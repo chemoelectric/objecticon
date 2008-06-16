@@ -1,0 +1,105 @@
+import mysql
+import lang
+
+procedure main()
+   local m, res, f, s, rs
+
+   m := MySql() | stop("Couldn't init MySql")
+
+   m.options(MySql.MYSQL_OPT_CONNECT_TIMEOUT, 100) | stop("Failed to set options:",m.get_error())
+   m.options(MySql.MYSQL_READ_DEFAULT_FILE, "abc") | stop("Failed to set options:",m.get_error())
+   #if m.ping() then stop("Could ping")
+   #write("m.ptr=",m.ptr)
+   m.connect(&null, "rparlett", &null, "test", &null, &null, MySql.CLIENT_MULTI_STATEMENTS) | stop("Failed to connect:", m.get_error(), "  errno=", m.get_errno())
+   #m.set_server_option(MySql.MYSQL_OPTION_MULTI_STATEMENTS_ON) | stop("failed to set server opt")
+   write("threadid=",m.get_thread_id())
+   write("warning count=",m.get_warning_count())
+   write(image(m.esc("what\'s this:\0\r\n")))
+   m.select_db("test") | stop("Failed to selectdb")
+   m.ping() | stop("Couldnt ping")
+   #m.change_user("rparlett", &null, "menagerie") | stop("Couldnt change user:",m.get_error())
+   m.dump_debug_info()
+   write("charset=", m.get_character_set_name())
+   m.query("select * from example") | stop("Query failed:", m.get_error())
+   write("field_count=",m.get_field_count())
+   write("client_info=", m.get_client_info())
+   write("client_version=", m.get_client_version())
+   write("host_info=", m.get_host_info())
+   write("proto_info=", m.get_proto_info())
+   write("server_info=", m.get_server_info())
+   write("server_version=", m.get_server_version())
+   write("info=", m.get_info())
+   write("insert_id=", m.get_insert_id())
+
+   res := m.store_result() | stop("Couldn't use result:", m.get_error())
+   write("row count=",res.get_num_rows())
+   #write("res.ptr=",res.ptr)
+   write("num fields=",res.get_num_fields())
+   write("affected rows=",m.get_affected_rows())
+   while f := res.fetch_field() do {
+      write("fetch_field=", to_string(f))
+      write("tell=", res.field_tell())
+   }
+   write("============")
+   write("field2->",to_string(res.fetch_field_direct(1)))
+   write("============")
+   write("all fields->", to_string(res.fetch_fields()))
+   write("============")
+   res.field_seek(3)
+   write("sought 3->", to_string(res.fetch_field()))
+   write("------DATA-----")
+
+   print_table(res)
+
+   write("seek to 1")
+   res.data_seek(1)
+   write(to_string(res.fetch_row()))
+
+   res.free()
+
+   print_table(m.list_dbs()) | stop("Couldnt list dbs:", m.get_error())
+   print_table(m.list_fields("example")) | stop("Couldnt list fields:", m.get_error())
+   print_table(m.list_processes()) | stop("Couldnt list procs:", m.get_error())
+   print_table(m.list_tables()) | stop("Couldnt list tables:", m.get_error())
+
+   write("stat->",m.get_stat())
+   write("state->", m.get_sqlstate())
+
+
+   s := "DROP TABLE IF EXISTS test_table; _
+         CREATE TABLE test_table(id INT); _
+         INSERT INTO test_table VALUES(10); _
+         UPDATE test_table SET id=20 WHERE id=10; _
+         SELECT * FROM test_table; _
+         DROP TABLE test_table"
+   
+   write(s)
+   m.query(s) | stop("Couldnt query:", m.get_error())
+   repeat {
+      if m.get_field_count() > 0 then {
+         rs := m.use_result() | stop("Couldnt use result:", m.get_error())
+         print_table(rs)
+         rs.free()
+      }
+      m.more_results() | break
+      m.next_result() | stop("Couldnt get next_result")
+   }
+
+   m.close()
+
+end
+
+
+procedure print_table(rs)
+   local l
+
+   l := []
+   every put(l, (!rs.fetch_fields()).get_name())
+   write(to_string(l))
+   write("====================================")
+   while l := rs.get_row() do {
+      write(to_string(l))
+   }
+   write("------------------------------------------------------------------")
+   return
+end

@@ -1,0 +1,237 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+$define LIB "objecticonmysqllib.so"
+
+package mysql
+
+import lang
+import util
+
+#
+# This class provides a wrapper around an MYSQL_RES object.
+#
+class MySqlRes()
+   private ptr, fields
+
+   #
+   # Invoke mysql_num_fields() for the current connection.
+   #
+   public get_num_fields()
+      return unimysql_num_fields(ptr)
+   end
+
+   #
+   # Invoke mysql_fetch_field() for the current connection.
+   #
+   # @return an {MySqlField} instance
+   #
+   public fetch_field()
+      local l
+      l := unimysql_fetch_field(ptr) | fail
+      return MySqlField!l
+   end
+
+   #
+   # Invoke mysql_fetch_field_direct() for the current connection.
+   #
+   # @return an {MySqlField} instance
+   #
+   public fetch_field_direct(fieldnr)
+      local l
+      l := unimysql_fetch_field_direct(ptr, fieldnr) | fail
+      return MySqlField!l
+   end
+
+   #
+   # Invoke mysql_fetch_fields() for the current connection.
+   #
+   # @return a list of {MySqlField} instances
+   #
+   public fetch_fields()
+      local l, res
+      l := unimysql_fetch_fields(ptr)
+      res := []
+      every put(res, MySqlField!(!l))
+      return res
+   end
+
+   #
+   # Invoke mysql_field_seek() for the current connection.
+   #
+   public field_seek(offset)
+      return unimysql_field_seek(ptr, offset)
+   end
+
+   #
+   # Invoke mysql_field_tell() for the current connection.
+   #
+   public field_tell(offset)
+      return unimysql_field_tell(ptr)
+   end
+
+   #
+   # Invoke mysql_fetch_lengths() for the current connection.
+   #
+   public fetch_lengths()
+      return unimysql_fetch_lengths(ptr)
+   end
+
+   #
+   # Invoke mysql_fetch_row() for the current connection.
+   #
+   public fetch_row()
+      return unimysql_fetch_row(ptr)
+   end
+
+   #
+   # Invoke mysql_row_seek() for the current connection.
+   #
+   public row_seek(offset)
+      return unimysql_row_seek(ptr, offset)
+   end
+
+   #
+   # Invoke mysql_row_tell() for the current connection.
+   #
+   public row_tell(offset)
+      return unimysql_row_tell(ptr)
+   end
+
+   #
+   # Invoke mysql_data_seek() for the current connection.
+   #
+   public data_seek(offset)
+      return unimysql_data_seek(ptr, offset)
+   end
+
+   #
+   # Invoke mysql_free_result() for the current connection.
+   #
+   public free()
+      return unimysql_free_result(ptr)
+   end
+
+   #
+   # Invoke mysql_num_rows() for the current connection.
+   #
+   public get_num_rows()
+      return unimysql_num_rows(ptr)
+   end
+
+   #
+   # This uses {fetch_row()} and {fetch_fields()} together to provide a rather more
+   # intelligent version of {fetch_row()}.   The column types are examined and the
+   # strings are converted to appropriate Icon objects: integer for the integer types,
+   # real for the floating point types, {Time} for the date/time types, and string for
+   # the char/blob types.
+   #
+   public get_row()
+      local row, res, f, t, o
+
+      /fields := fetch_fields() | fail
+      row := fetch_row() | fail
+
+      res := []
+      every f := !fields do {
+         o := pop(row)
+         if /o then 
+            put(res)
+         else {
+            case f.get_type() of {
+               MySql.FIELD_TYPE_LONGLONG |
+                  MySql.FIELD_TYPE_INT24 |
+                  MySql.FIELD_TYPE_YEAR |
+                  MySql.FIELD_TYPE_TINY |
+                  MySql.FIELD_TYPE_SHORT |
+                  MySql.FIELD_TYPE_LONG :
+                  put(res, integer(o)) | stop("Expected integer type:", o)
+               
+               MySql.FIELD_TYPE_DECIMAL |
+                  MySql.FIELD_TYPE_FLOAT |
+                  MySql.FIELD_TYPE_DOUBLE :
+                  put(res, real(o)) | stop("Expected real:", o)
+               
+               MySql.FIELD_TYPE_NULL :
+                  put(res)
+
+               MySql.FIELD_TYPE_DATE : {
+                  t := Time()
+                  t.parse(o, "yyyy-MM-dd") | stop("Expected date:", o)
+                  put(res, t)
+               }
+               
+               MySql.FIELD_TYPE_TIME: {
+                  t := Time()
+                  t.parse(o, "HH:mm:ss") | stop("Expected time:", o)
+                  put(res, t)
+               }
+
+               MySql.FIELD_TYPE_DATETIME |
+                  MySql.FIELD_TYPE_TIMESTAMP: {
+                     t := Time()
+                     t.parse(o, "yyyy-MM-dd HH:mm:ss") | stop("Expected timestamp:", o)
+                     put(res, t)
+                  }
+
+               MySql.FIELD_TYPE_ENUM |
+                  MySql.FIELD_TYPE_SET |
+                  MySql.FIELD_TYPE_TINY_BLOB |
+                  MySql.FIELD_TYPE_MEDIUM_BLOB |
+                  MySql.FIELD_TYPE_LONG_BLOB |
+                  MySql.FIELD_TYPE_BLOB |
+                  MySql.FIELD_TYPE_VAR_STRING |
+                  MySql.FIELD_TYPE_STRING :
+                  put(res, o)
+
+               default:
+                  stop("Unknown coltype:",  f.get_type())
+            }
+         }
+      }
+
+      return res
+   end
+
+   private static defer unimysql_num_fields()
+   private static defer unimysql_fetch_field()
+   private static defer unimysql_fetch_field_direct()
+   private static defer unimysql_fetch_fields()
+   private static defer unimysql_field_seek()
+   private static defer unimysql_field_tell()
+   private static defer unimysql_fetch_lengths()
+   private static defer unimysql_fetch_row()
+   private static defer unimysql_row_seek()
+   private static defer unimysql_row_tell()
+   private static defer unimysql_data_seek()
+   private static defer unimysql_free_result()
+   private static defer unimysql_num_rows()
+
+   private static init()
+      Class.set_method("unimysql_num_fields", loadfunc(LIB, "unimysql_num_fields"))
+      Class.set_method("unimysql_fetch_field", loadfunc(LIB, "unimysql_fetch_field"))
+      Class.set_method("unimysql_fetch_field_direct", loadfunc(LIB, "unimysql_fetch_field_direct"))
+      Class.set_method("unimysql_fetch_fields", loadfunc(LIB, "unimysql_fetch_fields"))
+      Class.set_method("unimysql_field_seek", loadfunc(LIB, "unimysql_field_seek"))
+      Class.set_method("unimysql_field_tell", loadfunc(LIB, "unimysql_field_tell"))
+      Class.set_method("unimysql_fetch_lengths", loadfunc(LIB, "unimysql_fetch_lengths"))
+      Class.set_method("unimysql_fetch_row", loadfunc(LIB, "unimysql_fetch_row"))
+      Class.set_method("unimysql_row_seek", loadfunc(LIB, "unimysql_row_seek"))
+      Class.set_method("unimysql_row_tell", loadfunc(LIB, "unimysql_row_tell"))
+      Class.set_method("unimysql_data_seek", loadfunc(LIB, "unimysql_data_seek"))
+      Class.set_method("unimysql_free_result", loadfunc(LIB, "unimysql_free_result"))
+      Class.set_method("unimysql_num_rows", loadfunc(LIB, "unimysql_num_rows"))
+   end
+
+   package new(ptr)
+      self.ptr := ptr
+      return
+   end
+end
+
+
