@@ -1,0 +1,76 @@
+import parser
+
+class Outputter()
+   public static const whitespace_cset, id_cset
+   protected const symbol_table, opts
+
+   private static init()
+      whitespace_cset := ' \t'
+      id_cset := &ucase ++ &lcase ++ '_0987654321'
+   end
+
+   protected static name_sort(x)
+      return x.name
+   end
+
+   protected get_packages()
+      local ps, e
+      ps := set()
+      every e := symbol_table.gen_symbols() do
+         insert(ps, \e.scanned_file.pack | "default")
+      suspend !sort(ps)
+   end
+
+   protected get_symbols_in(p)
+      local t, e
+      if p == "default" then
+         p := &null
+      t := table()
+      every e := symbol_table.gen_symbols() do {
+         if e.scanned_file.pack === p then
+            t[e.name] := e
+      }
+      suspend (!sort(t))[2]
+   end
+
+   protected get_classes_in(p)
+      local e
+      every e := get_symbols_in(p) do
+         if is(e, ClassSymbol) then
+            suspend e
+   end
+
+   protected get_others_in(p)
+      local e
+      every e := get_symbols_in(p) do
+         if not is(e, ClassSymbol) then
+            suspend e
+   end
+
+   protected get_param_string(obj)
+      local s, a
+      s := ""
+      every a := obj.get_args().gen() do
+         s ||:= a.str() || ", "
+      s[-2:0] := ""
+      if obj.has_varargs() then
+         s ||:= "[]"
+      return s
+   end
+
+   protected get_access_string(obj)
+      local s
+      s := ""
+      every s ||:= obj.get_access().gen().str() || " "
+      if is(obj, DeferredMethod) then
+         s ||:= "defer "
+      s[-1] := ""
+      return s
+   end
+
+   public new(opts, symbol_table)
+      self.opts := opts
+      self.symbol_table := symbol_table
+      return
+   end
+end

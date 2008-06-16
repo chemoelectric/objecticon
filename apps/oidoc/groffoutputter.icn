@@ -1,0 +1,128 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import parser
+
+link strings
+
+class GroffOutputter(Outputter)
+   private output_file
+
+   public output()
+      local c, l, s, t, u, m, el, com, meths, vars, x
+
+      if s := \opts["o"] then
+         output_file := open(s, "w") | stop("couldn't open output file ", s)
+      else
+         output_file := &output
+
+      every c := get_classes_in(get_packages()) do {
+         l := []
+         every put(l, c.get_supers().get_fq_name())
+         if *l = 0 then 
+            s := "(none)"
+         else {
+            s := ""
+            every s ||:= !l || " "
+            s := "\\f[HR]" || s || "\\f[R]"
+         }
+         t := c.get_package() | "default"
+         t := "\\f[HR]" || t || "\\f[R]"
+         u := c.scanned_file.filename
+         u := "\\f[HR]" || u || "\\f[R]"
+         write(output_file, ".HEAD ", c.name, " \"", s, "\"", " \"", t, "\"", " \"", u, "\"")
+         com := Comment(c)
+         every groff_unbracket(!com.comment)
+
+         meths := []
+         vars := []
+         every x := c.get_fields() do {
+            if is(x, ClassVariable) then
+               put(vars, x)
+            else
+               put(meths, x)
+         }
+         meths := isort(meths, name_sort)
+         vars := isort(vars, name_sort)
+
+         every m := !meths do {
+            write(output_file, ".FUNC_START \"", m.name, "(", get_param_string(m.obj) ,")\"")
+            com := Comment(m)
+            every groff_unbracket(!com.comment)
+            every el := !sort(com.fields) do
+               groff_fields(el[1], el[2])
+            write(output_file, ".FUNC_END")
+         }
+         every m := !vars do {
+            write(output_file, ".FUNC_START \"", m.name, "\"")
+            com := Comment(m)
+            every groff_unbracket(!com.comment)
+            every el := !sort(com.fields) do
+               groff_fields(el[1], el[2])
+            write(output_file, ".FUNC_END")
+         }
+      }
+   end
+
+   private groff_fields(key, vals)
+      local l, name
+      case key of {
+         "param" : {
+            write(output_file, ".P")
+            write(output_file, "Parameters :")
+            write(output_file, ".LS_SET c")
+            every l := !vals do {
+               l[1] ? {
+                  tab(many(whitespace_cset))
+                  name := tab(many(id_cset))
+                  l[1] := tab(0)
+               }
+               write(output_file, ".LS_ITEM \\f[HR]", name, "\\fR")
+               every groff_unbracket(!l)
+            }
+            write(output_file, ".LS_END")
+         }
+
+         "return" : {
+            write(output_file, ".P")
+            write(output_file, "Returns :")
+            write(output_file, ".P")
+            every groff_unbracket(!vals[1])
+         }
+
+         "example" : {
+            write(output_file, ".P")
+            write(output_file, "Example :")
+            write(output_file, ".ID\n.ft HR")
+            every l := !vals do
+               every write(output_file, l[2 to *l])
+            write(output_file, ".ft R\n.DE")
+         }
+      }
+   end
+
+   private groff_unbracket(s)
+      local r
+      r := ""
+      replace(s, "\\", "\\\\") ? {
+         tab(many(whitespace_cset))
+         while r ||:= tab(upto('{')) do {
+            r ||:= "\\f[HR]"
+            move(1)
+            r ||:= tab(upto('}') | 0)
+            move(1)
+            r ||:= "\\fR"
+         }
+         r ||:= tab(0)
+      }
+      if *r = 0 then
+         r := ".P"
+      write(output_file, r)
+   end
+end
+

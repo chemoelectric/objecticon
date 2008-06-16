@@ -1,0 +1,57 @@
+import parser
+
+class Comment()
+   public const comment, fields
+
+   private list_extract(sym)
+      if sym.decl_obj.size() = 1 then
+         return sym.decl_obj.get_first_token().get_pad()
+      return sym.obj.get_first_token().get_pad()
+   end
+
+   private get_comment_str(sym)
+      if is(sym, ClassVariable | GlobalSymbol) then
+         return list_extract(sym)
+      else
+         return sym.obj.get_first_token().get_pad()
+   end
+
+   public new(sym)
+      local s, l, key, val
+      comment := []
+      fields := table()
+      get_comment_str(sym) ? {
+         while s := tab(upto('#')) do {
+            move(1)
+            l := tab(upto('\n\r') | 0)
+            l ? {
+               if (tab(many(' \t')), ="@") then {
+                  if key := tab(many(&lcase)) then {
+                     val := [tab(0)]
+                     /fields[key] := []
+                     put(fields[key], val)
+                  } else {
+                     #
+                     # Continuation - add to end of last field.
+                     #
+                     # Tab over the first space, if present.
+                     =" "
+                     put(fields[\key][-1], tab(0))
+                  }
+               } else
+                  put(comment, l)
+            }
+         }
+      }
+      #
+      # Strip off any empty lines at the front and beginning of
+      # the comment.
+      #
+      while *comment[1] = 0 do
+         pop(comment)
+      while *comment[-1] = 0 do
+         pull(comment)
+
+      return
+   end
+end
