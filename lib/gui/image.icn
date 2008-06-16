@@ -1,0 +1,239 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util, lang
+
+#
+# This class scales and displays an image.  The image source can
+# be an image string, an external file, or another window, and
+# can be changed at any time.
+#
+class Image(Component)
+   public 
+   image_file, 
+   image_str,
+   image_window,
+   win,
+   zoom_win,
+   scale_up_flag,
+   use_cache_flag,
+   dont_close
+
+   #
+   # Set the name of the file from which to load the image;
+   # re-display the image from the new file if appropriate.
+   #
+   public set_file(x)
+      self.image_file := self.image_str := self.image_window := &null
+      if is_initialized() then {
+         close_image()
+         self.image_file := x
+         load_image()
+         self.invalidate()
+      } else {
+         self.image_file := x
+      }
+   end
+
+   #
+   # Set an image in Icon image format.
+   #
+   public set_image(x)
+      self.image_file := self.image_str := self.image_window := &null
+      if is_initialized() then {
+         close_image()
+         self.image_str := x
+         load_image()
+         self.invalidate()
+      } else {
+         self.image_str := x
+      }
+   end
+
+   #
+   # Set a window to use as the image source.  It will not be closed
+   # by this Component.
+   #
+   public set_window(x)
+      self.image_file := self.image_str := self.image_window := &null
+      if is_initialized() then {
+         close_image()
+         self.image_window := x
+         load_image()
+         self.invalidate()
+      } else {
+         self.image_window := x
+      }
+   end
+
+   #
+   # Blank the image
+   #
+   public clear_image()
+      self.image_file := self.image_str := self.image_window := &null
+      if is_initialized() then {
+         close_image()
+         self.invalidate()
+      }
+   end
+
+   public initially()
+      cast(self,Component).initially()
+      load_image()
+   end
+
+   public load_image()
+      local attribs
+      if \self.image_str then {
+         # Use our own attribs so that shade and highlight in the icon image
+         # comes out according to our own cbwin.
+         attribs := wattribs_to_list(self.get_effective_wattribs())
+         win := WOpen!(attribs ||| ["size=" || (0 < image_width(self.image_str)) || 
+                                          "," || (0 < image_height(self.image_str)),
+                                          "canvas=hidden"])
+         DrawImageEx(\win, 0, 0, self.image_str)
+      } else if \self.image_file then {
+         if \self.use_cache_flag then {
+            if win := ImageCache.get(self.image_file) then
+               dont_close := 1
+         } else
+            win := WOpen("image=" || self.image_file, "canvas=hidden")
+      } else if \self.image_window then {
+         win := self.image_window
+         dont_close := 1
+      }
+   end
+
+   #
+   # If set, then the image will be scaled up to fit in the space
+   # specified by {set_size()}.  The image will not be distorted, 
+   # but will be expanded to fill one of the dimensions depending 
+   # on its shape.  If the image is bigger than the specified size 
+   # then it will always be scaled down.
+   #
+   public set_scale_up(s)
+      self.scale_up_flag := to_flag(s)
+   end
+
+   public close_image()
+      if \win & /dont_close then {
+         WClose(win)
+         Gui.style.dispose(win)
+      }
+      WClose(\zoom_win)
+      dont_close := win := zoom_win := &null
+   end
+
+   #
+   # Indicate whether to use the image cache to load external files; by
+   # default "y".
+   #
+   public set_use_cache(s)
+      self.use_cache_flag := to_flag(s)
+   end
+
+   public get_default_width()
+      return WAttrib(\win, "width") + border.get_total_width()
+   end
+
+   public get_default_height()
+      return WAttrib(\win, "height") + border.get_total_height()
+   end
+
+   public display()
+      local ir, img_w, img_h,
+         asp_r, asp_max, zoom_w, zoom_h, pt
+
+      border.draw_rect(self.cbwin, self)
+
+      \win | fail
+
+      ir := border.get_inner_rect(self)
+
+      img_w := WAttrib(win, "width")
+      img_h := WAttrib(win, "height")
+
+      if img_w = ir.w & img_h = ir.h then {
+         CopyArea(win, 
+                  self.cbwin,,,,, 
+                  self.x + border.get_l_inset(),
+                  self.y + border.get_l_inset())
+      } else {
+         #
+         # Scale the image to the desired size
+         #
+
+         asp_r := real(img_w) / real(img_h)
+         asp_max := real(ir.w) / real(ir.h)
+
+         if /self.scale_up_flag & (img_w <= ir.w) & (img_h <= ir.h) then {
+            zoom_w := img_w
+            zoom_h := img_h
+         } else {
+            if asp_r > asp_max then {
+               zoom_w := ir.w
+               zoom_h := integer(ir.w / asp_r)
+            } else {
+               zoom_w := integer(ir.h * asp_r)
+               zoom_h := ir.h
+            }
+         }
+
+         pt := ir.float(Size(zoom_w, zoom_h), border)
+
+         zoom_w <:= 1
+         zoom_h <:= 1
+
+         if \zoom_win &
+            WAttrib(zoom_win, "width") = zoom_w & 
+            WAttrib(zoom_win,"height") = zoom_h then
+               CopyArea(zoom_win, self.cbwin, , , , , pt.x, pt.y)
+         else {
+            WClose(\zoom_win)
+            zoom_win := WOpen("size=" || zoom_w || "," || zoom_h, 
+                              "canvas=hidden") | fatal(self, "Couldn't open temp window")
+            Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
+            CopyArea(zoom_win, self.cbwin, , , , , pt.x, pt.y)
+         }
+      }
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "image" : set_image(f.string_val())
+         "file" : set_file(f.string_val())
+         "window" : set_window(f.val_of_type("window"))
+         "scale_up" : set_scale_up(f.flag_val())
+         "use_cache" : set_use_cache(f.flag_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public finally()
+      cast(self,Component).finally()
+      close_image()
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.set_constraint("x_fill", "y")
+      self.set_constraint("y_fill", "y")
+      self.set_constraint("x_weight", "1")
+      self.set_constraint("y_weight", "1")
+      set_border(RaisedBorder())
+      self.use_cache_flag := 1
+      set_fields(a)
+      return
+   end
+end
+
+
+

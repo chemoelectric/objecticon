@@ -1,0 +1,52 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+$include "keysyms.icn"
+
+class SpinLabel(Label)
+   public keeps(e)
+      return e === (Key_Up | Key_Down)
+   end
+
+   public on_key(e)
+      case e of {
+         Key_Up : parent.go_up(e)
+         Key_Down : parent.go_down(e)
+      }
+   end
+
+   public new(a[])
+      cast(self,Label).new()
+      self.set_label("")
+      self.connect(self.on_key, Event.KEY)
+      self.set_accepts_focus("t")
+      self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
+      set_fields(a)
+      return
+   end
+end
+
+
+#
+# This class is the base class for non-editable spin components which use
+# a Label to display the current value.
+#
+class StaticSpin(Spin)
+   public get_contents()
+      return view.get_label()
+   end
+
+   public create_view()
+      return SpinLabel()
+   end
+end
+
+
+

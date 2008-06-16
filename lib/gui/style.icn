@@ -1,0 +1,94 @@
+package gui
+
+class Style()
+   public dispose(W)
+      BevelDispose(W)
+   end
+
+   public dispose_all()
+      BevelDisposeAll()
+   end
+
+   #
+   # Draw a raised rectangle.
+   #
+   public draw_raised_rectangle(W, x, y, w, h, width)
+      BevelRectangle(W, x, y, w, h, width)
+   end
+
+   #
+   # Draw a sunken rectangle.
+   #
+   public draw_sunken_rectangle(W, x, y, w, h, width)
+      BevelRectangle(W, x, y, w, h, -width)
+   end
+
+   public draw_hilite_line(W, x1, y1, x2, y2)
+      DrawLine(bev_lookup(W).hilite, x1, y1, x2, y2)
+   end
+
+   public draw_shadow_line(W, x1, y1, x2, y2)
+      DrawLine(bev_lookup(W).shadow, x1, y1, x2, y2)
+   end
+
+   public get_hilite_color(W)
+      return WAttrib(bev_lookup(W).hilite, "fg")
+   end
+
+   public get_shadow_color(W)
+      return WAttrib(bev_lookup(W).shadow, "fg")
+   end
+
+   public get_filter_clone(W)
+$ifdef _MS_WINDOWS_NT
+      return Clone(W, "fillstyle=masked", "drawop=reverse", "pattern=verydark")
+$else
+      return Clone(W, "fillstyle=masked", "reverse=on", "pattern=waves")
+$endif
+   end
+
+   public get_down_clone(W)
+      return Clone(W, "drawop=reverse")
+   end
+
+   public get_selection_clone(W)
+      return Clone(W, "drawop=reverse")
+   end
+
+   public get_cursor_clone(W)
+      return Clone(W, "bg=red", "fg=white")
+   end
+
+   public get_focus_clone(W)
+      return Clone(W, "fg=red", "fillstyle=masked", "pattern=gray")
+   end
+
+   public get_dashed_clone(W)
+      return Clone(bev_lookup(W).shadow, "fillstyle=masked", "pattern=gray")
+   end
+
+   public get_highlight_clone(W)
+      return Clone(W, "fg=blue", "fillstyle=masked", "pattern=gray")
+   end
+
+   public create_tooltip_label()
+      return Label("bg=pale yellow", 
+                   "font=sans,10", 
+                   "fg=black",
+                   "border=",CompoundBorder("outer=",PlainBorder("line_width=1"),
+                                            "inner=",EmptyBorder("insets=3,3,2,2")))
+   end
+
+   public polish(obj)
+   end
+
+   public distance2ticker_rate(d)
+      local r
+      r := 200 - 6*d
+      r <:= 20
+      r >:= 200
+      return r
+   end
+end
+
+

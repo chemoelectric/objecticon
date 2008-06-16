@@ -1,0 +1,193 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import lang
+
+#
+# This class provides one column within a {Table}, which
+# displays a table of data.  A column has a label with a
+# button which produces an event when clicked.  The column may
+# be expanded or contracted by dragging the right edge of the
+# button.
+#
+# The label is set by calling the {set_label(x)} method of the
+# parent class, {TextButton}.
+#
+class TableColumn(TextButton)
+   public 
+   column_width,  
+   drag_offset,
+   tx,
+   tw,
+   is_resizing
+
+   public static CHANGE_SIZE_BORDER, MIN_COLUMN_WIDTH
+
+   private static init()
+      CHANGE_SIZE_BORDER := 4
+      MIN_COLUMN_WIDTH := 20
+   end
+
+   public in_resize_region()
+      return in_region() &
+         (self.x + self.w - CHANGE_SIZE_BORDER <= &x < self.x + self.w)
+   end
+
+   public handle_lpress(e)
+      if in_resize_region() then {
+         self.is_resizing := 1
+         self.parent.parent.no_more_sizing := 1
+         self.drag_offset := &x - (self.x + self.w)
+      } else
+         cast(self,TextButton).handle_lpress(e)
+   end
+
+   public handle_ldrag(e)
+      if \self.is_resizing then {
+         self.w_spec := &x - self.x - drag_offset
+         self.w_spec <:= MIN_COLUMN_WIDTH
+         get_table_content().invalidate_subject_width()
+         get_table_content().set_internal_fields()
+         self.parent.layout()
+         self.parent.parent.invalidate()
+      } else
+         cast(self,TextButton).handle_ldrag(e)
+   end
+
+   public handle_lrelease(e)
+      if \self.is_resizing then {
+         self.is_resizing := &null
+      } else
+         cast(self,TextButton).handle_lrelease(e)
+   end
+
+   public get_pointer()
+      if in_resize_region() then
+         return "sb h double arrow"
+   end
+
+   #
+   # Set the initial width of the column, in pixels.  If this is
+   # not provided, then the width will be set automatically to
+   # use up any available free space.
+   # @param x  The width
+   #
+   public set_column_width(x)
+      self.column_width := x
+   end
+
+   public set_column_align(x)
+      self.border.x_align := x
+   end
+
+   public display(r)
+      cast(self,TextButton).display(r)
+      Gui.style.draw_shadow_line(self.cbwin,
+                             self.x + self.w - 1, self.y,
+                             self.x + self.w - 1, self.y + self.h - 1)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "column_align" : set_column_align(f.string_val())
+         "column_width" : set_column_width(f.int_val())
+         default: return cast(self,TextButton).set_one(f)
+      }
+      return
+   end
+
+   #
+   # Return the table content
+   #
+   public get_table_content()
+      return parent.parent.table_content
+   end
+
+   #
+   # Return the table view
+   #
+   public get_table_view()
+      return parent.parent.table_content.view
+   end
+
+   #
+   # The column's index in the header
+   #
+   public get_column_index()
+      return parent.get_index(self)
+   end
+
+   #
+   # The table's contents list
+   #
+   public get_contents()
+      return parent.parent.table_content.contents
+   end
+
+   #
+   # Generate the column's data, as a slice of the contents list.
+   #
+   public slice()
+      suspend get_table_content().slice(get_column_index())
+   end
+
+   public layout()
+      self.tx := self.x + border.get_l_inset()
+      self.tw := self.w - border.get_total_width()
+   end
+
+   #
+   # Draw an individual cell for this column.  By default, string
+   # data is drawn.
+   #
+   # @param W the cloned window to draw into
+   # @param data the data to draw
+   # @param line the line number of the data
+   # @param col the column number of the data
+   # @param cy the y position of the cell
+   # @param ch the height of the cell
+   #
+   public draw_cell(W, data, line, col, cy, ch)
+      local x1, y1
+      x1 := case border.x_align of {
+         Align.R : self.tx + self.tw - TextWidth(W, data)
+         Align.C : self.tx + (self.tw - TextWidth(W, data)) / 2
+         Align.L : self.tx
+         default : fatal(self, "Bad column alignment")
+      }
+      y1 := cy + (ch - WAttrib(W, "fheight")) / 2
+      DrawStringEx(W, x1, y1, data)
+   end
+
+   #
+   # Return the desired height of the lines for the cells in this column.  This should
+   # return an integer if the heights are all the same, or a list containing the different
+   # heights for each line.
+   # @param W the cloned window to draw into
+   #
+   public calculate_line_height(W)
+      return WAttrib(W, "fheight")
+   end
+
+   public new(a[])
+      cast(self,TextButton).new()
+      self.set_accepts_focus("f")
+      self.set_border(EmptyBorder())
+      border.set_l_inset(Gui.TEXT_INSET)
+      border.set_r_inset(Gui.TEXT_INSET)
+      border.set_x_align(Align.L)
+      set_fields(a)
+      return
+   end
+end
+
+
+
+

@@ -1,0 +1,57 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# This is simply a horizontal bar in a {Menu}, for decorative purposes.
+# It has no methods which the user need invoke.
+#
+class MenuSeparator(MenuComponent)
+   public static HEIGHT
+
+   private static init()
+      HEIGHT := 4
+   end
+
+   public get_label_mid_width()
+      return 0
+   end
+
+   public get_label_mid_height()
+      return HEIGHT
+   end
+
+   public get_label_left_width()
+   end
+
+   public get_label_left_height()
+   end
+
+   public get_label_right_width()
+   end
+
+   public get_label_right_height()
+   end
+
+   public draw_label(W, lw, mw, rw)
+      Gui.style.draw_raised_rectangle(W,
+                                  self.label_x, self.label_y + (self.label_h - HEIGHT) / 2,
+                                  lw + mw + rw, HEIGHT,
+                                  HEIGHT / 2)
+   end
+
+   public new(a[])
+      cast(self,MenuComponent).new()
+      self.is_decorative_flag := 1
+      set_fields(a)
+      return
+   end
+end
+
+

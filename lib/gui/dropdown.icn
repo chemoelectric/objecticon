@@ -1,0 +1,258 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import lang
+
+#
+# This class is just a superclass of {List} and {EditList}.
+#
+class DropDown(SelectionList,Component)
+   public 
+   b,                           
+   view,
+   tl,                      #          
+   old_selection,
+   direction
+
+   #
+   # Set the direction to pop-up in.  Options are"up", "down" or
+   # "best" (the default).
+   #
+   public set_direction(s)
+      self.direction := s
+   end
+
+   public on_button_press(ev)
+      if \tl then
+         #
+         # Button pressed whilst list open; just close
+         #
+         self.close_textlist()
+      else
+         #
+         # Button pressed whilst no list; open list
+         #
+         self.open_textlist()
+   end
+
+   public on_textlist_selection(ev)
+      local tmp
+      #
+      # Selection in list - close textlist, amend label.
+      #
+      tmp := tl.get_selections()[1]
+      self.close_textlist()
+      go_to(\tmp, ev)
+   end
+
+   public start_change(e)
+      self.old_selection := self.selection
+   end
+
+   public end_change(e)
+      if self.old_selection ~=== self.selection then
+         fire(Event.SELECTION_CHANGED, e)
+   end
+
+   #
+   # Create the view component
+   #
+   public defer create_view()
+
+   public create_popup()
+      return TextList()
+   end
+
+   public go_up(e)
+      if *selection_list = 0 then
+         fail
+      start_change(e)
+      if /self.selection | (self.selection = 1) then
+         set_selection(*self.selection_list)
+      else
+         set_selection(self.selection - 1)
+      end_change(e)
+   end
+
+   public go_down(e)
+      if *selection_list = 0 then
+         fail
+      start_change(e)
+      if /self.selection then
+         set_selection(1)
+      else
+         set_selection(1 + self.selection % *self.selection_list)
+      end_change(e)
+   end
+
+   public go_to(x, e)
+      start_change(e)
+      set_selection(x)
+      end_change(e)
+   end
+
+   public open_textlist()
+      local fh, max_h, spc_below
+
+      fh := WAttrib(self.cbwin, "fheight")
+      # Space available for downward popup
+      spc_below := parent_dialog.h - (self.y + self.h)
+      max_h := case self.direction of {
+         "up": self.y
+         "down": spc_below
+         "best": if spc_below >= 7 * fh then spc_below else max(self.y, spc_below)
+         default: fatal(self, "Unknown direction")
+      }
+
+      #
+      # Initialize and open a list, saving window area below in a temp window.
+      #
+      self.tl := create_popup()
+      # Copy our attribs
+      self.tl.set_all_wattribs(self.get_effective_wattribs())
+      self.tl.connect(self.on_textlist_selection, Event.SELECTION_CHANGED)
+      self.tl.set_contents(self.selection_list)
+      self.tl.set_draggable_cursor("t")
+      self.tl.set_motion_cursor("t")
+      self.tl.set_z(self.parent_dialog.get_top_z())
+      self.parent_dialog.add(tl)
+      self.tl.initially()
+      self.tl.set_ideal_size(self.w, 
+                             self.parent_dialog.w - self.x, 
+                             0, max_h)
+
+      self.tl.set_pos(self.x, self.y + case self.direction of {
+         "up": -self.tl.h_spec
+         "down": self.h
+         "best": {
+            if self.tl.h_spec > spc_below then
+               -self.tl.h_spec
+            else
+               self.h
+         }
+      })
+
+      self.tl.set_select_mode(Select.ONE)
+      self.tl.resize()
+      self.tl.invalidate()
+      self.tl.set_selection_on_key_moves("f")
+      if \self.selection then {
+         self.tl.set_cursor(self.selection)
+         self.tl.center_line(self.selection)
+      }
+      self.parent_dialog.set_focus(tl)
+      self.parent_dialog.hold(tl.view)
+
+      self.parent_dialog.connect(self.dialog_event, Event.ICON)
+   end
+
+   public close_textlist()
+      #
+      # Close list, restore window
+      #
+      if self.parent_dialog.focus === tl then
+         self.parent_dialog.set_focus(view)
+      self.tl.invalidate()
+      self.tl.finally()
+      self.parent_dialog.remove(tl)
+      self.tl := &null
+      self.parent_dialog.disconnect_object(self)
+   end
+
+   public dialog_event(e)
+      if ((e === "\e") | 
+          ((e === (&lpress | &rpress | &mpress)) & not(tl.in_region()) & not(b.in_region()))) then 
+      {
+         #
+         # Mouse click outside textlist.  Close.
+         # 
+         self.close_textlist()
+      }
+   end
+
+   public initially()
+      \self.selection_list | fatal(self, "no selection list specified")
+      cast(self,Component).initially()
+   end
+
+   public finally()
+      #
+      # Disposed with text list showing, just get rid of it
+      #
+      if \self.tl then 
+         self.close_textlist()
+      cast(self,Component).finally()
+   end
+
+   public get_default_height()
+      return border.get_total_height() + view.get_default_height()
+   end
+
+   public display(r)
+      border.draw_rect(self.cbwin, self)
+      display_children(r)
+   end
+
+   public layout()
+      local bw
+
+      bw := b.get_preferred_width()
+      #
+      # Set button position and size
+      #
+      b.x := self.x + self.w - bw - border.get_r_inset()
+      b.y := self.y + border.get_t_inset()
+      b.w := bw
+      view.x := self.x + border.get_l_inset()
+      view.y := self.y + border.get_t_inset()
+      view.w := self.w - border.get_total_width() - bw
+      b.h := view.h := self.h - border.get_total_height()
+      b.layout()
+      view.layout()
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "selection_list" : set_selection_list(f.string_list_val())
+         "selection" : set_selection(f.int_val())
+         "direction" : set_direction(f.string_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.set_border(SunkenBorder())
+      # Make the same width as the button in the scrollbar of the dropdown.
+      self.b := IconButton("w=",ScrollBar.DEFAULT_SIZE)
+      self.b.set_parent(self)
+      self.b.connect(self.on_button_press, Event.BUTTON_PRESS)
+      self.b.set_image(Icon.ARROW_DOWN)
+      self.b.set_accepts_focus("f")
+      self.direction := "best"
+      self.add(b)
+      self.preferred_focus := self.view := create_view()
+      self.add(view)
+      self.set_constraint("x_fill", "")
+      self.set_constraint("x_align", Align.L)
+      self.set_constraint("x_weight", "1")
+      connect(self.go_up, Event.MOUSE_4_UP)
+      connect(self.go_down, Event.MOUSE_5_UP)
+      set_fields(a)
+      return
+   end
+end
+
+
+
+
+
+

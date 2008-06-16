@@ -1,0 +1,102 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+
+#
+# This is a class for popup menus.  It is an invisible placeholder
+# component, with zero size, from which a Menu can be popped up
+# using the {popup()} method.
+#
+# Note that instances should never be added or removed from a dialog;
+# that is done automatically.
+#
+class PopupMenu(Component)
+   public 
+   menu,
+   px, py
+
+   public finally()
+      if \self.menu then
+         close_menu()
+      cast(self,Component).finally()
+   end
+
+   public display()
+   end
+
+   public close_menu()
+      self.menu.hide()
+      self.menu.finally()
+      self.menu := &null
+      self.parent_dialog.exit_menu_mode()
+      self.parent_dialog.disconnect_object(self)
+   end
+
+   public go_right()
+   end
+
+   public go_left()
+   end
+
+   public close_all()
+      cleanup()
+   end
+
+   public make_partial()
+      cleanup()
+   end
+
+   public cleanup()
+      close_menu()
+      self.parent.remove(self)
+      self.finally()
+   end
+
+   public dialog_event(e)
+      if \self.menu &
+         not(e === (&lpress | &rpress | &mpress | 
+                    &lrelease | &rrelease | &mrelease) & &x = px & &y = py) then
+         self.menu.handle_event(e)
+   end
+
+   #
+   # Popup a menu
+   #
+   # @param dialog The dialog in which to show the menu
+   # @param menu  The menu to show
+   # @param x The x position to show, default &x
+   # @param y The y position to show, default &y
+   #
+   public popup(dialog, menu, x, y)
+      dialog.add(self)
+      self.initially()
+      self.resize()
+      px := x
+      py := y
+      /px := &x
+      /py := &y
+      self.parent_dialog.enter_menu_mode(self)
+      self.parent_dialog.connect(self.dialog_event, Event.ICON)
+      self.menu := menu
+      self.menu.set_parent_component(self)         
+      self.menu.initially()
+      self.menu.position_nicely(px, py, px)
+      self.menu.show()
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
+      set_fields(a)
+      return
+   end
+end
+
+

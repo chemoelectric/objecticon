@@ -1,0 +1,162 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import lang
+
+#
+# A button with a text label.
+#
+# The size of the button can either be set using {set_size()},
+# be left to default to a size based on the given label.
+#
+class TextButton(Button)
+   public 
+   paint,
+   paint_down
+
+   public display(r)
+      local cw, p
+
+      p := if /paint_down | (self.is_down === self.is_checked_flag) then
+         paint
+      else
+         paint_down
+
+      p.draw_point(self.cbwin, border.float(self, p))
+
+      if \self.is_down then {
+         cw := Gui.style.get_down_clone(self.cbwin)
+         FillRectangle(cw, self.x, self.y, self.w, self.h)
+         Uncouple(cw)
+         border.draw_rev_rect(self.cbwin, self)
+      } else if /self.is_checked_flag then
+         border.draw_rect(self.cbwin, self)
+      else
+         border.draw_rev_rect(self.cbwin, self)
+
+      if self.has_focus() & self.is_unshaded() then
+         border.draw_focus_rect(self.cbwin, self)
+   end
+
+   #
+   # Set the label.
+   # @param x   The label.
+   #
+   public set_label(x)
+      set_paint(paint_for_string(x))
+   end
+
+   public set_label_down(x)
+      set_paint_down(paint_for_string(x))
+   end
+
+   #
+   # Set down image to use in the button,
+   # which should be in Icon image format.
+   #
+   # @param x   The down image
+   #
+   public set_image_down(x)
+      if /x then
+         set_paint_down()
+      else
+         set_paint_down(ImageStringPaint(x))
+   end
+
+   #
+   # Set an image to use in the button, which should be in Icon image
+   # format.
+   # @param x   The image
+   #
+   public set_image(x)
+      set_paint(ImageStringPaint(x))
+   end
+
+   #
+   # Set the up/down images (if any) to the strings provided,
+   # which should be in Icon image format.
+   # The two images must have the same dimensions.
+   # @param x   The up image
+   # @param y   The down image
+   #
+   public set_images(x, y)
+      set_image(x)
+      set_image_down(y)
+   end
+
+   public set_paint(p)
+      (\self.paint).finally()
+      self.paint := p
+      if is_initialized() then {
+         self.paint.initially(self, self.accel)
+         self.invalidate()
+      }
+   end
+
+   public set_paint_down(p)
+      (\self.paint_down).finally()
+      self.paint_down := p
+      if is_initialized() then {
+         (\self.paint_down).initially(self, self.accel)
+         self.invalidate()
+      }
+   end
+
+   public initially()
+      \self.paint | fatal(self, "no label specified")
+      cast(self,Component).initially()
+      self.paint.initially(self, self.accel)
+      (\self.paint_down).initially(self, self.accel)
+   end
+
+   public finally()
+      cast(self,Component).finally()
+      paint.finally()
+      (\paint_down).finally()
+   end
+
+   public get_default_width()
+      local t
+      t := paint.w
+      t <:= (\paint_down).w
+      return t + border.get_total_width()
+   end
+
+   public get_default_height()
+      local t
+      t := paint.h
+      t <:= (\paint_down).h
+      return t + border.get_total_height()
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "image" : set_image(f.string_val())
+         "image_down" : set_image_down(f.string_val())
+         "images" : set_images!(f.string_list_val(2))
+         "label" : set_label(f.string_val())
+         "label_down" : set_label_down(f.string_val())
+         "paint" : set_paint(f.object_val(gui.Paint))
+         "paint_down" : set_paint_down(f.object_val(gui.Paint))
+         default: return cast(self,Button).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Button).new()
+      self.border := CompoundBorder("outer=",RaisedBorder(),
+                                    "inner=",EmptyBorder())
+      set_fields(a)
+      return
+   end
+end
+
+

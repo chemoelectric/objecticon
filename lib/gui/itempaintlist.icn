@@ -1,0 +1,92 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import lang
+
+class ItemPaintList(SelectableScrollArea)
+   public item_border, item_paint
+   public initially()
+      \self.item_paint | fatal(self, "ItemPaint not set")
+      cast(self,SelectableScrollArea).initially()
+      self.item_paint.initially(self)
+      self.item_border.initially(self)
+   end
+
+   public finally()
+      cast(self,SelectableScrollArea).finally()
+      self.item_paint.finally()
+      self.item_border.finally()
+   end
+
+   #
+   # Set a border to draw along with each item.
+   #
+   public set_item_border(b)
+      (\self.item_border).finally()
+      self.item_border := b
+      if is_initialized() then
+         self.item_border.initially(self)
+   end
+
+   public set_item_paint(r)
+      (\self.item_paint).finally()
+      self.item_paint := r
+      if is_initialized() then
+         self.item_paint.initially(self)
+   end
+
+   public calculate_line_height()
+      local h
+      if not(h := item_paint.get_constant_height(self.cbwin) +
+             item_border.get_total_height()) then 
+      {
+         h := []
+         every put(h, item_paint.get_height(self.cbwin, !self.contents) + 
+                   item_border.get_total_height())
+      }
+      return h
+   end
+
+   public calculate_subject_width()
+      local mw
+      if not(mw := item_paint.get_constant_width(self.cbwin)) then {
+         mw := 0
+         every mw <:= item_paint.get_width(self.cbwin, !self.contents)
+      }
+      return mw + item_border.get_total_width()
+   end
+
+   public draw_line_data(xp, yp, lh, i)
+      local d, r
+      d := contents[i]
+      r := Rect(xp, yp, max(subject_width, view.w), lh)
+      item_paint.draw_point(view.cbwin, 
+                            d,
+                            item_border.float(r, item_paint.get_size(view.cbwin, d)))
+      item_border.draw_rect(view.cbwin, r)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "item_paint" : set_item_paint(f.object_val(gui.ItemPaint))
+         "item_border" : set_item_border(f.object_val(gui.ABorder))
+         default: return cast(self,SelectableScrollArea).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,SelectableScrollArea).new()
+      self.set_item_border(EmptyBorder("flush"))
+      set_fields(a)
+      return
+   end
+end
+

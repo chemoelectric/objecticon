@@ -1,0 +1,106 @@
+package gui
+
+class ItemPaint()
+   public initially(c)
+   end
+
+   public defer get_width(W, data)
+   public defer get_height(W, data)
+   public defer get_size(W, data)
+   public defer draw(W, data, x, y)
+
+   public get_constant_width(W)
+   end
+
+   public get_constant_height(W)
+   end
+
+   public draw_point(W, data, p)
+      self.draw(W, data, p.x, p.y)
+   end
+
+   public finally()
+   end
+end
+
+
+class PaintAdapter(ItemPaint)
+   public get_width(W, data)
+      return data.w
+   end
+
+   public get_height(W, data)
+      return data.h
+   end
+
+   public get_size(W, data)
+      return data
+   end
+
+   public draw(W, data, x, y)
+      data.draw(W, x, y)
+   end
+end
+
+
+class TextItemPaint(ItemPaint)
+   public fh
+   public initially(c)
+      fh := WAttrib(c.cbwin, "fheight")
+   end
+
+   public get_width(W, data)
+      return TextWidth(W, detab(data))
+   end
+
+   public get_constant_height(W)
+      return fh
+   end
+
+   public get_size(W, data)
+      return Size(TextWidth(W, detab(data)), fh)
+   end
+
+   public draw(W, data, x, y)
+      DrawStringEx(W, x, y, detab(data))
+   end
+end
+
+
+class ImageStringItemPaint(ItemPaint)
+   public get_width(W, data)
+      return image_width(data)
+   end
+
+   public get_height(W, data)
+      return image_height(data)
+   end
+
+   public get_size(W, data)
+      return Size(image_width(data), image_height(data))
+   end
+
+   public draw(W, data, x, y)
+      DrawImageEx(W, x, y, data)
+   end
+end
+
+
+class ImageWindowItemPaint(ItemPaint)
+   public get_width(W, data)
+      return WAttrib(data, "width")
+   end
+
+   public get_height(W, data)
+      return WAttrib(data, "height")
+   end
+
+   public get_size(W, data)
+      return Size(WAttrib(data, "width"), WAttrib(data, "height"))
+   end
+
+   public draw(W, data, x, y)
+      CopyArea(data, W,,,,, x, y)
+   end
+end
+

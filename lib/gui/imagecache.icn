@@ -1,0 +1,67 @@
+package gui
+
+import util
+
+class ImageCache(StaticError)
+   public static map, path
+
+   private static init()
+      map := table()
+      path := []
+   end
+
+   public static add_dir(d)
+      d := Files.get_path(d).get_canonical()
+      # Ensure it isn't in the list twice.
+      if d.str() == (!path).str() then
+         return
+      push(path, d)
+   end
+
+   #
+   # Get the full file path where the given window was found and loaded from.
+   #
+   public static get_source(w)
+      return \map[w]
+   end
+
+   public static get(s)
+      local f, w
+
+      every f := get_paths(s) do {
+         if w := \map[f] then
+            return w
+         if stat(f).mode[1] == "-" then {
+            w := WOpen("image=" || f, "canvas=hidden") | return error("Couldn't load image from file " || f)
+            insert(map, f, w)
+            insert(map, w, f)
+            return w
+         }
+      }
+      return error("Couldn't find on path:" || s)
+   end
+
+   public static delete(s)
+      local f, w
+      every f := get_paths(s) do {
+         if w := \map[f] then {
+            WClose(w)
+            default.delete(map, f)
+            default.delete(map, w)
+            return
+         }
+      }
+   end
+
+   public static get_paths(s)
+      local p
+      p := Files.get_path(s)
+      if p.is_absolute() then
+         return p.get_canonical().str()
+      suspend (!path).append(p).str()
+   end
+
+   private new()
+   end
+end
+

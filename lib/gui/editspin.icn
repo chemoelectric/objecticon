@@ -1,0 +1,69 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+$include "keysyms.icn"
+
+class SpinTextField(TextField)
+   public keeps(e)
+      return e === (Key_Up | Key_Down | Key_Left | Key_Right)
+   end
+
+   public on_key(e)
+      case e of {
+         Key_Up : parent.go_up(e)
+         Key_Down : parent.go_down(e)
+      }
+   end
+
+   public new(a[])
+      cast(self,TextField).new()
+      self.connect(self.on_key, Event.KEY)
+      self.set_border(EmptyBorder("l_inset=",Gui.TEXT_INSET,
+                                  "r_inset=",Gui.TEXT_INSET))
+      set_fields(a)
+      return
+   end
+end
+
+
+#
+# This class is the base class for editable spin components which use a
+# TextField to display/edit the current value.
+#
+class EditSpin(Spin)
+   public old_contents
+   public on_textfield(ev, src, type)
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   public get_contents()
+      return view.get_contents()
+   end
+
+   public start_change(e)
+      self.old_contents := get_contents()
+   end
+
+   public end_change(e)
+      if self.old_contents ~=== get_contents() then
+         fire(Event.CONTENT_CHANGED, e)
+   end
+
+   public create_view()
+      local tf
+      tf := SpinTextField()
+      every tf.connect(self.on_textfield, Event.CONTENT_CHANGED|Event.ACTION)
+      return tf
+   end
+end
+
+
+

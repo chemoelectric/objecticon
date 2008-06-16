@@ -1,0 +1,47 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# This class encapsulates a drag over an object during a drag and
+# drop procedure.  This can either be the source or the prospective target
+# of the operation.
+#
+class Drag()
+   private readable source, content, event
+
+   #
+   # Get the content data
+   #
+   public get_content()
+      return content
+   end
+
+   #
+   # Get the Component source, ie the thing the pointer was over
+   #
+   public get_source()
+      return source
+   end
+
+   #
+   # Get the Icon event; one of  &ldrag, &rdrag, &mdrag.
+   #
+   public get_event()
+      return event
+   end
+
+   public new(source, content, event)
+      self.source := source
+      self.content := content
+      self.event := event
+      return
+   end
+end
+

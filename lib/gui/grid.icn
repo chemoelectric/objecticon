@@ -1,0 +1,399 @@
+package gui
+import util, lang
+
+class CellInfo(Insets,Align)
+   public 
+               obj,            # An arbitrary object 
+               grid,           # The grid we're in
+               ax,             # Actual computed pixel location and size,
+               ay,             # within insets, ie where to draw the thing
+               aw,             # inside the cell.
+               ah,
+               s,              # Identifying string for print_layout
+               x,              # Location, size in grid units.
+               y, 
+               w, 
+               h, 
+               dw,             # Desired cell width including insets
+               dh, 
+               pw,             # Preferred cell width excluding insets
+               ph, 
+               x_fill,         # Constraints: fill, align, weights, insets
+               y_fill,
+               x_weight,
+               y_weight
+
+   private object_to_string()
+      local t
+
+      t := s || ": "
+      t ||:= "obj=" || subtype(obj) || "<" || serial(obj) || ">"
+      t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
+         " component pref size=" || pw || "," || ph
+      t ||:= "\n\tcell desired size=" || dw || "," || dh
+      t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
+
+      t ||:= " \n\tfill=" || image(x_fill) || "," || image(y_fill) || 
+         " weight=" || x_weight || "," || y_weight ||
+         " align=" || image(x_align) || "," || image(y_align) ||
+         " insets=l:" || l_inset || " t:" || t_inset || " r:" || r_inset || " b:" || b_inset
+
+      return t
+   end
+end
+
+
+class Grid(SetFields)
+   public static const EXTRA_CELLS,
+                       EXTRA_BORDERS,
+                       EXTRA_IGNORE
+   public 
+               gw,           # Grid width, height in cells
+               gh, 
+               p_col_w,      # Preferred column widths/row heights
+               p_row_h,
+               a_col_w,      # Actual column widths/row heights after extra
+               a_row_h,      # space has been allocated
+               col_x,        # Actual row x and y values
+               row_y,
+               col_weights,  # Column/row weights.
+               row_weights,
+               info,         # List of CellInfo for each component being laid out
+               dii,          # Default inner padding, ie not at edge of grid
+               doi,          # Default outer padding
+               extra,        # Flag indicating how to allocate extra space
+               pad_w,        # Padding to the left of the grid
+               pad_h,        # Padding above the grid
+               id_str,       # For generating CellInfo string ids for debug
+               add_x,        # For auto-computing cell position and sizes.
+               add_y,
+               add_row_h
+
+   public create_cell(t)
+      local ci
+
+      ci := CellInfo()
+      ci.grid := self
+      ci.s := id_str[1]
+      id_str[1] := ""
+      self.add_x +:= integer(t["tab"])
+      ci.x := integer(t["x"]) | add_x
+      ci.y := integer(t["y"]) | add_y
+      ci.w := integer(t["w"]) | 1
+      ci.h := integer(t["h"]) | 1
+      add_row_h <:= ci.h
+      if /to_flag(t["eol"]) then {
+         add_x := ci.x + ci.w
+         add_y := ci.y
+      } else {
+         add_x := 1
+         add_y +:= add_row_h
+         add_row_h := 0
+      }
+      ci.l_inset := integer(t["l_inset"])
+      ci.t_inset := integer(t["t_inset"])
+      ci.r_inset := integer(t["r_inset"])
+      ci.b_inset := integer(t["b_inset"])
+      ci.x_fill := to_flag(t["x_fill"]) | 1
+      ci.y_fill := to_flag(t["y_fill"]) | 1
+      ci.x_align := (\t["x_align"] === (Align.L | Align.R)) | Align.C
+      ci.y_align := (\t["y_align"] === (Align.T | Align.B)) | Align.C
+      ci.x_weight := real(t["x_weight"]) | 0
+      ci.y_weight := real(t["y_weight"]) | 0
+
+      put(info, ci)
+
+      return ci
+   end
+
+   public dimension()
+      local ci
+
+      # Work out grid width/height
+      gw := gh := 0
+      every ci := !info do {
+         gw <:= ci.x + ci.w - 1
+         gh <:= ci.y + ci.h - 1
+      }
+
+      # Fill in final defaults now we have the grid dimensions.
+      every ci := !info do {
+         /ci.l_inset := if ci.x = 1 then self.doi else self.dii
+         /ci.t_inset := if ci.y = 1 then self.doi else self.dii
+         /ci.r_inset := if ci.x + ci.w = gw + 1 then self.doi else self.dii
+         /ci.b_inset := if ci.y + ci.h = gh + 1 then self.doi else self.dii
+         ci.dw := ci.pw + ci.l_inset + ci.r_inset
+         ci.dh := ci.ph + ci.t_inset + ci.b_inset
+      }
+
+      compute_col_widths()
+      compute_row_heights()
+   end
+   
+   public slice(start, span, l)
+      local n
+      n := 0
+      every n +:= l[start to start + span - 1]
+      return n
+   end
+
+   public total(l)
+      local n
+      n := 0
+      every n +:= !l
+      return n
+   end
+
+   public dist_by_weight(start, span, extra, l, weights, tw)
+      local left, i, a, j
+
+      left := extra
+      every i := start to start + span - 1 do {
+         a := integer(extra * weights[i] / tw)
+         l[i] +:= a
+         left -:= a
+         if weights[i] > 0 then
+            j := i
+      }
+      l[j] +:= left
+   end
+
+   public dist_equally(start, span, extra, l)
+      local left, i, a
+
+      a := extra / span
+      left := extra
+      every i := start to start + span - 1 do {
+         l[i] +:= a
+         left -:= a
+      }
+      l[i] +:= left
+   end
+
+   public allocate_space(start, span, extra, l, weights)
+      local tw
+      tw := slice(start, span, weights)
+      if tw = 0 then
+         dist_equally(start, span, extra, l)
+      else
+         dist_by_weight(start, span, extra, l, weights, tw)
+   end
+
+   public compute_col_widths()
+      local i, need, l
+      p_col_w := list(gw, 0)
+      col_weights := list(gw, 0.0)
+      l := isort(info, cell_width_sort)
+
+      # Weights
+      every i := !l do {
+         need := i.x_weight - slice(i.x, i.w, col_weights)
+         if need > 0 then
+            dist_equally(i.x, i.w, need, col_weights)
+      }
+
+      # Compute sizes
+      every i := !l do {
+         need := i.dw - slice(i.x, i.w, p_col_w)
+         if need > 0 then
+            allocate_space(i.x, i.w, need, p_col_w, col_weights)
+      }
+   end
+
+   public compute_row_heights()
+      local i, need, l
+      p_row_h := list(gh, 0)
+      row_weights := list(gh, 0.0)
+      l := isort(info, cell_height_sort)
+
+      # Weights
+      every i := !l do {
+         need := i.y_weight - slice(i.y, i.h, row_weights)
+         if need > 0 then
+            dist_equally(i.y, i.h, need, row_weights)
+      }
+
+      # Compute sizes
+      every i := !l do {
+         need := i.dh - slice(i.y, i.h, p_row_h)
+         if need > 0 then 
+            allocate_space(i.y, i.h, need, p_row_h, row_weights)
+      }
+   end
+
+   public print_layout()
+      local x, y, t, i, s
+
+      write("Grid dimensions:", gw, ",",gh)
+      t := table()
+      every t[(1 to gw)||","||(1 to gh)] := " "
+
+      every i := !info do
+         every t[(i.x to i.x + i.w - 1)||","||(i.y to i.y + i.h - 1)] := i.s
+
+      write(s := repl("+-", gw) || "+")
+      every y := 1 to gh do {
+         every x := 1 to gw do
+            writes("|", t[x||","||y])
+         write("|\n",s)
+      }
+
+      write("----- Items ------")
+      write(to_string(!info))
+
+      write("----- Data -------")
+      write("p_col_w=", to_string(p_col_w))
+      if \self.a_col_w then {
+         write("a_col_w=", to_string(a_col_w))
+         write("\textra width in a_col_w:", total(a_col_w)-total(p_col_w))
+         write("\tleft pad border:", self.pad_w)
+      }
+      write("p_row_h=", to_string(p_row_h))
+      if \self.a_row_h then {
+         write("a_row_h=", to_string(a_row_h))
+         write("\textra height in a_row_h:", total(a_row_h)-total(p_row_h))
+         write("\ttop pad border:", self.pad_h)
+      }
+
+      write("col_weights=", to_string(col_weights))
+      write("row_weights=", to_string(row_weights))
+      write("\nPreferred size gives:", get_preferred_width(),",",get_preferred_height())
+   end
+
+   public get_preferred_width()
+      return total(p_col_w)
+   end
+
+   public get_preferred_height()
+      return total(p_row_h)
+   end
+
+   public compute_locations(x1, y1, w1, h1)
+      local i, x, y, w, h, ew, eh, tw
+
+      /x1 := 0
+      /y1 := 0
+
+      a_col_w := copy(p_col_w)
+      a_row_h := copy(p_row_h)
+
+      case self.extra of {
+         EXTRA_CELLS : {
+            # Extra width
+            ew := w1 - total(p_col_w)
+            tw := total(col_weights)
+            if tw = 0 then
+               # All weights zero - it goes on the border
+               self.pad_w := ew / 2
+            else {
+               # Some weights, so no border and allocate by weight.
+               self.pad_w := 0
+               dist_by_weight(1, *a_col_w, ew, a_col_w, col_weights, tw)
+            }
+
+            # Same for height.
+            eh := h1 - total(p_row_h)
+            tw := total(row_weights)
+            if tw = 0 then
+               self.pad_h := eh / 2
+            else {
+               self.pad_h := 0
+               dist_by_weight(1, *a_row_h, eh, a_row_h, row_weights, tw)
+            }
+         }
+         EXTRA_BORDERS : {
+            self.pad_w := (w1 - total(p_col_w)) / 2
+            self.pad_h := (h1 - total(p_row_h)) / 2
+         }
+         EXTRA_IGNORE : {
+            self.pad_w := self.pad_h := 0
+         }
+         default : fatal(self, "Bad value for extra:" || image(self.extra))
+      }
+
+      col_x := []
+      x := x1 + self.pad_w
+      every w := !a_col_w do {
+         put(col_x, x)
+         x +:= w
+      }
+
+      row_y := []
+      y := y1 + self.pad_h
+      every h := !a_row_h do {
+         put(row_y, y)
+         y +:= h
+      }
+
+      every i := !info do {
+         x := col_x[i.x] + i.l_inset
+         y := row_y[i.y] + i.t_inset
+         w := slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
+         h := slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
+         i.aw := if \i.x_fill then w else i.pw
+         i.ah := if \i.y_fill then h else i.ph
+
+         i.ax := case i.x_align of {
+            Align.L : x
+            Align.R : x + w - i.aw
+            Align.C : x + (w - i.aw) / 2
+         }
+
+         i.ay := case i.y_align of {
+            Align.T : y
+            Align.B : y + h - i.ah
+            Align.C : y + (h - i.ah) / 2
+         }
+      }
+   end
+
+   public set_dii(n)
+      self.dii := n
+   end
+
+   public set_doi(n)
+      self.doi := n
+   end
+
+   public set_extra(s)
+      self.extra := s
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "dii" : set_dii(f.int_val())
+         "doi" : set_doi(f.int_val())
+         "flush" : set_doi(0)
+         "extra" : set_extra(f.string_val())
+         default : fail
+      }
+      return
+   end
+
+   private static init()
+      EXTRA_CELLS := "cells"
+      EXTRA_BORDERS := "borders"
+      EXTRA_IGNORE := "ignore"
+   end
+
+   public new(a[])
+      self.dii := self.doi := 0
+      self.extra := EXTRA_CELLS
+      self.id_str := string(&ucase)
+      self.add_y := self.add_x := 1
+      self.add_row_h := 0
+      self.info := []
+      set_fields(a)
+      return
+   end
+end
+
+procedure cell_width_sort(i)
+   return i.w
+end
+
+procedure cell_height_sort(i)
+   return i.h
+end
+
+

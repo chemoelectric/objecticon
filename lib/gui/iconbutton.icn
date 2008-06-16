@@ -1,0 +1,39 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+
+#
+# This is just a subclass of TextButton, with a slightly
+# different default border, suitable for displaying an icon
+# image.
+#
+# @example
+# @ Create a button with a diamond image and a border
+# @ b := IconButton()
+# @ b.set_image("11,c1,_
+# @ ~~~~~0~~~~~_
+# @ ~~~~000~~~~_
+# @ ~~0000000~~_
+# @ ~000000000~_
+# @ ~~0000000~~_
+# @ ~~~~000~~~~_
+# @ ~~~~~0~~~~~_
+# @")
+#
+class IconButton(TextButton)
+   public new(a[])
+      # Bypass TextButton's constructor to save creating a border twice.
+      cast(self,Button).new()
+      self.border := RaisedBorder()
+      set_fields(a)
+      return
+   end
+end
+

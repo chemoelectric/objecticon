@@ -1,0 +1,377 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+link graphics
+
+$include "keysyms.icn"     
+
+class Event()
+   public static const CLOSE_BUTTON,        # Some extra icon events which don't have keywords.
+                       MOUSE_MOVED,                
+                       MOUSE_4,
+                       MOUSE_5,
+                       MOUSE_4_UP,
+                       MOUSE_5_UP,
+                       INVOKE_LATER,        # The synthetic event for invocation via the event queue.
+                       ICON,                # Events fired by Components.
+                       BUTTON_RELEASE,
+                       BUTTON_PRESS,
+                       BUTTON_HELD,
+                       SELECTION_CHANGED,
+                       CONTENT_CHANGED,
+                       CURSOR_MOVED,
+                       VALUE_CHANGED,
+                       ACTION,
+                       TREE_NODE_EXPANSION,
+                       SIZER_PRESSED,
+                       SIZER_DRAGGED,
+                       SIZER_RELEASED,
+                       MOUSE_ENTER,
+                       MOUSE_EXIT,
+                       KEY,
+                       TICK,
+                       GOT_FOCUS,
+                       LOST_FOCUS,
+                       DIALOG_CLOSED
+
+   private static init()
+      CLOSE_BUTTON := -11
+      MOUSE_MOVED := -12
+      MOUSE_4 := -13
+      MOUSE_5 := -14
+      MOUSE_4_UP := -16
+      MOUSE_5_UP := -17
+      INVOKE_LATER := 1000
+      ICON := 1
+      BUTTON_RELEASE := 20
+      BUTTON_PRESS := 21
+      BUTTON_HELD := 22
+      SELECTION_CHANGED := 40
+      CONTENT_CHANGED := 50
+      CURSOR_MOVED := 51
+      VALUE_CHANGED := 55
+      ACTION := 60
+      TREE_NODE_EXPANSION := 70
+      SIZER_PRESSED := 80
+      SIZER_DRAGGED := 81
+      SIZER_RELEASED := 82
+      MOUSE_ENTER := 94
+      MOUSE_EXIT := 95
+      KEY := 100
+      TICK := 300
+      GOT_FOCUS := 400
+      LOST_FOCUS := 401
+      DIALOG_CLOSED := 500
+   end
+end
+
+class Select()
+   public static const NONE,
+                       ONE,
+                       MANY
+
+   private static init()
+      NONE := "none"
+      ONE := "one"
+      MANY := "many"
+   end
+end
+
+class Gui()
+   public static BORDER_WIDTH,
+                 TEXT_INSET,
+                 X_INSET,
+                 Y_INSET,
+                 REPEAT_DELAY,            
+                 REPEAT_RATE,
+                 TAB_WIDTH,                 # Default tab char width
+                 style
+
+   public static const CONSTRAINT_SET,
+                 WATTRIB_SET,
+                 KEY_CODE_SET,
+                 PRINTABLE_1,              # Printable on a single line of text
+                 PRINTABLE_N               # Printable on multi lines of text
+
+   private static init()
+      BORDER_WIDTH := 2
+      TEXT_INSET := 3
+      X_INSET := 6
+      Y_INSET := 3
+      REPEAT_DELAY := 500
+      REPEAT_RATE := 100
+      TAB_WIDTH := 8
+      style := Style()
+      PRINTABLE_1 := cset(&cset[33:0])
+      PRINTABLE_N := cset(&cset[33:0]) ++ '\t\n'
+      CONSTRAINT_SET := set()
+      every insert(CONSTRAINT_SET, "tab"|"eol"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset"|
+                   "x_fill"|"y_fill"|"x_align"|"y_align"|"x_weight"|"y_weight")
+      WATTRIB_SET := set()
+      every insert(WATTRIB_SET, "label" | "posx" | "pos" | "posy" | "resize" | "size" | "height" | 
+                   "width" | "lines" | "columns" | "image" | "canvas" | "iconpos" | "iconlabel" | 
+                   "iconimage" | "echo" | "cursor" | "x" | "y" | "row" | "col" | "pointer" | 
+                   "pointerx" | "pointery" | "pointerrow" | "pointercol" | "display" | "depth" | 
+                   "displayheight" | "displaywidth" | "fg" | "bg" | "reverse" | "drawop" | "gamma" | 
+                   "font" | "fheight" | "fwidth" | "ascent" | "descent" | "leading" | "linewidth" | 
+                   "linestyle" | "fillstyle" | "pattern" | "clipx" | "clipy" | "clipw" | "cliph" | 
+                   "dx" | "dy" | "inputmask" | "minwidth" | "minheight" | "minsize")
+      KEY_CODE_SET := set()
+      every insert(KEY_CODE_SET, 
+                   Shift_Tab|Key_Compose|Key_Do|Key_Down|Key_End|Key_F1|Key_F2|
+                   Key_F3|Key_F4|Key_F5|Key_F6|Key_F7|Key_F8|Key_F9|Key_F10|Key_F11|
+                   Key_F12|Key_F13|Key_F14|Key_F15|Key_F16|Key_F17|Key_F18|Key_F19|Key_F20|
+                   Key_Find|Key_Help|Key_Home|Key_Insert|Key_KP_Down|Key_KP_Left|
+                   Key_KP_Right|Key_KP_Up|Key_L1|
+                   Key_L2|Key_L3|Key_L4|Key_L5|Key_L6|Key_L7|Key_L8|Key_L9|Key_L10|
+                   Key_Left|Key_PF1|Key_PF2|Key_PF3|Key_PF4|Key_Pause|Key_PgDn|Key_PgUp|Key_PrSc|
+                   Key_R1|Key_R2|Key_R3|Key_R4|Key_R5|Key_R6|Key_R7|Key_R8|Key_R9|
+                   Key_R10|Key_R11|Key_R12|Key_R13|Key_R14|Key_R15|Key_Right|
+                   Key_ScrollLock|Key_Select|Key_Up)
+   end
+
+   public static is_constraint(s)
+      return member(CONSTRAINT_SET, s)
+   end
+
+   public static is_window_attrib(s)
+      return member(WATTRIB_SET, s)
+   end
+
+   public static is_key_event(e)
+      return (type(e) == "string") | member(KEY_CODE_SET, e)
+   end
+end
+
+procedure EraseRectangle(W, x, y, w, h)
+   if x < 0 then {
+      w +:= x
+      x := 0
+   }
+
+   if y < 0 then {
+      h +:= y
+      y := 0
+   }
+
+   return EraseArea(W, x, y, w, h)
+end
+
+
+procedure DrawImageEx(W, x, y, i)
+   i := get_extended_image(W, i) | fail
+   #
+   # This gets round a bug whereby painting an image
+   # in a -ve location (off screen) takes a really long
+   # time (it should be a no-op of course).
+   #
+   if x + image_width(i) < 0 & y + image_height(i) < 0 then
+      return
+   DrawImage(W, x, y, i)
+end
+
+
+procedure PaletteKeyEx(W, palette, spec)
+   local color
+   color := case spec of {
+      "hilite" : Gui.style.get_hilite_color(W)
+      "shadow" : Gui.style.get_shadow_color(W)
+      "fg" : WAttrib(W, "fg")
+      "bg" : WAttrib(W, "bg")
+      "trans" : return "\377"
+      default : spec
+   }
+   return PaletteKey(W, palette, color)
+end
+
+
+procedure get_extended_image(W, img)
+   local s1, s2, head, spec, palette
+
+   img ? {
+      ="(" | return img
+      spec := tab(upto(')')) | fail
+      =")"
+      tab(many(' '))
+      head := tab(upto(',')) || move(1) ||
+         (palette := tab(upto(','))) || move(1) | fail
+
+      s1 := s2 := ""
+      spec ? repeat {
+         tab(many('; '))
+         if pos(0) then 
+            break
+         s1 ||:= move(1) | fail
+         ="=" | fail
+         spec := tab(upto(';') | 0)
+         s2 ||:= PaletteKeyEx(W, palette, spec) | fail
+      }
+      return head || map(tab(0), s1, s2)
+   }
+end
+
+
+procedure Rectangle(W, x, y, w, h)
+   return DrawRectangle(W, x, y, w - 1, h - 1)
+end
+
+
+#
+# Return the char width for ch, which may be a tab
+#
+procedure CharWidth(win, ch)
+   if ch == "\t" then
+      return TextWidth(win, " ")
+   else
+      return TextWidth(win, ch)
+end
+
+
+#
+# Extended TextWidth function, handling tabs in s.  Returns the
+# width of the string from positions i through j.
+#
+procedure TextWidthEx(win, s, i, j, tw)
+   local tp, w, lr, cc, ch
+
+   if /i then {
+      i := 1
+      j := *s + 1
+   } else {
+      /j:= i + 1
+      if j <= 0 then
+         j +:= *s + 1
+   }
+
+   if not upto('\t', s) then
+      return TextWidth(win,s[i:j])
+
+   /tw := 8
+   tp := 0
+   w := 0
+   lr := 0
+   every cc := 1 to *s do {
+      if cc = i then
+         lr := w
+      if cc = j then
+         break
+      ch := s[cc]
+
+      if ch == "\t" then {
+         repeat {
+            w +:= TextWidth(win, " ")
+            tp +:= 1
+            if tp % tw = 0 then 
+               break
+         }
+      } else {
+         w +:= TextWidth(win, ch)
+         tp +:= 1
+      }
+   }
+   return w - lr
+end
+
+
+procedure DrawStringEx(win, x, y, s, k)
+   local i, x1, y1
+   y +:= WAttrib(win, "ascent")
+   DrawString(win, x, y, s)
+   if i := upto(\k, map(s)) then {
+      x1 := x + TextWidth(win, s[1:i])
+      y1 := y + WAttrib(win, "descent") - 1
+      DrawLine(win, x1, y1, x1 + TextWidth(win, s[i]), y1)
+   }
+end
+
+
+procedure image_width(s)
+   s ? {
+      if ="(" then {
+         tab(upto(')')) 
+         move(1)
+      }
+      return integer(tab(upto(',')))
+   }
+end
+
+
+procedure image_height(s)
+   local w
+   s ? {
+      if ="(" then {
+         tab(upto(')')) 
+         move(1)
+      }
+      w := integer(tab(upto(',')))
+      move(1)
+      tab(upto(','))
+      move(1)
+      return *tab(0) / (0 ~= \w)
+   }
+end
+
+
+procedure set_CheckBoxes_by_flag(i, checkboxes)
+   local c, j
+   j := 1
+   every c := !checkboxes do {
+      if iand(i, j) ~= 0 then
+         c.toggle_is_checked()
+      j *:= 2
+   }
+end
+
+
+procedure get_CheckBoxes_by_flag(checkboxes)
+   local i, j, c
+   i := 1
+   j := 0
+   every c := !checkboxes do {
+      if c.is_checked() then
+         j +:= i
+      i *:= 2
+   }
+   return j
+end
+
+
+#
+# The absolute pointer x position on the screen.
+#
+procedure get_pointerx()
+   local d
+   d := ?Dispatcher.dialogs | fail
+   return WAttrib(d.win, "posx") + WAttrib(d.win, "pointerx")
+end
+
+
+#
+# The absolute pointer y position on the screen.
+#
+procedure get_pointery()
+   local d
+   d := ?Dispatcher.dialogs | fail
+   return WAttrib(d.win, "posy") + WAttrib(d.win, "pointery")
+end
+
+
+#
+# Convert a table to an attribute list in the form
+#    ["key1=val1", "key2=val2", ...]
+#
+procedure wattribs_to_list(t)
+   local l, e
+   l := []
+   every e := !sort(t) do
+      put(l, e[1] || "=" || e[2])
+   return l
+end
+

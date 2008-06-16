@@ -1,0 +1,428 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import lang
+
+class TableContent(SelectableScrollArea)
+   public calculate_line_height()
+      local t, m, h, r, e, i
+      t := []
+      m := 0
+      every h := (!parent.table_header.children).calculate_line_height(self.cbwin) do {
+         if integer(h) then
+            m <:= h
+         else
+            put(t, h)
+      }
+      #
+      # Easy case, all columns report fixed line heights, so the line height for the
+      # table is the maximum.
+      if *t = 0 then
+         return m
+
+      r := list(*t[1], m)
+      every e := !t do {
+         *e = *r | fatal(self, "Inconsistent table column line height list sizes returned")
+         every i := 1 to *r do
+            r[i] <:= e[i]
+      }
+
+      return r
+   end
+
+   public slice(col)
+      suspend (!contents)[col]
+   end
+
+   public get_cell(line, col)
+      return contents[line, col]
+   end
+
+   public calculate_subject_width()
+      return parent.get_total_column_width()
+   end
+
+   # Synch buttons because of the horizontal movement.
+   public synch_header()
+      parent.table_header.layout()
+      parent.table_header.invalidate()
+   end
+
+   public on_hsb()
+      cast(self,SelectableScrollArea).on_hsb()
+      synch_header()
+   end
+
+   public handle_key_right(e)
+      cast(self,SelectableScrollArea).handle_key_right(e)
+      synch_header()
+   end
+
+   public handle_key_left(e)
+      cast(self,SelectableScrollArea).handle_key_left(e)
+      synch_header()
+   end
+
+   public get_column(n)
+      return parent.table_header.children[n]
+   end
+
+   #
+   # Return the column under the current x, y cursor.
+   #
+   public get_column_under_pointer()
+      local c
+      view.in_region() | fail
+      every c := !parent.table_header.children do
+         if c.x <= &x < c.x + c.w then
+            return c
+   end
+
+   public draw_line_data(xp, yp, lh, i, r)
+      local j, l, cols, clip_x, clip_w, col
+      l := self.contents[i]
+      cols := parent.table_header.children
+      every j := 1 to *cols do {
+         col := cols[j]
+         # Clip on the cell
+         clip_x := max(col.x, r.x)
+         clip_w := min(col.x + col.w, r.x + r.w) - clip_x
+         if clip_w > 0 then {
+            Clip(view.cbwin, clip_x, r.y, clip_w, r.h)
+            col.draw_cell(view.cbwin, l[j], i, j, yp, lh)
+         }
+      }
+      Clip(view.cbwin, r.x, r.y, r.w, r.h)
+   end
+end
+
+
+class TableHeader(Component)
+   public get_default_height()
+      local hh, col
+      hh := 0
+      every col := !self.children do
+         hh <:= col.get_preferred_height()
+      return hh
+   end
+
+   public layout()
+      local i, b
+
+      i := self.x - parent.table_content.get_area_x()
+      every b := !self.children do {
+         b.x := i
+         b.y := self.y
+         # b.w_spec is set below from the column width.
+         b.w := b.w_spec
+         b.h := self.h
+         b.layout()
+         i +:= b.w
+      }
+   end
+end
+
+
+#
+# This class displays a table, the columns of which are set up
+# using TableColumns.
+#
+class Table(Component)
+   public 
+   table_header,
+   table_content,
+   head_h,
+   no_more_sizing
+
+   #
+   # Return the nth {TableColumn}.
+   #
+   public get_column(n)
+      return table_header.children[n]
+   end
+
+   public get_contents()
+      return self.table_content.get_contents()
+   end
+
+   public set_checked(l)
+      return self.table_content.set_checked(l)
+   end
+
+   public get_checked()
+      return self.table_content.get_checked()
+   end
+
+   #
+   # Move to the given position.  Either parameter may be omitted.
+   # @param line   The line to move to
+   # @param horiz  The left offset to move to
+   #
+   public goto_pos(line, horiz)
+      return self.table_content.goto_pos(line, horiz)
+   end
+
+   #
+   # Ensure the given line is visible
+   #
+   public ensure_line_visible(line) 
+      return self.table_content.ensure_line_visible(line) 
+   end
+
+   #
+   # Set the contents of the table.  The parameter should be a
+   # two dimensional list.  Each element of the list should
+   # correspond to one line of the table.
+   # @param x   The contents
+   #
+   public set_contents(x)
+      return self.table_content.set_contents(x)
+   end
+
+   #
+   # Call this method if the contents list, previously
+   # set with {set_contents()}, has changed.
+   #
+   public contents_changed()
+      return self.table_content.contents_changed()
+   end
+
+   public clear_selections()
+      return self.table_content.clear_selections()
+   end
+
+   #
+   # Return a list of lines selected
+   # @return A list of lines currently selected
+   #
+   public get_selections()
+      return self.table_content.get_selections()
+   end
+
+   #
+   # Set the current selections to the list l, which is a list of
+   # line numbers.
+   # @param l   The list of item numbers.
+   #
+   public set_selections(l)
+      return self.table_content.set_selections(l)
+   end
+
+   #
+   # Set the cursor
+   #
+   # @p
+   public set_cursor(line)
+      self.table_content.set_cursor(line)
+   end
+
+   #
+   # Return item currently under the clicked cursor
+   #
+   # @p
+   public get_cursor()
+      return self.table_content.get_cursor()
+   end
+
+   #
+   # Return line currently under the clicked cursor
+   #
+   # @p
+   public line_get_cursor()
+      return self.table_content.object_get_cursor()
+   end
+
+   #
+   # Get the number of the first visible line
+   #
+   public get_first_line()
+      return self.table_content.get_first_line()
+   end
+
+   #
+   # The index of the last line in the area, or zero if there are no
+   # lines.
+   #
+   public get_last_line()
+      return self.table_content.get_last_line()
+   end
+
+   public get_line_under_pointer()
+      return self.table_content.get_line_under_pointer()
+   end
+
+   public get_column_under_pointer()
+      return self.table_content.get_column_under_pointer()
+   end
+
+   #
+   # Add the given TableColumn to the Table.
+   # @param c  The column to add.
+   # @param i   The index to add at; if omitted then the new column
+   # @          is appended to the end.
+   #
+   public add_column(c, i)
+      table_header.add(c, i)
+   end
+
+   #
+   # Get the columns of the table
+   #
+   public get_columns()
+      return table_header.get_children()
+   end
+
+   #
+   # Configure the table selection mode.
+   #
+   public set_select_mode(m)
+      self.table_content.set_select_mode(m)
+   end
+
+   #
+   # Get the total width of all columns
+   #
+   public get_total_column_width()
+      local sw
+      sw := 0
+      every sw +:= (!self.table_header.children).w_spec
+      return sw
+   end
+
+   #
+   # Compute the w_spec of the columns, including those whose width is unset.
+   # @p
+   public size_columns()
+      local col, l, sw, dw, av
+
+      l := []
+      sw := 0
+      every col := !self.table_header.children do {
+         if \col.column_width then {
+            col.w_spec := col.column_width
+            sw +:= col.column_width
+         } else 
+            put(l, col)
+      }
+      
+      if *l = 0 then
+         return
+
+      table_content.invalidate_subject_width()
+
+      # The width to give the auto size columns.
+      av := table_content.predict_view_width(self.w - border.get_total_width(), 1) - sw
+      dw := av / *l
+      dw <:= TableColumn.MIN_COLUMN_WIDTH
+
+      every l[1 to *l - 1].w_spec := dw
+      l[-1].w_spec := max(av - dw * (*l - 1), TableColumn.MIN_COLUMN_WIDTH)
+   end
+
+   public get_default_height()
+      return self.table_header.get_default_height() + 2 * Gui.BORDER_WIDTH + 
+         self.table_content.get_default_height() + border.get_total_height()
+   end
+
+   public get_default_width()
+      local col, tw
+      tw := 0
+      # No go if we have any auto-size columns...
+      every col := !self.table_header.children do
+         tw +:= \col.column_width | fail
+      return border.get_total_width() + tw
+   end
+
+   public layout()
+      local hh
+
+      if /no_more_sizing then
+         size_columns()
+
+      hh := self.table_header.get_preferred_height()
+
+      # The 2 * Gui.BORDER_WIDTH is the decoration between the header and the content.
+      self.table_content.x := self.x + border.get_l_inset()
+      self.table_content.y := self.y + hh + border.get_t_inset() + 2 * Gui.BORDER_WIDTH
+      self.table_content.w := self.w - border.get_total_width()
+      self.table_content.h := self.h - hh - border.get_total_height() - 2 * Gui.BORDER_WIDTH
+      self.table_content.layout()
+
+      self.table_header.x := self.x + border.get_l_inset()
+      self.table_header.y := self.y + border.get_t_inset()
+      self.table_header.w := self.w - border.get_total_width()
+      self.table_header.h := hh
+      self.table_header.layout()
+   end
+
+   public display(r)
+      border.draw_rect(self.cbwin, self)
+      Gui.style.draw_raised_rectangle(self.cbwin, 
+                                  self.x + border.get_l_inset(), 
+                                  self.y + self.table_header.h + border.get_t_inset(), 
+                                  self.w - border.get_total_width(), 
+                                  2 * Gui.BORDER_WIDTH,
+                                  Gui.BORDER_WIDTH)
+      self.display_children(r)
+   end
+
+   public on_table_content(ev, src, type)
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   #
+   # Return the component used to display the table contents, which is a
+   # subclass of SelectableScrollArea.
+   #
+   public get_table_content()
+      return self.table_content
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "select_mode" : set_select_mode(f.string_val())
+         "contents" : set_contents(f.list_val())
+         "selections" : set_selections(f.int_list_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public create_table_content()
+      return TableContent()
+   end
+
+   public create_table_header()
+      return TableHeader()
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.preferred_focus := self.table_content := create_table_content()
+      self.table_content.set_border(EmptyBorder("flush"))
+      self.set_border(SunkenBorder())
+      every self.table_content.connect(self.on_table_content,
+                                       Event.CURSOR_MOVED | Event.SELECTION_CHANGED)
+      self.add(table_content)
+      self.table_header := create_table_header()
+      self.add(table_header)
+      self.set_constraint("x_fill", "")
+      self.set_constraint("y_fill", "")
+      self.set_constraint("x_weight", "1")
+      self.set_constraint("y_weight", "1")
+      set_fields(a)
+      return
+   end
+end
+
+
+
+

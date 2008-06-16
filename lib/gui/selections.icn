@@ -1,0 +1,148 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+class SelectionOwner()
+   public defer get_content(target)
+   public defer lost_ownership()
+   public defer get_win()
+
+   public get_targets()
+      return Selection.STRING_TARGET
+   end
+end
+
+
+class Selection()
+   public static const
+                       PRIMARY,         # Selection constants
+                       SECONDARY,
+                       CLIPBOARD,
+                       STRING_TARGET,
+                       TARGETS_TARGET
+
+   private static const owners
+
+   private static init()
+      PRIMARY := "PRIMARY"      # These 3 must correspond to X Atom names.
+      SECONDARY := "SECONDARY"
+      CLIPBOARD := "CLIPBOARD"
+      STRING_TARGET := "STRING"
+      TARGETS_TARGET := "TARGETS"
+      owners := table()
+   end
+
+   public static own(selection, obj)
+      local curr
+      if curr := \owners[selection] then {
+         # Check if current owner is asserting selection.
+         if curr === obj then
+            return
+
+         curr.lost_ownership()
+         delete(owners, selection)
+
+         # If two different objects in the same window, no need to call
+         # the graphics layer.
+         if curr.get_win() === obj.get_win() then {
+            owners[selection] := obj
+            return
+         }
+      }
+      OwnSelection(obj.get_win(),
+                   selection,
+                   selection_callback)
+      owners[selection] := obj
+   end
+
+   #
+   # Return the content for the given selection.  Fails if there is no such
+   # selection, or the selection's target doesn't match the requested target
+   # (which defaults to string target type).
+   #
+   public static get_content(selection, target)
+      local curr, s
+      /target := STRING_TARGET
+      # Shortcut if we have the selection already.
+      if curr := \owners[selection] then {
+         if target == TARGETS_TARGET then {
+            s := TARGETS_TARGET || "\n"
+            every s ||:= curr.get_targets() || "\n"
+            return s
+         }
+         curr.get_targets() == target | fail
+         return curr.get_content(target)
+      }
+      return SelectionContent((?Dispatcher.dialogs).win, selection, target)
+   end
+
+   #
+   # Helpful function to check if the given selection supports the given
+   # target.
+   #
+   public static has_target(selection, target)
+      local s
+      get_content(selection, TARGETS_TARGET) ? {
+         while s := tab(upto('\n')) do {
+            if s == target then
+               return s
+            move(1)
+         }
+      }
+   end
+
+   #
+   # A dialog is closing... any components inside lose ownership.
+   #
+   public static dispose_owners(d)
+      local e
+      every e := !sort(owners) do {
+         if e[2].get_win() === d.get_win() then {
+            e[2].lost_ownership(e[1])
+            delete(owners, e[1])
+         }
+      }
+   end
+
+   public static get_owner(selection)
+      return \owners[selection]
+   end
+
+   public static clear(selection)
+      local c
+      if c := \owners[selection] then {
+         c.lost_ownership()
+         delete(owners, selection)
+      }
+   end
+end
+
+procedure selection_callback(q, selection, target)
+   local l
+   case q of {
+      "content": {
+         # The C code ensures target is one of our supported targets, so no need to check
+         # target again.
+         return Selection.get_owner(selection).get_content(target) | return ""
+      }
+      "targets" : {
+         l := []
+         every put(l, Selection.get_owner(selection).get_targets())
+         return l
+      }
+      "clear": {
+         Selection.clear(selection)
+      }
+      default: stop("Unknown query to selection callback:", q)
+   }
+end
+
+
+
+
