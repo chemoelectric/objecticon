@@ -1,0 +1,560 @@
+package parser
+
+import 
+   util(Files, Error, Connectable), 
+   lang(fatal)
+
+class Symbol()
+   public const scanned_file, obj, name
+
+   public get_package()
+      return \scanned_file.pack
+   end
+
+   public get_fq_name()
+      return (\scanned_file.pack || "." || name) | name
+   end
+
+   package new(scanned_file, obj, name)
+      self.scanned_file := scanned_file
+      self.obj := obj
+      self.name := name
+      return
+   end
+end
+
+class ProcedureSymbol(Symbol)
+end
+
+class BuiltinSymbol(Symbol)
+   package new(name)
+      self.name := name
+      return
+   end
+end
+
+class RecordSymbol(Symbol)
+end
+
+class GlobalSymbol(Symbol)
+   public const decl_obj
+
+   package new(scanned_file, obj, name, decl_obj)
+      cast(self,Symbol).new(scanned_file, obj, name)
+      self.decl_obj := decl_obj
+      return
+   end
+end
+
+class ClassSymbol(Symbol)
+   package fields, supers, implemented_fields, implemented_classes
+
+   public get_supers()
+      suspend .!supers
+   end
+
+   package add_super(c)
+      put(self.supers, c)
+   end
+
+   public get_implemented_fields()
+      suspend .!self.implemented_fields
+   end
+
+   public get_implemented_field(n)
+      return .\self.implemented_fields[n]
+   end
+
+   public get_implemented_classes()
+      suspend .!self.implemented_classes
+   end
+
+   package add_implemented_class(c)
+      local f
+      put(self.implemented_classes, c)
+      every f := !c.fields do
+         /self.implemented_fields[f.name] := f
+   end
+
+   public get_field(n)
+      return .\self.fields[n]
+   end
+
+   public get_fields()
+      suspend .!self.fields
+   end
+
+   package add_field(f)
+      self.fields[f.name] := f
+   end
+
+   package new(scanned_file, obj, name)
+      cast(self,Symbol).new(scanned_file, obj, name)
+      self.fields := table()
+      self.supers := []
+      self.implemented_fields := table()
+      self.implemented_classes := []
+      return
+   end
+end
+
+class ClassField(Symbol)
+   public const defining_class
+
+   package new(defining_class, obj, name)
+      cast(self,Symbol).new(defining_class.scanned_file, obj, name)
+      self.defining_class := defining_class
+      return
+   end
+end
+
+class ClassVariable(ClassField)
+   public const decl_obj
+
+   package new(defining_class, obj, name, decl_obj)
+      cast(self,ClassField).new(defining_class, obj, name)
+      self.decl_obj := decl_obj
+      return
+   end
+end
+
+class ClassMethod(ClassField)
+end
+
+class ScannedFile()
+   public const prog, filename
+   private const imports, invocables, symbols
+   private readable pack
+
+   package set_package(pack)
+      self.pack := pack
+   end
+      
+   package add_symbol(sym)
+      symbols[sym.name] := sym
+   end
+
+   public get_symbol(name)
+      return .\symbols[name]
+   end
+
+   public get_symbols()
+      suspend .!symbols
+   end
+
+   package add_import(i)
+      imports[i.name] := i
+   end
+
+   public get_import(name)
+      return .\imports[name]
+   end
+
+   public get_imports()
+      suspend .!imports
+   end
+
+   public get_invocables()
+      suspend .!invocables
+   end
+
+   package add_invocable(sym)
+      put(invocables, sym)
+   end
+
+   public convert_dottedidentexpr(n)
+      local ls
+      if is(n, Token) then
+         return n.s
+      ls := Util.dottedid2string(n.child(1))
+      if (ls == (\pack | "default")) | member(imports, ls) then
+         return ls || "." || n.child(3).s
+      return convert_dottedidentexpr(n.child(1))
+   end
+
+   package new(filename, prog)
+      self.filename := filename
+      self.prog := prog
+      self.imports := table()
+      self.symbols := table()
+      self.invocables := []
+      return
+   end
+end
+
+class ImportDec()
+   public const qualified, name
+   private const syms
+
+   package add(sym)
+      insert(syms, sym)
+   end
+
+   public has(sym)
+      return member(syms, sym)
+   end
+
+   package new(name, qualified)
+      self.name := name
+      self.qualified := qualified
+      self.syms := set()
+      return
+   end
+end
+
+class SymbolTable(Error,Connectable)
+   private package_db, symbol_table, scanned_files, scanned_packages
+   public static const SCANNING_EVENT
+   private static const BUILTINS
+
+   private static init()
+      SCANNING_EVENT := "scanning"
+      BUILTINS := set()
+      every insert(BUILTINS, function())
+   end
+
+   private parse(f)
+      local p, prog
+      p := Parser()
+      prog := p.parse_file(f) | return error(p)
+      return prog
+   end
+
+   public dump()
+      local e, f
+      every e := !sort(symbol_table) do {
+         write(e[1],"->",subtype(e[2]), " in file ", (\e[2].scanned_file).filename | "-")
+         if is(e[2], ClassSymbol) then {
+            every f := !sort(\e[2].implemented_fields) do {
+               write("\t", f[1], "->", subtype(f[2]), " from ", f[2].defining_class.name)
+            }
+         }
+      }
+   end
+
+   private build_scanned_file(fname, prog)
+      local d, e, s, i, sf
+      sf := ScannedFile(fname, prog)
+      every d := prog.gen() do {
+         case classof(d) of {
+            Package : sf.set_package(d.get_name().str())
+            Import : {
+               every e := d.gen() do {
+                  if is(e, Id) then
+                     sf.add_import(ImportDec(e.str()))
+                  else {
+                     s := e.get_package().str()
+                     if not(i := sf.get_import(s)) then {
+                        i := ImportDec(s, 1)
+                        sf.add_import(i)
+                     }
+                     every i.add(e.gen().str())
+                  }
+               }
+            }
+         }
+      }
+      return sf
+   end
+   
+   private add_symbol(sym)
+      local k
+      k := sym.get_fq_name()
+      if \symbol_table[k] then
+         return error("Symbol " || k || " already defined in " || symbol_table[k].scanned_file.filename)
+      symbol_table[k] := sym
+      sym.scanned_file.add_symbol(sym)
+      return
+   end
+
+   private do_package(d)
+      return scan_package(d.get_name().str())
+   end
+
+   private do_import(d)
+      local i
+      every i := d.gen() do {
+         if is(i, Id) then
+            scan_package(i.str()) | fail
+         else 
+            scan_package(i.get_package().str()) | fail
+      }
+      return
+   end
+
+   private do_link(d)
+      local f
+      every f := d.gen().str() || ".icn" do 
+         scan_link(f) | fail
+      return
+   end
+
+   private do_class(sf, d)
+      local e, f, c
+      c := ClassSymbol(sf, d, d.get_name().str())
+      every e := d.gen() do {
+         case classof(e) of {
+            FieldList: {
+               every f := e.gen() do
+                  c.add_field(ClassVariable(c, f, f.str(), e))
+            }
+            DeferredMethod | Method:
+               c.add_field(ClassMethod(c, e, e.get_name().str()))
+         }
+      }
+      return add_symbol(c)
+   end
+
+   private do_procedure(sf, d)
+      return add_symbol(ProcedureSymbol(sf, d, d.get_name().str()))
+   end
+
+   private do_record(sf, d)
+      return add_symbol(RecordSymbol(sf, d, d.get_name().str()))
+   end
+
+   private do_global(sf, d)
+      local s
+      every s := d.gen() do
+         add_symbol(GlobalSymbol(sf, s, s.str(), d)) | fail
+      return
+   end
+
+   private scan(f)
+      local d, prog, sf
+      if member(scanned_files, f) then
+         return
+
+      fire(SCANNING_EVENT, f)
+
+      prog := parse(f) | fail
+
+      scanned_files[f] := sf := build_scanned_file(f, prog) | fail
+
+      every d := prog.gen() do {
+         case classof(d) of {
+            Global : do_global(sf, d)
+            Procedure : do_procedure(sf, d)
+            Class : do_class(sf, d)
+            Record : do_record(sf, d)
+            Package : do_package(d)
+            Import : do_import(d)
+            Link : do_link(d)
+            Invocable : next
+            default : fatal(self, "Unknown global dec type:" || image(d))
+         } | fail
+      }
+      return
+   end
+
+   private path_find(f)
+      local p, d, s
+      p := Files.get_path(f)
+      if p.is_absolute() then
+         return p.get_canonical()
+      every d := chdir() | !path_list(getenv("OIPATH")) do {
+         s := Files.get_path(d).get_child(f).str()
+         if stat(s) then
+            return s
+      }
+      return error("Couldn't find " || f || " on path")
+   end
+
+   public scan_link(f)
+      return scan(path_find(f))
+   end
+
+   public scan_file(f)
+      return scan(Files.get_path(f).get_canonical().str())
+   end
+
+   private ensure_package_db()
+      local d, p, f
+      if \package_db then
+         return
+      package_db := table()
+      every d := chdir() | !path_list(getenv("OIPATH")) do {
+         p := Files.get_path(d).get_child("packages.txt").str()
+         if /package_db[d] & (f := open(p, "r")) then {
+            package_db[d] := scan_packtxt(f) | {
+               close(f)
+               fail
+            }
+            close(f)
+         }
+      }
+      return
+   end
+
+   private scan_packtxt(f)
+      local s, t, u
+      t := table()
+      while s := read(f) do {
+         if s == ">package" then {
+            s := read(f) | return error("corrupt - package name expected following package")
+            u := /t[s] := set() | return error("corrupt - duplicate package entry")
+         } else
+            insert(\u, s) | return error("corrupt - package expected")
+      }
+      return t
+   end
+
+   public get_all_packages()
+      ensure_package_db() | fail
+      suspend key(!package_db)
+   end
+
+   public scan_package(p)
+      local d, fs, seen, f
+      if member(scanned_packages, p) then
+         return
+      insert(scanned_packages, p)
+      ensure_package_db() | fail
+      every d := key(package_db) do {
+         if fs := \package_db[d, p] then {
+            if \seen then
+               return error("located package " || p || " in multiple directories")
+            every f := Files.get_path(d).get_child(!fs).str() || ".icn" do
+               scan(f) | fail
+            seen := 1
+         }
+      }
+      if /seen then
+         return error("cannot resolve package " || p)
+      return
+   end
+
+   public gen_symbol_names()
+      suspend key(symbol_table)
+   end
+
+   public gen_symbols()
+      suspend .!symbol_table
+   end
+
+   public add_builtins()
+      local x
+      every x := !BUILTINS do
+         symbol_table[x] := BuiltinSymbol(x)
+   end
+
+   public gb_locate(name)
+      local x
+      if x := glocate(name) then
+         return x
+      if member(BUILTINS, name) then
+         return symbol_table[name] := BuiltinSymbol(name)
+   end
+
+   public glocate(name)
+      return .\symbol_table[name]
+   end
+
+   public get_scanned_file(f)
+      return .\scanned_files[Files.get_path(f).get_canonical().str()]
+   end
+
+   public resolve_n(sf, name)
+      local r, i
+      r := []
+      name ? if upto('.') then {
+         if ="default." then
+            name := tab(0)
+         put(r, gb_locate(name))
+         return r
+      }
+      if \sf.pack then
+         put(r, glocate(sf.pack || "." || name))
+      else
+         put(r, gb_locate(name))
+      every i := sf.get_imports() do {
+         if /i.qualified | i.has(name) then
+            put(r, glocate(i.name || "." || name))
+      }
+      if \sf.pack & (*r = 0) then
+         put(r, gb_locate(name))
+      return r
+   end
+
+   public resolve(sf, name)
+      local l
+      l := resolve_n(sf, name) | fail
+      if *l = 0 then
+         return error("Couldn't resolve symbol " || name)
+      if *l > 1 then
+         return error("Ambiguous symbol " || name)
+      return l[1]
+   end
+
+   public resolve_classes()
+      resolve_invocables() | fail
+      resolve_supers() | fail
+      compute_inheritance() | fail
+      return
+   end
+
+   public gen_type(c)
+      local e
+      every e := !symbol_table do
+         if is(e, c) then
+            suspend e
+   end
+
+   private resolve_invocables()
+      local sf, o, p, s, x
+      every sf := !scanned_files do {
+         every o := sf.prog.gen() do {
+            if is(o, Invocable) then {
+               every p := o.gen() do {
+                  if is(p, Id) then {
+                     s := p.str()
+                     if s[1] == "\"" then
+                        s := s[2:-1]
+                     if s ~== "all" then {
+                        x := resolve(sf, s) | fail
+                        sf.add_invocable(x)
+                     }
+                  }
+               }
+            }
+         }
+      }
+      return
+   end
+
+   private resolve_supers()
+      local c, sup_name, sup
+      every c := gen_type(ClassSymbol) do {
+         every sup_name := c.obj.get_supers().gen().str() do {
+            sup := resolve(c.scanned_file, sup_name) | fail
+            is(sup, ClassSymbol) | return error("Superclass of " || c.name || " not a class")
+            c.add_super(sup)
+         }
+      }
+      return
+   end
+
+   private compute_inheritance()
+      local c, queue, seen, x
+      every c := gen_type(ClassSymbol) do {
+         seen := set()
+         queue := [c]
+         while x := pop(queue) do {
+            if member(seen, x) then
+               next
+            insert(seen, x)
+            c.add_implemented_class(x)
+            every put(queue, !x.supers)
+         }
+      }
+      return
+   end
+
+   public new()
+      cast(self,Connectable).new()
+      symbol_table := table()
+      scanned_files := table()
+      scanned_packages := set()
+      return
+   end
+end

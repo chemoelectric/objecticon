@@ -1,0 +1,33 @@
+package parser
+
+import util
+
+$include "oigram_tab.icn"
+
+#
+# Convert a list of paths in a string to a list of absolute files;
+# eg path_list("/tmp/a /fred/b c") -> ["/tmp/a","/fred/b/c", "/home/robert/c"]
+#
+procedure path_list(path)
+   local dir, l
+   if has_feature("PLAN9") then
+      path := map(path, "\001", " ")
+   l := []
+   path ? {
+      repeat {
+         tab(many(' \t'))
+         if pos(0) then
+            break
+         if any('\"') then {
+            move(1)
+            dir := tab(upto('\"') | 0)
+            move(1)
+         } else
+            dir := tab(upto(' \t') | 0)
+         dir := Files.get_path(dir).get_canonical().str()
+         keyof(l, dir) | put(l,  dir)
+      }
+   }
+   return l
+end
+
