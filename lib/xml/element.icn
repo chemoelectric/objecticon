@@ -1,0 +1,162 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+#
+# Represents an element in the document.
+#
+class Element(Node)
+   public name, attributes
+   #
+   # Set the name of the tag
+   #
+   public set_name(s)
+      return name := s
+   end
+
+   #
+   # Return the name of the element
+   #
+   public get_name(s)
+      return name
+   end
+
+   #
+   # Return the attributes map for this tag.
+   #
+   public get_attributes()
+      return attributes
+   end
+
+   #
+   # Set an attribute for this tag.
+   #
+   public set_attribute(key, value)
+      return attributes[key] := value
+   end
+
+   #
+   # Return the attribute for this element, or fail if non is present
+   #
+   public get_attribute(key)
+      return \attributes[key]
+   end
+
+   #
+   # Returns "element"
+   #
+   public get_type()
+      return "element"
+   end
+
+   #
+   # Search for all the {Elements} with the given tag name, recursively
+   # traversing the entire tree based at this node.
+   #
+   # @param s the name of the sub-elements.
+   #
+   public search_tree(s)
+      local n
+      every n := generate_nodes() do
+         if n.get_type() == "element" & (/s | n.get_name() == s) then
+            suspend n
+   end
+
+   #
+   # Generate the elements under this element, with the given name.  If name
+   # is omitted, generate all the elements.
+   #
+   # @param s the name of the sub-elements.
+   #
+   public search_children(s)
+      local n
+      every n := !children do
+         if not(string(n)) & n.get_type() == "element" & (/s | n.get_name() == s) then
+            suspend n
+   end
+
+   #
+   # Return the nth sub-element matching the given tag; if the tag is
+   # omitted just return the nth sub-element.
+   #
+   # @param n the index to look for; 1 being the first.
+   # @param s the name of the sub-element.
+   # @fail if there is no such element.
+   #
+   public get_nth_element(n, s)
+      local x
+      every x := search_children(s) do {
+         if n = 1 then
+            return x
+         n -:= 1
+      }
+   end
+
+   #
+   # Return the nth sub-element which is a string.
+   #
+   # @param n the index to look for; 1 being the first.
+   # @fail if there is no such element.
+   #
+   public get_nth_string(n)
+      local s
+      every s := string(!children) do {
+         if n = 1 then
+            return s
+         n -:= 1
+      }
+   end
+
+   #
+   # Return the nth sub-element which is a string, after
+   # trimming it.
+   #
+   # @param n the index to look for; 1 being the first.
+   # @fail if there is no such element.
+   #
+   public get_nth_trimmed_string(n)
+      return do_trim(get_nth_string(n))
+   end
+
+   #
+   # Print the structure to the given file
+   #
+   public print_structure(f, indent, flags)
+      local s, x, i, j, e
+      /f := &output
+      /indent := 0
+      i := repl(" ", indent * 5)
+      write(f, i || "Tag : <" || self.name || ">")
+      s := ""
+      every x := !sort(self.attributes) do {
+         s ||:= x[1] || "=" || image(x[2]) || " "
+      }
+      write(f, i || "Attributes : " || s)
+      write(f, i || "Contents :")
+      every j := 1 to *children do {
+         writes(i || j || ":")
+         e := children[j]
+         if string(e) then
+            write(f, image(e))
+         else {
+            write(f)
+            e.print_structure(f, indent + 1, flags)
+         }
+      }
+      write(f, i, "End of tag : </", self.name, ">")
+   end
+
+   public new(n)
+      cast(self,Node).new()
+      self.attributes := table()
+      self.name := n
+      return
+   end
+end
+

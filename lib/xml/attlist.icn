@@ -1,0 +1,52 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+import lang
+
+#
+# Represent the attribute constraints for one element type.
+#
+class AttList()
+   public attribute_defs, has_id
+   #
+   # Returns a string representation of this object.
+   #
+   public object_to_string()
+      local s, x
+      s := "AttList "
+      every x := !sort(attribute_defs) do {
+         s ||:= x[1] || " " || to_string(x[2]) || " "
+      }
+      return s
+   end
+
+   #
+   # Return the attribute_defs for this AttList, being a table mapping attribute names
+   # to AttributeDef objects.
+   #
+   public get_attribute_defs()
+      return attribute_defs
+   end
+
+   #
+   # Add an attribute def; called during parsing.
+   #
+   public add_attribute_def(name, def) 
+      insert(attribute_defs, name, def)
+      if \def.def_type == "ID" then
+         has_id := 1
+   end
+
+   public new()
+      attribute_defs := table()
+      return
+   end
+end
+

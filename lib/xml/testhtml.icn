@@ -1,0 +1,26 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import xml, util
+
+procedure main(a)
+   local p, fmt, e, s, d
+   p := HtmlParser()
+
+   fmt := HtmlFormatter()
+
+   every e := !a do {
+      s := Files.file_to_string(e) | stop("couldnt open" || e)
+      d := p.parse(s) | stop("couldnt parse " || e)
+      write(fmt.format(d))
+      d.print_structure()
+      write("------------")
+   }
+end
+
+

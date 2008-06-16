@@ -1,0 +1,73 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+#
+# This is an abstract base class for Formatters, which take a Document
+# object (or a Node within a Document), and output that document to a
+# string.
+#
+class Formatter()
+   public format(n, level)
+      local s
+      /level := 0
+
+      if s := string(n) then
+         return format_content(s, level)
+
+      return case n.get_type() of {
+         "doctype" : format_doctype(n, level)
+         "comment" : format_comment(n, level)
+         "pi" : format_pi(n, level)
+         "element" : format_element(n, level)
+         "cdata" : format_cdata(n, level)
+         "document": format_document(n, level)
+         "xmldecl": format_xmldecl(n, level)
+      }
+   end
+
+   public defer format_document(n, level)
+
+   public defer format_content(s, level)
+
+   public defer format_doctype(n, level)
+
+   public defer format_comment(n, level)
+
+   public defer format_pi(n, level)
+
+   public defer format_element(n, level)
+
+   public defer format_cdata(n, level)
+
+   public defer format_xmldecl(n, level)
+end
+
+
+procedure xml_escape(s, c)
+   local ch, r
+
+   r := ""
+   s ? repeat {
+      r ||:= tab(upto(c) | 0)
+
+      if pos(0) then
+         break
+
+      r ||:= case ch := move(1) of {
+         "&" : "&amp;"
+         "<" : "&lt;"
+         ">" : "&gt;"
+         "\"" : "&quot;"
+         default : "&#" || ord(ch) || ";"
+      }
+   }
+   return r
+end
+

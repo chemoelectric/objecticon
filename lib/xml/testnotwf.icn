@@ -1,0 +1,32 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import xml, util
+
+procedure main(a)
+   local p, s, d
+   p := XmlParser("do_namespaces=f")
+
+   *a = 1 | stop("usage: testnotwf source")
+   s := Files.file_to_string(a[1]) | stop("couldnt open" || a[1])
+
+   if d := p.parse(s) then {
+      write("A not-wf case parsed successfully : ", a[1])
+      write("there were ", d.validity_errors, " validitiy errors")
+      write("Parsed:")
+      write(s)
+      write("Failure")
+      write("End===============================================================")
+      exit(1)
+   } else {
+      exit(0)
+   }
+
+end
+
+

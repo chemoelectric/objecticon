@@ -1,0 +1,82 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import xml, util
+
+link options
+
+procedure main(a)
+   local p, fmt, t, e, s, d, eh
+   if *a = 0 then {
+      write("Usage: testxml [FILE]... [OPTIONS]")
+      write("Test parse FILE(s)")
+      write("  -g                      Show global names")
+      write("  -nc                     Don't preserve comments")
+      write("  -nv                     Don't validate")
+      write("  -fnw                    Format output with no whitespace")
+      write("  -ftt                    Format output with text trim")
+      write("  -far                    Format output as read")
+      write("  -fi INT                 Format output with given indent")
+      exit(0)
+   }
+
+   p := XmlParser()
+
+   eh := XmlErrorHandler()
+   eh.connect(p)
+
+   fmt := XmlFormatter()
+
+   t := options(a, "-g!-nc!-nv!-fnw!-fi+-ftt!-far!")
+
+   if \t["nv"] then
+      p.set_validate("f")
+
+   if \t["nc"] then
+      p.set_preserve_comments("f")
+
+   if /t["g"] then
+      p.set_do_namespaces("f")
+
+   #
+   # Setup formatter options
+   #
+   if \t["fnw"] then
+      fmt.set_no_whitespace("t")
+   if \t["ftt"] then
+      fmt.set_text_trim("t")
+   if \t["far"] then
+      fmt.set_as_read("t")
+   fmt.set_indent(\t["fi"])
+
+
+   every e := !a do {
+      s := Files.file_to_string(e) | stop("couldnt open" || e)
+      write("--- Parsing ", e)
+      if d := p.parse(s) then {
+         write("--- Parsing complete.  Document was well-formed")
+         write("--- Formatted input")
+         write(fmt.format(d))
+         write("--- Document structure")
+         if \t["g"] then
+            d.print_structure(,,1)
+         else
+            d.print_structure()
+         d.show_entities()
+         d.show_element_declarations()
+         d.show_notation_declarations()
+         d.show_attribute_lists()
+         d.show_id_attributes()
+      } else {
+         write("--- Parsing failed: ", p.get_reason())
+      }
+
+   }
+end
+
+

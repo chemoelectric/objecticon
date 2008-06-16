@@ -1,0 +1,68 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+import lang
+#
+# This represents the DocumentType declaration.
+#
+class DocType(Node)
+   public name, external_id
+   #
+   # Get the name
+   #
+   public get_name()
+      return name
+   end
+
+   #
+   # Set the name
+   #
+   public set_name(s)
+      return name := s
+   end
+
+   #
+   # Get the ExternalID declared, if any
+   #
+   public get_external_id()
+      return external_id
+   end
+
+   #
+   # Set the external ID as an ExternalID object.
+   #
+   public set_external_id(x)
+      return external_id := x
+   end
+
+   #
+   # Returns "doctype"
+   #
+   public get_type()
+      return "doctype"
+   end
+
+   #
+   # Get a string representation of this object.
+   #
+   public object_to_string() 
+      local s
+      s := to_string(\external_id) | image(external_id)
+      return "DocType[" || image(name) || "," || s || "]"
+   end
+
+   public new(n, i)
+      cast(self,Node).new()
+      self.name := n
+      self.external_id := i
+      return
+   end
+end
+

@@ -1,0 +1,181 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+import lang
+
+#
+# This class represents a node in the parse tree of a content specification,
+# as contained in an <!ELEMENT ..> declaration.  The parsed tree represents
+# the regular expression used to validate content elements.  Each node
+# contains an op and two args.
+#
+class ContentSpec()
+   public op, arg1, arg2, is_mixed_flag
+   #
+   # Print the structure to the given file.  For debugging.
+   #
+   public print_structure(f, indent)
+      local i, j, e
+      /f := &output
+      /indent := 0
+      i := repl(" ", indent * 5)
+      write(f, i || "Op : ", op)
+      j := 1
+      every e:= \arg1 | \arg2 do {
+         writes(i || j || ":")
+         if string(e) then
+            write(f, image(e))
+         else {
+            write(f)
+            e.print_structure(f, indent + 1)
+         }
+         j +:= 1
+      }
+   end
+
+   #
+   # Match the given Element with the pattern whose root is this object.
+   #
+   public pattern_match_element(el)
+      local t, x
+      #
+      # Create a list to match the pattern against.  The list contains
+      # values of &null for character portions, and strings being element names
+      # otherwise.
+      #
+      t := []
+      every x := !el.children do {
+         if string(x) then {
+            /t[-1] | put(t)
+         } else {
+            if x.get_type() == "element" then
+               put(t, x.name)
+            else if x.get_type() == "cdata" then
+               /t[-1] | put(t)
+         }
+      }
+      return *t = pattern_match(t, 1)
+   end
+
+   public is_mixed()
+      return \self.is_mixed_flag
+   end
+
+   public isnt_mixed()
+      return /self.is_mixed_flag
+   end
+
+   #
+   # The recursive element of pattern matching, called by the above.  It returns
+   # the sequence of initial matches of the pattern in subject, starting from pos.
+   #
+   public pattern_match(subject, pos)
+      local x, y, b
+
+      case op of {
+         "ANY" :
+            return *subject - pos + 1
+
+         "EMPTY" :
+            return 0
+
+         "#PCDATA" : {
+            if /subject[pos] then
+               return 1
+            else
+               return 0
+         }
+
+         "name" : {
+            if subject[pos] === arg1 then
+               return 1
+         }
+
+         "," : {
+            every x := arg1.pattern_match(subject, pos) do {
+               suspend x + arg2.pattern_match(subject, pos + x)
+            }
+         }
+
+         "|" : {
+            suspend (arg1 | arg2).pattern_match(subject, pos)
+         }
+
+         "*" : {
+            suspend x := 0
+            repeat {
+               b := 0
+               every y := arg1.pattern_match(subject, pos + x) do {
+                  suspend x + y
+                  b := max(b, y)
+               }
+               b > 0 | fail
+               x +:= b
+            }
+         }
+
+         "+" : {
+            x := 0
+            repeat {
+               b := 0
+               every y := arg1.pattern_match(subject, pos + x) do {
+                  suspend x + y
+                  b := max(b, y)
+               }
+               b > 0 | fail
+               x +:= b
+            }
+         }
+
+         "?" : {
+            suspend 0 | arg1.pattern_match(subject, pos)
+         }
+
+      }
+   end
+
+   #
+   # Get a string representation of this object.
+   #
+   public object_to_string()
+      local s, x
+      case op of {
+         "ANY" | "EMPTY" | "#PCDATA" :
+            return op
+
+         "name" :
+            return arg1
+
+         "," | "|" : {
+            s := ""
+            x := self
+            repeat {
+               s ||:= to_string(x.arg1)
+               s ||:= op
+               if x.arg2.op ~== op then
+                  break
+               x := x.arg2
+            }
+            return "(" || s || to_string(x.arg2) || ")"
+         }
+
+         "+" | "*" | "?" : 
+            return to_string(arg1) || op
+      }
+   end
+
+   public new(op, arg1, arg2)
+      self.op := op
+      self.arg1 := arg1
+      self.arg2 := arg2
+      return
+   end
+end
+
