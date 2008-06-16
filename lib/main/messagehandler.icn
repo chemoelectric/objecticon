@@ -1,0 +1,22 @@
+#
+# $Id$
+#
+
+package mail
+
+class MessageHandler(TypeHandler)
+   public can_handle(ct)
+      return (map(ct.get_type()) == "message") & (map(ct.get_subtype()) == "rfc822")
+   end
+
+   public convert_to_object(m,  data)
+      local res
+      res := Message()
+      res.parse(data) | return error(res)
+      return res
+   end
+
+   public convert_from_object(m, obj)
+      return obj.to_rfc822()
+   end
+end

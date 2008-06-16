@@ -1,0 +1,98 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+$define LIB "objecticonipclib.so"
+
+package ipc
+
+import lang
+
+#
+# This class provides an inter process shared variable facility.  The implementation requires
+# the accompanying C library objecticonipclib.so to be on the library path.
+#
+# Instances of this class should not be created directly, but rather using the static
+# methods {open_public}, {create_public} and {create_private}
+#
+class Shm()
+   private id
+
+   #
+   # Set the value to the given object.  The object may be an arbitrary
+   # Icon structure, and will be encoded into a string by the {encode()}
+   # procedure.
+   #
+   public set_value(o)
+      shm_set_value(id, encode(o))
+   end
+
+   #
+   # Get the value of the object.
+   #
+   public get_value()
+      return decode(shm_get_value(id))
+   end
+
+   #
+   # Clean up the resources used by the variable.  This should be called by
+   # the parent process after the shared variable is no longer needed.
+   #
+   public remove()
+      shm_remove(id)
+   end
+
+   #
+   # Return the underlying id of the shared variable.
+   #
+   public get_id()
+      return id
+   end
+
+   private static defer shm_set_value()
+   private static defer shm_get_value()
+   private static defer shm_remove()
+   private static defer shm_open_public()
+   private static defer shm_create_public()
+   private static defer shm_create_private()
+
+   private static init()
+      Class.set_method("shm_set_value", loadfunc(LIB, "shm_set_value"))
+      Class.set_method("shm_get_value", loadfunc(LIB, "shm_get_value"))
+      Class.set_method("shm_remove", loadfunc(LIB, "shm_remove"))
+      Class.set_method("shm_open_public", loadfunc(LIB, "shm_open_public"))
+      Class.set_method("shm_create_public", loadfunc(LIB, "shm_create_public"))
+      Class.set_method("shm_create_private", loadfunc(LIB, "shm_create_private"))
+   end
+
+   private new(id)
+      self.id := id
+      return
+   end
+
+   #
+   # Get an existing public shared variable with the given key, or fail
+   # if no such shared variable exists.
+   #
+   public static open_public(key)
+      return Shm(shm_open_public(key))
+   end
+
+   #
+   # Create a new public shared variable with the given key and initial value
+   #
+   public static create_public(key, o)
+      return Shm(shm_create_public(key, encode(o)))
+   end
+
+   #
+   # Create a new private shared variable with the given initial value
+   #
+   public static create_private(o)
+      return Shm(shm_create_private(encode(o)))
+   end
+end

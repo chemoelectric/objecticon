@@ -1,0 +1,221 @@
+#
+# $Id$
+#
+
+package net
+
+import util
+link posix
+
+$include "posix.icn"
+
+#
+# Common base class for a client class which holds a connection to a
+# server and communicates using CRLF-terminated lines.
+#
+class NetClient(Connectable, Error, SetFields)
+   public static const CONNECTING_EVENT,
+         CONNECTED_EVENT,
+         CLOSED_EVENT,
+         SENDING_STRING_EVENT,
+         SENDING_LINE_EVENT,
+         READ_LINE_EVENT,
+         READ_STRING_EVENT
+
+   private static init()
+      CONNECTING_EVENT := "Connecting"
+      CONNECTED_EVENT := "Connected"
+      CLOSED_EVENT := "Closed"
+      SENDING_STRING_EVENT := "Sending string"
+      SENDING_LINE_EVENT := "Sending line"
+      READ_LINE_EVENT := "Read line"
+      READ_STRING_EVENT := "Read string"
+   end
+
+   private readable server, port, connection, sbuff, timeout
+
+   # 
+   # Fail and set the error code, and close the connection.
+   #
+   protected error_and_close(a)
+      error(a)
+      close()
+   end
+
+   #
+   # Set the timeout in ms to use.  If a figure of zero, or &null, is given (the default)
+   # then no timeout will be used.
+   #
+   public set_timeout(timeout)
+      return self.timeout := timeout
+   end
+
+   #
+   # Open the connection.
+   #
+   public open()
+      local s
+
+      close() | fail
+      s := server || ":" || port
+      fire(CONNECTING_EVENT)
+
+      if not(connection := default.open(s, "n", timeout)) then {
+         if &errno = 0 then
+            return error("Timed out connecting to " || s)
+         else
+            return error("Couldn't connect to " || s)
+      }
+
+      sbuff := ""
+      fire(CONNECTED_EVENT)
+      return connection
+   end
+
+   #
+   # Close the connection
+   #
+   public close()
+      if \connection then {
+         default.close(connection) | return error("Failed to close connection")
+         fire(CLOSED_EVENT)
+         connection := &null
+      }
+      return
+   end
+
+   #
+   # Set the server to use
+   #
+   public set_server(s)
+      server := s
+   end
+
+   #
+   # Set the port.
+   #
+   public set_port(n)
+      port := n
+   end
+
+   #
+   # 
+   protected send(s)
+      local i, t
+
+      if /timeout | (timeout = 0) then
+         return syswrite(connection, s)
+
+      fcntl(connection, "F", "d")
+      t := curr_time_millis()
+      while *s > 0 do {
+         if i := syswrite(connection, s) then {
+            s := s[i+1 : 0]
+            t := curr_time_millis()
+         } else {
+            if &errno ~= EAGAIN then
+               return error("Failed to write:" || str_error())
+            if curr_time_millis() - t > timeout then
+               return error("Send timed out")
+            delay(50)
+         }
+      }
+      return
+   end
+
+   #
+   # Get an error string based on &errno
+   # 
+   protected str_error()
+      return sys_errstr(&errno) | ("&errno=" || &errno)
+   end
+
+   #
+   # 
+   protected recv(len)
+      local l
+
+      if \timeout > 0 then {
+         l := select(connection, timeout) | return error("Failed to select:" || str_error())
+         if *l = 0 then
+            return error("Failed to select (timeout)")
+      }
+      return sysread(connection, len) | error("EOF encountered")
+   end
+
+   #
+   # Write the given string to the connection.
+   #
+   public write_str(s)
+      fire(SENDING_STRING_EVENT, s)
+      return send(s)
+   end
+
+   #
+   # Write a single line to the connection, appending CRLF to the output stream.
+   # 
+   protected write_line(s)
+      /s := ""
+      fire(SENDING_LINE_EVENT, s)
+      return send(s || "\r\n") 
+   end
+
+   #
+   # Read a single line from the connection, and return it.
+   #
+   protected read_line()
+      local line
+
+      repeat {
+         #
+         # Look for a line and if found return it.
+         #
+         sbuff ? {
+            if line := tab(find("\r\n")) then {
+               move(2)
+               sbuff := tab(0)
+               fire(READ_LINE_EVENT, line)
+               return line
+            }
+         }
+         sbuff ||:= recv(1024) | fail
+      }
+   end
+
+   #
+   # Read up to len bytes on the connection.
+   #
+   protected read_str(len)
+      local t
+      #
+      # Use the line buffer if it has anything in it.
+      #
+      if *sbuff > 0 then {
+         sbuff ? {
+            t := move(len) | tab(0)
+            sbuff := tab(0)
+         }
+      } else {
+         t := recv(len) | fail
+      }
+      fire(READ_STRING_EVENT, t)
+      return t
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "timeout": set_timeout(f.int_val())
+         "server": set_server(f.string_val())
+         "port": set_port(f.int_val())
+         default : fail
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Connectable).new()
+      sbuff := ""
+      set_fields(a)
+      return
+   end
+end

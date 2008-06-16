@@ -1,0 +1,172 @@
+#
+# $Id$
+#
+
+package mail
+
+import util
+
+#
+# This class represents a content type
+#
+class ContentDisposition(Error)
+   private readable type, parameters
+
+   #
+   # Set type type
+   #
+   public set_type(t)
+      self.type := t
+   end
+
+   #
+   # Get the type
+   #
+   public get_type()
+      return type
+   end
+
+   #
+   # Get the parameter for the given key.
+   #
+   # @param key the key
+   public get_parameter(key)
+      if parameters.member(key) then
+         return parameters.get(key)
+   end
+
+   #
+   # Set the parameter to the given value
+   # @param key the key
+   # @param value the value
+   public set_parameter(key, value)
+      parameters.insert(key, value)
+   end
+
+   # @p
+   public parameter_error(h, s, p)
+      return error("Error parsing " || h || " parameter: " || image(s) || ":" || p.get_reason())
+   end
+
+   #
+   # Get the "filename" parameter, or fail if absent
+   #
+   public get_filename()
+      return get_parameter("filename") | error("Missing parameter: filename")
+   end
+
+   #
+   # Set the "filename" parameter.
+   #
+   public set_filename(v)
+      set_parameter("filename", v)
+   end
+
+   #
+   # Get the "creation-date" parameter as a {Time} object.
+   # @fail if the parameter is absent or cannot be parsed.
+   # @return a {Time} instance
+   #
+   public get_creation_date()
+      local s, p
+      s := get_parameter("creation-date") | return error("Missing parameter: creation-date")
+      p := RFC822Parser()
+      return p.parse_date_time(s) | parameter_error("creation-date", s, p)
+   end
+
+   #
+   # Set the "creation-date" parameter from the given {Time} object.
+   # @param t the {Time} from which to set the date field.
+   #
+   public set_creation_date(t)
+      set_parameter("creation-date", t.to_rfc822())
+   end
+
+   #
+   # Get the "modification-date" parameter as a {Time} object.
+   # @fail if the parameter is absent or cannot be parsed.
+   # @return a {Time} instance
+   #
+   public get_modification_date()
+      local s, p
+      s := get_parameter("modification-date") | return error("Missing parameter: modification-date")
+      p := RFC822Parser()
+      return p.parse_date_time(s) | parameter_error("modification-date", s, p)
+   end
+
+   #
+   # Set the "modification-date" parameter from the given {Time} object.
+   # @param t the {Time} from which to set the date field.
+   #
+   public set_modification_date(t)
+      set_parameter("modification-date", t.to_rfc822())
+   end
+
+   #
+   # Get the "read-date" parameter as a {Time} object.
+   # @fail if the parameter is absent or cannot be parsed.
+   # @return a {Time} instance
+   #
+   public get_read_date()
+      local s, p
+      s := get_parameter("read-date") | return error("Missing parameter: read-date")
+      p := RFC822Parser()
+      return p.parse_date_time(s) | parameter_error("read-date", s, p)
+   end
+
+   #
+   # Set the "read-date" parameter from the given {Time} object.
+   # @param t the {Time} from which to set the date field.
+   #
+   public set_read_date(t)
+      set_parameter("read-date", t.to_rfc822())
+   end
+
+   #
+   # Get the "size" parameter as an integer, or fail if it's absent or
+   # not an integer.
+   #
+   public get_size()
+      local s
+      s := get_parameter("size") | return error("Missing parameter: size")
+      return integer(s) | error("Parameter size: " || image(s) || ": Not an integer")
+   end
+
+   #
+   # Set the "size" parameter from the given integer.
+   #
+   public set_size(n)
+      set_parameter("size", string(integer(n)))
+   end
+
+   public parse(s)
+      local p
+      p := RFC822Parser()
+      return p.parse_content_disposition(s, self) | error(p)
+   end   
+
+   public to_rfc1521()
+      static c
+      local s, e, v
+      initial {
+         c := ~RFC822Parser.ATOM_CHAR_1521
+      }
+      s := type 
+      every e := !parameters.sort() do {
+         v := e[2]
+         if upto(c, v) then
+            v := "\"" || v || "\""
+         s ||:= " ; " || e[1] || "=" || v
+      }
+      return s
+   end
+
+   public new(s)
+      parameters := ClTable()
+      if \s then
+         parse(s) | fail
+      return
+   end
+end
+
+

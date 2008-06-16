@@ -1,0 +1,530 @@
+package lang
+
+import util
+
+class Codec()
+   public static const OBJECT_CODE,
+                CLASS_CODE,
+                RECORD_CODE,
+                PROCEDURE_CODE,
+                NULL_CODE,
+                STRING_CODE,
+                CSET_CODE,
+                INTEGER_CODE,
+                REAL_CODE,
+                LIST_CODE,
+                SET_CODE,
+                TABLE_CODE,
+                REF_CODE,
+                CODE_SEPARATOR
+
+   private static init()
+      CODE_SEPARATOR := "|"
+      OBJECT_CODE := "C"
+      CLASS_CODE := "D"
+      RECORD_CODE := "R"
+      PROCEDURE_CODE := "P"
+      NULL_CODE := "N"
+      STRING_CODE := "S"
+      CSET_CODE := "A"
+      INTEGER_CODE := "I"
+      REAL_CODE := "B"
+      LIST_CODE := "L"
+      SET_CODE := "E"
+      TABLE_CODE := "T"
+      REF_CODE := "X"
+   end
+end
+
+#
+# Return a string, being the encoded representation of the given object.
+#
+procedure encode(o)
+   local e
+   e := Encode()
+   e.encode(o)
+   return e.get_string()
+end
+
+#
+# Recreate an object from the encoded string.
+#
+procedure decode(s)
+   local d
+   if any(&lcase, s) then
+      d := LegacyDecode(s)
+   else
+      d := Decode(s)
+   return d.decode()
+end
+
+class Encode()
+   private tag_count, seen, string_buff
+
+   public get_string()
+      return string_buff.get_string()
+   end
+
+   protected note_seen(o)
+      seen[o] := (tag_count +:= 1)
+   end
+
+   protected encode_string(s)
+      local buff, t
+      static printable
+      initial {
+         printable := cset(&ascii[33:128]) -- '\\' -- Codec.CODE_SEPARATOR
+      }
+
+      buff := StringBuff()
+      s ? {
+         repeat {
+            if t := tab(many(printable)) then
+               buff.add(t)
+            if pos(0) then
+               return buff.get_string()
+            if t := "\\" || right(ord(move(1)), 3, "0") then
+               buff.add(t)
+         }
+      }	 
+   end
+
+   public encode(o)
+      local ty, i, pairs
+
+      if i := \seen[o] then {
+         chars_out(Codec.REF_CODE)
+         int_out(i)
+         return
+      }
+
+      ty := type(o)
+      case ty of {
+         "object" : {
+            chars_out(Codec.OBJECT_CODE)
+            encode_object(o)
+         }
+
+         "class": {
+            chars_out(Codec.CLASS_CODE)
+            line_out(subtype(o))
+         }
+
+         "procedure" : {
+            chars_out(Codec.PROCEDURE_CODE)
+            line_out(subtype(o))
+         }
+
+         "null" :
+            chars_out(Codec.NULL_CODE)
+
+         "string" : {
+            chars_out(Codec.STRING_CODE)
+            line_out(encode_string(o))
+         }
+
+         "cset" : {
+            chars_out(Codec.CSET_CODE)
+            line_out(encode_string(string(o)))
+         }
+
+         "integer" : {
+            chars_out(Codec.INTEGER_CODE)
+            int_out(string(o))
+         }
+
+         "real" : {
+            chars_out(Codec.REAL_CODE)
+            line_out(string(o))
+         }
+
+         "record" : {
+            chars_out(Codec.RECORD_CODE)
+            line_out(subtype(o))
+            int_out(*o)
+            note_seen(o)
+            every encode(!o)
+         }
+
+         "list" : {
+            chars_out(Codec.LIST_CODE)
+            int_out(*o)
+            note_seen(o)
+            every encode(!o)
+            }
+
+         "set" : {
+            chars_out(Codec.SET_CODE)
+            int_out(*o)
+            note_seen(o)
+            every encode(!o)
+         }
+
+         "table" : {
+            chars_out(Codec.TABLE_CODE)
+            int_out(*o)
+            encode(o[[]])
+            note_seen(o)
+            pairs := sort(o)
+            every encode(!!pairs)
+         }
+
+         default : 
+            chars_out(Codec.NULL_CODE)
+      }
+   end
+
+   protected line_out(s)
+      string_buff.add(s || Codec.CODE_SEPARATOR)
+   end
+
+   protected chars_out(s)
+      string_buff.add(s)
+   end
+
+   protected int_out(i)
+      string_buff.add(string(i))
+   end
+
+   protected encode_object(o)
+      local cname, p, n
+      cname := subtype(o)
+      line_out(cname)
+      note_seen(o)
+      if p := Class.getf(o, "object_encode") then
+         p(self)
+      else {
+         n := Class.get_n_instance_fields(o)
+         int_out(n)
+         every encode(Class.get(o, 1 to n))
+      }
+   end
+
+   public new()
+      tag_count := 0
+      seen := table()
+      string_buff := StringBuff()
+      return
+   end
+end
+
+#
+# This class is used to decode a string created by the encode process, and
+# reproduce the object.
+#
+class Decode()
+   private tag_count, seen, buff
+
+   protected decode_string(s)
+      local buff, t
+      static esc
+      initial
+         esc := ~'\\'
+
+      buff := StringBuff()
+      s ? {
+         repeat {
+            if t := tab(many(esc)) then
+               buff.add(t)
+            if pos(0) then
+               return buff.get_string()
+            move(1)
+            if t := char(move(3)) then
+               buff.add(t)
+         }
+      }
+   end
+
+   protected line_in()
+      local s
+      buff ? {
+         if s := tab(upto(Codec.CODE_SEPARATOR)) then {
+            move(1)
+            buff := tab(0)
+            return s
+         }
+      }
+   end
+
+   protected int_in()
+      local s
+      buff ? {
+         if s := tab(many(&digits ++ '-')) then {
+            buff := tab(0)
+            return integer(s)
+         }
+      }
+   end
+
+   protected char_in()
+      local s
+      buff ? {
+         if s := move(1) then {
+            buff := tab(0)
+            return s
+         }
+      }
+   end
+
+   protected note_seen(o)
+      seen[tag_count +:= 1] := o
+   end
+
+   public decode()
+      local i, n, rname, t, res, def
+
+      t := char_in() | fail
+
+      case t of {
+         Codec.REF_CODE : {
+            i := int_in() | fail
+            return \seen[i]
+         }
+
+         Codec.NULL_CODE :
+            return
+
+         Codec.CLASS_CODE :
+            return Class.for_name(line_in())
+
+         Codec.PROCEDURE_CODE :
+            return proc(line_in())
+
+         Codec.OBJECT_CODE :
+            return decode_object()
+
+         Codec.STRING_CODE :
+            return decode_string(line_in())
+
+         Codec.INTEGER_CODE :
+            return int_in()
+
+         Codec.REAL_CODE :
+            return real(line_in())
+
+         Codec.CSET_CODE :
+            return cset(decode_string(line_in()))
+
+         Codec.RECORD_CODE : {
+            (rname := line_in() &
+             n := int_in()) | fail
+            res := proc(rname)()
+            note_seen(res)
+            every i := 1 to n do
+               res[i] := decode() | fail
+            return res
+         }
+
+         Codec.LIST_CODE : {
+            n := int_in() | fail
+            res := []
+            note_seen(res)
+            every 1 to n do 
+               put(res, decode()) | fail
+            return res
+         }
+
+         Codec.SET_CODE : {
+            n := int_in() | fail
+            res := set([])
+            note_seen(res)
+            every 1 to n do 
+               insert(res, decode()) | fail
+            return res
+         }
+
+         Codec.TABLE_CODE : {
+            n := int_in() | fail
+            def := decode() | fail
+            res := table(def)
+            note_seen(res)
+            every 1 to n do
+               insert(res, decode(), decode()) | fail
+            return res
+         }            
+
+         default :
+            fail
+      }            
+   end
+
+   protected decode_object()
+      local res, cl, p, cname, n, i
+
+      cname := line_in() | fail
+      #
+      # Create an instance
+      #
+      cl := Class.for_name(cname) | fail
+      res := Class.create_raw(cl)
+      note_seen(res)
+      if p := Class.getf(res, "object_decode") then
+         p(self) | fail
+      else {
+         n := int_in() | fail
+         every i := 1 to n do
+            Class.get(res, i) := decode() | fail
+      }
+      Class.complete_raw(res)
+      return res
+   end
+   
+   public new(s)
+      tag_count := 0
+      seen := table()
+      buff := s
+      return
+   end
+end
+
+#
+# Old decode system.
+#
+class LegacyDecode()
+   private tag_count, seen, buff
+
+   protected decode_string(s)
+      local buff, t
+      static esc
+      initial
+         esc := ~'\\'
+
+      buff := StringBuff()
+      s ? {
+         repeat {
+            t := tab(many(esc))
+            buff.add(t)
+            if pos(0) then
+               return buff.get_string()
+            move(1)
+            t := char(move(3))
+            buff.add(t)
+         }
+      }
+   end
+
+   protected line_in()
+      local s
+      buff ? {
+         if s := tab(upto('|')) then {
+            move(1)
+            buff := tab(0)
+            return s
+         }
+      }
+   end
+
+   protected note_seen(o)
+      seen[tag_count +:= 1] := o
+   end
+
+   protected decode_record()
+      local rname, n, res, i
+      (rname := line_in() &
+       n := integer(line_in())) | fail
+      res := proc(rname)()
+      note_seen(res)
+      every i := 1 to n do
+         res[i] := decode() | fail
+      
+      return res
+   end
+
+   public decode()
+      local i, n, t, res, def, key, val
+
+      t := line_in() | fail
+
+      if i := integer(t) then
+         return \seen[i]
+
+      case t of {
+         "null":
+            return
+
+         "procedure" :
+            return proc(line_in())
+
+         "record" :
+            return decode_record()
+
+         "class" :
+            return decode_object()
+
+         "string" :
+            return decode_string(line_in())
+
+         "integer" :
+            return integer(line_in())
+
+         "real" :
+            return real(line_in())
+
+         "cset" :
+            return cset(decode_string(line_in()))
+
+         "list" : {
+            n := integer(line_in()) | fail
+            res := []
+            note_seen(res)
+            every 1 to n do 
+               put(res, decode()) | fail
+            return res
+         }
+
+         "set" : {
+            n := integer(line_in()) | fail
+            res := set([])
+            note_seen(res)
+            every 1 to n do 
+               insert(res, decode()) | fail
+            return res
+         }
+
+         "table" : {
+            def := decode() | fail
+            res := table(def)
+            n := integer(line_in()) | fail
+            note_seen(res)
+            every 1 to n do {
+               (key := decode() &
+               val := decode()) | fail
+               res[key] := val
+            }
+            return res
+         }            
+
+         default :
+            return
+      }            
+   end
+
+   protected decode_object()
+      local cl, res, p, cname, n, i
+
+      cname := line_in() | fail
+
+      #
+      # Create an instance
+      #
+      cl := Class.for_name(cname) | fail
+      res := Class.create_raw(cl)
+      note_seen(res)
+      if p := Class.getf(res, "legacy_object_decode") then
+         p(self) | fail
+      else {
+         n := integer(line_in()) | fail
+         every i := 1 to n do 
+            Class.get(res, i) := decode() | fail
+      }
+      Class.complete_raw(res)
+      return res
+   end
+
+   public new(s)
+      tag_count := 0
+      seen := table()
+      buff := s
+      return
+   end
+end

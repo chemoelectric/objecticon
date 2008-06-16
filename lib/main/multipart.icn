@@ -1,0 +1,56 @@
+#
+# $Id$
+#
+
+package mail
+
+import util
+
+#
+# This class represents a multipart content
+#
+class Multipart(Error)
+   private readable preamble, parts, epilogue
+
+   #
+   # Get the preamble
+   #
+   public get_preamble()
+      return preamble
+   end
+
+   #
+   # Set the preamble
+   #
+   public set_preamble(s)
+      preamble := s
+   end
+
+   #
+   # Get the epilogue
+   #
+   public get_epilogue()
+      return epilogue
+   end
+
+   #
+   # Set the epilogue
+   #
+   public set_epilogue(s)
+      epilogue := s
+   end
+
+   public get_parts()
+      return parts
+   end
+
+   public add_part(m)
+      put(parts, m)
+   end
+
+   public new()
+      preamble := epilogue := ""
+      parts := []
+      return
+   end
+end

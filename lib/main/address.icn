@@ -1,0 +1,17 @@
+#
+# $Id$
+#
+
+package mail
+
+class Address()
+   public defer to_rfc822()
+
+   public defer parse(s)
+
+   public defer generate_mailboxes()
+
+   private object_to_string()
+      return to_rfc822()
+   end
+end

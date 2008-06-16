@@ -1,0 +1,193 @@
+#
+# $Id$
+#
+
+package util
+
+import lang
+
+class Field()
+   public const attr, val, obj
+
+   public as_attrib() 
+      return attr || "=" || string_val() 
+   end
+
+   public flag_val()
+      return to_flag(val) | field_error("Need a boolean parameter")
+   end
+
+   public int_val()
+      return /val | integer(val) | field_error("Need an integer parameter")
+   end
+
+   public table_val()
+      type(\val) == "table" | field_error("Need a table paramter")
+      return val
+   end
+
+   public int_list_val(n)
+      return list_val(n, "integer")
+   end
+
+   public numeric_val()
+      return /val | numeric(val) | field_error("Need a single numeric parameter")
+   end
+
+   public numeric_list_val(n)
+      return list_val(n, "numeric")
+   end
+
+   public cset_val()
+      return /val | cset(val) | field_error("Need a single cset parameter")
+   end
+
+   public cset_list_val(n)
+      return list_val(n, "cset")
+   end
+
+   public string_val()
+      return /val | string(val) | field_error("Need a single string parameter")
+   end
+
+   public string_list_val(n)
+      return list_val(n, "string")
+   end
+
+   public object_val(t)
+      if /val then
+         return val
+      if \t then
+         is(val, t) | field_error("Need object of type:" || subtype(t))
+      return val
+   end
+
+   public val_of_type(t)
+      if /val then
+         return val
+      if \t then
+         type(val) == t | field_error("Need object of type:" || t)
+      return val
+   end
+
+   public list_val(n, type_name)
+      local l, t, e, p
+      if /val then
+         return val
+      p := proc(\type_name)
+
+      if type(val) == "list" then {
+         if *val < \n then
+            field_error("Need " || n || " parameters")
+         if \p then {
+            if type_name == "numeric" then {
+               every e := !val do
+                  type(e) == ("null" | "real" | "integer") | field_error("Need " || type_name || " parameters")
+            } else {
+               every e := !val do
+                  type(e) == ("null" | type_name) | field_error("Need " || type_name || " parameters")
+            }
+         }
+         return val
+      }
+
+      l := []
+      val ? {
+         while t := tab(find(",")) do {
+            if *t = 0 then
+               put(l, &null)
+            else if \p then
+               put(l, p(t)) | field_error("Need " || subtype(p) || " parameters")
+            else
+               put(l, t)
+            move(1)
+         }
+         t := tab(0)
+         if *t = 0 then {
+            if *l > 0 then
+               put(l, &null)
+         }
+         else if \p then
+            put(l, p(t)) | field_error("Need " || subtype(p) || " parameters")
+         else
+            put(l, t)
+      }
+
+      if *l < \n then
+         field_error("Need " || n || " parameters")
+
+      return l
+   end
+
+   #
+   # Invoked on a field setup error: stop with an error.  This is
+   # always a fatal error.
+   # @param s the error message
+   #
+   public field_error(s)
+      fatal(obj, "attribute: " || attr || ": " || s)
+   end
+
+   public new(attr, val, obj)
+      self.attr := attr
+      self.val := val
+      self.obj := obj
+      return
+   end
+end
+
+class SetFields()
+   public attrib(a[])
+      set_fields(a)
+   end
+
+   protected set_fields(l)
+      local s, attr, val
+      l := copy(l)
+      while s := pop(l) do {
+         s ? {
+            if attr := tab(find("=")) then {
+               ="="
+               if pos(0) then
+                  val := pop(l) | fatal(self, 
+                                        "setfields: Missing last param, attribute: " || attr)
+               else
+                  val := tab(0)
+            } else {
+               attr := s
+               val := 1
+            }
+         }
+         if not self.set_one(Field(attr, val, self)) then {
+            fatal(self, 
+                  "setfields: Unknown attribute: " || attr)
+         }
+      }
+   end
+
+   #
+   # This must be implemented to set a single field.
+   # @param attr the field
+   # @param val the value
+   #
+   protected defer set_one(f)
+
+   public new(a[])
+      set_fields(a)
+      return
+   end
+end
+
+procedure to_flag(s)
+   # Flag values just return themselves
+   if s === (1 | &null) then
+      return s
+
+   s := map(string(s)) | fail
+   if s == ("y" | "yes" | "t" | "true" | "on" | "1") then
+      return 1
+   if s == ("n" | "no" | "f" | "false" | "off" | "0") then
+      return &null
+
+   fail
+end

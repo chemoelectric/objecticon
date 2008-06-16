@@ -1,0 +1,95 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package undo
+
+import util
+
+#
+# An UndoableEdit which groups several edits together in a list.  The
+# undo and redo methods are implemented to undo the edits in the list together.
+#
+class CompoundEdit(UndoableEdit, SetFields)
+   protected l
+   private readable closed, liberal_flag, desc
+
+   public redo()
+      every (!l).redo()
+   end
+
+   public gen()
+      suspend .!l
+   end
+
+   public undo()
+      local i
+      every i := *l to 1 by -1 do
+         l[i].undo()
+   end
+
+   public add_edit(other)
+      if \closed then
+         return \liberal_flag & l[-1].add_edit(other)
+
+      l[-1].add_edit(other) | put(l, other)
+   end
+
+   #
+   # A closed CompoundEdit is one which cannot have any more
+   # edits added to it by add_edit.
+   #
+   public close()
+      self.closed := 1
+   end
+
+   #
+   # Clear the list of edits.
+   #
+   public clear()
+      self.l := []
+   end
+
+   #
+   # If this flag is set, then after closure edits may still be
+   # added to the last edit in the list (if it accepts them), although
+   # this edit's list will not be added to.
+   #
+   public set_liberal(s)
+      self.liberal_flag := to_flag(s)
+   end
+
+   #
+   # Set the edit description
+   #
+   public set_desc(s)
+      self.desc := s
+   end
+
+   #
+   # Return a description of the edit.
+   #
+   public get_desc()
+      return desc
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "desc" : set_desc(f.string_val())
+         "liberal":  set_liberal(f.flag_val())
+         default : fail
+      }
+      return
+   end
+
+   public new(a[])
+      desc := "Compound edit"
+      l := []
+      set_fields(a)
+      return
+   end
+end

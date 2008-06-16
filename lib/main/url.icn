@@ -1,0 +1,312 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package net
+
+import util
+
+link lastc
+
+$include "posix.icn"
+
+#
+# This class encapsulates a URL
+#
+class URL(Error)
+   private readable protocol, address, file, ref, port, file_handle, header
+
+   #
+   # Set the protocol field.
+   #
+   public set_protocol(x)
+      return self.protocol := x
+   end
+
+   #
+   # Get the protocol field.
+   #
+   public get_protocol()
+      return self.protocol
+   end
+
+   #
+   # Set the port field.
+   #
+   public set_port(x)
+      return self.port := x
+   end
+
+   #
+   # Get the port field.
+   #
+   public get_port()
+      return self.port
+   end
+
+   #
+   # Set the file field.
+   #
+   public set_file(x)
+      return self.file := x
+   end
+
+   #
+   # Get the file field.
+   #
+   public get_file()
+      return self.file
+   end
+
+   #
+   # Set the ref field.
+   #
+   public set_ref(x)
+      return self.ref := x
+   end
+
+   #
+   # Get the ref field.  This is {&null} if no ref is set.
+   #
+   public get_ref()
+      return self.ref
+   end
+
+   #
+   # Set the address (host) field.
+   #
+   public set_address(x)
+      return self.address := x
+   end
+
+   #
+   # Get the address field.
+   #
+   public get_address()
+      return self.address
+   end
+
+   #
+   # Return a string representation of the URL.
+   #
+   private object_to_string()
+      local s
+      s := self.protocol || "://" || self.address || ":" || self.port || self.file
+      s ||:= "#" || \self.ref
+      return s
+   end
+   
+   #
+   # Open a file based on the address and the port and return it.
+   # @param timeout the optional timeout to give the open function.
+   #
+   public open(timeout)
+      return self.file_handle := default.open(self.address || ":" || self.port, "n", timeout)
+   end
+
+   #
+   # Close the file returned by {Open()}.
+   #
+   public close()
+      if \self.file_handle then {
+         default.close(self.file_handle) | fail
+         self.file_handle := &null
+      }
+      return
+   end
+
+   #
+   # Extract the cgi parameters from the {file} field.
+   # @return   A table, representing the keys and values of the fields.
+   #
+   public extract_cgi_parameters()
+      self.file ? {
+         if tab(upto('?')) then {
+            move(1)
+            return make_cgi_table(tab(0))
+         } else
+            return table()
+      }
+   end
+
+   #
+   # Amend the file field given a table of CGI parameters.  The old parameter
+   # portion (if any) is discarded.
+   # @param cgi   The table of keys/values.
+   #
+   public set_cgi_parameters(cgi)
+      self.file ?:= tab(upto('?') | 0) || "?" || make_cgi_string(cgi)
+   end
+
+   #
+   # Parse the fields of the {URL} object given the string s.
+   #
+   public parse(s)
+      s ? {
+         set_protocol(1(tab(many(&lcase ++ &ucase)), ="://") | "http")
+         set_address(tab(upto(':/') | 0))
+         if *address = 0 then
+            return error("No address")
+         if =":" then {
+            set_port(integer(tab(many(&digits)))) | return error("Bad port")
+         } else
+            set_port(getserv(get_protocol() | "www").port) | return error("Unknown protocol")
+
+         if pos(0) then
+            set_file("/")
+         else {
+            any('/') | return error("File part should start with /")
+            set_file(tab(upto('#') | 0))
+            if any('#') then {
+               move(1)
+               set_ref(tab(0))
+            }
+         }
+      }
+      return
+   end
+
+   #
+   # Amend the filename/reference given a relative URL, treating the current instance as a
+   # base URL.
+   # @param s  The relative URL.
+   #
+   public set_relative(s)
+      if s[1] == "#" then
+         #
+         # Just reference, filename doesn't change.
+         # 
+         set_ref(s[2:0])
+      else {
+         #
+         # File name and possibly reference.  First check whether relative to current directory.
+         #
+         if s[1] ~== "/" then
+            s := get_file_dir() || s
+
+         s ? {
+            set_file(tab(upto('#') | 0))
+            if any('#') then {
+               move(1)
+               set_ref(tab(0))
+            } else
+               set_ref()
+         }
+      }
+   end
+
+   #
+   # Get the last portion of the file name, ie that past the last "/".  May be
+   # the empty string (eg for "http://abc.com/").
+   # @param fl if not &null, then any CGI params after a ? are stripped off.
+   #
+   public get_file_last(fl)
+      local x
+      self.file ? {
+         tab(upto('?') | 0)
+         x := &pos
+         while not lastc('/') do
+            move(-1)
+         return if /fl then tab(0) else tab(x)
+      }
+   end
+
+   #
+   # Get the portion of the file name upto and including the last "/".  The filename
+   # should always be at least a "/", so this should return at least that.
+   #
+   public get_file_dir()
+      self.file ? {
+         tab(upto('?') | 0)
+         while not lastc('/') do
+            move(-1)
+         return tab(1)
+      }
+   end
+
+   public new(s)
+      if \s then
+         parse(s) | fail
+      return
+   end
+
+   #
+   # Create a CGI parameter string from a table
+   #
+   public static make_cgi_string(cgi)
+      local l, s
+      s := ""
+      every l := !sort(cgi) do {
+         if string(l[2]) then
+            s ||:= convert_hex(l[1]) || "=" || convert_hex(l[2]) || "&"
+         else
+            every s ||:= convert_hex(l[1]) || "=" || convert_hex(!l[2]) || "&"
+      }
+      s[-1] := ""
+      return s
+   end
+
+   #
+   # Convert a CGI parameter string by extracting any encoded characters.
+   #
+   public static convert_hex(s)
+      local res
+      static convert_chars
+      initial 
+         convert_chars := &lcase ++ &ucase ++ &digits ++ '_*.- '
+
+      res := ""
+      s ? repeat {
+         res ||:= tab(many(convert_chars))
+         if pos(0) then
+            break
+         res ||:= "%" || format_int_to_string(ord(move(1)),,2)
+      }
+      res := map(res, " ", "+")
+      return res
+   end
+
+   #
+   # Make a cgi param table from the given string
+   # @return   A table, representing the keys and values of the fields.
+   #
+   public static make_cgi_table(s)
+      local cgi, key, val
+
+      cgi := table()
+      s ? {
+         while not pos(0) do {
+            key := tab(upto('&=') | 0)
+            if ="=" then
+               val := extract_hex(tab(upto('&') | 0))
+            else
+               val := ""
+            ="&"
+            /cgi[key] := []
+            put(cgi[key], val)
+         }
+      }
+      return cgi
+   end
+
+   #
+   # Create a CGI parameter string by adding any encoding necessary.
+   #
+   public static extract_hex(s)
+      local res
+      res := ""
+      s := map(s, "+", " ") 
+      s ? repeat {
+         res ||:= tab(upto('%') | 0)
+         if pos(0) then
+            break
+         move(1)
+         res ||:= char(format_string_to_int(move(2)))
+      }
+      return res
+   end
+end

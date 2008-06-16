@@ -1,0 +1,75 @@
+#
+# $Id$
+#
+
+package util
+
+import lang
+
+#
+# This class represents a caseless table()
+#
+class ClTable()
+   private lookup, names
+
+   public insert(key, val)
+      default.insert(lookup, map(key), val)
+      default.insert(names, map(key), key)
+   end
+
+   public member(key)
+      return default.member(lookup, map(key))
+   end
+
+   public delete(key)
+      default.delete(lookup, map(key))
+      default.delete(names, map(key))
+   end
+   
+   public get(key)
+      return lookup[map(key)]
+   end
+
+   public sort()
+      local l, e
+      l := default.sort(lookup)
+      every e := !l do
+         e[1] := names[e[1]]
+      return l
+   end
+
+   public keys()
+      local e
+      every e := !default.sort(names) do {
+         suspend e[2]
+      }
+   end
+
+   private object_to_string(depth, seen)
+      local string_buff, pairs, e
+
+      string_buff := StringBuff()
+      string_buff.add("ClTable<" || serial(self) || ">")
+      if depth ~= 0 then {
+         string_buff.add("[")
+         pairs := sort(names)
+         every e := !pairs do {
+            string_buff.add(to_string(e[1], depth - 1, seen))
+            string_buff.add("=")
+            string_buff.add(to_string(e[2], depth - 1, seen))
+            string_buff.add(";")
+         }
+         string_buff.drop_last(";")
+         string_buff.add("]")
+      }
+
+      return string_buff.get_string()
+   end
+
+   public new()
+      lookup := table()
+      names := table()
+      return
+   end
+end
+

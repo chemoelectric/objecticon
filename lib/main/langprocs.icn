@@ -1,0 +1,478 @@
+package lang
+
+import util
+
+#
+# Stop with a fatal error message.
+# @param obj the object causing the message
+#
+procedure fatal(obj, msg)
+   msg := image(\obj)  || ": " || msg
+   stop("fatal error: ", msg)
+end
+
+#
+# Generate the record names for a record.  The results are undefined for a
+# non-record type of object.
+#
+procedure generate_record_names(object)
+   local i
+   every i := 1 to *object do {
+      name(object[i]) ? {
+         tab(upto('.'))
+         move(1)
+         suspend tab(0)
+      }
+   }
+end
+
+#
+# Convert the object to string, descending structures to the given depth
+#
+# @param o       The object to be converted.
+# @param depth   The depth of recursion; default is all levels
+#
+procedure to_string(o, depth, seen)
+   local ty, string_buff, s, i, e, pairs, mp
+
+   /seen := table()
+   /depth := -1
+
+   if \seen[o] then {
+      if s := subtype(o) then
+         return "ref " || type(o) || " " || s || "<" || serial(o) || ">"
+      else
+         return "ref " || type(o) || "<" || serial(o) || ">"
+   }
+
+   string_buff := StringBuff()
+
+   ty := type(o)
+
+   case ty of {
+      "record" : {
+         seen[o] := 1
+         string_buff.add(ty || " " || subtype(o) || "<" || serial(o) || ">")
+         if depth ~= 0 then {
+            string_buff.add("(")
+            i := 1
+            every s := generate_record_names(o) do {
+               string_buff.add(s || "=")
+               string_buff.add(to_string(o[i], depth - 1, seen))
+               string_buff.add(";")
+               i +:= 1
+            }
+            string_buff.drop_last(";")
+            string_buff.add(")")
+         }
+      }
+
+      "object" : {
+         seen[o] := 1
+         if mp := Class.getf(o, "object_to_string") then
+            string_buff.add(mp(depth, seen))
+         else {
+            string_buff.add(type(o) || " " || subtype(o) || "<" || serial(o) || ">")
+            if depth ~= 0 then {
+               string_buff.add("(")
+               every i := 1 to Class.get_n_instance_fields(o) do {
+                  string_buff.add(Class.get_field_name(o, i) || "=")
+                  string_buff.add(to_string(Class.getf(o, i), depth - 1, seen))
+                  string_buff.add(";")
+                  i +:= 1
+               }
+               string_buff.drop_last(";")
+               string_buff.add(")")
+            }
+         }
+      }
+
+      "class" : {
+         seen[o] := 1
+         string_buff.add(ty || " " || subtype(o))
+         if depth ~= 0 then {
+            string_buff.add("(")
+            every i := Class.get_n_instance_fields(o) + 1 to Class.get_n_fields(o) do {
+               # Only show non-methods
+               if iand(Class.get_field_flags(o, i), Class.M_Method) = 0 then {
+                  string_buff.add(Class.get_field_name(o, i) || "=")
+                  string_buff.add(to_string(Class.getf(o, i), depth - 1, seen))
+                  string_buff.add(";")
+               }
+               i +:= 1
+            }
+            string_buff.drop_last(";")
+            string_buff.add(")")
+         }
+      }
+
+      "cast" : {
+         string_buff.add("cast(")
+         string_buff.add(to_string(Class.get_cast_object(o), depth - 1, seen))
+         string_buff.add(",")
+         string_buff.add(to_string(Class.get_cast_class(o), depth - 1, seen))
+         string_buff.add(")")
+      }
+
+      "methp" : {
+         string_buff.add("methp(")
+         string_buff.add(to_string(Class.get_methp_object(o), depth - 1, seen))
+         string_buff.add(",")
+         string_buff.add(to_string(Class.get_methp_proc(o), depth - 1, seen))
+         string_buff.add(")")
+      }
+
+      "procedure" :
+         # image for a procedure is rather more sophisticated than we
+         # can achieve here, as it knows whether the proc is a method,
+         # record constructor etc (see rmisc.r).
+         string_buff.add(image(o))   
+
+      "null" :
+         string_buff.add("&null")
+      
+      "string" :
+         string_buff.add("\"" || format_escape(o) || "\"")
+      
+      "cset" :
+         string_buff.add("\'" || format_escape(o) || "\'")
+
+      "integer" :
+         string_buff.add(o)
+
+      "real" :
+         string_buff.add(o)
+
+      "set" : {
+         seen[o] := 1
+         string_buff.add(ty || "<" || serial(o) || ">")
+         if depth ~= 0 then {
+            string_buff.add("{")
+            every e := !o do {
+               string_buff.add(to_string(e, depth - 1, seen))
+               string_buff.add(", ")
+            }
+            string_buff.drop_last(", ")
+            string_buff.add("}")
+         }
+      }
+
+      "list" : {
+         seen[o] := 1
+         string_buff.add(ty || "<" || serial(o) || ">")
+         if depth ~= 0 then {
+            string_buff.add("[")
+            every e := !o do {
+               string_buff.add(to_string(e, depth - 1, seen))
+               string_buff.add(", ")
+            }
+            string_buff.drop_last(", ")
+            string_buff.add("]")
+         }
+      }
+
+      "table" : {
+         seen[o] := 1
+         string_buff.add(ty || "<" || serial(o) || ">")
+         if depth ~= 0 then {
+            string_buff.add("def=")
+            string_buff.add(to_string(o[[]], depth - 1, seen))
+            pairs := sort(o)
+            string_buff.add("[")
+            every e := !pairs do {
+               string_buff.add(to_string(e[1], depth - 1, seen))
+               string_buff.add("=")
+               string_buff.add(to_string(e[2], depth - 1, seen))
+               string_buff.add(";")
+            }
+            string_buff.drop_last(";")
+            string_buff.add("]")
+         }
+      }
+
+      "co-expression" : {
+         string_buff.add(ty || "<" || serial(o) || ">")
+      }
+
+      "file" : {
+         string_buff.add(ty || "(" || subtype(o) || ")")
+      }
+
+      "window" : {
+         string_buff.add(ty || "<" || serial(o) || ">(" || subtype(o) || ")")
+      }
+
+      default : 
+         string_buff.add("unknown type")
+   }
+
+   return string_buff.get_string()
+end
+
+#
+# A helper class for producing a custom to_string on just some
+# selected fields.
+#
+class SelectiveToString()
+   private object_to_string(depth, seen)
+      local string_buff, s
+      string_buff := StringBuff()
+      string_buff.add(type(self) || " " || subtype(self) || "<" || serial(self) || ">")
+      if depth ~= 0 then {
+         string_buff.add("(")
+         every s := fields_to_string() do {
+            string_buff.add(s || "=")
+            string_buff.add(to_string(Class.getf(self, s), depth - 1, seen))
+            string_buff.add(";")
+         }
+         string_buff.drop_last(";")
+         string_buff.add(")")
+      }
+      return string_buff.get_string()
+   end
+
+   #
+   # This method should be overridden to generate the names of the
+   # fields which should be put in the to_string result.
+   #
+   private defer fields_to_string()
+end
+
+#
+# Clone the given object
+#
+procedure clone(o, seen)
+   local e, ty, res, i, mp
+
+   /seen := table()
+
+   if res := \seen[o] then
+      return res
+
+   ty := type(o)
+
+   case ty of {
+      "object" : {
+         if mp := Class.getf(o, "object_clone") then {
+            res := mp(seen)
+            seen[o] := res
+         } else {
+            #
+            # Create an instance
+            #
+            res := Class.create_raw(classof(o))
+            # The members of res may reference it...
+            seen[o] := res
+            every i := 1 to Class.get_n_instance_fields(res) do
+               Class.get(res, i) := clone(Class.get(o, i), seen) | fail
+            Class.complete_raw(res)
+         }
+         return res
+      }
+
+      "record" : {
+         res := proc(subtype(o))()
+         seen[o] := res
+         every i := 1 to *o do
+            res[i] := clone(o[i], seen)
+         return res
+      }
+
+      "set" : {
+         res := set([])
+         seen[o] := res
+         every insert(res, clone(!o, seen))
+         return res
+      }
+
+      "list" : {
+         res := []
+         seen[o] := res
+         every put(res, clone(!o, seen))
+         return res
+      }
+
+      "table" : {
+         res := table(clone(o[[]], seen))
+         seen[o] := res
+         every e := !sort(o) do
+            res[clone(e[1], seen)] := clone(e[2], seen)
+         return res
+      }
+
+      default : 
+         return o
+   }
+end
+
+#
+#
+# @p
+procedure hash_string(s)
+   local n, i
+   n := *s
+   every i := ord(!s \ 10) do
+      n := 13 * n + i
+   return n
+end
+
+#
+# Return a hash code for this object.  For any two objects for which {equals} indicates
+# equality, the returned hash code should be the same.
+#
+procedure hash(x, depth)
+   local n, i, l, mp
+
+   /depth := 2
+   if depth = 0 then
+      return 0
+   
+   case type(x) of {
+      "object" : {
+         if mp := Class.getf(x, "object_hash") then
+            return mp(depth)
+         l := n := Class.get_n_instance_fields(x)
+         if depth > 1 then {
+            every i := hash(Class.get(x, 1 to l) \ 10, depth - 1) do
+               n := 13 * n + i
+         }
+         return n
+      }
+
+      "record" | "list" : {
+         n := *x
+         if depth > 1 then {
+            every i := hash(!x \ 10, depth - 1) do
+               n := 13 * n + i
+         }
+         return n
+      }
+
+      "set" : {
+         n := *x
+         if depth > 1 then
+            every n +:= hash(!x, depth - 1)
+         return n
+      }
+
+      "table" : {
+         n := *x
+         if depth > 1 then {
+            n +:= hash(x[[]], depth - 1)
+            every n +:= hash(key(x), depth - 1)
+         }
+         return n
+      }
+      
+      "string" :
+         return hash_string(x)
+      
+      "cset" :
+         return hash_string(string(x))
+
+      "integer" :
+         return abs(x)
+
+      "real" :
+         return hash_string(string(x))
+
+      default :
+         return hash_string(subtype(x)) | 0
+   }
+end
+
+#
+# Compare this object with another by recursively comparing all
+# members of the object.
+#
+procedure equals(x, y, seen)
+   if x === y then
+      return
+
+   type(x) == type(y) | fail
+
+   /seen := table()
+   if member(\seen[x], y) | member(\seen[y], x) then
+      return
+   /seen[x] := set()
+   insert(seen[x], y)
+   if equals_impl(x, y, seen) then
+      return
+   delete(seen[x], y)
+end
+
+procedure equals_impl(x, y, seen)
+   local i, mp
+   case type(x) of {
+      "object" : {
+         classof(x) === classof(y) | fail
+         if mp := Class.getf(x, "object_equals") then
+            return mp(y, seen)
+         every i := 1 to Class.get_n_instance_fields(x) do 
+            equals(Class.get(x, i), Class.get(y, i), seen) | fail
+         return
+      }
+
+      "record" : {
+         *x = *y | fail
+         subtype(x) == subtype(y) | fail
+         every i := 1 to *x do
+            equals(x[i], y[i], seen) | fail
+         return
+      }
+
+      "list" : {
+         *x = *y | fail
+         every i := 1 to *x do
+            equals(x[i], y[i], seen) | fail
+         return
+      }
+
+      "set" : {
+         *x = *y | fail
+         return hash_and_check(x, y, seen)
+      }
+
+      "table" : {
+         *x = *y | fail
+         equals(x[[]], y[[]], seen) | fail
+         return hash_and_check(sort(x), sort(y), seen)
+      }
+
+      default : {
+         # Since x ~=== y, we just fail for all other types.
+         fail
+      }
+   }
+end
+
+#
+# Check that all elements of s2 are in s1, by using a table indexed on
+# hash-codes.
+# @p
+procedure hash_and_check(s1, s2, seen)
+   local t, e, i
+   t := table()
+   every e := !s1 do {
+      i := hash(e)
+      /t[i] := []
+      put(t[i], e)
+   }
+   every e := !s2 do
+      in_bucket(e, \t[hash(e)], seen) | fail
+   return
+end
+
+#
+# Search for element e in hash bucket l.  If found, the bucket element is
+# removed, so that it is matched only once.
+# @p
+procedure in_bucket(e, l, seen)
+   local i
+   every i := 1 to *l do {
+      if equals(e, l[i], seen) then {
+         delete(l, i)
+         return
+      }
+   }
+end

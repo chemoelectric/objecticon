@@ -1,0 +1,83 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package http
+
+import util
+
+#
+# This class encapsulates an HTTP response.
+#
+class HttpResponse(MimeHeaders)
+   private readable url, 
+       status,
+       data,
+       data_file
+
+   #
+   # Set the url
+   #
+   public set_url(url)
+      self.url := url
+   end
+
+   #
+   # Return the status of the page
+   # @return  The status eg "HTTP/1.1 200 OK"
+   #
+   public get_status()
+      return status
+   end
+
+   #
+   # Set the status
+   #
+   public set_status(s)
+      self.status := s
+   end
+
+   #
+   # Succeed iff the status was an HTTP OK status.
+   #
+   public status_okay()
+      return find("200", status)
+   end
+
+   #
+   # Set the data of the response.
+   #
+   public set_data(s)
+      self.data := s 
+   end
+
+   #
+   # Return the data.
+   # @return  A string representing the data (which may be binary data).
+   #
+   public get_data()
+      return data
+   end
+
+   #
+   # Set the data file for responses that save the data in a file,
+   # rather than as part of this object.
+   # @param s the filename.
+   #
+   public set_data_file(s)
+      self.data_file := s
+   end
+
+   #
+   # Return the data file for this response, or null if there is no
+   # such file.
+   # @return The filename
+   #
+   public get_data_file()
+      return data_file
+   end
+end

@@ -1,0 +1,63 @@
+package lang
+
+class Class()
+   public static const 
+      M_Method,
+      M_Private,
+      M_Public,
+      M_Protected,
+      M_Package,
+      M_Static,
+      M_Const,
+      M_Readable,
+      M_Defer, 
+      M_Final,
+      M_Special
+
+   private static init()
+      M_Method := 8r01
+      M_Private := 8r02
+      M_Public := 8r04
+      M_Protected := 8r010
+      M_Package := 8r020
+      M_Static := 8r040
+      M_Const := 8r0100
+      M_Readable := 8r0200
+      M_Defer := 8r0400
+      M_Final := 8r01000
+      M_Special := 8r02000
+   end
+
+   private static defer create_raw(c)
+   private static defer complete_raw(o)
+
+   public static defer get_supers(c)
+   public static defer get_implemented(c)
+   public static defer get_field_names(c)
+   public static defer get_n_fields(c)
+
+   public static defer get_class_flags(c)
+   public static defer get_class_field_names(c)
+   public static defer get_n_class_fields(c)
+
+   public static defer get_instance_field_names(c)
+   public static defer get_n_instance_fields(c)
+
+   public static defer get_field_flags(c, field)
+   public static defer get_field_index(c, field)
+   public static defer get_field_name(c, field)
+   public static defer get_field_defining_class(c, field)
+   
+   public static defer get_methp_object(mp)
+   public static defer get_methp_proc(mp)
+
+   public static defer get_cast_object(c)
+   public static defer get_cast_class(c)
+
+   public static defer get(obj, field)
+   public static defer getf(obj, field)
+
+   public static defer set_method(field, proc)   
+   public static defer for_name(s, ce)
+   public static defer ensure_initialized(c)
+end

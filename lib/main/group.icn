@@ -1,0 +1,69 @@
+#
+# $Id$
+#
+
+package mail
+
+import util
+
+#
+# This class represents a group, which is a phrase, plus
+# zero or more mailboxes.
+#
+class Group(Address, Error)
+   private readable mailboxes, phrase
+
+   public get_phrase() 
+      return phrase
+   end
+
+   public set_phrase(x)
+      phrase := x
+   end
+
+   public get_mailboxes() 
+      return mailboxes
+   end
+
+   public set_mailboxes(x)
+      mailboxes := x
+   end
+
+   public add_mailbox(x)
+      put(mailboxes, x)
+   end
+
+   public to_rfc822()
+      local tmp
+
+      tmp := ""
+      every tmp ||:= (!mailboxes).to_rfc822() || ", "
+      tmp[-2:0] := ""
+
+      if *phrase > 0 then
+         return phrase || ": " || tmp || " ;"
+      else
+         return ": " || tmp || " ;"
+   end
+
+   public parse(s)
+      local p
+      p := RFC822Parser()
+      return p.parse_group(s, self) | error(p)
+   end   
+
+   public generate_mailboxes()
+      suspend !mailboxes
+   end
+
+   public new(a[])
+      if (*a = 1) & (type(a[1]) == "string") then
+         parse(a[1]) | fail
+      else {
+         mailboxes := a[1] | []
+         phrase := a[2] | ""
+      }
+      return
+   end
+end
+

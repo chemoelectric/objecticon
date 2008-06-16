@@ -1,0 +1,179 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package lang
+
+#
+# An implementation of {object_encode} and {object_decode}.  The subclass
+# may override the method {get_template()} to return a list of
+# pairs.  The first element of each pair is an arbitrary string used
+# to identify the field; the second element is the name of the field.
+#
+# @example
+# @   # This will save the three fields {increment_size}, {value} and {is_range_flag}.
+# @   private get_template()
+# @      return  [
+# @          ["Increment Size", "increment_size"],
+# @          ["Value", "value"],
+# @          ["Is Range Flag", "is_range_flag"]]
+# @   end
+#
+# The programmer may change the name of the field afterwards; for example {value} may
+# be re-named {initial_value}, and the data would still be restored correctly.
+#
+# Alternatively, any of the pairs may be a string field name, in which the label
+# is the field name itself.  This does not permit the field name to change without
+# rendering the encoded string invalid.
+#
+# If not overridden, the default {get_template()} returns a list of all of the fields
+# in the class.
+#
+class SelectiveObjectCodec()
+   #
+   # This empty method may be overridden; it is invoked just before
+   # the object is encoded.
+   #
+   private pre_encode()
+   end
+
+   #
+   # This empty method may be overridden; it is invoked just after
+   # the object is encoded.
+   #
+   private post_encode()
+   end
+
+   #
+   # This empty method may be overridden; it is invoked just before
+   # the object is been decoded.
+   #
+   private pre_decode()
+   end
+
+   #
+   # This empty method may be overridden; it is invoked just after
+   # the object has been decoded.
+   #
+   private post_decode()
+   end
+
+   private object_encode(e)
+      local p, m, x
+      pre_encode()
+      p := self.load_structs()
+      m := p[1]
+      e.encode(*p[2])
+      every x := !p[2] do {
+         e.encode(x[1])
+         e.encode(Class.get(self, m[x[1]]))
+      }
+      post_encode()
+   end
+
+   private object_decode(e)
+      local n, p, m, x, v, f
+
+      pre_decode()
+      n := integer(e.decode()) | fail
+      p := self.load_structs()
+      m := p[1]
+
+      #
+      # Set up any defaults specified
+      #
+      every x := !p[2] do 
+         Class.get(self, m[x[1]]) := x[3]
+
+      every 1 to n do {
+         (f := e.decode() &
+          v := e.decode()) | fail
+         Class.get(self, \m[f]) := v
+      }
+
+      post_decode()
+      return
+   end
+
+   private legacy_object_decode(e)
+      local n, m, p, x, v, f
+
+      n := integer(e.line_in()) | fail
+      p := self.load_structs()
+      m := p[1]
+
+      #
+      # Set up any defaults specified
+      #
+      every x := !p[2] do 
+         Class.get(self, m[x[1]]) := x[3]
+
+      every 1 to n do {
+         (f := e.line_in() &
+          v := e.decode()) | fail
+         Class.get(self, \m[f]) := v
+      }
+
+      post_decode()
+      return
+   end
+
+   #
+   # Get the conversion info structures for this class, using caching for efficiency.
+   # The result is a list with two items.  The first element is a table mapping the field
+   # names to record indices.   The second element is the template, adjusted so that single
+   # elements are expanded to lists with two elements the same eg ... "x" -> ["x","x"].
+   #
+   private load_structs()
+      local i, e, class_name, map, template, p
+      static cache
+      initial {
+         cache := table()
+      }
+
+      class_name := subtype(self)
+
+      if member(cache, class_name) then
+         return cache[class_name]
+
+      # 
+      # Get the template
+      #
+      template := get_template()
+      # Convert any single string elements to pairs.
+      every i := 1 to *template do {
+         if type(template[i]) == "string" then
+            template[i] := [template[i], template[i]]
+      }
+
+      #
+      # Create a table mapping field names to record indices.  Check
+      # for duplicate names and non-existent variable names.
+      #
+      map := table()
+      every e := !template do
+         /map[e[1]] := Class.get_field_index(self, e[2]) | fatal(self, 
+                                             "invalid template: can't map " || e[1] || " to " || e[2])
+
+      p := [map, template]
+      insert(cache, class_name, p)
+
+      return p
+   end
+
+   #
+   # This method is overridden by a subclass to return the field
+   # template (see above).  By default, the method returns a list
+   # containing all of the instance fields of the class.
+   #
+   private get_template()
+      local l
+      l := []
+      every put(l, Class.get_instance_field_names(self))
+      return l
+   end
+end

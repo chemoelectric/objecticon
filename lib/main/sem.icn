@@ -1,0 +1,160 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+$define LIB "objecticonipclib.so"
+
+package ipc
+
+import lang, util
+
+#
+# This class provides a semaphore facility.  The implementation requires
+# the accompanying C library uniipclib.so to be on the library path.
+#
+# Instances of this class should not be created directly, but rather using the factory
+# procedures {open_public}, {create_public} and {create_private}
+#
+class Sem()
+   private id
+
+   #
+   # Set the value of the semaphore to x
+   #
+   public set_value(x)
+      sem_set_value(id, x)
+   end
+
+   #
+   # Get the current semaphore value.
+   #
+   public get_value()
+      return sem_get_value(id)
+   end
+
+   #
+   # Perform the wait operation, defined as {semop(-1)}
+   #
+   public wait()
+      semop(-1)
+   end
+
+   #
+   # Attempt a wait, defined as {semop_nowait(-1)}
+   #
+   public attempt()
+      return semop_nowait(-1)
+   end
+
+   #
+   # Perform the signal operation, defined as {semop(1)}
+   #
+   public signal()
+      semop(1)
+   end
+
+   #
+   # Perform a semop on the underlying sempahore.  If n is >0 then n is
+   # added to the value.  If it is <0 then the process is suspended until
+   # the value is >= abs(n), then abs(n) is subtracted.  If n is zero,
+   # then the process suspends until the semaphore value is zero.
+   #
+   public semop(n)
+      sem_semop(id, n)
+   end
+
+   # 
+   # Peform a semop with the IPC_NOWAIT flag set.  This is the same as
+   # {semop()}, but instead of suspending the call will fail.
+   #
+   public semop_nowait(n)
+      return sem_semop_nowait(id, n)
+   end
+
+   # 
+   # Repeatedly peform {semop_nowait()}, sleeping for a short period between each try
+   # until t milliseconds or {semop_nowait()} succeeds.  Fails on a timeout; otherwise
+   # succeeds.
+   # @param n the parameter to semop_nowait
+   # @param t the timeout in milliseconds.
+   #
+   public semop_poll(n, t)
+      local c
+      c := curr_time_millis()
+      repeat {
+         if semop_nowait(n) then
+            return 
+         if curr_time_millis() - c > t then
+            fail
+         delay(50)
+      }
+   end
+
+   #
+   # Clean up the resources used by the semaphore.  This should be called by
+   # the parent process after the semaphore is no longer needed.
+   #
+   public remove()
+      sem_remove(id)
+   end
+
+   #
+   # Return the underlying id of the semaphore.
+   #
+   public get_id()
+      return id
+   end
+
+   private static defer sem_set_value()
+   private static defer sem_get_value()
+   private static defer sem_semop()
+   private static defer sem_semop_nowait()
+   private static defer sem_remove()
+   private static defer sem_open_public()
+   private static defer sem_create_public()
+   private static defer sem_create_private()
+
+   private static init()
+      Class.set_method("sem_set_value", loadfunc(LIB, "sem_set_value"))
+      Class.set_method("sem_get_value", loadfunc(LIB, "sem_get_value"))
+      Class.set_method("sem_semop", loadfunc(LIB, "sem_semop"))
+      Class.set_method("sem_semop_nowait", loadfunc(LIB, "sem_semop_nowait"))
+      Class.set_method("sem_remove", loadfunc(LIB, "sem_remove"))
+      Class.set_method("sem_open_public", loadfunc(LIB, "sem_open_public"))
+      Class.set_method("sem_create_public", loadfunc(LIB, "sem_create_public"))
+      Class.set_method("sem_create_private", loadfunc(LIB, "sem_create_private"))
+   end
+
+   private new(id)
+      self.id := id
+      return
+   end
+
+   #
+   # Get an existing public semaphore with the given key, or fail
+   # if no such semaphore exists.
+   #
+   public static open_public(key)
+      return Sem(sem_open_public(key))
+   end
+
+   #
+   # Create a new public semaphore with the given key and initial value
+   #
+   public static create_public(key, val)
+      /val := 1
+      return Sem(sem_create_public(key, val))
+   end
+
+   #
+   # Create a new private semaphore with the given initial value
+   #
+   public static create_private(val)
+      /val := 1
+      return Sem(sem_create_private(val))
+   end
+end

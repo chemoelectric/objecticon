@@ -1,0 +1,91 @@
+#
+# $Id$
+#
+
+package mail
+
+import util
+
+#
+# This class represents a content type
+#
+class ContentType(Error)
+   private readable type, subtype, parameters
+
+   #
+   # Set type type
+   #
+   public set_type(t)
+      self.type := t
+   end
+
+   #
+   # Get the type
+   #
+   public get_type()
+      return type
+   end
+
+   #
+   # Set subtype subtype
+   #
+   public set_subtype(s)
+      self.subtype := s
+   end
+
+   #
+   # Get the subtype
+   #
+   public get_subtype()
+      return subtype
+   end
+
+   #
+   # Get the parameter for the given key.
+   #
+   # @param key the key
+   public get_parameter(key)
+      if parameters.member(key) then
+         return parameters.get(key)
+   end
+
+   #
+   # Set the parameter to the given value
+   # @param key the key
+   # @param value the value
+   #
+   public set_parameter(key, value)
+      parameters.insert(key, value)
+   end
+
+   public parse(s)
+      local p
+      p := RFC822Parser()
+      return p.parse_content_type(s, self) | error(p)
+   end   
+
+   public to_rfc1521()
+      static c
+      local s, e, v
+      initial {
+         c := ~RFC822Parser.ATOM_CHAR_1521
+      }
+      s := type || "/" || subtype
+      every e := !parameters.sort() do {
+         v := e[2]
+         if upto(c, v) then
+            v := "\"" || v || "\""
+         s ||:= " ; " || e[1] || "=" || v
+      }
+      return s
+   end
+
+   public new(s)
+      parameters := ClTable()
+      if \s then
+         parse(s) | fail
+      return
+   end
+end
+
+
