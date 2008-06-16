@@ -1,0 +1,32 @@
+package ivib_plugin
+
+import util
+
+class Plugin(Error)
+   public get_unique_id()
+      return get_ui_category() || "/" || get_ui_name()
+   end
+
+   public get_ui_category()
+      return "Plugin"
+   end
+
+   public defer get_ui_name()
+
+   public validate_config(obj, new_config)
+      return
+   end
+
+   public defer init_component(obj)
+
+   public defer display(obj, r)
+
+   public defer gen_code(code, obj)
+
+   public get_default_width(obj)
+   end
+
+   public get_default_height(obj)
+   end
+end
+

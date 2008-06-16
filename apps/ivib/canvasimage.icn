@@ -1,0 +1,85 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a Image on the canvas.
+#
+class CanvasImage(CanvasComponent,Image)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      c.line(name || ".set_file(" || image(\self.image_file) || ")")
+      c.line(name || ".set_image(" || image(\self.image_str) || ")")
+      if \self.scale_up_flag then
+         c.line(name || ".set_scale_up(\"t\")")
+      if /self.use_cache_flag then
+         c.line(name || ".set_use_cache(\"f\")")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasImage()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.scale_up_flag := self.scale_up_flag
+      c.use_cache_flag := self.use_cache_flag
+      c.image_file := self.image_file
+      c.image_str := self.image_str
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [["File name", "image_file"],
+          ["Image Str", "image_str"],
+          ["Cache image Flag", "use_cache_flag"],
+          ["Scale Up Flag", "scale_up_flag"]
+         ]
+   end
+
+   #
+   # Overrides Image.display() 
+   #
+   public display()
+      if in_preview() | \self.win then
+         cast(self,Image).display()
+      else {
+         Rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Image>")
+      }
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasImageDialog(self)
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,Image).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "Image"
+      self.import_name := "gui"
+      self.name := "image"
+      return
+   end
+end
+

@@ -1,0 +1,86 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a TextField on the canvas.
+#
+class CanvasTextField(CanvasComponent,TextField)
+   public 
+   filter_str
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      c.line(name || ".set_contents(" || image(self.contents) || ")")
+      if *\filter_str > 0 then
+         c.line(name || ".set_filter(" || image(cset(self.filter_str)) || ")")
+      if /self.is_editable_flag then
+         c.line(name || ".set_is_editable(\"f\")")
+      if /self.move_on_rpress_flag then
+         c.line(name || ".set_move_on_rpress(\"f\")")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup(pc)
+      local c
+      c := CanvasTextField()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.set_contents(self.get_contents())
+      c.is_editable_flag := self.is_editable_flag
+      c.move_on_rpress_flag := self.move_on_rpress_flag
+      c.filter_str := self.filter_str
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [["Contents", "contents"],
+          ["Filter String", "filter_str"],
+          ["Is editable flag", "is_editable_flag"],
+          ["Move on rpress flag", "move_on_rpress_flag"]
+         ]
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasTextFieldDialog(self)
+   end
+
+   public allows_null_height()
+      return 1
+   end
+
+   public allows_null_width()
+      return 1
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,TextField).new()
+      cast(self,CanvasComponent).new()
+      filter_str := ""
+      self.class_name := "TextField"
+      self.import_name := "gui"
+      self.name := "text_field"
+      return
+   end
+end
+

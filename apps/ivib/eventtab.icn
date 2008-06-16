@@ -1,0 +1,191 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+class EventTab(TabItem)
+   public 
+                         tbl,
+                         add_button,                 # Buttons              
+                         delete,              #                  
+                         apply,               #                 
+                         contents,            # Table contents
+                         event,
+                         handler,
+                         name_field
+
+   public update_grey()
+      if *tbl.get_selections() > 0 then {
+         event.set_is_shaded("f")
+         handler.set_is_shaded("f")
+         delete.set_is_shaded("f")
+         apply.set_is_shaded("f")
+      } else {
+         event.set_is_shaded("t")
+         handler.set_is_shaded("t")
+         delete.set_is_shaded("t")
+         apply.set_is_shaded("t")
+      }
+   end
+
+   public on_add()
+      #
+      # Add a new value to the attributes table.
+      #
+      put(contents, ["Event.ACTION", "on_" || name_field.get_contents()])
+      tbl.set_contents(contents)
+      tbl.table_content.goto_first(*contents)
+      tbl.set_selections([*contents])
+      tbl.set_cursor(*contents)
+      event.set_contents(contents[-1][1])
+      handler.set_contents(contents[-1][2])
+      update_grey()
+   end
+
+   public on_tbl()
+      local i
+      #
+      # Line in the table clicked - copy the line to the edit area.
+      #
+      if i := tbl.get_selections()[1] then {
+         event.set_contents(contents[i][1])
+         handler.set_contents(contents[i][2])
+      }
+      update_grey()
+   end
+
+   public on_delete()
+      local i
+      #
+      # Delete a line from the table.
+      #
+      i := tbl.get_selections()[1]
+      contents := contents[1 : i] ||| contents[i + 1 : 0]
+      tbl.set_contents(contents)
+      tbl.clear_selections()
+      update_grey()
+   end
+
+   public on_apply()
+      local i
+      #
+      # Copy the edited item back to the table. 
+      #
+      i := tbl.get_selections()[1]
+      contents[i] := [event.get_contents(), handler.get_contents()]
+      tbl.set_contents(contents)
+      tbl.clear_selections()
+      update_grey()
+   end
+
+   public get_contents()
+      return contents
+   end
+
+   public new(l, name_field)
+      local c1, c2, p
+      cast(self,TabItem).new("label=Events")
+
+      set_layout(GridLayout())
+
+      self.name_field := name_field
+      self.contents := \l | []
+      tbl := Table("c:eol")
+      tbl.connect(self.on_tbl, Event.SELECTION_CHANGED)
+      tbl.set_select_mode(Select.ONE)
+      tbl.set_size("200", "100")
+      tbl.set_contents(contents)
+      cast(self,Component).add(tbl)
+
+      c1 := TableColumn()
+      c1.set_column_width(200)
+      c1.set_label("Event")
+      tbl.add_column(c1)
+
+      c2 := TableColumn()
+      c2.set_label("Handler")
+      tbl.add_column(c2)
+
+      p := Panel("c:eol", "c:y_weight=0")
+      p.set_layout(GridLayout("doi=0"))
+      event :=  EditList()
+      event.set_size(95)
+      l := ["&null",
+            "Event.ICON",
+            "Event.BUTTON_RELEASE",
+            "Event.BUTTON_PRESS",
+            "Event.BUTTON_HELD",
+            "Event.SELECTION_CHANGED",
+            "Event.CONTENT_CHANGED",
+            "Event.CURSOR_MOVED",
+            "Event.VALUE_CHANGED",
+            "Event.ACTION",
+            "Event.TREE_NODE_EXPANSION",
+            "Event.SIZER_PRESSED",
+            "Event.SIZER_DRAGGED",
+            "Event.SIZER_RELEASED",
+            "&lpress",
+            "&rpress",
+            "&mpress",
+            "&ldrag",
+            "&rdrag",
+            "&mdrag",
+            "&lrelease",
+            "&rrelease",
+            "&mrelease",
+            "Event.MOUSE_MOVED",
+            "Event.MOUSE_4",
+            "Event.MOUSE_5",
+            "Event.MOUSE_4_UP",
+            "Event.MOUSE_5_UP",
+            "Event.MOUSE_ENTER",
+            "Event.MOUSE_EXIT",
+            "Event.CLOSE_BUTTON",
+            "Event.KEY",
+            "Event.TICK",
+            "Event.GOT_FOCUS",
+            "Event.LOST_FOCUS",
+            "Event.DIALOG_CLOSED"
+            ]
+      event.set_selection_list(l)
+      event.connect(self.on_apply, Event.ACTION)
+      p.add(event)
+
+      handler := TextField()
+      handler.set_size(175)
+      handler.connect(self.on_apply, Event.ACTION)
+      p.add(handler)
+      cast(self,Component).add(p)
+
+      p := Panel("c:eol","c:y_weight=0")
+      p.set_layout(GridLayout("doi=0"))
+      add_button := TextButton()
+      add_button.connect(self.on_add, Event.ACTION)
+      add_button.set_label("Add")
+      p.add(add_button)
+
+      delete := TextButton()
+      delete.connect(self.on_delete, Event.ACTION)
+      delete.set_label("Delete")
+      p.add(delete)
+
+      apply := TextButton()
+      apply.connect(self.on_apply, Event.ACTION)
+      apply.set_label("Apply")
+      p.add(apply)
+
+      cast(self,Component).add(p)
+
+      update_grey()
+      return
+   end
+end
+
+
+
+

@@ -1,0 +1,279 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+############################################################################
+#
+#
+#
+class BorderEdit(Dialog)
+   public 
+   c,
+   tabset,
+   code_tab,
+   set_l_inset_cb,
+   set_r_inset_cb,
+   set_t_inset_cb,
+   set_b_inset_cb,
+   set_x_align_cb,
+   set_y_align_cb,
+   set_line_width,
+   l_inset_field,
+   r_inset_field,
+   t_inset_field,
+   b_inset_field,
+   x_align_list,
+   y_align_list,
+   line_width_field,
+   use_empty_cb,
+   empty_panel,
+   okay_result
+
+   #
+   # Add the tab to the TabSet
+   #
+   public add_tab(t) 
+      tabset.add(t)
+   end
+
+   public on_set_l_inset()
+      l_inset_field.toggle_is_shaded()
+   end
+
+   public on_set_r_inset()
+      r_inset_field.toggle_is_shaded()
+   end
+
+   public on_set_t_inset()
+      t_inset_field.toggle_is_shaded()
+   end
+
+   public on_set_b_inset()
+      b_inset_field.toggle_is_shaded()
+   end
+
+   public on_set_x_align()
+      x_align_list.toggle_is_shaded()
+   end
+
+   public on_set_y_align()
+      y_align_list.toggle_is_shaded()
+   end
+
+   public on_set_line_width()
+      line_width_field.toggle_is_shaded()
+   end
+
+   public on_use_empty_cb()
+      empty_panel.toggle_is_shaded()
+   end
+
+   public setup()
+      local p, oc, label, q
+      subtype(c) ? {
+         ="Canvas"
+         label := tab(0) || " Setup"
+      }
+      self.set_wattrib("label", label)
+
+      set_layout(GridLayout())
+
+      tabset := TabSet("c:eol")
+      add(tabset)
+
+      p := TabItem("layout=",GridLayout("extra=borders"))
+      add_tab(p)
+      p.set_label("General")
+      if is(c, CanvasLineBorder) then {
+         use_empty_cb := CheckBox("label=Compound empty border")
+         use_empty_cb.connect(self.on_use_empty_cb, Event.ACTION)
+         q := empty_panel := Panel("layout=",GridLayout())
+         p.add(Border("c:eol", "c:w=2",
+                      "title=",use_empty_cb,
+                      "content=",q))
+         if /c.has_empty then
+            empty_panel.set_is_shaded("t")
+         else
+            use_empty_cb.set_is_checked("t")
+
+         set_line_width := CheckBox("label=Border line_width : ")
+         set_line_width.connect(self.on_set_line_width, Event.ACTION)
+         p.add(set_line_width)
+         line_width_field := TextField("size=70", "c:eol", "filter=",&digits)
+         p.add(line_width_field)
+         if \c.line_width_val then {
+            set_line_width.set_is_checked("t")
+            line_width_field.set_contents(c.line_width_val)
+         } else {
+            line_width_field.set_is_shaded("t")
+            line_width_field.set_contents(Gui.BORDER_WIDTH)
+         }
+      } else
+         q := p
+
+      set_l_inset_cb := CheckBox("label=Left inset : ")
+      set_l_inset_cb.connect(self.on_set_l_inset, Event.ACTION)
+      q.add(set_l_inset_cb)
+      l_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
+      q.add(l_inset_field)
+      if \c.empty_l_inset then {
+         set_l_inset_cb.set_is_checked("t")
+         l_inset_field.set_contents(c.empty_l_inset)
+      } else {
+         l_inset_field.set_is_shaded("t")
+         l_inset_field.set_contents(Gui.X_INSET)
+      }
+
+      set_r_inset_cb := CheckBox("label=Right inset : ")
+      set_r_inset_cb.connect(self.on_set_r_inset, Event.ACTION)
+      q.add(set_r_inset_cb)
+      r_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
+      q.add(r_inset_field)
+      if \c.empty_r_inset then {
+         set_r_inset_cb.set_is_checked("t")
+         r_inset_field.set_contents(c.empty_r_inset)
+      } else {
+         r_inset_field.set_is_shaded("t")
+         r_inset_field.set_contents(Gui.X_INSET)
+      }
+
+      set_t_inset_cb := CheckBox("label=Top inset : ")
+      set_t_inset_cb.connect(self.on_set_t_inset, Event.ACTION)
+      q.add(set_t_inset_cb)
+      t_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
+      q.add(t_inset_field)
+      if \c.empty_t_inset then {
+         set_t_inset_cb.set_is_checked("t")
+         t_inset_field.set_contents(c.empty_t_inset)
+      } else {
+         t_inset_field.set_is_shaded("t")
+         t_inset_field.set_contents(Gui.Y_INSET)
+      }
+
+      set_b_inset_cb := CheckBox("label=Bottom inset : ")
+      set_b_inset_cb.connect(self.on_set_b_inset, Event.ACTION)
+      q.add(set_b_inset_cb)
+      b_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
+      q.add(b_inset_field)
+      if \c.empty_b_inset then {
+         set_b_inset_cb.set_is_checked("t")
+         b_inset_field.set_contents(c.empty_b_inset)
+      } else {
+         b_inset_field.set_is_shaded("t")
+         b_inset_field.set_contents(Gui.Y_INSET)
+      }
+
+      set_x_align_cb := CheckBox("label=X Alignment : ")
+      set_x_align_cb.connect(self.on_set_x_align, Event.ACTION)
+      p.add(set_x_align_cb)
+      x_align_list := List("c:eol", "size=50",
+                           "selection_list=",[Align.L, Align.C, Align.R])
+      p.add(x_align_list)
+      if \c.x_align_val then {
+         set_x_align_cb.set_is_checked("t")
+         x_align_list.object_set_selection(c.x_align_val)
+      } else {
+         x_align_list.set_is_shaded("t")
+         x_align_list.object_set_selection(Align.C)
+      }
+
+      set_y_align_cb := CheckBox("label=Y Alignment : ")
+      set_y_align_cb.connect(self.on_set_y_align, Event.ACTION)
+      p.add(set_y_align_cb)
+      y_align_list := List("c:eol", "size=50",
+                           "selection_list=",[Align.T, Align.C, Align.B])
+      p.add(y_align_list)
+      if \c.y_align_val then {
+         set_y_align_cb.set_is_checked("t")
+         y_align_list.object_set_selection(c.y_align_val)
+      } else {
+         y_align_list.set_is_shaded("t")
+         y_align_list.object_set_selection(Align.C)
+      }
+
+      code_tab := CodeTab(c)
+      tabset.add(code_tab)
+
+      oc := OkCancel()
+      oc.listen(self)
+      self.add(oc)
+   end
+
+   public on_cancel()
+      self.dispose()
+   end
+
+   public validate_input()
+      return
+   end
+
+   public on_okay()
+      self.validate_input() | fail
+      self.set_vals(c)
+      self.okay_result := 1
+      self.dispose()
+   end
+
+   public set_vals()
+      code_tab.set_vals()
+
+      if \use_empty_cb then
+         c.has_empty := if use_empty_cb.is_checked() then 1 else &null
+
+      if /use_empty_cb | use_empty_cb.is_checked() then {
+         c.empty_l_inset := if set_l_inset_cb.is_checked() then 
+            integer(l_inset_field.get_contents())
+         else 
+            &null
+         
+         c.empty_r_inset := if set_r_inset_cb.is_checked() then 
+            r_inset_field.get_contents()
+         else 
+            &null
+         
+         c.empty_t_inset := if set_t_inset_cb.is_checked() then 
+            integer(t_inset_field.get_contents())
+         else 
+            &null
+         
+         c.empty_b_inset := if set_b_inset_cb.is_checked() then 
+            integer(b_inset_field.get_contents())
+         else 
+            &null
+      }
+
+      if \set_line_width then {
+         c.line_width_val := if set_line_width.is_checked() then 
+            integer(line_width_field.get_contents())
+         else 
+            &null
+      }
+
+      c.x_align_val := if set_x_align_cb.is_checked() then 
+         x_align_list.object_get_selection()
+      else 
+         &null
+      
+      c.y_align_val := if set_y_align_cb.is_checked() then 
+         y_align_list.object_get_selection()
+      else 
+         &null
+      
+   end
+
+   public new(c)
+      cast(self,Dialog).new()
+      self.c := c
+      setup(c)
+      return
+   end
+end
+
+
+

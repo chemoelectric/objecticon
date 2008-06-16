@@ -1,0 +1,160 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+############################################################################
+#
+# Class for representing a TabItem on the canvas.
+#
+class CanvasTabItem(CanvasComponent,TabItem)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      local i, e
+      c.add_var(self.name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+      c.line(name || " := " || self.class_name || "()")
+      self.paint.gen_code(c)
+      c.line(name || ".set_paint(" || self.paint.name || ")")
+      every e := !sort(self.wattribs) do
+         c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
+      if \self.is_shaded_flag then
+         c.line(name || ".set_is_shaded(\"t\")")
+      if \self.layout_delegate then {
+         self.layout_delegate.gen_code(c)
+         c.line(name || ".set_layout(" || self.layout_delegate.name || ")")
+      }
+      every i := !self.children do {
+         i.gen_code(c)
+         c.line(self.name || ".add(" || i.name || ")")
+      }
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasTabItem()
+      cast(self,CanvasComponent).dup_fields(c)
+      every c.add((!self.children).dup())
+      c.set_paint(self.paint.dup())
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [["Paint", "paint"],
+          ["Children", "children"]
+         ]
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasTabItemDialog(self)
+   end
+
+   #
+   # Overrides CanvasComponent.is_inside()
+   #
+   public is_inside(c)
+      local e, o
+      if c === self then
+         fail
+      every e := !self.reverse_z_children do
+         if o := e.is_inside(c) then
+            return o
+      # Include the parent's tab area as a drop zone
+      if (self.parent.x <= c.mx < self.parent.x + self.parent.w) & 
+         (self.parent.y <= c.my < self.parent.y + self.parent.h) then
+         return self
+   end
+
+   #
+   # Overrides CanvasComponent.which_cursor_over() 
+   #
+   public which_cursor_over()
+      local e, o
+      every e := !self.reverse_z_children do
+         if o := e.which_cursor_over() then
+            return o
+   end
+
+   public op_which()
+      local t
+      t := parent_Canvas.dup()
+      parent.which_one := self
+      parent.reset()
+      parent_Canvas.parent_dialog.push_onto_undo(t)
+      parent_Canvas.clear_selections()
+      parent_Canvas.set_modified()
+   end
+
+   public op_delete()
+      local i, c
+      if parent.which_one === self then {
+         i := parent.get_index(self)
+         c := parent.children[i-1 | i+1]
+         parent.set_which_one(\c)
+      }
+      parent_Canvas.delete(self)
+   end
+
+   public create_menu()
+      local m, i
+      m := cast(self,CanvasComponent).create_menu()
+      if self ~=== parent.which_one then {
+         i := TextMenuItem("label=Which")
+         i.connect(self.op_which, Event.ACTION)
+         m.add(i)
+      }
+      return m
+   end
+
+   public allows_selection()
+   end
+
+   public allows_positioning()
+   end
+
+   public allows_add()
+      return 1
+   end
+
+   public allows_copy()
+   end
+
+   public allows_delete()
+      # Can't delete the last item
+      return *parent.children > 1
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasComponent).gen_cos() | self.paint | !self.children
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,TabItem).new()
+      cast(self,CanvasComponent).new()
+      self.set_show_layout("t")
+      self.class_name := "TabItem"
+      self.import_name := "gui"
+      self.name := "tab_item"
+      return
+   end
+end
+
+

@@ -1,0 +1,259 @@
+#
+# $Id$
+#
+
+import gui
+
+class CanvasSplit(CanvasComponent,Split)
+   public 
+   sizer_is_horizontal_flag,     # These 2 flags are just used or save and restore.
+   sizer_show_inter_flag
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      self.first.gen_code(c)
+      self.second.gen_code(c)
+      if /self.sizer.is_horizontal_flag then {
+         c.line(self.name || ".set_left(" || self.first.name || ")")
+         c.line(self.name || ".set_right(" || self.second.name || ")")
+      } else {
+         c.line(self.name || ".set_top(" || self.first.name || ")")
+         c.line(self.name || ".set_bottom(" || self.second.name || ")")
+      }
+      if (self.min_first | self.min_second) ~= 0 then
+         c.line(self.name || ".set_min(" || self.min_first || ", " || self.min_second || ")")
+      if self.weight ~= 0 then
+         c.line(self.name || ".set_weight(" || self.weight || ")")
+      if \self.sizer.show_inter_flag then
+         c.line(self.name || ".set_show_inter(\"t\")")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasSplit()
+      cast(self,CanvasComponent).dup_fields(c)
+      if /self.sizer.is_horizontal_flag then {
+         c.set_left(self.first.dup())
+         c.set_right(self.second.dup())
+      } else {
+         c.set_top(self.first.dup())
+         c.set_bottom(self.second.dup())
+      }
+      c.min_first := self.min_first
+      c.min_second := self.min_second
+      c.weight := self.weight
+      c.sizer.show_inter_flag := self.sizer.show_inter_flag
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [["Sizer is horizontal flag", "sizer_is_horizontal_flag"],
+          ["Sizer show inter flag", "sizer_show_inter_flag"],
+          ["Min first", "min_first"],
+          ["Min second", "min_second"],
+          ["Weight", "weight"],
+          ["First", "first"],
+          ["Second", "second"]
+         ]
+   end
+
+   public pre_encode()
+      cast(self,CanvasComponent).pre_encode()
+      # Because we don't save the sizer...
+      self.sizer_is_horizontal_flag := self.sizer.is_horizontal_flag
+      self.sizer_show_inter_flag := self.sizer.show_inter_flag
+   end
+
+   public post_decode()
+      cast(self,CanvasComponent).post_decode()
+      if /self.sizer_is_horizontal_flag then {
+         self.set_left(first)
+         self.set_right(second)
+      } else {
+         self.set_top(first)
+         self.set_bottom(second)
+      }
+      if \self.sizer_show_inter_flag then
+         self.set_show_inter("t")
+   end
+
+   #
+   # Overrides CanvasComponent.inside()
+   #
+   public is_inside(c)
+      if c === self then
+         fail
+      return first.is_inside(c) | second.is_inside(c)
+   end
+
+   #
+   # Overrides CanvasComponent.which_cursor_over() 
+   #
+   public which_cursor_over()
+      local o
+      cast(self,CanvasComponent).which_cursor_over() | fail
+      if in_resize_region() then
+         return self
+      if o := (self.first | self.second).which_cursor_over() then
+         return o
+      return self
+   end
+
+   public display(r)
+      if in_preview() then
+         cast(self,Split).display(r)
+      else {
+         # Fiddly to get the label "<Split>" above the sizer, but below the
+         # contents of first and second.  (See also CanvasSplitContent.display() below).
+         display_child(r, sizer)
+         center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Split>")
+         display_child(r, first)
+         display_child(r, second)
+         Rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+      }
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasSplitDialog(self)
+   end
+
+   public allows_null_width()
+      return 1
+   end
+
+   public allows_null_height()
+      return 1
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasComponent).gen_cos() | self.first | self.second
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,Split).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "Split"
+      self.import_name := "gui"
+      self.name := "split"
+      return
+   end
+end
+
+
+class CanvasSplitContent(CanvasComponent,Component)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      local i
+      cast(self,CanvasComponent).gen_code(c)
+      every i := !self.children do {
+         i.gen_code(c)
+         c.line(self.name || ".add(" || i.name || ")")
+      }
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [["Children", "children"]
+         ]
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasSplitContent()
+      cast(self,CanvasComponent).dup_fields(c)
+      every c.add((!self.children).dup())
+      return c
+   end
+
+   #
+   # Overrides CanvasComponent.is_inside()
+   #
+   public is_inside(c)
+      local e, o
+      if c === self then
+         fail
+      every e := !self.reverse_z_children do
+         if o := e.is_inside(c) then
+            return o
+      if (self.x <= c.mx < self.x + self.w) & (self.y <= c.my < self.y + self.h) then
+         return self
+   end
+
+   #
+   # Overrides CanvasComponent.which_cursor_over() 
+   #
+   public which_cursor_over()
+      local e, o
+      every e := !self.reverse_z_children do
+         if o := e.which_cursor_over() then
+            return o
+   end
+
+   public allows_selection()
+   end
+
+   public allows_add()
+      return 1
+   end
+
+   public allows_delete()
+   end
+
+   public allows_copy()
+   end
+
+   public display(r)
+      if in_preview() then
+         cast(self,Component).display(r)
+      else {
+         Rectangle(parent.cbwin, parent.x, parent.y, parent.w, parent.h)
+         center_string(self.cbwin, parent.x + parent.w / 2, parent.y + 10, "<Split>")
+         display_children(r)
+      }
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasComponentDialog(self)
+   end
+
+   public gen_cos()
+     suspend cast(self,CanvasComponent).gen_cos() | !self.children
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,Component).new()
+      cast(self,CanvasComponent).new()
+      self.set_show_layout("t")
+      self.class_name := "Component"
+      self.import_name := "gui"
+      self.name := "split_content"
+      return
+   end
+end
+

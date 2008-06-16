@@ -1,0 +1,30 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+
+
+class CanvasVScrollBarUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasScrollBar()
+      t.set_range(0, 100)
+      t.set_increment_size(1)
+      t.set_value(0)
+      t.set_size(, 100)
+      return t
+   end
+
+   public get_category()
+      return "ScrollBar"
+   end
+
+   public get_name()
+      return "VScrollBar"
+   end
+end
+

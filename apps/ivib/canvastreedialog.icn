@@ -1,0 +1,54 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+#
+#
+class CanvasTreeDialog(CanvasComponentDialog)
+   public 
+   show_root,
+   show_root_handles,
+   select_group
+
+   public set_vals()
+      cast(self,CanvasComponentDialog).set_vals()
+      c.set_select_mode(select_group.get_select_mode())
+      c.show_root_flag := show_root.get_status()
+      c.show_root_handles_flag := show_root_handles.get_status()
+      c.tree_structure_changed()
+   end
+
+   public setup()
+      local p
+      cast(self,CanvasComponentDialog).setup()
+
+      p := TabItem()
+      p.set_layout(GridLayout("extra=borders"))
+      add_tab_at_front(p)
+      p.set_label("General")
+
+      show_root := CheckBox("label=Show root", "c:eol")
+      if \c.show_root_flag then
+         show_root.set_is_checked("t")
+      p.add(show_root)
+
+      show_root_handles := CheckBox("label=Show root handles", "c:eol")
+      if \c.show_root_handles_flag then
+         show_root_handles.set_is_checked("t")
+      p.add(show_root_handles)
+
+      select_group := SelectModeList("c:eol")
+      p.add(select_group)
+      select_group.set_select_mode(c.select_mode)
+   end
+end
+

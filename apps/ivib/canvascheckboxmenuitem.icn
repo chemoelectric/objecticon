@@ -1,0 +1,118 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+#
+#
+class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
+   public set_parent_check_box_group(x)
+      #
+      # Set the images to the standard ones, unless custom images already set.
+      #  
+      if \x then {
+         if self.img_up == Icon.BOX_UP & self.img_down == Icon.BOX_DOWN then 
+            self.set_images(Icon.DIAMOND_UP, Icon.DIAMOND_DOWN)
+      } else {
+         if self.img_up == Icon.DIAMOND_UP & self.img_down == Icon.DIAMOND_DOWN then 
+            self.set_images(Icon.BOX_UP, Icon.BOX_DOWN)
+      }
+      cast(self,CheckBoxMenuItem).set_parent_check_box_group(x)
+   end
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasMenuComponent).gen_code(c)
+
+      self.paint_mid.gen_code(c)
+      c.line(name || ".set_paint_mid(" || self.paint_mid.name || ")")
+
+      if not((/self.parent_check_box_group & self.img_up == Icon.BOX_UP & self.img_down == Icon.BOX_DOWN) | 
+             (\self.parent_check_box_group & self.img_up == Icon.DIAMOND_UP & self.img_down == Icon.DIAMOND_DOWN)) then
+         c.line(name || ".set_images(" || image(self.img_up) || ", " || image(self.img_down) || ")")
+
+      if \self.paint_right then {
+         self.paint_right.gen_code(c)
+         c.line(name || ".set_paint_right(" || self.paint_right.name || ")")
+      }
+
+      if \self.parent_check_box_group then
+         c.line(self.parent_check_box_group.name || ".add(" || name || ")")
+
+      if \self.is_checked_flag then
+         c.line(name || ".set_is_checked(\"t\")")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasCheckBoxMenuItem()
+      cast(self,CanvasMenuComponent).dup_fields(c)
+      c.set_images(self.img_up, self.img_down)
+      # Don't copy the left image, it's not a CanvasObject, just a Paint.
+      c.set_paint_mid(self.paint_mid.dup())
+      c.set_paint_right((\self.paint_right).dup())
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      # An abbreviated set... we don't want the left Paint.
+      return cast(self,CanvasMenuComponent).get_template() ||| 
+         [
+          ["Paint mid", "paint_mid"],
+          ["Paint right", "paint_right"],
+          ["Img Up", "img_up"],
+          ["Img Down", "img_down"],
+          ["Is Checked Flag", "is_checked_flag"],
+          ["Parent CheckBoxGroup", "parent_check_box_group"]
+         ]
+   end
+
+   #
+   # Get a label for the menu bar display.
+   #
+   public get_string_label()
+      local s
+      s := if is(self.paint_mid, CanvasTextPaint) then
+         self.paint_mid.str || "(Check)"
+      else
+         subtype(self.paint_mid) || "(Check)"
+      if \self.parent_check_box_group then
+         s ||:= " G"
+      if self.is_checked() then
+         s ||:= " X"
+      return s
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasMenuComponent).gen_cos() | self.paint_mid | \self.paint_right
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,CanvasTextMenuItem).new()
+      cast(self,CheckBoxMenuItem).new()
+      self.set_images(Icon.BOX_UP, Icon.BOX_DOWN)
+      self.class_name := "CheckBoxMenuItem"
+      self.import_name := "gui"
+      self.name := "check_box_menu_item"
+      return
+   end
+end
+
+

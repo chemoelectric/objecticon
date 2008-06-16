@@ -1,0 +1,126 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+#
+#
+class CanvasListDialog(CanvasComponentDialog)
+   public 
+   selection_list,          #                      
+   set_selection,           #                     
+   selection,               #                 
+   use_constant_label,      #                          
+   constant_label,          #                      
+   group,                   #             
+   default_setting
+
+   public validate_input()
+      if (group.get_which_one() === set_selection) & not(integer(selection.get_contents())) then
+         return alert_error(self, "Selection is non-integer")
+      return cast(self,CanvasComponentDialog).validate_input()
+   end
+
+   public set_vals()
+      cast(self,CanvasComponentDialog).set_vals()
+      c.set_selection_list(selection_list.get_contents())
+
+      c.constant_label := &null
+      c.selection := 1
+      case group.get_which_one() of {
+         use_constant_label : c.set_constant_label(constant_label.get_contents())
+         set_selection : c.set_selection(integer(selection.get_contents()))
+         default_setting : c.set_selection(1)
+      }
+   end
+
+   public on_use_constant_label()
+      selection.set_is_shaded("t")
+      constant_label.set_is_shaded("f") 
+   end
+
+   public on_set_selection()
+      selection.set_is_shaded("f")
+      constant_label.set_is_shaded("t") 
+   end
+
+   public on_default_setting()
+      c.set_selection(1)
+      selection.set_is_shaded("t")
+      constant_label.set_is_shaded("t") 
+   end
+
+   public setup()
+      local p, sn, q
+
+      cast(self,CanvasComponentDialog).setup()
+
+      p := TabItem()
+      p.set_layout(GridLayout())
+      add_tab_at_front(p)
+      p.set_label("General")
+
+      selection_list := EditableTextList()
+      selection_list.set_size(150, 200)
+      selection_list.set_contents(copy(c.selection_list))
+      p.add(selection_list)
+
+      q := Panel("c:x_weight=0")
+      q.set_layout(GridLayout("doi=0","extra=borders"))
+
+      group := CheckBoxGroup()
+
+      set_selection := CheckBox()
+      set_selection.connect(self.on_set_selection, Event.ACTION)
+      set_selection.set_label("Set selection")
+      q.add(set_selection)
+      group.add(set_selection)
+
+      selection := TextField("c:eol")
+      selection.set_size(100)
+      selection.set_contents(c.selection)
+      q.add(selection)
+
+      use_constant_label := CheckBox()
+      use_constant_label.connect(self.on_use_constant_label, Event.ACTION)
+      use_constant_label.set_label("Set constant_label")
+      q.add(use_constant_label)
+      group.add(use_constant_label)
+
+      constant_label := TextField("c:eol")
+      constant_label.set_size(100)
+      q.add(constant_label)
+
+      default_setting := CheckBox()
+      default_setting.connect(self.on_default_setting, Event.ACTION)
+      default_setting.set_label("Default")
+      q.add(default_setting)
+      group.add(default_setting)
+
+      p.add(q)
+
+      sn := \c.selection | 1
+      if \c.constant_label then {
+         group.set_which_one(use_constant_label)
+         constant_label.set_contents(c.constant_label)
+         selection.set_is_shaded("t")
+      } else if sn ~= 1 then {
+         group.set_which_one(set_selection)
+         constant_label.set_is_shaded("t")
+      } else {
+         group.set_which_one(default_setting)
+         selection.set_is_shaded("t")
+         constant_label.set_is_shaded("t")
+      }
+   end
+end
+
+

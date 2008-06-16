@@ -1,0 +1,30 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+
+
+class CanvasHSliderUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasSlider()
+      t.set_range(0, 100)
+      t.set_value(0)
+      t.set_size(100)
+      t.set_is_horizontal("t")
+      return t
+   end
+
+   public get_category()
+      return "Slider"
+   end
+
+   public get_name()
+      return "HSlider"
+   end
+end
+

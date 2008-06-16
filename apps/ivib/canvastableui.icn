@@ -1,0 +1,40 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+
+
+class CanvasTableUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t, c
+      t := CanvasTable()
+      t.set_contents([])
+      t.set_size(100, 100)
+
+      c := CanvasTableColumn()
+      c.set_paint(CanvasTextPaint("Edit me"))
+      c.set_column_width(75)
+      t.add_column(c)
+
+      return t
+   end
+
+   public get_category()
+      return "Other"
+   end
+
+   public get_name()
+      return "Table"
+   end
+
+   public get_icon()
+      return (
+              $include "icon/icn12.icon"
+              )
+   end
+end
+

@@ -1,0 +1,70 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+#
+#
+class CanvasTextFieldDialog(CanvasComponentDialog)
+   public 
+   contents, 
+   filter,
+   is_editable_cb,
+   move_on_rpress_cb
+
+   public set_vals()
+      cast(self,CanvasComponentDialog).set_vals()
+      c.set_contents(contents.get_contents())
+      c.filter_str := filter.get_contents()
+      c.is_editable_flag := is_editable_cb.get_status()
+      c.move_on_rpress_flag := move_on_rpress_cb.get_status()
+   end
+
+   public setup()
+      local p, l
+
+      cast(self,CanvasComponentDialog).setup()
+
+      p := TabItem()
+      p.set_layout(GridLayout("extra=borders"))
+      p.set_label("General")
+      add_tab_at_front(p)
+
+      l := Label()
+      l.set_label("Initial contents : ")
+      p.add(l)
+      
+      contents := TextField("c:eol")
+      contents.set_size(100)
+      contents.set_contents(c.contents)
+      p.add(contents)
+
+      l := Label()
+      l.set_label("Filter : ")
+      p.add(l)
+      
+      filter := TextField("c:eol")
+      filter.set_size(100)
+      filter.set_contents(c.filter_str)
+      p.add(filter)
+
+      is_editable_cb := CheckBox("label=Is editable", "c:eol", "c:w=2")
+      if \c.is_editable_flag then
+         is_editable_cb.set_is_checked("t")
+      p.add(is_editable_cb)
+
+      move_on_rpress_cb := CheckBox("label=Move on &rpress", "c:w=2")
+      if \c.move_on_rpress_flag then
+         move_on_rpress_cb.set_is_checked("t")
+      p.add(move_on_rpress_cb)
+   end
+end
+

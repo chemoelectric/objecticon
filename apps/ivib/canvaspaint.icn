@@ -1,0 +1,147 @@
+import util, gui
+
+class CanvasPaint(CanvasObject)
+   public dialog()
+      return PaintEdit(self)
+   end
+
+   private pre_decode()
+      new()
+   end
+
+   public new()
+      self.name := "paint"
+      self.import_name := "gui"
+      return
+   end
+end
+
+
+class CanvasTextPaint(CanvasPaint,TextPaint)
+   public dup()
+      local c
+      c := CanvasTextPaint()
+      cast(self,CanvasObject).dup_fields(c)
+      c.str := self.str
+      return c
+   end
+
+   public get_template()
+      return cast(self,CanvasPaint).get_template() |||  [[ "Str", "str"]]
+   end
+
+   public gen_code(c)
+      c.line(name || " := " || self.class_name || "(" || image(self.str) || ")")
+      c.add_var(name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+   end
+
+   public new(s)
+      cast(self,TextPaint).new(s)
+      cast(self,CanvasPaint).new()
+      self.class_name := "TextPaint"
+      return
+   end
+end
+
+
+class CanvasImagePaint(CanvasPaint,ImagePaint)
+   public dialog()
+      return ImagePaintEdit(self)
+   end
+
+   public dup()
+      local c
+      c := CanvasImagePaint()
+      cast(self,CanvasObject).dup_fields(c)
+      c.image_file := self.image_file
+      c.image_str := self.image_str
+      c.scale_up_flag := self.scale_up_flag
+      c.use_cache_flag := self.use_cache_flag
+      c.max_w := self.max_w
+      c.max_h := self.max_h
+      return c
+   end
+
+   public get_template()
+      return cast(self,CanvasPaint).get_template() |||  
+         [["Image File", "image_file"], 
+          ["Image Str", "image_str"],
+          ["Scale Up Flag", "scale_up_flag"],
+          ["Use Cache Flag", "use_cache_flag"],
+          ["Max W", "max_w"],
+          ["Max H", "max_h"]]
+
+   end
+
+   public gen_code(c)
+      local fp, p1, p2
+      c.line(name || " := " || self.class_name || "()")
+      c.line(name || ".set_file(" || image(\self.image_file) || ")")
+      c.line(name || ".set_image(" || image(\self.image_str) || ")")
+      c.line(name || ".set_max_w(" || \self.max_w || ")")
+      c.line(name || ".set_max_h(" || \self.max_h || ")")
+      if \self.scale_up_flag then
+         c.line(name || ".set_scale_up(\"t\")")
+      if /self.use_cache_flag then
+         c.line(name || ".set_use_cache(\"f\")")
+      c.add_var(name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+
+      if \self.image_file & 
+         \self.use_cache_flag &
+         fp := ImageCache.get_source(self.win) then 
+      {
+         p1 := Files.get_path(self.image_file)
+         if not p1.is_absolute() then {
+            every p2 := !ImageCache.path do {
+               if p2.append(p1).str() == fp then
+                  c.add_cache_path(p2.str())
+            }
+         }
+      }
+   end
+
+   public new(a[])
+      cast(self,ImagePaint).new()
+      cast(self,CanvasPaint).new()
+      self.class_name := "ImagePaint"
+      set_fields(a)
+      return
+   end
+end
+
+
+class CanvasGridPaint(CanvasPaint,GridPaint)
+   public dialog()
+      return GridPaintEdit(self)
+   end
+
+   public dup()
+      local c
+      c := CanvasGridPaint()
+      cast(self,CanvasObject).dup_fields(c)
+      c.fmt := self.fmt
+      return c
+   end
+
+   public get_template()
+      return cast(self,CanvasPaint).get_template() |||  [[ "Fmt", "fmt"]]
+   end
+
+   public gen_code(c)
+      c.line(name || " := " || self.class_name || "(" || image(self.fmt) || ")")
+      c.add_var(name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+   end
+
+   public new(s)
+      cast(self,GridPaint).new(s)
+      cast(self,CanvasPaint).new()
+      self.class_name := "GridPaint"
+      return
+   end
+end
+
+
+

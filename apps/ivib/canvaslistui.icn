@@ -1,0 +1,34 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+
+
+class CanvasListUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasList()
+      t.set_selection_list([])
+      t.set_size(100)
+      return t
+   end
+
+   public get_category()
+      return "List"
+   end
+
+   public get_name()
+      return "List"
+   end
+
+   public get_icon()
+      return (
+              $include "icon/icn18.icon"
+              )
+   end
+end
+

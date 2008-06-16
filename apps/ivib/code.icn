@@ -1,0 +1,496 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import lang(encode), gui, parser, util(Files)
+
+#
+# Record to store a method to generate
+#
+record a_method(name, params, body)
+
+############################################################################
+#
+# Class to process code generation
+#
+class Code()
+   public 
+      class_vars,              # Class variables which have methods             
+      local_vars,              # Variables local to the setup method             
+      imports,                 # Set of import declarations
+      methods,                 # Methods to be generated, a table of names->a_method records
+      code,                    # List of strings to generate in the setup method           
+      cache_path,
+      parent_Canvas,           #                     
+      indent1,                 # Spaces for indentation              
+      indent2                 #
+
+   #
+   # Display an error message
+   #
+   public alert_error(s)
+      return default.alert_error(self.parent_Canvas.parent_dialog, s)
+   end
+
+   public set_parent_Canvas(c)
+      self.parent_Canvas := c
+      self.indent1 := "\n" || repl(" ", self.parent_Canvas.gen_indent)
+      self.indent2 := "\n" || repl(" ", 2 * self.parent_Canvas.gen_indent)
+      return c
+   end
+
+   #
+   # Add a line of code to the setup method.
+   #
+   public line(s)
+      put(code, s)
+   end
+
+   #
+   # Add a variable to the given list.
+   #
+   public add_var(s, class_variable)
+      if \class_variable then
+         insert(class_vars, s)
+      else
+         insert(local_vars, s)
+   end
+
+   #
+   # Generate a temporary local variable name that won't clash with
+   # anything in the canvas.
+   #
+   public get_temp_var(root)
+      local s
+      /root := "tmp"
+      s := parent_Canvas.get_new_name(root)
+      add_var(s)
+      return s
+   end
+
+   #
+   # Add a method to the methods list
+   #
+   public add_method(name, params, body)
+      /params := []
+      /body := []
+      methods[name] := a_method(name, params, body)
+   end
+
+   #
+   # Add a import to the set of imports.
+   #
+   public add_import(pack, name)
+      /imports[pack] := set()
+      insert(imports[pack], name)
+   end
+
+   public add_event_handlers(t)
+      local e
+      every e := !t do {
+         line("self.connect(" || e[2] || ", " || e[1] || ")")
+         add_method(e[2], ["ev"])
+         if match("Event.", e[1]) then
+            add_import("gui", "Event")
+      }
+   end
+
+   public add_cache_path(s)
+      insert(cache_path, s)
+   end
+
+   private add_nice_import(im, pack, ids)
+      local ispec, k, pad, f
+      ispec := Factory.new_import_spec("\n   ", pack, [])
+      im.put(ispec)
+      k := 0
+      pad := ""
+      every f := !sort(ids) do {
+         ispec.put(Factory.new_id(pad, f))
+         k +:= 1
+         if k % 4 = 0 then
+            pad := "\n" || repl(" ", 4 + *pack)
+         else
+            pad := " "
+      }
+      return im
+   end
+
+   #
+   # Output the code to file called s.
+   #
+   public output_code(s)
+      local prog, im, cl, f, t, g, e
+
+      prog := Factory.new_prog()
+      im := Factory.new_import("", [])
+      prog.put(im)
+      every e := !sort(imports) do
+         add_nice_import(im, e[1], e[2])
+
+      cl := Factory.new_class("\n\n", self.parent_Canvas.name, [self.parent_Canvas.superclass_name], "\n")
+      prog.put(cl)
+      if *class_vars > 0 then
+         cl.put(Factory.new_fields(indent1, ["public"], class_vars))
+
+      generate_methods(prog, cl)
+
+      f := open(s, "w") | return alert_error("Couldn't open " || s)
+      prog.pos.write(f)
+      writes(f, "\n\n")
+
+      if t := resolve_layout_filename(s, \parent_Canvas.layout_filename) then {
+         #
+         # Output the encoded canvas to the layout file.
+         #
+         if not(g := open(t, "w")) then {
+            close(f)
+            return alert_error("Couldn't open " || t)
+         }
+         write(f, Ivib.V2i_MARKER, parent_Canvas.layout_filename)
+         write(g, encode(parent_Canvas))
+         close(g)
+      } else {
+         #
+         # Output the encoded canvas to the source file, splitting the output over several
+         # comment lines.
+         #
+         write(f, Ivib.V2_MARKER)
+         encode(parent_Canvas) ? {
+            while not(pos(0)) do
+               write(f, "#", move(70) | tab(0))
+         }
+      }
+      close(f)
+      return
+   end
+
+   #
+   # Interpose code to already existing file named src_name, resulting
+   # in dest_name.
+   #
+   public interpose_code(src_name, dest_name)
+      local prog, d, d2, p, f, g, temp_name, l_name, 
+            l_temp_name, cl, fl, s, t, seen_importspec, e, im, ispec
+
+      /dest_name := src_name
+
+      p := Parser()
+      s := Files.file_to_string(src_name) | return alert_error("Couldn't load " || src_name)
+      prog := p.parse(s) | return alert_error(["Couldn't parse ", p.get_reason()])
+      seen_importspec := table()
+      every d := prog.gen() do {
+         case classof(d) of {
+            Import : {
+               every d2 := d.gen() do {
+                  if is(d2, Id) then
+                     # Unqualified import - delete all symbols
+                     delete(imports, d2.str())
+                  else {
+                     # Qualified import, delete just those symbols
+                     every delete(\imports[d2.get_package().str()], d2.gen().str())
+                     seen_importspec[d2.get_package().str()] := d2
+                  }
+               }
+               # Keep note of last import
+               im := d
+            }
+            Package : {
+               delete(imports, d2.get_name().str())
+            }
+            Class : {
+               if d.get_name().str() == self.parent_Canvas.name then
+                  cl := d
+            }
+         }
+      }
+
+      \cl | return alert_error("Couldn't find class " || self.parent_Canvas.name)
+
+      #
+      # Add missing imports.
+      #
+      every e := !sort(imports) do {
+         if ispec := \seen_importspec[e[1]] then {
+            every ispec.put(Factory.new_id(" ", !sort(e[2])))
+         } else {
+            if /im then {
+               # Create a new import
+               im := Factory.new_import("", [])
+               # Prepend a \n to the chunk of the current first token in the prog.
+               t := prog.get(1).get_first_token()
+               t.set_chunk("\n" || t.chunk)
+               prog.insert(1, im)
+            }
+            add_nice_import(im, e[1], e[2])
+         }
+      }
+
+      #
+      # Generate any missing class variables.
+      #
+      every d := cl.gen() do {
+         if is(d, FieldList) then {
+            fl := d
+            every delete(class_vars, d.gen().str())
+         }
+      }
+      if *class_vars > 0 then {
+         if /fl then
+            cl.insert(1, Factory.new_fields(indent1, ["public"], class_vars))
+         else
+            every fl.put(Factory.new_id(" ", !class_vars))
+      }
+
+      # Add methods, main proc.
+      generate_methods(prog, cl)
+
+      # Clear away existing ivib section (child(2) is the EOF token).
+      prog.pos.child(2).set_chunk("")
+
+      #
+      # Re-create file
+      #
+      temp_name := dest_name || ".temp"
+      f := open(temp_name, "w") | return alert_error("Couldn't open " || temp_name)
+
+      prog.pos.write(f)
+      writes(f, "\n\n")
+
+      if l_name := resolve_layout_filename(dest_name,
+                                           \parent_Canvas.layout_filename) then {
+         #
+         # Output the encoded canvas to the layout file.
+         #
+         l_temp_name :=  l_name || ".temp"
+         if not(g := open(l_temp_name, "w")) then {
+            close(f)
+            return alert_error("Couldn't open " || l_temp_name)
+         }
+         write(f, Ivib.V2i_MARKER, parent_Canvas.layout_filename)
+         write(g, encode(parent_Canvas))
+         close(g)
+      } else {
+         #
+         # Output the encoded canvas to the source file, splitting the output over several
+         # comment lines.
+         #
+         write(f, Ivib.V2_MARKER)
+         encode(parent_Canvas) ? {
+            while not(pos(0)) do
+               write(f, "#", move(70) | tab(0))
+         }
+      }
+
+      close(f)
+
+      #
+      # Everything okay, so rename
+      #
+      if \l_name then {
+         remove(l_name)
+         rename(l_temp_name, l_name) | stop("Couldn't rename new layout file ", 
+                                            l_temp_name, " to ", l_name)
+      }
+      remove(dest_name)
+      rename(temp_name, dest_name) | stop("Couldn't rename new source file ", 
+                                          temp_name, " to ", dest_name)
+      return
+   end
+
+   private generate_methods(prog, cl)
+      local body
+
+      if /self.parent_Canvas.is_component & \self.parent_Canvas.gen_init_dialog then {
+         add_method("init_dialog")
+         add_method("end_dialog")
+      }
+
+      if \self.parent_Canvas.gen_component_setup then 
+         add_method("component_setup", [], ["self.setup()"])
+
+      if \self.parent_Canvas.dialog_struct.ticker_rate then 
+         add_method("tick")
+
+      if \self.parent_Canvas.gen_initially then {
+         body := ["cast(self," || self.parent_Canvas.superclass_name || ").new()"]
+         if /self.parent_Canvas.is_component then {
+            if /self.parent_Canvas.gen_component_setup then
+               put(body, "self.setup()")
+         } else {
+            if /self.parent_Canvas.gen_component_setup then
+               put(body, "self.setup()")
+            else
+               put(body, "self.component_setup()")
+         }
+         put(body, "set_fields(a)")
+         add_method("new", ["a[]"], body)
+      }
+      self.methods_out(cl)
+      self.setup_out(cl)
+
+      if /self.parent_Canvas.is_component & \self.parent_Canvas.gen_main then
+         self.main_out(prog)
+   end
+
+   private nice_pad(cl)
+      if cl.size() > 0 then
+         return "\n" || indent1
+      else
+         return indent1
+   end
+
+   private find_procedure(prog, n)
+      local d
+      every d := prog.gen() do {
+         if is(d, Procedure) & d.get_name().str() == n then
+            return d
+      }
+   end
+
+   #
+   # Generate the methods.
+   #
+   private methods_out(cl)
+      local rec, s, t, d
+
+      delete(methods, "dispose")
+
+      every d := cl.gen() do {
+         if is(d, Method | DeferredMethod) then
+            delete(methods, d.get_name().str())
+      }
+
+      every rec := (!sort(methods))[2] do {
+         # The method handle_v2_events is a special case...
+         if rec.name == "handle_v2_events" then {
+            t := Factory.new_method(nice_pad(cl), ["public"], 
+                                    rec.name, ["ev", "src", "type"], indent1)
+            t.set_body(indent2 || "dialog_event(V2TOV1(ev, src, type))")
+         } else {
+            t := Factory.new_method(nice_pad(cl), ["public"], 
+                                    rec.name, rec.params, indent1)
+            s := ""
+            every s ||:= indent2 || !rec.body
+            t.set_body(s)
+         }
+         cl.put(t)
+      } 
+   end
+
+   #
+   # Generate the setup() method with the code.
+   #
+   private setup_out(cl)
+      local m, a, body, x, i, d
+
+      #
+      # Delete any existing "setup" method
+      #
+      i := 1
+      every d := cl.gen() do {
+         if is(d, Method) & d.get_name().str() == "setup" then {
+            cl.delete(i)
+            break
+         }
+         i +:= 1
+      }
+
+      #
+      # Add a new setup method
+      #
+      x := Factory.new_method(nice_pad(cl), ["public"], "setup", [], indent1)
+      cl.put(x)
+
+      #
+      # Local variables.
+      #
+      if *local_vars > 0 then
+         x.get_locals_list().put(Factory.new_local(indent2, "local", local_vars))
+
+      #
+      # Dialog attribs.
+      #
+      m := copy(self.parent_Canvas.dialog_struct.wattribs)
+      if /self.parent_Canvas.is_component & 
+         \ (self.parent_Canvas.dialog_iw | self.parent_Canvas.dialog_ih) then 
+      {
+         if /self.parent_Canvas.dialog_iw then
+            insert(m, "height", self.parent_Canvas.dialog_ih)
+         else if /self.parent_Canvas.dialog_ih then
+            insert(m, "width", self.parent_Canvas.dialog_iw)
+         else
+            insert(m, "size", self.parent_Canvas.dialog_iw || "," || self.parent_Canvas.dialog_ih)
+      }
+      body := ""
+
+      every a := !sort(m) do
+         body ||:= indent2 || "self.set_wattrib(" || image(a[1]) || ", " || image(a[2]) || ")"
+      #
+      # Ticker
+      #
+      if \self.parent_Canvas.dialog_struct.ticker_rate then
+         body ||:= indent2 || "self.start_ticker(" || 
+                      self.parent_Canvas.dialog_struct.ticker_rate || ")"
+
+      if /self.parent_Canvas.is_component & 
+         \self.parent_Canvas.dialog_struct.only_enlarge_width_flag then
+         body ||:= indent2 || "self.set_only_enlarge_width(\"t\")"
+
+      if /self.parent_Canvas.is_component & 
+         \self.parent_Canvas.dialog_struct.only_enlarge_height_flag then
+         body ||:= indent2 || "self.set_only_enlarge_height(\"t\")"
+
+      #
+      # Insert the code already generated by the components.
+      every body ||:= indent2 || !code
+
+      x.set_body(body)
+   end
+
+   #
+   # Generate a main procedure. 
+   #
+   private main_out(pr)
+      local p, x, body
+
+      if find_procedure(pr, "main") then
+         return
+
+      x := Factory.new_procedure("\n\n", "main", [], "\n")
+      pr.put(x)
+
+      x.get_locals_list().put(Factory.new_local(indent1, "local", ["d"]))
+
+      body := ""
+      if *cache_path > 0 then {
+         every p := !ImageCache.path do {
+            if member(cache_path, p.str()) then
+               body ||:= indent1 || "ImageCache.add_dir(" || image(p.str()) || ")"
+         }
+      }
+      body ||:= indent1 || "d := " || self.parent_Canvas.name || "()"
+      if /self.parent_Canvas.gen_component_setup & /self.parent_Canvas.gen_initially then
+         body ||:= indent1 || "d.setup()"
+      body ||:= indent1 || "d.show_modal()"
+      x.set_body(body)
+   end
+
+   public new()
+      class_vars := set()
+      local_vars := set()
+      cache_path := set()
+      code := []
+      methods := table()
+      imports := table()
+      return
+   end
+end
+
+
+
+

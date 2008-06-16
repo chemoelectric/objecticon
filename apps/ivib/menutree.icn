@@ -1,0 +1,78 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+$define SPACING 25
+
+class MenuTree(SelectableScrollArea)
+   public calculate_line_height()
+      return WAttrib(self.cbwin, "fheight")
+   end
+
+   public draw_line_data(xp, yp, lh, i, r)
+      local dashed, s, lp, y0
+
+      y0 := yp + self.line_height / 2
+      s := contents[i]
+
+      dashed := Clone(view.cbwin, "pattern=gray", "fillstyle=textured")
+      lp := xp
+      every 1 to s.depth do {
+         DrawLine(dashed, lp + SPACING / 2, yp, lp + SPACING / 2, yp + self.line_height - 1)
+         
+         lp +:= SPACING
+      }
+      if \s.owner then {
+         if contents[i + 1].depth > s.depth then
+            DrawLine(dashed, lp + SPACING / 2, y0, lp + SPACING / 2, yp + self.line_height - 1)
+
+         DrawLine(dashed, lp - SPACING / 2, y0, lp + SPACING, y0)
+         lp +:= SPACING
+         DrawStringEx(view.cbwin, lp, yp, s.owner.get_string_label())
+      }
+
+      Uncouple(dashed)
+   end
+
+   public get_rec(n)
+      return contents[n]
+   end
+
+   public find_index(c)
+      local i
+      i := 1
+      every i := 1 to *contents do {
+         if contents[i].owner === c then
+            return i
+      }
+   end
+
+   public calculate_subject_width()
+      local ww, mw, s
+
+      mw := 0
+      every s := !self.contents do {
+         ww := SPACING * s.depth
+         if \s.owner then
+            ww +:= 2 * SPACING + TextWidth(self.cbwin, s.owner.get_string_label())
+         mw <:= ww
+      }
+      return mw
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,SelectableScrollArea).new()
+      self.set_draggable_cursor("t")
+
+      return
+   end
+end
+

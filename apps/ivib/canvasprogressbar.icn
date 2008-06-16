@@ -1,0 +1,47 @@
+#
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a ProgressBar on the canvas.
+#
+class CanvasProgressBar(CanvasComponent,ProgressBar)
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasProgressBar()
+      cast(self,CanvasComponent).dup_fields(c)
+      return c
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasComponentDialog(self)
+   end
+
+   public allows_null_height()
+      return 1
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,ProgressBar).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "ProgressBar"
+      self.import_name := "gui"
+      self.name := "progress_bar"
+      return
+   end
+end
+

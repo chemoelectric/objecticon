@@ -1,0 +1,43 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+
+
+############################################################################
+#
+# Class for representing a Custom on the canvas.
+# 
+class CanvasCustom(CanvasComponent,Custom)
+   # 
+   # Duplicate object
+   #
+   public dup()
+      local c
+      c := CanvasCustom()
+      cast(self,CanvasComponent).dup_fields(c)
+      return c
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasCustomDialog(self)
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,Custom).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "Custom"
+      self.import_name := "gui"
+      self.name := "custom"
+      return
+   end
+end
+

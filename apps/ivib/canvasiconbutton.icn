@@ -1,0 +1,72 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a IconButton on the canvas.
+#
+class CanvasIconButton(CanvasButton,IconButton)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasButton).gen_code(c)
+      self.paint.gen_code(c)
+      c.line(name || ".set_paint(" || self.paint.name || ")")
+      if \self.paint_down then {
+         self.paint_down.gen_code(c)
+         c.line(name || ".set_paint_down(" || self.paint_down.name || ")")
+      }
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasButton).get_template() ||| 
+         [["Paint", "paint"],
+          ["Paint down", "paint_down"]]
+   end
+
+   # 
+   # Duplicate object
+   #
+   public dup(pc)
+      local c
+      c := CanvasIconButton()
+      cast(self,CanvasButton).dup_fields(c)
+      c.set_paint(self.paint.dup(c))
+      c.set_paint_down((\self.paint_down).dup(c))
+      return c
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasIconButtonDialog(self)
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasComponent).gen_cos() | self.paint | \self.paint_down
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,IconButton).new()
+      cast(self,CanvasButton).new()
+      self.class_name := "IconButton"
+      self.import_name := "gui"
+      self.name := "icon_button"
+      return
+   end
+end
+

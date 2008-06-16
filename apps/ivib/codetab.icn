@@ -1,0 +1,83 @@
+import gui
+
+class CodeTab(TabItem)
+   public 
+   c,
+   name,                    #            
+   class_name,              # Class name
+   import_name,             # TextField - import name
+   var_category0,           # Checkboxes for variable category
+   var_category1,           #  
+   var_category_cbg
+
+   public set_vals()
+      c.set_name(name.get_contents())
+      c.set_class_name(self.class_name.get_contents())
+      c.set_import_name(self.import_name.get_contents())
+      c.class_variable := case var_category_cbg.get_which_one() of {
+         var_category0 : 1
+         var_category1 : &null
+      }
+   end
+
+   public new(c)
+      local l, p
+      cast(self,TabItem).new("label=Code")
+      self.c := c
+
+      set_layout(GridLayout("extra=borders"))
+
+      p := Panel("c:eol", "layout=",GridLayout("flush"))
+      self.add(p)
+
+      var_category_cbg := CheckBoxGroup()
+
+      var_category0 := CheckBox()
+      var_category0.set_label("Class variable")
+      var_category_cbg.add(var_category0)
+      p.add(var_category0)
+
+      var_category1 := CheckBox("c:eol")
+      var_category1.set_label("Local setup variable")
+      var_category_cbg.add(var_category1)
+      p.add(var_category1)
+
+      if \c.class_variable then
+         var_category_cbg.set_which_one(var_category0)
+      else
+         var_category_cbg.set_which_one(var_category1)
+
+      p := Panel("layout=",GridLayout("flush"), "c:eol")
+      self.add(p)
+      l := Label()
+      l.set_label("Import")
+      p.add(l)
+
+      self.import_name := TextField("c:eol")
+      self.import_name.set_size(150)
+      p.add(self.import_name)
+      self.import_name.set_contents(c.import_name)
+
+      l := Label()
+      l.set_label("Object name")
+      p.add(l)
+
+      name := TextField("c:eol")
+      name.set_size(150)
+      p.add(name)
+
+      name.set_contents(c.name)
+
+      l := Label()
+      l.set_label("Class name")
+      p.add(l)
+
+      self.class_name := TextField("c:eol")
+      self.class_name.set_size(150)
+      p.add(self.class_name)
+
+      self.class_name.set_contents(c.class_name)
+      return
+   end
+end
+

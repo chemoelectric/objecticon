@@ -1,0 +1,235 @@
+import gui
+
+class CanvasABorder(CanvasObject)
+   public 
+     empty_l_inset,
+     empty_r_inset,
+     empty_t_inset,
+     empty_b_inset, 
+     x_align_val,
+     y_align_val
+
+   public defer create_visual_border()
+
+   #
+   # Copy fields from self to c.
+   #
+   public dup_fields(c)
+      cast(self,CanvasObject).dup_fields(c)
+      c.empty_l_inset := self.empty_l_inset
+      c.empty_r_inset := self.empty_r_inset
+      c.empty_t_inset := self.empty_t_inset
+      c.empty_b_inset := self.empty_b_inset
+      c.x_align_val := self.x_align_val
+      c.y_align_val := self.y_align_val
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasObject).get_template() ||| [
+              ["Left inset", "empty_l_inset"],
+              ["Right inset", "empty_r_inset"],
+              ["Top inset", "empty_t_inset"],
+              ["Bottom inset", "empty_b_inset"],
+              ["X align", "x_align_val"],
+              ["Y align", "y_align_val"]
+              ]
+   end
+
+   public dialog()
+      return BorderEdit(self)
+   end
+
+# WARN : parameterless initially method
+   public new()
+      self.name := "border"
+      self.import_name := "gui"
+      return
+   end
+end
+
+
+class CanvasEmptyBorder(CanvasABorder)
+   public gen_code(c)
+      c.line(name || " := " || self.class_name || "()")
+      c.line(name || ".set_l_inset(" || \self.empty_l_inset || ")")
+      c.line(name || ".set_r_inset(" || \self.empty_r_inset || ")")
+      c.line(name || ".set_t_inset(" || \self.empty_t_inset || ")")
+      c.line(name || ".set_b_inset(" || \self.empty_b_inset || ")")
+      c.line(name || ".set_x_align(" || image(\self.x_align_val) || ")")
+      c.line(name || ".set_y_align(" || image(\self.y_align_val) || ")")
+      c.add_var(name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+   end
+
+   public create_visual_border()
+      local b
+      b := EmptyBorder()
+      b.set_l_inset(\self.empty_l_inset)
+      b.set_r_inset(\self.empty_r_inset)
+      b.set_t_inset(\self.empty_t_inset)
+      b.set_b_inset(\self.empty_b_inset)
+      b.set_x_align(\self.x_align_val)
+      b.set_y_align(\self.y_align_val)
+      return b
+   end
+
+   public dup()
+      local c
+      c := CanvasEmptyBorder()
+      self.dup_fields(c)
+      return c
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,CanvasABorder).new()
+      self.class_name := "EmptyBorder"
+      return
+   end
+end
+
+
+
+class CanvasLineBorder(CanvasABorder)
+   public line_width_val, has_empty
+   public get_template()
+      return cast(self,CanvasABorder).get_template() ||| 
+         [[ "Line width", "line_width_val"],
+          [ "Has empty", "has_empty"]]
+   end
+
+   public gen_code(c)
+      if \has_empty then {
+         c.line(name || " := CompoundBorder()")
+         c.line(name || ".set_outer(" || class_name || "())")
+         c.line(name || ".set_inner(EmptyBorder())")
+         c.line(name || ".inner.set_l_inset(" || \self.empty_l_inset || ")")
+         c.line(name || ".inner.set_r_inset(" || \self.empty_r_inset || ")")
+         c.line(name || ".inner.set_t_inset(" || \self.empty_t_inset || ")")
+         c.line(name || ".inner.set_b_inset(" || \self.empty_b_inset || ")")
+         c.line(name || ".outer.set_line_width(" || \self.line_width_val || ")")
+      } else {
+         c.line(name || " := " || self.class_name || "()")
+         c.line(name || ".set_line_width(" || \self.line_width_val || ")")
+      }
+      c.line(name || ".set_x_align(" || image(\self.x_align_val) || ")")
+      c.line(name || ".set_y_align(" || image(\self.y_align_val) || ")")
+      c.add_var(name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+   end
+
+   public dup_fields(c)
+      cast(self,CanvasABorder).dup_fields(c)
+      c.line_width_val := self.line_width_val
+      c.has_empty := self.has_empty
+   end
+
+   public create_visual_border()
+      local b
+      if \has_empty then {
+         b := CompoundBorder("outer=",create_outer_visual_border(),
+                             "inner=",EmptyBorder())
+         b.inner.set_l_inset(\self.empty_l_inset)
+         b.inner.set_r_inset(\self.empty_r_inset)
+         b.inner.set_t_inset(\self.empty_t_inset)
+         b.inner.set_b_inset(\self.empty_b_inset)
+         b.outer.set_line_width(\self.line_width_val)
+      } else {
+         b := create_outer_visual_border()
+         b.set_line_width(\self.line_width_val)
+      }
+      b.set_x_align(\self.x_align_val)
+      b.set_y_align(\self.y_align_val)
+      return b
+   end
+
+   public defer create_outer_visual_border()
+end
+
+
+class CanvasPlainBorder(CanvasLineBorder)
+   public dup()
+      local c
+      c := CanvasPlainBorder()
+      cast(self,CanvasLineBorder).dup_fields(c)
+      return c
+   end
+
+   public create_outer_visual_border()
+      return PlainBorder()
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,CanvasLineBorder).new()
+      self.class_name := "PlainBorder"
+      return
+   end
+end
+
+
+class CanvasBevelledBorder(CanvasLineBorder)
+   public dup()
+      local c
+      c := CanvasBevelledBorder()
+      cast(self,CanvasLineBorder).dup_fields(c)
+      return c
+   end
+
+   public create_outer_visual_border()
+      return BevelledBorder()
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,CanvasLineBorder).new()
+      self.class_name := "BevelledBorder"
+      return
+   end
+end
+
+
+class CanvasRaisedBorder(CanvasLineBorder)
+   public dup()
+      local c
+      c := CanvasRaisedBorder()
+      cast(self,CanvasLineBorder).dup_fields(c)
+      return c
+   end
+
+   public create_outer_visual_border()
+      return RaisedBorder()
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,CanvasLineBorder).new()
+      self.class_name := "RaisedBorder"
+      return
+   end
+end
+
+
+class CanvasSunkenBorder(CanvasLineBorder)
+   public dup()
+      local c
+      c := CanvasSunkenBorder()
+      cast(self,CanvasLineBorder).dup_fields(c)
+      return c
+   end
+
+   public create_outer_visual_border()
+      return SunkenBorder()
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,CanvasLineBorder).new()
+      self.class_name := "SunkenBorder"
+      return
+   end
+end
+

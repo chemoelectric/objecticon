@@ -1,0 +1,30 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+class CanvasComponentUI()
+   public defer create_canvas_component(canvas)
+
+   public defer get_category()
+   public defer get_name()
+
+   public get_icon()
+   end
+
+   public get_button() 
+      local b, icon
+      icon := get_icon() | fail
+      b := IconButton()
+      b.set_image(icon)
+      b.set_tooltip(get_name())
+      return b
+   end
+end
+

@@ -1,0 +1,47 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+#
+#
+class CanvasLabelDialog(CanvasComponentDialog)
+   public 
+   paint_field
+
+   public validate_input()
+      cast(self,CanvasComponentDialog).validate_input() | fail 
+      \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
+      self.paint_field.validate_input() | fail
+      return
+   end
+
+   public set_vals()
+      cast(self,CanvasComponentDialog).set_vals()
+      c.set_paint(paint_field.get_contents())
+   end
+
+   public setup()
+      local p
+      cast(self,CanvasComponentDialog).setup()
+
+      p := TabItem()
+      p.set_layout(GridLayout("extra=borders"))
+      p.set_label("General")
+      add_tab_at_front(p)
+
+      paint_field := PaintField("title=",Label("label=Label"), "c:eol")
+      paint_field.set_contents(c.paint)
+      p.add(paint_field)
+   end
+
+end
+

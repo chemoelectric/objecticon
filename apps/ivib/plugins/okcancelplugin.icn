@@ -1,0 +1,65 @@
+import gui, ivib_plugin
+
+class OkCancelPlugin(Plugin)
+   public get_ui_name()
+      return "OkCancel"
+   end
+
+   public init_component(obj)
+      obj.class_name := "Component"
+      obj.import_name := "gui"
+      obj.name := "ok_cancel"
+      insert(obj.config, "okay_label", "Okay")
+      insert(obj.config, "cancel_label", "Cancel")
+      insert(obj.config, "okay_method", "on_okay")
+      insert(obj.config, "cancel_method", "dispose")
+   end
+
+   public validate_config(obj, new_config)
+      *\new_config["okay_label"] > 0 | return error("Must have an okay_label")
+      *\new_config["cancel_label"] > 0 | return error("Must have an cancel_label")
+      return
+   end
+
+   public gen_code(c, obj)
+      local t, h
+      t := c.get_temp_var()
+      c.line(obj.name || ".set_layout(GridLayout(\"flush\"))")
+      c.line(t || " := TextButton(\"label=" || obj.config["okay_label"] || "\")")
+      if h := \obj.config["okay_method"] then {
+         c.line(t || ".connect(self, \"" || h || "\", Event.ACTION)")
+         c.add_method(h, ["ev"])
+      }
+      c.line(obj.name || ".add(" || t || ")")
+      c.line(t || " := TextButton(\"label=" || obj.config["cancel_label"] || "\")")
+      if h := \obj.config["cancel_method"] then {
+         c.line(t || ".connect(self, \"" || h || "\", Event.ACTION)")
+         c.add_method(h, ["ev"])
+      }
+      c.line(obj.name || ".add(" || t || ")")
+   end
+
+   public display(obj, r)
+      DrawImageEx(obj.cbwin, obj.x, obj.y, get_display_icon())
+   end
+
+   public get_default_width(obj)
+      return image_width(get_display_icon())
+   end
+
+   public get_default_height(obj)
+      return image_height(get_display_icon())
+   end
+
+   public get_display_icon()
+      return ( 
+              $include "okcancel.icon"
+              )
+   end
+end
+
+procedure main()
+   return OkCancelPlugin()
+end
+
+

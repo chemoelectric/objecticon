@@ -1,0 +1,42 @@
+#
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+############################################################################
+#
+#
+#
+class CanvasTextDisplayDialog(CanvasComponentDialog)
+   public 
+   contents
+
+   public set_vals()
+      cast(self,CanvasComponentDialog).set_vals()
+      if *contents.get_contents_str() = 0 then
+         c.set_contents([])
+      else
+         c.set_contents(contents.get_contents())
+   end
+
+   public setup()
+      local p
+
+      cast(self,CanvasComponentDialog).setup()
+
+      p := TabItem()
+      p.set_layout(GridLayout())
+      add_tab_at_front(p)
+      p.set_label("Contents")
+
+      contents := EditableTextList()
+      contents.set_size(200, 200)
+      contents.set_contents(copy(c.get_contents()))
+      p.add(contents)
+   end
+end
+

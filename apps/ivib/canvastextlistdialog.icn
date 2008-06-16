@@ -1,0 +1,55 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+#
+#
+class CanvasTextListDialog(CanvasComponentDialog)
+   public 
+   contents,                #                
+   select_group
+
+   public set_vals()
+      cast(self,CanvasComponentDialog).set_vals()
+      if *contents.get_contents_str() = 0 then
+         c.set_contents([])
+      else
+         c.set_contents(contents.get_contents())
+      c.set_select_mode(select_group.get_select_mode())
+   end
+
+   public setup()
+      local p
+
+      cast(self,CanvasComponentDialog).setup()
+
+      p := TabItem()
+      p.set_layout(GridLayout())
+      add_tab_at_front(p)
+      p.set_label("Contents")
+      contents := EditableTextList()
+      contents.set_size(200, 200)
+      contents.set_contents(copy(c.get_contents()))
+      p.add(contents)
+
+      p := TabItem()
+      p.set_layout(GridLayout("extra=borders"))
+      add_tab(p)
+      p.set_label("Selection")
+
+      p.add(Label("label=Selection:"))
+      select_group := SelectModeList()
+      p.add(select_group)
+      select_group.set_select_mode(c.select_mode)
+   end
+end
+

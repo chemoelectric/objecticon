@@ -1,0 +1,378 @@
+import gui
+
+#############################################################################
+#
+# Preferences for Canvas.
+#     
+class CanvasPreferencesDialog(Dialog)
+   public 
+   c,                       # The object being edited
+   okay,                    # Okay button
+   cancel,                  # Cancel button
+   has_ticker,              # Checkbox + rate
+   text_ticker_rate,
+   w_spec_tf,                  # TextField
+   h_spec_tf,                  # TextField
+   set_w_default,           # CheckBoxes                     
+   set_h_default,           #                     
+   only_enlarge_width,
+   only_enlarge_height,
+   okay_result,             # Flag indicating result
+   name,                    # TextField - object name
+   is_component_cb,         # Component or not
+   superclass_name,         # TextField - superclass name
+   import_name,             # TextField - import name
+   layout_filename_cb,
+   layout_filename,
+   tabset,                  # TabSet
+   pos_tab,                 # Size/position tab
+   methods_tab,             # Code generation tab
+   attrib_tab,              # Attrib tab
+   gen_main,                # CheckBoxes for code generation flags
+   gen_component_setup,
+   gen_init_dialog,
+   gen_initially,
+   gen_indent,
+   layout_field,
+   orig_layout,
+   event_tab
+
+   #
+   # Get the result
+   #  
+   public get_okay_result()
+      return self.okay_result
+   end
+
+   public on_cancel()
+      self.dispose()
+   end
+
+   public on_has_ticker()
+      text_ticker_rate.toggle_is_shaded()
+   end
+   
+   public on_layout_change()
+      # Need to set here to update the settings below.
+      c.set_layout(layout_field.get_contents())
+
+      if /self.c.layout_delegate then {
+         set_w_default.set_is_shaded("t")
+         set_w_default.set_is_checked("f")
+         w_spec_tf.set_is_shaded("f")
+      } else
+         set_w_default.set_is_shaded("f")
+
+      if /self.c.layout_delegate then {
+         set_h_default.set_is_shaded("t")
+         set_h_default.set_is_checked("f")
+         h_spec_tf.set_is_shaded("f")
+      } else
+         set_h_default.set_is_shaded("f")
+   end
+
+   public on_okay()
+      local d
+      # 
+      # Validate data
+      #
+      integer(self.gen_indent.get_contents()) | return alert_error(self, "Indent not integer")
+      if w_spec_tf.is_unshaded() then
+         integer(w_spec_tf.get_contents()) | return alert_error(self, "Invalid width")
+      if h_spec_tf.is_unshaded() then
+         integer(h_spec_tf.get_contents()) | return alert_error(self, "Invalid height")
+      util_check_attribs(self, attrib_tab.get_table()) | fail
+
+      c.dialog_struct.only_enlarge_width_flag := if only_enlarge_width.is_checked() then 1 else &null
+      c.dialog_struct.only_enlarge_height_flag := if only_enlarge_height.is_checked() then 1 else &null
+
+      #
+      # Set some values.
+      #
+      if has_ticker.is_checked() then
+         c.dialog_struct.ticker_rate := integer(text_ticker_rate.get_contents()) | return alert_error(self, "ticker rate not integer")
+      else
+         c.dialog_struct.ticker_rate := &null
+
+      #
+      # Set the attribs list.
+      #
+      c.dialog_struct.wattribs := attrib_tab.get_table()
+
+      c.event_handlers := event_tab.get_contents()
+      c.gen_main := if self.gen_main.is_checked() then 1 else &null
+      c.gen_component_setup := if self.gen_component_setup.is_checked() then 1 else &null
+      c.gen_init_dialog := if self.gen_init_dialog.is_checked() then 1 else &null
+      c.gen_initially := if self.gen_initially.is_checked() then 1 else &null
+      c.gen_indent := integer(self.gen_indent.get_contents()) 
+
+      if c.layout_delegate ~=== orig_layout then {
+         if \c.layout_delegate then {
+            every d := !c.children do {
+               d.layout_safe()
+            }
+         } else {
+            every d := !c.children do {
+               d.x_spec := d.x - c.x
+               d.y_spec := d.y - c.y
+            }
+         }
+      }
+
+      c.set_name(name.get_contents())
+      c.superclass_name := self.superclass_name.get_contents()
+      c.is_component := if self.is_component_cb.is_checked() then 1 else &null
+      c.import_name := self.import_name.get_contents()
+      c.layout_filename := if self.layout_filename_cb.is_checked() then
+         self.layout_filename.get_contents() else &null
+
+      c.dialog_iw := if w_spec_tf.is_shaded() then &null else w_spec_tf.get_contents()
+      c.dialog_ih := if h_spec_tf.is_shaded() then &null else h_spec_tf.get_contents()
+
+      self.okay_result := 1
+      self.dispose()
+   end
+
+   public on_is_component_cb(ev)
+      local s
+      s := self.superclass_name.get_contents()
+      if self.is_component_cb.is_checked() then {
+         if s == "Dialog" then
+            self.superclass_name.set_contents("Component")
+         self.gen_init_dialog.set_is_shaded("t")
+         self.gen_main.set_is_shaded("t")
+         only_enlarge_width.set_is_shaded("t")
+         only_enlarge_height.set_is_shaded("t")
+      } else {
+         if s == "Component" then
+            self.superclass_name.set_contents("Dialog")
+         self.gen_init_dialog.set_is_shaded("f")
+         self.gen_main.set_is_shaded("f")
+         only_enlarge_width.set_is_shaded("f")
+         only_enlarge_height.set_is_shaded("f")
+      }
+   end
+
+   public on_set_w_default()
+      w_spec_tf.toggle_is_shaded()
+   end
+
+   public on_set_h_default()
+      h_spec_tf.toggle_is_shaded()
+   end
+
+   public on_layout_filename_cb()
+      self.layout_filename.toggle_is_shaded()
+   end
+
+   #
+   # Add the tab to the TabSet
+   #
+   public add_tab(t) 
+      t.label_border.x_align := Align.L
+      tabset.add_tab(t)
+   end
+
+   public new(c)
+      local label, l, code_tab, oc
+      cast(self,Dialog).new()
+      self.c := c
+      label := "Dialog Preferences"
+      self.set_wattrib("label",  label)
+
+      set_layout(GridLayout())
+
+      tabset := ListTabSet("c:eol")
+      self.set_focus(tabset.dl)
+      add(tabset)
+
+      pos_tab := TabItem()
+      pos_tab.set_layout(GridLayout("extra=borders"))
+      pos_tab.set_label("Size")
+      add_tab(pos_tab)
+
+      l := Label()
+      l.set_label("W : ")
+      pos_tab.add(l)
+
+      w_spec_tf := TextField()
+      w_spec_tf.set_size(130)
+      pos_tab.add(w_spec_tf)
+
+      set_w_default := CheckBox("c:eol")
+      set_w_default.connect(self.on_set_w_default, Event.ACTION)
+      set_w_default.set_label("Default")
+      if /c.dialog_iw then {
+         set_w_default.set_is_checked("t")
+         w_spec_tf.set_is_shaded("t")
+         w_spec_tf.set_contents(c.dialog_w)
+      } else
+         w_spec_tf.set_contents(c.dialog_iw)
+      if /c.layout_delegate then
+         set_w_default.set_is_shaded("t")
+      pos_tab.add(set_w_default)
+
+      only_enlarge_width := CheckBox("c:eol", "c:tab=1", "c:w=2", "label=Only allow resize above original size")
+      if \c.dialog_struct.only_enlarge_width_flag then
+         only_enlarge_width.set_is_checked("t")
+      pos_tab.add(only_enlarge_width)
+
+
+      l := Label()
+      l.set_label("H : ")
+      pos_tab.add(l)
+
+      h_spec_tf := TextField()
+      h_spec_tf.set_size(130)
+      pos_tab.add(h_spec_tf)
+
+      set_h_default := CheckBox("c:eol")
+      set_h_default.connect(self.on_set_h_default, Event.ACTION)
+      set_h_default.set_label("Default")
+      if /c.dialog_ih then {
+         set_h_default.set_is_checked("t")
+         h_spec_tf.set_is_shaded("t")
+         h_spec_tf.set_contents(c.dialog_h)
+      } else
+         h_spec_tf.set_contents(c.dialog_ih)
+      if /c.layout_delegate then
+         set_h_default.set_is_shaded("t")
+      pos_tab.add(set_h_default)
+
+      only_enlarge_height := CheckBox("c:eol", "c:tab=1", "c:w=2", "label=Only allow resize above original size")
+      if \c.dialog_struct.only_enlarge_height_flag then
+         only_enlarge_height.set_is_checked("t")
+      pos_tab.add(only_enlarge_height)
+
+      pos_tab.add(Label("label=Layout"))
+      layout_field := LayoutField("c:eol", "c:w=2")
+      layout_field.set_contents(c.layout_delegate)
+      layout_field.connect(self.on_layout_change, Event.SELECTION_CHANGED)
+      pos_tab.add(layout_field)
+      orig_layout := c.layout_delegate
+     
+      self.attrib_tab := MapTab("label=WAttribs", "table=",c.dialog_struct.wattribs)
+      add_tab(self.attrib_tab)
+
+      methods_tab := TabItem()
+      methods_tab.set_layout(GridLayout("extra=borders"))
+      methods_tab.set_label("Methods")
+      add_tab(methods_tab)
+
+      gen_main := CheckBox("c:eol", "c:w=2")
+      gen_main.set_label("Generate main() procedure")
+      methods_tab.add(gen_main)
+
+      gen_component_setup := CheckBox("c:eol", "c:w=2")
+      gen_component_setup.set_label("Generate component_setup() method")
+      methods_tab.add(gen_component_setup)
+
+      gen_init_dialog := CheckBox("c:eol", "c:w=2")
+      gen_init_dialog.set_label("Generate init_dialog() & end_dialog() methods")
+      methods_tab.add(gen_init_dialog)
+
+      gen_initially := CheckBox("c:eol", "c:w=2")
+      gen_initially.set_label("Generate initially method")
+      methods_tab.add(gen_initially)
+
+      if \c.gen_main then
+         gen_main.set_is_checked("t")
+
+      if \c.gen_component_setup then
+         gen_component_setup.set_is_checked("t")
+
+      if \c.gen_init_dialog then
+         gen_init_dialog.set_is_checked("t")
+
+      if \c.gen_initially then
+         gen_initially.set_is_checked("t")
+
+
+      l := Label()
+      l.set_label("Indent")
+      methods_tab.add(l)
+
+      gen_indent := TextField()
+      gen_indent.set_size(50)
+      methods_tab.add(gen_indent)
+      gen_indent.set_contents(c.gen_indent)
+      
+      code_tab := TabItem()
+      code_tab.set_layout(GridLayout("extra=borders"))
+      code_tab.set_label("Code")
+      add_tab(code_tab)
+
+      l := Label()
+      l.set_label("Name")
+      code_tab.add(l)
+
+      name := TextField("c:eol")
+      name.set_size(200)
+      code_tab.add(name)
+
+      name.set_contents(c.name)
+
+      has_ticker := CheckBox()
+      has_ticker.connect(self.on_has_ticker, Event.ACTION)
+      has_ticker.set_label("Has ticker at rate")
+      code_tab.add(has_ticker)
+
+      text_ticker_rate := TextField("c:eol")
+      text_ticker_rate.set_size(200)
+      code_tab.add(text_ticker_rate)
+
+      if \c.dialog_struct.ticker_rate then {
+         has_ticker.set_is_checked("t")
+         text_ticker_rate.set_contents(string(c.dialog_struct.ticker_rate))
+      } else
+         text_ticker_rate.set_is_shaded("t")
+
+      l := Label()
+      l.set_label("Superclass")
+      code_tab.add(l)
+
+      self.superclass_name := TextField("c:eol")
+      self.superclass_name.set_size(200)
+      code_tab.add(self.superclass_name)
+      self.superclass_name.set_contents(c.superclass_name)
+
+      self.is_component_cb := CheckBox("label=Subclass of component",
+                                       "c:tab=1", "c:eol")
+      if \c.is_component then {
+         self.is_component_cb.set_is_checked("t")
+         self.gen_init_dialog.set_is_shaded("t")
+         self.gen_main.set_is_shaded("t")
+      }
+      self.is_component_cb.connect(self.on_is_component_cb, Event.ACTION)
+      code_tab.add(self.is_component_cb)
+
+      code_tab.add(Label("label=Import"))
+      self.import_name := TextField("c:eol", "size=200")
+      code_tab.add(self.import_name)
+      self.import_name.set_contents(c.import_name)
+
+      self.layout_filename_cb := CheckBox("label=Save layout in")
+      code_tab.add(self.layout_filename_cb)
+      self.layout_filename := TextField("c:eol", "size=200")
+      code_tab.add(self.layout_filename)
+      if \c.layout_filename then {
+         self.layout_filename_cb.set_is_checked("t")
+         self.layout_filename.set_contents(c.layout_filename)
+      } else {
+         self.layout_filename.set_is_shaded("t")
+         self.layout_filename.set_contents("$.layout")
+      }
+      self.layout_filename_cb.connect(self.on_layout_filename_cb, Event.ACTION)
+
+      event_tab := EventTab(c.event_handlers, name)
+      add_tab(event_tab)
+
+      oc := OkCancel()
+      oc.listen(self)
+      self.add(oc)
+      return
+   end
+end
+
+
+

@@ -1,0 +1,93 @@
+import gui
+
+
+class CanvasLayout(CanvasObject)
+   public gen_code(c)
+      c.line(name || " := " || self.class_name || "()")
+      c.add_var(name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+   end
+
+   private pre_decode()
+      new()
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return [
+              ["Name", "name"],
+              ["Class Name", "class_name"],
+              ["Import Name", "import_name"],
+              ["Class Variable", "class_variable"],
+              ["Parent", "parent"]
+              ]
+   end
+
+   public dialog()
+      return LayoutEdit(self)
+   end
+
+   public new()
+      self.name := "layout"
+      self.class_name := "CustomLayout"
+      self.import_name := "gui"
+      return
+   end
+end
+
+
+class CanvasGridLayout(CanvasLayout,GridLayout)
+   public doi_val, dii_val
+   public gen_code(c)
+      cast(self,CanvasLayout).gen_code(c)
+      c.line(name || ".set_doi(" || \self.doi_val || ")")
+      c.line(name || ".set_dii(" || \self.dii_val || ")")
+      c.line(name || ".set_extra(" || image(self.extra) || ")")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasGridLayout()
+      cast(self,CanvasObject).dup_fields(c)
+      c.doi_val := self.doi_val
+      c.dii_val := self.dii_val
+      c.extra := self.extra
+      c.set_doi(\c.doi_val)
+      c.set_dii(\c.dii_val)
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return [
+              ["DII val", "dii_val"],
+              ["DOI val", "doi_val"],
+              ["Extra", "extra"] ] ||| cast(self,CanvasLayout).get_template()
+   end
+
+   public post_decode()
+      self.set_doi(\self.doi_val)
+      self.set_dii(\self.dii_val)
+   end
+
+   public dialog()
+      return GridLayoutEdit(self)
+   end
+
+# WARN : parameterless initially method
+   public new()
+      cast(self,CanvasLayout).new()
+      cast(self,GridLayout).new()
+      self.class_name := "GridLayout"
+      #self.debug := 1
+      return
+   end
+end
+
