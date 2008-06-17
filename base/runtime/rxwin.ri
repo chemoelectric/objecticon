@@ -34,7 +34,7 @@ void unsetclip (wbp w);
 static dptr call(dptr proc, dptr args, int nargs);
 static void await_selectionnotify(wsp ws);
 
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
 int xft_textwidth(wbp w, char *s, int n);
 #endif
 
@@ -75,7 +75,7 @@ int n;
    pollctr>>=1; pollctr++;
    x = ws->x;
    y = ws->y;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    {
    XGCValues xgc;
    delta_x = xft_textwidth(w,s,n);
@@ -670,7 +670,7 @@ wbp w;
        */
       c = EVQUESUB(w,i);
       pre_x = ws->x;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
       ws->x -= xft_textwidth(w, &c, 1);
 #else
       ws->x -= XTextWidth(wc->font->fsp, &c, 1);
@@ -1018,7 +1018,7 @@ wbp w;
 		     XFreePixmap(d, ws->pix);
 		  ws->pix = (Pixmap) NULL;
 	          }
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
                if (ws->pixDraw) {
                   XftDrawDestroy(ws->pixDraw);
                   ws->pixDraw = NULL;
@@ -1186,7 +1186,7 @@ wbp w;
       }
    if (ws->win && ws->refcount > 1) {
       SETZOMBIE(w);
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
       if (ws->winDraw) {
          XftDrawDestroy(ws->winDraw);
          ws->winDraw = NULL;
@@ -1400,7 +1400,7 @@ int x, y;		/* current mouse position */
       ws->iconh = wd->fonts->ascent +
           wd->fonts->descent + 5;
       if (ws->iconlabel == NULL) ws->iconlabel = "";
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
       ws->iconw = xft_textwidth(w, ws->iconlabel,
 		  strlen(ws->iconlabel)) + 6;
 #else
@@ -1523,7 +1523,7 @@ int wmap(wbp w)
     */
    gcv.foreground = wd->colors[wc->fg].c ^ (ISXORREVERSE(w) ? wd->colors[wc->bg].c : 0);
    gcv.background = wd->colors[wc->bg].c;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    gcv.font       = wd->xfont->fid;
 #else
    gcv.font       = wc->font->fsp->fid;
@@ -2317,7 +2317,7 @@ char *s;
 	       }
 	    if (ws->iconic != IconicState) {
 	       SETZOMBIE(w);
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
                if (ws->winDraw) {
                   XftDrawDestroy(ws->winDraw);
                   ws->winDraw = NULL;
@@ -2862,7 +2862,7 @@ char **s;
    Protect(tmp = alc_font(w,s), return Failed);
    wc->font = tmp;
 
-#ifndef HAVE_XFT
+#ifndef HAVE_LIBXFT
    if (stdgc != NULL)
       XSetFont(stddpy, stdgc, wc->font->fsp->fid);
 #endif
@@ -2982,7 +2982,7 @@ int height;
 
       XFreePixmap(stddpy, stdpix);	/* free old pixmap */
       ws->pix = p;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
       if (ws->pixDraw) {
           XftDrawDestroy(ws->pixDraw);
           ws->pixDraw = NULL;
@@ -4281,7 +4281,7 @@ int x,y;
    wmhints = XGetWMHints(stddpy, stdwin);
    if (ws->iconwin)
       XDestroyWindow(stddpy, ws->iconwin);
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    if (ws->winDraw) {
       XftDrawDestroy(ws->winDraw);
       ws->winDraw = NULL;
@@ -4653,7 +4653,7 @@ int *status;
    if (stdgc == NULL) {
       gcv.foreground = wd->colors[wc->fg].c;
       gcv.background = wd->colors[wc->bg].c;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
       gcv.font       = wd->xfont->fid;
 #else
       gcv.font       = wc->font->fsp->fid;
@@ -4810,7 +4810,7 @@ wbp w;
    SETCLOSED(w);
    if (ws->win && ws->refcount > 1) {
       SETZOMBIE(w);
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
       if (ws->winDraw) {
          XftDrawDestroy(ws->winDraw);
          ws->winDraw = NULL;
@@ -5019,7 +5019,7 @@ char my_wmap(wbp w)
     */
    gcv.foreground = wd->colors[wc->fg].c ^ (ISXORREVERSE(w) ? wd->colors[wc->bg].c : 0);
    gcv.background = wd->colors[wc->bg].c;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    gcv.font       = wd->xfont->fid;
 #else
    gcv.font       = wc->font->fsp->fid;
@@ -5361,7 +5361,7 @@ int nargs;
 }
 #endif					/* !COMPILER */
 
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
 int xft_textwidth(wbp w, char *s, int n)
 {
     XGlyphInfo	extents; 

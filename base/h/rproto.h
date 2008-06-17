@@ -563,16 +563,16 @@ void detectRedirection();
       void	wflushall		(void);
       void postcursor(wbp);
       void scrubcursor(wbp);
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
       void drawstrng(wbp w, int x, int y, char *str, int slen);
 #endif
+      char my_wmap(wbp w);
 
    #endif				/* XWindows */
 
    #ifdef Graphics3D
       /* For creating child windows for 3D graphics */
       char child_window_stuff(wbp w, wbp wp, char child_window);
-      char my_wmap(wbp w);
       void makecurrent(wbp w);
    #endif					/* Graphics3D */
 

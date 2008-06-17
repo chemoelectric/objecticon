@@ -12,7 +12,7 @@ int okfont(char *spec, int size, int flags);
 int fontcmp(char *font1, char *font2, int size, int flags);
 wfp loadfont(wdp wd, char *s);
 
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
 static char *convert_spec(char *s);
 #endif
 #define DEFAULTFONTNAME "fixed"
@@ -435,7 +435,7 @@ char *s;
     * Initialize fonts and other things.
     */
    wd->numFonts = 1;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    wd->fonts = loadfont(wd, convert_spec(DEFAULTFONTNAME));
 #else
    wd->fonts = loadfont(wd, DEFAULTFONTNAME);
@@ -446,13 +446,13 @@ char *s;
       }
    wd->fonts->refcount = 1;
    wd->fonts->next = wd->fonts->previous = NULL;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    wd->xfont = XLoadQueryFont(wd->display, "fixed");
 #endif
    {
    XGCValues gcv;
    Display *stddpy = wd->display;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    gcv.font = wd->xfont->fid;
 #else
    gcv.font = wd->fonts->fsp->fid;
@@ -473,7 +473,7 @@ char *s;
    }
 
 
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
 
 /*
  * Convert a given font spec, which may or may not be in icon font spec format,
@@ -570,7 +570,7 @@ char **s;
    }
 
 
-#else /* HAVE_XFT */
+#else /* HAVE_LIBXFT */
 
 /*
  * allocate font s in the display attached to w
@@ -850,7 +850,7 @@ do { int r = fieldcmp(font1, font2, s, n); if (r != 0) return -r; } while (0)
    }
 
 
-#endif /* HAVE_XFT */
+#endif /* HAVE_LIBXFT */
 
 
 /*
@@ -903,7 +903,7 @@ char *s;
    if (rv->name == NULL) ReturnErrNum(305, NULL);
    strcpy(rv->name, s);
    /*printf("opening %s\n",rv->name);*/
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    rv->fsp = XftFontOpenName(wd->display, wd->screen, rv->name);
 #else
    rv->fsp = XLoadQueryFont(wd->display, rv->name);
@@ -914,7 +914,7 @@ char *s;
       return NULL;
       }
 
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    {
    XGlyphInfo	extents; 
    char s[256];
@@ -1015,7 +1015,7 @@ wbp w;
    else
       gcv.foreground = wd->colors[rv->fg].c;
    gcv.background = wd->colors[rv->bg].c;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
    gcv.font       = wd->xfont->fid;
 #else
    gcv.font       = rv->font->fsp->fid;
@@ -1079,7 +1079,7 @@ wsp ws;
    ws->refcount--;
    if(ws->refcount == 0) {
       ws->bits |= 1;			/* SETZOMBIE */
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
       if (ws->winDraw) {
          XftDrawDestroy(ws->winDraw);
          ws->winDraw = NULL;

@@ -271,19 +271,13 @@
 */
 
 #ifdef Graphics
-   #ifndef NoXpmFormat
-      #if UNIX
-         #undef HAVE_LIBXPM
-         #define HAVE_LIBXPM
-      #endif				/* UNIX */
-   #endif				/* NoXpmFormat */
-
    #ifndef MSWindows
       #ifndef PresentationManager
          #ifndef MacGraph
             #undef XWindows
             #define XWindows 1
-            #define HAVE_XFT 1
+            #define HAVE_LIBXFT 1
+            #define HAVE_LIBXPM 1
          #endif				/* MacGraph */
       #endif				/* PresentationManager */
    #endif				/* MSWindows */
@@ -735,17 +729,6 @@ Deliberate Syntax Error
 #define HAVE_LIBJPEG 0
 #endif					/* NoJPEG */
 
-#ifdef NoGL
-#undef HAVE_LIBGL
-#define HAVE_LIBGL 0
-#endif					/* NoGL */
-
-#ifdef NoODBC
-#undef HAVE_LIBIODBC
-#define HAVE_LIBIODBC 0
-#define HAVE_LIBODBC 0
-#endif					/* NoODBC */
-
 #ifndef HAVE_LIBZ
 #define HAVE_LIBZ 0
 #endif					/* HAVE_LIBZ */
@@ -753,29 +736,6 @@ Deliberate Syntax Error
 #ifndef HAVE_LIBJPEG
 #define HAVE_LIBJPEG 0
 #endif					/* HAVE_LIBJPEG */
-
-#ifndef HAVE_LIBGL
-#define HAVE_LIBGL 0
-#endif					/* HAVE_LIBJPEG */
-
-#ifndef HAVE_LIBIODBC
-#define HAVE_LIBIODBC 0
-#endif					/* HAVE_LIBIODBC */
-#ifndef HAVE_LIBODBC
-#define HAVE_LIBODBC 0
-#endif					/* HAVE_LIBODBC */
-
-#if HAVE_LIBGL
-#define Graphics3D 1
-#endif					/* HAVE_LIBGL */
-
-#ifndef Graphics
-#undef Graphics3D
-#endif					/* Graphics */
-
-#if HAVE_LIBIODBC || HAVE_LIBODBC
-#define ISQL 1
-#endif					/* HAVE_LIBIODBC */
 
 /*
  *  Vsizeof is for use with variable-sized (i.e., indefinite)

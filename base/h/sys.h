@@ -255,7 +255,7 @@
       #define VMS 0
    #endif				/* VMS */
 
-   #ifdef HAVE_XFT
+   #ifdef HAVE_LIBXFT
    #include <X11/Xft/Xft.h>
    #endif
 #endif					/* XWindows */

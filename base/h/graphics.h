@@ -186,11 +186,11 @@ typedef struct _wfont {
   int           descent;
   int		height;			
   int           maxwidth;               /* max width of one char */
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
   XftFont     * fsp;
 #else
   XFontStruct *	fsp;			/* X font pointer */
-#endif /* HAVE_XFT */
+#endif /* HAVE_LIBXFT */
 #endif					/* XWindows */
 #ifdef PresentationManager
    /*
@@ -288,7 +288,7 @@ typedef struct _wdisplay {
   int		screen;
   int		numFonts;
   wfp		fonts;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
   XFontStruct   *xfont;
 #endif
 #ifdef Graphics3D
@@ -505,7 +505,7 @@ typedef struct _wstate {
   Window        iconwin;		/* icon window */
   Pixmap	iconpix;		/* icon pixmap */
   Visual	*vis;
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
   XftDraw       *winDraw,*pixDraw;
 #endif
   int		normalx, normaly;	/* pos to remember when maximized */

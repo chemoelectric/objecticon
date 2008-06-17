@@ -29,7 +29,7 @@
 #define XLFD_Spacing	11
 #define XLFD_CharSet	13
 
-#ifdef HAVE_XFT
+#ifdef HAVE_LIBXFT
 #define TEXTWIDTH(w,s,n) xft_textwidth(w, s, n)
 #else
 #define TEXTWIDTH(w,s,n) XTextWidth((w)->context->font->fsp, s, n)
@@ -146,7 +146,7 @@
 
 #define drawsegments(w, segs, nsegs) \
    { STDLOCALS(w); RENDER2(XDrawSegments,segs,nsegs); }
-#ifndef HAVE_XFT
+#ifndef HAVE_LIBXFT
 #define drawstrng(w, x, y, s, slen) \
    { STDLOCALS(w); RENDER4(XDrawString, x, y, s, slen); }
 #endif
