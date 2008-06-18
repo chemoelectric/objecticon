@@ -1,4 +1,4 @@
-#include "nativeutils.h"
+#include "../h/nativeutils.h"
 
 #include <stdlib.h>
 
