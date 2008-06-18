@@ -3,8 +3,8 @@
  *  particularly those for establishing implementation-dependent standard
  *  macro definitions.
  */
-#include "../preproc/preproc.h"
-#include "../preproc/ptoken.h"
+#include "preproc.h"
+#include "ptoken.h"
 
 /*
  * The following code is operating-system dependent [@p_init.01]. 
@@ -59,7 +59,7 @@ char *_style = "tso:";
  * End of operating-system specific code.
  */
 
-#include "../preproc/pproto.h"
+#include "pproto.h"
 
 /*
  * Prototypes for static functions.

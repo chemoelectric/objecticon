@@ -2,8 +2,8 @@
  * This file contains routines for building tokens out of characters from a
  *  "character source". This source is the top element on the source stack.
  */
-#include "../preproc/preproc.h"
-#include "../preproc/ptoken.h"
+#include "preproc.h"
+#include "ptoken.h"
 
 /*
  * Prototypes for static functions.
@@ -18,7 +18,7 @@ int whsp_image = NoSpelling;    /* indicate what is in white space tokens */
 struct token *zero_tok;         /* token for literal 0 */
 struct token *one_tok;          /* token for literal 1 */
 
-#include "../preproc/pproto.h"
+#include "pproto.h"
 
 /*
  * IsWhSp(c) - true if c is a white space character.

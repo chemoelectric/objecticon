@@ -1,9 +1,9 @@
 /*
  * This files contains routines for getting the "next" token.
  */
-#include "../preproc/preproc.h"
-#include "../preproc/ptoken.h"
-#include "../preproc/pproto.h"
+#include "preproc.h"
+#include "ptoken.h"
+#include "pproto.h"
 
 /*
  * next_tok - get the next raw token. No macros are expanded here (although

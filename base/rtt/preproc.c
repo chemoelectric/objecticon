@@ -2,9 +2,9 @@
  * The functions in this file handle preprocessing directives, macro
  *  calls, and string concatenation.
  */
-#include "../preproc/preproc.h"
-#include "../preproc/ptoken.h"
-#include "../preproc/pproto.h"
+#include "preproc.h"
+#include "ptoken.h"
+#include "pproto.h"
 
 /*
  * Prototypes for static functions.

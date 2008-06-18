@@ -2,7 +2,7 @@
  * This file contains routines for setting up characters sources from
  *  files. It contains code to handle the search for include files.
  */
-#include "../preproc/preproc.h"
+#include "preproc.h"
 /*
  * The following code is operating-system dependent [@files.01].
  *  System header files needed for handling paths.
@@ -50,7 +50,7 @@ char *FileNameMacConvert(char *(*func)(char *),char *fn);
  * End of operating-system specific code.
  */
 
-#include "../preproc/pproto.h"
+#include "pproto.h"
 
 /*
  * Prototype for static function.

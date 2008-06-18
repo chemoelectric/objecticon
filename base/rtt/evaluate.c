@@ -5,8 +5,8 @@
  *  document. The function eval() is called from the outside.
  */
 
-#include "../preproc/preproc.h"
-#include "../preproc/ptoken.h"
+#include "preproc.h"
+#include "ptoken.h"
 
 /*
  * Prototypes for static functions.
@@ -24,7 +24,7 @@ static long incl_or        (struct token **tp, struct token *trigger);
 static long log_and        (struct token **tp, struct token *trigger);
 static long log_or         (struct token **tp, struct token *trigger);
 
-#include "../preproc/pproto.h"
+#include "pproto.h"
 
 /*
  * <primary> ::= <identifier>

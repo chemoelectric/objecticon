@@ -2,12 +2,12 @@
  * This file does most of the memory management.
  */
 
-#include "../preproc/preproc.h"
-#include "../preproc/ptoken.h"
+#include "preproc.h"
+#include "ptoken.h"
 
 struct src *src_stack = NULL;  /* stack of token sources */
 
-#include "../preproc/pproto.h"
+#include "pproto.h"
 
 /*
  * new_macro - allocate a new entry for the macro symbol table.

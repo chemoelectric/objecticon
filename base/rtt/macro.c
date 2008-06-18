@@ -1,9 +1,9 @@
 /*
  * This file contains various functions for dealing with macros.
  */
-#include "../preproc/preproc.h"
-#include "../preproc/ptoken.h"
-#include "../preproc/pproto.h"
+#include "preproc.h"
+#include "ptoken.h"
+#include "pproto.h"
 
 /*
  * Prototypes for static functions.

@@ -1,8 +1,8 @@
 /*
  * The functions in this file print error messages.
  */
-#include "../preproc/preproc.h"
-#include "../preproc/pproto.h"
+#include "preproc.h"
+#include "pproto.h"
 extern char *progname;
 
 /*

@@ -1,5 +1,5 @@
-#include "../preproc/preproc.h"
-#include "../preproc/pproto.h"
+#include "preproc.h"
+#include "pproto.h"
 
 #define IndentInc 3
 #define MaxCol 80
