@@ -276,8 +276,6 @@
          #ifndef MacGraph
             #undef XWindows
             #define XWindows 1
-            #define HAVE_LIBXFT 1
-            #define HAVE_LIBXPM 1
          #endif				/* MacGraph */
       #endif				/* PresentationManager */
    #endif				/* MSWindows */

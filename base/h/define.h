@@ -20,3 +20,5 @@
 #define NoMessaging 1
 #define DeBugLinker 1
 #define NoDbm       1
+#define NoProfil    1
+#define NoEventMon  1
