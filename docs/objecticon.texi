@@ -1,0 +1,743 @@
+% -*-texinfo-*-
+\input texinfo
+
+@setfilename out
+
+@copying
+This documentation is in the public domain.
+@end copying
+
+@dircategory Programming Languages
+@direntry
+* Object Icon: (objecticon).       An object-oriented version of the Icon programming language
+@end direntry
+
+@finalout
+
+@titlepage
+@title Object Icon
+@subtitle Introduction
+@author R Parlett (r.parlett@@gmail.com)
+
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@ifnottex
+@node Top
+@top Object Icon
+
+@unnumbered Object Icon
+Object Icon is an object-oriented extension of the Icon programming
+language. Some of the main features are :-
+
+@itemize @bullet
+@item Multiple inheritance
+@item Static and instance variables and methods
+@item Access modifiers: public, private, protected, package, final and readable.
+@item Constants, with automatic initialization.
+@item Package/namespace system
+@end itemize
+@end ifnottex
+@menu
+* Overview::                    Read for a smoother start
+* Classes and Objects::         Detailed info about the OO side of Object Icon
+* Differences - Icon::          Differences between Object Icon and Icon
+* Differences - Unicon::        Differences between Object Icon and Unicon
+
+* Key Index::                   Index of Vi and Ex Commands
+* Function Index::              Index of Viper Functions
+* Variable Index::              Index of Viper Variables
+* Package Index::               Index of Packages Mentioned in this Document
+* Concept Index::               Vi, Ex and Emacs concepts
+
+* Acknowledgments::
+
+@detailmenu
+ --- The Detailed Node Listing ---
+
+Object Icon
+
+* Classes and Objects - Introduction::  A brief intro
+* Fields::                      The different types of field in a class
+* Inheritance::                 Inheritance in Object Icon
+* Field modifiers::             Indicate access and other attributes of a field
+* Method pointers::             How instance methods work
+* Casts::                       Accessing overridden methods
+* The new() method::            Called during object creation
+* Deferred methods::            Methods with no body
+
+Inheritance
+
+* Inheritance restrictions:: What's allowed
+* Field name clashes:: When names collide
+
+Field modifiers
+
+* private:: Fields accessible in defining class only
+* public:: Fields accessible anywhere
+* package:: Fields accessible in same package
+* protected:: Fields accessible in same class hierarchy
+* static:: Fields with one instance only
+* const:: Constant read-only fields
+* readable:: Allow extra read-only access
+* final:: Prevents overriding
+
+@end detailmenu
+@end menu
+
+@node Overview
+@chapter Overview
+
+@node Classes and Objects
+@chapter Classes and Objects
+@menu
+* Classes and Objects - Introduction::  A brief intro
+* Fields::                      The different types of field in a class
+* Inheritance::                 Inheritance in Object Icon
+* Field modifiers::             Indicate access and other attributes of a field
+* Method pointers::             How instance methods work
+* Casts::                       Accessing overridden methods
+* The new() method::            Called during object creation
+* The init() method::           
+* Deferred methods::            Methods with no body
+@end menu
+@node Classes and Objects - Introduction
+@section Introduction
+ 
+ The basic format for a class is
+@example
+[final] class <classname> ( <superclasses> )
+        <field definitions>
+end
+@end example
+The field definitions are either variables or methods.  Each definition
+starts with the access modifiers, which specify who may access the
+field, and how it may be accessed.  Typical variable declarations are :-
+@example
+private x, y                    # Private instance variables
+public static const PI          # A constant, accessible anywhere
+private readable z              # A private variable, but accessible read-only from outside
+@end example
+The meaning of the various modifiers is explained in detail later.
+ 
+A method definition looks like :-
+@example
+# A public instance method
+public set_loc(x, y)
+   self.x := x
+   self.y := y
+end
+
+# A static method accessible without an instance
+public static origin()
+   return Point(0,0)
+end
+@end example
+To bring these things together, here is a simple class definition to represent an x,y point :-
+@example
+class Point()
+   public const x, y
+   public static const ORIGIN
+
+   private static init()
+      ORIGIN := Point(0, 0)
+   end
+
+   # Radius of a circle on which this point lies
+   public radius()
+      return sqrt(x * x + y * y)
+   end
+
+   # Distance between two points
+   public static distance(p1, p2)
+      return sqrt((p1.x - p2.x) ^ 2 + (p1.y - p2.y) ^ 2)
+   end
+
+   public new(x, y)
+      self.x := x
+      self.y := y
+      return
+   end
+end
+@end example
+The static init() method is used to initialize any static variables.
+It is called automatically the first time the class is referenced.  The
+new() method is similar, but is used to initialize instances - it is
+called automatically every time a new object is created.  Some examples
+of using the class :-
+@example 
+p1 := Point(-2, -3)
+p2 := Point(4, 3)
+write(Point.distance(p1, p2))
+write(p2.radius())
+write(Point.distance(p2, Point.ORIGIN))
+@end example
+One thing to note about the @code{Point} class is that it is immutable.  That
+means that its state does not change once it has been created.  This is
+achieved by declaring its two instance variables as "const".  The
+following attempts to change these variables' values would cause a
+runtime error :-
+@example
+p1.x := 100
+Point.ORIGIN.y := 1
+p1.new(3, 4)
+@end example
+The static field @code{ORIGIN} is also declared const.  That means that any
+attempt to change its value would also cause a runtime error :-
+@example
+Point.ORIGIN := 1    # Run-time error
+@end example
+Naturally these const variables have to be assignable at some point in
+order to be initialized.  For static variables, they are assignable
+during class initialization (when the init method is called), and for
+instance variables during object initialization (when the new method is
+called).  Thereafter, the variables become "locked", and are no longer
+assignable.
+@node Fields
+@section Fields
+Every class has a set of fields, each of which has a unique name.  Some
+of the fields may be defined in the class itself, but other may be
+inherited from the class's superclasses: @xref{Inheritance}.
+
+The fields can be divided into four basic categories.  Here is a class
+with one field of each sort.
+@example
+class X()
+   public a
+
+   public static b
+
+   public c(v)
+        self.a := v
+   end
+
+   public static d()
+   end
+end
+@end example
+The field @code{a} is an instance variable.  That is, every instance of
+@code{X} will have its own value of the field, accessed as follows :-
+@example
+x1 := X()
+x1.a := 100
+x2 := X()
+x2.a := 99   # Distinct from x1.a
+@end example
+The field @code{b} is a static variable.  This means that there is only one value of the
+variable in existence, and it is accessed via the class itself, rather than via any
+instance :-
+@example
+X.b := 101
+@end example
+The field @code{c} is an instance method.  It doesn't take up any space in the instance, but it
+is accessed in the same way as an instance variable :-
+@example
+x1 := X()
+x1.c(40)
+@end example
+An instance method has an implicit parameter @code{self}, which refers
+to the instance which was used to invoke the method (in the above
+example, @code{x1}).  The means by which this @code{self} parameter is
+passed into the method is quite subtle, and is described in more detail
+in the section on @ref{Method pointers}.
+
+Finally, the field @code{d} is a static method.  It doesn't have an
+implicit @code{self} parameter, and is invoked via the class, rather
+than an instance.  Instance variables and methods cannot be accessed
+from inside a static method (an error on linking will be produced).
+@example
+X.d()
+@end example
+@node Inheritance
+@section Inheritance
+@menu
+* Inheritance restrictions:: What's allowed
+* Field name clashes:: When names collide
+* Implemented classes::         All the things a class is
+@end menu
+Classes can inherit from multiple parent classes.  Fields of the parent
+classes are "merged" into the resulting class using a breadth first
+search.  For example, in the following situation
+@example 
+class X(A,B,C)
+        ...
+end
+@end example
+The fields of A, B and C are taken first, then the parents of A, B and
+C and then the parents of the parents, and so on.  If a class is
+encountered more than once during this process, it is simply ignored on
+the second and subsequent occasions.
+@node Inheritance restrictions
+@subsection
+There are some restrictions on what can be inherited, as follows.
+@itemize @bullet
+@item
+You cannot inherit from a superclass declared as final.  For example,
+this is not allowed :-
+@example
+final class Parent()
+end
+
+class Child(Parent)
+end
+@end example
+@item
+You can't override a method which was declared final.  For example, this
+is not allowed :-
+@example
+class Parent()
+   public final f()
+   end
+end
+
+class Child(Parent)
+   public f()
+   end
+end
+@end example
+@item
+It may also happen that there is a disallowed name clash - @xref{Field name clashes}.
+@end itemize
+@node Field name clashes
+@subsection Field name clashes
+It may be that a field name is encountered more than once whilst
+traversing the parent classes.  If this happens, then the first occurence is
+always the one that is inherited into the resulting class.  However, a
+compilation error may also be signalled.  This will happen UNLESS
+@itemize @bullet
+@item
+the second and subsequent occurences are static, OR
+@item
+both the first and the subsequent occurences are instance methods.
+@end itemize
+Looked at from another viewpoint, this table shows the permissible combinations, with
+an 'X' meaning disallowed and a '+' meaning allowed.
+
+@multitable @columnfractions 0.2 0.2 0.2 0.2 0.2
+@headitem First def'n @tab Instance var @tab Static var @tab Instance method @tab Static method
+@item Subsequent def'n
+@item Instance var @tab X @tab X @tab X @tab X
+@item Static var @tab + @tab + @tab + @tab +
+@item Instance method @tab X @tab X @tab + @tab X
+@item Static method @tab + @tab + @tab + @tab +
+@end multitable
+
+For an example of a permissible clash, consider the following:-
+@example
+class Parent()
+   public static x
+
+   private static init()
+      x := 100    # Meaning Parent.x := 100
+   end
+end
+
+class Child(Parent)
+   public x
+
+   public new()
+      x := 99     # Meaning self.x := 99
+      return
+   end
+end
+
+procedure main()
+   local z
+   z := Child()
+   write(z.x) # -> 99
+   write(Parent.x) # -> 100
+end
+@end example
+Here, Child inherits the instance field "x" from its own definition.
+The second static "x" still resides within the space reserved for it in
+Parent, so there is no problem.  However, if we swap the declarations
+around, then a problem arises :-
+@example 
+class Parent()
+   public x
+
+   public new()
+      x := 99   # Meaning self.x  ... not okay, Child's x is static
+      return
+   end
+end
+
+class Child(Parent)
+   static public x
+
+   private static init()
+      x := 100  # Meaning Child.x ... okay
+   end
+end
+
+procedure main()
+   local z
+   z := Child()
+end
+@end example
+If this program were allowed to compile, it wouldn't work because Child
+would have a static field @code{x}, but the reference to @code{x} in @code{x := 99}
+would attempt to assign to @code{self.x}, ie a non-existent instance field.
+This would cause a runtime error.
+@node Implemented classes
+@subsection Implemented classes
+
+
+@node Field modifiers
+@section Field modifiers
+@menu
+* private::                     Fields accessible in defining class only
+* public::                      Fields accessible anywhere
+* package::                     Fields accessible in same package
+* protected::                   Fields accessible in same class hierarchy
+* static::                      Fields with one instance only
+* const::                       Constant read-only fields
+* readable::                    Allow extra read-only access
+* final::                       Prevents overriding
+@end menu
+
+Here are the various modifiers which can be applied to a field.
+
+@node private
+@subsection private access
+A private field can only be accessed from within a method in the defining class.
+@node public
+@subsection public
+A public field can be accessed anywhere.
+@node package
+@subsection package
+A package field can only be accessed from within the same package.
+@node protected
+@subsection protected
+This varies slightly depending on whether we are accessing an instance
+field or a static field.  
+
+In the case of an non-static field, the caller must be a
+method in the implemented classes of the instance being accessed.  So,
+for example, consider the following tree of superclasses :-
+@example
+   A
+   |
+   B    C
+   \   / \
+    \ /   \
+     X     Y
+@end example
+Here, @code{X} has two superclasses, @code{B} and @code{C}.  @code{B} in
+turn has a superclass @code{A}, so @code{X}'s implemented classes are
+@code{X, B, C, A}.  This means that any protected instance field in
+@code{X} could only be accessed from a method within those four classes.
+A method in @code{Y}, would not be able to access the field in the
+instance of @code{X}, even if the field were defined in @code{C}, the
+common superclass of @code{X} and @code{Y} (in that case a method in
+@code{Y} @emph{could} access that field on an instance of @code{Y}).
+This little example program illustrates this.
+@example
+class C()
+   protected f
+
+   public new(f)
+      self.f := f
+      return
+   end
+end
+
+class X(C)
+end
+
+class Y(C)
+   public try(o)
+      write(o.f)
+   end
+end
+
+procedure main()
+   local x, y
+   x := X(100)
+   y := Y(99)
+   y.try(y)   # Okay, writes 99
+   y.try(x)   # Will lead to a runtime error...
+end
+@end example
+In the case of a static field, the field being accessed must be
+in the implemented classes of the calling method's class.  So in the above
+example a method in @code{X} could access static protected fields in any
+of the classes @code{X, B, C, A}.
+@node static
+@subsection static
+This declares the field as static - for more information on what this
+means, @xref{Fields}.
+@node const
+@subsection const
+Declaring a static field const means that it cannot be changed (ie, assigned to)
+after the class has been initialized, which is just after the class's
+static @code{init()} method has been called.  Therefore, static const fields
+can be initialized in @code{init()} and thereafter treated as constants, with any
+attempt to assign to them causing a runtime error.
+@example
+class Maths()
+   public static const PI
+
+   private static init()
+      PI := 3.14
+   end
+end
+
+procedure main()
+   write(Maths.PI) # Write 3.14
+   Maths.PI := 3   # Runtime error
+end
+@end example
+A const instance field is similar, and can be assigned to during
+instance initialization, but thereafter becomes fixed.  The class's
+@code{new()} method can be used to set initial values of the field.
+@example
+class Employee()
+   public const name, age
+
+   public new(name, age)
+      self.name := name
+      self.age := age
+      return
+   end
+end
+
+procedure main()
+   local e
+   e := Employee("Mary", 30)
+   write(e.name, ",", e.age)   # Writes Mary,30
+   e.age := 25                 # Runtime error
+end
+@end example
+A method cannot be declared const.
+@node readable
+@subsection readable
+The readable modifier must always be specified together with either the @ref{private}, @ref{public},
+or @ref{protected} modifier.  It indicates that the field is accessible in a read-only fashion, where
+it would otherwise be inaccessible, based on that other modifier.
+
+So for example, consider the following class :-
+@example
+class X()
+   private readable v
+
+   public f()
+      v := 100
+   end
+end
+
+procedure main()
+   local x
+   x := X()
+   x.f()
+   write(x.v)   # Okay, prints 100
+   x.v := 101   # Runtime error
+end
+@end example
+The field v can be read and assigned to within the @code{X}, but can
+only be read from outside of @code{X}.  Without the @code{readable} modifier, it
+would not be accessible at all outside of @code{X}, so the @code{write()} statement
+in @code{main()} would give a runtime error.
+
+Note that a @ref{public} field cannot be declared readable, because it
+is already readable everywhere.  Nor can a method be declared readable.
+@node final
+@subsection final
+Only an instance method can be declared final.  It indicates that the
+method cannot be overridden.  So, for example, the following will give
+an error during linking because the method @code{f()} in @code{Y}
+overrides @code{f()} in @code{X}, which is marked @code{final}.
+@example
+class X()
+   public final f()
+   end
+end
+
+class Y(X)
+   public f()
+   end
+end
+@end example
+A class can also be marked as @code{final}, and in this case it means that
+the class cannot be subclassed by another class.  So for example, this is
+not allowed :-
+@example
+final class X()
+   public f()
+   end
+end
+
+class Y(X)
+end
+@end example
+A static method cannot be @code{final} because static methods cannot be
+overridden, and a method cannot be marked @code{final} in a @code{final}
+class, because such a declaration would obviously be superfluous.
+@node Method pointers
+@section Method pointers
+When a static method field is accessed, the result is a procedure value.
+For example :-
+@example
+class X()
+   public static f()
+   end
+end
+
+procedure main()
+   local m
+   m := X.f
+   write("type=", type(m))
+   write("image=", image(m))
+end
+@end example
+This program writes :-
+@example
+type=procedure
+image=method X.f
+@end example
+The value of @code{m} is just a procedure that can be invoked when
+desired.
+
+For an instance method, the situation is a little more involved, because
+the instance needs to be kept to hand so that it can be passed to the
+method as the value of the @code{self} parameter.  To achieve this, when
+an instance method field is accessed, a small structure is created which
+holds two things, namely the instance and the method's procedure.  This
+structure is called a "methp" (short for "method pointer").
+
+To illustrate this, consider the following :-
+@example
+class X()
+   public g()
+   end
+end
+
+procedure main()
+   local i, m
+   i := X()
+   m := i.g
+   write("type=", type(m))
+   write("image=", image(m))
+end
+@end example
+The output in this case is :-
+@example
+type=methp
+image=methp(object X_1(0),method X.g)
+@end example
+The value @code{m} can now be used just like a procedure to invoke the
+method :-
+@example
+m(1, 2, 3)
+@end example
+and the effect of this is to call the method @code{g} with the given
+parameters, as well as the @code{self} parameter, which will have the
+value of the instance @code{i}.
+
+One other general point to note about methods is that access permissions
+are checked when the field is accessed, not when the method is called,
+which can be done at any later time from any location in the program.
+@node Casts
+@section Casts
+Casts are small icon structures which are used to access overridden methods.
+Consider the following program :-
+@example
+class X()
+   public f()
+      write("in X.f")
+   end
+end
+
+class Y(X)
+   public f()
+      write("in Y.f")
+   end
+end
+
+procedure main()
+   local i
+   i := Y()
+   i.f()
+   cast(i,X).f()
+end
+@end example
+Here the method @code{Y.f()} overrides @code{X.f()}.  Without a cast, it
+would be impossible to call the latter on an instance of class @code{Y}.
+Note that @code{cast} is just a builtin function, and does not use any
+special syntax.
+
+The cast contains two things, namely an object and a target class, which
+must be one of the object's @ref{Implemented classes}.  The result is
+something that will use the cast class, rather than the object's class,
+to resolve static and method field values.  Instance fields come from
+the object in the normal way.  So in the above example
+@code{cast(i,X).f()}, the value of @code{f} comes from the class
+@code{X}, and hence the overridden method is invoked.  
+
+Usually casts are used in a method which has overridden another method.
+So for example, if the @code{Y.f()} needed to call @code{X.f()},
+then it could do so as follows:-
+@example
+class Y(X)
+   public f()
+      write("in Y.f")
+      cast(self,X).f()
+   end
+end
+@end example
+@node The init() method
+@section The init() method
+The @code{init()} method is used to initialize a class, and in
+particular to initialize the values of any static variables.  It is
+called automatically the first time that one of the class's (static)
+fields is accessed, or when an instance of the class is created.
+
+Some other points to note about @code{init} :-
+@itemize @bullet
+@item
+A class's superclasses' @code{init} methods (if any) are called before the class's.
+@item
+An @code{init} method is only ever called once.
+@item
+The @code{init} method must be declared as a @ref{private} @ref{static}
+method.
+@item
+It is not possible to access the @code{init} field via normal field
+access, so the method can only ever be invoked by the runtime system
+itself.
+@end itemize
+@node The new() method
+@section The new() method
+
+@node Deferred methods
+@section Deferred methods
+
+@node Differences - Icon
+@chapter Differences - Icon
+
+@node Differences - Unicon
+@chapter Differences - Unicon
+
+@node Key Index
+@chapter Key Index
+
+@node Function Index
+@chapter Function Index
+
+@node Variable Index
+@chapter Variable Index
+
+@node Package Index
+@chapter Package Index
+
+@node Concept Index
+@chapter Concept Index
+
+
+@node Acknowledgments
+@chapter
+
+
+@bye
