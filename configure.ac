@@ -44,6 +44,7 @@ AC_CONFIG_COMMANDS(system, [
                 *) id=default ;;
         esac
         cp config/system/$id/rswitch.? base/common
+	mkdir -p bin
 ])
 AC_CONFIG_FILES([Makedefs:config/files/Makedefs],)
 AC_CONFIG_FILES([docs/Makefile:config/files/docs/Makefile])

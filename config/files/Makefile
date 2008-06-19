@@ -1,7 +1,6 @@
 include Makedefs
 
 all :
-	mkdir -p bin
 	make -C base all
 	make -C lib all
 	make -C apps all
