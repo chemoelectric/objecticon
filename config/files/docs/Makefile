@@ -1,7 +1,7 @@
 all: objecticon.info html
 
 clean:
-	rm objecticon.info
+	rm -f objecticon.info
 	rm -rf html
 
 objecticon.info:  objecticon.texi
