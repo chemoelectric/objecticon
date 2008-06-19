@@ -1,0 +1,19 @@
+OIHOME=@CONFIG_DIR@
+OIBIN=$(OIHOME)/bin
+OILIB=$(OIHOME)/lib
+
+CDBG=-ggdb
+LDFLAGS=@LDFLAGS@
+LIBS=@LIBS@
+CFLAGS=$(CWARN) $(CDBG) @CFLAGS@
+CPPFLAGS=@CPPFLAGS@
+
+MYSQL_HOME=/opt/mysql
+
+RM=rm -f
+RMDIR=rm -rf
+MKDIR=mkdir
+CP=cp
+export OIPATH:=$(OILIB)/main $(OILIB)/gui $(OILIB)/xml $(OILIB)/parser $(OILIB)/ipl
+export OLPATH:=$(OILIB)/incl
+export PATH:=$(OIBIN):$(PATH)

@@ -1,0 +1,25 @@
+include ../../Makedefs
+
+CWARN = -Wall
+
+OBJS=	long.o getopt.o time.o filepart.o identify.o strtbl.o \
+	mlocal.o literals.o rswitch.o alloc.o\
+	save.o rswitch.o redirerr.o xwindow.o nativeutils.o
+
+all:		$(OBJS)
+
+clean:		
+		rm -f *.o
+
+$(OBJS): ../h/define.h ../h/config.h ../h/cstructs.h ../h/mproto.h \
+	  ../h/typedefs.h ../h/proto.h ../h/cpuconf.h
+
+identify.o: ../h/version.h
+
+literals.o: ../h/esctab.h
+
+xwindow.o: ../h/graphics.h ../h/xwin.h
+
+rswitch.o: rswitch.s
+	$(CC) -c rswitch.[cs]
+
