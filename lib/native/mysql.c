@@ -297,7 +297,6 @@ int unimysql_character_set_name(int argc, struct descrip *argv) {
 
 int unimysql_dump_debug_info(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
 
    if (argc < 1)
       return 101;
@@ -439,7 +438,6 @@ int unimysql_stat(int argc, struct descrip *argv) {
 
 int unimysql_commit(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
 
    if (argc < 1)
       return 101;
@@ -454,7 +452,6 @@ int unimysql_commit(int argc, struct descrip *argv) {
 
 int unimysql_rollback(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
 
    if (argc < 1)
       return 101;
@@ -469,7 +466,6 @@ int unimysql_rollback(int argc, struct descrip *argv) {
 
 int unimysql_autocommit(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
    my_bool mode;
 
    if (argc < 1)
@@ -493,7 +489,6 @@ int unimysql_autocommit(int argc, struct descrip *argv) {
 
 int unimysql_more_results(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
 
    if (argc < 1)
       return 101;
@@ -508,7 +503,6 @@ int unimysql_more_results(int argc, struct descrip *argv) {
 
 int unimysql_next_result(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
 
    if (argc < 1)
       return 101;
@@ -701,7 +695,6 @@ int unimysql_ssl_set(int argc, struct descrip *argv) {
 
 int unimysql_error(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
 
    if (argc < 1)
       return 101;
@@ -718,7 +711,6 @@ int unimysql_error(int argc, struct descrip *argv) {
 
 int unimysql_errno(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
 
    if (argc < 1)
       return 101;
@@ -735,7 +727,6 @@ int unimysql_errno(int argc, struct descrip *argv) {
 
 int unimysql_thread_id(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
 
    if (argc < 1)
       return 101;
@@ -752,7 +743,6 @@ int unimysql_thread_id(int argc, struct descrip *argv) {
 
 int unimysql_warning_count(int argc, struct descrip *argv) {
    MYSQL *mysql;
-   char *s;
 
    if (argc < 1)
       return 101;
@@ -923,7 +913,6 @@ int unimysql_list_fields(int argc, struct descrip *argv) {
 int unimysql_list_processes(int argc, struct descrip *argv) {
    MYSQL *mysql;
    MYSQL_RES *res;
-   char *wild;
 
    if (argc < 1)
       return 101;
@@ -1022,8 +1011,6 @@ int unimysql_store_result(int argc, struct descrip *argv) {
 
 int unimysql_num_fields(int argc, struct descrip *argv) {
    MYSQL_RES *mysql_res;
-
-   int n;
 
    if (argc < 1)
       return 101;
