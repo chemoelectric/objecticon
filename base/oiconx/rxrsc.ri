@@ -1064,7 +1064,9 @@ wsp alc_winstate()
    ws->posx = ws->posy = -(MaxInt);
    ws->minwidth = ws->minheight = 0;
    ws->selectionproc = nulldesc;
+#ifdef HAVE_LIBXFT
    ws->pixDraw = ws->winDraw = NULL;
+#endif
 
    GRFX_LINK(ws, wstates);
    return ws;

@@ -2490,7 +2490,7 @@ function{0,1} WriteImage(argv[argc])
        * if the file name s does not specify a platform-dependent format.
        */
       r = dumpimage(w, s, x, y, width, height);
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
       if ((r == NoCvt) &&
 	  (strcmp(s + strlen(s)-4, ".jpg")==0 ||
           (strcmp(s + strlen(s)-4, ".JPG")==0))) {

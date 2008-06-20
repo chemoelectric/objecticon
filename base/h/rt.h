@@ -5,6 +5,7 @@
  * Include files.
  */
 
+#include "../h/auto.h"
 #include "../h/define.h"
 #include "../h/config.h"
 #include "../h/sys.h"

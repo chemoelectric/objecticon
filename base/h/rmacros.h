@@ -83,7 +83,7 @@
    #define Fs_Window3D  01000000	/* reading/writing on a window */
 #endif					/* Graphics3D */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    #define Fs_Compress  02000000	/* reading/writing compressed file */
 #endif					/* HAVE_LIBZ */
 

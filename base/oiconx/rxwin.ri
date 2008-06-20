@@ -4642,7 +4642,7 @@ int *status;
 	    }
          }
 #else					/* HAVE_LIBXPM */
-      return NULL;
+      return (Pixmap) NULL;
 #endif					/* HAVE_LIBXPM */
       }
 

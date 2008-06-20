@@ -9,7 +9,7 @@
 #if !COMPILER
 #include "../h/header.h"
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 static int readhdr	(char *name, struct header *hdr);
 #else					/* HAVE_LIBZ */
 static	FILE	*readhdr	(char *name, struct header *hdr);
@@ -264,7 +264,7 @@ extern int first_time;
 #endif					/* COMPILER */
 
 #if !COMPILER
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 
 int fdgets(int fd, char *buf, size_t count)
 {
@@ -306,7 +306,7 @@ int dgetc(int fd) {
  * Open the icode file and read the header.
  * Used by icon_init() as well as MultiThread's loadicode()
  */
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 static int readhdr(name,hdr)
 #else					/* HAVE_LIBZ */
 static FILE *readhdr(name,hdr)
@@ -314,7 +314,11 @@ static FILE *readhdr(name,hdr)
 char *name;
 struct header *hdr;
    {
+#ifdef HAVE_LIBZ
    int fdname = -1;
+#else
+   FILE *fname;
+#endif
    int n;
 
 #if MSDOS
@@ -393,7 +397,7 @@ struct header *hdr;
       fname = pathOpen(tname,ReadBinary);	/* try to find path */
 #else					/* MSDOS || OS2 */
 
-   #if HAVE_LIBZ
+   #ifdef HAVE_LIBZ
       fdname = open(tname,O_RDONLY);
    #else					/* HAVE_LIBZ */
       fname = fopen(tname, ReadBinary);
@@ -419,7 +423,7 @@ struct header *hdr;
 
       }
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    if (fdname == -1)			/* try the name as given */
 #else					/* HAVE_LIBZ */
    if (fname == NULL)			/* try the name as given */
@@ -429,7 +433,7 @@ struct header *hdr;
       fname = pathOpen(name, ReadBinary);
 #else					/* MSDOS || OS2 */
 
-   #if HAVE_LIBZ
+   #ifdef HAVE_LIBZ
       fdname = open(name, O_RDONLY);
    #else					/* HAVE_LIBZ */
       fname = fopen(name, ReadBinary);
@@ -441,7 +445,7 @@ struct header *hdr;
       } /* end if (n >= 4 && !stricmp(".exe", name + n - 4)) */
 #endif					/* MSDOS */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    if (fdname == -1)
       return -1;
 #else					/* HAVE_LIBZ */
@@ -475,7 +479,7 @@ struct header *hdr;
    char buf[200];
 
    for (;;) {
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
       if (fdgets(fdname, buf, sizeof(buf)-1) ==-1)
 	 error(name, errmsg);
 #else					/* HAVE_LIBZ */
@@ -491,7 +495,7 @@ struct header *hdr;
          break;
       }
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    while ((n = dgetc(fdname)) != EOF && n != '\f')	/* read thru \f\n\0 */
       ;
    dgetc(fdname);
@@ -504,7 +508,7 @@ struct header *hdr;
 #endif					/* HAVE_LIBZ */
 
 #else					/* ShellHeader */
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 deliberate syntax errror
 #endif					/* HAVE_LIBZ */
    if (fseek(fname, (long)MaxHeader, 0) == -1)
@@ -543,7 +547,7 @@ deliberate syntax errror
    }
 #endif                                  /* MSDOS && !NT */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    if (read(fdname,(char *)hdr, sizeof(*hdr)) != sizeof(*hdr))
 #else					/* HAVE_LIBZ */
    if (fread((char *)hdr, sizeof(char), sizeof(*hdr), fname) != sizeof(*hdr))
@@ -551,7 +555,7 @@ deliberate syntax errror
       error(name, errmsg);
    }
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    return fdname;
 #else					/* HAVE_LIBZ  */
    return fname;
@@ -563,7 +567,7 @@ deliberate syntax errror
  * The string must equal IVersion or IVersion || "Z".
  */
 void check_version(struct header *hdr, char *name,
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    int fdname
 #else
    FILE *fname
@@ -577,7 +581,7 @@ void check_version(struct header *hdr, char *name,
       fprintf(stderr,"icode version mismatch in %s\n", name);
       fprintf(stderr,"\ticode version: %s\n",(char *)hdr->config);
       fprintf(stderr,"\texpected version: %s\n",IVersion);
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
       close(fdname);
 #else					/* HAVE_LIBZ */
       fclose(fname);
@@ -822,7 +826,7 @@ Deliberate Syntax Error
 #endif					/* COMPILER */
 
 #if !COMPILER
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    fdname = readhdr(name,&hdr);
    if (fdname == -1) {
 #else					/* HAVE_LIBZ */
@@ -945,7 +949,7 @@ Deliberate Syntax Error
    BlkLoc(k_main) = (union block *) mainhead;
    k_current = k_main;
 #if !COMPILER
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    check_version(&hdr, name, fdname);
 #else
    check_version(&hdr, name, fname);
@@ -956,7 +960,7 @@ Deliberate Syntax Error
  * using gzread, else... call fdopen and use following code pretty much as-is
  */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 if ((strchr((char *)(hdr.config), 'Z'))!=NULL) { /* to decompress */
    fname= gzdopen(fdname,"r");
    }
@@ -969,7 +973,7 @@ else {
     * Read the interpretable code and data into memory.
     */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
  if ((strchr((char *)(hdr.config), 'Z'))!=NULL) { /* to decompress */
 
 #if OS2
@@ -1945,7 +1949,7 @@ C_integer bs, ss, stk;
    struct b_coexpr *coexp;
    struct progstate *pstate;
    struct header hdr;
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    int fdname;
 #endif					/* HAVE_LIBZ */
    FILE *fname = NULL;
@@ -1954,7 +1958,7 @@ C_integer bs, ss, stk;
    /*
     * open the icode file and read the header
     */
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    fdname = readhdr(name,&hdr);
    if (fdname== -1)
        return NULL;
@@ -2009,7 +2013,7 @@ C_integer bs, ss, stk;
    pstate->K_input  = *theInput;
    pstate->K_output = *theOutput;
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    check_version(&hdr, name, fdname);
 #else
    check_version(&hdr, name, fname);
@@ -2019,7 +2023,7 @@ C_integer bs, ss, stk;
     * Read the interpretable code and data into memory.
     */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    if ((strchr((char *)(hdr.config), 'Z'))!=NULL) { /* to decompress */
    fname= gzdopen(fdname,"r");
    if ((cbread = gzlongread(pstate->Code, sizeof(char), (long)hdr.hsize, fname))

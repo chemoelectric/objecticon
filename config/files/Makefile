@@ -12,6 +12,11 @@ clean :
 	make -C apps clean
 	make -C docs clean
 
+PACKAGE_NAME=@PACKAGE_NAME@
+PACKAGE_TARNAME=@PACKAGE_TARNAME@
+PACKAGE_VERSION=@PACKAGE_VERSION@
+PACKAGE_STRING=@PACKAGE_STRING@
+PACKAGE_BUGREPORT=@PACKAGE_BUGREPORT@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@

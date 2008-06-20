@@ -373,7 +373,7 @@ long len;
    }
 
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 /*
  * Read a long string in shorter parts from a comressed file. 
  * (Standard read may not handle long strings.)

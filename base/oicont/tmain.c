@@ -659,7 +659,7 @@ int main(int argc, char **argv)
     report("Linking:");
     ilink(link_files, ofile, &errors, &warnings);	/* link .u files to make icode file */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
     /*
      * we have linked together a bunch of files to make an icode,
      * now call file_comp() to compress it

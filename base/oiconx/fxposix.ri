@@ -580,7 +580,7 @@ function{0,1} truncate(f, l)
 	    int fd;
 	    IntVal(amperErrno) = 0;
 
-#if HAVE_LIBZ 
+#ifdef HAVE_LIBZ 
             if (BlkLoc(f)->file.status & Fs_Compress) {
                fail;
                }
@@ -619,7 +619,7 @@ function{0,1} flock(f, cmd)
       int fd, i=0;
       long flength;
 
-#if HAVE_LIBZ 
+#ifdef HAVE_LIBZ 
       if (BlkLoc(f)->file.status & Fs_Compress) {
          fail;
          }
@@ -698,7 +698,7 @@ function{0,1} fcntl(f, action, options)
       tended char *c;
       static dptr constr;
 
-#if HAVE_LIBZ 
+#ifdef HAVE_LIBZ 
       if (BlkLoc(f)->file.status & Fs_Compress) {
          fail;
          }
@@ -903,7 +903,7 @@ function{0,1} ioctl(f, action, options)
       if ((fd = get_fd(f, 0)) < 0)
 	 runerr(174, f);
 
-#if HAVE_LIBZ 
+#ifdef HAVE_LIBZ 
       if (BlkLoc(f)->file.status & Fs_Compress) {
          fail;
          }
@@ -1026,8 +1026,11 @@ function{0,1} fork()
 	 IntVal(amperErrno) = errno;
 	 fail;
 	 }
+#ifdef GRAPHICS
+      /* A child process can't interact with the graphics system */
       if (pid == 0)
         wdsplys = 0;
+#endif
       return C_integer pid;
 #endif					/* NT */
       }
@@ -1496,14 +1499,14 @@ function{0,1} crypt(key, salt)
       return string
       }
    inline {
-#ifdef NoCrypt
-      fail;
-      return nulldesc; /* NOTREACHED */
-#else					/* NoCrypt */
+#ifdef HAVE_LIBCRYPT
       char *crypt(const char *key, const char *salt);
       String(result, (char*)crypt(key, salt));
       return result;
-#endif					/* NoCrypt */
+#else
+      fail;
+      return nulldesc; /* NOTREACHED */
+#endif
    }
 end
 
@@ -1866,7 +1869,7 @@ function{0,1} stat(f)
 	    static dptr constr;
 	    int nfields, fd;
 
-#if HAVE_LIBZ 
+#ifdef HAVE_LIBZ 
             if (BlkLoc(f)->file.status & Fs_Compress)
                fail;
 #endif					/* HAVE_LIBZ */
@@ -2249,7 +2252,7 @@ function{0,1} select(files[nargs])
       for(k=0;k<nargs;k++) {
 	 if (is:file(files[k])) {
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
            if (BlkLoc(files[k])->file.status & Fs_Compress) { 
                fail;
                }
@@ -2267,7 +2270,7 @@ function{0,1} select(files[nargs])
 	             j -= ep->lelem.nslots;
 	          f = ep->lelem.lslots[j];
 		  if (is:file(f)) {
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 		     if (BlkLoc(files[k])->file.status & Fs_Compress) { 
 	                fail;
 	                }
@@ -2741,7 +2744,7 @@ function{0, 1} setenv(name, value)
 #if NT
       if (!SetEnvironmentVariable(name, value))
          fail;
-#else                                   /* NoCrypt */
+#else
 #if defined(SUN) || defined(HP)
 
       /*
@@ -2781,7 +2784,7 @@ function{0, 1} setenv(name, value)
       if (setenv(name, value, 1) < 0)
          fail;
 #endif
-#endif					/* NoCrypt */
+#endif
       return nulldesc;
    }
 end

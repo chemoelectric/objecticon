@@ -15,6 +15,12 @@
 /* define as 1 if we have jpeg */
 #undef HAVE_LIBJPEG
 
+/* define as 1 if we have crypt */
+#undef HAVE_LIBCRYPT
+
+/* define as 1 if we have dl */
+#undef HAVE_LIBDL
+
 /* define as 1 if we have getrlimit */
 #undef HAVE_GETRLIMIT
 

@@ -1,7 +1,7 @@
 #include "icont.h"
 #include "link.h"
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 
 #include "../h/header.h"
 

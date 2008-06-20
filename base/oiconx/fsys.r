@@ -147,7 +147,7 @@ function{1} close(f)
 #endif
 #endif					/* ReadDirectory */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
       if (BlkLoc(f)->file.status & Fs_Compress) {
 	 BlkLoc(f)->file.status = 0;
 	 if (gzclose((gzFile) fp)) fail;
@@ -519,7 +519,7 @@ Deliberate Syntax Error
             case 'z':
 	    case 'Z':
 
-#if HAVE_LIBZ      
+#ifdef HAVE_LIBZ      
 	       status |= Fs_Compress;
 
                continue; 
@@ -806,7 +806,7 @@ Deliberate Syntax Error
       else
 #endif					/* DBM */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
       if (status & Fs_Compress) {
          /*add new code here*/
          f = (FILE *)gzopen(fnamestr, mode);
@@ -1139,7 +1139,7 @@ function{0,1} read(f)
 #endif					/* PosixFns */
 
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
         /*
 	 * Read a line from a compressed file
 	 */
@@ -1386,7 +1386,7 @@ function{0,1} reads(f,i)
       Protect(StrLoc(s) = alcstr(NULL, i), runerr(0));
       StrLen(s) = 0;
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
       /*
        * Read characters from a compressed file
        */
@@ -1580,7 +1580,7 @@ function{0,1} seek(f,o)
 #endif					/* Graphics */
 
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
         if ( BlkLoc(f)->file.status & Fs_Compress) {
             if (o<0)
                fail;
@@ -1779,7 +1779,7 @@ end
    else
 #endif					/* Graphics */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    if (status & Fs_Compress) {
       if (gzputc((gzFile)(f.fp),'\n')==-1) {
           runerr(214);
@@ -1847,7 +1847,7 @@ end
       if (!(status & Fs_Socket)) {
 #endif					/* PosixFns */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
       if (status & (Fs_Compress
 		    )) {
 
@@ -2008,7 +2008,7 @@ function {1} name(x[nargs])
 		     else {
 #endif					/* Graphics */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
                      if (status & Fs_Compress) {
 			if (gzputc(f.fp,'\n')==-1)
                             runerr(214);
@@ -2123,7 +2123,7 @@ function {1} name(x[nargs])
 #endif					/* Graphics */
 
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 	          if (status & Fs_Compress){
                      if (gzputs(f.fp, StrLoc(t))==-1) 
 			runerr(214);

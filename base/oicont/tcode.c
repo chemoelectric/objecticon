@@ -3,12 +3,12 @@
  *  code.
  */
 
-#include "ttoken.h"
 #include "tsym.h"
 #include "../h/opdefs.h"
 #include "ucode.h"
 #include "tmain.h"
 #include "trans.h"
+#include "ttoken.h"
 
 /*
  * Prototypes.

@@ -37,14 +37,6 @@
  */
 
 /*
- * If define.h does not specify NoAuto, supplement config info with
- * autoconf-generated symbols.
- */
-#ifndef NoAuto
-#include "../h/auto.h"
-#endif					/* NoAuto */
-
-/*
  * If COMPILER is not defined, code for the interpreter is compiled.
  */
 
@@ -237,14 +229,6 @@
    #define LPATH "OLPATH"
 #endif
 
-#if defined(HAVE_LIBJVOIP) && defined(HAVE_LIBJRTP) && defined(HAVE_LIBJTHREAD) && defined(HAVE_LIBJVOIPAPI)
-#define HAVE_VOICE
-#endif
-
-#if defined(HAVE_LIBOGG) || defined(HAVE_LIBOPENAL)
-#define Audio
-#endif
-
 #ifdef MSWindows
    #undef Graphics
    #define Graphics 1
@@ -262,13 +246,6 @@
    #define Graphics 1
    #define ConsoleWindow 1
 #endif					/* PresentationManager */
-
-/*
- * Turn on graphics by default if available?  Not a good idea yet.
-#if defined(HAVE_LIBX11) && (HAVE_LIBX11!=0) && !defined(NoGraphics)
-#define Graphics 1
-#endif
-*/
 
 #ifdef Graphics
    #ifndef MSWindows
@@ -656,14 +633,6 @@ Deliberate Syntax Error
    #define LibSuffix ".a"
 #endif					/* LibSuffix */
 
-#ifndef CComp
-   #define CComp "cc"
-#endif					/* CComp */
-
-#ifndef COpts
-   #define COpts ""
-#endif					/* COpts */
-
 /*
  * Note, size of the hash table is a power of 2:
  */
@@ -716,24 +685,6 @@ Deliberate Syntax Error
    #undef DirectExecution
    #define DirectExecution
 #endif					/* Header */
-
-#ifdef NoLIBZ
-#undef HAVE_LIBZ
-#define HAVE_LIBZ 0
-#endif					/* NoLIBZ */
-
-#ifdef NoJPEG
-#undef HAVE_LIBJPEG
-#define HAVE_LIBJPEG 0
-#endif					/* NoJPEG */
-
-#ifndef HAVE_LIBZ
-#define HAVE_LIBZ 0
-#endif					/* HAVE_LIBZ */
-
-#ifndef HAVE_LIBJPEG
-#define HAVE_LIBJPEG 0
-#endif					/* HAVE_LIBJPEG */
 
 /*
  *  Vsizeof is for use with variable-sized (i.e., indefinite)

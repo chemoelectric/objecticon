@@ -2,6 +2,7 @@
  * Group of include files for translators, etc. 
  */
 
+#include "../h/auto.h"
 #include "../h/define.h"
 
 #if CSET2V2
@@ -18,11 +19,3 @@
 #include "../h/cstructs.h"
 #include "../h/proto.h"
 #include "../h/cpuconf.h"
-
-#ifdef ConsoleWindow
-   #include "../h/rmacros.h"
-   #include "../h/rstructs.h"
-   #include "../h/graphics.h"
-   #include "../h/rexterns.h"
-   #include "../h/rproto.h"
-#endif					/* ConsoleWindow */

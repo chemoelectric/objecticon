@@ -348,7 +348,7 @@ void detectRedirection();
    int	parsepattern	(char *s, int len, int *w, int *nbits, C_integer *bits);
    void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f);
    int	readGIF		(char *fname, int p, struct imgdata *d);
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
    int	readJPEG	(char *fname, int p, struct imgdata *d);
 #endif					/* HAVE_LIBJPEG */
    int	rectargs	(wbp w, int argc, dptr argv, int i,
@@ -675,24 +675,6 @@ void detectRedirection();
 
    #endif				/* PresentationManager */
 
-   #ifdef NAS
-   /*
-    * Audio support via NAS 1.2.4
-    */
-
-      short int PauseFlow  ( AudioComponentType *AuDev );
-      short int StopFlow   ( AudioComponentType *AuDev );
-      short int ResumeFlow ( AudioComponentType *AuDev );
-      short int InitAudio  ( AudioComponentType *AuDev );
-      short int SetVolume  ( AudioComponentType *AuDev );
-      short int GetVolume  ( AudioComponentType *AuDev );
-      short int OpenAudio  ( AudioComponentType *AuDev, char *AudioDeviceName);
-      short int CloseAudio ( AudioComponentType *AuDev );
-      short int IsAudioInUse ( AudioComponentType *AuDev );
-      short int PollServer   ( AudioComponentType *AuDev );
-      short int PlaySound    ( AudioComponentType *AuDev, char *FileName,
-			      int Volume, int Mode );
-   #endif					/* NAS */
 #endif					/* Graphics */
 
 

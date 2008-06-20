@@ -113,7 +113,7 @@ operator{*} ! bang(underef x -> dx)
                   else
 #endif					/* Graphics */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
                   if (status & Fs_Compress) {
 	              if (gzeof(fd)) fail;
                       if (gzgets((gzFile)fd,sbuf,MaxCvtLen+1) == Z_NULL) {

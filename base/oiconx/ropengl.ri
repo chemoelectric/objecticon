@@ -2155,7 +2155,7 @@ int fileimage(wbp w, char* filename)
    else {
      i = SCREENDEPTH(w);
      i = i / 8;
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
      r = readJPEG(filename, i, &im);
 
      if (r == Succeeded) {

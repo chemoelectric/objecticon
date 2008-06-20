@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
+#include <stdarg.h>
 
 /*
  * Operating-system-dependent includes.
@@ -188,19 +188,6 @@
    #include <stsdef.h>
 #endif					/* VMS */
 
-/*
- * Window-system-dependent includes.
- */
-#ifdef ConsoleWindow
-   #include <stdarg.h>
-   #undef printf
-   #undef fprintf
-   #undef fflush
-   #define printf Consoleprintf
-   #define fprintf Consolefprintf
-   #define fflush Consolefflush
-#endif					/* ConsoleWindow */
-
 #ifdef XWindows
    /*
     * Undef VMS under UNIX, and UNIX under VMS,
@@ -263,7 +250,7 @@
 /*
  * Include this after Xlib stuff, jmorecfg.h expects this.
  */
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
 
 #if defined(__x86_64__) && defined(XWindows)
 /* Some AMD64 Gentoo systems seem to have a buggy macros in
@@ -346,7 +333,7 @@
 #include <GL/glu.h>
 #endif					/* Graphics3D */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 			
 #  ifdef STDC
 #    define OF(args)  args
@@ -364,10 +351,3 @@
 
 #endif					/* HAVE_LIBZ */
 
-#ifdef HAVE_VOICE
-#include "../lib/voice/jvoip.h"
-#endif					/* HAVE_VOICE */
-
-#ifdef Audio
-#include "../lib/audio/audio.h"
-#endif					/* Audio */

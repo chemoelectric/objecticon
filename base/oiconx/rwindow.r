@@ -1111,7 +1111,7 @@ typedef struct lzwnode {	/* structure of LZW encoding tree node */
    unsigned short sibling;	/* next sibling */
    } lzwnode;
 
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
 struct my_error_mgr { /* a part of JPEG error handling */
   struct jpeg_error_mgr pub;	/* "public" fields */
   jmp_buf setjmp_buffer;	/* for return to caller */
@@ -1168,7 +1168,7 @@ static unsigned long gf_curr;		/* current partial byte(s) */
 static int gf_valid;			/* number of valid bits */
 static int gf_rem;			/* remaining bytes in this block */
 
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
 static int jpg_space;
 #endif					/* HAVE_LIBJPEG */
 
@@ -1711,7 +1711,7 @@ int b;
    }
 
 
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
 /*
  * readJPEG(filename, p, imd) - read JPEG file into image data structure
  * p is a palette number to which the JPEG colors are to be coerced;
@@ -2169,7 +2169,7 @@ static void gfdump()
    }
 
 
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
 
 #ifdef ConsoleWindow
 #undef fprintf
@@ -3282,7 +3282,7 @@ char * abuf;
             setheight(w, ws->initimage.height);
             }
          else {
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
             r = readJPEG(val,0, &ws->initimage);
             if (r == Succeeded) {
                setwidth(w, ws->initimage.width);

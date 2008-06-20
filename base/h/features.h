@@ -159,11 +159,11 @@
    Feature(1, "_DOS_FUNCTIONS", "MS-DOS extensions")
 #endif					/* DosFncs */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
    Feature(1, "_LIBZ_COMPRESSION", "libz file compression")
 #endif					/* HAVE_LIBZ */
 
-#if HAVE_LIBJEG
+#ifdef HAVE_LIBJPEG
    Feature(1, "_JPEG", "JPEG images")
 #endif					/* HAVE_LIBJPEG */
 

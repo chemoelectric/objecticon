@@ -3,6 +3,7 @@
  *   rtt reads these files for preprocessor directives and typedefs, but
  *   does not output any code from them.
  */
+#include "../h/auto.h"
 #include "../h/define.h"
 #include "../h/config.h"
 #include "../h/version.h"
@@ -180,7 +181,7 @@ typedef long time_t;
 typedef unsigned long mode_t;
 #endif					/* FAttrib */
 
-#if HAVE_LIBZ
+#ifdef HAVE_LIBZ
 typedef int gzFile;
 #endif					/* HAVE_LIBZ */
 
@@ -204,7 +205,7 @@ typedef int STARTUPINFO, PROCESS_INFORMATION, SECURITY_ATTRIBUTES;
 #endif
 #endif					/* NT */
 
-#if HAVE_LIBJPEG
+#ifdef HAVE_LIBJPEG
 typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;
 #endif					/* HAVE_LIBJPEG */
 
@@ -250,11 +251,6 @@ typedef int siptr, stringint, inst;
    typedef int XRectangle, XPoint, XSegment, XArc, SysColor, LinearColor;
    typedef int LONG, SHORT;
 
-   #ifdef NAS
-      typedef int AuServer, AuEvent, AuEventHandlerRec, AuPointer;
-      typedef int AudioComponentType, AuStatus;
-   #endif					/* NAS */
-
    #ifdef MacGraph
       typedef int Str255, Point, StandardFileReply, SFTypeList, Ptr, PixMap;
       typedef int Boolean, Rect, PolyHandle, EventRecord, wsp, MouseInfoType;
@@ -293,14 +289,6 @@ typedef int siptr, stringint, inst;
          typedef int HFILE, OFSTRUCT, FILETIME, SYSTEMTIME;
       #endif				/* FAttrib */
    #endif				/* MSWindows */
-
-   #ifdef HAVE_VOICE
-      typedef int VSESSION, PVSESSION;
-   #endif				/* HAVE_VOICE */
-
-   #if defined Audio
-      typedef int AudioFile, AudioStruct, AudioPtr;
-   #endif				/* Audio */
 
    #ifdef PresentationManager
       /* OS/2 PM specifics */
