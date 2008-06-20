@@ -17,7 +17,6 @@ exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@
 docdir=@docdir@
 infodir=@infodir@
-
 OIBIN=@bindir@
 OILIB=@libdir@/@PACKAGE_TARNAME@
 SOLIB=@libdir@
@@ -86,4 +85,4 @@ uninstall :
 	rm -f $(INFO)/objecticon.info
 	rm -rf $(LIBREF)
 	/sbin/install-info --delete objecticon $(INFO)/dir
-	rf -f $(PATHS) $(MKDEFS)
+	rm -f $(PATHS) $(MKDEFS)
