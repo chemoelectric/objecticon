@@ -283,9 +283,6 @@ typedef struct _wdisplay {
 #ifdef HAVE_LIBXFT
   XFontStruct   *xfont;
 #endif
-#ifdef Graphics3D
-  XVisualInfo  *vis;
-#endif					/* Graphics3D */
   int           numColors;		/* allocated color info */
   int		sizColors;		/* # elements of alloc. color array */
   struct wcolor	*colors;
@@ -326,20 +323,6 @@ typedef struct _lclIdentifier {
  * Texture management requires that we be able to lookup and reuse
  * existing textures, as well as support dynamic window-based textures.
  */
-#ifdef Graphics3D
-typedef struct _wtexture {
-   int		refcount;
-   int		serial;			/* serial # */
-   struct _wtexture *previous, *next;
-   int          textype;	/* 1 = file, 2 = window (descrip), 3 = string*/
-   struct descrip d;
-   struct {			/* if type = 1, we store file attributes */
-      int           size;
-      int          timestamp;
-      } fattr;
-   int       texindex;
-   } wtexture, *wtp;
-#endif					/* Graphics3D */
 
 /*
  * "Context" comprises the graphics context, and the font (i.e. text context).
@@ -394,32 +377,6 @@ typedef struct _wcontext {
   int		leading, bkmode;
 #endif					/* MSWindows*/
 
-#ifdef Graphics3D
-
-#ifdef XWindows
-  GLXContext    ctx;			   /* context for "gl" windows */
-#endif					/* XWindows */
-#ifdef MSWindows
-  HGLRC ctx;
-#endif					/* MSWindows */
-  int           dim;			   /* # of coordinates per vertex */
-  int           is_3D;			   /* flag for 3D windows */
-  double        eyeupx, eyeupy, eyeupz;	   /* eye up vector */
-  double        eyedirx, eyediry, eyedirz; /* eye direction vector */
-  double        eyeposx, eyeposy, eyeposz; /* eye position */
-  
-  int           autogen;  /* flag to automatically generate texture coordinate */
-  int           texmode;    /* textures on or off */
-  int           numtexcoords;           /* # of texture coordinates used */
-  int           ntexcoordsalced;      /* # of texture coordinates alloced */
-  double        *texcoords;             /* texture coordinates */
-  int ntextures;			/* # textures actually used */
-  int curtexture;			/* subscript of current texture */
-  int nalced;				/* number allocated */
-  GLuint *texName;			/* array of GL textures */
-  wtp textures;				/* textures */
-
-#endif					/* Graphics3D */
 } wcontext, *wcp;
 
 /*
@@ -558,10 +515,6 @@ typedef struct _wstate {
   int           nChildren;
   childcontrol *child;
 #endif					/* MSWindows */
-#ifdef Graphics3D
-  int            is_3D;        /* flag for 3D windows */
-  struct descrip funclist;    /* descriptor to hold list of 3d functions */
-#endif					/* Graphics3D */
   int            no;          /* new field added for child windows */
 } wstate, *wsp;
 

@@ -11,12 +11,6 @@ static struct region *newregion	(word nbytes, word stdsize);
 
 extern word alcnum;
 
-#ifndef MultiThread
-word coexp_ser = 2;	/* serial numbers for co-expressions; &main is 1 */
-word list_ser = 1;	/* serial numbers for lists */
-word set_ser = 1;	/* serial numbers for sets */
-word table_ser = 1;	/* serial numbers for tables */
-#endif					/* MultiThread */
 
 
 /*
@@ -114,12 +108,8 @@ struct b_bignum *f(word n)
    return blk;
    }
 #enddef
-#ifdef MultiThread
 alcbignum_macro(alcbignum_0,0)
 alcbignum_macro(alcbignum_1,E_Lrgint)
-#else					/* MultiThread */
-alcbignum_macro(alcbignum,0)
-#endif					/* MultiThread */
 
 #endif					/* LargeInts */
 
@@ -127,42 +117,6 @@ alcbignum_macro(alcbignum,0)
  * alccoexp - allocate a co-expression stack block.
  */
 
-#if COMPILER
-struct b_coexpr *alccoexp()
-   {
-   struct b_coexpr *ep;
-   static int serial = 2; /* main co-expression is allocated elsewhere */
-   ep = (struct b_coexpr *)malloc((msize)stksize);
-
-   /*
-    * If malloc failed or if there have been too many co-expression allocations
-    * since a collection, attempt to free some co-expression blocks and retry.
-    */
-
-   if (ep == NULL || alcnum > AlcMax) {
-      collect(Static);
-      ep = (struct b_coexpr *)malloc((msize)stksize);
-      }
-
-   if (ep == NULL)
-      ReturnErrNum(305, NULL);
-
-   alcnum++;                    /* increment allocation count since last g.c. */
-
-   ep->title = T_Coexpr;
-   ep->size = 0;
-   ep->id = serial++;
-   ep->nextstk = stklist;
-   ep->es_tend = NULL;
-   ep->file_name = "";
-   ep->line_num = 0;
-   ep->freshblk = nulldesc;
-   ep->es_actstk = NULL;
-   stklist = ep;
-   return ep;
-   }
-#else					/* COMPILER */
-#ifdef MultiThread
 /*
  * If this is a new program being loaded, an icodesize>0 gives the
  * hdr.hsize and a stacksize to use; allocate
@@ -171,21 +125,16 @@ struct b_coexpr *alccoexp()
  */
 struct b_coexpr *alccoexp(icodesize, stacksize)
 long icodesize, stacksize;
-#else					/* MultiThread */
-struct b_coexpr *alccoexp()
-#endif					/* MultiThread */
 
    {
    struct b_coexpr *ep;
 
-#ifdef MultiThread
    if (icodesize > 0) {
       ep = (struct b_coexpr *)
 	calloc(1, (msize)(stacksize + icodesize +
 			  sizeof(struct progstate) + sizeof(struct b_coexpr)));
       }
    else
-#endif					/* MultiThread */
       {
    ep = (struct b_coexpr *)malloc((msize)stksize);
    }
@@ -198,13 +147,11 @@ struct b_coexpr *alccoexp()
    if (ep == NULL || alcnum > AlcMax) {
       collect(Static);
 
-#ifdef MultiThread
       if (icodesize>0) {
          ep = (struct b_coexpr *)
 	    malloc((msize)(mstksize+icodesize+sizeof(struct progstate)));
          }
       else
-#endif					/* MultiThread */
 
          ep = (struct b_coexpr *)malloc((msize)stksize);
       }
@@ -216,7 +163,6 @@ struct b_coexpr *alccoexp()
    ep->title = T_Coexpr;
    ep->es_actstk = NULL;
    ep->size = 0;
-#ifdef MultiThread
    ep->es_pfp = NULL;
    ep->es_gfp = NULL;
    ep->es_argp = NULL;
@@ -225,25 +171,21 @@ struct b_coexpr *alccoexp()
    if (icodesize > 0)
       ep->id = 1;
    else
-#endif					/* MultiThread */
       ep->id = coexp_ser++;
    ep->nextstk = stklist;
    ep->es_tend = NULL;
 
-#ifdef MultiThread
    /*
     * Initialize program state to self for &main; curpstate for others.
     */
    if(icodesize>0) ep->program = (struct progstate *)(ep+1);
    else ep->program = curpstate;
 
-#endif					/* MultiThread */
 
    stklist = ep;
 
    return ep;
    }
-#endif					/* COMPILER */
 
 #begdef alccset_macro(f, e_cset)
 /*
@@ -267,12 +209,8 @@ struct b_cset *f()
    return blk;
    }
 #enddef
-#ifdef MultiThread
 alccset_macro(alccset_0,0)
 alccset_macro(alccset_1,E_Cset)
-#else					/* MultiThread */
-alccset_macro(alccset,0)
-#endif					/* MultiThread */
 
 
 #begdef alcfile_macro(f, e_file)
@@ -294,12 +232,8 @@ struct b_file *f(FILE *fd, int status, dptr name)
    }
 #enddef
 
-#ifdef MultiThread
 alcfile_macro(alcfile_0,0)
 alcfile_macro(alcfile_1,E_File)
-#else					/* MultiThread */
-alcfile_macro(alcfile,0)
-#endif					/* MultiThread */
 
 #begdef alchash_macro(f, e_table, e_set)
 /*
@@ -331,12 +265,8 @@ union block *f(int tcode)
    }
 #enddef
 
-#ifdef MultiThread
 alchash_macro(alchash_0,0,0)
 alchash_macro(alchash_1,E_Table,E_Set)
-#else					/* MultiThread */
-alchash_macro(alchash,0,0)
-#endif					/* MultiThread */
 
 #begdef alcsegment_macro(f,e_slots)
 /*
@@ -358,12 +288,8 @@ struct b_slots *f(word nslots)
    }
 #enddef
 
-#ifdef MultiThread
 alcsegment_macro(alcsegment_0,0)
 alcsegment_macro(alcsegment_1,E_Slots)
-#else					/* MultiThread */
-alcsegment_macro(alcsegment,0)
-#endif					/* MultiThread */
 
 #begdef alclist_raw_macro(f,e_list,e_lelem)
 /*
@@ -405,12 +331,8 @@ struct b_list *f(uword size, uword nslots)
    }
 #enddef
 
-#ifdef MultiThread
 alclist_raw_macro(alclist_raw_0,0,0)
 alclist_raw_macro(alclist_raw_1,E_List,E_Lelem)
-#else					/* MultiThread */
-alclist_raw_macro(alclist_raw,0,0)
-#endif					/* MultiThread */
 
 #begdef alclist_macro(f,e_list,e_lelem)
 
@@ -443,12 +365,8 @@ struct b_list *f(uword size, uword nslots)
    }
 #enddef
 
-#ifdef MultiThread
 alclist_macro(alclist_0,0,0)
 alclist_macro(alclist_1,E_List,E_Lelem)
-#else					/* MultiThread */
-alclist_macro(alclist,0,0)
-#endif					/* MultiThread */
 
 #begdef alclstb_macro(f,t_lelem)
 /*
@@ -475,12 +393,8 @@ struct b_lelem *f(uword nslots, uword first, uword nused)
    }
 #enddef
 
-#ifdef MultiThread
 alclstb_macro(alclstb_0,0)
 alclstb_macro(alclstb_1,E_Lelem)
-#else					/* MultiThread */
-alclstb_macro(alclstb,0)
-#endif					/* MultiThread */
 
 #begdef alcreal_macro(f,e_real)
 /*
@@ -510,12 +424,8 @@ struct b_real *f(double val)
    }
 #enddef
 
-#ifdef MultiThread
 alcreal_macro(alcreal_0,0)
 alcreal_macro(alcreal_1,E_Real)
-#else					/* MultiThread */
-alcreal_macro(alcreal,0)
-#endif					/* MultiThread */
 
 #begdef alcrecd_macro(f,e_record)
 /*
@@ -535,12 +445,8 @@ struct b_record *f(int nflds, union block *recptr)
    }
 #enddef
 
-#ifdef MultiThread
 alcrecd_macro(alcrecd_0,0)
 alcrecd_macro(alcrecd_1,E_Record)
-#else					/* MultiThread */
-alcrecd_macro(alcrecd,0)
-#endif					/* MultiThread */
 
 
 #begdef alcobject_macro(f,e_object)
@@ -567,12 +473,8 @@ struct b_object *f(struct b_class *class)
    }
 #enddef
 
-#ifdef MultiThread
 alcobject_macro(alcobject_0,0)
 alcobject_macro(alcobject_1,E_Object)
-#else					/* MultiThread */
-alcobject_macro(alcobject,0)
-#endif					/* MultiThread */
 
 
 #begdef alccast_macro(f,e_cast)
@@ -590,12 +492,8 @@ struct b_cast *f()
    }
 #enddef
 
-#ifdef MultiThread
 alccast_macro(alccast_0,0)
 alccast_macro(alccast_1,E_Cast)
-#else					/* MultiThread */
-alccast_macro(alccast,0)
-#endif					/* MultiThread */
 
 #begdef alcmethp_macro(f,e_methp)
 /*
@@ -612,12 +510,8 @@ struct b_methp *f()
    }
 #enddef
 
-#ifdef MultiThread
 alcmethp_macro(alcmethp_0,0)
 alcmethp_macro(alcmethp_1,E_Methp)
-#else					/* MultiThread */
-alcmethp_macro(alcmethp,0)
-#endif					/* MultiThread */
 
 
 
@@ -626,23 +520,6 @@ alcmethp_macro(alcmethp,0)
  * alcrefresh - allocate a co-expression refresh block.
  */
 
-#if COMPILER
-struct b_refresh *alcrefresh(na, nl, nt, wrk_sz)
-int na;
-int nl;
-int nt;
-int wrk_sz;
-   {
-   struct b_refresh *blk;
-
-   AlcVarBlk(blk, b_refresh, T_Refresh, na + nl)
-   blk->nlocals = nl;
-   blk->nargs = na;
-   blk->ntemps = nt;
-   blk->wrk_size = wrk_sz;
-   return blk;
-   }
-#else					/* COMPILER */
 #begdef alcrefresh_macro(f,e_refresh)
 
 struct b_refresh *f(word *entryx, int na, int nl)
@@ -657,13 +534,8 @@ struct b_refresh *f(word *entryx, int na, int nl)
 
 #enddef
 
-#ifdef MultiThread
 alcrefresh_macro(alcrefresh_0,0)
 alcrefresh_macro(alcrefresh_1,E_Refresh)
-#else					/* MultiThread */
-alcrefresh_macro(alcrefresh,0)
-#endif					/* MultiThread */
-#endif					/* COMPILER */
 
 #begdef alcselem_macro(f,e_selem)
 /*
@@ -683,12 +555,8 @@ struct b_selem *f(dptr mbr,uword hn)
    }
 #enddef
 
-#ifdef MultiThread
 alcselem_macro(alcselem_0,0)
 alcselem_macro(alcselem_1,E_Selem)
-#else					/* MultiThread */
-alcselem_macro(alcselem,0)
-#endif					/* MultiThread */
 
 #begdef alcstr_macro(f,e_string)
 /*
@@ -701,7 +569,6 @@ char *f(register char *s, register word slen)
    register char *d;
    char *ofree;
 
-#ifdef MultiThread
    StrLen(ts) = slen;
    StrLoc(ts) = s;
 #if E_String
@@ -709,7 +576,6 @@ char *f(register char *s, register word slen)
       EVVal(slen, e_string);
 #endif					/* E_String */
    s = StrLoc(ts);
-#endif					/* MultiThread */
 
    /*
     * Make sure there is enough room in the string space.
@@ -742,12 +608,8 @@ char *f(register char *s, register word slen)
    }
 #enddef
 
-#ifdef MultiThread
 alcstr_macro(alcstr_0,0)
 alcstr_macro(alcstr_1,E_String)
-#else					/* MultiThread */
-alcstr_macro(alcstr,0)
-#endif					/* MultiThread */
 
 #begdef alcsubs_macro(f, e_tvsubs)
 /*
@@ -768,12 +630,8 @@ struct b_tvsubs *f(word len, word pos, dptr var)
    }
 #enddef
 
-#ifdef MultiThread
 alcsubs_macro(alcsubs_0,0)
 alcsubs_macro(alcsubs_1,E_Tvsubs)
-#else					/* MultiThread */
-alcsubs_macro(alcsubs,0)
-#endif					/* MultiThread */
 
 #begdef alctelem_macro(f, e_telem)
 /*
@@ -793,12 +651,8 @@ struct b_telem *f()
    }
 #enddef
 
-#ifdef MultiThread
 alctelem_macro(alctelem_0,0)
 alctelem_macro(alctelem_1,E_Telem)
-#else					/* MultiThread */
-alctelem_macro(alctelem,0)
-#endif					/* MultiThread */
 
 #begdef alctvtbl_macro(f,e_tvtbl)
 /*
@@ -821,12 +675,8 @@ struct b_tvtbl *f(register dptr tbl, register dptr ref, uword hashnum)
    }
 #enddef
 
-#ifdef MultiThread
 alctvtbl_macro(alctvtbl_0,0)
 alctvtbl_macro(alctvtbl_1,E_Tvtbl)
-#else					/* MultiThread */
-alctvtbl_macro(alctvtbl,0)
-#endif					/* MultiThread */
 
 #begdef deallocate_macro(f,e_blkdealc)
 /*
@@ -855,12 +705,8 @@ void f (union block *bp)
 }
 #enddef
 
-#ifdef MultiThread
 deallocate_macro(deallocate_0,0)
 deallocate_macro(deallocate_1,E_BlkDeAlc)
-#else					/* MultiThread */
-deallocate_macro(deallocate,0)
-#endif					/* MultiThread */
 
 #begdef reserve_macro(f,e_tenurestring,e_tenureblock)
 /*
@@ -985,12 +831,8 @@ char *f(int region, word nbytes)
 }
 #enddef
 
-#ifdef MultiThread
 reserve_macro(reserve_0,0,0)
 reserve_macro(reserve_1,E_TenureString,E_TenureBlock)
-#else					/* MultiThread */
-reserve_macro(reserve,0,0)
-#endif					/* MultiThread */
 
 /*
  * findgap - search region chain for a region having at least nbytes available

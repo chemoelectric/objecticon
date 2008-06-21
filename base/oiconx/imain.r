@@ -1,4 +1,3 @@
-#if !COMPILER
 /*
  * File: imain.r
  * Interpreter main program, argument handling, and such.
@@ -82,10 +81,6 @@ extern int set_up;
  * A number of important variables follow.
  */
 
-#ifndef MultiThread
-int n_globals = 0;			/* number of globals */
-int n_statics = 0;			/* number of statics */
-#endif					/* MultiThread */
 
 extern int_setup;
 
@@ -141,47 +136,11 @@ int CmdParamToArgv(char *s, char ***avp, int dequote)
     *avp = malloc(2 * sizeof(char *));
     (*avp)[rv] = NULL;
 
-#ifdef ConsoleWindow
-    detectRedirection();
-#endif					/* ConsoleWindow */
 
     while (*t2) {
         while (*t2 && isspace(*t2)) t2++;
         switch (*t2) {
             case '\0': break;
-#ifdef ConsoleWindow
-            case '<': case '>': {
-                /*
-                 * perform file redirection; this is for Windows 3.1
-                 * and other situations where Wiconx is launched from
-                 * a shell that does not process < and > characters.
-                 */
-                char c = *t2++, buf[128], *t3;
-                FILE *f;
-                while (*t2 && isspace(*t2)) t2++;
-                t3 = buf;
-                while (*t2 && !isspace(*t2)) *t3++ = *t2++;
-                *t3 = '\0';
-                if (c == '<')
-                    f = fopen(buf, "r");
-                else
-                    f = fopen(buf, "w");
-                if (f == NULL) {
-                    MessageBox(0, "unable to redirect i/o", "system error",
-                               MB_ICONHAND);
-                    c_exit(-1);
-                }
-                if (c == '<') {
-                    finredir = f;
-                    ConsoleFlags |= StdInRedirect;
-                }
-                else {
-                    fouredir = f;
-                    ConsoleFlags |= StdOutRedirect;
-                }
-                break;
-	    }
-#endif					/* ConsoleWindow */
             case '"': {
                 char *t3, c = '\0';
                 if (dequote) t3 = ++t2;			/* skip " */
@@ -239,40 +198,6 @@ int CmdParamToArgv(char *s, char ***avp, int dequote)
 #endif
 
 #ifdef MSWindows
-#ifdef ConsoleWindow
-void detectRedirection()
-{
-    struct stat sb;
-    /*
-     * Look at the standard file handles and attempt to detect
-     * redirection.
-     */
-    if (fstat(stdin->_file, &sb) == 0) {
-        if (sb.st_mode & S_IFCHR) {		/* stdin is a device */
-        }
-        if (sb.st_mode & S_IFREG) {		/* stdin is a regular file */
-        }
-        /* stdin is of size sb.st_size */
-        if (sb.st_size > 0) {
-            ConsoleFlags |= StdInRedirect;
-        }
-    }
-    else {					/* unable to identify stdin */
-    }
-
-    if (fstat(stdout->_file, &sb) == 0) {
-        if (sb.st_mode & S_IFCHR) {		/* stdout is a device */
-        }
-        if (sb.st_mode & S_IFREG) {		/* stdout is a regular file */
-        }
-        /* stdout is of size sb.st_size */
-        if (sb.st_size == 0)
-            ConsoleFlags |= StdOutRedirect;
-    }
-    else {					/* unable to identify stdout */
-    }
-}
-#endif					/* ConsoleWindow */
 
 char *lognam;
 char tmplognam[128];
@@ -280,43 +205,9 @@ char tmplognam[128];
 void MSStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance)
 {
     WNDCLASS wc;
-#ifdef ConsoleWindow
-    char *tnam;
-    extern FILE *flog;
-
-    /*
-     * Select log file name.  Might make this a command-line option.
-     * Default to "WICON.LOG".  The log file is used by IDE programs to
-     * report translation errors and jump to the offending source code line.
-     */
-    if ((lognam = getenv("WICONLOG")) == NULL) {
-        if (((lognam = getenv("TEMP")) != NULL) &&
-            (lognam = malloc(strlen(lognam) + 13)) != NULL) {
-            strcpy(lognam, getenv("TEMP"));
-            strcat(lognam, "\\");
-            strcat(lognam, "winicon.log");
-        }
-        else
-            lognam = "winicon.log";
-    }
-    remove(lognam);
-    if (getenv("WICONLOG")!=NULL)
-        lognam = strdup(lognam);
-    tnam = _tempnam("C:\\TEMP", "wx");
-    strcpy(tmplognam, tnam);
-    flog = fopen(tnam, "w");
-    free(tnam);
-
-    if (flog == NULL) {
-        syserr("unable to open logfile");
-    }
-#endif					/* ConsoleWindow */
     if (!hPrevInstance) {
 #if NT
         wc.style = CS_HREDRAW | CS_VREDRAW;
-#ifdef Graphics3D
-        wc.style |= CS_OWNDC;
-#endif
 #else					/* NT */
         wc.style = 0;
 #endif					/* NT */
@@ -520,7 +411,6 @@ void os2main(stubflag, argc, argv)
     quiet(1);                    /* suppress C library diagnostics */
 #endif					/* SASC */
 
-#ifdef MultiThread
     /*
      * Look for MultiThread programming environment in which to execute
      * this program, specified by MTENV environment variable.
@@ -548,7 +438,6 @@ void os2main(stubflag, argc, argv)
             argv = new_argv;
         }
     }
-#endif					/* MultiThread */
 
     ipc.opnd = NULL;
 
@@ -700,9 +589,6 @@ void os2main(stubflag, argc, argv)
 
 #endif					/* OS2 */
 
-#ifdef Messaging
-    errno = 0;
-#endif					/* Messaging */
 
     /*
      *  Point sp at word after b_coexpr block for &main, point ipc at initial
@@ -966,12 +852,8 @@ void icon_setup(argc,argv,ip)
  * resolve - perform various fix-ups on the data read from the icode
  *  file.
  */
-#ifdef MultiThread
 void resolve(pstate)
     struct progstate *pstate;
-#else					/* MultiThread */
-    void resolve()
-#endif					/* MultiThread */
 
 {
     word i, j, n_classes, n_fields;
@@ -981,10 +863,8 @@ void resolve(pstate)
     struct class_field *cf;
     dptr dp;
     extern Omkrec();
-#ifdef MultiThread
     register struct progstate *savedstate = curpstate;
     if (pstate) curpstate = pstate;
-#endif					/* MultiThread */
 
     /*
      * For each class field info block, relocate the pointer to the
@@ -1025,9 +905,7 @@ void resolve(pstate)
                 /* The variables */
                 for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++)
                     StrLoc(pp->lnames[i]) = strcons + (uword)StrLoc(pp->lnames[i]);
-#ifdef MultiThread
                 pp->program = pstate ? pstate:&rootpstate;
-#endif
             }
         }
 #ifdef DEBUG_LOAD
@@ -1044,9 +922,7 @@ void resolve(pstate)
     for (i = 0; i < n_classes; ++i) {
         cb = (struct b_class *)class_start;
         StrLoc(cb->name) = strcons + (uword)StrLoc(cb->name);
-#ifdef MultiThread
         cb->program = pstate ? pstate:&rootpstate;
-#endif
         n_fields = cb->n_class_fields + cb->n_instance_fields;
         cb->supers = (struct b_class **)(code + (int)cb->supers);
         for (j = 0; j < cb->n_supers; ++j) 
@@ -1160,9 +1036,7 @@ void resolve(pstate)
                             !strncmp(StrLoc(pp->pname), "main", 4))
                             main_proc = &globals[j];
                     }
-#ifdef MultiThread
                     pp->program = pstate ? pstate:&rootpstate;
-#endif
                 }
                 break;
             }
@@ -1176,9 +1050,7 @@ void resolve(pstate)
     for (dp = fnames; dp < efnames; dp++)
         StrLoc(*dp) = strcons + (uword)StrLoc(*dp);
 
-#ifdef MultiThread
     curpstate = savedstate;
-#endif						/* MultiThread */
 }
 
 /*
@@ -1246,14 +1118,6 @@ void xmfree()
     if (blkbase)
         free((pointer)blkbase);		/* allocated block region */
     blkbase = NULL;
-#ifndef MultiThread
-    if (curstring != &rootstring)
-        free((pointer)curstring);		/* string region */
-    curstring = NULL;
-    if (curblock != &rootblock)
-        free((pointer)curblock);		/* allocated block region */
-    curblock = NULL;
-#endif					/* MultiThread */
     if (quallist)
         free((pointer)quallist);		/* qualifier list */
     quallist = NULL;
@@ -1288,7 +1152,6 @@ void xmfree()
     }
 
 }
-#endif					/* !COMPILER */
 
 
 #ifdef MacGraph

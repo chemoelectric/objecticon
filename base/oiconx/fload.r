@@ -142,11 +142,7 @@ int (*func)();
    blk->title = T_Proc;
    blk->blksize = sizeof(struct b_proc);
 
-#if COMPILER
-   blk->ccode = glue;		/* set code addr to glue routine */
-#else					/* COMPILER */
    blk->entryp.ccode = glue;	/* set code addr to glue routine */
-#endif					/* COMPILER */
 
    blk->nparam = -1;		/* varargs flag */
    blk->ndynam = -1;		/* treat as built-in function */
@@ -167,57 +163,6 @@ int (*func)();
  * It digs the actual C code address out of the proc block, and calls that.
  */
 
-#if COMPILER
-
-int glue(argc, dargv, rslt, succ_cont)
-int argc;
-dptr dargv;
-dptr rslt;
-continuation succ_cont;
-   {
-   int i, status, (*func)();
-   struct b_proc *blk;
-   struct descrip r;
-   tended struct descrip p;
-#if NT
-struct rtentrypts {
-  int (*cnv_int)(dptr, dptr);
-} rtentryvector;
-rtentryvector.cnv_int = cnv_int;
-#endif
-
-   dargv--;				/* reset pointer to proc entry */
-   for (i = 0; i <= argc; i++)
-      deref(&dargv[i], &dargv[i]);	/* dereference args including proc */
-
-   blk = (struct b_proc *)dargv[0].vword.bptr;	/* proc block address */
-   func = (int (*)())blk->lnames[0].vword.sptr;	/* entry point address */
-
-   p = dargv[0];			/* save proc for traceback */
-   dargv[0] = nulldesc;			/* set default return value */
-
-#if NT
-   status = (*func)(&rtentryvector, argc, dargv);	/* call func */
-#else
-   status = (*func)(argc, dargv);	/* call func */
-#endif
-
-   if (status == 0) {
-      *rslt = dargv[0];
-      Return;				/* success */
-      }
-
-   if (status < 0)
-      Fail;				/* failure */
-
-   r = dargv[0];			/* save result value */
-   dargv[0] = p;			/* restore proc for traceback */
-   if (is:null(r))
-      RunErr(status, NULL);		/* error, no value */
-   RunErr(status, &r);			/* error, with value */
-   }
-
-#else						/* COMPILER */
 
 int glue(argc, dargv)
 int argc;
@@ -259,7 +204,6 @@ rtentryvector.Cnv_int = cnv_int_0;
    RunErr(status, &r);			/* error, with value */
    }
 
-#endif						/* COMPILER */
 
 #else						/* LoadFunc */
 static char junk;			/* avoid empty module */

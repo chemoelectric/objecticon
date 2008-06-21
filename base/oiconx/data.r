@@ -2,18 +2,15 @@
  * data.r -- Various interpreter data tables.
  */
 
-#if !COMPILER
 
 struct b_proc Bnoproc;
 
-#ifdef MultiThread
 /*
  * A procedure block for list construction, used by event monitoring.
  */
 struct b_iproc mt_llist = {
    6, (sizeof(struct b_proc) - sizeof(struct descrip)), Ollist,
    0, -1,  0, 0, 0, 0, {sizeof( "[...]")-1, "[...]"}};
-#endif					/* MultiThread */
 
 /*
  * External declarations for function blocks.
@@ -89,7 +86,6 @@ struct pstrnm pntab[] = {
 
 int pnsize = (sizeof(pntab) / sizeof(struct pstrnm)) - 1;
 
-#endif					/* COMPILER */
 
 /*
  * Structures for built-in values.  Parts of some of these structures are
@@ -146,7 +142,6 @@ struct b_cset  fullcs = {
 		~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0)
    };
 
-#if !COMPILER
 
 /*
  * Built-in csets
@@ -219,40 +214,15 @@ struct b_cset  k_letters = {
 #endif					/* EBCDIC != 1 */
 
    };
-#endif					/* COMPILER */
 
 /*
  * Built-in files.
  */
 
-#ifndef MultiThread
-#ifdef ConsoleWindow
-struct b_file  k_errout = {T_File, NULL, Fs_Write};     /* &errout */
-struct b_file  k_input = {T_File, NULL, Fs_Read|Fs_Window};     /* &input */
-struct b_file  k_output = {T_File, NULL, Fs_Write};     /* &output */
-#else					/* ConsoleWindow */
-struct b_file  k_errout = {T_File, NULL, Fs_Write};	/* &errout */
-struct b_file  k_input = {T_File, NULL, Fs_Read};	/* &input */
-struct b_file  k_output = {T_File, NULL, Fs_Write};	/* &output */
-#endif					/* ConsoleWindow */
-
-#endif					/* MultiThread */
 
 /*
  * Keyword variables.
  */
-#ifndef MultiThread
-struct descrip kywd_err = {D_Integer};  /* &error */
-struct descrip kywd_pos = {D_Integer};	/* &pos */
-struct descrip kywd_prog;		/* &progname */
-struct descrip k_subject; 		/* &subject */
-struct descrip kywd_ran = {D_Integer};	/* &random */
-struct descrip kywd_trc = {D_Integer};	/* &trace */
-struct descrip k_eventcode = {D_Null};	/* &eventcode */
-struct descrip k_eventsource = {D_Null};/* &eventsource */
-struct descrip k_eventvalue = {D_Null};	/* &eventvalue */
-
-#endif					/* MultiThread */
 
 #ifdef FncTrace
 struct descrip kywd_ftrc = {D_Integer};	/* &ftrace */
@@ -277,7 +247,6 @@ struct descrip onedesc = {D_Integer};	/* integer 1 */
 struct descrip ucase;			/* string of uppercase letters */
 struct descrip zerodesc = {D_Integer};	/* integer 0 */
 
-#ifdef MultiThread
 /*
  * Descriptors used by event monitoring.
  */
@@ -288,7 +257,6 @@ struct descrip rzerodesc = {D_Real};
  *  Real block needed for event monitoring.
  */
 struct b_real realzero = {T_Real, 0.0};
-#endif					/* MultiThread */
 
 /*
  * An array of all characters for use in making one-character strings.
@@ -357,13 +325,6 @@ struct errtab errtab[] = {
    148, "selection proc returned wrong type",
 #endif					/* Graphics */
 
-#ifdef Graphics3D                 /* Graphics3D */
-   150,  "drawing a 3D object while in 2D mode",
-   151,  "pushed/popped too many matrices",
-   152,  "modelview or projection expected",
-   153,  "texture not in correct format",
-   154,  "must have an even number of texture coordinates",
-#endif                            /* Graphics3D */
 
 #ifdef PosixFns
    /*
@@ -378,9 +339,6 @@ struct errtab errtab[] = {
    175, "network connection expected",
 #endif					/* PosixFns */
 
-#ifdef Dbm
-   190, "dbm database expected",
-#endif					/* Dbm */
 
    201, "division by zero",
    202, "remaindering by zero",
@@ -413,9 +371,6 @@ struct errtab errtab[] = {
    318, "co-expression stack too large",
 #endif					/* IntBits == 16 */
 
-#ifndef Coexpr
-   401, "co-expressions not implemented",
-#endif					/* Coexpr */
    402, "program not compiled with debugging option",
 
    500, "program malfunction",		/* for use by runerr() */
@@ -454,28 +409,7 @@ struct errtab errtab[] = {
    1047, "invalid protocol name",
    1048, "low-level read or select mixed with buffered read",
 #endif					/* PosixFns */
-#ifdef ISQL
-   1100, "ODBC connection expected",
-#endif					/* ISQL */
 
-#ifdef Messaging
-   1200, "system error (see errno)",
-   1201, "malformed URL",
-   1202, "missing username in URL",
-   1203, "unknown scheme in URL",
-   1204, "cannot parse URL",
-   1205, "cannot connect",            /* TP_ECONNECT */
-   1206, "unknown host",           /* TP_EHOST */
-   /* TP_STATENOTREADING uses 212 */
-   /* TP_STATENOTWRITING uses 213 */
-   1207, "invalid field in header",
-   1208, "messaging file expected",
-   1209, "cannot determine smtpserver (set UNICON_SMTPSERVER)",
-   1210, "cannot determine user return address (set UNICON_USERADDRESS)",
-   1211, "invalid email address",
-   1212, "server error",
-   1213, "POP messaging file expected",
-#endif                                  /* Messaging */
 
 /*
  * End of operating-system specific code.
@@ -488,7 +422,6 @@ struct errtab errtab[] = {
  * Note:  the following material is here to avoid a bug in the Cray C compiler.
  */
 
-#if !COMPILER
 #define OpDef(p,n,s,u) int Cat(O,p) (dptr cargp);
 #include "../h/odefs.h"
 #undef OpDef
@@ -531,4 +464,3 @@ int (*keytab[])() = {
 #define KDef(p,n) Cat(K,p),
 #include "../h/kdefs.h"
    };
-#endif					/* !COMPILER */

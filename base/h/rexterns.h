@@ -13,9 +13,6 @@ extern int err_conv;		/* flag: error conversion is supported */
 extern int dodump;		/* termination dump */
 extern int line_info;		/* flag: line information is available */
 extern char *file_name;		/* source file for current execution point */
-#ifndef MultiThread
-extern int line_num;		/* line number for current execution point */
-#endif					/* MultiThread */
 
 extern unsigned char allchars[];/* array for making one-character strings */
 extern char *blkname[];		/* print names for block types. */
@@ -61,10 +58,6 @@ extern struct tend_desc *tend;  /* chain of tended descriptors */
  * Externals that are conditional on features.
  */
 
-#ifdef ISQL
-   extern HENV ISQLEnv;
-   extern struct ISQLFile *isqlfiles;
-#endif
 
 #ifdef FncTrace
    extern struct descrip kywd_ftrc;	/* descriptor for &ftrace */
@@ -93,57 +86,6 @@ extern struct b_real realzero;		/* real zero block */
 /*
  * Externals conditional on multithreading.
  */
-#ifndef MultiThread
-   extern dptr glbl_argp;		/* argument pointer */
-   extern struct region *curstring;
-   extern struct region *curblock;
-   extern struct region rootstring;
-   extern struct region rootblock;
-
-   extern struct descrip k_current;	/* &current */
-   extern char *k_errortext;		/* value of &errortext */
-   extern int have_errval;		/* &errorvalue has a legal value */
-   extern int k_errornumber;		/* value of &errornumber */
-   extern int t_errornumber;		/* tentative k_errornumber value */
-   extern int t_have_val;		/* tentative have_errval flag */
-   extern struct b_file k_errout;	/* value of &errout */
-   extern struct b_file k_input;	/* value of &input */
-   extern struct b_file k_output;	/* value of &output */
-   extern struct descrip k_errorvalue;	/* value of &errorvalue */
-   extern struct descrip kywd_err;	/* &error */
-   extern struct descrip kywd_pos;	/* descriptor for &pos */
-   extern struct descrip kywd_prog;	/* descriptor for &prog */
-   extern struct descrip kywd_ran;	/* descriptor for &random */
-   extern struct descrip k_subject;	/* &subject */
-   extern struct descrip kywd_trc;	/* descriptor for &trace */
-   extern struct descrip k_eventcode;	/* &eventcode */
-   extern struct descrip k_eventsource;	/* &eventsource */
-   extern struct descrip k_eventvalue;	/* &eventvalue */
-   extern struct descrip k_main;	/* value of &main */
-
-   extern struct descrip t_errorvalue;	/* tentative k_errorvalue value */
-
-   extern uword blktotal;		/* cumul total of all block allocs */
-   extern uword strtotal;		/* cumul total of all string allocs */
-
-   extern word coll_tot;		/* total number of collections */
-   extern word coll_stat;		/* collections from static reqests */
-   extern word coll_str;		/* collections from string requests */
-   extern word coll_blk;		/* collections from block requests */
-   extern dptr globals;			/* start of global variables */
-   extern dptr eglobals;		/* end of global variables */
-   extern dptr gnames;			/* start of global variable names */
-   extern dptr egnames;			/* end of global variable names */
-   extern dptr estatics;		/* end of static variables */
-
-   extern int n_globals;		/* number of global variables */
-   extern int n_statics;		/* number of static variables */
-   extern struct b_coexpr *mainhead;	/* &main */
-
-#ifdef PosixFns
-extern struct descrip amperErrno;
-#endif					/* PosixFns */
-#endif					/* MultiThread */
 
 /* dynamic record types */
 extern int longest_dr;
@@ -152,7 +94,6 @@ extern struct b_proc_list **dr_arrays;
 /*
  * Externals that differ between compiler and interpreter.
  */
-#if !COMPILER
    /*
     * External declarations for the interpreter.
     */
@@ -181,40 +122,10 @@ extern struct b_proc_list **dr_arrays;
       extern int dumped;		/* the interpreter has been dumped */
    #endif				/* ExecImages */
    
-   #ifdef MultiThread
       extern struct progstate *curpstate;
       extern struct progstate rootpstate;
       extern int noMTevents;		/* no MT events during GC */
-   #else				/* MultiThread */
-      extern char *code;		/* start of icode */
-      extern char *ecode;		/* end of icode */
-      extern dptr statics;		/* start of static variables */
-      extern char *strcons;		/* start of the string constants */
-      extern dptr fnames;		/* field names */
-      extern dptr efnames;		/* end of field names */
-      extern word *records;
-      extern int *ftabp;		/* field table pointer */
-      #ifdef FieldTableCompression
-         extern word ftabwidth, foffwidth;
-         extern unsigned char *ftabcp;
-         extern short *ftabsp;
-      #endif				/* FieldTableCompression */
-      extern dptr xargp;
-      extern word xnargs;
-      
-      extern word lastop;
-   #endif				/* MultiThread */
    
-#else					/* COMPILER */
-
-   extern struct descrip statics[];	/* array of static variables */
-   extern struct b_proc *builtins[];	/* pointers to builtin functions */
-   extern int noerrbuf;			/* error buffering */
-   extern struct p_frame *pfp;		/* procedure frame pointer */
-   extern struct descrip trashcan;	/* dummy descriptor, never read */
-   extern int largeints;		/* flag: large integers supported */
-
-#endif					/* COMPILER */
 
 extern stringint attribs[], drawops[];
 
@@ -231,17 +142,6 @@ extern stringint attribs[], drawops[];
    extern int win_highwater, canvas_serial, context_serial;
    extern clock_t starttime;		/* start time in milliseconds */
 
-   #ifndef MultiThread
-      extern struct descrip kywd_xwin[];
-      extern struct descrip lastEventWin;
-      extern int lastEvFWidth, lastEvLeading, lastEvAscent;
-      extern struct descrip amperCol;
-      extern struct descrip amperRow;
-      extern struct descrip amperX;
-      extern struct descrip amperY;
-      extern struct descrip amperInterval;
-      extern uword xmod_control, xmod_shift, xmod_meta;
-   #endif				/* MultiThread */
 
    #ifdef XWindows
       extern struct _wdisplay * wdsplys;
@@ -275,28 +175,7 @@ extern stringint attribs[], drawops[];
       extern ULONG imageAttrs;
    #endif				/* PresentationManager */
 
-   #ifdef ConsoleWindow
-      extern FILE *ConsoleBinding, *flog;
-      extern unsigned long ConsoleFlags;
-      extern char ConsoleStringBuf[];
-      extern char *ConsoleStringBufPtr;
-   #endif				/* ConsoleWindow */
 
-#ifdef Graphics3D
-   extern struct descrip gl_torus;
-   extern struct descrip gl_cube;
-   extern struct descrip gl_sphere;
-   extern struct descrip gl_cylinder;
-   extern struct descrip gl_disk;
-   extern struct descrip gl_rotate;
-   extern struct descrip gl_translate;
-   extern struct descrip gl_scale;
-   extern struct descrip gl_popmatrix;
-   extern struct descrip gl_pushmatrix;
-   extern struct descrip gl_identity;
-   extern struct descrip gl_matrixmode;
-   extern struct descrip gl_texture;
-#endif
 
 #endif					/* Graphics */
 

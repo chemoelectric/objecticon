@@ -11,9 +11,6 @@
  * other) copyright notices are kept intact.
  */
 
-#ifndef MultiThread
-struct descrip amperErrno = {D_Integer};
-#endif					/* MultiThread */
 
 #ifdef PosixFns
 #if NT
@@ -1953,88 +1950,6 @@ function{0,1} receive(f)
       return result;
    }
 end
-
-#if defined(Dbm) || defined(ISQL)
-
-"fetch() - fetch a value from a dbm database."
-
-function{0,1} fetch(d, k)
-   if !is:file(d) then
-      runerr(190, d)
-   abstract {
-      return string ++ record
-      }
-   body {
-      tended struct descrip dkey;
-#ifdef Dbm
-      if (BlkLoc(d)->file.status & Fs_Dbm) {
-	 DBM *db;
-	 datum key, content;
-	 int n;
-
-	 if (!cnv:string(k, dkey))
-	    runerr(103, k);
-	 db = (DBM *)BlkLoc(d)->file.fd.dbm;
-	 key.dsize = StrLen(dkey); key.dptr = StrLoc(dkey);
-	 content = dbm_fetch(db, key);
-	 if (content.dptr == NULL)
-	    fail;
-	 Protect(StrLoc(result)=alcstr(content.dptr, content.dsize),runerr(0));
-	 StrLen(result) = content.dsize;
-	 return result;
-	 }
-      else
-#endif					/* Dbm */
-#ifdef ISQL
-      if (BlkLoc(d)->file.status & Fs_ODBC) {
-	    int rv;
-	    if (!is:null(k) && (!cnv:string(k, dkey)))
-		runerr(103, k);
-	    rv = dbfetch(BlkLoc(d)->file.fd.sqlf, &result);
-	    if (rv == Succeeded) {
-	       if (is:null(k))
-		  return result;
-	       else { /* pick out element k from result record */
-		  register union block *bp;  /* doesn't need to be tended */
-		  register union block *bp2; /* doesn't need to be tended */
-		  register word i;
-		  register int len;
-		  char *loc;
-		  int nf;
-		  bp = BlkLoc(result);
-		  bp2 = BlkLoc(result)->record.recdesc;
-		  nf = bp2->proc.nfields;
-		  loc = StrLoc(dkey);
-		  len = StrLen(dkey);
-		  for(i=0; i<nf; i++) {
-		     if (len == StrLen(bp2->proc.lnames[i]) &&
-			 !strncmp(loc, StrLoc(bp2->proc.lnames[i]), len)) {
-			EVValD(&result, E_Rref);
-			EVVal(i+1, E_Rsub);
-
-#if COMPILER
-			syserr("dynamic records not supported in compiler yet");
-#else					/* COMPILER */
-			/*
-			 * Found the field, return a pointer to it.
-			 */
-			return struct_var(&bp->record.fields[i], bp);
-#endif					/* COMPILER */
-			}
-		     }
-		  }
-	       }
-	    else if (rv == Failed) fail;
-	    else runerr(0);
-	 }
-      else
-#endif					/* ISQL */
-	 runerr(190, d);
-      fail; /* avoid (gcc) compiler warning */
-      }
-end
-
-#endif				/* DBM */
 
 /* 
  * Select

@@ -483,10 +483,6 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         setexe(outname);
 }
 
-#ifdef ConsoleWindow
-extern FILE *flog;
-#endif					/* ConsoleWindow */
-
 char *function_name(struct lfunction *f)
 {
     if (f->proc)

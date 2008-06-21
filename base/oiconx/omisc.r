@@ -4,7 +4,6 @@
  */
 
 "^x - create a refreshed copy of a co-expression."
-#ifdef Coexpr
 /*
  * ^x - return an entry block for co-expression x from the refresh block.
  */
@@ -21,11 +20,7 @@ operator{1} ^ refresh(x)
       /*
        * Get a new co-expression stack and initialize.
        */
-#ifdef MultiThread
       Protect(sblkp = alccoexp(0, 0), runerr(0));
-#else					/* MultiThread */
-      Protect(sblkp = alccoexp(), runerr(0));
-#endif					/* MultiThread */
 
       sblkp->freshblk = BlkLoc(x)->coexpr.freshblk;
       if (ChkNull(sblkp->freshblk))	/* &main cannot be refreshed */
@@ -36,7 +31,6 @@ operator{1} ^ refresh(x)
        */
       co_init(sblkp);
 
-#ifdef MultiThread
       /*
        * The above initialises sblkp->program to curpstate, which is
        * the program containing the refresh (^) op, but we want it to
@@ -44,26 +38,10 @@ operator{1} ^ refresh(x)
        * which may be different.
        */
       sblkp->program = findprogramforicode(sblkp->es_ipc);
-#endif
 
-#if COMPILER
-      sblkp->fnc = BlkLoc(x)->coexpr.fnc;
-      if (line_info) {
-         if (debug_info)
-            PFDebug(sblkp->pf)->proc = PFDebug(BlkLoc(x)->coexpr.pf)->proc;
-         PFDebug(sblkp->pf)->old_fname =
-            PFDebug(BlkLoc(x)->coexpr.pf)->old_fname;
-         PFDebug(sblkp->pf)->old_line =
-            PFDebug(BlkLoc(x)->coexpr.pf)->old_line;
-         }
-#endif					/* COMPILER */
 
       return coexpr(sblkp);
       }
-#else					/* Coexpr */
-operator{} ^ refresh(x)
-      runerr(401)
-#endif					/* Coexpr */
 
 end
 
@@ -103,32 +81,6 @@ operator{1} * size(x)
          }
       file: inline {
 	 int status = BlkLoc(x)->file.status;
-#ifdef Dbm
-	 if ((status & Fs_Dbm) == Fs_Dbm) {
-	    int count = 0;
-	    DBM *db = (DBM *)BlkLoc(x)->file.fd.dbm;
-	    datum key = dbm_firstkey(db);
-	    while (key.dptr != NULL) {
-	       count++;
-	       key = dbm_nextkey(db);
-	       }
-	    return C_integer count;
-	    }
-#endif					/* Dbm */
-#ifdef ISQL
-	 if ((status & Fs_ODBC) == Fs_ODBC) { /* ODBC file */
-	    struct ISQLFile *fp;
-	    int rc;
-#if (ODBCVER >= 0x0351)
-	    SQLLEN numrows;
-#else					/* ODBCVER >= 0x0351 */
-	    SQLINTEGER numrows;
-#endif					/* ODBCVER >= 0x0351 */
-	    fp = BlkLoc(x)->file.fd.sqlf;
-	    rc = SQLRowCount(fp->hstmt, &numrows);
-	    return C_integer(numrows);
-	    }
-#endif					/* ISQL */
 	 runerr(1100, x); /* not ODBC file */
 	 }
       default: {

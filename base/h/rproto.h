@@ -10,7 +10,6 @@ int		activate	(dptr val, struct b_coexpr *ncp, dptr result);
 word		add		(word a,word b);
 void		addmem 	(struct b_set *ps,struct b_selem *pe, union block **pl);
 struct astkblk	*alcactiv	(void);
-#ifdef MultiThread
 struct b_cset	*alccset_0	(void);
 struct b_cset	*alccset_1	(void);
 struct b_file	*alcfile_0	(FILE *fd,int status,dptr name);
@@ -36,20 +35,6 @@ struct b_telem	*alctelem_1	(void);
 struct b_tvtbl	*alctvtbl_0	(dptr tbl,dptr ref,uword hashnum);
 struct b_tvtbl	*alctvtbl_1	(dptr tbl,dptr ref,uword hashnum);
 void assign_event_functions(struct progstate *p, struct descrip cs);
-#else					/* MultiThread */
-struct b_cset	*alccset	(void);
-struct b_file	*alcfile	(FILE *fd,int status,dptr name);
-union block	*alchash	(int tcode);
-struct b_slots	*alcsegment	(word nslots);
-struct b_list	*alclist_raw	(uword size, uword nslots);
-struct b_list	*alclist	(uword size, uword nslots);
-struct b_lelem	*alclstb	(uword nslots,uword first,uword nused);
-struct b_real	*alcreal	(double val);
-struct b_selem	*alcselem	(dptr mbr,uword hn);
-char		*alcstr		(char	*s,word slen);
-struct b_telem	*alctelem	(void);
-struct b_tvtbl	*alctvtbl	(dptr tbl,dptr ref,uword hashnum);
-#endif					/* MultiThread */
 int		anycmp		(dptr dp1,dptr dp2);
 int		bfunc		(void);
 struct b_proc	*bi_strprc	(dptr s, C_integer arity);
@@ -59,15 +44,10 @@ void		c_put		(struct descrip *l, struct descrip *val);
 int		cnv_c_dbl	(dptr s, double *d);
 int		cnv_c_int	(dptr s, C_integer *d);
 int		cnv_c_str	(dptr s, dptr d);
-#ifdef MultiThread
 int		cnv_cset_0	(dptr s, dptr d);
 int		cnv_cset_1	(dptr s, dptr d);
-#else
-int		cnv_cset	(dptr s, dptr d);
-#endif					/* MultiThread */
 int		cnv_ec_int	(dptr s, C_integer *d);
 int		cnv_eint	(dptr s, dptr d);
-#ifdef MultiThread
 int		cnv_int_0	(dptr s, dptr d);
 int		cnv_int_1	(dptr s, dptr d);
 int		cnv_real_0	(dptr s, dptr d);
@@ -78,13 +58,6 @@ int		cnv_tcset_0	(struct b_cset *cbuf, dptr s, dptr d);
 int		cnv_tcset_1	(struct b_cset *cbuf, dptr s, dptr d);
 int		cnv_tstr_0	(char *sbuf, dptr s, dptr d);
 int		cnv_tstr_1	(char *sbuf, dptr s, dptr d);
-#else					/* MultiThread */
-int		cnv_int		(dptr s, dptr d);
-int		cnv_real	(dptr s, dptr d);
-int		cnv_str		(dptr s, dptr d);
-int		cnv_tcset	(struct b_cset *cbuf, dptr s, dptr d);
-int		cnv_tstr	(char *sbuf, dptr s, dptr d);
-#endif					/* MultiThread */
 int		co_chng		(struct b_coexpr *ncp, struct descrip *valloc,
 				   struct descrip *rsltloc,
 				   int swtch_typ, int first);
@@ -93,7 +66,6 @@ void		coacttrace	(struct b_coexpr *ccp,struct b_coexpr *ncp);
 void		cofailtrace	(struct b_coexpr *ccp,struct b_coexpr *ncp);
 void		corettrace	(struct b_coexpr *ccp,struct b_coexpr *ncp);
 int		coswitch	(word *old, word *new, int first);
-#ifdef MultiThread
 int		cplist_0	(dptr dp1,dptr dp2,word i,word j);
 int		cplist_1	(dptr dp1,dptr dp2,word i,word j);
 int		cpset_0		(dptr dp1,dptr dp2,word size);
@@ -102,22 +74,13 @@ int		cptable_0	(dptr dp1,dptr dp2,word size);
 int		cptable_1	(dptr dp1,dptr dp2,word size);
 void		EVStrAlc_0	(word n);
 void		EVStrAlc_1	(word n);
-#else					/* MultiThread */
-int		cplist		(dptr dp1,dptr dp2,word i,word j);
-int		cpset		(dptr dp1,dptr dp2,word size);
-int		cptable		(dptr dp1,dptr dp2,word size);
-#endif					/* MultiThread */
 void		cpslots		(dptr dp1,dptr slotptr,word i, word j);
 int		csetcmp		(unsigned int *cs1,unsigned int *cs2);
 int		cssize		(dptr dp);
 word		cvpos		(long pos,long len);
 void		datainit	(void);
-#ifdef MultiThread
 void		deallocate_0	(union block *bp);
 void		deallocate_1	(union block *bp);
-#else					/* MultiThread */
-void		deallocate	(union block *bp);
-#endif					/* MultiThread */
 int		def_c_dbl	(dptr s, double df, double * d);
 int		def_c_int	(dptr s, C_integer df, C_integer * d);
 int		def_c_str	(dptr s, char * df, dptr d);
@@ -157,12 +120,8 @@ union block	*hmake		(int tcode,word nslots,word nelem);
 void		icon_init	(char *name, int *argcp, char *argv[]);
 void		iconhost	(char *hostname);
 int		idelay		(int n);
-#ifdef MultiThread
 int		interp_0	(int fsig,dptr cargp);
 int		interp_1	(int fsig,dptr cargp);
-#else
-int		interp		(int fsig,dptr cargp);
-#endif
 void		inttrap		(void);
 void		irunerr		(int n, C_integer v);
 int		lexcmp		(dptr dp1,dptr dp2);
@@ -198,12 +157,8 @@ char		*qsearch	(char *key, char *base, int nel, int width,
 int		qtos		(dptr dp,char *sbuf);
 int    		 radix		(int sign, register int r, register char *s,
 				   register char *end_s, union numeric *result);
-#ifdef MultiThread
 char		*reserve_0	(int region, word nbytes);
 char		*reserve_1	(int region, word nbytes);
-#else					/* MultiThread */
-char		*reserve	(int region, word nbytes);
-#endif					/* MultiThread */
 void		retderef		(dptr valp, word *low, word *high);
 void		segvtrap	(void);
 void		stkdump		(int);
@@ -215,7 +170,6 @@ struct class_field *lookup_standard_field(int standard_field_num, struct b_class
 void            ensure_initialized(struct b_class *class);
 dptr            do_invoke       (dptr proc);
 
-#ifdef MultiThread
    void	resolve			(struct progstate *pstate);
    struct b_coexpr *loadicode (char *name, struct b_file *theInput,
       struct b_file *theOutput, struct b_file *theError,
@@ -237,21 +191,14 @@ dptr            do_invoke       (dptr proc);
    char *tostring(dptr d);
    char *cstr(struct descrip *sd);
    void EVVariable(dptr dx, int eventcode);
-#else					/* MultiThread */
-   void	resolve			(void);
-#endif					/* MultiThread */
 
 #ifdef ExternalFunctions
    dptr	extcall			(dptr x, int nargs, int *signal);
 #endif					/* ExternalFunctions */
 
 #ifdef LargeInts
-#ifdef MultiThread
    struct b_bignum *alcbignum_0	(word n);
    struct b_bignum *alcbignum_1	(word n);
-#else					/* MultiThread */
-   struct b_bignum *alcbignum	(word n);
-#endif					/* MultiThread */
    word		bigradix	(int sign, int r, char *s, char *x,
 						   union numeric *result);
    double	bigtoreal	(dptr da);
@@ -304,9 +251,6 @@ dptr            do_invoke       (dptr proc);
 #endif                                  /* MVS || VM */
 
 #ifdef MSWindows
-#ifdef ConsoleWindow
-void detectRedirection();
-#endif
    #ifdef FAttrib
       #if MSDOS
          char *make_mode(unsigned short st_mode);
@@ -471,21 +415,12 @@ void detectRedirection();
 #endif
    int	wgetq		(wbp w, dptr res, int t);
    FILE	*wopen		(char *nm, struct b_list *hp, dptr attr, int n, int *e, int is_3d);
-#ifdef Graphics3D
-   FILE	*wopengl	(char *nm, struct b_list *hp, dptr attr, int n,int *e);
-#endif					/* Graphics3D */
    int	wputc		(int ci, wbp w);
 #ifndef MSWindows
    void	wsync		(wbp w);
 #endif					/* MSWindows */
    void	xdis		(wbp w, char *s, int n);
 
-   #ifdef ConsoleWindow
-      FILE* OpenConsole		(void);
-      int   Consolefprintf	(FILE *file, const char *format, ...);
-      int   Consoleputc		(int c, FILE *file);
-      int   Consolefflush	(FILE *file);
-   #endif				/* ConsoleWindow */
 
    #ifdef MacGraph
       /*
@@ -570,11 +505,6 @@ void detectRedirection();
 
    #endif				/* XWindows */
 
-   #ifdef Graphics3D
-      /* For creating child windows for 3D graphics */
-      char child_window_stuff(wbp w, wbp wp, char child_window);
-      void makecurrent(wbp w);
-   #endif					/* Graphics3D */
 
    #ifdef MSWindows
       /*
@@ -683,7 +613,6 @@ void detectRedirection();
  */
 
 struct b_external *alcextrnl	(int n);
-#ifdef MultiThread
 struct b_record *alcrecd_0	(int nflds,union block *recptr);
 struct b_record *alcrecd_1	(int nflds,union block *recptr);
 struct b_object *alcobject_0	(struct b_class *class);
@@ -694,10 +623,6 @@ struct b_methp  *alcmethp_0     ();
 struct b_methp  *alcmethp_1     ();
 struct b_tvsubs *alcsubs_0	(word len,word pos,dptr var);
 struct b_tvsubs *alcsubs_1	(word len,word pos,dptr var);
-#else					/* MultiThread */
-struct b_record *alcrecd	(int nflds,union block *recptr);
-struct b_tvsubs *alcsubs	(word len,word pos,dptr var);
-#endif					/* MultiThread */
 int     field_access(dptr cargp);
 int     check_access(struct class_field *cf, struct b_class *instance_class);
 int     lookup_class_field(struct b_class *class, dptr query, int query_flag);
@@ -715,12 +640,8 @@ void	cotrace		(struct b_coexpr *ccp, struct b_coexpr *ncp,
 int	cvcset		(dptr dp,int * *cs,int *csbuf);
 int	cvnum		(dptr dp,union numeric *result);
 int	cvreal		(dptr dp,double *r);
-#ifdef MultiThread
 void	deref_0		(dptr dp1, dptr dp2);
 void	deref_1		(dptr dp1, dptr dp2);
-#else					/* MultiThread */
-void	deref		(dptr dp1, dptr dp2);
-#endif					/* MultiThread */
 void	envset		(void);
 int	eq		(dptr dp1,dptr dp2);
 int	fixtrap		(void);
@@ -753,17 +674,10 @@ int	tvcmp4		(struct dpair *dp1,struct dpair *dp2);
 int	tvtbl_asgn	(dptr dest, const dptr src);
 void	varargs		(dptr argp, int nargs, dptr rslt);
 
-#ifdef MultiThread
    struct b_coexpr *alccoexp (long icodesize, long stacksize);
-#else					/* MultiThread */
-   struct b_coexpr *alccoexp (void);
-#endif					/* MultiThread */
 
 dptr rec_structinate(dptr dp, char *name, int nfields, char *a[]);
 
-#ifdef Messaging
-struct MFile* Mopen(URI* puri, dptr attr, int nattr, int shortreq);
-#endif					/* Messaging */
 
 #ifdef PosixFns
 #if NT
@@ -798,27 +712,9 @@ dptr u_read			(int fd, int n, dptr d);
 void dup_fds			(dptr d_stdin, dptr d_stdout, dptr d_stderr);
 #endif					/* PosixFns */
 
-#if COMPILER
 
-   struct b_refresh *alcrefresh	(int na, int nl, int nt, int wk_sz);
-   void	atrace			(void);
-   void	ctrace			(void);
-   void	failtrace		(void);
-   void	initalloc		(void);
-   int	invoke			(int n, dptr args, dptr rslt, continuation c);
-   void	rtrace			(void);
-   void	strace			(void);
-   void	tracebk			(struct p_frame *lcl_pfp, dptr argp);
-   int	xdisp			(struct p_frame *fp, dptr dp, int n, FILE *f);
-
-#else					/* COMPILER */
-
-#ifdef MultiThread
    struct b_refresh *alcrefresh_0(word *e, int nl, int nt);
    struct b_refresh *alcrefresh_1(word *e, int nl, int nt);
-#else					/* MultiThread */
-   struct b_refresh *alcrefresh	(word *e, int nl, int nt);
-#endif					/* MultiThread */
    void	atrace			(dptr dp);
    void	ctrace			(dptr dp, int nargs, dptr arg);
    void	failtrace		(dptr dp);
@@ -837,21 +733,9 @@ void dup_fds			(dptr d_stdin, dptr d_stdout, dptr d_stderr);
    int	Ollist			(int nargs, Fargs);
    int	Omkrec			(int nargs, Fargs);
 
-   #ifdef MultiThread
       void	initalloc	(word codesize, struct progstate *p);
-   #else				/* MultiThread */
-      void	initalloc	(word codesize);
-   #endif				/* MultiThread */
 
-#endif					/* COMPILER */
 
 /* dynamic records */
 struct b_proc *dynrecord(dptr s, dptr fields, int n);
 
-#ifdef ISQL
-FILE   *isql_open (char *, dptr, dptr, dptr);
-int     dbclose(struct ISQLFile *);
-int     dbfetch(struct ISQLFile *, dptr);
-void    odbcerror               (struct ISQLFile *fp, int errornum);
-void    qalloc                  (struct ISQLFile *f, long n); /* query space alloc */
-#endif					/* ISQL */

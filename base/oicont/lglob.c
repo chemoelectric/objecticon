@@ -300,7 +300,6 @@ void resolve_locals()
  */
 void scanrefs()
 {
-    char *t;
     struct gentry *gp, **gpp, *gmain;
     struct linvocable *inv;
     struct lclass *cp, **cpp;
@@ -348,6 +347,7 @@ void scanrefs()
         if (gp->g_flag & F_Unref) {
 #ifdef DeBugLinker
             if (Dflag) {
+                char *t;
                 if (gp->g_flag & F_Proc)
                     t = "procedure";
                 else if (gp->g_flag & F_Record)

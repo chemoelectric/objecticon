@@ -204,13 +204,8 @@ end
 "proc(x,i) - convert x to a procedure if possible; use i to resolve "
 "ambiguous string names."
 
-#ifdef MultiThread
 function{0,1} proc(x,i,c)
-#else					/* MultiThread */
-function{0,1} proc(x,i)
-#endif					/* MultiThread */
 
-#ifdef MultiThread
    if is:coexpr(x) then {
       if !def:C_integer(i, 1) then
          runerr(101, i)
@@ -235,13 +230,8 @@ function{0,1} proc(x,i)
 	 /* follow upwards, i levels */
 	 while (i--) {
 	    if (fp == NULL) fail;
-#if COMPILER
-	    dp = fp->old_argp;
-	    fp = fp->old_pfp;
-#else					/* COMPILER */
 	    dp = fp->pf_argp;
 	    fp = fp->pf_pfp;
-#endif					/* COMPILER */
 	    }
 	 if (fp == NULL) fail;
 	 if (dp)
@@ -250,7 +240,6 @@ function{0,1} proc(x,i)
 	 return proc(bp);
 	 }
       }
-#endif					/* MultiThread */
 
    if is:proc(x) then {
       abstract {
@@ -258,7 +247,6 @@ function{0,1} proc(x,i)
          }
       inline {
 
-#ifdef MultiThread
 	 if (!is:null(c)) {
 	    struct progstate *p;
 	    if (!is:coexpr(c)) runerr(118,c);
@@ -271,7 +259,6 @@ function{0,1} proc(x,i)
 			  (char *)p + p->hsize))
 	       fail;
 	    }
-#endif					/* MultiThread */
          return x;
          }
       }
@@ -295,7 +282,6 @@ function{0,1} proc(x,i)
       inline {
          struct b_proc *prc;
 
-#ifdef MultiThread
 	 struct progstate *prog, *savedprog;
 
 	 savedprog = curpstate;
@@ -310,7 +296,6 @@ function{0,1} proc(x,i)
 	    }
 
 	 ENTERPSTATE(prog);
-#endif						/* MultiThread */
 
          /*
           * Attempt to convert Arg0 to a procedure descriptor using i to
@@ -323,9 +308,7 @@ function{0,1} proc(x,i)
 	 else
          prc = strprc(&x, i);
 
-#ifdef MultiThread
 	 ENTERPSTATE(savedprog);
-#endif						/* MultiThread */
          if (prc == NULL)
             fail;
          else

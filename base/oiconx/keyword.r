@@ -80,21 +80,15 @@ keyword{4} collections
       }
 end
 
-#if !COMPILER
 "&column - source column number of current execution point"
 keyword{1} column
    abstract {
       return integer;
       }
    inline {
-#ifdef MultiThread
       return C_integer findcol(ipc.opnd);
-#else
-      fail;
-#endif					/* MultiThread */
       }
 end
-#endif					/* !COMPILER */
 
 "&current - the currently active co-expression"
 keyword{1} current
@@ -350,11 +344,7 @@ keyword{1,*} features
 #endif					/* UNIX */
 	 }
 
-#if COMPILER
-#define Feature(guard,sym,kwval) if ((guard) && (kwval)) suspend C_string kwval;
-#else					/* COMPILER */
 #define Feature(guard,sym,kwval) if (kwval) suspend C_string kwval;
-#endif					/* COMPILER */
 #include "../h/features.h"
 
       if (refpath && strlen(refpath) > 0) {
@@ -392,17 +382,10 @@ keyword{1} file
       return string
       }
    inline {
-#if COMPILER
-      if (line_info)
-         return C_string file_name;
-      else
-         runerr(402);
-#else					/* COMPILER */
       char *s;
       s = findfile(ipc.opnd);
       if (!strcmp(s,"?")) fail;
       return C_string s;
-#endif					/* COMPILER */
       }
 end
 
@@ -449,10 +432,6 @@ keyword{1} level
       }
 
    inline {
-#if COMPILER
-      if (!debug_info)
-         runerr(402);
-#endif					/* COMPILER */
       return C_integer k_level;
       }
 end
@@ -463,14 +442,7 @@ keyword{1} line
       return integer;
       }
    inline {
-#if COMPILER
-      if (line_info)
-         return C_integer line_num;
-      else
-         runerr(402);
-#else					/* COMPILER */
       return C_integer findline(ipc.opnd);
-#endif					/* COMPILER */
       }
 end
 
@@ -577,11 +549,7 @@ keyword{1} source
        return coexpr
        }
    inline {
-#ifndef Coexpr
-         return k_main;
-#else					/* Coexpr */
          return coexpr(topact((struct b_coexpr *)BlkLoc(k_current)));
-#endif					/* Coexpr */
          }
 end
 
@@ -628,14 +596,10 @@ keyword{1} time
       return integer
       }
    inline {
-#ifdef MultiThread
       /*
        * &time in this program = total time - time spent in other programs
        */
       return C_integer millisec() - curpstate->Kywd_time_elsewhere;
-#else					/* MultiThread */
-      return C_integer millisec();
-#endif					/* MultiThread */
       }
 end
 
@@ -684,9 +648,6 @@ keyword{1} errno
 #endif /* PosixFns */
 end
 
-#ifndef MultiThread
-struct descrip kywd_xwin[2] = {{D_Null}};
-#endif					/* MultiThread */
 
 "&window - variable containing the current graphics rendering context."
 #ifdef Graphics

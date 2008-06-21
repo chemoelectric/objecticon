@@ -27,7 +27,6 @@
  *  Other definitions may occur for different configurations. These include:
  *
  *	DeBug		debugging code
- *	MultiThread	support for multiple programs under the interpreter
  *
  *  Other definitions perform configurations that are common to several
  *  systems. An example is:
@@ -40,9 +39,7 @@
  * If COMPILER is not defined, code for the interpreter is compiled.
  */
 
-#ifndef COMPILER
    #define COMPILER 0
-#endif
 
 /*
  * The following definitions insure that all the symbols for operating
@@ -120,47 +117,6 @@
 #define ReadDirectory
 #endif					/* PosixFns */
 
-#ifndef NoCoexpr
-   #undef Coexpr
-   #define Coexpr
-#endif					/* NoCoexpr */
-
-#ifndef NoMultiThread
-   #undef MultiThread
-   #define MultiThread
-#endif					/* NoMultiThread */
-
-#ifndef NoProfil
-   #undef HaveProfil
-   #define HaveProfil
-#endif					/* NoProfil */
-
-#ifndef NoMessaging
-   #undef Messaging
-   #define Messaging
-#endif					/* Messaging */
-
-/*
- *  Execution monitoring is not supported under the compiler,
- *  nor if co-expressions are not available.
- */
-
-#ifdef NoCoexpr
-   #undef MultiThread
-   #undef EventMon
-   #undef Eve
-#endif					/* NoCoexpr */
-
-#ifndef NoEventMon
-#define EventMon
-#endif
-
-#if COMPILER
-   #undef Eve
-   #undef MultiThread
-   #undef EventMon
-#endif					/* COMPILER */
-
 #ifndef NoStrInvoke
    #undef StrInvoke
    #define StrInvoke
@@ -170,11 +126,6 @@
    #undef LargeInts
    #define LargeInts
 #endif					/* NoLargeInts */
-
-#ifdef EventMon
-   #undef MultiThread
-   #define MultiThread
-#endif					/* EventMon */
 
 /*
  * Names for standard environment variables.
@@ -232,9 +183,6 @@
 #ifdef MSWindows
    #undef Graphics
    #define Graphics 1
-   #ifndef NTConsole
-      #define ConsoleWindow 1
-   #endif				/* NTConsole */
 #endif					/* MSWindows */
 
 #ifdef MacGraph
@@ -244,7 +192,6 @@
 
 #ifdef PresentationManager
    #define Graphics 1
-   #define ConsoleWindow 1
 #endif					/* PresentationManager */
 
 #ifdef Graphics
@@ -271,22 +218,6 @@
       #define ICONC_XLIB "-L/usr/X11R6/lib -lX11"
    #endif				/* ICONC_XLIB */
 
-   #ifdef ConsoleWindow
-      /*
-       * knock out fprintf and putc; these are here so that consoles may be used
-       * in icont and rtt, not just iconx
-       */
-      #undef fprintf
-      #define fprintf Consolefprintf
-      #undef putc
-      #define putc Consoleputc
-      #undef fflush
-      #define fflush Consolefflush
-      #undef printf
-      #define printf Consoleprintf
-      #undef exit
-      #define exit c_exit
-   #endif				/* Console Window */
 
 #endif					/* Graphics */
 
@@ -380,14 +311,6 @@
       #define ReadDirectory
    #endif				/* UNIX*/
 #endif					/* ReadDirectory */
-
-#ifndef Dbm
-   #if UNIX
-   #ifndef NoDbm
-      #define Dbm 1
-   #endif				/* NoDbm */
-   #endif				/* UNIX */
-#endif					/* Dbm */
 
 /*
  * Default sizing and such.
@@ -639,18 +562,6 @@ Deliberate Syntax Error
 #define IHSize 128
 #define IHasher(x)	(((unsigned int)(unsigned long)(x))&(IHSize-1))
 
-#if COMPILER
-
-   /*
-    * Code for the compiler.
-    */
-   #undef MultiThread		/* no way -- interpreter only */
-   #undef EventMon		/* presently not supported in the compiler */
-   #undef ExecImages		/* interpreter only */
-   #undef HAVE_IODBC		/* ODBC interpreter only until dynamic */
-   #undef ISQL			/* records get added to the compiler */
-
-#else					/* COMPILER */
 
    /*
     * Code for the interpreter.
@@ -667,7 +578,6 @@ Deliberate Syntax Error
       #define USuffix ".u"
    #endif				/* USuffix */
 
-#endif					/* COMPILER */
 
 #if UNIX
    #undef Header

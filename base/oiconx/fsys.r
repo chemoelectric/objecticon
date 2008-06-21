@@ -119,12 +119,6 @@ function{1} close(f)
       /*
        * Close f, using fclose, pclose, closedir, or wclose as appropriate.
        */
-#ifdef Messaging
-      if (BlkLoc(f)->file.status & Fs_Messaging) {
-	 BlkLoc(f)->file.status = 0;
-	 return C_integer Mclose((struct Mfile*) fp);
-	 }
-#endif                                  /* Messaging */
 
 #ifdef PosixFns
       if (BlkLoc(f)->file.status & Fs_Socket) {
@@ -155,21 +149,7 @@ function{1} close(f)
 	 }
 #endif					/* HAVE_LIBZ */
 
-#ifdef ISQL
-      if (BlkLoc(f)->file.status & Fs_ODBC) {
-	 BlkLoc(f)->file.status = 0;
-	 if (dbclose((struct ISQLFile *)fp)) fail;
-	 return C_integer 0;
-	 }
-#endif					/* ISQL */
 
-#ifdef Dbm
-      if (BlkLoc(f)->file.status & Fs_Dbm) {
-	 BlkLoc(f)->file.status = 0;
-	 dbm_close((DBM *)fp);
-	 return f;
-         }
-#endif					/* Dbm */
 
 
 #ifdef Graphics
@@ -267,7 +247,7 @@ function{0,1} getenv(s)
 end
 
 
-#if defined(Graphics) || defined(Messaging) || defined(ISQL)
+#if defined(Graphics)
 "open(s1, s2, ...) - open file named s1 with options s2"
 " and attributes given in trailing arguments."
 function{0,1} open(fname, spec, attr[n])
@@ -330,9 +310,6 @@ function{0,1} open(fname, spec)
       tended struct b_list *hp;
 #endif					/* Graphics */
 
-#ifdef Messaging
-      int is_shortreq = 0;
-#endif                                  /* Messaging */
 
 /*
  * The following code is operating-system dependent [@fsys.02].  Make
@@ -408,12 +385,6 @@ Deliberate Syntax Error
 
 	    case 's':
 	    case 'S':
-#ifdef Messaging
-	       if (status & Fs_Messaging) {
-		  is_shortreq = 1;
-		  continue;
-		  }
-#endif                                  /* Messaging */
 #ifdef RecordIO
 	       status |= Fs_Untrans;
 	       status |= Fs_Record;
@@ -467,33 +438,16 @@ Deliberate Syntax Error
 		  continue;
 		  }
 #endif					/* PosixFns */
-#ifdef Graphics3D
-	       if (status & Fs_Window) {
-		  status |= Fs_Window3D;
-		  continue;
-		  }
-#else					/* Graphics3D */
 	       fail;
-#endif					/* Graphics3D */
 
 
 	    case 'd':
 	    case 'D':
-#ifdef Dbm
-	       status |= Fs_Dbm;
-	       continue;
-#else
 	       fail;
-#endif	   				/* DBM */
 
 	    case 'm':
 	    case 'M':
-#ifdef Messaging
-	       status |= Fs_Messaging|Fs_Read|Fs_Write;
-	       continue;
-#else
 	       fail;
-#endif                                  /* Messaging */
 
 	    case 'n':
 	    case 'N':
@@ -508,13 +462,7 @@ Deliberate Syntax Error
 
 	    case 'o':
 	    case 'O':
-#ifdef ISQL
-	       status |= Fs_ODBC;
-	       continue;
-
-#else 					/* ISQL */
 	       fail;
-#endif 					/* ISQL */
 
             case 'z':
 	    case 'Z':
@@ -542,15 +490,6 @@ Deliberate Syntax Error
       mode[2] = '\0';
       mode[3] = '\0';
 
-#ifdef Dbm
-      /* If we're opening a dbm database, the default is set further down to
-         "rw" */
-      if (!(status & Fs_Dbm))
-#endif					/* Dbm */
-#ifdef ISQL
-      /* If we're opening a sql database, modes are not used */
-      if (!(status & Fs_ODBC))
-#endif					/* ISQL */
 
       if ((status & (Fs_Read|Fs_Write)) == 0)	/* default: read only */
 	 status |= Fs_Read;
@@ -647,11 +586,6 @@ Deliberate Syntax Error
 	       runerr(109, attr[j]);
 	    }
 
-#ifdef Graphics3D
-	 if (status & Fs_Window3D)
-	    f = wopengl(fnamestr, hp, attr, n, &err_index);
-	 else
-#endif					/* Graphics3D */
 	    f = wopen(fnamestr, hp, attr, n, &err_index,0);
 
 	 if (f == NULL) {
@@ -662,104 +596,7 @@ Deliberate Syntax Error
 	 } else
 #endif					/* Graphics */
 
-#ifdef Messaging
-	    if (status & Fs_Messaging) {
-	       extern int Merror;
-	       if (status & ~(Fs_Messaging|Fs_Read|Fs_Write|Fs_Untrans)) {
-		  runerr(209, spec);
-		  }
-	       else {
-		  URI *puri;
-		  register int a;
-		  char *buf[4192];
-		  tended char *tmps;
 
-		  /* Check attributes (stolen from above) */
-		  for (a=0; a<n; a++) {
-		     if (is:null(attr[a])) {
-			attr[a] = emptystr;
-			}
-		     if (!is:string(attr[a])) {
-			runerr(109, attr[a]);
-			}
-		     if (cnv:C_string(attr[a], tmps)) {
-#ifdef MDEBUG
-			fprintf(stderr, "header: %s\n", tmps);
-			fflush(stderr);
-#endif                                  /* MDEBUG */
-			}
-		     }
-
-		  /* Try to parse the filename as a URL */
-		  puri = uri_parse(fnamestr);
-		  switch (puri->status) {
-		     case URI_OK:
-			break;
-		     case URI_EMALFORMED:
-			runerr(1201, fname);
-			break;
-		     case URI_ENOUSER:
-			runerr(1202, fname);
-			break;
-		     case URI_EUNKNOWNSCHEME:
-			runerr(1203, fname);
-			break;
-		     case URI_ECHECKERRNO:
-		     default:
-#ifdef PosixFns
-			if (errno != 0) {
-			   IntVal(amperErrno) = errno;
-			   }
-#endif                                  /* PosixFns */
-			runerr(1204, fname);
-		     }
-
-		  f = (FILE *)Mopen(puri, attr, n, is_shortreq);
-		  if (Merror > 1200) {
-		    runerr(Merror, fname);
-		  }
-		  switch (Merror) {
-		     case 0:
-			break;
-		     case TP_ECONNECT:
-			/*
-			 * used to be runerr 1205
-			 */
-			fail;
-		     case TP_EHOST:
-			/*
-			 * used to be runerr 1206
-			 */
-			fail;
-		     case TP_ESERVER:
-			runerr(1212, fname);
-			break;
-		     case TP_EMEM:
-		     case TP_EOPEN:
-		     default:
-			runerr(1200, fname);
-			break;
-		     }
-		  }
-	       }
-	    else
-#endif                                  /* Messaging */
-
-#ifdef ISQL
-   if (status & Fs_ODBC) {
-      if (n < 2) runerr(103);
-      if (!is:string(attr[0])) runerr(103, attr[0]);
-      if (!is:string(attr[1])) runerr(103, attr[1]);
-      if (n >= 3) {
-	 if (!is:string(attr[2])) runerr(103, attr[2]);
-	 f = isql_open(fnamestr, attr, attr+1, attr+2);
-	 }
-      else {
-	 f = isql_open(fnamestr, NULL, attr+1, attr+2);
-	 }
-      }
-   else
-#endif					/* ISQL */
 
 #if AMIGA || ARM || OS2 || UNIX || VMS || NT
       if (status & Fs_Pipe) {
@@ -786,25 +623,6 @@ Deliberate Syntax Error
       else
 #endif					/* AMIGA || ARM || OS2 || ... */
 
-#ifdef Dbm
-      if (status & Fs_Dbm) {
-	 int mode;
-	 if ((status & Fs_Read && status & Fs_Write) || status == Fs_Dbm) {
-	    mode = O_RDWR|O_CREAT;
-	    status |= Fs_Read|Fs_Write;
-	 }
-	 else if (status & Fs_Write) {
-	    mode = O_WRONLY|O_CREAT;
-	 }
-	 else
-	   mode = O_RDONLY;
-
-	 f = (FILE *)dbm_open(fnamestr, mode, 0666);
-	 if (!f)
-	    fail;
-      }
-      else
-#endif					/* DBM */
 
 #ifdef HAVE_LIBZ
       if (status & Fs_Compress) {
@@ -826,7 +644,7 @@ Deliberate Syntax Error
 	       fd = sock_listen(fnamestr, is_udp_or_listener);
 	    } else {
 	       C_integer timeout = 0;
-#if defined(Graphics) || defined(Messaging) || defined(ISQL)
+#if defined(Graphics)
 	       if (n > 0 && !is:null(attr[0])) {
                   if (!cnv:C_integer(attr[0], timeout))
                      runerr(101, attr[0]);
@@ -1083,19 +901,6 @@ function{0,1} read(f)
 	 }
       BlkLoc(f)->file.status |= Fs_Reading;
 
-#ifdef ConsoleWindow
-      /*
-       * if file is &input, then make sure our console is open and read
-       * from it, unless input redirected
-       */
-      if (fp == stdin
-           && !(ConsoleFlags & StdInRedirect)
-           ) {
-        fp = OpenConsole();
-        status = Fs_Window | Fs_Read | Fs_Write;
-        }
-
-#endif					/* ConsoleWindow */
       /*
        * Use getstrg to read a line from the file, failing if getstrg
        *  encounters end of file. [[ What about -2?]]
@@ -1241,27 +1046,6 @@ function{0,1} reads(f,i)
       if ((status & Fs_Read) == 0)
 	 runerr(212, f);
 
-#ifdef Messaging
-      if (status & Fs_Messaging) {
-	 struct MFile *mf = BlkLoc(f)->file.fd.mf;
-	 /* Casting to unsigned lets us use reads(f, -1) */
-	 size_t size = (unsigned)i <= MaxReadStr ? i : MaxReadStr;
-	 if (!MFIN(mf, READING)) {
-	    Mstartreading(mf);
-	    }
-	 bytesread = tp_read(mf->tp, sbuf, size);
-	 if (bytesread <= 0) {
-	    extern int Merror;
-	    if (Merror >= 1200) {
-	       runerr(Merror, f);
-	       }
-	    fail;
-	    }
-
-	 return string(bytesread, sbuf);
-	 }
-      else
-#endif                                  /* Messaging */
 
 #ifdef PosixFns
         if (status & Fs_Socket) {
@@ -1322,18 +1106,6 @@ function{0,1} reads(f,i)
 	 }
       BlkLoc(f)->file.status |= Fs_Reading;
 
-#ifdef ConsoleWindow
-      /*
-       * if file is &input, then make sure our console is open and read
-       * from it, unless input redirected
-       */
-      if (fp == stdin
-          && !(ConsoleFlags & StdInRedirect)
-          ) {
-        fp = OpenConsole();
-        status = Fs_Read | Fs_Write | Fs_Window;
-        }
-#endif					/* ConsoleWindow */
 
 #ifdef ReadDirectory
 #if !NT
@@ -1746,21 +1518,13 @@ end
       if ((k_errout.status & Fs_Write) == 0)
 	 runerr(213);
       else {
-#ifndef ConsoleWindow
 	 f.fp = k_errout.fd.fp;
-#else					/* ConsoleWindow */
-         f.fp=(ConsoleFlags & StdErrRedirect) ? k_errout.fd.fp : OpenConsole();
-#endif					/* ConsoleWindow */
 	 }
 #else					/* error_out */
       if ((k_output.status & Fs_Write) == 0)
 	 runerr(213);
       else {
-#ifndef ConsoleWindow
 	 f.fp = k_output.fd.fp;
-#else					/* ConsoleWindow */
-         f.fp=(ConsoleFlags & StdOutRedirect) ? k_output.fd.fp : OpenConsole();
-#endif					/* ConsoleWindow */
 	 }
 #endif					/* error_out */
       }
@@ -1791,26 +1555,6 @@ end
 #ifdef RecordIO
       if (!(status & Fs_Record)) {
 #endif					/* RecordIO */
-#ifdef Messaging
-      if (status & Fs_Messaging) {
-	 struct MFile *mf = f.mf;
-	 extern int Merror;
-	 if (!MFIN(mf, WRITING)) {
-	    runerr(213);
-	    }
-	 if (tp_write(mf->tp, "\n", 1) < 0) {
-#if terminate
-	    syserr("tp_write failed in stop()");
-#else
-	    fail;
-#endif
-	    }
-	 if (Merror != 0) {
-	    runerr(Merror);
-	    }
-	 }
-      else
-#endif                                  /* Messaging */
 #ifdef PosixFns
       if (status & Fs_Socket) {
 	 if (sock_write(f.fd, "\n", 1) < 0)
@@ -1832,9 +1576,6 @@ end
    /*
     * Flush the file.
     */
-#ifdef Messaging
-   if (!(status & Fs_Messaging)) {
-#endif					/* Messaging */
 #ifdef Graphics
    if (!(status & Fs_Window)) {
 #endif					/* Graphics */
@@ -1885,9 +1626,6 @@ end
       } /* End of else if - not the console window we're writing to */
 #endif					/* PresentationManager */
 #endif					/* Graphics */
-#ifdef Messaging
-   }
-#endif					/* Messaging */
 
 
 #if terminate
@@ -1920,27 +1658,13 @@ function {1} name(x[nargs])
 #ifdef Graphics
       struct _wbinding *wb;
 #endif					/* Graphics */
-#ifdef Messaging
-      struct MFile *mf;
-#endif					/* Messaging */
-#ifdef Dbm
-      struct DBM *dbm;
-#endif					/* Dbm */
       int  fd;
       } f;
       word status =
 #if terminate
-#ifndef ConsoleWindow
 	k_errout.status;
-#else					/* ConsoleWindow */
-        (ConsoleFlags & StdErrRedirect) ? k_errout.status : Fs_Read | Fs_Write | Fs_Window;
-#endif					/* ConsoleWindow */
 #else					/* terminate */
-#ifndef ConsoleWindow
 	k_output.status;
-#else					/* ConsoleWindow */
-        (ConsoleFlags & StdOutRedirect) ? k_output.status : Fs_Read | Fs_Write | Fs_Window;
-#endif					/* ConsoleWindow */
 #endif					/* terminate */
 
 #ifdef BadCode
@@ -2024,26 +1748,6 @@ function {1} name(x[nargs])
 			   flushrec(f.fp);
 			else
 #endif					/* RecordIO */
-#ifdef Messaging
-                        if (status & Fs_Messaging) {
-			   struct MFile *mf = f.mf;
-			   extern int Merror;
-			   if (!MFIN(mf, WRITING)) {
-			     runerr(213);
-			   }
-			   if (tp_write(mf->tp, "\n", 1) < 0) {
-#if terminate
-			      syserr("tp_write failed in stop()");
-#else
-			      fail;
-#endif
-			      }
-			   if (Merror != 0) {
-			      runerr(Merror, x[n]);
-			      }
-			   }
-			else
-#endif                                  /* Messaging */
 #ifdef PosixFns
 			if (status & Fs_Socket) {
 			   if (sock_write(f.fd, "\n", 1) < 0)
@@ -2086,13 +1790,6 @@ function {1} name(x[nargs])
 		  if ((status & Fs_Write) == 0)
 		     runerr(213, x[n]);
 		  f.fp = BlkLoc(x[n])->file.fd.fp;
-#ifdef ConsoleWindow
-                  if ((f.fp == stdout && !(ConsoleFlags & StdOutRedirect)) ||
-                      (f.fp == stderr && !(ConsoleFlags & StdErrRedirect))) {
-                     f.fp = OpenConsole();
-                     status = Fs_Read | Fs_Write | Fs_Window;
-                     }
-#endif					/* ConsoleWindow */
 #ifdef PresentationManager
                   if (status & Fs_Window) {
                      /*
@@ -2136,18 +1833,6 @@ function {1} name(x[nargs])
 		     if ((status & Fs_Record ? putrec(f.fp, &t) :
 					     putstr(f.fp, &t)) == Failed)
 #else					/* RecordIO */
-#ifdef Messaging
-                     if (status & Fs_Messaging) {
-			struct MFile *mf = f.mf;
-			extern int Merror;
-			Merror = 0;
-			tp_write(mf->tp, StrLoc(t), StrLen(t));
-			if (Merror > 1200) {
-			   runerr(Merror);
-			   }
-			}
-		     else
-#endif                                  /* Messaging */
 
 #ifdef PosixFns
 		     if (status & Fs_Socket) {
@@ -2191,13 +1876,7 @@ function{0,1} getch()
       }
    body {
       int i;
-#ifndef ConsoleWindow
       i = getch();
-#else					/* ConsoleWindow */
-      struct descrip res;
-      if (wgetchne((wbp)OpenConsole(), &res) < 0) fail;
-      i = *StrLoc(res);
-#endif					/* ConsoleWindow */
       if (i<0 || i>255)
 	 fail;
       return string(1, (char *)&allchars[FromAscii(i) & 0xFF]);
@@ -2212,13 +1891,7 @@ function{0,1} getche()
       }
    body {
       int i;
-#ifndef ConsoleWindow
       i = getche();
-#else					/* ConsoleWindow */
-      struct descrip res;
-      if (wgetche((wbp)OpenConsole(), &res) < 0) fail;
-      i = *StrLoc(res);
-#endif					/* ConsoleWindow */
       if (i<0 || i>255)
 	 fail;
       return string(1, (char *)&allchars[FromAscii(i) & 0xFF]);
@@ -2233,23 +1906,9 @@ function{0,1} kbhit()
       return null
       }
    inline {
-#ifndef ConsoleWindow
       if (kbhit())
 	 return nulldesc;
       else fail;
-#else					/* ConsoleWindow */
-     /* make sure we're up-to-date event wise */
-     if (ConsoleBinding) {
-        pollevent();
-        /*
-	 * perhaps should look in the console's icon event list for a keypress;
-	 *  either a string or event > 60k; presently, succeed for all events
-	 */
-        if (BlkLoc(((wbp)ConsoleBinding)->window->listp)->list.size > 0)
-	   return nulldesc;
-        }
-     fail;
-#endif					/* ConsoleWindow */
       }
 end
 #endif					/* KeyboardFncs */

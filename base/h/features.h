@@ -66,9 +66,6 @@
    Feature(1, "_POSIX", "POSIX")
 #endif					/* PosixFns */
 
-#ifdef Dbm
-   Feature(1, "_DBM", "DBM")
-#endif					/* DBM */
 
 #if VMS
    Feature(1, "_VMS", "VMS")
@@ -80,13 +77,8 @@
    Feature(1, "_EBCDIC", "EBCDIC")
 #endif					/* EBCDIC */
 
-#ifdef Coexpr
    Feature(1, "_CO_EXPRESSIONS", "co-expressions")
-#endif					/* Coexpr */
 
-#ifdef ConsoleWindow
-   Feature(1, "_CONSOLE_WINDOW", "console window")
-#endif					/* Coexpr */
 
 #ifdef LoadFunc
    Feature(1, "_DYNAMIC_LOADING", "dynamic loading")
@@ -110,9 +102,7 @@
    Feature(largeints, "_LARGE_INTEGERS", "large integers")
 #endif					/* LargeInts */
 
-#ifdef MultiThread
    Feature(1, "_MULTITASKING", "multiple programs")
-#endif					/* MultiThread */
 
 #ifdef Pipes
    Feature(1, "_PIPES", "pipes")
@@ -124,17 +114,11 @@
 
    Feature(1, "_SYSTEM_FUNCTION", "system function")
 
-#ifdef Messaging
-   Feature(1, "_MESSAGING", "messaging")
-#endif                                  /* Messaging */
 
 #ifdef Graphics
    Feature(1, "_GRAPHICS", "graphics")
 #endif					/* Graphics */
 
-#ifdef Graphics3D
-   Feature(1, "_3D_GRAPHICS", "3D graphics")
-#endif					/* Graphics */
 
 #ifdef XWindows
    Feature(1, "_X_WINDOW_SYSTEM", "X Windows")
@@ -167,6 +151,3 @@
    Feature(1, "_JPEG", "JPEG images")
 #endif					/* HAVE_LIBJPEG */
 
-#ifdef ISQL
-   Feature(1, "_SQL", "SQL via ODBC")
-#endif					/* ISQL */

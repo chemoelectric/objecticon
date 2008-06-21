@@ -24,12 +24,14 @@ CONFIG_DATE=$(date)
 
 AC_CONFIG_SRCDIR([base/oiconx/imain.r])
 
-CHECK_FREETYPE()
-CHECK_ZLIB()
 CHECK_XLIB()
-CHECK_JPEG()
-CHECK_XFT()
-CHECK_XPM()
+if test "$ac_cv_lib_X11_main" == yes; then
+   CHECK_FREETYPE()
+   CHECK_JPEG()
+   CHECK_XFT()
+   CHECK_XPM()
+fi
+CHECK_ZLIB()
 OI_ADD_LIB(m)
 OI_ADD_LIB(crypt)
 OI_ADD_LIB(dl)

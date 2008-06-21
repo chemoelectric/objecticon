@@ -57,7 +57,6 @@ typedef word C_integer;
  */
 typedef int (*continuation) (void);
 
-#if !COMPILER
 
    /*
     * Typedefs for the interpreter.
@@ -96,4 +95,3 @@ typedef int (*continuation) (void);
       
    #endif				/* IntBits != WordBits */
       
-#endif					/* COMPILER */

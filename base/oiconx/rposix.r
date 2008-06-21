@@ -209,9 +209,6 @@ unsigned int errmask;
    status = BlkLoc(file)->file.status;
    /* Check it's opened for reading, or it's a window */
    if ((status & Fs_Directory)
-#ifdef Dbm
-       || (status & Fs_Dbm)
-#endif
        )
      return -1;
 
@@ -1469,7 +1466,6 @@ struct hostent *hs;
  * Calling Icon from C (iconx)
  */
 
-#if !COMPILER
 
 /* No provision for resumption */
 static word *callproc, ibuf[100];
@@ -1528,7 +1524,6 @@ int nargs;
    else
       return ret;
 }
-#endif					/* !COMPILER */
 
 /*
  * Signals and trapping
@@ -1579,11 +1574,7 @@ int sig;
    StrLen(val) = strlen(p);
    StrLoc(val) = p;
 
-#if COMPILER
-   syserr("signal handlers are not supported by iconc");
-#else
    (void) call(proc, &val, 1);
-#endif
    
    /* Restore signal just in case (for non-BSD systems) */
    signal(sig, signal_dispatcher);

@@ -23,16 +23,6 @@ extern int numColors;
 extern LONG ScreenBitsPerPel;
 #endif					/* PresentationManager */
 
-#ifndef MultiThread
-struct descrip amperX = {D_Integer};
-struct descrip amperY = {D_Integer};
-struct descrip amperCol = {D_Integer};
-struct descrip amperRow = {D_Integer};
-struct descrip amperInterval = {D_Integer};
-struct descrip lastEventWin = {D_Null};
-int lastEvFWidth = 0, lastEvLeading = 0, lastEvAscent = 0;
-uword xmod_control, xmod_shift, xmod_meta;
-#endif					/* MultiThread */
 
 
 /*
@@ -196,52 +186,6 @@ dptr res;
    return 1;
    }
 
-#ifdef ConsoleWindow
-/*
- *  getch() -- return char from window, without echoing
- */
-int getch(void)
-{
-   struct descrip res;
-   if (wgetchne((wbp)OpenConsole(), &res) >= 0)
-      return *StrLoc(res) & 0xFF;
-   else
-      return -1;	/* fail */
-}
-
-/*
- *  getch() -- return char from window, with echoing
- */
-int getche(void)
-{
-   struct descrip res;
-   if (wgetche((wbp)OpenConsole(), &res) >= 0)
-      return *StrLoc(res) & 0xFF;
-   else
-      return -1;	/* fail */
-}
-
-/*
- *  kbhit() -- check for availability of char from window
- */
-int kbhit(void)
-{
-   if (ConsoleBinding) {
-      /* make sure we're up-to-date event wise */
-      pollevent();
-      /*
-       * perhaps should look in the console's icon event list for a keypress;
-       *  either a string or event > 60k; presently, succeed for all events
-       */
-      if (BlkLoc(((wbp)ConsoleBinding)->window->listp)->list.size > 0)
-         return 1;
-      else
-        return 0;  /* fail */
-      }
-   else
-      return 0;  /* fail */
-}
-#endif					/* ConsoleWindow */
 
 /*
  * Get a window that has an event pending (queued)
@@ -683,36 +627,6 @@ static colrmod transptable[] = {		/* transparency levels */
    { "transparent",  5 },
    };
 
-#ifdef Graphics3D
-static char *texturetable[] = {
-   "brick",
-   "carpet",
-   "cloth",
-   "clouds",
-   "concrete",
-   "dirt",
-   "glass",
-   "grass",
-   "grill",
-   "hair",
-   "iron",
-   "marble",
-   "metal",
-   "leaf",
-   "leather",
-   "plastic",
-   "sand",
-   "skin",
-   "sky"
-   "snow",
-   "stone",
-   "tile",
-   "water",
-   "wood",
-   };
-
-static int texturephrase(char *buf, long *r, long *g, long *b, long *a);
-#endif					/* Graphics3D */
 
 /*
  *  parsecolor(w, s, &r, &g, &b, &a) - parse a color specification
@@ -750,13 +664,6 @@ long *r, *g, *b, *a;
    while (isspace(*buf))
       buf++;
 
-#ifdef Graphics3D
-   /* try interpreting as four comma-separated numbers */
-   if (sscanf(buf, "%lf,%lf,%lf,%lf%c", &dr, &dg, &db, &da, &c) == 4) {
-      *a = da;
-      goto RGBnums;
-      }
-#endif					/* Graphics3D */
 
    /* try interpreting as three comma-separated numbers */
    if (sscanf(buf, "%lf,%lf,%lf%c", &dr, &dg, &db, &c) == 3) {
@@ -765,17 +672,6 @@ RGBnums:
       *g = dg;
       *b = db;
 
-#ifdef Graphics3D
-      if (w && w->context && w->context->is_3D) {
-	 if (dr>=0 && dr<=1.0 && dg>=0 && dg<=1.0 && db>=0 && db<=1.0) {
-	    *r = dr * 65535;
-	    *g = dg * 65535;
-	    *b = db * 65535;
-	    *a = da * 65535;
-	    return Succeeded;
-	    }
-	 }
-#endif					/* Graphics3D */
 
       if (*r>=0 && *r<=65535 && *g>=0 && *g<=65535 && *b>=0 && *b<=65535)
          return Succeeded;
@@ -810,12 +706,6 @@ RGBnums:
       return Succeeded;
       }
 
-#ifdef Graphics3D
-   if (texture = texturephrase(buf, r, g, b, a)) {
-      return Failed; /* not handling textures yet */
-      }
-   else
-#endif					/* Graphics3D */
 
    /* try interpreting as a color phrase or as a native color spec */
    if (colorphrase(buf, r, g, b, a) || nativecolor(w, buf, r, g, b))
@@ -824,48 +714,6 @@ RGBnums:
       return Failed;
    }
 
-#ifdef Graphics3D
-int mystrcmp(char *s1, char *s2)
-{
-   return strcmp(*(char **)s1, s2);
-}
-
-/*
- * texturephrase(s, &r, &g, &b, &texture) -- parse Unicon colored texture
- */
-static int texturephrase(buf, r, g, b, a)
-char *buf; 
-long *r, *g, *b, *a;
-   {
-   char buf2[128];
-   char *p, *p2;
-   int texture;
-
-   if (strlen(buf) > 127) return 0;
-   strcpy(buf2, buf);
-   p = buf2+strlen(buf2)-1;
-   while (*p == ' ' || *p == '\t') *p-- = '\0';
-   p = buf2;
-   while ((p2 = strchr(p, ' ')) || (p2 = strchr(p, '\t'))) p = p2+1;
-   /*
-    * p is at this point the last word in the texture phrase, see
-    * if it is a texture.
-    */
-   p2 = qsearch(p, (char *)texturetable,
-		ElemCount(texturetable), ElemSize(texturetable), mystrcmp);
-   if (p2) {
-      texture = ((char **)p2 - texturetable) + 1;
-      if (p != buf2) {
-	 p--;
-	 *p = '\0';
-	 if (colorphrase(buf2, r, g, b, a)) return texture;
-	 else return 0;
-	 }
-      else return -texture;
-      }
-   return 0;
-   }
-#endif					/* Graphics3D */
 
 /*
  *  colorphrase(s, &r, &g, &b, &a) -- parse Icon color phrase.
@@ -1946,11 +1794,6 @@ int x, y, width, height;
    return r;
    }
 
-#ifdef ConsoleWindow
-#undef fprintf
-#undef putc
-#define putc fputc
-#endif					/* ConsoleWindow */
 /*
  * gfwrite(w, filename, x, y, width, height) - write GIF file
  *
@@ -2171,11 +2014,6 @@ static void gfdump()
 
 #ifdef HAVE_LIBJPEG
 
-#ifdef ConsoleWindow
-#undef fprintf
-#undef putc
-#define putc fputc
-#endif					/* ConsoleWindow */
 
 static int jpegwrite(wbp w, char *filename, int x, int y,int width,int height);
 
@@ -2282,12 +2120,6 @@ static int jpegwrite(wbp w, char *filename, int x, int y, int width,int height)
 #endif					/* HAVE_LIBJPEG */
 
 
-#ifdef ConsoleWindow
-#undef fprintf
-#define fprintf Consolefprintf
-#undef putc
-#define putc Consoleputc
-#endif					/* ConsoleWindow */
 
 /*
  * Static data for XDrawImage and XPalette functions
@@ -2981,56 +2813,6 @@ char * abuf;
 	 if (setwidth(w, new_width) == Failed) return Failed;
 	 break;
          }
-#ifdef Graphics3D
-      case A_DIM:
-	 AttemptAttr(setdim(w, val));
-	 break;
-      case A_EYE:
-	 AttemptAttr(seteye(w, val));
-	 break;
-      case A_EYEPOS:
-	 AttemptAttr(seteyepos(w, val));
-	 break;
-      case A_EYEUP:
-	 AttemptAttr(seteyeup(w, val));
-	 break;
-      case A_EYEDIR:
-   	 AttemptAttr(seteyedir(w, val));
-	 break;
-      case A_LIGHT: case A_LIGHT0:
-	 AttemptAttr(setlight(w, val, GL_LIGHT0));
-	 break;
-      case A_LIGHT1:
-	 AttemptAttr(setlight(w, val, GL_LIGHT1));
-	 break;
-      case A_LIGHT2:
-	 AttemptAttr(setlight(w, val, GL_LIGHT2));
-	 break;
-      case A_LIGHT3:
-	 AttemptAttr( setlight(w, val, GL_LIGHT3));
-	 break;
-      case A_LIGHT4:
-	 AttemptAttr(setlight(w, val, GL_LIGHT4));
-	 break;
-      case A_LIGHT5:
-	 AttemptAttr(setlight(w, val, GL_LIGHT5));
-	 break;
-      case A_LIGHT6:
-	 AttemptAttr(setlight(w, val, GL_LIGHT6));
-	 break;
-      case A_LIGHT7:
-	 AttemptAttr( setlight(w, val, GL_LIGHT7));
-	 break;
-      case A_TEXTURE:
-	 AttemptAttr(settexture(w, StrLoc(d), StrLen(d)));
-	 break;
-      case A_TEXCOORD:
-	 AttemptAttr(settexcoords(w, val));
-	 break;
-      case A_TEXMODE:
-	 AttemptAttr(settexmode(w, val)); 
-	 break;
-#endif					/* Graphics3D */
       case A_HEIGHT: {
 	 if (!cnv:C_integer(d, tmp))
 	    return Failed;
@@ -3178,13 +2960,6 @@ char * abuf;
 	    if (isetfg(w, tmp) != Succeeded) return Failed;
 	    }
 	 else {
-#ifdef Graphics3D
-       if (w->context->is_3D) {
-	  if (setmaterials(w,val) != Succeeded) 
-	     return Failed;  
-          }
-       else 
-#endif					/* Graphics3D */
 	    if (setfg(w, val) != Succeeded) return Failed;
 	    }
 	 break;
@@ -3216,13 +2991,6 @@ char * abuf;
       case A_LINEWIDTH: {
 	 if (!cnv:C_integer(d, tmp))
 	    return Failed;
-#ifdef Graphics3D  
- 	 if (w->context->is_3D) {
-            if (setlinewidth3D(w, tmp) == Error)
-	       return Failed;
-	    }
-         else 
-#endif					/* Graphics3D */
 	 if (setlinewidth(w, tmp) == Error)
 	    return Failed;
 	 break;
@@ -3405,78 +3173,6 @@ char * abuf;
       case A_IMAGE:
          ReturnErrNum(147, Error);
          break;
-#ifdef Graphics3D
-      case A_DIM:
-	 MakeInt(wc->dim, answer);
-	 break;
-      case A_EYE:
-	 sprintf(abuf,"%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f",
-		 wc->eyeposx, wc->eyeposy, wc->eyeposz, wc->eyedirx,
-		 wc->eyediry, wc->eyedirz, wc->eyeupx, wc->eyeupy, wc->eyeupz);
-	 MakeStr(abuf, strlen(abuf), answer);
-	 break;
-      case A_EYEPOS:
- 	 sprintf(abuf,"%.2f,%.2f,%.2f", wc->eyeposx, wc->eyeposy, wc->eyeposz);
-	 MakeStr(abuf, strlen(abuf), answer);
-	 break;
-      case A_EYEUP:
- 	sprintf(abuf, "%.2f,%.2f,%.2f", wc->eyeupx, wc->eyeupy, wc->eyeupz);
-	MakeStr(abuf, strlen(abuf), answer);
-	break;
-      case A_EYEDIR:
-	sprintf(abuf, "%.2f,%.2f,%.2f", wc->eyedirx, wc->eyediry, wc->eyedirz);
-	MakeStr(abuf, strlen(abuf), answer);
-	break;
-      case A_LIGHT:
-      case A_LIGHT0:
-	 getlight(0, abuf);
-	 MakeStr(abuf, strlen(abuf), answer);
-	 break;
-      case A_LIGHT1:
-        getlight(1, abuf);
-        MakeStr(abuf, strlen(abuf), answer);
-        break;
-      case A_LIGHT2:
-        getlight(2, abuf);
-        MakeStr(abuf, strlen(abuf), answer);
-        break;
-      case A_LIGHT3:
-        getlight(3, abuf);
-        MakeStr(abuf, strlen(abuf), answer);
-        break;
-      case A_LIGHT4:
-        getlight(4, abuf);
-        MakeStr(abuf, strlen(abuf), answer);
-        break;
-      case A_LIGHT5:
-        getlight(5, abuf);
-        MakeStr(abuf, strlen(abuf), answer);
-        break;
-      case A_LIGHT6:
-        getlight(6, abuf);
-        MakeStr(abuf, strlen(abuf), answer);
-        break;
-      case A_LIGHT7:
-        getlight(7, abuf);
-        MakeStr(abuf, strlen(abuf), answer);
-        break;
-      case A_TEXTURE:
-	gettexture( w, answer );
-	if (is:string(*answer)) StrLoc(*answer) = strdup(StrLoc(*answer));
-        break;
-      case A_TEXMODE:
-        MakeInt(w->context->texmode, answer);
-        break;
-      case A_TEXCOORD:
-	 strcpy(abuf, "auto");
-	 if (wc->autogen) 
-	    MakeStr(abuf, 4, answer); 
-	 else {
-	    gettexcoords(w, abuf);
-	    MakeStr(strdup(abuf), strlen(abuf), answer);
-	    }
-	 break;
-#endif					/* Graphics3D */
       case A_VISUAL:
 	 if (getvisual(w, abuf) == Failed) return Failed;
 	 MakeStr(abuf, strlen(abuf), answer);
@@ -3555,11 +3251,6 @@ char * abuf;
 	    }
 	 break;
       case A_FG:      
-#ifdef Graphics3D  
- 	 if (w->context->is_3D)
-	    getmaterials(abuf);
-	 else
-#endif
 	 getfg(w, abuf);
 	 MakeStr(abuf, strlen(abuf), answer);
 	 break;
@@ -3998,201 +3689,6 @@ int n;
    genCurve(w, p, n, curveHelper);
    }
 
-#ifdef ConsoleWindow
-void wattr(FILE *w, char *s, int len)
-{
-   struct descrip answer;
-   wattrib((wbp)w, s, len, &answer, s);
-}
-
-void waitkey(FILE *w)
-{
-   struct descrip answer;
-   /* throw away pending events */
-   while (BlkLoc(((wbp)w)->window->listp)->list.size > 0) {
-      wgetevent((wbp)w, &answer,-1);
-      }
-   /* wait for an event */
-   wgetevent((wbp)w, &answer,-1);
-}
-
-FILE *flog;
-
-/*
- * OpenConsole
- */
-FILE *OpenConsole()
-   {
-   struct descrip attrs[4];
-   int eindx;
-
-   if (!ConsoleBinding) {
-      char ConsoleTitle[256];
-      tended struct b_list *hp;
-
-      /*
-       * If we haven't already allocated regions, we are called due to a
-       *  failure during program startup; allocate enough memory to
-       *  get the message out.
-       */
-#ifdef MultiThread
-      if (!curpstate) {
-         curpstate = &rootpstate;
-         rootpstate.eventmask = nulldesc;
-         }
-      if (!alclist) curpstate->Alclist = alclist_0;
-      if (!reserve) curpstate->Reserve = reserve_0;
-#endif
-      if (!curblock) {
-         curstring = (struct region *)malloc(sizeof (struct region));
-         curblock = (struct region *)malloc(sizeof (struct region));
-         curstring->size = MaxStrSpace;
-         curblock->size  = MaxAbrSize;
-#ifdef MultiThread
-         initalloc(1000, &rootpstate);
-#else					/* MultiThread */
-         initalloc(1000);
-#endif					/* MultiThread */
-         }
-
-      /*
-       * allocate an empty event queue
-       */
-      if ((hp = alclist(0, MinListSlots)) == NULL) return NULL;
-
-      /*
-       * build the attribute list
-       */
-      StrLoc(attrs[0]) = "cursor=on";
-      StrLen(attrs[0]) = strlen("cursor=on");
-      StrLoc(attrs[1]) = "rows=24";
-      StrLen(attrs[1]) = strlen("rows=24");
-      StrLoc(attrs[2]) = "columns=80";
-      StrLen(attrs[2]) = strlen("columns=80");
-      /*
-       * enable these last two (by telling wopen it has 4 args)
-       * if you want white text on black bg
-       */
-      StrLoc(attrs[3]) = "reverse=on";
-      StrLen(attrs[3]) = strlen("reverse=on");
-
-      strncpy(ConsoleTitle, StrLoc(kywd_prog), StrLen(kywd_prog));
-      ConsoleTitle[StrLen(kywd_prog)] = '\0';
-      strcat(ConsoleTitle, " - console");
-
-      ConsoleBinding = wopen(ConsoleTitle, hp, attrs, 3, &eindx,0);
-      k_input.fd.fp = ConsoleBinding;
-      k_output.fd.fp = ConsoleBinding;
-      k_errout.fd.fp = ConsoleBinding;
-      }
-   return ConsoleBinding;
-   }
-
-/*
- * Consolefprintf - fprintf to the Icon console
- */
-int Consolefprintf(FILE *file, const char *format, ...)
-   {
-   va_list list;
-   int retval = -1;
-   wbp console;
-
-   va_start(list, format);
-
-   if (ConsoleFlags & OutputToBuf) {
-     retval = vsprintf(ConsoleStringBufPtr, format, list);
-     ConsoleStringBufPtr += max(retval, 0);
-     }
-   else if (((file == stdout) && !(ConsoleFlags & StdOutRedirect)) ||
-       ((file == stderr) && !(ConsoleFlags & StdErrRedirect))) {
-      console = (wbp)OpenConsole();
-      if (console == NULL) return 0;
-      if ((retval = vsprintf(ConsoleStringBuf, format, list)) > 0) {
-        int len = strlen(ConsoleStringBuf);
-        if (flog != NULL) {
-           int i;
-	   for(i=0;i<len;i++) fputc(ConsoleStringBuf[i], flog);
-	   }
-        wputstr(console, ConsoleStringBuf, len);
-	}
-      }
-   else
-      retval = vfprintf(file, format, list);
-   va_end(list);
-   return retval;
-   }
-
-int Consoleprintf(const char *format, ...)
-   {
-   va_list list;
-   int retval = -1;
-   wbp console;
-   FILE *file = stdout;
-
-   va_start(list, format);
-
-   if (ConsoleFlags & OutputToBuf) {
-     retval = vsprintf(ConsoleStringBufPtr, format, list);
-     ConsoleStringBufPtr += max(retval, 0);
-     }
-   else if (!(ConsoleFlags & StdOutRedirect)) {
-      console = (wbp)OpenConsole();
-      if (console == NULL) return 0;
-      if ((retval = vsprintf(ConsoleStringBuf, format, list)) > 0) {
-        int len = strlen(ConsoleStringBuf);
-        if (flog != NULL) {
-           int i;
-	   for(i=0;i<len;i++) fputc(ConsoleStringBuf[i], flog);
-	   }
-        wputstr(console, ConsoleStringBuf, len);
-	}
-      }
-   else
-      retval = vfprintf(file, format, list);
-   va_end(list);
-   return retval;
-   }
-
-/*
- * Consoleputc -
- *   If output is to stdio and not redirected, open a console for it.
- */
-int Consoleputc(int c, FILE *f)
-   {
-   wbp console;
-   if (ConsoleFlags & OutputToBuf) {
-      *ConsoleStringBufPtr++ = c;
-      *ConsoleStringBufPtr = '\0';
-      return 1;
-      }
-   if ((f == stdout && !(ConsoleFlags & StdOutRedirect)) ||
-       (f == stderr && !(ConsoleFlags & StdErrRedirect))) {
-      if (flog) fputc(c, flog);
-      console = (wbp)OpenConsole();
-      if (console == NULL) return 0;
-      return wputc(c, console);
-      }
-   return fputc(c, f);
-   }
-
-#undef fflush
-#passthru #undef fflush
-
-int Consolefflush(FILE *f)
-{
-   wbp console;
-   extern int fflush(FILE *);
-   if ((f == stdout && !(ConsoleFlags & StdOutRedirect)) ||
-       (f == stderr && !(ConsoleFlags & StdErrRedirect))) {
-      if (flog) fflush(flog);
-      console = (wbp)OpenConsole();
-      if (console == NULL) return 0;
-      return wflush(console);
-      }
-  return fflush(f);
-}
-#passthru #define fflush Consolefflush
-#endif					/* ConsoleWindow */
 
 /*
  * Compare two unsigned long values for qsort or qsearch.

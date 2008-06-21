@@ -838,11 +838,7 @@ static void lemitproc(struct lfunction *func)
      * FncBlockSize = sizeof(BasicFncBlock) +
      *  sizeof(descrip)*(# of args + # of dynamics + # of statics).
      */
-#ifdef MultiThread
     size = (11*WordSize) + (2*WordSize) * (abs(func->nargs)+func->dynoff+func->nstatics);
-#else
-    size = (10*WordSize) + (2*WordSize) * (abs(func->nargs)+func->dynoff+func->nstatics);
-#endif
     if (func->proc)
         p = func->proc->name;
     else
@@ -859,9 +855,7 @@ static void lemitproc(struct lfunction *func)
         fprintf(dbgfile, "\t%d\t\t\t\t# Dynoff\n", func->dynoff);	/* # dynamic locals */
         fprintf(dbgfile, "\t%d\t\t\t\t# Nstatics\n", func->nstatics);	/* # static locals */
         fprintf(dbgfile, "\t%d\t\t\t\t# First static\n", nstatics);		/* first static */
-#ifdef MultiThread
         fprintf(dbgfile, "\t0\n");		        /* owning prog space */
-#endif
         fprintf(dbgfile, "\t0\n");		        /* field */
         fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n",	/* name of procedure */
                 sp->len, sp->offset, p);
@@ -876,9 +870,7 @@ static void lemitproc(struct lfunction *func)
     outword(func->dynoff);
     outword(func->nstatics);
     outword(nstatics);
-#ifdef MultiThread
     outword(0);
-#endif
     outword(0);
     outword(sp->len);          /* procedure name: length & offset */
     outword(sp->offset);
@@ -987,9 +979,7 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "\t%d\t\t\t\t# T_Class\n", T_Class);
         fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", cl->size);
         fprintf(dbgfile, "\t%d\t\t\t\t# Fieldtable col\n", cl->fieldtable_col);
-#ifdef MultiThread
         fprintf(dbgfile, "\t0\t\t\t\t# Owning prog\n");    /* owning prog space */
-#endif
         fprintf(dbgfile, "\t0\t\t\t\t# Instance ids counter\n");
         fprintf(dbgfile, "\t%d\t\t\t\t# Initialization state\n", Uninitialized);
         fprintf(dbgfile, "\t%08o\t\t\t# Flags\n", cl->flag);
@@ -1003,9 +993,7 @@ static void genclass(struct lclass *cl)
     outword(T_Class);		/* type code */
     outword(cl->size);
     outword(cl->fieldtable_col);/* fieldtable column */
-#ifdef MultiThread
     outword(0);
-#endif
     outword(0);
     outword(Uninitialized);
     outword(cl->flag);
@@ -1205,9 +1193,7 @@ static void genclasses()
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
         cl->size = WordSize * (16 +
-#ifdef MultiThread
                                1 + 
-#endif
                                cl->n_supers +
                                cl->n_implemented_classes +
                                n_fields) +
@@ -1323,9 +1309,7 @@ static void gentables()
                 fprintf(dbgfile, "\t-2\n");
                 fprintf(dbgfile, "\t%d\n", gp->record->fieldtable_col);
                 fprintf(dbgfile, "\t1\n");
-#ifdef MultiThread
                 fprintf(dbgfile, "\t0\n");
-#endif
                 fprintf(dbgfile, "\t0\n");
                 fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, s);
             }
@@ -1339,9 +1323,7 @@ static void gentables()
             outword(-2);			/* record constructor indicator */
             outword(gp->record->fieldtable_col);/* fieldtable column */
             outword(1);			/* serial number */
-#ifdef MultiThread
             outword(0);
-#endif
             outword(0);
             outword(sp->len);		/* name of record: size and offset */
             outword(sp->offset);

@@ -228,15 +228,6 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
             return I_Builtin;
     }
 
-#ifndef MultiThread
-    /*
-     * Make a stab at catching interpreter stack overflow.  This does
-     * nothing for invocation in a co-expression other than &main.
-     */
-    if (BlkLoc(k_current) == BlkLoc(k_main) &&
-        ((char *)sp + PerilDelta) > (char *)stackend) 
-        fatalerr(301, NULL);
-#endif					/* MultiThread */
 
     /*
      * Build the procedure frame.
@@ -269,7 +260,6 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
      */
     ipc.opnd = (word *)proc->entryp.icode;
 
-#ifdef MultiThread
     /*
      * Enter the program state of the procedure being invoked
      * and save from/to states in the procedure frame.
@@ -277,7 +267,6 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
     newpfp->pf_from = curpstate;
     newpfp->pf_to = proc->program;
     CHANGEPROGSTATE(newpfp->pf_to);
-#endif					/* MultiThread */
 
     efp = 0;
     gfp = 0;

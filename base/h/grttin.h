@@ -185,16 +185,6 @@ typedef unsigned long mode_t;
 typedef int gzFile;
 #endif					/* HAVE_LIBZ */
 
-#ifdef Messaging
-typedef int MFile;
-typedef int Tp_t;
-typedef int Tpdisc_t;
-typedef int Tpmethod_t;
-typedef int Tpexcept_f;
-typedef int Tprequest_t;
-typedef int Tpresponse_t;
-typedef int URI;
-#endif                                  /* Messaging */
 
 typedef int jmp_buf;
 
@@ -222,21 +212,7 @@ typedef int time_t;
 typedef int DIR;
 #endif					/* PosixFns */
 
-#ifdef Dbm
-typedef int DBM;
-typedef struct {
-   char *dptr;
-   int dsize;
-} datum;
-#endif					/* Dbm */
 
-#ifdef ISQL                             /* ODBC */
-  typedef int LPSTR, HENV, HDBC, HSTMT, ISQLFile, PTR, SQLPOINTER;
-  typedef int SWORD, SDWORD, UWORD, UDWORD, UCHAR;
-  typedef int SQLUSMALLINT, SQLSMALLINT, SQLHSTMT;
-  typedef int SQLUINTEGER, SQLRETURN, RETCODE, SQLLEN;
-  typedef int SQLHBDC, SQLHENV, SQLCHAR, SQLINTEGER; /* 3.0 */
-#endif					/* ISQL */
 
 # if defined(Graphics) || defined(PosixFns)
 typedef int siptr, stringint, inst;
@@ -349,13 +325,6 @@ typedef int siptr, stringint, inst;
          if ((BlkLoc(argv[warg])->file.status & (Fs_Read|Fs_Write)) == 0)
 	    runerr(142,argv[warg]);
          (w) = (wbp)BlkLoc(argv[warg])->file.fd.fp;
-#ifdef ConsoleWindow
-         if ((((FILE*)(w)) != ConsoleBinding) &&
-	     ((((FILE*)(w)) == k_input.fd.fp) ||
-	      (((FILE*)(w)) == k_output.fd.fp) ||
-	      (((FILE*)(w)) == k_errout.fd.fp)))
-	   (w) = (wbp)OpenConsole();
-#endif					/* ConsoleWindow */
          if (ISCLOSED(w))
 	    runerr(142,argv[warg]);
          warg++;
@@ -419,15 +388,6 @@ typedef int siptr, stringint, inst;
    } while(0)
 #enddef				/* GRFX_UNLINK */
 
-#ifdef Graphics3D
-   typedef int GLdouble, GLint, GLfloat, GLsizei, Status, GLboolean;
-   typedef int XWindowChanges, XStandardColormap, XMappingEvent;
-   typedef int GLXContext, GLUquadricObj, GLubyte, GLuint;
-   typedef int GLXFBConfig, GLXWindow;
-#ifdef MSWindows
-   typedef int HGLRC, PIXELFORMATDESCRIPTOR;
-#endif
-#endif					/* Graphics3D */
 
 #if HAVE_OGG
 typedef int OggVorbis_File, vorbis_info;

@@ -25,9 +25,6 @@
 #include "../h/posix.h"
 #endif					/* PosixFns */
 
-#ifdef Messaging
-#include "../h/messagin.h"
-#endif                                  /* Messaging */
 
 #include "../h/rexterns.h"
 #include "../h/rproto.h"

@@ -9,7 +9,6 @@
  */
 
 #if OS2
-#if !COMPILER
 #ifdef ExternalFunctions
 /*
  */
@@ -191,11 +190,9 @@ static dptr unloadfunc(dptr dargv, int argc, int *ip)
 #else					/* ExternalFunctions */
 static char x;			/* prevent empty module */
 #endif					/* ExternalFunctions */
-#endif					/* !COMPILER */
 
 #else					/* OS2 */
 
-#if !COMPILER
 #ifdef ExternalFunctions
 
 /*
@@ -213,5 +210,4 @@ int *ip;
 #else					/* ExternalFunctions */
 static char x;			/* prevent empty module */
 #endif 					/* ExternalFunctions */
-#endif					/* !COMPILER */
 #endif					/* OS2 */

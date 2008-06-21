@@ -80,51 +80,13 @@ struct b_file {			/* file block */
 #ifdef Graphics
         struct _wbinding *wb;			/*   window */
 #endif					/* Graphics */
-#ifdef Messaging
-        struct MFile *mf;
-#endif					/* Messaging */
-#ifdef ISQL
-        struct ISQLFile *sqlf;
-#endif					/* ISQL */
-#ifdef Dbm
-        struct DBM *dbm;
-#endif					/* Dbm */
         int fd;			/*   other int-based file descriptor */
     } fd;
     word status;			/*   file status */
     struct descrip fname;	/*   file name (string qualifier) */
 };
 
-#ifdef ISQL
 
-struct ISQLFile {             /* SQL file */
-    SQLHDBC hdbc;               /* used by open, close, query, fetch */
-    SQLHSTMT hstmt;             /* statement handler */
-    char *query;                /* SQL query buffer */
-    long qsize;                 /* SQL query buffer size */
-    char *tablename;
-    struct b_proc *proc;	/* current record constructor procedure */
-    int refcount;
-    struct ISQLFile *previous, *next; /* links, so we can find & free these*/
-};
-
-#endif					/* ISQL */
-
-#ifdef Messaging
-struct MFile {                  /* messaging file abstraction */
-    int flags;                   /* request options */
-    int state;                   /* our current action */
-    Tp_t *tp;                    /* a libtp handle */
-    Tpresponse_t *resp;          /* response from the last request */
-    void *data;                  /* for storing extra connection data */
-};
-
-struct Mpoplist {
-    int msgnum;
-    struct Mpoplist *next;
-    struct Mpoplist *prev;
-};
-#endif                                  /* Messaging */
 
 struct b_lelem {		/* list-element block */
     word title;			/*   T_Lelem */
@@ -149,23 +111,17 @@ struct b_proc {			/* procedure block */
     word title;			/*   T_Proc */
     word blksize;		/*   size of block */
 
-#if COMPILER
-    int (*ccode)();
-#else				/* COMPILER */
     union {			/*   entry points for */
         int (*ccode)();	/*     C routines */
         uword ioff;		/*     and icode as offset */
         pointer icode;		/*     and icode as absolute pointer */
     } entryp;
-#endif				/* COMPILER */
 
     word nparam;			/*   number of parameters */
     word ndynam;			/*   number of dynamic locals */
     word nstatic;		/*   number of static locals */
     word fstatic;		/*   index (in global table) of first static */
-#ifdef MultiThread
     struct progstate *program;   /*   program in which this procedure resides */
-#endif
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only
                                  * exception is the deferred method stub, which can be pointed to by
                                  * many different fields of course. */
@@ -197,9 +153,7 @@ struct b_class {
     word title;
     word blksize;
     word fieldtable_col;         /* The column number in the field table */
-#ifdef MultiThread
     struct progstate *program;   /*   program in which this class resides */
-#endif
     word instance_ids;           /* Sequence for instance ids */
     word init_state;             /* State of initialization */
     word flags;                  /* Modifier flags from the source code */
@@ -376,19 +330,6 @@ struct size_dbl {
 #endif					/* Double */
 
 
-#if COMPILER
-
-/*
- * Structures for the compiler.
- */
-struct p_frame {
-    struct p_frame *old_pfp;
-    struct descrip *old_argp;
-    struct descrip *rslt;
-    continuation succ_cont;
-    struct tend_desc t;
-};
-#endif				/* COMPILER */
 
 /*
  * when debugging is enabled a debug struct is placed after the tended
@@ -408,36 +349,6 @@ union numeric {			/* long integers or real numbers */
 #endif				/* LargeInts */
 };
 
-#if COMPILER
-struct b_coexpr {		/* co-expression stack block */
-    word title;			/*   T_Coexpr */
-    word size;			/*   number of results produced */
-    word id;			/*   identification number */
-    struct b_coexpr *nextstk;	/*   pointer to next allocated stack */
-    continuation fnc;		/*   function containing co-expression code */
-    struct p_frame *es_pfp;	/*   current procedure frame pointer */
-    dptr es_argp;		/*   current argument pointer */
-    struct tend_desc *es_tend;	/*   current tended pointer */
-    char *file_name;		/*   current file name */
-    word line_num;		/*   current line_number */
-    dptr tvalloc;		/*   where to place transmitted value */
-    struct descrip freshblk;	/*   refresh block pointer */
-    struct astkblk *es_actstk;	/*   pointer to activation stack structure */
-    word cstate[CStateSize];	/*   C state information */
-    struct p_frame pf;           /*   initial procedure frame */
-};
-
-struct b_refresh {		/* co-expression block */
-    word title;			/*   T_Refresh */
-    word blksize;		/*   size of block */
-    word nlocals;		/*   number of local variables */
-    word nargs;			/*   number of arguments */
-    word ntemps;                 /*   number of temporary descriptors */
-    word wrk_size;		/*   size of non-descriptor work area */
-    struct descrip elems[1];	/*   locals and arguments */
-};
-
-#else					/* COMPILER */
 
 /*
  * Structures for the interpreter.
@@ -457,7 +368,6 @@ struct ipc_line {
     int line;		/* line number */
 };
 
-#ifdef MultiThread
 /*
  * Program state encapsulation.  This consists of the VARIABLE parts of
  * many global structures.
@@ -599,7 +509,6 @@ struct progstate {
     char * (*Reserve)(int, word);
 };
 
-#endif					/* MultiThread */
 
 /*
  * Frame markers
@@ -662,9 +571,7 @@ struct b_iproc {		/* procedure block */
     word ip_ndynam;		/*   number of dynamic locals */
     word ip_nstatic;		/*   number of static locals */
     word ip_fstatic;		/*   index (in global table) of first static */
-#ifdef MultiThread
     struct progstate *ip_program;/*   not set */
-#endif
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field */
     struct sdescrip ip_pname;	/*   procedure name (string qualifier) */
     struct descrip ip_lnames[1];	/*   list of local names (qualifiers) */
@@ -689,9 +596,7 @@ struct b_coexpr {		/* co-expression stack block */
 
     word cstate[CStateSize];	/*   C state information */
 
-#ifdef MultiThread
     struct progstate *program;
-#endif				/* MultiThread */
 };
 
 struct b_refresh {		/* co-expression block */
@@ -703,7 +608,6 @@ struct b_refresh {		/* co-expression block */
     struct descrip elems[1];	/*   arguments and locals, including Arg0 */
 };
 
-#endif					/* COMPILER */
 
 union block {			/* general block */
     struct b_real realblk;

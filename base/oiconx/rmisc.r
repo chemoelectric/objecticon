@@ -50,17 +50,7 @@ int getvar(s,vp)
    register dptr np;
    register int i;
    struct b_proc *bp;
-#if COMPILER
-   struct descrip sdp;
-
-   if (!debug_info) 
-      fatalerr(402,NULL);
-
-   StrLoc(sdp) = s;
-   StrLen(sdp) = strlen(s);
-#else					/* COMPILER */
    struct pf_marker *fp = pfp;
-#endif					/* COMPILER */
 
    /*
     * Is it a keyword that's a variable?
@@ -126,7 +116,6 @@ int getvar(s,vp)
          }
 #endif					/* Graphics */
 
-#ifdef MultiThread
       else if (strcmp(s,"&eventvalue") == 0) {
          vp->dword = D_Var;
          VarLoc(*vp) = (dptr)&(curpstate->eventval);
@@ -142,7 +131,6 @@ int getvar(s,vp)
          VarLoc(*vp) = (dptr)&(curpstate->eventcode);
          return Succeeded;
          }
-#endif					/* MultiThread */
 
       else return Failed;
       }
@@ -156,55 +144,34 @@ int getvar(s,vp)
     *  If no such variable exits, it fails.
     */
 
-#if !COMPILER
    /*
     *  If no procedure has been called (as can happen with icon_call(),
     *  dont' try to find local identifier.
     */
    if (pfp == NULL)
       goto glbvars;
-#endif					/* !COMPILER */
 
    dp = glbl_argp;
-#if COMPILER
-   bp = PFDebug(*pfp)->proc;  /* get address of procedure block */
-#else					/* COMPILER */
    bp = (struct b_proc *)BlkLoc(*dp);	/* get address of procedure block */
-#endif					/* COMPILER */
    
    np = bp->lnames;		/* Check the formal parameter names. */
 
 
    for (i = abs((int)bp->nparam); i > 0; i--) {
-#if COMPILER
-      if (eq(&sdp, np) == 1) {
-#else					/* COMPILER */
       dp++;
 
       if (strcmp(s,StrLoc(*np)) == 0) {
-#endif					/* COMPILER */
          vp->dword = D_Var;
          VarLoc(*vp) = (dptr)dp;
          return ParamName;
          }
       np++;
-#if COMPILER
-      dp++;
-#endif					/* COMPILER */
       }
 
-#if COMPILER
-   dp = &pfp->t.d[0];
-#else					/* COMPILER */
    dp = &fp->pf_locals[0];
-#endif					/* COMPILER */
 
    for (i = (int)bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
-#if COMPILER
-         if (eq(&sdp, np)) {
-#else					/* COMPILER */
 	 if (strcmp(s,StrLoc(*np)) == 0) {
-#endif					/* COMPILER */
             vp->dword = D_Var;
             VarLoc(*vp) = (dptr)dp;
             return LocalName;
@@ -215,11 +182,7 @@ int getvar(s,vp)
 
    dp = &statics[bp->fstatic]; /* Check the local static names. */
    for (i = (int)bp->nstatic; i > 0; i--) {
-#if COMPILER
-         if (eq(&sdp, np)) {
-#else					/* COMPILER */
          if (strcmp(s,StrLoc(*np)) == 0) {
-#endif					/* COMPILER */
             vp->dword = D_Var;
             VarLoc(*vp) = (dptr)dp;
             return StaticName;
@@ -228,15 +191,6 @@ int getvar(s,vp)
          dp++;
          }
 
-#if COMPILER
-   for (i = 0; i < n_globals; ++i) {
-      if (eq(&sdp, &gnames[i])) {
-         vp->dword = D_Var;
-         VarLoc(*vp) = (dptr)&globals[i];
-         return GlobalName;
-         }
-      }
-#else					/* COMPILER */
 glbvars:
    dp = globals;	/* Check the global variable names. */
    np = gnames;
@@ -249,7 +203,6 @@ glbvars:
       np++;
       dp++;
       }
-#endif					/* COMPILER */
    return Failed;
    }
 
@@ -510,12 +463,6 @@ int noimage;
                }
 	    else
 #endif
-#ifdef Dbm
-	    if(BlkLoc(*dp)->file.status & Fs_Dbm) {
-	       fprintf(f, "dbmfile(");
-               }
-	    else
-#endif
 #ifdef Graphics
 	    if (BlkLoc(*dp)->file.status & Fs_Window) {
 	       if ((BlkLoc(*dp)->file.status != Fs_Window) && /* window open?*/
@@ -533,16 +480,6 @@ int noimage;
 	       }
 	    else
 #endif					/* Graphics */
-#ifdef Messaging
-            if (BlkLoc(*dp)->file.status & Fs_Messaging) {
-	       struct MFile *mf = BlkLoc(*dp)->file.fd.mf;
-	       fprintf(f, "message(");
-	       if (mf && mf->resp && mf->resp->msg != NULL) {
-		  fprintf(f, "[%d:%s]", mf->resp->sc, mf->resp->msg);
-		  }
-	       }
-	    else
-#endif                                  /* Messaging */
 	       fprintf(f, "file(");
 	    while (i-- > 0)
 	       printimage(f, *s++, '\0');
@@ -791,11 +728,6 @@ int noimage;
           *  the element and s is the image of the subscript.
           */
          bp = BlkLoc(*dp);
-#ifdef Dbm
-	 if (BlkType(bp) == T_File)
-	    tdp.dword = D_File;
-	 else
-#endif					/* Dbm */
 	    tdp.dword = D_Table;
 	 BlkLoc(tdp) = bp->tvtbl.clink;
 	 outimage(f, &tdp, noimage);
@@ -836,14 +768,12 @@ int noimage;
          }
 
       kywdevent: {
-#ifdef MultiThread
          if (VarLoc(*dp) == &curpstate->eventsource)
             fprintf(f, "&eventsource = ");
          else if (VarLoc(*dp) == &curpstate->eventcode)
             fprintf(f, "&eventcode = ");
          else if (VarLoc(*dp) == &curpstate->eventval)
             fprintf(f, "&eventval = ");
-#endif					/* MultiThread */
          outimage(f, VarLoc(*dp), noimage);
          }
 
@@ -1072,7 +1002,6 @@ int (*compar)();
     return 0;
 }
 
-#if !COMPILER
 /*
  * qtos - convert a qualified string named by *dp to a C-style string.
  *  Put the C-style string in sbuf if it will fit, otherwise put it
@@ -1107,9 +1036,7 @@ char *sbuf;
       }
    return Succeeded;
    }
-#endif					/* !COMPILER */
 
-#ifdef Coexpr
 /*
  * pushact - push actvtr on the activator stack of ce
  */
@@ -1118,39 +1045,9 @@ struct b_coexpr *ce, *actvtr;
 {
    struct astkblk *abp = ce->es_actstk;
 
-#ifdef MultiThread
    abp->arec[0].activator = actvtr;
-#else					/* MultiThread */
-
-   /*
-    * If the last activator is the same as this one, just increment
-    *  its count.
-    */
-   if (abp->nactivators > 0) {
-      arp = &abp->arec[abp->nactivators - 1];
-      if (arp->activator == actvtr) {
-         arp->acount++;
-         return Succeeded;
-         }
-      }
-   /*
-    * This activator is different from the last one.  Push this activator
-    *  on the stack, possibly adding another block.
-    */
-   if (abp->nactivators + 1 > ActStkBlkEnts) {
-      Protect(nabp = alcactiv(), fatalerr(0,NULL));
-      nabp->astk_nxt = abp;
-      abp = nabp;
-      }
-   abp->nactivators++;
-   arp = &abp->arec[abp->nactivators - 1];
-   arp->acount = 1;
-   arp->activator = actvtr;
-   ce->es_actstk = abp;
-#endif					/* MultiThread */
    return Succeeded;
 }
-#endif					/* Coexpr */
 
 /*
  * popact - pop the most recent activator from the activator stack of ce
@@ -1160,47 +1057,14 @@ struct b_coexpr *popact(ce)
 struct b_coexpr *ce;
 {
 
-#ifdef Coexpr
 
    struct astkblk *abp = ce->es_actstk;
 
-#ifdef MultiThread
    return abp->arec[0].activator;
-#else					/* MultiThread */
 
-   /*
-    * If the current stack block is empty, pop it.
-    */
-   if (abp->nactivators == 0) {
-      oabp = abp;
-      abp = abp->astk_nxt;
-      free((pointer)oabp);
-      }
-
-   if (abp == NULL || abp->nactivators == 0)
-      syserr("empty activator stack\n");
-
-   /*
-    * Find the activation record for the most recent co-expression.
-    *  Decrement the activation count and if it is zero, pop that
-    *  activation record and decrement the count of activators.
-    */
-   arp = &abp->arec[abp->nactivators - 1];
-   actvtr = arp->activator;
-   if (--arp->acount == 0)
-      abp->nactivators--;
-
-   ce->es_actstk = abp;
-   return actvtr;
-#endif					/* MultiThread */
-
-#else					/* Coexpr */
-    syserr("popact() called, but co-expressions not implemented");
-#endif					/* Coexpr */
 
 }
 
-#ifdef Coexpr
 /*
  * topact - return the most recent activator of ce.
  */
@@ -1209,13 +1073,7 @@ struct b_coexpr *ce;
 {
    struct astkblk *abp = ce->es_actstk;
    
-#ifdef MultiThread
    return abp->arec[0].activator;
-#else					/* MultiThread */
-   if (abp->nactivators == 0)
-      abp = abp->astk_nxt;
-   return abp->arec[abp->nactivators-1].activator;
-#endif					/* MultiThread */
 }
 
 #ifdef DeBugIconx
@@ -1244,9 +1102,7 @@ struct b_coexpr *ce;
       }
 }
 #endif					/* DeBugIconx */
-#endif					/* Coexpr */
 
-#if !COMPILER
 /*
  * findline - find the source line number associated with the ipc
  */
@@ -1270,10 +1126,6 @@ word *ipc;
    uword size;
    struct ipc_line *base;
 
-#ifndef MultiThread
-   extern struct ipc_line *ilines, *elines;
-   extern word *records;
-#endif					/* MultiThread */
 
    static int two = 2;	/* some compilers generate bad code for division
 			   by a constant that is a power of two ... */
@@ -1305,9 +1157,6 @@ int line;
    uword size;
    struct ipc_line *base;
 
-#ifndef MultiThread
-   extern struct ipc_line *ilines, *elines;
-#endif					/* MultiThread */
 
    static int two = 2;	/* some compilers generate bad code for division
 			   by a constant that is a power of two ... */
@@ -1334,10 +1183,6 @@ word *ipc;
    uword ipc_offset;
    struct ipc_fname *p;
 
-#ifndef MultiThread
-   extern struct ipc_fname *filenms, *efilenms;
-   extern word *records;
-#endif					/* MultiThread */
 
    if (!InRange(code,ipc,ecode))
       return "?";
@@ -1352,7 +1197,6 @@ word *ipc;
    /*NOTREACHED*/
    return 0;  /* avoid compiler warning */
 }
-#endif					/* !COMPILER */
 
 /*
  * doimage(c,q) - allocate character c in string space, with escape
@@ -2144,81 +1988,6 @@ word a;
 }
 #endif					/* AsmOver */
 
-#if COMPILER
-/*
- * sig_rsm - standard success continuation that just signals resumption.
- */
-
-int sig_rsm()
-   {
-   return A_Resume;
-   }
-
-/*
- * cmd_line - convert command line arguments into a list of strings.
- */
-void cmd_line(argc, argv, rslt)
-int argc;
-char **argv;
-dptr rslt;
-   {
-   tended struct b_list *hp;
-   register word i;
-   register struct b_lelem *bp;  /* need not be tended */
-
-   /*
-    * Skip the program name.
-    */
-   --argc;
-   ++argv;
-
-   /*
-    * Allocate the list and a list block.
-    */
-   Protect(hp = alclist(argc, argc), fatalerr(0,NULL));
-   bp = hp->listhead;
-
-   /*
-    * Copy the arguments into the list
-    */
-   for (i = 0; i < argc; ++i) {
-      StrLen(bp->lslots[i]) = strlen(argv[i]);
-      StrLoc(bp->lslots[i]) = argv[i];
-      }
-
-   rslt->dword = D_List;
-   rslt->vword.bptr = (union block *) hp;
-   }
-
-/*
- * varargs - construct list for use in procedures with variable length
- *  argument list.
- */
-void varargs(argp, nargs, rslt)
-dptr argp;
-int nargs;
-dptr rslt;
-   {
-   tended struct b_list *hp;
-   register word i;
-   register struct b_lelem *bp;  /* need not be tended */
-
-   /*
-    * Allocate the list and a list block.
-    */
-   Protect(hp = alclist(nargs, nargs), fatalerr(0,NULL));
-   bp = hp->listhead;
-
-   /*
-    * Copy the arguments into the list
-    */
-   for (i = 0; i < nargs; i++)
-      deref(&argp[i], &bp->lslots[i]);
-
-   rslt->dword = D_List;
-   rslt->vword.bptr = (union block *) hp;
-   }
-#endif					/* COMPILER */
 
 /*
  * retderef - Dereference local variables and substrings of local

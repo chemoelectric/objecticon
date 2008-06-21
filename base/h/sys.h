@@ -2,9 +2,6 @@
  * sys.h -- system include files.
  */
 
-#ifdef ConsoleWindow
-#undef putc
-#endif					/* ConsoleWindow */
 
 /*
  * Universal (Standard ANSI C) includes.
@@ -78,13 +75,6 @@
    #endif				/* MacGraph */
 #endif					/* MACINTOSH */
 
-#ifdef ISQL
-#if UNIX
-#undef OS2
-#endif					/* OS2 */
-  #undef Type
-  #undef Precision
-#endif					/* ISQL */
 
 #if MSDOS
    #undef Type
@@ -117,9 +107,6 @@
       #ifdef PosixFns
       #include <winsock2.h>
       #else
-#ifdef ISQL
-#include <windows.h>
-#endif					/* ISQL */
       #endif					/* PosixFns */
       #endif					/* NT */
    #endif				/* MSWindows */
@@ -300,38 +287,10 @@
    #include "../h/filepat.h"
 #endif					/* WildCards */
 
-#ifdef Dbm
-#include <ndbm.h>
-#endif					/* Dbm */
 
-#ifdef ISQL
 
-  #include <sqlext.h>
 
-  #define Type(d) (int)((d).dword & TypeMask)
-  #define Precision 16
 
-#if UNIX
-#define OS2 0
-#endif					/* UNIX */
-#endif					/* ISQL */
-
-#ifdef Messaging
-# include <tp.h>
-#endif                                  /* Messaging */
-
-#ifdef ConsoleWindow
-#undef putc
-#define putc Consoleputc
-#endif					/* ConsoleWindow */
-
-#ifdef Graphics3D
-#include <GL/gl.h>
-#ifdef XWindows
-#include <GL/glx.h>
-#endif					/* XWindows */
-#include <GL/glu.h>
-#endif					/* Graphics3D */
 
 #ifdef HAVE_LIBZ
 			

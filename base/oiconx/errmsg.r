@@ -12,9 +12,6 @@ void err_msg(int n, dptr v)
 {
     register struct errtab *p;
 
-#ifdef Messaging
-    int saveerrno = errno;
-#endif                                  /* Messaging */
 
     if (n == 0) {
         k_errornumber = t_errornumber;
@@ -63,12 +60,6 @@ void err_msg(int n, dptr v)
         putc('\n', stderr);
     }
 
-#ifdef Messaging
-    if (saveerrno != 0 && k_errornumber >= 1000) {
-        fprintf(stderr, "system error (errno %d): \"%s\"\n", 
-                saveerrno, strerror(saveerrno));
-    }
-#endif                                  /* Messaging */
 
     if (!debug_info)
         c_exit(EXIT_FAILURE);

@@ -58,9 +58,6 @@
 #define Fs_Untrans    01000	/* untranslated mode file */
 #define Fs_Directory  02000	/* reading a directory */
 
-#ifdef Dbm
-   #define Fs_Dbm       04000		/* a dbm file */
-#endif					/* Dbm */
 
 #ifdef PosixFns
    #define Fs_Socket    010000
@@ -69,19 +66,8 @@
    #define Fs_Listen   0100000
 #endif					/* PosixFns */
 
-#ifdef ISQL
-   #define Fs_ODBC      0200000
-   #define RC_SUCCESSFUL(rc) (rc==SQL_SUCCESS || rc==SQL_SUCCESS_WITH_INFO)
-   #define RC_NOTSUCCESSFUL(rc) (!(RC_SUCCESSFUL(rc)))
-#endif					/* ISQL */
 
-#ifdef Messaging
-   #define Fs_Messaging 0400000
-#endif                                  /* Messaging */
 
-#ifdef Graphics3D
-   #define Fs_Window3D  01000000	/* reading/writing on a window */
-#endif					/* Graphics3D */
 
 #ifdef HAVE_LIBZ
    #define Fs_Compress  02000000	/* reading/writing compressed file */
@@ -479,15 +465,9 @@
 /*
  * Macro for initialized procedure block.
  */
-#ifdef MultiThread
 #define B_IProc(n) struct {word title; word blksize; int (*ccode)();\
    word nparam; word ndynam; word nstatic; word fstatic;\
    struct progstate *program; struct class_field *field; struct sdescrip quals[n];}
-#else
-#define B_IProc(n) struct {word title; word blksize; int (*ccode)();\
-   word nparam; word ndynam; word nstatic; word fstatic;\
-   struct class_field *field; struct sdescrip quals[n];}
-#endif
 
 #define ssize    (curstring->size)
 #define strbase  (curstring->base)
@@ -499,15 +479,6 @@
 #define blkend   (curblock->end)
 #define blkfree  (curblock->free)
 
-#if COMPILER
-   
-   #ifdef Graphics
-      #define Poll() if (!pollctr--) pollctr = pollevent()
-   #else				/* Graphics */
-      #define Poll()
-   #endif				/* Graphics */
-   
-#else					/* COMPILER */
    
    /*
     * Definitions for the interpreter.
@@ -674,7 +645,6 @@
     * Miscellaneous macro definitions.
     */
    
-   #ifdef MultiThread
       #define glbl_argp (curpstate->Glbl_argp)
       #define kywd_err  (curpstate->Kywd_err)
       #define kywd_pos  (curpstate->Kywd_pos)
@@ -813,25 +783,11 @@
 
       #define ENTERPSTATE(p) if (((p)!=NULL)) { curpstate = (p); }
       #define CHANGEPROGSTATE(p) if (((p)!=curpstate)) { changeprogstate(p); }
-   #endif				/* MultiThread */
    
-#endif					/* COMPILER */
-
-#if COMPILER || !defined(MultiThread)
-   #define EVStrAlc(n)
-#endif
 
 /*
  * Constants controlling expression evaluation.
  */
-#if COMPILER
-   #define A_Resume	-1	/* expression failed: resume a generator */
-   #define A_Continue	-2	/* expression returned: continue execution */
-   #define A_FallThru	-3      /* body function: fell through end of code */
-   #define A_Coact	1	/* co-expression activation */
-   #define A_Coret	2	/* co-expression return */
-   #define A_Cofail	3	/* co-expression failure */
-#else					/* COMPILER */
    #define A_Resume	1	/* routine failed */
    #define A_Pret_uw	2	/* interp unwind for Op_Pret */
    #define A_Unmark_uw	3	/* interp unwind for Op_Unmark */
@@ -842,14 +798,11 @@
    #define A_Coact	8	/* co-expression activated */
    #define A_Coret	9	/* co-expression returned */
    #define A_Cofail	10	/* co-expression failed */
-   #ifdef MultiThread
       #define A_MTEvent	11	/* multithread event */
-   #endif				/* MultiThread */
    #ifdef PosixFns
       #define	A_Trapret	12	/* Return from stub  */
       #define	A_Trapfail	13	/* Fail from stub  */
    #endif 				/* PosixFns */
-#endif					/* COMPILER */
 
 /*
  * Address of word containing cset bit b (c is a struct descrip of type Cset).
@@ -872,31 +825,3 @@
 #endif					/* no S_ISDIR */
 #endif					/* NT */
 
-#ifdef ISQL                             /* ODBC support */
-
-   /*
-    * Icon/ODBC error codes
-    */
-   #define ODBC_ERR_SZ            19
-  
-   #define NOT_ODBC_FILE_ERR    1100
-   #define FREE_STMT_ERR        1101
-   #define DISCONNECT_ERR       1102
-   #define FREE_CONNECT_ERR     1103
-   #define ALLOC_STMT_ERR       1104
-   #define ALLOC_ENV_ERR        1105
-   #define ALLOC_CONNECT_ERR    1106
-   #define CONNECT_ERR          1107
-   #define EXEC_DIRECT_ERR      1108
-   #define CLOSE_CURSOR_ERR     1109
-   #define COLUMNS_ERR          1110
-   #define PRIMARY_KEYS_ERR     1111
-   #define NUM_RESULT_COLS_ERR  1112
-   #define DESCRIBE_COL_ERR     1113
-   #define FETCH_ERR            1114
-   #define TABLES_ERR           1115
-   #define NO_KEY_DEFINED_ERR   1116
-   #define TOO_MANY_KEYS_ERR    1117
-   #define KEY_MISSING_ERR      1118
-
-#endif					/* ISQL */

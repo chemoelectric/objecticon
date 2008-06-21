@@ -252,12 +252,8 @@ int f(dptr s, dptr d)
   }
 #enddef
 
-#ifdef MultiThread
 cnv_cset_macro(cnv_cset_0,0,0,0,0,0)
 cnv_cset_macro(cnv_cset_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
-#else					/* MultiThread */
-cnv_cset_macro(cnv_cset,0,0,0,0,0)
-#endif					/* MultiThread */
 
 /*
  * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
@@ -469,12 +465,8 @@ dptr s, d;
    }
 #enddef
 
-#ifdef MultiThread
 cnv_int_macro(cnv_int_0,0,0,0,0,0)
 cnv_int_macro(cnv_int_1,E_Aconv,E_Tconv,E_Nconv,E_Fconv,E_Sconv)
-#else					/* MultiThread */
-cnv_int_macro(cnv_int,0,0,0,0,0)
-#endif					/* MultiThread */
 
 #begdef cnv_real_macro(f,e_aconv,e_tconv,e_sconv,e_fconv)
 /*
@@ -499,12 +491,8 @@ int f(dptr s, dptr d)
    }
 #enddef
 
-#ifdef MultiThread
 cnv_real_macro(cnv_real_0,0,0,0,0)
 cnv_real_macro(cnv_real_1,E_Aconv,E_Tconv,E_Sconv,E_Fconv)
-#else					/* MultiThread */
-cnv_real_macro(cnv_real,0,0,0,0)
-#endif					/* MultiThread */
 
 
 #begdef cnv_str_macro(f, e_aconv, e_tconv, e_nconv, e_sconf, e_fconv)
@@ -558,12 +546,8 @@ int f(dptr s, dptr d)
    }
 #enddef
 
-#ifdef MultiThread
 cnv_str_macro(cnv_str_0,0,0,0,0,0)
 cnv_str_macro(cnv_str_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
-#else					/* MultiThread */
-cnv_str_macro(cnv_str,0,0,0,0,0)
-#endif					/* MultiThread */
 
 #begdef cnv_tcset_macro(f, e_aconv, e_tconv, e_nconv, e_sconv, e_fconv)
 /*
@@ -605,12 +589,8 @@ int f(struct b_cset *cbuf, dptr s, dptr d)
    }
 #enddef
 
-#ifdef MultiThread
 cnv_tcset_macro(cnv_tcset_0,0,0,0,0,0)
 cnv_tcset_macro(cnv_tcset_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
-#else					/* MultiThread */
-cnv_tcset_macro(cnv_tcset,0,0,0,0,0)
-#endif					/* MultiThread */
 
 #begdef cnv_tstr_macro(f,e_aconv,e_tconv,e_nconv,e_sconv,e_fconv)
 /*
@@ -637,12 +617,8 @@ int f(char *sbuf, dptr s, dptr d)
    }
 #enddef
 
-#ifdef MultiThread
 cnv_tstr_macro(cnv_tstr_0,0,0,0,0,0)
 cnv_tstr_macro(cnv_tstr_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
-#else					/* MultiThread */
-cnv_tstr_macro(cnv_tstr,0,0,0,0,0)
-#endif					/* MultiThread */
 
 #begdef deref_macro(f, e_deref)
 /*
@@ -713,12 +689,8 @@ void f(dptr s, dptr d)
    }
 #enddef
 
-#ifdef MultiThread
 deref_macro(deref_0,0)
 deref_macro(deref_1,E_Deref)
-#else					/* MultiThread */
-deref_macro(deref,0)
-#endif					/* MultiThread */
 
 /*
  * getdbl - return as a double the value inside a real block.
@@ -813,16 +785,10 @@ C_integer arity;
    /*
     * See if the string represents a built-in function.
     */
-#if COMPILER
-   for (i = 0; i < n_globals; ++i)
-      if (eq(s, &gnames[i]))
-	 return builtins[i];  /* may be null */
-#else					/* COMPILER */
    pp = (struct pstrnm *)qsearch((char *)s,(char *)pntab,pnsize,
 				 sizeof(struct pstrnm),dp_pnmcmp);
    if (pp!=NULL)
       return (struct b_proc *)pp->pblock;
-#endif					/* !COMPILER */
 
    return NULL;
    }
@@ -1044,9 +1010,6 @@ union numeric *result;
    /*
     * Test for bignum.
     */
-#if COMPILER
-   if (largeints)
-#endif					/* COMPILER */
       if (!realflag) {
          int rv;
          rv = bigradix((int)msign, 10, ssave, end_s, result);
@@ -1104,49 +1067,6 @@ union numeric *result;
    result->real = mantissa;
    return T_Real;
    }
-
-#if COMPILER || !(defined LargeInts)
-/*
- * radix - convert string s in radix r into an integer in *result.  sign
- *  will be either '+' or '-'.
- */
-int radix(sign, r, s, end_s, result)
-int sign;
-register int r;
-register char *s;
-register char *end_s;
-union numeric *result;
-   {
-   register int c;
-   long num;
-
-   if (r < 2 || r > 36)
-      return CvtFail;
-   c = (s < end_s) ? *s++ : ' ';
-   num = 0L;
-   while (isalnum(c)) {
-      c = tonum(c);
-      if (c >= r)
-	 return CvtFail;
-      num = num * r + c;
-      c = (s < end_s) ? *s++ : ' ';
-      }
-
-   /*
-    * Skip trailing white space and make sure there is nothing else left
-    *  in the string. Note, if we have already reached end-of-string,
-    *  c has been set to a space.
-    */
-   while (isspace(c) && s < end_s)
-      c = *s++;
-   if (!isspace(c))
-      return CvtFail;
-
-   result->integer = (sign == '+' ? num : -num);
-
-   return T_Integer;
-   }
-#endif					/* COMPILER || !(defined LargeInts) */
 
 
 /*

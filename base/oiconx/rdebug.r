@@ -252,7 +252,6 @@ int get_name(dptr dp1,dptr dp0)
             syserr("name: unknown integer keyword variable");
             
       kywdevent:
-#ifdef MultiThread
         if (VarLoc(*dp1) == &curpstate->eventsource) {
             StrLen(*dp0) = 12;
             StrLoc(*dp0) = "&eventsource";
@@ -266,7 +265,6 @@ int get_name(dptr dp1,dptr dp0)
             StrLoc(*dp0) = "&eventcode";
         }
         else
-#endif					/* MultiThread */
             syserr("name: unknown event keyword variable");
             
       kywdwin: {
@@ -389,13 +387,9 @@ int get_name(dptr dp1,dptr dp0)
                             return Error;
                         break;
                     default:		/* none of the above */
-#ifdef MultiThread
                         StrLen(*dp0) = 8;
                         StrLoc(*dp0) = "(struct)";
                         return Failed;
-#else
-                        syserr("name: invalid structure reference");
-#endif                                  /* MultiThread */
 
                 }
             }
@@ -403,91 +397,6 @@ int get_name(dptr dp1,dptr dp0)
     return Succeeded;
 }
 
-#if COMPILER
-#begdef PTraceSetup()
-struct b_proc *proc;
-
---k_trace;
-showline(file_name, line_num);
-showlevel(k_level);
-proc = PFDebug(*pfp)->proc; /* get address of procedure block */
-putstr(stderr, &proc->pname);
-#enddef
- 
-/*
- * ctrace - a procedure is being called; produce a trace message.
- */
-void ctrace()
-{
-    dptr arg;
-    int n;
-
-    PTraceSetup();
-
-    putc('(', stderr);
-    arg = glbl_argp;
-    n = abs((int)proc->nparam);
-    while (n--) {
-        outimage(stderr, arg++, 0);
-        if (n)
-            putc(',', stderr);
-    }
-    putc(')', stderr);
-    putc('\n', stderr);
-    fflush(stderr);
-}
-
-/*
- * rtrace - a procedure is returning; produce a trace message.
- */
-
-void rtrace()
-{
-    PTraceSetup();
-
-    fprintf(stderr, " returned ");
-    outimage(stderr, pfp->rslt, 0);
-    putc('\n', stderr);
-    fflush(stderr);
-}
-
-/*
- * failtrace - procedure named s is failing; produce a trace message.
- */
-
-void failtrace()
-{
-    PTraceSetup();
-
-    fprintf(stderr, " failed\n");
-    fflush(stderr);
-}
-
-/*
- * strace - a procedure is suspending; produce a trace message.
- */
-
-void strace()
-{
-    PTraceSetup();
-
-    fprintf(stderr, " suspended ");
-    outimage(stderr, pfp->rslt, 0);
-    putc('\n', stderr);
-    fflush(stderr);
-}
-
-/*
- * atrace - a procedure is being resumed; produce a trace message.
- */
-void atrace()
-{
-    PTraceSetup();
-
-    fprintf(stderr, " resumed\n");
-    fflush(stderr);
-}
-#endif					/* COMPILER */
 
 /*
  * keyref(bp,dp) -- print name of subscripted table
@@ -513,12 +422,6 @@ static int keyref(bp, dp)
     else
         while(BlkType(bp) == T_Telem)
             bp = bp->telem.clink;
-#ifdef Dbm
-    if (BlkType(bp) == T_File) {
-        sprintf(sbuf, "dbmfile(%s)[", bp->file.fname);
-    }
-    else
-#endif					/* Dbm */
         sprintf(sbuf, "table_%d[", bp->table.id);
     { char * dest = sbuf + strlen(sbuf);
         strncpy(dest, s2, len);
@@ -532,7 +435,6 @@ static int keyref(bp, dp)
     return Succeeded;
 }
 
-#ifdef Coexpr
 /*
  * cotrace -- a co-expression context switch; produce a trace message.
  */
@@ -544,16 +446,10 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
 {
     struct b_proc *proc;
 
-#if !COMPILER
     inst t_ipc;
-#endif					/* !COMPILER */
 
     --k_trace;
 
-#if COMPILER
-    showline(ccp->file_name, ccp->line_num);
-    proc = PFDebug(*ccp->es_pfp)->proc;     /* get address of procedure block */
-#else					/* COMPILER */
 
     /*
      * Compute the ipc of the instruction causing the context switch.
@@ -561,7 +457,6 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
     t_ipc.op = ipc.op - 1;
     showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
     proc = (struct b_proc *)BlkLoc(*glbl_argp);
-#endif					/* COMPILER */
 
     showlevel(k_level);
     putstr(stderr, &proc->pname);
@@ -584,7 +479,6 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
     fprintf(stderr,"co-expression_%ld\n", (long)ncp->id);
     fflush(stderr);
 }
-#endif					/* Coexpr */
 
 /*
  * showline - print file and line number information.
@@ -621,14 +515,10 @@ static void showlevel(n)
     }
 }
 
-#if !COMPILER
 
 #include "../h/opdefs.h"
 
 
-#ifndef MultiThread
-    extern struct descrip value_tmp;		/* argument of Op_Apply */
-#endif						/* MultiThread */
     extern struct b_proc *opblks[];
 
     
@@ -923,7 +813,6 @@ void atrace(dp)
     fflush(stderr);
 }
 
-#ifdef Coexpr
 /*
  * coacttrace -- co-expression is being activated; produce a trace message.
  */
@@ -994,8 +883,6 @@ void cofailtrace(ccp, ncp)
             (long)ccp->id, (long)ncp->id);
     fflush(stderr);
 }
-#endif					/* Coexpr */
-#endif					/* !COMPILER */
 
 /*
  * Service routine to display variables in given number of
@@ -1003,11 +890,7 @@ void cofailtrace(ccp, ncp)
  */
 
 int xdisp(fp,dp,count,f)
-#if COMPILER
-    struct p_frame *fp;
-#else					/* COMPILER */
     struct pf_marker *fp;
-#endif					/* COMPILER */
     register dptr dp;
     int count;
     FILE *f;
@@ -1021,12 +904,8 @@ int xdisp(fp,dp,count,f)
         if (fp == NULL)
             break;       /* needed because &level is wrong in co-expressions */
 
-#if COMPILER
-        bp = PFDebug(*fp)->proc;	/* get address of procedure block */
-#else					/* COMPILER */
         bp = (struct b_proc *)BlkLoc(*dp++); /* get addr of procedure block */
         /* #%#% was: no post-increment there, but *pre*increment dp below */
-#endif					/* COMPILER */
 
         /*
          * Print procedure name.
@@ -1050,11 +929,7 @@ int xdisp(fp,dp,count,f)
         /*
          * Print locals.
          */
-#if COMPILER
-        dp = fp->t.d;
-#else					/* COMPILER */
         dp = &fp->pf_locals[0];
-#endif					/* COMPILER */
         for (n = bp->ndynam; n > 0; n--) {
             fprintf(f, "   ");
             putstr(f, np);
@@ -1077,24 +952,15 @@ int xdisp(fp,dp,count,f)
             np++;
         }
 
-#if COMPILER
-        dp = fp->old_argp;
-        fp = fp->old_pfp;
-#else					/* COMPILER */
         dp = fp->pf_argp;
         fp = fp->pf_pfp;
-#endif					/* COMPILER */
     }
 
     /*
      * Print globals.  Sort names in lexical order using temporary index array.
      */
 
-#if COMPILER
-    nglobals = n_globals;
-#else					/* COMPILER */
     nglobals = eglobals - globals;
-#endif					/* COMPILER */
 
     indices = (word *)malloc((msize)nglobals * sizeof(word));
     if (indices == NULL)

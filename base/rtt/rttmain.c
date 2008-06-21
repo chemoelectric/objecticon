@@ -151,10 +151,6 @@ int _stack = 32 * 1024;		/* need large stack	*/
 #endif				/* DOS386 */
 #endif				/* ZTC_386 */
 
-#ifdef ConsoleWindow
-int ConsolePause = 1;
-#endif					/* ConsoleWindow */
-
 #ifndef NTConsole
 #ifdef MSWindows
 int rtt(int argc, char **argv);
@@ -323,11 +319,6 @@ char **argv;
           case 'd': /* -d name: name of data base */
             dbname = optarg;
             break;
-#ifdef ConsoleWindow
-	 case 'q':
- 	    ConsolePause = 0;
-	    break;
-#endif					/* ConsoleWindow */
          case 'r':  /* -r path: location of include files */
             refpath = optarg;
             break;

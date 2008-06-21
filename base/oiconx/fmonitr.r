@@ -16,7 +16,6 @@
  */
 
 
-#ifdef MultiThread
 /*
  * event(x, y, C) -- generate an event at the program level.
  */
@@ -337,11 +336,7 @@ void EVVariable(dptr dx, int eventcode)
       return;
       }
 
-#if COMPILER
-   procname = &(PFDebug(*pfp)->proc->pname);
-#else					/* COMPILER */
    procname = &((&BlkLoc(*glbl_argp)->proc)->pname);
-#endif					/* COMPILER */
    /*
     * call get_name, allocating out of the monitor if necessary.
     */
@@ -497,6 +492,3 @@ void EVStrAlc_1(word n)
 }
 
 
-#else					/* MultiThread */
-static char xjunk;			/* avoid empty module */
-#endif					/* MultiThread */

@@ -22,7 +22,7 @@ XOBJS=	xcnv.o xdata.o xdef.o xerrmsg.o xextcall.o xfconv.o xfload.o xfmath.o\
 	xkeyword.o xlmisc.o xoarith.o xoasgn.o xocat.o xocomp.o xnative.o \
 	xomisc.o xoref.o xoset.o xovalue.o xralc.o xrcoexpr.o xrcomp.o xrdb.o\
 	xrdebug.o xrlocal.o xrlrgint.o xrmemmgt.o xrmisc.o xrstruct.o xrsys.o\
-	xrwinrsc.o xrgfxsys.o xrwinsys.o xrwindow.o xfxtra.o xrposix.o xrmsg.o
+	xrwinrsc.o xrgfxsys.o xrwinsys.o xrwindow.o xfxtra.o xrposix.o
 
 COBJS=	../common/long.o ../common/time.o ../common/save.o \
 	../common/rswitch.o ../common/redirerr.o ../common/xwindow.o \
@@ -246,11 +246,6 @@ xrmisc.o: rmisc.r $(HDRS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c xrmisc.c
 	$(RM) xrmisc.c
 
-xrmsg.o: rmsg.r $(HDRS) ../h/messagin.h
-	rtt -x rmsg.r
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c xrmsg.c
-	$(RM) xrmsg.c
-
 xrposix.o: rposix.r $(HDRS) ../h/posix.h
 	rtt -x rposix.r
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c xrposix.c
@@ -276,7 +271,7 @@ xrgfxsys.o: rgfxsys.r $(HDRS) $(GRAPHICSHDRS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c xrgfxsys.c
 	$(RM) xrgfxsys.c
 
-xrwinsys.o: rwinsys.r $(HDRS) $(GRAPHICSHDRS) rxwin.ri ropengl.ri
+xrwinsys.o: rwinsys.r $(HDRS) $(GRAPHICSHDRS) rxwin.ri
 	rtt -x rwinsys.r
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c xrwinsys.c
 	$(RM) xrwinsys.c

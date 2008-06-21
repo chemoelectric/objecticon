@@ -105,17 +105,10 @@ FncDefV(writes)
    FncDef(open,3)
 #endif					/* Graphics */
 
-#ifdef MultiThread
    FncDef(display,3)
    FncDef(name,2)
    FncDef(proc,3)
    FncDef(variable,3)
-#else					/* MultiThread */
-   FncDef(display,2)
-   FncDef(name,1)
-   FncDef(proc,2)
-   FncDef(variable,1)
-#endif					/* MultiThread */
 
 /*
  * Dynamic loading.
@@ -207,9 +200,6 @@ FncDef(setenv,2)
 #endif					/* PosixFns */
 
 #ifdef PosixFns
-#ifdef Dbm
-FncDef(fetch,2)
-#endif					/* Dbm */
 #endif					/* PosixFns */
 /*
  * Functions for MS-DOS.
@@ -304,10 +294,6 @@ FncDef(fetch,2)
    FncDefV(WinSaveDialog)
    FncDefV(WinSelectDialog)
 
-#ifdef MultiThread
-   /*
-    * These functions are under MultiThread for no good reason.
-    */
    FncDef(cofail,1)
    FncDef(globalnames,1)
    FncDef(fieldnames,1)
@@ -315,9 +301,6 @@ FncDef(fetch,2)
    FncDef(staticnames,2)
    FncDef(paramnames,2)
    FncDef(structure,1)
-   /*
-    * These functions are inherent to MultiThread and multiple Icon programs
-    */
    FncDefV(load)
    FncDef(parent,1)
    FncDef(keyword,2)
@@ -331,36 +314,4 @@ FncDef(fetch,2)
    FncDef(eventmask,2)
    FncDef(opmask,2)
 
-#endif					/* MultiThread */
 
-/* SQL/ODBC database support */
-#ifdef ISQL
-  FncDef(dbcolumns,2)
-  FncDef(dbdriver,1)
-  FncDef(dbkeys,2)
-  FncDef(dblimits,1)
-  FncDef(dbproduct,1)
-  FncDef(sql,2)
-  FncDef(dbtables,1)
-#endif					/* ISQL */
-
-  FncDefV(DrawTorus)
-  FncDefV(DrawCube)
-  FncDefV(DrawSphere)
-  FncDefV(Eye)
-  FncDefV(Rotate)
-  FncDefV(Translate)
-  FncDefV(Scale)
-  FncDefV(PushMatrix)
-  FncDefV(PushTranslate)
-  FncDefV(PushRotate)
-  FncDefV(PushScale)
-  FncDefV(PopMatrix)
-  FncDefV(IdentityMatrix)
-  FncDefV(MatrixMode)
-  FncDefV(DrawCylinder)
-  FncDefV(DrawDisk)
-  FncDefV(Texture)
-  FncDefV(Texcoord)
-  FncDefV(Refresh)
-  FncDefV(WindowContents)

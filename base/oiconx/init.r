@@ -6,7 +6,6 @@
  *  fatalerr, pstrnmcmp, datainit, [loadicode]
  */
 
-#if !COMPILER
 #include "../h/header.h"
 
 #ifdef HAVE_LIBZ
@@ -14,7 +13,6 @@ static int readhdr	(char *name, struct header *hdr);
 #else					/* HAVE_LIBZ */
 static	FILE	*readhdr	(char *name, struct header *hdr);
 #endif					/* HAVE_LIBZ */
-#endif					/* !COMPILER */
 
 #if SCCX_MX
 extern  int         thisIsIconx;
@@ -75,7 +73,6 @@ int stubexe;				/* TRUE if resource attached to executable */
 
 char *prog_name;			/* name of icode file */
 
-#if !COMPILER
 #passthru #define OpDef(p,n,s,u) int Cat(O,p) (dptr cargp);
 #passthru #include "../h/odefs.h"
 #passthru #undef OpDef
@@ -84,7 +81,6 @@ char *prog_name;			/* name of icode file */
  * External declarations for operator blocks.
  */
 
-#ifdef MultiThread
 #passthru #define OpDef(f,nargs,sname,underef)\
 	{\
 	T_Proc,\
@@ -101,24 +97,6 @@ char *prog_name;			/* name of icode file */
 #passthru #include "../h/odefs.h"
 #passthru   };
 #undef OpDef
-#else
-#passthru #define OpDef(f,nargs,sname,underef)\
-	{\
-	T_Proc,\
-	Vsizeof(struct b_proc),\
-	Cat(O,f),\
-	nargs,\
-	-1,\
-	underef,\
-	0,\
-        0,                                        \
-	{{sizeof(sname)-1,sname}}},
-#passthru static B_IProc(2) init_op_tbl[] = {
-#passthru #include "../h/odefs.h"
-#passthru   };
-#undef OpDef
-#endif                                  /* MultiThread */
-#endif					/* !COMPILER */
 
 /*
  * A number of important variables follow.
@@ -126,9 +104,6 @@ char *prog_name;			/* name of icode file */
 
 int line_info;				/* flag: line information is available */
 char *file_name = NULL;			/* source file for current execution point */
-#ifndef MultiThread
-int line_num = 0;			/* line number for current execution point */
-#endif					/* MultiThread */
 struct b_proc *op_tbl;			/* operators available for string invocation */
 
 extern struct errtab errtab[];		/* error numbers and messages */
@@ -138,9 +113,6 @@ word stksize = StackSize;		/* co-expression stack size */
 
 int k_level = 0;			/* &level */
 
-#ifndef MultiThread
-struct descrip k_main;			/* &main */
-#endif					/* MultiThread */
 
 int set_up = 0;				/* set-up switch */
 
@@ -153,10 +125,6 @@ word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
 
 uword stattotal = 0;			/* cumulative total static allocation */
-#ifndef MultiThread
-uword strtotal = 0;			/* cumulative total string allocation */
-uword blktotal = 0;			/* cumulative total block allocation */
-#endif					/* MultiThread */
 
 int dodump;				/* if nonzero, core dump on error */
 int noerrbuf;				/* if nonzero, do not buffer stderr */
@@ -164,16 +132,6 @@ int noerrbuf;				/* if nonzero, do not buffer stderr */
 struct descrip maps2;			/* second cached argument of map */
 struct descrip maps3;			/* third cached argument of map */
 
-#ifndef MultiThread
-struct descrip k_current;		/* current expression stack pointer */
-int k_errornumber = 0;			/* &errornumber */
-char *k_errortext = "";			/* &errortext */
-struct descrip k_errorvalue;		/* &errorvalue */
-int have_errval = 0;			/* &errorvalue has legal value */
-int t_errornumber = 0;			/* tentative k_errornumber value */
-int t_have_val = 0;			/* tentative have_errval flag */
-struct descrip t_errorvalue;		/* tentative k_errorvalue value */
-#endif					/* MultiThread */
 
 struct b_coexpr *stklist;	/* base of co-expression block list */
 struct progstate *progs;        /* list of progstates */
@@ -182,25 +140,7 @@ struct tend_desc *tend = NULL;  /* chain of tended descriptors */
 
 struct region rootstring, rootblock;
 
-#ifndef MultiThread
-dptr glbl_argp = NULL;		/* argument pointer */
-dptr globals, eglobals;			/* pointer to global variables */
-dptr gnames, egnames;			/* pointer to global variable names */
-dptr estatics;				/* pointer to end of static variables */
 
-struct region *curstring, *curblock;
-#endif					/* MultiThread */
-
-#if COMPILER
-struct p_frame *pfp = NULL;	/* procedure frame pointer */
-
-int debug_info;				/* flag: is debugging information available */
-int err_conv;				/* flag: is error conversion supported */
-int largeints;				/* flag: large integers are supported */
-
-struct b_coexpr *mainhead;		/* &main */
-
-#else					/* COMPILER */
 
 int debug_info=1;			/* flag: debugging information IS available */
 int err_conv=1;				/* flag: error conversion IS supported */
@@ -212,33 +152,8 @@ struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
 #define MaxHeader MaxHdr
 #endif					/* MaxHeader */
 
-#ifdef MultiThread
 struct progstate *curpstate;		/* lastop accessed in program state */
 struct progstate rootpstate;
-#else					/* MultiThread */
-struct b_coexpr *mainhead;		/* &main */
-
-char *code;				/* interpreter code buffer */
-char *ecode;				/* end of interpreter code buffer */
-word *records;				/* pointer to record procedure blocks */
-
-short *ftabp;				/* pointer to record/field table */
-#ifdef FieldTableCompression
-word ftabwidth;				/* field table entry width */
-word foffwidth;				/* field offset entry width */
-unsigned char *ftabcp, *focp;		/* pointers to record/field table */
-unsigned short *ftabsp, *fosp;		/* pointers to record/field table */
-
-int *fo;				/* field offset (row in field table) */
-char *bm;				/* bitmap array of valid field bits */
-#endif					/* FieldTableCompression */
-
-dptr fnames, efnames;			/* pointer to field names */
-dptr statics;				/* pointer to static variables */
-char *strcons;				/* pointer to string constant table */
-struct ipc_fname *filenms, *efilenms;	/* pointer to ipc/file name table */
-struct ipc_line *ilines, *elines;	/* pointer to ipc/line number table */
-#endif					/* MultiThread */
 
 
 
@@ -254,16 +169,7 @@ int dumped = 0;				/* non-zero if reloaded from dump */
 word *stack;				/* Interpreter stack */
 word *stackend; 			/* End of interpreter stack */
 
-#ifdef MultipleRuns
-extern word coexp_ser;
-extern word list_ser;
-extern word set_ser;
-extern word table_ser;
-extern int first_time;
-#endif					/* MultipleRuns */
-#endif					/* COMPILER */
 
-#if !COMPILER
 #ifdef HAVE_LIBZ
 
 int fdgets(int fd, char *buf, size_t count)
@@ -590,45 +496,25 @@ void check_version(struct header *hdr, char *name,
       }
 }
 
-#endif
 
 
 /*
  * init/icon_init - initialize memory and prepare for Icon execution.
  */
-#if !COMPILER
    struct header hdr;
-#endif					/* !COMPILER */
 
-#if COMPILER
-void init(name, argcp, argv, trc_init)
-char *name;
-int *argcp;
-char *argv[];
-int trc_init;
-#else					/* COMPILER */
 void icon_init(name, argcp, argv)
 char *name;
 int *argcp;
 char *argv[];
-#endif					/* COMPILER */
 
    {
-#if !COMPILER
    int fdname = -1;
    FILE *fname = 0;
    word cbread, longread(), gzlongread();
-#endif					/* COMPILER */
    prog_name = name;			/* Set icode file name */
 
-#if COMPILER
-   curstring = &rootstring;
-   curblock  = &rootblock;
-   rootstring.size = MaxStrSpace;
-   rootblock.size  = MaxAbrSize;
-#else					/* COMPILER */
 
-#ifdef MultiThread
    /*
     * initialize root pstate
     */
@@ -715,11 +601,6 @@ char *argv[];
    rootpstate.Alctvtbl = alctvtbl_0;
    rootpstate.Deallocate = deallocate_0;
    rootpstate.Reserve = reserve_0;
-#else					/* MultiThread */
-
-   curstring = &rootstring;
-   curblock  = &rootblock;
-#endif					/* MultiThread */
 
    rootstring.size = MaxStrSpace;
    rootblock.size  = MaxAbrSize;
@@ -732,11 +613,8 @@ char *argv[];
 	}
      }
 
-#endif					/* COMPILER */
 
-#if !COMPILER
    op_tbl = (struct b_proc*)init_op_tbl;
-#endif					/* !COMPILER */
 
 #ifdef Double
    if (sizeof(struct size_dbl) != sizeof(double))
@@ -806,7 +684,6 @@ Deliberate Syntax Error
  * End of operating-system specific code.
  */
 
-#if !COMPILER
 #ifdef ExecImages
    /*
     * If reloading from a dumped out executable, skip most of init and
@@ -815,17 +692,12 @@ Deliberate Syntax Error
    if (dumped)
       goto btinit;
 #endif					/* ExecImages */
-#endif					/* COMPILER */
 
    /*
     * Initialize data that can't be initialized statically.
     */
    datainit();
-#if COMPILER
-   IntVal(kywd_trc) = trc_init;
-#endif					/* COMPILER */
 
-#if !COMPILER
 #ifdef HAVE_LIBZ
    fdname = readhdr(name,&hdr);
    if (fdname == -1) {
@@ -840,7 +712,6 @@ Deliberate Syntax Error
 
    k_trace = hdr.trace;
 
-#endif					/* COMPILER */
 
    /*
     * Examine the environment and make appropriate settings.    [[I?]]
@@ -864,17 +735,8 @@ Deliberate Syntax Error
    /*
     * Allocate memory for various regions.
     */
-#if COMPILER
-   initalloc();
-#else					/* COMPILER */
-#ifdef MultiThread
    initalloc(hdr.hsize,&rootpstate);
-#else					/* MultiThread */
-   initalloc(hdr.hsize);
-#endif					/* MultiThread */
-#endif					/* COMPILER */
 
-#if !COMPILER
    /*
     * Establish pointers to icode data regions.		[[I?]]
     */
@@ -900,26 +762,17 @@ Deliberate Syntax Error
    estrcons = (char *)(code + hdr.hsize);
    n_globals = eglobals - globals;
    n_statics = estatics - statics;
-#endif					/* COMPILER */
 
    /*
     * Allocate stack and initialize &main.
     */
 
-#if COMPILER
-   mainhead = (struct b_coexpr *)malloc((msize)sizeof(struct b_coexpr));
-#else					/* COMPILER */
    stack = (word *)malloc((msize)mstksize);
    mainhead = (struct b_coexpr *)stack;
 
-#endif					/* COMPILER */
 
    if (mainhead == NULL)
-#if COMPILER
-      err_msg(305, NULL);
-#else					/* COMPILER */
       fatalerr(303, NULL);
-#endif					/* COMPILER */
 
    mainhead->title = T_Coexpr;
    mainhead->id = 1;
@@ -928,18 +781,10 @@ Deliberate Syntax Error
    mainhead->es_tend = NULL;
    mainhead->freshblk = nulldesc;	/* &main has no refresh block. */
 					/*  This really is a bug. */
-#ifdef MultiThread
    mainhead->program = &rootpstate;
-#endif					/* MultiThread */
-#if COMPILER
-   mainhead->file_name = "";
-   mainhead->line_num = 0;
-#endif					/* COMPILER */
 
-#ifdef Coexpr
    Protect(mainhead->es_actstk = alcactiv(), fatalerr(0,NULL));
    pushact(mainhead, mainhead);
-#endif					/* Coexpr */
 
    /*
     * Point &main at the co-expression block for the main procedure and set
@@ -948,7 +793,6 @@ Deliberate Syntax Error
    k_main.dword = D_Coexpr;
    BlkLoc(k_main) = (union block *) mainhead;
    k_current = k_main;
-#if !COMPILER
 #ifdef HAVE_LIBZ
    check_version(&hdr, name, fdname);
 #else
@@ -1083,15 +927,12 @@ else {
 #endif					/* HAVE_LIBZ */
   
 
-#endif					/* !COMPILER */
 
    /*
     * Initialize the event monitoring system, if configured.
     */
 
-#ifdef MultiThread
    EVInit();
-#endif					/* MultiThread */
 
 /* this is the end of yonggang's compressed icode else-branch ! */
 
@@ -1107,22 +948,14 @@ else {
 #endif					/* KeyboardFncs */
 #endif					/* VMS */
 
-#if !COMPILER
    /*
     * Resolve references from icode to run-time system.
     */
-#ifdef MultiThread
    resolve(NULL);
-#else					/* MultiThread */
-   resolve();
-#endif					/* MultiThread */
-#endif					/* COMPILER */
 
-#if !COMPILER
 #ifdef ExecImages
 btinit:
 #endif					/* ExecImages */
-#endif					/* COMPILER */
 
 /*
  * The following code is operating-system dependent [@init.03].  Allocate and
@@ -1427,13 +1260,8 @@ char *s;
    if (pfp == NULL)
       fprintf(stderr, " in startup code");
    else {
-#if COMPILER
-      if (line_info)
-	 fprintf(stderr, " at line %d in %s", line_num, file_name);
-#else					/* COMPILER */
       fprintf(stderr, " at line %ld in %s", (long)findline(ipc.opnd),
 	 findfile(ipc.opnd));
-#endif					/* COMPILER */
       }
   fprintf(stderr, "\n%s\n", s);
 #ifdef PresentationManager
@@ -1446,38 +1274,6 @@ char *s;
    c_exit(EXIT_FAILURE);
    }
 
-#ifdef ConsoleWindow
-extern char *lognam;
-extern char tmplognam[];
-void closelogfile()
-{
-   if (flog) {
-      FILE *flog2;
-      int i;
-      fclose(flog);
-
-      /*
-       * write/append temporary log to the permanent logfile name
-       */
-      if ((flog = fopen(tmplognam, "r")) && (flog2 = fopen(lognam, "a"))) {
-	 while ((i = getc(flog)) != EOF)
-	    putc(i, flog2);
-	 fclose(flog);
-	 fclose(flog2);
-	 remove(tmplognam);
-         }
-
-      flog = NULL;
-      }
-   /*
-    * if it is not the ultimate default logfile name, free malloc'ed memory
-    */
-   if ((getenv("WICONLOG")!=NULL) || strcmp(lognam, "winicon.log")) {
-      free(lognam);
-      lognam = NULL;
-      }
-}
-#endif					/* ConsoleWindow */
 
 /*
  * c_exit(i) - flush all buffers and exit with status i.
@@ -1486,15 +1282,11 @@ void c_exit(i)
 int i;
 {
 
-#ifdef ConsoleWindow
-   char *msg = "Strike any key to close console...";
-#endif					/* ConsoleWindow */
 
 #if E_Exit
    if (curpstate != NULL)
       EVVal((word)i, E_Exit);
 #endif					/* E_Exit */
-#ifdef MultiThread
    if (curpstate != NULL && curpstate->parent != NULL) {
       /* might want to get to the lterm somehow, instead */
       while (0&&(struct b_coexpr*)BlkLoc(k_current) != curpstate->parent->Mainhead) {
@@ -1502,7 +1294,6 @@ int i;
 	 co_chng(curpstate->parent->Mainhead, NULL, &dummy, A_Cofail, 1);
 	 }
       }
-#endif					/* MultiThread */
 
 #ifdef TallyOpt
    {
@@ -1527,51 +1318,8 @@ int i;
       xdisp(pfp,glbl_argp,k_level,stderr);
       }
 
-#ifdef ConsoleWindow
-   /*
-    * if the console was used for anything, pause it
-    */
-   if (ConsoleBinding) {
-      char label[256], tossanswer[256];
-      struct descrip answer;
-
-      wputstr((wbp)ConsoleBinding, msg, strlen(msg));
-
-      strcpy(tossanswer, "label=");
-      strncpy(tossanswer+6, StrLoc(kywd_prog), StrLen(kywd_prog));
-      tossanswer[ 6 + StrLen(kywd_prog) ] = '\0';
-      strcat(tossanswer, " - execution terminated");
-      wattrib((wbp)ConsoleBinding, tossanswer, strlen(tossanswer),
-              &answer, tossanswer);
-      waitkey(ConsoleBinding);
-      }
-/* undo the #define exit c_exit */
-#undef exit
-#passthru #undef exit
-
-   closelogfile();
-
-#endif					/* ConsoleWindow */
-
-#if defined(MultipleRuns)
-   /*
-    * Free allocated memory so application can continue.
-    */
-   xmfree();
-#endif					/* MultipleRuns */
 
 #if MSDOS /* add others who need to free their resources here */
-#ifdef ISQL
-   /*
-    * close ODBC connections left open
-    */
-   while (isqlfiles != NULL) {
-      dbclose(isqlfiles);
-      }
-   if (ISQLEnv!=NULL) {
-      SQLFreeEnv(ISQLEnv);  /* release ODBC environment */
-      }
-#endif					/* ISQL */
    /*
     * free dynamic record types
     */
@@ -1662,11 +1410,9 @@ void datainit()
     * some compilers).					[[I?]]
     */
 
-#ifdef MultiThread
    k_errout.title = T_File;
    k_input.title = T_File;
    k_output.title = T_File;
-#endif					/* MultiThread */
 
 #ifdef MSWindows
    if (ferredir != NULL)
@@ -1676,11 +1422,6 @@ void datainit()
    k_errout.fd.fp = stderr;
    StrLen(k_errout.fname) = 7;
    StrLoc(k_errout.fname) = "&errout";
-#ifdef ConsoleWindow
-   if (!(ConsoleFlags & StdErrRedirect))
-      k_errout.status = Fs_Write | Fs_Window;
-   else
-#endif					/* Console Window */
       k_errout.status = Fs_Write;
 
 #ifdef MSWindows
@@ -1692,11 +1433,6 @@ void datainit()
       k_input.fd.fp = stdin;
    StrLen(k_input.fname) = 6;
    StrLoc(k_input.fname) = "&input";
-#ifdef ConsoleWindow
-   if (!(ConsoleFlags & StdInRedirect))
-      k_input.status = Fs_Read | Fs_Window;
-   else
-#endif					/* Console Window */
       k_input.status = Fs_Read;
 
 #ifdef MSWindows
@@ -1708,11 +1444,6 @@ void datainit()
       k_output.fd.fp = stdout;
    StrLen(k_output.fname) = 7;
    StrLoc(k_output.fname) = "&output";
-#ifdef ConsoleWindow
-   if (!(ConsoleFlags & StdOutRedirect))
-      k_output.status = Fs_Write | Fs_Window;
-   else
-#endif					/* Console Window */
       k_output.status = Fs_Write;
 
    IntVal(kywd_pos) = 1;
@@ -1739,71 +1470,21 @@ void datainit()
    StrLoc(ucase) = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
    IntVal(zerodesc) = 0;
 
-#ifdef MultiThread
    /*
     *  Initialization needed for event monitoring
     */
    BlkLoc(csetdesc) = (union block *)&fullcs;
    BlkLoc(rzerodesc) = (union block *)&realzero;
-#endif					/* MultiThread */
 
    maps2 = nulldesc;
    maps3 = nulldesc;
 
-#if !COMPILER
    qsort((char *)pntab, pnsize, sizeof(struct pstrnm),
 	 (QSortFncCast)pstrnmcmp);
 
-#ifdef MultipleRuns
-   /*
-    * Initializations required for repeated program runs
-    */
-					/* In this module:	*/
-   k_level = 0;				/* &level */
-   k_errornumber = 0;			/* &errornumber */
-   k_errortext = "";			/* &errortext */
-   currend = NULL;			/* current end of memory region */
-
-
-   mstksize = MStackSize;		/* initial size of main stack */
-   stksize = StackSize;			/* co-expression stack size */
-   ssize = MaxStrSpace;			/* initial string space size (bytes) */
-   abrsize = MaxAbrSize;		/* initial size of allocated block
-					     region (bytes) */
-   qualsize = QualLstSize;		/* size of quallist for fixed regions */
-
-   dodump = 0;				/* produce dump on error */
-
-#ifdef ExecImages
-   dumped = 0;				/* This is a dumped image. */
-#endif					/* ExecImages */
-
-					/* In module interp.r:	*/
-   pfp = 0;				/* Procedure frame pointer */
-   sp = NULL;				/* Stack pointer */
-
-
-					/* In module rmemmgt.r:	*/
-   coexp_ser = 2;
-   list_ser = 1;
-   set_ser = 1;
-   table_ser = 1;
-
-   coll_stat = 0;
-   coll_str = 0;
-   coll_blk = 0;
-   coll_tot = 0;
-
-					/* In module time.c: */
-   first_time = 1;
-
-
-#endif					/* MultipleRuns */
-#endif					/* COMPILER */
 
    }
 
-#ifdef MultiThread
 
 /*
  * Initialize a loaded program.  Unicon programs will have an
@@ -2556,4 +2237,3 @@ struct progstate *findprogramforicode(inst x)
 }
 
 
-#endif					/* MultiThread */

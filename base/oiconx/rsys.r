@@ -134,36 +134,6 @@ struct b_file *fbp;
 #endif					/* LATTICE */
 #endif					/* AMIGA */
 
-#ifdef Messaging
-   if (fbp->status & Fs_Messaging) {
-      extern int Merror;
-      struct MFile* mf = (struct MFile *)fd;
-
-      if (strcmp(mf->tp->uri.scheme, "pop") == 0) {
-	 return -1;
-	 }
-
-      if (MFIN(mf, WRITING)) {
-	 Mstartreading(mf);
-	 }
-      if (!MFIN(mf, READING)) {
-	 return -1;
-	 }
-      l = tp_readln(mf->tp, buf, maxi);
-      if (l <= 0) {
-	 tp_free(mf->tp);
-	 MFSTATE(mf, CLOSED);
-	 return -1;
-	 }
-      if (buf[l-1] == '\n') {
-	 l--;
-	 }
-      if (fbp->status & Fs_Untrans && buf[l-1] == '\r') {
-	 l--;
-	 }
-      return l;
-      }
-#endif                                  /* Messaging */
 
 #ifdef XWindows
    wflushall();
@@ -473,15 +443,6 @@ dptr d;
    s = StrLoc(*d);
 
 #ifdef MSWindows
-#ifdef ConsoleWindow
-   if ((f == stdout && !(ConsoleFlags & StdOutRedirect)) ||
-	(f == stderr && !(ConsoleFlags & StdErrRedirect))) {
-      if (ConsoleBinding == NULL)
-         ConsoleBinding = OpenConsole();
-      { int i; for(i=0;i<l;i++) Consoleputc(s[i], f); }
-      return Succeeded;
-      }
-#endif					/* ConsoleWindow */
 #endif					/* MSWindows */
 #ifdef PresentationManager
    if (ConsoleFlags & OutputToBuf) {
@@ -1117,24 +1078,6 @@ int netstatus (char *url, struct netstat *buf)
 #endif					/* Network */
 
 #if NT
-#ifdef Dbm
-/*
- * Win32 does not provide a link() function expected by GDBM.
- * Cross fingers and hope that copy-on-link semantics will work.
- */
-int link(char *s1, char *s2)
-{
-   int c;
-   FILE *f1 = fopen(s1,"rb"), *f2;
-   if (f1 == NULL) return -1;
-   f2 = fopen(s2, "wb");
-   if (f2 == NULL) { fclose(f1); return -1; }
-   while ((c = fgetc(f1)) != EOF) fputc(c, f2);
-   fclose(f1);
-   fclose(f2);
-   return 0;
-}
-#endif					/* Dbm */
 #endif					/* NT */
 
 #ifdef NTGCC

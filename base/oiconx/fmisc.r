@@ -5,9 +5,7 @@
  *  ishift, ixor, [keyword], [load], ord, name, runerr, seq, sort, sortf,
  *  type, variable
  */
-#if !COMPILER
 #include "../h/opdefs.h"
-#endif					/* !COMPILER */
 
 "args(x,i) - produce number of arguments for procedure x."
 
@@ -22,11 +20,7 @@ function{0,1} args(x,i)
    else if is:null(i) then {
       abstract { return integer }
       inline {
-#ifdef MultiThread
 	 return C_integer BlkLoc(x)->coexpr.program->Xnargs;
-#else
-	 fail;
-#endif					/* MultiThread */
 	 }
       }
    else if !cnv:integer(i) then
@@ -34,18 +28,13 @@ function{0,1} args(x,i)
    else {
       abstract { return any_value }
       inline {
-#ifdef MultiThread
 	 int c_i = IntVal(i);
 	 if ((c_i <= 0) || (c_i > BlkLoc(x)->coexpr.program->Xnargs)) fail;
 	 return BlkLoc(x)->coexpr.program->Xargp[IntVal(i)];
-#else
-	 fail;
-#endif					/* MultiThread */
 	 }
       }
 end
 
-#if !COMPILER
 #ifdef ExternalFunctions
 
 /*
@@ -90,7 +79,6 @@ function{1} callout(x[nargs])
 end
 
 #endif 					/* ExternalFunctions */
-#endif					/* !COMPILER */
 
 
 "char(i) - produce a string consisting of character i."
@@ -278,15 +266,11 @@ end
 " procedure activations, plus global variables."
 " Output to file f (default &errout)."
 
-#ifdef MultiThread
 function{1} display(i,f,c)
    declare {
       struct b_coexpr *ce = NULL;
       struct progstate *savedprog = 0;
       }
-#else					/* MultiThread */
-function{1} display(i,f)
-#endif					/* MultiThread */
 
    if !def:C_integer(i,(C_integer)k_level) then
       runerr(101, i)
@@ -299,14 +283,12 @@ function{1} display(i,f)
    else if !is:file(f) then
       runerr(105, f)
 
-#ifdef MultiThread
    if !is:null(c) then inline {
       if (!is:coexpr(c)) runerr(118,c);
       else if (BlkLoc(c) != BlkLoc(k_current))
          ce = (struct b_coexpr *)BlkLoc(c);
       savedprog = curpstate;
       }
-#endif						/* MultiThread */
 
    abstract {
       return null
@@ -341,7 +323,6 @@ function{1} display(i,f)
          (long)BlkLoc(k_current)->coexpr.id,
 	 (long)BlkLoc(k_current)->coexpr.size);
       fflush(std_f);
-#ifdef MultiThread
       if (ce) {
 	 if ((ce->es_pfp == NULL) || (ce->es_argp == NULL)) fail;
 	 ENTERPSTATE(ce->program);
@@ -349,7 +330,6 @@ function{1} display(i,f)
 	 ENTERPSTATE(savedprog);
        }
       else
-#endif						/* MultiThread */
          r = xdisp(pfp, glbl_argp, (int)i, std_f);
       if (r == Failed)
          runerr(305);
@@ -373,7 +353,6 @@ function{1} errorclear()
       }
 end
 
-#if !COMPILER
 
 "function() - generate the names of the functions."
 
@@ -390,7 +369,6 @@ function{*} function()
       fail;
       }
 end
-#endif					/* !COMPILER */
 
 
 /*
@@ -565,14 +543,10 @@ end
 
 "name(v) - return the name of a variable."
 
-#ifdef MultiThread
 function{1} name(underef v, c)
    declare {
       struct progstate *prog, *savedprog;
       }
-#else						/* MultiThread */
-function{1} name(underef v)
-#endif						/* MultiThread */
    /*
     * v must be a variable
     */
@@ -588,7 +562,6 @@ function{1} name(underef v)
       if (!debug_info)
          runerr(402);
 
-#ifdef MultiThread
       savedprog = curpstate;
       if (is:null(c)) {
          prog = curpstate;
@@ -601,12 +574,9 @@ function{1} name(underef v)
          }
 
       ENTERPSTATE(prog);
-#endif						/* MultiThread */
       i = get_name(&v, &result);		/* return val ? #%#% */
 
-#ifdef MultiThread
       ENTERPSTATE(savedprog);
-#endif						/* MultiThread */
 
       if (i == Error)
          runerr(0);
@@ -673,7 +643,6 @@ function{1,*} seq(from, by)
          }
       while (from >= seq_lb && from <= seq_ub);
 
-#if !COMPILER
       {
       /*
        * Suspending wipes out some things needed by the trace back code to
@@ -685,7 +654,6 @@ function{1,*} seq(from, by)
       r_args[0].dword = D_Proc;
       r_args[0].vword.bptr = (union block *)&Bseq;
       }
-#endif					/* COMPILER */
 
       runerr(203);
       }
@@ -1306,12 +1274,10 @@ function{1} type(x)
       coexpr:   inline { return C_string "co-expression"; }
       default:
          inline {
-#if !COMPILER
             if (!Qual(x) && (Type(x)==T_External)) {
                return C_string "external";
                }
             else
-#endif					/* !COMPILER */
                runerr(123,x);
 	    }
       }
@@ -1340,19 +1306,13 @@ end
 "variable(s) - find the variable with name s and return a"
 " variable descriptor which points to its value."
 
-#ifdef MultiThread
 function{0,1} variable(s,c,i)
-#else					/* MultiThread */
-function{0,1} variable(s)
-#endif					/* MultiThread */
 
    if !cnv:C_string(s) then
       runerr(103, s)
 
-#ifdef MultiThread
    if !def:C_integer(i,0) then
       runerr(101,i)
-#endif					/* MultiThread */
 
    abstract {
       return variable
@@ -1361,7 +1321,6 @@ function{0,1} variable(s)
    body {
       register int rv;
 
-#ifdef MultiThread
       struct progstate *prog, *savedprog;
       struct pf_marker *tmp_pfp = pfp;
       dptr tmp_argp = glbl_argp;
@@ -1394,11 +1353,9 @@ function{0,1} variable(s)
       if (pfp)
       glbl_argp = &((dptr)pfp)[-(pfp->pf_nargs) - 1];
       else glbl_argp = NULL;
-#endif						/* MultiThread */
 
       rv = getvar(s, &result);
    
-#ifdef MultiThread
       if (is:coexpr(c)) {
 	 ENTERPSTATE(savedprog);
 	 pfp = tmp_pfp;
@@ -1408,7 +1365,6 @@ function{0,1} variable(s)
 	    Deref(result);
 	    }
 	 }
-#endif						/* MultiThread */
 
       if (rv != Failed)
          return result;
@@ -1417,7 +1373,6 @@ function{0,1} variable(s)
       }
 end
 
-#ifdef MultiThread
 
 "cofail(CE) - transmit a co-expression failure to CE"
 
@@ -1427,16 +1382,12 @@ function{0,1} cofail(CE)
       }
    if is:null(CE) then
       body {
-#ifdef Coexpr
 	 struct b_coexpr *ce = topact((struct b_coexpr *)BlkLoc(k_current));
 	 if (ce != NULL) {
 	    CE.dword = D_Coexpr;
 	    BlkLoc(CE) = (union block *)ce;
 	    }
 	 else runerr(118,CE);
-#else					/* Coexpr */
-	runerr(118, CE);
-#endif					/* Coexpr */
 	 }
    else if !is:coexpr(CE) then
       runerr(118,CE)
@@ -1494,7 +1445,6 @@ function{*} localnames(ce,i)
    if !def:C_integer(i,0) then
       runerr(101,i)
    body {
-#if !COMPILER
       int j;
       dptr arg;
       struct b_proc *cproc;
@@ -1521,7 +1471,6 @@ function{*} localnames(ce,i)
 	 result = cproc->lnames[j + cproc->nparam];
 	 suspend result;
          }
-#endif					/* !COMPILER */
       fail;
       }
 end
@@ -1559,7 +1508,6 @@ function{*} staticnames(ce,i)
    if !def:C_integer(i,0) then
       runerr(101,i)
    body {
-#if !COMPILER
       int j;
       dptr arg;
       struct b_proc *cproc;
@@ -1585,7 +1533,6 @@ function{*} staticnames(ce,i)
 	 result = cproc->lnames[j + cproc->nparam + cproc->ndynam];
 	 suspend result;
          }
-#endif					/* !COMPILER */
       fail;
       }
 end
@@ -1622,7 +1569,6 @@ function{1,*} paramnames(ce,i)
    if !def:C_integer(i,0) then
       runerr(101,i)
    body {
-#if !COMPILER
       int j;
       dptr arg;
       struct b_proc *cproc;
@@ -1649,7 +1595,6 @@ function{1,*} paramnames(ce,i)
 	 result = cproc->lnames[j];
 	 suspend result;
          }
-#endif					/* !COMPILER */
       fail;
       }
 end
@@ -1849,7 +1794,6 @@ function{1} parent(ce)
       }
 end
 
-#ifdef MultiThread
 
 "eventmask(ce,cs) - given a ce, get or set that program's event mask"
 
@@ -1883,36 +1827,25 @@ function{1} eventmask(ce,cs,vmask)
          }
       }
 end
-#endif					/* MultiThread */
 
 
 
 "globalnames(ce) - produce the names of identifiers global to ce"
 
 function{*} globalnames(ce)
-#ifdef MultiThread
    declare {
       struct progstate *ps;
       }
-#endif					/* MultiThread */
    abstract {
       return string
       }
-#ifdef MultiThread
    if is:null(ce) then inline { ps = curpstate; }
    else if is:coexpr(ce) then
       inline { ps = BlkLoc(ce)->coexpr.program; }
    else runerr(118,ce)
-#else					/* MultiThread */
-   if not (is:null(ce) || is:coexpr(ce)) runerr(118, ce)
-#endif					/* MultiThread */
    body {
       struct descrip *dp;
-#ifdef MultiThread
       for (dp = ps->Gnames; dp != ps->Egnames; dp++) {
-#else					/* MultiThread */
-      for (dp = gnames; dp != egnames; dp++) {
-#endif					/* MultiThread */
          suspend *dp;
          }
       fail;
@@ -2052,11 +1985,7 @@ function{*} keyword(keyname,ce)
 	 return C_integer allRegions;
 	 }
       else if (strcmp(kname,"source") == 0) {
-#ifdef Coexpr
 	 return coexpr(topact((struct b_coexpr *)BlkLoc(BlkLoc(d)->coexpr.program->K_current)));
-#else					/* Coexpr */
-	fail;
-#endif					/* Coexpr */
 /*
 	 if (BlkLoc(d)->coexpr.es_actstk)
 	    return coexpr(topact((struct b_coexpr *)BlkLoc(d)));
@@ -2136,7 +2065,6 @@ function{*} keyword(keyname,ce)
       runerr(205, keyname);
       }
 end
-#ifdef MultiThread
 
 "opmask(ce,cs) - get or set ce's program's opcode mask"
 
@@ -2163,7 +2091,6 @@ function{1} opmask(ce,cs)
          }
       }
 end
-#endif					/* MultiThread */
 
 
 "structure(x) -- generate all structures allocated in program x"
@@ -2183,11 +2110,7 @@ function {*} structure(x)
       word type;
       struct region *theregion, *rp;
 
-#ifdef MultiThread
       theregion = ((struct b_coexpr *)BlkLoc(x))->program->blockregion;
-#else
-      theregion = curblock;
-#endif
       for(rp = theregion; rp; rp = rp->next) {
 	 bp = rp->base;
 	 free = rp->free;
@@ -2229,7 +2152,6 @@ function {*} structure(x)
 end
 
 
-#endif					/* MultiThread */
 
 "cast(o,c) - cast object o to class c."
 

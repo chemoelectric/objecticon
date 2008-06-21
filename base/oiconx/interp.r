@@ -1,4 +1,3 @@
-#if !COMPILER
 /*
  * File: interp.r
  *  The interpreter proper.
@@ -40,9 +39,6 @@ extern int chkbreak;
  * End of operating-system specific code.
  */
 
-#ifndef MultiThread
-word lastop;			/* Last operator evaluated */
-#endif					/* MultiThread */
 
 /*
  * Istate variables.
@@ -63,17 +59,10 @@ extern unsigned long oldtick;	/* previous sum of the two longs */
 
 
 int ilevel;			/* Depth of recursion in interp() */
-#ifndef MultiThread
-struct descrip value_tmp;	/* list argument to Op_Apply */
-#endif					/* MultiThread */
 struct descrip eret_tmp;	/* eret value during unwinding */
 
 int coexp_act;			/* last co-expression action */
 
-#ifndef MultiThread
-dptr xargp;
-word xnargs;
-#endif					/* MultiThread */
 
 /*
  * Macros for use inside the main loop of the interpreter.
@@ -87,13 +76,11 @@ word xnargs;
  * Setup_Op sets things up for a call to the C function for an operator.
  */
 #begdef Setup_Op(nargs,e)
-#ifdef MultiThread
    lastev = E_Operator;
    value_tmp.dword = D_Proc;
    value_tmp.vword.bptr = (union block *)&op_tbl[lastop - 1];
    lastdesc = value_tmp;
    InterpEVValD(&value_tmp, e);
-#endif					/* MultiThread */
    rargp = (dptr)(rsp - 1) - nargs;
    xargp = rargp;
    ExInterp;
@@ -105,9 +92,7 @@ word xnargs;
  *  operators.
  */
 #begdef Setup_Arg(nargs)
-#ifdef MultiThread
    lastev = E_Misc;
-#endif					/* MultiThread */
    rargp = (dptr)(rsp - 1) - nargs;
    xargp = rargp;
    ExInterp;
@@ -119,11 +104,7 @@ word xnargs;
      goto efail_noev;
    }
    rsp = (word *) rargp + 1;
-#ifdef MultiThread
    goto return_term;
-#else					/* MultiThread */
-   break;
-#endif					/* MultiThread */
 #enddef					/* Call_Cond */
 
 /*
@@ -207,9 +188,7 @@ Deliberate Syntax Error
  * End of operating-system specific code.
  */
 
-#ifdef MultiThread
 static struct descrip unwinder;
-#endif					/* MultiThread */
 
 #begdef interp_macro(interp_x,e_intcall,e_stack,e_fsusp,e_osusp,e_bsusp,e_ocall,e_ofail,e_tick,e_line,e_loc,e_opcode,e_fcall,e_prem,e_erem,e_intret,e_psusp,e_ssusp,e_pret,e_efail,e_sresum,e_fresum,e_oresum,e_eresum,e_presum,e_pfail,e_ffail,e_frem,e_orem,e_fret,e_oret,e_literal)
 
@@ -230,10 +209,8 @@ int interp_x(int fsig,dptr cargp)
    extern int (*optab[])();
    extern int (*keytab[])();
    struct b_proc *bproc;
-#ifdef MultiThread
    int lastev = E_Misc;
    struct descrip lastdesc = nulldesc;
-#endif					/* MultiThread */
 
 #ifdef TallyOpt
    extern word tallybin[];
@@ -242,15 +219,6 @@ int interp_x(int fsig,dptr cargp)
    EVVal(fsig, e_intcall);
    EVVal(DiffPtrs(sp, stack), e_stack);
 
-#ifndef MultiThread
-   /*
-    * Make a stab at catching interpreter stack overflow.  This does
-    * nothing for invocation in a co-expression other than &main.
-    */
-   if (BlkLoc(k_current) == BlkLoc(k_main) &&
-      ((char *)sp + PerilDelta) > (char *)stackend) 
-         fatalerr(301, NULL);
-#else
 
    /* RPP If we're in a coexpression we can estimate the space between the C stack pointer
     * and the Icon stack pointer (sp).  If they get too close, we're in trouble.
@@ -262,7 +230,6 @@ int interp_x(int fsig,dptr cargp)
               fatalerr(308, NULL);
       }
    }
-#endif					/* MultiThread */
 
 #ifdef Polling
    if (!pollctr--) {
@@ -802,17 +769,6 @@ fflush(stdout);
                   bp = BlkLoc(value_tmp);
                   args = (int)bp->list.size;
 
-#ifndef MultiThread
-                 /*
-                  * Make a stab at catching interpreter stack overflow.
-                  * This does nothing for invocation in a co-expression other
-                  * than &main.
-                  */
-                 if (BlkLoc(k_current) == BlkLoc(k_main) &&
-                    ((char *)sp + args * sizeof(struct descrip) >
-                       (char *)stackend))
-                          fatalerr(301, NULL);
-#endif					/* MultiThread */
 
                   for (bp = bp->list.listhead;
 		       BlkType(bp) == T_Lelem;
@@ -877,11 +833,9 @@ invokej:
 	          }	       
 #endif					/* Polling */
 
-#ifdef MultiThread
 	       lastev = E_Function;
 	       lastdesc = *rargp;
 	       InterpEVValD(rargp, e_fcall);
-#endif					/* MultiThread */
 
 	       bproc = (struct b_proc *)BlkLoc(*rargp);
 
@@ -942,7 +896,6 @@ invokej:
 	 case Op_Llist: 	/* construct list */
 	    opnd = GetWord;
 
-#ifdef MultiThread
             value_tmp.dword = D_Proc;
             value_tmp.vword.bptr = (union block *)&mt_llist;
             lastev = E_Operator;
@@ -951,9 +904,6 @@ invokej:
             rargp = (dptr)(rsp - 1) - opnd;
             xargp = rargp;
             ExInterp;
-#else					/* MultiThread */
-	    Setup_Arg(opnd);
-#endif					/* MultiThread */
 
 	    {
 	    int i;
@@ -1246,9 +1196,7 @@ Lsusp_uw:
 	    efp = pfp->pf_efp;
 	    ipc = pfp->pf_ipc;
 	    glbl_argp = pfp->pf_argp;
-#ifdef MultiThread
             CHANGEPROGSTATE(pfp->pf_from);
-#endif
 	    pfp = pfp->pf_pfp;
 
 	    break;
@@ -1287,9 +1235,7 @@ Eret_uw:
 
 
 	 case Op_Pret: {	/* return from procedure */
-#ifdef MultiThread
 	   struct descrip oldargp;
-#endif					/* MultiThread */
 
 	    /*
 	     * An Icon procedure is returning a value.	Determine if the
@@ -1301,9 +1247,7 @@ Eret_uw:
 	     */
 	    struct b_proc *rproc;
 	    rproc = (struct b_proc *)BlkLoc(*glbl_argp);
-#ifdef MultiThread
             oldargp = *glbl_argp;
-#endif					/* MultiThread */
 #if e_prem || e_erem
 	    ExInterp;
             vanq_proc(efp, gfp);
@@ -1330,32 +1274,24 @@ Pret_uw:
 
                EVVal(A_Pret_uw, e_intret);
                EVVal(DiffPtrs(sp, stack), e_stack);
-#ifdef MultiThread
 	       unwinder = oldargp;
-#endif					/* MultiThread */
 	       return A_Pret_uw;
 	       }
 	   
-#ifdef MultiThread
 	   if (!is:proc(oldargp) && is:proc(unwinder))
 	      oldargp = unwinder;
-#endif					/* MultiThread */
 	    rsp = (word *)glbl_argp + 1;
 	    efp = pfp->pf_efp;
 	    gfp = pfp->pf_gfp;
 	    ipc = pfp->pf_ipc;
 	    glbl_argp = pfp->pf_argp;
-#ifdef MultiThread
             CHANGEPROGSTATE(pfp->pf_from);
-#endif
 	    pfp = pfp->pf_pfp;
-#ifdef MultiThread
 #if e_pret
             value_tmp = *(dptr)(rsp - 1);	/* argument */
             Deref(value_tmp);
             InterpEVValD(&value_tmp, E_Pret);
 #endif					/* E_Pret */
-#endif					/* MultiThread */
 
 	    break;
 	    }
@@ -1381,11 +1317,9 @@ efail_noev:
 		*  structures that fail when complete.
 		*/
 
-#ifdef MultiThread
 	      if (efp == 0) {
 		 break;
 	         }
-#endif					/* MultiThread */
 
 	       ipc = efp->ef_failure;
 	       gfp = efp->ef_gfp;
@@ -1439,9 +1373,7 @@ efail_noev:
 		     InterpEVValD(&k_subject, e_sresum);
 		     }
 
-#ifdef MultiThread
                   CHANGEPROGSTATE(pfp->pf_to);
-#endif					/* MultiThread */
 
 		  ++k_level;		/* adjust procedure level */
 		  }
@@ -1519,9 +1451,7 @@ Pfail_uw:
 	    gfp = pfp->pf_gfp;
 	    ipc = pfp->pf_ipc;
 	    glbl_argp = pfp->pf_argp;
-#ifdef MultiThread
             CHANGEPROGSTATE(pfp->pf_from);
-#endif					/* MultiThread */
 	    pfp = pfp->pf_pfp;
 
 	    goto efail_noev;
@@ -1671,7 +1601,6 @@ EntInterp;
 
 	 case Op_Create:	/* create */
 
-#ifdef Coexpr
 	    PushNull;
 	    Setup_Arg(0);
 	    opnd = GetWord;
@@ -1680,17 +1609,9 @@ EntInterp;
 	    signal = Ocreate((word *)opnd, rargp);
 
 	    goto C_rtn_term;
-#else					/* Coexpr */
-	    err_msg(401, NULL);
-	    goto efail;
-#endif					/* Coexpr */
 
 	 case Op_Coact: {	/* @e */
 
-#ifndef Coexpr
-            err_msg(401, NULL);
-            goto efail;
-#else                                        /* Coexpr */
             struct b_coexpr *ncp;
             dptr dp;
 
@@ -1712,15 +1633,11 @@ EntInterp;
                goto efail_noev;
             else
                rsp -= 2;
-#endif					/* Coexpr */
             break;
 	    }
 
 	 case Op_Coret: {	/* return from co-expression */
 
-#ifndef Coexpr
-            syserr("co-expression return, but co-expressions not implemented");
-#else                                        /* Coexpr */
             struct b_coexpr *ncp;
 
             ExInterp;
@@ -1729,16 +1646,12 @@ EntInterp;
             ++BlkLoc(k_current)->coexpr.size;
             co_chng(ncp, (dptr)&sp[-1], NULL, A_Coret, 1);
             EntInterp;
-#endif					/* Coexpr */
             break;
 
 	    }
 
 	 case Op_Cofail: {	/* fail from co-expression */
 
-#ifndef Coexpr
-            syserr("co-expression failure, but co-expressions not implemented");
-#else                                        /* Coexpr */
             struct b_coexpr *ncp;
 
             ExInterp;
@@ -1746,7 +1659,6 @@ EntInterp;
 
             co_chng(ncp, NULL, NULL, A_Cofail, 1);
             EntInterp;
-#endif					/* Coexpr */
             break;
 
 	    }
@@ -1772,7 +1684,6 @@ C_rtn_term:
 	 switch (signal) {
 
 	    case A_Resume:
-#ifdef MultiThread
 	    if (lastev == E_Function) {
 	       InterpEVValD(&lastdesc, e_ffail);
 	       lastev = E_Misc;
@@ -1781,11 +1692,9 @@ C_rtn_term:
 	       InterpEVValD(&lastdesc, e_ofail);
 	       lastev = E_Misc;
 	       }
-#endif					/* MultiThread */
 	       goto efail_noev;
 
 	    case A_Unmark_uw:		/* unwind for unmark */
-#ifdef MultiThread
 	       if (lastev == E_Function) {
 		  InterpEVValD(&lastdesc, e_frem);
 		  lastev = E_Misc;
@@ -1794,11 +1703,9 @@ C_rtn_term:
 		  InterpEVValD(&lastdesc, e_orem);
 		  lastev = E_Misc;
 		  }
-#endif					/* MultiThread */
 	       goto Unmark_uw;
 
 	    case A_Lsusp_uw:		/* unwind for lsusp */
-#ifdef MultiThread
 	       if (lastev == E_Function) {
 		  InterpEVValD(&lastdesc, e_frem);
 		  lastev = E_Misc;
@@ -1807,11 +1714,9 @@ C_rtn_term:
 		  InterpEVValD(&lastdesc, e_orem);
 		  lastev = E_Misc;
 		  }
-#endif					/* MultiThread */
 	       goto Lsusp_uw;
 
 	    case A_Eret_uw:		/* unwind for eret */
-#ifdef MultiThread
 	       if (lastev == E_Function) {
 		  InterpEVValD(&lastdesc, e_frem);
 		  lastev = E_Misc;
@@ -1820,11 +1725,9 @@ C_rtn_term:
 		  InterpEVValD(&lastdesc, e_orem);
 		  lastev = E_Misc;
 		  }
-#endif					/* MultiThread */
 	       goto Eret_uw;
 
 	    case A_Pret_uw:		/* unwind for pret */
-#ifdef MultiThread
 	       if (lastev == E_Function) {
 		  InterpEVVal(&lastdesc, e_frem);
 		  lastev = E_Misc;
@@ -1833,11 +1736,9 @@ C_rtn_term:
 		  InterpEVVal(&lastdesc, e_orem);
 		  lastev = E_Misc;
 		  }
-#endif					/* MultiThread */
 	       goto Pret_uw;
 
 	    case A_Pfail_uw:		/* unwind for pfail */
-#ifdef MultiThread
 	       if (lastev == E_Function) {
 		  InterpEVValD(&lastdesc, e_frem);
 		  lastev = E_Misc;
@@ -1846,13 +1747,11 @@ C_rtn_term:
 		  InterpEVValD(&lastdesc, e_orem);
 		  lastev = E_Misc;
 		  }
-#endif					/* MultiThread */
 	       goto Pfail_uw;
 	    }
 
 	 rsp = (word *)rargp + 1;	/* set rsp to result */
 
-#ifdef MultiThread
 return_term:
          if (lastev == E_Function) {
 #if e_fret
@@ -1870,7 +1769,6 @@ return_term:
 #endif					/* E_Oret */
 	    lastev = E_Misc;
 	    }
-#endif					/* MultiThread */
 
 	 continue;
 	 }
@@ -1885,12 +1783,8 @@ interp_quit:
    }
 #enddef
 
-#ifdef MultiThread
 interp_macro(interp_0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 interp_macro(interp_1,E_Intcall,E_Stack,E_Fsusp,E_Osusp,E_Bsusp,E_Ocall,E_Ofail,E_Tick,E_Line,E_Loc,E_Opcode,E_Fcall,E_Prem,E_Erem,E_Intret,E_Psusp,E_Ssusp,E_Pret,E_Efail,E_Sresum,E_Fresum,E_Oresum,E_Eresum,E_Presum,E_Pfail,E_Ffail,E_Frem,E_Orem,E_Fret,E_Oret,E_Literal)
-#else					/* MultiThread */
-interp_macro(interp,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-#endif					/* MultiThread */
 
 
 #ifdef StackPic
@@ -2043,7 +1937,6 @@ struct gf_marker *gfp_v;
    }
 #endif					/* E_Prem || E_Erem */
 
-#ifdef MultiThread
 /*
  * activate some other co-expression from an arbitrary point in
  * the interpreter.
@@ -2158,5 +2051,3 @@ void changeprogstate(struct progstate *p)
     BlkLoc(k_current)->coexpr.program = curpstate;
 }
 
-#endif					/* MultiThread */
-#endif					/* !COMPILER */

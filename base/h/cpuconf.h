@@ -262,11 +262,7 @@
 #endif					/* QualLstSize */
 
 #ifndef ActStkBlkEnts
-   #ifdef Coexpr
       #define ActStkBlkEnts   25	/* number of entries in an astkblk */
-   #else				/* Coexpr */
-      #define ActStkBlkEnts    1	/* number of entries in an astkblk */
-   #endif				/* Coexpr */
 #endif					/* ActStkBlkEnts */
 
 #ifndef RegionCushion
@@ -281,11 +277,7 @@
  * Minimum regions sizes (presently not used).
  */
 #ifndef MinStatSize
-   #ifdef Coexpr
       #define MinStatSize	10240	/* size of the static region in bytes*/
-   #else				/* Coexpr */
-      #define MinStatSize	 1024	/* size of static region in bytes */
-   #endif				/* Coexpr */
 #endif					/* MinStatSize */
 
 #ifndef MinStrSpace

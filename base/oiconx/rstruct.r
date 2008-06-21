@@ -95,12 +95,8 @@ int f(dptr dp1, dptr dp2, word i, word j)
    }
 #enddef
 
-#ifdef MultiThread
 cplist_macro(cplist_0, 0)
 cplist_macro(cplist_1, E_Lcreate)
-#else					/* MultiThread */
-cplist_macro(cplist, 0)
-#endif					/* MultiThread */
 
 
 #begdef cpset_macro(f, e)
@@ -115,12 +111,8 @@ int f(dptr dp1, dptr dp2, word n)
    }
 #enddef
 
-#ifdef MultiThread
 cpset_macro(cpset_0, 0)
 cpset_macro(cpset_1, E_Screate)
-#else					/* MultiThread */
-cpset_macro(cpset, 0)
-#endif					/* MultiThread */
 
 #begdef cptable_macro(f, e)
 int f(dptr dp1, dptr dp2, word n)
@@ -132,12 +124,8 @@ int f(dptr dp1, dptr dp2, word n)
    }
 #enddef
 
-#ifdef MultiThread
 cptable_macro(cptable_0, 0)
 cptable_macro(cptable_1, E_Tcreate)
-#else					/* MultiThread */
-cptable_macro(cptable, 0)
-#endif					/* MultiThread */
 
 int cphash(dp1, dp2, n, tcode)
 dptr dp1, dp2;
@@ -567,9 +555,6 @@ struct b_proc *dynrecord(dptr s, dptr fields, int n)
       struct b_proc_list *bpelem = NULL;
       struct b_proc *bp = NULL;
       int i, ct=0;
-#if COMPILER
-      return NULL;
-#else
       if (n > longest_dr) {
 	 if (longest_dr==0) {
             dr_arrays = calloc(n, sizeof (struct b_proc *));
@@ -628,10 +613,8 @@ struct b_proc *dynrecord(dptr s, dptr fields, int n)
       bpelem->next = dr_arrays[n-1];
       dr_arrays[n-1] = bpelem;
       return bp;
-#endif
    }
 
-#ifdef MultiThread
 
 int invaluemask(struct progstate *p, int evcode, struct descrip *val)
    {
@@ -654,4 +637,3 @@ int invaluemask(struct progstate *p, int evcode, struct descrip *val)
       return 1;
       }
    }
-#endif					/* MultiThread */

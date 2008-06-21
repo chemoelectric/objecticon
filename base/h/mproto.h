@@ -52,12 +52,6 @@ char*   intern_using    (struct str_buf *sbuf, char *s);
 char *  join_strs(struct str_buf *sbuf, int n, ...);
 
 
-#ifdef ConsoleWindow
-   int Consolefprintf(FILE *file, const char *format, ...);
-   int Consoleprintf(const char *format, ...);
-   int Consoleputc(int c, FILE *file);
-   int Consolefflush(FILE *file);
-#endif					/* ConsoleWindow */
 
 #ifndef SysOpt
    int	getopt		(int argc, char * const argv[], const char *optstring);
