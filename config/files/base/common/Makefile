@@ -20,6 +20,3 @@ literals.o: ../h/esctab.h
 
 xwindow.o: ../h/graphics.h ../h/xwin.h
 
-rswitch.o: rswitch.s
-	$(CC) -c rswitch.[cs]
-
