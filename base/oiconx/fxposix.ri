@@ -1026,7 +1026,7 @@ function{0,1} fork()
 	 IntVal(amperErrno) = errno;
 	 fail;
 	 }
-#ifdef GRAPHICS
+#ifdef Graphics
       /* A child process can't interact with the graphics system */
       if (pid == 0)
         wdsplys = 0;
