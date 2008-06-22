@@ -609,8 +609,8 @@ int main(int argc, char **argv)
     if (!link_files)
         usage();				/* error -- no files named */
 
-    ipath = libpath(argv[0], IPATH);	/* set library search paths */
-    lpath = libpath(argv[0], LPATH);
+    ipath = getenv(IPATH);	/* set library search paths */
+    lpath = getenv(LPATH);
 
     /*
      * Translate .icn files to make .u files.
@@ -1335,7 +1335,7 @@ static int ldbg(int argc, char **argv)
         exit(1);
     }
 
-    lpath = libpath("oicont", LPATH);
+    lpath = getenv(LPATH);
     tmalloc();			/* allocate memory for translation */
 
     if (!ppinit(argv[1],lpath,0))

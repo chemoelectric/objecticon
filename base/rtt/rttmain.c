@@ -73,10 +73,8 @@ char *rt_path = "rt.h";
 #endif                                  /* VMS || VM */
 
 #if UNIX
-/*char *grttin_path = "../base/h/grttin.h";
-  char *rt_path = "../base/h/rt.h"; */
-char grttin_path[256];
-char rt_path[256];
+char *grttin_path = "../base/h/grttin.h";
+char *rt_path = "../base/h/rt.h";
 #endif					/* UNIX */
 
 /*
@@ -103,13 +101,11 @@ static char *options =
  */
 
 char *progname = "rtt";
-char *compiler_def;
 FILE *out_file;
 char *inclname;
 int def_fnd;
 char *largeints = NULL;
 
-int iconx_flg = 0;
 int enable_out = 0;
 
 static char *curlst_nm = "rttcur.lst";
@@ -250,19 +246,6 @@ char **argv;
    char buf[MaxFileName];		/* file name construction buffer */
    struct fileparts *fp;
 
-#ifdef UNIX
-   char *dir = getenv("RTT_SRC");
-   if (dir) {
-       strcpy(grttin_path, dir);
-       strcat(grttin_path, "/h/grttin.h");
-       strcpy(rt_path, dir);
-       strcat(rt_path, "/h/rt.h");
-    }
-    else {
-       strcpy(grttin_path, "../base/h/grttin.h");
-       strcpy(rt_path, "../base/h/rt.h");
-    }
-#endif
    /*
     * See if the location of include files has been patched into the
     *  rtt executable.
@@ -325,9 +308,6 @@ char **argv;
          case 't':  /* -t ident : treat ident as a typedef name */
             add_tdef(optarg);
             break;
-         case 'x':  /* produce code for interpreter rather than compiler */
-            iconx_flg = 1;
-            break;
          case 'D':  /* define preprocessor symbol */
          case 'I':  /* path to search for preprocessor includes */
          case 'U':  /* undefine preprocessor symbol */
@@ -343,30 +323,17 @@ char **argv;
             show_usage();
          }
 
-#if MACINTOSH
-   iconx_flg = 1;     /* Produce interpreter code */
-#endif					/* MACINTOSH */
-
-#ifdef Rttx
-   if (!iconx_flg) {
-      fprintf(stdout,
-         "rtt was compiled to only support the intepreter, use -x\n");
-      exit(EXIT_FAILURE);
-      }
-#endif					/* Rttx */
-
-   if (iconx_flg)
-      compiler_def = "#define COMPILER 0\n";
-   else
-      compiler_def = "#define COMPILER 1\n";
    in_header = (char *)alloc((unsigned)strlen(refpath) +
       (unsigned)strlen(grttin_path) + 1);
    strcpy(in_header, refpath);
    strcat(in_header, grttin_path);
+   normalize(in_header);
+
    inclname = (char *)alloc((unsigned)strlen(refpath) +
       (unsigned)strlen(rt_path) + 1);
    strcpy(inclname, refpath);
    strcat(inclname, rt_path);
+   normalize(inclname);
 
    opt_lst[nopts] = '\0';
 
@@ -375,17 +342,6 @@ char **argv;
     */
    if (optind == argc)
      show_usage();
-
-   /*
-    * When creating the compiler run-time system, rtt outputs a list
-    *  of names of C files created, because most of the file names are
-    *  not derived from the names of the input files.
-    */
-   if (!iconx_flg) {
-      curlst = fopen(curlst_nm, "w");
-      if (curlst == NULL)
-         err2("cannot open ", curlst_nm);
-      }
 
    /*
     * Unless the input is only being preprocessed, set up the in-memory data
@@ -428,21 +384,6 @@ char **argv;
       optind++;
       }
 
-#ifndef Rttx
-   /*
-    * Unless the user just requested the preprocessor be run, we
-    *   have created C files and updated the in-memory data base.
-    *   If this is the compiler's run-time system, we must dump
-    *   to data base to a file and create a list of all output files
-    *   produced in all runs of rtt that created the data base.
-    */
-   if (!(pp_only || iconx_flg)) {
-      if (fclose(curlst) != 0)
-         err2("cannot close ", curlst_nm);
-      dumpdb(dbname);
-      full_lst("rttfull.lst");
-      }
-#endif					/* Rttx */
 
    return EXIT_SUCCESS;
    }
@@ -471,7 +412,7 @@ char *src_file;
     */
    enable_out = 0;
    init_preproc(in_header, opt_lst, opt_args);
-   str_src("<rtt initialization>", compiler_def, (int)strlen(compiler_def));
+   /*str_src("<rtt initialization>", compiler_def, (int)strlen(compiler_def)); */
    init_sym();
    for (td = tdefnm_lst; td != NULL; td = td->next)
       sym_add(TypeDefName, td->name, OtherDcl, 1);
@@ -513,30 +454,13 @@ char *src_file;
          err2("unknown file suffix ", cur_src);
       cur_src = spec_str(cur_src);
 
-      /*
-       * For the compiler, remove from the data base the list of
-       *  files produced from this input file.
-       */
-      if (!iconx_flg)
-         clr_dpnd(cur_src);
       source(cur_src);  /* tell preprocessor to read source file */
       /*
        * For the interpreter prepend "x" to the file name for the .c file.
        */
 
-#if MVS
-      if (*fp->member != '\0') {
-         char buf2[MaxFileName];
-         sprintf(buf2, "%s%s%s(%s%s", fp->dir, fp->name, fp->ext,
-                 iconx_flg? "x": "", fp->member);
-         makename(buf, TargetDir, buf2, CSuffix);
-         }
-         else
-#endif                                  /* MVS */
-
       buf_ptr = buf;
-      if (iconx_flg)
-         *buf_ptr++ = 'x';
+      *buf_ptr++ = 'x';
       makename(buf_ptr, TargetDir, cur_src, CSuffix);
       cname = salloc(buf);
       }
@@ -566,13 +490,6 @@ char *src_file;
 	 else	/* can't close it again if we remove it to due an error */
             markrmlst(out_file);
          }
-
-      /*
-       * For the Compiler, note the name of the "primary" output file
-       *  in the data base and list of created files.
-       */
-      if (!iconx_flg)
-         put_c_fl(cname, def_fnd);
       }
    }
 

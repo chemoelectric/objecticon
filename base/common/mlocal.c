@@ -24,7 +24,6 @@
 static char *findexe(char *name, char *buf, size_t len);
 char *findonpath(char *name, char *buf, size_t len);
 static char *followsym(char *name, char *buf, size_t len);
-static char *canonize(char *path);
 
 /*
  *  relfile(prog, mod) -- find related file.
@@ -33,7 +32,7 @@ static char *canonize(char *path);
  *  and assuming that it was set by the shell or other equally correct
  *  invoker, relfile finds the location of a related file and returns
  *  it in an allocated string.  It takes the location of prog, appends
- *  mod, and canonizes the result; thus if argv[0] is icont or its path,
+ *  mod, and normalizes the result; thus if argv[0] is icont or its path,
  *  relfile(argv[0],"/../iconx") finds the location of iconx.
  */
 char *relfile(char *prog, char *mod) {
@@ -52,7 +51,7 @@ char *relfile(char *prog, char *mod) {
    strcpy(buf, baseloc);		/* start with base location */
    strcat(buf, mod);			/* append adjustment */
 
-   canonize(buf);			/* canonize result */
+   normalize(buf);			/* normalize result */
 
    if ((mod[strlen(mod)-1] == '/')	/* if trailing slash wanted */
 #if MSDOS
@@ -106,7 +105,7 @@ static char *findexe(char *name, char *buf, size_t len) {
       *s = '/';
       memcpy(s + 1, buf + len - n, n);
       }
-   canonize(buf);
+   normalize(buf);
    return buf;
    }
 
@@ -200,7 +199,7 @@ static char *followsym(char *name, char *buf, size_t len) {
          else
             return NULL;
          }
-      canonize(buf);
+      normalize(buf);
       }
 
    if (i > 0 && i < MAX_FOLLOWED_LINKS)
@@ -211,7 +210,7 @@ static char *followsym(char *name, char *buf, size_t len) {
    }
 
 /*
- *  canonize(path) -- put file path in canonical form.
+ *  normalize(path) -- put file path in canonical form.
  *
  *  Rewrites path in place, and returns it, after excising fragments of
  *  "." or "dir/..".  All leading slashes are preserved but other extra
@@ -224,7 +223,7 @@ static char *followsym(char *name, char *buf, size_t len) {
  *  of the directory containing "foo".
  */
 
-static char *canonize(char *path) {
+char *normalize(char *path) {
    int len = 0;
    char *root = path, *end = path + strlen(path),
         *in = NULL, *out = NULL, *prev = NULL;
@@ -310,36 +309,6 @@ void quotestrcat(char *buf, char *s)
    strcat(buf, s);
    if (strchr(s, ' ')) strcat(buf, "\"");
 }
-
-/*
- * Return path after appending lib directories.
- */
-char *libpath(char *prog, char *envname) {
-   char buf[1000], *s;
-
-   s = getenv(envname);
-   if (s != NULL)
-      strcpy(buf, s);
-   else
-      strcpy(buf, ".");
-   if (!strcmp(envname, IPATH)) {
-      strcat(buf, " ");
-      quotestrcat(buf, relfile(prog, "/../../ipl/lib"));
-     }
-   else if (!strcmp(envname, LPATH)) {
-      strcat(buf, " ");
-      quotestrcat(buf, relfile(prog, "/../../ipl/mincl"));
-      strcat(buf, " ");
-      quotestrcat(buf, relfile(prog, "/../../ipl/gincl"));
-      strcat(buf, " ");
-      quotestrcat(buf, relfile(prog, "/../../ipl/incl"));
-      }
-   strcat(buf, " ");
-   quotestrcat(buf, relfile(prog, "/../../uni/lib"));
-   strcat(buf, " ");
-   quotestrcat(buf, relfile(prog, "/../../uni/gui"));
-   return salloc(buf);
-   }
 
 #else                                  /* UNIX */
 

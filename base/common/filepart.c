@@ -224,138 +224,6 @@ struct fileparts *fparse(s)
     int n;
     char *p, *q;
 
-#if ARM
-    char *ext = 0;
-    char *extend = 0;
-    char *dirend = 0;
-    char *s1;
-    char *bp = buf;
-
-    /* First, skip any filing system prefix */
-    s1 = strchr(s,':');
-    if (s1 == NULL)
-        s1 = s;
-    else
-        ++s1;
-
-    /* Now, scan backwards through the filename, looking for dots.
-     * Record the positions of the final two, for later use.
-     */
-    p = s1 + strlen(s1);
-    fp.name = 0;
-   
-    while (--p > s1)
-    {
-        if (*p != '.')
-            continue;
-
-        if (fp.name == NULL)
-        {
-            fp.name = p + 1;
-            extend = p;
-        }
-        else
-        {
-            ext = p + 1;
-            dirend = p;
-            break;
-        }
-    }
-
-    /* This is the simple case. The filename is a simple name, with no
-     * directory part. The extension is therefore null, and the directory
-     * is just the filing system prefix, if any.
-     */
-    if (fp.name == NULL)
-    {
-        fp.name = s1;
-
-        if (s1 == s)
-        {
-            fp.ext = "";
-            fp.dir = "";
-        }
-        else
-        {
-            fp.ext = "";
-            strncpy(buf, s, s1 - s);
-            buf[s1-s] = '\0';
-            fp.dir = buf;
-        }
-
-        return &fp;
-    }
-
-    /* Now worry about the more complicated cases. First, check the
-     * supposed extension, to see if it is one of the valid cases,
-     * SourceSuffix or USuffix. For this code to work, these two
-     * defined values must start with a dot, and be all in lower case.
-     */
-    *buf = '.';
-    bp = buf + 1;
-
-    for (p = ext ? ext : s1; p < extend; ++p)
-    {
-        *bp++ = tolower(*p);
-    }
-
-    *bp++ = '\0';
-
-    if (strcmp(buf,SourceSuffix) == 0 || strcmp(buf,USuffix))
-    {
-        fp.ext = buf;
-    }
-    else
-    {
-        fp.ext = "";
-        bp = buf;
-        dirend = extend;
-    }
-
-    /* We now have the name and extension sorted out. So we just need
-     * to copy the directory part into buf (at bp), and set fp.dir.
-     */
-    if (dirend == NULL)
-    {
-        if (s1 == s)
-            fp.dir = "";
-        else
-        {
-            fp.dir = bp;
-
-            while (s < s1)
-                *bp++ = *s++;
-
-            *bp = '\0';
-        }
-    }
-    else
-    {
-        fp.dir = bp;
-
-        while (s <= dirend)
-            *bp++ = *s++;
-
-        *bp = '\0';
-    }
-
-    return &fp;
-
-#else					/* ARM */
-
-#if MVS
-    static char extbuf [MaxFileName+2] ;
-
-    p = strchr(s, '(');
-    if (p) {
-        fp.member = p+1;
-        memcpy(extbuf, s, p-s);
-        extbuf [p-s]  = '\0';
-        s = extbuf;
-    }
-    else fp.member = s + strlen(s);
-#endif					/* MVS */
-
     q = s;
     fp.ext = p = s + strlen(s);
     while (--p >= s) {
@@ -376,22 +244,7 @@ struct fileparts *fparse(s)
     strncpy(fp.name,q,n);
     fp.name[n] = '\0';
 
-#if VMS
-    /* if a version is included, get separate extension and version */
-    if (p = strchr(fp.ext, ';')) {
-        fp.version = p;
-        p = fp.ext;
-        fp.ext = fp.name + n + 1;
-        n = fp.version - p;
-        strncpy(fp.ext, p, n);
-        fp.ext[n] = '\0';
-    }
-    else
-        fp.version = fp.name + n;		/* point version to '\0' */
-#endif                                  /* VMS */
-
     return &fp;
-#endif					/* ARM */
 }
 
 /*
@@ -407,32 +260,7 @@ char *makename(dest,d,name,e)
     if (e != NULL)
         fp.ext = e;
 
-#if ARM
-    {
-        char *p = (*fp.ext ? fp.ext + 1 : "");
-        sprintf(dest, "%s%s%s%s", fp.dir, p, (*p ? "." : ""), fp.name);
-    }
-
-#else					/* ARM */
-
-#if MVS
-#if SASC
-    {
-        char *colons;
-        colons = strstr(fp.name, ":::");
-        if (colons) {
-            memcpy(colons+1, e+1, 2);
-            fp.ext = "";
-        }
-    }
-#endif					/* SASC */
-    if (*fp.member)
-        sprintf(dest,"%s%s%s(%s", fp.dir, fp.name, fp.ext, fp.member);
-    else
-#endif					/* MVS */
-
-        sprintf(dest,"%s%s%s",fp.dir,fp.name,fp.ext);
-#endif					/* ARM */
+    sprintf(dest,"%s%s%s",fp.dir,fp.name,fp.ext);
 
     return dest;
 }
@@ -578,7 +406,6 @@ char *abbreviate(char *path)
     return &path[n + 1];
 }
 
-
 /*
  * Standardize a path, which must be an existing directory.  Returns a
  * pointer to a static buff on success, or null if the directory
@@ -659,4 +486,22 @@ TODO
 #endif					/* MSDOS */
 
     return result;
+}
+
+/*
+ * This is like canonicalize_path above, but takes a file rather than
+ * a directory.  The directory is canonicalized and then the file part
+ * appended.  A pointer to a static buffer is returned.
+ */
+char *canonicalize_file(char *path)
+{
+    struct fileparts *fp = fparse(path);
+    char *t = canonicalize_path(fp->dir);
+    if (strlen(t) + strlen(fp->name) + strlen(fp->ext) > PATH_MAX) {
+        fprintf(stderr, "path too long to canonicalize - %s", path);
+        exit(1);
+    }
+    strcat(t, fp->name);
+    strcat(t, fp->ext);
+    return t;
 }

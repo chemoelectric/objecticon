@@ -35,6 +35,7 @@ char    *pathelem       (char *s, char *buf);
 int     newer_than(char *f1, char *f2);
 char    *last_pathelem(char *s);
 char    *canonicalize_path(char *file);
+char    *canonicalize_file(char *path);
 char    *abbreviate(char *path);
 int	ppch		(void);
 void	ppdef		(char *name, char *value);
@@ -66,6 +67,7 @@ char *  join_strs(struct str_buf *sbuf, int n, ...);
    (struct type *)alloc((unsigned int) sizeof (struct type))
 
 char *relfile	(char *prog, char *mod);
+char *normalize(char *path);
 #if UNIX
    FILE *pathOpen	(char *fname, char*mode);
 #endif

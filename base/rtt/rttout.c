@@ -1396,37 +1396,24 @@ int brace;
                 *  they must be removed from the tended list before a signal
                 *  is returned.
                 */
-               if (iconx_flg) {
-		  switch (op_type) {
-		  case TokFunction:
-		     prt_str(
-		       "if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {",
-			     indent);
-		     break;
-		  case Operator:
-		  case Keyword:
-		     prt_str(
-		       "if ((signal = interp(G_Osusp, r_args)) != A_Resume) {",
-			     indent);
-		     break;
-		  default:
-		     prt_str(
-		       "if ((signal = interp(G_Csusp, r_args)) != A_Resume) {",
-			     indent);
-		  }
-		  }
-               else {
-                  prt_str("if (r_s_cont == (continuation)NULL) {", indent);
-                  if (ntend != 0)
-                     untend(indent + IndentInc);
-                  ForceNl();
-                  prt_str("return A_Continue;", indent + IndentInc);
-                  ForceNl();
-                  prt_str("}", indent + IndentInc);
-                  ForceNl();
-                  prt_str("else if ((signal = (*r_s_cont)()) != A_Resume) {",
-                     indent);
-                  }
+               switch (op_type) {
+                   case TokFunction:
+                       prt_str(
+                           "if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {",
+                           indent);
+                       break;
+                   case Operator:
+                   case Keyword:
+                       prt_str(
+                           "if ((signal = interp(G_Osusp, r_args)) != A_Resume) {",
+                           indent);
+                       break;
+                   default:
+                       prt_str(
+                           "if ((signal = interp(G_Csusp, r_args)) != A_Resume) {",
+                           indent);
+               }
+
                ForceNl();
                if (ntend != 0)
                   untend(indent + IndentInc);
@@ -3076,7 +3063,7 @@ struct sym_entry *op_params;
     * For interpreter routines, extra tended descriptors are only needed
     *  when both dereferenced and undereferenced values are requested.
     */
-   if (iconx_flg && (next_parm == NULL ||
+   if ((next_parm == NULL ||
       op_params->u.param_info.param_num != next_parm->u.param_info.param_num))
       op_params->t_indx = -1;
    else
@@ -3274,10 +3261,7 @@ struct node *n;
    /*
     * Somewhat different code is produced for the interpreter and compiler.
     */
-   if (iconx_flg)
-      interp_def(n);
-   else
-      comp_def(n);
+   interp_def(n);
 
    free_tree(n);
    /*
@@ -3306,195 +3290,8 @@ struct node *n;
 static void comp_def(n)
 struct node *n;
    {
-#ifdef Rttx
    fprintf(stdout, "rtt was compiled to only support the interpreter, use -x\n");
    exit(EXIT_FAILURE);
-#else					/* Rttx */
-   struct sym_entry *sym;
-   struct node *n1;
-   FILE *f_save;
-
-#if MVS
-   char buf1[MaxFileName];
-#else                                   /* MVS */
-   char buf1[5];
-#endif                                  /* MVS */
-
-   char buf[MaxFileName];
-   char *cname;
-   long min_result;
-   long max_result;
-   int ret_flag;
-   int resume;
-   char *name;
-   char *s;
-
-   f_save = out_file;
-
-   /*
-    * Note if the result location is explicitly referenced and note
-    *  how it is accessed in the generated code.
-    */
-   cur_impl->use_rslt = sym_lkup(str_rslt)->u.referenced;
-   rslt_loc = "(*r_rslt)";
-
-   /*
-    * In several contexts, letters are used to distinguish kinds of operations.
-    */
-   switch (op_type) {
-      case TokFunction:
-         lc_letter = 'f';
-         uc_letter = 'F';
-         break;
-      case Keyword:
-         lc_letter = 'k';
-         uc_letter = 'K';
-         break;
-      case Operator:
-         lc_letter = 'o';
-         uc_letter = 'O';
-      }
-   prfx1 = cur_impl->prefix[0];
-   prfx2 = cur_impl->prefix[1];
-
-   if (op_type != Keyword) {
-      /*
-       * First pass through the operation: produce most general routine.
-       */
-      fnc_ret = RetSig;  /* most general routine always returns a signal */
-
-      /*
-       * Compute the file name in which to output the function.
-       */
-#if MVS
-   {
-      struct fileparts *fp;
-      fp = fparse(src_file_nm);
-      if (*fp->member == '\0')
-         sprintf(buf1, "%c#%c%c", lc_letter, prfx1, prfx2);
-      else
-         sprintf(buf1, "%s%s.ro.c(%c#%c%c)", fp->dir, fp->name,
-                 lc_letter, prfx1, prfx2);
-      }
-#else                                   /* MVS */
-      sprintf(buf1, "%c_%c%c", lc_letter, prfx1, prfx2);
-#endif                                  /* MVS */
-
-      cname = salloc(makename(buf, SourceDir, buf1, CSuffix));
-      if ((out_file = fopen(cname, "w")) == NULL)
-         err2("cannot open output file", cname);
-      else
-         addrmlst(cname, out_file);
-         
-      prologue(); /* output standard comments and preprocessor directives */
-
-      /*
-       * Output function header that corresponds to standard calling
-       *  convensions. The function name is constructed from the letter
-       *  for the operation type, the prefix that makes the function
-       *  name unique, and the name of the operation.
-       */
-      fprintf(out_file, "int %c%c%c_%s(r_nargs, r_args, r_rslt, r_s_cont)\n",
-         uc_letter, prfx1, prfx2, cur_impl->name);
-      fprintf(out_file, "int r_nargs;\n");
-      fprintf(out_file, "dptr r_args;\n");
-      fprintf(out_file, "dptr r_rslt;\n");
-      fprintf(out_file, "continuation r_s_cont;");
-      fname = cname;
-      line = 12;
-      ForceNl();
-      prt_str("{", IndentInc);
-      ForceNl();
-
-      /*
-       * Output ordinary declarations from declare clause.
-       */
-      for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
-         c_walk(sym->u.declare_var.tqual, IndentInc, 0);
-         prt_str(" ", IndentInc);
-         c_walk(sym->u.declare_var.dcltor, IndentInc, 0);
-         if ((n1 = sym->u.declare_var.init) != NULL) {
-            prt_str(" = ", IndentInc);
-            c_walk(n1, IndentInc, 0);
-            }
-         prt_str(";", IndentInc);
-         }
-
-      /*
-       * Output code for special declarations along with code to initial
-       *  them. This includes buffers and tended locations for parameters
-       *  and tended variables.
-       */
-      spcl_dcls(params);
-
-      if (rt_walk(n, IndentInc, 0)) {  /* body of operation */
-         if (n->nd_id == ConCatNd)
-            s = n->u[1].child->tok->fname;
-         else
-            s = n->tok->fname;
-         fprintf(stderr, "%s: file %s, warning: ", progname, s);
-         fprintf(stderr, "execution may fall off end of operation \"%s\"\n",
-             cur_impl->name);
-         }
-
-      ForceNl();
-      prt_str("}\n", IndentInc);
-      if (rmlst_empty_p() == 0) {
-	 if (fclose(out_file) != 0)
-	    err2("cannot close ", cname);
-	 else
-	    markrmlst(out_file);
-         }
-      out_file = f_save;   /* reset out_file */
-      put_c_fl(cname, 1);  /* note name of output file for operation */
-      }
-
-   /*
-    * Second pass through operation: produce in-line code and special purpose
-    *  routines.
-    */
-   for (sym = params; sym != NULL; sym = sym->u.param_info.next)
-      if (sym->id_type & DrfPrm)
-         sym->u.param_info.cur_loc = PrmTend;  /* reset location of parameter */
-   in_line(n);
-
-   /*
-    * Insure that the fail/return/suspend statements are consistent
-    *  with the result sequence indicated.
-    */
-   min_result = cur_impl->min_result;
-   max_result = cur_impl->max_result;
-   ret_flag = cur_impl->ret_flag;
-   resume = cur_impl->resume;
-   name = cur_impl->name;
-   if (min_result == NoRsltSeq && ret_flag & (DoesFail|DoesRet|DoesSusp))
-      err2(name,
-         ": result sequence of {}, but fail, return, or suspend present");
-   if (min_result != NoRsltSeq && ret_flag == 0)
-      err2(name,
-         ": result sequence indicated, no fail, return, or suspend present");
-   if (max_result != NoRsltSeq) {
-      if (max_result == 0 && ret_flag & (DoesRet|DoesSusp))
-         err2(name,
-            ": result sequence of 0 length, but return or suspend present");
-      if (max_result != 0 && !(ret_flag & (DoesRet | DoesSusp)))
-         err2(name,
-            ": result sequence length > 0, but no return or suspend present");
-      if ((max_result == UnbndSeq || max_result > 1 || resume) &&
-         !(ret_flag & DoesSusp))
-         err2(name,
-            ": result sequence indicates suspension, but no suspend present");
-      if ((max_result != UnbndSeq && max_result <= 1 && !resume) &&
-         ret_flag & DoesSusp)
-         err2(name,
-            ": result sequence indicates no suspension, but suspend present");
-      }
-   if (min_result != NoRsltSeq && max_result != UnbndSeq &&
-      min_result > max_result)
-      err2(name, ": minimum result sequence length greater than maximum");
-
-   out_file = f_save;
-#endif					/* Rttx */
    }
 
 /*
@@ -3719,95 +3516,65 @@ struct token *t;
    struct il_code *il;
    int n;
 
-   if (iconx_flg) {
-      /*
-       * For the interpreter, output a C function implementing the keyword.
-       */
-      rslt_loc = "r_args[0]";  /* result location */
 
-      fprintf(out_file, "\n");
-      fprintf(out_file, "int K%s(r_args)\n", cur_impl->name);
-      fprintf(out_file, "dptr r_args;");
-      line += 2;
-      ForceNl();
-      prt_str("{", IndentInc);
-      ForceNl();
-      switch (t->tok_id) {
-         case StrLit:
-            prt_str(rslt_loc, IndentInc);
-            prt_str(".vword.sptr = \"", IndentInc);
-            n = prt_i_str(out_file, t->image, (int)strlen(t->image));
-            prt_str("\";", IndentInc);
-            ForceNl();
-            prt_str(rslt_loc, IndentInc);
-            fprintf(out_file, ".dword = %d;", n);
-            break;
-         case CharConst:
-            prt_str("static struct b_cset cset_blk = ", IndentInc);
-            cset_init(out_file, bitvect(t->image, (int)strlen(t->image)));
-            ForceNl();
-            prt_str(rslt_loc, IndentInc);
-            prt_str(".dword = D_Cset;", IndentInc);
-            ForceNl();
-            prt_str(rslt_loc, IndentInc);
-            prt_str(".vword.bptr = (union block *)&cset_blk;", IndentInc);
-            break;
-         case DblConst:
-            prt_str("static struct b_real real_blk = {T_Real, ", IndentInc);
-            fprintf(out_file, "%s};", t->image);
-            ForceNl();
-            prt_str(rslt_loc, IndentInc);
-            prt_str(".dword = D_Real;", IndentInc);
-            ForceNl();
-            prt_str(rslt_loc, IndentInc);
-            prt_str(".vword.bptr = (union block *)&real_blk;", IndentInc);
-            break;
-         case IntConst:
-            prt_str(rslt_loc, IndentInc);
-            prt_str(".dword = D_Integer;", IndentInc);
-            ForceNl();
-            prt_str(rslt_loc, IndentInc);
-            prt_str(".vword.integr = ", IndentInc);
-            prt_str(t->image, IndentInc);
-            prt_str(";", IndentInc);
-            break;
-         }
-      ForceNl();
-      prt_str("return A_Continue;", IndentInc);
-      ForceNl();
-      prt_str("}\n", IndentInc);
-      ++line;
-      ForceNl();
-      }
-   else {
-      /*
-       * For the compiler, make an entry in the data base for the keyword.
-       */
-      cur_impl->use_rslt = 0;
-   
-      il = new_il(IL_Const, 2);
-      switch (t->tok_id) {
-         case StrLit:
-            il->u[0].n = str_typ;
-            il->u[1].s = (char *)alloc((unsigned int)(strlen(t->image) + 3));
-            sprintf(il->u[1].s, "\"%s\"", t->image);
-            break;
-         case CharConst:
-            il->u[0].n = cset_typ;
-            il->u[1].s = (char *)alloc((unsigned int)(strlen(t->image) + 3));
-            sprintf(il->u[1].s, "'%s'", t->image);
-            break;
-         case DblConst:
-            il->u[0].n = real_typ;
-            il->u[1].s = t->image;
-            break;
-         case IntConst:
-            il->u[0].n = int_typ;
-            il->u[1].s = t->image;
-            break;
-         }
-      cur_impl->in_line = il;
-      }
+   /*
+    * For the interpreter, output a C function implementing the keyword.
+    */
+   rslt_loc = "r_args[0]";  /* result location */
+
+   fprintf(out_file, "\n");
+   fprintf(out_file, "int K%s(r_args)\n", cur_impl->name);
+   fprintf(out_file, "dptr r_args;");
+   line += 2;
+   ForceNl();
+   prt_str("{", IndentInc);
+   ForceNl();
+   switch (t->tok_id) {
+       case StrLit:
+           prt_str(rslt_loc, IndentInc);
+           prt_str(".vword.sptr = \"", IndentInc);
+           n = prt_i_str(out_file, t->image, (int)strlen(t->image));
+           prt_str("\";", IndentInc);
+           ForceNl();
+           prt_str(rslt_loc, IndentInc);
+           fprintf(out_file, ".dword = %d;", n);
+           break;
+       case CharConst:
+           prt_str("static struct b_cset cset_blk = ", IndentInc);
+           cset_init(out_file, bitvect(t->image, (int)strlen(t->image)));
+           ForceNl();
+           prt_str(rslt_loc, IndentInc);
+           prt_str(".dword = D_Cset;", IndentInc);
+           ForceNl();
+           prt_str(rslt_loc, IndentInc);
+           prt_str(".vword.bptr = (union block *)&cset_blk;", IndentInc);
+           break;
+       case DblConst:
+           prt_str("static struct b_real real_blk = {T_Real, ", IndentInc);
+           fprintf(out_file, "%s};", t->image);
+           ForceNl();
+           prt_str(rslt_loc, IndentInc);
+           prt_str(".dword = D_Real;", IndentInc);
+           ForceNl();
+           prt_str(rslt_loc, IndentInc);
+           prt_str(".vword.bptr = (union block *)&real_blk;", IndentInc);
+           break;
+       case IntConst:
+           prt_str(rslt_loc, IndentInc);
+           prt_str(".dword = D_Integer;", IndentInc);
+           ForceNl();
+           prt_str(rslt_loc, IndentInc);
+           prt_str(".vword.integr = ", IndentInc);
+           prt_str(t->image, IndentInc);
+           prt_str(";", IndentInc);
+           break;
+   }
+   ForceNl();
+   prt_str("return A_Continue;", IndentInc);
+   ForceNl();
+   prt_str("}\n", IndentInc);
+   ++line;
+   ForceNl();
 
    /*
     * Reset the translator and free storage.
@@ -3843,6 +3610,5 @@ struct token *t;
 void prologue()
    {
    id_comment(out_file);
-   fprintf(out_file, "%s", compiler_def);
    fprintf(out_file, "#include \"%s\"\n\n", inclname);
    }
