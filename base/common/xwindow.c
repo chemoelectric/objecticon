@@ -154,6 +154,4 @@ stringint cursorsyms[] = {
   {"num glyphs",	XC_num_glyphs},
 };
 
-#else					/* XWindows */
-  static char x;
 #endif					/* XWindows */
