@@ -25,185 +25,101 @@
 #if NT
 void *dlopen(char *name, int flag)
 { /* LoadLibrary */
-   return (void *)LoadLibrary(name);
+    return (void *)LoadLibrary(name);
 }
 void *dlsym(void *handle, char *sym)
 {
-   return (void *)GetProcAddress((HMODULE)handle, sym);
+    return (void *)GetProcAddress((HMODULE)handle, sym);
 }
 int dlclose(void *handle)
 { /* FreeLibrary */
-   return FreeLibrary((HMODULE)handle);
+    return FreeLibrary((HMODULE)handle);
 }
 
 char *dlerror(void)
 {
-   return "undiagnosed dynamic load error";
+    return "undiagnosed dynamic load error";
 }
 #endif					/* NT */
 
 #ifdef FreeBSD
-   /*
-    * If DL_GETERRNO exists, this is an FreeBSD 1.1.5 or 2.0 
-    * which lacks dlerror(); supply a substitute.
-    */
-   #passthru #ifdef DL_GETERRNO
-      char *dlerror(void)
-      {
-         int no;
+/*
+ * If DL_GETERRNO exists, this is an FreeBSD 1.1.5 or 2.0 
+ * which lacks dlerror(); supply a substitute.
+ */
+#passthru #ifdef DL_GETERRNO
+char *dlerror(void)
+{
+    int no;
    
-         if (0 == dlctl(NULL, DL_GETERRNO, &no))
-            return(strerror(no));
-         else
-            return(NULL);
-      }
-   #passthru #endif
+    if (0 == dlctl(NULL, DL_GETERRNO, &no))
+        return(strerror(no));
+    else
+        return(NULL);
+}
+#passthru #endif
 #endif					/* __FreeBSD__ */
-
-int glue();
-int makefunc	(dptr d, char *name, int (*func)());
 
 "loadfunc(filename,funcname) - load C function dynamically."
 
 function{0,1} loadfunc(filename,funcname)
 
-   if !cnv:C_string(filename) then
-      runerr(103, filename)
-   if !cnv:C_string(funcname) then
-      runerr(103, funcname)
+    if !cnv:C_string(filename) then
+        runerr(103, filename)
+    if !cnv:C_string(funcname) then
+        runerr(103, funcname)
 
-   abstract {
-      return proc
-      }
-   body
-      {
-      int (*func)() = 0;
-      static char *curfile;
-      static void *handle;
-      char *funcname2;
+abstract {
+    return proc
+}
+body
+{
+    int (*func)() = 0;
+    struct b_proc *blk;
+    static char *curfile;
+    static void *handle;
+    char *tname;
    
-      /*
-       * Get a library handle, reusing it over successive calls.
-       */
-      if (!handle || !curfile || strcmp(filename, curfile) != 0) {
-         if (curfile)
+    /*
+     * Get a library handle, reusing it over successive calls.
+     */
+    if (!handle || !curfile || strcmp(filename, curfile) != 0) {
+        if (curfile)
             free((pointer)curfile);	/* free the old file name */
-         curfile = salloc(filename);	/* save the new name */
-         handle = dlopen(filename, RTLD_LAZY);	/* get the handle */
-         }
-      /*
-       * Load the function.  Diagnose both library and function errors here.
-       */
-      if (handle) {
-         func = (int (*)())dlsym(handle, funcname);
-         if (!func) {
+        curfile = salloc(filename);	/* save the new name */
+        handle = dlopen(filename, RTLD_LAZY);	/* get the handle */
+    }
+    /*
+     * Load the function.  Diagnose both library and function errors here.
+     */
+    if (handle) {
+        Protect(tname = malloc(strlen(funcname) + 3), runerr(0));
+        sprintf(tname, "Z%s", funcname);
+        func = (int (*)())dlsym(handle, tname);
+        if (!func) {
             /*
              * If no function, try again by prepending an underscore.
              * (for OpenBSD and similar systems.)
              */
-            funcname2 = malloc(strlen(funcname) + 2);
-            if (funcname2) {
-               *funcname2 = '_';
-               strcpy(funcname2 + 1, funcname);
-               func = (int (*)())dlsym(handle, funcname2);
-               free(funcname2);
-               }
-            }
-         }
-      if (!handle || !func) {
-         fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): %s\n",
-            filename, funcname, dlerror());
-         runerr(216);
-         }
-      /*
-       * Build and return a proc descriptor.
-       */
-      if (!makefunc(&result, funcname, func))
-         runerr(305);
-      return result;
-      }
+            sprintf(tname, "_Z%s", funcname);
+            func = (int (*)())dlsym(handle, tname);
+        }
+        sprintf(tname, "B%s", funcname);
+        blk = (struct b_proc *)dlsym(handle, tname);
+        if (!blk) {
+            sprintf(tname, "_B%s", funcname);
+            func = (int (*)())dlsym(handle, tname);
+        }
+    }
+    if (!handle || !func || !blk) {
+        fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): %s\n",
+                filename, funcname, dlerror());
+        runerr(216);
+    }
+    free(tname);
+    return proc(blk);
+}
 end
-
-/*
- * makefunc(d, name, func) -- make function descriptor in d.
- *
- *  Returns 0 if memory could not be allocated.
- */
-int makefunc(d, name, func)
-dptr d;
-char *name;
-int (*func)();
-   {
-   struct b_proc *blk;
-
-   blk = (struct b_proc *)calloc(1, sizeof(struct b_proc));
-   if (!blk)
-      return 0;
-   blk->title = T_Proc;
-   blk->blksize = sizeof(struct b_proc);
-
-   blk->entryp.ccode = glue;	/* set code addr to glue routine */
-
-   blk->nparam = -1;		/* varargs flag */
-   blk->ndynam = -1;		/* treat as built-in function */
-   blk->nstatic = 0;
-   blk->fstatic = 0;
-   blk->pname.dword = strlen(name);
-   blk->pname.vword.sptr = salloc(name);
-   blk->lnames[0].dword = 0;
-   blk->lnames[0].vword.sptr = (char *)func;
-				/* save func addr in lnames[0] vword */
-   d->dword = D_Proc;		/* build proc descriptor */
-   d->vword.bptr = (union block *)blk;
-   return 1;
-   }
-
-/*
- * This glue routine is called when a loaded function is invoked.
- * It digs the actual C code address out of the proc block, and calls that.
- */
-
-
-int glue(argc, dargv)
-int argc;
-dptr dargv;
-   {
-   int status, (*func)();
-   struct b_proc *blk;
-   struct descrip r;
-   tended struct descrip p;
-
-#if NT
-struct rtentrypts {
-  int (*Cnv_int)(dptr, dptr);
-} rtentryvector;
-rtentryvector.Cnv_int = cnv_int_0;
-#endif
-
-   blk = (struct b_proc *)dargv[0].vword.bptr;	/* proc block address */
-   func = (int (*)())blk->lnames[0].vword.sptr;	/* entry point address */
-
-   p = dargv[0];			/* save proc for traceback */
-   dargv[0] = nulldesc;			/* set default return value */
-
-#if NT
-   status = (*func)(&rtentryvector, argc, dargv);	/* call func */
-#else
-   status = (*func)(argc, dargv);	/* call func */
-#endif
-
-   if (status == 0)
-      Return;				/* success */
-   if (status < 0)
-      Fail;				/* failure */
-
-   r = dargv[0];			/* save result value */
-   dargv[0] = p;			/* restore proc for traceback */
-   if (is:null(r))
-      RunErr(status, NULL);		/* error, no value */
-   RunErr(status, &r);			/* error, with value */
-   }
-
 
 #else						/* LoadFunc */
 static char junk;			/* avoid empty module */

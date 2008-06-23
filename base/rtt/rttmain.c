@@ -81,7 +81,7 @@ char *rt_path = "../base/h/rt.h";
  * End of operating-system specific code.
  */
 
-static char *ostr = "ECPD:I:U:d:cir:st:x";
+static char *ostr = "ECPD:I:U:d:cir:st:h:";
 
 #if EBCDIC
 static char *options =
@@ -128,6 +128,7 @@ static int pp_only = 0;
 static char *opt_lst;
 static char **opt_args;
 static char *in_header;
+static char *xin_header;
 static struct tdefnm *tdefnm_lst = NULL;
 
 /*
@@ -305,6 +306,9 @@ char **argv;
          case 'r':  /* -r path: location of include files */
             refpath = optarg;
             break;
+         case 'h':  /* -h path: location of initialization header */
+            xin_header = optarg;
+            break;
          case 't':  /* -t ident : treat ident as a typedef name */
             add_tdef(optarg);
             break;
@@ -412,7 +416,8 @@ char *src_file;
     */
    enable_out = 0;
    init_preproc(in_header, opt_lst, opt_args);
-   /*str_src("<rtt initialization>", compiler_def, (int)strlen(compiler_def)); */
+   if (xin_header)
+      source(xin_header);
    init_sym();
    for (td = tdefnm_lst; td != NULL; td = td->next)
       sym_add(TypeDefName, td->name, OtherDcl, 1);

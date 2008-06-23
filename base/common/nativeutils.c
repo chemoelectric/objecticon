@@ -73,38 +73,3 @@ struct descrip create_string2(char *s, int len) {
 
     return res;
 }
-
-/*
- * Helper function to add a (single element) tended descriptor
- * structure to the tended list; returns a pointer to the single
- * tended item in the structure.
- * 
- * Example :-
- *    {
- *      struct tend_desc safe;
- *      dptr res = add_tended(&safe);
- * 
- *      ... use res, its contents will be swept 
- *                  during garbage collection.
- * 
- *      rm_tended(&safe);
- *      return;
- *    }
- */
-dptr add_tended(struct tend_desc *t)
-{
-    t->d[0].dword = D_Null;
-    t->num = 1;
-    t->previous = tend;
-    tend = t;
-    return t->d;
-}
-
-/*
- * Remove the given tended descriptor from the list.
- */
-void rm_tended(struct tend_desc *t)
-{
-   tend = t->previous;
-}
-
