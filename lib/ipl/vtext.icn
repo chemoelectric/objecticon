@@ -35,12 +35,24 @@ link vidgets
 
 $include "keysyms.icn"
 
-$ifndef _X_WINDOW_SYSTEM
+
+$ifndef Key_KP_Up
    $define Key_KP_Up Key_Up
+$endif
+
+$ifndef Key_KP_Down
    $define Key_KP_Down Key_Down
+$endif
+
+$ifndef Key_KP_Left
    $define Key_KP_Left Key_Left
+$endif
+
+$ifndef Key_KP_Right
    $define Key_KP_Right Key_Right
 $endif
+
+
 
 
 ############################################################################

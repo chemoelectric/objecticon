@@ -96,8 +96,7 @@ $define Key_Right		65363
 $define Key_ScrollLock		65300
 $define Key_Select		65376
 $define Key_Up			65362
-$endif
-
+$else
 $ifdef _MS_WINDOWS_NT
 $define Key_Down		40
 $define Key_End			35
@@ -137,8 +136,7 @@ $define Key_PrSc		44
 $define Key_Right		39
 $define Key_Select		41
 $define Key_Up			38
-$endif
-
+$else
 $ifdef _JAVA
 $define Key_PrSc		154
 $define Key_ScrollLock		145
@@ -164,5 +162,80 @@ $define Key_F9			120
 $define Key_F10			121
 $define Key_F11			122
 $define Key_F12			123
+$else
+# These need to be defined as something so that the library code compiles
+$define Shift_Tab               0
+$define Key_Compose		0
+$define Key_Do			0
+$define Key_Down		0
+$define Key_End			0
+$define Key_F1			0
+$define Key_F2			0
+$define Key_F3			0
+$define Key_F4			0
+$define Key_F5			0
+$define Key_F6			0
+$define Key_F7			0
+$define Key_F8			0
+$define Key_F9			0
+$define Key_F10			0
+$define Key_F11			0
+$define Key_F12			0
+$define Key_F13			0
+$define Key_F14			0
+$define Key_F15			0
+$define Key_F16			0
+$define Key_F17			0
+$define Key_F18			0
+$define Key_F19			0
+$define Key_F20			0
+$define Key_Find		0
+$define Key_Help		0
+$define Key_Home		0
+$define Key_Insert		0
+$define Key_KP_Down		0
+$define Key_KP_Left		0
+$define Key_KP_Right		0
+$define Key_KP_Up		0
+$define Key_L1			0
+$define Key_L2			0
+$define Key_L3			0
+$define Key_L4			0
+$define Key_L5			0
+$define Key_L6			0
+$define Key_L7			0
+$define Key_L8			0
+$define Key_L9			0
+$define Key_L10			0
+$define Key_Left		0
+$define Key_PF1			0
+$define Key_PF2			0
+$define Key_PF3			0
+$define Key_PF4			0
+$define Key_Pause		0
+$define Key_PgDn		0
+$define Key_PgUp		0
+$define Key_PrSc		0
+$define Key_R1			0
+$define Key_R2			0
+$define Key_R3			0
+$define Key_R4			0
+$define Key_R5			0
+$define Key_R6			0
+$define Key_R7			0
+$define Key_R8			0
+$define Key_R9			0
+$define Key_R10			0
+$define Key_R11			0
+$define Key_R12			0
+$define Key_R13			0
+$define Key_R14			0
+$define Key_R15			0
+$define Key_Right		0
+$define Key_ScrollLock		0
+$define Key_Select		0
+$define Key_Up			0
 
+$endif
+$endif
 $endif
