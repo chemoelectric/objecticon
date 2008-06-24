@@ -121,28 +121,24 @@ class Selection()
          delete(owners, selection)
       }
    end
+
+   private static selection_callback(q, selection, target)
+      local l
+      case q of {
+         "content": {
+            # The C code ensures target is one of our supported targets, so no need to check
+            # target again.
+            return get_owner(selection).get_content(target) | return ""
+         }
+         "targets" : {
+            l := []
+            every put(l, get_owner(selection).get_targets())
+            return l
+         }
+         "clear": {
+            clear(selection)
+         }
+         default: stop("Unknown query to selection callback:", q)
+      }
+   end
 end
-
-procedure selection_callback(q, selection, target)
-   local l
-   case q of {
-      "content": {
-         # The C code ensures target is one of our supported targets, so no need to check
-         # target again.
-         return Selection.get_owner(selection).get_content(target) | return ""
-      }
-      "targets" : {
-         l := []
-         every put(l, Selection.get_owner(selection).get_targets())
-         return l
-      }
-      "clear": {
-         Selection.clear(selection)
-      }
-      default: stop("Unknown query to selection callback:", q)
-   }
-end
-
-
-
-
