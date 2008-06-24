@@ -113,9 +113,7 @@ FncDefV(writes)
 /*
  * Dynamic loading.
  */
-#ifdef LoadFunc
-   FncDef(loadfunc,2)
-#endif					/* LoadFunc */
+FncDef(loadfunc,2)
 
 /*
  * Executable images.
@@ -199,8 +197,6 @@ FncDef(receive,1)
 FncDef(setenv,2)
 #endif					/* PosixFns */
 
-#ifdef PosixFns
-#endif					/* PosixFns */
 /*
  * Functions for MS-DOS.
  */

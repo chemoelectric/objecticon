@@ -122,5 +122,8 @@ body
 end
 
 #else						/* LoadFunc */
-static char junk;			/* avoid empty module */
+"loadfunc(filename,funcname) - load C function dynamically."
+function{0,1} loadfunc(filename,funcname)
+   runerr(121)
+end
 #endif						/* LoadFunc */

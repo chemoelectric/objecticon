@@ -723,8 +723,7 @@ procedure pathload(fname, entry)	#: load C function from $FPATH
    if /found then
       stop ("cannot find \"", fname, "\" on path \". ", path, "\"")
 
-   # Use proc here since loadfunc may not be present.
-   return proc("loadfunc")(found, entry)	# aborts if unsuccessful
+   return loadfunc(found, entry)	# aborts if unsuccessful
 end
 
 procedure readline(file)		#: assemble backslash-continued lines
