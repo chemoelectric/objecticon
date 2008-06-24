@@ -1463,69 +1463,6 @@ struct hostent *hs;
 }
 
 /*
- * Calling Icon from C (iconx)
- */
-
-
-/* No provision for resumption */
-static word *callproc, ibuf[100];
-dptr call(proc, args, nargs)
-struct descrip proc;
-dptr args;
-int nargs;
-{
-   int i, off, retval;
-   inst saved_ipc;
-   word *saved_sp = sp;
-   inst wp;
-   dptr dp, ret;
-
-#ifdef HP
-   bcopy(&ipc, &saved_ipc, sizeof(ipc));
-#else					/* HP */
-   saved_ipc = ipc;
-#endif					/* HP */
-
-   wp.opnd = callproc = ibuf;
-   ipad(wp);  *wp.op++ = Op_Mark;   *wp.opnd++ = (2 + nargs+1)*2 * WordSize;
-   ipad(wp);  *wp.op++ = Op_Copyd;  *wp.opnd++ = -(nargs+1);
-   off = -nargs;
-   for (i = 1; i < nargs+1; i++) {
-      ipad(wp);
-      *wp.op++ = Op_Copyd;
-      *wp.opnd++ = off++;
-   }
-   ipad(wp);  *wp.op++ = Op_Invoke;  *wp.opnd++ =  nargs;
-   *wp.op++ = Op_Eret;
-   ipad(wp);
-   *wp.op++ = Op_Trapret;
-   ipad(wp);
-   *wp.op++ = Op_Trapfail;
-
-   dp = (dptr)(sp + 1);
-   dp[0] = proc;
-   for (i = 0; i < nargs; i++)
-      dp[i+1] = args[i];
-
-   sp += (nargs+1)*2;
-   ipc.op = (int *)callproc;
-   retval = interp(0, NULL);
-   if (retval != A_Resume) ret = (dptr)(sp-1);
-
-#ifdef HP
-   bcopy(&saved_ipc, &ipc, sizeof(ipc));
-#else
-   ipc = saved_ipc;
-#endif
-   sp = saved_sp;
-
-   if (retval == A_Resume)
-      return 0;
-   else
-      return ret;
-}
-
-/*
  * Signals and trapping
  */
 
@@ -1574,7 +1511,7 @@ int sig;
    StrLen(val) = strlen(p);
    StrLoc(val) = p;
 
-   (void) call(proc, &val, 1);
+   do_invoke_with(&proc, &val, 1);
    
    /* Restore signal just in case (for non-BSD systems) */
    signal(sig, signal_dispatcher);

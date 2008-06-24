@@ -423,7 +423,6 @@ dptr do_invoke(dptr proc)
     inst wp;
     dptr ret;
     int ncopy = (sp + 1 - (word*)proc) / 2;
-
     wp.opnd = ibuf;
     *wp.op++ = Op_Mark;   
     *wp.opnd++ = 3 * 2 * WordSize;
@@ -447,9 +446,21 @@ dptr do_invoke(dptr proc)
     xargp = saved_xargp;
     xnargs = saved_xnargs;
 
-    if (retval == A_Trapret) {
-        Deref(*ret);
+    if (retval == A_Trapret)
         return ret;
-    } else
+    else
         return 0;
+}
+
+dptr do_invoke_with(dptr proc, dptr args, int nargs)
+{
+    dptr res, dp = (dptr)(sp + 1);
+    int i;
+    dp[0] = *proc;
+    for (i = 0; i < nargs; i++)
+        dp[i + 1] = args[i];
+    sp += (nargs + 1) * 2;
+    res = do_invoke(dp);
+    sp -= (nargs + 1) * 2;
+    return res;
 }

@@ -155,7 +155,6 @@
 /*
  * Extra instructions added for calling Icon from C (used by Posix functions)
  */
-#define Op_Copyd        111
 #define Op_Trapret      112
 #define Op_Trapfail     113
 #define Op_CopyArgs     114

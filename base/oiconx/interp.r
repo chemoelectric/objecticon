@@ -1566,14 +1566,6 @@ EntInterp;
 	    break;
 
 					/* --- calling Icon from C --- */
-         case Op_Copyd:         /* Copy a descriptor from off efp */
-            opnd = GetWord;
-            rsp += 2;
-            opnd *= 2;
-            rsp[-1] = *((word *)efp + opnd);
-            rsp[0] = *((word *)efp + opnd + 1);
-            break;
-
          case Op_CopyArgs: {
             int i; 
             dptr d;
