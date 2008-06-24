@@ -30,9 +30,17 @@ if test "$ac_cv_lib_X11_main" == yes; then
    CHECK_JPEG()
    CHECK_XFT()
    CHECK_XPM()
+   if test "$ac_cv_lib_Xft_main" == yes -a "$ac_cv_lib_freetype_main" != yes ; then
+        echo "*** Xft needs freetype to work"
+        exit 1
+   fi
 fi
 CHECK_ZLIB()
 OI_ADD_LIB(m)
+if ! test "$ac_cv_lib_m_main" == yes; then
+        echo "*** Couldn't find the math library (-lm) - can't compile without it."
+        exit 1
+fi
 OI_ADD_LIB(crypt)
 OI_ADD_LIB(dl)
 
@@ -75,3 +83,46 @@ AC_CONFIG_FILES([base/h/version.h:config/files/base/h/version.h],)
 AC_CONFIG_FILES([base/h/define.h:config/files/base/h/define.h],)
 AC_CONFIG_HEADERS([base/h/auto.h:config/files/base/h/auto.h],)
 AC_OUTPUT
+echo "Summary:-"
+echo -n "X11 graphics           :"
+if test "$ac_cv_lib_X11_main" == yes; then
+        echo yes
+        echo -n "jpeg library           :"
+        if test "$ac_cv_lib_jpeg_main" == yes; then
+                echo yes
+        else
+                echo no
+        fi
+        echo -n "Xft anti-aliased fonts :"
+        if test "$ac_cv_lib_Xft_main" == yes; then
+                echo yes
+        else
+                echo no
+        fi
+        echo -n "Xpm                    :"
+        if test "$ac_cv_lib_Xpm_main" == yes; then
+                echo yes
+        else
+                echo no
+        fi
+else
+        echo no
+fi
+echo -n "zlib compression       :"
+if test "$ac_cv_lib_z_main" == yes; then
+        echo yes
+else
+        echo no
+fi
+echo -n "dynamic loading        :"
+if test "$ac_cv_lib_dl_main" == yes; then
+        echo yes
+else
+        echo no
+fi
+echo -n "crypt lib              :"
+if test "$ac_cv_lib_crypt_main" == yes; then
+        echo yes
+else
+        echo no
+fi
