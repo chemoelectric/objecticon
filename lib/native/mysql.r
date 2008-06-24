@@ -181,17 +181,17 @@ function{0,1} unimysql_change_user(id, user, passwd, db)
       tended char *c_passwd;
       tended char *c_db;
 
-      if (ChkNull(user))
+      if (is:null(user))
           c_user = NULL;
       else if (!cnv:C_string(user, c_user))
           runerr(103, user);
 
-      if (ChkNull(passwd))
+      if (is:null(passwd))
           c_passwd = NULL;
       else if (!cnv:C_string(passwd, c_passwd))
           runerr(103, passwd);
 
-      if (ChkNull(db))
+      if (is:null(db))
           c_db = NULL;
       else if (!cnv:C_string(db, c_db))
           runerr(103, db);
@@ -381,37 +381,37 @@ function{0,1} unimysql_real_connect(id, host, user, passwd, db,
       tended char *c_unix_socket;
       unsigned int c_client_flag;
 
-      if (ChkNull(host))
+      if (is:null(host))
           c_host = NULL;
       else if (!cnv:C_string(host, c_host))
           runerr(103, host);
 
-      if (ChkNull(user))
+      if (is:null(user))
           c_user = NULL;
       else if (!cnv:C_string(user, c_user))
           runerr(103, user);
 
-      if (ChkNull(passwd))
+      if (is:null(passwd))
           c_passwd = NULL;
       else if (!cnv:C_string(passwd, c_passwd))
           runerr(103, passwd);
 
-      if (ChkNull(db))
+      if (is:null(db))
           c_db = NULL;
       else if (!cnv:C_string(db, c_db))
           runerr(103, db);
 
-      if (ChkNull(port))
+      if (is:null(port))
           c_port = 0;
       else if (!cnv:C_integer(port, c_port))
           runerr(101, port);
 
-      if (ChkNull(unix_socket))
+      if (is:null(unix_socket))
           c_unix_socket = NULL;
       else if (!cnv:C_string(unix_socket, c_unix_socket))
           runerr(103, unix_socket);
 
-      if (ChkNull(client_flag))
+      if (is:null(client_flag))
           c_client_flag = 0;
       else if (!cnv:C_integer(client_flag, c_client_flag))
           runerr(101, client_flag);
@@ -435,27 +435,27 @@ function{0,1} unimysql_ssl_set(id, key, cert, ca, capath, cipher)
       tended char *c_capath;
       tended char *c_cipher;
 
-      if (ChkNull(key))
+      if (is:null(key))
           c_key = NULL;
       else if (!cnv:C_string(key, c_key))
           runerr(103, key);
 
-      if (ChkNull(cert))
+      if (is:null(cert))
           c_cert = NULL;
       else if (!cnv:C_string(cert, c_cert))
           runerr(103, cert);
 
-      if (ChkNull(ca))
+      if (is:null(ca))
           c_ca = NULL;
       else if (!cnv:C_string(ca, c_ca))
           runerr(103, ca);
 
-      if (ChkNull(capath))
+      if (is:null(capath))
           c_capath = NULL;
       else if (!cnv:C_string(capath, c_capath))
           runerr(103, capath);
 
-      if (ChkNull(cipher))
+      if (is:null(cipher))
           c_cipher = NULL;
       else if (!cnv:C_string(cipher, c_cipher))
           runerr(103, cipher);
@@ -553,7 +553,7 @@ function{0,1} unimysql_list_dbs(id, wild)
       MYSQL_RES *res;
       tended char *c_wild;
 
-      if (ChkNull(wild))
+      if (is:null(wild))
           c_wild = NULL;
       else if (!cnv:C_string(wild, c_wild))
           runerr(103, wild);
@@ -577,7 +577,7 @@ function{0,1} unimysql_list_fields(id, table, wild)
       if (!cnv:C_string(table, c_table))
           runerr(103, table);
 
-      if (ChkNull(wild))
+      if (is:null(wild))
           c_wild = NULL;
       else if (!cnv:C_string(wild, c_wild))
           runerr(103, wild);
@@ -609,7 +609,7 @@ function{0,1} unimysql_list_tables(id, wild)
       MYSQL_RES *res;
       tended char *c_wild;
 
-      if (ChkNull(wild))
+      if (is:null(wild))
           c_wild = NULL;
       else if (!cnv:C_string(wild, c_wild))
           runerr(103, wild);
