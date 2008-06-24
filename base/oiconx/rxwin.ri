@@ -328,109 +328,6 @@ void await_selectionnotify(wsp ws)
    XSelectInput(ws->display->display, ws->win, XMasks(ws->inputmask));
 }
 
-char *copyselection(wsp ws, char* s, int *ip)
-{
-   Display *display = ws->display->display;
-   Window window = ws->win;
-   Atom	selection;
-   Atom	property;
-   Atom target;
-   Time	timestamp = (Time) ws->timestamp;
-   XSelectionEvent* event;
-   int                status;
-   unsigned char*     data;
-   Atom               actual_target, new_target;
-   int                actual_format;
-   unsigned long      bytes_remaining, number_items;
-   char*              string = NULL;
-   unsigned long      str_len;
-   char*	       atom_name= "STRING";   
-
-   target = XInternAtom(display, atom_name, False);
-
-   if (target == None) {
-       /* printf("target is None\n"); who cares ?  */
-      }
-   printf("Calling XConvertSelection\n");
-   XConvertSelection(display, XA_PRIMARY, XA_STRING, target, window,timestamp);
-   SelectionNotify_requestor = window;
-   XFlush(display);
-
-   await_selectionnotify(ws);
-   event = &SelectionNotify_event.xselection;
-
-   /* Check that property is not NULL. */
-   if ((event->property == (Atom) None) ||
-       (event->selection != XA_PRIMARY) ||
-       (event->requestor == (Window) None) ) {
-
-      if (event->property == (Atom) None) {
-	 /* printf("property = none\n"); */
-	 }
-      if (event->selection != XA_PRIMARY) {
-	 /* printf("selection not primary\n"); */
-	 }
-      if (event->requestor == (Window) None) {
-	 /* printf("window none\n"); */
-	 }
-
-      /* printf("Owning program failed to convert data."); */
-
-      *ip = 0;
-      return NULL;
-      }
-
-   /* Check if we need to convert target. */
-   new_target = ConvertTarget(display, event->target);
-
-   /*
-    * Read data from property identified in SelectionNotify event.
-    */
-   status = XGetWindowProperty(display, event->requestor, event->property,
-                0L,        /* offset */
-#define FULL_LENGTH 8192L
-                FULL_LENGTH,
-                True,      /* Delete when read. */
-                new_target,
-                &actual_target,
-                &actual_format,
-                &number_items,
-                &bytes_remaining,
-                &data);
-
-    if ( ( status == Success ) && (number_items > 0)) {
-
-       /* Convert data to text string. */
-       string = PropertyToString(display,
-				 new_target, number_items, (char*) data);
-
-       if (string != NULL) {
-	  str_len = strlen(string);
-	  if (str_len > 4000) s = strdup(string);
-	  else strcpy(s, string);
-	  XFree(string);
-	  }
-       if (data)
-	  XFree( data );
-       }
-   *ip = str_len;
-   return s;
-}
-
-
-char *getselection(wbp w, char *buf)
-{
-   int i;
-   char *s;
-   STDLOCALS(w);
-
-   s = copyselection(ws, buf, &i);
-   if (i == -1) return NULL;
-
-   return s;
-}
-
-
 /*
  * Function to append data to an X property.
  */
@@ -491,10 +388,6 @@ static void ErrorHandler(Display* display, XErrorEvent* error_event)
 	   error_event->minor_code, error_event->error_code );
    }
 
-int Groovy()
-{ 
-   return ErrorFlag;
-} 
 
 void ResetErrorFlag()
 {  
@@ -505,62 +398,6 @@ void ResetErrorFlag()
 void SetErrorHandler()
 {   
    (void) XSetErrorHandler((XErrorHandler) ErrorHandler);
-}
-
-int AppendProperty(Display* display, Window window,
-    Atom  property,			    /* you should pass "property" */
-    Atom  target,			    /* XA_STRING */
-    int   format,			    /* 8 */
-    unsigned char* data,		    /* data to append */
-    int   number_items)			    /* length of data to append */
-{   
-   SetErrorHandler();			    /* the error handler is set up. */
-   ResetErrorFlag();
-   if (target != XA_STRING) {
-      /* printf("target %x XA_STRING %x\n", target, XA_STRING); */
-      }
-
-   if (number_items > 0) {
-      XChangeProperty(display, window, property, target, format, 
-            PropModeReplace, data, number_items);
-
-      XSync(display, False);
-
-      if ( Groovy() ) {
-	 return False;
-	 }
-      }
-   return True;
-}   
-
-
-
-int ownselection( Display* display, Window window, 
-		  Atom selection,	    /* XA_PRIMARY */
-		  Time timestamp	    /* should be current time */
-		 )
-{   
-   Window owner;
-   if ((window == (Window) None ) || 
-       (selection == (Atom) None ) ) {
-      /* printf("No selection was selected"); */
-      return False;
-      }
-
-   /* Assert ownership of selection. */
-   XSetSelectionOwner(display, selection, window, timestamp);
-
-   /* Now check if we made it. */
-   owner = XGetSelectionOwner(display, selection);
-
-   if (owner != window) {
-
-	printf("Failed to ownselection\n"); 
-      return False;
-      }
-
-   printf("Successfull ownselection our window id=%x\n",window);
-   return True;
 }
 
 
@@ -2106,21 +1943,6 @@ char *s;
       }
    }
 
-int setselection(wbp w, dptr val)
-{
-   wsp ws = w->window;
-   int i;
-   i = ownselection(ws->display->display, ws->win, XA_PRIMARY,
-			(Time) ws->timestamp);
-   if (i != True) return Failed;
-   ws->selectiondata = malloc(StrLen(*val)+1);
-   if (ws->selectiondata == NULL) return Failed;
-   strncpy(ws->selectiondata, StrLoc(*val), StrLen(*val));
-   ws->selectiondata[StrLen(*val)] = '\0';
-   ws->inputmask |= PropertyChangeMask;
-printf("selection data:%s\n",ws->selectiondata);
-   return Succeeded;
-}
 
 int setinputmask(wbp w, char *val)
 {

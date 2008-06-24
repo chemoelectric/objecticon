@@ -594,7 +594,6 @@ typedef struct
 #define A_ICONLABEL	31
 #define A_ICONPOS	32
 #define A_IMAGE		33
-#define A_INPUTMASK	58
 #define A_LABEL		34
 #define A_LEADING	35
 #define A_LINES		36
@@ -619,34 +618,13 @@ typedef struct
 #define A_WINDOWLABEL   55
 #define A_X		56
 #define A_Y		57
-#define A_SELECTION	59
+#define A_INPUTMASK	58
+#define A_TITLEBAR      59
+#define A_MINSIZE	60
+#define A_MINWIDTH	61
+#define A_MINHEIGHT	62
 
-/* 3D attributes */
-#define A_DIM           60
-#define A_EYE           61
-#define A_EYEPOS        62
-#define A_EYEDIR        63
-#define A_EYEUP         64
-#define A_LIGHT         65
-#define A_LIGHT0        66
-#define A_LIGHT1        67
-#define A_LIGHT2        68
-#define A_LIGHT3        69
-#define A_LIGHT4        70
-#define A_LIGHT5        71
-#define A_LIGHT6        72
-#define A_LIGHT7        73
-#define A_TEXTURE       74
-#define A_TEXMODE       75
-#define A_TEXCOORD      76
-
-#define A_TITLEBAR      77
-
-#define A_MINSIZE	78
-#define A_MINWIDTH	79
-#define A_MINHEIGHT	80
-
-#define NUMATTRIBS	80
+#define NUMATTRIBS	62
 
 #define XICONSLEEP	20 /* milliseconds */
 

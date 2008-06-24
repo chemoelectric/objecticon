@@ -2853,14 +2853,6 @@ char * abuf;
 	 AttemptAttr(setgeometry(w, val));
 	 break;
          }
-      case A_SELECTION: {
-	 if (setselection(w, &d) == Succeeded) {
-            *answer = d;
-            wflush(w);
-            return Succeeded;
-            }
-	 break;
-	 }
       case A_INPUTMASK: {
 	 AttemptAttr(setinputmask(w, val));
 	 break;
@@ -3166,10 +3158,6 @@ char * abuf;
       strncpy(abuf, s, len);
       abuf[len] = '\0';
       switch (a=si_s2i(attribs, abuf)) {
-      case A_SELECTION:
-	 if ((selectiontemp=getselection(w, abuf)) == NULL) return Failed;
-	 MakeStr(selectiontemp, strlen(abuf), answer);
-	 break;
       case A_IMAGE:
          ReturnErrNum(147, Error);
          break;
@@ -3727,7 +3715,6 @@ stringint attribs[] = {
    {"cursor",		A_CURSOR},
    {"depth",		A_DEPTH},
    {"descent",		A_DESCENT},
-   {"dim",		A_DIM},
    {"display",		A_DISPLAY},
    {"displayheight",	A_DISPLAYHEIGHT},
    {"displaywidth",	A_DISPLAYWIDTH},
@@ -3735,10 +3722,6 @@ stringint attribs[] = {
    {"dx",		A_DX},
    {"dy",		A_DY},
    {"echo",		A_ECHO},
-   {"eye",		A_EYE},
-   {"eyedir",		A_EYEDIR},
-   {"eyepos",		A_EYEPOS},
-   {"eyeup",		A_EYEUP},
    {"fg",		A_FG},
    {"fheight",		A_FHEIGHT},
    {"fillstyle",	A_FILLSTYLE},
@@ -3755,15 +3738,6 @@ stringint attribs[] = {
    {"inputmask",	A_INPUTMASK},
    {"label",		A_LABEL},
    {"leading",		A_LEADING},
-   {"light",	 	A_LIGHT},
-   {"light0",	 	A_LIGHT0},
-   {"light1",	 	A_LIGHT1},
-   {"light2",	 	A_LIGHT2},
-   {"light3",	 	A_LIGHT3},
-   {"light4",	 	A_LIGHT4},
-   {"light5",	 	A_LIGHT5},
-   {"light6",	 	A_LIGHT6},
-   {"light7",	 	A_LIGHT7},
    {"lines",		A_LINES},
    {"linestyle",	A_LINESTYLE},
    {"linewidth",	A_LINEWIDTH},
@@ -3783,11 +3757,7 @@ stringint attribs[] = {
    {"reverse",		A_REVERSE},
    {"row",		A_ROW},
    {"rows",		A_ROWS},
-   {"selection",	A_SELECTION},
    {"size",		A_SIZE},
-   {"texcoord",		A_TEXCOORD}, 
-   {"texmode",		A_TEXMODE},
-   {"texture",		A_TEXTURE},
    {"titlebar",		A_TITLEBAR},
    {"visual",		A_VISUAL},
    {"width",		A_WIDTH},
