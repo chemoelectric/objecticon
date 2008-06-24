@@ -128,7 +128,7 @@ class Selection()
          "content": {
             # The C code ensures target is one of our supported targets, so no need to check
             # target again.
-            return get_owner(selection).get_content(target) | return ""
+            return get_owner(selection).get_content(target) | ""
          }
          "targets" : {
             l := []
