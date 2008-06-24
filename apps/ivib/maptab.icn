@@ -40,7 +40,7 @@ class MapTab(TabItem)
       attrib_tf.set_contents(contents[-1][1])
       value.set_contents(contents[-1][2])
       update_grey()
-      attrib_tf.focus()
+      attrib_tf.grab_focus()
       attrib_tf.handle_select_all()
    end
 

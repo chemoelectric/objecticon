@@ -1496,7 +1496,7 @@ class PathTab(TabItem)
       path_list.set_cursor(*contents)
       path.set_contents(contents[-1])
       update_grey()
-      path.focus()
+      path.grab_focus()
       path.handle_select_all()
    end
 
