@@ -16,7 +16,6 @@
 #include "../h/monitor.h"
 #include "../h/rmacros.h"
 #include "../h/rstructs.h"
-#include "nativeutils.h"
 
 #ifdef Graphics
    #include "../h/graphics.h"

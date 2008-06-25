@@ -629,7 +629,7 @@ wbp w;
                 target_list[0] = XA_TARGETS;
                 StrLen(param[0]) = 7;
                 StrLoc(param[0]) = "targets";
-                param[1] = create_string(selection_name);
+                param[1] = cstr2string(selection_name);
                 val = call(&proc, param, 2);
                 if (!val || !is:list(*val))
                     err_msg(148, NULL);
@@ -688,8 +688,8 @@ wbp w;
                     StrLoc(param[0]) = "content";
                     Protect(reserve(Strings, strlen(selection_name) + strlen(target_name)),
                             fatalerr(0,NULL));
-                    param[1] = create_string(selection_name);
-                    param[2] = create_string(target_name);
+                    param[1] = cstr2string(selection_name);
+                    param[2] = cstr2string(target_name);
 
                     val = call(&proc, param, 3);
                     if (!val || !is:string(*val))
@@ -747,7 +747,7 @@ wbp w;
 
             StrLen(param[0]) = 5;
             StrLoc(param[0]) = "clear";
-            param[1] = create_string(an);
+            param[1] = cstr2string(an);
             XFree(an);
             call(&proc, param, 2);
 
@@ -1734,11 +1734,11 @@ struct descrip getselectioncontent(wbp w, char *selname, char *targetname)
                               prop);
    if (conv_str) {
        /* Make an Icon string out of the data */
-       res = create_string(conv_str);
+       res = cstr2string(conv_str);
        free(conv_str);
    } else {
        /* Make an Icon string out of the data */
-       res = create_string2(prop, bytes_read);
+       res = bytes2string(prop, bytes_read);
    }
 
    XFree(prop);

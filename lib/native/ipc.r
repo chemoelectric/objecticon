@@ -284,7 +284,7 @@ function{1} shm_get_value(top_id)
        if ((void*)data == (void*)-1)
            aborted("Couldn't attach to shm");
 
-       result = create_string2(data, tp->data_size);
+       result = bytes2string(data, tp->data_size);
        shmdt(data);
 
        /* Signal */
@@ -663,7 +663,7 @@ function{1} msg_receive(top_id)
            memcpy(data, mb.mtext, residue);
        }
 
-       result = create_string2(p, size);
+       result = bytes2string(p, size);
        free(p);
 
        /* Signal */
@@ -727,7 +727,7 @@ function{0,1} msg_receive_nowait(top_id)
            memcpy(data, mb.mtext, residue);
        }
 
-       result = create_string2(p, size);
+       result = bytes2string(p, size);
        free(p);
 
        /* Signal */

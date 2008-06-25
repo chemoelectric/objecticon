@@ -740,3 +740,7 @@ void dup_fds			(dptr d_stdin, dptr d_stdout, dptr d_stderr);
 /* dynamic records */
 struct b_proc *dynrecord(dptr s, dptr fields, int n);
 
+struct descrip create_list(int n, dptr d);
+struct descrip create_empty_list();
+struct descrip cstr2string(char *s);
+struct descrip bytes2string(char *s, int len);

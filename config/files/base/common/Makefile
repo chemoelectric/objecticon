@@ -4,7 +4,7 @@ CWARN = -Wall
 
 OBJS=	long.o getopt.o time.o filepart.o identify.o strtbl.o \
 	mlocal.o literals.o rswitch.o alloc.o\
-	save.o rswitch.o redirerr.o xwindow.o nativeutils.o
+	save.o rswitch.o redirerr.o xwindow.o
 
 all:		$(OBJS)
 

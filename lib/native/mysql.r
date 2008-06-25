@@ -141,7 +141,7 @@ function{1} unimysql_real_escape_string(id, str)
       unsigned long to_len;
       Protect(to = malloc(2 * StrLen(str) + 1), runerr(0));
       to_len = mysql_real_escape_string(mysql, to, StrLoc(str), StrLen(str));
-      result = create_string2(to, to_len);
+      result = bytes2string(to, to_len);
       free(to);
       return result;
    }
@@ -206,7 +206,7 @@ function{1} unimysql_character_set_name(id)
        runerr(101, id)
    body {
       MYSQL *mysql = (MYSQL*)id;
-      return create_string((char*)mysql_character_set_name(mysql));
+      return cstr2string((char*)mysql_character_set_name(mysql));
    }
 end
 
@@ -223,7 +223,7 @@ end
 
 function{1} unimysql_get_client_info()
    body {
-      return create_string((char*)mysql_get_client_info());
+      return cstr2string((char*)mysql_get_client_info());
    }
 end
 
@@ -238,7 +238,7 @@ function{1} unimysql_get_host_info(id)
        runerr(101, id)
    body {
       MYSQL *mysql = (MYSQL*)id;
-      return create_string((char*)mysql_get_host_info(mysql));
+      return cstr2string((char*)mysql_get_host_info(mysql));
    }
 end
 
@@ -247,7 +247,7 @@ function{1} unimysql_sqlstate(id)
        runerr(101, id)
    body {
       MYSQL *mysql = (MYSQL*)id;
-      return create_string((char*)mysql_sqlstate(mysql));
+      return cstr2string((char*)mysql_sqlstate(mysql));
    }
 end
 
@@ -265,7 +265,7 @@ function{1} unimysql_get_server_info(id)
        runerr(101, id)
    body {
       MYSQL *mysql = (MYSQL*)id;
-      return create_string((char*)mysql_get_server_info(mysql));
+      return cstr2string((char*)mysql_get_server_info(mysql));
    }
 end
 
@@ -283,7 +283,7 @@ function{1} unimysql_info(id)
        runerr(101, id)
    body {
       MYSQL *mysql = (MYSQL*)id;
-      return create_string((char*)mysql_info(mysql));
+      return cstr2string((char*)mysql_info(mysql));
    }
 end
 
@@ -295,7 +295,7 @@ function{0,1} unimysql_stat(id)
       char *s = (char*)mysql_stat(mysql);
       if (s == NULL)
           fail;
-      return create_string(s);
+      return cstr2string(s);
    }
 end
 
@@ -469,7 +469,7 @@ function{1} unimysql_error(id)
        runerr(101, id)
    body {
       MYSQL *mysql = (MYSQL*)id;
-      return create_string((char*)mysql_error(mysql));
+      return cstr2string((char*)mysql_error(mysql));
    }
 end
 
@@ -674,15 +674,15 @@ static struct descrip field_to_list(MYSQL_FIELD *field) {
 
    res = create_empty_list();
 
-   tmp = create_string(field->name);
+   tmp = cstr2string(field->name);
    c_put(&res, &tmp);
-   tmp = create_string(field->table);
+   tmp = cstr2string(field->table);
    c_put(&res, &tmp);
-   tmp = create_string(field->org_table);
+   tmp = cstr2string(field->org_table);
    c_put(&res, &tmp);
-   tmp = create_string(field->db);
+   tmp = cstr2string(field->db);
    c_put(&res, &tmp);
-   tmp = create_string(field->_DEF);
+   tmp = cstr2string(field->_DEF);
    c_put(&res, &tmp);
    MakeInt(field->length, &tmp);
    c_put(&res, &tmp);
@@ -793,7 +793,7 @@ function{0,1} unimysql_fetch_row(id)
        result = create_empty_list();
        n = mysql_num_fields(mysql_res);
        for (i = 0; i < n; ++i) {
-           struct descrip tmp = create_string2(row[i], lengths[i]);
+           struct descrip tmp = bytes2string(row[i], lengths[i]);
            c_put(&result, &tmp);
        }
        return result;
