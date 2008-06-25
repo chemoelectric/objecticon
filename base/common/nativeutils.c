@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 
+#define Protect(notnull,orelse) do {if ((notnull)==NULL) orelse;} while(0)
+
 /*
   List creation helper funcs.  Example usage:
 
@@ -31,7 +33,7 @@ struct descrip create_list(int n, dptr d) {
    if (nslots == 0)
       nslots = MinListSlots;
 
-   hp = alclist(size, nslots);
+   Protect(hp = alclist(size, nslots), fatalerr(0,NULL));
    bp = (struct b_lelem*)hp->listhead;
  
    /*
@@ -51,13 +53,10 @@ struct descrip create_string(char *s) {
     char *a;
     int n;
 
-    if (s == NULL)
+    if (!s)
         return nulldesc;
-
     n = strlen(s);
-
-    a = alcstr(s, n);
-    
+    Protect(a = alcstr(s, n), fatalerr(0,NULL));
     MakeStr(a, n, &res);
 
     return res;
@@ -65,11 +64,12 @@ struct descrip create_string(char *s) {
 
 struct descrip create_string2(char *s, int len) {
     struct descrip res;
+    char *a;
 
-    if (s == NULL)
+    if (!s)
         return nulldesc;
-
-    MakeStr(alcstr(s, len), len, &res);
+    Protect(a = alcstr(s, len), fatalerr(0,NULL));
+    MakeStr(a, len, &res);
 
     return res;
 }

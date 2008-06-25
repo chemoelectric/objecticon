@@ -629,9 +629,7 @@ wbp w;
                 target_list[0] = XA_TARGETS;
                 StrLen(param[0]) = 7;
                 StrLoc(param[0]) = "targets";
-                Protect((StrLoc(param[1]) = alcstr(selection_name, 
-                                                   strlen(selection_name))), fatalerr(0,NULL));
-                StrLen(param[1]) = strlen(selection_name);
+                param[1] = create_string(selection_name);
                 val = call(&proc, param, 2);
                 if (!val || !is:list(*val))
                     err_msg(148, NULL);
@@ -690,12 +688,8 @@ wbp w;
                     StrLoc(param[0]) = "content";
                     Protect(reserve(Strings, strlen(selection_name) + strlen(target_name)),
                             fatalerr(0,NULL));
-                    Protect((StrLoc(param[1]) = alcstr(selection_name, 
-                                                       strlen(selection_name))), fatalerr(0,NULL));
-                    StrLen(param[1]) = strlen(selection_name);
-                    Protect((StrLoc(param[2]) = alcstr(target_name, 
-                                                       strlen(target_name))), fatalerr(0,NULL));
-                    StrLen(param[2]) = strlen(target_name);
+                    param[1] = create_string(selection_name);
+                    param[2] = create_string(target_name);
 
                     val = call(&proc, param, 3);
                     if (!val || !is:string(*val))
@@ -753,8 +747,7 @@ wbp w;
 
             StrLen(param[0]) = 5;
             StrLoc(param[0]) = "clear";
-            Protect((StrLoc(param[1]) = alcstr(an, strlen(an))), fatalerr(0,NULL));
-            StrLen(param[1]) = strlen(an);
+            param[1] = create_string(an);
             XFree(an);
             call(&proc, param, 2);
 
@@ -1741,13 +1734,11 @@ struct descrip getselectioncontent(wbp w, char *selname, char *targetname)
                               prop);
    if (conv_str) {
        /* Make an Icon string out of the data */
-       Protect((StrLoc(res) = alcstr(conv_str, strlen(conv_str))), fatalerr(0,NULL));
-       StrLen(res) = strlen(conv_str);
+       res = create_string(conv_str);
        free(conv_str);
    } else {
        /* Make an Icon string out of the data */
-       Protect((StrLoc(res) = alcstr(prop, bytes_read)), fatalerr(0,NULL));
-       StrLen(res) = bytes_read;
+       res = create_string2(prop, bytes_read);
    }
 
    XFree(prop);

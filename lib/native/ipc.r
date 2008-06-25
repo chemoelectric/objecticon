@@ -4,7 +4,6 @@
 #passthru #include <sys/sem.h>
 #passthru #include <sys/msg.h>
 #passthru #include <sys/types.h>
-#passthru #include "nativeutils.h"
 
 typedef union {
     int val;

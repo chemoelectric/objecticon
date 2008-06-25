@@ -1,6 +1,5 @@
 #passthru #undef column
 #passthru #include "mysql.h"
-#passthru #include "nativeutils.h"
 
 static struct descrip field_to_list(MYSQL_FIELD *field);
 
