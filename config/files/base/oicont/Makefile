@@ -24,6 +24,7 @@ pure:
 oicont:		$(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o oicont $(OBJS) $(LIBS)
 		cp oicont $(OIBIN)
+		ln -f -s oicont $(OIBIN)/udis
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/proto.h ../h/mproto.h \
