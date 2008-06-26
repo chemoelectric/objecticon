@@ -9,3 +9,4 @@ objecticon.info:  objecticon.texi
 
 html:	objecticon.texi
 	makeinfo --html -o html objecticon.texi
+	touch html
