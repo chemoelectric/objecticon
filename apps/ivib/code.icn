@@ -328,6 +328,7 @@ class Code()
                put(body, "self.component_setup()")
          }
          put(body, "set_fields(a)")
+         put(body, "return")
          add_method("new", ["a[]"], body)
       }
       self.methods_out(cl)

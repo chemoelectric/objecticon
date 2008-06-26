@@ -18,10 +18,10 @@ $define GRID_TOLERANCE 15
 #
 class GridLine()
    public 
-   avg_pos,                 # The average of the x or y values 
-   avg_size,                # The average w or h.
-   elements
-# WARN : parameterless initially method
+      avg_pos,                 # The average of the x or y values 
+      avg_size,                # The average w or h.
+      elements
+
    public new()
       elements := set([])
       return
@@ -101,8 +101,8 @@ end
 #
 class GridSet()
    public 
-   orientation,             # Either "h" or "v"                  
-   lines
+      orientation,             # Either "h" or "v"                  
+      lines
 
    #
    # Create a new GridLine and enter e into it.
@@ -144,8 +144,8 @@ class GridSet()
       }
    end
       
-# WARN : parameterless initially method
-   public new()
+   public new(orientation)
+      self.orientation := orientation
       lines := []
       return
    end
