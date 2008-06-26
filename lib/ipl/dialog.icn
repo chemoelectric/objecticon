@@ -732,7 +732,7 @@ procedure Popup(args[])			#: create popup subwindow
    y := get(args);		integer(y) | runerr(101, \y)
    w := \get(args) | 250; 	integer(w) | runerr(101, w)
    h := \get(args) | 150; 	integer(h) | runerr(101, h)
-   proc := \get(args) | Event
+   proc := \get(args) | NextEvent
 
    # Handle defaults
    dx := WAttrib(win, "dx")
@@ -770,7 +770,7 @@ procedure Popup(args[])			#: create popup subwindow
 
    # Flush any previously entered events on the window
    while *Pending(win) > 0 do
-      Event(win)
+      NextEvent(win)
 
    # Call proc; save result, if any, or use args as flag if none.
    retv := (proc ! args) | args
