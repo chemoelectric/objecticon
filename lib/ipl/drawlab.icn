@@ -84,7 +84,7 @@ procedure drawlab(p, callt, label)
                GotoRC(2, 2)
                writes(&window, name)
                trace(calls[name])
-               Event()
+               NextEvent()
                EraseArea()
                }
             }

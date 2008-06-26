@@ -155,9 +155,9 @@ procedure event_Vradio_frame(self, e, x, y)
    focus := self.V.lookup(self, x, y)
    (\focus).V.event(focus, e)
    repeat {
-      e := Event(self.win)
+      e := NextEvent(self.win)
       if e === "\^s" then
-         until Event(self.win) === (&lpress|&mpress|&rpress) ;
+         until NextEvent(self.win) === (&lpress|&mpress|&rpress) ;
       if self.V.inrange(self, &x, &y) then 
          focus := self.V.lookup(self, &x, &y)
       if rv := (\focus).V.event(focus, e) then {

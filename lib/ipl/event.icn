@@ -14,7 +14,7 @@
 #
 ############################################################################
 #
-#  Event(win) overloads the built-in function Event() and produces
+#  NextEvent(win) overloads the built-in function NextEvent() and produces
 #  events using evplay().
 #
 ############################################################################
@@ -29,15 +29,15 @@
 
 link evplay
 
-procedure Event(win)
-   static Event_
+procedure NextEvent(win)
+   static NextEvent_
 
    initial {
-      Event_ := proc("Event", 0) | stop("*** cannot get built-in Event()")
+      NextEvent_ := proc("NextEvent", 0) | stop("*** cannot get built-in NextEvent()")
       }
 
    evplay(win) | exit()
 
-   return Event_(win)
+   return NextEvent_(win)
 
 end

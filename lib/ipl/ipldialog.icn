@@ -89,9 +89,9 @@ $define XOff		  0	# offset for text vidgets
 $define XOffButton	 85	# initial x offset for buttons
 $define XOffIncr	 15	# space between buttons
 
-procedure Dialog(win, captions, labels, defaults, widths, buttons, index)
-   Dialog := TextDialog
-   return Dialog(win, captions, labels, defaults, widths, buttons, index)
+procedure IplDialog(win, captions, labels, defaults, widths, buttons, index)
+   IplDialog := TextDialog
+   return IplDialog(win, captions, labels, defaults, widths, buttons, index)
 end
 
 procedure AskDialog(win, caption)

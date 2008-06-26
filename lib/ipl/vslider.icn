@@ -96,7 +96,7 @@ local value
             s.callback.V.set(s.callback, s, s.callback.min + value, s.discont)
          s.data := s.callback.value
          update_Vvslider(s, 1)
-         e := Event(s.win)
+         e := NextEvent(s.win)
          }
    else
       fail				# not our event
@@ -239,7 +239,7 @@ local value
             s.callback.V.set(s.callback, s, s.callback.min + value, s.discont)
          s.data := s.callback.value
          update_Vhslider(s, 1)
-         e := Event(s.win)
+         e := NextEvent(s.win)
          }
    else
       fail				# not our event

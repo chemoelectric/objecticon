@@ -154,7 +154,7 @@ procedure Exec_Button(win, r, x, y)
    FillRectangle(win, r.x + BORDER, r.y + BORDER, r.w - 2*BORDER, r.h -2*BORDER)
    BevelRectangle(win, r.x, r.y, r.w, r.h, b := -BORDER)
 
-   while e := Event(win) do {
+   while e := NextEvent(win) do {
       x := &x
       y := &y
       case e of {

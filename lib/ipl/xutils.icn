@@ -25,13 +25,13 @@ link gpxlib
 procedure Quit(win)
    /win := &window
    while *Pending(win) > 0 do
-      if Event(win) === QuitEvents() then
+      if NextEvent(win) === QuitEvents() then
          return win
    fail
 end
 
 procedure Done(win)
    /win := &window
-   until Event(win) === QuitEvents()
+   until NextEvent(win) === QuitEvents()
    exit()
 end

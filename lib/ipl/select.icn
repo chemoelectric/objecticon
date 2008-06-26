@@ -38,7 +38,7 @@ procedure select(win)		#: interactive selection from window
 
    state := "wait"
    
-   while event := Event(win) do {
+   while event := NextEvent(win) do {
       if event == "q" then {
          DrawRectangle(win, \x0, y0, 0, 0)	# clear if already drawn
          fail

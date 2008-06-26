@@ -72,7 +72,7 @@ initial {
 
     repeat {
 	rv := &null
-	case event := Event(win) of {
+	case event := NextEvent(win) of {
 	-10: next
 	"\r": {
 	    rv := def_button
@@ -151,7 +151,7 @@ initial {
 
     repeat {
 	lrv := rv := &null
-	case event := Event(win) of {
+	case event := NextEvent(win) of {
 	-10 : next
 	"\r" : {
 	    rv := def_button

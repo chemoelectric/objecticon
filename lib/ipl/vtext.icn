@@ -301,7 +301,7 @@ procedure event_Vtext(self, e, x, y)
             draw_cursor_Vtext(self)
             otb := self.T.tb
             }
-         e := Event(self.win)
+         e := NextEvent(self.win)
          }
       rv := &null
       WAttrib(self.win, "pointer=top left arrow")

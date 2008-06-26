@@ -76,6 +76,7 @@ end
 # For frames, this must include (recursively) all contained vidgets.
 #
 procedure winnow_Vdialog(self, new_window)
+   local v
    self.win := new_window
    every v := !self.draw do {
       v.win := new_window
@@ -175,7 +176,7 @@ procedure open_dialog_Vdialog(self, x, y, values, def_str)
       # erased by a redraw call for the dialog (e.g. in ColorDialog())
       BevelRectangle((\def).win, def.ax-5, def.ay-5, def.aw+10, def.ah+10,-2)
 
-      e := Event(self.win)
+      e := NextEvent(self.win)
       if e === "\r" then {
          if \def then {
             e := &lpress
@@ -225,7 +226,7 @@ procedure open_dialog_Vdialog(self, x, y, values, def_str)
 
 ## flush pending events that may have accumulated on the parent window
    while *Pending(self.win) > 0 do
-      Event(self.win)
+      NextEvent(self.win)
 
 ##  For Vtext vidgies, tell them to turn off their cursors.
    every tid := !self.F.text_entries do

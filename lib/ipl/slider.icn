@@ -178,7 +178,7 @@ procedure Exec_Vert_Slider(win, r, x, y)
          if e = &lrelease then
             return
          }
-      e := Event(win)
+      e := NextEvent(win)
       y := &y
       }
    return
@@ -203,7 +203,7 @@ procedure Exec_Horiz_Slider(win, r, x, y)
          if e = &lrelease then
             return
          }
-      e := Event(win)
+      e := NextEvent(win)
       x := &x
       }
    return

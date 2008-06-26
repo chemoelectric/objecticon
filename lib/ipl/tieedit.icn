@@ -32,7 +32,7 @@ link interact
 link patxform
 link vdialog
 link vsetup
-link dialog
+link ipldialog
 link wopen
 
 global cellsize
@@ -339,7 +339,7 @@ end
 
 procedure new_tile()
 
-   case Dialog("New:", ["height", "width"], [*grid_rows, *grid_rows[1]], 3,
+   case IplDialog("New:", ["height", "width"], [*grid_rows, *grid_rows[1]], 3,
       ["Okay", "Cancel"]) of {
          "Cancel"  :  fail
          "Okay"    :   {
@@ -674,7 +674,7 @@ procedure xform(col, row)
          10:  list(vbits, repl("0", hbits))
          12:  ptrim(grid_rows)
          14:  {
-           case Dialog("Crop:", ["left", "right", "top", "bottom"],
+           case IplDialog("Crop:", ["left", "right", "top", "bottom"],
               0, 3, ["Okay", "Cancel"]) of {
                  "Cancel":   fail
                   "Okay": {
@@ -695,7 +695,7 @@ procedure xform(col, row)
          7:   protate(grid_rows, 180)
          10:  pinvert(grid_rows)
          12:  {
-               case Dialog("Enlarge:", ["left", "right", "top", "bottom"],
+               case IplDialog("Enlarge:", ["left", "right", "top", "bottom"],
                   0, 3, ["Okay", "Cancel"]) of {
                      "Cancel":  fail
                      "Okay":  {
@@ -712,7 +712,7 @@ procedure xform(col, row)
          1:   pshift(grid_rows, 1, "h")
          10:  pscramble(grid_rows, "b")
          12:  {
-            case Dialog("Center:", ["width", "height"], [*grid_rows[1], *grid_rows], 
+            case IplDialog("Center:", ["width", "height"], [*grid_rows[1], *grid_rows], 
                3, ["Okay", "Cancel"]) of {
                "Cancel":  fail
                "Okay": {

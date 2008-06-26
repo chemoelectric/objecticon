@@ -144,7 +144,7 @@ procedure edit_cw()
    expose(cw_win)
 
    repeat {
-      case Event(cw_win) of {
+      case NextEvent(cw_win) of {
          &lpress | &mpress | &rpress:   {
             name := cw_names[(&y / Lheight) + 1]
             if &meta then {

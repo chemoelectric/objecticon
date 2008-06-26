@@ -45,7 +45,7 @@ procedure winsnap(win, x, y, w, h)
          name := dialog_value
          if f := open(name) then {
             close(f)
-            if Dialog("Overwrite existing file?", , , ,
+            if IplDialog("Overwrite existing file?", , , ,
                ["Okay", "Cancel"]) == "Cancel" then next
             }
          WriteImage(win, name, x, y, w, h) | {

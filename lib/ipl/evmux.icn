@@ -192,7 +192,7 @@ procedure evhandle(win)
    local x, y, ev, e, r, t
 
    t := (\EvMux_Windows)[win] | stop("no events registered for window")
-   ev := Event(win)
+   ev := NextEvent(win)
    x := &x
    y := &y
 

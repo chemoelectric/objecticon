@@ -189,7 +189,7 @@ procedure execute()				#: command-line launch
 
    win := list_win(olist, "command") | fail
 
-   Event(win)
+   NextEvent(win)
 
    WClose(win)
 

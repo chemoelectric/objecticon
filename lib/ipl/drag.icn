@@ -86,7 +86,7 @@ procedure Drag(win, x, y, w, h)			#: opaque rectangle drag
    xoff := x - &x
    yoff := y - &y
 
-   until Event(win) === (&lrelease | &mrelease | &rrelease) do {
+   until NextEvent(win) === (&lrelease | &mrelease | &rrelease) do {
 
       # move the rectangle
       xnew := &x + xoff
@@ -154,7 +154,7 @@ procedure DragOutline(win, x, y, w, h)		#: outlined rectangle drag
    h -:= 1
 
    DrawRectangle(wrev, x, y, w, h)		# draw initial rectangle
-   until Event(wrev) === (&lrelease | &mrelease | &rrelease) do {
+   until NextEvent(wrev) === (&lrelease | &mrelease | &rrelease) do {
       DrawRectangle(wrev, x, y, w, h)		# erase old rectangle
       x := &x + xoff
       y := &y + yoff
