@@ -50,15 +50,7 @@ char *relfile(char *prog, char *mod) {
 
    strcpy(buf, baseloc);		/* start with base location */
    strcat(buf, mod);			/* append adjustment */
-
    normalize(buf);			/* normalize result */
-
-   if ((mod[strlen(mod)-1] == '/')	/* if trailing slash wanted */
-#if MSDOS
-       ||(mod[strlen(mod)-1] == '\\')
-#endif
-       )
-      sprintf(buf+strlen(buf), "%c", FILESEP);/* append to result */
    return salloc(buf);			/* return allocated string */
    }
 
@@ -209,87 +201,136 @@ static char *followsym(char *name, char *buf, size_t len) {
       return NULL;
    }
 
+#if UNIX
+
 /*
- *  normalize(path) -- put file path in canonical form.
- *
- *  Rewrites path in place, and returns it, after excising fragments of
- *  "." or "dir/..".  All leading slashes are preserved but other extra
- *  slashes are deleted.  The path never grows longer except for the
- *  special case of an empty path, which is rewritten to be ".".
- *
- *  No check is made that any component of the path actually exists or
- *  that inner components are truly directories.  From this it follows
- *  that if "foo" is any file path, canonizing "foo/.." produces the path
- *  of the directory containing "foo".
+ * Normalize a path by removing redundant slashes, . dirs and .. dirs.
  */
-
-char *normalize(char *path) {
-   int len = 0;
-   char *root = path, *end = path + strlen(path),
-        *in = NULL, *out = NULL, *prev = NULL;
-
-#if MSDOS
-   while(strchr(path, '\\')) *strchr(path, '\\') = '/';
-#endif
-
-   /* initialize */
-#ifdef MSDOS
-   if (isalpha(root[0]) && root[1]==':') root += 2;
-#endif
-   while (*root == '/')		/* preserve all leading slashes */
-      root++;
-   in = root;				/* input pointer */
-   out = root;				/* output pointer */
-
-   /* scan string one component at a time */
-   while (in < end) {
-
-      /* count component length */
-      for (len = 0; in + len < end && in[len] != '/'; len++)
-         ;
-
-      /* check for ".", "..", or other */
-      if (len == 1 && *in == '.')	/* just ignore "." */
-         in++;
-      else if (len == 2 && in[0] == '.' && in[1] == '.') {
-         in += 2;			/* skip over ".." */
-         /* find start of previous component */
-         prev = out;
-         if (prev > root)
-            prev--;			/* skip trailing slash */
-         while (prev > root && prev[-1] != '/')
-            prev--;			/* find next slash or start of path */
-         if (prev < out - 1
-         && (out - prev != 3 || strncmp(prev, "../", 3) != 0)) {
-            out = prev;		/* trim trailing component */
+void normalize(char *file)
+{
+    char *p, *q;
+    p = q = file;
+    while (*p) {
+        if (*p == '/' && *(p+1) == '.' && 
+            *(p+2) == '.' && (*(p+3) == '/' || *(p+3) == 0)) {
+            p += 3;
+            if (q > file) {
+                --q;
+                while (q > file && *q != '/')
+                    --q;
             }
-         else {
-            memcpy(out, "../", 3);	/* cannot trim, so must keep ".." */
-            out += 3;
-            }
-         }
-      else {
-         memmove(out, in, len);	/* copy component verbatim */
-         out += len;
-         in += len;
-         *out++ = '/';		/* add output separator */
-         }
-
-      while (in < end && *in == '/')	/* consume input separators */
-         in++;
-      }
-
-   /* final fixup */
-   if (out > root)
-      out--;				/* trim trailing slash */
-   if (out == path)
-      *out++ = '.';			/* change null path to "." */
-   *out++ = '\0';
-#if MSDOS
-   while(strchr(path, '/')) *strchr(path, '/') = '\\';
-#endif
-   return path;			/* return result */
+        } else if (*p == '/' && *(p+1) == '.' && 
+                   (*(p+2) == '/' || *(p+2) == 0)) {
+            p += 2;
+        } else if (*p == '/' && *(p+1) == '/') {  /* Duplicate slashes */
+            ++p;
+        } else
+            *q++ = *p++;
+    }
+    *q = 0;
 }
+
+/*
+ * Canonicalize a path by making it an absolute path if it isn't one
+ * already, and then normalizing the result.  A pointer to a static
+ * buffer is returned.
+ */
+char *canonicalize(char *path)
+{
+    static char result[PATH_MAX];
+    static char currentdir[PATH_MAX];
+    if (path[0] == '/') {
+        if (snprintf(result, sizeof(result), "%s", path) >= sizeof(result)) {
+            fprintf(stderr, "path too long to canonicalize: %s", path);
+            exit(1);
+        }
+    } else {
+        if (!getcwd(currentdir, sizeof(currentdir))) {
+            fprintf(stderr, "getcwd return 0 - current working dir too long.");
+            exit(1);
+        }
+        if (snprintf(result, sizeof(result), "%s/%s", currentdir, path) >= sizeof(result)) {
+            fprintf(stderr, "path too long to canonicalize: %s", path);
+            exit(1);
+        }
+    }
+    normalize(result);
+    return result;
+}
+#endif
+
+#if MSDOS
+
+/*
+ * Normalize a path by lower-casing everything, changing / to \,
+ * removing redundant slashes, . dirs and .. dirs.
+ */
+void normalize(char *file)
+{
+    char *p, *q;
+
+    /*
+     * Lower case everything and convert / to \
+     */
+    for (p = file; *p; ++p) {
+        if (*p == '/')
+            *p = '\\';
+        else 
+            *p = tolower(*p);
+    }
+    if (isalpha(file[0]) && file[1]==':') 
+        file += 2;
+    p = q = file;
+    while (*p) {
+        if (*p == '\\' && *(p+1) == '.' && 
+            *(p+2) == '.' && (*(p+3) == '\\' || *(p+3) == 0)) {
+            p += 3;
+            if (q > file) {
+                --q;
+                while (q > file && *q != '\\')
+                    --q;
+            }
+        } else if (*p == '\\' && *(p+1) == '.' && 
+                   (*(p+2) == '\\' || *(p+2) == 0)) {
+            p += 2;
+        } else if (*p == '\\' && *(p+1) == '\\') {  /* Duplicate slashes */
+            ++p;
+        } else
+            *q++ = *p++;
+    }
+    *q = 0;
+}
+
+/*
+ * Canonicalize a path by making it an absolute path if it isn't one
+ * already, and then normalizing the result.  A pointer to a static
+ * buffer is returned.
+ */
+char *canonicalize(char *path)
+{
+    static char result[PATH_MAX];
+    static char currentdir[PATH_MAX];
+    if (path[0] == '\\' || path[0] == '/' ||
+        (isalpha(path[0]) && path[1] == ':')) {
+        if (snprintf(result, sizeof(result), "%s", path) >= sizeof(result)) {
+            fprintf(stderr, "path too long to canonicalize: %s", path);
+            exit(1);
+        }
+    } else {
+        if (!getcwd(currentdir, sizeof(currentdir))) {
+            fprintf(stderr, "getcwd return 0 - current working dir too long.");
+            exit(1);
+        }
+        if (snprintf(result, sizeof(result), "%s\\%s", currentdir, path) >= sizeof(result)) {
+            fprintf(stderr, "path too long to canonicalize: %s", path);
+            exit(1);
+        }
+    }
+    normalize(result);
+    return result;
+}
+
+#endif
 
 #if !MSDOS
 FILE *pathOpen(char *fname, char *mode)

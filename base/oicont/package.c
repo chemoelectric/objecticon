@@ -263,7 +263,7 @@ int add_package(struct package_dir *p, struct package *new)
  */
 static char *get_interned_absolute(char *dir)
 {
-    char *cdir = canonicalize_path(dir);
+    char *cdir = canonicalize(dir);
     if (!cdir)
         return 0;
     return intern_using(&pack_sbuf, cdir);

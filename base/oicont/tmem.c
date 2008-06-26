@@ -487,7 +487,7 @@ char *fullname(char *file)
     char *cdir;
     /* Get the canonicalized directory */
     fps = fparse(file);
-    cdir = canonicalize_path(fps->dir);
+    cdir = canonicalize(fps->dir);
     if (!cdir)
         quitf("directory of source file doesn't exist %s", file);
 
