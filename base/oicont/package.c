@@ -349,7 +349,7 @@ void load_package_db_from_ipath()
     char *s = ipath;
 
     /* Load anything in the CD */
-    load_path_impl(".");
+    load_path_impl("./");
     
     /* And anything on the IPATH */
     if (!s)
