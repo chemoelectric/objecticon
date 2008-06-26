@@ -222,7 +222,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 
         EVVal((word)Op_Invoke,E_Ecall);
 
-        if ((nparam < 0) || (proc->ndynam == -2) || (proc->ndynam == -3))
+        if ((nparam < 0) || (proc->ndynam == -2))
             return I_Vararg;
         else
             return I_Builtin;

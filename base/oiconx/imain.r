@@ -1006,7 +1006,7 @@ void resolve(pstate)
                      */
                     StrLoc(pp->pname) = strcons + (uword)StrLoc(pp->pname);
 
-                    if ((pp->ndynam == -2) || (pp->ndynam == -3)) {
+                    if (pp->ndynam == -2) {
                         /*
                          * This procedure is a record constructor.	Make its entry point
                          *	be the entry point of Omkrec().
