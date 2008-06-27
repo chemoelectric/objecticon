@@ -595,6 +595,7 @@ struct b_proc *dynrecord(dptr s, dptr fields, int n)
       bp->recfieldtable_col = -1;  /* Never used, since bp->program = 0 => always use string search */
       bp->recid = 0;
       bp->program = 0;
+      bp->field = 0;
       StrLoc(bp->recname) = malloc(StrLen(*s)+1);
       strncpy(StrLoc(bp->recname), StrLoc(*s), StrLen(*s));
       if (StrLoc(bp->recname) == NULL) return NULL;
