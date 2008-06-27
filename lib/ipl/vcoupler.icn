@@ -67,10 +67,10 @@ procedure call_clients_Vcoupler(s, caller, val)
    every i := 1 to *s.clients do {
       c := s.clients[i]
       if type(c) == "procedure" then c(s.callers[i], val)
-      else if type(c) ? find("coupler") then c.V.set(c, caller, val)
-      else if type(c) == !Vrecset then {
+      else if subtype(c) ? find("coupler") then c.V.set(c, caller, val)
+      else if subtype(c) == !Vrecset then {
          # don't call yourself
-         if (type(\caller) == type(c) & \caller["uid"] === c["uid"]) then
+         if (subtype(\caller) == subtype(c) & \caller["uid"] === c["uid"]) then
             next
          c.V.couplerset(c, caller, val)
          }

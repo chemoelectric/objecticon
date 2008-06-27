@@ -61,15 +61,15 @@ procedure VInit()
 initial {
 
 #  Define the cset of all allowable vidget record types.
-   Vrecset := set(["Vbutton_rec", "Vcheckbox_rec", 
-      "Vline_rec", "Vdialog_frame_rec", 
-      "Vframe_rec",  "Vmenu_item_rec", 
-      "Vmenu_frame_rec", "Vradio_entry_rec", "Vradio_frame_rec", 
-      "Vpull_down_button_rec", "Vpane_rec", "Varrow_rec",
-      "Vthumb_rec", "Vscrollbar_frame_rec",
-      "Vslider_rec", "Vtext_rec", "Vgrid_rec"])
+   Vrecset := set(["ipl.vidgets.Vbutton_rec", "ipl.vidgets.Vcheckbox_rec", 
+      "ipl.vidgets.Vline_rec", "ipl.vidgets.Vdialog_frame_rec", 
+      "ipl.vidgets.Vframe_rec",  "ipl.vidgets.Vmenu_item_rec", 
+      "ipl.vidgets.Vmenu_frame_rec", "ipl.vidgets.Vradio_entry_rec", "ipl.vidgets.Vradio_frame_rec", 
+      "ipl.vidgets.Vpull_down_button_rec", "ipl.vidgets.Vpane_rec", "ipl.vidgets.Varrow_rec",
+      "ipl.vidgets.Vthumb_rec", "ipl.vidgets.Vscrollbar_frame_rec",
+      "ipl.vidgets.Vslider_rec", "ipl.vidgets.Vtext_rec", "ipl.vidgets.Vgrid_rec"])
 
-   Vcoupler_recset := set(["Vcoupler_rec", "Vrange_coupler_rec"])
+   Vcoupler_recset := set(["ipl.vidgets.Vcoupler_rec", "ipl.vidgets.Vrange_coupler_rec"])
 
 #  The padding in a Vtext_in between the data outline and the data text.
    V_TEXT_PAD 		:= 4

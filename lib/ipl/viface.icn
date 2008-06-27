@@ -56,7 +56,7 @@ procedure VDraw(vid, code)
    static type
 
    initial type := proc("type", 0)	# protect attractive name
-   if not (type(vid) == !Vrecset ) then
+   if not (subtype(vid) == !Vrecset ) then
       _Vbomb("invalid vidget parameter to VDraw()")
 
    vid.V.draw(vid, code)
@@ -66,9 +66,9 @@ procedure VErase(vid)
    static type
 
    initial type := proc("type", 0)	# protect attractive name
-   if not (type(vid) == !Vrecset) then
+   if not (subtype(vid) == !Vrecset) then
       _Vbomb("invalid vidget parameter to VErase()")
-   if type(vid) == "Vline_rec" then
+   if subtype(vid) == "ipl.vidgets.Vline_rec" then
       erase_Vline(vid)
    else
       EraseArea(vid.win, vid.ax, vid.ay, vid.aw, vid.ah)
@@ -78,7 +78,7 @@ procedure VOutline(vid)
    static type
 
    initial type := proc("type", 0)	# protect attractive name
-   if not (type(vid) == !Vrecset ) then
+   if not (subtype(vid) == !Vrecset ) then
       _Vbomb("invalid vidget parameter to VOutline()")
 
    vid.V.outline(vid)
@@ -88,9 +88,9 @@ procedure VResize(vid, x, y, w, h)
    static type
 
    initial type := proc("type", 0)	# protect attractive name
-   if not (type(vid) == !Vrecset ) then
+   if not (subtype(vid) == !Vrecset ) then
       _Vbomb("invalid vidget parameter to VResize()")
-   if type(vid) == "Vline_rec" then {
+   if subtype(vid) == "ipl.vidgets.Vline_rec" then {
       vid.ax1 := \x
       vid.ay1 := \y
       vid.ax2 := vid.ax1 + \w
@@ -106,9 +106,9 @@ procedure VResize(vid, x, y, w, h)
 end
 
 procedure VRemove(frame, vid, erase)
-   if not (type(frame) ? find("frame") ) then
+   if not (subtype(frame) ? find("frame") ) then
       _Vbomb("invalid frame parameter to VRemove()")
-   else if not (type(vid) == !Vrecset ) then
+   else if not (subtype(vid) == !Vrecset ) then
       _Vbomb("invalid vidget parameter to VRemove()")
  
    frame.V.remove(frame, vid, erase)
@@ -119,9 +119,9 @@ procedure VInsert(frame, vid, x, y, w, h)
 
    initial image := proc("image", 0)	# protect attractive name
 
-   if not (type(frame) ? find("frame") ) then
+   if not (subtype(frame) ? find("frame") ) then
       _Vbomb("invalid frame parameter to VInsert()")
-   else if not (type(vid) == !Vrecset ) then
+   else if not (subtype(vid) == !Vrecset ) then
       _Vbomb("invalid vidget parameter to VInsert(): " || image(vid))
    else if (\x, not numeric(x) ) then
       _Vbomb("non-numeric x parameter to VInsert()")
@@ -135,7 +135,7 @@ procedure VInsert(frame, vid, x, y, w, h)
 end
 
 procedure VEvent(vid, e, x, y)
-   if not (type(vid) == !Vrecset ) then
+   if not (subtype(vid) == !Vrecset ) then
       _Vbomb("invalid vidget parameter to VEvent()")
 
    return vid.V.event(vid, e, x, y)
@@ -149,9 +149,9 @@ end
 #  this is an editable field.
 ############################################################################
 procedure VRegister(dialog, vid, x, y, w, h)
-   if not (type(dialog) ? find("dialog_frame") ) then
+   if not (subtype(dialog) ? find("dialog_frame") ) then
       _Vbomb("invalid dialog parameter to VRegister()")
-   else if not (type(vid) == !Vrecset ) then
+   else if not (subtype(vid) == !Vrecset ) then
       _Vbomb("invalid vidget parameter to VRegister()")
    else if (\x, not numeric(x) ) then
       _Vbomb("Non-numeric x parameter to VRegister()")
@@ -166,9 +166,9 @@ procedure VRegister(dialog, vid, x, y, w, h)
 end
 
 procedure VUnregister(dialog, vid)
-   if not (type(dialog) ? find("dialog_frame") ) then
+   if not (subtype(dialog) ? find("dialog_frame") ) then
       _Vbomb("invalid dialog parameter to VUnregister()")
-   else if not (type(vid) == !Vrecset ) then
+   else if not (subtype(vid) == !Vrecset ) then
       _Vbomb("invalid vidget parameter to VUnregister()")
 
    dialog.F.unregister(dialog, vid)
@@ -189,7 +189,7 @@ end
 # location is remembered and applied to subsequent opens.
 #
 procedure VOpenDialog(dialog, x, y, data, default_string)
-   if not (type(dialog) ? find("dialog_frame") ) then
+   if not (subtype(dialog) ? find("dialog_frame") ) then
       _Vbomb("invalid dialog parameter to VOpenDialog()")
    if \x & not (numeric(x) & numeric(y)) then
       _Vbomb("invalid x or y parameter passed to VOpenDialog()")
@@ -204,7 +204,7 @@ end
 #  with absolute coordinates.
 #
 procedure VFormat(frame)
-   if not (type(frame) ? find("frame") ) then
+   if not (subtype(frame) ? find("frame") ) then
       _Vbomb("invalid frame parameter to VFormat()")
 
    frame["F"].format(frame)
@@ -215,35 +215,35 @@ end
 ############################################################################
 
 procedure VAddClient(coupler, client, caller)
-   if not (type(coupler) ? find("coupler") ) then
+   if not (subtype(coupler) ? find("coupler") ) then
       _Vbomb("invalid coupler parameter to VAddClient()")
 
    coupler.V.add_client(coupler, client, caller)
 end
 
 procedure VToggle(coupler)
-   if not (type(coupler) ? find("coupler") ) then
+   if not (subtype(coupler) ? find("coupler") ) then
       _Vbomb("invalid coupler parameter to VToggle()")
 
    coupler.V.toggle(coupler)
 end
 
 procedure VUnSet(coupler)
-   if not (type(coupler) ? find("coupler") ) then
+   if not (subtype(coupler) ? find("coupler") ) then
       _Vbomb("invalid coupler parameter to VUnSet()")
 
    coupler.V.unset(coupler)
 end
 
 procedure VLock(coupler)
-   if not (type(coupler) ? find("coupler") ) then
+   if not (subtype(coupler) ? find("coupler") ) then
       _Vbomb("invalid coupler parameter to VLock()")
 
    coupler.locked := 1
 end
 
 procedure VUnLock(coupler)
-   if not (type(coupler) ? find("coupler") ) then
+   if not (subtype(coupler) ? find("coupler") ) then
       _Vbomb("invalid coupler parameter to VUnLock()")
 
    coupler.locked := &null
@@ -253,9 +253,9 @@ end
 # VSetState sets the vidget | coupler to the value.
 ############################################################################
 procedure VSetState(vid, val, code)
-   if type(vid) ? find("coupler") then
+   if subtype(vid) ? find("coupler") then
       return (\(\vid).V.set)(vid, , val, code)
-   else if type(vid) == !Vrecset then
+   else if subtype(vid) == !Vrecset then
       return (\(\vid).V.set_value)(vid, val, code)
    else 
       _Vbomb("invalid vidget parameter to VSetState()")
@@ -275,11 +275,11 @@ end
 # VGetState returns the value of the vidget state.
 ############################################################################
 procedure VGetState(vid)
-   if type(vid) ? find("scroll" | "slide" | "radio" | "text") then
+   if subtype(vid) ? find("scroll" | "slide" | "radio" | "text") then
       return (\vid.callback).value
    else if vid.V.set_value === set_value_Vlist then		# list vidget
       return get_value_Vlist(vid)
-   else if type(vid) == "Vbutton_rec" &
+   else if subtype(vid) == "ipl.vidgets.Vbutton_rec" &
       (vid.V.event === event_Vtoggle) then return(\vid.callback).value
    else
       fail
@@ -291,8 +291,8 @@ end
 procedure VSetItems(vid, val, flag)
    if vid.V.set_value === set_value_Vlist then	# list vidget
       return set_items_Vlist(vid, val, flag)
-   else if type(vid) == "Vframe_rec" & type(vid.lookup) == "list" &
-         type(vid.lookup[1]) == "Vmenu_item_rec" then
+   else if subtype(vid) == "ipl.vidgets.Vframe_rec" & type(vid.lookup) == "list" &
+         subtype(vid.lookup[1]) == "ipl.vidgets.Vmenu_item_rec" then
       return Vmenu_set_items(vid, val)
    else
       fail
@@ -304,8 +304,8 @@ end
 procedure VGetItems(vid)
    if vid.V.set_value === set_value_Vlist then	# list vidget
       return get_items_Vlist(vid)
-   else if type(vid) == "Vframe_rec" & type(vid.lookup) == "list" &
-         type(vid.lookup[1]) == "Vmenu_item_rec" then
+   else if subtype(vid) == "ipl.vidgets.Vframe_rec" & type(vid.lookup) == "list" &
+         subtype(vid.lookup[1]) == "ipl.vidgets.Vmenu_item_rec" then
       return Vmenu_get_items(vid)
    else 
       fail
@@ -323,7 +323,7 @@ end
 procedure ProcessEvent(vidget, missed, all, resize)
    local event, lrv
 
-   type(vidget) ? {
+   subtype(vidget) ? {
       if not find("frame")
       then _Vbomb("invalid frame argument to ProcessEvent()")
       }
