@@ -329,7 +329,7 @@ void output_code()
     for (li = links; li; li = li->next) {
         ensure_pos(li->pos);
         uout_op(Op_Link);
-        uout_str(join_strs(&join_sbuf, 2, li->name, ".u"));
+        uout_str(li->name);
     }
 
     for (iv = tinvocables; iv; iv = iv->next) {
