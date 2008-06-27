@@ -18,4 +18,4 @@ html:	objecticon.texi
 libref:
 	rm -rf libref
 	mkdir libref
-	oidoc -html -d -o libref -a $(OILIB)/ipl/*.icn
+	oidoc -html -d -o libref -a
