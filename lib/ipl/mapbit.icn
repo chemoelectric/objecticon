@@ -24,7 +24,9 @@
 #
 ############################################################################
 
-link strings
+package ipl.mapbit
+
+import ipl.strings
 
 procedure bilit(text,alpha,first,second)
    return collate(map(text,alpha,first),map(text,alpha,second))

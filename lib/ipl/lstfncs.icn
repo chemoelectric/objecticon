@@ -18,8 +18,9 @@
 #
 ############################################################################
 
-link genrfncs
-link numbers
+package ipl.lstfncs
+
+import ipl.genrfncs, ipl.numbers
 
 procedure fiblist(l, m)
    local result

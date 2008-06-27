@@ -27,8 +27,9 @@
 #
 ############################################################################
 
-link io
-link patutils
+package ipl.fetchpat
+
+import ipl.io, ipl.patutils
 
 procedure fetchpat(file, n)
    local input, pattern

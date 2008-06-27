@@ -60,7 +60,9 @@
 
 $include "vdefns.icn"
 
-link graphics, vidgets, vscroll, vcoupler
+package ipl.vidgets
+
+import ipl.graphics
 
 $define V_READONLY	"r"
 $define V_SELECT	"w"

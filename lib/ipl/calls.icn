@@ -25,8 +25,9 @@
 
 invocable all
 
-link ivalue
-link procname
+package ipl.calls
+
+import ipl.ivalue, ipl.procname
 
 record call(proc, args)
 

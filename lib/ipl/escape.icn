@@ -29,7 +29,9 @@
 #
 ############################################################################
 
-link ebcdic
+package ipl.escape
+
+import ipl.ebcdic
 
 procedure escape(s)
    local ns, c

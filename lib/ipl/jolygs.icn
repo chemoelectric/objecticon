@@ -30,7 +30,9 @@
 #
 ############################################################################
 
-link gobject
+package ipl.jolygs
+
+import ipl.gobject
 
 procedure jolyg(x, y, extent, n, angle, ratio, lfact, yfact)
    local xpos, ypos, i, offset, length

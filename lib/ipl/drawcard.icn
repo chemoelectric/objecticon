@@ -37,8 +37,9 @@
 #
 ############################################################################
 
-link cardbits
-link graphics
+package ipl.drawcard
+
+import ipl.cardbits, ipl.graphics
 
 procedure drawcard(win, x, y, label)
    static cmap, gc, bk, plist, deck

@@ -33,7 +33,9 @@
 #
 ############################################################################
 
-link dsetup				# dialog setup
+package ipl.attribs
+
+import ipl.dialog, ipl.vidgets				# dialog setup
 
 procedure attribs(win)		#: set graphics attributes via dialog
    static atts

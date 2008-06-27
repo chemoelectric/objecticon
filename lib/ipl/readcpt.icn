@@ -26,7 +26,9 @@
 #
 ############################################################################
 
-link matrix
+package ipl.readcpt
+
+import ipl.matrix
 
 procedure read_cpt(input)	#: convert numerical carpet to matrix
    local carpet, width, height, i, j, line

@@ -25,6 +25,8 @@
 #
 ############################################################################
 
+package ipl.makelsys
+
 record Lsys(name, axiom, gener, angle, comment, productions)
 
 procedure makelsys(lst)			#: make L-system from list

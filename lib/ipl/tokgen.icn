@@ -32,7 +32,9 @@
 #
 ############################################################################
 
-link showtbl
+package ipl.tokgen
+
+import ipl.showtbl
 
 global binops, unops, vars, controls, procs, others, keys
 global clits, ilits, rlits, slits
@@ -40,7 +42,7 @@ global summary, globals, locals, statics, declarations, fields, files, parms
 global fldref
 global all			# kludge -- invocable is not handled properly
 
-procedure main()
+procedure main(Mp)
    local names, tables, i, total, count
 
    total := 0			# total number of tokens

@@ -26,9 +26,9 @@
 #
 ############################################################################
 
-link vidgets
-link vbuttons
-link vtext
+package ipl.vidgets
+
+import ipl.graphics
 
 procedure Vchoice(str, buttons[])
 local win, root, t, u, w, b, i, x, y, rv

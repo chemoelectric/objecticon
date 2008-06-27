@@ -26,7 +26,9 @@
 #
 ############################################################################
 
-link xcompat
+package ipl.overlay
+
+import ipl.xcompat
 
 procedure overlay(window, name)
    local pixmap, width, height, x

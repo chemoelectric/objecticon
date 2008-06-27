@@ -32,9 +32,9 @@
 #
 ############################################################################
 
-link wopen
+package ipl.weavegif
 
-link tables, wopen
+import ipl.graphics, ipl.tables
 
 procedure weavegif(draft, attribs)	#: create GIF from ISD
    local  y,   i, j, treadle_list, k

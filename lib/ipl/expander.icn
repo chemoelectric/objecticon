@@ -35,8 +35,9 @@
 #
 ############################################################################
 
-link strings
-link weaving
+package ipl.expander
+
+import ipl.strings, ipl.weaving
 
 procedure pfl2str(pattern)		#: pattern-form to plain string
    local result, expr1, expr2, op

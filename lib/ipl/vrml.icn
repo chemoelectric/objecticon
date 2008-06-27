@@ -57,7 +57,9 @@
 #
 ############################################################################
 
-link ptutils, records
+package ipl.vrml
+
+import ipl.ptutils, ipl.records
 
 procedure point_field(pts)	#: create VRML point field
    local field

@@ -318,9 +318,9 @@
 #
 ############################################################################
 
-link equiv
-link indices
-link numbers
+package ipl.lists
+
+import ipl.equiv, ipl.indices, ipl.numbers
 
 procedure file2lst(s)			#: create list from lines in file
    local input, result, x

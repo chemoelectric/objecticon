@@ -28,8 +28,9 @@
 #
 ############################################################################
 
-link fastfncs
-link numbers
+package ipl.partit
+
+import ipl.numbers
 
 procedure partit(i, min, max, k)
    local j
@@ -87,7 +88,7 @@ end
 
 #  Partition of an integer into Fibonacci numbers.
 
-procedure fibpart(i)
+procedure fibpart(i, fib)
    local partl, n
    static m
 

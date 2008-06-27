@@ -85,9 +85,9 @@
 #
 ############################################################################
 
-link dsetup
-link io
-link lists
+package ipl.interact
+
+import ipl.graphics, ipl.dialog, ipl.vidgets, ipl.io, ipl.lists, ipl.strings
 
 procedure edit_file(name)			#: editor launch
    local editor

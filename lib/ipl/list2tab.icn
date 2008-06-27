@@ -23,6 +23,8 @@
 #
 ############################################################################
 
+package ipl.list2tab
+
 procedure list2tab(L)
 
    every writes(map(L[1 to *L - 1], "\n", "\v"),"\t")

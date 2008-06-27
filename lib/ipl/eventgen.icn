@@ -34,12 +34,14 @@
 
 global procname
 
-link strings
+package ipl.eventgen
+
+import ipl.strings
 
 #  main() calls tp(), which is produced by the meta-variant
 #  translation.
 
-procedure main()
+procedure main(Mp)
 
    write("$define MAssign 1")
    write("$define MValue 2")

@@ -192,7 +192,9 @@
 #
 ############################################################################
 
-link itlib
+package ipl.getchlib
+
+import ipl.itlib
 
 global c_cc, current_mode		# what mode are we in, raw or cooked?
 record termio_struct(vintr,vquit,verase,vkill)

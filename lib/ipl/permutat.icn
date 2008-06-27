@@ -18,8 +18,9 @@
 #
 ############################################################################
 
-link lists
-link seqops
+package ipl.permutat
+
+import ipl.lists, ipl.seqops, ipl.numbers
 
 procedure multireduce(i, j)		#: multi-reduction permutation
    local indexes, result, parts

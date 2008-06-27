@@ -36,6 +36,8 @@
 #  from a file.
 #
 
+package ipl.signed
+
 procedure signed(s)
    local i
    i := if ord(s[1]) >= 128 then -1 else 0

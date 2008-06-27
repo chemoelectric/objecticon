@@ -53,6 +53,8 @@
 
 ##  returns 1 if date1 is greater than date2, fails otherwise
 
+package ipl.datecomp
+
 procedure dgt(date1, date2)
 
    # reformat the dates if we need to
@@ -149,6 +151,7 @@ end
 #######################################################
 
 procedure reformatdate(thisdate)
+   local str
    ## if thisdate came as yyyymmdd then fix it
    thisdate ? {
       str := tab(find("/"))
@@ -182,6 +185,7 @@ end
 #######################################################
 
 procedure getmonth(thisdate)
+   local thismonth
    ##  this returns the number of the current month
    thisdate ? {
       thismonth := tab(find("/"))

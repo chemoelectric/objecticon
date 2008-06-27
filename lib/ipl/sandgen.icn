@@ -32,11 +32,13 @@
 #
 ############################################################################
 
-link strings
+package ipl.sandgen
+
+import ipl.strings
 
 global code_gen
 
-procedure main()
+procedure main(Mp)
 
    code_gen := sandwich			# so it can be changed easily
 

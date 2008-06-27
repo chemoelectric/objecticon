@@ -29,7 +29,9 @@
 $define Cells 16
 $define Width 20
 
-link graphics
+package ipl.drawcolr
+
+import ipl.graphics, ipl.dialog
 
 procedure draw_colors(clist)
    local i, j, k, depth, color, colors

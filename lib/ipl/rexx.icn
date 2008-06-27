@@ -52,6 +52,8 @@
 #
 ############################################################################
 
+package ipl.rexx
+
 procedure RexxActive()     # return whether an EXEC is active
    if callout("rexxvar", "a") == "Rexx error: No EXEC is active" then
       fail

@@ -29,6 +29,8 @@
 #
 #############################################################################
 
+package ipl.base64
+
 procedure base64encode(s)   #: encode a string into base 64 (MIME)
    local  pad, t, i, j, k
    static b64

@@ -30,11 +30,9 @@
 #
 ############################################################################
 
-link ifg
-link gtrace
-link gdisable
-link wopen
-link xgtrace
+package ipl.drawlab
+
+import ipl.ifg, ipl.gtrace, ipl.gdisable, ipl.graphics, ipl.xgtrace, ipl.calls
 
 global size	# can be set by caller to control the window size
 

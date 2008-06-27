@@ -69,8 +69,9 @@
 #
 ############################################################################
 
-link io
-link numbers
+package ipl.factors
+
+import ipl.io, ipl.numbers
 
 procedure divisors(n)			#: generate the divisors of n
    local d, dlist

@@ -20,6 +20,8 @@
 #
 ############################################################################
 
+package ipl.soundex
+
 procedure soundex(name)
    local first, c, i
    name := map(name,string(&lcase),string(&ucase)) # Convert to uppercase..

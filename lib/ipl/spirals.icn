@@ -26,8 +26,9 @@
 #
 ############################################################################
 
-link gobject
-link numbers
+package ipl.spirals
+
+import ipl.gobject, ipl.numbers
 
 procedure spiral(x, y, extent, n, t, e, r, incr, yfact)
    local i, c, s, angle, redrad, x1, y1

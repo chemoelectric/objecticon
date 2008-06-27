@@ -57,7 +57,9 @@
 #
 ############################################################################
 
-link wopen
+package ipl.cells
+
+import ipl.graphics
 
 record Cell(n, m, color)
 record Panel(window, n, m, size, fg, bg, pg)

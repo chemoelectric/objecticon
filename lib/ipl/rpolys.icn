@@ -24,7 +24,9 @@
 #
 ############################################################################
 
-link gobject
+package ipl.rpolys
+
+import ipl.gobject
 
 procedure rpoly(cx, cy, radius, vertices, theta)	#: generate polygon points
    local incr, i

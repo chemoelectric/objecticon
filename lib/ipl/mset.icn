@@ -38,6 +38,8 @@
 # This is the core routine.
 # It succeeds if two things have the same value(s).
 #
+package ipl.mset
+
 procedure same_value(d1,d2)
     if d1 === d2 then return              # same object
     else

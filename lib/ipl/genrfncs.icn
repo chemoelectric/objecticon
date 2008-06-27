@@ -136,19 +136,9 @@
 #
 ############################################################################
 
-link convert
-link factors
-link fastfncs
-link io
-link lindgen
-link lists
-link numbers
-link partit
-link periodic
-link polynom
-link rational
-link strings
-link xcode
+package ipl.genrfncs
+
+import ipl.convert, ipl.io, ipl.lists, ipl.numbers, ipl.partit, ipl.periodic, ipl.polynom, ipl.strings, ipl.xcode
 
 procedure arandseq(i, j)	#: arithmetic sequence with random intervals
 
@@ -193,7 +183,7 @@ procedure catlnseq(i)		#: generalized Catalan sequence
 
 end
 
-procedure chaosseq()		#: Hofstadter's chaotic sequence
+procedure chaosseq(q)		#: Hofstadter's chaotic sequence
 
    suspend q(seq())
 

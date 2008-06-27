@@ -36,7 +36,9 @@
 #
 ############################################################################
 
-link glib
+package ipl.lsystem
+
+import ipl.glib
 record Lsys(order, dist, delta, axiom, rewrite)
 
 # lsmap(s1,T) - replace, in s1, occurrences of character key values in T

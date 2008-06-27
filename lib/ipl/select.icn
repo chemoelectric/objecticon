@@ -26,7 +26,9 @@
 #
 ############################################################################
 
-link grecords
+package ipl.select
+
+import ipl.grecords
 
 procedure select(win)		#: interactive selection from window
    local x0, x1, y0, y1, w, h, state, event

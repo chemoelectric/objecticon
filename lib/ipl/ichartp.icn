@@ -159,12 +159,9 @@
 #
 ############################################################################
 
-link trees
-link scan
-link rewrap
-link strip
-link stripcom
-link strings
+package ipl.ichartp
+
+import ipl.trees, ipl.scan, ipl.rewrap, ipl.strip, ipl.stripcom, ipl.strings
 
 record stats(edge_list, lhs_table, term_set)
 record chart(inactive, active)               # inactive - set; active - list

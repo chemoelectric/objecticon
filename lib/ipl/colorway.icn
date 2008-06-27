@@ -86,13 +86,9 @@
 #
 ############################################################################
 
-link interact
-link io
-link lists
-link strings
-link tables
-link vsetup
-link xcode
+package ipl.colorway
+
+import ipl.graphics, ipl.dialog, ipl.interact, ipl.io, ipl.strings, ipl.tables, ipl.vidgets, ipl.xcode
 
 global cw_active			# edit-mode switch
 global cw_active_vidget		# edit-mode vidget 

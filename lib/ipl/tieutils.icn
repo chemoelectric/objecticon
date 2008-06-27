@@ -72,12 +72,9 @@
 #
 ############################################################################
 
-link cells
-link numbers
-link wopen
-link patutils
-link patxform
-link imrutils
+package ipl.tieutils
+
+import ipl.cells, ipl.numbers, ipl.patutils, ipl.patxform, ipl.imrutils, ipl.strings
 
 record tie(shafts, treadles, matrix)
 

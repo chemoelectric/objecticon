@@ -26,8 +26,9 @@
 #
 ############################################################################
 
-link imutils
-link tile
+package ipl.tiler
+
+import ipl.imscolor, ipl.graphics, ipl.tile
 
 procedure tileimg(win, img)		#: tile image
    local hidden

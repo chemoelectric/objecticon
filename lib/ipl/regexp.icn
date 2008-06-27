@@ -285,6 +285,10 @@
 #
 ############################################################################
 
+package ipl.regexp
+
+import ipl.noncase
+
 record Re_Tok(proc,args)
 
 global Re_ParenGroups,Re_Filter,Re_Ordered
@@ -801,8 +805,6 @@ end
 
 ###################  Case Independence Procedures  ###################
 
-
-link noncase
 
 global Re__find,Re__match,Re__any,Re__many,Re__upto,Re__tabmatch
 

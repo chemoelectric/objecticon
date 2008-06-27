@@ -64,6 +64,8 @@
 #
 ############################################################################
 
+package ipl.bitstr
+
 record BitString(s, buffer, bufferBits)
 
 procedure BitStringPut(bitString, nbits, value)

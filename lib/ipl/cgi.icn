@@ -16,6 +16,10 @@
 #
 ############################################################################ 
 
+package ipl.cgi
+
+import ipl.optwindw
+
 global cgi			# table of input fields
 
 
@@ -69,6 +73,7 @@ end
 record HMap(value,x1,y1,x2,y2)
 
 procedure cgiXYCoord(hlst)
+   local title,x,y,q
    title := hlst[1]
    getenv("QUERY_STRING") ? {
       x := tab(find(","))
@@ -100,6 +105,7 @@ end
 #
 
 procedure cgiReadParse()
+   local html,it,line,ct,cl,boundary,content,s,delim,nam,filename,value,r,k,data,c1,c2
 static hexen
 initial {
    hexen := &digits ++ 'ABCDEF'
@@ -206,12 +212,14 @@ end
 #
 
 procedure cgiPrintVariables(in)
+   local X
    write("<br>")
    every X := key(in) do
       write("<b>",X,"</b> is <i>",in[X],"</i><p>")
 end
 
 procedure cgiError(in)
+   local i
    if /in then
       write("Error: Script ", cgiMyURL(), " encountered fatal error")
    else { 
@@ -240,6 +248,7 @@ end
 #
 
 procedure cgiColorToHex(s)
+   local rv
 static ColorTbl
 initial {
    ColorTbl:=table(0)
@@ -273,6 +282,7 @@ end
 #
 
 procedure cgiPrePro(filename,def)
+   local AllFlag,DefFlag,all,look,intext,here
    AllFlag := 0
    DefFlag := 0
    all := "<!-- ALL"
@@ -330,8 +340,9 @@ end
 # This procedure checks for a title procedure and a body procedure and places 
 # the html headers and tail... it then calls the users cgimain.
 #
-
+global cgititle, cgiBBuilder, cgimain
 procedure main(args)
+   local BB
    write("Content-type: text/html\n\n")
    write("<html>")
    if \cgititle then {

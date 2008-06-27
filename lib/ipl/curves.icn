@@ -68,9 +68,9 @@
 #
 ############################################################################
 
-link gobject
-link math
-link step
+package ipl.curves
+
+import ipl.gobject, ipl.step
 
 procedure bullet_nose(x, y, a, b, steps, lo, hi)
    local incr, theta

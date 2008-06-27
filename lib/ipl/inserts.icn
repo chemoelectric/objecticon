@@ -20,6 +20,8 @@
 #  with default value &null.
 #
 
+package ipl.inserts
+
 procedure inserts(tabl,key,value)
    (/tabl[key] := [value]) | put(tabl[key],value)
    return tabl

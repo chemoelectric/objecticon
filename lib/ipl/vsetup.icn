@@ -40,15 +40,9 @@
 #
 ############################################################################
 
-link graphics
-link vidgets
-link vslider
-link vmenu
-link vscroll
-link vtext
-link vbuttons
-link vradio
-link vlist
+package ipl.vidgets
+
+import ipl.graphics
 
 record VS_rec(var, typ, sty, num, x, y, w, h, lbl, cbk, etc)
 

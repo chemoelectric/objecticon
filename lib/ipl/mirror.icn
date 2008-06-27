@@ -27,7 +27,9 @@
 #
 ############################################################################
 
-link wopen
+package ipl.mirror
+
+import ipl.graphics
 
 procedure mirror(win, x, y, w, h)	# mirror with p2mm symmetry
    local width, height, sym

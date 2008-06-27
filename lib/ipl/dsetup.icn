@@ -41,16 +41,9 @@
 
 $include "vdefns.icn"
 
-link dialog
-link vdialog
-link vidgets
-link vslider
-link vmenu
-link vscroll
-link vtext
-link vbuttons
-link vradio
-link vsetup
+package ipl.vidgets
+
+import ipl.dialog, ipl.graphics
 
 record DL_rec(var, typ, sty, num, x, y, w, h, lbl, cbk, etc)
 record DL_state(dialog, list, deflabel)
