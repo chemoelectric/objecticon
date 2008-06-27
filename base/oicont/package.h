@@ -29,7 +29,7 @@ struct package {
 struct package_dir {
     char *path;
     int modflag;
-    struct package *package_hash[16], *packages, *package_last;
+    struct package *package_hash[256], *packages, *package_last;
     struct package_dir *b_next, *next;
 };
 
