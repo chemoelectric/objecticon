@@ -6,9 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import xml(xml_escape), parser, util(Files)
-
-link sort
+import xml(xml_escape), parser, util(Files), ipl.sort
 
 class HtmlOutputter(Outputter)
    private output_dir, done_files, subclass_table
