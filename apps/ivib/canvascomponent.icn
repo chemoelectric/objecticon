@@ -128,7 +128,7 @@ class CanvasComponent(CanvasObject)
       if self === self.parent_Canvas.initial_focus then
          c.line("self.set_focus(" || self.name || ".find_focus())")
 
-      c.add_event_handlers(\self.event_handlers)
+      c.add_event_handlers(self.name, \self.event_handlers)
 
       if \self.layout_delegate then {
          self.layout_delegate.gen_code(c)

@@ -39,7 +39,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
       every e := !sort(self.wattribs) do
          c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
 
-      c.add_event_handlers(\self.event_handlers)
+      c.add_event_handlers(self.name, \self.event_handlers)
    end
 
    public set_column_align(x)

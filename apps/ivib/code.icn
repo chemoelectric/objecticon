@@ -89,10 +89,10 @@ class Code()
       insert(imports[pack], name)
    end
 
-   public add_event_handlers(t)
+   public add_event_handlers(name, t)
       local e
       every e := !t do {
-         line("self.connect(" || e[2] || ", " || e[1] || ")")
+         line(name || ".connect(" || e[2] || ", " || e[1] || ")")
          add_method(e[2], ["ev"])
          if match("Event.", e[1]) then
             add_import("gui", "Event")
