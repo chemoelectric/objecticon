@@ -1,6 +1,7 @@
 package util
 
-link random, posix
+import 
+   ipl.random
 
 class Files()
    private static const FS
@@ -206,20 +207,20 @@ class DirEntry()
 
    package new(name, ps)
       self.name := name
-      self.dev := ps.dev
-      self.ino := ps.ino
-      self.mode := ps.mode
-      self.nlink := ps.nlink
-      self.uid := ps.uid
-      self.gid := ps.gid
-      self.rdev := ps.rdev
-      self.size := ps.size
-      self.atime := ps.atime
-      self.mtime := ps.mtime
-      self.ctime := ps.ctime
-      self.blksize := ps.blksize
-      self.blocks := ps.blocks
-      self.symlink := ps.symlink
+      self.dev := ps[1]
+      self.ino := ps[2]
+      self.mode := ps[3]
+      self.nlink := ps[4]
+      self.uid := ps[5]
+      self.gid := ps[6]
+      self.rdev := ps[7]
+      self.size := ps[8]
+      self.atime := ps[9]
+      self.mtime := ps[10]
+      self.ctime := ps[11]
+      self.blksize := ps[12]
+      self.blocks := ps[13]
+      self.symlink := ps[14]
       return
    end
 end

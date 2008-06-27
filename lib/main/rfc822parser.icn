@@ -4,9 +4,9 @@
 
 package mail
 
-link scan, caseless
-
-import util
+import 
+   util,
+   ipl.caseless
 
 class RFC822Parser(Error)
    public static const CTL_CHAR, SPACE, SPECIALS, ATOM_CHAR, CTEXT_CHAR, FIELD_NAME_CHARS,

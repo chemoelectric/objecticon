@@ -68,16 +68,20 @@ class Parser(Connectable, Error)
 
    public parse(s)
       parser_fname := &null
-      return do_parse(s)
+      yyin := s
+      parser.yyerror := yyerror
+      yylex_reinit()
+      # Because we don't have the pp-generated # at the top of the file we start
+      # at line 1 not line 0
+      yylineno := 1
+      yyparse()
+      if yynerrs = 0 then
+         return Prog(yyval)
    end
 
    public parse_file(fname, predefined_syms)
       parser_fname := fname
-      return do_parse(preprocess(fname, predefined_syms))
-   end
-
-   private do_parse(s)
-      yyin := s
+      yyin := preprocess(fname, predefined_syms)
       parser.yyerror := yyerror
       yylex_reinit()
       yyparse()
@@ -87,95 +91,9 @@ class Parser(Connectable, Error)
 
    public yyerror(s)
       local ed
-      static t
-      initial {
-         t := table(table("syntax error"))
-         t[0] := table("invalid declaration")
-         t[26] := table("left parenthesis expected to start class fieldlist")
-         t[26,257] := "left parenthesis expected to start class fieldlist"
-         t[26,372] := "fieldlist starts with left *parenthesis*, not curly brace!"
-         t[47] := table("missing identifier")
-         t[73] := table("invalid while control expression")
-         t[246] := table("missing operand after |||")
-         t[246,307] := "missing operand after |||"
-         t[246,317] := "illegal space inside |||:="
-         t[10] := table("link list expected")
-         t[188] := table("unclosed parenthesis")
-         t[41] := table("method expected")
-         t[62] := table("invalid case control expression")
-         t[130] := table("missing fieldname or right parenthesis")
-         t[151] := table("missing \"of\" in case expression")
-         t[72] := table("invalid until control expression")
-         t[135] := table("missing comma or unclosed class field arguments")
-         t[135,282] := "unclosed class field arguments"
-         t[135,257] := "missing comma or unclosed class field arguments"
-         t[245] := table("missing operand after ||")
-         t[245,307] := "missing operand after ||"
-         t[245,317] := "illegal space inside ||:="
-         t[376] := table("parenthesis is required for method invocation")
-         t[444] := table("unclosed parenthesis")
-         t[9] := table("invocable list expected")
-         t[51] := table("parameter name expected")
-         t[56] := table("unclosed literal or missing operator")
-         t[255] := table("missing or invalid second argument to !")
-         t[276] := table("parameter modifier must be a (atomic) literal or a convertor")
-         t[370] := table("unclosed parenthesis")
-         t[3] := table("global, class, or link expected")
-         t[3,306] := "global, class, or link expected"
-         t[3,282] := "method declaration outside any class"
-         t[24] := table("missing semicolon")
-         t[24,274] := "semicolon expected"
-         t[24,271] := "missing semicolon"
-         t[66] := table("invalid if control expression")
-         t[265] := table("invalid local declaration")
-         t[375] := table("missing \"do\" or some such keyword earlier, or expected a comma or right brace here")
-         t[118] := table("missing operator or \"do\" keyword")
-         t[39] := table("missing parameter list in procedure declaration")
-         t[191] := table("missing operator or unbalanced parenthesis/bracket")
-         t[259] := table("field name expected")
-         t[301] := table("missing } somewhere before \"end\"")
-         t[23] := table("procedure not allowed within a class")
-         t[107] := table("too many closing curly braces")
-         t[107,365] := "semicolon or operator expected"
-         t[107,373] := "too many closing curly braces"
-         t[154] := table("missing then")
-         t[154,369] := "missing then"
-         t[154,363] := "spurious close-parenthesis"
-         t[264] := table("invalid initial expression")
-         t[7] := table("unexpected end of file")
-         t[28] := table("invalid global declaration")
-         t[75] := table("bad keyword name or bogus & precedes this token")
-         t[12] := table("procedure name expected")
-         t[101] := table("invalid compound expression")
-         t[101,271] := "invalid compound expression"
-         t[101,317] := "assignment missing its left operand"
-         t[127] := table("invalid procedure body")
-         t[148] := table("a ; or \\n is missing between method header and body")
-         t[190] := table("unclosed list")
-         t[190,369] := "unclosed list"
-         t[190,271] := "missing operator or closing bracket"
-         t[64] := table("invalid every control expression")
-         t[195] := table("expression expected, or need to move declaration to top of procedure or method")
-         t[69] := table("invalid repeat control expression")
-         t[74] := table("invalid argument to unary !")
-         t[247] := table("missing or invalid second argument to +")
-         t[252] := table("missing or invalid second argument to *")
-         t[294] := table("missing then-part")
-         t[37] := table("invalid link declaration")
-         t[100] := table("unclosed list")
-         t[147] := table("procedure not allowed within a class")
-         t[278] := table("parameter name expected")
-         t[435] := table("malformed case expression")
-         t[63] := table("invalid create expression")
-      }
-
-      if s == "syntax error" then
-         s := t[statestk[1], yychar]
-
       ed := ErrorDetail(parser_fname, yylineno, image(yytext) || ": " || s)
       fire(PARSER_ERROR_EVENT, ed)
       get_reason() | error(ed.str())
-
       return
    end
 
