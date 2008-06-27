@@ -177,13 +177,13 @@ end
 procedure get_list(i)
    local n, list_tmp, x
 
-   if IplDialog("Number of entries", , 2, NumberField, ["Okay", "Cancel"]) ==
+   if Dialog("Number of entries", , 2, NumberField, ["Okay", "Cancel"]) ==
       "Cancel" then fail
 
    n := (0 < integer(dialog_value[1])) |
       return Notice("Invalid number specification")
 
-   if IplDialog("Values", , list(n, ""), ColorField, ["Okay", "Cancel"]) ==
+   if Dialog("Values", , list(n, ""), ColorField, ["Okay", "Cancel"]) ==
       "Cancel" then fail
 
    list_tmp := [] 
