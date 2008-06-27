@@ -161,7 +161,13 @@
 
 package ipl.ichartp
 
-import ipl.trees, ipl.scan, ipl.rewrap, ipl.strip, ipl.stripcom, ipl.strings
+import
+   ipl.rewrap(rewrap),
+   ipl.scan(slashbal, slshupto),
+   ipl.strings(replace),
+   ipl.strip(strip),
+   ipl.stripcom(stripcom),
+   ipl.trees(stree)
 
 record stats(edge_list, lhs_table, term_set)
 record chart(inactive, active)               # inactive - set; active - list

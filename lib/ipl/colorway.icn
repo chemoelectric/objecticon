@@ -88,7 +88,16 @@
 
 package ipl.colorway
 
-import ipl.graphics, ipl.dialog, ipl.interact, ipl.io, ipl.strings, ipl.tables, ipl.vidgets, ipl.xcode
+import
+   ipl.dialog(ColorDialog, Notice, OpenDialog, SaveDialog,
+              SelectDialog, TextDialog, ToggleDialog, dialog_value),
+   ipl.graphics(CenterString, WClose, WOpen),
+   ipl.interact(ExitNotice, FailNotice, expose),
+   ipl.io(filelist),
+   ipl.strings(maxlen),
+   ipl.tables(keylist),
+   ipl.vidgets(VSetState, vsetup),
+   ipl.xcode(xdecodet, xencodet)
 
 global cw_active			# edit-mode switch
 global cw_active_vidget		# edit-mode vidget 

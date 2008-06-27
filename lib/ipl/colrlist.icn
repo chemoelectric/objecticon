@@ -30,7 +30,8 @@
 
 package ipl.colrlist
 
-import ipl.io
+import
+   ipl.io(dopen)
 
 procedure colrlist(f)			#: list of colors from file
    local input, colors, line

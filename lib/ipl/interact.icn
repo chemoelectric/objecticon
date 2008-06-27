@@ -87,7 +87,14 @@
 
 package ipl.interact
 
-import ipl.graphics, ipl.dialog, ipl.vidgets, ipl.io, ipl.lists, ipl.strings
+import
+   ipl.dialog(Notice, OpenDialog, SaveDialog, SelectDialog,
+              TextDialog, dialog_value),
+   ipl.graphics(WClose, WOpen, WWrite),
+   ipl.io(exists),
+   ipl.lists(ldelete),
+   ipl.strings(maxlen),
+   ipl.vidgets(dpopup, dsetup)
 
 procedure edit_file(name)			#: editor launch
    local editor

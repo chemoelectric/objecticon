@@ -220,7 +220,11 @@
 
 package ipl.pdco
 
-import ipl.lists, ipl.periodic, ipl.rational, ipl.numbers
+import
+   ipl.lists(lmap, lrotate),
+   ipl.numbers(residue),
+   ipl.periodic(repeater),
+   ipl.rational(rational)
 
 procedure AddTabbyPDCO(L)	#: PDCO to add tabby to treadling
    local i

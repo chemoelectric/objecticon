@@ -30,7 +30,17 @@
 
 package ipl.tieedit
 
-import ipl.interact, ipl.patxform, ipl.vidgets, ipl.dialog, ipl.graphics, ipl.patutils
+import
+   ipl.dialog(Dialog, Notice, OpenDialog, SaveDialog,
+              TextDialog, dialog_value),
+   ipl.graphics(Capture, WClose, WOpen),
+   ipl.interact(snapshot),
+   ipl.patutils(getpatt, getpattnote, legaltile, pat2rows,
+                readpattline, rows2pat, tilebits),
+   ipl.patxform(pborder, pcenter, pcrop, pflip,
+                pinvert, protate, pscramble, pshift,
+                ptrim),
+   ipl.vidgets(vsetup)
 
 global cellsize
 global flip_horiz				# icon for horizontal flip

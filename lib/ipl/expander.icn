@@ -37,7 +37,11 @@
 
 package ipl.expander
 
-import ipl.strings, ipl.weaving
+import
+   ipl.strings(collate, deletec, replacem, rotate),
+   ipl.weaving(Block, DownUp, Downto, Extend,
+               Interleave, Palindrome, Pbox, Permute,
+               Template, UpDown, Upto)
 
 procedure pfl2str(pattern)		#: pattern-form to plain string
    local result, expr1, expr2, op

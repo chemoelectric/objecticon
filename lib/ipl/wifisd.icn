@@ -47,7 +47,11 @@
 
 package ipl.wifisd
 
-import ipl.tieutils, ipl.weavutil, ipl.xcode, ipl.ximage
+import
+   ipl.tieutils(pat2tier, tie2pat),
+   ipl.weavutil(isd, possym),
+   ipl.xcode(xencode),
+   ipl.ximage(ximage)
 
 global data_default
 global data_entries

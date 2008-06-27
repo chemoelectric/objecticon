@@ -29,7 +29,9 @@
 
 package ipl.fetchpat
 
-import ipl.io, ipl.patutils
+import
+   ipl.io(dopen),
+   ipl.patutils(readpatt)
 
 procedure fetchpat(file, n)
    local input, pattern

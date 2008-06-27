@@ -38,7 +38,8 @@
 
 package ipl.lsystem
 
-import ipl.glib
+import
+   ipl.glib(Left, Line_Forward, Move_Forward, Right)
 record Lsys(order, dist, delta, axiom, rewrite)
 
 # lsmap(s1,T) - replace, in s1, occurrences of character key values in T

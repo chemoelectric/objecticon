@@ -70,7 +70,14 @@
 
 package ipl.dialog
 
-import ipl.graphics, ipl.vidgets
+import
+   ipl.graphics(BevelRectangle, HSV, HSVValue, PushWin,
+                ScratchCanvas, WClose, WOpen),
+   ipl.vidgets(VDraw, VFormat, VInsert, VOpenDialog,
+               VRegister, VSetState, V_CHECK_NO, V_DIAMOND_NO,
+               V_OK, Vbutton, Vdialog, Vmessage,
+               Vpane, Vtext, Vtoggle, Vvert_radio_buttons,
+               Vvert_slider)
 
 $include "vdefns.icn"
 

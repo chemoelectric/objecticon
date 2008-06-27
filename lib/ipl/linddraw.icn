@@ -25,7 +25,11 @@
 
 package ipl.linddraw
 
-import ipl.lindgen, ipl.turtle, ipl.graphics
+import
+   ipl.graphics(WDelay),
+   ipl.lindgen(lindgen),
+   ipl.turtle(TDraw, TGoto, TLeft, TReset,
+              TRestore, TRight, TSave, TSkip)
 
 #  The drawing is based on the axiom and the rewriting rules.  The other
 #  parameters are the line length, the angle delta between lines, and

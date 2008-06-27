@@ -25,7 +25,10 @@
 
 package ipl.periodic
 
-import ipl.lists, ipl.rational
+import
+   ipl.lists(lequiv, lextend),
+   ipl.rational(addrat, divrat, mpyrat, rational,
+                ratred)
 
 record perseq(pre, rep)
 

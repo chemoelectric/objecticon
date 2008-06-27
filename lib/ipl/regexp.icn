@@ -287,7 +287,9 @@
 
 package ipl.regexp
 
-import ipl.noncase
+import
+   ipl.noncase(c_any, c_find, c_many, c_match,
+               c_upto)
 
 record Re_Tok(proc,args)
 

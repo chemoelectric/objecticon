@@ -30,7 +30,10 @@
 
 package ipl.gtrace
 
-import ipl.calls, ipl.numbers, ipl.gobject
+import
+   ipl.calls(invoke),
+   ipl.gobject(Point),
+   ipl.numbers(decipos)
 
 #  list_coords(call) lists the coordinates of the trace produced by
 #  invoke(call)

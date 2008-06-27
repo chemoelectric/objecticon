@@ -74,7 +74,13 @@
 
 package ipl.tieutils
 
-import ipl.cells, ipl.numbers, ipl.patutils, ipl.patxform, ipl.imrutils, ipl.strings
+import
+   ipl.cells(colorcell, makepanel),
+   ipl.imrutils(imstoimr),
+   ipl.numbers(residue),
+   ipl.patutils(pat2rows, rows2pat),
+   ipl.patxform(pflip, protate),
+   ipl.strings(extend, rotate)
 
 record tie(shafts, treadles, matrix)
 

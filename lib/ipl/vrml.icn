@@ -59,7 +59,9 @@
 
 package ipl.vrml
 
-import ipl.ptutils, ipl.records
+import
+   ipl.ptutils(pt2coord),
+   ipl.records(field)
 
 procedure point_field(pts)	#: create VRML point field
    local field

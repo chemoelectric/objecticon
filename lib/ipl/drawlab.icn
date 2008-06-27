@@ -32,7 +32,13 @@
 
 package ipl.drawlab
 
-import ipl.ifg, ipl.gtrace, ipl.gdisable, ipl.graphics, ipl.xgtrace, ipl.calls
+import
+   ipl.calls(call),
+   ipl.gdisable(gdisable),
+   ipl.graphics(WOpen),
+   ipl.gtrace(list_coords),
+   ipl.ifg(ifg),
+   ipl.xgtrace(line_trace)
 
 global size	# can be set by caller to control the window size
 

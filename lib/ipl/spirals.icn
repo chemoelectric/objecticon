@@ -28,7 +28,9 @@
 
 package ipl.spirals
 
-import ipl.gobject, ipl.numbers
+import
+   ipl.gobject(Point),
+   ipl.numbers(div)
 
 procedure spiral(x, y, extent, n, t, e, r, incr, yfact)
    local i, c, s, angle, redrad, x1, y1

@@ -29,7 +29,10 @@
 
 package ipl.imxform
 
-import ipl.factors, ipl.random, ipl.strings
+import
+   ipl.factors(pfactors),
+   ipl.random(shuffle),
+   ipl.strings(collate, decollate, rotate)
 
 #
 #  Reduces a image matrix to the smallest equivalent one.

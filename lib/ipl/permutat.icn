@@ -20,7 +20,10 @@
 
 package ipl.permutat
 
-import ipl.lists, ipl.seqops, ipl.numbers
+import
+   ipl.lists(ldecollate),
+   ipl.numbers(lcml),
+   ipl.seqops(srun)
 
 procedure multireduce(i, j)		#: multi-reduction permutation
    local indexes, result, parts

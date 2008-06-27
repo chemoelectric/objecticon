@@ -31,7 +31,9 @@
 
 package ipl.xformimg
 
-import ipl.wattrib, ipl.graphics
+import
+   ipl.graphics(WOpen),
+   ipl.wattrib(Height, Width)
 
 procedure wreflect(win1, dir)
    local win2,  x2,  y2, width, height

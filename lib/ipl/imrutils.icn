@@ -83,7 +83,9 @@
 
 package ipl.imrutils
 
-import ipl.strings, ipl.graphics
+import
+   ipl.graphics(WClose, WOpen),
+   ipl.strings(rotate)
 
 record ImageRecord(width, palette, pixels)
 

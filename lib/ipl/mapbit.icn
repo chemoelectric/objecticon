@@ -26,7 +26,8 @@
 
 package ipl.mapbit
 
-import ipl.strings
+import
+   ipl.strings(collate)
 
 procedure bilit(text,alpha,first,second)
    return collate(map(text,alpha,first),map(text,alpha,second))

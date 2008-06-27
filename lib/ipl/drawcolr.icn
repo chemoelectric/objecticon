@@ -31,7 +31,9 @@ $define Width 20
 
 package ipl.drawcolr
 
-import ipl.graphics, ipl.dialog
+import
+   ipl.dialog(Notice),
+   ipl.graphics(WClose, WOpen)
 
 procedure draw_colors(clist)
    local i, j, k, depth, color, colors

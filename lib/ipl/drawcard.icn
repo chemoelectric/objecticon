@@ -39,7 +39,9 @@
 
 package ipl.drawcard
 
-import ipl.cardbits, ipl.graphics
+import
+   ipl.cardbits(cardbits),
+   ipl.graphics(ClearOutline)
 
 procedure drawcard(win, x, y, label)
    static cmap, gc, bk, plist, deck

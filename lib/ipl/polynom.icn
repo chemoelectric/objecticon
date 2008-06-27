@@ -25,7 +25,9 @@
 
 package ipl.polynom
 
-import ipl.strings, ipl.tables
+import
+   ipl.strings(csort),
+   ipl.tables(keylist)
 
 procedure str2poly(str)			#: convert string to polynomial
    local poly, var, vars, term, factor, power

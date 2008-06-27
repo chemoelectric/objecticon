@@ -70,7 +70,9 @@
 
 package ipl.curves
 
-import ipl.gobject, ipl.step
+import
+   ipl.gobject(Point),
+   ipl.step(step)
 
 procedure bullet_nose(x, y, a, b, steps, lo, hi)
    local incr, theta

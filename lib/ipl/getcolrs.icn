@@ -28,7 +28,13 @@
 
 package ipl.getcolrs
 
-import ipl.dialog, ipl.graphics, ipl.colrlist, ipl.vidgets, ipl.interact
+import
+   ipl.colrlist(colrplte),
+   ipl.dialog(Dialog, Notice, OpenDialog, SelectDialog,
+              TextDialog, dialog_value),
+   ipl.graphics(Blend, WClose, WOpen),
+   ipl.interact(load_file, save_as, unsupported),
+   ipl.vidgets(dpopup, dsetup)
 
 global save_colortbl_name
 

@@ -138,7 +138,17 @@
 
 package ipl.genrfncs
 
-import ipl.convert, ipl.io, ipl.lists, ipl.numbers, ipl.partit, ipl.periodic, ipl.polynom, ipl.strings, ipl.xcode
+import
+   ipl.convert(exbase10),
+   ipl.io(dopen),
+   ipl.lists(lequiv, lreverse),
+   ipl.numbers(adr, gcd),
+   ipl.partit(partit),
+   ipl.periodic(Sqrt),
+   ipl.polynom(poly2profile, polyadd, polyexp, polymul,
+               polysub, str2poly),
+   ipl.strings(csort, deletec),
+   ipl.xcode(xdecode)
 
 procedure arandseq(i, j)	#: arithmetic sequence with random intervals
 

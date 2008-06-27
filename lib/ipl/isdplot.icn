@@ -27,7 +27,10 @@
 
 package ipl.isdplot
 
-import ipl.patxform, ipl.graphics, ipl.cells
+import
+   ipl.cells(colorcell, makepanel),
+   ipl.graphics(WClose, WOpen),
+   ipl.patxform(pflip)
 
 global X_		# x position for copying
 global Y_		# y position for copying

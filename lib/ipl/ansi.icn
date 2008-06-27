@@ -68,7 +68,8 @@ invocable all
 
 package ipl.ansi
 
-import ipl.iolib
+import
+   ipl.iolib(getname, getval, igoto, iputs)
 
 procedure _isANSI()
     static isANSI

@@ -71,7 +71,9 @@
 
 package ipl.factors
 
-import ipl.io, ipl.numbers
+import
+   ipl.io(dopen),
+   ipl.numbers(round)
 
 procedure divisors(n)			#: generate the divisors of n
    local d, dlist

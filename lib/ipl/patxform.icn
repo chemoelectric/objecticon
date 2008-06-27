@@ -39,7 +39,9 @@
 
 package ipl.patxform
 
-import ipl.random, ipl.strings
+import
+   ipl.random(shuffle),
+   ipl.strings(collate, decollate, rotate)
 
 #
 #  Scrambles a pattern by shuffling it.  If dir is "h", the columns of each row

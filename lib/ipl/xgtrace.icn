@@ -29,7 +29,10 @@
 
 package ipl.xgtrace
 
-import ipl.gtrace, ipl.turtle, ipl.calls
+import
+   ipl.calls(invoke),
+   ipl.gtrace(coord_list),
+   ipl.turtle(TDrawto, TGoto)
 
 #
 #  line_trace(call) draws lines along the figure described by the trace from

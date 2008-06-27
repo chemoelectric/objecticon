@@ -28,7 +28,11 @@
 
 package ipl.cwutils
 
-import ipl.interact, ipl.tables, ipl.graphics, ipl.xcode
+import
+   ipl.graphics(WClose, WOpen),
+   ipl.interact(FailNotice, snapshot),
+   ipl.tables(kvallist),
+   ipl.xcode(xdecodet, xencodet)
 
 #  Note: This duplicates declaration in colorway.icn
 

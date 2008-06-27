@@ -39,7 +39,9 @@
 
 package ipl.colrmodl
 
-import ipl.matrix, ipl.numbers
+import
+   ipl.matrix(create_matrix, mult_matrix),
+   ipl.numbers(floor)
 
 record rgb(r, g, b)
 record cmy(c, m, y)
