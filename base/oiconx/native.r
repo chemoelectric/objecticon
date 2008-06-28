@@ -361,7 +361,7 @@ function{1} lang_Class_create_raw(c)
         struct b_object *obj;
         struct b_class *class = &BlkLoc(c)->class;
         ensure_initialized(class);
-        Protect(obj = alcobject(class), err_msg(0,NULL));
+        Protect(obj = alcobject(class), runerr(0));
         obj->init_state = Initializing;
         return object(obj);
     }
