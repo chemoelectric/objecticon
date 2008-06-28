@@ -1697,7 +1697,10 @@ function{1} load(s,arglist,infile,outfile,errfile,
       savedsp = sp;
       sp = stack + Wsizeof(struct b_coexpr)
         + Wsizeof(struct progstate) + pstate->hsize/WordSize;
-      if (pstate->hsize % WordSize) sp++;
+
+      if (pstate->hsize % WordSize) 
+          sp++;
+
 #ifdef UpStack
       sblkp->cstate[0] =
          ((word)((char *)sblkp + (mstksize - (sizeof(*sblkp)+sizeof(struct progstate)+pstate->hsize))/2)
@@ -1722,7 +1725,7 @@ function{1} load(s,arglist,infile,outfile,errfile,
        *  main procedure.  If failure occurs in this context, control
        *  is transferred to lterm, the address of an ...
        */
-      newefp = (struct ef_marker *)(sp+1);
+      newefp = (struct ef_marker *)sp;
 #if IntBits != WordBits
       newefp->ef_failure.op = (int *)lterm;
 #else					/* IntBits != WordBits */
@@ -1731,8 +1734,8 @@ function{1} load(s,arglist,infile,outfile,errfile,
 
       newefp->ef_gfp = 0;
       newefp->ef_efp = 0;
-      newefp->ef_ilevel = ilevel/*1*/;
-      sp += Wsizeof(*newefp);
+      newefp->ef_ilevel = ilevel;
+      sp += Wsizeof(*newefp) - 1;   /* SP now points to last word of efp */
       sblkp->es_efp = newefp;
 
       /*

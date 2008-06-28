@@ -2161,7 +2161,10 @@ void showstack()
         p += sizeof(struct progstate)/sizeof(word);
         if (p == (word*)t->Code) {
             printf("\t%p\tcode\thsize=%ld\n",p,t->hsize);
-            p += t->hsize/sizeof(word);
+            p += t->hsize / WordSize;
+            /* Pad.. see corresponding code in fmisc.r */
+            if (t->hsize % WordSize)
+                ++p;
         }
     }
     while (p <= sp) {
