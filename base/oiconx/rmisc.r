@@ -192,19 +192,18 @@ int getvar(s,vp)
          }
 
 glbvars:
-   dp = globals;	/* Check the global variable names. */
-   np = gnames;
-   while (dp < eglobals) {
-      if (strcmp(s,StrLoc(*np)) == 0) {
-         vp->dword    =  D_Var;
-         VarLoc(*vp) =  (dptr)(dp);
-         return GlobalName;
-         }
-      np++;
-      dp++;
-      }
-   return Failed;
+   {
+       struct descrip t;
+       MakeStr(s, strlen(s), &t);
+       /* Check the global variable names. */
+       if ((dp = lookup_global(&t, curpstate))) {
+           vp->dword    =  D_Var;
+           VarLoc(*vp) =  (dptr)(dp);
+           return GlobalName;
+       }
+       return Failed;
    }
+ }
 
 /*
  * hash - compute hash value of arbitrary object for table and set accessing.

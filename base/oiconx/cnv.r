@@ -801,17 +801,18 @@ dptr s;
 C_integer arity;
    {
    C_integer i;
+   dptr t;
 
    /*
     * See if the string is the name of a global variable.
     */
-   for (i = 0; i < n_globals; ++i)
-      if (eq(s, &gnames[i])) {
-         if (is:proc(globals[i]))
-            return (struct b_proc *)BlkLoc(globals[i]);
-         else
-            return NULL;
-      }
+   if ((t = lookup_global(s, curpstate))) {
+       if (is:proc(*t))
+           return (struct b_proc *)BlkLoc(*t);
+       else
+           return 0;
+   }
+
    return bi_strprc(s,arity);
    }
 
