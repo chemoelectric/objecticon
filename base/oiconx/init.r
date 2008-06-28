@@ -748,7 +748,7 @@ Deliberate Syntax Error
    classes = (word *)(code + hdr.Classes);
    records = (word *)(code + hdr.Records);
    ftabp = (short *)(code + hdr.Ftab);
-   standardfields = (int *)(code + hdr.StandardFields);
+   standardfields = (word *)(code + hdr.StandardFields);
    fnames = (dptr)(code + hdr.Fnames);
    globals = efnames = (dptr)(code + hdr.Globals);
    gnames = eglobals = (dptr)(code + hdr.Gnames);
@@ -1677,7 +1677,7 @@ C_integer bs, ss, stk;
    pstate->Classes = (word *)(pstate->Code + hdr.Classes);
    pstate->Records = (word *)(pstate->Code + hdr.Records);
    pstate->Ftabp   = (short *)(pstate->Code + hdr.Ftab);
-   pstate->StandardFields = (int *)(pstate->Code + hdr.StandardFields);
+   pstate->StandardFields = (word *)(pstate->Code + hdr.StandardFields);
    pstate->Fnames  = (dptr)(pstate->Code + hdr.Fnames);
    pstate->Globals = pstate->Efnames = (dptr)(pstate->Code + hdr.Globals);
    pstate->Gnames  = pstate->Eglobals = (dptr)(pstate->Code + hdr.Gnames);

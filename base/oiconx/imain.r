@@ -1060,7 +1060,7 @@ void resolve(pstate)
 struct class_field *lookup_standard_field(int standard_field_num, struct b_class *class)
 {
     struct progstate *p = class->program;
-    int fnum = p->StandardFields[standard_field_num];
+    word fnum = p->StandardFields[standard_field_num];
     int i;
     if (fnum == -1)
         return 0;

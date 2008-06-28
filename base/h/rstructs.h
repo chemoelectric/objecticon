@@ -405,7 +405,7 @@ struct progstate {
     word *Records;
     short *Ftabp;
     dptr Fnames, Efnames;
-    int *StandardFields;
+    word *StandardFields;
     dptr Globals, Eglobals;
     dptr Gnames, Egnames;
     dptr Statics, Estatics;
