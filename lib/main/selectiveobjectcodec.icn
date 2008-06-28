@@ -38,28 +38,28 @@ class SelectiveObjectCodec()
    # This empty method may be overridden; it is invoked just before
    # the object is encoded.
    #
-   private pre_encode()
+   protected pre_encode()
    end
 
    #
    # This empty method may be overridden; it is invoked just after
    # the object is encoded.
    #
-   private post_encode()
+   protected post_encode()
    end
 
    #
    # This empty method may be overridden; it is invoked just before
    # the object is been decoded.
    #
-   private pre_decode()
+   protected pre_decode()
    end
 
    #
    # This empty method may be overridden; it is invoked just after
    # the object has been decoded.
    #
-   private post_decode()
+   protected post_decode()
    end
 
    private object_encode(e)
@@ -170,7 +170,7 @@ class SelectiveObjectCodec()
    # template (see above).  By default, the method returns a list
    # containing all of the instance fields of the class.
    #
-   private get_template()
+   protected get_template()
       local l
       l := []
       every put(l, Class.get_instance_field_names(self))
