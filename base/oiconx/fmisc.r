@@ -1732,7 +1732,6 @@ function{1} load(s,arglist,infile,outfile,errfile,
       newefp->ef_gfp = 0;
       newefp->ef_efp = 0;
       newefp->ef_ilevel = ilevel/*1*/;
-/*      sp += Wsizeof(*newefp) - 1; */
       sp += Wsizeof(*newefp);
       sblkp->es_efp = newefp;
 
@@ -1769,6 +1768,7 @@ function{1} load(s,arglist,infile,outfile,errfile,
 
       result.dword = D_Coexpr;
       BlkLoc(result) = (union block *)sblkp;
+
       sp = savedsp;
 
       return result;
