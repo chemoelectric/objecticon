@@ -627,8 +627,7 @@ int handle_misc(wd, w)
                          * Get the types we are handling
                          */
                         target_list[0] = XA_TARGETS;
-                        StrLen(param[0]) = 7;
-                        StrLoc(param[0]) = "targets";
+                        AsgnCStr(param[0], "targets");
                         param[1] = cstr2string(selection_name);
                         val = call(&proc, param, 2);
                         if (!val || !is:list(*val))
@@ -684,8 +683,7 @@ int handle_misc(wd, w)
                             /*
                              * Get the value
                              */
-                            StrLen(param[0]) = 7;
-                            StrLoc(param[0]) = "content";
+                            AsgnCStr(param[0], "content");
                             Protect(reserve(Strings, strlen(selection_name) + strlen(target_name)),
                                     fatalerr(0,NULL));
                             param[1] = cstr2string(selection_name);
@@ -745,8 +743,7 @@ int handle_misc(wd, w)
                         break;
                     }
 
-                    StrLen(param[0]) = 5;
-                    StrLoc(param[0]) = "clear";
+                    AsgnCStr(param[0], "clear");
                     param[1] = cstr2string(an);
                     XFree(an);
                     call(&proc, param, 2);
