@@ -10,7 +10,7 @@ class Outputter()
    end
 
    protected static name_sort(x)
-      return x.name
+      return map(x.name)
    end
 
    protected get_packages()

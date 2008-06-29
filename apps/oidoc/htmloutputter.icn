@@ -22,8 +22,7 @@ class HtmlOutputter(Outputter)
    end
 
    public output()
-      local nav, fname, index, s, all_classes_table, all_others_table,
-         begin, c, all
+      local nav, fname, index, s, all_classes, all_others, begin, c, all
 
       done_files := set()
       output_dir := \opts["o"] | stop("Please specify an output directory")
@@ -50,21 +49,18 @@ class HtmlOutputter(Outputter)
       write(index, "</html>")
       close(index)
 
-      all_classes_table := table()
-      all_others_table := table()
+      all_classes := []
+      all_others := []
       subclass_table := table()
       every c := symbol_table.gen_symbols() do {
          if is(c, ClassSymbol) then {
-            /all_classes_table[c.name] := []
-            put(all_classes_table[c.name], c)
+            put(all_classes, c)
             every s := c.get_supers() do {
                /subclass_table[s] := []
                put(subclass_table[s], c)
             }
-         } else {
-            /all_others_table[c.name] := []
-            put(all_others_table[c.name], c)
-         }
+         } else 
+            put(all_others, c)
       }
 
       fname := output_dir || "/nav.html"
@@ -84,9 +80,9 @@ class HtmlOutputter(Outputter)
       write(begin, "<html><body>")
       write(begin, "<h1>Object Icon generated documentation</h1>")
       write(begin, "This is the automatically generated documentation for the following packages.<p>")
-      every s := get_packages() do {
+      every s := get_packages() do
          write(begin, "<a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a><br>")
-      }
+
       write(begin, "</body></html>")
       close(begin)
 
@@ -96,13 +92,13 @@ class HtmlOutputter(Outputter)
       write(all, "<html><body>")
       write(all, "<h1>All packages</h1><p>")
       write(all, "<h1>Classes</h1><p>")
-      every c := !(!sort(all_classes_table))[2] do {
+      every c := !isort(all_classes, name_sort) do
          write(all, "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
-      }
+
       write(all, "<p><h1>Other Symbols</h1><p>")
-      every c := !(!sort(all_others_table))[2] do {
+      every c := !isort(all_others, name_sort) do
          write(all, "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
-      }
+
       close(all)
    end
 
