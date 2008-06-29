@@ -6,7 +6,7 @@
 #
 #	Author:   William H. Mitchell
 #
-#	Date:     June 16, 2003
+#	Date:     July 20, 2005
 #
 ############################################################################
 #
@@ -28,8 +28,9 @@
 #     Left or right justification and field width control are pro-
 #  vided as in printf.   %s, %r, and %e handle precision specifications.
 #
-#     Code contributions for %f and %g formats that work like 
-#  printf are welcome.
+#     The %r format is quite a bit of a hack, but it meets the
+#  author's requirements for accuracy and speed.  Code contributions
+#  for %f, %e, and %g formats that work like printf are welcome.
 #
 #     Possible new formats:
 #
@@ -84,7 +85,7 @@ procedure _doprnt(format, args)
 		    "x": v := hexstr(v)
 		    "o": v := octstr(v)
 		    "i": v := image(v)
-		    "r": v := rformatstr(v,prec)
+		    "r": v := fixnum(v,prec)
 		    "e": v := eformatstr(v, prec, width)
 		    default: {
 			push(args, v)
@@ -159,57 +160,28 @@ procedure octstr(n)
 	return h
 end
 
-# r-format:  [-]mmm.ddd
-#
-#  This is similar to C or Fortran f format.
-#
-#  -- The "precision" (number of decimal places) is adhered to exactly.
-#
-#  -- If there are too many digits in the converted number to fit
-#     in the available width, then the number is not truncated to
-#     fit.  It just becomes too wide.
-#
-procedure rformatstr(x, prec)
-   local s, signpart, wholepart, fracpart, exppart
+procedure fixnum(x, prec)
+   local int, frac, f1, f2, p10
 
-   /prec := 6
-
-   # Check for so-large-that-we-return-e-format 
-   integer(x) | return image(x)
-
-
-   # Separate string representation of x into parts
-   #
-   s := string(real(x)) | return image(x)
-   s ? { signpart  :=  (=("-" | "+") | "")
-         wholepart :=  1(tab(many(&digits)), any('.eE')) | return image(x) 
-         fracpart  :=  ((=".", tab(many(&digits)))  | "")
-         exppart   :=  integer((=("e"|"E"), tab(0))  | 0)
-       }
-
-   # Shift fraction into whole part if exponent > 0
-   #
-   if exppart > 0 then {
-      fracpart ||:= repl("0", exppart)
-      wholepart ||:= fracpart[1+:exppart]
-      fracpart := fracpart[exppart+1:0]
-
-   # Shift whole part into fraction if exponent < 0
-   #
-   } else if exppart < 0 then {
-      wholepart := repl("0", -exppart) || wholepart 
-      fracpart := wholepart[exppart:0] || fracpart
-      wholepart := wholepart[1:exppart]
-   }
-
-   # Round fraction to requested number of places
-   #
-   fracpart := adjustfracprec(fracpart, prec)
-   wholepart +:= fracpart[2]
-
-   # Assemble and return result
-   #
-   return signpart || wholepart || "." || fracpart[1]
+	/prec := 6
+	x := real(x) | return image(x)
+	int := integer(x) | return image(x)
+	frac := image(x - int)
+	if find("e", frac) then {
+		frac ?:= {
+			f1 := tab(upto('.')) &
+			move(1) &
+			f2 := tab(upto('e')) &
+			move(1) &
+			p10 := -integer(tab(0)) &
+			repl("0",p10-1) || f1 || f2
+			}
+		}
+	else
+		frac ?:= (tab(upto('.')) & move(1) & tab(0))
+        frac := adjustfracprec(frac, prec)
+        int +:= if int >= 0 then frac[2] else -frac[2]
+	return int || "." || frac[1]
 end
 
 
@@ -226,21 +198,20 @@ end
 #   below 1 digit after the decimal point.
 #
 procedure eformatstr(x, prec, width)
-   local signpart, wholepart, fracpart, exppart
-   local  shiftcount
-   local rslt, s
+   local signpart, wholepart, fracpart, exppart, shiftcount, rslt, s
 
    /prec := 6
-   /width := prec+7
+   /width := prec + 7
 
    # Separate string representation of x into parts
    #
    s := string(real(x)) | return image(x)
-   s ? { signpart  :=  (=("-" | "+") | "")
-         wholepart :=  1(tab(many(&digits)), any('.eE')) | return image(x) 
-         fracpart  :=  ((=".", tab(many(&digits)))  | "")
-         exppart   :=  integer((=("e"|"E"), tab(0))  | 0)
-       }
+   s ? {
+      signpart  :=  (=("-" | "+") | "")
+      wholepart :=  1(tab(many(&digits)), any('.eE')) | return image(x) 
+      fracpart  :=  ((=".", tab(many(&digits)))  | "")
+      exppart   :=  integer((=("e"|"E"), tab(0))  | 0)
+      }
 
    # When the integer part has more than 1 digit, shift it
    #  right into fractional part and scale the exponent
@@ -249,7 +220,7 @@ procedure eformatstr(x, prec, width)
       exppart +:= *wholepart -1
       fracpart := wholepart[2:0] || fracpart
       wholepart := wholepart[1]
-   }
+      }
 
    # If the the number is unnormalized, shift the fraction
    #   left into the whole part and scale the exponent
@@ -259,8 +230,8 @@ procedure eformatstr(x, prec, width)
          exppart -:= shiftcount
          wholepart := fracpart[shiftcount] 
          fracpart := fracpart[shiftcount+1:0]
+         }
       }
-   }
 
    # Adjust the fractional part to the requested precision.
    # If the carry causes the whole part to overflow from
@@ -270,9 +241,9 @@ procedure eformatstr(x, prec, width)
    wholepart +:= fracpart[2]
    fracpart := fracpart[1]
    if *wholepart > 1 then {
-       wholepart := wholepart[1]
-       exppart +:= 1
-    }
+      wholepart := wholepart[1]
+      exppart +:= 1
+      }
 
    #  Assemble the final result.
    #  - Leading "+" dropped in mantissa
@@ -316,27 +287,27 @@ procedure adjustfracprec(fracpart, prec)
    #
    carryout := 0
    if *fracpart > prec then {
-       choppart := fracpart[prec+1:0]
-       fracpart := fracpart[1+:prec]
+      choppart := fracpart[prec+1:0]
+      fracpart := fracpart[1+:prec]
 
-       # If rounding up is needed...
-       #
-       if choppart[1] >>= "5" then {
+      # If rounding up is needed...
+      #
+      if choppart[1] >>= "5" then {
 
-          #  When the fractional part is .999s or the precision is 0,
-          #     then round up overflows into the whole part.
-          #
-          if (prec = 0) | (string(cset(fracpart)) == "9") then {
-             fracpart := left("0", prec, "0")
-             carryout := 1
-          }
-          #  In the usual case, round up simply increments the
-          #     fractional part.  (We put back any leading
-          #     zeros that got lost.) 
-          else {
-             fracpart := right(integer(fracpart)+1, prec, "0")
-          }
+         #  When the fractional part is .999s or the precision is 0,
+         #     then round up overflows into the whole part.
+         #
+         if (prec = 0) | (string(cset(fracpart)) == "9") then {
+            fracpart := left("0", prec, "0")
+            carryout := 1
+            }
+         #  In the usual case, round up simply increments the
+         #     fractional part.  (We put back any trailing
+         #     zeros that got lost.) 
+         else {
+            fracpart := left(integer(fracpart)+1, prec, "0")
+            }
+         }
       }
-   }
    return [fracpart, carryout]
 end
