@@ -127,7 +127,7 @@ function{1} lang_Class_get_field_flags(c, field)
         struct b_class *class = get_class_for(&c);
         int i = lookup_class_field(class, &field, 0);
         if (i < 0)
-            runerr(207, field);
+            fail;
         return C_integer class->fields[i]->flags;
      }
 end
