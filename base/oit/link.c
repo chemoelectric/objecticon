@@ -392,12 +392,12 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         sprintf(script, "%s\n%s%-72s\n%s\n\n%s\n%s\n%s\n%s%s%s\n\n%s\n",
                 "#!/bin/sh",
                 "OIXBIN=", iconxloc,
-                "OIXLCL=`echo $0 | sed 's=[^/]*$=oiconx='`",
-                "[ -n \"$OICONX\" ] && exec \"$OICONX\" $0 ${1+\"$@\"}",
+                "OIXLCL=`echo $0 | sed 's=[^/]*$=oix='`",
+                "[ -n \"$OIX\" ] && exec \"$OIX\" $0 ${1+\"$@\"}",
                 "[ -x $OIXLCL ] && exec $OIXLCL $0 ${1+\"$@\"}",
                 "[ -x $OIXBIN ] && exec $OIXBIN $0 ${1+\"$@\"}",
                 "exec ",
-                "oiconx",
+                "oix",
                 " $0 ${1+\"$@\"}",
                 "[executable Icon binary follows]");
         strcat(script, "        \n\f\n" + ((int)(strlen(script) + 4) % 8));

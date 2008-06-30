@@ -48,7 +48,7 @@ long fileOffsetOfStuffThatGoesInICX = 0; /* remains 0 -f -X is not used */
 #if defined(MSWindows) && !defined(NTGCC)
 char *progname	="wicont";	/* program name for diagnostics */
 #else
-char *progname	="oicont";	/* program name for diagnostics */
+char *progname	="oit";	/* program name for diagnostics */
 #endif					/* MSWindows */
 
 #if defined(MSWindows) && defined(MSVC)
@@ -458,7 +458,7 @@ int main(int argc, char **argv)
 #if defined(MSVC) && defined(MSWindows)
                            "/../wiconx"
 #else					/* MSWindows */
-                           "/../oiconx"
+                           "/../oix"
 #endif					/* MSVC && MSWindows */
             );
     /*

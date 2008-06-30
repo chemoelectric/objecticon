@@ -740,13 +740,15 @@ void icon_setup(argc,argv,ip)
         }
         len = t2 - tmp;
 
-        if (len > 4 && !strcmp(tmp+len-4, ".exe")) {len -= 4; tmp[len] = '\0'; }
+        if (len > 4 && !strcmp(tmp+len-4, ".exe")) {
+            len -= 4; tmp[len] = '\0'; 
+        }
 
         /*
          * if argv[0] is not a reference to our interpreter, take it as the
          * name of the icode file, and back up for it.
          */
-        if (!(len >= 5 && !strcmp(tmp+len-4, "conx"))) {
+        if (len < 3 || strcmp(tmp + len - 3, "oix")) {
             argv--;
             argc++;
             (*ip)--;
