@@ -480,17 +480,3 @@ struct node *convert_dottedidentexpr(struct node *n)
     } else
         return tree4(N_Field, n, convert_dottedidentexpr(Tree0(n)), Tree1(n));
 }
-
-char *fullname(char *file)
-{
-    struct fileparts *fps;
-    char *cdir;
-    /* Get the canonicalized directory */
-    fps = fparse(file);
-    cdir = canonicalize(fps->dir);
-    if (!cdir)
-        quitf("directory of source file doesn't exist %s", file);
-
-    return join_strs(&join_sbuf, 3, cdir, fps->name, fps->ext);
-}
-

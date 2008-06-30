@@ -587,7 +587,8 @@ static int setfilenm(c)
     while ((c = NextChar) != '"' && c != EOF && c != '\n')
         AppChar(lex_sbuf, c);
     if (c == '"') {
-        tok_loc.n_file = fullname(str_install(&lex_sbuf));
+        char *s = str_install(&lex_sbuf);
+        tok_loc.n_file = intern_using(&lex_sbuf, canonicalize(s));
         return NextChar;
     }
     else {

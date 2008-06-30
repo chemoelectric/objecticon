@@ -23,6 +23,5 @@ void add_link(char *s, struct node *n);
 void add_invocable(char *name, int x, struct node *n);
 char *dottedid2string(struct node *n);
 struct node *convert_dottedidentexpr(struct node *n);
-char *fullname(char *file);
 
 #endif

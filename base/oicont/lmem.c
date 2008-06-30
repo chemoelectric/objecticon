@@ -135,27 +135,14 @@ static void ensure_lfile(char *ifile)
  */
 void alsolink(char *name, struct lfile *lf, struct loc *pos)
 {
-    char file[MaxFileName], *cdir, *ifile;
-    struct fileparts *fps;
+    char file[MaxFileName];
 
     if (!pathfind(file, ipath, name, USuffix)) {
         lfatal(pos, "cannot resolve link reference: %s", name);
         return;
     }
 
-    /* Get the canonicalized directory */
-    fps = fparse(file);
-    cdir = canonicalize(fps->dir);
-    if (!cdir) {
-        lfatal(pos, "directory of link file doesn't exist:%s", file);
-        return;
-    }
-
-    /* Get the full filename interned */
-    ifile = join_strs(&link_sbuf, 3, cdir, fps->name, fps->ext);
-
-    /* Add it to the link list if not already there. */
-    ensure_lfile(ifile);
+    ensure_lfile(intern_using(&link_sbuf, canonicalize(file)));
 }
 
 void alsoimport(char *package, struct lfile *lf, struct loc *pos)

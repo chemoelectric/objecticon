@@ -9,6 +9,7 @@
 #include "tmain.h"
 #include "tmem.h"
 #include "package.h"
+#include "tlex.h"
 
 /*
  * Prototypes.
@@ -210,7 +211,7 @@ static void trans1(char *filename)
 
     report(filename);
 
-    tok_loc.n_file = fullname(filename);
+    tok_loc.n_file = intern_using(&lex_sbuf, canonicalize(filename));
     in_line = 1;
 
     tminit();				/* Initialize data structures */
