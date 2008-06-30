@@ -17,7 +17,7 @@ class Outputter()
       local ps, e
       ps := set()
       every e := symbol_table.gen_symbols() do
-         insert(ps, \e.scanned_file.pack | "default")
+         insert(ps, \(\e.scanned_file).pack | "default")
       suspend !sort(ps)
    end
 
@@ -27,7 +27,7 @@ class Outputter()
          p := &null
       t := table()
       every e := symbol_table.gen_symbols() do {
-         if e.scanned_file.pack === p then
+         if (\e.scanned_file).pack === p then
             t[e.name] := e
       }
       suspend (!sort(t))[2]

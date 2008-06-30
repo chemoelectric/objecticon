@@ -296,13 +296,18 @@ class HtmlOutputter(Outputter)
    end
 
    private comment_and_fields(f, c)
-      local el, com
+      local k, com
       com := Comment(c)
       every html_unbracket(f, !com.comment, c)
       write(f, "<dl>")
-      every el := !sort(com.fields) do
-         html_fields(f, c, el[1], el[2])
-      write(f, "<dt><a href=\"", get_serial_no(c.obj.get_first_token().filename) || ".html#", c.obj.get_first_token().line , "\" target=\"displayFrame\">Source</a></dt>")
+      every k := !com.keys do
+         html_fields(f, c, k, com.fields[k])
+      write(f, "<dt><a href=\"", 
+            get_serial_no(c.obj.get_first_token().filename) || ".html#", 
+            c.obj.get_first_token().line , 
+            "\" target=\"displayFrame\">Source - ", 
+            Files.get_path(c.obj.get_first_token().filename).get_last(),
+            " </a></dt>")
       write(f, "</dl>")
    end
 
@@ -344,6 +349,13 @@ class HtmlOutputter(Outputter)
             write(f, "</dd>")
          }
 
+         "runerr" : {
+            write(f, "<dt>Runtime error :</dt>")
+            write(f, "<dd>")
+            every html_unbracket(f, !vals[1], c)
+            write(f, "</dd>")
+         }
+
          "example" : {
             write(f, "<dt>Example :</dt><dd><pre>")
             every l := !vals do
@@ -380,8 +392,11 @@ class HtmlOutputter(Outputter)
       if is(sym, ClassSymbol) &
          i := sym.get_implemented_field(name) then
             return i
+      #
+      # Is it a global - note the test for scanned_file is so we fail on
+      # a builtin function.
       if i := symbol_table.resolve(sym.scanned_file, name) then
-         return i
+         return \i.scanned_file & i
 
       #
       # Is it in the form <Class>.<Field> ?

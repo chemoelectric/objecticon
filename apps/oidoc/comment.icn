@@ -1,7 +1,7 @@
 import parser
 
 class Comment()
-   public const comment, fields
+   public const comment, fields, keys
 
    private list_extract(sym)
       if sym.decl_obj.size() = 1 then
@@ -20,6 +20,7 @@ class Comment()
       local s, l, key, val
       comment := []
       fields := table()
+      keys := []
       get_comment_str(sym) ? {
          while s := tab(upto('#')) do {
             move(1)
@@ -28,7 +29,8 @@ class Comment()
                if (tab(many(' \t')), ="@") then {
                   if key := tab(many(&lcase)) then {
                      val := [tab(0)]
-                     /fields[key] := []
+                     if /fields[key] := [] then
+                        put(keys, key)
                      put(fields[key], val)
                   } else {
                      #
