@@ -15,7 +15,7 @@ clean:
 	rm -f *.u packages.txt $(UFILES) $(PROGS)
 
 %.u:    %.icn
-	oicont -nsc $(SRCFILES)
+	oit -nsc $(SRCFILES)
 
 %:      %.u $(UFILES)
-	oicont -o $@ $@.u $(UFILES)
+	oit -o $@ $@.u $(UFILES)

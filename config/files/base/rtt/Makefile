@@ -60,7 +60,7 @@ icontype.h: typespec.txt typespec
 	typespec <typespec.txt >icontype.h
 
 typespec: typespec.icn
-	oicont -s typespec
+	oit -s typespec
 endif
 #
 # The following entry is commented out because it is not normally

@@ -56,8 +56,8 @@ clean:
 	make -C plugins clean
 
 %.u: %.icn
-	oicont -s -n -c $(SRCFILES) $(PROGSRC)
+	oit -s -n -c $(SRCFILES) $(PROGSRC)
 
 %:      %.u $(UFILES)
-	oicont -o $@ $@.u $(UFILES)
+	oit -o $@ $@.u $(UFILES)
 	cp $@ $(OIBIN)

@@ -12,7 +12,7 @@ clean:
 	$(RM) *.u ../incl/oigram_tab.icn oigram.icn packages.txt
 
 %.u: %.icn
-	oicont -ncs $(SRCFILES) oigram.icn
+	oit -ncs $(SRCFILES) oigram.icn
 
 oigram.icn : oigram.y
 	iyacc -v -k parser -d -i oigram.y

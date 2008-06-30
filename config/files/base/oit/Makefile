@@ -12,19 +12,19 @@ COBJS=		../common/long.o ../common/getopt.o ../common/alloc.o \
 
 OBJS=		package.o resolve.o tmain.o util.o tlocal.o $(TRANS) $(LINKR) $(COBJS)
 
-all:		oicont
+all:		oit
 
 clean:		
-		rm -f *.o tgram.g y.tab.c y.tab.h y.output oicont mkkwd fixgram mktoktab
+		rm -f *.o tgram.g y.tab.c y.tab.h y.output oit mkkwd fixgram mktoktab
 
 pure:		
 		rm -f *.o tparse.c tgram.g ttoken.h y.tab.c y.tab.h yacctok.h \
-			lextab.h y.output oicont mkkwd fixgram mktoktab
+			lextab.h y.output oit mkkwd fixgram mktoktab
 
-oicont:		$(OBJS)
-		$(CC) $(CFLAGS) $(LDFLAGS) -o oicont $(OBJS) $(LIBS)
-		cp oicont $(OIBIN)
-		ln -f -s oicont $(OIBIN)/udis
+oit:		$(OBJS)
+		$(CC) $(CFLAGS) $(LDFLAGS) -o oit $(OBJS) $(LIBS)
+		cp oit $(OIBIN)
+		ln -f -s oit $(OIBIN)/udis
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/proto.h ../h/mproto.h \
@@ -63,13 +63,13 @@ lcompres.o:	../h/header.h
 ifeq ($(GRAM),Y)
 
 mkkwd:		mkkwd.icn
-		oicont -s mkkwd.icn
+		oit -s mkkwd.icn
 
 fixgram:	fixgram.icn
-		oicont -s fixgram.icn
+		oit -s fixgram.icn
 
 mktoktab:	mktoktab.icn
-		oicont -s mktoktab.icn
+		oit -s mktoktab.icn
 
 lextab.h yacctok.h:	tokens.txt op.txt mktoktab
 		./mktoktab

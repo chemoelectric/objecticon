@@ -22,7 +22,7 @@ clean:
 	$(RM) $(PROGS) *.u packages.txt
 
 %.u: %.icn
-	oicont -s -n -c $(SRCFILES)
+	oit -s -n -c $(SRCFILES)
 
 %: %.icn
-	oicont -s -o $@ $<
+	oit -s -o $@ $<

@@ -10,5 +10,5 @@ clean:
 	rm -f *.u packages.txt
 
 %.u: %.icn
-	oicont -s -n -c $(SRCFILES)
+	oit -s -n -c $(SRCFILES)
 

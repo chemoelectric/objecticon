@@ -9,11 +9,11 @@ HDRS = ../h/define.h ../h/config.h ../h/typedefs.h ../h/monitor.h\
 
 GRAPHICSHDRS = ../h/graphics.h ../h/xwin.h
 
-default: oiconx
+default: oix
 
 ####################################################################
 #
-# Make entries for oiconx
+# Make entries for oix
 #
 
 XOBJS=	xcnv.o xdata.o xdef.o xerrmsg.o xextcall.o xfconv.o xfload.o xfmath.o\
@@ -30,11 +30,11 @@ COBJS=	../common/long.o ../common/time.o ../common/save.o \
 
 OBJS=	$(XOBJS) $(COBJS)
 
-all:	oiconx
+all:	oix
 
-oiconx: $(OBJS)
-	$(CC) $(CFLAGS) -Wl,-E $(LDFLAGS) -o oiconx $(OBJS) $(LIBS)
-	cp oiconx $(OIBIN)
+oix:	$(OBJS)
+	$(CC) $(CFLAGS) -Wl,-E $(LDFLAGS) -o oix $(OBJS) $(LIBS)
+	cp oix $(OIBIN)
 
 xcnv.o: cnv.r $(HDRS)
 	rtt cnv.r
@@ -287,4 +287,4 @@ xfxtra.o: fxtra.r $(HDRS) ../h/posix.h fxposix.ri
 	$(RM) xfxtra.c
 
 clean:		
-	rm -f *.o *.c rt.db rt.a rttcur.lst rttfull.lst oiconx
+	rm -f *.o *.c rt.db rt.a rttcur.lst rttfull.lst oix

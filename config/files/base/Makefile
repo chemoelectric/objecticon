@@ -1,11 +1,11 @@
 all :
 	make -C common all
 	make -C rtt all
-	make -C oicont all
-	make -C oiconx all
+	make -C oit all
+	make -C oix all
 
 clean :
 	make -C common clean
 	make -C rtt clean
-	make -C oiconx clean
-	make -C oicont clean
+	make -C oix clean
+	make -C oit clean

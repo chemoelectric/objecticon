@@ -9,8 +9,8 @@ clean:
 	$(RM) *.u packages.txt oidoc
 
 %.u: %.icn
-	oicont -ncs $(SRCFILES)
+	oit -ncs $(SRCFILES)
 
 oidoc: $(UFILES)
-	oicont -o oidoc $(UFILES)
+	oit -o oidoc $(UFILES)
 	$(CP) oidoc $(OIBIN)
