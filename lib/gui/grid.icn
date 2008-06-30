@@ -225,6 +225,14 @@ class Grid(SetFields)
       }
    end
 
+   private static cell_width_sort(i)
+      return i.w
+   end
+
+   private static cell_height_sort(i)
+      return i.h
+   end
+
    public print_layout()
       local x, y, t, i, s
 
@@ -391,13 +399,3 @@ class Grid(SetFields)
       return
    end
 end
-
-procedure cell_width_sort(i)
-   return i.w
-end
-
-procedure cell_height_sort(i)
-   return i.h
-end
-
-
