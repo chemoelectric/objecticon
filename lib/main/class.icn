@@ -1,17 +1,32 @@
 package lang
 
+#
+# This class contains various helpful methods to get information about
+# a class at runtime.
+#
 class Class()
    public static const 
+      # Integer flag for a method
       M_Method,
+      # Integer flag for a private field
       M_Private,
+      # Integer flag for a public field
       M_Public,
+      # Integer flag for a protected field
       M_Protected,
+      # Integer flag for a package field
       M_Package,
+      # Integer flag for a static field
       M_Static,
+      # Integer flag for a constant field
       M_Const,
+      # Integer flag for a readable field
       M_Readable,
+      # Integer flag for a deferred method
       M_Defer, 
+      # Integer flag for a final method or class
       M_Final,
+      # Integer flag for a special method, ie init or new.
       M_Special
 
    private static init()
@@ -31,33 +46,143 @@ class Class()
    private static defer create_raw(c)
    private static defer complete_raw(o)
 
+   # Generate the superclasses of the class {c}
+   #
    public static defer get_supers(c)
+
+   # Generate the implemented classes of the class {c}
+   #
    public static defer get_implemented(c)
+
+   # Generate the field names of the class {c}.  The instance fields
+   # come first, followed by the class fields.
+   #
    public static defer get_field_names(c)
+
+   # Return the number of fields in the class {c}.
+   #
    public static defer get_n_fields(c)
 
+   # Return the flags for the class {c}, which in fact can only be
+   # zero or {M_Final}, for a final class.
+   #
    public static defer get_class_flags(c)
+
+   # Generate the field names of the class fields of class {c}.
+   #
    public static defer get_class_field_names(c)
+
+   # Return the number of class fields of class {c}.
+   #
    public static defer get_n_class_fields(c)
 
+   # Generate the field names of the instance fields of class {c}.
+   #
    public static defer get_instance_field_names(c)
+
+   # Return the number of instance fields of class {c}.
+   #
    public static defer get_n_instance_fields(c)
 
+   # Return the flags of the given field in class{c}.
+   # @param c the class
+   # @param field either a field name or number
+   # @return an integer, being the OR of all the flags
+   # @fail if the field is unknown
+   #
    public static defer get_field_flags(c, field)
+
+   # Return the field index number of the given field in class{c}.
+   # @param c the class
+   # @param field either a field name or number
+   # @return an integer, being the OR of all the flags
+   # @fail if the field is unknown
+   #
    public static defer get_field_index(c, field)
+
+   # Return the field name of the given field in class{c}.
+   # @param c the class
+   # @param field either a field name or number
+   # @return the field name
+   # @fail if the field is unknown
+   #
    public static defer get_field_name(c, field)
+
+   # Return the class in which the given field is defined.
+   # @param c the class
+   # @param field either a field name or number
+   # @return the defining class of the field
+   # @fail if the field is unknown
+   #
    public static defer get_field_defining_class(c, field)
-   
+
+   # Return the object part of a method pointer.
+   # @param mp a methp structure
+   # @return an object
+   #
    public static defer get_methp_object(mp)
+
+   # Return the procedure part of a method pointer.
+   # @param mp a methp structure
+   # @return a procedure object (which will be an instance method)
+   #
    public static defer get_methp_proc(mp)
 
+   # Return the object part of a cast.
+   # @param mp a cast structure created with the {cast()} function
+   # @return an object
+   #
    public static defer get_cast_object(c)
+
+   # Return the class part of a cast.
+   # @param mp a cast structure created with the {cast()} function
+   # @return a class
+   #
    public static defer get_cast_class(c)
 
-   public static defer get(obj, field)
-   public static defer getf(obj, field)
+   # Get the value of the field in {x}, behaving in exactly the same way
+   # as though the "." operation had been invoked with equivalent values.
+   # @param x either a class, cast or object
+   # @param field either a field name or number
+   # @return the field value
+   # @runerr if the field is unknown or access is not permitted
+   #
+   public static defer get(x, field)
 
+   # This behaves in exactly the same way as {get} above, but fails
+   # rather than stops with a runtime error, if the field is unknown
+   # or access is denied.
+   # @param x either a class, cast or object
+   # @param field either a field name or number
+   # @return the field value
+   # @fail if the field is unknown or access is not permitted
+   #
+   public static defer getf(x, field)
+
+   # Set the given field, which must be a method, in the class from
+   # which this method was invoked, to be the given procedure.
+   #
+   # @param field either a field name or number
+   # @param proc a procedure
+   # @runerr if the field is unkown, the field already has a method,
+   # @ or isn't a method field, the procedure is already a method or the
+   # @ field is not defined in the class from which this method was
+   # @ invoked.
+   #
    public static defer set_method(field, proc)   
+
+   # Lookup a class by name
+   # 
+   # @param s a class name
+   # @param ce a coexpression, representing a loaded program, defaults
+   # @ to the main program
+   # @return a class
+   # @fail if the class is unknown
+   #
    public static defer for_name(s, ce)
+
+   # Initialize a class, by calling its static init method.  Has no
+   # effect if the class has already been initialized.
+   #
    public static defer ensure_initialized(c)
 end
