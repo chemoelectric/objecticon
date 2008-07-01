@@ -284,8 +284,15 @@ class SymbolTable(Error,Connectable)
 
    private do_link(d)
       local f
-      every f := d.gen().str() || ".icn" do 
+      every f := d.gen().str() do {
+         # Strip quotes and .u if present
+         if f[1] == "\"" then
+            f[1] := f[-1] := ""
+         if map(f[-2:0]) == ".u" then
+            f[-2:0] := ""
+         f ||:= ".icn"
          scan_link(f) | fail
+      }
       return
    end
 
@@ -352,8 +359,8 @@ class SymbolTable(Error,Connectable)
       p := Files.get_path(f)
       if p.is_absolute() then
          return p.get_canonical()
-      every d := chdir() | !path_list(getenv("OIPATH")) do {
-         s := Files.get_path(d).get_child(f).str()
+      every d := chdir() | get_path(getenv("OIPATH")) do {
+         s := Files.get_path(d).append(p).get_canonical().str()
          if stat(s) then
             return s
       }
@@ -373,8 +380,8 @@ class SymbolTable(Error,Connectable)
       if \package_db then
          return
       package_db := table()
-      every d := chdir() | !path_list(getenv("OIPATH")) do {
-         p := Files.get_path(d).get_child("packages.txt").str()
+      every d := chdir() | get_path(getenv("OIPATH")) do {
+         p := Files.get_path(d).get_child("packages.txt").get_canonical().str()
          if /package_db[d] & (f := open(p, "r")) then {
             package_db[d] := scan_packtxt(f) | {
                close(f)

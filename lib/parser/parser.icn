@@ -187,7 +187,7 @@ class Parser(Connectable, Error)
    # a_Scans a preprocessor directive.
    #
    private preproc_scan_directive()
-      local sym,value,new_file,new_filename,new_line,path_list,old
+      local sym,value,new_file,new_filename,new_line,old
       preproc_space()
       preproc_command := preproc_word()
       if \preproc_if_state then {
@@ -275,14 +275,13 @@ class Parser(Connectable, Error)
       }
       "include": {
          if /preproc_if_state then {
-            path_list := preproc_get_path_list()
             if sym := preproc_qword() & *sym > 0 &
                preproc_at_end() then {
                   if member(preproc_include_set,sym) then {
                      preproc_error("circular reference to " || image(sym))
                   } else {
                      if new_file := open(new_filename := sym | 
-                                         Files.get_path(!path_list).get_child(sym).str())
+                                         Files.get_path(get_path(getenv("OLPATH"))).get_child(sym).str())
                      then {
                         push(preproc_file_stack,
                              preproc_file,preproc_filename,
@@ -527,19 +526,6 @@ class Parser(Connectable, Error)
    private preproc_at_end()
       preproc_space()
       return pos(0) | match("#")
-   end
-
-   #
-   # a_Returns the list of directories in the OLPATH environment variable.
-   #
-   private preproc_get_path_list()
-      local s
-      static the_list
-      initial {
-         s := getenv("OLPATH") | ""
-         the_list := path_list(s)
-      }
-      return the_list
    end
 
    #
