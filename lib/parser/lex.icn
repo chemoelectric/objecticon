@@ -441,6 +441,7 @@ end
 
 procedure yylex_reinit()
    yytext := ""
+   yyfilename := &null
    yylineno := 0
    yycolno := 1
    lastchar := ""

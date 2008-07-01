@@ -291,7 +291,7 @@ class SymbolTable(Error,Connectable)
          if map(f[-2:0]) == ".u" then
             f[-2:0] := ""
          f ||:= ".icn"
-         scan_link(f) | fail
+         scan_file_on_path(f) | fail
       }
       return
    end
@@ -354,21 +354,10 @@ class SymbolTable(Error,Connectable)
       return
    end
 
-   private path_find(f)
-      local p, d, s
-      p := Files.get_path(f)
-      if p.is_absolute() then
-         return p.get_canonical()
-      every d := chdir() | get_path(getenv("OIPATH")) do {
-         s := Files.get_path(d).append(p).get_canonical().str()
-         if stat(s) then
-            return s
-      }
-      return error("Couldn't find " || f || " on path")
-   end
-
-   public scan_link(f)
-      return scan(path_find(f))
+   public scan_file_on_path(f)
+      local s
+      s := path_find(f, "OIPATH") | return error("Couldn't find " || f || " on path")
+      return scan_file(s)
    end
 
    public scan_file(f)
@@ -380,7 +369,7 @@ class SymbolTable(Error,Connectable)
       if \package_db then
          return
       package_db := table()
-      every d := chdir() | get_path(getenv("OIPATH")) do {
+      every d := chdir() | path_elements(getenv("OIPATH")) do {
          p := Files.get_path(d).get_child("packages.txt").get_canonical().str()
          if /package_db[d] & (f := open(p, "r")) then {
             package_db[d] := scan_packtxt(f) | {

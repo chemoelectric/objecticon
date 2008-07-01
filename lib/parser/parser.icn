@@ -31,7 +31,7 @@ class Parser(Connectable, Error)
       preproc_file,preproc_filename,preproc_line,preproc_print_line,
       preproc_word_chars,preproc_nest_level,preproc_include_name,
       preproc_include_set,preproc_print_filename,preproc_command,
-      preproc_err_count, parser_fname
+      preproc_err_count
 
    public static const DEFAULT_SYMBOLS, PREPROCESSOR_ERROR_EVENT, PARSER_ERROR_EVENT
 
@@ -67,7 +67,6 @@ class Parser(Connectable, Error)
    end
 
    public parse(s)
-      parser_fname := &null
       yyin := s
       parser.yyerror := yyerror
       yylex_reinit()
@@ -80,7 +79,6 @@ class Parser(Connectable, Error)
    end
 
    public parse_file(fname, predefined_syms)
-      parser_fname := fname
       yyin := preprocess(fname, predefined_syms)
       parser.yyerror := yyerror
       yylex_reinit()
@@ -91,7 +89,7 @@ class Parser(Connectable, Error)
 
    public yyerror(s)
       local ed
-      ed := ErrorDetail(parser_fname, yylineno, image(yytext) || ": " || s)
+      ed := ErrorDetail(yyfilename, yylineno, image(yytext) || ": " || s)
       fire(PARSER_ERROR_EVENT, ed)
       get_reason() | error(ed.str())
       return
@@ -280,8 +278,7 @@ class Parser(Connectable, Error)
                   if member(preproc_include_set,sym) then {
                      preproc_error("circular reference to " || image(sym))
                   } else {
-                     if new_file := open(new_filename := sym | 
-                                         Files.get_path(get_path(getenv("OLPATH"))).get_child(sym).str())
+                     if new_file := open(new_filename := path_find(sym, "OLPATH"))
                      then {
                         push(preproc_file_stack,
                              preproc_file,preproc_filename,

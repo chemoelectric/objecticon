@@ -5,7 +5,7 @@ import util
 #
 # Generate the paths in a path string.
 #
-procedure get_path(path)
+procedure path_elements(path)
    local dir, psep
 
    psep := if has_feature("UNIX" | "PLAN9") then ' :' else ' '
@@ -26,6 +26,18 @@ procedure get_path(path)
             dir := tab(upto(psep) | 0)
          suspend dir
       }
+   }
+end
+
+procedure path_find(f, n)
+   local p, d, s
+   if stat(f) then
+      return f
+   p := Files.get_path(f)
+   every d := path_elements(getenv(n)) do {
+      s := Files.get_path(d).append(p).str()
+      if stat(s) then
+         return s
    }
 end
 
