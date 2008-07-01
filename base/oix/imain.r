@@ -441,22 +441,6 @@ void os2main(stubflag, argc, argv)
 
     ipc.opnd = NULL;
 
-#if UNIX
-    /*
-     *  Append to FPATH the bin directory from which iconx was executed.
-     */
-    {
-        char *p = getenv("FPATH");
-        char *q = relfile(argv[0], "/..");
-        char *buf = malloc((p?strlen(p):1) + (q?strlen(q):1) + 8);
-        if (buf) {
-            sprintf(buf, "FPATH=%s %s", (p ? p : "."), (q ? q : "."));
-            putenv(buf);
-            free(buf);
-        }
-    }
-#endif
-
     /*
      * Setup Icon interface.  It's done this way to avoid duplication
      *  of code, since the same thing has to be done if calling Icon
@@ -464,7 +448,7 @@ void os2main(stubflag, argc, argv)
      */
 
 #ifdef CRAY
-    argv[0] = "iconx";
+    argv[0] = "oix";
 #endif					/* CRAY */
 
 #if OS2
