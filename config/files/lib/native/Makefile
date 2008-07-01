@@ -1,10 +1,8 @@
 include ../../Makedefs
 
-.PHONY: all clean
-
-CWARN = -Wall -fno-strict-aliasing
-CFLAGS=-fPIC $(CWARN) @CFLAGS@
-CPPFLAGS=-I$(OIHOME)/base/h -I- @CPPFLAGS@ @MYSQL_CFLAGS@
+CWARN=-Wall -fno-strict-aliasing
+CFLAGS:=-fPIC $(CFLAGS)
+CPPFLAGS:=$(CPPFLAGS) @MYSQL_CFLAGS@
 
 ifeq (@MYSQL_VERSION@,)
 all : objecticonipclib.so
