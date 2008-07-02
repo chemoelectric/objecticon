@@ -5,6 +5,8 @@ import util
 #
 # Generate the paths in a path string.
 #
+# @param path the path to split up
+#
 procedure path_elements(path)
    local dir, psep
 
@@ -29,15 +31,27 @@ procedure path_elements(path)
    }
 end
 
+#
+# This procedure searches for a file on a environment-defined path.
+# It follows the same logic as the C procedure in filepart.c
+#
+# @param f the file to look for
+# @param n the name of the environment variable holding the path
+#
 procedure path_find(f, n)
-   local p, d, s
+   local p, s
+
+   # First of all see if it exists without any search
    if stat(f) then
       return f
+
    p := Files.get_path(f)
+   # We never append absolute paths to the search path
    if p.is_absolute() then
       fail
-   every d := path_elements(getenv(n)) do {
-      s := Files.get_path(d).append(p).str()
+
+   # Search all the elements in the path
+   every s := Files.get_path(path_elements(getenv(n))).append(p).str() do {
       if stat(s) then
          return s
    }
