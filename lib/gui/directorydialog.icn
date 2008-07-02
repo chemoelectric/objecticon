@@ -157,9 +157,9 @@ class DirectoryDialog(Dialog)
 
    public goto_dir(d)
       local n, s, p, ps
-      p := Files.get_path(d).get_canonical()
+      p := Files.get_path(d).canonical()
       n := tree.get_root_node()
-      every s := !p.l do {
+      every s := p.gen() do {
          n := find_child(n, s) | break
          load_subtree(n)
          n.set_expanded("t")
@@ -200,7 +200,7 @@ class DirectoryDialog(Dialog)
    end
 
    public on_up_button(ev)
-      goto_dir(self.get_dir_path().get_parent().str())
+      goto_dir(self.get_dir_path().parent().str())
    end
 
    public on_home_button(ev)
@@ -219,7 +219,7 @@ class DirectoryDialog(Dialog)
       d := NewDirectoryDialog()
       d.show_modal(self)
       if \d.okay then {
-         s := self.get_dir_path().get_child(d.result).str()
+         s := self.get_dir_path().child(d.result).str()
          if mkdir(s) then
             goto_dir(s)
          else

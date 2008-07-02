@@ -212,7 +212,7 @@ class Main(Dialog)
       s := \self.canvas.filename | "Untitled"
       if \self.canvas.modified then
          s ||:= " *"
-      self.filename_label.set_label(Files.get_path(s).get_last())
+      self.filename_label.set_label(Files.get_path(s).get(-1))
    end      
 
    #
@@ -961,7 +961,7 @@ class Main(Dialog)
    end
 
    public get_config_file_name()
-      return Files.get_path(Files.get_home()).get_child(".ivibrc2").str()
+      return Files.get_path(Files.get_home()).child(".ivibrc2").str()
    end
 
    public read_config_file()
@@ -1237,7 +1237,7 @@ class Main(Dialog)
       pp := Files.get_path(prefs.plugin_directory)
       every f := !Files.list(pp.str()) do {
          if f.mode[1] == "-" & upto('x', f.mode) then {
-            fn := pp.get_child(f.name).str()
+            fn := pp.child(f.name).str()
             ce := load(fn) | stop("Failed to load plugin:", fn)
             plugin := @ce | stop("Plugin didn't return a Plugin from main")
             insert(plugins, plugin.get_unique_id(), plugin)

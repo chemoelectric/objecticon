@@ -361,7 +361,7 @@ class SymbolTable(Error,Connectable)
    end
 
    public scan_file(f)
-      return scan(Files.get_path(f).get_canonical().str())
+      return scan(Files.get_path(f).canonical().str())
    end
 
    private ensure_package_db()
@@ -370,7 +370,7 @@ class SymbolTable(Error,Connectable)
          return
       package_db := table()
       every d := chdir() | path_elements(getenv("OIPATH")) do {
-         p := Files.get_path(d).get_child("packages.txt").get_canonical().str()
+         p := Files.get_path(d).child("packages.txt").canonical().str()
          if /package_db[d] & (f := open(p, "r")) then {
             package_db[d] := scan_packtxt(f) | {
                close(f)
@@ -410,7 +410,7 @@ class SymbolTable(Error,Connectable)
          if fs := \package_db[d, p] then {
             if \seen then
                return error("located package " || p || " in multiple directories")
-            every f := Files.get_path(d).get_child(!fs).str() || ".icn" do
+            every f := Files.get_path(d).child(!fs).str() || ".icn" do
                scan(f) | fail
             seen := 1
          }
@@ -447,7 +447,7 @@ class SymbolTable(Error,Connectable)
    end
 
    public get_scanned_file(f)
-      return .\scanned_files[Files.get_path(f).get_canonical().str()]
+      return .\scanned_files[Files.get_path(f).canonical().str()]
    end
 
    public resolve_n(sf, name)

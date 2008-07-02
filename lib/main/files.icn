@@ -3,6 +3,10 @@ package util
 import 
    ipl.random
 
+#
+# This class has several static methods which provide
+# system-independent access to the file system.
+#
 class Files()
    private static const FS
 
@@ -17,44 +21,74 @@ class Files()
    end
 
    #
-   # Read a directory.
+   # Read the given directory returning a list of {DirEntry} objects.
    #
    public static list(s)
       return FS.list(s)
    end
 
+   #
+   # Return a {FilePath} corresponding to the given path in string
+   # form.
+   #
    public static get_path(s)
       return FS.get_path(s)
    end
 
+   #
+   # Return a {FilePath} corresponding to the elements in the given
+   # list.
+   #
    public static get_path_from_list(l)
-      return FS.get_path_from_list(l)
+      return FS.get_path_from_list(copy(l))
    end
 
+   #
+   # Return the home directory.
+   #
    public static get_home()
       return FS.get_home()
    end
 
+   #
+   # Return the temporary directory.
+   #
    public static get_temp()
       return FS.get_temp()
    end
 
+   #
+   # Succeed iff the given file is hidden.
+   #
    public static is_hidden(s)
       return FS.is_hidden(s)
    end
 
+   #
+   # Succeed iff the given file is a relative directory name (on Unix,
+   # "." or "..").
+   #
    public static is_relative_dir(s)
       return FS.is_relative_dir(s)
    end
 
+   #
+   # Get the roots of the file system.
+   #
    public static get_roots()
       return FS.get_roots()
    end
 
+   #
+   # Get the separator char used by the filesystem.
+   #
    public static get_separator()
       return FS.get_separator()
    end
 
+   #
+   # Load a file into a string, failing if the file doesn't exist.
+   #
    public static file_to_string(fn)
       local res, f
       f := open(fn, "ru") | fail
@@ -64,6 +98,9 @@ class Files()
       return res
    end
 
+   #
+   # Write a string to a file.
+   #
    public static string_to_file(fn, s)
       local f
       f := open(fn, "wu") | fail
@@ -72,20 +109,27 @@ class Files()
       return s
    end
 
+   #
+   # Make a temporary filename.
+   # @param prefix, by default empty
+   # @param suffix, by default empty
+   # @param path, the directory, by default {get_temp()}
+   # @param len, the number of digits in the result, default 8
+   #
    public static make_temp_filename(prefix, suffix, path, len)
       local p, name
 
       /prefix := ""
       /suffix := ""
-      /path := Files.FS.get_temp()
+      /path := get_temp()
       /len := 8
 
       randomize()
 
-      p := Files.FS.get_path(path)
+      p := get_path(path)
       repeat {
          ?1                                # change &random
-         name := p.get_child(prefix || left(&random, 8, "0") || suffix).str()
+         name := p.child(prefix || left(&random, len, "0") || suffix).str()
          if not open(name) then {
             # Touch the filename to stop anyone else using it.
             close(open(name, "w"))
@@ -94,6 +138,9 @@ class Files()
       }
    end
 
+   #
+   # Succeed iff the two given files have the same content.
+   #
    public static equal_files(n1, n2)
       local f1, f2, r
 
@@ -125,10 +172,19 @@ class Files()
       return not(reads(f2))
    end
 
+   #
+   # Succeed iff the given file is a directory.
+   #
    public static is_directory(s)
       return stat(s).mode[1] == "d"
    end
 
+   #
+   # Rename a file.  If that fails, try to copy the file then delete
+   # the original, or if that fails, fail.
+   # @param s1 the source filename
+   # @param s2 the target filename
+   #
    public static rename_file(s1, s2)
       if rename(s1, s2) then
          return
@@ -137,6 +193,11 @@ class Files()
       return
    end
 
+   #
+   # Copy a file.
+   # @param s1 the source filename
+   # @param s2 the target filename
+   #
    public static copy_file(s1, s2)
       local f1, f2
       f1 := open(s1, "ru") | fail
@@ -151,6 +212,11 @@ class Files()
       return
    end
 
+   #
+   # Append file {s1} onto {s2}.
+   # @param s1 the source filename
+   # @param s2 the target filename
+   #
    public static append_file(s1, s2)
       local f1, f2
       f1 := open(s1, "ru") | fail
@@ -165,6 +231,9 @@ class Files()
       return
    end
 
+   #
+   # Given a stem filename, return another unique filename based upon it.
+   #
    public static ensure_unique_filename(stem)
       local i, p, s
       stat(stem) | return stem
@@ -182,28 +251,148 @@ class Files()
    end
 end
 
+#
+# This class provides implementations of some of the methods in
+# {Files}.  It is not used directly by clients.
+#
 class FileSystem(Error)
+   public defer list(s)
+
+   public defer get_path(s)
+
+   public defer get_path_from_list(l)
+
+   public defer get_home()
+
+   public defer get_temp()
+
+   public defer is_hidden(s)
+
+   public defer is_relative_dir(s)
+
+   public defer get_roots()
+
+   public defer get_separator()
 end
 
+#
+# This class manipulates file paths by treating them as a list of
+# elements.  Instances are not created directly by the client, rather
+# they are created initially via {Files.get_path()} and then via other
+# methods in this class.
+#
+# Instances of this class are immutable.
+#
 class FilePath()
+   protected l
+
+   #
+   # Return the number of elements in the path.
+   #
+   public size()
+      return *l
+   end
+
+   #
+   # Return the {i}th element in the path.
+   #
+   public get(i)
+      return .l[i]
+   end
+
+   #
+   # Generate the elements in the path.
+   #
+   public gen()
+      suspend .!l
+   end
+
+   #
+   # Return a path which represents the absolute path of this
+   # path.
+   #
+   public absolute()
+      if is_absolute() then
+         return self
+      return Files.get_path(chdir()).append(self)
+   end
+
+   #
+   # Convert the path back into a string.
+   #
+   public defer str()
+
+   #
+   # Succeed iff this path represents an absolute path.
+   #
+   public defer is_absolute()
+
+   #
+   # Return a normalized equivalent of the path, ie without redundant
+   # path elements.
+   #
+   public defer normal()
+
+   #
+   # Return the path formed by appending the elements of this path to
+   # the other path.
+   #
+   public append(other)
+      return classof(self)(l ||| other.l)
+   end
+
+   #
+   # Return the parent path, ie a path with everything but the last
+   # element.
+   #
+   public parent()
+      if *l > 1 then
+         return classof(self)(l[1:-1])
+   end
+
+   #
+   # Return the child path, ie a path with the same elements plus the
+   # element {s}.
+   #
+   public child(s)
+      return classof(self)(l ||| [s])
+   end
+
+   #
+   # Canonicalize a path, which means trying to turn it into a
+   # standard form.  This means (at least) getting the absolute path
+   # and normalizing it.
+   #
+   public canonical()
+      return absolute().normal()
+   end
+
+   package new(l)
+      self.l := l
+      return
+   end
 end
 
+#
+# This class represents an entry in a directory listing.
+#
 class DirEntry()
-   private readable name, 
-               dev,
-               ino,
-               mode,
-               nlink,
-               uid,
-               gid,
-               rdev,
-               size,
-               atime,
-               mtime,
-               ctime,
-               blksize,
-               blocks,
-               symlink
+   public const 
+      name, 
+      dev,
+      ino,
+      mode,
+      nlink,
+      uid,
+      gid,
+      rdev,
+      size,
+      atime,
+      mtime,
+      ctime,
+      blksize,
+      blocks,
+      symlink
 
    package new(name, ps)
       self.name := name
@@ -226,8 +415,6 @@ class DirEntry()
 end
 
 class UnixFilePath(FilePath)
-   private l
-
    public str()
       local e, s
       s := ""
@@ -239,38 +426,11 @@ class UnixFilePath(FilePath)
       return s
    end
 
-   public append(other)
-      return UnixFilePath(l ||| other.l)
-   end
-
-   public add(x)
-      put(l, x)
-   end
-
-   public get_last()
-      return l[-1]
-   end
-
-   public get_parent()
-      if *l > 1 then
-         return UnixFilePath(l[1:-1])
-   end
-
-   public get_child(x)
-      return UnixFilePath(l ||| [x])
-   end
-
    public is_absolute()
       return l[1] == "/"
    end
 
-   public get_absolute()
-      if is_absolute() then
-         return self
-      return Files.get_path(chdir()).append(self)
-   end
-
-   public get_clean()
+   public normal()
       local e, r
       r := []
       every e := !l do {
@@ -285,26 +445,9 @@ class UnixFilePath(FilePath)
       }
       return UnixFilePath(r)
    end
-
-   #
-   # Canonicalize a path.  This involves :-
-   #   - expanding non-absolute paths to absolute ones using chdir()
-   #   - removing any ".." or "." directories
-   #
-   public get_canonical()
-      return get_absolute().get_clean()
-   end
-
-   package new(l)
-      self.l := l
-      return
-   end
 end
 
 class UnixFileSystem(FileSystem)
-   #
-   # Read a directory.
-   #
    public list(s)
       local l, p, s2, sr
       if (*s > 1) & (s[-1] == "/") then 
@@ -369,8 +512,6 @@ class UnixFileSystem(FileSystem)
 end
 
 class WindowsFilePath(FilePath)
-   private l
-
    public str()
       local e, s
       s := ""
@@ -382,38 +523,11 @@ class WindowsFilePath(FilePath)
       return s
    end
 
-   public append(other)
-      return WindowsFilePath(l ||| other.l)
-   end
-
-   public add(x)
-      put(l, x)
-   end
-
-   public get_last()
-      return l[-1]
-   end
-
-   public get_parent()
-      if *l > 1 then
-         return WindowsFilePath(l[1:-1])
-   end
-
-   public get_child(x)
-      return WindowsFilePath(l ||| [x])
-   end
-
    public is_absolute()
       return l[1][2:0] == ":\\"
    end
 
-   public get_absolute()
-      if is_absolute() then
-         return self
-      return Files.get_path(chdir()).append(self)
-   end
-
-   public get_clean()
+   public normal()
       local e, r
       r := []
       every e := !l do {
@@ -427,18 +541,11 @@ class WindowsFilePath(FilePath)
       return WindowsFilePath(r)
    end
 
-   #
-   # Canonicalize a path.  This involves :-
-   #   - expanding non-absolute paths to absolute ones using chdir()
-   #   - removing any ".." or "." directories
-   #
-   public get_canonical()
-      return get_absolute().get_clean()
-   end
-
-   package new(l)
-      self.l := l
-      return
+   public canonical()
+      local t
+      t := []
+      every put(t, map(!l))
+      return WindowsFilePath(t).absolute().normal()
    end
 end
 

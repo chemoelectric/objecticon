@@ -11,7 +11,7 @@ class ImageCache(StaticError)
    end
 
    public static add_dir(d)
-      d := Files.get_path(d).get_canonical()
+      d := Files.get_path(d).canonical()
       # Ensure it isn't in the list twice.
       if d.str() == (!path).str() then
          return
@@ -57,7 +57,7 @@ class ImageCache(StaticError)
       local p
       p := Files.get_path(s)
       if p.is_absolute() then
-         return p.get_canonical().str()
+         return p.canonical().str()
       suspend (!path).append(p).str()
    end
 

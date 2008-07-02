@@ -88,14 +88,14 @@ class FileDialog(Dialog)
    # Get the directory part of the result
    #
    public get_directory()
-      return (\self.res).get_parent().str()
+      return (\self.res).parent().str()
    end
 
    #
    # Get the file part of the result
    #
    public get_file()
-      return (\self.res).get_last()
+      return (\self.res).get(-1)
    end
 
    #
@@ -147,11 +147,11 @@ class FileDialog(Dialog)
    public set_path(s)
       local l, t
       l := Files.get_path(s)
-      if t := l.get_parent() then
+      if t := l.parent() then
          self.init_dirs := [t.str()]
       else
          self.init_dirs := [chdir()]
-      self.init_files := [l.get_last()]
+      self.init_files := [l.get(-1)]
       return s
    end
 
@@ -166,7 +166,7 @@ class FileDialog(Dialog)
    end
 
    public get_dir_path()
-      return Files.get_path(dir.get_contents()).get_canonical()
+      return Files.get_path(dir.get_contents()).canonical()
    end
 
    public on_okay_button()
@@ -187,10 +187,7 @@ class FileDialog(Dialog)
    end
 
    public on_dlist()
-      local l
-      l := get_dir_path()
-      l.add(dlist.object_get_selections()[1])
-      goto_dir(l.str(), 1)
+      goto_dir(get_dir_path().child(dlist.object_get_selections()[1]).str(), 1)
    end
 
    public on_flist()
@@ -216,7 +213,7 @@ class FileDialog(Dialog)
    end
 
    public on_up_button(ev)
-      goto_dir(self.get_dir_path().get_parent().str(), 1)
+      goto_dir(self.get_dir_path().parent().str(), 1)
    end
 
    public on_home_button(ev)
@@ -233,7 +230,7 @@ class FileDialog(Dialog)
       d := NewDirectoryDialog()
       d.show_modal(self)
       if \d.okay then {
-         s := self.get_dir_path().get_child(d.result).str()
+         s := self.get_dir_path().child(d.result).str()
          if mkdir(s) then
             goto_dir(s, 1)
          else
@@ -263,7 +260,7 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, cf)
-      dir.set_contents(Files.get_path(d).get_canonical().str())
+      dir.set_contents(Files.get_path(d).canonical().str())
       if \cf then
          file.set_contents("")
       load_dir()

@@ -306,7 +306,7 @@ class HtmlOutputter(Outputter)
             get_serial_no(c.obj.get_first_token().filename) || ".html#", 
             c.obj.get_first_token().line , 
             "\" target=\"displayFrame\">Source - ", 
-            Files.get_path(c.obj.get_first_token().filename).get_last(),
+            Files.get_path(c.obj.get_first_token().filename).get(-1),
             " </a></dt>")
       write(f, "</dl>")
    end
@@ -434,7 +434,7 @@ class HtmlOutputter(Outputter)
       f := open(fname, "w") | stop("couldn't open " || fname)
       g := open(filename) | stop("couldn't open " || filename)
 
-      write(f, "<html><head><title>", Files.get_path(filename).get_last(), "</title></head><body><pre>")
+      write(f, "<html><head><title>", Files.get_path(filename).get(-1), "</title></head><body><pre>")
 
       line_no := 0
       while s := read(g) do {

@@ -139,7 +139,7 @@ procedure resolve_layout_filename(src, layout)
    # file name, less the .icn extension.
    layout ? {
       if xl := tab(upto('$')) then {
-         xl ||:= t.get_last()
+         xl ||:= t.get(-1)
          if xl[-4:0] == ".icn" then
             xl[-4:0] := ""
          move(1)

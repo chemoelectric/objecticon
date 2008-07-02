@@ -146,9 +146,9 @@ class ImagePaintEdit(PaintEdit)
       fd := FileDialog()
       l := []
       if \file_img.image_file then {
-         p := Files.get_path(file_img.image_file).get_canonical()
+         p := Files.get_path(file_img.image_file).canonical()
          put(l, p.get_parent().str())
-         fd.set_file(p.get_last())
+         fd.set_file(p.get(-1))
       }
       put(l, \Ivib.last_icon_dir)
       l |||:= Ivib.main.prefs.cache_path

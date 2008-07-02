@@ -133,7 +133,7 @@ procedure yylex2()
          if ="line " then {
             if yylineno := integer(tab(many(&digits))) then {
                =" \""
-               yyfilename := Files.get_path(tab(find("\"")|0)).get_canonical().str()
+               yyfilename := Files.get_path(tab(find("\"")|0)).canonical().str()
             }
          }
          tab(find("\n") | 0)
