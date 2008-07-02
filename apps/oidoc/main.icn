@@ -8,6 +8,8 @@
 
 import parser, ipl.options
 
+global opts, arg_packs
+
 procedure warn(s)
    write(&errout, s)
 end
@@ -17,9 +19,9 @@ procedure note(s)
 end
 
 procedure main(a)
-   local s, o, symbol_table, opts
+   local s, o, symbol_table
 
-   opts := options(a, "-html -o: -a! -d!")
+   opts := options(a, "-html -o: -a! -d! -r!")
 
    symbol_table := SymbolTable()
    if \opts["d"] then
@@ -28,11 +30,15 @@ procedure main(a)
       every s := symbol_table.get_all_packages() do
          symbol_table.scan_package(s) | stop(symbol_table.get_reason())
    }
+
+   arg_packs := set()
    every s := !a do {
       if s[-4:0] == ".icn" then
          symbol_table.scan_file(s) | warn(symbol_table.get_reason())
-      else
+      else {
+         insert(arg_packs, s)
          symbol_table.scan_package(s) | stop(symbol_table.get_reason())
+      }
    }
 
    symbol_table.resolve_classes() | stop(symbol_table.get_reason())

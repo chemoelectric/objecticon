@@ -17,8 +17,20 @@ class Outputter()
       local ps, e
       ps := set()
       every e := symbol_table.gen_symbols() do
-         insert(ps, \(\e.scanned_file).pack | "default")
+         insert(ps, get_package(e))
       suspend !sort(ps)
+   end
+
+   protected get_package(e)
+      return \(\e.scanned_file).pack | "default"
+   end
+
+   protected should_print_symbol(e)
+      return should_print_package(get_package(e))
+   end
+
+   protected should_print_package(p)
+      return (p == "default") | /opts["r"] | member(arg_packs, p)
    end
 
    protected get_symbols_in(p)

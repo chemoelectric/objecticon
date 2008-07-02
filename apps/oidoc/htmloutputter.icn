@@ -69,7 +69,8 @@ class HtmlOutputter(Outputter)
       write(nav, "<h1>Packages</h1><p>")
       write(nav, "<a href=\"all.html\" target=\"listFrame\">All</a><p>")
       every s := get_packages() do {
-         write(nav, "<a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a><br>")
+         if should_print_package(s) then
+            write(nav, "<a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a><br>")
          output_package(s)
       }
       write(nav, "</body></html>")
@@ -81,7 +82,8 @@ class HtmlOutputter(Outputter)
       write(begin, "<h1>Object Icon generated documentation</h1>")
       write(begin, "This is the automatically generated documentation for the following packages.<p>")
       every s := get_packages() do
-         write(begin, "<a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a><br>")
+         if should_print_package(s) then
+            write(begin, "<a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a><br>")
 
       write(begin, "</body></html>")
       close(begin)
@@ -92,12 +94,19 @@ class HtmlOutputter(Outputter)
       write(all, "<html><body>")
       write(all, "<h1>All packages</h1><p>")
       write(all, "<h1>Classes</h1><p>")
-      every c := !isort(all_classes, name_sort) do
-         write(all, "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
-
+      every c := !isort(all_classes, name_sort) do {
+         if should_print_symbol(c) then
+            write(all, "<a href=\"", 
+                  get_serial_no(c) || ".html\" target=\"displayFrame\">", 
+                  c.name, "</a><br>")
+      }
       write(all, "<p><h1>Other Symbols</h1><p>")
-      every c := !isort(all_others, name_sort) do
-         write(all, "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
+      every c := !isort(all_others, name_sort) do {
+         if should_print_symbol(c) then
+            write(all, 
+                  "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", 
+                  c.name, "</a><br>")
+      }
 
       close(all)
    end
