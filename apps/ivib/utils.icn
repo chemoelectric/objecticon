@@ -150,7 +150,7 @@ procedure resolve_layout_filename(src, layout)
 
    # Append the expanded layout string to the directory
    # part of the src file.
-   if t := t.get_parent() then
+   if t := t.parent() then
       return t.append(Files.get_path(xl)).str()
    else
       return xl
