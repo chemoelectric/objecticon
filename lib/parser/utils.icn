@@ -34,6 +34,8 @@ procedure path_find(f, n)
    if stat(f) then
       return f
    p := Files.get_path(f)
+   if p.is_absolute() then
+      fail
    every d := path_elements(getenv(n)) do {
       s := Files.get_path(d).append(p).str()
       if stat(s) then

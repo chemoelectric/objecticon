@@ -111,6 +111,11 @@ char *pathfind(buf, path, name, extn)
 
     if (tryfile(buf, (char *)NULL, name, extn))	/* try curr directory first */
         return buf;
+
+    /* Don't search the path if we have an absolute path */
+    if (isabsolute(name))
+        return NULL;
+
     if (!path)				/* if no path, use default */
         path = DefPath;
     s = path;
@@ -120,6 +125,24 @@ char *pathfind(buf, path, name, extn)
             return buf;
     }
     return NULL;				/* return NULL if no file found */
+}
+
+/*
+ * Is a file path absolute?
+ */
+int isabsolute(char *s)
+{
+#if UNIX
+    return *s == '/';
+#endif
+
+#if MSDOS || OS2
+    return isalpha(*s) && s[1] == ':' && (s[2] == '\\' || s[2] == '/');
+#endif
+
+#if PORT
+Deliberate Syntax Error
+#endif
 }
 
 /*
