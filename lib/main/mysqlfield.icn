@@ -12,16 +12,17 @@ package mysql
 # A simple object which corresponds to the MYSQL_FIELD struct.
 #
 class MySqlField()
-   private readable name, 
-          table,
-          org_table,
-          db,
-          def,
-          length,
-          max_length,
-          flags,
-          decimals,
-          type
+   private readable 
+      name, 
+      table,
+      org_table,
+      db,
+      def,
+      length,
+      max_length,
+      flags,
+      decimals,
+      type
 
    #
    # Get the name

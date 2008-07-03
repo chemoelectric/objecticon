@@ -10,7 +10,8 @@ import util
 # Handles the conversion from decoded content to an object
 #
 class EncodingHandler(Error)
-   public static const ENCODING_HANDLERS
+   public static const 
+      ENCODING_HANDLERS
 
    private static init()
       ENCODING_HANDLERS := [NoOpEncodingHandler(), Base64Handler(), QuotedPrintableHandler()]

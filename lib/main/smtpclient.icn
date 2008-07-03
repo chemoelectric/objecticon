@@ -7,7 +7,8 @@ package mail
 import net
 
 class SmtpClient(NetClient)
-   private static const RFC822_HEADERS
+   private static const 
+      RFC822_HEADERS
 
    private static init()
       RFC822_HEADERS := set(["date", "resent-date", "return-path", "received", "sender", 
@@ -18,7 +19,9 @@ class SmtpClient(NetClient)
                              "comments", "encrypted"])
    end
 
-   private hostname, sent_helo
+   private 
+      hostname,
+      sent_helo
 
    public set_hostname(s)
       hostname := s

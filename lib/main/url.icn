@@ -18,7 +18,14 @@ $include "posix.icn"
 # This class encapsulates a URL
 #
 class URL(Error)
-   private readable protocol, address, file, ref, port, file_handle, header
+   private readable 
+      protocol,
+      address,
+      file,
+      ref,
+      port,
+      file_handle,
+      header
 
    #
    # Set the protocol field.

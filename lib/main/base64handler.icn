@@ -8,7 +8,10 @@ package mail
 # Handles the base64 encoding of a message
 #
 class Base64Handler(EncodingHandler)
-   public static const BASE64_STRING, BASE64_CSET, BASE64_FIRST64
+   public static const
+      BASE64_STRING,
+      BASE64_CSET, 
+      BASE64_FIRST64
 
    private static init()
       BASE64_STRING := &ucase || &lcase || &digits || "+/"

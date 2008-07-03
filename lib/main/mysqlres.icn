@@ -17,7 +17,9 @@ import util
 # This class provides a wrapper around an MYSQL_RES object.
 #
 class MySqlRes()
-   private ptr, fields
+   private
+      ptr,
+      fields
 
    #
    # Invoke mysql_num_fields() for the current connection.

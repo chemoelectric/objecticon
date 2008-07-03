@@ -10,7 +10,8 @@ import util
 # Handles the quoted-printable encoding of a message
 #
 class QuotedPrintableHandler(EncodingHandler)
-   public static const QUOTED_PRINTABLE_CHARS
+   public static const 
+      QUOTED_PRINTABLE_CHARS
 
    private static init()
       QUOTED_PRINTABLE_CHARS := cset(&ascii[33:62] || &ascii[63:128])

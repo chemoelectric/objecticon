@@ -10,17 +10,18 @@ import util, net, mail
 # Encapsulate one request to {HttpClient}.
 #
 class HttpRequest(SetFields, MimeHeaders)
-   private readable url,
-       post_data,
-       post_file,
-       method,
-       data_file,
-       username,
-       password,
-       referer,
-       range_start,
-       range_end,
-       content_type
+   private readable 
+      url,
+      post_data,
+      post_file,
+      method,
+      data_file,
+      username,
+      password,
+      referer,
+      range_start,
+      range_end,
+      content_type
 
    #
    # Set the desired url.

@@ -14,7 +14,9 @@ $include "posix.icn"
 # This class is a convenient way of creating a sub-process in a program,
 #
 class Process()
-   private pid, p
+   private 
+      pid,
+      p
 
    #
    # Called by the parent process to start the child

@@ -10,7 +10,10 @@ import util
 # This class represents a content type
 #
 class ContentType(Error)
-   private readable type, subtype, parameters
+   private readable
+      type,
+      subtype,
+      parameters
 
    #
    # Set type type

@@ -11,7 +11,11 @@ import util
 # may be parsed in accordance with RFC822.
 #
 class Mailbox(Address, Error)
-   private readable local_part, domain, phrase, route
+   private readable
+      local_part,
+      domain,
+      phrase,
+      route
 
    public get_local_part() 
       return local_part

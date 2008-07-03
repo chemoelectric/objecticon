@@ -11,7 +11,9 @@ import util
 # zero or more mailboxes.
 #
 class Group(Address, Error)
-   private readable mailboxes, phrase
+   private readable 
+      mailboxes,
+      phrase
 
    public get_phrase() 
       return phrase

@@ -14,10 +14,11 @@ import util
 # This class encapsulates an HTTP response.
 #
 class HttpResponse(MimeHeaders)
-   private readable url, 
-       status,
-       data,
-       data_file
+   private readable 
+      url, 
+      status,
+      data,
+      data_file
 
    #
    # Set the url

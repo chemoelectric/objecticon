@@ -14,13 +14,14 @@ $include "posix.icn"
 # server and communicates using CRLF-terminated lines.
 #
 class NetClient(Connectable, Error, SetFields)
-   public static const CONNECTING_EVENT,
-         CONNECTED_EVENT,
-         CLOSED_EVENT,
-         SENDING_STRING_EVENT,
-         SENDING_LINE_EVENT,
-         READ_LINE_EVENT,
-         READ_STRING_EVENT
+   public static const 
+      CONNECTING_EVENT,
+      CONNECTED_EVENT,
+      CLOSED_EVENT,
+      SENDING_STRING_EVENT,
+      SENDING_LINE_EVENT,
+      READ_LINE_EVENT,
+      READ_STRING_EVENT
 
    private static init()
       CONNECTING_EVENT := "Connecting"
@@ -32,7 +33,12 @@ class NetClient(Connectable, Error, SetFields)
       READ_STRING_EVENT := "Read string"
    end
 
-   private readable server, port, connection, sbuff, timeout
+   private readable
+      server,
+      port,
+      connection,
+      sbuff,
+      timeout
 
    # 
    # Fail and set the error code, and close the connection.

@@ -10,7 +10,10 @@ import util
 # This class represents a multipart content
 #
 class Multipart(Error)
-   private readable preamble, parts, epilogue
+   private readable 
+      preamble,
+      parts, 
+      epilogue
 
    #
    # Get the preamble

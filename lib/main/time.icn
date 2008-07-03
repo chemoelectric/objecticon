@@ -31,15 +31,34 @@ $include "posix.icn"
 # @ t.set_seconds(n, z)      # n seconds past the base date in GMT, +/-z mins
 #
 class Time(Error)
-   private readable seconds, year, month, mday, hour, min, sec, zone
-   private psub, ppos
+   private readable 
+      seconds,
+      year,
+      month,
+      mday,
+      hour,
+      min,
+      sec,
+      zone
+
+   private 
+      psub,
+      ppos
 
    #
    # Constant data for time functions
    #
-   public static const TIME_MONTHS, TIME_BASE_YEAR, TIME_WEEK_DAYS,
-      TIME_TZCHARS, TIME_UNIX_BASE_OFFSET, TIME_DEFAULT_FORMAT,
-      TIME_MDAYS, TIME_LEAP_MDAYS, TIME_CUM_MDAYS, TIME_LEAP_CUM_MDAYS
+   public static const
+      TIME_MONTHS,
+      TIME_BASE_YEAR,
+      TIME_WEEK_DAYS,
+      TIME_TZCHARS,
+      TIME_UNIX_BASE_OFFSET,
+      TIME_DEFAULT_FORMAT,
+      TIME_MDAYS,
+      TIME_LEAP_MDAYS, 
+      TIME_CUM_MDAYS,
+      TIME_LEAP_CUM_MDAYS
 
    private static init()
       TIME_DEFAULT_FORMAT := "yyyy/MM/dd HH:mm:ss zzz"

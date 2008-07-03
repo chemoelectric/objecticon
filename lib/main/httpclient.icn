@@ -15,15 +15,23 @@ $include "posix.icn"
 # Little helper class to store cookie details
 #
 class Cookie()
-   package readable name, value, expires, domain, 
-           path, secure, comment, version
+   package readable
+      name,
+      value,
+      expires, 
+      domain, 
+      path,
+      secure,
+      comment, 
+      version
 end
 
 #
 # An http client
 #
 class HttpClient(NetClient)
-   public static const TOKEN_CHAR,
+   public static const
+      TOKEN_CHAR,
       COMPLETE_EVENT,
       FAILED_EVENT,
       RETRYING_EVENT,
@@ -39,7 +47,8 @@ class HttpClient(NetClient)
       PROGRESS_EVENT := "Progress"
    end
 
-   private readable request,
+   private readable 
+      request,
       response,
       open_url,
       data_out,

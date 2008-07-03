@@ -9,8 +9,21 @@ import
    ipl.caseless
 
 class RFC822Parser(Error)
-   public static const CTL_CHAR, SPACE, SPECIALS, ATOM_CHAR, CTEXT_CHAR, FIELD_NAME_CHARS,
-      QTEXT_CHAR, DTEXT_CHAR, LWSP_CHAR, DAYS, MONTHS, TZ_CHARS, TSPECIALS, ATOM_CHAR_1521
+   public static const 
+      CTL_CHAR,
+      SPACE,
+      SPECIALS,
+      ATOM_CHAR,
+      CTEXT_CHAR,
+      FIELD_NAME_CHARS,
+      QTEXT_CHAR,
+      DTEXT_CHAR,
+      LWSP_CHAR,
+      DAYS,
+      MONTHS,
+      TZ_CHARS,
+      TSPECIALS,
+      ATOM_CHAR_1521
 
    private static init()
       CTL_CHAR := &ascii[1:33] ++ &ascii[128]

@@ -35,7 +35,13 @@ $define BIT32 16rffffffff
 # digest.   
 #
 class MD5()
-   private a, b, c, d, bit_count, buffer
+   private 
+      a,
+      b,
+      c,
+      d,
+      bit_count,
+      buffer
 
    private F(x, y, z)
       return ior(iand(x, y), iand(icom(x), z));

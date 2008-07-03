@@ -15,7 +15,10 @@ package undo
 # Once closed, it behaves just like a closed CompoundEdit.
 #
 class UndoManager(CompoundEdit)
-   private limit, index, last
+   private
+      limit,
+      index,
+      last
 
    public redo()
       if \closed then

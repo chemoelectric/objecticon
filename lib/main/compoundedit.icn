@@ -16,7 +16,11 @@ import util
 #
 class CompoundEdit(UndoableEdit, SetFields)
    protected l
-   private readable closed, liberal_flag, desc
+
+   private readable
+      closed,
+      liberal_flag,
+      desc
 
    public redo()
       every (!l).redo()

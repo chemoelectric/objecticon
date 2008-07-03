@@ -9,9 +9,14 @@
 package util
 
 class Timezone()
-   public static const KNOWN_TIMEZONES, SYSTEM_TIMEZONE, UTC_TIMEZONE
+   public static const 
+      KNOWN_TIMEZONES,
+      SYSTEM_TIMEZONE, 
+      UTC_TIMEZONE
 
-   private readable offset, id
+   private readable
+      offset,
+      id
 
    private static init()
       local s, t1, pat, t2, f, t, stz

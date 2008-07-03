@@ -3,20 +3,21 @@ package lang
 import util
 
 class Codec()
-   public static const OBJECT_CODE,
-                CLASS_CODE,
-                RECORD_CODE,
-                PROCEDURE_CODE,
-                NULL_CODE,
-                STRING_CODE,
-                CSET_CODE,
-                INTEGER_CODE,
-                REAL_CODE,
-                LIST_CODE,
-                SET_CODE,
-                TABLE_CODE,
-                REF_CODE,
-                CODE_SEPARATOR
+   public static const 
+      OBJECT_CODE,
+      CLASS_CODE,
+      RECORD_CODE,
+      PROCEDURE_CODE,
+      NULL_CODE,
+      STRING_CODE,
+      CSET_CODE,
+      INTEGER_CODE,
+      REAL_CODE,
+      LIST_CODE,
+      SET_CODE,
+      TABLE_CODE,
+      REF_CODE,
+      CODE_SEPARATOR
 
    private static init()
       CODE_SEPARATOR := "|"

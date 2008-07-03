@@ -7,7 +7,10 @@ package util
 import lang
 
 class Field()
-   public const attr, val, obj
+   public const 
+      attr,
+      val,
+      obj
 
    public as_attrib() 
       return attr || "=" || string_val() 

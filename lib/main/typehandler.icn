@@ -10,7 +10,8 @@ import util
 # Handles the conversion from decoded content to an object
 #
 class TypeHandler(Error)
-   public static const TYPE_HANDLERS
+   public static const 
+      TYPE_HANDLERS
 
    private static init()
       TYPE_HANDLERS := [NoOpTypeHandler(), MultipartHandler(), TextHandler(), MessageHandler()]

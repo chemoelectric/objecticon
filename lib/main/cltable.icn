@@ -10,7 +10,9 @@ import lang
 # This class represents a caseless table()
 #
 class ClTable()
-   private lookup, names
+   private 
+      lookup,
+      names
 
    public insert(key, val)
       default.insert(lookup, map(key), val)
