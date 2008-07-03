@@ -15,7 +15,7 @@ import gui
 #
 class CanvasLabelDialog(CanvasComponentDialog)
    public 
-   paint_field
+      paint_field
 
    public validate_input()
       cast(self,CanvasComponentDialog).validate_input() | fail 
@@ -42,6 +42,5 @@ class CanvasLabelDialog(CanvasComponentDialog)
       paint_field.set_contents(c.paint)
       p.add(paint_field)
    end
-
 end
 

@@ -15,10 +15,10 @@ import gui
 #
 class CanvasTableColumnDialog(CanvasComponentDialog)
    public 
-   paint_field,
-   size,                    #            
-   internal_alignment,      #                          
-   auto_width_cb
+      paint_field,
+      size,    
+      internal_alignment,
+      auto_width_cb
 
    public validate_input()
       cast(self,CanvasComponentDialog).validate_input() | fail 

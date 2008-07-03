@@ -2,11 +2,11 @@ import lang, util
 
 class CanvasObject(SelectiveObjectCodec)
    public 
-   parent_Canvas,           # Link to owning Canvas object
-   name,                    # Object name
-   class_name,              # Class name of object
-   import_name,             # Name of import file
-   class_variable
+      parent_Canvas,           # Link to owning Canvas object
+      name,                    # Object name
+      class_name,              # Class name of object
+      import_name,             # Name of import file
+      class_variable
 
    #
    # Set the object's name.

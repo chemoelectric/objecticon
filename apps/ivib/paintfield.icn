@@ -2,13 +2,13 @@ import gui
 
 class PaintField(Border)
    public 
-   paints, 
-   os, 
-   img, 
-   tf,
-   grid_label,
-   paint_tbl,
-   edit_paint_button
+      paints, 
+      os, 
+      img, 
+      tf,
+      grid_label,
+      paint_tbl,
+      edit_paint_button
 
    public on_sel_change()
       if paints.get_selection() = 1 then

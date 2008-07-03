@@ -8,7 +8,6 @@
 
 import lang, gui, ipl.graphics
 
-
 $include "keysyms.icn"
 
 #
@@ -22,12 +21,13 @@ $define RSW      12
 $define EDGE      4
 
 class BorderOfCanvas(Component)
-   public canvas,
-                                 is_resizing,             # Flag indicating Canvas being resized
-                                 orig_w, 
-                                 orig_h, 
-                                 drag_x_offset,           # Offsets used for smooth dragging
-                                 drag_y_offset
+   public
+      canvas,
+      is_resizing,             # Flag indicating Canvas being resized
+      orig_w, 
+      orig_h, 
+      drag_x_offset,           # Offsets used for smooth dragging
+      drag_y_offset
 
    public set_canvas(c)
       self.canvas := c
@@ -172,52 +172,52 @@ end
 #
 class Canvas(Component,SelectiveObjectCodec)
    public 
-   layout_filename,         # Layout file, or null if in source file
-   superclass_name,         # Class name of superclass
-   import_name,             # Name of import file
-   selections,              # Items currently selected
-   selected,                # Item currently selected and highlighted
-   held_flag,               # Flag indicating whether left button held over item
-   drag_x_offset,           # Offsets used for smooth dragging
-   drag_y_offset, 
-   resize_mode,             # Flag indicating how an item is being resized/moved
-   button_groups,           # Set of ButtonGroup objects (see groups.iol)
-   checkbox_groups,         # Set of CheckBoxGroup objects
-   dialog_struct,           # A _Dialog object corresponding to the Canvas
-   new_file_flag,           # Flag indicating if filename is a new file (ie provided
-                            # via the command line, but didn't exist).
-   filename,                # File name of Canvas
-   modified,                # Flag indicating whether is modified
-   moving,                  # Item being moved
-   tmp_dup,                 # Temporary undo variable
-   orig_x,                  # Original pos/size of an item being resized/moved
-   orig_y, 
-   orig_w, 
-   orig_h, 
-   orig_x_spec,             # Original pos/size spec of an item being resized/moved
-   orig_y_spec, 
-   orig_w_spec, 
-   orig_h_spec, 
-   x_new,                   # New pos/size spec of an item being resized/moved
-   y_new,
-   h_new,
-   w_new,
-   arrow_flag,              # Flag for co-ordinating undo on keypad movement
-   initial_focus,           # Component which will have intitial focus in dialog
-   name,                    # Class name of Canvas
-   is_component,            # Is it a Component (rather than a Dialog)?
-   gen_main,                # Flags regarding code generation options.
-   gen_component_setup,
-   gen_initially,
-   gen_init_dialog,
-   gen_indent,
-   event_handlers,          # List of event, handler pairs
-   item_buff_win,
-   dialog_iw,               # Initial size to set dialog; may be null if
-   dialog_ih,               # default is to be used.
-   dialog_w,                # Actual size of dialog
-   dialog_h,                #
-   parent_Canvas
+      layout_filename,         # Layout file, or null if in source file
+      superclass_name,         # Class name of superclass
+      import_name,             # Name of import file
+      selections,              # Items currently selected
+      selected,                # Item currently selected and highlighted
+      held_flag,               # Flag indicating whether left button held over item
+      drag_x_offset,           # Offsets used for smooth dragging
+      drag_y_offset, 
+      resize_mode,             # Flag indicating how an item is being resized/moved
+      button_groups,           # Set of ButtonGroup objects (see groups.iol)
+      checkbox_groups,         # Set of CheckBoxGroup objects
+      dialog_struct,           # A _Dialog object corresponding to the Canvas
+      new_file_flag,           # Flag indicating if filename is a new file (ie provided
+                               # via the command line, but didn't exist).
+      filename,                # File name of Canvas
+      modified,                # Flag indicating whether is modified
+      moving,                  # Item being moved
+      tmp_dup,                 # Temporary undo variable
+      orig_x,                  # Original pos/size of an item being resized/moved
+      orig_y, 
+      orig_w, 
+      orig_h, 
+      orig_x_spec,             # Original pos/size spec of an item being resized/moved
+      orig_y_spec, 
+      orig_w_spec, 
+      orig_h_spec, 
+      x_new,                   # New pos/size spec of an item being resized/moved
+      y_new,
+      h_new,
+      w_new,
+      arrow_flag,              # Flag for co-ordinating undo on keypad movement
+      initial_focus,           # Component which will have intitial focus in dialog
+      name,                    # Class name of Canvas
+      is_component,            # Is it a Component (rather than a Dialog)?
+      gen_main,                # Flags regarding code generation options.
+      gen_component_setup,
+      gen_initially,
+      gen_init_dialog,
+      gen_indent,
+      event_handlers,          # List of event, handler pairs
+      item_buff_win,
+      dialog_iw,               # Initial size to set dialog; may be null if
+      dialog_ih,               # default is to be used.
+      dialog_w,                # Actual size of dialog
+      dialog_h,                #
+      parent_Canvas
 
    public static const
       DEFAULT_WIDTH,

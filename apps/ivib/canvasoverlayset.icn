@@ -111,7 +111,6 @@ class CanvasOverlaySet(CanvasComponent,OverlaySet)
       suspend cast(self,CanvasComponent).gen_cos() | !self.children
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,OverlaySet).new()
       cast(self,CanvasComponent).new()

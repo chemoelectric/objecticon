@@ -81,7 +81,6 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
       return GridLayoutEdit(self)
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CanvasLayout).new()
       cast(self,GridLayout).new()

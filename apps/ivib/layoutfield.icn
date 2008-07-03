@@ -4,9 +4,9 @@ import gui
 
 class LayoutField(Component)
    public 
-    layouts,
-    layout_tbl,
-    edit_layout_button
+      layouts,
+      layout_tbl,
+      edit_layout_button
 
    public on_edit_layout()
       get_contents().dialog().show_modal(parent_dialog)

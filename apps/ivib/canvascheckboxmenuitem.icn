@@ -103,7 +103,6 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
       suspend cast(self,CanvasMenuComponent).gen_cos() | self.paint_mid | \self.paint_right
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CanvasTextMenuItem).new()
       cast(self,CheckBoxMenuItem).new()

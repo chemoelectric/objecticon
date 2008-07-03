@@ -14,12 +14,12 @@ import gui
 #
 class CanvasMenuComponentDialog(MenuComponentEdit)
    public 
-   paint_field,
-   paint_field_l,
-   paint_field_r,
-   shaded,                  #
-   accel_flag,              # Accel on/off
-   accel_tf
+      paint_field,
+      paint_field_l,
+      paint_field_r,
+      shaded,                  #
+      accel_flag,              # Accel on/off
+      accel_tf
 
    public on_accel_flag()
       accel_tf.toggle_is_shaded()

@@ -67,7 +67,6 @@ class MenuTree(SelectableScrollArea)
       return mw
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,SelectableScrollArea).new()
       self.set_draggable_cursor("t")

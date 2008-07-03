@@ -14,7 +14,10 @@ import gui
 # Class for representing a Table on the canvas.
 #
 class CanvasTable(CanvasComponent,Table)
-   public select_mode, columns
+   public
+      select_mode,
+      columns
+
    #
    # Default minimum width for the object
    #
@@ -121,7 +124,6 @@ class CanvasTable(CanvasComponent,Table)
       suspend cast(self,CanvasComponent).gen_cos() | !self.get_columns()
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Table).new()
       cast(self,CanvasComponent).new()

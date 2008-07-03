@@ -14,14 +14,14 @@ import gui
 #
 class CanvasEditListDialog(CanvasComponentDialog)
    public 
-   selection_list,          #                      
-   set_selection,           #                     
-   selection,               #                 
-   set_initial_text,        #                        
-   initial_text,            #                    
-   group,                   #             
-   filter,                  #
-   default_setting
+      selection_list,          #                      
+      set_selection,           #                     
+      selection,               #                 
+      set_initial_text,        #                        
+      initial_text,            #                    
+      group,                   #             
+      filter,                  #
+      default_setting
 
    public validate_input()
       if (group.get_which_one() === set_selection) & not(integer(selection.get_contents())) then

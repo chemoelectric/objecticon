@@ -151,7 +151,6 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
       suspend cast(self,CanvasComponent).gen_cos() | !self.children
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,OverlayItem).new()
       cast(self,CanvasComponent).new()

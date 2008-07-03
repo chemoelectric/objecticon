@@ -10,14 +10,14 @@ import gui
 
 class EventTab(TabItem)
    public 
-                         tbl,
-                         add_button,                 # Buttons              
-                         delete,              #                  
-                         apply,               #                 
-                         contents,            # Table contents
-                         event,
-                         handler,
-                         name_field
+      tbl,
+      add_button,          # Buttons              
+      delete,              #                  
+      apply,               #                 
+      contents,            # Table contents
+      event,
+      handler,
+      name_field
 
    public update_grey()
       if *tbl.get_selections() > 0 then {

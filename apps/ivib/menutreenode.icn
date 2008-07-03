@@ -9,7 +9,11 @@
 
 
 class MenuTreeNode()
-   private readable depth, parent, index, owner
+   private readable
+      depth,
+      parent,
+      index,
+      owner
 
    public new(depth, parent, index, owner)
       self.depth := depth

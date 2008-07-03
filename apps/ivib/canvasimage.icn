@@ -72,7 +72,6 @@ class CanvasImage(CanvasComponent,Image)
       return CanvasImageDialog(self)
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Image).new()
       cast(self,CanvasComponent).new()

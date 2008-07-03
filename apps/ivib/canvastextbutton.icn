@@ -61,7 +61,6 @@ class CanvasTextButton(CanvasButton,TextButton)
       suspend cast(self,CanvasComponent).gen_cos() | self.paint | \self.paint_down
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,TextButton).new()
       cast(self,CanvasButton).new()

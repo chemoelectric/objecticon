@@ -2,12 +2,12 @@ import gui
 
 class CheckBoxImageTab(TabItem)
    public 
-   c,
-   browse_up,               #                     
-   browse_down,             #                     
-   icon_up,
-   icon_down,
-   cp_img
+      c,
+      browse_up,               #                     
+      browse_down,             #                     
+      icon_up,
+      icon_down,
+      cp_img
 
    public on_cp_img()
       self.icon_down.set_image(icon_up.image_str)

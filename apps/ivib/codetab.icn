@@ -2,13 +2,13 @@ import gui
 
 class CodeTab(TabItem)
    public 
-   c,
-   name,                    #            
-   class_name,              # Class name
-   import_name,             # TextField - import name
-   var_category0,           # Checkboxes for variable category
-   var_category1,           #  
-   var_category_cbg
+      c,
+      name,                    #            
+      class_name,              # Class name
+      import_name,             # TextField - import name
+      var_category0,           # Checkboxes for variable category
+      var_category1,           #  
+      var_category_cbg
 
    public set_vals()
       c.set_name(name.get_contents())

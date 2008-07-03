@@ -6,8 +6,8 @@ import gui
 
 class CanvasSplit(CanvasComponent,Split)
    public 
-   sizer_is_horizontal_flag,     # These 2 flags are just used or save and restore.
-   sizer_show_inter_flag
+      sizer_is_horizontal_flag,     # These 2 flags are just used or save and restore.
+      sizer_show_inter_flag
 
    #
    # Generate code into Code object c.
@@ -142,7 +142,6 @@ class CanvasSplit(CanvasComponent,Split)
       suspend cast(self,CanvasComponent).gen_cos() | self.first | self.second
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Split).new()
       cast(self,CanvasComponent).new()
@@ -245,7 +244,6 @@ class CanvasSplitContent(CanvasComponent,Component)
      suspend cast(self,CanvasComponent).gen_cos() | !self.children
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Component).new()
       cast(self,CanvasComponent).new()

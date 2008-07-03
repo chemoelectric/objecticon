@@ -6,8 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
-import lang
+import gui, lang
 
 ############################################################################
 #
@@ -15,17 +14,17 @@ import lang
 #
 class CanvasMenuBarDialog(CanvasComponentDialog)
    public 
-   add_label,               #                 
-   add_menu,                #                
-   add_separator,           #                     
-   add_checkbox,            #                    
-   delete,                  #              
-   edit,                    #            
-   up,
-   down,
-   struct,                  #              
-   select_rec,              #                  
-   new_cbg
+      add_label,               #                 
+      add_menu,                #                
+      add_separator,           #                     
+      add_checkbox,            #                    
+      delete,                  #              
+      edit,                    #            
+      up,
+      down,
+      struct,                  #              
+      select_rec,              #                  
+      new_cbg
 
    #
    # Insert new into tree, update string representation.

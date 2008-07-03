@@ -81,7 +81,6 @@ class CanvasTree(CanvasComponent,Tree)
       return CanvasTreeDialog(self)
    end
 
-# WARN : parameterless initially method
    public new()
       local m, n, p
       cast(self,Tree).new()

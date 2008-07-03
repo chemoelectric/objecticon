@@ -2,7 +2,10 @@ import gui
 
 
 class OkCancel(Component)
-   public okay, cancel
+   public 
+      okay,
+      cancel
+
    public listen(obj)
       okay.connect(obj.on_okay, Event.ACTION)
       cancel.connect(obj.on_cancel, Event.ACTION)

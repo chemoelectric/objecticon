@@ -14,11 +14,11 @@ import gui
 #
 class LayoutEdit(Dialog)
    public 
-   c,
-   label,                   # Dialog title
-   tabset,
-   code_tab,
-   okay_result
+      c,
+      label,                   # Dialog title
+      tabset,
+      code_tab,
+      okay_result
 
    #
    # Add the tab to the TabSet
@@ -84,7 +84,13 @@ end
 
 
 class GridLayoutEdit(LayoutEdit)
-   public set_doi, doi_field, set_dii, dii_field, extra_list
+   public
+      set_doi,
+      doi_field,
+      set_dii,
+      dii_field,
+      extra_list
+
    public on_set_doi()
       doi_field.toggle_is_shaded()
    end

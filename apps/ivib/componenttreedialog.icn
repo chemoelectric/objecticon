@@ -37,7 +37,10 @@ end
 
 
 class ComponentTreeDialog(Dialog)
-   public tree, main
+   public 
+      tree,
+      main
+
    public component_setup()
       self.setup()
       tree.set_root_node(CanvasNode())
@@ -155,7 +158,9 @@ end
 
 
 class BaseNode(TreeNode)
-   public component
+   public 
+      component
+
    public defer get_child_components()
    public defer get_name()
 

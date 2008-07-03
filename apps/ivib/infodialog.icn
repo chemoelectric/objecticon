@@ -13,10 +13,11 @@ import gui
 # A simple dialog to output a multi-line message.
 #     
 class InfoDialog(Dialog)
-   private lines, 
-           title,
-           button_text,
-           alignment
+   private
+      lines, 
+      title,
+      button_text,
+      alignment
 
    public component_setup()
       local l, s, b

@@ -70,7 +70,6 @@ class CanvasTextDisplay(CanvasComponent,TextDisplay)
       return 1
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,TextDisplay).new()
       cast(self,CanvasComponent).new()

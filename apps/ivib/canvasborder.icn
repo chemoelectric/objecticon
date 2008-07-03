@@ -8,7 +8,6 @@
 
 import gui
 
-
 $define INSIDE_BOX 30
 
 ############################################################################
@@ -166,7 +165,6 @@ class CanvasBorder(CanvasComponent,Border)
       suspend cast(self,CanvasComponent).gen_cos() | self.content | \self.title
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Border).new()
       cast(self,CanvasComponent).new()
@@ -176,7 +174,6 @@ class CanvasBorder(CanvasComponent,Border)
       return
    end
 end
-
 
 class CanvasBorderContent(CanvasComponent,Component)
    #
@@ -260,7 +257,6 @@ class CanvasBorderContent(CanvasComponent,Component)
      suspend cast(self,CanvasComponent).gen_cos() | !self.children
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Component).new()
       cast(self,CanvasComponent).new()
@@ -271,7 +267,6 @@ class CanvasBorderContent(CanvasComponent,Component)
       return
    end
 end
-
 
 class CanvasBorderContentDialog(CanvasComponentDialog)
    public validate_input()

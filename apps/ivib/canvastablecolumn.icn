@@ -13,7 +13,9 @@ import gui
 # Class for representing a TableColumn on the canvas.
 #
 class CanvasTableColumn(CanvasComponent,TableColumn)
-   public column_align
+   public 
+      column_align
+
    #
    # CanvasComponent has an in_resize_region too, but we want TableColumn's (for preview).
    #
@@ -114,7 +116,6 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
       suspend cast(self,CanvasComponent).gen_cos() | self.paint
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,TableColumn).new()
       cast(self,CanvasComponent).new()

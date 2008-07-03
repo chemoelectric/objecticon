@@ -4,15 +4,16 @@ import gui, util
 
 class GroupsDialog(Dialog)
    public 
-   c,
-   group_objs,
-   groups,
-   member_objs,
-   members,
-   edit_group, 
-   delete_group, 
-   delete_member, 
-   okay_result
+      c,
+      group_objs,
+      groups,
+      member_objs,
+      members,
+      edit_group, 
+      delete_group, 
+      delete_member, 
+      okay_result
+
    #
    # Get result flag
    #
@@ -149,7 +150,12 @@ end
 
 
 class GroupEdit(Dialog)
-   public c, tabset, code_tab, okay_result
+   public
+      c, 
+      tabset,
+      code_tab,
+      okay_result
+
    public setup()
       local oc, label
       subtype(c) ? {

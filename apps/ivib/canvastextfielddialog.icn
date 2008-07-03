@@ -15,10 +15,10 @@ import gui
 #
 class CanvasTextFieldDialog(CanvasComponentDialog)
    public 
-   contents, 
-   filter,
-   is_editable_cb,
-   move_on_rpress_cb
+      contents, 
+      filter,
+      is_editable_cb,
+      move_on_rpress_cb
 
    public set_vals()
       cast(self,CanvasComponentDialog).set_vals()

@@ -124,7 +124,6 @@ class CanvasTabSet(CanvasComponent,TabSet)
       suspend cast(self,CanvasComponent).gen_cos() | !self.children
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,TabSet).new()
       cast(self,CanvasComponent).new()

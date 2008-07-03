@@ -15,6 +15,7 @@ import gui
 #
 class CanvasRangeSpin(CanvasComponent,RangeSpin)
    public value
+
    #
    # Generate code into Code object c.
    #
@@ -77,7 +78,6 @@ class CanvasRangeSpin(CanvasComponent,RangeSpin)
       return 1
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,RangeSpin).new()
       cast(self,CanvasComponent).new()

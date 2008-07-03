@@ -15,8 +15,8 @@ import gui
 #
 class CanvasEditList(CanvasComponent,EditList)
    public 
-   tmp, 
-   filter_str
+      tmp, 
+      filter_str
 
    #
    # Generate code into Code object c.
@@ -99,7 +99,6 @@ class CanvasEditList(CanvasComponent,EditList)
       return 1
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,EditList).new()
       cast(self,CanvasComponent).new()

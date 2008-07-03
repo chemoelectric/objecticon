@@ -88,7 +88,6 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
          return subtype(self.paint_mid)
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CanvasTextMenuItem).new()
       cast(self,Menu).new()

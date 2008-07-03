@@ -20,14 +20,14 @@ $define RST 3
 #
 class CanvasComponent(CanvasObject)
    public 
-   x_fixed,                 # Flags - is position/size fixed
-   y_fixed,                 #
-   w_fixed,                 #
-   h_fixed,                 #
-   event_handlers,          # List of event, handler pairs
-   mx, my, mw, mh,          # Pos/size whilst being resized, in absolute values
-   default_border,          # The border set in the Component's constructor
-   border_opts
+      x_fixed,                 # Flags - is position/size fixed
+      y_fixed,                 #
+      w_fixed,                 #
+      h_fixed,                 #
+      event_handlers,          # List of event, handler pairs
+      mx, my, mw, mh,          # Pos/size whilst being resized, in absolute values
+      default_border,          # The border set in the Component's constructor
+      border_opts
 
    public gen_cos()
       suspend \self.border_opts | \self.layout_delegate | \self.tooltip
@@ -629,7 +629,6 @@ class CanvasComponent(CanvasObject)
       return m
    end
 
-# WARN : parameterless initially method
    public new()
       class_variable := 1
       self.default_border := self.border
@@ -637,32 +636,40 @@ class CanvasComponent(CanvasObject)
    end
 end
 
-
 class SetConstraintItem(TextMenuItem)
-   public obj, name, val
+   public
+      obj,
+      name,
+      val
+
    public on_event()
       obj.parent_Canvas.op_set_constraint(obj, name, val)
    end
 
-# WARN : parameterless initially method
-   public new()
+   public new(obj, name, val)
       cast(self,TextMenuItem).new()
+      self.obj := obj
+      self.name := name
+      self.val := val
       self.connect(self.on_event, Event.ACTION)
       self.set_label("Set " || name || " to " || image(val))
       return
    end
 end
 
-
 class RemoveConstraintItem(TextMenuItem)
-   public obj, name
+   public 
+      obj,
+      name
+
    public on_event()
       obj.parent_Canvas.op_remove_constraint(obj, name)
    end
 
-# WARN : parameterless initially method
-   public new()
+   public new(obj, name)
       cast(self,TextMenuItem).new()
+      self.obj := obj
+      self.name := name
       self.connect(self.on_event, Event.ACTION)
       self.set_label("Remove " || name)
       return

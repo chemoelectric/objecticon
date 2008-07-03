@@ -15,7 +15,7 @@ import gui
 #
 class CanvasMenuBar(CanvasComponent,MenuBar)
    public 
-   string_rep
+      string_rep
 
    #
    # Generate code into Code object c.
@@ -83,7 +83,6 @@ class CanvasMenuBar(CanvasComponent,MenuBar)
       suspend cast(self,CanvasComponent).gen_cos() | !self.menus
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,MenuBar).new()
       cast(self,CanvasComponent).new()

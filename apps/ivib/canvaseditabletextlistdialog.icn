@@ -14,9 +14,9 @@ import gui
 #
 class CanvasEditableTextListDialog(CanvasComponentDialog)
    public 
-   contents,
-   is_editable_cb,
-   move_on_rpress_cb
+      contents,
+      is_editable_cb,
+      move_on_rpress_cb
 
    public set_vals()
       cast(self,CanvasComponentDialog).set_vals()

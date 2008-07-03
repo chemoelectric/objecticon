@@ -6,13 +6,13 @@ import gui
 
 class MapTab(TabItem)
    public 
-   tbl,
-   add_button,                 # Buttons              
-   delete,              #                  
-   apply,               #                 
-   contents,            # Table contents
-   attrib_tf,
-   value
+      tbl,
+      add_button,          # Buttons              
+      delete,                                
+      apply,                                
+      contents,            # Table contents
+      attrib_tf,
+      value
 
    public update_grey()
       if *tbl.get_selections() > 0 then {

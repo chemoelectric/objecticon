@@ -15,6 +15,7 @@ import gui
 #     
 class SaveChangesDialog(Dialog)
    public res
+
    public result()
       return self.res
    end
@@ -34,7 +35,6 @@ class SaveChangesDialog(Dialog)
       self.dispose()
    end
 
-# WARN : parameterless initially method
    public new()
       local l, p, yes, no, cancel
       cast(self,Dialog).new()

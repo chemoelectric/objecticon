@@ -15,15 +15,15 @@ import gui
 #
 class CanvasCheckBoxMenuEdit(MenuComponentEdit)
    public 
-   tab_basic,
-   tab_images,
-   paint_field,
-   paint_field_r,
-   shaded,                  #              
-   browse_custom,           #                     
-   group_list,              #                  
-   in_checkbox_group,       #                          
-   initially_checked
+      tab_basic,
+      tab_images,
+      paint_field,
+      paint_field_r,
+      shaded,                  #              
+      browse_custom,           #                     
+      group_list,              #                  
+      in_checkbox_group,       #                          
+      initially_checked
 
    public on_in_checkbox_group()
       group_list.toggle_is_shaded()

@@ -75,7 +75,6 @@ class CanvasCheckBox(CanvasButton,CheckBox)
       suspend cast(self,CanvasComponent).gen_cos() | self.paint
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CheckBox).new()
       cast(self,CanvasButton).new()

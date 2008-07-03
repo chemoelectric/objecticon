@@ -78,7 +78,6 @@ class CanvasSlider(CanvasComponent,Slider)
       return \self.is_horizontal_flag
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Slider).new()
       cast(self,CanvasComponent).new()

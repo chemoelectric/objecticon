@@ -10,7 +10,9 @@ import lang, gui, util
 
 
 class Loader(Error)
-   private readable fname, lname
+   private readable
+      fname,
+      lname
 
    public load()
       local f, r
@@ -67,7 +69,10 @@ end
 
 
 class Source()
-   public version, code
+   public 
+      version, 
+      code
+
    public defer createconverterset()
 
    public migrate()

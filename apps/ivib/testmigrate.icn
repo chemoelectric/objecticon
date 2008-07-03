@@ -23,6 +23,7 @@ end
 
 class LegacyCodePrinter(LegacyDecode)
    public col
+
    public print(l,s)
       \l|fail
       if col = 0 then
@@ -171,6 +172,7 @@ end
 
 class CodePrinter(Decode)
    public col
+
    public print(l,s)
       \l|fail
       if col = 0 then

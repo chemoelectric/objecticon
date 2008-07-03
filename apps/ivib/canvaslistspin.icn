@@ -62,7 +62,6 @@ class CanvasListSpin(CanvasComponent,ListSpin)
       return 1
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,ListSpin).new()
       cast(self,CanvasComponent).new()

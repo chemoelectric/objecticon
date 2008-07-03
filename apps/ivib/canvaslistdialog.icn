@@ -15,13 +15,13 @@ import gui
 #
 class CanvasListDialog(CanvasComponentDialog)
    public 
-   selection_list,          #                      
-   set_selection,           #                     
-   selection,               #                 
-   use_constant_label,      #                          
-   constant_label,          #                      
-   group,                   #             
-   default_setting
+      selection_list,     
+      set_selection,      
+      selection,          
+      use_constant_label, 
+      constant_label,     
+      group,              
+      default_setting
 
    public validate_input()
       if (group.get_which_one() === set_selection) & not(integer(selection.get_contents())) then

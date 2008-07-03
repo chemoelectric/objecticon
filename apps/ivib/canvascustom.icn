@@ -30,7 +30,6 @@ class CanvasCustom(CanvasComponent,Custom)
       return CanvasCustomDialog(self)
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Custom).new()
       cast(self,CanvasComponent).new()

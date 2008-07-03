@@ -37,7 +37,6 @@ class CanvasMenuSeparator(CanvasMenuComponent,MenuSeparator)
       return "___(Sep)"
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CanvasMenuComponent).new()
       cast(self,MenuSeparator).new()

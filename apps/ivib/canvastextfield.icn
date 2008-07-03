@@ -15,7 +15,7 @@ import gui
 #
 class CanvasTextField(CanvasComponent,TextField)
    public 
-   filter_str
+      filter_str
 
    #
    # Generate code into Code object c.
@@ -72,7 +72,6 @@ class CanvasTextField(CanvasComponent,TextField)
       return 1
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,TextField).new()
       cast(self,CanvasComponent).new()

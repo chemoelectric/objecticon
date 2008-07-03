@@ -34,7 +34,6 @@ class CanvasProgressBar(CanvasComponent,ProgressBar)
       return 1
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,ProgressBar).new()
       cast(self,CanvasComponent).new()

@@ -145,7 +145,6 @@ class CanvasTabItem(CanvasComponent,TabItem)
       suspend cast(self,CanvasComponent).gen_cos() | self.paint | !self.children
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,TabItem).new()
       cast(self,CanvasComponent).new()

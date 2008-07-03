@@ -45,7 +45,6 @@ class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
       return l
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CheckBoxGroup).new()
       self.class_name := "CheckBoxGroup"

@@ -8,7 +8,6 @@
 
 import gui
 
-
 ############################################################################
 #
 # Class for representing a IconButton on the canvas.
@@ -59,7 +58,6 @@ class CanvasIconButton(CanvasButton,IconButton)
       suspend cast(self,CanvasComponent).gen_cos() | self.paint | \self.paint_down
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,IconButton).new()
       cast(self,CanvasButton).new()

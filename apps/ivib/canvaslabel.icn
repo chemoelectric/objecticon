@@ -68,7 +68,6 @@ class CanvasLabel(CanvasComponent,Label)
       suspend cast(self,CanvasComponent).gen_cos() | self.paint
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Label).new()
       cast(self,CanvasComponent).new()

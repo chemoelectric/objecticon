@@ -42,14 +42,12 @@ class CanvasABorder(CanvasObject)
       return BorderEdit(self)
    end
 
-# WARN : parameterless initially method
    public new()
       self.name := "border"
       self.import_name := "gui"
       return
    end
 end
-
 
 class CanvasEmptyBorder(CanvasABorder)
    public gen_code(c)
@@ -83,7 +81,6 @@ class CanvasEmptyBorder(CanvasABorder)
       return c
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CanvasABorder).new()
       self.class_name := "EmptyBorder"
@@ -91,10 +88,11 @@ class CanvasEmptyBorder(CanvasABorder)
    end
 end
 
-
-
 class CanvasLineBorder(CanvasABorder)
-   public line_width_val, has_empty
+   public 
+      line_width_val,
+      has_empty
+
    public get_template()
       return cast(self,CanvasABorder).get_template() ||| 
          [[ "Line width", "line_width_val"],
@@ -149,7 +147,6 @@ class CanvasLineBorder(CanvasABorder)
    public defer create_outer_visual_border()
 end
 
-
 class CanvasPlainBorder(CanvasLineBorder)
    public dup()
       local c
@@ -162,14 +159,12 @@ class CanvasPlainBorder(CanvasLineBorder)
       return PlainBorder()
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CanvasLineBorder).new()
       self.class_name := "PlainBorder"
       return
    end
 end
-
 
 class CanvasBevelledBorder(CanvasLineBorder)
    public dup()
@@ -183,14 +178,12 @@ class CanvasBevelledBorder(CanvasLineBorder)
       return BevelledBorder()
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CanvasLineBorder).new()
       self.class_name := "BevelledBorder"
       return
    end
 end
-
 
 class CanvasRaisedBorder(CanvasLineBorder)
    public dup()
@@ -204,14 +197,12 @@ class CanvasRaisedBorder(CanvasLineBorder)
       return RaisedBorder()
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CanvasLineBorder).new()
       self.class_name := "RaisedBorder"
       return
    end
 end
-
 
 class CanvasSunkenBorder(CanvasLineBorder)
    public dup()
@@ -225,7 +216,6 @@ class CanvasSunkenBorder(CanvasLineBorder)
       return SunkenBorder()
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,CanvasLineBorder).new()
       self.class_name := "SunkenBorder"

@@ -39,9 +39,9 @@ end
 #
 class Prefs(SelectiveObjectCodec)
    public 
-   undo_size,                # Size of undo buffer
-   plugin_directory,
-   cache_path
+      undo_size,                # Size of undo buffer
+      plugin_directory,
+      cache_path
 
    public get_template()
       return [["Undo Size", "undo_size"],
@@ -65,7 +65,13 @@ end
 # The main window's toolbar.
 #
 class CustomToolBar(Component)
-   public x1, y1, img_w, img_h, bg
+   public
+      x1,
+      y1,
+      img_w,
+      img_h,
+      bg
+
    public add_button(t)
       t.set_pos(x1, y1)
       t.set_accepts_focus("f")
@@ -95,7 +101,9 @@ end
 # This listens for actions to either the menu/button object creation items.
 #
 class ObjectActionListener()
-   public main, object_ui
+   public
+      main, 
+      object_ui
 
    public on_event(event)
       main.create_in_canvas(object_ui)
@@ -1468,8 +1476,8 @@ class PathTab(TabItem)
       c,
       path_list,
       path,
-      add_button,                 # Buttons              
-      delete,              #                  
+      add_button,   # Buttons              
+      delete,                         
       contents,
       browse,
       apply

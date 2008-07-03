@@ -79,7 +79,6 @@ class CanvasEditableTextList(CanvasComponent,EditableTextList)
       return 1
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,EditableTextList).new()
       cast(self,CanvasComponent).new()

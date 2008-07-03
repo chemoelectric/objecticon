@@ -2,6 +2,7 @@ import gui
 
 class MissingPlugin()
    public id
+
    public get_unique_id()
       return id
    end
@@ -31,6 +32,7 @@ end
 
 class PluginUI(CanvasComponentUI)
    public plugin
+
    public get_category()
       return plugin.get_ui_category()
    end
@@ -51,7 +53,11 @@ end
 
 
 class CanvasPlugin(CanvasComponent,Component)
-   public plugin, config, id
+   public 
+      plugin,
+      config,
+      id
+
    #
    # Generate code into Code object c.
    #
@@ -134,6 +140,7 @@ end
 
 class CanvasPluginDialog(CanvasComponentDialog)
    public config_tab
+
    public setup()
       cast(self,CanvasComponentDialog).setup()
       config_tab := MapTab("label=Config", "table=",c.config)

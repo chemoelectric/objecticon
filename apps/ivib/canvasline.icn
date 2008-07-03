@@ -71,7 +71,6 @@ class CanvasLine(CanvasComponent,Line)
       return \self.is_horizontal_flag
    end
 
-# WARN : parameterless initially method
    public new()
       cast(self,Line).new()
       cast(self,CanvasComponent).new()

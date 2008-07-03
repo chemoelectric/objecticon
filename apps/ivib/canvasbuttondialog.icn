@@ -14,23 +14,23 @@ import gui
 #
 class CanvasButtonDialog(CanvasComponentDialog)
    public 
-   paint_field,               #                 
-   paint_down_field,
-   button_group_list,       #                  
-   in_checkbox_group,       #                          
-   keyboard,                #                
-   no_click_focus,
-   checkbox_group_list,     #                  
-   in_button_group,         #
-   button_tab_set,
-   tab_basic,
-   tab_groups,
-   tab_images,
-   toggles,
-   initially_checked,
-   has_label,
-   has_label_down,
-   has_images
+      paint_field,         
+      paint_down_field,
+      button_group_list,   
+      in_checkbox_group,   
+      keyboard,            
+      no_click_focus,
+      checkbox_group_list, 
+      in_button_group,     
+      button_tab_set,
+      tab_basic,
+      tab_groups,
+      tab_images,
+      toggles,
+      initially_checked,
+      has_label,
+      has_label_down,
+      has_images
 
    public validate_input()
       cast(self,CanvasComponentDialog).validate_input() | fail
@@ -204,7 +204,6 @@ class CanvasButtonDialog(CanvasComponentDialog)
          } else 
             button_group_list.set_is_shaded("t")
       }
-
    end
 end
 
