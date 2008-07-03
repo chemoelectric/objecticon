@@ -16,6 +16,7 @@ import lang
 #
 class EditListSpin(SelectionList,EditSpin)
    public old_selection
+
    public apply_selection(ev)
       local s 
       s := self.selection_list[\self.selection] | ""

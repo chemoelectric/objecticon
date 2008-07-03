@@ -3,7 +3,10 @@ package gui
 import lang
 
 class ItemPaintTree(Tree)
-   public item_paint, item_border
+   public
+      item_paint,
+      item_border
+
    public initially()
       \self.item_paint | fatal(self, "ItemPaint not set")
       cast(self,Tree).initially()

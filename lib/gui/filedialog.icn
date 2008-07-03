@@ -15,24 +15,25 @@ import
 # @ write(d.get_result() | "cancelled")
 #
 class FileDialog(Dialog)
-   public home_button, 
-          new_button, 
-          refresh_button, 
-          up_button, 
-          dir, 
-          dlist, 
-          flist, 
-          pos_table,
-          cancel_button, 
-          file, 
-          filter, 
-          okay_button,
-          init_dirs,                # Initial directory name
-          init_files,               # Initial file name
-          init_filters,
-          res,                      # Resulting file path          
-          message_label, 
-          show_hidden_cb
+   public
+      home_button, 
+      new_button, 
+      refresh_button, 
+      up_button, 
+      dir, 
+      dlist, 
+      flist, 
+      pos_table,
+      cancel_button, 
+      file, 
+      filter, 
+      okay_button,
+      init_dirs,                # Initial directory name
+      init_files,               # Initial file name
+      init_filters,
+      res,                      # Resulting file path          
+      message_label, 
+      show_hidden_cb
 
    public component_setup()
       self.setup()

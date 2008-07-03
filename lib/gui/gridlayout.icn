@@ -5,14 +5,16 @@ import
 
 class GridLayout(Layout,SetFields)
    public 
-   g,
-   dii,          # Default inner padding, ie not at edge of grid
-   doi,          # Default outer padding
-   extra,        # Flag indicating how to allocate extra space
-   debug
+      g,
+      dii,          # Default inner padding, ie not at edge of grid
+      doi,          # Default outer padding
+      extra,        # Flag indicating how to allocate extra space
+      debug
 
    # Default insets between components in a GridLayout.
-   public static const DEFAULT_OUTER_INSET, DEFAULT_INNER_INSET
+   public static const
+      DEFAULT_OUTER_INSET,
+      DEFAULT_INNER_INSET
 
    private static init()
       DEFAULT_OUTER_INSET := 10

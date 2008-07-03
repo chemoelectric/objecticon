@@ -13,7 +13,11 @@ package gui
 # This is a Spin for numeric values, optionally within a fixed range.
 #
 class RangeSpin(EditSpin)
-   public lo, hi, increment_size
+   public
+      lo,
+      hi,
+      increment_size
+
    public do_increment()
       set_value(get_value() + self.increment_size)
    end

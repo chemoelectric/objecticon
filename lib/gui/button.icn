@@ -31,11 +31,11 @@ import util
 #
 class Button(Toggle,Component)
    public 
-   is_down,                 #               
-   parent_button_group,     #
-   repeat_delay,
-   no_click_focus_flag,
-   toggles_flag
+      is_down,                 #               
+      parent_button_group,     #
+      repeat_delay,
+      no_click_focus_flag,
+      toggles_flag
 
    public set_parent_button_group(x)
       return self.parent_button_group := x

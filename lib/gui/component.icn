@@ -19,120 +19,120 @@ import
 #
 class Component(Rect,Align,SetFields,Connectable)
    public 
-   #
-   # x position as specified by {set_pos()}, eg "50%"
-   #                        
-   x_spec,
-   #
-   # y position as specified by set_pos().
-   #
-   y_spec,
-   #
-   # width specifier as specified in set_size(), eg "100%"              
-   #
-   w_spec, 
-   #
-   # height specifier as specified in set_size(),
-   #
-   h_spec, 
-   #
-   # An integer used to sort the parent's z_children list.
-   #
-   z,
-   #
-   # This can be set to alter the tab-focus ordering of the parent
-   # container.
-   #
-   tab_ord,
-   #
-   # The {Dialog} class instance of which this {Component} is a part.
-   #
-   parent_dialog,
-   #
-   # A map of the Icon window graphics attributes, eg "bg"->"blue",
-   # "resize"->"on" etc.
-   wattribs,
-   effective_wattribs,
-   #
-   # Flags indicating whether the {Component} currently is shaded;
-   # {&null} means it isn't.
-   is_shaded_flag, 
-   effective_is_shaded_flag,
-   #
-   # Flags indicating whether the {Component} currently is hidden;
-   # {&null} means it isn't.
-   is_hidden_flag,
-   effective_is_hidden_flag,
-   #
-   # A cloned window created by combining a buffer window with
-   # the {Component's} attributes.  The component draws itself
-   # into this window.
-   cbwin,
-   #
-   # Flag indicating whether the {Component} accepts keyboard focus
-   # by way of the tab key being pressed;  {&null} means it doesn't.
-   accepts_focus_flag,
-   #
-   # Tooltip config
-   #
-   tooltip,         
-   tooltip_start_delay,
-   tooltip_end_delay,
-   tooltip_follows_mouse_flag,
-   #
-   # Reference to enclosing {Component} object.
-   #
-   parent,
-   #
-   # List of child components
-   #
-   children,
-   #
-   # The same children, but sorted in z order; held in both orders.
-   #
-   z_children,
-   reverse_z_children,
-   #
-   # The same children, but sorted in tab order.
-   #
-   tab_children,
-   #
-   # Mnemonic key for keyboard accelerators.
-   #
-   accel,
-   #
-   # The child which we want to give the focus to.
-   #
-   preferred_focus,
-   #
-   # Flags to turn on drag and drop
-   #
-   allow_drag_flag,
-   allow_drop_flag,
-   #
-   # Mouse pointer.
-   #
-   pointer,
-   #
-   # Layout manager
-   #
-   layout_delegate,
-   #
-   # Layout constraints
-   # 
-   constraints,
-   #
-   # Show layout grid - for layout debugging
-   #
-   show_layout_flag,
-   #
-   # Border instance
-   #
-   border,
-   #
-   # Default ticker
-   #
-   ticker
+      #
+      # x position as specified by {set_pos()}, eg "50%"
+      #                        
+      x_spec,
+      #
+      # y position as specified by set_pos().
+      #
+      y_spec,
+      #
+      # width specifier as specified in set_size(), eg "100%"              
+      #
+      w_spec, 
+      #
+      # height specifier as specified in set_size(),
+      #
+      h_spec, 
+      #
+      # An integer used to sort the parent's z_children list.
+      #
+      z,
+      #
+      # This can be set to alter the tab-focus ordering of the parent
+      # container.
+      #
+      tab_ord,
+      #
+      # The {Dialog} class instance of which this {Component} is a part.
+      #
+      parent_dialog,
+      #
+      # A map of the Icon window graphics attributes, eg "bg"->"blue",
+      # "resize"->"on" etc.
+      wattribs,
+      effective_wattribs,
+      #
+      # Flags indicating whether the {Component} currently is shaded;
+      # {&null} means it isn't.
+      is_shaded_flag, 
+      effective_is_shaded_flag,
+      #
+      # Flags indicating whether the {Component} currently is hidden;
+      # {&null} means it isn't.
+      is_hidden_flag,
+      effective_is_hidden_flag,
+      #
+      # A cloned window created by combining a buffer window with
+      # the {Component's} attributes.  The component draws itself
+      # into this window.
+      cbwin,
+      #
+      # Flag indicating whether the {Component} accepts keyboard focus
+      # by way of the tab key being pressed;  {&null} means it doesn't.
+      accepts_focus_flag,
+      #
+      # Tooltip config
+      #
+      tooltip,         
+      tooltip_start_delay,
+      tooltip_end_delay,
+      tooltip_follows_mouse_flag,
+      #
+      # Reference to enclosing {Component} object.
+      #
+      parent,
+      #
+      # List of child components
+      #
+      children,
+      #
+      # The same children, but sorted in z order; held in both orders.
+      #
+      z_children,
+      reverse_z_children,
+      #
+      # The same children, but sorted in tab order.
+      #
+      tab_children,
+      #
+      # Mnemonic key for keyboard accelerators.
+      #
+      accel,
+      #
+      # The child which we want to give the focus to.
+      #
+      preferred_focus,
+      #
+      # Flags to turn on drag and drop
+      #
+      allow_drag_flag,
+      allow_drop_flag,
+      #
+      # Mouse pointer.
+      #
+      pointer,
+      #
+      # Layout manager
+      #
+      layout_delegate,
+      #
+      # Layout constraints
+      # 
+      constraints,
+      #
+      # Show layout grid - for layout debugging
+      #
+      show_layout_flag,
+      #
+      # Border instance
+      #
+      border,
+      #
+      # Default ticker
+      #
+      ticker
 
    #
    # Set the tooltip.  This object is passed to {create_tooltip_component} when a

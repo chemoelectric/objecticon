@@ -14,7 +14,6 @@ class Paint(Size)
    end
 end
 
-
 procedure paint_for_string(s)
    if /s then
       return
@@ -24,9 +23,9 @@ procedure paint_for_string(s)
       return TextPaint(s)
 end
 
-
 class TextPaint(Paint)
    public str, accel
+
    public initially(c, accel)
       self.accel := accel
       self.h := WAttrib(c.cbwin, "fheight")
@@ -43,9 +42,9 @@ class TextPaint(Paint)
    end
 end
 
-
 class ImageStringPaint(Paint)
    public str
+
    public initially()
       self.w := image_width(str)
       self.h := image_height(str)
@@ -61,9 +60,9 @@ class ImageStringPaint(Paint)
    end
 end
 
-
 class ImageWindowPaint(Paint)
    public win
+
    public initially()
       self.w := WAttrib(win, "width")
       self.h := WAttrib(win, "height")
@@ -79,24 +78,23 @@ class ImageWindowPaint(Paint)
    end
 end
 
-
 class GridPaint(Paint)
    public 
-                fmt,          # Format string
-                g,            # Grid object
-                win,          # Window buffer
-                pass,         # Pass number
-                curr_cell,    # Current cell being read
-                x,            # Text 'cursor' location in cell
-                y, 
-                ia_x,         # Alignment of lines in a cell
-                ia_y,
-                llen,         # Current line len, height
-                lheight, 
-                lno,          # Line no. in cell 
-                ii,           # Cell index counter.
-                buff,         # Input as a list of strings.
-                accel
+      fmt,          # Format string
+      g,            # Grid object
+      win,          # Window buffer
+      pass,         # Pass number
+      curr_cell,    # Current cell being read
+      x,            # Text 'cursor' location in cell
+      y, 
+      ia_x,         # Alignment of lines in a cell
+      ia_y,
+      llen,         # Current line len, height
+      lheight, 
+      lno,          # Line no. in cell 
+      ii,           # Cell index counter.
+      buff,         # Input as a list of strings.
+      accel
 
    public draw(W, x, y)
       CopyArea(\win, W,,,,, x, y)
@@ -373,18 +371,17 @@ class GridPaint(Paint)
    end
 end
 
-
 class ImagePaint(Paint,SetFields)
    public 
-   image_file, 
-   image_str,
-   image_window,
-   win,
-   scale_up_flag,
-   use_cache_flag,
-   dont_close,
-   max_w,
-   max_h
+      image_file, 
+      image_str,
+      image_window,
+      win,
+      scale_up_flag,
+      use_cache_flag,
+      dont_close,
+      max_w,
+      max_h
 
    #
    # Set the name of the file from which to load the image.

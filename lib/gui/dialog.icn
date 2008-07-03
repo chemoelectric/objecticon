@@ -8,7 +8,10 @@
 
 package gui
 
-import util, lang, ipl.graphics
+import 
+   util,
+   lang,
+   ipl.graphics
 
 $include "keysyms.icn"
 
@@ -17,51 +20,52 @@ $include "keysyms.icn"
 # This is the parent class of a dialog window.
 #
 class Dialog(Component)
-   public static ROOT_WATTRIBS, 
-                 DEFAULT_POINTER,
-                 DOUBLE_CLICK_DELAY,        # Repeat event delays
-                 TOOLTIP_START_DELAY,       # Default tooltip delays
-                 TOOLTIP_END_DELAY,
-                 TOOLTIP_CONTINUE_DELAY,
-                 TOOLTIP_X_OFFSET,
-                 TOOLTIP_Y_OFFSET
+   public static 
+      ROOT_WATTRIBS, 
+      DEFAULT_POINTER,
+      DOUBLE_CLICK_DELAY,        # Repeat event delays
+      TOOLTIP_START_DELAY,       # Default tooltip delays
+      TOOLTIP_END_DELAY,
+      TOOLTIP_CONTINUE_DELAY,
+      TOOLTIP_X_OFFSET,
+      TOOLTIP_Y_OFFSET
 
    public 
-   win,                     # The dialog's window.
-   is_open_flag,            # Flag indicates whether window is open              
-   owning_dialog,
-   child_dialogs,
-   focus,                   # Component with current focus            
-   menu_mode,               # Do we have a menu open?
-   buffer_win,              # Buffer window for double buffering                 
-   click_count,             # Variables controlling multiple clicks
-   prev_x,
-   prev_y,
-   prev_time,
-   prev_event,
-   is_blocked_flag,
-   resize_attrib,
-   drag_gesture_x,
-   drag_gesture_y,
-   curr_drag,
-   curr_drag_holder,
-   curr_drop,
-   tried_drag,
-   invokes,
-   tooltip_ticker,
-   tooltip_last_obj, 
-   tooltip_last_tip, 
-   tooltip_state,
-   tooltip_start_time,
-   tooltip_end_time,
-   tooltip_continue_time,
-   tooltip_component, 
-   point_chain,
-   copy_rect,
-   only_enlarge_width_flag,
-   only_enlarge_height_flag,
-   held,
-   moving
+      win,                     # The dialog's window.
+      is_open_flag,            # Flag indicates whether window is open              
+      owning_dialog,
+      child_dialogs,
+      focus,                   # Component with current focus            
+      menu_mode,               # Do we have a menu open?
+      buffer_win,              # Buffer window for double buffering                 
+      click_count,             # Variables controlling multiple clicks
+      prev_x,
+      prev_y,
+      prev_time,
+      prev_event,
+      is_blocked_flag,
+      resize_attrib,
+      drag_gesture_x,
+      drag_gesture_y,
+      curr_drag,
+      curr_drag_holder,
+      curr_drop,
+      tried_drag,
+      invokes,
+      tooltip_ticker,
+      tooltip_last_obj, 
+      tooltip_last_tip, 
+      tooltip_state,
+      tooltip_start_time,
+      tooltip_end_time,
+      tooltip_continue_time,
+      tooltip_component, 
+      point_chain,
+      copy_rect,
+      only_enlarge_width_flag,
+      only_enlarge_height_flag,
+      held,
+      moving
 
    public needs_validate()
       return \copy_rect

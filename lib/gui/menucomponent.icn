@@ -22,19 +22,19 @@ import util
 #
 class MenuComponent(Rect,SetFields,Connectable)
    public 
-   label_x,                                
-   label_y,                                
-   label_w,  
-   label_h,                                
-   is_sub_menu_flag,                                
-   is_decorative_flag,                                
-   parent_component,                               
-   is_shaded_flag,                                
-   parent,                  
-   accel,
-   children,
-   border,
-   temp_win
+      label_x,                                
+      label_y,                                
+      label_w,  
+      label_h,                                
+      is_sub_menu_flag,                                
+      is_decorative_flag,                                
+      parent_component,                               
+      is_shaded_flag,                                
+      parent,                  
+      accel,
+      children,
+      border,
+      temp_win
 
    public initially()
       self.parent_component := (\parent).parent_component
@@ -372,6 +372,7 @@ end
 
 class SubMenuProxyComponent(Component)
    public menu
+
    public display(r)
       menu.display(self.cbwin, r)
    end

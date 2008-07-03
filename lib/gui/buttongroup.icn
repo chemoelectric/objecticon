@@ -26,7 +26,7 @@ package gui
 #
 class ButtonGroup()
    public 
-   buttons
+      buttons
 
    #
    # Add the given {Button} to the {ButtonGroup}.
@@ -37,7 +37,6 @@ class ButtonGroup()
       c.set_parent_button_group(self)
    end
 
-# WARN : parameterless initially method
    public new()
       self.buttons := []
       return

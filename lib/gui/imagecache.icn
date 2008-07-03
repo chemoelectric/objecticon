@@ -3,7 +3,9 @@ package gui
 import util, ipl.graphics
 
 class ImageCache(StaticError)
-   public static map, path
+   public static 
+      map,
+      path
 
    private static init()
       map := table()

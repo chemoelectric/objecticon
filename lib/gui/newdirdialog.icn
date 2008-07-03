@@ -1,7 +1,13 @@
 package gui
 
 class NewDirectoryDialog(Dialog)
-   public cancel_button, okay_button, okay, result, file_field
+   public
+      cancel_button,
+      okay_button, 
+      okay,
+      result, 
+      file_field
+
    public component_setup()
       self.setup()
    end

@@ -26,6 +26,7 @@ end
 
 class ListTabSet(Component)
    public dl, oa
+
    public initially()
       cast(self,Component).initially()
       self.dl.set_ideal_size(100, 200, 100, 400)

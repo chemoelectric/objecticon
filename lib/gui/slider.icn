@@ -46,26 +46,26 @@ end
 #
 class Slider(Component)
    public 
-   value,                   
-   old_value,
-   slider_down,
-   slider_down_offset,
-   slider_area,
-   slider_pos,
-   slider_area_pos,
-   slider_area_size,
-   is_horizontal_flag,                                
-   discrete_vals,
-   ticks,
-   labels,
-   snaps,
-   ticks_pos,
-   labels_pos,
-   is_paging,
-   increment_size,
-   wheel_factor,
-   hi,                                
-   lo
+      value,                   
+      old_value,
+      slider_down,
+      slider_down_offset,
+      slider_area,
+      slider_pos,
+      slider_area_pos,
+      slider_area_size,
+      is_horizontal_flag,                                
+      discrete_vals,
+      ticks,
+      labels,
+      snaps,
+      ticks_pos,
+      labels_pos,
+      is_paging,
+      increment_size,
+      wheel_factor,
+      hi,                                
+      lo
 
    # These values refer to a horizontal slider, the logic is backwards for a vertical one.
    public static SLIDER_W, SLIDER_H, SLIDER_INNER_H, SLIDER_TICK_H

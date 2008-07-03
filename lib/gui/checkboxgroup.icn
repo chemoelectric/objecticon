@@ -22,8 +22,8 @@ package gui
 #
 class CheckBoxGroup()
    public 
-   checkboxes,              #                  
-   which_one
+      checkboxes,              #                  
+      which_one
 
    #
    # Returns the object is currently down.
@@ -49,7 +49,6 @@ class CheckBoxGroup()
       x.set_is_checked("t")
    end
 
-# WARN : parameterless initially method
    public new()
       self.checkboxes := []
       return

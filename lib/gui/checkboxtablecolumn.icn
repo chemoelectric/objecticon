@@ -9,11 +9,11 @@ import util, lang
 #
 class CheckBoxTableColumn(TableColumn)
    public 
-   single_selection_flag,
-   img_up, 
-   img_down,
-   img_w,
-   img_h
+      single_selection_flag,
+      img_up, 
+      img_down,
+      img_w,
+      img_h
 
    public calculate_line_height()
       return img_h + 8

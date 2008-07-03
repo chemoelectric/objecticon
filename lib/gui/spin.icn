@@ -14,9 +14,11 @@ package gui
 # buttons and two abstract methods which are invoked to implement those actions.
 #
 class Spin(Component)
-   public up, 
-                       down,
-                       view
+   public 
+      up, 
+      down,
+      view
+
    #
    # This method must be overridden to do something to the component when the
    # up button is pressed.

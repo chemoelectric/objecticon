@@ -14,7 +14,10 @@ import util
 # This class implements an etched Line, drawn within its region.
 #
 class Line(Component)
-   public is_horizontal_flag, line_width
+   public
+      is_horizontal_flag,
+      line_width
+
    public set_line_width(n)
       self.line_width := n
    end

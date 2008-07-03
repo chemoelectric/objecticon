@@ -28,13 +28,15 @@ import lang
 #
 class Border(Component)
    public 
-   internal_align, 
-   title,
-   content,
-   y0,
-   h0
+      internal_align, 
+      title,
+      content,
+      y0,
+      h0
 
-   public static TITLE_SPACING, TITLE_OFFSET
+   public static
+      TITLE_SPACING,
+      TITLE_OFFSET
 
    private static init()
       TITLE_SPACING := 2

@@ -39,6 +39,7 @@ end
 #
 class EditSpin(Spin)
    public old_contents
+
    public on_textfield(ev, src, type)
       # Fire the event with self as source.
       fire(type, ev)

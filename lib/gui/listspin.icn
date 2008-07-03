@@ -15,6 +15,7 @@ import lang
 #
 class ListSpin(SelectionList,StaticSpin)
    public old_selection
+
    public apply_selection()
       local s
       s := self.selection_list[\self.selection] | ""

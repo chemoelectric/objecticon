@@ -36,26 +36,26 @@ $include "keysyms.icn"
 #
 class TextField(Component)
    public 
-   filter,                  # Cset for filtering characters
-   is_editable_flag,        # Are we editable?
-   move_on_rpress_flag,     # Move on &rpress event?
-   contents,                #                
-   going_left,
-   cursor,                  #              
-   mark,
-   tx,                      #          
-   tw,                      #
-   displaychar,             # char to print on screen
-   undo_manager,
-   remembered_region,
-   clipboard,
-   old_cursor,
-   old_mark,
-   old_region,
-   changed,
-   loff,
-   primary_selection_owner,
-   clipboard_selection_owner
+      filter,                  # Cset for filtering characters
+      is_editable_flag,        # Are we editable?
+      move_on_rpress_flag,     # Move on &rpress event?
+      contents,                #                
+      going_left,
+      cursor,                  #              
+      mark,
+      tx,                      #          
+      tw,                      #
+      displaychar,             # char to print on screen
+      undo_manager,
+      remembered_region,
+      clipboard,
+      old_cursor,
+      old_mark,
+      old_region,
+      changed,
+      loff,
+      primary_selection_owner,
+      clipboard_selection_owner
 
    #
    # Set the displaychar attribute
@@ -610,12 +610,16 @@ class TextField(Component)
       if self.has_focus() & self.is_unshaded() then {
          if \self.is_editable_flag then {
             cw := Gui.style.get_cursor_clone(self.cbwin)
-            EraseRectangle(cw, self.tx - loff + TextWidth(self.cbwin, s[1:cursor]), y1, TextWidth(self.cbwin, s[cursor]), fh)
+            EraseRectangle(cw, 
+                           self.tx - loff + TextWidth(self.cbwin, s[1:cursor]), 
+                           y1, TextWidth(self.cbwin, s[cursor]), fh)
             DrawStringEx(cw, self.tx - loff + TextWidth(cw, s[1:cursor]), y1, s[cursor])
             Uncouple(cw)
          } else {
             cw := Gui.style.get_focus_clone(self.cbwin)
-            Rectangle(cw, self.tx - loff + TextWidth(self.cbwin, s[1:cursor]), y1, TextWidth(self.cbwin, s[cursor]), fh)
+            Rectangle(cw, 
+                      self.tx - loff + TextWidth(self.cbwin, s[1:cursor]), 
+                      y1, TextWidth(self.cbwin, s[cursor]), fh)
             Uncouple(cw)
          }
       } else if \self.is_editable_flag | has_region() then {
@@ -738,9 +742,11 @@ end
 
 
 class TextFieldEdit(UndoableEdit)
-   public parent,
-                                 cursor, 
-                                 mark
+   public 
+      parent,
+      cursor, 
+      mark
+
    public doit()
       save()
       self.redo_impl()
@@ -781,6 +787,7 @@ end
 
 class TextFieldDeleteRightEdit(TextFieldEdit)
    public ch
+
    public redo_impl()
       ch := parent.contents[parent.cursor]
       parent.contents[parent.cursor] := ""
@@ -803,6 +810,7 @@ end
 
 class TextFieldDeleteLeftEdit(TextFieldEdit)
    public ch
+
    public redo_impl()
       ch := parent.contents[parent.cursor - 1]
       parent.contents[parent.cursor - 1] := ""
@@ -826,6 +834,7 @@ end
 
 class TextFieldDeleteRegionEdit(TextFieldEdit)
    public pre
+
    public redo_impl()
       if parent.mark < parent.cursor then {
          pre := parent.contents[parent.mark:parent.cursor]
@@ -855,6 +864,7 @@ end
 
 class TextFieldPasteEdit(TextFieldEdit)
    public s
+
    public redo_impl()
       parent.contents := parent.contents[1:parent.cursor] || s || parent.contents[parent.cursor:0]
       parent.cursor +:= *s
@@ -874,6 +884,7 @@ end
 
 class TextFieldDefaultEdit(TextFieldEdit)
    public s
+
    public add_edit(other)
       if is(other, gui.TextFieldDefaultEdit) &
          (other.cursor = self.cursor + *s) then {
@@ -905,6 +916,7 @@ end
 
 class TextFieldDeleteLineEdit(TextFieldEdit)
    public pre
+
    public redo_impl()
       pre := parent.contents
       parent.contents := ""

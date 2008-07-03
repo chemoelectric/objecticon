@@ -13,7 +13,11 @@ package gui
 # This class displays a list of objects using the GridPaint class.
 #
 class GridPaintList(SelectableScrollArea)
-   public cache, cache_k, lim
+   public
+      cache,
+      cache_k,
+      lim
+
    public get_draw(s)
       local d, k
 

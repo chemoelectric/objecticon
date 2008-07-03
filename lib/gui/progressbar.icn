@@ -4,14 +4,11 @@
 
 package gui
 
-
-
 #
 # A progress bar
 #
 class ProgressBar(Component)
-   public 
-   p
+   public p
 
    public get_default_height()
       return WAttrib(self.cbwin, "fheight") + border.get_total_height()

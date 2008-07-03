@@ -130,6 +130,7 @@ end
 
 class LineBorder(ABorder)
    public line_width
+
    public initially()
       self.l_inset := self.t_inset := self.r_inset := self.b_inset := line_width
    end
@@ -212,7 +213,10 @@ end
 
 
 class CompoundBorder(ABorder)
-   public outer, inner
+   public
+      outer,
+      inner
+
    public initially(c)
       outer.initially(c)
       inner.initially(c)

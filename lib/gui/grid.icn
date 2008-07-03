@@ -7,25 +7,25 @@ import
 
 class CellInfo(Insets,Align)
    public 
-               obj,            # An arbitrary object 
-               grid,           # The grid we're in
-               ax,             # Actual computed pixel location and size,
-               ay,             # within insets, ie where to draw the thing
-               aw,             # inside the cell.
-               ah,
-               s,              # Identifying string for print_layout
-               x,              # Location, size in grid units.
-               y, 
-               w, 
-               h, 
-               dw,             # Desired cell width including insets
-               dh, 
-               pw,             # Preferred cell width excluding insets
-               ph, 
-               x_fill,         # Constraints: fill, align, weights, insets
-               y_fill,
-               x_weight,
-               y_weight
+      obj,            # An arbitrary object 
+      grid,           # The grid we're in
+      ax,             # Actual computed pixel location and size,
+      ay,             # within insets, ie where to draw the thing
+      aw,             # inside the cell.
+      ah,
+      s,              # Identifying string for print_layout
+      x,              # Location, size in grid units.
+      y, 
+      w, 
+      h, 
+      dw,             # Desired cell width including insets
+      dh, 
+      pw,             # Preferred cell width excluding insets
+      ph, 
+      x_fill,         # Constraints: fill, align, weights, insets
+      y_fill,
+      x_weight,
+      y_weight
 
    private object_to_string()
       local t
@@ -48,30 +48,32 @@ end
 
 
 class Grid(SetFields)
-   public static const EXTRA_CELLS,
-                       EXTRA_BORDERS,
-                       EXTRA_IGNORE
+   public static const 
+      EXTRA_CELLS,
+      EXTRA_BORDERS,
+      EXTRA_IGNORE
+
    public 
-               gw,           # Grid width, height in cells
-               gh, 
-               p_col_w,      # Preferred column widths/row heights
-               p_row_h,
-               a_col_w,      # Actual column widths/row heights after extra
-               a_row_h,      # space has been allocated
-               col_x,        # Actual row x and y values
-               row_y,
-               col_weights,  # Column/row weights.
-               row_weights,
-               info,         # List of CellInfo for each component being laid out
-               dii,          # Default inner padding, ie not at edge of grid
-               doi,          # Default outer padding
-               extra,        # Flag indicating how to allocate extra space
-               pad_w,        # Padding to the left of the grid
-               pad_h,        # Padding above the grid
-               id_str,       # For generating CellInfo string ids for debug
-               add_x,        # For auto-computing cell position and sizes.
-               add_y,
-               add_row_h
+      gw,           # Grid width, height in cells
+      gh, 
+      p_col_w,      # Preferred column widths/row heights
+      p_row_h,
+      a_col_w,      # Actual column widths/row heights after extra
+      a_row_h,      # space has been allocated
+      col_x,        # Actual row x and y values
+      row_y,
+      col_weights,  # Column/row weights.
+      row_weights,
+      info,         # List of CellInfo for each component being laid out
+      dii,          # Default inner padding, ie not at edge of grid
+      doi,          # Default outer padding
+      extra,        # Flag indicating how to allocate extra space
+      pad_w,        # Padding to the left of the grid
+      pad_h,        # Padding above the grid
+      id_str,       # For generating CellInfo string ids for debug
+      add_x,        # For auto-computing cell position and sizes.
+      add_y,
+      add_row_h
 
    public create_cell(t)
       local ci

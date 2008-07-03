@@ -11,33 +11,34 @@ package gui
 $include "keysyms.icn"     
 
 class Event()
-   public static const CLOSE_BUTTON,        # Some extra icon events which don't have keywords.
-                       MOUSE_MOVED,                
-                       MOUSE_4,
-                       MOUSE_5,
-                       MOUSE_4_UP,
-                       MOUSE_5_UP,
-                       INVOKE_LATER,        # The synthetic event for invocation via the event queue.
-                       ICON,                # Events fired by Components.
-                       BUTTON_RELEASE,
-                       BUTTON_PRESS,
-                       BUTTON_HELD,
-                       SELECTION_CHANGED,
-                       CONTENT_CHANGED,
-                       CURSOR_MOVED,
-                       VALUE_CHANGED,
-                       ACTION,
-                       TREE_NODE_EXPANSION,
-                       SIZER_PRESSED,
-                       SIZER_DRAGGED,
-                       SIZER_RELEASED,
-                       MOUSE_ENTER,
-                       MOUSE_EXIT,
-                       KEY,
-                       TICK,
-                       GOT_FOCUS,
-                       LOST_FOCUS,
-                       DIALOG_CLOSED
+   public static const
+      CLOSE_BUTTON,        # Some extra icon events which don't have keywords.
+      MOUSE_MOVED,                
+      MOUSE_4,
+      MOUSE_5,
+      MOUSE_4_UP,
+      MOUSE_5_UP,
+      INVOKE_LATER,        # The synthetic event for invocation via the event queue.
+      ICON,                # Events fired by Components.
+      BUTTON_RELEASE,
+      BUTTON_PRESS,
+      BUTTON_HELD,
+      SELECTION_CHANGED,
+      CONTENT_CHANGED,
+      CURSOR_MOVED,
+      VALUE_CHANGED,
+      ACTION,
+      TREE_NODE_EXPANSION,
+      SIZER_PRESSED,
+      SIZER_DRAGGED,
+      SIZER_RELEASED,
+      MOUSE_ENTER,
+      MOUSE_EXIT,
+      KEY,
+      TICK,
+      GOT_FOCUS,
+      LOST_FOCUS,
+      DIALOG_CLOSED
 
    private static init()
       CLOSE_BUTTON := -11
@@ -71,9 +72,10 @@ class Event()
 end
 
 class Select()
-   public static const NONE,
-                       ONE,
-                       MANY
+   public static const 
+      NONE,
+      ONE,
+      MANY
 
    private static init()
       NONE := "none"
@@ -83,14 +85,15 @@ class Select()
 end
 
 class Gui()
-   public static BORDER_WIDTH,
-                 TEXT_INSET,
-                 X_INSET,
-                 Y_INSET,
-                 REPEAT_DELAY,            
-                 REPEAT_RATE,
-                 TAB_WIDTH,                 # Default tab char width
-                 style
+   public static 
+      BORDER_WIDTH,
+      TEXT_INSET,
+      X_INSET,
+      Y_INSET,
+      REPEAT_DELAY,            
+      REPEAT_RATE,
+      TAB_WIDTH,                 # Default tab char width
+      style
 
    public static const CONSTRAINT_SET,
                  WATTRIB_SET,

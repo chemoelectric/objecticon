@@ -27,12 +27,12 @@ import util
 #
 class Ticker(SetFields,Connectable)
    public 
-   interval,
-   delay,
-   times,
-   start_time,        # Time start() called
-   last_tick_time,    # Time tick() last called, or &null
-   next_tick_time
+      interval,
+      delay,
+      times,
+      start_time,        # Time start() called
+      last_tick_time,    # Time tick() last called, or &null
+      next_tick_time
 
    #
    # This method is called repeatedly by the Dispatcher.  It

@@ -4,6 +4,7 @@ import lang
 
 class Point()
    public x, y
+
    public get_x()
       return x
    end
@@ -22,6 +23,7 @@ end
 
 class Size()
    public w, h
+
    public get_w()
       return w
    end
@@ -117,10 +119,11 @@ end
 
 
 class Insets()
-   public l_inset, 
-             r_inset,
-             t_inset,
-             b_inset
+   public 
+      l_inset, 
+      r_inset,
+      t_inset,
+      b_inset
    
    public get_inner_rect(r)
       return Rect(r.x + l_inset, 
@@ -156,11 +159,13 @@ end
 
 
 class Align()
-   public static const L,      # Alignments
-                       C,
-                       R,
-                       T,
-                       B
+   public static const 
+      L,      # Alignments
+      C,
+      R,
+      T,
+      B
+
    private static init()
       L := "l"
       C := "c"

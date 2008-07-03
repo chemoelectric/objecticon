@@ -20,33 +20,33 @@ $include "keysyms.icn"
 #
 class EditableTextList(LineBasedScrollArea)
    public 
-   contents,                                     
-   is_editable_flag,        # Are we editable?
-   move_on_rpress_flag,     # Move on &rpress event?
-   cursor_x,                #                
-   cursor_y,                #                
-   mark_x,                  #
-   mark_y,                  #
-   direction,               #
-   long_line,               #
-   undo_manager,
-   remembered_region,
-   clipboard,
-   old_view_list_size,
-   old_mw,
-   old_cursor_x,
-   old_cursor_y,
-   old_mark_x,
-   old_mark_y,
-   old_region,
-   view_list,
-   tab_width,
-   wrap_mode,
-   split_words_flag,
-   line_splitter,
-   changed,
-   primary_selection_owner,
-   clipboard_selection_owner
+      contents,                                     
+      is_editable_flag,        # Are we editable?
+      move_on_rpress_flag,     # Move on &rpress event?
+      cursor_x,                #                
+      cursor_y,                #                
+      mark_x,                  #
+      mark_y,                  #
+      direction,               #
+      long_line,               #
+      undo_manager,
+      remembered_region,
+      clipboard,
+      old_view_list_size,
+      old_mw,
+      old_cursor_x,
+      old_cursor_y,
+      old_mark_x,
+      old_mark_y,
+      old_region,
+      view_list,
+      tab_width,
+      wrap_mode,
+      split_words_flag,
+      line_splitter,
+      changed,
+      primary_selection_owner,
+      clipboard_selection_owner
 
    public calculate_line_count()
       if /view_list then
@@ -1219,7 +1219,6 @@ class EditableTextList(LineBasedScrollArea)
    end
 end
 
-
 class EditableTextListPrimarySelectionOwner(SelectionOwner)
    private parent
 
@@ -1243,7 +1242,6 @@ class EditableTextListPrimarySelectionOwner(SelectionOwner)
    end
 end
 
-
 class EditableTextListClipboardSelectionOwner(SelectionOwner)
    private parent
 
@@ -1264,13 +1262,13 @@ class EditableTextListClipboardSelectionOwner(SelectionOwner)
    end
 end
 
-
 class ViewLine()
-   private readable index, 
-               str,
-               first, 
-               last,
-               tw
+   package readable 
+      index, 
+      str,
+      first, 
+      last,
+      tw
 
    private object_to_string()
       return "ViewLine(" || index || "," || str || "," || first || "," || last || ")"
@@ -1286,13 +1284,14 @@ class ViewLine()
    end
 end
 
-
 class EditableTextListEdit(UndoableEdit)
-   public parent,
-                                        cursor_x, 
-                                        cursor_y,
-                                        mark_x,
-                                        mark_y
+   public
+      parent,
+      cursor_x, 
+      cursor_y,
+      mark_x,
+      mark_y
+
    public doit()
       save()
       self.redo_impl()
@@ -1334,9 +1333,9 @@ class EditableTextListEdit(UndoableEdit)
    end
 end
 
-
 class EditableTextListDefaultEdit(EditableTextListEdit)
    public s
+
    public add_edit(other)
       if is(other, gui.EditableTextListDefaultEdit) &
          (other.cursor_y = self.cursor_y) &
@@ -1392,9 +1391,9 @@ class EditableTextListReturnEdit(EditableTextListEdit)
    end
 end
 
-
 class EditableTextListDeleteRightEdit(EditableTextListEdit)
    public ch
+
    public redo_impl()
       if parent.cursor_x = *parent.contents[parent.cursor_y] + 1 then {
          # We know cursor_y < *contents from the handle method above.
@@ -1435,6 +1434,7 @@ end
 
 class EditableTextListDeleteLeftEdit(EditableTextListEdit)
    public ch, cut
+
    public redo_impl()
       if parent.cursor_x = 1 then {
          # We know parent.cursor_y > 1 from the handle method
@@ -1475,9 +1475,9 @@ class EditableTextListDeleteLeftEdit(EditableTextListEdit)
    end
 end
 
-
 class EditableTextListDeleteLineEdit(EditableTextListEdit)
    public s, last
+
    public redo_impl()
       s := parent.contents[parent.cursor_y]
       if parent.cursor_y = *parent.contents then {
@@ -1508,9 +1508,9 @@ class EditableTextListDeleteLineEdit(EditableTextListEdit)
    end
 end
 
-
 class EditableTextListDeleteRegionEdit(EditableTextListEdit)
    public l, pos
+
    public redo_impl()
       l := []
       if parent.mark_y < parent.cursor_y then {
@@ -1560,9 +1560,9 @@ class EditableTextListDeleteRegionEdit(EditableTextListEdit)
    end
 end
 
-
 class EditableTextListPasteEdit(EditableTextListEdit)
    public s, pre, n
+
    public redo_impl()
       local t, nl
 
@@ -1602,9 +1602,9 @@ class EditableTextListPasteEdit(EditableTextListEdit)
    end
 end
 
-
 class LineSplitter()
    public parent
+
    public defer split(s)
 
    public new(parent)
@@ -1613,9 +1613,9 @@ class LineSplitter()
    end
 end
 
-
 class ColumnLineSplitter(LineSplitter)
    public wrap_col
+
    public split(s)
       local ch, ds, p
 
@@ -1652,13 +1652,11 @@ class ColumnLineSplitter(LineSplitter)
    end
 end
 
-
 class DefaultLineSplitter(LineSplitter)
    public split(s)
       return *s + 1
    end
 end
-
 
 class WidthLineSplitter(LineSplitter)
    public split(s)
@@ -1691,9 +1689,3 @@ class WidthLineSplitter(LineSplitter)
       }
    end
 end
-
-
-
-
-
-

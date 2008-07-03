@@ -49,7 +49,11 @@ end
 # Selection from a list
 #
 class Circulate(SelectionList,Component)
-   public old_selection, b, l
+   public
+      old_selection, 
+      b,
+      l
+
    public apply_selection()
       local s
       s := self.selection_list[\self.selection] | ""

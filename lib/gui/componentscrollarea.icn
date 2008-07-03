@@ -11,9 +11,11 @@ package gui
 import lang
 
 class ComponentScrollAreaView(Component)
-   public inner, 
-                                          inner_w,
-                                          inner_h
+   public
+      inner, 
+      inner_w,
+      inner_h
+
    public initially()
       \self.inner | fatal(self, "no inner component specified")
       cast(self,Component).initially()

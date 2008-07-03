@@ -14,18 +14,19 @@ import
 # @ write(d.get_result() | "cancelled")
 #
 class DirectoryDialog(Dialog)
-   public home_button, 
-                               new_button, 
-                               refresh_button, 
-                               up_button, 
-                               cancel_button, 
-                               okay_button,
-                               init_dirs,         # Directory choices
-                               res,               # Resulting file path          
-                               message_label, 
-                               tree, 
-                               dir, 
-                               show_hidden_cb
+   public
+      home_button, 
+      new_button, 
+      refresh_button, 
+      up_button, 
+      cancel_button, 
+      okay_button,
+      init_dirs,         # Directory choices
+      res,               # Resulting file path          
+      message_label, 
+      tree, 
+      dir, 
+      show_hidden_cb
 
    public component_setup()
       local root_node, d

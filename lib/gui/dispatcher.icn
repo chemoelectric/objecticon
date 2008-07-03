@@ -16,9 +16,16 @@ import lang, util
 # activating them between events as and when appropriate.
 #
 class Dispatcher()
-   public static const dialogs, tickers
-   private static idle_sleep
-   private static const IDLE_SLEEP_MIN, IDLE_SLEEP_MAX
+   public static const 
+      dialogs,
+      tickers
+
+   private static 
+      idle_sleep
+
+   private static const
+      IDLE_SLEEP_MIN,
+      IDLE_SLEEP_MAX
 
    private static init()
       IDLE_SLEEP_MIN := 10

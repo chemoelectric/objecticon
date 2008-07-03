@@ -3,13 +3,15 @@ package gui
 import lang
 
 class Frame(Component)
-   public held_flag,
-                        bar,
-                        content,
-                        drag_x_offset,
-                        drag_y_offset
+   public
+      held_flag,
+      bar,
+      content,
+      drag_x_offset,
+      drag_y_offset
 
-   public static const FRAME_RSW
+   public static const
+      FRAME_RSW
 
    private static init()
       FRAME_RSW := 12

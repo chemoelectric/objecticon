@@ -18,10 +18,10 @@ $include "keysyms.icn"
 #
 class MenuBar(Component)
    public 
-   which_highlight,      # Currently highlighted menu
-   which_open,           # Currently open menu
-   menus,                # List of menus.
-   accel_skip
+      which_highlight,      # Currently highlighted menu
+      which_open,           # Currently open menu
+      menus,                # List of menus.
+      accel_skip
 
    public close_all()
       set_which_highlight()

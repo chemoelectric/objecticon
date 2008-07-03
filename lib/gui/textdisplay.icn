@@ -14,13 +14,15 @@ import util, lang
 # This class displays a list of strings.
 #
 class TextDisplay(LineBasedScrollArea)
-   public contents, 
-                                        wrap_mode,
-                                        split_words_flag,
-                                        view_list, 
-                                        long_line,
-                                        line_splitter,
-                                        tab_width
+   public
+      contents, 
+      wrap_mode,
+      split_words_flag,
+      view_list, 
+      long_line,
+      line_splitter,
+      tab_width
+
    public calculate_line_count()
       if /view_list then
          create_view_list()

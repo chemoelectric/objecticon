@@ -11,7 +11,10 @@ package gui
 import lang
 
 class ItemPaintList(SelectableScrollArea)
-   public item_border, item_paint
+   public
+      item_border,
+      item_paint
+
    public initially()
       \self.item_paint | fatal(self, "ItemPaint not set")
       cast(self,SelectableScrollArea).initially()
