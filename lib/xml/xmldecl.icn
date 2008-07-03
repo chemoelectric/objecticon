@@ -12,7 +12,11 @@ package xml
 # This class represents the XML declaration in the document.
 #
 class XmlDecl(Node)
-   public version, encoding, standalone
+   public
+      version,
+      encoding, 
+      standalone
+
    #
    # Get the version
    #

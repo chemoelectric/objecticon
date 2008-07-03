@@ -12,7 +12,10 @@ package xml
 # This class represents a processing instruction in the document.
 #
 class ProcessingInstruction(Node)
-   public target, content
+   public
+      target,
+      content
+
    #
    # Return the target
    #

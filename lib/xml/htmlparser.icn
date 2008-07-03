@@ -11,7 +11,12 @@ package xml
 import lang
 
 class Tag(Node)
-   public name, closed, attributes, empty
+   public
+      name,
+      closed,
+      attributes,
+      empty
+
    #
    # Set the name of the tag, which is converted to upper case.  Any
    # leading "/" should be omitted.
@@ -84,8 +89,17 @@ end
 class HtmlParser()
    public doc
 
-   public static const HTML_IDINTRO, HTML_IDCHARS, HTML_KEYCHARS, HTML_VALCHARS, 
-      HTML_DELIM, HTML_SPACE, HTML_STANDALONE, HTML_AUTOCLOSE, HTML_ENTITIES, HTML_PUBID_CHAR
+   public static const
+      HTML_IDINTRO,
+      HTML_IDCHARS,
+      HTML_KEYCHARS,
+      HTML_VALCHARS, 
+      HTML_DELIM,
+      HTML_SPACE,
+      HTML_STANDALONE,
+      HTML_AUTOCLOSE,
+      HTML_ENTITIES,
+      HTML_PUBID_CHAR
 
    private static init()
       local e
@@ -482,7 +496,4 @@ class HtmlParser()
    public static html_is_autoclose_tag(name)
       return member(HTML_AUTOCLOSE, name)
    end
-
 end
-
-

@@ -23,7 +23,11 @@ import http, net, util
 # Otherwise, the system id is treated as a filename.
 #
 class DefaultResolver(Resolver)
-   public public_mapping, uri_cache, cache_uris_flag
+   public
+      public_mapping,
+      uri_cache,
+      cache_uris_flag
+
    #
    # Set a mapping from a public id to an alternative URI.  The alternative URI
    # will then be loaded when the public id is encountered, rather than the

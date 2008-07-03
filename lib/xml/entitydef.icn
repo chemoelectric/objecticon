@@ -14,11 +14,12 @@ import lang
 # Represents the definition of an entity.
 #
 class EntityDef()
-   public str,
-                external_id, 
-                notation,
-                in_ext_subset,
-                pos
+   public
+      str,
+      external_id, 
+      notation,
+      in_ext_subset,
+      pos
 
    #
    # Get the string value; returns null for an external entity.

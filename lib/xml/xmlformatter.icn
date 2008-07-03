@@ -17,10 +17,12 @@ import util
 # indentation.
 #
 class XmlFormatter(Formatter,SetFields)
-   public indent, 
-                                           no_whitespace_flag, 
-                                           text_trim_flag, 
-                                           as_read_flag
+   public
+      indent, 
+      no_whitespace_flag, 
+      text_trim_flag, 
+      as_read_flag
+
    #
    # Ensure that each opening element appears with an indent of n chars.  Whitespace
    # will be inserted as appropriate.  By default, no indentation is done.

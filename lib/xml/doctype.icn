@@ -13,7 +13,10 @@ import lang
 # This represents the DocumentType declaration.
 #
 class DocType(Node)
-   public name, external_id
+   public
+      name,
+      external_id
+
    #
    # Get the name
    #

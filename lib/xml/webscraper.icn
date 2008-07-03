@@ -8,6 +8,7 @@ import util, ipl.noncase
 
 class WebScraper(Error)
    public paths
+
    public load_file(fn)
       local f, s
       f := open(fn) | return error("Couldn't open:" || fn)

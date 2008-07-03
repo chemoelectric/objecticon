@@ -37,11 +37,12 @@ import lang
 #
 class XmlElement(Element)
    public 
-                           whitespace_children,
-                           global_name, 
-                           attributes_global_name, 
-                           namespace_declarations, 
-                           xml_space_preserve
+      whitespace_children,
+      global_name, 
+      attributes_global_name, 
+      namespace_declarations, 
+      xml_space_preserve
+
    #
    # Set the global (namespace-aware) name.  The global
    # name should be a {GlobalName} instance.

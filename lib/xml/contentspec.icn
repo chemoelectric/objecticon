@@ -17,7 +17,12 @@ import lang
 # contains an op and two args.
 #
 class ContentSpec()
-   public op, arg1, arg2, is_mixed_flag
+   public
+      op, 
+      arg1,
+      arg2,
+      is_mixed_flag
+
    #
    # Print the structure to the given file.  For debugging.
    #

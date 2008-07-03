@@ -14,7 +14,10 @@ import lang, util
 # Holds detail of a parse position in a file
 #
 class Diversion()
-   private readable id, subject, pos
+   private readable
+      id,
+      subject, 
+      pos
 
    package new(id, subject, pos)
       self.id := id
@@ -40,7 +43,9 @@ end
 # Holds a attribute usage of IDREF.  Just used for validation.
 #
 class IdAttributeRef()
-   private readable val, pos
+   private readable 
+      val,
+      pos
 
    package new(val, pos)
       self.val := val
@@ -51,22 +56,30 @@ end
 
 
 class XmlParser(Connectable,SetFields,Error)
-   public static const XML_SPACE, XML_CHAR, XML_LETTER, XML_NAME_START, 
-          XML_NAME_CHAR, XML_PUBID_CHAR, WARNING_EVENT, VALIDITY_ERROR_EVENT, 
-          FATAL_ERROR_EVENT
+   public static const
+      XML_SPACE,
+      XML_CHAR,
+      XML_LETTER,
+      XML_NAME_START, 
+      XML_NAME_CHAR,
+      XML_PUBID_CHAR,
+      WARNING_EVENT,
+      VALIDITY_ERROR_EVENT, 
+      FATAL_ERROR_EVENT
 
    public 
-    doc,
-    resolver, 
-    current_divert_id,
-    divert_stack,
-    in_ext_subset,
-    dtd_insert_shown_error,
-    do_namespaces_flag,
-    preserve_insignificant_whitespace_flag,
-    preserve_comments_flag,
-    id_attribute_refs,
-    validate_flag
+      doc,
+      resolver, 
+      current_divert_id,
+      divert_stack,
+      in_ext_subset,
+      dtd_insert_shown_error,
+      do_namespaces_flag,
+      preserve_insignificant_whitespace_flag,
+      preserve_comments_flag,
+      id_attribute_refs,
+      validate_flag
+
    #
    # Set the resolver
    #
