@@ -18,9 +18,9 @@ default: oix
 
 XOBJS=	xcnv.o xdata.o xdef.o xerrmsg.o xextcall.o xfconv.o xfload.o xfmath.o\
 	xfmisc.o xfmonitr.o xfscan.o xfstr.o xfstranl.o xfstruct.o xfsys.o\
-	xfwindow.o ximain.o ximisc.o xinit.o xinterp.o xinvoke.o xfdb.o\
+	xfwindow.o ximain.o ximisc.o xinit.o xinterp.o xinvoke.o \
 	xkeyword.o xlmisc.o xoarith.o xoasgn.o xocat.o xocomp.o xnative.o \
-	xomisc.o xoref.o xoset.o xovalue.o xralc.o xrcoexpr.o xrcomp.o xrdb.o\
+	xomisc.o xoref.o xoset.o xovalue.o xralc.o xrcoexpr.o xrcomp.o \
 	xrdebug.o xrlocal.o xrlrgint.o xrmemmgt.o xrmisc.o xrstruct.o xrsys.o\
 	xrwinrsc.o xrgfxsys.o xrwinsys.o xrwindow.o xfxtra.o xrposix.o
 
@@ -215,11 +215,6 @@ xrcomp.o: rcomp.r $(HDRS)
 	rtt rcomp.r
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c xrcomp.c
 	$(RM) xrcomp.c
-
-xrdb.o: rdb.r $(HDRS)
-	rtt rdb.r
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c xrdb.c
-	$(RM) xrdb.c
 
 xrdebug.o: rdebug.r $(HDRS)
 	rtt rdebug.r
