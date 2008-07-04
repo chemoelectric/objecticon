@@ -124,7 +124,7 @@ class Code()
    # Output the code to file called s.
    #
    public output_code(s)
-      local prog, im, cl, f, t, g, e
+      local prog, im, cl, f, t, g, e, fl
 
       prog := Factory.new_prog()
       im := Factory.new_import("", [])
@@ -134,8 +134,11 @@ class Code()
 
       cl := Factory.new_class("\n\n", self.parent_Canvas.name, [self.parent_Canvas.superclass_name], "\n")
       prog.put(cl)
-      if *class_vars > 0 then
-         cl.put(Factory.new_fields(indent1, ["public"], class_vars))
+      if *class_vars > 0 then {
+         fl := Factory.new_fields(indent1, ["public"], [])
+         every fl.put(Factory.new_id("\n      ", !class_vars))
+         cl.put(fl)
+      }
 
       generate_methods(prog, cl)
 
@@ -240,10 +243,12 @@ class Code()
          }
       }
       if *class_vars > 0 then {
-         if /fl then
-            cl.insert(1, Factory.new_fields(indent1, ["public"], class_vars))
-         else
-            every fl.put(Factory.new_id(" ", !class_vars))
+         if /fl then {
+            fl := Factory.new_fields(indent1, ["public"], [])
+            every fl.put(Factory.new_id("\n      ", !class_vars))
+            cl.insert(1, fl)
+         } else
+            every fl.put(Factory.new_id("\n      ", !class_vars))
       }
 
       # Add methods, main proc.
