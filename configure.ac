@@ -45,7 +45,7 @@ OI_ADD_LIB(crypt)
 OI_ADD_LIB(dl)
 
 AX_LIB_MYSQL()
-AC_CHECK_FUNCS(getrlimit setrlimit strerror vfork)
+AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork)
 AC_CHECK_GLOBAL(sys_nerr)
 AC_CHECK_GLOBAL(sys_errlist)
 AC_VAR_TIMEZONE_EXTERNALS()
@@ -53,6 +53,7 @@ AC_STRUCT_TIMEZONE()
 AC_CONFIG_COMMANDS(system, [
         case $(uname -om) in
                 'i686 GNU/Linux') id=linux_x86 ;;
+                'i686 Cygwin') id=cygwin_x86 ;;
                 *) id=default ;;
         esac
         cp config/system/$id/rswitch.? base/common
