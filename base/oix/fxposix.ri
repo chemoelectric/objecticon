@@ -2396,8 +2396,13 @@ function{0,1} gethost(h)
 	       return result;
 	       }
 #else					/* NT */
+
+#ifdef HAVE_GETHOSTENT
 	    if ((hs = gethostent()) == NULL)
 	       fail;
+#else
+            fail;
+#endif
 
 	    if (make_host(hs, &result) == 0)
 	       syserr("failed to create posix record constructor");
