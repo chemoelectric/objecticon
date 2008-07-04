@@ -45,6 +45,9 @@
 /* define as 1 if strerror exists */
 #undef HAVE_STRERROR
 
+/* define as 1 if gethostent exists */
+#undef HAVE_GETHOSTENT
+
 /* define as 1 if vfork exists */
 #undef HAVE_VFORK
 
