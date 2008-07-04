@@ -100,7 +100,7 @@ class EventTab(TabItem)
       tbl.set_select_mode(Select.ONE)
       tbl.set_size("200", "100")
       tbl.set_contents(contents)
-      cast(self,Component).add(tbl)
+      add(tbl)
 
       c1 := TableColumn()
       c1.set_column_width(200)
@@ -160,7 +160,7 @@ class EventTab(TabItem)
       handler.set_size(175)
       handler.connect(self.on_apply, Event.ACTION)
       p.add(handler)
-      cast(self,Component).add(p)
+      add(p)
 
       p := Panel("c:eol","c:y_weight=0")
       p.set_layout(GridLayout("doi=0"))
@@ -179,7 +179,7 @@ class EventTab(TabItem)
       apply.set_label("Apply")
       p.add(apply)
 
-      cast(self,Component).add(p)
+      add(p)
 
       update_grey()
       return

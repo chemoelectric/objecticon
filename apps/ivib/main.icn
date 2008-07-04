@@ -1396,7 +1396,6 @@ class Main(Dialog)
    end
 end
 
-
 #############################################################################
 #
 # Preferences for program
@@ -1469,7 +1468,6 @@ class Preferences(Dialog)
       return
    end
 end
-
 
 class PathTab(TabItem)
    public 
@@ -1561,7 +1559,7 @@ class PathTab(TabItem)
                             "select_mode=one",
                             "contents=",contents)
       path_list.connect(self.on_list, Event.SELECTION_CHANGED)
-      cast(self,Component).add(path_list)
+      add(path_list)
 
       p := Panel("c:eol", "c:y_weight=0", "layout=",GridLayout("flush"))
       path := TextField("size=150")
@@ -1572,7 +1570,7 @@ class PathTab(TabItem)
       browse.connect(self.on_browse, Event.ACTION)
       p.add(browse)
 
-      cast(self,Component).add(p)
+      add(p)
     
       p := Panel("c:eol", "c:y_weight=0", "layout=",GridLayout("flush"))
       add_button := TextButton()
@@ -1590,13 +1588,12 @@ class PathTab(TabItem)
       apply.set_label("Apply")
       p.add(apply)
 
-      cast(self,Component).add(p)
+      add(p)
 
       update_grey()
       return
    end
 end
-
 
 class IvibClipboardSelectionOwner(SelectionOwner)
    public parent
