@@ -257,18 +257,6 @@ int add_package(struct package_dir *p, struct package *new)
     return 1;
 }
 
-/*
- * Create an interned string giving the absolute path of the
- * given directory.
- */
-static char *get_interned_absolute(char *dir)
-{
-    char *cdir = canonicalize(dir);
-    if (!cdir)
-        return 0;
-    return intern_using(&pack_sbuf, cdir);
-}
-
 void ensure_file_in_package(char *file, char *ipackage)
 {
     struct fileparts *fps = fparse(file);
@@ -277,10 +265,7 @@ void ensure_file_in_package(char *file, char *ipackage)
     struct package *pk;
     struct package_file *pf;
 
-    idir = get_interned_absolute(fps->dir);
-    if (!idir)
-        quitf("couldn't get absolute path for directory:%s", fps->dir);
-
+    idir = intern_using(&pack_sbuf, canonicalize(fps->dir));
     pd = lookup_package_dir(idir);
     if (!pd) {
         /*
@@ -319,11 +304,7 @@ static void load_path_impl(char *dir)
     struct package_dir *pd;
     char *idir;
 
-    idir = get_interned_absolute(dir);
-    /* Allow non-existent directories on the ipath */
-    if (!idir)
-        return;
-
+    idir = intern_using(&pack_sbuf, canonicalize(dir));
     /* Have we seen it yet?  If so, just ignore. */
     pd = lookup_package_dir(idir);
     if (pd)
