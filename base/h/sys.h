@@ -144,14 +144,6 @@
    #include <process.h>
    #include <fcntl.h>
 
-   #if CSET2V2
-      #include <io.h>
-      #include <direct.h>
-      #define IN_SYS_H
-      #include "../h/local.h"		/* Include #pragmas */
-      #undef IN_SYS_H
-   #endif				/* CSet/2 version 2 */
-
 #endif					/* OS2 */
 
 #if UNIX

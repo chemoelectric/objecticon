@@ -409,14 +409,6 @@ Deliberate Syntax Error
       #define MICROSOFT 0
    #endif				/* MICROSOFT */
 
-   #ifndef CSET2
-      #define CSET2 0
-   #endif				/* CSet/2 */
-
-   #ifndef CSET2V2
-      #define CSET2V2 0
-   #endif				/* CSet/2 version 2 */
-
    #ifndef TURBO
       #define TURBO 0
    #endif				/* TURBO */

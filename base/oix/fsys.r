@@ -529,16 +529,9 @@ Deliberate Syntax Error
 #if MSDOS || OS2
       if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write)) {
 	 mode[1] = '+';
-#if CSET2
-         /* we don't have the 't' in C Set/2 */
-         if ((status & Fs_Untrans) != 0) mode[2] = 'b';
-         } /* End of if - open file for reading or writing */
-      else if ((status & Fs_Untrans) != 0) mode[1] = 'b';
-#else					/* CSET2 */
 	 mode[2] = ((status & Fs_Untrans) != 0) ? 'b' : 't';
 	 }
       else mode[1] = ((status & Fs_Untrans) != 0) ? 'b' : 't';
-#endif					/* CSET2 */
 #endif					/* MSDOS || OS2 */
 
 #if MVS || VM
@@ -1365,38 +1358,15 @@ function{0,1} seek(f,o)
 #endif                                 /* HAVE_LIBZ */
 
       if (o > 0) {
-/* fseek returns a non-zero value on error for CSET2, not -1 */
-#if CSET2
-	 if (fseek(fd, o - 1, SEEK_SET))
-#else
 	 if (fseek(fd, o - 1, SEEK_SET) == -1)
-#endif					/* CSET2 */
 	    fail;
 
 	 }
 
       else {
 
-#if CSET2
-/* unreliable seeking from the end in CSet/2 on a text stream, so
-   we will fixup seek-from-end to seek-from-beginning */
-	long size;
-	long save_pos;
-
-	/* save the position in case we have to reset it */
-	save_pos = ftell(fd);
-	/* seek to the end and get the file size */
-	fseek(fd, 0, SEEK_END);
-	size = ftell(fd);
-	/* try to accomplish the fixed-up seek */
-	if (fseek(fd, size + o, SEEK_SET)) {
-	   fseek(fd, save_pos, SEEK_SET);
-	   fail;
-	   }  /* End of if - seek failed, reset position */
-#else
 	 if (fseek(fd, o, SEEK_END) == -1)
 	    fail;
-#endif					/* CSET2 */
 
 	 }
       BlkLoc(f)->file.status &= ~(Fs_Reading | Fs_Writing);

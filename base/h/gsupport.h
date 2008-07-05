@@ -4,11 +4,6 @@
 
 #include "../h/auto.h"
 #include "../h/define.h"
-
-#if CSET2V2
-   #include <io.h>
-#endif					/* CSet/2 ver 2 */
-
 #include "../h/config.h"
 #include "../h/sys.h"
 #include "../h/typedefs.h"

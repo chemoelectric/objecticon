@@ -65,9 +65,9 @@ char *routname;			/* real output file name */
 #endif					/* MVS */
 
 #if OS2
-#if MICROSOFT || CSET2
+#if MICROSOFT
 #include <fcntl.h>
-#endif				/* MICROSOFT || CSET2 */
+#endif				/* MICROSOFT */
 #endif					/* OS2 */
 
 #if UNIX
@@ -216,9 +216,9 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
 #endif					/* MSDOS */
 
 #if OS2
-#if MICROSOFT || CSET2
+#if MICROSOFT
     setmode(fileno(outfile),O_BINARY);
-#endif				/* MICROSOFT || CSET2 */
+#endif				/* MICROSOFT */
 #endif					/* OS2 */
 
 /*

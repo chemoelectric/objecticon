@@ -1894,12 +1894,10 @@ int LoadFont(wbp wb, char *family, LONG attrs, ULONG fsize)
    fheight = FNTHEIGHT(fsize);
    attstr[0] = '\0';
 
-#ifndef CSET2
 #define FATTR_SEL_BOLD		    FM_SEL_BOLD
 #define FATTR_SEL_ITALIC	    FM_SEL_ITALIC
 #define FATTR_FONTUSE_OUTLINE	    FM_SEL_OUTLINE
 #define FATTR_FONTUSE_TRANSFORMABLE FM_SEL_ISO9241_TESTED
-#endif					/* CSET2 */
 
    if (attrs & FONTFLAG_BOLD) strcat(attstr, " Bold");
    if (attrs & FONTFLAG_ITALIC) strcat(attstr, " Italic");

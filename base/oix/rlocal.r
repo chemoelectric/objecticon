@@ -917,19 +917,11 @@ void abort()
     blkdump();
 #endif
     fflush(stderr);
-#if CSET2
-    _fcloseall();
-#else
     fcloseall();
-#endif		CSET2
     _exit(1);
 }
 
 #ifndef OS2EMX
-#if CSET2
-/* 20 is the default file handle max, this can be dynamically altered */
-#define _NFILE  20
-#endif		/* CSET2 */
 
 static int _pipes[_NFILE];
 
