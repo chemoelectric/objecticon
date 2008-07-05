@@ -1,9 +1,8 @@
 /*
  * xwindow.c - X Window System-specific routines
  */
-#include "../h/auto.h"
-#include "../h/define.h"
-#include "../h/config.h"
+#include "../h/gsupport.h"
+
 #ifdef XWindows
 
 typedef struct {
