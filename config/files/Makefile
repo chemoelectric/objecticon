@@ -45,7 +45,6 @@ install :
 	install -m 755 bin/iyacc $(OIBIN)
 	install -m 755 bin/oit $(OIBIN)
 	install -m 755 bin/oix $(OIBIN)
-	install -m 755 bin/oidoc $(OIBIN)
 	ln -f -s oit $(OIBIN)/udis
 	install -m 644 lib/gui/*.u lib/gui/packages.txt $(OILIB)/gui
 	install -m 644 lib/incl/*.icn $(OILIB)/incl
@@ -88,7 +87,7 @@ install-libref :
 
 uninstall :
 	rm -f $(OIBIN)/ivib $(OIBIN)/iyacc $(OIBIN)/oit $(OIBIN)/oix \
-		$(OIBIN)/oidoc $(OIBIN)/udis
+		$(OIBIN)/udis
 	rm -f $(SOLIB)/objecticonipclib.so  $(SOLIB)/objecticonmysqllib.so
 	rm -rf $(OILIB)
 	rm -f $(HTML)/*.html
