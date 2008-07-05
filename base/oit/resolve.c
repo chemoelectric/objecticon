@@ -6,7 +6,7 @@
 #include "resolve.h"
 #include "tmain.h"
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 
 static void merge(struct lclass *cl, struct lclass *super);
 
@@ -55,7 +55,7 @@ static void resolve_global(struct lfile *lf, char *name)
     /*
      * Easy case is if it's an absolute specification.
      */
-    if ((dot = rindex(name, '.'))) {
+    if ((dot = strrchr(name, '.'))) {
         char *t, *package;
         /* 
          * Get the package name 

@@ -9,6 +9,7 @@
 #ifdef Header
 #include "../h/header.h"
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -54,7 +55,7 @@ char **argv;
     * If the name contains any slashes, execute the file as named.
     *  Otherwise, search the path to find out where the file really is.
     */
-   if (index(name, '/'))
+   if (strchr(name, '/'))
       doiconx(argv, name);
    else if (findcmd(fullpath, name, "PATH"))
       doiconx(argv, fullpath);

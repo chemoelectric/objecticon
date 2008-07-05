@@ -89,7 +89,9 @@ Deliberate Syntax Error
 #ifndef PathSep
 #define PathSep " "
 #endif					/* PathSep */
-
+
+#include <string.h>
+
 /*
  * pathfind(buf,path,name,extn) -- find file in path and return name.
  *
@@ -193,7 +195,7 @@ char *pathelem(s, buf)
  */
 char *last_pathelem(char *s)
 {
-    char *p = rindex(s, FileSep);
+    char *p = strrchr(s, FileSep);
     if (!p)
         return s;
     else

@@ -6,6 +6,4 @@ void resolve_supers();
 void compute_inheritance();
 void resolve_invocables();
 
-#define is_absolute(s) (index(s, '.'))
-
 #endif

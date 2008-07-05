@@ -10,6 +10,7 @@
 #include "tmem.h"
 #include "package.h"
 #include "tlex.h"
+#include <string.h>
 
 /*
  * Prototypes.
@@ -129,7 +130,7 @@ void trans(struct file_param *trans_files, int *fatals, int *warnings)
 
 static void check_dottedident(struct node *pos, char *s)
 {
-    char *d = rindex(s, '.'), *t = s;
+    char *d = strrchr(s, '.'), *t = s;
     if (!d)
         return;
     zero_sbuf(&join_sbuf);
