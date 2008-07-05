@@ -1,3 +1,5 @@
+include ../../Makedefs
+
 SRCFILES=$(wildcard *.icn)
 
 UFILES=$(SRCFILES:.icn=.u)
