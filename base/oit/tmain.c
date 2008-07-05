@@ -633,16 +633,15 @@ int main(int argc, char **argv)
 
 #if MSDOS
     {
-        if (ofile == NULL)  {                /* if no -o file, synthesize a name */
-            ofile = intern_using(&join_sbuf, makename(buf,TargetDir,lfiles[0],
-                                    makeExe ? ".exe" : IcodeSuffix));
-        }
-        else {                             /* add extension if necessary */
-            fp = fparse(ofile);
-            if (*fp->ext == '\0' && *IcodeSuffix != '\0') /* if no ext given */
-                ofile = intern_using(&join_sbuf, makename(buf,NULL,ofile,
-                                        makeExe ? ".exe" : IcodeSuffix));
-        }
+    if (ofile == NULL)  {		/* if no -o file, synthesize a name */
+        ofile = intern_using(&join_sbuf, makename(buf,SourceDir,link_files->name,
+						  makeExe ? ".exe" : IcodeSuffix));
+    } else {				/* add extension in necessary */
+        fp = fparse(ofile);
+        if (*fp->ext == '\0' && *IcodeSuffix != '\0') /* if no ext given */
+            ofile = intern_using(&join_sbuf, makename(buf,NULL,ofile,
+						      makeExe ? ".exe" : IcodeSuffix));
+    }
     }
 #else                                   /* MSDOS */
 
