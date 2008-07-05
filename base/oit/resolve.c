@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <strings.h>
 
 #include "icont.h"
 #include "link.h"
