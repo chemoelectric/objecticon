@@ -564,103 +564,103 @@ char *name;
 
    if (!strcmp(name, "posix_lock")) {
       if (is:null(posix_lock)) {
-	 AsgnCStr(s, "posix_lock");
-	 AsgnCStr(fields[0], "value");
-	 AsgnCStr(fields[1], "pid");
-	 posix_lock.dword = D_Proc;
-	 posix_lock.vword.bptr = (union block *)dynrecord(&s, fields, 2);
+          MakeCStr("posix_lock", &s);
+          MakeCStr("value", &fields[0]);
+          MakeCStr("pid", &fields[1]);
+          posix_lock.dword = D_Proc;
+          posix_lock.vword.bptr = (union block *)dynrecord(&s, fields, 2);
 	 }
       return &posix_lock;
       }
    else if (!strcmp(name, "posix_message")) {
       if (is:null(posix_message)) {
-	 AsgnCStr(s, "posix_message");
-	 AsgnCStr(fields[0], "addr");
-	 AsgnCStr(fields[1], "msg");
-	 posix_message.dword = D_Proc;
-	 posix_message.vword.bptr = (union block *)dynrecord(&s, fields, 2);
+          MakeCStr("posix_message", &s);
+          MakeCStr("addr", &fields[0]);
+          MakeCStr("msg", &fields[1]);
+          posix_message.dword = D_Proc;
+          posix_message.vword.bptr = (union block *)dynrecord(&s, fields, 2);
 	 }
       return &posix_message;
       }
    else if (!strcmp(name, "posix_servent")) {
       if (is:null(posix_servent)) {
-	 AsgnCStr(s, "posix_servent");
-	 AsgnCStr(fields[0], "name");
-	 AsgnCStr(fields[1], "aliases");
-	 AsgnCStr(fields[2], "port");
-	 AsgnCStr(fields[3], "proto");
-	 posix_servent.dword = D_Proc;
-	 posix_servent.vword.bptr = (union block *)dynrecord(&s, fields, 4);
+          MakeCStr("posix_servent", &s);
+          MakeCStr("name", &fields[0]);
+          MakeCStr("aliases", &fields[1]);
+          MakeCStr("port", &fields[2]);
+          MakeCStr("proto", &fields[3]);
+          posix_servent.dword = D_Proc;
+          posix_servent.vword.bptr = (union block *)dynrecord(&s, fields, 4);
 	 }
       return &posix_servent;
       }
    else if (!strcmp(name, "posix_hostent")) {
       if (is:null(posix_hostent)) {
-	 AsgnCStr(s, "posix_hostent");
-	 AsgnCStr(fields[0], "name");
-	 AsgnCStr(fields[1], "aliases");
-	 AsgnCStr(fields[2], "addresses");
-	 posix_hostent.dword = D_Proc;
-	 posix_hostent.vword.bptr = (union block *)dynrecord(&s, fields, 3);
+          MakeCStr("posix_hostent", &s);
+          MakeCStr("name", &fields[0]);
+          MakeCStr("aliases", &fields[1]);
+          MakeCStr("addresses", &fields[2]);
+          posix_hostent.dword = D_Proc;
+          posix_hostent.vword.bptr = (union block *)dynrecord(&s, fields, 3);
 	 }
       return &posix_hostent;
       }
    else if (!strcmp(name, "posix_timeval")) {
       if (is:null(posix_timeval)) {
-	 AsgnCStr(s, "posix_timeval");
-	 AsgnCStr(fields[0], "sec");
-	 AsgnCStr(fields[1], "usec");
-	 posix_timeval.dword = D_Proc;
-	 posix_timeval.vword.bptr = (union block *)dynrecord(&s, fields, 2);
+          MakeCStr("posix_timeval", &s);
+          MakeCStr("sec", &fields[0]);
+          MakeCStr("usec", &fields[1]);
+          posix_timeval.dword = D_Proc;
+          posix_timeval.vword.bptr = (union block *)dynrecord(&s, fields, 2);
 	 }
       return &posix_timeval;
       }
    else if (!strcmp(name, "posix_group")) {
       if (is:null(posix_group)) {
-	 AsgnCStr(s, "posix_group");
-	 AsgnCStr(fields[0], "name");
-	 AsgnCStr(fields[1], "passwd");
-	 AsgnCStr(fields[2], "gid");
-	 AsgnCStr(fields[3], "members");
-	 posix_group.dword = D_Proc;
-	 posix_group.vword.bptr = (union block *)dynrecord(&s, fields, 4);
+          MakeCStr("posix_group", &s);
+          MakeCStr("name", &fields[0]);
+          MakeCStr("passwd", &fields[1]);
+          MakeCStr("gid", &fields[2]);
+          MakeCStr("members", &fields[3]);
+          posix_group.dword = D_Proc;
+          posix_group.vword.bptr = (union block *)dynrecord(&s, fields, 4);
 	 }
       return &posix_group;
       }
    else if (!strcmp(name, "posix_passwd")) {
       if (is:null(posix_passwd)) {
-	 AsgnCStr(s, "posix_passwd");
-	 AsgnCStr(fields[0], "name");
-	 AsgnCStr(fields[1], "passwd");
-	 AsgnCStr(fields[2], "uid");
-	 AsgnCStr(fields[3], "gid");
-	 AsgnCStr(fields[4], "gecos");
-	 AsgnCStr(fields[5], "dir");
-	 AsgnCStr(fields[6], "shell");
-	 posix_passwd.dword = D_Proc;
-	 posix_passwd.vword.bptr = (union block *)dynrecord(&s, fields, 7);
+          MakeCStr("posix_passwd", &s);
+          MakeCStr("name", &fields[0]);
+          MakeCStr("passwd", &fields[1]);
+          MakeCStr("uid", &fields[2]);
+          MakeCStr("gid", &fields[3]);
+          MakeCStr("gecos", &fields[4]);
+          MakeCStr("dir", &fields[5]);
+          MakeCStr("shell", &fields[6]);
+          posix_passwd.dword = D_Proc;
+          posix_passwd.vword.bptr = (union block *)dynrecord(&s, fields, 7);
 	 }
       return &posix_passwd;
       }
    else if (!strcmp(name, "posix_stat")) {
       if (is:null(posix_stat)) {
-	 AsgnCStr(s, "posix_stat");
-	 AsgnCStr(fields[0], "dev");
-	 AsgnCStr(fields[1], "ino");
-	 AsgnCStr(fields[2], "mode");
-	 AsgnCStr(fields[3], "nlink");
-	 AsgnCStr(fields[4], "uid");
-	 AsgnCStr(fields[5], "gid");
-	 AsgnCStr(fields[6], "rdev");
-	 AsgnCStr(fields[7], "size");
-	 AsgnCStr(fields[8], "atime");
-	 AsgnCStr(fields[9], "mtime");
-	 AsgnCStr(fields[10], "ctime");
-	 AsgnCStr(fields[11], "blksize");
-	 AsgnCStr(fields[12], "blocks");
-	 AsgnCStr(fields[13], "symlink");
-	 posix_stat.dword = D_Proc;
-	 posix_stat.vword.bptr = (union block *)dynrecord(&s, fields, 14);
+          MakeCStr("posix_stat", &s);
+          MakeCStr("dev", &fields[0]);
+          MakeCStr("ino", &fields[1]);
+          MakeCStr("mode", &fields[2]);
+          MakeCStr("nlink", &fields[3]);
+          MakeCStr("uid", &fields[4]);
+          MakeCStr("gid", &fields[5]);
+          MakeCStr("rdev", &fields[6]);
+          MakeCStr("size", &fields[7]);
+          MakeCStr("atime", &fields[8]);
+          MakeCStr("mtime", &fields[9]);
+          MakeCStr("ctime", &fields[10]);
+          MakeCStr("blksize", &fields[11]);
+          MakeCStr("blocks", &fields[12]);
+          MakeCStr("symlink", &fields[13]);
+          posix_stat.dword = D_Proc;
+          posix_stat.vword.bptr = (union block *)dynrecord(&s, fields, 14);
 	 }
       return &posix_stat;
       }

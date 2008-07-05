@@ -31,7 +31,7 @@ void              makeIcon         (wbp w, int x, int y);
 int		     wmap	      (wbp w);
 Pixmap		     loadimage	      (wbp w, char *filename, unsigned int *height, unsigned int *width, int atorigin, int *status);
 void unsetclip (wbp w);
-static dptr call(dptr proc, dptr args, int nargs);
+static dptr call(dptr proc, dptr *args);
 static void await_selectionnotify(wsp ws);
 
 #ifdef HAVE_LIBXFT
@@ -615,21 +615,26 @@ int handle_misc(wd, w)
                         theevent.xselection.property = None;
                     } else {
                         Atom XA_TARGETS = XInternAtom(ws->display->display, "TARGETS", False);
-                        struct descrip param[3];
+                        dptr param[4];
                         dptr val, at;
                         union block *ep;
                         int i, j;
                         Atom target_list[32];
                         int target_cnt = 1;
                         int have_target = 0;
+                        struct descrip str0;
+                        tended struct descrip str1, str2;
 
                         /*
                          * Get the types we are handling
                          */
                         target_list[0] = XA_TARGETS;
-                        AsgnCStr(param[0], "targets");
-                        param[1] = cstr2string(selection_name);
-                        val = call(&proc, param, 2);
+                        MakeCStr("targets", &str0);
+                        str1 = cstr2string(selection_name);
+                        param[0] = &str0;
+                        param[1] = &str1;
+                        param[2] = 0;
+                        val = call(&proc, param);
                         if (!val || !is:list(*val))
                             err_msg(148, NULL);
                         for (ep = BlkLoc(*val)->list.listhead;
@@ -683,13 +688,14 @@ int handle_misc(wd, w)
                             /*
                              * Get the value
                              */
-                            AsgnCStr(param[0], "content");
-                            Protect(reserve(Strings, strlen(selection_name) + strlen(target_name)),
-                                    fatalerr(0,NULL));
-                            param[1] = cstr2string(selection_name);
-                            param[2] = cstr2string(target_name);
-
-                            val = call(&proc, param, 3);
+                            MakeCStr("content", &str0);
+                            str1 = cstr2string(selection_name);
+                            str2 = cstr2string(target_name);
+                            param[0] = &str0;
+                            param[1] = &str1;
+                            param[2] = &str2;
+                            param[3] = 0;
+                            val = call(&proc, param);
                             if (!val || !is:string(*val))
                                 err_msg(148, NULL);
 
@@ -727,7 +733,10 @@ int handle_misc(wd, w)
                 }
                     break;
                 case SelectionClear: {
-                    struct descrip proc, param[2];
+                    struct descrip str0;
+                    tended struct descrip str1;
+                    struct descrip proc;
+                    dptr param[3];
                     char *an = XGetAtomName(ws->display->display, event.xselectionclear.selection);
 
                     if (selection_debug)
@@ -743,10 +752,13 @@ int handle_misc(wd, w)
                         break;
                     }
 
-                    AsgnCStr(param[0], "clear");
-                    param[1] = cstr2string(an);
+                    MakeCStr("clear", &str0);
+                    str1 = cstr2string(an);
                     XFree(an);
-                    call(&proc, param, 2);
+                    param[0] = &str0;
+                    param[1] = &str1;
+                    param[2] = 0;
+                    call(&proc, param);
 
                     ws->inputmask &= ~(PropertyChangeMask);
                 }
@@ -4908,12 +4920,12 @@ char my_wmap(wbp w)
     return 1;
 }
 
-dptr call(dptr proc, dptr args, int nargs)
+dptr call(dptr proc, dptr *args)
 {
     wdp saved_wdsplys = wdsplys;
     dptr res;
     wdsplys = 0;   /* Avoid interp processing X events */
-    res = do_invoke_with(proc, args, nargs);
+    res = do_invoke_withp(proc, args);
     wdsplys = saved_wdsplys;
     if (res)
         Deref(*res);

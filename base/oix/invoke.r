@@ -456,11 +456,23 @@ dptr do_invoke_with(dptr proc, dptr args, int nargs)
 {
     dptr res, dp = (dptr)(sp + 1);
     int i;
-    dp[0] = *proc;
+    PushDesc(*proc);
     for (i = 0; i < nargs; i++)
-        dp[i + 1] = args[i];
-    sp += (nargs + 1) * 2;
+        PushDesc(args[i]);
     res = do_invoke(dp);
-    sp -= (nargs + 1) * 2;
+    sp = (word *)dp - 1;
+    return res;
+}
+
+dptr do_invoke_withp(dptr proc, dptr *args)
+{
+    dptr res, dp = (dptr)(sp + 1);
+    PushDesc(*proc);
+    while (*args) {
+        PushDesc(**args);
+        ++args;
+    }
+    res = do_invoke(dp);
+    sp = (word *)dp - 1;
     return res;
 }

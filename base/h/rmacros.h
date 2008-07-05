@@ -171,12 +171,6 @@
 #define StrLoc(q)	((q).vword.sptr)
 
 /*
- * Assign a C string to a descriptor. Assume it is reasonable to use the
- *   descriptor expression more than once, but not the string expression.
- */
-#define AsgnCStr(d,s) (StrLoc(d) = (s), StrLen(d) = strlen(StrLoc(d)))
-
-/*
  * Type of descriptor.
  */
 #define Type(d)		(int)((d).dword & TypeMask)
@@ -266,6 +260,15 @@
 #define MakeStr(s,len,dp)      do { \
                  	 StrLoc(*dp) = (s); \
                          StrLen(*dp) = (len); \
+			 } while (0)
+
+/*
+ * Assign a C string to a descriptor. Assume it is reasonable to use the
+ *   descriptor expression more than once, but not the string expression.
+ */
+#define MakeCStr(s,dp) do { \
+                 	 StrLoc(*dp) = (s); \
+                         StrLen(*dp) = strlen(StrLoc(*dp));  \
 			 } while (0)
 
 /*
