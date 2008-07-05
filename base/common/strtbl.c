@@ -253,9 +253,9 @@ char* intern_using(struct str_buf *sbuf, char *s)
 char *join_strs(struct str_buf *sbuf, int n, ...)
 {
     char *s;
+    va_list argp;
     /* Reset any junk first */
     sbuf->endimage = sbuf->strtimage;
-    va_list argp;
     va_start(argp, n);
     while (n-- > 0) {
         s = va_arg(argp, char*);
