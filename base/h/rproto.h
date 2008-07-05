@@ -169,8 +169,7 @@ void		xmfree		(void);
 struct class_field *lookup_standard_field(int standard_field_num, struct b_class *class);
 void            ensure_initialized(struct b_class *class);
 dptr            do_invoke       (dptr proc);
-dptr            do_invoke_with  (dptr proc, dptr args, int nargs);
-dptr            do_invoke_withp(dptr proc, dptr *args);
+dptr            do_invoke_with(dptr proc, dptr *args);
 
    void	resolve			(struct progstate *pstate);
    struct b_coexpr *loadicode (char *name, struct b_file *theInput,

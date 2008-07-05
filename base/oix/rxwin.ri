@@ -4925,7 +4925,7 @@ dptr call(dptr proc, dptr *args)
     wdp saved_wdsplys = wdsplys;
     dptr res;
     wdsplys = 0;   /* Avoid interp processing X events */
-    res = do_invoke_withp(proc, args);
+    res = do_invoke_with(proc, args);
     wdsplys = saved_wdsplys;
     if (res)
         Deref(*res);

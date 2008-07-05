@@ -411,6 +411,11 @@ void ensure_initialized(struct b_class *class)
 
 #include "../h/opdefs.h"
 
+/*
+ * Invoke the given Icon procedure, which must be a pointer into the
+ * stack.  The arguments to the procedure come after the procedure on
+ * the stack.
+ */
 dptr do_invoke(dptr proc)
 {
     word ibuf[9];
@@ -452,19 +457,11 @@ dptr do_invoke(dptr proc)
         return 0;
 }
 
-dptr do_invoke_with(dptr proc, dptr args, int nargs)
-{
-    dptr res, dp = (dptr)(sp + 1);
-    int i;
-    PushDesc(*proc);
-    for (i = 0; i < nargs; i++)
-        PushDesc(args[i]);
-    res = do_invoke(dp);
-    sp = (word *)dp - 1;
-    return res;
-}
-
-dptr do_invoke_withp(dptr proc, dptr *args)
+/*
+ * Helper function to push the given proc and args (a null terminated
+ * array of dptrs) onto the stack and call do_invoke above.
+ */
+dptr do_invoke_with(dptr proc, dptr *args)
 {
     dptr res, dp = (dptr)(sp + 1);
     PushDesc(*proc);

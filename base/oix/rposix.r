@@ -1450,9 +1450,8 @@ struct descrip handler;
 void signal_dispatcher(sig)
 int sig;
 {
-   struct descrip proc, val;
-   struct b_proc *pp;
-   char *p;
+   struct descrip proc, p;
+   dptr a[2];
 
    if (!inited) {
       int i;
@@ -1467,11 +1466,10 @@ int sig;
       return;
 
    /* Invoke proc */
-   p = si_i2s(signalnames, sig);
-   StrLen(val) = strlen(p);
-   StrLoc(val) = p;
-
-   do_invoke_with(&proc, &val, 1);
+   MakeCStr(si_i2s(signalnames, sig), &p);
+   a[0] = &p;
+   a[1] = 0;
+   do_invoke_with(&proc, a);
    
    /* Restore signal just in case (for non-BSD systems) */
    signal(sig, signal_dispatcher);
