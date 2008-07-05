@@ -2036,46 +2036,17 @@ int strncasecmp(char *s1, char *s2, int n)
 #endif					/* NTGCC */
 #endif					/* MSDOS */
 
-
-
-
 /*
-  List creation helper funcs.  Example usage:
-
-   l = create_empty_list();
-
-   for (i = 0; i < 10; ++i) {
-      struct descrip intval;
-      MakeInt(i, &intval);
-      c_put(&l, &intval);
-   }
-*/
-
-struct descrip create_empty_list() {
-   return create_list(0, NULL);
-}
-
-struct descrip create_list(int n, dptr d) {
+ * Create an empty list, with initial number of slots.
+ */
+struct descrip create_list(uword nslots) 
+{
    struct descrip res;
-
    struct b_list *hp;
-   struct b_lelem *bp;
-   word i, size;
-   word nslots;
- 
-   nslots = size = n;
  
    if (nslots == 0)
       nslots = MinListSlots;
-
-   Protect(hp = alclist(size, nslots), fatalerr(0,NULL));
-   bp = (struct b_lelem*)hp->listhead;
- 
-   /*
-    * Initialize each slot.
-    */
-   for (i = 0; i < size; i++)
-      bp->lslots[i] = *d;
+   Protect(hp = alclist(0, nslots), fatalerr(0,NULL));
  
    res.dword = D_List;
    res.vword.bptr = (union  block *)hp;
@@ -2083,7 +2054,12 @@ struct descrip create_list(int n, dptr d) {
    return res;
 }
 
-struct descrip cstr2string(char *s) {
+/*
+ * Create a string from a null-terminated C string.  If s is
+ * null, return the null descriptor.
+ */
+struct descrip cstr2string(char *s) 
+{
     struct descrip res;
     char *a;
     int n;
@@ -2097,7 +2073,12 @@ struct descrip cstr2string(char *s) {
     return res;
 }
 
-struct descrip bytes2string(char *s, int len) {
+/*
+ * Create a string from a string of bytes of the given length.  If s
+ * is null, return the null descriptor.
+ */
+struct descrip bytes2string(char *s, int len) 
+{
     struct descrip res;
     char *a;
 
@@ -2108,3 +2089,37 @@ struct descrip bytes2string(char *s, int len) {
 
     return res;
 }
+
+/*
+ * Catenate the given C strings, terminated by a null pointer.  The
+ * resulting string has the string delim between each element.
+ */
+struct descrip cstrs2string(char **s, char *delim) 
+{
+    struct descrip res;
+    int n, len = 0;
+    for (n = 0; s[n]; ++n)
+        len += strlen(s[n]);
+    if (n == 0)
+        MakeStr("", 0, &res);
+    else {
+        int i;
+        char *a, *p, *q;
+        len += strlen(delim) * (n - 1);
+        Protect(a = alcstr(0, len), fatalerr(0,NULL));
+        p = a;
+        for (i = 0; i < n; ++i) {
+            if (i > 0) {
+                q = delim;
+                while (*q)
+                    *p++ = *q++;
+            }
+            q = s[i];
+            while (*q)
+                *p++ = *q++;
+        }
+        MakeStr(a, len, &res);
+    }
+    return res;
+}
+

@@ -669,11 +669,9 @@ end
 #passthru #define _DEF def
 
 static struct descrip field_to_list(MYSQL_FIELD *field) {
-   struct descrip tmp;
-   tended struct descrip res;
+   tended struct descrip tmp, res;
 
-   res = create_empty_list();
-
+   res = create_list(10);
    tmp = cstr2string(field->name);
    c_put(&res, &tmp);
    tmp = cstr2string(field->table);
@@ -724,10 +722,10 @@ function{0,1} unimysql_fetch_fields(id)
        if (!fields)
            fail;
 
-       result = create_empty_list();
        n = mysql_num_fields(mysql_res);
+       result = create_list(n);
        for (i = 0; i < n; ++i) {
-           struct descrip tmp = field_to_list(&fields[i]);
+           tended struct descrip tmp = field_to_list(&fields[i]);
            c_put(&result, &tmp);
        }
        return result;
@@ -763,10 +761,10 @@ function{0,1} unimysql_fetch_lengths(id)
        unsigned long *lengths = mysql_fetch_lengths(mysql_res);
        if (!lengths)
            fail;
-       result = create_empty_list();
        n = mysql_num_fields(mysql_res);
+       result = create_list(n);
        for (i = 0; i < n; ++i) {
-           struct descrip tmp;
+           tended struct descrip tmp;
            MakeInt(lengths[i], &tmp);
            c_put(&result, &tmp);
        }
@@ -790,10 +788,10 @@ function{0,1} unimysql_fetch_row(id)
        if (!lengths)
            fail;
 
-       result = create_empty_list();
        n = mysql_num_fields(mysql_res);
+       result = create_list(n);
        for (i = 0; i < n; ++i) {
-           struct descrip tmp = bytes2string(row[i], lengths[i]);
+           tended struct descrip tmp = bytes2string(row[i], lengths[i]);
            c_put(&result, &tmp);
        }
        return result;

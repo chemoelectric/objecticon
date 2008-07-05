@@ -14,19 +14,6 @@
 
 #include "../h/opdefs.h"
 
-#define String(d, s) do {           \
-      int len = strlen(s);          \
-      StrLoc(d) = alcstr((s), len); \
-      StrLen(d) = len;              \
-} while (0)
-
-/* Padding for machines that have opcodes smaller than words */
-#if IntBits != WordBits
-#define ipad(wp)  do *(wp).op++ = Op_Noop; while (0)
-#else
-#define ipad(wp)  do ; while (0)
-#endif
-
 /* Signal definitions */ 
 #passthru #if !defined(SIGABRT) 
 #passthru #define SIGABRT 0 
@@ -1258,7 +1245,7 @@ int sock_recv(int s, struct b_record **rp)
 	     ntohs(saddr_in.sin_port));
       }
 
-   String((*rp)->fields[0], buf);
+   (*rp)->fields[0] = cstr2string(buf);
 
    return 1;
 }
@@ -1323,50 +1310,24 @@ dptr result;
 
    result->dword = D_Record;
    result->vword.bptr = (union block *)rp;
-   String(rp->fields[0], pw->pw_name);
-   String(rp->fields[1], pw->pw_passwd);
+   rp->fields[0] = cstr2string(pw->pw_name);
+   rp->fields[1] = cstr2string(pw->pw_passwd);
    rp->fields[2].dword = rp->fields[3].dword = D_Integer;
    IntVal(rp->fields[2]) = pw->pw_uid;
    IntVal(rp->fields[3]) = pw->pw_gid;
-   String(rp->fields[4], pw->pw_gecos);
-   String(rp->fields[5], pw->pw_dir);
-   String(rp->fields[6], pw->pw_shell);
+   rp->fields[4] = cstr2string(pw->pw_gecos);
+   rp->fields[5] = cstr2string(pw->pw_dir);
+   rp->fields[6] = cstr2string(pw->pw_shell);
    return result;
 }
 #endif					/* !NT */
-
-void catstrs(char **ptrs, dptr d)
-{
-   int nmem = 0, i, n;
-   char *p;
-
-   while (ptrs[nmem])
-      nmem++;
-
-   StrLoc(*d) = p = alcstr(NULL, nmem*9);
-   
-   for (i = 0; i < nmem; i++) {
-      char *q = ptrs[i];
-      while ((*p = *q++))
- 	 p++;
-      *p++ = ',';
-   }
-   if (nmem > 0)
-      *--p = 0;
-
-   StrLen(*d) = DiffPtrs(p,StrLoc(*d));
-   n = DiffPtrs(p,strfree);             /* note the deallocation */
-   EVStrAlc(n);
-   strtotal += n;
-   strfree = p;                         /* give back unused space */
-}
 
 #if !NT
 dptr make_group(gr, result)
 struct group *gr;
 dptr result;
 {
-   struct b_record *rp;
+   tended struct b_record *rp;
    dptr constr;
    int nfields;
 
@@ -1378,12 +1339,11 @@ dptr result;
 
    result->dword = D_Record;
    result->vword.bptr = (union block *)rp;
-   String(rp->fields[0], gr->gr_name);
-   String(rp->fields[1], gr->gr_passwd);
+   rp->fields[0] = cstr2string(gr->gr_name);
+   rp->fields[1] = cstr2string(gr->gr_passwd);
    rp->fields[2].dword = D_Integer;
    IntVal(rp->fields[2]) = gr->gr_gid;
-   
-   catstrs(gr->gr_mem, &rp->fields[3]);
+   rp->fields[3] = cstrs2string(gr->gr_mem, ",");
    return result;
 }
 #endif					/* !NT */
@@ -1392,7 +1352,7 @@ dptr make_serv(s, result)
 struct servent *s;
 dptr result;
 {
-   struct b_record *rp;
+   tended struct b_record *rp;
    dptr constr;
    int nfields;
    int nmem = 0, i, n;
@@ -1406,11 +1366,11 @@ dptr result;
    result->dword = D_Record;
    result->vword.bptr = (union block *)rp;
 
-   String(rp->fields[0], s->s_name);
-   catstrs(s->s_aliases, &rp->fields[1]);
+   rp->fields[0] = cstr2string(s->s_name);
+   rp->fields[1] = cstrs2string(s->s_aliases, ",");
    rp->fields[2].dword = D_Integer;
    IntVal(rp->fields[2]) = ntohs((short)s->s_port);
-   String(rp->fields[3], s->s_proto);
+   rp->fields[3] = cstr2string(s->s_proto);
 
    return result;
 }
@@ -1419,7 +1379,7 @@ dptr make_host(hs, result)
 struct hostent *hs;
  dptr result;
 {
-   struct b_record *rp;
+   tended struct b_record *rp;
    dptr constr;
    int nfields;
    int nmem = 0, i, n;
@@ -1435,8 +1395,8 @@ struct hostent *hs;
    result->dword = D_Record;
    result->vword.bptr = (union block *)rp;
 
-   String(rp->fields[0], hs->h_name);
-   catstrs(hs->h_aliases, &rp->fields[1]);
+   rp->fields[0] = cstr2string(hs->h_name);
+   rp->fields[1] = cstrs2string(hs->h_aliases, ",");
 
    while (hs->h_addr_list[nmem])
       nmem++;
