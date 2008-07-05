@@ -4,6 +4,7 @@
 #include "util.h"
 #include <stdio.h>
 #include <limits.h>
+#include <string.h>
 
 struct str_buf pack_sbuf;
 struct package_dir *package_dir_hash[16], *package_dirs, *package_dir_last;

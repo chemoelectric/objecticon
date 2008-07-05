@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "icont.h"
 #include "link.h"
 #include "lsym.h"
@@ -7,6 +5,8 @@
 #include "util.h"
 #include "resolve.h"
 #include "tmain.h"
+#include <stdio.h>
+#include <strings.h>
 
 static void merge(struct lclass *cl, struct lclass *super);
 
