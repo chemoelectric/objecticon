@@ -764,7 +764,7 @@ function{0,1} unimysql_fetch_lengths(id)
        n = mysql_num_fields(mysql_res);
        result = create_list(n);
        for (i = 0; i < n; ++i) {
-           tended struct descrip tmp;
+           struct descrip tmp;
            MakeInt(lengths[i], &tmp);
            c_put(&result, &tmp);
        }
