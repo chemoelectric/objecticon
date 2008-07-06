@@ -42,7 +42,7 @@ extern struct descrip onedesc;	/* one */
 extern struct descrip ucase;	/* uppercase string */
 extern struct descrip zerodesc;	/* zero */
 
-extern struct b_iproc deferred_method_stub_block;  /* Deferred method block */
+extern struct b_iproc Bdeferred_method_stub;  /* Deferred method block */
 
 extern word mstksize;		/* size of main stack in words */
 extern word stksize;		/* size of co-expression stacks in words */

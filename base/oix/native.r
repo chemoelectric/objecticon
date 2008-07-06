@@ -321,7 +321,7 @@ function{1} lang_Class_set_method(field, pr)
         if (new_proc->field)
             runerr(618, pr);
 
-        if (BlkLoc(*cf->field_descriptor) != (union block *)&deferred_method_stub_block)
+        if (BlkLoc(*cf->field_descriptor) != (union block *)&Bdeferred_method_stub)
             runerr(623, field);
 
         BlkLoc(*cf->field_descriptor) = (union block *)new_proc;

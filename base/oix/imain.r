@@ -84,17 +84,11 @@ extern int set_up;
 
 extern int_setup;
 
-static int deferred_method_stub()
-{
-    RunErr(612, 0);
-}
-
-static char deferred_s[] = "<deferred method stub>";
-
-struct b_iproc deferred_method_stub_block = {
-   T_Proc, (sizeof(struct b_proc) - sizeof(struct descrip)), deferred_method_stub,
-   0, -1,  0, 0, 0, 0, {sizeof(deferred_s) - 1, deferred_s }
-};
+function{0} deferred_method_stub()
+   body {
+      runerr(612);       
+   }
+end
 
 #define NativeDef(f) extern struct b_iproc B##f##;
 #include "../h/nativedefs.h"
@@ -872,7 +866,7 @@ void resolve(pstate)
                 } else {
                     /* Unresolved, point to stub */
                     cf->field_descriptor->dword = D_Proc;
-                    BlkLoc(*cf->field_descriptor) = (union block *)&deferred_method_stub_block;
+                    BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
                 }
             } else if (cf->flags & M_Method) {
                 /*
