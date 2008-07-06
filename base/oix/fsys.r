@@ -1600,6 +1600,7 @@ end
 
 #if terminate
 	    c_exit(EXIT_FAILURE);
+            fail; /* Not reached */
 #else					/* terminate */
 	    return retvalue;
 #endif					/* terminate */
