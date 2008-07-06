@@ -521,3 +521,22 @@ AC_DEFUN([AX_LIB_MYSQL],
     AC_SUBST([MYSQL_LDFLAGS])
 ])
 
+
+
+dnl ======================================================================
+dnl Check for MSG_NOSIGNAL flag
+dnl ======================================================================
+AC_DEFUN([AC_FLAG_MSG_NOSIGNAL], [
+AC_REQUIRE([AC_PROG_CC])
+AC_CACHE_CHECK([for MSG_NOSIGNAL], 
+  ac_cv_flag_msg_nosignal, [
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#include <sys/socket.h>]], [[
+  int flags = MSG_NOSIGNAL;
+]])],[ac_cv_flag_msg_nosignal=yes],[ac_cv_flag_msg_nosignal=no])])
+if test "$ac_cv_flag_msg_nosignal" = yes ; then
+	AC_DEFINE([HAVE_MSG_NOSIGNAL], 1,
+		[Define to 1 if you have MSG_NOSIGNAL flag for send()]) 
+fi
+])dnl

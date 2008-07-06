@@ -2635,13 +2635,18 @@ function{0, 1} syswrite(f, s)
       BlkLoc(f)->file.status = status;
       
       IntVal(amperErrno) = 0;
-      /* Use send for sockets so that we get the EPIPE error code, rather than the
-       * SIGPIPE signal.
+      /* 
+       * If applicable, use send for sockets so that we get the EPIPE
+       * error code, rather than the SIGPIPE signal.
        */
+#ifdef HAVE_MSG_NOSIGNAL
       if (status & Fs_Socket) 
          rc = send(fd, StrLoc(s), StrLen(s), MSG_NOSIGNAL);
       else
          rc = write(fd, StrLoc(s), StrLen(s));
+#else
+      rc = write(fd, StrLoc(s), StrLen(s));
+#endif
       if (rc < 0) {
          IntVal(amperErrno) = errno;
          fail;

@@ -56,3 +56,6 @@
 
 /* define as 1 if sys_errlist exists */
 #undef HAVE_SYS_ERRLIST
+
+/* define as 1 if MSG_NOSIGNAL defined */
+#undef HAVE_MSG_NOSIGNAL

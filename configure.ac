@@ -45,6 +45,8 @@ OI_ADD_LIB(crypt)
 OI_ADD_LIB(dl)
 
 AX_LIB_MYSQL()
+AC_FLAG_MSG_NOSIGNAL()
+
 AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork)
 AC_CHECK_GLOBAL(sys_nerr)
 AC_CHECK_GLOBAL(sys_errlist)
