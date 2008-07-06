@@ -199,7 +199,7 @@ operator{*} ... toby(from, to, by)
             abstract { return real }
 	    inline {
                if (by == 0) {
-                  irunerr(211, by);
+                  irunerr(211, (int)by);
                   errorfail;
                   }
                if (by > 0)
