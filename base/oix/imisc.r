@@ -66,7 +66,8 @@ int field_access(dptr cargp)
         }
 
         default: {
-            err_msg(620, &Arg1);
+            fatalerr(620, &Arg1);
+            return 0; /* Unreachable */
         }
     }
 }
@@ -112,7 +113,7 @@ static int cast_access(dptr cargp, int query_flag)
         /*
          * Instance method.
          */
-        Protect(mp = alcmethp(), err_msg(0,NULL));
+        Protect(mp = alcmethp(), fatalerr(0,NULL));
         /*
          * Refresh pointers after allocation.
          */
@@ -212,7 +213,7 @@ static int instance_access(dptr cargp, int query_flag)
         /*
          * Instance method.  Return a method pointer.
          */
-        Protect(mp = alcmethp(), err_msg(0,NULL));
+        Protect(mp = alcmethp(), fatalerr(0,NULL));
         /*
          * Refresh pointers after allocation.
          */
@@ -304,6 +305,7 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     }
 
     syserr("unknown/missing access modifier");
+    return 0; /* Not reached */
 }
 
 /*
