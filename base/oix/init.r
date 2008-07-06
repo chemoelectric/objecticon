@@ -1825,9 +1825,9 @@ void checkstack1() {
 }
 
 void checkstack2(char *s) {
-    void *sp = get_sp()+24;
+    void *sp = (char*)get_sp()+24;
     if (ssp) {
-        printf("%s: Stack usage check curr=%p delta=%d bytes\n",s,sp,(ssp-sp));
+        printf("%s: Stack usage check curr=%p delta=%d bytes\n",s,sp,((char*)ssp-sp));
     }
     ssp = sp;
 }
