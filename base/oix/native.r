@@ -15,7 +15,8 @@ static struct b_class *get_class_for(dptr x)
             return BlkLoc(*x)->object.class;
         }
      default: {
-            err_msg(619, x);
+            fatalerr(619, x);
+            return 0; /* Unreachable */
         }
     }
 }
