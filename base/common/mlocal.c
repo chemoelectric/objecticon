@@ -5,13 +5,6 @@
 
 #if UNIX || NT
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#if UNIX || defined(NTGCC)
-#include <unistd.h>
-#endif					/* UNIX || NTGCC */
 #if UNIX
 #define PATHSEP ':'
 #define FILESEP '/'
@@ -22,7 +15,6 @@
 #endif
 
 static char *findexe(char *name, char *buf, size_t len);
-char *findonpath(char *name, char *buf, size_t len);
 static char *followsym(char *name, char *buf, size_t len);
 
 /*
