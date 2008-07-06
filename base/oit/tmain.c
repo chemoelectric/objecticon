@@ -365,7 +365,7 @@ void MSStartup(int argc, char **argv, HINSTANCE hInstance, HINSTANCE hPrevInstan
       wc.hCursor    = LoadCursor(NULL, IDC_ARROW);
       wc.hbrBackground = GetStockObject(WHITE_BRUSH);
       wc.lpszMenuName = NULL;
-      wc.lpszClassName = "iconx";
+      wc.lpszClassName = "oix";
       RegisterClass(&wc);
       }
    }
@@ -456,7 +456,7 @@ int main(int argc, char **argv)
     else
         iconxloc = relfile(argv[0],
 #if defined(MSVC) && defined(MSWindows)
-                           "/../wiconx"
+                           "/../woix"
 #else					/* MSWindows */
                            "/../oix"
 #endif					/* MSVC && MSWindows */
@@ -572,7 +572,7 @@ int main(int argc, char **argv)
                      "Can't understand what directory icont was run from.\n");
             exit(EXIT_FAILURE);
         }
-        strcpy( ++pathCursor, (makeExe==1) ?  "ixhdr.exe" : "iconx.exe");
+        strcpy( ++pathCursor, (makeExe==1) ?  "ixhdr.exe" : "oix.exe");
     }
 #endif                                  /* MSDOS && !NT */
 
@@ -691,12 +691,12 @@ int main(int argc, char **argv)
         rename(ofile, tmp);
 
 #if UNIX
-        iconx = "iconx";
+        iconx = "oix";
 #endif
 #if NT
-        if (Gflag) iconx="wiconx.exe";
+        if (Gflag) iconx="woix.exe";
         else
-            iconx = "iconx.exe";
+            iconx = "oix.exe";
 #endif					/* NT */
         if ((f = pathOpen(iconx, ReadBinary)) == NULL) {
             report("Tried to open %s to build .exe, but couldn't",iconx);
@@ -793,7 +793,7 @@ static void execute(char *ofile, char *efile, char **args)
    {
       char cmdline[256], *tmp;
 
-      strcpy(cmdline, "wiconx ");
+      strcpy(cmdline, "woix ");
       if (efile != NULL) {
          strcat(cmdline, "-e ");
          strcat(cmdline, efile);
