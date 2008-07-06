@@ -129,6 +129,7 @@ static int nearest_with_dptr(int m, int n)
             return m - off;
     }    
     syserr("name: no field_descriptors in classfields area");
+    return 0; /* Unreachable */
 }
 
 static struct class_field *find_class_field_for_dptr(dptr d)
@@ -144,6 +145,7 @@ static struct class_field *find_class_field_for_dptr(dptr d)
             return &classfields[m];
     }
     syserr("name: no corresponding field_descriptor in classfields area");
+    return 0; /* Unreachable */
 }
 
 /*
