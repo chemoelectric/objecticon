@@ -704,7 +704,7 @@ int sock_name			(int sock, char* addr, char* addrbuf, int bufsize);
 int sock_send			(char* addr, char* msg, int msglen);
 int sock_recv			(int f, struct b_record **rp);
 int sock_write			(int f, char *s, int n);
-int sock_getstrg(char *buf,  int maxi, int fd);
+int sock_getstrg(char *buf,  int maxi, SOCKET fd);
 
 struct descrip register_sig	(int sig, struct descrip handler);
 void signal_dispatcher		(int sig);
