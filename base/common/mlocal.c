@@ -326,10 +326,6 @@ char *canonicalize(char *path)
 
 
 #if MSDOS
-#if NT
-#include <sys/stat.h>
-#include <direct.h>
-#endif					/* NT */
 
 /*
  * this version of pathfind, unlike the one above, is looking on
