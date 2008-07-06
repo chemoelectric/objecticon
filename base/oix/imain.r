@@ -86,7 +86,7 @@ extern int_setup;
 
 static int deferred_method_stub()
 {
-    err_msg(612, 0);
+    RunErr(612, 0);
 }
 
 static char deferred_s[] = "<deferred method stub>";

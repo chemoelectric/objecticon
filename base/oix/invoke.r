@@ -300,7 +300,7 @@ static int construct_object(int nargs, dptr newargp)
     class = (struct b_class*)BlkLoc(*newargp);
     ensure_initialized(class);
 
-    Protect(object = alcobject(class), RunErr(0,NULL));
+    Protect(object = alcobject(class), fatalerr(0,NULL));
 
     new_field = lookup_standard_field(NEW_FIELD, class);
     if (!new_field) {
@@ -315,12 +315,16 @@ static int construct_object(int nargs, dptr newargp)
         /*
          * Check the constructor function is a non-static method.
          */
-        if ((new_field->flags & (M_Method | M_Static)) != M_Method)
+        if ((new_field->flags & (M_Method | M_Static)) != M_Method) {
             err_msg(605, newargp);
+            return I_Fail;
+        }
 
         ac = check_access(new_field, class);
-        if (ac != 0)
+        if (ac != 0) {
             err_msg(ac, newargp);
+            return I_Fail;
+        }
 
         /*
          * Shift all the parameters down one to make room for the object
@@ -394,7 +398,7 @@ void ensure_initialized(struct b_class *class)
             struct descrip d;
             d.dword = D_Class;
             BlkLoc(d) = (union block *)class;
-            err_msg(606, &d);
+            fatalerr(606, &d);
         }
 
         /*

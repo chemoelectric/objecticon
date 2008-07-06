@@ -636,7 +636,7 @@ int handle_misc(wd, w)
                         param[2] = 0;
                         val = call(&proc, param);
                         if (!val || !is:list(*val))
-                            err_msg(148, NULL);
+                            fatalerr(148, NULL);
                         for (ep = BlkLoc(*val)->list.listhead;
                              BlkType(ep) == T_Lelem;
                              ep = ep->lelem.listnext) {
@@ -646,7 +646,7 @@ int handle_misc(wd, w)
                                     j -= ep->lelem.nslots;
                                 at = &ep->lelem.lslots[j];
                                 if (!is:string(*at))
-                                    err_msg(148, NULL);
+                                    fatalerr(148, NULL);
                                 target_list[target_cnt] = XInternAtom(ws->display->display, cstr(at), False);
                                 if (target_list[target_cnt] == event.xselectionrequest.target)
                                     have_target = 1;
@@ -697,7 +697,7 @@ int handle_misc(wd, w)
                             param[3] = 0;
                             val = call(&proc, param);
                             if (!val || !is:string(*val))
-                                err_msg(148, NULL);
+                                fatalerr(148, NULL);
 
                             XFree(target_name);
 

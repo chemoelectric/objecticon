@@ -1801,40 +1801,8 @@ void checkcoexps(char *s) {
 /*     printf("OKAY at %s\n",s); */
 }
 
-void *get_sp()
-{
-    int dummy = 0;
-    return (void*)&dummy;
-}
-
-int getfree()
-{
-    void *csp = get_sp();
-    struct b_coexpr *curr = (struct b_coexpr *)(curpstate->K_current.vword.bptr);
-
-    if (curr == mainhead)
-        return -1;
-
-    return (char*)csp-(char*)sp;
-}
-
-static void *ssp=0;
-
-void checkstack1() {
-    ssp = get_sp();
-}
-
-void checkstack2(char *s) {
-    void *sp = (char*)get_sp()+24;
-    if (ssp) {
-        printf("%s: Stack usage check curr=%p delta=%d bytes\n",s,sp,((char*)ssp-sp));
-    }
-    ssp = sp;
-}
-
 void showcoexps()
 {
-    void *csp = get_sp();
     struct b_coexpr *p;
     struct b_coexpr *curr = (struct b_coexpr *)(curpstate->K_current.vword.bptr);
 
@@ -1865,16 +1833,7 @@ void showcoexps()
            &rootpstate,
            curpstate->K_main.vword.bptr,
            curpstate->K_current.vword.bptr);
-    if (curr == mainhead)
-        printf("ilevel=%d ISP=%p CSP=%p\n", ilevel,sp, csp);
-    else
-        printf("ilevel=%d ISP=%p CSP=%p  free=%d   used C=%d bytes\n", 
-               ilevel,
-               sp,
-               csp,
-               (char*)csp-(char*)sp,
-               (char*)((word)((char *)curr + stksize - WordSize) &~((word)WordSize*StackAlign-1)) - (char*)csp
-            );
+    printf("ilevel=%d ISP=%p\n", ilevel,sp);
 
     fflush(stdout);
 }
