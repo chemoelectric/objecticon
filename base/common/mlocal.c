@@ -332,7 +332,85 @@ char *canonicalize(char *path)
 
 #endif
 
-#if !MSDOS
+
+#if MSDOS
+#if NT
+#include <sys/stat.h>
+#include <direct.h>
+#endif					/* NT */
+
+/*
+ * this version of pathfind, unlike the one above, is looking on
+ * the real path to find an executable.
+ */
+int pathFind(char target[], char buf[], int n)
+{
+    char *path;
+    register int i;
+    int res;
+    struct stat sbuf;
+
+    if ((path = getenv("PATH")) == 0)
+        path = "";
+
+    if (!getcwd(buf, n)) {		/* get current working directory */
+        *buf = 0;		/* may be better to do something nicer if we can't */
+        return 0;		/* find out where we are -- struggling to achieve */
+    }			/* something can be better than not trying */
+
+    /* attempt to find the icode file in the current directory first */
+    /* this mimicks the behavior of COMMAND.COM */
+    if ((i = strlen(buf)) > 0) {
+        i = buf[i - 1];
+        if (i != '\\' && i != '/' && i != ':')
+            strcat(buf, "/");
+    }
+    strcat(buf, target);
+    res = stat(buf, &sbuf);
+
+    while(res && *path) {
+        for (i = 0; *path && *path != ';'; ++i)
+            buf[i] = *path++;
+        if (*path)			/* skip the ; or : separator */
+            ++path;
+        if (i == 0)			/* skip empty fragments in PATH */
+            continue;
+        if (i > 0 && buf[i-1] != '/' && buf[i-1] != '\\' && buf[i-1] != ':')
+            buf[i++] = '\\';
+        strcpy(buf + i, target);
+        res = stat(buf, &sbuf);
+        /* exclude directories (and any other nasties) from selection */
+        if (res == 0 && sbuf.st_mode & S_IFDIR)
+            res = -1;
+    }
+    if (res != 0)
+        *buf = 0;
+    return res == 0;
+}
+
+FILE *pathOpen(char *fname, char *mode)
+{
+    char buf[260 + 1];
+    int i, use = 1;
+
+    for( i = 0; buf[i] = fname[i]; ++i)
+        /* find out if a path has been given in the file name */
+        if (buf[i] == '/' || buf[i] == ':' || buf[i] == '\\')
+            use = 0;
+
+    /* If a path has been given with the file name, don't bother to
+       use the PATH */
+
+    if (use && !pathFind(fname, buf, 150))
+        return 0;
+
+    return fopen(buf, mode);
+}
+
+
+#else
+
+
 FILE *pathOpen(char *fname, char *mode)
 {
    char tmp[256];

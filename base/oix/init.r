@@ -25,7 +25,6 @@ extern  setint_t    sizevar;
  */
 
 static void	env_err		(char *msg, char *name, char *val);
-FILE		*pathOpen       (char *fname, char *mode);
 
 /*
  * The following code is operating-system dependent [@init.01].  Declarations

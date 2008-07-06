@@ -68,6 +68,4 @@ char *  join_strs(struct str_buf *sbuf, int n, ...);
 char *relfile	(char *prog, char *mod);
 void normalize(char *path);
 char *canonicalize(char *path);
-#if UNIX
-   FILE *pathOpen	(char *fname, char*mode);
-#endif
+FILE *pathOpen	(char *fname, char*mode);
