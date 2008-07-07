@@ -1893,12 +1893,6 @@ function{0,1} chdir(s)
       return string
    }
    body {
-#if NT
-#ifndef NTGCC
-#define chdir nt_chdir
-#passthru #include <direct.h>
-#endif
-#endif
 
 #if PORT
    Deliberate Syntax Error
@@ -1932,27 +1926,6 @@ function{0,1} chdir(s)
    }
 end
 
-#if NT
-#ifdef MSWindows
-#ifndef NTGCC
-char *getenv(char *s)
-{
-static char tmp[1537];
-DWORD rv;
-rv = GetEnvironmentVariable(s, tmp, 1536);
-if (rv > 0) return tmp;
-return NULL;
-}
-#endif					/* NTGCC */
-#endif					/* MSWindows */
-
-#ifndef NTGCC
-int nt_chdir(char *s)
-{
-    return chdir(s);
-}
-#endif
-#endif					/* NT */
 
 "delay(i) - delay for i milliseconds."
 

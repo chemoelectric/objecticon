@@ -277,7 +277,7 @@ dptr            do_invoke_with(dptr proc, dptr *args);
    int	docircles	(wbp w, int argc, dptr argv, int fill);
    void	drawCurve	(wbp w, XPoint *p, int n);
    char	*evquesub	(wbp w, int i);
-   void	genCurve	(wbp w, XPoint *p, int n, void (*h)());
+   void	genCurve	(wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
    wsp	getactivewindow	(void);
    int	getpattern	(wbp w, char *answer);
    char *getselection(wbp w, char *buf);

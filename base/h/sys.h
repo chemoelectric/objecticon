@@ -90,9 +90,9 @@
       #define int_PASCAL int PASCAL
       #define LRESULT_CALLBACK LRESULT CALLBACK
       #define BOOL_CALLBACK BOOL CALLBACK
-      #if BORLAND_286
-         #include <dir.h>
-      #endif				/* BORLAND_286 */
+      #ifndef PATH_MAX
+      #define PATH_MAX 512
+      #endif
       #ifdef PosixFns
       #include <winsock2.h>
       #else					/* PosixFns */

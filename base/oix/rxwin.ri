@@ -1608,9 +1608,7 @@ int setgeometry(w, geo)
     return Succeeded;
 }
 
-int setminheight(w, new_height)
-    wbp w;
-    SHORT new_height;
+int setminheight(wbp w, SHORT new_height)
 {
     XSizeHints size_hints;
     long t;
@@ -1625,9 +1623,7 @@ int setminheight(w, new_height)
     return Succeeded;
 }
 
-int setminwidth(w, new_width)
-    wbp w;
-    SHORT new_width;
+int setminwidth(wbp w, SHORT new_width)
 {
     XSizeHints size_hints;
     long t;

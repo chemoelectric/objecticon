@@ -7,6 +7,7 @@
 
 #include "../h/gsupport.h"
 #undef OF
+#undef CONST
 #include "../h/version.h"
 #include "../h/mproto.h"
 #include "../h/modflags.h"

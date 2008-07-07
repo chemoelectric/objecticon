@@ -218,7 +218,7 @@ void MSStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance)
     }
 }
 
-void iconx(int argc, char **argv);
+int iconx(int argc, char **argv);
 
 jmp_buf mark_sj;
 

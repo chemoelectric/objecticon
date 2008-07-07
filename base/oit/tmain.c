@@ -95,12 +95,7 @@ long hdrsize;			/* size of iconx header */
 #endif
 
 #ifdef MSWindows
-   #ifdef NTConsole
-      #define int_PASCAL int PASCAL
-      #define LRESULT_CALLBACK LRESULT CALLBACK
-      #include <windows.h>
-      #include "../h/filepat.h"
-   #endif				/* NTConsole */
+   #include "../h/filepat.h"
 #endif					/* MSWindows */
 
 /*
@@ -231,175 +226,6 @@ extern int optind;		/* index into parent argv vector */
 extern int optopt;		/* character checked for validity */
 extern char *optarg;		/* argument associated with option */
 
-
-#ifndef NTConsole
-#ifdef MSWindows
-int icont(int argc, char **argv);
-#define int_PASCAL int PASCAL
-#define LRESULT_CALLBACK LRESULT CALLBACK
-#undef lstrlen
-#include <windows.h>
-#define lstrlen longstrlen
-
-int CmdParamToArgv(char *s, char ***avp)
-   {
-   char tmp[MaxPath], dir[MaxPath];
-   char *t, *t2;
-   int rv=0, i;
-   FILE *f;
-   t = intern_using(&join_sbuf, s);
-   t2 = t;
-   *avp = malloc(2 * sizeof(char *));
-   (*avp)[rv] = NULL;
-
-   while (*t2) {
-      while (*t2 && isspace(*t2)) t2++;
-      switch (*t2) {
-	 case '\0': break;
-	 case '"': {
-	    char *t3 = ++t2;			/* skip " */
-            while (*t2 && (*t2 != '"')) t2++;
-            if (*t2)
-	       *t2++ = '\0';
-	    *avp = realloc(*avp, (rv + 2) * sizeof (char *));
-	    (*avp)[rv++] = intern_using(&join_sbuf, t3);
-            (*avp)[rv] = NULL;
-	    break;
-	    }
-         default: {
-            FINDDATA_T fd;
-	    char *t3 = t2;
-            while (*t2 && !isspace(*t2)) t2++;
-	    if (*t2)
-	       *t2++ = '\0';
-            strcpy(tmp, t3);
-	    if (!FINDFIRST(tmp, &fd)) {
-	       *avp = realloc(*avp, (rv + 2) * sizeof (char *));
-	       (*avp)[rv++] = intern_using(&join_sbuf, t3);
-               (*avp)[rv] = NULL;
-               }
-	    else {
-               int end;
-               strcpy(dir, t3);
-	       do {
-	          end = strlen(dir)-1;
-	          while (end >= 0 && dir[end] != '\\' && dir[end] != '/' &&
-			dir[end] != ':') {
-                     dir[end] = '\0';
-		     end--;
-	             }
-		  strcat(dir, FILENAME(&fd));
-	          *avp = realloc(*avp, (rv + 2) * sizeof (char *));
-	          (*avp)[rv++] = intern_using(&join_sbuf, dir);
-                  (*avp)[rv] = NULL;
-	          } while (FINDNEXT(&fd));
-	       FINDCLOSE(&fd);
-	       }
-            break;
-	    }
-         }
-      }
-   free(t);
-   return rv;
-   }
-
-
-LRESULT_CALLBACK WndProc	(HWND, UINT, WPARAM, LPARAM);
-char *lognam;
-char tmplognam[128];
-extern FILE *flog;
-
-void MSStartup(int argc, char **argv, HINSTANCE hInstance, HINSTANCE hPrevInstance)
-   {
-   WNDCLASS wc;
-   char *tnam;
-
-   /*
-    * Select log file name.  Might make this a command-line option.
-    * Default to "WICON.LOG".  The log file is used by Wi to report
-    * translation errors and jump to the offending source code line.
-    */
-   if ((lognam = getenv("WICONLOG")) == NULL) {
-      if (((lognam = getenv("TEMP")) != NULL) &&
-	  (lognam = malloc(strlen(lognam) + 13)) != NULL) {
-	 strcpy(lognam, getenv("TEMP"));
-	 strcat(lognam, "\\");
-	 strcat(lognam, "winicon.log");
-         }
-      else
-	 lognam = "winicon.log";
-      }
-   if (flog = fopen(lognam, "r")) {
-      fclose(flog);
-      flog = NULL;
-      remove(lognam);
-      }
-   lognam = strdup(lognam);
-   flog = NULL;
-   tnam = _tempnam("C:\\TEMP", "wi");
-   if (tnam != NULL) {
-      strcpy(tmplognam, tnam);
-      flog = fopen(tmplognam, "w");
-      free(tnam);
-   }
-   if (flog == NULL) {
-      fprintf(stderr, "unable to open logfile");
-      exit(EXIT_FAILURE);
-      }
-
-   if (!hPrevInstance) {
-#if NT
-      wc.style = CS_HREDRAW | CS_VREDRAW;
-#else					/* NT */
-      wc.style = 0;
-#endif					/* NT */
-#ifdef NTConsole
-      wc.lpfnWndProc = DefWindowProc;
-#else					/* NTConsole */
-      wc.lpfnWndProc = WndProc;
-#endif					/* NTConsole */
-      wc.cbClsExtra = 0;
-      wc.cbWndExtra = 0;
-      wc.hInstance  = hInstance;
-      wc.hIcon      = NULL;
-      wc.hCursor    = LoadCursor(NULL, IDC_ARROW);
-      wc.hbrBackground = GetStockObject(WHITE_BRUSH);
-      wc.lpszMenuName = NULL;
-      wc.lpszClassName = "oix";
-      RegisterClass(&wc);
-      }
-   }
-
-HINSTANCE mswinInstance;
-int ncmdShow;
-
-jmp_buf mark_sj;
-
-int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                   LPSTR lpszCmdParam, int nCmdShow)
-   {
-   int argc;
-   char **argv;
-
-   mswinInstance = hInstance;
-   ncmdShow = nCmdShow;
-   argc = CmdParamToArgv(GetCommandLine(), &argv);
-   MSStartup(argc, argv, hInstance, hPrevInstance);
-#if BORLAND_286
-   _InitEasyWin();
-#endif					/* BORLAND_286 */
-   if (setjmp(mark_sj) == 0)
-      icont(argc,argv);
-   while (--argc>=0)
-      free(argv[argc]);
-   free(argv);
-   wfreersc();
-   return 0;
-}
-
-#define main icont
-#endif					/* MSWindows */
-#endif					/* NTConsole */
 
 static void report_errors(int f)
 {
@@ -788,29 +614,6 @@ static void execute(char *ofile, char *efile, char **args)
       args++;
    }
 #else					/* AMIGA && LATTICE */
-#ifdef MSWindows
-#ifndef NTConsole
-   {
-      char cmdline[256], *tmp;
-
-      strcpy(cmdline, "woix ");
-      if (efile != NULL) {
-         strcat(cmdline, "-e ");
-         strcat(cmdline, efile);
-         strcat(cmdline, " ");
-      }
-   strcat(cmdline, ofile);
-   strcat(cmdline, " ");
-   while ((tmp = *args++) != NULL) {	/* copy args into argument vector */
-      strcat(cmdline, tmp);
-      strcat(cmdline, " ");
-   }
-
-   WinExec(cmdline, SW_SHOW);
-   return;
-   }
-#endif					/* NTConsole */
-#endif					/* MSWindows */
 
    while ((*p++ = *args++) != 0)      /* copy args into argument vector */
       ;
