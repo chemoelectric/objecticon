@@ -625,7 +625,6 @@ void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    long flags = 0, eventcode;
    POINT pt;
    HWND win;
-
    switch(msg) {
    case WM_MOUSEMOVE: /* only called if one of these three cases is true */
       if (MK_LBUTTON & wp)
@@ -634,7 +633,8 @@ void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
 	 eventcode = MOUSERIGHTDRAG;
       else if (MK_MBUTTON & wp)
 	 eventcode = MOUSEMIDDRAG;
-      else eventcode = MOUSEMOVED;
+      else 
+	 eventcode = MOUSEMOVED;
       break;
    case WM_LBUTTONDOWN: {
       WORD x, y;
@@ -845,7 +845,8 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
          handle_child(wb, msg, wp, lp);
       break;
    case WM_SIZE:
-      handle_config(wb, msg, wp, lp);
+      if (hwnd == ws->win)
+         handle_config(wb, msg, wp, lp);
       break;
    case WM_MOVE:
       ws->posx = LOWORD(lp) - (BORDWIDTH>>1);
