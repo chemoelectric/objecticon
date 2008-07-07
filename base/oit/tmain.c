@@ -45,17 +45,7 @@ long fileOffsetOfStuffThatGoesInICX = 0; /* remains 0 -f -X is not used */
 /*
  * Variables related to command processing.
  */
-#if defined(MSWindows) && !defined(NTGCC)
-char *progname	="wicont";	/* program name for diagnostics */
-#else
 char *progname	="oit";	/* program name for diagnostics */
-#endif					/* MSWindows */
-
-#if defined(MSWindows) && defined(MSVC)
-int Gflag	=1;	/* -G: enable graphics (write wiconx)*/
-#else					/* MSWindows && MSVC */
-int Gflag	=0;	/* -G: enable graphics (write wiconx)*/
-#endif					/* MSWindows && MSVC */
 
 struct str_buf join_sbuf;
 
@@ -280,18 +270,12 @@ int main(int argc, char **argv)
     if ((int)strlen(patchpath) > 18)
         iconxloc = patchpath+18;	/* use stated iconx path if patched */
     else
-        iconxloc = relfile(argv[0],
-#if defined(MSVC) && defined(MSWindows)
-                           "/../woix"
-#else					/* MSWindows */
-                           "/../oix"
-#endif					/* MSVC && MSWindows */
-            );
+       iconxloc = relfile(argv[0], "/../oix");
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBstuEG] [-f s] [-o ofile] [-v i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBe:f:no:stuGv:ELZ")) != EOF) {
+#define Usage "[-cBstuE] [-f s] [-o ofile] [-v i]"	/* omit -e from doc */
+    while ((c = getopt(argc,argv, "cBe:f:no:stuv:ELZ")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -312,10 +296,6 @@ int main(int argc, char **argv)
                 Dflag = 1;
 #endif					/* DeBugLinker */
 
-                break;
-
-            case 'G':			/* -G: enable graphics */
-                Gflag = 1;
                 break;
 
             case 'S':			/* -S */
@@ -520,9 +500,7 @@ int main(int argc, char **argv)
         iconx = "oix";
 #endif
 #if NT
-        if (Gflag) iconx="woix.exe";
-        else
-            iconx = "oix.exe";
+        iconx = "oix.exe";
 #endif					/* NT */
         if ((f = pathOpen(iconx, ReadBinary)) == NULL) {
             report("Tried to open %s to build .exe, but couldn't",iconx);
