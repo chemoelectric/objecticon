@@ -246,6 +246,7 @@ int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     return 0;
 }
 #define main iconx
+#define INTMAIN 1
 #else
 #if WildCards
 void ExpandArgv(int *argcp, char ***avp)
