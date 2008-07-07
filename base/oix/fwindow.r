@@ -1060,9 +1060,6 @@ function{1} NextEvent(argv[argc])
 	 t = -1;
       else
 	 CnvCInteger(argv[warg], t)
-#ifdef MSWindows
-      SetFocus(w->window->win);
-#endif					/* MSWindows */
       d = nulldesc;
       i = wgetevent(w, &d, t);
       if (i == -3) {
