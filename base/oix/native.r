@@ -386,3 +386,25 @@ function{1} lang_Class_ensure_initialized(c)
         return c;
    }
 end
+
+#ifdef MSWindows
+function{*} util_WindowsFileSystem_get_roots()
+   abstract {
+      return string
+      }
+    body {
+        DWORD n = GetLogicalDrives();
+        char t[4], c = 'A';
+	strcpy(t, "?:\\");
+        while (n) {
+	   if (n & 1) {
+	      t[0] = c;
+	      suspend cstr2string(t);
+	   }
+	   n /= 2;
+	   ++c;
+	}
+        fail;
+    }
+end
+#endif

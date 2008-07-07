@@ -76,7 +76,7 @@ class Files()
    # Get the roots of the file system.
    #
    public static get_roots()
-      return FS.get_roots()
+      suspend FS.get_roots()
    end
 
    #
@@ -611,9 +611,7 @@ class WindowsFileSystem(FileSystem)
       return s == ("." | "..")
    end
 
-   public get_roots()
-      suspend "A:\\" | "B:\\" | "C:\\"
-   end
+   public defer get_roots()
 
    public get_separator()
       return "\\"
