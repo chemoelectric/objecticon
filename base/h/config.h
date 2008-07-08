@@ -252,10 +252,6 @@
    #define AllocType unsigned int
 #endif					/* AllocType */
 
-#ifndef MaxHdr
-   #define MaxHdr 4096
-#endif					/* MaxHdr */
-
 #ifndef MaxPath
    #define MaxPath 200
 #endif					/* MaxPath */
@@ -481,13 +477,6 @@ Deliberate Syntax Error
    #endif				/* WATERLOO_C_V3_0 */
 #endif					/* MVS || VM */
 
-#if MACINTOSH && MPW
-   #ifndef NoHeader
-      #undef Header
-      #define Header
-   #endif				/* NoHeader */
-#endif					/* MACINTOSH && MPW */
-
 #ifndef NoWildCards
    #if NT || BORLAND_286 || BORLAND_386 || MICROSOFT || SCCX_MX
       #define WildCards 1
@@ -571,22 +560,6 @@ Deliberate Syntax Error
    #endif				/* USuffix */
 
 
-#if UNIX
-   #undef Header
-   #define Header
-   #undef ShellHeader
-   #define ShellHeader
-#endif					/* UNIX */
-
-#if (MSDOS || OS2) && !NT
-   #undef DirectExecution
-   #define DirectExecution
-#endif					/* (MSDOS || OS2) && !NT */
-
-#ifdef Header
-   #undef DirectExecution
-   #define DirectExecution
-#endif					/* Header */
 
 /*
  *  Vsizeof is for use with variable-sized (i.e., indefinite)

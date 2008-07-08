@@ -14,12 +14,6 @@ static int readhdr	(char *name, struct header *hdr);
 static	FILE	*readhdr	(char *name, struct header *hdr);
 #endif					/* HAVE_LIBZ */
 
-#if SCCX_MX
-extern  int         thisIsIconx;
-extern  char        settingsname[];
-extern  setint_t    sizevar;
-#endif  /* SCCX_MX */
-
 /*
  * Prototypes.
  */
@@ -35,36 +29,6 @@ static void	env_err		(char *msg, char *name, char *val);
    /* probably needs something more */
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if AMIGA
-int chkbreak;				/* if nonzero, check for ^C */
-  /* These override environment variables if set from ToolTypes. */
-uword WBstrsize = 0;
-uword WBblksize = 0;
-uword WBmstksize = 0;
-#endif					/* AMIGA */
-
-#if MSDOS
-#if HIGHC_386
-int _fmode = 0;				/* force CR-LF on std.. files */
-#endif					/* HIGHC_386 */
-#endif					/* MSDOS */
-
-#if OS2
-
-char modname[256];			/* Character string for module name */
-#passthru HMODULE modhandle;		/* Handle of loaded module */
-char loadmoderr[256];			/* Error message if loadmodule fails */
-#define RT_ICODE 0x4843 		/* Resource type id is 'IC' */
-unsigned long icoderesid;		/* Resource ID from caller */
-char *icoderes; 			/* Pointer to the icode resource data */
-int use_resource = 0;			/* Set to TRUE if using a resource */
-int stubexe;				/* TRUE if resource attached to executable */
-#endif					/* OS2 */
-
-#if ARM || MACINTOSH || MVS || VM || UNIX || VMS
-   /* nothing needed */
-#endif					/* ARM || MACINTOSH ... */
 
 /*
  * End of operating-system specific code.
@@ -147,9 +111,6 @@ int err_conv=1;				/* flag: error conversion IS supported */
 int op_tbl_sz = (sizeof(init_op_tbl) / sizeof(struct b_proc));
 struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
 
-#ifndef MaxHeader
-#define MaxHeader MaxHdr
-#endif					/* MaxHeader */
 
 struct progstate *curpstate;		/* lastop accessed in program state */
 struct progstate rootpstate;
@@ -226,40 +187,23 @@ struct header *hdr;
 #endif
    int n;
 
-#if MSDOS
+#if MSWindows
    int thisIsAnExeFile = 0;
    char bytesThatBeginEveryExe[2] = {0,0};
    unsigned short originalExeBytesMod512, originalExePages;
    unsigned long originalExeBytes;
-#if SCCX_MX
-   char drive[260];
-   char dir[260];
-   char file[260];
-   char ext[260];
-   FILE*   setPtr;
-   int     i, c;
-#endif                                  /* SCCX_MX */
-#endif					/* MSDOS */
+#endif					/* MSWindows */
 
    if (!name)
-
-#ifdef PresentationManager
-      error(NULL, "An icode file was not specified.\nExecution can't proceed.");
-#else					/* PresentationManager */
       error(name, "No interpreter file supplied");
-#endif					/* PresentationManager */
 
    /*
     * Try adding the suffix if the file name doesn't end in it.
     */
    n = strlen(name);
 
-#if MSDOS
-#if ZTC_386
-   if (n >= 4 && !strcmp(".exe", name + n - 4)) {
-#else					/* ZTC_386 */
+#if MSWindows
    if (n >= 4 && !stricmp(".exe", name + n - 4)) {
-#endif					/* ZTC_386 */
       thisIsAnExeFile = 1;
       fname = pathOpen(name, ReadBinary);
          /*
@@ -274,7 +218,7 @@ struct header *hdr;
           */
       }
    else {
-#endif					/* MSDOS */
+#endif					/* MSWindows */
 
    if (n <= 4 || (strcmp(name+n-4,IcodeSuffix) != 0
    && strcmp(name+n-4,IcodeASuffix) != 0)) {
@@ -283,24 +227,11 @@ struct header *hdr;
 	 error(name, "icode file name too long");
       strcpy(tname,name);
 
-#if MVS
-   {
-      char *p;
-      if (p = strchr(name, '(')) {
-	 tname[p-name] = '\0';
-      }
-#endif					/* MVS */
-
       strcat(tname,IcodeSuffix);
 
-#if MVS
-      if (p) strcat(tname,p);
-   }
-#endif					/* MVS */
-
-#if MSDOS || OS2
+#if MSWindows
       fname = pathOpen(tname,ReadBinary);	/* try to find path */
-#else					/* MSDOS || OS2 */
+#else					/* MSWindows */
 
    #ifdef HAVE_LIBZ
       fdname = open(tname,O_RDONLY);
@@ -308,9 +239,9 @@ struct header *hdr;
       fname = fopen(tname, ReadBinary);
    #endif					/* HAVE_LIBZ */
 
-#endif					/* MSDOS || OS2 */
+#endif					/* MSWindows */
 
-#if NT
+#if MSWindows
     /*
      * tried appending .exe, now try .bat or .cmd
      */
@@ -334,9 +265,9 @@ struct header *hdr;
    if (fname == NULL)			/* try the name as given */
 #endif					/* HAVE_LIBZ */
 
-#if MSDOS || OS2
+#if MSWindows
       fname = pathOpen(name, ReadBinary);
-#else					/* MSDOS || OS2 */
+#else					/* MSWindows */
 
    #ifdef HAVE_LIBZ
       fdname = open(name, O_RDONLY);
@@ -344,11 +275,11 @@ struct header *hdr;
       fname = fopen(name, ReadBinary);
    #endif					/* HAVE_LIBZ */
 
-#endif					/* MSDOS || OS2 */
+#endif					/* MSWindows */
 
-#if MSDOS
+#if MSWindows
       } /* end if (n >= 4 && !stricmp(".exe", name + n - 4)) */
-#endif					/* MSDOS */
+#endif					/* MSWindows */
 
 #ifdef HAVE_LIBZ
    if (fdname == -1)
@@ -361,26 +292,6 @@ struct header *hdr;
    {
    static char errmsg[] = "can't read interpreter file header";
 
-#ifdef Header
-
-#if MSDOS && !NT
-   #error
-   deliberate syntax error
-
-  /*
-   * The MSDOS .exe-handling code assumes & requires that the executable
-   * .exe be followed immediately by the icode itself (actually header.h).
-   * This is because the following Header fseek() is relative to the
-   * beginning of the file, which in a .exe is the beginning of the
-   * executable code, not the beginning of some Icon thing; & I can't
-   * check & fix all the Header-handling logic because hdr.h wasn't
-   * included with my MS-DOS distribution so I don't even know what it does,
-   * let alone how to keep from breaking it. We're safe as long as
-   * Header & MSDOS are disjoint.
-   */
-#endif                                  /* MSDOS && !NT */
-
-#ifdef ShellHeader
    char buf[200];
 
    for (;;) {
@@ -392,7 +303,7 @@ struct header *hdr;
 	 error(name, errmsg);
 #endif					/* HAVE_LIBZ */
 
-#if NT
+#if MSWindows
       if (strncmp(buf, "rem [executable Icon binary follows]", 36) == 0)
 #else					/* NT */
       if (strncmp(buf, "[executable Icon binary follows]", 32) == 0)
@@ -412,45 +323,6 @@ struct header *hdr;
    getc(fname);
 #endif					/* HAVE_LIBZ */
 
-#else					/* ShellHeader */
-#ifdef HAVE_LIBZ
-deliberate syntax errror
-#endif					/* HAVE_LIBZ */
-   if (fseek(fname, (long)MaxHeader, 0) == -1)
-      error(name, errmsg);
-#endif					/* ShellHeader */
-#endif					/* Header */
-
-#if MSDOS && !NT
-   if (thisIsAnExeFile) {
-#if SCCX_MX
-        if( thisIsIconx)
-        {
-            originalExeBytes = sizevar.value;
-        }
-        else
-#endif                                  /* SCCX_MX */
-        {
-            static char exe_errmsg[] = "can't read MS-DOS .exe header";
-            fread (&bytesThatBeginEveryExe,
-                    sizeof bytesThatBeginEveryExe, 1, fname);
-            if (bytesThatBeginEveryExe[0] != 'M' ||
-                bytesThatBeginEveryExe[1] != 'Z')
-            {
-                error(name, exe_errmsg);
-            }
-            fread (&originalExeBytesMod512,
-                    sizeof originalExeBytesMod512, 1, fname);
-            fread (&originalExePages, sizeof originalExePages, 1, fname);
-            originalExeBytes = (originalExePages - 1)*512 +
-                                originalExeBytesMod512;
-        }
-        if (fseek(fname, originalExeBytes, 0))
-            error(name, errmsg);
-        if (ferror(fname) || feof(fname) || !originalExeBytes)
-            error(name, exe_errmsg);
-   }
-#endif                                  /* MSDOS && !NT */
 
 #ifdef HAVE_LIBZ
    if (read(fdname,(char *)hdr, sizeof(*hdr)) != sizeof(*hdr))
@@ -634,15 +506,6 @@ char *argv[];
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-   signal(SIGFPE, SigFncCast fpetrap);
-#endif					/* AMIGA */
-
-#if ARM
-   signal(SIGFPE, SigFncCast fpetrap);
-   signal(SIGSEGV, SigFncCast segvtrap);
-#endif					/* ARM */
-
 #if MACINTOSH
 #if MPW
    {
@@ -655,24 +518,6 @@ Deliberate Syntax Error
    }
 #endif					/* MPW */
 #endif					/* MACINTOSH */
-
-#if MSDOS
-#if MICROSOFT || TURBO || ZTC_386 || SCCX_MX
-   signal(SIGFPE, SigFncCast fpetrap);
-#endif					/* MICROSOFT || TURBO || ZTC_386 || SCCX_MX */
-#endif					/* MSDOS */
-
-#if MVS || VM
-#if SASC
-   cosignal(SIGFPE, SigFncCast fpetrap);           /* catch in all coprocs */
-   cosignal(SIGSEGV, SigFncCast segvtrap);
-#endif					/* SASC */
-#endif					/* MVS || VM */
-
-#if OS2 || BORLAND_386
-   signal(SIGFPE, SigFncCast fpetrap);
-   signal(SIGSEGV, SigFncCast segvtrap);
-#endif					/* OS2 || BORLAND_386 */
 
 #if UNIX || VMS
 /*RPP   signal(SIGSEGV, SigFncCast segvtrap); */
@@ -985,7 +830,7 @@ Deliberate Syntax Error
       }
 #endif					/* ARM || MACINTOSH ... */
 
-#if MSDOS
+#if MSWindows
 #if !HIGHC_386
    if (noerrbuf)
       setbuf(stderr, NULL);
@@ -998,7 +843,7 @@ Deliberate Syntax Error
 #endif					/* MSWindows */
       }
 #endif					/* !HIGHC_386 */
-#endif					/* MSDOS */
+#endif					/* MSWindows */
 
 /*
  * End of operating-system specific code.
@@ -1056,7 +901,7 @@ Deliberate Syntax Error
    if (WBmstksize != 0 && WBmstksize <= (uword) MaxUnsigned) mstksize = WBmstksize; 
 #endif					/* AMIGA */
 
-#if ARM || MACINTOSH || MSDOS || MVS || OS2 || UNIX || VM || VMS
+#if ARM || MACINTOSH || MSWindows || MVS || OS2 || UNIX || VM || VMS
    /* nothing to do */
 #endif					/* ARM || ... */
 
@@ -1085,11 +930,11 @@ Deliberate Syntax Error
       signal(SIGFPE, SIG_DFL);
 #endif					/* ARM || OS2 */
 
-#if MSDOS
+#if MSWindows
 #if TURBO || BORLAND_386
       signal(SIGFPE, SIG_DFL);
 #endif					/* TURBO || BORLAND_386 */
-#endif					/* MSDOS */
+#endif					/* MSWindows */
 
 #if MVS || VM
       /* Really nothing to do. */
@@ -1318,7 +1163,7 @@ int i;
       }
 
 
-#if MSDOS /* add others who need to free their resources here */
+#if MSWindows /* add others who need to free their resources here */
    /*
     * free dynamic record types
     */

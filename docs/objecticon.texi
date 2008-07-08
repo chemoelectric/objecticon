@@ -41,51 +41,30 @@ language. Some of the main features are :-
 @end itemize
 @end ifnottex
 @menu
+* Installation::                
 * Overview::                    Read for a smoother start
 * Classes and Objects::         Detailed info about the OO side of Object Icon
+* Packages::                    Packaging several files together
+* Runtime information about objects and classes::  
+* Library::                     Object Icon libraries and the IPL
+* Makefiles::                   
+* Dynamically loading C/RTL code::  
+* Dynamically loading Icon code::  
 * Differences - Icon::          Differences between Object Icon and Icon
 * Differences - Unicon::        Differences between Object Icon and Unicon
 
+* Emacs mode::                  
 * Key Index::                   Index of Vi and Ex Commands
 * Function Index::              Index of Viper Functions
 * Variable Index::              Index of Viper Variables
 * Package Index::               Index of Packages Mentioned in this Document
 * Concept Index::               Vi, Ex and Emacs concepts
 
-* Acknowledgments::
-
-@detailmenu
- --- The Detailed Node Listing ---
-
-Object Icon
-
-* Classes and Objects - Introduction::  A brief intro
-* Fields::                      The different types of field in a class
-* Inheritance::                 Inheritance in Object Icon
-* Field modifiers::             Indicate access and other attributes of a field
-* Method pointers::             How instance methods work
-* Casts::                       Accessing overridden methods
-* The new() method::            Called during object creation
-* Deferred methods::            Methods with no body
-
-Inheritance
-
-* Inheritance restrictions:: What's allowed
-* Field name clashes:: When names collide
-
-Field modifiers
-
-* private:: Fields accessible in defining class only
-* public:: Fields accessible anywhere
-* package:: Fields accessible in same package
-* protected:: Fields accessible in same class hierarchy
-* static:: Fields with one instance only
-* const:: Constant read-only fields
-* readable:: Allow extra read-only access
-* final:: Prevents overriding
-
-@end detailmenu
+* Acknowledgments::             
 @end menu
+
+@node Installation
+@chapter Installation
 
 @node Overview
 @chapter Overview
@@ -99,8 +78,8 @@ Field modifiers
 * Field modifiers::             Indicate access and other attributes of a field
 * Method pointers::             How instance methods work
 * Casts::                       Accessing overridden methods
+* The init() method::           Called during class initialization
 * The new() method::            Called during object creation
-* The init() method::           
 * Deferred methods::            Methods with no body
 @end menu
 @node Classes and Objects - Introduction
@@ -710,15 +689,581 @@ itself.
 @end itemize
 @node The new() method
 @section The new() method
+The @code{new()} method is used to initialize an object, ie an instance
+of a particular class.  The method is not invoked explicitly however.  Rather,
+in order to create an instance the class name is used like a function call,
+and the @code{new()} method is invoked automatically.  So for example :-
+@example
+class X()
+   public new(a, b)
+      write("in new a=", a, " b=", b)
+      return
+   end
+end
+
+procedure main()
+   local i
+   i := X(3, 4)
+end
+@end example
+This writes @code{"in new a=3 b=4"}.
+Some other points to note about @code{new()} :-
+@itemize @bullet
+@item
+A class doesn't have to have a @code{new} method.  If it is absent, then all the
+instance variables are initially @code{&null}.
+@item
+A class can inherit (and override) a @code{new} method in a superclass, just like
+any other method.
+@item
+The access modifier of the @code{new} method is respected.  So making
+the @code{new} method private means that instances can only be created
+from within the class itself (by necessity in a static method).
+@item
+After an object has been initialized, the @code{new()} method cannot be
+accessed, and any attempt to do so gives a run-time error.  So in the example above,
+the following would not be allowed :-
+@example
+procedure main()
+   local i
+   i := X(3, 4)
+   i.new(5, 6)   # Runtime error
+end
+@end example
+@item
+If the @code{new()} method fails, then the creation of the object fails.
+This gives @code{new()} extra control over the creation process, but
+does mean that you have to remember to put a @code{return} in the
+@code{new()} method somewhere.
+@end itemize
 
 @node Deferred methods
 @section Deferred methods
+A deferred method is one in which there is no body, and the actual functionality
+of the method is defined elsewhere.  For example :-
+@example
+class X()
+   public defer f()
+end
+@end example
+Parameters can be declared if desired, but they are ignored by the
+linker.
+
+There are three possible ways to provide the functionality of a deferred
+method.
+
+@menu
+* Deferred methods as abstract methods::  
+* Deferred methods in the runtime system::  
+* Deferred methods resolved at runtime::  
+@end menu
+
+@node Deferred methods as abstract methods
+@subsection Deferred methods as abstract methods
+These work just like abstract methods in other languages.  A subclass
+overrides the deferred method :-
+@example
+class X()
+   public defer f()
+end
+
+class Y(X)
+   public f()
+      write("in f()")
+   end
+end
+@end example
+Obviously this doesn't apply to static methods, which can't be
+overridden.
+@node Deferred methods in the runtime system
+@subsection Deferred methods in the runtime system
+This necessitates editing and re-building the C/RTL source code of the
+runtime system and the translator.  
+
+The first step is to convert the name of the deferred method to be
+implemented into the name of the runtime function to be implemented, by
+taking the fully qualified name of the class in which the method
+resides, adding a "." and the method name, and then changing all dots to
+underscores.  So, for example, say we were implementing method
+@code{my_method} in class @code{MyClass} in package @code{my.package},
+then we would write a runtime function named
+@code{my_package_MyClass_my_method}.
+
+The next step is to add this name to the file
+@code{base/h/nativedefs.h}, ensuring that the file stays in ascending
+ascii order.
+
+Next, the function must be implemented somewhere in the runtime, as
+an RTL function, which might look like this :-
+@example
+function@{1@} my_package_MyClass_my_method(x, y)
+   ... RTL code
+end
+@end example
+Note that for an instance method, the first parameter will be the
+instance on which the method was invoked.  In this case, add a
+@code{self} parameter to the parameter list :-
+@example
+function@{1@} my_package_MyClass_my_method(self, x, y)
+   ... RTL code
+end
+@end example
+
+Finally, both the translator and the runtime must be
+re-compiled.  The easiest way to do this is to go into the @code{base}
+directory and run
+@example
+make clean
+make
+make install
+@end example
+
+@node Deferred methods resolved at runtime
+@subsection Deferred methods resolved at runtime
+This involves setting an arbitrary procedure value to be the
+implementation of the method, as the following example shows :-
+@example
+import lang(Class)
+
+procedure myproc(self, x)
+   write("in myproc self=", image(self), " x=", image(x))
+end
+
+class X()
+   public defer f()
+
+   private static init()
+      Class.set_method("f", myproc)
+   end
+end
+
+procedure main()
+   local i
+   i := X()
+   i.f(33)
+end
+@end example
+This prints "@code{in myproc self=object X_1(0) x=33}".
+
+This example uses the static method @code{Class.set_method} in the
+@code{lang} package to set the deferred method @code{f} to point to the
+procedure @code{mproc}.  The result is that when @code{f} is invoked,
+@code{mproc} is called, with the instance @code{i} as the first
+parameter, and the value @code{33} as the second.  Note that unlike a
+normal method, the @code{self} parameter has to be placed in the
+parameter list.
+
+There are some restrictions which @code{set_method} imposes :-
+
+@itemize @bullet
+@item
+The method must be defined in the class from which @code{set_method} is
+called.
+@item
+The method must be a deferred method.
+@item
+The procedure supplied may not be a method.  Nor can a procedure be set
+as the implementation of more than one method.
+@end itemize
+
+Setting a normal procedure to be a deferred method's definition isn't
+particularly useful, because you could always implement the method and
+just call the procedure.  However, @code{set_method} does still have one
+important use, and that is to set method implementations to procedures
+loaded via the @code{loadfunc} function, which loads code from a dynamic
+native library (.so or .dll).  This enables you to implement methods in
+C and RTL without editing or re-compiling the runtime system itself.  In
+this case, the init method might look like this :-
+@example
+   private static init()
+      Class.set_method("f", loadfunc("mylib.so", "my_method"))
+   end
+@end example
+
+
+@node Packages
+@chapter Packages
+Packages in Object Icon provide two functions :-
+@itemize @bullet
+@item
+They group several source files into a single unit which can easily
+be imported into a program.
+@item
+They provide a naming prefix for all the symbols in a package, so that
+symbol name clashes between code in different libraries are avoided
+@end itemize
+
+
+@menu
+* Declaring a package::         The package declaration
+* Using a package::             The import declaration
+@end menu
+
+@node Declaring a package
+@section Declaring a package
+A file is declared to be in a package by simply adding a package declaration
+at the top of the source file, such as the following :-
+@example
+package my.pack
+
+procedure one()
+   write("in my.pack.one")
+end
+@end example
+
+This will have the effect of adding the file to the package
+@code{"my.pack"}.  This information is stored in a file named
+@code{"packages.txt"}, stored in the same directory as the ucode file.
+The format of the file is very simple, and just maintains a list of
+which files are in which package.
+
+The other effect of the package statement is that the names of the
+global symbols (procedures, records, classes and global variables)
+declared in the file are prefixed automatically with the package name.
+So, the procedure @code{one} in the above file is in fact named
+@code{my.pack.one}.
+
+@itemize @bullet
+@item
+A package name must be comprised of one or more identifiers separated by
+dots.
+@item
+You can have several packages in the same directory of source files;
+however you cannot spread a particular package over source files from
+more than one directory.
+@end itemize
+
+@node Using a package
+@section Using a package
+A package is used in a program via the import statement.  For example :-
+@example
+import my.pack
+
+procedure main()
+   one()
+end
+@end example
+The import statement causes the linker to search all the @code{packages.txt}
+located on the linking path for the specified package.  When found, all of
+the files in the package are linked into the program.
+
+Note that the reference to the procedure @code{my.pack.one} is in the
+shorter form, @code{one}.  This is allowed so long as there isn't
+another symbol @code{one} which would make the reference ambiguous.  In
+any case, the fully qualified form is also acceptable.
+
+If there are several imports in one file it may become difficult to
+discern which symbol came from which package.  For this reason, the
+import statement lets you indicate which symbols are being used from a
+particular package, as follows :-
+@example
+import my.pack(one, two, three)
+@end example
+This means the three given symbols are being used in the source file and
+can be resolved to @code{my.pack.one}, @code{my.pack.two} and
+@code{my.pack.three} respectively.  If there were another symbol in
+@code{my.pack}, say @code{four}, then it would not be resolved by the
+linker if it were encountered as @code{four}; rather an undeclared
+identifier error would be raised.  If it were encountered as
+@code{my.pack.four} however, that would not raise an error.  Note that
+this form of the import statement still links all of the files in the
+package into the program, regardless of which symbols are specified.
+
+@node Runtime information about objects and classes
+@chapter Runtime information about objects and classes
+
+@menu
+* classof()::                   
+* is()::                        
+* lang.Class::                  
+@end menu
+
+@node classof()
+@section classof()
+This builtin takes an object as a parameter and returns its class.
+
+@node is()
+@section is()
+This builtin takes two parameters: an object and a class and succeeds
+if the class is one of the object's implemented classes.
+
+@node lang.Class
+@section lang.Class
+This class contains several static methods which can be used to retrieve
+information about an object or a class.
+
+@node Library
+@chapter Library
+
+@menu
+* Environment Variables::       OIPATH and OLPATH
+* Packages in the library::     
+* IPL::                         
+* Auto-generated documentation::  
+@end menu
+
+@node Environment Variables
+@section Environment Variables
+When a package is imported using the @code{import} statement, the linker
+uses the @code{OIPATH} environment variable for directories to search
+for a matching package.  Each directory's @code{package.txt} file is
+loaded and examined for a matching package.  The @code{OIPATH} is also
+used to resolve @code{link} declarations in source files too, and to
+this extent serves the same purpose as Icon's @code{IPATH} variable.
+
+The @code{OLPATH} variable is the path used by the preprocessor to
+resolve @code{$include} directives, and serves the same purpose as
+Icon's @code{LPATH} variable.
+
+@node Packages in the library
+@section Packages in the library
+
+@node IPL
+@section IPL
+The library includes a slightly modified copy of Icon's extensive
+program library.  The chief difference is that Object Icon's package
+facility has been used to remove any potential clashes of symbol names
+or filenames.  Nearly all the files have been placed in their own
+package with the name @code{ipl.}@emph{filename}.  The only exceptions
+are the graphics functions and the vidgets library, each of which group
+several related files into the @code{ipl.graphics} and
+@code{ipl.vidgets} packages respectively.
+
+For example, to use the options procedure for processing command-line
+options, whereas in Icon one would write @code{"link options"}, in Object
+Icon use @code{"import ipl.options"}.
+
+@node Auto-generated documentation
+@section Auto-generated documentation
+The distribution includes a program called @code{oidoc}, which can be
+used to generate HTML format documentation from the source code in the
+library.  It is not built by default because it creates rather a large
+amount of data (about 25 MB).  To build it run @code{make libref} from
+the docs directory.  The result is a directory, @code{libref}, which can
+be copied or moved to any desired location.  The starting page is
+@code{"index.html"} within that directory.
+
+@node Makefiles
+@chapter Makefiles
+
+@node Dynamically loading C/RTL code
+@chapter Dynamically loading C/RTL code
+Object Icon incorporates some enhancements to Icon's dynamic loading
+facility which allow dynamically loaded functions to be written in RTL
+rather than plain C.  This means that dynamically loaded code can take
+the same form as builtin code, and can do the same things.
+
+In order to develop a dynamic library it is necessary to have the source
+distribution available, with its bin directory on your @code{PATH}.
+
+@menu
+* A sample RTL file::           
+* Compilation::                 
+* Loading the library::         
+* External headers and symbols::  
+@end menu
+
+@node A sample RTL file
+@section A sample RTL file
+Here is a not-very-useful function to generate the bit positions of ones
+in an integer (for example 6 is 110, so generates 2, 3).
+
+@example
+function@{*@} bits(v)
+    if !cnv:C_integer(v) then
+       runerr(101, v)
+    body @{
+       int i = 1;
+       while (v) @{
+           if (v & 1)
+               suspend C_integer i;
+           v /= 2;
+           ++i;
+       @}
+       fail;
+    @}
+end
+@end example
+
+To create a dynamic library to use this function we would firstly place
+it in a file with the suffix ".r", say @code{testlib.r}.
+
+@node Compilation
+@section Compilation
+
+Next, create a Makefile to build the library.
+
+@example
+include $(OIHOME)/Makedefs
+
+all:	testlib.so
+
+clean :
+	rm -f *.u *.o *.so
+
+testlib.o : testlib.r
+	rtt testlib.r
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c xtestlib.c -o testlib.o
+
+testlib.so : testlib.o
+	$(CC) -shared -fPIC -o testlib.so testlib.o
+@end example
+
+Notes :-
+
+@itemize @bullet
+@item
+In the first line the environment variable @code{$(OIHOME)} is assumed to point
+to the root of the source code distribution.
+@item
+The Makedefs file defines various variables, in particular the flags for C
+compilation.
+@item
+The flags to the @code{$(CC)} command may need to be tweaked.
+@end itemize
+
+@node Loading the library
+@section Loading the library
+Here is a sample program to load the library and run the @code{bits()}
+function.
+
+@example
+procedure main()
+   local p
+   p := loadfunc("./testlib.so", "bits")
+   write("okay, loaded ",image(p))
+   every write(p(12345))
+end
+@end example
+
+When compiled and run, the following output should result :-
+
+@example
+okay, loaded function bits
+1
+4
+5
+6
+13
+14
+@end example
+
+Note that the library name in the first parameter of @code{loadfunc} is
+passed unaltered to the underlying system's dynamic load function (on
+Unix, @code{dlopen}).  This means that the library must either be an
+absolute path, relative to the current directory, or in one of the
+places that the system normally looks for shared libraries.
+
+There are some functions available to help search for files on paths.  In
+particular see :-
+@itemize @bullet
+@item
+@code{pathload()} and @code{pathfind()} in the package @code{ipl.io}
+@item
+@code{path_find()} in the package @code{parser}
+@end itemize
+@node External headers and symbols
+@section External headers and symbols
+It is possible that the RTL code in a dynamic library will need to refer
+to another existing library and its associated C header files.  For
+example, the mysql library needs to reference "mysql.h" and link to the
+mysqlclient library.  These external header files are normally
+@emph{not} processed by RTT - rather they are passed through RTT to be
+processed by the C compiler.  For example
+
+@example
+#passthru #include "mysql.h"
+@end example
+
+This raises a problem of how RTT will recognise symbol and types defined
+in the header concerned, which are then used in the RTL source.  For
+example, @code{mysql.h} defines the type @code{MYSQL_RES}, and this is
+used several times in @code{mysql.r}.  For code in the interpreter, a
+separate header file, @code{grttin.h}, is processed specially by RTT in
+order to allow such symbols to be declared with dummy types, typically
+as @code{typedef int}.  This allows them to pass through RTT without
+error.  For an dynamic library we naturally don't want to edit
+@code{grttin.h}, so a new option, @code{-h} specifies an extra header
+file to process immediately after @code{grttin.h}.  Here we can provide
+the necessary dummy definitions of symbols like @code{MYSQL_RES}.  The
+header for the mysql library looks like this :-
+
+@example
+typedef int MYSQL, MYSQL_FIELD, my_bool, MYSQL_RES,
+    MYSQL_FIELD_OFFSET, MYSQL_ROW, MYSQL_ROW_OFFSET, my_ulonglong;
+@end example
+
+and is processed with the command :-
+
+@example
+rtt -h gmysql.h mysql.r
+@end example
+@node Dynamically loading Icon code
+@chapter Dynamically loading Icon code
+Object Icon includes a small enhancement to MT Icon which allows
+procedures and classes to be loaded and invoked dynamically from other
+icode files (ie executable files created by the linker).
+
+To illustrate how this works, consider the following simple source file:-
+@example
+invocable X, p
+
+class X()
+   public hello()
+      write("Hello")
+   end
+end
+
+procedure p()
+   write("Hello again")
+end
+
+procedure main()
+end
+@end example
+If this were in the file @code{abc.icn}, then it could be compiled with
+the command @code{oit abc.icn}.  Then its symbols could be loaded and
+used dynamically as follows :-
+@example
+procedure main()
+   local prog, x
+   prog := load("abc") | stop("Couldn't load")
+
+   # Create an instance of X, call hello method
+   x := variable("X", prog)()
+   x.hello()
+
+   # Call procedure p
+   variable("p", prog)()
+end
+@end example
+
+@itemize @bullet
+@item
+The "library" program needs a dummy @code{main} procedure.  It also
+needs to declare the procedure and class as invocable, so that the
+linker doesn't discard them as unreferenced symbols.
+@item
+The class could also be accessed via @code{Class.for_name("X", prog)()}
+(after importing @code{lang.Class}).
+@item
+The procedure could also be accessed via the call @code{proc("p",,prog)()}
+@item
+The loaded program retains its own separate set of global identifiers.
+References to global identifiers in loaded procedures and methods always
+refer to the enclosing loaded program.  Hence, several global
+identifiers with the same name can co-exist at the same time in separate
+programs.
+@end itemize
 
 @node Differences - Icon
 @chapter Differences - Icon
 
 @node Differences - Unicon
 @chapter Differences - Unicon
+
+@node Emacs mode
+@chapter Emacs mode
 
 @node Key Index
 @chapter Key Index

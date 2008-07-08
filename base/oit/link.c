@@ -12,21 +12,6 @@
 
 #include "../h/header.h"
 
-#if SCCX_MX
-#undef ISICONT
-#define ISICONT
-#include "ixhdr.h"
-#endif					/* SCCX_MX */
-
-#ifdef Header
-#ifndef ShellHeader
-#include "hdr.h"
-#endif					/* ShellHeader */
-#ifndef MaxHeader
-#define MaxHeader MaxHdr
-#endif					/* MaxHeader */
-#endif					/* Header */
-
 /*
  * Prototype.
  */
@@ -177,12 +162,10 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         quitf("cannot create %s",outname);
     }
 
-#ifdef Header
     /*
      * Write the bootstrap header to the output file.
      */
 
-#ifdef ShellHeader
     /*
      * Write a short shell header terminated by \n\f\n\0.
      * Use magic "#!/bin/sh" to ensure that $0 is set when run via $PATH.
@@ -239,14 +222,6 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         fwrite(script, hdrsize, 1, outfile);	/* write header */
 #endif					/* UNIX */
     }
-#else					/* ShellHeader */
-    /*
-     *  Always write MaxHeader bytes.
-     */
-    fwrite(iconxhdr, sizeof(char), MaxHeader, outfile);
-    hdrsize = MaxHeader;
-#endif					/* ShellHeader */
-#endif					/* Header */
 
     for (i = sizeof(struct header); i--;)
         putc(0, outfile);
