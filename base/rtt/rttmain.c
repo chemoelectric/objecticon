@@ -14,13 +14,6 @@ unsigned _stack = 100000;
  */
 static void add_tdef (char *name);
 
-/*
- * refpath is used to locate the standard include files for the Icon.
- *  run-time system. If patchpath has been patched in the binary of rtt,
- *  the string that was patched in is used for refpath.
- */
-char patchpath[MaxPath+18] = "%PatchStringHere->";
-
 #ifdef RefPath
 char *refpath = RefPath;
 #else					/* RefPath */
@@ -158,14 +151,8 @@ char **argv;
    char buf[MaxFileName];		/* file name construction buffer */
    struct fileparts *fp;
 
-   /*
-    * See if the location of include files has been patched into the
-    *  rtt executable.
-    */
-   if ((int)strlen(patchpath) > 18)
-      refpath = patchpath+18;
-   else if (strlen(refpath)==0)
-      refpath = relfile(argv[0], "/../");
+   if (strlen(refpath)==0)
+      refpath = salloc(relfile(argv[0], "/../"));
 
    /*
     * Initialize the string table and indicate that File must be treated

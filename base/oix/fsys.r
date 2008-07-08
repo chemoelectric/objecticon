@@ -594,14 +594,16 @@ Deliberate Syntax Error
 #if AMIGA || ARM || OS2 || UNIX || VMS || NT
       if (status & Fs_Pipe) {
 	 int c;
+         char *ploc;
 	 if (status != (Fs_Read|Fs_Pipe) && status != (Fs_Write|Fs_Pipe))
 	    runerr(209, spec);
 	 strcpy(sbuf, fnamestr);
 	 if ((s = strchr(sbuf, ' ')) != NULL) *s = '\0';
-	 if (findonpath(sbuf, sbuf2, MaxCvtLen) == NULL) {
+         ploc = findonpath(sbuf);
+	 if (!ploc)
 	    fail;
-	    }
          fnamestr = sbuf2;
+         strcpy(fnamestr, ploc);
 	 if (s) {
 	    strcat(fnamestr, " ");
 	    strcat(fnamestr, s+1);

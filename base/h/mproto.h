@@ -18,7 +18,6 @@ struct implement *db_impl  (int oper_typ);
 int	db_open		(char *s, char **lrgintflg);
 char	*db_string	(void);
 int	db_tbl		(char *section, struct implement **tbl);
-char *findonpath(char *name, char *buf, size_t len);
 struct fileparts *fparse(char *s);
 void	free_stbl	(void);
 void	id_comment	(FILE *f);
@@ -65,7 +64,9 @@ char *  join_strs(struct str_buf *sbuf, int n, ...);
 #define NewStruct(type)\
    (struct type *)alloc((unsigned int) sizeof (struct type))
 
+char *findonpath(char *name);
+char *findexe(char *name);
 char *relfile	(char *prog, char *mod);
 void normalize(char *path);
 char *canonicalize(char *path);
-FILE *pathOpen	(char *fname, char*mode);
+FILE *pathopen	(char *fname, char*mode);

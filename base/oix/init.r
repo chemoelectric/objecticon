@@ -8,11 +8,7 @@
 
 #include "../h/header.h"
 
-#ifdef HAVE_LIBZ
-static int readhdr	(char *name, struct header *hdr);
-#else					/* HAVE_LIBZ */
 static	FILE	*readhdr	(char *name, struct header *hdr);
-#endif					/* HAVE_LIBZ */
 
 /*
  * Prototypes.
@@ -26,7 +22,7 @@ static void	env_err		(char *msg, char *name, char *val);
  */
 
 #if PORT
-   /* probably needs something more */
+/* probably needs something more */
 Deliberate Syntax Error
 #endif					/* PORT */
 
@@ -44,18 +40,18 @@ char *prog_name;			/* name of icode file */
  * External declarations for operator blocks.
  */
 
-#passthru #define OpDef(f,nargs,sname,underef)\
-	{\
-	T_Proc,\
-	Vsizeof(struct b_proc),\
-	Cat(O,f),\
-	nargs,\
-	-1,\
-	underef,\
-	0,\
-        &rootpstate,\
-        0,                                        \
-	{{sizeof(sname)-1,sname}}},
+#passthru #define OpDef(f,nargs,sname,underef)  \
+    {                                           \
+    T_Proc,                                     \
+    Vsizeof(struct b_proc),                     \
+    Cat(O,f),                                   \
+    nargs,                                      \
+    -1,                                         \
+    underef,                                    \
+    0,                                          \
+    &rootpstate,                                \
+    0,                                          \
+    {{sizeof(sname)-1,sname}}},
 #passthru static B_IProc(2) init_op_tbl[] = {
 #passthru #include "../h/odefs.h"
 #passthru   };
@@ -130,398 +126,342 @@ word *stack;				/* Interpreter stack */
 word *stackend; 			/* End of interpreter stack */
 
 
-#ifdef HAVE_LIBZ
 
-int fdgets(int fd, char *buf, size_t count)
+#if MSWindows
+/*
+ * Open the icode file and read the header.
+ * Used by icon_init() as well as MultiThread's loadicode()
+ */
+static char *convert_name(char *name)
 {
-  int i;
-  char *temp=buf;
+    FILE *ifile;
+    int n;
 
-  for (i=0;i<count;i++) {
-    if (read(fd,temp,1)==-1) {
-      return -1;
+    if (!name)
+        error(name, "No interpreter file supplied");
+
+    /*
+     * Try adding the suffix if the file name doesn't end in it.
+     */
+    n = strlen(name);
+
+    if (n >= 4 && !stricmp(".exe", name + n - 4)) {
+        ifile = pathOpen(name, ReadBinary);
+        /*
+         * ixhdr's code for calling iconx from an .exe passes iconx the
+         * full path of the .exe, so using pathOpen() seems redundant &
+         * potentially inefficient. However, pathOpen() first checks for a
+         * complete path, & if one is present, doesn't search Path; & since
+         * MS-DOS has a limited line length, it'd be possible for ixhdr
+         * to check whether the full path will fit, & if not, use only the
+         * name. The only price for this additional robustness would be
+         * the time pathOpen() spends checking for a path, which is trivial.
+         */
     }
-    if (*temp==EOF)  /* end of the file */
-      break;
-    if (*temp=='\n') { /* new line */
-      i++;
-      break;
+    else {
+
+        if (n <= 4 || (strcmp(name+n-4,IcodeSuffix) != 0
+                       && strcmp(name+n-4,IcodeASuffix) != 0)) {
+            char tname[100];
+            if ((int)strlen(name) + 5 > 100)
+                error(name, "icode file name too long");
+            strcpy(tname,name);
+
+            strcat(tname,IcodeSuffix);
+
+            ifile = pathOpen(tname,ReadBinary);	/* try to find path */
+
+            /*
+             * tried appending .exe, now try .bat or .cmd
+             */
+            if (ifile == NULL) {
+                strcpy(tname,name);
+                strcat(tname,".bat");
+                ifile = pathOpen(tname, ReadBinary);
+                if (ifile == NULL) {
+                    strcpy(tname,name);
+                    strcat(tname,".cmd");
+                    ifile = pathOpen(tname, ReadBinary);
+                }
+            }
+
+        }
+
+        if (ifile == NULL)			/* try the name as given */
+            ifile = pathOpen(name, ReadBinary);
+
+    } /* end if (n >= 4 && !stricmp(".exe", name + n - 4)) */
+
+    if (ifile == NULL)
+        return NULL;
+
+    {
+        static char errmsg[] = "can't read interpreter file header";
+
+        char buf[200];
+
+        for (;;) {
+            if (fgets(buf, sizeof buf-1, ifile) == NULL)
+                error(name, errmsg);
+            if (strncmp(buf, "rem [executable Icon binary follows]", 36) == 0)
+                    break;
+        }
+        while ((n = getc(ifile)) != EOF && n != '\f')	/* read thru \f\n\0 */
+            ;
+        getc(ifile);
+        getc(ifile);
+        if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr))
+            error(name, errmsg);
     }
-    temp++;
-  }
-  buf[i]='\0';
-  return i;
+
+    return ifile;
 }
+#endif
 
-
-int dgetc(int fd) {
-  int rv;
-  unsigned char c;
-  rv = read(fd,&c,1);
-  if (rv == -1)
-    return -1;
-  else if (rv == 0) return EOF;
-  else {
-    return c;
-    }
+#ifdef UNIX
+static char *convert_name(char *name)
+{
+    char *s = findexe(name);
+    if (s)
+        return salloc(s);
+    return 0;
 }
-
-#endif					/* HAVE_LIBZ */
+#endif
 
 /*
  * Open the icode file and read the header.
  * Used by icon_init() as well as MultiThread's loadicode()
  */
-#ifdef HAVE_LIBZ
-static int readhdr(name,hdr)
-#else					/* HAVE_LIBZ */
-static FILE *readhdr(name,hdr)
-#endif					/* HAVE_LIBZ */
-char *name;
-struct header *hdr;
-   {
-#ifdef HAVE_LIBZ
-   int fdname = -1;
-#else
-   FILE *fname;
-#endif
-   int n;
+static FILE *readhdr(char *name, struct header *hdr)
+{
+    FILE *ifile;
+    int n;
+    char buf[200];
 
-#if MSWindows
-   int thisIsAnExeFile = 0;
-   char bytesThatBeginEveryExe[2] = {0,0};
-   unsigned short originalExeBytesMod512, originalExePages;
-   unsigned long originalExeBytes;
-#endif					/* MSWindows */
+    ifile = fopen(name, ReadBinary);
+    if (ifile == NULL)
+        return NULL;
 
-   if (!name)
-      error(name, "No interpreter file supplied");
+    for (;;) {
+        if (fgets(buf, sizeof buf-1, ifile) == NULL)
+            error(name, "can't find header marker in interpreter file");
+        if (strncmp(buf, "[executable Icon binary follows]", 32) == 0)
+            break;
+    }
+    while ((n = getc(ifile)) != EOF && n != '\f')	/* read thru \f\n\0 */
+        ;
+    getc(ifile);
+    getc(ifile);
+    if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr))
+        error(name, "can't read interpreter file header");
 
-   /*
-    * Try adding the suffix if the file name doesn't end in it.
-    */
-   n = strlen(name);
-
-#if MSWindows
-   if (n >= 4 && !stricmp(".exe", name + n - 4)) {
-      thisIsAnExeFile = 1;
-      fname = pathOpen(name, ReadBinary);
-         /*
-          * ixhdr's code for calling iconx from an .exe passes iconx the
-          * full path of the .exe, so using pathOpen() seems redundant &
-          * potentially inefficient. However, pathOpen() first checks for a
-          * complete path, & if one is present, doesn't search Path; & since
-          * MS-DOS has a limited line length, it'd be possible for ixhdr
-          * to check whether the full path will fit, & if not, use only the
-          * name. The only price for this additional robustness would be
-          * the time pathOpen() spends checking for a path, which is trivial.
-          */
-      }
-   else {
-#endif					/* MSWindows */
-
-   if (n <= 4 || (strcmp(name+n-4,IcodeSuffix) != 0
-   && strcmp(name+n-4,IcodeASuffix) != 0)) {
-      char tname[100];
-      if ((int)strlen(name) + 5 > 100)
-	 error(name, "icode file name too long");
-      strcpy(tname,name);
-
-      strcat(tname,IcodeSuffix);
-
-#if MSWindows
-      fname = pathOpen(tname,ReadBinary);	/* try to find path */
-#else					/* MSWindows */
-
-   #ifdef HAVE_LIBZ
-      fdname = open(tname,O_RDONLY);
-   #else					/* HAVE_LIBZ */
-      fname = fopen(tname, ReadBinary);
-   #endif					/* HAVE_LIBZ */
-
-#endif					/* MSWindows */
-
-#if MSWindows
-    /*
-     * tried appending .exe, now try .bat or .cmd
-     */
-    if (fname == NULL) {
-       strcpy(tname,name);
-       strcat(tname,".bat");
-       fname = pathOpen(tname, ReadBinary);
-       if (fname == NULL) {
-          strcpy(tname,name);
-          strcat(tname,".cmd");
-          fname = pathOpen(tname, ReadBinary);
-          }
-      }
-#endif					/* NT */
-
-      }
-
-#ifdef HAVE_LIBZ
-   if (fdname == -1)			/* try the name as given */
-#else					/* HAVE_LIBZ */
-   if (fname == NULL)			/* try the name as given */
-#endif					/* HAVE_LIBZ */
-
-#if MSWindows
-      fname = pathOpen(name, ReadBinary);
-#else					/* MSWindows */
-
-   #ifdef HAVE_LIBZ
-      fdname = open(name, O_RDONLY);
-   #else					/* HAVE_LIBZ */
-      fname = fopen(name, ReadBinary);
-   #endif					/* HAVE_LIBZ */
-
-#endif					/* MSWindows */
-
-#if MSWindows
-      } /* end if (n >= 4 && !stricmp(".exe", name + n - 4)) */
-#endif					/* MSWindows */
-
-#ifdef HAVE_LIBZ
-   if (fdname == -1)
-      return -1;
-#else					/* HAVE_LIBZ */
-   if (fname == NULL)
-      return NULL;
-#endif					/* HAVE_LIBZ */
-
-   {
-   static char errmsg[] = "can't read interpreter file header";
-
-   char buf[200];
-
-   for (;;) {
-#ifdef HAVE_LIBZ
-      if (fdgets(fdname, buf, sizeof(buf)-1) ==-1)
-	 error(name, errmsg);
-#else					/* HAVE_LIBZ */
-      if (fgets(buf, sizeof buf-1, fname) == NULL)
-	 error(name, errmsg);
-#endif					/* HAVE_LIBZ */
-
-#if MSWindows
-      if (strncmp(buf, "rem [executable Icon binary follows]", 36) == 0)
-#else					/* NT */
-      if (strncmp(buf, "[executable Icon binary follows]", 32) == 0)
-#endif					/* NT */
-         break;
-      }
-
-#ifdef HAVE_LIBZ
-   while ((n = dgetc(fdname)) != EOF && n != '\f')	/* read thru \f\n\0 */
-      ;
-   dgetc(fdname);
-   dgetc(fdname);
-#else					/* HAVE_LIBZ */
-   while ((n = getc(fname)) != EOF && n != '\f')	/* read thru \f\n\0 */
-      ;
-   getc(fname);
-   getc(fname);
-#endif					/* HAVE_LIBZ */
-
-
-#ifdef HAVE_LIBZ
-   if (read(fdname,(char *)hdr, sizeof(*hdr)) != sizeof(*hdr))
-#else					/* HAVE_LIBZ */
-   if (fread((char *)hdr, sizeof(char), sizeof(*hdr), fname) != sizeof(*hdr))
-#endif					/* HAVE_LIBZ  */
-      error(name, errmsg);
-   }
-
-#ifdef HAVE_LIBZ
-   return fdname;
-#else					/* HAVE_LIBZ  */
-   return fname;
-#endif					/* HAVE_LIBZ  */
-   }
+    return ifile;
+}
 
 /*
  * Make sure the version number of the icode matches the interpreter version.
  * The string must equal IVersion or IVersion || "Z".
  */
-void check_version(struct header *hdr, char *name,
-#ifdef HAVE_LIBZ
-   int fdname
-#else
-   FILE *fname
-#endif
-   )
+void check_version(struct header *hdr, char *name,FILE *fname)
 {
-   if (strncmp((char *)hdr->config,IVersion, strlen(IVersion)) ||
-       ((((char *)hdr->config)[strlen(IVersion)]) &&
-	strcmp(((char *)hdr->config)+strlen(IVersion), "Z"))
-       ) {
-      fprintf(stderr,"icode version mismatch in %s\n", name);
-      fprintf(stderr,"\ticode version: %s\n",(char *)hdr->config);
-      fprintf(stderr,"\texpected version: %s\n",IVersion);
-#ifdef HAVE_LIBZ
-      close(fdname);
-#else					/* HAVE_LIBZ */
-      fclose(fname);
-#endif					/* HAVE_LIBZ */
-      error(name, "cannot run");
-      }
+    if (strncmp((char *)hdr->config,IVersion, strlen(IVersion)) ||
+        ((((char *)hdr->config)[strlen(IVersion)]) &&
+         strcmp(((char *)hdr->config)+strlen(IVersion), "Z"))
+        ) {
+        fprintf(stderr,"icode version mismatch in %s\n", name);
+        fprintf(stderr,"\ticode version: %s\n",(char *)hdr->config);
+        fprintf(stderr,"\texpected version: %s\n",IVersion);
+        fclose(fname);
+        error(name, "cannot run");
+    }
 }
 
-
+static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codeptr)
+{
+    word cbread;
+#ifdef HAVE_LIBZ
+    if ((strchr((char *)(hdr->config), 'Z'))!=NULL) { /* to decompress */
+        gzFile zfd;
+        int tmp = open(name, O_RDONLY);
+        lseek(tmp,ftell(ifile),SEEK_SET);
+        zfd = gzdopen(tmp, "r");
+        if ((cbread = gzlongread(codeptr, sizeof(char), (long)hdr->hsize, zfd)) !=
+            hdr->hsize) {
+            fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
+                    (long)hdr->hsize,(long)cbread);
+            error(name, "bad icode file");
+        }
+        gzclose(zfd);
+    } else {
+        if ((cbread = longread(codeptr, sizeof(char), (long)hdr->hsize, ifile)) !=
+            hdr->hsize) {
+            fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
+                    (long)hdr->hsize,(long)cbread);
+            error(name, "bad icode file");
+        }
+    }
+#else					/* HAVE_LIBZ */
+    if ((cbread = longread(codeptr, sizeof(char), (long)hdr.hsize, ifile)) !=
+        hdr.hsize) {
+        fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
+                (long)hdr.hsize,(long)cbread);
+        error(name, "bad icode file");
+    }
+#endif					/* HAVE_LIBZ */
+}
+
 
 /*
  * init/icon_init - initialize memory and prepare for Icon execution.
  */
-   struct header hdr;
 
 void icon_init(name, argcp, argv)
-char *name;
-int *argcp;
-char *argv[];
+    char *name;
+    int *argcp;
+    char *argv[];
 
-   {
-   int fdname = -1;
-   FILE *fname = 0;
-   word cbread, longread(), gzlongread();
-   prog_name = name;			/* Set icode file name */
+{
+    struct header hdr;
+    FILE *ifile = 0;
+    prog_name = name;			/* Set icode file name */
 
 
-   /*
-    * initialize root pstate
-    */
-   curpstate = &rootpstate;
-   progs = &rootpstate;
-   rootpstate.next = NULL;
-   rootpstate.parentdesc = nulldesc;
-   rootpstate.eventmask= nulldesc;
-   rootpstate.opcodemask = nulldesc;
-   rootpstate.eventcount = zerodesc;
-   rootpstate.valuemask = nulldesc;
-   rootpstate.eventcode= nulldesc;
-   rootpstate.eventval = nulldesc;
-   rootpstate.eventsource = nulldesc;
-   rootpstate.Glbl_argp = NULL;
-   rootpstate.Kywd_err = zerodesc;
-   MakeInt(1, &(rootpstate.Kywd_pos));
-   StrLen(rootpstate.ksub) = 0;
-   StrLoc(rootpstate.ksub) = "";
-   MakeInt(hdr.trace, &(rootpstate.Kywd_trc));
-   StrLen(rootpstate.Kywd_prog) = strlen(prog_name);
-   StrLoc(rootpstate.Kywd_prog) = prog_name;
-   rootpstate.Kywd_ran = zerodesc;
-   rootpstate.K_errornumber = 0;
-   rootpstate.T_errornumber = 0;
-   rootpstate.Have_errval = 0;
-   rootpstate.T_have_val = 0;
-   rootpstate.K_errortext = "";
-   rootpstate.K_errorvalue = nulldesc;
-   rootpstate.T_errorvalue = nulldesc;
+    /*
+     * initialize root pstate
+     */
+    curpstate = &rootpstate;
+    progs = &rootpstate;
+    rootpstate.next = NULL;
+    rootpstate.parentdesc = nulldesc;
+    rootpstate.eventmask= nulldesc;
+    rootpstate.opcodemask = nulldesc;
+    rootpstate.eventcount = zerodesc;
+    rootpstate.valuemask = nulldesc;
+    rootpstate.eventcode= nulldesc;
+    rootpstate.eventval = nulldesc;
+    rootpstate.eventsource = nulldesc;
+    rootpstate.Glbl_argp = NULL;
+    rootpstate.Kywd_err = zerodesc;
+    MakeInt(1, &(rootpstate.Kywd_pos));
+    StrLen(rootpstate.ksub) = 0;
+    StrLoc(rootpstate.ksub) = "";
+    MakeInt(hdr.trace, &(rootpstate.Kywd_trc));
+    StrLen(rootpstate.Kywd_prog) = strlen(prog_name);
+    StrLoc(rootpstate.Kywd_prog) = prog_name;
+    rootpstate.Kywd_ran = zerodesc;
+    rootpstate.K_errornumber = 0;
+    rootpstate.T_errornumber = 0;
+    rootpstate.Have_errval = 0;
+    rootpstate.T_have_val = 0;
+    rootpstate.K_errortext = "";
+    rootpstate.K_errorvalue = nulldesc;
+    rootpstate.T_errorvalue = nulldesc;
 #ifdef PosixFns
-   rootpstate.AmperErrno = zerodesc;
+    rootpstate.AmperErrno = zerodesc;
 #endif					/* PosixFns */
 
 #ifdef Graphics
-   rootpstate.AmperX = zerodesc;
-   rootpstate.AmperY = zerodesc;
-   rootpstate.AmperRow = zerodesc;
-   rootpstate.AmperCol = zerodesc;
-   rootpstate.AmperInterval = zerodesc;
-   rootpstate.LastEventWin = nulldesc;
-   rootpstate.Kywd_xwin[XKey_Window] = nulldesc;
+    rootpstate.AmperX = zerodesc;
+    rootpstate.AmperY = zerodesc;
+    rootpstate.AmperRow = zerodesc;
+    rootpstate.AmperCol = zerodesc;
+    rootpstate.AmperInterval = zerodesc;
+    rootpstate.LastEventWin = nulldesc;
+    rootpstate.Kywd_xwin[XKey_Window] = nulldesc;
 #endif					/* Graphics */
 
-   rootpstate.Coexp_ser = 2;
-   rootpstate.List_ser  = 1;
-   rootpstate.Set_ser   = 1;
-   rootpstate.Table_ser = 1;
-   rootpstate.Kywd_time_elsewhere = 0;
-   rootpstate.Kywd_time_out = 0;
-   rootpstate.stringregion = &rootstring;
-   rootpstate.blockregion = &rootblock;
+    rootpstate.Coexp_ser = 2;
+    rootpstate.List_ser  = 1;
+    rootpstate.Set_ser   = 1;
+    rootpstate.Table_ser = 1;
+    rootpstate.Kywd_time_elsewhere = 0;
+    rootpstate.Kywd_time_out = 0;
+    rootpstate.stringregion = &rootstring;
+    rootpstate.blockregion = &rootblock;
 
-   rootpstate.Cplist = cplist_0;
-   rootpstate.Cpset = cpset_0;
-   rootpstate.Cptable = cptable_0;
-   rootpstate.EVstralc = EVStrAlc_0;
-   rootpstate.Interp = interp_0;
-   rootpstate.Cnvcset = cnv_cset_0;
-   rootpstate.Cnvint = cnv_int_0;
-   rootpstate.Cnvreal = cnv_real_0;
-   rootpstate.Cnvstr = cnv_str_0;
-   rootpstate.Cnvtcset = cnv_tcset_0;
-   rootpstate.Cnvtstr = cnv_tstr_0;
-   rootpstate.Deref = deref_0;
-   rootpstate.Alcbignum = alcbignum_0;
-   rootpstate.Alccset = alccset_0;
-   rootpstate.Alcfile = alcfile_0;
-   rootpstate.Alchash = alchash_0;
-   rootpstate.Alcsegment = alcsegment_0;
-   rootpstate.Alclist_raw = alclist_raw_0;
-   rootpstate.Alclist = alclist_0;
-   rootpstate.Alclstb = alclstb_0;
-   rootpstate.Alcreal = alcreal_0;
-   rootpstate.Alcrecd = alcrecd_0;
-   rootpstate.Alcobject = alcobject_0;
-   rootpstate.Alccast = alccast_0;
-   rootpstate.Alcmethp = alcmethp_0;
-   rootpstate.Alcrefresh = alcrefresh_0;
-   rootpstate.Alcselem = alcselem_0;
-   rootpstate.Alcstr = alcstr_0;
-   rootpstate.Alcsubs = alcsubs_0;
-   rootpstate.Alctelem = alctelem_0;
-   rootpstate.Alctvtbl = alctvtbl_0;
-   rootpstate.Deallocate = deallocate_0;
-   rootpstate.Reserve = reserve_0;
+    rootpstate.Cplist = cplist_0;
+    rootpstate.Cpset = cpset_0;
+    rootpstate.Cptable = cptable_0;
+    rootpstate.EVstralc = EVStrAlc_0;
+    rootpstate.Interp = interp_0;
+    rootpstate.Cnvcset = cnv_cset_0;
+    rootpstate.Cnvint = cnv_int_0;
+    rootpstate.Cnvreal = cnv_real_0;
+    rootpstate.Cnvstr = cnv_str_0;
+    rootpstate.Cnvtcset = cnv_tcset_0;
+    rootpstate.Cnvtstr = cnv_tstr_0;
+    rootpstate.Deref = deref_0;
+    rootpstate.Alcbignum = alcbignum_0;
+    rootpstate.Alccset = alccset_0;
+    rootpstate.Alcfile = alcfile_0;
+    rootpstate.Alchash = alchash_0;
+    rootpstate.Alcsegment = alcsegment_0;
+    rootpstate.Alclist_raw = alclist_raw_0;
+    rootpstate.Alclist = alclist_0;
+    rootpstate.Alclstb = alclstb_0;
+    rootpstate.Alcreal = alcreal_0;
+    rootpstate.Alcrecd = alcrecd_0;
+    rootpstate.Alcobject = alcobject_0;
+    rootpstate.Alccast = alccast_0;
+    rootpstate.Alcmethp = alcmethp_0;
+    rootpstate.Alcrefresh = alcrefresh_0;
+    rootpstate.Alcselem = alcselem_0;
+    rootpstate.Alcstr = alcstr_0;
+    rootpstate.Alcsubs = alcsubs_0;
+    rootpstate.Alctelem = alctelem_0;
+    rootpstate.Alctvtbl = alctvtbl_0;
+    rootpstate.Deallocate = deallocate_0;
+    rootpstate.Reserve = reserve_0;
 
-   rootstring.size = MaxStrSpace;
-   rootblock.size  = MaxAbrSize;
+    rootstring.size = MaxStrSpace;
+    rootblock.size  = MaxAbrSize;
 
-   { long l, onepercent;
-     if ((l = physicalmemorysize())) {
-	onepercent = l / 100;
-	if (rootstring.size < onepercent) rootstring.size = onepercent;
-	if (rootblock.size < onepercent) rootblock.size = onepercent;
+    { long l, onepercent;
+        if ((l = physicalmemorysize())) {
+            onepercent = l / 100;
+            if (rootstring.size < onepercent) rootstring.size = onepercent;
+            if (rootblock.size < onepercent) rootblock.size = onepercent;
 	}
-     }
+    }
 
 
-   op_tbl = (struct b_proc*)init_op_tbl;
+    op_tbl = (struct b_proc*)init_op_tbl;
 
 #ifdef Double
-   if (sizeof(struct size_dbl) != sizeof(double))
-      syserr("Icon configuration does not handle double alignment");
+    if (sizeof(struct size_dbl) != sizeof(double))
+        syserr("Icon configuration does not handle double alignment");
 #endif					/* Double */
 
 
-   /*
-    * Catch floating-point traps and memory faults.
-    */
+    /*
+     * Catch floating-point traps and memory faults.
+     */
 
 /*
  * The following code is operating-system dependent [@init.02].  Set traps.
  */
 
 #if PORT
-   /* probably needs something */
-Deliberate Syntax Error
+    /* probably needs something */
+    Deliberate Syntax Error
 #endif					/* PORT */
 
 #if MACINTOSH
 #if MPW
-   {
-      void MacInit(void);
-      void SetFloatTrap(void (*fpetrap)());
-      void fpetrap();
+    {
+        void MacInit(void);
+        void SetFloatTrap(void (*fpetrap)());
+        void fpetrap();
 
-      MacInit();
-      SetFloatTrap(fpetrap);
-   }
+        MacInit();
+        SetFloatTrap(fpetrap);
+    }
 #endif					/* MPW */
 #endif					/* MACINTOSH */
 
 #if UNIX || VMS
 /*RPP   signal(SIGSEGV, SigFncCast segvtrap); */
-   signal(SIGFPE, SigFncCast fpetrap);
+    signal(SIGFPE, SigFncCast fpetrap);
 #endif					/* UNIX || VMS */
 
 /*
@@ -529,276 +469,139 @@ Deliberate Syntax Error
  */
 
 #ifdef ExecImages
-   /*
-    * If reloading from a dumped out executable, skip most of init and
-    *  just set up the buffer for stderr and do the timing initializations.
-    */
-   if (dumped)
-      goto btinit;
+    /*
+     * If reloading from a dumped out executable, skip most of init and
+     *  just set up the buffer for stderr and do the timing initializations.
+     */
+    if (dumped)
+        goto btinit;
 #endif					/* ExecImages */
 
-   /*
-    * Initialize data that can't be initialized statically.
-    */
-   datainit();
+    /*
+     * Initialize data that can't be initialized statically.
+     */
+    datainit();
 
-#ifdef HAVE_LIBZ
-   fdname = readhdr(name,&hdr);
-   if (fdname == -1) {
-#else					/* HAVE_LIBZ */
+    name = convert_name(name);
 
-   fname = readhdr(name,&hdr);
-   if (fname == NULL) {
-#endif					/* HAVE_LIBZ */
-      error(name, "cannot open interpreter file");
+    ifile = readhdr(name, &hdr);
+    if (ifile == NULL) {
+        error(name, "cannot open interpreter file");
 
-      }
+    }
 
-   k_trace = hdr.trace;
+    k_trace = hdr.trace;
 
 
-   /*
-    * Examine the environment and make appropriate settings.    [[I?]]
-    */
-   envset();
+    /*
+     * Examine the environment and make appropriate settings.    [[I?]]
+     */
+    envset();
 
-   /*
-    * Convert stack sizes from words to bytes.
-    */
+    /*
+     * Convert stack sizes from words to bytes.
+     */
 
-   stksize *= WordSize;
-   mstksize *= WordSize;
+    stksize *= WordSize;
+    mstksize *= WordSize;
 
 #if IntBits == 16
-   if (mstksize > MaxBlock)
-      fatalerr(316, NULL);
-   if (stksize > MaxBlock)
-      fatalerr(318, NULL);
+    if (mstksize > MaxBlock)
+        fatalerr(316, NULL);
+    if (stksize > MaxBlock)
+        fatalerr(318, NULL);
 #endif					/* IntBits == 16 */
 
-   /*
-    * Allocate memory for various regions.
-    */
-   initalloc(hdr.hsize,&rootpstate);
+    /*
+     * Allocate memory for various regions.
+     */
+    initalloc(hdr.hsize,&rootpstate);
 
-   /*
-    * Establish pointers to icode data regions.		[[I?]]
-    */
-   ecode = code + hdr.ClassStatics;
-   classstatics = (dptr)(code + hdr.ClassStatics);
-   eclassstatics = (dptr)(code + hdr.ClassFields);
-   classfields = (struct class_field *)(code + hdr.ClassFields);
-   eclassfields = (struct class_field *)(code + hdr.Classes);
-   classes = (word *)(code + hdr.Classes);
-   records = (word *)(code + hdr.Records);
-   ftabp = (short *)(code + hdr.Ftab);
-   standardfields = (word *)(code + hdr.StandardFields);
-   fnames = (dptr)(code + hdr.Fnames);
-   globals = efnames = (dptr)(code + hdr.Globals);
-   gnames = eglobals = (dptr)(code + hdr.Gnames);
-   statics = egnames = (dptr)(code + hdr.Statics);
-   estatics = (dptr)(code + hdr.Filenms);
-   filenms = (struct ipc_fname *)estatics;
-   efilenms = (struct ipc_fname *)(code + hdr.linenums);
-   ilines = (struct ipc_line *)efilenms;
-   elines = (struct ipc_line *)(code + hdr.Strcons);
-   strcons = (char *)elines;
-   estrcons = (char *)(code + hdr.hsize);
-   n_globals = eglobals - globals;
-   n_statics = estatics - statics;
+    /*
+     * Establish pointers to icode data regions.		[[I?]]
+     */
+    ecode = code + hdr.ClassStatics;
+    classstatics = (dptr)(code + hdr.ClassStatics);
+    eclassstatics = (dptr)(code + hdr.ClassFields);
+    classfields = (struct class_field *)(code + hdr.ClassFields);
+    eclassfields = (struct class_field *)(code + hdr.Classes);
+    classes = (word *)(code + hdr.Classes);
+    records = (word *)(code + hdr.Records);
+    ftabp = (short *)(code + hdr.Ftab);
+    standardfields = (word *)(code + hdr.StandardFields);
+    fnames = (dptr)(code + hdr.Fnames);
+    globals = efnames = (dptr)(code + hdr.Globals);
+    gnames = eglobals = (dptr)(code + hdr.Gnames);
+    statics = egnames = (dptr)(code + hdr.Statics);
+    estatics = (dptr)(code + hdr.Filenms);
+    filenms = (struct ipc_fname *)estatics;
+    efilenms = (struct ipc_fname *)(code + hdr.linenums);
+    ilines = (struct ipc_line *)efilenms;
+    elines = (struct ipc_line *)(code + hdr.Strcons);
+    strcons = (char *)elines;
+    estrcons = (char *)(code + hdr.hsize);
+    n_globals = eglobals - globals;
+    n_statics = estatics - statics;
 
-   /*
-    * Allocate stack and initialize &main.
-    */
+    /*
+     * Allocate stack and initialize &main.
+     */
 
-   stack = (word *)malloc((msize)mstksize);
-   mainhead = (struct b_coexpr *)stack;
+    stack = (word *)malloc((msize)mstksize);
+    mainhead = (struct b_coexpr *)stack;
 
 
-   if (mainhead == NULL)
-      fatalerr(303, NULL);
+    if (mainhead == NULL)
+        fatalerr(303, NULL);
 
-   mainhead->title = T_Coexpr;
-   mainhead->id = 1;
-   mainhead->size = 1;			/* pretend main() does an activation */
-   mainhead->nextstk = NULL;
-   mainhead->es_tend = NULL;
-   mainhead->freshblk = nulldesc;	/* &main has no refresh block. */
+    mainhead->title = T_Coexpr;
+    mainhead->id = 1;
+    mainhead->size = 1;			/* pretend main() does an activation */
+    mainhead->nextstk = NULL;
+    mainhead->es_tend = NULL;
+    mainhead->freshblk = nulldesc;	/* &main has no refresh block. */
 					/*  This really is a bug. */
-   mainhead->program = &rootpstate;
+    mainhead->program = &rootpstate;
 
-   Protect(mainhead->es_actstk = alcactiv(), fatalerr(0,NULL));
-   pushact(mainhead, mainhead);
+    Protect(mainhead->es_actstk = alcactiv(), fatalerr(0,NULL));
+    pushact(mainhead, mainhead);
 
-   /*
-    * Point &main at the co-expression block for the main procedure and set
-    *  k_current, the pointer to the current co-expression, to &main.
-    */
-   k_main.dword = D_Coexpr;
-   BlkLoc(k_main) = (union block *) mainhead;
-   k_current = k_main;
-#ifdef HAVE_LIBZ
-   check_version(&hdr, name, fdname);
-#else
-   check_version(&hdr, name, fname);
-#endif
+    /*
+     * Point &main at the co-expression block for the main procedure and set
+     *  k_current, the pointer to the current co-expression, to &main.
+     */
+    k_main.dword = D_Coexpr;
+    BlkLoc(k_main) = (union block *) mainhead;
+    k_current = k_main;
+    check_version(&hdr, name, ifile);
+    read_icode(&hdr, name, ifile, code);
+    fclose(ifile);
 
-/*
- * if version says to decompress, call gzdopen and read interpretable code
- * using gzread, else... call fdopen and use following code pretty much as-is
- */
+    /*
+     * Initialize the event monitoring system, if configured.
+     */
 
-#ifdef HAVE_LIBZ
-if ((strchr((char *)(hdr.config), 'Z'))!=NULL) { /* to decompress */
-   fname= gzdopen(fdname,"r");
-   }
-else {
-   fname= fdopen(fdname,"r");
-   }
-#endif					/* HAVE_LIBZ */
+    EVInit();
 
-   /*
-    * Read the interpretable code and data into memory.
-    */
-
-#ifdef HAVE_LIBZ
- if ((strchr((char *)(hdr.config), 'Z'))!=NULL) { /* to decompress */
-
-#if OS2
-   if (use_resource) {
-	memcpy(code,icoderes+sizeof(hdr),hdr.hsize);
-	DosFreeResource(icoderes);
-	if (modhandle) DosFreeModule(modhandle);
-   }
-   else {
-       if ((cbread = gzlongread(code, sizeof(char), (long)hdr.hsize, fname)) !=
-	  hdr.hsize) {
-#ifdef PresentationManager
-	  ConsoleFlags |= OutputToBuf;
-	  fprintf(stderr, "Invalid icode file: %s.\n", name);
-	  fprintf(stderr,"Could only read %ld (of %ld) bytes of code.\n",
-		  (long)cbread, (long)hdr.hsize);
-	  error(NULL, NULL);
-#else					/* PresentationManager */
-	  fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-	    (long)hdr.hsize,(long)cbread);
-	  error(name, "bad icode file");
-#endif					/* PresentationManager */
-	  }
-       gzclose(fname);
-       }
-#else					/* OS2 */
-   if ((cbread = gzlongread(code, sizeof(char), (long)hdr.hsize, fname)) !=
-      hdr.hsize) {
-      fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-	(long)hdr.hsize,(long)cbread);
-      error(name, "bad icode file");
-      }
-   gzclose(fname);
-#endif					/* OS2 */
-  }
-  else  {        /* Don't need to decompress */
-
-#if OS2
-   if (use_resource) {
-	memcpy(code,icoderes+sizeof(hdr),hdr.hsize);
-	DosFreeResource(icoderes);
-	if (modhandle) DosFreeModule(modhandle);
-   }
-   else {
-      if ((cbread = longread(code, sizeof(char), (long)hdr.hsize, fname)) !=
-	  hdr.hsize) {
-#ifdef PresentationManager
-	  ConsoleFlags |= OutputToBuf;
-	  fprintf(stderr, "Invalid icode file: %s.\n", name);
-	  fprintf(stderr,"Could only read %ld (of %ld) bytes of code.\n",
-		  (long)cbread, (long)hdr.hsize);
-	  error(NULL, NULL);
-#else					/* PresentationManager */
-	  fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-	    (long)hdr.hsize,(long)cbread);
-	  error(name, "bad icode file");
-#endif					/* PresentationManager */
-	  }
-       fclose(fname);
-   }
-#else					/* OS2 */
-   if ((cbread = longread(code, sizeof(char), (long)hdr.hsize, fname)) !=
-      hdr.hsize) {
-      fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-	(long)hdr.hsize,(long)cbread);
-      error(name, "bad icode file");
-      }
-   fclose(fname);
-#endif					/* OS2 */
-}
-  
-#else					/* HAVE_LIBZ */
-
-#if OS2
-   if (use_resource) {
-	memcpy(code,icoderes+sizeof(hdr),hdr.hsize);
-	DosFreeResource(icoderes);
-	if (modhandle) DosFreeModule(modhandle);
-   }
-   else {
-      if ((cbread = longread(code, sizeof(char), (long)hdr.hsize, fname)) !=
-	  hdr.hsize) {
-#ifdef PresentationManager
-	  ConsoleFlags |= OutputToBuf;
-	  fprintf(stderr, "Invalid icode file: %s.\n", name);
-	  fprintf(stderr,"Could only read %ld (of %ld) bytes of code.\n",
-		  (long)cbread, (long)hdr.hsize);
-	  error(NULL, NULL);
-#else					/* PresentationManager */
-	  fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-	    (long)hdr.hsize,(long)cbread);
-	  error(name, "bad icode file");
-#endif					/* PresentationManager */
-	  }
-       fclose(fname);
-   }
-#else					/* OS2 */
-   if ((cbread = longread(code, sizeof(char), (long)hdr.hsize, fname)) !=
-      hdr.hsize) {
-      fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-	(long)hdr.hsize,(long)cbread);
-      error(name, "bad icode file");
-      }
-   fclose(fname);
-#endif					/* OS2 */
-
-#endif					/* HAVE_LIBZ */
-  
-
-
-   /*
-    * Initialize the event monitoring system, if configured.
-    */
-
-   EVInit();
-
-/* this is the end of yonggang's compressed icode else-branch ! */
-
-   /*
-    * Check command line for redirected standard I/O.
-    *  Assign a channel to the terminal if KeyboardFncs are enabled on VMS.
-    */
+    /*
+     * Check command line for redirected standard I/O.
+     *  Assign a channel to the terminal if KeyboardFncs are enabled on VMS.
+     */
 
 #if VMS
-   redirect(argcp, argv, 0);
+    redirect(argcp, argv, 0);
 #ifdef KeyboardFncs
-   assign_channel_to_terminal();
+    assign_channel_to_terminal();
 #endif					/* KeyboardFncs */
 #endif					/* VMS */
 
-   /*
-    * Resolve references from icode to run-time system.
-    */
-   resolve(NULL);
+    /*
+     * Resolve references from icode to run-time system.
+     */
+    resolve(NULL);
 
 #ifdef ExecImages
-btinit:
+  btinit:
 #endif					/* ExecImages */
 
 /*
@@ -807,41 +610,37 @@ btinit:
  */
 
 #if PORT
-   /* probably nothing */
-Deliberate Syntax Error
+    /* probably nothing */
+    Deliberate Syntax Error
 #endif					/* PORT */
-
-#if AMIGA || MVS || VM
-   /* not done */
-#endif					/* AMIGA */
 
 #if ARM || MACINTOSH || UNIX || OS2 || VMS
 
 
-   if (noerrbuf)
-      setbuf(stderr, NULL);
-   else {
-      char *buf;
+        if (noerrbuf)
+            setbuf(stderr, NULL);
+        else {
+            char *buf;
 
-      buf = (char *)malloc((msize)BUFSIZ);
-      if (buf == NULL)
-	 fatalerr(305, NULL);
-      setbuf(stderr, buf);
-      }
+            buf = (char *)malloc((msize)BUFSIZ);
+            if (buf == NULL)
+                fatalerr(305, NULL);
+            setbuf(stderr, buf);
+        }
 #endif					/* ARM || MACINTOSH ... */
 
 #if MSWindows
 #if !HIGHC_386
-   if (noerrbuf)
-      setbuf(stderr, NULL);
-   else {
+    if (noerrbuf)
+        setbuf(stderr, NULL);
+    else {
 #ifndef MSWindows
-      char *buf = (char *)malloc((msize)BUFSIZ);
-      if (buf == NULL)
-	 fatalerr(305, NULL);
-      setbuf(stderr, buf);
+        char *buf = (char *)malloc((msize)BUFSIZ);
+        if (buf == NULL)
+            fatalerr(305, NULL);
+        setbuf(stderr, buf);
 #endif					/* MSWindows */
-      }
+    }
 #endif					/* !HIGHC_386 */
 #endif					/* MSWindows */
 
@@ -849,11 +648,11 @@ Deliberate Syntax Error
  * End of operating-system specific code.
  */
 
-   /*
-    * Start timing execution.
-    */
-   millisec();
-   }
+    /*
+     * Start timing execution.
+     */
+    millisec();
+}
 
 /*
  * Service routines related to getting things started.
@@ -865,23 +664,23 @@ Deliberate Syntax Error
  *  values as is appropriate.
  */
 void envset()
-   {
-   register char *p;
+{
+    register char *p;
 
-   if ((p = getenv("NOERRBUF")) != NULL)
-      noerrbuf++;
-   env_int(TRACE, &k_trace, 0, (uword)0);
-   env_int(COEXPSIZE, &stksize, 1, (uword)MaxUnsigned);
-   env_int(STRSIZE, &ssize, 1, (uword)MaxBlock);
-   env_int(HEAPSIZE, &abrsize, 1, (uword)MaxBlock);
+    if ((p = getenv("NOERRBUF")) != NULL)
+        noerrbuf++;
+    env_int(TRACE, &k_trace, 0, (uword)0);
+    env_int(COEXPSIZE, &stksize, 1, (uword)MaxUnsigned);
+    env_int(STRSIZE, &ssize, 1, (uword)MaxBlock);
+    env_int(HEAPSIZE, &abrsize, 1, (uword)MaxBlock);
 #ifndef BSD_4_4_LITE
-   env_int(BLOCKSIZE, &abrsize, 1, (uword)MaxBlock);    /* synonym */
+    env_int(BLOCKSIZE, &abrsize, 1, (uword)MaxBlock);    /* synonym */
 #endif					/* BSD_4_4_LITE */
-   env_int(BLKSIZE, &abrsize, 1, (uword)MaxBlock);      /* synonym */
-   env_int(MSTKSIZE, &mstksize, 1, (uword)MaxUnsigned);
-   env_int(QLSIZE, &qualsize, 1, (uword)MaxBlock);
-   env_int("IXCUSHION", &memcushion, 1, (uword)100);	/* max 100 % */
-   env_int("IXGROWTH", &memgrowth, 1, (uword)10000);	/* max 100x growth */
+    env_int(BLKSIZE, &abrsize, 1, (uword)MaxBlock);      /* synonym */
+    env_int(MSTKSIZE, &mstksize, 1, (uword)MaxUnsigned);
+    env_int(QLSIZE, &qualsize, 1, (uword)MaxBlock);
+    env_int("IXCUSHION", &memcushion, 1, (uword)100);	/* max 100 % */
+    env_int("IXGROWTH", &memgrowth, 1, (uword)10000);	/* max 100x growth */
 
 /*
  * The following code is operating-system dependent [@init.04].  Check any
@@ -889,27 +688,15 @@ void envset()
  */
 
 #if PORT
-   /* nothing to do */
-Deliberate Syntax Error
+    /* nothing to do */
+    Deliberate Syntax Error
 #endif					/* PORT */
-
-#if AMIGA
-   if ((p = getenv("CHECKBREAK")) != NULL)
-      chkbreak++;
-   if (WBstrsize != 0 && WBstrsize <= MaxBlock) ssize = WBstrsize;
-   if (WBblksize != 0 && WBblksize <= MaxBlock) abrsize = WBblksize;
-   if (WBmstksize != 0 && WBmstksize <= (uword) MaxUnsigned) mstksize = WBmstksize; 
-#endif					/* AMIGA */
-
-#if ARM || MACINTOSH || MSWindows || MVS || OS2 || UNIX || VM || VMS
-   /* nothing to do */
-#endif					/* ARM || ... */
 
 /*
  * End of operating-system specific code.
  */
 
-   if ((p = getenv(ICONCORE)) != NULL && *p != '\0') {
+    if ((p = getenv(ICONCORE)) != NULL && *p != '\0') {
 
 /*
  * The following code is operating-system dependent [@init.05].  Set trap to
@@ -917,98 +704,79 @@ Deliberate Syntax Error
  */
 
 #if PORT
-   /* can't handle */
-Deliberate Syntax Error
+        /* can't handle */
+        Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || MACINTOSH
-   /* can't handle */
-#endif					/* AMIGA || ... */
-
-#if ARM || OS2
-      signal(SIGSEGV, SIG_DFL);
-      signal(SIGFPE, SIG_DFL);
-#endif					/* ARM || OS2 */
-
-#if MSWindows
-#if TURBO || BORLAND_386
-      signal(SIGFPE, SIG_DFL);
-#endif					/* TURBO || BORLAND_386 */
-#endif					/* MSWindows */
-
-#if MVS || VM
-      /* Really nothing to do. */
-#endif					/* MVS || VM */
-
 #if UNIX || VMS
-      signal(SIGSEGV, SIG_DFL);
+        signal(SIGSEGV, SIG_DFL);
 #endif					/* UNIX || VMS */
 
 /*
  * End of operating-system specific code.
  */
-      dodump++;
-      }
-   }
+        dodump++;
+    }
+}
 
 /*
  * env_err - print an error mesage about the value of an environment
  *  variable.
  */
 static void env_err(msg, name, val)
-char *msg;
-char *name;
-char *val;
+    char *msg;
+    char *name;
+    char *val;
 {
-   char msg_buf[100];
+    char msg_buf[100];
 
-   strncpy(msg_buf, msg, 99);
-   strncat(msg_buf, ": ", 99 - (int)strlen(msg_buf));
-   strncat(msg_buf, name, 99 - (int)strlen(msg_buf));
-   strncat(msg_buf, "=", 99 - (int)strlen(msg_buf));
-   strncat(msg_buf, val, 99 - (int)strlen(msg_buf));
-   error("", msg_buf);
+    strncpy(msg_buf, msg, 99);
+    strncat(msg_buf, ": ", 99 - (int)strlen(msg_buf));
+    strncat(msg_buf, name, 99 - (int)strlen(msg_buf));
+    strncat(msg_buf, "=", 99 - (int)strlen(msg_buf));
+    strncat(msg_buf, val, 99 - (int)strlen(msg_buf));
+    error("", msg_buf);
 }
 
 /*
  * env_int - get the value of an integer-valued environment variable.
  */
 void env_int(name, variable, non_neg, limit)
-char *name;
-word *variable;
-int non_neg;
-uword limit;
+    char *name;
+    word *variable;
+    int non_neg;
+    uword limit;
 {
-   char *value;
-   char *s;
-   register uword n = 0;
-   register uword d;
-   int sign = 1;
+    char *value;
+    char *s;
+    register uword n = 0;
+    register uword d;
+    int sign = 1;
 
-   if ((value = getenv(name)) == NULL || *value == '\0')
-      return;
+    if ((value = getenv(name)) == NULL || *value == '\0')
+        return;
 
-   s = value;
-   if (*s == '-') {
-      if (non_neg)
-	 env_err("environment variable out of range", name, value);
-      sign = -1;
-      ++s;
-      }
-   else if (*s == '+')
-      ++s;
-   while (isdigit(*s)) {
-      d = *s++ - '0';
-      /*
-       * See if 10 * n + d > limit, but do it so there can be no overflow.
-       */
-      if ((d > (uword)(limit / 10 - n) * 10 + limit % 10) && (limit > 0))
-	 env_err("environment variable out of range", name, value);
-      n = n * 10 + d;
-      }
-   if (*s != '\0')
-      env_err("environment variable not numeric", name, value);
-   *variable = sign * n;
+    s = value;
+    if (*s == '-') {
+        if (non_neg)
+            env_err("environment variable out of range", name, value);
+        sign = -1;
+        ++s;
+    }
+    else if (*s == '+')
+        ++s;
+    while (isdigit(*s)) {
+        d = *s++ - '0';
+        /*
+         * See if 10 * n + d > limit, but do it so there can be no overflow.
+         */
+        if ((d > (uword)(limit / 10 - n) * 10 + limit % 10) && (limit > 0))
+            env_err("environment variable out of range", name, value);
+        n = n * 10 + d;
+    }
+    if (*s != '\0')
+        env_err("environment variable not numeric", name, value);
+    *variable = sign * n;
 }
 
 /*
@@ -1020,189 +788,189 @@ uword limit;
  */
 
 void fpetrap()
-   {
-   fatalerr(204, NULL);
-   }
+{
+    fatalerr(204, NULL);
+}
 
 /*
  * Produce run-time error 320 on ^C interrupts. Not used at present,
  *  since malfunction may occur during traceback.
  */
 void inttrap()
-   {
-   fatalerr(320, NULL);
-   }
+{
+    fatalerr(320, NULL);
+}
 
 /*
  * Produce run-time error 302 on segmentation faults.
  */
 void segvtrap()
-   {
-   static int n = 0;
+{
+    static int n = 0;
 
-   if (n != 0) {			/* only try traceback once */
-      fprintf(stderr, "[Traceback failed]\n");
-      exit(1);
-      }
-   n++;
+    if (n != 0) {			/* only try traceback once */
+        fprintf(stderr, "[Traceback failed]\n");
+        exit(1);
+    }
+    n++;
 
 #if MVS || VM
 #if SASC
-   btrace(0);
+    btrace(0);
 #endif					/* SASC */
 #endif					/* MVS || VM */
 
-   fatalerr(302, NULL);
-   }
+    fatalerr(302, NULL);
+}
 
 /*
  * error - print error message from s1 and s2; used only in startup code.
  */
 void error(s1, s2)
-char *s1, *s2;
-   {
+    char *s1, *s2;
+{
 
 #ifdef PresentationManager
-   ConsoleFlags |= OutputToBuf;
-   if (!s1 && s2)
-      fprintf(stderr, s2);
-   else if (s1 && s2)
-      fprintf(stderr, "%s: %s\n", s1, s2);
+    ConsoleFlags |= OutputToBuf;
+    if (!s1 && s2)
+        fprintf(stderr, s2);
+    else if (s1 && s2)
+        fprintf(stderr, "%s: %s\n", s1, s2);
 #else					/* PresentationManager */
-   if (!s1)
-      fprintf(stderr, "error in startup code\n%s\n", s2);
-   else
-      fprintf(stderr, "error in startup code\n%s: %s\n", s1, s2);
+    if (!s1)
+        fprintf(stderr, "error in startup code\n%s\n", s2);
+    else
+        fprintf(stderr, "error in startup code\n%s: %s\n", s1, s2);
 #endif					/* PresentationManager */
 
-   fflush(stderr);
+    fflush(stderr);
 
 #ifdef PresentationManager
-   /* bring up the message box to display the error we constructed */
-   WinMessageBox(HWND_DESKTOP, HWND_DESKTOP, ConsoleStringBuf,
-		"Icon Runtime Initialization", 0,
-		MB_OK|MB_ICONHAND|MB_MOVEABLE);
+    /* bring up the message box to display the error we constructed */
+    WinMessageBox(HWND_DESKTOP, HWND_DESKTOP, ConsoleStringBuf,
+                  "Icon Runtime Initialization", 0,
+                  MB_OK|MB_ICONHAND|MB_MOVEABLE);
 #endif					/* PresentationManager */
 
-   if (dodump)
-      abort();
-   c_exit(EXIT_FAILURE);
-   }
+    if (dodump)
+        abort();
+    c_exit(EXIT_FAILURE);
+}
 
 /*
  * syserr - print s as a system error.
  */
 void syserr(s)
-char *s;
-   {
+    char *s;
+{
 
 
 #ifdef PresentationManager
-   ConsoleFlags |= OutputToBuf;
+    ConsoleFlags |= OutputToBuf;
 #endif					/* PresentationManager */
-   fprintf(stderr, "System error");
-   if (pfp == NULL)
-      fprintf(stderr, " in startup code");
-   else {
-      fprintf(stderr, " at line %ld in %s", (long)findline(ipc.opnd),
-	 findfile(ipc.opnd));
-      }
-  fprintf(stderr, "\n%s\n", s);
+    fprintf(stderr, "System error");
+    if (pfp == NULL)
+        fprintf(stderr, " in startup code");
+    else {
+        fprintf(stderr, " at line %ld in %s", (long)findline(ipc.opnd),
+                findfile(ipc.opnd));
+    }
+    fprintf(stderr, "\n%s\n", s);
 #ifdef PresentationManager
-  error(NULL, NULL);
+    error(NULL, NULL);
 #endif					/* PresentationManager */
 
-   fflush(stderr);
-   if (dodump)
-      abort();
-   c_exit(EXIT_FAILURE);
-   }
+    fflush(stderr);
+    if (dodump)
+        abort();
+    c_exit(EXIT_FAILURE);
+}
 
 
 /*
  * c_exit(i) - flush all buffers and exit with status i.
  */
 void c_exit(i)
-int i;
+    int i;
 {
 
 
 #if E_Exit
-   if (curpstate != NULL)
-      EVVal((word)i, E_Exit);
+    if (curpstate != NULL)
+        EVVal((word)i, E_Exit);
 #endif					/* E_Exit */
-   if (curpstate != NULL && curpstate->parent != NULL) {
-      /* might want to get to the lterm somehow, instead */
-      while (0&&(struct b_coexpr*)BlkLoc(k_current) != curpstate->parent->Mainhead) {
-	 struct descrip dummy;
-	 co_chng(curpstate->parent->Mainhead, NULL, &dummy, A_Cofail, 1);
-	 }
-      }
+    if (curpstate != NULL && curpstate->parent != NULL) {
+        /* might want to get to the lterm somehow, instead */
+        while (0&&(struct b_coexpr*)BlkLoc(k_current) != curpstate->parent->Mainhead) {
+            struct descrip dummy;
+            co_chng(curpstate->parent->Mainhead, NULL, &dummy, A_Cofail, 1);
+        }
+    }
 
 #ifdef TallyOpt
-   {
-   int j;
+    {
+        int j;
 
-   if (tallyopt) {
-      fprintf(stderr,"tallies: ");
-      for (j=0; j<16; j++)
-	 fprintf(stderr," %ld", (long)tallybin[j]);
-	 fprintf(stderr,"\n");
-	 }
-      }
+        if (tallyopt) {
+            fprintf(stderr,"tallies: ");
+            for (j=0; j<16; j++)
+                fprintf(stderr," %ld", (long)tallybin[j]);
+            fprintf(stderr,"\n");
+        }
+    }
 #endif					/* TallyOpt */
 
-   if (k_dump && set_up) {
-      fprintf(stderr,"\nTermination dump:\n\n");
-      fflush(stderr);
-       fprintf(stderr,"co-expression #%ld(%ld)\n",
-	 (long)BlkLoc(k_current)->coexpr.id,
-	 (long)BlkLoc(k_current)->coexpr.size);
-      fflush(stderr);
-      xdisp(pfp,glbl_argp,k_level,stderr);
-      }
+    if (k_dump && set_up) {
+        fprintf(stderr,"\nTermination dump:\n\n");
+        fflush(stderr);
+        fprintf(stderr,"co-expression #%ld(%ld)\n",
+                (long)BlkLoc(k_current)->coexpr.id,
+                (long)BlkLoc(k_current)->coexpr.size);
+        fflush(stderr);
+        xdisp(pfp,glbl_argp,k_level,stderr);
+    }
 
 
 #if MSWindows /* add others who need to free their resources here */
-   /*
-    * free dynamic record types
-    */
-   if(dr_arrays) {
-      int i, j;
-      struct b_proc_list *bpelem, *to_free;
-      for(i=0;i<longest_dr;i++) {
-         if (dr_arrays[i] != NULL) {
-	    for(bpelem = dr_arrays[i]; bpelem; ) {
-	       free(StrLoc(bpelem->this->recname));
-	       for(j=0;j<bpelem->this->nparam;j++)
-	          free(StrLoc(bpelem->this->lnames[j]));
-	       free(bpelem->this);
-	       to_free = bpelem;
-	       bpelem = bpelem->next;
-	       free(to_free);
-               }
+    /*
+     * free dynamic record types
+     */
+    if(dr_arrays) {
+        int i, j;
+        struct b_proc_list *bpelem, *to_free;
+        for(i=0;i<longest_dr;i++) {
+            if (dr_arrays[i] != NULL) {
+                for(bpelem = dr_arrays[i]; bpelem; ) {
+                    free(StrLoc(bpelem->this->recname));
+                    for(j=0;j<bpelem->this->nparam;j++)
+                        free(StrLoc(bpelem->this->lnames[j]));
+                    free(bpelem->this);
+                    to_free = bpelem;
+                    bpelem = bpelem->next;
+                    free(to_free);
+                }
             }
-         }
-      free(dr_arrays);
-      }
+        }
+        free(dr_arrays);
+    }
 #endif
 
 #ifdef MSWindows
-   PostQuitMessage(0);
-   while (wstates != NULL) pollevent();
+    PostQuitMessage(0);
+    while (wstates != NULL) pollevent();
 #endif					/* MSWindows */
 
 #if TURBO || BORLAND_386
-   flushall();
-   _exit(i);
+    flushall();
+    _exit(i);
 #else					/* TURBO || BORLAND_386 */
 #ifdef PresentationManager
-   /* tell thread 1 to shut down */
-   WinPostQueueMsg(HMainMessageQueue, WM_QUIT, (MPARAM)0, (MPARAM)0);
-   /* bye, bye */
-   InterpThreadShutdown();
+    /* tell thread 1 to shut down */
+    WinPostQueueMsg(HMainMessageQueue, WM_QUIT, (MPARAM)0, (MPARAM)0);
+    /* bye, bye */
+    InterpThreadShutdown();
 #else					/* PresentationManager */
-   exit(i);
+    exit(i);
 #endif					/* PresentationManager */
 #endif					/* TURBO || BORLAND_386 */
 
@@ -1216,118 +984,118 @@ int i;
  */
 int err()
 {
-   syserr("call to 'err'\n");
-   return 1;		/* unreachable; make compilers happy */
+    syserr("call to 'err'\n");
+    return 1;		/* unreachable; make compilers happy */
 }
 
 /*
  * fatalerr - disable error conversion and call run-time error routine.
  */
 void fatalerr(n, v)
-int n;
-dptr v;
-   {
-   IntVal(kywd_err) = 0;
-   err_msg(n, v);
-   }
+    int n;
+    dptr v;
+{
+    IntVal(kywd_err) = 0;
+    err_msg(n, v);
+}
 
 /*
  * pstrnmcmp - compare names in two pstrnm structs; used for qsort.
  */
 int pstrnmcmp(a,b)
-struct pstrnm *a, *b;
+    struct pstrnm *a, *b;
 {
-  return strcmp(a->pstrep, b->pstrep);
+    return strcmp(a->pstrep, b->pstrep);
 }
 
 /*
  * datainit - initialize some global variables.
  */
 void datainit()
-   {
+{
 #ifdef MSWindows
-   extern FILE *finredir, *fouredir, *ferredir;
+    extern FILE *finredir, *fouredir, *ferredir;
 #endif					/* MSWindows */
 
-   /*
-    * Initializations that cannot be performed statically (at least for
-    * some compilers).					[[I?]]
-    */
+    /*
+     * Initializations that cannot be performed statically (at least for
+     * some compilers).					[[I?]]
+     */
 
-   k_errout.title = T_File;
-   k_input.title = T_File;
-   k_output.title = T_File;
-
-#ifdef MSWindows
-   if (ferredir != NULL)
-      k_errout.fd.fp = ferredir;
-   else
-#endif					/* MSWindows */
-   k_errout.fd.fp = stderr;
-   StrLen(k_errout.fname) = 7;
-   StrLoc(k_errout.fname) = "&errout";
-      k_errout.status = Fs_Write;
+    k_errout.title = T_File;
+    k_input.title = T_File;
+    k_output.title = T_File;
 
 #ifdef MSWindows
-   if (finredir != NULL)
-      k_input.fd.fp = finredir;
-   else
+    if (ferredir != NULL)
+        k_errout.fd.fp = ferredir;
+    else
 #endif					/* MSWindows */
-   if (k_input.fd.fp == NULL)
-      k_input.fd.fp = stdin;
-   StrLen(k_input.fname) = 6;
-   StrLoc(k_input.fname) = "&input";
-      k_input.status = Fs_Read;
+        k_errout.fd.fp = stderr;
+    StrLen(k_errout.fname) = 7;
+    StrLoc(k_errout.fname) = "&errout";
+    k_errout.status = Fs_Write;
 
 #ifdef MSWindows
-   if (fouredir != NULL)
-      k_output.fd.fp = fouredir;
-   else
+    if (finredir != NULL)
+        k_input.fd.fp = finredir;
+    else
 #endif					/* MSWindows */
-   if (k_output.fd.fp == NULL)
-      k_output.fd.fp = stdout;
-   StrLen(k_output.fname) = 7;
-   StrLoc(k_output.fname) = "&output";
-      k_output.status = Fs_Write;
+        if (k_input.fd.fp == NULL)
+            k_input.fd.fp = stdin;
+    StrLen(k_input.fname) = 6;
+    StrLoc(k_input.fname) = "&input";
+    k_input.status = Fs_Read;
 
-   IntVal(kywd_pos) = 1;
-   IntVal(kywd_ran) = 0;
-   StrLen(kywd_prog) = strlen(prog_name);
-   StrLoc(kywd_prog) = prog_name;
-   StrLen(k_subject) = 0;
-   StrLoc(k_subject) = "";
+#ifdef MSWindows
+    if (fouredir != NULL)
+        k_output.fd.fp = fouredir;
+    else
+#endif					/* MSWindows */
+        if (k_output.fd.fp == NULL)
+            k_output.fd.fp = stdout;
+    StrLen(k_output.fname) = 7;
+    StrLoc(k_output.fname) = "&output";
+    k_output.status = Fs_Write;
 
-
-   StrLen(blank) = 1;
-   StrLoc(blank) = " ";
-   StrLen(emptystr) = 0;
-   StrLoc(emptystr) = "";
-   BlkLoc(nullptr) = (union block *)NULL;
-   StrLen(lcase) = 26;
-   StrLoc(lcase) = "abcdefghijklmnopqrstuvwxyz";
-   StrLen(letr) = 1;
-   StrLoc(letr) = "r";
-   IntVal(nulldesc) = 0;
-   k_errorvalue = nulldesc;
-   IntVal(onedesc) = 1;
-   StrLen(ucase) = 26;
-   StrLoc(ucase) = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-   IntVal(zerodesc) = 0;
-
-   /*
-    *  Initialization needed for event monitoring
-    */
-   BlkLoc(csetdesc) = (union block *)&fullcs;
-   BlkLoc(rzerodesc) = (union block *)&realzero;
-
-   maps2 = nulldesc;
-   maps3 = nulldesc;
-
-   qsort((char *)pntab, pnsize, sizeof(struct pstrnm),
-	 (QSortFncCast)pstrnmcmp);
+    IntVal(kywd_pos) = 1;
+    IntVal(kywd_ran) = 0;
+    StrLen(kywd_prog) = strlen(prog_name);
+    StrLoc(kywd_prog) = prog_name;
+    StrLen(k_subject) = 0;
+    StrLoc(k_subject) = "";
 
 
-   }
+    StrLen(blank) = 1;
+    StrLoc(blank) = " ";
+    StrLen(emptystr) = 0;
+    StrLoc(emptystr) = "";
+    BlkLoc(nullptr) = (union block *)NULL;
+    StrLen(lcase) = 26;
+    StrLoc(lcase) = "abcdefghijklmnopqrstuvwxyz";
+    StrLen(letr) = 1;
+    StrLoc(letr) = "r";
+    IntVal(nulldesc) = 0;
+    k_errorvalue = nulldesc;
+    IntVal(onedesc) = 1;
+    StrLen(ucase) = 26;
+    StrLoc(ucase) = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    IntVal(zerodesc) = 0;
+
+    /*
+     *  Initialization needed for event monitoring
+     */
+    BlkLoc(csetdesc) = (union block *)&fullcs;
+    BlkLoc(rzerodesc) = (union block *)&realzero;
+
+    maps2 = nulldesc;
+    maps3 = nulldesc;
+
+    qsort((char *)pntab, pnsize, sizeof(struct pstrnm),
+          (QSortFncCast)pstrnmcmp);
+
+
+}
 
 
 /*
@@ -1338,257 +1106,210 @@ void datainit()
 struct b_coexpr *initprogram(word icodesize, word stacksize,
 			     word stringsiz, word blocksiz)
 {
-   struct b_coexpr *coexp = alccoexp(icodesize, stacksize);
-   struct progstate *pstate = NULL;
-   if (coexp == NULL) return NULL;
-   pstate = coexp->program;
-   /*
-    * Initialize values.
-    */
-   pstate->hsize = icodesize;
-   pstate->parent= NULL;
-   pstate->next = progs;
-   progs = pstate;
-   pstate->parentdesc= nulldesc;
-   pstate->eventmask= nulldesc;
-   pstate->opcodemask= nulldesc;
-   pstate->eventcount = zerodesc;
-   pstate->valuemask= nulldesc;
-   pstate->eventcode= nulldesc;
-   pstate->eventval = nulldesc;
-   pstate->eventsource = nulldesc;
-   pstate->Glbl_argp = NULL;
-   pstate->Kywd_err = zerodesc;
-   pstate->Kywd_pos = onedesc;
-   StrLen(pstate->ksub) = 0;
-   StrLoc(pstate->ksub) = "";
-   pstate->Kywd_ran = zerodesc;
-   pstate->Line_num = pstate->Column = pstate->Lastline = pstate->Lastcol = 0;
-   pstate->Lastop = 0;
-   pstate->Xargp = NULL;
-   pstate->Xnargs = 0;
-   pstate->K_errornumber = 0;
-   pstate->T_errornumber = 0;
-   pstate->Have_errval = 0;
-   pstate->T_have_val = 0;
-   pstate->K_errortext = "";
-   pstate->K_errorvalue = nulldesc;
-   pstate->T_errorvalue = nulldesc;
-   pstate->Kywd_time_elsewhere = millisec();
-   pstate->Kywd_time_out = 0;
-   pstate->Mainhead= ((struct b_coexpr *)pstate)-1;
-   pstate->K_main.dword = D_Coexpr;
-   BlkLoc(pstate->K_main) = (union block *) pstate->Mainhead;
+    struct b_coexpr *coexp = alccoexp(icodesize, stacksize);
+    struct progstate *pstate = NULL;
+    if (coexp == NULL) return NULL;
+    pstate = coexp->program;
+    /*
+     * Initialize values.
+     */
+    pstate->hsize = icodesize;
+    pstate->parent= NULL;
+    pstate->next = progs;
+    progs = pstate;
+    pstate->parentdesc= nulldesc;
+    pstate->eventmask= nulldesc;
+    pstate->opcodemask= nulldesc;
+    pstate->eventcount = zerodesc;
+    pstate->valuemask= nulldesc;
+    pstate->eventcode= nulldesc;
+    pstate->eventval = nulldesc;
+    pstate->eventsource = nulldesc;
+    pstate->Glbl_argp = NULL;
+    pstate->Kywd_err = zerodesc;
+    pstate->Kywd_pos = onedesc;
+    StrLen(pstate->ksub) = 0;
+    StrLoc(pstate->ksub) = "";
+    pstate->Kywd_ran = zerodesc;
+    pstate->Line_num = pstate->Column = pstate->Lastline = pstate->Lastcol = 0;
+    pstate->Lastop = 0;
+    pstate->Xargp = NULL;
+    pstate->Xnargs = 0;
+    pstate->K_errornumber = 0;
+    pstate->T_errornumber = 0;
+    pstate->Have_errval = 0;
+    pstate->T_have_val = 0;
+    pstate->K_errortext = "";
+    pstate->K_errorvalue = nulldesc;
+    pstate->T_errorvalue = nulldesc;
+    pstate->Kywd_time_elsewhere = millisec();
+    pstate->Kywd_time_out = 0;
+    pstate->Mainhead= ((struct b_coexpr *)pstate)-1;
+    pstate->K_main.dword = D_Coexpr;
+    BlkLoc(pstate->K_main) = (union block *) pstate->Mainhead;
 
 #ifdef Graphics
-   pstate->AmperX = zerodesc;
-   pstate->AmperY = zerodesc;
-   pstate->AmperRow = zerodesc;
-   pstate->AmperCol = zerodesc;
-   pstate->AmperInterval = zerodesc;
-   pstate->LastEventWin = nulldesc;
-   pstate->Kywd_xwin[XKey_Window] = nulldesc;
+    pstate->AmperX = zerodesc;
+    pstate->AmperY = zerodesc;
+    pstate->AmperRow = zerodesc;
+    pstate->AmperCol = zerodesc;
+    pstate->AmperInterval = zerodesc;
+    pstate->LastEventWin = nulldesc;
+    pstate->Kywd_xwin[XKey_Window] = nulldesc;
 #endif					/* Graphics */
 
-   pstate->Coexp_ser = 2;
-   pstate->List_ser = 1;
-   pstate->Set_ser = 1;
-   pstate->Table_ser = 1;
+    pstate->Coexp_ser = 2;
+    pstate->List_ser = 1;
+    pstate->Set_ser = 1;
+    pstate->Table_ser = 1;
 
-   pstate->stringtotal = pstate->blocktotal =
-   pstate->colltot     = pstate->collstat   =
-   pstate->collstr     = pstate->collblk    = 0;
+    pstate->stringtotal = pstate->blocktotal =
+        pstate->colltot     = pstate->collstat   =
+        pstate->collstr     = pstate->collblk    = 0;
 
-   pstate->stringregion = (struct region *)malloc(sizeof(struct region));
-   pstate->blockregion  = (struct region *)malloc(sizeof(struct region));
-   pstate->stringregion->size = stringsiz;
-   pstate->blockregion->size = blocksiz;
+    pstate->stringregion = (struct region *)malloc(sizeof(struct region));
+    pstate->blockregion  = (struct region *)malloc(sizeof(struct region));
+    pstate->stringregion->size = stringsiz;
+    pstate->blockregion->size = blocksiz;
 
-   /*
-    * the local program region list starts out with this region only
-    */
-   pstate->stringregion->prev = NULL;
-   pstate->blockregion->prev = NULL;
-   pstate->stringregion->next = NULL;
-   pstate->blockregion->next = NULL;
-   /*
-    * the global region list links this region with curpstate's
-    */
-   pstate->stringregion->Gprev = curpstate->stringregion;
-   pstate->blockregion->Gprev = curpstate->blockregion;
-   pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
-   pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
-   if (curpstate->stringregion->Gnext)
-      curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
-   curpstate->stringregion->Gnext = pstate->stringregion;
-   if (curpstate->blockregion->Gnext)
-      curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
-   curpstate->blockregion->Gnext = pstate->blockregion;
-   initalloc(0, pstate);
+    /*
+     * the local program region list starts out with this region only
+     */
+    pstate->stringregion->prev = NULL;
+    pstate->blockregion->prev = NULL;
+    pstate->stringregion->next = NULL;
+    pstate->blockregion->next = NULL;
+    /*
+     * the global region list links this region with curpstate's
+     */
+    pstate->stringregion->Gprev = curpstate->stringregion;
+    pstate->blockregion->Gprev = curpstate->blockregion;
+    pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
+    pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
+    if (curpstate->stringregion->Gnext)
+        curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
+    curpstate->stringregion->Gnext = pstate->stringregion;
+    if (curpstate->blockregion->Gnext)
+        curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
+    curpstate->blockregion->Gnext = pstate->blockregion;
+    initalloc(0, pstate);
 
-   pstate->Cplist = cplist_0;
-   pstate->Cpset = cpset_0;
-   pstate->Cptable = cptable_0;
-   pstate->EVstralc = EVStrAlc_0;
-   pstate->Interp = interp_0;
-   pstate->Cnvcset = cnv_cset_0;
-   pstate->Cnvint = cnv_int_0;
-   pstate->Cnvreal = cnv_real_0;
-   pstate->Cnvstr = cnv_str_0;
-   pstate->Cnvtcset = cnv_tcset_0;
-   pstate->Cnvtstr = cnv_tstr_0;
-   pstate->Deref = deref_0;
-   pstate->Alcbignum = alcbignum_0;
-   pstate->Alccset = alccset_0;
-   pstate->Alcfile = alcfile_0;
-   pstate->Alchash = alchash_0;
-   pstate->Alcsegment = alcsegment_0;
-   pstate->Alclist_raw = alclist_raw_0;
-   pstate->Alclist = alclist_0;
-   pstate->Alclstb = alclstb_0;
-   pstate->Alcreal = alcreal_0;
-   pstate->Alcrecd = alcrecd_0;
-   pstate->Alcobject = alcobject_0;
-   pstate->Alccast = alccast_0;
-   pstate->Alcmethp = alcmethp_0;
-   pstate->Alcrefresh = alcrefresh_0;
-   pstate->Alcselem = alcselem_0;
-   pstate->Alcstr = alcstr_0;
-   pstate->Alcsubs = alcsubs_0;
-   pstate->Alctelem = alctelem_0;
-   pstate->Alctvtbl = alctvtbl_0;
-   pstate->Deallocate = deallocate_0;
-   pstate->Reserve = reserve_0;
+    pstate->Cplist = cplist_0;
+    pstate->Cpset = cpset_0;
+    pstate->Cptable = cptable_0;
+    pstate->EVstralc = EVStrAlc_0;
+    pstate->Interp = interp_0;
+    pstate->Cnvcset = cnv_cset_0;
+    pstate->Cnvint = cnv_int_0;
+    pstate->Cnvreal = cnv_real_0;
+    pstate->Cnvstr = cnv_str_0;
+    pstate->Cnvtcset = cnv_tcset_0;
+    pstate->Cnvtstr = cnv_tstr_0;
+    pstate->Deref = deref_0;
+    pstate->Alcbignum = alcbignum_0;
+    pstate->Alccset = alccset_0;
+    pstate->Alcfile = alcfile_0;
+    pstate->Alchash = alchash_0;
+    pstate->Alcsegment = alcsegment_0;
+    pstate->Alclist_raw = alclist_raw_0;
+    pstate->Alclist = alclist_0;
+    pstate->Alclstb = alclstb_0;
+    pstate->Alcreal = alcreal_0;
+    pstate->Alcrecd = alcrecd_0;
+    pstate->Alcobject = alcobject_0;
+    pstate->Alccast = alccast_0;
+    pstate->Alcmethp = alcmethp_0;
+    pstate->Alcrefresh = alcrefresh_0;
+    pstate->Alcselem = alcselem_0;
+    pstate->Alcstr = alcstr_0;
+    pstate->Alcsubs = alcsubs_0;
+    pstate->Alctelem = alctelem_0;
+    pstate->Alctvtbl = alctvtbl_0;
+    pstate->Deallocate = deallocate_0;
+    pstate->Reserve = reserve_0;
 
-   return coexp;
+    return coexp;
 }
 
 /*
  * loadicode - initialize memory particular to a given icode file
  */
 struct b_coexpr * loadicode(name, theInput, theOutput, theError, bs, ss, stk)
-char *name;
-struct b_file *theInput, *theOutput, *theError;
-C_integer bs, ss, stk;
-   {
-   struct b_coexpr *coexp;
-   struct progstate *pstate;
-   struct header hdr;
-#ifdef HAVE_LIBZ
-   int fdname;
-#endif					/* HAVE_LIBZ */
-   FILE *fname = NULL;
-   word cbread, longread();
+    char *name;
+    struct b_file *theInput, *theOutput, *theError;
+    C_integer bs, ss, stk;
+{
+    struct b_coexpr *coexp;
+    struct progstate *pstate;
+    struct header hdr;
+    FILE *ifile = NULL;
+    word cbread, longread();
 
-   /*
-    * open the icode file and read the header
-    */
-#ifdef HAVE_LIBZ
-   fdname = readhdr(name,&hdr);
-   if (fdname== -1)
-       return NULL;
-#else					/* HAVE_LIBZ */
-   fname = readhdr(name,&hdr);
-   if (fname == NULL)
-      return NULL;
-#endif					/* HAVE_LIBZ */
-   /*
-    * Allocate memory for icode and the struct that describes it
-    */
-   Protect(coexp = initprogram(hdr.hsize, stk, ss, bs),
-    {fprintf(stderr,"can't malloc new icode region\n");c_exit(EXIT_FAILURE);});
+    /*
+     * open the icode file and read the header
+     */
+    ifile = readhdr(name,&hdr);
+    if (ifile == NULL)
+        return NULL;
 
-   pstate = coexp->program;
-   pstate->K_current.dword = D_Coexpr;
+    /*
+     * Allocate memory for icode and the struct that describes it
+     */
+    Protect(coexp = initprogram(hdr.hsize, stk, ss, bs),
+            {fprintf(stderr,"can't malloc new icode region\n");c_exit(EXIT_FAILURE);});
 
-   StrLen(pstate->Kywd_prog) = strlen(prog_name);
-   StrLoc(pstate->Kywd_prog) = prog_name;
-   MakeInt(hdr.trace, &(pstate->Kywd_trc));
+    pstate = coexp->program;
+    pstate->K_current.dword = D_Coexpr;
 
-   /*
-    * might want to override from TRACE environment variable here.
-    */
+    StrLen(pstate->Kywd_prog) = strlen(prog_name);
+    StrLoc(pstate->Kywd_prog) = prog_name;
+    MakeInt(hdr.trace, &(pstate->Kywd_trc));
 
-   /*
-    * Establish pointers to icode data regions.		[[I?]]
-    */
-   pstate->Code    = (char *)(pstate + 1);
-   pstate->Ecode    = (char *)(pstate->Code + hdr.ClassStatics);
-   pstate->ClassStatics = (dptr)(pstate->Code + hdr.ClassStatics);
-   pstate->EClassStatics = (dptr)(pstate->Code + hdr.ClassFields);
-   pstate->ClassFields = (struct class_field *)(pstate->Code + hdr.ClassFields);
-   pstate->EClassFields = (struct class_field *)(pstate->Code + hdr.Classes);
-   pstate->Classes = (word *)(pstate->Code + hdr.Classes);
-   pstate->Records = (word *)(pstate->Code + hdr.Records);
-   pstate->Ftabp   = (short *)(pstate->Code + hdr.Ftab);
-   pstate->StandardFields = (word *)(pstate->Code + hdr.StandardFields);
-   pstate->Fnames  = (dptr)(pstate->Code + hdr.Fnames);
-   pstate->Globals = pstate->Efnames = (dptr)(pstate->Code + hdr.Globals);
-   pstate->Gnames  = pstate->Eglobals = (dptr)(pstate->Code + hdr.Gnames);
-   pstate->NGlobals = pstate->Eglobals - pstate->Globals;
-   pstate->Statics = pstate->Egnames = (dptr)(pstate->Code + hdr.Statics);
-   pstate->Estatics = (dptr)(pstate->Code + hdr.Filenms);
-   pstate->NStatics = pstate->Estatics - pstate->Statics;
-   pstate->Filenms = (struct ipc_fname *)(pstate->Estatics);
-   pstate->Efilenms = (struct ipc_fname *)(pstate->Code + hdr.linenums);
-   pstate->Ilines = (struct ipc_line *)(pstate->Efilenms);
-   pstate->Elines = (struct ipc_line *)(pstate->Code + hdr.Strcons);
-   pstate->Strcons = (char *)(pstate->Elines);
-   pstate->K_errout = *theError;
-   pstate->K_input  = *theInput;
-   pstate->K_output = *theOutput;
+    /*
+     * might want to override from TRACE environment variable here.
+     */
 
-#ifdef HAVE_LIBZ
-   check_version(&hdr, name, fdname);
-#else
-   check_version(&hdr, name, fname);
-#endif
+    /*
+     * Establish pointers to icode data regions.		[[I?]]
+     */
+    pstate->Code    = (char *)(pstate + 1);
+    pstate->Ecode    = (char *)(pstate->Code + hdr.ClassStatics);
+    pstate->ClassStatics = (dptr)(pstate->Code + hdr.ClassStatics);
+    pstate->EClassStatics = (dptr)(pstate->Code + hdr.ClassFields);
+    pstate->ClassFields = (struct class_field *)(pstate->Code + hdr.ClassFields);
+    pstate->EClassFields = (struct class_field *)(pstate->Code + hdr.Classes);
+    pstate->Classes = (word *)(pstate->Code + hdr.Classes);
+    pstate->Records = (word *)(pstate->Code + hdr.Records);
+    pstate->Ftabp   = (short *)(pstate->Code + hdr.Ftab);
+    pstate->StandardFields = (word *)(pstate->Code + hdr.StandardFields);
+    pstate->Fnames  = (dptr)(pstate->Code + hdr.Fnames);
+    pstate->Globals = pstate->Efnames = (dptr)(pstate->Code + hdr.Globals);
+    pstate->Gnames  = pstate->Eglobals = (dptr)(pstate->Code + hdr.Gnames);
+    pstate->NGlobals = pstate->Eglobals - pstate->Globals;
+    pstate->Statics = pstate->Egnames = (dptr)(pstate->Code + hdr.Statics);
+    pstate->Estatics = (dptr)(pstate->Code + hdr.Filenms);
+    pstate->NStatics = pstate->Estatics - pstate->Statics;
+    pstate->Filenms = (struct ipc_fname *)(pstate->Estatics);
+    pstate->Efilenms = (struct ipc_fname *)(pstate->Code + hdr.linenums);
+    pstate->Ilines = (struct ipc_line *)(pstate->Efilenms);
+    pstate->Elines = (struct ipc_line *)(pstate->Code + hdr.Strcons);
+    pstate->Strcons = (char *)(pstate->Elines);
+    pstate->K_errout = *theError;
+    pstate->K_input  = *theInput;
+    pstate->K_output = *theOutput;
 
-   /*
-    * Read the interpretable code and data into memory.
-    */
+    check_version(&hdr, name, ifile);
+    read_icode(&hdr, name, ifile, pstate->Code);
 
-#ifdef HAVE_LIBZ
-   if ((strchr((char *)(hdr.config), 'Z'))!=NULL) { /* to decompress */
-   fname= gzdopen(fdname,"r");
-   if ((cbread = gzlongread(pstate->Code, sizeof(char), (long)hdr.hsize, fname))
-       != hdr.hsize) {
-      fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-	(long)hdr.hsize,(long)cbread);
-      error(name, "can't read interpreter code");
-      }
-   gzclose(fname);
-   }
- else {       
-   fname= fdopen(fdname,"r");
-   if ((cbread = longread(pstate->Code, sizeof(char), (long)hdr.hsize, fname))
-       != hdr.hsize) {
-      fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-	(long)hdr.hsize,(long)cbread);
-      error(name, "can't read interpreter code");
-      }
-   fclose(fname);
-   }
-#else					/* HAVE_LIBZ */
+    /*
+     * Resolve references from icode to run-time system.
+     * The first program has this done in icon_init after
+     * initializing the event monitoring system.
+     */
+    resolve(pstate);
 
-   if ((cbread = longread(pstate->Code, sizeof(char), (long)hdr.hsize, fname))
-       != hdr.hsize) {
-      fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-	(long)hdr.hsize,(long)cbread);
-      error(name, "can't read interpreter code");
-      }
-   fclose(fname);
-#endif					/* HAVE_LIBZ */
-
-   /*
-    * Resolve references from icode to run-time system.
-    * The first program has this done in icon_init after
-    * initializing the event monitoring system.
-    */
-   resolve(pstate);
-
-   return coexp;
-   }
+    return coexp;
+}
 
 /*
  * To which program does arbitrary icode address p belong?
@@ -1600,38 +1321,38 @@ C_integer bs, ss, stk;
  */
 struct progstate *findprogramforblock(union block *p)
 {
-   struct b_coexpr *ce = stklist;
-   struct progstate *tmpp;
+    struct b_coexpr *ce = stklist;
+    struct progstate *tmpp;
 
-   if ((p == BlkLoc(posix_lock)) || (p == BlkLoc(posix_timeval)) ||
-       (p == BlkLoc(posix_stat)) || (p == BlkLoc(posix_message)) ||
-       (p == BlkLoc(posix_passwd)) || (p == BlkLoc(posix_group)) ||
-       (p == BlkLoc(posix_servent)) || (p == BlkLoc(posix_hostent)))
-      return curpstate;
+    if ((p == BlkLoc(posix_lock)) || (p == BlkLoc(posix_timeval)) ||
+        (p == BlkLoc(posix_stat)) || (p == BlkLoc(posix_message)) ||
+        (p == BlkLoc(posix_passwd)) || (p == BlkLoc(posix_group)) ||
+        (p == BlkLoc(posix_servent)) || (p == BlkLoc(posix_hostent)))
+        return curpstate;
 
-   while (ce != NULL) {
-      tmpp = ce->program;
-      if (InRange(tmpp->Code, p, tmpp->Elines)) {
-	 return tmpp;
-	 }
-      ce = ce->nextstk;
-      }
-   return NULL;
+    while (ce != NULL) {
+        tmpp = ce->program;
+        if (InRange(tmpp->Code, p, tmpp->Elines)) {
+            return tmpp;
+        }
+        ce = ce->nextstk;
+    }
+    return NULL;
 }
 
 void showicode()
 {
-   struct progstate *p;
+    struct progstate *p;
 
-   printf("Addr    Name        Glbl_argp        Code       &main\t&current\n");
-   for (p = progs; p; p = p->next) {
-      printf("%p %-10s %10p %p-%p\t%p\t%p\n", 
-             p, 
-             cstr(&p->Kywd_prog), 
-             p->Glbl_argp, p->Code, p->Ecode,
-             p->Mainhead,
-             p->K_current.vword.bptr);
-   }
+    printf("Addr    Name        Glbl_argp        Code       &main\t&current\n");
+    for (p = progs; p; p = p->next) {
+        printf("%p %-10s %10p %p-%p\t%p\t%p\n", 
+               p, 
+               cstr(&p->Kywd_prog), 
+               p->Glbl_argp, p->Code, p->Ecode,
+               p->Mainhead,
+               p->K_current.vword.bptr);
+    }
 }
 
 void checkcoexps(char *s) {

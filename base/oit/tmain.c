@@ -166,8 +166,6 @@ char *libpath (char *prog, char *envname);
 
 int bundleiconx = 0;
 
-char patchpath[MaxPath+18] = "%PatchStringHere->";
-
 struct file_param *trans_files = 0, *last_trans_file = 0, 
                   *link_files = 0, *last_link_file = 0,
                   *remove_files = 0, *last_remove_file = 0;
@@ -263,10 +261,8 @@ int main(int argc, char **argv)
     if (strlen(*argv) >= 4 && !strcmp(*argv + strlen(*argv) - 4, "ldbg"))
         return ldbg(argc, argv);
 
-    if ((int)strlen(patchpath) > 18)
-        iconxloc = patchpath+18;	/* use stated iconx path if patched */
-    else
-       iconxloc = relfile(argv[0], "/../oix");
+    iconxloc = salloc(relfile(argv[0], "/../oix"));
+
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
@@ -479,7 +475,7 @@ int main(int argc, char **argv)
 #if MSWindows
         iconx = "oix.exe";
 #endif					/* NT */
-        if ((f = pathOpen(iconx, ReadBinary)) == NULL) {
+        if ((f = pathopen(iconx, ReadBinary)) == NULL) {
             report("Tried to open %s to build .exe, but couldn't",iconx);
             errors++;
         }
