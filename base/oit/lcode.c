@@ -186,10 +186,10 @@ static void	dumpblock	(char *addr,int count);
 #include <fcntl.h>
 #endif					/* AMIGA */
 
-#if MSDOS
+#if MSWindows
 extern long fileOffsetOfStuffThatGoesInICX;
 /* defined in Globals.h, set in link.c, used below */
-#endif                                  /* MSDOS */
+#endif                                  /* MSWindows */
 
 #if MVS
 extern char *routname;
@@ -1638,11 +1638,11 @@ static void gentables()
 #ifdef Header
     fseek(outfile, hdrsize, 0);
 #else                                   /* Header */
-#if MSDOS
+#if MSWindows
     fseek(outfile, fileOffsetOfStuffThatGoesInICX, 0);
-#else				/* MSDOS */
+#else				/* MSWindows */
     fseek(outfile, 0L, 0);
-#endif				/* MSDOS */
+#endif				/* MSWindows */
 #endif                                  /* Header */
 
     if (longwrite((char *)&hdr, (long)sizeof(hdr), outfile) < 0)

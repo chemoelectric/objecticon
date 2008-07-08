@@ -44,32 +44,6 @@ static void check_unused_imports();
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || ATARI_ST || MACINTOSH || VM || VMS
-/* nothing to do */
-#endif					/* AMIGA || ATARI_ST || ... */
-
-#if ARM
-#include "kernel.h"
-#include "swis.h"
-#endif					/* ARM */
-
-#if MSDOS
-extern char pathToIconDOS[];
-#if MICROSOFT || TURBO || BORLAND_286 || BORLAND_386
-#include <fcntl.h>
-#endif				/* MICROSOFT || TURBO ... */
-#endif					/* MSDOS */
-
-#if MVS
-char *routname;			/* real output file name */
-#endif					/* MVS */
-
-#if OS2
-#if MICROSOFT
-#include <fcntl.h>
-#endif				/* MICROSOFT */
-#endif					/* OS2 */
-
 #if UNIX
 #ifdef CRAY
 #define word word_fubar
@@ -182,18 +156,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
     /*
      * Open the output file.
      */
-
-#if MVS
-    routname = outname;
-    outfile = tmpfile();         /* write icode to temporary file to
-                                    avoid fseek-PDS limitations */
-#else					/* MVS */
-#if AMIGA && __SASC
-    outfile = fopen(outname, ReadWriteBinary);
-#else				/* AMIGA && __SASC */
     outfile = fopen(outname, WriteBinary);
-#endif				/* AMIGA && __SASC */
-#endif					/* MVS */
 
 /*
  * The following code is operating-system dependent [@link.02].  Set
@@ -205,22 +168,6 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
     Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || ARM || ATARI_ST || MACINTOSH || MVS || UNIX || VM || VMS
-        /* nothing to do */
-#endif					/* AMIGA || ARM || ATARI_ST || ... */
-
-#if MSDOS
-#if MICROSOFT || TURBO || BORLAND_286 || BORLAND_386
-        setmode(fileno(outfile),O_BINARY);	/* set for untranslated mode */
-#endif				/* MICROSOFT || TURBO ... */
-#endif					/* MSDOS */
-
-#if OS2
-#if MICROSOFT
-    setmode(fileno(outfile),O_BINARY);
-#endif				/* MICROSOFT */
-#endif					/* OS2 */
-
 /*
  * End of operating-system specific code.
  */
@@ -229,102 +176,6 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         ofile = NULL;			/* so don't delete if it's there */
         quitf("cannot create %s",outname);
     }
-
-#if MSDOS && (!NT)
-    /*
-     * This prepends ixhdr.exe to outfile, so it'll be executable.
-     *
-     * I don't know what that #if Header stuff was about since my MSDOS
-     * distribution didn't include "hdr.h", but it looks very similar to
-     * what I'm doing, so I'll put my stuff here, & if somebody who
-     * understands all the multi-operating-system porting thinks my code could
-     * be folded into it, having it here should make it easy. -- Will Mengarini.
-     */
-
-    if (makeExe) {
-
-#if SCCX_MX
-        unsigned long i;
-
-        if( makeExe == 1)
-        {
-            for( i=0; i<IXHDRSIZE; ++i)
-                fputc( ixhdrarray[i], outfile);
-            fileOffsetOfStuffThatGoesInICX = IXHDRSIZE;
-        }
-        else
-        {
-            FILE *fIconDOS = fopen(pathToIconDOS, "rb");
-            char oneChar;
-
-            if (!fIconDOS)
-                quit("unable to find iconx.exe in same dir as icont");
-
-            if (setvbuf(fIconDOS, 0, _IOFBF, 4096))
-            {
-                if (setvbuf(fIconDOS, 0, _IOFBF, 128))
-                    quit("setvbuf() failure");
-            }
-
-            fseek( fIconDOS, 0, 0);
-            while( oneChar = fgetc( fIconDOS), !feof( fIconDOS) )
-            {
-                if( ferror( fIconDOS)  ||  ferror( outfile) )
-                    quit("Error copying iconx.exe");
-                fputc( oneChar, outfile);
-            }
-
-            fclose (fIconDOS);
-            fileOffsetOfStuffThatGoesInICX = ftell (outfile);
-        }
-#else					/* SCCX_MX */
-        FILE *fIconDOS = fopen(pathToIconDOS, "rb");
-        char bytesThatBeginEveryExe[2] = {0,0}, oneChar;
-        unsigned short originalExeBytesMod512, originalExePages;
-        unsigned long originalExeBytes, byteCounter;
-
-        if (!fIconDOS)
-            quit("unable to find ixhdr.exe in same dir as icont");
-        if (setvbuf(fIconDOS, 0, _IOFBF, 4096))
-            if (setvbuf(fIconDOS, 0, _IOFBF, 128))
-                quit("setvbuf() failure");
-        fread (&bytesThatBeginEveryExe, 2, 1, fIconDOS);
-        if (bytesThatBeginEveryExe[0] != 'M' ||
-            bytesThatBeginEveryExe[1] != 'Z')
-            quit("ixhdr header is corrupt");
-        fread (&originalExeBytesMod512, sizeof originalExeBytesMod512,
-               1, fIconDOS);
-        fread (&originalExePages,       sizeof originalExePages,
-               1, fIconDOS);
-        originalExeBytes = (originalExePages - 1)*512 + originalExeBytesMod512;
-
-        if (ferror(fIconDOS) || feof(fIconDOS) || !originalExeBytes)
-            quit("ixhdr header is corrupt");
-        fseek (fIconDOS, 0, 0);
-
-#ifdef MSWindows
-        for (oneChar=fgetc(fIconDOS); !feof(fIconDOS); oneChar=fgetc(fIconDOS)) {
-            if (ferror(fIconDOS) || ferror(outfile)) {
-                quit("Error copying ixhdr.exe");
-	    }
-            fputc (oneChar, outfile);
-        }
-#else					/* MSWindows */
-
-        for (byteCounter = 0; byteCounter < originalExeBytes; byteCounter++) {
-            oneChar = fgetc (fIconDOS);
-            if (ferror(fIconDOS) || feof(fIconDOS) || ferror(outfile)) {
-                quit("Error copying ixhdr.exe");
-	    }
-            fputc (oneChar, outfile);
-        }
-#endif					/* MSWindows */
-
-        fclose (fIconDOS);
-        fileOffsetOfStuffThatGoesInICX = ftell (outfile);
-#endif					/* SCCX_MX */
-    }
-#endif                                  /* MSDOS && (!NT) */
 
 #ifdef Header
     /*
@@ -340,24 +191,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
     {
         char script[2 * MaxPath + 300];
 
-#if AMIGA
-        sprintf(script,
-                "/* ARexx header for direct execution of Icon code */\n\
-   PARSE SOURCE type flag filename fullname ext host\n\
-   PARSE ARG 1 args 1\n\
-   SIGNAL ON ERROR\n\
-   ADDRESS command\n\
-   \"%s\" fullname args\n\
-   ERROR:\n\
-   EXIT\n\
-   /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*\n[executable Icon binary follows]\n",
-                iconxloc);
-        strcat(script, "        \n\f\n" + ((int)(strlen(script) + 4) % 8));
-        hdrsize = strlen(script) + 1;	/* length includes \0 at end */
-        fwrite(script, hdrsize, 1, outfile);	/* write header */
-#endif                                  /* AMIGA */
-
-#if NT
+#if MSWindows
         /*
          * The NT and Win95 direct execution batch file turns echoing off,
          * launches wiconx, attempts to terminate softly via noop.bat,
@@ -374,7 +208,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         strcat(script, "        \n\f\n" + ((int)(strlen(script) + 4) % 8));
         hdrsize = strlen(script) + 1;	/* length includes \0 at end */
         fwrite(script, hdrsize, 1, outfile);	/* write header */
-#endif					/* NT */
+#endif					/* MSWindows */
 #if UNIX
         /*
          *  Generate a shell header that searches for iconx in this order:
@@ -436,44 +270,6 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         fclose(dbgfile);
     }
 #endif
-
-#if AMIGA
-#ifdef ShellHeader
-    /* The icode is enclosed in a deeply nested ARexx comment.
-       Here we close up the comment. */
-    {
-        int c, count = 0, state = 0;
-
-        rewind(outfile);
-        while ((c = fgetc(outfile)) != EOF)
-            switch(state){
-                case 0:  /* start state */
-                    if (c == '/' || c == '*') state = c;
-                    break;
-                case '/':
-                    if (c == '*') count++;
-                    state = 0;
-                    break;
-                case '*':
-                    if (c == '/') count--;
-                    state = 0;
-                    break;
-            }
-        if (count < 0){
-            fprintf(stderr, "       Failed to write direct execution header.\n\
-       You will have to use iconx to execute %s.\n", outname);
-            outname = NULL;
-        }
-        else {
-            fseek(outfile, 0, SEEK_END);
-            while (0 < count--){
-                fputc('*', outfile);
-                fputc('/', outfile);
-            }
-        }
-    }
-#endif					/* ShellHeader */
-#endif					/* AMIGA */
 
     fclose(outfile);
     lmfree();
@@ -556,48 +352,11 @@ void setexe(char *fname)
     Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-#if __SASC
-        if (fname != NULL) {
-            struct DiskObject *dob;
-   
-            chmod(fname,S_ISCRIPT|S_IREAD|S_IWRITE|S_IEXECUTE|S_IDELETE);
-            /* Create a WorkBench Icon if necessary. */
-            dob = GetDiskObject(fname);
-            if (dob == NULL) {
-                dob = GetDiskObject(IconIcon);
-                if ( dob ) {
-                    dob->do_CurrentX = NO_ICON_POSITION;
-                    dob->do_CurrentY = NO_ICON_POSITION;
-                    PutDiskObject(fname, dob);
-                }
-            }
-            if ( dob ) FreeDiskObject(dob);
-        }
-#endif                                  /* __SASC */
-#endif					/* AMIGA */
-
-#if ARM
-    {
-        _kernel_swi_regs regs;
-
-        regs.r[0] = 31;
-        regs.r[1] = (int)"Icon";
-        if (_kernel_swi(OS_FSControl,&regs,&regs) == NULL)
-        {
-            regs.r[0] = 18;
-            regs.r[1] = (int)fname;
-            _kernel_swi(OS_File,&regs,&regs);
-        }
-    }
-#endif					/* ARM */
-
-#if ATARI_ST || MSDOS || MVS || VM || VMS
+#if MSWindows
     /*
      * can't be made executable
-     * note: VMS files can't be made executable, but see "iexe.com" under VMS.
      */
-#endif					/* ATARI_ST || MSDOS || ... */
+#endif
 
 #if MACINTOSH
 #if MPW
@@ -606,58 +365,6 @@ void setexe(char *fname)
     */
 #endif				/* MPW */
 #endif					/* MACINTOSH */
-
-#if MSDOS
-#if MICROSOFT || TURBO || BORLAND_286 || BORLAND_386
-    chmod(fname,0755);	/* probably could be smarter... */
-#endif				/* MICROSOFT || TURBO ... */
-#endif					/* MSDOS */
-
-#if OS2
-    /*
-     *	Obtain the EXE stub resource from icont (or xicont)
-     *	and write it out as the executable name.  Invoke the resource
-     *	compiler to add the icode file as a resource to the executable
-     *	This should be portable to Windows NT I believe.  Cheyenne.
-     */
-    {
-	char	*exeres;		/* EXE stub resource pointer */
-	unsigned long exereslen;	/* Length of resource */
-	char loadmoderr[256];
-
-	char exename[256];
-	char rcname[256];
-	char cmdbuffer[256];
-	FILE *exefile;
-	FILE *rcfile;
-
-	if( noexe ) return;		/* Nothing to do.. */
-
-	DosGetResource(0,0x4844,1,&exeres);
-	DosQueryResourceSize(0,0x4844,1,&exereslen);
-
-	makename(exename,NULL,fname,".exe");
-	exefile = fopen(exename,WriteBinary);
-	fwrite( exeres, sizeof(char), exereslen, exefile);
-	fclose(exefile);
-	DosFreeResource(exeres);
-
-	makename(rcname,NULL,fname,".rc");
-	rcfile = fopen(rcname,WriteText);
-
-	fprintf(rcfile,"RESOURCE 0x4843 1 %s\n",fname);
-	fclose(rcfile);
-
-	sprintf(cmdbuffer,"rc %s %s",rcname,exename);
-
-	system(cmdbuffer);
-
-	remove(rcname);
-	makename(rcname,NULL,fname,".res");
-	remove(rcname);
-	remove(fname);
-    }
-#endif					/* OS2 */
 
 #if UNIX
     {

@@ -13,115 +13,7 @@
 /* place to put anything system specific */
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if AMIGA
-#if LATTICE || __SASC
-unsigned long _STACK = 20000;   /*   MNEED ALSO, PLEASE */
-#endif					/* LATTICE || __SASC */
-#if AZTEC_C
-/*
- * abs
- */
-abs(i)
-int i;
-{
-   return ((i<0)? (-i) : i);
-}
 
-/*
- * getfa - get file attribute -1 == OK, 0 == ERROR, 1 == DIRECTORY
- */
-getfa()
-{
-   return -1;
-}
-#endif					/* AZTEC_C */
-#endif					/* AMIGA */
-
-#if ARM
-#include "kernel.h"
-
-/* **** The following line causes a fatal error in some C preprocessors
-   **** even if ARM is 0.  Remove the comment characters for ARM.
-   ****
-*/
-/*#define QUOTE " \"\t"*/
-
-int armquote (char *str, char **ret)
-{
-	char *p;
-	static char buf[255];
-
-	if (strpbrk(str,QUOTE) == NULL)
-	{
-		*ret = str;
-		return strlen(str);
-	}
-
-	p = buf;
-
-	while (*str && p < &buf[255])
-	{
-		if (strchr(QUOTE,*str))
-		{
-			if (p > &buf[252])
-				return -1;
-
-			*p++ = '\\';
-			*p++ = *str;
-		}
-		else
-			*p++ = *str;
-
-		++str;
-	}
-
-	if (p >= &buf[255])
-		return -1;
-
-	*p = 0;
-	*ret = buf;
-	return (p - buf);
-}
-
-/* Takes a filename, with a ".u1" suffix, and swaps it, IN PLACE, to
- * conform to Archimedes conventions (u1 as a directory).
- * Note that this is a very simplified version. It relies on the following
- * facts:
- *
- *	1. In the ucode link directives, files ALWAYS end in .u1
- *	2. The input filename is writeable.
- *	3. Files which include directory parts conform to Archimedes
- *	   format (FS:dir.dir.file). Note that Unix formats such as
- *	   "/usr/icon/lib/time" are inherently non-portable, and NOT
- *	   supported.
- *
- * This function is only called from readglob() in C.Lglob.
- */
-char *flipname(char *name)
-{
-	char *p = name + strlen(name) - 1;
-	char *q = p - 3;
-
-	/* Copy the leafname to the end */
-	while (q >= name && *q != '.' && *q != ':')
-		*p-- = *q--;
-
-	/* Insert the "U1." before the leafname */
-	*p-- = '.';
-	*p-- = '1';
-	*p-- = 'U';
-
-	return name;
-}
-#endif					/* ARM */
-
-#if ATARI_ST
-
-unsigned long _STACK = 10240;   /*   MNEED ALSO, PLEASE */
-
-#endif					/* ATARI_ST */
-
 #if MACINTOSH
 #if MPW
 /* Routine to set file type and creator.
@@ -262,103 +154,9 @@ char *argv[];
    }
 #endif					/* MPW */
 #endif					/* MACINTOSH */
-
-#if MSDOS
 
-#if MICROSOFT
-
-pointer xmalloc(n)
-   long n;
-   {
-   return calloc((size_t)n,sizeof(char));
-   }
-#endif					/* MICROSOFT */
-
-#if MICROSOFT
-int _stack = (8 * 1024);
-#endif					/* MICROSOFT */
-
-#if TURBO
-extern unsigned _stklen = 12 * 1024;
-#endif					/* TURBO */
-
-#if ZTC_386 || SCCX_MX
-#ifndef DOS386
-int _stack = (8 * 1024);
-#endif					/* DOS386 */
-#endif					/* ZTC_386 || SCCX_MX */
-
-#endif					/* MSDOS */
-
-#if MVS || VM
-#if SASC
-#include <options.h>
-char _linkage = _OPTIMIZE;
-
-#if MVS                 /* expect dsnames, not DDnames, as file names */
-char *_style = "tso:";
-#define SYS_OSVS
-#else					/* MVS */
-#define SYS_CMS
-#endif					/* MVS */
-
-#define RES_IOUTIL
-#define RES_DSNAME
-
-#include <resident.h>
-
-#if VM
-#include <cmsexec.h>
-#endif					/* VM */
-/*
- * No execvp, so turn it into a call to system.  (Then caller can exit.)
- * In VM, put the ICONX command on the CMS stack, and someone else will
- * do it after we're gone.  (system would clobber the user area.)
- */
-int sysexec(cmd, argv)
-   char *cmd;
-   char **argv;
-   {
-#if MVS
-      char *prefix = "tso:";
-#else					/* MVS */
-      char *prefix = "";
-#endif					/* MVS */
-      int cmdlen = strlen(cmd) + strlen(prefix) + 1;
-      char **p;
-      char *cmdstr, *next;
-
-      for(p = argv+1; *p; ++p)
-         cmdlen += strlen(*p) + 1;
-      cmdstr = malloc(cmdlen);      /* blithely ignoring failure...  */
-      strcpy(cmdstr, prefix);
-      strcat(cmdstr, cmd);
-      next = cmdstr + strlen(prefix) + strlen(cmd);
-      for (p = argv+1; *p; ++p)
-         {
-             *next = ' ';
-             strcpy(next+1, *p);
-             next += strlen(*p) + 1;
-          }
-      *next = '\0';
-#if MVS
-      return(system(cmdstr));
-#else					/* MVS */
-      cmspush(cmdstr);
-      return EXIT_SUCCESS;
-#endif					/* MVS */
-   }
-#endif					/* SASC */
-#endif					/* MVS || VM */
-
-#if OS2
-#endif					/* OS2 */
-
 #if UNIX
 #endif					/* UNIX */
-
-#if VMS
-#endif					/* VMS */
 
 /*
  * End of operating-system specific code.

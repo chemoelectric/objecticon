@@ -37,10 +37,10 @@ char *init_string;
 char *all_string;
 char *package_marker_string;
 
-#if MSDOS
+#if MSWindows
 int makeExe	=1;	/* -X: create .exe instead of .icx */
 long fileOffsetOfStuffThatGoesInICX = 0; /* remains 0 -f -X is not used */
-#endif					/* MSDOS */
+#endif					/* MSWindows */
 
 /*
  * Variables related to command processing.
@@ -79,10 +79,6 @@ long hdrsize;			/* size of iconx header */
       Boolean g_cOption;
    #endif    /* THINK_C */
 #endif    /* MACINTOSH */
-
-#if NT
-   extern FILE *pathOpen(char *, char *);
-#endif
 
 #ifdef MSWindows
    #include "../h/filepat.h"
@@ -136,9 +132,9 @@ char *libpath (char *prog, char *envname);
    /* nothing is needed */
 #endif					/* ARM || ... */
 
-#if MSDOS
+#if MSWindows
    char pathToIconDOS[129];
-#endif					/* MSDOS */
+#endif					/* MSWindows */
 
 #if ATARI_ST
    char *patharg;
@@ -275,7 +271,7 @@ int main(int argc, char **argv)
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
 #define Usage "[-cBstuE] [-f s] [-o ofile] [-v i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBe:f:no:stuv:ELZ")) != EOF) {
+    while ((c = getopt(argc,argv, "cBe:f:no:stuv:ELZXI")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -302,14 +298,14 @@ int main(int argc, char **argv)
                 fprintf(stderr, "Warning, -S option is obsolete\n");
                 break;
 
-#if MSDOS
+#if MSWindows
             case 'X':			/* -X */
                 makeExe = 1;
                 break;
             case 'I':			/* -C */
                 makeExe = 0;
                 break;
-#endif					/* MSDOS */
+#endif					/* MSWindows */
 
             case 'V':
                 printf("%s\n", Version);
@@ -362,25 +358,6 @@ int main(int argc, char **argv)
                 usage();
         }
     }
-
-#if MSDOS && !NT
-    /*
-     * Define pathToIconDOS as a global accessible from inside
-     * separately-compiled compilation units.
-     */
-    if( makeExe ){
-        char *pathCursor;
-
-        strcpy (pathToIconDOS, argv[0]);
-        pathCursor = (char *)strrchr (pathToIconDOS, '\\');
-        if (!pathCursor) {
-            fprintf (stderr,
-                     "Can't understand what directory icont was run from.\n");
-            exit(EXIT_FAILURE);
-        }
-        strcpy( ++pathCursor, (makeExe==1) ?  "ixhdr.exe" : "oix.exe");
-    }
-#endif                                  /* MSDOS && !NT */
 
     /*
      * Scan file name arguments.
@@ -437,7 +414,7 @@ int main(int argc, char **argv)
         exit(EXIT_SUCCESS);
     }
 
-#if MSDOS
+#if MSWindows
     {
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
         ofile = intern_using(&join_sbuf, makename(buf,SourceDir,link_files->name,
@@ -449,7 +426,7 @@ int main(int argc, char **argv)
 						      makeExe ? ".exe" : IcodeSuffix));
     }
     }
-#else                                   /* MSDOS */
+#else                                   /* MSWindows */
 
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
         ofile = intern_using(&join_sbuf, makename(buf,SourceDir,link_files->name,IcodeSuffix));
@@ -459,7 +436,7 @@ int main(int argc, char **argv)
             ofile = intern_using(&join_sbuf, makename(buf,NULL,ofile,IcodeSuffix));
     }
 
-#endif					/* MSDOS */
+#endif					/* MSWindows */
 
     report("Linking:");
     ilink(link_files, ofile, &errors, &warnings);	/* link .u files to make icode file */
@@ -470,7 +447,7 @@ int main(int argc, char **argv)
      * now call file_comp() to compress it
      */
     if (Zflag) {
-#if NT
+#if MSWindows
 #define stat _stat
 #endif					/* NT */
         struct stat buf;
@@ -481,7 +458,7 @@ int main(int argc, char **argv)
     }
 #endif					/* HAVE_LIBZ */
 
-#if NT
+#if MSWindows
     if (!bundleiconx)
         bundleiconx = !stricmp(".exe", ofile+strlen(ofile)-4);
 #endif
@@ -499,7 +476,7 @@ int main(int argc, char **argv)
 #if UNIX
         iconx = "oix";
 #endif
-#if NT
+#if MSWindows
         iconx = "oix.exe";
 #endif					/* NT */
         if ((f = pathOpen(iconx, ReadBinary)) == NULL) {
@@ -614,20 +591,12 @@ Deliberate Syntax Error
       fflush(stderr);
 #endif					/* ATARI_ST || ... */
 
-#if MSDOS
+#if MSWindows
       /* No special handling is needed for an .exe files, since iconx
        * recognizes it from the extension andfrom internal .exe data.
        */
-#if MICROSOFT || TURBO || BORLAND_286 || BORLAND_386
-      execvp(iconxloc,argv);	/* execute with path search */
-#endif					/* MICROSOFT || ... */
-
-#if INTEL_386 || ZTC_386 || HIGHC_386 || WATCOM || SCCX_MX
-      fprintf(stderr,"-x not supported\n");
-      fflush(stderr);
-#endif					/* INTEL_386 || ... */
-
-#endif					/* MSDOS */
+      execv(iconxloc,argv);	/* execute with path search */
+#endif					/* MSWindows */
 
 #if UNIX
       /*
