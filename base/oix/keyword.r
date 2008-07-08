@@ -314,9 +314,9 @@ keyword{1,*} features
       char *refpath = "";
 #endif					/* RefPath */
 
-      if (strlen(refpath)==0) {
+      if (!*refpath) {
           char *ploc;
-          ploc = findonpath("oix");
+          ploc = findexe("oix");
           if (ploc) {
               *last_pathelem(ploc) = 0;
               refpath = salloc(ploc);

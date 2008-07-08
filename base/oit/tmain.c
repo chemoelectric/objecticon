@@ -437,12 +437,12 @@ int main(int argc, char **argv)
      */
     if (!errors && bundleiconx) {
         FILE *f, *f2;
-        char tmp[MaxPath], *iconx;
+        char tmp[MaxPath];
         makename(tmp, 0, ofile, ".tmp");
         rename(ofile, tmp);
 
         if ((f = pathopen("oix", ReadBinary)) == NULL) {
-            report("Tried to open %s to build .exe, but couldn't",iconx);
+            report("Tried to open oix to build .exe, but couldn't");
             errors++;
         }
         else {
