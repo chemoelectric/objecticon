@@ -607,15 +607,15 @@ char *s;
 static char *include(s)
 char *s;
    {
-   char *fname;
-   char fullpath[MaxFileName];
+   char *fname, *fullpath;
 
    s = getfnm(fname = s - 1, s);
    if (*fname == '\0')
       return "$include: invalid file name";
    if (*wskip(s) != '\0')
       return "$include: too many arguments";
-   if (!pathfind(fullpath, lpath, fname, (char *)NULL) || !ppopen(fullpath, 0))
+   fullpath = pathfind(lpath, fname, 0);
+   if (!fullpath || !ppopen(fullpath, 0))
       pfatal("cannot open", fname);
    return NULL;
    }

@@ -135,9 +135,9 @@ static void ensure_lfile(char *ifile)
  */
 void alsolink(char *name, struct lfile *lf, struct loc *pos)
 {
-    char file[MaxFileName];
+    char *file = pathfind(ipath, name, USuffix);
 
-    if (!pathfind(file, ipath, name, USuffix)) {
+    if (!file) {
         lfatal(pos, "cannot resolve link reference: %s", name);
         return;
     }

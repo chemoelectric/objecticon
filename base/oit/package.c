@@ -327,7 +327,7 @@ static void load_path_impl(char *dir)
  */
 void load_package_db_from_ipath()
 {
-    char buff[PATH_MAX];
+    static char buff[PATH_MAX];
     char *s = ipath;
 
     /* Load anything in the CD */

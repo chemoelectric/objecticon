@@ -30,7 +30,7 @@ struct il_code *new_il	(int il_type, int size);
 void	new_sbuf	(struct str_buf *sbuf);
 void	nxt_pre		(char *pre, char *nxt, int n);
 int     isabsolute      (char *s);
-char	*pathfind	(char *buf, char *path, char *name, char *extn);
+char	*pathfind	(char *path, char *name, char *extn);
 char    *pathelem       (char *s, char *buf);
 int     newer_than(char *f1, char *f2);
 char    *last_pathelem(char *s);

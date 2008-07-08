@@ -29,7 +29,7 @@
 #define DEFPATH ";"
 #endif
 
-static char *tryfile	(char *buf, char *dir, char *name, char *extn);
+static char *tryfile(char *buf, char *dir, char *name, char *extn);
 
 /*
  *  relfile(prog, mod) -- find related file.
@@ -293,18 +293,19 @@ void quotestrcat(char *buf, char *s)
  *  that the file must be a readable simple text file.  pathfind
  *  returns buf if it finds a file or NULL if not.
  *
- *  buf[MaxFileName] is a buffer in which to put the constructed file name.
+ *  A pointer to a static buffer is returned.
+ * 
  *  path is the IPATH or LPATH value, or NULL if unset.
  *  name is the file name.
- *  extn is the file extension (.icn or .u1) to be appended, or NULL if none.
+ *  extn is the file extension (.icn or .u) to be appended, or NULL if none.
  */
-char *pathfind(buf, path, name, extn)
-    char *buf, *path, *name, *extn;
+char *pathfind(char *path, char *name, char *extn)
 {
     char *s;
-    char pbuf[MaxFileName];
+    static char pbuf[PATH_MAX];
+    static char buf[PATH_MAX];
 
-    if (tryfile(buf, (char *)NULL, name, extn))	/* try curr directory first */
+    if (tryfile(buf, 0, name, extn))	/* try curr directory first */
         return buf;
 
     /* Don't search the path if we have an absolute path */
@@ -345,8 +346,7 @@ Deliberate Syntax Error
  *
  *  Returns the updated pointer s.
  */
-char *pathelem(s, buf)
-    char *s, *buf;
+char *pathelem(char *s, char *buf)
 {
     char c;
 
@@ -417,8 +417,7 @@ int newer_than(char *f1, char *f2)
  *  The file name is constructed in buf from dir + name + extn.
  *  findfile returns buf if successful or NULL if not.
  */
-static char *tryfile(buf, dir, name, extn)
-    char *buf, *dir, *name, *extn;
+static char *tryfile(char *buf, char *dir, char *name, char *extn)
 {
     FILE *f;
     makename(buf, dir, name, extn);
@@ -429,15 +428,14 @@ static char *tryfile(buf, dir, name, extn)
     else
         return NULL;
 }
-
+
 /*
  * fparse - break a file name down into component parts.
  * Result is a pointer to a struct of static pointers good until the next call.
  */
-struct fileparts *fparse(s)
-    char *s;
+struct fileparts *fparse(char *s)
 {
-    static char buf[MaxFileName+2];
+    static char buf[PATH_MAX];
     static struct fileparts fp;
     int n;
     char *p, *q;
@@ -464,7 +462,7 @@ struct fileparts *fparse(s)
 
     return &fp;
 }
-
+
 /*
  * makename - make a file name, optionally substituting a new dir and/or ext
  */
@@ -482,7 +480,7 @@ char *makename(dest,d,name,e)
 
     return dest;
 }
-
+
 /*
  * smatch - case-insensitive string match - returns nonzero if they match
  */
