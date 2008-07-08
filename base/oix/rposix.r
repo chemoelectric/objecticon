@@ -1451,7 +1451,6 @@ void signal_dispatcher(sig)
 int sig;
 {
    struct descrip proc, p;
-   dptr a[2];
 
    if (!inited) {
       int i;
@@ -1467,9 +1466,7 @@ int sig;
 
    /* Invoke proc */
    MakeCStr(si_i2s(signalnames, sig), &p);
-   a[0] = &p;
-   a[1] = 0;
-   do_invoke_with(&proc, a);
+   call_icon(&proc, &p, 0);
    
    /* Restore signal just in case (for non-BSD systems) */
    signal(sig, signal_dispatcher);

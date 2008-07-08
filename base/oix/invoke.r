@@ -419,13 +419,20 @@ void ensure_initialized(struct b_class *class)
  * Invoke the given Icon procedure, which must be a pointer into the
  * stack.  The arguments to the procedure come after the procedure on
  * the stack.
+ * 
+ * The result is returned as a dptr, which will be null if the
+ * procedure failed.  This pointer lies just below the interpreter
+ * stack pointer, so it should be dereferenced and copied elsewhere if
+ * it needs to be kept around.
+ * 
+ * See call_icon() for a convenient interface to this function.
+ *
  */
 dptr do_invoke(dptr proc)
 {
     word ibuf[9];
     int i, off, retval;
     inst saved_ipc = ipc;
-    word *saved_sp = sp;
     word saved_lastop = lastop;
     dptr saved_xargp = xargp;
     word saved_xnargs = xnargs;
@@ -446,32 +453,56 @@ dptr do_invoke(dptr proc)
     ipc.op = (int *)ibuf;
     retval = interp(0, NULL);
 
-    if (retval == A_Trapret) 
+    if (retval == A_Trapret) {
         ret = (dptr)(sp - 1);
+        sp -= 2;
+    } else
+        ret = 0;
 
     ipc = saved_ipc;
-    sp = saved_sp;
     lastop = saved_lastop;
     xargp = saved_xargp;
     xnargs = saved_xnargs;
 
-    if (retval == A_Trapret)
-        return ret;
-    else
-        return 0;
+    return ret;
 }
 
 /*
- * Helper function to push the given proc and args (a null terminated
- * array of dptrs) onto the stack and call do_invoke above.
+ * This is a convenient function to call a given icon procedure.  The
+ * arguments are provided as varargs, terminated with a null pointer.
+ * Each should be a dptr.  
+ * 
+ * The result is returned as a dptr, which will be null if the
+ * procedure failed.  This pointer lies just below the interpreter
+ * stack pointer, so it should be dereferenced and copied elsewhere if
+ * it needs to be kept around.
  */
-dptr do_invoke_with(dptr proc, dptr *args)
+dptr call_icon(dptr proc, ...)
 {
-    dptr res, dp = (dptr)(sp + 1);
+    dptr res;
+    va_list ap;
+    va_start(ap, proc);
+    res = call_icon_va(proc, ap);
+    va_end(ap);
+    return res;
+}
+
+#passthru #define _DPTR dptr
+
+/*
+ * This is used to implement the above function.  It pushes the
+ * procedure and all the arguments onto the stack, and then calls
+ * do_invoke.
+ */
+dptr call_icon_va(dptr proc, va_list ap)
+{
+    dptr a, res, dp = (dptr)(sp + 1);
     PushDesc(*proc);
-    while (*args) {
-        PushDesc(**args);
-        ++args;
+    for (;;) {
+        a = va_arg(ap, _DPTR);
+        if (!a)
+            break;
+        PushDesc(*a);
     }
     res = do_invoke(dp);
     sp = (word *)dp - 1;
