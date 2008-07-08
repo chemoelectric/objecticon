@@ -182,19 +182,6 @@ static void	shortout	(short o);
 static void	dumpblock	(char *addr,int count);
 #endif					/* DeBugLinker */
 
-#if AMIGA
-#include <fcntl.h>
-#endif					/* AMIGA */
-
-#if MSWindows
-extern long fileOffsetOfStuffThatGoesInICX;
-/* defined in Globals.h, set in link.c, used below */
-#endif                                  /* MSWindows */
-
-#if MVS
-extern char *routname;
-#endif					/* MVS */
-
 word pc = 0;		/* simulated program counter */
 
 #define outword(n)	wordout((word)(n))

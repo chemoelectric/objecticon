@@ -37,11 +37,6 @@ char *init_string;
 char *all_string;
 char *package_marker_string;
 
-#if MSWindows
-int makeExe	=1;	/* -X: create .exe instead of .icx */
-long fileOffsetOfStuffThatGoesInICX = 0; /* remains 0 -f -X is not used */
-#endif					/* MSWindows */
-
 /*
  * Variables related to command processing.
  */
@@ -135,10 +130,6 @@ char *libpath (char *prog, char *envname);
 #if MSWindows
    char pathToIconDOS[129];
 #endif					/* MSWindows */
-
-#if ATARI_ST
-   char *patharg;
-#endif					/* ATARI_ST */
 
 #if MACINTOSH
    #if MPW
@@ -267,7 +258,7 @@ int main(int argc, char **argv)
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
 #define Usage "[-cBstuE] [-f s] [-o ofile] [-v i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBe:f:no:stuv:ELZXI")) != EOF) {
+    while ((c = getopt(argc,argv, "cBe:f:no:stuv:ELZ")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -293,15 +284,6 @@ int main(int argc, char **argv)
             case 'S':			/* -S */
                 fprintf(stderr, "Warning, -S option is obsolete\n");
                 break;
-
-#if MSWindows
-            case 'X':			/* -X */
-                makeExe = 1;
-                break;
-            case 'I':			/* -C */
-                makeExe = 0;
-                break;
-#endif					/* MSWindows */
 
             case 'V':
                 printf("%s\n", Version);
@@ -414,12 +396,12 @@ int main(int argc, char **argv)
     {
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
         ofile = intern_using(&join_sbuf, makename(buf,SourceDir,link_files->name,
-						  makeExe ? ".exe" : IcodeSuffix));
+						  bundleiconx ? ".exe" : ".bat"));
     } else {				/* add extension in necessary */
         fp = fparse(ofile);
         if (*fp->ext == '\0' && *IcodeSuffix != '\0') /* if no ext given */
             ofile = intern_using(&join_sbuf, makename(buf,NULL,ofile,
-						      makeExe ? ".exe" : IcodeSuffix));
+						      bundleiconx ? ".exe" : ".bat"));
     }
     }
 #else                                   /* MSWindows */
@@ -453,11 +435,6 @@ int main(int argc, char **argv)
         }
     }
 #endif					/* HAVE_LIBZ */
-
-#if MSWindows
-    if (!bundleiconx)
-        bundleiconx = !stricmp(".exe", ofile+strlen(ofile)-4);
-#endif
 
     /*
      * prepend iconx if we generated an executable and specified to bundle
@@ -558,17 +535,8 @@ static void execute(char *ofile, char *efile, char **args)
 
    *p++ = ofile;			/* pass icode file name */
 
-#if AMIGA && LATTICE
-   *p = *args;
-   while (*p++) {
-      *p = *args;
-      args++;
-   }
-#else					/* AMIGA && LATTICE */
-
    while ((*p++ = *args++) != 0)      /* copy args into argument vector */
       ;
-#endif					/* AMIGA && LATTICE */
 
    *p = NULL;
 
@@ -582,10 +550,10 @@ static void execute(char *ofile, char *efile, char **args)
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if ATARI_ST || MACINTOSH
+#if MACINTOSH
       fprintf(stderr,"-x not supported\n");
       fflush(stderr);
-#endif					/* ATARI_ST || ... */
+#endif
 
 #if MSWindows
       /* No special handling is needed for an .exe files, since iconx
@@ -644,388 +612,10 @@ void report(char *fmt, ...)
  */
 static void usage()
    {
-#if MVS || VM
-   fprintf(stderr,"usage: %s %s file ... <-x args>\n", progname, Usage);
-#elif MPW
-   fprintf(stderr,"usage: %s %s file ...\n", progname, Usage);
-#else
    fprintf(stderr,"usage: %s %s file ... [-x args]\n", progname, Usage);
-#endif					/* MVS || VM || MPW */
    exit(EXIT_FAILURE);
    }
 
-
-
-#if MACINTOSH
-#if THINK_C
-
-/*
- * IncreaseStackSize - increases stack size by extraBytes
- */
-void IncreaseStackSize (Size extraBytes)
-{
-   SetApplLimit ( GetApplLimit() - extraBytes );
-}
-
-/*
- * ToolBoxInit - initializes mac toolbox
- */
-void ToolBoxInit ( void )
-{
-   InitGraf ( &qd.thePort );
-   InitFonts ();
-   InitWindows ();
-   InitMenus ();
-   TEInit ();
-   InitDialogs ( nil );
-   InitCursor ();
-}
-
-/*-------------- code for display graphics ----------------------*/
-
-/*
- * DoEvent - handles AppleEvent by passing eventPtr to AEProcessAppleEvent
- *           Command-Q key sequence results exit of the program
- */
-void DoEvent ( EventRecord *eventPtr )
-{
-   char theChar;
-
-   switch ( eventPtr->what )
-   {
-      case mouseDown:        DoMouseDown (eventPtr);
-                             break;
-/*
-      case kHighLevelEvent : AEProcessAppleEvent ( eventPtr );
-                             break;
- */
-      case keyDown:
-      case autoKey:          theChar = eventPtr->message & charCodeMask;
-                             if ( (eventPtr->modifiers & cmdKey) != 0)
-                                HandleMenuChoice (MenuKey (theChar));
-                             break;
-   }
-}
-
-/*
- * DoMouseDown -
- */
-void DoMouseDown (EventRecord *eventPtr)
-{
-   WindowPtr whichWindow;
-   short thePart;
-   long menuChoice;
-
-   thePart = FindWindow (eventPtr->where, &whichWindow);
-   switch (thePart) {
-      case inMenuBar:
-         menuChoice = MenuSelect (eventPtr->where);
-         HandleMenuChoice (menuChoice);
-         break;
-      }
-}
-
-/*
- * HandleMenuChoice -
- */
-void HandleMenuChoice (long menuChoice)
-{
-   short menu;
-   short item;
-
-   if (menuChoice != 0) {
-      menu = HiWord (menuChoice);
-      item = LoWord (menuChoice);
-
-      switch (menu) {
-         case kAppleMenu:
-            HandleAppleChoice (item);
-            break;
-         case kFileMenu:
-            HandleFileChoice (item);
-            break;
-         case kOptionsMenu:
-            HandleOptionsChoice (item);
-            break;
-         }
-      HiliteMenu (0);
-      }
-}
-
-void HandleAppleChoice (short item)
-{
-   MenuHandle  appleMenu;
-   Str255      accName;
-   short       accNumber;
-
-   switch (item) {
-      case kAboutMItem:
-         SysBeep (20);
-         break;
-         /* ******************* open a dialog box **************** */
-      default:
-         appleMenu = GetMHandle (kAppleMenu);
-         GetItem (appleMenu, item, accName);
-         accNumber = OpenDeskAcc (accName);
-         break;
-      }
-}
-
-void HandleFileChoice (short item)
-{
-   StandardFileReply fileReply;
-   SFTypeList typeList;
-   short numTypes;
-   char *fileName;
-   int argc;
-   char **argv;
-   MenuHandle menu;
-
-   switch (item) {
-      case kQuitMItem:
-         gDone = true;
-         abort ();
-         break;
-      case kCompileMItem:
-         typeList[0] = 'TEXT';
-         numTypes = 1;
-         StandardGetFile (nil, numTypes, typeList, &fileReply);
-         if (fileReply.sfGood) {
-            fileName = PtoCstr (fileReply.sfFile.name);
-            menu = GetMHandle (kFileMenu);
-            DisableItem (menu, kCompileMItem);
-            menu = GetMHandle (kOptionsMenu);
-            DisableItem (menu, 0);
-            }
-         else
-            break;
-
-         if (g_cOption)
-            argc = 3;
-         else
-            argc = 2;
-
-         argv = malloc (sizeof (*argv) * argc);
-         argv[0] = malloc (strlen ("ICONT") + 1);
-         strcpy (argv[0], "ICONT");
-
-         if (g_cOption) {
-            argv[1] = malloc (strlen ("-c") + 1);
-            strcpy (argv[1], "-c");
-            }
-
-         argv[argc-1] = malloc (strlen(fileName) + 1);
-         strcpy (argv[argc-1], fileName);
-
-         MacMain (argc, argv);
-         break;
-      }
-}
-
-void HandleOptionsChoice (short item)
-{
-   MenuHandle menu;
-
-   switch (item) {
-      case k_cMItem:
-         g_cOption = !g_cOption;
-         menu = GetMHandle (kOptionsMenu);
-         CheckItem (menu, item, g_cOption);
-         break;
-      }
-}
-
-/*------------------  End of display graphics code ------------------------*/
-
-void MenuBarInit (void)
-{
-   Handle         menuBar;
-   MenuHandle     menu;
-   OSErr          myErr;
-   long           feature;
-
-   g_cOption = false;
-
-   menuBar = GetNewMBar (kMenuBar);
-   SetMenuBar (menuBar);
-
-   menu = GetMHandle (kAppleMenu);
-   AddResMenu (menu, 'DRVR');
-
-   menu = GetMHandle (kOptionsMenu);
-   CheckItem (menu, k_cMItem, g_cOption);
-
-   DrawMenuBar ();
-}
-
-/*
- * EventInit - calls Gestalt to check if AppleEvent is available, if so,
- *   install OpenDocument and QuitApplication handler routines
- */
-void EventInit ( void )
-{
-   OSErr err;
-   long  feature;
-
-   err = Gestalt ( gestaltAppleEventsAttr, &feature );
-
-   if ( err != noErr ) {
-      printf ("Problem in calling Gestalt.");
-      return;
-      }
-   else {
-      if ( ! ( feature & (kGestaltMask << gestaltAppleEventsPresent ) ) ) {
-         printf ("Apple events not available!");
-         return;
-         }
-      }
-
-   err = AEInstallEventHandler (kCoreEventClass,
-                                kAEOpenDocuments,
-            (AEEventHandlerUPP)   DoOpenDoc,
-                                0L,
-                                false );
-
-   if ( err != noErr )
-      printf ("kAEOpenDocuments Apple Event not available!");
-
-   err = AEInstallEventHandler (kCoreEventClass,
-                                kAEQuitApplication,
-             (AEEventHandlerUPP)  DoQuitApp,
-                                0L,
-                                false );
-   if ( err != noErr )
-      printf ("kAEQuitApplication Apple Event not available!");
-}
-
-/*
- * EventLoop - waits for an event to be processed
- */
-void EventLoop ( void )
-{
-   EventRecord event;
-
-   gDone = false;
-   while ( gDone == false ) {
-      if ( WaitNextEvent ( everyEvent, &event, kSleep, nil ) )
-         DoEvent ( &event );
-      }
-}
-
-/*
- * DoOpenDoc - called by AEProcessAppleEvent (a ToolBox routine)
- *
- *    Calls AECountItems to retrieve number of files is to be processed
- *    and enters a loop to process each file.  Sets gDone to true
- *    to terminate program.
- */
-pascal OSErr DoOpenDoc ( AppleEvent theAppleEvent,
-                         AppleEvent reply,
-                               long refCon )
-{
-   AEDescList fileSpecList;
-   FSSpec     file;
-   OSErr      err;
-   DescType   type;
-   Size       actual;
-   long       count;
-   AEKeyword  keyword;
-   long       i;
-
-   int        argc;
-   char       **argv;
-
-   char       *fileName;
-
-   err = AEGetParamDesc ( &theAppleEvent,
-                          keyDirectObject,
-                          typeAEList,
-                          &fileSpecList );
-   if ( err != noErr ) {
-      printf ("Error AEGetParamDesc");
-      return ( err );
-      }
-
-   err = GotRequiredParams ( &theAppleEvent );
-   if ( err != noErr ) {
-      printf ("Error GotRequiredParams");
-      return ( err );
-      }
-
-   err = AECountItems ( &fileSpecList, &count );
-   if ( err != noErr ) {
-      printf ("Error AECountItems");
-      return ( err );
-      }
-
-   argc = count + 1;
-   argv = malloc (sizeof (*argv) * (argc + 1));
-   argv[0] = malloc (strlen("ICONT") + 1);
-   strcpy (argv[0], "ICONT");
-
-   for ( i = 1; i <= count; i++ ) {
-      err = AEGetNthPtr ( &fileSpecList,
-                          i,
-                          typeFSS,
-                          &keyword,
-                          &type,
-                          (Ptr) &file,
-                          sizeof (FSSpec),
-                          &actual );
-      if ( err != noErr ) {
-         printf ("Error AEGetNthPtr");
-         return ( err );
-	 }
-
-      fileName = PtoCstr (file.name);
-      argv[i] = malloc(strlen(fileName) + 1);
-      strcpy (argv[i], fileName);
-      }
-   MacMain (argc, argv);
-   gDone = true;
-   return ( noErr );
-}
-
-/*
- * DoQuitApp - called by AEProcessAppleEvent (a ToolBox routine)
- *             sets gDone to true to terminate program
- */
-pascal OSErr DoQuitApp ( AppleEvent theAppleEvent,
-                         AppleEvent reply,
-                               long refCon )
-{
-   OSErr err = noErr;
-   gDone = true;
-   return err;
-}
-
-/*
- * GotRequiredParams - check if all required parameters are retrieved
- */
-OSErr GotRequiredParams ( AppleEvent *appleEventPtr )
-{
-    DescType returnedType;
-    Size     actualSize;
-    OSErr    err;
-
-    err = AEGetAttributePtr ( appleEventPtr,
-                              keyMissedKeywordAttr,
-                              typeWildCard,
-                              &returnedType,
-                              nil,
-                              0,
-                              &actualSize );
-    if ( err == errAEDescNotFound )
-        return noErr;
-    else
-        if (err == noErr )
-            return errAEEventNotHandled;
-        else
-            return err;
-}
-
-#endif               /* THINK_C */
-#endif               /* MACINTOSH */
 
 /*
  * quit - immediate exit with error message

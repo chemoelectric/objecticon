@@ -187,7 +187,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
                 ((iconxloc!=NULL)?iconxloc:"wiconx"));
         strcat(script,"noop.bat\r\n@echo on\r\n");
         strcat(script,"pause missing noop.bat - press ^c or shell will exit\r\n");
-        strcat(script,"exit\r\nrem [executable Icon binary follows]\r\n");
+        strcat(script,"exit\r\n[executable Icon binary follows]\r\n");
         strcat(script, "        \n\f\n" + ((int)(strlen(script) + 4) % 8));
         hdrsize = strlen(script) + 1;	/* length includes \0 at end */
         fwrite(script, hdrsize, 1, outfile);	/* write header */

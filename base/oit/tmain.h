@@ -21,11 +21,6 @@ extern int Dflag;       /* -L: link debug */
 extern int Zflag;	/* -Z disables icode-gz compression */
 extern int Gflag;
 
-#if MSWindows
-extern int makeExe;	/* -X: create .exe instead of .icx */
-extern long fileOffsetOfStuffThatGoesInICX; /* remains 0 -f -X is not used */
-#endif					/* MSWindows */
-
 extern char *progname;
 
 /*

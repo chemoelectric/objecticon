@@ -125,7 +125,6 @@ int dumped = 0;				/* non-zero if reloaded from dump */
 word *stack;				/* Interpreter stack */
 word *stackend; 			/* End of interpreter stack */
 
-
 
 #if MSWindows
 /*
@@ -134,97 +133,39 @@ word *stackend; 			/* End of interpreter stack */
  */
 static char *convert_name(char *name)
 {
-    FILE *ifile;
+    char *s, tname[100];
     int n;
 
-    if (!name)
-        error(name, "No interpreter file supplied");
+    s = findexe(name);
+    if (s)
+       return s;
 
     /*
-     * Try adding the suffix if the file name doesn't end in it.
+     * Try adding .exe, .bat
      */
     n = strlen(name);
 
-    if (n >= 4 && !stricmp(".exe", name + n - 4)) {
-        ifile = pathOpen(name, ReadBinary);
-        /*
-         * ixhdr's code for calling iconx from an .exe passes iconx the
-         * full path of the .exe, so using pathOpen() seems redundant &
-         * potentially inefficient. However, pathOpen() first checks for a
-         * complete path, & if one is present, doesn't search Path; & since
-         * MS-DOS has a limited line length, it'd be possible for ixhdr
-         * to check whether the full path will fit, & if not, use only the
-         * name. The only price for this additional robustness would be
-         * the time pathOpen() spends checking for a path, which is trivial.
-         */
-    }
-    else {
+    if (strlen(name) + 5 > sizeof(tname))
+       error(name, "icode file name too long");
 
-        if (n <= 4 || (strcmp(name+n-4,IcodeSuffix) != 0
-                       && strcmp(name+n-4,IcodeASuffix) != 0)) {
-            char tname[100];
-            if ((int)strlen(name) + 5 > 100)
-                error(name, "icode file name too long");
-            strcpy(tname,name);
+    sprintf(tname, "%s.exe", name);
+    s = findexe(tname);
+    if (s)
+       return s;
 
-            strcat(tname,IcodeSuffix);
+    sprintf(tname, "%s.bat", name);
+    s = findexe(tname);
+    if (s)
+       return s;
 
-            ifile = pathOpen(tname,ReadBinary);	/* try to find path */
-
-            /*
-             * tried appending .exe, now try .bat or .cmd
-             */
-            if (ifile == NULL) {
-                strcpy(tname,name);
-                strcat(tname,".bat");
-                ifile = pathOpen(tname, ReadBinary);
-                if (ifile == NULL) {
-                    strcpy(tname,name);
-                    strcat(tname,".cmd");
-                    ifile = pathOpen(tname, ReadBinary);
-                }
-            }
-
-        }
-
-        if (ifile == NULL)			/* try the name as given */
-            ifile = pathOpen(name, ReadBinary);
-
-    } /* end if (n >= 4 && !stricmp(".exe", name + n - 4)) */
-
-    if (ifile == NULL)
-        return NULL;
-
-    {
-        static char errmsg[] = "can't read interpreter file header";
-
-        char buf[200];
-
-        for (;;) {
-            if (fgets(buf, sizeof buf-1, ifile) == NULL)
-                error(name, errmsg);
-            if (strncmp(buf, "rem [executable Icon binary follows]", 36) == 0)
-                    break;
-        }
-        while ((n = getc(ifile)) != EOF && n != '\f')	/* read thru \f\n\0 */
-            ;
-        getc(ifile);
-        getc(ifile);
-        if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr))
-            error(name, errmsg);
-    }
-
-    return ifile;
+    return 0;
 }
 #endif
 
-#ifdef UNIX
+#if UNIX
 static char *convert_name(char *name)
 {
-    char *s = findexe(name);
-    if (s)
-        return salloc(s);
-    return 0;
+    return findexe(name);
 }
 #endif
 
@@ -301,10 +242,10 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         }
     }
 #else					/* HAVE_LIBZ */
-    if ((cbread = longread(codeptr, sizeof(char), (long)hdr.hsize, ifile)) !=
-        hdr.hsize) {
+    if ((cbread = longread(codeptr, sizeof(char), (long)hdr->hsize, ifile)) !=
+        hdr->hsize) {
         fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                (long)hdr.hsize,(long)cbread);
+                (long)hdr->hsize,(long)cbread);
         error(name, "bad icode file");
     }
 #endif					/* HAVE_LIBZ */
@@ -345,7 +286,7 @@ void icon_init(name, argcp, argv)
     MakeInt(1, &(rootpstate.Kywd_pos));
     StrLen(rootpstate.ksub) = 0;
     StrLoc(rootpstate.ksub) = "";
-    MakeInt(hdr.trace, &(rootpstate.Kywd_trc));
+    MakeInt(0, &(rootpstate.Kywd_trc));
     StrLen(rootpstate.Kywd_prog) = strlen(prog_name);
     StrLoc(rootpstate.Kywd_prog) = prog_name;
     rootpstate.Kywd_ran = zerodesc;
@@ -482,7 +423,10 @@ void icon_init(name, argcp, argv)
      */
     datainit();
 
-    name = convert_name(name);
+    if (!name)
+        error(name, "No interpreter file supplied");
+
+    name = salloc(convert_name(name));
 
     ifile = readhdr(name, &hdr);
     if (ifile == NULL) {
@@ -1243,7 +1187,6 @@ struct b_coexpr * loadicode(name, theInput, theOutput, theError, bs, ss, stk)
     struct progstate *pstate;
     struct header hdr;
     FILE *ifile = NULL;
-    word cbread, longread();
 
     /*
      * open the icode file and read the header
