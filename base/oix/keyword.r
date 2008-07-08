@@ -316,21 +316,12 @@ keyword{1,*} features
 
       if (strlen(refpath)==0) {
           char *ploc;
-#if UNIX
-#define ICONXNAM "oix"
-#else
-#if MSDOS
-#define ICONXNAM "oix.exe"
-#else
-deliberate syntax error
-#endif
-#endif
-          ploc = findonpath(ICONXNAM);
+          ploc = findonpath("oix");
           if (ploc) {
+              *last_pathelem(ploc) = 0;
               refpath = salloc(ploc);
-              refpath[strlen(refpath)-strlen(ICONXNAM)] = '\0';
           }
-	 }
+      }
 
 #define Feature(guard,sym,kwval) if (kwval) suspend C_string kwval;
 #include "../h/features.h"

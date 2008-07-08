@@ -544,17 +544,6 @@ Deliberate Syntax Error
 #define IHasher(x)	(((unsigned int)(unsigned long)(x))&(IHSize-1))
 
 
-   /*
-    * Code for the interpreter.
-    */
-   #ifndef IcodeSuffix
-      #define IcodeSuffix ""
-   #endif				/* IcodeSuffix */
-
-   #ifndef IcodeASuffix
-      #define IcodeASuffix ""
-   #endif				/* IcodeASuffix */
-
    #ifndef USuffix
       #define USuffix ".u"
    #endif				/* USuffix */

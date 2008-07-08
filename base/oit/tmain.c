@@ -399,7 +399,7 @@ int main(int argc, char **argv)
 						  bundleiconx ? ".exe" : ".bat"));
     } else {				/* add extension in necessary */
         fp = fparse(ofile);
-        if (*fp->ext == '\0' && *IcodeSuffix != '\0') /* if no ext given */
+        if (*fp->ext == '\0') /* if no ext given */
             ofile = intern_using(&join_sbuf, makename(buf,NULL,ofile,
 						      bundleiconx ? ".exe" : ".bat"));
     }
@@ -407,11 +407,7 @@ int main(int argc, char **argv)
 #else                                   /* MSWindows */
 
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
-        ofile = intern_using(&join_sbuf, makename(buf,SourceDir,link_files->name,IcodeSuffix));
-    } else {				/* add extension in necessary */
-        fp = fparse(ofile);
-        if (*fp->ext == '\0' && *IcodeSuffix != '\0') /* if no ext given */
-            ofile = intern_using(&join_sbuf, makename(buf,NULL,ofile,IcodeSuffix));
+        ofile = intern_using(&join_sbuf, makename(buf,SourceDir,link_files->name,""));
     }
 
 #endif					/* MSWindows */
@@ -442,17 +438,10 @@ int main(int argc, char **argv)
     if (!errors && bundleiconx) {
         FILE *f, *f2;
         char tmp[MaxPath], *iconx;
-        strcpy(tmp, ofile);
-        strcpy(tmp+strlen(tmp)-4, ".bat");
+        makename(tmp, 0, ofile, ".tmp");
         rename(ofile, tmp);
 
-#if UNIX
-        iconx = "oix";
-#endif
-#if MSWindows
-        iconx = "oix.exe";
-#endif					/* NT */
-        if ((f = pathopen(iconx, ReadBinary)) == NULL) {
+        if ((f = pathopen("oix", ReadBinary)) == NULL) {
             report("Tried to open %s to build .exe, but couldn't",iconx);
             errors++;
         }
@@ -463,7 +452,7 @@ int main(int argc, char **argv)
 	    }
             fclose(f);
             if ((f = fopen(tmp, ReadBinary)) == NULL) {
-                report("tried to read .bat to append to .exe, but couldn't");
+                report("tried to read %s to append to exe, but couldn't",tmp);
                 errors++;
 	    }
             else {
