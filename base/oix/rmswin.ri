@@ -35,6 +35,9 @@ int numRealized;
 int winInitialized = 0;
 int BORDHEIGHT;
 int BORDWIDTH;
+int CLIENT_XOFF;
+int CLIENT_YOFF;
+
 /*
  * check for double-byte character set versions of Windows
  */
@@ -277,7 +280,9 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx, int i
 
    if (! winInitialized++) {
       BORDWIDTH = FRAMEWIDTH * 2;
-      BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2 - 1;
+      BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
+      CLIENT_XOFF = FRAMEWIDTH;
+      CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
       GetCPInfo(CP_ACP, &cpinfo);
       MAXBYTESPERCHAR = cpinfo.MaxCharSize;
       }
@@ -336,7 +341,7 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx, int i
 		   winstyles,
 		   ws->posx, ws->posy,
 		   ws->width == 0 ? 400 : ws->width + BORDWIDTH,
-		   ws->height == 0 ? 400: ws->height + BORDHEIGHT + 1,
+		   ws->height == 0 ? 400: ws->height + BORDHEIGHT,
 		   NULL, NULL, mswinInstance, NULL);
    hdc = GetDC(ws->iconwin);
    if ((GetDeviceCaps(hdc, RASTERCAPS) & RC_PALETTE) && (numColors == 0)){
@@ -384,7 +389,7 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx, int i
       SetWindowPos(ws->iconwin, ws->iconwin,
 		   ws->posx,
 		   ws->posy,
-		   ws->width + BORDWIDTH, ws->height + BORDHEIGHT + 1,
+		   ws->width + BORDWIDTH, ws->height + BORDHEIGHT,
 		   SWP_NOZORDER);
       }
    if (!ws->pix) {
@@ -616,6 +621,44 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
    qevent(ws, &d, x, y, t, flags);
    }
 
+void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
+{
+   wsp ws = wb->window;
+   LONG t;
+   WORD x, y;
+   struct descrip d;
+   long flags = 0;
+   RECT r;
+
+   /* Unlike normal mouse events, the co-ordinates are absolute, so
+    * convert to relative.
+    */
+   GetWindowRect(ws->win, &r);
+   x = LOWORD(lp) - (r.left + CLIENT_XOFF);
+   y = HIWORD(lp) - (r.top + CLIENT_YOFF);
+
+   t = GetMessageTime(); /* why might someone comment this out? */
+
+   if (MK_CONTROL & wp) flags |= ControlMask;
+   if (MK_SHIFT & wp) flags |= ShiftMask;
+
+   /*
+    * Wheel events produce two events each, namely a "press" and
+    * "release" of buttons 4 (scroll up) and 5 (scroll down).
+    */
+   if ((long)wp > 0) {
+      MakeInt(MOUSE4, &d);
+      qevent(ws, &d, x, y, t, flags);
+      MakeInt(MOUSE4UP, &d);
+      qevent(ws, &d, x, y, t, flags);
+   } else {
+      MakeInt(MOUSE5, &d);
+      qevent(ws, &d, x, y, t, flags);
+      MakeInt(MOUSE5UP, &d);
+      qevent(ws, &d, x, y, t, flags);
+   }
+}
+
 void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    {
    wsp ws = wb->window;
@@ -623,8 +666,7 @@ void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    WORD x, y;
    struct descrip d;
    long flags = 0, eventcode;
-   POINT pt;
-   HWND win;
+
    switch(msg) {
    case WM_MOUSEMOVE: /* only called if one of these three cases is true */
       if (MK_LBUTTON & wp)
@@ -636,17 +678,7 @@ void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
       else 
 	 eventcode = MOUSEMOVED;
       break;
-   case WM_LBUTTONDOWN: {
-      WORD x, y;
-      x = LOWORD(lp);
-      y = HIWORD(lp);
-      pt.x=x;
-      pt.y=y;
-      win = ChildWindowFromPoint(ws->win,pt);
-      if ((win!=NULL) && (win != GetFocus())) {
-	 SetFocus(win);
-	 }
-      }
+   case WM_LBUTTONDOWN:
       eventcode = MOUSELEFT;
       break;
    case WM_MBUTTONDOWN:
@@ -733,6 +765,9 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       if ((ws->inputmask & PointerMotionMask) ||
 	  ((MK_LBUTTON | MK_RBUTTON | MK_MBUTTON) & wp))
 	 handle_mouse(wb,msg,wp,lp);
+      return 0;
+   case WM_MOUSEWHEEL:
+      handle_wheel(wb,msg,wp,lp);
       return 0;
    case WM_LBUTTONDOWN: case WM_RBUTTONDOWN: case WM_MBUTTONDOWN:
    case WM_LBUTTONUP:   case WM_RBUTTONUP:   case WM_MBUTTONUP:
@@ -849,8 +884,9 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
          handle_config(wb, msg, wp, lp);
       break;
    case WM_MOVE:
-      ws->posx = LOWORD(lp) - (BORDWIDTH>>1);
-      ws->posy = HIWORD(lp) - (BORDHEIGHT - 4);
+      /* posx,posy represents the position of the whole window, not the client area */
+      ws->posx = LOWORD(lp) - CLIENT_XOFF;
+      ws->posy = HIWORD(lp) - CLIENT_YOFF; 
       break;
    case WM_ACTIVATE:
       if (wp == WA_INACTIVE) {
@@ -880,7 +916,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	 mmi->ptMinTrackSize.x = mmi->ptMaxTrackSize.x =
 	    ws->width + BORDWIDTH;
 	 mmi->ptMinTrackSize.y = mmi->ptMaxTrackSize.y =
-	    ws->height + BORDHEIGHT + 1;
+	    ws->height + BORDHEIGHT;
 	 }
       return 0;
       }
@@ -902,6 +938,13 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	 ws->hasCaret = 1;
          }
       break;
+   case WM_CLOSE: {
+      struct descrip d;
+      MakeInt(WINDOWCLOSED, &d);
+      qevent(ws, &d, 0, 0, 0, 0);
+      return 0;
+   }
+
    /* case WM_QUIT is handled prior to the switch*/
    case WM_DESTROY: {
       wbp tmp_wb, w = wb;
@@ -974,6 +1017,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       mciSendCommand(LOWORD(lp), MCI_CLOSE, 0, (DWORD)NULL);
       break;
    }
+
    return DefWindowProc(hwnd, msg, wp, lp);
 }
 
@@ -2732,8 +2776,8 @@ XPoint *pp;
    if (ws->win) {
       GetCursorPos(pp);
       GetWindowRect(ws->win, &r);
-      pp->x -= r.left;
-      pp->y -= r.top;
+      pp->x -= r.left + CLIENT_XOFF;
+      pp->y -= r.top + CLIENT_YOFF;
       return Succeeded;
       }
    return Failed;
@@ -3773,7 +3817,7 @@ int status;
 			SWP_NOZORDER|SWP_NOACTIVATE);
          else 
 	   SetWindowPos(ws->win, ws->win, posx, posy,
-		      wid + BORDWIDTH, ht + BORDHEIGHT + 1,
+		      wid + BORDWIDTH, ht + BORDHEIGHT,
 			SWP_NOZORDER|SWP_NOACTIVATE);
 	 }
       else if (status == 2) {
@@ -3782,7 +3826,7 @@ int status;
 			 SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
          else 
 	   SetWindowPos(ws->win, ws->win, 0, 0,
-		      wid + BORDWIDTH, ht + BORDHEIGHT + 1,
+		      wid + BORDWIDTH, ht + BORDHEIGHT,
 		      SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
          }
       else if (status == 1)

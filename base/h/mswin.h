@@ -208,3 +208,7 @@ HDC stddc = CreateWinDC(w);\
          SwapBuffers(stddc);\
 ReleaseDC(w->window->iconwin, stddc);\
 }
+
+#ifndef WM_MOUSEWHEEL
+#define WM_MOUSEWHEEL 0x20A
+#endif
