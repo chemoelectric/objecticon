@@ -9,9 +9,8 @@
  *  Define symbols for building file names.
  *  1. PREFIX: the characters that terminate a file name prefix
  *  2. FILESEP: the char to insert after a dir name, if any
- *  3. DEFPATH: the default IPATH/LPATH
- *  4. IPATHSEP: allowable OIPATH/OLPATH separators,
- *  5. XPATHSEP: separator for executable PATH variable
+ *  3. IPATHSEP: allowable OIPATH/OLPATH separators,
+ *  4. XPATHSEP: separator for executable PATH variable
  */
 
 #if UNIX
@@ -19,14 +18,12 @@
 #define PREFIX "/"
 #define IPATHSEP " :"
 #define XPATHSEP ":"
-#define DEFPATH ""
 #endif
 #if MSDOS
 #define FILESEP '\\'
 #define PREFIX "/:\\"
 #define IPATHSEP " "
 #define XPATHSEP ";"
-#define DEFPATH ";"
 #endif
 
 static char *tryfile(char *buf, char *dir, char *name, char *extn);
@@ -116,7 +113,7 @@ char *findonpath(char *name)
             return NULL;
         }
         memcpy(buf, next, plen);
-        buf[plen] = '/';
+        buf[plen] = FILESEP;
         strcpy(buf + plen + 1, name);
 #if NT && !defined(NTGCC)
 /* under visual C++, just check whether the file exists */
@@ -290,10 +287,9 @@ void quotestrcat(char *buf, char *s)
  *
  *  pathfind looks for a file on a path, begining with the current
  *  directory.  Details vary by platform, but the general idea is
- *  that the file must be a readable simple text file.  pathfind
- *  returns buf if it finds a file or NULL if not.
+ *  that the file must be a readable simple text file.
  *
- *  A pointer to a static buffer is returned.
+ *  A pointer to a static buffer is returned, or NULL if not found.
  * 
  *  path is the IPATH or LPATH value, or NULL if unset.
  *  name is the file name.
@@ -301,7 +297,6 @@ void quotestrcat(char *buf, char *s)
  */
 char *pathfind(char *path, char *name, char *extn)
 {
-    char *s;
     static char pbuf[PATH_MAX];
     static char buf[PATH_MAX];
 
@@ -312,13 +307,11 @@ char *pathfind(char *path, char *name, char *extn)
     if (isabsolute(name))
         return NULL;
 
-    if (!path)				/* if no path, use default */
-        path = DEFPATH;
-    s = path;
-
-    while ((s = pathelem(s, pbuf)) != 0) {	/* for each path element */
-        if (tryfile(buf, pbuf, name, extn))	/* look for file */
-            return buf;
+    if (path) {
+        while ((path = pathelem(path, pbuf)) != 0) {	/* for each path element */
+            if (tryfile(buf, pbuf, name, extn))	/* look for file */
+                return buf;
+        }
     }
     return NULL;				/* return NULL if no file found */
 }
@@ -466,8 +459,7 @@ struct fileparts *fparse(char *s)
 /*
  * makename - make a file name, optionally substituting a new dir and/or ext
  */
-char *makename(dest,d,name,e)
-    char *dest, *d, *name, *e;
+char *makename(char *dest, char *d, char *name, char *e)
 {
     struct fileparts fp;
     fp = *fparse(name);
@@ -484,8 +476,7 @@ char *makename(dest,d,name,e)
 /*
  * smatch - case-insensitive string match - returns nonzero if they match
  */
-int smatch(s,t)
-    char *s, *t;
+int smatch(char *s, char *t)
 {
     char a, b;
     for (;;) {

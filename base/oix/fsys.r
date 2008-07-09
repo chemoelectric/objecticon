@@ -1913,9 +1913,6 @@ function{0,1} chdir(s)
 	 if (chdir(dir) != 0)
 	    fail;
 	 }
-#ifndef PATH_MAX
-#define PATH_MAX 512
-#endif					/* PATH_MAX */
       if (getcwd(path, PATH_MAX) == NULL)
 	  fail;
 
