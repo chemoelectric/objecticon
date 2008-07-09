@@ -183,13 +183,13 @@ static void check_unused()
  */
 static void trans1(char *filename)
 {
-    char outname[MaxFileName];	/* buffer for constructing file name */
+    char *outname;              /* output file name */
 
-    twarnings = tfatals = 0;	/* reset error/warning counts */
-    nocode = 0;			/* allow code generation */
-    in_line = 1;			/* start with line 1, column 0 */
+    twarnings = tfatals = 0;    /* reset error/warning counts */
+    nocode = 0;                 /* allow code generation */
+    in_line = 1;                /* start with line 1, column 0 */
     incol = 0;
-    peekc = 0;			/* clear character lookahead */
+    peekc = 0;                  /* clear character lookahead */
 
     if (!ppinit(filename,lpath,m4pre))
         quitf("cannot open %s",filename);
@@ -198,7 +198,7 @@ static void trans1(char *filename)
         filename = "stdin";
     }
 
-    makename(outname, SourceDir, filename, USuffix);
+    outname = intern_using(&lex_sbuf, makename(SourceDir, filename, USuffix));
 
     if (pponly) {
         ppecho();

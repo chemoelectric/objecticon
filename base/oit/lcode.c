@@ -92,10 +92,9 @@ void generate_code()
      */
     for (lf = lfiles; lf; lf = lf->next) {
         filename = lf->lf_name;
-        makename(inname, SourceDir, filename, USuffix);
-        makename(icnname, TargetDir, filename, SourceSuffix);
+        inname = intern_using(&link_sbuf, makename(SourceDir, filename, USuffix));
         ucodefile = fopen(inname, ReadBinary);
-        if (ucodefile == NULL)
+        if (!ucodefile)
             quitf("cannot open .u for %s", inname);
         fseek(ucodefile, lf->declend_offset, SEEK_SET);
         gencode(lf);

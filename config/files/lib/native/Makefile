@@ -15,8 +15,8 @@ objecticonmysqllib.so : mysql.o
 
 mysql.o : mysql.r
 	rtt -h gmysql.h mysql.r
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c xmysql.c -o mysql.o
-	$(RM) xmysql.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c mysql.c -o mysql.o
+	$(RM) mysql.c
 endif
 
 objecticonipclib.so : ipc.o
@@ -24,8 +24,8 @@ objecticonipclib.so : ipc.o
 
 ipc.o : ipc.r
 	rtt -h gipc.h ipc.r
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c xipc.c -o ipc.o
-	$(RM) xipc.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c ipc.c -o ipc.o
+	$(RM) ipc.c
 
 clean :
-	rm -f *.u *.o *.so *.a x*.c
+	rm -f *.u *.o *.so *.a mysql.c ipc.c

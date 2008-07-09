@@ -26,7 +26,7 @@
 #define XPATHSEP ";"
 #endif
 
-static char *tryfile(char *buf, char *dir, char *name, char *extn);
+static char *tryfile(char *dir, char *name, char *extn);
 
 /*
  *  relfile(prog, mod) -- find related file.
@@ -47,8 +47,8 @@ char *relfile(char *prog, char *mod)
         fprintf(stderr, "cannot find location of %s\n", prog);
         exit(EXIT_FAILURE);
     }
-    strcat(t, mod);			/* append adjustment */
-    normalize(t);			/* normalize result */
+    strcat(t, mod);                     /* append adjustment */
+    normalize(t);                       /* normalize result */
     return t;
 }
 
@@ -92,7 +92,7 @@ char *findonpath(char *name)
 {
     int nlen, plen;
     char *path, *next, *sep, *end;
-    static char buf[PATH_MAX];
+    static char buf[MaxPath];
 
     nlen = strlen(name);
     path = getenv("PATH");
@@ -110,7 +110,7 @@ char *findonpath(char *name)
         }
         if (plen + 1 + nlen + 1 >= sizeof(buf)) {
             *buf = '\0';
-            return NULL;
+            return 0;
         }
         memcpy(buf, next, plen);
         buf[plen] = FILESEP;
@@ -129,7 +129,7 @@ char *findonpath(char *name)
 #endif
     }
     *buf = '\0';
-    return NULL;
+    return 0;
 }
 
 
@@ -169,8 +169,8 @@ void normalize(char *file)
  */
 char *canonicalize(char *path)
 {
-    static char result[PATH_MAX];
-    static char currentdir[PATH_MAX];
+    static char result[MaxPath];
+    static char currentdir[MaxPath];
     if (path[0] == '/') {
         if (snprintf(result, sizeof(result), "%s", path) >= sizeof(result)) {
             fprintf(stderr, "path too long to canonicalize: %s", path);
@@ -240,8 +240,8 @@ void normalize(char *file)
  */
 char *canonicalize(char *path)
 {
-    static char result[PATH_MAX];
-    static char currentdir[PATH_MAX];
+    static char result[MaxPath];
+    static char currentdir[MaxPath];
     if (path[0] == '\\' || path[0] == '/' ||
         (isalpha(path[0]) && path[1] == ':')) {
         if (snprintf(result, sizeof(result), "%s", path) >= sizeof(result)) {
@@ -270,7 +270,7 @@ FILE *pathopen(char *fname, char *mode)
     char *s = findexe(fname);
     if (s) 
         return fopen(s, mode);
-    return NULL;
+    return 0;
 }
 
 
@@ -289,7 +289,8 @@ void quotestrcat(char *buf, char *s)
  *  directory.  Details vary by platform, but the general idea is
  *  that the file must be a readable simple text file.
  *
- *  A pointer to a static buffer is returned, or NULL if not found.
+ *  A pointer to a makename's static buffer is returned, or NULL if
+ *  not found.
  * 
  *  path is the IPATH or LPATH value, or NULL if unset.
  *  name is the file name.
@@ -297,23 +298,27 @@ void quotestrcat(char *buf, char *s)
  */
 char *pathfind(char *path, char *name, char *extn)
 {
-    static char pbuf[PATH_MAX];
-    static char buf[PATH_MAX];
+    char *p;
 
-    if (tryfile(buf, 0, name, extn))	/* try curr directory first */
-        return buf;
+    if ((p = tryfile(0, name, extn)))     /* try curr directory first */
+        return p;
 
     /* Don't search the path if we have an absolute path */
     if (isabsolute(name))
-        return NULL;
+        return 0;
 
-    if (path) {
-        while ((path = pathelem(path, pbuf)) != 0) {	/* for each path element */
-            if (tryfile(buf, pbuf, name, extn))	/* look for file */
-                return buf;
-        }
+    if (!path)
+        return 0;
+
+    for (;;) {
+        char *e = pathelem(&path);
+        if (!e)
+            break;
+        if ((p = tryfile(e, name, extn)))        /* look for file */
+            return p;
     }
-    return NULL;				/* return NULL if no file found */
+
+    return 0;                           /* return 0 if no file found */
 }
 
 /*
@@ -335,45 +340,53 @@ Deliberate Syntax Error
 }
 
 /*
- * pathelem(s,buf) -- copy next path element from s to buf.
- *
- *  Returns the updated pointer s.
+ * pathelem(s) -- get next path element
+ * 
+ * The parameter s is a pointer to a pointer to a string.  This pointer is
+ * advanced and the intermediate path element copied to a static buffer
+ * and returned.
+ * 
+ * If no path remains, the pointer is set to NULL, and NULL is
+ * returned.
  */
-char *pathelem(char *s, char *buf)
+char *pathelem(char **ps)
 {
-    char c;
+    static char buf[MaxPath];
+    char c, *s = *ps, *b = buf;
 
     while ((c = *s) != '\0' && strchr(IPATHSEP, c))
         s++;
-    if (!*s)
-        return NULL;
+    if (!*s) {
+        *ps = 0;
+        return 0;
+    }
 
     if (*s == '"') {
         s++;
         while ((c = *s) != '\0' && (c != '"')) {
-            *buf++ = c;
+            *b++ = c;
             s++;
         }
         s++;
     }
     else {
         while ((c = *s) != '\0' && !strchr(IPATHSEP, c)) {
-            *buf++ = c;
+            *b++ = c;
             s++;
         }
     }
-#ifdef FILESEP
+
     /*
      * We have to append a path separator here.
      *  Seems like makename should really be the one to do that.
      */
-    if (!strchr(PREFIX, buf[-1])) {	/* if separator not already there */
-        *buf++ = FILESEP;
+    if (!strchr(PREFIX, b[-1])) {       /* if separator not already there */
+        *b++ = FILESEP;
     }
-#endif					/* FILESEP */
 
-    *buf = '\0';
-    return s;
+    *b = 0;
+    *ps = s;
+    return buf;
 }
 
 /*
@@ -405,21 +418,21 @@ int newer_than(char *f1, char *f2)
 }
 
 /*
- * tryfile(buf, dir, name, extn) -- check to see if file is readable.
+ * tryfile(dir, name, extn) -- check to see if file is readable.
  *
- *  The file name is constructed in buf from dir + name + extn.
- *  findfile returns buf if successful or NULL if not.
+ *  The file name is constructed in from dir + name + extn.  findfile
+ *  returns makename's static buf if successful or NULL if not.
  */
-static char *tryfile(char *buf, char *dir, char *name, char *extn)
+static char *tryfile(char *dir, char *name, char *extn)
 {
     FILE *f;
-    makename(buf, dir, name, extn);
-    if ((f = fopen(buf, ReadText)) != NULL) {
+    char *p = makename(dir, name, extn);
+    if ((f = fopen(p, ReadText)) != NULL) {
         fclose(f);
-        return buf;
+        return p;
     }
     else
-        return NULL;
+        return 0;
 }
 
 /*
@@ -428,7 +441,7 @@ static char *tryfile(char *buf, char *dir, char *name, char *extn)
  */
 struct fileparts *fparse(char *s)
 {
-    static char buf[PATH_MAX];
+    static char buf[MaxPath];
     static struct fileparts fp;
     int n;
     char *p, *q;
@@ -459,18 +472,16 @@ struct fileparts *fparse(char *s)
 /*
  * makename - make a file name, optionally substituting a new dir and/or ext
  */
-char *makename(char *dest, char *d, char *name, char *e)
+char *makename(char *d, char *name, char *e)
 {
-    struct fileparts fp;
-    fp = *fparse(name);
-    if (d != NULL)
-        fp.dir = d;
-    if (e != NULL)
-        fp.ext = e;
-
-    sprintf(dest,"%s%s%s",fp.dir,fp.name,fp.ext);
-
-    return dest;
+    static char buf[MaxPath];
+    struct fileparts *fp = fparse(name);
+    if (d)
+        fp->dir = d;
+    if (e)
+        fp->ext = e;
+    snprintf(buf, sizeof(buf), "%s%s%s", fp->dir, fp->name, fp->ext);
+    return buf;
 }
 
 /*
@@ -502,7 +513,7 @@ int smatch(char *s, char *t)
  */
 char *abbreviate(char *path)
 {
-    static char currentdir[PATH_MAX];
+    static char currentdir[MaxPath];
     int n;
 
     if (!getcwd(currentdir, sizeof(currentdir))) {

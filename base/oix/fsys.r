@@ -1904,7 +1904,7 @@ function{0,1} chdir(s)
 #endif                                  /* ARM || MACINTOSH ... */
 #if AMIGA || MSDOS || OS2 || UNIX || VMS || NT
 
-      char path[PATH_MAX];
+      char path[MaxPath];
       int len;
 
       if (is:string(s)) {
@@ -1913,7 +1913,7 @@ function{0,1} chdir(s)
 	 if (chdir(dir) != 0)
 	    fail;
 	 }
-      if (getcwd(path, PATH_MAX) == NULL)
+      if (getcwd(path, sizeof(path)) == NULL)
 	  fail;
 
       len = strlen(path);

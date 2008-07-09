@@ -253,7 +253,7 @@
 #endif					/* AllocType */
 
 #ifndef MaxPath
-   #define MaxPath 200
+   #define MaxPath 1024
 #endif					/* MaxPath */
 
 #ifndef StackAlign
@@ -499,8 +499,6 @@ Deliberate Syntax Error
    #define AllocReg(n) malloc((msize)n)
 #endif					/* AllocReg */
 
-#define MaxFileName 256
-
 #ifndef RttSuffix
    #define RttSuffix ".r"
 #endif					/* RttSuffix */
@@ -548,7 +546,7 @@ Deliberate Syntax Error
       #define USuffix ".u"
    #endif				/* USuffix */
 
-
+#define IcodeDelim "[executable Icon binary follows]"
 
 /*
  *  Vsizeof is for use with variable-sized (i.e., indefinite)

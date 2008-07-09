@@ -85,6 +85,7 @@ int mterm = Op_Quit;
 FILE *finredir, *fouredir, *ferredir;
 
 #if MSWindows
+
 /*
  * CmdParamToArgv() - convert a command line to an argv array.  Return argc.
  * Called for both input processing (e.g. in WinMain()) and in output
@@ -160,10 +161,6 @@ int CmdParamToArgv(char *s, char ***avp, int dequote)
     free(t);
     return rv;
 }
-
-#endif
-
-#ifdef MSWindows
 
 char *lognam;
 char tmplognam[128];

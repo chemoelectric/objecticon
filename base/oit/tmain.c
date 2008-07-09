@@ -242,7 +242,6 @@ int main(int argc, char **argv)
     char ch;
     struct fileparts *fp;
     struct file_param *rptr;
-    static char buf[MaxFileName];  /* file name construction buffers */
 
     init_strings();
 
@@ -351,15 +350,14 @@ int main(int argc, char **argv)
         else {
             fp = fparse(argv[optind]);		/* parse file name */
             if (*fp->ext == '\0' || smatch(fp->ext, SourceSuffix)) {
-                makename(buf, SourceDir, argv[optind],  SourceSuffix);
-                add_trans_file(buf);
-                makename(buf, SourceDir, argv[optind], USuffix);
-                add_link_file(buf);
-                add_remove_file(buf);
+                char *t;
+                add_trans_file(makename(SourceDir, argv[optind],  SourceSuffix));
+                t = makename(SourceDir, argv[optind], USuffix);
+                add_link_file(t);
+                add_remove_file(t);
             }
             else if (smatch(fp->ext, USuffix)) {
-                makename(buf, TargetDir, argv[optind], USuffix);
-                add_link_file(buf);
+                add_link_file(makename(TargetDir, argv[optind], USuffix));
             }
             else
                 quitf("bad argument %s", argv[optind]);
@@ -395,19 +393,19 @@ int main(int argc, char **argv)
 #if MSWindows
     {
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
-        ofile = intern_using(&join_sbuf, makename(buf,SourceDir,link_files->name,
+        ofile = intern_using(&join_sbuf, makename(SourceDir,link_files->name,
 						  bundleiconx ? ".exe" : ".bat"));
     } else {				/* add extension in necessary */
         fp = fparse(ofile);
         if (*fp->ext == '\0') /* if no ext given */
-            ofile = intern_using(&join_sbuf, makename(buf,NULL,ofile,
+            ofile = intern_using(&join_sbuf, makename(0,ofile,
 						      bundleiconx ? ".exe" : ".bat"));
     }
     }
 #else                                   /* MSWindows */
 
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
-        ofile = intern_using(&join_sbuf, makename(buf,SourceDir,link_files->name,""));
+        ofile = intern_using(&join_sbuf, makename(SourceDir,link_files->name,""));
     }
 
 #endif					/* MSWindows */
@@ -437,8 +435,7 @@ int main(int argc, char **argv)
      */
     if (!errors && bundleiconx) {
         FILE *f, *f2;
-        char tmp[MaxPath];
-        makename(tmp, 0, ofile, ".tmp");
+        char *tmp = salloc(makename(0, ofile, ".tmp"));
         rename(ofile, tmp);
 
         if ((f = pathopen("oix", ReadBinary)) == NULL) {

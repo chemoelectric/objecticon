@@ -148,7 +148,6 @@ char **argv;
    {
    int c;
    int nopts;
-   char buf[MaxFileName];		/* file name construction buffer */
    struct fileparts *fp;
 
    if (strlen(refpath)==0)
@@ -252,7 +251,7 @@ char **argv;
    if (!pp_only) {
       fp = fparse(dbname);
       if (*fp->ext == '\0')
-         dbname = salloc(makename(buf, SourceDir, dbname, DBSuffix));
+         dbname = salloc(makename(SourceDir, dbname, DBSuffix));
       else if (!smatch(fp->ext, DBSuffix))
          err2("bad data base name:", dbname);
       loaddb(dbname);
@@ -297,8 +296,6 @@ void trans(src_file)
 char *src_file;
    {
    char *cname;
-   char buf[MaxFileName];		/* file name construction buffer */
-   char *buf_ptr;
    char *s;
    struct fileparts *fp;
    struct tdefnm *td;
@@ -347,25 +344,18 @@ char *src_file;
     */
    if (strcmp(cur_src, "-") == 0) {
       source("-"); /* tell preprocessor to read standard input */
-      cname = salloc(makename(buf, TargetDir, "stdin", CSuffix));
+      cname = salloc(makename(TargetDir, "stdin", CSuffix));
       }
    else {
       fp = fparse(cur_src);
       if (*fp->ext == '\0')
-         cur_src = salloc(makename(buf, SourceDir, cur_src, RttSuffix));
+         cur_src = salloc(makename(SourceDir, cur_src, RttSuffix));
       else if (!smatch(fp->ext, RttSuffix))
          err2("unknown file suffix ", cur_src);
       cur_src = spec_str(cur_src);
 
       source(cur_src);  /* tell preprocessor to read source file */
-      /*
-       * For the interpreter prepend "x" to the file name for the .c file.
-       */
-
-      buf_ptr = buf;
-      *buf_ptr++ = 'x';
-      makename(buf_ptr, TargetDir, cur_src, CSuffix);
-      cname = salloc(buf);
+      cname = salloc(makename(TargetDir, cur_src, CSuffix));
       }
 
    if (pp_only)

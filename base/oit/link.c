@@ -47,22 +47,21 @@ Deliberate Syntax Error
  * End of operating-system specific code.
  */
 
-FILE *infile;				/* input file (.u) */
-FILE *outfile;				/* interpreter code output file */
+FILE *infile;                           /* input file (.u) */
+FILE *outfile;                          /* interpreter code output file */
 
-extern char *ofile;			/* output file name */
+extern char *ofile;                     /* output file name */
 
 #ifdef DeBugLinker
-FILE *dbgfile;			/* debug file */
-static char dbgname[MaxFileName];	/* debug file name */
-#endif					/* DeBugLinker */
+FILE *dbgfile;                          /* debug file */
+static char *dbgname;                   /* debug file name */
+#endif                                  /* DeBugLinker */
 
-char inname[MaxFileName];		/* input file name */
-char icnname[MaxFileName];	/* icon source file name */
+char *inname;                           /* input file name */
 
-int lineno = 0;				/* current source line number */
-int lfatals = 0;				/* number of errors encountered */
-int lwarnings = 0;			/* number of warnings encountered */
+int lineno = 0;                         /* current source line number */
+int lfatals = 0;                                /* number of errors encountered */
+int lwarnings = 0;                      /* number of warnings encountered */
 
 /*
  *  ilink - link a number of files, returning error and warning counts
@@ -95,8 +94,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
      */
     for (lf = lfiles; lf; lf = lf->next) {
         filename = lf->lf_name;
-        makename(inname, SourceDir, filename, USuffix);
-        makename(icnname, TargetDir, filename, SourceSuffix);
+        inname = intern_using(&link_sbuf, makename(SourceDir, filename, USuffix));
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
             quitf("cannot open %s",inname);
@@ -109,7 +107,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
      * Open the .ux file if debugging is on.
      */
     if (Dflag) {
-        makename(dbgname, TargetDir, lfiles->lf_name, ".ux");
+        dbgname = intern_using(&link_sbuf, makename(TargetDir, lfiles->lf_name, ".ux"));
         dbgfile = fopen(dbgname, WriteText);
         if (dbgfile == NULL)
             quitf("cannot create %s", dbgname);
@@ -172,7 +170,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
      * Pad header to a multiple of 8 characters.
      */
     {
-        char script[2 * MaxPath + 300];
+        char script[2048];
 
 #if MSWindows
         /*
@@ -182,15 +180,13 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
          * fails, rather than fall through and start executing machine code
          * as if it were batch commands.
          */
-        sprintf(script,
-                "@echo off\r\n%s %%0 %%1 %%2 %%3 %%4 %%5 %%6 %%7 %%8 %%9\r\n",
-                ((iconxloc!=NULL)?iconxloc:"wiconx"));
-        strcat(script,"noop.bat\r\n@echo on\r\n");
-        strcat(script,"pause missing noop.bat - press ^c or shell will exit\r\n");
-        strcat(script,"exit\r\n[executable Icon binary follows]\r\n");
-        strcat(script, "        \n\f\n" + ((int)(strlen(script) + 4) % 8));
-        hdrsize = strlen(script) + 1;	/* length includes \0 at end */
-        fwrite(script, hdrsize, 1, outfile);	/* write header */
+        snprintf(script, sizeof(script),
+                "@echo off\r\n%s %%0 %%1 %%2 %%3 %%4 %%5 %%6 %%7 %%8 %%9\r\n%s%s%s",
+                ((iconxloc!=NULL)?iconxloc:"wiconx"),
+                "noop.bat\r\n@echo on\r\n",
+                "pause missing noop.bat - press ^c or shell will exit\r\n",
+                "exit\r\n" IcodeDelim "\r\n");
+
 #endif					/* MSWindows */
 #if UNIX
         /*
@@ -206,7 +202,8 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
          *  of "$@" by some shells in the absence of any arguments.
          *  Thanks to the Unix-haters handbook for this trick.
          */
-        sprintf(script, "%s\n%s%-72s\n%s\n\n%s\n%s\n%s\n%s%s%s\n\n%s\n",
+        snprintf(script, sizeof(script),
+                "%s\n%s%-72s\n%s\n\n%s\n%s\n%s\n%s%s%s\n\n%s",
                 "#!/bin/sh",
                 "OIXBIN=", iconxloc,
                 "OIXLCL=`echo $0 | sed 's=[^/]*$=oix='`",
@@ -216,11 +213,11 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
                 "exec ",
                 "oix",
                 " $0 ${1+\"$@\"}",
-                "[executable Icon binary follows]");
-        strcat(script, "        \n\f\n" + ((int)(strlen(script) + 4) % 8));
-        hdrsize = strlen(script) + 1;	/* length includes \0 at end */
-        fwrite(script, hdrsize, 1, outfile);	/* write header */
+                IcodeDelim "\n");
 #endif					/* UNIX */
+
+        hdrsize = strlen(script);
+        fwrite(script, hdrsize, 1, outfile);	/* write header */
     }
 
     for (i = sizeof(struct header); i--;)

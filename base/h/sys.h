@@ -90,9 +90,6 @@
       #define int_PASCAL int PASCAL
       #define LRESULT_CALLBACK LRESULT CALLBACK
       #define BOOL_CALLBACK BOOL CALLBACK
-      #ifndef PATH_MAX
-      #define PATH_MAX 512
-      #endif
       #ifdef PosixFns
       #include <winsock2.h>
       #else					/* PosixFns */
@@ -102,9 +99,6 @@
       #include <process.h>
    #else					/* MSWindows */
       #if NT
-      #ifndef PATH_MAX
-      #define PATH_MAX 512
-      #endif					/* PATH_MAX */
       #ifdef PosixFns
       #include <winsock2.h>
       #else

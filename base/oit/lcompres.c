@@ -37,20 +37,15 @@ int file_comp(char *filename) {
       return 1;
     }
 
+    n = strlen(IcodeDelim);
     for (;;) {
       if (fgets(buf, sizeof buf-1, finput) == NULL)
 	printf("Error: Reading Error: Check if the file is executable Icon\n");
       else 
 	fputs(buf, foutput);
-      if (strncmp(buf, "[executable Icon binary follows]", 32) == 0)
+      if (strncmp(buf, IcodeDelim, n) == 0)
 	 break;
     }
-
-    while ((n = getc(finput)) != EOF && n != '\f')	/* read thru \f\n\0 */
-      putc(n,foutput);
-    putc(n,foutput);
-    putc(getc(finput),foutput);
-    putc(getc(finput),foutput);
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), finput) != sizeof(*hdr)) {
       fprintf(stderr, "gz compressor can't read the header, compression\n");

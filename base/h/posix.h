@@ -41,10 +41,6 @@
 #include <time.h>
 #include <process.h>
 #define NAME_MAX FILENAME_MAX
-#ifdef PATH_MAX
-#undef PATH_MAX
-#endif						/* PATH_MAX */
-#define PATH_MAX FILENAME_MAX
 #define MAXHOSTNAMELEN		256
 #else					/* NT */
 #define SOCKET int

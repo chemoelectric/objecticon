@@ -176,7 +176,7 @@ static char *convert_name(char *name)
 static FILE *readhdr(char *name, struct header *hdr)
 {
     FILE *ifile;
-    int n;
+    int n = strlen(IcodeDelim);
     char buf[200];
 
     ifile = fopen(name, ReadBinary);
@@ -186,13 +186,10 @@ static FILE *readhdr(char *name, struct header *hdr)
     for (;;) {
         if (fgets(buf, sizeof buf-1, ifile) == NULL)
             error(name, "can't find header marker in interpreter file");
-        if (strncmp(buf, "[executable Icon binary follows]", 32) == 0)
+        if (strncmp(buf, IcodeDelim, n) == 0)
             break;
     }
-    while ((n = getc(ifile)) != EOF && n != '\f')	/* read thru \f\n\0 */
-        ;
-    getc(ifile);
-    getc(ifile);
+
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr))
         error(name, "can't read interpreter file header");
 
@@ -221,7 +218,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
 {
     word cbread;
 #ifdef HAVE_LIBZ
-    if ((strchr((char *)(hdr->config), 'Z'))!=NULL) { /* to decompress */
+    if (strchr((char *)(hdr->config), 'Z')) { /* to decompress */
         gzFile zfd;
         int tmp = open(name, O_RDONLY);
         lseek(tmp,ftell(ifile),SEEK_SET);
