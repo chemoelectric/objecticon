@@ -101,20 +101,14 @@ static char *read_package_line(FILE *f)
 {
     int c;
     zero_sbuf(&pack_sbuf);
-    /* Skip any whitespace */
-    for(;;) {
-        c = getc(f);
-        if (!isspace(c))
-            break;
-    }
     /* Read upto end of line */
     for(;;) {
+        c = getc(f);
         if (c == EOF)
             return 0;
-        if (c == '\n' || c == '\r')
+        if (c == '\n')
             break;
         AppChar(pack_sbuf, (char)c);
-        c = getc(f);
     }
     return str_install(&pack_sbuf);
 }
@@ -128,7 +122,7 @@ int load_package_dir(struct package_dir *dir)
     struct package *pack = 0;
     struct package_file *pf = 0;
     char *fn = get_packages_file(dir);
-    FILE *f = fopen(fn, "r");
+    FILE *f = fopen(fn, "rb");
 
     if (!f)
         return 0;
@@ -172,7 +166,7 @@ static void writecheck(int rc)
 static void save_package_dir(struct package_dir *dir)
 {
     char *fn = get_packages_file(dir);
-    FILE *f = fopen(fn, "w");
+    FILE *f = fopen(fn, "wb");
     struct package *pk;
     struct package_file *pf;
     if (!f)
