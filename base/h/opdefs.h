@@ -96,7 +96,6 @@
 #define Op_Mark0	 85
 #define Op_Quit		 86
 #define Op_FQuit	 87
-#define Op_Tally	 88
 #define Op_Apply	 89
 
 /*

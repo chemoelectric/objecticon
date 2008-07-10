@@ -427,9 +427,6 @@ int main(int argc, char **argv)
  */
 void icon_setup(int argc, char **argv, int *ip)
 {
-#ifdef TallyOpt
-    extern int tallyopt;
-#endif					/* TallyOpt */
     struct fileparts *fp;
     *ip = 0;			/* number of arguments processed */
 
@@ -449,41 +446,32 @@ void icon_setup(int argc, char **argv, int *ip)
      * Handle command line options.
      */
     while ( argv[1] != 0 && *argv[1] == '-' ) {
-            switch ( *(argv[1]+1) ) {
+        switch ( *(argv[1]+1) ) {
 
-#ifdef TallyOpt
-                /*
-                 * Set tallying flag if -T option given
-                 */
-                case 'T':
-                    tallyopt = 1;
-                    break;
-#endif					/* TallyOpt */
-
-                    /*
-                     * Set stderr to new file if -e option is given.
-                     */
-                case 'e': {
-                    char *p;
-                    if ( *(argv[1]+2) != '\0' )
-                        p = argv[1]+2;
-                    else {
-                        argv++;
-                        argc--;
-                        (*ip)++;
-                        p = argv[1];
-                        if ( !p )
-                            error(NULL, "no file name given for redirection of &errout");
-                    }
-                    if (!redirerr(p))
-                        syserr("Unable to redirect &errout\n");
-                    break;
+            /*
+             * Set stderr to new file if -e option is given.
+             */
+            case 'e': {
+                char *p;
+                if ( *(argv[1]+2) != '\0' )
+                    p = argv[1]+2;
+                else {
+                    argv++;
+                    argc--;
+                    (*ip)++;
+                    p = argv[1];
+                    if ( !p )
+                        error(NULL, "no file name given for redirection of &errout");
                 }
+                if (!redirerr(p))
+                    syserr("Unable to redirect &errout\n");
+                break;
             }
-            argc--;
-            (*ip)++;
-            argv++;
         }
+        argc--;
+        (*ip)++;
+        argv++;
+    }
 }
 
 /*

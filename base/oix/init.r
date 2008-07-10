@@ -111,13 +111,6 @@ struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
 struct progstate *curpstate;		/* lastop accessed in program state */
 struct progstate rootpstate;
 
-
-
-#ifdef TallyOpt
-word tallybin[16];			/* counters for tallying */
-int tallyopt = 0;			/* want tally results output? */
-#endif					/* TallyOpt */
-
 #ifdef ExecImages
 int dumped = 0;				/* non-zero if reloaded from dump */
 #endif					/* ExecImages */
@@ -773,19 +766,6 @@ void c_exit(i)
             co_chng(curpstate->parent->Mainhead, NULL, &dummy, A_Cofail, 1);
         }
     }
-
-#ifdef TallyOpt
-    {
-        int j;
-
-        if (tallyopt) {
-            fprintf(stderr,"tallies: ");
-            for (j=0; j<16; j++)
-                fprintf(stderr," %ld", (long)tallybin[j]);
-            fprintf(stderr,"\n");
-        }
-    }
-#endif					/* TallyOpt */
 
     if (k_dump && set_up) {
         fprintf(stderr,"\nTermination dump:\n\n");

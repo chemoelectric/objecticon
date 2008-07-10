@@ -424,11 +424,6 @@ static void gencode(struct lfile *lf)
                 lemitin(op, sp->offset, sp->len, name);
                 break;
         
-            case Op_Tally:
-                k = uin_word();
-                lemitn(op, (word)k, name);
-                break;
-
             case Op_Unmark:
                 lemit(Op_Unmark, name);
                 break;

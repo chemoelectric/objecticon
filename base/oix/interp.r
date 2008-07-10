@@ -212,10 +212,6 @@ int interp_x(int fsig,dptr cargp)
    int lastev = E_Misc;
    struct descrip lastdesc = nulldesc;
 
-#ifdef TallyOpt
-   extern word tallybin[];
-#endif					/* TallyOpt */
-
    EVVal(fsig, e_intcall);
    EVVal(DiffPtrs(sp, stack), e_stack);
 
@@ -1534,12 +1530,6 @@ EntInterp;
 	       rsp = (word *) rargp + 1;
 	       }
 	    goto mark0;
-
-#ifdef TallyOpt
-	 case Op_Tally: 	/* tally */
-	    tallybin[GetWord]++;
-	    break;
-#endif					/* TallyOpt */
 
 	 case Op_Pnull: 	/* push null descriptor */
 	    PushNull;

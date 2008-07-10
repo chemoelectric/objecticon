@@ -95,7 +95,7 @@ struct ucode_op ucode_op_table[] = {
     /*  85 */         { Op_Mark0, "mark0", {0,0,0}, "\t%-12s" },               
     /*  86 */         { Op_Quit, "quit", {0,0,0}, "\t%-12s" },                 
     /*  87 */         { Op_FQuit, "fquit", {0,0,0}, "\t%-12s" },               
-    /*  88 */         { Op_Tally, "tally", {0,0,0}, "\t%-12s" },               
+    /*  88 */         INVALID,
     /*  89 */         { Op_Apply, "apply", {0,0,0}, "\t%-12s" },               
     /*  90 */         INVALID,                                    
     /*  91 */         INVALID,                                    
