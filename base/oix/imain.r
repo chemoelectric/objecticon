@@ -427,94 +427,28 @@ int main(int argc, char **argv)
  */
 void icon_setup(int argc, char **argv, int *ip)
 {
-    int len = 0;
-    char *tmp = strdup(argv[0]), *t2 = tmp;
-
 #ifdef TallyOpt
     extern int tallyopt;
 #endif					/* TallyOpt */
-
+    struct fileparts *fp;
     *ip = 0;			/* number of arguments processed */
 
-    /*
-     * if we didn't start with *iconx[.exe], backup one
-     * so that our icode filename is argv[1].
-     */
-    if (tmp == NULL) {
-        syserr("memory allocation failure in startup code");
-    }
-    while (*t2) {
-        *t2 = tolower(*t2);
-        t2++;
-    }
-    len = t2 - tmp;
-
-    if (len > 4 && !strcmp(tmp+len-4, ".exe")) {
-        len -= 4; tmp[len] = '\0'; 
-    }
+    fp = fparse(last_pathelem(argv[0]));
 
     /*
      * if argv[0] is not a reference to our interpreter, take it as the
      * name of the icode file, and back up for it.
      */
-    if (len < 3 || strcmp(tmp + len - 3, "oix")) {
+    if (!smatch(fp->name, "oix")) {
         argv--;
         argc++;
         (*ip)--;
     }
 
-#if MACINTOSH
-#if MPW
-    InitCursorCtl(NULL);
     /*
-     * To support the icode and iconx interpreter bundled together in
-     * the same file, we might have to use this code file as the icode
-     * file, too.  We do this if the command name is not 'iconx'.
+     * Handle command line options.
      */
-    {
-        char *p,*q,c,fn[6];
-
-        /*
-         * Isolate the filename from the path.
-         */
-        q = strrchr(*argv,':');
-        if (q == NULL)
-            q = *argv;
-        else
-            ++q;
-        /*
-         * See if it's the real iconx -- case independent compare.
-         */
-        p = fn;
-        if (strlen(q) == 5)
-            while (c = *q++) *p++ = tolower(c);
-        *p = '\0';
-        if (strcmp(fn,"iconx") != 0) {
-            /*
-             * This technique of shifting arguments relies on the fact that
-             * argv[0] is never referenced, since this will make it invalid.
-             */
-            --argv;
-            ++argc;
-            --(*ip);
-            /*
-             * We don't want to look for any command line options in this
-             * case.  They could interfere with options for the icon
-             * program.
-             */
-            NoOptions = 1;
-        }
-    }
-#endif					/* MPW */
-#endif                                  /* MACINTOSH */
-
-/*
- * Handle command line options.
- */
-#if MACINTOSH && MPW
-    if (!NoOptions)
-#endif					/* MACINTOSH && MPW */
-        while ( argv[1] != 0 && *argv[1] == '-' ) {
+    while ( argv[1] != 0 && *argv[1] == '-' ) {
             switch ( *(argv[1]+1) ) {
 
 #ifdef TallyOpt
