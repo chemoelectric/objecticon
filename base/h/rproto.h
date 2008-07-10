@@ -126,18 +126,6 @@ void		inttrap		(void);
 void		irunerr		(int n, C_integer v);
 int		lexcmp		(dptr dp1,dptr dp2);
 word		longread	(char *s,int width,long len,FILE *fname);
-#ifdef FAttrib
-#if UNIX
-char *  make_mode		(mode_t st_mode);
-#endif					/* UNIX */
-#if MSDOS
-char *  make_mode		(unsigned short st_mode);
-#ifndef NTGCC
-int	strcasecmp		(char *s1, char *s2);
-int	strncasecmp		(char *s1, char *s2, int n);
-#endif					/* NTGCC */
-#endif					/* MSDOS */
-#endif					/* FAttrib */
 union block	**memb		(union block *pb,dptr x,uword hn, int *res);
 void		mksubs		(dptr var,dptr val,word i,word j, dptr result);
 word		mod3		(word a,word b);
@@ -240,25 +228,6 @@ dptr            call_icon_va    (dptr proc, va_list ap);
       char *sbrk(int incr);
    #endif				/* MPW */
 #endif					/* MACINTOSH */
-
-#if MVS || VM
-   #if SASC
-      #define brk(x) sbrk(((char *)(x))-sbrk(0))
-      char *sbrk(int incr);
-   #endif				/* SASC */
-#endif                                  /* MVS || VM */
-
-#ifdef MSWindows
-   #ifdef FAttrib
-      #if MSDOS
-         char *make_mode(unsigned short st_mode);
-#ifndef NTGCC
-         int strcasecmp(char *s1, char *s2);
-         int strncasecmp(char *s1, char *s2, int n);
-#endif					/* NTGCC */
-      #endif				/* MSDOS */
-   #endif				/* FAttrib */
-#endif					/* MSWindows */
 
 #if defined(Graphics) || defined(PosixFns)
    struct b_list *findactivewindow(struct b_list *);

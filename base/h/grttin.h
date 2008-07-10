@@ -177,10 +177,6 @@ typedef int clock_t, time_t, fd_set;
 typedef int size_t;
 typedef long time_t;
 
-#ifdef FAttrib
-typedef unsigned long mode_t;
-#endif					/* FAttrib */
-
 #ifdef HAVE_LIBZ
 typedef int gzFile;
 #endif					/* HAVE_LIBZ */
@@ -260,10 +256,6 @@ typedef int siptr, stringint, inst;
       typedef int MCI_OPEN_PARMS, MCI_STATUS_PARMS, MCI_SEQ_SET_PARMS;
       typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
       typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
-      #ifdef FAttrib
-         typedef unsigned long mode_t;
-         typedef int HFILE, OFSTRUCT, FILETIME, SYSTEMTIME;
-      #endif				/* FAttrib */
    #endif				/* MSWindows */
 
    #ifdef PresentationManager
