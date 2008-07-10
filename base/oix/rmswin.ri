@@ -337,7 +337,7 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx, int i
    if (!ISTOBEHIDDEN(ws))
       winstyles |= WS_VISIBLE;
 */
-   ws->iconwin = CreateWindow( "iconx", ws->windowlabel,
+   ws->iconwin = CreateWindow( "oix", ws->windowlabel,
 		   winstyles,
 		   ws->posx, ws->posy,
 		   ws->width == 0 ? 400 : ws->width + BORDWIDTH,
@@ -745,7 +745,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
          HBRUSH hb = CreateBrushIndirect(&(wb->context->brush));
 	 FrameRect(hdc, &rect, hb);
 	 DeleteObject(hb);
-	 DrawText(hdc, "Iconx", 5, &rect, DT_WORDBREAK);
+	 DrawText(hdc, "oix", 3, &rect, DT_WORDBREAK);
 	 }
       else {
          HBITMAP oldpix;

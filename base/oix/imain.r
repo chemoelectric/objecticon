@@ -178,7 +178,7 @@ void MSStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance)
         wc.hCursor    = NULL;
         wc.hbrBackground = GetStockObject(WHITE_BRUSH);
         wc.lpszMenuName = NULL;
-        wc.lpszClassName = "iconx";
+        wc.lpszClassName = "oix";
         RegisterClass(&wc);
     }
 }

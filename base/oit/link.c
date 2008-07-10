@@ -182,7 +182,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
          */
         snprintf(script, sizeof(script),
                 "@echo off\r\n%s %%0 %%1 %%2 %%3 %%4 %%5 %%6 %%7 %%8 %%9\r\n%s%s%s",
-                ((iconxloc!=NULL)?iconxloc:"wiconx"),
+                iconxloc,
                 "noop.bat\r\n@echo on\r\n",
                 "pause missing noop.bat - press ^c or shell will exit\r\n",
                 "exit\r\n" IcodeDelim "\r\n");
