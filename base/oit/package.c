@@ -122,7 +122,7 @@ int load_package_dir(struct package_dir *dir)
     struct package *pack = 0;
     struct package_file *pf = 0;
     char *fn = get_packages_file(dir);
-    FILE *f = fopen(fn, "rb");
+    FILE *f = fopen(fn, ReadBinary);
 
     if (!f)
         return 0;
@@ -166,7 +166,7 @@ static void writecheck(int rc)
 static void save_package_dir(struct package_dir *dir)
 {
     char *fn = get_packages_file(dir);
-    FILE *f = fopen(fn, "wb");
+    FILE *f = fopen(fn, WriteBinary);
     struct package *pk;
     struct package_file *pf;
     if (!f)
