@@ -118,10 +118,6 @@ extern struct b_proc_list **dr_arrays;
    extern struct pstrnm pntab[];
    extern int pnsize;
    
-   #ifdef ExecImages
-      extern int dumped;		/* the interpreter has been dumped */
-   #endif				/* ExecImages */
-   
       extern struct progstate *curpstate;
       extern struct progstate rootpstate;
       extern int noMTevents;		/* no MT events during GC */

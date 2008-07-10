@@ -116,13 +116,6 @@ FncDefV(writes)
 FncDef(loadfunc,2)
 
 /*
- * Executable images.
- */
-#ifdef ExecImages
-   FncDef(save,1)
-#endif					/* ExecImages */
-
-/*
  * External functions.
  */
 #ifdef ExternalFunctions

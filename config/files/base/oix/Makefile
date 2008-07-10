@@ -24,7 +24,7 @@ XOBJS=	cnv.o data.o def.o errmsg.o extcall.o fconv.o fload.o fmath.o\
 	rdebug.o rlocal.o rlrgint.o rmemmgt.o rmisc.o rstruct.o rsys.o\
 	rwinrsc.o rgfxsys.o rwinsys.o rwindow.o fxtra.o rposix.o
 
-COBJS=	../common/long.o ../common/time.o ../common/save.o \
+COBJS=	../common/long.o ../common/time.o \
 	../common/rswitch.o ../common/redirerr.o ../common/xwindow.o \
 	../common/alloc.o ../common/mlocal.o
 

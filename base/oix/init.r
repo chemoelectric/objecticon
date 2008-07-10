@@ -111,10 +111,6 @@ struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
 struct progstate *curpstate;		/* lastop accessed in program state */
 struct progstate rootpstate;
 
-#ifdef ExecImages
-int dumped = 0;				/* non-zero if reloaded from dump */
-#endif					/* ExecImages */
-
 word *stack;				/* Interpreter stack */
 word *stackend; 			/* End of interpreter stack */
 
@@ -356,14 +352,6 @@ void icon_init(name, argcp, argv)
  * End of operating-system specific code.
  */
 
-#ifdef ExecImages
-    /*
-     * If reloading from a dumped out executable, skip most of init and
-     *  just set up the buffer for stderr and do the timing initializations.
-     */
-    if (dumped)
-        goto btinit;
-#endif					/* ExecImages */
 
     /*
      * Initialize data that can't be initialized statically.
@@ -491,10 +479,6 @@ void icon_init(name, argcp, argv)
      * Resolve references from icode to run-time system.
      */
     resolve(NULL);
-
-#ifdef ExecImages
-  btinit:
-#endif					/* ExecImages */
 
 /*
  * The following code is operating-system dependent [@init.03].  Allocate and
