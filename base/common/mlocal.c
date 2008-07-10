@@ -163,32 +163,13 @@ void normalize(char *file)
 }
 
 /*
- * Canonicalize a path by making it an absolute path if it isn't one
- * already, and then normalizing the result.  A pointer to a static
- * buffer is returned.
+ * Is a file path absolute?
  */
-char *canonicalize(char *path)
+int isabsolute(char *s)
 {
-    static char result[MaxPath];
-    static char currentdir[MaxPath];
-    if (path[0] == '/') {
-        if (snprintf(result, sizeof(result), "%s", path) >= sizeof(result)) {
-            fprintf(stderr, "path too long to canonicalize: %s", path);
-            exit(1);
-        }
-    } else {
-        if (!getcwd(currentdir, sizeof(currentdir))) {
-            fprintf(stderr, "getcwd return 0 - current working dir too long.");
-            exit(1);
-        }
-        if (snprintf(result, sizeof(result), "%s/%s", currentdir, path) >= sizeof(result)) {
-            fprintf(stderr, "path too long to canonicalize: %s", path);
-            exit(1);
-        }
-    }
-    normalize(result);
-    return result;
+    return *s == '/';
 }
+
 #endif
 
 #if MSDOS
@@ -234,6 +215,17 @@ void normalize(char *file)
 }
 
 /*
+ * Is a file path absolute?
+ */
+int isabsolute(char *s)
+{
+    return isalpha(*s) && s[1] == ':' && (s[2] == '\\' || s[2] == '/');
+}
+
+#endif
+
+
+/*
  * Canonicalize a path by making it an absolute path if it isn't one
  * already, and then normalizing the result.  A pointer to a static
  * buffer is returned.
@@ -241,28 +233,30 @@ void normalize(char *file)
 char *canonicalize(char *path)
 {
     static char result[MaxPath];
-    static char currentdir[MaxPath];
-    if (path[0] == '\\' || path[0] == '/' ||
-        (isalpha(path[0]) && path[1] == ':')) {
-        if (snprintf(result, sizeof(result), "%s", path) >= sizeof(result)) {
+    if (isabsolute(path)) {
+        if (strlen(path) + 1 > sizeof(result)) {
             fprintf(stderr, "path too long to canonicalize: %s", path);
             exit(1);
         }
+        strcpy(result, path);
     } else {
-        if (!getcwd(currentdir, sizeof(currentdir))) {
+        int l;
+        if (!getcwd(result, sizeof(result))) {
             fprintf(stderr, "getcwd return 0 - current working dir too long.");
             exit(1);
         }
-        if (snprintf(result, sizeof(result), "%s\\%s", currentdir, path) >= sizeof(result)) {
+        l = strlen(result);
+        if (l + 1 + strlen(path) + 1 > sizeof(result)) {
             fprintf(stderr, "path too long to canonicalize: %s", path);
             exit(1);
         }
+        if (!strchr(PREFIX, result[l - 1]))
+            result[l++] = FILESEP;
+        strcpy(&result[l], path);
     }
     normalize(result);
     return result;
 }
-
-#endif
 
 
 FILE *pathopen(char *fname, char *mode)
@@ -322,24 +316,6 @@ char *pathfind(char *path, char *name, char *extn)
 }
 
 /*
- * Is a file path absolute?
- */
-int isabsolute(char *s)
-{
-#if UNIX
-    return *s == '/';
-#endif
-
-#if MSDOS || OS2
-    return isalpha(*s) && s[1] == ':' && (s[2] == '\\' || s[2] == '/');
-#endif
-
-#if PORT
-Deliberate Syntax Error
-#endif
-}
-
-/*
  * pathelem(s) -- get next path element
  * 
  * The parameter s is a pointer to a pointer to a string.  This pointer is
@@ -380,10 +356,9 @@ char *pathelem(char **ps)
      * We have to append a path separator here.
      *  Seems like makename should really be the one to do that.
      */
-    if (!strchr(PREFIX, b[-1])) {       /* if separator not already there */
+    if (!strchr(PREFIX, b[-1]))     /* if separator not already there */
         *b++ = FILESEP;
-    }
-
+    
     *b = 0;
     *ps = s;
     return buf;
@@ -394,11 +369,16 @@ char *pathelem(char **ps)
  */
 char *last_pathelem(char *s)
 {
-    char *p = strrchr(s, FILESEP);
-    if (!p)
-        return s;
-    else
+    char *p = 0;
+    while (*s) {
+        if (strchr(PREFIX, *s))
+            p = s;
+        ++s;
+    }
+    if (p)
         return p + 1;
+    else
+        return s;
 }
 
 /*
