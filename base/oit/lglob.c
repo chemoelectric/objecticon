@@ -345,8 +345,7 @@ void scanrefs()
     gpp = &lgfirst;
     while ((gp = *gpp)) {
         if (gp->g_flag & F_Unref) {
-#ifdef DeBugLinker
-            if (Dflag) {
+            if (verbose > 2) {
                 char *t;
                 if (gp->g_flag & F_Proc)
                     t = "procedure";
@@ -357,9 +356,8 @@ void scanrefs()
                 else
                     t = "global   ";
                 if (!(gp->g_flag & F_Builtin))
-                    fprintf(dbgfile, "  discarding %s %s\n", t, gp->name);
+                    report("Discarding %s %s", t, gp->name);
             }
-#endif
             *gpp = gp->g_next;
         }
         else {

@@ -1626,19 +1626,22 @@ static void gentables()
     if (longwrite((char *)&hdr, (long)sizeof(hdr), outfile) < 0)
         quit("cannot write icode file");
 
-    if (verbose >= 2) {
+    if (verbose > 1) {
         word tsize = sizeof(hdr) + hdr.hsize;
-        fprintf(stderr, "  bootstrap  %7ld\n", hdrsize);
+        report("  Bootstrap       %7ld", hdrsize);
         tsize += hdrsize;
-        fprintf(stderr, "  header     %7ld\n", (long)sizeof(hdr));
-        fprintf(stderr, "  procedures %7ld\n", (long)hdr.Records);
-        fprintf(stderr, "  records    %7ld\n", (long)(hdr.Ftab - hdr.Records));
-        fprintf(stderr, "  fields     %7ld\n", (long)(hdr.Globals - hdr.Ftab));
-        fprintf(stderr, "  globals    %7ld\n", (long)(hdr.Statics - hdr.Globals));
-        fprintf(stderr, "  statics    %7ld\n", (long)(hdr.Filenms - hdr.Statics));
-        fprintf(stderr, "  linenums   %7ld\n", (long)(hdr.Strcons - hdr.Filenms));
-        fprintf(stderr, "  strings    %7ld\n", (long)(hdr.hsize - hdr.Strcons));
-        fprintf(stderr, "  total      %7ld\n", (long)tsize);
+        report("  Header          %7ld", (long)sizeof(hdr));
+        report("  Procedures      %7ld", (long)hdr.ClassStatics);
+        report("  Class statics   %7ld", (long)(hdr.ClassFields - hdr.ClassStatics));
+        report("  Class fields    %7ld", (long)(hdr.Classes - hdr.ClassFields));
+        report("  Classes         %7ld", (long)(hdr.Records - hdr.Classes));
+        report("  Records         %7ld", (long)(hdr.Ftab - hdr.Records));
+        report("  Fields          %7ld", (long)(hdr.Globals - hdr.Ftab));
+        report("  Globals         %7ld", (long)(hdr.Statics - hdr.Globals));
+        report("  Statics         %7ld", (long)(hdr.Filenms - hdr.Statics));
+        report("  Linenums        %7ld", (long)(hdr.Strcons - hdr.Filenms));
+        report("  Strings         %7ld", (long)(hdr.hsize - hdr.Strcons));
+        report("  Total           %7ld", (long)tsize);
     }
 }
 

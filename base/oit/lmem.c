@@ -117,6 +117,10 @@ static void ensure_lfile(char *ifile)
         x = x->b_next;
     if (x)
         return;
+
+    if (verbose > 2)
+        report("Linking file %s", ifile);
+
     x = New(struct lfile);
     x->b_next = lfile_hash[i];
     lfile_hash[i] = x;
@@ -159,6 +163,9 @@ void alsoimport(char *package, struct lfile *lf, struct loc *pos)
         x = x->b_next;
     if (x)
         return;
+
+    if (verbose > 2)
+        report("Importing package %s", package);
 
     /* No, so note it as done, and use the package db to scan all the
      * files in the package, and add them to the lfiles list.
