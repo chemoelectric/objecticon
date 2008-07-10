@@ -90,8 +90,9 @@ char *findexe(char *name)
             return 0;
         }
         memcpy(buf, next, plen);
-        buf[plen] = FILESEP;
-        strcpy(buf + plen + 1, name);
+        if (!strchr(PREFIX, buf[plen - 1]))
+	   buf[plen++] = FILESEP;
+        strcpy(buf + plen, name);
         if ((p = accessexe(buf)))
             return canonicalize(p);
     }
@@ -142,7 +143,7 @@ int isabsolute(char *s)
  */
 static char *accessexe(char *name)
 {
-    if (access(name, X_OK) == 0)
+    if (!access(name, X_OK))
         return name;
     else
         return 0;
@@ -205,17 +206,23 @@ int isabsolute(char *s)
  */
 static char *accessexe(char *name)
 {
+    struct fileparts *fp = fparse(name);
     char *p;
-    if (access(name, 0))
-        return name;
 
-    p = makename(0, name, ".exe");
-    if (access(p, 0))
-        return p;
+    if (*fp->ext) {
+       /* File has an extension, so just access it as given */
+       if (!access(name, 0))
+	  return name;
+    } else {
+       /* No extension so try .exe and .bat */
+       p = makename(0, name, ".exe");
+       if (!access(p, 0))
+	  return p;
 
-    p = makename(0, name, ".bat");
-    if (access(p, 0))
-        return p;
+       p = makename(0, name, ".bat");
+       if (!access(p, 0))
+	  return p;
+    }
 
     return 0;
 }
