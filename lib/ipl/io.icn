@@ -592,7 +592,7 @@ procedure exists(name)			#: test file existence
 end
 
 procedure directory(name)		#: succeed if name is a directory
-   return stat(s).mode[1] == "d"
+   return stat(name).mode[1] == "d"
 end
 
 $ifdef _MSDOS
