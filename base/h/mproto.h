@@ -64,7 +64,6 @@ char *  join_strs(struct str_buf *sbuf, int n, ...);
 #define NewStruct(type)\
    (struct type *)alloc((unsigned int) sizeof (struct type))
 
-char *findonpath(char *name);
 char *findexe(char *name);
 char *relfile	(char *prog, char *mod);
 void normalize(char *path);

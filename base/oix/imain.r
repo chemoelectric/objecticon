@@ -425,11 +425,10 @@ int main(int argc, char **argv)
 /*
  * icon_setup - handle interpreter command line options.
  */
-void icon_setup(argc,argv,ip)
-    int argc;
-    char **argv;
-    int *ip;
+void icon_setup(int argc, char **argv, int *ip)
 {
+    int len = 0;
+    char *tmp = strdup(argv[0]), *t2 = tmp;
 
 #ifdef TallyOpt
     extern int tallyopt;
@@ -441,38 +440,28 @@ void icon_setup(argc,argv,ip)
      * if we didn't start with *iconx[.exe], backup one
      * so that our icode filename is argv[1].
      */
-    {
-        int len = 0;
-        char *tmp = strdup(argv[0]), *t2 = tmp;
-        if (tmp == NULL) {
-            syserr("memory allocation failure in startup code");
-        }
-        while (*t2) {
-            *t2 = tolower(*t2);
-            t2++;
-        }
-        len = t2 - tmp;
+    if (tmp == NULL) {
+        syserr("memory allocation failure in startup code");
+    }
+    while (*t2) {
+        *t2 = tolower(*t2);
+        t2++;
+    }
+    len = t2 - tmp;
 
-        if (len > 4 && !strcmp(tmp+len-4, ".exe")) {
-            len -= 4; tmp[len] = '\0'; 
-        }
-
-        /*
-         * if argv[0] is not a reference to our interpreter, take it as the
-         * name of the icode file, and back up for it.
-         */
-        if (len < 3 || strcmp(tmp + len - 3, "oix")) {
-            argv--;
-            argc++;
-            (*ip)--;
-        }
+    if (len > 4 && !strcmp(tmp+len-4, ".exe")) {
+        len -= 4; tmp[len] = '\0'; 
     }
 
-#ifdef MaxLevel
-    maxilevel = 0;
-    maxplevel = 0;
-    maxsp = 0;
-#endif					/* MaxLevel */
+    /*
+     * if argv[0] is not a reference to our interpreter, take it as the
+     * name of the icode file, and back up for it.
+     */
+    if (len < 3 || strcmp(tmp + len - 3, "oix")) {
+        argv--;
+        argc++;
+        (*ip)--;
+    }
 
 #if MACINTOSH
 #if MPW

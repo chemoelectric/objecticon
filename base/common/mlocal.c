@@ -19,7 +19,7 @@
 #define IPATHSEP " :"
 #define XPATHSEP ":"
 #endif
-#if MSDOS
+#if MSWindows
 #define FILESEP '\\'
 #define PREFIX "/:\\"
 #define IPATHSEP " "
@@ -27,6 +27,7 @@
 #endif
 
 static char *tryfile(char *dir, char *name, char *extn);
+static char *accessexe(char *name);
 
 /*
  *  relfile(prog, mod) -- find related file.
@@ -53,46 +54,22 @@ char *relfile(char *prog, char *mod)
 }
 
 /*
- *  findexe(prog) -- find absolute executable path, given argv[0]
- *
- *  Finds the absolute path to prog, assuming that prog is the value passed
- *  by the shell in argv[0].
+ *  findexe(prog) -- find absolute executable, searching $PATH (using
+ *  POSIX 1003.2 rules) for executable name.
  * 
- *  A pointer to a static buffer is returned, or NULL in case of error.
- */
-
-char *findexe(char *name) 
-{
-    char *s;
-
-    /* if name does not contain a slash, search $PATH for file */
-    if ((strchr(name, '/') != NULL)
-#if MSDOS
-        || (strchr(name, '\\') != NULL)
-#endif
-        )
-        return canonicalize(name);
-    else {
-        s = findonpath(name);
-        if (s)
-            return canonicalize(s);
-        else
-            return canonicalize(name);
-    }
-}
-
-/*
- *  findonpath(name) -- find name on $PATH
- *
- *  Searches $PATH (using POSIX 1003.2 rules) for executable name,
- *
  *  A pointer to a static buffer is returned, or NULL if not found.
  */
-char *findonpath(char *name) 
+char *findexe(char *name) 
 {
     int nlen, plen;
-    char *path, *next, *sep, *end;
+    char *path, *next, *sep, *end, *p;
     static char buf[MaxPath];
+
+    /* Does name have a separator char? If so, don't search $PATH */
+    for (p = name; *p; ++p) {
+        if (strchr(PREFIX, *p))
+            return accessexe(canonicalize(name));
+    }
 
     nlen = strlen(name);
     path = getenv("PATH");
@@ -115,18 +92,8 @@ char *findonpath(char *name)
         memcpy(buf, next, plen);
         buf[plen] = FILESEP;
         strcpy(buf + plen + 1, name);
-#if NT && !defined(NTGCC)
-/* under visual C++, just check whether the file exists */
-#define access _access
-#define X_OK 00
-#endif
-        if (access(buf, X_OK) == 0)
-            return buf;
-#if MSDOS
-        strcat(buf, ".exe");
-        if (access(buf, X_OK) == 0)
-            return buf;
-#endif
+        if ((p = accessexe(buf)))
+            return canonicalize(p);
     }
     *buf = '\0';
     return 0;
@@ -170,9 +137,20 @@ int isabsolute(char *s)
     return *s == '/';
 }
 
+/*
+ * Check if a file exists as an exe.
+ */
+static char *accessexe(char *name)
+{
+    if (access(name, X_OK) == 0)
+        return name;
+    else
+        return 0;
+}
+
 #endif
 
-#if MSDOS
+#if MSWindows
 
 /*
  * Normalize a path by lower-casing everything, changing / to \,
@@ -220,6 +198,26 @@ void normalize(char *file)
 int isabsolute(char *s)
 {
     return isalpha(*s) && s[1] == ':' && (s[2] == '\\' || s[2] == '/');
+}
+
+/*
+ * Check if a file exists as an exe.
+ */
+static char *accessexe(char *name)
+{
+    char *p;
+    if (access(name, 0))
+        return name;
+
+    p = makename(0, name, ".exe");
+    if (access(p, 0))
+        return p;
+
+    p = makename(0, name, ".bat");
+    if (access(p, 0))
+        return p;
+
+    return 0;
 }
 
 #endif

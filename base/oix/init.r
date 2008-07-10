@@ -126,49 +126,6 @@ word *stack;				/* Interpreter stack */
 word *stackend; 			/* End of interpreter stack */
 
 
-#if MSWindows
-/*
- * Open the icode file and read the header.
- * Used by icon_init() as well as MultiThread's loadicode()
- */
-static char *convert_name(char *name)
-{
-    char *s, tname[100];
-    int n;
-
-    s = findexe(name);
-    if (s)
-       return s;
-
-    /*
-     * Try adding .exe, .bat
-     */
-    n = strlen(name);
-
-    if (strlen(name) + 5 > sizeof(tname))
-       error(name, "icode file name too long");
-
-    sprintf(tname, "%s.exe", name);
-    s = findexe(tname);
-    if (s)
-       return s;
-
-    sprintf(tname, "%s.bat", name);
-    s = findexe(tname);
-    if (s)
-       return s;
-
-    return 0;
-}
-#endif
-
-#if UNIX
-static char *convert_name(char *name)
-{
-    return findexe(name);
-}
-#endif
-
 /*
  * Open the icode file and read the header.
  * Used by icon_init() as well as MultiThread's loadicode()
@@ -423,16 +380,17 @@ void icon_init(name, argcp, argv)
     if (!name)
         error(name, "No interpreter file supplied");
 
-    name = salloc(convert_name(name));
+    name = findexe(name);
+    if (!name)
+        error(name, "Not found on PATH");
+
+    name = salloc(name);
 
     ifile = readhdr(name, &hdr);
-    if (ifile == NULL) {
+    if (ifile == NULL) 
         error(name, "cannot open interpreter file");
 
-    }
-
     k_trace = hdr.trace;
-
 
     /*
      * Examine the environment and make appropriate settings.    [[I?]]
@@ -594,12 +552,12 @@ void icon_init(name, argcp, argv)
      */
     millisec();
 }
-
+
 /*
  * Service routines related to getting things started.
  */
 
-
+
 /*
  * Check for environment variables that Icon uses and set system
  *  values as is appropriate.
@@ -719,7 +677,7 @@ void env_int(name, variable, non_neg, limit)
         env_err("environment variable not numeric", name, value);
     *variable = sign * n;
 }
-
+
 /*
  * Termination routines.
  */
@@ -741,7 +699,7 @@ void inttrap()
 {
     fatalerr(320, NULL);
 }
-
+
 /*
  * Produce run-time error 302 on segmentation faults.
  */
@@ -755,60 +713,31 @@ void segvtrap()
     }
     n++;
 
-#if MVS || VM
-#if SASC
-    btrace(0);
-#endif					/* SASC */
-#endif					/* MVS || VM */
-
     fatalerr(302, NULL);
 }
-
+
 /*
  * error - print error message from s1 and s2; used only in startup code.
  */
-void error(s1, s2)
-    char *s1, *s2;
+void error(char *s1, char *s2)
 {
-
-#ifdef PresentationManager
-    ConsoleFlags |= OutputToBuf;
-    if (!s1 && s2)
-        fprintf(stderr, s2);
-    else if (s1 && s2)
-        fprintf(stderr, "%s: %s\n", s1, s2);
-#else					/* PresentationManager */
     if (!s1)
         fprintf(stderr, "error in startup code\n%s\n", s2);
     else
         fprintf(stderr, "error in startup code\n%s: %s\n", s1, s2);
-#endif					/* PresentationManager */
 
     fflush(stderr);
-
-#ifdef PresentationManager
-    /* bring up the message box to display the error we constructed */
-    WinMessageBox(HWND_DESKTOP, HWND_DESKTOP, ConsoleStringBuf,
-                  "Icon Runtime Initialization", 0,
-                  MB_OK|MB_ICONHAND|MB_MOVEABLE);
-#endif					/* PresentationManager */
 
     if (dodump)
         abort();
     c_exit(EXIT_FAILURE);
 }
-
+
 /*
  * syserr - print s as a system error.
  */
-void syserr(s)
-    char *s;
+void syserr(char *s)
 {
-
-
-#ifdef PresentationManager
-    ConsoleFlags |= OutputToBuf;
-#endif					/* PresentationManager */
     fprintf(stderr, "System error");
     if (pfp == NULL)
         fprintf(stderr, " in startup code");
@@ -817,16 +746,13 @@ void syserr(s)
                 findfile(ipc.opnd));
     }
     fprintf(stderr, "\n%s\n", s);
-#ifdef PresentationManager
-    error(NULL, NULL);
-#endif					/* PresentationManager */
 
     fflush(stderr);
     if (dodump)
         abort();
     c_exit(EXIT_FAILURE);
 }
-
+
 
 /*
  * c_exit(i) - flush all buffers and exit with status i.
@@ -894,30 +820,16 @@ void c_exit(i)
         }
         free(dr_arrays);
     }
-#endif
 
-#ifdef MSWindows
     PostQuitMessage(0);
     while (wstates != NULL) pollevent();
 #endif					/* MSWindows */
 
-#if TURBO || BORLAND_386
-    flushall();
-    _exit(i);
-#else					/* TURBO || BORLAND_386 */
-#ifdef PresentationManager
-    /* tell thread 1 to shut down */
-    WinPostQueueMsg(HMainMessageQueue, WM_QUIT, (MPARAM)0, (MPARAM)0);
-    /* bye, bye */
-    InterpThreadShutdown();
-#else					/* PresentationManager */
     exit(i);
-#endif					/* PresentationManager */
-#endif					/* TURBO || BORLAND_386 */
 
 }
 
-
+
 /*
  * err() is called if an erroneous situation occurs in the virtual
  *  machine code.  It is typed as int to avoid declaration problems
@@ -928,7 +840,7 @@ int err()
     syserr("call to 'err'\n");
     return 1;		/* unreachable; make compilers happy */
 }
-
+
 /*
  * fatalerr - disable error conversion and call run-time error routine.
  */
@@ -939,7 +851,7 @@ void fatalerr(n, v)
     IntVal(kywd_err) = 0;
     err_msg(n, v);
 }
-
+
 /*
  * pstrnmcmp - compare names in two pstrnm structs; used for qsort.
  */
@@ -948,7 +860,7 @@ int pstrnmcmp(a,b)
 {
     return strcmp(a->pstrep, b->pstrep);
 }
-
+
 /*
  * datainit - initialize some global variables.
  */
@@ -1037,7 +949,6 @@ void datainit()
 
 
 }
-
 
 /*
  * Initialize a loaded program.  Unicon programs will have an

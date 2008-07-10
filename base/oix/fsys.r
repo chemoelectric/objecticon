@@ -599,7 +599,7 @@ Deliberate Syntax Error
 	    runerr(209, spec);
 	 strcpy(sbuf, fnamestr);
 	 if ((s = strchr(sbuf, ' ')) != NULL) *s = '\0';
-         ploc = findonpath(sbuf);
+         ploc = findexe(sbuf);
 	 if (!ploc)
 	    fail;
          fnamestr = sbuf2;
