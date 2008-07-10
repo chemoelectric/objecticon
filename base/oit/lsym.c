@@ -98,7 +98,7 @@ void add_constant(struct lfunction *func,
 #endif					/* Double */
 
     else
-        fprintf(stderr, "putconst: bad flags: %06o %011lo\n", flags, valp->ival);
+        quitf("putconst: bad flags: %06o %011lo\n", flags, valp->ival);
 
     if (func->constant_last) {
         func->constant_last->next = p;

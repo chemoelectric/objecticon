@@ -5,7 +5,7 @@ CWARN = -Wall
 TRANS=		trans.o tcode.o tlex.o tparse.o tsym.o tmem.o \
 		 tree.o ucode.o ipp.o
 
-LINKR=		link.o lglob.o lcode.o lmem.o lsym.o lcompres.o
+LINKR=		link.o lglob.o lcode.o lmem.o lsym.o
 
 COBJS=		../common/long.o ../common/getopt.o ../common/alloc.o \
 		../common/strtbl.o ../common/mlocal.o
@@ -57,7 +57,6 @@ lcode.o:	keyword.h ../h/header.h \
 lglob.o:	../h/opdefs.h ../h/version.h
 lmem.o:		
 lsym.o:		
-lcompres.o:	../h/header.h
 
 # Compile with make GRAM=Y
 ifeq ($(GRAM),Y)

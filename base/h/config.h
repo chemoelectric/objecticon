@@ -359,6 +359,10 @@
    #define ReadBinary "rb"
 #endif					/* ReadBinary */
 
+#ifndef AppendBinary
+   #define AppendBinary "ab"
+#endif					/* AppendBinary */
+
 #ifndef ReadWriteBinary
    #define ReadWriteBinary "wb+"
 #endif					/* ReadWriteBinary */
@@ -374,6 +378,10 @@
 #ifndef ReadText
    #define ReadText "r"
 #endif					/* ReadText */
+
+#ifndef AppendText
+   #define AppendText "a"
+#endif					/* AppendText */
 
 /*
  * The following code is operating-system dependent [@config.01].

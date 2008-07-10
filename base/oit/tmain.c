@@ -6,25 +6,25 @@
 #include "tmain.h"
 #include "trans.h"
 #include "ucode.h"
-#include "lcompres.h"
 #include "link.h"
 #include "tmem.h"
 #include "tlex.h"
 #include "util.h"
+#include "../h/header.h"
 
 int warnings = 0;           /* count of warnings */
 int errors = 0;		    /* translator and linker errors */
 
-int silent	=0;	/* -s: suppress info messages? */
 int m4pre	=0;	/* -m: use m4 preprocessor? [UNIX] */
 int uwarn	=0;	/* -u: warn about undefined ids? */
 int trace	=0;	/* -t: initial &trace value */
 int pponly	=0;	/* -E: preprocess only */
 int strinv	=0;	/* -f s: allow full string invocation */
-int verbose	=1;	/* -v n: verbosity of commentary */
+int verbose	=1;	/* -v n: verbosity of commentary, 0 = silent */
 int neweronly	=0;	/* -n: only translate .icn if newer than .u */
 int Dflag       =0;     /* -L: link debug */
-int Zflag	=1;	/* -Z disables icode-gz compression */
+int Zflag	=0;	/* -Z: icode-gz compression */
+int Bflag       =0;     /* -B: bundle iconx in output file */
 
 /*
  * Some convenient interned strings.
@@ -83,9 +83,12 @@ long hdrsize;			/* size of iconx header */
  * Prototypes.
  */
 
-static	void	execute	(char *ofile,char *efile,char * *args);
-static	void	usage (void);
-char *libpath (char *prog, char *envname);
+#ifdef HAVE_LIBZ
+static void file_comp(char *ofile);
+#endif
+static void bundle_iconx(char *ofile);
+static void execute(char *ofile,char *efile,char * *args);
+static void usage(void);
 
 #if MACINTOSH
    #if THINK_C
@@ -154,8 +157,6 @@ char *libpath (char *prog, char *envname);
 /*
  *  Define global variables.
  */
-
-int bundleiconx = 0;
 
 struct file_param *trans_files = 0, *last_trans_file = 0, 
                   *link_files = 0, *last_link_file = 0,
@@ -263,7 +264,7 @@ int main(int argc, char **argv)
                 neweronly = 1;
                 break;
             case 'B':
-                bundleiconx = 1;
+                Bflag = 1;
                 break;
             case 'C':			/* Ignore: compiler only */
                 break;
@@ -310,7 +311,6 @@ int main(int argc, char **argv)
             case 'r':			/* Ignore: compiler only */
                 break;
             case 's':			/* -s: suppress informative messages */
-                silent = 1;
                 verbose = 0;
                 break;
             case 't':			/* -t: turn on procedure tracing */
@@ -322,12 +322,9 @@ int main(int argc, char **argv)
             case 'v':			/* -v n: set verbosity level */
                 if (sscanf(optarg, "%d%c", &verbose, &ch) != 1)
                     quitf("bad operand to -v option: %s",optarg);
-                if (verbose == 0)
-                    silent = 1;
                 break;
             case 'Z':
-                /* add flag to say "don't compress". noop unless HAVE_LIBZ */
-                Zflag = 0;
+                Zflag = 1;
                 break;
 
             default:
@@ -394,12 +391,12 @@ int main(int argc, char **argv)
     {
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
         ofile = intern_using(&join_sbuf, makename(SourceDir,link_files->name,
-						  bundleiconx ? ".exe" : ".bat"));
+						  Bflag ? ".exe" : ".bat"));
     } else {				/* add extension in necessary */
         fp = fparse(ofile);
         if (*fp->ext == '\0') /* if no ext given */
             ofile = intern_using(&join_sbuf, makename(0,ofile,
-						      bundleiconx ? ".exe" : ".bat"));
+						      Bflag ? ".exe" : ".bat"));
     }
     }
 #else                                   /* MSWindows */
@@ -413,55 +410,19 @@ int main(int argc, char **argv)
     report("Linking:");
     ilink(link_files, ofile, &errors, &warnings);	/* link .u files to make icode file */
 
+    if (!errors) {
 #ifdef HAVE_LIBZ
-    /*
-     * we have linked together a bunch of files to make an icode,
-     * now call file_comp() to compress it
-     */
-    if (Zflag) {
-#if MSWindows
-#define stat _stat
-#endif					/* NT */
-        struct stat buf;
-        int i = stat(ofile, &buf);
-        if (i==0 && buf.st_size > 1000000 && file_comp(ofile)) {
-            report("error during icode compression");
-        }
-    }
+        /*
+         * Optional gz compression
+         */
+        if (Zflag)
+            file_comp(ofile);
 #endif					/* HAVE_LIBZ */
-
-    /*
-     * prepend iconx if we generated an executable and specified to bundle
-     */
-    if (!errors && bundleiconx) {
-        FILE *f, *f2;
-        char *tmp = salloc(makename(0, ofile, ".tmp"));
-        rename(ofile, tmp);
-
-        if ((f = pathopen("oix", ReadBinary)) == NULL) {
-            report("Tried to open oix to build .exe, but couldn't");
-            errors++;
-        }
-        else {
-            f2 = fopen(ofile, WriteBinary);
-            while ((c = fgetc(f)) != EOF) {
-                fputc(c, f2);
-	    }
-            fclose(f);
-            if ((f = fopen(tmp, ReadBinary)) == NULL) {
-                report("tried to read %s to append to exe, but couldn't",tmp);
-                errors++;
-	    }
-            else {
-                while ((c = fgetc(f)) != EOF) {
-                    fputc(c, f2);
-                }
-                fclose(f);
-	    }
-            fclose(f2);
-            setexe(ofile);
-            unlink(tmp);
-        }
+        /*
+         * Optional bundling of iconx executable in output
+         */
+        if (Bflag)
+            bundle_iconx(ofile);
     }
 
     /*
@@ -580,10 +541,115 @@ Deliberate Syntax Error
 
    }
 
+static void bundle_iconx(char *ofile)
+{
+    FILE *f, *f2;
+    int c;
+    char *tmp = salloc(makename(0, ofile, ".tmp"));
+    rename(ofile, tmp);
+
+    if (!(f = pathopen("oix", ReadBinary)))
+        quitf("Tried to open oix to build .exe, but couldn't");
+
+    if (!(f2 = fopen(ofile, WriteBinary)))
+        quitf("Couldn't reopen output file %s", ofile);
+
+    while ((c = fgetc(f)) != EOF)
+        fputc(c, f2);
+
+    fclose(f);
+    if (!(f = fopen(tmp, ReadBinary))) 
+        quitf("tried to read %s to append to exe, but couldn't",tmp);
+
+    while ((c = fgetc(f)) != EOF)
+        fputc(c, f2);
+
+    fclose(f);
+
+    fclose(f2);
+    setexe(ofile);
+    unlink(tmp);
+}
+
+#ifdef HAVE_LIBZ
+
+static void file_comp(char *ofile) 
+{
+    gzFile f; 
+    FILE *finput, *foutput;
+    struct header *hdr;
+    int n, c;
+    char buf[200], *tmp = salloc(makename(0, ofile, ".tmp"));
+  
+    hdr = malloc(sizeof(struct header));
+    
+    /* use fopen() to open the target file then read the header and add "z" to the hdr->config. */
+    
+    if (!(finput = fopen(ofile, ReadBinary)))
+        quitf("Can't open the file to compress: %s",ofile);
+    
+    if (!(foutput = fopen(tmp, WriteBinary)))
+        quitf("Can't open the temp compression file: %s",tmp);
+
+    n = strlen(IcodeDelim);
+    for (;;) {
+        if (fgets(buf, sizeof(buf) - 1, finput) == NULL)
+            quitf("Compression - Reading Error: Check if the file is executable Icon");
+        fputs(buf, foutput);
+        if (strncmp(buf, IcodeDelim, n) == 0)
+            break;
+    }
+
+    if (fread((char *)hdr, sizeof(char), sizeof(*hdr), finput) != sizeof(*hdr))
+        quitf("gz compressor can't read the header, compression");
+    
+    /* Turn on the Z flag */
+    strcat((char *)hdr->config,"Z");
+
+    /* write the modified header into a new file */
+    
+    fwrite((char *)hdr, sizeof(char), sizeof(*hdr), foutput);
+    
+    /* close the new file */
+  
+    fclose(foutput);
+    
+    /* use gzopen() to open the new file */
+    
+    if (!(f = gzopen(tmp, AppendBinary)))
+        quitf("Compression Error: can not open output file %s", tmp);
+    
+    /*
+     * read the rest of the target file and write the compressed data into
+     * the new file
+     */
+    
+    while((c = fgetc(finput)) != EOF) {
+        gzputc(f, c);
+        if (ferror(finput))
+            quitf("Compression - Error occurs while reading!");
+    }
+   
+    /* close both files */
+    fclose(finput);
+    gzclose(f);
+    
+    if (unlink(ofile))
+        quitf("can't remove old %s, compressed version left in %s",
+              ofile, tmp);
+
+    if (rename(tmp, ofile))
+        quitf("can't rename compressed %s back to %s", tmp, ofile);
+
+    setexe(ofile);
+}
+
+#endif
+
 void report(char *fmt, ...)
 {
     va_list argp;
-    if (silent)
+    if (verbose == 0)
         return;
     va_start(argp, fmt);
     vfprintf(stderr, fmt, argp);

@@ -9,7 +9,6 @@ struct file_param {
     struct file_param *next;
 };
 
-extern int silent;	/* -s: suppress info messages? */
 extern int m4pre;	/* -m: use m4 preprocessor? [UNIX] */
 extern int uwarn;	/* -u: warn about undefined ids? */
 extern int trace;	/* -t: initial &trace value */

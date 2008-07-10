@@ -41,15 +41,9 @@ void readglob(struct lfile *lf)
     if (uop->opcode != Op_Version)
         quitf("ucode file %s has no version identification",inname);
     id = uin_str();		/* get version number of ucode */
-    if (strcmp(id, UVersion)) {
-        if (!silent) {
-            fprintf(stderr,"version mismatch in ucode file %s\n",inname);
-            fprintf(stderr,"\tucode version: %s\n",id);
-            fprintf(stderr,"\texpected version: %s\n",UVersion);
-        }
-        exit(EXIT_FAILURE);
+    if (strcmp(id, UVersion))
+        quitf("version mismatch in ucode file %s - got %s instead of %s",inname, id, UVersion);
 
-    }
     while (1) {
         uop = uin_expectop();
         switch (uop->opcode) {
