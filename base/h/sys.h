@@ -260,7 +260,7 @@
    #endif				/* !VMS */
 #endif					/* HostStr */
 
-#ifdef LoadFunc
+#ifdef HAVE_LIBDL
 #if NT
    void *dlopen(char *, int); /* LoadLibrary */
    void *dlsym(void *, char *sym); /* GetProcAddress */
@@ -268,7 +268,7 @@
 #else					/* NT */
    #include <dlfcn.h>
 #endif					/* NT */
-#endif					/* LoadFunc */
+#endif					/* HAVE_LIBDL */
 
 #if WildCards
    #include "../h/filepat.h"

@@ -80,9 +80,9 @@
    Feature(1, "_CO_EXPRESSIONS", "co-expressions")
 
 
-#ifdef LoadFunc
+#ifdef HAVE_LIBDL
    Feature(1, "_DYNAMIC_LOADING", "dynamic loading")
-#endif					/* LoadFunc */
+#endif					/* HAVE_LIBDL */
 
    Feature(1, "", "environment variables")
 

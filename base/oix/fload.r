@@ -16,7 +16,7 @@
  *        argv[0] is for return value; others are true args
  */
 
-#ifdef LoadFunc
+#ifdef HAVE_LIBDL
 
 #ifndef RTLD_LAZY	/* normally from <dlfcn.h> */
 #define RTLD_LAZY 1
@@ -121,9 +121,9 @@ body
 }
 end
 
-#else						/* LoadFunc */
+#else						/* HAVE_LIBDL */
 "loadfunc(filename,funcname) - load C function dynamically."
 function{0,1} loadfunc(filename,funcname)
    runerr(121)
 end
-#endif						/* LoadFunc */
+#endif						/* HAVE_LIBDL */
