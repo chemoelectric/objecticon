@@ -323,8 +323,9 @@ void load_package_db_from_ipath()
 {
     char *s = ipath;
 
-    /* Load anything in the CD */
-    load_path_impl("./");
+    /* Load anything in the CD.  The empty string passed to canonicalize will
+     * return the CD with a trailing separator. */
+    load_path_impl("");
     
     /* And anything on the IPATH */
     if (!s)
