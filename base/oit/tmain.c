@@ -252,7 +252,9 @@ int main(int argc, char **argv)
     if (strlen(*argv) >= 4 && !strcmp(*argv + strlen(*argv) - 4, "ldbg"))
         return ldbg(argc, argv);
 
-    iconxloc = salloc(relfile(argv[0], "/../oix"));
+    iconxloc = findexe("oix");
+    if (!iconxloc)
+        quitf("Couldn't find oix on PATH");
 
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
