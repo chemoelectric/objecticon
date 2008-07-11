@@ -194,16 +194,12 @@
    #define Graphics 1
 #endif					/* PresentationManager */
 
-#ifdef Graphics
-   #ifndef MSWindows
-      #ifndef PresentationManager
-         #ifndef MacGraph
-            #undef XWindows
-            #define XWindows 1
-         #endif				/* MacGraph */
-      #endif				/* PresentationManager */
-   #endif				/* MSWindows */
+#ifdef HAVE_LIBX11
+   #define Graphics 1
+   #define XWindows 1
+#endif
 
+#ifdef Graphics
    #undef LineCodes
    #define LineCodes
 
