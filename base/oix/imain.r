@@ -430,7 +430,7 @@ void icon_setup(int argc, char **argv, int *ip)
     struct fileparts *fp;
     *ip = 0;			/* number of arguments processed */
 
-    fp = fparse(last_pathelem(argv[0]));
+    fp = fparse(argv[0]);
 
     /*
      * if argv[0] is not a reference to our interpreter, take it as the
