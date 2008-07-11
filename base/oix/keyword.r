@@ -315,11 +315,10 @@ keyword{1,*} features
 #endif					/* RefPath */
 
       if (!*refpath) {
-          char *ploc;
-          ploc = findexe("oix");
+          char *ploc = findexe("oix");
           if (ploc) {
-              *last_pathelem(ploc) = 0;
-              refpath = salloc(ploc);
+              struct fileparts *fps = fparse(ploc);
+              refpath = salloc(fps->dir);
           }
       }
 
