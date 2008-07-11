@@ -374,15 +374,12 @@ char *pathelem(char **ps)
  */
 char *last_pathelem(char *s)
 {
-    char *t, *p = 0;
-    for (t = s; *t; ++t) {
-        if (strchr(PREFIX, *t))
-            p = t;
+    char *p = s + strlen(s);
+    while (--p >= s) {
+        if (strchr(PREFIX, *p))
+            return p + 1;
     }
-    if (p)
-        return p + 1;
-    else
-        return s;
+    return s;
 }
 
 /*
