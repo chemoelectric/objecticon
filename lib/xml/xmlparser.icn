@@ -29,7 +29,9 @@ end
 
 
 class ProblemDetail()
-   private readable stack, msg
+   private readable
+      stack,
+      msg
 
    package new(stack, msg)
       self.stack := stack

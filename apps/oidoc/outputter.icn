@@ -1,8 +1,13 @@
 import parser
 
 class Outputter()
-   public static const whitespace_cset, id_cset
-   protected const symbol_table, opts
+   public static const
+      whitespace_cset,
+      id_cset
+
+   protected const
+      symbol_table,
+      opts
 
    private static init()
       whitespace_cset := ' \t'

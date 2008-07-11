@@ -1,7 +1,10 @@
 import parser
 
 class Comment()
-   public const comment, fields, keys
+   public const
+      comment,
+      fields,
+      keys
 
    private list_extract(sym)
       if sym.decl_obj.size() = 1 then

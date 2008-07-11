@@ -6,10 +6,17 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import xml(xml_escape), parser, util(Files), ipl.sort
+import
+   xml(xml_escape),
+   parser, 
+   util(Files), 
+   ipl.sort
 
 class HtmlOutputter(Outputter)
-   private output_dir, done_files, subclass_table
+   private
+      output_dir,
+      done_files,
+      subclass_table
 
    private get_serial_no(sym)
       static serial_no_gen, sym_serial_no_table
