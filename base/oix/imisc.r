@@ -299,7 +299,11 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     }
 
     if (cf->flags & M_Package) {
-        if (same_package(caller_fq, &cf->defining_class->name))
+        /* Check for same package.  Note that packages in different programs are
+         * distinct.
+         */
+        if (caller_proc->program == cf->defining_class->program &&
+                same_package(caller_fq, &cf->defining_class->name))
             return 0;
         return 611;
     }
