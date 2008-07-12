@@ -130,13 +130,14 @@ void trans(struct file_param *trans_files, int *fatals, int *warnings)
 
 static void check_dottedident(struct node *pos, char *s)
 {
+    static struct str_buf sb;
     char *d = strrchr(s, '.'), *t = s;
     if (!d)
         return;
-    zero_sbuf(&oit_sbuf);
+    zero_sbuf(&sb);
     while (t != d)
-        AppChar(oit_sbuf, *t++);
-    t = str_install(&oit_sbuf);
+        AppChar(sb, *t++);
+    t = str_install(&sb);
     if (t == package_name || t == default_string || lookup_import(t))
         return;
     twarn_at(pos, "Reference to unimported package: '%s'", t);
@@ -198,7 +199,7 @@ static void trans1(char *filename)
         filename = "stdin";
     }
 
-    outname = intern_using(&oit_sbuf, makename(SourceDir, filename, USuffix));
+    outname = intern(makename(SourceDir, filename, USuffix));
 
     if (pponly) {
         ppecho();
@@ -212,7 +213,7 @@ static void trans1(char *filename)
 
     report(filename);
 
-    tok_loc.n_file = intern_using(&oit_sbuf, canonicalize(filename));
+    tok_loc.n_file = intern(canonicalize(filename));
     in_line = 1;
 
     tminit();				/* Initialize data structures */

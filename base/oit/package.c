@@ -7,7 +7,6 @@
 #include <string.h>
 #include <ctype.h>
 
-static struct str_buf pack_sbuf;
 struct package_dir *package_dir_hash[16], *package_dirs, *package_dir_last;
 
 void init_package_db()
@@ -94,13 +93,14 @@ int add_package_file(struct package *p, struct package_file *new)
 
 char *get_packages_file(struct package_dir *d)
 {
-    return join_strs(&pack_sbuf, 2, d->path, "packages.txt");
+    return join(d->path, "packages.txt", 0);
 }
 
 static char *read_package_line(FILE *f)
 {
     int c;
-    zero_sbuf(&pack_sbuf);
+    static struct str_buf sb;
+    zero_sbuf(&sb);
     /* Read upto end of line */
     for(;;) {
         c = getc(f);
@@ -108,9 +108,9 @@ static char *read_package_line(FILE *f)
             return 0;
         if (c == '\n')
             break;
-        AppChar(pack_sbuf, (char)c);
+        AppChar(sb, (char)c);
     }
-    return str_install(&pack_sbuf);
+    return str_install(&sb);
 }
 
 /*
@@ -260,7 +260,7 @@ void ensure_file_in_package(char *file, char *ipackage)
     struct package *pk;
     struct package_file *pf;
 
-    idir = intern_using(&pack_sbuf, canonicalize(fps->dir));
+    idir = intern(canonicalize(fps->dir));
     pd = lookup_package_dir(idir);
     if (!pd) {
         /*
@@ -282,7 +282,7 @@ void ensure_file_in_package(char *file, char *ipackage)
     }
 
     /* Intern the filename */
-    iname = intern_using(&pack_sbuf, fps->name);
+    iname = intern(fps->name);
     pf = lookup_package_file(pk, iname);
     if (!pf) {
         /* Create a new one */
@@ -299,7 +299,7 @@ static void load_path_impl(char *dir)
     struct package_dir *pd;
     char *idir;
 
-    idir = intern_using(&pack_sbuf, canonicalize(dir));
+    idir = intern(canonicalize(dir));
     /* Have we seen it yet?  If so, just ignore. */
     pd = lookup_package_dir(idir);
     if (pd)

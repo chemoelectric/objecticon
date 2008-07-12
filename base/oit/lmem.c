@@ -140,7 +140,7 @@ void alsolink(char *name, struct lfile *lf, struct loc *pos)
         return;
     }
 
-    ensure_lfile(intern_using(&oit_sbuf, canonicalize(file)));
+    ensure_lfile(intern(canonicalize(file)));
 }
 
 void alsoimport(char *package, struct lfile *lf, struct loc *pos)
@@ -179,7 +179,7 @@ void alsoimport(char *package, struct lfile *lf, struct loc *pos)
             }
             found = pd->path;
             for (pf = pk->files; pf; pf = pf->next)
-                ensure_lfile(join_strs(&oit_sbuf, 3, pd->path, pf->name, USuffix));
+                ensure_lfile(join(pd->path, pf->name, USuffix, 0));
         }
     }
     /* Check if we found it */

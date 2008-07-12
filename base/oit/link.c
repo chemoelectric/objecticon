@@ -94,7 +94,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
      */
     for (lf = lfiles; lf; lf = lf->next) {
         filename = lf->lf_name;
-        inname = intern_using(&oit_sbuf, makename(SourceDir, filename, USuffix));
+        inname = intern(makename(SourceDir, filename, USuffix));
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
             quitf("cannot open %s",inname);
@@ -107,7 +107,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
      * Open the .ux file if debugging is on.
      */
     if (Dflag) {
-        dbgname = intern_using(&oit_sbuf, makename(TargetDir, lfiles->lf_name, ".ux"));
+        dbgname = intern(makename(TargetDir, lfiles->lf_name, ".ux"));
         dbgfile = fopen(dbgname, WriteText);
         if (dbgfile == NULL)
             quitf("cannot create %s", dbgname);
@@ -254,15 +254,15 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
 char *function_name(struct lfunction *f)
 {
     if (f->proc)
-        return join_strs(&oit_sbuf, 2, 
-                         "procedure ", 
-                         f->proc->name);
+        return join("procedure ", 
+                    f->proc->name,
+                    0);
     else
-        return join_strs(&oit_sbuf, 4,
-                         "method ",
-                         f->method->class->global->name, 
-                         ".",
-                         f->method->name);
+        return join("method ",
+                    f->method->class->global->name, 
+                    ".",
+                    f->method->name,
+                    0);
 }
 
 /*

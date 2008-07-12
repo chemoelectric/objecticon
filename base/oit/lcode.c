@@ -20,7 +20,6 @@
 #define RecordBlkSize(gp) ((11*WordSize)+(gp)->record->nfields * 2 * WordSize)
 
 int nstatics = 0;                       /* Running count of static variables */
-static struct str_buf code_sbuf;
 
 static void gencode(struct lfile *lf);
 static void gentables(void);
@@ -93,7 +92,7 @@ void generate_code()
      */
     for (lf = lfiles; lf; lf = lf->next) {
         filename = lf->lf_name;
-        inname = intern_using(&code_sbuf, makename(SourceDir, filename, USuffix));
+        inname = intern(makename(SourceDir, filename, USuffix));
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
             quitf("cannot open .u for %s", inname);
@@ -132,22 +131,23 @@ static int native_cmp(const void *key, const void *item)
 static int resolve_native_method(char *class, char *field)
 {
     char **p;
+    static struct str_buf sb;
 
     /*
      * Create a function name to look for, using the sbuf as a
      * temporary string buffer.
      */
-    zero_sbuf(&code_sbuf);
+    zero_sbuf(&sb);
     while (*class) {
-        AppChar(code_sbuf, *class == '.' ? '_' : *class);
+        AppChar(sb, *class == '.' ? '_' : *class);
         ++class;
     }
-    AppChar(code_sbuf, '_');
+    AppChar(sb, '_');
     while (*field)
-        AppChar(code_sbuf, *field++);
-    AppChar(code_sbuf, 0);
+        AppChar(sb, *field++);
+    AppChar(sb, 0);
 
-    p = bsearch(code_sbuf.strtimage, native_methods, asize(native_methods), 
+    p = bsearch(sb.strtimage, native_methods, asize(native_methods), 
                 sizeof(char *), native_cmp);
     if (!p)
         return -1;

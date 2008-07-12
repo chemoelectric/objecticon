@@ -235,35 +235,6 @@ void zero_sbuf(struct str_buf *sbuf)
 }
 
 /*
- * Save the given string using the given buffer's memory.
- */
-char* intern_using(struct str_buf *sbuf, char *s)
-{
-    /* Reset any junk first */
-    sbuf->endimage = sbuf->strtimage;
-    while (*s)
-        AppChar(*sbuf, *s++);
-    return str_install(sbuf);
-}
-
-char *join_strs(struct str_buf *sbuf, int n, ...)
-{
-    char *s;
-    va_list argp;
-    /* Reset any junk first */
-    sbuf->endimage = sbuf->strtimage;
-    va_start(argp, n);
-    while (n-- > 0) {
-        s = va_arg(argp, char*);
-        while (*s)
-            AppChar(*sbuf, *s++);
-    }
-    va_end(argp);
-    return str_install(sbuf);
-}
-
-
-/*
  * streq - compare s1 with s2 for len bytes, and return 1 for equal,
  *  0 for not equal.
  */

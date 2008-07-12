@@ -47,9 +47,6 @@ char	*spec_str	(char *s);
 char	*str_install	(struct str_buf *sbuf);
 int	tonum		(int c);
 void 	zero_sbuf	(struct str_buf *sbuf);
-char*   intern_using    (struct str_buf *sbuf, char *s);
-char *  join_strs(struct str_buf *sbuf, int n, ...);
-
 
 
 #ifndef SysOpt

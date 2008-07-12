@@ -43,11 +43,11 @@ extern char *init_string;
 extern char *all_string;
 extern char *package_marker_string;
 
-extern struct str_buf oit_sbuf;
-
 int main(int argc, char **argv);
 void report(char *fmt, ...);
 void quit(char *msg);
 void quitf(char *fmt, ...);
+char *intern(char *s);
+char *join(char *s, ...);
 
 #endif

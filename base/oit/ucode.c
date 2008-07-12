@@ -467,7 +467,7 @@ int udis(int argc, char **argv)
         fprintf(stderr, "Usage: udis ufile\n");
         exit(1);
     }
-    inname = intern_using(&ucode_sbuf, argv[1]);
+    inname = intern(argv[1]);
     ucodefile = fopen(inname, ReadBinary);
     if (!ucodefile) {
         fprintf(stderr, "Couldn't open %s\n", inname);
