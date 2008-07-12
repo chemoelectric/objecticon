@@ -42,7 +42,7 @@ char *package_marker_string;
  */
 char *progname	="oit";	/* program name for diagnostics */
 
-struct str_buf join_sbuf;
+struct str_buf oit_sbuf;
 
 /*
  * Files and related globals.
@@ -165,7 +165,7 @@ struct file_param *trans_files = 0, *last_trans_file = 0,
 static void add_trans_file(char *s)
 {
     struct file_param *p = New(struct file_param);
-    p->name = intern_using(&join_sbuf, s);
+    p->name = intern_using(&oit_sbuf, s);
     if (last_trans_file) {
         last_trans_file->next = p;
         last_trans_file = p;
@@ -176,7 +176,7 @@ static void add_trans_file(char *s)
 static void add_link_file(char *s)
 {
     struct file_param *p = New(struct file_param);
-    p->name = intern_using(&join_sbuf, s);
+    p->name = intern_using(&oit_sbuf, s);
     if (last_link_file) {
         last_link_file->next = p;
         last_link_file = p;
@@ -187,7 +187,7 @@ static void add_link_file(char *s)
 static void add_remove_file(char *s)
 {
     struct file_param *p = New(struct file_param);
-    p->name = intern_using(&join_sbuf, s);
+    p->name = intern_using(&oit_sbuf, s);
     if (last_remove_file) {
         last_remove_file->next = p;
         last_remove_file = p;
@@ -396,19 +396,19 @@ int main(int argc, char **argv)
 #if MSWindows
     {
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
-        ofile = intern_using(&join_sbuf, makename(SourceDir,link_files->name,
+        ofile = intern_using(&oit_sbuf, makename(SourceDir,link_files->name,
 						  Bflag ? ".exe" : ".bat"));
     } else {				/* add extension in necessary */
         fp = fparse(ofile);
         if (*fp->ext == '\0') /* if no ext given */
-            ofile = intern_using(&join_sbuf, makename(0,ofile,
+            ofile = intern_using(&oit_sbuf, makename(0,ofile,
 						      Bflag ? ".exe" : ".bat"));
     }
     }
 #else                                   /* MSWindows */
 
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
-        ofile = intern_using(&join_sbuf, makename(SourceDir,link_files->name,""));
+        ofile = intern_using(&oit_sbuf, makename(SourceDir,link_files->name,""));
     }
 
 #endif					/* MSWindows */

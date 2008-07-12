@@ -421,11 +421,11 @@ static void dottedid2string_impl(struct node *n)
         case N_Id: 
             s = Str0(n);
             while (*s)
-                AppChar(join_sbuf, *s++);
+                AppChar(oit_sbuf, *s++);
             break;
         case N_Dottedid:
             dottedid2string_impl(Tree0(n));
-            AppChar(join_sbuf, '.');
+            AppChar(oit_sbuf, '.');
             dottedid2string_impl(Tree1(n));
             break;
     }
@@ -439,9 +439,9 @@ char *dottedid2string(struct node *n)
 {
     if (TType(n) == N_Id)
         return Str0(n);
-    zero_sbuf(&join_sbuf);
+    zero_sbuf(&oit_sbuf);
     dottedid2string_impl(n);
-    return str_install(&join_sbuf);
+    return str_install(&oit_sbuf);
 }
 
 /*
@@ -469,7 +469,7 @@ struct node *convert_dottedidentexpr(struct node *n)
     }
     ls = dottedid2string(Tree0(n));
     if (ls == package_name || ls == default_string || lookup_import(ls)) {
-        struct node *r = IdNode(join_strs(&join_sbuf, 3, ls, ".", Str0(Tree1(n))));
+        struct node *r = IdNode(join_strs(&oit_sbuf, 3, ls, ".", Str0(Tree1(n))));
         Line(r) = Line(n);
         File(r) = File(n);
         l = put_local(Str0(r), 0, r, 0);

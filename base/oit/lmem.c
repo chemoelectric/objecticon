@@ -40,9 +40,6 @@ struct fentry *lflast;		/* last field table entry */
 struct gentry *lgfirst;		/* first global table entry */
 struct gentry *lglast;		/* last global table entry */
 
-struct str_buf link_sbuf;
-struct str_buf llex_sbuf;
-
 /*
  * Array sizes for various linker tables that can be expanded with realloc().
  */
@@ -143,7 +140,7 @@ void alsolink(char *name, struct lfile *lf, struct loc *pos)
         return;
     }
 
-    ensure_lfile(intern_using(&link_sbuf, canonicalize(file)));
+    ensure_lfile(intern_using(&oit_sbuf, canonicalize(file)));
 }
 
 void alsoimport(char *package, struct lfile *lf, struct loc *pos)
@@ -182,7 +179,7 @@ void alsoimport(char *package, struct lfile *lf, struct loc *pos)
             }
             found = pd->path;
             for (pf = pk->files; pf; pf = pf->next)
-                ensure_lfile(join_strs(&link_sbuf, 3, pd->path, pf->name, USuffix));
+                ensure_lfile(join_strs(&oit_sbuf, 3, pd->path, pf->name, USuffix));
         }
     }
     /* Check if we found it */

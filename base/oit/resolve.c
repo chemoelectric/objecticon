@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 
+static struct str_buf resolve_sbuf;
+
 static void merge(struct lclass *cl, struct lclass *super);
 
 /*
@@ -60,10 +62,10 @@ static void resolve_global(struct lfile *lf, char *name)
         /* 
          * Get the package name 
          */
-        zero_sbuf(&link_sbuf);
+        zero_sbuf(&resolve_sbuf);
         for (t = name; t != dot; ++t)
-            AppChar(link_sbuf, *t);
-        package = str_install(&link_sbuf);
+            AppChar(resolve_sbuf, *t);
+        package = str_install(&resolve_sbuf);
         /*
          * If the package is "default", just convert the name to its
          * unqualified form.  Otherwise if it's not in the file's
@@ -74,7 +76,7 @@ static void resolve_global(struct lfile *lf, char *name)
          * have generated a warning on translation.
          */
         if (package == default_string)
-            name = intern_using(&link_sbuf, dot + 1);
+            name = intern_using(&resolve_sbuf, dot + 1);
         else if (lf->package != package) {
             struct fimport *im = lookup_fimport(lf, package);
             if (im)
@@ -89,7 +91,7 @@ static void resolve_global(struct lfile *lf, char *name)
      * toplevel first.
      */
     if (lf->package)
-        rres_found = glocate(join_strs(&link_sbuf, 3, lf->package, ".", name));
+        rres_found = glocate(join_strs(&resolve_sbuf, 3, lf->package, ".", name));
     else
         rres_found = gb_locate(name);
 
@@ -102,7 +104,7 @@ static void resolve_global(struct lfile *lf, char *name)
          * If it's unqualified, or has the symbol...
          */
         if (!fp->qualified || (is = lookup_fimport_symbol(fp, name))) {
-            abs = join_strs(&link_sbuf, 3, fp->name, ".", name);
+            abs = join_strs(&resolve_sbuf, 3, fp->name, ".", name);
             gl = glocate(abs);
             if (gl) {
                 fp->used = 1;

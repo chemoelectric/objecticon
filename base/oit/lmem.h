@@ -38,9 +38,6 @@ extern struct lclass *lclasses, *lclass_last;
 extern struct linvocable *linvocables,
                     *last_linvocable; /* invocables in link stage */
 
-extern struct str_buf link_sbuf;
-extern struct str_buf llex_sbuf;
-
 extern int nsize;	    /* ipc/line num. assoc. table */
 extern int maxcode;    /* code space */
 extern int fnmsize;	    /* ipc/file name assoc. table */

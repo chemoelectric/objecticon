@@ -43,7 +43,7 @@ extern char *init_string;
 extern char *all_string;
 extern char *package_marker_string;
 
-extern struct str_buf join_sbuf;
+extern struct str_buf oit_sbuf;
 
 int main(int argc, char **argv);
 void report(char *fmt, ...);

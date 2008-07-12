@@ -7,7 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 
-struct str_buf pack_sbuf;
+static struct str_buf pack_sbuf;
 struct package_dir *package_dir_hash[16], *package_dirs, *package_dir_last;
 
 void init_package_db()

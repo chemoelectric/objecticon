@@ -49,7 +49,7 @@ extern char ToEBCDIC[256], FromEBCDIC[256];
 struct node tok_loc =
 {0, NULL, 0, 0};	/* "model" node containing location of current token */
 
-struct str_buf lex_sbuf;	/* string buffer for lexical analyzer */
+static struct str_buf lex_sbuf;	/* string buffer for lexical analyzer */
 
 /*
  * yylex - find the next token in the input stream, and return its token

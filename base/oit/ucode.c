@@ -235,6 +235,8 @@ struct ucode_op ucode_op_table[] = {
 
 static int last_opcode = 0, n_params = 0;
 
+static struct str_buf ucode_sbuf;
+
 static void check_param(int type)
 {
     if (n_params > 2)
@@ -343,14 +345,14 @@ char *uin_str()
 {
     int c;
     check_param(TYPE_STR);
-    zero_sbuf(&llex_sbuf);
+    zero_sbuf(&ucode_sbuf);
     for (;;) {
         c = uin_nextch();
         if (!c)
             break;
-        AppChar(llex_sbuf, c);
+        AppChar(ucode_sbuf, c);
     }
-    return str_install(&llex_sbuf);
+    return str_install(&ucode_sbuf);
 }
 
 char *uin_bin(int *n)
@@ -366,12 +368,12 @@ char *uin_bin(int *n)
     l = (int)i.s;
     if (n)
         *n = l;
-    zero_sbuf(&llex_sbuf);
+    zero_sbuf(&ucode_sbuf);
     while (l-- > 0) {
         c = uin_nextch();
-        AppChar(llex_sbuf, c);
+        AppChar(ucode_sbuf, c);
     }
-    return str_install(&llex_sbuf);
+    return str_install(&ucode_sbuf);
 }
 
 struct ucode_op *uin_expectop()
@@ -389,21 +391,21 @@ char *uin_fqid(char *package)
 {
     register int c;
     check_param(TYPE_STR);
-    zero_sbuf(&llex_sbuf);
+    zero_sbuf(&ucode_sbuf);
     if (package) {
         while (*package) {
-            AppChar(llex_sbuf, *package++);
+            AppChar(ucode_sbuf, *package++);
         }
         /* Add a "." between package and string */
-        AppChar(llex_sbuf, '.');
+        AppChar(ucode_sbuf, '.');
     }
     for (;;) {
         c = uin_nextch();
         if (!c)
             break;
-        AppChar(llex_sbuf, c);
+        AppChar(ucode_sbuf, c);
     }
-    return str_install(&llex_sbuf);
+    return str_install(&ucode_sbuf);
 }
 
 struct ucode_op *uin_op()
@@ -465,7 +467,7 @@ int udis(int argc, char **argv)
         fprintf(stderr, "Usage: udis ufile\n");
         exit(1);
     }
-    inname = intern_using(&link_sbuf, argv[1]);
+    inname = intern_using(&ucode_sbuf, argv[1]);
     ucodefile = fopen(inname, ReadBinary);
     if (!ucodefile) {
         fprintf(stderr, "Couldn't open %s\n", inname);
@@ -516,15 +518,15 @@ static void read_params(struct ucode_op *op)
                 int l, t;
                 char *s1 = uin_bin(&l);
                 t = l;
-                zero_sbuf(&llex_sbuf);
+                zero_sbuf(&ucode_sbuf);
                 while (l-- > 0) {
                     if (isprint(*s1))
-                        AppChar(llex_sbuf, *s1);
+                        AppChar(ucode_sbuf, *s1);
                     else
-                        AppChar(llex_sbuf, '?');
+                        AppChar(ucode_sbuf, '?');
                     ++s1;
                 }
-                args[i] = (long)str_install(&llex_sbuf);
+                args[i] = (long)str_install(&ucode_sbuf);
                 break;
             }
             default:

@@ -4,6 +4,4 @@
 int yylex();
 void yyerror(char *msg);
 
-extern struct str_buf lex_sbuf;
-
 #endif
