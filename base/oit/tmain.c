@@ -246,10 +246,13 @@ int main(int argc, char **argv)
 
     init_strings();
 
-    if (strlen(*argv) >= 4 && !strcmp(*argv + strlen(*argv) - 4, "udis"))
+    /*
+     * Check for alternate uses, udis and ldbg.
+     */
+    fp = fparse(*argv);
+    if (smatch(fp->name, "udis"))
         return udis(argc, argv);
-
-    if (strlen(*argv) >= 4 && !strcmp(*argv + strlen(*argv) - 4, "ldbg"))
+    if (smatch(fp->name, "ldbg"))
         return ldbg(argc, argv);
 
     iconxloc = findexe("oix");
