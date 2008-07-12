@@ -705,7 +705,6 @@ void quitf(char *fmt, ...)
 void init_strings()
 {
     init_str();
-    init_sbuf(&join_sbuf);
     main_string = spec_str("main");
     default_string = spec_str("default");
     self_string = spec_str("self");

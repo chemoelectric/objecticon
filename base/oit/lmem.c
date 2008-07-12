@@ -56,9 +56,6 @@ int maxlabels	= 500;	    /* maximum num of labels/proc */
  */
 void linit()
 {
-    init_sbuf(&link_sbuf);
-    init_sbuf(&llex_sbuf);
-
     init_package_db();
     load_package_db_from_ipath();
 

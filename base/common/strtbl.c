@@ -79,16 +79,12 @@ void dump_sbuf(struct str_buf *s)
 }
 
 /*
- * init_sbuf - initialize a new sbuf struct, allocating an initial buffer.
+ * init_sbuf - initialize a new sbuf struct.  This just zeroes the
+ * structure.
  */
 void init_sbuf(struct str_buf *sbuf)
 {
-    sbuf->size = SBufSize;
-    sbuf->frag_lst = alloc(sizeof(struct str_buf_frag) + SBufSize - 1);
-    sbuf->frag_lst->next = NULL;
-    sbuf->strtimage = sbuf->frag_lst->s;
-    sbuf->endimage = sbuf->strtimage;
-    sbuf->end = sbuf->strtimage + SBufSize;
+    memset(sbuf, 0, sizeof(*sbuf));
 }
 
 /*

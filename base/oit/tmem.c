@@ -31,7 +31,6 @@ static void free_function_hash(struct tfunction *f);
 
 void tmalloc()
 {
-    init_sbuf(&lex_sbuf);
     init_package_db();
 }
 
