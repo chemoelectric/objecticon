@@ -1,4 +1,4 @@
-import lang, gui, ipl.options
+import lang, ipl.options
 
 procedure main(args)
    local t, l, s, res
@@ -193,46 +193,46 @@ class CodePrinter(Decode)
       t := char_in() | fail
 
       case t of {
-         REF_CODE : {
+         Codec.REF_CODE : {
             i := int_in() | fail
             print(l, "REF to " || i)
             return
          }
 
-         NULL_CODE : {
+         Codec.NULL_CODE : {
             print(l,"&null")
             return
          }
 
-         PROCEDURE_CODE : {
+         Codec.PROCEDURE_CODE : {
             print(l,"procedure(" || line_in() || ")")
             return
          }
 
-         CLASS_CODE :
+         Codec.CLASS_CODE :
             return decode_class(l)
 
-         STRING_CODE : {
+         Codec.STRING_CODE : {
             print(l,image(s := decode_string(line_in())))
             return s
          }
 
-         INTEGER_CODE : {
+         Codec.INTEGER_CODE : {
             print(l, i := int_in())
             return i
          }
 
-         REAL_CODE : {
+         Codec.REAL_CODE : {
             print(l, i := real(line_in()))
             return i
          }
 
-         CSET_CODE : {
+         Codec.CSET_CODE : {
             print(l, "cset("|| image(s := cset(decode_string(line_in())))|| ")")
             return s
          }
 
-         RECORD_CODE : {
+         Codec.RECORD_CODE : {
             (rname := line_in() &
              n := int_in()) | fail
             note_seen(res)
@@ -246,7 +246,7 @@ class CodePrinter(Decode)
             return
          }
 
-         LIST_CODE : {
+         Codec.LIST_CODE : {
             n := int_in() | fail
             note_seen(res)
             print(l, "<" || tag_count || ">[")
@@ -259,7 +259,7 @@ class CodePrinter(Decode)
             return
          }
 
-         SET_CODE : {
+         Codec.SET_CODE : {
             n := int_in() | fail
             note_seen(res)
             print(l, "set<" || tag_count || ">(")
@@ -272,7 +272,7 @@ class CodePrinter(Decode)
             return
          }
 
-         TABLE_CODE : {
+         Codec.TABLE_CODE : {
             n := int_in() | fail
             print(l,"table(")
             decode(l+1) | fail
