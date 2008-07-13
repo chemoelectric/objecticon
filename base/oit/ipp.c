@@ -185,7 +185,7 @@ int m4;
    fs = (infile *)alloc((unsigned int)sizeof(infile));
    fs->prev = curfile;
    fs->fp = f;
-   fs->fname = salloc(fname);
+   fs->fname = intern(fname);
    fs->lno = 0;
    fs->m4flag = m4;
    fs->ifdepth = ifdepth;
@@ -383,8 +383,7 @@ int ppch()
 #endif					/* ARM || UNIX */
             fclose(fs->fp);		/* close current file */
            
-         free((char *)fs->fname);
-         free((char *)fs);
+         free(fs);
          if (curfile == &nofile)	/* if at outer level, return EOF */
             return EOF;
          else				/* else generate #line comment */
@@ -651,8 +650,7 @@ char *s;
 
    curfile->lno = n;			/* set line number */
    if (fname != NULL) {			/* also set filename if given */
-      free(curfile->fname);
-      curfile->fname = salloc(fname);
+      curfile->fname = intern(fname);
       }
 
    pushline(curfile->fname, curfile->lno);
@@ -945,7 +943,7 @@ char *val;
           */
          if (val == NULL) {		/* if $undef */
             *p = d->next;		/* delete from table */
-            free((char *)d);
+            free(d);
             return NULL;
             }
          if (val != name && strcmp(val, d->s + d->nlen) != 0)
