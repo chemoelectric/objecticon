@@ -120,7 +120,7 @@ class NetClient(Connectable, Error, SetFields)
             t := curr_time_millis()
          } else {
             if &errno ~= EAGAIN then
-               return error("Failed to write:" || str_error())
+               return error("Failed to write:" || errno_str())
             if curr_time_millis() - t > timeout then
                return error("Send timed out")
             delay(50)
@@ -130,19 +130,12 @@ class NetClient(Connectable, Error, SetFields)
    end
 
    #
-   # Get an error string based on &errno
-   # 
-   protected str_error()
-      return sys_errstr(&errno) | ("&errno=" || &errno)
-   end
-
-   #
    # 
    protected recv(len)
       local l
 
       if \timeout > 0 then {
-         l := select(connection, timeout) | return error("Failed to select:" || str_error())
+         l := select(connection, timeout) | return error("Failed to select:" || errno_str())
          if *l = 0 then
             return error("Failed to select (timeout)")
       }

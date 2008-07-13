@@ -85,3 +85,11 @@ end
 procedure find_and_skip(s)
    return tab(find(s)) || move(*s)
 end
+
+#
+# Get an error string based on &errno
+# 
+procedure errno_str()
+   return sys_errstr(&errno) | ("&errno=" || &errno)
+end
+

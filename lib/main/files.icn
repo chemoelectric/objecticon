@@ -467,7 +467,7 @@ class UnixFileSystem(FileSystem)
       while s2 := read(p) do {
          sr := stat(s || s2) | {
             close(p)
-            return error("Can't stat " || image(s || s2))
+            return error("Can't stat " || image(s || s2) || ":" || errno_str())
          }
          put(l, DirEntry(s2, sr))
       }
@@ -578,7 +578,7 @@ class WindowsFileSystem(FileSystem)
       while s2 := read(p) do {
          sr := stat(s || s2) | {
             close(p)
-            return error("Can't stat " || image(s || s2))
+            return error("Can't stat " || image(s || s2) || ":" || errno_str())
          }
          put(l, DirEntry(s2, sr))
       }
