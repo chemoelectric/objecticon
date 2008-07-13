@@ -95,3 +95,20 @@ uninstall :
 	rm -rf $(LIBREF)
 	/sbin/install-info --delete objecticon $(INFO)/dir
 	rm -f $(PATHS) $(MKDEFS)
+
+T=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)
+tar :
+	@rm -rf $(T)
+	@mkdir -p $(T)
+	@for f in $$( find apps base docs lib \
+		-regex ".*\.\(icn\|c\|r\|ri\|h\|y\|icon\|texi\)" ) ; do \
+		cp --parents $$f $(T) ;\
+	done
+	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \
+		cp --parents $$f $(T) ;\
+	done
+	@cp configure $(T)
+	@rm -f $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
+		$(T)/base/common/rswitch.?
+	tar cfz $(T).tar.gz $(T)
+	@rm -rf $(T)
