@@ -234,13 +234,87 @@ void zero_sbuf(struct str_buf *sbuf)
 
 }
 
+static struct str_buf util;
+
+/*
+ * Intern a string using our local sbuf
+ */
+char *intern(char *s)
+{
+    zero_sbuf(&util);
+    while (*s)
+        AppChar(util, *s++);
+    return str_install(&util);
+}
+
+/*
+ * Catenate and intern the given strings (terminated with a null
+ * pointer).
+ */
+char *join(char *s, ...)
+{
+    va_list argp;
+    zero_sbuf(&util);
+    va_start(argp, s);
+    while (s) {
+        while (*s)
+            AppChar(util, *s++);
+        s = va_arg(argp, char*);
+    }
+    va_end(argp);
+    return str_install(&util);
+}
+
+static struct str_buf tbuf[8];
+static int tcount = 0;
+
+/*
+ * get_sbuf - get a temporary str_buf
+ */
+struct str_buf *get_sbuf()
+{
+    struct str_buf *sbuf;
+    if (tcount >= asize(tbuf)) {
+        fprintf(stderr, "get_sbuf: out of buffers to allocate\n");
+        exit(EXIT_FAILURE);
+    }
+    sbuf = &tbuf[tcount++];
+    zero_sbuf(sbuf);
+    return sbuf;
+}
+
+/*
+ * rel_sbuf - free the most recent temporary str_buf allocated by
+ * get_sbuf.
+ */
+void rel_sbuf(struct str_buf *sbuf)
+{
+    if (tcount == 0 || &tbuf[tcount - 1] != sbuf) {
+        fprintf(stderr, "get_sbuf: rel_sbuf out of sequence\n");
+        exit(EXIT_FAILURE);
+    }
+    --tcount;
+}
+
+/*
+ * Call clear_sbuf on the static sbufs in this file.  This should only
+ * be called in conjunction with free_stbl(), which will have pointers
+ * into any memory allocated in these sbufs.
+ */
+void clear_local_sbufs()
+{
+    int i;
+    clear_sbuf(&util);
+    for (i = 0; i < asize(tbuf); ++i)
+        clear_sbuf(&tbuf[i]);
+    tcount = 0;
+}
+
 /*
  * streq - compare s1 with s2 for len bytes, and return 1 for equal,
  *  0 for not equal.
  */
-static int streq(len, s1, s2)
-    register int len;
-    register char *s1, *s2;
+static int streq(int len, char *s1, char *s2)
 {
     while (len--)
         if (*s1++ != *s2++)

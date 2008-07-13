@@ -32,8 +32,6 @@
 /*
  * Hash functions for symbol tables.
  */
-#define asize(obj)      ((sizeof(obj)/sizeof(obj[0])))
 #define hasher(x,obj)   (((word)x)%asize(obj))
-#define clear(obj)      (memset(obj, 0, sizeof(obj)))
 
 #endif

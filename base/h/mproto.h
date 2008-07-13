@@ -47,7 +47,11 @@ char	*spec_str	(char *s);
 char	*str_install	(struct str_buf *sbuf);
 int	tonum		(int c);
 void 	zero_sbuf	(struct str_buf *sbuf);
-
+char    *intern(char *s);
+char    *join(char *s, ...);
+struct str_buf *get_sbuf();
+void    rel_sbuf(struct str_buf *sbuf);
+void    clear_local_sbufs();
 
 #ifndef SysOpt
    int	getopt		(int argc, char * const argv[], const char *optstring);

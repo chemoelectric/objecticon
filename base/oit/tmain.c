@@ -42,8 +42,6 @@ char *package_marker_string;
  */
 char *progname	="oit";	/* program name for diagnostics */
 
-static struct str_buf oit_sbuf;
-
 /*
  * Files and related globals.
  */
@@ -672,35 +670,6 @@ static void usage()
 {
    fprintf(stderr,"usage: %s %s file ... [-x args]\n", progname, Usage);
    exit(EXIT_FAILURE);
-}
-
-/*
- * Intern a string using our local sbuf
- */
-char *intern(char *s)
-{
-    zero_sbuf(&oit_sbuf);
-    while (*s)
-        AppChar(oit_sbuf, *s++);
-    return str_install(&oit_sbuf);
-}
-
-/*
- * Catenate and intern the given strings (terminated with a null
- * pointer).
- */
-char *join(char *s, ...)
-{
-    va_list argp;
-    zero_sbuf(&oit_sbuf);
-    va_start(argp, s);
-    while (s) {
-        while (*s)
-            AppChar(oit_sbuf, *s++);
-        s = va_arg(argp, char*);
-    }
-    va_end(argp);
-    return str_install(&oit_sbuf);
 }
 
 /*

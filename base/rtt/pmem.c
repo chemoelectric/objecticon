@@ -159,17 +159,6 @@ struct paste_lsts *plst;
    return plsts;
    }
 
-/*
- * get_sbuf - dynamically allocate a string buffer.
- */
-struct str_buf *get_sbuf()
-   {
-   struct str_buf *sbuf;
-
-   sbuf = NewStruct(str_buf);
-   init_sbuf(sbuf);
-   return sbuf;
-   }
 
 /*
  * push_src - push an entry on the stack of tokens sources. This entry
@@ -262,15 +251,6 @@ void free_plsts(plsts)
 struct paste_lsts *plsts;
    {
    free((char *)plsts);
-   }
-
-/*
- * rel_sbuf - free a string buffer.
- */
-void rel_sbuf(sbuf)
-struct str_buf *sbuf;
-   {
-   free((char *)sbuf);
    }
 
 /*

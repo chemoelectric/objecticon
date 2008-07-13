@@ -314,3 +314,6 @@ extern int tbl_dflt;                   /* index of table default */
  *  used in translators, not in the run-time system.
  */
 #define BVectSize 16
+
+#define asize(obj)      ((sizeof(obj)/sizeof(obj[0])))
+#define clear(obj)      (memset(obj, 0, sizeof(obj)))
