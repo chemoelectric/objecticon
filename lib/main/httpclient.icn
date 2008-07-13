@@ -742,7 +742,8 @@ class HttpClient(NetClient)
          \request.content_type | fatal(self, "Content-type header not set on a POST")
          request.set_header("content-type", request.content_type)
          sz := stat(request.post_file).size | return error("Couldn't stat post file:" ||
-                                                           request.post_file)
+                                                           request.post_file ||
+                                                           ":" || errno_str())
          request.set_header("content-length", sz)
          request.set_header("authorization", create_authorization_header())
          write_request_headers() | fail
