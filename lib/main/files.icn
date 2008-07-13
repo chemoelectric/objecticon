@@ -87,6 +87,14 @@ class Files()
    end
 
    #
+   # Return the error reason for calls delegated to the
+   # system-specific FileSystem instance.
+   #
+   public static get_reason()
+      return FS.get_reason()
+   end
+
+   #
    # Load a file into a string, failing if the file doesn't exist.
    #
    public static file_to_string(fn)

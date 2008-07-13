@@ -123,6 +123,7 @@ class DirectoryDialog(Dialog)
    end
 
    public on_tree_selection(ev)
+      clear_msg()
       dir.set_contents(get_full_path(tree.object_get_selections()[1]).str())
    end
 
