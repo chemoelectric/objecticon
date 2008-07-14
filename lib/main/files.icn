@@ -80,10 +80,11 @@ class Files()
    end
 
    #
-   # Get the separator char used by the filesystem.
+   # Split a list of paths (such as the $PATH variable) into its
+   # constituent elements.
    #
-   public static get_separator()
-      return FS.get_separator()
+   public static split_paths(s)
+      suspend FS.split_paths(s)
    end
 
    #
@@ -257,6 +258,33 @@ class Files()
          i +:= 1
       }
    end
+
+   #
+   # This procedure searches for a file on a environment-defined path.
+   # It follows the same logic as the C function pathfind() in
+   # mlocal.c
+   #
+   # @param f the file to look for
+   # @param n the name of the environment variable holding the path
+   #
+   public static path_find(f, n)
+      local p, s
+
+      # First of all see if it exists without any search
+      if stat(f) then
+         return f
+
+      p := get_path(f)
+      # We never append absolute paths to the search path
+      if p.is_absolute() then
+         fail
+
+      # Search all the elements in the path
+      every s := get_path(split_paths(getenv(n))).append(p).str() do {
+         if stat(s) then
+            return s
+      }
+   end
 end
 
 #
@@ -280,7 +308,7 @@ class FileSystem(Error)
 
    public defer get_roots()
 
-   public defer get_separator()
+   public defer split_paths(s)
 end
 
 #
@@ -514,8 +542,15 @@ class UnixFileSystem(FileSystem)
       return "/"
    end
 
-   public get_separator()
-      return "/"
+   public split_paths(s)
+      local t
+      s ? while not(pos(0)) do {
+         t := tab(upto(':') | 0)
+         move(1)
+         if *t = 0 then
+            t := "."
+         suspend t
+      }
    end
 end
 
@@ -621,7 +656,14 @@ class WindowsFileSystem(FileSystem)
 
    public defer get_roots()
 
-   public get_separator()
-      return "\\"
+   public split_paths(s)
+      local t
+      s ? while not(pos(0)) do {
+         t := tab(upto(';') | 0)
+         move(1)
+         if *t = 0 then
+            t := "."
+         suspend t
+      }
    end
 end

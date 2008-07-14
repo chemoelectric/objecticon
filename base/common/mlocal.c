@@ -9,25 +9,22 @@
  *  Define symbols for building file names.
  *  1. PREFIX: the characters that terminate a file name prefix
  *  2. FILESEP: the char to insert after a dir name, if any
- *  3. IPATHSEP: allowable OIPATH/OLPATH separators,
- *  4. XPATHSEP: separator for executable PATH variable
+ *  3. PATHSEP: path separator character.
  */
 
 #if UNIX
 #define FILESEP '/'
 #define PREFIX "/"
-#define IPATHSEP " :"
-#define XPATHSEP ":"
+#define PATHSEP ":"
 #endif
 #if MSWindows
 #define FILESEP '\\'
 #define PREFIX "/:\\"
-#define IPATHSEP " "
-#define XPATHSEP ";"
+#define PATHSEP ";"
 #endif
 
 static char *tryfile(char *dir, char *name, char *extn);
-static char *accessexe(char *name);
+static char *tryexe(char *dir, char *name);
 
 /*
  *  relfile(prog, mod) -- find related file.
@@ -57,46 +54,31 @@ char *relfile(char *prog, char *mod)
  *  findexe(prog) -- find absolute executable, searching $PATH (using
  *  POSIX 1003.2 rules) for executable name.
  * 
- *  A pointer to a static buffer is returned, or NULL if not found.
+ *  A pointer to makename's static buffer is returned, or NULL if
+ *  not found.
  */
 char *findexe(char *name) 
 {
-    int nlen, plen;
-    char *path, *next, *sep, *end, *p;
-    static char buf[MaxPath];
+    char *path, *p;
 
     /* Does name have a separator char? If so, don't search $PATH */
     for (p = name; *p; ++p) {
         if (strchr(PREFIX, *p))
-            return accessexe(canonicalize(name));
+            return tryexe(0, canonicalize(name));
     }
 
-    nlen = strlen(name);
     path = getenv("PATH");
     if (path == NULL || *path == '\0')
         path = ".";
-    end = path + strlen(path);
-    for (next = path; next <= end; next = sep + 1) {
-        sep = next;
-        while (*sep && !strchr(XPATHSEP, *sep))
-            ++sep;
-        plen = sep - next;
-        if (plen == 0) {
-            next = ".";
-            plen = 1;
-        }
-        if (plen + 1 + nlen + 1 >= sizeof(buf)) {
-            *buf = '\0';
-            return 0;
-        }
-        memcpy(buf, next, plen);
-        if (!strchr(PREFIX, buf[plen - 1]))
-	   buf[plen++] = FILESEP;
-        strcpy(buf + plen, name);
-        if ((p = accessexe(buf)))
-            return canonicalize(p);
+
+    for (;;) {
+        char *e = pathelem(&path);
+        if (!e)
+            break;
+        if ((p = tryexe(e, name)))        /* look for file */
+            return p;
     }
-    *buf = '\0';
+
     return 0;
 }
 
@@ -141,10 +123,11 @@ int isabsolute(char *s)
 /*
  * Check if a file exists as an exe.
  */
-static char *accessexe(char *name)
+static char *tryexe(char *dir, char *name)
 {
-    if (!access(name, X_OK))
-        return name;
+    char *s = makename(dir, name, 0);
+    if (!access(s, X_OK))
+        return s;
     else
         return 0;
 }
@@ -204,7 +187,7 @@ int isabsolute(char *s)
 /*
  * Check if a file exists as an exe.
  */
-static char *accessexe(char *name)
+static char *tryexe(char *name)
 {
     struct fileparts *fp = fparse(name);
     char *p;
@@ -288,7 +271,7 @@ void quotestrcat(char *buf, char *s)
  *  directory.  Details vary by platform, but the general idea is
  *  that the file must be a readable simple text file.
  *
- *  A pointer to a makename's static buffer is returned, or NULL if
+ *  A pointer to makename's static buffer is returned, or NULL if
  *  not found.
  * 
  *  path is the IPATH or LPATH value, or NULL if unset.
@@ -333,39 +316,35 @@ char *pathfind(char *path, char *name, char *extn)
 char *pathelem(char **ps)
 {
     static char buf[MaxPath];
-    char c, *s = *ps, *b = buf;
+    char *s = *ps, *e;
+    int n;
 
-    while ((c = *s) != '\0' && strchr(IPATHSEP, c))
-        s++;
     if (!*s) {
         *ps = 0;
         return 0;
     }
 
-    if (*s == '"') {
-        s++;
-        while ((c = *s) != '\0' && (c != '"')) {
-            *b++ = c;
-            s++;
-        }
-        s++;
-    }
-    else {
-        while ((c = *s) != '\0' && !strchr(IPATHSEP, c)) {
-            *b++ = c;
-            s++;
-        }
-    }
+    e = s;
+    while (*e && !strchr(PATHSEP, *e))
+        ++e;
 
-    /*
-     * We have to append a path separator here.
-     *  Seems like makename should really be the one to do that.
-     */
-    if (!strchr(PREFIX, b[-1]))     /* if separator not already there */
-        *b++ = FILESEP;
-    
-    *b = 0;
-    *ps = s;
+    n = e - s;
+    if (n == 0) {
+        s = ".";
+        n = 1;
+    }
+    if (n + 2 > sizeof(buf)) {
+        *ps = 0;
+        return 0;
+    }
+    memcpy(buf, s, n);
+    if (!strchr(PREFIX, buf[n - 1]))
+        buf[n++] = FILESEP;
+    buf[n] = 0;
+    if (*e)
+        *ps = e + 1;
+    else 
+        *ps = e;
     return buf;
 }
 

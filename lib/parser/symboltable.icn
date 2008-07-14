@@ -356,7 +356,7 @@ class SymbolTable(Error,Connectable)
 
    public scan_file_on_path(f)
       local s
-      s := path_find(f, "OIPATH") | return error("Couldn't find " || f || " on path")
+      s := Files.path_find(f, "OIPATH") | return error("Couldn't find " || f || " on path")
       return scan_file(s)
    end
 
@@ -369,7 +369,7 @@ class SymbolTable(Error,Connectable)
       if \package_db then
          return
       package_db := table()
-      every d := chdir() | path_elements(getenv("OIPATH")) do {
+      every d := chdir() | Files.split_paths(getenv("OIPATH")) do {
          p := Files.get_path(d).canonical()
          s := p.str()
          if /package_db[s] then {

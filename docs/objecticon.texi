@@ -618,6 +618,48 @@ value of the instance @code{i}.
 One other general point to note about methods is that access permissions
 are checked when the field is accessed, not when the method is called,
 which can be done at any later time from any location in the program.
+
+Method pointers also allow some closure-like behaviour which would
+otherwise be difficult or impossible to achieve.  For example, consider
+the problem of writing a function which takes a parameter @code{n}, and
+returns another function which adds @code{n} to its argument.  This can
+be done as follows :-
+@example
+class X()
+   private n
+
+   private f(x)
+      return x + n
+   end
+
+   private new(n)
+      return self.n := n
+   end
+
+   public static adder(n)
+      return X(n).f
+   end
+end
+
+
+procedure main()
+   local f
+   f := X.adder(20)
+   write(f(4))
+   write(f(6))
+
+   f := X.adder(100)
+   write(f(5))
+   write(f(10))
+end
+@end example
+The output is
+@example
+24
+26
+105
+110
+@end example
 @node Casts
 @section Casts
 Casts are small icon structures which are used to access overridden methods.

@@ -278,7 +278,7 @@ class Parser(Connectable, Error)
                   if member(preproc_include_set,sym) then {
                      preproc_error("circular reference to " || image(sym))
                   } else {
-                     if new_file := open(new_filename := path_find(sym, "OLPATH"))
+                     if new_file := open(new_filename := Files.path_find(sym, "OLPATH"))
                      then {
                         push(preproc_file_stack,
                              preproc_file,preproc_filename,
