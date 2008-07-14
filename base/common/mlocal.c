@@ -9,18 +9,18 @@
  *  Define symbols for building file names.
  *  1. PREFIX: the characters that terminate a file name prefix
  *  2. FILESEP: the char to insert after a dir name, if any
- *  3. PATHSEP: path separator character.
+ *  3. PATHSEP: separator character on $PATH, $OIPATH etc.
  */
 
 #if UNIX
 #define FILESEP '/'
 #define PREFIX "/"
-#define PATHSEP ":"
+#define PATHSEP ':'
 #endif
 #if MSWindows
 #define FILESEP '\\'
 #define PREFIX "/:\\"
-#define PATHSEP ";"
+#define PATHSEP ';'
 #endif
 
 static char *tryfile(char *dir, char *name, char *extn);
@@ -342,7 +342,7 @@ char *pathelem(char **ps)
         return 0;
 
     e = s;
-    while (*e && !strchr(PATHSEP, *e))
+    while (*e && *e != PATHSEP)
         ++e;
 
     n = e - s;
