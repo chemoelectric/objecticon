@@ -187,24 +187,30 @@ int isabsolute(char *s)
 /*
  * Check if a file exists as an exe.
  */
-static char *tryexe(char *name)
+static char *tryexe(char *dir, char *name)
 {
-    struct fileparts *fp = fparse(name);
-    char *p;
+    char *s = makename(dir, name, 0);
+    struct fileparts *fp;
 
-    if (*fp->ext) {
-       /* File has an extension, so just access it as given */
-       if (!access(name, 0))
-	  return name;
-    } else {
-       /* No extension so try .exe and .bat */
-       p = makename(0, name, ".exe");
-       if (!access(p, 0))
-	  return p;
+    /*
+     * Try as given
+     */
+    if (!access(s, 0))
+        return s;
 
-       p = makename(0, name, ".bat");
-       if (!access(p, 0))
-	  return p;
+    /*
+     * If name has no extension, try extensions .exe and .bat
+     * as alternatives.
+     */
+    fp = fparse(name);
+    if (!*fp->ext) {
+       s = makename(dir, name, ".exe");
+       if (!access(s, 0))
+	  return s;
+
+       s = makename(dir, name, ".bat");
+       if (!access(s, 0))
+	  return s;
     }
 
     return 0;
