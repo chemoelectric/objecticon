@@ -132,6 +132,21 @@ static char *tryexe(char *dir, char *name)
         return 0;
 }
 
+/*
+ * tryfile(dir, name, extn) -- check to see if file is readable.
+ *
+ *  The file name is constructed in from dir + name + extn.  findfile
+ *  returns makename's static buf if successful or NULL if not.
+ */
+static char *tryfile(char *dir, char *name, char *extn)
+{
+    char *s = makename(dir, name, extn);
+    if (!access(s, R_OK))
+        return s;
+    else
+        return 0;
+}
+
 #endif
 
 #if MSWindows
@@ -216,6 +231,21 @@ static char *tryexe(char *dir, char *name)
     return 0;
 }
 
+/*
+ * tryfile(dir, name, extn) -- check to see if file is readable.
+ *
+ *  The file name is constructed in from dir + name + extn.  findfile
+ *  returns makename's static buf if successful or NULL if not.
+ */
+static char *tryfile(char *dir, char *name, char *extn)
+{
+    char *s = makename(dir, name, extn);
+    if (!access(s, 0))
+        return s;
+    else
+        return 0;
+}
+
 #endif
 
 
@@ -250,23 +280,6 @@ char *canonicalize(char *path)
     }
     normalize(result);
     return result;
-}
-
-
-FILE *pathopen(char *fname, char *mode)
-{
-    char *s = findexe(fname);
-    if (s) 
-        return fopen(s, mode);
-    return 0;
-}
-
-
-void quotestrcat(char *buf, char *s)
-{
-    if (strchr(s, ' ')) strcat(buf, "\"");
-    strcat(buf, s);
-    if (strchr(s, ' ')) strcat(buf, "\"");
 }
 
 
@@ -379,24 +392,6 @@ int newer_than(char *f1, char *f2)
     if (stat(f2, &buf) < 0)
         return 1;
     return t1 > buf.st_mtime;
-}
-
-/*
- * tryfile(dir, name, extn) -- check to see if file is readable.
- *
- *  The file name is constructed in from dir + name + extn.  findfile
- *  returns makename's static buf if successful or NULL if not.
- */
-static char *tryfile(char *dir, char *name, char *extn)
-{
-    FILE *f;
-    char *p = makename(dir, name, extn);
-    if ((f = fopen(p, ReadText)) != NULL) {
-        fclose(f);
-        return p;
-    }
-    else
-        return 0;
 }
 
 /*

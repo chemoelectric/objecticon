@@ -69,4 +69,3 @@ char *findexe(char *name);
 char *relfile	(char *prog, char *mod);
 void normalize(char *path);
 char *canonicalize(char *path);
-FILE *pathopen	(char *fname, char*mode);

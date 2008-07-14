@@ -552,7 +552,7 @@ static void bundle_iconx(char *ofile)
     char *tmp = intern(makename(0, ofile, ".tmp"));
     rename(ofile, tmp);
 
-    if (!(f = pathopen("oix", ReadBinary)))
+    if (!(f = fopen(iconxloc, ReadBinary)))
         quitf("Tried to open oix to build .exe, but couldn't");
 
     if (!(f2 = fopen(ofile, WriteBinary)))
