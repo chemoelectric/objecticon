@@ -64,12 +64,11 @@ install :
 	@echo -e "OIHOME=$(prefix)" >>$(MKDEFS)
 	@echo -e "OIBIN=$(OIBIN)" >>$(MKDEFS)
 	@echo -e "OILIB=$(OILIB)" >>$(MKDEFS)
-	@echo -e "export OIPATH:=\$$(OILIB)/main \$$(OILIB)/gui\
-                  \$$(OILIB)/xml \$$(OILIB)/parser \$$(OILIB)/ipl" >>$(MKDEFS)
+	@echo -e "export OIPATH:=\$$(OILIB)/main:\$$(OILIB)/gui:\$$(OILIB)/xml:\$$(OILIB)/parser:\$$(OILIB)/ipl" >>$(MKDEFS)
 	@echo -e "export OLPATH:=\$$(OILIB)/incl" >>$(MKDEFS)
 	@echo -e "export PATH:=\$$(OIBIN):\$$(PATH)" >>$(MKDEFS)
-	@echo -e "export OIPATH=\"\$$OILIB/main \$$OILIB/gui\
-                  \$$OILIB/xml \$$OILIB/parser \$$OILIB/ipl\"" >>$(PATHS)
+	@echo -e "\n%.u: %.icn\n\toit -c -s \$$<" >>$(MKDEFS)
+	@echo -e "export OIPATH=\"\$$OILIB/main:\$$OILIB/gui:\$$OILIB/xml:\$$OILIB/parser:\$$OILIB/ipl\"" >>$(PATHS)
 	@echo -e "export OLPATH=\"\$$OILIB/incl\"" >>$(PATHS)
 	@if [ $(prefix) != /usr/local ] ; then \
 		echo -e "PATH=\"\$$PATH:\$$OIBIN\"" >>$(PATHS) ; \
