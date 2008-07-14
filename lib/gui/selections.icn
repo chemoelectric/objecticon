@@ -79,7 +79,7 @@ class Selection()
          curr.get_targets() == target | fail
          return curr.get_content(target)
       }
-      return SelectionContent((?Dispatcher.dialogs).win, selection, target)
+      return GetSelectionContent((?Dispatcher.dialogs).win, selection, target)
    end
 
    #

@@ -2263,14 +2263,14 @@ function{1} OwnSelection(win, selection, callback)
            runerr(140,win);
        w = (wbp)BlkLoc(win)->file.fd.fp;
        w->window->selectionproc = callback;
-       assertselectionownership(w, selection);
+       ownselection(w, selection);
        return win;
    }
 end
 
-"SelectionContent(win,selection,target_type) - get the window system's selection"
+"GetSelectionContent(win,selection,target_type) - get the window system's selection"
 
-function{0,1} SelectionContent(win, selection,target_type)
+function{0,1} GetSelectionContent(win, selection,target_type)
    if !is:file(win) then
        runerr(140,win);
    if !cnv:C_string(selection) then
@@ -2328,7 +2328,7 @@ MissingGraphicsFuncV(GotoXY)
 MissingGraphicsFuncV(Lower)
 MissingGraphicsFuncV(NewColor)
 MissingGraphicsFuncV(NextEvent)
-MissingGraphicsFuncV(SelectionContent)
+MissingGraphicsFuncV(GetSelectionContent)
 MissingGraphicsFuncV(OwnSelection)
 MissingGraphicsFuncV(PaletteChars)
 MissingGraphicsFuncV(PaletteColor)

@@ -367,7 +367,7 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    int	setpointer	(wbp w, char *val);
    int	setwidth	(wbp w, SHORT new_width);
    int	setminwidth	(wbp w, SHORT new_width);
-   int  assertselectionownership (wbp w, char *selection);
+   int  ownselection    (wbp w, char *selection);
    struct descrip getselectioncontent (wbp w, char *selection, char *target_type);
    int	setwindowlabel	(wbp w, char *val);
    int	strimage	(wbp w, int x, int y, int width, int height,

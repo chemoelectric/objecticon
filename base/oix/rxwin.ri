@@ -1626,7 +1626,7 @@ int setminwidth(wbp w, SHORT new_width)
     return Succeeded;
 }
 
-int assertselectionownership(wbp w, char *selname)
+int ownselection(wbp w, char *selname)
 {
     Atom selection;
     STDLOCALS(w);
