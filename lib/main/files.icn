@@ -544,12 +544,14 @@ class UnixFileSystem(FileSystem)
 
    public split_paths(s)
       local t
-      s ? while not(pos(0)) do {
+      s ? repeat {
          t := tab(upto(':') | 0)
-         move(1)
          if *t = 0 then
             t := "."
          suspend t
+         if pos(0) then
+            break
+         move(1)
       }
    end
 end
@@ -658,12 +660,14 @@ class WindowsFileSystem(FileSystem)
 
    public split_paths(s)
       local t
-      s ? while not(pos(0)) do {
+      s ? repeat {
          t := tab(upto(';') | 0)
-         move(1)
          if *t = 0 then
             t := "."
          suspend t
+         if pos(0) then
+            break
+         move(1)
       }
    end
 end

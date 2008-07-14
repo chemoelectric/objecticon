@@ -68,8 +68,8 @@ char *findexe(char *name)
     }
 
     path = getenv("PATH");
-    if (path == NULL || *path == '\0')
-        path = ".";
+    if (!path)
+        path = "";
 
     for (;;) {
         char *e = pathelem(&path);
@@ -325,10 +325,8 @@ char *pathelem(char **ps)
     char *s = *ps, *e;
     int n;
 
-    if (!*s) {
-        *ps = 0;
+    if (!s)
         return 0;
-    }
 
     e = s;
     while (*e && !strchr(PATHSEP, *e))
@@ -350,7 +348,7 @@ char *pathelem(char **ps)
     if (*e)
         *ps = e + 1;
     else 
-        *ps = e;
+        *ps = 0;
     return buf;
 }
 
