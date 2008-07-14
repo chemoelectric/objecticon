@@ -1,16 +1,20 @@
 include ../../Makedefs
 
-SRCFILES=main.icn outputter.icn htmloutputter.icn groffoutputter.icn comment.icn
-UFILES=$(SRCFILES:.icn=.u)
+COMMONSRC=outputter.icn htmloutputter.icn groffoutputter.icn comment.icn
+COMMONU=$(COMMONSRC:.icn=.u)
 
-all:  oidoc
+PROGS=oidoc
+PROGSRC=$(PROGS:=.icn)
+PROGU=$(PROGSRC:.icn=.u)
+
+all:	$(PROGS)
 
 clean:
-	$(RM) *.u packages.txt oidoc
+	$(RM) *.u packages.txt $(PROGS)
 
-%.u: %.icn
-	oit -ncs $(SRCFILES)
+$(COMMONU) $(PROGU): %.u: %.icn
+	oit -snc $(COMMONSRC) $(PROGSRC)
 
-oidoc: $(UFILES)
-	oit -o oidoc $(UFILES)
-	$(CP) oidoc $(OIBIN)
+%:      %.u $(COMMONU)
+	oit -o $@ $@.u $(COMMONU)
+	cp $@ $(OIBIN)

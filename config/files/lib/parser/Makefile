@@ -1,18 +1,16 @@
 include ../../Makedefs
 
-SRCFILES=lex.icn parser.icn utils.icn tokens.icn tree.icn symboltable.icn
+LIBSRC=lex.icn parser.icn utils.icn tokens.icn tree.icn symboltable.icn oigram.icn
 
-UFILES=$(SRCFILES:.icn=.u) oigram.u
+LIBU=$(LIBSRC:.icn=.u)
 
-.PHONY: all clean
-
-all:  oigram.icn $(UFILES)
+all:  $(LIBU)
 
 clean:
 	$(RM) *.u ../incl/oigram_tab.icn oigram.icn packages.txt
 
-%.u: %.icn
-	oit -ncs $(SRCFILES) oigram.icn
+$(LIBU): %.u: %.icn oigram.icn
+	oit -ncs $(LIBSRC)
 
 oigram.icn : oigram.y
 	iyacc -v -k parser -d -i oigram.y

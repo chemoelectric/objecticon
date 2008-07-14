@@ -1,14 +1,14 @@
 include ../../Makedefs
 
-SRCFILES=$(wildcard *.icn)
+LIBSRC=$(wildcard *.icn)
 
-UFILES=$(SRCFILES:.icn=.u)
+LIBU=$(LIBSRC:.icn=.u)
 
-all: $(UFILES)
+all: $(LIBU)
 
 clean:
-	rm -f *.u packages.txt
+	$(RM) *.u packages.txt
 
-%.u: %.icn
-	oit -s -n -c $(SRCFILES)
+$(LIBU): %.u: %.icn
+	oit -snc $(LIBSRC)
 

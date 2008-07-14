@@ -1,4 +1,5 @@
-.PHONY: all clean
+.PHONY:         all clean
+.PRECIOUS:      %.u
 
 OIHOME=@CONFIG_DIR@
 OIBIN=$(OIHOME)/bin
@@ -17,3 +18,6 @@ CP=cp
 export OIPATH:=$(OILIB)/main $(OILIB)/gui $(OILIB)/xml $(OILIB)/parser $(OILIB)/ipl
 export OLPATH:=$(OILIB)/incl
 export PATH:=$(OIBIN):$(PATH)
+
+%.u: %.icn
+	oit -c -s $<
