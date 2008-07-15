@@ -9,10 +9,10 @@ clean:
 	rm -rf html libref
 
 objecticon.info:  objecticon.texi
-	makeinfo -o objecticon.info objecticon.texi
+	-makeinfo --force -o objecticon.info objecticon.texi
 
 html:	objecticon.texi
-	makeinfo --html -o html objecticon.texi
+	-makeinfo --force --html -o html objecticon.texi
 	touch html
 
 libref:

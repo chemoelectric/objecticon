@@ -15,6 +15,9 @@ RM=rm -f
 RMDIR=rm -rf
 MKDIR=mkdir
 CP=cp
+INSTALL=@INSTALL@
+LN_S=@LN_S@
+
 export OIPATH:=$(OILIB)/main:$(OILIB)/gui:$(OILIB)/xml:$(OILIB)/parser:$(OILIB)/ipl
 export OLPATH:=$(OILIB)/incl
 export PATH:=$(OIBIN):$(PATH)

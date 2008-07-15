@@ -23,8 +23,8 @@ pure:
 
 oit:		$(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o oit $(OBJS) $(LIBS)
-		cp oit $(OIBIN)
-		ln -f -s oit $(OIBIN)/udis
+		$(CP) oit $(OIBIN)
+		(cd $(OIBIN) && $(RM) udis && $(LN_S) oit udis)
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/proto.h ../h/mproto.h \

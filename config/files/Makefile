@@ -32,30 +32,30 @@ PATHS=$(OILIB)/paths.txt
 MKDEFS=$(OILIB)/Makedefs
 
 install :
-	install -d $(OIBIN)
-	install -d $(OILIB)/gui
-	install -d $(OILIB)/incl
-	install -d $(OILIB)/ipl
-	install -d $(OILIB)/main
-	install -d $(OILIB)/parser
-	install -d $(OILIB)/xml
-	install -d $(HTML)
-	install -d $(INFO)
-	install -m 755 bin/ivib $(OIBIN)
-	install -m 755 bin/iyacc $(OIBIN)
-	install -m 755 bin/oit $(OIBIN)
-	install -m 755 bin/oix $(OIBIN)
-	ln -f -s oit $(OIBIN)/udis
-	install -m 644 lib/gui/*.u lib/gui/packages.txt $(OILIB)/gui
-	install -m 644 lib/incl/*.icn $(OILIB)/incl
-	install -m 644 lib/ipl/*.u $(OILIB)/ipl
-	install -m 644 lib/main/*.u lib/main/packages.txt $(OILIB)/main
-	install -m 755 lib/native/*.so $(SOLIB)
-	install -m 644 lib/parser/*.u lib/parser/packages.txt $(OILIB)/parser
-	install -m 644 lib/xml/*.u lib/xml/packages.txt $(OILIB)/xml
-	install -m 644 docs/html/*.html $(HTML)
-	install -m 644 docs/objecticon.info $(INFO)
-	/sbin/install-info docs/objecticon.info $(INFO)/dir
+	$(INSTALL) -d $(OIBIN)
+	$(INSTALL) -d $(OILIB)/gui
+	$(INSTALL) -d $(OILIB)/incl
+	$(INSTALL) -d $(OILIB)/ipl
+	$(INSTALL) -d $(OILIB)/main
+	$(INSTALL) -d $(OILIB)/parser
+	$(INSTALL) -d $(OILIB)/xml
+	$(INSTALL) -d $(HTML)
+	$(INSTALL) -d $(INFO)
+	$(INSTALL) -m 755 bin/ivib $(OIBIN)
+	$(INSTALL) -m 755 bin/iyacc $(OIBIN)
+	$(INSTALL) -m 755 bin/oit $(OIBIN)
+	$(INSTALL) -m 755 bin/oix $(OIBIN)
+	(cd $(OIBIN) && $(RM) udis && $(LN_S) oit udis)
+	$(INSTALL) -m 644 lib/gui/*.u lib/gui/packages.txt $(OILIB)/gui
+	$(INSTALL) -m 644 lib/incl/*.icn $(OILIB)/incl
+	$(INSTALL) -m 644 lib/ipl/*.u $(OILIB)/ipl
+	$(INSTALL) -m 644 lib/main/*.u lib/main/packages.txt $(OILIB)/main
+	$(INSTALL) -m 755 lib/native/*.so $(SOLIB)
+	$(INSTALL) -m 644 lib/parser/*.u lib/parser/packages.txt $(OILIB)/parser
+	$(INSTALL) -m 644 lib/xml/*.u lib/xml/packages.txt $(OILIB)/xml
+	$(INSTALL) -m 644 docs/html/*.html $(HTML)
+	$(INSTALL) -m 644 docs/objecticon.info $(INFO)
+	-/sbin/install-info docs/objecticon.info $(INFO)/dir
 	@echo -e "# Object Icon path settings" >$(PATHS)
 	@echo -e "export OIHOME=$(prefix)" >>$(PATHS)
 	@echo -e "export OIBIN=$(OIBIN)" >>$(PATHS)
@@ -81,7 +81,7 @@ install :
 	@echo "   $(MKDEFS) - useful Makefile definitions"
 
 install-libref :
-	install -d $(LIBREF)
+	$(INSTALL) -d $(LIBREF)
 	oidoc -html -d -o $(LIBREF) -a $(OILIB)/ipl/*.icn
 
 uninstall :
@@ -92,7 +92,7 @@ uninstall :
 	rm -f $(HTML)/*.html
 	rm -f $(INFO)/objecticon.info
 	rm -rf $(LIBREF)
-	/sbin/install-info --delete objecticon $(INFO)/dir
+	-/sbin/install-info --delete objecticon $(INFO)/dir
 	rm -f $(PATHS) $(MKDEFS)
 
 T=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)
@@ -106,7 +106,7 @@ tar :
 	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
-	@cp configure $(T)
+	@cp configure config.guess config.sub install-sh $(T)
 	@rm -f $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
 		$(T)/base/common/rswitch.?
 	tar cfz $(T).tar.gz $(T)

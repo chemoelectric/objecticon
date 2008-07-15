@@ -46,6 +46,23 @@ OI_ADD_LIB(dl)
 
 AX_LIB_MYSQL()
 AC_FLAG_MSG_NOSIGNAL()
+AC_CHECK_PROG(MAKEINFO, makeinfo, yes)
+if ! test "$MAKEINFO" == yes; then
+        echo "*** Need makeinfo to create the documentation"
+        exit 1
+fi
+
+AC_PROG_INSTALL()
+AC_PROG_LN_S()
+
+AC_CANONICAL_HOST()
+case $host in
+     i?86-*-linux*) id=linux_x86 ;;
+     i?86-*-cygwin*) id=cygwin_x86 ;;
+     *) id=default ;;
+esac
+export CSWITCH
+CSWITCH=config/system/$id/rswitch.?
 
 AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork)
 AC_CHECK_GLOBAL(sys_nerr)
@@ -53,12 +70,7 @@ AC_CHECK_GLOBAL(sys_errlist)
 AC_VAR_TIMEZONE_EXTERNALS()
 AC_STRUCT_TIMEZONE()
 AC_CONFIG_COMMANDS(system, [
-        case $(uname -om) in
-                'i686 GNU/Linux') id=linux_x86 ;;
-                'i686 Cygwin') id=cygwin_x86 ;;
-                *) id=default ;;
-        esac
-        cp config/system/$id/rswitch.? base/common
+        cp $CSWITCH base/common
 	mkdir -p bin
 ])
 AC_CONFIG_FILES([Makedefs:config/files/Makedefs],)
@@ -87,22 +99,22 @@ AC_CONFIG_FILES([base/h/define.h:config/files/base/h/define.h],)
 AC_CONFIG_HEADERS([base/h/auto.h:config/files/base/h/auto.h],)
 AC_OUTPUT
 echo "Summary:-"
-echo -n "X11 graphics           :"
+echo -n "X11 graphics           : "
 if test "$ac_cv_lib_X11_main" == yes; then
         echo yes
-        echo -n "jpeg library           :"
+        echo -n "jpeg library           : "
         if test "$ac_cv_lib_jpeg_main" == yes; then
                 echo yes
         else
                 echo no
         fi
-        echo -n "Xft anti-aliased fonts :"
+        echo -n "Xft anti-aliased fonts : "
         if test "$ac_cv_lib_Xft_main" == yes; then
                 echo yes
         else
                 echo no
         fi
-        echo -n "Xpm                    :"
+        echo -n "Xpm                    : "
         if test "$ac_cv_lib_Xpm_main" == yes; then
                 echo yes
         else
@@ -111,21 +123,23 @@ if test "$ac_cv_lib_X11_main" == yes; then
 else
         echo no
 fi
-echo -n "zlib compression       :"
+echo -n "zlib compression       : "
 if test "$ac_cv_lib_z_main" == yes; then
         echo yes
 else
         echo no
 fi
-echo -n "dynamic loading        :"
+echo -n "dynamic loading        : "
 if test "$ac_cv_lib_dl_main" == yes; then
         echo yes
 else
         echo no
 fi
-echo -n "crypt lib              :"
+echo -n "crypt lib              : "
 if test "$ac_cv_lib_crypt_main" == yes; then
         echo yes
 else
         echo no
 fi
+echo "context switch         :" $CSWITCH
+
