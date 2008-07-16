@@ -27,8 +27,8 @@ static void gentables(void);
 struct unref {
     char *name;
     int num;
-    struct unref *next;
-} *unreffirst;
+    struct unref *next, *b_next;
+};
 
 struct strconst {
     char *s;
@@ -37,6 +37,7 @@ struct strconst {
     struct strconst *next, *b_next;
 };
 
+struct unref *first_unref, *unref_hash[128];
 struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
 int strconst_offset;
 
@@ -47,6 +48,24 @@ int strconst_offset;
 #define CsetPtr(b,c)	((c) + (((b)&0377) >> LogIntBits))
 
 struct header hdr;
+
+static struct unref *get_unref(char *s)
+{
+    int i = hasher(s, unref_hash);
+    struct unref *p = unref_hash[i];
+    while (p && p->name != s)
+        p = p->b_next;
+    if (!p) {
+        p = New(struct unref);
+        p->b_next = unref_hash[i];
+        unref_hash[i] = p;
+        p->name = s;
+        p->num = (first_unref ? (first_unref->num - 1) : -1);
+        p->next = first_unref;
+        first_unref = p;
+    }
+    return p;
+}
 
 static struct strconst *inst_strconst(char *s, int len)
 {
@@ -85,7 +104,10 @@ void generate_code()
 
     nstatics = 0;
     strconst_offset = 0;
+    first_strconst = last_strconst = 0;
     clear(strconst_hash);
+    first_unref = 0;
+    clear(unref_hash);
 
     /*
      * Loop through input files and generate code for each.
@@ -314,20 +336,8 @@ static void gencode(struct lfile *lf)
                 if (fp)
                     lemitn(op, (word)(fp->field_id), name);
                 else {
-                    /* append it to field table */
-                    struct unref *p;
-                    for(p = unreffirst; p; p = p->next){
-                        if (p->name == s)
-                            break;
-                    }
-                    if (!p) {
-                        /* add new unreferenced field */
-                        p = New(struct unref);
-                        p->name = s;
-                        p->num = (unreffirst ? (unreffirst->num - 1) : -1);
-                        p->next = unreffirst;
-                        unreffirst = p;
-                    }
+                    /* Get or create an unref record */
+                    struct unref *p = get_unref(s);
                     lemitn(op, (word) p->num, name);
                 }
                 break;
@@ -1383,7 +1393,7 @@ static void gentables()
         outword(sp->len);      /* name of field: length & offset */
         outword(sp->offset);
     }
-    for(up = unreffirst; up; up = up->next) {
+    for(up = first_unref; up; up = up->next) {
         sp = inst_c_strconst(up->name);
 #ifdef DeBugLinker
         if (Dflag)
