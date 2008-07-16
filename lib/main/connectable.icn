@@ -39,11 +39,8 @@ class Connectable()
    public disconnect_object(obj)
       local t, l
       t := []
-      every l := !listeners do {
-         if (type(l.proc) ~== "methp") |
-            (Class.get_methp_object(l.proc) ~=== obj) then
-            put(t, l)
-      }
+      every l := !listeners do
+         (type(l.proc) == "methp" & Class.methp_has_object(l.proc, obj)) | put(t, l)
       listeners := t
    end
 
