@@ -108,17 +108,21 @@ procedure to_string(o, depth, seen)
 
       "cast" : {
          string_buff.add("cast(")
-         string_buff.add(to_string(Class.get_cast_object(o), depth - 1, seen))
-         string_buff.add(",")
-         string_buff.add(to_string(Class.get_cast_class(o), depth - 1, seen))
+         if depth ~= 0 then {
+            string_buff.add(to_string(Class.get_cast_object(o), depth - 1, seen))
+            string_buff.add(",")
+            string_buff.add(to_string(Class.get_cast_class(o), depth - 1, seen))
+         }
          string_buff.add(")")
       }
 
       "methp" : {
          string_buff.add("methp(")
-         string_buff.add(to_string(Class.get_methp_object(o), depth - 1, seen))
-         string_buff.add(",")
-         string_buff.add(to_string(Class.get_methp_proc(o), depth - 1, seen))
+         if depth ~= 0 then {
+            string_buff.add(to_string(Class.get_methp_object(o), depth - 1, seen))
+            string_buff.add(",")
+            string_buff.add(to_string(Class.get_methp_proc(o), depth - 1, seen))
+         }
          string_buff.add(")")
       }
 
