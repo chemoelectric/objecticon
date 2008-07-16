@@ -53,9 +53,13 @@ install :
 	$(INSTALL) -m 755 lib/native/*.so $(SOLIB)
 	$(INSTALL) -m 644 lib/parser/*.u lib/parser/packages.txt $(OILIB)/parser
 	$(INSTALL) -m 644 lib/xml/*.u lib/xml/packages.txt $(OILIB)/xml
+ifeq (@MAKEINFO@,yes)
 	$(INSTALL) -m 644 docs/html/*.html $(HTML)
 	$(INSTALL) -m 644 docs/objecticon.info $(INFO)
-	-/sbin/install-info docs/objecticon.info $(INFO)/dir
+ifeq (@INSTALLINFO@,yes)
+	install-info docs/objecticon.info $(INFO)/dir
+endif
+endif
 	@echo -e "# Object Icon path settings" >$(PATHS)
 	@echo -e "export OIHOME=$(prefix)" >>$(PATHS)
 	@echo -e "export OIBIN=$(OIBIN)" >>$(PATHS)
@@ -92,7 +96,9 @@ uninstall :
 	rm -f $(HTML)/*.html
 	rm -f $(INFO)/objecticon.info
 	rm -rf $(LIBREF)
-	-/sbin/install-info --delete objecticon $(INFO)/dir
+ifeq (@INSTALLINFO@,yes)
+	install-info --delete objecticon $(INFO)/dir
+endif
 	rm -f $(PATHS) $(MKDEFS)
 
 T=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)

@@ -31,25 +31,30 @@ if test "$ac_cv_lib_X11_main" == yes; then
    CHECK_XFT()
    CHECK_XPM()
    if test "$ac_cv_lib_Xft_main" == yes -a "$ac_cv_lib_freetype_main" != yes ; then
-        echo "*** Xft needs freetype to work"
-        exit 1
+        AC_MSG_ERROR([*** Xft needs freetype to work])
    fi
 fi
 CHECK_ZLIB()
 OI_ADD_LIB(m)
 if ! test "$ac_cv_lib_m_main" == yes; then
-        echo "*** Couldn't find the math library (-lm) - can't compile without it."
-        exit 1
+        AC_MSG_ERROR([*** Couldn't find the math library (-lm) - can't compile without it.])
 fi
 OI_ADD_LIB(crypt)
 OI_ADD_LIB(dl)
 
 AX_LIB_MYSQL()
 AC_FLAG_MSG_NOSIGNAL()
+
+dnl check for makeinfo v >= 4.8
 AC_CHECK_PROG(MAKEINFO, makeinfo, yes)
-if ! test "$MAKEINFO" == yes; then
-        echo "*** Need makeinfo to create the documentation"
-        exit 1
+if test "$MAKEINFO" == yes; then
+    case x"`$MAKEINFO --version | grep 'GNU texinfo'`" in
+      x*\ [[1-3]].* ) unset MAKEINFO;;
+      x*\ 4.[[0-7]] ) unset MAKEINFO;;
+    esac
+fi
+if test "$MAKEINFO" == yes; then
+    AC_CHECK_PROG(INSTALLINFO, install-info, yes)
 fi
 
 AC_PROG_INSTALL()
@@ -71,7 +76,7 @@ AC_VAR_TIMEZONE_EXTERNALS()
 AC_STRUCT_TIMEZONE()
 AC_CONFIG_COMMANDS(system, [
         cp $CSWITCH base/common
-	mkdir -p bin
+	AS_MKDIR_P(bin)
 ])
 AC_CONFIG_FILES([Makedefs:config/files/Makedefs],)
 AC_CONFIG_FILES([docs/Makefile:config/files/docs/Makefile])
@@ -141,5 +146,10 @@ if test "$ac_cv_lib_crypt_main" == yes; then
 else
         echo no
 fi
+echo -n "makeinfo >=4.8         : "
+if test "$MAKEINFO" == yes; then
+        echo yes
+else
+        echo no
+fi
 echo "context switch         :" $CSWITCH
-
