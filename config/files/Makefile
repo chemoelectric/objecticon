@@ -48,7 +48,7 @@ install :
 	(cd $(OIBIN) && $(RM) udis && $(LN_S) oit udis)
 	$(INSTALL) -m 644 lib/gui/*.u lib/gui/packages.txt $(OILIB)/gui
 	$(INSTALL) -m 644 lib/incl/*.icn $(OILIB)/incl
-	$(INSTALL) -m 644 lib/ipl/*.u $(OILIB)/ipl
+	$(INSTALL) -m 644 lib/ipl/*.u lib/ipl/packages.txt $(OILIB)/ipl
 	$(INSTALL) -m 644 lib/main/*.u lib/main/packages.txt $(OILIB)/main
 	$(INSTALL) -m 755 lib/native/*.so $(SOLIB)
 	$(INSTALL) -m 644 lib/parser/*.u lib/parser/packages.txt $(OILIB)/parser
