@@ -882,12 +882,8 @@ int pollevent()
     wdp wd;
     int hm;
     for (wd = wdsplys; wd; wd = wd->next) {
-        if ((hm = handle_misc(wd, NULL)) < 1) {
-            if (hm == -1) return -1;
-            else if (hm == 0) {
-                /* how to handle failure? */
-	    }
-        }
+        if ((hm = handle_misc(wd, NULL)) == -1)
+            fatalerr(141, NULL);
     }
     return 400;
 }
@@ -1974,7 +1970,6 @@ int setcanvas(w,s)
         }
         else {
             if (ws->iconic != IconicState) {
-#ifdef Iconify
                 if (ws->win == (Window) NULL) {
                     wmap(w);
                 }
@@ -1987,9 +1982,6 @@ int setcanvas(w,s)
                             return Failed;
                         }
                     }
-#else					/* Iconify */
-                return Failed;
-#endif					/* Iconify */
 	    }
         }
     }
@@ -2108,11 +2100,7 @@ int seticonicstate(w,s)
         }
         else {
             if (ws->iconic != IconicState) {
-#ifdef Iconify
                 XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
-#else					/* Iconify */
-                return Failed;
-#endif					/* Iconify */
 	    }
         }
     }

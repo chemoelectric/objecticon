@@ -230,7 +230,6 @@ int interp_x(int fsig,dptr cargp)
 #ifdef Polling
    if (!pollctr--) {
       pollctr = pollevent();
-      if (pollctr == -1) fatalerr(141, NULL);
       }
 #endif					/* Polling */
 /*printf("INTERP csp=%x ilevel=%d local=%d\n",get_sp(),ilevel,(((char*)(&fsig)))-(char*)(&lastdesc));*/
@@ -345,14 +344,13 @@ int interp_x(int fsig,dptr cargp)
 	if (!current_line_ptr ||
 	    current_line_ptr->ipc > ipc_offset ||
 	    current_line_ptr[1].ipc <= ipc_offset) {
-#if defined(LineCodes) && defined(Polling)
+#if defined(Polling)
             if (!pollctr--) {
 	       ExInterp;
                pollctr = pollevent();
 	       EntInterp;
-	       if (pollctr == -1) fatalerr(141, NULL);
 	       }	       
-#endif					/* LineCodes && Polling */
+#endif					/* Polling */
 
 	    if(current_line_ptr &&
 	       current_line_ptr + 2 < elines &&
@@ -688,18 +686,13 @@ fflush(stdout);
 
          case Op_Noop:		/* no-op */
 
-#ifdef LineCodes
 #ifdef Polling
            if (!pollctr--) { 
 	       ExInterp;
                pollctr = pollevent();
 	       EntInterp;
-	       if (pollctr == -1) fatalerr(141, NULL);
 	       }	       
 #endif					/* Polling */
-
-
-#endif				/* LineCodes */
 
             break;
 
@@ -720,14 +713,13 @@ fflush(stdout);
 
          case Op_Line:		/* source line number */
 
-#if defined(LineCodes) && defined(Polling)
+#if defined(Polling)
             if (!pollctr--) {
 	       ExInterp;
                pollctr = pollevent();
 	       EntInterp;
-	       if (pollctr == -1) fatalerr(141, NULL);
 	       }	       
-#endif					/* LineCodes && Polling */
+#endif					/* Polling */
             line_num = GetWord;
             lastline = line_num;
             break;
@@ -825,7 +817,6 @@ invokej:
 	          ExInterp;
                   pollctr = pollevent();
 	          EntInterp;
-	          if (pollctr == -1) fatalerr(141, NULL);
 	          }	       
 #endif					/* Polling */
 

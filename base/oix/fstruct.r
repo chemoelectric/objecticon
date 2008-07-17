@@ -1029,7 +1029,6 @@ function{1} set(x[n])
 #ifdef Polling
             if (!pollctr--) {
                pollctr = pollevent();
-	       if (pollctr == -1) fatalerr(141, NULL);
 	       }	       
 #endif					/* Polling */
 		    j = pb->lelem.first + i;

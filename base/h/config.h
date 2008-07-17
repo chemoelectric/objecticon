@@ -200,21 +200,8 @@
 #endif
 
 #ifdef Graphics
-   #undef LineCodes
-   #define LineCodes
-
    #undef Polling
    #define Polling
-
-   #ifndef NoIconify
-      #define Iconify
-   #endif				/* NoIconify */
-
-   #ifndef ICONC_XLIB
-      #define ICONC_XLIB "-L/usr/X11R6/lib -lX11"
-   #endif				/* ICONC_XLIB */
-
-
 #endif					/* Graphics */
 
 #ifndef NoExternalFunctions
@@ -460,26 +447,6 @@ Deliberate Syntax Error
       #define malloc mlalloc
    #endif				/* LSC */
 #endif					/* MACINTOSH */
-
-#if MVS || VM
-
-   /*
-    *  Define compiler-specific symbols to be zero if not already
-    *  defined.
-    */
-
-   #ifndef SASC
-      #define SASC 0
-   #endif				/* SASC */
-
-   #ifndef __SASC
-      #define __SASC 0
-   #endif				/* __SASC */
-
-   #ifndef WATERLOO_C_V3_0
-      #define WATERLOO_C_V3_0 0
-   #endif				/* WATERLOO_C_V3_0 */
-#endif					/* MVS || VM */
 
 #ifndef NoWildCards
    #if NT || BORLAND_286 || BORLAND_386 || MICROSOFT || SCCX_MX
