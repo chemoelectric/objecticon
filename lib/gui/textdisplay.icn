@@ -56,8 +56,8 @@ class TextDisplay(LineBasedScrollArea)
    #
    # Clear the view list, forcing it to be re-created next
    # time it's needed.
-   # @p
-   public clear_view_list()
+   # 
+   private clear_view_list()
       view_list := long_line := &null
       invalidate_subject_width()
       invalidate_line_count()
@@ -65,8 +65,8 @@ class TextDisplay(LineBasedScrollArea)
 
    #
    # Run through the view list looking for the longest line.
-   # @p
-   public find_long_line()
+   # 
+   private find_long_line()
       local v
       long_line := view_list[1] | &null
       every v := !view_list do {
@@ -175,8 +175,8 @@ class TextDisplay(LineBasedScrollArea)
 
    #
    # Create the view_list from the contents.
-   # @p
-   public create_view_list()
+   # 
+   private create_view_list()
       local s, i, pos, j, p
 
       view_list := []
@@ -196,8 +196,8 @@ class TextDisplay(LineBasedScrollArea)
    #
    # Return the index into view_list containing the
    # content position x, y.  Binary search is used.
-   # @p
-   public get_view_list_index(x, y)
+   # 
+   private get_view_list_index(x, y)
       local i, j, mid, v
       i := 1
       j := *view_list

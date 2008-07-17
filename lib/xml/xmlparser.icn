@@ -226,8 +226,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Validate idrefs
    #
-   # @p
-   public validate_idrefs()
+   private validate_idrefs()
       local x
       every x := !id_attribute_refs do
          member(doc.id_attribute_values, x.val) | invalid("an IDREF(S) attribute " ||
@@ -252,8 +251,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [3] S ::= (#x20 | #x9 | #xD | #xA)+
    #
-   # @p
-   public spaces()
+   private spaces()
       any(XML_SPACE) | return err("space expected")
       return tab(many(XML_SPACE))
    end
@@ -268,8 +266,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # If quiet is non-null, just fail silently on error.
    #
-   # @p
-   public parse_name(quiet)
+   private parse_name(quiet)
       if any(XML_NAME_START) then
          return move(1) || tab(many_star(XML_NAME_CHAR))
       else
@@ -279,8 +276,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Same as parse_name, but within a DTD
    #
-   # @p
-   public dtd_parse_name()
+   private dtd_parse_name()
       dtd_any(XML_NAME_START) | return err(XML_NAME_START || " expected")
       return move(1) ||  tab(dtd_many_star(XML_NAME_CHAR))
    end
@@ -290,8 +286,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # If quiet is non-null, just fail silently on error.
    #
-   # @p
-   public parse_names(quiet) 
+   private parse_names(quiet) 
       local l
 
       l := []
@@ -309,8 +304,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # If quiet is non-null, just fail silently on error.
    #
-   # @p
-   public parse_nmtoken(quiet)
+   private parse_nmtoken(quiet)
       if any(XML_NAME_CHAR) then
          return tab(many(XML_NAME_CHAR))
       return /quiet & err(XML_NAME_CHAR || " expected")
@@ -319,8 +313,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Same as parse_nmtoken, but within a DTD
    #
-   # @p
-   public dtd_parse_nmtoken()
+   private dtd_parse_nmtoken()
       dtd_any(XML_NAME_CHAR) | return err(XML_NAME_CHAR || " expected")
       return tab(dtd_many(XML_NAME_CHAR))
    end
@@ -330,8 +323,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # If quiet is non-null, just fail silently on error.
    #
-   # @p
-   public parse_nmtokens(quiet) 
+   private parse_nmtokens(quiet) 
       local l
 
       l := []
@@ -347,8 +339,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [9] EntityValue ::= '"' ([^%&"] | PEReference | Reference)* '"' |  "'" ([^%&'] | PEReference | Reference)* "'"
    #
-   # @p
-   public parse_entity_value()
+   private parse_entity_value()
       local res, c
       any('\'\"') | return err("\' or \" expected")
       c := move(1)
@@ -376,8 +367,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [10] AttValue ::= '"' ([^<&"] | Reference)* '"' |  "'" ([^<&'] | Reference)* "'"
    #
-   # @p
-   public parse_attvalue()
+   private parse_attvalue()
       local res, c
       any('\'\"') | return err("\' or \" expected")
       c := move(1)
@@ -399,8 +389,7 @@ class XmlParser(Connectable,SetFields,Error)
    # attlist is the attributelist for this element, or &null if unknown.
    # att is the name of the attribute.
    #
-   # @p
-   public normalize_attvalue(s, attdef)
+   private normalize_attvalue(s, attdef)
       local res
 
       #
@@ -494,8 +483,7 @@ class XmlParser(Connectable,SetFields,Error)
    # \r\n combinations are replaced with \n
    # \rx combinations are replaced with \nx where x is any character other than \n
    #
-   # @p
-   public normalize_eol(s)
+   private normalize_eol(s)
       local res
       res := ""
       s ? repeat {
@@ -513,8 +501,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [11] SystemLiteral ::= ('"' [^"]* '"') | ("'" [^']* "'") 
    #
-   # @p
-   public parse_system_literal()
+   private parse_system_literal()
       local c, res
       any('\'\"') | return err("\' or \" expected")
       c := move(1)
@@ -526,8 +513,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [12] PubidLiteral ::= '"' PubidChar* '"' | "'" (PubidChar - "'")* "'"
    #
-   # @p
-   public parse_pubid_literal()
+   private parse_pubid_literal()
       local c, res, t
       if any('\'') then
          t := XML_PUBID_CHAR -- '\''
@@ -545,8 +531,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
    #
-   # @p
-   public parse_comment()
+   private parse_comment()
       local res, s, t
       res := Comment()
       ="<!--" | return err("'<!--' expected")
@@ -568,8 +553,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
    #
-   # @p
-   public parse_pi()
+   private parse_pi()
       local res
       res := ProcessingInstruction()
       ="<?" | return err("'<?' expected")
@@ -586,8 +570,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
    #
-   # @p
-   public parse_pi_target()
+   private parse_pi_target()
       local s
       s := parse_name() | fail
       if map(s) == "xml" then
@@ -601,8 +584,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [20] CData ::= (Char* - (Char* ']]>' Char*)) 
    # [21] CDEnd ::= ']]>'
    #
-   # @p
-   public parse_cdsect()
+   private parse_cdsect()
       local res
       res := CData()
       ="<![CDATA[" | return err("'<![CDATA[' expected")
@@ -615,8 +597,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
    #
-   # @p
-   public parse_prolog()
+   private parse_prolog()
       if match("<?xml") then
          doc.add(parse_xml_decl()) | fail
 
@@ -633,8 +614,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
    #
-   # @p
-   public parse_xml_decl() 
+   private parse_xml_decl() 
       local res
       res := XmlDecl()
       ="<?xml" | return err("'<?xml' expected")
@@ -656,8 +636,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [24] VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
    #
-   # @p
-   public parse_version_info()
+   private parse_version_info()
       local c, res
       spaces() | fail
       ="version" | return err("'version' expected")
@@ -678,8 +657,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [25] Eq ::= S? '=' S?
    #
-   # @p
-   public parse_eq()
+   private parse_eq()
       opt_spaces()
       ="=" | return err("'=' expected")
       opt_spaces()
@@ -689,8 +667,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [26] VersionNum ::= ([a-zA-Z0-9_.:] | '-')+
    #
-   # @p
-   public parse_version_num()
+   private parse_version_num()
       local c
       c := &lcase ++ &ucase ++ &digits ++ '_.:-'
       any(c) | return err("expected " || image(c))
@@ -701,8 +678,7 @@ class XmlParser(Connectable,SetFields,Error)
    # Misc*
    # [27] Misc ::= Comment | PI | S
    #
-   # @p
-   public parse_misc_star()
+   private parse_misc_star()
       repeat {
          if match("<!--") then
             parse_and_maybe_add_comment(doc) | fail
@@ -720,8 +696,7 @@ class XmlParser(Connectable,SetFields,Error)
    # Parse and add a comment to the parent node, but only if the
    # preserve_comments_flag is set.
    #
-   # @p
-   public parse_and_maybe_add_comment(parent)
+   private parse_and_maybe_add_comment(parent)
       local c
 
       c := parse_comment() | fail
@@ -735,8 +710,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' (markupdecl | DeclSep)* ']' S?)? '>'
    #
-   # @p
-   public parse_doctype_decl()
+   private parse_doctype_decl()
       local res, s
       res := DocType()
       ="<!DOCTYPE" | return err("'<!DOCTYPE' expected")
@@ -776,8 +750,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [28a] DeclSep ::= PEReference | S
    # [29] markupdecl ::= elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment 
    #
-   # @p
-   public parse_markup_decls()
+   private parse_markup_decls()
       local ref, o, s
       repeat {
          if match("<!ELEMENT") then
@@ -826,8 +799,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [30] extSubset ::= TextDecl? extSubsetDecl
    #
-   # @p
-   public parse_ext_subset()
+   private parse_ext_subset()
       if match("<?xml") then
          parse_text_decl() | fail
       return parse_ext_subset_decl()
@@ -836,8 +808,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [31] extSubsetDecl ::= ( markupdecl | conditionalSect | DeclSep)*
    #
-   # @p
-   public parse_ext_subset_decl()
+   private parse_ext_subset_decl()
       local ref, o, s
       repeat {
          if match("<![") then
@@ -888,8 +859,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"')) 
    #
-   # @p
-   public parse_sdecl()
+   private parse_sdecl()
       local c, res
       spaces() | fail
       ="standalone" | return err("'standalone' expected")
@@ -917,8 +887,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [40] STag ::= '<' Name (S Attribute)* S? '>'
    # [44] EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
    #
-   # @p
-   public parse_element(parent_el)
+   private parse_element(parent_el)
       local res, attlist, xs
       res := XmlElement()
       ="<" | return err("'<' expected")
@@ -981,8 +950,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [41] Attribute ::= Name Eq AttValue
    #
-   # @p
-   public parse_attribute(el, attlist)
+   private parse_attribute(el, attlist)
       local att, val, attdef
       att := parse_name() | fail
       parse_eq() | fail
@@ -1002,8 +970,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [42] ETag ::= '</' Name S? '>'
    #
-   # @p
-   public parse_etag(el)
+   private parse_etag(el)
       local t
       ="</" | return err("'</' expected")
       t := parse_name() | fail
@@ -1017,8 +984,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
    # [14] CharData ::= [^<&]* - ([^<&]* ']]>' [^<&]*)
    #
-   # @p
-   public parse_content(parent, circle)
+   private parse_content(parent, circle)
       local s, o, c2, ref, cd
 
       repeat {
@@ -1097,8 +1063,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [45] elementdecl ::=  '<!ELEMENT' S Name S contentspec S? '>'
    #
-   # @p
-   public parse_element_decl()
+   private parse_element_decl()
       local name, content_spec, element_decl
 
       tab(dtd_match("<!ELEMENT")) | return err("'<!ELEMENT' expected")
@@ -1121,8 +1086,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [46] contentspec ::= 'EMPTY' | 'ANY' | Mixed | children 
    #
-   # @p
-   public parse_content_spec()
+   private parse_content_spec()
       local a, i
       if tab(dtd_match("EMPTY")) then
          return ContentSpec("EMPTY")
@@ -1148,8 +1112,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [47] children ::= (choice | seq) ('?' | '*' | '+')?
    #
-   # @p
-   public parse_children()
+   private parse_children()
       local x, op
       x := parse_choiceseq() | fail
       if dtd_any('?*+') then {
@@ -1162,8 +1125,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [48] cp ::= (Name | choice | seq) ('?' | '*' | '+')?
    #
-   # @p
-   public parse_cp()
+   private parse_cp()
       local x, op
 
       if dtd_any('(') then
@@ -1183,8 +1145,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [49] choice ::= '(' S? cp ( S? '|' S? cp )+ S? ')'
    # [50] seq ::= '(' S? cp ( S? ',' S? cp )* S? ')'
    #
-   # @p
-   public parse_choiceseq()
+   private parse_choiceseq()
       local res, op, a, t
 
       tab(dtd_match("(")) | return err("'(' expected")
@@ -1215,8 +1176,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [51] Mixed ::= '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')' 
    # Converts to a string with spaces removed.
    #
-   # @p
-   public parse_mixed()
+   private parse_mixed()
       local res, t, a, seen, n
 
       tab(dtd_match("(")) | return err("( expected")
@@ -1262,8 +1222,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [52] AttlistDecl ::= '<!ATTLIST' S Name AttDef* S? '>'
    # [53] AttDef ::= S Name S AttType S DefaultDecl
    #
-   # @p
-   public parse_attlist_decl()
+   private parse_attlist_decl()
       local element_name, t, attr_name, attribute_def, res
       tab(dtd_match("<!ATTLIST")) | return err("'<!ATTLIST' expected")
       dtd_spaces() | fail
@@ -1317,8 +1276,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [56] TokenizedType ::= 'ID' | 'IDREF'| 'IDREFS' | 'ENTITY' | 'ENTITIES' | 'NMTOKEN' | 'NMTOKENS'
    # [57] EnumeratedType ::= NotationType | Enumeration 
    #
-   # @p
-   public parse_att_type(attribute_def)
+   private parse_att_type(attribute_def)
       local s
 
       if s := tab(dtd_match("CDATA" | "IDREFS" | "IDREF"| "ID" | "ENTITY" | "ENTITIES" | "NMTOKENS" | "NMTOKEN")) then
@@ -1338,8 +1296,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')' 
    #
-   # @p
-   public parse_notation_type()
+   private parse_notation_type()
       local res, t
 
       res := set()
@@ -1364,8 +1321,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [59] Enumeration ::= '(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')'
    #
-   # @p
-   public parse_enumeration()
+   private parse_enumeration()
       local res, t
 
       res := set()
@@ -1388,8 +1344,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue)
    #
-   # @p
-   public parse_default_decl(attribute_def)
+   private parse_default_decl(attribute_def)
       local s, val
       if s := tab(dtd_match("#REQUIRED" | "#IMPLIED")) then
          attribute_def.default_decl := s
@@ -1453,8 +1408,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [62] includeSect ::= '<![' S? 'INCLUDE' S? '[' extSubsetDecl ']]>' 
    # [63] ignoreSect ::= '<![' S? 'IGNORE' S? '[' ignoreSectContents* ']]>'
    #
-   # @p
-   public parse_conditional_sect()
+   private parse_conditional_sect()
       tab(dtd_match("<![")) | return err("'<![' expected")
       dtd_opt_spaces()
       if tab(dtd_match("INCLUDE")) then {
@@ -1477,8 +1431,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [64] ignoreSectContents ::= Ignore ('<![' ignoreSectContents ']]>' Ignore)*
    # [65] Ignore ::= Char* - (Char* ('<![' | ']]>') Char*) 
    #
-   # @p
-   public parse_ignore_sect_contents()
+   private parse_ignore_sect_contents()
       repeat {
          tab(upto('<]')) | return err("ignore section not closed")
          if match("]]>") then 
@@ -1495,8 +1448,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
    # [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
    #
-   # @p
-   public parse_char_ref(expand)
+   private parse_char_ref(expand)
       local s, c, digs, i
 
       s := ="&#" | return err("'&#' expected")
@@ -1530,8 +1482,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [67] Reference ::= EntityRef | CharRef
    #
-   # @p
-   public parse_reference()
+   private parse_reference()
       if match("&#") then
          return parse_char_ref() | fail
       if any('&') then
@@ -1543,8 +1494,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [68] EntityRef ::= '&' Name ';'
    #
-   # @p
-   public parse_entity_ref()
+   private parse_entity_ref()
       local res
       res := ="&" | return err("'&' expected")
       res ||:= parse_name() | fail
@@ -1555,8 +1505,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [69] PEReference ::= '%' Name ';'
    #
-   # @p
-   public parse_pe_reference()
+   private parse_pe_reference()
       local res
       res := ="%" | return err("'%' expected")
       res ||:= parse_name() | fail
@@ -1567,8 +1516,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Lookup a pe in the table, returning its value.
    #
-   # @p
-   public lookup_pe_reference(s)
+   private lookup_pe_reference(s)
       local name
       name := s[2:-1]
       if member(doc.parameter_entities, name) then
@@ -1580,8 +1528,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Lookup a general entity in the table, returning its value.
    #
-   # @p
-   public lookup_entity_ref(s)
+   private lookup_entity_ref(s)
       local name
       name := s[2:-1]
       if member(doc.general_entities, name) then
@@ -1594,8 +1541,7 @@ class XmlParser(Connectable,SetFields,Error)
    # Convenience method to take a value from one of the entity tables and return it
    # as a string, resolving it externally if necessary.
    #
-   # @p
-   public resolve_entity(o)
+   private resolve_entity(o)
       if \o.str then
          return o.str
       if \o.notation then
@@ -1608,8 +1554,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [71] GEDecl ::= '<!ENTITY' S Name S EntityDef S? '>'
    # [72] PEDecl ::= '<!ENTITY' S '%' S Name S PEDef S? '>'
    #
-   # @p
-   public parse_entity_decl()
+   private parse_entity_decl()
       local name, val
       tab(dtd_match("<!ENTITY")) | return err("'<!ENTITY' expected")
       #
@@ -1647,8 +1592,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [73] EntityDef ::= EntityValue | (ExternalID NDataDecl?)
    # return a string or an ExternalID
    #
-   # @p
-   public parse_entity_def()
+   private parse_entity_def()
       local res
 
       res := EntityDef()
@@ -1667,8 +1611,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [74] PEDef ::= EntityValue | ExternalID
    # return a string or an ExternalID
    #
-   # @p
-   public parse_pe_def()
+   private parse_pe_def()
       local res
          
       res := EntityDef()
@@ -1685,8 +1628,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [75] ExternalID ::= 'SYSTEM' S SystemLiteral | 'PUBLIC' S PubidLiteral S SystemLiteral 
    #
-   # @p
-   public parse_external_id()
+   private parse_external_id()
       local res
       res := ExternalID()
       if tab(dtd_match("SYSTEM")) then {
@@ -1705,8 +1647,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [76] NDataDecl ::= S 'NDATA' S Name
    #
-   # @p
-   public parse_ndata_decl()
+   private parse_ndata_decl()
       local n
       dtd_spaces() | fail
       tab(dtd_match("NDATA")) | return err("'NDATA' expected")
@@ -1718,8 +1659,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [77] TextDecl ::= '<?xml' VersionInfo? EncodingDecl S? '?>'
    #
-   # @p
-   public parse_text_decl()
+   private parse_text_decl()
       ="<?xml" | return err("'<?xml' expected")
 
       if looking_at_space_then("version") then
@@ -1737,8 +1677,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [78] extParsedEnt ::= TextDecl? content
    #
-   # @p
-   public parse_external_parsed_entity(parent, circle)
+   private parse_external_parsed_entity(parent, circle)
       if match("<?xml") then
          parse_text_decl() | fail
       return parse_content(parent, circle)
@@ -1747,8 +1686,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [80] EncodingDecl ::= S 'encoding' Eq ('"' EncName '"' | "'" EncName "'" ) 
    #
-   # @p
-   public parse_encoding_decl()
+   private parse_encoding_decl()
       local c, res
       spaces() | fail
       ="encoding" | return err("'encoding' expected")
@@ -1769,8 +1707,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # [81] EncName ::= [A-Za-z] ([A-Za-z0-9._] | '-')*
    #
-   # @p
-   public parse_enc_name()
+   private parse_enc_name()
       local c1, c2
       c1 := &lcase ++ &ucase
       c2 := &lcase ++ &ucase ++ &digits ++ '._-'
@@ -1782,8 +1719,7 @@ class XmlParser(Connectable,SetFields,Error)
    # [82] NotationDecl ::= '<!NOTATION' S Name S (ExternalID | PublicID) S? '>'
    # [83] PublicID ::= 'PUBLIC' S PubidLiteral 
    #
-   # @p
-   public parse_notation_decl()
+   private parse_notation_decl()
       local res, name, pub, sys
       res := NotationDecl()
       tab(dtd_match("<!NOTATION")) | return err("'<!NOTATION' expected")
@@ -1814,8 +1750,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # S?
    #
-   # @p
-   public opt_spaces()
+   private opt_spaces()
       if any(XML_SPACE) then
          return spaces()
       else
@@ -2055,8 +1990,7 @@ class XmlParser(Connectable,SetFields,Error)
    # Utility: succeed if we are looking at S s, fail otherwise.
    # Does not change &pos.
    #
-   # @p
-   public looking_at_space_then(s)
+   private looking_at_space_then(s)
       local res, i
       any(XML_SPACE) | fail
       i := &pos
@@ -2069,8 +2003,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # DTD version of above
    #
-   # @p
-   public dtd_looking_at_space_then(s)
+   private dtd_looking_at_space_then(s)
       local res, i
       dtd_any(XML_SPACE) | fail
       i := &pos
@@ -2083,8 +2016,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # As above, but looks for chars in the set.
    #
-   # @p
-   public looking_at_space_then_cset(c)
+   private looking_at_space_then_cset(c)
       local res, i
       any(XML_SPACE) | fail
       i := &pos
@@ -2097,8 +2029,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # DTD version of above
    #
-   # @p
-   public dtd_looking_at_space_then_cset(c)
+   private dtd_looking_at_space_then_cset(c)
       local res, i
       dtd_any(XML_SPACE) | fail
       i := &pos
@@ -2111,8 +2042,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Equivalent to match(), but checks for pe expansions
    #
-   # @p
-   public dtd_match(s)
+   private dtd_match(s)
       local i, x, c
       i := &pos
       repeat {
@@ -2128,8 +2058,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Equivalent to any(), but checks for pe expansions
    #
-   # @p
-   public dtd_any(c)
+   private dtd_any(c)
       local i, x
       i := &pos
       repeat {
@@ -2142,8 +2071,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Equivalent to many(), but checks for pe expansions
    #
-   # @p
-   public dtd_many(c)
+   private dtd_many(c)
       local i, x
       i := &pos
 
@@ -2163,8 +2091,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Equivalent to many_star(), but checks for pe expansions
    #
-   # @p
-   public dtd_many_star(c)
+   private dtd_many_star(c)
       if dtd_any(c) then
          return dtd_many(c)
       else
@@ -2175,8 +2102,7 @@ class XmlParser(Connectable,SetFields,Error)
    # If the current char is %, try and insert a pe value.  If successful, return
    # otherwise fail.  &pos is always set to i on exit.
    #
-   # @p
-   public try_dtd_insert(i)
+   private try_dtd_insert(i)
       local j, t
       if any('%') then {
          if /in_ext_subset then {
@@ -2203,8 +2129,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    # Resolve the given external_id, using the current resolver
    #
-   # @p
-   public resolve(external_id)
+   private resolve(external_id)
       return normalize_eol(resolver.resolve(external_id))  | return err("Couldn't resolve: " || to_string(external_id) || ":" || resolver.get_reason())
    end
 
@@ -2212,8 +2137,7 @@ class XmlParser(Connectable,SetFields,Error)
    # This method post-processes the parsed tree to fill in the 
    # global names in the XmlElement structures.
    #
-   # @p
-   public do_namespace_processing()
+   private do_namespace_processing()
       local t
       
       t := table()
@@ -2228,8 +2152,7 @@ class XmlParser(Connectable,SetFields,Error)
    #        to URI's to use for the conversion.
    # @param el the element to process
    #
-   # @p
-   public do_namespace_processing_element(resolve_table, el)
+   private do_namespace_processing_element(resolve_table, el)
       local k, sub
       #
       # Could be comment, cdata
@@ -2275,8 +2198,7 @@ class XmlParser(Connectable,SetFields,Error)
    # Convert a single element.  This completes the global name field and
    # sets up the global attributes.
    #
-   # @p
-   public convert_element(resolve_table, el)
+   private convert_element(resolve_table, el)
       local k
       el.global_name := convert_name(resolve_table, el.name) | fail
 
@@ -2298,8 +2220,7 @@ class XmlParser(Connectable,SetFields,Error)
    # given resolve table for the conversion.  The returned value is a
    # GlobalName instance.
    #
-   # @p
-   public convert_name(resolve_table, name)
+   private convert_name(resolve_table, name)
       local prefix, local_name, uri
 
       name ? {
@@ -2325,8 +2246,7 @@ class XmlParser(Connectable,SetFields,Error)
    # Make a map of namespace id's to uri's from the attributes in the
    # given element.  
    #
-   # @p
-   public make_declarations_map(el)
+   private make_declarations_map(el)
       local k, uri, prefix, t
 
       t := table()

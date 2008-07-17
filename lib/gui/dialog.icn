@@ -226,8 +226,8 @@ class Dialog(Component)
    #
    # Set the owning dialog to d, and insert this dialog into
    # the parent's set of child dialogs.
-   # @p
-   public set_owning_dialog(d)
+   # 
+   private set_owning_dialog(d)
       insert(d.child_dialogs, self)
       self.owning_dialog := d
    end
@@ -265,8 +265,8 @@ class Dialog(Component)
 
    #
    # Ensure we have a position if one is not set.
-   # @p
-   public ensure_pos()
+   # 
+   private ensure_pos()
       local x1, y1
       if get_wattrib("pos") | (get_wattrib("posx") & get_wattrib("posy")) then
          return
@@ -289,8 +289,8 @@ class Dialog(Component)
    #
    # Ensure we have size attributes, setting from the preferred width/height if
    # absent
-   # @p
-   public ensure_size()
+   # 
+   private ensure_size()
       if get_wattrib("size") | (get_wattrib("width") & get_wattrib("height")) then
          return
 
@@ -439,8 +439,8 @@ class Dialog(Component)
 
    #
    # Normal event processing - not dnd
-   # @p
-   public process_normal(e)
+   # 
+   private process_normal(e)
       local c
 
       if e === (&lpress | &rpress | &mpress) then {
@@ -532,8 +532,8 @@ class Dialog(Component)
       fire(Event.ICON, e)
    end
 
-   # @p
-   public fire_list(l, t, p)
+   # 
+   private fire_list(l, t, p)
       local c
       every c := !l do {
          if c.is_unshaded() & c.is_unhidden() &
@@ -544,16 +544,16 @@ class Dialog(Component)
 
    #
    # Initialize the tooltip state and ticker.
-   # @p
-   public tooltip_init()
+   # 
+   private tooltip_init()
       self.tooltip_state := 0
       self.tooltip_ticker.start()
    end
 
    #
    # Cleanup the tooltip settings.
-   # @p
-   public tooltip_dispose()
+   # 
+   private tooltip_dispose()
       self.tooltip_ticker.stop()
       if self.tooltip_state = 2 then
          hide_tooltip()
@@ -561,8 +561,8 @@ class Dialog(Component)
 
    #
    # Show the tooltip at the given cursor position.
-   # @p
-   public show_tooltip(obj, tip)
+   # 
+   private show_tooltip(obj, tip)
       if \self.tooltip_component then
          hide_tooltip()
       self.tooltip_component := obj.create_tooltip_component(tip)
@@ -589,8 +589,8 @@ class Dialog(Component)
 
    #
    # Update the tooltip by hiding it and re-creating it.
-   # @p
-   public update_tooltip(obj, tip)
+   # 
+   private update_tooltip(obj, tip)
       local x, y
       x := tooltip_component.x
       y := tooltip_component.y
@@ -619,8 +619,8 @@ class Dialog(Component)
 
    #
    # Hide the tooltip label.
-   # @p
-   public hide_tooltip()
+   # 
+   private hide_tooltip()
       self.tooltip_component.invalidate()
       self.remove(self.tooltip_component)
       self.tooltip_component.finally()
@@ -629,8 +629,8 @@ class Dialog(Component)
 
    #
    # Tooltip processing during an event.
-   # @p
-   public process_tooltip_event(e)
+   # 
+   private process_tooltip_event(e)
       if e === Event.MOUSE_MOVED then
          tooltip_states()
       else {
@@ -646,8 +646,8 @@ class Dialog(Component)
 
    #
    # Tooltip processing on a tick.
-   # @p
-   public process_tooltip_tick()
+   # 
+   private process_tooltip_tick()
       #
       # Don't process ticks whilst blocked, or button held.
       #
@@ -663,8 +663,8 @@ class Dialog(Component)
 
    #
    # Tooltip state processing.
-   # @p
-   public tooltip_states()
+   # 
+   private tooltip_states()
       local obj, t, c, tip
 
       #
@@ -764,8 +764,8 @@ class Dialog(Component)
 
    #
    # Drag & drop mode processing
-   # @p
-   public process_dnd(e)
+   # 
+   private process_dnd(e)
       local o
       if e === (&ldrag | &rdrag | &mdrag) then {
          # Try the drag holder's drag_event method first...
@@ -799,8 +799,8 @@ class Dialog(Component)
 
    #
    # Check whether we should start a dnd (by setting curr_drag)
-   # @p
-   public check_dnd(e)
+   # 
+   private check_dnd(e)
       if e === (&ldrag | &rdrag | &mdrag) then {
          # Note the position of the start of a drag
          /self.drag_gesture_x := &x
@@ -835,8 +835,8 @@ class Dialog(Component)
 
    #
    # Process a resize 
-   # @p
-   public handle_resize(e)
+   # 
+   private handle_resize(e)
       consume_same(e)
       #
       # Resize buffer canvas
@@ -848,8 +848,8 @@ class Dialog(Component)
 
    #
    # Maybe increment the click count
-   # @p
-   public check_click_count(e)
+   # 
+   private check_click_count(e)
       local t
 
       t := curr_time_millis()
@@ -915,8 +915,8 @@ class Dialog(Component)
 
    #
    # Call a method added via invoke_later().
-   # @p
-   public do_invoke()
+   # 
+   private do_invoke()
       local e
       if e := pop(self.invokes) then {
          e[1](e[2])

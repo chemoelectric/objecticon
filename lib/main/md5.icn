@@ -228,7 +228,7 @@ class MD5()
 
    #
    # Transform a 32 bit number to 4 corresponding bytes
-   # @p
+   #
    private encode(n)
       return char(iand(n, 16rff)) ||
          char(iand(ishift(n, -8), 16rff)) ||
@@ -238,7 +238,7 @@ class MD5()
 
    #
    # Transform 64 char string into 16 x 32 bit words
-   # @p
+   #
    private decode(block)
       local l, s
       l := []

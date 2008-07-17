@@ -45,8 +45,7 @@ class ContentDisposition(Error)
       parameters.insert(key, value)
    end
 
-   # @p
-   public parameter_error(h, s, p)
+   private parameter_error(h, s, p)
       return error("Error parsing " || h || " parameter: " || image(s) || ":" || p.get_reason())
    end
 

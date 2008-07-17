@@ -208,8 +208,7 @@ class HtmlParser()
    #
    # Parse the current input into an {Node}
    #
-   # @p
-   public parse_node(parent)
+   private parse_node(parent)
       if match("<!DOCTYPE") then
          return parse_doctype()
       if match("<!") then
@@ -221,8 +220,7 @@ class HtmlParser()
    #
    # Parse and return an Element, given the starting tag
    #
-   # @p
-   public parse_element(start_tag, parent)
+   private parse_element(start_tag, parent)
       local res, debug, print_debug, i, node, n
 
       res := HtmlElement()
@@ -292,8 +290,7 @@ class HtmlParser()
    #
    # DOCTYPE
    #
-   # @p
-   public parse_doctype()
+   private parse_doctype()
       local res
 
       res := DocType()
@@ -347,8 +344,7 @@ class HtmlParser()
    # have a legal comment like <!-- abc -- def -->
    # see http://htmlhelp.com/reference/wilbur/misc/comment.html
    #
-   # @p
-   public parse_comment(parent)
+   private parse_comment(parent)
       local res, s, t
       res := Comment()
       ="<!" | fail
@@ -369,8 +365,7 @@ class HtmlParser()
    #
    # Normal tag
    #
-   # @p
-   public parse_tag()
+   private parse_tag()
       local res, key, c, s, value
 
       res := Tag()
@@ -413,8 +408,7 @@ class HtmlParser()
    #
    # Move to the next node (tag, comment, doctype), or end of file.
    #
-   # @p
-   public move_to_node()
+   private move_to_node()
       local s, i, debug, print_debug
       s := ""
       repeat {
@@ -445,8 +439,7 @@ class HtmlParser()
    #
    # Remove the entity characters from a string.
    #
-   # @p
-   public remove_entities(s)
+   private remove_entities(s)
       local res, i
 
       res := ""

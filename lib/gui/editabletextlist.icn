@@ -174,8 +174,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Move cursor y to line n, and constrain x within range of that line.
    #
-   # @p
-   public set_cursor_y(n)
+   private set_cursor_y(n)
       local d, i, dest
 
       n <:= 1
@@ -201,8 +200,7 @@ class EditableTextList(LineBasedScrollArea)
    # Move cursor so that it is in the text area, if possible.  May not be possible
    # if cursor at end of line to the left of the text area.
    #     
-   # @p
-   public constrain_cursor()
+   private constrain_cursor()
       local vi, v, s, i, j, l, info
 
       vi := get_view_list_index()
@@ -253,8 +251,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Move the text area displayed so that the cursor is on the screen.
    #
-   # @p
-   public constrain_line()
+   private constrain_line()
       local vi, v, s, i, j, l
 
       vi := get_view_list_index()
@@ -440,8 +437,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Set cursor from the current &x, &y
    #
-   # @p
-   public set_cursor_from_pos()
+   private set_cursor_from_pos()
       local l, s, i, v
 
       v := self.view_list[get_nearest_line_to_pointer()]
@@ -984,8 +980,8 @@ class EditableTextList(LineBasedScrollArea)
    # Return the intersection of the range f1-t1 and f2-t2, or
    # fail if the ranges don't intersect.  Example:
    # range(2,20,10,30) = [10,20]
-   # @p
-   public range(f1, t1, f2, t2)
+   # 
+   private range(f1, t1, f2, t2)
       if f1 < f2 then {
          if t1 >= f2 then
             return [f2, min(t1, t2)]
@@ -1015,8 +1011,8 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Return the index into view_list containing the
    # content position x, y.  Binary search is used.
-   # @p
-   public get_view_list_index(x, y)
+   # 
+   private get_view_list_index(x, y)
       local i, j, mid, v
       /x := self.cursor_x
       /y := self.cursor_y
@@ -1036,8 +1032,8 @@ class EditableTextList(LineBasedScrollArea)
 
    #
    # Create the view_list from the contents.
-   # @p
-   public create_view_list()
+   # 
+   private create_view_list()
       local s, i, pos, j, p
 
       view_list := []
@@ -1058,8 +1054,8 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Clear the view list, forcing it to be re-created next
    # time it's needed.
-   # @p
-   public clear_view_list()
+   # 
+   private clear_view_list()
       view_list := long_line := &null
       invalidate_subject_width()
       invalidate_line_count()
@@ -1067,8 +1063,8 @@ class EditableTextList(LineBasedScrollArea)
 
    #
    # Run through the view list looking for the longest line.
-   # @p
-   public find_long_line()
+   # 
+   private find_long_line()
       local v
       long_line := view_list[1]
       every v := !view_list do {

@@ -85,7 +85,7 @@ class Time(Error)
 
    #
    # Format the given int using the given width
-   # @p
+   # 
    private format_int(n, w)
       local s
       s := string(n)
@@ -97,7 +97,7 @@ class Time(Error)
 
    #
    # Format a weekday (Mon, Tue etc) given a width.
-   # @p
+   # 
    private format_weekday(w)
       local s
       s := TIME_WEEK_DAYS[self.week_day() + 1]
@@ -109,7 +109,7 @@ class Time(Error)
 
    #
    # Format a month (Jan, Feb etc) given a width
-   # @p
+   # 
    private format_month(w)
       local s
 
@@ -125,7 +125,7 @@ class Time(Error)
 
    #
    # Format a year given the width
-   # @p
+   # 
    private format_year(w)
       if w == 2 then
          return format_int(self.year % 100, w)
@@ -237,7 +237,7 @@ class Time(Error)
 
    # 
    # Get the next parsed int
-   # @p
+   #
    private parse_int(w)
       local j, n
       j := many(&digits, psub, ppos) | return error("Digit expected")
@@ -256,7 +256,7 @@ class Time(Error)
 
    # 
    # Get the next parsed timezone
-   # @p
+   #
    private parse_timezone()
       local j, z
       j := many(TIME_TZCHARS, psub, ppos) | return error("Timezone expected")
@@ -267,7 +267,7 @@ class Time(Error)
 
    # 
    # Get the next parsed am/pm
-   # @p
+   #
    private parse_ampm()
       local s
       s := map(psub[ppos+:2]) | return error("am/pm expected")
@@ -278,7 +278,7 @@ class Time(Error)
 
    # 
    # Get the next parsed month
-   # @p
+   # 
    private parse_month(w)
       local j, m
       if w < 3 then
@@ -291,7 +291,7 @@ class Time(Error)
 
    # 
    # Get the next parsed weekday
-   # @p
+   # 
    private parse_weekday()
       local j
       j := many(&ucase ++ &lcase, psub, ppos) | return error("Weekday expected")
@@ -302,7 +302,7 @@ class Time(Error)
    #
    # Match a literal, which begins with a ', and ends with the next ', except
    # that two ' together means a single ' in the result.
-   # @p
+   # 
    private match_literal()
       local s
       ="\'"
@@ -320,7 +320,7 @@ class Time(Error)
 
    # 
    # Get the next parsed month
-   # @p
+   # 
    private parse_year(w)
       local n
       n := parse_int(w) | fail
@@ -437,7 +437,7 @@ class Time(Error)
    ##      
    # Convert to icon &date format
    #
-   # @p
+   # 
    public to_date()
       return format("yyyy/MM/dd")
    end
@@ -798,7 +798,7 @@ class Time(Error)
    #
    # Utility procedure - return cumulative days upto month m in year y
    #
-   # @p
+   #
    private get_cum_mdays(y, m)
       return if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
          TIME_LEAP_CUM_MDAYS[m]   # leap year
@@ -809,7 +809,7 @@ class Time(Error)
    #
    # Utility procedure - return in month m for year y
    #
-   # @p
+   #
    private get_mdays(y, m)
       return if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
          TIME_LEAP_MDAYS[m]               # leap year
@@ -820,7 +820,7 @@ class Time(Error)
    #
    # Utility to get next integer
    #
-   # @p
+   #
    private get_int()
       suspend tab(upto(&digits)) & integer(tab(many(&digits)))
    end

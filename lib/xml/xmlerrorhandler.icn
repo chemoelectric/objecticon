@@ -59,9 +59,7 @@ class XmlErrorHandler()
       msg_impl(pd, 3, "Warning")
    end
 
-   #
-   # @p
-   public msg_impl(pd, n, pre)
+   private msg_impl(pd, n, pre)
       if level < n then
          return
       write(out_file, pre, ": ", pd.msg, " at:")

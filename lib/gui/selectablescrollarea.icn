@@ -48,8 +48,8 @@ class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Ensure all the selections are valid lines.
-   # @p
-   public constrain_selections()
+   #
+   private constrain_selections()
       local i
       every i := !self.selections do
          if i > *self.contents then
@@ -71,8 +71,8 @@ class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Keep the cursor within the bounds of the contents.
-   # @p
-   public constrain_cursor()
+   # 
+   private constrain_cursor()
       if *self.contents = 0 then
          self.cursor := &null
       else {
@@ -391,8 +391,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       self.selections ++:= s
    end
 
-   # @p
-   public move_cursor_on_key(line)
+   private move_cursor_on_key(line)
       set_cursor(line)
       self.prev_cursor := self.cursor
       if \self.selection_on_key_moves & (self.select_mode ~=== Select.NONE) then {
@@ -404,14 +403,12 @@ class SelectableScrollArea(LineBasedScrollArea)
       ensure_line_visible(self.cursor)
    end
 
-   # @p
    public start_handle(e)
       self.old_cursor := self.cursor
       self.old_highlight := self.highlight
       self.old_selections := get_selections()
    end
 
-   # @p
    public end_handle(e)
       if self.cursor ~=== self.old_cursor then {
          self.refresh()

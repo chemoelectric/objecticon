@@ -310,8 +310,8 @@ procedure clone(o, seen)
 end
 
 #
+# Compute a hash value for a string
 #
-# @p
 procedure hash_string(s)
    local n, i
    n := *s
@@ -453,7 +453,7 @@ end
 #
 # Check that all elements of s2 are in s1, by using a table indexed on
 # hash-codes.
-# @p
+#
 procedure hash_and_check(s1, s2, seen)
    local t, e, i
    t := table()
@@ -470,7 +470,7 @@ end
 #
 # Search for element e in hash bucket l.  If found, the bucket element is
 # removed, so that it is matched only once.
-# @p
+#
 procedure in_bucket(e, l, seen)
    local i
    every i := 1 to *l do {
