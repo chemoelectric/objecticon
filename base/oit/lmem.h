@@ -45,8 +45,8 @@ extern int maxlabels;	    /* maximum num of labels/proc */
 
 void linit();
 void dumplfiles();
-void alsolink(char *name, struct lfile *lf, struct loc *pos);
-void alsoimport(char *package, struct lfile *lf, struct loc *pos);
+void alsolink(char *name, struct loc *pos);
+void alsoimport(char *package, struct loc *pos);
 void addinvk(char *name, struct lfile *lf, struct loc *pos);
 void lmfree();
 void add_super(struct lclass *x, char *name, struct loc *pos);

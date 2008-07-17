@@ -589,7 +589,7 @@ static void setfile()
     fnmfree->ipc = pc;
 #endif					/* CRAY */
 
-    sp = inst_c_strconst(last_pathelem(uin_str()));
+    sp = inst_c_strconst(intern(last_pathelem(uin_str())));
     fnmfree->fname = sp->offset;
     fnmfree++;
 }

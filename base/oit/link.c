@@ -70,14 +70,11 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
 {
     int i;
     struct lfile *lf;
-    char *filename;			/* name of current input file */
     struct file_param *p;
 
     linit();				/* initialize memory structures */
-    for (p = link_files; p; p = p->next) {
-        struct loc l = {p->name, 0};
-        alsolink(p->name, 0, &l);  /* make initial list of files */
-    }
+    for (p = link_files; p; p = p->next)
+        alsolink(p->name, 0);  /* make initial list of files */
 
     /*
      * Phase I: load global information contained in .u files into
@@ -93,8 +90,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
      *  of files to link.
      */
     for (lf = lfiles; lf; lf = lf->next) {
-        filename = lf->lf_name;
-        inname = intern(makename(SourceDir, filename, USuffix));
+        inname = lf->lf_name;
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
             quitf("cannot open %s",inname);
@@ -273,7 +269,7 @@ void lfatal(struct loc *pos, char *fmt, ...)
     va_list argp;
     if (pos) {
         if (pos->file)
-            fprintf(stderr, "%s: ", abbreviate(pos->file));
+            fprintf(stderr, "%s: ", pos->file);
         if (pos->line)
             fprintf(stderr, "Line %d # :", pos->line);
     }
@@ -294,7 +290,7 @@ void lwarn(struct loc *pos, char *fmt, ...)
     va_start(argp, fmt);
     if (pos) {
         if (pos->file)
-            fprintf(stderr, "%s: ", abbreviate(pos->file));
+            fprintf(stderr, "%s: ", pos->file);
         if (pos->line)
             fprintf(stderr, "Line %d # ", pos->line);
     }

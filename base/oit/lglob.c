@@ -39,16 +39,16 @@ void readglob(struct lfile *lf)
 
     uop = uin_expectop();
     if (uop->opcode != Op_Version)
-        quitf("ucode file %s has no version identification",inname);
+        quitf("ucode file %s has no version identification", lf->lf_name);
     id = uin_str();		/* get version number of ucode */
     if (strcmp(id, UVersion))
-        quitf("version mismatch in ucode file %s - got %s instead of %s",inname, id, UVersion);
+        quitf("version mismatch in ucode file %s - got %s instead of %s", lf->lf_name, id, UVersion);
 
     while (1) {
         uop = uin_expectop();
         switch (uop->opcode) {
             case Op_Filen:
-                pos.file = uin_str();
+                pos.file = join(lf->lf_name, "(", last_pathelem(uin_str()), ")", 0);
                 break;
 
             case Op_Line:
@@ -65,7 +65,7 @@ void readglob(struct lfile *lf)
 
             case Op_Import:		/* import the named package */
                 package = uin_str();
-                alsoimport(package, lf, &pos);	/*  (maybe) import the files in the package */
+                alsoimport(package, &pos);	/*  (maybe) import the files in the package */
                 n = uin_short();        /* qualified flag */
                 add_fimport(lf, package, n, &pos);  /* Add it to the lfile structure's list of imports */
                 break;
@@ -82,7 +82,7 @@ void readglob(struct lfile *lf)
                 if (gp) {
                     lfatal(&pos, 
                             "class %s declared elsewhere in %s, line %d", 
-                            name, abbreviate(gp->pos.file), gp->pos.line);
+                            name, gp->pos.file, gp->pos.line);
                     curr_class = 0;
                 } else {
                     gp = putglobal(name, F_Class, lf, &pos);
@@ -136,7 +136,7 @@ void readglob(struct lfile *lf)
                 if (gp) {
                     lfatal(&pos, 
                             "record %s declared elsewhere in %s, line %d", 
-                            name, abbreviate(gp->pos.file), gp->pos.line);
+                            name, gp->pos.file, gp->pos.line);
                     curr_record = 0;
                 } else {
                     gp = putglobal(name, F_Record, lf, &pos);
@@ -156,7 +156,7 @@ void readglob(struct lfile *lf)
                 if (gp)
                     lfatal(&pos, 
                             "procedure %s declared elsewhere in %s, line %d", 
-                            name, abbreviate(gp->pos.file), gp->pos.line);
+                            name, gp->pos.file, gp->pos.line);
                 else
                     gp = putglobal(name, F_Proc, lf, &pos);
                 curr_func = gp->func = New(struct lfunction);
@@ -211,7 +211,7 @@ void readglob(struct lfile *lf)
                 if (gp)
                     lfatal(&pos, 
                             "global %s declared elsewhere in %s, line %d", 
-                            name, abbreviate(gp->pos.file), gp->pos.line);
+                            name, gp->pos.file, gp->pos.line);
                 else
                     putglobal(name, 0, lf, &pos);
                 break;
@@ -226,11 +226,11 @@ void readglob(struct lfile *lf)
 
             case Op_Link:		/* link the named file */
                 name = uin_str();	/* get the name and */
-                alsolink(name, lf, &pos);	/*  put it on the list of files to link */
+                alsolink(name, &pos);	/*  put it on the list of files to link */
                 break;
 
             default:
-                quitf("ill-formed global file %s",inname);
+                quitf("ill-formed global file %s",lf->lf_name);
         }
     }
 }

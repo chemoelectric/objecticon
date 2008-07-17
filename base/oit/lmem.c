@@ -131,7 +131,7 @@ static void ensure_lfile(char *ifile)
  * alsolink - create an lfile structure for the named file and add it to the
  *  end of the list of files (lfiles) to generate link instructions for.
  */
-void alsolink(char *name, struct lfile *lf, struct loc *pos)
+void alsolink(char *name, struct loc *pos)
 {
     char *file = pathfind(ipath, name, USuffix);
 
@@ -143,7 +143,7 @@ void alsolink(char *name, struct lfile *lf, struct loc *pos)
     ensure_lfile(intern(canonicalize(file)));
 }
 
-void alsoimport(char *package, struct lfile *lf, struct loc *pos)
+void alsoimport(char *package, struct loc *pos)
 {
     struct package_dir *pd;
     struct package *pk;

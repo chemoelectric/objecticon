@@ -33,9 +33,9 @@ static struct gentry *rres_found, *rres_ambig;
 static void print_clash()
 {
     fprintf(stderr, "\t\t%s (%s: Line %d)\n", 
-            rres_found->name, abbreviate(rres_found->pos.file), rres_found->pos.line);
+            rres_found->name, rres_found->pos.file, rres_found->pos.line);
     fprintf(stderr, "\t\t%s (%s: Line %d)\n", 
-            rres_ambig->name, abbreviate(rres_ambig->pos.file), rres_ambig->pos.line);
+            rres_ambig->name, rres_ambig->pos.file, rres_ambig->pos.line);
 }
 
 /*
@@ -350,7 +350,7 @@ static void merge(struct lclass *cl, struct lclass *super)
                         f->name,
                         fr->field->class->global->name,
                         f->class->global->name,
-                        abbreviate(f->pos.file),
+                        f->pos.file,
                         f->pos.line
                     );
             /*
@@ -363,7 +363,7 @@ static void merge(struct lclass *cl, struct lclass *super)
                         f->name,
                         fr->field->class->global->name,
                         f->class->global->name,
-                        abbreviate(f->pos.file),
+                        f->pos.file,
                         f->pos.line
                     );
         } else {
