@@ -43,11 +43,6 @@
 #define Fs_Create	 04	/* file created on open */
 #define Fs_Append	010	/* append mode */
 #define Fs_Pipe		020	/* reading/writing on a pipe */
-
-#ifdef RecordIO
-   #define Fs_Record    040	/* record structured file */
-#endif					/* RecordIO */
-
 #define Fs_Reading     0100     /* last file operation was read */
 #define Fs_Writing     0200     /* last file operation was write */
 

@@ -3,45 +3,6 @@
  *  Contents: [flushrec], [getrec], getstrg, host, longread, [putrec], putstr
  */
 
-#ifdef RecordIO
-/*
- * flushrec - force buffered output to be written with a record break.
- *  Applies only to files with mode "s".
- */
-
-void flushrec(fd)
-FILE *fd;
-{
-#if SASC
-   afwrite("", 1, 0, fd);
-#endif					/* SASC */
-}
-
-/*
- * getrec - read a record into buf from file fd. At most maxi characters
- *  are read.  getrec returns the length of the record.
- *  Returns -1 if EOF and -2 if length was limited by
- *  maxi. [[ Needs ferror() check. ]]
- *  This function is meaningful only for files opened with mode "s".
- */
-
-int getrec(buf, maxi, fd)
-register char *buf;
-int maxi;
-FILE *fd;
-   {
-#ifdef SASC
-   register int l;
-
-   l = afreadh(buf, 1, maxi+1, fd);     /* read record or maxi+1 chars */
-   if (l == 0) return -1;
-   if (l <= maxi) return l;
-   ungetc(buf[maxi], fd);               /* if record not used up, push
-                                           back last char read */
-   return -2;
-#endif					/* SASC */
-   }
-#endif					/* RecordIO */
 
 #ifdef PosixFns
 #ifndef SOCKET_ERROR
@@ -391,38 +352,6 @@ long len;
 #endif					/* HAVE_LIBZ */
 
 
-#ifdef RecordIO
-/*
- * Write string referenced by descriptor d, avoiding a record break.
- *  Applies only to files openend with mode "s".
- */
-
-int putrec(f, d)
-register FILE *f;
-dptr d;
-   {
-#if SASC
-   register char *s;
-   register word l;
-
-   l = StrLen(*d);
-   if (l == 0)
-      return Succeeded;
-   s = StrLoc(*d);
-
-   if (afwriteh(s,1,l,f) < l)
-      return Failed;
-   else
-      return Succeeded;
-   /*
-    * Note:  Because RecordIO depends on SASC, and because SASC
-    *  uses its own malloc rather than the Icon malloc, file usage
-    *  cannot cause a garbage collection.  This may require
-    *  reevaluation if RecordIO is supported for any other compiler.
-    */
-#endif					/* SASC */
-   }
-#endif					/* RecordIO */
 
 /*
  * Print string referenced by descriptor d. Note, d must not move during

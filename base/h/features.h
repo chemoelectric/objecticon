@@ -106,10 +106,6 @@
    Feature(1, "_PIPES", "pipes")
 #endif					/* Pipes */
 
-#ifdef RecordIO
-   Feature(1, "_RECORD_IO", "record I/O")
-#endif					/* RecordIO */
-
    Feature(1, "_SYSTEM_FUNCTION", "system function")
 
 
