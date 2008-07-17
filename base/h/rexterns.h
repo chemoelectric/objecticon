@@ -63,9 +63,9 @@ extern struct tend_desc *tend;  /* chain of tended descriptors */
    extern struct descrip kywd_ftrc;	/* descriptor for &ftrace */
 #endif					/* FncTrace */
 
-#ifdef Polling
+#ifdef Graphics
    extern int pollctr;
-#endif					/* Polling */
+#endif					/* Graphics */
 
 extern char typech[];
 extern word oldsum;

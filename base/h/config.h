@@ -199,16 +199,6 @@
    #define XWindows 1
 #endif
 
-#ifdef Graphics
-   #undef Polling
-   #define Polling
-#endif					/* Graphics */
-
-#ifndef NoExternalFunctions
-   #undef ExternalFunctions
-   #define ExternalFunctions
-#endif					/* NoExternalFunctions */
-
 /*
  * EBCDIC == 0 corresponds to ASCII.
  * EBCDIC == 1 corresponds to EBCDIC collating sequence.

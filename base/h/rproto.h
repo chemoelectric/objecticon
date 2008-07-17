@@ -178,9 +178,7 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    char *cstr(struct descrip *sd);
    void EVVariable(dptr dx, int eventcode);
 
-#ifdef ExternalFunctions
    dptr	extcall			(dptr x, int nargs, int *signal);
-#endif					/* ExternalFunctions */
 
 #ifdef LargeInts
    struct b_bignum *alcbignum_0	(word n);

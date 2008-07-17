@@ -227,11 +227,11 @@ int interp_x(int fsig,dptr cargp)
       }
    }
 
-#ifdef Polling
+#ifdef Graphics
    if (!pollctr--) {
       pollctr = pollevent();
       }
-#endif					/* Polling */
+#endif					/* Graphics */
 /*printf("INTERP csp=%x ilevel=%d local=%d\n",get_sp(),ilevel,(((char*)(&fsig)))-(char*)(&lastdesc));*/
 
    ilevel++;
@@ -344,13 +344,13 @@ int interp_x(int fsig,dptr cargp)
 	if (!current_line_ptr ||
 	    current_line_ptr->ipc > ipc_offset ||
 	    current_line_ptr[1].ipc <= ipc_offset) {
-#if defined(Polling)
+#ifdef Graphics
             if (!pollctr--) {
 	       ExInterp;
                pollctr = pollevent();
 	       EntInterp;
 	       }	       
-#endif					/* Polling */
+#endif					/* Graphics */
 
 	    if(current_line_ptr &&
 	       current_line_ptr + 2 < elines &&
@@ -686,13 +686,13 @@ fflush(stdout);
 
          case Op_Noop:		/* no-op */
 
-#ifdef Polling
+#ifdef Graphics
            if (!pollctr--) { 
 	       ExInterp;
                pollctr = pollevent();
 	       EntInterp;
 	       }	       
-#endif					/* Polling */
+#endif					/* Graphics */
 
             break;
 
@@ -713,13 +713,13 @@ fflush(stdout);
 
          case Op_Line:		/* source line number */
 
-#if defined(Polling)
+#ifdef Graphics
             if (!pollctr--) {
 	       ExInterp;
                pollctr = pollevent();
 	       EntInterp;
 	       }	       
-#endif					/* Polling */
+#endif					/* Graphics */
             line_num = GetWord;
             lastline = line_num;
             break;
@@ -808,7 +808,7 @@ invokej:
 
                rargp = carg;		/* valid only for Vararg or Builtin */
 
-#ifdef Polling
+#ifdef Graphics
 	       /*
 		* Do polling here
 		*/
@@ -818,7 +818,7 @@ invokej:
                   pollctr = pollevent();
 	          EntInterp;
 	          }	       
-#endif					/* Polling */
+#endif					/* Graphics */
 
 	       lastev = E_Function;
 	       lastdesc = *rargp;

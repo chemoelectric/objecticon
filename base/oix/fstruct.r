@@ -1026,11 +1026,11 @@ function{1} set(x[n])
 		     pb && (BlkType(pb) == T_Lelem);
 		     pb = pb->lelem.listnext) {
 		  for (i = 0; i < pb->lelem.nused; i++) {
-#ifdef Polling
+#ifdef Graphics
             if (!pollctr--) {
                pollctr = pollevent();
 	       }	       
-#endif					/* Polling */
+#endif					/* Graphics */
 		    j = pb->lelem.first + i;
 		    if (j >= pb->lelem.nslots)
 		      j -= pb->lelem.nslots;

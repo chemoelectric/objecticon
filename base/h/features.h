@@ -90,9 +90,7 @@
    Feature(1, "_EVENT_MONITOR", "event monitoring")
 #endif					/* EventMon */
 
-#ifdef ExternalFunctions
    Feature(1, "_EXTERNAL_FUNCTIONS", "external functions")
-#endif					/* ExternalFunctions */
 
 #ifdef KeyboardFncs
    Feature(1, "_KEYBOARD_FUNCTIONS", "keyboard functions")

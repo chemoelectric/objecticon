@@ -9,7 +9,6 @@
  */
 
 #if OS2
-#ifdef ExternalFunctions
 /*
  */
 
@@ -187,13 +186,9 @@ static dptr unloadfunc(dptr dargv, int argc, int *ip)
     return &nulldesc;
 
 }
-#else					/* ExternalFunctions */
-static char x;			/* prevent empty module */
-#endif					/* ExternalFunctions */
 
 #else					/* OS2 */
 
-#ifdef ExternalFunctions
 
 /*
  * extcall - stub procedure for external call interface.
@@ -207,7 +202,4 @@ int *ip;
    return (dptr)NULL;
    }
 
-#else					/* ExternalFunctions */
-static char x;			/* prevent empty module */
-#endif 					/* ExternalFunctions */
 #endif					/* OS2 */

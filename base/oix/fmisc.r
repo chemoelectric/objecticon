@@ -35,7 +35,7 @@ function{0,1} args(x,i)
       }
 end
 
-#ifdef ExternalFunctions
+
 
 /*
  * callout - call a C library routine (or any C routine that doesn't call Icon)
@@ -78,8 +78,7 @@ function{1} callout(x[nargs])
       }
 end
 
-#endif 					/* ExternalFunctions */
-
+
 
 "char(i) - produce a string consisting of character i."
 

@@ -118,9 +118,7 @@ FncDef(loadfunc,2)
 /*
  * External functions.
  */
-#ifdef ExternalFunctions
    FncDefV(callout)
-#endif					/* ExternalFunctions */
 
 /*
  * Keyboard Functions
