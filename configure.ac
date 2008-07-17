@@ -48,10 +48,15 @@ AC_FLAG_MSG_NOSIGNAL()
 dnl check for makeinfo v >= 4.8
 AC_CHECK_PROG(MAKEINFO, makeinfo, yes)
 if test "$MAKEINFO" == yes; then
-    case x"`$MAKEINFO --version | grep 'GNU texinfo'`" in
-      x*\ [[1-3]].* ) unset MAKEINFO;;
-      x*\ 4.[[0-7]] ) unset MAKEINFO;;
-    esac
+        if x=`makeinfo --version|grep "makeinfo (GNU texinfo) [[0-9]]\.[[0-9]]*$"` ; then
+                ma=${x:23:1}
+                mi=${x:25}
+                if test $ma -lt 4 || ( test $ma -eq 4 && test $mi -lt 8 ) ; then
+                        unset MAKEINFO
+                fi
+        else
+                unset MAKEINFO
+        fi
 fi
 if test "$MAKEINFO" == yes; then
     AC_CHECK_PROG(INSTALLINFO, install-info, yes)
