@@ -160,7 +160,7 @@
 /*
  * dummy typedefs for things defined in #include files
  */
-typedef int clock_t, time_t, fd_set;
+typedef int clock_t, time_t, fd_set, va_list;
 
 #if OS2_32
    typedef int HFILE, ULONG;
@@ -237,7 +237,7 @@ typedef int siptr, stringint, inst;
       typedef int XGCValues, XColor, XFontStruct, XWindowAttributes, XEvent;
       typedef int XExposeEvent, XKeyEvent, XButtonEvent, XConfigureEvent;
       typedef int XSizeHints, XWMHints, XClassHint, XTextProperty;
-      typedef int Colormap, XVisualInfo, va_list;
+      typedef int Colormap, XVisualInfo;
       typedef int *Display, Cursor, GC, Window, Pixmap, Visual, KeySym;
       typedef int WidgetClass, XImage, XpmAttributes, XSetWindowAttributes;
       typedef int XGlyphInfo, XftColor, Region, XftDraw;
@@ -252,7 +252,7 @@ typedef int siptr, stringint, inst;
       typedef int HWND, HDC, UINT, WPARAM, LPARAM, SIZE;
       typedef int COLORREF, HFONT, LOGFONT, TEXTMETRIC, FONTENUMPROC, FARPROC;
       typedef int LOGPALETTE, HPALETTE, PALETTEENTRY, HCURSOR, BITMAP, HDIB;
-      typedef int va_list, LOGPEN, LOGBRUSH, LPVOID, MCI_PLAY_PARMS;
+      typedef int LOGPEN, LOGBRUSH, LPVOID, MCI_PLAY_PARMS;
       typedef int MCI_OPEN_PARMS, MCI_STATUS_PARMS, MCI_SEQ_SET_PARMS;
       typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
       typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
@@ -271,7 +271,7 @@ typedef int siptr, stringint, inst;
       typedef int PBITMAPINFOHEADER2, BITMAPFILEHEADER2, BITMAPARRAYFILEHEADER2;
       typedef int colorEntry, ARCPARAMS, threadargs, HPOINTER, CURSORINFO;
       typedef int PCURSORINFO, DEVOPENSTRUCT, PDEVOPENDATA, SIZEF, HRGN, PSWP;
-      typedef int va_list, BITMAPINFOHEADER, BITMAPFILEHEADER;
+      typedef int BITMAPINFOHEADER, BITMAPFILEHEADER;
       typedef int PBITMAPINFOHEADER, MinBitmapHeader, RGB;
    #endif				/* PresentationManager */
 
