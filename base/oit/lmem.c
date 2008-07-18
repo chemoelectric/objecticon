@@ -95,7 +95,7 @@ void dumplfiles()
     struct lfile *p;
     fprintf(stderr,"lfiles:\n");
     for (p = lfiles; p; p = p->next)
-        fprintf(stderr,"'%s'\n",p->lf_name);
+        fprintf(stderr,"'%s'\n",p->name);
     fflush(stderr);
 }
 
@@ -107,7 +107,7 @@ static void ensure_lfile(char *ifile)
 {
     int i = hasher(ifile, lfile_hash);
     struct lfile *x = lfile_hash[i];
-    while (x && x->lf_name != ifile)
+    while (x && x->name != ifile)
         x = x->b_next;
     if (x)
         return;
@@ -118,7 +118,7 @@ static void ensure_lfile(char *ifile)
     x = New(struct lfile);
     x->b_next = lfile_hash[i];
     lfile_hash[i] = x;
-    x->lf_name = ifile;
+    x->name = ifile;
     if (lfiles_last) {
         lfiles_last->next = x;
         lfiles_last = x;
@@ -131,19 +131,19 @@ static void ensure_lfile(char *ifile)
  * alsolink - create an lfile structure for the named file and add it to the
  *  end of the list of files (lfiles) to generate link instructions for.
  */
-void alsolink(char *name, struct loc *pos)
+void alsolink(char *name, struct lfile *lf, struct loc *pos)
 {
     char *file = pathfind(ipath, name, USuffix);
 
     if (!file) {
-        lfatal(pos, "cannot resolve link reference: %s", name);
+        lfatal(lf, pos, "cannot resolve link reference: %s", name);
         return;
     }
 
     ensure_lfile(intern(canonicalize(file)));
 }
 
-void alsoimport(char *package, struct loc *pos)
+void alsoimport(char *package, struct lfile *lf, struct loc *pos)
 {
     struct package_dir *pd;
     struct package *pk;
@@ -172,9 +172,9 @@ void alsoimport(char *package, struct loc *pos)
         if ((pk = lookup_package(pd, package))) {
             /* Check for duplicate package on the path */
             if (found) {
-                lfatal(pos, 
-                        "located package '%s' in multiple directories: %s and %s", 
-                        package, found, pd->path);
+                lfatal(lf, pos, 
+                       "located package '%s' in multiple directories: %s and %s", 
+                       package, found, pd->path);
                 return;
             }
             found = pd->path;
@@ -184,7 +184,7 @@ void alsoimport(char *package, struct loc *pos)
     }
     /* Check if we found it */
     if (!found)
-        lfatal(pos, "cannot resolve package '%s'", package);
+        lfatal(lf, pos, "cannot resolve package '%s'", package);
 }
 
 /*

@@ -32,10 +32,10 @@ static struct gentry *rres_found, *rres_ambig;
 
 static void print_clash()
 {
-    fprintf(stderr, "\t\t%s (%s: Line %d)\n", 
-            rres_found->name, rres_found->pos.file, rres_found->pos.line);
-    fprintf(stderr, "\t\t%s (%s: Line %d)\n", 
-            rres_ambig->name, rres_ambig->pos.file, rres_ambig->pos.line);
+    fprintf(stderr, "\t%s (%s: Line %d)\n", 
+            rres_found->name, abbreviate(rres_found->pos.file), rres_found->pos.line);
+    fprintf(stderr, "\t%s (%s: Line %d)\n", 
+            rres_ambig->name, abbreviate(rres_ambig->pos.file), rres_ambig->pos.line);
 }
 
 /*
@@ -170,9 +170,9 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
              * var) must also be static.
              */
             if ((func->method->flag & M_Static) && !(cfr->field->flag & M_Static))
-                lfatal(&lp->pos,
-                        "Can't implicitly reference a non-static field '%s' from static %s", 
-                        cfr->field->name, function_name(func));
+                lfatal(func->defined, &lp->pos,
+                       "Can't implicitly reference a non-static field '%s' from static %s", 
+                       cfr->field->name, function_name(func));
             else {
                 lp->l_flag |= F_Field;
                 lp->l_val.field = cfr->field;
@@ -186,16 +186,16 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
      */
     resolve_global(func->defined, lp->name);
     if (rres_ambig) {
-        lfatal(&lp->pos,
-                "Symbol '%s' resolves to multiple targets in %s :-", 
-                lp->name, function_name(func));
+        lfatal(func->defined, &lp->pos,
+               "Symbol '%s' resolves to multiple targets in %s :-", 
+               lp->name, function_name(func));
         print_clash();
         return;
     }
     if (!rres_found) {
-        lfatal(&lp->pos,
-                "Undeclared identifier '%s' in %s", 
-                lp->name, function_name(func));
+        lfatal(func->defined, &lp->pos,
+               "Undeclared identifier '%s' in %s", 
+               lp->name, function_name(func));
         return;
     }
 
@@ -210,24 +210,24 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
 
 static struct gentry *resolve_super(struct lclass *class, struct lclass_super *super)
 {
-    resolve_global(class->defined, super->name);
+    resolve_global(class->global->defined, super->name);
     if (rres_ambig) {
-        lfatal(&super->pos,
-                "Superclass of class %s, '%s', resolves to multiple targets:-", 
-                class->global->name, super->name);
+        lfatal(class->global->defined, &super->pos,
+               "Superclass of class %s, '%s', resolves to multiple targets:-", 
+               class->global->name, super->name);
         print_clash();
         return 0;
     }
     if (!rres_found) {
-        lfatal(&super->pos,
-                "Couldn't resolve superclass of class %s: '%s'",
-                class->global->name, super->name);
+        lfatal(class->global->defined, &super->pos,
+               "Couldn't resolve superclass of class %s: '%s'",
+               class->global->name, super->name);
         return 0;
     }
     if (!rres_found->class) {
-        lfatal(&super->pos,
-                "Superclass of %s, '%s', is not a class",
-                class->global->name, super->name);
+        lfatal(class->global->defined, &super->pos,
+               "Superclass of %s, '%s', is not a class",
+               class->global->name, super->name);
         return 0;
     }
     return rres_found;
@@ -290,9 +290,10 @@ static void compute_impl(struct lclass *cl)
 
         /* Check that the superclass isn't final */
         if (x != cl && (x->flag & M_Final))
-            lfatal(&cl->global->pos,
-                    "Class %s cannot inherit from %s, which is marked final", 
-                    cl->global->name, x->global->name);
+            lfatal(cl->global->defined,
+                   &cl->global->pos,
+                   "Class %s cannot inherit from %s, which is marked final", 
+                   cl->global->name, x->global->name);
 
         /* We have an implemented superclass, so merge methods etc into our
          * class.
@@ -345,26 +346,28 @@ static void merge(struct lclass *cl, struct lclass *super)
             if (!(f->flag & M_Static) &&
                 !(((fr->field->flag & (M_Method | M_Static)) == M_Method) 
                        && ((f->flag & (M_Method | M_Static)) == M_Method)))
-                lfatal(&fr->field->pos,
-                        "Inheritance clash: field '%s' encountered in class %s and class %s (in file '%s', line %d)",
-                        f->name,
-                        fr->field->class->global->name,
-                        f->class->global->name,
-                        f->pos.file,
-                        f->pos.line
+                lfatal(fr->field->class->global->defined,
+                       &fr->field->pos,
+                       "Inheritance clash: field '%s' encountered in class %s and class %s (%s: Line %d)",
+                       f->name,
+                       fr->field->class->global->name,
+                       f->class->global->name,
+                       abbreviate(f->pos.file),
+                       f->pos.line
                     );
             /*
              * If the new field is final, then fr cannot override it.  Note that the translator
              * ensures only non-static methods can be marked final.
              */
             else if (f->flag & M_Final)
-                lfatal(&fr->field->pos,
-                        "Field %s encountered in class %s overrides a final field in class %s (in file '%s', line %d)",
-                        f->name,
-                        fr->field->class->global->name,
-                        f->class->global->name,
-                        f->pos.file,
-                        f->pos.line
+                lfatal(fr->field->class->global->defined,
+                       &fr->field->pos,
+                       "Field %s encountered in class %s overrides a final field in class %s (%s: Line %d)",
+                       f->name,
+                       fr->field->class->global->name,
+                       f->class->global->name,
+                       abbreviate(f->pos.file),
+                       f->pos.line
                     );
         } else {
             /* Not found, so add it */
@@ -402,12 +405,14 @@ static struct gentry *resolve_invocable(struct linvocable *inv)
 {
     resolve_global(inv->defined, inv->iv_name);
     if (rres_ambig) {
-        lfatal(&inv->pos, "Invocable '%s' resolves to multiple targets:-", inv->iv_name);
+        lfatal(inv->defined, &inv->pos, 
+               "Invocable '%s' resolves to multiple targets:-", inv->iv_name);
         print_clash();
         return 0;
     }
     if (!rres_found) {
-        lfatal(&inv->pos, "Couldn't resolve invocable '%s'", inv->iv_name);
+        lfatal(inv->defined, &inv->pos, 
+               "Couldn't resolve invocable '%s'", inv->iv_name);
         return 0;
     }
     return rres_found;

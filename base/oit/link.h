@@ -14,8 +14,8 @@ extern int lineno;		/* source program line number (from ucode) */
 
 void ilink(struct file_param *link_files, char *outname, int *fatals, int *warnings);
 char *function_name(struct lfunction *f);
-void lfatal(struct loc *pos, char *fmt, ...);
-void lwarn(struct loc *pos, char *fmt, ...);
+void lfatal(struct lfile *lf, struct loc *pos, char *fmt, ...);
+void lwarn(struct lfile *lf, struct loc *pos, char *fmt, ...);
 void setexe(char *fname);
 void dumpstate();
 

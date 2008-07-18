@@ -464,26 +464,3 @@ int smatch(char *s, char *t)
     }
 }
 
-/*
- * Given a path, abbreviate it if it is absolute and under the current
- * directory.  Thus, if the cd is "/tmp/dir", then
- * abbreviate("/tmp/dir/one/two.txt") would return "one/two.txt".  The
- * function is non-destructive.
- */
-char *abbreviate(char *path)
-{
-    static char currentdir[MaxPath];
-    int n;
-
-    if (!getcwd(currentdir, sizeof(currentdir))) {
-        fprintf(stderr, "getcwd return 0 - current working dir too long.");
-        exit(1);
-    }
-    n = strlen(currentdir);
-
-    if (strncmp(path, currentdir, n))
-        return path;
-
-    return &path[n + 1];
-}
-

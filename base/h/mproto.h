@@ -34,7 +34,6 @@ char	*pathfind	(char *path, char *name, char *extn);
 char    *pathelem       (char **s);
 int     newer_than(char *f1, char *f2);
 char    *last_pathelem(char *s);
-char    *abbreviate(char *path);
 int	ppch		(void);
 void	ppdef		(char *name, char *value);
 void	ppecho		(void);

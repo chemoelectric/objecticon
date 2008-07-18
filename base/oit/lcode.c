@@ -113,7 +113,7 @@ void generate_code()
      * Loop through input files and generate code for each.
      */
     for (lf = lfiles; lf; lf = lf->next) {
-        filename = lf->lf_name;
+        filename = lf->name;
         inname = intern(makename(SourceDir, filename, USuffix));
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
@@ -377,7 +377,7 @@ static void gencode(struct lfile *lf)
                 k = klookup(s);
                 switch (k) {
                     case 0:
-                        lfatal(0, "invalid keyword: %s", s);	
+                        lfatal(lf, 0, "invalid keyword: %s", s);	
                         break;
                     case K_FAIL:
                         lemit(Op_Efail,"efail");

@@ -118,7 +118,6 @@ struct lclass {
     struct lclass_super *super_hash[32], *supers, *last_super;
     struct lclass_field *field_hash[32], *fields, *last_field;
     struct gentry *global;      /* Pointer back to global table entry */
-    struct lfile *defined;      /* The file this class was defined in */
     struct lclass *next;        /* Link in the list of all lclass objects */
     int fieldtable_col;         /* Column in the field table */
     int seen;                   /* Flag for computing superclass set */
@@ -171,7 +170,7 @@ struct lfunction {
  *  lfile structures.
  */
 struct lfile {
-    char *lf_name;                           /* name of the file */
+    char *name;                           /* name of the file */
     int declend_offset;                      /* file offset of declend */
     char *package;                           /* package of this file, or null */
     struct fimport *import_hash[64], *imports, *last_import;  /* imports in this file */

@@ -47,5 +47,6 @@ int main(int argc, char **argv);
 void report(char *fmt, ...);
 void quit(char *msg);
 void quitf(char *fmt, ...);
+char *abbreviate(char *path);
 
 #endif

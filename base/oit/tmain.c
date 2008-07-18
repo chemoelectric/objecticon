@@ -699,6 +699,29 @@ void quitf(char *fmt, ...)
     exit(EXIT_FAILURE);
 }
 
+/*
+ * The given name is a canonical reference to a source file.  If it
+ * exists and represents a file in the current directory, just the
+ * last path element is returned.  If it doesn't exist (eg it is a
+ * reference from an installed ucode file), the last path element is
+ * also returned, to avoid printing a non-existent path.  If however
+ * it does exist, but is not in the current directory, the full path
+ * is returned.
+ */
+char *abbreviate(char *name)
+{
+    char *l = last_pathelem(name);
+    FILE *f = fopen(name, ReadBinary);
+    if (f) {
+        fclose(f);
+        if (strcmp(canonicalize(l), name))
+            return name;
+        else
+            return l;
+    } else
+        return l;
+}
+
 void init_strings()
 {
     init_str();

@@ -74,7 +74,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
 
     linit();				/* initialize memory structures */
     for (p = link_files; p; p = p->next)
-        alsolink(p->name, 0);  /* make initial list of files */
+        alsolink(p->name, 0, 0);  /* make initial list of files */
 
     /*
      * Phase I: load global information contained in .u files into
@@ -90,7 +90,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
      *  of files to link.
      */
     for (lf = lfiles; lf; lf = lf->next) {
-        inname = lf->lf_name;
+        inname = lf->name;
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
             quitf("cannot open %s",inname);
@@ -103,7 +103,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
      * Open the .ux file if debugging is on.
      */
     if (Dflag) {
-        dbgname = intern(makename(TargetDir, lfiles->lf_name, ".ux"));
+        dbgname = intern(makename(TargetDir, lfiles->name, ".ux"));
         dbgfile = fopen(dbgname, WriteText);
         if (dbgfile == NULL)
             quitf("cannot create %s", dbgname);
@@ -264,12 +264,14 @@ char *function_name(struct lfunction *f)
 /*
  * lfatal - issue a fatal linker error message.
  */
-void lfatal(struct loc *pos, char *fmt, ...)
+void lfatal(struct lfile *lf, struct loc *pos, char *fmt, ...)
 {
     va_list argp;
+    if (lf)
+        fprintf(stderr, "%s:\n", lf->name);
     if (pos) {
         if (pos->file)
-            fprintf(stderr, "%s: ", pos->file);
+            fprintf(stderr, "%s: ", abbreviate(pos->file));
         if (pos->line)
             fprintf(stderr, "Line %d # :", pos->line);
     }
@@ -284,13 +286,15 @@ void lfatal(struct loc *pos, char *fmt, ...)
 /*
  * warn - issue a warning message.
  */
-void lwarn(struct loc *pos, char *fmt, ...)
+void lwarn(struct lfile *lf, struct loc *pos, char *fmt, ...)
 {
     va_list argp;
     va_start(argp, fmt);
+    if (lf)
+        fprintf(stderr, "%s:\n", lf->name);
     if (pos) {
         if (pos->file)
-            fprintf(stderr, "%s: ", pos->file);
+            fprintf(stderr, "%s: ", abbreviate(pos->file));
         if (pos->line)
             fprintf(stderr, "Line %d # ", pos->line);
     }
@@ -365,11 +369,11 @@ static void check_unused_imports()
     for (lf = lfiles; lf; lf = lf->next) {
         for (fp = lf->imports; fp; fp = fp->next) {
             if (!fp->used)
-                lwarn(&fp->pos, "Unused import: %s", fp->name);
+                lwarn(lf, &fp->pos, "Unused import: %s", fp->name);
             if (fp->qualified) {
                 for (fis = fp->symbols; fis; fis = fis->next) {
                     if (!fis->used)
-                        lwarn(&fis->pos, "Unused import symbol: %s", fis->name);
+                        lwarn(lf, &fis->pos, "Unused import symbol: %s", fis->name);
                 }
             }
         }
@@ -447,9 +451,9 @@ void dumpstate()
     fprintf(dbgfile, "File list\n---------\n");
     for (lf = lfiles; lf; lf = lf->next) {
         if (lf->package)
-            fprintf(dbgfile, "file %s package %s u2off=%d\n",lf->lf_name,lf->package,lf->declend_offset);
+            fprintf(dbgfile, "file %s package %s u2off=%d\n",lf->name,lf->package,lf->declend_offset);
         else
-            fprintf(dbgfile, "file %s u2off=%d\n",lf->lf_name,lf->declend_offset);
+            fprintf(dbgfile, "file %s u2off=%d\n",lf->name,lf->declend_offset);
         for (fp = lf->imports; fp; fp = fp->next) {
             if (fp->qualified) {
                 fprintf(dbgfile, "\timport %s (qualified)\n",fp->name);
@@ -495,7 +499,7 @@ void dumpstate()
         if (gl->class) {
             cl = gl->class;
             fprintf(dbgfile, "\tfieldtable_col=%d class defined in %s   flags=%s\n", 
-                   cl->fieldtable_col,cl->defined->lf_name,m_flag2str(cl->flag));
+                   cl->fieldtable_col,cl->defined->name,m_flag2str(cl->flag));
             fprintf(dbgfile, "\tSource super names:\n");
             for (sup = cl->supers; sup; sup = sup->next)
                 fprintf(dbgfile, "\t\t%s\n", sup->name);
