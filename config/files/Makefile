@@ -25,11 +25,12 @@ infodir=@infodir@
 OIBIN=@bindir@
 OILIB=@libdir@/@PACKAGE_TARNAME@
 SOLIB=@libdir@
-HTML=@htmldir@
+HTMLINFO=@htmldir@/@PACKAGE_TARNAME@-htmlinfo
 INFO=@infodir@
-LIBREF=@htmldir@/libref
+LIBREF=@htmldir@/@PACKAGE_TARNAME@-libref
 PATHS=$(OILIB)/paths.txt
 MKDEFS=$(OILIB)/Makedefs
+UNINST=$(OILIB)/uninstall.sh
 
 install :
 	$(INSTALL) -d $(OIBIN)
@@ -39,7 +40,7 @@ install :
 	$(INSTALL) -d $(OILIB)/main
 	$(INSTALL) -d $(OILIB)/parser
 	$(INSTALL) -d $(OILIB)/xml
-	$(INSTALL) -d $(HTML)
+	$(INSTALL) -d $(HTMLINFO)
 	$(INSTALL) -d $(INFO)
 	$(INSTALL) -m 755 bin/ivib $(OIBIN)
 	$(INSTALL) -m 755 bin/iyacc $(OIBIN)
@@ -54,7 +55,7 @@ install :
 	$(INSTALL) -m 644 lib/parser/*.u lib/parser/packages.txt $(OILIB)/parser
 	$(INSTALL) -m 644 lib/xml/*.u lib/xml/packages.txt $(OILIB)/xml
 ifeq (@MAKEINFO@,yes)
-	$(INSTALL) -m 644 docs/html/*.html $(HTML)
+	$(INSTALL) -m 644 docs/htmlinfo/*.html $(HTMLINFO)
 	$(INSTALL) -m 644 docs/objecticon.info $(INFO)
 ifeq (@INSTALLINFO@,yes)
 	install-info docs/objecticon.info $(INFO)/dir
@@ -80,26 +81,25 @@ endif
                             use the mysql or ipc packages" >>$(PATHS) ; \
 		echo -e "LD_LIBRARY_PATH=\"\$$LD_LIBRARY_PATH:$(SOLIB)\"" >>$(PATHS) ; \
 	fi
-	@echo "Installation complete.  Some helpful files :-"
+
+	@echo -e rm -f $(OIBIN)/ivib $(OIBIN)/iyacc $(OIBIN)/oit $(OIBIN)/oix $(OIBIN)/udis >$(UNINST)
+	@echo -e rm -f $(SOLIB)/objecticonipclib.so  $(SOLIB)/objecticonmysqllib.so >>$(UNINST)
+	@echo -e rm -rf $(OILIB) >>$(UNINST)
+	@echo -e rm -rf $(HTMLINFO) >>$(UNINST)
+	@echo -e rm -f $(INFO)/objecticon.info >>$(UNINST)
+	@echo -e rm -rf $(LIBREF) >>$(UNINST)
+ifeq (@INSTALLINFO@,yes)
+	@echo -e install-info --delete objecticon $(INFO)/dir >>$(UNINST)
+endif
+
+	@echo -e "\nInstallation complete.  Some helpful files :-"
 	@echo "   $(PATHS) - environment variables"
 	@echo "   $(MKDEFS) - useful Makefile definitions"
+	@echo "   $(UNINST) - uninstallation script"
 
 install-libref :
 	$(INSTALL) -d $(LIBREF)
-	oidoc -html -d -o $(LIBREF) -a $(OILIB)/ipl/*.icn
-
-uninstall :
-	rm -f $(OIBIN)/ivib $(OIBIN)/iyacc $(OIBIN)/oit $(OIBIN)/oix \
-		$(OIBIN)/udis
-	rm -f $(SOLIB)/objecticonipclib.so  $(SOLIB)/objecticonmysqllib.so
-	rm -rf $(OILIB)
-	rm -f $(HTML)/*.html
-	rm -f $(INFO)/objecticon.info
-	rm -rf $(LIBREF)
-ifeq (@INSTALLINFO@,yes)
-	install-info --delete objecticon $(INFO)/dir
-endif
-	rm -f $(PATHS) $(MKDEFS)
+	oidoc -html -d -o $(LIBREF) -a
 
 T=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)
 tar :

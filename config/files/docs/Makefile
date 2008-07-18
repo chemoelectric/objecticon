@@ -3,18 +3,18 @@ include ../Makedefs
 .PHONY:	libref
 
 ifeq (@MAKEINFO@,yes)
-all: objecticon.info html
+all: objecticon.info htmlinfo
 
 clean:
 	rm -f objecticon.info
-	rm -rf html libref
+	rm -rf htmlinfo libref
 
 objecticon.info:  objecticon.texi
 	makeinfo -o objecticon.info objecticon.texi
 
-html:	objecticon.texi
-	makeinfo --html -o html objecticon.texi
-	touch html
+htmlinfo:	objecticon.texi
+	makeinfo --html -o htmlinfo objecticon.texi
+	touch htmlinfo
 else
 all:
 endif
