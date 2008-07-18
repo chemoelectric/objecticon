@@ -28,7 +28,7 @@ SOLIB=@libdir@
 HTMLINFO=@htmldir@/@PACKAGE_TARNAME@-htmlinfo
 INFO=@infodir@
 LIBREF=@htmldir@/@PACKAGE_TARNAME@-libref
-PATHS=$(OILIB)/paths.txt
+PATHS=$(OILIB)/paths.sh
 MKDEFS=$(OILIB)/Makedefs
 UNINST=$(OILIB)/uninstall.sh
 
@@ -62,9 +62,9 @@ ifeq (@INSTALLINFO@,yes)
 endif
 endif
 	@echo -e "# Object Icon path settings" >$(PATHS)
-	@echo -e "export OIHOME=$(prefix)" >>$(PATHS)
-	@echo -e "export OIBIN=$(OIBIN)" >>$(PATHS)
-	@echo -e "export OILIB=$(OILIB)" >>$(PATHS)
+	@echo -e "export OIHOME=\"$(prefix)\"" >>$(PATHS)
+	@echo -e "export OIBIN=\"$(OIBIN)\"" >>$(PATHS)
+	@echo -e "export OILIB=\"$(OILIB)\"" >>$(PATHS)
 	@echo -e "# Object Icon Makedefs" >$(MKDEFS)
 	@echo -e "OIHOME=$(prefix)" >>$(MKDEFS)
 	@echo -e "OIBIN=$(OIBIN)" >>$(MKDEFS)
@@ -77,10 +77,8 @@ endif
 	@echo -e "export OLPATH=\"\$$OILIB/incl\"" >>$(PATHS)
 	@if [ $(prefix) != /usr/local ] ; then \
 		echo -e "PATH=\"\$$PATH:\$$OIBIN\"" >>$(PATHS) ; \
-		echo -e "# This last one is only needed if you intend to\
-                            use the mysql or ipc packages" >>$(PATHS) ; \
-		echo -e "LD_LIBRARY_PATH=\"\$$LD_LIBRARY_PATH:$(SOLIB)\"" >>$(PATHS) ; \
 	fi
+	@echo -e "export TRACE" >>$(PATHS) ; \
 
 	@echo -e rm -f $(OIBIN)/ivib $(OIBIN)/iyacc $(OIBIN)/oit $(OIBIN)/oix $(OIBIN)/udis >$(UNINST)
 	@echo -e rm -f $(SOLIB)/objecticonipclib.so  $(SOLIB)/objecticonmysqllib.so >>$(UNINST)
