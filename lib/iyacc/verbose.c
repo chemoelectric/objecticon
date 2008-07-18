@@ -90,7 +90,7 @@ void print_state(int state)
 
 void print_conflicts(int state)
 {
-    register int symbol, act, number;
+    register int symbol, act=0, number=0;
     register action *p;
 
     symbol = -1;

@@ -2,6 +2,8 @@
 
 include ../../Makedefs
 
+CWARN = -Wall
+
 DEST	      = .
 HDRS	      = defs.h
 LDFLAGS	      =

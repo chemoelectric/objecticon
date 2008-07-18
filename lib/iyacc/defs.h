@@ -2,7 +2,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <malloc.h>
-
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 /*  machine-dependent definitions			*/
 /*  the following definitions are for the Tahoe		*/

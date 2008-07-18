@@ -50,7 +50,7 @@ void set_first_derives(void)
     register unsigned *vrow;
     register int j;
     register unsigned k;
-    register unsigned cword;
+    register unsigned cword=0;
     register short *rp;
 
     int rule;

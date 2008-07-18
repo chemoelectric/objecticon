@@ -311,11 +311,12 @@ void copy_text(void)
 	if (line == 0)
 	    unterminated_text(t_lineno, t_line, t_cptr);
     }
-    if (!lflag)/*rwj*/
+    if (!lflag) {
       if (jflag)
         fprintf(f, jline_format, lineno, input_file_name);
       else
         fprintf(f, line_format, lineno, input_file_name);
+    }
 
 loop:
     c = *cptr++;
@@ -442,11 +443,12 @@ void copy_union(void)
     if (unionized) over_unionized(cptr - 6);
     unionized = 1;
 
-    if (!lflag)
+    if (!lflag) {
       if (jflag)
         fprintf(text_file, jline_format, lineno, input_file_name);
       else
         fprintf(text_file, line_format, lineno, input_file_name);
+    }
 
     fprintf(text_file, "typedef union");
     if (dflag) fprintf(union_file, "typedef union");
@@ -1192,11 +1194,12 @@ void copy_action(void)
     } else 
 	  fprintf(f, "case %d:\n", nrules - 2);
 
-    if (!lflag)/*rwj*/
+    if (!lflag) {
       if (jflag)
         fprintf(f, jline_format, lineno, input_file_name);
       else
         fprintf(f, line_format, lineno, input_file_name);
+    }
     if (*cptr == '=') ++cptr;
 
     n = 0;
@@ -1447,7 +1450,7 @@ loop:
 int mark_symbol(void)
 {
     register int c;
-    register bucket *bp;
+    register bucket *bp = 0;
 
     c = cptr[1];
     if (c == '%' || c == '\\')
@@ -1764,7 +1767,7 @@ void pack_grammar(void)
 void print_grammar(void)
 {
     register int i, j, k;
-    int spacing;
+    int spacing = 0;
     register FILE *f = verbose_file;
 
     if (!vflag) return;

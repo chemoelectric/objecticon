@@ -182,10 +182,12 @@ void unused_rules(void)
 	if (!rules_used[i]) ++nunused;
 
     if (nunused)
+    {
 	if (nunused == 1)
 	    fprintf(stderr, "%s: 1 rule never reduced\n", myname);
 	else
 	    fprintf(stderr, "%s: %d rules never reduced\n", myname, nunused);
+    }
 }
 
 
@@ -193,7 +195,7 @@ void remove_conflicts(void)
 {
     register int i;
     register int symbol;
-    register action *p, *pref;
+    register action *p, *pref=0;
 
     SRtotal = 0;
     RRtotal = 0;
