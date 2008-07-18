@@ -115,14 +115,15 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         resolve_invocables();
     resolve_supers();
     compute_inheritance();
+
+    /* Resolve identifiers encountered in procedures and methods */
+    resolve_locals();
+
     if (lfatals > 0) {
         *warnings = lwarnings;
         *fatals = lfatals;
         return;
     }
-
-    /* Resolve identifiers encountered in procedures and methods */
-    resolve_locals();
 
     /* Phase II:  suppress unreferenced procs. */
     scanrefs();
