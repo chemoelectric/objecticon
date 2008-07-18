@@ -101,7 +101,6 @@ char *largeints = NULL;
 
 int enable_out = 0;
 
-static char *curlst_nm = "rttcur.lst";
 static FILE *curlst;
 static char *cur_src;
 

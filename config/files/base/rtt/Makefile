@@ -3,7 +3,7 @@
 
 include ../../Makedefs
 
-MAKE = make
+CWARN = -Wall
 
 ROBJS = rttparse.o rttmain.o rttlex.o rttsym.o rttnode.o rttout.o rttmisc.o\
 	rtdb.o rttdb.o rttinlin.o rttilc.o yyerror.o \

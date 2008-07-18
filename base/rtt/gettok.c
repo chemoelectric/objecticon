@@ -12,7 +12,7 @@
  */
 struct token *next_tok()
    {
-   struct token *t, *t1;
+   struct token *t=0, *t1;
    struct tok_lst *tlst;
    struct char_src *cs;
    struct str_buf *sbuf;

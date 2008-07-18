@@ -10,7 +10,7 @@ int *last_char;
  */
 void fill_cbuf()
    {
-   register int c1, c2, c3;
+   register int c1, c2, c3=0;
    register int *s;
    register int *l;
    int c;

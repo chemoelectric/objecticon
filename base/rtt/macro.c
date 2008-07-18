@@ -270,7 +270,7 @@ struct token *id;
    static char buf[20];
 
    m = *m_find(id->image);
-   if (m != NULL && m->category == SpecMac)
+   if (m != NULL && m->category == SpecMac) {
       if (m->mname == line_mac) {  /* __LINE___ */
          sprintf(buf, "%d", id->line);
          m->body = new_t_lst(new_token(PpNumber, buf, id->fname,
@@ -279,6 +279,7 @@ struct token *id;
       else if (m->mname == file_mac) /* __FILE__ */
          m->body = new_t_lst(new_token(StrLit, id->fname, id->fname,
             id->line));
+   }
    return m;
    }
 
@@ -571,8 +572,8 @@ struct token *mac_tok()
    union src_ref ref;
    int line_check;
    int indx;
-   int line;
-   char *fname;
+   int line = 0;
+   char *fname = 0;
 
    me = src_stack->u.me; /* macro, current position, and arguments */
 

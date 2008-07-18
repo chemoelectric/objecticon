@@ -13,23 +13,9 @@
  * prototypes for static functions.
  */
 static void max_pre   (struct implement **tbl, char *pre);
-static int     name_cmp  (char *p1, char *p2);
-static int     op_cmp    (char *p1, char *p2);
-static void prt_dpnd  (FILE *db);
-static void prt_impls (FILE *db, char *sect, struct implement **tbl,
-                           int num, struct implement **sort_ary, int (*com)());
-static int     prt_c_fl  (FILE *db, struct cfile *clst, int line_left);
-static int     put_case  (FILE *db, struct il_code *il);
-static void put_ilc   (FILE *db, struct il_c *ilc);
-static void put_inlin (FILE *db, struct il_code *il);
-static void put_ret   (FILE *db, struct il_c *ilc);
-static void put_typcd (FILE *db, int typcd);
-static void put_var   (FILE *db, int code, struct il_c *ilc);
-static void ret_flag  (FILE *db, int flag, int may_fthru);
 static int     set_impl  (struct token *name, struct implement **tbl,
                            int num_impl, char *pre);
 static void set_prms  (struct implement *ptr);
-static int     src_cmp   (char *p1, char *p2);
 
 static struct implement *bhash[IHSize];	/* hash area for built-in func table */
 static struct implement *ohash[IHSize]; /* hash area for operator table */
@@ -60,14 +46,7 @@ struct implement *cur_impl;	/* data base entry for current operation */
 void loaddb(dbname)
 char *dbname;
    {
-   char *op;
-   struct implement *ip;
-   unsigned hashval;
    int i;
-   char *srcname;
-   char *c_name;
-   struct srcfile *sfile;
-
 
    /*
     * Initialize internal data base.

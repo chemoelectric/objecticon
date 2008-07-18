@@ -149,7 +149,7 @@ int system;
    {
    struct str_buf *sbuf;
    char *s;
-   char *path;
+   char *path = 0;
    char *end_prfx;
    struct src *sp;
    struct char_src *cs;
@@ -225,7 +225,7 @@ int system;
 	 path = FileNameMacConvert(FileNameUnixToMac,path);
 #endif					/* MACINTOSH */
          f = fopen(path, "r");
-         prefix = ++prefix;
+         ++prefix;
          }
       rel_sbuf(sbuf);
 #else					/* !MVS && !VM */

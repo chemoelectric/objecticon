@@ -23,7 +23,6 @@ static void cnv_fnc       (struct token *t, int typcd,
 static void chk_conj      (struct node *n);
 static void chk_nl        (int indent);
 static void chk_rsltblk   (int indent);
-static void comp_def      (struct node *n);
 static int     does_call     (struct node *expr);
 static void failure       (int indent, int brace);
 static void interp_def    (struct node *n);
@@ -1981,7 +1980,7 @@ int indent;
    int first;
    int fnd_slctrs;
    int maybe_str = 1;
-   int dflt_lbl;
+   int dflt_lbl = 0;
    int typcd;
    int fall_thru;
    char *s;
@@ -3285,16 +3284,6 @@ struct node *n;
    }
 
 /*
- * comp_def - output code for the compiler for operation definitions.
- */
-static void comp_def(n)
-struct node *n;
-   {
-   fprintf(stdout, "rtt was compiled to only support the interpreter, use -x\n");
-   exit(EXIT_FAILURE);
-   }
-
-/*
  * interp_def - output code for the interpreter for operation definitions.
  */
 static void interp_def(n)
@@ -3304,7 +3293,7 @@ struct node *n;
    struct node *n1;
    int nparms;
    int has_underef;
-   char letter;
+   char letter = 0;
    char *name;
    char *s;
 
@@ -3513,7 +3502,6 @@ struct node *n;
 void keyconst(t)
 struct token *t;
    {
-   struct il_code *il;
    int n;
 
 
