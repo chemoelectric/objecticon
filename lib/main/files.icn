@@ -630,6 +630,8 @@ class WindowsFileSystem(FileSystem)
       s ? {
          if &subject[2:4] == ":\\" then
             put(l, move(3))
+         else
+            put(l, ="\\")
          while put(l, tab(upto("\\"))) do 
             move(1)
          pos(0) | put(l, tab(0))
