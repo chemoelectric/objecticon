@@ -261,14 +261,13 @@ word codesize;
    struct region *ps, *pb;
 
    if ((uword)codesize > (unsigned)MaxBlock)
-      error(NULL, "icode file too large");
+      error("icode file too large");
    /*
     * Allocate icode region
     */
    if (codesize)
    if ((code = (char *)AllocReg(codesize)) == NULL)
-      error(NULL,
-	 "insufficient memory, corrupted icode file, or wrong platform");
+      error("insufficient memory, corrupted icode file, or wrong platform");
 
    /*
     * Set up allocated memory.	The regions are:
@@ -281,18 +280,18 @@ word codesize;
    ps = p->stringregion;
    ps->free = ps->base = (char *)AllocReg(ps->size);
    if (ps->free == NULL)
-      error(NULL, "insufficient memory for string region");
+      error("insufficient memory for string region");
    ps->end = ps->base + ps->size;
 
    pb = p->blockregion;
    pb->free = pb->base = (char *)AllocReg(pb->size);
    if (pb->free == NULL)
-      error(NULL, "insufficient memory for block region");
+      error("insufficient memory for block region");
    pb->end = pb->base + pb->size;
 
    if (p == &rootpstate) {
       if ((quallist = (dptr *)malloc(qualsize)) == NULL)
-         error(NULL, "insufficient memory for qualifier list");
+         error("insufficient memory for qualifier list");
       equallist = (dptr *)((char *)quallist + qualsize);
       }
    }

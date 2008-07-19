@@ -325,7 +325,7 @@ int main(int argc, char **argv)
     }
 
     if (argc <= 1) {
-        error(NULL, "no icode file specified");
+        error("no icode file specified");
     }
 
     /*
@@ -461,7 +461,7 @@ void icon_setup(int argc, char **argv, int *ip)
                     (*ip)++;
                     p = argv[1];
                     if ( !p )
-                        error(NULL, "no file name given for redirection of &errout");
+                        error("no file name given for redirection of &errout");
                 }
                 if (!redirerr(p))
                     syserr("Unable to redirect &errout\n");

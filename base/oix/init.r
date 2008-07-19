@@ -1,7 +1,7 @@
 /*
  * File: init.r
  * Initialization, termination, and such.
- * Contents: readhdr, init/icon_init, envset, env_err, env_int,
+ * Contents: readhdr, init/icon_init, envset, env_int,
  *  fpe_trap, inttrag, segvtrap, error, syserr, c_exit, err,
  *  fatalerr, pstrnmcmp, datainit, [loadicode]
  */
@@ -14,7 +14,6 @@ static	FILE	*readhdr	(char *name, struct header *hdr);
  * Prototypes.
  */
 
-static void	env_err		(char *msg, char *name, char *val);
 
 /*
  * The following code is operating-system dependent [@init.01].  Declarations
@@ -131,13 +130,13 @@ static FILE *readhdr(char *name, struct header *hdr)
 
     for (;;) {
         if (fgets(buf, sizeof buf-1, ifile) == NULL)
-            error(name, "can't find header marker in interpreter file");
+            error("can't find header marker in interpreter file %s", name);
         if (strncmp(buf, IcodeDelim, n) == 0)
             break;
     }
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr))
-        error(name, "can't read interpreter file header");
+        error("can't read interpreter file header in file %s", name);
 
     return ifile;
 }
@@ -156,7 +155,7 @@ void check_version(struct header *hdr, char *name,FILE *fname)
         fprintf(stderr,"\ticode version: %s\n",(char *)hdr->config);
         fprintf(stderr,"\texpected version: %s\n",IVersion);
         fclose(fname);
-        error(name, "cannot run");
+        error("cannot run:%s", name);
     }
 }
 
@@ -173,7 +172,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
             hdr->hsize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                     (long)hdr->hsize,(long)cbread);
-            error(name, "bad icode file");
+            error("bad icode file:%s", name);
         }
         gzclose(zfd);
     } else {
@@ -181,7 +180,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
             hdr->hsize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                     (long)hdr->hsize,(long)cbread);
-            error(name, "bad icode file");
+            error("bad icode file:%s", name);
         }
     }
 #else					/* HAVE_LIBZ */
@@ -189,7 +188,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         hdr->hsize) {
         fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                 (long)hdr->hsize,(long)cbread);
-        error(name, "bad icode file");
+        error("bad icode file:%s", name);
     }
 #endif					/* HAVE_LIBZ */
 }
@@ -209,7 +208,6 @@ void icon_init(name, argcp, argv)
     FILE *ifile = 0;
     char *t;
     prog_name = name;			/* Set icode file name */
-
 
     /*
      * initialize root pstate
@@ -360,17 +358,17 @@ void icon_init(name, argcp, argv)
     datainit();
 
     if (!name)
-        error(name, "No interpreter file supplied");
+        error("No interpreter file supplied");
 
     t = findexe(name);
     if (!t)
-        error(name, "Not found on PATH");
+        error("Not found on PATH:%s", name);
 
     name = salloc(t);
 
     ifile = readhdr(name, &hdr);
     if (ifile == NULL) 
-        error(name, "cannot open interpreter file");
+        error("cannot open interpreter file:%s", name);
 
     k_trace = hdr.trace;
 
@@ -597,25 +595,6 @@ void envset()
 }
 
 /*
- * env_err - print an error mesage about the value of an environment
- *  variable.
- */
-static void env_err(msg, name, val)
-    char *msg;
-    char *name;
-    char *val;
-{
-    char msg_buf[100];
-
-    strncpy(msg_buf, msg, 99);
-    strncat(msg_buf, ": ", 99 - (int)strlen(msg_buf));
-    strncat(msg_buf, name, 99 - (int)strlen(msg_buf));
-    strncat(msg_buf, "=", 99 - (int)strlen(msg_buf));
-    strncat(msg_buf, val, 99 - (int)strlen(msg_buf));
-    error("", msg_buf);
-}
-
-/*
  * env_int - get the value of an integer-valued environment variable.
  */
 void env_int(name, variable, non_neg, limit)
@@ -636,7 +615,7 @@ void env_int(name, variable, non_neg, limit)
     s = value;
     if (*s == '-') {
         if (non_neg)
-            env_err("environment variable out of range", name, value);
+            error("environment variable out of range: %s=%s", name, value);
         sign = -1;
         ++s;
     }
@@ -648,11 +627,11 @@ void env_int(name, variable, non_neg, limit)
          * See if 10 * n + d > limit, but do it so there can be no overflow.
          */
         if ((d > (uword)(limit / 10 - n) * 10 + limit % 10) && (limit > 0))
-            env_err("environment variable out of range", name, value);
+            error("environment variable out of range: %s=%s", name, value);
         n = n * 10 + d;
     }
     if (*s != '\0')
-        env_err("environment variable not numeric", name, value);
+        error("environment variable not numeric: %s=%s", name, value);
     *variable = sign * n;
 }
 
@@ -695,17 +674,17 @@ void segvtrap()
 }
 
 /*
- * error - print error message from s1 and s2; used only in startup code.
+ * error - print error message; used only in startup code.
  */
-void error(char *s1, char *s2)
+void error(char *fmt, ...)
 {
-    if (!s1)
-        fprintf(stderr, "error in startup code\n%s\n", s2);
-    else
-        fprintf(stderr, "error in startup code\n%s: %s\n", s1, s2);
-
+    va_list argp;
+    va_start(argp, fmt);
+    fprintf(stderr, "error in startup code\n");
+    vfprintf(stderr, fmt, argp);
+    fprintf(stderr,"\n");
     fflush(stderr);
-
+    va_end(argp);
     if (dodump)
         abort();
     c_exit(EXIT_FAILURE);
@@ -714,8 +693,10 @@ void error(char *s1, char *s2)
 /*
  * syserr - print s as a system error.
  */
-void syserr(char *s)
+void syserr(char *fmt, ...)
 {
+    va_list argp;
+    va_start(argp, fmt);
     fprintf(stderr, "System error");
     if (pfp == NULL)
         fprintf(stderr, " in startup code");
@@ -723,9 +704,11 @@ void syserr(char *s)
         fprintf(stderr, " at line %ld in %s", (long)findline(ipc.opnd),
                 findfile(ipc.opnd));
     }
-    fprintf(stderr, "\n%s\n", s);
-
+    fprintf(stderr, "\n");
+    vfprintf(stderr, fmt, argp);
+    fprintf(stderr,"\n");
     fflush(stderr);
+    va_end(argp);
     if (dodump)
         abort();
     c_exit(EXIT_FAILURE);
