@@ -575,18 +575,19 @@ class WindowsFilePath(FilePath)
    end
 
    public absolute()
+      local s
       if is_absolute() then
          return self
       if l[1] == "\\" then
          return WindowsFilePath([chdir()[1:4]] ||| l[2:0])
-      if l[1][2:0] == ":" then
-         return Files.get_path(getdcwd(l[1][1])).append(WindowsFilePath(l[2:0]))
+      if l[1][2:0] == ":" then {
+         s := getdcwd(l[1][1]) | l[1] || "\\"
+         return Files.get_path(s).append(WindowsFilePath(l[2:0]))
+      }
       return Files.get_path(chdir()).append(self)
    end
 
-   private static getdcwd(d)
-      return "C:\\"
-   end
+   private static defer getdcwd(d)
 
    public normal()
       local e, r
