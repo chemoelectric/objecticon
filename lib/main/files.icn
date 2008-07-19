@@ -347,11 +347,7 @@ class FilePath()
    # Return a path which represents the absolute path of this
    # path.
    #
-   public absolute()
-      if is_absolute() then
-         return self
-      return Files.get_path(chdir()).append(self)
-   end
+   public defer absolute()
 
    #
    # Convert the path back into a string.
@@ -466,6 +462,12 @@ class UnixFilePath(FilePath)
       return l[1] == "/"
    end
 
+   public absolute()
+      if is_absolute() then
+         return self
+      return Files.get_path(chdir()).append(self)
+   end
+
    public normal()
       local e, r
       r := []
@@ -561,7 +563,7 @@ class WindowsFilePath(FilePath)
       local e, s
       s := ""
       every e := !l do {
-         if s[-1] ~== "\\" then 
+         if *s > 0 & not any("\\:", s[-1]) then
             s ||:= "\\"
          s ||:= e
       }
@@ -570,6 +572,20 @@ class WindowsFilePath(FilePath)
 
    public is_absolute()
       return l[1][2:0] == ":\\"
+   end
+
+   public absolute()
+      if is_absolute() then
+         return self
+      if l[1] == "\\" then
+         return WindowsFilePath([chdir()[1:4]] ||| l[2:0])
+      if l[1][2:0] == ":" then
+         return Files.get_path(getdcwd(l[1][1])).append(WindowsFilePath(l[2:0]))
+      return Files.get_path(chdir()).append(self)
+   end
+
+   private static getdcwd(d)
+      return "C:\\"
    end
 
    public normal()
@@ -624,17 +640,22 @@ class WindowsFileSystem(FileSystem)
    end
 
    public get_path(s)
-      local l
+      local l, t
       l := []
       s := map(s, "/", "\\")
       s ? {
-         if &subject[2:4] == ":\\" then
+         if &subject[2:4] == ":\\" then    # eg c:\tmp\abc.c
             put(l, move(3))
+         else if &subject[2] == ":" then   # eg c:abc.c
+            put(l, move(2))
          else
-            put(l, ="\\")
-         while put(l, tab(upto("\\"))) do 
+            put(l, ="\\")                  # eg \tmp\abc.c
+         while not pos(0) do {
+            t := tab(upto('\\') | 0)
+            if *t > 0 then
+               put(l, t)
             move(1)
-         pos(0) | put(l, tab(0))
+         }
       }
       return WindowsFilePath(l)
    end
