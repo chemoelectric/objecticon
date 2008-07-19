@@ -207,6 +207,7 @@ void icon_init(name, argcp, argv)
 {
     struct header hdr;
     FILE *ifile = 0;
+    char *t;
     prog_name = name;			/* Set icode file name */
 
 
@@ -361,11 +362,11 @@ void icon_init(name, argcp, argv)
     if (!name)
         error(name, "No interpreter file supplied");
 
-    name = findexe(name);
-    if (!name)
+    t = findexe(name);
+    if (!t)
         error(name, "Not found on PATH");
 
-    name = salloc(name);
+    name = salloc(t);
 
     ifile = readhdr(name, &hdr);
     if (ifile == NULL) 

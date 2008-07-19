@@ -32,5 +32,6 @@ NativeDef(lang_Class_get_supers)
 NativeDef(lang_Class_getf)
 NativeDef(lang_Class_set_method)
 #ifdef MSWindows
+NativeDef(util_WindowsFilePath_getdcwd)
 NativeDef(util_WindowsFileSystem_get_roots)
 #endif

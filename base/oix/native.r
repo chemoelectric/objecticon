@@ -407,4 +407,26 @@ function{*} util_WindowsFileSystem_get_roots()
         fail;
     }
 end
+
+function{0,1} util_WindowsFilePath_getdcwd(d)
+   if !cnv:tmp_string(d) then
+      runerr(103, d)
+   abstract {
+      return string
+      }
+   body {
+      char *p;
+      int dir;
+      if (StrLen(d) != 1)
+	 fail;
+      dir = toupper(*StrLoc(d)) - 'A' + 1;
+      p = _getdcwd(dir, 0, 32);
+      if (!p)
+	 fail;
+      result = cstr2string(p);
+      free(p);
+      return result;
+   }
+end
+
 #endif
