@@ -604,10 +604,11 @@ class WindowsFilePath(FilePath)
    end
 
    public canonical()
-      local t
-      t := []
-      every put(t, map(!l))
-      return WindowsFilePath(t).absolute().normal()
+      local t, u
+      t := absolute().normal()
+      u := []
+      every put(u, map(!t.l))
+      return WindowsFilePath(u)
    end
 end
 
