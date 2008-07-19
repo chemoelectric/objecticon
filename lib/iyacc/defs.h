@@ -4,7 +4,11 @@
 #include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 
 /*  machine-dependent definitions			*/
 /*  the following definitions are for the Tahoe		*/
