@@ -49,7 +49,7 @@ $(PROGRAM):     $(OBJS) $(LIBS)
 		cp iyacc $(OIBIN)
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)
-		@cd test; make clean
+		$(MAKE) -C test clean
 
 clobber:;	@rm -f $(OBJS) $(PROGRAM)
 
@@ -70,7 +70,7 @@ program:        $(PROGRAM)
 tags:           $(HDRS) $(SRCS); @ctags $(HDRS) $(SRCS)
 
 test:		$(PROGRAM)
-		@cd test; make
+		$(MAKE) -C test
 
 ###
 closure.o: defs.h

@@ -1,16 +1,16 @@
 include Makedefs
 
 all :
-	make -C base all
-	make -C lib all
-	make -C apps all
-	make -C docs all
+	$(MAKE) -C base all
+	$(MAKE) -C lib all
+	$(MAKE) -C apps all
+	$(MAKE) -C docs all
 
 clean :
-	make -C base clean
-	make -C lib clean
-	make -C apps clean
-	make -C docs clean
+	$(MAKE) -C base clean
+	$(MAKE) -C lib clean
+	$(MAKE) -C apps clean
+	$(MAKE) -C docs clean
 
 PACKAGE_NAME=@PACKAGE_NAME@
 PACKAGE_TARNAME=@PACKAGE_TARNAME@

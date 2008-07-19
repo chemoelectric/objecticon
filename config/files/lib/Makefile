@@ -1,17 +1,19 @@
+include ../Makedefs
+
 all :
-	make -C iyacc all
-	make -C ipl all
-	make -C main all
-	make -C gui all
-	make -C xml all
-	make -C parser all
-	make -C native all
+	$(MAKE) -C iyacc all
+	$(MAKE) -C ipl all
+	$(MAKE) -C main all
+	$(MAKE) -C gui all
+	$(MAKE) -C xml all
+	$(MAKE) -C parser all
+	$(MAKE) -C native all
 
 clean :
-	make -C iyacc clean
-	make -C ipl clean
-	make -C main clean
-	make -C gui clean
-	make -C xml clean
-	make -C parser clean
-	make -C native clean
+	$(MAKE) -C iyacc clean
+	$(MAKE) -C ipl clean
+	$(MAKE) -C main clean
+	$(MAKE) -C gui clean
+	$(MAKE) -C xml clean
+	$(MAKE) -C parser clean
+	$(MAKE) -C native clean

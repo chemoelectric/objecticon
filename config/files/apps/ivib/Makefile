@@ -58,11 +58,11 @@ PROGU=$(PROGSRC:.icn=.u)
 default: ivib
 
 all: $(COMMONU) ivib
-	make -C plugins
+	$(MAKE) -C plugins
 
 clean:
 	rm -f *.u packages.txt $(PROGS)
-	make -C plugins clean
+	$(MAKE) -C plugins clean
 
 $(COMMONU) $(PROGU): %.u: %.icn
 	oit -snc $(COMMONSRC) $(PROGSRC)

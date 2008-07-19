@@ -64,6 +64,7 @@ fi
 
 AC_PROG_INSTALL()
 AC_PROG_LN_S()
+AC_PROG_MAKE_SET()
 
 AC_CANONICAL_HOST()
 case $host in
@@ -157,5 +158,11 @@ if test "$MAKEINFO" == yes; then
         echo yes
 else
         echo no
+fi
+echo -n "mysql lib              : "
+if test -z "$MYSQL_VERSION"; then
+        echo no
+else
+        echo yes
 fi
 echo "context switch         :" $CSWITCH

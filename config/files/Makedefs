@@ -17,6 +17,7 @@ MKDIR=mkdir
 CP=cp
 INSTALL=@INSTALL@
 LN_S=@LN_S@
+@SET_MAKE@
 
 export OIPATH:=$(OILIB)/main:$(OILIB)/gui:$(OILIB)/xml:$(OILIB)/parser:$(OILIB)/ipl
 export OLPATH:=$(OILIB)/incl

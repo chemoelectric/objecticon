@@ -1,11 +1,13 @@
+include ../Makedefs
+
 all :
-	make -C common all
-	make -C rtt all
-	make -C oit all
-	make -C oix all
+	$(MAKE) -C common all
+	$(MAKE) -C rtt all
+	$(MAKE) -C oit all
+	$(MAKE) -C oix all
 
 clean :
-	make -C common clean
-	make -C rtt clean
-	make -C oix clean
-	make -C oit clean
+	$(MAKE) -C common clean
+	$(MAKE) -C rtt clean
+	$(MAKE) -C oix clean
+	$(MAKE) -C oit clean
