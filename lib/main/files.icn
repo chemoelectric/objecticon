@@ -344,6 +344,30 @@ class FilePath()
    end
 
    #
+   # Return the path formed by appending the elements of this path to
+   # the other path.
+   #
+   public append(other)
+      return classof(self)(l ||| other.l)
+   end
+
+   #
+   # Return the parent path, ie a path with everything but the last
+   # element.  Fails if the path has no elements.
+   #
+   public parent()
+      return classof(self)(l[1:-1])
+   end
+
+   #
+   # Return the child path, ie a path with the same elements plus the
+   # element {s}.
+   #
+   public child(s)
+      return classof(self)(l ||| [s])
+   end
+
+   #
    # Return a path which represents the absolute path of this
    # path.
    #
@@ -360,44 +384,11 @@ class FilePath()
    public defer is_absolute()
 
    #
-   # Return a normalized equivalent of the path, ie without redundant
-   # path elements.
-   #
-   public defer normal()
-
-   #
-   # Return the path formed by appending the elements of this path to
-   # the other path.
-   #
-   public append(other)
-      return classof(self)(l ||| other.l)
-   end
-
-   #
-   # Return the parent path, ie a path with everything but the last
-   # element.
-   #
-   public parent()
-      if *l > 1 then
-         return classof(self)(l[1:-1])
-   end
-
-   #
-   # Return the child path, ie a path with the same elements plus the
-   # element {s}.
-   #
-   public child(s)
-      return classof(self)(l ||| [s])
-   end
-
-   #
    # Canonicalize a path, which means trying to turn it into a
-   # standard form.  This means (at least) getting the absolute path
-   # and normalizing it.
+   # standard form.  This involves (at least) getting the absolute
+   # path and removing any redundant path elements.
    #
-   public canonical()
-      return absolute().normal()
-   end
+   public defer canonical()
 
    package new(l)
       self.l := l
@@ -468,10 +459,10 @@ class UnixFilePath(FilePath)
       return Files.get_path(chdir()).append(self)
    end
 
-   public normal()
+   public canonical()
       local e, r
       r := []
-      every e := !l do {
+      every e := !absolute().l do {
          if e == "." then
             next
          else if e == ".." then {
@@ -571,7 +562,7 @@ class WindowsFilePath(FilePath)
    end
 
    public is_absolute()
-      return l[1][2:0] == ":\\"
+      return l[1] == "\\\\" | l[1][2:0] == ":\\"
    end
 
    public absolute()
@@ -589,26 +580,18 @@ class WindowsFilePath(FilePath)
 
    private static defer getdcwd(d)
 
-   public normal()
+   public canonical()
       local e, r
       r := []
-      every e := !l do {
+      every e := !absolute().l do {
          if e == "." then
             next
          else if e == ".." then
             pull(r)
          else
-            put(r, e)
+            put(r, map(e))
       }
       return WindowsFilePath(r)
-   end
-
-   public canonical()
-      local t, u
-      t := absolute().normal()
-      u := []
-      every put(u, map(!t.l))
-      return WindowsFilePath(u)
    end
 end
 
@@ -646,12 +629,14 @@ class WindowsFileSystem(FileSystem)
       l := []
       s := map(s, "/", "\\")
       s ? {
-         if &subject[2:4] == ":\\" then    # eg c:\tmp\abc.c
+         if &subject[2:4] == ":\\" then       # X:\
             put(l, move(3))
-         else if &subject[2] == ":" then   # eg c:abc.c
+         else if &subject[2] == ":" then      # X:
             put(l, move(2))
-         else
-            put(l, ="\\")                  # eg \tmp\abc.c
+         else if &subject[1:3] == "\\\\" then # \\X
+            put(l, move(2))
+         else if &subject[1] == "\\" then     # \X
+            put(l, move(1))                
          while not pos(0) do {
             t := tab(upto('\\') | 0)
             if *t > 0 then
