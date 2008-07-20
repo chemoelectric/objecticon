@@ -155,7 +155,7 @@ void check_version(struct header *hdr, char *name,FILE *fname)
         fprintf(stderr,"\ticode version: %s\n",(char *)hdr->config);
         fprintf(stderr,"\texpected version: %s\n",IVersion);
         fclose(fname);
-        error("cannot run:%s", name);
+        error("cannot run %s", name);
     }
 }
 
@@ -172,7 +172,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
             hdr->hsize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                     (long)hdr->hsize,(long)cbread);
-            error("bad icode file:%s", name);
+            error("bad icode file: %s", name);
         }
         gzclose(zfd);
     } else {
@@ -180,7 +180,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
             hdr->hsize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                     (long)hdr->hsize,(long)cbread);
-            error("bad icode file:%s", name);
+            error("bad icode file: %s", name);
         }
     }
 #else					/* HAVE_LIBZ */
@@ -188,7 +188,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         hdr->hsize) {
         fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                 (long)hdr->hsize,(long)cbread);
-        error("bad icode file:%s", name);
+        error("bad icode file: %s", name);
     }
 #endif					/* HAVE_LIBZ */
 }
@@ -362,13 +362,13 @@ void icon_init(name, argcp, argv)
 
     t = findexe(name);
     if (!t)
-        error("Not found on PATH:%s", name);
+        error("Not found on PATH: %s", name);
 
     name = salloc(t);
 
     ifile = readhdr(name, &hdr);
     if (ifile == NULL) 
-        error("cannot open interpreter file:%s", name);
+        error("cannot open interpreter file %s", name);
 
     k_trace = hdr.trace;
 
