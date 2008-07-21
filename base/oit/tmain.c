@@ -256,7 +256,7 @@ int main(int argc, char **argv)
     iconxloc = findexe("oix");
     if (!iconxloc)
         quitf("Couldn't find oix on PATH");
-    iconxloc = intern(iconxloc);
+    iconxloc = intern(canonicalize(iconxloc));
 
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.

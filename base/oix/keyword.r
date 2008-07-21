@@ -317,7 +317,7 @@ keyword{1,*} features
       if (!*refpath) {
           char *ploc = findexe("oix");
           if (ploc) {
-              struct fileparts *fps = fparse(ploc);
+              struct fileparts *fps = fparse(canonicalize(ploc));
               refpath = salloc(fps->dir);
           }
       }

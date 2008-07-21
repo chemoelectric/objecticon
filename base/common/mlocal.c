@@ -64,7 +64,7 @@ char *findexe(char *name)
     /* Does name have a separator char? If so, don't search $PATH */
     for (p = name; *p; ++p) {
         if (strchr(PREFIX, *p))
-            return tryexe(0, canonicalize(name));
+            return tryexe(0, name);
     }
 
     path = getenv("PATH");
