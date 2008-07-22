@@ -145,3 +145,7 @@
    Feature(1, "_JPEG", "JPEG images")
 #endif					/* HAVE_LIBJPEG */
 
+#ifdef HAVE_LIBXPM
+   Feature(1, "_XPM", "XPM images")
+#endif					/* HAVE_LIBXPM */
+
