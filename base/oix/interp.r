@@ -31,9 +31,9 @@ extern int chkbreak;
 #endif					/* LATTICE */
 #endif					/* AMIGA */
 
-#if ARM || MACINTOSH || MSDOS || MVS || OS2 || UNIX || VM || VMS
+#if MACINTOSH || MSDOS || MVS || OS2 || UNIX || VM || VMS
    /* nothing needed */
-#endif					/* ARM || ... */
+#endif					
 
 /*
  * End of operating-system specific code.
@@ -169,9 +169,9 @@ int coexp_act;			/* last co-expression action */
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || ARM || MACINTOSH || MVS || UNIX || VM || VMS
+#if AMIGA || MACINTOSH || MVS || UNIX || VM || VMS
 #define PushAVal(x) PushVal(x)
-#endif					/* AMIGA || ARM || ... */
+#endif
 
 #if MSDOS || OS2
 #if HIGHC_386 || ZTC_386 || INTEL_386 || WATCOM || BORLAND_386 || SCCX_MX
@@ -419,9 +419,9 @@ Deliberate Syntax Error
 #endif					/* LATTICE */
 #endif					/* AMIGA */
 
-#if ARM || MSDOS || MVS || OS2 || UNIX || VM || VMS
+#if MSDOS || MVS || OS2 || UNIX || VM || VMS
    /* nothing to do */
-#endif					/* ARM || ... */
+#endif					
 
 #if MACINTOSH
 #if MPW
@@ -1773,30 +1773,6 @@ Deliberate Syntax Error
 #if AMIGA || MACINTOSH || MVS || VM || VMS
    /* not included */
 #endif					/* AMIGA || ... */
-
-#if ARM
-void stkdump(op)
-   int op;
-   {
-   word *stk;
-   word *i;
-   stk = (word *)BlkLoc(k_current);
-   stk += Wsizeof(struct b_coexpr);
-   fprintf(stderr,">  stack:  %.8x\n", (word)stk);
-   fprintf(stderr,">  sp:     %.8x\n", (word)sp);
-   fprintf(stderr,">  pfp:    %.8x\n", (word)pfp);
-   fprintf(stderr,">  efp:    %.8x\n", (word)efp);
-   fprintf(stderr,">  gfp:    %.8x\n", (word)gfp);
-   fprintf(stderr,">  ipc:    %.8x\n", (word)ipc.op);
-   fprintf(stderr,">  argp:   %.8x\n", (word)glbl_argp);
-   fprintf(stderr,">  ilevel: %.8x\n", (word)ilevel);
-   fprintf(stderr,">  op:     %d\n",    (int)op);
-   for (i = stk; i <= (word *)sp; i++)
-      fprintf(stderr,"> %.8x\n",(word)*i);
-   fprintf(stderr,"> ----------\n");
-   fflush(stderr);
-   }
-#endif					/* ARM */
 
 #if MSDOS || OS2
 #if MICROSOFT || TURBO || BORLAND_386

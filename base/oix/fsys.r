@@ -177,7 +177,7 @@ function{1} close(f)
 #endif					/* NTGCC */
 #endif					/* NT */
 
-#if AMIGA || ARM || OS2 || UNIX || VMS || NT
+#if AMIGA || OS2 || UNIX || VMS || NT
       /*
        * Close pipe if pipes are supported.
        */
@@ -187,7 +187,7 @@ function{1} close(f)
 	 return C_integer((pclose(fp) >> 8) & 0377);
 	 }
       else
-#endif					/* AMIGA || ARM || OS2 || ... */
+#endif					
 
       fclose(fp);
       BlkLoc(f)->file.status = 0;
@@ -324,11 +324,6 @@ Deliberate Syntax Error
    /* nothing is needed */
 #endif					/* AMIGA || ... */
 
-#if ARM
-      extern FILE *popen(const char *, const char *);
-      extern int pclose(FILE *);
-#endif					/* ARM */
-
 #ifdef PosixFns
       int is_udp_or_listener = 0;	/* UDP = 1, listener = 2 */
 #endif					/* PosixFns */
@@ -401,12 +396,12 @@ Deliberate Syntax Error
 		  status |= Fs_Untrans;
 	       continue;
 
-#if AMIGA || ARM || OS2 || UNIX || VMS || NT
+#if AMIGA || OS2 || UNIX || VMS || NT
 	    case 'p':
 	    case 'P':
 	       status |= Fs_Pipe;
 	       continue;
-#endif					/* AMIGA || ARM || OS2 || UNIX ... */
+#endif				
 
 	    case 'x':
 	    case 'X':
@@ -503,10 +498,10 @@ Deliberate Syntax Error
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || ARM || UNIX || VMS
+#if AMIGA || UNIX || VMS
       if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write))
 	 mode[1] = '+';
-#endif					/* AMIGA || ARM || UNIX || VMS */
+#endif
 
 #if MACINTOSH
       if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write)) {
@@ -576,7 +571,7 @@ Deliberate Syntax Error
 
 
 
-#if AMIGA || ARM || OS2 || UNIX || VMS || NT
+#if UNIX || NT
       if (status & Fs_Pipe) {
 	 int c;
          char *ploc;
@@ -601,7 +596,7 @@ Deliberate Syntax Error
 	 ungetc(c, f);
 	 }
       else
-#endif					/* AMIGA || ARM || OS2 || ... */
+#endif			
 
 
 #ifdef HAVE_LIBZ
@@ -1818,9 +1813,9 @@ function{0,1} chdir(s)
 #if PORT
    Deliberate Syntax Error
 #endif                                  /* PORT */
-#if ARM || MACINTOSH || MVS || VM
+#if MACINTOSH
       runerr(121);
-#endif                                  /* ARM || MACINTOSH ... */
+#endif                              
 #if AMIGA || MSDOS || OS2 || UNIX || VMS || NT
 
       char path[MaxPath];

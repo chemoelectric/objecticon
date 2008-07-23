@@ -489,7 +489,7 @@ void icon_init(name, argcp, argv)
     Deliberate Syntax Error
 #endif					/* PORT */
 
-#if ARM || MACINTOSH || UNIX || OS2 || VMS
+#if MACINTOSH || UNIX || OS2 || VMS
 
 
         if (noerrbuf)
@@ -502,7 +502,7 @@ void icon_init(name, argcp, argv)
                 fatalerr(305, NULL);
             setbuf(stderr, buf);
         }
-#endif					/* ARM || MACINTOSH ... */
+#endif					/* MACINTOSH ... */
 
 #if MSWindows
 #if !HIGHC_386

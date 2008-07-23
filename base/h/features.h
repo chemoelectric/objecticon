@@ -18,18 +18,6 @@
 
    Feature(1, "_V9", 0)			/* Version 9 (unconditional) */
 
-#if AMIGA
-   Feature(1, "_AMIGA", "Amiga")
-#endif					/* AMIGA */
-
-#if ARM
-   Feature(1, "_ACORN", "Acorn Archimedes")
-#endif					/* ARM */
-
-#if VM
-   Feature(1, "_CMS", "CMS")
-#endif					/* VM */
-
 #if MACINTOSH
    Feature(1, "_MACINTOSH", "Macintosh")
 #endif					/* MACINTOSH */
@@ -128,10 +116,6 @@
 #ifdef PresentationManager
    Feature(1, "_PRESENTATION_MGR", "Presentation Manager")
 #endif					/* PresentationManager */
-
-#ifdef ArmFncs
-   Feature(1, "_ARM_FUNCTIONS", "Archimedes extensions")
-#endif					/* ArmFncs */
 
 #ifdef DosFncs
    Feature(1, "_DOS_FUNCTIONS", "MS-DOS extensions")

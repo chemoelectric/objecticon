@@ -1839,10 +1839,6 @@ Deliberate Syntax Error
    return (isascii(c) && isprint(c));
 #endif					/* AMIGA ... */
 
-#if ARM
-   return (c >= 0x00 && c <= 0x7F && isprint(c));
-#endif					/* ARM */
-
 #if MACINTOSH
 #if MPW
    return (isascii(c) && isprint(c));

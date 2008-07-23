@@ -518,9 +518,9 @@
       Deliberate Syntax Error
    #endif				/* PORT */
    
-   #if AMIGA || ARM || MACINTOSH || MVS || UNIX || VM || VMS
+   #if MACINTOSH || UNIX
       #define PushAVal(x) PushVal(x)
-   #endif				/* AMIGA || ARM ||... */
+   #endif		
    
    #if MSDOS || OS2
       #if HIGHC_386 || ZTC_386 || INTEL_386 || WATCOM || BORLAND_386 || SCCX_MX

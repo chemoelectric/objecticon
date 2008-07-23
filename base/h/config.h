@@ -51,14 +51,6 @@
    #define PORT 0
 #endif					/* PORT */
 
-#ifndef AMIGA
-   #define AMIGA 0
-#endif					/* AMIGA */
-
-#ifndef ARM
-   #define ARM 0
-#endif					/* ARM */
-
 #ifndef MACINTOSH
    #define MACINTOSH 0
 #endif					/* MACINTOSH */
@@ -258,9 +250,9 @@
  */
 
 #ifndef Pipes
-   #if ARM || OS2 || UNIX || VMS
+   #if UNIX
       #define Pipes
-   #endif				/* ARM || OS2 || UNIX || VMS */
+   #endif	
 #endif					/* Pipes */
 
 #ifndef KeyboardFncs
@@ -361,15 +353,6 @@
    /* Probably nothing is needed. */
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if VMS
-   #define ExecSuffix ".exe"
-   #define ObjSuffix ".obj"
-   #define LibSuffix ".olb"
-#endif					/* VMS */
-
-#if AMIGA || ARM || MACINTOSH || MVS || VM
-#endif					/* AMIGA || ARM || ... */
 
 #if MSDOS || OS2
 

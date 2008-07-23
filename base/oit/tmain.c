@@ -124,9 +124,9 @@ static void usage(void);
    Deliberate syntax error
 #endif					/* PORT */
 
-#if ARM || MVS || UNIX || VM || VMS
+#if UNIX
    /* nothing is needed */
-#endif					/* ARM || ... */
+#endif					
 
 #if MSWindows
    char pathToIconDOS[129];
