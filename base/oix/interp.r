@@ -25,13 +25,7 @@ static void vanq_proc (struct ef_marker *efp_v, struct gf_marker *gfp_v);
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-#if LATTICE
-extern int chkbreak;
-#endif					/* LATTICE */
-#endif					/* AMIGA */
-
-#if MACINTOSH || MSDOS || MVS || OS2 || UNIX || VM || VMS
+#if MACINTOSH || MSDOS || UNIX
    /* nothing needed */
 #endif					
 
@@ -169,11 +163,11 @@ int coexp_act;			/* last co-expression action */
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || MACINTOSH || MVS || UNIX || VM || VMS
+#if MACINTOSH || UNIX
 #define PushAVal(x) PushVal(x)
 #endif
 
-#if MSDOS || OS2
+#if MSDOS
 #if HIGHC_386 || ZTC_386 || INTEL_386 || WATCOM || BORLAND_386 || SCCX_MX
 #define PushAVal(x) PushVal(x)
 #else					/* HIGHC_386 || ZTC_386 || ... */
@@ -182,7 +176,7 @@ Deliberate Syntax Error
 		       *rsp = stkword.stkint; \
 		       }
 #endif					/* HIGH_386 || ZTC_386 || ... */
-#endif					/* MSDOS || OS2 */
+#endif					/* MSDOS */
 
 /*
  * End of operating-system specific code.
@@ -410,16 +404,7 @@ int interp_x(int fsig,dptr cargp)
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-#if LATTICE
-      ExInterp;
-      if (chkbreak > 0)
-	 chkabort();			/* check for CTRL-C or CTRL-D break */
-      EntInterp;
-#endif					/* LATTICE */
-#endif					/* AMIGA */
-
-#if MSDOS || MVS || OS2 || UNIX || VM || VMS
+#if MSDOS || UNIX
    /* nothing to do */
 #endif					
 
@@ -1770,11 +1755,11 @@ interp_macro(interp_1,E_Intcall,E_Stack,E_Fsusp,E_Osusp,E_Bsusp,E_Ocall,E_Ofail,
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || MACINTOSH || MVS || VM || VMS
+#if MACINTOSH
    /* not included */
-#endif					/* AMIGA || ... */
+#endif
 
-#if MSDOS || OS2
+#if MSDOS
 #if MICROSOFT || TURBO || BORLAND_386
 void stkdump(op)
    int op;
@@ -1798,9 +1783,9 @@ void stkdump(op)
    fflush(stderr);
    }
 #endif					/* MICROSOFT || TURBO ... */
-#endif					/* MSDOS || OS2 */
+#endif					/* MSDOS */
 
-#if UNIX || VMS
+#if UNIX
 void stkdump(op)
    int op;
    {
@@ -1818,7 +1803,7 @@ void stkdump(op)
    fprintf(stderr,"\001----------\n");
    fflush(stderr);
    }
-#endif					/* UNIX || VMS */
+#endif					/* UNIX */
 
 /*
  * End of operating-system specific code.

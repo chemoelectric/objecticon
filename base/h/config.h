@@ -12,7 +12,6 @@
  *
  *	MSDOS		MS-DOS for PCs
  *	UNIX		any UNIX system; also set for BeOS
- *	VMS		VMS for the VAX
  *
  *  These are defined to be 1 or 0 depending on which operating system
  *  the installation is being done under.  They are all defined and only
@@ -63,29 +62,9 @@
    #define SCCX_MX 0
 #endif					/* SCCX_MX */
 
-#ifndef MVS
-   #define MVS 0
-#endif					/* MVS */
-
-#ifndef OS2
-   #define OS2 0
-#endif					/* OS2 */
-
-#ifndef OS2_32
-   #define OS2_32 0
-#endif					/* OS32 */
-
 #ifndef UNIX
    #define UNIX 0
 #endif					/* UNIX */
-
-#ifndef VM
-   #define VM 0
-#endif					/* VM */
-
-#ifndef VMS
-   #define VMS 0
-#endif					/* VMS */
 
 /*
  * The following definitions serve to cast common conditionals is
@@ -177,10 +156,6 @@
    #undef Graphics
    #define Graphics 1
 #endif					/* MacGraph */
-
-#ifdef PresentationManager
-   #define Graphics 1
-#endif					/* PresentationManager */
 
 #ifdef HAVE_LIBX11
    #define Graphics 1
@@ -354,7 +329,7 @@
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS || OS2
+#if MSDOS
 
    /*
     *  Define compiler-specific symbols to be zero if not already
@@ -406,7 +381,7 @@ Deliberate Syntax Error
       #undef putc
       #define putc(c,f) fputc(c,f)
    #endif				/* HIGHC_386 */
-#endif					/* MSDOS || OS2 */
+#endif					/* MSDOS */
 
 #if MACINTOSH
    #if LSC

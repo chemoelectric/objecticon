@@ -208,15 +208,10 @@
 /*
  * Absolute value, maximum, and minimum.
  */
-#if (MVS || VM) && SASC
-   #define Abs(x) __builtin_abs(x)
-   #define Max(x,y)     __builtin_max(x,y)
-   #define Min(x,y)     __builtin_min(x,y)
-#else					/* SASC */
    #define Abs(x) (((x) < 0) ? (-(x)) : (x))
    #define Max(x,y)        ((x)>(y)?(x):(y))
    #define Min(x,y)        ((x)<(y)?(x):(y))
-#endif					/* SASC */
+
 
 /*
  * Number of elements of a C array, and element size.
@@ -522,7 +517,7 @@
       #define PushAVal(x) PushVal(x)
    #endif		
    
-   #if MSDOS || OS2
+   #if MSDOS
       #if HIGHC_386 || ZTC_386 || INTEL_386 || WATCOM || BORLAND_386 || SCCX_MX
          #define PushAVal(x) PushVal(x)
       #else				/* HIGHC_386 || ZTC_386 || ... */
@@ -535,7 +530,7 @@
          			stkword.stkadr = (char *)(x); \
          			*sp = stkword.stkint;}
       #endif				/* HIGHC_386 || ZTC_386 || ... */
-   #endif				/* MSDOS || OS2 */
+   #endif				/* MSDOS */
    
    /*
     * End of operating-system specific code.

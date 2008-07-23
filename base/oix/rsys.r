@@ -83,19 +83,6 @@ struct b_file *fbp;
    static int nsaved = 0;
 #endif					/* PosixFns */
 
-#if AMIGA
-#if LATTICE
-   /* This code is special for Lattice 4.0.  It was different for
-    *  Lattice 3.10 and probably won't work for other C compilers.
-    */
-   extern struct UFB _ufbs[];
-
-   if (IsInteractive(_ufbs[fileno(fd)].ufbfh))
-      return read(fileno(fd),buf,maxi);
-#endif					/* LATTICE */
-#endif					/* AMIGA */
-
-
 #ifdef XWindows
    wflushall();
 #endif					/* XWindows */
@@ -238,14 +225,6 @@ char *hostname;
     * The string constant HostStr contains the host name.
     */
    strcpy(hostname,HostStr);
-#elif VMS				/* HostStr */
-   /*
-    * VMS has its own special logic.
-    */
-   char *h;
-   if (!(h = getenv("ICON_HOST")) && !(h = getenv("SYS$NODE")))
-      h = "VAX/VMS";
-   strcpy(hostname,h);
 #else					/* HostStr */
    {
    /*
@@ -373,41 +352,10 @@ dptr d;
 
 #ifdef MSWindows
 #endif					/* MSWindows */
-#ifdef PresentationManager
-   if (ConsoleFlags & OutputToBuf) {
-      /* check for overflow */
-      if (MaxReadStr * 4 - ((int)ConsoleStringBufPtr - (int)ConsoleStringBuf) < l + 1)
-	 return Failed;
-      /* big enough */
-      memcpy(ConsoleStringBufPtr, s, l);
-      ConsoleStringBufPtr += l;
-      *ConsoleStringBufPtr = '\0';
-      } /* End of if - push to buffer */
-   else if ((f == stdout && !(ConsoleFlags & StdOutRedirect)) ||
-	    (f == stderr && !(ConsoleFlags & StdErrRedirect)))
-      wputstr((wbinding *)PMOpenConsole(), s, l);
-   return Succeeded;
-#endif					/* PresentationManager */
-#if VMS
-   /*
-    * This is to get around a bug in VMS C's fwrite routine.
-    */
-   {
-      int i;
-      for (i = 0; i < l; i++)
-         if (putc(s[i], f) == EOF)
-            break;
-      if (i == l)
-         return Succeeded;
-      else
-         return Failed;
-   }
-#else					/* VMS */
    if (longwrite(s,l,f) < 0)
       return Failed;
    else
       return Succeeded;
-#endif					/* VMS */
    }
 
 /*
@@ -444,24 +392,6 @@ int n;
 /*
  * The following code is operating-system dependent [@fsys.01].
  */
-#if OS2
-#if OS2_32
-   DosSleep(n);
-   return Succeeded;
-#else					/* OS2_32 */
-   return Failed;
-#endif					/* OS2_32 */
-#endif					/* OS2 */
-
-#if VMS
-   delay_vms(n);
-   return Succeeded;
-#endif					/* VMS */
-
-#if SASC
-   sleepd(0.001*n);
-   return Succeeded;
-#endif                                   /* SASC */
 
 #if UNIX
    {

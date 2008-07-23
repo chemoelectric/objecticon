@@ -21,23 +21,9 @@
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-#if __SASC
-   /* Undefine macros from fcntl.h and stdlib.h that collide with
-      function names in this module. */
-#passthru #undef close
-#passthru #undef open
-#passthru #undef read
-#passthru #undef write
-#passthru #undef getenv
-#endif __SASC                           /* SASC  */
-extern FILE *popen(const char *, const char *);
-extern int pclose(FILE *);
-#endif AMIGA                            /* AMIGA */
-
-#if MSDOS || MVS || OS2 || UNIX || VM || VMS
+#if MSDOS || UNIX
    /* nothing to do */
-#endif					/* MSDOS ... */
+#endif			
 
 #if MACINTOSH && MPW
 extern int MPWFlush(FILE *f);
@@ -177,7 +163,7 @@ function{1} close(f)
 #endif					/* NTGCC */
 #endif					/* NT */
 
-#if AMIGA || OS2 || UNIX || VMS || NT
+#if UNIX || NT
       /*
        * Close pipe if pipes are supported.
        */
@@ -231,11 +217,7 @@ function{0,1} getenv(s)
       register char *p;
       long l;
 
-#if AMIGA && __SASC
-      if ((p = __getenv(s)) != NULL) {
-#else                                /* AMIGA && __SASC */
       if ((p = getenv(s)) != NULL) {	/* get environment variable */
-#endif                               /* AMIGA && __SASC */
 	 l = strlen(p);
 	 Protect(p = alcstr(p,l),runerr(0));
 	 return string(l,p);
@@ -320,17 +302,17 @@ function{0,1} open(fname, spec)
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || MACINTOSH || MSDOS || MVS || OS2 || VM
+#if MACINTOSH || MSDOS
    /* nothing is needed */
-#endif					/* AMIGA || ... */
+#endif
 
 #ifdef PosixFns
       int is_udp_or_listener = 0;	/* UDP = 1, listener = 2 */
 #endif					/* PosixFns */
 
-#if OS2 || UNIX || VMS || NT
+#if UNIX || NT
       extern FILE *popen();
-#endif					/* OS2 || UNIX || VMS || NT */
+#endif
 
 /*
  * End of operating-system specific code.
@@ -396,7 +378,7 @@ Deliberate Syntax Error
 		  status |= Fs_Untrans;
 	       continue;
 
-#if AMIGA || OS2 || UNIX || VMS || NT
+#if UNIX || NT
 	    case 'p':
 	    case 'P':
 	       status |= Fs_Pipe;
@@ -498,7 +480,7 @@ Deliberate Syntax Error
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || UNIX || VMS
+#if UNIX
       if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write))
 	 mode[1] = '+';
 #endif
@@ -511,21 +493,13 @@ Deliberate Syntax Error
       else if ((status & Fs_Untrans) != 0) mode[1] = 'b';
 #endif					/* MACINTOSH */
 
-#if MSDOS || OS2
+#if MSDOS
       if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write)) {
 	 mode[1] = '+';
 	 mode[2] = ((status & Fs_Untrans) != 0) ? 'b' : 't';
 	 }
       else mode[1] = ((status & Fs_Untrans) != 0) ? 'b' : 't';
-#endif					/* MSDOS || OS2 */
-
-#if MVS || VM
-      if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write)) {
-	 mode[1] = '+';
-	 mode[2] = ((status & Fs_Untrans) != 0) ? 'b' : 0;
-	 }
-      else mode[1] = ((status & Fs_Untrans) != 0) ? 'b' : 0;
-#endif					/* MVS || VM */
+#endif					/* MSDOS */
 
 /*
  * End of operating-system specific code.
@@ -1510,17 +1484,6 @@ end
 
 #ifdef Graphics
       }
-#ifdef PresentationManager
-    /* must be writing to a window, then, if it is not the console,
-       we have to set the background mix mode of the character bundle
-       back to LEAVEALONE so the background is no longer clobbered */
-    else if (f != ConsoleBinding) {
-      /* have to set the background mode back to leave-alone */
-      ((wbp)f)->context->charBundle.usBackMixMode = BM_LEAVEALONE;
-      /* force the reload on next use */
-      ((wbp)f)->window->charContext = NULL;
-      } /* End of else if - not the console window we're writing to */
-#endif					/* PresentationManager */
 #endif					/* Graphics */
 
 
@@ -1664,15 +1627,6 @@ function {1} name(x[nargs])
 		     }
 #endif					/* nl */
 
-#ifdef PresentationManager
-                 /* have to put the background mix back on the current file */
-                 if (f != NULL && (status & Fs_Window) && f != ConsoleBinding) {
-                   /* set the background back to leave-alone */
-                   ((wbp)f)->context->charBundle.usBackMixMode = BM_LEAVEALONE;
-                   /* unload the context from this window */
-                   ((wbp)f)->window->charContext = NULL;
-                   }
-#endif					/* PresentationManager */
 
 		  /*
 		   * Switch the current file to the file named by the current
@@ -1682,17 +1636,6 @@ function {1} name(x[nargs])
 		  if ((status & Fs_Write) == 0)
 		     runerr(213, x[n]);
 		  f.fp = BlkLoc(x[n])->file.fd.fp;
-#ifdef PresentationManager
-                  if (status & Fs_Window) {
-                     /*
-		      * have to set the background to overpaint - the one
-                      * difference between DrawString and write(s)
-		      */
-                    f.wb->context->charBundle.usBackMixMode = BM_OVERPAINT;
-                    /* unload the context from the window so it will be reloaded */
-                    f.wb->window->charContext = NULL;
-                    }
-#endif					/* PresentationManager */
 		  }
 	       else {
 		  /*
@@ -1816,7 +1759,7 @@ function{0,1} chdir(s)
 #if MACINTOSH
       runerr(121);
 #endif                              
-#if AMIGA || MSDOS || OS2 || UNIX || VMS || NT
+#if MSDOS || UNIX || NT
 
       char path[MaxPath];
       int len;

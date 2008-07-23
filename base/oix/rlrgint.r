@@ -373,24 +373,13 @@ dptr da, dx;
           DIG(temp,0),
           alen);
    p = q += slen;
-#ifdef VMS
-   {
-      DIGIT *tempdg;
-      for (;;) {
-         tempdg = DIG(temp,0);
-         if (!cmpi1(tempdg, (word)0, alen))
-            break;
-         *--p = '0' + divi1(tempdg, (word)10, tempdg, alen);
-      }
-   }
-#else
    while (cmpi1(DIG(temp,0),
                 (word)0, alen))
       *--p = '0' + divi1(DIG(temp,0),
                          (word)10,
                          DIG(temp,0),
                          alen);
-#endif			/* VMS */
+
    if (a->sign)
       *--p = '-';
    StrLen(*dx) = q - p;

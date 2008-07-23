@@ -61,10 +61,6 @@ static void untend        (int indent);
 
 extern char *progname;
  
-#if MVS
-extern char *src_file_nm;
-#endif                                  /* MVS */
-
 int op_type = OrdFunc;  /* type of operation */
 char lc_letter;         /* f = function, o = operator, k = keyword */
 char uc_letter;         /* F = function, O = operator, K = keyword */
@@ -3333,13 +3329,7 @@ struct node *n;
     */
    switch (op_type) {
       case TokFunction:
-
-#if VMS
-         letter = 'Y';
-#else					/* VMS */
          letter = 'Z';
-#endif					/* VMS */
-
          break;
       case Keyword:
          letter = 'K';

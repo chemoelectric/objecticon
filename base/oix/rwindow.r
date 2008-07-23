@@ -19,11 +19,6 @@ extern HPALETTE palette;
 extern int numColors;
 #endif					/* MSWindows */
 
-#ifdef PresentationManager
-extern LONG ScreenBitsPerPel;
-#endif					/* PresentationManager */
-
-
 
 /*
  * subscript the already-processed-events "queue" to index i.
@@ -88,9 +83,9 @@ int wgetevent(w,res,t)
 #endif					/* MSWindows */
             if (pollevent() < 0)				/* poll all windows */
                 break;					/* break on error */
-#if UNIX || VMS || OS2_32
+#if UNIX
             idelay(XICONSLEEP);
-#endif					/* UNIX || VMS || OS2_32 */
+#endif					/* UNIX */
 #ifdef MSWindows
             Sleep(20);
 #endif					/* MSWindows */
@@ -176,12 +171,8 @@ int wgetche(w,res)
         return i;
     i = *StrLoc(*res);
     if ((0 <= i) && (i <= 127) && (ISECHOON(w))) {
-#ifndef PresentationManager
         wputc(i, w);
         if (i == '\r') wputc((int)'\n', w); /* CR -> CR/LF */
-#else					/* PresentationManager */
-        wputc(((i == '\r') ? '\n' : i), w);
-#endif					/* PresentationManager */
     }
     return 1;
 }
@@ -229,12 +220,12 @@ wsp getactivewindow()
                 next = j;
                 return ws;
 	    }
-#if UNIX || VMS || OS2_32
+#if UNIX
         /*
          * couldn't find a pending event - wait awhile
          */
         idelay(XICONSLEEP);
-#endif					/* UNIX || VMS || OS2_32 */
+#endif					/* UNIX */
     }
 }
 
@@ -3606,15 +3597,8 @@ void genCurve(w, p, n, helper)
 #define max(x,y) ((x>y)?x:y)
 #endif
 
-#if VMS
-        {
-            int tmp1 = abs(p[i-1].x - p[i-2].x);
-            int tmp2 = abs(p[i-1].y - p[i-2].y);
-            steps = max(tmp1, tmp2) + 10;
-        }
-#else						/* VMS */
+
         steps = max(abs(p[i-1].x - p[i-2].x), abs(p[i-1].y - p[i-2].y)) + 10;
-#endif						/* VMS */
 
         if (steps+4 > npoints) {
             if (thepoints != NULL) free(thepoints);

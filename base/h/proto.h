@@ -11,25 +11,7 @@
    Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-   #if LATTICE
-      #include <dos.h>
-   #endif				/* LATTICE */
-   #if __SASC
-      /* GLOBAL and STATIC are defined in tparse.c as well as
-      in <exec/types.h>, which is included in <dos.h>. */
-      #undef GLOBAL        
-      #undef STATIC
-      #include <dos.h>
-      #undef GLOBAL        
-      #undef STATIC
-      /* From tparse.c */
-      # define GLOBAL 273
-      # define STATIC 286
-   #endif                               /* __SASC */
-#endif					/* AMIGA */
-
-#if MSDOS || OS2
+#if MSDOS
    #if HIGHC_386
       int	brk		(pointer p);
       pointer sbrk		(msize n);
@@ -43,7 +25,7 @@
       #include <dos.h>
 #endif					/* not LCC */
    #endif				/* MICROSOFT || TURBO || ZTC_386 ... */
-#endif					/* MSDOS || OS2 */
+#endif					/* MSDOS */
 
 /*
  * End of operating-system specific code.

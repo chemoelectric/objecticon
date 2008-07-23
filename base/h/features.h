@@ -34,14 +34,6 @@
 #endif					/* INTEL_386 || HIGHC_386 ... */
 #endif					/* MSDOS */
 
-#if MVS
-   Feature(1, "_MVS", "MVS")
-#endif					/* MVS */
-
-#if OS2
-   Feature(1, "_OS2", "OS/2")
-#endif					/* OS2 */
-
 #if PORT
    Feature(1, "_PORT", "PORT")
 #endif					/* PORT */
@@ -53,11 +45,6 @@
 #ifdef PosixFns
    Feature(1, "_POSIX", "POSIX")
 #endif					/* PosixFns */
-
-
-#if VMS
-   Feature(1, "_VMS", "VMS")
-#endif					/* VMS */
 
 #if EBCDIC != 1
    Feature(1, "_ASCII", "ASCII")
@@ -112,10 +99,6 @@
    Feature(1, "_WIN32", "Win32")
 #endif					/* NT */
 #endif					/* MSWindows */
-
-#ifdef PresentationManager
-   Feature(1, "_PRESENTATION_MGR", "Presentation Manager")
-#endif					/* PresentationManager */
 
 #ifdef DosFncs
    Feature(1, "_DOS_FUNCTIONS", "MS-DOS extensions")

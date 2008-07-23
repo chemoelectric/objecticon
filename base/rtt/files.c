@@ -13,13 +13,6 @@
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-   /* Amiga paths are not converted. 
-    *  Absolute paths have the form Volume:dir/dir/.../file
-    */
-#define IsRelPath(fname) (strchr(fname, ':') == NULL)
-#endif					/* AMIGA */
-
 #if MACINTOSH
 char *FileNameMacToUnix(char *fn);
 char *FileNameUnixToMac(char *fn);
@@ -37,9 +30,9 @@ char *FileNameMacConvert(char *(*func)(char *),char *fn);
 #define IsRelPath(fname) (fname[0] != '/')
 #endif					/* MSDOS */
 
-#if UNIX || VMS
+#if UNIX
 #define IsRelPath(fname) (fname[0] != '/')
-#endif					/* UNIX || VMS */
+#endif	
 
 /*
  * End of operating-system specific code.
@@ -77,10 +70,6 @@ FILE *f;
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-   /* nothing is needed */
-#endif					/* AMIGA */
-
 #if MACINTOSH
    fname = FileNameMacConvert(FileNameMacToUnix,fname);
 #endif					/* MACINTOSH */
@@ -97,9 +86,9 @@ Deliberate Syntax Error
          *s = '/';
 #endif					/* MSDOS */
 
-#if UNIX || VMS
+#if UNIX
    /* nothing is needed */
-#endif					/* UNIX || VMS */
+#endif					/* UNIX */
 
 /*
  * End of operating-system specific code.
@@ -151,7 +140,6 @@ int system;
     */
    if (IsRelPath(fname)) {
       sbuf = get_sbuf();
-#if  !MVS && !VM					/* ??? */
       f = NULL;
       if (!system) {
          /*
@@ -218,38 +206,6 @@ int system;
          ++prefix;
          }
       rel_sbuf(sbuf);
-#else					/* !MVS && !VM */
-      if (system) {
-         for (s = "ddn:SYSLIB("; *s != '\0'; ++s)
-            AppChar(*sbuf, *s);
-         for (s = fname; *s != '\0' && *s != '.'; ++s)
-            AppChar(*sbuf, *s);
-         AppChar(*sbuf, ')');
-         }
-      else {
-         char *t;
-         for (s = "ddn:"; *s != '\0'; ++s)
-            AppChar(*sbuf, *s);
-         t = fname;
-         do {
-            for (s = t; *s != '/' && *s != '\0'; ++s);
-            if (*s != '\0') t = s+1;
-            } while (*s != '\0');
-         for (s = t; *s != '.' && *s != '\0'; ++s);
-         if (*s == '\0') {
-            AppChar(*sbuf, 'H');
-            }
-         else for (++s; *s != '\0'; ++s)
-            AppChar(*sbuf, *s);
-         AppChar(*sbuf, '(');
-         for (; *t != '.' && *t != '\0'; ++t)
-            AppChar(*sbuf, *t);
-         AppChar(*sbuf, ')');
-         }
-      path = str_install(sbuf);
-      f = fopen(path, "r");
-      rel_sbuf(sbuf);
-#endif					/* !MVS && !VM */
       }
    else {                               /* The path is absolute. */
       path = fname;
@@ -284,28 +240,6 @@ char **opt_args;
    /* probably needs something */
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if VMS
-   char **syspaths;
-   int  vmsi;
-
-   n_paths = vmsi = 0;
-   syspaths = (char **)alloc((unsigned int)(sizeof(char *) * 2));
-   if (syspaths[n_paths] = getenv("VAXC$INCLUDE")) {
-      n_paths++;
-      vmsi++;
-      }
-   if (syspaths[n_paths] = getenv("SYS$LIBRARY")) {
-      n_paths++;
-      vmsi++;
-      }
-#endif					/* VMS */
-
-#if AMIGA
-   static char *sysdir = "include:";
-
-   n_paths = 1;
-#endif					/* AMIGA */
 
 #if MACINTOSH
 #if THINK_C
@@ -489,10 +423,6 @@ Deliberate Syntax Error
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-   /* nothing is needed */
-#endif					/* AMIGA */
-
 #if MSDOS
 #if MICROSOFT
    /*
@@ -575,9 +505,9 @@ Deliberate Syntax Error
 #endif					/* HIGHC_386 || INTEL_386 || ... */
 #endif					/* MSDOS */
 
-#if UNIX || VMS || MACINTOSH
+#if UNIX || MACINTOSH
    /* nothing is needed */
-#endif					/* UNIX || VMS || MACINTOSH */
+#endif					/* UNIX || MACINTOSH */
 
 /*
  * End of operating-system specific code.
@@ -604,10 +534,6 @@ Deliberate Syntax Error
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-   /* nothing is needed */
-#endif					/* AMIGA */
-
 #if MACINTOSH
    s1 = FileNameMacConvert(FileNameMacToUnix,s);
 #endif					/* MACINTOSH */
@@ -621,9 +547,9 @@ Deliberate Syntax Error
                *s = '/';
 #endif					/* MSDOS */
 
-#if UNIX || VMS
+#if UNIX
    /* nothing is needed */
-#endif					/* UNIX || VMS */
+#endif	
 
 /*
  * End of operating-system specific code.
@@ -642,15 +568,6 @@ Deliberate Syntax Error
    /* probably needs something */
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if VMS
-   for ( ; vmsi; vmsi--)
-      incl_search[n_paths - vmsi] = syspaths[vmsi-1];
-#endif					/* VMS */
-
-#if AMIGA
-   incl_search[n_paths - 1] = sysdir;
-#endif					/* AMIGA */
 
 #if MSDOS
 #if MICROSOFT

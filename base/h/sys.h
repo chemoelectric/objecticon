@@ -23,21 +23,6 @@
    Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-   #include <fcntl.h>
-   #include <ios1.h>
-   #include <libraries/dosextens.h>
-   #include <libraries/dos.h>
-   #include <workbench/startup.h>
-   #if __SASC
-      #include <proto/dos.h>
-      #include <proto/icon.h>
-      #include <proto/wb.h>
-      #undef GLOBAL
-      #undef STATIC			/* defined in <exec/types.h> */
-   #endif				/* __SASC */
-#endif					/* AMIGA */
-
 #if MACINTOSH
    #if LSC
       #include <unix.h>
@@ -107,24 +92,6 @@
 #endif					/* MSDOS */
 
 
-#if OS2
-   #define INCL_DOS
-   #define INCL_ERRORS
-   #define INCL_RESOURCES
-   #define INCL_DOSMODULEMGR
-
-   #ifdef PresentationManager
-      #define INCL_PM
-   #endif				/* PresentationManager */
-
-   #include <os2.h>
-   /* Pipe support for OS/2 */
-   #include <stddef.h>
-   #include <process.h>
-   #include <fcntl.h>
-
-#endif					/* OS2 */
-
 #if UNIX
    #include <dirent.h>
    #include <limits.h>
@@ -139,33 +106,7 @@
    #endif
 #endif					/* UNIX */
 
-#if VMS
-   #include <types.h>
-   #include <dvidef>
-   #include <iodef>
-   #include <stsdef.h>
-#endif					/* VMS */
-
 #ifdef XWindows
-   /*
-    * Undef VMS under UNIX, and UNIX under VMS,
-    * to avoid confusing the tests within the X header files.
-    */
-   #if VMS
-      #undef UNIX
-      #include "decw$include:Xlib.h"
-      #include "decw$include:Xutil.h"
-      #include "decw$include:Xos.h"
-      #include "decw$include:Xatom.h"
-
-      #ifdef HAVE_LIBXPM
-         #include <X11/xpm.h>
-      #endif				/* HAVE_LIBXPM */
-
-      #undef UNIX
-      #define UNIX 0
-   #else				/* VMS */
-      #undef VMS
 
 #ifdef Redhat71
 /* due to a header bug, we must commit a preemptive first strike of Xosdefs */
@@ -180,14 +121,7 @@
 #endif					/* Redhat71 */
 
       #ifdef HAVE_LIBXPM
-#if !AMIGA
-#define AMIGA_ZERO
-#undef AMIGA
-#endif					/* !AMIGA */
          #include <X11/xpm.h>
-#ifdef AMIGA_ZERO
-#define AMIGA 0
-#endif					/* !AMIGA */
       #else				/* HAVE_LIBXPM */
          #include <X11/Xlib.h>
       #endif				/* HAVE_LIBXPM */
@@ -195,10 +129,6 @@
       #include <X11/Xutil.h>
       #include <X11/Xos.h>
       #include <X11/Xatom.h>
-
-      #undef VMS
-      #define VMS 0
-   #endif				/* VMS */
 
    #ifdef HAVE_LIBXFT
    #include <X11/Xft/Xft.h>
@@ -239,9 +169,7 @@
  * Feature-dependent includes.
  */
 #ifndef HostStr
-   #if !VMS
       #include <sys/utsname.h>
-   #endif				/* !VMS */
 #endif					/* HostStr */
 
 #ifdef HAVE_LIBDL
@@ -259,10 +187,6 @@
 #endif					/* WildCards */
 
 
-
-
-
-
 #ifdef HAVE_LIBZ
 			
 #  ifdef STDC
@@ -271,13 +195,7 @@
 #    define OF(args)  ()
 #  endif
 
-#if !VMS
-#undef VMS
-#endif
 #include <zlib.h>
-#ifndef VMS
-#define VMS 0
-#endif
 
 #endif					/* HAVE_LIBZ */
 

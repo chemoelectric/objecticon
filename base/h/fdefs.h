@@ -3,7 +3,7 @@
  */
 
 #undef exit		/* may be defined under ConsoleWindow */
-#undef getenv		/* may be defined under AMIGA */
+#undef getenv		
 
 FncDef(abs,1)
 FncDef(acos,1)
@@ -95,9 +95,9 @@ FncDef(where,1)
 FncDefV(write)
 FncDefV(writes)
 
-#if AMIGA || UNIX || VMS || OS2_32 || NT || SCCX_MX
+#if UNIX || NT
    FncDef(delay,1)
-#endif					/* AMIGA || UNIX || VMS || OS2_32... */
+#endif		
 
 #ifdef Graphics
    FncDefV(open)

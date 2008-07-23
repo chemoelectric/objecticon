@@ -162,10 +162,6 @@
  */
 typedef int clock_t, time_t, fd_set, va_list;
 
-#if OS2_32
-   typedef int HFILE, ULONG;
-#endif					/* OS2_32 */
-
 #if WildCards
    typedef int FINDDATA_T;
 #endif					/* WildCards */
@@ -257,23 +253,6 @@ typedef int siptr, stringint, inst;
       typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
       typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
    #endif				/* MSWindows */
-
-   #ifdef PresentationManager
-      /* OS/2 PM specifics */
-      typedef int HAB, HPS, QMSG, HMQ, HWND, USHORT, MRESULT, ULONG, MPARAM;
-      typedef int PFNWP, HMODULE, SHORT, BOOL, TID, RECTL, ERRORID;
-      typedef int MRESULT_N_EXPENTRY, SIZEL, HDC, POINTL, HMTX, HBITMAP;
-      typedef int VOID_APIENTRY, UCHAR, HEV, LINEBUNDLE, BUTMAPARRAYFILEHEADER;
-      typedef int LONG, BITMAPINFOHEADER2, PBITMAPINFO2, PSZ, RGB2, BITMAPINFO2;
-      typedef int FONTMETRICS, PRECTL, PCHARBUNDLE, PLINEBUNDLE, PIMAGEBUNDLE;
-      typedef int AREABUNDLE, PAREABUNDLE, PPOINTL, POLYGON, CHARBUNDLE;
-      typedef int lclIdentifier, BYTE, PBYTE, PRGB2, FATTRS, PFATTRS, PULONG;
-      typedef int PBITMAPINFOHEADER2, BITMAPFILEHEADER2, BITMAPARRAYFILEHEADER2;
-      typedef int colorEntry, ARCPARAMS, threadargs, HPOINTER, CURSORINFO;
-      typedef int PCURSORINFO, DEVOPENSTRUCT, PDEVOPENDATA, SIZEF, HRGN, PSWP;
-      typedef int BITMAPINFOHEADER, BITMAPFILEHEADER;
-      typedef int PBITMAPINFOHEADER, MinBitmapHeader, RGB;
-   #endif				/* PresentationManager */
 
    /*
     * Convenience macros to make up for RTL's long-windedness.

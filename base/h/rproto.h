@@ -324,13 +324,11 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    int	mutable_color	(wbp w, dptr argv, int ac, int *retval);
    int	nativecolor	(wbp w, char *s, long *r, long *g, long *b);
 
-   #ifndef PresentationManager
-      /* Exclude those functions defined as macros */
-      int pollevent	(void);
+   /* Exclude those functions defined as macros */
+   int pollevent	(void);
 #ifndef MSWindows
-      void wflush	(wbp w);
+   void wflush	(wbp w);
 #endif
-   #endif				/* PresentationManager */
 
    int	query_pointer	(wbp w, XPoint *pp);
    int	query_rootpointer (XPoint *pp);

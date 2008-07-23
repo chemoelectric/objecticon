@@ -20,10 +20,6 @@ char *refpath = RefPath;
 char *refpath = "";
 #endif					/* RefPath */
 
-#if MVS
-char *src_file_nm;
-#endif                                  /* MVS */
-
 /*
  * The following code is operating-system dependent [@rttmain.02].
  * The relative path to grttin.h and rt.h depends on whether they are
@@ -36,30 +32,15 @@ char *src_file_nm;
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-char *grttin_path = "/base/h/grttin.h";
-char *rt_path = "/base/h/rt.h";
-#endif					/* AMIGA */
-
 #if MACINTOSH
 char *grttin_path = "::h:grttin.h";
 char *rt_path = "::h:rt.h";
 #endif					/* MACINTOSH */
 
-#if MSDOS || OS2
+#if MSDOS
 char *grttin_path = "..\\base\\h\\grttin.h";
 char *rt_path = "..\\base\\h\\rt.h";
-#endif					/* MSDOS || OS2 */
-
-#if MVS
-char *grttin_path = "ddn:h(grttin)";  /* presented to source() */
-char *rt_path = "rt.h";  /* presented to compiler */
-#endif                                  /* MVS */
-
-#if VMS || VM
-char *grttin_path = "grttin.h";
-char *rt_path = "rt.h";
-#endif                                  /* VMS || VM */
+#endif					/* MSDOS */
 
 #if UNIX
 char *grttin_path = "../base/h/grttin.h";
@@ -257,10 +238,6 @@ char **argv;
     */
    while (optind < argc)  {
 
-#if MVS
-      src_file_nm = argv[optind];
-#endif                                  /* MVS */
-
 #if PatternMatch
       FINDDATA_T fd;
 
@@ -406,12 +383,6 @@ int keep;
    struct fileparts *fp;
 
    fp = fparse(fname);
-
-#if MVS
-   if (*fp->member)
-      fprintf(curlst, "%s(%s\n", fp->name, fp->member);
-   else
-#endif                                  /* MVS */
 
    fprintf(curlst, "%s\n", fp->name);
    if (keep)

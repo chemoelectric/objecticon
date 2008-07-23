@@ -19,25 +19,7 @@ char *p;
    Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA
-   #if AZTEC_C
-       /*
-        * If it doesn't work, try trick used for HIGH_C, below.
-        */
-       stderr->_unit  = stdout->_unit;
-       stderr->_flags = stdout->_flags;
-   #endif				/* AZTEC C */
-   #if LATTICE || __SASC
-      /*
-       * The following code varies from compiler to compiler, or even
-       *  between versions of the same compiler (e.g. lattice 3.1 vs. 4.0).
-       */
-      stderr->_file = stdout->_file;
-      stderr->_flag = stdout->_flag;
-   #endif				/* LATTICE || __SASC */
-#endif					/* AMIGA */
-
-#if MSDOS || OS2 || VMS
+#if MSDOS
    #if HIGHC_386 || NT
       /*
        * Don't like doing this, but it seems to work.
@@ -48,7 +30,7 @@ char *p;
    #else				/* HIGHC_386 || NT */
       dup2(fileno(stdout),fileno(stderr));
    #endif				/* HIGHC_386 || NT */
-#endif					/* MSDOS || OS2 ... */
+#endif					/* MSDOS */
 
 
 #if MACINTOSH

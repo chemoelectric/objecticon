@@ -139,9 +139,6 @@ static void usage(void);
    #endif				/* MPW */
 #endif					/* MACINTOSH */
 
-#if OS2
-   #include <process.h>
-#endif					/* OS2 */
 /*
  * End of operating-system specific code.
  */
@@ -528,10 +525,6 @@ Deliberate Syntax Error
       execv(ofile, argv);
       quitf("could not execute %s", ofile);
 #endif					/* UNIX */
-
-#if VMS
-      execv(iconxloc,argv);
-#endif					/* VMS */
 
 /*
  * End of operating-system specific code.

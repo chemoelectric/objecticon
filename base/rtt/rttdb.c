@@ -197,12 +197,6 @@ char *fname;
              */
             fp = fparse(clst->name);
 
-#if MVS
-            if (*fp->member)
-               fprintf(f, "%s(%s\n", fp->name, fp->member);
-            else
-#endif                                  /* MVS */
-
             fprintf(f, "%s\n", fp->name);
             }
    if (fclose(f) != 0)

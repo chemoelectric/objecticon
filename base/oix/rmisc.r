@@ -1835,9 +1835,9 @@ int c;
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if AMIGA || MSDOS || OS2 || UNIX || VMS
+#if MSDOS || UNIX
    return (isascii(c) && isprint(c));
-#endif					/* AMIGA ... */
+#endif		
 
 #if MACINTOSH
 #if MPW
@@ -1846,14 +1846,6 @@ Deliberate Syntax Error
    return isprint(c);
 #endif					/* MPW */
 #endif					/* MACINTOSH */
-
-#if MVS || VM
-#if SASC
-   return isascii(c) && !iscntrl(c);
-#else					/* SASC */
-   return isprint(c);
-#endif					/* SASC */
-#endif                                  /* MVS || VM */
 
 /*
  * End of operating-system specific code.

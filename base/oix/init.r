@@ -342,10 +342,10 @@ void icon_init(name, argcp, argv)
 #endif					/* MPW */
 #endif					/* MACINTOSH */
 
-#if UNIX || VMS
+#if UNIX
 /*RPP   signal(SIGSEGV, SigFncCast segvtrap); */
     signal(SIGFPE, SigFncCast fpetrap);
-#endif					/* UNIX || VMS */
+#endif					/* UNIX */
 
 /*
  * End of operating-system specific code.
@@ -463,18 +463,6 @@ void icon_init(name, argcp, argv)
     EVInit();
 
     /*
-     * Check command line for redirected standard I/O.
-     *  Assign a channel to the terminal if KeyboardFncs are enabled on VMS.
-     */
-
-#if VMS
-    redirect(argcp, argv, 0);
-#ifdef KeyboardFncs
-    assign_channel_to_terminal();
-#endif					/* KeyboardFncs */
-#endif					/* VMS */
-
-    /*
      * Resolve references from icode to run-time system.
      */
     resolve(NULL);
@@ -489,7 +477,7 @@ void icon_init(name, argcp, argv)
     Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MACINTOSH || UNIX || OS2 || VMS
+#if MACINTOSH || UNIX
 
 
         if (noerrbuf)
@@ -583,9 +571,9 @@ void envset()
         Deliberate Syntax Error
 #endif					/* PORT */
 
-#if UNIX || VMS
+#if UNIX
         signal(SIGSEGV, SIG_DFL);
-#endif					/* UNIX || VMS */
+#endif					/* UNIX */
 
 /*
  * End of operating-system specific code.
