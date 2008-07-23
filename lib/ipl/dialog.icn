@@ -315,7 +315,7 @@ procedure SelectDialog( 		#: selection dialog
 
    default_button := buttons[index] 		# null if out of bounds
 
-$ifdef _MS_WINDOWS_NT
+$ifdef _MS_WIN32
    if (*labels=0) & (p := proc("WinSelectDialog", 0)) then {
       # call built-in selectdialog, but only for supported buttons
       every x := !buttons do
@@ -393,7 +393,7 @@ procedure Notice(captions[])		#: notice dialog
       /win := temp_win := WOpen("canvas=hidden", "bg=" || VBackground)
       }
 
-$ifdef _MS_WINDOWS_NT
+$ifdef _MS_WIN32
    if p := proc("WinSelectDialog", 0) then {	# use built-in if available
       p(win, captions)
       dialog_button := "Okay"
@@ -426,7 +426,7 @@ procedure SaveDialog(win, caption, filename, len)	#: save dialog
    /filename := ""
    /len := OpenWidth
 
-$ifdef _MS_WINDOWS_NT
+$ifdef _MS_WIN32
    if p := proc("WinSaveDialog", 0) then {	# use built-in if available
       SelectDialog(win, caption, , , ["Yes", "No", "Cancel"])
       if dialog_button == ("No" | "Cancel") then return dialog_button
@@ -463,7 +463,7 @@ procedure OpenDialog(win, caption, filename, len)	#: open dialog
    /filename := ""
    /len := OpenWidth
 
-$ifdef _MS_WINDOWS_NT
+$ifdef _MS_WIN32
    if p := proc("WinOpenDialog", 0) then {	# use built-in if available
       if dialog_value := p(win, caption, filename, len) then
          dialog_button := "Okay"
@@ -520,7 +520,7 @@ procedure ColorDialog(			#: color dialog
    /captions := "Select color:"
    if type(captions) ~== "list" then captions := [captions]
 
-$ifdef _MS_WINDOWS_NT
+$ifdef _MS_WIN32
    if p := proc("WinColorDialog", 0) then {	# use built-in if available
       if dialog_value := p(win, caption, filename, len) then
          dialog_button := "Okay"

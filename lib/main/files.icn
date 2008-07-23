@@ -12,9 +12,9 @@ class Files()
 
    private static init()
       FS := 
-         if has_feature("MS Windows NT" | "MS-DOS") then 
+         if has_feature("MS Win32") then 
             WindowsFileSystem()
-         else if has_feature("UNIX" | "PLAN9") then
+         else if has_feature("UNIX") then
             UnixFileSystem()
          else
             stop("Can't init_file_system: unknown o/s type")

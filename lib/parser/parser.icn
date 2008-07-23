@@ -45,7 +45,7 @@ class Parser(Connectable, Error)
       every s := &features do {
          DEFAULT_SYMBOLS[case s of {
             "Macintosh":"_MACINTOSH"
-            "MS Windows NT":"_MS_WINDOWS_NT"
+            "MS Win32":"_MS_WIN32"
             "UNIX":"_UNIX"
             "POSIX":"_POSIX"
             "DBM":"_DBM"
@@ -61,7 +61,6 @@ class Parser(Connectable, Error)
             "graphics":"_GRAPHICS"
             "X Windows":"_X_WINDOW_SYSTEM"
             "MS Windows":"_MS_WINDOWS"
-            "Win32":"_WIN32"
          }] := "1"
       }
    end

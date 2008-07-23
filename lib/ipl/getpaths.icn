@@ -53,7 +53,7 @@ procedure getpaths(base_paths[])
 	    trimmer := cset(trailer || " ")
             varname := "path"
         }
-	else if find("MS-DOS"|"MS Windows NT", &features) then {
+	else if find("MS Win32", &features) then {
 	    sep := ";"
 	    trailer := "\\"
 	    trimmer := cset(trailer || " ")

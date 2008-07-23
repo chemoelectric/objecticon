@@ -42,7 +42,7 @@ class Style()
    end
 
    public get_filter_clone(W)
-$ifdef _MS_WINDOWS_NT
+$ifdef _MS_WIN32
       return Clone(W, "fillstyle=masked", "drawop=reverse", "pattern=verydark")
 $else
       return Clone(W, "fillstyle=masked", "reverse=on", "pattern=waves")

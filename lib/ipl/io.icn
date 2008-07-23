@@ -792,7 +792,7 @@ procedure tempname(			#: get temporary file name
    /prefix := ""
    /suffix := ""
    /path := "."
-   if find("MS-DOS"|"MS Windows NT", &features) then
+   if find("MS Win32", &features) then
       prefix := path || "\\" || prefix
    else
       prefix := path || "/" || prefix

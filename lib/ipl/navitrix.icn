@@ -155,7 +155,7 @@ $ifdef _UNIX
       return
       }
 $else
-$ifdef _MS_WINDOWS_NT
+$ifdef _MS_WIN32
    if value ?:= tab(upto('/\\')) then {
       chdir(value) # map the / to \?
       nav_refresh()

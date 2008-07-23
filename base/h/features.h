@@ -19,7 +19,7 @@
    Feature(1, "_V9", 0)			/* Version 9 (unconditional) */
 
 #if MSWIN32
-   Feature(1, "_MS_WINDOWS_NT", "MS Windows NT")
+   Feature(1, "_MS_WIN32", "MS Win32")
 #endif					/* MSWIN32 */
 
 #if PORT
