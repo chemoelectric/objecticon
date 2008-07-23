@@ -327,52 +327,15 @@ Deliberate Syntax Error
       #define MICROSOFT 0
    #endif				/* MICROSOFT */
 
-   #ifndef TURBO
-      #define TURBO 0
-   #endif				/* TURBO */
-
-   #ifndef HIGHC_386
-      #define HIGHC_386 0
-   #endif				/* HIGHC_386 */
-
-   #ifndef INTEL_386
-      #define INTEL_386 0
-   #endif				/* INTEL_386 */
-
-   #ifndef WATCOM
-      #define WATCOM 0
-   #endif				/* WATCOM */
-
-   #ifndef ZTC_386
-      #define ZTC_386 0
-   #endif				/* ZTC_386 */
-
    #ifndef NT
       #define NT 0
    #endif				/* NT */
 
-   #ifndef BORLAND_286
-      #define BORLAND_286 0
-   #endif				/* BORLAND_286 (16-bit protected mode)*/
-
-   #ifndef BORLAND_386
-      #define BORLAND_386 0
-   #endif				/* BORLAND_386 (32-bit protected mode)*/
-
-   #if HIGHC_386
-      /*
-       * MetaWare's HighC 386 macro putc doesn't handle putc('\n') correctly -
-       * sometimes a CR is not written out before the LF.  So, redefine
-       * macro putc to actually issue an fputc.
-       */
-      #undef putc
-      #define putc(c,f) fputc(c,f)
-   #endif				/* HIGHC_386 */
 #endif					/* MSDOS */
 
 
 #ifndef NoWildCards
-   #if NT || BORLAND_286 || BORLAND_386 || MICROSOFT
+   #if NT
       #define WildCards 1
    #else				/* NT || ... */
       #define WildCards 0

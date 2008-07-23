@@ -95,16 +95,6 @@ extern int optind;		/* index into parent argv vector */
 extern int optopt;		/* character checked for validity */
 extern char *optarg;		/* argument associated with option */
 
-#if TURBO
-unsigned _stklen = 30000;
-#endif					/* TURBO */
-
-#if ZTC_386
-#ifndef DOS386
-int _stack = 32 * 1024;		/* need large stack	*/
-#endif				/* DOS386 */
-#endif				/* ZTC_386 */
-
 
 int main(argc, argv)
 int argc;

@@ -518,9 +518,6 @@
    #endif		
    
    #if MSDOS
-      #if HIGHC_386 || ZTC_386 || INTEL_386 || WATCOM || BORLAND_386
-         #define PushAVal(x) PushVal(x)
-      #else				/* HIGHC_386 || ZTC_386 || ... */
          static union {
                 pointer stkadr;
                 word stkint;
@@ -529,7 +526,6 @@
          #define PushAVal(x)  {sp++; \
          			stkword.stkadr = (char *)(x); \
          			*sp = stkword.stkint;}
-      #endif				/* HIGHC_386 || ZTC_386 || ... */
    #endif				/* MSDOS */
    
    /*
@@ -803,7 +799,7 @@
 #define CsetPtr(b,c)	(BlkLoc(c)->cset.bits + (((b)&0377) >> LogIntBits))
 
 #if MSDOS
-   #if (MICROSOFT && defined(M_I86HM)) || (TURBO && defined(__HUGE__))
+   #if (MICROSOFT && defined(M_I86HM))
       #define ptr2word(x) ((uword)((char huge *)x - (char huge *)zptr))
       #define word2ptr(x) ((char huge *)((char huge *)zptr + (uword)x))
    #else				/* MICROSOFT ... */

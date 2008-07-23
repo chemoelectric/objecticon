@@ -168,14 +168,10 @@ Deliberate Syntax Error
 #endif
 
 #if MSDOS
-#if HIGHC_386 || ZTC_386 || INTEL_386 || WATCOM || BORLAND_386
-#define PushAVal(x) PushVal(x)
-#else					/* HIGHC_386 || ZTC_386 || ... */
 #define PushAVal(x) {rsp++; \
 		       stkword.stkadr = (char *)(x); \
 		       *rsp = stkword.stkint; \
 		       }
-#endif					/* HIGH_386 || ZTC_386 || ... */
 #endif					/* MSDOS */
 
 /*
@@ -1742,7 +1738,7 @@ Deliberate Syntax Error
 #endif					/* PORT */
 
 #if MSDOS
-#if MICROSOFT || TURBO || BORLAND_386
+#if MICROSOFT
 void stkdump(op)
    int op;
    {
@@ -1764,7 +1760,7 @@ void stkdump(op)
    fprintf(stderr,"> ----------\n");
    fflush(stderr);
    }
-#endif					/* MICROSOFT || TURBO ... */
+#endif					/* MICROSOFT. */
 #endif					/* MSDOS */
 
 #if UNIX

@@ -73,10 +73,6 @@ pointer addr;
 
 #endif					/* INTEL_386 */
 
-#if TURBO
-extern unsigned _stklen = 16 * 1024;
-#endif					/* TURBO */
-
 #endif					/* MSDOS */
 
 
