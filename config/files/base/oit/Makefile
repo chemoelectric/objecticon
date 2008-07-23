@@ -27,8 +27,7 @@ oit:		$(OBJS)
 		(cd $(OIBIN) && $(RM) udis && $(LN_S) oit udis)
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
-		   ../h/proto.h ../h/mproto.h \
-		   ../h/typedefs.h ../h/cstructs.h
+		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h
 
 $(COBJS):	../h/mproto.h
 

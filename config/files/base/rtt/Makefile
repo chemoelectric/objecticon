@@ -32,14 +32,14 @@ library:	$(OBJ)
 		-(test -f ../../NoRanlib) || (ranlib rtt.a)
 
 $(ROBJS): rtt.h rtt1.h rttproto.h preproc.h pproto.h ltoken.h ../h/mproto.h\
-	        ../h/define.h ../h/config.h ../h/typedefs.h ../h/proto.h\
+	        ../h/define.h ../h/config.h ../h/typedefs.h \
 	        ../h/cstructs.h ../h/cpuconf.h
 
 rtdb.o: ../h/version.h icontype.h
 
 rttdb.o: ../h/version.h
 rttparse.o : ../h/gsupport.h ../h/config.h ../h/cstructs.h \
-	../h/proto.h ../h/typedefs.h ../h/cpuconf.h ../h/define.h
+	../h/typedefs.h ../h/cpuconf.h ../h/define.h
 
 
 #  The following section is commented out because it does not need to be

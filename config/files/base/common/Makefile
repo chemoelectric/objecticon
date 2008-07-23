@@ -12,7 +12,7 @@ clean:
 		rm -f *.o
 
 $(OBJS): ../h/define.h ../h/config.h ../h/cstructs.h ../h/mproto.h \
-	  ../h/typedefs.h ../h/proto.h ../h/cpuconf.h
+	  ../h/typedefs.h ../h/cpuconf.h
 
 identify.o: ../h/version.h
 
