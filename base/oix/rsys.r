@@ -404,10 +404,6 @@ int n;
 #endif					/* UNIX */
 
 #if MSDOS
-#if SCCX_MX
-   msleep(n);
-   return Succeeded;
-#else					/* SCCX_MX */
 #if NT
 #ifdef MSWindows
    Sleep(n);
@@ -423,7 +419,6 @@ int n;
 #else					/* NT */
    return Failed;
 #endif					/* NT */
-#endif					/* SCCX_MX */
 #endif					/* MSDOS */
 
 #if PORT

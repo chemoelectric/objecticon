@@ -518,7 +518,7 @@
    #endif		
    
    #if MSDOS
-      #if HIGHC_386 || ZTC_386 || INTEL_386 || WATCOM || BORLAND_386 || SCCX_MX
+      #if HIGHC_386 || ZTC_386 || INTEL_386 || WATCOM || BORLAND_386
          #define PushAVal(x) PushVal(x)
       #else				/* HIGHC_386 || ZTC_386 || ... */
          static union {

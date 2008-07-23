@@ -20,7 +20,7 @@
       #include <dos.h>
       int	brk		(pointer p);
    #endif				/* INTEL_386 */
-   #if MICROSOFT || TURBO || ZTC_386 || WATCOM || NT || BORLAND_286 || BORLAND_386 || SCCX_MX
+   #if MICROSOFT || TURBO || ZTC_386 || WATCOM || NT || BORLAND_286 || BORLAND_386
 #ifndef LCC
       #include <dos.h>
 #endif					/* not LCC */

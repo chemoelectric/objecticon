@@ -19,7 +19,7 @@
    Feature(1, "_V9", 0)			/* Version 9 (unconditional) */
 
 #if MSDOS
-#if INTEL_386 || HIGHC_386 || WATCOM || ZTC_386 || BORLAND_386 || SCCX_MX
+#if INTEL_386 || HIGHC_386 || WATCOM || ZTC_386 || BORLAND_386
    Feature(1, "_MSDOS_386", "MS-DOS/386")
 #else					/* INTEL_386 || HIGHC_386 ... */
 #if NT

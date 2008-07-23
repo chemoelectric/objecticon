@@ -2,9 +2,6 @@
 
 /*#include "../h/filepat.h"		?* added for filepat change */
 
-#if SCCX_MX
-unsigned _stack = 100000;
-#endif
 /*
  * prototypes for static functions.
  */

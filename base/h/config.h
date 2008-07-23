@@ -54,10 +54,6 @@
    #define MSDOS 0
 #endif					/* MSDOS */
 
-#ifndef SCCX_MX
-   #define SCCX_MX 0
-#endif					/* SCCX_MX */
-
 #ifndef UNIX
    #define UNIX 0
 #endif					/* UNIX */
@@ -376,7 +372,7 @@ Deliberate Syntax Error
 
 
 #ifndef NoWildCards
-   #if NT || BORLAND_286 || BORLAND_386 || MICROSOFT || SCCX_MX
+   #if NT || BORLAND_286 || BORLAND_386 || MICROSOFT
       #define WildCards 1
    #else				/* NT || ... */
       #define WildCards 0
