@@ -19,18 +19,14 @@ char *p;
    Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
-   #if HIGHC_386 || NT
+#if MSWIN32
       /*
        * Don't like doing this, but it seems to work.
        */
       setbuf(stdout,NULL);
       setbuf(stderr,NULL);
       stderr->_file = stdout->_file;
-   #else				/* HIGHC_386 || NT */
-      dup2(fileno(stdout),fileno(stderr));
-   #endif				/* HIGHC_386 || NT */
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 
 #if UNIX

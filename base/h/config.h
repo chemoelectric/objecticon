@@ -10,12 +10,12 @@
  *  A number of symbols are defined here.  Some are specific to individual
  *  to operating systems.  Examples are:
  *
- *	MSDOS		MS-DOS for PCs
+ *	MSWIN32		MS-DOS for PCs
  *	UNIX		any UNIX system; also set for BeOS
  *
  *  These are defined to be 1 or 0 depending on which operating system
  *  the installation is being done under.  They are all defined and only
- *  one is defined to be 1.  (They are used in the form #if VAX || MSDOS.)
+ *  one is defined to be 1.  (They are used in the form #if VAX || MSWIN32.)
  *
  *  There also are definitions of symbols for specific computers and
  *  versions of operating systems.  These include:
@@ -50,9 +50,9 @@
    #define PORT 0
 #endif					/* PORT */
 
-#ifndef MSDOS
-   #define MSDOS 0
-#endif					/* MSDOS */
+#ifndef MSWIN32
+   #define MSWIN32 0
+#endif					/* MSWIN32 */
 
 #ifndef UNIX
    #define UNIX 0
@@ -316,26 +316,12 @@
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
-
-   /*
-    *  Define compiler-specific symbols to be zero if not already
-    *  defined.
-    */
-
-   #ifndef NT
-      #define NT 0
-   #endif				/* NT */
-
-#endif					/* MSDOS */
-
-
 #ifndef NoWildCards
-   #if NT
+   #if MSWIN32
       #define WildCards 1
-   #else				/* NT || ... */
+   #else				/* MSWIN32 || ... */
       #define WildCards 0
-   #endif				/* NT || ... */
+   #endif				/* MSWIN32 || ... */
 #else					/* NoWildCards */
    #define WildCards 0
 #endif					/* NoWildCards */

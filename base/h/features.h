@@ -18,13 +18,9 @@
 
    Feature(1, "_V9", 0)			/* Version 9 (unconditional) */
 
-#if MSDOS
-#if NT
+#if MSWIN32
    Feature(1, "_MS_WINDOWS_NT", "MS Windows NT")
-#else					/* NT */
-   Feature(1, "_MSDOS", "MS-DOS")
-#endif					/* NT */
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 #if PORT
    Feature(1, "_PORT", "PORT")
@@ -87,9 +83,6 @@
 
 #ifdef MSWindows
    Feature(1, "_MS_WINDOWS", "MS Windows")
-#if NT
-   Feature(1, "_WIN32", "Win32")
-#endif					/* NT */
 #endif					/* MSWindows */
 
 #ifdef DosFncs

@@ -23,7 +23,7 @@
    Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
    #undef Type
    #include <sys/types.h>
    #include <sys/stat.h>
@@ -45,18 +45,16 @@
       #include <mmsystem.h>
       #include <process.h>
    #else					/* MSWindows */
-      #if NT
       #ifdef PosixFns
       #include <winsock2.h>
       #else
       #endif					/* PosixFns */
-      #endif					/* NT */
    #endif				/* MSWindows */
    #include <setjmp.h>
    #define Type(d) (int)((d).dword & TypeMask)
    #undef lst1
    #undef lst2
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 
 #if UNIX
@@ -140,13 +138,13 @@
 #endif					/* HostStr */
 
 #ifdef HAVE_LIBDL
-#if NT
+#if MSWIN32
    void *dlopen(char *, int); /* LoadLibrary */
    void *dlsym(void *, char *sym); /* GetProcAddress */
    int dlclose(void *); /* FreeLibrary */
-#else					/* NT */
+#else					/* MSWIN32 */
    #include <dlfcn.h>
-#endif					/* NT */
+#endif					/* MSWIN32 */
 #endif					/* HAVE_LIBDL */
 
 #if WildCards

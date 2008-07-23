@@ -131,7 +131,7 @@ operator{*} ! bang(underef x -> dx)
 
 
 #ifdef ReadDirectory
-#if !NT
+#if !MSWIN32
           	  if (status & Fs_Directory) {
 		     struct dirent *d = readdir((DIR *)fd);
 		     char *s, *p=sbuf;
@@ -144,7 +144,7 @@ operator{*} ! bang(underef x -> dx)
 		        slen = -2;
 		  }
 		  else
-#endif					/* !NT */
+#endif					/* !MSWIN32 */
 #endif                                  /* ReadDirectory */
 
                   if ((slen = getstrg(sbuf,MaxCvtLen,&BlkLoc(dx)->file)) == -1)

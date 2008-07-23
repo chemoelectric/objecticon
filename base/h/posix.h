@@ -30,7 +30,7 @@
 #include <grp.h>
 #endif					/* UNIX */
 
-#ifdef NT
+#if MSWIN32
 #include <sys/timeb.h>
 #include <sys/locking.h>
 #include <sys/types.h>
@@ -42,9 +42,9 @@
 #include <process.h>
 #define NAME_MAX FILENAME_MAX
 #define MAXHOSTNAMELEN		256
-#else					/* NT */
+#else					/* MSWIN32 */
 #define SOCKET int
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
 #if defined(SUN) || defined(HP) || defined(IRIS4D)
 #include <sys/file.h>
@@ -85,9 +85,9 @@ extern stringint signalnames[];
 #include <sys/param.h>
 #endif					/* IRIS4D */
 
-#ifdef NT
+#if MSWIN32
 extern WORD wVersionRequested;
 extern WSADATA wsaData;
 extern int werr;
 extern int WINSOCK_INITIAL;
-#endif					/* NT */
+#endif					/* MSWIN32 */

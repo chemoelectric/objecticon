@@ -23,10 +23,10 @@ SOCKET fd;
    char *stmp=NULL;
   
    if ((r=recv(fd, buf, maxi, MSG_PEEK))==SOCKET_ERROR) {
-#if NT
+#if MSWIN32
       if(WSAGetLastError() == WSAESHUTDOWN)   
 	 return -1;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       k_errornumber = 1040;
       return -3;
       }
@@ -47,18 +47,18 @@ SOCKET fd;
    else  
       i = r;
    if ((r=recv(fd, buf, i, 0)) == SOCKET_ERROR) {
-#if NT
+#if MSWIN32
       if (WSAGetLastError() == WSAESHUTDOWN)
 	 return -1;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       k_errornumber = 1040;
       return -3;
       }
    return r;
    }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
-#if NT
+#if MSWIN32
 #ifndef NTGCC
 #define pclose _pclose
 #endif
@@ -86,7 +86,7 @@ struct b_file *fbp;
 #ifdef XWindows
    wflushall();
 #endif					/* XWindows */
-#if NT
+#if MSWIN32
    if (fbp->status & Fs_Pipe) {
       if (feof(fd) || (fgets(buf, maxi, fd) == NULL)) {
          pclose(fd);
@@ -102,7 +102,7 @@ struct b_file *fbp;
          }
       return l;
       }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
    l = 0;
 
@@ -121,7 +121,7 @@ struct b_file *fbp;
       /* insert non-blocking read/code to service windows here */
 #endif					/* Graphics */
 
-#if NT
+#if MSWIN32
    if (fbp->status & Fs_Pipe) {
       if (feof(fd)) {
          pclose(fd);
@@ -130,14 +130,14 @@ struct b_file *fbp;
          else return -1;
          }
       }
-#endif					/* NT */
+#endif					/* MSWIN32 */
       if ((c = fgetc(fd)) == '\n') {	/* \n terminates line */
 	 break;
          }
 
       if (c == '\r' && (fbp->status & Fs_Untrans) == 0) {
 	 /* \r terminates line in translated mode */
-#if NT
+#if MSWIN32
    if (fbp->status & Fs_Pipe) {
       if (feof(fd)) {
          pclose(fd);
@@ -146,12 +146,12 @@ struct b_file *fbp;
          else return -1;
          }
       }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 if ((c = fgetc(fd)) != '\n')	/* consume following \n */
 	     ungetc(c, fd);		/* (put back if not \n) */
 	 break;
 	 }
-#if NT
+#if MSWIN32
    if (fbp->status & Fs_Pipe) {
       if (feof(fd)) {
          pclose(fd);
@@ -160,19 +160,19 @@ struct b_file *fbp;
          else return -1;
          }
       }
-#endif					/* NT */
+#endif					/* MSWIN32 */
       if (c == EOF) {
-#if NT
+#if MSWIN32
          if (fbp->status & Fs_Pipe) {
             pclose(fd);
 	    fbp->status = 0;
             }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
 #ifdef PosixFns
 	 /* If errno is EAGAIN, we will not return any chars just yet */
 	 if (errno == EAGAIN 
-#if !NT
+#if !MSWIN32
 	    || errno == EWOULDBLOCK
 #endif
 	 ) {
@@ -252,13 +252,13 @@ long len;
    long tally = 0;
    long n = 0;
 
-#if NT
+#if MSWIN32
    /*
     * Under NT/MSVC++, ftell() used in Icon where() returns bad answers
     * after a wlongread().  We work around it here by fseeking after fread.
     */
    long pos = ftell(fd);
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
 #ifdef XWindows
    if (isatty(fileno(fd))) wflushall();
@@ -267,18 +267,18 @@ long len;
    while (len > 0) {
       n = fread(ts, width, (int)((len < MaxIn) ? len : MaxIn), fd);
       if (n <= 0) {
-#if NT
+#if MSWIN32
          fseek(fd, pos + tally, SEEK_SET);
-#endif					/* NT */
+#endif					/* MSWIN32 */
          return tally;
 	 }
       tally += n;
       ts += n;
       len -= n;
       }
-#if NT
+#if MSWIN32
    fseek(fd, pos + tally, SEEK_SET);
-#endif					/* NT */
+#endif					/* MSWIN32 */
    return tally;
    }
 
@@ -298,13 +298,13 @@ long len;
    long tally = 0;
    long n = 0;
 
-#if NT
+#if MSWIN32
    /*
-    * Under NT/MSVC++, ftell() used in Icon where() returns bad answers
+    * Under WIN32/MSVC++, ftell() used in Icon where() returns bad answers
     * after a wlongread().  We work around it here by fseeking after fread.
     */
    long pos = ftell(fd);
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
 #ifdef XWindows
    if (isatty(fileno(fd))) wflushall();
@@ -313,18 +313,18 @@ long len;
    while (len > 0) {
       n = gzread(fd,ts, width * ((int)((len < MaxIn) ? len : MaxIn)));
       if (n <= 0) {
-#if NT
+#if MSWIN32
          gzseek(fd, pos + tally, SEEK_SET);
-#endif					/* NT */
+#endif					/* MSWIN32 */
          return tally;
 	 }
       tally += n;
       ts += n;
       len -= n;
       }
-#if NT
+#if MSWIN32
    gzseek(fd, pos + tally, SEEK_SET);
-#endif					/* NT */
+#endif					/* MSWIN32 */
    return tally;
    }
 
@@ -370,9 +370,9 @@ int fd, t;
    fd_set fds;
    tv.tv_sec = t/1000;
    tv.tv_usec = (t % 1000) * 1000;
-#if !NT
+#if !MSWIN32
    FD_ZERO(&fds);
-#endif					/* NT */
+#endif					/* MSWIN32 */
    FD_SET(fd, &fds);
    return select(fd+1, &fds, NULL, NULL, &tv);
 #else					/* PosixFns */
@@ -403,8 +403,7 @@ int n;
    }
 #endif					/* UNIX */
 
-#if MSDOS
-#if NT
+#if MSWIN32
 #ifdef MSWindows
    Sleep(n);
 #else					/* MSWindows */
@@ -416,10 +415,9 @@ int n;
 
 #endif					/* MSWindows */
    return Succeeded;
-#else					/* NT */
+#else					/* MSWIN32 */
    return Failed;
-#endif					/* NT */
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 #if PORT
    return Failed;
@@ -452,7 +450,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /*
-  This does make sense only under WIN32.
+  This does make sense only under MSWIN32.
   Functions:
     - popen() rewritten
     - pclose() rewritten

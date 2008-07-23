@@ -31,7 +31,7 @@
 
 #if WildCards
 
-#if NT
+#if MSWIN32
 
 #include <io.h>
 
@@ -46,7 +46,7 @@ typedef struct _FINDFILE_TAG {
 #define FILENAME(pfd)	( (pfd)->fileinfo.name )
 #define FINDCLOSE(pfd)	_findclose( (pfd)->handle )
 
-#endif 					/* NT */
+#endif 					/* MSWIN32 */
 
 
 

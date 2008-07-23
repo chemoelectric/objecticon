@@ -25,7 +25,7 @@ static void vanq_proc (struct ef_marker *efp_v, struct gf_marker *gfp_v);
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS || UNIX
+#if MSWIN32 || UNIX
    /* nothing needed */
 #endif					
 
@@ -167,12 +167,12 @@ Deliberate Syntax Error
 #define PushAVal(x) PushVal(x)
 #endif
 
-#if MSDOS
+#if MSWIN32
 #define PushAVal(x) {rsp++; \
 		       stkword.stkadr = (char *)(x); \
 		       *rsp = stkword.stkint; \
 		       }
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 /*
  * End of operating-system specific code.
@@ -395,7 +395,7 @@ int interp_x(int fsig,dptr cargp)
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS || UNIX
+#if MSWIN32 || UNIX
    /* nothing to do */
 #endif					
 

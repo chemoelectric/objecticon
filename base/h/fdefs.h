@@ -95,7 +95,7 @@ FncDef(where,1)
 FncDefV(write)
 FncDefV(writes)
 
-#if UNIX || NT
+#if UNIX || MSWIN32
    FncDef(delay,1)
 #endif		
 

@@ -13,9 +13,9 @@
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
 #define IsRelPath(fname) (fname[0] != '/')
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 #if UNIX
 #define IsRelPath(fname) (fname[0] != '/')
@@ -57,7 +57,7 @@ FILE *f;
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
    char *s;
    
    /*
@@ -67,7 +67,7 @@ Deliberate Syntax Error
    for (s = fname; *s != '\0'; ++s)
       if (*s == '\\')
          *s = '/';
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 #if UNIX
    /* nothing is needed */
@@ -204,8 +204,7 @@ char **opt_args;
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
-#if NT
+#if MSWIN32
    char *syspath;
    char *cl_var;
    char *incl_var;
@@ -252,9 +251,8 @@ Deliberate Syntax Error
          if (*incl_var++ == ';' && *incl_var != '\0')
             ++n_paths;
       }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
-#endif					/* MSDOS */
 
 #if UNIX
    static char *sysdir = "/usr/include/";
@@ -290,8 +288,8 @@ Deliberate Syntax Error
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
-#endif					/* MSDOS */
+#if MSWIN32
+#endif					/* MSWIN32 */
 
 #if UNIX
    /* nothing is needed */
@@ -322,14 +320,14 @@ Deliberate Syntax Error
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
          /*
           * Convert back slashes to slashes for internal consistency.
           */
          for (s = s1; *s != '\0'; ++s)
             if (*s == '\\')
                *s = '/';
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 #if UNIX
    /* nothing is needed */
@@ -353,9 +351,9 @@ Deliberate Syntax Error
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
 
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 #if UNIX
    incl_search[n_paths - 1] = sysdir;

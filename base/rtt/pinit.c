@@ -16,9 +16,9 @@
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
    /* nothing is needed */
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
  
 #if UNIX
    /* nothing is needed */
@@ -86,9 +86,9 @@ char **opt_args;
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
 
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
  
 #if UNIX
    do_directive("#define unix 1\n");
@@ -128,9 +128,9 @@ Deliberate Syntax Error
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
 
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
  
 #if UNIX
    /* nothing is needed */

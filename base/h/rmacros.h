@@ -517,7 +517,7 @@
       #define PushAVal(x) PushVal(x)
    #endif		
    
-   #if MSDOS
+   #if MSWIN32
          static union {
                 pointer stkadr;
                 word stkint;
@@ -526,7 +526,7 @@
          #define PushAVal(x)  {sp++; \
          			stkword.stkadr = (char *)(x); \
          			*sp = stkword.stkint;}
-   #endif				/* MSDOS */
+   #endif				/* MSWIN32 */
    
    /*
     * End of operating-system specific code.
@@ -798,14 +798,14 @@
  */
 #define CsetPtr(b,c)	(BlkLoc(c)->cset.bits + (((b)&0377) >> LogIntBits))
 
-#if MSDOS
+#if MSWIN32
       #define ptr2word(x) (uword)x
       #define word2ptr(x) ((char *)x)
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
-#if NT
+#if MSWIN32
 #ifndef S_ISDIR
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
-#endif					/* NT */
+#endif					/* MSWIN32 */
 

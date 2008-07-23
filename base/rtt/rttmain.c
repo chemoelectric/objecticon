@@ -25,10 +25,10 @@ char *refpath = "";
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
 char *grttin_path = "..\\base\\h\\grttin.h";
 char *rt_path = "..\\base\\h\\rt.h";
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 #if UNIX
 char *grttin_path = "../base/h/grttin.h";

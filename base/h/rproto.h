@@ -593,11 +593,11 @@ dptr rec_structinate(dptr dp, char *name, int nfields, char *a[]);
 
 
 #ifdef PosixFns
-#if NT
+#if MSWIN32
 void stat2rec			(struct _stat *st, dptr dp, struct b_record **rp);
-#else					/* NT */
+#else					/* MSWIN32 */
 void stat2rec			(struct stat *st, dptr dp, struct b_record **rp);
-#endif					/* NT */
+#endif					/* MSWIN32 */
 dptr rec_structor		(char *s);
 dptr rec_structor3d		(char *s);
 int sock_connect		(char *s, int udp, int timeout);
@@ -605,10 +605,10 @@ int getmodefd			(int fd, char *mode);
 int getmodenam			(char *path, char *mode);
 int get_uid			(char *name);
 int get_gid			(char *name);
-#if !NT
+#if !MSWIN32
 dptr make_pwd			(struct passwd *pw, dptr result);
 dptr make_group			(struct group *pw, dptr result);
-#endif					/* NT */
+#endif					/* MSWIN32 */
 dptr make_host			(struct hostent *pw, dptr result);
 dptr make_serv			(struct servent *pw, dptr result);
 int sock_listen		(char *s, int udp);

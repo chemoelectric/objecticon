@@ -180,12 +180,12 @@ stringint signalnames[] = {
    { "SIGXFSZ",         SIGXFSZ },
 };
 
-#if NT
+#if MSWIN32
 WORD wVersionRequested = MAKEWORD( 2, 0 );
 WSADATA wsaData;
 int werr;
 int WINSOCK_INITIAL=0;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
 int get_fd(file, errmask)
 struct descrip file;
@@ -217,9 +217,9 @@ unsigned int errmask;
       return -2;
    else
 
-#if NT
+#if MSWIN32
 #define fileno _fileno
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
       if (status & Fs_Socket)
 	 return BlkLoc(file)->file.fd.fd;
@@ -231,27 +231,27 @@ unsigned int errmask;
 int get_uid(name)
 char *name;
 {
-#if NT
+#if MSWIN32
    return -1;
-#else					/* NT */
+#else					/* MSWIN32 */
    struct passwd *pw;
    if (!(pw = getpwnam(name)))
       return -1;
    return pw->pw_uid;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 }
 
 int get_gid(name)
 char *name;
 {
-#if NT
+#if MSWIN32
    return -1;
-#else					/* NT */
+#else					/* MSWIN32 */
    struct group *gr;
    if (!(gr = getgrnam(name)))
       return -1;
    return gr->gr_gid;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 }
 
 static int newmode(mode, oldmode)
@@ -387,13 +387,13 @@ int oldmode;
 	 int nvalue;
 	 if (which & (1 << i)) {
 	    if (do_umask) {
-#if NT
+#if MSWIN32
 	       int u = _umask(0);
 	       _umask(u);
-#else					/* NT */
+#else					/* MSWIN32 */
 	       int u = umask(0);
 	       umask(u);
-#endif					/* NT */	
+#endif					/* MSWIN32 */	
 	       nvalue = value & ~u;
 	    } else
 	       nvalue = value;
@@ -448,11 +448,11 @@ char *mode;
  * should point at tended variables.
  */
 void stat2rec(st, dp, rp)
-#if NT
+#if MSWIN32
 struct _stat *st;
-#else					/* NT */
+#else					/* MSWIN32 */
 struct stat *st;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 struct descrip *dp;
 struct b_record **rp;
 {
@@ -475,7 +475,7 @@ struct b_record **rp;
    IntVal((*rp)->fields[8]) = (int)st->st_atime;
    IntVal((*rp)->fields[9]) = (int)st->st_mtime;
    IntVal((*rp)->fields[10]) = (int)st->st_ctime;
-#if NT
+#if MSWIN32
    IntVal((*rp)->fields[11]) = (int)0;
    IntVal((*rp)->fields[12]) = (int)0;
 #else
@@ -486,7 +486,7 @@ struct b_record **rp;
    (*rp)->fields[13] = nulldesc;
 
    strcpy(mode, "----------");
-#if NT
+#if MSWIN32
    if (st->st_mode & _S_IFREG) mode[0] = '-';
    else if (st->st_mode & _S_IFDIR) mode[0] = 'd';
    else if (st->st_mode & _S_IFCHR) mode[0] = 'c';
@@ -495,7 +495,7 @@ struct b_record **rp;
    if (st->st_mode & S_IREAD) mode[1] = mode[4] = mode[7] = 'r';
    if (st->st_mode & S_IWRITE) mode[2] = mode[5] = mode[8] = 'w';
    if (st->st_mode & S_IEXEC) mode[3] = mode[6] = mode[9] = 'x';
-#else					/* NT */
+#else					/* MSWIN32 */
    if (S_ISLNK(st->st_mode)) mode[0] = 'l';
    else if (S_ISREG(st->st_mode)) mode[0] = '-';
    else if (S_ISDIR(st->st_mode)) mode[0] = 'd';
@@ -517,14 +517,14 @@ struct b_record **rp;
    if (S_ISUID & st->st_mode) mode[3] = (mode[3] == 'x') ? 's' : 'S';
    if (S_ISGID & st->st_mode) mode[6] = (mode[6] == 'x') ? 's' : 'S';
    if (S_ISVTX & st->st_mode) mode[9] = (mode[9] == 'x') ? 't' : 'T';
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
    StrLoc((*rp)->fields[2]) = alcstr(mode, 10);
    StrLen((*rp)->fields[2]) = 10;
 
-#if NT
+#if MSWIN32
    (*rp)->fields[4] = (*rp)->fields[5] = emptystr;
-#else					/* NT */
+#else					/* MSWIN32 */
    pw = getpwuid(st->st_uid);
    if (!pw) {
       sprintf(mode, "%d", st->st_uid);
@@ -542,7 +542,7 @@ struct b_record **rp;
       group = gr->gr_name;
    StrLoc((*rp)->fields[5]) = alcstr(group, strlen(group));
    StrLen((*rp)->fields[5]) = strlen(group);
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
 }
 
@@ -771,7 +771,7 @@ int sock_connect(char *fn, int is_udp, int timeout)
 	 return 0;
       }
 
-#if NT
+#if MSWIN32
       if (!WINSOCK_INITIAL)   {
         werr = WSAStartup( wVersionRequested, &wsaData );
 	if ( werr != 0 ) {
@@ -816,7 +816,7 @@ int sock_connect(char *fn, int is_udp, int timeout)
 
    else {
       /* UNIX domain socket */
-#if NT
+#if MSWIN32
       return 0;
 #endif
 #if UNIX
@@ -857,7 +857,7 @@ int sock_connect(char *fn, int is_udp, int timeout)
          return 0;
       }
 #endif					/* UNIX */
-#if NT
+#if MSWIN32
       /* Turn on non-blocking flag - this will make connect
          return immediately.  */
       int imode = 1;
@@ -866,7 +866,7 @@ int sock_connect(char *fn, int is_udp, int timeout)
          closesocket(s);
          return 0;
       }
-#endif					/* NT */
+#endif					/* MSWIN32 */
    }
 
    rc = connect(s, sa, len);
@@ -921,7 +921,7 @@ int sock_connect(char *fn, int is_udp, int timeout)
          return s;
       }
 #endif					/* UNIX */
-#if NT
+#if MSWIN32
       /* Turn off non-blocking flag */
       int connect_err = WSAGetLastError();
       int imode = 0;
@@ -971,7 +971,7 @@ int sock_connect(char *fn, int is_udp, int timeout)
 
          return s;
       }
-#endif					/* NT */
+#endif					/* MSWIN32 */
    }
 
    if (rc < 0) {
@@ -1013,7 +1013,7 @@ int is_udp_or_listener;
 
      if ((p=strchr(addr, ':')) != NULL) {
 
-#if NT
+#if MSWIN32
         if (!WINSOCK_INITIAL)   {
             werr = WSAStartup( wVersionRequested, &wsaData );
             if ( werr != 0 ) {
@@ -1067,7 +1067,7 @@ int is_udp_or_listener;
       }
       else {
          /* unix domain socket */
-#if NT
+#if MSWIN32
          return 0;
 #endif
 #if UNIX
@@ -1146,7 +1146,7 @@ int sock_send(char *adr, char *msg, int msglen)
    port = atoi(p+1);
    *p = 0;
       
-#if NT
+#if MSWIN32
    if (!WINSOCK_INITIAL)   {
       werr = WSAStartup( wVersionRequested, &wsaData );
       if ( werr != 0 ) {
@@ -1157,7 +1157,7 @@ int sock_send(char *adr, char *msg, int msglen)
       }
       WINSOCK_INITIAL = 1;
    }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
    if (*host == 0) {
       /* localhost */
@@ -1207,7 +1207,7 @@ int sock_recv(int s, struct b_record **rp)
    memset(&saddr_in, 0, sizeof(saddr_in));
    len = sizeof(s_type);
 
-#if NT
+#if MSWIN32
    if (!WINSOCK_INITIAL)   {
       werr = WSAStartup( wVersionRequested, &wsaData );
       if ( werr != 0 ) {
@@ -1218,7 +1218,7 @@ int sock_recv(int s, struct b_record **rp)
       }
       WINSOCK_INITIAL = 1;
    }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
    if (getsockopt(s, SOL_SOCKET, SO_TYPE, (char *)&s_type, &len) < 0)
       return 0;
@@ -1293,7 +1293,7 @@ int fd;
    nsock++;
 }
 
-#if !NT
+#if !MSWIN32
 dptr make_pwd(pw, result)
 struct passwd *pw;
 dptr result;
@@ -1320,9 +1320,9 @@ dptr result;
    rp->fields[6] = cstr2string(pw->pw_shell);
    return result;
 }
-#endif					/* !NT */
+#endif					/* !MSWIN32 */
 
-#if !NT
+#if !MSWIN32
 dptr make_group(gr, result)
 struct group *gr;
 dptr result;
@@ -1346,7 +1346,7 @@ dptr result;
    rp->fields[3] = cstrs2string(gr->gr_mem, ",");
    return result;
 }
-#endif					/* !NT */
+#endif					/* !MSWIN32 */
 
 dptr make_serv(s, result)
 struct servent *s;
@@ -1536,15 +1536,15 @@ tryagain:
 	     * Error on recv().  Some kinds of errors might be recoverable.
 	     */
 	    kk++;
-#if NT
+#if MSWIN32
 	    errno = WSAGetLastError();
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	    switch (errno) {
-#if NT
+#if MSWIN32
 	    case WSAEINTR: case WSAEINPROGRESS:
-#else					/* NT */
+#else					/* MSWIN32 */
 	    case EINTR: case EINPROGRESS:
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	       if (kk < 5) goto tryagain;
 	       break;
 	    default:

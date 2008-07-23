@@ -1835,7 +1835,7 @@ int c;
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS || UNIX
+#if MSWIN32 || UNIX
    return (isascii(c) && isprint(c));
 #endif		
 
@@ -1991,7 +1991,7 @@ word *high;
       deref(valp, valp);
    }
 
-#if MSDOS
+#if MSWIN32
 #ifndef NTGCC
 int strcasecmp(char *s1, char *s2)
 {
@@ -2014,7 +2014,7 @@ int strncasecmp(char *s1, char *s2, int n)
    return 0;
 }
 #endif					/* NTGCC */
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 /*
  * Create an empty list, with initial number of slots.

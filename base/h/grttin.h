@@ -180,12 +180,12 @@ typedef int gzFile;
 
 typedef int jmp_buf;
 
-#if NT
+#if MSWIN32
 typedef int HMODULE, WSADATA, WORD, HANDLE, MEMORYSTATUS;
 #ifdef NTGCC
 typedef int STARTUPINFO, PROCESS_INFORMATION, SECURITY_ATTRIBUTES;
 #endif
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
 #ifdef HAVE_LIBJPEG
 typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;

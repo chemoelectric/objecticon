@@ -1453,11 +1453,11 @@ long physicalmemorysize()
       fclose(f);
       }
 #endif					/* UNIX */
-#if NT
+#if MSWIN32
    MEMORYSTATUS ms;
    GlobalMemoryStatus(&ms);
    return ms.dwTotalPhys;
-#else					/* NT */
+#else					/* MSWIN32 */
    return 0;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 }

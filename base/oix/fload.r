@@ -22,7 +22,7 @@
 #define RTLD_LAZY 1
 #endif					/* RTLD_LAZY */
 
-#if NT
+#if MSWIN32
 void *dlopen(char *name, int flag)
 { /* LoadLibrary */
     return (void *)LoadLibrary(name);
@@ -40,7 +40,7 @@ char *dlerror(void)
 {
     return "undiagnosed dynamic load error";
 }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
 #ifdef FreeBSD
 /*

@@ -14,7 +14,7 @@
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS || UNIX
+#if MSWIN32 || UNIX
    /* nothing to do */
 #endif			
 
@@ -97,16 +97,16 @@ function{1} close(f)
 #ifdef PosixFns
       if (BlkLoc(f)->file.status & Fs_Socket) {
 	 BlkLoc(f)->file.status = 0;
-#if NT
+#if MSWIN32
 	 return C_integer closesocket((SOCKET)BlkLoc(f)->file.fd.fd);
-#else					/* NT */
+#else					/* MSWIN32 */
 	 return C_integer close(BlkLoc(f)->file.fd.fd);
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
 #endif					/* PosixFns */
 
 #ifdef ReadDirectory
-#if !NT
+#if !MSWIN32
       if (BlkLoc(f)->file.status & Fs_Directory) {
 	 BlkLoc(f)->file.status = 0;
 	 closedir((DIR *)fp);
@@ -144,14 +144,14 @@ function{1} close(f)
       else
 #endif					/* Graphics */
 
-#if NT
+#if MSWIN32
 #ifndef NTGCC
 #define pclose _pclose
 #define popen _popen
 #endif					/* NTGCC */
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
-#if UNIX || NT
+#if UNIX || MSWIN32
       /*
        * Close pipe if pipes are supported.
        */
@@ -290,7 +290,7 @@ function{0,1} open(fname, spec)
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSDOS
+#if MSWIN32
    /* nothing is needed */
 #endif
 
@@ -298,7 +298,7 @@ Deliberate Syntax Error
       int is_udp_or_listener = 0;	/* UDP = 1, listener = 2 */
 #endif					/* PosixFns */
 
-#if UNIX || NT
+#if UNIX || MSWIN32
       extern FILE *popen();
 #endif
 
@@ -366,7 +366,7 @@ Deliberate Syntax Error
 		  status |= Fs_Untrans;
 	       continue;
 
-#if UNIX || NT
+#if UNIX || MSWIN32
 	    case 'p':
 	    case 'P':
 	       status |= Fs_Pipe;
@@ -473,13 +473,13 @@ Deliberate Syntax Error
 	 mode[1] = '+';
 #endif
 
-#if MSDOS
+#if MSWIN32
       if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write)) {
 	 mode[1] = '+';
 	 mode[2] = ((status & Fs_Untrans) != 0) ? 'b' : 't';
 	 }
       else mode[1] = ((status & Fs_Untrans) != 0) ? 'b' : 't';
-#endif					/* MSDOS */
+#endif					/* MSWIN32 */
 
 /*
  * End of operating-system specific code.
@@ -525,7 +525,7 @@ Deliberate Syntax Error
 
 
 
-#if UNIX || NT
+#if UNIX || MSWIN32
       if (status & Fs_Pipe) {
 	 int c;
          char *ploc;
@@ -619,10 +619,10 @@ Deliberate Syntax Error
 	       if (status & Fs_Write)
 		  runerr(173, fname);
 	       else {
-#if !NT
+#if !MSWIN32
 		  f = (FILE *)opendir(fnamestr);
 		  status |= Fs_Directory;
-#else					/* !NT */
+#else					/* !MSWIN32 */
 		  char tempbuf[512];
 		  strcpy(tempbuf, fnamestr);
 		  if (tempbuf[strlen(tempbuf)-1] != '\\')
@@ -641,7 +641,7 @@ Deliberate Syntax Error
 		     fflush(f);
 		     fseek(f, 0, SEEK_SET);
 		     }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 		  }
 	       }
 	    else {
@@ -842,7 +842,7 @@ function{0,1} read(f)
 #endif					/* Graphics */
 
 #ifdef PosixFns
-#if !NT
+#if !MSWIN32
 	  if (status & Fs_Directory) {
 	     struct dirent *d;
 	     char *s, *p=sbuf;
@@ -1020,7 +1020,7 @@ function{0,1} reads(f,i)
 
 
 #ifdef ReadDirectory
-#if !NT
+#if !MSWIN32
       /*
        *  If reading a directory, return up to i bytes of next entry.
        */
@@ -1134,9 +1134,9 @@ function{0,1} remove(s)
       if (remove(s) != 0) {
 #ifdef PosixFns
 	 IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
 #define rmdir _rmdir
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 if (rmdir(s) != 0) {
 	    IntVal(amperErrno) = errno;
 	    fail;
@@ -1166,7 +1166,7 @@ function{0,1} rename(s1,s2)
       }
 
    body {
-#if NT
+#if MSWIN32
       int i=0;
       if ((i = rename(s1,s2)) != 0) {
 	 remove(s2);
@@ -1178,7 +1178,7 @@ function{0,1} rename(s1,s2)
       if (rename(s1,s2) != 0)
 	 fail;
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -1290,7 +1290,7 @@ function{1} system(s, o)
       pollctr++;
 #endif					/* Graphics */
 
-#if NT
+#if MSWIN32
       if (o == 0)   { /* nowait, or 0, for second argument */
          cmdname = strtok(s, " ");
          for(j = 0; j<256; j++)
@@ -1726,7 +1726,7 @@ function{0,1} chdir(s)
    Deliberate Syntax Error
 #endif                                  /* PORT */
 
-#if MSDOS || UNIX || NT
+#if MSWIN32 || UNIX
 
       char path[MaxPath];
       int len;

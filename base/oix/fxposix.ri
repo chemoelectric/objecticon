@@ -13,13 +13,13 @@
 
 
 #ifdef PosixFns
-#if NT
+#if MSWIN32
 #define ftruncate _chsize
 #define pclose _pclose
 #define dup2 _dup2
 #define execvp _execvp
 #define fstat _fstat
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
 extern int errno;
 
@@ -66,11 +66,11 @@ function{0,1} getppid()
       }
    body {
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       return C_integer (getppid());
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -82,7 +82,7 @@ function{0,1} getpid()
       }
    inline {
      IntVal(amperErrno) = 0;
-#ifdef NT
+#if MSWIN32
 #define getpid _getpid
 #endif
      return C_integer (getpid());
@@ -101,15 +101,15 @@ function{0,1} link(s1, s2)
       }
    inline {
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if (link(s1, s2) != 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
          }
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -125,15 +125,15 @@ function{0,1} symlink(s1, s2)
       }
    inline {
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if (symlink(s1, s2) != 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
          }
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -152,9 +152,9 @@ function{0,1} readlink(s)
       long n;
 
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       reserve(Strings, NAME_MAX);
       Protect(StrLoc(result) = alcstr(NULL, NAME_MAX), runerr(0));
       if ((len = readlink(s, StrLoc(result), NAME_MAX)) < 0) {
@@ -177,7 +177,7 @@ function{0,1} readlink(s)
       strfree = out;                         /* give back unused space */
 
       return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -215,15 +215,15 @@ function{0,1} kill(pid, signal)
       } 
 
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if (kill(pid, sig) != 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
 	 }
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -256,9 +256,9 @@ function{0,1} trap(nsignal, handler)
 	 fail; 
       } 
 
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if (is:null(handler))
          signal(sig, SIG_DFL);
       else if (is:proc(handler)) {
@@ -270,7 +270,7 @@ function{0,1} trap(nsignal, handler)
       else
          runerr(106, handler);
       return register_sig(sig, handler);
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -336,15 +336,15 @@ function{0,1} chown(s, u, g)
 
 	    IntVal(amperErrno) = 0;
             cnv:C_string(s, fname);
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    if (chown(fname, i_u, i_g) != 0) {
 	       IntVal(amperErrno) = errno;
 	       fail;
 	       }
 	    return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
       file: {
@@ -356,15 +356,15 @@ function{0,1} chown(s, u, g)
 	    IntVal(amperErrno) = 0;
 	    if ((fd = get_fd(s, 0)) < 0)
 	       runerr(174, s);
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    if (fchown(fd, i_u, i_g) != 0) {
 	       IntVal(amperErrno) = errno;
 	       fail;
 	       }
 	    return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
       default:
@@ -402,7 +402,7 @@ function{0,1} chmod(s, m)
 	    else {
 	       cnv:C_integer(m, i);
 	       }
-#if NT
+#if MSWIN32
 #define chmod _chmod
 #endif
 	    if (chmod(fname, i) != 0) {
@@ -434,15 +434,15 @@ function{0,1} chmod(s, m)
 	    }
 	    else
 	       cnv:C_integer(m, i);
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    if (fchmod(fd, i) != 0) {
 	       IntVal(amperErrno) = errno;
 	       fail;
 	       }
 	    return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
       default:
@@ -460,15 +460,15 @@ function{0,1} chroot(d)
       }
    inline {
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if (chroot(d) != 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
 	 }
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -482,7 +482,7 @@ function{0,1} rmdir(s)
       }
    inline {
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
 #define rmdir _rmdir
 #endif
       if (rmdir(s) != 0) {
@@ -525,8 +525,8 @@ function{0,1} mkdir(s, m)
       }
 
       IntVal(amperErrno) = 0;
-#if NT
-#define mkdir(s,mode) _mkdir(s)		/* in NT, _mkdir don't have mode*/
+#if MSWIN32
+#define mkdir(s,mode) _mkdir(s)		/* in MSWIN32, _mkdir don't have mode*/
 #endif
       if (mkdir(s, mode) != 0) {
 	 IntVal(amperErrno) = errno;
@@ -553,19 +553,19 @@ function{0,1} truncate(f, l)
 	    IntVal(amperErrno) = 0;
             cnv:C_string(f, s);
 
-#if NT
+#if MSWIN32
 	    if (((fd = _open(s, _O_RDWR | _O_CREAT, _S_IWRITE)) == -1) ||
 		(_chsize(fd, l) != 0)) {
 	       IntVal(amperErrno) = errno;
 	       fail;
 	       }
 	    _close(fd);
-#else					/* NT */
+#else					/* MSWIN32 */
 	    if (truncate(s, l) != 0) {
 	       IntVal(amperErrno) = errno;
 	       fail;
 	       }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	    return nulldesc;
 	 }
       }
@@ -622,7 +622,7 @@ function{0,1} flock(f, cmd)
          }
 #endif					/* HAVE_LIBZ */
 
-#if NT
+#if MSWIN32
       while (c[i])
 	 switch (c[i++]) {
 	 case 'x': option |= LK_LOCK; break;
@@ -649,7 +649,7 @@ function{0,1} flock(f, cmd)
 	 fail;
       }
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 #if defined(BSD) || defined(BSD_4_4_LITE) || defined(IRIS4D) || defined(Linux)
 
       while (c[i])
@@ -701,9 +701,9 @@ function{0,1} fcntl(f, action, options)
          }
 #endif					/* HAVE_LIBZ */
 
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if ((fd = get_fd(f, 0)) < 0)
 	 runerr(174, f);
 
@@ -850,7 +850,7 @@ function{0,1} fcntl(f, action, options)
 	 } else
 	    return C_integer retval;
       }
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -867,7 +867,7 @@ function{0,1} utime(f, atime, mtime)
       return null
       }
    body {
-#if NT
+#if MSWIN32
 #define utime _utime
 #define utimbuf _utimbuf
 #endif
@@ -906,9 +906,9 @@ function{0,1} ioctl(f, action, options)
          }
 #endif					/* HAVE_LIBZ */
 
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 #ifdef UNICON_IOCTL
       if ((retval = ioctl(fd, action, options)) < 0) {
 	 IntVal(amperErrno) = errno;
@@ -917,7 +917,7 @@ function{0,1} ioctl(f, action, options)
 #else					/* UNICON_IOCTL */
       runerr(121, f);
 #endif					/* UNICON_IOCTL */
-#endif					/* NT */
+#endif					/* MSWIN32 */
       return C_integer retval;
       }
 end
@@ -935,9 +935,9 @@ function{0,1} filepair()
       struct b_file *fl; /* not tended: single assignment usage */
       tended struct b_list *lp;
       tended union block *ep;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       IntVal(amperErrno) = 0;
       if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) != 0) {
 	 IntVal(amperErrno) = errno;
@@ -959,7 +959,7 @@ function{0,1} filepair()
 	 }
 
       return list(lp);
-#endif					/* NT */
+#endif					/* MSWIN32 */
    }
 end
 
@@ -978,7 +978,7 @@ function{0,1} pipe()
       tended union block *ep;
 
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
 #define pipe(x) _pipe(x, 4096, O_BINARY|O_NOINHERIT)
 #endif
       if (pipe(fds) != 0) {
@@ -1005,20 +1005,20 @@ end
 
 "fork() - spawn a new identical process."
 
-#if NT
+#if MSWIN32
 function{0} fork()
-#else					/* NT */
+#else					/* MSWIN32 */
 function{0,1} fork()
-#endif					/* NT */
+#endif					/* MSWIN32 */
    abstract {
       return integer
       }
    inline {
       int pid;
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if ((pid = fork()) < 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
@@ -1029,7 +1029,7 @@ function{0,1} fork()
         wdsplys = 0;
 #endif
       return C_integer pid;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -1195,7 +1195,7 @@ function{0,1} system(argv, d_stdin, d_stdout, d_stderr, mode)
       }
 
 
-#if !NT
+#if !MSWIN32
       /* 
        * We don't use system(3) any more since the program is allowed to
        * re-map the files even for foreground execution
@@ -1235,7 +1235,7 @@ function{0,1} system(argv, d_stdin, d_stdout, d_stderr, mode)
 	    return C_integer pid;
             }
       }
-#else					/* NT */
+#else					/* MSWIN32 */
      /*
       * We might want to use CreateProcess and pass the file handles
       * for stdin/stdout/stderr to the child process.  Another candidate
@@ -1295,7 +1295,7 @@ function{0,1} system(argv, d_stdin, d_stdout, d_stderr, mode)
 	       return C_integer i;
 	       }
 	    }
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
       /*NOTREACHED*/
       return nulldesc;
@@ -1309,9 +1309,9 @@ function{0,1} getuid()
       return string
       }
    body {
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       struct passwd *pw;
       char name[12], *user;
       int u;
@@ -1324,7 +1324,7 @@ function{0,1} getuid()
 	 user = pw->pw_name;
       String(result, user);
       return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -1335,9 +1335,9 @@ function{0,1} geteuid()
       return string
       }
    body {
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       struct passwd *pw;
       char name[12], *user;
       int u;
@@ -1350,7 +1350,7 @@ function{0,1} geteuid()
 	 user = pw->pw_name;
       String(result, user);
       return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -1361,9 +1361,9 @@ function{0,1} getgid()
       return string
       }
    body {
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       struct group *gr;
       char name[12], *user;
       int g;
@@ -1376,7 +1376,7 @@ function{0,1} getgid()
 	 user = gr->gr_name;
       String(result, user);
       return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -1387,9 +1387,9 @@ function{0,1} getegid()
       return string
       }
    body {
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       struct group *gr;
       char name[12], *user;
       int g;
@@ -1402,7 +1402,7 @@ function{0,1} getegid()
 	 user = gr->gr_name;
       String(result, user);
       return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -1416,15 +1416,15 @@ function{0,1} setuid(u)
       }
    inline {
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if (setuid(u) != 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
 	 }
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -1438,15 +1438,15 @@ function{0,1} setgid(g)
       }
    inline {
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if (setgid(g) != 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
 	 }
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
    }
 end
 
@@ -1457,11 +1457,11 @@ function{0,1} getpgrp()
       return integer
       }
    inline {
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       return C_integer getpgrp();
-#endif					/* NT */
+#endif					/* MSWIN32 */
    }
 end
 
@@ -1473,15 +1473,15 @@ function{0,1} setpgrp()
       }
    inline {
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       if (Setpgrp() != 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
 	 }
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
    }
 end
 
@@ -1521,7 +1521,7 @@ function{0,1} umask(mask)
       if (is:integer(mask)) {
 	 C_integer m;
          cnv:C_integer(mask, m);
-#if NT
+#if MSWIN32
 #define umask _umask
 #endif
 	 return C_integer umask(m);
@@ -1585,7 +1585,7 @@ function{0,1} wait(pid, options)
    body {
       char retval[64];
       int option = 0, status = 0, wpid, i=0;
-#if !NT
+#if !MSWIN32
 #if defined(BSD) || defined(Linux) || defined(BSD_4_4_LITE)
       struct rusage rusage;
       while(options[i])
@@ -1648,7 +1648,7 @@ function{0,1} wait(pid, options)
 #endif
 	 strcat(retval, ":core");
 
-#else					/* NT */
+#else					/* MSWIN32 */
       int termstat;
 
       while(options[i])
@@ -1663,7 +1663,7 @@ function{0,1} wait(pid, options)
 	 fail;
 	 }
       sprintf(retval, "%d terminated:%d", wpid, termstat);
-#endif					/* NT */
+#endif					/* MSWIN32 */
 
       String(result, retval);
       return result;
@@ -1708,22 +1708,22 @@ function{0,1} gettimeofday()
    }
    body {
       struct timeval tp;
-#if NT
+#if MSWIN32
       struct _timeb wtp;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       struct b_record *rp; /* does not need to be tended */
       static dptr constr;
       int nfields;
 
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
       _ftime( &wtp );
-#else					/* NT */
+#else					/* MSWIN32 */
       if (gettimeofday(&tp, 0) < 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
 	 }
-#endif					/* NT */
+#endif					/* MSWIN32 */
       if (!constr)
 	 if (!(constr = rec_structor("posix_timeval")))
 	    syserr("failed to create posix record constructor");
@@ -1732,13 +1732,13 @@ function{0,1} gettimeofday()
       Protect(rp = alcrecd(nfields, BlkLoc(*constr)), runerr(0));
       result.dword = D_Record;
       result.vword.bptr = (union block *)rp;
-#if NT
+#if MSWIN32
       MakeInt(wtp.time, &(rp->fields[0]));
       MakeInt(wtp.millitm * 1000, &(rp->fields[1]));
-#else					/* NT */
+#else					/* MSWIN32 */
       MakeInt(tp.tv_sec, &(rp->fields[0]));
       MakeInt(tp.tv_usec, &(rp->fields[1]));
-#endif					/* NT */
+#endif					/* MSWIN32 */
       return result;
 
    }
@@ -1754,18 +1754,18 @@ function{0,1} lstat(f)
       }
    body {
       tended struct b_record *rp;
-#if NT
+#if MSWIN32
       struct _stat sbuf;
-#else					/* NT */
+#else					/* MSWIN32 */
       struct stat sbuf;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       static dptr constr;
       int nfields;
 
       IntVal(amperErrno) = 0;
-#if NT
+#if MSWIN32
 #define lstat _stat
-#endif					/* NT */
+#endif					/* MSWIN32 */
       if (lstat(f, &sbuf) != 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
@@ -1792,11 +1792,11 @@ function{0,1} stat(f)
 	    }
 	 body {
 	    tended struct b_record *rp;
-#if NT
+#if MSWIN32
 	    struct _stat sbuf;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    struct stat sbuf;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	    tended char *fname;
 	    static dptr constr;
 	    int nfields;
@@ -1815,7 +1815,7 @@ function{0,1} stat(f)
 	    Protect(rp = alcrecd(nfields, BlkLoc(*constr)), runerr(0));
 	    stat2rec(&sbuf, &result, &rp);
 
-#if !NT
+#if !MSWIN32
 	    if (S_ISLNK(sbuf.st_mode)) {
 	       /* readlink */
 	       char ret[NAME_MAX];
@@ -1848,7 +1848,7 @@ function{0,1} stat(f)
 	       strtotal += n;
 	       strfree = out;
 	    }
-#endif					/* !NT */
+#endif					/* !MSWIN32 */
 	    return result;
 	 }
       }
@@ -1858,11 +1858,11 @@ function{0,1} stat(f)
 	    }
 	 body {
 	    tended struct b_record *rp;
-#if NT
+#if MSWIN32
 	    struct _stat sbuf;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    struct stat sbuf;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	    static dptr constr;
 	    int nfields, fd;
 
@@ -2132,7 +2132,7 @@ function{0,1} select(files[nargs])
 
       if (n) {
          if ((nset = select(n, &fds, NULL, NULL, ptv)) < 0) {
-#if NT
+#if MSWIN32
 	    IntVal(amperErrno) = WSAGetLastError();
 #else
 	    IntVal(amperErrno) = errno;
@@ -2238,9 +2238,9 @@ function{0,1} getpw(u)
    type_case u of {
       string: {
 	 body {
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    tended char* name;
 	    cnv:C_string(u, name);
 	    
@@ -2250,14 +2250,14 @@ function{0,1} getpw(u)
 	    if (make_pwd(pw, &result) == 0)
 	       syserr("failed to create posix record constructor");
 	    return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
       integer: {
 	 body {
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    C_integer uid;
 	    cnv:C_integer(u, uid);
 
@@ -2267,21 +2267,21 @@ function{0,1} getpw(u)
 	    if (make_pwd(pw, &result) == 0)
 	       syserr("failed to create posix record constructor");
 	    return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
       null: {
 	 body {
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    if ((pw = getpwent()) == NULL)
 	       fail;
 
 	    if (make_pwd(pw, &result) == 0)
 	       syserr("failed to create posix record constructor");
 	    return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
       default: {
@@ -2306,46 +2306,46 @@ function{0,1} getgr(g)
 	 body {
 	    tended char* name;
 	    cnv:C_string(g, name);
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    if ((gr = getgrnam(name)) == NULL)
 	       fail;
 
 	    if (make_group(gr, &result) == 0)
 	       syserr("failed to create posix record constructor");
 	    return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
    integer: {
 	 body {
 	    C_integer gid;
 	    cnv:C_integer(g, gid);
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    if ((gr = getgrgid(gid)) == NULL)
 	       fail;
 
 	    if (make_group(gr, &result) == 0)
 	       syserr("failed to create posix record constructor");
 	    return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
    null: {
 	 body {
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    if ((gr = getgrent()) == NULL)
 	       fail;
 
 	    if (make_group(gr, &result) == 0)
 	       syserr("failed to create posix record constructor");
 	    return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
    default: {
@@ -2380,7 +2380,7 @@ function{0,1} gethost(h)
       }
       null: {
 	 body {
-#if NT
+#if MSWIN32
 	    static struct hostent *hs2;
 	    if (hs2 != NULL) {
 	       hs2 = NULL;
@@ -2395,7 +2395,7 @@ function{0,1} gethost(h)
 		  syserr("failed to create posix record constructor");
 	       return result;
 	       }
-#else					/* NT */
+#else					/* MSWIN32 */
 
 #ifdef HAVE_GETHOSTENT
 	    if ((hs = gethostent()) == NULL)
@@ -2407,7 +2407,7 @@ function{0,1} gethost(h)
 	    if (make_host(hs, &result) == 0)
 	       syserr("failed to create posix record constructor");
 	    return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
    default: {
@@ -2469,16 +2469,16 @@ function{0,1} getserv(s, proto)
       }
       null: {
 	 body {
-#if NT
+#if MSWIN32
 	    fail;
-#else					/* NT */
+#else					/* MSWIN32 */
 	    if ((serv = getservent()) == NULL)
 	       fail;
 
 	    if (make_serv(serv, &result) == 0)
 	       syserr("failed to create posix record constructor");
 	    return result;
-#endif					/* NT */
+#endif					/* MSWIN32 */
 	 }
       }
    default: {
@@ -2494,11 +2494,11 @@ function{0,1} setpwent()
       return null
       }
    body {
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       setpwent();
-#endif					/* NT */
+#endif					/* MSWIN32 */
       return nulldesc;
    }
 end
@@ -2510,12 +2510,12 @@ function{0,1} setgrent()
       return null
       }
    body {
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       setgrent();
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
    }
 end
 
@@ -2528,12 +2528,12 @@ function{0,1} sethostent(so)
       return null
       }
    body {
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       sethostent(so);
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
       }
 end
 
@@ -2546,12 +2546,12 @@ function{0,1} setservent(so)
       return null
       }
    body {
-#if NT
+#if MSWIN32
       fail;
-#else					/* NT */
+#else					/* MSWIN32 */
       setservent(so);
       return nulldesc;
-#endif					/* NT */
+#endif					/* MSWIN32 */
    }
 end
 
@@ -2666,7 +2666,7 @@ function{0, 1} setenv(name, value)
       return null
       }
    inline {
-#if NT
+#if MSWIN32
       if (!SetEnvironmentVariable(name, value))
          fail;
 #else
