@@ -10,7 +10,7 @@ LINKR=		link.o lglob.o lcode.o lmem.o lsym.o
 COBJS=		../common/long.o ../common/getopt.o ../common/alloc.o \
 		../common/strtbl.o ../common/mlocal.o
 
-OBJS=		package.o resolve.o tmain.o util.o tlocal.o $(TRANS) $(LINKR) $(COBJS)
+OBJS=		package.o resolve.o tmain.o util.o $(TRANS) $(LINKR) $(COBJS)
 
 all:		oit
 

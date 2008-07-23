@@ -18,10 +18,6 @@
 
    Feature(1, "_V9", 0)			/* Version 9 (unconditional) */
 
-#if MACINTOSH
-   Feature(1, "_MACINTOSH", "Macintosh")
-#endif					/* MACINTOSH */
-
 #if MSDOS
 #if INTEL_386 || HIGHC_386 || WATCOM || ZTC_386 || BORLAND_386 || SCCX_MX
    Feature(1, "_MSDOS_386", "MS-DOS/386")

@@ -25,11 +25,6 @@ Deliberate Syntax Error
    /* nothing to do */
 #endif			
 
-#if MACINTOSH && MPW
-extern int MPWFlush(FILE *f);
-#define fflush(f) MPWFlush(f)
-#endif					/* MACINTOSH && MPW*/
-
 #ifdef PosixFns
 extern int errno;
 #endif					/* PosixFns */
@@ -302,7 +297,7 @@ function{0,1} open(fname, spec)
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MACINTOSH || MSDOS
+#if MSDOS
    /* nothing is needed */
 #endif
 
@@ -484,14 +479,6 @@ Deliberate Syntax Error
       if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write))
 	 mode[1] = '+';
 #endif
-
-#if MACINTOSH
-      if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write)) {
-         mode[1] = '+';
-         if ((status & Fs_Untrans) != 0) mode[2] = 'b';
-         }
-      else if ((status & Fs_Untrans) != 0) mode[1] = 'b';
-#endif					/* MACINTOSH */
 
 #if MSDOS
       if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write)) {
@@ -718,17 +705,6 @@ Deliberate Syntax Error
 	 fail;
 #endif					/* MSWindows */
 	 }
-
-#if MACINTOSH
-#if MPW
-      {
-	 void SetFileToMPWText(const char *fname);
-
-	 if (status & Fs_Write)
-	    SetFileToMPWText(fnamestr);
-      }
-#endif					/* MPW */
-#endif					/* MACINTOSH */
 
       /*
        * Return the resulting file value.
@@ -1756,9 +1732,7 @@ function{0,1} chdir(s)
 #if PORT
    Deliberate Syntax Error
 #endif                                  /* PORT */
-#if MACINTOSH
-      runerr(121);
-#endif                              
+
 #if MSDOS || UNIX || NT
 
       char path[MaxPath];

@@ -16,10 +16,6 @@
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MACINTOSH
-   /* nothing is needed */
-#endif					/* MACINTOSH */
-
 #if MSDOS
 #if MICROSOFT || HIGHC_386 || INTEL_386 || ZTC_386 || WATCOM
    /* nothing is needed */
@@ -97,10 +93,6 @@ char **opt_args;
    /* something may be needed */
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if MACINTOSH
-   /* nothing is needed */
-#endif					/* MACINTOSH */
 
 #if MSDOS
 #if MICROSOFT
@@ -534,10 +526,6 @@ Deliberate Syntax Error
    /* something may be needed */
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if MACINTOSH
-   /* nothing is needed */
-#endif					/* MACINTOSH */
 
 #if MSDOS
 #if MICROSOFT

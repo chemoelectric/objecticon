@@ -329,19 +329,6 @@ void icon_init(name, argcp, argv)
     Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MACINTOSH
-#if MPW
-    {
-        void MacInit(void);
-        void SetFloatTrap(void (*fpetrap)());
-        void fpetrap();
-
-        MacInit();
-        SetFloatTrap(fpetrap);
-    }
-#endif					/* MPW */
-#endif					/* MACINTOSH */
-
 #if UNIX
 /*RPP   signal(SIGSEGV, SigFncCast segvtrap); */
     signal(SIGFPE, SigFncCast fpetrap);
@@ -477,7 +464,7 @@ void icon_init(name, argcp, argv)
     Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MACINTOSH || UNIX
+#if UNIX
 
 
         if (noerrbuf)
@@ -490,7 +477,7 @@ void icon_init(name, argcp, argv)
                 fatalerr(305, NULL);
             setbuf(stderr, buf);
         }
-#endif					/* MACINTOSH ... */
+#endif					/* UNIX */
 
 #if MSWindows
 #if !HIGHC_386

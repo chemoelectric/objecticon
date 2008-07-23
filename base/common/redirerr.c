@@ -33,16 +33,6 @@ char *p;
 #endif					/* MSDOS */
 
 
-#if MACINTOSH
-   #if LSC
-      /* cannot do */
-   #endif				/* LSC */
-   #if MPW
-      close(fileno(stderr));
-      dup(fileno(stdout));
-   #endif				/* MPW */
-#endif					/* MACINTOSH */
-
 #if UNIX
       /*
        * This relies on the way UNIX assigns file numbers.

@@ -1839,14 +1839,6 @@ Deliberate Syntax Error
    return (isascii(c) && isprint(c));
 #endif		
 
-#if MACINTOSH
-#if MPW
-   return (isascii(c) && isprint(c));
-#else					/* MPW */
-   return isprint(c);
-#endif					/* MPW */
-#endif					/* MACINTOSH */
-
 /*
  * End of operating-system specific code.
  */

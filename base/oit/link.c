@@ -331,14 +331,6 @@ void setexe(char *fname)
      */
 #endif
 
-#if MACINTOSH
-#if MPW
-    /* Nothing to do here -- file is set to type TEXT
-       (so it can be executed as a script) in tmain.c.
-    */
-#endif				/* MPW */
-#endif					/* MACINTOSH */
-
 #if UNIX
     {
         struct stat stbuf;

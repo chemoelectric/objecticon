@@ -426,12 +426,6 @@ int n;
 #endif					/* SCCX_MX */
 #endif					/* MSDOS */
 
-#if MACINTOSH
-   void MacDelay(int n);
-   MacDelay(n);
-   return Succeeded;
-#endif					/* MACINTOSH */
-
 #if PORT
    return Failed;
 #endif	

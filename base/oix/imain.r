@@ -16,14 +16,6 @@
 static	void	env_err	(char *msg,char *name,char *val);
 void	icon_setup	(int argc, char **argv, int *ip);
 
-#ifdef MacGraph
-void MacMain (int argc, char **argv);
-void ToolBoxInit (void);
-void MenuBarInit (void);
-void MouseInfoInit (void);
-int GetArgs (char **argv);
-#endif					/* MacGraph */
-
 /*
  * The following code is operating-system dependent [@imain.01].  Declarations
  *   that are system-dependent.
@@ -33,12 +25,6 @@ int GetArgs (char **argv);
 /* probably needs something more */
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if MACINTOSH
-#if MPW
-int NoOptions = 0;
-#endif					/* MPW */
-#endif					/* MACINTOSH */
 
 
 /* #define DEBUG_LOAD 1 */
@@ -774,61 +760,3 @@ void xmfree()
 
 }
 
-
-#ifdef MacGraph
-void MouseInfoInit (void)
-{
-    gMouseInfo.wasDown = false;
-}
-
-void ToolBoxInit (void)
-{
-    InitGraf (&qd.thePort);
-    InitFonts ();
-    InitWindows ();
-    InitMenus ();
-    TEInit ();
-    InitDialogs (nil);
-    InitCursor ();
-}
-
-void MenuBarInit (void)
-{
-    Handle         menuBar;
-    MenuHandle     menu;
-    OSErr          myErr;
-    long           feature;
-
-    menuBar = GetNewMBar (kMenuBar);
-    SetMenuBar (menuBar);
-
-    menu = GetMHandle (kAppleMenu);
-    AddResMenu (menu, 'DRVR');
-
-    DrawMenuBar ();
-}
-
-void EventLoop ( void )
-{
-    EventRecord event, *eventPtr;
-    char theChar;
-
-    gDone = false;
-    while ( gDone == false )
-    {
-        if ( WaitNextEvent ( everyEvent, &event, kSleep, nil ) )
-            DoEvent ( &event );
-    }
-}
-
-void main ()
-{
-    atexit (EventLoop);
-    ToolBoxInit ();
-    MenuBarInit ();
-    MouseInfoInit ();
-    cmlArgs = "";
-
-    EventLoop ();
-}
-#endif					/* MacGraph */

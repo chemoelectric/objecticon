@@ -50,10 +50,6 @@
    #define PORT 0
 #endif					/* PORT */
 
-#ifndef MACINTOSH
-   #define MACINTOSH 0
-#endif					/* MACINTOSH */
-
 #ifndef MSDOS
    #define MSDOS 0
 #endif					/* MSDOS */
@@ -151,11 +147,6 @@
    #undef Graphics
    #define Graphics 1
 #endif					/* MSWindows */
-
-#ifdef MacGraph
-   #undef Graphics
-   #define Graphics 1
-#endif					/* MacGraph */
 
 #ifdef HAVE_LIBX11
    #define Graphics 1
@@ -383,14 +374,6 @@ Deliberate Syntax Error
    #endif				/* HIGHC_386 */
 #endif					/* MSDOS */
 
-#if MACINTOSH
-   #if LSC
-      /*
-       * LightSpeed C requires that #define tokens appear after prototypes
-       */
-      #define malloc mlalloc
-   #endif				/* LSC */
-#endif					/* MACINTOSH */
 
 #ifndef NoWildCards
    #if NT || BORLAND_286 || BORLAND_386 || MICROSOFT || SCCX_MX

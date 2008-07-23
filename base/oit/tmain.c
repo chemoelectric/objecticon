@@ -52,27 +52,6 @@ char *ofile = 0;         	/* name of linker output file */
 char *iconxloc;			/* path to iconx */
 long hdrsize;			/* size of iconx header */
 
-#if MACINTOSH
-   #if THINK_C
-      #include "console.h"
-      #include "config.h"
-      #include "cpuconf.h"
-      #include "macgraph.h"
-      #include <AppleEvents.h>
-      #include <GestaltEqu.h>
-      /* #include <Values.h> */
-
-      #define MAXLONG  (0x7fffffff)
-      
-      /* #define kSleep MAXLONG */
-      #define kGestaltMask 1L
-
-      /* Global */
-      Boolean gDone;
-      Boolean g_cOption;
-   #endif    /* THINK_C */
-#endif    /* MACINTOSH */
-
 #ifdef MSWindows
    #include "../h/filepat.h"
 #endif					/* MSWindows */
@@ -87,33 +66,6 @@ static void file_comp(char *ofile);
 static void bundle_iconx(char *ofile);
 static void execute(char *ofile,char *efile,char * *args);
 static void usage(void);
-
-#if MACINTOSH
-   #if THINK_C
-      pascal void  MaxApplZone ( void );
-      void         IncreaseStackSize ( Size extraBytes );
-      
-      void         ToolBoxInit ( void );
-      void         EventInit ( void );
-      void         EventLoop ( void );
-      void         DoEvent ( EventRecord *eventPtr );
-      pascal OSErr DoOpenDoc ( AppleEvent theAppleEvent,
-                         AppleEvent reply,
-                               long refCon );
-      pascal OSErr DoQuitApp ( AppleEvent theAppleEvent,
-                         AppleEvent reply,
-                               long refCon );
-      OSErr        GotRequiredParams ( AppleEvent *appleEventPtr );
-      void      MacMain ( int argc, char **argv );
-
-      void DoMouseDown (EventRecord *eventPtr);
-      void HandleMenuChoice (long menuChoice);
-      void HandleAppleChoice (short item);
-      void HandleFileChoice (short item);
-      void HandleOptionsChoice (short item);
-      void MenuBarInit (void);
-   #endif					/* THINK_C */
-#endif					/* MACINTOSH */
 
 /*
  * The following code is operating-system dependent [@tmain.01].  Include
@@ -131,13 +83,6 @@ static void usage(void);
 #if MSWindows
    char pathToIconDOS[129];
 #endif					/* MSWindows */
-
-#if MACINTOSH
-   #if MPW
-      #include <CursorCtl.h>
-      void SortOptions();
-   #endif				/* MPW */
-#endif					/* MACINTOSH */
 
 /*
  * End of operating-system specific code.
@@ -431,13 +376,6 @@ int main(int argc, char **argv)
      *  Execute the linked program if so requested and if there were no errors.
      */
 
-#if MACINTOSH
-#if MPW
-    /* Set file type to TEXT so it will be executable as a script. */
-    setfile(ofile,'TEXT','ICOD');
-#endif					/* MPW */
-#endif					/* MACINTOSH */
-
     /* delete intermediate files */
     for (rptr = remove_files; rptr; rptr = rptr->next)
         remove(rptr->name);
@@ -449,12 +387,10 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-#if !(MACINTOSH && MPW)
     if (optind < argc)  {
         report("Executing");
         execute (ofile, efile, argv+optind+1);
     }
-#endif					/* !(MACINTOSH && MPW) */
 
     exit(EXIT_SUCCESS);
 }
@@ -464,8 +400,6 @@ int main(int argc, char **argv)
  */
 static void execute(char *ofile, char *efile, char **args)
    {
-
-#if !(MACINTOSH && MPW)
    int n;
    char **argv, **p;
 
@@ -498,11 +432,6 @@ static void execute(char *ofile, char *efile, char **args)
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MACINTOSH
-      fprintf(stderr,"-x not supported\n");
-      fflush(stderr);
-#endif
-
 #if MSWindows
       /* No special handling is needed for an .exe files, since iconx
        * recognizes it from the extension andfrom internal .exe data.
@@ -531,10 +460,6 @@ Deliberate Syntax Error
  */
 
    quitf("could not run %s",iconxloc);
-
-#else					/* !(MACINTOSH && MPW) */
-   printf("-x not supported\n");
-#endif					/* !(MACINTOSH && MPW) */
 
    }
 

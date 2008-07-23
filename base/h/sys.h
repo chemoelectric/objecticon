@@ -23,39 +23,6 @@
    Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MACINTOSH
-   #if LSC
-      #include <unix.h>
-   #endif				/* LSC */
-   #if MPW
-      #define create xx_create	/* prevent duplicate definition of create() */
-      #include <Types.h>
-      #include <Events.h>
-      #include <Files.h>
-      #include <FCntl.h>
-      #include <Files.h>
-      #include <IOCtl.h>
-      #include <fp.h>
-      #include <OSUtils.h>
-      #include <Memory.h>
-      #include <Errors.h>
-      #include "time.h"
-      #include <Quickdraw.h>
-      #include <ToolUtils.h>
-      #include <CursorCtl.h>
-   #endif				/* MPW */
-   #ifdef MacGraph
-      #include <console.h>
-      #include <AppleEvents.h>
-      #include <GestaltEqu.h>
-      #include <fp.h>
-      #include <QDOffscreen.h>
-      #include <Palettes.h>
-      #include <Quickdraw.h>
-   #endif				/* MacGraph */
-#endif					/* MACINTOSH */
-
-
 #if MSDOS
    #undef Type
    #include <sys/types.h>

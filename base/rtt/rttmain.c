@@ -2,10 +2,6 @@
 
 /*#include "../h/filepat.h"		?* added for filepat change */
 
-#if MACINTOSH
-#include <console.h>
-#endif					/* MACINTOSH */
-
 #if SCCX_MX
 unsigned _stack = 100000;
 #endif
@@ -31,11 +27,6 @@ char *refpath = "";
    /* something is needed */
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if MACINTOSH
-char *grttin_path = "::h:grttin.h";
-char *rt_path = "::h:rt.h";
-#endif					/* MACINTOSH */
 
 #if MSDOS
 char *grttin_path = "..\\base\\h\\grttin.h";
@@ -143,10 +134,6 @@ char **argv;
     */
    whsp_image = NoSpelling;
    line_cntrl = 1;
-
-#if MACINTOSH
-   argc = ccommand(&argv);
-#endif					/* MACINTOSH */
 
    /*
     * opt_lst and opt_args are the options and corresponding arguments

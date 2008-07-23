@@ -25,7 +25,7 @@ static void vanq_proc (struct ef_marker *efp_v, struct gf_marker *gfp_v);
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MACINTOSH || MSDOS || UNIX
+#if MSDOS || UNIX
    /* nothing needed */
 #endif					
 
@@ -163,7 +163,7 @@ int coexp_act;			/* last co-expression action */
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MACINTOSH || UNIX
+#if UNIX
 #define PushAVal(x) PushVal(x)
 #endif
 
@@ -407,20 +407,6 @@ Deliberate Syntax Error
 #if MSDOS || UNIX
    /* nothing to do */
 #endif					
-
-#if MACINTOSH
-#if MPW
-   {
-      #define CursorCheckInterval 800 /* virtual machine instructions */
-      void RotateTheCursor(void);
-      static short cursorcount = 1;
-      if (--cursorcount == 0) {
-	 RotateTheCursor();
-	 cursorcount = CursorCheckInterval;
-	 }
-   }
-#endif					/* MPW */
-#endif					/* MACINTOSH */
 
 /*
  * End of operating-system specific code.
@@ -1754,10 +1740,6 @@ interp_macro(interp_1,E_Intcall,E_Stack,E_Fsusp,E_Osusp,E_Bsusp,E_Ocall,E_Ofail,
 #if PORT
 Deliberate Syntax Error
 #endif					/* PORT */
-
-#if MACINTOSH
-   /* not included */
-#endif
 
 #if MSDOS
 #if MICROSOFT || TURBO || BORLAND_386

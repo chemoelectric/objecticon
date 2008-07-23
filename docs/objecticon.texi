@@ -66,19 +66,112 @@ language. Some of the main features are :-
 @node Installation
 @chapter Installation
 
+
+Object Icon uses autoconf for its configuration.  
+
+
+@menu
+* Installing from the subversion source repository::  
+* Installing from a .tar.gz file::  
+* Compilation_::                
+@end menu
+
+@node Installing from the subversion source repository
+@section Installing from the subversion source repository
+To do this you need autoconf installed (at least version 2.61).
+
+Use the following command to checkout a read-only copy of the source code :-
+
+@code{svn co http://objecticon.googlecode.com/svn/trunk/ objecticon}
+
+This will create a directory @code{objecticon} under the present
+directory (you can change the last parameter to create a different
+directory name if you want).
+
+Then cd into that directory and run the command @code{autoconf}.  This will
+create a @code{configure} script.
+
+Then proceed just the same as if you had downloaded the .tar.gz file.
+@node Installing from a .tar.gz file
+@section Installing from a .tar.gz file
+Extract the source code from the .tar.gz file with a command like
+@code{tar xfz objecticon-1.0.tar.gz}.  This will create a directory
+@code{objecticon-1.0} under the current directory.  Obviously the
+version number may be different.
+
+Change to the new directory and run @code{./configure}.  This
+command accepts various options - run @code{./configure --help} to
+see them.  The @code{./configure} script prints a summary of
+the options when it finishes, for example.
+
+@example
+Summary:-
+X11 graphics           : yes
+jpeg library           : yes
+Xft anti-aliased fonts : yes
+Xpm                    : yes
+zlib compression       : yes
+dynamic loading        : yes
+crypt lib              : yes
+makeinfo >=4.8         : yes
+mysql lib              : yes
+context switch         : config/system/linux_x86/rswitch.s
+@end example
+
+The meaning of these various options is as follows.
+
+@itemize @bullet
+@item X11 graphics
+Determines whether the Icon graphics facilities are built.  The
+following three options only apply if this is 'yes'.
+@item jpeg library
+Allows loading of jpeg images.
+@item Xft anti-aliased fonts
+Fonts are drawn with smooth edges using the xft and freetype libraries.
+This looks nice, but is considerably slower than using traditional X
+bitmap fonts.
+@item Xpm
+Allows loading of xpm images.
+@item zlib compression
+Allows zlib compressed files (ie .gz files), to be read/written via the
+"z" flag in the open function.  Also allows icode files to be compressed
+with the -Z flag given to the @code{oit}.
+@item dynamic loading
+Allows shared library (.so) files containing native functions to be
+loaded at runtime.
+@item crypt lib
+This just enables the builtin crypt() function.
+@item mysql lib
+Allows a dynamic library to be built which provides an interface to
+mysql.  Has no effect either way on the runtime system proper.
+@item makeinfo
+This allows the texinfo and html documentation to be built.
+@item context switch
+This is a system-dependent source file which is used by co-expressions.  If the
+value is @code{config/system/default/rswitch.c}, then co-expressions will not be
+functional (activation will end with a runtime error).
+@end itemize
+
+@node Compilation_
+@section Compilation_
+GNU make is required for compilation.  Just run make (or gmake) in the
+top-level directory.
+
+
+
 @node Overview
 @chapter Overview
 
 @node Classes and Objects
 @chapter Classes and Objects
 @menu
-* Classes and Objects - Introduction::  A brief intro
+* Classes and Objects - Introduction::  A brief intro 
 * Fields::                      The different types of field in a class
 * Inheritance::                 Inheritance in Object Icon
 * Field modifiers::             Indicate access and other attributes of a field
 * Method pointers::             How instance methods work
 * Casts::                       Accessing overridden methods
-* The init() method::           Called during class initialization
+* The init() method::           Called during class initialization 
 * The new() method::            Called during object creation
 * Deferred methods::            Methods with no body
 @end menu
@@ -1087,6 +1180,18 @@ be copied or moved to any desired location.  The starting page is
 
 @node Makefiles
 @chapter Makefiles
+A useful file with some make definitions, @code{Makedefs} can be found
+in the root directory of the source tree.  A similar file is generated
+by the installation process, and can be found in the @code{objecticon}
+subdirectory of the installation @code{lib} directory (eg
+@code{/usr/local/lib/objecticon/Makedefs}).
+
+The @code{Makedefs} file provides appropriate definitions for the
+@code{OIPATH}, @code{OLPATH} and @code{PATH} environment variables, as
+well as providing a simple pattern rule for translating .icn to .u
+files.
+
+Here are some example Makefiles which show how
 
 @node Dynamically loading C/RTL code
 @chapter Dynamically loading C/RTL code

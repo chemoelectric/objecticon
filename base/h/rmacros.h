@@ -513,7 +513,7 @@
       Deliberate Syntax Error
    #endif				/* PORT */
    
-   #if MACINTOSH || UNIX
+   #if UNIX
       #define PushAVal(x) PushVal(x)
    #endif		
    
