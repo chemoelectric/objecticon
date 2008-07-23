@@ -49,18 +49,6 @@ typedef struct _FINDFILE_TAG {
 #endif 					/* NT */
 
 
-#if MICROSOFT
-
-#include <dos.h>
-
-typedef struct _find_t FINDDATA_T;
-
-#define FINDFIRST(pattern, pfd)	(!_dos_findfirst ((pattern), _A_NORMAL, (pfd)))
-#define FINDNEXT(pfd)	( !_dos_findnext ( (pfd) ) )
-#define FILENAME(pfd)	( (pfd)->name )
-#define FINDCLOSE(pfd)	( (void) 0 )
-
-#endif					/* MICROSOFT */
 
 #if PORT
 Deliberate Syntax Error                 /* Give it some thought */

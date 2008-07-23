@@ -323,10 +323,6 @@ Deliberate Syntax Error
     *  defined.
     */
 
-   #ifndef MICROSOFT
-      #define MICROSOFT 0
-   #endif				/* MICROSOFT */
-
    #ifndef NT
       #define NT 0
    #endif				/* NT */

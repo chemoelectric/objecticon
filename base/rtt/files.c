@@ -205,7 +205,7 @@ Deliberate Syntax Error
 #endif					/* PORT */
 
 #if MSDOS
-#if MICROSOFT || NT
+#if NT
    char *syspath;
    char *cl_var;
    char *incl_var;
@@ -252,7 +252,7 @@ Deliberate Syntax Error
          if (*incl_var++ == ';' && *incl_var != '\0')
             ++n_paths;
       }
-#endif					/* MICROSOFT || NT */
+#endif					/* NT */
 
 #endif					/* MSDOS */
 
@@ -291,40 +291,6 @@ Deliberate Syntax Error
 #endif					/* PORT */
 
 #if MSDOS
-#if MICROSOFT
-   /*
-    * Get locations from -I options from the CL environment variable.
-    */
-   if (cl_var != NULL)
-      while (*cl_var != '\0') {
-         if (*cl_var == '/' || *cl_var == '-') {
-            ++cl_var;
-            if (*cl_var == 'I') {
-                  ++cl_var;
-                  while (*cl_var == ' ' || *cl_var == '\t')
-                     ++cl_var;
-                  i = 0;
-                  while (cl_var[i] != ' ' && cl_var[i] != '\t' &&
-                    cl_var[i] != '\0')
-                     ++i;
-                  s1 = (char *) alloc((unsigned int)(i + 1));
-                  strncpy(s1, cl_var, i);
-                  s1[i] = '\0';
-                  /*
-                   * Convert back slashes to slashes for internal consistency.
-                   */
-                  for (s = s1; *s != '\0'; ++s)
-                     if (*s == '\\')
-                        *s = '/';
-                  incl_search[j++] = s1;
-                  cl_var += i;
-               }
-            }
-         if (*cl_var != '\0')
-            ++cl_var;
-         }
-#endif					/* MICROSOFT */
-
 #endif					/* MSDOS */
 
 #if UNIX
@@ -388,27 +354,6 @@ Deliberate Syntax Error
 #endif					/* PORT */
 
 #if MSDOS
-#if MICROSOFT
-   /*
-    * Get the locations from the INCLUDE environment variable.
-    */
-   s = syspath;
-   if (*s != '\0')
-      incl_search[j++] = s;
-   while (*s != '\0') {
-      if (*s == ';') {
-         *s = '\0';
-         ++s;
-         if (*s != '\0')
-            incl_search[j++] = s;
-         }
-      else {
-         if (*s == '\\')
-            *s = '/';
-         ++s;
-         }
-      }
-#endif					/* MICROSOFT */
 
 #endif					/* MSDOS */
 

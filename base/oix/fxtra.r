@@ -11,14 +11,6 @@
  */
 
 
-#ifdef DosFncs
-#include "fxmsdos.ri"
-#endif					/* DosFncs */
-
-#ifdef ArmFncs
-#include "fxarm.ri"
-#endif					/* ArmFncs */
-
 #ifdef PosixFns
 #include "fxposix.ri"
 #endif					/* POSIX interface functions */

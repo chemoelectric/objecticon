@@ -386,11 +386,6 @@ int interp_x(int fsig,dptr cargp)
 
       lastop = GetOp;		/* Instruction fetch */
 
-#ifdef StackPic
-      ExInterp;
-      stkdump((int)lastop);
-      EntInterp;
-#endif					/* StackPic */
 
 /*
  * The following code is operating-system dependent [@interp.03].  Check
@@ -1726,68 +1721,6 @@ interp_quit:
 interp_macro(interp_0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 interp_macro(interp_1,E_Intcall,E_Stack,E_Fsusp,E_Osusp,E_Bsusp,E_Ocall,E_Ofail,E_Tick,E_Line,E_Loc,E_Opcode,E_Fcall,E_Prem,E_Erem,E_Intret,E_Psusp,E_Ssusp,E_Pret,E_Efail,E_Sresum,E_Fresum,E_Oresum,E_Eresum,E_Presum,E_Pfail,E_Ffail,E_Frem,E_Orem,E_Fret,E_Oret,E_Literal)
 
-
-#ifdef StackPic
-/*
- * The following code is operating-system dependent [@interp.04].
- *  Diagnostic stack pictures for debugging/monitoring.
- */
-
-#if PORT
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if MSDOS
-#if MICROSOFT
-void stkdump(op)
-   int op;
-   {
-   word far *stk;
-   word far *i;
-   stk = (word far *)BlkLoc(k_current);
-   stk += Wsizeof(struct b_coexpr);
-   fprintf(stderr,">  stack:  %08lx\n", (word)stk);
-   fprintf(stderr,">  sp:     %08lx\n", (word)sp);
-   fprintf(stderr,">  pfp:    %08lx\n", (word)pfp);
-   fprintf(stderr,">  efp:    %08lx\n", (word)efp);
-   fprintf(stderr,">  gfp:    %08lx\n", (word)gfp);
-   fprintf(stderr,">  ipc:    %08lx\n", (word)ipc.op);
-   fprintf(stderr,">  argp:   %08lx\n", (word)glbl_argp);
-   fprintf(stderr,">  ilevel: %08lx\n", (word)ilevel);
-   fprintf(stderr,">  op:     %d\n",    (int)op);
-   for (i = stk; i <= (word far *)sp; i++)
-      fprintf(stderr,"> %08lx\n",(word)*i);
-   fprintf(stderr,"> ----------\n");
-   fflush(stderr);
-   }
-#endif					/* MICROSOFT. */
-#endif					/* MSDOS */
-
-#if UNIX
-void stkdump(op)
-   int op;
-   {
-   word *i;
-   fprintf(stderr,"\001stack: %lx\n",(long)(stack + Wsizeof(struct b_coexpr)));
-   fprintf(stderr,"\001pfp: %lx\n",(long)pfp);
-   fprintf(stderr,"\001efp: %lx\n",(long)efp);
-   fprintf(stderr,"\001gfp: %lx\n",(long)gfp);
-   fprintf(stderr,"\001ipc: %lx\n",(long)ipc.op);
-   fprintf(stderr,"\001argp: %lx\n",(long)glbl_argp);
-   fprintf(stderr,"\001ilevel: %lx\n",(long)ilevel);
-   fprintf(stderr,"\001op: \%d\n",(int)op);
-   for (i = stack + Wsizeof(struct b_coexpr); i <= sp; i++)
-      fprintf(stderr,"\001%lx\n",*i);
-   fprintf(stderr,"\001----------\n");
-   fflush(stderr);
-   }
-#endif					/* UNIX */
-
-/*
- * End of operating-system specific code.
- */
-#endif					/* StackPic */
-
 #if E_Prem || E_Erem
 /*
  * vanq_proc - monitor the removal of suspended operations from within
