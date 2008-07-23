@@ -59,10 +59,6 @@
    #define ARM 0
 #endif					/* ARM */
 
-#ifndef ATARI_ST
-   #define ATARI_ST 0
-#endif					/* ATARI_ST */
-
 #ifndef MACINTOSH
    #define MACINTOSH 0
 #endif					/* MACINTOSH */
@@ -372,7 +368,7 @@ Deliberate Syntax Error
    #define LibSuffix ".olb"
 #endif					/* VMS */
 
-#if AMIGA || ARM || ATARI_ST || MACINTOSH || MVS || VM
+#if AMIGA || ARM || MACINTOSH || MVS || VM
 #endif					/* AMIGA || ARM || ... */
 
 #if MSDOS || OS2

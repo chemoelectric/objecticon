@@ -38,11 +38,6 @@
    #endif				/* __SASC */
 #endif					/* AMIGA */
 
-#if ATARI_ST
-   #include <fcntl.h>
-   #include <osbind.h>
-#endif					/* ATARI_ST */
-
 #if MACINTOSH
    #if LSC
       #include <unix.h>

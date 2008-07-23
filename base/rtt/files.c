@@ -20,11 +20,6 @@ Deliberate Syntax Error
 #define IsRelPath(fname) (strchr(fname, ':') == NULL)
 #endif					/* AMIGA */
 
-#if ATARI_ST || VM || MVS
-   /* something may be needed */
-Deliberate Syntax Error
-#endif					/* ATARI_ST || ... */
-
 #if MACINTOSH
 char *FileNameMacToUnix(char *fn);
 char *FileNameUnixToMac(char *fn);
@@ -85,11 +80,6 @@ Deliberate Syntax Error
 #if AMIGA
    /* nothing is needed */
 #endif					/* AMIGA */
-
-#if ATARI_ST || VM || MVS
-   /* something may be needed */
-Deliberate Syntax Error
-#endif					/* ATARI_ST || ... */
 
 #if MACINTOSH
    fname = FileNameMacConvert(FileNameMacToUnix,fname);
@@ -317,11 +307,6 @@ Deliberate Syntax Error
    n_paths = 1;
 #endif					/* AMIGA */
 
-#if ATARI_ST || VM || MVS || (MACINTOSH && !MPW && !THINK_C)
-   /* probably needs something */
-Deliberate Syntax Error
-#endif					/* ATARI_ST || ... */
-
 #if MACINTOSH
 #if THINK_C
    char *sysdir = FileNameMacConvert(FileNameMacToUnix, "MacintoshHD:THINK C:THINK C:Standard Libraries:C headers");
@@ -508,11 +493,6 @@ Deliberate Syntax Error
    /* nothing is needed */
 #endif					/* AMIGA */
 
-#if ATARI_ST || VM || MVS
-   /* something may be needed */
-Deliberate Syntax Error
-#endif					/* ATARI_ST || ... */
-
 #if MSDOS
 #if MICROSOFT
    /*
@@ -628,11 +608,6 @@ Deliberate Syntax Error
    /* nothing is needed */
 #endif					/* AMIGA */
 
-#if ATARI_ST || VM || MVS
-   /* something might be needed */
-Deliberate Syntax Error
-#endif					/* ATARI_ST || ... */
-
 #if MACINTOSH
    s1 = FileNameMacConvert(FileNameMacToUnix,s);
 #endif					/* MACINTOSH */
@@ -676,11 +651,6 @@ Deliberate Syntax Error
 #if AMIGA
    incl_search[n_paths - 1] = sysdir;
 #endif					/* AMIGA */
-
-#if ATARI_ST || VM || MVS
-   /* probably needs something */
-Deliberate Syntax Error
-#endif					/* ATARI_ST || ... */
 
 #if MSDOS
 #if MICROSOFT
