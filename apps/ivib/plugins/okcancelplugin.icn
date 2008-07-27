@@ -28,13 +28,13 @@ class OkCancelPlugin(Plugin)
       c.line(t || " := TextButton(\"label=" || obj.config["okay_label"] || "\")")
       if h := \obj.config["okay_method"] then {
          c.line(t || ".connect(self, \"" || h || "\", Event.ACTION)")
-         c.add_method(h, ["ev"])
+         c.add_method("private", h, ["ev"])
       }
       c.line(obj.name || ".add(" || t || ")")
       c.line(t || " := TextButton(\"label=" || obj.config["cancel_label"] || "\")")
       if h := \obj.config["cancel_method"] then {
          c.line(t || ".connect(self, \"" || h || "\", Event.ACTION)")
-         c.add_method(h, ["ev"])
+         c.add_method("private", h, ["ev"])
       }
       c.line(obj.name || ".add(" || t || ")")
    end
