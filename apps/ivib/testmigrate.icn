@@ -9,14 +9,14 @@ procedure main(args)
 
    write("Source:")
    if any(&lcase, s.code) then
-      LegacyCodePrinter(s.code).decode(0)
+      s.code ? LegacyCodePrinter().decode(0)
    else
-      CodePrinter(s.code).decode(0)
+      s.code ? CodePrinter().decode(0)
 
    write("\n\n===========================\n\nResult:")
 
    res := s.migrate()
-   CodePrinter(res).decode(0)
+   res ? CodePrinter().decode(0)
    write()
 end
 
@@ -161,8 +161,8 @@ class LegacyCodePrinter(LegacyDecode)
       return
    end
 
-   public new(s)
-      cast(self,LegacyDecode).new(s)
+   public new()
+      cast(self,LegacyDecode).new()
       col := 0
       return
    end
@@ -311,8 +311,8 @@ class CodePrinter(Decode)
       return
    end
 
-   public new(s)
-      cast(self,Decode).new(s)
+   public new()
+      cast(self,Decode).new()
       col := 0
       return
    end

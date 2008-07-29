@@ -79,10 +79,10 @@ class Source()
       local cs, d, o, e
       cs := createconverterset()
       if any(&lcase, code) then
-         d := LegacyCustomDecode(cs, code)
+         d := LegacyCustomDecode(cs)
       else
-         d := CustomDecode(cs, code)
-      o := d.decode() | fail
+         d := CustomDecode(cs)
+      o := (code ? d.decode()) | fail
       e := CustomEncode()
       e.encode(o)
       return e.get_string()
@@ -616,8 +616,8 @@ class LegacyCustomDecode(LegacyDecode)
       return res
    end
 
-   public new(cs, s)
-      cast(self,LegacyDecode).new(s)
+   public new(cs)
+      cast(self,LegacyDecode).new()
       self.cs := cs
       return
    end
@@ -654,8 +654,8 @@ class CustomDecode(Decode)
       return res
    end
 
-   public new(cs, s)
-      cast(self,Decode).new(s)
+   public new(cs)
+      cast(self,Decode).new()
       self.cs := cs
       return
    end

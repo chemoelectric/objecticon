@@ -53,10 +53,10 @@ end
 procedure decode(s)
    local d
    if any(&lcase, s) then
-      d := LegacyDecode(s)
+      d := LegacyDecode()
    else
-      d := Decode(s)
-   return d.decode()
+      d := Decode()
+   return s ? d.decode()
 end
 
 class Encode()
@@ -214,7 +214,7 @@ end
 # reproduce the object.
 #
 class Decode()
-   private tag_count, seen, buff
+   private tag_count, seen
 
    protected decode_string(s)
       local r
@@ -235,33 +235,20 @@ class Decode()
 
    protected line_in()
       local s
-      buff ? {
-         if s := tab(upto(Codec.CODE_SEPARATOR)) then {
-            move(1)
-            buff := tab(0)
-            return s
-         }
+      if s := tab(upto(Codec.CODE_SEPARATOR)) then {
+         move(1)
+         return s
       }
    end
 
    protected int_in()
       local s
-      buff ? {
-         if s := tab(many(&digits ++ '-')) then {
-            buff := tab(0)
-            return integer(s)
-         }
-      }
+      if s := tab(many(&digits ++ '-')) then
+         return integer(s)
    end
 
    protected char_in()
-      local s
-      buff ? {
-         if s := move(1) then {
-            buff := tab(0)
-            return s
-         }
-      }
+      return move(1)
    end
 
    protected note_seen(o)
@@ -367,10 +354,9 @@ class Decode()
       return res
    end
    
-   public new(s)
+   public new()
       tag_count := 0
       seen := table()
-      buff := s
       return
    end
 end
@@ -379,36 +365,30 @@ end
 # Old decode system.
 #
 class LegacyDecode()
-   private tag_count, seen, buff
+   private tag_count, seen
 
    protected decode_string(s)
-      local buff, t
+      local r
       static esc
       initial
          esc := ~'\\'
-
-      buff := StringBuff()
+      r := ""
       s ? {
          repeat {
-            t := tab(many(esc))
-            buff.add(t)
+            r ||:= tab(many(esc))
             if pos(0) then
-               return buff.get_string()
+               return r
             move(1)
-            t := char(move(3))
-            buff.add(t)
+            r ||:= char(move(3))
          }
       }
    end
 
    protected line_in()
       local s
-      buff ? {
-         if s := tab(upto('|')) then {
-            move(1)
-            buff := tab(0)
-            return s
-         }
+      if s := tab(upto('|')) then {
+         move(1)
+         return s
       }
    end
 
@@ -519,10 +499,9 @@ class LegacyDecode()
       return res
    end
 
-   public new(s)
+   public new()
       tag_count := 0
       seen := table()
-      buff := s
       return
    end
 end
