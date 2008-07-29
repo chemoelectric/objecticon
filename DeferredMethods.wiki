@@ -1,0 +1,110 @@
+#summary Deferred methods
+
+= Deferred methods =
+A deferred method is one in which there is no body, and the actual functionality of the method is defined elsewhere.  For example :-
+
+{{{
+class X()
+   public defer f()
+end
+}}}
+
+Parameters can be declared if desired, but they are ignored by the linker.
+
+There are three possible ways to provide the functionality of a deferred method.
+
+ * [DeferredMethods#Deferred_methods_as_abstract_methods Deferred methods as abstract methods]
+ * [DeferredMethods#Deferred_methods_in_the_runtime_system Deferred methods in the runtime system] 
+ * [DeferredMethods#Deferred_methods_resolved_at_runtime Deferred methods resolved at runtime]
+
+==Deferred methods as abstract methods==
+These work just like abstract methods in other languages.  A subclass
+overrides the deferred method :-
+
+{{{
+class X()
+   public defer f()
+end
+
+class Y(X)
+   public f()
+      write("in f()")
+   end
+end
+}}}
+
+Obviously this doesn't apply to static methods, which can't be overridden.
+
+== Deferred methods in the runtime system ==
+This necessitates editing and re-building the C/RTL source code of the runtime system and the translator.
+
+The first step is to convert the name of the deferred method to be implemented into the name of the runtime function to be implemented, by taking the fully qualified name of the class in which the method resides, adding a "." and the method name, and then changing all dots to underscores.  So, for example, say we were implementing method `my_method` in class `MyClass` in package `my.package`, then we would write a runtime function named `my_package_MyClass_my_method`.
+
+The next step is to add this name to the file `base/h/nativedefs.h`, ensuring that the file stays in ascending ascii order.
+
+Next, the function must be implemented somewhere in the runtime, as an RTL function, which might look like this :-
+
+{{{
+function{1} my_package_MyClass_my_method(x, y)
+   ... RTL code
+end
+}}}
+
+Note that for an instance method, the first parameter will be the instance on which the method was invoked.  In this case, add a `self` parameter to the parameter list :-
+
+{{{
+function{1} my_package_MyClass_my_method(self, x, y)
+   ... RTL code
+end
+}}}
+
+Finally, both the translator and the runtime must be re-compiled.  The easiest way to do this is to go into the `base` directory and run
+
+{{{
+make clean
+make
+make install   # Not needed if you work solely from the distribution
+}}}
+
+== Deferred methods resolved at runtime ==
+This involves setting an arbitrary procedure value to be the implementation of the method, as the following example shows :-
+
+{{{
+import lang(Class)
+
+procedure myproc(self, x)
+   write("in myproc self=", image(self), " x=", image(x))
+end
+
+class X()
+   public defer f()
+
+   private static init()
+      Class.set_method("f", myproc)
+   end
+end
+
+procedure main()
+   local i
+   i := X()
+   i.f(33)
+end
+}}}
+
+This prints `"in myproc self=object X_1(0) x=33"`.
+
+This example uses the static method `Class.set_method` in the `lang` package to set the deferred method `f` to point to the procedure `mproc`.  The result is that when `f` is invoked, `mproc` is called, with the instance `i` as the first parameter, and the value `33` as the second.  Note that unlike a normal method, the `self` parameter has to be placed in the parameter list.
+
+There are some restrictions which `set_method()` imposes :-
+
+ * The method must be defined in the class from which `set_method()` is called.
+ * The method must be a deferred method.
+ * The procedure supplied may not be a method.  Nor can a procedure be set as the implementation of more than one method.
+
+Setting a normal procedure to be a deferred method's definition isn't particularly useful, because you could always implement the method and just call the procedure.  However, `set_method` does still have one important use, and that is to set method implementations to procedures loaded via the `loadfunc` function, which loads code from a dynamic native library (.so or .dll).  This enables you to implement methods in C and RTL without editing or re-compiling the runtime system itself.  In this case, the init method might look like this :-
+
+{{{
+   private static init()
+      Class.set_method("f", loadfunc("mylib.so", "my_method"))
+   end
+}}}
