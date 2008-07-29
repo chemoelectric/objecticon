@@ -3,7 +3,7 @@
 Object Icon uses autoconf for its configuration.  
 
  * [Installation#Installing_from_the_subversion_source_repository Installing from the subversion source repository]
- * [Installation#Installing_from_a_.tar.gz_file Installing from a .tar.gz file]
+ * [Installation#Installing_from_a_tar_gz_file Installing from a .tar.gz file]
  * [Installation#Compilation Compilation]
 
 == Installing from the subversion source repository ==
@@ -21,8 +21,7 @@ Then cd into that directory and run the command @code{autoconf}.  This will
 create a @code{configure} script.
 
 Then proceed just the same as if you had downloaded the .tar.gz file.
-
-== Installing from a .tar.gz file ==
+== Installing from a tar gz file ==
 
 Extract the source code from the .tar.gz file with a command like
 @code{tar xfz objecticon-1.0.tar.gz}.  This will create a directory
@@ -59,23 +58,14 @@ Allows loading of jpeg images.
 Fonts are drawn with smooth edges using the xft and freetype libraries.
 This looks nice, but is considerably slower than using traditional X
 bitmap fonts.
- * Xpm
-Allows loading of xpm images.
- * zlib compression
-Allows zlib compressed files (ie .gz files), to be read/written via the
-"z" flag in the open function.  Also allows icode files to be compressed
-with the -Z flag given to the @code{oit}.
+ * Xpm Allows loading of xpm images.
+ * zlib compression - Allows zlib compressed files (ie .gz files), to be read/written via the "z" flag in the open function.  Also allows icode files to be compressed with the -Z flag given to the @code{oit}.
  * dynamic loading
 Allows shared library (.so) files containing native functions to be
 loaded at runtime.
  * crypt lib
 This just enables the builtin crypt() function.
- * mysql lib
-Allows a dynamic library to be built which provides an interface to
+ * mysql lib -Allows a dynamic library to be built which provides an interface to
 mysql.  Has no effect either way on the runtime system proper.
- * makeinfo
-This allows the texinfo and html documentation to be built.
- * context switch
-This is a system-dependent source file which is used by co-expressions.  If the
-value is @code{config/system/default/rswitch.c}, then co-expressions will not be
+ * context switch -This is a system-dependent source file which is used by co-expressions.  If the value is @code{config/system/default/rswitch.c}, then co-expressions will not be
 functional (activation will end with a runtime error).
