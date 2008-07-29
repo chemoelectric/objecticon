@@ -4,13 +4,11 @@ all :
 	$(MAKE) -C base all
 	$(MAKE) -C lib all
 	$(MAKE) -C apps all
-	$(MAKE) -C docs all
 
 clean :
 	$(MAKE) -C base clean
 	$(MAKE) -C lib clean
 	$(MAKE) -C apps clean
-	$(MAKE) -C docs clean
 
 PACKAGE_NAME=@PACKAGE_NAME@
 PACKAGE_TARNAME=@PACKAGE_TARNAME@
@@ -21,12 +19,9 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@
 docdir=@docdir@
-infodir=@infodir@
 OIBIN=@bindir@
 OILIB=@libdir@/@PACKAGE_TARNAME@
 SOLIB=@libdir@
-HTMLINFO=@htmldir@/@PACKAGE_TARNAME@-htmlinfo
-INFO=@infodir@
 LIBREF=@htmldir@/@PACKAGE_TARNAME@-libref
 PATHS=$(OILIB)/paths.sh
 MKDEFS=$(OILIB)/Makedefs
@@ -40,8 +35,6 @@ install :
 	$(INSTALL) -d $(OILIB)/main
 	$(INSTALL) -d $(OILIB)/parser
 	$(INSTALL) -d $(OILIB)/xml
-	$(INSTALL) -d $(HTMLINFO)
-	$(INSTALL) -d $(INFO)
 	$(INSTALL) -m 755 bin/ivib $(OIBIN)
 	$(INSTALL) -m 755 bin/iyacc $(OIBIN)
 	$(INSTALL) -m 755 bin/oit $(OIBIN)
@@ -54,13 +47,6 @@ install :
 	$(INSTALL) -m 755 lib/native/*.so $(SOLIB)
 	$(INSTALL) -m 644 lib/parser/*.u lib/parser/packages.txt $(OILIB)/parser
 	$(INSTALL) -m 644 lib/xml/*.u lib/xml/packages.txt $(OILIB)/xml
-ifeq (@MAKEINFO@,yes)
-	$(INSTALL) -m 644 docs/htmlinfo/*.html $(HTMLINFO)
-	$(INSTALL) -m 644 docs/objecticon.info $(INFO)
-ifeq (@INSTALLINFO@,yes)
-	install-info docs/objecticon.info $(INFO)/dir
-endif
-endif
 	@echo -e "# Object Icon path settings" >$(PATHS)
 	@echo -e "export OIHOME=\"$(prefix)\"" >>$(PATHS)
 	@echo -e "export OIBIN=\"$(OIBIN)\"" >>$(PATHS)
@@ -83,12 +69,7 @@ endif
 	@echo -e rm -f $(OIBIN)/ivib $(OIBIN)/iyacc $(OIBIN)/oit $(OIBIN)/oix $(OIBIN)/udis >$(UNINST)
 	@echo -e rm -f $(SOLIB)/objecticonipclib.so  $(SOLIB)/objecticonmysqllib.so >>$(UNINST)
 	@echo -e rm -rf $(OILIB) >>$(UNINST)
-	@echo -e rm -rf $(HTMLINFO) >>$(UNINST)
-	@echo -e rm -f $(INFO)/objecticon.info >>$(UNINST)
 	@echo -e rm -rf $(LIBREF) >>$(UNINST)
-ifeq (@INSTALLINFO@,yes)
-	@echo -e install-info --delete objecticon $(INFO)/dir >>$(UNINST)
-endif
 
 	@echo -e "\nInstallation complete.  Some helpful files :-"
 	@echo "   $(PATHS) - environment variables"
@@ -103,8 +84,8 @@ T=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)
 tar :
 	@rm -rf $(T)
 	@mkdir -p $(T)
-	@for f in $$( find apps base docs lib \
-		-regex ".*\.\(icn\|c\|r\|ri\|h\|y\|icon\|texi\)" ) ; do \
+	@for f in $$( find apps base lib \
+		-regex ".*\.\(icn\|c\|r\|ri\|h\|y\|icon\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \

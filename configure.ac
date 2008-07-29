@@ -45,23 +45,6 @@ OI_ADD_LIB(dl)
 AX_LIB_MYSQL()
 AC_FLAG_MSG_NOSIGNAL()
 
-dnl check for makeinfo v >= 4.8
-AC_CHECK_PROG(MAKEINFO, makeinfo, yes)
-if test "$MAKEINFO" == yes; then
-        if x=`makeinfo --version|grep "makeinfo (GNU texinfo) [[0-9]]\.[[0-9]]*$"` ; then
-                ma=${x:23:1}
-                mi=${x:25}
-                if test $ma -lt 4 || ( test $ma -eq 4 && test $mi -lt 8 ) ; then
-                        unset MAKEINFO
-                fi
-        else
-                unset MAKEINFO
-        fi
-fi
-if test "$MAKEINFO" == yes; then
-    AC_CHECK_PROG(INSTALLINFO, install-info, yes)
-fi
-
 AC_PROG_INSTALL()
 AC_PROG_LN_S()
 AC_PROG_MAKE_SET()
@@ -149,12 +132,6 @@ else
 fi
 echo -n "crypt lib              : "
 if test "$ac_cv_lib_crypt_main" == yes; then
-        echo yes
-else
-        echo no
-fi
-echo -n "makeinfo >=4.8         : "
-if test "$MAKEINFO" == yes; then
         echo yes
 else
         echo no
