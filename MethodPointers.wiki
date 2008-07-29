@@ -1,0 +1,106 @@
+#summary Pointers to instance methods
+
+= Method pointers =
+
+When a static method field is accessed, the result is a procedure value.  For example :-
+
+{{{
+class X()
+   public static f()
+   end
+end
+
+procedure main()
+   local m
+   m := X.f
+   write("type=", type(m))
+   write("image=", image(m))
+end
+}}}
+
+This program writes :-
+
+{{{
+type=procedure
+image=method X.f
+}}}
+
+The value of `m` is just a procedure that can be invoked when desired.
+
+For an instance method, the situation is a little more involved, because the instance needs to be kept to hand so that it can be passed to the method as the value of the `self` parameter.  To achieve this, when an instance method field is accessed, a small structure is created which holds two things, namely the instance and the method's procedure.  This structure is called a "methp" (short for "method pointer").
+
+To illustrate this, consider the following :-
+
+{{{
+class X()
+   public g()
+   end
+end
+
+procedure main()
+   local i, m
+   i := X()
+   m := i.g
+   write("type=", type(m))
+   write("image=", image(m))
+end
+}}}
+
+The output in this case is :-
+
+{{{
+type=methp
+image=methp(object X_1(0),method X.g)
+}}}
+
+The value `m` can now be used just like a procedure to invoke the
+method :-
+
+{{{
+m(1, 2, 3)
+}}}
+
+and the effect of this is to call the method `g` with the given parameters, as well as the `self` parameter, which will have the value of the instance `i`.
+
+One other general point to note about methods is that access permissions are checked when the field is accessed, not when the method is called, which can be done at any later time from any location in the program.
+
+Method pointers also allow some closure-like behaviour which would otherwise be difficult or impossible to achieve.  For example, consider the problem of writing a function which takes a parameter `n`, and returns another function which adds `n` to its argument.  This can be done as follows :-
+
+{{{
+class X()
+   private n
+
+   private f(x)
+      return x + n
+   end
+
+   private new(n)
+      return self.n := n
+   end
+
+   public static adder(n)
+      return X(n).f
+   end
+end
+
+
+procedure main()
+   local f
+   f := X.adder(20)
+   write(f(4))
+   write(f(6))
+
+   f := X.adder(100)
+   write(f(5))
+   write(f(10))
+end
+}}}
+
+The output is
+
+{{{
+24
+26
+105
+110
+}}}
