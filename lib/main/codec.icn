@@ -71,21 +71,21 @@ class Encode()
    end
 
    protected encode_string(s)
-      local buff, t
+      local r
       static printable
       initial {
          printable := cset(&ascii[33:128]) -- '\\' -- Codec.CODE_SEPARATOR
       }
-
-      buff := StringBuff()
+      r := ""
       s ? {
          repeat {
-            if t := tab(many(printable)) then
-               buff.add(t)
+            r ||:= tab(many(printable))
             if pos(0) then
-               return buff.get_string()
-            if t := "\\" || right(ord(move(1)), 3, "0") then
-               buff.add(t)
+               return r
+            # This MUST be done in two steps to take advantage of
+            # catenation optimisation - very slow otherwise!
+            r ||:= "\\"
+            r ||:= right(ord(move(1)), 3, "0")
          }
       }	 
    end
@@ -217,21 +217,18 @@ class Decode()
    private tag_count, seen, buff
 
    protected decode_string(s)
-      local buff, t
+      local r
       static esc
       initial
          esc := ~'\\'
-
-      buff := StringBuff()
+      r := ""
       s ? {
          repeat {
-            if t := tab(many(esc)) then
-               buff.add(t)
+            r ||:= tab(many(esc))
             if pos(0) then
-               return buff.get_string()
+               return r
             move(1)
-            if t := char(move(3)) then
-               buff.add(t)
+            r ||:= char(move(3))
          }
       }
    end
