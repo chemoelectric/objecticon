@@ -7,31 +7,35 @@ Object Icon uses autoconf for its configuration.
  * [Installation#Compilation Compilation]
 
 == Installing from the subversion source repository ==
-To do this you need autoconf installed (at least version 2.61).
+To do this you need `autoconf` installed (at least version 2.61).
 
 Use the following command to checkout a read-only copy of the source code :-
 
 {{{svn co http://objecticon.googlecode.com/svn/trunk/ objecticon}}}
 
-This will create a directory {{{objecticon}}} under the present
-directory (you can change the last parameter to create a different
-directory name if you want).
+This will create a directory `objecticon` under the present directory (you can change the last parameter to create a different directory name if you want).
 
-Then cd into that directory and run the command {{{autoconf}}}.  This will
-create a {{{configure}}} script.
+Then `cd` into that directory and run the command `autoconf`.  This will create a `configure` script.
 
 Then proceed just the same as if you had downloaded the .tar.gz file.
 == Installing from a tar gz file ==
 
 Extract the source code from the .tar.gz file with a command like
-{{{tar xfz objecticon-1.0.tar.gz}}}.  This will create a directory
-{{{objecticon-1.0}}} under the current directory.  Obviously the
+
+{{{tar xfz objecticon-1.0.tar.gz}}}
+
+This will create a directory `objecticon-1.0` under the current directory.  Obviously the
 version number may be different.
 
-Change to the new directory and run {{{./configure}}}.  This
-command accepts various options - run {{{./configure --help}}} to
-see them.  The {{{./configure}}} script prints a summary of
-the options when it finishes, for example.
+Change to the new directory and run 
+
+{{{./configure}}}
+
+This command accepts various options - run
+
+{{{./configure --help}}}
+
+to see them.  The `configure` script prints a summary of features when it finishes. For example.
 
 {{{
 Summary:-
@@ -51,7 +55,7 @@ The meaning of these various options is as follows.
 
  * *X11 graphics* - Determines whether the Icon graphics facilities are built. The following three options only apply if this is 'yes'.
  * *jpeg library* -Allows loading of jpeg images.
- * *Xft anti-aliased fonts* - Fonts are drawn with smooth edges using the xft and freetype libraries. This looks nice, but is considerably slower than using traditional X bitmap fonts.
+ * *Xft anti-aliased fonts* - Fonts are drawn with smooth edges using the xft and freetype libraries. This looks nice, but is considerably slower than using traditional X bitmap fonts.  If this is a problem, you can force the use of traditional X11 bitmap fonts by giving `configure` the option `--without-xft`.
  * *Xpm* -Allows loading of xpm images.
  * *zlib* compression - Allows zlib compressed files (ie .gz files), to be read/written via the "z" flag in the open function.  Also allows icode files to be compressed with the -Z flag given to the @code{oit}.
  * *dynamic loading* -Allows shared library (.so) files containing native functions to be loaded at runtime.
