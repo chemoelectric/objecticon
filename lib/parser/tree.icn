@@ -21,7 +21,7 @@ final class Token()
 
    public get_pad()
       if chunk[-*s:0] == s then
-         return chunk[1:-*s]
+         return .chunk[1:-*s]
       else
          return .chunk
    end
