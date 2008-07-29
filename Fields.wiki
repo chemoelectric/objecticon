@@ -1,0 +1,52 @@
+#summary All about the fields of a class
+
+= Introduction =
+
+Every class has a set of fields, each of which has a unique name.  Some
+of the fields may be defined in the class itself, but other may be
+inherited from the class's superclasses: see Inheritance.
+
+The fields can be divided into four basic categories.  Here is a class
+with one field of each sort.
+
+{{{
+class X()
+   public a
+
+   public static b
+
+   public c(v)
+        self.a := v
+   end
+
+   public static d()
+   end
+end
+}}}
+
+The field `a` is an instance variable.  That is, every instance of
+`X` will have its own value of the field, accessed as follows :-
+{{{
+x1 := X()
+x1.a := 100
+x2 := X()
+x2.a := 99   # Distinct from x1.a
+}}}
+The field `b` is a static variable.  This means that there is only one value of the
+variable in existence, and it is accessed via the class itself, rather than via any
+instance :-
+{{{
+X.b := 101
+}}}
+The field `c` is an instance method.  It doesn't take up any space in the instance, but it
+is accessed in the same way as an instance variable :-
+{{{
+x1 := X()
+x1.c(40)
+}}}
+An instance method has an implicit parameter `self`, which refers to the instance which was used to invoke the method (in the above example, `x1`).  The means by which this `self` parameter is passed into the method is quite subtle, and is described in more detail in the section on Method pointers.
+
+Finally, the field `d` is a static method.  It doesn't have an implicit `self` parameter, and is invoked via the class, rather than an instance.  Instance variables and methods cannot be accessed from inside a static method (an error on linking will be produced).
+{{{
+X.d()
+}}}
