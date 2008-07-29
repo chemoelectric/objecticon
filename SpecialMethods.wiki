@@ -1,0 +1,48 @@
+#summary About the new and init methods.
+
+= Special methods =
+
+There are two special methods, which are used to initialize a class and its objects.
+
+== The init() method ==
+The `init()` method is used to initialize a class, and in particular to initialize the values of any static variables.  It is called automatically the first time that one of the class's (static) fields is accessed, or when an instance of the class is created.
+
+Some other points to note about `init()` :-
+ * A class's superclasses' `init` methods (if any) are called before the class's.
+ * An `init` method is only ever called once.
+ * The `init` method must be declared as a `private static` method.
+ * It is not possible to access the `init` field via normal field access, so the method can only ever be invoked by the runtime system itself.  There is however a library function, `lang.Class.ensure_initialized(c)` which will ensure the given class's `init` method has been called, if it hasn't been already.
+
+== The new() method ==
+The `new` method is used to initialize an object, ie an instance of a particular class.  The method is not invoked explicitly however.  Rather, in order to create an instance the class name is used like a function call, and the `new()` method is invoked automatically.  So for example :-
+
+{{{
+class X()
+   public new(a, b)
+      write("in new a=", a, " b=", b)
+      return
+   end
+end
+
+procedure main()
+   local i
+   i := X(3, 4)
+end
+}}}
+
+This writes `"in new a=3 b=4"`.
+
+Some other points to note about `new()` :-
+
+ * A class doesn't have to have a `new()` method.  If it is absent, then all the instance variables are initially `&null`.
+ * A class can inherit (and override) a `new()` method in a superclass, just like any other method.
+ * The access modifier of the `new()` method is respected.  So making the `new()` method private means that instances can only be created from within the class itself (by necessity in a static method).
+ * After an object has been initialized, the `new()` method cannot be accessed, and any attempt to do so gives a run-time error.  So in the example above, the following would not be allowed :-
+{{{
+procedure main()
+   local i
+   i := X(3, 4)
+   i.new(5, 6)   # Runtime error
+end
+}}}
+ * If the `new()` method fails, then the creation of the object fails. This gives `new()` extra control over the creation process, but does mean that you have to remember to put a `return` in the `new()` method somewhere.
