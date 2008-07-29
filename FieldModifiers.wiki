@@ -1,0 +1,165 @@
+#summary Specifying access to fields
+
+= Field modifiers =
+
+Here are the various modifiers which can be applied to a field.  Each modifier is described in detail in its own section.
+
+ * *[FieldModifiers#private private]*
+ * *[FieldModifiers#public public]*
+ * *[FieldModifiers#package package]*
+ * *[FieldModifiers#protected protected]*
+ * *[FieldModifiers#static static]*
+ * *[FieldModifiers#const const]*
+ * *[FieldModifiers#readable readable]*
+ * *[FieldModifiers#final final]*
+
+== private ==
+A private field can only be accessed from within a method in the same class as the field.
+
+== public ==
+A public field can be accessed from anywhere.
+
+== package ==
+A package field can only be accessed from within the same package as the field.
+
+== protected ==
+This varies slightly depending on whether we are accessing an instance field or a static field.
+
+In the case of an non-static field, the caller must be a method in the implemented classes of the instance being accessed.  So, for example, consider the following tree of superclasses :-
+{{{
+   A
+   |
+   B    C
+   \   / \
+    \ /   \
+     X     Y
+}}}
+Here, `X` has two superclasses, `B` and `C`.  `B` in turn has a superclass `A`, so `X`'s implemented classes are `X, B, C, A`.  This means that any protected instance field in `X` could only be accessed from a method within those four classes.  A method in `Y`, would not be able to access the field in the instance of `X`, even if the field were defined in `C`, the common superclass of `X` and `Y` (in that case a method in `Y` _could_ access that field on an instance of `Y`).  This little example program illustrates this.
+{{{
+class C()
+   protected f
+
+   public new(f)
+      self.f := f
+      return
+   end
+end
+
+class X(C)
+end
+
+class Y(C)
+   public try(o)
+      write(o.f)
+   end
+end
+
+procedure main()
+   local x, y
+   x := X(100)
+   y := Y(99)
+   y.try(y)   # Okay, writes 99
+   y.try(x)   # Will lead to a runtime error...
+end
+}}}
+In the case of a static field, the field being accessed must be in the implemented classes of the calling method's class.  So in the above example a method in `X` could access static protected fields in any of the classes `X, B, C, A`.
+
+== static ==
+This declares the field as static - for more information on what this means, see [Fields].
+
+== const ==
+Declaring a static field const means that it cannot be changed (ie, assigned to) after the class has been initialized, which is just after the class's static `init()` method has been called.  Therefore, static const fields can be initialized in `init()` and thereafter treated as constants, with any attempt to assign to them causing a runtime error.  For example
+
+{{{
+class Maths()
+   public static const PI
+
+   private static init()
+      PI := 3.14
+   end
+end
+
+procedure main()
+   write(Maths.PI) # Write 3.14
+   Maths.PI := 3   # Runtime error
+end
+}}}
+
+A `const` instance field is similar, and can be assigned to during instance initialization, but thereafter becomes fixed.  The class's `new()` method can be used to set initial values of the field.  For example
+
+{{{
+class Employee()
+   public const name, age
+
+   public new(name, age)
+      self.name := name
+      self.age := age
+      return
+   end
+end
+
+procedure main()
+   local e
+   e := Employee("Mary", 30)
+   write(e.name, ",", e.age)   # Writes Mary,30
+   e.age := 25                 # Runtime error
+end
+}}}
+
+A method cannot be declared `const`.
+
+== readable ==
+The readable modifier must always be specified together with either the `private, public`, or `protected` modifier.  It indicates that the field is accessible in a read-only fashion, where it would otherwise be inaccessible, based on that other modifier.
+
+So for example, consider the following class :-
+
+{{{
+class X()
+   private readable v
+
+   public f()
+      v := 100
+   end
+end
+
+procedure main()
+   local x
+   x := X()
+   x.f()
+   write(x.v)   # Okay, prints 100
+   x.v := 101   # Runtime error
+end
+}}}
+
+The field `v` can be read and assigned to within `X`, but can only be read from outside of `X`.  Without the `readable` modifier, it would not be accessible at all outside of `X`, so the `write()` statement in `main()` would give a runtime error.
+
+Note that a `public` field cannot be declared `readable`, because it is already readable everywhere.  Nor can a method be declared `readable`.
+
+== final ==
+Only an instance method can be declared `final`.  It indicates that the method cannot be overridden.  So, for example, the following will give an error during linking because the method `f()` in `Y` overrides `f()` in `X`, which is marked `final`.
+
+{{{
+class X()
+   public final f()
+   end
+end
+
+class Y(X)
+   public f()
+   end
+end
+}}}
+
+A class can also be marked as `final`, and in this case it means that the class cannot be subclassed by another class.  So for example, this is not allowed :-
+
+{{{
+final class X()
+   public f()
+   end
+end
+
+class Y(X)
+end
+}}}
+
+A static method cannot be `final` because `static` methods cannot be overridden, and a method cannot be marked `final` in a `final` class, because such a declaration would obviously be superfluous.
