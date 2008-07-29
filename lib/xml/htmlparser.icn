@@ -8,8 +8,6 @@
 
 package xml
 
-import lang
-
 class Tag(Node)
    public
       name,
@@ -221,15 +219,12 @@ class HtmlParser()
    # Parse and return an Element, given the starting tag
    #
    private parse_element(start_tag, parent)
-      local res, debug, print_debug, i, node, n
+      local res, i, node, n
 
       res := HtmlElement()
 
       res.name := start_tag.name
       res.attributes := start_tag.attributes
-
-      if \debug then 
-         print_debug("Parsing node ", start_tag.name)
 
       if start_tag.name == "PLAINTEXT" then
          res.add("" ~== remove_entities(tab(0)))
@@ -267,12 +262,8 @@ class HtmlParser()
                      tab(i)
                      break
                   }
-                  if \debug then
-                     print_debug("Skipping closing tag", to_string(node))
                } else {
                   res.add(n := parse_element(node, res))
-                  if \debug then 
-                     print_debug("Adding node ", to_string(n) || " to" || to_string(start_tag))
                }
             } else {
                #
@@ -282,8 +273,7 @@ class HtmlParser()
             }            
          }
       }
-      if \debug then 
-         print_debug("Finished parsing node ", to_string(start_tag))
+
       return res
    end
 
@@ -409,7 +399,7 @@ class HtmlParser()
    # Move to the next node (tag, comment, doctype), or end of file.
    #
    private move_to_node()
-      local s, i, debug, print_debug
+      local s, i
       s := ""
       repeat {
          s ||:= tab(upto('<') | 0)
@@ -429,9 +419,6 @@ class HtmlParser()
          tab(i)
          s ||:= move(1)
       }
-
-      if \debug then 
-         print_debug("Moved to node")
 
       return s
    end
