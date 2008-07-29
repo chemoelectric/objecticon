@@ -16,6 +16,21 @@ operator{1} || cater(x, y)
 
    body {
       /*
+       *  Optimization 0:  Check for zero-length operands.
+       */
+
+      if (StrLen(x) == 0) {
+         StrLoc(result) = StrLoc(y);
+         StrLen(result) = StrLen(y);
+         return result;
+         }
+      if (StrLen(y) == 0) {
+         StrLoc(result) = StrLoc(x);
+         StrLen(result) = StrLen(x);
+         return result;
+         }
+
+      /*
        *  Optimization 1:  The strings to be concatenated are already
        *   adjacent in memory; no allocation is required.
        */
@@ -24,14 +39,15 @@ operator{1} || cater(x, y)
          StrLen(result) = StrLen(x) + StrLen(y);
          return result;
          }
-      else if ((StrLoc(x) + StrLen(x) == strfree)
-      && (DiffPtrs(strend,strfree) > StrLen(y))) {
-         /*
-          * Optimization 2: The end of x is at the end of the string space.
-          *  Hence, x was the last string allocated and need not be
-          *  re-allocated. y is appended to the string space and the
-          *  result is pointed to the start of x.
-          */
+
+      /*
+       * Optimization 2: The end of x is at the end of the string space.
+       *  Hence, x was the last string allocated and need not be
+       *  re-allocated. y is appended to the string space and the
+       *  result is pointed to the start of x.
+       */
+      if ((StrLoc(x) + StrLen(x) == strfree) &&
+          (DiffPtrs(strend,strfree) > StrLen(y))) {
 	 result = x;
 	 /*
 	  * Append y to the end of the string space.
