@@ -34,7 +34,7 @@ In the case of an non-static field, the caller must be a method in the implement
     \ /   \
      X     Y
 }}}
-Here, `X` has two superclasses, `B` and `C`.  `B` in turn has a superclass `A`, so `X`'s implemented classes are `X, B, C, A`.  This means that any protected instance field in `X` could only be accessed from a method within those four classes.  A method in `Y`, would not be able to access the field in the instance of `X`, even if the field were defined in `C`, the common superclass of `X` and `Y` (in that case a method in `Y` _could_ access that field on an instance of `Y`).  This little example program illustrates this.
+Here, `X` has two superclasses, `B` and `C`.  `B` in turn has a superclass `A`, so `X`'s [Inheritance#Implemented_classes implemented classes] are `X, B, C, A`.  This means that any protected instance field in `X` could only be accessed from a method within those four classes.  A method in `Y`, would not be able to access the field in the instance of `X`, even if the field were defined in `C`, the common superclass of `X` and `Y` (in that case a method in `Y` _could_ access that field on an instance of `Y`).  This little example program illustrates this.
 {{{
 class C()
    protected f
