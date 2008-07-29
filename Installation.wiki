@@ -17,23 +17,23 @@ This will create a directory {{{objecticon}}} under the present
 directory (you can change the last parameter to create a different
 directory name if you want).
 
-Then cd into that directory and run the command @code{autoconf}.  This will
-create a @code{configure} script.
+Then cd into that directory and run the command {{{autoconf}}}.  This will
+create a {{{configure}}} script.
 
 Then proceed just the same as if you had downloaded the .tar.gz file.
 == Installing from a tar gz file ==
 
 Extract the source code from the .tar.gz file with a command like
-@code{tar xfz objecticon-1.0.tar.gz}.  This will create a directory
-@code{objecticon-1.0} under the current directory.  Obviously the
+{{{tar xfz objecticon-1.0.tar.gz}}}.  This will create a directory
+{{{objecticon-1.0}}} under the current directory.  Obviously the
 version number may be different.
 
-Change to the new directory and run @code{./configure}.  This
-command accepts various options - run @code{./configure --help} to
-see them.  The @code{./configure} script prints a summary of
+Change to the new directory and run {{{./configure}}}.  This
+command accepts various options - run {{{./configure --help}}} to
+see them.  The {{{./configure}}} script prints a summary of
 the options when it finishes, for example.
 
-@example
+{{{
 Summary:-
 X11 graphics           : yes
 jpeg library           : yes
@@ -45,27 +45,16 @@ crypt lib              : yes
 makeinfo >=4.8         : yes
 mysql lib              : yes
 context switch         : config/system/linux_x86/rswitch.s
-@end example
+}}}
 
 The meaning of these various options is as follows.
 
- * X11 graphics
-Determines whether the Icon graphics facilities are built.  The
-following three options only apply if this is 'yes'.
- * jpeg library
-Allows loading of jpeg images.
- * Xft anti-aliased fonts
-Fonts are drawn with smooth edges using the xft and freetype libraries.
-This looks nice, but is considerably slower than using traditional X
-bitmap fonts.
- * Xpm Allows loading of xpm images.
- * zlib compression - Allows zlib compressed files (ie .gz files), to be read/written via the "z" flag in the open function.  Also allows icode files to be compressed with the -Z flag given to the @code{oit}.
- * dynamic loading
-Allows shared library (.so) files containing native functions to be
-loaded at runtime.
- * crypt lib
-This just enables the builtin crypt() function.
- * mysql lib -Allows a dynamic library to be built which provides an interface to
-mysql.  Has no effect either way on the runtime system proper.
- * context switch -This is a system-dependent source file which is used by co-expressions.  If the value is @code{config/system/default/rswitch.c}, then co-expressions will not be
-functional (activation will end with a runtime error).
+ * *X11 graphics* - Determines whether the Icon graphics facilities are built. The following three options only apply if this is 'yes'.
+ * *jpeg library* -Allows loading of jpeg images.
+ * *Xft anti-aliased fonts* - Fonts are drawn with smooth edges using the xft and freetype libraries. This looks nice, but is considerably slower than using traditional X bitmap fonts.
+ * *Xpm* -Allows loading of xpm images.
+ * *zlib* compression - Allows zlib compressed files (ie .gz files), to be read/written via the "z" flag in the open function.  Also allows icode files to be compressed with the -Z flag given to the @code{oit}.
+ * *dynamic loading* -Allows shared library (.so) files containing native functions to be loaded at runtime.
+ * *crypt lib* -This just enables the builtin crypt() function.
+ * *mysql lib* -Allows a dynamic library to be built which provides an interface to mysql.  Has no effect either way on the runtime system proper.
+ * *context switch* -This is a system-dependent source file which is used by co-expressions.  If the value is {{{config/system/default/rswitch.c}}}, then co-expressions will not be functional (activation will end with a runtime error).
