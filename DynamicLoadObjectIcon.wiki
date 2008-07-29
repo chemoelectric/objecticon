@@ -1,0 +1,46 @@
+#summary Dynamically loading Object Icon programs.
+
+= Dynamically loading Object Icon code =
+Object Icon includes a small enhancement to MT Icon which allows procedures and classes to be loaded and invoked dynamically from other icode files (ie executable files created by the linker).
+
+To illustrate how this works, consider the following simple source file:-
+
+{{{
+invocable X, p
+
+class X()
+   public hello()
+      write("Hello")
+   end
+end
+
+procedure p()
+   write("Hello again")
+end
+
+procedure main()
+end
+}}}
+
+If this were in the file `abc.icn`, then it could be compiled with the command `oit abc.icn`.  Then its symbols could be loaded and used dynamically as follows :-
+
+{{{
+procedure main()
+   local prog, x
+   prog := load("abc") | stop("Couldn't load")
+
+   # Create an instance of X, call hello method
+   x := variable("X", prog)()
+   x.hello()
+
+   # Call procedure p
+   variable("p", prog)()
+end
+}}}
+
+Some points to note.
+
+ * The "library" program needs a dummy `main` procedure.  It also needs to declare the procedure and class as invocable, so that the linker doesn't discard them as unreferenced symbols.
+ * The class could also be accessed via `Class.for_name("X", prog)()` (after importing `lang.Class`).
+ * The procedure could also be accessed via the call `proc("p",,prog)()`
+ * The loaded program retains its own separate set of global identifiers. References to global identifiers in loaded procedures and methods always refer to the enclosing loaded program.  Hence, several global identifiers with the same name can co-exist at the same time in separate programs.
