@@ -1,0 +1,49 @@
+#summary Object Icon's package system
+
+= Packages =
+
+Packages in Object Icon provide two functions :-
+
+ * They group several source files into a single unit which can easily be imported into a program.
+ * They provide a naming prefix for all the symbols in a package, so that symbol name clashes between code in different libraries are avoided.
+
+== Declaring a package ==
+A file is declared to be in a package by simply adding a package declaration at the top of the source file, such as the following :-
+
+{{{
+package my.pack
+
+procedure one()
+   write("in my.pack.one")
+end
+}}}
+
+This will have the effect of adding the file to the package `my.pack`.  This information is stored in a file named `packages.txt`, stored in the same directory as the ucode file.  The format of the file is very simple, and just maintains a list of which files are in which package.
+
+The other effect of the package statement is that the names of the global symbols (procedures, records, classes and global variables) declared in the file are prefixed automatically with the package name. So, the procedure `one` in the above file is in fact named `my.pack.one`.
+
+ * A package name must be comprised of one or more identifiers separated by dots.
+ * You can have several packages in the same directory of source files; however you cannot spread a particular package over source files from more than one directory.
+
+== Using a package ==
+A package is used in a program via the import statement.  For example :-
+
+{{{
+import my.pack
+
+procedure main()
+   one()
+end
+}}}
+
+The import statement causes the linker to search all the `packages.txt` located on the linking path for the specified package.  When found, all of the files in the package are linked into the program.
+
+Note that the reference to the procedure `my.pack.one` is in the shorter form, `one`. This is allowed so long as there isn't another symbol `one` which would make the reference ambiguous.  In any case, the fully qualified form is also acceptable.
+
+If there are several imports in one file it may become difficult to discern which symbol came from which package.  For this reason, the import statement lets you indicate which symbols are being used from a particular package, as follows :-
+
+{{{
+import my.pack(one, two, three)
+}}}
+
+This means the three given symbols are being used in the source file and can be resolved to `my.pack.one`, `my.pack.two` and `my.pack.three` respectively.  If there were another symbol in `my.pack`, say `four`, then it would not be resolved by the linker if it were encountered as `four`; rather an undeclared identifier error would be raised.  If it were encountered as `my.pack.four` however, that would not raise an error.  Note that this form of the import statement still links all of the files in the package into the program, regardless of which symbols are specified.
