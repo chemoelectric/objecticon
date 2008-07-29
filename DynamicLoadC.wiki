@@ -1,0 +1,103 @@
+#summary How to dynamically load C/RTL code
+
+= Dynamically loading C/RTL code =
+Object Icon incorporates some enhancements to Icon's dynamic loading facility which allow dynamically loaded functions to be written in RTL rather than plain C.  This means that dynamically loaded code can take the same form as builtin code, and can do the same things.
+
+In order to develop a dynamic library it is necessary to have the source distribution available, with its bin directory on your `PATH`.
+
+== A sample RTL file ==
+Here is a not-very-useful function to generate the bit positions of ones in an integer (for example 6 is 110, so generates 2, 3).
+
+{{{
+function{*} bits(v)
+    if !cnv:C_integer(v) then
+       runerr(101, v)
+    body {
+       int i = 1;
+       while (v) {
+           if (v & 1)
+               suspend C_integer i;
+           v /= 2;
+           ++i;
+       }
+       fail;
+    }
+end
+}}}
+
+To create a dynamic library to use this function we would firstly place it in a file with the suffix ".r", say `testlib.r`.
+
+== Compilation ==
+Next, create a Makefile to build the library.
+
+{{{
+include $(OIHOME)/Makedefs
+
+all:	testlib.so
+
+clean :
+	rm -f *.u *.o *.so
+
+testlib.o : testlib.r
+	rtt testlib.r
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c xtestlib.c -o testlib.o
+
+testlib.so : testlib.o
+	$(CC) -shared -fPIC -o testlib.so testlib.o
+}}}
+
+Notes :-
+
+ * In the first line the environment variable `$(OIHOME)` is assumed to point to the root of the source code distribution.
+ * The `Makedefs` file defines various variables, in particular the flags for C compilation.
+ * The flags to the `$(CC)` command may need to be tweaked.
+
+== Loading the library ==
+Here is a sample program to load the library and run the `bits()` function.
+
+{{{
+procedure main()
+   local p
+   p := loadfunc("./testlib.so", "bits")
+   write("okay, loaded ",image(p))
+   every write(p(12345))
+end
+}}}
+
+When compiled and run, the following output should result :-
+
+{{{
+okay, loaded function bits
+1
+4
+5
+6
+13
+14
+}}}
+
+Note that the library name in the first parameter of `loadfunc` is passed unaltered to the underlying system's dynamic load function (on Unix, `dlopen`).  This means that the library must either be an absolute path, relative to the current directory, or in one of the places that the system normally looks for shared libraries.
+
+There are some functions available to help search for files on paths.  In particular see :-
+ * `pathload()` and `pathfind()` in the package `ipl.io`.
+ *  `Files.path_find()` in the package `util`.
+
+== External headers and symbols ==
+It is possible that the RTL code in a dynamic library will need to refer to another existing library and its associated C header files.  For example, the mysql library needs to reference `"mysql.h"` and link to the mysqlclient library.  These external header files are normally _not_ processed by RTT - rather they are passed through RTT to be processed by the C compiler.  For example
+
+{{{
+#passthru #include "mysql.h"
+}}}
+
+This raises a problem of how RTT will recognise symbol and types defined in the header concerned, which are then used in the RTL source.  For example `mysql.h` defines the type `MYSQL_RES`, and this is used several times in `mysql.r`.  For code in the interpreter, a separate header file, `grttin.h`, is processed specially by RTT in order to allow such symbols to be declared with dummy types, typically as `typedef int`.  This allows them to pass through RTT without error.  For an dynamic library we naturally don't want to edit `grttin.h`, so a new option, `-h` specifies an extra header file to process immediately after `grttin.h`.  Here we can provide the necessary dummy definitions of symbols like `MYSQL_RES`.  The header for the mysql library looks like this :-
+
+{{{
+typedef int MYSQL, MYSQL_FIELD, my_bool, MYSQL_RES,
+    MYSQL_FIELD_OFFSET, MYSQL_ROW, MYSQL_ROW_OFFSET, my_ulonglong;
+}}}
+
+and is processed with the command :-
+
+{{{
+rtt -h gmysql.h mysql.r
+}}}
