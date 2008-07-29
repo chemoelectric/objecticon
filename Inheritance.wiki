@@ -1,0 +1,138 @@
+#summary Inheritance
+
+= Inheritance =
+In this section
+
+ * *[Inheritance#Restrictions Restrictions]*
+ * *[Inheritance#Field_name_clashes Field name clases]*
+ * *[Inheritance#Implemented_classes Implemented classes]*
+
+Classes can inherit from multiple parent classes.  Fields of the parent classes are "merged" into the resulting class using a breadth first search.  For example, in the following situation
+{{{
+class X(A,B,C)
+        ...
+end
+}}}
+The fields of `A`, `B` and `C` are taken first, then the parents of `A`, `B` and `C` and then the parents of the parents, and so on.  If a class is encountered more than once during this process, it is simply ignored on the second and subsequent occasions.
+
+== Restrictions ==
+There are some restrictions on what can be inherited, as follows.
+ * You cannot inherit from a superclass declared as final.  For example, this is not allowed :-
+{{{
+final class Parent()
+end
+
+class Child(Parent)
+end
+}}}
+ * You can't override a method which was declared final.  For example, this is not allowed :-
+{{{
+class Parent()
+   public final f()
+   end
+end
+
+class Child(Parent)
+   public f()
+   end
+end
+}}}
+ * It may also happen that there is a disallowed name clash - this is described in the next section.
+
+== Field name clashes ==
+It may be that a field name is encountered more than once whilst traversing the parent classes.  If this happens, then the first occurence is always the one that is inherited into the resulting class.  However, a compilation error may also be signalled.  This will happen UNLESS
+
+ * the second and subsequent occurences are static, OR
+ * both the first and the subsequent occurences are instance methods.
+
+Looked at from another viewpoint, this table shows the permissible combinations, with an 'X' meaning disallowed and a '+' meaning allowed.
+
+|| First def'n || Instance var || Static var || Instance method || Static method ||
+|| Subsequent def'n ||
+|| Instance var || X || X || X || X ||
+|| Static var || + || + || + || + ||
+|| Instance method || X || X || + || X ||
+|| Static method || + || + || + || + ||
+
+For an example of a permissible clash, consider the following:-
+{{{
+class Parent()
+   public static x
+
+   private static init()
+      x := 100    # Meaning Parent.x := 100
+   end
+end
+
+class Child(Parent)
+   public x
+
+   public new()
+      x := 99     # Meaning self.x := 99
+      return
+   end
+end
+
+procedure main()
+   local z
+   z := Child()
+   write(z.x) # -> 99
+   write(Parent.x) # -> 100
+end
+}}}
+Here, `Child` inherits the instance field `x` from its own definition. The second static `x` still resides within the space reserved for it in `Parent`, so there is no problem.  However, if we swap the declarations around, then a problem arises :-
+{{{
+class Parent()
+   public x
+
+   public new()
+      x := 99   # Meaning self.x  ... not okay, Child's x is static
+      return
+   end
+end
+
+class Child(Parent)
+   static public x
+
+   private static init()
+      x := 100  # Meaning Child.x ... okay
+   end
+end
+
+procedure main()
+   local z
+   z := Child()
+end
+}}}
+If this program were allowed to compile, it wouldn't work because `Child`would have a static field `x`, but the reference to `x` in `x := 99` would attempt to assign to `self.x`, ie a non-existent instance field. This would cause a runtime error.
+
+== Implemented classes ==
+
+For any particular class, this term is used to refer to the following group of classes :-
+
+ * The class itself
+ * The class's immediate superclasses
+ * The class's superclasses' superclasses, and so on up the class hierarchy.
+
+So if we have the following class hierarchy :-
+
+{{{
+class Animal()
+class Pet()
+class Mammal(Animal)
+class Dog(Mammal,Pet)
+}}}
+
+Then the implemented classes of `Dog` are `Dog, Mammal, Animal` and `Pet`.
+
+If we have an instance of `Dog`, then the builtin function `is()` will succeed for just the implemented classes.  Thus :-
+
+{{{
+d := Dog()
+is(d, Pet)  # Yes
+is(d, Cat)  # No
+is(d, Mammal) # Yes
+... etc
+}}}
+
+The implemented classes of a particular class can be easily enumerated using the library function `lang.Class.get_implemented()`.
