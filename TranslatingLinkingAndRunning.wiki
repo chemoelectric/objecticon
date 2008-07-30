@@ -1,0 +1,48 @@
+#summary Translating, linking and running programs
+
+= Translating =
+Translation from Object Icon source files to intermediate `.u` files is done by the program `oit`.
+
+Input source files should have the suffix `.icn`.  To translate one or more files, invoke `oit` as follows :-
+{{{
+oit -c file1.icn file2.icn ...
+}}}
+This will produce `file1.u`, `file2.u` etc.
+
+= Linking =
+The `oit` program is also used to link `.u` files together to form an executable file that can be run :-
+{{{
+oit -o prog file1.u file2.u ...
+}}}
+
+You can also go directly from the source file to the executable if you wish.  In this case the intermediate `.u` files are deleted.  For example :-
+{{{
+oit myprog.icn
+}}}
+Translates and links `myprog.icn` into an executable `myprog`.
+
+== Command line options ==
+`oit` accepts the following command-line options :-
+
+ * *-n* Only translate a .icn to a .u file if it is out-of-date
+ * *-B* Bundle the oix executable in the output
+ * *-m* Preprocess using m4
+ * *-Z* Use zlib compression on the icode file
+ * *-e* Redirect stderr to given file
+ * *-c* Stop after producing ucode files.
+ * *-f* Enable full string invocation by preserving unreferenced globals during linking (equivalent to `invocable all` in a source file).
+ * *-o file* Write the executable program to the specified file.
+ * *-s* Suppress informative messages during translation and linking (equivalent to `-v 0`)
+ * *-t* Activate runtime tracing by arranging for &trace to have an initial value of -1 upon execution.
+ * *-v i* Set verbosity level of informative messages to i.
+ * *-E* Direct  the results of preprocessing to standard output and inhibit further processing.
+ * *-V* Announce version and configuration information on standard error.
+
+= Running =
+The runtime system is contained in the program `oix`.  It is not normally necessary to run that directly because the executable built by `oit` invokes it automatically.
+
+`oix` can be invoked by `oit` by appending `-x` to the command line (followed by any desired runtime arguments).   For example
+{{{
+oit myprog.icn -x
+}}}
+translates, links and runs `myprog.icn`.   The executable file `myprog` is not deleted after completion (unlike the intermediate `.u` file).
