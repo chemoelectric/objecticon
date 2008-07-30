@@ -3,8 +3,6 @@
 = Dynamically loading C/RTL code =
 Object Icon incorporates some enhancements to Icon's dynamic loading facility which allow dynamically loaded functions to be written in RTL rather than plain C.  This means that dynamically loaded code can take the same form as builtin code, and can do the same things.
 
-In order to develop a dynamic library it is necessary to have the source distribution available, with its bin directory on your `PATH`.
-
 == A sample RTL file ==
 Here is a not-very-useful function to generate the bit positions of ones in an integer (for example 6 is 110, so generates 2, 3).
 
@@ -31,16 +29,19 @@ To create a dynamic library to use this function we would firstly place it in a 
 Next, create a Makefile to build the library.
 
 {{{
-include $(OIHOME)/Makedefs
+include $(OILIB)/Makedefs
 
-all:	testlib.so
+all:	testlib.so prog
 
 clean :
-	rm -f *.u *.o *.so
+	rm -f *.c *.u *.o *.so prog
+
+prog : 	prog.icn
+	oit -s prog.icn
 
 testlib.o : testlib.r
-	rtt testlib.r
-	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c xtestlib.c -o testlib.o
+	$(RTT) testlib.r
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c testlib.c -o testlib.o
 
 testlib.so : testlib.o
 	$(CC) -shared -fPIC -o testlib.so testlib.o
@@ -48,9 +49,10 @@ testlib.so : testlib.o
 
 Notes :-
 
- * In the first line the environment variable `$(OIHOME)` is assumed to point to the root of the source code distribution.
+ * If you are running directly from the source distribution, the `Makedefs` file should be included from `$(OIHOME)`, rather than `$(OILIB)`.
  * The `Makedefs` file defines various variables, in particular the flags for C compilation.
  * The flags to the `$(CC)` command may need to be tweaked.
+ * The use of the macro $(RTT) is important because it points `rtt` to the location of the necessary header files (via the `-r` option).
 
 == Loading the library ==
 Here is a sample program to load the library and run the `bits()` function.
@@ -89,15 +91,15 @@ It is possible that the RTL code in a dynamic library will need to refer to anot
 #passthru #include "mysql.h"
 }}}
 
-This raises a problem of how RTT will recognise symbol and types defined in the header concerned, which are then used in the RTL source.  For example `mysql.h` defines the type `MYSQL_RES`, and this is used several times in `mysql.r`.  For code in the interpreter, a separate header file, `grttin.h`, is processed specially by RTT in order to allow such symbols to be declared with dummy types, typically as `typedef int`.  This allows them to pass through RTT without error.  For an dynamic library we naturally don't want to edit `grttin.h`, so a new option, `-h` specifies an extra header file to process immediately after `grttin.h`.  Here we can provide the necessary dummy definitions of symbols like `MYSQL_RES`.  The header for the mysql library looks like this :-
+This raises a problem of how `rtt` will recognise symbol and types defined in the header concerned, which are then used in the RTL source.  For example `mysql.h` defines the type `MYSQL_RES`, and this is used several times in `mysql.r`.  For code in the interpreter, a separate header file, `grttin.h`, is processed specially by `rtt` in order to allow such symbols to be declared with dummy types, typically as `typedef int`.  This allows them to pass through RTT without error.  For an dynamic library we naturally don't want to edit `grttin.h`, so a new option, `-h` specifies an extra header file to process immediately after `grttin.h`.  Here we can provide the necessary dummy definitions of symbols like `MYSQL_RES`.  The header for the mysql library looks like this :-
 
 {{{
 typedef int MYSQL, MYSQL_FIELD, my_bool, MYSQL_RES,
     MYSQL_FIELD_OFFSET, MYSQL_ROW, MYSQL_ROW_OFFSET, my_ulonglong;
 }}}
 
-and is processed with the command :-
+and is processed (from a Makefile like the one above) with the command :-
 
 {{{
-rtt -h gmysql.h mysql.r
+$(RTT) -h gmysql.h mysql.r
 }}}
