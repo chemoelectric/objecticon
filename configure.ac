@@ -93,6 +93,7 @@ AC_CONFIG_FILES([base/h/define.h:config/files/base/h/define.h],)
 AC_CONFIG_HEADERS([base/h/auto.h:config/files/base/h/auto.h],)
 AC_OUTPUT
 echo "Summary:-"
+echo    "Installation prefix    :" $prefix
 echo -n "X11 graphics           : "
 if test "$ac_cv_lib_X11_main" == yes; then
         echo yes
