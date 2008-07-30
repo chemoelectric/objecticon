@@ -61,7 +61,7 @@ class Point()
 end
 }}}
 
-The static [SpecialMethods `init()` method] is used to initialize any static variables. It is called automatically the first time the class is referenced.  The [SpecialMethods `new()` method] is similar, but is used to initialize instances - it is called automatically every time a new object is created.  Some examples of using the class :-
+The static [SpecialMethods init() method] is used to initialize any static variables. It is called automatically the first time the class is referenced.  The [SpecialMethods new() method] is similar, but is used to initialize instances - it is called automatically every time a new object is created.  Some examples of using the class :-
 
 {{{ 
 p1 := Point(-2, -3)
@@ -71,7 +71,7 @@ write(p2.radius())
 write(Point.distance(p2, Point.ORIGIN))
 }}}
 
-One thing to note about the `Point` class is that it is immutable.  That means that its state does not change once it has been created.  This is achieved by declaring its two instance variables as [FieldModifiers#const `const`].  The following attempts to change these variables' values would cause a runtime error :-
+One thing to note about the `Point` class is that it is immutable.  That means that its state does not change once it has been created.  This is achieved by declaring its two instance variables as [FieldModifiers#const const].  The following attempts to change these variables' values would cause a runtime error :-
 
 {{{
 p1.x := 100
