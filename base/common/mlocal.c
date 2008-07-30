@@ -17,7 +17,7 @@
 #define PREFIX "/"
 #define PATHSEP ':'
 #endif
-#if MSWindows
+#if MSWIN32
 #define FILESEP '\\'
 #define PREFIX "/:\\"
 #define PATHSEP ';'
@@ -149,7 +149,7 @@ static char *tryfile(char *dir, char *name, char *extn)
 
 #endif
 
-#if MSWindows
+#if MSWIN32
 
 /*
  * Normalize a path by lower-casing everything, changing / to \,
