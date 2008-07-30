@@ -80,6 +80,11 @@ install-libref :
 	$(INSTALL) -d $(LIBREF)
 	oidoc -html -d -o $(LIBREF) -a
 
+libref :
+	rm -rf libref
+	mkdir libref
+	oidoc -html -d -o libref -a
+
 T=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)
 tar :
 	@rm -rf $(T)
