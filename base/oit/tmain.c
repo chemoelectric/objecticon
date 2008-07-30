@@ -16,7 +16,6 @@ int warnings = 0;           /* count of warnings */
 int errors = 0;		    /* translator and linker errors */
 
 int m4pre	=0;	/* -m: use m4 preprocessor? [UNIX] */
-int uwarn	=0;	/* -u: warn about undefined ids? */
 int trace	=0;	/* -t: initial &trace value */
 int pponly	=0;	/* -E: preprocess only */
 int strinv	=0;	/* -f s: allow full string invocation */
@@ -204,46 +203,42 @@ int main(int argc, char **argv)
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
 #define Usage "[-cBstuE] [-f s] [-o ofile] [-v i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBe:f:no:stuv:ELZ")) != EOF) {
+    while ((c = getopt(argc,argv, "cBe:fmno:stv:ELZV")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
                 break;
+
             case 'B':
                 Bflag = 1;
                 break;
-            case 'C':			/* Ignore: compiler only */
-                break;
+
             case 'E':			/* -E: preprocess only */
                 pponly = 1;
                 nolink = 1;
                 break;
 
             case 'L':			/* -L: enable linker debugging */
-
 #ifdef DeBugLinker
                 Dflag = 1;
 #endif					/* DeBugLinker */
-
-                break;
-
-            case 'S':			/* -S */
-                fprintf(stderr, "Warning, -S option is obsolete\n");
                 break;
 
             case 'V':
                 printf("%s\n", Version);
                 exit(0);
                 break;
+
             case 'c':			/* -c: compile only (no linking) */
                 nolink = 1;
                 break;
+
             case 'e':			/* -e file: redirect stderr */
                 efile = optarg;
                 break;
-            case 'f':			/* -f features: enable features */
-                if (strchr(optarg, 's') || strchr(optarg, 'a'))
-                    strinv = 1;		/* this is the only icont feature */
+
+            case 'f':			/* -f : full invocation */
+                strinv = 1;		
                 break;
 
             case 'm':			/* -m: preprocess using m4(1) [UNIX] */
@@ -254,21 +249,19 @@ int main(int argc, char **argv)
                 ofile = optarg;
                 break;
 
-            case 'r':			/* Ignore: compiler only */
-                break;
             case 's':			/* -s: suppress informative messages */
                 verbose = 0;
                 break;
+
             case 't':			/* -t: turn on procedure tracing */
                 trace = -1;
                 break;
-            case 'u':			/* -u: warn about undeclared ids */
-                uwarn = 1;
-                break;
+
             case 'v':			/* -v n: set verbosity level */
                 if (sscanf(optarg, "%d%c", &verbose, &ch) != 1)
                     quitf("bad operand to -v option: %s",optarg);
                 break;
+
             case 'Z':
                 Zflag = 1;
                 break;

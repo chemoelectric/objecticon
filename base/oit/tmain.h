@@ -10,7 +10,6 @@ struct file_param {
 };
 
 extern int m4pre;	/* -m: use m4 preprocessor? [UNIX] */
-extern int uwarn;	/* -u: warn about undefined ids? */
 extern int trace;	/* -t: initial &trace value */
 extern int pponly;	/* -E: preprocess only */
 extern int strinv;	/* -f s: allow full string invocation */
