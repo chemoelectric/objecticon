@@ -189,31 +189,6 @@ FncDef(setenv,2)
 #endif					/* PosixFns */
 
 /*
- * Functions for MS-DOS.
- */
-#ifdef DosFncs
-   FncDef(Int86,1)
-   FncDef(Peek,1)
-   FncDef(Poke,1)
-   FncDef(GetSpace,1)
-   FncDef(FreeSpace,1)
-   FncDef(InPort,1)
-   FncDef(OutPort,1)
-#endif					/* DosFncs */
-
-/*
- * Functions for the Archimedes.
- */
-#ifdef ArmFncs
-   FncDef(Swi,2)
-   FncDef(Peek,2)
-   FncDef(Poke,2)
-   FncDef(GetSpace,1)
-   FncDef(FreeSpace,1)
-#endif					/* ArmFncs */
-
-
-/*
  * Graphics functions.  These are always defined; in virtual machines
  * without graphics facilities, calling them is a runtime error.
  */

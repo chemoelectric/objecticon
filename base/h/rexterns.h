@@ -75,10 +75,6 @@ extern struct b_iproc mt_llist;
 extern struct descrip rzerodesc;	/* real descriptor */
 extern struct b_real realzero;		/* real zero block */
 
-#ifdef DosFncs
-   extern char *zptr;
-#endif					/* DosFncs */
-
 #if EBCDIC == 2
    extern char ToEBCDIC[], FromEBCDIC[]; /* ASCII<->EBCDIC maps */
 #endif					/* EBCDIC == 2 */

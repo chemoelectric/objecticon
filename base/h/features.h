@@ -85,10 +85,6 @@
    Feature(1, "_MS_WINDOWS", "MS Windows")
 #endif					/* MSWindows */
 
-#ifdef DosFncs
-   Feature(1, "_DOS_FUNCTIONS", "MS-DOS extensions")
-#endif					/* DosFncs */
-
 #ifdef HAVE_LIBZ
    Feature(1, "_LIBZ_COMPRESSION", "libz file compression")
 #endif					/* HAVE_LIBZ */
