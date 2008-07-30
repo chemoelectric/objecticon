@@ -29,10 +29,10 @@ all:	oix
 
 oix:	$(OBJS)
 	$(CC) $(CFLAGS) -Wl,-E $(LDFLAGS) -o oix $(OBJS) $(LIBS)
-	cp oix $(OIBIN)
+	$(CP) oix $(OIBIN)
 
 %.o: %.r $(HDRS)
-	rtt $<
+	$(RTT) $<
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 	$(RM) $*.c
 
