@@ -1,13 +1,88 @@
-#summary One-sentence summary of this page.
+#summary Classes and objects
 
-= Introduction =
+= Class syntax =
+The syntax for a class definition is
+{{{
+class ClassName(Super1, Super2, ...)
+   ... Field definitions...
+end
+}}}
 
-Add your content here.
+= Fields =
+The field definitions are either variables or methods.  Each definition starts with the access modifiers, which specify who may access the field, and how it may be accessed. Typical variable declarations are :-
 
+{{{
+private x, y                    # Private instance variables
+public static const PI          # A constant, accessible anywhere
+private readable z              # A private variable, but accessible read-only from outside
+}}}
 
-= Details =
+The meaning of the various modifiers is explained in detail [FieldModifiers here].
+ 
+A method definition looks like :-
+{{{
+# A public instance method
+public set_loc(x, y)
+   self.x := x
+   self.y := y
+end
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+# A static method accessible without an instance
+public static origin()
+   return Point(0,0)
+end
+}}}
+To bring these things together, here is a simple class definition to represent an x,y point :-
+
+{{{
+class Point()
+   public const x, y
+   public static const ORIGIN
+
+   private static init()
+      ORIGIN := Point(0, 0)
+   end
+
+   # Radius of a circle on which this point lies
+   public radius()
+      return sqrt(x * x + y * y)
+   end
+
+   # Distance between two points
+   public static distance(p1, p2)
+      return sqrt((p1.x - p2.x) ^ 2 + (p1.y - p2.y) ^ 2)
+   end
+
+   public new(x, y)
+      self.x := x
+      self.y := y
+      return
+   end
+end
+}}}
+
+The static [SpecialMethods `init()` method] is used to initialize any static variables. It is called automatically the first time the class is referenced.  The [SpecialMethods `new()` method] is similar, but is used to initialize instances - it is called automatically every time a new object is created.  Some examples of using the class :-
+
+{{{ 
+p1 := Point(-2, -3)
+p2 := Point(4, 3)
+write(Point.distance(p1, p2))
+write(p2.radius())
+write(Point.distance(p2, Point.ORIGIN))
+}}}
+
+One thing to note about the `Point` class is that it is immutable.  That means that its state does not change once it has been created.  This is achieved by declaring its two instance variables as [FieldModifiers#const `const`].  The following attempts to change these variables' values would cause a runtime error :-
+
+{{{
+p1.x := 100
+Point.ORIGIN.y := 1
+p1.new(3, 4)
+}}}
+
+The static field `ORIGIN` is also declared `const`.  That means that any attempt to change its value would also cause a runtime error :-
+
+{{{
+Point.ORIGIN := 1    # Run-time error
+}}}
+
+Naturally these const variables have to be assignable at some point in order to be initialized.  For static variables, they are assignable during class initialization (when the `init` method is called), and for instance variables during object initialization (when the `new` method is called).  Thereafter, the variables become "locked", and are no longer assignable.
