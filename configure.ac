@@ -68,7 +68,6 @@ AC_CONFIG_COMMANDS(system, [
 	AS_MKDIR_P(bin)
 ])
 AC_CONFIG_FILES([Makedefs:config/files/Makedefs],)
-AC_CONFIG_FILES([docs/Makefile:config/files/docs/Makefile])
 AC_CONFIG_FILES([apps/ivib/plugins/Makefile:config/files/apps/ivib/plugins/Makefile])
 AC_CONFIG_FILES([apps/ivib/Makefile:config/files/apps/ivib/Makefile])
 AC_CONFIG_FILES([apps/oidoc/Makefile:config/files/apps/oidoc/Makefile])
