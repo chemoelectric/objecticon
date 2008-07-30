@@ -1,14 +1,12 @@
 #summary Installation of Object Icon
 
-Object Icon uses autoconf for its configuration.  
+== Prerequisites ==
 
- * [Installation#Installing_from_the_subversion_source_repository Installing from the subversion source repository]
- * [Installation#Installing_from_a_tar_gz_file Installing from a .tar.gz file]
- * [Installation#Compilation Compilation]
+ * GNU make
+ * autoconf (at least version 2.61), if you build direct from the subversion source
+
 
 == Installing from the subversion source repository ==
-To do this you need `autoconf` installed (at least version 2.61).
-
 Use the following command to checkout a read-only copy of the source code :-
 
 {{{svn co http://objecticon.googlecode.com/svn/trunk/ objecticon}}}
@@ -18,7 +16,7 @@ This will create a directory `objecticon` under the present directory (you can c
 Then `cd` into that directory and run the command `autoconf`.  This will create a `configure` script.
 
 Then proceed just the same as if you had downloaded the .tar.gz file.
-== Installing from a tar gz file ==
+== Installing from a tar.gz file ==
 
 Extract the source code from the .tar.gz file with a command like
 
@@ -39,6 +37,7 @@ to see them.  The `configure` script prints a summary of features when it finish
 
 {{{
 Summary:-
+Install prefix         : /opt/objecticon
 X11 graphics           : yes
 jpeg library           : yes
 Xft anti-aliased fonts : yes
@@ -53,12 +52,46 @@ context switch         : config/system/linux_x86/rswitch.s
 
 The meaning of these various options is as follows.
 
+ * *Install prefix* - The root of the place to install to.  By default `/usr/local`, but can be changed with the `configure` option `--prefix`.  Note that you can also choose to run Object Icon from the same directory it was built in.
  * *X11 graphics* - Determines whether the Icon graphics facilities are built. The following three options only apply if this is 'yes'.
  * *jpeg library* -Allows loading of jpeg images.
  * *Xft anti-aliased fonts* - Fonts are drawn with smooth edges using the xft and freetype libraries. This looks nice, but is considerably slower than using traditional X bitmap fonts.  If this is a problem, you can force the use of traditional X11 bitmap fonts by giving `configure` the option `--without-xft`.
  * *Xpm* -Allows loading of xpm images.
- * *zlib* compression - Allows zlib compressed files (ie .gz files), to be read/written via the "z" flag in the open function.  Also allows icode files to be compressed with the -Z flag given to the `oit`.
+ * *zlib* compression - Allows zlib compressed files (ie .gz files), to be read/written via the "z" flag in the open function.  Also allows icode files to be compressed with the -Z flag given to `oit`.
  * *dynamic loading* -Allows shared library (.so) files containing native functions to be loaded at runtime.
  * *crypt lib* -This just enables the builtin crypt() function.
  * *mysql lib* -Allows a dynamic library to be built which provides an interface to mysql.  Has no effect either way on the runtime system proper.
  * *context switch* -This is a system-dependent source file which is used by co-expressions.  If the value is {{{config/system/default/rswitch.c}}}, then co-expressions will not be functional (activation will end with a runtime error).
+
+== Compilation ==
+After running `configure` successfully, just run the command
+{{{
+make
+}}}
+to build everything.  Note that GNU make is required.
+
+== Installing ==
+After `make` has completed successfully, you can optionally install to the directory specified with the `configure --prefix` option (by default `/usr/local`).   This is optional, because it is quite possible to run Object Icon from the same directory it was compiled in (see below).
+
+If you do wish to install to the `--prefix` directory, then run the command
+{{{
+make install
+}}}
+After completion, `make install` prints the locations of some useful files which can be used to setup environment variables, define symbols in Makefiles, and peform an uninstall.  Please keep a note of these files' locations.
+
+You might also wish to install a local copy of the auto-generated library documentation.  It is not installed by default because it is rather large (about 25MB).  If you want this to be installed, run
+{{{
+make install-libref
+}}}
+This command will take a couple of minutes to run.
+
+== Environment variables ==
+Object Icon requires some environment variables to be setup correctly.  To make doing this a bit easier, a file named `paths.sh` is provided which contains appropriate definitions.  Its location is printed by `make install`, or if you are running from the source distribution, it is in the distribution top-level directory.
+
+Include this file by adding a line like this to your `.bashrc` file (or equivalent)
+{{{
+. /opt/objecticon/lib/objecticon/paths.sh
+}}}
+
+== Uninstallation ==
+There is an uninstallation script named `uninstall.sh`.  Its location is printed by `make install`.  Running it will remove all of the files installed by `make install`.  Some empty directories may remain however.
