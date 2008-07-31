@@ -21,7 +21,7 @@ NativeDef(lang_Class_get_field_flags)
 NativeDef(lang_Class_get_field_index)
 NativeDef(lang_Class_get_field_name)
 NativeDef(lang_Class_get_field_names)
-NativeDef(lang_Class_get_implemented)
+NativeDef(lang_Class_get_implemented_classes)
 NativeDef(lang_Class_get_instance_field_names)
 NativeDef(lang_Class_get_methp_object)
 NativeDef(lang_Class_get_methp_proc)
@@ -31,7 +31,7 @@ NativeDef(lang_Class_get_n_instance_fields)
 NativeDef(lang_Class_get_supers)
 NativeDef(lang_Class_getf)
 NativeDef(lang_Class_set_method)
-#ifdef MSWindows
+#if MSWIN32
 NativeDef(util_WindowsFilePath_getdcwd)
 NativeDef(util_WindowsFileSystem_get_roots)
 #endif

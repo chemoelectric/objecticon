@@ -63,7 +63,7 @@ function{*} lang_Class_get_supers(c)
     }
 end
 
-function{*} lang_Class_get_implemented(c)
+function{*} lang_Class_get_implemented_classes(c)
    abstract {
       return class
       }
@@ -387,7 +387,7 @@ function{1} lang_Class_ensure_initialized(c)
    }
 end
 
-#ifdef MSWindows
+#if MSWIN32
 function{*} util_WindowsFileSystem_get_roots()
    abstract {
       return string
