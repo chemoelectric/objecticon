@@ -329,18 +329,6 @@ struct size_dbl {
 };
 #endif					/* Double */
 
-
-
-/*
- * when debugging is enabled a debug struct is placed after the tended
- *  descriptors in the procedure frame.
- */
-struct debug {
-    struct b_proc *proc;
-    char *old_fname;
-    int old_line;
-};
-
 union numeric {			/* long integers or real numbers */
     long integer;
     double real;

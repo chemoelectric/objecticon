@@ -448,14 +448,6 @@
    (dest)->dword = D_Tvsubs;
 
 /*
- * Find debug struct in procedure frame, assuming debugging is enabled.
- *  Note that there is always one descriptor in array even if it is not
- *  being used.
- */
-#define PFDebug(pf) ((struct debug *)((char *)(pf).t.d +\
-    sizeof(struct descrip) * ((pf).t.num ? (pf).t.num : 1)))
-
-/*
  * Macro for initialized procedure block.
  */
 #define B_IProc(n) struct {word title; word blksize; int (*ccode)();\

@@ -219,9 +219,7 @@ int main(int argc, char **argv)
                 break;
 
             case 'L':			/* -L: enable linker debugging */
-#ifdef DeBugLinker
                 Dflag = 1;
-#endif					/* DeBugLinker */
                 break;
 
             case 'V':

@@ -1365,7 +1365,7 @@ register char *src, *dest;
     */
    }
 
-#ifdef DeBugIconx
+
 /*
  * descr - dump a descriptor.  Used only for debugging.
  */
@@ -1428,8 +1428,6 @@ void blkdump()
       }
    fprintf(stderr,"end of block region.\n");
    }
-#endif                                  /* DeBugIconx */
-
 
 long physicalmemorysize()
 {

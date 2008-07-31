@@ -52,10 +52,8 @@ FILE *outfile;                          /* interpreter code output file */
 
 extern char *ofile;                     /* output file name */
 
-#ifdef DeBugLinker
 FILE *dbgfile;                          /* debug file */
 static char *dbgname;                   /* debug file name */
-#endif                                  /* DeBugLinker */
 
 char *inname;                           /* input file name */
 
@@ -98,7 +96,6 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         fclose(ucodefile);
     }
 
-#ifdef DeBugLinker
     /*
      * Open the .ux file if debugging is on.
      */
@@ -108,7 +105,6 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         if (dbgfile == NULL)
             quitf("cannot create %s", dbgname);
     }
-#endif					/* DeBugLinker */
 
     /* Phase 1a - resolve invocables, superclass identifiers */
     if (!strinv)
@@ -223,22 +219,19 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
     if (ferror(outfile) != 0)
         quit("unable to write to icode file");
 
-#ifdef DeBugLinker
-    if (Dflag)
+    if (verbose > 3)
         dumpstate();
-#endif					/* DeBugLinker */
+
     check_unused_imports();
 
     generate_code();
 
-#ifdef DeBugLinker
     /*
      * Close the .ux file if debugging is on.
      */
     if (Dflag) {
         fclose(dbgfile);
     }
-#endif
 
     fclose(outfile);
     lmfree();
@@ -373,8 +366,6 @@ static void check_unused_imports()
     }
 }
 
-#ifdef DeBugLinker
-
 static char *f_flag2str(int flag)
 {
     static char buff[256];
@@ -433,136 +424,135 @@ void dumpstate()
     struct linvocable *inv;
     int i;
 
-    fprintf(dbgfile, "Invocables, strinv=%d\n", strinv);
+    fprintf(stderr, "Invocables, strinv=%d\n", strinv);
     for (inv = linvocables; inv; inv = inv->iv_link) {
         if (inv->resolved)
-            fprintf(dbgfile, "\t%s -> %s\n", inv->iv_name, inv->resolved->name);
+            fprintf(stderr, "\t%s -> %s\n", inv->iv_name, inv->resolved->name);
         else
-            fprintf(dbgfile, "\t%s (unresolved)\n", inv->iv_name);
+            fprintf(stderr, "\t%s (unresolved)\n", inv->iv_name);
     }
 
-    fprintf(dbgfile, "File list\n---------\n");
+    fprintf(stderr, "File list\n---------\n");
     for (lf = lfiles; lf; lf = lf->next) {
         if (lf->package)
-            fprintf(dbgfile, "file %s package %s u2off=%d\n",lf->name,lf->package,lf->declend_offset);
+            fprintf(stderr, "file %s package %s u2off=%d\n",lf->name,lf->package,lf->declend_offset);
         else
-            fprintf(dbgfile, "file %s u2off=%d\n",lf->name,lf->declend_offset);
+            fprintf(stderr, "file %s u2off=%d\n",lf->name,lf->declend_offset);
         for (fp = lf->imports; fp; fp = fp->next) {
             if (fp->qualified) {
-                fprintf(dbgfile, "\timport %s (qualified)\n",fp->name);
+                fprintf(stderr, "\timport %s (qualified)\n",fp->name);
                 for (fis = fp->symbols; fis; fis = fis->next)
-                    fprintf(dbgfile, "\t\t%s\n",fis->name);
+                    fprintf(stderr, "\t\t%s\n",fis->name);
             } else
-                fprintf(dbgfile, "\timport %s (unqualified)\n",fp->name);
+                fprintf(stderr, "\timport %s (unqualified)\n",fp->name);
         }
     }
-    fprintf(dbgfile, "Globals\n---------\n");
+    fprintf(stderr, "Globals\n---------\n");
     for (gl = lgfirst; gl; gl = gl->g_next) {
-        fprintf(dbgfile, "name %s id=%d flag=%s\n", gl->name, gl->g_index, f_flag2str(gl->g_flag));
+        fprintf(stderr, "name %s id=%d flag=%s\n", gl->name, gl->g_index, f_flag2str(gl->g_flag));
         if (gl->func) {
-            fprintf(dbgfile, "\tnargs=%d nstatics=%d\n", gl->func->nargs,
+            fprintf(stderr, "\tnargs=%d nstatics=%d\n", gl->func->nargs,
                 gl->func->nstatics);
             for (le = gl->func->locals; le; le = le->next) {
                 if (le->l_flag & F_Global)
-                    fprintf(dbgfile, "\tlocal %s %s global=%s\n", le->name,
+                    fprintf(stderr, "\tlocal %s %s global=%s\n", le->name,
                            f_flag2str(le->l_flag),
                            le->l_val.global->name);
                 else if (le->l_flag & F_Static)
-                    fprintf(dbgfile, "\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
+                    fprintf(stderr, "\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
                 else if (le->l_flag & (F_Argument|F_Dynamic))
-                    fprintf(dbgfile, "\tlocal %s %s offset=%d\n", le->name,
+                    fprintf(stderr, "\tlocal %s %s offset=%d\n", le->name,
                            f_flag2str(le->l_flag), le->l_val.offset);
                 else
-                    fprintf(dbgfile, "\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
+                    fprintf(stderr, "\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
             }
             for (ce = gl->func->constants; ce; ce = ce->next) {
-                fprintf(dbgfile, "\tconst %s len=%d ", f_flag2str(ce->c_flag),ce->c_length);
+                fprintf(stderr, "\tconst %s len=%d ", f_flag2str(ce->c_flag),ce->c_length);
                 if (ce->c_flag & F_IntLit)
-                    fprintf(dbgfile, "val=%ld\n",ce->c_val.ival);
+                    fprintf(stderr, "val=%ld\n",ce->c_val.ival);
                 if (ce->c_flag & F_RealLit)
-                    fprintf(dbgfile, "val=%f\n",ce->c_val.rval);
+                    fprintf(stderr, "val=%f\n",ce->c_val.rval);
                 if (ce->c_flag & (F_CsetLit|F_StrLit)) {
-                    fprintf(dbgfile, "val=");
+                    fprintf(stderr, "val=");
                     for (i = 0; i < ce->c_length; ++i)
-                        putc(ce->c_val.sval[i], dbgfile);
-                    fprintf(dbgfile, "\n");
+                        putc(ce->c_val.sval[i], stderr);
+                    fprintf(stderr, "\n");
                 }
             }
         }
         if (gl->class) {
             cl = gl->class;
-            fprintf(dbgfile, "\tfieldtable_col=%d class defined in %s   flags=%s\n", 
-                   cl->fieldtable_col,cl->defined->name,m_flag2str(cl->flag));
-            fprintf(dbgfile, "\tSource super names:\n");
+            fprintf(stderr, "\tfieldtable_col=%d class defined in %s   flags=%s\n", 
+                   cl->fieldtable_col,cl->global->defined->name,m_flag2str(cl->flag));
+            fprintf(stderr, "\tSource super names:\n");
             for (sup = cl->supers; sup; sup = sup->next)
-                fprintf(dbgfile, "\t\t%s\n", sup->name);
-            fprintf(dbgfile, "\tResolved supers:\n");
+                fprintf(stderr, "\t\t%s\n", sup->name);
+            fprintf(stderr, "\tResolved supers:\n");
             for (rsup = cl->resolved_supers; rsup; rsup = rsup->next)
-                fprintf(dbgfile, "\t\t%s\n", rsup->class->global->name);
-            fprintf(dbgfile, "\tImplemented classes:\n");
+                fprintf(stderr, "\t\t%s\n", rsup->class->global->name);
+            fprintf(stderr, "\tImplemented classes:\n");
             for (imp = cl->implemented_classes; imp; imp = imp->next)
-                fprintf(dbgfile, "\t\t%s\n", imp->class->global->name);
-            fprintf(dbgfile, "\tImplemented fields (instance):\n");
+                fprintf(stderr, "\t\t%s\n", imp->class->global->name);
+            fprintf(stderr, "\tImplemented fields (instance):\n");
             for (vr = cl->implemented_instance_fields; vr; vr = vr->next)
-                fprintf(dbgfile, "\t\t%s from %s\n", vr->field->name,
+                fprintf(stderr, "\t\t%s from %s\n", vr->field->name,
                        vr->field->class->global->name);
-            fprintf(dbgfile, "\tImplemented fields (class):\n");
+            fprintf(stderr, "\tImplemented fields (class):\n");
             for (vr = cl->implemented_class_fields; vr; vr = vr->next)
-                fprintf(dbgfile, "\t\t%s from %s\n", vr->field->name,
+                fprintf(stderr, "\t\t%s from %s\n", vr->field->name,
                        vr->field->class->global->name);
-            fprintf(dbgfile, "\tDefined fields:\n");
+            fprintf(stderr, "\tDefined fields:\n");
             for (me = cl->fields; me; me = me->next) {
-                fprintf(dbgfile, "\t\t%s %s\n", me->name, m_flag2str(me->flag));
+                fprintf(stderr, "\t\t%s %s\n", me->name, m_flag2str(me->flag));
                 if (me->func) {
-                    fprintf(dbgfile, "\t\t\tMethod numargs=%d nstatics=%d\n", me->func->nargs,
+                    fprintf(stderr, "\t\t\tMethod numargs=%d nstatics=%d\n", me->func->nargs,
                         me->func->nstatics);
                     for (le = me->func->locals; le; le = le->next) {
                         if (le->l_flag & F_Global)
-                            fprintf(dbgfile, "\t\t\tlocal %s %s global=%s\n", le->name,
+                            fprintf(stderr, "\t\t\tlocal %s %s global=%s\n", le->name,
                                    f_flag2str(le->l_flag),
                                    le->l_val.global->name);
                         else if (le->l_flag & F_Static)
-                            fprintf(dbgfile, "\t\t\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
+                            fprintf(stderr, "\t\t\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
                         else if (le->l_flag & (F_Argument|F_Dynamic))
-                            fprintf(dbgfile, "\t\t\tlocal %s %s offset=%d\n", le->name,
+                            fprintf(stderr, "\t\t\tlocal %s %s offset=%d\n", le->name,
                                    f_flag2str(le->l_flag), le->l_val.offset);
                         else if (le->l_flag & (F_Field))
-                            fprintf(dbgfile, "\t\t\tlocal %s %s field=%s\n", le->name,
+                            fprintf(stderr, "\t\t\tlocal %s %s field=%s\n", le->name,
                                    f_flag2str(le->l_flag), le->l_val.field->name);
                         else
-                            fprintf(dbgfile, "\t\t\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
+                            fprintf(stderr, "\t\t\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
                     }
                     for (ce = me->func->constants; ce; ce = ce->next) {
-                        fprintf(dbgfile, "\t\t\tconst %s len=%d ", f_flag2str(ce->c_flag),ce->c_length);
+                        fprintf(stderr, "\t\t\tconst %s len=%d ", f_flag2str(ce->c_flag),ce->c_length);
                         if (ce->c_flag & F_IntLit)
-                            fprintf(dbgfile, "val=%ld\n",ce->c_val.ival);
+                            fprintf(stderr, "val=%ld\n",ce->c_val.ival);
                         if (ce->c_flag & F_RealLit)
-                            fprintf(dbgfile, "val=%f\n",ce->c_val.rval);
+                            fprintf(stderr, "val=%f\n",ce->c_val.rval);
                         if (ce->c_flag & (F_CsetLit|F_StrLit)) {
-                            fprintf(dbgfile, "val=");
+                            fprintf(stderr, "val=");
                             for (i = 0; i < ce->c_length; ++i)
-                                putc(ce->c_val.sval[i], dbgfile);
-                            fprintf(dbgfile, "\n");
+                                putc(ce->c_val.sval[i], stderr);
+                            fprintf(stderr, "\n");
                         }
                     }
                 }
             }
         }
         if (gl->record) {
-            fprintf(dbgfile, "\tfieldtable_col=%d\n", gl->record->fieldtable_col);
+            fprintf(stderr, "\tfieldtable_col=%d\n", gl->record->fieldtable_col);
             for (lfd = gl->record->fields; lfd; lfd = lfd->next) {
-                fprintf(dbgfile, "\tfield %s\n", lfd->name);
+                fprintf(stderr, "\tfield %s\n", lfd->name);
             }
         }
     }
-    fprintf(dbgfile, "Field table\n---------\n");
+    fprintf(stderr, "Field table\n---------\n");
     for (fe = lffirst; fe; fe = fe->next) {
-        fprintf(dbgfile, "Field %s id=%d\n\t", fe->name, fe->field_id);
+        fprintf(stderr, "Field %s id=%d\n\t", fe->name, fe->field_id);
         for (i = 0; i < fieldtable_cols; i++) {
-            fprintf(dbgfile, "%3d ", fe->rowdata[i]);
+            fprintf(stderr, "%3d ", fe->rowdata[i]);
         }
-        fprintf(dbgfile, "\n");
+        fprintf(stderr, "\n");
     }
+    fflush(stderr);
 }
-
-#endif

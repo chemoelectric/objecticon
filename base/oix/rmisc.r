@@ -1075,7 +1075,7 @@ struct b_coexpr *ce;
    return abp->arec[0].activator;
 }
 
-#ifdef DeBugIconx
+
 /*
  * dumpact - dump an activator stack
  */
@@ -1100,7 +1100,7 @@ struct b_coexpr *ce;
       abp = abp->astk_nxt;
       }
 }
-#endif					/* DeBugIconx */
+
 
 /*
  * findline - find the source line number associated with the ipc

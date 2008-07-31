@@ -162,15 +162,6 @@
  * Other defaults.
  */
 
-#ifdef DeBug
-   #undef DeBugTrans
-   #undef DeBugLinker
-   #undef DeBugIconx
-   #define DeBugTrans
-   #define DeBugLinker
-   #define DeBugIconx
-#endif					/* DeBug */
-
 #ifndef AllocType
    #define AllocType unsigned int
 #endif					/* AllocType */
