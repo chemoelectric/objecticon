@@ -62,8 +62,15 @@ Finally, both the translator and the runtime must be re-compiled.  The easiest w
 
 {{{
 make clean all
-make install   # Not needed if you work solely from the distribution
 }}}
+
+If you have previously installed the distribution, you then need to go to the top-level directory and run
+
+{{{
+make install
+}}}
+
+again.
 
 == Deferred methods resolved at runtime ==
 This involves setting an arbitrary procedure value to be the implementation of the method, as the following example shows :-
@@ -107,3 +114,5 @@ Setting a normal procedure to be a deferred method's definition isn't particular
       Class.set_method("f", loadfunc("mylib.so", "my_method"))
    end
 }}}
+
+For a page explaining how to create a dynamic library of RTL/C code, see [DynamicLoadC here].
