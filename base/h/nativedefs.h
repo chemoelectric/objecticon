@@ -31,6 +31,7 @@ NativeDef(lang_Class_get_n_instance_fields)
 NativeDef(lang_Class_get_supers)
 NativeDef(lang_Class_getf)
 NativeDef(lang_Class_set_method)
+NativeDef(parser_UReader_raw_convert)
 #if MSWIN32
 NativeDef(util_WindowsFilePath_getdcwd)
 NativeDef(util_WindowsFileSystem_get_roots)

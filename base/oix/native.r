@@ -387,6 +387,35 @@ function{1} lang_Class_ensure_initialized(c)
    }
 end
 
+function{1} parser_UReader_raw_convert(s)
+   if !is:string(s) then
+      runerr(103, s)
+   body {
+       char *p = StrLoc(s);
+       if (StrLen(s) == 2) {
+           union {
+               unsigned char c[2];
+               unsigned int s:16;
+           } i;
+           i.c[0] = p[0];
+           i.c[1] = p[1];
+           return C_integer i.s;
+       }
+       if (StrLen(s) == 4) {
+           union {
+               unsigned char c[4];
+               unsigned long int w:32;
+           } i;
+           i.c[0] = p[0];
+           i.c[1] = p[1];
+           i.c[2] = p[2];
+           i.c[3] = p[3];
+           return C_integer i.w;
+       }
+       fail;
+   }
+end
+
 #if MSWIN32
 function{*} util_WindowsFileSystem_get_roots()
    abstract {

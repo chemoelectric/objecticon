@@ -408,16 +408,10 @@ class UReader(Error)
       return s
    end
 
-   private uin_fqid(pack)
-      local s
-      s := uin_str() | fail
-      return if /pack then s else pack || "." || s
-   end
-
    private uin_short()
       local s, i
       s := move(2) | return error("Unexpected EOF")
-      i := ord(s[1]) + 256 * ord(s[2])
+      i := raw_convert(s)
       if i > 16r7fff then
          i -:= 16r10000
       return i
@@ -426,7 +420,7 @@ class UReader(Error)
    private uin_word()
       local s, i
       s := move(4) | return error("Unexpected EOF")
-      i := ord(s[1]) + 256 * ord(s[2]) + 16rffff * ord(s[3]) + 16r1000000 * ord(s[4])
+      i := raw_convert(s)
       if i > 16r7fffffff then
          i -:= 16r100000000
       return i
@@ -435,7 +429,13 @@ class UReader(Error)
    private uin_bin()
       local s, i
       s := move(2) | return error("Unexpected EOF")
-      i := ord(s[1]) + 256 * ord(s[2])
+      i := raw_convert(s)
       return move(i)
+   end
+
+   private static defer raw_convert(s)
+
+   public static test(s)
+      write(raw_convert(s))
    end
 end
