@@ -1,4 +1,4 @@
-import parser
+import parser, lang()
 
 class Outputter()
    public static const
@@ -64,24 +64,70 @@ class Outputter()
             suspend e
    end
 
+   protected is_final(obj)
+      if is(obj, parser.Class) then
+         return obj.is_final()
+      else
+         return iand(obj.flags, lang.Class.M_Final) ~= 0
+   end
+
    protected get_param_string(obj)
-      local s, a
+      local s, a, has_self
       s := ""
-      every a := obj.get_args().gen() do
-         s ||:= a.str() || ", "
-      s[-2:0] := ""
-      if obj.has_varargs() then
-         s ||:= "[]"
+      if is(obj, parser.Function) then {
+         every a := obj.get_args().gen() do
+            s ||:= a.str() || ", "
+         s[-2:0] := ""
+         if obj.has_varargs() then
+            s ||:= "[]"
+      } else {
+         # A non-static method will have an implicit self param.
+         if is(obj, UMethod) & iand(obj.flags, lang.Class.M_Static) = 0 then
+            has_self := 1
+         every a := obj.get_locals() do {
+            if iand(a.flags, ULocal.F_Argument) ~= 0 then {
+               if \has_self then
+                  has_self := &null
+               else
+                  s ||:= a.id || ", "
+            }
+         }
+         s[-2:0] := ""
+         if obj.nargs < 0 then
+            s ||:= "[]"
+      }
       return s
    end
 
    protected get_access_string(obj)
       local s
       s := ""
-      every s ||:= obj.get_access().gen().str() || " "
-      if is(obj, DeferredMethod) then
-         s ||:= "defer "
-      s[-1] := ""
+      if is(obj, FieldList | Method | DeferredMethod) then {
+         every s ||:= obj.get_access().gen().str() || " "
+         if is(obj, DeferredMethod) then
+            s ||:= "defer "
+         s[-1] := ""
+      } else {
+         if iand(obj.flags, lang.Class.M_Private) ~= 0 then
+            s ||:= "private "
+         if iand(obj.flags, lang.Class.M_Public) ~= 0 then
+            s ||:= "public "
+         if iand(obj.flags, lang.Class.M_Protected) ~= 0 then
+            s ||:= "protected "
+         if iand(obj.flags, lang.Class.M_Package) ~= 0 then
+            s ||:= "package "
+         if iand(obj.flags, lang.Class.M_Static) ~= 0 then
+            s ||:= "static "
+         if iand(obj.flags, lang.Class.M_Const) ~= 0 then
+            s ||:= "const "
+         if iand(obj.flags, lang.Class.M_Readable) ~= 0 then
+            s ||:= "readable "
+         if iand(obj.flags, lang.Class.M_Defer) ~= 0 then
+            s ||:= "defer "
+         if iand(obj.flags, lang.Class.M_Final) ~= 0 then
+            s ||:= "final "
+         s[-1] := ""
+      }
       return s
    end
 

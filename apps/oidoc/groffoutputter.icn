@@ -25,7 +25,7 @@ class GroffOutputter(Outputter)
 
       every c := get_classes_in(get_packages()) do {
          l := []
-         every put(l, c.get_supers().get_fq_name())
+         every put(l, c.get_resolved_supers().get_fq_name())
          if *l = 0 then 
             s := "(none)"
          else {

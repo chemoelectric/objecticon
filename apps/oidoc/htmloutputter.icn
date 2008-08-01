@@ -62,7 +62,7 @@ class HtmlOutputter(Outputter)
       every c := symbol_table.gen_symbols() do {
          if is(c, ClassSymbol) then {
             put(all_classes, c)
-            every s := c.get_supers() do {
+            every s := c.get_resolved_supers() do {
                /subclass_table[s] := []
                put(subclass_table[s], c)
             }
@@ -146,13 +146,13 @@ class HtmlOutputter(Outputter)
       f := open(fname, "w") | stop("couldn't open " || fname)
       write(f, "<html><head><title>", c.name, "</title></head><body>")
       write(f, "<h1>Class ", c.name, "</h1>")
-      if c.obj.is_final() then
+      if is_final(c.obj) then
          write(f, "final<p>")
       write(f, "<dl>")
 
       # Superclass list
       supers := []
-      every o := c.get_supers() do {
+      every o := c.get_resolved_supers() do {
          put(supers, "<a href=\"" || get_serial_no(o) || ".html\" target=\"displayFrame\">" || o.get_fq_name() || "</a>")
       }
       if *supers > 0 then {
@@ -174,11 +174,13 @@ class HtmlOutputter(Outputter)
 
       s := c.get_package() | "default"
       write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
-      output_file(c.obj.get_first_token().filename)
       write(f, "</dl><p>")
 
-      comment_and_fields(f, c)
-      write(f, "<p>")
+      if is(c.obj, parser.Class) then {
+         output_file(c.obj.get_first_token().filename)
+         comment_and_fields(f, c)
+         write(f, "<p>")
+      }
 
       pretty_heading(f, "Class summary")
       overrides := table()
@@ -225,9 +227,11 @@ class HtmlOutputter(Outputter)
                mm := o.get_field(m.name) | stop("Internal error")
                write(f,"<dd>Overrides <a href=\"" || get_serial_no(o) || ".html#" || get_serial_no(mm) || "\">" || mm.name || "()</a> in <a href=\"", get_serial_no(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
             }
-            write(f, "<dd>")
-            comment_and_fields(f, m)
-            write(f, "</dd>")
+            if is(m.obj, Method | DeferredMethod) then {
+               write(f, "<dd>")
+               comment_and_fields(f, m)
+               write(f, "</dd>")
+            }
             write(f, "</dl><hr>")
          }
       }
@@ -239,9 +243,11 @@ class HtmlOutputter(Outputter)
             write(f, "<h3>", m.name, "</h3>")
             write(f, get_access_string(m.decl_obj), "<p>")
             write(f, "<dl>")
-            write(f, "<dd>")
-            comment_and_fields(f, m)
-            write(f, "</dd>")
+            if is(m.obj, Id) then {
+               write(f, "<dd>")
+               comment_and_fields(f, m)
+               write(f, "</dd>")
+            }
             write(f, "</dl><hr>")
          }
       }
@@ -484,11 +490,13 @@ class HtmlOutputter(Outputter)
       write(f, "<dl>")
       s := c.get_package() | "default"
       write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
-      output_file(c.obj.get_first_token().filename)
       write(f, "<dt>Type :</dt><dd>", type, "</dd>")
       write(f, "</dl><p>")
-      comment_and_fields(f, c)
-      write(f, "<p>")
+      if is(c.obj, Procedure | Record | Id) then {
+         output_file(c.obj.get_first_token().filename)
+         comment_and_fields(f, c)
+         write(f, "<p>")
+      }
       write(f, "</body></html>")
       close(f)
    end
