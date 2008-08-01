@@ -37,6 +37,7 @@ install :
 	$(INSTALL) -d "$(OILIB)/xml"
 	$(INSTALL) -d "$(OILIB)/h"
 	$(INSTALL) -m 755 bin/ivib "$(OIBIN)"
+	$(INSTALL) -m 755 bin/oidoc "$(OIBIN)"
 	$(INSTALL) -m 755 bin/iyacc "$(OIBIN)"
 	$(INSTALL) -m 755 bin/oit "$(OIBIN)"
 	$(INSTALL) -m 755 bin/oix "$(OIBIN)"
@@ -74,7 +75,7 @@ install :
 	fi
 	@echo -e "export TRACE" >>"$(PATHS)" ; \
 
-	@echo -e rm -f \"$(OIBIN)/ivib\" \"$(OIBIN)/iyacc\" \"$(OIBIN)/oit\" \"$(OIBIN)/oix\" \"$(OIBIN)/udis\" \"$(OIBIN)/rtt\" >"$(UNINST)"
+	@echo -e rm -f \"$(OIBIN)/ivib\" \"$(OIBIN)/oidoc\" \"$(OIBIN)/iyacc\" \"$(OIBIN)/oit\" \"$(OIBIN)/oix\" \"$(OIBIN)/udis\" \"$(OIBIN)/rtt\" >"$(UNINST)"
 	@echo -e rm -f \"$(SOLIB)/objecticonipclib.so\"  \"$(SOLIB)/objecticonmysqllib.so\" >>"$(UNINST)"
 	@echo -e rm -rf \"$(OILIB)\" >>"$(UNINST)"
 	@echo -e rm -rf \"$(LIBREF)\" >>"$(UNINST)"
@@ -89,6 +90,7 @@ install-libref :
 	oidoc -html -d -o "$(LIBREF)" -a
 	@echo -e "\nInstallation complete to file://$(LIBREF)/index.html"
 
+.PHONY:	libref
 libref :
 	rm -rf libref
 	mkdir libref
