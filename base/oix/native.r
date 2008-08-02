@@ -24,9 +24,6 @@ static struct b_class *get_class_for(dptr x)
 function{1} classof(o)
    if !is:object(o) then
        runerr(602, o)
-   abstract {
-      return class
-      }
     body {
        return class(BlkLoc(o)->object.class);
     }
@@ -35,9 +32,6 @@ end
 function{0,1} is(x,c)
    if !is:class(c) then
        runerr(603, c)
-   abstract {
-      return class
-      }
     body {
         struct b_class *class = get_class_for(&x),
             *target = &BlkLoc(c)->class;
@@ -51,9 +45,6 @@ function{0,1} is(x,c)
 end
 
 function{*} lang_Class_get_supers(c)
-   abstract {
-      return class
-      }
     body {
         struct b_class *class = get_class_for(&c);
         int i;
@@ -64,9 +55,6 @@ function{*} lang_Class_get_supers(c)
 end
 
 function{*} lang_Class_get_implemented_classes(c)
-   abstract {
-      return class
-      }
     body {
         struct b_class *class = get_class_for(&c);
         int i;
@@ -79,9 +67,6 @@ end
 function{1} lang_Class_get_methp_object(mp)
    if !is:methp(mp) then
        runerr(613, mp)
-   abstract {
-      return object
-      }
     body {
        return object(BlkLoc(mp)->methp.object);
     }
@@ -90,9 +75,6 @@ end
 function{1} lang_Class_get_methp_proc(mp)
    if !is:methp(mp) then
        runerr(613, mp)
-   abstract {
-      return proc
-      }
     body {
         return proc(BlkLoc(mp)->methp.proc);
     }
@@ -101,9 +83,6 @@ end
 function{1} lang_Class_get_cast_object(c)
    if !is:cast(c) then
        runerr(614, c)
-   abstract {
-      return object
-      }
     body {
        return object(BlkLoc(c)->cast.object);
     }
@@ -112,18 +91,12 @@ end
 function{1} lang_Class_get_cast_class(c)
    if !is:cast(c) then
        runerr(614, c)
-   abstract {
-      return class
-      }
     body {
        return class(BlkLoc(c)->cast.class);
     }
 end
 
 function{1} lang_Class_get_field_flags(c, field)
-   abstract {
-      return integer
-      }
    body {
         struct b_class *class = get_class_for(&c);
         int i = lookup_class_field(class, &field, 0);
@@ -134,9 +107,6 @@ function{1} lang_Class_get_field_flags(c, field)
 end
 
 function{1} lang_Class_get_class_flags(c)
-   abstract {
-      return integer
-      }
    body {
         struct b_class *class = get_class_for(&c);
         return C_integer class->flags;
@@ -144,9 +114,6 @@ function{1} lang_Class_get_class_flags(c)
 end
 
 function{0,1} lang_Class_get_field_index(c, field)
-   abstract {
-      return integer
-      }
    body {
         struct b_class *class = get_class_for(&c);
         int i = lookup_class_field(class, &field, 0);
@@ -157,9 +124,6 @@ function{0,1} lang_Class_get_field_index(c, field)
 end
 
 function{0,1} lang_Class_get_field_name(c, field)
-   abstract {
-      return string
-      }
    body {
         struct b_class *class = get_class_for(&c);
         int i = lookup_class_field(class, &field, 0);
@@ -170,9 +134,6 @@ function{0,1} lang_Class_get_field_name(c, field)
 end
 
 function{0,1} lang_Class_get_field_defining_class(c, field)
-   abstract {
-      return class
-      }
    body {
         struct b_class *class = get_class_for(&c);
         int i = lookup_class_field(class, &field, 0);
@@ -183,9 +144,6 @@ function{0,1} lang_Class_get_field_defining_class(c, field)
 end
 
 function{1} lang_Class_get_n_fields(c)
-   abstract {
-      return integer
-      }
    body {
         struct b_class *class = get_class_for(&c);
         return C_integer class->n_instance_fields + class->n_class_fields;
@@ -193,9 +151,6 @@ function{1} lang_Class_get_n_fields(c)
 end
 
 function{1} lang_Class_get_n_class_fields(c)
-   abstract {
-      return integer
-      }
    body {
         struct b_class *class = get_class_for(&c);
         return C_integer class->n_class_fields;
@@ -203,9 +158,6 @@ function{1} lang_Class_get_n_class_fields(c)
 end
 
 function{1} lang_Class_get_n_instance_fields(c)
-   abstract {
-      return integer
-      }
    body {
         struct b_class *class = get_class_for(&c);
         return C_integer class->n_instance_fields;
@@ -213,9 +165,6 @@ function{1} lang_Class_get_n_instance_fields(c)
 end
 
 function{*} lang_Class_get_field_names(c)
-   abstract {
-      return string
-      }
     body {
         struct b_class *class = get_class_for(&c);
         int i;
@@ -226,9 +175,6 @@ function{*} lang_Class_get_field_names(c)
 end
 
 function{*} lang_Class_get_instance_field_names(c)
-   abstract {
-      return string
-      }
     body {
         struct b_class *class = get_class_for(&c);
         int i;
@@ -239,9 +185,6 @@ function{*} lang_Class_get_instance_field_names(c)
 end
 
 function{*} lang_Class_get_class_field_names(c)
-   abstract {
-      return string
-      }
     body {
         struct b_class *class = get_class_for(&c);
         int i;
@@ -334,9 +277,6 @@ end
 function{0,1} lang_Class_for_name(s, c)
    if !cnv:tmp_string(s) then
       runerr(103, s)
-   abstract {
-      return class
-   }
    body {
        struct progstate *prog;
        dptr p;
@@ -355,9 +295,6 @@ end
 function{1} lang_Class_create_raw(c)
    if !is:class(c) then
        runerr(603, c)
-   abstract {
-      return object
-      }
     body {
         struct b_object *obj;
         struct b_class *class = &BlkLoc(c)->class;
@@ -418,9 +355,6 @@ end
 
 #if MSWIN32
 function{*} util_WindowsFileSystem_get_roots()
-   abstract {
-      return string
-      }
     body {
         DWORD n = GetLogicalDrives();
         char t[4], c = 'A';
@@ -440,9 +374,6 @@ end
 function{0,1} util_WindowsFilePath_getdcwd(d)
    if !cnv:tmp_string(d) then
       runerr(103, d)
-   abstract {
-      return string
-      }
    body {
       char *p;
       int dir;
