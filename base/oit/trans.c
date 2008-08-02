@@ -140,7 +140,7 @@ static void check_dottedident(struct node *pos, char *s)
     t = str_install(&sb);
     if (t == package_name || t == default_string || lookup_import(t))
         return;
-    twarn_at(pos, "Reference to unimported package: '%s'", t);
+    tfatal_at(pos, "Reference to unimported package: '%s'", t);
 }
 
 static void check_dottedidents()

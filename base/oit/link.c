@@ -258,9 +258,9 @@ void lfatal(struct lfile *lf, struct loc *pos, char *fmt, ...)
         fprintf(stderr, "%s:\n", lf->name);
     if (pos) {
         if (pos->file)
-            fprintf(stderr, "%s: ", abbreviate(pos->file));
+            fprintf(stderr, "File %s; ", abbreviate(pos->file));
         if (pos->line)
-            fprintf(stderr, "Line %d # :", pos->line);
+            fprintf(stderr, "Line %d # ", pos->line);
     }
     va_start(argp, fmt);
     vfprintf(stderr, fmt, argp);
@@ -281,7 +281,7 @@ void lwarn(struct lfile *lf, struct loc *pos, char *fmt, ...)
         fprintf(stderr, "%s:\n", lf->name);
     if (pos) {
         if (pos->file)
-            fprintf(stderr, "%s: ", abbreviate(pos->file));
+            fprintf(stderr, "File %s; ", abbreviate(pos->file));
         if (pos->line)
             fprintf(stderr, "Line %d # ", pos->line);
     }
