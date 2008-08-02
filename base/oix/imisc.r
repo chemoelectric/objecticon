@@ -25,23 +25,23 @@ LibDcl(field,2,".")
     type_case Arg1 of {
       record: {
             r = record_access(cargp);
-        }
+      }
 
       cast: {
             r = cast_access(cargp, 1);
-        }
+      }
 
       class: {
             r = class_access(cargp, 1);
-        }
+      }
 
       object: {
             r = instance_access(cargp, 1);
-        }
+      }
 
-        default: {
-            RunErr(107, &Arg1);
-        }
+      default: {
+            RunErr(624, &Arg1);
+      }
     }
     if (r != 0)
         RunErr(r, &Arg1);
@@ -55,21 +55,21 @@ int field_access(dptr cargp)
     type_case Arg1 of {
       cast: {
             return cast_access(cargp, 0);
-        }
+      }
 
       class: {
             return class_access(cargp, 0);
-        }
+      }
 
       object: {
             return instance_access(cargp, 0);
-        }
+      }
 
-        default: {
+      default: {
             fatalerr(620, &Arg1);
             return 0; /* Unreachable */
-        }
-    }
+      }
+   }
 }
 
 static int cast_access(dptr cargp, int query_flag)
@@ -426,8 +426,10 @@ int lookup_class_field(struct b_class *class, dptr query, int query_flag)
         if (Qual(*query))
             return lookup_class_field_by_name(class, query);
 
-        if (!is:integer(*query))
-            syserr("Expected string or integer for field lookup");
+        if (!is:integer(*query)) {
+            err_msg(625, query);
+            return -1;
+        }
 
         /*
          * Simple index into fields array, using conventional icon

@@ -260,7 +260,7 @@ struct errtab errtab[] = {
    104, "cset expected",
    105, "file expected",
    106, "procedure or integer expected",
-   107, "record, class or object expected",
+   107, "record expected",
    108, "list expected",
    109, "string or file expected",
    110, "string or list expected",
@@ -367,6 +367,8 @@ struct errtab errtab[] = {
    621, "init cannot be accessed via a field",
    622, "new cannot be accessed on an initialized object",
    623, "can only set a method on an unresolved field",
+   624, "record, class, cast or object expected",
+   625, "Expected string or integer for field lookup",
 
 #ifdef PosixFns
    1040, "socket error",		 
