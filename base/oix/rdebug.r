@@ -569,22 +569,9 @@ static void ttrace()
         case Op_Subsc:
             putc('{', stderr);
             outimage(stderr, ++xargp, 0);
-
-#if EBCDIC != 1
             putc('[', stderr);
-#else					/* EBCDIC != 1 */
-            putc('$', stderr);
-            putc('<', stderr);
-#endif					/* EBCDIC != 1 */
-
             outimage(stderr, ++xargp, 0);
-
-#if EBCDIC != 1
             putc(']', stderr);
-#else					/* EBCDIC != 1 */
-            putc('$', stderr);
-            putc('>', stderr);
-#endif					/* EBCDIC != 1 */
 
             putc('}', stderr);
             break;
@@ -593,23 +580,13 @@ static void ttrace()
             putc('{', stderr);
             outimage(stderr, ++xargp, 0);
 
-#if EBCDIC != 1
             putc('[', stderr);
-#else					/* EBCDIC != 1 */
-            putc('$', stderr);
-            putc('<', stderr);
-#endif					/* EBCDIC != 1 */
 
             outimage(stderr, ++xargp, 0);
             putc(':', stderr);
             outimage(stderr, ++xargp, 0);
 
-#if EBCDIC != 1
             putc(']', stderr);
-#else					/* EBCDIC != 1 */
-            putc('$', stderr);
-            putc('>', stderr);
-#endif					/* EBCDIC != 1 */
 
             putc('}', stderr);
             break;
@@ -660,11 +637,7 @@ static void ttrace()
 
         case Op_Llist:
 
-#if EBCDIC != 1
             fprintf(stderr,"[ ... ]");
-#else					/* EBCDIC != 1 */
-            fputs("$< ... $>", stderr);
-#endif					/* EBCDIC != 1 */
             break;
 
    

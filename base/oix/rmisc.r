@@ -692,22 +692,11 @@ int noimage;
             }
 
          if (bp->tvsubs.sslen == 1)
-
-#if EBCDIC != 1
             fprintf(f, "[%ld]", (long)bp->tvsubs.sspos);
-#else					/* EBCDIC != 1 */
-
-            fprintf(f, "$<%ld$>", (long)bp->tvsubs.sspos);
-#endif					/* EBCDIC != 1 */
 
          else
 
-#if EBCDIC != 1
             fprintf(f, "[%ld+:%ld]", (long)bp->tvsubs.sspos,
-
-#else					/* EBCDIC != 1 */
-            fprintf(f, "$<%ld+:%ld$>", (long)bp->tvsubs.sspos,
-#endif					/* EBCDIC != 1 */
 
                (long)bp->tvsubs.sslen);
 
@@ -731,21 +720,11 @@ int noimage;
 	 BlkLoc(tdp) = bp->tvtbl.clink;
 	 outimage(f, &tdp, noimage);
 
-#if EBCDIC != 1
          putc('[', f);
-#else					/* EBCDIC != 1 */
-         putc('$', f);
-         putc('<', f);
-#endif					/* EBCDIC != 1 */
 
          outimage(f, &bp->tvtbl.tref, noimage);
 
-#if EBCDIC != 1
          putc(']', f);
-#else					/* EBCDIC != 1 */
-         putc('$', f);
-         putc('>', f);
-#endif					/* EBCDIC != 1 */
          }
 
       kywdint: {
@@ -857,19 +836,11 @@ int c, q;
          fprintf(f, "\\b");
          return;
 
-#if !EBCDIC
       case '\177':			/* delete */
-#else					/* !EBCDIC */
-      case '\x07':
-#endif					/* !EBCDIC */
 
          fprintf(f, "\\d");
          return;
-#if !EBCDIC
       case '\33':			/* escape */
-#else					/* !EBCDIC */
-      case '\x27':
-#endif					/* !EBCDIC */
          fprintf(f, "\\e");
          return;
       case '\f':			/* form feed */
@@ -878,12 +849,6 @@ int c, q;
       case LineFeed:			/* new line */
          fprintf(f, "\\n");
          return;
-
-#if EBCDIC == 1
-      case '\x25':                      /* EBCDIC line feed */
-         fprintf(f, "\\l");
-         return;
-#endif					/* EBCDIC == 1 */
 
       case CarriageReturn:		/* carriage return */
          fprintf(f, "\\r");
@@ -930,11 +895,7 @@ int noimage;
     *  last ListLimit elements.
     */
 
-#if EBCDIC != 1
    fprintf(f, "list_%ld = [", (long)lp->id);
-#else					/* EBCDIC != 1 */
-   fprintf(f, "list_%ld = $<", (long)lp->id);
-#endif				/* EBCDIC != 1 */
 
    count = 1;
    i = 0;
@@ -959,12 +920,7 @@ int noimage;
          }
       }
 
-#if EBCDIC != 1
    putc(']', f);
-#else					/* EBCDIC != 1 */
-   putc('$', f);
-   putc('>', f);
-#endif					/* EBCDIC != 1 */
 
    }
 
@@ -1243,32 +1199,18 @@ int c, q;
          Protect(alcstr("\\b", (word)(2)), return Error);
          return 2;
 
-#if !EBCDIC
       case '\177':			/*      delete	  */
-#else					/* !EBCDIC */
-      case '\x07':			/*      delete    */
-#endif					/* !EBCDIC */
 
          Protect(alcstr("\\d", (word)(2)), return Error);
          return 2;
 
-#if !EBCDIC
       case '\33':			/*	    escape	 */
-#else					/* !EBCDIC */
-      case '\x27':			/*          escape       */
-#endif					/* !EBCDIC */
 
          Protect(alcstr("\\e", (word)(2)), return Error);
          return 2;
       case '\f':			/*	   form feed	*/
          Protect(alcstr("\\f", (word)(2)), return Error);
          return 2;
-
-#if EBCDIC == 1
-      case '\x25':                      /* EBCDIC line feed */
-         Protect(alcstr("\\l", (word)(2)), return Error);
-         return 2;
-#endif					/* EBCDIC */
 
       case LineFeed:			/*	   new line	*/
          Protect(alcstr("\\n", (word)(2)), return Error);
@@ -1734,7 +1676,7 @@ dptr dp;
    if (n < 0) 
       n = cssize(dp);
 
-#if EBCDIC != 1
+
    /*
     * Check for a cset we recognize using a hardwired decision tree.
     *  In ASCII, each of &lcase/&ucase/&digits are complete within 32 bits.
@@ -1761,40 +1703,7 @@ dptr dp;
 	    return "&ascii";
       }
    return NULL;
-#else						/* EBCDIC != 1 */
-   /*
-    * Check for a cset we recognize using a hardwired decision tree.
-    *  In EBCDIC, the neither &lcase nor &ucase is contiguous.
-    *  #%#% THIS CODE HAS NOT YET BEEN TESTED.
-    */
-   if (n == 52) {
-      if ((Cset32(0x80,*dp) & Cset32(0xC0,*dp)) == 0x03FE03FE
-         && Cset32(0xA0,*dp) & Cset32(0xE0,*dp)) == 0x03FC)
-	    return ("&letters");
-      }
-   else if (n < 52) {
-      if (n == 26) {
-	 if (Cset32(0x80,*dp) == 0x03FE03FE && Cset32(0xA0,*dp) == 0x03FC)
-	    return ("&lcase");
-	 else if (Cset32(0xC0,*dp) == 0x03FE03FE && Cset32(0xE0,*dp) == 0x03FC)
-	    return ("&ucase");
-	 }
-      else if (n == 10 && *CsetPtr('0',*dp) == (01777 << CsetOff('0')))
-	 return ("&digits");
-      }
-   else /* n > 52 */ {
-      if (n == 256)
-	 return "&cset";
-      else if (n == 128) {
-         int i;
-         for (i = 0; i < CsetSize; i++)
-            if (k_ascii.bits[i] != BlkLoc(*dp)->cset.bits[i])
-               break;
-         if (i >= CsetSize) return "&ascii";
-         }
-      }
-   return NULL;
-#endif						/* EBCDIC != 1 */
+
    }
 
 /*

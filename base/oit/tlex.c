@@ -38,13 +38,8 @@ static	int	octesc		(int ac);
 
 #define isletter(s)	(isupper(c) | islower(c))
 
-#if EBCDIC
-extern char ToEBCDIC[256], FromEBCDIC[256];
-#endif					/* EBCDIC */
 
-#if !EBCDIC
 #define tonum(c)        (isdigit(c) ? (c - '0') : ((c & 037) + 9))
-#endif					/* !EBCDIC */
 
 struct node tok_loc =
 {0, NULL, 0, 0};	/* "model" node containing location of current token */
@@ -469,14 +464,7 @@ static int ctlesc()
     if (c == EOF)
         return EOF;
 
-#if !EBCDIC
     return (c & 037);
-#else					/* !EBCDIC */
-    return ToEBCDIC[FromEBCDIC[c] & 037];
-    /* ctrl-x in EBCDIC is the EBCDIC equivalent */
-    /* to ASCII ctrl-x                           */
-#endif					/* !EBCDIC */
-
 }
 
 /*
@@ -500,11 +488,7 @@ static int octesc(ac)
     } while (isoctal(nc) && i++ < 3);
     PushChar(nc);
 
-#if EBCDIC != 2
     return (c & 0377);
-#else					/* EBCDIC != 2 */
-    return ToEBCDIC[c & 0377];
-#endif					/* EBCDIC != 2 */
 }
 
 /*
@@ -535,12 +519,7 @@ static int hexesc()
         c = (c << 4) | nc;
     }
 
-#if EBCDIC != 2
     return c;
-#else					/* EBCDIC != 2 */
-    return ToEBCDIC[c];
-#endif					/* EBCDIC != 2 */
-
 }
 
 

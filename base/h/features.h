@@ -34,11 +34,7 @@
    Feature(1, "_POSIX", "POSIX")
 #endif					/* PosixFns */
 
-#if EBCDIC != 1
    Feature(1, "_ASCII", "ASCII")
-#else					/* EBCDIC != 1 */
-   Feature(1, "_EBCDIC", "EBCDIC")
-#endif					/* EBCDIC */
 
    Feature(1, "_CO_EXPRESSIONS", "co-expressions")
 

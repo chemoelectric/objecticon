@@ -1585,15 +1585,6 @@ int n;
                nxt[i] = '0';
             break;
 
-#if EBCDIC
-         case 'i':
-            nxt[i] = 'j';
-            return;
-         case 'r':
-            nxt[i] = 's';
-            return;
-#endif					/* EBCDIC */
-
          case 'z':
             /*
              * Start over at zero and continue to previous character in the

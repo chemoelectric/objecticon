@@ -575,11 +575,7 @@ static void setfile()
         fnmtbl = (struct ipc_fname *) trealloc(fnmtbl, &fnmfree,
                                                &fnmsize, sizeof(struct ipc_fname), 1, "file name table");
 
-#ifdef CRAY
-    fnmfree->ipc = pc/8;
-#else					/* CRAY */
     fnmfree->ipc = pc;
-#endif					/* CRAY */
 
     sp = inst_c_strconst(intern(last_pathelem(uin_str())));
     fnmfree->fname = sp->offset;
@@ -632,11 +628,7 @@ static void lemitl(op, lab, name)
     }
     else					/* output relative offset */
 
-#ifdef CRAY
-        outword((labels[lab] - (pc + WordSize))/8);
-#else					/* CRAY */
     outword(labels[lab] - (pc + WordSize));
-#endif					/* CRAY */
 }
 
 static void lemitn(op, n, name)
@@ -662,12 +654,7 @@ static void lemitr(op, loc, name)
 {
     misalign();
 
-#ifdef CRAY
-    loc = (loc - pc - 16)/8;
-#else					/* CRAY */
     loc -= pc + ((IntBits/ByteBits) + WordSize);
-#endif					/* CRAY */
-
     if (Dflag) {
         if (loc >= 0)
             fprintf(dbgfile, "%ld:\t%d\t*+%ld\t\t\t# %s\n",(long) pc, op,
@@ -1697,11 +1684,7 @@ static void backpatch(lab)
         quit("multiply defined label in ucode");
     while (p < 0) {		/* follow reference chain */
 
-#ifdef CRAY
-        r = (pc - (WordSize - p))/8;	/* compute relative offset */
-#else					/* CRAY */
         r = pc - (WordSize - p);	/* compute relative offset */
-#endif					/* CRAY */
         q = codep - (pc + p);	/* point to word with address */
         cp = (char *) &p;		/* address of integer p       */
         cr = (char *) &r;		/* address of integer r       */

@@ -478,13 +478,7 @@ fflush(stdout);
 	 case Op_Str:		/* string */
 	    PutOp(Op_Astr);
 	    PushVal(GetWord)
-
-#ifdef CRAY
-	    opnd = (word)(strcons + GetWord);
-#else					/* CRAY */
 	    opnd = (word)strcons + GetWord;
-#endif					/* CRAY */
-
 	    PutWord(opnd);
 	    PushAVal(opnd);
 	    InterpEVValD((dptr)(rsp-1), e_literal);
@@ -1451,13 +1445,7 @@ EntInterp;
 
 	 case Op_Init:		/* initial */
 	    *--ipc.op = Op_Goto;
-
-#ifdef CRAY
-	    opnd = (sizeof(*ipc.op) + sizeof(*rsp))/8;
-#else					/* CRAY */
 	    opnd = sizeof(*ipc.op) + sizeof(*rsp);
-#endif					/* CRAY */
-
 	    opnd += (word)ipc.opnd;
 	    ipc.opnd = (word *)opnd;
 	    break;
