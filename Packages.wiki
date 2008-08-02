@@ -49,7 +49,7 @@ import my.pack(one, two, three)
 This means the three given symbols are being used in the source file and can be resolved to `my.pack.one`, `my.pack.two` and `my.pack.three` respectively.  If there were another symbol in `my.pack`, say `four`, then it would not be resolved by the linker if it were encountered as `four`; rather an undeclared identifier error would be raised.  If it were encountered as `my.pack.four` however, that would not raise an error.  Note that this form of the import statement still links all of the files in the package into the program, regardless of which symbols are specified.
 
 == Using fully-qualified symbols ==
-Sometimes it is necessary to use a fully-qualified symbol;  in particular it may be necessary if you have imported two packages which both contain the same symbol.  For example, consider the following program which imports two packages each of which contains a symbol named 'Class'.
+Sometimes it is necessary to use a fully-qualified symbol;  in particular it may be necessary if you have imported two packages which both contain the same symbol.  For example, consider the following program which imports two packages each of which contains a symbol named `Class`.
 {{{
 import lang, parser
 
@@ -69,7 +69,7 @@ Supposing we meant `parser.Class`, we can just change the offending line to :-
 {{{
 write(image(parser.Class))
 }}}
-Note that we still need the `import parser`.  Otherwise `parser` is interpreted as an indentifier and `Class` as a field, and an "Undeclared identifier" error is produced by the linker.
+Note that we still need the `import parser`.  Otherwise `parser` is interpreted as an identifier and `Class` as a field, and an "Undeclared identifier" error is produced by the linker.
 
 Another way to resolve the ambiguity would be to use qualified imports.  For example, the following program compiles successfully with the use of `Class` unambiguously resolving to `parser.Class`.
 {{{
