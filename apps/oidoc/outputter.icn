@@ -1,4 +1,7 @@
-import parser, lang()
+import
+   lang(Class),
+   parser(ClassSymbol, DeferredMethod, Tree, ULocal,
+          UMethod)
 
 class Outputter()
    public static const
@@ -68,7 +71,7 @@ class Outputter()
       if is(obj, Tree) then
          return obj.is_final()
       else
-         return iand(obj.flags, lang.Class.M_Final) ~= 0
+         return iand(obj.flags, Class.M_Final) ~= 0
    end
 
    protected get_param_string(obj)
@@ -82,7 +85,7 @@ class Outputter()
             s ||:= "[]"
       } else {
          # A non-static method will have an implicit self param.
-         if is(obj, UMethod) & iand(obj.flags, lang.Class.M_Static) = 0 then
+         if is(obj, UMethod) & iand(obj.flags, Class.M_Static) = 0 then
             has_self := 1
          every a := obj.get_locals() do {
             if iand(a.flags, ULocal.F_Argument) ~= 0 then {
@@ -108,23 +111,23 @@ class Outputter()
             s ||:= "defer "
          s[-1] := ""
       } else {
-         if iand(obj.flags, lang.Class.M_Private) ~= 0 then
+         if iand(obj.flags, Class.M_Private) ~= 0 then
             s ||:= "private "
-         if iand(obj.flags, lang.Class.M_Public) ~= 0 then
+         if iand(obj.flags, Class.M_Public) ~= 0 then
             s ||:= "public "
-         if iand(obj.flags, lang.Class.M_Protected) ~= 0 then
+         if iand(obj.flags, Class.M_Protected) ~= 0 then
             s ||:= "protected "
-         if iand(obj.flags, lang.Class.M_Package) ~= 0 then
+         if iand(obj.flags, Class.M_Package) ~= 0 then
             s ||:= "package "
-         if iand(obj.flags, lang.Class.M_Static) ~= 0 then
+         if iand(obj.flags, Class.M_Static) ~= 0 then
             s ||:= "static "
-         if iand(obj.flags, lang.Class.M_Const) ~= 0 then
+         if iand(obj.flags, Class.M_Const) ~= 0 then
             s ||:= "const "
-         if iand(obj.flags, lang.Class.M_Readable) ~= 0 then
+         if iand(obj.flags, Class.M_Readable) ~= 0 then
             s ||:= "readable "
-         if iand(obj.flags, lang.Class.M_Defer) ~= 0 then
+         if iand(obj.flags, Class.M_Defer) ~= 0 then
             s ||:= "defer "
-         if iand(obj.flags, lang.Class.M_Final) ~= 0 then
+         if iand(obj.flags, Class.M_Final) ~= 0 then
             s ||:= "final "
          s[-1] := ""
       }
