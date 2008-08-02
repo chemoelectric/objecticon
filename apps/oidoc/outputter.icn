@@ -65,7 +65,7 @@ class Outputter()
    end
 
    protected is_final(obj)
-      if is(obj, parser.Class) then
+      if is(obj, Tree) then
          return obj.is_final()
       else
          return iand(obj.flags, lang.Class.M_Final) ~= 0
@@ -74,7 +74,7 @@ class Outputter()
    protected get_param_string(obj)
       local s, a, has_self
       s := ""
-      if is(obj, parser.Function) then {
+      if is(obj, Tree) then {
          every a := obj.get_args().gen() do
             s ||:= a.str() || ", "
          s[-2:0] := ""
@@ -102,7 +102,7 @@ class Outputter()
    protected get_access_string(obj)
       local s
       s := ""
-      if is(obj, FieldList | Method | DeferredMethod) then {
+      if is(obj, Tree) then {
          every s ||:= obj.get_access().gen().str() || " "
          if is(obj, DeferredMethod) then
             s ||:= "defer "

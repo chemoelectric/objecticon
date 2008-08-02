@@ -176,7 +176,7 @@ class HtmlOutputter(Outputter)
       write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
       write(f, "</dl><p>")
 
-      if is(c.obj, parser.Class) then {
+      if is(c.obj, Tree) then {
          output_file(c.obj.get_first_token().filename)
          comment_and_fields(f, c)
          write(f, "<p>")
@@ -227,7 +227,7 @@ class HtmlOutputter(Outputter)
                mm := o.get_field(m.name) | stop("Internal error")
                write(f,"<dd>Overrides <a href=\"" || get_serial_no(o) || ".html#" || get_serial_no(mm) || "\">" || mm.name || "()</a> in <a href=\"", get_serial_no(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
             }
-            if is(m.obj, Method | DeferredMethod) then {
+            if is(m.obj, Tree) then {
                write(f, "<dd>")
                comment_and_fields(f, m)
                write(f, "</dd>")
@@ -243,7 +243,7 @@ class HtmlOutputter(Outputter)
             write(f, "<h3>", m.name, "</h3>")
             write(f, get_access_string(m.decl_obj), "<p>")
             write(f, "<dl>")
-            if is(m.obj, Id) then {
+            if is(m.obj, Tree) then {
                write(f, "<dd>")
                comment_and_fields(f, m)
                write(f, "</dd>")
@@ -492,7 +492,7 @@ class HtmlOutputter(Outputter)
       write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
       write(f, "<dt>Type :</dt><dd>", type, "</dd>")
       write(f, "</dl><p>")
-      if is(c.obj, Procedure | Record | Id) then {
+      if is(c.obj, Tree) then {
          output_file(c.obj.get_first_token().filename)
          comment_and_fields(f, c)
          write(f, "<p>")

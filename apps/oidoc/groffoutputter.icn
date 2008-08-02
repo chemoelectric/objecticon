@@ -38,7 +38,7 @@ class GroffOutputter(Outputter)
          u := c.scanned_file.filename
          u := "\\f[HR]" || u || "\\f[R]"
          write(output_file, ".HEAD ", c.name, " \"", s, "\"", " \"", t, "\"", " \"", u, "\"")
-         if is(c.obj, parser.Class) then {
+         if is(c.obj, Tree) then {
             com := Comment(c)
             every groff_unbracket(!com.comment)
          }
@@ -56,7 +56,7 @@ class GroffOutputter(Outputter)
 
          every m := !meths do {
             write(output_file, ".FUNC_START \"", m.name, "(", get_param_string(m.obj) ,")\"")
-            if is(m.obj, Method | DeferredMethod) then {
+            if is(m.obj, Tree) then {
                com := Comment(m)
                every groff_unbracket(!com.comment)
                every el := !sort(com.fields) do
@@ -67,7 +67,7 @@ class GroffOutputter(Outputter)
          }
          every m := !vars do {
             write(output_file, ".FUNC_START \"", m.name, "\"")
-            if is(m.obj, Id) then {
+            if is(m.obj, Tree) then {
                com := Comment(m)
                every groff_unbracket(!com.comment)
                every el := !sort(com.fields) do
