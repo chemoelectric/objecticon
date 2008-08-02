@@ -426,10 +426,8 @@ int lookup_class_field(struct b_class *class, dptr query, int query_flag)
         if (Qual(*query))
             return lookup_class_field_by_name(class, query);
 
-        if (!is:integer(*query)) {
-            err_msg(625, query);
+        if (!is:integer(*query))
             return -1;
-        }
 
         /*
          * Simple index into fields array, using conventional icon
