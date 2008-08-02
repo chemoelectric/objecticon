@@ -38,8 +38,10 @@ class GroffOutputter(Outputter)
          u := c.scanned_file.filename
          u := "\\f[HR]" || u || "\\f[R]"
          write(output_file, ".HEAD ", c.name, " \"", s, "\"", " \"", t, "\"", " \"", u, "\"")
-         com := Comment(c)
-         every groff_unbracket(!com.comment)
+         if is(c.obj, parser.Class) then {
+            com := Comment(c)
+            every groff_unbracket(!com.comment)
+         }
 
          meths := []
          vars := []
@@ -54,18 +56,23 @@ class GroffOutputter(Outputter)
 
          every m := !meths do {
             write(output_file, ".FUNC_START \"", m.name, "(", get_param_string(m.obj) ,")\"")
-            com := Comment(m)
-            every groff_unbracket(!com.comment)
-            every el := !sort(com.fields) do
-               groff_fields(el[1], el[2])
+            if is(m.obj, Method | DeferredMethod) then {
+               com := Comment(m)
+               every groff_unbracket(!com.comment)
+               every el := !sort(com.fields) do
+                  groff_fields(el[1], el[2])
+            }
             write(output_file, ".FUNC_END")
+
          }
          every m := !vars do {
             write(output_file, ".FUNC_START \"", m.name, "\"")
-            com := Comment(m)
-            every groff_unbracket(!com.comment)
-            every el := !sort(com.fields) do
-               groff_fields(el[1], el[2])
+            if is(m.obj, Id) then {
+               com := Comment(m)
+               every groff_unbracket(!com.comment)
+               every el := !sort(com.fields) do
+                  groff_fields(el[1], el[2])
+            }
             write(output_file, ".FUNC_END")
          }
       }
