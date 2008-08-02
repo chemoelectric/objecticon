@@ -103,3 +103,11 @@ and is processed (from a Makefile like the one above) with the command :-
 {{{
 $(RTT) -h gmysql.h mysql.r
 }}}
+
+Another way of passing symbols like MYSQL_RES through `rtt` unchanged is via the `-t` option to `rtt` :-
+
+{{{
+$(RTT) -t MYSQL_RES -t MYSQL_FIELD .... mysql.r
+}}}
+
+The indicated symbols then pass through to the C code unchanged.
