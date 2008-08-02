@@ -423,24 +423,29 @@ int lookup_class_field(struct b_class *class, dptr query, int query_flag)
         /*
          * Query is a string (field name) or int (field index).
          */
+
         if (Qual(*query))
             return lookup_class_field_by_name(class, query);
 
-        if (!is:integer(*query))
-            return -1;
+        if (is:integer(*query)) {
+            /*
+             * Simple index into fields array, using conventional icon
+             * semantics.  Falls through if out-of-range.
+             */
+            i = IntVal(*query);
+            if (i > 0) {
+                if (i <= nf)
+                    return i - 1;
+            } else if (i < 0) {
+                if (i >= -nf)
+                    return nf + i;
+            }
+        }
 
         /*
-         * Simple index into fields array, using conventional icon
-         * semantics.
+         * Wrong type, or out of range.
          */
-        i = IntVal(*query);
-        if (i > 0) {
-            if (i <= nf)
-                return i - 1;
-        } else if (i < 0) {
-            if (i >= -nf)
-                return nf + i;
-        }
+
         return -1;
     }
 }
