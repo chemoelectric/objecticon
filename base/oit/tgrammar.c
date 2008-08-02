@@ -11,7 +11,7 @@
  * of cpp, then turned into real includes in tgram.g by fixgram.icn.
  */
 /*#include "icont.h"*/
-/*#include "../h/lexdef.h"*/
+/*#include "lexdef.h"*/
 /*#include "tsym.h"*/
 /*#include "tmem.h"*/
 /*#include "tree.h"*/

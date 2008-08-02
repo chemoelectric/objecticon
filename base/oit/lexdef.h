@@ -1,3 +1,6 @@
+#ifndef _LEXDEF_H
+#define _LEXDEF_H 1
+
 /*
  * lexdef.h -- common definitions for use with the lexical analyzer.
  */
@@ -78,3 +81,5 @@ extern int minus_loc;        /* index in optab of subtraction */
 
 #define Comment '#'			/* comment beginner */
 #define Escape  '\\'			/* string literal escape character */
+
+#endif

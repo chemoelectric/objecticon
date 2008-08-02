@@ -16,7 +16,7 @@
 /* Used by auto-generated func in ../common/lextab.h */
 static  int nextchar();
 
-#include "../h/lexdef.h"
+#include "lexdef.h"
 #include "lextab.h"
 #include "../h/esctab.h"
 

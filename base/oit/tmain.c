@@ -644,7 +644,7 @@ void init_strings()
 }
 
 #include "tree.h"
-#include "../h/lexdef.h"
+#include "lexdef.h"
 
 extern struct toktab toktab[];
 extern int nlflag;
