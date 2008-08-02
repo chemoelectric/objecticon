@@ -31,7 +31,7 @@ $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 
 $(COBJS):	../h/mproto.h
 
-tmain.o:	tree.h ../h/lexdef.h
+tmain.o:	tree.h lexdef.h
 util.o:		tree.h ../h/fdefs.h
 package.o:	package.h
 resolve.o:	link.h
@@ -39,9 +39,9 @@ resolve.o:	link.h
 # translator files
 ipp.o:		../h/features.h
 trans.o:	tsym.h ttoken.h tree.h ../h/version.h ../h/kdefs.h
-tparse.o:	../h/lexdef.h tsym.h tree.h keyword.h
+tparse.o:	lexdef.h tsym.h tree.h keyword.h
 tcode.o:	tsym.h ttoken.h tree.h
-tlex.o:		../h/lexdef.h ../h/parserr.h ttoken.h tree.h ../h/esctab.h  lextab.h
+tlex.o:		lexdef.h ttoken.h tree.h ../h/esctab.h  lextab.h
 tmem.o:		tsym.h tree.h
 tree.o:		tree.h
 tsym.o:		tsym.h ttoken.h keyword.h ../h/kdefs.h
@@ -82,6 +82,6 @@ tparse.c ttoken.h:	tgram.g
 tgram.g:	tgrammar.c ../h/define.h grammar.h yacctok.h fixgram
 		$(CC) -E -C tgrammar.c | ./fixgram >tgram.g
 
-../h/kdefs.h keyword.h:	../runtime/keyword.r mkkwd
-		./mkkwd <../runtime/keyword.r
+../h/kdefs.h keyword.h:	../oix/keyword.r mkkwd
+		./mkkwd <../oix/keyword.r
 endif
