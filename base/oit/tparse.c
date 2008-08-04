@@ -2212,7 +2212,7 @@ case 16:
 break;
 case 18:
 #line 207 "tgram.g"
-{set_package(dottedid2string(yyvsp[0]));;}
+{set_package(dottedid2string(yyvsp[0]), yyvsp[0]);;}
 break;
 case 19:
 #line 209 "tgram.g"
@@ -2908,53 +2908,49 @@ case 232:
 break;
 case 233:
 #line 472 "tgram.g"
-{
-  yyval = tree3(N_Create,yyvsp[0],yyvsp[0]);
-  }
+{yyval = tree3(N_Create,yyvsp[0],yyvsp[0]); }
 break;
 case 234:
-#line 475 "tgram.g"
-{
-  yyval = tree4(N_Elist,yyvsp[-1],yyvsp[-2],tree3(N_Create,yyvsp[-1],yyvsp[0]));
-  }
+#line 473 "tgram.g"
+{yyval = tree4(N_Elist,yyvsp[-1],yyvsp[-2],tree3(N_Create,yyvsp[-1],yyvsp[0])); }
 break;
 case 235:
-#line 479 "tgram.g"
+#line 475 "tgram.g"
 {Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_IntLit,strlen(Str0(yyvsp[0])));}
 break;
 case 236:
-#line 480 "tgram.g"
+#line 476 "tgram.g"
 {Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_RealLit,strlen(Str0(yyvsp[0])));}
 break;
 case 237:
-#line 481 "tgram.g"
+#line 477 "tgram.g"
 {Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_StrLit,(int)Val1(yyvsp[0]));}
 break;
 case 238:
-#line 482 "tgram.g"
+#line 478 "tgram.g"
 {Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_CsetLit,(int)Val1(yyvsp[0]));}
 break;
 case 239:
-#line 484 "tgram.g"
+#line 480 "tgram.g"
 {yyval = tree6(N_Sect,yyvsp[-2],yyvsp[-2],yyvsp[-5],yyvsp[-3],yyvsp[-1]);}
 break;
 case 240:
-#line 486 "tgram.g"
+#line 482 "tgram.g"
 {yyval = yyvsp[0];}
 break;
 case 241:
-#line 487 "tgram.g"
+#line 483 "tgram.g"
 {yyval = yyvsp[0];}
 break;
 case 242:
-#line 488 "tgram.g"
+#line 484 "tgram.g"
 {yyval = yyvsp[0];}
 break;
 case 244:
-#line 491 "tgram.g"
+#line 487 "tgram.g"
 {yyval = tree4(N_Slist,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-#line 2958 "y.tab.c"
+#line 2954 "y.tab.c"
     }
     yyssp -= yym;
     yystate = *yyssp;

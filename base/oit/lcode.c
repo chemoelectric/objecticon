@@ -399,11 +399,11 @@ static void gencode(struct lfile *lf)
                 backpatch(lab);
                 break;
 
-            case Op_Line:
+            case Op_Line: {
                 /*
                  * Line number change.
                  */
-                lineno = uin_short();
+                int lineno = uin_short();
                 if (lnfree >= &lntable[nsize])
                     lntable  = (struct ipc_line *)trealloc(lntable, &lnfree, &nsize,
                                                            sizeof(struct ipc_line), 1, "line number table");
@@ -411,6 +411,7 @@ static void gencode(struct lfile *lf)
                 lnfree->line = lineno;
                 lnfree++;
                 break;
+            }
 
             case Op_Mark:
                 lab = uin_short();
@@ -466,7 +467,6 @@ static void gencode(struct lfile *lf)
                      * Initialize for wanted procedure.
                      */
                     clearlab();
-                    lineno = 0;
                     align();
                     if (Dflag)
                         fprintf(dbgfile, "\n# procedure %s\n", s);
@@ -507,7 +507,6 @@ static void gencode(struct lfile *lf)
                      * Initialize for wanted method.
                      */
                     clearlab();
-                    lineno = 0;
                     align();
                     if (Dflag)
                         fprintf(dbgfile, "\n# method %s.%s\n", class, meth);

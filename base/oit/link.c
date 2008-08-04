@@ -50,7 +50,6 @@ static char *dbgname;                   /* debug file name */
 
 char *inname;                           /* input file name */
 
-int lineno = 0;                         /* current source line number */
 int lfatals = 0;                                /* number of errors encountered */
 int lwarnings = 0;                      /* number of warnings encountered */
 

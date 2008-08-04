@@ -194,7 +194,7 @@ void next_super(char *name, struct node *n)
     while (cs && cs->name != name)
         cs = cs->b_next;
     if (cs)
-        tfatal("duplicate superclass: %s", name);
+        tfatal_at(n, "duplicate superclass: %s", name);
     cs = New(struct tclass_super);
     cs->b_next = curr_class->super_hash[i];
     curr_class->super_hash[i] = cs;
@@ -257,7 +257,7 @@ void next_field(char *name, int flag, struct node *n)
     while (cv && cv->name != name)
         cv = cv->b_next;
     if (cv)
-        tfatal("duplicate class field: %s", name);
+        tfatal_at(n, "duplicate class field: %s", name);
     cv = New(struct tclass_field);
     cv->b_next = curr_class->field_hash[i];
     curr_class->field_hash[i] = cv;
@@ -314,12 +314,12 @@ struct timport *lookup_import(char *s)
     return x;
 }
 
-void set_package(char *s)
+void set_package(char *s, struct node *n)
 {
     if (package_name)
-        tfatal("duplicate package declaration: %s", s);
+        tfatal_at(n, "duplicate package declaration: %s", s);
     if (gfirst)
-        tfatal("package declaration must precede global declarations");
+        tfatal_at(n, "package declaration must precede global declarations");
     package_name = s;
 }
 
@@ -328,15 +328,15 @@ void next_import(char *s, int qualified, struct node *n)
     int i = hasher(s, import_hash);
     struct timport *x = import_hash[i];
     if (gfirst)
-        tfatal("import declaration must precede global declarations");
+        tfatal_at(n, "import declaration must precede global declarations");
     while (x && x->name != s)
         x = x->b_next;
     if (x) {
         /* Can only have duplicate import declarations if both are qualified */
         if (!qualified)
-            tfatal("duplicate import: %s", s);
+            tfatal_at(n, "duplicate import: %s", s);
         else if (!x->qualified)
-            tfatal("package already imported as an unqualified import: %s", s);
+            tfatal_at(n, "package already imported as an unqualified import: %s", s);
         curr_import = x;
         return;
     }
@@ -362,7 +362,7 @@ void add_import_symbol(char *s, struct node *n)
     while (x && x->name != s)
         x = x->b_next;
     if (x)
-        tfatal("duplicate imported symbol: %s", s);
+        tfatal_at(n, "duplicate imported symbol: %s", s);
     x = New(struct timport_symbol);
     x->b_next = curr_import->symbol_hash[i];
     curr_import->symbol_hash[i] = x;

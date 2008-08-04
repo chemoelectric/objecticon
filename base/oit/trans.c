@@ -38,7 +38,8 @@ void tfatal(char *fmt, ...)
     va_list argp;
     if (File(&tok_loc))
         fprintf(stderr, "File %s; ", abbreviate(File(&tok_loc)));
-    fprintf(stderr, "Line %d # ", Line(&tok_loc));
+    if (Line(&tok_loc))
+        fprintf(stderr, "Line %d # ", Line(&tok_loc));
     va_start(argp, fmt);
     vfprintf(stderr, fmt, argp);
     putc('\n', stderr);
@@ -58,7 +59,8 @@ void tfatal_at(struct node *n, char *fmt, ...)
     if (n) {
         if (File(n))
             fprintf(stderr, "File %s; ", abbreviate(File(n)));
-        fprintf(stderr, "Line %d # ", Line(n));
+        if (Line(n))
+            fprintf(stderr, "Line %d # ", Line(n));
     }
     va_start(argp, fmt);
     vfprintf(stderr, fmt, argp);
@@ -94,9 +96,11 @@ void twarn_at(struct node *n, char *fmt, ...)
  */
 void tsyserr(char *s)
 {
-    if (tok_loc.n_file)
-        fprintf(stderr, "File %s; ", tok_loc.n_file);
-    fprintf(stderr, "Line %d # %s\n", in_line, s);
+    if (File(&tok_loc))
+        fprintf(stderr, "File %s; ", File(&tok_loc));
+    if (Line(&tok_loc))
+        fprintf(stderr, "Line %d # ", Line(&tok_loc));
+    fprintf(stderr, "%s\n", s);
     exit(EXIT_FAILURE);
 }
 

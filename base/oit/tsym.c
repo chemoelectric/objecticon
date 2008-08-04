@@ -77,7 +77,7 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
     while (x && x->g_name != name)
         x = x->g_blink;
     if (x)
-        tfatal("global redeclaration: %s previously declared at line %d", name, Line(x->pos));
+        tfatal_at(n, "global redeclaration: %s previously declared at line %d", name, Line(x->pos));
     x = New(struct tgentry);
     x->g_blink = ghash[i];
     ghash[i] = x;
@@ -103,7 +103,7 @@ struct tlentry *put_local(char *name, int flag, struct node *n, int unique)
         x = x->l_blink;
     if (x) {
         if (unique)
-            tfatal("local redeclaration: %s previously declared at line %d", name, Line(x->pos));
+            tfatal_at(n, "local redeclaration: %s previously declared at line %d", name, Line(x->pos));
         return x;
     }
     x = New(struct tlentry);

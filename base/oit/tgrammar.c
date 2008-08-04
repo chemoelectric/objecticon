@@ -102,7 +102,7 @@ int modflag;
 #define Cclause0(x1,x2,x3)	$$ = tree4(N_Ccls,x2,x1,x3) 
 #define Cclause1(x1,x2,x3)	$$ = tree4(N_Ccls,x2,x1,x3) 
 
-#define Package(x1,x2)          set_package(dottedid2string(x2));
+#define Package(x1,x2)          set_package(dottedid2string(x2), x2);
 #define Classdcl(x)		
 #define Class1(x1,x2)           next_class(Str0(x2),modflag, x2);
 #define Super(x)                next_super(dottedid2string(x),x);

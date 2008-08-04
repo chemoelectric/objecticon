@@ -16,7 +16,7 @@ void next_field(char *name, int flag, struct node *n);
 void next_method(char *name, int flag, struct node *n);
 void next_procedure(char *name, struct node *n);
 struct timport *lookup_import(char *s);
-void set_package(char *s);
+void set_package(char *s, struct node *n);
 void next_import(char *s, int qualified, struct node *n);
 void add_import_symbol(char *s, struct node *n); 
 void add_link(char *s, struct node *n); 

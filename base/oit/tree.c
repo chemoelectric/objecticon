@@ -20,6 +20,9 @@ int type;
 
    t = NewNode(0);
    t->n_type = type;
+   t->n_file = tok_loc.n_file;
+   t->n_line = tok_loc.n_line;
+   t->n_col = tok_loc.n_col;
    return t;
    }
 

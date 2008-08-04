@@ -296,12 +296,8 @@ cclause	: DEFAULT COLON expr {Cclause0($1,$2,$3);} ;
 exprlist: nexpr                {Elst0($1);}
 	| exprlist COMMA nexpr {Elst1($1,$2,$3);} ;
 
-pdcolist: nexpr {
-		Pdcolist0($1);
-		} ;
-	| pdcolist COMMA nexpr {
-		Pdcolist1($1,$2,$3);
-		} ;
+pdcolist: nexpr { Pdcolist0($1); } ;
+	| pdcolist COMMA nexpr { Pdcolist1($1,$2,$3); } ;
 
 literal	: INTLIT {Iliter($1);} ;
 	| REALLIT {Rliter($1);} ;
