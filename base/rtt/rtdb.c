@@ -6,6 +6,14 @@
 #include "icontype.h"
 
 /*
+ * Version number to insure format of data base matches version of iconc
+ *  and rtt.
+ */
+
+#define DVersion "1.0.00"
+
+
+/*
  * GetInt - the next thing in the data base is an integer. Get it.
  */
 #define GetInt(n, c)\

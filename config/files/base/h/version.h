@@ -2,7 +2,6 @@
  * version.h -- version identification
  */
 
-#undef DVersion
 #undef Version
 #undef UVersion
 #undef IVersion
@@ -15,13 +14,6 @@
 #define VersionDate "@CONFIG_DATE@"
 
 /*
- * Version number to insure format of data base matches version of iconc
- *  and rtt.
- */
-
-#define DVersion "1.0.00"
-
-/*
  *  &version
  */
 #define Version  "Object Icon Version " VersionNumber ".  " VersionDate
@@ -31,7 +23,7 @@
  * and icode is compatible with the run-time system.
  */
    
-#define UVersion "U1.0.00"
+#define UVersion "U1.0.01"
    
 #if IntBits == 16
      #define IVersion "I1.0.00/16"

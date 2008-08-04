@@ -361,13 +361,13 @@ static void gencode(struct lfile *lf)
                 break;
             }
 
+            case Op_Apply:
+                lemit(op, name);
+                break;
 
             case Op_Invoke:
                 k = uin_short();
-                if (k == -1)
-                    lemit(Op_Apply,"apply");
-                else
-                    lemitn(op, (word)k, name);
+                lemitn(op, (word)k, name);
                 break;
 
             case Op_Keywd: {

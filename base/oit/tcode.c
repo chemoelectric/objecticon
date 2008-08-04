@@ -326,8 +326,7 @@ static int traverse(t)
         case N_Apply:			/* application */
             traverse(Tree0(t));
             traverse(Tree1(t));
-            uout_op(Op_Invoke);
-            uout_short(-1);
+            uout_op(Op_Apply);
             break;
 
         case N_Invok:			/* invocation */
