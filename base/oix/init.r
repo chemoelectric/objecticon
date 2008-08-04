@@ -198,11 +198,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
  * init/icon_init - initialize memory and prepare for Icon execution.
  */
 
-void icon_init(name, argcp, argv)
-    char *name;
-    int *argcp;
-    char *argv[];
-
+void icon_init(char *name)
 {
     struct header hdr;
     FILE *ifile = 0;
@@ -1505,7 +1501,7 @@ void showstack()
             dptr d = (dptr)p;
             if (Qual(*d)) {
                 printf("%s\t%p\tdescrip\tString:%d\n", ptr(p), p, StrLen(*d));
-                printf("%s\t\t\t%s\n", ptr(&d->vword), StrLoc(*d));
+                printf("%s\t\t\t%s\n", ptr(&d->vword), cstr(d));
             } else if (isvar(p)) {
                 struct descrip tmp;
                 char *t;

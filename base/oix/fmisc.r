@@ -1639,8 +1639,7 @@ function{1} load(s,arglist,infile,outfile,errfile,
 
       tipc.opnd = pstart;
       *tipc.op++ = Op_Noop; /* aligns Invokes operand */  /* ?cj? */
-      *tipc.op++ = Op_Invoke;
-      *tipc.opnd++ = 1;
+      *tipc.op++ = Op_Apply;
       *tipc.op++ = Op_Coret;
       *tipc.op++ = Op_Efail;
 

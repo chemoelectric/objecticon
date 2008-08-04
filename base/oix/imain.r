@@ -14,7 +14,6 @@
  * Prototypes.
  */
 static	void	env_err	(char *msg,char *name,char *val);
-void	icon_setup	(int argc, char **argv, int *ip);
 
 /*
  * The following code is operating-system dependent [@imain.01].  Declarations
@@ -255,6 +254,7 @@ void ExpandArgv(int *argcp, char ***avp)
 int main(int argc, char **argv)
 {
     int i, slen;
+    struct fileparts *fp;
 
 #if WildCards
 #ifndef MSWindows
@@ -292,32 +292,52 @@ int main(int argc, char **argv)
 
     ipc.opnd = NULL;
 
-    /*
-     * Setup Icon interface.  It's done this way to avoid duplication
-     *  of code, since the same thing has to be done if calling Icon
-     *  is enabled.
-     */
-    icon_setup(argc, argv, &i);
+    fp = fparse(argv[0]);
 
-    if (i < 0) {
-        argc++;
+    /*
+     * if argv[0] is not a reference to our interpreter, take it as the
+     * name of the icode file, and back up for it.
+     */
+    if (!smatch(fp->name, "oix")) {
         argv--;
-        i++;
+        argc++;
     }
 
-    while (i--) {			/* skip option arguments */
+    /*
+     * Handle command line options.
+     */
+    while ( argv[1] != 0 && *argv[1] == '-' ) {
+        switch ( *(argv[1]+1) ) {
+            /*
+             * Set stderr to new file if -e option is given.
+             */
+            case 'e': {
+                char *p;
+                if ( *(argv[1]+2) != '\0' )
+                    p = argv[1]+2;
+                else {
+                    argv++;
+                    argc--;
+                    p = argv[1];
+                    if ( !p )
+                        error("no file name given for redirection of &errout");
+                }
+                if (!redirerr(p))
+                    syserr("Unable to redirect &errout\n");
+                break;
+            }
+        }
         argc--;
         argv++;
     }
 
-    if (argc <= 1) {
+    if (argc < 2) 
         error("no icode file specified");
-    }
 
     /*
      * Call icon_init with the name of the icode file to execute.	[[I?]]
      */
-    icon_init(argv[1], &argc, argv);
+    icon_init(argv[1]);
 
     /*
      *  Point sp at word after b_coexpr block for &main, point ipc at initial
@@ -330,7 +350,7 @@ int main(int argc, char **argv)
     ipc.opnd = istart;
     *ipc.op++ = Op_Noop;  /* aligns Invoke's operand */	/*	[[I?]] */
     *ipc.op++ = Op_Invoke;				/*	[[I?]] */
-    *ipc.opnd++ = 1;
+    *ipc.opnd++ = (argc - 2);  /* Number of command line args */
     *ipc.op = Op_Quit;
     ipc.opnd = istart;
 
@@ -351,45 +371,22 @@ int main(int argc, char **argv)
     pfp = 0;
     ilevel = 0;
 
-/*
- * We have already loaded the
- * icode and initialized things, so it's time to just push main(),
- * build an Icon list for the rest of the arguments, and called
- * interp on a "invoke 1" bytecode.
- */
-
     /*
-     * Check whether resolve() found the main procedure.  If not, this
-     * is noted as run-time error 117.  Otherwise, this value is
-     * pushed on the stack.
+     * Check whether resolve() found the main procedure.  If not, exit.
      */
     if (!main_proc)
         fatalerr(117, NULL);
-    PushDesc(*main_proc);
-    PushNull;
-    glbl_argp = (dptr)(sp - 1);
 
     /*
-     * If main() has a parameter, it is to be invoked with one argument, a list
-     *  of the command line arguments.  The command line arguments are pushed
-     *  on the stack as a series of descriptors and Ollist is called to create
-     *  the list.  The null descriptor first pushed serves as Arg0 for
-     *  Ollist and receives the result of the computation.
+     * We have already loaded the icode and initialized things, so it's
+     * time to just push main(), and the arguments, and called interp on a
+     * "invoke <num args>" bytecode.
      */
-    if (((struct b_proc *)BlkLoc(*main_proc))->nparam > 0) {
-        for (i = 2; i < argc; i++) {
-            char *tmp;
-            slen = strlen(argv[i]);
-            PushVal(slen);
-            Protect(tmp=alcstr(argv[i],(word)slen), fatalerr(0,NULL));
-            PushAVal(tmp);
-        }
-
-        Ollist(argc - 2, glbl_argp);
+    PushDesc(*main_proc);
+    for (i = 2; i < argc; i++) {
+        PushVal(strlen(argv[i]));
+        PushAVal(argv[i]);
     }
-
-
-    sp = (word *)glbl_argp + 1;
 
     glbl_argp = 0;
 
@@ -407,59 +404,7 @@ int main(int argc, char **argv)
     return 0;
 #endif
 }
-
-/*
- * icon_setup - handle interpreter command line options.
- */
-void icon_setup(int argc, char **argv, int *ip)
-{
-    struct fileparts *fp;
-    *ip = 0;			/* number of arguments processed */
 
-    fp = fparse(argv[0]);
-
-    /*
-     * if argv[0] is not a reference to our interpreter, take it as the
-     * name of the icode file, and back up for it.
-     */
-    if (!smatch(fp->name, "oix")) {
-        argv--;
-        argc++;
-        (*ip)--;
-    }
-
-    /*
-     * Handle command line options.
-     */
-    while ( argv[1] != 0 && *argv[1] == '-' ) {
-        switch ( *(argv[1]+1) ) {
-
-            /*
-             * Set stderr to new file if -e option is given.
-             */
-            case 'e': {
-                char *p;
-                if ( *(argv[1]+2) != '\0' )
-                    p = argv[1]+2;
-                else {
-                    argv++;
-                    argc--;
-                    (*ip)++;
-                    p = argv[1];
-                    if ( !p )
-                        error("no file name given for redirection of &errout");
-                }
-                if (!redirerr(p))
-                    syserr("Unable to redirect &errout\n");
-                break;
-            }
-        }
-        argc--;
-        (*ip)++;
-        argv++;
-    }
-}
-
 /*
  * resolve - perform various fix-ups on the data read from the icode
  *  file.

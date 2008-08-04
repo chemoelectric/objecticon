@@ -117,7 +117,7 @@ union block	**hchain	(union block *pb,uword hn);
 union block	*hgfirst	(union block *bp, struct hgstate *state);
 union block	*hgnext		(union block*b,struct hgstate*s,union block *e);
 union block	*hmake		(int tcode,word nslots,word nelem);
-void		icon_init	(char *name, int *argcp, char *argv[]);
+void		icon_init	(char *name);
 void		iconhost	(char *hostname);
 int		idelay		(int n);
 int		interp_0	(int fsig,dptr cargp);
