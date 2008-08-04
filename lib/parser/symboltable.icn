@@ -507,7 +507,7 @@ class SymbolTable(Error,Connectable,SetFields)
             }
             URecord : add_symbol(RecordSymbol(sf, d, d.name)) | fail
             default : fatal(self, "Unknown ufile type:" || image(d))
-         } | fail
+         }
       }
       return
    end
