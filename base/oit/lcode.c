@@ -311,6 +311,7 @@ static void gencode(struct lfile *lf)
             case Op_Push1:
             case Op_Pushn1:
             case Op_Sdup:
+            case Op_Apply:
                 lemit(op, name);
                 break;
 
@@ -360,10 +361,6 @@ static void gencode(struct lfile *lf)
                 lemitint(op, i, name);
                 break;
             }
-
-            case Op_Apply:
-                lemit(op, name);
-                break;
 
             case Op_Invoke:
                 k = uin_short();
