@@ -100,7 +100,7 @@ class Field()
             if *t = 0 then
                put(l, &null)
             else if \p then
-               put(l, p(t)) | field_error("Need " || subtype(p) || " parameters")
+               put(l, p(t)) | field_error("Need " || type_name || " parameters")
             else
                put(l, t)
             move(1)
@@ -111,7 +111,7 @@ class Field()
                put(l, &null)
          }
          else if \p then
-            put(l, p(t)) | field_error("Need " || subtype(p) || " parameters")
+            put(l, p(t)) | field_error("Need " || type_name || " parameters")
          else
             put(l, t)
       }
