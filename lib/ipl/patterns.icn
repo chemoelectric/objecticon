@@ -119,15 +119,18 @@ package ipl.patterns
 
 global Mode, Float
 
-procedure Anchor()			#  &ANCHOR = 1
+# &ANCHOR = 1
+procedure Anchor()			
    suspend ""
 end
 
-procedure Any(s)			#  ANY(S)
+# ANY(S)
+procedure Any(s)			
    suspend tab(any(s))
 end
 
-procedure Apply(s,p)			#  S ? P
+# S ? P
+procedure Apply(s,p)			
    local tsubject, tpos, value
    initial {
       Float := Arb
@@ -146,105 +149,130 @@ procedure Apply(s,p)			#  S ? P
       )
 end
 
-procedure Arb()				#  ARB
+# ARB
+procedure Arb()				
    suspend tab(&pos to *&subject + 1)
 end
 
-procedure Arbno(p)			#  ARBNO(P)
+# ARBNO(P)
+procedure Arbno(p)			
    suspend "" | (p() || Arbno(p))
 end
 
-procedure Arbx(i)			#  ARB(I)
+# ARB(I)
+procedure Arbx(i)			
    suspend tab(&pos to *&subject + 1 by i)
 end
 
-procedure Bal()				#  BAL
+# BAL
+procedure Bal()				
    suspend Bbal() || Arbno(Bbal)
 end
 
-procedure Bbal()			#  used by Bal()
+# used by Bal()
+procedure Bbal()			
    suspend (="(" || Arbno(Bbal) || =")") | Notany("()")
 end
 
-procedure Break(s)			#  BREAK(S)
+# BREAK(S)
+procedure Break(s)			
    suspend tab(upto(s) \ 1)
 end
 
-procedure Breakx(s)			#  BREAKX(S)
+# BREAKX(S)
+procedure Breakx(s)			
    suspend tab(upto(s))
 end
 
-procedure Cat(p1,p2)			#  P1 P2
+# P1 P2
+procedure Cat(p1,p2)			
    suspend p1() || p2()
 end
 
-procedure Discard(p)			#  /P
+# /P
+procedure Discard(p)			
    suspend p() & ""
 end
 
-procedure Exog(s)			#  \S
+# \S
+procedure Exog(s)			
    suspend s
 end
 
-procedure Find(s)			#  FIND(S)
+# FIND(S)
+procedure Find(s)			
    suspend tab(find(s) + 1)
 end
 
-procedure Len(i)			#  LEN(I)
+# LEN(I)
+procedure Len(i)			
    suspend move(i)
 end
 
-procedure Limit(p,i)			#  P \ i
+# P \ i
+procedure Limit(p,i)			
    local j
    j := &pos
    suspend p() \ i
    &pos := j
 end
 
-procedure Locate(p)			#  LOCATE(P)
+# LOCATE(P)
+procedure Locate(p)			
    suspend tab(&pos to *&subject + 1) & p()
 end
 
-procedure Marb()			# max-first ARB
+# max-first ARB
+procedure Marb()			
    suspend tab(*&subject + 1 to &pos by -1)
 end
 
-procedure Notany(s)			#  NOTANY(S)
+# NOTANY(S)
+procedure Notany(s)			
    suspend tab(any(~s))
 end
 
-procedure Pos(i)			#  POS(I)
+# POS(I)
+procedure Pos(i)			
    suspend pos(i + 1) & ""
 end
 
-procedure Replace(p,s)			#  P = S
+# P = S
+procedure Replace(p,s)			
    suspend p() & s
 end
 
-procedure Rpos(i)			#  RPOS(I)
+# RPOS(I)
+procedure Rpos(i)			
    suspend pos(-i) & ""
 end
 
-procedure Rtab(i)			#  RTAB(I)
+# RTAB(I)
+procedure Rtab(i)			
    suspend tab(-i)
 end
 
-procedure Span(s)			#  SPAN(S)
+# SPAN(S)
+procedure Span(s)			
    suspend tab(many(s))
 end
 
-procedure String(s)			#  S
+# S
+procedure String(s)			
    suspend =s
 end
 
-procedure Succeed()			#  SUCCEED
+# SUCCEED
+procedure Succeed()			
    suspend |""
 end
 
-procedure Tab(i)			#  TAB(I)
+# TAB(I)
+procedure Tab(i)			
    suspend tab(i + 1)
 end
 
-procedure Xform(f,p)			#  F(P)
+# F(P)
+procedure Xform(f,p)			
    suspend f(p())
 end

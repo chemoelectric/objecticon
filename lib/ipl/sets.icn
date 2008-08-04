@@ -46,7 +46,8 @@
 
 package ipl.sets
 
-procedure cset2set(cs)			#: set of characters
+# set of characters
+procedure cset2set(cs)			
    local result
 
    result := set()
@@ -56,11 +57,13 @@ procedure cset2set(cs)			#: set of characters
 
 end
 
-procedure pairset(T)			#: set of table pairs
+# set of table pairs
+procedure pairset(T)			
     return set(sort(T))
 end
 
-procedure domain(T)			#: domain of table
+# domain of table
+procedure domain(T)			
     local dom
 
     dom := set()
@@ -68,7 +71,8 @@ procedure domain(T)			#: domain of table
     return dom
 end
 
-procedure range(T)			#: range of table
+# range of table
+procedure range(T)			
     local ran
 
     ran := set()
@@ -76,7 +80,8 @@ procedure range(T)			#: range of table
     return ran
 end
 
-procedure inverse(T, Default)		#: inverse of table function
+# inverse of table function
+procedure inverse(T, Default)		
     local inv, delem, relem
 
     inv := table(Default)
@@ -94,7 +99,8 @@ procedure inverse(T, Default)		#: inverse of table function
     return inv
 end
 
-procedure seteq(set1, set2)		#: set equivalence
+# set equivalence
+procedure seteq(set1, set2)		
    local x
 
    if *set1 ~= *set2 then fail
@@ -104,7 +110,8 @@ procedure seteq(set1, set2)		#: set equivalence
 
 end
 
-procedure setlt(set1, set2)		#: set inclusion
+# set inclusion
+procedure setlt(set1, set2)		
    local x
 
    if *set1 >= *set2 then fail
@@ -114,7 +121,8 @@ procedure setlt(set1, set2)		#: set inclusion
 
 end
 
-procedure simage(set)			#: string image of set
+# string image of set
+procedure simage(set)			
    local result
 
    result := ""

@@ -231,7 +231,8 @@ import
 record _DirectivesSpec_(classproc,editproc,minargs,maxargs)
 
 
-procedure Directive(p,e,mi,mx)    #: Wrapper to build directive specification
+# Wrapper to build directive specification
+procedure Directive(p,e,mi,mx)    
 
 if type(p) ~== "procedure" then runerr(123,p)
 if type(\e) ~== "procedure" then runerr(123,e) else /e := 1
@@ -251,7 +252,8 @@ return _DirectivesSpec_(p,e,mi,mx)
 end
 
 
-procedure ReadDirectives( #: Builds icon data structures from a config file
+# Builds icon data structures from a config file
+procedure ReadDirectives( 
              fnL,spec,comment,continue,escape,quotes,whitespace,errp)
 
 local notescape, eof, line, wip, x, y, q,  d
@@ -373,7 +375,8 @@ end
 
 #  Build support procedures
 
-procedure Directive_table_of_sets( #: build table of sets: action key value(s)
+# build table of sets: action key value(s)
+procedure Directive_table_of_sets( 
           fileL,DirectiveT,action,argL,editproc)
 local tag
 
@@ -386,7 +389,8 @@ return
 end
  
          
-procedure Directive_table( #: build table: action key value
+# build table: action key value
+procedure Directive_table( 
           fileL,DirectiveT,action,argL,editproc)
 
 if *argL ~= 2 then 
@@ -397,7 +401,8 @@ return
 end
 
          
-procedure Directive_set( #: build set: action value(s)
+# build set: action value(s)
+procedure Directive_set( 
           fileL,DirectiveT,action,argL,editproc)
 
 if *argL < 1 then 
@@ -408,7 +413,8 @@ return
 end
 
          
-procedure Directive_list( #: build list: action value(s)
+# build list: action value(s)
+procedure Directive_list( 
           fileL,DirectiveT,action,argL,editproc)
 
 if *argL < 1 then 
@@ -419,7 +425,8 @@ return
 end
 
 
-procedure Directive_value( #: build value: action value
+# build value: action value
+procedure Directive_value( 
           fileL,DirectiveT,action,argL,editproc)
 
 if *argL = 0 then 
@@ -429,7 +436,8 @@ else
 return
 end
 
-procedure Directive_exists( #: build existence flag: action
+# build existence flag: action
+procedure Directive_exists( 
           fileL,DirectiveT,action,argL,editproc)
 
 if *argL = 0 then 
@@ -440,14 +448,16 @@ return
 end
 
 
-procedure Directive_ignore( #: quietly ignore any directive
+# quietly ignore any directive
+procedure Directive_ignore( 
           fileL,DirectiveT,action,argL,editproc)
 
 return
 end
 
          
-procedure Directive_warning( #: flag directive with a warning
+# flag directive with a warning
+procedure Directive_warning( 
           fileL,DirectiveT,action,argL,editproc)
 
 put(fileL,"-- Directive isn't defined in specification." )

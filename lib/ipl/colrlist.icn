@@ -33,7 +33,8 @@ package ipl.colrlist
 import
    ipl.io(dopen)
 
-procedure colrlist(f)			#: list of colors from file
+# list of colors from file
+procedure colrlist(f)			
    local input, colors, line
 
    if f === "-" then input := &input
@@ -51,7 +52,8 @@ procedure colrlist(f)			#: list of colors from file
 
 end
 
-procedure colrplte(p)			#: list of colors from palette
+# list of colors from palette
+procedure colrplte(p)			
    local colors
 
    colors := []

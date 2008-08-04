@@ -233,7 +233,8 @@ end
 #  off a group of differences.  This is the default routine -- the
 #  caller may provide his own.
 #
-procedure groupfactor(m)  # Compute: Trunc((2.0 * Log(m)) + 2.0)
+# Compute: Trunc((2.0 * Log(m)) + 2.0)
+procedure groupfactor(m)  
   m := string(m)
   return 2 * *m + if m <<= "316227766"[1+:*m] then 0 else 1
 end

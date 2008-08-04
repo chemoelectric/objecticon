@@ -68,14 +68,16 @@ record Decay_Rec(	# decay pipe record
 
 ##  dpipe(proc, length, gc1, gc2) -- create a decay pipeline
 
-procedure dpipe(proc, length, gc1, gc2)		#: create a decay pipeline
+# create a decay pipeline
+procedure dpipe(proc, length, gc1, gc2)		
    return Decay_Rec(list(length), table(0), proc, gc1, gc2)
 end
 
 
 ##  decay(dp, i) -- mark entry i with later decay
 
-procedure decay(dp, i)				#: mark entry for later decay
+# mark entry for later decay
+procedure decay(dp, i)				
    local j
    j := get(dp.pipe)
    if (dp.tab[\i] +:= 1) = 1 then

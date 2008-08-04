@@ -133,7 +133,8 @@ package ipl.numbers
 import
    ipl.strings(palins)
 
-procedure adp(i)		#: additive digital persistence
+# additive digital persistence
+procedure adp(i)		
    local j
 
    j := 0
@@ -147,7 +148,8 @@ procedure adp(i)		#: additive digital persistence
 
 end
 
-procedure adr(i)		#: additive digital root
+# additive digital root
+procedure adr(i)		
 
    until *i = 1 do
       i := digsum(i)
@@ -156,7 +158,8 @@ procedure adr(i)		#: additive digital root
 
 end
 
-procedure amean(L[])		#: arithmetic mean
+# arithmetic mean
+procedure amean(L[])		
    local m
 
    if *L = 0 then fail
@@ -168,7 +171,8 @@ procedure amean(L[])		#: arithmetic mean
 
 end
 
-procedure ceil(r)		#: ceiling
+# ceiling
+procedure ceil(r)		
 
    if integer(r) = r then return integer(r)
 
@@ -176,7 +180,8 @@ procedure ceil(r)		#: ceiling
 
 end
 
-procedure commas(s)		#: insert commas in number
+# insert commas in number
+procedure commas(s)		
 
    local s2, sign
 
@@ -204,7 +209,8 @@ procedure commas(s)		#: insert commas in number
 
 end
 
-procedure decimal(i, j)		#: decimal expansion of rational
+# decimal expansion of rational
+procedure decimal(i, j)		
    local head, tail, numers, count
 
    head := (i / j) || "."
@@ -228,7 +234,8 @@ procedure decimal(i, j)		#: decimal expansion of rational
 
 end
 
-procedure decipos(r, i, j)	#: position decimal point
+# position decimal point
+procedure decipos(r, i, j)	
    local head, tail
 
    /i := 3
@@ -247,7 +254,8 @@ procedure decipos(r, i, j)	#: position decimal point
 
 end
 
-procedure digred(i)		#: sum digits of integer repeated to one digit
+# sum digits of integer repeated to one digit
+procedure digred(i)		
 
    digred := digroot
 
@@ -255,7 +263,8 @@ procedure digred(i)		#: sum digits of integer repeated to one digit
 
 end
 
-procedure digroot(i)		#: digital root
+# digital root
+procedure digroot(i)		
 
    if i = 0 then return 1
 
@@ -265,7 +274,8 @@ procedure digroot(i)		#: digital root
 
 end
 
-procedure digprod(i)		#: product of digits
+# product of digits
+procedure digprod(i)		
    local j
 
    if upto('0', i) then return 0
@@ -278,7 +288,8 @@ procedure digprod(i)		#: product of digits
 
 end
 
-procedure digsum(i)		#: sum of digits
+# sum of digits
+procedure digsum(i)		
    local j
 
    i := integer(i) | fail
@@ -296,7 +307,8 @@ end
 #  "most uniformly distributed" in Knuth's terminology (vol3, 1/e, p. 511).
 #  Each integer in the range is produced exactly once.
 
-procedure distseq(low, high)		#: generate low to high nonsequentially
+# generate low to high nonsequentially
+procedure distseq(low, high)		
    local n, start, incr, range
 
    low := integer(low) | runerr(101, low)
@@ -321,13 +333,15 @@ procedure distseq(low, high)		#: generate low to high nonsequentially
 
 end
 
-procedure div(i, j)		#: real division
+# real division
+procedure div(i, j)		
 
    return i / real(j)
 
 end
 
-procedure fix(i, j, w, d)	#: format real number
+# format real number
+procedure fix(i, j, w, d)	
    local r, int, dec, sign
 
    /j := 1
@@ -358,7 +372,8 @@ procedure fix(i, j, w, d)	#: format real number
    return right(sign || int || "." || left(dec, d, "0"), w)
 end
 
-procedure floor(r)		#: floor
+# floor
+procedure floor(r)		
 
    if r > 0 then return integer(r) else return -integer(-r)
 
@@ -366,7 +381,8 @@ end
 
 $define MAXDECIMALS 25
 
-procedure frn(r, w, d)		#: format real number
+# format real number
+procedure frn(r, w, d)		
 
    local s
    static mlist
@@ -389,7 +405,8 @@ procedure frn(r, w, d)		#: format real number
 
 end
 
-procedure gcd(i,j)		#: greatest common divisor
+# greatest common divisor
+procedure gcd(i,j)		
    local r
 
    if (i | j) < 1 then runerr(501)
@@ -402,7 +419,8 @@ procedure gcd(i,j)		#: greatest common divisor
       }
 end
 
-procedure gcdl(L[])		#: greatest common divisor of list
+# greatest common divisor of list
+procedure gcdl(L[])		
    local i, j
 
    i := get(L) | fail
@@ -414,7 +432,8 @@ procedure gcdl(L[])		#: greatest common divisor of list
 
 end
    
-procedure gmean(L[])		#: geometric mean
+# geometric mean
+procedure gmean(L[])		
    local m
 
    if *L = 0 then fail
@@ -428,7 +447,8 @@ procedure gmean(L[])		#: geometric mean
       fail
 end
    
-procedure hmean(L[])		#: harmonic mean
+# harmonic mean
+procedure hmean(L[])		
    local m, r
 
    if *L = 0 then fail
@@ -450,7 +470,8 @@ end
 #  integer causes storage allocation, which this procedure detects.
 #
 
-procedure large(i)		#: detect large integers
+# detect large integers
+procedure large(i)		
    local mem
 
    mem := &allocated
@@ -460,7 +481,8 @@ procedure large(i)		#: detect large integers
 
 end
 
-procedure lcm(i, j)		#: least common multiple
+# least common multiple
+procedure lcm(i, j)		
 
    if (i =  0) | (j = 0) then return 0	# ???
 
@@ -468,7 +490,8 @@ procedure lcm(i, j)		#: least common multiple
 
 end
 
-procedure lcml(L[])		#: least common multiple of list
+# least common multiple of list
+procedure lcml(L[])		
    local i, j
 
    i := get(L) | fail
@@ -480,7 +503,8 @@ procedure lcml(L[])		#: least common multiple of list
 
 end
 
-procedure mantissa(r)		#: mantissa (fractional part)
+# mantissa (fractional part)
+procedure mantissa(r)		
    local fpart
 
    r := real(r)
@@ -517,7 +541,8 @@ end
 #
 #end
 
-procedure mdp(i)		#: multiplicative digital persistence
+# multiplicative digital persistence
+procedure mdp(i)		
    local j
 
    j := 0
@@ -531,7 +556,8 @@ procedure mdp(i)		#: multiplicative digital persistence
 
 end
 
-procedure mdr(i)		#: multiplicative digital root
+# multiplicative digital root
+procedure mdr(i)		
 
    until *i = 1 do
       i := digprod(i)
@@ -550,7 +576,8 @@ end
 #
 #end
 
-procedure mod1(i, m)		#: modulus for 1-based integers
+# modulus for 1-based integers
+procedure mod1(i, m)		
 
    i %:= m
 
@@ -560,7 +587,8 @@ procedure mod1(i, m)		#: modulus for 1-based integers
 
 end
 
-procedure npalins(n)		#: palindromic numbers
+# palindromic numbers
+procedure npalins(n)		
    local i
 
    every i := palins(&digits, n) do
@@ -568,7 +596,8 @@ procedure npalins(n)		#: palindromic numbers
 
 end
 
-procedure residue(i, m, j)		#: residue for j-based integers
+# residue for j-based integers
+procedure residue(i, m, j)		
 
    /j := 0
 
@@ -582,7 +611,8 @@ end
 
 #  This procedure is based on a SNOBOL4 function written by Jim Gimpel.
 #
-procedure roman(n)		#: convert integer to Roman numeral
+# convert integer to Roman numeral
+procedure roman(n)		
    local arabic, result
    static equiv
 
@@ -596,13 +626,15 @@ procedure roman(n)		#: convert integer to Roman numeral
 
 end
 
-procedure round(r)		#: round real
+# round real
+procedure round(r)		
 
    if r > 0 then return integer(r + 0.5) else return -integer(0.5 - r)
 
 end
 
-procedure sigma(i)		#: synonym for digroot()
+# synonym for digroot()
+procedure sigma(i)		
 
    sigma := digroot
 
@@ -610,7 +642,8 @@ procedure sigma(i)		#: synonym for digroot()
 
 end
 
-procedure sign(r)		#: sign
+# sign
+procedure sign(r)		
 
    if r = 0 then return 0
    else if r < 0 then return -1
@@ -618,7 +651,8 @@ procedure sign(r)		#: sign
 
 end
 
-procedure spell(n)		#: spell out integer
+# spell out integer
+procedure spell(n)		
    local m
 
    n := integer(n) | stop(image(n)," is not an integer")
@@ -658,7 +692,8 @@ procedure spell(n)		#: spell out integer
 
 end
 
-procedure sum(values[])		#: sum of numbers
+# sum of numbers
+procedure sum(values[])		
    local result
 
    result := 0
@@ -669,13 +704,15 @@ procedure sum(values[])		#: sum of numbers
 
 end
 
-procedure trunc(r)		#: truncate real
+# truncate real
+procedure trunc(r)		
 
    return integer(r)
 
 end
 
-procedure unroman(s)		#: convert Roman numeral to integer
+# convert Roman numeral to integer
+procedure unroman(s)		
    local nbr,lastVal,val
 
    nbr := lastVal := 0

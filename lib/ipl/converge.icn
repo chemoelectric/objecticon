@@ -28,7 +28,8 @@ package ipl.converge
 import
    ipl.rational(rational)
 
-procedure converge(seq)		#: continued-fraction convergents
+# continued-fraction convergents
+procedure converge(seq)		
    local prev_p, prev_q, p, q, t
 
    seq := copy(seq)

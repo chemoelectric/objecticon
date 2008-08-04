@@ -31,7 +31,8 @@ package ipl.select
 import
    ipl.grecords(rect)
 
-procedure select(win)		#: interactive selection from window
+# interactive selection from window
+procedure select(win)		
    local x0, x1, y0, y1, w, h, state, event
 
    /win := &window

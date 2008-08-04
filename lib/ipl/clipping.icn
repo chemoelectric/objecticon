@@ -36,7 +36,8 @@
 
 package ipl.clipping
 
-procedure DrawClipped(a[])		#: draw line with clipping
+# draw line with clipping
+procedure DrawClipped(a[])		
    local win
 
    if type(a[1]) == "window" then
@@ -54,7 +55,8 @@ end
 #  Cyrus-Beck parametric line clipping with Liang-Barsky
 #  optimizations for axis-aligned rectangular clipping regions.
 
-procedure ClipLine(win, L, x, y, w, h)	#: clip line for DrawSegment
+# clip line for DrawSegment
+procedure ClipLine(win, L, x, y, w, h)	
    local i, ret, tin, tout, delx, dely, x0, x1, xmax, y0, y1, ymax
 
    if (type(win) == "list") then		# window param is optional
@@ -121,7 +123,8 @@ end
 
 #  Coalesce(L) -- connect adjoining segments
 
-procedure Coalesce(L)			#: connect adjoining segments
+# connect adjoining segments
+procedure Coalesce(L)			
    local i, all, seg, x1, y1, x2, y2
 
    all := []

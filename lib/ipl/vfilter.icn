@@ -26,7 +26,8 @@
 
 package ipl.vidgets
 
-procedure VSetFilter(vidget, value)	#: filter mode of slider/scrollbar
+# filter mode of slider/scrollbar
+procedure VSetFilter(vidget, value)	
    local t
 
    t := type(vidget)

@@ -241,7 +241,8 @@ record Cal_TimeZoneData(dstOffset,startYear,
 #  calls to date procedures, it's not a bad idea to call this explicitly
 #  before using.
 #
-procedure Cal_Init(initialTimeZone)		#: initialize calendar globals
+# initialize calendar globals
+procedure Cal_Init(initialTimeZone)		
    local tzTbl
    initial {
       Cal_SecPerMin := 60
@@ -394,7 +395,8 @@ end
 #
 # Fails unless year is a leap year.
 #
-procedure Cal_IsLeapYear(year)			#: determine if year is leap
+# determine if year is leap
+procedure Cal_IsLeapYear(year)			
    initial Cal_Init()
    return year % 4 = 0 & (year % 100 ~= 0 | year % 400 = 0) & Cal_SecPerDay
 end
@@ -415,7 +417,8 @@ end
 # daylight savings time, otherwise fails. "seconds" are local, but not
 # adjusted for DST.
 #
-procedure Cal_IsDST(seconds,timeZone)	#: determines if seconds (local) is DST
+# determines if seconds (local) is DST
+procedure Cal_IsDST(seconds,timeZone)	
    local data,calRec,year,month,startMonth,endMonth,dstOffset
    /timeZone := Cal_CurrentTimeZone
    if not (data := \timeZone.data) then fail
@@ -461,7 +464,8 @@ end
 #   For last Sunday in October, 1998:
 #     NthWeekdayToSec(1998,10,1,-1)
 #
-procedure Cal_NthWeekdayToSec(year,month,weekday,n,fromDay)   #: gets seconds of nth specified weekday of month
+# gets seconds of nth specified weekday of month
+procedure Cal_NthWeekdayToSec(year,month,weekday,n,fromDay)   
    local startOfMonth,endOfMonth,lastDay
    startOfMonth := Cal_RecToSec(Cal_Rec(year,month,1),Cal_TimeZoneGMT)
    endOfMonth := Cal_RecToSec(Cal_Rec(year,month + 1,1),Cal_TimeZoneGMT)
@@ -488,7 +492,8 @@ end
 #
 #  Converts a date in long form to seconds since start of DateBaseYear.
 #
-procedure Cal_DateLineToSec(dateline,timeZone)	#: convert &dateline to seconds
+# convert &dateline to seconds
+procedure Cal_DateLineToSec(dateline,timeZone)	
    local day,halfday,hour,min,month,sec,year
    static months
    initial {
@@ -533,7 +538,8 @@ end
 #  Converts a date in Icon &date format (yyyy/mm/dd) do seconds
 #  past DateBaseYear.
 #
-procedure Cal_DateToSec(date,timeZone)	#: convert &date to seconds
+# convert &date to seconds
+procedure Cal_DateToSec(date,timeZone)	
    date ? return Cal_RecToSec(Cal_Rec(+1(tab(find("/")),move(1)),
 	 +1(tab(find("/")),move(1)),+tab(0)),timeZone)
 end
@@ -542,7 +548,8 @@ end
 #  Converts seconds past DateBaseYear to a &date in Icon date format
 #  (yyyy,mm,dd).
 #
-procedure Cal_SecToDate(seconds,timeZone) #: convert seconds to &date
+# convert seconds to &date
+procedure Cal_SecToDate(seconds,timeZone) 
    local r
    r := Cal_SecToRec(seconds,timeZone)
    return right(r.year,4,"0") || "/" || right(r.month,2,"0") || "/" ||
@@ -552,7 +559,8 @@ end
 #
 #  Produces a date in the same format as Icon's &dateline.
 #
-procedure Cal_SecToDateLine(seconds,timeZone) #: convert seconds to &dateline
+# convert seconds to &dateline
+procedure Cal_SecToDateLine(seconds,timeZone) 
    local d,hour,halfday
    d := Cal_SecToRec(seconds,timeZone)
    if (hour := d.hour) < 12 then {
@@ -571,7 +579,8 @@ end
 #
 #  Returns a date and time in UNIX format: Jan 14 10:24 1991
 #
-procedure Cal_SecToUnixDate(seconds,timeZone)	#: convert seconds to UNIX time
+# convert seconds to UNIX time
+procedure Cal_SecToUnixDate(seconds,timeZone)	
    local d
    d := Cal_SecToRec(seconds,timeZone)
    return Cal_MonthNames[d.month][1+:3] || " " || d.day || " " ||
@@ -581,7 +590,8 @@ end
 #
 #  Converts a time in the format of &clock to seconds past midnight.
 #
-procedure Cal_ClockToSec(seconds)		#: convert &date to seconds
+# convert &date to seconds
+procedure Cal_ClockToSec(seconds)		
     seconds ? return (
 	 (1(tab(many(&digits)),move(1)) * 60 +
 	 1(tab(many(&digits)),move(1) | &null)) * 60 +
@@ -592,7 +602,8 @@ end
 #
 #  Converts seconds past midnight to a string in the format of &clock.
 #
-procedure Cal_SecToClock(seconds)		#: convert seconds to &clock
+# convert seconds to &clock
+procedure Cal_SecToClock(seconds)		
    local sec
    sec := seconds % 60
    seconds /:= 60

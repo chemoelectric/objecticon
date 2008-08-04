@@ -31,7 +31,8 @@ package ipl.popular
 import
    ipl.imrutils(imstoimr)
 
-procedure popularity(ims)	#: color popularity in image string
+# color popularity in image string
+procedure popularity(ims)	
    local imr, color_tbl, color_list, color
 
    imr := imstoimr(ims)

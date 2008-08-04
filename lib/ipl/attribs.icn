@@ -39,7 +39,8 @@ import
    ipl.dialog(Notice),
    ipl.vidgets(dpopup, dsetup)				# dialog setup
 
-procedure attribs(win)		#: set graphics attributes via dialog
+# set graphics attributes via dialog
+procedure attribs(win)		
    static atts
 
    initial atts := table()		# table of vidget IDs

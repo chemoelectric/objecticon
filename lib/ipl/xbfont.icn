@@ -109,14 +109,16 @@ global XFW_default, XFW_exact, XFW_posn, XFW_tiebreakers
 
 #  BestFont(window, spec...) - generate ranked sequence of font names
 
-procedure BestFont(args[])		#: generate best X fonts
+# generate best X fonts
+procedure BestFont(args[])		
    suspend (RankFonts ! args) . str
 end
 
 
 #  XRankFont(window, spec...) - generate sequence of (name,score) tuples
 
-procedure RankFonts(w, args[])		#: generate scores for X fonts
+# generate scores for X fonts
+procedure RankFonts(w, args[])		
    local tokens, cklist, sclist, fspec, ranks, r
 
    if type(w) ~== "window" & type(w) ~== "list" then {

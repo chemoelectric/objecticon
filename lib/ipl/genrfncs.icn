@@ -150,7 +150,8 @@ import
    ipl.strings(csort, deletec),
    ipl.xcode(xdecode)
 
-procedure arandseq(i, j)	#: arithmetic sequence with random intervals
+# arithmetic sequence with random intervals
+procedure arandseq(i, j)	
 
    /i := 1
    /j := 1
@@ -159,7 +160,8 @@ procedure arandseq(i, j)	#: arithmetic sequence with random intervals
 
 end
 
-procedure arithseq(i, j)	#: arithmetic sequence
+# arithmetic sequence
+procedure arithseq(i, j)	
 
    /i := 1
    /j := 0
@@ -168,7 +170,8 @@ procedure arithseq(i, j)	#: arithmetic sequence
 
 end
 
-procedure beatty1seq(r)		#: Beatty sequence 1
+# Beatty sequence 1
+procedure beatty1seq(r)		
 
    /r := &phi
 
@@ -176,7 +179,8 @@ procedure beatty1seq(r)		#: Beatty sequence 1
 
 end
 
-procedure beatty2seq(r)		#: Beatty sequence 2
+# Beatty sequence 2
+procedure beatty2seq(r)		
 
    /r := &phi
 
@@ -184,7 +188,8 @@ procedure beatty2seq(r)		#: Beatty sequence 2
 
 end
 
-procedure catlnseq(i)		#: generalized Catalan sequence
+# generalized Catalan sequence
+procedure catlnseq(i)		
    local k
 
   /i := 1
@@ -193,7 +198,8 @@ procedure catlnseq(i)		#: generalized Catalan sequence
 
 end
 
-procedure chaosseq(q)		#: Hofstadter's chaotic sequence
+# Hofstadter's chaotic sequence
+procedure chaosseq(q)		
 
    suspend q(seq())
 
@@ -202,7 +208,8 @@ end
 #  The generalization here is to allow a generating procedure, p to
 #  be specified.  The default is seq().  Arguments are given in args.
 
-procedure connellseq(p, args[])	#: generalized Connell sequence
+# generalized Connell sequence
+procedure connellseq(p, args[])	
    local i, j, count, parity, parity2, C
 
    C := create (\p | seq) ! args
@@ -227,7 +234,8 @@ procedure connellseq(p, args[])	#: generalized Connell sequence
 
 end
    
-procedure chexmorphseq()	#: sequence of centered hexamorphic numbers
+# sequence of centered hexamorphic numbers
+procedure chexmorphseq()	
    local i, j
 
    every (i := seq(), j := 3 * i * (i - 1) + 1, j ? {
@@ -237,7 +245,8 @@ procedure chexmorphseq()	#: sequence of centered hexamorphic numbers
 
 end
 
-procedure cfseq(i, j)	#: continued-fraction sequence
+# continued-fraction sequence
+procedure cfseq(i, j)	
    local r
 
    until j = 0 do {
@@ -285,7 +294,8 @@ procedure form(str1, op, str2)
 
 end
 
-procedure dressseq(i)		#: dress sequence
+# dress sequence
+procedure dressseq(i)		
    local s, t
 
    /i := 1
@@ -303,7 +313,8 @@ procedure dressseq(i)		#: dress sequence
 
 end
 
-procedure eisseq(i)		#: EIS A sequence
+# EIS A sequence
+procedure eisseq(i)		
    local input, seq
    static lst
 
@@ -319,7 +330,8 @@ procedure eisseq(i)		#: EIS A sequence
 
 end
 
-procedure factseq()		#: factorial sequence
+# factorial sequence
+procedure factseq()		
    local i
 
    i := 1
@@ -330,7 +342,8 @@ end
 
 record farey(magnitude, n, d)
 
-procedure fareyseq(i, k)		#: Farey fraction sequence
+# Farey fraction sequence
+procedure fareyseq(i, k)		
    local farey_list, n, d
 
    /k := 0				# default numerators
@@ -354,7 +367,8 @@ procedure fareyseq(i, k)		#: Farey fraction sequence
 
 end
       
-procedure fareydseq(i)		#: Farey fraction denominator sequence
+# Farey fraction denominator sequence
+procedure fareydseq(i)		
    local parity, j
 
    parity := 1
@@ -366,7 +380,8 @@ procedure fareydseq(i)		#: Farey fraction denominator sequence
 
 end
 
-procedure fareynseq(i)		#: Farey fraction numerator sequence
+# Farey fraction numerator sequence
+procedure fareynseq(i)		
    local parity, j
 
    parity := 1
@@ -378,13 +393,15 @@ procedure fareynseq(i)		#: Farey fraction numerator sequence
 
 end
 
-procedure fareyn1seq(i)		#: Farey fraction numerator sequence, 1-based
+# Farey fraction numerator sequence, 1-based
+procedure fareyn1seq(i)		
 
    suspend fareynseq(i) + 1
 
 end
 
-procedure fibseq(i, j, k, m)	#: generalized Fibonacci sequence
+# generalized Fibonacci sequence
+procedure fibseq(i, j, k, m)	
    local n
 
    /i := 1
@@ -411,7 +428,8 @@ end
 #  Warning; if not all lines are generated from the input file, the
 #  file is not closed until the next call of fileseq().
 
-procedure fileseq(s, i)		#: sequence from file
+# sequence from file
+procedure fileseq(s, i)		
    static input
 
    close(\input)
@@ -427,7 +445,8 @@ procedure fileseq(s, i)		#: sequence from file
 
 end
 
-procedure figurseq(i)		#: sequence of figurate numbers
+# sequence of figurate numbers
+procedure figurseq(i)		
    local j, k
 
    /i := 1
@@ -436,7 +455,8 @@ procedure figurseq(i)		#: sequence of figurate numbers
 
 end
 
-procedure friendseq(k)		#: random friendly sequence
+# random friendly sequence
+procedure friendseq(k)		
    local state
 
    state := ?k
@@ -452,7 +472,8 @@ procedure friendseq(k)		#: random friendly sequence
 
 end
       
-procedure geomseq(i, j)		#: geometric sequence
+# geometric sequence
+procedure geomseq(i, j)		
 
    /i := 1
    /j := 1
@@ -461,7 +482,8 @@ procedure geomseq(i, j)		#: geometric sequence
 
 end
 
-procedure hailseq(i)		#: hailstone sequence
+# hailstone sequence
+procedure hailseq(i)		
 
    /i := 1
 
@@ -469,7 +491,8 @@ procedure hailseq(i)		#: hailstone sequence
 
 end
 
-procedure irepl(i, j)		#: repeated sequence
+# repeated sequence
+procedure irepl(i, j)		
 
    /i := 1
    /j := 1
@@ -478,14 +501,16 @@ procedure irepl(i, j)		#: repeated sequence
 
 end
 
-procedure linrecseq(terms, coeffs)	#: synonym for lrrcseq
+# synonym for lrrcseq
+procedure linrecseq(terms, coeffs)	
    linrecseq := lrrcseq
 
    suspend lrrcseq(terms, coeffs)
 
 end
 
-procedure lrrcseq(terms, coeffs)	#: linear recurrence sequence
+# linear recurrence sequence
+procedure lrrcseq(terms, coeffs)	
    local i, term
 
    suspend !terms
@@ -501,7 +526,8 @@ procedure lrrcseq(terms, coeffs)	#: linear recurrence sequence
 
 end
 
-procedure meanderseq(alpha, n)	#: generate meandering characters
+# generate meandering characters
+procedure meanderseq(alpha, n)	
    local sequence, trial, i, c
 
    i := *alpha
@@ -521,7 +547,8 @@ procedure meanderseq(alpha, n)	#: generate meandering characters
 
 end
 
-procedure mthueseq()		#: Morse-Thue sequence
+# Morse-Thue sequence
+procedure mthueseq()		
    local s, t
 
    s := 0
@@ -536,13 +563,15 @@ procedure mthueseq()		#: Morse-Thue sequence
 
 end
 
-procedure mthuegseq(j)		#: generalized Morse-Thue sequence
+# generalized Morse-Thue sequence
+procedure mthuegseq(j)		
 
    suspend adr(exbase10(seq(0), j)) % j		# only works through base 10
       
 end
    
-procedure multiseq(i, j, k)	#: sequence of repeated integers
+# sequence of repeated integers
+procedure multiseq(i, j, k)	
 
    /i := 1
    /j := 1
@@ -552,7 +581,8 @@ procedure multiseq(i, j, k)	#: sequence of repeated integers
 
 end
 
-procedure ngonalseq(i)		#: sequence of polygonal numbers
+# sequence of polygonal numbers
+procedure ngonalseq(i)		
    local j, k
 
    /i := 2
@@ -563,7 +593,8 @@ procedure ngonalseq(i)		#: sequence of polygonal numbers
 
 end
 
-procedure nibonacciseq(values[])	#: n-valued Fibonacci generalization
+# n-valued Fibonacci generalization
+procedure nibonacciseq(values[])	
    local sum
 
    if *values = 0 then fail
@@ -580,7 +611,8 @@ procedure nibonacciseq(values[])	#: n-valued Fibonacci generalization
 
 end
 
-procedure partitseq(i, j, k)	#: sequence of integer partitions
+# sequence of integer partitions
+procedure partitseq(i, j, k)	
 
    /i := 1
    /j := 1
@@ -590,7 +622,8 @@ procedure partitseq(i, j, k)	#: sequence of integer partitions
 
 end
 
-procedure pellseq(i, j, k)	#: generalized Pell sequence
+# generalized Pell sequence
+procedure pellseq(i, j, k)	
    local m
 
    /i := 1
@@ -605,7 +638,8 @@ procedure pellseq(i, j, k)	#: generalized Pell sequence
 
 end
 
-procedure perrinseq()		#: perrin sequence
+# perrin sequence
+procedure perrinseq()		
    local i, j, k, l
 
    suspend i := 0
@@ -621,7 +655,8 @@ procedure perrinseq()		#: perrin sequence
 
 end
 
-procedure polyseq(coeff[])	#: sequence of polynomial evaluations
+# sequence of polynomial evaluations
+procedure polyseq(coeff[])	
    local i, j, sum
 
    every i := seq() do {
@@ -633,7 +668,8 @@ procedure polyseq(coeff[])	#: sequence of polynomial evaluations
 
 end
 
-procedure primeseq()		#: sequence of prime numbers
+# sequence of prime numbers
+procedure primeseq()		
    local i, k
 
    suspend 2 | ((i := seq(3, 2)) & (not(i = (k := (3 to sqrt(i) by 2)) *
@@ -641,7 +677,8 @@ procedure primeseq()		#: sequence of prime numbers
 
 end
 
-procedure powersofseq(i)		#: powers
+# powers
+procedure powersofseq(i)		
 
    /i := 2
 
@@ -649,13 +686,15 @@ procedure powersofseq(i)		#: powers
 
 end
 
-procedure powerseq(i)		#: powers sequence
+# powers sequence
+procedure powerseq(i)		
 
    suspend seq() ^ i
 
 end
 
-procedure rabbitseq()		#: rabbit sequence
+# rabbit sequence
+procedure rabbitseq()		
    local seq, i
 
    seq := [0]
@@ -671,7 +710,8 @@ procedure rabbitseq()		#: rabbit sequence
 
 end
    
-procedure ratsseq(i, p)		#: reverse add and then sort sequence
+# reverse add and then sort sequence
+procedure ratsseq(i, p)		
 
    /p := 1
 
@@ -685,7 +725,8 @@ end
 
 record entry(value, i, j)
 
-procedure signaseq(r, n, m)	#: signature sequence
+# signature sequence
+procedure signaseq(r, n, m)	
    local i, j, result
 
    /n := 100
@@ -703,7 +744,8 @@ procedure signaseq(r, n, m)	#: signature sequence
 
 end
 
-procedure spectseq(r)		#: spectral sequence
+# spectral sequence
+procedure spectseq(r)		
 
    /r := 1.0
 
@@ -712,7 +754,8 @@ procedure spectseq(r)		#: spectral sequence
 end
 
 
-procedure srpseq(n, m)		#: generate square-root palindrome
+# generate square-root palindrome
+procedure srpseq(n, m)		
    local iter, count, okay, rat, j, pal
 
    if not (1 <= m <= 2 * n) then fail
@@ -747,7 +790,8 @@ procedure srpseq(n, m)		#: generate square-root palindrome
 
 end
 
-procedure versumseq(i, j)	#: generalized reversed-sum sequence
+# generalized reversed-sum sequence
+procedure versumseq(i, j)	
 
    /j := 0
 
@@ -760,7 +804,8 @@ procedure versumseq(i, j)	#: generalized reversed-sum sequence
 
 end
 
-procedure versumopseq(i, p, args[])	#: versum sequence with operator
+# versum sequence with operator
+procedure versumopseq(i, p, args[])	
 
    /i := 196
 
@@ -777,7 +822,8 @@ procedure versumopseq(i, p, args[])	#: versum sequence with operator
 
 end
 
-procedure vishwanathseq(i, j)	#: random variation on Fibonacci sequence
+# random variation on Fibonacci sequence
+procedure vishwanathseq(i, j)	
    local m
 
    /i := 1
@@ -796,7 +842,8 @@ procedure vishwanathseq(i, j)	#: random variation on Fibonacci sequence
 
 end
 
-procedure zebra(args[])		#: black and white bands
+# black and white bands
+procedure zebra(args[])		
    local i, clr, clr_alt
 
    clr := 2			# light

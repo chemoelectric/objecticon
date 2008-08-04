@@ -32,7 +32,8 @@ import
 
 record perseq(pre, rep)
 
-procedure Sqrt(i, j)		#: rational approximate to square root
+# rational approximate to square root
+procedure Sqrt(i, j)		
    local rat, half
 
    /j := 5
@@ -50,7 +51,8 @@ procedure Sqrt(i, j)		#: rational approximate to square root
 
 end
 
-procedure rat2cf(rat)		#: continued fraction sequence for rational
+# continued fraction sequence for rational
+procedure rat2cf(rat)		
    local r, result, i, j
 
    i := rat.numer
@@ -70,7 +72,8 @@ procedure rat2cf(rat)		#: continued fraction sequence for rational
 
 end
 
-procedure cfapprox(lst)		#: continued-fraction approximation
+# continued-fraction approximation
+procedure cfapprox(lst)		
    local prev_n, prev_m, n, m, t
 
    lst := copy(lst)
@@ -94,7 +97,8 @@ procedure cfapprox(lst)		#: continued-fraction approximation
 
 end
 
-procedure dec2rat(pre, rep)	#: convert repeating decimal to rational
+# convert repeating decimal to rational
+procedure dec2rat(pre, rep)	
    local s
 
    s := ""
@@ -106,7 +110,8 @@ procedure dec2rat(pre, rep)	#: convert repeating decimal to rational
 
 end
 
-procedure rat2dec(rat)		#: decimal expansion of rational
+# decimal expansion of rational
+procedure rat2dec(rat)		
    local  result, remainders, count, seq
 
    rat := copy(rat)
@@ -140,7 +145,8 @@ procedure rat2dec(rat)		#: decimal expansion of rational
 
 end
 
-procedure repeater(seq, ratio, limit)		#: find repeat in sequence
+# find repeat in sequence
+procedure repeater(seq, ratio, limit)		
    local i, prefix, results, segment, span
 
    /ratio := 2
@@ -164,7 +170,8 @@ procedure repeater(seq, ratio, limit)		#: find repeat in sequence
 
 end
 
-procedure seqimage(seq)		#: sequence image
+# sequence image
+procedure seqimage(seq)		
    local result
 
    result := ""

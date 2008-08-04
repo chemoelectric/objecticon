@@ -311,14 +311,16 @@ end
 # Simple drawing primitives
 ############################################################################
 
-procedure DrwLine(w,pnts[])	# draw a polyline
+# draw a polyline
+procedure DrwLine(w,pnts[])	
 
    if *pnts < 2 then fail		# ... not enough points
 
    return DrawLine ! ([w.vp.screen]|||transform_points(pnts,w.xform_mat[1]))
 end
 
-procedure DrawConvexClipped(w,poly,pnts[])	# clip to polygon
+# clip to polygon
+procedure DrawConvexClipped(w,poly,pnts[])	
    local i
 
    if (*pnts < 2) | (*poly < 3) then fail
@@ -330,13 +332,15 @@ procedure DrawConvexClipped(w,poly,pnts[])	# clip to polygon
    return
 end
 
-procedure DrawPolygon(args[])	# draw a polygon
+# draw a polygon
+procedure DrawPolygon(args[])	
 
    return DrwLine ! (args|||[args[2]])
 
 end
 
-procedure FillPolygon(w,pnts[]) # draw a filled polygon
+# draw a filled polygon
+procedure FillPolygon(w,pnts[]) 
 
    if *pnts < 2 then fail		# ... not enough points
 
@@ -353,7 +357,8 @@ end
 #     operations determine the size of the matrix directly
 #     from the matrix itself
 
-procedure mwrite(m)		# output a matrix (usually for debugging)
+# output a matrix (usually for debugging)
+procedure mwrite(m)		
    local r, c, row, col
 
    r := *m
@@ -370,7 +375,8 @@ procedure mwrite(m)		# output a matrix (usually for debugging)
    write("]")
 end
 
-procedure newmat(n,m)		# create a matrix
+# create a matrix
+procedure newmat(n,m)		
    local M
 
    M := list(n)
@@ -379,7 +385,8 @@ procedure newmat(n,m)		# create a matrix
    return M
 end
 
-procedure Imatrix(n,m)		# Identity matrix
+# Identity matrix
+procedure Imatrix(n,m)		
    local M, r, c
 
    M := newmat(n,m)
@@ -391,7 +398,8 @@ procedure Imatrix(n,m)		# Identity matrix
    return M
 end
 
-procedure mmult(m1,m2)		# matrix multiply
+# matrix multiply
+procedure mmult(m1,m2)		
    local m3, r, c, nk, k
 
    if (nk := *m1[1]) ~= *m2 then stop("Matrices are wrong size to multiply")
@@ -416,7 +424,8 @@ end
 record viewport(ul, lr, screen)
 record window(ll, ur, vp, xform_mat)
 
-procedure set_window(win, ll, ur, vp)	# construct new graphics window
+# construct new graphics window
+procedure set_window(win, ll, ur, vp)	
    local x_scale, y_scale, x_trans, y_trans, xfrm
 
    if /vp then {	# make vp the entire 'screen'
@@ -710,7 +719,8 @@ procedure transform_points(pl,M)
    return xformed
 end
    
-procedure set_scale(x,y,z)	# set up an Xform matrix for scaling
+# set up an Xform matrix for scaling
+procedure set_scale(x,y,z)	
    local M
 
    M := if /z then Imatrix(3,3)
@@ -723,7 +733,8 @@ procedure set_scale(x,y,z)	# set up an Xform matrix for scaling
    return M
 end
 
-procedure set_trans(x,y,z)	# set up an Xform matrix for translation
+# set up an Xform matrix for translation
+procedure set_trans(x,y,z)	
    local M
 
    M := if /z then Imatrix(3,3)
@@ -736,7 +747,8 @@ procedure set_trans(x,y,z)	# set up an Xform matrix for translation
    return M
 end
 
-procedure set_rotate(x,y,z)	# set up an Xform matrix for rotation
+# set up an Xform matrix for rotation
+procedure set_rotate(x,y,z)	
    local X, Y, Z
 
    if /y & /z then {	# 2-D rotation

@@ -56,7 +56,8 @@
 
 package ipl.wildcard
 
-procedure wild_match(plist,s,i1,i2) # i3,i4,...,iN
+# i3,i4,...,iN
+procedure wild_match(plist,s,i1,i2) 
 #
 #  Produce the sequence of positions in s past a string starting at i1
 #  that matches the pattern plist, but fails if there is no such
@@ -69,7 +70,8 @@ procedure wild_match(plist,s,i1,i2) # i3,i4,...,iN
 end
 
 
-procedure wild_find(plist,s,i1,i2) # i3,i4,...,iN
+# i3,i4,...,iN
+procedure wild_find(plist,s,i1,i2) 
 #
 #  Produce the sequence of positions in s where strings begin that match
 #  the pattern plist, but fails if there is no such position.  Similar
@@ -86,7 +88,8 @@ procedure wild_find(plist,s,i1,i2) # i3,i4,...,iN
 end
 
 
-procedure wild_pat(s) # L
+# L
+procedure wild_pat(s) 
 #
 #  Produce pattern list representing pattern string s.
 #
@@ -146,7 +149,8 @@ procedure wild_pat(s) # L
 end
 
 
-procedure wild_skip(plist) # s1,s2,...,sN
+# s1,s2,...,sN
+procedure wild_skip(plist) 
 #
 #  Used privately -- match a sequence of strings in s past which a match
 #  of the first pattern element in plist is likely to succeed.	This
@@ -167,7 +171,8 @@ procedure wild_skip(plist) # s1,s2,...,sN
 end
 
 
-procedure wild_match1(plist,v) # s1,s2,...,sN
+# s1,s2,...,sN
+procedure wild_match1(plist,v) 
 #
 #  Used privately by wild_match() to simulate a computed conjunction
 #  expression via recursive suspension.

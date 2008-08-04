@@ -96,7 +96,8 @@ import
    ipl.strings(maxlen),
    ipl.vidgets(dpopup, dsetup)
 
-procedure edit_file(name)			#: editor launch
+# editor launch
+procedure edit_file(name)			
    local editor
 
    TextDialog("Edit:", , name, 30) == "Okay" | fail
@@ -107,7 +108,8 @@ procedure edit_file(name)			#: editor launch
 
 end
 
-procedure edit_list(lines)			#: edit lines dialog
+# edit lines dialog
+procedure edit_list(lines)			
    local insert, number,  bounds, n
    static add_tbl, labels, buttons
 
@@ -175,14 +177,16 @@ procedure edit_list(lines)			#: edit lines dialog
 
 end
 
-procedure error_notice(i, x, s)			#: error alert
+# error alert
+procedure error_notice(i, x, s)			
 
    return Notice("Error " || i || " " || s,
       "Offending value: " || image(x))
 
 end
 
-procedure execute()				#: command-line launch
+# command-line launch
+procedure execute()				
    local pipe, win, olist
 
    OpenDialog("Command line:") == "Okay"  | fail
@@ -204,7 +208,8 @@ procedure execute()				#: command-line launch
 
 end
 
-procedure list_win(lst, label)			#: window for list of strings
+# window for list of strings
+procedure list_win(lst, label)			
    local win
 
    win := WOpen("canvas=hidden", "label=" || label, "lines=" || *lst + 2,
@@ -218,7 +223,8 @@ procedure list_win(lst, label)			#: window for list of strings
 
 end
 
-procedure expose(win)				#: expose window
+# expose window
+procedure expose(win)				
 
 #  For some window managers, this can be use to make a window active
 
@@ -233,7 +239,8 @@ procedure expose(win)				#: expose window
 
 end
 
-procedure load_file(caption, n)			#: load dialog
+# load dialog
+procedure load_file(caption, n)			
    local button
 
    repeat {
@@ -247,7 +254,8 @@ procedure load_file(caption, n)			#: load dialog
 
 end
 
-procedure open_image(caption, atts[])		#: open image
+# open image
+procedure open_image(caption, atts[])		
    local button, win
 
    repeat {
@@ -263,7 +271,8 @@ procedure open_image(caption, atts[])		#: open image
 
 end
 
-procedure ExitNotice(s[])			#: notice dialog that fails
+# notice dialog that fails
+procedure ExitNotice(s[])			
 
    Notice ! s
 
@@ -271,7 +280,8 @@ procedure ExitNotice(s[])			#: notice dialog that fails
 
 end
 
-procedure FailNotice(s[])			#: notice dialog that fails
+# notice dialog that fails
+procedure FailNotice(s[])			
 
    Notice ! s
 
@@ -279,7 +289,8 @@ procedure FailNotice(s[])			#: notice dialog that fails
 
 end
 
-procedure save_as(caption, name, n)		#: save-as dialog
+# save-as dialog
+procedure save_as(caption, name, n)		
    local button, file
 
    repeat {
@@ -298,7 +309,8 @@ procedure save_as(caption, name, n)		#: save-as dialog
 
 end
 
-procedure save_file(caption, name, n)		#: save dialog
+# save dialog
+procedure save_file(caption, name, n)		
    local button
 
    (button := SaveDialog(caption, name, n)) == "Yes" | return button
@@ -311,7 +323,8 @@ procedure save_file(caption, name, n)		#: save dialog
 
 end
 
-procedure save_list(caption, lst)		#: save list dialog
+# save list dialog
+procedure save_list(caption, lst)		
    local output
 
    OpenDialog(caption, , 30) == "Okay" | fail
@@ -332,7 +345,8 @@ end
 
 $define Choices 30		# maximum choices per dialog
 
-procedure select_dialog(caption, lst, dflt)	#: select dialog for many items
+# select dialog for many items
+procedure select_dialog(caption, lst, dflt)	
    static buttons
 
    initial buttons := ["Okay", "More", "Cancel"]
@@ -358,7 +372,8 @@ procedure select_dialog(caption, lst, dflt)	#: select dialog for many items
 
 end
 
-procedure snapshot(win, x, y, w, h, n)		#: snapshot dialog
+# snapshot dialog
+procedure snapshot(win, x, y, w, h, n)		
    local name, fg, bg
 
    if type(win) ~== "window" then {
@@ -391,7 +406,8 @@ procedure snapshot(win, x, y, w, h, n)		#: snapshot dialog
       
 end
 
-procedure unsupported()				#: unsupported feature alert
+# unsupported feature alert
+procedure unsupported()				
 
    return FailNotice("Unsupported feature")
 

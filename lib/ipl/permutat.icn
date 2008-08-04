@@ -25,7 +25,8 @@ import
    ipl.numbers(lcml),
    ipl.seqops(srun)
 
-procedure multireduce(i, j)		#: multi-reduction permutation
+# multi-reduction permutation
+procedure multireduce(i, j)		
    local indexes, result, parts
 
    /j := 2
@@ -44,7 +45,8 @@ procedure multireduce(i, j)		#: multi-reduction permutation
 
 end
 
-procedure permperiod(p)			#: period of permutation
+# period of permutation
+procedure permperiod(p)			
    local lengths
 
    lengths := []
@@ -55,7 +57,8 @@ procedure permperiod(p)			#: period of permutation
 
 end
 
-procedure cycles(p)			#: permutation cycles
+# permutation cycles
+procedure cycles(p)			
    local indices, cycle, cycles, i
 
    cycles := []		# list of cycles
@@ -82,7 +85,8 @@ procedure cycles(p)			#: permutation cycles
 
 end
 
-procedure mutate(seq, mutation)		#: mutate sequence
+# mutate sequence
+procedure mutate(seq, mutation)		
    local result
 
    result := []

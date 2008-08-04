@@ -32,7 +32,8 @@
 
 package ipl.trees
 
-procedure depth(ltree)			#: depth of tree
+# depth of tree
+procedure depth(ltree)			
    local count
 
    count := 0
@@ -41,7 +42,8 @@ procedure depth(ltree)			#: depth of tree
 
 end
 
-procedure ldag(stree,done)		#: construct dag from string
+# construct dag from string
+procedure ldag(stree,done)		
    local L
 
    /done := table()
@@ -57,7 +59,8 @@ procedure ldag(stree,done)		#: construct dag from string
 
 end
 
-procedure ltree(stree)			#: construct tree from string
+# construct tree from string
+procedure ltree(stree)			
    local L
 
    stree ?
@@ -71,7 +74,8 @@ procedure ltree(stree)			#: construct tree from string
 
 end
 
-procedure stree(ltree)			#: construct string from tree
+# construct string from tree
+procedure stree(ltree)			
    local s
 
    if *ltree = 1 then return ltree[1]
@@ -81,7 +85,8 @@ procedure stree(ltree)			#: construct string from tree
 
 end
 
-procedure tcopy(ltree)			#: tree copy
+# tree copy
+procedure tcopy(ltree)			
    local L
 
    L := [ltree[1]]
@@ -90,7 +95,8 @@ procedure tcopy(ltree)			#: tree copy
 
 end
 
-procedure teq(L1,L2)			#: tree equivalence
+# tree equivalence
+procedure teq(L1,L2)			
    local i
 
    if *L1 ~= *L2 then fail
@@ -101,7 +107,8 @@ procedure teq(L1,L2)			#: tree equivalence
 
 end
 
-procedure visit(ltree)			#: visit nodes of tree
+# visit nodes of tree
+procedure visit(ltree)			
 
    suspend ltree | visit(ltree[2 to *ltree])
 

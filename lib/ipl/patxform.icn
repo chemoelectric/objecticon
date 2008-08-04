@@ -48,7 +48,8 @@ import
 #  are scrambled; if "v", the the rows are scrambled.  If "b", bits are
 #  scrambled throughout the pattern.
 
-procedure pscramble(rows, dir)		#: scramble pattern
+# scramble pattern
+procedure pscramble(rows, dir)		
    local i, all
 
    case dir of {
@@ -80,7 +81,8 @@ end
 #  Positive shift is to the right for horizontal shifts, downward for vertical
 #  shifts.  The default shift is 0 and the default direction is horizontal.
 
-procedure pshift(rows, shift, dir)	#: bit shift pattern
+# bit shift pattern
+procedure pshift(rows, shift, dir)	
    local i
 
    /shift := 0
@@ -110,7 +112,8 @@ end
 #  to add at the left, right, top, and bottom, respectively.  c specifies
 #  the color of the border, "0" for white, "1" for black.
 
-procedure pborder(rows, l, r, t, b, c)	#: place border around pattern
+# place border around pattern
+procedure pborder(rows, l, r, t, b, c)	
    local i, row, left, right
 
    /l := 1
@@ -142,7 +145,8 @@ end
 #  Crop a pattern.  l, r, t, and b specify the number of bits
 #  to crop at the left, right, top, and bottom, respectively.
 
-procedure pcrop(rows, l, r, t, b)	#: crop pattern
+# crop pattern
+procedure pcrop(rows, l, r, t, b)	
    local i
 
    /l := 0
@@ -174,7 +178,8 @@ end
 #  If choice is "o" or null, odd-numbered rows or columns are kept;
 #  if "e", the even-numbered ones.
 
-procedure phalve(rows, dir, choice)	#: halve pattern by bits
+# halve pattern by bits
+procedure phalve(rows, dir, choice)	
    local newrows, i
 
    choice := if choice === ("o" | &null) then 1 else 0
@@ -199,7 +204,8 @@ end
 #  done both horizontally and vertically.  If dir is "v", it's only done
 #  vertically, while if dir is "h", it's done only horizontally.
 
-procedure pdouble(rows, dir)		#: double pattern
+# double pattern
+procedure pdouble(rows, dir)		
    local row, newrows
 
    newrows := []
@@ -227,7 +233,8 @@ end
 #  right corner; the right diagonal from the upper right to the lower
 #  left.
 
-procedure pflip(rows, dir)		#: flip pattern
+# flip pattern
+procedure pflip(rows, dir)		
    local newrows, x, y, i
 
    case dir of {
@@ -265,7 +272,8 @@ end
 #
 #  Invert white and black bits in pattern specification
 
-procedure pinvert(rows)			#: invert B&W pattern
+# invert B&W pattern
+procedure pinvert(rows)			
    local i
 
    every i := 1 to *rows do
@@ -281,7 +289,8 @@ end
 #  for operating on and/or producing patterns that are not square.
 
 
-procedure pminim(rows)			#: minimize pattern
+# minimize pattern
+procedure pminim(rows)			
    local halfw, halfh, i
 
 #  if (*rows ~= *rows[1]) | (*rows % 2 ~= 0) then return rows
@@ -313,7 +322,8 @@ end
 #  degrees clockwise; if "ccw" or "-90", 90 degrees counter-clockwise.
 #  If dir is "180", rotation is 180 degrees.  The default is "cw".
 
-procedure protate(rows, dir)		#: rotate pattern
+# rotate pattern
+procedure protate(rows, dir)		
    local newrows, i, row, pix
 
    /dir := "cw"
@@ -349,7 +359,8 @@ end
 #
 #  Trim border from pattern;  c gives color; default "1"
 
-procedure ptrim(rows, c)		#: trim pattern
+# trim pattern
+procedure ptrim(rows, c)		
    
    /c := '1'
    c := cset(c)
@@ -375,7 +386,8 @@ end
 #
 #  Centers non-white portion of pattern
 
-procedure pcenter(rows, w, h)		#: center pattern
+# center pattern
+procedure pcenter(rows, w, h)		
    local rw, rh, vert, horz, t, l
 
    rows := ptrim(rows)

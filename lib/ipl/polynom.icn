@@ -29,7 +29,8 @@ import
    ipl.strings(csort),
    ipl.tables(keylist)
 
-procedure str2poly(str)			#: convert string to polynomial
+# convert string to polynomial
+procedure str2poly(str)			
    local poly, var, vars, term, factor, power
 
    poly := table(0)
@@ -56,7 +57,8 @@ procedure str2poly(str)			#: convert string to polynomial
 
 end
 
-procedure polyadd(poly1, poly2)		#: add polynomials
+# add polynomials
+procedure polyadd(poly1, poly2)		
    local poly, keys, k
 
    keys := sort(set(keylist(poly1)) ++ set(keylist(poly2)))
@@ -70,7 +72,8 @@ procedure polyadd(poly1, poly2)		#: add polynomials
 
 end
 
-procedure polysub(poly1, poly2)		#: subtract polynomials
+# subtract polynomials
+procedure polysub(poly1, poly2)		
    local poly, keys, k
 
    keys := sort(set(keylist(poly1)) ++ set(keylist(poly2)))
@@ -84,7 +87,8 @@ procedure polysub(poly1, poly2)		#: subtract polynomials
 
 end
 
-procedure polymul(poly1, poly2)		#: multiply polynomials
+# multiply polynomials
+procedure polymul(poly1, poly2)		
    local poly, keys1, keys2, k1, k2
 
    keys1 := keylist(poly1)
@@ -100,7 +104,8 @@ procedure polymul(poly1, poly2)		#: multiply polynomials
 
 end
 
-procedure polyexp(poly1, i)		#: exponentiate polynomial
+# exponentiate polynomial
+procedure polyexp(poly1, i)		
    local poly
 
    poly := copy(poly1)
@@ -112,7 +117,8 @@ procedure polyexp(poly1, i)		#: exponentiate polynomial
 
 end
 
-procedure poly2str(poly)		#: polynomial to string
+# polynomial to string
+procedure poly2str(poly)		
    local str, keys, k, count, var
 
    keys := keylist(poly)
@@ -139,7 +145,8 @@ procedure poly2str(poly)		#: polynomial to string
 
 end
 
-procedure poly2profile(poly)		#: polynomial to profile sequence
+# polynomial to profile sequence
+procedure poly2profile(poly)		
    local str, keys, k
 
    keys := keylist(poly)

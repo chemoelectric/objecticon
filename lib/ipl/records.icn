@@ -22,7 +22,8 @@
 
 package ipl.records
 
-procedure field(R, i)			#: return name of field R[i]
+# return name of field R[i]
+procedure field(R, i)			
 
    name(R[i]) ? {
       tab(upto('.') + 1)
@@ -31,7 +32,8 @@ procedure field(R, i)			#: return name of field R[i]
 
 end
 
-procedure fieldnum(R, s)		#: return index of field R.s
+# return index of field R.s
+procedure fieldnum(R, s)		
    local i
 
    R := copy(R)

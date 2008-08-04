@@ -43,7 +43,8 @@ record colorway(table)		# note:  "table" does not conflict
 $define Width 50		# width of image produced in way2image()
 
 
-procedure list2way(L)		#: convert list of color specs. to colorway
+# convert list of color specs. to colorway
+procedure list2way(L)		
    local cw, i, c
 
    cw := colorway(table())
@@ -61,7 +62,8 @@ end
 
 #  Note:  code is identical to procedure above.
 
-procedure file2way(f)		#: convert file of color specs. to color way
+# convert file of color specs. to color way
+procedure file2way(f)		
    local cw, i, c
 
    cw := colorway(table())
@@ -77,19 +79,22 @@ procedure file2way(f)		#: convert file of color specs. to color way
 
 end
 
-procedure way2list(cw)		#: convert color way to list of colors
+# convert color way to list of colors
+procedure way2list(cw)		
 
    return kvallist(cw.table)
 
 end
 
-procedure way2file(cw)		#: convert color way to file of colors
+# convert color way to file of colors
+procedure way2file(cw)		
 
    every write(!kvallist(cw.table))
 
 end
 
-procedure way2image(cw)		#: create image from color way
+# create image from color way
+procedure way2image(cw)		
    local win, y
 
    win := WOpen("canvas=hidden", "size="|| Width || "," || *cw.table) |
@@ -110,19 +115,22 @@ procedure way2image(cw)		#: create image from color way
 
 end
 
-procedure saveway(cw, output)	#: save color way
+# save color way
+procedure saveway(cw, output)	
 
    xencodet(cw, output, "colorway") | fail
 
 end
 
-procedure loadway(input)	#: load color way
+# load color way
+procedure loadway(input)	
 
     return xdecodet(input, "colorway") | fail
 
 end
 
-procedure image2way(s, direction)	#: convert image to color way
+# convert image to color way
+procedure image2way(s, direction)	
    local result, width, color, old_color, stripes, w, h
 
    /direction := "horizontal"

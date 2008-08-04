@@ -59,7 +59,8 @@ import
 
 record rational(numer, denom, sign)
 
-procedure addrat(r1, r2)		#: sum of rationals
+# sum of rationals
+procedure addrat(r1, r2)		
    local denom, numer, div
 
    r1 := ratred(r1)
@@ -77,7 +78,8 @@ procedure addrat(r1, r2)		#: sum of rationals
 
 end
 
-procedure divrat(r1, r2)		#: divide rationals.
+# divide rationals.
+procedure divrat(r1, r2)		
 
    r1 := ratred(r1)
    r2 := ratred(r2)
@@ -86,7 +88,8 @@ procedure divrat(r1, r2)		#: divide rationals.
 
 end
  
-procedure medrat(r1, r2)		#: form rational mediant
+# form rational mediant
+procedure medrat(r1, r2)		
    local numer, denom, div
 
    r1 := ratred(r1)
@@ -101,7 +104,8 @@ procedure medrat(r1, r2)		#: form rational mediant
 
 end
  
-procedure mpyrat(r1, r2)		#: multiply rationals
+# multiply rationals
+procedure mpyrat(r1, r2)		
    local numer, denom, div
 
    r1 := ratred(r1)
@@ -116,7 +120,8 @@ procedure mpyrat(r1, r2)		#: multiply rationals
 
 end
 
-procedure negrat(r)		#: negative of rational
+# negative of rational
+procedure negrat(r)		
 
    r := ratred(r)
 
@@ -124,7 +129,8 @@ procedure negrat(r)		#: negative of rational
 
 end
 
-procedure rat2real(r)		#: floating-point approximation of rational
+# floating-point approximation of rational
+procedure rat2real(r)		
 
    r := ratred(r)
 
@@ -132,7 +138,8 @@ procedure rat2real(r)		#: floating-point approximation of rational
 
 end
   
-procedure rat2str(r)		#: convert rational to string
+# convert rational to string
+procedure rat2str(r)		
 
    r := ratred(r)
 
@@ -140,7 +147,8 @@ procedure rat2str(r)		#: convert rational to string
 
 end
 
-procedure ratred(r)		#: reduce rational to lowest terms
+# reduce rational to lowest terms
+procedure ratred(r)		
    local div
 
    if r.denom = 0 then runerr(501)
@@ -168,7 +176,8 @@ end
 $define MAXITER 40		# maximum number of iterations
 $define PRECISION 1e-10		# default conversion precision
 
-procedure real2rat(r, p)	#: convert to rational with precision p
+# convert to rational with precision p
+procedure real2rat(r, p)	
    local t, d, i, j
    static x, y
    initial { x := list(MAXITER); y := list(MAXITER + 2) }
@@ -190,7 +199,8 @@ procedure real2rat(r, p)	#: convert to rational with precision p
 
 end
 
-procedure reciprat(r)		#: reciprocal of rational
+# reciprocal of rational
+procedure reciprat(r)		
 
    r := ratred(r)
 
@@ -198,7 +208,8 @@ procedure reciprat(r)		#: reciprocal of rational
 
 end
 
-procedure str2rat(s)		# convert string to rational
+# convert string to rational
+procedure str2rat(s)		
    local numer, denom
 
    s ? {
@@ -213,7 +224,8 @@ procedure str2rat(s)		# convert string to rational
 
 end
 
-procedure subrat(r1, r2)		#: difference of rationals
+# difference of rationals
+procedure subrat(r1, r2)		
 
    r1 := ratred(r1)
    r2 := ratred(r2)

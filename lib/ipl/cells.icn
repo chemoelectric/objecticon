@@ -65,7 +65,8 @@ import
 record Cell(n, m, color)
 record Panel(window, n, m, size, fg, bg, pg)
 
-procedure makepanel(n, m, cellsize, fg, bg, pg)		#: make panel of cells
+# make panel of cells
+procedure makepanel(n, m, cellsize, fg, bg, pg)		
    local window,   width, height, panel
 
    /fg := "black"
@@ -118,7 +119,8 @@ procedure matrixpanel(matrix, cellsize, fg, bg, pg)
 
 end
 
-procedure colorcell(panel, n, m, color)		#: color cell in panel
+# color cell in panel
+procedure colorcell(panel, n, m, color)		
    local cellsize
 
    if not(integer(n) & integer(m)) then
@@ -135,7 +137,8 @@ procedure colorcell(panel, n, m, color)		#: color cell in panel
  
 end
 
-procedure colorcells(panel, matrix)		#: color all cells in panel
+# color all cells in panel
+procedure colorcells(panel, matrix)		
    local i, j, n, m, cellsize
 
    cellsize := panel.size
@@ -160,7 +163,8 @@ procedure colorcells(panel, matrix)		#: color all cells in panel
  
 end
 
-procedure tiercells(panel, tier)		#: color all cells in panel
+# color all cells in panel
+procedure tiercells(panel, tier)		
    local i, j, n, m, cellsize, matrix
 
    cellsize := panel.size

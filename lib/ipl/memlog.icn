@@ -25,7 +25,8 @@
 
 package ipl.memlog
 
-procedure memlog(f)		#: log memory usage
+# log memory usage
+procedure memlog(f)		
    local sused, bused, salloc, balloc, scoll, bcoll
 
    every sused := &storage \ 2

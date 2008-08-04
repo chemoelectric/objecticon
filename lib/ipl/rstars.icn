@@ -34,7 +34,8 @@ global size
 #  centered at x and y, with scaled radius, with an initial offset angle,
 #  and with a specified frame size.
 
-procedure rstar(x, y, n, j, scale, offset, size)	#:  regular star
+# regular star
+procedure rstar(x, y, n, j, scale, offset, size)	
    local i, jangle, angle
 
    /x := 100				# defaults

@@ -104,7 +104,8 @@ procedure AskDialog(win, caption)
 
 end
 
-procedure TextDialog(			#: text dialog
+# text dialog
+procedure TextDialog(			
    win, captions, labels, defaults, widths, buttons, index
    )
    local maxl, lead, pad, default_button, i, maxw, cwidth, id, label_width
@@ -199,7 +200,8 @@ procedure TextDialog(			#: text dialog
 
 end
 
-procedure ToggleDialog(			#: toggle dialog
+# toggle dialog
+procedure ToggleDialog(			
    win, captions, labels, defaults, buttons, index
    )
    local maxl, lead, pad, default_button, i, maxw, cwidth, id, label_width
@@ -288,7 +290,8 @@ procedure ToggleDialog(			#: toggle dialog
 
 end
 
-procedure SelectDialog( 		#: selection dialog
+# selection dialog
+procedure SelectDialog( 		
    win, captions, labels, deflt, buttons, index
    ) 
    local maxl, lead, pad, default_button,  maxw, cwidth, label_width
@@ -380,7 +383,8 @@ $endif
 
 end
 
-procedure Notice(captions[])		#: notice dialog
+# notice dialog
+procedure Notice(captions[])		
    local win, temp_win
    static type
 
@@ -410,7 +414,8 @@ $endif
 
 end
 
-procedure SaveDialog(win, caption, filename, len)	#: save dialog
+# save dialog
+procedure SaveDialog(win, caption, filename, len)	
    local temp_win
    static type
 
@@ -447,7 +452,8 @@ $endif
 
 end
 
-procedure OpenDialog(win, caption, filename, len)	#: open dialog
+# open dialog
+procedure OpenDialog(win, caption, filename, len)	
    local temp_win
    static type
 
@@ -503,7 +509,8 @@ $define SliderWidth	 15	# width of one slider
 $define SliderPad	  5	# distance between sliders
 $define MaxStaticCol	200	# maximum colors before recycling
 
-procedure ColorDialog(			#: color dialog
+# color dialog
+procedure ColorDialog(			
    win, captions, refcolor, callback, id
    )
    local x1, x2, dx, y, bw, lead, pad, dialog, box_id, temp_win
@@ -596,7 +603,8 @@ $endif
 
 end
 
-procedure cdl_slider(dialog, id, x, y, low, high, init) 	# place a slider
+# place a slider
+procedure cdl_slider(dialog, id, x, y, low, high, init) 	
    local v
 
    v := Vvert_slider(dialog.win, cdl_setval, id,
@@ -605,7 +613,8 @@ procedure cdl_slider(dialog, id, x, y, low, high, init) 	# place a slider
    return v
 end
 
-procedure cdl_init()			# initialize non-vidget part of dialog
+# initialize non-vidget part of dialog
+procedure cdl_init()			
    local r
 
    r := cdl_data.rect
@@ -626,14 +635,16 @@ procedure cdl_init()			# initialize non-vidget part of dialog
    return
 end
 
-procedure cdl_exit(vidget, s)		# save position and button name on exit
+# save position and button name on exit
+procedure cdl_exit(vidget, s)		
    dialog_button := vidget.s
    FreeColor(cdl_data.rect.win, \cdl_data.mutable)
    EraseArea(cdl_data.rect.win)
    return
 end
 
-procedure cdl_setval(v, x)		# set value in response to slider motion
+# set value in response to slider motion
+procedure cdl_setval(v, x)		
    static recurse
 
    if /recurse then {			# if not a recursive call
@@ -651,7 +662,8 @@ procedure cdl_setval(v, x)		# set value in response to slider motion
    return
 end
 
-procedure cdl_sethsv()			# set h/s/v values from r/g/b
+# set h/s/v values from r/g/b
+procedure cdl_sethsv()			
    local c
 
    HSV(c := cdl_data.r || "," || cdl_data.g || "," || cdl_data.b) ? {
@@ -665,7 +677,8 @@ procedure cdl_sethsv()			# set h/s/v values from r/g/b
    return
 end
 
-procedure cdl_setrgb()			# set r/g/b values from h/s/v
+# set r/g/b values from h/s/v
+procedure cdl_setrgb()			
    local c
 
    (c := HSVValue(cdl_data.h || "/" || cdl_data.s || "/" || cdl_data.v)) ? {
@@ -679,7 +692,8 @@ procedure cdl_setrgb()			# set r/g/b values from h/s/v
    return
 end
 
-procedure cdl_setcolor(c)		# display new color and invoke callback
+# display new color and invoke callback
+procedure cdl_setcolor(c)		
    local r, win, x1, x2, y, dy
 
    r := cdl_data.rect
@@ -726,7 +740,8 @@ end
 $define BorderWidth 4
 $define ShadowWidth 4
 
-procedure Popup(args[])			#: create popup subwindow
+# create popup subwindow
+procedure Popup(args[])			
    local win, x, y, w, h, xx, yy, ww, hh, dx, dy,  proc, retv, ampwin, save
 
    # Get parameters.

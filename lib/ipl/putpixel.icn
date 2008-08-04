@@ -54,7 +54,8 @@ global XPP_qtab, XPP_gtab, XPP_dtab, XPP_rtab, XPP_gadjust
 
 #  PixInit -- set parameters and build tables
 
-procedure PixInit(gamma, cquant, gquant, drandom)  #: initialize pixel processing
+# initialize pixel processing
+procedure PixInit(gamma, cquant, gquant, drandom)  
    local PIXRANGE, NRANDOM, cstep, gstep, indx, appx, gcor, i
 
    /gamma := 1.0			# gamma correction factor
@@ -108,7 +109,8 @@ end
 
 #  PutPixel -- write a pixel
 
-procedure PutPixel(win, x, y, color)		   #: write pixel
+# write pixel
+procedure PutPixel(win, x, y, color)		   
    local i, r, g, b
 
    initial if /XPP_qtab then PixInit()

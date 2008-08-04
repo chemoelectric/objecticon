@@ -64,7 +64,8 @@ import
 
 global random
 
-procedure rand_num(a_, c_, m_)		#: random number generator
+# random number generator
+procedure rand_num(a_, c_, m_)		
    static a, c, m
 
    initial {
@@ -78,7 +79,8 @@ procedure rand_num(a_, c_, m_)		#: random number generator
      
 end
 
-procedure rand_int(i)			#: model ?i
+# model ?i
+procedure rand_int(i)			
    static scale
 	
    initial scale := 1.0 / (2 ^ 31 - 1)
@@ -89,7 +91,8 @@ procedure rand_int(i)			#: model ?i
 
 end
 
-procedure randomize()			#: randomize
+# randomize
+procedure randomize()			
    static ncalls
 
    initial ncalls := 0
@@ -103,13 +106,15 @@ procedure randomize()			#: randomize
 
 end
 
-procedure randrange(min, max)		#: random number in range
+# random number in range
+procedure randrange(min, max)		
 
    return min - 1 + ?(max - min + 1)
 
 end
 
-procedure randrangeseq(i, j)		#: random sequence in range
+# random sequence in range
+procedure randrangeseq(i, j)		
    local x, m, a, c, n
 
    n := j - i + 1
@@ -130,14 +135,16 @@ procedure randrangeseq(i, j)		#: random sequence in range
 
 end
 
-procedure randseq(seed)			#: generate &random
+# generate &random
+procedure randseq(seed)			
 
    suspend &random := seed
    suspend |?1 & &random
 
 end
 
-procedure rng(a, c, m, x)	#: random number generator
+# random number generator
+procedure rng(a, c, m, x)	
 
    /a := 1103515245			# multiplicative constant
    /c := 453816694			# additive constant
@@ -154,7 +161,8 @@ end
 #  characters randomly rearranged is produced. In the case that x is
 #  list or records the elements are randomly rearranged.
    
-procedure shuffle(x)			#: shuffle
+# shuffle
+procedure shuffle(x)			
    local i
 
    x := string(x)		# may fail

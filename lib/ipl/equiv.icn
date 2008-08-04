@@ -54,7 +54,8 @@
 
 package ipl.equiv
 
-procedure equiv(x1,x2,done)		#: compare values for equivalence
+# compare values for equivalence
+procedure equiv(x1,x2,done)		
    local code, i
 
    if x1 === x2 then return x2		# Covers everything but structures.

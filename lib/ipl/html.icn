@@ -114,7 +114,8 @@
 
 package ipl.html
 
-procedure htchunks(f)			#: generate chunks of HTML file
+# generate chunks of HTML file
+procedure htchunks(f)			
 
 
    "" ? repeat {
@@ -175,7 +176,8 @@ end
 
 ##  htrefs(f) -- generate references from HTML file f
 
-procedure htrefs(f)			#: generate references from HTML file
+# generate references from HTML file
+procedure htrefs(f)			
    local tag, tagname, kwset, s
    static ttable
    initial {
@@ -213,7 +215,8 @@ end
 
 ##  httag(s) -- return the name of the HTML tag s
 
-procedure httag(s)			#: extract name of HTML tag
+# extract name of HTML tag
+procedure httag(s)			
    static idset, wset, lcase, ucase
    initial {
       idset := &letters ++ &digits ++ '.-/'
@@ -233,7 +236,8 @@ end
 
 ##  htvals(s) -- generate tag values of HTML tag s
 
-procedure htvals(s)			#: generate values in HTML tag
+# generate values in HTML tag
+procedure htvals(s)			
    local kw
    static idset, wset, qset, lcase, ucase
    initial {
@@ -275,7 +279,8 @@ end
 
 #  urlmerge(base,new) -- merge URLs
 
-procedure urlmerge(base, new)		#: merge URLs
+# merge URLs
+procedure urlmerge(base, new)		
    local protocol, host, path
    static notslash
    initial notslash := ~'/'

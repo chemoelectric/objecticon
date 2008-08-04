@@ -118,7 +118,8 @@ record ddf_decoder(	# field decoder record
 #  Opens a DDF file, decodes the header, and returns an opaque handle h
 #  for use with ddfread(h).  Fails if any problems are found.
 
-procedure ddfopen(fname)		#: open DDF file
+# open DDF file
+procedure ddfopen(fname)		
    local f, h, p, l, t, e
 
    if type(fname) == "file" then
@@ -163,7 +164,8 @@ end
 #  Returns a list of lists, each sublist consisting of a
 #  tag name followed by the associated data values
 
-procedure ddfread(handle)		#: read DDF record
+# read DDF record
+procedure ddfread(handle)		
    local h, p, dlist, code, data, drec, sublist, e
 
    h := handle.header
@@ -191,7 +193,8 @@ end
 
 #  ddfclose(handle) -- close DDF file
 
-procedure ddfclose(handle)		#: close DDF file
+# close DDF file
+procedure ddfclose(handle)		
    close(\handle.file)
    every !handle := &null
    return
@@ -359,41 +362,48 @@ end
 
 
 
-procedure ddf_str(cs)			# delimited string
+# delimited string
+procedure ddf_str(cs)			
    return 1(tab(upto(cs)), move(1))
 end
 
-procedure ddf_strn(n)			# string of n characters
+# string of n characters
+procedure ddf_strn(n)			
    return move(n)
 end
 
-procedure ddf_int(cs)			# delimited integer
+# delimited integer
+procedure ddf_int(cs)			
    local s
    s := tab(upto(cs))
    move(1)
    return integer(s) | 0
 end
 
-procedure ddf_intn(n)			# integer of n digits
+# integer of n digits
+procedure ddf_intn(n)			
    local s
    s := move(n)
    return integer(s) | 0
 end
 
-procedure ddf_real(cs)			# delimited real
+# delimited real
+procedure ddf_real(cs)			
    local s
    s := tab(upto(cs))
    move(1)
    return real(s) | 0.0
 end
 
-procedure ddf_realn(n)			# real of n digits
+# real of n digits
+procedure ddf_realn(n)			
    local s
    s := move(n)
    return real(s) | 0.0
 end
 
-procedure ddf_binn(n)			# binary value of n bytes
+# binary value of n bytes
+procedure ddf_binn(n)			
    local v, c
    v := c := ord(move(1))
    every 2 to n do
@@ -404,7 +414,8 @@ procedure ddf_binn(n)			# binary value of n bytes
       return v - ishift(1, 8 * n)
 end
 
-procedure ddf_repeat(lst)		# repeat sublist to EOR
+# repeat sublist to EOR
+procedure ddf_repeat(lst)		
    local e
    repeat {
       every e := !lst do {

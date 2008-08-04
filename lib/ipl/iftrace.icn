@@ -39,7 +39,8 @@ invocable all
 
 package ipl.iftrace
 
-procedure iftrace(args[])		#: trace built-in functions
+# trace built-in functions
+procedure iftrace(args[])		
 
 
    every set_trace(!args)

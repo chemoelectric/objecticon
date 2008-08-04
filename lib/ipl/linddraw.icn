@@ -35,7 +35,8 @@ import
 #  parameters are the line length, the angle delta between lines, and
 #  the number of generations.  Drawing starts at x,y.
 
-procedure linddraw(		#: draw L-system
+# draw L-system
+procedure linddraw(		
    x, y, axiom, rewrite, length, delta, gener, delay
    )
    local c

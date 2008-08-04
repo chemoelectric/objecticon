@@ -55,7 +55,8 @@ import
 
 #  Drag(x, y, w, h) -- opaque drag
 
-procedure Drag(win, x, y, w, h)			#: opaque rectangle drag
+# opaque rectangle drag
+procedure Drag(win, x, y, w, h)			
    local dx, dy, x0, y0, x1, y1
    local behind, xoff, yoff, xnew, ynew, xshift, yshift
 
@@ -138,7 +139,8 @@ end
 
 #  DragOutline(x, y, w, h) -- outlined drag
 
-procedure DragOutline(win, x, y, w, h)		#: outlined rectangle drag
+# outlined rectangle drag
+procedure DragOutline(win, x, y, w, h)		
    local wrev, xoff, yoff
 
    if type(win) ~== "window" then

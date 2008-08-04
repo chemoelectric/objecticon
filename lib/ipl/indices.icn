@@ -38,7 +38,8 @@
 
 package ipl.indices
 
-procedure indices(spec, last)		#: generate indices
+# generate indices
+procedure indices(spec, last)		
    local item, hi, lo, result
 
    if \last then last := (0 < integer(last)) | fail

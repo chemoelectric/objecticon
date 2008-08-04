@@ -36,7 +36,8 @@ package ipl.adjuncts
 
 global _slash, _baselen, _delimiter, _OS_offset, firstline
 
-procedure Set_OS()                   #: set global OS features
+# set global OS features
+procedure Set_OS()                   
 
       # delimiter for indexed values      
       _delimiter := char(255)
@@ -64,7 +65,8 @@ procedure Set_OS()                   #: set global OS features
       return
 end
 
-procedure Basename(s)                  #: obtain base filename
+# obtain base filename
+procedure Basename(s)                  
 
    # global _slash
    s ? {
@@ -74,7 +76,8 @@ procedure Basename(s)                  #: obtain base filename
 end
 
 
-procedure Pathname(s)                  #: obtain path of filename
+# obtain path of filename
+procedure Pathname(s)                  
 
    local s2
    # global _slash
@@ -87,7 +90,8 @@ procedure Pathname(s)                  #: obtain path of filename
 end
 
 
-procedure getidxname(FNAME)     #: obtain index from datafile name
+# obtain index from datafile name
+procedure getidxname(FNAME)     
 
    #
    # Discard path component.  Cut basename down to a small enough
@@ -100,7 +104,8 @@ procedure getidxname(FNAME)     #: obtain index from datafile name
 end
 
 
-procedure Strip(s,c)                   #: remove chars from string
+# remove chars from string
+procedure Strip(s,c)                   
 
    local s2
 

@@ -87,7 +87,8 @@ package ipl.graphics
 
 #   LeftString(x, y, s) -- draw string left-justified at (x,y).
 
-procedure LeftString(win, x, y, s)		#: draw left-justified string
+# draw left-justified string
+procedure LeftString(win, x, y, s)		
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -102,7 +103,8 @@ end
 
 #   CenterString(x, y, s) -- draw string centered about (x,y).
 
-procedure CenterString(win, x, y, s)		#: draw centered string
+# draw centered string
+procedure CenterString(win, x, y, s)		
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -118,7 +120,8 @@ end
 
 #   RightString(x, y, s) -- draw string right-justified at (x,y).
 
-procedure RightString(win, x, y, s)		#: draw right-justified string
+# draw right-justified string
+procedure RightString(win, x, y, s)		
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -134,7 +137,8 @@ end
 
 #   ClearOutline(x, y, w, h) -- draw rectangle and fill background.
 
-procedure ClearOutline(win, x, y, w, h)		#: draw and clear rectangle
+# draw and clear rectangle
+procedure ClearOutline(win, x, y, w, h)		
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -161,7 +165,8 @@ end
 
 #   Translate(dx, dy, w, h) -- add translation and possibly clipping.
 
-procedure Translate(win, dx, dy, w, h)		#: add translation
+# add translation
+procedure Translate(win, dx, dy, w, h)		
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -177,7 +182,8 @@ end
 
 #  Sweep() -- sweep out area with mouse, return bounds
 
-procedure Sweep(win)				#: sweep area with mouse
+# sweep area with mouse
+procedure Sweep(win)				
    local x, y, w, h, wmin, wmax, hmin, hmax
 
    /win := &window
@@ -215,7 +221,8 @@ end
 
 #  Zoom(win1, win2, x1, y1, w1, h1, x2, y2, w2, h2) -- copy and distort.
 
-procedure Zoom(args[])				#: zoom image
+# zoom image
+procedure Zoom(args[])				
    local win1, x1, y1, w1, h1
    local win2, x2, y2, w2, h2
    local x, y, scr
@@ -268,7 +275,8 @@ end
 
 $define CaptureChunk 100
 
-procedure Capture(win, pal, x, y, w, h)		#: capture image as string
+# capture image as string
+procedure Capture(win, pal, x, y, w, h)		
    local a, c, k, s, cmap
    static type
 

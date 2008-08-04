@@ -30,7 +30,8 @@ package ipl.xforms
 import
    ipl.matrix(identity_matrix, mult_matrix)
 
-procedure transform(p, M)		#: transform point list by matrix
+# transform point list by matrix
+procedure transform(p, M)		
    local pl, i
 
    # convert p to a matrix for matrix multiply...
@@ -51,7 +52,8 @@ procedure transform(p, M)		#: transform point list by matrix
 
 end
 
-procedure transform_points(pl,M)	#: transform point list
+# transform point list
+procedure transform_points(pl,M)	
    local xformed
 
    every put(xformed := [], !transform(!pl,M))
@@ -60,7 +62,8 @@ procedure transform_points(pl,M)	#: transform point list
 
 end
    
-procedure set_scale(x, y)		#: matrix for scaling
+# matrix for scaling
+procedure set_scale(x, y)		
    local M
 
    M := identity_matrix(3,3)
@@ -72,7 +75,8 @@ procedure set_scale(x, y)		#: matrix for scaling
 
 end
 
-procedure set_trans(x, y)		#: matrix for translation
+# matrix for translation
+procedure set_trans(x, y)		
    local M
 
    M := identity_matrix(3,3)
@@ -84,7 +88,8 @@ procedure set_trans(x, y)		#: matrix for translation
 
 end
 
-procedure set_xshear(x)			#: matrix for x shear
+# matrix for x shear
+procedure set_xshear(x)			
    local M
 
    M :=  identity_matrix(3,3)
@@ -95,7 +100,8 @@ procedure set_xshear(x)			#: matrix for x shear
 
 end
 
-procedure set_yshear(y)			#: matrix for y shear
+# matrix for y shear
+procedure set_yshear(y)			
    local M
 
    M := identity_matrix(3,3)
@@ -106,7 +112,8 @@ procedure set_yshear(y)			#: matrix for y shear
 
 end
 
-procedure set_rotate(x)			#: matrix for rotation
+# matrix for rotation
+procedure set_rotate(x)			
    local M
 
    M := identity_matrix(3,3)

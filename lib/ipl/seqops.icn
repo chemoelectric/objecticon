@@ -117,7 +117,8 @@ record node(name, seqlist)
 
 $define MaxTerms 300
 
-procedure copyl(xargs[])		#: copy list of lists
+# copy list of lists
+procedure copyl(xargs[])		
    local new_xargs
 
    new_xargs := []
@@ -207,7 +208,8 @@ procedure get_analysis(seq)
 
 end
 
-procedure get_scollate(seq)		#: find collation in sequence
+# find collation in sequence
+procedure get_scollate(seq)		
    local bound, deltas, i, j, poses, positions, oper, seqs
    local   k, count, oseq, m
 
@@ -252,7 +254,8 @@ procedure get_scollate(seq)		#: find collation in sequence
 
 end
 
-procedure get_splace(seq)		#: find motif along a path in sequence
+# find motif along a path in sequence
+procedure get_splace(seq)		
    local i, j, motif,  path
 
    if i := sconstant(seq) then return "srepeat(" || i || "," || *seq || ")"
@@ -270,7 +273,8 @@ procedure get_splace(seq)		#: find motif along a path in sequence
 
 end
 
-procedure get_srepeat(seq)		#: find repeat in sequence
+# find repeat in sequence
+procedure get_srepeat(seq)		
    local i
 
    i := speriod(seq) | fail
@@ -350,7 +354,8 @@ procedure get_sruns(seq)
 
 end
 
-procedure is_scompact(x)		#: test sequence for compactness
+# test sequence for compactness
+procedure is_scompact(x)		
    local bound
 
    x := spromote(x)
@@ -362,7 +367,8 @@ procedure is_scompact(x)		#: test sequence for compactness
 
 end
 
-procedure pimage(s)			# DOES THIS BELONG HERE?
+# DOES THIS BELONG HERE?
+procedure pimage(s)			
    local result, x
 
    result := ""
@@ -377,7 +383,8 @@ procedure pimage(s)			# DOES THIS BELONG HERE?
 
 end
 
-procedure remod(seq, p)			#: handle modulus
+# handle modulus
+procedure remod(seq, p)			
    local nseq, bound
 
    nseq := sunmod(seq)
@@ -419,7 +426,8 @@ procedure sanalysis(x)
 
 end
 
-procedure sbinop(op, xargs[])		#: binary operation on terms
+# binary operation on terms
+procedure sbinop(op, xargs[])		
    local lseq, i, x1, x2
 
    x1 := spromote(xargs[1])
@@ -436,13 +444,15 @@ procedure sbinop(op, xargs[])		#: binary operation on terms
 
 end
 
-procedure sbound(xargs[])		#: compute sequence upper bound  FIX!
+# compute sequence upper bound  FIX!
+procedure sbound(xargs[])		
 
    return sort(xargs)[-1]
 
 end
 
-procedure scollate(xargs[])		#: sequence term collation
+# sequence term collation
+procedure scollate(xargs[])		
    local lseq, i, order
 
    if \node_gen then return node("scollate", xargs)
@@ -466,7 +476,8 @@ procedure scollate(xargs[])		#: sequence term collation
 
 end
 
-procedure scompress(xargs[])		#: compact sequence
+# compact sequence
+procedure scompress(xargs[])		
    local unique, target, x
 
    if \node_gen then return node("compress", xargs)
@@ -483,7 +494,8 @@ procedure scompress(xargs[])		#: compact sequence
 
 end
 
-procedure sconcat(xargs[])		#: concatenate sequences
+# concatenate sequences
+procedure sconcat(xargs[])		
    local lseq
 
    if \node_gen then return node("sconcat", xargs)
@@ -496,14 +508,16 @@ procedure sconcat(xargs[])		#: concatenate sequences
 
 end
 
-procedure sconstant(seq)		#: test for constant sequence
+# test for constant sequence
+procedure sconstant(seq)		
 
    if *set(seq) = 1 then return !seq
    else fail
 
 end
 
-procedure scpal(xargs[])		#: closed sequence palindrome
+# closed sequence palindrome
+procedure scpal(xargs[])		
    local lseq, x1, x2, i
 
    if \node_gen then return node("scpal", xargs)
@@ -523,7 +537,8 @@ procedure scpal(xargs[])		#: closed sequence palindrome
 
 end
 
-procedure sdecimate(xargs[])		#: decimate sequence
+# decimate sequence
+procedure sdecimate(xargs[])		
    local lseq, j, k, x1, x2
 
    x1 := spromote(xargs[1])
@@ -545,7 +560,8 @@ procedure sdecimate(xargs[])		#: decimate sequence
 end
 
 
-procedure sdecollate(order, x)		#: sequence decollation
+# sequence decollation
+procedure sdecollate(order, x)		
    local lseq, i, j
 
    x := spromote(x)
@@ -568,7 +584,8 @@ procedure sdecollate(order, x)		#: sequence decollation
 
 end
 
-procedure sdelta(seq)			#: sequence delta
+# sequence delta
+procedure sdelta(seq)			
    local i, lseq, j
 
    if *seq < 2 then fail
@@ -588,7 +605,8 @@ procedure sdelta(seq)			#: sequence delta
 
 end
 
-procedure sdirection(x)			#: sequence delta "direction"
+# sequence delta "direction"
+procedure sdirection(x)			
    local lseq, i
 
    x := sdelta(spromote(x)) | fail
@@ -620,7 +638,8 @@ procedure sdistrib(x)
 
 end
 
-procedure sequiv(x1, x2)		# test for sequence equivalence
+# test for sequence equivalence
+procedure sequiv(x1, x2)		
    local i
 
    x1 := spromote(x1)
@@ -635,7 +654,8 @@ procedure sequiv(x1, x2)		# test for sequence equivalence
 
 end
 
-procedure sextend(xargs[])		#: extend sequence
+# extend sequence
+procedure sextend(xargs[])		
    local lseq, part, i, x1
 
    if \node_gen then return node("sextend", xargs)
@@ -655,7 +675,8 @@ procedure sextend(xargs[])		#: extend sequence
 
 end
 
-procedure sflatten(s)		# flatten packet sequence  BELONGS HERE?
+# flatten packet sequence  BELONGS HERE?
+procedure sflatten(s)		
    local lseq, x
 
    lseq := []
@@ -668,7 +689,8 @@ procedure sflatten(s)		# flatten packet sequence  BELONGS HERE?
 
 end
 
-procedure sground(seq, i)		#: ground sequence to i
+# ground sequence to i
+procedure sground(seq, i)		
    local j
 
    j := smin ! seq
@@ -679,7 +701,8 @@ procedure sground(seq, i)		#: ground sequence to i
 
 end
 
-procedure shaft_period(x1, x2)		#: shaft period
+# shaft period
+procedure shaft_period(x1, x2)		
 
 
    x1 := spromote(x1)
@@ -689,7 +712,8 @@ procedure shaft_period(x1, x2)		#: shaft period
 
 end
 
-procedure simage(x, limit)		#: string image of sequence
+# string image of sequence
+procedure simage(x, limit)		
    local str
 
    x := spromote(x)
@@ -708,7 +732,8 @@ procedure simage(x, limit)		#: string image of sequence
 
 end
 
-procedure simageb(seq)			#: bracketed sequence image
+# bracketed sequence image
+procedure simageb(seq)			
 
    if *seq = 1 then return seq[1]
 
@@ -716,7 +741,8 @@ procedure simageb(seq)			#: bracketed sequence image
 
 end
 
-procedure sinit()			#: initialize sequence operations
+# initialize sequence operations
+procedure sinit()			
 
    saltparity := sparity
    scompact := scompress
@@ -729,7 +755,8 @@ procedure sinit()			#: initialize sequence operations
 
 end
 
-procedure slayer(xargs[])		#: layer sequences
+# layer sequences
+procedure slayer(xargs[])		
    local new_xargs, i, shift
 
    if \node_gen then return node("slayer", xargs)
@@ -749,13 +776,15 @@ procedure slayer(xargs[])		#: layer sequences
 
 end
 
-procedure slength(x)			#: compute sequence length
+# compute sequence length
+procedure slength(x)			
 
    return *spromote(x)
 
 end
 
-procedure slocate(xargs[])		#: sequences of first positions of terms
+# sequences of first positions of terms
+procedure slocate(xargs[])		
    local count, i, lseq, x1, x2
 
    if \node_gen then return node("slocate", xargs)
@@ -777,7 +806,8 @@ procedure slocate(xargs[])		#: sequences of first positions of terms
 
 end
 
-procedure smap(xargs[])			#: map terms in sequence
+# map terms in sequence
+procedure smap(xargs[])			
    local i, smaptbl, x1, x2, x3
    static tdefault
 
@@ -801,13 +831,15 @@ procedure smap(xargs[])			#: map terms in sequence
 
 end
 
-procedure smin(xargs[])			#: compute sequence lower bound	FIX
+# compute sequence lower bound	FIX
+procedure smin(xargs[])			
 
    return sort(xargs)[1]
 
 end
 
-procedure smissing(x)			#: missing terms in sequence  BOGUS??
+# missing terms in sequence  BOGUS??
+procedure smissing(x)			
    local lseq, i, result
 
    x := spromote(x)
@@ -823,7 +855,8 @@ procedure smissing(x)			#: missing terms in sequence  BOGUS??
 
 end
 
-procedure smod(xargs[])			#: modular reduction
+# modular reduction
+procedure smod(xargs[])			
    local lseq, i, x1, x2
 
    if \node_gen then return node("smod", xargs)
@@ -840,7 +873,8 @@ procedure smod(xargs[])			#: modular reduction
 
 end
 
-procedure smutate(xargs[])		#: mutation
+# mutation
+procedure smutate(xargs[])		
    local lseq, x1, x2
 
    if \node_gen then return node("smutate", xargs)
@@ -856,7 +890,8 @@ procedure smutate(xargs[])		#: mutation
 
 end
 
-procedure snormal(x)			#: normalize sequence
+# normalize sequence
+procedure snormal(x)			
    local lseq, i, target, count	# maps shafts so they are numbered in order
 				# first appearance
    x := spromote(x)
@@ -876,7 +911,8 @@ procedure snormal(x)			#: normalize sequence
 
 end
 
-procedure sopal(xargs[])		#: create open sequence palindrome
+# create open sequence palindrome
+procedure sopal(xargs[])		
    local x
 
    if \node_gen then return node("sopal", xargs)
@@ -887,7 +923,8 @@ procedure sopal(xargs[])		#: create open sequence palindrome
 
 end
 
-procedure sorder(x)			#: positions of first occurrence
+# positions of first occurrence
+procedure sorder(x)			
    local lseq, i, done		#  of terms in *compact* sequence
 
    x := copy(spromote(x))
@@ -908,7 +945,8 @@ procedure sorder(x)			#: positions of first occurrence
 
 end
 
-procedure sparity(xargs[])		#: adjust parity
+# adjust parity
+procedure sparity(xargs[])		
    local lseq, i, j, k, x1, x2
 
    if \node_gen then return node("sparity", xargs)
@@ -929,7 +967,8 @@ procedure sparity(xargs[])		#: adjust parity
 
 end
 
-procedure speriod(seq)			#: period of sequence
+# period of sequence
+procedure speriod(seq)			
    local i, segment
 
    every i := divisors(*seq) do {
@@ -941,7 +980,8 @@ procedure speriod(seq)			#: period of sequence
 
 end
 
-procedure splace(xargs[])		#: place motif along a path
+# place motif along a path
+procedure splace(xargs[])		
    local lseq, i, x1, x2
 
    if \node_gen then return node("splace", xargs)
@@ -958,7 +998,8 @@ procedure splace(xargs[])		#: place motif along a path
 
 end
 
-procedure splaceg(xargs[])		#: generalized motifs along a path
+# generalized motifs along a path
+procedure splaceg(xargs[])		
    local lseq, i, path, motif
 
    if \node_gen then return node("splaceg", xargs)
@@ -979,7 +1020,8 @@ procedure splaceg(xargs[])		#: generalized motifs along a path
 
 end
 
-procedure spositions(x1, x2)		#: positions of values in sequence
+# positions of values in sequence
+procedure spositions(x1, x2)		
    local lseq, count, i
 
    x1 := copy(spromote(x1))
@@ -999,7 +1041,8 @@ procedure spositions(x1, x2)		#: positions of values in sequence
 
 end
 
-procedure spromote(x)			#: promote term to sequence
+# promote term to sequence
+procedure spromote(x)			
 
    if type(x) ~== "list" then x := [x]
 
@@ -1007,13 +1050,15 @@ procedure spromote(x)			#: promote term to sequence
 
 end
 
-procedure srandom(x)			#: random selection
+# random selection
+procedure srandom(x)			
 
    return ?spromote(x)
 
 end
 
-procedure sreflecth(xargs[])		#: reflect sequence horizontally
+# reflect sequence horizontally
+procedure sreflecth(xargs[])		
    local lseq
 
    if \node_gen then return node("sreflecth", xargs)
@@ -1045,7 +1090,8 @@ procedure sreflectr(xargs[])
 
 end
 
-procedure sreflectv(xargs[])		#: reflect sequence vertically
+# reflect sequence vertically
+procedure sreflectv(xargs[])		
    local lseq, m, x
 
    if \node_gen then return node("sreflectv", xargs)
@@ -1064,7 +1110,8 @@ procedure sreflectv(xargs[])		#: reflect sequence vertically
 
 end
 
-procedure sremdupl(xargs[])		#: remove duplicate adjacent terms
+# remove duplicate adjacent terms
+procedure sremdupl(xargs[])		
    local lseq, i, x
 
    if \node_gen then return node("sremdupl", xargs)
@@ -1081,7 +1128,8 @@ procedure sremdupl(xargs[])		#: remove duplicate adjacent terms
 
 end
 
-procedure srepeat(xargs[])		#: repeat sequence
+# repeat sequence
+procedure srepeat(xargs[])		
    local lseq, count, x1
 
    if \node_gen then return node("srepeat", xargs)
@@ -1101,7 +1149,8 @@ procedure srepeat(xargs[])		#: repeat sequence
 
 end
 
-procedure srepl(xargs[])		# replicate sequence terms
+# replicate sequence terms
+procedure srepl(xargs[])		
    local lseq, i, j, x1, x2
 
    if \node_gen then return node("srepl", xargs)
@@ -1120,7 +1169,8 @@ procedure srepl(xargs[])		# replicate sequence terms
 
 end
 
-procedure srotatev(xargs[])		#: rotate sequence vertically
+# rotate sequence vertically
+procedure srotatev(xargs[])		
    local lseq, m, x
 
    if \node_gen then return node("srotatev", xargs)
@@ -1139,7 +1189,8 @@ procedure srotatev(xargs[])		#: rotate sequence vertically
 
 end
 
-procedure srun(xargs[])			#: create connected runs
+# create connected runs
+procedure srun(xargs[])			
    local lseq, i, j, x
 
    if \node_gen then return node("srun", xargs)
@@ -1162,7 +1213,8 @@ procedure srun(xargs[])			#: create connected runs
 
 end     
 
-procedure sruns(xargs[])		# disconnected runs
+# disconnected runs
+procedure sruns(xargs[])		
    local lseq, i, j, k,  x1, x2, x3
 
    if \node_gen then return node("sruns", xargs)
@@ -1186,7 +1238,8 @@ procedure sruns(xargs[])		# disconnected runs
 
 end
  
-procedure sscale(xargs[])		#: scale terms in sequence
+# scale terms in sequence
+procedure sscale(xargs[])		
    local lseq, j, i, x1
 
    if \node_gen then return node("sscale", xargs)
@@ -1203,7 +1256,8 @@ procedure sscale(xargs[])		#: scale terms in sequence
 
 end
 
-procedure sscollate(xargs[])		#: entire sequence collation
+# entire sequence collation
+procedure sscollate(xargs[])		
    local lseq, i, order
 
    if \node_gen then return node("sscollate", xargs)
@@ -1223,7 +1277,8 @@ procedure sscollate(xargs[])		#: entire sequence collation
 
 end
 
-procedure sselect(xargs[])		#: select terms from sequence
+# select terms from sequence
+procedure sselect(xargs[])		
    local lseq, i, x1, x2
 
    if \node_gen then return node("sselect", xargs)
@@ -1240,7 +1295,8 @@ procedure sselect(xargs[])		#: select terms from sequence
 
 end
 
-procedure sshift(x, i)			#: shift terms sequence
+# shift terms sequence
+procedure sshift(x, i)			
    local lseq
 
    lseq := []
@@ -1251,7 +1307,8 @@ procedure sshift(x, i)			#: shift terms sequence
 
 end
 
-procedure sunmod(x)			#: modular expansion
+# modular expansion
+procedure sunmod(x)			
    local base, bound, i, lseq, k
 
    x := copy(spromote(x))
@@ -1283,7 +1340,8 @@ procedure sunmod(x)			#: modular expansion
    return lseq
 
 end
-procedure sunop(op, xargs[])		#: unary operation on terms
+# unary operation on terms
+procedure sunop(op, xargs[])		
    local lseq, i, x
 
    if \node_gen then return node("sunop", xargs)

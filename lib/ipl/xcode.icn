@@ -213,7 +213,8 @@ import
 
 record xcode_rec(file,ioProc,done,nextTag)
 
-procedure xencode(x,file,writeProc)	#: write structure to file
+# write structure to file
+procedure xencode(x,file,writeProc)	
 
    /file := &output
    return xencode_1(
@@ -331,7 +332,8 @@ procedure xencode_1(data,x)
    return f
 end
 
-procedure xdecode(file,readProc)	#: read structure from file
+# read structure from file
+procedure xdecode(file,readProc)	
 
    /file := &input
 

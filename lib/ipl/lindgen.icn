@@ -25,14 +25,16 @@
 
 package ipl.lindgen
 
-procedure lindgen(c, rewrite, gener)	#: rewrite L-system
+# rewrite L-system
+procedure lindgen(c, rewrite, gener)	
 
    if gener = 0 then suspend c
    else suspend lindgen(!rewrite[c], rewrite, gener - 1)
 
 end
 
-procedure lindgenx(c, rewrite, gener)	#: rewrite L-system
+# rewrite L-system
+procedure lindgenx(c, rewrite, gener)	
    local k
 
    if gener = 0 then suspend c

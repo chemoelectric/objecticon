@@ -29,7 +29,8 @@ package ipl.makelsys
 
 record Lsys(name, axiom, gener, angle, comment, productions)
 
-procedure makelsys(lst)			#: make L-system from list
+# make L-system from list
+procedure makelsys(lst)			
    local line,   c, symbol, rewrite
    local allchars, rhs, value, spec, result
 
@@ -68,7 +69,8 @@ procedure makelsys(lst)			#: make L-system from list
 
 end
 
-procedure readlsys(input)		#: make L-system from a file
+# make L-system from a file
+procedure readlsys(input)		
    local result
 
    result := []

@@ -57,7 +57,8 @@
 
 package ipl.tables
 
-procedure tblunion(T1, T2)			#: table union
+# table union
+procedure tblunion(T1, T2)			
    local T3, x
 
    T3 := copy(T1)
@@ -69,7 +70,8 @@ procedure tblunion(T1, T2)			#: table union
 
 end
 
-procedure tblinter(T1, T2)			#: table intersection
+# table intersection
+procedure tblinter(T1, T2)			
    local T3, x
 
    T3 := table(tbldflt(T1))
@@ -81,7 +83,8 @@ procedure tblinter(T1, T2)			#: table intersection
 
 end
 
-procedure tbldiff(T1, T2)			#: table difference
+# table difference
+procedure tbldiff(T1, T2)			
    local T3, x
 
    T3 := copy(T1)
@@ -93,7 +96,8 @@ procedure tbldiff(T1, T2)			#: table difference
 
 end
 
-procedure tblinvrt(T)				#: table inversion
+# table inversion
+procedure tblinvrt(T)				
    local T1, x
 
    T1 := table(tbldflt(T))
@@ -105,7 +109,8 @@ procedure tblinvrt(T)				#: table inversion
 
 end
 
-procedure tbldflt(T)				#: table default
+# table default
+procedure tbldflt(T)				
    static probe
 
    initial probe := []			# only need one
@@ -114,7 +119,8 @@ procedure tbldflt(T)				#: table default
 
 end
 
-procedure twt(T)				#: two-way table
+# two-way table
+procedure twt(T)				
    local T1, x
 
    T1 := copy(T)
@@ -126,7 +132,8 @@ procedure twt(T)				#: two-way table
 
 end
 
-procedure keylist(tbl)			#: list of keys in table
+# list of keys in table
+procedure keylist(tbl)			
    local lst
 
    lst := []
@@ -146,7 +153,8 @@ procedure kvallist(T)
 
 end
 
-procedure tbleq(tbl1, tbl2)		#: table equivalence
+# table equivalence
+procedure tbleq(tbl1, tbl2)		
    local x
    static prod
 
@@ -161,7 +169,8 @@ procedure tbleq(tbl1, tbl2)		#: table equivalence
 
 end
 
-procedure vallist(tbl)		#: list of table values
+# list of table values
+procedure vallist(tbl)		
    local list1
 
    list1 := []
@@ -170,7 +179,8 @@ procedure vallist(tbl)		#: list of table values
 
 end
 
-procedure valset(tbl)		#: set of table values
+# set of table values
+procedure valset(tbl)		
    local set1
 
    set1 := set()

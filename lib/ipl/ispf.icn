@@ -50,11 +50,13 @@
 
 package ipl.ispf
 
-procedure ISPQry()     # detect presence or absence of ISPF
+# detect presence or absence of ISPF
+procedure ISPQry()     
    return callout("ispqry")
 end
 
-procedure ISPExec(cmd)    # transmit an ISPEXEC request to ISPF
+# transmit an ISPEXEC request to ISPF
+procedure ISPExec(cmd)    
    local result 
 
    result := callout("ispexec", cmd)
@@ -66,7 +68,8 @@ procedure ISPExec(cmd)    # transmit an ISPEXEC request to ISPF
    else return result
 end
 
-procedure ISPVcopy(var)     # get value of an ISPF "function" variable
+# get value of an ISPF "function" variable
+procedure ISPVcopy(var)     
    local result
 
    if not (result := callout("ispcopy", var||" ")) then fail
@@ -82,7 +85,8 @@ procedure ISPVcopy(var)     # get value of an ISPF "function" variable
    runerr(500, result)
 end
 
-procedure ISPVrepl(var,value)   # assign to an ISPF variable
+# assign to an ISPF variable
+procedure ISPVrepl(var,value)   
    local result
 
    result := callout("isprepl", var||" ", value)

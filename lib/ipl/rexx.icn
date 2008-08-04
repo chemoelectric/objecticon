@@ -54,7 +54,8 @@
 
 package ipl.rexx
 
-procedure RexxActive()     # return whether an EXEC is active
+# return whether an EXEC is active
+procedure RexxActive()     
    if callout("rexxvar", "a") == "Rexx error: No EXEC is active" then
       fail
    else return &null
@@ -64,7 +65,8 @@ procedure RexxActive()     # return whether an EXEC is active
 #
 end
 
-procedure RexxVar(var)     # return the value of a Rexx variable
+# return the value of a Rexx variable
+procedure RexxVar(var)     
    local result
 
    if not (result := callout("rexxvar", var)) then fail
@@ -79,7 +81,8 @@ procedure RexxVar(var)     # return the value of a Rexx variable
    runerr(500, result)
 end
 
-procedure RexxSet(var,value)   # assign to a Rexx variable
+# assign to a Rexx variable
+procedure RexxSet(var,value)   
    local result
 
    result := callout("rexxset", var, value)
@@ -91,7 +94,8 @@ procedure RexxSet(var,value)   # assign to a Rexx variable
    else return result
 end
 
-procedure RexxDrop(var,value)  # drop a Rexx variable
+# drop a Rexx variable
+procedure RexxDrop(var,value)  
    local result
 
    result := callout("rexxdrop", var, value)
@@ -103,7 +107,8 @@ procedure RexxDrop(var,value)  # drop a Rexx variable
    else return result
 end
 
-procedure RexxAll()           # return a table of all Rexx variables
+# return a table of all Rexx variables
+procedure RexxAll()           
    local result, allofthem, nextvar
 #
 # Note:  You might suppose that RexxAll would be better designed as a

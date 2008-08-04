@@ -74,7 +74,8 @@
 
 package ipl.scan
 
-procedure slashbal(c1, c2, c3, s, i, j)	#: bal() with escapes
+# bal() with escapes
+procedure slashbal(c1, c2, c3, s, i, j)	
 
     local twocs, allcs, default_val, POS, chr, chr2, count
 
@@ -150,7 +151,8 @@ end
 
 # for compatibility with the original name
 #
-procedure slashupto(c, s, i, j)		#: upto() with escapes
+# upto() with escapes
+procedure slashupto(c, s, i, j)		
     suspend slshupto(c, s, i, j)
 end
 
@@ -160,7 +162,8 @@ end
 #    where Is are the integer positions in s[i:j] before characters
 #    in c that is not preceded by a backslash escape
 #
-procedure slshupto(c, s, i, j)		#: upto() with escapes
+# upto() with escapes
+procedure slshupto(c, s, i, j)		
 
     local c2
 
@@ -262,7 +265,8 @@ end
 ############################################################################
 
 
-procedure snapshot(title,len)		#: snapshot of string scanning
+# snapshot of string scanning
+procedure snapshot(title,len)		
 
    local bar1, bar2, bar3, is, is0, prefix, titlel, placement, POS
 
@@ -342,7 +346,8 @@ end
 #
 #############################################################################
 
-procedure balq(				#: bal() with quote escaping.
+# bal() with quote escaping.
+procedure balq(				
    cstop, copen, cclose, cquote, cescape, s, i1, i2)
 
 local quote, pcount, spos
@@ -393,7 +398,8 @@ while sp := s[ spos := upto( ca, s, spos, i2 ) ] do {
 
 end
 
-procedure balqc(			#: balq() with comment escaping
+# balq() with comment escaping
+procedure balqc(			
    cstop, copen, cclose, cquote, cescape, scm, ecm, s, i1, i2)
 
 local quote, pcount, spos
@@ -495,7 +501,8 @@ end
 #
 #############################################################################
 
-procedure limatch(l,i)			#: matching items in list
+# matching items in list
+procedure limatch(l,i)			
 
 local s, f, p
 

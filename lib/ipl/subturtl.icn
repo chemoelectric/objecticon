@@ -91,7 +91,8 @@ global T_stack			# turtle state stack
 
 #  TInit() -- initialize turtle system, opening window if needed
 
-procedure TInit()			#: initialize turtle system
+# initialize turtle system
+procedure TInit()			
 
    initial {
       if /&window then
@@ -109,7 +110,8 @@ end
 
 #  TReset() -- clear screen and stack, go to center, head -90 degrees
 
-procedure TReset()			#: reset turtle system
+# reset turtle system
+procedure TReset()			
    initial TInit()
 
    EraseArea()
@@ -125,7 +127,8 @@ end
 
 #  TDraw(n) -- move forward n units while drawing a line
 
-procedure TDraw(n)			#: draw with turtle
+# draw with turtle
+procedure TDraw(n)			
    local rad, x, y
    initial TInit()
 
@@ -143,7 +146,8 @@ end
 
 #  TDrawto(x, y) -- draw line to (x,y)
 
-procedure TDrawto(x, y)			#: draw to with turtle
+# draw to with turtle
+procedure TDrawto(x, y)			
    initial TInit()
 
    TFace(x, y)
@@ -158,7 +162,8 @@ end
 
 #  TSkip(n) -- move forward n units without drawing
 
-procedure TSkip(n)			#: skip with turtle
+# skip with turtle
+procedure TSkip(n)			
    local rad
    initial TInit()
 
@@ -173,7 +178,8 @@ end
 
 #  TGoto(x, y) -- move to (x,y) without drawing
 
-procedure TGoto(x, y)			#: goto with turtle
+# goto with turtle
+procedure TGoto(x, y)			
    initial TInit()
    T_x := x
    T_y := y
@@ -185,7 +191,8 @@ end
 
 #  TRight(d) -- turn right d degrees
 
-procedure TRight(d)			#: turn turtle right
+# turn turtle right
+procedure TRight(d)			
    initial TInit()
 
    T_deg +:= d
@@ -198,7 +205,8 @@ end
 
 #  TLeft(d) -- turn left d degrees
 
-procedure TLeft(d)			#: turn turtle left
+# turn turtle left
+procedure TLeft(d)			
    initial TInit()
 
    T_deg -:= d
@@ -211,7 +219,8 @@ end
 
 #  TFace(x, y) -- turn to face (x,y), unless already there
 
-procedure TFace(x, y)			#: turn turtle to face point
+# turn turtle to face point
+procedure TFace(x, y)			
    initial TInit()
 
    if x ~= T_x | y ~= T_y then
@@ -224,7 +233,8 @@ end
 
 #  TX() -- return current x location
 
-procedure TX(x)				#: turtle x coordinate
+# turtle x coordinate
+procedure TX(x)				
    initial TInit()
 
    return T_x
@@ -234,7 +244,8 @@ end
 
 #  TY() -- return current y location
 
-procedure TY(y)				#: turtle y coordinate
+# turtle y coordinate
+procedure TY(y)				
    initial TInit()
 
    return T_y
@@ -244,7 +255,8 @@ end
 
 #  THeading() -- return current heading
 
-procedure THeading()			#: turtle heading
+# turtle heading
+procedure THeading()			
    initial TInit()
 
    return T_deg
@@ -254,7 +266,8 @@ end
 
 #  TSave() -- save turtle state
 
-procedure TSave()			#: save turtle state
+# save turtle state
+procedure TSave()			
    initial TInit()
 
    push(T_stack, T_deg, T_y, T_x)
@@ -266,7 +279,8 @@ end
 
 #  TRestore() -- restore turtle state
 
-procedure TRestore()			#: restore turtle state
+# restore turtle state
+procedure TRestore()			
    initial TInit()
 
    T_x := pop(T_stack)

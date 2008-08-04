@@ -118,7 +118,8 @@ record DateRec(year,month,day,hour,min,sec,weekday)
 
 global Months,Days,DateBaseYear,HoursFromGmt
 
-procedure ClockToSec(seconds)			#: convert &date to seconds
+# convert &date to seconds
+procedure ClockToSec(seconds)			
 #
 #  Converts a time in the format of &clock to seconds past midnight.
 #
@@ -146,7 +147,8 @@ procedure DateInit()
 end
 
 
-procedure DateLineToSec(dateline,hoursFromGmt)	#: convert &dateline to seconds
+# convert &dateline to seconds
+procedure DateLineToSec(dateline,hoursFromGmt)	
 #
 #  Converts a date in long form to seconds since start of DateBaseYear.
 #
@@ -230,7 +232,8 @@ procedure DateRecToSec(dateRec,hoursFromGmt)
 	 (hour - hoursFromGmt) * 3600 + min * 60 + sec
 end
 
-procedure DateToSec(date,hoursFromGmt)	#: convert &date to seconds
+# convert &date to seconds
+procedure DateToSec(date,hoursFromGmt)	
 #
 #  Converts a date in Icon &date format (yyyy/mm/dd) do seconds
 #  past DateBaseYear.
@@ -239,7 +242,8 @@ procedure DateToSec(date,hoursFromGmt)	#: convert &date to seconds
 	+1(tab(find("/")),move(1)),+tab(0)),hoursFromGmt)
 end
 
-procedure SecToClock(seconds)		#: convert seconds to &clock
+# convert seconds to &clock
+procedure SecToClock(seconds)		
 #
 #  Converts seconds past midnight to a string in the format of &clock.
 #
@@ -250,7 +254,8 @@ procedure SecToClock(seconds)		#: convert seconds to &clock
 	     ":" || right(sec,2,"0")
 end
 
-procedure SecToDate(seconds,hoursFromGmt) #: convert seconds to &date
+# convert seconds to &date
+procedure SecToDate(seconds,hoursFromGmt) 
 #
 #  Converts seconds past DateBaseYear to a &date in Icon date format
 #  (yyyy,mm,dd).
@@ -261,7 +266,8 @@ procedure SecToDate(seconds,hoursFromGmt) #: convert seconds to &date
 	     right(r.day,2,"0")
 end
 
-procedure SecToDateLine(seconds,hoursFromGmt) #: convert seconds to &dateline
+# convert seconds to &dateline
+procedure SecToDateLine(seconds,hoursFromGmt) 
 #
 #  Produces a date in the same format as Icon's &dateline.
 #
@@ -326,7 +332,8 @@ procedure SecToDateRec(seconds,hoursFromGmt)
    return DateRec(year,month,day,hour,min,seconds,weekday)
 end
 
-procedure SecToUnixDate(seconds,hoursFromGmt)	#: convert seconds to UNIX time
+# convert seconds to UNIX time
+procedure SecToUnixDate(seconds,hoursFromGmt)	
 #
 #  Returns a date and time in UNIX format: Jan 14 10:24 1991
 #
@@ -336,14 +343,16 @@ procedure SecToUnixDate(seconds,hoursFromGmt)	#: convert seconds to UNIX time
 	 d.hour || ":" || right(d.min,2,"0") || " " || d.year
 end
 
-procedure IsLeapYear(year)			#: determine if year is leap
+# determine if year is leap
+procedure IsLeapYear(year)			
    #
    # Fails unless year is a leap year.
    #
    return year % 4 = 0 & (year % 100 ~= 0 | year % 400 = 0) & &null
 end
 
-procedure calendat(julian)			#: Julian date
+# Julian date
+procedure calendat(julian)			
    local ja, jalpha, jb, jc, jd, je, gregorian
    local month, day, year
 
@@ -370,7 +379,8 @@ procedure calendat(julian)			#: Julian date
 
 end
 
-procedure date()			#: date in natural English
+# date in natural English
+procedure date()			
 
    &dateline ? {
       tab(find(", ") + 2)
@@ -382,7 +392,8 @@ end
 #
 #  The method used was adapted from a Web page by Mark Dettinger.
 
-procedure dayoweek(day, month, year)	#: day of the week
+# day of the week
+procedure dayoweek(day, month, year)	
    static d_code, c_code, m_code, ml_code, y, C, M, Y
 
    initial {
@@ -437,7 +448,8 @@ procedure dayoweek(day, month, year)	#: day of the week
    
 end
 
-procedure full13th(year1, year2)	#: full moons on Friday 13ths
+# full moons on Friday 13ths
+procedure full13th(year1, year2)	
    local time_zone, jd, jday, fraction, jul
    local year, month,  n, icon, day_of_week, c
 
@@ -480,7 +492,8 @@ procedure full13th(year1, year2)	#: full moons on Friday 13ths
 
 end
 
-procedure julian(month, day, year)	#: Julian date
+# Julian date
+procedure julian(month, day, year)	
    local jul, gregorian, ja, julian_year, julian_month
 
    gregorian := (15 + 31 * (10 + 12 * 1582))
@@ -505,7 +518,8 @@ procedure julian(month, day, year)	#: Julian date
 
 end
 
-procedure pom(n, nph)			#: phase of moon
+# phase of moon
+procedure pom(n, nph)			
    local i, jd, fraction, radians
    local am, as, c, t, t2, extra
 
@@ -536,7 +550,8 @@ procedure pom(n, nph)			#: phase of moon
 
 end
 
-procedure saytime(time)			#: time in natural English
+# time in natural English
+procedure saytime(time)			
    local hour,min,mod,near,numbers,out,sec
    #
    # Extract the hours, minutes, and seconds from the time.
@@ -596,7 +611,8 @@ procedure saytime(time)			#: time in natural English
    return out                    # return the final result
 end
  
-procedure walltime()			#: time since midnight
+# time since midnight
+procedure walltime()			
    local seconds
 
    &clock ? {

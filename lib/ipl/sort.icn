@@ -87,7 +87,8 @@ end
 #     sorted on field[2], etc.
 #
 
-procedure sortff(L, fields[])		#: sort on multiple fields
+# sort on multiple fields
+procedure sortff(L, fields[])		
     *L <= 1 & { return copy(L) }
     return sortff_1(L, fields, 1, [])
 end
@@ -141,7 +142,8 @@ procedure sortff_1(L, fields, k, uniqueObject)
 
 end
 
-procedure sortgen(T, m)		#: generate by different sorting orders
+# generate by different sorting orders
+procedure sortgen(T, m)		
    local L
 
    L := sort(T, case m of {
@@ -158,7 +160,8 @@ end
 
 record element(key, value)
 
-procedure sortt(T, i)		#: sort to produce list of records
+# sort to produce list of records
+procedure sortt(T, i)		
    local result, k
 
    if not(integer(i) = (1 | 2)) then runerr(205, i)

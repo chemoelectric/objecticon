@@ -43,7 +43,8 @@ record graph(nodes, lookup)
 #  Construct a graph from the specification given in file f.  Error checking
 #  is minimal.
 
-procedure read_graph(f)		#: read graph
+# read graph
+procedure read_graph(f)		
    local node, nodes, node_list, lookup, arc, from_name, to_name
 
    nodes := []				# list of the graph nodes
@@ -78,7 +79,8 @@ end
 
 #  Write graph g to file f.
 
-procedure write_graph(g, f)	#: write graph
+# write graph
+procedure write_graph(g, f)	
    local name_list, node
 
    name_list := ""			# initialize
@@ -97,7 +99,8 @@ end
 
 #  Transitive closure of node.  Called as closure(node) without second argument
 
-procedure closure(node, close)	#: transitive closure of graph
+# transitive closure of graph
+procedure closure(node, close)	
    local n
 
    /close := set()			# initialize closure

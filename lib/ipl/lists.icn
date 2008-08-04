@@ -325,7 +325,8 @@ import
    ipl.indices(indices),
    ipl.numbers(residue)
 
-procedure file2lst(s)			#: create list from lines in file
+# create list from lines in file
+procedure file2lst(s)			
    local input, result, x
 
    input := open(s) | fail
@@ -343,7 +344,8 @@ procedure file2lst(s)			#: create list from lines in file
 
 end
 
-procedure imag2lst(seqimage)		#: convert limage() output to list
+# convert limage() output to list
+procedure imag2lst(seqimage)		
    local seq, term
 
    seq := []
@@ -365,7 +367,8 @@ global l_SUBJ
 
 record l_ScanEnvir(subject,pos)
 
-procedure l_Bscan(e1)			#: begin list scanning
+# begin list scanning
+procedure l_Bscan(e1)			
 
     #
     # Prototype list scan initializer.  Based on code published in
@@ -410,7 +413,8 @@ end
 
 
 
-procedure l_Escan(l_OuterEnvir, e2)	#: end list scanning
+# end list scanning
+procedure l_Escan(l_OuterEnvir, e2)	
 
     local l_InnerEnvir
 
@@ -456,7 +460,8 @@ end
 
 
 
-procedure l_any(l1,l2,i,j)		#: any() for list scanning
+# any() for list scanning
+procedure l_any(l1,l2,i,j)		
 
     #
     # Like any(c,s2,i,j) except that the string & cset arguments are
@@ -494,7 +499,8 @@ end
 
 
 
-procedure l_bal(l1,l2,l3,l,i,j)		#: bal() for list scanning
+# bal() for list scanning
+procedure l_bal(l1,l2,l3,l,i,j)		
 
     local default_val, l2_count, l3_count, x
 
@@ -539,7 +545,8 @@ end
 
     
 
-procedure l_comp(l1,l2)			# list comparison
+# list comparison
+procedure l_comp(l1,l2)			
 
     #
     # List comparison routine basically taken from Griswold & Griswold
@@ -562,7 +569,8 @@ end
 
 
 
-procedure l_find(l1,l2,i,j)		#: find() for list scanning
+# find() for list scanning
+procedure l_find(l1,l2,i,j)		
 
     #
     # Like the builtin find(s1,s2,i,j), but for lists.
@@ -605,7 +613,8 @@ end
 
 
 
-procedure l_many(l1,l2,i,j)		#: many() for list scanning
+# many() for list scanning
+procedure l_many(l1,l2,i,j)		
 
     local x, old_l_POS, default_val
 
@@ -649,7 +658,8 @@ end
 
 
 
-procedure l_match(l1,l2,i,j)		#: match() for list scanning
+# match() for list scanning
+procedure l_match(l1,l2,i,j)		
 
     #
     # Analogous to match(s1,s2,i,j), except that s1 and s2 are lists,
@@ -689,7 +699,8 @@ end
 
     
 
-procedure l_move(i)			#: move() for list scanning
+# move() for list scanning
+procedure l_move(i)			
 
     /i & stop("l_move:  Null argument.")
     if /l_POS | /l_SUBJ then
@@ -707,7 +718,8 @@ end
 
 
 
-procedure l_pos(i)			#: pos() for list scanning
+# pos() for list scanning
+procedure l_pos(i)			
 
     local x
 
@@ -726,7 +738,8 @@ end
 
 
 
-procedure l_tab(i)			#: tab() for list scanning
+# tab() for list scanning
+procedure l_tab(i)			
 
     /i & stop("l_tab:  Null argument.")
     if /l_POS | /l_SUBJ then
@@ -740,7 +753,8 @@ end
 
 
 
-procedure l_upto(l1,l2,i,j)		#: upto() for list scanning
+# upto() for list scanning
+procedure l_upto(l1,l2,i,j)		
 
     #
     # See l_any() above.  This procedure just moves through l2, calling
@@ -814,7 +828,8 @@ procedure lblock(L1, L2)
 
 end
 
-procedure llayer(args[])		#: interleave lists with layering
+# interleave lists with layering
+procedure llayer(args[])		
    local offsets, offset, seq, arg, lists, k
 
    lists := []
@@ -843,7 +858,8 @@ procedure llayer(args[])		#: interleave lists with layering
 
 end
 
-procedure lcompact(seq)			#: compact sequence
+# compact sequence
+procedure lcompact(seq)			
    local unique, target
 
    unique := set(seq)
@@ -856,7 +872,8 @@ procedure lcompact(seq)			#: compact sequence
 
 end
 
-procedure lclose(L)			#: close open palindrome
+# close open palindrome
+procedure lclose(L)			
 
    if equiv(L, lreverse(L)) then return L
    else {
@@ -867,7 +884,8 @@ procedure lclose(L)			#: close open palindrome
 
 end
 
-procedure lcomb(L,i)			#: list combinations
+# list combinations
+procedure lcomb(L,i)			
    local j
 
    if i < 1 then fail
@@ -876,7 +894,8 @@ procedure lcomb(L,i)			#: list combinations
 
 end
 
-procedure ldecollate(indices, L)	#: list decollation
+# list decollation
+procedure ldecollate(indices, L)	
    local result, i, x
 
    indices := copy(indices)
@@ -894,7 +913,8 @@ procedure ldecollate(indices, L)	#: list decollation
 
 end
 
-procedure ldelete(L, spec)		#: delete specified list elements
+# delete specified list elements
+procedure ldelete(L, spec)		
    local i, tmp
 
    tmp := indices(spec, *L) | fail		# bad specification
@@ -906,7 +926,8 @@ procedure ldelete(L, spec)		#: delete specified list elements
 
 end
 
-procedure ldupl(L1, L2)			#: list term duplication
+# list term duplication
+procedure ldupl(L1, L2)			
    local L3, i, j
 
    if integer(L2) then L2 := [L2]
@@ -922,7 +943,8 @@ procedure ldupl(L1, L2)			#: list term duplication
 
 end
 
-procedure lequiv(x,y)			#: compare lists for equivalence
+# compare lists for equivalence
+procedure lequiv(x,y)			
    local i
 
    if x === y then return y
@@ -935,7 +957,8 @@ procedure lequiv(x,y)			#: compare lists for equivalence
 
 end
 
-procedure levate(seq, m, n)		#: elevate values
+# elevate values
+procedure levate(seq, m, n)		
    local shafts, reseq, i, j, k
 
    shafts := list(m)
@@ -958,7 +981,8 @@ procedure levate(seq, m, n)		#: elevate values
 
 end
 	
-procedure lextend(L, i)			#: list extension
+# list extension
+procedure lextend(L, i)			
    local result
 
    if *L = 0 then fail
@@ -974,7 +998,8 @@ procedure lextend(L, i)			#: list extension
  
 end
 
-procedure lfliph(L)			#: list horizontal flip (reversal)
+# list horizontal flip (reversal)
+procedure lfliph(L)			
 
    lfliph := lreverse
 
@@ -982,7 +1007,8 @@ procedure lfliph(L)			#: list horizontal flip (reversal)
 
 end
 
-procedure lflipv(L)			#: list vertical flip
+# list vertical flip
+procedure lflipv(L)			
    local L1, m, i
 
    m := max ! L
@@ -996,7 +1022,8 @@ procedure lflipv(L)			#: list vertical flip
 
 end
 
-procedure limage(L)			#: list image
+# list image
+procedure limage(L)			
    local result
 
    if type(L) ~== "list" then fail
@@ -1009,7 +1036,8 @@ procedure limage(L)			#: list image
 
 end
 
-procedure lcollate(args[])		#: generalized list collation
+# generalized list collation
+procedure lcollate(args[])		
    local seq, arg, lists, k
 
    lists := []
@@ -1029,14 +1057,16 @@ procedure lcollate(args[])		#: generalized list collation
 
 end
 
-procedure lconstant(L)			#: test list for all terms equal
+# test list for all terms equal
+procedure lconstant(L)			
 
    if *set(L) = 1 then return L[1]
    else fail
 
 end
 
-procedure linterl(L1, L2)		#: list interleaving
+# list interleaving
+procedure linterl(L1, L2)		
    local L3, i
 
    if *L1 < *L2 then L1 := lextend(L1, *L2) | fail
@@ -1051,7 +1081,8 @@ procedure linterl(L1, L2)		#: list interleaving
 
 end
 
-procedure llpad(L, i, x)		#: list padding at left
+# list padding at left
+procedure llpad(L, i, x)		
 
    L := copy(L)
 
@@ -1061,7 +1092,8 @@ procedure llpad(L, i, x)		#: list padding at left
 
 end
 
-procedure lrunup(L1, L2, L3)		#: list run up
+# list run up
+procedure lrunup(L1, L2, L3)		
    local L4
 
    /L3 := [1]		# could be /L3 := 1 ...
@@ -1074,7 +1106,8 @@ procedure lrunup(L1, L2, L3)		#: list run up
 
 end
 
-procedure lrundown(L1, L2, L3)		#: list run up
+# list run up
+procedure lrundown(L1, L2, L3)		
    local L4
 
    /L3 := [1]		# could be /L3 := 1 ...
@@ -1088,7 +1121,8 @@ procedure lrundown(L1, L2, L3)		#: list run up
 end
 
 
-procedure lltrim(L, S)			#: list left trimming
+# list left trimming
+procedure lltrim(L, S)			
 
    L := copy(L)
 
@@ -1099,7 +1133,8 @@ procedure lltrim(L, S)			#: list left trimming
 
 end
 
-procedure lmap(L1,L2,L3)		#: list mapping
+# list mapping
+procedure lmap(L1,L2,L3)		
    static lmem2, lmem3, lmaptbl, tdefault
    local i, a
 
@@ -1123,7 +1158,8 @@ procedure lmap(L1,L2,L3)		#: list mapping
 
 end
 
-procedure lresidue(L, m, i)		#: list residue
+# list residue
+procedure lresidue(L, m, i)		
    local result
 
    /i := 0
@@ -1136,7 +1172,8 @@ procedure lresidue(L, m, i)		#: list residue
 
 end
 
-procedure lpalin(L, x)			#: list palindrome
+# list palindrome
+procedure lpalin(L, x)			
 
    L |||:= lreverse(L)
 
@@ -1146,7 +1183,8 @@ procedure lpalin(L, x)			#: list palindrome
 
 end
 
-procedure lpermute(L)			#: list permutations
+# list permutations
+procedure lpermute(L)			
    local i
 
    if *L = 0 then return []
@@ -1154,7 +1192,8 @@ procedure lpermute(L)			#: list permutations
 
 end
 
-procedure lreflect(L, i)		#: list reflection
+# list reflection
+procedure lreflect(L, i)		
    local L1
 
    /i := 0
@@ -1174,7 +1213,8 @@ procedure lreflect(L, i)		#: list reflection
 
 end
 
-procedure lremvals(L, x[])		#: remove values from list
+# remove values from list
+procedure lremvals(L, x[])		
    local result, y
 
    result := []
@@ -1187,7 +1227,8 @@ procedure lremvals(L, x[])		#: remove values from list
 
 end
 
-procedure lrepl(L, i)			#: list replication
+# list replication
+procedure lrepl(L, i)			
    local j, k
 
    i := (0 < integer(i)) | stop("*** invalid replication factor in lrepl()")
@@ -1204,7 +1245,8 @@ procedure lrepl(L, i)			#: list replication
 
 end
 
-procedure lreverse(L)			#: list reverse
+# list reverse
+procedure lreverse(L)			
    local i
 
    L := copy(L)
@@ -1216,7 +1258,8 @@ procedure lreverse(L)			#: list reverse
 
 end
 
-procedure lrotate(L, i)			#: list rotation
+# list rotation
+procedure lrotate(L, i)			
 
    /i := 1
 
@@ -1233,7 +1276,8 @@ procedure lrotate(L, i)			#: list rotation
 
 end
 
-procedure lrpad(L, i, x)		#: list right padding
+# list right padding
+procedure lrpad(L, i, x)		
 
    L := copy(L)
 
@@ -1243,7 +1287,8 @@ procedure lrpad(L, i, x)		#: list right padding
 
 end
 
-procedure lrtrim(L, S)			#: list right trimming
+# list right trimming
+procedure lrtrim(L, S)			
 
    L := copy(L)
 
@@ -1254,7 +1299,8 @@ procedure lrtrim(L, S)			#: list right trimming
 
 end
 
-procedure lshift(L, i)			#: shift list terms
+# shift list terms
+procedure lshift(L, i)			
 
    L := copy(L)
 
@@ -1264,7 +1310,8 @@ procedure lshift(L, i)			#: shift list terms
 
 end
 
-procedure lswap(L)			#: list element swap
+# list element swap
+procedure lswap(L)			
    local i
 
    L := copy(L)
@@ -1276,7 +1323,8 @@ procedure lswap(L)			#: list element swap
 
 end
 
-procedure lunique(L)			#: keep only unique list elements
+# keep only unique list elements
+procedure lunique(L)			
    local result, culls, x
 
    result := []
@@ -1292,7 +1340,8 @@ procedure lunique(L)			#: keep only unique list elements
 
 end
 
-procedure lmaxlen(L, p)			#: size of largest list entry
+# size of largest list entry
+procedure lmaxlen(L, p)			
    local i
 
    /p := proc("*", 1)
@@ -1305,7 +1354,8 @@ procedure lmaxlen(L, p)			#: size of largest list entry
 
 end
 
-procedure lminlen(L, p)			#: size of smallest list entry
+# size of smallest list entry
+procedure lminlen(L, p)			
    local i
 
    /p := proc("*", 1)
@@ -1318,7 +1368,8 @@ procedure lminlen(L, p)			#: size of smallest list entry
 
 end
 
-procedure sortkeys(L)			#: extract keys from sorted list
+# extract keys from sorted list
+procedure sortkeys(L)			
    local result
 
    result := []
@@ -1329,7 +1380,8 @@ procedure sortkeys(L)			#: extract keys from sorted list
 
 end
 
-procedure sortvalues(L)			#: extract values from sorted list
+# extract values from sorted list
+procedure sortvalues(L)			
    local result
 
    result := []
@@ -1340,7 +1392,8 @@ procedure sortvalues(L)			#: extract values from sorted list
 
 end
 
-procedure str2lst(s, i)			#: list from string
+# list from string
+procedure str2lst(s, i)			
    local L
 
    /i := 1

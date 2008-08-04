@@ -33,7 +33,8 @@ import
    ipl.imscolor(imsheight, imswidth),
    ipl.tile(tile)
 
-procedure tileimg(win, img)		#: tile image
+# tile image
+procedure tileimg(win, img)		
    local hidden
 
    hidden := WOpen("canvas=hidden", "image=" || img, "gamma=" ||
@@ -50,7 +51,8 @@ procedure tileimg(win, img)		#: tile image
 
 end
 
-procedure tileims(win, ims)		#: tile image string
+# tile image string
+procedure tileims(win, ims)		
    local w, h
 
    w := imswidth(ims)

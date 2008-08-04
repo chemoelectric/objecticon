@@ -31,7 +31,8 @@ package ipl.readcpt
 import
    ipl.matrix(create_matrix)
 
-procedure read_cpt(input)	#: convert numerical carpet to matrix
+# convert numerical carpet to matrix
+procedure read_cpt(input)	
    local carpet, width, height, i, j, line
 
    read(input) ? {

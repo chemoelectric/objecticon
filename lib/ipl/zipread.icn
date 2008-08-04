@@ -51,7 +51,8 @@
 
 package ipl.zipread
 
-procedure iszip(fname)		#: check for ZIP archive
+# check for ZIP archive
+procedure iszip(fname)		
    local f, s
 
    f := open(fname, "ru") | fail
@@ -64,7 +65,8 @@ end
 
 #  zipdir(zname) -- returns a file representing the ZIP directory
 
-procedure zipdir(zname)			#: open ZIP directory
+# open ZIP directory
+procedure zipdir(zname)			
    return open("unzip -l " || zname || " | sed -n 's/.*:..   //p'", "rp")
 end
 
@@ -72,6 +74,7 @@ end
 
 #  zipfile(zname, fname) -- open file fname inside archive zname
 
-procedure zipfile(zname, fname)		#: open member of ZIP archive
+# open member of ZIP archive
+procedure zipfile(zname, fname)		
    return open("unzip -p " || zname || " " || fname, "rp")
 end

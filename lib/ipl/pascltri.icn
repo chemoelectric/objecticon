@@ -33,7 +33,8 @@
 
 package ipl.pascltri
 
-procedure PascalsTriangle(level)	#: Pascal triangle row
+# Pascal triangle row
+procedure PascalsTriangle(level)	
 static tri
 local row, elem, temp
 initial tri := [[1], [1, 1]]               # Start with first two rows stored

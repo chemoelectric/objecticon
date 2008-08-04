@@ -23,7 +23,8 @@ package ipl.clrutils
 
 record RGB(r, g, b)
 
-procedure colortorgb(color)		#: rgb record for color
+# rgb record for color
+procedure colortorgb(color)		
    local rgb
 
    rgb := RGB()

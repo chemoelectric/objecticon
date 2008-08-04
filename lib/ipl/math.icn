@@ -40,7 +40,8 @@ package ipl.math
 import
    ipl.factors(factorial)
 
-procedure binocoef(n, k)	#: binomial coefficient
+# binomial coefficient
+procedure binocoef(n, k)	
 
    k := integer(k) | fail
    n := integer(n) | fail
@@ -53,19 +54,22 @@ procedure binocoef(n, k)	#: binomial coefficient
 
 end
 
-procedure cosh(r)		#: hyperbolic cosine
+# hyperbolic cosine
+procedure cosh(r)		
 
    return (&e ^ r + &e ^ -r) / 2
 
 end
 
-procedure sinh(r)		#: hyperbolic sine
+# hyperbolic sine
+procedure sinh(r)		
 
    return (&e ^ r - &e ^ -r) / 2
 
 end
 
-procedure tanh(r)		#: hyperbolic tanh
+# hyperbolic tanh
+procedure tanh(r)		
 
    return (&e ^ r - &e ^ -r) / (&e ^ r + &e ^ -r)
 

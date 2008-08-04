@@ -261,12 +261,14 @@ procedure VSetState(vid, val, code)
       _Vbomb("invalid vidget parameter to VSetState()")
 end
 
-procedure SetVidget(vid, val, code)	# old name
+# old name
+procedure SetVidget(vid, val, code)	
    SetVidget := VSetState
    return VSetState(vid, val, code)
 end
 
-procedure VSet(vid, val, code)		# older name
+# older name
+procedure VSet(vid, val, code)		
    VSet := VSetState
    return VSetState(vid, val, code)
 end
@@ -352,7 +354,8 @@ end
 #  It just prints a message on standard output giving the value of x.
 ############################################################################
 
-procedure vecho(v, x)	# old name
+# old name
+procedure vecho(v, x)	
    vecho := VEcho
    return VEcho(v, x)
 end
@@ -382,7 +385,8 @@ end
 #  VSetFont tries to set a 7-pixel-wide font for use by VIB and vidgets.
 ############################################################################
 
-procedure vsetfont(win)		# old name
+# old name
+procedure vsetfont(win)		
    vsetfont := VSetFont
    return VSetFont(win)
 end

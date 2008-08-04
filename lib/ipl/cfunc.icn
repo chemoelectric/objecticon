@@ -39,75 +39,101 @@ import
 $define LIB "libcfunc.so"
 
 # bitcount.c:
-procedure bitcount(a[])      		#: count bits in an integer 
+# count bits in an integer 
+procedure bitcount(a[])      		
    return(bitcount:=pathload(LIB,"bitcount"))!a;end
 
 # files.c:
-procedure chmod(a[])      		#: change UNIX file permissions 
+# change UNIX file permissions 
+procedure chmod(a[])      		
    return(chmod:=pathload(LIB,"icon_chmod"))!a;end
-procedure umask(a[])      		#: change UNIX permission mask 
+# change UNIX permission mask 
+procedure umask(a[])      		
    return(umask:=pathload(LIB,"icon_umask"))!a;end
 
 # fpoll.c:
-procedure fpoll(a[])      		#: await data from file 
+# await data from file 
+procedure fpoll(a[])      		
    return(fpoll:=pathload(LIB,"fpoll"))!a;end
 
 # internal.c:
-procedure dword(a[])      		#: return descriptor d-word 
+# return descriptor d-word 
+procedure dword(a[])      		
    return(dword:=pathload(LIB,"dword"))!a;end
-procedure vword(a[])      		#: return descriptor v-word 
+# return descriptor v-word 
+procedure vword(a[])      		
    return(vword:=pathload(LIB,"vword"))!a;end
-procedure descriptor(a[])      		#: construct descriptor 
+# construct descriptor 
+procedure descriptor(a[])      		
    return(descriptor:=pathload(LIB,"icon_descriptor"))!a;end
-procedure peek(a[])      		#: load value from memory 
+# load value from memory 
+procedure peek(a[])      		
    return(peek:=pathload(LIB,"peek"))!a;end
-procedure spy(a[])      		#: create spy-port to memory 
+# create spy-port to memory 
+procedure spy(a[])      		
    return(spy:=pathload(LIB,"spy"))!a;end
 
 # lgconv.c:
-procedure lgconv(a[])      		#: convert large integer to string 
+# convert large integer to string 
+procedure lgconv(a[])      		
    return(lgconv:=pathload(LIB,"lgconv"))!a;end
 
 # osf.c:
-procedure osftable(a[])      		#: query OSF system table 
+# query OSF system table 
+procedure osftable(a[])      		
    return(osftable:=pathload(LIB,"osftable"))!a;end
 
 # pack.c:
-procedure pack(a[])      		#: pack integer into bytes 
+# pack integer into bytes 
+procedure pack(a[])      		
    return(pack:=pathload(LIB,"pack"))!a;end
-procedure unpack(a[])      		#: unpack integer from bytes 
+# unpack integer from bytes 
+procedure unpack(a[])      		
    return(unpack:=pathload(LIB,"unpack"))!a;end
 
 # ppm.c:
-procedure ppmwidth(a[])      		#: extract width of PPM string 
+# extract width of PPM string 
+procedure ppmwidth(a[])      		
    return(ppmwidth:=pathload(LIB,"ppmwidth"))!a;end
-procedure ppmheight(a[])      		#: extract height of PPM string 
+# extract height of PPM string 
+procedure ppmheight(a[])      		
    return(ppmheight:=pathload(LIB,"ppmheight"))!a;end
-procedure ppmmax(a[])      		#: extract max of PPM string 
+# extract max of PPM string 
+procedure ppmmax(a[])      		
    return(ppmmax:=pathload(LIB,"ppmmax"))!a;end
-procedure ppmdata(a[])      		#: extract data from PPM string 
+# extract data from PPM string 
+procedure ppmdata(a[])      		
    return(ppmdata:=pathload(LIB,"ppmdata"))!a;end
-procedure ppmstretch(a[])      		#: stretch contrast of PPM string 
+# stretch contrast of PPM string 
+procedure ppmstretch(a[])      		
    return(ppmstretch:=pathload(LIB,"ppmstretch"))!a;end
-procedure ppmsharpen(a[])      		#: sharpen a PPM string 
+# sharpen a PPM string 
+procedure ppmsharpen(a[])      		
    return(ppmsharpen:=pathload(LIB,"ppmsharpen"))!a;end
-procedure ppm3x3(a[])      		#: convolve PPM with matrix 
+# convolve PPM with matrix 
+procedure ppm3x3(a[])      		
    return(ppm3x3:=pathload(LIB,"ppm3x3"))!a;end
-procedure ppmimage(a[])      		#: dither PPM to Icon image 
+# dither PPM to Icon image 
+procedure ppmimage(a[])      		
    return(ppmimage:=pathload(LIB,"ppmimage"))!a;end
 
 # process.c:
-procedure kill(a[])      		#: kill process 
+# kill process 
+procedure kill(a[])      		
    return(kill:=pathload(LIB,"icon_kill"))!a;end
-procedure getpid(a[])      		#: query process ID 
+# query process ID 
+procedure getpid(a[])      		
    return(getpid:=pathload(LIB,"icon_getpid"))!a;end
-procedure getuid(a[])      		#: query user ID 
+# query user ID 
+procedure getuid(a[])      		
    return(getuid:=pathload(LIB,"icon_getuid"))!a;end
-procedure getgid(a[])      		#: query group ID 
+# query group ID 
+procedure getgid(a[])      		
    return(getgid:=pathload(LIB,"icon_getgid"))!a;end
 
 # tconnect.c:
-procedure tconnect(a[])      		#: connect to TCP socket 
+# connect to TCP socket 
+procedure tconnect(a[])      		
    return(tconnect:=pathload(LIB,"tconnect"))!a;end
 
 #---

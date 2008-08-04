@@ -88,7 +88,8 @@ procedure patch(from, diff, rev)
 end
 
 
-procedure zot_patch(msg)			# exit w/ message
+# exit w/ message
+procedure zot_patch(msg)			
   write(&errout, "patch: ", msg)
   exit(1)
 end

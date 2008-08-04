@@ -85,7 +85,8 @@ package ipl.barchart
 
 record BC_rec(win, x, y, dx, dy, sf, n, l, w, b, len, val, round)
 
-procedure barchart(win, x, y, dx, dy, sf, n, l, w, b)	#: draw barchart
+# draw barchart
+procedure barchart(win, x, y, dx, dy, sf, n, l, w, b)	
    local bc
    bc := BC_rec(win, x, y, dx, dy, sf, n, l, w, b)
    bc.len := list(n, 0)
@@ -103,7 +104,8 @@ end
 #
 #  It is assumed that v>0 and that bars never shrink; but they may grow.
 
-procedure setbar(bc, n, v)			#: set bar value on barchart
+# set bar value on barchart
+procedure setbar(bc, n, v)			
    local x, y,  oldlen, newlen, incr
 
    v := log(v, \bc.b)
@@ -150,7 +152,8 @@ end
 #
 #  sf is assumed to be of the same sign as the previous scaling factor.
 
-procedure rebar(bc, sf)				#: redraw barchart
+# redraw barchart
+procedure rebar(bc, sf)				
    local i, l, x, y, dx, dy
 
    if bc.sf > 0 then

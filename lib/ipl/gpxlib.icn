@@ -79,7 +79,8 @@ end
 
 #   Distance(x1, y1, x2, y2) -- compute distance between two points.
 
-procedure Distance(x1, y1, x2, y2)		#: distance between two points
+# distance between two points
+procedure Distance(x1, y1, x2, y2)		
    x1 -:= x2
    y1 -:= y2
    return sqrt(x1 * x1 + y1 * y1)
@@ -88,7 +89,8 @@ end
 
 #   InBounds(x, y, w, h) -- succeed if (&x,&y) is in a rectangular area.
 
-procedure InBounds(x, y, w, h)			#: check point within rectangle
+# check point within rectangle
+procedure InBounds(x, y, w, h)			
    if w < 0 then
       x -:= (w := -w)
    if h < 0 then
@@ -99,7 +101,8 @@ end
 
 #  ScratchCanvas([win,] w, h, id) -- return hidden window for temporary use.
 
-procedure ScratchCanvas(win, w, h, id)		#: return scratch canvas
+# return scratch canvas
+procedure ScratchCanvas(win, w, h, id)		
    local d, s
    static dpytab, type
 

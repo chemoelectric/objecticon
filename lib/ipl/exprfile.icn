@@ -57,7 +57,8 @@ import
 
 global expr_error
 
-procedure exprfile(exp, links[])	#: pipe for Icon expression
+# pipe for Icon expression
+procedure exprfile(exp, links[])	
    local output
    static name, input
 
@@ -96,13 +97,15 @@ procedure exprfile(exp, links[])	#: pipe for Icon expression
    
 end
 
-procedure exec_expr(expr_list, links[])	#: execute expression in lists
+# execute expression in lists
+procedure exec_expr(expr_list, links[])	
 
    suspend !(exprfile ! push(links, plst2pstr(expr_list)))
 
 end
 
-procedure plst2pstr(L)			#: convert program list to string
+# convert program list to string
+procedure plst2pstr(L)			
    local result
 
    result := ""
@@ -113,7 +116,8 @@ procedure plst2pstr(L)			#: convert program list to string
 
 end
 
-procedure pstr2plst(s)			#: convert program string to list
+# convert program string to list
+procedure pstr2plst(s)			
    local result
 
    result := []
@@ -128,7 +132,8 @@ procedure pstr2plst(s)			#: convert program string to list
 
 end
 
-procedure ucode(file)			#: create ucode file
+# create ucode file
+procedure ucode(file)			
 
    if system("icont -s -c " || file) ~= 0 then fail
 

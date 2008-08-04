@@ -134,7 +134,8 @@ end
 #  must also be called explicitly if the background color is changed.
 #  (Pale, weak background colors work best with beveling.)
 
-procedure BevelReset(win)	#: set colors for beveled drawing
+# set colors for beveled drawing
+procedure BevelReset(win)	
    local b, h, l, s, hilite, shadow, lhilite, lshadow
 
    /win := &window
@@ -203,7 +204,8 @@ end
 
 #  BevelCircle(win, x, y, r, bw) -- draw beveled circle
 
-procedure BevelCircle(win, x, y, r, bw)		#: draw beveled circle
+# draw beveled circle
+procedure BevelCircle(win, x, y, r, bw)		
    local b, upper, lower, a
    static type
 
@@ -237,7 +239,8 @@ end
 
 #  BevelDiamond(win, x, y, r, bw) -- draw beveled diamond
 
-procedure BevelDiamond(win, x, y, r, bw)	#: draw beveled diamond
+# draw beveled diamond
+procedure BevelDiamond(win, x, y, r, bw)	
    local b, upper, lower
    static type
 
@@ -319,7 +322,8 @@ end
 
 #  BevelSquare(win, x, y, r, bw) -- draw beveled square
 
-procedure BevelSquare(win, x, y, r, bw)		#: draw beveled square
+# draw beveled square
+procedure BevelSquare(win, x, y, r, bw)		
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -333,7 +337,8 @@ end
 
 #  RidgeRectangle(win, x, y, w, h, bw) -- draw ridged rectangle
 
-procedure RidgeRectangle(win, x, y, w, h, bw)	#: draw ridged rectangle
+# draw ridged rectangle
+procedure RidgeRectangle(win, x, y, w, h, bw)	
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -347,7 +352,8 @@ end
 
 #  GrooveRectangle(win, x, y, w, h, bw) -- draw grooved rectangle
 
-procedure GrooveRectangle(win, x, y, w, h, bw)	#: draw grooved rectangle
+# draw grooved rectangle
+procedure GrooveRectangle(win, x, y, w, h, bw)	
    local abw
    static type
 
@@ -384,7 +390,8 @@ end
 #  bw is the border width (>0 for raised bevel, <0 for sunken bevel).
 #  (x,y,w,h) bounds the entire beveled rectangle, not the usable area inside.
 
-procedure BevelRectangle(win, x, y, w, h, bw)	#: draw beveled rectangle
+# draw beveled rectangle
+procedure BevelRectangle(win, x, y, w, h, bw)	
    local b, upper, lower, xx, yy
    static type
 
@@ -433,7 +440,8 @@ end
 #
 #  If w is negative, a groove is drawn instead.
 
-procedure DrawRidge(win, x1, y1, x2, y2, w)	#: draw ridged line
+# draw ridged line
+procedure DrawRidge(win, x1, y1, x2, y2, w)	
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -456,7 +464,8 @@ end
 #  Horizontal and vertical grooves fill the same pixels as lines drawn
 #  linewidth=2.  Angled grooves are not necessarily the same, though.
 
-procedure DrawGroove(win, x1, y1, x2, y2, w)	#: draw grooved line
+# draw grooved line
+procedure DrawGroove(win, x1, y1, x2, y2, w)	
    local a, n, b, upper, lower, fg
    static type
 
@@ -508,7 +517,8 @@ end
 
 #  FillSquare(win, x, y, r) -- fill square centered at (x,y)
 
-procedure FillSquare(win, x, y, r)		#: draw filled square
+# draw filled square
+procedure FillSquare(win, x, y, r)		
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -520,7 +530,8 @@ end
 
 #  FillDiamond(win, x, y, r) -- fill diamond centered at (x,y)
 
-procedure FillDiamond(win, x, y, r)		#: draw filled diamond
+# draw filled diamond
+procedure FillDiamond(win, x, y, r)		
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -535,7 +546,8 @@ end
 #  r is "radius" (1/2 of side of enclosing square)
 #  o is orientation ("n", "s", "e", "w")
 
-procedure FillTriangle(win, x, y, r, o)		#: draw filled triangle
+# draw filled triangle
+procedure FillTriangle(win, x, y, r, o)		
    static type
 
    initial type := proc("type", 0)	# protect attractive name

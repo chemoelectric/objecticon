@@ -91,7 +91,8 @@ $define WHITESPACE ' \t\n\r'
 
 #  gedload(f) -- load GEDCOM data from file f, returning gedcom record.
 
-procedure gedload(f)		#: load GEDCOM data from file f
+# load GEDCOM data from file f
+procedure gedload(f)		
    local line, lnum, r, curr
    local root, id, fam, ind
    local hset, h1, h2, c
@@ -157,7 +158,8 @@ end
 
 #  gedscan(f) -- scan one line of a GEDCOM record, returning gednode record
 
-procedure gedscan(s)		# (internal procedure)
+# (internal procedure)
+procedure gedscan(s)		
    local level, id, tag, data
    static alnum
    initial alnum := &letters ++ &digits ++ '_'
@@ -179,7 +181,8 @@ end
 
 #  gedwalk(r) -- walk GEDCOM tree, generating nodes in preorder
 
-procedure gedwalk(r)		#: generate GEDCOM tree nodes in preorder
+# generate GEDCOM tree nodes in preorder
+procedure gedwalk(r)		
    suspend r | gedwalk(!r.sub)
    fail
 end
@@ -190,7 +193,8 @@ end
 #  gedval(r, field...) -- generate values of subrecords with given tags
 #  gedref(r, field...) -- generate nodes referenced by given tags
 
-procedure gedsub(r, f[])	#: find subrecords
+# find subrecords
+procedure gedsub(r, f[])	
    local tag, x
 
    tag := get(f) | fail
@@ -203,11 +207,13 @@ procedure gedsub(r, f[])	#: find subrecords
    }
 end
 
-procedure gedval(a[])		#: find subrecord values
+# find subrecord values
+procedure gedval(a[])		
    suspend (gedsub ! a).data
 end
 
-procedure gedref(a[])		#: find referenced nodes
+# find referenced nodes
+procedure gedref(a[])		
    suspend \(gedsub ! a).ref
 end
 
@@ -215,7 +221,8 @@ end
 
 #  gedfnf(r) -- get name from individual record, first name first
 
-procedure gedfnf(r)		#: get first name first
+# get first name first
+procedure gedfnf(r)		
    return gednmf(r, "P F L S")
 end
 
@@ -223,7 +230,8 @@ end
 
 #  gedlnf(r) -- get name from individual record, last name first
 
-procedure gedlnf(r)		#: get last name first
+# get last name first
+procedure gedlnf(r)		
    local s
    s := gednmf(r, "L, P F S")
    s ? {
@@ -240,7 +248,8 @@ end
 #  for the letters F, L, P, S respectively in string f.
 #  multiple spaces are suppressed.
 
-procedure gednmf(r, f)		#: format name
+# format name
+procedure gednmf(r, f)		
    local c, s, prefix, first, last, suffix
 
    prefix := gedval(r, "TITL" | "NPFX") | gedval(r, "NAME", "NPFX")
@@ -274,7 +283,8 @@ end
 
 #  geddate(r) -- get date from record in standard form
 
-procedure geddate(r)		#: get canonical date
+# get canonical date
+procedure geddate(r)		
    local s, t, w
    static ftab
    initial {
@@ -306,7 +316,8 @@ end
 
 #  gedyear(r) -- get year from event record
 
-procedure gedyear(r)		#: get year
+# get year
+procedure gedyear(r)		
    local d, y
 
    d := gedval(r, "DATE") | fail
@@ -322,7 +333,8 @@ end
 #  The hashcode uses two initials, final digits of birth year,
 #  and a 3-letter hashing of the full name and birthdate fields.
 
-procedure gedhi(r)		# (internal procedure)
+# (internal procedure)
+procedure gedhi(r)		
    local s, name, bdate, bd
    static lc, uc
    initial {
@@ -354,7 +366,8 @@ end
 
 #  gedh3a(s) -- hash arbitrary string into three alphabetic characters
 
-procedure gedh3a(s)		# (internal procedure)
+# (internal procedure)
+procedure gedh3a(s)		
    local n, d1, d2, d3, c
 
    n := 0
@@ -376,7 +389,8 @@ end
 #  is matched by either a word of the individual's name or by
 #  the birth year.  Matching is case-insensitive.
 
-procedure gedfind(g, s)		#: find individual by name
+# find individual by name
+procedure gedfind(g, s)		
    local r
    
    every r := !g.ind do 
@@ -390,7 +404,8 @@ end
 #  s is a string of words to match name field and/or birth year.
 #  Matching is case sensitive.
 
-procedure gedmatch(r, s)	# (internal procedure)
+# (internal procedure)
+procedure gedmatch(r, s)	
    local w
 
    every w := gedlcw(s) do
@@ -404,7 +419,8 @@ end
 #
 #  words are mapped to lower-case to allow case-insensitive comparisons
 
-procedure gedlcw(s, c)		# (internal procedure)
+# (internal procedure)
+procedure gedlcw(s, c)		
    /c := '/ \t\r\n\v\f'
    map(s) ? {
       tab(many(c))

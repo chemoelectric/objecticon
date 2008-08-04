@@ -92,7 +92,8 @@ global PS_active, PS_f, PS_win, PS_width, PS_height
 #
 #  window and filename are significant only on the very first call.
 
-procedure PSEnable(w, f)		#: enable PostScript recording
+# enable PostScript recording
+procedure PSEnable(w, f)		
    initial PS_init(w, f)
    if /PS_active := 1 then
       PS_swap()
@@ -101,7 +102,8 @@ end
 
 #  PSSnap() -- take snapshot at this point
 
-procedure PSSnap()			#: take PostScript snapshot
+# take PostScript snapshot
+procedure PSSnap()			
    static inited
    if /PS_active then
       fail
@@ -116,7 +118,8 @@ end
 
 #  PSRaw(s) -- output a line of raw PostScript (at user's own risk)
 
-procedure PSRaw(s)			#: output raw PostScript
+# output raw PostScript
+procedure PSRaw(s)			
    if /PS_active then
       fail
    return write(PS_f, s)
@@ -124,7 +127,8 @@ end
 
 #  PSDisable() -- temporarily turn off recording
 
-procedure PSDisable()			#: disable PostScript recording
+# disable PostScript recording
+procedure PSDisable()			
    if \PS_active := &null then
       PS_swap()
    return
@@ -132,7 +136,8 @@ end
 
 #  PSDone(sw) -- terminate output
 
-procedure PSDone(sw)			#: terminate PostScript recording
+# terminate PostScript recording
+procedure PSDone(sw)			
    initial PS_init()
    PSDisable()
    if /sw then PS_out("showpage") 	# if sw nonnull, do not output
@@ -301,28 +306,32 @@ end
 
 ####################  Icon Function Substitutes  ####################
 
-procedure PS_flush(a[])		# replaces WFlush
+# replaces WFlush
+procedure PS_flush(a[])		
    # we don't know why they're flushing, but we'll flush, too
    flush(PS_f)
    return PS_flush ! a
 end
 
 
-procedure PS_bg(a[])		# replaces Bg
+# replaces Bg
+procedure PS_bg(a[])		
    PS_afix(a)
    # note that following line fails if there is no a[2]
    PS_out(PS_color(a[2]), "bg")
    return PS_bg ! a
 end
 
-procedure PS_fg(a[])		# replaces Fg
+# replaces Fg
+procedure PS_fg(a[])		
    PS_afix(a)
    # note that following line fails if there is no a[2]
    PS_out(PS_color(a[2]), "fg")
    return PS_fg ! a
 end
 
-procedure PS_color(color)	# parse color, return string of PS r, g, b
+# parse color, return string of PS r, g, b
+procedure PS_color(color)	
    local r, g, b
    (ColorValue(PS_win, color) | fail) ? {
       r := tab(many(&digits));  move(1)
@@ -332,7 +341,8 @@ procedure PS_color(color)	# parse color, return string of PS r, g, b
    return (r / 65535.0) || " " || (g / 65535.0) || " " || (b / 65535.0)
 end
 
-procedure PS_drawpoint(a[])	# replaces DrawPoint
+# replaces DrawPoint
+procedure PS_drawpoint(a[])	
    local i
 
    PS_afix(a)
@@ -341,7 +351,8 @@ procedure PS_drawpoint(a[])	# replaces DrawPoint
    return PS_drawpoint ! a
 end
 
-procedure PS_drawsegment(a[])	# replaces DrawSegment
+# replaces DrawSegment
+procedure PS_drawsegment(a[])	
    local i
 
    PS_afix(a)
@@ -350,7 +361,8 @@ procedure PS_drawsegment(a[])	# replaces DrawSegment
    return PS_drawsegment ! a
 end
 
-procedure PS_drawline(a[])	# replaces DrawLine
+# replaces DrawLine
+procedure PS_drawline(a[])	
 
 
    PS_afix(a)
@@ -361,7 +373,8 @@ procedure PS_drawline(a[])	# replaces DrawLine
    return PS_drawline ! a
 end
 
-procedure PS_drawcurve(a[])	# replaces DrawCurve -- approx with line segs
+# replaces DrawCurve -- approx with line segs
+procedure PS_drawcurve(a[])	
 
 
    PS_afix(a)
@@ -369,7 +382,8 @@ procedure PS_drawcurve(a[])	# replaces DrawCurve -- approx with line segs
    return PS_drawcurve ! a
 end
 
-procedure PS_drawrect(a[])	# replaces DrawRectangle
+# replaces DrawRectangle
+procedure PS_drawrect(a[])	
    local i
 
    PS_afix(a)
@@ -378,7 +392,8 @@ procedure PS_drawrect(a[])	# replaces DrawRectangle
    return PS_drawrect ! a
 end
 
-procedure PS_fillrect(a[])	# replaces FillRectangle
+# replaces FillRectangle
+procedure PS_fillrect(a[])	
    local i
 
    PS_afix(a)
@@ -387,7 +402,8 @@ procedure PS_fillrect(a[])	# replaces FillRectangle
    return PS_fillrect ! a
 end
 
-procedure PS_fillpoly(a[])	# replaces FillPolygon
+# replaces FillPolygon
+procedure PS_fillpoly(a[])	
 
 
    PS_afix(a)
@@ -396,17 +412,20 @@ procedure PS_fillpoly(a[])	# replaces FillPolygon
 end
 
 
-procedure PS_clip(a[])		# replaces Clip
+# replaces Clip
+procedure PS_clip(a[])		
    PS_area(a, "cp")
    return PS_clip ! a
 end
 
-procedure PS_erasearea(a[])	# replaces EraseArea
+# replaces EraseArea
+procedure PS_erasearea(a[])	
    PS_area(a, "er")
    return PS_erasearea ! a
 end
 
-procedure PS_area(a, cmd)	# generate w, h, x, y, and cmd, with defaults
+# generate w, h, x, y, and cmd, with defaults
+procedure PS_area(a, cmd)	
    local x, y, w, h
    PS_afix(a)
 
@@ -417,27 +436,32 @@ procedure PS_area(a, cmd)	# generate w, h, x, y, and cmd, with defaults
    PS_out(w, h, x, y, cmd)
 end
 
-procedure PS_drawcircle(a[])	# replaces DrawCircle
+# replaces DrawCircle
+procedure PS_drawcircle(a[])	
    PS_arc(a, 0, "")
    return PS_drawcircle ! a
 end
 
-procedure PS_fillcircle(a[])	# replaces FillCircle
+# replaces FillCircle
+procedure PS_fillcircle(a[])	
    PS_arc(a, 0, "f")
    return PS_fillcircle ! a
 end
   
-procedure PS_drawarc(a[])	# replaces DrawArc
+# replaces DrawArc
+procedure PS_drawarc(a[])	
    PS_arc(a, 1, "")
    return PS_drawarc ! a
 end
 
-procedure PS_fillarc(a[])	# replaces FillArc
+# replaces FillArc
+procedure PS_fillarc(a[])	
    PS_arc(a, 1, "f")
    return PS_fillarc ! a
 end
 
-procedure PS_arc(a, n, f)	# handle draw/fill arc/circle, append f to cmd
+# handle draw/fill arc/circle, append f to cmd
+procedure PS_arc(a, n, f)	
    local x, y, w, h, ar, a1, a2, r, i
    static mul
    initial mul := 180 / &pi
@@ -474,7 +498,8 @@ procedure PS_arc(a, n, f)	# handle draw/fill arc/circle, append f to cmd
    return
 end
 
-procedure PS_font(a[])	     	# replaces Font (very crudely)
+# replaces Font (very crudely)
+procedure PS_font(a[])	     	
    local ret, xname, psname, n
 
    PS_afix(a)
@@ -513,14 +538,16 @@ procedure PS_font(a[])	     	# replaces Font (very crudely)
    return ret
 end
 
-procedure PS_drawstring(a[])		# replaces DrawString
+# replaces DrawString
+procedure PS_drawstring(a[])		
    PS_afix(a)
    PS_psstring(a[4])
    PS_out("", a[2], a[3], "t")
    return PS_drawstring ! a
 end
 
-procedure PS_psstring(s)		# output a string as a PS string
+# output a string as a PS string
+procedure PS_psstring(s)		
    s ? {
       writes(PS_f, "(")
       while writes(PS_f, tab(upto('()\\'))) do
@@ -536,7 +563,8 @@ end
 #  the correct value during initialization in order to catch attributes
 #  that were set on the open() call.
 
-procedure PS_attrib(alist[])		# replaces WAttrib
+# replaces WAttrib
+procedure PS_attrib(alist[])		
    local win, ret, name, val, a
 
    PS_afix(alist)

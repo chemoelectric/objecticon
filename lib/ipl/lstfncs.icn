@@ -66,7 +66,8 @@ procedure primelist(l, m)
 
 end
 
-procedure List(L)		# called as List{e, l, m}
+# called as List{e, l, m}
+procedure List(L)		
    local l, m, result
 
    l := \@L[2] | 128		# length

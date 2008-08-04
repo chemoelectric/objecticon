@@ -167,7 +167,8 @@ end
 #  The bitmap is in a separate source file cardbits.icn due to its size.
 #  It is represented there as a bilevel image.
 
-procedure cardmap()		# create and load card bitmap
+# create and load card bitmap
+procedure cardmap()		
    local ims, cmap, rmap
 
    ims := cardbits()

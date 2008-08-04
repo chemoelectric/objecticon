@@ -89,7 +89,8 @@ import
 
 record ImageRecord(width, palette, pixels)
 
-procedure imrcath(imr1, imr2)	#: horizontally concatenate image records
+# horizontally concatenate image records
+procedure imrcath(imr1, imr2)	
    local imr, i, rows1, rows2
 
    if *imr1.pixels / imr1.width ~= *imr2.pixels / imr2.width then fail
@@ -120,7 +121,8 @@ procedure imrcath(imr1, imr2)	#: horizontally concatenate image records
 
 end
 
-procedure imrcatv(imr1, imr2)		#: vertically concatenate image records
+# vertically concatenate image records
+procedure imrcatv(imr1, imr2)		
    local imr
 
    if imr1.width ~= imr2.width then fail
@@ -141,7 +143,8 @@ procedure imrcopy(imr)
 
 end
 
-procedure imrdraw(win, x, y, imr)	#: draw image record
+# draw image record
+procedure imrdraw(win, x, y, imr)	
 
    if type(win) ~== "window" then {
       win :=: x :=: y :=: imr
@@ -155,7 +158,8 @@ procedure imrdraw(win, x, y, imr)	#: draw image record
 
 end
 
-procedure imrflipd(imr)			#: flip image record diagonally
+# flip image record diagonally
+procedure imrflipd(imr)			
    local height, columns, i, row
 
    height := *imr.pixels / imr.width
@@ -177,7 +181,8 @@ procedure imrflipd(imr)			#: flip image record diagonally
 
 end
 
-procedure imrfliph(imr)			#: flip image record horizontally
+# flip image record horizontally
+procedure imrfliph(imr)			
    local pixels
 
    pixels := ""
@@ -192,7 +197,8 @@ procedure imrfliph(imr)			#: flip image record horizontally
 
 end
 
-procedure imrflipv(imr)			#: flip image record vertically
+# flip image record vertically
+procedure imrflipv(imr)			
    local pixels
 
    pixels := ""
@@ -207,7 +213,8 @@ procedure imrflipv(imr)			#: flip image record vertically
 
 end
 
-procedure imrnegative(imr)		#: form negative of image record
+# form negative of image record
+procedure imrnegative(imr)		
    local chars
 
    chars := PaletteChars(imr.palette)
@@ -218,7 +225,8 @@ procedure imrnegative(imr)		#: form negative of image record
 
 end
 
-procedure imropen(imr)			#: open window with image record
+# open window with image record
+procedure imropen(imr)			
    local win
 
    win := WOpen("canvas=hidden","size=" || imr.width || "," ||
@@ -233,7 +241,8 @@ procedure imropen(imr)			#: open window with image record
    
 end
 
-procedure imrpshift(imr, i)		#: map shifted palette
+# map shifted palette
+procedure imrpshift(imr, i)		
    local chars
 
    chars := PaletteChars(imr.palette)
@@ -244,7 +253,8 @@ procedure imrpshift(imr, i)		#: map shifted palette
 
 end
 
-procedure imrrot180(imr)		#: rotate image record 180 degrees
+# rotate image record 180 degrees
+procedure imrrot180(imr)		
 
    imr.pixels := reverse(imr.pixels)
 
@@ -252,7 +262,8 @@ procedure imrrot180(imr)		#: rotate image record 180 degrees
 
 end
 
-procedure imrrot90cw(imr)		#: rotate image record 90 deg. clockwise
+# rotate image record 90 deg. clockwise
+procedure imrrot90cw(imr)		
    local height, columns, i, row
 
    height := *imr.pixels / imr.width
@@ -278,7 +289,8 @@ end
 #  on the direction of the shift, one full pass over the width raises the
 #  image one pixel.
 
-procedure imrshifth(imr, i)		#: shift image record horizontally
+# shift image record horizontally
+procedure imrshifth(imr, i)		
 
    imr.pixels := rotate(imr.pixels, i)
 
@@ -288,7 +300,8 @@ end
 
 #  See note on imrshifth()
 
-procedure imrshiftv(imr, i)		#: shift image record vertically
+# shift image record vertically
+procedure imrshiftv(imr, i)		
 
    /i := 1
 
@@ -298,13 +311,15 @@ procedure imrshiftv(imr, i)		#: shift image record vertically
 
 end
 
-procedure imrtoims(imr)			#: convert image record to image string
+# convert image record to image string
+procedure imrtoims(imr)			
 
    return imr.width || "," || imr.palette || "," || imr.pixels
 
 end
 
-procedure imstoimr(s)			#: convert image string to image record
+# convert image string to image record
+procedure imstoimr(s)			
    local imr
 
    imr := ImageRecord()

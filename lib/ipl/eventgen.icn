@@ -54,13 +54,15 @@ procedure main(Mp)
 
 end
 
-procedure Alt(e1, e2)			# e1 | e2
+# e1 | e2
+procedure Alt(e1, e2)			
 
    return cat("(", e1, "|", e2, ")")
 
 end
 
-procedure Apply(e1, e2)		# e1 ! e2
+# e1 ! e2
+procedure Apply(e1, e2)		
 
    return cat("(", e1, "!", e2, ")")
 
@@ -72,32 +74,37 @@ procedure Arg(e)
 
 end
 
-procedure Asgnop(op, e1, e2)		# e1 op e2
+# e1 op e2
+procedure Asgnop(op, e1, e2)		
 
    return cat("2(event(MAssign, ", image(e1) , "), ",
       e1, " ", op, " ", e2, ", event(MValue, ", e1, "))")
 
 end
 
-procedure Augscan(e1, e2)		# e1 ?:= e2
+# e1 ?:= e2
+procedure Augscan(e1, e2)		
 
    return cat("(", e1, " ?:= ", e2, ")")
 
 end
 
-procedure Bamper(e1, e2)		# e1 & e2
+# e1 & e2
+procedure Bamper(e1, e2)		
 
    return cat("(", e1, " & ", e2, ")")
 
 end
 
-procedure Binop(op, e1, e2)		# e1 op e2
+# e1 op e2
+procedure Binop(op, e1, e2)		
 
    return cat("(", e1, " ",  op, " ",  e2, ")")
 
 end
 
-procedure Body(s[])			# procedure body
+# procedure body
+procedure Body(s[])			
 
    if procname == "main" then
       write("   if &source === &main then event := noop")
@@ -108,38 +115,44 @@ procedure Body(s[])			# procedure body
 
 end
 
-procedure Break(e)			# break e
+# break e
+procedure Break(e)			
 
    return cat("break ", e)
 
 end
 
-procedure Case(e, clist)		# case e of { caselist }
+# case e of { caselist }
+procedure Case(e, clist)		
 
    return cat("case ", e, " of {", clist, "}")
 
 end
 
-procedure Cclause(e1, e2)		# e1 : e2
+# e1 : e2
+procedure Cclause(e1, e2)		
 
    return cat(e1, " : ", e2, "\n")
 
 end
 
-procedure Clist(e1, e2)		# e1 ; e2 in case list
+# e1 ; e2 in case list
+procedure Clist(e1, e2)		
 
    return cat(e1, ";", e2)
 
 end
 
-procedure Clit(e)			# 's'
+# 's'
+procedure Clit(e)			
 
 #  return cat("'", e, "'")
    return image(e)
 
 end
 
-procedure Compound(es[])		# { e1; e2; ... }
+# { e1; e2; ... }
+procedure Compound(es[])		
    local result
 
    if *es = 0 then return "{}\n"
@@ -151,19 +164,22 @@ procedure Compound(es[])		# { e1; e2; ... }
 
 end
 
-procedure Create(e)			# create e
+# create e
+procedure Create(e)			
 
    return cat("create ", e)
 
 end
 
-procedure Default(e)			# default: e
+# default: e
+procedure Default(e)			
 
    return cat("default: ", e)
 
 end
 
-procedure End()			# end
+# end
+procedure End()			
 
    write("end")
 
@@ -171,31 +187,36 @@ procedure End()			# end
 
 end
 
-procedure Every(e)			# every e
+# every e
+procedure Every(e)			
 
    return cat("every ", e)
 
 end
 
-procedure EveryDo(e1, e2)		# every e1 do e2
+# every e1 do e2
+procedure EveryDo(e1, e2)		
 
    return cat("every ", e1, " do ", e2)
 
 end
 
-procedure Fail()			# fail
+# fail
+procedure Fail()			
 
    return "fail"
 
 end
 
-procedure Field(e1, e2)		# e . f
+# e . f
+procedure Field(e1, e2)		
 
    return cat("(", e1, ".", e2, ")")
 
 end
 
-procedure Global(vs[])		# global v1, v2, ...
+# global v1, v2, ...
+procedure Global(vs[])		
    local result
 
    result := ""
@@ -207,25 +228,29 @@ procedure Global(vs[])		# global v1, v2, ...
 
 end
 
-procedure If(e1, e2)			# if e1 then e2
+# if e1 then e2
+procedure If(e1, e2)			
 
    return cat("if ", e1, " then ", e2)
 
 end
 
-procedure IfElse(e1, e2, e3)		# if e1 then e2 else e3
+# if e1 then e2 else e3
+procedure IfElse(e1, e2, e3)		
 
    return cat("if ", e1, " then ", e2, " else ", e3)
 
 end
 
-procedure Ilit(e)			# i
+# i
+procedure Ilit(e)			
 
    return e
 
 end
 
-procedure Initial(s)			# initial e
+# initial e
+procedure Initial(s)			
 
    write("initial ", s)
 
@@ -233,7 +258,8 @@ procedure Initial(s)			# initial e
 
 end
 
-procedure Invocable(es[])		# invocable ... (problem)
+# invocable ... (problem)
+procedure Invocable(es[])		
 
    if \es then write("invocable all")
    else write("invocable ", es)
@@ -242,7 +268,8 @@ procedure Invocable(es[])		# invocable ... (problem)
 
 end
 
-procedure Invoke(e0, es[])		# e0(e1, e2, ...)
+# e0(e1, e2, ...)
+procedure Invoke(e0, es[])		
    local result
 
    if *es = 0 then return cat(e0, "()")
@@ -254,19 +281,22 @@ procedure Invoke(e0, es[])		# e0(e1, e2, ...)
 
 end
 
-procedure Key(s)			# &s
+# &s
+procedure Key(s)			
 
    return cat("&", s)
 
 end
 
-procedure Limit(e1, e2)		# e1 \ e2
+# e1 \ e2
+procedure Limit(e1, e2)		
 
    return cat("(", e1, "\\", e2, ")")
 
 end
 
-procedure Link(vs[])			# link "v1, v2, ..."
+# link "v1, v2, ..."
+procedure Link(vs[])			
 
    local result
 
@@ -279,7 +309,8 @@ procedure Link(vs[])			# link "v1, v2, ..."
 
 end
 
-procedure List(es[])			# [e1, e2, ... ]
+# [e1, e2, ... ]
+procedure List(es[])			
    local result
 
    if *es = 0 then return "[]"
@@ -291,7 +322,8 @@ procedure List(es[])			# [e1, e2, ... ]
 
 end
 
-procedure Local(vs[])			# local v1, v2, ...
+# local v1, v2, ...
+procedure Local(vs[])			
    local result
 
    result := ""
@@ -303,25 +335,29 @@ procedure Local(vs[])			# local v1, v2, ...
 
 end
 
-procedure Next()			# next
+# next
+procedure Next()			
 
    return "next"
 
 end
 
-procedure Not(e)			# not e
+# not e
+procedure Not(e)			
 
    return cat("not(", e, ")")
 
 end
 
-procedure Null()			# &null
+# &null
+procedure Null()			
 
    return ""
 
 end
 
-procedure Paren(es[])			# (e1, e2, ... )
+# (e1, e2, ... )
+procedure Paren(es[])			
    local result
 
    if *es = 0 then return "()"
@@ -333,7 +369,8 @@ procedure Paren(es[])			# (e1, e2, ... )
 
 end
 
-procedure Pdco(e0, es[])		# e0{e1, e2, ... }
+# e0{e1, e2, ... }
+procedure Pdco(e0, es[])		
    local result
 
    if *es = 0 then return cat(e0, "{}")
@@ -345,7 +382,8 @@ procedure Pdco(e0, es[])		# e0{e1, e2, ... }
 
 end
 
-procedure Proc(s, es[])		# procedure s(v1, v2, ...)
+# procedure s(v1, v2, ...)
+procedure Proc(s, es[])		
    local result, e
 
    if *es = 0 then write("procedure ", s, "()")
@@ -363,7 +401,8 @@ procedure Proc(s, es[])		# procedure s(v1, v2, ...)
 
 end
 
-procedure Record(s, es[])		# record s(v1, v2, ...)
+# record s(v1, v2, ...)
+procedure Record(s, es[])		
    local result, field
 
    if *es = 0 then write("record ", s, "()")
@@ -378,13 +417,15 @@ procedure Record(s, es[])		# record s(v1, v2, ...)
 
 end
 
-procedure Repeat(e)			# repeat e
+# repeat e
+procedure Repeat(e)			
 
    return cat("repeat ", e)
 
 end
 
-procedure Return(e)			# return e
+# return e
+procedure Return(e)			
 
    return cat("return ", e)
 
@@ -396,25 +437,29 @@ procedure Rlit(e)
 
 end
 
-procedure Scan(e1, e2)			# e1 ? e2
+# e1 ? e2
+procedure Scan(e1, e2)			
 
    return cat("(", e1 , " ? ", e2, ")")
 
 end
 
-procedure Section(op, e1, e2, e3)	# e1[e2 op  e3]
+# e1[e2 op  e3]
+procedure Section(op, e1, e2, e3)	
 
    return cat(e1, "[", e2, op, e3, "]")
 
 end
 
-procedure Slit(s)			# "s"
+# "s"
+procedure Slit(s)			
 
    return image(s)
 
 end
 
-procedure Static(ev[])			# static v1, v2, ..
+# static v1, v2, ..
+procedure Static(ev[])			
    local result
 
    result := ""
@@ -426,73 +471,85 @@ procedure Static(ev[])			# static v1, v2, ..
 
 end
 
-procedure Subscript(e1, e2)		# e1[e2]
+# e1[e2]
+procedure Subscript(e1, e2)		
 
    return cat(e1, "[", e2, "]")
 
 end
 
-procedure Suspend(e)			# suspend e
+# suspend e
+procedure Suspend(e)			
 
    return cat("suspend ", e)
 
 end
 
-procedure SuspendDo(e1, e2)		# suspend e1 do e2
+# suspend e1 do e2
+procedure SuspendDo(e1, e2)		
 
    return cat("suspend ", e1, " do ", e2)
 
 end
 
-procedure To(e1, e2)			# e1 to e2
+# e1 to e2
+procedure To(e1, e2)			
 
    return cat("(", e1, " to ", e2, ")")
 
 end
 
-procedure ToBy(e1, e2, e3)		# e1 to e2 by e3
+# e1 to e2 by e3
+procedure ToBy(e1, e2, e3)		
 
    return cat("(", e1, " to ", e2, " by ", e3, ")")
 
 end
 
-procedure Repalt(e)			# |e
+# |e
+procedure Repalt(e)			
 
    return cat("(|", e, ")")
 
 end
 
-procedure Unop(op, e)			# op e
+# op e
+procedure Unop(op, e)			
 
    return cat("(", op, e, ")")
 
 end
 
-procedure Until(e)			# until e
+# until e
+procedure Until(e)			
 
    return cat("until ", e)
 
 end
 
-procedure UntilDo(e1, e2)		# until e1 do e2
+# until e1 do e2
+procedure UntilDo(e1, e2)		
 
    return cat("until ", e1, " do ", e2)
 
 end
 
-procedure Var(s)			# v
+# v
+procedure Var(s)			
 
    return s
 
 end
 
-procedure While(e)			# while e
+# while e
+procedure While(e)			
 
    return cat("while ", e)
 
 end
 
-procedure WhileDo(e1, e2)		# while e1 do e2
+# while e1 do e2
+procedure WhileDo(e1, e2)		
 
    return cat("while ", e1, " do ", e2)
 

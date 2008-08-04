@@ -63,7 +63,8 @@ import
    ipl.ptutils(pt2coord),
    ipl.records(field)
 
-procedure point_field(pts)	#: create VRML point field
+# create VRML point field
+procedure point_field(pts)	
    local field
 
    field := "[\n"
@@ -74,7 +75,8 @@ procedure point_field(pts)	#: create VRML point field
 
 end
 
-procedure u_crd_idx(i)		#: create VRML coordinate index
+# create VRML coordinate index
+procedure u_crd_idx(i)		
    local index
 
    index := "[\n"
@@ -89,7 +91,8 @@ end
 
 
 
-procedure vrml1(x, f) 		#: write VRML 1.0 file
+# write VRML 1.0 file
+procedure vrml1(x, f) 		
 
    /f := &output
 
@@ -99,7 +102,8 @@ procedure vrml1(x, f) 		#: write VRML 1.0 file
 
 end
 
-procedure vrml2(x, f)		#: produce VRML 2.0 file
+# produce VRML 2.0 file
+procedure vrml2(x, f)		
 
    write(f, "#VRML V2.0 utf8")
 
@@ -107,7 +111,8 @@ procedure vrml2(x, f)		#: produce VRML 2.0 file
 
 end
 
-procedure render(x, f)		# render VRML object
+# render VRML object
+procedure render(x, f)		
    local i, bar, fieldname, input
    static indent
 

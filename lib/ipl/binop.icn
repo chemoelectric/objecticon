@@ -25,7 +25,8 @@
 
 package ipl.binop
 
-procedure binop(op, result, rest[])		#: apply binary operation
+# apply binary operation
+procedure binop(op, result, rest[])		
 
    every result := op(result, !rest)
 

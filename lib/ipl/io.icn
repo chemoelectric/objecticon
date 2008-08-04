@@ -267,13 +267,15 @@ global buffer_in, buffer_out, Eof
 record    _DOS_FileParts_(fullname,devpath,device,path,name,extension)
 record dirinfo( name, ext, size, date, time )
 
-procedure ClearOut()			#: remove contents of output buffer
+# remove contents of output buffer
+procedure ClearOut()			
 
    buffer_out := []
 
 end
 
-procedure DOS_FileParts(filename)	#: parse DOSfile name
+# parse DOSfile name
+procedure DOS_FileParts(filename)	
 
 local dev, path, name, ext, p, d
 
@@ -294,7 +296,8 @@ filename   ? {
 return _DOS_FileParts_(filename,filename[1:d + p],dev,path,name,ext)
 end
 
-procedure Flush()			#: flush output buffer
+# flush output buffer
+procedure Flush()			
 
    while write(pull(buffer_out))
 
@@ -302,19 +305,22 @@ procedure Flush()			#: flush output buffer
 
 end
 
-procedure GetBack()			#: get back line written
+# get back line written
+procedure GetBack()			
 
    return get(buffer_out)
 
 end
 
-procedure LookAhead()			#: look at next line
+# look at next line
+procedure LookAhead()			
 
    return buffer_in[1]
 
 end
 
-procedure PutBack(s)			#: put back line read
+# put back line read
+procedure PutBack(s)			
 
    push(buffer_in,s)
 
@@ -322,7 +328,8 @@ procedure PutBack(s)			#: put back line read
 
 end
 
-procedure Read()			#: read a line in buffered mode
+# read a line in buffered mode
+procedure Read()			
 
    initial{
       buffer_in := []
@@ -334,7 +341,8 @@ procedure Read()			#: read a line in buffered mode
 
 end
 
-procedure ReadAhead(n)			#: read ahead
+# read ahead
+procedure ReadAhead(n)			
 
    while *buffer_in < n do
       put(buffer_in,read()) | {
@@ -346,7 +354,8 @@ procedure ReadAhead(n)			#: read ahead
 
 end
 
-procedure Write(s)			#: write in buffered mode
+# write in buffered mode
+procedure Write(s)			
 
    initial buffer_out := []
 
@@ -356,7 +365,8 @@ procedure Write(s)			#: write in buffered mode
 
 end
 
-procedure components(s,separator)	#: get components of file name
+# get components of file name
+procedure components(s,separator)	
    local x,head
    /separator := "/"
    x := tail(s,separator)
@@ -369,7 +379,8 @@ procedure components(s,separator)	#: get components of file name
       } ||| ([&null ~=== x[2]] | [])
 end
 
-procedure dopen(s)			#: open file on DPATH
+# open file on DPATH
+procedure dopen(s)			
    local file, paths, path, binpath, f
 
    if file := open(s) then return file		# look in current directory
@@ -398,7 +409,8 @@ procedure dopen(s)			#: open file on DPATH
 
 end
 
-procedure dosdir( diropts )		#: process DOS directory
+# process DOS directory
+procedure dosdir( diropts )		
    local de, line 
 
    static tempfn, tempf, dosdir_ver
@@ -479,7 +491,8 @@ if *&subject = 39  & (tab(any(nb)), move(-1)) then {
    }
 end
 
-procedure dosdirlist(			#: get list of DOS directory
+# get list of DOS directory
+procedure dosdirlist(			
    dpath, dpart2, infotab
    )
 local dl, di, fn
@@ -503,7 +516,8 @@ end
 
 $ifdef _MSDOS
  
-procedure dosfiles(pfn)			#: DOS file names
+# DOS file names
+procedure dosfiles(pfn)			
    local asciiz, fnr, prefix, k, name
    local ds, dx, result, fnloc, string_block
  
@@ -546,7 +560,8 @@ end
 
 $endif
  
-procedure dosname(namein)		#: convert file name to DOS format
+# convert file name to DOS format
+procedure dosname(namein)		
 
     local prefix, base, extension, pair, extended_name
     
@@ -565,7 +580,8 @@ procedure dosname(namein)		#: convert file name to DOS format
     
 end
 
-procedure dpath(s)			#: full path to file on DPATH
+# full path to file on DPATH
+procedure dpath(s)			
    local paths, path, result
 
    if exists(s) then return s		# look in current directory
@@ -585,13 +601,15 @@ procedure dpath(s)			#: full path to file on DPATH
 
 end
 
-procedure exists(name)			#: test file existence
+# test file existence
+procedure exists(name)			
 
    return close(open(name))
 
 end
 
-procedure directory(name)		#: succeed if name is a directory
+# succeed if name is a directory
+procedure directory(name)		
    return stat(name).mode[1] == "d"
 end
 
@@ -605,7 +623,8 @@ end
 
 $endif
 
-procedure fcopy(fn1,fn2)		#: copy file
+# copy file
+procedure fcopy(fn1,fn2)		
    local f1, f2, buf
 
    f1 := open(fn1,"ru") | stop("Can't open ",fn1)
@@ -615,7 +634,8 @@ procedure fcopy(fn1,fn2)		#: copy file
    return fn2
 end
 
-procedure filelist(spec, x)		#: get list of files
+# get list of files
+procedure filelist(spec, x)		
    local flist, ls, f
 
    /spec := ""
@@ -638,7 +658,8 @@ procedure filelist(spec, x)		#: get list of files
 
 end
 
-procedure filetext(f)			#: read file into list
+# read file into list
+procedure filetext(f)			
    local input, text
 
    input := open(f) | stop("cannot open input file")
@@ -655,11 +676,13 @@ end
  
 $ifdef _MSDOS
 
-procedure getdrive()			#: get current DOS drive
+# get current DOS drive
+procedure getdrive()			
    return &lcase[iand( Int86([33,16r1900,0,0,0,0,0,0,0])[2], 255 )+1] || ":"
 end
 
-procedure getwd(drive)			#: get DOS working directory
+# get DOS working directory
+procedure getwd(drive)			
    local A, dx, si, cf, ds
 
 
@@ -676,7 +699,8 @@ end
 $endif
 
 
-procedure pathfind(fname, path)		#: find file on path
+# find file on path
+procedure pathfind(fname, path)		
    local dir, fullname
 
    $ifdef _UNIX
@@ -705,7 +729,8 @@ procedure pathfind(fname, path)		#: find file on path
    fail
 end
 
-procedure pathload(fname, entry)	#: load C function from $FPATH
+# load C function from $FPATH
+procedure pathload(fname, entry)	
    local path, found
 
    path := getenv("FPATH") | "."
@@ -717,7 +742,8 @@ procedure pathload(fname, entry)	#: load C function from $FPATH
    return loadfunc(found, entry)	# aborts if unsuccessful
 end
 
-procedure readline(file)		#: assemble backslash-continued lines
+# assemble backslash-continued lines
+procedure readline(file)		
    local line
 
    line := read(file) | fail
@@ -729,7 +755,8 @@ procedure readline(file)		#: assemble backslash-continued lines
 
 end
 
-procedure splitline(file,line,limit)	#: split line into pieces
+# split line into pieces
+procedure splitline(file,line,limit)	
    local i, j
 
    if *line = 0 then {			# don't fail to write empty line
@@ -757,7 +784,8 @@ procedure splitline(file,line,limit)	#: split line into pieces
 
 end
 
-procedure suffix(s,separator)		#: find suffix of file name
+# find suffix of file name
+procedure suffix(s,separator)		
    local i
    /separator := "."
    i := *s + 1
@@ -765,7 +793,8 @@ procedure suffix(s,separator)		#: find suffix of file name
    return [s[1:i],s[(*s >= i) + 1:0] | &null]
 end
 
-procedure tail(s,separator)		#: find tail of file name 
+# find tail of file name 
+procedure tail(s,separator)		
    local i
    /separator := "/"
    i := 0
@@ -773,7 +802,8 @@ procedure tail(s,separator)		#: find tail of file name
    return [s[1:i + (i <= 1 | 0)],"" ~== s[i + 1:0] | &null]
 end
 
-procedure tempfile(			#: get temporary file
+# get temporary file
+procedure tempfile(			
    prefix, suffix, path, len
    )
    local name
@@ -784,7 +814,8 @@ procedure tempfile(			#: get temporary file
 
 end
 
-procedure tempname(			#: get temporary file name
+# get temporary file name
+procedure tempname(			
    prefix, suffix, path, len
    )
    local name

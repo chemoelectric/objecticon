@@ -86,21 +86,24 @@ import
 
 #  imspalette(im) -- return palette used by image
 
-procedure imspalette(im)			#: palette for image
+# palette for image
+procedure imspalette(im)			
    im ? {tab(upto(',') + 1) & return ((="#" & &null) | tab(upto(',')))}
 end
 
 
 #  imswidth(im) -- return width of image
 
-procedure imswidth(im)				#: width of image
+# width of image
+procedure imswidth(im)				
    im ? return integer(tab(upto(',')))
 end
 
 
 #  imsheight(im) -- return height of image
 
-procedure imsheight(im)				#: height of image
+# height of image
+procedure imsheight(im)				
    local pal, w, n, d, c
 
    im ? {
@@ -119,7 +122,8 @@ procedure imsheight(im)				#: height of image
       }
 end
 
-procedure IMH_Count(c)		# count remaining chars that are in cset c
+# count remaining chars that are in cset c
+procedure IMH_Count(c)		
    local n
 
    n := 0
@@ -131,14 +135,16 @@ end
 
 #  imsmap(s1, s2, s3) -- map the data (only) of an image string
 
-procedure imsmap(s1, s2, s3)			#: map data of image string
+# map data of image string
+procedure imsmap(s1, s2, s3)			
    s1 ? return tab(upto(',')+1) || tab(upto(',')+1) || map(tab(0), s2, s3)
 end
 
 
 #  imswrite(f, s, n) -- write image string s to file f, max linelength of n.
 
-procedure imswrite(f, s, n)			#: write image string
+# write image string
+procedure imswrite(f, s, n)			
    local w, h, p, d, ll
 
    w := imswidth(s) | fail
@@ -170,7 +176,8 @@ procedure imswrite(f, s, n)			#: write image string
    return
 end
 
-procedure IWR_Row(f, s, n)	# write one row, max n bytes per line
+# write one row, max n bytes per line
+procedure IWR_Row(f, s, n)	
    s ? while not pos(0) do
       write(f, image(move(n) | tab(0)) [2:-1], "_")
    return
@@ -179,7 +186,8 @@ end
 
 #  drawpalette(win, p, x, y, w, h, f, n) -- draw palette in region
 
-procedure drawpalette(win, p, x, y, w, h, f, n)	#: draw palette
+# draw palette
+procedure drawpalette(win, p, x, y, w, h, f, n)	
    local nh, c, s, colr, x1, x2, y1, y2, i, j, ret
    static cs
    initial cs := &ascii[33+:95] -- '\\'
@@ -260,7 +268,8 @@ end
 
 #  pickpalette(win, p, dx, dy, w, h, n) -- return key picked from drawn palette
 
-procedure pickpalette(win, p, dx, dy, w, h, n)	#: key from drawn palette
+# key from drawn palette
+procedure pickpalette(win, p, dx, dy, w, h, n)	
    local s, nh
 
    if type(win) ~== "window" then {
@@ -344,7 +353,8 @@ end
 
 #  XPMImage(win, f, palette) -- read XPM file and return Icon image spec
 
-procedure XPMImage(win, f, pal)			#: image string for XPM file
+# image string for XPM file
+procedure XPMImage(win, f, pal)			
    local w, h, nc, cpp, i, im, c, k, s1, s2
 
    if type(win) ~== "window" then {
@@ -389,7 +399,8 @@ procedure XPMImage(win, f, pal)			#: image string for XPM file
    return im
 end
 
-procedure XPM_Key(win, pal, s)	#  return key corresponding to color s
+# return key corresponding to color s
+procedure XPM_Key(win, pal, s)	
 
    if s == "None" then {		# if transparent
       if PaletteColor(pal, "~") then	# if "~" is in palette
@@ -404,7 +415,8 @@ procedure XPM_Key(win, pal, s)	#  return key corresponding to color s
       return PaletteKey(pal, s)		# return key from palette, or fail
 end
 
-procedure XPM_RdStr(f)		# read next C string from file f
+# read next C string from file f
+procedure XPM_RdStr(f)		
    local line, s
 
    while line := read(f) do line ? {
@@ -416,7 +428,8 @@ procedure XPM_RdStr(f)		# read next C string from file f
    fail
 end
 
-procedure XPM_Nth(s, n)		#  concatenate every nth character from s
+# concatenate every nth character from s
+procedure XPM_Nth(s, n)		
    local t
    n -:= 1
    t := ""

@@ -138,7 +138,8 @@ global pack_short,pack_long,
       pack_int_proc,unpack_int_proc,unpack_unsigned_int_proc
 
 
-procedure pack(template,values[])	#: pack values into a string
+# pack values into a string
+procedure pack(template,values[])	
    local result,t,n,c,v,spliced_values
    initial if /pack_short then pack_big_endian()
    spliced_values := []
@@ -200,7 +201,8 @@ procedure pack(template,values[])	#: pack values into a string
    return result
 end
 
-procedure unpack(template,binaryString)	#: unpack values from string
+# unpack values from string
+procedure unpack(template,binaryString)	
    local result,t,n,c,v
    initial if /unpack_short then pack_big_endian()
    result := []

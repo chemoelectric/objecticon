@@ -29,7 +29,8 @@
 
 package ipl.mixsort
 
-procedure mixsort(T, i)		#: mixed-case string sorting
+# mixed-case string sorting
+procedure mixsort(T, i)		
    local xcase, x, y, temp, j
 
    xcase := table()		# key-mapping table

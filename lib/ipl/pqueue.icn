@@ -44,7 +44,8 @@ record pqelem (
    priority		# element's priority
    )
 
-procedure pq(L)				#: create priority queue
+# create priority queue
+procedure pq(L)				
    local Q, i, e
 
    /L := list()
@@ -56,7 +57,8 @@ procedure pq(L)				#: create priority queue
    return Q
 end
 
-procedure pqget(Q)			#: remove first priority queue element
+# remove first priority queue element
+procedure pqget(Q)			
    local e
 
    e := get(Q) | fail
@@ -65,7 +67,8 @@ procedure pqget(Q)			#: remove first priority queue element
    return e
 end
 
-procedure pqgen(Q)			#: generate priority queue elements
+# generate priority queue elements
+procedure pqgen(Q)			
    local q, e
 
    q := copy(Q)
@@ -73,7 +76,8 @@ procedure pqgen(Q)			#: generate priority queue elements
       suspend e
 end
 
-procedure pqput(Q, e)			#: insert priority queue element
+# insert priority queue element
+procedure pqput(Q, e)			
    put(Q, pqelem(e.data, numeric(e.priority) | runerr(102, e.priority)))
    pq__up(Q, *Q)
    return Q

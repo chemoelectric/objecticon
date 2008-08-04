@@ -198,7 +198,8 @@ global Plane_Mask
 
 #  AlcPlane(win, n) -- allocate 2^n colors for bitplanes and return base b
 
-procedure AlcPlane(win, n)		#: allocate colors for bitplane
+# allocate colors for bitplane
+procedure AlcPlane(win, n)		
    local ncolors, mask, b, seqlen, prev, fg, clist
 
    if type(win) ~== "window" then {
@@ -250,7 +251,8 @@ end
 
 #  FrontPlane(win, bp, color) -- move indexed plane to "front", set color
 
-procedure FrontPlane(win, bp, color)	#: move bitplane to front
+# move bitplane to front
+procedure FrontPlane(win, bp, color)	
    local mask, base, bits, i
 
    if type(win) ~== "window" then {
@@ -272,7 +274,8 @@ end
 
 #  BackPlane(win, bp, color) -- move indexed plane to "back", set color
 
-procedure BackPlane(win, bp, color)	#: move bitplane to back
+# move bitplane to back
+procedure BackPlane(win, bp, color)	
    local mask, base, bits, i
 
    if type(win) ~== "window" then {
@@ -294,7 +297,8 @@ end
 
 #  PlaneOp(win, bp, op) -- set graphics context for plane operation
 
-procedure PlaneOp(win, bp, op)		#: set context for bitplane operation
+# set context for bitplane operation
+procedure PlaneOp(win, bp, op)		
    local mask, base, bits, i
 
    if type(win) ~== "window" then {

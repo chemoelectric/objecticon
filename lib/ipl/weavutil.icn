@@ -73,7 +73,8 @@ record isd(				# internal structure draft
    liftplan			# liftplan matrix
    )
 
-procedure readpfd(input)		# read PFD
+# read PFD
+procedure readpfd(input)		
    local draft
 
    draft := pfd()
@@ -95,7 +96,8 @@ procedure readpfd(input)		# read PFD
 
 end
 
-procedure writepfd(output, pfd)		#: write PFD
+# write PFD
+procedure writepfd(output, pfd)		
 
    write(output, pfd.name)
    write(output, pfd.threading)
@@ -113,7 +115,8 @@ procedure writepfd(output, pfd)		#: write PFD
 
 end
 
-procedure expandpfd(pfd)		#: expand PFD
+# expand PFD
+procedure expandpfd(pfd)		
 
    pfd := copy(pfd)
 
@@ -131,7 +134,8 @@ end
 
 #  Write include file for seqdraft (old)
 
-procedure write_spec(name, spec, opt, mode)	#: write weaving include file
+# write weaving include file
+procedure write_spec(name, spec, opt, mode)	
    local n, output
    static bar
 
@@ -172,7 +176,8 @@ end
 
 #  Write include file for seqdraft (new)
 
-procedure write_spec1(name, spec, opt, mode, defns)	#: weaving include file
+# weaving include file
+procedure write_spec1(name, spec, opt, mode, defns)	
    local n, output
    static bar
 
@@ -219,7 +224,8 @@ end
 
 #  Write include file for lstdraft (new)
 
-procedure write_spec2(name, spec, opt, mode, defns)	#: weaving include file
+# weaving include file
+procedure write_spec2(name, spec, opt, mode, defns)	
    local n, output
    static bar
 
@@ -264,7 +270,8 @@ procedure write_spec2(name, spec, opt, mode, defns)	#: weaving include file
 
 end
 
-procedure check(s)		#: check for pattern form
+# check for pattern form
+procedure check(s)		
 
    if s[1] == "[" then s := "!pfl2str(" || image(s) || ")"
 
@@ -286,7 +293,8 @@ procedure display(pfd)
 
 end
 
-procedure sympos(sym)		#: position of symbol in symbol list
+# position of symbol in symbol list
+procedure sympos(sym)		
    static mask
 
    initial mask := Mask
@@ -295,7 +303,8 @@ procedure sympos(sym)		#: position of symbol in symbol list
 
 end
 
-procedure possym(i)		#: symbol in position i of symbol list
+# symbol in position i of symbol list
+procedure possym(i)		
    static mask
 
    initial mask := Mask

@@ -79,7 +79,8 @@
 
 package ipl.graphics
 
-procedure pack_intrvl(n)			#: encode event interval
+# encode event interval
+procedure pack_intrvl(n)			
    local e
 
    n := integer(n) | runerr(101, n)	# ensure integer
@@ -96,7 +97,8 @@ end
 
 #  unpack_intrvl(n) -- decode event interval
 
-procedure unpack_intrvl(n)			#: decode event interval
+# decode event interval
+procedure unpack_intrvl(n)			
    local e
 
    n := integer(n) | runerr(101, n)	# ensure integer
@@ -108,7 +110,8 @@ end
 
 #  pack_modkeys(s) -- encode modifier keys
 
-procedure pack_modkeys(s)			#: encode modifier keys
+# encode modifier keys
+procedure pack_modkeys(s)			
    local b, c
 
    b := 0
@@ -125,7 +128,8 @@ end
 
 #  unpack_modkeys(n) -- decode modifier keys
 
-procedure unpack_modkeys(n)			#: decode modifier keys
+# decode modifier keys
+procedure unpack_modkeys(n)			
    local s
 
    n := integer(n) | runerr(101, n)		# ensure integer
@@ -139,7 +143,8 @@ end
 
 #  Enqueue(window, eventcode, x, y, modkeys, interval) -- enqueue event
 
-procedure Enqueue(win, eventcode, x, y, modkeys, interval)	#: enqueue event
+# enqueue event
+procedure Enqueue(win, eventcode, x, y, modkeys, interval)	
    static type
 
    initial type := proc("type", 0)	# protect attractive name

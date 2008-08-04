@@ -113,7 +113,8 @@ $define HTTP_PORT 80			# standard HTTP: port
 
 
 
-procedure vhttp(url)			#: validate HTTP: URL
+# validate HTTP: URL
+procedure vhttp(url)			
    local protocol, host, port, path, result
    initial vhttp_inithist()
 

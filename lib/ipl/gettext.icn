@@ -99,7 +99,8 @@ import
    ipl.adjuncts(Pathname, _OS_offset, _delimiter, firstline,
                 getidxname)
 
-procedure gettext(KEY,FNAME)      #: search database by indexed term
+# search database by indexed term
+procedure gettext(KEY,FNAME)      
 
    local line, value
    static last_FNAME, intext, inidx, off_set, off_sets
@@ -164,7 +165,8 @@ procedure gettext(KEY,FNAME)      #: search database by indexed term
 
 end
 
-procedure get_offsets(KEY, inidx)       #: binary search of index
+# binary search of index
+procedure get_offsets(KEY, inidx)       
    local  bottom, top, loc, firstpart,  line
 
    # Use these to store values likely to be reused.
@@ -237,7 +239,8 @@ end
 
 # Perform sequential search of intext for all instances of KEY.
 
-procedure sequential_search(KEY, intext)  #: brute-force database search
+# brute-force database search
+procedure sequential_search(KEY, intext)  
 
    local line, value, off_set
    

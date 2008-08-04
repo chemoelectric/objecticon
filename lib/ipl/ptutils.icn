@@ -28,13 +28,15 @@ package ipl.ptutils
 import
    ipl.gobject(Point)
 
-procedure pt2coord(p)		#: convert point to coordinate
+# convert point to coordinate
+procedure pt2coord(p)		
 
    return p.x || " " || p.y || " " || p.z
 
 end
 
-procedure coord2pt(c)		#: convert coodinate to path
+# convert coodinate to path
+procedure coord2pt(c)		
    local p
 
    p := Point()
@@ -51,19 +53,22 @@ procedure coord2pt(c)		#: convert coodinate to path
 
 end
 
-procedure negpt(p)			#: negative of point
+# negative of point
+procedure negpt(p)			
 
     return Point(-p.x, -p.y, -p.z)
 
 end
 
-procedure pteq(p1, p2)			#: test point equality
+# test point equality
+procedure pteq(p1, p2)			
 
    if p1.x = p2.x & p1.y = p2.y & p1.z = p2.z then return p2 else fail
 
 end
 
-procedure getpts(s)			#: make point list from coordinate file
+# make point list from coordinate file
+procedure getpts(s)			
    local input, pts
 
    input := open(s) | stop("*** cannot open ", image(s))

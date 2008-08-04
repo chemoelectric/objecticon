@@ -28,7 +28,8 @@ package ipl.created
 import
    ipl.serial(serial)
 
-procedure created(kind)			#: number of structures created
+# number of structures created
+procedure created(kind)			
 
    return serial(proc(kind)())
    fail

@@ -75,7 +75,8 @@ import
    ipl.io(dopen),
    ipl.numbers(round)
 
-procedure divisors(n)			#: generate the divisors of n
+# generate the divisors of n
+procedure divisors(n)			
    local d, dlist
 
    dlist := []
@@ -93,7 +94,8 @@ procedure divisors(n)			#: generate the divisors of n
 
 end
 
-procedure factorial(n)			#: return n! (n factorial)
+# return n! (n factorial)
+procedure factorial(n)			
    local i
 
    n := integer(n) | runerr(101, n)
@@ -108,7 +110,8 @@ procedure factorial(n)			#: return n! (n factorial)
 
 end
 
-procedure factors(i, j)			#: return list of factors
+# return list of factors
+procedure factors(i, j)			
    local facts
 
    every put(facts := [], genfactors(i, j))
@@ -116,7 +119,8 @@ procedure factors(i, j)			#: return list of factors
 
 end
 
-procedure genfactors(i, j)		#: generate prime factors of integer
+# generate prime factors of integer
+procedure genfactors(i, j)		
    local p
 
    i := integer(i) | runerr(101, i)
@@ -134,7 +138,8 @@ procedure genfactors(i, j)		#: generate prime factors of integer
 
 end
 
-procedure gfactorial(n, i)		#: generalized factorial
+# generalized factorial
+procedure gfactorial(n, i)		
    local j
 
    n := integer(n) | runerr(101, n)
@@ -154,7 +159,8 @@ procedure gfactorial(n, i)		#: generalized factorial
 
 end
 
-procedure pfactors(i)			#: primes that divide integer
+# primes that divide integer
+procedure pfactors(i)			
    local facts, p
 
    i := integer(i) | runerr(101, i)
@@ -172,7 +178,8 @@ procedure pfactors(i)			#: primes that divide integer
 
 end
 
-procedure ispower(i, j)			#: test for integer power
+# test for integer power
+procedure ispower(i, j)			
    local k, n
 
    k := (n := round(i ^ (1.0 / j))) ^ j
@@ -184,7 +191,8 @@ end
 #  is about the worst possible.  It is inappropriate for all but small
 #  numbers.
 
-procedure isprime(n)			#: test for primality
+# test for primality
+procedure isprime(n)			
    local p
 
    n := integer(n) | runerr(101, n)
@@ -196,7 +204,8 @@ procedure isprime(n)			#: test for primality
 
 end
 
-procedure nxtprime(n)			#: next prime beyond n
+# next prime beyond n
+procedure nxtprime(n)			
    local d
    static step, div
 
@@ -221,7 +230,8 @@ procedure nxtprime(n)			#: next prime beyond n
 
 end
 
-procedure prdecomp(i)			#: prime decomposition
+# prime decomposition
+procedure prdecomp(i)			
    local decomp, count, p
 
    decomp := []
@@ -239,7 +249,8 @@ procedure prdecomp(i)			#: prime decomposition
 
 end
 
-procedure prime()			#: generate primes
+# generate primes
+procedure prime()			
    local i, k
 
    suspend 2 | ((i := seq(3, 2)) & (not(i = (k := (3 to sqrt(i) by 2)) *
@@ -247,7 +258,8 @@ procedure prime()			#: generate primes
 
 end
 
-procedure primel()			#: primes from list
+# primes from list
+procedure primel()			
    local pfile
 
    pfile := dopen("primes.lst") | stop("*** cannot open primes.lst")
@@ -256,7 +268,8 @@ procedure primel()			#: primes from list
 
 end
 
-procedure primorial(i, j)		#: product of primes
+# product of primes
+procedure primorial(i, j)		
    local m, k, mark
 
    /j := 1
@@ -277,7 +290,8 @@ procedure primorial(i, j)		#: product of primes
 
 end
 
-procedure sfactors(i, j)		# return factors in string form
+# return factors in string form
+procedure sfactors(i, j)		
    local facts, result, term, nterm, count
 
    facts := factors(i, j)
@@ -304,7 +318,8 @@ procedure sfactors(i, j)		# return factors in string form
 
 end
 
-procedure squarefree(n)			#: test for square-free number
+# test for square-free number
+procedure squarefree(n)			
    local facts
 
    facts := factors(n)

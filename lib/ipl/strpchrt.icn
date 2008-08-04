@@ -60,7 +60,8 @@ record StripChart_Rec(win, x0, y, w, h, x, n, last)
 
 ## stripchart(win, x, y, w, h) - create stripchart of size w by h at (x, y)
 
-procedure stripchart(win, x, y, w, h)		#: create stripchart
+# create stripchart
+procedure stripchart(win, x, y, w, h)		
    if type(win) ~== "window" then
       return stripchart((\&window | runerr(140)), win, x, y, w)
 
@@ -81,7 +82,8 @@ end
 
 ## sadvance(sc, n) - advance stripchart n pixels (default 1)
 
-procedure sadvance(sc, n)			#: advance stripchart
+# advance stripchart
+procedure sadvance(sc, n)			
 
    /n := 1
    every 1 to n do {
@@ -98,7 +100,8 @@ end
 
 ## smark (sc, y1, y2) - mark stripchart from y1 to y2.
 
-procedure smark(sc, y1, y2)			#: mark stripchart
+# mark stripchart
+procedure smark(sc, y1, y2)			
    y1 := integer(y1)
    if sc.last[y1] <:= sc.n then
       DrawLine(sc.win, sc.x, y1, sc.x, \y2) | DrawPoint(sc.win, sc.x, y1)

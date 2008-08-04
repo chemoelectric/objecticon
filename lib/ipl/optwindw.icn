@@ -108,7 +108,8 @@ procedure winoptions()
 end
 
 
-procedure optwindow(opts, args[])		#: open window with options
+# open window with options
+procedure optwindow(opts, args[])		
    local  w
    /opts["F"] := "black"
    /opts["B"] := VBackground

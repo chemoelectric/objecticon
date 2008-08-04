@@ -32,7 +32,8 @@ package ipl.mirror
 import
    ipl.graphics(WOpen)
 
-procedure mirror(win, x, y, w, h)	# mirror with p2mm symmetry
+# mirror with p2mm symmetry
+procedure mirror(win, x, y, w, h)	
    local width, height, sym
 
    /win := &window

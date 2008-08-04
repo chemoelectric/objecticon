@@ -66,7 +66,8 @@ $define VertMargin  1.0
 
 package ipl.pscript
 
-procedure epsheader(f, x, y, w, h, flags)	#: write PostScript header
+# write PostScript header
+procedure epsheader(f, x, y, w, h, flags)	
    local xctr, yctr, xsize, ysize, xscale, yscale, dx, dy
 
    if w < 0 then

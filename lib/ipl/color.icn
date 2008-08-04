@@ -102,7 +102,8 @@
 
 package ipl.graphics
 
-procedure ScaleGamma(v, g)		#: scale with gamma correction
+# scale with gamma correction
+procedure ScaleGamma(v, g)		
    /g := 2.5
    return integer(65535 * v ^ (1.0 / g))
 end
@@ -110,7 +111,8 @@ end
 
 #  Blend(color1, color2, ...) -- generate sequence of colors
 
-procedure Blend(args[])			#: generate sequence of colors
+# generate sequence of colors
+procedure Blend(args[])			
    local win, n, s, a, i, f1, f2, r1, g1, b1, r2, g2, b2, r3, g3, b3
    static type
 
@@ -152,7 +154,8 @@ end
 
 #  Contrast(win, color) -- return "white" or "black" to maximize contrast
 
-procedure Contrast(win, color)		#: choose contrasting color
+# choose contrasting color
+procedure Contrast(win, color)		
    static l, type
    initial {
       l := ["white", "black"]
@@ -168,7 +171,8 @@ end
 
 #  Shade(win, color) -- approximate a shade with a pattern if bilevel screen
 
-procedure Shade(win, color)		#: dither shade using pattern
+# dither shade using pattern
+procedure Shade(win, color)		
    local r, g, b
    static dmat, env, type
 
@@ -225,7 +229,8 @@ end
 
 #   RandomColor(win, palette) -- choose random color
 
-procedure RandomColor(win, palette)	#: choose random color
+# choose random color
+procedure RandomColor(win, palette)	
    local s, n
    static type
 
@@ -248,7 +253,8 @@ end
 
 #  PaletteGrays(win, palette) -- return grayscale entries from palette.
 
-procedure PaletteGrays(win, palette)	#: grayscale entries from palette
+# grayscale entries from palette
+procedure PaletteGrays(win, palette)	
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -276,7 +282,8 @@ end
 
 #  RGBKey(win, palette, r, g, b) -- find key given real-valued color
 
-procedure RGBKey(win, palette, r, g, b)	#: return palette key for color
+# return palette key for color
+procedure RGBKey(win, palette, r, g, b)	
    static type
 
    initial type := proc("type", 0)	# protect attractive name
@@ -293,7 +300,8 @@ end
 #
 #  HSV conversion based on Foley et al, 2/e, p.593
 
-procedure HSVKey(win, palette, h, s, v)	#: nearest key from HSV specification
+# nearest key from HSV specification
+procedure HSVKey(win, palette, h, s, v)	
    local i, f, p, q, t, r, g, b
    static type
 
@@ -335,7 +343,8 @@ end
 #
 #  based on Foley et al, 2/e, p.592
 
-procedure HSV(k)			#: HSV interpretation of color
+# HSV interpretation of color
+procedure HSV(k)			
    local r, g, b, h, s, v, min, max, d
 
    (ColorValue(k) | fail) ? {
@@ -380,7 +389,8 @@ end
 #
 #  based on Foley et al, 2/e, p.593
 
-procedure HSVValue(hsv)			#: color value of HSV specification
+# color value of HSV specification
+procedure HSVValue(hsv)			
    local h, s, v, r, g, b, i, f, p, q, t
 
    hsv ? {
@@ -430,7 +440,8 @@ end
 #
 #  based on Foley et al, 2/e, p.595
 
-procedure HLS(k)			#: HLS interpretation of color
+# HLS interpretation of color
+procedure HLS(k)			
    local r, g, b, h, l, s, min, max, delta
 
    (ColorValue(k) | fail) ? {
@@ -480,7 +491,8 @@ end
 #
 #  based on Foley & Van Dam, 1/e, p.619
 
-procedure HLSValue(hls)			#: color value of HLS specification
+# color value of HLS specification
+procedure HLSValue(hls)			
    local h, l, s, r, g, b, m1, m2
 
    hls ? {
@@ -511,7 +523,8 @@ procedure HLSValue(hls)			#: color value of HLS specification
       integer(65535 * g + 0.499999) || "," || integer(65535 * b + 0.499999)
 end
 
-procedure hls_rgb_val(n1, n2, hue)	# helper function for HLSValue
+# helper function for HLSValue
+procedure hls_rgb_val(n1, n2, hue)	
    hue *:= 6
    if hue >= 6 then
       hue -:= 6

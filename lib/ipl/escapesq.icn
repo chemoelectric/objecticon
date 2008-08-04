@@ -31,7 +31,8 @@
 
 package ipl.escapesq
 
-procedure escapeseq() # s
+# s
+procedure escapeseq() 
 #
 #  Matching routine for Icon string escape sequence.
 #
@@ -52,7 +53,8 @@ procedure escapeseq() # s
 end
 
 
-procedure escchar(s1) # s2
+# s2
+procedure escchar(s1) 
 #
 #  Character value of Icon string escape sequence s1.
 #
@@ -105,7 +107,8 @@ procedure escchar_convert(r,max)
 end
 
 
-procedure escape(s1) # s2
+# s2
+procedure escape(s1) 
 #
 #  Returns string s1 with escape sequences (as in Icon string
 #  representation) converted.
@@ -123,7 +126,8 @@ procedure escape(s1) # s2
 end
 
 
-procedure quotedstring() # s
+# s
+procedure quotedstring() 
 #
 #  Matching routine for a quoted string.
 #

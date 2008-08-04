@@ -28,7 +28,8 @@
 
 package ipl.ngrams
 
-procedure ngrams(s, i, c, t)		#: n-grams with count
+# n-grams with count
+procedure ngrams(s, i, c, t)		
    local line, grams, a, count, f
 
    if not (integer(i) > 0) then stop("*** invalid ngrams specification")
@@ -57,7 +58,8 @@ procedure ngrams(s, i, c, t)		#: n-grams with count
       }
 end
 
-procedure ngramset(s, i, c)		#: n-grams set
+# n-grams set
+procedure ngramset(s, i, c)		
    local line, grams,   f
 
    if not (integer(i) > 0) then stop("*** invalid ngrams specification")

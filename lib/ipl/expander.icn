@@ -43,7 +43,8 @@ import
                Interleave, Palindrome, Pbox, Permute,
                Template, UpDown, Upto)
 
-procedure pfl2str(pattern)		#: pattern-form to plain string
+# pattern-form to plain string
+procedure pfl2str(pattern)		
    local result, expr1, expr2, op
    static operator, optbl
 
@@ -94,7 +95,8 @@ procedure pfl2str(pattern)		#: pattern-form to plain string
 
 end
 
-procedure pfl2pwl(pattern)		#: pattern form to Painter expression
+# pattern form to Painter expression
+procedure pfl2pwl(pattern)		
    local result,     expr1, expr2, op, head
    static operator, optbl
 
@@ -150,7 +152,8 @@ procedure error(expr1, expr2)
 
 end
 
-procedure pfl2gxp(pattern, arg)		#: pattern form to generating expression
+# pattern form to generating expression
+procedure pfl2gxp(pattern, arg)		
    local result,     expr1, expr2, op
    static operator, optbl, argtbl
 
@@ -235,13 +238,15 @@ procedure galt(s)
 
 end
 
-procedure pwl2pfl(wexpr)		#: Painter expression to pattern form
+# Painter expression to pattern form
+procedure pwl2pfl(wexpr)		
 
    return pwlcvt(prepare(wexpr))
 
 end
 
-procedure prepare(wexpr)		# preprocess pwl
+# preprocess pwl
+procedure prepare(wexpr)		
    local inter, result
    static names, names1
 

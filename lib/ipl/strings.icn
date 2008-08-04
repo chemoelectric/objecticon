@@ -162,7 +162,8 @@
 
 package ipl.strings
 
-procedure cat(args[])			#: concatenate strings
+# concatenate strings
+procedure cat(args[])			
    local result
 
    result := ""
@@ -173,7 +174,8 @@ procedure cat(args[])			#: concatenate strings
 
 end
 
-procedure charcnt(s, c)			#: character count
+# character count
+procedure charcnt(s, c)			
    local count
 
    count := 0
@@ -187,7 +189,8 @@ procedure charcnt(s, c)			#: character count
 
 end
 
-procedure collate(s1, s2)		#: string collation
+# string collation
+procedure collate(s1, s2)		
    local length, ltemp, rtemp
    static llabels, rlabels, clabels, blabels, half
 
@@ -215,7 +218,8 @@ procedure collate(s1, s2)		#: string collation
 
 end
 
-procedure comb(s, i)			#: character combinations
+# character combinations
+procedure comb(s, i)			
    local j
 
    if i < 1 then fail
@@ -224,7 +228,8 @@ procedure comb(s, i)			#: character combinations
 
 end
 
-procedure compress(s, c)		#: character compression
+# character compression
+procedure compress(s, c)		
    local result, s1
 
    /c := &cset
@@ -240,7 +245,8 @@ procedure compress(s, c)		#: character compression
       }
 end
 
-procedure csort(s)			#: lexically ordered characters
+# lexically ordered characters
+procedure csort(s)			
    local c, s1
 
    s1 := ""
@@ -255,7 +261,8 @@ end
 
 #  decollate s according to even or odd i
 #
-procedure decollate(s, i)		#: string decollation
+# string decollation
+procedure decollate(s, i)		
    local ssize
    static dsize, image, object
 
@@ -277,7 +284,8 @@ procedure decollate(s, i)		#: string decollation
 
 end
 
-procedure deletec(s, c)			#: delete characters
+# delete characters
+procedure deletec(s, c)			
    local result
 
    result := ""
@@ -300,7 +308,8 @@ procedure deletep(s, L)
 
 end
 
-procedure deletes(s1, s2)		#: delete string
+# delete string
+procedure deletes(s1, s2)		
    local result, i
 
    result := ""
@@ -314,13 +323,15 @@ procedure deletes(s1, s2)		#: delete string
          
 end
 
-procedure diffcnt(s)			#: number of different characters
+# number of different characters
+procedure diffcnt(s)			
 
    return *cset(s)
 
 end
 
-procedure extend(s, n)			#: extend string
+# extend string
+procedure extend(s, n)			
    local i
 
    if *s = 0 then fail
@@ -332,7 +343,8 @@ procedure extend(s, n)			#: extend string
 
 end
 
-procedure fchars(s)			#: characters in order of frequency
+# characters in order of frequency
+procedure fchars(s)			
    local counts, clist, bins, blist, result
 
    counts := table(0)
@@ -351,19 +363,22 @@ procedure fchars(s)			#: characters in order of frequency
 
 end
 
-procedure interleave(s1, s2)		#: interleave strings
+# interleave strings
+procedure interleave(s1, s2)		
 
    return collate(s1, extend(s2, *s1)) | fail
 
 end
 
-procedure ispal(s)			#: test for palindrome
+# test for palindrome
+procedure ispal(s)			
 
    if s == reverse(s) then return s else fail
 
 end
 
-procedure maxlen(L, p)			#: maximum string length
+# maximum string length
+procedure maxlen(L, p)			
    local i
 
    if *L = 0 then fail
@@ -378,7 +393,8 @@ procedure maxlen(L, p)			#: maximum string length
 
 end
 
-procedure meander(alpha, n)		#: meandering strings
+# meandering strings
+procedure meander(alpha, n)		
    local result, trial, t, i, c
 
    i := *alpha
@@ -402,7 +418,8 @@ procedure meander(alpha, n)		#: meandering strings
 
 end
 
-procedure multicoll(L)			#: collate strings in list
+# collate strings in list
+procedure multicoll(L)			
    local result, i, j
 
    result := ""
@@ -415,7 +432,8 @@ procedure multicoll(L)			#: collate strings in list
 
 end
 
-procedure ochars(w)			#: first appearance unique characters
+# first appearance unique characters
+procedure ochars(w)			
    local out, c
 
    out := ""
@@ -428,7 +446,8 @@ procedure ochars(w)			#: first appearance unique characters
 
 end
 
-procedure odd_even(s)			#: odd-even numerical string
+# odd-even numerical string
+procedure odd_even(s)			
    local result, i, j
 
 
@@ -443,7 +462,8 @@ procedure odd_even(s)			#: odd-even numerical string
 
 end
 
-procedure palins(s, n)			#: palindromes
+# palindromes
+procedure palins(s, n)			
    local c, lpart, mpart, rpart, h, p
 
    if n = 1 then suspend !s
@@ -475,7 +495,8 @@ procedure palins(s, n)			#: palindromes
     
 end
 
-procedure permutes(s)			#: string permutations
+# string permutations
+procedure permutes(s)			
    local i
 
    if *s = 0 then return ""
@@ -483,7 +504,8 @@ procedure permutes(s)			#: string permutations
 
 end
 
-procedure pretrim(s, c)			#: pre-trim string
+# pre-trim string
+procedure pretrim(s, c)			
 
    /c := ' '
 
@@ -494,7 +516,8 @@ procedure pretrim(s, c)			#: pre-trim string
 
 end
 
-procedure reflect(s1, i, s2)			#: string reflection
+# string reflection
+procedure reflect(s1, i, s2)			
 
    /i :=0
    /s2 := ""
@@ -510,7 +533,8 @@ procedure reflect(s1, i, s2)			#: string reflection
 
 end
 
-procedure replace(s1, s2, s3)		#: string replacement
+# string replacement
+procedure replace(s1, s2, s3)		
    local result, i
 
    result := ""
@@ -527,14 +551,16 @@ procedure replace(s1, s2, s3)		#: string replacement
 
 end
 
-procedure replacem(s, pairs[])		#: multiple string replacement
+# multiple string replacement
+procedure replacem(s, pairs[])		
 
    while s := replace(s, get(pairs), get(pairs))
 
    return s
 
 end
-procedure replc(s, L)			#: replicate characters
+# replicate characters
+procedure replc(s, L)			
    local result
 
    result := ""
@@ -545,7 +571,8 @@ procedure replc(s, L)			#: replicate characters
 
 end
 
-procedure rotate(s, i)			#: string rotation
+# string rotation
+procedure rotate(s, i)			
 
    if s == "" then return s
    /i := 1
@@ -556,13 +583,15 @@ procedure rotate(s, i)			#: string rotation
 
 end
 
-procedure schars(s)			#: lexical unique characters
+# lexical unique characters
+procedure schars(s)			
 
    return string(cset(s))
 
 end
 
-procedure scramble(s)			#: scramble string
+# scramble string
+procedure scramble(s)			
    local i
 
    s := string(s) | fail
@@ -574,7 +603,8 @@ procedure scramble(s)			#: scramble string
 
 end
 
-procedure selectp(s, L)			#: select characters
+# select characters
+procedure selectp(s, L)			
    local result
 
    result := ""
@@ -585,7 +615,8 @@ procedure selectp(s, L)			#: select characters
 
 end
 
-procedure slugs(s, n, c)  		#: generate s in chunks of size <= n
+# generate s in chunks of size <= n
+procedure slugs(s, n, c)  		
    local i, t
 
    (/n := 80) | (n := 0 < integer(n)) | runerr(101, n)
@@ -611,7 +642,8 @@ procedure slugs(s, n, c)  		#: generate s in chunks of size <= n
    fail
 end
 
-procedure starseq(s)		#: closure sequence
+# closure sequence
+procedure starseq(s)		
 
    /s := ""
 
@@ -619,7 +651,8 @@ procedure starseq(s)		#: closure sequence
 
 end
 
-procedure strcnt(s1, s2)		#: substring count
+# substring count
+procedure strcnt(s1, s2)		
    local j, i
 
    if *s1 = 0 then fail			# null string would loop
@@ -637,7 +670,8 @@ procedure strcnt(s1, s2)		#: substring count
 
 end
 
-procedure substrings(s, i, j)		#: generate substrings
+# generate substrings
+procedure substrings(s, i, j)		
 
    /i := 1
    /j := *s
@@ -649,7 +683,8 @@ procedure substrings(s, i, j)		#: generate substrings
 
 end
 
-procedure transpose(s1, s2, s3)		#: transpose characters
+# transpose characters
+procedure transpose(s1, s2, s3)		
    local n, result
 
    n := *s2
@@ -662,7 +697,8 @@ procedure transpose(s1, s2, s3)		#: transpose characters
 
 end
 
-procedure words(s, c)		#: generate words from string
+# generate words from string
+procedure words(s, c)		
 
    /c := ' \t\r\n\v\f'
 

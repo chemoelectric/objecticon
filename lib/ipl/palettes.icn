@@ -131,7 +131,8 @@ record Color_(r, g, b)
 
 #  Check for built-in palette
 
-procedure BuiltinPalette(name)			#: check for built-in palette
+# check for built-in palette
+procedure BuiltinPalette(name)			
 
    BuiltinPalette := proc("PaletteChars", 0)
 
@@ -139,7 +140,8 @@ procedure BuiltinPalette(name)			#: check for built-in palette
 
 end
 
-procedure CreatePalette(name, keys, colors)	#: create palette
+# create palette
+procedure CreatePalette(name, keys, colors)	
    local i,  t
 
    initial InitializePalettes()
@@ -163,7 +165,8 @@ end
 
 #  Extended version of DrawImage()
 
-procedure DrawImage(args[])			#: draw image
+# draw image
+procedure DrawImage(args[])			
    local palette_pixels, palette_lookup, keys, c, i, row, imr
    static draw_image
 
@@ -205,7 +208,8 @@ end
 
 #  Initialize defined palette mechanism
 
-procedure InitializePalettes()			#: initialize palettes
+# initialize palettes
+procedure InitializePalettes()			
 
    /PDB_ := table()
 
@@ -217,7 +221,8 @@ procedure InitializePalettes()			#: initialize palettes
 
 end
 
-procedure Measure(s1, s2)			#: measure of RGB distance
+# measure of RGB distance
+procedure Measure(s1, s2)			
    local color1, color2
 
    color1 := RGB(s1)
@@ -230,7 +235,8 @@ end
 
 #  Get color close to specified key
 
-procedure NearColor(name, s)			#: close color in palette
+# close color in palette
+procedure NearColor(name, s)			
    local palette_lookup, k, measure, close_key, color
 
    measure := 3 * (2 ^ 16 - 1) ^ 2	# maximum
@@ -251,7 +257,8 @@ end
 
 #  Extended version of PaletteChars()
 
-procedure PaletteChars(args[])			#: characters in palette
+# characters in palette
+procedure PaletteChars(args[])			
    local name
    static palette_chars
 
@@ -271,7 +278,8 @@ end
 
 #  Extended version of PaletteColor()
 
-procedure PaletteColor(args[])			#: color for key in palette
+# color for key in palette
+procedure PaletteColor(args[])			
    local palette_lookup, name, s
    static palette_color
 
@@ -295,7 +303,8 @@ end
 
 #  Extended version of PaletteKey()
 
-procedure PaletteKey(args[])			#: key for color in palette
+# key for color in palette
+procedure PaletteKey(args[])			
    local name, s
    static palette_key
 
@@ -314,7 +323,8 @@ procedure PaletteKey(args[])			#: key for color in palette
 
 end
 
-procedure RGB(s)				#: convert RGB color to record
+# convert RGB color to record
+procedure RGB(s)				
    local color
 
    color := Color_()
@@ -331,7 +341,8 @@ procedure RGB(s)				#: convert RGB color to record
 
 end
 
-procedure makepalette(name, clist)		#: make palette automatically
+# make palette automatically
+procedure makepalette(name, clist)		
    local keys
    static alphan
 
@@ -349,7 +360,8 @@ procedure makepalette(name, clist)		#: make palette automatically
 
 end
 
-procedure palette_colors(p)			#: list of palette colors
+# list of palette colors
+procedure palette_colors(p)			
    local clist
 
    clist := []
@@ -360,7 +372,8 @@ procedure palette_colors(p)			#: list of palette colors
 
 end
 
-procedure keyseq(palette, colors[])		#: sequence of palette keys
+# sequence of palette keys
+procedure keyseq(palette, colors[])		
    local chars
 
    chars := PaletteChars(palette)
@@ -369,7 +382,8 @@ procedure keyseq(palette, colors[])		#: sequence of palette keys
 
 end
 
-procedure color_range(color, range)		#: adjust RGB range
+# adjust RGB range
+procedure color_range(color, range)		
    local r, g, b
 
    range := 2 ^ 16 / range
@@ -385,7 +399,8 @@ procedure color_range(color, range)		#: adjust RGB range
 
 end
 
-procedure colorseq(palette)			#: sequence of palette colors
+# sequence of palette colors
+procedure colorseq(palette)			
 
    suspend PaletteColor(palette, !PaletteChars(palette))
 
@@ -397,7 +412,8 @@ procedure sort_colors(colors)
 
 end
 
-procedure value(s)			#: RGB magnitude
+# RGB magnitude
+procedure value(s)			
    local color
 
    color := RGB(s)

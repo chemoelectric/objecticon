@@ -27,7 +27,8 @@
 
 package ipl.convert
 
-procedure exbase10(i, j)	#: convert base 10 to arbitrary base
+# convert base 10 to arbitrary base
+procedure exbase10(i, j)	
    local s, d, sign
    static digits
 
@@ -54,7 +55,8 @@ procedure exbase10(i, j)	#: convert base 10 to arbitrary base
 
 end
 
-procedure inbase10(s, i)	#: convert arbitrary base to base 10
+# convert arbitrary base to base 10
+procedure inbase10(s, i)	
 
    if i > 36 then stop("*** base too large for inbase10()")
 
@@ -63,7 +65,8 @@ procedure inbase10(s, i)	#: convert arbitrary base to base 10
 
 end
 
-procedure radcon(s, i, j)	#: convert between bases
+# convert between bases
+procedure radcon(s, i, j)	
 
    return exbase10(inbase10(s,i),j)
 

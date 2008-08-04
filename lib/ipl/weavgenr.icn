@@ -24,7 +24,8 @@
 
 package ipl.weavgenr
 
-procedure shaftmap(s)			#: produce shaft map for characters
+# produce shaft map for characters
+procedure shaftmap(s)			
    local j, map_table
 
    map_table := table()
@@ -37,13 +38,15 @@ procedure shaftmap(s)			#: produce shaft map for characters
 
 end
 
-procedure genshafts(s, tbl)		#: generate shafts for string mapping
+# generate shafts for string mapping
+procedure genshafts(s, tbl)		
 
    suspend tbl[!s]
 
 end
 
-procedure genmapshafts(s1, s2)		#: map string and generate shafts
+# map string and generate shafts
+procedure genmapshafts(s1, s2)		
 
    suspend genshafts(s1, shaftmap(s2))
 

@@ -66,7 +66,8 @@
 
 package ipl.caseless
 
-procedure anycl(c, s, i1, i2)	#:	Caseless version of any()
+# 	Caseless version of any()
+procedure anycl(c, s, i1, i2)	
 
 	c := cset(map(cset(c)))
 	/i1 := (/s & &pos)
@@ -77,7 +78,8 @@ procedure anycl(c, s, i1, i2)	#:	Caseless version of any()
 end
 
 
-procedure balcl(c1, c2, c3, s, i1, i2)	#:	Caseless version of bal()
+# 	Caseless version of bal()
+procedure balcl(c1, c2, c3, s, i1, i2)	
 
 	c1 := cset(map(cset(c1)))
 	c2 := cset(map(cset(c2)))
@@ -90,7 +92,8 @@ procedure balcl(c1, c2, c3, s, i1, i2)	#:	Caseless version of bal()
 end
 
 
-procedure findcl(s1, s2, i1, i2)	#:	Caseless version of find()
+# 	Caseless version of find()
+procedure findcl(s1, s2, i1, i2)	
 
 	s1 := map(string(s1))
 	/i1 := (/s2 & &pos)
@@ -101,7 +104,8 @@ procedure findcl(s1, s2, i1, i2)	#:	Caseless version of find()
 end
 
 
-procedure manycl(c, s, i1, i2)	#:	Caseless version of many()
+# 	Caseless version of many()
+procedure manycl(c, s, i1, i2)	
 
 	c := cset(map(cset(c)))
 	/i1 := (/s & &pos)
@@ -112,7 +116,8 @@ procedure manycl(c, s, i1, i2)	#:	Caseless version of many()
 end
 
 
-procedure matchcl(s1, s2, i1, i2)	#:	Caseless version of match()
+# 	Caseless version of match()
+procedure matchcl(s1, s2, i1, i2)	
 
 	s1 := map(string(s1))
 	/i1 := (/s2 & &pos)
@@ -123,7 +128,8 @@ procedure matchcl(s1, s2, i1, i2)	#:	Caseless version of match()
 end
 
 
-procedure uptocl(c, s, i1, i2)	#:	Caseless version of upto()
+# 	Caseless version of upto()
+procedure uptocl(c, s, i1, i2)	
 
 	c := cset(map(cset(c)))
 	/i1 := (/s & &pos)

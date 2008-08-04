@@ -112,7 +112,8 @@ global ctg_eps_ptab		# table of [axis, flatng], keyed by eps name
 
 #  project(p, L) projects a list of coordinates, returning a new list.
 
-procedure project(p, L)			#: project a list of coordinates
+# project a list of coordinates
+procedure project(p, L)			
    return p.proj(p, L)
 end
 
@@ -120,7 +121,8 @@ end
 
 #  invp(p) returns the inverse of projection p.
 
-procedure invp(p)			#: return inversion of projection
+# return inversion of projection
+procedure invp(p)			
    return (\p.inv)(p)
 end
 
@@ -144,7 +146,8 @@ record ctg_rect(	# rectangular projection record
 
 #  rectp(x1, y1, x2, y2, xm, ym) -- define rectangular projection
 
-procedure rectp(x1, y1, x2, y2, xm, ym)	#: define rectangular projection
+# define rectangular projection
+procedure rectp(x1, y1, x2, y2, xm, ym)	
    local p
 
    /xm := 1.0
@@ -213,7 +216,8 @@ record ctg_ppt(		# planar projective transformation record
 
 #  pptrans(L1, L2) -- define planar projective transformation 
 
-procedure pptrans(L1, L2)	#: define planar projective transformation
+# define planar projective transformation
+procedure pptrans(L1, L2)	
    local p, M, I, B
    local x1, x2, x3, x4, y1, y2, y3, y4
    local x1p, x2p, x3p, x4p, y1p, y2p, y3p, y4p
@@ -317,7 +321,8 @@ record ctg_utm(		# UTM projection record
 
 #  utm(a, f) -- define UTM projection
 
-procedure utm(a, f)		#: define UTM projection
+# define UTM projection
+procedure utm(a, f)		
    local p,  af
 
    p := ctg_utm()
@@ -462,7 +467,8 @@ record ctg_comp(		# composition of two projections
 # compose --	produce a projection that applies the LAST projection
 #		in a[] first, etc.
 
-procedure compose(a[])		#: define composite projection
+# define composite projection
+procedure compose(a[])		
    local q, r
 
    q := ctg_comp()

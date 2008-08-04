@@ -120,7 +120,8 @@ global gdt_datum_ptab		# table of gdt_datum_rec's, keyed by code
 
 ###################### Geodat Conversion #################################
 
-procedure geodat(f, t)		#: define geodetic conversion
+# define geodetic conversion
+procedure geodat(f, t)		
    return nadcon(f, t) | molodensky(f, t) | fail
 end
 
@@ -144,7 +145,8 @@ record gdt_nadcon_grid(		# information about a .loa and .laa file
    angle			# ??
    )
 
-procedure nadcon(f, t)		#: define NAD data conversion
+# define NAD data conversion
+procedure nadcon(f, t)		
    local d, ft
 
    ft := (gdt_nadcon_datum(f) || "-" || gdt_nadcon_datum(t)) | fail
@@ -394,7 +396,8 @@ record gdt_molo(
    aout, fout		# output ellipsoid specs
    )
 
-procedure molodensky(dx,dy,dz,ain,fin,aout,fout) #: define geodetic conversion
+# define geodetic conversion
+procedure molodensky(dx,dy,dz,ain,fin,aout,fout) 
    local p, a, din, ein, dout, eout
 
    if /dx | /dy then fail
@@ -468,7 +471,8 @@ end
 
 ###################### Ellipsoid Parameters #################################
 
-procedure ellipsoid(name)	#: return [a, 1/f] for named ellipsoid
+# return [a, 1/f] for named ellipsoid
+procedure ellipsoid(name)	
 
 
    /name := "WGS84"

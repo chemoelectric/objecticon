@@ -36,7 +36,8 @@
 
 package ipl.intpdco
 
-procedure Compl(L)	#: PDCO to generate integers not in sequence
+# PDCO to generate integers not in sequence
+procedure Compl(L)	
    local i, j
 
    j := 1
@@ -51,7 +52,8 @@ procedure Compl(L)	#: PDCO to generate integers not in sequence
 
 end
 
-procedure Delta(L)	#: PDCO to generate differences in sequences 
+# PDCO to generate differences in sequences 
+procedure Delta(L)	
    local C, i
 
    C := ^L[1]
@@ -62,7 +64,8 @@ procedure Delta(L)	#: PDCO to generate differences in sequences
 
 end
 
-procedure Selfrepl(L)	#: PDCO to produce multiple of values in sequence
+# PDCO to produce multiple of values in sequence
+procedure Selfrepl(L)	
    local i, j
 
    j := @L[2] | 1
@@ -75,7 +78,8 @@ procedure Selfrepl(L)	#: PDCO to produce multiple of values in sequence
 
 end
 
-procedure Sumlimit(L) 	#: PDCO to sum sequence to a limit
+# PDCO to sum sequence to a limit
+procedure Sumlimit(L) 	
    local sum, min, limit, i
 
    limit := integer(@L[2]) | 2 ^ 31

@@ -305,7 +305,8 @@ invocable "=":1
 ###################  Pattern Translation Procedures  ###################
 
 
-procedure RePat(s)	#: regular expression pattern list
+# regular expression pattern list
+procedure RePat(s)	
 #
 #  Produce pattern list representing pattern string s.
 #
@@ -382,7 +383,8 @@ procedure RePat(s)	#: regular expression pattern list
 end
 
 
-procedure Re_pat1(level) # L
+# L
+procedure Re_pat1(level) 
 #
 #  Recursive portion of RePat()
 #
@@ -534,7 +536,8 @@ end
 #####################  Matching Engine Procedures  ########################
 
 
-procedure ReMatch(plist,s,i1,i2) #: position past regular expression matched
+# position past regular expression matched
+procedure ReMatch(plist,s,i1,i2) 
 #
 #  Produce the sequence of positions in s past a string starting at i1
 #  that matches the pattern plist, but fails if there is no such
@@ -550,7 +553,8 @@ procedure ReMatch(plist,s,i1,i2) #: position past regular expression matched
 end
 
 
-procedure Re_match1(plist,i) # s1,s2,...,sN
+# s1,s2,...,sN
+procedure Re_match1(plist,i) 
 #
 #  Used privately by ReMatch() to simulate a computed conjunction
 #  expression via recursive generation.
@@ -561,7 +565,8 @@ procedure Re_match1(plist,i) # s1,s2,...,sN
 end
 
 
-procedure ReFind(plist,s,i1,i2) #: position where regular expression matched
+# position where regular expression matched
+procedure ReFind(plist,s,i1,i2) 
 #
 #  Produce the sequence of positions in s where strings begin that match
 #  the pattern plist, but fails if there is no such position.  Similar
@@ -604,7 +609,8 @@ end
 ##########  Heuristic Code for Matching Arbitrary Characters  ##########
 
 
-procedure Re_skip(plist,i) # s1,s2,...,sN
+# s1,s2,...,sN
+procedure Re_skip(plist,i) 
 #
 #  Used privately -- match a sequence of strings in s past which a match
 #  of the first pattern element in plist is likely to succeed.  This
