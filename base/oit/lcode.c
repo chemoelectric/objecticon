@@ -399,19 +399,18 @@ static void gencode(struct lfile *lf)
                 backpatch(lab);
                 break;
 
-            case Op_Line: {
+            case Op_Line:
                 /*
                  * Line number change.
                  */
-                int lineno = uin_short();
+                k = uin_short();
                 if (lnfree >= &lntable[nsize])
                     lntable  = (struct ipc_line *)trealloc(lntable, &lnfree, &nsize,
                                                            sizeof(struct ipc_line), 1, "line number table");
                 lnfree->ipc = pc;
-                lnfree->line = lineno;
+                lnfree->line = k;
                 lnfree++;
                 break;
-            }
 
             case Op_Mark:
                 lab = uin_short();
