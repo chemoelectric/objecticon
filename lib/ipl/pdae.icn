@@ -57,7 +57,7 @@
 
 package ipl.pdae
 
-procedure Allpar(L)
+procedure Allpar(L[])
    local i, L1, done
    L1 := list(*L)
    done := list(*L,1)
@@ -70,7 +70,7 @@ procedure Allpar(L)
        }
 end
 
-procedure Extract(L)
+procedure Extract(L[])
    local i,  n, L1
    L1 := list(*L/2)
    repeat {
@@ -86,7 +86,7 @@ procedure Extract(L)
       }
 end
 
-procedure Lifo(L)
+procedure Lifo(L[])
    local  L1, ptr
    L1 := list(*L)
    ptr := 1
@@ -104,7 +104,7 @@ procedure Lifo(L)
       }
 end
 
-procedure Parallel(L)
+procedure Parallel(L[])
    local i, L1
    L1 := list(*L)
    repeat {
@@ -114,7 +114,7 @@ procedure Parallel(L)
       }
 end
 
-procedure Reverse(L)
+procedure Reverse(L[])
    local  L1, ptr
    L1 := list(*L)
    ptr := *L
@@ -133,7 +133,7 @@ procedure Reverse(L)
       }
 end
 
-procedure Rotate(L)
+procedure Rotate(L[])
    local i, L1, done
    L1 := list(*L)
    done := list(*L,1)
@@ -152,7 +152,7 @@ procedure Rotate(L)
         }
 end
 
-procedure Simple(L)
+procedure Simple(L[])
    local i, L1
    L1 := list(*L)
    every i := 1 to *L do

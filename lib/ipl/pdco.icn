@@ -226,16 +226,14 @@ import
    ipl.periodic(repeater),
    ipl.rational(rational)
 
-procedure AddTabbyPDCO(L)	#: PDCO to add tabby to treadling
-   local i
+procedure AddTabbyPDCO(e, i)	#: PDCO to add tabby to treadling
+   /i :=  4	# number of regular treadles
 
-   i := @L[2] | 4	# number of regular treadles
-
-   suspend InterPDCO([L[1], create |((i + 1) | (i + 2))])
+   suspend InterPDCO![e, create |((i + 1) | (i + 2))]
 
 end
 
-procedure AllparAER(L)	#: PDAE for parallel evuation with repeats
+procedure AllparAER(L[])	#: PDAE for parallel evuation with repeats
    local i, L1, done
 
    L1 := list(*L)
@@ -253,14 +251,14 @@ procedure AllparAER(L)	#: PDAE for parallel evuation with repeats
 
 end
 
-procedure AltPDCO(L)	#: PDCO to model alternation
+procedure AltPDCO(L[])	#: PDCO to model alternation
 
    suspend |@L[1]
    suspend |@L[2]
 
 end
 
-procedure BinopPDCO(L)	#: PDCO to apply binary operation to sequences
+procedure BinopPDCO(L[])	#: PDCO to apply binary operation to sequences
    local op, x, y
 
    repeat {
@@ -272,7 +270,7 @@ procedure BinopPDCO(L)	#: PDCO to apply binary operation to sequences
 
 end
 
-procedure CFapproxPDCO(L)	#: PDCO for continued-fraction approximations
+procedure CFapproxPDCO(L[])	#: PDCO for continued-fraction approximations
   local prev_n, prev_m, n, m, t
 
   prev_n := [1]
@@ -294,21 +292,21 @@ procedure CFapproxPDCO(L)	#: PDCO for continued-fraction approximations
 
 end
 
-procedure ComparePDCO(L)	#: PDCO to compare sequences
+procedure ComparePDCO(e1, e2)	#: PDCO to compare sequences
    local x1
 
-   while x1 := @L[1] do
-      (x1 === @L[2]) | fail
-   if @L[2] then fail else return
+   while x1 := @e1 do
+      (x1 === @e2) | fail
+   if @e2 then fail else return
 
 end
 
-procedure ComplintPDCO(L)	#: PDCO to generate integers not in sequence
+procedure ComplintPDCO(e)	#: PDCO to generate integers not in sequence
    local i, j			# EXPECTS MONOTONE NON-DECREASING SEQUENCE
 
    j := 0
 
-   while i := @L[1] do {
+   while i := @e do {
       i := integer(i) | stop("*** invalid value in sequence to Compl{}")
       suspend j to i - 1
       j := i + 1
@@ -318,7 +316,7 @@ procedure ComplintPDCO(L)	#: PDCO to generate integers not in sequence
 
 end
 
-procedure CondPDCO(L)	#: PDCO for generalized Lisp conditional
+procedure CondPDCO(L[])	#: PDCO for generalized Lisp conditional
    local i, x
 
    every i := 1 to *L do
@@ -330,17 +328,17 @@ procedure CondPDCO(L)	#: PDCO for generalized Lisp conditional
 
 end
 
-procedure CumsumPDCO(L)		#: PDCO to produce cumulative sum
+procedure CumsumPDCO(e)		#: PDCO to produce cumulative sum
    local i
 
    i := 0
 
-   while i +:= @L[1] do
+   while i +:= @e do
       suspend i
 
 end
 
-procedure CycleparAER(L)	#: PDAE for parallel evaluation with cycling
+procedure CycleparAER(L[])	#: PDAE for parallel evaluation with cycling
    local i, L1, done
 
    L1 := list(*L)
@@ -364,7 +362,7 @@ procedure CycleparAER(L)	#: PDAE for parallel evaluation with cycling
       }
 end
 
-procedure DecimatePDCO(L)	#: PDCO to decimate sequence
+procedure DecimatePDCO(L[])	#: PDCO to decimate sequence
    local i, j, count
 
    count := 0
@@ -379,7 +377,7 @@ procedure DecimatePDCO(L)	#: PDCO to decimate sequence
 
 end
 
-procedure DecimationPDCO(L)	#: PDCO to create decimation sequence
+procedure DecimationPDCO(L[])	#: PDCO to create decimation sequence
    local i, count
 
    count := 0
@@ -390,7 +388,7 @@ procedure DecimationPDCO(L)	#: PDCO to create decimation sequence
       }
 
 end
-procedure DecollatePDCO(L)	#: PDCO to decollate sequence
+procedure DecollatePDCO(L[])	#: PDCO to decollate sequence
    local i, j, x
 
    i := @L[2] | 1
@@ -406,7 +404,7 @@ procedure DecollatePDCO(L)	#: PDCO to decollate sequence
 
 end
 
-procedure DeltaPDCO(L)	#: PDCO to generate difference sequence 
+procedure DeltaPDCO(L[])	#: PDCO to generate difference sequence 
    local i, j
 
    i := @L[1] | fail
@@ -418,7 +416,7 @@ procedure DeltaPDCO(L)	#: PDCO to generate difference sequence
 
 end
 
-procedure ElevatePDCO(L)	#: PDCO to elevate sequence
+procedure ElevatePDCO(L[])	#: PDCO to elevate sequence
    local n, m, shafts, i, j, k
 
    m := @L[2] | fail
@@ -440,13 +438,13 @@ procedure ElevatePDCO(L)	#: PDCO to elevate sequence
 
 end
 
-procedure EveryPDCO(L)	#: PDCO to model iteration
+procedure EveryPDCO(L[])	#: PDCO to model iteration
 
    while @L[1] do @^L[2]
 
 end
 
-procedure ExtendSeqPDCO(L)	#: PDCO to extend sequence
+procedure ExtendSeqPDCO(L[])	#: PDCO to extend sequence
    local count
 
    count := integer(@L[2]) | fail
@@ -463,7 +461,7 @@ procedure ExtendSeqPDCO(L)	#: PDCO to extend sequence
 
 end
 
-procedure ExtractAER(L)	#: PDAE to extract values
+procedure ExtractAER(L[])	#: PDAE to extract values
    local i, n, L1
 
    L1 := list(*L/2)
@@ -482,7 +480,7 @@ procedure ExtractAER(L)	#: PDAE to extract values
 
 end
 
-procedure FifoAER(L)	#: PDAE for reversal of lifo evaluation
+procedure FifoAER(L[])	#: PDAE for reversal of lifo evaluation
    local L1, j
 
    L1 := list(*L)
@@ -504,7 +502,7 @@ procedure FifoAER(L)	#: PDAE for reversal of lifo evaluation
 
 end
 
-procedure FriendlyPDCO(L)	# PDCO for friendly sequences
+procedure FriendlyPDCO(L[])	# PDCO for friendly sequences
    local mod, state, value
 
    mod := @L[1] | fail
@@ -521,7 +519,7 @@ procedure FriendlyPDCO(L)	# PDCO for friendly sequences
 
 end
 
-procedure GaltPDCO(L)		#: PDCO to concatenate sequences
+procedure GaltPDCO(L[])		#: PDCO to concatenate sequences
    local C
 
    every C := !L do
@@ -529,7 +527,7 @@ procedure GaltPDCO(L)		#: PDCO to concatenate sequences
 
 end
 
-procedure GconjPDCO(L)	#: PDCO for generalized conjunction
+procedure GconjPDCO(L[])	#: PDCO for generalized conjunction
 
    suspend Gconj_(L,1)
 
@@ -546,7 +544,7 @@ procedure Gconj_(L,i,v)
 
 end
 
-procedure HistoPDCO(L)		#: histogram
+procedure HistoPDCO(L[])		#: histogram
    local limit, results, seq
 
    limit := @L[2] | 100
@@ -564,7 +562,7 @@ procedure HistoPDCO(L)		#: histogram
 end
 
 
-procedure IncreasingPDCO(L)	#: PDCO to filter out non-increasing values
+procedure IncreasingPDCO(L[])	#: PDCO to filter out non-increasing values
    local last, current
 
    last := @L[1] | fail
@@ -581,7 +579,7 @@ procedure IncreasingPDCO(L)	#: PDCO to filter out non-increasing values
 
 end
 
-procedure IndexPDCO(L)		#: PDCO to select terms by position
+procedure IndexPDCO(L[])		#: PDCO to select terms by position
    local i, j, x
 
    j := @L[2] | fail
@@ -599,13 +597,13 @@ procedure IndexPDCO(L)		#: PDCO to select terms by position
 
 end
 
-procedure InterPDCO(L)	#: PDCO to interleave sequences
+procedure InterPDCO(L[])	#: PDCO to interleave sequences
 
    suspend |@!L
 
 end
 
-procedure LcondPDCO(L)	#: PDCO for Lisp conditional
+procedure LcondPDCO(L[])	#: PDCO for Lisp conditional
    local i
 
    every i := 1 to *L by 2 do
@@ -616,18 +614,18 @@ procedure LcondPDCO(L)	#: PDCO for Lisp conditional
 
 end
 
-procedure LengthPDCO(L)	#: PDCO to produce length of sequence
+procedure LengthPDCO(e)	#: PDCO to produce length of sequence
    local i
 
    i := 0
 
-   while @L[1] do i +:= 1
+   while @e do i +:= 1
 
    return i
 
 end
 
-procedure LifoAER(L)	#: PDAE for standard lifo evaluation
+procedure LifoAER(L[])	#: PDAE for standard lifo evaluation
    local L1, j
 
    L1 := list(*L)
@@ -649,7 +647,7 @@ procedure LifoAER(L)	#: PDAE for standard lifo evaluation
 
 end
 
-procedure LimitPDCO(L)	#: PDCO to model limtation
+procedure LimitPDCO(L[])	#: PDCO to model limtation
    local i, x
 
    while i := @L[2] do {
@@ -661,7 +659,7 @@ procedure LimitPDCO(L)	#: PDCO to model limtation
 
 end
 
-procedure ListPDCO(L)		#: list from sequence
+procedure ListPDCO(L[])		#: list from sequence
    local limit, result
 
    limit := @L[2] | 100
@@ -674,7 +672,7 @@ procedure ListPDCO(L)		#: list from sequence
 
 end
 
-procedure LowerTrimPDCO(L)	#: lower trimming
+procedure LowerTrimPDCO(L[])	#: lower trimming
    local i
 
    while i := @L[1] do {
@@ -684,7 +682,7 @@ procedure LowerTrimPDCO(L)	#: lower trimming
 
 end
 
-procedure MapPDCO(L)		#: PDCO to map values
+procedure MapPDCO(L[])		#: PDCO to map values
    local maptbl, x
 
    maptbl := table()
@@ -696,7 +694,7 @@ procedure MapPDCO(L)		#: PDCO to map values
 
 end
 
-procedure OddEvenPDCO(L)	#: PDCO to force odd/even sequence
+procedure OddEvenPDCO(L[])	#: PDCO to force odd/even sequence
    local val, val_old
 
    while val := @L[1] do {
@@ -708,7 +706,7 @@ procedure OddEvenPDCO(L)	#: PDCO to force odd/even sequence
 
 end
 
-procedure PalinPDCO(L)	#: PDCO to produce palindromic sequence
+procedure PalinPDCO(L[])	#: PDCO to produce palindromic sequence
    local tail, x
 
    tail := []
@@ -722,15 +720,15 @@ procedure PalinPDCO(L)	#: PDCO to produce palindromic sequence
 
 end
 
-procedure ParallelPDCO(L)	#: synonym for Inter
+procedure ParallelPDCO(L[])	#: synonym for Inter
 
    ParallelPDCO := InterPDCO		# redefine for next use
 
-   suspend InterPDCO(L)
+   suspend InterPDCO!L
 
 end
 
-procedure ParallelAER(L)	#: PDAE for parallel evaluation
+procedure ParallelAER(L[])	#: PDAE for parallel evaluation
    local i, L1
 
    L1 := list(*L)
@@ -743,7 +741,7 @@ procedure ParallelAER(L)	#: PDAE for parallel evaluation
 
 end
 
-procedure PatternPalinPDCO(L)	#: PDCO to produce pattern palindrome
+procedure PatternPalinPDCO(L[])	#: PDCO to produce pattern palindrome
    local tail, x, limit
 
    tail := []
@@ -764,7 +762,7 @@ procedure PatternPalinPDCO(L)	#: PDCO to produce pattern palindrome
 
 end
 
-procedure PeriodPDCO(L)		#: PDCO for periodic part of sequence
+procedure PeriodPDCO(L[])		#: PDCO for periodic part of sequence
    local limit, result
 
    limit := @L[2] | 300
@@ -779,7 +777,7 @@ procedure PeriodPDCO(L)		#: PDCO for periodic part of sequence
 
 end
 
-procedure PermutePDCO(L)	#: PDCO for permutations
+procedure PermutePDCO(L[])	#: PDCO for permutations
    local temp1, temp2, chunk, i
 
    repeat {
@@ -794,7 +792,7 @@ procedure PermutePDCO(L)	#: PDCO for permutations
 
 end
 
-procedure PivotPDCO(L)		#: PDCO to generate pivot points
+procedure PivotPDCO(L[])		#: PDCO to generate pivot points
    local current, direction, m, new
 
    m := @L[2]
@@ -839,7 +837,7 @@ procedure PivotPDCO(L)		#: PDCO to generate pivot points
 
 end
 
-procedure PositionsPDCO(L)	# positions in e of i
+procedure PositionsPDCO(L[])	# positions in e of i
    local i, count, j
 
    i := integer(@L[2]) | fail
@@ -853,7 +851,7 @@ procedure PositionsPDCO(L)	# positions in e of i
 
 end
 
-procedure PosDiffPDCO(L)	# PDCO to generate positions of difference
+procedure PosDiffPDCO(L[])	# PDCO to generate positions of difference
    local i, x, y
 
    i := 0
@@ -865,14 +863,14 @@ procedure PosDiffPDCO(L)	# PDCO to generate positions of difference
 
 end
 
-procedure RandomPDCO(L)	#: PDCO to generate from sequences at random
+procedure RandomPDCO(L[])	#: PDCO to generate from sequences at random
    local x
 
    while x := @?L do suspend x
 
 end
 
-procedure RepaltPDCO(L)	#: PDCO to model repeated alternation
+procedure RepaltPDCO(L[])	#: PDCO to model repeated alternation
    repeat {
       suspend |@L[1]
       if *L[1] == 0 then fail
@@ -881,7 +879,7 @@ procedure RepaltPDCO(L)	#: PDCO to model repeated alternation
 
 end
 
-procedure ReducePDCO(L)	#: PDCO to reduce sequence using binary operation
+procedure ReducePDCO(L[])	#: PDCO to reduce sequence using binary operation
    local op, x
 
    op := proc(@L[1], 2) | stop("*** invalid operation for Reduce{}")
@@ -893,7 +891,7 @@ procedure ReducePDCO(L)	#: PDCO to reduce sequence using binary operation
 
 end
 
-procedure RepeatPDCO(L)	#: PDCO to repeat sequence
+procedure RepeatPDCO(L[])	#: PDCO to repeat sequence
    local i
 
    while i := @L[2] do {
@@ -906,7 +904,7 @@ procedure RepeatPDCO(L)	#: PDCO to repeat sequence
 
 end
 
-procedure RemoveDuplPDCO(L)	#: PDCO for remove duplicate values in a sequence
+procedure RemoveDuplPDCO(L[])	#: PDCO for remove duplicate values in a sequence
    local old, new
 
    old := @L[1] | fail
@@ -923,19 +921,17 @@ procedure RemoveDuplPDCO(L)	#: PDCO for remove duplicate values in a sequence
 
 end
 
-procedure ReplPDCO(L)	#: PDCO to replicate values in a sequence
+procedure ReplPDCO(e1, e2)	#: PDCO to replicate values in a sequence
    local x, i
 
-   i := 1		# default
-
-   while x := @L[1] do {
-      i := @L[2]
+   while x := @e1 do {
+      i := @\e2 | 1
       suspend (1 to i) & x
       }
 
 end
 
-procedure ResumePDCO(L)	#: PDCO to model limited iteration
+procedure ResumePDCO(L[])	#: PDCO to model limited iteration
    local i
 
    while i := @L[2] do {
@@ -945,7 +941,7 @@ procedure ResumePDCO(L)	#: PDCO to model limited iteration
 
 end
 
-procedure ReversePDCO(L)	#: PDCO to reverse sequence
+procedure ReversePDCO(L[])	#: PDCO to reverse sequence
    local result, limit
 
    result := []
@@ -961,7 +957,7 @@ procedure ReversePDCO(L)	#: PDCO to reverse sequence
 
 end
 
-procedure RotatePDCO(L)		#: PDCO to rotate sequence
+procedure RotatePDCO(L[])		#: PDCO to rotate sequence
    local result, i, x
 
    i := integer(@L[2]) | stop("*** invalid specification in Rotate{}")
@@ -983,7 +979,7 @@ procedure RotatePDCO(L)		#: PDCO to rotate sequence
 
 end
 
-procedure SelfreplPDCO(L)	#: PDCO to produce multiple of values in sequence
+procedure SelfreplPDCO(L[])	#: PDCO to produce multiple of values in sequence
    local i, j
 
    j := @L[2] | 1
@@ -996,7 +992,7 @@ procedure SelfreplPDCO(L)	#: PDCO to produce multiple of values in sequence
 
 end
 
-procedure SeqlistPDCO(L)	#: PDCO to return list of values
+procedure SeqlistPDCO(L[])	#: PDCO to return list of values
    local result, limit
 
    result := []
@@ -1010,7 +1006,7 @@ procedure SeqlistPDCO(L)	#: PDCO to return list of values
 
 end
 
-procedure SimpleAER(L)	#: PDAE for simple evaluation
+procedure SimpleAER(L[])	#: PDAE for simple evaluation
    local i, L1
 
    L1 := list(*L)
@@ -1022,7 +1018,7 @@ procedure SimpleAER(L)	#: PDAE for simple evaluation
 
 end
 
-procedure SkipPDCO(L)	#: PDCO to skip terms
+procedure SkipPDCO(L[])	#: PDCO to skip terms
    local gap
 
    suspend @L[1]
@@ -1036,7 +1032,7 @@ procedure SkipPDCO(L)	#: PDCO to skip terms
 
 end
 
-procedure SmodPDCO(L)		#: generalized modular reduction
+procedure SmodPDCO(L[])		#: generalized modular reduction
    local i, m
 
    while i := @L[1] do {
@@ -1046,7 +1042,7 @@ procedure SmodPDCO(L)		#: generalized modular reduction
 
 end
 
-procedure SpanPDCO(L)		#: fill in gaps in integer sequences
+procedure SpanPDCO(L[])		#: fill in gaps in integer sequences
    local i, j, m
 
    j := @L[1] | fail
@@ -1064,7 +1060,7 @@ procedure SpanPDCO(L)		#: fill in gaps in integer sequences
 
 end
 
-procedure SumlimitPDCO(L) 	#: PDCO to sum sequence to a limit
+procedure SumlimitPDCO(L[]) 	#: PDCO to sum sequence to a limit
    local sum, min, limit, i
 
    limit := integer(@L[2]) | 2 ^ 15
@@ -1080,7 +1076,7 @@ procedure SumlimitPDCO(L) 	#: PDCO to sum sequence to a limit
 
 end
 
-procedure TrinopPDCO(L)	#: PDCO to apply trinary operator to sequneces
+procedure TrinopPDCO(L[])	#: PDCO to apply trinary operator to sequneces
    local op, x, y, z
 
    repeat {
@@ -1091,12 +1087,12 @@ procedure TrinopPDCO(L)	#: PDCO to apply trinary operator to sequneces
 
 end
 
-procedure UniquePDCO(L)	#: PDCO to filter out duplication values
+procedure UniquePDCO(e)	#: PDCO to filter out duplication values
    local done, x
 
    done := set()
 
-   while x := @L[1] do
+   while x := @e do
       if member(done, x) then next
       else {
          insert(done, x)
@@ -1105,19 +1101,19 @@ procedure UniquePDCO(L)	#: PDCO to filter out duplication values
 
 end
 
-procedure UnopPDCO(L)	#: PDCO to apply unary operation to sequence
+procedure UnopPDCO(e1, e2)	#: PDCO to apply unary operation to sequence
    local op, x
 
    repeat {
-      op := @L[1]
+      op := @e1
       op := proc(op, 1) | fail
-      x := @L[2]  | fail
+      x := @e2  | fail
       suspend op(x)
       }
 
 end
 
-procedure UpperTrimPDCO(L)	#: upper sequence trimming
+procedure UpperTrimPDCO(L[])	#: upper sequence trimming
    local done, i
 
    done := set()
@@ -1130,15 +1126,15 @@ procedure UpperTrimPDCO(L)	#: upper sequence trimming
 
 end
 
-procedure ValrptPDCO(L)		#: synonym for Repl
+procedure ValrptPDCO(e1, e2)		#: synonym for Repl
 
    ValrptPDCO := ReplPDCO
 
-   suspend ReplPDCO(L)
+   suspend ReplPDCO(e1, e2)
 
 end
 
-procedure WobblePDCO(L)	#: PDCO to produce sequence values alternately
+procedure WobblePDCO(L[])	#: PDCO to produce sequence values alternately
    local x, y
 
    x := @L[1] | fail
