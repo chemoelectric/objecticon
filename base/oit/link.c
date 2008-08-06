@@ -453,8 +453,8 @@ void dumpstate()
                 else if (le->l_flag & F_Static)
                     fprintf(stderr, "\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
                 else if (le->l_flag & (F_Argument|F_Dynamic))
-                    fprintf(stderr, "\tlocal %s %s offset=%d\n", le->name,
-                           f_flag2str(le->l_flag), le->l_val.offset);
+                    fprintf(stderr, "\tlocal %s %s index=%d\n", le->name,
+                           f_flag2str(le->l_flag), le->l_val.index);
                 else
                     fprintf(stderr, "\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
             }
@@ -507,8 +507,8 @@ void dumpstate()
                         else if (le->l_flag & F_Static)
                             fprintf(stderr, "\t\t\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
                         else if (le->l_flag & (F_Argument|F_Dynamic))
-                            fprintf(stderr, "\t\t\tlocal %s %s offset=%d\n", le->name,
-                                   f_flag2str(le->l_flag), le->l_val.offset);
+                            fprintf(stderr, "\t\t\tlocal %s %s index=%d\n", le->name,
+                                   f_flag2str(le->l_flag), le->l_val.index);
                         else if (le->l_flag & (F_Field))
                             fprintf(stderr, "\t\t\tlocal %s %s field=%s\n", le->name,
                                    f_flag2str(le->l_flag), le->l_val.field->name);

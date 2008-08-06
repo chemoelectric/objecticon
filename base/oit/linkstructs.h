@@ -32,8 +32,7 @@ struct lentry {                 /* local table entry */
     struct loc pos;             /*   source line number */
     word l_flag;                /*   variable flags */
     union {                     /*   value field */
-        int staticid;           /*     unique id for static variables */
-        word offset;            /*     stack offset for args and locals */
+        word index;             /*     index number for statics arguments and dynamics */
         struct gentry *global;  /*     global table entry */
         struct lclass_field *field; /* a field in a class's method */
     } l_val;
@@ -152,12 +151,12 @@ struct lclass_field_ref {
 
 struct lfunction {
     int pc;
-    int nargs;
-    int dynoff;
-    int argoff;
-    int nlocals;
-    int nconstants;
-    int nstatics;
+    int ndynamic;         /* Count of dynamics */
+    int narguments;       /* Count of arguments, always >= 0 even for varargs */
+    int nstatics;         /* Count of statics */
+    int nargs;            /* Read from the ufile, will be -ve for varargs */
+    int nlocals;          /* Number of local symbols - may be any sort */
+    int nconstants;       /* Number of constants */
     struct lfile *defined;            /* The file this function was defined in */
     struct lclass_field *method;      /* Pointer to method, if a method */
     struct gentry *proc;              /* Pointer to proc, if a proc */

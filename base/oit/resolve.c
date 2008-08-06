@@ -144,14 +144,14 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
      */
     if (lp->l_flag) {
         if (lp->l_flag & F_Argument)			/* procedure argument */
-            lp->l_val.offset = ++func->argoff;
+            lp->l_val.index = func->narguments++;
         else if (lp->l_flag & F_Dynamic)			/* local dynamic */
-            lp->l_val.offset = ++func->dynoff;
+            lp->l_val.index = func->ndynamic++;
         else if (lp->l_flag & F_Static) {			/* local static */
-            /* Note that the staticid field is set later, during code generation */
+            /* Note that the static's index number is set later, during code generation */
             ++func->nstatics;
         } else
-            quit("putlocal: unknown flags");
+            quit("resolvelocal: unknown flags");
         return;
     }
 

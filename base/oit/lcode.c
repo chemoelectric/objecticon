@@ -440,9 +440,9 @@ static void gencode(struct lfile *lf)
                     lemitn(Op_Global, (word)(lp->l_val.global->g_index),
                            "global");
                 else if (flags & F_Static)
-                    lemitn(Op_Static, (word)(lp->l_val.staticid-1), "static");
+                    lemitn(Op_Static, lp->l_val.index, "static");
                 else if (flags & F_Argument)
-                    lemitn(Op_Arg, (word)(lp->l_val.offset-1), "arg");
+                    lemitn(Op_Arg, lp->l_val.index, "arg");
                 else if (flags & F_Field) {
                     fp = flocate(lp->name);
                     if (!fp)
@@ -454,7 +454,7 @@ static void gencode(struct lfile *lf)
                         lemitn(Op_Arg, 0, "arg");          /* inst var, "self" is the 0th argument */
                     lemitn(Op_Field, (word)(fp->field_id), "field");
                 } else
-                    lemitn(Op_Local, (word)(lp->l_val.offset-1), "local");
+                    lemitn(Op_Local, lp->l_val.index, "local");
                 break;
 
                 /* Declarations. */
@@ -784,7 +784,10 @@ static void lemitproc(struct lfunction *func)
      * FncBlockSize = sizeof(BasicFncBlock) +
      *  sizeof(descrip)*(# of args + # of dynamics + # of statics).
      */
-    size = (11*WordSize) + (2*WordSize) * (abs(func->nargs)+func->dynoff+func->nstatics);
+    if (abs(func->nargs) != func->narguments)
+        quitf("Mismatch between ufile's nargs and narguments");
+
+    size = (11*WordSize) + (2*WordSize) * (func->narguments + func->ndynamic + func->nstatics);
     if (func->proc)
         p = func->proc->name;
     else
@@ -797,8 +800,8 @@ static void lemitproc(struct lfunction *func)
         fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", size);			/* size of block */
         fprintf(dbgfile, "\tZ+%ld\t\t\t\t# Entry point\n",(long)(pc+size));	/* entry point */
         fprintf(dbgfile, "\t%d\t\t\t\t# Num args\n", func->nargs);	/* # arguments */
-        fprintf(dbgfile, "\t%d\t\t\t\t# Dynoff\n", func->dynoff);	/* # dynamic locals */
-        fprintf(dbgfile, "\t%d\t\t\t\t# Nstatics\n", func->nstatics);	/* # static locals */
+        fprintf(dbgfile, "\t%d\t\t\t\t# Num dynamic\n", func->ndynamic);	/* # dynamic locals */
+        fprintf(dbgfile, "\t%d\t\t\t\t# Num static\n", func->nstatics);	/* # static locals */
         fprintf(dbgfile, "\t%d\t\t\t\t# First static\n", nstatics);		/* first static */
         fprintf(dbgfile, "\t0\n");		        /* owning prog space */
         fprintf(dbgfile, "\t0\n");		        /* field */
@@ -811,7 +814,7 @@ static void lemitproc(struct lfunction *func)
     outword(pc + size - 2*WordSize); /* Have to allow for the two words
                 			that we've already output. */
     outword(func->nargs);
-    outword(func->dynoff);
+    outword(func->ndynamic);
     outword(func->nstatics);
     outword(nstatics);
     outword(0);
@@ -848,12 +851,12 @@ static void lemitproc(struct lfunction *func)
 
     /*
      * Output string descriptors for static variable names, and set their
-     * staticid numbers.
+     * index numbers.
      */
     for (le = func->locals; le; le = le->next) {
         if (le->l_flag & F_Static) {
             sp = inst_c_strconst(le->name);
-            le->l_val.staticid = ++nstatics;
+            le->l_val.index = nstatics++;
             if (Dflag)
                 fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, le->name);
             outword(sp->len);
