@@ -379,7 +379,7 @@ int main(int argc, char **argv)
     }
 
     if (optind < argc)  {
-        report("Executing");
+        report("Executing:");
         execute (ofile, efile, argv+optind+1);
     }
 

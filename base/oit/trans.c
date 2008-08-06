@@ -215,7 +215,7 @@ static void trans1(char *filename)
         return;
     }
 
-    report(filename);
+    report("%s:", filename);
 
     tok_loc.n_file = intern(canonicalize(filename));
     in_line = 1;
