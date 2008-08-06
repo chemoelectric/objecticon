@@ -1577,8 +1577,15 @@ dptr da, db;
       }
    else if (Type(*da) == T_Lrgint)    /* cmp(bignum, integer) */
       return bigcmpi(da, IntVal(*db));
-   else                               /* cmp(integer, bignum) */
+   else if (Type(*db) == T_Lrgint)    /* cmp(integer, bignum) */
       return -bigcmpi(db, IntVal(*da));
+   else { /* Two integers */
+      if (IntVal(*da) > IntVal(*db))
+           return 1;
+      if (IntVal(*da) < IntVal(*db))
+           return -1;
+      return 0;
+   }
 }
 
 /*
