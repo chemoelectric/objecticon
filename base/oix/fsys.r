@@ -222,13 +222,8 @@ end
 " and attributes given in trailing arguments."
 function{0,1} open(fname, spec, attr[n])
 #else						/* Graphics */
-#ifdef OpenAttributes
-"open(fname, spec, attrstring) - open file fname with specification spec."
-function{0,1} open(fname, spec, attrstring)
-#else						/* OpenAttributes */
 "open(fname, spec) - open file fname with specification spec."
 function{0,1} open(fname, spec)
-#endif						/* OpenAttributes */
 #endif						/* Graphics */
    declare {
       tended struct descrip filename;
@@ -248,13 +243,6 @@ function{0,1} open(fname, spec)
    if !def:tmp_string(spec, letr) then
       runerr(103, spec)
 
-#ifdef OpenAttributes
-   /*
-    * Convert attrstr to a string, defaulting to "".
-    */
-   if !def:C_string(attrstring, emptystr) then
-      runerr(103, attrstring)
-#endif					/* OpenAttributes */
 
    abstract {
       return file
@@ -489,12 +477,6 @@ Deliberate Syntax Error
        * Open the file with fopen or popen.
        */
 
-#ifdef OpenAttributes
-#if SASC
-	 f = afopen(fnamestr, mode, "", attrstring);
-#endif					/* SASC */
-
-#else					/* OpenAttributes */
 
 #ifdef Graphics
       if (status & Fs_Window) {
@@ -543,11 +525,14 @@ Deliberate Syntax Error
 	    strcat(fnamestr, s+1);
 	    }
 	 f = popen(fnamestr, mode);
-	 if (!strcmp(mode,"r") && ((c = getc(f)) == EOF)) {
-	    pclose(f);
-	    fail;
-	    }
-	 ungetc(c, f);
+         if (!strcmp(mode,"r")) {
+            if ((c = getc(f)) == EOF) {
+               pclose(f);
+               fail;
+               }
+            else
+               ungetc(c, f);
+            }
 	 }
       else
 #endif			
@@ -652,7 +637,6 @@ Deliberate Syntax Error
 #else					/* PosixFns */
   	 f = fopen(fnamestr, mode);
 #endif 					/* PosixFns */
-#endif					/* OpenAttributes */
 
       /*
        * Fail if the file cannot be opened.
