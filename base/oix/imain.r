@@ -69,7 +69,7 @@ int mterm = Op_Quit;
 
 FILE *finredir, *fouredir, *ferredir;
 
-#if MSWindows
+#ifdef MSWindows
 
 /*
  * CmdParamToArgv() - convert a command line to an argv array.  Return argc.

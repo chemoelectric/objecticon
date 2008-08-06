@@ -350,8 +350,6 @@ dptr d;
       return  Succeeded;
    s = StrLoc(*d);
 
-#ifdef MSWindows
-#endif					/* MSWindows */
    if (longwrite(s,l,f) < 0)
       return Failed;
    else

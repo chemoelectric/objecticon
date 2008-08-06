@@ -475,8 +475,7 @@ void icon_init(char *name)
         }
 #endif					/* UNIX */
 
-#if MSWindows
-#if !HIGHC_386
+#if MSWIN32
     if (noerrbuf)
         setbuf(stderr, NULL);
     else {
@@ -487,8 +486,7 @@ void icon_init(char *name)
         setbuf(stderr, buf);
 #endif					/* MSWindows */
     }
-#endif					/* !HIGHC_386 */
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
 /*
  * End of operating-system specific code.
@@ -716,8 +714,7 @@ void c_exit(i)
         xdisp(pfp,glbl_argp,k_level,stderr);
     }
 
-
-#if MSWindows /* add others who need to free their resources here */
+#if MSWIN32
     /*
      * free dynamic record types
      */
@@ -740,9 +737,11 @@ void c_exit(i)
         free(dr_arrays);
     }
 
+#ifdef MSWindows
     PostQuitMessage(0);
     while (wstates != NULL) pollevent();
 #endif					/* MSWindows */
+#endif                                  /* MSWIN32 */
 
     exit(i);
 
