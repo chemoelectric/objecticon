@@ -1214,7 +1214,7 @@ static void gentables()
                 fprintf(dbgfile, "\t%d\n", gp->record->nfields);
                 fprintf(dbgfile, "\t-2\n");
                 fprintf(dbgfile, "\t%d\n", gp->record->fieldtable_col);
-                fprintf(dbgfile, "\t1\n");
+                fprintf(dbgfile, "\t0\n");
                 fprintf(dbgfile, "\t0\n");
                 fprintf(dbgfile, "\t0\n");
                 fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, s);
@@ -1227,7 +1227,7 @@ static void gentables()
             outword(gp->record->nfields);		/* number of fields */
             outword(-2);			/* record constructor indicator */
             outword(gp->record->fieldtable_col);/* fieldtable column */
-            outword(1);			/* serial number */
+            outword(0);			/* serial number counter */
             outword(0);
             outword(0);
             outword(sp->len);		/* name of record: size and offset */
