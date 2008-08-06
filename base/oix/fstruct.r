@@ -4,8 +4,8 @@
  *  set, table
  */
 
-"delete(x1, x2) - delete element x2 from set, table, or list x1 if it is there"
-" (always succeeds and returns x1)."
+"delete(s, x1,..., xN) - delete elements x1..N from set, table, or list s if it is there"
+" (always succeeds and returns s)."
 
 function{1} delete(s, x[n])
    abstract {
@@ -215,9 +215,9 @@ function{*} key(t)
 end
 
 
-"insert(x1, x2, x3) - insert element x2 into set or table x1 if not already there."
-" If x1 is a table, the assigned value for element x2 is x3."
-" (always succeeds and returns x1)."
+"insert(s, x1, ..., xN) - insert elements x1..N into set or table s if not already there."
+" If s is a table, the assigned value for element xi is x(i+1)."
+" (always succeeds and returns s)."
 
 function{1} insert(s, x[n])
    type_case s of {
@@ -451,14 +451,14 @@ function{1} list(n, x)
 end
 
 
-"member(x1, x2) - returns x1 if x2 is a member of set or table x2 but fails"
-" otherwise."
+"member(s, x1, ..., xN) - returns s if x1 ... xN are members of set or"
+" table s but fails otherwise."
 
 function{0,1} member(s, x[n])
    type_case s of {
       set: {
          abstract {
-            return type(x) ** store[type(s).set_elem]
+            return type(s)
             }
          inline {
             int res, argc;
@@ -473,7 +473,7 @@ function{0,1} member(s, x[n])
 	       if (res==0)
 		  fail;
 	       }
-	    return x[n-1];
+	    return s;
             }
          }
       table: {
@@ -493,7 +493,7 @@ function{0,1} member(s, x[n])
 	       if (res == 0)
 		  fail;
 	       }
-	    return x[n-1];
+	    return s;
             }
          }
       list: {
@@ -509,7 +509,7 @@ function{0,1} member(s, x[n])
 	       cnv_x = cvpos(cnv_x, size);
 	       if (cnv_x > size) fail;
 	       }
-	    return x[n-1];
+	    return s;
 	    }
 	 }
       cset: {
@@ -968,9 +968,9 @@ int c_setinsert(union block **pps, dptr pd)
    return rv;
 }
 
-"set(L) - create a set with members in list L."
-"  The members are linked into hash chains which are"
-" arranged in increasing order by hash number."
+"set(x1,...,xN) - create a set with given members."
+" If any parameter is a list, its"
+" elements are added rather than the list itself."
 
 function{1} set(x[n])
 
