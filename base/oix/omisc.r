@@ -165,71 +165,79 @@ end
 "i to j by k - generate successive values."
 
 operator{*} ... toby(from, to, by)
-
-   if cnv:(exact)C_integer(by) && cnv:(exact)C_integer(from) then {
-	 if !cnv:C_integer(to) then { runerr(101, to) }
-	 abstract {
-	    return integer
-            }
-	 inline {
-	    /*
-	     * by must not be zero.
-	     */
-	    if (by == 0) {
+   declare {
+    tended struct descrip by1, from1, to1;
+   }
+   if cnv:(exact)C_integer(by) && cnv:(exact)C_integer(from) && cnv:C_integer(to) then {
+       abstract {
+           return integer
+               }
+       inline {
+           /*
+            * by must not be zero.
+            */
+           if (by == 0) {
 	       irunerr(211, by);
 	       errorfail;
-	       }
-	    /*
-	     * Count up or down (depending on relationship of from and to)
-	     *  and suspend each value in sequence, failing
-	     *  when the limit has been exceeded.
-	     */
-	    if (by > 0)
+           }
+           /*
+            * Count up or down (depending on relationship of from and to)
+            *  and suspend each value in sequence, failing
+            *  when the limit has been exceeded.
+            */
+           if (by > 0)
 	       for ( ; from <= to; from += by) {
-		  suspend C_integer from;
-		  }
-	    else
+                   suspend C_integer from;
+               }
+           else
 	       for ( ; from >= to; from += by) {
-		  suspend C_integer from;
-                  }
-               fail;
-	       }
-	 }
-   else if cnv:C_double(from) && cnv:C_double(to) && cnv:C_double(by) then {
-            abstract { return real }
-	    inline {
-               if (by == 0) {
-                  irunerr(211, (int)by);
-                  errorfail;
-                  }
-               if (by > 0)
-                  for ( ; from <= to; from += by) {
-                     suspend C_double from;
-                     }
-               else
-                  for ( ; from >= to; from += by) {
-                     suspend C_double from;
-                  }
-	       fail;
-	       }
-	    }
-   else if cnv:(exact) integer(by) then { /* step by a large integer */
-   arith_case(from,to) of {
-   C_integer: {
-   abstract { return integer }
-   inline { fail; }
-      }
-   integer: {
-   abstract { return integer }
-   inline { fail; }
-      }
-   C_double: {
-   abstract { return real }
-   inline { fail; }
-      }
-      }
+                   suspend C_integer from;
+               }
+           fail;
+       }
    }
-else runerr(102, by)
+   else if cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)  && cnv:integer(to,to1) then {
+       abstract { return integer }
+       inline {
+           tended struct descrip t;
+           word sn = bigcmp(&by1, &zerodesc);
+           if (sn == 0) {
+	       runerr(211, by1);
+	       errorfail;
+           }
+           if (sn > 0) {
+               for ( ; bigcmp(&from1, &to1) <= 0; from1 = t) {
+                   suspend from1;
+                   bigadd(&from1, &by1, &t);
+               }
+           } else {
+               for ( ; bigcmp(&from1, &to1) >= 0; from1 = t) {
+                   suspend from1;
+                   bigadd(&from1, &by1, &t);
+               }
+           }
+           fail;
+       }
+   }
+   else if cnv:C_double(from) && cnv:C_double(to) && cnv:C_double(by) then {
+       abstract { return real }
+       inline {
+           if (by == 0) {
+               irunerr(211, (int)by);
+               errorfail;
+           }
+           if (by > 0)
+               for ( ; from <= to; from += by) {
+                   suspend C_double from;
+               }
+           else
+               for ( ; from >= to; from += by) {
+                   suspend C_double from;
+               }
+           fail;
+       }
+   }
+   else runerr(102, by)
 end
 
 
