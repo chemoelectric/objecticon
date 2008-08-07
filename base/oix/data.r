@@ -259,7 +259,7 @@ struct errtab errtab[] = {
    103, "string expected",
    104, "cset expected",
    105, "file expected",
-   106, "procedure or integer expected",
+   106, "procedure or other invocable expected",
    107, "record expected",
    108, "list expected",
    109, "string or file expected",
