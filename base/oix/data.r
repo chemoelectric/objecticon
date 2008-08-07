@@ -275,7 +275,7 @@ struct errtab errtab[] = {
    119, "set expected",
    120, "two csets or two sets expected",
    121, "function not supported",
-   122, "set or table expected",
+   122, "set, list or table expected",
    123, "invalid type",
    124, "table expected",
    125, "list, record, or set expected",

@@ -450,30 +450,29 @@ function{1} list(n, x)
       }
 end
 
+"member(x1, x2) - returns x1 if x2 is a member of set or table x2 but fails"
+" otherwise."
 
-"member(s, x1, ..., xN) - returns s if x1 ... xN are members of set or"
-" table s but fails otherwise."
-
-function{0,1} member(s, x[n])
+function{0,1} member(s, x)
    type_case s of {
+
       set: {
          abstract {
-            return type(s)
+            return type(x) ** store[type(s).set_elem]
             }
          inline {
-            int res, argc;
+            int res;
             register uword hn;
 
-	    for(argc=0; argc<n; argc++) {
-	       EVValD(&s, E_Smember);
-	       EVValD(x+argc, E_Sval);
+            EVValD(&s, E_Smember);
+            EVValD(&x, E_Sval);
 
-	       hn = hash(x+argc);
-	       memb(BlkLoc(s), x+argc, hn, &res);
-	       if (res==0)
-		  fail;
-	       }
-	    return s;
+            hn = hash(&x);
+            memb(BlkLoc(s), &x, hn, &res);
+            if (res==1)
+               return x;
+            else
+               fail;
             }
          }
       table: {
@@ -481,19 +480,18 @@ function{0,1} member(s, x[n])
             return type(x) ** store[type(s).tbl_key]
             }
          inline {
-            int res, argc;
+            int res;
             register uword hn;
 
-	    for(argc=0; argc<n; argc++) {
-	       EVValD(&s, E_Tmember);
-	       EVValD(x+argc, E_Tsub);
+            EVValD(&s, E_Tmember);
+            EVValD(&x, E_Tsub);
 
-	       hn = hash(x+argc);
-	       memb(BlkLoc(s), x+argc, hn, &res);
-	       if (res == 0)
-		  fail;
-	       }
-	    return s;
+            hn = hash(&x);
+            memb(BlkLoc(s), &x, hn, &res);
+            if (res == 1)
+               return x;
+            else
+               fail;
             }
          }
       list: {
@@ -501,36 +499,25 @@ function{0,1} member(s, x[n])
 	    return store[type(x).lst_elem]
 	    }
 	 inline {
-	    int argc, size;
+            int size, i;
 	    C_integer cnv_x;
 	    size = ((struct b_list *)BlkLoc(s))->size;
-	    for(argc=0; argc<n; argc++) {
-	       if (!(cnv:C_integer(x[argc], cnv_x))) fail;
-	       cnv_x = cvpos(cnv_x, size);
-	       if (cnv_x > size) fail;
-	       }
-	    return s;
+            if (!(cnv:C_integer(x, cnv_x))) 
+                fail;
+            i = cvpos(cnv_x, size);
+            if (i == CvtFail || i > size)
+                fail;
+            else
+                return x;
 	    }
 	 }
-      cset: {
-	 abstract {
-	    return cset
-	    }
-	 body {
-            int argc, i;
-	    for(argc=0; argc<n; argc++) {
-	       if (!(cnv:string(x[argc], x[argc]))) fail;
-	       for(i=0; i<StrLen(x[argc]); i++)
-		  if (!Testb(StrLoc(x[argc])[i], s)) fail;
-	       }
-	    return s;
-	    }
-	 }
+
       default:
          runerr(122, s)
-   }
+      }
 end
-
+
+
 
 "pull(L,n) - pull an element from end of list L."
 
