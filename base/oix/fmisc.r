@@ -6,6 +6,7 @@
  *  type, variable
  */
 #include "../h/opdefs.h"
+#include "../h/standardfields.h"
 
 "args(x,i) - produce number of arguments for procedure x."
 
@@ -15,6 +16,23 @@ function{0,1} args(x,i)
       abstract { return integer }
       inline { return C_integer ((struct b_proc *)BlkLoc(x))->nparam; }
       }
+   else if is:methp(x) then {
+      abstract { return integer }
+      /* Method pointer - deduct 1 for the automatic self param */
+      inline { return C_integer ((struct b_methp *)BlkLoc(x))->proc->nparam - 1; }
+      }
+   else if is:class(x) then {
+      abstract { return integer }
+      /* Class - lookup the constructor - also deduct 1 for the self param */
+      inline { 
+          struct b_class *class = (struct b_class*)BlkLoc(x);
+          struct class_field *new_field = lookup_standard_field(NEW_FIELD, class);
+          if (new_field)
+              return C_integer ((struct b_proc *)BlkLoc(*new_field->field_descriptor))->nparam - 1;
+          else
+              return zerodesc;
+      }
+   }
    else if !is:coexpr(x) then
       runerr(106, x)
    else if is:null(i) then {
@@ -1639,7 +1657,8 @@ function{1} load(s,arglist,infile,outfile,errfile,
 
       tipc.opnd = pstart;
       *tipc.op++ = Op_Noop; /* aligns Invokes operand */  /* ?cj? */
-      *tipc.op++ = Op_Apply;
+      *tipc.op++ = Op_Invoke;
+      *tipc.opnd++ = 1;
       *tipc.op++ = Op_Coret;
       *tipc.op++ = Op_Efail;
 

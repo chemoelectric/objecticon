@@ -18,7 +18,7 @@ procedure note(s)
    write("Scanning ", s)
 end
 
-procedure main(a[])
+procedure main(a)
    local s, o, symbol_table
 
    opts := options(a, "-html -o: -a! -d! -r!")

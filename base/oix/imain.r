@@ -255,7 +255,6 @@ int main(int argc, char **argv)
 {
     int i, slen;
     struct fileparts *fp;
-
 #if WildCards
 #ifndef MSWindows
     ExpandArgv(&argc, &argv);
@@ -350,7 +349,7 @@ int main(int argc, char **argv)
     ipc.opnd = istart;
     *ipc.op++ = Op_Noop;  /* aligns Invoke's operand */	/*	[[I?]] */
     *ipc.op++ = Op_Invoke;				/*	[[I?]] */
-    *ipc.opnd++ = (argc - 2);  /* Number of command line args */
+    *ipc.opnd++ = 1;  /* Number of command line args */
     *ipc.op = Op_Quit;
     ipc.opnd = istart;
 
@@ -378,15 +377,21 @@ int main(int argc, char **argv)
         fatalerr(117, NULL);
 
     /*
-     * We have already loaded the icode and initialized things, so it's
-     * time to just push main(), and the arguments, and called interp on a
-     * "invoke <num args>" bytecode.
+     * We have already loaded the icode and initialized things, so
+     * it's time to just push main(), and the arguments in a list, and
+     * called interp on a invoke bytecode.
      */
     PushDesc(*main_proc);
-    for (i = 2; i < argc; i++) {
-        PushVal(strlen(argv[i]));
-        PushAVal(argv[i]);
-    }
+    if (((struct b_proc *)BlkLoc(*main_proc))->nparam > 0) {
+        tended struct descrip args = create_list(argc - 2);
+        for (i = 2; i < argc; i++) {
+            struct descrip t;
+            MakeCStr(argv[i], &t);
+            c_put(&args, &t);
+        }
+        PushDesc(args);
+    } else
+        PushNull;
 
     glbl_argp = 0;
 

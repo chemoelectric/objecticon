@@ -8,7 +8,7 @@
 
 import xml, util
 
-procedure main(a[])
+procedure main(a)
    local fmt, p, s, d, t, x
    fmt := CanonicalXmlFormatter()
    p := XmlParser("preserve_insignificant_whitespace=t", "do_namespaces=f")
