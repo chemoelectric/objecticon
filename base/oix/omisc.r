@@ -237,52 +237,7 @@ operator{*} ... toby(from, to, by)
            fail;
        }
    }
-   else runerr(102, by)
-end
-
-
-"i to j - generate successive values."
-
-operator{*} ... to(from, to)
-
-   arith_case (from, to) of {
-      C_integer: {
-         abstract {
-            return integer
-            }
-         inline {
-            for ( ; from <= to; ++from) {
-               suspend C_integer from;
-               }
-            fail;
-	    }
-	 }
-      integer : {
-         abstract {
-            return integer
-            }
-         inline {
-            tended struct descrip d1, d2;
-	    d1 = onedesc;
-            for ( ; bigcmp(&from, &to)<=0; from=d2) {
-               suspend from;
-	       bigadd(&from, &d1, &d2);
-               }
-            fail;
-	    }
-	 }
-      C_double: {
-         abstract {
-            return real
-            }
-         inline {
-            for ( ; from <= to; ++from) {
-               suspend C_double from;
-               }
-            fail;
-	    }
-	 }
-	    }
+   else runerr(102)
 end
 
 
