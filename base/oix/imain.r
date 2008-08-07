@@ -346,22 +346,6 @@ int main(int argc, char **argv)
     stackend = stack + mstksize/WordSize;
     sp = stack + Wsizeof(struct b_coexpr);
 
-    /*
-     * We avoid passing an arg to main if possible, so that we don't create
-     * a list unnecessarily.
-     */
-    if (((struct b_proc *)BlkLoc(*main_proc))->nparam)
-        want_arg = 1;
-    else
-        want_arg = 0;
-
-    ipc.opnd = istart;
-    *ipc.op++ = Op_Noop;  /* aligns Invoke's operand */	/*	[[I?]] */
-    *ipc.op++ = Op_Invoke;				/*	[[I?]] */
-    *ipc.opnd++ = want_arg;  /* Number of args to pass to main proc (1 or 0) */
-    *ipc.op = Op_Quit;
-    ipc.opnd = istart;
-
     gfp = 0;
 
     /*
@@ -391,7 +375,12 @@ int main(int argc, char **argv)
      * they're wanted, and call interp on a invoke bytecode.
      */
     PushDesc(*main_proc);
-    if (want_arg) {
+
+    /*
+     * We avoid passing an arg to main if possible, so that we don't create
+     * a list unnecessarily.
+     */
+    if (((struct b_proc *)BlkLoc(*main_proc))->nparam) {
         tended struct descrip args = create_list(argc - 2);
         for (i = 2; i < argc; i++) {
             struct descrip t;
@@ -399,11 +388,20 @@ int main(int argc, char **argv)
             c_put(&args, &t);
         }
         PushDesc(args);
-    }
+        want_arg = 1;
+    } else
+        want_arg = 0;
 
     glbl_argp = 0;
 
     set_up = 1;			/* post fact that iconx is initialized */
+
+    ipc.opnd = istart;
+    *ipc.op++ = Op_Noop;  /* aligns Invoke's operand */	/*	[[I?]] */
+    *ipc.op++ = Op_Invoke;				/*	[[I?]] */
+    *ipc.opnd++ = want_arg;  /* Number of args to pass to main proc (1 or 0) */
+    *ipc.op = Op_Quit;
+    ipc.opnd = istart;
 
     /*
      * Start things rolling by calling interp.  This call to interp
