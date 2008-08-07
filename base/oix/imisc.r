@@ -40,7 +40,7 @@ LibDcl(field,2,".")
       }
 
       default: {
-            RunErr(624, &Arg1);
+            r = 624;
       }
     }
     if (r != 0)
@@ -66,8 +66,7 @@ int field_access(dptr cargp)
       }
 
       default: {
-            fatalerr(620, &Arg1);
-            return 0; /* Unreachable */
+            return 620;
       }
    }
 }

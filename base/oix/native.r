@@ -15,8 +15,7 @@ static struct b_class *get_class_for(dptr x)
             return BlkLoc(*x)->object.class;
         }
      default: {
-            fatalerr(619, x);
-            return 0; /* Unreachable */
+            return 0;
         }
     }
 }
@@ -33,9 +32,10 @@ function{0,1} is(x,c)
    if !is:class(c) then
        runerr(603, c)
     body {
-        struct b_class *class = get_class_for(&x),
-            *target = &BlkLoc(c)->class;
+        struct b_class *class, *target = &BlkLoc(c)->class;
         int i;
+        if (!(class = get_class_for(&x)))
+            runerr(619, x);
         for (i = 0; i < class->n_implemented_classes; ++i) {
             if (class->implemented_classes[i] == target)
                 return c;
@@ -46,8 +46,10 @@ end
 
 function{*} lang_Class_get_supers(c)
     body {
-        struct b_class *class = get_class_for(&c);
+        struct b_class *class;
         int i;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
         for (i = 0; i < class->n_supers; ++i)
             suspend class(class->supers[i]);
         fail;
@@ -56,8 +58,10 @@ end
 
 function{*} lang_Class_get_implemented_classes(c)
     body {
-        struct b_class *class = get_class_for(&c);
+        struct b_class *class;
         int i;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
         for (i = 0; i < class->n_implemented_classes; ++i)
             suspend class(class->implemented_classes[i]);
         fail;
@@ -98,8 +102,11 @@ end
 
 function{1} lang_Class_get_field_flags(c, field)
    body {
-        struct b_class *class = get_class_for(&c);
-        int i = lookup_class_field(class, &field, 0);
+        struct b_class *class;
+        int i;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
+        i = lookup_class_field(class, &field, 0);
         if (i < 0)
             fail;
         return C_integer class->fields[i]->flags;
@@ -108,15 +115,20 @@ end
 
 function{1} lang_Class_get_class_flags(c)
    body {
-        struct b_class *class = get_class_for(&c);
+        struct b_class *class;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
         return C_integer class->flags;
      }
 end
 
 function{0,1} lang_Class_get_field_index(c, field)
    body {
-        struct b_class *class = get_class_for(&c);
-        int i = lookup_class_field(class, &field, 0);
+        struct b_class *class;
+        int i;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
+        i = lookup_class_field(class, &field, 0);
         if (i < 0)
             fail;
         return C_integer i + 1;
@@ -125,8 +137,11 @@ end
 
 function{0,1} lang_Class_get_field_name(c, field)
    body {
-        struct b_class *class = get_class_for(&c);
-        int i = lookup_class_field(class, &field, 0);
+        struct b_class *class;
+        int i;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
+        i = lookup_class_field(class, &field, 0);
         if (i < 0)
             fail;
         return class->fields[i]->name;
@@ -135,8 +150,11 @@ end
 
 function{0,1} lang_Class_get_field_defining_class(c, field)
    body {
-        struct b_class *class = get_class_for(&c);
-        int i = lookup_class_field(class, &field, 0);
+        struct b_class *class;
+        int i;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
+        i = lookup_class_field(class, &field, 0);
         if (i < 0)
             fail;
         return class(class->fields[i]->defining_class);
@@ -145,29 +163,37 @@ end
 
 function{1} lang_Class_get_n_fields(c)
    body {
-        struct b_class *class = get_class_for(&c);
+        struct b_class *class;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
         return C_integer class->n_instance_fields + class->n_class_fields;
      }
 end
 
 function{1} lang_Class_get_n_class_fields(c)
    body {
-        struct b_class *class = get_class_for(&c);
+        struct b_class *class;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
         return C_integer class->n_class_fields;
      }
 end
 
 function{1} lang_Class_get_n_instance_fields(c)
    body {
-        struct b_class *class = get_class_for(&c);
+        struct b_class *class;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
         return C_integer class->n_instance_fields;
      }
 end
 
 function{*} lang_Class_get_field_names(c)
     body {
-        struct b_class *class = get_class_for(&c);
+        struct b_class *class;
         int i;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
         for (i = 0; i < class->n_instance_fields + class->n_class_fields; ++i)
             suspend class->fields[i]->name;
         fail;
@@ -176,8 +202,10 @@ end
 
 function{*} lang_Class_get_instance_field_names(c)
     body {
-        struct b_class *class = get_class_for(&c);
+        struct b_class *class;
         int i;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
         for (i = 0; i < class->n_instance_fields; ++i)
             suspend class->fields[i]->name;
         fail;
@@ -186,8 +214,10 @@ end
 
 function{*} lang_Class_get_class_field_names(c)
     body {
-        struct b_class *class = get_class_for(&c);
+        struct b_class *class;
         int i;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
         for (i = class->n_instance_fields; 
              i < class->n_instance_fields + class->n_class_fields; ++i)
             suspend class->fields[i]->name;
