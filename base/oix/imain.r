@@ -253,7 +253,7 @@ void ExpandArgv(int *argcp, char ***avp)
 
 int main(int argc, char **argv)
 {
-    int i, slen;
+    int i, slen, want_arg;
     struct fileparts *fp;
 #if WildCards
 #ifndef MSWindows
@@ -346,10 +346,19 @@ int main(int argc, char **argv)
     stackend = stack + mstksize/WordSize;
     sp = stack + Wsizeof(struct b_coexpr);
 
+    /*
+     * We avoid passing an arg to main if possible, so that we don't create
+     * a list unnecessarily.
+     */
+    if (((struct b_proc *)BlkLoc(*main_proc))->nparam)
+        want_arg = 1;
+    else
+        want_arg = 0;
+
     ipc.opnd = istart;
     *ipc.op++ = Op_Noop;  /* aligns Invoke's operand */	/*	[[I?]] */
     *ipc.op++ = Op_Invoke;				/*	[[I?]] */
-    *ipc.opnd++ = 1;  /* Number of command line args */
+    *ipc.opnd++ = want_arg;  /* Number of args to pass to main proc (1 or 0) */
     *ipc.op = Op_Quit;
     ipc.opnd = istart;
 
@@ -378,11 +387,11 @@ int main(int argc, char **argv)
 
     /*
      * We have already loaded the icode and initialized things, so
-     * it's time to just push main(), and the arguments in a list, and
-     * called interp on a invoke bytecode.
+     * it's time to just push main(), and the arguments in a list if
+     * they're wanted, and call interp on a invoke bytecode.
      */
     PushDesc(*main_proc);
-    if (((struct b_proc *)BlkLoc(*main_proc))->nparam > 0) {
+    if (want_arg) {
         tended struct descrip args = create_list(argc - 2);
         for (i = 2; i < argc; i++) {
             struct descrip t;
@@ -390,8 +399,7 @@ int main(int argc, char **argv)
             c_put(&args, &t);
         }
         PushDesc(args);
-    } else
-        PushNull;
+    }
 
     glbl_argp = 0;
 
