@@ -94,6 +94,13 @@ procedure divisors(n)
 
 end
 
+# return list of divisors of n
+procedure divisorl(n)
+   local divs
+   every put(divs := [], divisors(n))
+   return divs
+end
+
 # return n! (n factorial)
 procedure factorial(n)			
    local i

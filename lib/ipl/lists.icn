@@ -1065,6 +1065,15 @@ procedure lconstant(L)
 
 end
 
+# generate indices for items matching x
+procedure lindex(lst, x)
+   local i
+
+   every i := 1 to *lst do
+      if lst[i] === x then suspend i
+
+end
+
 # list interleaving
 procedure linterl(L1, L2)		
    local L3, i

@@ -33,6 +33,16 @@
 #       compress(s, c)     compresses consecutive occurrences of charac-
 #                          ters in c that occur in s; c defaults to &cset.
 #
+#	coprefix(s1, s2, ...)
+#			   produces the common prefix of its arguments:
+#			   the longest initial substring shared by all,
+#			   which may be the empty string.
+#
+#	cosuffix(s1, s2, ...)
+#			   produces the common suffix of its arguments:
+#			   the longest trailing substring shared by all,
+#			   which may be the empty string.
+#
 #	csort(s)           produces the characters of s in lexical order.
 #  
 #	decollate(s, i)    produces a string consisting of every other
@@ -243,6 +253,32 @@ procedure compress(s, c)
          }
       return result || tab(0)
       }
+end
+
+# find common prefix of strings
+procedure coprefix(args[])
+   local s, t, i
+
+   s := get(args) | fail
+   every t := !args do {
+      every i := seq(1) do
+         if not (s[i] == t[i]) then break
+      s := s[1+:(i-1)] 
+      }
+   return s
+end
+
+# find common suffix of strings
+procedure cosuffix(args[])
+   local s, t, i
+
+   s := get(args) | fail
+   every t := !args do {
+      every i := seq(-1, -1) do
+         if not (s[i] == t[i]) then break
+      s := s[i+1:0]
+      }
+   return s
 end
 
 # lexically ordered characters
@@ -576,10 +612,11 @@ procedure rotate(s, i)
 
    if s == "" then return s
    /i := 1
-   if i <= 0 then i +:= *s
+   if i = 0 then return s
+   else if i < 0 then i +:= *s
    i %:= *s
 
-   return s[i + 1:0] || s[1:i + 1]
+   return s[(i + 1):0] || s[1:(i + 1)]
 
 end
 

@@ -514,51 +514,6 @@ every di := dosdir( dpath || dpart2 ) do
 
 end
 
-$ifdef _MSDOS
- 
-# DOS file names
-procedure dosfiles(pfn)			
-   local asciiz, fnr, prefix, k, name
-   local ds, dx, result, fnloc, string_block
- 
-# Get Disk Transfer Address; filename locn is 30 beyond that.
- 
-   result := Int86([16r21, 16r2f00] ||| list(7,0))
-   # pointer arithmetic wrong: fnloc := 16 * result[8] + result[3]+ 30
-   fnloc := ishift( result[8], 16 ) + result[3] + 30
- 
-# Get the generalized filename.
- 
-   fnr := reverse(pfn)
-   k := upto("\\:", fnr) | *fnr + 1
-   prefix := reverse(fnr[k:0])
-   name := "" ~== reverse(fnr[1:k]) | "*.*"
- 
-# Get the first file in the sequence.
- 
-   asciiz := prefix || name || "\x00"
-   Poke(string_block := GetSpace(*asciiz), asciiz) |
-      stop( "dosfiles(): GetSpace() failed." )
-   # pointer arithmetic wrong: ds := string_block / 16
-   # pointer arithmetic wrong: dx := string_block % 16
-   ds := ishift( string_block, -16 )
-   dx := iand( string_block, 16rffff )
-   result := Int86([16r21, 16r4e00, 0, 0, dx, 0, 0, 0, ds])
-   FreeSpace(string_block)
-   case result[2] of {
-      0 : {}
-      18 : fail
-      default : stop("I/O Error ", result[2])
-      }
-   suspend prefix || extract_name(fnloc)
- 
-# Get the remaining files in the sequence.
- 
-   while Int86([16r21, 16r4f00, 0, 0, 0, 0, 0, 0, 0])[2] = 0 do
-      suspend prefix || extract_name(fnloc)
-end
-
-$endif
  
 # convert file name to DOS format
 procedure dosname(namein)		
@@ -610,18 +565,9 @@ end
 
 # succeed if name is a directory
 procedure directory(name)		
-   return stat(name).mode[1] == "d"
+   if stat(name).mode[1] == "d" then
+      return name
 end
-
-$ifdef _MSDOS
- 
-procedure extract_name(fnloc)
-   local asciiz
-   asciiz := Peek(fnloc, 13)
-   return asciiz[1:upto("\x00", asciiz)]
-end
-
-$endif
 
 # copy file
 procedure fcopy(fn1,fn2)		
@@ -674,30 +620,6 @@ procedure filetext(f)
 
 end
  
-$ifdef _MSDOS
-
-# get current DOS drive
-procedure getdrive()			
-   return &lcase[iand( Int86([33,16r1900,0,0,0,0,0,0,0])[2], 255 )+1] || ":"
-end
-
-# get DOS working directory
-procedure getwd(drive)			
-   local A, dx, si, cf, ds
-
-
-   A := GetSpace(64) | stop( "getwd(): GetSpace() failed." )
-   dx := ("36r" || !\drive) - 9 | 0
-   si := iand( A, 16rffff ); ds := ishift( A, -16 )
-   cf := !Int86([33,16r4700,0,0,dx,si,0,0,ds]) % 2
-   Peek( A , 64 ) ? path := tab(many(~'\0')) | ""
-   FreeSpace(A)
-   cf = 0 | fail
-   return (   map(!\drive) || ":"   |   getdrive()   ) || "\\" || map(path)
-end
-
-$endif
-
 
 # find file on path
 procedure pathfind(fname, path)		
