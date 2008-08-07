@@ -107,19 +107,41 @@ int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
         return I_Continue;
     }
     else {
-        struct b_proc *tmp;
         /*
-         * See if Arg0 can be converted to a string that names a procedure
-         *  or operator.  If not, generate run-time error 106.
+         * Can Arg0 be converted to a string?
          */
-        if (!cnv:tmp_string(newargp[0],newargp[0]) ||
-            ((tmp = strprc(newargp, (C_integer)nargs)) == NULL)) {
-            err_msg(106, newargp);
-            return I_Fail;
+        if (cnv:tmp_string(newargp[0],newargp[0])) {
+            /*
+             * Is it a global class or procedure (or record)?
+             */
+            dptr p = lookup_global(newargp, curpstate);
+            if (p) {
+                if (is:class(*p)) {
+                    *newargp = *p;
+                    return construct_object(nargs, newargp);
+                }
+                if (is:proc(*p)) {
+                    *newargp = *p;
+                    return invoke_proc(nargs, newargp, cargp_ptr, nargs_ptr);
+                }
+            } else {
+                struct b_proc *tmp;
+                /*
+                 * Is it a builtin or an operator?
+                 */
+                if ((tmp = bi_strprc(newargp, (C_integer)nargs))) {
+                    BlkLoc(newargp[0]) = (union block *)tmp;
+                    newargp[0].dword = D_Proc;
+                    return invoke_proc(nargs, newargp, cargp_ptr, nargs_ptr);
+                }
+            }
         }
-        BlkLoc(newargp[0]) = (union block *)tmp;
-        newargp[0].dword = D_Proc;
-        return invoke_proc(nargs, newargp, cargp_ptr, nargs_ptr);
+
+        /*
+         * Fell through - not a string or not convertible to something invocable.
+         */
+        err_msg(106, newargp);
+        return I_Fail;
     }
 }
 
