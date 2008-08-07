@@ -76,15 +76,6 @@
 #define ReadDirectory
 #endif					/* PosixFns */
 
-#ifndef NoStrInvoke
-   #undef StrInvoke
-   #define StrInvoke
-#endif					/* NoStrInvoke */
-
-#ifndef NoLargeInts
-   #undef LargeInts
-   #define LargeInts
-#endif					/* NoLargeInts */
 
 /*
  * Names for standard environment variables.

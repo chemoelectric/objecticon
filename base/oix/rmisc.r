@@ -249,7 +249,6 @@ dptr dp;
             i = (13255 * (uword)IntVal(*dp)) >> 10;
             break;
 
-#ifdef LargeInts
          /*
           * The hash value of a bignum is based on its length and its
           *  most and least significant digits.
@@ -262,7 +261,6 @@ dptr dp;
 		(b->digits[b->msd] << 8) ^ b->digits[b->lsd];
 	    }
 	    break;
-#endif					/* LargeInts */
 
          /*
           * The hash value of a real number is itself times a constant,
@@ -390,14 +388,10 @@ int noimage;
 
       integer:
 
-#ifdef LargeInts
          if (Type(*dp) == T_Lrgint)
             bigprint(f, dp);
          else
             fprintf(f, "%ld", (long)IntVal(*dp));
-#else					/* LargeInts */
-         fprintf(f, "%ld", (long)IntVal(*dp));
-#endif					/* LargeInts */
 
       real: {
          char s[30];
@@ -1286,7 +1280,6 @@ dptr dp1, dp2;
        }
 
       integer: {
-#ifdef LargeInts
          if (Type(source) == T_Lrgint) {
             word slen;
             word dlen;
@@ -1308,9 +1301,6 @@ dptr dp1, dp2;
 	    }
          else
             cnv: string(source, *dp2);
-#else					/* LargeInts */
-         cnv:string(source, *dp2);
-#endif					/* LargeInts */
 	 }
 
       real: {

@@ -180,7 +180,7 @@ dptr            call_icon_va    (dptr proc, va_list ap);
 
    dptr	extcall			(dptr x, int nargs, int *signal);
 
-#ifdef LargeInts
+
    struct b_bignum *alcbignum_0	(word n);
    struct b_bignum *alcbignum_1	(word n);
    word		bigradix	(int sign, int r, char *s, char *x,
@@ -204,17 +204,7 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    int		bigshift	(dptr da, dptr db, dptr dx);
    word		bigcmp		(dptr da, dptr db);
    int		bigrand		(dptr da, dptr dx);
-#endif					/* LargeInts */
 
-
-
-#if !HIGHC_386
-   int dup2(int h1, int h2);
-#endif					/* !HIGHC_386 */
-
-#if HIGHC_386
-   int	brk(char *p);
-#endif					/* HIGHC_386 */
 
 #if defined(Graphics) || defined(PosixFns)
    struct b_list *findactivewindow(struct b_list *);

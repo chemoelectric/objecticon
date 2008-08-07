@@ -84,7 +84,6 @@ struct astkblk *alcactiv()
    return abp;
    }
 
-#ifdef LargeInts
 #begdef alcbignum_macro(f,e_lrgint)
 /*
  * alcbignum - allocate an n-digit bignum in the block region
@@ -111,7 +110,6 @@ struct b_bignum *f(word n)
 alcbignum_macro(alcbignum_0,0)
 alcbignum_macro(alcbignum_1,E_Lrgint)
 
-#endif					/* LargeInts */
 
 /*
  * alccoexp - allocate a co-expression stack block.

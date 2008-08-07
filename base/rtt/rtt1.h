@@ -40,7 +40,7 @@ extern FILE *out_file;     /* output file */
 extern int def_fnd;        /* C input defines something concrete */
 extern char *inclname;     /* include file to be included by C compiler */
 extern int enable_out;     /* enable output of C code */
-extern char *largeints;    /* "Largeints" or "NoLargeInts" */
+
 
 /*
  * The symbol table is used by the lexical analyser to decide whether an

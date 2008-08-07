@@ -399,9 +399,7 @@ void EVInit()
    for (i = 0; i <= MaxType; i++)
       typech[i] = '?';	/* initialize with error character */
 
-#ifdef LargeInts
    typech[T_Lrgint]  = E_Lrgint;	/* long integer */
-#endif					/* LargeInts */
 
    typech[T_Real]    = E_Real;		/* real number */
    typech[T_Cset]    = E_Cset;		/* cset */

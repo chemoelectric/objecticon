@@ -22,16 +22,11 @@ function{1} abs(n)
 	 else {
 	    i = neg(n);
 	    if (over_flow) {
-#ifdef LargeInts
 	       struct descrip tmp;
 	       MakeInt(n,&tmp);
 	       if (bigneg(&tmp, &result) == Error)  /* alcbignum failed */
 	          runerr(0);
                return result;
-#else					/* LargeInts */
-	       irunerr(203,n);
-               errorfail;
-#endif					/* LargeInts */
 	       }
 	    }
          return C_integer i;
@@ -39,7 +34,6 @@ function{1} abs(n)
       }
 
 
-#ifdef LargeInts
    else if cnv:(exact)integer(n) then {
       abstract {
          return integer
@@ -54,7 +48,6 @@ function{1} abs(n)
          return result;
          }
       }
-#endif					/* LargeInts */
 
    else if cnv:C_double(n) then {
       abstract {

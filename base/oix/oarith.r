@@ -17,9 +17,7 @@ int list_add(dptr x, dptr y, dptr z);
 
    operator{1} icon_op func_name(x, y)
       declare {
-#ifdef LargeInts
          tended struct descrip lx, ly;
-#endif					/* LargeInts */
 	 C_integer irslt;
          }
 #ifdef DataParallel
@@ -83,15 +81,11 @@ end
 
    irslt = div3(x,y);
    if (over_flow) {
-#ifdef LargeInts
       MakeInt(x,&lx);
       MakeInt(y,&ly);
       if (bigdiv(&lx,&ly,&result) == Error) /* alcbignum failed */
 	 runerr(0);
       return result;
-#else                                   /* LargeInts */
-      runerr(203);
-#endif                                  /* LargeInts */
       }
    else return C_integer irslt;
 }
@@ -131,15 +125,11 @@ ArithOp( / , divide , Divide , RealDivide, list_add /* bogus */)
 #begdef Sub(x,y)
    irslt = sub(x,y);
    if (over_flow) {
-#ifdef LargeInts
       MakeInt(x,&lx);
       MakeInt(y,&ly);
       if (bigsub(&lx,&ly,&result) == Error) /* alcbignum failed */
          runerr(0);
       return result;
-#else					/* LargeInts */
-      runerr(203);
-#endif					/* LargeInts */
       }
    else return C_integer irslt;
 #enddef
@@ -216,15 +206,11 @@ ArithOp( % , mod , IntMod , RealMod, list_add /* bogus */ )
 #begdef Mpy(x,y)
    irslt = mul(x,y);
    if (over_flow) {
-#ifdef LargeInts
       MakeInt(x,&lx);
       MakeInt(y,&ly);
       if (bigmul(&lx,&ly,&result) == Error) /* alcbignum failed */
          runerr(0);
       return result;
-#else					/* LargeInts */
-      runerr(203);
-#endif					/* LargeInts */
       }
    else return C_integer irslt;
 #enddef
@@ -248,21 +234,15 @@ operator{1} - neg(x)
 
 	    i = neg(x);
 	    if (over_flow) {
-#ifdef LargeInts
 	       struct descrip tmp;
 	       MakeInt(x,&tmp);
 	       if (bigneg(&tmp, &result) == Error)  /* alcbignum failed */
 	          runerr(0);
                return result;
-#else					/* LargeInts */
-	       irunerr(203,x);
-               errorfail;
-#endif					/* LargeInts */
                }
          return C_integer i;
          }
       }
-#ifdef LargeInts
    else if cnv:(exact) integer(x) then {
       abstract {
          return integer
@@ -273,7 +253,6 @@ operator{1} - neg(x)
 	 return result;
          }
       }
-#endif					/* LargeInts */
    else {
       if !cnv:C_double(x) then
          runerr(102, x)
@@ -302,7 +281,6 @@ operator{1} + number(x)
           return C_integer x;
           }
       }
-#ifdef LargeInts
    else if cnv:(exact) integer(x) then {
        abstract {
           return integer
@@ -311,7 +289,6 @@ operator{1} + number(x)
           return x;
           }
       }
-#endif					/* LargeInts */
    else if cnv:C_double(x) then {
        abstract {
           return real
@@ -339,15 +316,11 @@ end
 #begdef Add(x,y)
    irslt = add(x,y);
    if (over_flow) {
-#ifdef LargeInts
       MakeInt(x,&lx);
       MakeInt(y,&ly);
       if (bigadd(&lx, &ly, &result) == Error)  /* alcbignum failed */
 	 runerr(0);
       return result;
-#else					/* LargeInts */
-      runerr(203);
-#endif					/* LargeInts */
       }
    else return C_integer irslt;
 #enddef
@@ -362,9 +335,7 @@ int list_add(dptr x, dptr y, dptr z)
 {
    tended struct b_list *lp1;
    tended struct b_lelem *bp1;
-#ifdef LargeInts
    tended struct descrip lx, ly;
-#endif					/* LargeInts */
    struct descrip *slotptr;
    word size1, size2;
    word i, j, slot;
@@ -420,12 +391,10 @@ int list_add(dptr x, dptr y, dptr z)
       if (cnv:(exact)C_integer(*x, tmp) && cnv:(exact)C_integer(*y, tmp2)) {
          irslt = add(tmp,tmp2);
 	 if (over_flow) {
-#ifdef LargeInts
             MakeInt(x,&lx);
             MakeInt(y,&ly);
             if (bigadd(&lx, &ly, z) == Error)  /* alcbignum failed */
                return Error;
-#endif					/* LargeInts */
 	    }
 	 else MakeInt(irslt, z);
          }
@@ -449,19 +418,11 @@ operator{1} ^ powr(x, y)
 	    return integer
 	    }
 	 inline {
-#ifdef LargeInts
 	    tended struct descrip ly;
 	    MakeInt ( y, &ly );
 	    if (bigpow(&x, &ly, &result) == Error)  /* alcbignum failed */
 	       runerr(0);
 	    return result;
-#else
-	    extern int over_flow;
-	    C_integer r = iipow(IntVal(x), y);
-	    if (over_flow)
-	       runerr(203);
-	    return C_integer r;
-#endif
 	   }
 	 }
       else {
@@ -477,7 +438,6 @@ operator{1} ^ powr(x, y)
 	    }
 	 }
       }
-#ifdef LargeInts
    else if cnv:(exact)integer(y) then {
       if cnv:(exact)integer(x) then {
 	 abstract {
@@ -502,7 +462,6 @@ operator{1} ^ powr(x, y)
 	    }
 	 }
       }
-#endif					/* LargeInts */
    else {
       if !cnv:C_double(x) then
 	 runerr(102, x)

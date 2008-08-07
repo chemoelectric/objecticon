@@ -55,9 +55,7 @@
    Feature(1, "_KEYBOARD_FUNCTIONS", "keyboard functions")
 #endif					/* KeyboardFncs */
 
-#ifdef LargeInts
    Feature(largeints, "_LARGE_INTEGERS", "large integers")
-#endif					/* LargeInts */
 
    Feature(1, "_MULTITASKING", "multiple programs")
 

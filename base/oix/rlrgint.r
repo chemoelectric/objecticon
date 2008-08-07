@@ -3,7 +3,6 @@
  *  Large integer arithmetic
  */
 
-#ifdef LargeInts
 
 extern int over_flow;
 
@@ -2309,6 +2308,3 @@ word n;
    return u[n - 1] > (DIGIT)k ? 1 : -1;
 }
 
-#else					/* LargeInts */
-static char x;			/* prevent empty module */
-#endif					/* LargeInts */

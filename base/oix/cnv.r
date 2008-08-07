@@ -36,9 +36,7 @@ dptr s;
 double *d;
    {
 
-#ifdef LargeInts
    tended	/* need to be tended if ston allocates largeint blocks */
-#endif					/* LargeInts */
 
    struct descrip result, cnvstr;
    char sbuf[MaxCvtLen];
@@ -52,11 +50,9 @@ double *d;
          }
       integer: {
 
-#ifdef LargeInts
          if (Type(*s) == T_Lrgint)
             *d = bigtoreal(s);
          else
-#endif					/* LargeInts */
 
             *d = IntVal(*s);
 
@@ -82,13 +78,11 @@ double *d;
          *d = numrc.integer;
          return 1;
 
-#ifdef LargeInts
       case T_Lrgint:
          result.dword = D_Lrgint;
 	 BlkLoc(result) = (union block *)numrc.big;
          *d = bigtoreal(&result);
          return 1;
-#endif					/* LargeInts */
 
       case T_Real:
          *d = numrc.real;
@@ -106,9 +100,7 @@ dptr s;
 C_integer *d;
    {
 
-#ifdef LargeInts
    tended  /* tended since ston now allocates blocks */
-#endif						/* LargeInts */
 
    struct descrip cnvstr, result;			/* not tended */
    union numeric numrc;
@@ -117,11 +109,9 @@ C_integer *d;
    type_case *s of {
       integer: {
 
-#ifdef LargeInts
          if (Type(*s) == T_Lrgint) {
             return 0;
             }
-#endif					/* LargeInts */
 
          *d = IntVal(*s);
          return 1;
@@ -263,9 +253,7 @@ dptr s;
 C_integer *d;
    {
 
-#ifdef LargeInts
    tended  /* tended since ston now allocates blocks */
-#endif						/* LargeInts */
 
    struct descrip cnvstr;			/* not tended */
    union numeric numrc;
@@ -274,11 +262,9 @@ C_integer *d;
    type_case *s of {
       integer: {
 
-#ifdef LargeInts
          if (Type(*s) == T_Lrgint) {
             return 0;
             }
-#endif					/* LargeInts */
          *d = IntVal(*s);
          return 1;
          }
@@ -313,9 +299,7 @@ int cnv_eint(s, d)
 dptr s, d;
    {
 
-#ifdef LargeInts
    tended  /* tended since ston now allocates blocks */
-#endif						/* LargeInts */
 
    struct descrip cnvstr;			/* not tended */
    char sbuf[MaxCvtLen];
@@ -346,12 +330,10 @@ dptr s, d;
          MakeInt(numrc.integer, d);
 	 return 1;
 
-#ifdef LargeInts
       case T_Lrgint:
          d->dword = D_Lrgint;
 	 BlkLoc(*d) = (union block *)numrc.big;
          return 1;
-#endif				/* LargeInts */
 
       default:
          return 0;
@@ -366,9 +348,7 @@ int f(s, d)
 dptr s, d;
    {
 
-#ifdef LargeInts
    tended   /* tended since ston now allocates blocks */
-#endif						/* LargeInts */
 
    struct descrip cnvstr;			/* not tended */
    char sbuf[MaxCvtLen];
@@ -388,7 +368,6 @@ dptr s, d;
          GetReal(s,dbl);
          if (dbl > MaxLong || dbl < MinLong) {
 
-#ifdef LargeInts
             if (realtobig(s, d) == Succeeded) {
                EVValD(d, e_sconv);
                return 1;
@@ -397,10 +376,6 @@ dptr s, d;
                EVValD(s, e_fconv);
                return 0;
                }
-#else					/* LargeInts */
-            EVValD(s, e_fconv);
-            return 0;
-#endif					/* LargeInts */
 	    }
          MakeInt((word)dbl,d);
          EVValD(d, e_sconv);
@@ -424,13 +399,11 @@ dptr s, d;
     */
    switch( ston(s, &numrc) ) {
 
-#ifdef LargeInts
       case T_Lrgint:
          d->dword = D_Lrgint;
 	 BlkLoc(*d) = (union block *)numrc.big;
          EVValD(d, e_sconv);
 	 return 1;
-#endif					/* LargeInts */
 
       case T_Integer:
          MakeInt(numrc.integer,d);
@@ -440,7 +413,6 @@ dptr s, d;
          double dbl = numrc.real;
          if (dbl > MaxLong || dbl < MinLong) {
 
-#ifdef LargeInts
             if (realtobig(s, d) == Succeeded) {
                EVValD(d, e_sconv);
                return 1;
@@ -449,10 +421,6 @@ dptr s, d;
                EVValD(s, e_fconv);
                return 0;
                }
-#else					/* LargeInts */
-            EVValD(s, e_fconv);
-            return 0;
-#endif					/* LargeInts */
 	    }
          MakeInt((word)dbl,d);
          EVValD(d, e_sconv);
@@ -514,7 +482,6 @@ int f(dptr s, dptr d)
          }
       integer: {
 
-#ifdef LargeInts
          if (Type(*s) == T_Lrgint) {
             word slen;
             word dlen;
@@ -524,7 +491,6 @@ int f(dptr s, dptr d)
 	    bigtos(s,d);
 	    }
          else
-#endif					/* LargeInts */
 
          itos(IntVal(*s), d, sbuf);
 	 }
@@ -716,7 +682,6 @@ dptr d;
          *d = *s;
       integer: {
 
-#ifdef LargeInts
          if (Type(*s) == T_Lrgint) {
             word slen;
             word dlen;
@@ -726,7 +691,6 @@ dptr d;
 	    bigtos(s,d);
 	    }
          else
-#endif					/* LargeInts */
 
          itos(IntVal(*s), d, sbuf);
 	 }
@@ -935,13 +899,9 @@ union numeric *result;
     */
    if (c == 'r' || c == 'R') {
       int rv;
-#ifdef LargeInts
       rv = bigradix((int)msign, (int)mantissa, s, end_s, result);
       if (rv == Error)
          fatalerr(0, NULL);
-#else					/* LargeInts */
-      rv = radix((int)msign, (int)mantissa, s, end_s, result);
-#endif					/* LargeInts */
       return rv;
       }
 
@@ -1007,7 +967,6 @@ union numeric *result;
       return T_Integer;
       }
 
-#ifdef LargeInts
    /*
     * Test for bignum.
     */
@@ -1018,7 +977,6 @@ union numeric *result;
             fatalerr(0, NULL);
          return rv;
          }
-#endif					/* LargeInts */
 
    if (!realflag)
       return CvtFail;		/* don't promote to real if integer format */

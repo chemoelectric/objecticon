@@ -264,11 +264,6 @@ end
 
 operator{0,1} ? random(underef x -> dx)
 
-#ifndef LargeInts
-   declare {
-      C_integer v = 0;
-      }
-#endif					/* LargeInts */
 
    if is:variable(x) && is:string(dx) then {
       abstract {
@@ -497,13 +492,8 @@ operator{0,1} ? random(underef x -> dx)
 
       default: {
 
-#ifdef LargeInts
          if !cnv:integer(dx) then
             runerr(113, dx)
-#else					/* LargeInts */
-         if !cnv:C_integer(dx,v) then
-            runerr(113, dx)
-#endif					/* LargeInts */
 
          abstract {
             return integer ++ real
@@ -511,7 +501,6 @@ operator{0,1} ? random(underef x -> dx)
          body {
             double rval;
 
-#ifdef LargeInts
             C_integer v;
             if (Type(dx) == T_Lrgint) {
 	       if (bigrand(&dx, &result) == Error)  /* alcbignum failed */
@@ -520,7 +509,6 @@ operator{0,1} ? random(underef x -> dx)
 	       }
 
             v = IntVal(dx);
-#endif					/* LargeInts */
             /*
              * x is an integer, be sure that it's non-negative.
              */

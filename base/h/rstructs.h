@@ -52,7 +52,6 @@ struct b_proc_list {
     struct b_proc_list *next;
 };
 
-#ifdef LargeInts
 struct b_bignum {		/* large integer block */
     word title;			/*   T_Lrgint */
     word blksize;		/*   block size */
@@ -60,7 +59,6 @@ struct b_bignum {		/* large integer block */
     int sign;			/*   sign; 0 positive, 1 negative */
     DIGIT digits[1];		/*   digits */
 };
-#endif					/* LargeInts */
 
 struct b_real {			/* real block */
     word title;			/*   T_Real */
@@ -332,9 +330,7 @@ struct size_dbl {
 union numeric {			/* long integers or real numbers */
     long integer;
     double real;
-#ifdef LargeInts
     struct b_bignum *big;
-#endif				/* LargeInts */
 };
 
 
@@ -619,9 +615,6 @@ union block {			/* general block */
     struct b_object object;
     struct b_cast cast;
     struct b_methp methp;
-
-#ifdef LargeInts
     struct b_bignum bignumblk;
-#endif				/* LargeInts */
 };
 

@@ -408,12 +408,10 @@ function{1} func_name(i,j)
       return integer
       }
    inline {
-#ifdef LargeInts
       if ((Type(i)==T_Lrgint) || (Type(j)==T_Lrgint)) {
          big_ ## c_op(i,j);
          }
       else
-#endif					/* LargeInts */
       return C_integer IntVal(i) c_op IntVal(j);
       }
 end
@@ -462,7 +460,6 @@ function{1} icom(i)
       return integer
       }
    inline {
-#ifdef LargeInts
       if (Type(i) == T_Lrgint) {
          struct descrip td;
 
@@ -473,7 +470,6 @@ function{1} icom(i)
          return result;
          }
       else
-#endif					/* LargeInts */
       return C_integer ~IntVal(i);
       }
 end
@@ -510,7 +506,6 @@ function{1} ishift(i,j)
    body {
       uword ci;			 /* shift in 0s, even if negative */
       C_integer cj;
-#ifdef LargeInts
       if (Type(j) == T_Lrgint)
          runerr(101,j);
       cj = IntVal(j);
@@ -520,10 +515,6 @@ function{1} ishift(i,j)
             runerr(0);
          return result;
          }
-#else					/* LargeInts */
-      ci = (uword)IntVal(i);
-      cj = IntVal(j);
-#endif					/* LargeInts */
       /*
        * Check for a shift of WordSize or greater; handle specially because
        *  this is beyond C's defined behavior.  Otherwise shift as requested.
