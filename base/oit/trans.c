@@ -205,17 +205,17 @@ static void trans1(char *filename)
 
     outname = intern(makename(SourceDir, filename, USuffix));
 
+    report("%s:", filename);
+
     if (pponly) {
         ppecho();
         return;
     }
 
     if (neweronly && !newer_than(filename, outname)) {
-        report("%s is up-to-date", filename);
+        report("  up-to-date");
         return;
     }
-
-    report("%s:", filename);
 
     tok_loc.n_file = intern(canonicalize(filename));
     in_line = 1;
