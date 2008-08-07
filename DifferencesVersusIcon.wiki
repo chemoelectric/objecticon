@@ -7,13 +7,7 @@ Although Object Icon is nearly completely compatible with Icon source code, ther
  * New reserved words : `class`, `const`, `defer`, `final`, `import`, `package`, `private`, `protected`, `public`, `readable`.
  * A few new builtin functions : `cast()`, `is()`, `classof()`, `keyof()`, `subtype()`
  * For a record, `type()` returns the record type name in Icon, whereas in Object Icon it returns "record"; a new builtin function, `subtype()`, returns the type name.
- * Invocation of the `main` procedure is a bit different.  In Icon, all the command-line arguments are collected in a list and passed as a single argument to main; in Object Icon each command-line argument is passed as a separate argument.  However, you can still get all of the command-line arguments together in a list with a `main` like the following :-
-{{{
-procedure main(a[])
-...
-end
-}}}
- * In a similar vein to the different `main` invocation, the invocation of PDCO procedures passes the co-expressions as individual parameters, rather than collected as a list in one parameter.  So the syntax 
+ * The invocation of PDCO procedures passes the co-expressions as individual parameters, rather than collected as a list in one parameter.  So the syntax 
 {{{
 proc{expr1, expr2, ...}
 }}}
