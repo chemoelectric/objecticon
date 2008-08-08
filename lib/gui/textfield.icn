@@ -456,12 +456,12 @@ class TextField(Component)
    end
 
    public apply_filter(t)
-      local s, c
+      local s
       # Apply the filter to the string to paste
       s := ""
-      every c := !t do {
-         if member(filter, c) then
-            s ||:= c
+      t ? {
+         while tab(upto(filter)) do
+            s ||:= tab(many(filter))
       }
       if *s > 0 then
          return s
