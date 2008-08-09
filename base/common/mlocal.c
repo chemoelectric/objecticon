@@ -304,11 +304,9 @@ char *pathfind(char *path, char *name, char *extn)
     if ((p = tryfile(0, name, extn)))     /* try curr directory first */
         return p;
 
-    /* Don't search the path if we have an absolute path */
-    if (isabsolute(name))
-        return 0;
-
-    if (!path)
+    /* Don't search the path if we have an absolute file, or the path
+     * given was null. */
+    if (isabsolute(name) || !path)
         return 0;
 
     for (;;) {
