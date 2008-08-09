@@ -97,6 +97,24 @@ static void ensure_lfile(char *ifile)
 }
 
 /*
+ * Link a ufile given on the command line (or implied from a .icn
+ * file).  This differs from alsolink in that we don't search ipath
+ * for the file, and quit immediately with a fatal error if the file
+ * is not found.
+ */
+void paramlink(char *name)
+{
+    char *file = pathfind(0, name, USuffix);
+
+    if (!file) {
+        quitf("cannot open %s", name);
+        return;
+    }
+
+    ensure_lfile(intern(canonicalize(file)));
+}
+
+/*
  * alsolink - create an lfile structure for the named file and add it to the
  *  end of the list of files (lfiles) to generate link instructions for.
  */

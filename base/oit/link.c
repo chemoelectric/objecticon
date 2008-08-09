@@ -64,20 +64,19 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
 
     linit();				/* initialize memory structures */
     for (p = link_files; p; p = p->next)
-        alsolink(p->name, 0, 0);  /* make initial list of files */
+        paramlink(p->name);  /* make initial list of files */
 
     /*
      * Phase I: load global information contained in .u files into
      *  data structures.
      *
      * The list of files to link is maintained as a queue with lfiles
-     *  as the base.  lf moves along the list.  Each file is processed
-     *  in turn by forming .u and .icn names from each file name, each
-     *  of which ends in .u1.  The .u file is opened and globals is called
-     *  to process it.  When the end of the list is reached, lf becomes
-     *  NULL and the loop is terminated, completing phase I.  Note that
-     *  link instructions in the .u file cause files to be added to list
-     *  of files to link.
+     * as the base.  lf moves along the list.  Each file is processed
+     * in turn.  The .u file is opened and readglob is called to
+     * process it.  When the end of the list is reached, lf becomes
+     * NULL and the loop is terminated, completing phase I.  Note that
+     * link and import instructions in the .u file cause files to be
+     * added to list of files to link.
      */
     for (lf = lfiles; lf; lf = lf->next) {
         inname = lf->name;
@@ -92,7 +91,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
      * Open the .ux file if debugging is on.
      */
     if (Dflag) {
-        dbgname = intern(makename(TargetDir, lfiles->name, ".ux"));
+        dbgname = intern(makename(TargetDir, lfiles->name, UXSuffix));
         dbgfile = fopen(dbgname, WriteText);
         if (dbgfile == NULL)
             quitf("cannot create %s", dbgname);
