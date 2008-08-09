@@ -33,16 +33,12 @@ struct sdescrip {
     char *string;		/*   pointer to string */
 };
 
-#if defined(Graphics) || defined(PosixFns)
-
 struct si_ {
     char *s;
     int i;
 };
 typedef struct si_ stringint;
 typedef struct si_ *siptr;
-
-#endif					/* Graphics || PosixFns */
 
 /*
  * structure supporting dynamic record types
@@ -399,10 +395,7 @@ struct progstate {
     struct ipc_line *Ilines, *Elines;
     struct ipc_line * Current_line_ptr;
     dptr MainProc;
-
-#ifdef PosixFns
     struct descrip AmperErrno;
-#endif					/* PosixFns */
 
 #ifdef Graphics
     struct descrip AmperX, AmperY, AmperRow, AmperCol;/* &x, &y, &row, &col */

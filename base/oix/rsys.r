@@ -4,7 +4,6 @@
  */
 
 
-#ifdef PosixFns
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
 #endif
@@ -56,7 +55,6 @@ SOCKET fd;
       }
    return r;
    }
-#endif					/* MSWIN32 */
 
 #if MSWIN32
 #ifndef NTGCC
@@ -78,10 +76,8 @@ struct b_file *fbp;
    register int c, l;
    FILE *fd = fbp->fd.fp;
 
-#ifdef PosixFns
    static char savedbuf[BUFSIZ];
    static int nsaved = 0;
-#endif					/* PosixFns */
 
 #ifdef XWindows
    wflushall();
@@ -106,14 +102,12 @@ struct b_file *fbp;
 
    l = 0;
 
-#ifdef PosixFns
    /* If there are saved chars in the static buffer, use those */
    if (nsaved > 0) {
       strncpy(buf, savedbuf, nsaved);
       l = nsaved;
       buf += l;
    }
-#endif
 
    while (1) {
 
@@ -169,7 +163,6 @@ struct b_file *fbp;
             }
 #endif					/* MSWIN32 */
 
-#ifdef PosixFns
 	 /* If errno is EAGAIN, we will not return any chars just yet */
 	 if (errno == EAGAIN 
 #if !MSWIN32
@@ -178,35 +171,26 @@ struct b_file *fbp;
 	 ) {
 	    return -1;
 	 }
-#endif					/* PosixFns */
 
 	 if (l > 0) {
-#ifdef PosixFns
 	    /* Clear the saved chars buffer */
 	    nsaved = 0;
-#endif					/* PosixFns */
 	    return l;
 	    } 
 	 else return -1;
 	 }
       if (++l > maxi) {
 	 ungetc(c, fd);
-#ifdef PosixFns
 	 /* Clear the saved chars buffer */
 	 nsaved = 0;
-#endif					/* PosixFns */
 	 return -2;
 	 }
-#ifdef PosixFns
       savedbuf[nsaved++] = c;
-#endif					/* PosixFns */
       *buf++ = c;
       }
 
-#ifdef PosixFns
    /* We can clear the saved static buffer */
    nsaved = 0;
-#endif					/* PosixFns */
 
    return l;
    }
@@ -363,7 +347,6 @@ iselect(fd, t)
 int fd, t;
    {
 
-#ifdef PosixFns
    struct timeval tv;
    fd_set fds;
    tv.tv_sec = t/1000;
@@ -373,9 +356,6 @@ int fd, t;
 #endif					/* MSWIN32 */
    FD_SET(fd, &fds);
    return select(fd+1, &fds, NULL, NULL, &tv);
-#else					/* PosixFns */
-   return -1;
-#endif					/* PosixFns */
 
    }
 

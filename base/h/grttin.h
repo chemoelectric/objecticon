@@ -166,9 +166,7 @@ typedef int clock_t, time_t, fd_set, va_list;
    typedef int FINDDATA_T;
 #endif					/* WildCards */
 
-#ifdef ReadDirectory
-   typedef int DIR;
-#endif					/* ReadDirectory */
+typedef int DIR;
 
 typedef int size_t;
 typedef long time_t;
@@ -191,7 +189,6 @@ typedef int STARTUPINFO, PROCESS_INFORMATION, SECURITY_ATTRIBUTES;
 typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;
 #endif					/* HAVE_LIBJPEG */
 
-#ifdef PosixFns
 typedef int SOCKET;
 typedef int u_short;
 typedef int fd_set;
@@ -202,13 +199,9 @@ struct timeval {
 };
 typedef int time_t;
 typedef int DIR;
-#endif					/* PosixFns */
 
 
-
-# if defined(Graphics) || defined(PosixFns)
 typedef int siptr, stringint, inst;
-#endif
 
 /*
  * graphics

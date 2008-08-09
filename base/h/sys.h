@@ -37,18 +37,11 @@
       #define int_PASCAL int PASCAL
       #define LRESULT_CALLBACK LRESULT CALLBACK
       #define BOOL_CALLBACK BOOL CALLBACK
-      #ifdef PosixFns
       #include <winsock2.h>
-      #else					/* PosixFns */
-      #include <windows.h>
-      #endif					/* PosixFns */
       #include <mmsystem.h>
       #include <process.h>
    #else					/* MSWindows */
-      #ifdef PosixFns
       #include <winsock2.h>
-      #else
-      #endif					/* PosixFns */
    #endif				/* MSWindows */
    #include <setjmp.h>
    #define Type(d) (int)((d).dword & TypeMask)

@@ -67,16 +67,6 @@
  *  can be cast as #ifdef Coexpr.
  */
 
-#ifndef NoPosixFns
-   #undef PosixFns
-   #define PosixFns
-#endif					/* NoPosixFns */
-
-#ifdef PosixFns
-#define ReadDirectory
-#endif					/* PosixFns */
-
-
 /*
  * Names for standard environment variables.
  * The standard names are used unless they are overridden.
@@ -197,12 +187,6 @@
       #endif				/* NoKeyboardFncs */
    #endif				/* UNIX */
 #endif					/* KeyboardFncs */
-
-#ifndef ReadDirectory
-   #if UNIX
-      #define ReadDirectory
-   #endif				/* UNIX*/
-#endif					/* ReadDirectory */
 
 /*
  * Default sizing and such.

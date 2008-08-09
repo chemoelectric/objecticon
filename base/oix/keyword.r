@@ -595,17 +595,12 @@ end
 
 "&errno - variable containing error number from previous posix command."
 keyword{1} errno
-#ifdef PosixFns
    abstract {
       return kywdint
       }
    inline {
       return kywdint(&amperErrno);
       }
-#else /* PosixFns */
-   abstract { return empty_type }
-   inline { fail; }
-#endif /* PosixFns */
 end
 
 

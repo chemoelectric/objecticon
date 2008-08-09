@@ -3765,7 +3765,7 @@ char *rgbkey(int p, double r, double g, double b)	{ return 0; }
 
 #endif					/* Graphics */
 
-#if defined(Graphics) || defined(PosixFns)
+
 
 /*
  * the next section consists of code to deal with string-integer
@@ -3808,4 +3808,4 @@ char *si_i2s(sip,i)
     for(;sip2<=sip+sip[0].i;sip2++) if (sip2->i == i) return sip2->s;
     return NULL;
 }
-#endif
+

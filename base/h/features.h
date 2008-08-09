@@ -30,9 +30,7 @@
    Feature(1, "_UNIX", "UNIX")
 #endif					/* VM */
 
-#ifdef PosixFns
    Feature(1, "_POSIX", "POSIX")
-#endif					/* PosixFns */
 
    Feature(1, "_ASCII", "ASCII")
 

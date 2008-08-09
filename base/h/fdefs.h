@@ -132,7 +132,7 @@ FncDef(loadfunc,2)
 /*
  * The POSIX interface
  */
-#ifdef PosixFns
+
 FncDef(sys_errstr,1)
 FncDef(getppid,0)
 FncDef(getpid,0)
@@ -186,7 +186,7 @@ FncDef(syswrite,2)
 FncDef(send,2)
 FncDef(receive,1)
 FncDef(setenv,2)
-#endif					/* PosixFns */
+
 
 /*
  * Graphics functions.  These are always defined; in virtual machines

@@ -11,8 +11,6 @@
  */
 
 
-#ifdef PosixFns
 #include "fxposix.ri"
-#endif					/* POSIX interface functions */
 
 static char junk;			/* avoid empty module */

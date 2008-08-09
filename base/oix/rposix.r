@@ -10,7 +10,6 @@
  * $Id: rposix.r,v 1.29 2005/06/24 09:13:44 jeffery Exp $
  */
 
-#ifdef PosixFns
 
 #include "../h/opdefs.h"
 
@@ -1651,4 +1650,3 @@ struct b_list *findactivewindow(struct b_list *lws)
    return (struct b_list *)BlkLoc(d);
 }   
 #endif					/* Graphics */
-#endif					/* PosixFns */

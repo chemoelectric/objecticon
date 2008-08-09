@@ -143,7 +143,5 @@ extern stringint attribs[], drawops[];
 
 #endif					/* Graphics */
 
-#ifdef PosixFns
 extern struct descrip posix_lock, posix_timeval, posix_stat, posix_message,
   posix_passwd, posix_group, posix_servent, posix_hostent;
-#endif					/* PosixFns */

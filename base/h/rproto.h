@@ -206,11 +206,9 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    int		bigrand		(dptr da, dptr dx);
 
 
-#if defined(Graphics) || defined(PosixFns)
    struct b_list *findactivewindow(struct b_list *);
    char	*si_i2s		(siptr sip, int i);
    int	si_s2i		(siptr sip, char *s);
-#endif					/* Graphics || PosixFns */
 
 #ifdef Graphics
    /*
@@ -582,7 +580,6 @@ void	varargs		(dptr argp, int nargs, dptr rslt);
 dptr rec_structinate(dptr dp, char *name, int nfields, char *a[]);
 
 
-#ifdef PosixFns
 #if MSWIN32
 void stat2rec			(struct _stat *st, dptr dp, struct b_record **rp);
 #else					/* MSWIN32 */
@@ -613,7 +610,6 @@ void signal_dispatcher		(int sig);
 int get_fd			(struct descrip, unsigned int errmask);
 dptr u_read			(int fd, int n, dptr d);
 void dup_fds			(dptr d_stdin, dptr d_stdout, dptr d_stderr);
-#endif					/* PosixFns */
 
 
    struct b_refresh *alcrefresh_0(word *e, int nl, int nt);

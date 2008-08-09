@@ -235,9 +235,7 @@ void icon_init(char *name)
     rootpstate.K_errortext = "";
     rootpstate.K_errorvalue = nulldesc;
     rootpstate.T_errorvalue = nulldesc;
-#ifdef PosixFns
     rootpstate.AmperErrno = zerodesc;
-#endif					/* PosixFns */
 
 #ifdef Graphics
     rootpstate.AmperX = zerodesc;

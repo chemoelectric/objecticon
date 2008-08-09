@@ -222,12 +222,10 @@ int get_name(dptr dp1,dptr dp0)
             StrLen(*dp0) = 6;
             StrLoc(*dp0) = "&error";
         }
-#ifdef PosixFns
         else if (VarLoc(*dp1) == &amperErrno) {
             StrLen(*dp0) = 6;
             StrLoc(*dp0) = "&errno";
         }
-#endif					/* PosixFns */
 #ifdef Graphics
         else if (VarLoc(*dp1) == &amperCol) {
             StrLen(*dp0) = 4;

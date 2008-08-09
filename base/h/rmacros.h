@@ -54,12 +54,10 @@
 #define Fs_Directory  02000	/* reading a directory */
 
 
-#ifdef PosixFns
    #define Fs_Socket    010000
    #define Fs_Buff      020000
    #define Fs_Unbuf     040000
    #define Fs_Listen   0100000
-#endif					/* PosixFns */
 
 
 
@@ -643,10 +641,7 @@
       #define current_line_ptr (curpstate->Current_line_ptr)
       #define standard_fields (curpstate->StandardFields)
       #define main_proc (curpstate->MainProc)
-
-      #ifdef PosixFns
-         #define amperErrno (curpstate->AmperErrno)
-      #endif
+      #define amperErrno (curpstate->AmperErrno)
 
       #ifdef Graphics
          #define amperX   (curpstate->AmperX)
@@ -756,11 +751,9 @@
    #define A_Coact	8	/* co-expression activated */
    #define A_Coret	9	/* co-expression returned */
    #define A_Cofail	10	/* co-expression failed */
-      #define A_MTEvent	11	/* multithread event */
-   #ifdef PosixFns
-      #define	A_Trapret	12	/* Return from stub  */
-      #define	A_Trapfail	13	/* Fail from stub  */
-   #endif 				/* PosixFns */
+   #define A_MTEvent	11	/* multithread event */
+   #define A_Trapret	12	/* Return from stub  */
+   #define A_Trapfail	13	/* Fail from stub  */
 
 /*
  * Address of word containing cset bit b (c is a struct descrip of type Cset).

@@ -21,11 +21,7 @@
    #include "../h/graphics.h"
 #endif					/* Graphics */
 
-#ifdef PosixFns
 #include "../h/posix.h"
-#endif					/* PosixFns */
-
-
 #include "../h/rexterns.h"
 #include "../h/rproto.h"
 

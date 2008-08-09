@@ -12,7 +12,7 @@
  */
 
 
-#ifdef PosixFns
+
 #if MSWIN32
 #define ftruncate _chsize
 #define pclose _pclose
@@ -2717,6 +2717,3 @@ end
 
 
 
-#else				/* POSIX_FUNCS */
-static char x;			/* avoid empty module */
-#endif				/* POSIX_FUNCS */

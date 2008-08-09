@@ -18,9 +18,7 @@ Deliberate Syntax Error
    /* nothing to do */
 #endif			
 
-#ifdef PosixFns
 extern int errno;
-#endif					/* PosixFns */
 /*
  * End of operating-system specific code.
  */
@@ -94,7 +92,6 @@ function{1} close(f)
        * Close f, using fclose, pclose, closedir, or wclose as appropriate.
        */
 
-#ifdef PosixFns
       if (BlkLoc(f)->file.status & Fs_Socket) {
 	 BlkLoc(f)->file.status = 0;
 #if MSWIN32
@@ -103,9 +100,7 @@ function{1} close(f)
 	 return C_integer close(BlkLoc(f)->file.fd.fd);
 #endif					/* MSWIN32 */
 	 }
-#endif					/* PosixFns */
 
-#ifdef ReadDirectory
 #if !MSWIN32
       if (BlkLoc(f)->file.status & Fs_Directory) {
 	 BlkLoc(f)->file.status = 0;
@@ -113,7 +108,6 @@ function{1} close(f)
 	 return f;
          }
 #endif
-#endif					/* ReadDirectory */
 
 #ifdef HAVE_LIBZ
       if (BlkLoc(f)->file.status & Fs_Compress) {
@@ -259,9 +253,7 @@ function{0,1} open(fname, spec)
       FILE *f;
       SOCKET fd;
       struct b_file *fl;
-#ifdef PosixFns
       struct stat st;
-#endif					/* PosixFns */
 
 #ifdef Graphics
       int j, err_index = -1;
@@ -282,9 +274,7 @@ Deliberate Syntax Error
    /* nothing is needed */
 #endif
 
-#ifdef PosixFns
       int is_udp_or_listener = 0;	/* UDP = 1, listener = 2 */
-#endif					/* PosixFns */
 
 #if UNIX || MSWIN32
       extern FILE *popen();
@@ -347,9 +337,7 @@ Deliberate Syntax Error
 
 	    case 'u':
 	    case 'U':
-#ifdef PosixFns
 	       is_udp_or_listener = 1;
-#endif					/* PosixFns */
 	       if ((status & Fs_Socket)==0)
 		  status |= Fs_Untrans;
 	       continue;
@@ -374,13 +362,11 @@ Deliberate Syntax Error
 
 	    case 'l':
 	    case 'L':
-#ifdef PosixFns
 	       if (status & Fs_Socket) {
 		  status |= Fs_Listen | Fs_Append;
 		  is_udp_or_listener = 2;
 		  continue;
 		  }
-#endif					/* PosixFns */
 	       fail;
 
 
@@ -394,13 +380,9 @@ Deliberate Syntax Error
 
 	    case 'n':
 	    case 'N':
-#ifdef PosixFns
 	       status |= Fs_Socket|Fs_Read|Fs_Write|Fs_Unbuf;
 	       continue;
 
-#else 					/* PosixFns */
-	       fail;
-#endif 					/* PosixFns */
 
 
 	    case 'o':
@@ -547,7 +529,6 @@ Deliberate Syntax Error
 #endif					/* HAVE_LIBZ */
 
 
-#ifdef PosixFns
       {
 	 if (status & Fs_Socket) {
 	    /* The only allowed values for flags are "n" and "na" */
@@ -634,15 +615,12 @@ Deliberate Syntax Error
 	       }
 	    }
 	 }
-#else					/* PosixFns */
-  	 f = fopen(fnamestr, mode);
-#endif 					/* PosixFns */
 
       /*
        * Fail if the file cannot be opened.
        */
       if (f == NULL) {
-#ifdef MSWindows
+#if MSWIN32
          char tempbuf[512];
 	 *tempbuf = '\0';
          if (strchr(fnamestr, '*') || strchr(fnamestr, '?')) {
@@ -678,9 +656,9 @@ Deliberate Syntax Error
             fseek(f, 0, SEEK_SET);
             if (f == NULL) fail;
 	    }
-#else					/* MSWindows */
+#else					/* MSWIN32 */
 	 fail;
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 	 }
 
       /*
@@ -737,9 +715,7 @@ function{0,1} read(f)
       static char sbuf[MaxReadStr];
       tended struct descrip s;
       FILE *fp;
-#ifdef PosixFns
       SOCKET ws;
-#endif					/* PosixFns */
 
       /*
        * Get a pointer to the file and be sure that it is open for reading.
@@ -749,7 +725,6 @@ function{0,1} read(f)
       if ((status & Fs_Read) == 0)
 	 runerr(212, f);
 
-#ifdef PosixFns
        if (status & Fs_Socket) {
 	  StrLen(s) = 0;
           do {
@@ -795,7 +770,6 @@ function{0,1} read(f)
 	 status |= Fs_Buff;
 	 BlkLoc(f)->file.status = status;
 	 }
-#endif					/* PosixFns */
 
       if (status & Fs_Writing) {
 	 fseek(fp, 0L, SEEK_CUR);
@@ -825,7 +799,6 @@ function{0,1} read(f)
 	 else
 #endif					/* Graphics */
 
-#ifdef PosixFns
 #if !MSWIN32
 	  if (status & Fs_Directory) {
 	     struct dirent *d;
@@ -843,7 +816,6 @@ function{0,1} read(f)
 	  }
 	  else
 #endif
-#endif					/* PosixFns */
 
 
 #ifdef HAVE_LIBZ
@@ -872,9 +844,7 @@ function{0,1} read(f)
 #endif					/* HAVE_LIBZ */
 
 	 if ((slen = getstrg(sbuf, MaxReadStr, &BlkLoc(f)->file)) == -1) {
-#ifdef PosixFns
 	    IntVal(amperErrno) = errno;
-#endif					/* PosixFns */
 	    fail;
 	    }
 
@@ -943,7 +913,6 @@ function{0,1} reads(f,i)
 	 runerr(212, f);
 
 
-#ifdef PosixFns
         if (status & Fs_Socket) {
 	    StrLen(s) = 0;
 	    Maxread = (i <= MaxReadStr)? i : MaxReadStr;
@@ -993,7 +962,6 @@ function{0,1} reads(f,i)
 	    status |= Fs_Buff;
 	    BlkLoc(f)->file.status = status;
 	}
-#endif					/* PosixFns */
 
       fp = BlkLoc(f)->file.fd.fp;
       if (status & Fs_Writing) {
@@ -1003,7 +971,6 @@ function{0,1} reads(f,i)
       BlkLoc(f)->file.status |= Fs_Reading;
 
 
-#ifdef ReadDirectory
 #if !MSWIN32
       /*
        *  If reading a directory, return up to i bytes of next entry.
@@ -1020,7 +987,6 @@ function{0,1} reads(f,i)
          return string(nbytes, sp);
          }
 #endif
-#endif					/* ReadDirectory */
 
       /*
        * Be sure that a positive number of bytes is to be read.
@@ -1031,7 +997,6 @@ function{0,1} reads(f,i)
 	 errorfail;
 	 }
 
-#ifdef PosixFns
       /* Remember, sockets are always unbuffered */
       if (status & Fs_Unbuf) {
 	 /* We do one read(2) call here to avoid interactions with stdio */
@@ -1046,7 +1011,6 @@ function{0,1} reads(f,i)
 	    fail;
 	 return s;
       }
-#endif					/* PosixFns */
 
       /*
        * For now, assume we can read the full number of bytes.
@@ -1116,7 +1080,6 @@ function{0,1} remove(s)
 
    inline {
       if (remove(s) != 0) {
-#ifdef PosixFns
 	 IntVal(amperErrno) = 0;
 #if MSWIN32
 #define rmdir _rmdir
@@ -1125,7 +1088,6 @@ function{0,1} remove(s)
 	    IntVal(amperErrno) = errno;
 	    fail;
             }
-#endif					/* PosixFns */
 	 fail;
          }
       return nulldesc;
@@ -1195,10 +1157,8 @@ function{0,1} seek(f,o)
       if (BlkLoc(f)->file.status == 0)
 	 fail;
 
-#ifdef ReadDirectory
       if (BlkLoc(f)->file.status & Fs_Directory)
 	 fail;
-#endif					/* ReadDirectory */
 
 #ifdef Graphics
       pollctr >>= 1;
@@ -1238,62 +1198,6 @@ function{0,1} seek(f,o)
 end
 
 
-#ifndef PosixFns
-
-"system(s) - execute string s as a system command."
-
-function{1} system(s, o)
-   /*
-    * Make a C-style string out of s
-    */
-   if !cnv:C_string(s) then
-      runerr(103,s)
-   /*
-    * o must be an integer and defaults to 1.
-    */
-   if !def:C_integer(o,1L) then
-      runerr(0)
-
-   abstract {
-      return integer
-      }
-
-   inline {
-      /*
-       * Pass the C string to the system() function and return
-       * the exit code of the command as the result of system().
-       * Note, the expression on a "return" may not have side effects,
-       * so the exit code must be returned via a variable.
-       */
-      C_integer i, j;
-      char *cmdname;
-      char *args[256];
-
-#ifdef Graphics
-      pollctr >>= 1;
-      pollctr++;
-#endif					/* Graphics */
-
-#if MSWIN32
-      if (o == 0)   { /* nowait, or 0, for second argument */
-         cmdname = strtok(s, " ");
-         for(j = 0; j<256; j++)
-            if ((args[j] = strtok(NULL, " ")) == NULL)
-	       break;
-	 args[j] = NULL;
-         _flushall();
-         i = (C_integer)_spawnvp(_P_NOWAITO, cmdname, args);
-      }
-      else
-	 i = mswinsystem(s);
-#else					/*NT*/
-      i = (C_integer)system(s);
-#endif					/*NT*/
-
-      return C_integer i;
-      }
-end
-#endif					/* PosixFns */
 
 
 "where(f) - return current offset position in file f."
@@ -1317,10 +1221,8 @@ function{0,1} where(f)
       if (BlkLoc(f)->file.status == 0)
 	 fail;
 
-#ifdef ReadDirectory
       if ((BlkLoc(f)->file.status & Fs_Directory) != 0)
          fail;
-#endif					/* ReadDirectory */
 
 #ifdef Graphics
       pollctr >>= 1;
@@ -1385,7 +1287,6 @@ end
    else
 #endif					/* HAVE_LIBZ */
 
-#ifdef PosixFns
       if (status & Fs_Socket) {
 	 if (sock_write(f.fd, "\n", 1) < 0)
 #if terminate
@@ -1395,7 +1296,6 @@ end
 #endif
          }
       else
-#endif					/* PosixFns */
 	 putc('\n', f.fp);
 
 #endif					/* nl */
@@ -1407,9 +1307,7 @@ end
    if (!(status & Fs_Window)) {
 #endif					/* Graphics */
 
-#ifdef PosixFns
       if (!(status & Fs_Socket)) {
-#endif					/* PosixFns */
 
 #ifdef HAVE_LIBZ
       if (status & (Fs_Compress
@@ -1431,9 +1329,7 @@ end
       
 #endif					/* HAVE_LIBZ */
 
-#ifdef PosixFns
       }
-#endif					/* PosixFns */
 
 #ifdef Graphics
       }
@@ -1556,7 +1452,6 @@ function {1} name(x[nargs])
 #endif					/* HAVE_LIBZ */
 
 
-#ifdef PosixFns
 			if (status & Fs_Socket) {
 			   if (sock_write(f.fd, "\n", 1) < 0)
 #if terminate
@@ -1566,14 +1461,11 @@ function {1} name(x[nargs])
 #endif
 			   }
 			else {
-#endif					/* PosixFns */
 			putc('\n', f.fp);
 			if (ferror(f.fp))
 			   runerr(214);
 			fflush(f.fp);
-#ifdef PosixFns
                         }
-#endif					/* PosixFns */
 #ifdef Graphics
 			}
 #endif					/* Graphics */
@@ -1618,7 +1510,6 @@ function {1} name(x[nargs])
 
 
 
-#ifdef PosixFns
 		     if (status & Fs_Socket) {
 
 			if (sock_write(f.fd, StrLoc(t), StrLen(t)) < 0) {
@@ -1629,12 +1520,9 @@ function {1} name(x[nargs])
 #endif
 			   }
 		     } else {
-#endif					/* PosixFns */
 		     if (putstr(f.fp, &t) == Failed)
 			runerr(214, x[n]);
-#ifdef PosixFns
 			}
-#endif
 		  }
 	       }
 
@@ -1772,12 +1660,8 @@ function{1} flush(f)
        * File types for which no flushing is possible, or is a no-op.
        */
       if (((status & (Fs_Read | Fs_Write)) == 0)	/* if already closed */
-#ifdef ReadDirectory
 	  || (status & Fs_Directory)
-#endif					/* ReadDirectory */
-#ifdef PosixFns
 	  || (status & Fs_Socket)
-#endif					/* PosixFns */
 	  )
 	 return f;
 

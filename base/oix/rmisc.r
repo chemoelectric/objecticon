@@ -62,13 +62,11 @@ int getvar(s,vp)
          VarLoc(*vp) = &kywd_err;
          return Succeeded;
          }
-#ifdef PosixFns
       else if (strcmp(s,"&errno") == 0) {
          vp->dword = D_Kywdint;
          VarLoc(*vp) = &amperErrno;
          return Succeeded;
          }
-#endif					/* PosixFns */
       else if (strcmp(s,"&pos") == 0) {
          vp->dword = D_Kywdpos;
          VarLoc(*vp) = &kywd_pos;
@@ -446,7 +444,6 @@ int noimage;
              */
 	    i = StrLen(BlkLoc(*dp)->file.fname);
 	    s = StrLoc(BlkLoc(*dp)->file.fname);
-#ifdef PosixFns
 	    if (BlkLoc(*dp)->file.status & Fs_Socket) {
 	       fprintf(f, "inet(");
                }
@@ -455,7 +452,6 @@ int noimage;
 	       fprintf(f, "directory(");
                }
 	    else
-#endif
 #ifdef Graphics
 	    if (BlkLoc(*dp)->file.status & Fs_Window) {
 	       if ((BlkLoc(*dp)->file.status != Fs_Window) && /* window open?*/
@@ -1384,7 +1380,6 @@ dptr dp1, dp2;
 	       }
 	    else {
 #endif					/* Graphics */
-#ifdef PosixFns
                if (BlkLoc(source)->file.status & Fs_Socket) {
                    s = namebuf;
                    len = sock_name(BlkLoc(source)->file.fd.fd,
@@ -1392,12 +1387,9 @@ dptr dp1, dp2;
                                  namebuf, sizeof(namebuf));
                }
                else {
-#endif 					/* PosixFns */
                s = StrLoc(BlkLoc(source)->file.fname);
                len = StrLen(BlkLoc(source)->file.fname);
-#ifdef PosixFns
                }
-#endif 					/* PosixFns */
                Protect (reserve(Strings, (len << 2) + 12), return Error);
 	       Protect(t = alcstr("file(", (word)(5)), return Error);
 	       StrLoc(*dp2) = t;

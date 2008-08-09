@@ -295,9 +295,8 @@ struct errtab errtab[] = {
 #endif					/* Graphics */
 
 
-#ifdef PosixFns
    /*
-    * PosixFns errors related to incorrect usage are here; PosixFns errors
+    * Posix errors related to incorrect usage are here; Posix errors
     * that result from failed system calls appear below with numbers > 1000.
     */
    170, "string or integer expected",
@@ -306,7 +305,6 @@ struct errtab errtab[] = {
    173, "cannot open directory for writing",
    174, "invalid file operation on directory or database",
    175, "network connection expected",
-#endif					/* PosixFns */
 
 
    201, "division by zero",
@@ -369,7 +367,6 @@ struct errtab errtab[] = {
    623, "can only set a method on an unresolved field",
    624, "record, class, cast or object expected",
 
-#ifdef PosixFns
    1040, "socket error",		 
    1041, "cannot initialize network library",
    1042, "fdup of closed file",
@@ -379,7 +376,6 @@ struct errtab errtab[] = {
    1046, "invalid permission string for umask",
    1047, "invalid protocol name",
    1048, "low-level read or select mixed with buffered read",
-#endif					/* PosixFns */
 
 
 /*
