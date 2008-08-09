@@ -24,29 +24,10 @@ struct lpackage *lpackage_hash[LPACKAGE_HASH_SIZE];
 struct lclass *lclasses = 0, *lclass_last = 0;
 struct linvocable *linvocables = 0, *last_linvocable = 0;
 
-struct ipc_fname *fnmtbl;	/* table associating ipc with file name */
-struct ipc_line *lntable;	/* table associating ipc with line number */
-
-word *labels;			/* label table */
-char *codeb;			/* generated code space */
-
-struct ipc_fname *fnmfree;	/* free pointer for ipc/file name table */
-struct ipc_line *lnfree;	/* free pointer for ipc/line number table */
-word lsfree;			/* free index for string space */
-char *codep;			/* free pointer for code space */
-
 struct fentry *lffirst;		/* first field table entry */
 struct fentry *lflast;		/* last field table entry */
 struct gentry *lgfirst;		/* first global table entry */
 struct gentry *lglast;		/* last global table entry */
-
-/*
- * Array sizes for various linker tables that can be expanded with realloc().
- */
-int nsize	= 1000;	    /* ipc/line num. assoc. table */
-int maxcode	= 15000;    /* code space */
-int fnmsize	= 10;	    /* ipc/file name assoc. table */
-int maxlabels	= 500;	    /* maximum num of labels/proc */
 
 /*
  * linit - scan the command line arguments and initialize data structures.
@@ -60,18 +41,6 @@ void linit()
     clear(lfile_hash);
 
     clear(lpackage_hash);
-
-    /*
-     * Allocate the various data structures that are used by the linker.
-     */
-
-    lnfree = lntable  = (struct ipc_line*)tcalloc(nsize,sizeof(struct ipc_line));
-
-    fnmtbl = (struct ipc_fname *) tcalloc(fnmsize, sizeof(struct ipc_fname));
-    fnmfree = fnmtbl;
-
-    labels  = (word *) tcalloc(maxlabels, sizeof(word));
-    codep = codeb = (char *) tcalloc(maxcode, 1);
 
     lffirst = lflast = 0;
     lgfirst = lglast = 0;
@@ -214,11 +183,6 @@ void lmfree()
     struct lpackage *lp, *lp1;
     struct lfile *lf, *nlf;
     int i;
-
-    free( lntable);   lntable = NULL;
-    free( fnmtbl);   fnmtbl = NULL;
-    free( labels);   labels = NULL;
-    free( codep);   codep = NULL;
 
     for (fp = lffirst; fp; fp = fp1) {
         free(fp->rowdata);

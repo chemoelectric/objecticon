@@ -362,6 +362,7 @@ void output_code()
     for (curr_func = functions; curr_func; curr_func = curr_func->next) {
         switch (curr_func->flag) {
             case F_Proc: 
+                ensure_pos(curr_func->global->pos);
                 uout_op(Op_Proc);
                 uout_str(curr_func->global->g_name);
                 codegen(curr_func->code);
@@ -369,6 +370,7 @@ void output_code()
 
             case F_Method: 
                 if (!(curr_func->field->flag & M_Defer)) {
+                    ensure_pos(curr_func->field->pos);
                     uout_op(Op_Method);
                     uout_str(curr_func->field->class->global->g_name);
                     uout_str(curr_func->field->name);

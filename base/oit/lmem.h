@@ -23,16 +23,6 @@ extern struct fentry *lflast;	/* last field table entry */
 extern struct gentry *lgfirst;	/* first global table entry */
 extern struct gentry *lglast;	/* last global table entry */
 
-extern struct ipc_fname *fnmfree; /* free pointer for ipc/file name tbl */
-extern struct ipc_line *lnfree;	/* free pointer for ipc/line number tbl */
-extern char *codep;		/* free pointer for code space */
-
-extern struct ipc_fname *fnmtbl; /* table associating ipc with file name */
-extern struct ipc_line *lntable; /* table associating ipc with line number */
-
-extern word *labels;		/* label table */
-extern char *codeb;		/* generated code space */
-
 extern struct lclass *lclasses, *lclass_last;
 
 extern struct linvocable *linvocables,

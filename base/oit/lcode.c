@@ -19,10 +19,33 @@
 
 #define RecordBlkSize(gp) ((11*WordSize)+(gp)->record->nfields * 2 * WordSize)
 
-int nstatics = 0;                       /* Running count of static variables */
+int nstatics = 0;               /* Running count of static variables */
+
+/*
+ * Array sizes for various linker tables that can be expanded with realloc().
+ */
+int maxcode	= 15000;        /* code space */
+int maxlabels	= 500;	        /* maximum num of labels/proc */
+int nsize       = 1000;         /* ipc/line num. assoc. table */
+int fnmsize     = 10;           /* ipc/file name assoc. table */
+
+struct ipc_fname *fnmtbl;	/* table associating ipc with file name */
+struct ipc_line *lntable;	/* table associating ipc with line number */
+struct ipc_fname *fnmfree;	/* free pointer for ipc/file name table */
+struct ipc_line *lnfree;	/* free pointer for ipc/line number table */
+word *labels;			/* label table */
+char *codeb;			/* generated code space */
+char *codep;			/* free pointer for code space */
+
+static char *curr_file,         /* Current file name from an Op_Filen */
+            *last_fnmtbl_filen; /* Last file name entered into fnmtbl above */
+static int curr_line;           /* Current line from an Op_Line */
 
 static void gencode(struct lfile *lf);
 static void gentables(void);
+static void skip_proc();
+static void synch_file();
+static void synch_line();
 
 struct unref {
     char *name;
@@ -100,7 +123,6 @@ static struct strconst *inst_c_strconst(char *s)
 void generate_code()
 {
     struct lfile *lf;
-    char *filename;			/* name of current input file */
 
     nstatics = 0;
     strconst_offset = 0;
@@ -108,13 +130,22 @@ void generate_code()
     clear(strconst_hash);
     first_unref = 0;
     clear(unref_hash);
+    curr_file = last_fnmtbl_filen = 0;
+    curr_line = 0;
+
+    /*
+     * Initialize some dynamically-sized tables.
+     */
+    lnfree = lntable = tcalloc(nsize, sizeof(struct ipc_line));
+    fnmfree = fnmtbl = tcalloc(fnmsize, sizeof(struct ipc_fname));
+    labels  = tcalloc(maxlabels, sizeof(word));
+    codep = codeb = tcalloc(maxcode, 1);
 
     /*
      * Loop through input files and generate code for each.
      */
     for (lf = lfiles; lf; lf = lf->next) {
-        filename = lf->name;
-        inname = intern(makename(SourceDir, filename, USuffix));
+        inname = lf->name;
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
             quitf("cannot open .u for %s", inname);
@@ -125,6 +156,18 @@ void generate_code()
 
     gentables();		/* Generate record, field, global, global names,
                                    static, and identifier tables. */
+
+    /*
+     * Free the tables allocated above.
+     */
+    free(lntable);   
+    lntable = 0;
+    free(fnmtbl);   
+    fnmtbl = 0;
+    free(labels);
+    labels = 0;
+    free(codep);
+    codep = 0;
 }
 
 static int lookup_field(char *s)
@@ -196,11 +239,11 @@ static void	lemitproc       (struct lfunction *func);
 static void	lemitr		(int op,word loc,char *name);
 static void	misalign	(void);
 static void	outblock	(char *addr,int count);
-static void	setfile		(void);
 static void	wordout		(word oword);
 static void	shortout	(short o);
 
 static void	dumpblock	(char *addr,int count);
+
 
 word pc = 0;		/* simulated program counter */
 
@@ -221,7 +264,7 @@ codeb = (char *) trealloc(codeb, &codep, &maxcode, 1,                   \
  */
 static void gencode(struct lfile *lf)
 {
-    int k, op, lab;
+    int k, op, lab, in_proc;
     int flags;
     char *name;
     struct centry *cp;
@@ -231,6 +274,13 @@ static void gencode(struct lfile *lf)
     struct lfunction *curr_func = 0;
     struct strconst *sp;
     struct ucode_op *uop;
+
+    /*
+     * This variable notes whether we are within a wanted
+     * procedure/method; will not be for the Op_Filen/Op_Line between
+     * the Op_End of one proc and the beginning of the next.
+     */
+    in_proc = 0;
 
     while ((uop = uin_op())) {
         op = uop->opcode;
@@ -399,19 +449,6 @@ static void gencode(struct lfile *lf)
                 backpatch(lab);
                 break;
 
-            case Op_Line:
-                /*
-                 * Line number change.
-                 */
-                k = uin_short();
-                if (lnfree >= &lntable[nsize])
-                    lntable  = (struct ipc_line *)trealloc(lntable, &lnfree, &nsize,
-                                                           sizeof(struct ipc_line), 1, "line number table");
-                lnfree->ipc = pc;
-                lnfree->line = k;
-                lnfree++;
-                break;
-
             case Op_Mark:
                 lab = uin_short();
                 lemitl(op, lab, name);
@@ -465,6 +502,9 @@ static void gencode(struct lfile *lf)
                     /*
                      * Initialize for wanted procedure.
                      */
+                    synch_file();
+                    synch_line();
+                    in_proc = 1;
                     clearlab();
                     align();
                     if (Dflag)
@@ -479,19 +519,8 @@ static void gencode(struct lfile *lf)
                     lemitproc(curr_func);
                 }
                 else {
-                    /*
-                     * Skip unreferenced procedure.
-                     */
-                    while (1) {
-                        uop = uin_expectop();
-                        op = uop->opcode;
-                        if (op == Op_End)
-                            break;
-                        if (op == Op_Filen)
-                            setfile();		/* handle filename op while skipping */
-                        else
-                            uin_skip(op);
-                    }
+                    in_proc = 0;
+                    skip_proc();
                 }
                 break;
             }
@@ -505,6 +534,9 @@ static void gencode(struct lfile *lf)
                     /*
                      * Initialize for wanted method.
                      */
+                    synch_file();
+                    synch_line();
+                    in_proc = 1;
                     clearlab();
                     align();
                     if (Dflag)
@@ -519,19 +551,8 @@ static void gencode(struct lfile *lf)
                     lemitproc(curr_func);
                 }
                 else {
-                    /*
-                     * Skip unreferenced procedure.
-                     */
-                    while (1) {
-                        uop = uin_expectop();
-                        op = uop->opcode;
-                        if (op == Op_End)
-                            break;
-                        if (op == Op_Filen)
-                            setfile();		/* handle filename op while skipping */
-                        else
-                            uin_skip(op);
-                    }
+                    in_proc = 0;
+                    skip_proc();
                 }
                 break;
             }
@@ -543,14 +564,20 @@ static void gencode(struct lfile *lf)
                 break;
 
             case Op_Filen:
-                setfile();
+                curr_file = uin_str();
+                if (in_proc)
+                    synch_file();
                 break;
 
-            case Op_Declend:
+            case Op_Line:
+                curr_line = uin_short();
+                if (in_proc)
+                    synch_line();
                 break;
 
             case Op_End:
                 flushcode();
+                in_proc = 0;
                 break;
 
             default:
@@ -560,22 +587,61 @@ static void gencode(struct lfile *lf)
 }
 
 /*
- * setfile - handle Op_Filen.
+ * Skip unreferenced procedure.
  */
-static void setfile()
+void skip_proc()
+{
+    int op;
+    struct ucode_op *uop;
+    while (1) {
+        uop = uin_expectop();
+        op = uop->opcode;
+        switch (op) {
+            case Op_End:
+                return;
+            case Op_Filen:
+                curr_file = uin_str();
+                break;
+            case Op_Line:
+                curr_line = uin_short();
+                break;
+            default:
+                uin_skip(op);
+        }
+    }
+}
+
+void synch_file()
 {
     struct strconst *sp;
+
+    /*
+     * Avoid adjacent entries with the same name.
+     */
+    if (curr_file == last_fnmtbl_filen)
+        return;
 
     if (fnmfree >= &fnmtbl[fnmsize])
         fnmtbl = (struct ipc_fname *) trealloc(fnmtbl, &fnmfree,
                                                &fnmsize, sizeof(struct ipc_fname), 1, "file name table");
-
+    last_fnmtbl_filen = curr_file;
     fnmfree->ipc = pc;
-
-    sp = inst_c_strconst(intern(last_pathelem(uin_str())));
+    sp = inst_c_strconst(intern(last_pathelem(curr_file)));
     fnmfree->fname = sp->offset;
     fnmfree++;
 }
+
+void synch_line()
+{
+    if (lnfree >= &lntable[nsize])
+        lntable  = (struct ipc_line *)trealloc(lntable, &lnfree, &nsize,
+                                               sizeof(struct ipc_line), 1, "line number table");
+    lnfree->ipc = pc;
+    lnfree->line = curr_line;
+    lnfree++;
+}
+
+
 
 /*
  *  lemit - emit opcode.
@@ -1704,3 +1770,4 @@ void idump(s)		/* dump code region */
         fprintf(stderr,"%ld: %d\n",(long)c, (int)*c);
     fflush(stderr);
 }
+
