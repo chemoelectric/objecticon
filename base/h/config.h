@@ -334,9 +334,13 @@ Deliberate Syntax Error
 #define IHasher(x)	(((unsigned int)(unsigned long)(x))&(IHSize-1))
 
 
-   #ifndef USuffix
-      #define USuffix ".u"
-   #endif				/* USuffix */
+#ifndef USuffix
+   #define USuffix ".u"
+#endif				/* USuffix */
+
+#ifndef UXSuffix
+   #define UXSuffix ".ux"
+#endif				/* UXSuffix */
 
 #define IcodeDelim "[executable Icon binary follows]"
 
