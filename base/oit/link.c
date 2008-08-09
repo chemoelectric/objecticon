@@ -113,8 +113,9 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         return;
     }
 
-    /* Phase II:  suppress unreferenced procs. */
-    scanrefs();
+    /* Phase II:  suppress unreferenced procs, unless "invocable all". */
+    if (!strinv)
+        scanrefs();
 
     sort_global_table();
     build_fieldtable();
@@ -346,9 +347,16 @@ static void check_unused_imports()
     struct fimport_symbol *fis;
     for (lf = lfiles; lf; lf = lf->next) {
         for (fp = lf->imports; fp; fp = fp->next) {
-            if (!fp->used)
+            /*
+             * We only output a warning for the stem if strinv is off,
+             * because an import will have an effect if "invocable
+             * all" is on.  Also since "stem unused => symbols unused",
+             * we don't check the symbols if we output a warning for
+             * the stem.
+             */
+            if (!fp->used && !strinv)
                 lwarn(lf, &fp->pos, "Unused import: %s", fp->name);
-            if (fp->qualified) {
+            else if (fp->qualified) {
                 for (fis = fp->symbols; fis; fis = fis->next) {
                     if (!fis->used)
                         lwarn(lf, &fis->pos, "Unused import symbol: %s", fis->name);
