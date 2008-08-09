@@ -299,12 +299,6 @@ void scanrefs()
     struct lclass *cp, **cpp;
 
     /*
-     * If "invocable all" specified, we keep all globals.
-     */
-    if (strinv)
-        return;
-
-    /*
      * Mark every global as unreferenced; search for main.
      */
     gmain = 0;
