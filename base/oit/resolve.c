@@ -68,18 +68,15 @@ static void resolve_global(struct lfile *lf, char *name)
         /*
          * If the package is "default", just convert the name to its
          * unqualified form.  Otherwise if it's not in the file's
-         * package, note the corresponding import (if any) as used.
-         * There may be no corresponding import if we have a super or
-         * an invocable that was specified as a fully qualified
-         * symbol, but without a matching import; however this will
-         * have generated a warning on translation.
+         * package, note the corresponding import as used.
          */
         if (package == default_string)
             name = intern(dot + 1);
         else if (lf->package != package) {
             struct fimport *im = lookup_fimport(lf, package);
-            if (im)
-                im->used = 1;
+            if (!im)
+                quitf("Couldn't find import %s in file %s", package, lf->name);
+            im->used = 1;
         }
         rres_found = gb_locate(name);
         return;
