@@ -1211,3 +1211,20 @@ procedure WobblePDCO(L[])
       }
 
 end
+
+# Evaluate the given expression, suspending its results, whilst
+# ignoring any non-fatal runtime errors
+procedure safe(e)
+   local t, x
+   repeat {
+      t := &error
+      &error := -1
+      if x := @e then {
+         &error := t
+         suspend x
+      } else {
+         &error := t
+         fail
+      }
+   }
+end
