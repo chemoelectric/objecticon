@@ -211,14 +211,10 @@ function{0,1} getenv(s)
 end
 
 
-#if defined(Graphics)
+
 "open(s1, s2, ...) - open file named s1 with options s2"
 " and attributes given in trailing arguments."
 function{0,1} open(fname, spec, attr[n])
-#else						/* Graphics */
-"open(fname, spec) - open file fname with specification spec."
-function{0,1} open(fname, spec)
-#endif						/* Graphics */
    declare {
       tended struct descrip filename;
       }
@@ -539,12 +535,10 @@ Deliberate Syntax Error
 	       fd = sock_listen(fnamestr, is_udp_or_listener);
 	    } else {
 	       C_integer timeout = 0;
-#if defined(Graphics)
 	       if (n > 0 && !is:null(attr[0])) {
                   if (!cnv:C_integer(attr[0], timeout))
                      runerr(101, attr[0]);
                }
-#endif
 	       /* connect to a port */
 	       fd = sock_connect(fnamestr, is_udp_or_listener, timeout);
 	    }

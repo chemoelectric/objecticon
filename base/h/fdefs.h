@@ -99,11 +99,7 @@ FncDefV(writes)
    FncDef(delay,1)
 #endif		
 
-#ifdef Graphics
    FncDefV(open)
-#else					/* Graphics */
-   FncDef(open,3)
-#endif					/* Graphics */
 
    FncDef(display,3)
    FncDef(name,2)
