@@ -23,7 +23,7 @@
  * and icode is compatible with the run-time system.
  */
    
-#define UVersion "U1.0.01"
+#define UVersion "U1.0.02"
    
 #if IntBits == 16
      #define IVersion "I1.0.00/16"
