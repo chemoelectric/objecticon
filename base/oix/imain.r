@@ -446,8 +446,17 @@ void resolve(pstate)
             /* Follow the same logic as lcode.c */
             if (cf->flags & M_Defer) {
                 if (cf->field_descriptor->dword == D_Proc) {
-                    /* Resolved to native method, set pointer */
-                    pp = (struct b_proc *)native_methods[IntVal(*cf->field_descriptor)];
+                    /* Resolved to native method, do sanity checks, set pointer */
+                    int n = IntVal(*cf->field_descriptor);
+                    if (n < 0 || n >= asize(native_methods))
+                        error("Native method index out of range: %d", n);
+                    pp = (struct b_proc *)native_methods[n];
+
+                    /* The field name should match the end of the procedure block's name */
+                    if (strcmp(StrLoc(cf->name),
+                               StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(cf->name)))
+                        error("Native method name mismatch: %s", StrLoc(cf->name));
+
                     /* Pointer back to the corresponding field */
                     pp->field = cf;
                     BlkLoc(*cf->field_descriptor) = (union block *)pp;
