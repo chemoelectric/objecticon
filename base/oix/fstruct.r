@@ -1079,6 +1079,14 @@ function{1} constructor(s, x[n])
       }
 end
 
+function{1} constructorof(r)
+   if !is:record(r) then
+       runerr(107, r)
+    body {
+       return proc(BlkLoc(r)->record.recdesc);
+    }
+end
+
 "keyof(s, x) - given a table or list s and a value x, generate the keys k such that s[k] === x"
 
 function{*} keyof(s,x)

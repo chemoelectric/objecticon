@@ -275,7 +275,7 @@ procedure clone(o, seen)
       }
 
       "record" : {
-         res := proc(subtype(o))() | fatal(o, "Couldn't lookup record constructor")
+         res := constructorof(o)()
          seen[o] := res
          every i := 1 to *o do
             res[i] := clone(o[i], seen)
