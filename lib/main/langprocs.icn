@@ -268,14 +268,14 @@ procedure clone(o, seen)
             # The members of res may reference it...
             seen[o] := res
             every i := 1 to Class.get_n_instance_fields(res) do
-               Class.get(res, i) := clone(Class.get(o, i), seen) | fail
+               Class.get(res, i) := clone(Class.get(o, i), seen)
             Class.complete_raw(res)
          }
          return res
       }
 
       "record" : {
-         res := proc(subtype(o))()
+         res := proc(subtype(o))() | fatal(o, "Couldn't lookup record constructor")
          seen[o] := res
          every i := 1 to *o do
             res[i] := clone(o[i], seen)
