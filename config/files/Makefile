@@ -10,6 +10,9 @@ clean :
 	$(MAKE) -C lib clean
 	$(MAKE) -C apps clean
 
+test :
+	$(MAKE) -C test all
+
 PACKAGE_NAME=@PACKAGE_NAME@
 PACKAGE_TARNAME=@PACKAGE_TARNAME@
 PACKAGE_VERSION=@PACKAGE_VERSION@
@@ -104,6 +107,10 @@ tar :
 	@mkdir -p $(T)
 	@for f in $$( find apps base lib \
 		-regex ".*\.\(icn\|c\|r\|ri\|h\|y\|icon\)" ) ; do \
+		cp --parents $$f $(T) ;\
+	done
+	@for f in $$( find test \
+		-regex ".*\.\(icn\|std\|stde\|dat\|gif\|sh\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \

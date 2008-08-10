@@ -1,0 +1,735 @@
+classof(x): class Eight
+is(x,Eight): yes
+is(x,Class): no
+is(Eight,Eight): yes
+is(Eleven,Eight): yes
+is(Eleven,Ten): yes
+is(Eight,Eleven): no
+Class.for_name("junk"): no
+Class.for_name([]): Error 103
+is(): Error 603
+is("junk"): Error 603
+is(x,"junk"): Error 603
+is("junk",Eleven): Error 619
+classof(Time()): No error, gave class util.Time
+classof(): Error 602
+classof("abc"): Error 602
+Class.get_supers(): Error 619
+Class.get_supers(1): Error 619
+Class.get_implemented_classes(): Error 619
+Class.get_implemented_classes(1): Error 619
+Class.get_supers(Eleven): class Eight class Ten 
+Class.get_implemented_classes(Eleven): class Eleven class Eight class Ten class Nine 
+-------------
+Class Eleven
+Supers: class Eight class Ten 
+Implemented classes: class Eleven class Eight class Ten class Nine 
+Flags: 0
+Num fields: 17
+Field names: "z" "one" "two" "three" "four" "five" "six" "seven" "eight" "a" "b" "c" "eleven1" "new" "thing" "dm" "ten1" 
+Num class fields: 8
+Class field names: "a" "b" "c" "eleven1" "new" "thing" "dm" "ten1" 
+Num instance fields: 9
+Instance field names: "z" "one" "two" "three" "four" "five" "six" "seven" "eight" 
+is(c,c): yes
+is(c,Class): no
+Class.for_name check: yes
+Field count check: yes
+Name set check1: yes
+Name set check2: yes
+Field z index 1
+	Name: z
+	Index: 1
+	Flags: 4
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: 100
+Field one index 2
+	Name: one
+	Index: 2
+	Flags: 4
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: &null
+Field two index 3
+	Name: two
+	Index: 3
+	Flags: 4
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: &null
+Field three index 4
+	Name: three
+	Index: 4
+	Flags: 4
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: &null
+Field four index 5
+	Name: four
+	Index: 5
+	Flags: 4
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: &null
+Field five index 6
+	Name: five
+	Index: 6
+	Flags: 4
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: &null
+Field six index 7
+	Name: six
+	Index: 7
+	Flags: 4
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: &null
+Field seven index 8
+	Name: seven
+	Index: 8
+	Flags: 4
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: &null
+Field eight index 9
+	Name: eight
+	Index: 9
+	Flags: 4
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: &null
+Field a index 10
+	Name: a
+	Index: 10
+	Flags: 36
+	Defining class: class Eleven
+	Value via class: &null
+	Value via instance: Not accessible
+Field b index 11
+	Name: b
+	Index: 11
+	Flags: 36
+	Defining class: class Eleven
+	Value via class: &null
+	Value via instance: Not accessible
+Field c index 12
+	Name: c
+	Index: 12
+	Flags: 36
+	Defining class: class Eleven
+	Value via class: &null
+	Value via instance: Not accessible
+Field eleven1 index 13
+	Name: eleven1
+	Index: 13
+	Flags: 5
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: methp(object Eleven_1(9),method Eleven.eleven1)
+	Class.methp_has_object(v, o): yes
+Field new index 14
+	Name: new
+	Index: 14
+	Flags: 1029
+	Defining class: class Eleven
+	Value via class: Not accessible
+	Value via instance: Not accessible
+Field thing index 15
+	Name: thing
+	Index: 15
+	Flags: 5
+	Defining class: class Eight
+	Value via class: Not accessible
+	Value via instance: methp(object Eleven_1(9),method Eight.thing)
+	Class.methp_has_object(v, o): yes
+Field dm index 16
+	Name: dm
+	Index: 16
+	Flags: 261
+	Defining class: class Eight
+	Value via class: Not accessible
+	Value via instance: methp(object Eleven_1(9),method deferred_method_stub)
+	Class.methp_has_object(v, o): yes
+Field ten1 index 17
+	Name: ten1
+	Index: 17
+	Flags: 37
+	Defining class: class Ten
+	Value via class: method Ten.ten1
+	Value via instance: Not accessible
+-------------
+Class Eight
+Supers: 
+Implemented classes: class Eight 
+Flags: 0
+Num fields: 2
+Field names: "thing" "dm" 
+Num class fields: 2
+Class field names: "thing" "dm" 
+Num instance fields: 0
+Instance field names: 
+is(c,c): yes
+is(c,Class): no
+Class.for_name check: yes
+Field count check: yes
+Name set check1: yes
+Name set check2: yes
+Field thing index 1
+	Name: thing
+	Index: 1
+	Flags: 5
+	Defining class: class Eight
+	Value via class: Not accessible
+	Value via instance: methp(object Eight_2(0),method Eight.thing)
+	Class.methp_has_object(v, o): yes
+Field dm index 2
+	Name: dm
+	Index: 2
+	Flags: 261
+	Defining class: class Eight
+	Value via class: Not accessible
+	Value via instance: methp(object Eight_2(0),method deferred_method_stub)
+	Class.methp_has_object(v, o): yes
+-------------
+Class Nine
+Supers: 
+Implemented classes: class Nine 
+Flags: 0
+Num fields: 0
+Field names: 
+Num class fields: 0
+Class field names: 
+Num instance fields: 0
+Instance field names: 
+is(c,c): yes
+is(c,Class): no
+Class.for_name check: yes
+Field count check: yes
+Name set check1: yes
+Name set check2: yes
+-------------
+Class Ten
+Supers: class Nine 
+Implemented classes: class Ten class Nine 
+Flags: 0
+Num fields: 1
+Field names: "ten1" 
+Num class fields: 1
+Class field names: "ten1" 
+Num instance fields: 0
+Instance field names: 
+is(c,c): yes
+is(c,Class): no
+Class.for_name check: yes
+Field count check: yes
+Name set check1: yes
+Name set check2: yes
+Field ten1 index 1
+	Name: ten1
+	Index: 1
+	Flags: 37
+	Defining class: class Ten
+	Value via class: method Ten.ten1
+	Value via instance: Not accessible
+Test eleven1: No error, gave "in eleven1"
+Test set: No error, gave 99
+x.z = 99: yes
+to_string: list<29>[object Seven<1>(a=1;c=3), ref object Seven<1>]
+Class.get(Eleven, "rubbish"): Error 207
+Class.get(Eleven, "a"): No error, gave &null
+Class.junk: Error 207
+Clone check: object One<1>(x=1;y=2)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: record rec1<1>(a=1;b=2;c=3)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+Clone check: &null
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Clone check: 1
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Clone check: "fred"
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Clone check: list<45>["fred", "mary", 100, 3.2, 'abc', 72057594037927935]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Clone check: list<54>[6, 7, 8]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<62>[list<54>, list<55>, 1, list<61>, 3, 4, 5, ref list<54>] -v- list<64>[list<55>, list<54>, 1, list<63>, 3, 4, 5, ref list<55>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<62>[list<54>, list<55>, 1, list<61>, 3, 4, 5, ref list<54>] -v- list<64>[list<55>, list<54>, 1, list<63>, 3, 4, 5, ref list<55>, 5]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: 1 -v- 1.0
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): no
+	subtype(a)==subtype(b): no
+Equals check: 1 -v- 1
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: "fred" -v- "fred"
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: "bred" -v- "fred"
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: procedure proc1 -v- procedure proc1
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+Equals check: procedure proc1 -v- procedure proc1
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+p===q: yes
+Equals check: procedure proc1 -v- procedure proc2
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+subtype(f)=="args.icn": yes
+Equals check: file(args.icn) -v- file(args.icn)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+Equals check: file(args.icn) -v- file(classes.icn)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<121>[1, 2, list<116>, list<117>, list<120>] -v- list<127>[1, 2, list<122>, list<123>, list<126>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<140>[list<121>, ref list<121>, ref list<121>] -v- list<141>[list<121>, ref list<121>, ref list<121>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<151>[1, 2, list<146>, list<147>, list<150>] -v- list<157>[1, 2, list<152>, list<153>, list<156>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<151>[1, 2, list<146>, list<147>, list<150>] -v- list<151>[1, 2, list<146>, list<147>, list<150>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: &null -v- &null
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<184>["the", "cat", "sat", "on", "the", "mat"] -v- list<185>["the", "cat", "sat", "on", "the", "mat"]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<200>["the", "cat", "sat", "off", "the", "mat"] -v- list<201>["the", "cat", "sat", "on", "the", "mat"]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<216>[1, 2, ref list<216>] -v- list<217>[1, 2, ref list<217>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Clone check: list<216>[1, 2, ref list<216>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<228>[1, 2, ref list<228>] -v- list<229>[1, 2, list<228>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<238>[list<237>, ref list<237>] -v- list<241>[list<239>, list<240>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<248>[list<247>, ref list<247>] -v- list<249>[list<247>, 1]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<255>[ref list<255>] -v- list<256>[ref list<256>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: object Three<1>(x=&null;y=&null) -v- object Three<2>(x=&null;y=&null)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Equals check: object Three<1>(x=&null;y=&null) -v- object Three<3>(x=&null;y=&null)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Equals check: list<271>[object Three<1>, ref object Three<1>] -v- list<272>[object Three<2>, object Three<3>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: object One<3>(x=1;y=Two{id=1}) -v- object One<4>(x=1;y=Two{id=1})
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Equals check: object One<3>(x=1;y=Two{id=1}) -v- object One<5>(x=1;y=3)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: list<290>[Two{id=1}, Two{id=2}, Two{id=3}]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Clone check: object One<6>(x=Two{id=5};y=Two{id=6})
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: list<300>[object One<8>, ref object One<8>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: object One<10>(x="hello";y=Two{id=1}) -v- object One<11>(x="hello";y=Two{id=1})
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: object One<12>(x=object One<15>;y=ref object One<15>)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: object Four<1>(x=&null;y=&null;z=&null)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: object One<20>(x=set<143>;y=&null)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: Five
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: ClTable<1>[1=Two{id=22};2=ref object Two<18>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: object Six<1>(x=100;y=ref object Six<1>)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Clone check: ClTable<3>[10=list<383>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Equals check: table<194>def=&null[1=2;3=4;ref table<194>=ref table<194>] -v- table<195>def=&null[1=2;3=4;ref table<195>=ref table<195>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Clone check: table<194>def=&null[1=2;3=4;ref table<194>=ref table<194>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: list<522>[list<519>, ref list<519>] -v- list<523>[list<520>, list<521>]
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: set<202>{list<531>, list<530>, list<529>} -v- set<203>{list<534>, list<533>, list<535>}
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: set<212>{ref set<212>} -v- set<213>{ref set<213>}
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: set<216>{list<555>, list<557>, list<556>, list<558>} -v- set<217>{list<560>, list<562>, list<561>, list<563>}
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: set<228>{list<581>, list<583>, list<582>, list<584>} -v- set<229>{list<589>, list<586>, list<588>, list<587>}
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 20:11.33 BST
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Equals check: set<239>{October 10, 2000 20:11.33 BST} -v- set<240>{October 10, 2000 20:11.33 BST}
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 11:11.33 BST
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): yes
+	classof(a)===classof(b): yes
+Equals check: set<247>{October 10, 2000 20:11.33 BST} -v- set<248>{October 10, 2000 11:11.33 BST}
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+Equals check: October 10, 2000 20:11.33 BST -v- object One<22>(x=1;y=2)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): no
+	classof(a)===classof(b): no
+Random object test starting
+Random object test finished

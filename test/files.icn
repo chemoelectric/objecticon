@@ -1,0 +1,52 @@
+import util
+
+procedure test1(p, abs)
+   local s
+   s := Files.get_path(p).absolute().str()
+   yes_no{"Test abs(" || p || ")", s == abs}
+end
+
+procedure test2(p, clean)
+   local s
+   s := Files.get_path(p).canonical().str()
+   yes_no{"Test canonical(" || p || ")", s == clean}
+end
+
+procedure main()
+   local cd, pd
+
+   cd := chdir()
+   cd ? {
+      while tab(upto('/')) do move(1)
+      move(-1)
+      pd := tab(1)
+   }
+
+   test1("/tmp/xyz.txt", "/tmp/xyz.txt")
+   test1("/tmp//xyz.txt", "/tmp/xyz.txt")
+   test1("////tmp////xyz.txt///", "/tmp/xyz.txt")
+   test1("xyz.txt", cd||"/xyz.txt")
+   test1("abc/def/xyz.txt", cd||"/abc/def/xyz.txt")
+   test1("/","/")
+   test1("/x","/x")
+
+   test2("/tmp/../xyz.txt", "/xyz.txt")
+   test2("/tmp/./xyz.txt", "/tmp/xyz.txt")
+   test2("/..", "/")
+
+   test2("/tmp/xyz.txt","/tmp/xyz.txt")
+   test2("/tmp","/tmp")
+   test2("/..","/")
+   test2("/","/")
+   test2("hello",cd||"/hello")
+   test2("../hello",pd||"/hello")
+   test2("./hello",cd||"/hello")
+   test2(".",cd)
+   test2("..",pd)
+   test2("xyz.txt",cd||"/xyz.txt")
+   test2("abc/def/xyz.txt",cd||"/abc/def/xyz.txt")
+   test2("/x","/x")
+   test2("",cd)
+
+   write("ok")
+end
