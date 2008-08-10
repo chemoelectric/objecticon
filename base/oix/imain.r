@@ -552,12 +552,15 @@ void resolve(pstate)
 
                 if (i < 0) {
                     /*
-                     * globals[j] points to a built-in function; call (bi_)strprc
-                     *  to look it up by name in the interpreter's table of built-in
-                     *  functions.
+                     * It is a builtin function.  Calculate the index and carry out
+                     * some sanity checks on it.
                      */
-                    if((BlkLoc(globals[j])= (union block *)bi_strprc(gnames+j,0)) == NULL)
-                        globals[j] = nulldesc;		/* undefined, set to &null */
+                    int n = -1 - i;
+                    if (n < 0 || n >= pnsize)
+                        error("Builtin function index out of range: %d", n);
+                    BlkLoc(globals[j]) = (union block *)pntab[n].pblock;
+                    if (!eq(&gnames[j], &pntab[n].pblock->pname))
+                        error("Builtin function index name mismatch: %s", StrLoc(gnames[j]));
                 }
                 else {
 

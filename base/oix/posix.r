@@ -30,9 +30,9 @@ extern int errno;
 } while (0)
 
 
-"sys_errstr() - get the error string corresponding to an &errno value."
+"syserrstr() - get the error string corresponding to an &errno value."
 
-function{0,1} sys_errstr(e)
+function{0,1} syserrstr(e)
    if !cnv:C_integer(e) then
       runerr(101, e)
    abstract {
@@ -89,9 +89,9 @@ function{0,1} getpid()
      }
 end
 
-"link() - create a link to a file."
+"hardlink() - create a hard link to a file."
 
-function{0,1} link(s1, s2)
+function{0,1} hardlink(s1, s2)
    if !cnv:C_string(s1) then
       runerr(103, s1)
    if !cnv:C_string(s2) then

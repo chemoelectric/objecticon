@@ -1531,7 +1531,7 @@ GenWrite(stop,	 True,	True)  /* stop(s, ...) - write message and stop */
 GenWrite(write,  True,	False) /* write(s, ...) - write with new-line */
 GenWrite(writes, False, False) /* writes(s, ...) - write with no new-line */
 
-#ifdef KeyboardFncs
+
 
 "getch() - return a character from console."
 
@@ -1576,7 +1576,7 @@ function{0,1} kbhit()
       else fail;
       }
 end
-#endif					/* KeyboardFncs */
+
 
 "chdir(s) - change working directory to s."
 function{0,1} chdir(s)

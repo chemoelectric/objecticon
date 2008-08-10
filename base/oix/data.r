@@ -16,13 +16,11 @@ struct b_iproc mt_llist = {
  * External declarations for function blocks.
  */
 
-#define FncDef(p,n) extern struct b_proc Cat(B,p);
-#define FncDefV(p) extern struct b_proc Cat(B,p);
+#define FncDef(p) extern struct b_proc Cat(B,p);
 #passthru #undef exit
 #undef exit
 #include "../h/fdefs.h"
 #undef FncDef
-#undef FncDefV
 
 #define OpDef(p,n,s,u) extern struct b_proc Cat(B,p);
 #include "../h/odefs.h"
@@ -75,16 +73,12 @@ struct b_proc *opblks[] = {
 
 struct pstrnm pntab[] = {
 
-#define FncDef(p,n) Lit(p), Cat(&B,p),
-#define FncDefV(p) Lit(p), Cat(&B,p),
+#define FncDef(p) Lit(p), Cat(&B,p),
 #include "../h/fdefs.h"
 #undef FncDef
-#undef FncDefV
-
-	0,		 0
 	};
 
-int pnsize = (sizeof(pntab) / sizeof(struct pstrnm)) - 1;
+int pnsize = (sizeof(pntab) / sizeof(struct pstrnm));
 
 
 /*

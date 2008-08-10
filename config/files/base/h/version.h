@@ -24,21 +24,4 @@
  */
    
 #define UVersion "U1.0.02"
-   
-#if IntBits == 16
-     #define IVersion "I1.0.00/16"
-#endif				/* IntBits == 16 */
-
-#if IntBits == 32
-    #define IVersion "I1.0.00/32"
-#endif				/* IntBits == 32 */
-
-#if IntBits == 64
-     #define IVersion "I1.0.00/64"
-#endif				/* IntBits == 64 */
-
-
-/*
- * Version number for event monitoring.
- */
-#define Eversion "1.0.00"
+#define IVersion "I1.0.01"

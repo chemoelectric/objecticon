@@ -859,11 +859,6 @@ void datainit()
 
     maps2 = nulldesc;
     maps3 = nulldesc;
-
-    qsort((char *)pntab, pnsize, sizeof(struct pstrnm),
-          (QSortFncCast)pstrnmcmp);
-
-
 }
 
 /*

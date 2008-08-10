@@ -180,13 +180,6 @@
    #endif	
 #endif					/* Pipes */
 
-#ifndef KeyboardFncs
-   #if UNIX
-      #ifndef NoKeyboardFncs
-	 #define KeyboardFncs
-      #endif				/* NoKeyboardFncs */
-   #endif				/* UNIX */
-#endif					/* KeyboardFncs */
 
 /*
  * Default sizing and such.

@@ -1374,10 +1374,9 @@ static void gentables()
 
             if (Dflag)
                 fprintf(dbgfile, "%ld:\t%06lo\t%d\t\t#   %s\n",
-                        (long)pc, (long)D_Proc, -gp->builtin->builtin_id, gp->name);
-
+                        (long)pc, (long)D_Proc, -gp->builtin->builtin_id - 1, gp->name);
             outword(D_Proc);
-            outword(-gp->builtin->builtin_id);
+            outword(-gp->builtin->builtin_id - 1);
         }
         else if (gp->g_flag & F_Proc) {		/* Icon procedure */
 

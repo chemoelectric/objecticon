@@ -49,9 +49,7 @@
 
    Feature(1, "_EXTERNAL_FUNCTIONS", "external functions")
 
-#ifdef KeyboardFncs
    Feature(1, "_KEYBOARD_FUNCTIONS", "keyboard functions")
-#endif					/* KeyboardFncs */
 
    Feature(largeints, "_LARGE_INTEGERS", "large integers")
 

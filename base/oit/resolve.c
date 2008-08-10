@@ -11,6 +11,34 @@
 static void merge(struct lclass *cl, struct lclass *super);
 
 /*
+ * Names of builtin functions.
+ */
+char *builtin_table[] = {
+#define FncDef(p) Lit(p),
+#include "../h/fdefs.h"
+#undef FncDef
+};
+
+static int builtin_table_cmp(const void *key, const void *item)
+{
+    return strcmp((char*)key, *((char **)item));
+}
+
+/*
+ * Lookup a builtin function name; returns -1 if not found, or the
+ * index otherwise.
+ */
+static int blocate(char *s)
+{
+    char **p = bsearch(s, builtin_table, asize(builtin_table), 
+                       sizeof(char *), builtin_table_cmp);
+    if (!p)
+        return -1;
+
+    return p - builtin_table;
+}
+
+/*
  * Just like glocate, but if the symbol is not found then it checks
  * for a builtin function as well.
  */
@@ -18,7 +46,7 @@ static struct gentry *gb_locate(char *name)
 {
     struct gentry *gl = glocate(name);
     int bn;
-    if (!gl && (bn = blocate(name))) {	
+    if (!gl && (bn = blocate(name)) >= 0) {	
         struct loc bl = {"Builtin", 0};
         /* Builtin function, add to global table so we see it next time */
         gl = putglobal(name, F_Builtin | F_Proc, 0, &bl);

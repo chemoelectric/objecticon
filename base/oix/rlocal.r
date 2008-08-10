@@ -27,6 +27,10 @@ Deliberate Syntax Error
 
 #if MSWIN32
 
+int getch()  { return -1; }
+int getche() { return -1; }
+int kbhit()  { return 0; }
+
 #endif					/* MSWIN32 */
 
 
