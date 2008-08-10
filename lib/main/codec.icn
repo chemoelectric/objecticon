@@ -293,7 +293,7 @@ class Decode()
          Codec.RECORD_CODE : {
             (rname := line_in() &
              n := int_in()) | fail
-            res := proc(rname)()
+            res := proc(rname)() | fail
             note_seen(res)
             every i := 1 to n do
                res[i] := decode() | fail
