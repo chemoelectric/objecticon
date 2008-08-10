@@ -9,7 +9,6 @@ void add_local(struct lfunction *func, char *name, int flags, struct loc *pos);
 void add_constant(struct lfunction *func, 
                   int flags, int len, union xval *valp);
 struct fentry *flocate(char *name);
-int blocate(char *s);
 struct lclass_field *lookup_method(char *class, char *method);
 
 #endif

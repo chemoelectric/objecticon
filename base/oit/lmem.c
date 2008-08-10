@@ -30,10 +30,47 @@ struct gentry *lgfirst;		/* first global table entry */
 struct gentry *lglast;		/* last global table entry */
 
 /*
+ * Names of builtin functions.
+ */
+char *builtin_table[] = {
+#define FncDef(p,n) Lit(p),
+#define FncDefV(p) Lit(p),
+#include "../h/fdefs.h"
+#undef FncDef
+#undef FncDefV
+};
+
+int builtin_table_size = sizeof(builtin_table)/sizeof(char *);
+
+static int builtin_table_compare(const void *p1, const void *p2)
+{
+    char *s1, *s2;
+    s1 = *((char **)p1);
+    s2 = *((char **)p2);
+    return strcmp(s1, s2);
+}
+
+/*
+ * Lookup a builtin function name; returns 0 if not found, or the
+ * function number (1-based) otherwise.
+ */
+int blocate(char *s)
+{
+    char **p = bsearch(&s, builtin_table, builtin_table_size, 
+                       sizeof(char *), builtin_table_compare);
+    if (!p)
+        return 0;
+
+    return (p - builtin_table) + 1;
+}
+
+/*
  * linit - scan the command line arguments and initialize data structures.
  */
 void linit()
 {
+    qsort(builtin_table, builtin_table_size, sizeof(char *), builtin_table_compare);
+
     init_package_db();
     load_package_db_from_ipath();
 

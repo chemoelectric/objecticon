@@ -123,18 +123,6 @@ struct fentry *flocate(char *name)
  *  it easier to add/delete functions. If found, returns index+1 for entry.
  */
 
-int blocate(char *s)
-{
-    int i;
-    extern char *ftable[];
-    extern int ftbsize;
-
-    for (i = 0; i < ftbsize; i++)
-        if (strcmp(ftable[i], s) == 0)
-            return i + 1;
-    return 0;
-}
-
 /*
  * Lookup a method, given in the form class:method.  Returns 0 if not
  * found.

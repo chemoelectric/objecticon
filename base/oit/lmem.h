@@ -33,6 +33,7 @@ extern int maxcode;    /* code space */
 extern int fnmsize;	    /* ipc/file name assoc. table */
 extern int maxlabels;	    /* maximum num of labels/proc */
 
+int blocate(char *s);
 void linit();
 void dumplfiles();
 void paramlink(char *name);

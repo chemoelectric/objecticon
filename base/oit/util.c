@@ -5,18 +5,6 @@
 #include "icont.h"
 #include "tmain.h"
 
-/*
- * Names of Icon functions.
- */
-char *ftable[] = {
-#define FncDef(p,n) Lit(p),
-#define FncDefV(p) Lit(p),
-#include "../h/fdefs.h"
-#undef FncDef
-#undef FncDefV
-};
-
-int ftbsize = sizeof(ftable)/sizeof(char *);
 
 /*
  * tcalloc - allocate and zero m*n bytes
