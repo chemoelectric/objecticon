@@ -43,9 +43,9 @@ typedef struct si_ *siptr;
 /*
  * structure supporting dynamic record types
  */
-struct b_proc_list {
-    struct b_proc *this;
-    struct b_proc_list *next;
+struct b_constructor_list {
+    struct b_constructor *this;
+    struct b_constructor_list *next;
 };
 
 struct b_bignum {		/* large integer block */
@@ -71,16 +71,19 @@ struct b_file {			/* file block */
     word title;			/*   T_File */
     union {
         FILE *fp;			/*   stdio file pointer */
-#ifdef Graphics
-        struct _wbinding *wb;			/*   window */
-#endif					/* Graphics */
         int fd;			/*   other int-based file descriptor */
     } fd;
     word status;			/*   file status */
     struct descrip fname;	/*   file name (string qualifier) */
 };
 
-
+struct b_window {		/* window block */
+    word title;			/*   T_Window */
+#ifdef Graphics
+    struct _wbinding *wb;	/*   window */
+#endif /* Graphics */
+    word isopen;		/*  open status */
+};
 
 struct b_lelem {		/* list-element block */
     word title;			/*   T_Lelem */
@@ -123,11 +126,22 @@ struct b_proc {			/* procedure block */
     struct descrip lnames[1];	/*   list of local names (qualifiers) */
 };
 
+struct b_constructor {		/* constructor block */
+    word title;			/*   T_Constructor */
+    word blksize;		/*   size of block */
+    word fieldtable_col;
+    struct progstate *program;  /*   program in which this constructor resides */
+    word instance_ids;          /*   Sequence for instance ids */
+    word n_fields;
+    struct descrip name;	/*   procedure name (string qualifier) */
+    struct descrip field_names[1];	/*   list of field names (qualifiers) */
+};
+
 struct b_record {		/* record block */
     word title;			/*   T_Record */
     word blksize;		/*   size of block */
     word id;			/*   identification number */
-    union block *recdesc;	/*   pointer to record constructor */
+    struct b_constructor *constructor;	/*   pointer to record constructor */
     struct descrip fields[1];	/*   fields */
 };
 
@@ -185,14 +199,6 @@ struct b_methp {                /* method pointer */
     struct b_object *object;	/*   the instance */
     struct b_proc *proc;	/*   the method */
 };
-
-/*
- * Alternate uses for procedure block fields, applied to records.
- */
-#define nfields	nparam		  /* number of fields */
-#define recfieldtable_col nstatic /* fieldtable column */
-#define recid fstatic		  /* record instance serial number generator */
-#define recname	pname		  /* record name */
 
 struct b_selem {		/* set-element block */
     word title;			/*   T_Selem */
@@ -398,11 +404,10 @@ struct progstate {
     struct descrip AmperErrno;
 
 #ifdef Graphics
-    struct descrip AmperX, AmperY, AmperRow, AmperCol;/* &x, &y, &row, &col */
+    struct descrip AmperX, AmperY;               /* &x, &y */
     struct descrip AmperInterval;			/* &interval */
     struct descrip LastEventWin;			/* last Event() win */
     int LastEvFWidth;
-    int LastEvLeading;
     int LastEvAscent;
     uword PrevTimeStamp;				/* previous timestamp */
     uword Xmod_Control, Xmod_Shift, Xmod_Meta;	/* control,shift,meta */
@@ -466,13 +471,16 @@ struct progstate {
     struct b_bignum * (*Alcbignum)(word);
     struct b_cset * (*Alccset)();
     struct b_file * (*Alcfile)(FILE*,int,dptr);
+#ifdef Graphics
+    struct b_window * (*Alcwindow)(struct _wbinding *, word);
+#endif
     union block * (*Alchash)(int);
     struct b_slots * (*Alcsegment)(word);
     struct b_list *(*Alclist_raw)(uword,uword);
     struct b_list *(*Alclist)(uword,uword);
     struct b_lelem *(*Alclstb)(uword,uword,uword);
     struct b_real *(*Alcreal)(double);
-    struct b_record *(*Alcrecd)(int, union block *);
+    struct b_record *(*Alcrecd)(struct b_constructor *);
     struct b_object *(*Alcobject)(struct b_class *);
     struct b_cast *(*Alccast)();
     struct b_methp *(*Alcmethp)();
@@ -608,6 +616,8 @@ union block {			/* general block */
     struct b_object object;
     struct b_cast cast;
     struct b_methp methp;
+    struct b_constructor constructor;
+    struct b_window window;
     struct b_bignum bignumblk;
 };
 

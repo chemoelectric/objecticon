@@ -547,21 +547,21 @@ union block **memb(union block *pb, dptr x, uword hn, int *res)
  */
 
 int longest_dr = 0;
-struct b_proc_list **dr_arrays;
+struct b_constructor_list **dr_arrays;
 
-struct b_proc *dynrecord(dptr s, dptr fields, int n)
+struct b_constructor *dynrecord(dptr s, dptr fields, int n)
 {
-    struct b_proc_list *bpelem = NULL;
-    struct b_proc *bp = NULL;
+    struct b_constructor_list *bpelem = NULL;
+    struct b_constructor *bp = NULL;
     int i;
     if (n > longest_dr) {
         if (longest_dr==0) {
-            dr_arrays = calloc(n, sizeof (struct b_proc *));
+            dr_arrays = calloc(n, sizeof (struct b_constructor *));
             if (dr_arrays == NULL) return NULL;
 	    longest_dr = n;
         }
         else {
-	    dr_arrays = realloc(dr_arrays, n * sizeof (struct b_proc *));
+	    dr_arrays = realloc(dr_arrays, n * sizeof (struct b_constructor *));
             if (dr_arrays == NULL) return NULL;
 	    while(longest_dr<n) {
                 dr_arrays[longest_dr++] = NULL;
@@ -572,10 +572,10 @@ struct b_proc *dynrecord(dptr s, dptr fields, int n)
     if (n>0)
         for(bpelem = dr_arrays[n-1]; bpelem; bpelem = bpelem->next) {
             bp = bpelem->this;
-            if (eq(&bp->pname, s)) {
+            if (eq(&bp->name, s)) {
                 for (i=0; i<n; i++) {
-                    if((StrLen(fields[i]) != StrLen(bp->lnames[i])) ||
-                       strncmp(StrLoc(fields[i]), StrLoc(bp->lnames[i]),StrLen(fields[i]))) break;
+                    if((StrLen(fields[i]) != StrLen(bp->field_names[i])) ||
+                       strncmp(StrLoc(fields[i]), StrLoc(bp->field_names[i]),StrLen(fields[i]))) break;
                 }
                 if(i==n) {
                     return bp;
@@ -583,31 +583,28 @@ struct b_proc *dynrecord(dptr s, dptr fields, int n)
             }
         }
 
-    bp = (struct b_proc *)malloc(sizeof(struct b_proc) +
+    bp = (struct b_constructor *)malloc(sizeof(struct b_constructor) +
                                  sizeof(struct descrip) * n);
     if (bp == NULL) return NULL;
-    bp->title = T_Proc;
-    bp->blksize = sizeof(struct b_proc) + sizeof(struct descrip) * n;
-    bp->entryp.ccode = Omkrec;
-    bp->nfields = n;
-    bp->ndynam = -2;
-    bp->recfieldtable_col = -1;  /* Never used, since bp->program = 0 => always use string search */
-    bp->recid = 0;
+    bp->title = T_Constructor;
+    bp->blksize = sizeof(struct b_constructor) + sizeof(struct descrip) * n;
+    bp->n_fields = n;
+    bp->fieldtable_col = -1;  /* Never used, since bp->program = 0 => always use string search */
+    bp->instance_ids = 0;
     bp->program = 0;
-    bp->field = 0;
-    StrLoc(bp->recname) = malloc(StrLen(*s)+1);
-    strncpy(StrLoc(bp->recname), StrLoc(*s), StrLen(*s));
-    if (StrLoc(bp->recname) == NULL) return NULL;
-    StrLen(bp->recname) = StrLen(*s);
-    StrLoc(bp->recname)[StrLen(*s)] = '\0';
+    StrLoc(bp->name) = malloc(StrLen(*s)+1);
+    strncpy(StrLoc(bp->name), StrLoc(*s), StrLen(*s));
+    if (StrLoc(bp->name) == NULL) return NULL;
+    StrLen(bp->name) = StrLen(*s);
+    StrLoc(bp->name)[StrLen(*s)] = '\0';
     for(i=0;i<n;i++) {
-        StrLen(bp->lnames[i]) = StrLen(fields[i]);
-        StrLoc(bp->lnames[i]) = malloc(StrLen(fields[i])+1);
-        if (StrLoc(bp->lnames[i]) == NULL) return NULL;
-        strncpy(StrLoc(bp->lnames[i]), StrLoc(fields[i]), StrLen(fields[i]));
-        StrLoc(bp->lnames[i])[StrLen(fields[i])] = '\0';
+        StrLen(bp->field_names[i]) = StrLen(fields[i]);
+        StrLoc(bp->field_names[i]) = malloc(StrLen(fields[i])+1);
+        if (StrLoc(bp->field_names[i]) == NULL) return NULL;
+        strncpy(StrLoc(bp->field_names[i]), StrLoc(fields[i]), StrLen(fields[i]));
+        StrLoc(bp->field_names[i])[StrLen(fields[i])] = '\0';
     }
-    bpelem = malloc(sizeof (struct b_proc_list));
+    bpelem = malloc(sizeof (struct b_constructor_list));
     if (bpelem == NULL) return NULL;
     bpelem->this = bp;
     bpelem->next = dr_arrays[n-1];

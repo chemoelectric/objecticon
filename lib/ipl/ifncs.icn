@@ -193,18 +193,6 @@ procedure freeColor(a[])
    suspend __fnc_FreeColor ! a
 end
 
-procedure gotoRC(a[])
-   static __fnc_GotoRC
-   initial __fnc_GotoRC := proc("GotoRC", 0)
-   suspend __fnc_GotoRC ! a
-end
-
-procedure gotoXY(a[])
-   static __fnc_GotoXY
-   initial __fnc_GotoXY := proc("GotoXY", 0)
-   suspend __fnc_GotoXY ! a
-end
-
 procedure lower(a[])
    static __fnc_Lower
    initial __fnc_Lower := proc("Lower", 0)

@@ -75,6 +75,8 @@ int bsizes[] = {
      0,                       /* T_Object (27), object */
      sizeof(struct b_cast),   /* T_Cast (28), cast */
      sizeof(struct b_methp),  /* T_Methp (29), method pointer */
+     0,                       /* T_Constructor (30), record constructor */
+     sizeof(struct b_window), /* T_Window (31), window */
     };
 
 /*
@@ -116,6 +118,8 @@ int firstd[] = {
      5*WordSize,              /* T_Object (27), object */
      0,                       /* T_Cast (28), cast */
      0,                       /* T_Methp (29), methp */
+     6*WordSize,              /* T_Constructor (30), record constructor */
+     0,                       /* T_Window (31), window */
     };
 
 /*
@@ -153,6 +157,8 @@ int firstp[] = {
      0,                       /* T_Object (27), object, just a pointer to the class, which is static */
      1*WordSize,              /* T_Cast (28), cast */
      1*WordSize,              /* T_Methp (29), methp */
+     0,                       /* T_Constructor (30), record constructor */
+     0,                       /* T_Window (31), window */
     };
 
 /*
@@ -190,6 +196,8 @@ int ptrno[] = {
     -1,                       /* T_Object (27), object */
      2,                       /* T_Cast (28), cast */
      2,                       /* T_Methp (29), method pointer */
+    -1,                       /* T_Constructor (30), record constructor */
+    -1,                       /* T_Window (31), window */
     };
 
 /*
@@ -226,6 +234,8 @@ char *blkname[] = {
    "object",                            /* T_Object (27) */
    "cast",                              /* T_Cast (28) */
    "methp",                             /* T_Methp (29) */
+   "constructor",                       /* T_Constructor (30), record constructor */
+   "window",                            /* T_Window (31), window */
    };
 
 /*
@@ -406,7 +416,7 @@ int region;
      wsp ws;
 
      for (ws = wstates; ws ; ws = ws->next) {
-	    if (is:file(ws->filep))
+	    if (is:window(ws->filep))
 	      markblock(&(ws->filep));
 	    if (is:list(ws->listp))
 	      markblock(&(ws->listp));

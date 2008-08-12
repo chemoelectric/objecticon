@@ -315,6 +315,10 @@ dptr dp;
 	    dp = &(BlkLoc(*dp)->class.name);
 	    goto hashstring;
 
+         case T_Constructor:
+	    dp = &(BlkLoc(*dp)->constructor.name);
+	    goto hashstring;
+
          case T_Cast:
             i = (13255 * BlkLoc(*dp)->cast.object->id) >> 10;
             break;
@@ -452,23 +456,6 @@ int noimage;
 	       fprintf(f, "directory(");
                }
 	    else
-#ifdef Graphics
-	    if (BlkLoc(*dp)->file.status & Fs_Window) {
-	       if ((BlkLoc(*dp)->file.status != Fs_Window) && /* window open?*/
-		  (s = BlkLoc(*dp)->file.fd.wb->window->windowlabel)) {
-		  i = strlen(s);
-	          fprintf(f, "window_%d:%d(",
-		       BlkLoc(*dp)->file.fd.wb->window->serial,
-		       BlkLoc(*dp)->file.fd.wb->context->serial
-		       );
-		  }
-	       else {
-		  i = 0;
-	          fprintf(f, "window_-1:-1(");
-		 }
-	       }
-	    else
-#endif					/* Graphics */
 	       fprintf(f, "file(");
 	    while (i-- > 0)
 	       printimage(f, *s++, '\0');
@@ -476,11 +463,41 @@ int noimage;
             }
          }
 
+#ifdef Graphics
+     window: {
+      wbp w = BlkLoc(*dp)->window.wb;
+      if (BlkLoc(*dp)->window.isopen &&
+           (s = w->window->windowlabel)) {
+           i = strlen(s);
+           fprintf(f, "window_%d:%d(",
+                   w->window->serial,
+                   w->context->serial
+               );
+       }
+       else {
+           i = 0;
+           fprintf(f, "window_-1:-1(");
+       }
+       while (i-- > 0)
+         printimage(f, *s++, '\0');
+       putc(')', f);
+     }
+#endif					/* Graphics */
+
      class: {
            /* produce "class " + the class name */
          i = StrLen(BlkLoc(*dp)->class.name);
          s = StrLoc(BlkLoc(*dp)->class.name);
          fprintf(f, "class ");
+         while (i-- > 0)
+            printimage(f, *s++, '\0');
+         }
+
+     constructor: {
+           /* produce "constructor " + the type name */
+         i = StrLen(BlkLoc(*dp)->constructor.name);
+         s = StrLoc(BlkLoc(*dp)->constructor.name);
+         fprintf(f, "constructor ");
          while (i-- > 0)
             printimage(f, *s++, '\0');
          }
@@ -508,7 +525,6 @@ int noimage;
               * Produce one of:
               *  "procedure name"
               *  "function name"
-              *  "record constructor name"
               *
               * Note that the number of dynamic locals is used to determine
               *  what type of "procedure" is at hand.
@@ -518,7 +534,6 @@ int noimage;
              switch ((int)BlkLoc(*dp)->proc.ndynam) {
                  default:  type = "procedure"; break;
                  case -1:  type = "function"; break;
-                 case -2:  type = "record constructor"; break;
              }
              fprintf(f, "%s ", type);
              while (i-- > 0)
@@ -633,13 +648,13 @@ int noimage;
           *  the image of each field instead of the number of fields.
           */
          bp = BlkLoc(*dp);
-         i = StrLen(bp->record.recdesc->proc.recname);
-         s = StrLoc(bp->record.recdesc->proc.recname);
+         i = StrLen(bp->record.constructor->name);
+         s = StrLoc(bp->record.constructor->name);
          fprintf(f, "record ");
          while (i-- > 0)
             printimage(f, *s++, '\0');
         fprintf(f, "_%ld", (long)bp->record.id);
-         j = bp->record.recdesc->proc.nfields;
+         j = bp->record.constructor->n_fields;
          if (j <= 0)
             fprintf(f, "()");
          else if (noimage > 0)
@@ -1275,6 +1290,17 @@ dptr dp1, dp2;
          StrLen(*dp2) = len + 6;
        }
 
+     constructor: {
+          /* produce "constructor " + the type name */
+         len = StrLen(BlkLoc(source)->constructor.name);
+         s = StrLoc(BlkLoc(source)->constructor.name);
+	 Protect (reserve(Strings, len + 12), return Error);
+         Protect(t = alcstr("constructor ", 12), return Error);
+         Protect(alcstr(s, len),  return Error);
+         StrLoc(*dp2) = t;
+         StrLen(*dp2) = len + 12;
+       }
+
       integer: {
          if (Type(source) == T_Lrgint) {
             word slen;
@@ -1333,6 +1359,33 @@ dptr dp1, dp2;
          ++StrLen(*dp2);
          }
 
+#ifdef Graphics
+      window: {
+         wbp w = BlkLoc(source)->window.wb;
+
+         if (BlkLoc(source)->window.isopen && (s = w->window->windowlabel)){
+             len = strlen(s);
+             Protect (reserve(Strings, (len << 2) + 16), return Error);
+             sprintf(sbuf, "window_%d:%d(", 
+                       w->window->serial,
+                       w->context->serial
+                       );
+         }
+         else {
+             len = 0;
+             Protect (reserve(Strings, 16), return Error);
+             sprintf(sbuf, "window_-1:-1(");
+         }
+         Protect(t = alcstr(sbuf, (word)(strlen(sbuf))), return Error);
+         StrLoc(*dp2) = t;
+         StrLen(*dp2) = strlen(sbuf);
+         while (len-- > 0)
+               StrLen(*dp2) += doimage(*s++, '\0');
+         Protect(alcstr(")", (word)(1)), return Error);
+         ++StrLen(*dp2);
+      }
+#endif					/* Graphics */
+
       file: {
          /*
           * Check for distinguished files by looking at the address of
@@ -1358,28 +1411,6 @@ dptr dp1, dp2;
              *	open.
              */
              char namebuf[100];		/* scratch space */
-#ifdef Graphics
-	    if (BlkLoc(source)->file.status & Fs_Window) {
-	       if ((BlkLoc(source)->file.status != Fs_Window) &&
-		  (s = BlkLoc(source)->file.fd.wb->window->windowlabel)){
-	          len = strlen(s);
-                  Protect (reserve(Strings, (len << 2) + 16), return Error);
-	          sprintf(sbuf, "window_%d:%d(", 
-		       BlkLoc(source)->file.fd.wb->window->serial,
-		       BlkLoc(source)->file.fd.wb->context->serial
-		       );
-                }
-		else {
-                  len = 0;
-                  Protect (reserve(Strings, (len << 2) + 16), return Error);
-	          sprintf(sbuf, "window_-1:-1(");
-                  }
-	       Protect(t = alcstr(sbuf, (word)(strlen(sbuf))), return Error);
-	       StrLoc(*dp2) = t;
-	       StrLen(*dp2) = strlen(sbuf);
-	       }
-	    else {
-#endif					/* Graphics */
                if (BlkLoc(source)->file.status & Fs_Socket) {
                    s = namebuf;
                    len = sock_name(BlkLoc(source)->file.fd.fd,
@@ -1394,9 +1425,6 @@ dptr dp1, dp2;
 	       Protect(t = alcstr("file(", (word)(5)), return Error);
 	       StrLoc(*dp2) = t;
 	       StrLen(*dp2) = 5;
-#ifdef Graphics
-	     }
-#endif					/* Graphics */
             while (len-- > 0)
                StrLen(*dp2) += doimage(*s++, '\0');
             Protect(alcstr(")", (word)(1)), return Error);
@@ -1426,7 +1454,6 @@ dptr dp1, dp2;
               * Produce one of:
               *  "procedure name"
               *  "function name"
-              *  "record constructor name"
               *
               * Note that the number of dynamic locals is used to determine
               *  what type of "procedure" is at hand.
@@ -1437,7 +1464,6 @@ dptr dp1, dp2;
              switch ((int)BlkLoc(source)->proc.ndynam) {
                  default:  type = "procedure "; outlen = 10; break;
                  case -1:  type = "function "; outlen = 9; break;
-                 case -2:  type = "record constructor "; outlen = 19; break;
              }
              Protect(t = alcstr(type, outlen), return Error);
              StrLoc(*dp2) = t;
@@ -1494,16 +1520,16 @@ dptr dp1, dp2;
           * where n is the number of fields.
           */
          bp = BlkLoc(*dp1);
-         rnlen = StrLen(bp->record.recdesc->proc.recname);
+         rnlen = StrLen(bp->record.constructor->name);
          sprintf(sbuf, "_%ld(%ld)", (long)bp->record.id,
-            (long)bp->record.recdesc->proc.nfields);
+            (long)bp->record.constructor->n_fields);
          len = strlen(sbuf);
 	 Protect (reserve(Strings, 7 + len + rnlen), return Error);
          Protect(t = alcstr("record ", (word)(7)), return Error);
          bp = BlkLoc(*dp1);		/* refresh pointer */
          StrLoc(*dp2) = t;
 	 StrLen(*dp2) = 7;
-         Protect(alcstr(StrLoc(bp->record.recdesc->proc.recname),rnlen),
+         Protect(alcstr(StrLoc(bp->record.constructor->name),rnlen),
 	            return Error);
          StrLen(*dp2) += rnlen;
          Protect(alcstr(sbuf, len),  return Error);

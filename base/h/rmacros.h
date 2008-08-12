@@ -46,10 +46,6 @@
 #define Fs_Reading     0100     /* last file operation was read */
 #define Fs_Writing     0200     /* last file operation was write */
 
-#ifdef Graphics
-   #define Fs_Window   0400	/* reading/writing on a window */
-#endif					/* Graphics */
-   
 #define Fs_Untrans    01000	/* untranslated mode file */
 #define Fs_Directory  02000	/* reading a directory */
 
@@ -349,8 +345,9 @@
 #define T_Object        27      /* object */
 #define T_Cast          28      /* cast */
 #define T_Methp         29      /* method pointer */
-
-#define MaxType		29	/* maximum type number */
+#define T_Constructor   30      /* record constructor */
+#define T_Window        31      /* window */
+#define MaxType		31	/* maximum type number */
 
 /*
  * Definitions for keywords.
@@ -380,6 +377,8 @@
 #define D_Object	(T_Object   | D_Typecode | F_Ptr)
 #define D_Cast  	(T_Cast     | D_Typecode | F_Ptr)
 #define D_Methp 	(T_Methp    | D_Typecode | F_Ptr)
+#define D_Constructor 	(T_Constructor    | D_Typecode | F_Ptr)
+#define D_Window 	(T_Window   | D_Typecode | F_Ptr)
 #define D_List		(T_List     | D_Typecode | F_Ptr)
 #define D_Lelem		(T_Lelem    | D_Typecode | F_Ptr)
 #define D_Table		(T_Table    | D_Typecode | F_Ptr)
@@ -646,12 +645,9 @@
       #ifdef Graphics
          #define amperX   (curpstate->AmperX)
          #define amperY   (curpstate->AmperY)
-         #define amperRow (curpstate->AmperRow)
-         #define amperCol (curpstate->AmperCol)
          #define amperInterval (curpstate->AmperInterval)
          #define lastEventWin (curpstate->LastEventWin)
          #define lastEvFWidth (curpstate->LastEvFWidth)
-         #define lastEvLeading (curpstate->LastEvLeading)
          #define lastEvAscent (curpstate->LastEvAscent)
          #define kywd_xwin (curpstate->Kywd_xwin)
          #define xmod_control (curpstate->Xmod_Control)
@@ -715,6 +711,7 @@
       #define alcbignum	    (curpstate->Alcbignum)
       #define alccset	    (curpstate->Alccset)
       #define alcfile	    (curpstate->Alcfile)
+      #define alcwindow	    (curpstate->Alcwindow)
       #define alchash	    (curpstate->Alchash)
       #define alcsegment    (curpstate->Alcsegment)
       #define alclist_raw   (curpstate->Alclist_raw)

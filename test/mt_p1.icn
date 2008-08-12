@@ -25,19 +25,19 @@ end
 
 procedure test1()
    local p
-   p := variable("child1",c) | stop("no child1 found")
+   p := glob("child1",c) | stop("no child1 found")
    pr_seq{"test1.p(4)", p(4)}
 end
 
 procedure test2()
    local p
-   p := variable("child2",c) | stop("no child2 found")
+   p := glob("child2",c) | stop("no child2 found")
    pr_seq{"test2.p(4)", p(4)}
 end
 
 procedure test3()
    local p
-   p := variable("child3",c) | stop("no child3 found")
+   p := glob("child3",c) | stop("no child3 found")
    pr_seq{"test3.p(4)", p(4)}
 end
 
@@ -49,13 +49,13 @@ end
 
 procedure test4()
    local p
-   p := variable("child4",c) | stop("no child3 found")
+   p := glob("child4",c) | stop("no child3 found")
    p(back4)
 end
 
 procedure test5()
    local p,e
-   p := variable("child5",c) | stop("no child3 found")
+   p := glob("child5",c) | stop("no child3 found")
    e := p()
    pr_seq{"test5", "x" || |@e}
 end
@@ -66,7 +66,7 @@ end
 
 procedure test6()
    local p,e
-   p := variable("child6",c) | stop("no child3 found")
+   p := glob("child6",c) | stop("no child3 found")
    e := create back6(5)
    pr_seq{"test6", "y" || p(e)}
 end
@@ -79,7 +79,7 @@ end
 
 procedure test7()
    local e, p
-   p := variable("child7",c) | stop("no child7 found")
+   p := glob("child7",c) | stop("no child7 found")
    e := create call7(p)
    pr_seq{"test7", |@e}
 end
@@ -90,7 +90,7 @@ end
 
 procedure test8()
    local l,p
-   p := variable("child8",c) | stop("no child8 found")
+   p := glob("child8",c) | stop("no child8 found")
    l := []
    p(l, back8)
    pr_seq{"test8.l", !l}
@@ -100,7 +100,7 @@ record rec9(a,b,c)
 
 procedure test9()
    local r,p
-   p := variable("child9",c) | stop("no child9 found")
+   p := glob("child9",c) | stop("no child9 found")
    r := rec9()
    p(r)
    pr_seq{"test9.r", !r}
@@ -108,14 +108,14 @@ end
 
 procedure test10()
    local p, r
-   p := variable("child10",c) | stop("no child10 found")
+   p := glob("child10",c) | stop("no child10 found")
    r := p(rec9)
    pr_seq{"test10.r", !r}
 end
 
 procedure test11()
    local p, l
-   p := variable("child11",c) | stop("no child11 found")
+   p := glob("child11",c) | stop("no child11 found")
    l := []
    p(l,put)
    pr_seq{"test11.l", !l}
@@ -123,8 +123,8 @@ end
 
 procedure test12()
    local p,q, i
-   p := variable("rec12",c) | stop("no rec12 found")
-   q := variable("child12",c) | stop("no child12 found")
+   p := glob("rec12",c) | stop("no rec12 found")
+   q := glob("child12",c) | stop("no child12 found")
    write(image(p))
    i := p()
    i.r := 3
@@ -137,15 +137,15 @@ end
 
 procedure test13()
    local p
-   p := variable("child13",c) | stop("no child13 found")
+   p := glob("child13",c) | stop("no child13 found")
    pr_seq{"test13", ((1 to 5) = p())}
 end
 
 procedure test14()
    local p,q,r
-   p := variable("child14a",c) | stop("no child13 found")
-   q := variable("child14b",c) | stop("no child13 found")
-   r := variable("child14c",c) | stop("no child13 found")
+   p := glob("child14a",c) | stop("no child13 found")
+   q := glob("child14b",c) | stop("no child13 found")
+   r := glob("child14c",c) | stop("no child13 found")
    pr_seq{"test14.1", ((1 to 5) = p())}
    pr_seq{"test14.2", ((1 to 5) = q())}
    pr_seq{"test14.3", ((1 to 5) = r())}
@@ -163,13 +163,13 @@ end
 
 procedure test15()
    local p
-   p := variable("child15",c) | stop("no child15 found")
+   p := glob("child15",c) | stop("no child15 found")
    p()
 end
 
 procedure test16()
    local p, e
-   p := variable("child16",c) | stop("no child15 found")
+   p := glob("child16",c) | stop("no child15 found")
    e := p()
    pr_seq{"test16.1", |@e}
    e := ^e
@@ -178,19 +178,19 @@ end
 
 procedure test17()
    local p
-   p := variable("child17",c) | stop("no child17 found")
+   p := glob("child17",c) | stop("no child17 found")
    pr_seq{"test17.p", p()}
 end
 
 procedure test18()
    local p
-   p := variable("child18",c) | stop("no child18 found")
+   p := glob("child18",c) | stop("no child18 found")
    p()
 end
 
 procedure test19()
    local p, e
-   p := variable("child19",c) | stop("no child19 found")
+   p := glob("child19",c) | stop("no child19 found")
    e := p()
    pr_seq{"test19.1", |@e}
    e := ^e
@@ -223,7 +223,7 @@ procedure test20()
    local i,p
    i := Class20(100,200)
    i.meth1()
-   p := variable("child20",c) | stop("no child20 found")
+   p := glob("child20",c) | stop("no child20 found")
    p(i,Class20)
 end
 
@@ -252,7 +252,7 @@ end
 
 procedure test21()
    local r,p
-   p := variable("child21",c) | stop("no child21 found")
+   p := glob("child21",c) | stop("no child21 found")
    r := Class21(1,2,3)
    write(r.v1)
    cast(r,Class21a).meth1()
@@ -262,13 +262,13 @@ end
 
 procedure test22()
    local p
-   p := variable("child22",c) | stop("no child22 found")
+   p := glob("child22",c) | stop("no child22 found")
    p(&main,&current)
 end
 
 procedure test23()
    local p, t, obj, res
-   p := variable("child23",c) | stop("no child23 found")
+   p := glob("child23",c) | stop("no child23 found")
    t := constructor("sometype", "a","b","c")
    obj := t(1,2,3)
    print{"subtype(obj)", subtype(obj)}
@@ -282,7 +282,7 @@ end
 
 procedure test24()
    local p, t, o
-   p := variable("child24",c) | stop("no child24 found")
+   p := glob("child24",c) | stop("no child24 found")
    t := p()
    o := t(1,2,3)
    pr_seq{"test24.o", !o}
@@ -299,7 +299,7 @@ class X25()
 
    private static init()
       local p
-      p := variable("child25",c) | stop("no child25 found")
+      p := glob("child25",c) | stop("no child25 found")
       Class.set_method("f", p)
    end
 end
@@ -312,8 +312,8 @@ end
 
 procedure test26()
    local p, q, t1, t2
-   p := variable("any.pack.P",c) | stop("no any.pack.P found")
-   q := variable("any.pack.access_other",c) | stop("no any.pack.access_other found")
+   p := glob("any.pack.P",c) | stop("no any.pack.P found")
+   q := glob("any.pack.access_other",c) | stop("no any.pack.access_other found")
 
    t1 := P()
    write(image(t1))
@@ -332,7 +332,7 @@ procedure test27()
    @c
    c := load("mt_c3")  | stop("Couldn't load mt_c3")
    @c
-   p := variable("main",c) | stop("Couldn't access main")
+   p := glob("main",c) | stop("Couldn't access main")
    p([4,5,6])
    p([7,8,9])
 end

@@ -13,6 +13,7 @@ static int invoke_methp(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr
 static int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
 static int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
 static int construct_object(int nargs, dptr newargp);
+static int construct_record(int nargs, dptr newargp);
 
 
 /*
@@ -34,6 +35,10 @@ int invoke(int nargs, dptr *cargp_ptr, int *nargs_ptr)
     type_case *newargp of {
       class: {
             return construct_object(nargs, newargp);
+        }
+
+      constructor: {
+            return construct_record(nargs, newargp);
         }
 
       methp: {
@@ -123,6 +128,10 @@ int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
                 if (is:proc(*p)) {
                     *newargp = *p;
                     return invoke_proc(nargs, newargp, cargp_ptr, nargs_ptr);
+                }
+                if (is:constructor(*p)) {
+                    *newargp = *p;
+                    return construct_record(nargs, newargp);
                 }
             } else {
                 struct b_proc *tmp;
@@ -244,7 +253,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 
         EVVal((word)Op_Invoke,E_Ecall);
 
-        if ((nparam < 0) || (proc->ndynam == -2))
+        if (nparam < 0)
             return I_Vararg;
         else
             return I_Builtin;
@@ -386,6 +395,26 @@ static int construct_object(int nargs, dptr newargp)
      * Set the init flag
      */
     BlkLoc(newargp[0])->object.init_state = Initialized;
+
+    sp = (word *)newargp + 1;
+    return I_Continue;
+}
+
+static int construct_record(int nargs, dptr newargp)
+{
+    struct b_constructor *con;
+    struct b_record *rec;
+    int i, n;
+
+    con = (struct b_constructor*)BlkLoc(*newargp);
+    Protect(rec = alcrecd(con), fatalerr(0,NULL));
+    newargp[0].dword = D_Record;
+    BlkLoc(newargp[0]) = (union block *)rec;
+    n = Min(nargs, con->n_fields);
+    for (i = 0; i < n; ++i) {
+        Deref(newargp[i + 1]);
+        rec->fields[i] = newargp[i + 1];
+    }
 
     sp = (word *)newargp + 1;
     return I_Continue;

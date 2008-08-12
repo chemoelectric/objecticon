@@ -90,7 +90,6 @@ package ipl.interact
 import
    ipl.dialog(Notice, OpenDialog, SaveDialog, SelectDialog,
               TextDialog, dialog_value),
-   ipl.graphics(WClose, WOpen, WWrite),
    ipl.io(exists),
    ipl.lists(ldelete),
    ipl.strings(maxlen),
@@ -210,13 +209,18 @@ end
 
 # window for list of strings
 procedure list_win(lst, label)			
-   local win
+   local win, y, s
 
    win := WOpen("canvas=hidden", "label=" || label, "lines=" || *lst + 2,
       "columns=" || maxlen(lst) + 2) | fail
 
-   WWrite(win)
-   every WWrite(win, " ", !lst)
+#   WWrite(win)
+#   every WWrite(win, " ", !lst)
+   y := 0
+   every s := !lst do {
+      DrawString(win, 0, y, s)
+      y +:= WAttrib(win, "fheight")
+   }
    WAttrib(win, "canvas=normal")
 
    return win

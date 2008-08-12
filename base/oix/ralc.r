@@ -233,6 +233,32 @@ struct b_file *f(FILE *fd, int status, dptr name)
 alcfile_macro(alcfile_0,0)
 alcfile_macro(alcfile_1,E_File)
 
+
+
+#ifdef Graphics
+
+#begdef alcwindow_macro(f, e_window)
+/*
+ * alcwindow - allocate a window block in the block region.
+ */
+
+struct b_window *f(wbp w, word isopen)
+   {
+   register struct b_window *blk;
+   EVVal(sizeof (struct b_window), e_window);
+   AlcFixBlk(blk, b_window, T_Window)
+   blk->wb = w;
+   blk->isopen = isopen;
+   return blk;
+   }
+#enddef
+
+alcwindow_macro(alcwindow_0,0)
+alcwindow_macro(alcwindow_1,E_Window)
+
+#endif
+
+
 #begdef alchash_macro(f, e_table, e_set)
 /*
  * alchash - allocate a hashed structure (set or table header) in the block
@@ -430,15 +456,20 @@ alcreal_macro(alcreal_1,E_Real)
  * alcrecd - allocate record with nflds fields in the block region.
  */
 
-struct b_record *f(int nflds, union block *recptr)
+struct b_record *f(struct b_constructor *con)
    {
-   tended union block *trecptr = recptr;
    register struct b_record *blk;
+   int i, nflds = con->n_fields;
 
    EVVal(sizeof(struct b_record) + (nflds-1)*sizeof(struct descrip),e_record);
    AlcVarBlk(blk, b_record, T_Record, nflds)
-   blk->recdesc = trecptr;
-   blk->id = ++(((struct b_proc *)recptr)->recid);
+   blk->constructor = con;
+   blk->id = ++con->instance_ids;
+   /*
+    * Set all fields to null value.
+    */
+   for (i = 0; i < nflds; ++i)
+       blk->fields[i] = nulldesc;
    return blk;
    }
 #enddef
@@ -454,13 +485,12 @@ alcrecd_macro(alcrecd_1,E_Record)
 
 struct b_object *f(struct b_class *class)
    {
-   tended struct b_class *tclass = class;
    register struct b_object *blk;
    int i, nflds = class->n_instance_fields;
    EVVal(sizeof(struct b_object) + (nflds-1)*sizeof(struct descrip),e_object);
    AlcVarBlk(blk, b_object, T_Object, nflds);
-   blk->class = tclass;
-   blk->id = ++blk->class->instance_ids;
+   blk->class = class;
+   blk->id = ++class->instance_ids;
    blk->init_state = Uninitialized;
    /*
     * Set all fields to null value.

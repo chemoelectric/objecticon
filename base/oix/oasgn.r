@@ -47,7 +47,7 @@
 	    if (is:null(y))
 	       *VarLoc(x) = y;
 	    else {
-	       if ((!is:file(y)) || !(BlkLoc(y)->file.status & Fs_Window))
+               if ((!is:window(y)))
 		  runerr(140,y);
 	       *VarLoc(x) = y;
 	       }
@@ -64,11 +64,6 @@
             if (!cnv:C_integer(y, i))
                runerr(101, y);
             IntVal(*VarLoc(x)) = i;
-
-#ifdef Graphics
-	    if (xyrowcol(&x) == -1)
-	       runerr(140,kywd_xwin[XKey_Window]);
-#endif					/* Graphics */
 	    }
 	}
       kywdpos: {

@@ -232,6 +232,7 @@ procedure init_Vvthumb(s)
    if /s.callback | type(s.callback) == "procedure" then
       _Vbomb("Vvthumb requires a coupler variable callback")
    s.sw := 3
+
    s.sp:= (s.aw - s.sw) / 2
    s.tw := s.aw
    \s.win_sz <:= 0
@@ -664,7 +665,7 @@ procedure VReformat(scrollbar, length, width)
 
    initial type := proc("type", 0)	# protect attractive name
 
-   if /scrollbar | type(scrollbar) ~== "Vscrollbar_frame_rec" then
+   if /scrollbar | subtype(scrollbar) ~== "ipl.vidgets.Vscrollbar_frame_rec" then
       _Vbomb("invalid scrollbar parameter to VReformat()")
 
    if \(scrollbar.thumb.type) then

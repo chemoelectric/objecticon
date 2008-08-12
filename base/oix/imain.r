@@ -26,7 +26,7 @@ Deliberate Syntax Error
 #endif					/* PORT */
 
 
-/* #define DEBUG_LOAD 1 */
+/* #define DEBUG_LOAD 1  */
 
 /*
  * End of operating-system specific code.
@@ -424,13 +424,11 @@ void resolve(pstate)
     struct progstate *pstate;
 
 {
-    word i, j, n_classes, n_fields;
-    char *class_start;
+    word i, j, n_fields;
     struct b_proc *pp;
-    struct b_class *class_blocks, *cb;
+    struct b_class *class_blocks;
     struct class_field *cf;
     dptr dp;
-    extern Omkrec();
     register struct progstate *savedstate = curpstate;
     if (pstate) curpstate = pstate;
 
@@ -494,43 +492,6 @@ void resolve(pstate)
 #endif
     }
 
-    n_classes = *classes;
-    class_start = (char*)(classes + 1);  /* One word after classes - skip the n_classes field */
-    for (i = 0; i < n_classes; ++i) {
-        cb = (struct b_class *)class_start;
-        StrLoc(cb->name) = strcons + (uword)StrLoc(cb->name);
-        cb->program = pstate ? pstate:&rootpstate;
-        n_fields = cb->n_class_fields + cb->n_instance_fields;
-        cb->supers = (struct b_class **)(code + (int)cb->supers);
-        for (j = 0; j < cb->n_supers; ++j) 
-            cb->supers[j] = (struct b_class*)(code + (int)cb->supers[j]);
-        cb->implemented_classes = (struct b_class **)(code + (int)cb->implemented_classes);
-        for (j = 0; j < cb->n_implemented_classes; ++j) 
-            cb->implemented_classes[j] = (struct b_class*)(code + (int)cb->implemented_classes[j]);
-        cb->fields = (struct class_field **)(code + (int)cb->fields);
-        for (j = 0; j < n_fields; ++j) 
-            cb->fields[j] = (struct class_field*)(code + (int)cb->fields[j]);
-        cb->sorted_fields = (short *)(code + (int)cb->sorted_fields);
-        class_start += cb->blksize;
-#ifdef DEBUG_LOAD
-        printf("%8x\t\t\tClass\n", cb);
-        printf("\t%d\t\t\t  Title\n", cb->title);
-        printf("\t%d\t\t\t  Fieldtable col\n", cb->fieldtable_col);
-        printf("\t%d\t\t\t  N supers\n", cb->n_supers);
-        printf("\t%d\t\t\t  N implemented classes\n", cb->n_implemented_classes);
-        printf("\t%d\t\t\t  N implemented instance class fields\n", cb->n_instance_fields);
-        printf("\t%d\t\t\t  N implemented class fields\n", cb->n_class_fields);
-        for (j = 0; j < cb->n_supers; ++j) 
-            printf("\t%8x\t\t\t  Superclass %d\n",cb->supers[j], j);
-        for (j = 0; j < cb->n_implemented_classes; ++j) 
-            printf("\t%8x\t\t\t  Implemented class %d\n",cb->implemented_classes[j], j);
-        for (j = 0; j < n_fields; ++j) 
-            printf("\t%8x\t\t\t  Field info %d\n",cb->fields[j], j);
-        for (j = 0; j < n_fields; ++j) 
-            printf("\t%d\t\t\t  Sorted field array\n",cb->sorted_fields[j]);
-#endif
-    }
-
     /*
      * Relocate the names of the global variables.
      */
@@ -538,19 +499,64 @@ void resolve(pstate)
         StrLoc(*dp) = strcons + (uword)StrLoc(*dp);
 
     /*
-     * Scan the global variable array for procedures and fill in appropriate
-     *  addresses.   Also note the main procedure if found.
+     * Scan the global variable array and relocate all blocks. Also
+     * note the main procedure if found.
      */
     main_proc = 0;
     for (j = 0; j < n_globals; j++) {
         switch (globals[j].dword) {
             case D_Class: {
-                /* We just need to relocate the vword */
+                struct b_class *cb;
                 i = IntVal(globals[j]);
-                BlkLoc(globals[j]) = (union block *)((struct b_class *)(code + i));
+                cb = (struct b_class *)(code + i);
+                BlkLoc(globals[j]) = (union block *)cb;
+                StrLoc(cb->name) = strcons + (uword)StrLoc(cb->name);
+                cb->program = pstate ? pstate:&rootpstate;
+                n_fields = cb->n_class_fields + cb->n_instance_fields;
+                cb->supers = (struct b_class **)(code + (int)cb->supers);
+                for (i = 0; i < cb->n_supers; ++i) 
+                    cb->supers[i] = (struct b_class*)(code + (int)cb->supers[i]);
+                cb->implemented_classes = (struct b_class **)(code + (int)cb->implemented_classes);
+                for (i = 0; i < cb->n_implemented_classes; ++i) 
+                    cb->implemented_classes[i] = (struct b_class*)(code + (int)cb->implemented_classes[i]);
+                cb->fields = (struct class_field **)(code + (int)cb->fields);
+                for (i = 0; i < n_fields; ++i) 
+                    cb->fields[i] = (struct class_field*)(code + (int)cb->fields[i]);
+                cb->sorted_fields = (short *)(code + (int)cb->sorted_fields);
+#ifdef DEBUG_LOAD
+                printf("%8x\t\t\tClass\n", cb);
+                printf("\t%d\t\t\t  Title\n", cb->title);
+                printf("\t%d\t\t\t  Fieldtable col\n", cb->fieldtable_col);
+                printf("\t%d\t\t\t  N supers\n", cb->n_supers);
+                printf("\t%d\t\t\t  N implemented classes\n", cb->n_implemented_classes);
+                printf("\t%d\t\t\t  N implemented instance class fields\n", cb->n_instance_fields);
+                printf("\t%d\t\t\t  N implemented class fields\n", cb->n_class_fields);
+                for (i = 0; i < cb->n_supers; ++i) 
+                    printf("\t%8x\t\t\t  Superclass %d\n",cb->supers[i], i);
+                for (i = 0; i < cb->n_implemented_classes; ++i) 
+                    printf("\t%8x\t\t\t  Implemented class %d\n",cb->implemented_classes[i], i);
+                for (i = 0; i < n_fields; ++i) 
+                    printf("\t%8x\t\t\t  Field info %d\n",cb->fields[i], i);
+                for (i = 0; i < n_fields; ++i) 
+                    printf("\t%d\t\t\t  Sorted field array\n",cb->sorted_fields[i]);
+#endif
                 break;
             }
 
+            case D_Constructor: {
+                struct b_constructor *c;
+                i = IntVal(globals[j]);
+                c = (struct b_constructor *)(code + i);
+                BlkLoc(globals[j]) = (union block *)c;
+                c->program = pstate ? pstate:&rootpstate;
+                /*
+                 * Relocate the name and fields
+                 */
+                StrLoc(c->name) = strcons + (uword)StrLoc(c->name);
+                for (i = 0; i < c->n_fields; i++)
+                    StrLoc(c->field_names[i]) = strcons + (uword)StrLoc(c->field_names[i]);
+                break;
+            }
             case D_Proc: {
                 /*
                  * The second word of the descriptor for procedure variables tells
@@ -558,7 +564,6 @@ void resolve(pstate)
                  *  procedures and positive values are used for Icon procedures.
                  */
                 i = IntVal(globals[j]);
-
                 if (i < 0) {
                     /*
                      * It is a builtin function.  Calculate the index and carry out
@@ -574,7 +579,7 @@ void resolve(pstate)
                 else {
 
                     /*
-                     * globals[j] points to an Icon procedure or a record; i is an offset
+                     * globals[j] points to an Icon procedure; i is an offset
                      *  to location of the procedure block in the code section.  Point
                      *  pp at the block and replace BlkLoc(globals[j]).
                      */
@@ -586,36 +591,21 @@ void resolve(pstate)
                      */
                     StrLoc(pp->pname) = strcons + (uword)StrLoc(pp->pname);
 
-                    if (pp->ndynam == -2) {
-                        /*
-                         * This procedure is a record constructor.	Make its entry point
-                         *	be the entry point of Omkrec().
-                         */
-                        pp->entryp.ccode = Omkrec;
+                    /*
+                     * This is an Icon procedure.  Relocate the entry point and
+                     *	the names of the parameters, locals, and static variables.
+                     */
+                    pp->entryp.icode = code + pp->entryp.ioff;
+                    for (i = 0; i < abs((int)pp->nparam)+pp->ndynam+pp->nstatic; i++)
+                        StrLoc(pp->lnames[i]) = strcons + (uword)StrLoc(pp->lnames[i]);
 
-                        /*
-                         * Initialize field names
-                         */
-                        for (i = 0; i < pp->nfields; i++)
-                            StrLoc(pp->lnames[i]) = strcons + (uword)StrLoc(pp->lnames[i]);
+                    /*
+                     * Is it the main procedure?
+                     */
+                    if (StrLen(pp->pname) == 4 &&
+                        !strncmp(StrLoc(pp->pname), "main", 4))
+                        main_proc = &globals[j];
 
-                    }
-                    else {
-                        /*
-                         * This is an Icon procedure.  Relocate the entry point and
-                         *	the names of the parameters, locals, and static variables.
-                         */
-                        pp->entryp.icode = code + pp->entryp.ioff;
-                        for (i = 0; i < abs((int)pp->nparam)+pp->ndynam+pp->nstatic; i++)
-                            StrLoc(pp->lnames[i]) = strcons + (uword)StrLoc(pp->lnames[i]);
-
-                        /*
-                         * Is it the main procedure?
-                         */
-                        if (StrLen(pp->pname) == 4 &&
-                            !strncmp(StrLoc(pp->pname), "main", 4))
-                            main_proc = &globals[j];
-                    }
                     pp->program = pstate ? pstate:&rootpstate;
                 }
                 break;

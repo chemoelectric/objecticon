@@ -11,7 +11,7 @@
 static int cast_access(dptr cargp, int query_flag);
 static int instance_access(dptr cargp, int query_flag);
 static int class_access(dptr cargp, int query_flag);
-static int lookup_record_field(struct b_proc *recdef, dptr num);
+static int lookup_record_field(struct b_constructor *recdef, dptr num);
 static int in_lang(dptr s);
 static int same_package(dptr n1, dptr n2);
 static int in_hierarchy(struct b_class *c1, struct b_class *c2);
@@ -452,7 +452,7 @@ int lookup_class_field(struct b_class *class, dptr query, int query_flag)
 static int record_access(dptr cargp)
 {
     struct b_record *rec = &BlkLoc(Arg1)->record;
-    struct b_proc *recdef = &BlkLoc(Arg1)->record.recdesc->proc;
+    struct b_constructor *recdef = BlkLoc(Arg1)->record.constructor;
     dptr dp;
     int i = lookup_record_field(recdef, &Arg2);
     if (i < 0)
@@ -469,7 +469,7 @@ static int record_access(dptr cargp)
 /*
  * This follows similar logic to lookup_class_field above.
  */
-static int lookup_record_field(struct b_proc *recdef, dptr num)
+static int lookup_record_field(struct b_constructor *recdef, dptr num)
 {
     struct descrip s;
     int i;
@@ -477,73 +477,31 @@ static int lookup_record_field(struct b_proc *recdef, dptr num)
 
     if (fnum < 0) {
         s = efnames[fnum];
-        for (i = 0; i < recdef->nfields; ++i) {
-            if (StrLen(s) == StrLen(recdef->lnames[i]) &&
-                !strncmp(StrLoc(s), StrLoc(recdef->lnames[i]), StrLen(s)))
+        for (i = 0; i < recdef->n_fields; ++i) {
+            if (StrLen(s) == StrLen(recdef->field_names[i]) &&
+                !strncmp(StrLoc(s), StrLoc(recdef->field_names[i]), StrLen(s)))
                 break;
         }
-        if (i < recdef->nfields)
+        if (i < recdef->n_fields)
             return i;
         return -1;
     }
 
     if (recdef->program != curpstate) {
         s = fnames[fnum];
-        for (i = 0; i < recdef->nfields; ++i) {
-            if (StrLen(s) == StrLen(recdef->lnames[i]) &&
-                !strncmp(StrLoc(s), StrLoc(recdef->lnames[i]), StrLen(s)))
+        for (i = 0; i < recdef->n_fields; ++i) {
+            if (StrLen(s) == StrLen(recdef->field_names[i]) &&
+                !strncmp(StrLoc(s), StrLoc(recdef->field_names[i]), StrLen(s)))
                 break;
         }
-        if (i < recdef->nfields)
+        if (i < recdef->n_fields)
             return i;
         return -1;
     }
 
-    return ftabp[fnum * (*records + *classes) + recdef->recfieldtable_col];
+    return ftabp[fnum * (*records + *classes) + recdef->fieldtable_col];
 }
 
-
-/*
- * mkrec - create a record.
- */
-
-LibDcl(mkrec,-1,"mkrec")
-{
-    register int i;
-    register struct b_proc *bp;
-    register struct b_record *rp;
-
-    /*
-     * Be sure that call is from a procedure.
-     */
-
-    /*
-     * Get a pointer to the record constructor procedure and allocate
-     *  a record with the appropriate number of fields.
-     */
-    bp = (struct b_proc *) BlkLoc(Arg0);
-    Protect(rp = alcrecd((int)bp->nfields, (union block *)bp), RunErr(0,NULL));
-
-    /*
-     * Set all fields in the new record to null value.
-     */
-    for (i = (int)bp->nfields; i > nargs; i--)
-        rp->fields[i-1] = nulldesc;
-
-    /*
-     * Assign each argument value to a record element and dereference it.
-     */
-    for ( ; i > 0; i--) {
-        rp->fields[i-1] = Arg(i);
-        Deref(rp->fields[i-1]);
-    }
-
-    ArgType(0) = D_Record;
-    Arg0.vword.bptr = (union block *)rp;
-    EVValD(&Arg0, E_Rcreate);
-    Return;
-}
-
 /*
  * limit - explicit limitation initialization.
  */

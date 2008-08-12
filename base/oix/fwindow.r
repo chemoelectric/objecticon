@@ -57,7 +57,7 @@ unsigned long ConsoleFlags = 0;			 /* Console flags */
 
 function{0,1} Active()
    abstract {
-      return file
+      return window
       }
    body {
       wsp ws;
@@ -71,7 +71,7 @@ end
 
 function{1} Alert(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -132,7 +132,7 @@ end
 
 function{1} Clip(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -168,7 +168,7 @@ end
 
 function{1} Clone(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w, w2;
@@ -207,16 +207,14 @@ function{1} Clone(argv[argc])
       }
       else warg++;
 
-      if (argc>warg && is:file(argv[warg])) {
-	 if ((BlkLoc(argv[warg])->file.status & Fs_Window) == 0)
-	    runerr(140,argv[warg]);
-	 if ((BlkLoc(argv[warg])->file.status & (Fs_Read|Fs_Write)) == 0)
+      if (argc>warg && is:window(argv[warg])) {
+         if (!BlkLoc(argv[warg])->window.isopen)
 	    runerr(142,argv[warg]);
-	 if (ISCLOSED(BlkLoc(argv[warg])->file.fd.wb))
-	    runerr(142,argv[warg]);
+        if (ISCLOSED(BlkLoc(argv[warg])->window.wb))
+            runerr(142,argv[warg]);
          if (child_window) child_window_stuff(w2, w, child_window);
 	 else Protect(w2->context =
-		 clone_context((wbp)BlkLoc(argv[warg])->file.fd.wb),runerr(0));
+		 clone_context((wbp)BlkLoc(argv[warg])->window.wb),runerr(0));
 	 warg++;
 	 }
       else {
@@ -237,11 +235,8 @@ function{1} Clone(argv[argc])
 	 }
       if (child_window) my_wmap(w2);
 
-      Protect(BlkLoc(result) =
-	      (union block *)alcfile((FILE *)w2,
-				     Fs_Window|Fs_Read|Fs_Write
-				   , &emptystr),runerr(0));
-      result.dword = D_File;
+      Protect(BlkLoc(result) = (union block *)alcwindow(w2, 1), runerr(0));
+      result.dword = D_Window;
       return result;
       }
 end
@@ -252,7 +247,7 @@ end
 
 function{0,1} Color(argv[argc])
    abstract {
-      return file ++ string
+      return window ++ string
       }
    body {
       wbp w;
@@ -319,14 +314,13 @@ function{0,1} ColorValue(argv[argc])
       tended char *s;
       char tmp[32], *t;
 
-      if (is:file(argv[0]) && (BlkLoc(argv[0])->file.status & Fs_Window)) {
-         w = BlkLoc(argv[0])->file.fd.wb;	/* explicit window */	
+      if (is:window(argv[0])) {
+         w = BlkLoc(argv[0])->window.wb;	/* explicit window */	
          warg = 1;
          }
-      else if (is:file(kywd_xwin[XKey_Window]) &&
-            ((BlkLoc(kywd_xwin[XKey_Window])->file.status &
-	     (Fs_Window|Fs_Read))==(Fs_Window|Fs_Read))) {
-         w = BlkLoc(kywd_xwin[XKey_Window])->file.fd.wb;	/* &window */
+      else if (is:window(kywd_xwin[XKey_Window]) &&
+               BlkLoc(kywd_xwin[XKey_Window])->window.isopen) {
+         w = BlkLoc(kywd_xwin[XKey_Window])->window.wb;	/* &window */
 	 }
       else {
          w = NULL;			/* no window (but proceed anyway) */
@@ -362,7 +356,7 @@ end
 
 function{0,1} CopyArea(argv[argc]) /* w,w2,x,y,width,height,x2,y2 */
    abstract {
-      return file
+      return window
       }
    body {
       int warg = 0, n, r;
@@ -373,12 +367,10 @@ function{0,1} CopyArea(argv[argc]) /* w,w2,x,y,width,height,x2,y2 */
       /*
        * 2nd window defaults to value of first window
        */
-      if (argc>warg && is:file(argv[warg])) {
-	 if ((BlkLoc(argv[warg])->file.status & Fs_Window) == 0)
-	    runerr(140,argv[warg]);
-	 if ((BlkLoc(argv[warg])->file.status & (Fs_Read|Fs_Write)) == 0)
-	    runerr(142,argv[warg]);
-	 w2 = BlkLoc(argv[warg])->file.fd.wb;
+      if (argc>warg && is:window(argv[warg])) {
+         if (!BlkLoc(argv[warg])->window.isopen)
+           runerr(142,argv[warg]);
+	 w2 = BlkLoc(argv[warg])->window.wb;
 	 if (ISCLOSED(w2))
 	    runerr(142,argv[warg]);
 	 warg++;
@@ -419,7 +411,7 @@ end
 
 function{0,1} Couple(w,w2)
    abstract {
-      return file
+      return window
       }
    body {
       tended struct descrip sbuf, sbuf2;
@@ -434,15 +426,15 @@ function{0,1} Couple(w,w2)
       /*
        * if w is a file, then we bind to an existing window
        */
-      if (is:file(w) && (BlkLoc(w)->file.status & Fs_Window)) {
-	 wb = BlkLoc(w)->file.fd.wb;
+      if (is:window(w)) {
+	 wb = BlkLoc(w)->window.wb;
 	 wb_new->window = ws = wb->window;
-	 if (is:file(w2) && (BlkLoc(w2)->file.status & Fs_Window)) {
+	 if (is:window(w2)) {
 	    /*
 	     * Bind an existing window to an existing context,
 	     * and up the context's reference count.
 	     */
-	    if (rebind(wb_new, BlkLoc(w2)->file.fd.wb) == Failed) fail;
+	    if (rebind(wb_new, BlkLoc(w2)->window.wb) == Failed) fail;
 	    wb_new->context->refcount++;
 	    }
 	 else 
@@ -454,10 +446,8 @@ function{0,1} Couple(w,w2)
       else
 	 runerr(140, w);
 
-      Protect(BlkLoc(result) =
-	 (union block *)alcfile((FILE *)wb_new,	Fs_Window|Fs_Read|Fs_Write,
-				&emptystr),runerr(0));
-      result.dword = D_File;
+      Protect(BlkLoc(result) = (union block *)alcwindow(wb_new, 1),runerr(0));
+      result.dword = D_Window;
       return result;
       }
 end
@@ -469,7 +459,7 @@ end
 
 function{1} DrawArc(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -550,7 +540,7 @@ end
 
 function{1} DrawCircle(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -575,7 +565,7 @@ end
 
 function{1} DrawCurve(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -768,7 +758,7 @@ end
 
 function{1} DrawLine(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -807,7 +797,7 @@ end
 
 function{1} DrawPoint(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -846,7 +836,7 @@ end
 
 function{1} DrawPolygon(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -897,7 +887,7 @@ end
 
 function{1} DrawRectangle(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -935,7 +925,7 @@ end
 
 function{1} DrawSegment(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -978,7 +968,7 @@ end
 
 function{1} DrawString(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -1010,7 +1000,7 @@ end
 
 function{1} EraseArea(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -1042,17 +1032,17 @@ function{1} NextEvent(argv[argc])
       C_integer i, t;
       tended struct descrip d;
       int warg = 0;
-      if (argc>warg && is:file(argv[warg])) {
+      if (argc>warg && is:window(argv[warg])) {
 	 d = argv[warg++];
          }
       else {
 	 d = kywd_xwin[XKey_Window];
 	 }
-      if (is:null(d) || ((BlkLoc(d)->file.status & Fs_Window) == 0))
+      if (is:null(d))
 	 runerr(140,d);
-      if ((BlkLoc(d)->file.status & (Fs_Read|Fs_Write)) == 0)
-	 runerr(142,d);
-      w = BlkLoc(d)->file.fd.wb;
+      if (!BlkLoc(d)->window.isopen)
+         runerr(142,d);
+      w = BlkLoc(d)->window.wb;
 
       if (ISCLOSED(w) && BlkLoc(w->window->listp)->list.size == 0)
 	 runerr(142,d);
@@ -1070,18 +1060,17 @@ function{1} NextEvent(argv[argc])
          fail;
          }
       if (i == 0) {
-         if (is:file(kywd_xwin[XKey_Window]) &&
-               w == BlkLoc(kywd_xwin[XKey_Window])->file.fd.wb)
+         if (is:window(kywd_xwin[XKey_Window]) &&
+               w == BlkLoc(kywd_xwin[XKey_Window])->window.wb)
 	    lastEventWin = kywd_xwin[XKey_Window];
 	 else
 	    lastEventWin = argv[warg-1];
-         lastEvFWidth = FWIDTH(BlkLoc(lastEventWin)->file.fd.wb);
-         lastEvLeading = LEADING(BlkLoc(lastEventWin)->file.fd.wb);
-         lastEvAscent = ASCENT(BlkLoc(lastEventWin)->file.fd.wb);
+         lastEvFWidth = FWIDTH(BlkLoc(lastEventWin)->window.wb);
+         lastEvAscent = ASCENT(BlkLoc(lastEventWin)->window.wb);
 	 if (is:integer(d) && IntVal(d)==WINDOWCLOSED && 
 	     !(w->window->inputmask & WindowClosureMask)) {
 	    /* closed, don't accept more I/O on it */
-	    BlkLoc(lastEventWin)->file.status &= ~(Fs_Read|Fs_Write);
+            BlkLoc(lastEventWin)->window.isopen = 0;
 	    }
 	 return d;
 	 }
@@ -1145,7 +1134,7 @@ end
 
 function{1} FillArc(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -1220,7 +1209,7 @@ end
 
 function{1} FillCircle(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -1244,7 +1233,7 @@ end
 
 function{1} FillPolygon(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -1286,7 +1275,7 @@ end
 
 function{1} FillRectangle(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -1350,7 +1339,7 @@ end
 
 function{1} FreeColor(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -1379,92 +1368,14 @@ function{1} FreeColor(argv[argc])
       }
 
 end
-
 
-"GotoRC(w,r,c) - move cursor to a particular text row and column"
-
-function{1} GotoRC(argv[argc])
-   abstract {
-      return file
-      }
-   body {
-      C_integer r, c;
-      wbp w;
-      int warg = 0;
-      OptWindow(w);
-
-      if (argc - warg < 1)
-	 r = 1;
-      else
-	 CnvCInteger(argv[warg], r)
-      if (argc - warg < 2)
-	 c = 1;
-      else
-	 CnvCInteger(argv[warg + 1], c)
-
-      /*
-       * turn the cursor off
-       */
-      hidecrsr(w->window);
-
-      w->window->y = ROWTOY(w, r);
-      w->window->x = COLTOX(w, c);
-      w->window->x += w->context->dx;
-      w->window->y += w->context->dy;
-
-      /*
-       * turn it back on at new location
-       */
-      UpdateCursorPos(w->window, w->context);
-      showcrsr(w->window);
-
-      ReturnWindow;
-      }
-end
-
-
-"GotoXY(w,x,y) - move cursor to a particular pixel location"
-
-function{1} GotoXY(argv[argc])
-   abstract {
-      return file
-      }
-   body {
-      wbp w;
-      C_integer x, y;
-      int warg = 0;
-      OptWindow(w);
-
-      if (argc - warg < 1)
-	 x = 0;
-      else
-	 CnvCInteger(argv[warg], x)
-      if (argc - warg < 2)
-	 y = 0;
-      else
-	 CnvCInteger(argv[warg + 1], y)
-
-      x += w->context->dx;
-      y += w->context->dy;
-
-      hidecrsr(w->window);
-
-      w->window->x = x;
-      w->window->y = y;
-
-      UpdateCursorPos(w->window, w->context);
-      showcrsr(w->window);
-
-      ReturnWindow;
-      }
-end
 
 
 "Lower(w) - lower w to the bottom of the window stack"
 
 function{1} Lower(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -1505,7 +1416,7 @@ function{0,1} PaletteChars(argv[argc])
       int n, warg;
       extern char c1list[], c2list[], c3list[], c4list[];
 
-      if (is:file(argv[0]) && (BlkLoc(argv[0])->file.status & Fs_Window))
+      if (is:window(argv[0]))
          warg = 1;
       else
          warg = 0;		/* window not required */
@@ -1545,7 +1456,7 @@ function{0,1} PaletteColor(argv[argc])
       struct palentry *e;
       tended struct descrip d;
 
-      if (is:file(argv[0]) && (BlkLoc(argv[0])->file.status & Fs_Window))
+      if (is:window(argv[0]))
          warg = 1;
       else
          warg = 0;			/* window not required */
@@ -1587,13 +1498,12 @@ function{0,1} PaletteKey(argv[argc])
       tended char *s;
       long r, g, b, a;
 
-      if (is:file(argv[0]) && (BlkLoc(argv[0])->file.status & Fs_Window)) {
-         w = BlkLoc(argv[0])->file.fd.wb;	/* explicit window */	
+      if (is:window(argv[0])) {
+         w = BlkLoc(argv[0])->window.wb;	/* explicit window */	
          warg = 1;
          }
-      else if (is:file(kywd_xwin[XKey_Window]) &&
-            (BlkLoc(kywd_xwin[XKey_Window])->file.status & Fs_Window))
-         w = BlkLoc(kywd_xwin[XKey_Window])->file.fd.wb;	/* &window */
+      else if (is:window(kywd_xwin[XKey_Window]))
+         w = BlkLoc(kywd_xwin[XKey_Window])->window.wb;	/* &window */
       else
          w = NULL;			/* no window (but proceed anyway) */
 
@@ -1624,7 +1534,7 @@ end
 
 function{1} Pattern(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       int warg = 0;
@@ -1664,24 +1574,18 @@ function{0,1} Pending(argv[argc])
 
       /* not using OptWindow() macro here since Pending() does no I/O */
 
-      if (argc>warg && is:file(argv[warg])) {
-         if ((BlkLoc(argv[warg])->file.status & Fs_Window) == 0)
-	    runerr(140,argv[warg]);
-         if ((BlkLoc(argv[warg])->file.status & Fs_Write) == 0)
-	    isclosed = 1;
-
-         w = BlkLoc(argv[warg])->file.fd.wb;
-         if (ISCLOSED(w))
-	    isclosed = 1;
+      if (argc>warg && is:window(argv[warg])) {
+         w = BlkLoc(argv[warg])->window.wb;
+         if (!BlkLoc(argv[warg])->window.isopen)
+            isclosed = 1;
          warg++;
          }
       else {
-         if (!(is:file(kywd_xwin[XKey_Window]) &&
-	      (BlkLoc(kywd_xwin[XKey_Window])->file.status & Fs_Window)))
+         if (!(is:window(kywd_xwin[XKey_Window])))
 	    runerr(140,kywd_xwin[XKey_Window]);
-	 if ((BlkLoc(kywd_xwin[XKey_Window])->file.status & (Fs_Read|Fs_Write))==0)
-	    isclosed = 1;
-         w = BlkLoc(kywd_xwin[XKey_Window])->file.fd.wb;
+         if (!BlkLoc(kywd_xwin[XKey_Window])->window.isopen)
+            isclosed = 1;
+         w = BlkLoc(kywd_xwin[XKey_Window])->window.wb;
          if (ISCLOSED(w))
 	    isclosed = 1;
          }
@@ -1812,9 +1716,9 @@ function{0,2} QueryPointer(w)
 	 query_rootpointer(&xp);
 	 }
       else {
-	 if (!is:file(w) || !(BlkLoc(w)->file.status & Fs_Window))
+	 if (!is:window(w))
 	    runerr(140, w);
-	 query_pointer(BlkLoc(w)->file.fd.wb, &xp);
+	 query_pointer(BlkLoc(w)->window.wb, &xp);
 	 }
       suspend C_integer xp.x;
       suspend C_integer xp.y;
@@ -1827,7 +1731,7 @@ end
 
 function{1} Raise(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -1920,7 +1824,7 @@ end
 
 function{1} WSync(w)
    abstract {
-      return file++null
+      return window++null
       }
    body {
       wbp _w_;
@@ -1928,11 +1832,9 @@ function{1} WSync(w)
       if (is:null(w)) {
 	 _w_ = NULL;
 	 }
-      else if (!is:file(w)) runerr(140,w);
+      else if (!is:window(w)) runerr(140,w);
       else {
-         if (!(BlkLoc(w)->file.status & Fs_Window))
-            runerr(140,w);
-         _w_ = BlkLoc(w)->file.fd.wb;
+         _w_ = BlkLoc(w)->window.wb;
 	 }
 
       wsync(_w_);
@@ -1968,15 +1870,15 @@ end
 
 function{1} Uncouple(w)
    abstract {
-      return file
+      return window
       }
    body {
       wbp _w_;
-      if (!is:file(w)) runerr(140,w);
-      if ((BlkLoc(w)->file.status & Fs_Window) == 0) runerr(140,w);
-      if ((BlkLoc(w)->file.status & (Fs_Read|Fs_Write)) == 0) runerr(142,w);
-      _w_ = BlkLoc(w)->file.fd.wb;
-      BlkLoc(w)->file.status = Fs_Window; /* no longer open for read/write */
+      if (!is:window(w)) 
+          runerr(140,w);
+      if (!BlkLoc(w)->window.isopen) 
+          runerr(142,w);
+      _w_ = BlkLoc(w)->window.wb;
       free_binding(_w_);
       return w;
       }
@@ -1986,7 +1888,7 @@ end
 
 function{*} WAttrib(argv[argc])
    abstract {
-      return file++string++integer
+      return window++string++integer
       }
    body {
       wbp w, wsave;
@@ -2008,15 +1910,13 @@ function{*} WAttrib(argv[argc])
 	    if (do_config(w, config) == Failed) fail;
 	    }
          for (n = warg; n < argc; n++) {
-            if (is:file(argv[n])) {/* Current argument is a file */
+            if (is:window(argv[n])) {/* Current argument is a file */
                /*
                 * Switch the current file to the file named by the
                 *  current argument providing it is a file.  argv[n]
                 *  is made to be a empty string to avoid a special case.
                 */
-               if (!(BlkLoc(argv[n])->file.status & Fs_Window))
-                  runerr(140,argv[n]);
-               w = BlkLoc(argv[n])->file.fd.wb;
+               w = BlkLoc(argv[n])->window.wb;
 	       if (config && pass == 2) {
 		  if (do_config(w, config) == Failed) fail;
 		  }
@@ -2169,7 +2069,7 @@ end
 
 function{1} WFlush(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -2185,7 +2085,7 @@ end
 
 function{0,1} WriteImage(argv[argc])
    abstract {
-      return file
+      return window
       }
    body {
       wbp w;
@@ -2248,19 +2148,17 @@ end
 "OwnSelection(win,selection,callback) - set the window system's selection"
 
 function{1} OwnSelection(win, selection, callback)
-   if !is:file(win) then
+   if !is:window(win) then
        runerr(140,win);
    if !cnv:C_string(selection) then
       runerr(103,selection)
    if !is:proc(callback) then
       runerr(106,callback);
    abstract {
-      return file
+      return window
       }
    body {
        wbp w;
-       if ((BlkLoc(win)->file.status & Fs_Window) == 0)
-           runerr(140,win);
        w = (wbp)BlkLoc(win)->file.fd.fp;
        w->window->selectionproc = callback;
        ownselection(w, selection);
@@ -2271,7 +2169,7 @@ end
 "GetSelectionContent(win,selection,target_type) - get the window system's selection"
 
 function{0,1} GetSelectionContent(win, selection,target_type)
-   if !is:file(win) then
+   if !is:window(win) then
        runerr(140,win);
    if !cnv:C_string(selection) then
       runerr(103,selection)
@@ -2283,13 +2181,82 @@ function{0,1} GetSelectionContent(win, selection,target_type)
    body {
        struct descrip s;
        wbp w;
-       if ((BlkLoc(win)->file.status & Fs_Window) == 0)
-           runerr(140,win);
        w = (wbp)BlkLoc(win)->file.fd.fp;
        s = getselectioncontent(w, selection,target_type);
        if (is:null(s))
            fail;
        return s;
+   }
+end
+
+function{0,1} WOpen(attr[n])
+   abstract {
+      return window
+      }
+   body {
+      int j, err_index = -1;
+      tended struct b_list *hp;
+      wbp f;
+      tended struct b_window *fl;
+
+      /*
+       * allocate an empty event queue for the window
+       */
+      Protect(hp = alclist(0, MinListSlots), runerr(0));
+
+      /*
+       * loop through attributes, checking validity
+       */
+      for (j = 0; j < n; j++) {
+          if (is:null(attr[j]))
+              attr[j] = emptystr;
+          if (!is:string(attr[j]))
+              runerr(109, attr[j]);
+      }
+
+      f = wopen("Object Icon", hp, attr, n, &err_index,0);
+
+      if (f == NULL) {
+          if (err_index >= 0) runerr(145, attr[err_index]);
+          else if (err_index == -1) fail;
+          else runerr(305);
+      }
+
+      Protect(fl = alcwindow(f, 1), runerr(0));
+
+      /*
+       * link in the Icon file value so this window can find it
+       */
+      f->window->filep.dword = D_Window;
+      BlkLoc(f->window->filep) = (union block *)fl;
+      if (is:null(lastEventWin)) {
+          lastEventWin = f->window->filep;
+          lastEvFWidth = FWIDTH(f);
+          lastEvAscent = ASCENT(f);
+      }
+
+      if (is:null(kywd_xwin[XKey_Window])) {
+          kywd_xwin[XKey_Window].dword = D_Window;
+          BlkLoc(kywd_xwin[XKey_Window]) = (union block *)fl;
+      }
+
+      return window(fl);
+   }
+end
+
+function{1} WClose(f)
+   if !is:window(f) then
+      runerr(140, f);
+   body {
+
+     if (BlkLoc(f)->window.isopen) { /* not already closed? */
+         BlkLoc(f)->window.isopen = 0;
+         SETCLOSED(BlkLoc(f)->window.wb);
+         wclose(BlkLoc(f)->window.wb);
+         if (EqlDesc(f, kywd_xwin[XKey_Window]))
+             kywd_xwin[XKey_Window] = nulldesc;
+     }
+     return f;
    }
 end
 
@@ -2323,8 +2290,6 @@ MissingGraphicsFuncV(FillPolygon)
 MissingGraphicsFuncV(FillRectangle)
 MissingGraphicsFuncV(Font)
 MissingGraphicsFuncV(FreeColor)
-MissingGraphicsFuncV(GotoRC)
-MissingGraphicsFuncV(GotoXY)
 MissingGraphicsFuncV(Lower)
 MissingGraphicsFuncV(NewColor)
 MissingGraphicsFuncV(NextEvent)
@@ -2341,21 +2306,12 @@ MissingGraphicsFuncV(Raise)
 MissingGraphicsFuncV(ReadImage)
 MissingGraphicsFuncV(TextWidth)
 MissingGraphicsFunc1(Uncouple)
+MissingGraphicsFunc1(WClose)
 MissingGraphicsFuncV(WAttrib)
+MissingGraphicsFuncV(WOpen)
 MissingGraphicsFuncV(WDefault)
 MissingGraphicsFuncV(WFlush)
 MissingGraphicsFuncV(WriteImage)
 MissingGraphicsFunc1(WSync)
-MissingGraphicsFunc1(WinAssociate)
-MissingGraphicsFuncV(WinPlayMedia)
-MissingGraphicsFuncV(WinButton)
-MissingGraphicsFuncV(WinScrollBar)
-MissingGraphicsFuncV(WinMenuBar)
-MissingGraphicsFuncV(WinEditRegion)
-MissingGraphicsFuncV(WinColorDialog)
-MissingGraphicsFuncV(WinFontDialog)
-MissingGraphicsFuncV(WinOpenDialog)
-MissingGraphicsFuncV(WinSelectDialog)
-MissingGraphicsFuncV(WinSaveDialog)
 
 #endif					/* Graphics */

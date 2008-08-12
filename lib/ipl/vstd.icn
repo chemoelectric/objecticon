@@ -130,7 +130,7 @@ procedure Vinsert_check(p)
 
    initial type := proc("type", 0)	# protect attractive name
 
-   if type(p[1]) ? find("frame") then {
+   if subtype(p[1]) ? find("frame") then {
       if not (numeric(p[2]), numeric(p[3])) then
          _Vbomb("invalid x or y coordinate to VInsert()")
       return 1

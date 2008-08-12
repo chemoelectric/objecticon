@@ -187,8 +187,9 @@ end
 #  Draw the prompt.
 #
 procedure draw_prompt_Vtext(self)
-   GotoXY(self.win, self.ax, self.ay+self.T.dy)
-   writes(self.win, self.s)
+   #GotoXY(self.win, self.ax, self.ay+self.T.dy)
+   #writes(self.win, self.s)
+   DrawString(self.win, self.ax, self.ay+self.T.dy, self.s)
    return
 end
 
@@ -254,22 +255,29 @@ end
 #
 procedure draw_data_Vtext(self)
 
+   local x, y
 #   if self.T.ta = self.T.tb then return
    erase_cursor_Vtext(self)
-   GotoXY(self.win, self.ax+self.T.dx, self.ay+self.T.dy)
+#   GotoXY(self.win, self.ax+self.T.dx, self.ay+self.T.dy)
+   x := self.ax+self.T.dx
+   y := self.ay+self.T.dy
    if self.T.ta <= self.T.tb then {
-      writes(self.win, self.data[1:self.T.ta])
+      DrawString(self.win, x, y, self.data[1:self.T.ta])
+      x +:= TextWidth(self.win, self.data[1:self.T.ta])
       WAttrib(self.win, "reverse=on")
-      writes(self.win, self.data[self.T.ta:self.T.tb])
+      DrawString(self.win, x, y, self.data[self.T.ta:self.T.tb])
+      x +:= TextWidth(self.win, self.data[self.T.ta:self.T.tb])
       WAttrib(self.win, "reverse=off")
-      writes(self.win, self.data[self.T.tb:0])
+      DrawString(self.win, x, y, self.data[self.T.tb:0])
    }
    else {
-      writes(self.win, self.data[1:self.T.tb])
+      DrawString(self.win, x, y, self.data[1:self.T.tb])
+      x +:= TextWidth(self.win, self.data[1:self.T.tb])
       WAttrib(self.win, "reverse=on")
-      writes(self.win, self.data[self.T.tb:self.T.ta])
+      DrawString(self.win, x, y, self.data[self.T.tb:self.T.ta])
+      x +:= TextWidth(self.win, self.data[self.T.tb:self.T.ta])
       WAttrib(self.win, "reverse=off")
-      writes(self.win, self.data[self.T.ta:0])
+      DrawString(self.win, x, y, self.data[self.T.ta:0])
    }
    EraseArea(self.win, self.ax+self.T.dx+self.T.DataPixelSize, self.ay+2,
               self.aw-(self.T.dx +self.T.DataPixelSize+1), self.ah-4)

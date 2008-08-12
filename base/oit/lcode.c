@@ -17,7 +17,7 @@
 #include "../h/header.h"
 #include "../h/rmacros.h"
 
-#define RecordBlkSize(gp) ((11*WordSize)+(gp)->record->nfields * 2 * WordSize)
+#define RecordBlkSize(gp) ((8*WordSize)+(gp)->record->nfields * 2 * WordSize)
 
 int nstatics = 0;               /* Running count of static variables */
 
@@ -1274,28 +1274,21 @@ static void gentables()
             if (Dflag) {
                 fprintf(dbgfile, "\n# record %s\n", s);
                 fprintf(dbgfile, "%ld:\n", (long)pc);
-                fprintf(dbgfile, "\t%d\t\t\t\t# T_Proc\n", T_Proc);
+                fprintf(dbgfile, "\t%d\t\t\t\t# T_Constructor\n", T_Constructor);
                 fprintf(dbgfile, "\t%d\n", RecordBlkSize(gp));
-                fprintf(dbgfile, "\t_mkrec\n");
-                fprintf(dbgfile, "\t%d\n", gp->record->nfields);
-                fprintf(dbgfile, "\t-2\n");
                 fprintf(dbgfile, "\t%d\n", gp->record->fieldtable_col);
                 fprintf(dbgfile, "\t0\n");
                 fprintf(dbgfile, "\t0\n");
-                fprintf(dbgfile, "\t0\n");
+                fprintf(dbgfile, "\t%d\n", gp->record->nfields);
                 fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, s);
             }
 
-
-            outword(T_Proc);		/* type code */
+            outword(T_Constructor);		/* type code */
             outword(RecordBlkSize(gp));
-            outword(0);			/* entry point (filled in by interp)*/
-            outword(gp->record->nfields);		/* number of fields */
-            outword(-2);			/* record constructor indicator */
             outword(gp->record->fieldtable_col);/* fieldtable column */
+            outword(0);			/* progstate (filled in by interp)*/
             outword(0);			/* serial number counter */
-            outword(0);
-            outword(0);
+            outword(gp->record->nfields);		/* number of fields */
             outword(sp->len);		/* name of record: size and offset */
             outword(sp->offset);
             for (fd = gp->record->fields; fd; fd = fd->next) {
@@ -1391,9 +1384,9 @@ static void gentables()
 
             if (Dflag)
                 fprintf(dbgfile, "%ld:\t%06lo\tZ+%ld\t\t#   %s\n",
-                        (long)pc, (long)D_Proc, (long)gp->record->pc, gp->name);
+                        (long)pc, (long)D_Constructor, (long)gp->record->pc, gp->name);
 
-            outword(D_Proc);
+            outword(D_Constructor);
             outword(gp->record->pc);
         }
         else if (gp->g_flag & F_Class) {		/* class */

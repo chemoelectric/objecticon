@@ -227,14 +227,6 @@ int get_name(dptr dp1,dptr dp0)
             StrLoc(*dp0) = "&errno";
         }
 #ifdef Graphics
-        else if (VarLoc(*dp1) == &amperCol) {
-            StrLen(*dp0) = 4;
-            StrLoc(*dp0) = "&col";
-        }
-        else if (VarLoc(*dp1) == &amperRow) {
-            StrLen(*dp0) = 4;
-            StrLoc(*dp0) = "&row";
-        }
         else if (VarLoc(*dp1) == &amperX) {
             StrLen(*dp0) = 2;
             StrLoc(*dp0) = "&x";
@@ -360,16 +352,17 @@ int get_name(dptr dp1,dptr dp0)
                         Protect(StrLoc(*dp0) = alcstr(sbuf,i), return Error);
                         StrLen(*dp0) = i;
                         break;
-                    case T_Record: 		/* record */
+                    case T_Record: { 		/* record */
+                        struct b_constructor *c = blkptr->record.constructor;
                         i = varptr - blkptr->record.fields;
-                        proc = &blkptr->record.recdesc->proc;
-                        sprintf(sbuf,"record %s_%d.%s", StrLoc(proc->recname),
+                        sprintf(sbuf,"record %s_%d.%s", StrLoc(c->name),
                                 blkptr->record.id,
-                                StrLoc(proc->lnames[i]));
+                                StrLoc(c->field_names[i]));
                         i = strlen(sbuf);
                         Protect(StrLoc(*dp0) = alcstr(sbuf,i), return Error);
                         StrLen(*dp0) = i;
                         break;
+                    }
                     case T_Object: { 		/* object */
                         struct b_class *c = blkptr->object.class;
                         i = varptr - blkptr->object.fields;

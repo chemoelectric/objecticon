@@ -27,8 +27,6 @@ function FillRectangle: yes
 function Font: yes
 function FreeColor: yes
 function GetSelectionContent: yes
-function GotoRC: yes
-function GotoXY: yes
 function Lower: yes
 function NewColor: yes
 function NextEvent: yes
@@ -45,8 +43,10 @@ function ReadImage: yes
 function TextWidth: yes
 function Uncouple: yes
 function WAttrib: yes
+function WClose: yes
 function WDefault: yes
 function WFlush: yes
+function WOpen: yes
 function WSync: yes
 function WriteImage: yes
 function abs: yes
@@ -112,6 +112,7 @@ function getpw: yes
 function getserv: yes
 function gettimeofday: yes
 function getuid: yes
+function glob: yes
 function globalnames: yes
 function gtime: yes
 function hardlink: yes
@@ -245,8 +246,6 @@ FillRectangle: yes
 Font: yes
 FreeColor: yes
 GetSelectionContent: yes
-GotoRC: yes
-GotoXY: yes
 Lower: yes
 NewColor: yes
 NextEvent: yes
@@ -263,8 +262,10 @@ ReadImage: yes
 TextWidth: yes
 Uncouple: yes
 WAttrib: yes
+WClose: yes
 WDefault: yes
 WFlush: yes
+WOpen: yes
 WSync: yes
 WriteImage: yes
 abs: yes
@@ -330,6 +331,7 @@ getpw: yes
 getserv: yes
 gettimeofday: yes
 getuid: yes
+glob: yes
 globalnames: yes
 gtime: yes
 hardlink: yes

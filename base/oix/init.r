@@ -240,8 +240,6 @@ void icon_init(char *name)
 #ifdef Graphics
     rootpstate.AmperX = zerodesc;
     rootpstate.AmperY = zerodesc;
-    rootpstate.AmperRow = zerodesc;
-    rootpstate.AmperCol = zerodesc;
     rootpstate.AmperInterval = zerodesc;
     rootpstate.LastEventWin = nulldesc;
     rootpstate.Kywd_xwin[XKey_Window] = nulldesc;
@@ -271,6 +269,9 @@ void icon_init(char *name)
     rootpstate.Alcbignum = alcbignum_0;
     rootpstate.Alccset = alccset_0;
     rootpstate.Alcfile = alcfile_0;
+#ifdef Graphics
+    rootpstate.Alcwindow = alcwindow_0;
+#endif
     rootpstate.Alchash = alchash_0;
     rootpstate.Alcsegment = alcsegment_0;
     rootpstate.Alclist_raw = alclist_raw_0;
@@ -914,8 +915,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
 #ifdef Graphics
     pstate->AmperX = zerodesc;
     pstate->AmperY = zerodesc;
-    pstate->AmperRow = zerodesc;
-    pstate->AmperCol = zerodesc;
     pstate->AmperInterval = zerodesc;
     pstate->LastEventWin = nulldesc;
     pstate->Kywd_xwin[XKey_Window] = nulldesc;
@@ -972,6 +971,9 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->Alcbignum = alcbignum_0;
     pstate->Alccset = alccset_0;
     pstate->Alcfile = alcfile_0;
+#ifdef Graphics
+    pstate->Alcwindow = alcwindow_0;
+#endif
     pstate->Alchash = alchash_0;
     pstate->Alcsegment = alcsegment_0;
     pstate->Alclist_raw = alclist_raw_0;
@@ -1186,7 +1188,8 @@ static int isdescrip(word *p){
             i==D_Lelem || i==D_Set || i==D_Selem || i==D_Table || i==D_Telem ||
             i==D_Tvtbl || i==D_Slots || i==D_Tvsubs || i==D_Refresh || i==D_Coexpr ||
             i==D_External || i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj || i==D_Kywdwin ||
-            i==D_Kywdstr || i==D_Kywdevent || i==D_Class || i==D_Object || i==D_Cast || i==D_Methp);
+            i==D_Kywdstr || i==D_Kywdevent || i==D_Class || i==D_Object || i==D_Cast || 
+            i==D_Constructor || i==D_Window || i==D_Methp);
 }
 
 char *cstr(struct descrip *sd) {
@@ -1219,6 +1222,11 @@ static char* vword2str(dptr d) {
             sprintf(res, "class %s prog:%p", cstr(&p->name), p->program);
             break;
         }
+        case D_Constructor: {
+            struct b_constructor *p = (struct b_constructor*)BlkLoc(*d);
+            sprintf(res, "constructor %s prog:%p", cstr(&p->name), p->program);
+            break;
+        }
         case D_Object: {
             struct b_object *p = (struct b_object*)BlkLoc(*d);
             sprintf(res, "object %p %s(%d)", BlkLoc(*d), cstr(&p->class->name), p->id);
@@ -1242,6 +1250,7 @@ static char* vword2str(dptr d) {
         case D_Real: 
         case D_Cset: 
         case D_File: 
+        case D_Window: 
         case D_Record:
         case D_List: 
         case D_Lelem:
@@ -1317,6 +1326,8 @@ static char* dword2str(dptr d) {
             case D_Object: t = "T_Object"; break;
             case D_Cast: t = "T_Cast"; break;
             case D_Methp: t = "T_Methp"; break;
+            case D_Constructor: t = "T_Constructor"; break;
+            case D_Window: t = "T_Window"; break;
             default: return "?";
         }
         strcat(buff, " ");

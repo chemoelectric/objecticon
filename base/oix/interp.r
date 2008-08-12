@@ -730,7 +730,7 @@ fflush(stdout);
                case T_Record: {
                   rsp -= 2;		/* pop it off */
                   bp = BlkLoc(value_tmp);
-                  args = bp->record.recdesc->proc.nfields;
+                  args = bp->record.constructor->n_fields;
                   for (i = 0; i < args; i++) {
                      PushDesc(bp->record.fields[i])
                      }

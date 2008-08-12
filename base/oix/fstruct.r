@@ -202,9 +202,9 @@ function{*} key(t)
       record: {
 	 abstract { return string }
 	 inline {
-	    C_integer i, sz = BlkLoc(t)->record.recdesc->proc.nfields;
+	    C_integer i, sz = BlkLoc(t)->record.constructor->n_fields;
 	    for(i=0; i<sz; i++)
-	       suspend BlkLoc(t)->record.recdesc->proc.lnames[i];
+	       suspend BlkLoc(t)->record.constructor->field_names[i];
 	    fail;
 	    }
 	 }
@@ -1065,17 +1065,17 @@ end
 
 function{1} constructor(s, x[n])
    abstract {
-      return proc
+      return constructor
 	}
    if !cnv:string(s) then runerr(103,s)
    inline {
       int i;
-      struct b_proc *bp;
+      struct b_constructor *bp;
       for(i=0;i<n;i++)
          if (!is:string(x[i])) runerr(103, x[i]);
       bp = dynrecord(&s, x, n);
       if (bp == NULL) syserr("out of memory in constructor()");
-      return proc(bp);
+      return constructor(bp);
       }
 end
 
@@ -1083,7 +1083,7 @@ function{1} constructorof(r)
    if !is:record(r) then
        runerr(107, r)
     body {
-       return proc(BlkLoc(r)->record.recdesc);
+       return constructor(BlkLoc(r)->record.constructor);
     }
 end
 

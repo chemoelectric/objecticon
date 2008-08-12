@@ -45,7 +45,7 @@ package ipl.vidgets
 
 import
    ipl.dialog(TextDialog, dialog_button, dialog_cb, dialog_value),
-   ipl.graphics(WClose, Window)
+   ipl.graphics(Window)
 
 record DL_rec(var, typ, sty, num, x, y, w, h, lbl, cbk, etc)
 record DL_state(dialog, list, deflabel)

@@ -360,6 +360,7 @@ struct errtab errtab[] = {
    622, "new cannot be accessed on an initialized object",
    623, "can only set a method on an unresolved field",
    624, "record, class, cast or object expected",
+   625, "record or constructor expected",
 
    1040, "socket error",		 
    1041, "cannot initialize network library",

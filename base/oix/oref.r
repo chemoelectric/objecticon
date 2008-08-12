@@ -101,18 +101,6 @@ operator{*} ! bang(underef x -> dx)
                StrLen(result) = 0;
                do {
 
-#ifdef Graphics
-                  pollctr >>= 1; pollctr++;
-                  if (status & Fs_Window) {
-                     slen = wgetstrg(sbuf,MaxCvtLen,fd);
-		     if (slen == -1)
-			runerr(141);
-		     else if (slen < -1)
-			runerr(143);
-                     }
-                  else
-#endif					/* Graphics */
-
 #ifdef HAVE_LIBZ
                   if (status & Fs_Compress) {
 	              if (gzeof(fd)) fail;
@@ -220,7 +208,7 @@ operator{*} ! bang(underef x -> dx)
 
             EVValD(&dx, E_Rbang);
 
-            j = BlkLoc(dx)->record.recdesc->proc.nfields;
+            j = BlkLoc(dx)->record.constructor->n_fields;
             for (i = 0; i < j; i++) {
 	       EVVal(i+1, E_Rsub);
                suspend struct_var(&BlkLoc(dx)->record.fields[i], 
@@ -473,7 +461,7 @@ operator{0,1} ? random(underef x -> dx)
             struct b_record *rec;  /* doesn't need to be tended */
 
             rec = (struct b_record *)BlkLoc(dx);
-            val = rec->recdesc->proc.nfields;
+            val = rec->constructor->n_fields;
             if (val <= 0)
                fail;
             /*
@@ -734,19 +722,19 @@ operator{0,1} [] subsc(underef x -> dx,y)
 	       runerr(101,y);
 	    else {
 	       register union block *bp;  /* doesn't need to be tended */
-	       register union block *bp2; /* doesn't need to be tended */
+	       register struct b_constructor *bp2; /* doesn't need to be tended */
 	       register word i;
 	       register int len;
 	       char *loc;
 	       int nf;
 	       bp = BlkLoc(dx);
-	       bp2 = BlkLoc(dx)->record.recdesc;
-	       nf = bp2->proc.nfields;
+	       bp2 = BlkLoc(dx)->record.constructor;
+	       nf = bp2->n_fields;
 	       loc = StrLoc(y);
 	       len = StrLen(y);
 	       for(i=0; i<nf; i++) {
-		  if (len == StrLen(bp2->proc.lnames[i]) &&
-		      !strncmp(loc, StrLoc(bp2->proc.lnames[i]), len)) {
+		  if (len == StrLen(bp2->field_names[i]) &&
+		      !strncmp(loc, StrLoc(bp2->field_names[i]), len)) {
 
 		     EVValD(&dx, E_Rref);
 		     EVVal(i+1, E_Rsub);
@@ -766,8 +754,8 @@ operator{0,1} [] subsc(underef x -> dx,y)
             register union block *bp; /* doesn't need to be tended */
 
             bp = BlkLoc(dx);
-            i = cvpos(y, (word)(bp->record.recdesc->proc.nfields));
-            if (i == CvtFail || i > bp->record.recdesc->proc.nfields)
+            i = cvpos(y, (word)(bp->record.constructor->n_fields));
+            if (i == CvtFail || i > bp->record.constructor->n_fields)
                fail;
 
             EVValD(&dx, E_Rref);

@@ -81,7 +81,7 @@ extern struct b_real realzero;		/* real zero block */
 
 /* dynamic record types */
 extern int longest_dr;
-extern struct b_proc_list **dr_arrays;
+extern struct b_constructor_list **dr_arrays;
 
 /*
  * Externals that differ between compiler and interpreter.

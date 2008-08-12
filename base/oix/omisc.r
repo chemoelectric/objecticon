@@ -74,7 +74,7 @@ operator{1} * size(x)
          return C_integer i;
          }
       record: inline {
-         return C_integer BlkLoc(x)->record.recdesc->proc.nfields;
+         return C_integer BlkLoc(x)->record.constructor->n_fields;
          }
       coexpr: inline {
          return C_integer BlkLoc(x)->coexpr.size;

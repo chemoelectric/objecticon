@@ -274,23 +274,20 @@ typedef int siptr, stringint, inst;
     * Macro ReturnWindow returns either the initial window argument, or &window
     */
    #begdef OptWindow(w)
-      if (argc>warg && is:file(argv[warg])) {
-         if ((BlkLoc(argv[warg])->file.status & Fs_Window) == 0)
-	    runerr(140,argv[warg]);
-         if ((BlkLoc(argv[warg])->file.status & (Fs_Read|Fs_Write)) == 0)
+      if (argc>warg && is:window(argv[warg])) {
+         if (!(BlkLoc(argv[warg])->window.isopen))
 	    runerr(142,argv[warg]);
-         (w) = (wbp)BlkLoc(argv[warg])->file.fd.fp;
+         (w) = BlkLoc(argv[warg])->window.wb;
          if (ISCLOSED(w))
 	    runerr(142,argv[warg]);
          warg++;
          }
       else {
-         if (!(is:file(kywd_xwin[XKey_Window]) &&
-	      (BlkLoc(kywd_xwin[XKey_Window])->file.status & Fs_Window)))
+         if (!(is:window(kywd_xwin[XKey_Window])))
 	    runerr(140,kywd_xwin[XKey_Window]);
-         if (!(BlkLoc(kywd_xwin[XKey_Window])->file.status & (Fs_Read|Fs_Write)))
+         if (!(BlkLoc(kywd_xwin[XKey_Window])->window.isopen))
 	    runerr(142,kywd_xwin[XKey_Window]);
-         (w) = (wbp)BlkLoc(kywd_xwin[XKey_Window])->file.fd.fp;
+         (w) = (wbp)BlkLoc(kywd_xwin[XKey_Window])->window.wb;
          if (ISCLOSED(w))
 	    runerr(142,kywd_xwin[XKey_Window]);
          }

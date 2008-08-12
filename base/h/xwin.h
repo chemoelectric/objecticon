@@ -40,7 +40,6 @@
 	DefaultDepth((w)->window->display->display, w->window->display->screen)
 #define ASCENT(w) ((w)->context->font->ascent)
 #define DESCENT(w) ((w)->context->font->descent)
-#define LEADING(w) ((w)->context->leading)
 #define FHEIGHT(w) ((w)->context->font->height)
 #define LINEWIDTH(w) ((w)->context->linewidth)
 #define DISPLAYHEIGHT(w)\
@@ -194,16 +193,6 @@ typedef struct wcolor {
    int           type;			/* SHARED or MUTABLE */
 } *wclrp;
 
-/*
- * macros performing row/column to pixel y,x translations
- * computation is 1-based and depends on the current font's size.
- * exception: XTOCOL as defined is 0-based, because that's what its
- * clients seem to need.
- */
-#define ROWTOY(w,row) ((row-1) * LEADING(w) + ASCENT(w))
-#define COLTOX(w,col) ((col-1) * FWIDTH(w))
-#define YTOROW(w,y)   ((y>0) ? ((y) / LEADING(w) + 1) : ((y) / LEADING(w)))
-#define XTOCOL(w,x)  (!FWIDTH(w) ? (x) : ((x) / FWIDTH(w)))
 
 #define STDLOCALS(w) \
    wcp wc = (w)->context; \

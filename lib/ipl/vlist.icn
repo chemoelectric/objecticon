@@ -63,7 +63,7 @@ $include "vdefns.icn"
 package ipl.vidgets
 
 import
-   ipl.graphics(BevelRectangle, DrawGroove, WWrites)
+   ipl.graphics(BevelRectangle, DrawGroove)
 
 $define V_READONLY	"r"
 $define V_SELECT	"w"
@@ -585,11 +585,14 @@ local fh, fw, ds, z, col, rev, non, margin
 
    while ((y < h) & (z <= *dl)) do
    {
-      GotoXY(win, x + margin, y + fh)
-      if dl[z][1] == "S" then
-         WWrites(rev, left(dl[z][2:0], col))
-      else
-         WWrites(non, left(dl[z][2:0], col))
+#      GotoXY(win, x + margin, y + fh)
+#      if dl[z][1] == "S" then
+#         WWrites(rev, left(dl[z][2:0], col))
+#      else
+#         WWrites(non, left(dl[z][2:0], col))
+
+      DrawString(if dl[z][1] == "S" then rev else non
+                 , x + margin, y + fh, left(dl[z][2:0], col))
 
       y +:= fh
       z +:= 1

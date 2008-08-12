@@ -12,7 +12,7 @@ function write
 w(image(w)) ----> "function write"
 copy(array()) ----> record array_2(7)
 copy := copy(copy) ----> function copy
-x := copy(array) ----> record constructor array
+x := copy(array) ----> constructor array
 x := x(1,2,3,4,5,6,7) ----> record array_3(7)
 x[-4] ----> 4
 v := copy(c) ----> &null
@@ -345,9 +345,9 @@ image(set([1,2,3,3,3,3,3,4])) ----> "set_2(4)"
 image(repl) ----> "function repl"
 image(main) ----> "procedure main"
 image(repl(&lcase,10)) ----> "\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\""
-image(array) ----> "record constructor array"
+image(array) ----> "constructor array"
 image(a) ----> "&null"
-image(array) ----> "record constructor array"
+image(array) ----> "constructor array"
 image(image) ----> "function image"
 string(2) ----> "2"
 string("2") ----> "2"
@@ -383,7 +383,7 @@ type(table()) ----> "table"
 type(main) ----> "procedure"
 type(write) ----> "procedure"
 type(array()) ----> "record"
-type(array) ----> "procedure"
+type(array) ----> "constructor"
 type(f) ----> "null"
 cset(2) ----> '2'
 cset("2") ----> '2'

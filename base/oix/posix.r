@@ -691,7 +691,7 @@ function{0,1} fcntl(f, action, options)
       return string ++ record ++ integer
       }
    body {
-      int fd, cmd, nfields, buflen;
+      int fd, cmd, buflen;
       tended char *c;
       static dptr constr;
 
@@ -798,8 +798,7 @@ function{0,1} fcntl(f, action, options)
 	    if (!(constr = rec_structor("posix_lock")))
 	       syserr("failed to create posix record constructor");
 
-	 nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-	 Protect(rp = alcrecd(nfields, BlkLoc(*constr)), runerr(0));
+	 Protect(rp = alcrecd(&BlkLoc(*constr)->constructor), runerr(0));
 	 result.dword = D_Record;
 	 result.vword.bptr = (union block*)rp;
 	 IntVal(rp->fields[1]) = fl.l_pid;
@@ -1050,13 +1049,6 @@ function{0,1} fdup(src, dest)
 
       if (BlkLoc(src)->file.status == 0)
 	 runerr(1042, src);
-
-#ifdef Graphics
-      if (BlkLoc(src)->file.status & Fs_Window)
-	 runerr(105, src);
-      if (BlkLoc(dest)->file.status & Fs_Window)
-	 runerr(105, dest);
-#endif					/* Graphics */
 
       if ((fd_src = get_fd(src, 0)) < 0)
 	 runerr(174, src);
@@ -1713,7 +1705,6 @@ function{0,1} gettimeofday()
 #endif					/* MSWIN32 */
       struct b_record *rp; /* does not need to be tended */
       static dptr constr;
-      int nfields;
 
       IntVal(amperErrno) = 0;
 #if MSWIN32
@@ -1728,8 +1719,7 @@ function{0,1} gettimeofday()
 	 if (!(constr = rec_structor("posix_timeval")))
 	    syserr("failed to create posix record constructor");
 
-      nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-      Protect(rp = alcrecd(nfields, BlkLoc(*constr)), runerr(0));
+      Protect(rp = alcrecd(&BlkLoc(*constr)->constructor), runerr(0));
       result.dword = D_Record;
       result.vword.bptr = (union block *)rp;
 #if MSWIN32
@@ -1760,7 +1750,6 @@ function{0,1} lstat(f)
       struct stat sbuf;
 #endif					/* MSWIN32 */
       static dptr constr;
-      int nfields;
 
       IntVal(amperErrno) = 0;
 #if MSWIN32
@@ -1775,8 +1764,7 @@ function{0,1} lstat(f)
 	 if (!(constr = rec_structor("posix_stat")))
 	    syserr("failed to create posix record constructor");
 
-      nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-      Protect(rp = alcrecd(nfields, BlkLoc(*constr)), runerr(0));
+      Protect(rp = alcrecd(&BlkLoc(*constr)->constructor), runerr(0));
       stat2rec(&sbuf, &result, &rp);
       return result;
    }
@@ -1799,7 +1787,6 @@ function{0,1} stat(f)
 #endif					/* MSWIN32 */
 	    tended char *fname;
 	    static dptr constr;
-	    int nfields;
 
             cnv:C_string(f, fname);
 	    IntVal(amperErrno) = 0;
@@ -1811,8 +1798,7 @@ function{0,1} stat(f)
 	       if (!(constr = rec_structor("posix_stat")))
 		  syserr("failed to create posix record constructor");
 
-	    nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-	    Protect(rp = alcrecd(nfields, BlkLoc(*constr)), runerr(0));
+	    Protect(rp = alcrecd(&BlkLoc(*constr)->constructor), runerr(0));
 	    stat2rec(&sbuf, &result, &rp);
 
 #if !MSWIN32
@@ -1864,7 +1850,7 @@ function{0,1} stat(f)
 	    struct stat sbuf;
 #endif					/* MSWIN32 */
 	    static dptr constr;
-	    int nfields, fd;
+	    int fd;
 
 #ifdef HAVE_LIBZ 
             if (BlkLoc(f)->file.status & Fs_Compress)
@@ -1882,8 +1868,7 @@ function{0,1} stat(f)
 	       if (!(constr = rec_structor("posix_stat")))
 		  syserr("failed to create posix record constructor");
 
-	    nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-	    Protect(rp = alcrecd(nfields, BlkLoc(*constr)), runerr(0));
+	    Protect(rp = alcrecd(&BlkLoc(*constr)->constructor), runerr(0));
 	    stat2rec(&sbuf, &result, &rp);
 	    return result;
 	 }
@@ -1924,7 +1909,7 @@ function{0,1} receive(f)
    body {
       tended struct b_record *rp;
       static dptr constr;
-      int nfields, status, ret;
+      int status, ret;
       
       status = BlkLoc(f)->file.status;
       if (!(status & Fs_Socket))
@@ -1934,8 +1919,7 @@ function{0,1} receive(f)
 	 if (!(constr = rec_structor("posix_message")))
 	    syserr("failed to create posix record constructor");
 
-      nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-      Protect(rp = alcrecd(nfields, BlkLoc(*constr)), runerr(0));
+      Protect(rp = alcrecd(&BlkLoc(*constr)->constructor), runerr(0));
 
       IntVal(amperErrno) = 0;
       if ((ret = sock_recv(BlkLoc(f)->file.fd.fd, &rp)) == 0) {
@@ -1964,15 +1948,6 @@ int set_if_selectable(struct descrip *f, fd_set *fdsp, int *n)
       BlkLoc(*f)->file.status |= Fs_Unbuf;
 #endif					/* UNIX */
 
-#ifdef Graphics
-      /*
-       * windows are handled separately from sockets in select()
-       */
-      if (status & Fs_Window) {
-	 return 0;
-	 }
-      else 
-#endif					/* Graphics */
       if ((fd = get_fd(*f, Fs_Read|Fs_Socket)) < 0) {
 	 if (fd == -2)
 	    return 212;
@@ -2036,33 +2011,6 @@ function{0,1} select(files[nargs])
       tended struct descrip d = nulldesc;
       tended struct descrip d2 = nulldesc;
       tended struct descrip f;
-      tended struct b_list *lws = NULL;
-
-      /*
-       * prepass: pull out windows, into their own list
-       */
-#ifdef Graphics
-      if ((lws = alclist(0, MinListSlots)) == NULL) fail;
-      d2.dword = D_List;
-      BlkLoc(d2) = (union block *)lws;
-      for (k=0; k<nargs; k++) {
-	 if (is:file(files[k]) && (BlkLoc(files[k])->file.status & Fs_Window))
-	    c_put(&d2, files+k);
-	 else if (is:list(files[k])) {
-	    for (ep = BlkLoc(files[k])->list.listhead;
-		 BlkType(ep) == T_Lelem; ep = ep->lelem.listnext) {
-	       for (i = 0; i < ep->lelem.nused; i++) {
-		  j = ep->lelem.first + i;
-		  if (j >= ep->lelem.nslots)
-		     j -= ep->lelem.nslots;
-		  f = ep->lelem.lslots[j];
-		  if (is:file(f) && BlkLoc(f)->file.status & Fs_Window)
-		     c_put(&d2, &f);
-		  }
-	       }
-	    }
-	 }
-#endif					/* Graphics */
 
       /*
        * Unicon select() repeats until a timeout or real result.
@@ -2101,17 +2049,6 @@ function{0,1} select(files[nargs])
       
       /* Set the tv struct */
       if (timeout < 0) {
-#ifdef Graphics
-	 /*
-	  * if there are any windows, then even if we said to go forever
-	  * timeout periodically to check for window events.
-	  */
-	 if (lws->size > 0) {
-	    tv.tv_sec = 0;
-	    tv.tv_usec = 50000;
-	    }
-	 else
-#endif					/* Graphics */
 	    ptv = 0;
          }
       else {
@@ -2121,14 +2058,6 @@ function{0,1} select(files[nargs])
 
       errno = 0;
       IntVal(amperErrno) = 0;
-
-#ifdef Graphics
-      if ((lws->size > 0) && ((lp = findactivewindow(lws)) != NULL)) {
-	 d.dword = D_List;
-	 BlkLoc(d) = (union block *) lp;
-         tv.tv_sec = tv.tv_usec = 0;
-	 }
-#endif					/* Graphics */
 
       if (n) {
          if ((nset = select(n, &fds, NULL, NULL, ptv)) < 0) {
@@ -2141,17 +2070,6 @@ function{0,1} select(files[nargs])
 	       fail;
 	    }
 
-#ifdef Graphics
-	 pollevent();
-
-	 /*
-	  * if our select() could have taken any time, try windows again
-	  */
-	 if ((lp == NULL) && ((lp = findactivewindow(lws)) != NULL)) {
-	    d.dword = D_List;
-	    BlkLoc(d) = (union block *) lp;
-	    }
-#endif					/* Graphics */
 	 }
       else if (ptv && (ptv->tv_sec || ptv->tv_usec)) {
 	 idelay(ptv->tv_sec * 1000 + ptv->tv_usec / 1000);
@@ -2577,11 +2495,7 @@ function{0, 1} sysread(f, i)
       tended struct descrip desc;
       status = BlkLoc(f)->file.status;
 
-      if (!status || !(status & Fs_Read) 
-#ifdef Graphics
-      || (status & Fs_Window)
-#endif					/* Graphics */
-          )
+      if (!status || !(status & Fs_Read) )
 	  runerr(212, f);
 
       if ((fd = get_fd(f, 0)) < 0)
@@ -2620,11 +2534,7 @@ function{0, 1} syswrite(f, s)
       tended struct descrip desc;
       status = BlkLoc(f)->file.status;
 
-      if (!status || !(status & Fs_Write) 
-#ifdef Graphics
-      || (status & Fs_Window)
-#endif					/* Graphics */
-          )
+      if (!status || !(status & Fs_Write)  )
 	  runerr(213, f);
 
       if ((fd = get_fd(f, 0)) < 0)

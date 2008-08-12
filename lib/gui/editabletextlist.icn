@@ -299,12 +299,12 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public apply_filter(t)
-      local s, c
+      local s
       # Apply the filter to the string to paste
       s := ""
-      every c := !t do {
-         if member(Gui.PRINTABLE_N, c) then
-            s ||:= c
+      t ? {
+         while tab(upto(Gui.PRINTABLE_N)) do
+            s ||:= tab(many(Gui.PRINTABLE_N))
       }
       if *s > 0 then
          return s

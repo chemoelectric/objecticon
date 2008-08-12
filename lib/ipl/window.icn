@@ -161,7 +161,7 @@ procedure Window(args[])
    wdw_attrib(win, att, "fg")
    wdw_attrib(win, att, "bg")
    wdw_attrib(win, att, "font")
-   GotoRC(win, 1, 1)			# now that font has been set
+   #GotoRC(win, 1, 1)			# now that font has been set
    /&window := win
    return win
 end
@@ -346,7 +346,7 @@ procedure wdw_open(att, omit)
 
    initial image := proc("image", 0)	# protect attractive name
 
-   args := [&progname, "g"]
+   args := []
    every name := key(att) do
       if not member(omit, name) then
          put(args, name || "=" || ("" ~== \att[name]))
@@ -357,7 +357,7 @@ procedure wdw_open(att, omit)
       write(&errout, ")")
       }
 
-   return open ! args
+   return WOpen ! args
 end
 
 

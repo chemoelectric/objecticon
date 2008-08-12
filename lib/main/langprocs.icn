@@ -126,10 +126,8 @@ procedure to_string(o, depth, seen)
          string_buff.add(")")
       }
 
-      "procedure" :
-         # image for a procedure is rather more sophisticated than we
-         # can achieve here, as it knows whether the proc is a method,
-         # record constructor etc (see rmisc.r).
+      "constructor" | "procedure" :
+         # Just let image() do the work.
          string_buff.add(image(o))   
 
       "null" :

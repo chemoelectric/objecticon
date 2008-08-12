@@ -105,15 +105,17 @@ procedure draw_Vmenu_item(s)
 end
 
 procedure draw_on_entry(s)
-   GotoXY(s.win, s.ax+s.D.basex, s.ay+s.D.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, s.ax+s.D.basex, s.ay+s.D.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, s.ax+s.D.basex, s.ay+s.D.basey, s.s)
    BevelRectangle(s.win, s.ax, s.ay, s.aw, s.ah)
 end
 
 procedure draw_off_entry(s)
    EraseArea(s.win, s.ax, s.ay, s.aw, s.ah)
-   GotoXY(s.win, s.ax+s.D.basex, s.ay+s.D.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, s.ax+s.D.basex, s.ay+s.D.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, s.ax+s.D.basex, s.ay+s.D.basey, s.s)
 end
 
 procedure couplerset_Vmenu_item(s)
@@ -175,7 +177,7 @@ procedure Vmenu_bar_item(params[])
                         null_proc, couplerset_Vmenu_item)
    self := Vmenu_item_rec ! params
    self.uid := Vget_uid()
-   if type(\self.menu) ~== "Vmenu_frame_rec" then
+   if subtype(\self.menu) ~== "ipl.vidgets.Vmenu_frame_rec" then
       _Vbomb("Vmenu_bar_item must be created with a Vmenu_frame")
 
 ## Init
@@ -272,7 +274,7 @@ static procs
    self.P := Vstd_pos()
    init_Vframe(self)
    self.callback := table()
-   self.temp := open("vmenu", "g", "canvas=hidden")
+   self.temp := WOpen("label=vmenu", "canvas=hidden")
 
    return self
 end
@@ -399,7 +401,7 @@ procedure Vmenu_bar(p[])
       submenu := pop(p) | &null
       if type(\name) ~== "string" & not numeric(name) then
          _Vbomb("invalid label passed to Vmenu_bar()")
-      if type(\submenu) ~== "Vmenu_frame_rec" then
+      if subtype(\submenu) ~== "ipl.vidgets.Vmenu_frame_rec" then
          _Vbomb("invalid menu parameter to Vmenu_bar()")
       item := Vmenu_bar_item(win, name, , id, , , submenu )
       VInsert(frame, item, xpos, 0)

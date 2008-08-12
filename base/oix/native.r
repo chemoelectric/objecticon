@@ -44,6 +44,26 @@ function{0,1} is(x,c)
     }
 end
 
+function{0,1} glob(s, c)
+   if !cnv:tmp_string(s) then
+      runerr(103, s)
+   body {
+       struct progstate *prog;
+       dptr p;
+       if (is:coexpr(c))
+           prog = BlkLoc(c)->coexpr.program;
+       else
+           prog = curpstate;
+       p = lookup_global(&s, prog);
+       if (p) {
+           result.dword = D_Var;
+           VarLoc(result) = p;
+           return result;
+       } else
+           fail;
+   }
+end
+
 function{*} lang_Class_get_supers(c)
     body {
         struct b_class *class;

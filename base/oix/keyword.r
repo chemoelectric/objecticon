@@ -626,19 +626,6 @@ end
 #endif					/* Graphics */
 
 #ifdef Graphics
-"&col - mouse horizontal position in text columns."
-keyword{1} col
-   abstract { return kywdint }
-   inline { if (is:null(lastEventWin)) runerr(140, lastEventWin);
-	    else return kywdint(&amperCol); }
-end
-
-"&row - mouse vertical position in text rows."
-keyword{1} row
-   abstract { return kywdint }
-   inline { if (is:null(lastEventWin)) runerr(140, lastEventWin);
-	    else return kywdint(&amperRow); }
-end
 
 "&x - mouse horizontal position."
 keyword{1} x
@@ -682,17 +669,6 @@ keyword{0,1} meta
 	    else if (xmod_meta) return nulldesc; else fail; }
 end
 #else					/* Graphics */
-"&col - mouse horizontal position in text columns."
-keyword{0} col
-   abstract { return empty_type }
-   inline { fail; }
-end
-
-"&row - mouse vertical position in text rows."
-keyword{0} row
-   abstract { return empty_type }
-   inline { fail; }
-end
 
 "&x - mouse horizontal position."
 keyword{0} x

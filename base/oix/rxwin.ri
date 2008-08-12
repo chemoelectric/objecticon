@@ -21,8 +21,6 @@ static int	     handle_config    (wbp w, XConfigureEvent *event);
 static int           handle_exposures (wbp w, XExposeEvent *event);
 static void       handle_mouse     (wbp w, XButtonEvent *event);
 static void       handle_keypress  (wbp w, XKeyEvent *event);
-void	     postcursor       (wbp w);
-void	     scrubcursor      (wbp w);
 static XImage *	     getximage	      (wbp w, int x, int y,
                                        int width, int height, int init);
 void              moveWindow       (wbp w, int x, int y);
@@ -61,56 +59,6 @@ static char *atom_fmt(wsp ws,Atom a) {
 }
 
 
-/*
- * write some text to both the window and the pixmap
- */
-void xdis(w,s,n)
-    register wbp w;
-    char *s;
-    int n;
-{
-    int x, y, delta_x;
-    STDLOCALS(w);
-
-    pollctr>>=1; pollctr++;
-    x = ws->x;
-    y = ws->y;
-#ifdef HAVE_LIBXFT
-    {
-        XGCValues xgc;
-        delta_x = xft_textwidth(w,s,n);
-        /* 
-         * Clear the area first (XDrawImageString does this itself) 
-         */
-        XGetGCValues(stddpy, stdgc, GCForeground, &xgc);
-        XSetForeground(stddpy, stdgc, wd->colors[wc->bg].c);
-        if (ws->win)
-            XFillRectangle(stddpy,
-                           stdwin,
-                           stdgc,
-                           x,
-                           y - wc->font->ascent,
-                           delta_x, 
-                           wc->font->height);
-        XFillRectangle(stddpy,
-                       stdpix,
-                       stdgc,
-                       x,
-                       y - wc->font->ascent,
-                       delta_x, 
-                       wc->font->height);
-        /* Restore foreground */
-        XSetForeground(stddpy, stdgc, xgc.foreground);
-        drawstrng(w,x,y,s,n);
-    }
-#else
-    delta_x = XTextWidth(wc->font->fsp,s,n);
-    RENDER4(XDrawImageString,x,y,s,n);
-#endif
-    ws->x += delta_x;
-}
-
-
 
 /*
  * Routines to convert property data into text strings.
@@ -399,139 +347,6 @@ void SetErrorHandler()
 {   
     (void) XSetErrorHandler((XErrorHandler) ErrorHandler);
 }
-
-
-/*
- * put a character out to a window using the current attributes
- */
-int wputc(ci,w)
-    int ci;
-    wbp w;
-{
-    int fh, lh, width, height, over;
-    char c = (char)ci;
-    STDLOCALS(w);
-
-    fh = wc->font->height;
-    lh = wc->leading;
-    width = ws->width;
-    height = ws->height;
-
-    switch(c) {
-        case '\r': {
-            ws->x = wc->dx;
-            break;
-        }
-        case '\n': {
-            if (ISCEOLON(w)) {
-                /*
-                 * Clear the rest of the line, like a terminal would.
-                 * Its arguable whether this should clear to the window
-                 * background or the current context background.  If you
-                 * change it to use the context background you have to
-                 * change the XClearArea call to another XFillRectangle
-                 * (cf. eraseArea()).
-                 */
-                if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
-                XSetForeground(stddpy, stdgc, wd->colors[wc->bg].c);
-                XClearArea(stddpy, stdwin,
-                           ws->x, 
-                           ws->y - wc->font->ascent,
-                           width-ws->x, lh, False);
-                XFillRectangle(stddpy, stdpix, stdgc,
-                               ws->x, 
-                               ws->y - wc->font->ascent,
-                               width - ws->x, lh);
-                XSetForeground(stddpy, stdgc,
-                               wd->colors[wc->fg].c^(ISXORREVERSE(w)?
-                                                     wd->colors[wc->bg].c:0));
-                if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-            }
-            ws->y += lh;
-            ws->x = wc->dx;
-            /*
-             * Now for the exciting part: do we scroll the window?
-             * Copy the pixmap upward, then repaint the window.
-             */
-            over = ws->y + wc->font->descent - height;
-            if (over > 0) {
-                ws->y -= over;
-
-                if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
-                XCopyArea(stddpy, stdpix, stdpix, stdgc,
-                          0, over,			/* x, y */
-                          width, height - over,	/* w, h */
-                          0, 0);			/* dstx,dsty */
-                XSetForeground(stddpy, stdgc, wd->colors[wc->bg].c);
-                XFillRectangle(stddpy, stdpix, stdgc,
-                               0, height - over, width, over);
-                XSetForeground(stddpy, stdgc,wd->colors[wc->fg].c^(ISXORREVERSE(w)?
-                                                                   wd->colors[wc->bg].c:0));
-                if (stdwin)
-                    XCopyArea(stddpy, stdpix, stdwin, stdgc, 0, 0, width, height, 0,0);
-                if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-            }
-            break;
-        }
-        case '\t': {
-            xdis(w, "        ", 8 - ((XTOCOL(w,ws->x))&7));
-            break;
-        }
-            /*
-             * Handle backspaces.  This implements cooked mode echo handling.
-             */
-        case '\177':
-        case '\010': {
-            int i = 0, pre_x;
-            /*
-             * Start with the last character queued up.
-             */
-            i--;
-            /*
-             * Trot back to the control-H itself.
-             */
-            while ((i>-EQUEUELEN) && (EVQUESUB(w,i) != c)) i--;
-            if (i == -EQUEUELEN) break;
-            /*
-             * Go past the control-H.
-             */
-            i--;
-            /*
-             * Go back through any number of control-H's from prior lifetimes.
-             */
-            while((i > -EQUEUELEN) && !isprint(EVQUESUB(w,i))) i--;
-            if (i == -EQUEUELEN) break;
-
-            /*
-             * OK, here's the character we're actually rubbing out.  Back up.
-             */
-            c = EVQUESUB(w,i);
-            pre_x = ws->x;
-#ifdef HAVE_LIBXFT
-            ws->x -= xft_textwidth(w, &c, 1);
-#else
-            ws->x -= XTextWidth(wc->font->fsp, &c, 1);
-#endif
-            /*
-             * Physically erase the character from the queue.  This results in
-             * two control-H's present in the queue.
-             */
-            *evquesub(w,i) = '\010';
-            /*
-             * Save the backed-up position, and draw spaces through the erased.
-             */
-            i = ws->x;
-            while(ws->x < pre_x) xdis(w," ",1);
-            ws->x = i;
-            break;
-        }
-        default: {
-            xdis(w,&c,1);
-        }
-    }
-    return 1;
-}
-
 
 /*
  * handle_misc processes pending events on display.
@@ -896,61 +711,23 @@ int wgetq(w,res,t)
     dptr res;
     int t;
 {
-    int posted = 0;
-
     while (1) {
         STDLOCALS(w);		/* leave inside loop; ws->pix can change! */
         if (!EVQUEEMPTY(w)) {
             EVQUEGET(w,*res);
-            if (posted)
-                scrubcursor(w);
             return 1;
         }
-        postcursor(w);		/* post every time in case resize erased it */
-        posted = 1;
         /* If we need a timeout, we select right here so we know an event will
            be available when XNextEvent is called by handle_misc */
         if (t > 0 && iselect(XConnectionNumber(wd->display), t) == 0)
             /* timer expired */
             return -2;
         if (handle_misc(wd, w) == -1) {
-            if (posted)
-                scrubcursor(w);
             return -1;
         }
     }
 }
 
-/*
- * postcursor/scrubcursor calls must be paired without any intervening output.
- */
-void postcursor(wbp w)
-{
-    STDLOCALS(w);
-
-    if (!ISCURSORON(w) || !stdwin) return;
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, GXcopy);
-    if (ISXORREVERSE(w)) XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
-
-    /* Draw only on window, not on backing pixmap */
-    XFillRectangle(stddpy, stdwin, stdgc, ws->x, ws->y, FWIDTH(w), DESCENT(w));
-    XSync(stddpy, False);
-}
-
-void scrubcursor(wbp w)
-{
-    STDLOCALS(w);
-
-    if (!ISCURSORON(w) || !stdwin) return;
-
-    XCopyArea(stddpy, stdpix, stdwin, stdgc,	/* restore window from pixmap */
-              ws->x, ws->y, FWIDTH(w), DESCENT(w), ws->x, ws->y);
-
-    if (wc->drawop != GXcopy) XSetFunction(stddpy, stdgc, wc->drawop);
-    if (ISXORREVERSE(w)) XSetForeground(stddpy, stdgc,
-                                        wd->colors[wc->fg].c ^ wd->colors[wc->bg].c);
-}
-
 /*
  * wclose - close a window.  If is a real on-screen window,
  * wait for a DestroyNotify event from the server before returning.
@@ -1078,7 +855,7 @@ void wsync(w)
  *  -1  : ordinary failure
  *  -2  : out of memory
  */
-FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index, int is_3d)
+wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index, int is_3d)
 {
     wbp w;
     wsp ws;
@@ -1139,10 +916,6 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index, int
      */
     ws->height = w->context->font->height * 12;
     ws->width  = w->context->font->maxwidth * 80;
-    ws->y = w->context->font->ascent;
-    ws->x = 0;
-    ws->y += w->context->dy;
-    ws->x += w->context->dx;
     /*
      * Loop through any remaining arguments.
      */
@@ -1182,7 +955,7 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index, int
         XSetWMProtocols(ws->display->display, ws->win, &WMDeleteWindow, 1);
     }
 
-    return (FILE *)w;
+    return w;
 }
 
 /*
@@ -1796,19 +1569,6 @@ int setwindowlabel(w, s)
     return Succeeded;
 }
 
-/*
- * setcursor() - a no-op under X at present
- */
-int setcursor(w, on)
-    wbp w;
-    int on;
-{
-    if (on)
-        SETCURSORON(w);
-    else
-        CLRCURSORON(w);
-    return Succeeded;
-}
 
 
 /*
@@ -2613,10 +2373,6 @@ int setfont(w,s)
         XSetFont(stddpy, stdgc, wc->font->fsp->fid);
 #endif
 
-    if (stdpix == (Pixmap) NULL) {
-        ws->y = wc->font->ascent;
-        ws->x = 0;
-    }
     return Succeeded;
 }
 
@@ -2742,8 +2498,6 @@ static int handle_config(w, event)
     /*
      * Update X-Icon's information about the window's configuration
      */
-    ws->x = min(ws->x, event->width - FWIDTH(w));
-    ws->y = min(ws->y, event->height);
 
     ws->posx = event->x;
     ws->posy = event->y;
@@ -3157,26 +2911,6 @@ int n;
         lastx = p[i].x;
         lasty = p[i].y;
     }
-}
-
-void animate(w, pixs, npix, p, n, delay)
-    wbp w;
-    dptr pixs;
-    int npix;
-    XPoint *p;
-    int n, delay;
-{
-    wbp w2 = BlkLoc(*pixs)->file.fd.wb;
-    STDLOCALS(w);
-
-    sprite = w2;
-    animheight = sprite->window->height;
-    animwidth  = sprite->window->width;
-    tics = delay;
-    lastx = lasty = -1;
-    genCurve(w, p, n, animHelper);
-    XCopyArea(stddpy, stdpix, stdwin, stdgc, lastx, lasty,
-              animwidth, animheight, lastx, lasty);
 }
 
 
@@ -4062,8 +3796,8 @@ int seticonimage(w, dp)
         /*
          * get the preloaded (in another window value) pixmap image
          */
-        if (is:file(*dp) && (BlkLoc(*dp)->file.status & Fs_Window)) {
-            wbp x = BlkLoc(*dp)->file.fd.wb;
+        if (is:window(*dp)) {
+            wbp x = BlkLoc(*dp)->window.wb;
             if ((ws->iconimage = salloc(x->window->windowlabel)) == NULL)
                 ReturnErrNum(305, Error);
             pix = XCreatePixmap(stddpy, DefaultRootWindow(stddpy),
@@ -4079,10 +3813,12 @@ int seticonimage(w, dp)
             ws->iconpix = pix;
             ws->iconw = x->window->width;
             ws->iconh = x->window->height;
+/**
             if (!ws->iconx && !ws->icony) {
                 ws->iconx = ws->x;
                 ws->icony = ws->y;
             }
+**/
             if (remap(w,ws->iconx,ws->icony) == -1)
                 ReturnErrNum(144, Error);
 
@@ -4611,10 +4347,6 @@ char child_window_stuff(wbp w, wbp wp, char child_window)
      */
     ws->height = w->context->font->height * 12;
     ws->width  = w->context->font->maxwidth * 80;
-    ws->y = w->context->font->ascent;
-    ws->x = 0;
-    ws->y += w->context->dy;
-    ws->x += w->context->dx;
     return 1;
 }
 

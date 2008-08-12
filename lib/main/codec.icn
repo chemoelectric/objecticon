@@ -7,6 +7,7 @@ class Codec()
       OBJECT_CODE,
       CLASS_CODE,
       RECORD_CODE,
+      CONSTRUCTOR_CODE,
       PROCEDURE_CODE,
       NULL_CODE,
       STRING_CODE,
@@ -24,6 +25,7 @@ class Codec()
       OBJECT_CODE := "C"
       CLASS_CODE := "D"
       RECORD_CODE := "R"
+      CONSTRUCTOR_CODE := "K"
       PROCEDURE_CODE := "P"
       NULL_CODE := "N"
       STRING_CODE := "S"
@@ -113,6 +115,11 @@ class Encode()
 
          "procedure" : {
             chars_out(Codec.PROCEDURE_CODE)
+            line_out(subtype(o))
+         }
+
+         "constructor" : {
+            chars_out(Codec.CONSTRUCTOR_CODE)
             line_out(subtype(o))
          }
 
@@ -256,7 +263,7 @@ class Decode()
    end
 
    public decode()
-      local i, n, rname, t, res, def
+      local i, n, rname, t, res, def, con
 
       t := char_in() | fail
 
@@ -271,6 +278,13 @@ class Decode()
 
          Codec.CLASS_CODE :
             return Class.for_name(line_in())
+
+         Codec.CONSTRUCTOR_CODE : {
+            rname := line_in() | fail
+            con := glob(rname) | fail
+            type(con) == "constructor" | fail
+            return con
+         }
 
          Codec.PROCEDURE_CODE :
             return proc(line_in())
@@ -293,7 +307,9 @@ class Decode()
          Codec.RECORD_CODE : {
             (rname := line_in() &
              n := int_in()) | fail
-            res := proc(rname)() | fail
+            con := glob(rname) | fail
+            type(con) == "constructor" | fail
+            res := con()
             note_seen(res)
             every i := 1 to n do
                res[i] := decode() | fail

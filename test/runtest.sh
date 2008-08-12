@@ -49,7 +49,7 @@ for FNAME; do
 
     rm -f $BASE *.u packages.txt
 
-    if cmp $BASE.std $BASE.out ; then
+    if cmp $BASE.out $BASE.std  ; then
         rm -f $BASE.out
     else
         FAILED="$FAILED $BASE"

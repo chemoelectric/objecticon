@@ -10,4 +10,4 @@ oit -s mt_p1.icn utils.icn
 ./mt_p1 >mt.out
 rm -f mt_c1 mt_c2  mt_c3  mt_p1
 set -e
-cmp mt.std mt.out
+cmp mt.out mt.std

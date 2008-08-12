@@ -120,23 +120,6 @@ function{1} close(f)
 
 
 
-#ifdef Graphics
-      /*
-       * Close window if windows are supported.
-       */
-
-      pollctr >>= 1;
-      pollctr++;
-      if (BlkLoc(f)->file.status & Fs_Window) {
-	 if (BlkLoc(f)->file.status != Fs_Window) { /* not already closed? */
-	    BlkLoc(f)->file.status = Fs_Window;
-	    SETCLOSED((wbp) fp);
-	    wclose((wbp) fp);
-	    }
-	 return f;
-	 }
-      else
-#endif					/* Graphics */
 
 #if MSWIN32
 #ifndef NTGCC
@@ -251,11 +234,6 @@ function{0,1} open(fname, spec, attr[n])
       struct b_file *fl;
       struct stat st;
 
-#ifdef Graphics
-      int j, err_index = -1;
-      tended struct b_list *hp;
-#endif					/* Graphics */
-
 
 /*
  * The following code is operating-system dependent [@fsys.02].  Make
@@ -344,17 +322,6 @@ Deliberate Syntax Error
 	       status |= Fs_Pipe;
 	       continue;
 #endif				
-
-	    case 'x':
-	    case 'X':
-	    case 'g':
-	    case 'G':
-#ifdef Graphics
-	       status |= Fs_Window | Fs_Read | Fs_Write;
-	       continue;
-#else					/* Graphics */
-	       fail;
-#endif					/* Graphics */
 
 	    case 'l':
 	    case 'L':
@@ -456,33 +423,6 @@ Deliberate Syntax Error
        */
 
 
-#ifdef Graphics
-      if (status & Fs_Window) {
-	 /*
-	  * allocate an empty event queue for the window
-	  */
-	 Protect(hp = alclist(0, MinListSlots), runerr(0));
-
-	 /*
-	  * loop through attributes, checking validity
-	  */
-	 for (j = 0; j < n; j++) {
-	    if (is:null(attr[j]))
-	       attr[j] = emptystr;
-	    if (!is:string(attr[j]))
-	       runerr(109, attr[j]);
-	    }
-
-	    f = wopen(fnamestr, hp, attr, n, &err_index,0);
-
-	 if (f == NULL) {
-	    if (err_index >= 0) runerr(145, attr[err_index]);
-	    else if (err_index == -1) fail;
-	    else runerr(305);
-	    }
-	 } else
-#endif					/* Graphics */
-
 
 
 #if UNIX || MSWIN32
@@ -502,16 +442,17 @@ Deliberate Syntax Error
 	    strcat(fnamestr, " ");
 	    strcat(fnamestr, s+1);
 	    }
+         errno = 0;
 	 f = popen(fnamestr, mode);
-         if (!strcmp(mode,"r")) {
-            if ((c = getc(f)) == EOF) {
-               pclose(f);
-               fail;
-               }
-            else
-               ungetc(c, f);
-            }
-	 }
+         if (f && !strcmp(mode,"r")) {
+             if ((c = getc(f)) == EOF) {
+                 pclose(f);
+                 fail;
+             }
+             else
+                 ungetc(c, f);
+         }
+      }
       else
 #endif			
 
@@ -663,22 +604,6 @@ Deliberate Syntax Error
 
       Protect(fl = alcfile(f, status, &filename), runerr(0));
 
-#ifdef Graphics
-      /*
-       * link in the Icon file value so this window can find it
-       */
-      if (status & Fs_Window) {
-	 ((wbp)f)->window->filep.dword = D_File;
-	 BlkLoc(((wbp)f)->window->filep) = (union block *)fl;
-	 if (is:null(lastEventWin)) {
-	    lastEventWin = ((wbp)f)->window->filep;
-            lastEvFWidth = FWIDTH((wbp)f);
-            lastEvLeading = LEADING((wbp)f);
-            lastEvAscent = ASCENT((wbp)f);
-            }
-	 }
-#endif					/* Graphics */
-
       return file(fl);
       }
 end
@@ -778,20 +703,6 @@ function{0,1} read(f)
       StrLen(s) = 0;
       do {
 
-#ifdef Graphics
-	 pollctr >>= 1;
-	 pollctr++;
-	 if (status & Fs_Window) {
-	    slen = wgetstrg(sbuf,MaxReadStr,fp);
-	    if (slen == -1)
-	       runerr(141);
-	    else if (slen == -2)
-	       runerr(143);
-	    else if (slen == -3)
-               fail;
-	    }
-	 else
-#endif					/* Graphics */
 
 #if !MSWIN32
 	  if (status & Fs_Directory) {
@@ -1027,20 +938,6 @@ function{0,1} reads(f,i)
 	 }
 #endif					/* HAVE_LIBZ */
 
-#ifdef Graphics
-      pollctr >>= 1;
-      pollctr++;
-      if (status & Fs_Window) {
-	 tally = wlongread(StrLoc(s),sizeof(char),i,fp);
-	 if (tally == -1)
-	    runerr(141);
-	 else if (tally == -2)
-	    runerr(143);
-	 else if (tally == -3)
-            fail;
-	 }
-      else
-#endif					/* Graphics */
 
       tally = longread(StrLoc(s),sizeof(char),i,fp);
 
@@ -1154,14 +1051,6 @@ function{0,1} seek(f,o)
       if (BlkLoc(f)->file.status & Fs_Directory)
 	 fail;
 
-#ifdef Graphics
-      pollctr >>= 1;
-      pollctr++;
-      if (BlkLoc(f)->file.status & Fs_Window)
-	 fail;
-#endif					/* Graphics */
-
-
 #ifdef HAVE_LIBZ
         if ( BlkLoc(f)->file.status & Fs_Compress) {
             if (o<0)
@@ -1218,13 +1107,6 @@ function{0,1} where(f)
       if ((BlkLoc(f)->file.status & Fs_Directory) != 0)
          fail;
 
-#ifdef Graphics
-      pollctr >>= 1;
-      pollctr++;
-      if (BlkLoc(f)->file.status & Fs_Window)
-	 fail;
-#endif					/* Graphics */
-
       pos = ftell(fd) + 1;
       if (pos == 0)
 	 fail;	/* may only be effective on ANSI systems */
@@ -1264,13 +1146,6 @@ end
    /*
     * Append a newline to the file.
     */
-#ifdef Graphics
-   pollctr >>= 1;
-   pollctr++;
-   if (status & Fs_Window)
-      wputc('\n', f.wb);
-   else
-#endif					/* Graphics */
 
 #ifdef HAVE_LIBZ
    if (status & Fs_Compress) {
@@ -1297,9 +1172,6 @@ end
    /*
     * Flush the file.
     */
-#ifdef Graphics
-   if (!(status & Fs_Window)) {
-#endif					/* Graphics */
 
       if (!(status & Fs_Socket)) {
 
@@ -1324,11 +1196,6 @@ end
 #endif					/* HAVE_LIBZ */
 
       }
-
-#ifdef Graphics
-      }
-#endif					/* Graphics */
-
 
 #if terminate
 	    c_exit(EXIT_FAILURE);
@@ -1425,16 +1292,6 @@ function {1} name(x[nargs])
 		     /*
 		      * Append a newline to the file and flush it.
 		      */
-#ifdef Graphics
-		     pollctr >>= 1;
-		     pollctr++;
-		     if (status & Fs_Window) {
-			wputc('\n', f.wb);
-			wflush(f.wb);
-			}
-		     else {
-#endif					/* Graphics */
-
 #ifdef HAVE_LIBZ
                      if (status & Fs_Compress) {
 			if (gzputc(f.fp,'\n')==-1)
@@ -1460,9 +1317,6 @@ function {1} name(x[nargs])
 			   runerr(214);
 			fflush(f.fp);
                         }
-#ifdef Graphics
-			}
-#endif					/* Graphics */
 		     }
 #endif					/* nl */
 
@@ -1487,12 +1341,6 @@ function {1} name(x[nargs])
 		  /*
 		   * Output the string.
 		   */
-#ifdef Graphics
-		  if (status & Fs_Window)
-		     wputstr(f.wb, StrLoc(t), StrLen(t));
-		  else
-#endif					/* Graphics */
-
 
 #ifdef HAVE_LIBZ
 	          if (status & Fs_Compress){
@@ -1659,14 +1507,6 @@ function{1} flush(f)
 	  )
 	 return f;
 
-#ifdef Graphics
-      pollctr >>= 1;
-      pollctr++;
-
-      if (status & Fs_Window)
-	 wflush((wbp)fp);
-      else
-#endif					/* Graphics */
 	 fflush(fp);
 
       /*

@@ -198,19 +198,6 @@ unsigned int errmask;
        )
      return -1;
 
-#ifdef Graphics
-   if (status & Fs_Window) {
-     if (!(status & Fs_Read)) {
-	return -1;
-	}
-#ifdef XWindows
-     return XConnectionNumber(((wbp)(BlkLoc(file)->file.fd.fp))->
-				      window->display->display);
-#else
-     return -1;
-#endif
-     }
-#endif
 
    if (errmask && !(status & errmask))
       return -2;
@@ -566,7 +553,7 @@ char *name;
           MakeCStr("posix_lock", &s);
           MakeCStr("value", &fields[0]);
           MakeCStr("pid", &fields[1]);
-          posix_lock.dword = D_Proc;
+          posix_lock.dword = D_Constructor;
           posix_lock.vword.bptr = (union block *)dynrecord(&s, fields, 2);
 	 }
       return &posix_lock;
@@ -576,7 +563,7 @@ char *name;
           MakeCStr("posix_message", &s);
           MakeCStr("addr", &fields[0]);
           MakeCStr("msg", &fields[1]);
-          posix_message.dword = D_Proc;
+          posix_message.dword = D_Constructor;
           posix_message.vword.bptr = (union block *)dynrecord(&s, fields, 2);
 	 }
       return &posix_message;
@@ -588,7 +575,7 @@ char *name;
           MakeCStr("aliases", &fields[1]);
           MakeCStr("port", &fields[2]);
           MakeCStr("proto", &fields[3]);
-          posix_servent.dword = D_Proc;
+          posix_servent.dword = D_Constructor;
           posix_servent.vword.bptr = (union block *)dynrecord(&s, fields, 4);
 	 }
       return &posix_servent;
@@ -599,7 +586,7 @@ char *name;
           MakeCStr("name", &fields[0]);
           MakeCStr("aliases", &fields[1]);
           MakeCStr("addresses", &fields[2]);
-          posix_hostent.dword = D_Proc;
+          posix_hostent.dword = D_Constructor;
           posix_hostent.vword.bptr = (union block *)dynrecord(&s, fields, 3);
 	 }
       return &posix_hostent;
@@ -609,7 +596,7 @@ char *name;
           MakeCStr("posix_timeval", &s);
           MakeCStr("sec", &fields[0]);
           MakeCStr("usec", &fields[1]);
-          posix_timeval.dword = D_Proc;
+          posix_timeval.dword = D_Constructor;
           posix_timeval.vword.bptr = (union block *)dynrecord(&s, fields, 2);
 	 }
       return &posix_timeval;
@@ -621,7 +608,7 @@ char *name;
           MakeCStr("passwd", &fields[1]);
           MakeCStr("gid", &fields[2]);
           MakeCStr("members", &fields[3]);
-          posix_group.dword = D_Proc;
+          posix_group.dword = D_Constructor;
           posix_group.vword.bptr = (union block *)dynrecord(&s, fields, 4);
 	 }
       return &posix_group;
@@ -636,7 +623,7 @@ char *name;
           MakeCStr("gecos", &fields[4]);
           MakeCStr("dir", &fields[5]);
           MakeCStr("shell", &fields[6]);
-          posix_passwd.dword = D_Proc;
+          posix_passwd.dword = D_Constructor;
           posix_passwd.vword.bptr = (union block *)dynrecord(&s, fields, 7);
 	 }
       return &posix_passwd;
@@ -658,7 +645,7 @@ char *name;
           MakeCStr("blksize", &fields[11]);
           MakeCStr("blocks", &fields[12]);
           MakeCStr("symlink", &fields[13]);
-          posix_stat.dword = D_Proc;
+          posix_stat.dword = D_Constructor;
           posix_stat.vword.bptr = (union block *)dynrecord(&s, fields, 14);
 	 }
       return &posix_stat;
@@ -671,7 +658,7 @@ char *name;
    StrLen(s) = strlen(name);
    for (i = 0; i < n_globals; ++i)
       if (eq(&s, &gnames[i]))
-         if (is:proc(globals[i]))
+         if (is:constructor(globals[i]))
             return &globals[i];
          else
 	    return 0;
@@ -1299,13 +1286,11 @@ dptr result;
 {
    tended struct b_record *rp;
    dptr constr;
-   int nfields;
 
    if (!(constr = rec_structor("posix_passwd")))
       return 0;
 
-   nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-   rp = alcrecd(nfields, BlkLoc(*constr));
+   rp = alcrecd(&BlkLoc(*constr)->constructor);
 
    result->dword = D_Record;
    result->vword.bptr = (union block *)rp;
@@ -1328,13 +1313,11 @@ dptr result;
 {
    tended struct b_record *rp;
    dptr constr;
-   int nfields;
 
    if (!(constr = rec_structor("posix_group")))
       return 0;
 
-   nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-   rp = alcrecd(nfields, BlkLoc(*constr));
+   rp = alcrecd(&BlkLoc(*constr)->constructor);
 
    result->dword = D_Record;
    result->vword.bptr = (union block *)rp;
@@ -1353,14 +1336,12 @@ dptr result;
 {
    tended struct b_record *rp;
    dptr constr;
-   int nfields;
    int nmem = 0, i, n;
 
    if (!(constr = rec_structor("posix_servent")))
       return 0;
 
-   nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-   rp = alcrecd(nfields, BlkLoc(*constr));
+   rp = alcrecd(&BlkLoc(*constr)->constructor);
 
    result->dword = D_Record;
    result->vword.bptr = (union block *)rp;
@@ -1380,7 +1361,6 @@ struct hostent *hs;
 {
    tended struct b_record *rp;
    dptr constr;
-   int nfields;
    int nmem = 0, i, n;
    unsigned int *addr;
    char *p;
@@ -1388,8 +1368,7 @@ struct hostent *hs;
    if (!(constr = rec_structor("posix_hostent")))
      return 0;
 
-   nfields = (int) ((struct b_proc *)BlkLoc(*constr))->nfields;
-   rp = alcrecd(nfields, BlkLoc(*constr));
+   rp = alcrecd(&BlkLoc(*constr)->constructor);
 
    result->dword = D_Record;
    result->vword.bptr = (union block *)rp;
@@ -1626,16 +1605,14 @@ struct b_list *findactivewindow(struct b_list *lws)
 	 if (j >= ep->lelem.nslots)
 	    j -= ep->lelem.nslots;
 	 
-         if (!(is:file(ep->lelem.lslots[j]) &&
-	       (status = BlkLoc(ep->lelem.lslots[j])->file.status) &&      
-	       (status & Fs_Window)))
+         if (!(is:window(ep->lelem.lslots[j])))
             syserr("internal error calling findactivewindow()");
-         if (!(status & Fs_Read)) {
+	 bp = BlkLoc(ep->lelem.lslots[j]);
+	 w = bp->window.wb;
+         if (ISCLOSED(w)) {
             /* a closed window was found on the list, ignore it */
 	    continue;
 	    }
-	 bp = BlkLoc(ep->lelem.lslots[j]);
-	 w = bp->file.fd.wb;
 	 ws = w->window;
 	 if (BlkLoc(ws->listp)->list.size > 0) {
 	    if (is:null(d)) {

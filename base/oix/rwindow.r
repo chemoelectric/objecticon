@@ -62,25 +62,10 @@ int wgetevent(w,res,t)
         && (BlkLoc(w->window->listp)->list.size == 0)) {	/* & queue is empty */
         while (BlkLoc(w->window->listp)->list.size == 0) {
 #ifdef XWindows
-            extern void postcursor(wbp);
-            extern void scrubcursor(wbp);
             if (ISCLOSED(w)) {
                 return -1;
 	    }
-            if (ISCURSORON(w)) {
-                postcursor(w);
-	    }
 #endif					/* XWindows */
-#ifdef MSWindows
-            if (ISCURSORON(w) && w->window->hasCaret == 0) {
-                wsp ws = w->window;
-                CreateCaret(ws->iconwin, NULL, FWIDTH(w), FHEIGHT(w));
-                SetCaretBlinkTime(500);
-                SetCaretPos(ws->x, ws->y - ASCENT(w));
-                ShowCaret(ws->iconwin);
-                ws->hasCaret = 1;
-	    }
-#endif					/* MSWindows */
             if (pollevent() < 0)				/* poll all windows */
                 break;					/* break on error */
 #if UNIX
@@ -90,10 +75,6 @@ int wgetevent(w,res,t)
             Sleep(20);
 #endif					/* MSWindows */
         }
-#ifdef XWindows
-        if (ISCURSORON(w))
-            scrubcursor(w);
-#endif
     }
 
     retval = wgetq(w,res,t);
@@ -119,8 +100,6 @@ int wgetevent(w,res,t)
         IntVal(amperY) -= 0x10000;
     IntVal(amperX) -= w->context->dx;
     IntVal(amperY) -= w->context->dy;
-    MakeInt(1 + XTOCOL(w,IntVal(amperX)), &(amperCol));	/* &col */
-    MakeInt(YTOROW(w,IntVal(amperY)) , &(amperRow));	/* &row */
 
     xmod_control = IntVal(xdesc) & EQ_MOD_CONTROL;	/* &control */
     xmod_meta = IntVal(xdesc) & EQ_MOD_META;		/* &meta */
@@ -131,53 +110,7 @@ int wgetevent(w,res,t)
     IntVal(amperInterval) = i;				/* &interval */
     return 0;
 }
-
-/*
- * get event from window (drop mouse events), no echo
- *
- * return: 1 = success, -1 = window died, -2 = malformed queue, -3 = EOF
- */
-int wgetchne(w,res)
-    wbp w;
-    dptr res;
-{
-    int i;
 
-    while (1) {
-        i = wgetevent(w,res,-1);
-        if (i != 0)
-            return i;
-        if (is:string(*res)) {
-#ifdef MSWindows
-            if (*StrLoc(*res) == '\032') return -3; /* control-Z gives EOF */
-#endif					/* MSWindows */
-            return 1;
-        }
-    }
-}
-
-/*
- * get event from window (drop mouse events), with echo
- *
- * returns 1 for success, -1 if window died, -2 for malformed queue, -3 for EOF
- */
-int wgetche(w,res)
-    wbp w;
-    dptr res;
-{
-    int i;
-    i = wgetchne(w,res);
-    if (i != 1)
-        return i;
-    i = *StrLoc(*res);
-    if ((0 <= i) && (i <= 127) && (ISECHOON(w))) {
-        wputc(i, w);
-        if (i == '\r') wputc((int)'\n', w); /* CR -> CR/LF */
-    }
-    return 1;
-}
-
-
 /*
  * Get a window that has an event pending (queued)
  */
@@ -229,138 +162,6 @@ wsp getactivewindow()
     }
 }
 
-/*
- * wlongread(s,elsize,nelem,f) -- read string from window for reads(w)
- *
- * returns length(>=0) for success, -1 if window died, -2 for malformed queue
- *  -3 on EOF
- */
-int wlongread(s, elsize, nelem, f)
-    char *s;
-    int elsize, nelem;
-    FILE *f;
-{
-    int c;
-    tended char *ts = s;
-    struct descrip foo;
-    long l = 0, bytes = elsize * nelem;
-
-    while (l < bytes) {
-        c = wgetche((wbp)f, &foo);
-        if (c == -3 && l > 0)
-            return l;
-        if (c < 0)
-            return c;
-        c = *StrLoc(foo);
-        switch(c) {
-            case '\177':
-            case '\010':
-                if (l > 0) { ts--; l--; }
-                break;
-            default:
-                *ts++ = c; l++;
-                break;
-        }
-    }
-    return l;
-}
-
-/*
- * wgetstrg(s,maxlen,f) -- get string from window for read(w) or !w
- *
- * returns length(>=0) for success, -1 if window died, -2 for malformed queue
- *  -3 for EOF, -4 if length was limited by maxi
- */
-int wgetstrg(s, maxlen, f)
-    char *s;
-    long  maxlen;
-    FILE *f;
-{
-    int c;
-    tended char *ts = s;
-    long l = 0;
-    struct descrip foo;
-
-    while (l < maxlen) {
-        c = wgetche((wbp)f,&foo);
-        if (c == -3 && l > 0)
-            return l;
-        if (c < 0)
-            return c;
-        c = *StrLoc(foo);
-        switch(c) {
-            case '\177':
-            case '\010':
-                if (l > 0) { ts--; l--; }
-                break;
-            case '\r':
-            case '\n':
-                return l;
-            default:
-                *ts++ = c; l++;
-                break;
-        }
-    }
-    return -4;
-}
-
-
-/*
- * Assignment side-effects for &x,&y,&row,&col
- */
-int xyrowcol(dx)
-    dptr dx;
-{
-    if (VarLoc(*dx) == &amperX) { /* update &col too */
-        wbp w;
-        if (!is:file(lastEventWin) ||
-            ((BlkLoc(lastEventWin)->file.status & Fs_Window) == 0) ||
-            ((BlkLoc(lastEventWin)->file.status & (Fs_Read|Fs_Write)) == 0)) {
-            MakeInt(1 + IntVal(amperX)/lastEvFWidth, &amperCol);
-        }
-        else {
-            w = BlkLoc(lastEventWin)->file.fd.wb;
-            MakeInt(1 + XTOCOL(w, IntVal(amperX)), &amperCol);
-        }
-    }
-    else if (VarLoc(*dx) == &amperY) { /* update &row too */
-        wbp w;
-        if (!is:file(lastEventWin) ||
-            ((BlkLoc(lastEventWin)->file.status & Fs_Window) == 0) ||
-            ((BlkLoc(lastEventWin)->file.status & (Fs_Read|Fs_Write)) == 0)) {
-            MakeInt(IntVal(amperY) / lastEvLeading + 1, &amperRow);
-        }
-        else {
-            w = BlkLoc(lastEventWin)->file.fd.wb;
-            MakeInt(YTOROW(w, IntVal(amperY)), &amperRow);
-        }
-    }
-    else if (VarLoc(*dx) == &amperCol) { /* update &x too */
-        wbp w;
-        if (!is:file(lastEventWin) ||
-            ((BlkLoc(lastEventWin)->file.status & Fs_Window) == 0) ||
-            ((BlkLoc(lastEventWin)->file.status & (Fs_Read|Fs_Write)) == 0)) {
-            MakeInt((IntVal(amperCol) - 1) * lastEvFWidth, &amperX);
-        }
-        else {
-            w = BlkLoc(lastEventWin)->file.fd.wb;
-            MakeInt(COLTOX(w, IntVal(amperCol)), &amperX);
-        }
-    }
-    else if (VarLoc(*dx) == &amperRow) { /* update &y too */
-        wbp w;
-        if (!is:file(lastEventWin) ||
-            ((BlkLoc(lastEventWin)->file.status & Fs_Window) == 0) ||
-            ((BlkLoc(lastEventWin)->file.status & (Fs_Read|Fs_Write)) == 0)) {
-            MakeInt((IntVal(amperRow)-1) * lastEvLeading + lastEvAscent, &amperY);
-        }
-        else {
-            w = BlkLoc(lastEventWin)->file.fd.wb;
-            MakeInt(ROWTOY(w, IntVal(amperRow)), &amperY);
-        }
-    }
-    return 0;
-}
 
 
 /*
@@ -504,58 +305,6 @@ int setminsize(w,s)
 }
 
 
-
-/*
- * put a string out to a window using the current attributes
- */
-void wputstr(w,s,len)
-    wbp w;
-    char *s;
-    int len;
-{
-    char *s2 = s;
-    wstate *ws = w->window;
-    /* turn off the cursor */
-    hidecrsr(ws);
-
-    while (len > 0) {
-        /*
-         * find a chunk of printable text
-         */
-#ifdef MSWindows
-        while (len > 0) {
-            if (IsDBCSLeadByte(*s2)) {
-                s2++; s2++; len--; len--;
-	    }
-            else if (isprint(*s2)) {
-                s2++; len--;
-	    }
-            else break;
-        }
-#else					/* MSWindows */
-        while (isprint(*s2) && len > 0) {
-            s2++; len--;
-        }
-#endif					/* MSWindows */
-        /*
-         * if a chunk was parsed, write it out
-         */
-        if (s2 != s)
-            xdis(w, s, s2 - s);
-        /*
-         * put the 'unprintable' character, if didn't just hit the end
-         */
-        if (len-- > 0) {
-            wputc(*s2++, w);
-        }
-        s = s2;
-    }
-
-    /* show the cursor again */
-    UpdateCursorPos(ws, w->context);
-    showcrsr(ws);
-    return;
-}
 
 
 /*
@@ -2785,25 +2534,6 @@ int wattrib(w, s, len, answer, abuf)
         }
 
         switch (a = si_s2i(attribs, abuf)) {
-            case A_LINES: case A_ROWS: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                if ((new_height = tmp) < 1)
-                    return Failed;
-                new_height = ROWTOY(w, new_height);
-                new_height += MAXDESCENDER(w);
-                if (setheight(w, new_height) == Failed) return Failed;
-                break;
-            }
-            case A_COLUMNS: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                if ((new_width = tmp) < 1)
-                    return Failed;
-                new_width = COLTOX(w, new_width + 1);
-                if (setwidth(w, new_width) == Failed) return Failed;
-                break;
-            }
             case A_HEIGHT: {
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
@@ -2868,18 +2598,6 @@ int wattrib(w, s, len, answer, abuf)
                 }
                 break;
             }
-            case A_ROW: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->y = ROWTOY(w, tmp) + wc->dy;
-                break;
-            }
-            case A_COL: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->x = COLTOX(w, tmp) + wc->dx;
-                break;
-            }
             case A_CANVAS: {
                 AttemptAttr(setcanvas(w,val));
                 break;
@@ -2904,14 +2622,6 @@ int wattrib(w, s, len, answer, abuf)
             case A_LABEL:
             case A_WINDOWLABEL: {
                 AttemptAttr(setwindowlabel(w, val));
-                break;
-            }
-            case A_CURSOR: {
-                int on_off;
-                if (strcmp(val, "on") & strcmp(val, "off"))
-                    return Failed;
-                on_off = ATOBOOL(val);
-                setcursor(w, on_off);
                 break;
             }
             case A_FONT: {
@@ -2990,20 +2700,6 @@ int wattrib(w, s, len, answer, abuf)
                 AttemptAttr(setdisplay(w,val));
                 break;
             }
-            case A_X: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->x = tmp + wc->dx;
-                UpdateCursorPos(ws, wc);	/* tell system where to blink it */
-                break;
-            }
-            case A_Y: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->y = tmp + wc->dy;
-                UpdateCursorPos(ws, wc);	/* tell system where to blink it */
-                break;
-            }
             case A_DX: {
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
@@ -3016,12 +2712,6 @@ int wattrib(w, s, len, answer, abuf)
                     return Failed;
                 wc->dy = tmp;
                 UpdateCursorPos(ws, wc);	/* tell system where to blink it */
-                break;
-            }
-            case A_LEADING: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                setleading(w, tmp);
                 break;
             }
             case A_IMAGE: {
@@ -3045,13 +2735,6 @@ int wattrib(w, s, len, answer, abuf)
                 }
 
                 AttemptAttr(r);
-                break;
-            }
-            case A_ECHO: {
-                if (strcmp(val, "on") & strcmp(val, "off"))
-                    return Failed;
-                if (ATOBOOL(val)) SETECHOON(w);
-                else CLRECHOON(w);
                 break;
             }
             case A_CLIPX:
@@ -3102,20 +2785,6 @@ int wattrib(w, s, len, answer, abuf)
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
                 ws->pointery = tmp + wc->dy;
-                warpPointer(w, ws->pointerx, ws->pointery);
-                break;
-            }
-            case A_POINTERCOL: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->pointerx = COLTOX(w, tmp) + wc->dx;
-                warpPointer(w, ws->pointerx, ws->pointery);
-                break;
-            }
-            case A_POINTERROW: {
-                if (!cnv:C_integer(d, tmp))
-                    return Failed;
-                ws->pointery = ROWTOY(w, tmp) + wc->dy;
                 warpPointer(w, ws->pointerx, ws->pointery);
                 break;
             }
@@ -3188,31 +2857,6 @@ int wattrib(w, s, len, answer, abuf)
                 MakeStr(abuf, strlen(abuf), answer);
                 break;
             }
-            case A_ROW:
-                MakeInt(YTOROW(w, ws->y - wc->dy), answer);
-                break;
-            case A_COL:
-                MakeInt(1 + XTOCOL(w, ws->x - wc->dx), answer);
-                break;
-            case A_POINTERROW: {
-                XPoint xp;
-                query_pointer(w, &xp);
-                MakeInt(YTOROW(w, xp.y - wc->dy), answer);
-                break;
-            }
-            case A_POINTERCOL: {
-                XPoint xp;
-                query_pointer(w, &xp);
-                MakeInt(1 + XTOCOL(w, xp.x - wc->dx), answer);
-                break;
-            }
-            case A_LINES:
-            case A_ROWS:
-                MakeInt(YTOROW(w,ws->height - DESCENT(w)), answer);
-                break;
-            case A_COLUMNS:
-                MakeInt(XTOCOL(w,ws->width), answer);
-                break;
             case A_POS: case A_POSX: case A_POSY:
                 if (getpos(w) == Failed)
                     return Failed;
@@ -3277,14 +2921,6 @@ int wattrib(w, s, len, answer, abuf)
             case A_DISPLAYWIDTH:
                 MakeInt(DISPLAYWIDTH(w), answer);
                 break;
-            case A_CURSOR:
-                sprintf(abuf,"%s",(ISCURSORON(w)?"on":"off"));
-                MakeStr(abuf, strlen(abuf), answer);
-                break;
-            case A_ECHO:
-                sprintf(abuf,"%s",(ISECHOON(w)?"on":"off"));
-                MakeStr(abuf, strlen(abuf), answer);
-                break;
             case A_REVERSE:
                 sprintf(abuf,"%s",(ISREVERSE(w)?"on":"off"));
                 MakeStr(abuf, strlen(abuf), answer);
@@ -3293,11 +2929,8 @@ int wattrib(w, s, len, answer, abuf)
                 getfntnam(w, abuf);
                 MakeStr(abuf, strlen(abuf), answer);
                 break;
-            case A_X:  MakeInt(ws->x - wc->dx, answer); break;
-            case A_Y:  MakeInt(ws->y - wc->dy, answer); break;
             case A_DX: MakeInt(wc->dx, answer); break;
             case A_DY: MakeInt(wc->dy, answer); break;
-            case A_LEADING: MakeInt(LEADING(w), answer); break;
             case A_POINTERX: {
                 XPoint xp;
                 query_pointer(w, &xp);
@@ -3685,18 +3318,14 @@ int ulcmp(p1, p2)
  */
 
 stringint attribs[] = {
-    { 0,			NUMATTRIBS},
+    { 0,		NUMATTRIBS},
     {"ascent",		A_ASCENT},
     {"bg",		A_BG},
     {"canvas",		A_CANVAS},
-    {"ceol",		A_CEOL},
     {"cliph",		A_CLIPH},
     {"clipw",		A_CLIPW},
     {"clipx",		A_CLIPX},
     {"clipy",		A_CLIPY},
-    {"col",		A_COL},
-    {"columns",		A_COLUMNS},
-    {"cursor",		A_CURSOR},
     {"depth",		A_DEPTH},
     {"descent",		A_DESCENT},
     {"display",		A_DISPLAY},
@@ -3705,14 +3334,13 @@ stringint attribs[] = {
     {"drawop",		A_DRAWOP},
     {"dx",		A_DX},
     {"dy",		A_DY},
-    {"echo",		A_ECHO},
     {"fg",		A_FG},
     {"fheight",		A_FHEIGHT},
     {"fillstyle",	A_FILLSTYLE},
     {"font",		A_FONT},
     {"fwidth",		A_FWIDTH},
     {"gamma",		A_GAMMA},
-    {"geometry",		A_GEOMETRY},
+    {"geometry",	A_GEOMETRY},
     {"height",		A_HEIGHT},
     {"iconic",		A_ICONIC},
     {"iconimage",	A_ICONIMAGE},
@@ -3721,33 +3349,25 @@ stringint attribs[] = {
     {"image",		A_IMAGE},
     {"inputmask",	A_INPUTMASK},
     {"label",		A_LABEL},
-    {"leading",		A_LEADING},
-    {"lines",		A_LINES},
     {"linestyle",	A_LINESTYLE},
     {"linewidth",	A_LINEWIDTH},
     {"minheight",	A_MINHEIGHT},
     {"minsize",		A_MINSIZE},
-    {"minwidth",		A_MINWIDTH},
+    {"minwidth",	A_MINWIDTH},
     {"pattern",		A_PATTERN},
     {"pointer",		A_POINTER},
-    {"pointercol",	A_POINTERCOL},
-    {"pointerrow",	A_POINTERROW},
-    {"pointerx",		A_POINTERX},
-    {"pointery",		A_POINTERY},
+    {"pointerx",	A_POINTERX},
+    {"pointery",	A_POINTERY},
     {"pos",		A_POS},
     {"posx",		A_POSX},
     {"posy",		A_POSY},
     {"resize",		A_RESIZE},
     {"reverse",		A_REVERSE},
-    {"row",		A_ROW},
-    {"rows",		A_ROWS},
     {"size",		A_SIZE},
-    {"titlebar",		A_TITLEBAR},
+    {"titlebar",	A_TITLEBAR},
     {"visual",		A_VISUAL},
     {"width",		A_WIDTH},
     {"windowlabel",	A_WINDOWLABEL},
-    {"x",		A_X},
-    {"y",		A_Y},
 };
 
 

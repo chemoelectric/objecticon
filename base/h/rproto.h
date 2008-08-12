@@ -14,6 +14,10 @@ struct b_cset	*alccset_0	(void);
 struct b_cset	*alccset_1	(void);
 struct b_file	*alcfile_0	(FILE *fd,int status,dptr name);
 struct b_file	*alcfile_1	(FILE *fd,int status,dptr name);
+#ifdef Graphics
+struct b_window	*alcwindow_0	(wbp w, word isopen);
+struct b_window	*alcwindow_1	(wbp w, word isopen);
+#endif
 union block	*alchash_0	(int tcode);
 union block	*alchash_1	(int tcode);
 struct b_slots	*alcsegment_0	(word nslots);
@@ -98,7 +102,7 @@ int		doimage		(int c,int q);
 int		dp_pnmcmp	(struct pstrnm *pne,dptr dp);
 void		drunerr		(int n, double v);
 void		dumpact		(struct b_coexpr *ce);
-struct b_proc * dynrecord	(dptr s, dptr fields, int n);
+struct b_constructor * dynrecord	(dptr s, dptr fields, int n);
 void		env_int	(char *name,word *variable,int non_neg, uword limit);
 int		equiv		(dptr dp1,dptr dp2);
 int		err		(void);
@@ -246,19 +250,11 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    int	setminsize	(wbp w, char *s);
    int	ulcmp		(pointer p1, pointer p2);
    int	wattrib		(wbp w, char *s, long len, dptr answer, char *abuf);
-   int	wgetche		(wbp w, dptr res);
-   int	wgetchne	(wbp w, dptr res);
    int	wgetevent	(wbp w, dptr res, int t);
-   int	wgetstrg	(char *s, long maxlen, FILE *f);
-   void	wgoto		(wbp w, int row, int col);
-   int	wlongread	(char *s, int elsize, int nelem, FILE *f);
-   void	wputstr		(wbp w, char *s, int len);
    int	writeGIF	(wbp w, char *filename,
    			  int x, int y, int width, int height);
    int	writeBMP	(wbp w, char *filename,
    			  int x, int y, int width, int height);
-   int	xyrowcol	(dptr dx);
-
    /*
     * graphics implementation routines supplied for each platform
     * (excluding those defined as macros for X-windows)
@@ -320,7 +316,6 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    int	setbg		(wbp w, char *s);
    int	setcanvas	(wbp w, char *s);
    void	setclip		(wbp w);
-   int	setcursor	(wbp w, int on);
    int	setdisplay	(wbp w, char *s);
    int	setdrawop	(wbp w, char *val);
    int	setfg		(wbp w, char *s);
@@ -354,8 +349,7 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    void	wflush		(wbp w);
 #endif
    int	wgetq		(wbp w, dptr res, int t);
-   FILE	*wopen		(char *nm, struct b_list *hp, dptr attr, int n, int *e, int is_3d);
-   int	wputc		(int ci, wbp w);
+   wbp  wopen		(char *nm, struct b_list *hp, dptr attr, int n, int *e, int is_3d);
 #ifndef MSWindows
    void	wsync		(wbp w);
 #endif					/* MSWindows */
@@ -514,8 +508,8 @@ dptr            call_icon_va    (dptr proc, va_list ap);
  */
 
 struct b_external *alcextrnl	(int n);
-struct b_record *alcrecd_0	(int nflds,union block *recptr);
-struct b_record *alcrecd_1	(int nflds,union block *recptr);
+struct b_record *alcrecd_0	(struct b_constructor *con);
+struct b_record *alcrecd_1	(struct b_constructor *con);
 struct b_object *alcobject_0	(struct b_class *class);
 struct b_object *alcobject_1	(struct b_class *class);
 struct b_cast   *alccast_0      ();
@@ -634,9 +628,6 @@ void dup_fds			(dptr d_stdin, dptr d_stdout, dptr d_stderr);
 
       void	initalloc	(word codesize, struct progstate *p);
 
-
-/* dynamic records */
-struct b_proc *dynrecord(dptr s, dptr fields, int n);
 
 struct descrip create_list(uword nslots);
 struct descrip cstr2string(char *s);

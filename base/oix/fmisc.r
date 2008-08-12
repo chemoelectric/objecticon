@@ -15,7 +15,11 @@ function{0,1} args(x,i)
    if is:proc(x) then {
       abstract { return integer }
       inline { return C_integer ((struct b_proc *)BlkLoc(x))->nparam; }
-      }
+   }
+   else if is:constructor(x) then {
+      abstract { return integer }
+      inline { return C_integer ((struct b_constructor *)BlkLoc(x))->n_fields; }
+   }
    else if is:methp(x) then {
       abstract { return integer }
       /* Method pointer - deduct 1 for the automatic self param */
@@ -181,6 +185,8 @@ function{1} copy(x)
       cast:
       object:
       class:
+      constructor:
+      window:
       coexpr:
          inline {
             /*
@@ -238,10 +244,10 @@ function{1} copy(x)
              *	one into it.
              */
             old_rec = (struct b_record *)BlkLoc(x);
-            i = old_rec->recdesc->proc.nfields;
+            i = old_rec->constructor->n_fields;
 
             /* #%#% param changed ? */
-            Protect(new_rec = alcrecd(i,old_rec->recdesc), runerr(0));
+            Protect(new_rec = alcrecd(old_rec->constructor), runerr(0));
             d1 = new_rec->fields;
             d2 = old_rec->fields;
             while (i--)
@@ -694,14 +700,9 @@ function {0,1} serial(x)
          return C_integer BlkLoc(x)->coexpr.id;
          }
 #ifdef Graphics
-      file:   inline {
-	 if (BlkLoc(x)->file.status & Fs_Window) {
-	    wsp ws = BlkLoc(x)->file.fd.wb->window;
-	    return C_integer ws->serial;
-	    }
-	 else {
-	    fail;
-	    }
+      window:   inline {
+         wsp ws = BlkLoc(x)->window.wb->window;
+         return C_integer ws->serial;
          }
 #endif					/* Graphics */
       default:
@@ -750,7 +751,7 @@ function{1} sort(t, i)
              * the list, and then sort the list using qsort as in list
              * sorting and return the sorted list.
              */
-            size = BlkLoc(t)->record.recdesc->proc.nfields;
+            size = BlkLoc(t)->record.constructor->n_fields;
 
             Protect(lp = alclist_raw(size, size), runerr(0));
 
@@ -1090,7 +1091,7 @@ function{1} sortf(t, i)
              * the list, and then sort the list using qsort as in list
              * sorting and return the sorted list.
              */
-            size = BlkLoc(t)->record.recdesc->proc.nfields;
+            size = BlkLoc(t)->record.constructor->n_fields;
 
             Protect(lp = alclist_raw(size, size), runerr(0));
 
@@ -1217,8 +1218,8 @@ dptr d;
        * Find the nth field of a record.
        */
       bp = BlkLoc(*d);
-      i = cvpos((long)sort_field, (long)(bp->record.recdesc->proc.nfields));
-      if (i != CvtFail && i <= bp->record.recdesc->proc.nfields)
+      i = cvpos((long)sort_field, (long)(bp->record.constructor->n_fields));
+      if (i != CvtFail && i <= bp->record.constructor->n_fields)
          rv = &bp->record.fields[i-1];
       }
    else if (d->dword == D_List) {
@@ -1262,19 +1263,15 @@ function{1} type(x)
       integer:  inline { return C_string "integer";   }
       real:     inline { return C_string "real";      }
       cset:     inline { return C_string "cset";      }
-      file:
-	 inline {
-#ifdef Graphics
-	    if (BlkLoc(x)->file.status & Fs_Window)
-	       return C_string "window";
-#endif					/* Graphics */
-	    return C_string "file";
-	    }
+      file:     inline { return C_string "file";    }
       proc:     inline { return C_string "procedure"; }
       list:     inline { return C_string "list";      }
       table:    inline { return C_string "table";     }
       set:      inline { return C_string "set";       }
       class:    inline { return C_string "class";       }
+      constructor: 
+                inline { return C_string "constructor";       }
+      window:   inline { return C_string "window";       }
       record:   inline { return C_string "record";    }
       object:   inline { return C_string "object";    }
       methp:    inline { return C_string "methp";    }
@@ -1301,9 +1298,11 @@ function{0,1} subtype(x)
     type_case x of {
          proc:    return BlkLoc(x)->proc.pname;
          class:   return BlkLoc(x)->class.name;
-         record:  return BlkLoc(x)->record.recdesc->proc.recname; 
+         record:  return BlkLoc(x)->record.constructor->name; 
          object:  return BlkLoc(x)->object.class->name;
          file:    return BlkLoc(x)->file.fname;
+         constructor:
+                  return BlkLoc(x)->constructor.name;
          default: fail;
     }
    }
@@ -1407,19 +1406,33 @@ function{0,1} cofail(CE)
 end
 
 
-"fieldnames(r) - generate the fieldnames of record r"
+"fieldnames(r) - generate the fieldnames of record or constructor r"
 
 function{*} fieldnames(r)
    abstract {
       return string
       }
-   if !is:record(r) then runerr(107,r)
    body {
-      int i, sz = BlkLoc(r)->record.recdesc->proc.nfields;
-      for(i=0;i<sz;i++)
-	 suspend BlkLoc(r)->record.recdesc->proc.lnames[i];
-      fail;
+       struct b_constructor *c;
+       int i, n;
+       type_case r of {
+          constructor: {
+             c = &BlkLoc(r)->constructor;
+             break;
+          }
+          record : {
+             c = BlkLoc(r)->record.constructor;
+             break;
+          }
+          default: {
+             runerr(625, r);
+         }
       }
+      n = c->n_fields;
+      for(i = 0; i < n; i++)
+         suspend c->field_names[i];
+      fail;
+   }
 end
 
 
@@ -2034,12 +2047,6 @@ function{*} keyword(keyname,ce)
 #ifdef Graphics
       else if (strcmp(kname,"window") == 0) {
 	 return kywdwin(&(p->Kywd_xwin[XKey_Window]));
-	 }
-      else if (strcmp(kname,"col") == 0) {
-	 return kywdint(&(p->AmperCol));
-	 }
-      else if (strcmp(kname,"row") == 0) {
-	 return kywdint(&(p->AmperRow));
 	 }
       else if (strcmp(kname,"x") == 0) {
 	 return kywdint(&(p->AmperX));

@@ -23,7 +23,7 @@ package ipl.vidgets
 
 import
    ipl.graphics(BevelCircle, BevelDiamond, BevelRectangle, FillDiamond,
-                GrooveRectangle, WOpen),
+                GrooveRectangle),
    ipl.imscolor(imsheight, imswidth)
 
 procedure Vset_style (vid, style)
@@ -131,8 +131,9 @@ end
 
 procedure draw_off_rect(s)
    EraseArea(s.win, s.ax, s.ay, s.aw, s.ah)
-   GotoXY(s.win, s.ax+s.D.basex, s.ay+s.D.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, s.ax+s.D.basex, s.ay+s.D.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, s.ax+s.D.basex, s.ay+s.D.basey, s.s)
    if /s.D.outline then
       BevelRectangle(s.win, s.ax, s.ay, s.aw, s.ah, 2)
 end
@@ -140,8 +141,9 @@ end
 procedure draw_on_rect(s)
    FillRectangle(s.win, s.ax, s.ay, s.aw, s.ah)
    WAttrib(s.win, "reverse=on")
-   GotoXY(s.win, s.ax+s.D.basex, s.ay+s.D.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, s.ax+s.D.basex, s.ay+s.D.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, s.ax+s.D.basex, s.ay+s.D.basey, s.s)
    WAttrib(s.win, "reverse=off")
    if /s.D.outline then
       BevelRectangle(s.win, s.ax, s.ay, s.aw, s.ah, -2)
@@ -177,8 +179,9 @@ procedure draw_off_check(s)
 
    BevelRectangle(s.win, ax+sp, ay+cp, cs, cs, 2)
    EraseArea(s.win, ax+sp+2, ay+cp+2, cs-4, cs-4)
-   GotoXY(s.win, ax+s.D.basex, ay+s.D.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, ax+s.D.basex, ay+s.D.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, ax+s.D.basex, ay+s.D.basey, s.s)
    if /s.D.outline then
       GrooveRectangle(s.win, s.ax, s.ay, s.aw, s.ah)
 end
@@ -191,8 +194,9 @@ procedure draw_on_check(s)
 
    BevelRectangle(s.win, ax+sp, ay+cp, cs, cs, -2)
    FillRectangle(s.win, ax+sp+2, ay+cp+2, cs-4, cs-4)
-   GotoXY(s.win, ax+s.D.basex, ay+s.D.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, ax+s.D.basex, ay+s.D.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, ax+s.D.basex, ay+s.D.basey, s.s)
    if /s.D.outline then
       GrooveRectangle(s.win, s.ax, s.ay, s.aw, s.ah)
 end
@@ -230,8 +234,9 @@ procedure draw_off_circle(s)
    EraseArea(s.win, ax+da.space, ay+da.CP, da.CS, da.CS)
    BevelCircle(s.win, ax+da.space+r, ay+da.CP+r, r, 2)
 
-   GotoXY(s.win, ax+da.basex, ay+da.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, ax+da.basex, ay+da.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, ax+da.basex, ay+da.basey, s.s)
    if /da.outline then
       GrooveRectangle(s.win, s.ax, s.ay, s.aw, s.ah)
 end
@@ -248,8 +253,9 @@ procedure draw_on_circle(s)
    FillCircle(s.win, ax+da.space+r, ay+da.CP+r, r - 1)
    BevelCircle(s.win, ax+da.space+r, ay+da.CP+r, r, -2)
 
-   GotoXY(s.win, ax+da.basex, ay+da.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, ax+da.basex, ay+da.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, ax+da.basex, ay+da.basey, s.s)
    if /da.outline then
       GrooveRectangle(s.win, s.ax, s.ay, s.aw, s.ah)
 end
@@ -285,8 +291,9 @@ procedure draw_off_diamond(s)
 
    EraseArea(s.win, ax+sp, ay+cp, cs, cs)
    BevelDiamond(s.win, ax+sp+r, ay+cp+r, r, 2)
-   GotoXY(s.win, ax+s.D.basex, ay+s.D.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, ax+s.D.basex, ay+s.D.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, ax+s.D.basex, ay+s.D.basey, s.s)
    if /s.D.outline then
       GrooveRectangle(s.win, s.ax, s.ay, s.aw, s.ah)
 end
@@ -300,8 +307,9 @@ procedure draw_on_diamond(s)
 
    BevelDiamond(s.win, ax+sp+r, ay+cp+r, r, -2)
    FillDiamond(s.win, ax+sp+r, ay+cp+r, r - 2)
-   GotoXY(s.win, ax+s.D.basex, ay+s.D.basey)
-   writes(s.win, s.s)
+#   GotoXY(s.win, ax+s.D.basex, ay+s.D.basey)
+#   writes(s.win, s.s)
+   DrawString(s.win, ax+s.D.basex, ay+s.D.basey, s.s)
    if /s.D.outline then
       GrooveRectangle(s.win, s.ax, s.ay, s.aw, s.ah)
 end

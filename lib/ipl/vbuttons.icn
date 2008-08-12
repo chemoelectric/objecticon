@@ -341,8 +341,9 @@ end
 
 procedure draw_Vmessage(self)
 
-   GotoXY(self.win, self.ax+self.D.basex, self.ay+self.D.basey)
-   writes(self.win, self.s)
+#   GotoXY(self.win, self.ax+self.D.basex, self.ay+self.D.basey)
+#   writes(self.win, self.s)
+    DrawString(self.win, self.ax+self.D.basex, self.ay+self.D.basey, self.s)
 #   self.V.outline(self)
 end
 
