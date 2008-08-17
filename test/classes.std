@@ -18,19 +18,19 @@ Class.get_supers(): Error 619
 Class.get_supers(1): Error 619
 Class.get_implemented_classes(): Error 619
 Class.get_implemented_classes(1): Error 619
-Class.get_supers(Eleven): class Eight class Ten 
-Class.get_implemented_classes(Eleven): class Eleven class Eight class Ten class Nine 
+Class.get_supers(Eleven): {class Eight, class Ten}
+Class.get_implemented_classes(Eleven): {class Eleven, class Eight, class Ten, class Nine}
 -------------
 Class Eleven
-Supers: class Eight class Ten 
-Implemented classes: class Eleven class Eight class Ten class Nine 
+Supers: {class Eight, class Ten}
+Implemented classes: {class Eleven, class Eight, class Ten, class Nine}
 Flags: 0
 Num fields: 17
-Field names: "z" "one" "two" "three" "four" "five" "six" "seven" "eight" "a" "b" "c" "eleven1" "new" "thing" "dm" "ten1" 
+Field names: {"z", "one", "two", "three", "four", "five", "six", "seven", "eight", "a", "b", "c", "eleven1", "new", "thing", "dm", "ten1"}
 Num class fields: 8
-Class field names: "a" "b" "c" "eleven1" "new" "thing" "dm" "ten1" 
+Class field names: {"a", "b", "c", "eleven1", "new", "thing", "dm", "ten1"}
 Num instance fields: 9
-Instance field names: "z" "one" "two" "three" "four" "five" "six" "seven" "eight" 
+Instance field names: {"z", "one", "two", "three", "four", "five", "six", "seven", "eight"}
 is(c,c): yes
 is(c,Class): no
 Class.for_name check: yes
@@ -161,15 +161,15 @@ Field ten1 index 17
 	Value via instance: Not accessible
 -------------
 Class Eight
-Supers: 
-Implemented classes: class Eight 
+Supers: {}
+Implemented classes: {class Eight}
 Flags: 0
 Num fields: 2
-Field names: "thing" "dm" 
+Field names: {"thing", "dm"}
 Num class fields: 2
-Class field names: "thing" "dm" 
+Class field names: {"thing", "dm"}
 Num instance fields: 0
-Instance field names: 
+Instance field names: {}
 is(c,c): yes
 is(c,Class): no
 Class.for_name check: yes
@@ -194,15 +194,15 @@ Field dm index 2
 	Class.methp_has_object(v, o): yes
 -------------
 Class Nine
-Supers: 
-Implemented classes: class Nine 
+Supers: {}
+Implemented classes: {class Nine}
 Flags: 0
 Num fields: 0
-Field names: 
+Field names: {}
 Num class fields: 0
-Class field names: 
+Class field names: {}
 Num instance fields: 0
-Instance field names: 
+Instance field names: {}
 is(c,c): yes
 is(c,Class): no
 Class.for_name check: yes
@@ -211,15 +211,15 @@ Name set check1: yes
 Name set check2: yes
 -------------
 Class Ten
-Supers: class Nine 
-Implemented classes: class Ten class Nine 
+Supers: {class Nine}
+Implemented classes: {class Ten, class Nine}
 Flags: 0
 Num fields: 1
-Field names: "ten1" 
+Field names: {"ten1"}
 Num class fields: 1
-Class field names: "ten1" 
+Class field names: {"ten1"}
 Num instance fields: 0
-Instance field names: 
+Instance field names: {}
 is(c,c): yes
 is(c,Class): no
 Class.for_name check: yes

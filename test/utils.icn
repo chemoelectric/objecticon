@@ -1,7 +1,10 @@
 procedure pr_seq(s, e)
-   writes(@s, ": ")
-   while writes(image(@e), " ")
-   write()
+   local t
+   writes(@s, ": {")
+   t := ""
+   while writes(t, image(@e)) do
+      t := ", "
+   write("}")
 end
 
 procedure yes_no(s, e)
@@ -31,4 +34,25 @@ procedure print(s, e)
    else
       write("Failed")
    return o
+end
+
+procedure pr_type(s, e)
+   local o
+   writes(@s, ": ")
+   if o := @e then
+      write(type(o))
+   else
+      write("Failed")
+   return o
+end
+
+procedure pr_seq_type(s, e)
+   local x, t
+   writes(@s, ": {")
+   x := set()
+   while insert(x, type(@e))
+   t := ""
+   every writes(t, !sort(x)) do
+      t := ", "
+   write("}")
 end
