@@ -416,7 +416,7 @@ struct progstate {
     struct descrip Kywd_xwin[2];			/* &window + ... */
 #endif				/* Graphics */
    
-    word Line_num, Column, Lastline, Lastcol;
+    word Line_num, Lastline;
 
     word Coexp_ser;			/* this program's serial numbers */
     word List_ser;

@@ -653,20 +653,6 @@ fflush(stdout);
             break;
 
 
-         case Op_Colm:		/* source column number */
-            {
-#if e_loc
-            word loc;
-            column = GetWord;
-            loc = column;
-            loc <<= (WordBits >> 1);	/* column in high-order part */
-            loc += line_num;
-            InterpEVVal(loc, E_Loc);
-#endif					/* E_Loc */
-
-            break;
-            }
-
          case Op_Line:		/* source line number */
 
 #ifdef Graphics

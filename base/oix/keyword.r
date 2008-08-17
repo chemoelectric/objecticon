@@ -80,16 +80,6 @@ keyword{4} collections
       }
 end
 
-"&column - source column number of current execution point"
-keyword{1} column
-   abstract {
-      return integer;
-      }
-   inline {
-      return C_integer findcol(ipc.opnd);
-      }
-end
-
 "&current - the currently active co-expression"
 keyword{1} current
    abstract {

@@ -1906,14 +1906,6 @@ function{*} keyword(keyname,ce)
 	 suspend C_integer p->collstr;
 	 return  C_integer p->collblk;
 	 }
-      else if (strcmp(kname,"column") == 0) {
-	 struct progstate *savedp = curpstate;
-	 int i;
-	 ENTERPSTATE(p);
-	 i = findcol(BlkLoc(d)->coexpr.es_ipc.opnd);
-	 ENTERPSTATE(savedp);
-	 return C_integer i;
-	 }
       else if (strcmp(kname,"current") == 0) {
 	 return p->K_current;
 	 }

@@ -116,8 +116,6 @@
 #define Op_Noop		 98
 
 
-#define Op_Colm		108		/* column number */
-
 /*
  * Declarations and such -- used by the linker but not the run-time system.
  */

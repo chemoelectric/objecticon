@@ -1075,12 +1075,6 @@ word *ipc;
   return findloc(ipc) & 65535;
 }
 
-int findcol(ipc)
-word *ipc;
-{
-  return findloc(ipc) >> 16;
-}
-
 int findloc(ipc)
 word *ipc;
 {

@@ -894,7 +894,7 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     StrLen(pstate->ksub) = 0;
     StrLoc(pstate->ksub) = "";
     pstate->Kywd_ran = zerodesc;
-    pstate->Line_num = pstate->Column = pstate->Lastline = pstate->Lastcol = 0;
+    pstate->Line_num = pstate->Lastline = 0;
     pstate->Lastop = 0;
     pstate->Xargp = NULL;
     pstate->Xnargs = 0;

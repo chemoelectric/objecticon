@@ -647,9 +647,7 @@
       #endif				/* Graphics */
       
       #define line_num  (curpstate->Line_num)
-      #define column   (curpstate->Column)
       #define lastline (curpstate->Lastline)
-      #define lastcol  (curpstate->Lastcol)
       
       #define coexp_ser (curpstate->Coexp_ser)
       #define list_ser  (curpstate->List_ser)
