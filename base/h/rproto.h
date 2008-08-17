@@ -210,8 +210,6 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    int		bigrand		(dptr da, dptr dx);
 
 
-   struct b_list *findactivewindow(struct b_list *);
-
 #ifdef Graphics
    /*
     * portable graphics routines in rwindow.r and rwinrsc.r
