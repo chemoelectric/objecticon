@@ -548,11 +548,9 @@ function{0,1} connect(f, addr)
        }
 
        if (connect(BlkLoc(f)->file.u.sd, sa, len) < 0) {
-           printf("LL:connect FAIL %d\n",errno);
            IntVal(amperErrno) = errno;
            fail;
        }
-           printf("LL:connect OK\n");
 
        /*
         * Update the file's name field to represent the connected

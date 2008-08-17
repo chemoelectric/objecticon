@@ -323,7 +323,6 @@ static int construct_object(int nargs, dptr newargp)
     struct pf_marker *newpfp;
     struct class_field *new_field;
     word *newsp = sp, i;
-    tended struct descrip arg_sv;
     int nparam;
     struct b_class *class;
     struct b_object *object;
