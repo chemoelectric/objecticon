@@ -147,7 +147,7 @@ procedure loadfile()
 
    chtab := table()
    repeat {
-      w := where(ifile) | stop(&progname, ": input file is not seekable")
+      w := tell(ifile) | stop(&progname, ": input file is not seekable")
       line := read(ifile) | break
 
       r := crack(line)

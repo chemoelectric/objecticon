@@ -4,197 +4,13 @@
  */
 
 
-#ifndef SOCKET_ERROR
-#define SOCKET_ERROR -1
-#endif
-/*
- * sock_getstrg - read a line into buf from socket.  
- *  At most maxi characters are read.  sock_getstrg returns the 
- *  length of the line, not counting the newline.  Returns -1 
- *  if EOF and -3 if a socket error occur.
- */
-int sock_getstrg(buf, maxi, fd)
-register char *buf;
-int maxi;
-SOCKET fd;
-   {
-   int r = 0, i=0;
-   char *stmp=NULL;
-  
-   if ((r=recv(fd, buf, maxi, MSG_PEEK))==SOCKET_ERROR) {
-#if MSWIN32
-      if(WSAGetLastError() == WSAESHUTDOWN)   
-	 return -1;
-#endif					/* MSWIN32 */
-      k_errornumber = 1040;
-      return -3;
-      }
-   if (r == 0) return -1;
-   
-   stmp = buf;
-   while (stmp - buf < r) {
-      if (*stmp == '\n') break;
-      stmp++;
-      }
 
-   if (stmp - buf < r) {
-      if(stmp == buf)
-	 i = stmp - buf + 1;
-      else
-	 i = stmp - buf;
-      }
-   else  
-      i = r;
-   if ((r=recv(fd, buf, i, 0)) == SOCKET_ERROR) {
-#if MSWIN32
-      if (WSAGetLastError() == WSAESHUTDOWN)
-	 return -1;
-#endif					/* MSWIN32 */
-      k_errornumber = 1040;
-      return -3;
-      }
-   return r;
-   }
-
 #if MSWIN32
 #ifndef NTGCC
 #define pclose _pclose
 #endif
 #endif
 
-/*
- * getstrg - read a line into buf from file fbp.  At most maxi characters
- *  are read.  getstrg returns the length of the line, not counting the
- *  newline.  Returns -1 if EOF and -2 if length was limited by maxi.
- *  Discards \r before \n in translated mode.  [[ Needs ferror() check. ]]
- */
-int getstrg(buf, maxi, fbp)
-register char *buf;
-int maxi;
-struct b_file *fbp;
-   {
-   register int c, l;
-   FILE *fd = fbp->fd.fp;
-
-   static char savedbuf[BUFSIZ];
-   static int nsaved = 0;
-
-#ifdef XWindows
-   wflushall();
-#endif					/* XWindows */
-#if MSWIN32
-   if (fbp->status & Fs_Pipe) {
-      if (feof(fd) || (fgets(buf, maxi, fd) == NULL)) {
-         pclose(fd);
-	 fbp->status = 0;
-         return -1;
-         }
-      l = strlen(buf);
-      if (l>0 && buf[l-1] == '\n') l--;
-      if (l>0 && buf[l-1] == '\r' && (fbp->status & Fs_Untrans) == 0) l--;
-      if (feof(fd)) {
-         pclose(fd);
-	 fbp->status = 0;
-         }
-      return l;
-      }
-#endif					/* MSWIN32 */
-
-   l = 0;
-
-   /* If there are saved chars in the static buffer, use those */
-   if (nsaved > 0) {
-      strncpy(buf, savedbuf, nsaved);
-      l = nsaved;
-      buf += l;
-   }
-
-   while (1) {
-
-#ifdef Graphics
-      /* insert non-blocking read/code to service windows here */
-#endif					/* Graphics */
-
-#if MSWIN32
-   if (fbp->status & Fs_Pipe) {
-      if (feof(fd)) {
-         pclose(fd);
-	 fbp->status = 0;
-         if (l>0) return 1;
-         else return -1;
-         }
-      }
-#endif					/* MSWIN32 */
-      if ((c = fgetc(fd)) == '\n') {	/* \n terminates line */
-	 break;
-         }
-
-      if (c == '\r' && (fbp->status & Fs_Untrans) == 0) {
-	 /* \r terminates line in translated mode */
-#if MSWIN32
-   if (fbp->status & Fs_Pipe) {
-      if (feof(fd)) {
-         pclose(fd);
-	 fbp->status = 0;
-         if (l>0) return 1;
-         else return -1;
-         }
-      }
-#endif					/* MSWIN32 */
-	 if ((c = fgetc(fd)) != '\n')	/* consume following \n */
-	     ungetc(c, fd);		/* (put back if not \n) */
-	 break;
-	 }
-#if MSWIN32
-   if (fbp->status & Fs_Pipe) {
-      if (feof(fd)) {
-         pclose(fd);
-	 fbp->status = 0;
-         if (l>0) return 1;
-         else return -1;
-         }
-      }
-#endif					/* MSWIN32 */
-      if (c == EOF) {
-#if MSWIN32
-         if (fbp->status & Fs_Pipe) {
-            pclose(fd);
-	    fbp->status = 0;
-            }
-#endif					/* MSWIN32 */
-
-	 /* If errno is EAGAIN, we will not return any chars just yet */
-	 if (errno == EAGAIN 
-#if !MSWIN32
-	    || errno == EWOULDBLOCK
-#endif
-	 ) {
-	    return -1;
-	 }
-
-	 if (l > 0) {
-	    /* Clear the saved chars buffer */
-	    nsaved = 0;
-	    return l;
-	    } 
-	 else return -1;
-	 }
-      if (++l > maxi) {
-	 ungetc(c, fd);
-	 /* Clear the saved chars buffer */
-	 nsaved = 0;
-	 return -2;
-	 }
-      savedbuf[nsaved++] = c;
-      *buf++ = c;
-      }
-
-   /* We can clear the saved static buffer */
-   nsaved = 0;
-
-   return l;
-   }
-
 /*
  * iconhost - return some sort of host name into the buffer pointed at
  *  by hostname.  This code accommodates several different host name
@@ -407,324 +223,257 @@ int n;
    }
 
 
-#ifdef NTGCC
-
-/* libc replacement functions for win32.
-
-Copyright (C) 1992, 93 Free Software Foundation, Inc.
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Library General Public
-License as published by the Free Software Foundation; either
-version 2 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Library General Public License for more details.
-
-You should have received a copy of the GNU Library General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
-
-/*
-  This does make sense only under MSWIN32.
-  Functions:
-    - popen() rewritten
-    - pclose() rewritten
-    - stat() wrapper for _stat(), removing trailing slashes
-  */
-
-struct _popen_elt {
-  FILE *f;                      /* File stream returned */
-  HANDLE hp;                    /* Handle of associated process */
-  struct _popen_elt *next;      /* Next list element */
-};
-
-static struct _popen_elt _z = { NULL, 0, &_z };
-static struct _popen_elt *_popen_list = &_z;
-
-FILE *popen (const char* cmd, const char *mode)
-/* [<][>][^][v][top][bottom][index][help] */
+int file_readline(struct b_file *fbp, char *buf, int max)
 {
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
-  SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES), NULL, TRUE };
-  FILE *f = NULL;
-  int fno, i;
-  HANDLE child_in, child_out;
-  HANDLE father_in, father_out;
-  HANDLE father_in_dup, father_out_dup;
-  HANDLE current_in, current_out;
-  HANDLE current_pid;
-  int binary_mode;
-  char *new_cmd, *app_name = NULL;
-  char *p, *q;
-  struct _popen_elt *new_process;
-  char pname[MaxPath], *fp;
-  char *suffixes[] = { ".bat", ".cmd", ".com", ".exe", NULL };
-  char **s;
-  int go_on;
-
-  /* We should look for the application name along the PATH,
-     and decide to prepend "%COMSPEC% /c " or not to the command line.
-     Do nothing for the moment. */
-
-  /* Another way to do that would be to try CreateProcess first without
-     invoking cmd, and look at the error code. If it fails because of
-     command not found, try to prepend "cmd /c" to the cmd line.
-     */
-
-  /* Look for the application name */
-  for (p = cmd; *p && isspace(*p); p++);
-  if (*p == '"') {
-    q = ++p;
-    while(*p && *p != '"') p++;
-    if (*p != '\0') {
-      fprintf(stderr, "popen: malformed command (\" not terminated)\n");
-      return NULL;
+    word status = fbp->status;
+    if (status & Fs_Stdio) {
+        FILE *fd = fbp->u.fp;
+        int n = 0;
+        while (n < max) {
+            int c = fgetc(fd);
+            if (c == EOF)
+                break;
+            buf[n++] = c;
+            if (c == '\n')
+                break;
+        }
+        if (ferror(fd))
+            return -1;
+        else
+            return n;
     }
-  }
-  else
-    for (q = p; *p && !isspace(*p); p++);
-  /* q points to the beginning of appname, p to the last + 1 char */
-  if ((app_name = malloc(p - q + 1)) == NULL) {
-    fprintf(stderr, "xpopen: malloc(app_name) failed.\n");
-    return NULL;
-  }
-  strncpy(app_name, q, p - q );
-  app_name[p - q] = '\0';
-  pname[0] = '\0';
-#ifdef __TRACE
-  fprintf(stderr, "popen: app_name = %s\n", app_name);
-#endif
-
-  /* Looking for appname on the path */
-  for (s = suffixes, go_on = 1; go_on; *s++) {
-    if (SearchPath(NULL,        /* Address of search path */
-                   app_name,    /* Address of filename */
-                   *s,          /* Address of extension */
-                   sizeof(pname),    /* Size of destination buffer */
-                   pname,       /* Address of destination buffer */
-                   &fp)         /* File part of app_name */
-      != 0) {
-#ifdef __TRACE
-      fprintf(stderr, "%s found with suffix %s\n", app_name, *s);
-#endif
-      new_cmd = strdup(cmd);
-      free(app_name);
-      app_name = strdup(pname);
-      break;
+    if (status & Fs_Socket) {
+        int r, i;
+        r =  recv(fbp->u.sd, buf, max, MSG_PEEK);
+        if (r <= 0)
+            return r;
+        max = r;
+        for (i = 0; i < r; ++i) {
+            if (buf[i] == '\n') {
+                max = i + 1;
+                break;
+            }
+        }
+        return recv(fbp->u.sd, buf, max, 0);
     }
-    go_on = (*s != NULL);
-  }
-  if (go_on == 0) {
-    /* the app_name was not found */
-#ifdef __TRACE
-    fprintf(stderr, "%s not found, concatenating comspec\n", app_name);
-#endif
-    new_cmd = malloc(strlen(getenv("CONSPEC"))+4+strlen(cmd)+1);
-    sprintf(new_cmd, "%s /c %s", getenv("COMSPEC"), cmd);
-    free(app_name);
-    app_name = NULL;
-  }
-  else {
-  }
-#ifdef __TRACE
-  fprintf(stderr, "popen: app_name = %s\n", app_name);
-  fprintf(stderr, "popen: cmd_line = %s\n", new_cmd);
-#endif
-
-  current_in = GetStdHandle(STD_INPUT_HANDLE);
-  current_out = GetStdHandle(STD_OUTPUT_HANDLE);
-  current_pid = GetCurrentProcess();
-  ZeroMemory( &si, sizeof(STARTUPINFO) );
-  si.cb = sizeof(STARTUPINFO);
-  si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-  si.wShowWindow = SW_HIDE;
-
-  if (strchr(mode, 'b'))
-    binary_mode = _O_BINARY;
-  else
-    binary_mode = _O_TEXT;
-
-  /* Opening the pipe for writing */
-  if (strchr(mode, 'w')) {
-    binary_mode |= _O_WRONLY;
-    if (CreatePipe(&child_in, &father_out, &sa, 0) == FALSE) {
-      fprintf(stderr, "popen: error CreatePipe\n");
-      return NULL;
+    if (status & Fs_Desc) {
+        int n = 0;
+        while (n < max) {
+            char c;
+            int rc = read(fbp->u.fd, &c, 1);
+            if (rc < 0)
+                return -1;
+            if (rc == 0)
+                break;
+            buf[n++] = c;
+            if (c == '\n')
+                break;
+        }
+        return n;
     }
-#if 0
-    if (SetStdHandle(STD_INPUT_HANDLE, child_in) == FALSE) {
-      fprintf(stderr, "popen: error SetStdHandle child_in\n");
-      return NULL;
+    if (status & Fs_Directory) {
+        struct dirent *e;
+        int len;
+        errno = 0;
+        e = readdir(fbp->u.dir);
+        if (!e) {
+            if (errno)
+                return -1;
+            else
+                return 0;
+        }
+        len = strlen(e->d_name);
+        if (len >= max) {
+            errno = XE_DIRTOOLONG;
+            return -1;
+        }
+        strcpy(buf, e->d_name);
+        buf[len] = '\n';
+        return len + 1;
     }
-#endif
-    si.hStdInput = child_in;
-    si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-    si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-
-    if (DuplicateHandle(current_pid, father_out, 
-                        current_pid, &father_out_dup, 
-                        0, FALSE, DUPLICATE_SAME_ACCESS) == FALSE) {
-      fprintf(stderr, "popen: error DuplicateHandle father_out\n");
-      return NULL;
-    }
-    CloseHandle(father_out);
-    fno = _open_osfhandle((long)father_out_dup, binary_mode);
-    f = _fdopen(fno, mode);
-    i = setvbuf( f, NULL, _IONBF, 0 );
-  }
-  /* Opening the pipe for reading */
-  else if (strchr(mode, 'r')) {
-    binary_mode |= _O_RDONLY;
-    if (CreatePipe(&father_in, &child_out, &sa, 0) == FALSE) {
-      fprintf(stderr, "popen: error CreatePipe\n");
-      return NULL;
-    }
-#if 0
-    if (SetStdHandle(STD_OUTPUT_HANDLE, child_out) == FALSE) {
-      fprintf(stderr, "popen: error SetStdHandle child_out\n");
-      return NULL;
-    }
-#endif
-    si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-    si.hStdOutput = child_out;
-    si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-    if (DuplicateHandle(current_pid, father_in, 
-                        current_pid, &father_in_dup, 
-                        0, FALSE, DUPLICATE_SAME_ACCESS) == FALSE) {
-      fprintf(stderr, "popen: error DuplicateHandle father_in\n");
-      return NULL;
-    }
-    CloseHandle(father_in);
-    fno = _open_osfhandle((long)father_in_dup, binary_mode);
-    f = _fdopen(fno, mode);
-    i = setvbuf( f, NULL, _IONBF, 0 );
-  }
-  else {
-    fprintf(stderr, "popen: invalid mode %s\n", mode);
-    return NULL;
-  }
-
-  /* creating child process */
-  if (CreateProcess(app_name,   /* pointer to name of executable module */
-                    new_cmd,    /* pointer to command line string */
-                    NULL,       /* pointer to process security attributes */
-                    NULL,       /* pointer to thread security attributes */
-                    TRUE,       /* handle inheritance flag */
-                    CREATE_NEW_CONSOLE,         /* creation flags */
-                    NULL,       /* pointer to environment */
-                    NULL,       /* pointer to current directory */
-                    &si,        /* pointer to STARTUPINFO */
-                    &pi         /* pointer to PROCESS_INFORMATION */
-                  ) == FALSE) {
-    fprintf(stderr, "popen: CreateProcess %x\n", GetLastError());
-    return NULL;
-  }
-  
-#if 0
-  /* Restoring saved values for stdin/stdout */
-  if (SetStdHandle(STD_INPUT_HANDLE, current_in) == FALSE) 
-    fprintf(stderr, "popen: error re-redirecting Stdin\n");  
-  if (SetStdHandle(STD_OUTPUT_HANDLE, current_out) == FALSE) 
-    fprintf(stderr, "popen: error re-redirecting Stdout\n");  
-#endif  
-   /* Only the process handle is needed */
-  if (CloseHandle(pi.hThread) == FALSE) {
-    fprintf(stderr, "popen: error closing thread handle\n");
-    return NULL;
-  }
-
-  if (new_cmd) free(new_cmd);
-  if (app_name) free(app_name);
-
-#if 0
-  /* This does not seem to make sense for console apps */
-  while (1) {
-    i = WaitForInputIdle(pi.hProcess, 5); /* Wait 5ms  */
-    if (i == 0xFFFFFFFF) {
-      fprintf(stderr, "popen: process can't initialize\n");
-      return NULL;
-    }
-    else if (i == WAIT_TIMEOUT)
-      fprintf(stderr, "popen: warning, process still not initialized\n");
-    else
-      break;
-  }
-#endif
-
-  /* Add the pair (f, pi.hProcess) to the list */
-  if ((new_process = malloc(sizeof(struct _popen_elt))) == NULL) {
-    fprintf (stderr, "popen: malloc(new_process) error\n");
-    return NULL;
-  }
-  /* Saving the FILE * pointer, access key for retrieving the process
-     handle later on */
-  new_process->f = f;
-  /* Closing the unnecessary part of the pipe */
-  if (strchr(mode, 'r')) {
-    CloseHandle(child_out);
-  }
-  else if (strchr(mode, 'w')) {
-    CloseHandle(child_in);
-  }
-  /* Saving the process handle */
-  new_process->hp = pi.hProcess;
-  /* Linking it to the list of popen() processes */
-  new_process->next = _popen_list;
-  _popen_list = new_process;
-
-  return f;
-
+    errno = XE_NOTSUPPORTED;
+    return -1;
 }
 
-int pclose (FILE * f)
-/* [<][>][^][v][top][bottom][index][help] */
+int file_readstr(struct b_file *fbp, char *buf, int max)
 {
-  struct _popen_elt *p, *q;
-  int exit_code;
+    word status = fbp->status;
+    if (status & Fs_Stdio) {
+        FILE *fd = fbp->u.fp;
+        int n = fread(buf, 1, max, fd);
+        if (ferror(fd))
+            return -1;
+        else
+            return n;
+    }
+    if (status & Fs_Socket)
+        return recv(fbp->u.sd, buf, max, 0);
+    if (status & Fs_Desc)
+        return read(fbp->u.fd, buf, max);
 
-  /* Look for f is the access key in the linked list */
-  for (q = NULL, p = _popen_list; 
-       p != &_z && p->f != f; 
-       q = p, p = p->next);
-
-  if (p == &_z) {
-    fprintf(stderr, "pclose: error, file not found.");
+    errno = XE_NOTSUPPORTED;
     return -1;
-  }
-
-  /* Closing the FILE pointer */
-  fclose(f);
-
-  /* Waiting for the process to terminate */
-  if (WaitForSingleObject(p->hp, INFINITE) != WAIT_OBJECT_0) {
-    fprintf(stderr, "pclose: error, process still active\n");
-    return -1;
-  }
-
-  /* retrieving the exit code */
-  if (GetExitCodeProcess(p->hp, &exit_code) == 0) {
-    fprintf(stderr, "pclose: can't get process exit code\n");
-    return -1;
-  }
-
-  /* Closing the process handle, this will cause the system to
-     remove the process from memory */
-  if (CloseHandle(p->hp) == FALSE) {
-    fprintf(stderr, "pclose: error closing process handle\n");
-    return -1;
-  }
-
-  /* remove the elt from the list */
-  if (q != NULL)
-    q->next = p->next;
-  else
-    _popen_list = p->next;
-  free(p);
-    
-  return exit_code;
 }
+
+int file_outputstr(struct b_file *fbp, char *buf, int n)
+{
+    word status = fbp->status;
+    if (status & Fs_Stdio) {
+        FILE *fd = fbp->u.fp;
+        n = fwrite(buf, 1, n, fd);
+        if (ferror(fd))
+            return -1;
+        else
+            return n;
+    }
+    if (status & Fs_Socket) {
+        /* 
+         * If possible use MSG_NOSIGNAL so that we get the EPIPE error
+         * code, rather than the SIGPIPE signal.
+         */
+#ifdef HAVE_MSG_NOSIGNAL
+        return send(fbp->u.sd, buf, n, MSG_NOSIGNAL);
+#else
+        return send(fbp->u.sd, buf, n, 0);
 #endif
+    }
+    if (status & Fs_Desc)
+        return write(fbp->u.fd, buf, n);
+
+    errno = XE_NOTSUPPORTED;
+    return -1;
+}
+
+int file_flush(struct b_file *fbp)
+{
+    word status = fbp->status;
+    if (status & Fs_Stdio)
+        return fflush(fbp->u.fp);
+    return 0;
+}
+
+int file_close(struct b_file *fbp)
+{
+    word status = fbp->status;
+    if (status & Fs_Prog)
+        return pclose(fbp->u.fp);
+    if (status & Fs_Stdio)
+        return fclose(fbp->u.fp);
+    if (status & Fs_Socket) {
+#if MSWIN32
+        return closesocket(fbp->u.sd);
+#else					/* MSWIN32 */
+        return close(fbp->u.sd);
+#endif
+    }
+    if (status & Fs_Desc)
+        return close(fbp->u.fd);
+    if (status & Fs_Directory)
+        return closedir(fbp->u.dir);
+    return 0;
+}
+
+int file_seek(struct b_file *fbp, int offset, int whence)
+{
+    word status = fbp->status;
+    if (status & Fs_Stdio) {
+        int i = fseek(fbp->u.fp, offset, whence);
+        if (i < 0)
+            return i;
+        return ftell(fbp->u.fp);
+    }
+    if (status & Fs_Desc)
+        return lseek(fbp->u.fd, offset, whence);
+
+    errno = XE_NOTSUPPORTED;
+    return -1;
+}
+
+int file_tell(struct b_file *fbp)
+{
+    word status = fbp->status;
+    if (status & Fs_Stdio)
+        return ftell(fbp->u.fp);
+    if (status & Fs_Desc)
+        return lseek(fbp->u.fd, 0, SEEK_CUR);
+
+    errno = XE_NOTSUPPORTED;
+    return -1;
+}
+
+int file_fd(struct b_file *fbp)
+{
+    word status = fbp->status;
+
+    if (status & Fs_Stdio)
+        return fileno(fbp->u.fp);
+    if (status & Fs_Socket)
+        return (int)fbp->u.sd;
+    if (status & Fs_Desc)
+        return fbp->u.fd;
+    if (status & Fs_Directory)
+        return dirfd(fbp->u.dir);
+
+    errno = XE_NOTSUPPORTED;
+    return -1;
+}
+
+
+struct sockaddr *parse_sockaddr(char *s, int *len)
+{
+    if (strncmp(s, "unix:", 5) == 0) {
+        static struct sockaddr_un us;
+        char *t = s + 5;
+        if (strlen(t) >= sizeof(us.sun_path)) {
+            errno = XE_NAMETOOLONG;
+            return 0;
+        }
+        us.sun_family = AF_UNIX;
+        strcpy(us.sun_path, t);
+        *len = sizeof(us.sun_family) + strlen(us.sun_path);
+        return (struct sockaddr *)&us;
+    } 
+
+    if (strncmp(s, "inet:", 5) == 0) {
+        static struct sockaddr_in iss;
+        char *t = s + 5, host[128], *p;
+        int port;
+        struct hostent *hp;
+
+        if (strlen(t) >= sizeof(host)) {
+            errno = XE_NAMETOOLONG;
+            return 0;
+        }
+        strcpy(host, t);
+        p = strchr(host, ':');
+        if (!p) {
+            errno = XE_BADADDRFMT;
+            return 0;
+        }
+        *p++ = 0;
+        port = atoi(p);
+        iss.sin_family = AF_INET;
+        iss.sin_port = htons((u_short)port);
+        if (strcmp(host, "INADDR_ANY") == 0)
+            iss.sin_addr.s_addr = INADDR_ANY;
+        else {
+            if ((hp = gethostbyname(host)) == NULL) {
+                switch (h_errno) {
+                    case HOST_NOT_FOUND: errno = XE_HOSTNOTFOUND ; break;
+                    case NO_DATA: errno = XE_NOIPADDR ; break;
+                    case NO_RECOVERY: errno = XE_NAMESRVERR ; break;
+                    case TRY_AGAIN: errno = XE_TMPNAMESRVERR ; break;
+                    default: errno = XE_UNKNOWN ; break;
+                }
+                return 0;
+            }
+            memcpy(&iss.sin_addr, hp->h_addr, hp->h_length);
+        }
+        *len = sizeof(iss);
+        return (struct sockaddr *)&iss;
+    }
+
+    errno = XE_BADADDRFMT;
+    return 0;
+}
+

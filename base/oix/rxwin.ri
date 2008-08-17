@@ -1578,7 +1578,7 @@ int setpointer(w, val)
     wbp w;
     char *val;
 {
-    int i = si_s2i(cursorsyms,val) >> 1;
+    int i = stringint_str2int(cursorsyms,val) >> 1;
     STDLOCALS(w);
     if (i < 0 || i >= NUMCURSORSYMS) return Failed;
 
@@ -1614,7 +1614,7 @@ int setdrawop(w, val)
             if (stdgc)
                 XSetForeground(stddpy, stdgc, wd->colors[wc->fg].c);
         }
-        wc->drawop = si_s2i(drawops,val);
+        wc->drawop = stringint_str2int(drawops,val);
         if (wc->drawop == -1) { wc->drawop = GXcopy; return Error; }
     }
     if (stdgc) XSetFunction(stddpy, stdgc, wc->drawop);
@@ -2320,7 +2320,7 @@ void getpointername(w, answer)
     wbp w;
     char *answer;
 {
-    strcpy(answer, si_i2s(cursorsyms, 2 * w->window->theCursor));
+    strcpy(answer, stringint_int2str(cursorsyms, 2 * w->window->theCursor));
 }
 
 void getdrawop(w, answer)
@@ -2329,7 +2329,7 @@ void getdrawop(w, answer)
 {
     char *s;
     if (ISXORREVERSE(w)) s = "reverse";
-    else s = si_i2s(drawops, w->context->drawop);
+    else s = stringint_int2str(drawops, w->context->drawop);
     if (s) sprintf(answer, "%s", s);
     else strcpy(answer, "copy");
 }
@@ -3679,7 +3679,7 @@ int SetPattern(w, name, len)
     /*
      * Otherwise, it is a named pattern.  Find the symbol id.
      */
-    if ((symbol = si_s2i(siPatternSyms, wc->patternname)) >= 0) {
+    if ((symbol = stringint_str2int(siPatternSyms, wc->patternname)) >= 0) {
         if (!stdgc) return Succeeded;
         for(i = 0; i < 8; i++) {
             v = patbits[symbol * 8 + i];

@@ -319,7 +319,7 @@ class HttpClient(NetClient)
             t.update(request.post_data)
          else if \request.post_file then {
             # Just fail; the whole request will surely fail anyway.
-            f := default.open(request.post_file, "ru") | fail
+            f := default.open(request.post_file, "rb") | fail
             while s := reads(f, 8192) do {
                t.update(s)
             }
@@ -743,12 +743,12 @@ class HttpClient(NetClient)
          request.set_header("content-type", request.content_type)
          sz := stat(request.post_file).size | return error("Couldn't stat post file:" ||
                                                            request.post_file ||
-                                                           ":" || errno_str())
+                                                           ":" || strerror())
          request.set_header("content-length", sz)
          request.set_header("authorization", create_authorization_header())
          write_request_headers() | fail
          write_line() | fail
-         f := default.open(request.post_file, "ru") | return error("Couldn't open:" || request.post_file)
+         f := default.open(request.post_file, "rb") | return error("Couldn't open:" || request.post_file)
          while s := reads(f, 8192) do {
             if not write_str(s) then {
                default.close(f)
@@ -803,7 +803,7 @@ class HttpClient(NetClient)
          # continue from the previous attempt.
          #
          if \request.data_file then
-            data_out := default.open(request.data_file, "au") | fatal(self, "Couldn't open " ||
+            data_out := default.open(request.data_file, "ab") | fatal(self, "Couldn't open " ||
                                                                 request.data_file)
       } else {
          #
@@ -813,7 +813,7 @@ class HttpClient(NetClient)
          if /request.data_file then
             string_buff := StringBuff()
          else
-            data_out := default.open(request.data_file, "wu") | fatal(self, "Couldn't open " ||
+            data_out := default.open(request.data_file, "wb") | fatal(self, "Couldn't open " ||
                                                                 request.data_file)
 
          self.length := integer(response.get_first_header("content-length")) | &null
@@ -901,7 +901,7 @@ class HttpClient(NetClient)
       #
       # Check for errors that may have caused read_str to fail.
       #
-      if &errno ~= 0 then {
+      if &errno ~= XE_EOF then {
          close()
          fail
       }

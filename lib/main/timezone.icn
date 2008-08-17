@@ -48,7 +48,7 @@ class Timezone()
       stz := Timezone(t1.get_seconds() - t2.get_seconds())
       # If possible, use a symbolic representation, eg "EST" instead of -0500
       if &features == "UNIX" then {
-         if f := open("date +%Z", "p") then {
+         if f := popen("date +%Z") then {
             t := read(f)
             close(f)
          }

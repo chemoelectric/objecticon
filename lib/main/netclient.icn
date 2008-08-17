@@ -5,6 +5,7 @@
 package net
 
 import 
+   lang(fatal),
    util
 
 $include "posix.icn"
@@ -34,6 +35,7 @@ class NetClient(Connectable, Error, SetFields)
    end
 
    private readable
+      path,
       server,
       port,
       connection,
@@ -60,19 +62,47 @@ class NetClient(Connectable, Error, SetFields)
    # Open the connection.
    #
    public open()
-      local s
+      local n, l1, l2, domain, addr
+
+      if \server then {
+         domain := PF_INET
+         addr := "inet:" || server || ":" || port
+      } else if \path then {
+         domain := PF_UNIX
+         addr := "unix:" || path
+      } else
+         fatal(self, "Neither server/port nor path set")
 
       close() | fail
-      s := server || ":" || port
+      connection := socket(domain)
+
+      # If we are using a timeout, put the socket into non-blocking mode
+      if \timeout > 0 then
+         fflag(connection, O_NONBLOCK)
+
       fire(CONNECTING_EVENT)
-
-      if not(connection := default.open(s, "n", timeout)) then {
-         if &errno = 0 then
-            return error("Timed out connecting to " || s)
-         else
-            return error("Couldn't connect to " || s)
+      default.connect(connection, addr) | {
+         if \timeout > 0 & &errno = EINPROGRESS then {
+            write("** in progress")
+            l1 := [connection]
+            l2 := [connection]
+            select(&null, l1, l2, timeout) | {
+               n := &errno
+               close()
+               return error("Couldn't connect to " || addr || ":" || strerror(n))
+            }
+            if *l2 > 0 then {
+               close()
+               return error("Couldn't connect to " || addr || " (socket error)")
+            }
+            write("select success ", *l1, " ", *l2)
+         } else {
+            # Save errno, close() will overwrite it
+            n := &errno
+            close()
+            return error("Couldn't connect to " || addr || ":" || strerror(n))
+         }
       }
-
       sbuff := ""
       fire(CONNECTED_EVENT)
       return connection
@@ -83,7 +113,7 @@ class NetClient(Connectable, Error, SetFields)
    #
    public close()
       if \connection then {
-         default.close(connection) | return error("Failed to close connection")
+         default.close(connection) | return error("Failed to close connection:" || strerror())
          fire(CLOSED_EVENT)
          connection := &null
       }
@@ -91,55 +121,64 @@ class NetClient(Connectable, Error, SetFields)
    end
 
    #
-   # Set the server to use
+   # Set the path to use (implies using PF_UNIX socket domain)
+   #
+   public set_path(s)
+      path := s
+   end
+
+   #
+   # Set the server to use (implies using PF_INET socket domain)
    #
    public set_server(s)
       server := s
    end
 
    #
-   # Set the port.
+   # Set the port
    #
    public set_port(n)
       port := n
    end
 
    #
-   # 
-   protected send(s)
-      local i, t
+   # Low-level write on the connection. 
+   #
+   private send(s)
+      local i, l1, l2
 
-      if /timeout | (timeout = 0) then
-         return syswrite(connection, s)
-
-      fcntl(connection, "F", "d")
-      t := curr_time_millis()
       while *s > 0 do {
-         if i := syswrite(connection, s) then {
-            s := s[i+1 : 0]
-            t := curr_time_millis()
-         } else {
-            if &errno ~= EAGAIN then
-               return error("Failed to write:" || errno_str())
-            if curr_time_millis() - t > timeout then
-               return error("Send timed out")
-            delay(50)
+         if \timeout > 0 then {
+            l1 := [connection]
+            l2 := [connection]
+            select(&null, l1, l2, timeout) |
+               return error("Send failed:" || strerror())
+            if *l2 > 0 then
+               return error("Send failed (socket error)")
          }
+         i := writes(connection, s) | {
+            return error("Failed to write:" || strerror())
+         }
+         s := s[i+1 : 0]
       }
       return
    end
 
    #
-   # 
-   protected recv(len)
-      local l
+   # Low-level read on the connection. 
+   #
+   private recv(len)
+      local l1, l2
 
       if \timeout > 0 then {
-         l := select(connection, timeout) | return error("Failed to select:" || errno_str())
-         if *l = 0 then
-            return error("Failed to select (timeout)")
+         l1 := [connection]
+         l2 := [connection]
+         select(l1, &null, l2, timeout) |
+            return error("Receive failed:" || strerror())
+         if *l2 > 0 then
+            return error("Receive failed (socket error)")
       }
-      return sysread(connection, len) | error("EOF encountered")
+      return reads(connection, len) | error("Failed to read:" || strerror())
    end
 
    #
@@ -153,7 +192,7 @@ class NetClient(Connectable, Error, SetFields)
    #
    # Write a single line to the connection, appending CRLF to the output stream.
    # 
-   protected write_line(s)
+   public write_line(s)
       /s := ""
       fire(SENDING_LINE_EVENT, s)
       return send(s || "\r\n") 
@@ -162,7 +201,7 @@ class NetClient(Connectable, Error, SetFields)
    #
    # Read a single line from the connection, and return it.
    #
-   protected read_line()
+   public read_line()
       local line
 
       repeat {
@@ -184,7 +223,7 @@ class NetClient(Connectable, Error, SetFields)
    #
    # Read up to len bytes on the connection.
    #
-   protected read_str(len)
+   public read_str(len)
       local t
       #
       # Use the line buffer if it has anything in it.
@@ -205,6 +244,7 @@ class NetClient(Connectable, Error, SetFields)
       case f.attr of {
          "timeout": set_timeout(f.int_val())
          "server": set_server(f.string_val())
+         "path": set_path(f.string_val())
          "port": set_port(f.int_val())
          default : fail
       }

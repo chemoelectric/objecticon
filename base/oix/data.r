@@ -309,7 +309,7 @@ struct errtab errtab[] = {
    206, "negative first argument to real exponentiation",
    207, "invalid field name",
    208, "second and third arguments to map of unequal length",
-   209, "invalid second argument to open",
+   209, "invalid second argument to open/popen",
    210, "non-ascending arguments to detab/entab",
    211, "by value equal to zero",
    212, "attempt to read file not open for reading",
@@ -317,6 +317,8 @@ struct errtab errtab[] = {
    214, "input/output error",
    215, "attempt to refresh &main",
    216, "external function not found",
+   217, "attempt to use file which is not open for reading or writing",
+   218, "attempt to use file which is closed",
 
    301, "evaluation stack overflow",
    302, "memory violation",
@@ -370,8 +372,12 @@ struct errtab errtab[] = {
    1045, "invalid mode string",
    1046, "invalid permission string for umask",
    1047, "invalid protocol name",
-   1048, "low-level read or select mixed with buffered read",
-
+   1048, "bad seek whence value",
+   1049, "bad protocol domain or type",
+   1050, "socket file expected",
+   1052, "couldn't get descriptor for file",
+   1053, "invalid file flags",
+   1054, "invalid file mode",
 
 /*
  * End of operating-system specific code.
@@ -380,6 +386,25 @@ struct errtab errtab[] = {
    0,	""
    };
 
+/*
+ * Extra custom values for errno and corresponding messages.  These have
+ * to avoid clashing with any external errno values of course.
+ */
+struct errtab xerrnotab[] = {
+    XE_UNKNOWN, "Unknown reason",
+    XE_NOTSUPPORTED, "Operation not supported",
+    XE_DIRTOOLONG, "Directory entry too long",
+    XE_HOSTNOTFOUND, "Name lookup failure: host not found",
+    XE_NOIPADDR, "Name lookup failure: no IP address for host",
+    XE_NAMESRVERR, "Name lookup failure: name server error",
+    XE_TMPNAMESRVERR, "Name lookup failure: temporary name server error",
+    XE_TIMEOUT, "Timeout",
+    XE_NAMETOOLONG, "Name too long",
+    XE_BADADDRFMT, "Bad socket address format",
+    XE_EOF, "End of file",
+    0,	""
+   };
+
 /*
  * Note:  the following material is here to avoid a bug in the Cray C compiler.
  */

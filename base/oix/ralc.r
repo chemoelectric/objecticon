@@ -216,14 +216,13 @@ alccset_macro(alccset_1,E_Cset)
  * alcfile - allocate a file block in the block region.
  */
 
-struct b_file *f(FILE *fd, int status, dptr name)
+struct b_file *f(int status, dptr name)
    {
    tended struct descrip tname = *name;
    register struct b_file *blk;
 
    EVVal(sizeof (struct b_file), e_file);
    AlcFixBlk(blk, b_file, T_File)
-   blk->fd.fp = fd;
    blk->status = status;
    blk->fname = tname;
    return blk;

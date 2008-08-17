@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/poll.h>
 #include <time.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -42,8 +43,6 @@
 #include <process.h>
 #define NAME_MAX FILENAME_MAX
 #define MAXHOSTNAMELEN		256
-#else					/* MSWIN32 */
-#define SOCKET int
 #endif					/* MSWIN32 */
 
 #if defined(SUN) || defined(HP) || defined(IRIS4D)

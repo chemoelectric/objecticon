@@ -71,88 +71,51 @@ operator{*} ! bang(underef x -> dx)
             return string
 	       }
          body {
-            FILE *fd;
-            /*RPP was: char sbuf[MaxCvtLen]; */
-            /* To save valuable stack space, share the buffer which rtt creates for use
-                with cnv:tmp_string() below */
-            char *sbuf = r_sbuf[0];
-            register char *sp;
-            register C_integer slen, rlen;
-            word status;
+             tended struct descrip s;
+             static char sbuf[MaxReadStr];
+             char *sp;
 
-            /*
-             * x is a file.  Read the next line into the string space
-             *	and suspend the newly allocated string.
-             */
-            fd = BlkLoc(dx)->file.fd.fp;
-   
-            status = BlkLoc(dx)->file.status;
-            if ((status & Fs_Read) == 0) 
-               runerr(212, dx);
+             if (!(BlkLoc(dx)->file.status & Fs_Read))
+                 runerr(212, dx);
 
-            if (status & Fs_Writing) {
-               fseek(fd, 0L, SEEK_CUR);
-               BlkLoc(dx)->file.status &= ~Fs_Writing;
-               }
-            BlkLoc(dx)->file.status |= Fs_Reading;
-            status = BlkLoc(dx)->file.status;
+             for (;;) {
+                 IntVal(amperErrno) = 0;
+                 StrLen(s) = 0;
+                 for (;;) {
+                     int nread;
+                     nread = file_readline(&BlkLoc(dx)->file, sbuf, sizeof(sbuf));
+                     if (nread < 0) {
+                         IntVal(amperErrno) = errno;
+                         fail;
+                     }
+                     if (nread == 0) {
+                         if (StrLen(s) == 0) {
+                             IntVal(amperErrno) = XE_EOF;
+                             fail;
+                         } else
+                             break;
+                     }
+                     Protect(reserve(Strings, nread), runerr(0));
+                     if (StrLen(s) > 0 && !InRange(strbase, StrLoc(s),strfree)) {
+                         Protect(reserve(Strings, StrLen(s) + nread), runerr(0));
+                         Protect((StrLoc(s) = alcstr(StrLoc(s), StrLen(s))), runerr(0));
+                     }
+                     Protect(sp = alcstr(sbuf, nread), runerr(0));
+                     if (StrLen(s) == 0)
+                         StrLoc(s) = sp;
+                     StrLen(s) += nread;
 
-            for (;;) {
-               StrLen(result) = 0;
-               do {
-
-#ifdef HAVE_LIBZ
-                  if (status & Fs_Compress) {
-	              if (gzeof(fd)) fail;
-                      if (gzgets((gzFile)fd,sbuf,MaxCvtLen+1) == Z_NULL) {
-	                  runerr(214);
-                         }
-	             slen = strlen(sbuf);
-                     if (slen==MaxCvtLen && sbuf[slen-1]!='\n') slen = -2;
-                     else if (sbuf[slen-1] == '\n') {
-                        sbuf[slen-1] = '\0';
-                        slen--;
-                        }
-	             }
-                  else
-#endif					/* HAVE_LIBZ */
-
-
-#if !MSWIN32
-          	  if (status & Fs_Directory) {
-		     struct dirent *d = readdir((DIR *)fd);
-		     char *s, *p=sbuf;
-		     if (d == NULL) fail;
-		     s = d->d_name;
-		     slen = 0;
-		     while(*s && slen++ < MaxCvtLen)
-		        *p++ = *s++;
-		     if (slen == MaxCvtLen)
-		        slen = -2;
-		  }
-		  else
-#endif					/* !MSWIN32 */
-
-                  if ((slen = getstrg(sbuf,MaxCvtLen,&BlkLoc(dx)->file)) == -1)
-                     fail;
-                  rlen = slen < 0 ? (word)MaxCvtLen : slen;
-
-		  Protect(reserve(Strings, rlen), runerr(0));
-		  if (!InRange(strbase,StrLoc(result),strfree)) {
-		     Protect(reserve(Strings, StrLen(result)+rlen), runerr(0));
-		     Protect((StrLoc(result) = alcstr(StrLoc(result),
-                        StrLen(result))), runerr(0));
-		     }
-
-                  Protect(sp = alcstr(sbuf,rlen), runerr(0));
-                  if (StrLen(result) == 0)
-                     StrLoc(result) = sp;
-                  StrLen(result) += rlen;
-                  } while (slen < 0);
-               suspend result;
-               }
-            }
-         }
+                     if (StrLoc(s)[StrLen(s) - 1] == '\n') {
+                         --StrLen(s);
+                         if (StrLen(s) > 0 &&  StrLoc(s)[StrLen(s) - 1] == '\r')
+                             --StrLen(s);
+                         break;
+                     }
+                 }
+                 suspend s;
+             }
+          }
+       }
 
       table: {
          abstract {

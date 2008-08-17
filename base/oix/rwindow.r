@@ -9,7 +9,6 @@ static	int	colorphrase    (char *buf, long *r, long *g, long *b, long *a);
 static	double	rgbval		(double n1, double n2, double hue);
 
 static	int	setpos          (wbp w, char *s);
-static	int	sicmp		(siptr sip1, siptr sip2);
 
 int canvas_serial, context_serial;
 
@@ -2338,7 +2337,7 @@ int *size;
         }
 
         else {				/* otherwise it's a style attribute */
-            tmp = si_s2i(fontwords, attr);	/* look up in table */
+            tmp = stringint_str2int(fontwords, attr);	/* look up in table */
             if (tmp != -1) {		/* if recognized */
                 if ((tmp & *style) != 0 && (tmp & *style) != tmp)
                     return 0;		/* conflicting attribute */
@@ -2533,7 +2532,7 @@ int wattrib(w, s, len, answer, abuf)
             StrLoc(d) = val;
         }
 
-        switch (a = si_s2i(attribs, abuf)) {
+        switch (a = stringint_str2int(attribs, abuf)) {
             case A_HEIGHT: {
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
@@ -2817,7 +2816,7 @@ int wattrib(w, s, len, answer, abuf)
          */
         strncpy(abuf, s, len);
         abuf[len] = '\0';
-        switch (a=si_s2i(attribs, abuf)) {
+        switch (a=stringint_str2int(attribs, abuf)) {
             case A_IMAGE:
                 ReturnErrNum(147, Error);
                 break;
@@ -3385,47 +3384,4 @@ char *rgbkey(int p, double r, double g, double b)	{ return 0; }
 
 #endif					/* Graphics */
 
-
-
-/*
- * the next section consists of code to deal with string-integer
- * (stringint) symbols.  See rstructs.h.
- */
-
-/*
- * string-integer comparison, for qsearch()
- */
-static int sicmp(sip1,sip2)
-    siptr sip1, sip2;
-{
-    return strcmp(sip1->s, sip2->s);
-}
-
-/*
- * string-integer lookup function: given a string, return its integer
- */
-int si_s2i(sip,s)
-    siptr sip;
-    char *s;
-{
-    stringint key;
-    siptr p;
-    key.s = s;
-
-    p = (siptr)qsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),sicmp);
-    if (p) return p->i;
-    return -1;
-}
-
-/*
- * string-integer inverse function: given an integer, return its string
- */
-char *si_i2s(sip,i)
-    siptr sip;
-    int i;
-{
-    register siptr sip2 = sip+1;
-    for(;sip2<=sip+sip[0].i;sip2++) if (sip2->i == i) return sip2->s;
-    return NULL;
-}
 

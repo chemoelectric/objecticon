@@ -330,7 +330,7 @@ function{1} display(i,f,c)
       if ((BlkLoc(f)->file.status & Fs_Write) == 0) 
          runerr(213, f);
 
-      std_f = BlkLoc(f)->file.fd.fp;
+      std_f = BlkLoc(f)->file.u.fp;
 
       /*
        * Produce error if i is negative; constrain i to be <= &level.

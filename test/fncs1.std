@@ -1,6 +1,6 @@
  ----> &null
 f := open("foo.baz","w") ----> file(foo.baz)
-write(f,"hello world") ----> "hello world"
+write(f,"hello world") ----> 12
 close(f) ----> file(foo.baz)
 F := open("fncs1.dat") ----> file(fncs1.dat)
 )(niam erudecorp

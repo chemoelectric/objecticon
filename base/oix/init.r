@@ -64,7 +64,6 @@ int line_info;				/* flag: line information is available */
 char *file_name = NULL;			/* source file for current execution point */
 struct b_proc *op_tbl;			/* operators available for string invocation */
 
-extern struct errtab errtab[];		/* error numbers and messages */
 
 word mstksize = MStackSize;		/* initial size of main stack */
 word stksize = StackSize;		/* co-expression stack size */
@@ -798,35 +797,35 @@ void datainit()
 
 #ifdef MSWindows
     if (ferredir != NULL)
-        k_errout.fd.fp = ferredir;
+        k_errout.u.fp = ferredir;
     else
 #endif					/* MSWindows */
-        k_errout.fd.fp = stderr;
+        k_errout.u.fp = stderr;
     StrLen(k_errout.fname) = 7;
     StrLoc(k_errout.fname) = "&errout";
-    k_errout.status = Fs_Write;
+    k_errout.status = Fs_Write | Fs_Stdio;
 
 #ifdef MSWindows
     if (finredir != NULL)
-        k_input.fd.fp = finredir;
+        k_input.u.fp = finredir;
     else
 #endif					/* MSWindows */
-        if (k_input.fd.fp == NULL)
-            k_input.fd.fp = stdin;
+        if (k_input.u.fp == NULL)
+            k_input.u.fp = stdin;
     StrLen(k_input.fname) = 6;
     StrLoc(k_input.fname) = "&input";
-    k_input.status = Fs_Read;
+    k_input.status = Fs_Read | Fs_Stdio;
 
 #ifdef MSWindows
     if (fouredir != NULL)
         k_output.fd.fp = fouredir;
     else
 #endif					/* MSWindows */
-        if (k_output.fd.fp == NULL)
-            k_output.fd.fp = stdout;
+        if (k_output.u.fp == NULL)
+            k_output.u.fp = stdout;
     StrLen(k_output.fname) = 7;
     StrLoc(k_output.fname) = "&output";
-    k_output.status = Fs_Write;
+    k_output.status = Fs_Write | Fs_Stdio;
 
     IntVal(kywd_pos) = 1;
     IntVal(kywd_ran) = 0;

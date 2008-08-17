@@ -2,8 +2,6 @@
  * errmsg.r -- err_msg, irunerr, drunerr
  */
 
-extern struct errtab errtab[];		/* error numbers and messages */
-
 /*
  * err_msg - print run-time error message, performing trace back if required.
  *  This function underlies the rtt runerr() construct.

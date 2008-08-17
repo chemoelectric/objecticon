@@ -21,8 +21,7 @@ static char *	csname		(dptr dp);
 /* 
  * eq - compare two Icon strings for equality
  */
-int eq(d1, d2)
-dptr d1, d2;
+int eq(dptr d1, dptr d2)
 {
 	char *s1, *s2;
 	int i;
@@ -36,6 +35,17 @@ dptr d1, d2;
 	      return 0;
 	return 1;
 }
+
+/*
+ * Compare an Icon string and a C string for equality.
+ */
+int ceq(dptr dp, char *s)
+{
+    struct descrip t;
+    MakeCStr(s, &t);
+    return eq(&t, dp);
+}
+
 
 /*
  * Get variable descriptor from name.  Returns the (integer-encoded) scope
@@ -436,7 +446,7 @@ int noimage;
           * Check for distinguished files by looking at the address of
           *  of the object to image.  If one is found, print its name.
           */
-         if ((fd = BlkLoc(*dp)->file.fd.fp) == stdin)
+         if ((fd = BlkLoc(*dp)->file.u.fp) == stdin)
             fprintf(f, "&input");
          else if (fd == stdout)
             fprintf(f, "&output");
@@ -448,15 +458,7 @@ int noimage;
              */
 	    i = StrLen(BlkLoc(*dp)->file.fname);
 	    s = StrLoc(BlkLoc(*dp)->file.fname);
-	    if (BlkLoc(*dp)->file.status & Fs_Socket) {
-	       fprintf(f, "inet(");
-               }
-            else
-	    if (BlkLoc(*dp)->file.status & Fs_Directory) {
-	       fprintf(f, "directory(");
-               }
-	    else
-	       fprintf(f, "file(");
+            fprintf(f, "file(");
 	    while (i-- > 0)
 	       printimage(f, *s++, '\0');
 	    putc(')', f);
@@ -1177,19 +1179,19 @@ int c, q;
       switch (c) {
          case '"':
             if (c != q) goto deflt;
-            Protect(alcstr("\\\"", (word)(2)), return Error);
+            Protect(alcstr("\\\"", 2), return Error);
             return 2;
          case '\'':
             if (c != q) goto deflt;
-            Protect(alcstr("\\'", (word)(2)), return Error);
+            Protect(alcstr("\\'", 2), return Error);
             return 2;
          case '\\':
-            Protect(alcstr("\\\\", (word)(2)), return Error);
+            Protect(alcstr("\\\\", 2), return Error);
             return 2;
          default:
          deflt:
             cbuf[0] = c;
-            Protect(alcstr(cbuf, (word)(1)), return Error);
+            Protect(alcstr(cbuf, 1), return Error);
             return 1;
          }
       }
@@ -1201,37 +1203,37 @@ int c, q;
     */
    switch (c) {
       case '\b':			/*	   backspace	*/
-         Protect(alcstr("\\b", (word)(2)), return Error);
+         Protect(alcstr("\\b", 2), return Error);
          return 2;
 
       case '\177':			/*      delete	  */
 
-         Protect(alcstr("\\d", (word)(2)), return Error);
+         Protect(alcstr("\\d", 2), return Error);
          return 2;
 
       case '\33':			/*	    escape	 */
 
-         Protect(alcstr("\\e", (word)(2)), return Error);
+         Protect(alcstr("\\e", 2), return Error);
          return 2;
       case '\f':			/*	   form feed	*/
-         Protect(alcstr("\\f", (word)(2)), return Error);
+         Protect(alcstr("\\f", 2), return Error);
          return 2;
 
       case LineFeed:			/*	   new line	*/
-         Protect(alcstr("\\n", (word)(2)), return Error);
+         Protect(alcstr("\\n", 2), return Error);
          return 2;
       case CarriageReturn:		/*	   return	*/
-         Protect(alcstr("\\r", (word)(2)), return Error);
+         Protect(alcstr("\\r", 2), return Error);
          return 2;
       case '\t':			/*	   horizontal tab     */
-         Protect(alcstr("\\t", (word)(2)), return Error);
+         Protect(alcstr("\\t", 2), return Error);
          return 2;
       case '\13':			/*	    vertical tab     */
-         Protect(alcstr("\\v", (word)(2)), return Error);
+         Protect(alcstr("\\v", 2), return Error);
          return 2;
       default:				/*	  hex escape sequence  */
          sprintf(cbuf, "\\x%02x", ToAscii(c & 0xff));
-         Protect(alcstr(cbuf, (word)(4)), return Error);
+         Protect(alcstr(cbuf, 4), return Error);
          return 4;
       }
    }
@@ -1264,13 +1266,13 @@ dptr dp1, dp2;
          s = StrLoc(source);
          len = StrLen(source);
 	 Protect (reserve(Strings, (len << 2) + 2), return Error);
-         Protect(t = alcstr("\"", (word)(1)), return Error);
+         Protect(t = alcstr("\"", 1), return Error);
          StrLoc(*dp2) = t;
          StrLen(*dp2) = 1;
 
          while (len-- > 0)
             StrLen(*dp2) += doimage(*s++, '"');
-         Protect(alcstr("\"", (word)(1)), return Error);
+         Protect(alcstr("\"", 1), return Error);
          ++StrLen(*dp2);
          }
 
@@ -1349,13 +1351,13 @@ dptr dp1, dp2;
 	 if (i > 730) i = 730;
 	 Protect (reserve(Strings, i), return Error);
 
-         Protect(t = alcstr("'", (word)(1)), return Error);
+         Protect(t = alcstr("'", 1), return Error);
          StrLoc(*dp2) = t;
          StrLen(*dp2) = 1;
          for (i = 0; i < 256; ++i)
             if (Testb(i, source))
                StrLen(*dp2) += doimage((char)i, '\'');
-         Protect(alcstr("'", (word)(1)), return Error);
+         Protect(alcstr("'", 1), return Error);
          ++StrLen(*dp2);
          }
 
@@ -1381,7 +1383,7 @@ dptr dp1, dp2;
          StrLen(*dp2) = strlen(sbuf);
          while (len-- > 0)
                StrLen(*dp2) += doimage(*s++, '\0');
-         Protect(alcstr(")", (word)(1)), return Error);
+         Protect(alcstr(")", 1), return Error);
          ++StrLen(*dp2);
       }
 #endif					/* Graphics */
@@ -1392,7 +1394,7 @@ dptr dp1, dp2;
           *  of the object to image.  If one is found, make a string
           *  naming it and return.
           */
-         if ((fd = BlkLoc(source)->file.fd.fp) == stdin) {
+         if ((fd = BlkLoc(source)->file.u.fp) == stdin) {
             StrLen(*dp2) = 6;
             StrLoc(*dp2) = "&input";
             }
@@ -1405,31 +1407,22 @@ dptr dp1, dp2;
             StrLoc(*dp2) = "&errout";
             }
          else {
-            /*
-             * The file is not a standard one; form a string of the form
-             *	file(nm) where nm is the argument originally given to
-             *	open.
-             */
-             char namebuf[100];		/* scratch space */
-               if (BlkLoc(source)->file.status & Fs_Socket) {
-                   s = namebuf;
-                   len = sock_name(BlkLoc(source)->file.fd.fd,
-                                 StrLoc(BlkLoc(source)->file.fname),
-                                 namebuf, sizeof(namebuf));
-               }
-               else {
-               s = StrLoc(BlkLoc(source)->file.fname);
-               len = StrLen(BlkLoc(source)->file.fname);
-               }
-               Protect (reserve(Strings, (len << 2) + 12), return Error);
-	       Protect(t = alcstr("file(", (word)(5)), return Error);
-	       StrLoc(*dp2) = t;
-	       StrLen(*dp2) = 5;
-            while (len-- > 0)
-               StrLen(*dp2) += doimage(*s++, '\0');
-            Protect(alcstr(")", (word)(1)), return Error);
-            ++StrLen(*dp2);
-            }
+             /*
+              * The file is not a standard one; form a string of the form
+              *	file(nm) where nm is the argument originally given to
+              *	open.
+              */
+             s = StrLoc(BlkLoc(source)->file.fname);
+             len = StrLen(BlkLoc(source)->file.fname);
+             Protect (reserve(Strings, (len << 2) + 12), return Error);
+             Protect(t = alcstr("file(", 5), return Error);
+             StrLoc(*dp2) = t;
+             StrLen(*dp2) = 5;
+             while (len-- > 0)
+                 StrLen(*dp2) += doimage(*s++, '\0');
+             Protect(alcstr(")", 1), return Error);
+             ++StrLen(*dp2);
+             }
          }
 
       proc: {
@@ -2019,4 +2012,51 @@ struct descrip cstrs2string(char **s, char *delim)
     }
     return res;
 }
+
+
+
+/*
+ * the next section consists of code to deal with string-integer
+ * (stringint) symbols.  See rstructs.h.
+ */
+
+/*
+ * string-integer comparison, for qsearch()
+ */
+static int sicmp(stringint *sip1, stringint *sip2)
+{
+    return strcmp(sip1->s, sip2->s);
+}
+
+/*
+ * string-integer lookup function: given a string, return its integer
+ */
+int stringint_str2int(stringint * sip, char *s)
+{
+    stringint key;
+    stringint * p;
+    key.s = s;
+
+    p = (stringint *)qsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),sicmp);
+    if (p) return p->i;
+    return -1;
+}
+
+/*
+ * string-integer inverse function: given an integer, return its string
+ */
+char *stringint_int2str(stringint * sip, int i)
+{
+    register stringint * sip2 = sip+1;
+    for(;sip2<=sip+sip[0].i;sip2++) if (sip2->i == i) return sip2->s;
+    return NULL;
+}
+
+stringint *stringint_lookup(stringint *sip, char *s)
+{
+    stringint key;
+    key.s = s;
+    return (stringint *)qsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),sicmp);
+}
+
 

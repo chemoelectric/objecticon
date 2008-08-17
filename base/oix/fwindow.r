@@ -2159,7 +2159,7 @@ function{1} OwnSelection(win, selection, callback)
       }
    body {
        wbp w;
-       w = (wbp)BlkLoc(win)->file.fd.fp;
+       w = (wbp)BlkLoc(win)->window.wb;
        w->window->selectionproc = callback;
        ownselection(w, selection);
        return win;
@@ -2181,7 +2181,7 @@ function{0,1} GetSelectionContent(win, selection,target_type)
    body {
        struct descrip s;
        wbp w;
-       w = (wbp)BlkLoc(win)->file.fd.fp;
+       w = (wbp)BlkLoc(win)->window.wb;
        s = getselectioncontent(w, selection,target_type);
        if (is:null(s))
            fail;

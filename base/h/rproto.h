@@ -12,8 +12,8 @@ void		addmem 	(struct b_set *ps,struct b_selem *pe, union block **pl);
 struct astkblk	*alcactiv	(void);
 struct b_cset	*alccset_0	(void);
 struct b_cset	*alccset_1	(void);
-struct b_file	*alcfile_0	(FILE *fd,int status,dptr name);
-struct b_file	*alcfile_1	(FILE *fd,int status,dptr name);
+struct b_file	*alcfile_0	(int status,dptr name);
+struct b_file	*alcfile_1	(int status,dptr name);
 #ifdef Graphics
 struct b_window	*alcwindow_0	(wbp w, word isopen);
 struct b_window	*alcwindow_1	(wbp w, word isopen);
@@ -211,8 +211,6 @@ dptr            call_icon_va    (dptr proc, va_list ap);
 
 
    struct b_list *findactivewindow(struct b_list *);
-   char	*si_i2s		(siptr sip, int i);
-   int	si_s2i		(siptr sip, char *s);
 
 #ifdef Graphics
    /*
@@ -545,7 +543,16 @@ int	getch		(void);
 int	getche		(void);
 double	getdbl		(dptr dp);
 int	getimage	(dptr dp1, dptr dp2);
-int	getstrg		(char *buf, int maxi, struct b_file *fbp);
+
+int     file_readline   (struct b_file *fbp, char *buf, int max);
+int     file_readstr(struct b_file *fbp, char *buf, int max);
+int     file_outputstr(struct b_file *fbp, char *buf, int n);
+int     file_flush(struct b_file *fbp);
+int     file_close(struct b_file *fbp);
+int     file_seek(struct b_file *fbp, int offset, int whence);
+int     file_tell(struct b_file *fbp);
+int     file_fd(struct b_file *fbp);
+
 void	hgrow		(union block *bp);
 void	hshrink		(union block *bp);
 C_integer iipow		(C_integer n1, C_integer n2);
@@ -581,7 +588,7 @@ void stat2rec			(struct stat *st, dptr dp, struct b_record **rp);
 #endif					/* MSWIN32 */
 dptr rec_structor		(char *s);
 dptr rec_structor3d		(char *s);
-int sock_connect		(char *s, int udp, int timeout);
+int tcp_connect		        (char *host, int port, int timeout);
 int getmodefd			(int fd, char *mode);
 int getmodenam			(char *path, char *mode);
 int get_uid			(char *name);
@@ -598,6 +605,7 @@ int sock_send			(char* addr, char* msg, int msglen);
 int sock_recv			(int f, struct b_record **rp);
 int sock_write			(int f, char *s, int n);
 int sock_getstrg(char *buf,  int maxi, SOCKET fd);
+struct sockaddr *parse_sockaddr(char *s, int *size);
 
 struct descrip register_sig	(int sig, struct descrip handler);
 void signal_dispatcher		(int sig);
@@ -633,3 +641,16 @@ struct descrip create_list(uword nslots);
 struct descrip cstr2string(char *s);
 struct descrip bytes2string(char *s, int len);
 struct descrip cstrs2string(char **s, char *delim);
+int eq(dptr d1, dptr d2);
+int ceq(dptr dp, char *s);
+
+int convert_flag_set(struct descrip s, char *deflt, int *res, stringint *tbl);
+int convert_flag(struct descrip s, char *deflt, int *res, stringint *tbl);
+
+int stringint_str2int(stringint * sip, char *s);
+char *stringint_int2str(stringint * sip, int i);
+stringint *stringint_lookup(stringint *sip, char *s);
+
+
+
+

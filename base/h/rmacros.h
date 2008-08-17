@@ -40,21 +40,12 @@
  */
 #define Fs_Read		 01	/* read access */
 #define Fs_Write	 02	/* write access */
-#define Fs_Create	 04	/* file created on open */
-#define Fs_Append	010	/* append mode */
-#define Fs_Pipe		020	/* reading/writing on a pipe */
-#define Fs_Reading     0100     /* last file operation was read */
-#define Fs_Writing     0200     /* last file operation was write */
-
-#define Fs_Untrans    01000	/* untranslated mode file */
-#define Fs_Directory  02000	/* reading a directory */
-
-
-   #define Fs_Socket    010000
-   #define Fs_Buff      020000
-   #define Fs_Unbuf     040000
-   #define Fs_Listen   0100000
-
+#define Fs_Directory     04	
+#define Fs_Socket       010
+#define Fs_Stdio        020
+#define Fs_Desc         040
+#define Fs_Prog        0100
+#define Fs_Closed      0200     /* indicates close was called */
 
 
 
@@ -768,3 +759,14 @@
 #endif					/* no S_ISDIR */
 #endif					/* MSWIN32 */
 
+#define XE_UNKNOWN         1001
+#define XE_NOTSUPPORTED    1002
+#define XE_DIRTOOLONG      1003
+#define XE_HOSTNOTFOUND    1004
+#define XE_NOIPADDR        1005
+#define XE_NAMESRVERR      1006
+#define XE_TMPNAMESRVERR   1007
+#define XE_TIMEOUT         1008
+#define XE_NAMETOOLONG     1009
+#define XE_BADADDRFMT      1010
+#define XE_EOF             1011

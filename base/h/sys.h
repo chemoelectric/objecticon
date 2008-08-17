@@ -62,6 +62,7 @@
    #ifdef SysSelectH
       #include <sys/select.h>
    #endif
+   #define SOCKET int
 #endif					/* UNIX */
 
 #ifdef XWindows

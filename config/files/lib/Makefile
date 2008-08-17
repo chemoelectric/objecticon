@@ -1,6 +1,7 @@
 include ../Makedefs
 
 all :
+	$(MAKE) -C incl all
 	$(MAKE) -C iyacc all
 	$(MAKE) -C ipl all
 	$(MAKE) -C main all
@@ -10,6 +11,7 @@ all :
 	$(MAKE) -C native all
 
 clean :
+	$(MAKE) -C incl clean
 	$(MAKE) -C iyacc clean
 	$(MAKE) -C ipl clean
 	$(MAKE) -C main clean

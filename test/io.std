@@ -13,15 +13,15 @@ ffffffff
 ggggggggg
 hhhhhhhhhh
 
-flush /etc/motd: file(/etc/motd)
+flush /etc/motd: FAILED
 close /etc/motd: file(/etc/motd)
 close /etc/motd: file(/etc/motd)
-flush /etc/motd: file(/etc/motd)
+flush /etc/motd: FAILED
 
 flush /dev/null: file(/dev/null)
 close /dev/null: file(/dev/null)
 close /dev/null: file(/dev/null)
-flush /dev/null: file(/dev/null)
+flush /dev/null: FAILED
 
 read  /dev/null:	
    !f:		 
@@ -29,42 +29,42 @@ read  /dev/null:
    reads():	
    nonseq:	 ?????????????????????????????????????????????????????????????
 
-write tmp1,w:	 follow the yellow brick road : 30
+write tmp1,w:	 follow the yellow brick road : 29
 read  tmp1:	 follow the yellow brick road
    !f:		 follow the yellow brick road 
    read/!f:	 follow the yellow brick road
    reads():	 follo w.the .yell ow.br ick.r oad.
    nonseq:	 ?.daor.kcirb.wolley.eht.wollof?.daor.kcirb.wolley.eht.wollof-
 
-write tmp1,w:	 shorter file : 14
+write tmp1,w:	 shorter file : 13
 read  tmp1:	 shorter file
    !f:		 shorter file 
    read/!f:	 shorter file
    reads():	 short er.fi le.
    nonseq:	 ?????????????????.elif.retrohs?.elif.retrohs-----------------
 
-write tmp1,a:	 gets extended : 28
+write tmp1,a:	 gets extended : 27
 read  tmp1:	 shorter file gets extended
    !f:		 shorter file gets extended 
    read/!f:	 shorter file gets extended
    reads():	 short er.fi le.ge ts.ex tende d.
    nonseq:	 ???.dednetxe.steg.elif.retrohs?.dednetxe.steg.elif.retrohs---
 
-write tmp1,rw:	 changed : 9
+write tmp1,r+:	 changed : 8
 read  tmp1:	 changed file gets extended
    !f:		 changed file gets extended 
    read/!f:	 changed file gets extended
    reads():	 chang ed.fi le.ge ts.ex tende d.
    nonseq:	 ???.dednetxe.steg.elif.degnahc?.dednetxe.steg.elif.degnahc---
 
-write tmp1,b:	 mode b  : 8
+write tmp1,r+:	 mode b  : 7
 read  tmp1:	 mode b  file gets extended
    !f:		 mode b  file gets extended 
    read/!f:	 mode b  file gets extended
    reads():	 mode. b..fi le.ge ts.ex tende d.
    nonseq:	 ???.dednetxe.steg.elif..b.edom?.dednetxe.steg.elif..b.edom---
 
-write tmp1,crw:	 cleared anew : 14
+write tmp1,w+:	 cleared anew : 13
 read  tmp1:	 cleared anew
    !f:		 cleared anew 
    read/!f:	 cleared anew
@@ -107,11 +107,13 @@ io.dat
 io.icn
 io.std
 
-file(/bin/echo hello world)
+file(echo hello world)
 > hello world
 
-file(/bin/sed 's/^/=()= /' io.icn)
+file(sed 's/^/=()= /' io.icn)
 > =()= #SRC: JCON
+> =()= 
+> =()= $include "posix.icn"
 > =()= 
 > =()= #  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
 > =()= 
@@ -119,15 +121,13 @@ file(/bin/sed 's/^/=()= /' io.icn)
 > =()=    local L, f, m, n, t1, t2
 > =()= 
 > =()=    L := [&input, &output, &errout,
-> =()=    	m := open("/etc/motd"), n := open("/dev/null", "w")]
-> =()=    L := sort(L)
 
-file(/bin/ls io.i?n io.d?t io.s?d)
+file(ls io.i?n io.d?t io.s?d)
 > io.dat
 > io.icn
 > io.std
 
-file(/usr/bin/tr aeiou oaeui)
+file(tr aeiou oaeui)
 --- closing output pipe
 unca ipun o medneght draory
 twu ruods devargad en o yalluw wuud

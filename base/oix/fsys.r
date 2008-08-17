@@ -18,137 +18,116 @@ Deliberate Syntax Error
    /* nothing to do */
 #endif			
 
-extern int errno;
 /*
  * End of operating-system specific code.
  */
 
 
-/* (should) change the mixed case of string s1 to the lower case string s2 */
+"flush(f) - flush file f."
 
-void UtoL (char *s1, char *s2)
-{
-   int i, l = strlen(s2);
+function{1} flush(f)
+   if !is:file(f) then
+      runerr(105, f)
+   body {
+       int rc;
 
-   for (i = 0; i < l; i++)
-      *(s1+i) = *(s2+i);
-}
+       if (!(BlkLoc(f)->file.status & Fs_Write))
+          runerr(213, f);
 
-/*
- * is_url() takes a string s as its parameter. If s starts with a URL scheme,
- * is_url() returns 1. If s starts with "net:", it returns 2. Otherwise,
- * for normal files, is_url() returns 0.
-*/
-
-int is_url(char *s)
-{
-   char *tmp = s;
-
-   while ( *tmp == ' ' || *tmp == '\t' || *tmp == '\n' )
-      tmp++;
-
-   if (!strncasecmp (tmp, "http:", 5) ){
-      UtoL(tmp, "http");
-      return 1;
-      }
-   if (!strncasecmp (tmp, "file:", 5) ) {
-      UtoL(tmp, "file");
-      return 1;
-      }
-   if (!strncasecmp (tmp, "ftp:", 4) ) {
-      UtoL(tmp, "ftp");
-      return 1;
-      }
-   if (!strncasecmp (tmp, "gopher:", 7) ) {
-      UtoL(tmp, "gopher");
-      return 1;
-      }
-   if (!strncasecmp (tmp, "telnet:", 7) )  {
-      UtoL(tmp, "telnet");
-      return 1;
-      }
-   if ( !strncasecmp(tmp, "net:", 4) )
-      return 2;
-   return 0;
-}
+       IntVal(amperErrno) = 0;
+       rc = file_flush(&BlkLoc(f)->file);
+       if (rc < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+       /*
+        * Return the flushed file.
+        */
+       return f;
+   }
+end
 
 "close(f) - close file f."
 
 function{1} close(f)
-
    if !is:file(f) then
       runerr(105, f)
+   body {
+       int rc;
+
+       /* A double-close succeeds and returns the file */
+       if (BlkLoc(f)->file.status & Fs_Closed)
+           return f;
+
+       IntVal(amperErrno) = 0;
+       rc = file_close(&BlkLoc(f)->file);
+       BlkLoc(f)->file.status = Fs_Closed;
+       if (rc < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+       /*
+        * Return the closed file.
+        */
+       return f;
+   }
+end
+
+"seek(f, offset, whence) - seek to offset in file f."
+" whence can be SEEK_SET (the default), SEEK_CUR or SEEK_END"
+
+function{0,1} seek(f, offset, whence)
+   if !is:file(f) then
+      runerr(105,f)
+
+   if !cnv:C_integer(offset) then
+      runerr(101, offset)
+
+   if !def:C_integer(whence, SEEK_SET) then
+      runerr(101, whence)
+
+   body {
+       int rc;
+       if (!(BlkLoc(f)->file.status & (Fs_Read | Fs_Write)))
+          runerr(217, f);
+
+       IntVal(amperErrno) = 0;
+       rc = file_seek(&BlkLoc(f)->file, offset, whence);
+       if (rc < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+"tell(f) - return current offset position in file f."
+
+function{0,1} tell(f)
+
+   if !is:file(f) then
+      runerr(105,f)
 
    abstract {
-      return file ++ integer
+      return integer
       }
 
    body {
-      FILE *fp = BlkLoc(f)->file.fd.fp;
-      int status = BlkLoc(f)->file.status;
-      if ((status & (Fs_Read|Fs_Write)) == 0) return f;
+       int rc;
 
-      /*
-       * Close f, using fclose, pclose, closedir, or wclose as appropriate.
-       */
+       if (!(BlkLoc(f)->file.status & (Fs_Read | Fs_Write)))
+          runerr(217, f);
 
-      if (BlkLoc(f)->file.status & Fs_Socket) {
-	 BlkLoc(f)->file.status = 0;
-#if MSWIN32
-	 return C_integer closesocket((SOCKET)BlkLoc(f)->file.fd.fd);
-#else					/* MSWIN32 */
-	 return C_integer close(BlkLoc(f)->file.fd.fd);
-#endif					/* MSWIN32 */
-	 }
-
-#if !MSWIN32
-      if (BlkLoc(f)->file.status & Fs_Directory) {
-	 BlkLoc(f)->file.status = 0;
-	 closedir((DIR *)fp);
-	 return f;
-         }
-#endif
-
-#ifdef HAVE_LIBZ
-      if (BlkLoc(f)->file.status & Fs_Compress) {
-	 BlkLoc(f)->file.status = 0;
-	 if (gzclose((gzFile) fp)) fail;
-	 return C_integer 0;
-	 }
-#endif					/* HAVE_LIBZ */
-
-
-
-
-
-#if MSWIN32
-#ifndef NTGCC
-#define pclose _pclose
-#define popen _popen
-#endif					/* NTGCC */
-#endif					/* MSWIN32 */
-
-#if UNIX || MSWIN32
-      /*
-       * Close pipe if pipes are supported.
-       */
-
-      if (BlkLoc(f)->file.status & Fs_Pipe) {
-	 BlkLoc(f)->file.status = 0;
-	 return C_integer((pclose(fp) >> 8) & 0377);
-	 }
-      else
-#endif					
-
-      fclose(fp);
-      BlkLoc(f)->file.status = 0;
-
-      /*
-       * Return the closed file.
-       */
-      return f;
-      }
+       IntVal(amperErrno) = 0;
+       rc = file_tell(&BlkLoc(f)->file);
+       if (rc < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+       return C_integer rc;
+   }
 end
+
 
 #undef exit
 #passthru #undef exit
@@ -194,420 +173,701 @@ function{0,1} getenv(s)
 end
 
 
-
-"open(s1, s2, ...) - open file named s1 with options s2"
+"open(s1, s2) - open file named s1 with options s2"
 " and attributes given in trailing arguments."
-function{0,1} open(fname, spec, attr[n])
-   declare {
-      tended struct descrip filename;
-      }
-
-   /*
-    * fopen and popen require a C string, but it looks terrible in
-    *  error messages, so convert it to a string here and use a local
-    *  variable (fnamestr) to store the C string.
-    */
+function{0,1} open(fname, spec)
    if !cnv:string(fname) then
       runerr(103, fname)
 
    /*
     * spec defaults to "r".
     */
-   if !def:tmp_string(spec, letr) then
+   if !def:string(spec, letr) then
       runerr(103, spec)
-
 
    abstract {
       return file
       }
 
    body {
-      tended char *fnamestr;
-      register word slen;
-      register int i;
-      register char *s;
-      int status;
-      char mode[4], sbuf[MaxCvtLen+1], sbuf2[MaxCvtLen+1];
-      extern FILE *fopen();
-      FILE *f;
-      SOCKET fd;
-      struct b_file *fl;
-      struct stat st;
+       tended char *fnamestr, *specstr;
+       tended struct b_file *fl;
+       int status;
+       char mode[16], *s;
+       FILE *f;
 
+       /*
+        * get a C string for the file name and spec
+        */
+       if (!cnv:C_string(fname, fnamestr))
+           runerr(103,fname);
 
-/*
- * The following code is operating-system dependent [@fsys.02].  Make
- *  declarations as needed for opening files.
- */
+       if (!cnv:C_string(spec, specstr))
+           runerr(103,spec);
 
-#if PORT
-Deliberate Syntax Error
-#endif					/* PORT */
+       status = Fs_Stdio;
+       s = specstr;
+       while (*s) {
+           switch (tolower(*s++)) {
+               case 'a':
+                   status |= Fs_Write;
+                   break;
+               case 'r':
+                   status |= Fs_Read;
+                   break;
+               case 'w':
+                   status |= Fs_Write;
+                   break;
+               case '+':
+                   status |= Fs_Read | Fs_Write;
+                   break;
+               case 'b':
+                   break;
+               default:
+                   runerr(209, spec);
+           }
+       }
 
-#if MSWIN32
-   /* nothing is needed */
-#endif
+       IntVal(amperErrno) = 0;
 
-      int is_udp_or_listener = 0;	/* UDP = 1, listener = 2 */
-
-#if UNIX || MSWIN32
-      extern FILE *popen();
-#endif
-
-/*
- * End of operating-system specific code.
- */
-
-      /*
-       * get a C string for the file name
-       */
-      if (!cnv:C_string(fname, fnamestr))
-	 runerr(103,fname);
-
-      if (strlen(fnamestr) != StrLen(fname)) {
-	 fail;
-	 }
-
-      status = 0;
-
-      /*
-       * Scan spec, setting appropriate bits in status.  Produce a
-       *  run-time error if an unknown character is encountered.
-       */
-      s = StrLoc(spec);
-      slen = StrLen(spec);
-
-      for (i = 0; i < slen; i++) {
-	 switch (*s++) {
-	    case 'a':
-	    case 'A':
-	       status |= Fs_Write|Fs_Append;
-	       continue;
-	    case 'b':
-	    case 'B':
-	       status |= Fs_Read|Fs_Write;
-	       continue;
-	    case 'c':
-	    case 'C':
-	       status |= Fs_Create|Fs_Write;
-	       continue;
-	    case 'r':
-	    case 'R':
-	       status |= Fs_Read;
-	       continue;
-	    case 'w':
-	    case 'W':
-	       status |= Fs_Write;
-	       continue;
-
-	    case 's':
-	    case 'S':
-	       continue;
-
-	    case 't':
-	    case 'T':
-	       status &= ~Fs_Untrans;
-	       continue;
-
-	    case 'u':
-	    case 'U':
-	       is_udp_or_listener = 1;
-	       if ((status & Fs_Socket)==0)
-		  status |= Fs_Untrans;
-	       continue;
-
-#if UNIX || MSWIN32
-	    case 'p':
-	    case 'P':
-	       status |= Fs_Pipe;
-	       continue;
-#endif				
-
-	    case 'l':
-	    case 'L':
-	       if (status & Fs_Socket) {
-		  status |= Fs_Listen | Fs_Append;
-		  is_udp_or_listener = 2;
-		  continue;
-		  }
-	       fail;
-
-
-	    case 'd':
-	    case 'D':
-	       fail;
-
-	    case 'm':
-	    case 'M':
-	       fail;
-
-	    case 'n':
-	    case 'N':
-	       status |= Fs_Socket|Fs_Read|Fs_Write|Fs_Unbuf;
-	       continue;
-
-
-
-	    case 'o':
-	    case 'O':
-	       fail;
-
-            case 'z':
-	    case 'Z':
-
-#ifdef HAVE_LIBZ      
-	       status |= Fs_Compress;
-
-               continue; 
-#else					/* HAVE_LIBZ */
-               fail; 
-#endif					/* HAVE_LIBZ */
-
-
-
-	    default:
-	       runerr(209, spec);
-	    }
-	 }
-
-      /*
-       * Construct a mode field for fopen/popen.
-       */
-      mode[0] = '\0';
-      mode[1] = '\0';
-      mode[2] = '\0';
-      mode[3] = '\0';
-
-
-      if ((status & (Fs_Read|Fs_Write)) == 0)	/* default: read only */
-	 status |= Fs_Read;
-      if (status & Fs_Create)
-	 mode[0] = 'w';
-      else if (status & Fs_Append)
-	 mode[0] = 'a';
-      else if (status & Fs_Read)
-	 mode[0] = 'r';
-      else
-	 mode[0] = 'w';
-
-/*
- * The following code is operating-system dependent [@fsys.05].  Handle open
- *  modes.
- */
-
-#if PORT
-      if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write))
-	 mode[1] = '+';
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if UNIX
-      if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write))
-	 mode[1] = '+';
-#endif
-
-#if MSWIN32
-      if ((status & (Fs_Read|Fs_Write)) == (Fs_Read|Fs_Write)) {
-	 mode[1] = '+';
-	 mode[2] = ((status & Fs_Untrans) != 0) ? 'b' : 't';
-	 }
-      else mode[1] = ((status & Fs_Untrans) != 0) ? 'b' : 't';
-#endif					/* MSWIN32 */
-
-/*
- * End of operating-system specific code.
- */
-
-      /*
-       * Open the file with fopen or popen.
-       */
-
-
-
-
-#if UNIX || MSWIN32
-      if (status & Fs_Pipe) {
-	 int c;
-         char *ploc;
-	 if (status != (Fs_Read|Fs_Pipe) && status != (Fs_Write|Fs_Pipe))
-	    runerr(209, spec);
-	 strcpy(sbuf, fnamestr);
-	 if ((s = strchr(sbuf, ' ')) != NULL) *s = '\0';
-         ploc = findexe(sbuf);
-	 if (!ploc)
-	    fail;
-         fnamestr = sbuf2;
-         strcpy(fnamestr, ploc);
-	 if (s) {
-	    strcat(fnamestr, " ");
-	    strcat(fnamestr, s+1);
-	    }
-         errno = 0;
-	 f = popen(fnamestr, mode);
-         if (f && !strcmp(mode,"r")) {
-             if ((c = getc(f)) == EOF) {
-                 pclose(f);
-                 fail;
-             }
-             else
-                 ungetc(c, f);
-         }
-      }
-      else
-#endif			
-
-
-#ifdef HAVE_LIBZ
-      if (status & Fs_Compress) {
-         /*add new code here*/
-         f = (FILE *)gzopen(fnamestr, mode);
-         }
-      else 
-#endif					/* HAVE_LIBZ */
-
-
-      {
-	 if (status & Fs_Socket) {
-	    /* The only allowed values for flags are "n" and "na" */
-	    if (status & ~(Fs_Read|Fs_Write|Fs_Socket|Fs_Append|Fs_Unbuf|Fs_Listen))
-	       runerr(209, spec);
-	    if (status & Fs_Append) {
-	       /* "na" => listen for connections */
-	       fd = sock_listen(fnamestr, is_udp_or_listener);
-	    } else {
-	       C_integer timeout = 0;
-	       if (n > 0 && !is:null(attr[0])) {
-                  if (!cnv:C_integer(attr[0], timeout))
-                     runerr(101, attr[0]);
-               }
-	       /* connect to a port */
-	       fd = sock_connect(fnamestr, is_udp_or_listener, timeout);
-	    }
-	    /*
-	     * read/reads is not allowed on a listener socket, only select
-	     * read/reads is not allowed on a UDP socket, only receive
-	     */
-	    if (is_udp_or_listener == 2)
-	       status = Fs_Socket | Fs_Listen;
-	    else if (is_udp_or_listener == 1)
-	       status = Fs_Socket | Fs_Write;
-	    else
-	       status = Fs_Socket | Fs_Read | Fs_Write;
-
-
-	    if (!fd) {
-	       IntVal(amperErrno) = errno;
-	       fail;
-	       }
-
-	    StrLen(filename) = strlen(fnamestr);
-	    StrLoc(filename) = fnamestr;
-	    Protect(fl = alcfile(0, status, &filename), runerr(0));
-	    fl->fd.fd = fd;
-	    return file(fl);
-	    }
-	 else if (stat(fnamestr, &st) < 0) {
-	    if (errno == ENOENT && (status & Fs_Read))
-	       fail;
-	    else
-	       f = fopen(fnamestr, mode);
-	 }
-	 else {
-	    /*
-	     * check and see if the file was actually a directory
-	     */
-	    if (S_ISDIR(st.st_mode)) {
-	       if (status & Fs_Write)
-		  runerr(173, fname);
-	       else {
-#if !MSWIN32
-		  f = (FILE *)opendir(fnamestr);
-		  status |= Fs_Directory;
-#else					/* !MSWIN32 */
-		  char tempbuf[512];
-		  strcpy(tempbuf, fnamestr);
-		  if (tempbuf[strlen(tempbuf)-1] != '\\')
-		     strcat(tempbuf, "\\");
-		  strcat(tempbuf, "*.*");
-		  if (*tempbuf) {
-		     FINDDATA_T fd;
-		     if (!FINDFIRST(tempbuf, &fd)) fail;
-		     f = tmpfile();
-		     if (f == NULL) fail;
-		     do {
-			fprintf(f, "%s\n", FILENAME(&fd));
-			}
-		     while (FINDNEXT(&fd));
-		     FINDCLOSE(&fd);
-		     fflush(f);
-		     fseek(f, 0, SEEK_SET);
-		     }
-#endif					/* MSWIN32 */
-		  }
-	       }
-	    else {
-	       f = fopen(fnamestr, mode);
-	       }
-	    }
-	 }
-
-      /*
-       * Fail if the file cannot be opened.
-       */
-      if (f == NULL) {
-#if MSWIN32
-         char tempbuf[512];
-	 *tempbuf = '\0';
-         if (strchr(fnamestr, '*') || strchr(fnamestr, '?')) {
-            /*
-	     * attempted to open a wildcard, do file completion
-	     */
-	    strcpy(tempbuf, fnamestr);
-            }
-	 else {
-            /*
-	     * check and see if the file was actually a directory
-	     */
-            struct stat fs;
-
-            if (stat(fnamestr, &fs) == -1) fail;
-	    if (S_ISDIR(fs.st_mode)) {
-	       strcpy(tempbuf, fnamestr);
-	       if (tempbuf[strlen(tempbuf)-1] != '\\')
-	          strcat(tempbuf, "\\");
-	       strcat(tempbuf, "*.*");
-	       }
-	    }
-         if (*tempbuf) {
-            FINDDATA_T fd;
-	    if (!FINDFIRST(tempbuf, &fd)) fail;
-            f = tmpfile();
-            if (f == NULL) fail;
-            do {
-               fprintf(f, "%s\n", FILENAME(&fd));
-               } while (FINDNEXT(&fd));
-            FINDCLOSE(&fd);
-            fflush(f);
-            fseek(f, 0, SEEK_SET);
-            if (f == NULL) fail;
-	    }
-#else					/* MSWIN32 */
-	 fail;
-#endif					/* MSWIN32 */
-	 }
-
-      /*
-       * Return the resulting file value.
-       */
-      StrLen(filename) = strlen(fnamestr);
-      StrLoc(filename) = fnamestr;
-
-      Protect(fl = alcfile(f, status, &filename), runerr(0));
-
-      return file(fl);
-      }
+       f = fopen(fnamestr, specstr);
+       if (!f) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+       Protect(fl = alcfile(status, &fname), runerr(0));
+       fl->u.fp = f;
+       return file(fl);
+   }
 end
-
+
+function{0,1} open2(path, flags, mode)
+   if !cnv:string(path) then
+      runerr(103, path)
+
+   if !cnv:C_integer(flags) then
+      runerr(101, flags)
+
+   if !def:C_integer(mode, 0) then
+      runerr(101, mode)
+
+   abstract {
+      return file
+      }
+
+   body {
+       int status = Fs_Desc, fd;
+       tended char *pathstr;
+       tended struct b_file *fl;
+
+       if (!cnv:C_string(path, pathstr))
+           runerr(103, path);
+
+       if (flags & O_RDWR)
+           status |= Fs_Read | Fs_Write;
+       else if (flags & O_WRONLY)
+           status |= Fs_Write;
+       else
+           status |= Fs_Read;
+
+       IntVal(amperErrno) = 0;
+       fd = open(pathstr, flags, mode);
+       if (fd < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       Protect(fl = alcfile(status, &path), runerr(0));
+       fl->u.fd = fd;
+       return file(fl);
+   }
+end
+
+function{0,1} fflag(f, on, off)
+    if !is:file(f) then
+      runerr(105, f)
+
+    if !def:C_integer(on, 0) then
+      runerr(101, on)
+
+    if !def:C_integer(off, 0) then
+      runerr(101, off)
+
+    body {
+        int fd, i;
+        
+        if (BlkLoc(f)->file.status & Fs_Closed)
+            runerr(218, f);
+
+        IntVal(amperErrno) = 0;
+
+        if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
+            IntVal(amperErrno) = errno;
+            fail;
+        }
+        if ((i = fcntl(fd, F_GETFL, 0)) < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+        }
+        if (on || off) {
+            i = (i | on) & (~off);
+            if (fcntl(fd, F_SETFL, i) < 0) {
+                IntVal(amperErrno) = errno;
+                fail;
+            }
+        }
+
+        return C_integer i;
+    }
+end
+
+function{1} fstatus(f)
+    if !is:file(f) then
+      runerr(105, f)
+    body {
+        return C_integer BlkLoc(f)->file.status;
+    }
+end
+
+function{0,1} popen(cmd, spec)
+   if !cnv:string(cmd) then
+      runerr(103, cmd)
+
+   /*
+    * spec defaults to "r".
+    */
+   if !def:string(spec, letr) then
+      runerr(103, spec)
+
+   body {
+       tended char *cmdstr, *specstr;
+       tended struct b_file *fl;
+       FILE *f;
+       int status = Fs_Stdio | Fs_Prog;
+
+       /*
+        * get a C string for the command and spec
+        */
+       if (!cnv:C_string(cmd, cmdstr))
+           runerr(103,cmd);
+
+       if (!cnv:C_string(spec, specstr))
+           runerr(103,spec);
+
+       if (strcmp(specstr, "r") == 0)
+           status |= Fs_Read;
+       else if (strcmp(specstr, "w") == 0)
+           status |= Fs_Write;
+       else
+           runerr(209, spec);
+
+       IntVal(amperErrno) = 0;
+
+       f = popen(cmdstr, specstr);
+       if (!f) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       Protect(fl = alcfile(status, &cmd), runerr(0));
+       fl->u.fp = f;
+       return file(fl);
+   }
+
+end
+
+function{0,1} opendir(dname)
+   if !cnv:string(dname) then
+      runerr(103, dname)
+
+   body {
+       tended char *dnamestr;
+       tended struct b_file *fl;
+       DIR *f;
+
+       /*
+        * get a C string for the dir.
+        */
+       if (!cnv:C_string(dname, dnamestr))
+           runerr(103, dname);
+
+       IntVal(amperErrno) = 0;
+
+       f = opendir(dnamestr);
+       if (!f) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       Protect(fl = alcfile(Fs_Read | Fs_Directory, &dname), runerr(0));
+       fl->u.dir = f;
+       return file(fl);
+   }
+end
+
+#if MSWIN32
+#define pipe(x) _pipe(x, 4096, O_BINARY|O_NOINHERIT)
+#endif
+
+"pipe() - create a pipe."
+
+function{0,1} pipe()
+   body {
+      int fds[2];
+      struct descrip fname;
+      tended struct descrip f;
+      tended struct b_file *fl;
+
+      IntVal(amperErrno) = 0;
+      if (pipe(fds) < 0) {
+          IntVal(amperErrno) = errno;
+          fail;
+      }
+
+      result = create_list(2);
+
+      /*
+       * The name is simply "pipe".
+       */
+      MakeCStr("pipe", &fname);
+
+      Protect(fl = alcfile(Fs_Desc | Fs_Read, &fname), runerr(0));
+      fl->u.fd = fds[0];
+      f.dword = D_File;
+      BlkLoc(f) = (union block *)fl;
+      c_put(&result, &f);
+
+      Protect(fl = alcfile(Fs_Desc | Fs_Write, &fname), runerr(0));
+      fl->u.fd = fds[1];
+      BlkLoc(f) = (union block *)fl;
+      c_put(&result, &f);
+
+      return result;
+   }
+end
+
+function{0,1} socket(domain, typ)
+   if !def:C_integer(domain, PF_INET) then
+      runerr(101, domain)
+
+   if !def:C_integer(typ, SOCK_STREAM) then
+      runerr(101, typ)
+
+   body {
+       SOCKET sockfd;
+       struct descrip fname;
+       tended struct b_file *fl;
+
+       IntVal(amperErrno) = 0;
+       sockfd = socket(domain, typ, 0);
+       if (sockfd < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       /*
+        * The name is simply "socket".
+        */
+       MakeCStr("socket", &fname);
+
+       /*
+        * Allocate and return a new file structure.
+        */
+       Protect(fl = alcfile(Fs_Socket | Fs_Read | Fs_Write, &fname), runerr(0));
+       fl->u.sd = sockfd;
+       return file(fl);
+   }
+end
+
+function{0,1} socketpair(typ)
+   if !def:C_integer(typ, SOCK_STREAM) then
+      runerr(101, typ)
+
+   body {
+       int fds[2];
+       struct descrip fname;
+       tended struct descrip f;
+       tended struct b_file *fl;
+
+       IntVal(amperErrno) = 0;
+
+       if (socketpair(AF_UNIX, typ, 0, fds) < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+      result = create_list(2);
+
+      /*
+       * The name is simply "socket".
+       */
+      MakeCStr("socket", &fname);
+
+      Protect(fl = alcfile(Fs_Socket | Fs_Read, &fname), runerr(0));
+      fl->u.fd = fds[0];
+      f.dword = D_File;
+      BlkLoc(f) = (union block *)fl;
+      c_put(&result, &f);
+
+      Protect(fl = alcfile(Fs_Socket | Fs_Write, &fname), runerr(0));
+      fl->u.fd = fds[1];
+      BlkLoc(f) = (union block *)fl;
+      c_put(&result, &f);
+
+      return result;
+   }
+end
+
+function{0,1} connect(f, addr)
+   if !is:file(f) then
+      runerr(105, f)
+   
+   if !cnv:string(addr) then
+      runerr(103, addr)
+
+   body {
+       tended char *addrstr;
+       struct sockaddr *sa;
+       int len;
+
+       if (!(BlkLoc(f)->file.status & Fs_Socket))
+           runerr(1050, f);
+
+       /*
+        * get a C string for the address.
+        */
+       if (!cnv:C_string(addr, addrstr))
+           runerr(103, addr);
+
+       IntVal(amperErrno) = 0;
+
+       sa = parse_sockaddr(addrstr, &len);
+       if (!sa) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       if (connect(BlkLoc(f)->file.u.sd, sa, len) < 0) {
+           printf("LL:connect FAIL %d\n",errno);
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+           printf("LL:connect OK\n");
+
+       /*
+        * Update the file's name field to represent the connected
+        * address.
+        */
+       BlkLoc(f)->file.fname = addr;
+
+       return f;
+   }
+end
+
+function{0,1} bind(f, addr)
+   if !is:file(f) then
+      runerr(105, f)
+   
+   if !cnv:string(addr) then
+      runerr(103, addr)
+
+   body {
+       tended char *addrstr;
+       struct sockaddr *sa;
+       int len;
+
+       if (!(BlkLoc(f)->file.status & Fs_Socket))
+           runerr(1050, f);
+
+       /*
+        * get a C string for the address.
+        */
+       if (!cnv:C_string(addr, addrstr))
+           runerr(103, addr);
+
+       IntVal(amperErrno) = 0;
+
+       sa = parse_sockaddr(addrstr, &len);
+       if (!sa) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       if (bind(BlkLoc(f)->file.u.sd, sa, len) < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       /*
+        * Update the file's name field to represent the connected
+        * address.
+        */
+       BlkLoc(f)->file.fname = addr;
+
+       return f;
+   }
+end
+
+function{0,1} listen(f, backlog)
+   if !is:file(f) then
+      runerr(105, f)
+   
+   if !cnv:C_integer(backlog) then
+      runerr(101, backlog)
+
+   body {
+       if (!(BlkLoc(f)->file.status & Fs_Socket))
+           runerr(1050, f);
+
+       IntVal(amperErrno) = 0;
+       if (listen(BlkLoc(f)->file.u.sd, backlog) < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+       return f;
+   }
+end
+
+function{0,1} accept(f)
+   if !is:file(f) then
+      runerr(105, f)
+   body {
+       struct descrip fname;
+       tended struct b_file *fl;
+       SOCKET sockfd;
+
+       if (!(BlkLoc(f)->file.status & Fs_Socket))
+           runerr(1050, f);
+
+       IntVal(amperErrno) = 0;
+       if ((sockfd = accept(BlkLoc(f)->file.u.sd, 0, 0)) < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       MakeCStr("accepted socket", &fname);
+
+       /*
+        * Allocate and return a new file structure.
+        */
+       Protect(fl = alcfile(Fs_Socket | Fs_Read | Fs_Write, &fname), runerr(0));
+       fl->u.sd = sockfd;
+       return file(fl);
+   }
+end
+
+function{0,1} sendto(f)
+   if !is:file(f) then
+      runerr(105, f)
+
+    body {
+       if (!(BlkLoc(f)->file.status & Fs_Socket))
+           runerr(1050, f);
+
+       fail;
+    }
+end
+
+function{0,1} recvfrom(f)
+   if !is:file(f) then
+      runerr(105, f)
+
+    body {
+       if (!(BlkLoc(f)->file.status & Fs_Socket))
+           runerr(1050, f);
+
+       fail;
+    }
+end
+
+"flock() - apply or remove a lock on a file."
+
+function{0,1} flock(f, operation)
+   if !is:file(f) then
+      runerr(105, f)
+
+   if !cnv:C_integer(operation) then
+      runerr(101, operation)
+
+   body {
+       int fd;
+       if (BlkLoc(f)->file.status & Fs_Closed)
+           runerr(218, f);
+
+       IntVal(amperErrno) = 0;
+       if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       if (flock(fd, operation) < 0) {
+          IntVal(amperErrno) = errno;
+          fail;
+       }
+       return f;
+   }
+end
+
+static int list2fd_set(dptr l, dptr tmpl, fd_set *s)
+{
+    tended struct descrip e;
+
+    FD_ZERO(s);
+    if (is:null(*l))
+        return 0;
+    if (!is:list(*l)) {
+        err_msg(108, l);
+        return -1;
+    }
+    *tmpl = create_list(BlkLoc(*l)->list.size);
+
+    while (c_get(&BlkLoc(*l)->list, &e)) {
+        int fd;
+        if (!is:file(e)) {
+            err_msg(105, &e);
+            return -1;
+        }
+        if (BlkLoc(e)->file.status & Fs_Closed) {
+            err_msg(218, &e);
+            return -1;
+        }
+        if ((fd = file_fd(&BlkLoc(e)->file)) < 0)
+            return -1;
+        c_put(tmpl, &e);
+        FD_SET(fd, s);
+    }
+    /*printf("#elements in l:%d\n",BlkLoc(*l)->list.size);*/
+    return 0;
+}
+
+static void fd_set2list(dptr l, dptr tmpl, fd_set *s)
+{
+    tended struct descrip e;
+
+    if (is:null(*l))
+        return;
+
+    while (c_get(&BlkLoc(*tmpl)->list, &e)) {
+        int fd;
+        if ((fd = file_fd(&BlkLoc(e)->file)) < 0)
+            /* Should never happen ... */
+            continue;
+        if (FD_ISSET(fd, s))
+            c_put(l, &e);
+    }
+    /*printf("#elements in l:%d\n",BlkLoc(*l)->list.size);*/
+}
+
+function{0,1} select(rl, wl, el, timeout)
+    body {
+       fd_set rset, wset, eset;
+       struct timeval tv, *ptv;
+       tended struct descrip rtmp, wtmp, etmp;
+       int rc;
+
+       IntVal(amperErrno) = 0;
+
+       if ((list2fd_set(&rl, &rtmp, &rset) < 0) ||
+           (list2fd_set(&wl, &wtmp, &wset) < 0) ||
+           (list2fd_set(&el, &etmp, &eset) < 0)) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+
+       if (is:null(timeout))
+           ptv = 0;
+       else {
+           C_integer t;
+           if (!cnv:C_integer(timeout, t))
+               runerr(101, timeout);
+           tv.tv_sec = t / 1000;
+           tv.tv_usec = (t % 1000) * 1000;
+           ptv = &tv;
+       }
+
+       rc = select(FD_SETSIZE, &rset, &wset, &eset, ptv);
+       if (rc < 0) {
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+       /* A rc of zero means timeout; we fail with a custom &errno */
+       if (rc == 0) {
+           IntVal(amperErrno) = XE_TIMEOUT;
+           fail;
+       }
+
+       fd_set2list(&rl, &rtmp, &rset);
+       fd_set2list(&wl, &wtmp, &wset);
+       fd_set2list(&el, &etmp, &eset);
+
+       return C_integer rc;
+    }
+end
+
+function{0,1} poll(a[n])
+   body {
+       struct pollfd *ufds;
+       unsigned int nfds;
+       int timeout, i, rc;
+
+       nfds = n / 2;
+       if (n % 2 == 0)
+           timeout = -1;
+       else {
+           if (!cnv:C_integer(a[n - 1], timeout))
+               runerr(101, a[n - 1]);
+       }
+
+       Protect(ufds = calloc(nfds, sizeof(struct pollfd)), runerr(0));
+       IntVal(amperErrno) = 0;
+       for (i = 0; i < nfds; ++i) {
+           int events, fd;
+           if (!is:file(a[2 * i])) {
+               free(ufds);
+               runerr(105, a[2 * i]);
+           }
+           if (BlkLoc(a[2 * i])->file.status & Fs_Closed) {
+               free(ufds);
+               runerr(218, a[2 * i]);
+           }
+           if (!cnv:C_integer(a[2 * i + 1], events)) {
+               free(ufds);
+               runerr(101, a[2 * i + 1]);
+           }
+           if ((fd = file_fd(&BlkLoc(a[2 * i])->file)) < 0) {
+               free(ufds);
+               IntVal(amperErrno) = errno;
+               fail;
+           }
+           ufds[i].fd = fd;
+           ufds[i].events = events;
+       }
+
+       rc = poll(ufds, nfds, timeout);
+       if (rc < 0) {
+           free(ufds);
+           IntVal(amperErrno) = errno;
+           fail;
+       }
+       /* A rc of zero means timeout; we fail with a custom &errno */
+       if (rc == 0) {
+           free(ufds);
+           IntVal(amperErrno) = XE_TIMEOUT;
+           fail;
+       }
+
+       result = create_list(nfds);
+       for (i = 0; i < nfds; ++i) {
+           struct descrip tmp;
+           MakeInt(ufds[i].revents, &tmp);
+           c_put(&result, &tmp);
+       }
+
+       free(ufds);
+
+       return result;
+   }
+end
 
 "read(f) - read line on file f."
 
@@ -628,153 +888,53 @@ function{0,1} read(f)
       }
 
    body {
-      register word slen, rlen;
-      register char *sp;
-      int status;
-      static char sbuf[MaxReadStr];
-      tended struct descrip s;
-      FILE *fp;
-      SOCKET ws;
+       tended struct descrip s;
+       static char sbuf[MaxReadStr];
+       char *sp;
 
-      /*
-       * Get a pointer to the file and be sure that it is open for reading.
-       */
-      fp = BlkLoc(f)->file.fd.fp;
-      status = BlkLoc(f)->file.status;
-      if ((status & Fs_Read) == 0)
-	 runerr(212, f);
+       if (!(BlkLoc(f)->file.status & Fs_Read))
+           runerr(212, f);
 
-       if (status & Fs_Socket) {
-	  StrLen(s) = 0;
-          do {
-	     ws = (SOCKET)BlkLoc(f)->file.fd.fd;
-	     if ((slen = sock_getstrg(sbuf, MaxReadStr, ws)) == -1) {
-	        /*IntVal(amperErrno) = errno; */
-	        fail;
-		}
-	     if (slen == -3)
-		fail;
-	     if (slen == 1 && *sbuf == '\n')
-		break;
-	     rlen = slen < 0 ? (word)MaxReadStr : slen;
+       IntVal(amperErrno) = 0;
+       StrLen(s) = 0;
+       for (;;) {
+           int nread;
+           nread = file_readline(&BlkLoc(f)->file, sbuf, sizeof(sbuf));
+           if (nread < 0) {
+               IntVal(amperErrno) = errno;
+               fail;
+           }
+           if (nread == 0) {
+               if (StrLen(s) == 0) {
+                   IntVal(amperErrno) = XE_EOF;
+                   fail;
+               } else
+                   break;
+           }
+           Protect(reserve(Strings, nread), runerr(0));
+           if (StrLen(s) > 0 && !InRange(strbase, StrLoc(s),strfree)) {
+               Protect(reserve(Strings, StrLen(s) + nread), runerr(0));
+               Protect((StrLoc(s) = alcstr(StrLoc(s), StrLen(s))), runerr(0));
+           }
+           Protect(sp = alcstr(sbuf, nread), runerr(0));
+           if (StrLen(s) == 0)
+               StrLoc(s) = sp;
+           StrLen(s) += nread;
 
-	     Protect(reserve(Strings, rlen), runerr(0));
-	     if (StrLen(s) > 0 && !InRange(strbase,StrLoc(s),strfree)) {
-	        Protect(reserve(Strings, StrLen(s)+rlen), runerr(0));
-	        Protect((StrLoc(s) = alcstr(StrLoc(s),StrLen(s))), runerr(0));
-		}
-
-	     Protect(sp = alcstr(sbuf,rlen), runerr(0));
-	     if (StrLen(s) == 0)
-	        StrLoc(s) = sp;
-	     StrLen(s) += rlen;
-	     if (StrLoc(s) [ StrLen(s) - 1 ] == '\n') { StrLen(s)--; break; }
-	     else {
-		/* no newline to trim; EOF? */
-		}
-	     }
-	  while (slen > 0);
-
-         return s;
-	  }
-
-      /*
-       * well.... switching from unbuffered to buffered actually works so
-       * we will allow it except for sockets.
-       */
-      if (status & Fs_Unbuf) {
-	 if (status & Fs_Socket)
-	    runerr(1048, f);
-	 status &= ~Fs_Unbuf;
-	 status |= Fs_Buff;
-	 BlkLoc(f)->file.status = status;
-	 }
-
-      if (status & Fs_Writing) {
-	 fseek(fp, 0L, SEEK_CUR);
-	 BlkLoc(f)->file.status &= ~Fs_Writing;
-	 }
-      BlkLoc(f)->file.status |= Fs_Reading;
-
-      /*
-       * Use getstrg to read a line from the file, failing if getstrg
-       *  encounters end of file. [[ What about -2?]]
-       */
-      StrLen(s) = 0;
-      do {
-
-
-#if !MSWIN32
-	  if (status & Fs_Directory) {
-	     struct dirent *d;
-	     char *s, *p=sbuf;
-	     IntVal(amperErrno) = 0;
-	     slen = 0;
-	     d = readdir((DIR *)fp);
-	     if (!d)
-	        fail;
-	     s = d->d_name;
-	     while(*s && slen++ < MaxReadStr)
-	        *p++ = *s++;
-	     if (slen == MaxReadStr)
-		slen = -2;
-	  }
-	  else
-#endif
-
-
-#ifdef HAVE_LIBZ
-        /*
-	 * Read a line from a compressed file
-	 */
-	if (status & Fs_Compress) {
-            
-            if (gzeof(fp)) fail;
-
-            if (gzgets((gzFile)fp,sbuf,MaxReadStr+1) == Z_NULL) {
-	       runerr(214);
-               }
-
-	    slen = strlen(sbuf);
-
-            if (slen==MaxReadStr && sbuf[slen-1]!='\n') slen = -2;
-	    else if (sbuf[slen-1] == '\n') {
-               sbuf[slen-1] = '\0';
-               slen--;
-               }
-           
-	    }
-           
-	else 
-#endif					/* HAVE_LIBZ */
-
-	 if ((slen = getstrg(sbuf, MaxReadStr, &BlkLoc(f)->file)) == -1) {
-	    IntVal(amperErrno) = errno;
-	    fail;
-	    }
-
-	 /*
-	  * Allocate the string read and make s a descriptor for it.
-	  */
-	 rlen = slen < 0 ? (word)MaxReadStr : slen;
-
-	 Protect(reserve(Strings, rlen), runerr(0));
-	 if (StrLen(s) > 0 && !InRange(strbase,StrLoc(s),strfree)) {
-	    Protect(reserve(Strings, StrLen(s)+rlen), runerr(0));
-	    Protect((StrLoc(s) = alcstr(StrLoc(s),StrLen(s))), runerr(0));
-	    }
-
-	 Protect(sp = alcstr(sbuf,rlen), runerr(0));
-	 if (StrLen(s) == 0)
-	    StrLoc(s) = sp;
-	 StrLen(s) += rlen;
-	 } while (slen < 0);
-      return s;
-      }
+           if (StrLoc(s)[StrLen(s) - 1] == '\n') {
+               --StrLen(s);
+               if (StrLen(s) > 0 &&  StrLoc(s)[StrLen(s) - 1] == '\r')
+                   --StrLen(s);
+               break;
+           }
+       }
+       return s;
+   }
 end
 
 
 "reads(f,i) - read i characters on file f."
+  "The number of chars returned may be less than i, but will be > 0"
 
 function{0,1} reads(f,i)
    /*
@@ -799,160 +959,53 @@ function{0,1} reads(f,i)
       }
 
    body {
-      register word slen, rlen;
-      register char *sp;
-      static char sbuf[MaxReadStr];
-      SOCKET ws;
-      int bytesread = 0;
-      int Maxread = 0;
-      long tally, nbytes;
-      int status;
-      FILE *fp;
-      tended struct descrip s;
+       int nread;
+       tended struct descrip s;
 
-      /*
-       * Get a pointer to the file and be sure that it is open for reading.
-       */
-      status = BlkLoc(f)->file.status;
-      if ((status & Fs_Read) == 0)
-	 runerr(212, f);
+       if (!(BlkLoc(f)->file.status & Fs_Read))
+           runerr(212, f);
 
+       /*
+        * Be sure that a positive number of bytes is to be read.
+        */
+       if (i <= 0) {
+           irunerr(205, i);
+           errorfail;
+       }
 
-        if (status & Fs_Socket) {
-	    StrLen(s) = 0;
-	    Maxread = (i <= MaxReadStr)? i : MaxReadStr;
-	    do {
-	        ws = (SOCKET)BlkLoc(f)->file.fd.fd;
-		if (bytesread > 0) {
-                    if (i - bytesread <= MaxReadStr)
-                        Maxread = i - bytesread;
-                    else
-                        Maxread = MaxReadStr;
-                }
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       Protect(StrLoc(s) = alcstr(NULL, i), runerr(0));
 
-		if ((slen = sock_getstrg(sbuf, Maxread, ws)) == -1) {
-		    /*IntVal(amperErrno) = errno; */
-		    if (bytesread == 0)
-		        fail;
-		    else
-		        return s;
-		}
-		if (slen == -3)
-		    fail;
+       IntVal(amperErrno) = 0;
 
-		if (slen > 0)
-		    bytesread += slen;
-		rlen = slen < 0 ? (word)MaxReadStr : slen;
+       nread = file_readstr(&BlkLoc(f)->file, StrLoc(s), i);
+       if (nread < 0) {
+           /* Reset the memory just allocated */
+           strtotal += DiffPtrs(StrLoc(s), strfree);
+           strfree = StrLoc(s);
+           IntVal(amperErrno) = errno;
+           fail;
+       }
 
-		Protect(reserve(Strings, rlen), runerr(0));
-		if (StrLen(s) > 0 && !InRange(strbase, StrLoc(s), strfree)) {
-		    Protect(reserve(Strings, StrLen(s) + rlen), runerr(0));
-		    Protect((StrLoc(s) =
-                        alcstr(StrLoc(s), StrLen(s))), runerr(0));
-		}
+       if (nread == 0) {
+           /* Reset the memory just allocated */
+           strtotal += DiffPtrs(StrLoc(s), strfree);
+           strfree = StrLoc(s);
+           IntVal(amperErrno) = XE_EOF;
+           fail;
+       }
 
-		Protect(sp = alcstr(sbuf, rlen), runerr(0));
-		if (StrLen(s) == 0)
-		    StrLoc(s) = sp;
-		StrLen(s) += rlen;
-	    } while (bytesread < i);
-	    return s;
-	}
+       StrLen(s) = nread;
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       strtotal += DiffPtrs(StrLoc(s) + nread, strfree);
+       strfree = StrLoc(s) + nread;
 
-        /* This is a hack to fix things for the release. The solution to be
-	 * implemented after release: all I/O is low-level, no stdio. This
-	 * makes the Fs_Buff/Fs_Unbuf go away and select will work -- 
-	 * correctly. */
-        if (strcmp(StrLoc(BlkLoc(f)->file.fname), "pipe") != 0) {
-	    status |= Fs_Buff;
-	    BlkLoc(f)->file.status = status;
-	}
-
-      fp = BlkLoc(f)->file.fd.fp;
-      if (status & Fs_Writing) {
-	 fseek(fp, 0L, SEEK_CUR);
-	 BlkLoc(f)->file.status &= ~Fs_Writing;
-	 }
-      BlkLoc(f)->file.status |= Fs_Reading;
-
-
-#if !MSWIN32
-      /*
-       *  If reading a directory, return up to i bytes of next entry.
-       */
-      if ((BlkLoc(f)->file.status & Fs_Directory) != 0) {
-         char *sp;
-         struct dirent *de = readdir((DIR*) fp);
-         if (de == NULL)
-            fail;
-         nbytes = strlen(de->d_name);
-         if (nbytes > i)
-            nbytes = i;
-         Protect(sp = alcstr(de->d_name, nbytes), runerr(0));
-         return string(nbytes, sp);
-         }
-#endif
-
-      /*
-       * Be sure that a positive number of bytes is to be read.
-       */
-      if (i <= 0) {
-	 irunerr(205, i);
-
-	 errorfail;
-	 }
-
-      /* Remember, sockets are always unbuffered */
-      if (status & Fs_Unbuf) {
-	 /* We do one read(2) call here to avoid interactions with stdio */
-
-	 int fd;
-
-	 if ((fd = get_fd(f, 0)) < 0)
-	    runerr(174, f);
-
-	 IntVal(amperErrno) = 0;
-	 if (u_read(fd, i, &s) == 0)
-	    fail;
-	 return s;
-      }
-
-      /*
-       * For now, assume we can read the full number of bytes.
-       */
-      Protect(StrLoc(s) = alcstr(NULL, i), runerr(0));
-      StrLen(s) = 0;
-
-#ifdef HAVE_LIBZ
-      /*
-       * Read characters from a compressed file
-       */
-      if (status & Fs_Compress) {
-	 if (gzeof(fp)) fail;
-	 slen = gzread((gzFile)fp,StrLoc(s),i);
-	 if (slen == 0)
-	    fail;
-	 else if (slen == -1)
-	    runerr(214);
-	 return string(slen, StrLoc(s));
-	 }
-#endif					/* HAVE_LIBZ */
-
-
-      tally = longread(StrLoc(s),sizeof(char),i,fp);
-
-      if (tally == 0)
-	 fail;
-      StrLen(s) = tally;
-      /*
-       * We may not have used the entire amount of storage we reserved.
-       */
-      nbytes = DiffPtrs(StrLoc(s) + tally, strfree);
-      EVStrAlc(nbytes);
-      strtotal += nbytes;
-      strfree = StrLoc(s) + tally;
-      return s;
-      }
+       return s;
+   }
 end
 
 
@@ -1018,103 +1071,8 @@ function{0,1} rename(s1,s2)
 #endif					/* MSWIN32 */
       }
 end
-
 
-"seek(f,i) - seek to offset i in file f."
-" [[ What about seek error ? ]] "
 
-function{0,1} seek(f,o)
-
-   /*
-    * f must be a file
-    */
-   if !is:file(f) then
-      runerr(105,f)
-
-   /*
-    * o must be an integer and defaults to 1.
-    */
-   if !def:C_integer(o,1L) then
-      runerr(0)
-
-   abstract {
-      return file
-      }
-
-   body {
-      FILE *fd;
-
-      fd = BlkLoc(f)->file.fd.fp;
-      if (BlkLoc(f)->file.status == 0)
-	 fail;
-
-      if (BlkLoc(f)->file.status & Fs_Directory)
-	 fail;
-
-#ifdef HAVE_LIBZ
-        if ( BlkLoc(f)->file.status & Fs_Compress) {
-            if (o<0)
-               fail;
-            else
-               if (gzseek(fd, o - 1, SEEK_SET)==-1)
-                   fail;
-               else
-                   return f;        
-             }
-#endif                                 /* HAVE_LIBZ */
-
-      if (o > 0) {
-	 if (fseek(fd, o - 1, SEEK_SET) == -1)
-	    fail;
-
-	 }
-
-      else {
-
-	 if (fseek(fd, o, SEEK_END) == -1)
-	    fail;
-
-	 }
-      BlkLoc(f)->file.status &= ~(Fs_Reading | Fs_Writing);
-      return f;
-      }
-end
-
-
-
-
-"where(f) - return current offset position in file f."
-
-function{0,1} where(f)
-
-   if !is:file(f) then
-      runerr(105,f)
-
-   abstract {
-      return integer
-      }
-
-   body {
-      FILE *fd;
-      long ftell();
-      long pos;
-
-      fd = BlkLoc(f)->file.fd.fp;
-
-      if (BlkLoc(f)->file.status == 0)
-	 fail;
-
-      if ((BlkLoc(f)->file.status & Fs_Directory) != 0)
-         fail;
-
-      pos = ftell(fd) + 1;
-      if (pos == 0)
-	 fail;	/* may only be effective on ANSI systems */
-
-      return C_integer pos;
-      }
-end
-
 /*
  * stop(), write(), and writes() differ in whether they stop the program
  *  and whether they output newlines. The macro GenWrite is used to
@@ -1122,88 +1080,6 @@ end
  */
 #define False 0
 #define True 1
-
-#begdef DefaultFile(error_out)
-   inline {
-#if error_out
-      if ((k_errout.status & Fs_Write) == 0)
-	 runerr(213);
-      else {
-	 f.fp = k_errout.fd.fp;
-	 }
-#else					/* error_out */
-      if ((k_output.status & Fs_Write) == 0)
-	 runerr(213);
-      else {
-	 f.fp = k_output.fd.fp;
-	 }
-#endif					/* error_out */
-      }
-#enddef					/* DefaultFile */
-
-#begdef Finish(retvalue, nl, terminate)
-#if nl
-   /*
-    * Append a newline to the file.
-    */
-
-#ifdef HAVE_LIBZ
-   if (status & Fs_Compress) {
-      if (gzputc((gzFile)(f.fp),'\n')==-1) {
-          runerr(214);
-          }
-      }
-   else
-#endif					/* HAVE_LIBZ */
-
-      if (status & Fs_Socket) {
-	 if (sock_write(f.fd, "\n", 1) < 0)
-#if terminate
-	    syserr("sock_write failed in stop()");
-#else
-	    fail;
-#endif
-         }
-      else
-	 putc('\n', f.fp);
-
-#endif					/* nl */
-
-   /*
-    * Flush the file.
-    */
-
-      if (!(status & Fs_Socket)) {
-
-#ifdef HAVE_LIBZ
-      if (status & (Fs_Compress
-		    )) {
-
-       /*if (ferror(f))
-	    runerr(214);
-         gzflush(f, Z_SYNC_FLUSH);  */
-         }
-      else{
-         if (ferror(f.fp))
-	    runerr(214);
-         fflush(f.fp);
-      }
-#else					/* HAVE_LIBZ */
-         if (ferror(f.fp))
-	    runerr(214);
-         fflush(f.fp);
-      
-#endif					/* HAVE_LIBZ */
-
-      }
-
-#if terminate
-	    c_exit(EXIT_FAILURE);
-            fail; /* Not reached */
-#else					/* terminate */
-	    return retvalue;
-#endif					/* terminate */
-#enddef					/* Finish */
 
 #begdef GenWrite(name, nl, terminate)
 
@@ -1222,156 +1098,88 @@ function {} name(x[nargs])
 function {1} name(x[nargs])
 #endif					/* terminate */
 
-   declare {
-      union {
-      FILE *fp;
-#ifdef Graphics
-      struct _wbinding *wb;
-#endif					/* Graphics */
-      int  fd;
-      } f;
-      word status =
-#if terminate
-	k_errout.status;
-#else					/* terminate */
-	k_output.status;
-#endif					/* terminate */
+  body {
+    tended struct descrip t;
+    tended struct descrip f;
+    int rc, n, count = 0;
 
-#ifdef BadCode
-      struct descrip temp;
-#endif					/* BadCode */
-      }
+    if (nargs == 0 || !is:file(x[0])) {
+        f.dword = D_File;
+#if error_out
+        BlkLoc(f) = (union block *)&k_errout;
+#else					/* error_out */
+        BlkLoc(f) = (union block *)&k_output;
+#endif					/* error_out */
+        n = 0;
+    } else {
+        f = x[0];
+        n = 1;
+    }
 
-#if terminate
-   abstract {
-      return empty_type
-      }
-#endif					/* terminate */
+    if (!(BlkLoc(f)->file.status & Fs_Write))
+        runerr(213, f);
 
-   len_case nargs of {
-      0: {
-#if !terminate
-	 abstract {
-	    return null
-	    }
-#endif					/* terminate */
-	 DefaultFile(terminate)
-	 body {
-	    Finish(nulldesc, nl, terminate)
-	    }
-	 }
+    IntVal(amperErrno) = 0;
+    /*
+     * Loop through the arguments.
+     */
+    for (; n < nargs; n++) {
+        /*
+         * Convert the argument to a string, defaulting to a empty
+         *  string.
+         */
+        if (!def:tmp_string(x[n],emptystr,t))
+            runerr(109, x[n]);
 
-      default: {
-#if !terminate
-	 abstract {
-	    return type(x)
-	    }
-#endif					/* terminate */
-	 /*
-	  * See if we need to start with the default file.
-	  */
-	 if !is:file(x[0]) then
-	    DefaultFile(terminate)
+        rc = file_outputstr(&BlkLoc(f)->file, StrLoc(t), StrLen(t));
+        if (rc < 0) {
+            IntVal(amperErrno) = errno;
+            #if terminate
+            c_exit(EXIT_FAILURE);
+            #else
+            fail;
+            #endif
+        }
+        count += rc;
+        if (rc < StrLen(t)) {
+            #if terminate
+            c_exit(EXIT_FAILURE);
+            #else
+            return C_integer count;
+            #endif
+        }
+    }
 
-	 body {
-	    tended struct descrip t;
-	    register word n;
+    #if nl
+      /*
+       * Append a newline to the file and flush.
+       */
+       rc = file_outputstr(&BlkLoc(f)->file, "\n", 1);
+       if (rc < 0) {
+           IntVal(amperErrno) = errno;
+           #if terminate
+           c_exit(EXIT_FAILURE);
+           #else
+           fail;
+           #endif
+       }
+       count += rc;
+       if (file_flush(&BlkLoc(f)->file) < 0) {
+           IntVal(amperErrno) = errno;
+           #if terminate
+           c_exit(EXIT_FAILURE);
+           #else
+           fail;
+           #endif
+       }
+    #endif
 
-	    /*
-	     * Loop through the arguments.
-	     */
-	    for (n = 0; n < nargs; n++) {
-	       if (is:file(x[n])) {	/* Current argument is a file */
-#if nl
-		  /*
-		   * If this is not the first argument, output a newline to the
-		   * current file and flush it.
-		   */
-		  if (n > 0) {
-
-		     /*
-		      * Append a newline to the file and flush it.
-		      */
-#ifdef HAVE_LIBZ
-                     if (status & Fs_Compress) {
-			if (gzputc(f.fp,'\n')==-1)
-                            runerr(214);
-/*			gzflush(f.fp,4); */
-			  }
-		     else {
-                          }
-#endif					/* HAVE_LIBZ */
-
-
-			if (status & Fs_Socket) {
-			   if (sock_write(f.fd, "\n", 1) < 0)
-#if terminate
-			      syserr("sock_write failed in stop()");
-#else
-			      fail;
-#endif
-			   }
-			else {
-			putc('\n', f.fp);
-			if (ferror(f.fp))
-			   runerr(214);
-			fflush(f.fp);
-                        }
-		     }
-#endif					/* nl */
-
-
-		  /*
-		   * Switch the current file to the file named by the current
-		   * argument providing it is a file.
-		   */
-		  status = BlkLoc(x[n])->file.status;
-		  if ((status & Fs_Write) == 0)
-		     runerr(213, x[n]);
-		  f.fp = BlkLoc(x[n])->file.fd.fp;
-		  }
-	       else {
-		  /*
-		   * Convert the argument to a string, defaulting to a empty
-		   *  string.
-		   */
-		  if (!def:tmp_string(x[n],emptystr,t))
-		     runerr(109, x[n]);
-
-		  /*
-		   * Output the string.
-		   */
-
-#ifdef HAVE_LIBZ
-	          if (status & Fs_Compress){
-                     if (gzputs(f.fp, StrLoc(t))==-1) 
-			runerr(214);
-                     }
-		  else
-#endif					/* HAVE_LIBZ */
-
-
-
-		     if (status & Fs_Socket) {
-
-			if (sock_write(f.fd, StrLoc(t), StrLen(t)) < 0) {
-#if terminate
-			   syserr("sock_write failed in stop()");
-#else
-			   fail;
-#endif
-			   }
-		     } else {
-		     if (putstr(f.fp, &t) == Failed)
-			runerr(214, x[n]);
-			}
-		  }
-	       }
-
-	    Finish(x[n-1], nl, terminate)
-	    }
-	 }
-      }
+    #if terminate
+    c_exit(EXIT_FAILURE);
+    #else
+    return C_integer count;
+    #endif
+  }
 end
 #enddef					/* GenWrite */
 
@@ -1379,7 +1187,6 @@ GenWrite(stop,	 True,	True)  /* stop(s, ...) - write message and stop */
 GenWrite(write,  True,	False) /* write(s, ...) - write with new-line */
 GenWrite(writes, False, False) /* writes(s, ...) - write with no new-line */
 
-
 
 "getch() - return a character from console."
 
@@ -1485,33 +1292,3 @@ function{0,1} delay(n)
       }
 end
 
-"flush(f) - flush file f."
-
-function{1} flush(f)
-   if !is:file(f) then
-      runerr(105, f)
-   abstract {
-      return type(f)
-      }
-
-   body {
-      FILE *fp = BlkLoc(f)->file.fd.fp;
-      int status = BlkLoc(f)->file.status;
-
-      /*
-       * File types for which no flushing is possible, or is a no-op.
-       */
-      if (((status & (Fs_Read | Fs_Write)) == 0)	/* if already closed */
-	  || (status & Fs_Directory)
-	  || (status & Fs_Socket)
-	  )
-	 return f;
-
-	 fflush(fp);
-
-      /*
-       * Return the flushed file.
-       */
-      return f;
-      }
-end

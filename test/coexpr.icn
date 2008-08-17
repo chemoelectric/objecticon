@@ -48,9 +48,9 @@ procedure main()
    write(image(trim := create {write("entering trim"); @tab | (main @:= tab)}) | "failed")
    write(image(@trim) | "failed")
    write(image(@trim) | "failed")
-   write(image(write(image(trim))) | "failed")
-   write(image(write(image(tab))) | "failed")
-   write(image(write(image(main))) | "failed")
+   write(image(trim) | "failed")
+   write(image(tab) | "failed")
+   write(image(main) | "failed")
    &trace := -1
    dummy{1,2,3,4}
    dummy{}
@@ -66,7 +66,7 @@ procedure main()
 end
 
 procedure writer(n)
-   return write("in cx write ", n)
+   return write("in cx write ", n) & n
 end
 
 invocable "*", "|||", "+", "image"

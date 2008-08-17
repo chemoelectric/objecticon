@@ -83,7 +83,7 @@ numeric(--2) ----> 2
 36 ^ -9 ----> 0
 -36 ^ -9 ----> 0
 f := open("foo.baz","w") ----> file(foo.baz)
-write(f,"hello world") ----> "hello world"
+write(f,"hello world") ----> 12
 close(f) ----> file(foo.baz)
 
 cset sizes and images:

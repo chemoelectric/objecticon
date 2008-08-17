@@ -1115,3 +1115,68 @@ char *s;
    StrLen(*dp) = p - s;
    StrLoc(*dp) = s;
    }
+
+
+static int isidentc(char c)
+{
+    return c == '_' || isalnum(c);
+}
+
+int convert_flag_set(struct descrip s, char *deflt, int *res, stringint *tbl)
+{
+    int i;
+
+    if (is:null(s)) {
+        if (!deflt)
+            return 0;
+        MakeCStr(deflt, &s);
+    } else if (!is:string(s))
+        return 0;
+
+    *res = 0;
+    i = 0;
+    for (;;) {
+        char buf[32];
+        stringint *p;
+        int j, v;
+        while (i < StrLen(s) && !isidentc(StrLoc(s)[i]))
+            ++i;
+        if (i == StrLen(s))
+            break;
+        j = 0;
+        while (i < StrLen(s) && j < sizeof(buf) && isidentc(StrLoc(s)[i]))
+            buf[j++] = StrLoc(s)[i++];
+        if (j >= sizeof(buf))
+            return 0;
+        buf[j] = 0;
+        p = stringint_lookup(tbl, buf);
+        if (!p)
+            return 0;
+        *res |= p->i;
+    }
+    return 1;
+}
+
+int convert_flag(struct descrip s, char *deflt, int *res, stringint *tbl)
+{
+    int i;
+    char buf[32];
+    stringint *p;
+
+    if (is:null(s)) {
+        if (!deflt)
+            return 0;
+        MakeCStr(deflt, &s);
+    } else if (!is:string(s))
+        return 0;
+
+    if (StrLen(s) >= sizeof(buf))
+        return 0;
+    memcpy(buf, StrLoc(s), StrLen(s));
+    buf[StrLen(s)] = 0;
+    p = stringint_lookup(tbl, buf);
+    if (!p)
+        return 0;
+    *res = p->i;
+    return 1;
+}

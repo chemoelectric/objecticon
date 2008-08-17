@@ -9,7 +9,7 @@ copy() ----> &null
 copy(&input) ----> &input
 w := copy(write) ----> function write
 function write
-w(image(w)) ----> "function write"
+w(image(w)) ----> 15
 copy(array()) ----> record array_2(7)
 copy := copy(copy) ----> function copy
 x := copy(array) ----> constructor array

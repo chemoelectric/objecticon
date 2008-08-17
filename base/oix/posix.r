@@ -30,32 +30,37 @@ extern int errno;
 } while (0)
 
 
-"syserrstr() - get the error string corresponding to an &errno value."
+"strerror() - get the error string corresponding to an &errno value."
 
-function{0,1} syserrstr(e)
-   if !cnv:C_integer(e) then
+function{0,1} strerror(e)
+   if !def:C_integer(e, IntVal(amperErrno)) then
       runerr(101, e)
    abstract {
       return string
       }
    inline {
-      int rv;
+       struct errtab *p;
+       char buff[32];
+       for (p = xerrnotab; p->err_no > 0; p++) {
+           if (p->err_no == e) {
+               MakeCStr(p->errmsg, &result);
+               return result;
+           }
+       }
 #ifdef HAVE_STRERROR
-      char *s = strerror(e);
-      String(result, alcstr(s, strlen(s)));
-#else					/* HAVE_STRERROR */
-#ifdef HAVE_SYS_NERR
-      if (e <= 0 || e > sys_nerr)
-	 fail;
-#endif
-#ifdef HAVE_SYS_ERRLIST
-      String(result, (char *)sys_errlist[e]);
-#else
-      fail;
-#endif					/* HAVE_SYS_ERRLIST */
-#endif					/* HAVE_STRERROR */
-      return result;
+       return cstr2string(strerror(e));
+#elif HAVE_SYS_NERR && HAVE_SYS_ERRLIST
+      if (e <= 0 || e > sys_nerr) {
+          sprintf(buff, "Unknown error %d", e);
+          return cstr2string(buff);
       }
+      MakeCStr((char *)sys_errlist[e], &result);
+      return result;
+#else
+      sprintf(buff, "Error %d", e);
+      return cstr2string(buff);
+#endif
+    }
 end
 
 "getppid() - get parent pid."
@@ -184,41 +189,21 @@ end
 "kill() - send a signal to a process."
 
 function{0,1} kill(pid, signal)
-   if !is:string(signal) then
-      if !is:integer(signal) then
-         runerr(170, signal)
    if !cnv:C_integer(pid) then
       runerr(101, pid)
+
+   if !cnv:C_integer(signal) then
+      runerr(101, signal)
 
    abstract {
       return null
       }
    body {
-      C_integer sig;
-      tended char *signalname;
-     
-      if (is:string(signal)) {
-	 /* Parse signal name */
-         cnv:C_string(signal, signalname);
-	 sig = si_s2i((siptr)signalnames, signalname);
-	 if (sig == -1)
-	    runerr(1043, signal);
-         }
-      else {
-         cnv:C_integer(signal, sig);
-	 if (sig < 0 || sig > 50)
-	    runerr(1043, signal);
-	 }
-      if (sig == 0) { 
-	 IntVal(amperErrno) = EINVAL; 
-	 fail; 
-      } 
-
       IntVal(amperErrno) = 0;
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
-      if (kill(pid, sig) != 0) {
+      if (kill(pid, signal) != 0) {
 	 IntVal(amperErrno) = errno;
 	 fail;
 	 }
@@ -229,47 +214,29 @@ end
 
 "trap() - trap a signal."
 
-function{0,1} trap(nsignal, handler)
-   if !is:string(nsignal) then
-      if !is:integer(nsignal) then
-         runerr(170, nsignal)
+function{0,1} trap(sig, handler)
+   if !cnv:C_integer(sig) then
+      runerr(101, sig)
    abstract {
       return proc
       }
    body { 
-      C_integer sig;
-      tended char *signalname;
+       tended char *signalname;
         
-      if (is:string(nsignal)) {
-         cnv:C_string(nsignal, signalname);
-	 sig = si_s2i((siptr)signalnames, signalname);
-	 if (sig == -1)
-	    runerr(1043, nsignal);
-         }
-      else {
-         cnv:C_integer(nsignal, sig);
-	 if (sig < 0 || sig > 50)
-	    runerr(1043, nsignal);
-         }
-      if (sig == 0) { 
-	 IntVal(amperErrno) = EINVAL; 
-	 fail; 
-      } 
-
 #if MSWIN32
-      fail;
+       fail;
 #else					/* MSWIN32 */
-      if (is:null(handler))
-         signal(sig, SIG_DFL);
-      else if (is:proc(handler)) {
-	 struct b_proc *pp = (struct b_proc*)BlkLoc(handler);
-	 if (pp->nparam != 1 && pp->nparam != -1)
-	    runerr(172, handler);
-         signal(sig, signal_dispatcher);
-         }
-      else
-         runerr(106, handler);
-      return register_sig(sig, handler);
+       if (is:null(handler))
+           signal(sig, SIG_DFL);
+       else if (is:proc(handler)) {
+           struct b_proc *pp = (struct b_proc*)BlkLoc(handler);
+           if (pp->nparam != 1 && pp->nparam != -1)
+               runerr(172, handler);
+           signal(sig, signal_dispatcher);
+       }
+       else
+           runerr(106, handler);
+       return register_sig(sig, handler);
 #endif					/* MSWIN32 */
       }
 end
@@ -354,8 +321,10 @@ function{0,1} chown(s, u, g)
 	 body {
 	    int fd;
 	    IntVal(amperErrno) = 0;
-	    if ((fd = get_fd(s, 0)) < 0)
-	       runerr(174, s);
+	    if ((fd = file_fd(&BlkLoc(s)->file)) < 0) {
+	       IntVal(amperErrno) = errno;
+	       fail;
+            }
 #if MSWIN32
 	    fail;
 #else					/* MSWIN32 */
@@ -422,8 +391,10 @@ function{0,1} chmod(s, m)
 	    IntVal(amperErrno) = 0;
 	    if (is:string(m)) {
 	       cnv:C_string(m, cmode);
-	       if ((fd = get_fd(s, 0)) < 0)
-		  runerr(174, s);
+                if ((fd = file_fd(&BlkLoc(s)->file)) < 0) {
+		  IntVal(amperErrno) = errno;
+		  fail;
+                }
 	       i = getmodefd(fd, cmode);
 	       if (i == -1) {
 		  IntVal(amperErrno) = errno;
@@ -583,8 +554,10 @@ function{0,1} truncate(f, l)
                }
 #endif					/* HAVE_LIBZ */
 
-	    if ((fd = get_fd(f, 0)) < 0)
-	       runerr(174, f);
+	    if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
+	       IntVal(amperErrno) = errno;
+	       fail;
+            }
 	    if (ftruncate(fd, l) != 0) {
 	       IntVal(amperErrno) = errno;
 	       fail;
@@ -594,262 +567,6 @@ function{0,1} truncate(f, l)
       }
       default:
 	 runerr(109, f)
-      }
-end
-
-"flock() - apply or remove a lock on a file."
-
-function{0,1} flock(f, cmd)
-   declare {
-      tended char *c;
-   }
-   if !cnv:C_string(cmd, c) then
-      runerr(101, cmd)
-   if !is:file(f) then
-      runerr(105, f)
-   abstract {
-      return null
-      }
-   body {
-
-      int option = 0;
-      int fd, i=0;
-      long flength;
-
-#ifdef HAVE_LIBZ 
-      if (BlkLoc(f)->file.status & Fs_Compress) {
-         fail;
-         }
-#endif					/* HAVE_LIBZ */
-
-#if MSWIN32
-      while (c[i])
-	 switch (c[i++]) {
-	 case 'x': option |= LK_LOCK; break;
-	 /*
-	 case 's': option |= LOCK_SH; break;
-	 */
-	 case 'b': option |= LK_NBLCK; break;
-#ifndef NTGCC
-	 case 'u': option |= LK_UNLCK; break;
-#endif					/* NTGCC */
-	 default: runerr(1044, cmd);
-	 }
-
-      IntVal(amperErrno) = 0;
-      
-      if ((fd = get_fd(f, 0)) < 0)
-	 runerr(174, f);
-	   
-      if ((flength = _filelength(fd)) < 0)
-	  irunerr(174, (int)flength);
-
-      if (_locking(fd, option, flength) != 0) {
-	 IntVal(amperErrno) = errno;
-	 fail;
-      }
-      return nulldesc;
-#endif					/* MSWIN32 */
-#if defined(BSD) || defined(BSD_4_4_LITE) || defined(IRIS4D) || defined(Linux)
-
-      while (c[i])
-	 switch (c[i++]) {
-	 case 'x': option |= LOCK_EX; break;
-	 case 's': option |= LOCK_SH; break;
-	 case 'b': option |= LOCK_NB; break;
-	 case 'u': option |= LOCK_UN; break;
-	 default: runerr(1044, cmd);
-     }
-
-      IntVal(amperErrno) = 0;
-      
-      if ((fd = get_fd(f, 0)) < 0)
-	 runerr(174, f);
-
-      if (flock(fd, option) != 0) {
-	 IntVal(amperErrno) = errno;
-	 fail;
-      }
-#else					/* BSD */
-      fail;
-#endif					/* BSD */
-      return nulldesc;
-   }
-end
-
-"fcntl() - control a file."
-
-function{0,1} fcntl(f, action, options)
-   if !is:string(action) then
-      runerr(103, action)
-   if !is:file(f) then
-      runerr(105, f)
-   if !is:string(options) then
-      if !is:integer(options) then
-         runerr(1044, options)
-   abstract {
-      return string ++ record ++ integer
-      }
-   body {
-      int fd, cmd, buflen;
-      tended char *c;
-      static dptr constr;
-
-#ifdef HAVE_LIBZ 
-      if (BlkLoc(f)->file.status & Fs_Compress) {
-         fail;
-         }
-#endif					/* HAVE_LIBZ */
-
-#if MSWIN32
-      fail;
-#else					/* MSWIN32 */
-      if ((fd = get_fd(f, 0)) < 0)
-	 runerr(174, f);
-
-      cnv:C_string(action, c);
-
-      switch (*c) {
-	 case 'F': cmd = F_SETFL; break;
-	 case 'f': cmd = F_GETFL; break;
-	 case 'X': cmd = F_SETFD; break;
-	 case 'x': cmd = F_GETFD; break;
-	 case 'L': cmd = F_SETLK; break;
-	 case 'l': cmd = F_GETLK; break;
-	 case 'W': cmd = F_SETLKW; break;
-#ifdef HP
-	   /* Owners not defined on HP */
-#else					/* HP */
-	 case 'O': cmd = F_SETOWN; break;
-	 case 'o': cmd = F_GETOWN; break;
-#endif					/* HP */
-	 default: runerr(1044, action);
-      }
-
-      /* Figure out options to use */
-      if (cmd == F_SETLK || cmd == F_GETLK || cmd == F_SETLKW) {
-	 struct flock fl;
-	 tended struct b_record *rp;
-	 tended char *lock;
-	 char *start, *len, *p;
-	 char buf[32];
-
-         cnv:C_string(options, lock);
-	 if ((start = strchr(lock, ',')) == NULL)
-	    runerr(1044, options);
-	 *start++ = 0;
-	 if ((len = strchr(start, ',')) == NULL)
-	    runerr(1044, options);
-	 *len++ = 0;
-
-	 switch (lock[0]) {
-	 case 'r': fl.l_type = F_RDLCK; break;
-	 case 'w': fl.l_type = F_WRLCK; break;
-	 case 'u': fl.l_type = F_UNLCK; break;
-	 default: runerr(1044, options);
-	 }
-	 if (lock[1] != 0)
-	    runerr(1044, options);
-
-	 switch(start[0]) {
-	 case '+': 
-	    fl.l_whence = SEEK_CUR;
-	    fl.l_start = strtol(start+1, &p, 10);
-	    break;
-	 case '-':
-	    fl.l_whence = SEEK_END;
-	    fl.l_start = strtol(start+1, &p, 10);
-	    break;
-	 default : 
-	    fl.l_whence = SEEK_SET;
-	    fl.l_start = strtol(start, &p, 10);
-	    break;
-	 }
-	 if (*p != ',')
-	    runerr(1044, options);
-
-	 fl.l_len = strtol(len, &p, 10);
-	 if (*p != ',')
-	    runerr(1044, options);
-
-	 start[-1] = len[-1] = ',';
-
-	 IntVal(amperErrno) = 0;
-	 if (fcntl(fd, cmd, &fl) < 0) {
-	    IntVal(amperErrno) = errno;
-	    fail;
-	 }
-
-	 p = buf;
-	 switch (fl.l_type) {
-	 case F_RDLCK: *p++ = 'r'; break;
-	 case F_WRLCK: *p++ = 'w'; break;
-	 case F_UNLCK: *p++ = 'u'; break;
-	 }
-	 *p++ = ',';
-	 switch (fl.l_whence) {
-	 case SEEK_CUR: *p++ = '+'; break;
-	 case SEEK_END: *p++ = '-'; break;
-	 }
-
-	 sprintf(p, "%ld,%ld", fl.l_start, fl.l_len);
-
-	 if (!constr)
-	    if (!(constr = rec_structor("posix_lock")))
-	       syserr("failed to create posix record constructor");
-
-	 Protect(rp = alcrecd(&BlkLoc(*constr)->constructor), runerr(0));
-	 result.dword = D_Record;
-	 result.vword.bptr = (union block*)rp;
-	 IntVal(rp->fields[1]) = fl.l_pid;
-	 buflen = strlen(buf);
-	 Protect(StrLoc(rp->fields[0]) = alcstr(buf, buflen), runerr(0));
-	 StrLen(rp->fields[0]) = buflen;
-
-	 return result;
-      } else {
-	 /* options should be an int */
-	 C_integer o = 0, retval;
-
-	 if (cmd == F_SETFL) {
-	    tended char *opt;
-	    cnv:C_string(options, opt);
-	    while (*opt)
-	      switch(*opt++) {
-	      case 'd': o |= O_NDELAY; break;
-	      case 'a': o |= O_APPEND; break;
-#if defined(HP) || defined(SUN)
-	      case 's': o |= FASYNC; break;
-#endif
-	      default: runerr(1044, options);
-	      }
-	 } else
-	    cnv:C_integer(options, o);
-
-	 IntVal(amperErrno) = 0;
-	 if ((retval = fcntl(fd, cmd, o)) < 0) {
-	    IntVal(amperErrno) = errno;
-	    fail;
-	 }
-
-	 if (cmd == F_GETFL) {
-	    char buf[10], *p = buf;
-	    int buflen;
-	    if (retval & O_APPEND) *p++ = 'a';
-	    if (retval & O_NDELAY) *p++ = 'd';
-#if defined(HP) || defined(SUN)
-	    if (retval & FASYNC) *p++ = 's';
-#endif
-	    *p = 0;
-	    buflen = strlen(buf);
-	    Protect(StrLoc(result) = alcstr(buf, buflen), runerr(0));
-	    StrLen(result) = buflen;
-	    return result;
-
-	 } else
-	    return C_integer retval;
-      }
-#endif					/* MSWIN32 */
       }
 end
 
@@ -896,8 +613,10 @@ function{0,1} ioctl(f, action, options)
    inline {
       int retval, fd;
       IntVal(amperErrno) = 0;
-      if ((fd = get_fd(f, 0)) < 0)
-	 runerr(174, f);
+      if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
+          IntVal(amperErrno) = errno;
+          fail;
+      }
 
 #ifdef HAVE_LIBZ 
       if (BlkLoc(f)->file.status & Fs_Compress) {
@@ -921,86 +640,6 @@ function{0,1} ioctl(f, action, options)
       }
 end
 
-"filepair() - create a connected bidirectional pair of files."
-
-function{0,1} filepair()
-   abstract {
-      return new list(file)
-      }
-   body {
-      int fds[2], i;
-      FILE* fps[2];
-      struct descrip fname;
-      struct b_file *fl; /* not tended: single assignment usage */
-      tended struct b_list *lp;
-      tended union block *ep;
-#if MSWIN32
-      fail;
-#else					/* MSWIN32 */
-      IntVal(amperErrno) = 0;
-      if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) != 0) {
-	 IntVal(amperErrno) = errno;
-	 fail;
-	 }
-      /* create a list to put them in */
-      Protect(lp = alclist(2, 2), runerr(0));
-      ep = lp->listhead;
-
-      /* Create the two file objects and put them into the list */
-      StrLoc(fname) = "filepair";
-      StrLen(fname) = 8;
-      for(i = 0; i < 2; i++) {
-	 fps[i] = fdopen(fds[i], "r");
-	 Protect(fl = alcfile(fps[i], Fs_Write|Fs_Read|Fs_Socket, &fname),
-		 runerr(0));
-	 ep->lelem.lslots[i].dword = D_File;
-	 ep->lelem.lslots[i].vword.bptr = (union block*)fl;
-	 }
-
-      return list(lp);
-#endif					/* MSWIN32 */
-   }
-end
-
-"pipe() - create a pipe."
-
-function{0,1} pipe()
-   abstract {
-      return new list(file)
-      }
-   body {
-      int fds[2], i;
-      FILE* fps[2];
-      struct descrip fname;
-      struct b_file *fl;
-      tended struct b_list *lp;
-      tended union block *ep;
-
-      IntVal(amperErrno) = 0;
-#if MSWIN32
-#define pipe(x) _pipe(x, 4096, O_BINARY|O_NOINHERIT)
-#endif
-      if (pipe(fds) != 0) {
-	 IntVal(amperErrno) = errno;
-	 fail;
-	 }
-      /* create a list to put them in */
-      Protect(lp = alclist(2, 2), runerr(0));
-      ep = lp->listhead;
-
-      /* Create the two file objects and put them into the list */
-      StrLoc(fname) = "pipe";
-      StrLen(fname) = 4;
-      for(i = 0; i < 2; i++) {
-	 fps[i] = fdopen(fds[i], i? "w":"r");
-	 Protect(fl = alcfile(fps[i], (i? Fs_Write:Fs_Read), &fname),
-		 runerr(0));
-	 ep->lelem.lslots[i].dword = D_File;
-	 ep->lelem.lslots[i].vword.bptr = (union block*)fl;
-	 }
-      return list(lp);
-   }
-end
 
 "fork() - spawn a new identical process."
 
@@ -1032,52 +671,6 @@ function{0,1} fork()
       }
 end
 
-"fdup() - duplicate a file (including its Unix fd)."
-
-function{0,1} fdup(src, dest)
-   if !is:file(src) then
-      runerr(105, src)
-   if !is:file(dest) then
-      runerr(105, dest)
-   abstract {
-      return null
-      }
-   body {
-      int fd_src, fd_dest, status;
-      char *fmode;
-      FILE *fp;
-
-      if (BlkLoc(src)->file.status == 0)
-	 runerr(1042, src);
-
-      if ((fd_src = get_fd(src, 0)) < 0)
-	 runerr(174, src);
-
-      if ((fd_dest = get_fd(dest, 0)) < 0)
-	 runerr(174, dest);
-      if (BlkLoc(dest)->file.status != 0)
-	 if (BlkLoc(dest)->file.status & Fs_Pipe)
-	    pclose(BlkLoc(dest)->file.fd.fp);
-	 else 
-	    fclose(BlkLoc(dest)->file.fd.fp);
- 
-      IntVal(amperErrno) = 0;
-      if (dup2(fd_src, fd_dest) < 0) {
-	 IntVal(amperErrno) = errno;
-	 fail;
-	 }
-      BlkLoc(dest)->file.status = status = BlkLoc(src)->file.status;
-      switch (status & (Fs_Read|Fs_Write)) {
-      case Fs_Read & ~Fs_Write : fmode = "r"; break;
-      case ~Fs_Read & Fs_Write : fmode = "w"; break;
-      case Fs_Read & Fs_Write : fmode = "r+"; break;
-      default: runerr(500); break;
-      }
-      BlkLoc(dest)->file.fd.fp = fp = fdopen(fd_dest, fmode);
-      BlkLoc(dest)->file.fname = BlkLoc(src)->file.fname;
-      return nulldesc;
-      }
-end
 
 "exec() - replace the executing Icon program with a new program."
 
@@ -1618,12 +1211,10 @@ function{0,1} wait(pid, options)
 
       /* Unpack all the fields */
       if (WIFSTOPPED(status))
-	 sprintf(retval, "%d stopped:%s", wpid, 
-		 si_i2s((siptr)signalnames, WSTOPSIG(status)));
+          sprintf(retval, "%d stopped:%d", wpid, WSTOPSIG(status));
 
       else if (WIFSIGNALED(status))
-	 sprintf(retval, "%d terminated:%s", wpid, 
-		 si_i2s((siptr)signalnames, WTERMSIG(status)));
+          sprintf(retval, "%d terminated:%d", wpid, WTERMSIG(status));
 
       else if (WIFEXITED(status))
 	 sprintf(retval, "%d exited:%d", wpid, WEXITSTATUS(status));
@@ -1858,8 +1449,10 @@ function{0,1} stat(f)
 #endif					/* HAVE_LIBZ */
 
 	    IntVal(amperErrno) = 0;
-	    if ((fd = get_fd(f, 0)) < 0)
-	       runerr(174, f);
+	    if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
+	       IntVal(amperErrno) = errno;
+	       fail;
+            }
 	    if (fstat(fd, &sbuf) != 0) {
 	       IntVal(amperErrno) = errno;
 	       fail;
@@ -1877,271 +1470,6 @@ function{0,1} stat(f)
 	 runerr(109, f)
    }
 end
-
-"send() - send a UDP datagram."
-
-function{0,1} send(addr, msg)
-   if !cnv:C_string(addr) then
-      runerr(103, addr)
-   if !cnv:string(msg) then
-      runerr(103, msg)
-   abstract {
-      return null
-      }
-   body {
-      IntVal(amperErrno) = 0;
-      if (!sock_send(addr, StrLoc(msg), StrLen(msg))) {
-	 IntVal(amperErrno) = errno;
-	 fail;
-	 }
-      return nulldesc;
-   }
-end
-
-"receive() - receive a UDP datagram."
-
-function{0,1} receive(f)
-  if !is:file(f) then
-      runerr(105, f)
-   abstract {
-      return record
-      }
-   body {
-      tended struct b_record *rp;
-      static dptr constr;
-      int status, ret;
-      
-      status = BlkLoc(f)->file.status;
-      if (!(status & Fs_Socket))
-	 runerr(175, f);
-
-      if (!constr)
-	 if (!(constr = rec_structor("posix_message")))
-	    syserr("failed to create posix record constructor");
-
-      Protect(rp = alcrecd(&BlkLoc(*constr)->constructor), runerr(0));
-
-      IntVal(amperErrno) = 0;
-      if ((ret = sock_recv(BlkLoc(f)->file.fd.fd, &rp)) == 0) {
-	 IntVal(amperErrno) = errno;
-	 fail;
-	 }
-      if (ret == -1)
-	 runerr(171, f);
-	 
-      result.dword = D_Record;
-      result.vword.bptr = (union block *)rp;
-      return result;
-   }
-end
-
-/* 
- * Select
- */
-int set_if_selectable(struct descrip *f, fd_set *fdsp, int *n)
-{
-   int fd, status;
-   if (is:file(*f)) {
-      status = BlkLoc(*f)->file.status;
-#if UNIX
-      if (status & Fs_Buff) return 1048;
-      BlkLoc(*f)->file.status |= Fs_Unbuf;
-#endif					/* UNIX */
-
-      if ((fd = get_fd(*f, Fs_Read|Fs_Socket)) < 0) {
-	 if (fd == -2)
-	    return 212;
-	 else
-	   return 174;
-         }
-      }
-   else
-      return 105;
-
-   if (*n < fd + 1)
-      *n = fd + 1;
-   FD_SET(fd, fdsp);
-   return 0;
-}
-
-void post_if_ready(struct descrip *ldp, struct descrip *f, fd_set *fdsp)
-{
-   int fd, fromlen, status = BlkLoc(*f)->file.status;
-   struct sockaddr_in from;
-
-   if ((status & Fs_Socket) == 0) return;
-
-   fd = get_fd(*f, Fs_Read|Fs_Socket);
-   if ((fd!=-1) && FD_ISSET(fd, fdsp)) {
-      /*
-       * If its a listener socket, convert it to the new connection.
-       */
-      if (status & Fs_Listen) {
-	 fromlen = sizeof(from);
-	 if ((fd = accept(fd, (struct sockaddr *)&from, &fromlen)) < 0)
-	    return;
-	 BlkLoc(*f)->file.fd.fd = fd;
-	 BlkLoc(*f)->file.status = Fs_Socket | Fs_Read | Fs_Write;
-	 }
-      c_put(ldp, f);
-      }
-}
-
-
-"select() - wait for i/o to be available on files."
-
-function{0,1} select(files[nargs])
-   abstract {
-      return new list(file)
-      }
-   body {
-      int rv, status, acc_time = 0, check_time, clocks;
-      int i, j, k=0, n=0, nset, nset_add=0;
-      C_integer timeout = -1;
-#if UNIX
-      struct tms t;
-      int base_time = times(&t), ctps = sysconf(_SC_CLK_TCK);
-#else					/* UNIX */
-      int base_time = clock(), ctps = CLOCKS_PER_SEC;
-#endif					/* UNIX */
-      fd_set fds;
-      struct timeval tv, *ptv = &tv;
-      tended struct b_list *lp = NULL;
-      tended union block *ep;
-      tended struct descrip d = nulldesc;
-      tended struct descrip d2 = nulldesc;
-      tended struct descrip f;
-
-      /*
-       * Unicon select() repeats until a timeout or real result.
-       * GUI activity requires periodic service while select() waits.
-       *
-       * Could pull a lot of redundant work out of this loop, such as
-       * the calculation of the list of windows.
-       */
-
-      do {
-	 n = 0;
-	 FD_ZERO(&fds);			/* Set the fd's in the set */
-
-	 for(k=0;k<nargs;k++) {
-	    /* Traverse the list, build fd_set of sockets */
-	    if (!is:list(files[k])) {
-	       if ((k+1 == nargs) && is:integer(files[k]))
-		  cnv:C_integer(files[k], timeout);
-	       else
-		  if (rv = set_if_selectable(files+k, &fds, &n))
-		     runerr(rv, files[k]);
-	       }
-	    else
-	       for (ep = BlkLoc(files[k])->list.listhead;
-		    BlkType(ep) == T_Lelem; ep = ep->lelem.listnext) {
-		  for (i = 0; i < ep->lelem.nused; i++) {
-		     j = ep->lelem.first + i;
-		     if (j >= ep->lelem.nslots)
-		        j -= ep->lelem.nslots;
-		     f = ep->lelem.lslots[j];
-		     if (rv = set_if_selectable(&f, &fds, &n))
-			runerr(rv, f);
-		     }
-	          }
-	    }
-      
-      /* Set the tv struct */
-      if (timeout < 0) {
-	    ptv = 0;
-         }
-      else {
-	 tv.tv_sec = timeout/1000;
-	 tv.tv_usec = (timeout%1000)*1000;
-	 }
-
-      errno = 0;
-      IntVal(amperErrno) = 0;
-
-      if (n) {
-         if ((nset = select(n, &fds, NULL, NULL, ptv)) < 0) {
-#if MSWIN32
-	    IntVal(amperErrno) = WSAGetLastError();
-#else
-	    IntVal(amperErrno) = errno;
-#endif
-	    if (IntVal(amperErrno) != 0)
-	       fail;
-	    }
-
-	 }
-      else if (ptv && (ptv->tv_sec || ptv->tv_usec)) {
-	 idelay(ptv->tv_sec * 1000 + ptv->tv_usec / 1000);
-	 }
-
-      if (lp == NULL) {
-	 if ((lp = alclist(0, MinListSlots)) == NULL) fail;
-         }
-
-      d.dword = D_List;
-      BlkLoc(d) = (union block *)lp;
-
-      for(k=0;k<nargs;k++) {
-	 if (is:file(files[k])) {
-
-#ifdef HAVE_LIBZ
-           if (BlkLoc(files[k])->file.status & Fs_Compress) { 
-               fail;
-               }
-#endif					/* HAVE_LIBZ */
-	    post_if_ready(&d, files+k, &fds);
-	    }
-         else if (is:integer(files[k])) {/* timeout */}
-	 else {
-            for (ep = BlkLoc(files[k])->list.listhead;
-	         BlkType(ep) == T_Lelem;
-	         ep = ep->lelem.listnext) {
-	       for (i = 0; i < ep->lelem.nused; i++) {
-	          j = ep->lelem.first + i;
-	          if (j >= ep->lelem.nslots)
-	             j -= ep->lelem.nslots;
-	          f = ep->lelem.lslots[j];
-		  if (is:file(f)) {
-#ifdef HAVE_LIBZ
-		     if (BlkLoc(files[k])->file.status & Fs_Compress) { 
-	                fail;
-	                }
-#endif					/* HAVE_LIBZ */
-		     post_if_ready(&d, &f, &fds);
-		     }
-	       }
-	    }
-          }
-	 }
-	 /*
-	  * This little gem tries to check if the timeout has elapsed.
-	  * On some buggy versions of linux, at least, the struct members
-	  * that t points at don't get updated, although times()'s return
-	  * value does show forward progress.  Use that return value,
-	  * try to handle overflow.  More ifdef's will be needed here
-	  * if times() return value doesn't work on some systems.
-	  */
-#if UNIX
-	 clocks = times(&t);
-#else					/* UNIX */
-	 clocks = clock();
-#endif					/* UNIX */
-	 if (clocks > base_time) {
-	    acc_time = clocks - base_time;
-	    check_time = acc_time;
-	    }
-	 else {
-	    check_time = clocks + acc_time;
-	    }
-      } while ((BlkLoc(d)->list.size == 0) &&
-	       ((timeout < 0)||(check_time*1000/ctps<timeout)));
-
-      Desc_EVValD(lp, E_Lcreate, D_List);
-      return list(lp);
-   }
-end
-
 
 "getpw() - get password file information."
 
@@ -2470,98 +1798,6 @@ function{0,1} setservent(so)
       setservent(so);
       return nulldesc;
 #endif					/* MSWIN32 */
-   }
-end
-
-"sysread() - low level non-blocking read with no buffering."
-
-function{0, 1} sysread(f, i)
-   if !def:C_integer(i, 0) then
-      runerr(101, i)
-
-   if is:null(f) then
-      inline {
-	 f.dword = D_File;
-	 BlkLoc(f) = (union block *)&k_input;
-	 }
-   else if !is:file(f) then
-      runerr(105, f)
-
-   abstract {
-      return string
-      }
-   body {
-      int status, fd;
-      tended struct descrip desc;
-      status = BlkLoc(f)->file.status;
-
-      if (!status || !(status & Fs_Read) )
-	  runerr(212, f);
-
-      if ((fd = get_fd(f, 0)) < 0)
-	 runerr(174, f);
-
-      if (status & Fs_Buff)
-	 runerr(1048, f);
-      BlkLoc(f)->file.status = status;
-
-      IntVal(amperErrno) = 0;
-      if (u_read(fd, i, &desc) == 0)
-	 fail;
-      return desc;
-   }
-end
-
-"syswrite() - low level write with no buffering."
-
-function{0, 1} syswrite(f, s)
-   if !cnv:string(s,s) then
-      runerr(103, s)
-
-   if is:null(f) then
-      inline {
-	 f.dword = D_File;
-	 BlkLoc(f) = (union block *)&k_output;
-	 }
-   else if !is:file(f) then
-      runerr(105, f)
-
-   abstract {
-      return integer
-      }
-   body {
-      int status, fd, rc;
-      tended struct descrip desc;
-      status = BlkLoc(f)->file.status;
-
-      if (!status || !(status & Fs_Write)  )
-	  runerr(213, f);
-
-      if ((fd = get_fd(f, 0)) < 0)
-	 runerr(174, f);
-      
-      if (status & Fs_Buff)
-	 runerr(1048, f);
-      BlkLoc(f)->file.status = status;
-      
-      IntVal(amperErrno) = 0;
-      /* 
-       * If applicable, use send for sockets so that we get the EPIPE
-       * error code, rather than the SIGPIPE signal.
-       */
-#ifdef HAVE_MSG_NOSIGNAL
-      if (status & Fs_Socket) 
-         rc = send(fd, StrLoc(s), StrLen(s), MSG_NOSIGNAL);
-      else
-         rc = write(fd, StrLoc(s), StrLen(s));
-#else
-      rc = write(fd, StrLoc(s), StrLen(s));
-#endif
-      if (rc < 0) {
-         IntVal(amperErrno) = errno;
-         fail;
-      }
-      return C_integer(rc);
    }
 end
 

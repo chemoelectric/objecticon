@@ -1,5 +1,7 @@
 #SRC: JCON
 
+$include "posix.icn"
+
 #  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
 
 procedure main()
@@ -19,6 +21,7 @@ procedure main()
    every write(!&input \ 2)
    every write(!&input) \ 2
 
+   &error := -1
    write()
    write("flush /etc/motd: ", image(flush(m)) | "FAILED")
    write("close /etc/motd: ", image(close(m)) | "FAILED")
@@ -30,6 +33,7 @@ procedure main()
    write("close /dev/null: ", image(close(n)) | "FAILED")
    write("close /dev/null: ", image(close(n)) | "FAILED")
    write("flush /dev/null: ", image(flush(n)) | "FAILED")
+   &error := 0
 
    every remove("tmp1" | "tmp2")
    every remove("tmp1" | "tmp2")
@@ -43,11 +47,11 @@ procedure main()
    rfile("tmp1")
    wfile("tmp1", "a", "gets extended")
    rfile("tmp1")
-   wfile("tmp1", "rw", "changed")
+   wfile("tmp1", "r+", "changed")
    rfile("tmp1")
-   wfile("tmp1", "b", "mode b ")
+   wfile("tmp1", "r+", "mode b ")
    rfile("tmp1")
-   wfile("tmp1", "crw", "cleared anew")
+   wfile("tmp1", "w+", "cleared anew")
    rfile("tmp1")
    rename("tmp1", "tmp2")
    rfile("tmp2")
@@ -55,10 +59,24 @@ procedure main()
    write()
    write(image(t1 := open("tmp1", "w")) | "can't open tmp1")
    write(image(t2 := open("tmp2", "w")) | "can't open tmp2")
-   writes(">stdout", t1, ">1a", t2, ">2a", &output)
-   writes(">stdout", t2, ">2b", t1, ">1b", &output)
-   write(">stdout", t1, ">1c", t2, t2, ">2c", &output)
-   write(">stdout", t2, ">2d", t1, t1, ">1d", &output)
+   writes(">stdout")
+   writes(t1, ">1a")
+   writes(t2, ">2a")
+   writes(&output)
+   writes(">stdout")
+   writes(t2, ">2b")
+   writes(t1, ">1b")
+   writes(&output)
+   write(">stdout")
+   write(t1, ">1c")
+   write(t2)
+   write(t2, ">2c")
+   write(&output)
+   write(">stdout")
+   write(t2, ">2d")
+   write(t1)
+   write(t1, ">1d")
+   write(&output)
    every write(t1 | t2)
    writes(t1, ">1e")
    writes(t2, ">2e")
@@ -94,7 +112,7 @@ end
 #  wfile(name, mode, s) -- break apart string and write file
 
 procedure wfile(name, mode, s)
-   local f
+   local f, x
 
    write()
    writes("write ", name, ",", mode, ":\t ")
@@ -102,10 +120,11 @@ procedure wfile(name, mode, s)
       writes(s)
       tab(many(' '))
       while not pos(0) do {
-	 write(f, tab(upto(' ') | 0))
+         x := tab(upto(' ') | 0)
+	 write(f, x) | stop("Failed to write:", strerror())
 	 tab(many(' '))
          }
-      write(" : ", where(f))
+      write(" : ", tell(f))
       flush(f)
       close(f)
       }
@@ -115,6 +134,12 @@ procedure wfile(name, mode, s)
    return
 end
 
+procedure seekx(f,i)
+   if i <= 0 then
+      return seek(f,i,SEEK_END)
+   else
+      return seek(f,i-1,SEEK_SET)
+end
 
 
 #  rfile(name) -- read and echo file contents (several different ways)
@@ -133,17 +158,17 @@ procedure rfile(name)
    write()
 
    # bang
-   seek(f, 1)
+   seek(f, 0)
    every writes(" ", "  !f:\t\t" | !f | "\n")
 
    # both, mixed
-   seek(f, 1)
+   seek(f, 0)
    writes("   read/!f:\t")
    while writes(" ", read(f)) do writes(" ", !f)
    write()
 
    # reads()
-   seek(f, 1)
+   seek(f, 0)
    writes("   reads():\t")
    while writes(" ", map(reads(f, 5), "\n", "."))
    write()
@@ -151,7 +176,7 @@ procedure rfile(name)
    # nonsequential
    writes("   nonseq:\t ")
    every i := 30 to -30 by -1 do
-      if seek(f, i) then
+      if seekx(f, i) then
 	 writes(map(reads(f), "\n", ".") | "?")
       else
 	 writes("-")
@@ -178,28 +203,28 @@ procedure tpipe()
 
    # very simple case
    write()
-   p := open("echo hello world", "rp") | stop("can't open echo pipe")
+   p := popen("echo hello world", "r") | stop("can't open echo pipe")
    write(image(p))
    while write("> ", read(p))
    close(p)
 
    # check unclosed pipe
    write()
-   p := open("sed 's/^/=()= /' io.icn", "p") | stop("can't open od pipe")
+   p := popen("sed 's/^/=()= /' io.icn") | stop("can't open od pipe")
    write(image(p))
    every 1 to 10 do write("> ", read(p))
    # p is deliberately left unclosed
 
    # check wildcarding, and also !pipe
    write()
-   p := open("ls io.i?n io.d?t io.s?d", "p") | stop("can't open ls pipe")
+   p := popen("ls io.i?n io.d?t io.s?d") | stop("can't open ls pipe")
    write(image(p))
    every write("> ", !p)
    close(p)
 
    # check output pipe
    write()
-   p := open("tr aeiou oaeui", "wp") | stop("can't open tr pipe")
+   p := popen("tr aeiou oaeui", "w") | stop("can't open tr pipe")
    write(image(p))
    write(p, "once upon a midnight dreary")
    write(p, "two roads diverged in a yellow wood")

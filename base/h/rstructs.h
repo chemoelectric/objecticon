@@ -38,7 +38,7 @@ struct si_ {
     int i;
 };
 typedef struct si_ stringint;
-typedef struct si_ *siptr;
+
 
 /*
  * structure supporting dynamic record types
@@ -70,10 +70,12 @@ struct b_cset {			/* cset block */
 struct b_file {			/* file block */
     word title;			/*   T_File */
     union {
-        FILE *fp;			/*   stdio file pointer */
-        int fd;			/*   other int-based file descriptor */
-    } fd;
-    word status;			/*   file status */
+        FILE *fp;		/*   stdio file pointer (Fs_Stdio) */
+        DIR *dir;               /*   from opendir() (Fs_Directory) */
+        SOCKET sd;              /*   socket descriptor (Fs_Socket) */
+        int fd;			/*   file descriptor (Fs_Desc) */
+    } u;
+    word status;		/*   file status */
     struct descrip fname;	/*   file name (string qualifier) */
 };
 
@@ -470,7 +472,7 @@ struct progstate {
     void (*Deref)(dptr,dptr);
     struct b_bignum * (*Alcbignum)(word);
     struct b_cset * (*Alccset)();
-    struct b_file * (*Alcfile)(FILE*,int,dptr);
+    struct b_file * (*Alcfile)(int,dptr);
 #ifdef Graphics
     struct b_window * (*Alcwindow)(struct _wbinding *, word);
 #endif

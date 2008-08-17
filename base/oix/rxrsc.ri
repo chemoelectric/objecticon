@@ -1049,7 +1049,7 @@ wsp alc_winstate()
     ws->bits = 1024;				/* echo ON; others OFF */
     ws->filep = nulldesc;
     ws->listp = nulldesc;
-    ws->theCursor = si_s2i(cursorsyms, "left ptr") >> 1;
+    ws->theCursor = stringint_str2int(cursorsyms, "left ptr") >> 1;
     ws->inputmask =
         ExposureMask | KeyPressMask |
         ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |

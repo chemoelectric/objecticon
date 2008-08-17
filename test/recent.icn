@@ -1,5 +1,7 @@
 #SRC: V9GEN
 
+$include "posix.icn"
+
 procedure main ()
    local i,j,name1,name2,f,s,c,n,fset,a,b,d,e,g,h,A,t,x
    sf([])
@@ -61,15 +63,15 @@ procedure main ()
 #  test seek() and where()
 
    f := open("recent.dat") | stop("can't open recent.dat")
-   write(image(seek(f,11)))
-   write(where(f))
+   write(image(seek(f,10)))
+   write(tell(f))
    write(image(reads(f,10)))
-   write(where(f))
-   write(where(f))
-   seek(f,-2)
-   write(where(f))
+   write(tell(f))
+   write(tell(f))
+   seek(f,-2,SEEK_END)
+   write(tell(f))
    write(image(reads(f,1)))
-   write(where(f))
+   write(tell(f))
    close(f)
 
 # test ord() and char(), and print messages if wrong results
@@ -98,7 +100,7 @@ procedure main ()
 
 #  test open(directory)
 
-   f := open(".") | stop("can't open `.'")
+   f := opendir(".") | stop("can't open `.'")
    fset := set()
    # try three kinds of reading in rotation
    while insert(fset, read(f)) do {

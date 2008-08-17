@@ -1719,7 +1719,7 @@ char *s;
    wcp wc = w->context;
    SHORT ltype;
 
-   if ((ltype = si_s2i(siLineTypes, s)) < 0)
+   if ((ltype = stringint_str2int(siLineTypes, s)) < 0)
       return Error;
    wc->pen.lopnStyle = ltype;
    resetfg(w);
@@ -1973,7 +1973,7 @@ char *val;
 	 CLRXORREVERSE(w);
          resetfg(w);
 	 }
-      wc->drawop = si_s2i(drawops,val);
+      wc->drawop = stringint_str2int(drawops,val);
       if (wc->drawop == -1) { wc->drawop = R2_COPYPEN; return Error; }
       }
    return Succeeded;
@@ -2058,7 +2058,7 @@ wbp w;
 char *answer;
    {
    wcp wc = w->context;
-   char *ptr = si_i2s(siLineTypes, wc->pen.lopnStyle);
+   char *ptr = stringint_int2str(siLineTypes, wc->pen.lopnStyle);
    if (ptr != NULL) {
       strcpy(answer, ptr);
       }
@@ -2092,7 +2092,7 @@ char *answer;
    {
    char *s;
    if (ISXORREVERSE(w)) s = "reverse";
-   else s = si_i2s(drawops, w->context->drawop);
+   else s = stringint_int2str(drawops, w->context->drawop);
    if (s) sprintf(answer, "%s", s);
    else strcpy(answer, "unknown");
    }
@@ -3682,7 +3682,7 @@ int len;
    /*
     * Otherwise, it is a named pattern.  Find the symbol id.
     */
-   if ((symbol = si_s2i(siPatternSyms, wc->patternname)) >= 0) {
+   if ((symbol = stringint_str2int(siPatternSyms, wc->patternname)) >= 0) {
       if (w->window->iconwin == NULL) return Succeeded;
       for(i = 0; i < 8; i++) {
 	 v = reversebits(~(patbits[symbol * 8 + i]));

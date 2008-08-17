@@ -3,6 +3,8 @@ package util
 import 
    ipl.random
 
+$include "posix.icn"
+
 #
 # This class has several static methods which provide
 # system-independent access to the file system.
@@ -96,26 +98,17 @@ class Files()
    end
 
    #
-   # Load a file into a string, failing if the file doesn't exist.
+   # Load a file into a string
    #
    public static file_to_string(fn)
-      local res, f
-      f := open(fn, "ru") | fail
-      res := ""
-      while res ||:= reads(f, 8192)
-      close(f)
-      return res
+      return FS.file_to_string(fn)
    end
 
    #
    # Write a string to a file.
    #
    public static string_to_file(fn, s)
-      local f
-      f := open(fn, "wu") | fail
-      writes(f, s)
-      close(f)
-      return s
+      return FS.string_to_file(fn, s)
    end
 
    #
@@ -151,34 +144,7 @@ class Files()
    # Succeed iff the two given files have the same content.
    #
    public static equal_files(n1, n2)
-      local f1, f2, r
-
-      stat(n1).size = stat(n2).size | fail
-
-      f1 := open(n1, "ru") | fail
-      f2 := open(n2, "ru") | {
-         close(f1)
-         fail
-      }
-
-      if equal_files1(f1, f2) then
-         r := 1
-
-      close(f1)
-      close(f2)
-
-      return \r
-   end
-
-   private static equal_files1(f1, f2)
-      local s1, s2
-
-      while s1 := reads(f1, 8192) do {
-         s2 := reads(f2, 8192) | fail
-         s1 == s2 | fail
-      }
-      
-      return not(reads(f2))
+      return FS.equal_files(n1, n2)
    end
 
    #
@@ -208,17 +174,7 @@ class Files()
    # @param s2 the target filename
    #
    public static copy_file(s1, s2)
-      local f1, f2
-      f1 := open(s1, "ru") | fail
-      f2 := open(s2, "wu") | {
-         close(f1)
-         fail
-      }
-      # The writes will give a runtime error 214 on failure (eg device full).
-      while writes(f2, reads(f1, 8192))
-      close(f1)
-      close(f2)
-      return
+      return FS.copy_file(s1, s2)
    end
 
    #
@@ -227,17 +183,7 @@ class Files()
    # @param s2 the target filename
    #
    public static append_file(s1, s2)
-      local f1, f2
-      f1 := open(s1, "ru") | fail
-      f2 := open(s2, "au") | {
-         close(f1)
-         fail
-      }
-      # The writes will give a runtime error 214 on failure (eg device full).
-      while writes(f2, reads(f1, 8192))
-      close(f1)
-      close(f2)
-      return
+      return FS.append_file(s1, s2)
    end
 
    #
@@ -309,6 +255,105 @@ class FileSystem(Error)
    public defer get_roots()
 
    public defer split_paths(s)
+
+   public equal_files(n1, n2)
+      local f1, f2, r, n
+
+      clear_error()
+
+      stat(n1).size = stat(n2).size | fail
+
+      f1 := open(n1, "rb") | return error("Couldn't open " || n1 || ":" || strerror())
+      f2 := open(n2, "rb") | {
+         n := &errno
+         close(f1)
+         return error("Couldn't open " || n2 || ":" || strerror(n))
+      }
+
+      if equal_files1(f1, f2) then
+         r := 1
+
+      n := &errno
+
+      close(f1)
+      close(f2)
+
+      if n = (0 | XE_EOF) then
+         return \r
+      else
+         return sys_error(n)
+   end
+
+   private equal_files1(f1, f2)
+      local s1, s2
+
+      while s1 := reads(f1, 8192) do {
+         s2 := reads(f2, 8192) | fail
+         s1 == s2 | fail
+      }
+      if &errno ~= XE_EOF then
+         fail
+      return not(reads(f2))
+   end
+
+   public file_to_string(fn)
+      local res, f, n
+      f := open(fn, "rb") | return error("Couldn't open " || fn || ":" || strerror())
+      res := ""
+      while res ||:= reads(f, 8192)
+      n := &errno
+      close(f)
+      if n ~= XE_EOF then
+         return sys_error(n)
+      return res
+   end
+
+   public string_to_file(fn, s)
+      local f, n
+      f := open(fn, "wb") | return error("Couldn't open " || fn || ":" || strerror())
+      writes(f, s) | {
+         n := &errno
+         close(f)
+         return sys_error(n)
+      }
+      close(f)
+      return s
+   end
+
+   public copy_file(s1, s2)
+      local f1, f2, n
+      f1 := open(s1, "rb") | return error("Couldn't open " || s1 || ":" || strerror())
+      f2 := open(s2, "wb") | {
+         n := &errno
+         close(f1)
+         return error("Couldn't open " || s2 || ":" || strerror(n))
+      }
+      while writes(f2, reads(f1, 8192))
+      n := &errno
+      close(f1)
+      close(f2)
+      if n ~= XE_EOF then
+         return sys_error(n)
+      return
+   end
+
+   public append_file(s1, s2)
+      local f1, f2, n
+      f1 := open(s1, "rb") | return error("Couldn't open " || s1 || ":" || strerror())
+      f2 := open(s2, "ab") | {
+         n := &errno
+         close(f1)
+         return error("Couldn't open " || s2 || ":" || strerror(n))
+      }
+      while writes(f2, reads(f1, 8192))
+      n := &errno
+      close(f1)
+      close(f2)
+      if n ~= XE_EOF then
+         return sys_error(n)
+      return
+   end
+
 end
 
 #
@@ -481,14 +526,14 @@ class UnixFileSystem(FileSystem)
       local l, p, s2, sr
       if (*s > 1) & (s[-1] == "/") then 
          s[-1] := ""
-      p := open(s) | return error("Can't open " || image(s))
+      p := opendir(s) | return error("Can't open " || image(s))
       if s[-1] ~== "/" then 
          s ||:= "/"
       l := []
       while s2 := read(p) do {
          sr := stat(s || s2) | {
             close(p)
-            return error("Can't stat " || image(s || s2) || ":" || errno_str())
+            return error("Can't stat " || image(s || s2) || ":" || strerror())
          }
          put(l, DirEntry(s2, sr))
       }
@@ -616,7 +661,7 @@ class WindowsFileSystem(FileSystem)
       while s2 := read(p) do {
          sr := stat(s || s2) | {
             close(p)
-            return error("Can't stat " || image(s || s2) || ":" || errno_str())
+            return error("Can't stat " || image(s || s2) || ":" || strerror())
          }
          put(l, DirEntry(s2, sr))
       }

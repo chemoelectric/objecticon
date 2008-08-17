@@ -20,6 +20,13 @@ class Error()
    end
 
    #
+   # Convenience method to call error(strerror(n)).
+   #
+   protected sys_error(n)
+      return error(strerror(n))
+   end
+
+   #
    # Set the error reason back to null; subsequent calls 
    # of get_reason() will fail.
    #
@@ -34,39 +41,3 @@ class Error()
       return \error_reason
    end
 end
-
-#
-# A version of Error for "static" classes
-#
-class StaticError()
-   private static error_reason
-
-   #
-   # Set the error reason.  The parameter can either simply be a string,
-   # or another subclass of Error, in which case its error reason is
-   # copied into this instance.
-   #
-   protected static error(a)
-      if type(a) == "string" then
-         error_reason := a
-      else
-         error_reason := a.get_reason()
-   end
-
-   #
-   # Set the error reason back to null; subsequent calls 
-   # of get_reason() will fail.
-   #
-   protected static clear_error()
-      error_reason := &null
-   end
-
-   #
-   # Return the error reason, or fail if it is unset.
-   #
-   public static get_reason()
-      return \error_reason
-   end
-end
-
-

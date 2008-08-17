@@ -50,12 +50,14 @@ function WOpen: yes
 function WSync: yes
 function WriteImage: yes
 function abs: yes
+function accept: yes
 function acos: yes
 function any: yes
 function args: yes
 function asin: yes
 function atan: yes
 function bal: yes
+function bind: yes
 function callout: yes
 function cast: yes
 function center: yes
@@ -68,6 +70,7 @@ function classof: yes
 function close: yes
 function cofail: yes
 function collect: yes
+function connect: yes
 function constructor: yes
 function constructorof: yes
 function copy: yes
@@ -87,10 +90,9 @@ function eventmask: yes
 function exec: yes
 function exit: yes
 function exp: yes
-function fcntl: yes
 function fdup: yes
+function fflag: yes
 function fieldnames: yes
-function filepair: yes
 function find: yes
 function flock: yes
 function flush: yes
@@ -133,6 +135,7 @@ function keyword: yes
 function kill: yes
 function left: yes
 function list: yes
+function listen: yes
 function load: yes
 function loadfunc: yes
 function localnames: yes
@@ -149,12 +152,15 @@ function move: yes
 function name: yes
 function numeric: yes
 function open: yes
+function open2: yes
+function opendir: yes
 function opmask: yes
 function ord: yes
 function paramnames: yes
 function parent: yes
 function pipe: yes
 function pop: yes
+function popen: yes
 function pos: yes
 function proc: yes
 function pull: yes
@@ -164,7 +170,7 @@ function read: yes
 function readlink: yes
 function reads: yes
 function real: yes
-function receive: yes
+function recvfrom: yes
 function remove: yes
 function rename: yes
 function repl: yes
@@ -175,7 +181,7 @@ function rtod: yes
 function runerr: yes
 function seek: yes
 function select: yes
-function send: yes
+function sendto: yes
 function seq: yes
 function serial: yes
 function set: yes
@@ -188,6 +194,8 @@ function setpwent: yes
 function setservent: yes
 function setuid: yes
 function sin: yes
+function socket: yes
+function socketpair: yes
 function sort: yes
 function sortf: yes
 function sqrt: yes
@@ -199,12 +207,11 @@ function structure: yes
 function subtype: yes
 function symlink: yes
 function syserrstr: yes
-function sysread: yes
 function system: yes
-function syswrite: yes
 function tab: yes
 function table: yes
 function tan: yes
+function tell: yes
 function trap: yes
 function trim: yes
 function truncate: yes
@@ -214,7 +221,6 @@ function upto: yes
 function utime: yes
 function variable: yes
 function wait: yes
-function where: yes
 function write: yes
 function writes: yes
 Active: yes
@@ -269,12 +275,14 @@ WOpen: yes
 WSync: yes
 WriteImage: yes
 abs: yes
+accept: yes
 acos: yes
 any: yes
 args: yes
 asin: yes
 atan: yes
 bal: yes
+bind: yes
 callout: yes
 cast: yes
 center: yes
@@ -287,6 +295,7 @@ classof: yes
 close: yes
 cofail: yes
 collect: yes
+connect: yes
 constructor: yes
 constructorof: yes
 copy: yes
@@ -306,10 +315,9 @@ eventmask: yes
 exec: yes
 exit: yes
 exp: yes
-fcntl: yes
 fdup: yes
+fflag: yes
 fieldnames: yes
-filepair: yes
 find: yes
 flock: yes
 flush: yes
@@ -352,6 +360,7 @@ keyword: yes
 kill: yes
 left: yes
 list: yes
+listen: yes
 load: yes
 loadfunc: yes
 localnames: yes
@@ -368,12 +377,15 @@ move: yes
 name: yes
 numeric: yes
 open: yes
+open2: yes
+opendir: yes
 opmask: yes
 ord: yes
 paramnames: yes
 parent: yes
 pipe: yes
 pop: yes
+popen: yes
 pos: yes
 proc: yes
 pull: yes
@@ -383,7 +395,7 @@ read: yes
 readlink: yes
 reads: yes
 real: yes
-receive: yes
+recvfrom: yes
 remove: yes
 rename: yes
 repl: yes
@@ -394,7 +406,7 @@ rtod: yes
 runerr: yes
 seek: yes
 select: yes
-send: yes
+sendto: yes
 seq: yes
 serial: yes
 set: yes
@@ -407,6 +419,8 @@ setpwent: yes
 setservent: yes
 setuid: yes
 sin: yes
+socket: yes
+socketpair: yes
 sort: yes
 sortf: yes
 sqrt: yes
@@ -418,12 +432,11 @@ structure: yes
 subtype: yes
 symlink: yes
 syserrstr: yes
-sysread: yes
 system: yes
-syswrite: yes
 tab: yes
 table: yes
 tan: yes
+tell: yes
 trap: yes
 trim: yes
 truncate: yes
@@ -433,6 +446,5 @@ upto: yes
 utime: yes
 variable: yes
 wait: yes
-where: yes
 write: yes
 writes: yes
