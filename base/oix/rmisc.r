@@ -1072,12 +1072,6 @@ struct b_coexpr *ce;
 int findline(ipc)
 word *ipc;
 {
-  return findloc(ipc) & 65535;
-}
-
-int findloc(ipc)
-word *ipc;
-{
    uword ipc_offset;
    uword size;
    struct ipc_line *base;

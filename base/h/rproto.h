@@ -113,7 +113,6 @@ int		findcol		(word *ipc);
 char		*findfile	(word *ipc);
 int		findipc		(int line);
 int		findline	(word *ipc);
-int		findloc		(word *ipc);
 void		fpetrap		(void);
 int		getvar		(char *s,dptr vp);
 uword		hash		(dptr dp);
