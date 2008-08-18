@@ -14,7 +14,9 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_POLL
 #include <sys/poll.h>
+#endif
 #include <time.h>
 #include <dirent.h>
 #include <unistd.h>

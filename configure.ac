@@ -58,7 +58,7 @@ esac
 export CSWITCH
 CSWITCH=config/system/$id/rswitch.?
 
-AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork)
+AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll)
 AC_CHECK_GLOBAL(sys_nerr)
 AC_CHECK_GLOBAL(sys_errlist)
 AC_VAR_TIMEZONE_EXTERNALS()

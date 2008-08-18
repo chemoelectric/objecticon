@@ -59,3 +59,6 @@
 
 /* define as 1 if MSG_NOSIGNAL defined */
 #undef HAVE_MSG_NOSIGNAL
+
+/* define as 1 if poll exists */
+#undef HAVE_POLL

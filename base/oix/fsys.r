@@ -802,8 +802,15 @@ function{0,1} select(rl, wl, el, timeout)
     }
 end
 
+"Poll one or more files for i/o using the poll function."
+" The arguments should be of the form file1, events1, file2,"
+" events2, etc.  The last argument is the timeout, which will"
+" default to -1 if not present.   The result is a list of "
+" all the revents values corresponding to the files"
+
 function{0,1} poll(a[n])
    body {
+#ifdef HAVE_POLL
        struct pollfd *ufds;
        unsigned int nfds;
        int timeout, i, rc;
@@ -864,6 +871,9 @@ function{0,1} poll(a[n])
        free(ufds);
 
        return result;
+#else
+       runerr(121);
+#endif  /* HAVE_POLL */
    }
 end
 
@@ -1084,17 +1094,17 @@ end
 #name "(a,b,...) - write arguments"
 #if !nl
    " without newline terminator"
-#endif					/* nl */
+#endif
 #if terminate
    " (starting on error output) and stop"
-#endif					/* terminate */
+#endif
 "."
 
 #if terminate
 function {} name(x[nargs])
-#else					/* terminate */
+#else
 function {1} name(x[nargs])
-#endif					/* terminate */
+#endif
 
   body {
     tended struct descrip t;
@@ -1103,11 +1113,11 @@ function {1} name(x[nargs])
 
     if (nargs == 0 || !is:file(x[0])) {
         f.dword = D_File;
-#if error_out
+        #if terminate
         BlkLoc(f) = (union block *)&k_errout;
-#else					/* error_out */
+        #else
         BlkLoc(f) = (union block *)&k_output;
-#endif					/* error_out */
+        #endif
         n = 0;
     } else {
         f = x[0];
