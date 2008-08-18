@@ -89,7 +89,7 @@ void tmfilefree()
 
     for (iv = tinvocables; iv; iv = tiv) {
         tiv = iv->next;
-        free(tiv);
+        free(iv);
     }
     tinvocables = last_tinvocable = 0;
 }
