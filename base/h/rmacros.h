@@ -47,12 +47,6 @@
 #define Fs_Prog        0100
 #define Fs_Closed      0200     /* indicates close was called */
 
-
-
-#ifdef HAVE_LIBZ
-   #define Fs_Compress  02000000	/* reading/writing compressed file */
-#endif					/* HAVE_LIBZ */
-
 #ifdef Graphics
    #define XKey_Window 0
    #define XKey_Fg 1

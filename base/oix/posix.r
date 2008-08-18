@@ -548,12 +548,6 @@ function{0,1} truncate(f, l)
 	    int fd;
 	    IntVal(amperErrno) = 0;
 
-#ifdef HAVE_LIBZ 
-            if (BlkLoc(f)->file.status & Fs_Compress) {
-               fail;
-               }
-#endif					/* HAVE_LIBZ */
-
 	    if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
 	       IntVal(amperErrno) = errno;
 	       fail;
@@ -617,12 +611,6 @@ function{0,1} ioctl(f, action, options)
           IntVal(amperErrno) = errno;
           fail;
       }
-
-#ifdef HAVE_LIBZ 
-      if (BlkLoc(f)->file.status & Fs_Compress) {
-         fail;
-         }
-#endif					/* HAVE_LIBZ */
 
 #if MSWIN32
       fail;
@@ -1442,11 +1430,6 @@ function{0,1} stat(f)
 #endif					/* MSWIN32 */
 	    static dptr constr;
 	    int fd;
-
-#ifdef HAVE_LIBZ 
-            if (BlkLoc(f)->file.status & Fs_Compress)
-               fail;
-#endif					/* HAVE_LIBZ */
 
 	    IntVal(amperErrno) = 0;
 	    if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
