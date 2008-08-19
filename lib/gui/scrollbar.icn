@@ -317,6 +317,7 @@ class ScrollBar(Component)
    end
 
    public handle_wheel_up(e)
+      /self.bar_down | fail
       start_handle(e)
       self.move_value(self.get_value() - self.wheel_factor * self.increment_size)
       self.set_pos_from_value()
@@ -324,6 +325,7 @@ class ScrollBar(Component)
    end
 
    public handle_wheel_down(e)
+      /self.bar_down | fail
       start_handle(e)
       self.move_value(self.get_value() + self.wheel_factor * self.increment_size)
       self.set_pos_from_value()

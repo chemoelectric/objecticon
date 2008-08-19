@@ -72,7 +72,7 @@ class Button(Toggle,Component)
          self.repeat_delay := curr_time_millis() + Gui.REPEAT_DELAY
          every b := !(\self.parent_button_group).buttons do {
             if b.is_unhidden() & b.is_unshaded() then {
-               parent_dialog.hold(b)
+               parent_dialog.hold(b, e)
                b.repeat_delay := self.repeat_delay
             }
          }

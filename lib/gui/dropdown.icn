@@ -34,12 +34,12 @@ class DropDown(SelectionList,Component)
          #
          # Button pressed whilst list open; just close
          #
-         self.close_textlist()
+         self.close_textlist(ev)
       else
          #
          # Button pressed whilst no list; open list
          #
-         self.open_textlist()
+         self.open_textlist(ev)
    end
 
    public on_textlist_selection(ev)
@@ -98,7 +98,7 @@ class DropDown(SelectionList,Component)
       end_change(e)
    end
 
-   public open_textlist()
+   public open_textlist(ev)
       local fh, max_h, spc_below
 
       fh := WAttrib(self.cbwin, "fheight")
@@ -148,12 +148,11 @@ class DropDown(SelectionList,Component)
          self.tl.center_line(self.selection)
       }
       self.parent_dialog.set_focus(tl)
-      self.parent_dialog.hold(tl.view)
-
+      self.parent_dialog.hold(tl.view, ev)
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
    end
 
-   public close_textlist()
+   public close_textlist(ev)
       #
       # Close list, restore window
       #

@@ -523,8 +523,12 @@ class Component(Rect,Align,SetFields,Connectable)
       return keyof(parent_dialog.point_chain, self)
    end
 
-   public is_held()
-      return keyof(\parent_dialog.held, self)
+   #
+   # Succeed if this component is held with the given button press.
+   # @param e The mouse press event - &lpress, &mpress or &rpress.
+   #
+   public is_held(e)
+      return keyof(\parent_dialog.held[e], self)
    end
 
    #

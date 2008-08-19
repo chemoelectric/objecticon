@@ -523,6 +523,18 @@ class SelectableScrollArea(LineBasedScrollArea)
       end_handle(e)
    end
 
+   public on_vsb(e)
+      self.refresh()
+      #
+      # Simulate drag or move events if appropriate in order to
+      # keep the cursor in synch.
+      #
+      if view.is_held(&lpress) then
+         handle_ldrag(e)
+      else if not(parent_dialog.any_held()) & view.in_region() then
+         handle_move(e)
+   end
+
    public handle_ldrag(e)
       \self.draggable_cursor | fail
 
@@ -757,7 +769,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    public defer draw_line_data(xp, yp, lh, i, r)
 
    public can_drag(ev)
-      if (ev === &ldrag) & view.is_held() & /self.draggable_cursor & \self.on_a_line then
+      if (ev === &ldrag) & view.is_held(&lpress) & /self.draggable_cursor & \self.on_a_line then
          return self.object_get_gesture_selections()
    end
 

@@ -1520,6 +1520,8 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    public handle_rpress()
       local i, pm
+
+      /self.held_flag | fail
       if i := self.which_cursor_over() then {
          self.select(i, if &control then 1 else &null)
          if not(&control) then {

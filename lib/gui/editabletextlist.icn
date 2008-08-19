@@ -344,6 +344,12 @@ class EditableTextList(LineBasedScrollArea)
       self.constrain_cursor()
       self.refresh()
       end_handle(ev)
+      #
+      # Simulate a drag event if appropriate in order to keep the
+      # cursor in synch.
+      #
+      if view.is_held(&lpress) then
+         handle_ldrag(ev)
    end
 
    public on_hsb(ev)
@@ -410,6 +416,8 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public handle_key(e)
+      # Stop dragging on any keypress.
+      parent_dialog.release(view, &lpress)
       case e of {
          Key_Home : handle_key_home(e)
          Key_End : handle_key_end(e)

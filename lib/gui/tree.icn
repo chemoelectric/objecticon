@@ -226,7 +226,7 @@ class Tree(SelectableScrollArea)
                N.toggle_expanded()
                self.last_expanded := N
                tree_structure_changed()
-               parent_dialog.release(self.view)
+               parent_dialog.release(self.view, &lpress)
                if curr_cursor ~=== self.cursor then
                   fire(Event.CURSOR_MOVED, e)
                # Just monitor the number of selections to detect a change.
