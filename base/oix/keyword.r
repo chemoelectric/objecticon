@@ -701,42 +701,72 @@ end
 keyword{1} lpress
    abstract { return integer} inline { return C_integer MOUSELEFT; }
 end
+
 "&mpress - middle button press."
 keyword{1} mpress
    abstract { return integer} inline { return C_integer MOUSEMID; }
 end
+
 "&rpress - right button press."
 keyword{1} rpress
    abstract { return integer} inline { return C_integer MOUSERIGHT; }
 end
+
 "&lrelease - left button release."
 keyword{1} lrelease
    abstract { return integer} inline { return C_integer MOUSELEFTUP; }
 end
+
 "&mrelease - middle button release."
 keyword{1} mrelease
    abstract { return integer} inline { return C_integer MOUSEMIDUP; }
 end
+
 "&rrelease - right button release."
 keyword{1} rrelease
    abstract { return integer} inline { return C_integer MOUSERIGHTUP; }
 end
+
 "&ldrag - left button drag."
 keyword{1} ldrag
    abstract { return integer} inline { return C_integer MOUSELEFTDRAG; }
 end
+
 "&mdrag - middle button drag."
 keyword{1} mdrag
    abstract { return integer} inline { return C_integer MOUSEMIDDRAG; }
 end
+
 "&rdrag - right button drag."
 keyword{1} rdrag
    abstract { return integer} inline { return C_integer MOUSERIGHTDRAG; }
 end
+
 "&resize - window resize."
 keyword{1} resize
    abstract { return integer} inline { return C_integer RESIZED; }
 end
+
+"&windowclose - window close button"
+keyword{1} windowclose
+   abstract { return integer } inline { return C_integer WINDOWCLOSED; }
+end
+
+"&mousemove - mouse movement"
+keyword{1} mousemove
+   abstract { return integer } inline { return C_integer MOUSEMOVED; }
+end
+
+"&wheelup - mouse wheel up"
+keyword{1} wheelup
+   abstract { return integer } inline { return C_integer MOUSE4UP; }
+end
+
+"&wheeldown - mouse wheel down "
+keyword{1} wheeldown
+   abstract { return integer } inline { return C_integer MOUSE5UP; }
+end
+
 
 "&ascii - a cset consisting of the 128 ascii characters"
 keyword{1} ascii

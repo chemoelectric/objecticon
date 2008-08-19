@@ -1899,7 +1899,7 @@ class Canvas(Component,SelectiveObjectCodec)
       self.dialog_iw := Canvas.DEFAULT_WIDTH
       self.dialog_ih := Canvas.DEFAULT_HEIGHT
       set_accepts_focus("t")
-      connect(self.handle_move, Event.MOUSE_MOVED)
+      connect(self.handle_move, &mousemove)
       connect(self.handle_lpress, &lpress)
       connect(self.handle_rpress, &rpress)
       connect(self.handle_ldrag, &ldrag)

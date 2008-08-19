@@ -303,7 +303,7 @@ class MenuBar(Component)
             else
                self.set_which_open(t)
          }
-      } else if /self.which_open & e = Event.MOUSE_MOVED then
+      } else if /self.which_open & e = &mousemove then
          #
          # Submenu not open (just highlighted), and a mouse move outside of the
          # bar - this clears the highlight (and leaves menu mode).
@@ -355,7 +355,7 @@ class MenuBar(Component)
          handle_press(e)
       else if e === (&lrelease | &rrelease | &mrelease) then 
          handle_release(e)
-      else if e === (Event.MOUSE_MOVED | &ldrag | &rdrag | &mdrag) then 
+      else if e === (&mousemove | &ldrag | &rdrag | &mdrag) then 
          handle_move(e)
       else if Gui.is_key_event(e) then 
          handle_key(e)

@@ -62,7 +62,12 @@ procedure decode(s)
 end
 
 class Encode()
-   private tag_count, seen, string_buff
+   private readable
+      tag_count
+
+   private
+      seen, 
+      string_buff
 
    public get_string()
       return string_buff.get_string()
@@ -221,7 +226,11 @@ end
 # reproduce the object.
 #
 class Decode()
-   private tag_count, seen
+   private readable
+      tag_count
+
+   private
+      seen
 
    protected decode_string(s)
       local r
@@ -327,7 +336,7 @@ class Decode()
 
          Codec.SET_CODE : {
             n := int_in() | fail
-            res := set([])
+            res := set()
             note_seen(res)
             every 1 to n do 
                insert(res, decode()) | fail
@@ -381,7 +390,11 @@ end
 # Old decode system.
 #
 class LegacyDecode()
-   private tag_count, seen
+   private readable
+      tag_count
+
+   private
+      seen
 
    protected decode_string(s)
       local r
@@ -468,7 +481,7 @@ class LegacyDecode()
 
          "set" : {
             n := integer(line_in()) | fail
-            res := set([])
+            res := set()
             note_seen(res)
             every 1 to n do 
                insert(res, decode()) | fail

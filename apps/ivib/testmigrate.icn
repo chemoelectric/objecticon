@@ -1,8 +1,7 @@
-import lang, ipl.options
+import lang
 
 procedure main(args)
-   local t, l, s, res
-   t := options(args, "-o:-d!")
+   local l, s, res
 
    l := Loader(args[1])
    s := l.load() | stop(l.get_reason())
@@ -191,7 +190,6 @@ class CodePrinter(Decode)
       local i, n, rname, t, res, s
 
       t := char_in() | fail
-
       case t of {
          Codec.REF_CODE : {
             i := int_in() | fail
@@ -209,8 +207,9 @@ class CodePrinter(Decode)
             return
          }
 
-         Codec.CLASS_CODE :
+         Codec.OBJECT_CODE : {
             return decode_class(l)
+         }
 
          Codec.STRING_CODE : {
             print(l,image(s := decode_string(line_in())))

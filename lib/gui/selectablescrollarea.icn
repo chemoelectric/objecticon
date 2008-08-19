@@ -829,7 +829,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       view.connect(self.handle_rpress, &rpress)
       view.connect(self.handle_ldrag, &ldrag)
       view.connect(self.handle_lrelease, &lrelease)
-      view.connect(self.handle_move, Event.MOUSE_MOVED)
+      view.connect(self.handle_move, &mousemove)
       connect(self.handle_key, Event.KEY)
       set_fields(a)
       return

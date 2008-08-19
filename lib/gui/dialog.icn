@@ -423,7 +423,7 @@ class Dialog(Component)
    end
 
    public process_event(e)
-      if e === (&ldrag | &rdrag | &mdrag | Event.MOUSE_MOVED) then
+      if e === (&ldrag | &rdrag | &mdrag | &mousemove) then
          consume_same(e)
 
       create_point_chain()
@@ -504,24 +504,26 @@ class Dialog(Component)
 
    public generate_events(e)
       local s1, s2
-      if e === (&lpress | &rpress | &mpress | Event.MOUSE_4 | Event.MOUSE_5) then {
+      if e === (&wheelup | &wheeldown) then {
+         fire_list(point_chain, e, e)
+      } else if e === (&lpress | &rpress | &mpress) then {
          held := copy(point_chain)
          fire_list(held, e, e)
-      } else if e === (&ldrag | &rdrag | &mdrag | Event.MOUSE_MOVED) then {
+      } else if e === (&ldrag | &rdrag | &mdrag | &mousemove) then {
          s1 := set(\moving) | set()
          s2 := set(point_chain)
          fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
          fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
-         if e === Event.MOUSE_MOVED then 
+         if e === &mousemove then 
             fire_list(point_chain, e, e)
          else
             fire_list(\held, e, e)
          moving := copy(point_chain)
-      } else if e === (&lrelease | &rrelease | &mrelease | Event.MOUSE_4_UP | Event.MOUSE_5_UP) then {
+      } else if e === (&lrelease | &rrelease | &mrelease) then {
          fire_list(\held, e, e)
          held := &null
-      } else if e === Event.CLOSE_BUTTON then {
-         fire(Event.CLOSE_BUTTON, e)
+      } else if e === &windowclose then {
+         fire(e, e)
       } else if Gui.is_key_event(e) then {
          if \self.menu_mode then
             fire_list([self.menu_mode], Event.KEY, e)
@@ -631,7 +633,7 @@ class Dialog(Component)
    # Tooltip processing during an event.
    # 
    private process_tooltip_event(e)
-      if e === Event.MOUSE_MOVED then
+      if e === &mousemove then
          tooltip_states()
       else {
          if tooltip_state = 2 then
@@ -767,7 +769,9 @@ class Dialog(Component)
    # 
    private process_dnd(e)
       local o
-      if e === (&ldrag | &rdrag | &mdrag) then {
+      if e === (&wheelup | &wheeldown) then {
+         fire_list(point_chain, e, e)
+      } else if e === (&ldrag | &rdrag | &mdrag) then {
          # Try the drag holder's drag_event method first...
          if not((\self.curr_drag_holder).drag_event(self.curr_drag, e)) then {
             # No luck with the drag holder, so try to search for a new drag holder.

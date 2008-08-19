@@ -359,7 +359,7 @@ class Menu(TextMenuItem)
          handle_press(e)
       else if e === (&lrelease | &rrelease | &mrelease) then
          handle_release(e)
-      else if e === (Event.MOUSE_MOVED | &ldrag | &rdrag | &mdrag) then
+      else if e === (&mousemove | &ldrag | &rdrag | &mdrag) then
          handle_move(e)
       else if Gui.is_key_event(e) then
          handle_key(e)

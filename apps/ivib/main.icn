@@ -792,7 +792,7 @@ class Main(Dialog)
       every bg := !t.button_groups do
          bg.buttons := bg.get_members()
       d.set_focus((\t.initial_focus).find_focus())
-      d.connect(d.dispose, Event.CLOSE_BUTTON)
+      d.connect(d.dispose, &windowclose)
       d.show_modal(self)
    end
 
@@ -1366,7 +1366,7 @@ class Main(Dialog)
 
       self.add(p)
 
-      self.connect(self.op_quit, Event.CLOSE_BUTTON)
+      self.connect(self.op_quit, &windowclose)
 
       self.attrib("label=Ivib", "height=600", "minheight=400")
       self.set_only_enlarge_width("t")

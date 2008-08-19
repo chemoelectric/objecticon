@@ -27,7 +27,7 @@ class CanvasMenuComponent(CanvasObject)
          c.line(name || ".set_accel(" || image(self.accel) || ")")
 
       if \self.event_method then {
-         c.line(name || ".connect(self, \"" || self.event_method || "\", Event.ACTION)")
+         c.line(name || ".connect(" || self.event_method || ", Event.ACTION)")
          c.add_method("private", self.event_method, ["ev"])
          c.add_import("gui", "Event")
       }

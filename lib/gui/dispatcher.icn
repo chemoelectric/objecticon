@@ -147,7 +147,7 @@ class Dispatcher()
                   # Discard the event and beep in the window.
                   # 
                   e := default.NextEvent(d.win)
-                  if not(e === (Event.MOUSE_MOVED | &lrelease | &rrelease | 
+                  if not(e === (&mousemove | &lrelease | &rrelease | 
                                 &mrelease | &ldrag | &rdrag | &mdrag)) then
                      Alert(d.win)
                }

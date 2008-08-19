@@ -146,7 +146,7 @@ class ComponentTreeDialog(Dialog)
       tree.connect(self.on_tree_press, &rpress)
       tree.set_select_mode(Select.MANY)
       self.add(tree)
-      self.connect(self.on_close_button, Event.CLOSE_BUTTON)
+      self.connect(self.on_close_button, &windowclose)
    end
 
    public new(main)

@@ -244,8 +244,8 @@ class DropDown(SelectionList,Component)
       self.set_constraint("x_fill", "")
       self.set_constraint("x_align", Align.L)
       self.set_constraint("x_weight", "1")
-      connect(self.go_up, Event.MOUSE_4_UP)
-      connect(self.go_down, Event.MOUSE_5_UP)
+      connect(self.go_up, &wheelup)
+      connect(self.go_down, &wheeldown)
       set_fields(a)
       return
    end

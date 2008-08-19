@@ -470,8 +470,8 @@ class Slider(Component)
       connect(self.handle_lpress, &lpress)
       connect(self.handle_ldrag, &ldrag)
       connect(self.handle_lrelease, &lrelease)
-      connect(self.handle_wheel_up, Event.MOUSE_4_UP)
-      connect(self.handle_wheel_down, Event.MOUSE_5_UP)
+      connect(self.handle_wheel_up, &wheelup)
+      connect(self.handle_wheel_down, &wheeldown)
       set_fields(a)
       return
    end

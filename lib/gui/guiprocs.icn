@@ -12,12 +12,6 @@ $include "keysyms.icn"
 
 class Event()
    public static const
-      CLOSE_BUTTON,        # Some extra icon events which don't have keywords.
-      MOUSE_MOVED,                
-      MOUSE_4,
-      MOUSE_5,
-      MOUSE_4_UP,
-      MOUSE_5_UP,
       INVOKE_LATER,        # The synthetic event for invocation via the event queue.
       ICON,                # Events fired by Components.
       BUTTON_RELEASE,
@@ -41,12 +35,6 @@ class Event()
       DIALOG_CLOSED
 
    private static init()
-      CLOSE_BUTTON := -11
-      MOUSE_MOVED := -12
-      MOUSE_4 := -13
-      MOUSE_5 := -14
-      MOUSE_4_UP := -16
-      MOUSE_5_UP := -17
       INVOKE_LATER := 1000
       ICON := 1
       BUTTON_RELEASE := 20
