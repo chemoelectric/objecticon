@@ -2652,6 +2652,14 @@ static void handle_mouse(w,event)
         swap(buttonorder[1],buttonorder[2]);
     }
 
+    /*
+     * Don't generate events for these codes.  Rather, MOUSE4UP and
+     * MOUSE5UP are used to generate the &wheelup and &wheeldown
+     * events respectively.
+     */
+    if (eventcode == MOUSE4 || eventcode == MOUSE5)
+        return;
+
     w->window->pointerx = event->x;
     w->window->pointery = event->y;
 
