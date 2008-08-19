@@ -531,7 +531,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       #
       if view.is_held(&lpress) then
          handle_ldrag(e)
-      else if not(parent_dialog.any_held()) & view.in_region() then
+      else if (parent_dialog.get_held_count() = 0) & view.in_region() then
          handle_move(e)
    end
 

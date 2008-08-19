@@ -510,10 +510,10 @@ class Dialog(Component)
    end
 
    #
-   # Succeed if any mouse button is down
+   # Return the number of buttons presently held down.
    #
-   public any_held()
-      return \!held
+   public get_held_count()
+      return *held
    end
 
    public generate_events(e)
@@ -667,7 +667,7 @@ class Dialog(Component)
       #
       # Don't process ticks whilst blocked, or button held.
       #
-      if \self.is_blocked_flag | any_held() then
+      if \self.is_blocked_flag | (get_held_count() > 0) then
          return
 
       &x := WAttrib(self.win, "pointerx")
@@ -761,7 +761,7 @@ class Dialog(Component)
    public synch_pointer(e)
       local c, ptr
 
-      if any_held() then
+      if get_held_count() > 0 then
          return
 
       if \self.menu_mode then
