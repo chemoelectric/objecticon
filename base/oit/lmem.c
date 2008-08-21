@@ -202,7 +202,8 @@ void lmfree()
     int i;
 
     for (fp = lffirst; fp; fp = fp1) {
-        free(fp->rowdata);
+        if (fp->rowdata)
+            free(fp->rowdata);
         fp1 = fp->next;
         free(fp);
     }

@@ -154,6 +154,7 @@ struct b_record {		/* record block */
  */
 struct class_field {
     struct descrip name;               /* Field name (string qualifier) */
+    word fnum;                          /* Field number */
     word flags;
     struct b_class *defining_class;
     struct descrip *field_descriptor;  /* Pointer to descriptor; null if an instance field */
@@ -175,7 +176,8 @@ struct b_class {
     struct b_class **supers;
     struct b_class **implemented_classes;
     struct class_field **fields;  /* Pointers to field info; one for each field */
-    short *sorted_fields;  /* An array of indices into fields, giving the order sorted by name */
+    short *name_sorted_fields;  /* An array of indices into fields, giving the order sorted by name */
+    short *fnum_sorted_fields;  /* An array of indices into fields, giving the order sorted by fnum */
 };
 
 struct b_object {		/* object block */
@@ -391,6 +393,7 @@ struct progstate {
     struct class_field *ClassFields, *EClassFields;
     word *Classes;
     word *Records;
+    word  FtabWidth;   /* Number of cols in field table */
     short *Ftabp;
     dptr Fnames, Efnames;
     word *StandardFields;

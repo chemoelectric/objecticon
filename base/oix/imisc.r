@@ -351,19 +351,40 @@ static int same_package(dptr p1, dptr p2)
 }
 
 /*
- * Do a binary search look up of a field name in the given class.  Returns the
- * index into the class's field array, or -1 if not found.
+ * Do a binary search look up of a field name in the given class.
+ * Returns the index into the class's field array, or -1 if not found.
  */
-static int lookup_class_field_by_name(struct b_class *class, dptr name)
+int lookup_class_field_by_name(struct b_class *class, dptr name)
 {
     int i, c, m, l = 0, r = class->n_instance_fields + class->n_class_fields - 1;
     while (l <= r) {
         m = (l + r) / 2;
-        i = class->sorted_fields[m];
+        i = class->name_sorted_fields[m];
         c = lexcmp(&class->fields[i]->name, name);
         if (c == Greater)
             r = m - 1;
         else if (c == Less)
+            l = m + 1;
+        else
+            return i;
+    }
+    return -1;
+}
+
+/*
+ * Do a binary search look up of a field number in the given class.
+ * Returns the index into the class's field array, or -1 if not found.
+ */
+int lookup_class_field_by_fnum(struct b_class *class, int fnum)
+{
+    int i, c, m, l = 0, r = class->n_instance_fields + class->n_class_fields - 1;
+    while (l <= r) {
+        m = (l + r) / 2;
+        i = class->fnum_sorted_fields[m];
+        c = class->fields[i]->fnum - fnum;
+        if (c > 0)
+            r = m - 1;
+        else if (c < 0)
             l = m + 1;
         else
             return i;
@@ -413,10 +434,18 @@ int lookup_class_field(struct b_class *class, dptr query, int query_flag)
             return lookup_class_field_by_name(class, &fnames[fnum]);
         }
 
+        if (ftabp) {
+            /*
+             * The simple case - use the field table.
+             */
+            return ftabp[fnum * ftabwidth + class->fieldtable_col];
+        }
+
         /*
-         * The simple case - use the field table.
+         * No field table, so lookup in the sorted fnum table.
          */
-        return ftabp[fnum * (*records + *classes) + class->fieldtable_col];
+        return lookup_class_field_by_fnum(class, fnum);
+
     } else {
         int i, nf = class->n_instance_fields + class->n_class_fields;
         /*
@@ -487,7 +516,7 @@ static int lookup_record_field(struct b_constructor *recdef, dptr num)
         return -1;
     }
 
-    if (recdef->program != curpstate) {
+    if (!ftabp || recdef->program != curpstate) {
         s = fnames[fnum];
         for (i = 0; i < recdef->n_fields; ++i) {
             if (StrLen(s) == StrLen(recdef->field_names[i]) &&

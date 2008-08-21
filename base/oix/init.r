@@ -387,7 +387,16 @@ void icon_init(char *name)
     eclassfields = (struct class_field *)(code + hdr.Classes);
     classes = (word *)(code + hdr.Classes);
     records = (word *)(code + hdr.Records);
-    ftabp = (short *)(code + hdr.Ftab);
+    /*
+     * The field table is optional and will be zero if not generated.
+     */
+    if (hdr.Ftab) {
+        ftabp = (short *)(code + hdr.Ftab);
+        ftabwidth = *classes + *records;
+    } else {
+        ftabp = 0;
+        ftabwidth = 0;
+    }
     standardfields = (word *)(code + hdr.StandardFields);
     fnames = (dptr)(code + hdr.Fnames);
     globals = efnames = (dptr)(code + hdr.Globals);
@@ -1043,7 +1052,16 @@ struct b_coexpr * loadicode(name, theInput, theOutput, theError, bs, ss, stk)
     pstate->EClassFields = (struct class_field *)(pstate->Code + hdr.Classes);
     pstate->Classes = (word *)(pstate->Code + hdr.Classes);
     pstate->Records = (word *)(pstate->Code + hdr.Records);
-    pstate->Ftabp   = (short *)(pstate->Code + hdr.Ftab);
+    /*
+     * The field table is optional and will be zero if not generated.
+     */
+    if (hdr.Ftab) {
+        pstate->Ftabp = (short *)(pstate->Code + hdr.Ftab);
+        pstate->FtabWidth = *pstate->Classes + *pstate->Records;
+    } else {
+        pstate->Ftabp = 0;
+        pstate->FtabWidth = 0;
+    }
     pstate->StandardFields = (word *)(pstate->Code + hdr.StandardFields);
     pstate->Fnames  = (dptr)(pstate->Code + hdr.Fnames);
     pstate->Globals = pstate->Efnames = (dptr)(pstate->Code + hdr.Globals);

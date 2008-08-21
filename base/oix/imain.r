@@ -522,7 +522,8 @@ void resolve(pstate)
                 cb->fields = (struct class_field **)(code + (int)cb->fields);
                 for (i = 0; i < n_fields; ++i) 
                     cb->fields[i] = (struct class_field*)(code + (int)cb->fields[i]);
-                cb->sorted_fields = (short *)(code + (int)cb->sorted_fields);
+                cb->name_sorted_fields = (short *)(code + (int)cb->name_sorted_fields);
+                cb->fnum_sorted_fields = (short *)(code + (int)cb->fnum_sorted_fields);
 #ifdef DEBUG_LOAD
                 printf("%8x\t\t\tClass\n", cb);
                 printf("\t%d\t\t\t  Title\n", cb->title);
@@ -538,7 +539,9 @@ void resolve(pstate)
                 for (i = 0; i < n_fields; ++i) 
                     printf("\t%8x\t\t\t  Field info %d\n",cb->fields[i], i);
                 for (i = 0; i < n_fields; ++i) 
-                    printf("\t%d\t\t\t  Sorted field array\n",cb->sorted_fields[i]);
+                    printf("\t%d\t\t\t  Name sorted field array\n",cb->name_sorted_fields[i]);
+                for (i = 0; i < n_fields; ++i) 
+                    printf("\t%d\t\t\t  Fnum sorted field array\n",cb->fnum_sorted_fields[i]);
 #endif
                 break;
             }
@@ -634,7 +637,10 @@ struct class_field *lookup_standard_field(int standard_field_num, struct b_class
     int i;
     if (fnum == -1)
         return 0;
-    i = p->Ftabp[fnum * (*(p->Records) + *(p->Classes)) + class->fieldtable_col];
+    if (p->Ftabp)
+        i = p->Ftabp[fnum * p->FtabWidth + class->fieldtable_col];
+    else
+        i = lookup_class_field_by_fnum(class, fnum);
     if (i == -1)
         return 0;
     return class->fields[i];

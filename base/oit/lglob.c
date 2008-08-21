@@ -413,12 +413,15 @@ static int add_fieldtable_entry(char *name, int column_num, int field_num)
         fp = New(struct fentry);
         fp->name = name;
         fp->field_id = nfields++;
-        /* Allocate and init the data for this row */
-        fp->rowdata = malloc(fieldtable_cols * sizeof(int));
-        if (!fp->rowdata)
-            quit("Out of memory");
-        for (j = 0; j < fieldtable_cols; ++j)
-            fp->rowdata[j] = -1;
+        if (Tflag) {
+            /* Allocate and init the data for this row */
+            fp->rowdata = malloc(fieldtable_cols * sizeof(int));
+            if (!fp->rowdata)
+                quit("Out of memory");
+            for (j = 0; j < fieldtable_cols; ++j)
+                fp->rowdata[j] = -1;
+        } else
+            fp->rowdata = 0;
         fp->b_next = lfhash[i];
         lfhash[i] = fp;
         if (lflast) {
@@ -427,10 +430,11 @@ static int add_fieldtable_entry(char *name, int column_num, int field_num)
         } else
             lffirst = lflast = fp;
     }
-    if (fp->rowdata[column_num] != -1)
-        quit("Unexpected fieldtable clash");
-
-    fp->rowdata[column_num] = field_num;
+    if (Tflag) {
+        if (fp->rowdata[column_num] != -1)
+            quit("Unexpected fieldtable clash");
+        fp->rowdata[column_num] = field_num;
+    }
     return fp->field_id;
 }
 

@@ -545,13 +545,15 @@ void dumpstate()
             }
         }
     }
-    fprintf(stderr, "Field table\n---------\n");
-    for (fe = lffirst; fe; fe = fe->next) {
-        fprintf(stderr, "Field %s id=%d\n\t", fe->name, fe->field_id);
-        for (i = 0; i < fieldtable_cols; i++) {
-            fprintf(stderr, "%3d ", fe->rowdata[i]);
+    if (Tflag) {
+        fprintf(stderr, "Field table\n---------\n");
+        for (fe = lffirst; fe; fe = fe->next) {
+            fprintf(stderr, "Field %s id=%d\n\t", fe->name, fe->field_id);
+            for (i = 0; i < fieldtable_cols; i++) {
+                fprintf(stderr, "%3d ", fe->rowdata[i]);
+            }
+            fprintf(stderr, "\n");
         }
-        fprintf(stderr, "\n");
     }
     fflush(stderr);
 }

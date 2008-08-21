@@ -517,6 +517,8 @@ int     field_access(dptr cargp);
 int     check_access(struct class_field *cf, struct b_class *instance_class);
 int     lookup_class_field(struct b_class *class, dptr query, int query_flag);
 dptr    lookup_global(dptr name, struct progstate *prog);
+int     lookup_class_field_by_name(struct b_class *class, dptr name);
+int     lookup_class_field_by_fnum(struct b_class *class, int fnum);
 
 int	bfunc		(void);
 long	ckadd		(long i, long j);

@@ -16,8 +16,8 @@ extern int strinv;	/* -f s: allow full string invocation */
 extern int verbose;	/* -v n: verbosity of commentary */
 extern int neweronly;	/* -n: only translate .icn if newer than .u */
 extern int Dflag;       /* -L: link debug */
-extern int Zflag;	/* -Z disables icode-gz compression */
-extern int Gflag;
+extern int Zflag;	/* -Z: icode-gz compression */
+extern int Tflag;       /* -T: generate field table */
 
 extern char *progname;
 
