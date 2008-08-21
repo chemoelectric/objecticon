@@ -503,13 +503,13 @@ function{0,1} socketpair(typ)
        */
       MakeCStr("socket", &fname);
 
-      Protect(fl = alcfile(Fs_Socket | Fs_Read, &fname), runerr(0));
+      Protect(fl = alcfile(Fs_Socket | Fs_Read | Fs_Write, &fname), runerr(0));
       fl->u.fd = fds[0];
       f.dword = D_File;
       BlkLoc(f) = (union block *)fl;
       c_put(&result, &f);
 
-      Protect(fl = alcfile(Fs_Socket | Fs_Write, &fname), runerr(0));
+      Protect(fl = alcfile(Fs_Socket | Fs_Read | Fs_Write, &fname), runerr(0));
       fl->u.fd = fds[1];
       BlkLoc(f) = (union block *)fl;
       c_put(&result, &f);
