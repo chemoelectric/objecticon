@@ -643,7 +643,7 @@ function{0,1} fork()
       int pid;
       IntVal(amperErrno) = 0;
 #if MSWIN32
-      fail;
+      runerr(121);
 #else					/* MSWIN32 */
       if ((pid = fork()) < 0) {
 	 IntVal(amperErrno) = errno;
