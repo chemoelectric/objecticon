@@ -1313,10 +1313,9 @@ static void gentables()
             fprintf(dbgfile, "%ld:\t\t\t\t\t# %s id=%d\n", (long)pc, fp->name, fp->field_id);
         for (i = 0; i < fieldtable_cols; i++) {
             if (Dflag)
-                fprintf(dbgfile, "\t%d\n", fp->rowdata[i]);
+                fprintf(dbgfile, "\t%d", fp->rowdata[i]);
             outshort(fp->rowdata[i]);
-
-            if (Dflag && (i == fieldtable_cols - 1 || ((i + 1) & 03) == 0))
+            if (Dflag && (i == fieldtable_cols - 1 || ((i + 1) % 8) == 0))
                 putc('\n', dbgfile);
         }
     }
