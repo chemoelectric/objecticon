@@ -1,5 +1,7 @@
 #SRC: V9GEN
 
+import io
+
 $include "posix.icn"
 
 procedure main ()
@@ -63,16 +65,16 @@ procedure main ()
 #  test seek() and where()
 
    f := open("recent.dat") | stop("can't open recent.dat")
-   write(image(seek(f,10)))
-   write(tell(f))
+   write(image(f.seek(11)))
+   write(f.tell())
    write(image(reads(f,10)))
-   write(tell(f))
-   write(tell(f))
-   seek(f,-2,SEEK_END)
-   write(tell(f))
+   write(f.tell())
+   write(f.tell())
+   f.seek(-2)
+   write(f.tell())
    write(image(reads(f,1)))
-   write(tell(f))
-   close(f)
+   write(f.tell())
+   f.close()
 
 # test ord() and char(), and print messages if wrong results
 
@@ -100,13 +102,10 @@ procedure main ()
 
 #  test open(directory)
 
-   f := opendir(".") | stop("can't open `.'")
+   f := DirStream.open(".") | stop("can't open `.'")
    fset := set()
    # try three kinds of reading in rotation
-   while insert(fset, read(f)) do {
-      insert(fset, !f)			# note just one per loop pass
-      insert(fset, reads(f, 25))	# assumes no name longer than 25
-      }
+   while insert(fset, read(f))
    every s := ![".", "..", "Makefile", "recent.icn", "recogn.dat", "nope"] do
       if member(fset, s) then
          write("found file: ", s)

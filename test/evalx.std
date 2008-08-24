@@ -32,14 +32,14 @@
 7
 9
 every write("..."(1,10,2)) ----> none
-function write
+procedure io.write
 every write("image"(write)) ----> none
 "[:]"("abcdef",3,5) ----> "cd"
 "[]"(&lcase,3) ----> "c"
 image(proc("^",1)) ----> "function ^"
 image(proc("^",2)) ----> "function ^"
 proc("+",2)(3,4) ----> 7
-proc(proc)("write") ----> function write
+proc(proc)("write") ----> none
 proc("+") ----> function +
 ?10 ----> 3
 ?10 ----> 5
@@ -217,7 +217,7 @@ y ----> 2
 ?30 ----> 27
 .x ----> &null
 ."abc" ----> "abc"
-.[] ----> list_22(0)
+.[] ----> list_469(0)
 .main ----> procedure main
 /main ----> none
 /"abc" ----> none
@@ -227,7 +227,7 @@ y ----> 2
 \main ----> procedure main
 \"abc" ----> "abc"
 \x ----> none
-\[] ----> list_24(0)
+\[] ----> list_491(0)
 \&null ----> none
 1 | 2 | 3 ----> 1
 |(1 to 10) ----> 1

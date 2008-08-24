@@ -9,16 +9,16 @@
 "&error"
 "table_1[\"abc\"]"
 "table_1[\"abc\"]"
-"list_2[1]"
-"list_2[2]"
-"list_2[3]"
-"list_2[200]"
-"list_2[191]"
-"list_3[1]"
-"list_3[2]"
-"list_3[3]"
-"list_3[200]"
-"list_3[191]"
+"list_25[1]"
+"list_25[2]"
+"list_25[3]"
+"list_25[200]"
+"list_25[191]"
+"list_26[1]"
+"list_26[2]"
+"list_26[3]"
+"list_26[200]"
+"list_26[191]"
 "record complex_1.r"
 
 ----------------------------------------------------------------------
@@ -41,19 +41,53 @@ recurse local identifiers:
    y = -4
 
 global identifiers:
+   classof = function classof
    complex = constructor complex
+   copy = function copy
+   cset = function cset
    display = function display
+   exit = function exit
+   find = function find
+   get = function get
    image = function image
+   integer = function integer
+   io.BufferStream = class io.BufferStream
+   io.DescStream = class io.DescStream
+   io.FileStream = class io.FileStream
+   io.Stream = class io.Stream
+   io.stop = procedure io.stop
+   io.write = procedure io.write
+   is = function is
+   lang.fatal = procedure lang.fatal
    list = function list
    main = procedure main
    main2 = procedure main2
+   many = function many
+   map = function map
+   move = function move
    name = function name
+   numeric = function numeric
+   pop = function pop
+   pos = function pos
+   proc = function proc
    push = function push
+   put = function put
    recurse = procedure recurse
    repl = function repl
+   runerr = function runerr
+   string = function string
+   subtype = function subtype
+   tab = function tab
    table = function table
+   type = function type
+   upto = function upto
+   util.Field = class util.Field
+   util.SetFields = class util.SetFields
+   util.errno = procedure util.errno
+   util.error = procedure util.error
+   util.find_and_skip = procedure util.find_and_skip
+   util.to_flag = procedure util.to_flag
    variable = function variable
-   write = function write
 ----------------------------------------------------------------------
 co-expression_1(1)
 
@@ -85,30 +119,64 @@ recurse local identifiers:
 main local identifiers:
    a = 1
    x = 2
-   l0 = list_4 = []
-   l1 = list_5 = ['ABCDEFGHIKLMNOPQ...']
-   l2 = list_6 = ["supercalifragili...","expialidocious"]
-   l3 = list_7 = [1.618033989,2.718281828,3.141592654]
-   l4 = list_8 = [1,2,3,4]
-   l5 = list_9 = [1,2,3,4,5]
-   l6 = list_10 = [1,2,3,4,5,6]
-   l7 = list_11 = [1,2,3,...,5,6,7]
-   l8 = list_12 = [1,2,3,...,6,7,8]
-   l9 = list_13 = [list_4 = [],list_5(1),list_6(2),...,list_10(6),list_11(7),list_12(8)]
+   l0 = list_59 = []
+   l1 = list_60 = ['ABCDEFGHIKLMNOPQ...']
+   l2 = list_61 = ["supercalifragili...","expialidocious"]
+   l3 = list_62 = [1.618033989,2.718281828,3.141592654]
+   l4 = list_63 = [1,2,3,4]
+   l5 = list_64 = [1,2,3,4,5]
+   l6 = list_65 = [1,2,3,4,5,6]
+   l7 = list_66 = [1,2,3,...,5,6,7]
+   l8 = list_67 = [1,2,3,...,6,7,8]
+   l9 = list_68 = [list_59 = [],list_60(1),list_61(2),...,list_65(6),list_66(7),list_67(8)]
    y = 3
 
 global identifiers:
+   classof = function classof
    complex = constructor complex
+   copy = function copy
+   cset = function cset
    display = function display
+   exit = function exit
+   find = function find
+   get = function get
    image = function image
+   integer = function integer
+   io.BufferStream = class io.BufferStream
+   io.DescStream = class io.DescStream
+   io.FileStream = class io.FileStream
+   io.Stream = class io.Stream
+   io.stop = procedure io.stop
+   io.write = procedure io.write
+   is = function is
+   lang.fatal = procedure lang.fatal
    list = function list
    main = procedure main
    main2 = procedure main2
+   many = function many
+   map = function map
+   move = function move
    name = function name
+   numeric = function numeric
+   pop = function pop
+   pos = function pos
+   proc = function proc
    push = function push
+   put = function put
    recurse = procedure recurse
    repl = function repl
+   runerr = function runerr
+   string = function string
+   subtype = function subtype
+   tab = function tab
    table = function table
+   type = function type
+   upto = function upto
+   util.Field = class util.Field
+   util.SetFields = class util.SetFields
+   util.errno = procedure util.errno
+   util.error = procedure util.error
+   util.find_and_skip = procedure util.find_and_skip
+   util.to_flag = procedure util.to_flag
    variable = function variable
-   write = function write
 ----------------------------------------------------------------------

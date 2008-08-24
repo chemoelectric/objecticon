@@ -1,4 +1,4 @@
-import mail, util, lang
+import mail, util, lang, io
 
 procedure test_folding()
    local m,i,spc,j,word,k,s,t
@@ -74,7 +74,7 @@ procedure test_base64_impl(x)
    bh := Base64Handler()
 
    s := bh.encode_data(,x) | stop("Couldn't encode ",x)
-   t := bh.decode_data(,s) | stop("Couldn't decode ",image(s)," ",bh.get_reason())
+   t := bh.decode_data(,s) | stop("Couldn't decode ",image(s)," ",&why)
 
    x == t | stop("base64 failed on ", image(x), ":s=",image(s),"t=",image(t))
 end
@@ -95,7 +95,7 @@ procedure test_base64()
    s := m.to_rfc822()
    m2 := Message()
    m2.parse(s)
-   bin2 := m.get_decoded_content() | stop("base64 failed to decode content ", m.get_reason())
+   bin2 := m.get_decoded_content() | stop("base64 failed to decode content ", &why)
    bin == bin2 | stop("base64 - different binary content")
 end
 
@@ -192,10 +192,10 @@ procedure testsmtp()
    t := SmtpClient()
    t.set_hostname("tweedle.bracknell")
    t.set_logging(1)
-   t.connect() | stop(t.get_reason())
-   t.send_message(m) | stop(t.get_reason())
-   t.send_message(m) | stop(t.get_reason())
-   t.disconnect() |  stop(t.get_reason())
+   t.connect() | stop(&why)
+   t.send_message(m) | stop(&why)
+   t.send_message(m) | stop(&why)
+   t.disconnect() |  stop(&why)
 
 end
 
@@ -448,7 +448,7 @@ procedure test_message1()
    q.set_content_type(ct) 
    q.set_content_transfer_encoding("quoted-printable")
    q.set_content_object(xml := "<xml>\n<tag>\ndata<tag><xml>\n") | 
-      stop("Couldn't set content object:", q.get_reason())
+      stop("Couldn't set content object:", &why)
 
    mp := Multipart()
    mp.set_preamble("Preamble")
@@ -458,7 +458,7 @@ procedure test_message1()
 
    m := Message()
    m.set_header("Content-Type", "multipart/thing")
-   m.set_content_object(mp) | stop("Failed to set_content_object:",m.get_reason())
+   m.set_content_object(mp) | stop("Failed to set_content_object:",&why)
    m.set_subject("Here is some stuff")
    m.set_from(Mailbox("rparlett@localhost"))
    m.set_to(Mailbox("rparlett@localhost"))
@@ -514,7 +514,7 @@ procedure test_message3()
 
    m := Message()
    m.set_header("Content-Type", "message/rfc822")
-   m.set_content_object(p) | stop("Failed to set_content_object:",m.get_reason())
+   m.set_content_object(p) | stop("Failed to set_content_object:",&why)
 
    s := m.to_rfc822()
    z := Message()
@@ -529,22 +529,20 @@ procedure test_message_errors()
    m := Message()
    m.set_header("to","people: smith@xyz.com,jsoap@soap\"suds.co.uk ;")
    print{"M1.Get to",m.get_to() }
-   print{"M1.Get reason", m.get_reason()}
+   print{"M1.Get reason", &why}
 
    m := Message()
-   print{"M2.Get reason", m.get_reason()}
    print{"M2.Get to",m.get_to() }
-   print{"M2.Get reason", m.get_reason()}
+   print{"M2.Get reason", &why}
 
    m := Message()
    m.set_header("to","fred\"")
    print{"M3.Get to",m.get_to() }
-   print{"M3.Get reason", m.get_reason()}
+   print{"M3.Get reason", &why}
 
    m := Message()
    m.set_header("to","fred@abc.com")
    print{"M4.Get to",m.get_to() }
-   print{"M4.Get reason", m.get_reason()}
 end
 
 procedure main()

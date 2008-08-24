@@ -78,16 +78,16 @@ error in line 26:
 
 error in line 32:
    &error = -13
-   &errornumber = 105
-   &errortext = "file expected"
-   &errorvalue = list_2(0)
+   &errornumber = 118
+   &errortext = "co-expression expected"
+   &errorvalue = list_154(0)
 display(,[]) | monitor(&line) ----> 32
 
 error in line 34:
    &error = -14
    &errornumber = 103
    &errortext = "string expected"
-   &errorvalue = list_3(0)
+   &errorvalue = list_168(0)
 ([] ~== "x") | monitor(&line) ----> 34
 
 error in line 36:
@@ -115,7 +115,7 @@ error in line 42:
    &error = -18
    &errornumber = 120
    &errortext = "two csets or two sets expected"
-   &errorvalue = list_4(0)
+   &errorvalue = list_221(0)
 (&cset ++ []) | monitor(&line) ----> 42
 
 error in line 44:
@@ -191,7 +191,7 @@ error in line 68:
    &error = -29
    &errornumber = 120
    &errortext = "two csets or two sets expected"
-   &errorvalue = list_5(0)
+   &errorvalue = list_363(0)
 ([] ** "abc") | monitor(&line) ----> 68
 
 error in line 70:
@@ -261,14 +261,14 @@ error in line 92:
    &error = -39
    &errornumber = 103
    &errortext = "string expected"
-   &errorvalue = list_6(0)
+   &errorvalue = list_494(0)
 (&subject := []) | monitor(&line) ----> 92
 
 error in line 94:
    &error = -40
    &errornumber = 103
    &errortext = "string expected"
-   &errorvalue = list_7(0)
+   &errorvalue = list_508(0)
 ([] ? []) | monitor(&line) ----> 94
 
 error in line 96:
@@ -289,7 +289,7 @@ error in line 104:
    &error = -43
    &errornumber = 102
    &errortext = "numeric expected"
-   &errorvalue = list_9(0)
+   &errorvalue = list_549(0)
 ([] ^ i) | monitor(&line) ----> 104
 
 error in line 106:
@@ -331,7 +331,7 @@ error in line 116:
    &error = -49
    &errornumber = 103
    &errortext = "string expected"
-   &errorvalue = list_10(0)
+   &errorvalue = list_628(0)
 =[] | monitor(&line) ----> 116
 
 error in line 118:
@@ -355,178 +355,164 @@ error in line 122:
    &errorvalue = "a"
 (2 \ "a") | monitor(&line) ----> 122
 
-error in line 128:
+error in line 127:
    &error = -53
    &errornumber = 101
    &errortext = "integer expected or out of range"
    &errorvalue = ""
-right("","") | monitor(&line) ----> 128
+right("","") | monitor(&line) ----> 127
 
-error in line 130:
+error in line 129:
    &error = -54
-   &errornumber = 105
-   &errortext = "file expected"
+   &errornumber = 624
+   &errortext = "record, class, cast or object expected"
    &errorvalue = "F"
-close("F") | monitor(&line) ----> 130
+close("F") | monitor(&line) ----> 129
 
-error in line 132:
+error in line 131:
    &error = -55
    &errornumber = 104
    &errortext = "cset expected"
-   &errorvalue = list_11(0)
-trim(&lcase,[]) | monitor(&line) ----> 132
+   &errorvalue = list_707(0)
+trim(&lcase,[]) | monitor(&line) ----> 131
 
-error in line 134:
+error in line 133:
    &error = -56
    &errornumber = 101
    &errortext = "integer expected or out of range"
-   &errorvalue = list_12(0)
-list([]) | monitor(&line) ----> 134
+   &errorvalue = list_721(0)
+list([]) | monitor(&line) ----> 133
 
-error in line 136:
+error in line 135:
    &error = -57
-   &errornumber = 205
-   &errortext = "invalid value"
-   &errorvalue = 0
-reads(f,0) | monitor(&line) ----> 136
-
-error in line 138:
-   &error = -58
-   &errornumber = 105
-   &errortext = "file expected"
-   &errorvalue = "f"
-read("f") | monitor(&line) ----> 138
-
-error in line 140:
-   &error = -59
    &errornumber = 104
    &errortext = "cset expected"
-   &errorvalue = list_13(0)
-bal([],,,"") | monitor(&line) ----> 140
+   &errorvalue = list_735(0)
+bal([],,,"") | monitor(&line) ----> 135
 
-error in line 142:
+error in line 137:
+   &error = -58
+   &errornumber = 101
+   &errortext = "integer expected or out of range"
+   &errorvalue = "a"
+pos("a") | monitor(&line) ----> 137
+
+error in line 139:
+   &error = -59
+   &errornumber = 101
+   &errortext = "integer expected or out of range"
+   &errorvalue = "a"
+139
+
+error in line 141:
    &error = -60
-   &errornumber = 101
-   &errortext = "integer expected or out of range"
+   &errornumber = 102
+   &errortext = "numeric expected"
    &errorvalue = "a"
-pos("a") | monitor(&line) ----> 142
-
-error in line 144:
-   &error = -61
-   &errornumber = 101
-   &errortext = "integer expected or out of range"
-   &errorvalue = "a"
-144
+(2 % "a") | monitor(&line) ----> 141
 
 error in line 146:
+   &error = -61
+   &errornumber = 102
+   &errortext = "numeric expected"
+   &errorvalue = "a"
+(2 * "a") | monitor(&line) ----> 146
+
+error in line 148:
    &error = -62
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
-(2 % "a") | monitor(&line) ----> 146
+(2 / "a") | monitor(&line) ----> 148
 
-error in line 151:
+error in line 150:
    &error = -63
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
-(2 * "a") | monitor(&line) ----> 151
+(2 + "a") | monitor(&line) ----> 150
+(-36 ^ -9) | monitor(&line) ----> 0
 
-error in line 153:
+error in line 154:
    &error = -64
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
-(2 / "a") | monitor(&line) ----> 153
+(2 < "a") | monitor(&line) ----> 154
 
-error in line 155:
+error in line 156:
    &error = -65
    &errornumber = 102
    &errortext = "numeric expected"
-   &errorvalue = "a"
-(2 + "a") | monitor(&line) ----> 155
-(-36 ^ -9) | monitor(&line) ----> 0
+   &errorvalue = &null
+(0 > &null) | monitor(&line) ----> 156
 
-error in line 159:
+error in line 158:
    &error = -66
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
-(2 < "a") | monitor(&line) ----> 159
+(2 <= "a") | monitor(&line) ----> 158
 
-error in line 161:
+error in line 160:
    &error = -67
    &errornumber = 102
    &errortext = "numeric expected"
-   &errorvalue = &null
-(0 > &null) | monitor(&line) ----> 161
+   &errorvalue = "a"
+(2 > "a") | monitor(&line) ----> 160
 
-error in line 163:
+error in line 162:
    &error = -68
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
-(2 <= "a") | monitor(&line) ----> 163
+(2 = "a") | monitor(&line) ----> 162
 
-error in line 165:
+error in line 164:
    &error = -69
    &errornumber = 102
    &errortext = "numeric expected"
    &errorvalue = "a"
-(2 > "a") | monitor(&line) ----> 165
+(2 ~= "a") | monitor(&line) ----> 164
 
-error in line 167:
+error in line 166:
    &error = -70
-   &errornumber = 102
-   &errortext = "numeric expected"
-   &errorvalue = "a"
-(2 = "a") | monitor(&line) ----> 167
-
-error in line 169:
-   &error = -71
-   &errornumber = 102
-   &errortext = "numeric expected"
-   &errorvalue = "a"
-(2 ~= "a") | monitor(&line) ----> 169
-
-error in line 171:
-   &error = -72
    &errornumber = 108
    &errortext = "list expected"
    &errorvalue = "abc"
-(list(10)) ||| "abc" | monitor(&line) ----> 171
+(list(10)) ||| "abc" | monitor(&line) ----> 166
 
-error in line 177:
-   &error = -73
+error in line 172:
+   &error = -71
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = "a"
-(x :=: "a") | monitor(&line) ----> 177
+(x :=: "a") | monitor(&line) ----> 172
 
-error in line 179:
-   &error = -74
+error in line 174:
+   &error = -72
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = "b"
-(x <-> "b") | monitor(&line) ----> 179
+(x <-> "b") | monitor(&line) ----> 174
 
-error in line 181:
-   &error = -75
+error in line 176:
+   &error = -73
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = 4
-((x & 2 & 3 & 4) := 3) | monitor(&line) ----> 181
+((x & 2 & 3 & 4) := 3) | monitor(&line) ----> 176
 
-error in line 183:
-   &error = -76
+error in line 178:
+   &error = -74
    &errornumber = 111
    &errortext = "variable expected"
    &errorvalue = 1
-((1 <- y) & &fail) | monitor(&line) ----> 183
+((1 <- y) & &fail) | monitor(&line) ----> 178
 
-error in line 185:
-   &error = -77
+error in line 180:
+   &error = -75
    &errornumber = 206
    &errortext = "negative first argument to real exponentiation"
-(-36. ^ -9.) | monitor(&line) ----> 185
+(-36. ^ -9.) | monitor(&line) ----> 180
  eginopst

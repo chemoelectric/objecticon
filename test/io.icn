@@ -1,8 +1,10 @@
 #SRC: JCON
+#  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
 
 $include "posix.icn"
 
-#  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
+import io
+
 
 procedure main()
    local L, f, m, n, t1, t2
@@ -15,25 +17,23 @@ procedure main()
 
    write()
    write(read())
-   write(read(&input))
+   write(read())
    while write(read()) do break
-   write(!&input)
-   every write(!&input \ 2)
-   every write(!&input) \ 2
-
-   &error := -1
-   write()
-   write("flush /etc/motd: ", image(flush(m)) | "FAILED")
-   write("close /etc/motd: ", image(close(m)) | "FAILED")
-   write("close /etc/motd: ", image(close(m)) | "FAILED")
-   write("flush /etc/motd: ", image(flush(m)) | "FAILED")
+   write(|read())
+   every write(|read() \ 2)
+   every write(|read()) \ 2
 
    write()
-   write("flush /dev/null: ", image(flush(n)) | "FAILED")
-   write("close /dev/null: ", image(close(n)) | "FAILED")
-   write("close /dev/null: ", image(close(n)) | "FAILED")
-   write("flush /dev/null: ", image(flush(n)) | "FAILED")
-   &error := 0
+   write("flush /etc/motd: ", image(m.flush()) | "FAILED")
+   write("close /etc/motd: ", image(m.close()) | "FAILED")
+   write("close /etc/motd: ", image(m.close()) | "FAILED")
+   write("flush /etc/motd: ", image(m.flush()) | "FAILED")
+
+   write()
+   write("flush /dev/null: ", image(n.flush()) | "FAILED")
+   write("close /dev/null: ", image(n.close()) | "FAILED")
+   write("close /dev/null: ", image(n.close()) | "FAILED")
+   write("flush /dev/null: ", image(n.flush()) | "FAILED")
 
    every remove("tmp1" | "tmp2")
    every remove("tmp1" | "tmp2")
@@ -47,11 +47,11 @@ procedure main()
    rfile("tmp1")
    wfile("tmp1", "a", "gets extended")
    rfile("tmp1")
-   wfile("tmp1", "r+", "changed")
+   wfile("tmp1", "rw", "changed")
    rfile("tmp1")
-   wfile("tmp1", "r+", "mode b ")
+   wfile("tmp1", "b", "mode b ")
    rfile("tmp1")
-   wfile("tmp1", "w+", "cleared anew")
+   wfile("tmp1", "crw", "cleared anew")
    rfile("tmp1")
    rename("tmp1", "tmp2")
    rfile("tmp2")
@@ -59,30 +59,16 @@ procedure main()
    write()
    write(image(t1 := open("tmp1", "w")) | "can't open tmp1")
    write(image(t2 := open("tmp2", "w")) | "can't open tmp2")
-   writes(">stdout")
-   writes(t1, ">1a")
-   writes(t2, ">2a")
-   writes(&output)
-   writes(">stdout")
-   writes(t2, ">2b")
-   writes(t1, ">1b")
-   writes(&output)
-   write(">stdout")
-   write(t1, ">1c")
-   write(t2)
-   write(t2, ">2c")
-   write(&output)
-   write(">stdout")
-   write(t2, ">2d")
-   write(t1)
-   write(t1, ">1d")
-   write(&output)
+   writes(">stdout", t1, ">1a", t2, ">2a", FileStream.b_stdout)
+   writes(">stdout", t2, ">2b", t1, ">1b", FileStream.b_stdout)
+   write(">stdout", t1, ">1c", t2, t2, ">2c", FileStream.b_stdout)
+   write(">stdout", t2, ">2d", t1, t1, ">1d", FileStream.b_stdout)
    every write(t1 | t2)
    writes(t1, ">1e")
    writes(t2, ">2e")
    write(t1, ">1f")
    write(t2, ">2f")
-   every close(t1 | t2)
+   every (t1 | t2).close()
    rfile("tmp1")
    rfile("tmp2")
 
@@ -112,7 +98,7 @@ end
 #  wfile(name, mode, s) -- break apart string and write file
 
 procedure wfile(name, mode, s)
-   local f, x
+   local f
 
    write()
    writes("write ", name, ",", mode, ":\t ")
@@ -120,13 +106,12 @@ procedure wfile(name, mode, s)
       writes(s)
       tab(many(' '))
       while not pos(0) do {
-         x := tab(upto(' ') | 0)
-	 write(f, x) | stop("Failed to write:", strerror())
+	 write(f, tab(upto(' ') | 0))
 	 tab(many(' '))
          }
-      write(" : ", tell(f))
-      flush(f)
-      close(f)
+      write(" : ", f.tell())
+      f.flush()
+      f.close()
       }
    else {
       write("can't open")
@@ -134,12 +119,6 @@ procedure wfile(name, mode, s)
    return
 end
 
-procedure seekx(f,i)
-   if i <= 0 then
-      return seek(f,i,SEEK_END)
-   else
-      return seek(f,i-1,SEEK_SET)
-end
 
 
 #  rfile(name) -- read and echo file contents (several different ways)
@@ -158,31 +137,31 @@ procedure rfile(name)
    write()
 
    # bang
-   seek(f, 0)
-   every writes(" ", "  !f:\t\t" | !f | "\n")
+   f.seek(1)
+   every writes(" ", "  !f:\t\t" | |read(f) | "\n")
 
    # both, mixed
-   seek(f, 0)
+   f.seek(1)
    writes("   read/!f:\t")
-   while writes(" ", read(f)) do writes(" ", !f)
+   while writes(" ", read(f)) do writes(" ", |read(f))
    write()
 
    # reads()
-   seek(f, 0)
+   f.seek(1)
    writes("   reads():\t")
-   while writes(" ", map(reads(f, 5), "\n", "."))
+   while writes(" ", map(f.reads(5), "\n", "."))
    write()
 
    # nonsequential
    writes("   nonseq:\t ")
    every i := 30 to -30 by -1 do
-      if seekx(f, i) then
-	 writes(map(reads(f), "\n", ".") | "?")
+      if f.seek(i) then
+	 writes(map(f.reads(1), "\n", ".") | "?")
       else
 	 writes("-")
    write()
 
-   close(f)
+   f.close()
    return
 end
 
@@ -203,28 +182,28 @@ procedure tpipe()
 
    # very simple case
    write()
-   p := popen("echo hello world", "r") | stop("can't open echo pipe")
+   p := ProgStream.open("echo hello world", O_RDONLY) | stop("can't open echo pipe")
    write(image(p))
    while write("> ", read(p))
    close(p)
 
    # check unclosed pipe
    write()
-   p := popen("sed 's/^/=()= /' io.icn") | stop("can't open od pipe")
+   p := ProgStream.open("sed 's/^/=()= /' io.icn", O_RDONLY) | stop("can't open od pipe")
    write(image(p))
    every 1 to 10 do write("> ", read(p))
    # p is deliberately left unclosed
 
    # check wildcarding, and also !pipe
    write()
-   p := popen("ls io.i?n io.d?t io.s?d") | stop("can't open ls pipe")
+   p := ProgStream.open("ls io.i?n io.d?t io.s?d", O_RDONLY) | stop("can't open ls pipe")
    write(image(p))
-   every write("> ", !p)
+   every write("> ", |read(p))
    close(p)
 
    # check output pipe
    write()
-   p := popen("tr aeiou oaeui", "w") | stop("can't open tr pipe")
+   p := ProgStream.open("tr aeiou oaeui", O_WRONLY) | stop("can't open tr pipe")
    write(image(p))
    write(p, "once upon a midnight dreary")
    write(p, "two roads diverged in a yellow wood")

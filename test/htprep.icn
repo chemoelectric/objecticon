@@ -43,6 +43,8 @@
 #
 ############################################################################
 
+import io
+
 $define SIGNATURE "<!-- Created by HTPREP -->"
 $define WSPACE ' \t'		# whitespace cset
 
@@ -73,7 +75,7 @@ procedure main(args)
    errors := 0
    tagstack := []
 
-   stdout := &output
+   stdout := FileStream.b_stdout
 
    cmdtable := table()
    cmdtable["divert"] := divert

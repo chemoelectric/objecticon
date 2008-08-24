@@ -1,5 +1,5 @@
+import io
 record array(a,b,c,d,e,f,g)
-
 procedure p1()
    local x,i,a,c,s
    write("seq(\"a\") | monitor(&line) ----> ",
@@ -123,7 +123,6 @@ procedure p5()
 end
 
 procedure p6()
-   local f
    write("right(\"\",\"\") | monitor(&line) ----> ",
       image(right("","") | monitor(&line)) | "none")
    write("close(\"F\") | monitor(&line) ----> ",
@@ -132,10 +131,6 @@ procedure p6()
       image(trim(&lcase,[]) | monitor(&line)) | "none")
    write("list([]) | monitor(&line) ----> ",
       image(list([]) | monitor(&line)) | "none")
-   write("reads(f,0) | monitor(&line) ----> ",
-      image(reads(f,0) | monitor(&line)) | "none")
-   write("read(\"f\") | monitor(&line) ----> ",
-      image(read("f") | monitor(&line)) | "none")
    write("bal([],,,\"\") | monitor(&line) ----> ",
       image(bal([],,,"") | monitor(&line)) | "none")
    write("pos(\"a\") | monitor(&line) ----> ",
@@ -195,8 +190,8 @@ procedure main()
    p6()
    p7()
    p8()
-   write("stop(&output,'testing stop') | monitor(&line) ----> ",
-      image(stop(&output,'testing stop') | monitor(&line)) | "none")
+   write("stop('testing stop') | monitor(&line) ----> ",
+      image(stop('testing stop') | monitor(&line)) | "none")
 end
 
 procedure monitor(line)

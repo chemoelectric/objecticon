@@ -6,6 +6,8 @@
 #  implemented in Icon using co-expressions and the p{ ... }
 #  syntax that facilitates their use.
 
+import io
+
 procedure main()
    if not(&features == "co-expressions") then
       stop("co-expressions not supported")

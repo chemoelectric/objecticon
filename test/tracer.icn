@@ -1,4 +1,5 @@
 global s
+
 procedure main()
    &trace := -1
    s := "abcdef"
@@ -7,9 +8,12 @@ procedure main()
    every tracer(1)
    every foo(&pos | &subject | &pos[1] | &subject[2:5])
    display()
-   write(&line)
-   write(&file)
-   write(&level)
+   x(&line)
+   x(&file)
+   x(&level)
+end
+
+procedure x(e)
 end
 
 procedure tracer(a)

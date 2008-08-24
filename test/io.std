@@ -1,8 +1,8 @@
 file: &errout
 file: &input
 file: &output
-file: file(/dev/null)
-file: file(/etc/motd)
+object: object io.BufferStream_4(7)
+object: object io.BufferStream_5(7)
 
 aaa
 bbbb
@@ -13,15 +13,15 @@ ffffffff
 ggggggggg
 hhhhhhhhhh
 
-flush /etc/motd: FAILED
-close /etc/motd: file(/etc/motd)
-close /etc/motd: file(/etc/motd)
-flush /etc/motd: FAILED
+flush /etc/motd: &null
+close /etc/motd: &null
+close /etc/motd: FAILED
+flush /etc/motd: &null
 
-flush /dev/null: file(/dev/null)
-close /dev/null: file(/dev/null)
-close /dev/null: file(/dev/null)
-flush /dev/null: FAILED
+flush /dev/null: &null
+close /dev/null: &null
+close /dev/null: FAILED
+flush /dev/null: &null
 
 read  /dev/null:	
    !f:		 
@@ -29,42 +29,42 @@ read  /dev/null:
    reads():	
    nonseq:	 ?????????????????????????????????????????????????????????????
 
-write tmp1,w:	 follow the yellow brick road : 29
+write tmp1,w:	 follow the yellow brick road : 30
 read  tmp1:	 follow the yellow brick road
    !f:		 follow the yellow brick road 
    read/!f:	 follow the yellow brick road
    reads():	 follo w.the .yell ow.br ick.r oad.
    nonseq:	 ?.daor.kcirb.wolley.eht.wollof?.daor.kcirb.wolley.eht.wollof-
 
-write tmp1,w:	 shorter file : 13
+write tmp1,w:	 shorter file : 14
 read  tmp1:	 shorter file
    !f:		 shorter file 
    read/!f:	 shorter file
    reads():	 short er.fi le.
    nonseq:	 ?????????????????.elif.retrohs?.elif.retrohs-----------------
 
-write tmp1,a:	 gets extended : 27
+write tmp1,a:	 gets extended : 28
 read  tmp1:	 shorter file gets extended
    !f:		 shorter file gets extended 
    read/!f:	 shorter file gets extended
    reads():	 short er.fi le.ge ts.ex tende d.
    nonseq:	 ???.dednetxe.steg.elif.retrohs?.dednetxe.steg.elif.retrohs---
 
-write tmp1,r+:	 changed : 8
+write tmp1,rw:	 changed : 9
 read  tmp1:	 changed file gets extended
    !f:		 changed file gets extended 
    read/!f:	 changed file gets extended
    reads():	 chang ed.fi le.ge ts.ex tende d.
    nonseq:	 ???.dednetxe.steg.elif.degnahc?.dednetxe.steg.elif.degnahc---
 
-write tmp1,r+:	 mode b  : 7
+write tmp1,b:	 mode b  : 8
 read  tmp1:	 mode b  file gets extended
    !f:		 mode b  file gets extended 
    read/!f:	 mode b  file gets extended
    reads():	 mode. b..fi le.ge ts.ex tende d.
    nonseq:	 ???.dednetxe.steg.elif..b.edom?.dednetxe.steg.elif..b.edom---
 
-write tmp1,w+:	 cleared anew : 13
+write tmp1,crw:	 cleared anew : 14
 read  tmp1:	 cleared anew
    !f:		 cleared anew 
    read/!f:	 cleared anew
@@ -76,8 +76,8 @@ read  tmp2:	 cleared anew
    reads():	 clear ed.an ew.
    nonseq:	 ?????????????????.wena.deraelc?.wena.deraelc-----------------
 
-file(tmp1)
-file(tmp2)
+object io.BufferStream_20(7)
+object io.BufferStream_21(7)
 >stdout>stdout>stdout
 
 >stdout
@@ -107,27 +107,27 @@ io.dat
 io.icn
 io.std
 
-file(echo hello world)
+object io.ProgStream_1(3)
 > hello world
 
-file(sed 's/^/=()= /' io.icn)
+object io.ProgStream_2(3)
 > =()= #SRC: JCON
+> =()= #  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
 > =()= 
 > =()= $include "posix.icn"
 > =()= 
-> =()= #  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
+> =()= import io
+> =()= 
 > =()= 
 > =()= procedure main()
 > =()=    local L, f, m, n, t1, t2
-> =()= 
-> =()=    L := [&input, &output, &errout,
 
-file(ls io.i?n io.d?t io.s?d)
+object io.ProgStream_3(3)
 > io.dat
 > io.icn
 > io.std
 
-file(tr aeiou oaeui)
+object io.ProgStream_4(3)
 --- closing output pipe
 unca ipun o medneght draory
 twu ruods devargad en o yalluw wuud

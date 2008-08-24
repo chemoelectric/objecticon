@@ -1,5 +1,7 @@
 #SRC: V9GEN
 
+import io
+
 record array(a,b,c,d,e,f,g)
 global F, f
 global w, t
@@ -19,19 +21,19 @@ procedure q1()
    write("close(f) ----> ",image(close(f)) | "none")
    remove("foo.baz")
    write("F := open(\"fncs1.dat\") ----> ",image(F := open("fncs1.dat")) | "none")
-   write("every write(reverse(!F)) ----> ",image(every write(reverse(!F))) | "none")
+   write("every write(reverse(!F)) ----> ",image(every write(reverse(|read(F)))) | "none")
    write("close(F) ----> ",image(close(F)) | "none")
    write("F := open(\"fncs1.dat\") ----> ",image(F := open("fncs1.dat")) | "none")
-   write("every write(map(!F)) ----> ",image(every write(map(!F))) | "none")
+   write("every write(map(!F)) ----> ",image(every write(map(|read(F)))) | "none")
    write("close(F) ----> ",image(close(F)) | "none")
    write("F := open(\"fncs1.dat\") ----> ",image(F := open("fncs1.dat")) | "none")
 end
 
 procedure q2()
-   write("every write(map(!F,&cset || \"aeiou\",&cset || \"-----\")) ----> ",image(every write(map(!F,&cset || "aeiou",&cset || "-----"))) | "none")
+   write("every write(map(!F,&cset || \"aeiou\",&cset || \"-----\")) ----> ",image(every write(map(|read(F),&cset || "aeiou",&cset || "-----"))) | "none")
    write("close(F) ----> ",image(close(F)) | "none")
    write("F := open(\"fncs1.dat\") ----> ",image(F := open("fncs1.dat")) | "none")
-   write("every write(map(!F,&cset || \"     \",&cset || \"aeiou\")) ----> ",image(every write(map(!F,&cset || "     ",&cset || "aeiou"))) | "none")
+   write("every write(map(!F,&cset || \"     \",&cset || \"aeiou\")) ----> ",image(every write(map(|read(F),&cset || "     ",&cset || "aeiou"))) | "none")
    write("close(F) ----> ",image(close(F)) | "none")
    write("f := open(\"fncs1.dat\") ----> ",image(f := open("fncs1.dat")) | "none")
    write("while writes(reads(f)) ----> ",image(while writes(reads(f))) | "none")

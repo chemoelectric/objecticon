@@ -86,6 +86,8 @@
 
 
 
+import io
+
 
 $define DefaultError 4		# default max error for removing point
 $define DefaultAngle 30		# default max angle for removing point
@@ -117,12 +119,10 @@ procedure main(args)
    maxangle := \opts["a"] | DefaultAngle
    maxerr := \opts["e"] | DefaultError
 
-   if *args > 1 then
+   if *args ~= 1 then
       stop("usage: ", &progname, " file")
-   else if *args = 1 then
-      ifile := open(args[1]) | stop(&progname, ": can't open ", args[1])
    else
-      ifile := &input
+      ifile := open(args[1]) | stop(&progname, ": can't open ", args[1])
 
    hdr1 := read(ifile) | stop(&progname, ": empty file")
    hdr2 := read(ifile) | stop(&progname, ": file truncated")
@@ -147,7 +147,8 @@ procedure loadfile()
 
    chtab := table()
    repeat {
-      w := tell(ifile) | stop(&progname, ": input file is not seekable")
+      w := ifile.tell() | stop(&progname, ": input file is not seekable")
+      #write("w=",w)
       line := read(ifile) | break
 
       r := crack(line)
@@ -289,9 +290,11 @@ procedure putdel(o)
    local line, r
 
    # read the line located at offset o
-   seek(ifile, o) | stop(&progname, ":can't reposition input file")
+   #write("Seek to ", o)
+   ifile.seek(o) | stop(&progname, ":can't reposition input file")
    line := read(ifile) | stop(&progname,
 				    ": input file changed during processing")
+   #write("line=",image(line))
    # crack its data
    r := crack(line)
 

@@ -6,13 +6,11 @@ Test same content object 3: yes
 Test same content: yes
 M1.Get to: Failed
 M1.Get reason: "Error parsing To header: \"people: smith@xyz.com,jsoap@soap\\\"suds.co.uk ;\":; expected"
-M2.Get reason: Failed
 M2.Get to: Failed
 M2.Get reason: "Missing header: To"
 M3.Get to: Failed
 M3.Get reason: "Error parsing To header: \"fred\\\"\":Missing closing quote or illegal char"
-M4.Get to: list_140(1)
-M4.Get reason: Failed
+M4.Get to: list_199(1)
 Bad ContentType: no
 Good ContentType: yes
 Empty ContentType: yes

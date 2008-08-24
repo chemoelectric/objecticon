@@ -1,4 +1,4 @@
-import lang, util
+import lang, util, io
 
 invocable proc1, proc2
 
@@ -331,7 +331,7 @@ procedure rand_string()
 end
 
 procedure test_langprocs()
-   local x,m,y,p,q,r,a,b,c,d,e,l, f,g,l1,l2,cl,t,u,s1,s2,t1,t2
+   local x,m,y,p,q,r,a,b,c,d,e,l,l1,l2,cl,t,u,s1,s2,t1,t2
 
    clone_check(One(1,2))
    clone_check(rec1(1,2,3))
@@ -361,16 +361,6 @@ procedure test_langprocs()
    p := proc("proc1") | stop(26)
    q := proc("proc2") | stop(27)
    equals_check(p, q)
-
-   f := open("args.icn")|stop(30)
-   yes_no{"subtype(f)==\"args.icn\"", subtype(f)=="args.icn"}
-   g := open("classes.icn")|stop(31)
-   equals_check(f, f)
-   equals_check(f,g)
-   close(f)
-   close(g)
-   #w := WOpen("size=20,20","canvas=hidden")|stop(34)
-   #equals(w,w) | stop(35)
 
    l1 := [1,2,[3,4],[],[[[3,4]]]]
    l2 := [1,2,[3,4],[],[[[3,4]]]]
@@ -514,8 +504,8 @@ procedure test_langprocs()
    s2 := set([ [1], [2,2], [2,2], [3] ])
    equals_check(s1,s2)
 
-   t1 := Time("2000 10 10 20:11:33")
-   t2 := Time("2000 10 10 20:11:33")
+   t1 := Time("2000 10 10 20:11:33 BST")
+   t2 := Time("2000 10 10 20:11:33 BST")
    equals_check(t1,t2)
    equals_check(set([t1]), set([t2]))
 

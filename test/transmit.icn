@@ -1,3 +1,5 @@
+import io
+
 global words, lines, writer, line
 
 procedure main()
@@ -24,6 +26,6 @@ procedure reader()
 end
 
 procedure output()
-   while write(&errout,@words)
+   while write(FileStream.stderr,@words)
    @&main
 end
