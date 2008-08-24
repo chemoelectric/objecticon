@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui
+import lang, gui, io
 
 $include "keysyms.icn"
 
@@ -394,7 +394,7 @@ class Canvas(Component,SelectiveObjectCodec)
       fd.show_modal(parent_dialog)
 
       s := fd.get_result() | fail
-      f := default.open(s, "w") | return alert_error(parent_dialog, "Couldn't open " || s)
+      f := io.open(s, "w") | return alert_error(parent_dialog, "Couldn't open " || s)
 
       c := cc.dup()
       c.change_canvas(&null)
@@ -414,7 +414,7 @@ class Canvas(Component,SelectiveObjectCodec)
       fd.show_modal(parent_dialog)
       s := fd.get_result() | fail
       Ivib.last_layout_dir := fd.get_directory()
-      f := default.open(s) | return alert_error(parent_dialog, "Couldn't open " || s)
+      f := io.open(s) | return alert_error(parent_dialog, "Couldn't open " || s)
 
       if not(c := lang.decode(read(f))) then {
          close(f)

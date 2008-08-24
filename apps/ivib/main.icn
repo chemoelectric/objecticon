@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, util, gui
+import lang, util, gui, io
 
 $include "version.icn"
 
@@ -974,7 +974,7 @@ class Main(Dialog)
 
    public read_config_file()
       local f
-      if f := default.open(get_config_file_name()) then {
+      if f := io.open(get_config_file_name()) then {
          if not(self.prefs := lang.decode(read(f))) then {
             self.prefs := Prefs()
             return alert_error(self, "Invalid config file format")
@@ -985,7 +985,7 @@ class Main(Dialog)
 
    public save_config_file()
       local f
-      f := default.open(get_config_file_name(), "w") | return alert_error(self, "Couldn't open config file : " || get_config_file_name())
+      f := io.open(get_config_file_name(), "w") | return alert_error(self, "Couldn't open config file : " || get_config_file_name())
 
       write(f, lang.encode(self.prefs))
 
