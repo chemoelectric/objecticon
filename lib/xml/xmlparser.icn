@@ -57,7 +57,7 @@ class IdAttributeRef()
 end
 
 
-class XmlParser(Connectable,SetFields,Error)
+class XmlParser(Connectable,SetFields)
    public static const
       XML_SPACE,
       XML_CHAR,
@@ -80,7 +80,8 @@ class XmlParser(Connectable,SetFields,Error)
       preserve_insignificant_whitespace_flag,
       preserve_comments_flag,
       id_attribute_refs,
-      validate_flag
+      validate_flag,
+      fatal_error
 
    #
    # Set the resolver
@@ -138,7 +139,7 @@ class XmlParser(Connectable,SetFields,Error)
    public parse(s)
       doc := XmlDocument()
 
-      dtd_insert_shown_error := &null
+      fatal_error := dtd_insert_shown_error := &null
       current_divert_id := "input"
       divert_stack := []
       id_attribute_refs := []
@@ -151,7 +152,7 @@ class XmlParser(Connectable,SetFields,Error)
       }
 
       # Catch-all
-      if get_reason() then
+      if \fatal_error then
          fail
 
       validate_docname()
@@ -1955,7 +1956,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    public warn(s, loc)
       # No warnings after a fatal error.
-      if get_reason() then 
+      if \fatal_error then
          fail
       /loc := where()
       fire(WARNING_EVENT, ProblemDetail(loc, s))
@@ -1967,7 +1968,7 @@ class XmlParser(Connectable,SetFields,Error)
    #
    public invalid(s, loc)
       # Ignore if not validating, or after a fatal error.
-      if /validate_flag | get_reason() then
+      if /validate_flag | \fatal_error then
          fail
       /loc := where()
       fire(VALIDITY_ERROR_EVENT, ProblemDetail(loc, s))
@@ -1979,8 +1980,9 @@ class XmlParser(Connectable,SetFields,Error)
    #
    public err(s, loc)
       # Ensure only one fatal error is ever sent.
-      if get_reason() then 
+      if \fatal_error then
          fail
+      fatal_error := s
       /loc := where()
       error(s)
       fire(FATAL_ERROR_EVENT, ProblemDetail(loc, s))
@@ -2130,7 +2132,7 @@ class XmlParser(Connectable,SetFields,Error)
    # Resolve the given external_id, using the current resolver
    #
    private resolve(external_id)
-      return normalize_eol(resolver.resolve(external_id))  | return err("Couldn't resolve: " || to_string(external_id) || ":" || resolver.get_reason())
+      return normalize_eol(resolver.resolve(external_id))  | return err("Couldn't resolve: " || to_string(external_id) || ":" || &why)
    end
 
    #

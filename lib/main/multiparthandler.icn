@@ -4,6 +4,8 @@
 
 package mail
 
+import util(error)
+
 class MultipartHandler(TypeHandler)
    public can_handle(ct)
       return map(ct.get_type()) == "multipart"
@@ -38,7 +40,7 @@ class MultipartHandler(TypeHandler)
             data := tab(find(b)) | return error("Boundary not found")
             =b
             sm := Message()
-            sm.parse(data) | return error(sm)
+            sm.parse(data) | fail
             res.add_part(sm)
          }
          res.set_epilogue(tab(0))

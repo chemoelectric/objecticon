@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import xml, util, ipl.options
+import xml, util, ipl.options, io
 
 procedure main(a)
    local p, fmt, t, e, s, d, eh
@@ -71,7 +71,7 @@ procedure main(a)
          d.show_attribute_lists()
          d.show_id_attributes()
       } else {
-         write("--- Parsing failed: ", p.get_reason())
+         write("--- Parsing failed: ", &why)
       }
 
    }

@@ -79,7 +79,7 @@ class DirectoryDialog(Dialog)
       if l := Files.list(s) then 
          clear_msg()
       else {
-         msg(Files.get_reason())
+         msg(&why)
          return []
       }
       dir_list := []

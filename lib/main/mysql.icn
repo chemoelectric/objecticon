@@ -11,14 +11,13 @@ $define LIB "objecticonmysqllib.so"
 package mysql
 
 import lang
-import util
 
 #
 # This class provides a wrapper around the MySql C API.  Nearly all the
 # methods have a single underlying corresponding C function - see the MySql
 # documentation for details on what the underlying function does.
 #
-class MySql(Error)
+class MySql()
    public static const 
       FIELD_TYPE_DECIMAL,
       FIELD_TYPE_TINY,

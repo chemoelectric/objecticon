@@ -4,18 +4,13 @@
 
 package xml
 
-import util, ipl.noncase
+import util, ipl.noncase, io
 
-class WebScraper(Error)
+class WebScraper()
    public paths
 
    public load_file(fn)
-      local f, s
-      f := open(fn) | return error("Couldn't open:" || fn)
-      s := ""
-      every s ||:= !f || "\n"
-      close(f)
-      return set_page(s)
+      return set_page(Files.file_to_string(fn)) 
    end
 
    public object_to_string()

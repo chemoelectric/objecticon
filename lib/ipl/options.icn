@@ -105,6 +105,8 @@
 
 package ipl.options
 
+import io(stop,open,read)
+
 procedure options(arg,optstring,errproc)
    local f,fList,fileArg,fn,ignore,optname,opttable,opttype,p,x,option,optcs
    #
@@ -170,7 +172,7 @@ procedure options(arg,optstring,errproc)
 	       return errproc("Can't open " || fn)
 	    fileArg := []
 	    while put(fileArg,read(f))
-	    close(f)
+	    f.close()
 	    push(arg)	# push null to signal end of args from file
 	    while push(arg,pull(fileArg))
 	    }

@@ -4,12 +4,12 @@
 
 package mail
 
-import util
+import util(ClTable, error)
 
 #
 # This class represents a content type
 #
-class ContentDisposition(Error)
+class ContentDisposition()
    private readable
       type,
       parameters
@@ -45,8 +45,8 @@ class ContentDisposition(Error)
       parameters.insert(key, value)
    end
 
-   private parameter_error(h, s, p)
-      return error("Error parsing " || h || " parameter: " || image(s) || ":" || p.get_reason())
+   private parameter_error(h, s)
+      return error("Error parsing " || h || " parameter: " || image(s) || ":" || &why)
    end
 
    #
@@ -72,7 +72,7 @@ class ContentDisposition(Error)
       local s, p
       s := get_parameter("creation-date") | return error("Missing parameter: creation-date")
       p := RFC822Parser()
-      return p.parse_date_time(s) | parameter_error("creation-date", s, p)
+      return p.parse_date_time(s) | parameter_error("creation-date", s)
    end
 
    #
@@ -92,7 +92,7 @@ class ContentDisposition(Error)
       local s, p
       s := get_parameter("modification-date") | return error("Missing parameter: modification-date")
       p := RFC822Parser()
-      return p.parse_date_time(s) | parameter_error("modification-date", s, p)
+      return p.parse_date_time(s) | parameter_error("modification-date", s)
    end
 
    #
@@ -112,7 +112,7 @@ class ContentDisposition(Error)
       local s, p
       s := get_parameter("read-date") | return error("Missing parameter: read-date")
       p := RFC822Parser()
-      return p.parse_date_time(s) | parameter_error("read-date", s, p)
+      return p.parse_date_time(s) | parameter_error("read-date", s)
    end
 
    #
@@ -143,7 +143,7 @@ class ContentDisposition(Error)
    public parse(s)
       local p
       p := RFC822Parser()
-      return p.parse_content_disposition(s, self) | error(p)
+      return p.parse_content_disposition(s, self)
    end   
 
    public to_rfc1521()

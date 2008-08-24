@@ -4,12 +4,10 @@
 
 package mail
 
-import util
-
 #
 # This class represents a multipart content
 #
-class Multipart(Error)
+class Multipart()
    private readable 
       preamble,
       parts, 

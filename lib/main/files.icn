@@ -1,7 +1,8 @@
 package util
 
 import 
-   ipl.random
+   ipl.random,
+   io
 
 $include "posix.icn"
 
@@ -90,25 +91,31 @@ class Files()
    end
 
    #
-   # Return the error reason for calls delegated to the
-   # system-specific FileSystem instance.
-   #
-   public static get_reason()
-      return FS.get_reason()
-   end
-
-   #
    # Load a file into a string
    #
    public static file_to_string(fn)
-      return FS.file_to_string(fn)
+      local res, f
+      f := FileStream.open(fn, O_RDONLY) | return error("Couldn't open " || fn || ":" || &why)
+      res := ""
+      while res ||:= f.reads(8192)
+      f.close()
+      f.eof() | fail
+      return res
    end
 
    #
    # Write a string to a file.
    #
    public static string_to_file(fn, s)
-      return FS.string_to_file(fn, s)
+      local f
+      f := FileStream.open(fn, ior(O_WRONLY, ior(O_TRUNC, O_CREAT))) | 
+         return error("Couldn't open " || fn || ":" || &why)
+      f.writes(s) | {
+         f.close()
+         fail
+      }
+      f.close() | fail
+      return s
    end
 
    #
@@ -119,7 +126,7 @@ class Files()
    # @param len, the number of digits in the result, default 8
    #
    public static make_temp_filename(prefix, suffix, path, len)
-      local p, name
+      local p, name, f
 
       /prefix := ""
       /suffix := ""
@@ -132,9 +139,10 @@ class Files()
       repeat {
          ?1                                # change &random
          name := p.child(prefix || left(&random, len, "0") || suffix).str()
-         if not open(name) then {
+         if not FileStream.open(name, O_RDONLY) then {
             # Touch the filename to stop anyone else using it.
-            close(open(name, "w"))
+            f := FileStream.open(name, ior(O_WRONLY, O_CREAT)) | fail
+            f.close()
             return name
          }
       }
@@ -144,7 +152,37 @@ class Files()
    # Succeed iff the two given files have the same content.
    #
    public static equal_files(n1, n2)
-      return FS.equal_files(n1, n2)
+      local f1, f2, r
+
+      stat(n1).size = stat(n2).size | fail
+
+      f1 := FileStream.open(n1, O_RDONLY) | return error("Couldn't open " || n1 || ":" || &why)
+      f2 := FileStream.open(n2, O_RDONLY) | {
+         f1.close()
+         return error("Couldn't open " || n2 || ":" || &why)
+      }
+
+      if equal_files1(f1, f2) then
+         r := 1
+
+      f1.close()
+      f1.close()
+
+      return \r
+   end
+
+   private static equal_files1(f1, f2)
+      local s1, s2
+
+      while s1 := f1.reads(8192) do {
+         s2 := f2.reads(8192) | fail
+         s1 == s2 | fail
+      }
+      f1.eof() | fail
+      # A further read of f2 should fail and set its eof flag.
+      if f2.reads(1) then
+         fail
+      return f2.eof()
    end
 
    #
@@ -170,20 +208,40 @@ class Files()
 
    #
    # Copy a file.
-   # @param s1 the source filename
-   # @param s2 the target filename
+   # @param n1 the source filename
+   # @param n2 the target filename
    #
-   public static copy_file(s1, s2)
-      return FS.copy_file(s1, s2)
+   public static copy_file(n1, n2)
+      local f1, f2
+      f1 := FileStream.open(n1, O_RDONLY) | return error("Couldn't open " || n1 || ":" || &why)
+      f2 := FileStream.open(n2, ior(O_WRONLY, ior(O_TRUNC, O_CREAT))) | {
+         f1.close()
+         return error("Couldn't open " || n2 || ":" || &why)
+      }
+      while f2.writes(f1.reads(8192))
+      f1.close()
+      f2.close() | return error("Failed to close " || n2 || ":" || &why)
+      f1.eof() | fail
+      return
    end
 
    #
-   # Append file {s1} onto {s2}.
-   # @param s1 the source filename
-   # @param s2 the target filename
+   # Append file {n1} onto {n2}.
+   # @param n1 the source filename
+   # @param n2 the target filename
    #
-   public static append_file(s1, s2)
-      return FS.append_file(s1, s2)
+   public static append_file(n1, n2)
+      local f1, f2
+      f1 := FileStream.open(n1, O_RDONLY) | return error("Couldn't open " || n1 || ":" || &why)
+      f2 := FileStream.open(n2, ior(O_WRONLY, ior(O_APPEND, O_CREAT))) | {
+         f1.close()
+         return error("Couldn't open " || n2 || ":" || &why)
+      }
+      while f2.writes(f1.reads(8192))
+      f1.close()
+      f2.close() | return error("Failed to close " || n2 || ":" || &why)
+      f1.eof() | fail
+      return
    end
 
    #
@@ -237,7 +295,7 @@ end
 # This class provides implementations of some of the methods in
 # {Files}.  It is not used directly by clients.
 #
-class FileSystem(Error)
+class FileSystem()
    public defer list(s)
 
    public defer get_path(s)
@@ -255,105 +313,6 @@ class FileSystem(Error)
    public defer get_roots()
 
    public defer split_paths(s)
-
-   public equal_files(n1, n2)
-      local f1, f2, r, n
-
-      clear_error()
-
-      stat(n1).size = stat(n2).size | fail
-
-      f1 := open(n1, "rb") | return error("Couldn't open " || n1 || ":" || strerror())
-      f2 := open(n2, "rb") | {
-         n := &errno
-         close(f1)
-         return error("Couldn't open " || n2 || ":" || strerror(n))
-      }
-
-      if equal_files1(f1, f2) then
-         r := 1
-
-      n := &errno
-
-      close(f1)
-      close(f2)
-
-      if n = (0 | XE_EOF) then
-         return \r
-      else
-         return sys_error(n)
-   end
-
-   private equal_files1(f1, f2)
-      local s1, s2
-
-      while s1 := reads(f1, 8192) do {
-         s2 := reads(f2, 8192) | fail
-         s1 == s2 | fail
-      }
-      if &errno ~= XE_EOF then
-         fail
-      return not(reads(f2))
-   end
-
-   public file_to_string(fn)
-      local res, f, n
-      f := open(fn, "rb") | return error("Couldn't open " || fn || ":" || strerror())
-      res := ""
-      while res ||:= reads(f, 8192)
-      n := &errno
-      close(f)
-      if n ~= XE_EOF then
-         return sys_error(n)
-      return res
-   end
-
-   public string_to_file(fn, s)
-      local f, n
-      f := open(fn, "wb") | return error("Couldn't open " || fn || ":" || strerror())
-      writes(f, s) | {
-         n := &errno
-         close(f)
-         return sys_error(n)
-      }
-      close(f) | return error("Failed to close " || fn || ":" || strerror())
-      return s
-   end
-
-   public copy_file(s1, s2)
-      local f1, f2, n
-      f1 := open(s1, "rb") | return error("Couldn't open " || s1 || ":" || strerror())
-      f2 := open(s2, "wb") | {
-         n := &errno
-         close(f1)
-         return error("Couldn't open " || s2 || ":" || strerror(n))
-      }
-      while writes(f2, reads(f1, 8192))
-      n := &errno
-      close(f1)
-      close(f2) | return error("Failed to close " || s2 || ":" || strerror())
-      if n ~= XE_EOF then
-         return sys_error(n)
-      return
-   end
-
-   public append_file(s1, s2)
-      local f1, f2, n
-      f1 := open(s1, "rb") | return error("Couldn't open " || s1 || ":" || strerror())
-      f2 := open(s2, "ab") | {
-         n := &errno
-         close(f1)
-         return error("Couldn't open " || s2 || ":" || strerror(n))
-      }
-      while writes(f2, reads(f1, 8192))
-      n := &errno
-      close(f1)
-      close(f2) | return error("Failed to close " || s2 || ":" || strerror())
-      if n ~= XE_EOF then
-         return sys_error(n)
-      return
-   end
-
 end
 
 #
@@ -526,14 +485,14 @@ class UnixFileSystem(FileSystem)
       local l, p, s2, sr
       if (*s > 1) & (s[-1] == "/") then 
          s[-1] := ""
-      p := opendir(s) | return error("Can't open " || image(s))
+      p := DirStream.open(s) | return error("Can't open " || image(s))
       if s[-1] ~== "/" then 
          s ||:= "/"
       l := []
       while s2 := read(p) do {
          sr := stat(s || s2) | {
             close(p)
-            return error("Can't stat " || image(s || s2) || ":" || strerror())
+            return error("Can't stat " || image(s || s2) || ":" || &why)
          }
          put(l, DirEntry(s2, sr))
       }
@@ -654,14 +613,14 @@ class WindowsFileSystem(FileSystem)
          if *s > 1 & s[-1] == "\\" then
             s[-1] := ""
       }
-      p := open(s) | return error("Can't open " || image(s))
+      p := DirStream.open(s) | return error("Can't open " || image(s))
       if s[-1] ~== "\\" then 
          s ||:= "\\"
       l := []
       while s2 := read(p) do {
          sr := stat(s || s2) | {
             close(p)
-            return error("Can't stat " || image(s || s2) || ":" || strerror())
+            return error("Can't stat " || image(s || s2) || ":" || &why)
          }
          put(l, DirEntry(s2, sr))
       }

@@ -4,13 +4,14 @@
 
 package mail
 
-import util
+import util, io
 
 #
 # This class represents an email message
 #
-class Message(SetFields, MimeHeaders, Error)
-   private readable content
+class Message(SetFields, MimeHeaders)
+   private readable 
+      content
 
    #
    # Set the content
@@ -40,7 +41,7 @@ class Message(SetFields, MimeHeaders, Error)
       #
       # Use the handler to convert the data.
       #
-      return h.decode_data(self, content) | error(h)
+      return h.decode_data(self, content)
    end
 
    #
@@ -58,7 +59,7 @@ class Message(SetFields, MimeHeaders, Error)
       #
       # Use the handler to convert the data.
       #
-      return content := h.encode_data(self, s) | error(h)
+      return content := h.encode_data(self, s)
    end
 
    #
@@ -78,7 +79,7 @@ class Message(SetFields, MimeHeaders, Error)
       #
       # Use the handler to convert the data.
       #
-      return h.convert_to_object(self, data) | error(h)
+      return h.convert_to_object(self, data)
    end
 
    #
@@ -93,7 +94,7 @@ class Message(SetFields, MimeHeaders, Error)
       #
       h := get_type_handler() | fail
 
-      data := h.convert_from_object(self, o) | return error(h)
+      data := h.convert_from_object(self, o) | fail
 
       return set_decoded_content(data)
    end
@@ -236,7 +237,7 @@ class Message(SetFields, MimeHeaders, Error)
                content := tab(0)
                return
             }
-            p.parse_field(s, self) | return error(p)
+            p.parse_field(s, self) | fail
          }
          return error("Unexpected end of message")
       }
@@ -263,8 +264,8 @@ class Message(SetFields, MimeHeaders, Error)
    end
 
    # 
-   private header_error(h, s, p)
-      return error("Error parsing " || h || " header: " || image(s) || ":" || p.get_reason())
+   private header_error(h, s)
+      return error("Error parsing " || h || " header: " || image(s) || ":" || &why)
    end
 
    #
@@ -276,7 +277,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_first_header("Date") | return error("Missing header: Date")
       p := RFC822Parser()
-      return p.parse_date_time(s) | header_error("Date", s, p)
+      return p.parse_date_time(s) | header_error("Date", s)
    end
 
    #
@@ -297,7 +298,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_catenated_headers("To") | return error("Missing header: To")
       p := RFC822Parser()
-      return p.parse_address_list(s) | header_error("To", s, p)
+      return p.parse_address_list(s) | header_error("To", s)
    end
 
    #
@@ -329,7 +330,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_catenated_headers("Reply-To") | return error("Missing header: Reply-To")
       p := RFC822Parser()
-      return p.parse_address_list(s, 1) | header_error("Reply-To", s, p)
+      return p.parse_address_list(s, 1) | header_error("Reply-To", s)
    end
 
    #
@@ -361,7 +362,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_catenated_headers("Resent-To") | return error("Missing header: Resent-To")
       p := RFC822Parser()
-      return p.parse_address_list(s) | header_error("Resent-To", s, p)
+      return p.parse_address_list(s) | header_error("Resent-To", s)
    end
 
    #
@@ -393,7 +394,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_catenated_headers("cc") | return error("Missing header: cc")
       p := RFC822Parser()
-      return p.parse_address_list(s) | header_error("cc", s, p)
+      return p.parse_address_list(s) | header_error("cc", s)
    end
 
    #
@@ -425,7 +426,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_catenated_headers("Resent-cc") | return error("Missing header: Resent-cc")
       p := RFC822Parser()
-      return p.parse_address_list(s) | header_error("Resent-cc", s, p)
+      return p.parse_address_list(s) | header_error("Resent-cc", s)
    end
 
    #
@@ -457,7 +458,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_catenated_headers("bcc") | return error("Missing header: bcc")
       p := RFC822Parser()
-      return p.parse_address_list(s, 1) | header_error("bcc", s, p)
+      return p.parse_address_list(s, 1) | header_error("bcc", s)
    end
 
    #
@@ -489,7 +490,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_catenated_headers("Resent-bcc") | return error("Missing header: Resent-bcc")
       p := RFC822Parser()
-      return p.parse_address_list(s, 1) | header_error("Resent-bcc", s, p)
+      return p.parse_address_list(s, 1) | header_error("Resent-bcc", s)
    end
 
    #
@@ -521,7 +522,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_catenated_headers("From") | return error("Missing header: From")
       p := RFC822Parser()
-      return p.parse_mailbox_list(s) | header_error("From", s, p)
+      return p.parse_mailbox_list(s) | header_error("From", s)
    end
 
    #
@@ -553,7 +554,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_first_header("Sender") | return error("Missing header: Sender")
       p := RFC822Parser()
-      return p.parse_mailbox(s) | header_error("Sender", s, p)
+      return p.parse_mailbox(s) | header_error("Sender", s)
    end
 
    #
@@ -573,7 +574,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_catenated_headers("Resent-From") | return error("Missing header: Resent-From")
       p := RFC822Parser()
-      return p.parse_mailbox_list(s) | header_error("Resent-From", s, p)
+      return p.parse_mailbox_list(s) | header_error("Resent-From", s)
    end
 
    #
@@ -605,7 +606,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_first_header("Resent-Sender") | return error("Missing header: Resent-Sender")
       p := RFC822Parser()
-      return p.parse_mailbox(s) | header_error("Resent-Sender", s, p)
+      return p.parse_mailbox(s) | header_error("Resent-Sender", s)
    end
 
    #
@@ -624,7 +625,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_first_header("Resent-Date") | return error("Missing header: Resent-Date")
       p := RFC822Parser()
-      return p.parse_date_time(s) | header_error("Resent-Date", s, p)
+      return p.parse_date_time(s) | header_error("Resent-Date", s)
    end
 
    #
@@ -644,7 +645,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_first_header("Content-Type") | return error("Missing header: Content-Type")
       p := RFC822Parser()
-      return p.parse_content_type(s) | header_error("Content-Type", s, p)
+      return p.parse_content_type(s) | header_error("Content-Type", s)
    end
 
    #
@@ -664,7 +665,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_first_header("Content-Disposition") | return error("Missing header: Content-Disposition")
       p := RFC822Parser()
-      return p.parse_content_disposition(s) | header_error("Content-Disposition", s, p)
+      return p.parse_content_disposition(s) | header_error("Content-Disposition", s)
    end
 
    #
@@ -684,7 +685,7 @@ class Message(SetFields, MimeHeaders, Error)
       local s, p
       s := get_first_header("Content-Transfer-Encoding") | return error("Missing header: Content-Transfer-Encoding")
       p := RFC822Parser()
-      return p.parse_content_transfer_encoding(s) | header_error("Content-Transfer-Encoding", s, p)
+      return p.parse_content_transfer_encoding(s) | header_error("Content-Transfer-Encoding", s)
    end
 
    #

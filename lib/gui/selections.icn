@@ -8,6 +8,8 @@
 
 package gui
 
+import io(stop)
+
 class SelectionOwner()
    public defer get_content(target)
    public defer lost_ownership()
@@ -17,7 +19,6 @@ class SelectionOwner()
       return Selection.STRING_TARGET
    end
 end
-
 
 class Selection()
    public static const

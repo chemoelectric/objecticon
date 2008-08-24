@@ -4,13 +4,11 @@
 
 package mail
 
-import util
-
 #
 # This class represents an internet Address, which
 # may be parsed in accordance with RFC822.
 #
-class Mailbox(Address, Error)
+class Mailbox(Address)
    private readable
       local_part,
       domain,
@@ -75,7 +73,7 @@ class Mailbox(Address, Error)
    public parse(s)
       local p
       p := RFC822Parser()
-      return p.parse_mailbox(s, self) | error(p)
+      return p.parse_mailbox(s, self)
    end   
 
    public generate_mailboxes()

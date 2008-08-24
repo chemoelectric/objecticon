@@ -1,0 +1,677 @@
+package io
+
+import util(error, errno, to_flag,
+            SetFields)
+
+$include "posix.icn"
+
+class Stream()
+   public in(n)
+      return error("This type of stream is write-only")
+   end
+
+   public out(s)
+      return error("This type of stream is read-only")
+   end
+
+   public seek(offset)
+      return error("This type of stream is not seekable")
+   end
+
+   public tell()
+      return error("This type of stream is not seekable")
+   end
+
+   public defer close()
+
+   public defer eof()
+
+   public read()
+      local s, c
+      s := ""
+      repeat {
+         if c := in(1) then {
+            if c == "\n" then {
+               if s[-1] == "\r" then
+                  s[-1] := ""
+               return s
+            } else
+               s ||:= c
+         } else {
+            if eof() & (*s > 0) then
+               return s
+            else
+               fail
+         }
+      }
+   end
+
+   public reads(n)
+      return in(n)
+   end
+
+   public writes(a[])
+      local e, n
+      every e := !a do {
+         while *e > 0 do {
+            n := out(e) | fail
+            e := e[n + 1:0]
+         }
+      }
+      return
+   end
+
+   public write(a[])
+      local e, n
+      every e := !a | "\n" do {
+         while *e > 0 do {
+            n := out(e) | fail
+            e := e[n + 1:0]
+         }
+      }
+      return
+   end
+end
+
+class StringStream(Stream)
+   private 
+      f_eof,
+      str,
+      pos
+
+   public in(n)
+      local t, e
+      f_eof := &null
+      if pos > *str then {
+         f_eof := 1
+         return error("End of file")
+      }
+      e := min(pos + n, *str + 1)
+      t := str[pos:e]
+      pos := e
+      return t
+   end
+
+   public out(s)
+      local e
+      if pos > *str then {
+         str ||:= repl("\0", pos - *str - 1) || s
+         pos := *str + 1
+      } else {
+         e := min(pos + *s, *str + 1)
+         str[pos:e] := s
+         pos +:= *s
+      }
+      return *s
+   end
+
+   public seek(offset)
+      return if offset > 0 then
+         pos := offset
+      else if -offset <= *str then
+         pos := *str + 1 + offset
+      else
+         error("Seek out of range")
+   end
+
+   public tell()
+      return pos
+   end
+
+   public close()
+   end
+
+   public eof()
+      return \f_eof
+   end
+
+   public get_str()
+      return .str
+   end
+
+   public new(str)
+      /str := ""
+      self.str := str
+      self.pos := 1
+      return
+   end
+end
+
+class BufferStream(Stream, SetFields)
+   private
+      other,
+      rpos,
+      wbuff,
+      wbuff_len,
+      rbuff,
+      flush_on_nl_flag,
+      buff_size
+
+   public set_other(other)
+      self.other := other
+   end
+
+   public set_flush_on_nl(s)
+      self.flush_on_nl_flag := to_flag(s)
+   end
+
+   public set_buff_size(n)
+      self.buff_size := n
+   end
+
+   public read()
+      local t
+      flush() | fail
+      repeat {
+         rbuff ? {
+            if t := tab(upto('\n')) then {
+               t ||:= move(1)
+               rbuff := tab(0)
+               \rpos +:= *t
+               break
+            }
+         }
+         if *rbuff = 0 then
+            rpos := other.tell() | &null
+         rbuff ||:= other.in(buff_size) | {
+            other.eof() | fail
+            t := rbuff
+            rbuff := ""
+            rpos := &null
+            break
+         }
+      }
+      if *t = 0 then
+         fail
+      if t[-1] == "\n" then {
+         t[-1] := ""
+         if t[-1] == "\r" then
+            t[-1] := ""
+      }
+      return t
+   end
+
+   public in(n)
+      local t
+      flush() | fail
+      if *rbuff > 0 then {
+         rbuff ? {
+            t := move(n) | tab(0)
+            rbuff := tab(0)
+            \rpos +:= *t
+         }
+      } else if n < buff_size then {
+         rpos := other.tell() | &null
+         rbuff := other.in(buff_size) | fail
+         rbuff ? {
+            t := move(n) | tab(0)
+            rbuff := tab(0)
+            \rpos +:= *t
+         }
+      } else
+         t := other.in(n) | fail
+      return t
+   end
+
+   public out(s)
+      unbuff() | fail
+      put(wbuff, s)
+      wbuff_len +:= *s
+      if wbuff_len > buff_size | (\flush_on_nl_flag & upto('\n', s)) then
+         flush() | fail
+      return *s
+   end
+
+   public flush()
+      local n, s
+      if *wbuff = 0 then
+         return
+      s := ""
+      every s ||:= !wbuff
+      wbuff := []
+      wbuff_len := 0
+      while *s > 0 do {
+         n := other.out(s) | fail
+         s := s[n + 1:0]
+      }
+      return
+   end
+
+   public unbuff()
+      if *rbuff > 0 & \rpos then {
+         other.seek(rpos) | fail
+         rbuff := ""
+         rpos := &null
+      }
+      return
+   end
+
+   public synch()
+      unbuff() | fail
+      flush() | fail
+      return
+   end
+
+   public close()
+      flush() | fail
+      return other.close()
+   end
+
+   public seek(offset)
+      synch() | fail
+      return other.seek(offset)
+   end
+
+   public tell()
+      synch() | fail
+      return other.tell()
+   end
+
+   public eof()
+      return other.eof()
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "other" : set_other(f.object_val(Stream))
+         "buff_size" : set_buff_size(f.int_val())
+         "flush_on_nl" : set_flush_on_nl(f.flag_val())
+         default: fail
+      }
+      return
+   end
+
+   public new(a[])
+      self.rbuff := ""
+      self.wbuff := []
+      self.wbuff_len := 0
+      self.buff_size := 1024
+      set_fields(a)
+      return
+   end
+end
+
+class DescStream(Stream)
+   protected 
+      fd
+
+   public get_fd()
+      return .fd
+   end
+
+   private static get_fds(l)
+      local r, e
+      if /l then
+         return
+      r := []
+      every e := !l do {
+         if is(e, DescStream) then
+            put(r, e.get_fd())
+         else
+            return error("Not supported for a stream of type " || classof(e))
+      }
+      return r
+   end
+
+   private static filter_fds(l, il)
+      local t, i, e
+      if /l then
+         return
+      t := []
+      while put(t, get(l))
+      every i := !il do {
+         while e := get(t) do {
+            if e.get_fd() = i then {
+               put(l, e)
+               break
+            }
+         }
+      }
+   end
+
+   public static select(rl, wl, el, timeout)
+      local tr, tw, te, rc
+      tr := get_fds(rl) | fail
+      tw := get_fds(wl) | fail
+      te := get_fds(el) | fail
+      rc := select_impl(tr, tw, te, timeout) | fail
+      filter_fds(rl, tr)
+      filter_fds(wl, tw)
+      filter_fds(el, te)
+      return rc
+   end
+
+   public static poll(a[])
+      local l, e
+      l := []
+      every e := !a do {
+         if type(e) == "object" then {
+            if is(e, DescStream) then
+               put(l, e.get_fd())
+            else
+               return error("Not supported for a stream of type " || classof(e))
+         } else
+            put(l, e)
+      }
+      return poll_impl!l
+   end
+
+   public flag(on, off)
+      return flag_impl(fd, on, off)
+   end
+
+   private static defer select_impl(rl, wl, el, timeout)
+   private static defer poll_impl(a[])
+   private static defer flag_impl(fd, on, off)
+
+   package new(fd)
+      self.fd := fd
+      return
+   end
+end
+
+procedure open(name, mode)
+   local i
+   i := case mode of {
+      &null | "r" : O_RDONLY
+      "w" : ior(O_WRONLY, ior(O_TRUNC, O_CREAT))
+      "b"|"rw"|"r+" : O_RDWR
+      "crw"|"w+" : ior(O_RDWR, ior(O_TRUNC, O_CREAT))
+      "a" : ior(O_WRONLY, ior(O_APPEND, O_CREAT))
+      "a+" : ior(O_RDWR, ior(O_APPEND, O_CREAT))
+      default: return error("Invalid mode flag: " || mode)
+   }
+   return BufferStream("other=",FileStream.open(name, i))
+end
+
+procedure popen(cmd, mode)
+end
+
+procedure write(a[])
+   local e, f, r, n
+   r := a[-1]
+   if type(a[1]) == "object" then
+      f := pop(a)
+   else
+      f := FileStream.b_stdout
+   every e := \!a | "\n" do {
+      if type(e) == "object" then {
+         f.out("\n")
+         f := e
+      } else {
+         e := string(e) | runerr(103, e)
+         while *e > 0 do {
+            n := f.out(e) | fail
+            e := e[n + 1:0]
+         }
+      }
+   }
+   return r
+end
+
+procedure writes(a[])
+   local e, f, r, n
+   r := a[-1]
+   if type(a[1]) == "object" then
+      f := pop(a)
+   else
+      f := FileStream.b_stdout
+   every e := \!a do {
+      if type(e) == "object" then {
+         if f === FileStream.b_stdout then
+            f.flush() | fail
+         f := e
+      } else {
+         e := string(e) | runerr(103, e)
+         while *e > 0 do {
+            n := f.out(e) | fail
+            e := e[n + 1:0]
+         }
+      }
+   }
+   if f === FileStream.b_stdout then
+      f.flush() | fail
+   return r
+end
+
+procedure stop(a[])
+   every FileStream.stderr.out(string(!a) | "\n")
+   exit(1)
+end
+
+procedure read(f)
+   /f := FileStream.b_stdin
+   return f.read()
+end
+
+procedure reads(f, n)
+   /f := FileStream.b_stdin
+   /n := 1
+   return f.in(n)
+end
+
+procedure close(f)
+   f.close() | fail
+   return f
+end
+
+class FileStream(DescStream)
+   private 
+      f_eof
+
+   public static const
+      stdin, 
+      stdout,
+      stderr,
+      b_stdin, 
+      b_stdout,
+      b_stderr
+
+   public static open(name, flags)
+      return FileStream(open_impl(name, flags))
+   end
+
+   private static init()
+      stdin := FileStream(0)
+      stdout := FileStream(1)
+      stderr := FileStream(2)
+      b_stdin := BufferStream("other=",stdin, "flush_on_nl=t")
+      b_stdout := BufferStream("other=",stdout, "flush_on_nl=t")
+      b_stderr := BufferStream("other=",stderr, "flush_on_nl=t")
+   end
+
+   public in(n)
+      local s
+      f_eof := &null
+      if s := in_impl(fd, n) then
+         return s
+      if errno() = XE_EOF then
+         f_eof := 1
+   end
+
+   public out(s)
+      return out_impl(fd, s)
+   end
+
+   public seek(offset)
+      if offset > 0 then
+         return 1 + seek_impl(fd, offset - 1, SEEK_SET)
+      else
+         return 1 + seek_impl(fd, offset, SEEK_END)
+   end
+
+   public tell()
+      return seek_impl(fd, 0, SEEK_CUR) + 1
+   end
+
+   public close()
+      return close_impl(fd)
+   end
+
+   public eof()
+      return \f_eof
+   end
+
+   private static defer open_impl(path, flags, mode)
+
+   private static defer in_impl(fd, i)
+
+   private static defer out_impl(fd, s)
+
+   private static defer close_impl(fd)
+
+   private static defer seek_impl(fd, offset, whence)
+end
+
+class SocketStream(DescStream)
+   private 
+      f_eof
+
+   public static socket(domain, typ)
+      return SocketStream(socket_impl(domain, typ))
+   end
+
+   public static socketpair(typ)
+      local t
+      t := socketpair_impl(typ) | fail
+      return [SocketStream(t[1]), SocketStream(t[2])]
+   end
+
+   public in(n)
+      local s
+      f_eof := &null
+      if s := in_impl(fd, n) then
+         return s
+      if errno() = XE_EOF then
+         f_eof := 1
+   end
+
+   public connect(addr)
+      return connect_impl(fd, addr)
+   end
+
+   public bind(addr)
+      return bind_impl(fd, addr)
+   end
+
+   public listen(backlog)
+      return SocketStream(listen_impl(fd, backlog))
+   end
+
+   public accept()
+      return accept_impl(fd)
+   end
+
+   public out(s)
+      return out_impl(fd, s)
+   end
+
+   public close()
+      return close_impl(fd)
+   end
+
+   public eof()
+      return \f_eof
+   end
+
+   private static defer socketpair_impl(typ)
+
+   private static defer socket_impl(domain, typ)
+
+   private static defer connect_impl(fd, addr)
+
+   private static defer bind_impl(fd, addr)
+
+   private static defer listen_impl(fd, backlog)
+
+   private static defer accept_impl(fd)
+
+   private static defer in_impl(fd, i)
+
+   private static defer out_impl(fd, s)
+
+   private static defer close_impl(fd)
+end
+
+class DirStream(Stream)
+   private 
+      dd,
+      line,
+      f_eof
+
+   public static open(dir)
+      return DirStream(open_impl(dir))
+   end
+
+   public read()
+      local t
+      f_eof := &null
+      if (*\line > 0) then {
+         t := line[1:-1]
+         line := ""
+         return t
+      }
+      if t := read_impl(dd) then
+         return t
+      if errno() = XE_EOF then
+         f_eof := 1
+   end
+
+   public in(n)
+      local t
+      f_eof := &null
+      if (*\line > 0) | (line := read_impl(dd) || "\n") then {
+         line ? {
+            t := move(n) | tab(0)
+            line := tab(0)
+         }
+         return t
+      }
+      if errno() = XE_EOF then
+         f_eof := 1
+   end
+
+   public close()
+      return close_impl(dd)
+   end
+
+   public eof()
+      return \f_eof
+   end
+
+   private static defer open_impl(path)
+
+   private static defer read_impl(dd)
+
+   private static defer close_impl(dd)
+
+   package new(dd)
+      self.dd := dd
+      return
+   end
+end
+
+class ProgStream(FileStream)
+   private
+      pid
+
+   public static open(cmd, flags)
+      local l
+      l := open_impl(cmd, flags) | fail
+      return ProgStream(l[1], l[2])
+   end
+
+   public close()
+      return close_impl(fd, pid)
+   end
+
+   private static defer open_impl(cmd, flags)
+
+   private static defer close_impl(fd, pid)
+
+   package new(fd, pid)
+      cast(self,FileStream).new(fd)
+      self.pid := pid
+      return
+   end
+end

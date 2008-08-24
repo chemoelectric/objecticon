@@ -1,7 +1,7 @@
 package parser
 
 import
-   util(Error),
+   util(error),
    lang()
 
 $include "opdefs.icn"
@@ -267,7 +267,7 @@ end
 class UGlobal(UObject)
 end
 
-class UReader(Error)
+class UReader()
    public scan_decls()
       local uf, file, line, uop, s, n, curr_import, curr_class, 
          curr_record, curr_func

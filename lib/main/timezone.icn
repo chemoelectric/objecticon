@@ -8,6 +8,10 @@
 
 package util
 
+import io(ProgStream, stop)
+
+$include "posix.icn"
+
 class Timezone()
    public static const 
       KNOWN_TIMEZONES,
@@ -48,9 +52,9 @@ class Timezone()
       stz := Timezone(t1.get_seconds() - t2.get_seconds())
       # If possible, use a symbolic representation, eg "EST" instead of -0500
       if &features == "UNIX" then {
-         if f := popen("date +%Z") then {
-            t := read(f)
-            close(f)
+         if f := ProgStream.open("date +%Z", O_RDONLY) then {
+            t := f.read()
+            f.close()
          }
          # Only use a known symbol, whose offset agrees with the one just calculated
          if (\KNOWN_TIMEZONES[\t]).get_offset() = stz.get_offset() then

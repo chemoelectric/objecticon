@@ -8,6 +8,7 @@ import util
 import lang
 import net
 import mail
+import io
 
 $include "posix.icn"
 
@@ -319,11 +320,11 @@ class HttpClient(NetClient)
             t.update(request.post_data)
          else if \request.post_file then {
             # Just fail; the whole request will surely fail anyway.
-            f := default.open(request.post_file, "rb") | fail
+            f := io.open(request.post_file, "r") | fail
             while s := reads(f, 8192) do {
                t.update(s)
             }
-            default.close(f)
+            f.close()
          }
          hentity := t.final_str()
          md5.update(":" || hentity)
@@ -635,7 +636,7 @@ class HttpClient(NetClient)
             if retries = 0 then
                fail
             else
-               return error("Gave up after " || (1+retries) || " attempts - last reason:" || get_reason())
+               return error("Gave up after " || (1+retries) || " attempts - last reason:" || &why)
          }
 
          fire(RETRYING_EVENT)
@@ -743,19 +744,19 @@ class HttpClient(NetClient)
          request.set_header("content-type", request.content_type)
          sz := stat(request.post_file).size | return error("Couldn't stat post file:" ||
                                                            request.post_file ||
-                                                           ":" || strerror())
+                                                           ":" || &why)
          request.set_header("content-length", sz)
          request.set_header("authorization", create_authorization_header())
          write_request_headers() | fail
          write_line() | fail
-         f := default.open(request.post_file, "rb") | return error("Couldn't open:" || request.post_file)
-         while s := reads(f, 8192) do {
+         f := io.open(request.post_file, "r") | return error("Couldn't open:" || request.post_file)
+         while s := f.reads(8192) do {
             if not write_str(s) then {
-               default.close(f)
+               f.close()
                fail
             }
          }
-         default.close(f)
+         f.close()
       } else {
          request.set_header("authorization", create_authorization_header())
          write_request_headers() | fail
@@ -803,7 +804,7 @@ class HttpClient(NetClient)
          # continue from the previous attempt.
          #
          if \request.data_file then
-            data_out := default.open(request.data_file, "ab") | fatal(self, "Couldn't open " ||
+            data_out := io.open(request.data_file, "a") | fatal(self, "Couldn't open " ||
                                                                 request.data_file)
       } else {
          #
@@ -813,8 +814,8 @@ class HttpClient(NetClient)
          if /request.data_file then
             string_buff := StringBuff()
          else
-            data_out := default.open(request.data_file, "wb") | fatal(self, "Couldn't open " ||
-                                                                request.data_file)
+            data_out := io.open(request.data_file, "w") | fatal(self, "Couldn't open " ||
+                                                                 request.data_file)
 
          self.length := integer(response.get_first_header("content-length")) | &null
          self.read := 0
@@ -822,7 +823,7 @@ class HttpClient(NetClient)
 
       if not read_data_impl() then {
          if \request.data_file then
-            default.close(data_out)
+            data_out.close()
          fail
       }
 
@@ -832,7 +833,7 @@ class HttpClient(NetClient)
       if /request.data_file then 
          response.set_data(string_buff.get_string())
       else {
-         default.close(data_out)
+         data_out.close()
          response.set_data_file(request.data_file)
       }
 
@@ -898,17 +899,12 @@ class HttpClient(NetClient)
       while s := read_str(1024) do
          add_some(s)
 
-      #
-      # Check for errors that may have caused read_str to fail.
-      #
-      if &errno ~= XE_EOF then {
-         close()
-         fail
-      }
-
       close()
 
-      return
+      #
+      # Succeed iff the stream is at EOF
+      #
+      return eof()
    end
 
    #

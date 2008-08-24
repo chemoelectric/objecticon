@@ -309,7 +309,7 @@ class FileDialog(Dialog)
       pats := get_pats()
 
       if not(l := Files.list(s)) then {
-         msg(Files.get_reason())
+         msg(&why)
          return [[],[]]
       }
       dir_list := []

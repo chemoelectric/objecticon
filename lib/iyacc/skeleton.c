@@ -43,6 +43,7 @@ char *ibanner[] =
     "### This file created by IYACC 1.0",
     "### Please send bug reports to raypereda@hotmail.com",
     "@ICON_PACKAGE@%s\n",
+    "import io(write)\n",
     0
 };
 

@@ -4,13 +4,11 @@
 
 package mail
 
-import util
-
 #
 # This class represents a group, which is a phrase, plus
 # zero or more mailboxes.
 #
-class Group(Address, Error)
+class Group(Address)
    private readable 
       mailboxes,
       phrase
@@ -51,7 +49,7 @@ class Group(Address, Error)
    public parse(s)
       local p
       p := RFC822Parser()
-      return p.parse_group(s, self) | error(p)
+      return p.parse_group(s, self)
    end   
 
    public generate_mailboxes()

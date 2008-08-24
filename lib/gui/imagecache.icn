@@ -7,9 +7,6 @@ class ImageCache()
       map,
       path
 
-   private static 
-      error_reason
-
    private static init()
       map := table()
       path := []
@@ -66,17 +63,6 @@ class ImageCache()
       suspend (!path).append(p).str()
    end
    
-   private static error(a)
-      error_reason := a
-   end
-
-   #
-   # Return the error reason, or fail if it is unset.
-   #
-   public static get_reason()
-      return \error_reason
-   end
-
    private new()
    end
 end

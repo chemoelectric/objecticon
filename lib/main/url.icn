@@ -17,14 +17,13 @@ $include "posix.icn"
 #
 # This class encapsulates a URL
 #
-class URL(Error)
+class URL()
    private readable 
       protocol,
       address,
       file,
       ref,
       port,
-      file_handle,
       header
 
    #
@@ -108,25 +107,6 @@ class URL(Error)
    end
    
    #
-   # Open a file based on the address and the port and return it.
-   # @param timeout the optional timeout to give the open function.
-   #
-   public open(timeout)
-      return self.file_handle := default.open(self.address || ":" || self.port, "n", timeout)
-   end
-
-   #
-   # Close the file returned by {Open()}.
-   #
-   public close()
-      if \self.file_handle then {
-         default.close(self.file_handle) | fail
-         self.file_handle := &null
-      }
-      return
-   end
-
-   #
    # Extract the cgi parameters from the {file} field.
    # @return   A table, representing the keys and values of the fields.
    #
@@ -150,7 +130,8 @@ class URL(Error)
    end
 
    #
-   # Parse the fields of the {URL} object given the string s.
+   # Parse the fields of the {URL} object given the string s.  Succeeds if okay,
+   # or sets &why on failure.
    #
    public parse(s)
       s ? {

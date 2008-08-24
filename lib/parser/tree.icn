@@ -2,7 +2,7 @@ package parser
 
 $include "oigram_tab.icn"
 
-import lang(fatal), util
+import lang(fatal), util, io
 
 final class Token()
    public const
@@ -31,7 +31,7 @@ final class Token()
    end
 
    public write(f)
-      default.writes(f, chunk)
+      io.writes(f, chunk)
    end
 
    public new(tok, s, chunk, line, column, filename)

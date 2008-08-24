@@ -1,8 +1,9 @@
 package parser
 
 import 
-   util(Files, Error, Connectable, SetFields), 
-   lang(fatal)
+   util(Files, Connectable, SetFields, error), 
+   lang(fatal), 
+   io
 
 class Symbol()
    public const
@@ -264,7 +265,7 @@ class ImportDec()
    end
 end
 
-class SymbolTable(Error,Connectable,SetFields)
+class SymbolTable(Connectable,SetFields)
    private
       package_db,
       symbol_table, 
@@ -295,7 +296,7 @@ class SymbolTable(Error,Connectable,SetFields)
    private parse(f)
       local p, prog
       p := Parser()
-      prog := p.parse_file(f) | return error(p)
+      prog := p.parse_file(f) | fail
       return prog
    end
 
@@ -479,7 +480,7 @@ class SymbolTable(Error,Connectable,SetFields)
       local s, r, uf, d, c, e
       s := Files.file_to_string(sf.filename) | return error("Couldn't read " || sf.filename)
       r := UReader()
-      uf := (s ? r.scan_decls()) | return error("Couldn't scan ufile: " || r.get_reason())
+      uf := (s ? r.scan_decls()) | return error("Couldn't scan ufile: " || &why)
       sf.set_obj(uf)
       sf.set_package(uf.pack)
       every sf.add_import(uf.get_imports())
@@ -533,10 +534,10 @@ class SymbolTable(Error,Connectable,SetFields)
          if /package_db[s] then {
             if f := open(p.child("packages.txt").str(), "r") then {
                package_db[s] := scan_packtxt(f) | {
-                  close(f)
+                  f.close()
                   fail
                }
-               close(f)
+               f.close()
             } else
                package_db[s] := table()
          }

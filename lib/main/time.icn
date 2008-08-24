@@ -8,6 +8,8 @@
 
 package util
 
+import io(write)
+
 $include "posix.icn"
 
 #
@@ -30,7 +32,7 @@ $include "posix.icn"
 # @ t.set_fields(1990, 12, 2, 11, 22, 03, Timezone(-18000))  # the same date
 # @ t.set_seconds(n, z)      # n seconds past the base date in GMT, +/-z mins
 #
-class Time(Error)
+class Time()
    private readable 
       seconds,
       year,
@@ -334,7 +336,8 @@ class Time(Error)
 
    # 
    # Parse the instance using the given pattern string.  The pattern
-   # consists of pattern chars and other chars.
+   # consists of pattern chars and other chars.  Succeeds if the 
+   # string could be parsed; fails and sets &why otherwise.
    # 
    # The "width" of a field is the number of successive equal pattern
    # chars.  For example in the pattern

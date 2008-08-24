@@ -323,7 +323,8 @@ package ipl.lists
 import
    ipl.equiv(equiv),
    ipl.indices(indices),
-   ipl.numbers(residue)
+   ipl.numbers(residue),
+   io(stop,open)
 
 # create list from lines in file
 procedure file2lst(s)			
@@ -333,12 +334,12 @@ procedure file2lst(s)
 
    result := []
 
-   every x := !input do {
+   every x := |input.read() do {
       x := numeric(x)			# kludge
       put(result, x)
       }
 
-   close(input)
+   input.close()
 
    return result
 

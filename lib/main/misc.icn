@@ -85,3 +85,14 @@ end
 procedure find_and_skip(s)
    return tab(find(s)) || move(*s)
 end
+
+procedure errno()
+   \&why ? {
+      find_and_skip("(errno=") | fail
+      return integer(tab(many(&digits)))
+   }
+end
+
+procedure error(s)
+   &why := s
+end

@@ -1,6 +1,6 @@
 package parser
 
-import lang, util
+import lang, util, io
 
 class ErrorDetail()
    public const src, line, msg
@@ -25,7 +25,7 @@ class ErrorDetail()
    end
 end
 
-class Parser(Connectable, Error)
+class Parser(Connectable)
    public
       preproc_sym_table,preproc_if_stack,preproc_file_stack,preproc_if_state,
       preproc_file,preproc_filename,preproc_line,preproc_print_line,
@@ -33,7 +33,10 @@ class Parser(Connectable, Error)
       preproc_include_set,preproc_print_filename,preproc_command,
       preproc_err_count
 
-   public static const DEFAULT_SYMBOLS, PREPROCESSOR_ERROR_EVENT, PARSER_ERROR_EVENT
+   public static const 
+      DEFAULT_SYMBOLS, 
+      PREPROCESSOR_ERROR_EVENT, 
+      PARSER_ERROR_EVENT
 
    private static init()
       local s
@@ -78,7 +81,7 @@ class Parser(Connectable, Error)
    end
 
    public parse_file(fname, predefined_syms)
-      yyin := preprocess(fname, predefined_syms)
+      yyin := preprocess(fname, predefined_syms) | fail
       parser.yyerror := yyerror
       yylex_reinit()
       yyparse()
@@ -90,7 +93,9 @@ class Parser(Connectable, Error)
       local ed
       ed := ErrorDetail(yyfilename, yylineno, image(yytext) || ": " || s)
       fire(PARSER_ERROR_EVENT, ed)
-      get_reason() | error(ed.str())
+      # Put the first error into &why
+      if yynerrs = 0 then
+         error(ed.str())
       return
    end
 
@@ -101,7 +106,8 @@ class Parser(Connectable, Error)
       local ed
       ed := ErrorDetail(preproc_filename, preproc_line, msg)
       fire(PREPROCESSOR_ERROR_EVENT, ed)
-      get_reason() | error(ed.str())
+      if preproc_err_count = 0 then
+         error(ed.str())
       preproc_err_count +:= 1
       return
    end
@@ -155,7 +161,6 @@ class Parser(Connectable, Error)
       if not(preproc_file := open(fname)) then {
          fatal(self, "cannot open " || image(fname))
       }
-      clear_error()
       preproc_sym_table := \predefined_syms | copy(DEFAULT_SYMBOLS)
       preproc_if_stack := []
       preproc_file_stack := []

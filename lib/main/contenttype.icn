@@ -4,12 +4,12 @@
 
 package mail
 
-import util
+import util(ClTable)
 
 #
 # This class represents a content type
 #
-class ContentType(Error)
+class ContentType()
    private readable
       type,
       subtype,
@@ -64,7 +64,7 @@ class ContentType(Error)
    public parse(s)
       local p
       p := RFC822Parser()
-      return p.parse_content_type(s, self) | error(p)
+      return p.parse_content_type(s, self)
    end   
 
    public to_rfc1521()

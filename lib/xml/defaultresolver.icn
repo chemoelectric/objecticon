@@ -104,13 +104,12 @@ class DefaultResolver(Resolver)
       local hc, url, hp, hr
 
       hc := HttpClient()
-      url := URL()
-      url.parse(sys_id) | return error(url)
+      url := URL(sys_id) | fail
 
       hr := HttpRequest()
       hr.set_url(url)
 
-      hp := hc.retrieve(hr) | return error(hc)
+      hp := hc.retrieve(hr) | fail
 
       return hp.get_data()
    end
