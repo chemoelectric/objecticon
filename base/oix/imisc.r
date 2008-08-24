@@ -528,7 +528,7 @@ static int lookup_record_field(struct b_constructor *recdef, dptr num)
         return -1;
     }
 
-    return ftabp[fnum * (*records + *classes) + recdef->fieldtable_col];
+    return ftabp[fnum * ftabwidth + recdef->fieldtable_col];
 }
 
 /*
