@@ -71,7 +71,8 @@
 #define K_VERSION     61
 #define K_WHEELDOWN   62
 #define K_WHEELUP     63
-#define K_WINDOW      64
-#define K_WINDOWCLOSE 65
-#define K_X           66
-#define K_Y           67
+#define K_WHY         64
+#define K_WINDOW      65
+#define K_WINDOWCLOSE 66
+#define K_X           67
+#define K_Y           68

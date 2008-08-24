@@ -492,6 +492,7 @@ struct progstate *pstate;
    /* Kywd_pos, &pos, always an integer */
    postqual(&(pstate->ksub));
    postqual(&(pstate->Kywd_prog));
+   postqual(&(pstate->Kywd_why));
    /* Kywd_ran, &random, always an integer */
    /* Kywd_trc, &trace, always an integer */
 

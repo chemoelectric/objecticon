@@ -770,17 +770,3 @@ int sig;
 }
 
 
-void dup_fds(dptr d_stdin, dptr d_stdout, dptr d_stderr)
-{
-   if (is:file(*d_stdin)) {
-       dup2(file_fd(&BlkLoc(*d_stdin)->file), 0);
-   }
-   if (is:file(*d_stdout)) {
-       dup2(file_fd(&BlkLoc(*d_stdout)->file), 1);
-   }
-   if (is:file(*d_stderr)) {
-       dup2(file_fd(&BlkLoc(*d_stderr)->file), 2);
-   }
-}
-
-

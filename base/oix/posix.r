@@ -314,28 +314,6 @@ function{0,1} chown(s, u, g)
 #endif					/* MSWIN32 */
 	 }
       }
-      file: {
-         abstract {
-	    return null
-         }
-	 body {
-	    int fd;
-	    IntVal(amperErrno) = 0;
-	    if ((fd = file_fd(&BlkLoc(s)->file)) < 0) {
-	       IntVal(amperErrno) = errno;
-	       fail;
-            }
-#if MSWIN32
-	    fail;
-#else					/* MSWIN32 */
-	    if (fchown(fd, i_u, i_g) != 0) {
-	       IntVal(amperErrno) = errno;
-	       fail;
-	       }
-	    return nulldesc;
-#endif					/* MSWIN32 */
-	 }
-      }
       default:
 	 runerr(109, s)
       }
@@ -379,41 +357,6 @@ function{0,1} chmod(s, m)
 	       fail;
 	    }
 	    return nulldesc;
-	 }
-      }
-      file: {
-	 abstract {
-	    return null
-	    }
-	 body {
-	    tended char *cmode;
-	    C_integer i, fd;
-	    IntVal(amperErrno) = 0;
-	    if (is:string(m)) {
-	       cnv:C_string(m, cmode);
-                if ((fd = file_fd(&BlkLoc(s)->file)) < 0) {
-		  IntVal(amperErrno) = errno;
-		  fail;
-                }
-	       i = getmodefd(fd, cmode);
-	       if (i == -1) {
-		  IntVal(amperErrno) = errno;
-		  fail;
-	       }
-	       if (i == -2)
-		  runerr(1045, m);
-	    }
-	    else
-	       cnv:C_integer(m, i);
-#if MSWIN32
-	    fail;
-#else					/* MSWIN32 */
-	    if (fchmod(fd, i) != 0) {
-	       IntVal(amperErrno) = errno;
-	       fail;
-	       }
-	    return nulldesc;
-#endif					/* MSWIN32 */
 	 }
       }
       default:
@@ -540,25 +483,6 @@ function{0,1} truncate(f, l)
 	    return nulldesc;
 	 }
       }
-      file: {
-	 abstract {
-	    return null
-	    }
-	 body {
-	    int fd;
-	    IntVal(amperErrno) = 0;
-
-	    if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
-	       IntVal(amperErrno) = errno;
-	       fail;
-            }
-	    if (ftruncate(fd, l) != 0) {
-	       IntVal(amperErrno) = errno;
-	       fail;
-	       }
-	    return nulldesc;
-	 }
-      }
       default:
 	 runerr(109, f)
       }
@@ -590,41 +514,6 @@ function{0,1} utime(f, atime, mtime)
 	 fail;
 	 }
       return nulldesc;
-      }
-end
-
-
-"ioctl() - control a device driver."
-
-function{0,1} ioctl(f, action, options)
-   if !cnv:C_integer(action) then
-      runerr(103, action)
-   if !is:file(f) then
-      runerr(105, f)
-   abstract {
-      return integer
-      }
-   inline {
-      int retval, fd;
-      IntVal(amperErrno) = 0;
-      if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
-          IntVal(amperErrno) = errno;
-          fail;
-      }
-
-#if MSWIN32
-      fail;
-#else					/* MSWIN32 */
-#ifdef UNICON_IOCTL
-      if ((retval = ioctl(fd, action, options)) < 0) {
-	 IntVal(amperErrno) = errno;
-	 fail;
-	 }
-#else					/* UNICON_IOCTL */
-      runerr(121, f);
-#endif					/* UNICON_IOCTL */
-#endif					/* MSWIN32 */
-      return C_integer retval;
       }
 end
 
@@ -695,185 +584,6 @@ function{0,1} exec(f, argv[argc])
       }
 end
 
-"system() - create a new process, optionally mapping its stdin/stdout/stderr."
-
-function{0,1} system(argv, d_stdin, d_stdout, d_stderr, mode)
-   if !is:file(d_stdin) then
-      if !is:null(d_stdin) then
-	 runerr(105, d_stdin)
-   if !is:file(d_stdout) then
-      if !is:null(d_stdout) then
-	 runerr(105, d_stdout)
-   if !is:file(d_stderr) then
-      if !is:null(d_stderr) then
-	 runerr(105, d_stderr)
-   if !is:list(argv) then
-      if !is:string(argv) then
-         runerr(110, argv)
-   if !is:string(mode) then
-      if !is:integer(mode) then
-	 if !is:file(mode) then
-	    if !is:null(mode) then
-	       runerr(170, mode)
-   abstract {
-      return null ++ integer
-      }
-   body {
-      int i, j, n, fd_0, fd_1, fd_2, is_argv_str=0, pid;
-      C_integer i_mode=0;
-      tended union block *ep;
-	 
-      /*
-       * We are subverting the RTT type system here w.r.t. garbage
-       * collection but we're going to be doing an exec() so ...
-       */
-      tended char *p;
-      tended char *cmdline;
-      char **margv=NULL;
-      IntVal(amperErrno) = 0;
-
-      /* Decode the mode */
-      if (is:integer(mode))
-	 cnv:C_integer(mode, i_mode);
-      else if (is:string(mode)) {
-	 tended char *s_mode;
-         cnv:C_string(mode, s_mode);
-	 i_mode = (strcmp(s_mode, "nowait") == 0);
-      }
-
-      if (is:list(argv)) {
-         margv = (char **)malloc((BlkLoc(argv)->list.size+1) * sizeof(char *));
-         if (margv == NULL) runerr(305);
-	 n = 0;
-	 /* Traverse the list */
-	 for (ep = BlkLoc(argv)->list.listhead; BlkType(ep) == T_Lelem;
-	      ep = ep->lelem.listnext) {
-	    for (i = 0; i < ep->lelem.nused; i++) {
-	       dptr f;
-	       j = ep->lelem.first + i;
-	       if (j >= ep->lelem.nslots)
-		  j -= ep->lelem.nslots;
-	       f = &ep->lelem.lslots[j];
-
-	       if (!cnv:C_string((*f), p))
-		  runerr(103, *f);
-	       margv[n++] = p;
-	       }
-	    }
-	 margv[n] = 0;
-         }
-      else if (is:string(argv)) {
-	 is_argv_str = 1;
-         cnv:C_string(argv, cmdline);
-      }
-
-
-#if !MSWIN32
-      /* 
-       * We don't use system(3) any more since the program is allowed to
-       * re-map the files even for foreground execution
-       */
-      switch (pid = fork()) {
-      case 0:
-
-	 dup_fds(&d_stdin, &d_stdout, &d_stderr);
-
-	 if (is_argv_str)
-	    execl("/bin/sh", "sh", "-c", cmdline, 0);
-	 else {
-	    execvp(margv[0], margv);
-	    free(margv);
-            }
-
-	  /*
-	   * If we returned.... this is the child, so failure is no good;
-	   * stop with a runtime error so at least the user will get some
-	   * indication of the problem.
-	   */
-	  IntVal(amperErrno) = errno;
-	  runerr(500);
-	  break;
-      case -1:
-         if (margv) free(margv);
-	 fail;
-	 break;
-      default:
-         if (margv) free(margv);
-	 if (!i_mode) {
-	    int status;
-	    waitpid(pid, &status, 0);
-	    return C_integer status;
-	    }
-	 else {
-	    return C_integer pid;
-            }
-      }
-#else					/* MSWIN32 */
-     /*
-      * We might want to use CreateProcess and pass the file handles
-      * for stdin/stdout/stderr to the child process.  Another candidate
-      * is _execvp().
-      */
-      if (i_mode) {
-         _flushall();
-	 if (is:string(argv)) {
-	    int argc;
-	    char **garbage;
-	    argc = CmdParamToArgv(cmdline, &garbage, 0);
-	    i = (C_integer)_spawnvp(_P_NOWAITO, garbage[0], garbage);
-	    }
-	 else {
-	    i = (C_integer)_spawnvp(_P_NOWAITO, margv[0], margv);
-	    free(margv);
-            }
-	 if (i != 0) {
-	    IntVal(amperErrno) = errno;
-	    fail;
-	    }
-         }
-      else {
-	    /* Sigh... old "system". Collect all args into a string. */
-	    if (is_argv_str) {
-#ifdef MSWindows
-	       i = (C_integer)mswinsystem(cmdline);
-#else					/* MSWindows */
-	       i = (C_integer)system(cmdline);
-#endif					/* MSWindows */
-	       return C_integer i;
-	       }
-	    else {
-	       int i, total = 0, n;
-	       tended char *s;
-	 
-	       i = 0;
-	       while (margv[i]) {
-		  total += strlen(margv[i]) + 1;
-		  i++;
-		  }
-	       n = i-1;
-	       /* We use Icon's allocator, it's the only safe way. */
-	       Protect(s = alcstr(0, total), runerr(0));
-	       p = s;
-	       for (i = 0; i < n; i++) {
-		  strcpy(p, margv[i]);
-		  p += strlen(margv[i]);
-		  *p++ = ' ';
-		  }
-#ifdef MSWindows
-	       i = (C_integer)mswinsystem(s);
-#else					/* MSWindows */
-	       i = (C_integer)system(s);
-#endif					/* MSWindows */
-	       free(margv);
-	       return C_integer i;
-	       }
-	    }
-#endif					/* MSWIN32 */
-
-      /*NOTREACHED*/
-      return nulldesc;
-   }
-end
 
 "getuid() - get the real user identity."
 
@@ -1414,38 +1124,6 @@ function{0,1} stat(f)
 	       strfree = out;
 	    }
 #endif					/* !MSWIN32 */
-	    return result;
-	 }
-      }
-      file: {
-	 abstract {
-	    return record
-	    }
-	 body {
-	    tended struct b_record *rp;
-#if MSWIN32
-	    struct _stat sbuf;
-#else					/* MSWIN32 */
-	    struct stat sbuf;
-#endif					/* MSWIN32 */
-	    static dptr constr;
-	    int fd;
-
-	    IntVal(amperErrno) = 0;
-	    if ((fd = file_fd(&BlkLoc(f)->file)) < 0) {
-	       IntVal(amperErrno) = errno;
-	       fail;
-            }
-	    if (fstat(fd, &sbuf) != 0) {
-	       IntVal(amperErrno) = errno;
-	       fail;
-	       }
-	    if (!constr)
-	       if (!(constr = rec_structor("posix_stat")))
-		  syserr("failed to create posix record constructor");
-
-	    Protect(rp = alcrecd(&BlkLoc(*constr)->constructor), runerr(0));
-	    stat2rec(&sbuf, &result, &rp);
 	    return result;
 	 }
       }

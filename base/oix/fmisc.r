@@ -285,11 +285,10 @@ function{1} copy(x)
 end
 
 
-"display(i,f) - display local variables of i most recent"
+"display(i) - display local variables of i most recent"
 " procedure activations, plus global variables."
-" Output to file f (default &errout)."
 
-function{1} display(i,f,c)
+function{1} display(i,c)
    declare {
       struct b_coexpr *ce = NULL;
       struct progstate *savedprog = 0;
@@ -297,14 +296,6 @@ function{1} display(i,f,c)
 
    if !def:C_integer(i,(C_integer)k_level) then
       runerr(101, i)
-
-   if is:null(f) then
-       inline {
-	  f.dword = D_File;
-	  BlkLoc(f) = (union block *)&k_errout;
-          }
-   else if !is:file(f) then
-      runerr(105, f)
 
    if !is:null(c) then inline {
       if (!is:coexpr(c)) runerr(118,c);
@@ -318,19 +309,11 @@ function{1} display(i,f,c)
       }
 
    body {
-      FILE *std_f;
+      FILE *std_f = stderr;
       int r;
 
       if (!debug_info)
          runerr(402);
-
-      /*
-       * Produce error if file cannot be written.
-       */
-      if ((BlkLoc(f)->file.status & Fs_Write) == 0) 
-         runerr(213, f);
-
-      std_f = BlkLoc(f)->file.u.fp;
 
       /*
        * Produce error if i is negative; constrain i to be <= &level.
@@ -1974,6 +1957,9 @@ function{*} keyword(keyname,ce)
 	 }
       else if (strcmp(kname,"progname") == 0) {
 	 return kywdstr(&(p->Kywd_prog));
+	 }
+      else if (strcmp(kname,"why") == 0) {
+	 return kywdstr(&(p->Kywd_why));
 	 }
       else if (strcmp(kname,"random") == 0) {
 	 return kywdint(&(p->Kywd_ran));

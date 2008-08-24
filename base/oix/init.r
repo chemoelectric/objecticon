@@ -226,6 +226,7 @@ void icon_init(char *name)
     MakeInt(0, &(rootpstate.Kywd_trc));
     StrLen(rootpstate.Kywd_prog) = strlen(prog_name);
     StrLoc(rootpstate.Kywd_prog) = prog_name;
+    rootpstate.Kywd_why = nulldesc;
     rootpstate.Kywd_ran = zerodesc;
     rootpstate.K_errornumber = 0;
     rootpstate.T_errornumber = 0;
@@ -390,13 +391,10 @@ void icon_init(char *name)
     /*
      * The field table is optional and will be zero if not generated.
      */
-    if (hdr.Ftab) {
+    if (hdr.Ftab)
         ftabp = (short *)(code + hdr.Ftab);
-        ftabwidth = *classes + *records;
-    } else {
+    else
         ftabp = 0;
-        ftabwidth = 0;
-    }
     standardfields = (word *)(code + hdr.StandardFields);
     fnames = (dptr)(code + hdr.Fnames);
     globals = efnames = (dptr)(code + hdr.Globals);
@@ -445,6 +443,14 @@ void icon_init(char *name)
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, code);
     fclose(ifile);
+
+    /*
+     * Set the ftabwidth - quicker for Field table lookup
+     */
+    if (hdr.Ftab)
+        ftabwidth = *classes + *records;
+    else
+        ftabwidth = 0;
 
     /*
      * Initialize the event monitoring system, if configured.
@@ -840,6 +846,7 @@ void datainit()
     IntVal(kywd_ran) = 0;
     StrLen(kywd_prog) = strlen(prog_name);
     StrLoc(kywd_prog) = prog_name;
+    kywd_why = nulldesc;
     StrLen(k_subject) = 0;
     StrLoc(k_subject) = "";
 
@@ -897,6 +904,7 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->eventcode= nulldesc;
     pstate->eventval = nulldesc;
     pstate->eventsource = nulldesc;
+    pstate->Kywd_why = nulldesc;
     pstate->Glbl_argp = NULL;
     pstate->Kywd_err = zerodesc;
     pstate->Kywd_pos = onedesc;
@@ -1055,13 +1063,10 @@ struct b_coexpr * loadicode(name, theInput, theOutput, theError, bs, ss, stk)
     /*
      * The field table is optional and will be zero if not generated.
      */
-    if (hdr.Ftab) {
+    if (hdr.Ftab)
         pstate->Ftabp = (short *)(pstate->Code + hdr.Ftab);
-        pstate->FtabWidth = *pstate->Classes + *pstate->Records;
-    } else {
+    else
         pstate->Ftabp = 0;
-        pstate->FtabWidth = 0;
-    }
     pstate->StandardFields = (word *)(pstate->Code + hdr.StandardFields);
     pstate->Fnames  = (dptr)(pstate->Code + hdr.Fnames);
     pstate->Globals = pstate->Efnames = (dptr)(pstate->Code + hdr.Globals);
@@ -1081,6 +1086,13 @@ struct b_coexpr * loadicode(name, theInput, theOutput, theError, bs, ss, stk)
 
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, pstate->Code);
+
+    if (hdr.Ftab)
+        pstate->FtabWidth = *pstate->Classes + *pstate->Records;
+    else
+        pstate->FtabWidth = 0;
+
+    fclose(ifile);
 
     /*
      * Resolve references from icode to run-time system.

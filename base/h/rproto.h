@@ -543,15 +543,6 @@ int	getche		(void);
 double	getdbl		(dptr dp);
 int	getimage	(dptr dp1, dptr dp2);
 
-int     file_readline   (struct b_file *fbp, char *buf, int max);
-int     file_readstr(struct b_file *fbp, char *buf, int max);
-int     file_outputstr(struct b_file *fbp, char *buf, int n);
-int     file_flush(struct b_file *fbp);
-int     file_close(struct b_file *fbp);
-int     file_seek(struct b_file *fbp, int offset, int whence);
-int     file_tell(struct b_file *fbp);
-int     file_fd(struct b_file *fbp);
-
 void	hgrow		(union block *bp);
 void	hshrink		(union block *bp);
 C_integer iipow		(C_integer n1, C_integer n2);
@@ -598,19 +589,13 @@ dptr make_group			(struct group *pw, dptr result);
 #endif					/* MSWIN32 */
 dptr make_host			(struct hostent *pw, dptr result);
 dptr make_serv			(struct servent *pw, dptr result);
-int sock_listen		(char *s, int udp);
-int sock_name			(int sock, char* addr, char* addrbuf, int bufsize);
-int sock_send			(char* addr, char* msg, int msglen);
-int sock_recv			(int f, struct b_record **rp);
-int sock_write			(int f, char *s, int n);
-int sock_getstrg(char *buf,  int maxi, SOCKET fd);
+
 struct sockaddr *parse_sockaddr(char *s, int *size);
 
 struct descrip register_sig	(int sig, struct descrip handler);
 void signal_dispatcher		(int sig);
 int get_fd			(struct descrip, unsigned int errmask);
 dptr u_read			(int fd, int n, dptr d);
-void dup_fds			(dptr d_stdin, dptr d_stdout, dptr d_stderr);
 
 
    struct b_refresh *alcrefresh_0(word *e, int nl, int nt);
@@ -650,6 +635,4 @@ int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);
 stringint *stringint_lookup(stringint *sip, char *s);
 
-
-
-
+void on_error(int n);

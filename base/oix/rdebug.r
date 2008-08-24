@@ -265,10 +265,14 @@ int get_name(dptr dp1,dptr dp0)
         }
 
       kywdstr: {
-            StrLen(*dp0) = 9;
-            StrLoc(*dp0) = "&progname";
+          if (VarLoc(*dp1) == &kywd_prog) {
+              StrLen(*dp0) = 9;
+              StrLoc(*dp0) = "&progname";
+          } else if (VarLoc(*dp1) == &kywd_why) {
+              StrLen(*dp0) = 4;
+              StrLoc(*dp0) = "&why";
+          }
         }
-
       kywdpos: {
             StrLen(*dp0) = 4;
             StrLoc(*dp0) = "&pos";

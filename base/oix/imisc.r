@@ -285,12 +285,12 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
 
     if (cf->flags & M_Protected) {
         if (instance_class) {
-            /* Instance access, caller must be in instance's superclasses */
+            /* Instance access, caller must be in instance's implemented classes */
             if (caller_class && in_hierarchy(caller_class, instance_class))
                 return 0;
             return 609;
         } else {
-            /* Static access, definition must be in caller's superclasses */
+            /* Static access, definition must be in caller's implemented classes */
             if (caller_class && in_hierarchy(cf->defining_class, caller_class))
                 return 0;
             return 610;

@@ -66,57 +66,6 @@ operator{*} ! bang(underef x -> dx)
             }
          }
 
-      file: {
-         abstract {
-            return string
-	       }
-         body {
-             tended struct descrip s;
-             static char sbuf[MaxReadStr];
-             char *sp;
-
-             if (!(BlkLoc(dx)->file.status & Fs_Read))
-                 runerr(212, dx);
-
-             for (;;) {
-                 IntVal(amperErrno) = 0;
-                 StrLen(s) = 0;
-                 for (;;) {
-                     int nread;
-                     nread = file_readline(&BlkLoc(dx)->file, sbuf, sizeof(sbuf));
-                     if (nread < 0) {
-                         IntVal(amperErrno) = errno;
-                         fail;
-                     }
-                     if (nread == 0) {
-                         if (StrLen(s) == 0) {
-                             IntVal(amperErrno) = XE_EOF;
-                             fail;
-                         } else
-                             break;
-                     }
-                     Protect(reserve(Strings, nread), runerr(0));
-                     if (StrLen(s) > 0 && !InRange(strbase, StrLoc(s),strfree)) {
-                         Protect(reserve(Strings, StrLen(s) + nread), runerr(0));
-                         Protect((StrLoc(s) = alcstr(StrLoc(s), StrLen(s))), runerr(0));
-                     }
-                     Protect(sp = alcstr(sbuf, nread), runerr(0));
-                     if (StrLen(s) == 0)
-                         StrLoc(s) = sp;
-                     StrLen(s) += nread;
-
-                     if (StrLoc(s)[StrLen(s) - 1] == '\n') {
-                         --StrLen(s);
-                         if (StrLen(s) > 0 &&  StrLoc(s)[StrLen(s) - 1] == '\r')
-                             --StrLen(s);
-                         break;
-                     }
-                 }
-                 suspend s;
-             }
-          }
-       }
-
       table: {
          abstract {
             return type(dx).tbl_val

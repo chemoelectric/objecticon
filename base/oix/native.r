@@ -440,3 +440,637 @@ function{0,1} util_WindowsFilePath_getdcwd(d)
 end
 
 #endif
+
+function{0,1} io_FileStream_open_impl(path, flags, mode)
+   if !cnv:C_string(path) then
+      runerr(103, path)
+
+   if !cnv:C_integer(flags) then
+      runerr(101, flags)
+
+   if !def:C_integer(mode, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) then
+      runerr(101, mode)
+
+   body {
+       int fd;
+
+       fd = open(path, flags, mode);
+       if (fd < 0) {
+           on_error(errno);
+           fail;
+       }
+
+       return C_integer fd;
+   }
+end
+
+function{0,1} io_FileStream_in_impl(fd, i)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+       int nread;
+       tended struct descrip s;
+
+       if (i <= 0) {
+           irunerr(205, i);
+           errorfail;
+       }
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       Protect(StrLoc(s) = alcstr(NULL, i), runerr(0));
+
+       nread = read(fd, StrLoc(s), i);
+       if (nread < 0) {
+           /* Reset the memory just allocated */
+           strtotal += DiffPtrs(StrLoc(s), strfree);
+           strfree = StrLoc(s);
+           on_error(errno);
+           fail;
+       }
+
+       if (nread == 0) {
+           /* Reset the memory just allocated */
+           strtotal += DiffPtrs(StrLoc(s), strfree);
+           strfree = StrLoc(s);
+           on_error(XE_EOF);
+           fail;
+       }
+
+       StrLen(s) = nread;
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       strtotal += DiffPtrs(StrLoc(s) + nread, strfree);
+       strfree = StrLoc(s) + nread;
+
+       return s;
+   }
+
+end
+
+function{0,1} io_FileStream_out_impl(fd, s)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       int rc;
+       if ((rc = write(fd, StrLoc(s), StrLen(s))) < 0) {
+           on_error(errno);
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+function{0,1} io_FileStream_close_impl(fd)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   body {
+       if (close(fd) < 0) {
+           on_error(errno);
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function{0,1} io_FileStream_seek_impl(fd, offset, whence)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   if !cnv:C_integer(offset) then
+      runerr(101, offset)
+   if !cnv:C_integer(whence) then
+      runerr(101, whence)
+   body {
+       int rc;
+       if ((rc = lseek(fd, offset, whence)) < 0) {
+           on_error(errno);
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+function{0,1} io_SocketStream_in_impl(fd, i)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+       int nread;
+       tended struct descrip s;
+
+       if (i <= 0) {
+           irunerr(205, i);
+           errorfail;
+       }
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       Protect(StrLoc(s) = alcstr(NULL, i), runerr(0));
+
+       nread = recv(fd, StrLoc(s), i, 0);
+       if (nread < 0) {
+           /* Reset the memory just allocated */
+           strtotal += DiffPtrs(StrLoc(s), strfree);
+           strfree = StrLoc(s);
+           on_error(errno);
+           fail;
+       }
+
+       if (nread == 0) {
+           /* Reset the memory just allocated */
+           strtotal += DiffPtrs(StrLoc(s), strfree);
+           strfree = StrLoc(s);
+           on_error(XE_EOF);
+           fail;
+       }
+
+       StrLen(s) = nread;
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       strtotal += DiffPtrs(StrLoc(s) + nread, strfree);
+       strfree = StrLoc(s) + nread;
+
+       return s;
+   }
+
+end
+
+function{0,1} io_SocketStream_socket_impl(domain, typ)
+   if !def:C_integer(domain, PF_INET) then
+      runerr(101, domain)
+
+   if !def:C_integer(typ, SOCK_STREAM) then
+      runerr(101, typ)
+
+   body {
+       SOCKET sockfd;
+       struct descrip fname;
+       sockfd = socket(domain, typ, 0);
+       if (sockfd < 0) {
+           on_error(errno);
+           fail;
+       }
+       return C_integer sockfd;
+   }
+end
+
+function{0,1} io_SocketStream_out_impl(fd, s)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       int rc;
+       /* 
+        * If possible use MSG_NOSIGNAL so that we get the EPIPE error
+        * code, rather than the SIGPIPE signal.
+        */
+#ifdef HAVE_MSG_NOSIGNAL
+       rc = send(fd, StrLoc(s), StrLen(s), MSG_NOSIGNAL);
+#else
+       rc = send(fd, StrLoc(s), StrLen(s), 0);
+#endif
+       if (rc < 0) {
+           on_error(errno);
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+function{0,1} io_SocketStream_close_impl(fd)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   body {
+       if (close(fd) < 0) {
+           on_error(errno);
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function{0,1} io_SocketStream_socketpair_impl(typ)
+   if !def:C_integer(typ, SOCK_STREAM) then
+      runerr(101, typ)
+
+   body {
+       int fds[2];
+       struct descrip t;
+
+       if (socketpair(AF_UNIX, typ, 0, fds) < 0) {
+           on_error(errno);
+           fail;
+       }
+
+      result = create_list(2);
+
+      MakeInt(fds[0], &t);
+      c_put(&result, &t);
+
+      MakeInt(fds[1], &t);
+      c_put(&result, &t);
+
+      return result;
+   }
+end
+
+function{0,1} io_SocketStream_connect_impl(fd, addr)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   
+   if !cnv:C_string(addr) then
+      runerr(103, addr)
+
+   body {
+       struct sockaddr *sa;
+       int len;
+
+       sa = parse_sockaddr(addr, &len);
+       if (!sa) {
+           on_error(errno);
+           fail;
+       }
+
+       if (connect(fd, sa, len) < 0) {
+           on_error(errno);
+           fail;
+       }
+
+       return nulldesc;
+   }
+end
+
+function{0,1} io_SocketStream_bind_impl(fd, addr)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   
+   if !cnv:string(addr) then
+      runerr(103, addr)
+
+   body {
+       tended char *addrstr;
+       struct sockaddr *sa;
+       int len;
+
+       /*
+        * get a C string for the address.
+        */
+       if (!cnv:C_string(addr, addrstr))
+           runerr(103, addr);
+
+       sa = parse_sockaddr(addrstr, &len);
+       if (!sa) {
+           on_error(errno);
+           fail;
+       }
+
+       if (bind(fd, sa, len) < 0) {
+           on_error(errno);
+           fail;
+       }
+
+       return nulldesc;
+   }
+end
+
+function{0,1} io_SocketStream_listen_impl(fd, backlog)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   
+   if !cnv:C_integer(backlog) then
+      runerr(101, backlog)
+
+   body {
+       if (listen(fd, backlog) < 0) {
+           on_error(errno);
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function{0,1} io_SocketStream_accept_impl(fd)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+
+   body {
+       SOCKET sockfd;
+
+       if ((sockfd = accept(fd, 0, 0)) < 0) {
+           on_error(errno);
+           fail;
+       }
+
+       return C_integer sockfd;
+   }
+end
+
+
+
+static int list2fd_set(dptr l, dptr tmpl, fd_set *s)
+{
+    tended struct descrip e;
+
+    FD_ZERO(s);
+    if (is:null(*l))
+        return 0;
+    if (!is:list(*l)) {
+        err_msg(108, l);
+        return -1;
+    }
+    *tmpl = create_list(BlkLoc(*l)->list.size);
+
+    while (c_get(&BlkLoc(*l)->list, &e)) {
+        C_integer t;
+        if (!cnv:C_integer(e, t)) {
+            err_msg(101, &e);
+            return -1;
+        }
+        c_put(tmpl, &e);
+        FD_SET(t, s);
+    }
+    return 0;
+}
+
+static void fd_set2list(dptr l, dptr tmpl, fd_set *s)
+{
+    tended struct descrip e;
+
+    if (is:null(*l))
+        return;
+
+    while (c_get(&BlkLoc(*tmpl)->list, &e)) {
+        C_integer t;
+        if (!cnv:C_integer(e, t))
+            continue; /* Should never happen */
+        if (FD_ISSET(t, s))
+            c_put(l, &e);
+    }
+}
+
+function{0,1} io_DescStream_select_impl(rl, wl, el, timeout)
+    body {
+       fd_set rset, wset, eset;
+       struct timeval tv, *ptv;
+       tended struct descrip rtmp, wtmp, etmp;
+       int rc;
+
+       if ((list2fd_set(&rl, &rtmp, &rset) < 0) ||
+           (list2fd_set(&wl, &wtmp, &wset) < 0) ||
+           (list2fd_set(&el, &etmp, &eset) < 0)) {
+           on_error(errno);
+           fail;
+       }
+
+       if (is:null(timeout))
+           ptv = 0;
+       else {
+           C_integer t;
+           if (!cnv:C_integer(timeout, t))
+               runerr(101, timeout);
+           tv.tv_sec = t / 1000;
+           tv.tv_usec = (t % 1000) * 1000;
+           ptv = &tv;
+       }
+
+       rc = select(FD_SETSIZE, &rset, &wset, &eset, ptv);
+       if (rc < 0) {
+           on_error(errno);
+           fail;
+       }
+       /* A rc of zero means timeout; we fail with a custom &errno */
+       if (rc == 0) {
+           on_error(XE_TIMEOUT);
+           fail;
+       }
+
+       fd_set2list(&rl, &rtmp, &rset);
+       fd_set2list(&wl, &wtmp, &wset);
+       fd_set2list(&el, &etmp, &eset);
+
+       return C_integer rc;
+    }
+end
+
+function{0,1} io_DescStream_poll_impl(a[n])
+   body {
+#ifdef HAVE_POLL
+       struct pollfd *ufds;
+       unsigned int nfds;
+       int timeout, i, rc;
+
+       nfds = n / 2;
+       if (n % 2 == 0)
+           timeout = -1;
+       else {
+           if (!cnv:C_integer(a[n - 1], timeout))
+               runerr(101, a[n - 1]);
+       }
+
+       Protect(ufds = calloc(nfds, sizeof(struct pollfd)), runerr(0));
+       for (i = 0; i < nfds; ++i) {
+           int events, fd;
+           if (!cnv:C_integer(a[2 * i], fd)) {
+               free(ufds);
+               runerr(101, a[2 * i]);
+           }
+           if (!cnv:C_integer(a[2 * i + 1], events)) {
+               free(ufds);
+               runerr(101, a[2 * i + 1]);
+           }
+           ufds[i].fd = fd;
+           ufds[i].events = events;
+       }
+
+       rc = poll(ufds, nfds, timeout);
+       if (rc < 0) {
+           free(ufds);
+           on_error(errno);
+           fail;
+       }
+       /* A rc of zero means timeout; we fail with a custom &errno */
+       if (rc == 0) {
+           free(ufds);
+           on_error(XE_TIMEOUT);
+           fail;
+       }
+
+       result = create_list(nfds);
+       for (i = 0; i < nfds; ++i) {
+           struct descrip tmp;
+           MakeInt(ufds[i].revents, &tmp);
+           c_put(&result, &tmp);
+       }
+
+       free(ufds);
+
+       return result;
+#else
+       runerr(121);
+#endif  /* HAVE_POLL */
+   }
+end
+
+function{0,1} io_DescStream_flag_impl(fd, on, off)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+
+    if !def:C_integer(on, 0) then
+      runerr(101, on)
+
+    if !def:C_integer(off, 0) then
+      runerr(101, off)
+
+    body {
+        int i;
+
+        if ((i = fcntl(fd, F_GETFL, 0)) < 0) {
+           on_error(errno);
+           fail;
+        }
+        if (on || off) {
+            i = (i | on) & (~off);
+            if (fcntl(fd, F_SETFL, i) < 0) {
+                on_error(errno);
+                fail;
+            }
+        }
+
+        return C_integer i;
+    }
+end
+
+function{0,1} io_DirStream_open_impl(path)
+   if !cnv:C_string(path) then
+      runerr(103, path)
+   body {
+       DIR *dd;
+
+       dd = opendir(path);
+       if (!dd) {
+           on_error(errno);
+           fail;
+       }
+
+       return C_integer((long int)dd);
+   }
+end
+
+function{0,1} io_DirStream_read_impl(dd)
+   if !cnv:C_integer(dd) then
+      runerr(101, dd)
+   body {
+       struct dirent *de;
+       errno = 0;
+       de = readdir((DIR*)dd);
+       if (!de) {
+           if (errno)
+               on_error(errno);
+           else
+               on_error(XE_EOF);
+           fail;
+       }
+       return cstr2string(de->d_name);
+   }
+end
+
+function{0,1} io_DirStream_close_impl(dd)
+   if !cnv:C_integer(dd) then
+      runerr(101, dd)
+   body {
+       int rc;
+       if ((rc = closedir((DIR*)dd)) < 0) {
+           on_error(errno);
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function{0,1} io_ProgStream_open_impl(cmd, flags)
+   if !cnv:C_string(cmd) then
+      runerr(103, cmd)
+   if !cnv:C_integer(flags) then
+      runerr(101, flags)
+   body {
+       int pid, fd[2];
+
+       if (flags != O_RDONLY && flags != O_WRONLY) {
+           irunerr(205, flags);
+           errorfail;
+       }
+
+       if ((pipe(fd) < 0)) {
+           on_error(errno);
+           fail;
+       }
+
+       if ((pid = fork()) < 0) {
+           on_error(errno);
+           close(fd[0]);
+           close(fd[1]);
+           fail;
+       }
+
+       if (pid) {
+           struct descrip t;
+           result = create_list(2);
+           if (flags == O_RDONLY) {
+               close(fd[1]);
+               MakeInt(fd[0], &t);
+           } else {
+               close(fd[0]);
+               MakeInt(fd[1], &t);
+           }
+           c_put(&result, &t);
+           MakeInt(pid, &t);
+           c_put(&result, &t);
+           return result;
+       } else {
+           if (flags == O_RDONLY) {
+               if (dup2(fd[1], 1) < 0) 
+                   perror("dup2 of write side of pipe failed");
+               if (dup2(fd[1], 2) < 0) 
+                   perror("dup2 of write side of pipe failed");
+           } else { 
+               if (dup2(fd[0], 0) < 0) 
+                   perror("dup2 of read side of pipe failed"); 
+           } 
+           close(fd[0]); /* close since we dup()'ed what we needed */ 
+           close(fd[1]); 
+
+           execl("/bin/sh", "sh", "-c", cmd, 0);
+           perror("execl failed");        
+           exit(1);
+           fail;  /* Not reached */
+       } 
+   }    
+end
+
+function{0,1} io_ProgStream_close_impl(fd, pid)
+   if !cnv:C_integer(fd) then
+      runerr(101, fd)
+   if !cnv:C_integer(pid) then
+      runerr(101, pid)
+   body {
+       if (close(fd) < 0) {
+           on_error(errno);
+           fail;
+       }
+       
+       if (waitpid(pid, 0, 0) < 0) {
+           on_error(errno);
+           fail;
+       }
+
+       return nulldesc;
+   }
+end

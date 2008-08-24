@@ -589,6 +589,7 @@
       #define kywd_err  (curpstate->Kywd_err)
       #define kywd_pos  (curpstate->Kywd_pos)
       #define kywd_prog  (curpstate->Kywd_prog)
+      #define kywd_why  (curpstate->Kywd_why)
       #define kywd_ran  (curpstate->Kywd_ran)
       #define k_eventcode (curpstate->eventcode)
       #define k_eventsource (curpstate->eventsource)
@@ -751,6 +752,8 @@
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
 #endif					/* MSWIN32 */
+
+#define XE_BASE            1000
 
 #define XE_UNKNOWN         1001
 #define XE_NOTSUPPORTED    1002

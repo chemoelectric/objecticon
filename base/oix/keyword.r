@@ -801,3 +801,13 @@ constant '\
 \340\341\342\343\344\345\346\347\350\351\352\353\354\355\356\357\
 \360\361\362\363\364\365\366\367\370\371\372\373\374\375\376\377'
 end
+
+"&why - a variable containing the program name."
+keyword{1} why
+   abstract {
+      return kywdstr
+      }
+    inline {
+      return kywdstr(&kywd_why);
+      }
+end

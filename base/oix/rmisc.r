@@ -87,6 +87,11 @@ int getvar(s,vp)
          VarLoc(*vp) = &kywd_prog;
          return Succeeded;
          }
+      else if (strcmp(s,"&why") == 0) {
+         vp->dword = D_Kywdstr;
+         VarLoc(*vp) = &kywd_why;
+         return Succeeded;
+         }
       else if (strcmp(s,"&random") == 0) {
          vp->dword = D_Kywdint;
          VarLoc(*vp) = &kywd_ran;
@@ -2047,4 +2052,38 @@ stringint *stringint_lookup(stringint *sip, char *s)
     return (stringint *)qsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),sicmp);
 }
 
+void on_error(int n)
+{
+    char *msg = 0;
+    char buff[32];
+    char *t;
+    int len;
 
+    if (n > XE_BASE) {
+       struct errtab *p;
+       for (p = xerrnotab; p->err_no > 0; p++) {
+           if (p->err_no == n) {
+               msg = p->errmsg;
+               break;
+           }
+       }
+    } else {
+        #ifdef HAVE_STRERROR
+           msg = strerror(n);
+        #elif HAVE_SYS_NERR && HAVE_SYS_ERRLIST
+           if (n > 0 && n <= sys_nerr)
+               msg = (char *)sys_errlist[n];
+        #endif
+    }
+    IntVal(amperErrno) = n;
+    if (!msg)
+        msg = "Unknown system error";
+    sprintf(buff, " (errno=%d)", n);
+
+    len = strlen(buff) + strlen(msg);
+    Protect (reserve(Strings, len), fatalerr(0,NULL));
+    Protect(t = alcstr(msg, strlen(msg)),  fatalerr(0,NULL));
+    Protect(alcstr(buff, strlen(buff)), fatalerr(0,NULL));
+    StrLoc(kywd_why) = t;
+    StrLen(kywd_why) = len;
+}
