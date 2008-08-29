@@ -138,8 +138,8 @@ procedure event_Vpane(self, e, x, y)
    initial type := proc("type", 0)	# protect attractive name
 
    cb := self.callback
-   /x := &x
-   /y := &y
+   /x := AmperX
+   /y := AmperY
    if type(\cb) == "procedure" then		# procedure
       return cb(self, e, x, y) | &null
    if find("coupler",type(\cb)) then {		# coupler

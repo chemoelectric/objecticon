@@ -106,7 +106,7 @@ procedure stripunb(c1,c2,s,i,j,t)
 		    else {
 			# BUT, if it's not the right-delim, then we have a
 			# tag split by a line break.  Blasted things.
-			return stripunb(c1,c2,&subject||read(&input),
+			return stripunb(c1,c2,&subject||read(),
 					*.&subject,,t) |
 			# Can't find the right delimiter.  Parsing error.
 			stop("stripunb:  Incomplete tag\n",s[1:80] | s)

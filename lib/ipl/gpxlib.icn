@@ -22,12 +22,12 @@
 #
 #	Distance(x1, y1, x2, y2)  computes the distance between two points.
 #
-#	InBounds(x, y, w, h)	  succeeds if (&x,&y) is within (x,y,w,h).
+#	InBounds(x, y, w, h)	  succeeds if (AmperX,AmperY) is within (x,y,w,h).
 #
 ############################################################################
 #
 #   The following procedure allows an additional first argument
-#   specifying a window to use instead of &window:
+#   specifying a window to use instead of amper_window:
 #
 #   ScratchCanvas(w, h, id) returns a hidden-canvas window for temporary
 #   use.  The same scratch window (per display) is returned by successive
@@ -40,15 +40,15 @@
 #
 #   The following procedures do not accept a window argument:
 #
-#   PushWin(L) pushes &window onto the front of list L if the first
+#   PushWin(L) pushes amper_window onto the front of list L if the first
 #   element of the list is not a window.  This aids in constructing
 #   variable-argument procedures with an optional window argument.
 #
 #   Distance(x1, y1, x2, y2) returns the distance between two points
 #   as a real number.
 #
-#   InBounds(x, y, w, h) checks whether &x and &y are within the given
-#   region:  it returns &null if x <= &x <= x+w and y <= &y <= y+h,
+#   InBounds(x, y, w, h) checks whether AmperX and AmperY are within the given
+#   region:  it returns &null if x <= AmperX <= x+w and y <= AmperY <= y+h,
 #   and fails otherwise.
 #
 ############################################################################
@@ -63,16 +63,11 @@
 
 package ipl.graphics
 
+import graphics
 
-#   PushWin(L) -- push &window on list if no window already there.
+#   PushWin(L) -- push amper_window on list if no window already there.
 
 procedure PushWin(a)
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-
-   if not (type(a[1]) == "window") then
-      push(a, &window)
    return a
 end
 
@@ -87,15 +82,15 @@ procedure Distance(x1, y1, x2, y2)
 end
 
 
-#   InBounds(x, y, w, h) -- succeed if (&x,&y) is in a rectangular area.
+#   InBounds(x, y, w, h) -- succeed if (AmperX,AmperY) is in a rectangular area.
 
 # check point within rectangle
-procedure InBounds(x, y, w, h)			
+procedure InBounds(x, y, w, h, AmperX, AmperY)			
    if w < 0 then
       x -:= (w := -w)
    if h < 0 then
       y -:= (h := -h)
-   return (x <= &x <= x + w) & (y <= &y <= y + h) & &null
+   return (x <= AmperX <= x + w) & (y <= AmperY <= y + h) & &null
 end
 
 
@@ -111,23 +106,19 @@ procedure ScratchCanvas(win, w, h, id)
       type := proc("type", 0)	# protect attractive name
       }
 
-   if type(win) ~== "window" then {
-      win :=: w :=: h :=: id
-      win := &window
-      }
-   /w := WAttrib(win, "width")
-   /h := WAttrib(win, "height")
+   /w := win.attrib("width")
+   /h := win.attrib("height")
    w <:= 100				# if too teeny, can't open
    h <:= 100
 
-   d := WAttrib(win, "display")
+   d := win.attrib("display")
    s := d || "," || image(id)
-   /dpytab[s] := WOpen("width=" || w, "height=" || h, "canvas=hidden",
+   /dpytab[s] := graphics.Window.open("width=" || w, "height=" || h, "canvas=hidden",
       "display=" || d)
    win := dpytab[s]
    if /win then
       fail
-   if WAttrib(win, "width") < w | WAttrib(win, "height") < h then
-      WAttrib(win, "width=" || w, "height=" || h)
+   if win.attrib("width") < w | win.attrib("height") < h then
+      win.attrib("width=" || w, "height=" || h)
    return win
 end

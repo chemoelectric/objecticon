@@ -37,6 +37,7 @@ package ipl.vidgets
 import
    ipl.graphics(BevelRectangle)
 
+$include "keysyms.icn"
 $include "vdefns.icn"
 
 record Vslider_rec (win, callback, id, aw, ah, discont,
@@ -90,9 +91,9 @@ procedure event_Vvslider(s, e)
 local value
 
    if \s.callback.locked then fail
-   if e === (&lpress|&mpress|&rpress) then
-      until e === (&lrelease|&mrelease|&rrelease) do {
-         value := ((&y - s.ay - s.pad) / s.ws) * s.cv_range
+   if e === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) then
+      until e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) do {
+         value := ((AmperY - s.ay - s.pad) / s.ws) * s.cv_range
          if \s.rev then
             s.callback.V.set(s.callback, s, s.callback.max - value, s.discont)
          else
@@ -233,9 +234,9 @@ procedure event_Vhslider(s, e)
 local value
 
    if \s.callback.locked then fail
-   if e === (&lpress|&mpress|&rpress) then
-      until e === (&lrelease|&mrelease|&rrelease) do {
-         value := ((&x - s.ax - s.pad) / s.ws) * s.cv_range
+   if e === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) then
+      until e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) do {
+         value := ((AmperX - s.ax - s.pad) / s.ws) * s.cv_range
          if \s.rev then
             s.callback.V.set(s.callback, s, s.callback.max - value, s.discont)
          else

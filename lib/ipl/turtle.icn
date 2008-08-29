@@ -73,9 +73,9 @@
 #  center of the window with a heading of -90 degrees (that is, pointed
 #  towards the top of the window).
 #
-#  The turtle draws on &window unless a different window is specified by
-#  calling TWindow().  If no window is provided and &window is null,
-#  a 500x500 window is opened and assigned to &window.
+#  The turtle draws on amper_window unless a different window is specified by
+#  calling TWindow().  If no window is provided and amper_window is null,
+#  a 500x500 window is opened and assigned to amper_window.
 #
 #  Distances are measured in pixels and are always multiplied by a
 #  settable scaling factor, initially 1.  Angles are measured in degrees;
@@ -179,7 +179,7 @@
 #  TWindow(win) -- set turtle window
 #	The turtle is moved to the given window, retaining its
 #	coordinates and heading.
-#	Default:   win = &window
+#	Default:   win = amper_window
 #
 #  These procedures do not attempt to provide a complete graphics interface;
 #  in particular, no control of color is provided.  Missing functions can
@@ -208,9 +208,6 @@ global T_win			# current window
 
 # set turtle window
 procedure TWindow(win)		
-   /win := &window
-   if type(win) ~== "window" then
-      runerr(140, win)
    T_win := win
    return
 end
@@ -221,9 +218,9 @@ end
 procedure TInit()		
    TInit := 1			# suppress any subsequent calls
    if /T_win then {
-      /&window := open("turtle", "g", "width=500", "height=500") |
+      /amper_window := open("turtle", "g", "width=500", "height=500") |
          stop("can't open window")
-      T_win := &window
+      T_win := amper_window
       }
    T_stack := []
    T_scale := 1.0

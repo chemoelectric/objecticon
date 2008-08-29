@@ -253,7 +253,7 @@ end
 procedure er(func,msg,errnum)
 
     # short error processing utility
-    write(&errout,func,":  ",msg)
+    ewrite(func,":  ",msg)
     exit(errnum)
 
 end

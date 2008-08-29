@@ -95,7 +95,7 @@ global T_stack			# turtle state stack
 procedure TInit()			
 
    initial {
-      if /&window then
+      if /amper_window then
          WOpen("width=500", "height=500") | stop("can't open window")
       T_stack := []
       T_x := WAttrib("width") / 2 + 0.5

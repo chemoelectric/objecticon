@@ -94,8 +94,6 @@ end
 # write VRML 1.0 file
 procedure vrml1(x, f) 		
 
-   /f := &output
-
    write(f, "#VRML V1.0 ascii")
 
    render(x, f)

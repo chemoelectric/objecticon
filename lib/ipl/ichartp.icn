@@ -184,7 +184,7 @@ procedure main(a)
     local res, filename, line
     # &trace := -1
     filename := \a[1] | "bnfs.byte"
-    while line := read(&input) do {
+    while line := read() do {
 	res := &null
         every res := parse_sentence(line, filename, "S") do {
             if res.no = 0 then
@@ -588,7 +588,7 @@ procedure p_err(s, n)
     }
     every i := 1 to *errlist do
         if errlist[i][1] = n then msg := errlist[i][2]
-    writes(&errout, "error ", n, " (", msg, ") in \n")
+    ewrites( "error ", n, " (", msg, ") in \n")
     every write("\t", rewrap(s) | rewrap())
     exit(n)
 

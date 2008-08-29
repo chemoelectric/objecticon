@@ -99,6 +99,8 @@ import
    ipl.vidgets(VSetState, vsetup),
    ipl.xcode(xdecodet, xencodet)
 
+$include "keysyms.icn"
+
 global cw_active			# edit-mode switch
 global cw_active_vidget		# edit-mode vidget 
 global cw_touched
@@ -150,14 +152,14 @@ procedure edit_cw()
 
    repeat {
       case NextEvent(cw_win) of {
-         &lpress | &mpress | &rpress:   {
-            name := cw_names[(&y / Lheight) + 1]
-            if &meta then {
+         Mouse_LeftPress | Mouse_MiddlePress | Mouse_RightPress:   {
+            name := cw_names[(AmperY / Lheight) + 1]
+            if AmperMeta then {
                delete(cw.table, name)
                cw_touched := 1
                win_cw()
                }
-            else if &x > cw_col then {
+            else if AmperX > cw_col then {
                if ColorDialog("Select color:", cw.table[name]) ==
                   "Cancel" then next
                cw.table[name] := dialog_value
@@ -235,7 +237,7 @@ end
 
 procedure shortcuts(e)
 
-   if &meta then case map(e) of {
+   if AmperMeta then case map(e) of {
       "a":   add_way()
       "d":   delete_way()
       "e":   VSetState(cw_active_vidget, 1)

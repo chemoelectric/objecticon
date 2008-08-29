@@ -146,10 +146,6 @@ end
 # draw image record
 procedure imrdraw(win, x, y, imr)	
 
-   if type(win) ~== "window" then {
-      win :=: x :=: y :=: imr
-      win := \&window | runerr(140, &window)
-      }
 
    /x := 0
    /y := 0

@@ -102,6 +102,8 @@
 
 package ipl.graphics
 
+import graphics()
+
 # scale with gamma correction
 procedure ScaleGamma(v, g)		
    /g := 2.5
@@ -119,16 +121,13 @@ procedure Blend(args[])
    initial type := proc("type", 0)	# protect attractive name
 
    n := 4
-   if type(args[1]) == "window" then
-      win := get(args)
-   else
-      win := &window
+   win := get(args)
 
    while a := get(args) do
       if integer(a) >= 0 then
          n := integer(a)
       else {
-         s := ColorValue(win, a) | fail
+         s := win.color_value(a) | fail
          s ? {
             r2 := tab(many(&digits));  move(1)
             g2 := tab(many(&digits));  move(1)
@@ -162,10 +161,7 @@ procedure Contrast(win, color)
       type := proc("type", 0)	# protect attractive name
       }
        
-   if type(win) == "window" then
-      return l[1 + PaletteKey(win, "g2", color)]
-   else
-      return l[1 + PaletteKey("g2", win)]
+      return l[1 + win.palettekey("g2", color)]
 end
 
 
@@ -181,15 +177,11 @@ procedure Shade(win, color)
       type := proc("type", 0)	# protect attractive name
       }
 
-   if type(win) ~== "window" then {
-      color := win
-      win := &window
-      }
-   if WAttrib(win, "depth") ~== "1" & /env then {
-      Fg(win, color) | fail
+   if win.attrib( "depth") ~== "1" & /env then {
+      win.fg( color) | fail
       return win
       }
-   (ColorValue(win, color) | fail) ? {
+   (win.color_value( color) | fail) ? {
       r := tab(many(&digits));  move(1)
       g := tab(many(&digits));  move(1)
       b := tab(many(&digits))
@@ -197,7 +189,7 @@ procedure Shade(win, color)
    g := integer(0.30 * r + 0.59 * g + 0.11 * b)
 
    if \env == ("gray" | "grey") then {
-      Fg(win, g || "," || g || "," || g)
+      win.fg( g || "," || g || "," || g)
       return win
       }
 
@@ -220,9 +212,9 @@ procedure Shade(win, color)
       "4,8,0,0,0",
       "4,0,0,0,0",
       ]
-   WAttrib(win, "fillstyle=textured")
+   win.attrib( "fillstyle=textured")
    g := g / 3856 + 1
-   Pattern(win, dmat[g])
+   win.pattern(dmat[g])
    return win
 end
 
@@ -232,21 +224,15 @@ end
 # choose random color
 procedure RandomColor(win, palette)	
    local s, n
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      palette:= win			# window allowed but ignored
    /palette := "c6"
 
-   s := PaletteChars(palette)
+   s := win.palette_chars(palette)
    palette ?
       if ="c" & any('23456') then {
          n := integer(move(1))
          s := s[1 +: n * n * n]
          }
-   return PaletteColor(palette, ?s)
+   return graphics.Window.palette_color(palette, ?s)
 
 end
 
@@ -264,7 +250,7 @@ procedure PaletteGrays(win, palette)
    palette := string(palette) | runerr(103, palette)
 
    if palette ? ="g" then
-      return PaletteChars(palette)
+      return graphics.Window.palette_chars(palette)
 
    return case palette of {
       "c1":	"0123456"
@@ -284,15 +270,10 @@ end
 
 # return palette key for color
 procedure RGBKey(win, palette, r, g, b)	
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-   if type(win) ~== "window" then	# allow unused window argument
-      win :=: palette :=: r :=: g :=: b
    r := integer(r * 65535.99)
    g := integer(g * 65535.99)
    b := integer(b * 65535.99)
-   return PaletteKey(palette, r || "," || g || "," || b)
+   return win.palette_key(palette, r || "," || g || "," || b)
 end
 
 
@@ -344,10 +325,10 @@ end
 #  based on Foley et al, 2/e, p.592
 
 # HSV interpretation of color
-procedure HSV(k)			
+procedure HSV(win,k)			
    local r, g, b, h, s, v, min, max, d
 
-   (ColorValue(k) | fail) ? {
+   (win.color_value(k) | fail) ? {
       r := tab(many(&digits)) / 65535.0
       move(1)
       g := tab(many(&digits)) / 65535.0
@@ -441,10 +422,10 @@ end
 #  based on Foley et al, 2/e, p.595
 
 # HLS interpretation of color
-procedure HLS(k)			
+procedure HLS(win,k)			
    local r, g, b, h, l, s, min, max, delta
 
-   (ColorValue(k) | fail) ? {
+   (win.color_value(k) | fail) ? {
       r := tab(many(&digits)) / 65535.0
       move(1)
       g := tab(many(&digits)) / 65535.0

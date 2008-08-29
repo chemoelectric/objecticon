@@ -252,7 +252,7 @@ procedure wif2isd(file, title)
 
    draft.tieup := pat2tier(tie2pat(draft.shafts, draft.treadles, tie)).matrix
 
-   write(&errout, ximage(draft.tieup))
+   ewrite(ximage(draft.tieup))
 
    #  Now, finally, the liftplan, if any.
    #
@@ -262,7 +262,7 @@ procedure wif2isd(file, title)
 
    draft.liftplan := \lift_list
 
-   xencode(draft, &output)
+   xencode(draft, )
 
 end
 
@@ -316,7 +316,7 @@ procedure decode_data(name)
            if *keyvalue = 0 then {
               keyvalue := value
               if /keyvalue then {
-                  write(&errout, "name=", name)
+                  ewrite("name=", name)
                   stop("*** no default where needed")
                   }
               }

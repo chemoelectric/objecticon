@@ -44,8 +44,8 @@
 #           also if you must temporarily restore the terminal to cooked
 #           mode
 #
-#  Note that getse() *must* be used in place of read(&input) if you
-#  are planning on using getch() or getche(), since read(&input)
+#  Note that getse() *must* be used in place of read() if you
+#  are planning on using getch() or getche(), since read()
 #  assumes a tty with "sane" settings.
 #
 #  Warning:  The routines below do not do any sophisticated output
@@ -81,7 +81,7 @@
 #  
 #      # Open input file
 #      intext := open(a[1],"r") | {
-#  	write(&errout,"Can't open input file.")
+#  	ewrite("Can't open input file.")
 #  	exit(1)
 #      }
 #  
@@ -204,7 +204,7 @@ procedure getse(s)
 
     # getse() - like getche, only for strings instead of single chars
     #
-    # This procedure *must* be used instead of read(&input) if getch
+    # This procedure *must* be used instead of read() if getch
     # and/or getche are to be used, since these put the current tty
     # line in raw mode.
     #
@@ -275,7 +275,7 @@ procedure getch()
     if /current_mode := 1 then
 	setup_tty()
 
-    chr := reads(&input)
+    chr := reads()
     case chr of {
 	c_cc.vintr : reset_tty() & stop()  # shouldn't hard code this in
 	c_cc.vquit  : reset_tty() & stop()
@@ -295,7 +295,7 @@ procedure getche()
     if /current_mode := 1 then
 	setup_tty()
 
-    chr := reads(&input)
+    chr := reads()
     case chr of {
 	c_cc.vintr  : reset_tty() & stop()
 	c_cc.vquit  : reset_tty() & stop()

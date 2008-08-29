@@ -90,6 +90,6 @@ end
 
 # exit w/ message
 procedure zot_patch(msg)			
-  write(&errout, "patch: ", msg)
+  ewrite("patch: ", msg)
   exit(1)
 end

@@ -281,13 +281,13 @@ end
 
 procedure display(pfd)
 
-   write(&errout, "name=", pfd.name)
-   write(&errout, "threading=", pfd.threading)
-   write(&errout, "treadling=", pfd.treadling)
-   write(&errout, "warp colors=", pfd.warp_colors)
-   write(&errout, "weft colors=", pfd.weft_colors)
-   write(&errout, "tie up=", limage(pfd.tieup))
-   write(&errout, "palette=", pfd.palette)
+   ewrite("name=", pfd.name)
+   ewrite("threading=", pfd.threading)
+   ewrite("treadling=", pfd.treadling)
+   ewrite("warp colors=", pfd.warp_colors)
+   ewrite("weft colors=", pfd.weft_colors)
+   ewrite("tie up=", limage(pfd.tieup))
+   ewrite("palette=", pfd.palette)
 
    return
 

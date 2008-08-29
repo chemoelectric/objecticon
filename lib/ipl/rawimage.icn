@@ -45,10 +45,6 @@ $define LineLen 64
 procedure WriteRaw(win, x, y, w, h)
    local nextid, palette, line, c, temp, tempname
 
-   if type(win) ~== "window" then {
-      win :=: x :=: y :=: w :=: h
-      win := &window
-      }
 
    /w := WAttrib(win, "width")
    /h := WAttrib(win, "height")
@@ -98,11 +94,6 @@ end
 
 procedure ReadRaw(win, s, x, y)
    local input, palette, c, temp, size, width, height, line
-
-   if type(win) ~== "window" then {
-      win :=: s :=: x :=: y
-      win := &window
-      }
 
    input := open(s) | stop("*** cannot read raw image file")
 

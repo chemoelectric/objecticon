@@ -50,7 +50,7 @@
 #
 #  Popup(x, y, w, h, proc, args...) creates a subwindow of the specified
 #  size, calls proc(args), and awaits its success or failure.  Then, the
-#  overlaid area is restored and the result of proc is produced.  &window,
+#  overlaid area is restored and the result of proc is produced.  amper_window,
 #  as seen by proc, is a new binding of win in which dx, dy, and clipping
 #  have been set.  The usable area begins at (0,0);  its size is
 #  (WAttrib(win, "clipw"), WAttrib(win, "cliph")).  Defaults are:
@@ -114,13 +114,6 @@ procedure TextDialog(
    static type
 
    initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then {
-      win :=: captions :=: labels :=: defaults :=: widths :=: buttons :=:
-         index
-      win := &window
-      /win := temp_win := WOpen("canvas=hidden", "bg=" || VBackground)
-      }
 
    /captions := []
    /labels := []
@@ -211,12 +204,6 @@ procedure ToggleDialog(
 
    initial type := proc("type", 0)	# protect attractive name
 
-   if type(win) ~== "window" then {
-      win :=: captions :=: labels :=: defaults :=:  buttons :=: index
-      win := &window
-      /win := temp_win := WOpen("canvas=hidden", "bg=" || VBackground)
-      }
-
    /captions := []
    /labels := []
    /defaults := []
@@ -301,12 +288,6 @@ procedure SelectDialog(
 
    initial type := proc("type", 0)	# protect attractive name
 
-   if type(win) ~== "window" then {
-      win :=: captions :=: labels :=: deflt :=: buttons :=: index
-      win := &window
-      /win := temp_win := WOpen("canvas=hidden", "bg=" || VBackground)
-      }
-
    /captions := []
    /labels := []
    /buttons := ["Okay", "Cancel"]
@@ -390,12 +371,7 @@ procedure Notice(captions[])
 
    initial type := proc("type", 0)	# protect attractive name
 
-   if type(captions[1]) == "window" then
-      win := get(captions)
-   else {
-      win := &window
-      /win := temp_win := WOpen("canvas=hidden", "bg=" || VBackground)
-      }
+   win := get(captions)
 
 $ifdef _MS_WIN32
    if p := proc("WinSelectDialog", 0) then {	# use built-in if available
@@ -420,12 +396,6 @@ procedure SaveDialog(win, caption, filename, len)
    static type
 
    initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then {
-      win :=: caption :=: filename :=: len
-      win := &window
-      /win := temp_win := WOpen("canvas=hidden", "bg=" || VBackground)
-      }
 
    /caption := "Save:"
    /filename := ""
@@ -458,12 +428,6 @@ procedure OpenDialog(win, caption, filename, len)
    static type
 
    initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then {
-      win :=: caption :=: filename :=: len
-      win := &window
-      /win := temp_win := WOpen("canvas=hidden", "bg=" || VBackground)
-      }
 
    /caption := "Open:"
    /filename := ""
@@ -517,12 +481,6 @@ procedure ColorDialog(
    static type
 
    initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then {
-      win :=: captions :=: refcolor :=: callback :=: id
-      win := &window
-      /win := temp_win := WOpen("canvas=hidden", "bg=" || VBackground)
-      }
 
    /captions := "Select color:"
    if type(captions) ~== "list" then captions := [captions]
@@ -772,9 +730,9 @@ procedure Popup(args[])
       stop("can't get ScratchCanvas in Popup()")
    CopyArea(win, save, xx, yy, ww, hh)
 
-   # Save &window and create subwindow.
-   ampwin := &window
-   &window := Clone(win) | stop("can't Clone in Popup()")
+   # Save amper_window and create subwindow.
+   ampwin := amper_window
+   amper_window := Clone(win) | stop("can't Clone in Popup()")
    WAttrib("drawop=copy", "fillstyle=solid", "linestyle=solid", "linewidth=1",
       "dx=" || (dx + x), "dy=" || (dy + y))
    DrawRectangle(-BorderWidth, -BorderWidth, ww-ShadowWidth-1, hh-ShadowWidth-1)
@@ -794,10 +752,10 @@ procedure Popup(args[])
    # Call proc; save result, if any, or use args as flag if none.
    retv := (proc ! args) | args
 
-   # Restore window and return result.  Use &window to ensure drawop=copy.
+   # Restore window and return result.  Use amper_window to ensure drawop=copy.
    Clip(-BorderWidth, -BorderWidth, ww, hh)
-   CopyArea(save, &window, 0, 0, ww, hh, -BorderWidth, -BorderWidth)
+   CopyArea(save, amper_window, 0, 0, ww, hh, -BorderWidth, -BorderWidth)
    EraseArea(save)
-   &window := ampwin
+   amper_window := ampwin
    return args ~=== retv
 end

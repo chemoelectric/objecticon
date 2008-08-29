@@ -154,9 +154,9 @@ procedure optwindow(opts, args[])
    push(args, "x")
    push(args, opts["L"])
    if \opts["!"] then {
-      writes(&errout, "open(\"", args[1])
-      every writes(&errout, "\",\"", args[2 to *args])
-      write(&errout, "\")")
+      ewrites( "open(\"", args[1])
+      every ewrites( "\",\"", args[2 to *args])
+      ewrite( "\")")
       }
    w := open ! args | stop(args[1], ": can't open window")
    if \opts["T"] then

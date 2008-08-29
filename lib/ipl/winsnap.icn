@@ -38,11 +38,6 @@ import
 procedure winsnap(win, x, y, w, h)
    local name, f
 
-   if type(win) ~== "window" then {
-      win :=: x :=: y :=: w :=: h
-      win := \&window | runerr(140, &window)
-      }
-
    repeat {
       if OpenDialog("Image file name") == "Okay" then {
          name := dialog_value

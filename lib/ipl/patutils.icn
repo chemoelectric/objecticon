@@ -68,10 +68,6 @@ record tdim(w, h)
 procedure DrawTile(win, xoff, yoff, pattern, magnif, mode)
    local x, y, row, pixel, dims, arglist
 
-   if type(win) ~== "window" then {
-      win :=: xoff :=: yoff :=: pattern :=: mode
-      win := &window
-      }
 
    /magnif := 1
 
@@ -113,11 +109,6 @@ end
 
 procedure DrawRows(win, xoff, yoff, rows, magnif, mode)
    local x, y, row, pixel, arglist
-
-   if type(win) ~== "window" then {
-      win :=: xoff :=: yoff :=: rows :=: magnif :=: mode
-      win := &window
-      }
 
    /magnif := 1
 

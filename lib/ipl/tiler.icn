@@ -39,7 +39,7 @@ procedure tileimg(win, img)
 
    hidden := WOpen("canvas=hidden", "image=" || img, "gamma=" ||
       WAttrib(win, "gamma")) | {
-      write(&errout, "*** cannot open image ", img)
+      ewrite("*** cannot open image ", img)
       fail
       }
 

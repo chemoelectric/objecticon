@@ -921,7 +921,7 @@ end
 procedure UUDecodeQuad(s)
   local v1,v2,v3,v4
   *s = 4 | {
-    write(&errout,"Input string not of length 4")
+    ewrite("Input string not of length 4")
     runerr(500,s)
   }
   v1 := UUDecodeChar(s[1])

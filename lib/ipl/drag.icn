@@ -29,7 +29,7 @@
 #  across the screen; vacated pixels at the original location are
 #  filled with the background color.  The rectangle cannot be dragged
 #  off-screen or outside the clipping region.  When the mouse button
-#  is released, Drag() sets &x and &y to the upper-left corner of the
+#  is released, Drag() sets AmperX and AmperY to the upper-left corner of the
 #  new location and returns.
 #
 #  DragOutline(x, y, w, h) lets the user move a reverse-mode rectangle
@@ -38,7 +38,7 @@
 #  (x,y,w,h) and handles all subsequent events until a mouse button is
 #  released.  As the mouse moves, the rectangle follows it.  When the
 #  mouse button is released, the rectangle disappears, and DragOutline
-#  sets &x and &y to the upper-left corner of the new location.  It is
+#  sets AmperX and AmperY to the upper-left corner of the new location.  It is
 #  up to the calling program to update the display as necessary.
 #
 ############################################################################
@@ -59,9 +59,6 @@ import
 procedure Drag(win, x, y, w, h)			
    local dx, dy, x0, y0, x1, y1
    local behind, xoff, yoff, xnew, ynew, xshift, yshift
-
-   if type(win) ~== "window" then
-      return Drag((\&window | runerr(140)), win, x, y, w)
 
    if w < 0 then
       x -:= (w := -w)
@@ -87,14 +84,14 @@ procedure Drag(win, x, y, w, h)
    Bg(behind, Bg(win))
    EraseArea(behind, x + dx, y + dy, w, h)
 
-   xoff := x - &x
-   yoff := y - &y
+   xoff := x - AmperX
+   yoff := y - AmperY
 
-   until NextEvent(win) === (&lrelease | &mrelease | &rrelease) do {
+   until NextEvent(win) === (Mouse_LeftRelease | Mouse_MiddleRelease | Mouse_RightRelease) do {
 
       # move the rectangle
-      xnew := &x + xoff
-      ynew := &y + yoff
+      xnew := AmperX + xoff
+      ynew := AmperY + yoff
       xnew <:= x0
       ynew <:= y0
       xnew >:= x1
@@ -131,8 +128,8 @@ procedure Drag(win, x, y, w, h)
       }
 
    EraseArea(behind)
-   &x := x			
-   &y := y
+   AmperX := x			
+   AmperY := y
    return win
 end
 
@@ -143,32 +140,29 @@ end
 procedure DragOutline(win, x, y, w, h)		
    local wrev, xoff, yoff
 
-   if type(win) ~== "window" then
-      return DragOutline((\&window | runerr(140)), win, x, y, w)
-
    if w < 0 then
       x -:= (w := -w)
    if h < 0 then
       y -:= (h := -h)
 
    wrev := Clone(win, "drawop=reverse")
-   xoff := x - &x
-   yoff := y - &y
+   xoff := x - AmperX
+   yoff := y - AmperY
 
    w -:= 1					# adjust Draw/Fill inconsistency
    h -:= 1
 
    DrawRectangle(wrev, x, y, w, h)		# draw initial rectangle
-   until NextEvent(wrev) === (&lrelease | &mrelease | &rrelease) do {
+   until NextEvent(wrev) === (Mouse_LeftRelease | Mouse_MiddleRelease | Mouse_RightRelease) do {
       DrawRectangle(wrev, x, y, w, h)		# erase old rectangle
-      x := &x + xoff
-      y := &y + yoff
+      x := AmperX + xoff
+      y := AmperY + yoff
       DrawRectangle(wrev, x, y, w, h)		# draw new rectangle
       }
    DrawRectangle(wrev, x, y, w, h)		# erase final rectangle
    Uncouple(wrev)
 
-   &x := x			
-   &y := y
+   AmperX := x			
+   AmperY := y
    return win
 end

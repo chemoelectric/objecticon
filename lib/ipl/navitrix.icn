@@ -49,10 +49,6 @@
 #
 #  repeat {			# event loop
 #     case Active() of {
-#        &window   :  {		# application window
-#           root_cur := root
-#           shortcuts_cur := shortcuts
-#           }
 #        nav_window   :  {	# navigation window
 #           root_cur := nav_root
 #           shortcuts_cur := nav_keyboard
@@ -123,14 +119,14 @@ global nav_window
 procedure nav_init()
    local window_save, atts
 
-   window_save := &window		# save current subject window
-   &window := &null			# clear for new subject
+   window_save := amper_window		# save current subject window
+   amper_window := &null			# clear for new subject
    atts := navig_atts()
    put(atts, "canvas=hidden")
    (WOpen ! atts) | stop("*** can't open navigation window")
    nav_vidgets := navig()		# initialize interface
-   nav_window := &window		# name navigation window
-   &window := window_save 		# restore previous subject window
+   nav_window := amper_window		# name navigation window
+   amper_window := window_save 		# restore previous subject window
 
    files := nav_vidgets["files"]
    nav_root := nav_vidgets["root"]

@@ -40,10 +40,7 @@ package ipl.clipping
 procedure DrawClipped(a[])		
    local win
 
-   if type(a[1]) == "window" then
-      win := pop(a)
-   else
-      win := &window
+   win := pop(a)
 
    DrawSegment ! push(ClipLine(win, a), win)
    return win
@@ -58,9 +55,6 @@ end
 # clip line for DrawSegment
 procedure ClipLine(win, L, x, y, w, h)	
    local i, ret, tin, tout, delx, dely, x0, x1, xmax, y0, y1, ymax
-
-   if (type(win) == "list") then		# window param is optional
-      return ClipLine(&window, win, L, x, y, w)
 
    /x := WAttrib(win, "clipx") - WAttrib(win, "dx")
    /y := WAttrib(win, "clipy") - WAttrib(win, "dy")

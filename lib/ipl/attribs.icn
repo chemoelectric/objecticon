@@ -45,8 +45,6 @@ procedure attribs(win)
 
    initial atts := table()		# table of vidget IDs
 
-   /win := &window
-
    # Assign values from current attributes.
 
    atts["1_fg"] := Fg(win)

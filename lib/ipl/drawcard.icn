@@ -47,10 +47,6 @@ procedure drawcard(win, x, y, label)
    static cmap, gc, bk, plist, deck
    local ysuit, yrank, r, s, i, l, dx, dy
 
-   if type(win) ~== "window" then {
-      win :=: x :=: y :=: label
-      win := &window
-      }
    if /gc then {
       # funny order of card deck is for conversion to ranks below
       deck := "ABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZ"

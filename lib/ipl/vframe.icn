@@ -36,6 +36,8 @@
 
 package ipl.vidgets
 
+$include "keysyms.icn"
+
 ############################################################################
 #	frame vidget -
 #       Keeps track of panes.  Frames can contain
@@ -286,7 +288,7 @@ end
 procedure event_Vroot_frame(s,e,x,y)
 local dest
 
-   if e === &resize then {
+   if e === Window_Resize then {
       s.V.resize(s)
       return &null
    }

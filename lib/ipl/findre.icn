@@ -56,7 +56,7 @@
 #  tions rather than those of any particular Unix variant.  Be care-
 #  ful!  If you put findre("\(hello\)",s) into your source file,
 #  findre will treat it just like findre("(hello)",s).  If, however,
-#  you enter '\(hello\)' at run-time (via, say, findre(!&input,s)),
+#  you enter '\(hello\)' at run-time (via, say, findre(,s)),
 #  what Icon receives will depend on your operating system (most
 #  likely, a trace will show "\\(hello\\)").
 #
@@ -137,7 +137,7 @@
 #  EXAMPLE program:
 #
 #  procedure main(a)
-#      while line := !&input do {
+#      while line :=  do {
 #          token_list := tokenize_line(line,a[1])
 #          every write(!token_list)
 #      }
@@ -635,10 +635,10 @@ end
 
 
 procedure err_out(x,i,elem)
-    writes(&errout,"Error number ",i," parsing ",image(x)," at ")
+    ewrites("Error number ",i," parsing ",image(x)," at ")
     if \elem 
-    then write(&errout,image(elem),".")
-    else write(&errout,"(?).")
+    then ewrite(image(elem),".")
+    else ewrite("(?).")
     exit(i)
 end
 

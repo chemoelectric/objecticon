@@ -61,7 +61,7 @@
 #  XPMImage([win,] f, palette) reads an XPM (X Pixmap) format image from
 #  the open file f and returns an Icon image specification that uses the
 #  specified palette.  XPMImage() fails if it cannot decode the file.
-#  If f is omitted, &input is used; if palette is omitted, "c1" is used.
+#   if palette is omitted, "c1" is used.
 #  Not all variants of XPM format are handled; in particular, images that
 #  use more than one significant input character per pixel, or that use
 #  the old XPM Version 1 format, cause XPMImage() to fail.  No window
@@ -82,7 +82,8 @@ package ipl.imscolor
 
 import
    ipl.graphics(CenterString, Contrast),
-   io(read, write)
+   io(read, write),
+   graphics(Window)
 
 
 #  imspalette(im) -- return palette used by image
@@ -117,7 +118,7 @@ procedure imsheight(im)
          }
       pal := tab(upto(',')) | fail
       move(1)
-      c := cset(PaletteChars(pal)) | fail
+      c := cset(Window.palette_chars(pal)) | fail
       n := IMH_Count(c ++ '~\xFF')
       return (n + w - 1) / w
       }
@@ -157,12 +158,11 @@ procedure imswrite(f, s, n)
    else
       d := w
 
-   /f := &output
    /n := 79
 
    # Figure out a reasonable line length for output, with n as maximum
    n -:= 1				# allow for underscore
-   if upto('\0', PaletteChars(\p)) then
+   if upto('\0', Window.palette_chars(\p)) then
       n /:= 4				# allow for escapes
    ll := 1 + (n > (d - 1) / seq(1))	# divide line as equally as possible
 
@@ -193,20 +193,16 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
    static cs
    initial cs := &ascii[33+:95] -- '\\'
 
-   if type(win) ~== "window" then {
-      win :=: p :=: x :=: y :=: w :=: h :=: f :=: n
-      win := \&window | runerr(140, &window)
-      }
-   win := Clone(win, "fg=black")
+   win := win.clone("fg=black")
    ret := win
 
    /p := "c1"
    /f := ""
 
-   /x := -WAttrib(win, "dx")
-   /y := -WAttrib(win, "dy")
-   /w := WAttrib(win, "width") - (x + WAttrib(win, "dx"))
-   /h := WAttrib(win, "height") - (y + WAttrib(win, "dy"))
+   /x := -win.attrib( "dx")
+   /y := -win.attrib( "dy")
+   /w := win.attrib( "width") - (x + win.attrib( "dx"))
+   /h := win.attrib( "height") - (y + win.attrib( "dy"))
 
    if w < 0 then
       x -:= (w := -w)
@@ -217,7 +213,7 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
    /n := PAL_Columns(p, s, w, h)
    nh := (*s + n - 1) / n
 
-   EraseArea(win, x, y, w, h)
+   win.erase_area(x, y, w, h)
    if f ? upto('o') then {
       w -:= 1
       h -:= 1
@@ -229,17 +225,17 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
       x2 := x + (j + 1) * w / n
       y1 := y + i * h / nh
       y2 := y + (i + 1) * h / nh
-      Fg(win, colr := PaletteColor(p, c)) | (ret := &null)
-      FillRectangle(win, x1, y1, x2 - x1, y2 - y1)
+      win.fg(colr := Window.palette_color(p, c)) | (ret := &null)
+      win.fill_rectangle(x1, y1, x2 - x1, y2 - y1)
       if upto('l', f) then {
-         Fg(win, Contrast(win, colr))
+         win.fg(Contrast(win, colr))
          if not upto(cs, c) then
             c := image(c)[-3:-1]
          CenterString(win, (x1 + x2) / 2, (y1 + y2) / 2, c)
          }
       if upto('o', f) then {
-         Fg(win, "black")
-         DrawRectangle(win, x1, y1, x2 - x1, y2 - y1)
+         win.fg("black")
+         win.draw_rectangle(x1, y1, x2 - x1, y2 - y1)
          }
       if (j +:= 1) >= n then {
          j := 0
@@ -254,15 +250,15 @@ procedure drawpalette(win, p, x, y, w, h, f, n)
       y1 := y + i * h / nh
       x2 := x + w
       y2 := y + h
-      WAttrib(win, "fg=black", "pattern=diagonal", "fillstyle=textured")
-      FillRectangle(win, x1, y1, x2 - x1, y2 - y1)
+      win.attrib( "fg=black", "pattern=diagonal", "fillstyle=textured")
+      win.fill_rectangle(x1, y1, x2 - x1, y2 - y1)
       if upto('o', f) then {
-         WAttrib(win, "fillstyle=solid")
-         DrawRectangle(win, x1, y1, x2 - x1, y2 - y1)
+         win.attrib( "fillstyle=solid")
+         win.draw_rectangle(x1, y1, x2 - x1, y2 - y1)
          }
       }
 
-   Uncouple(win)
+   win.uncouple()
    return \ret
 end
 
@@ -273,12 +269,8 @@ end
 procedure pickpalette(win, p, dx, dy, w, h, n)	
    local s, nh
 
-   if type(win) ~== "window" then {
-      win :=: p :=: dx :=: dy :=: w :=: h :=: n
-      win := \&window | runerr(140, &window)
-      }
-   /w := WAttrib(win, "width")
-   /h := WAttrib(win, "height")
+   /w := win.attrib( "width")
+   /h := win.attrib( "height")
    if dx < 0 | dy < 0 | dx >= w | dy >= h then
       fail
 
@@ -327,7 +319,7 @@ end
 procedure PAL_Order(p)
    local palchars, s, t, n, n3, i, l
 
-   palchars := PaletteChars(p) | fail
+   palchars := Window.palette_chars(p) | fail
 
    p ? {
       if not (="c" & any('23456')) then return palchars
@@ -358,14 +350,9 @@ end
 procedure XPMImage(win, f, pal)			
    local w, h, nc, cpp, i, im, c, k, s1, s2
 
-   if type(win) ~== "window" then {
-      win :=: f :=: pal
-      win := &window		# okay if null
-      }
-   /f := &input
    /pal := "c1"
-   type(f) == "file" | runerr(105, f)
-   PaletteChars(pal) | runerr(205, f)
+   #type(f) == "file" | runerr(105, f)
+   Window.palette_chars(pal) | runerr(205, f)
 
    (read(f) ? find("XPM")) | fail
    (XPM_RdStr(f) | fail) ? {
@@ -388,7 +375,7 @@ procedure XPMImage(win, f, pal)
       (c := !"cgm") & tab(upto(' \t') + 1) & =c & tab(many(' \t')) &
          (k := XPM_Key(win, pal, (tab(upto(' \t') | 0))))
       # use first color found, or default if none
-      s2 ||:= \k | PaletteKey(pal, "gray")
+      s2 ||:= \k | win.palette_key(pal, "gray")
       }
 
    # construct image
@@ -404,16 +391,14 @@ end
 procedure XPM_Key(win, pal, s)	
 
    if s == "None" then {		# if transparent
-      if PaletteColor(pal, "~") then	# if "~" is in palette
+      if Window.palette_color(pal, "~") then	# if "~" is in palette
          return "\xFF"			# then use "\xFF" for transparent
       else
          return "~"			# but use "~" if possible
       }
 
    if \win then
-      return PaletteKey(win, pal, s)	# return key from palette, or fail
-   else
-      return PaletteKey(pal, s)		# return key from palette, or fail
+      return win.palette_key(pal, s)	# return key from palette, or fail
 end
 
 # read next C string from file f

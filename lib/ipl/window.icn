@@ -15,9 +15,7 @@
 ############################################################################
 #
 #  Window() opens a window with provisions for option processing and
-#  error handling.  The returned window is assigned to &window if
-#  &window is null.  If the window cannot be opened, the program is
-#  aborted.
+#  error handling.  
 #
 #  The characteristics of the window are set from several sources:
 #  Window's arguments, optionally including the program argument list;
@@ -98,12 +96,12 @@ $include "vdefns.icn"
 
 package ipl.graphics
 
-import io
+import io, graphics
 
 global wdw_debug			# non-null if to trace open call
 
 
-#  Window(att, ..., arglist, ..., att) -- open window and set &window
+#  Window(att, ..., arglist, ..., att) -- open window
 
 procedure Window(args[])
    local cs, pname, att, omit1, omit2, name, val, a, win
@@ -164,7 +162,6 @@ procedure Window(args[])
    wdw_attrib(win, att, "bg")
    wdw_attrib(win, att, "font")
    #GotoRC(win, 1, 1)			# now that font has been set
-   /&window := win
    return win
 end
 
@@ -183,17 +180,17 @@ procedure wdw_defaults(att, arglist, pname)
    dpy := ("display=" || wdw_peekopt(arglist, "D")) | "fg=black"
 
    # Open an offscreen window.
-   w := open("Window()", "g", "canvas=hidden", "size=32,32", dpy) |
+   w := graphics.Window.open("canvas=hidden", "size=32,32", dpy) |
       stop(&progname, ": can't open display")
 
    # Set attributes from environment.  Order is significant here:
    # pos & size override geometry, and posx/posy/width/height override both.
    every oname := "display" | "bg" | "fg" | "font" | "windowlabel" | "label" |
          "geometry" | "size" | "pos" | "posx" | "posy" | "width" | "height" do
-      wdw_register(att, oname, WDefault(w, pname, oname))
+      wdw_register(att, oname, w.wdefault(pname, oname))
 
    # Delete the offscreen window, and return.
-   Uncouple(w)
+   w.uncouple()
    return
 end
 
@@ -340,7 +337,7 @@ end
 #  wdw_open(att, omit) -- open window with attributes from att table
 #
 #  Ignore null or empty attributes and those in the "omit" set.
-#  Trace open call if wdw_debug is set.  Set &window.
+#  Trace open call if wdw_debug is set.  
 
 procedure wdw_open(att, omit)
    local args, name
@@ -354,12 +351,12 @@ procedure wdw_open(att, omit)
          put(args, name || "=" || ("" ~== \att[name]))
 
    if \wdw_debug then {
-      writes(&errout, "Window: open(", image(args[1]))
-      every writes(&errout, ",", image(args[2 to *args]))
-      write(&errout, ")")
+      ewrites( "Window: open(", image(args[1]))
+      every ewrites( ",", image(args[2 to *args]))
+      ewrite(")")
       }
 
-   return WOpen ! args
+   return graphics.Window.open ! args
 end
 
 
@@ -378,7 +375,7 @@ procedure wdw_attrib(win, att, name)
    val := ("" ~== \att[name]) | return
    s := name || "=" || val
    if \wdw_debug then
-      write(&errout, "Window: WAttrib(", image(s), ")")
-   WAttrib(win, s) | write(&errout, &progname, ": can't set ", s)
+      ewrite("Window: WAttrib(", image(s), ")")
+   win.attrib(s) | ewrite(&progname, ": can't set ", s)
    return
 end

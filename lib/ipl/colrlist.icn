@@ -37,8 +37,7 @@ import
 procedure colrlist(f)			
    local input, colors, line
 
-   if f === "-" then input := &input
-   else (input := dopen(f)) | fail
+   (input := dopen(f)) | fail
    colors := []
 
    while line := read(input) do

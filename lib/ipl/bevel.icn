@@ -111,19 +111,19 @@ record bev_record(shadow, hilite)
 
 
 procedure BevelDispose(win)
-local b
-    if b := \(\bev_table)[win] then {
-	Uncouple(b.hilite)
-	Uncouple(b.shadow)
-	delete(bev_table, win)
-    }
+   local b
+   if b := \ (\bev_table)[win] then {
+      b.hilite.uncouple()
+      b.shadow.uncouple()
+      delete(bev_table, win)
+   }
 end
 
 procedure BevelDisposeAll()
 local b
     every b := !\bev_table do {
-	Uncouple(b.hilite)
-	Uncouple(b.shadow)
+       b.hilite.uncouple()
+       b.shadow.uncouple()
     }
     bev_table := &null
 end
@@ -138,14 +138,13 @@ end
 procedure BevelReset(win)	
    local b, h, l, s, hilite, shadow, lhilite, lshadow
 
-   /win := &window
    /bev_table := table()
 
    BevelDispose(win)
 
-   if WAttrib(win, "depth") >= 4 then {
+   if win.attrib("depth") >= 4 then {
 
-      HLS(ColorValue(Bg(win))) ? {
+      HLS(win,win.color_value(win.bg())) ? {
          h := tab(many(&digits))
          move(1)
          l := tab(many(&digits))
@@ -163,17 +162,15 @@ procedure BevelReset(win)
          }
       s /:= 2
 
-      shadow := Clone(win, "fg=" || HLSValue(h || ":" || lshadow || ":" || s),
+      shadow := win.clone("fg=" || HLSValue(h || ":" || lshadow || ":" || s),
          "linewidth=1", "linestyle=solid", "fillstyle=solid", "drawop=copy")
-      hilite := Clone(shadow,
-         "fg=" || HLSValue(h || ":" || lhilite || ":" || s))
+      hilite := shadow.clone("fg=" || HLSValue(h || ":" || lhilite || ":" || s))
       b := bev_record(\shadow, \hilite)
       }
 
    if /b then {
-      shadow := Clone(win,
-         "linewidth=1", "linestyle=solid", "fillstyle=solid", "drawop=copy")
-      hilite := Clone(shadow, "fillstyle=textured", "pattern=gray")
+      shadow := win.clone("linewidth=1", "linestyle=solid", "fillstyle=solid", "drawop=copy")
+      hilite := shadow.clone("fillstyle=textured", "pattern=gray")
       b := bev_record(shadow, hilite)
       }
    bev_table[win] := bev_record(shadow, hilite)
@@ -187,17 +184,17 @@ end
 
 procedure bev_lookup(win)
    local b, attr, t
-   b := \(\bev_table)[win] | bev_table[BevelReset(win)]
-
+   b := \ (\bev_table)[win] | bev_table[BevelReset(win)]
+   
    # Ensure the shadow and hilite windows have the same values for
    # some selected attributes.
    every attr := "dx" | "dy" | "clipx" | "clipy" | "clipw" | "cliph" do {
-      t := WAttrib(win, attr) 
-      if t ~=== WAttrib(b.shadow, attr) then {
+      t := win.attrib(attr) 
+      if t ~=== b.shadow.attrib(attr) then {
          /t := ""
-         every WAttrib(b.shadow | b.hilite, attr || "=" || t)
-         }
+         every (b.shadow | b.hilite).attrib(attr || "=" || t)
       }
+   }
    return b
 end
 
@@ -207,12 +204,7 @@ end
 # draw beveled circle
 procedure BevelCircle(win, x, y, r, bw)		
    local b, upper, lower, a
-   static type
 
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      return BevelCircle((\&window | runerr(140)), win, x, y, r)
    b := bev_lookup(win)
 
    /r := 6
@@ -220,19 +212,19 @@ procedure BevelCircle(win, x, y, r, bw)
    if bw >= 0 then {
       upper := b.hilite
       lower := b.shadow
-      }
+   }
    else {
       upper := b.shadow
       lower := b.hilite
       bw := -bw
-      }
+   }
 
    a := -&pi / 8
    while (bw -:= 1) >= 0 do {
-      DrawCircle(lower, x, y, r, a, &pi)
-      DrawCircle(upper, x, y, r, a + &pi, &pi)
+      lower.draw_circle(x, y, r, a, &pi)
+      upper.draw_circle(x, y, r, a + &pi, &pi)
       r -:= 1
-      }
+   }
    return win
 end
 
@@ -242,12 +234,7 @@ end
 # draw beveled diamond
 procedure BevelDiamond(win, x, y, r, bw)	
    local b, upper, lower
-   static type
 
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      return BevelDiamond((\&window | runerr(140)), win, x, y, r)
    b := bev_lookup(win)
 
    /r := 6
@@ -255,18 +242,18 @@ procedure BevelDiamond(win, x, y, r, bw)
    if bw >= 0 then {
       upper := b.hilite
       lower := b.shadow
-      }
+   }
    else {
       upper := b.shadow
       lower := b.hilite
       bw := -bw
-      }
+   }
 
    while (bw -:= 1) >= 0 do {
-      DrawLine(lower, x - r, y, x, y + r, x + r, y)
-      DrawLine(upper, x - r, y, x, y - r, x + r, y)
+      lower.draw_line(x - r, y, x, y + r, x + r, y)
+      upper.draw_line(x - r, y, x, y - r, x + r, y)
       r -:= 1
-      }
+   }
    return win
 end
 
@@ -275,12 +262,7 @@ end
 
 procedure BevelTriangle(win, x, y, r, o, bw)
    local b, upper, lower
-   static type
 
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      return BevelTriangle((\&window | runerr(140)), win, x, y, r, o)
    b := bev_lookup(win)
 
    /r := 6
@@ -288,34 +270,34 @@ procedure BevelTriangle(win, x, y, r, o, bw)
    if bw >= 0 then {
       upper := b.hilite
       lower := b.shadow
-      }
+   }
    else {
       upper := b.shadow
       lower := b.hilite
       bw := -bw
-      }
+   }
 
    while (bw -:= 1) >= 0 do {
       case o of {
          default: {  #"n"
-            DrawLine(lower, x - r, y + r, x + r, y + r, x, y - r)
-            DrawLine(upper, x - r, y + r, x, y - r)
-            }
-         "s": {
-            DrawLine(lower, x, y + r, x + r, y - r)
-            DrawLine(upper, x, y + r, x - r, y - r, x + r, y - r)
-            }
-         "e": {
-            DrawLine(lower, x - r, y + r, x + r, y)
-            DrawLine(upper, x - r, y + r, x - r, y - r, x + r, y)
-            }
-         "w": {
-            DrawSegment(lower, x - r, y, x + r, y + r, x + r, y + r, x + r, y-r)
-            DrawLine(upper, x - r, y, x + r, y - r)
-            }
+            lower.draw_line(x - r, y + r, x + r, y + r, x, y - r)
+            upper.draw_line(x - r, y + r, x, y - r)
          }
-      r -:= 1
+         "s": {
+            lower.draw_line(x, y + r, x + r, y - r)
+            upper.draw_line(x, y + r, x - r, y - r, x + r, y - r)
+         }
+         "e": {
+            lower.draw_line(x - r, y + r, x + r, y)
+            upper.draw_line(x - r, y + r, x - r, y - r, x + r, y)
+         }
+         "w": {
+            lower.draw_segment(x - r, y, x + r, y + r, x + r, y + r, x + r, y-r)
+            upper.draw_line(x - r, y, x + r, y - r)
+         }
       }
+      r -:= 1
+   }
    return win
 end
 
@@ -324,12 +306,6 @@ end
 
 # draw beveled square
 procedure BevelSquare(win, x, y, r, bw)		
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      return BevelSquare((\&window | runerr(140)), win, x, y, r)
    /r := 6
    return BevelRectangle(win, x - r, y - r, 2 * r + 1, 2 * r + 1, bw)
 end
@@ -339,12 +315,6 @@ end
 
 # draw ridged rectangle
 procedure RidgeRectangle(win, x, y, w, h, bw)	
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      return RidgeRectangle((\&window | runerr(140)), win, x, y, w, h)
    /bw := 2
    return GrooveRectangle(win, x, y, w, h, -bw)
 end
@@ -355,17 +325,11 @@ end
 # draw grooved rectangle
 procedure GrooveRectangle(win, x, y, w, h, bw)	
    local abw
-   static type
 
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      return GrooveRectangle((\&window | runerr(140)), win, x, y, w, h)
-
-   /x := -WAttrib(win, "dx")
-   /y := -WAttrib(win, "dy")
-   /w := WAttrib(win, "width") - (x + WAttrib(win, "dx"))
-   /h := WAttrib(win, "height") - (y + WAttrib(win, "dy"))
+   /x := -win.attrib("dx")
+   /y := -win.attrib("dy")
+   /w := win.attrib("width") - (x + win.attrib("dx"))
+   /h := win.attrib("height") - (y + win.attrib("dy"))
 
    if w < 0 then
       x -:= (w := -w)
@@ -393,18 +357,13 @@ end
 # draw beveled rectangle
 procedure BevelRectangle(win, x, y, w, h, bw)	
    local b, upper, lower, xx, yy
-   static type
 
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      return BevelRectangle((\&window | runerr(140)), win, x, y, w, h)
    b := bev_lookup(win)
 
-   /x := -WAttrib(win, "dx")
-   /y := -WAttrib(win, "dy")
-   /w := WAttrib(win, "width") - (x + WAttrib(win, "dx"))
-   /h := WAttrib(win, "height") - (y + WAttrib(win, "dy"))
+   /x := -win.attrib("dx")
+   /y := -win.attrib("dy")
+   /w := win.attrib("width") - (x + win.attrib("dx"))
+   /h := win.attrib("height") - (y + win.attrib("dy"))
 
    if w < 0 then
       x -:= (w := -w)
@@ -415,22 +374,22 @@ procedure BevelRectangle(win, x, y, w, h, bw)
    if bw >= 0 then {
       upper := b.hilite
       lower := b.shadow
-      }
+   }
    else {
       upper := b.shadow
       lower := b.hilite
       bw := -bw
-      }
+   }
 
    xx := x + w
    yy := y + h
-   FillRectangle(lower, x, yy, w, -bw, xx, y, -bw, h)
+   lower.fill_rectangle(x, yy, w, -bw, xx, y, -bw, h)
 
    while (bw -:= 1) >= 0 do {
-      DrawLine(upper, x, yy -:= 1, x, y, xx -:= 1, y)
+      upper.draw_line(x, yy -:= 1, x, y, xx -:= 1, y)
       x +:= 1
       y +:= 1
-      }
+   }
 
    return win
 end
@@ -442,12 +401,6 @@ end
 
 # draw ridged line
 procedure DrawRidge(win, x1, y1, x2, y2, w)	
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      return DrawRidge((\&window | runerr(140)), win, x1, y1, x2, y2)
    /w := 2
 
    DrawGroove(win, x1, y1, x2, y2, -w)
@@ -467,12 +420,6 @@ end
 # draw grooved line
 procedure DrawGroove(win, x1, y1, x2, y2, w)	
    local a, n, b, upper, lower, fg
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-
-   if type(win) ~== "window" then
-      return DrawGroove((\&window | runerr(140)), win, x1, y1, x2, y2)
 
    /w := 2
    x1 := integer(x1)
@@ -486,8 +433,8 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
       lower := b.hilite
       }
    else {
-      fg := Fg(win)			# if erasing, draw in bg color
-      Fg(win, Bg(win))
+      fg := win.fg()			# if erasing, draw in bg color
+      win.fg(win.bg())
       upper := lower := win
       }
 
@@ -502,15 +449,15 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
       upper :=: lower
 
    if 2 <= n <= 5 then {		# approximately vertical
-      DrawLine(upper, x1 - 1, y1, x2 - 1, y2)
-      DrawLine(lower, x1, y1, x2, y2)
+      upper.draw_line(x1 - 1, y1, x2 - 1, y2)
+      lower.draw_line(x1, y1, x2, y2)
       }
    else {				# approximately horizontal
-      DrawLine(upper, x1, y1 - 1, x2, y2 - 1)
-      DrawLine(lower, x1, y1, x2, y2)
+      upper.draw_line(x1, y1 - 1, x2, y2 - 1)
+      lower.draw_line(x1, y1, x2, y2)
       }
 
-   Fg(win, \fg)				# restore foreground if changed
+   win.fg(\fg)				# restore foreground if changed
    return win
 end
 
@@ -519,12 +466,7 @@ end
 
 # draw filled square
 procedure FillSquare(win, x, y, r)		
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-   if type(win) ~== "window" then
-      return FillSquare((\&window | runerr(140)), win, x, y)
-   return FillRectangle(win, x - r, y - r, 2 * r + 1, 2 * r + 1)
+   return win.fill_rectangle( x - r, y - r, 2 * r + 1, 2 * r + 1)
 end
 
 
@@ -532,12 +474,7 @@ end
 
 # draw filled diamond
 procedure FillDiamond(win, x, y, r)		
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-   if type(win) ~== "window" then
-      return FillDiamond((\&window | runerr(140)), win, x, y)
-   return FillPolygon(win, x - r, y, x, y + r + 1, x + r + 1, y, x, y - r - 1)
+   return win.fill_polygon( x - r, y, x, y + r + 1, x + r + 1, y, x, y - r - 1)
 end
 
 
@@ -548,20 +485,15 @@ end
 
 # draw filled triangle
 procedure FillTriangle(win, x, y, r, o)		
-   static type
-
-   initial type := proc("type", 0)	# protect attractive name
-   if type(win) ~== "window" then
-      return FillTriangle((\&window | runerr(140)), win, x, y, r)
    return case o of {
       default:  #"n"
-         FillPolygon(win, x - r - 1, y + r + 1, x, y - r, x + r + 1, y + r + 1)
+         win.fill_polygon( x - r - 1, y + r + 1, x, y - r, x + r + 1, y + r + 1)
       "s":
-         FillPolygon(win, x - r, y - r, x, y + r, x + r, y - r)
+         win.fill_polygon( x - r, y - r, x, y + r, x + r, y - r)
       "e":
-         FillPolygon(win, x - r, y - r, x + r, y, x - r, y + r)
+         win.fill_polygon( x - r, y - r, x + r, y, x - r, y + r)
       "w":
-         FillPolygon(win, x + r + 1, y - r - 1, x - r, y, x + r + 1, y + r + 1)
+         win.fill_polygon( x + r + 1, y - r - 1, x - r, y, x + r + 1, y + r + 1)
       }
 end
 

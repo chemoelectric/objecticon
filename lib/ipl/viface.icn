@@ -51,6 +51,7 @@
 package ipl.vidgets
 
 $include "vdefns.icn"
+$include "keysyms.icn"
 
 procedure VDraw(vid, code)
    static type
@@ -332,15 +333,15 @@ procedure ProcessEvent(vidget, missed, all, resize)
 
    event := NextEvent(vidget.win)
 
-   if event === &resize then {
-      (\resize)(vidget, event, &x, &y)
-      VEvent(vidget, event, &x, &y)
+   if event === Window_Resize then {
+      (\resize)(vidget, event, AmperX, AmperY)
+      VEvent(vidget, event, AmperX, AmperY)
       }
 
-   (\(lrv := vidget.V.lookup(vidget,&x,&y)) & lrv.V.event(lrv,event,&x,&y)) |
-      (\missed)(event, &x, &y)
+   (\(lrv := vidget.V.lookup(vidget,AmperX,AmperY)) & lrv.V.event(lrv,event,AmperX,AmperY)) |
+      (\missed)(event, AmperX, AmperY)
 
-   (\all)(event, &x, &y)
+   (\all)(event, AmperX, AmperY)
 
    return event
 
@@ -394,7 +395,6 @@ end
 procedure VSetFont(win)
    local spec, maybe
 
-   /win := &window
    if WAttrib(win, "fwidth") = VFWidth then
       return win			# existing font is acceptable
 

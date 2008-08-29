@@ -109,9 +109,6 @@ case type(p) of
 
       every xi := !x do 
       {      
-         if xi === &output then
-            keepxi := 1                   # copying arguments after &output
-         else 
             if type(xi) == "file" then
                keepxi := &null            # ignore arguments after non-&output
             else 

@@ -59,6 +59,7 @@
 
 
 $include "vdefns.icn"
+$include "keysyms.icn"
 
 package ipl.vidgets
 
@@ -796,7 +797,7 @@ end
 #    highlighting the line that was selected by the user with the mouse
 #    or by the programmer using VSetState().  Only one line at a time
 #    can be highlighted.  The list vidget callback is not called until
-#    a &lrelease event is detected (releasing the mouse button implies
+#    a Mouse_LeftRelease event is detected (releasing the mouse button implies
 #    the user has made a selection).  It also supports dragging the mouse
 #    across the list, highlighting and unhighlighting each line in turn.
 #
@@ -814,7 +815,7 @@ end
 procedure event_Vlist(self, e, x, y)
    local cb, dl, tl, sl, selectmode, selected, cb_data, cb_items, i, mode
 
-   if e ~=== &lpress then
+   if e ~=== Mouse_LeftPress then
       fail				# not our event
 
    mode := storage_Vlist(self.id, "read", "mode")
@@ -822,7 +823,7 @@ procedure event_Vlist(self, e, x, y)
       fail				# no events on read-only vidget
 
    cb := self.callback
-   /y := &y
+   /y := AmperY
    dl := storage_Vlist(self.id, "read", "datalist")
    tl := storage_Vlist(self.id, "read", "top_line")
    sl := storage_Vlist(self.id, "read", "selection")
@@ -850,12 +851,12 @@ procedure event_Vlist(self, e, x, y)
          }
       drawlist_Vlist(self, dl, tl)
 
-      while (e := NextEvent(self.win)) ~=== &lrelease do {
+      while (e := NextEvent(self.win)) ~=== Mouse_LeftRelease do {
 
-         if e ~=== &ldrag then
+         if e ~=== Mouse_LeftDrag then
             next
 
-         selected := vlist_selection(self, &y)
+         selected := vlist_selection(self, AmperY)
 
          /sl := 0
          if sl = selected then
@@ -895,9 +896,9 @@ procedure event_Vlist(self, e, x, y)
    dl[selected][1] := selectmode
    drawlist_Vlist(self, dl, tl)
 
-   while (e := NextEvent(self.win)) ~=== &lrelease do
-      if e === &ldrag then {
-         dl[vlist_selection(self, &y)][1] := selectmode
+   while (e := NextEvent(self.win)) ~=== Mouse_LeftRelease do
+      if e === Mouse_LeftDrag then {
+         dl[vlist_selection(self, AmperY)][1] := selectmode
          drawlist_Vlist(self, dl, tl)
          }
 

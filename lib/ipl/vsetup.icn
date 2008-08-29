@@ -19,7 +19,7 @@
 #
 #  win can be an existing window, a list of command arguments to be
 #  passed to Window(), null, or omitted.  In the latter three cases
-#  a new window is opened if &window is null.
+#  a new window is opened if amper_window is null.
 #
 #  cbk is a default callback routine to be used when no callback is
 #  specified for a particular vidget.
@@ -65,8 +65,6 @@ procedure vsetup(args[])
       "list":	winargs := get(args)
       "null":	get(args)
       }
-   /win := &window
-
    if type(args[1]) ~== "list" then	# check for callback argument
       cbk := get(args)
 

@@ -26,8 +26,7 @@
 #
 #  xdump(x1,x2,...,xn) : xn
 #
-#  Using ximage(), successively writes the images of x1, x2, ..., xn to
-#  &errout.
+#  Using ximage(), successively writes the images of x1, x2, ..., xn 
 #
 #  Some Examples:
 #
@@ -208,6 +207,6 @@ end
 #
 # write images of values
 procedure xdump(x[])		
-   every write(&errout,ximage(!x))
+   every ewrite(ximage(!x))
    return x[-1] | &null
 end

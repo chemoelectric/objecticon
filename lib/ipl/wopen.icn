@@ -15,13 +15,7 @@
 ############################################################################
 #
 #	These procedures provide window input and output using "W" names as
-#	substitutes for standard input and output functions.  WOpen() opens
-#	and returns a window; the result is also assigned to &window if
-#	&window is null. 
-#
-#	WRead(W)		reads a line from a window.
-#
-#	WReads(W, i)		reads i characters from a window.
+#	substitutes for standard input and output functions.
 #
 #	WDelay(W, n)		flushes a window, then delays n milliseconds.
 #				default:  n = 1
@@ -56,6 +50,10 @@
 
 package ipl.graphics
 
+import graphics()
+
+$include "keysyms.icn"
+
 procedure WDelay(window, n)
    static delay, type
 
@@ -64,15 +62,9 @@ procedure WDelay(window, n)
       type := proc("type", 0)
       }
 
-   if /window then
-      window := \&window | runerr(140, &window)
-   else if type(window) ~== "window" then {
-      n := window
-      window := \&window | runerr(140, &window)
-      }
    /n := 1
    integer(n) | runerr(101, n)
-   WFlush(window)
+   window.flush()
    delay(n)
 
    return window
@@ -93,17 +85,15 @@ end
 
 
 procedure WQuit(win)
-   /win := &window
-   while *Pending(win) > 0 do
-      if NextEvent(win) === QuitEvents() then
+   while *win.pending() > 0 do
+      if win.event()[1] === QuitEvents() then
          return win
    fail
 end
 
 
 procedure WDone(win)
-   /win := &window
-   until NextEvent(win) === QuitEvents()
+   until win.event()[1] === QuitEvents()
    exit()
 end
 
@@ -113,23 +103,22 @@ end
 procedure ZDone(win)
    local org, e, w, h, ww, hh, x0, y0
 
-   /win := &window
-   x0 := -WAttrib(win, "dx")
-   y0 := -WAttrib(win, "dy")
-   w := WAttrib(win, "width")
-   h := WAttrib(win, "height")
-   org := WOpen("width=" || w, "height=" || h, "canvas=hidden") | WDone()
-   CopyArea(win, org, x0, y0)
-   WAttrib(win, "resize=on")
-   while e := NextEvent(win) do case e of {
+   x0 := -win.attrib( "dx")
+   y0 := -win.attrib( "dy")
+   w := win.attrib( "width")
+   h := win.attrib( "height")
+   org := graphics.Window.open("width=" || w, "height=" || h, "canvas=hidden") | WDone()
+   graphics.Window.copy_area(org, x0, y0)
+   win.attrib( "resize=on")
+   while e := win.event()[1] do case e of {
       QuitEvents():
          exit()
-      &resize:
+      Window_Resize:
          Zoom(org, win, , , , , x0, y0)
       !"123456789": {
          ww := e * w
          hh := e * h
-         WAttrib(win, "width=" || ww, "height=" || hh)
+         win.attrib( "width=" || ww, "height=" || hh)
          Zoom(org, win, , , , , x0, y0, ww, hh)
          }
       }
@@ -139,23 +128,19 @@ procedure SubWindow(win, x, y, w, h)
    static type
    initial type := proc("type", 0)	# protect attractive name
 
-   if type(win) ~== "window" then
-      return SubWindow((\&window | runerr(140)), win, x, y, w)
-
-   /x := -WAttrib(win, "dx")
-   /y := -WAttrib(win, "dy")
-   /w := WAttrib(win, "width") - (x + WAttrib(win, "dx"))
-   /h := WAttrib(win, "height") - (y + WAttrib(win, "dy"))
+   /x := -win.attrib( "dx")
+   /y := -win.attrib( "dy")
+   /w := win.attrib( "width") - (x + win.attrib( "dx"))
+   /h := win.attrib( "height") - (y + win.attrib( "dy"))
 
    if w < 0 then
       x -:= (w := -w)
    if h < 0 then
       y -:= (h := -h)
 
-   win := Clone(win,
-      "dx=" || WAttrib(win, "dx") + x,
-      "dy=" || WAttrib(win, "dy") + y)
-   Clip(win, 0, 0, w, h)
+   win := win.clone("dx=" || win.attrib( "dx") + x,
+                    "dy=" || win.attrib( "dy") + y)
+   win.clip( 0, 0, w, h)
    #GotoRC(win, 1, 1)
    return win
 end

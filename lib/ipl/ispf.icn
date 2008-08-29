@@ -62,7 +62,7 @@ procedure ISPExec(cmd)
    result := callout("ispexec", cmd)
    if type(result) == "string" then {
       if result[1+:4] ~== "ISPF" then result := "ISPF error: "||result
-      if &error = 0 then write(&errout, result)
+      if &error = 0 then ewrite(result)
       runerr(500, result)
    }
    else return result
@@ -81,7 +81,7 @@ procedure ISPVcopy(var)
    if result[1] == "=" then return result[2:0]
    result = result[2:0]
    if result[1+:4] ~== "ISPF" then result := "ISPF error: "||result
-   if &error = 0 then write(&errout, result)
+   if &error = 0 then ewrite(result)
    runerr(500, result)
 end
 
@@ -92,7 +92,7 @@ procedure ISPVrepl(var,value)
    result := callout("isprepl", var||" ", value)
    if type(result) == "string" then {
       if result[1+:4] ~== "ISPF" then result := "ISPF error: "||result
-      if &error = 0 then write(&errout, result)
+      if &error = 0 then ewrite(result)
       runerr(500, result)
    }
    else return result

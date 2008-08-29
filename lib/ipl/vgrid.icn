@@ -87,8 +87,8 @@ procedure event_Vgrid(self, e)
    local row, col
 
    if \self.callback.locked then fail
-   col := VGetCol(self, &x)
-   row := VGetRow(self, &y)
+   col := VGetCol(self, AmperX)
+   row := VGetRow(self, AmperY)
    return self.callback.V.set(self.callback, self, [row, col, e])
 end
 

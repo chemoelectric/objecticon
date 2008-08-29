@@ -40,7 +40,7 @@
 #     PostScript recording is enabled by calling PSEnable(window, filename)
 #  any time after after the window has been opened.  (The procedures in
 #  "autopost.icn" may be used for this.)  Defaults for PSEnable are
-#  &window and "xlog.ps".  At the end, PSDone() should be called to
+#  amper_window and "xlog.ps".  At the end, PSDone() should be called to
 #  properly terminate the file; when PSDone() is not called, the file is
 #  still be legal but lacks the "showpage" command needed for printing.
 #
@@ -185,7 +185,7 @@ local fname, scale, psw, psh, llx, lly
 
    if \PS_active then PSDone()
    PS_afix(a)
-   PS_win := \a[1] | \&window | runerr(140, a[1])
+   PS_win := \a[1] | runerr(140, a[1])
    fname := \a[2] | "xlog.ps"
    PS_f := open(fname, "w") | stop("can't open", fname)
 
@@ -299,8 +299,6 @@ end
 #  PS_afix(a) -- fix arg list to ensure that first arg is a window
 
 procedure PS_afix(a)
-   if not (type(a[1]) == "window") then
-      push(a, &window)
    return a
 end
 

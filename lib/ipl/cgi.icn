@@ -123,7 +123,7 @@ initial {
 	 tab(find("boundary=") + 9)
 	 boundary := "--" || tab(0)
          }
-   content := reads(&input, cl)
+   content := reads(, cl)
    content ? {
       while tab(find(boundary)) do {
 	  tab(find("\n")+1)
@@ -178,7 +178,7 @@ initial {
 else {
    if cgiMethGet() then
       line := getenv("QUERY_STRING")
-   else line := reads(&input, getenv("CONTENT_LENGTH"))
+   else line := reads(, getenv("CONTENT_LENGTH"))
    line ? {
       while put(html, tab(find("&"))) do {
 	 tab(many('&'))

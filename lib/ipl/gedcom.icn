@@ -109,7 +109,7 @@ procedure gedload(f)
          next
 
       if not (r := gedscan(line)) then {
-         write(&errout, "ERR, line ", lnum, ": ", line)
+         ewrite("ERR, line ", lnum, ": ", line)
          next
       }
       r.lnum := lnum

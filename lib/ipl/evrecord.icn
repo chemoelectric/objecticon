@@ -41,13 +41,13 @@ procedure evrecord(event)
    local modkeys
 
    modkeys := ""
-   modkeys ||:= (&shift & "s")
-   modkeys ||:= (&meta & "m")
-   modkeys ||:= (&control & "c")
+   modkeys ||:= (AmperShift & "s")
+   modkeys ||:= (AmperMeta & "m")
+   modkeys ||:= (AmperControl & "c")
 
    write(image(event))
-   write(ior(pack_modkeys(modkeys), iand(&x, 16rFFFF)))
-   write(ior(pack_intrvl(&interval), iand(&y, 16rFFFF)))
+   write(ior(pack_modkeys(modkeys), iand(AmperX, 16rFFFF)))
+   write(ior(pack_intrvl(AmperInterval), iand(AmperY, 16rFFFF)))
 
    return
 

@@ -84,11 +84,6 @@ end
 procedure XDrawTile(win, xoff, yoff, pattern, magnif, mode)
    local x, y, row, pixel, dims, arglist
 
-   if type(win) ~== "window" then {
-      win :=: xoff :=: yoff :=: pattern :=: mode
-      win := &window
-      }
-
    if magnif = 1 then XDrawImage(win, xoff, yoff, pattern, mode)
    else {
       if \mode then {
@@ -118,11 +113,6 @@ end
 
 procedure XDrawRows(win, xoff, yoff, imx, magnif, mode)
    local x, y, row, pixel, arglist
-
-   if type(win) ~== "window" then {
-      win :=: xoff :=: yoff :=: imx :=: magnif :=: mode
-      win := &window
-      }
 
    /magnif := 1
 

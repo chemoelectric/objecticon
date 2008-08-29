@@ -172,8 +172,6 @@ procedure DrawImage(args[])
 
    initial draw_image := proc("DrawImage", 0)
 
-   if type(args[1]) ~== "window" then push(args, &window)
-
    imr := imstoimr(args[4]) | return draw_image ! args
 
    if BuiltinPalette(imr.palette) then return draw_image ! args

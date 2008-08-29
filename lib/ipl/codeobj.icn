@@ -245,13 +245,4 @@ end
 #  Decode a file.
 #
 procedure defile(s, tag)
-   return inlab[tag] := case s of {		# files aren't so simple ...
-      "&input":  &input
-      "&output": &output
-      "&errout": &errout
-      default: s ? {
-            ="file("		# open for reading to play it safe
-            open(tab(upto(')'))) | stop("cannot open encoded file")
-            }
-       }
 end

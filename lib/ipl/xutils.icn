@@ -24,7 +24,6 @@ import
    ipl.graphics(QuitEvents)
 
 procedure Quit(win)
-   /win := &window
    while *Pending(win) > 0 do
       if NextEvent(win) === QuitEvents() then
          return win
@@ -32,7 +31,6 @@ procedure Quit(win)
 end
 
 procedure Done(win)
-   /win := &window
    until NextEvent(win) === QuitEvents()
    exit()
 end

@@ -31,7 +31,7 @@
 # example:
 #
 #   f := open("input_file") | stop("!!!")
-#   FileSpeedo(f,75,&errout)            # Start a file speedo, specifying
+#   FileSpeedo(f,75)            # Start a file speedo, specifying
 #                                       # length and output file
 #   while read(f) do {
 #      FileSpeedo(f)                    # Keep it updated while reading file
@@ -47,7 +47,6 @@ record SpeedoRec(max,length,file,lastOut,string)
 
 procedure SpeedoNew(max,length,file,str)
     /length := 79
-    /file := &errout
     /str := "="
     write(file,"|",repl("-",length / *str * *str - 2),"|")
     return SpeedoRec(max,length,file,0,str)

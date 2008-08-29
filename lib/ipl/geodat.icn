@@ -246,7 +246,7 @@ procedure gdt_nadcon_initGrids(names)
       b1 := read(latf) | &null
       b2 := read(latf) | &null
       if /a1 | /a2 | /b1 | /b2 | a1 ~== b1 | a2 ~== b2 then {
-         write(&errout, g.name, " incompatible or corrupt files.")
+         ewrite(g.name, " incompatible or corrupt files.")
          next
          }
       g.offset := where(lonf)
@@ -273,7 +273,7 @@ procedure gdt_nadcon_initGrids(names)
    close(\latf)
 
    if *grids = 0 then {
-      write(&errout, "No valid NADCON conversion files found.")
+      ewrite("No valid NADCON conversion files found.")
       fail
       }
    return grids
@@ -366,7 +366,7 @@ procedure gdt_nadcon_bckPoint(p, a, xpt, ypt)
          return
          }
       }
-   write(&errout, "Maximum iterations exceeded!!")
+   ewrite("Maximum iterations exceeded!!")
    fail
 end
 

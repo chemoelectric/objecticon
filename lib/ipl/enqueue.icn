@@ -35,9 +35,9 @@
 #	0EEE MMMM MMMM MMMM  YYYY YYYY YYYY YYYY   (third entry)
 #
 #   The fields have these meanings:
-#	X...X	&x: 16-bit signed x-coordinate value
-#	Y...Y	&y: 16-bit signed y-coordinate value
-#	SMC	&shift, &meta, and &control (modifier keys)
+#	X...X	AmperX: 16-bit signed x-coordinate value
+#	Y...Y	AmperY: 16-bit signed y-coordinate value
+#	SMC	AmperShift, AmperMeta, and AmperControl (modifier keys)
 #	E...M	&interval, interpreted as  M * 16 ^ E
 #	0	currently unused; should be zero
 #
@@ -149,15 +149,11 @@ procedure Enqueue(win, eventcode, x, y, modkeys, interval)
 
    initial type := proc("type", 0)	# protect attractive name
 
-   if type(win) ~== "window" then {
-      win :=: eventcode :=: x :=: y :=: modkeys :=: interval
-      win := &window
-      }
    /x := 0
    /y := 0
-   x +:= WAttrib(win, "dx")
-   y +:= WAttrib(win, "dy")
-   return put(Pending(win),
+   x +:= win.attrib( "dx")
+   y +:= win.attrib( "dy")
+   return put(win.pending(),
       eventcode,
       ior(pack_modkeys(\modkeys | ""), iand(x, 16rFFFF)),
       ior(pack_intrvl(\interval | 0), iand(y, 16rFFFF)))

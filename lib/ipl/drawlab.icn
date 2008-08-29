@@ -77,18 +77,18 @@ procedure drawlab(p, callt, label)
          if ="=" then {
             name := tab(0)
             #GotoRC(2, 2)
-            #writes(&window, name)
-            DrawString(&window, 10, 10, name)
+            #writes(amper_window, name)
+            DrawString(amper_window, 10, 10, name)
             trace(\calls[name]) | {
-               write(&errout, "*** erroneous specification")
+               ewrite("*** erroneous specification")
                next
                }
             }
          else if ="all" then {
             every name := !dlist do {
                #GotoRC(2, 2)
-               #writes(&window, name)
-               DrawString(&window, 10, 10, name)
+               #writes(amper_window, name)
+               DrawString(amper_window, 10, 10, name)
                trace(calls[name])
                NextEvent()
                EraseArea()
@@ -99,7 +99,7 @@ procedure drawlab(p, callt, label)
             while arg := tab(upto(',')) do {
                if *arg = 0 then put(args, &null) else {
                   put(args, numeric(arg)) | {
-                     write(&errout, "*** erroneous specification")
+                     ewrite("*** erroneous specification")
                      next
                      }
                   }

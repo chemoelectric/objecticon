@@ -77,7 +77,7 @@ record TOK(sym, str)
 #
 #    local separator, T
 #    separator := ""
-#    every T := itokens(&input) do {
+#    every T := itokens() do {
 #	if any(&digits ++ &letters ++ '_.', \T.str, 1, 2) & \T.sym ~== "DOT"
 #	then writes(separator)
 #	if T.sym == "SEMICOL" then writes(";") else writes(T.str)
@@ -359,7 +359,7 @@ procedure iparse_tokens(stream, getchar)
 		#
 		last_token := do_dot(getchar)
 		suspend last_token
-#		write(&errout, "next_c == ", image(next_c))
+#		ewrite("next_c == ", image(next_c))
 		next
 	    }
 
@@ -380,7 +380,7 @@ procedure iparse_tokens(stream, getchar)
 		# should *always* == "\n" when this is done.
 		#
 		do_number_sign(getchar)
-#		write(&errout, "next_c == ", image(next_c))
+#		ewrite("next_c == ", image(next_c))
 		next
 	    }
 
@@ -391,7 +391,7 @@ procedure iparse_tokens(stream, getchar)
 		#
 		last_token := do_quotation_mark(getchar)
 		suspend last_token
-#		write(&errout, "next_c == ", image(next_c))
+#		ewrite("next_c == ", image(next_c))
 		next
 	    }
 
@@ -401,7 +401,7 @@ procedure iparse_tokens(stream, getchar)
 		#
 		last_token := do_apostrophe(getchar)
 		suspend last_token
-#		write(&errout, "next_c == ", image(next_c))
+#		ewrite("next_c == ", image(next_c))
 		next
 	    }
 
@@ -431,7 +431,7 @@ procedure iparse_tokens(stream, getchar)
 		    suspend last_token
 		    next
 		}
-#		write(&errout, "it's an operator")
+#		ewrite("it's an operator")
 		last_token := do_operator(getchar, operators)
 		suspend last_token
 		next
@@ -469,12 +469,12 @@ procedure do_dot(getchar)
     local token
     # global next_c
 
-#    write(&errout, "it's a dot")
+#    ewrite("it's a dot")
 
     # If dot's followed by a digit, then we have a real literal.
     #
     if any(&digits, next_c := @getchar) then {
-#	write(&errout, "dot -> it's a real literal")
+#	ewrite("dot -> it's a real literal")
 	token := "." || next_c
 	while any(&digits, next_c := @getchar) do
 	    token ||:= next_c
@@ -491,7 +491,7 @@ procedure do_dot(getchar)
     # Dot not followed by an integer; so we just have a dot operator,
     # and not a real literal.
     #
-#    write(&errout, "dot -> just a plain dot")
+#    ewrite("dot -> just a plain dot")
     return TOK("DOT", ".")
     
 end
@@ -518,7 +518,7 @@ procedure do_newline(getchar, last_token, be_tbl)
     local next_token
     # global next_c
 
-#    write(&errout, "it's a newline")
+#    ewrite("it's a newline")
 
     # Go past any additional newlines.
     #
@@ -541,12 +541,12 @@ procedure do_newline(getchar, last_token, be_tbl)
     # record before suspending the next token.
     #
     if find("e", be_tbl[(\last_token).sym]) then {
-#	write(&errout, "calling iparse_tokens via do_newline")
+#	ewrite("calling iparse_tokens via do_newline")
 #	&trace := -1
 	# First arg to iparse_tokens can be null here.
 	\ (next_token := iparse_tokens(&null, getchar)).sym
 	if \next_token then {
-#	    write(&errout, "call of iparse_tokens via do_newline yields ",
+#	    ewrite("call of iparse_tokens via do_newline yields ",
 #		  ximage(next_token))
 	    if find("b", be_tbl[next_token.sym])
 	    then suspend TOK("SEMICOL", "\n")
@@ -593,7 +593,7 @@ procedure do_number_sign(getchar)
 
     # global next_c
 
-#    write(&errout, "it's a number sign")
+#    ewrite("it's a number sign")
     while next_c ~== "\n" do {
 	next_c := @getchar
     }
@@ -620,7 +620,7 @@ procedure do_quotation_mark(getchar)
     local token
     # global next_c
 
-    # write(&errout, "it's a string literal")
+    # ewrite("it's a string literal")
     token := "\""
     next_c := @getchar
     repeat {
@@ -657,7 +657,7 @@ procedure do_apostrophe(getchar)
     local token
     # global next_c
 
-#   write(&errout, "it's a cset literal")
+#   ewrite("it's a cset literal")
     token := "'"
     next_c := @getchar
     repeat {
@@ -699,7 +699,7 @@ procedure do_digits(getchar)
     # Assume integer literal until proven otherwise....
     tok_record := TOK("INTLIT")
 
-#   write(&errout, "it's an integer or real literal")
+#   ewrite("it's an integer or real literal")
     token := ("0" ~== next_c) | ""
     while any(&digits, next_c := @getchar) do
 	token ||:= next_c
@@ -753,7 +753,7 @@ end
 #
 procedure do_whitespace(getchar, whitespace)
 
-#   write(&errout, "it's junk")
+#   ewrite("it's junk")
     while any(whitespace, next_c) do
 	next_c := @getchar
     return
@@ -778,7 +778,7 @@ procedure do_identifier(getchar, reserved_tbl)
     local token
     # global next_c
 
-#   write(&errout, "it's an indentifier")
+#   ewrite("it's an indentifier")
     token := next_c
     while any(&letters ++ &digits ++ '_', next_c := @getchar)
     do token ||:= next_c
@@ -808,7 +808,7 @@ procedure do_operator(getchar, operators)
     # Go until recognop fails.
     while elem := recognop(operators, token, 1) do
 	token ||:= (next_c := @getchar)
-#   write(&errout, ximage(elem))
+#   ewrite(ximage(elem))
     if *\elem = 1 then
 	return TOK(elem[1][2], elem[1][1])
     else fail
@@ -870,8 +870,8 @@ procedure recognop(l, s, i)
 	    if current_state.tbl === 0 then
 		fail
 	    
-#	    write(&errout, "c = ", image(c))
-#	    write(&errout, "table for current state = ", 
+#	    ewrite("c = ", image(c))
+#	    ewrite("table for current state = ", 
 #		  ximage(current_state.tbl))
 
 	    # If we get to here, the current state has arcs leading

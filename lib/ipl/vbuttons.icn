@@ -37,6 +37,8 @@ package ipl.vidgets
 import
    ipl.graphics(DrawGroove)
 
+$include "keysyms.icn"
+
 ############################################################################
 # Vbutton
 ############################################################################
@@ -89,12 +91,12 @@ procedure event_Vbutton(self, e)
    local out
 
    if \self.callback.locked then fail
-   if e === (&lpress|&mpress|&rpress) then {
+   if e === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) then {
       self.D.draw_on(self)
       repeat {
 	 e := NextEvent(self.win)
-	 if self.V.inrange(self, &x, &y) then {
-	    if e === (&lrelease|&mrelease|&rrelease) then {
+	 if self.V.inrange(self, AmperX, AmperY) then {
+	    if e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) then {
 	       self.D.draw_off(self)
 	       self.callback.V.set(self.callback, self)
 	       return self.id
@@ -105,11 +107,11 @@ procedure event_Vbutton(self, e)
                }
             }
 	 else
-	    if e === (&ldrag|&mdrag|&rdrag) & /out then {
+	    if e === (Mouse_LeftDrag|Mouse_MiddleDrag|Mouse_RightDrag) & /out then {
 	       self.D.draw_off(self)
 	       out := 1
                }
-	    else if e === (&lrelease|&mrelease|&rrelease) then {
+	    else if e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) then {
 	       self.D.draw_off(self)
 	       break
                }
@@ -188,7 +190,7 @@ procedure event_Vtoggle(self, e)
    local out, new, original
 
    if \self.callback.locked then fail
-   if e === (&lpress|&mpress|&rpress) then {
+   if e === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) then {
       if /self.callback.value then {
          new := self.D.draw_on
          original := self.D.draw_off
@@ -200,8 +202,8 @@ procedure event_Vtoggle(self, e)
       new(self)
       repeat {
          e := NextEvent(self.win)
-         if self.V.inrange(self, &x, &y) then {
-            if e === (&lrelease|&mrelease|&rrelease) then {
+         if self.V.inrange(self, AmperX, AmperY) then {
+            if e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) then {
                self.callback.V.toggle(self.callback, self)
                self.data := self.callback.value
                return self.id
@@ -212,11 +214,11 @@ procedure event_Vtoggle(self, e)
             }
          }
          else
-            if e === (&ldrag|&mdrag|&rdrag) & /out then {
+            if e === (Mouse_LeftDrag|Mouse_MiddleDrag|Mouse_RightDrag) & /out then {
                original(self)
                out := 1
             }
-            else if e === (&lrelease|&mrelease|&rrelease) then {
+            else if e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) then {
                original(self)
                break
             }

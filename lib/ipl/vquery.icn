@@ -86,7 +86,7 @@ initial {
             DrawRectangle(win, old.x, old.y, old.w, old.h)
         }
 	default : {
-	    rv := VEvent(root, event, &x, &y)
+	    rv := VEvent(root, event, AmperX, AmperY)
 	    (\rv, break)
 	}
 	} # end case
@@ -165,9 +165,9 @@ initial {
 	}
 
 	default: {
-	    lrv := root.V.lookup(root, &x, &y)
+	    lrv := root.V.lookup(root, AmperX, AmperY)
 	    /lrv  := input_vidget
-	    rv := (lrv).V.event(lrv, event, &x, &y)
+	    rv := (lrv).V.event(lrv, event, AmperX, AmperY)
 	    if rv === (ID_OK | ID_CANCEL) then break
 	}
 	} # end case

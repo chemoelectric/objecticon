@@ -53,7 +53,7 @@ procedure fprintf(file, format, args[])
 end
 
 procedure printf(format, args[])
-	writes(&output, _doprnt(format, args))
+	writes(, _doprnt(format, args))
 	return
 end
 

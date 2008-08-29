@@ -49,8 +49,6 @@
 #  way that makes much sense.  These objects are restored as empty lists so
 #  that (1) they will be unique objects and (2) will likely generate
 #  run-time errors if they are (probably erroneously) used in
-#  computation.  However, the special files &input, &output, and &errout are
-#  restored.
 #
 #     Not much can be done with functions and procedures, except to preserve
 #  type and identification.
@@ -94,8 +92,7 @@
 #
 #	where
 #
-#		f is the file to read (default &input)
-#
+
 #		p is a procedure that reads a line from f using the
 #		  same interface as read() (the parameter is
 #		  always a the value passed as "file") (default: read)
@@ -216,7 +213,6 @@ record xcode_rec(file,ioProc,done,nextTag)
 # write structure to file
 procedure xencode(x,file,writeProc)	
 
-   /file := &output
    return xencode_1(
       xcode_rec(
 	 file,
@@ -335,8 +331,6 @@ end
 # read structure from file
 procedure xdecode(file,readProc)	
 
-   /file := &input
-
    return xdecode_1(
       xcode_rec(
 	 file,
@@ -378,9 +372,6 @@ procedure xdecode_1(data)
 	       #
 	       #  Special files.
 	       #
-	       "input":		&input
-	       "output":	&output
-	       "errout":	&errout
 	       default:		[] # so it won't crash if new keywords arise
 	       }
             "f" | "C": []	# unique object for things that can't

@@ -43,7 +43,7 @@
 # Example code:
 #
 #      commands := ["run","stop","quit","save","load","continue"]
-#      while line := read(&input) do {
+#      while line := read() do {
 #          cmds := list()
 #          every put(cmds, complete(line, commands))
 #          case *cmds of {

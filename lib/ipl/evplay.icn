@@ -39,8 +39,6 @@ global EventFile
 procedure evplay(win)
    local event1, event2, event3
 
-   /EventFile := &input
-
    event1 := ivalue(read(EventFile)) | fail
    event2 := ivalue(read(EventFile)) | stop("*** short event history")
    event3 := ivalue(read(EventFile)) | stop("*** short event history")

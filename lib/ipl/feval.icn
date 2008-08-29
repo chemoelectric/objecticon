@@ -39,11 +39,11 @@ procedure feval(s)
 
    s ? {
       fnc := tab(upto('(')) | {
-         write(&errout, "*** syntax error")
+         ewrite("*** syntax error")
          fail
          }
       fnc := proc(fnc, 3 to 1 by -1) | {
-         write(&errout, "*** invalid function or operation")
+         ewrite("*** invalid function or operation")
          fail
          }
       move(1)

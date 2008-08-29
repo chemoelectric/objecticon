@@ -33,6 +33,8 @@ package ipl.vidgets
 import
    ipl.graphics(BevelRectangle, Enqueue)
 
+$include "keysyms.icn"
+
 record DL_pos_rec(x,y)		# dialog position record
 
 ############################################################################
@@ -138,9 +140,9 @@ procedure open_dialog_Vdialog(self, x, y, values, def_str)
       put(args, "bg=" || c)
    parent := self.win
    if not (self.win := WOpen ! args) then {
-      write(&errout, "can't open window for dialog")
-      writes(&errout, "window arguments:")
-      every writes(&errout, " ", !args | "\n")
+      ewrite("can't open window for dialog")
+      ewrites( "window arguments:")
+      every ewrites( " ", !args | "\n")
       stop()
       }
 
@@ -181,19 +183,19 @@ procedure open_dialog_Vdialog(self, x, y, values, def_str)
       e := NextEvent(self.win)
       if e === "\r" then {
          if \def then {
-            e := &lpress
-            &x := def.ax + 1
-            &y := def.ay + 1
-            Enqueue(def.win, &lrelease, def.ax + 1, def.ay + 1)
+            e := Mouse_LeftPress
+            AmperX := def.ax + 1
+            AmperY := def.ay + 1
+            Enqueue(def.win, Mouse_LeftRelease, def.ax + 1, def.ay + 1)
          }
          else next
       }
       if integer(e) < 0 then {
-         newfocus := self.V.lookup(self, &x, &y) | self.F.focus
+         newfocus := self.V.lookup(self, AmperX, AmperY) | self.F.focus
          if ((\newfocus).id) ~=== ((\self.F.focus).id) then
             switch_focus_Vdialog(self, newfocus)
       }
-      r := (\newfocus).V.event(newfocus, e, &x, &y) | &null
+      r := (\newfocus).V.event(newfocus, e, AmperX, AmperY) | &null
       case r of {
          V_NEXT: { 	#move to next entry
             now := self.F.text_lu[self.F.focus.id]

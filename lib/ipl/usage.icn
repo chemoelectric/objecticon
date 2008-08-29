@@ -19,7 +19,7 @@
 #     Usage(s)          stops executions with a message concerning the
 #                       expected form of usage of a program.
 #
-#     Error(L[])	writes arguments to &errout and returns.
+#     Error(L[])	writes arguments to stderr and returns.
 #
 #
 #     ErrorCheck(l,f)	reports an error that has been converted to
@@ -43,8 +43,7 @@ end
 
 procedure Error(L[])
    push(L,"*** ")
-   push(L, &errout)
-   write ! L
+   ewrite ! L
 end
 
 procedure ErrorCheck(line,file)

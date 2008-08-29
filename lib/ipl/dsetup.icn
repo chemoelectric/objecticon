@@ -59,9 +59,6 @@ global did_list, did_label
 procedure dsetup(win, wlist[])
    local r, dialog,   wspec
 
-   if type(win) ~== "window" then
-      win := &window
-
    win := Clone(win, "fg=black", "linewidth=1", "linestyle=solid",
       "fillstyle=solid", "drawop=copy")	# clone window with standard attribs
    VSetFont(win)			# set standard VIB font

@@ -146,7 +146,7 @@ end
 
 procedure error(expr1, expr2)
 
-   write(&errout, "*** error ", expr1, " ", expr2)
+   ewrite("*** error ", expr1, " ", expr2)
 
    fail
 

@@ -46,6 +46,8 @@ $define	NumberField	 3
 $define	WPad		20
 $define	HPad		45
 
+$include "keysyms.icn"
+
 global	colors
 global	colortbl
 global	palette
@@ -95,10 +97,10 @@ procedure color_palette()
 
    repeat {
       e := NextEvent(pal_win)
-      if &meta & (map(e) == "q") then break
-      if e === (&lpress | &rpress | &mpress) then {
-         if ((&x % CellSize) | (&y % CellSize)) = 0 then next	# on border
-         put(colors_tmp, c := Pixel(pal_win, &x, &y, 1, 1))
+      if AmperMeta & (map(e) == "q") then break
+      if e === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
+         if ((AmperX % CellSize) | (AmperY % CellSize)) = 0 then next	# on border
+         put(colors_tmp, c := Pixel(pal_win, AmperX, AmperY, 1, 1))
          Fg(color_win, c)
          FillRectangle(color_win, x, y, CellSize - 1, CellSize - 1)
          x +:= CellSize

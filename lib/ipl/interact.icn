@@ -332,8 +332,7 @@ procedure save_list(caption, lst)
    local output
 
    OpenDialog(caption, , 30) == "Okay" | fail
-   if dialog_value == "-" then output := &output	# "-" means &output
-   else output := open(dialog_value, "w") |
+   output := open(dialog_value, "w") |
       return FailNotice("Cannot open " || dialog_value)
 
    every write(output, !lst)
@@ -380,10 +379,6 @@ end
 procedure snapshot(win, x, y, w, h, n)		
    local name, fg, bg
 
-   if type(win) ~== "window" then {
-      win :=: x :=: y :=: w :=: h
-      win := &window
-      }
 
    fg := Fg(win)
    bg := Bg(win)

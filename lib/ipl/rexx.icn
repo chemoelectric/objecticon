@@ -77,7 +77,7 @@ procedure RexxVar(var)
 #         defined" (which is a failure condition).
 #
    if result[1+:4] ~== "Rexx" then result := "Rexx error: "||result
-   if &error = 0 then write(&errout, result)
+   if &error = 0 then ewrite(result)
    runerr(500, result)
 end
 
@@ -88,7 +88,7 @@ procedure RexxSet(var,value)
    result := callout("rexxset", var, value)
    if type(result) == "string" then {
       if result[1+:4] ~== "Rexx" then result := "Rexx error: "||result
-      if &error = 0 then write(&errout, result)
+      if &error = 0 then ewrite(result)
       runerr(500, result)
    }
    else return result
@@ -101,7 +101,7 @@ procedure RexxDrop(var,value)
    result := callout("rexxdrop", var, value)
    if type(result) == "string" then {
       if result[1+:4] ~== "Rexx" then result := "Rexx error: "||result
-      if &error = 0 then write(&errout, result)
+      if &error = 0 then ewrite(result)
       runerr(500, result)
    }
    else return result
@@ -125,7 +125,7 @@ procedure RexxAll()
       if nextvar[1] ~== "=" then {
          if nextvar[1+:4] ~== "Rexx" then
             result := "Rexx error: "||nextvar
-         if &error = 0 then write(&errout, result)
+         if &error = 0 then ewrite(result)
          runerr(500, result)
          fail
       }

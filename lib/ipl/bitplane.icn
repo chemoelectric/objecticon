@@ -202,11 +202,6 @@ global Plane_Mask
 procedure AlcPlane(win, n)		
    local ncolors, mask, b, seqlen, prev, fg, clist
 
-   if type(win) ~== "window" then {
-      n := win
-      win := &window
-      }
-
    if n < 1 | n > 7 then
       runerr(205, n)
    fg := Fg(win)
@@ -255,11 +250,6 @@ end
 procedure FrontPlane(win, bp, color)	
    local mask, base, bits, i
 
-   if type(win) ~== "window" then {
-      win :=: bp :=: color
-      win := &window
-      }
-
    mask := \Plane_Mask[bp] | runerr(205, bp)
    base := iand(icom(mask), bp)
    bits := bp - base
@@ -278,11 +268,6 @@ end
 procedure BackPlane(win, bp, color)	
    local mask, base, bits, i
 
-   if type(win) ~== "window" then {
-      win :=: bp :=: color
-      win := &window
-      }
-
    mask := \Plane_Mask[bp] | runerr(205, bp)
    base := iand(icom(mask), bp)
    bits := bp - base
@@ -300,11 +285,6 @@ end
 # set context for bitplane operation
 procedure PlaneOp(win, bp, op)		
    local mask, base, bits, i
-
-   if type(win) ~== "window" then {
-      win :=: bp :=: op
-      win := &window
-      }
 
    mask := \Plane_Mask[bp] | runerr(205, bp)
    base := iand(icom(mask), bp)
@@ -336,11 +316,6 @@ end
 #  Deplane(win, color) -- restore normal drawop and set fg to color
 
 procedure Deplane(win, color)
-
-   if type(win) ~== "window" then {
-      color := win
-      win := &window
-      }
    WAttrib(win, "drawop=copy")
    Fg(win, \color)
    return win

@@ -37,7 +37,7 @@ procedure wdiag(names__[])
 
    every put(wlist__, " ", s__ := !names__, "=") do
       put(wlist__, image(variable(s__))) |
-         write(&errout, image(s__), " is not a variable")
+         ewrite(image(s__), " is not a variable")
 
    write ! wlist__
 

@@ -47,7 +47,7 @@ procedure repeats(name, i, j)
    wdim := width * j
 
    win2 := WOpen("canvas=hidden", "width=" || wdim, "height=" || hdim) |
-      stop(&errout, "*** cannot open window for repeat")
+      stop("*** cannot open window for repeat")
 
    tile(win1, win2)
 

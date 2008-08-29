@@ -294,18 +294,18 @@ procedure event_Vtext(self, e, x, y)
    local otb, rv
 
    if \self.callback.locked then fail
-   /x := &x; /y := &y
+   /x := AmperX; /y := AmperY
    self.T.DataLength := *self.data
-   if e === (&lpress|&mpress|&rpress) then {
+   if e === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) then {
       WAttrib(self.win, "pointer=xterm")
       otb := self.T.ta := self.T.tb := self.T.CursorPos :=
-         get_pos_Vtext(self, &x-(self.ax+self.T.dx))
+         get_pos_Vtext(self, AmperX-(self.ax+self.T.dx))
       if otb = self.T.DataLength+1 & otb = \ota then
          self.T.ta := 1
       draw_data_Vtext(self)
       draw_cursor_Vtext(self)
-      until e === (&lrelease|&mrelease|&rrelease) do {
-         self.T.tb := get_pos_Vtext(self, &x-(self.ax+self.T.dx))
+      until e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) do {
+         self.T.tb := get_pos_Vtext(self, AmperX-(self.ax+self.T.dx))
          if otb ~= self.T.tb then {
             draw_data_Vtext(self)
             self.T.CursorPos := self.T.tb
@@ -317,14 +317,14 @@ procedure event_Vtext(self, e, x, y)
       rv := &null
       WAttrib(self.win, "pointer=top left arrow")
       } ## end mouse event loop
-   else if (not &meta) & (not (integer(e) < 0)) then  {
+   else if (not AmperMeta) & (not (integer(e) < 0)) then  {
       ## it's a keypress
       if rv := case e of {
          "\^b" | Key_Left | Key_KP_Left:	move_cursor_Vtext(self, -1)
          "\^f" | Key_Right | Key_KP_Right:	move_cursor_Vtext(self, 1)
          "\b" | "\d":				delete_left_Vtext(self)
          "\^k" | "\^u" | "\^x":			delete_line_Vtext(self)
-	 (&shift & "\t") | Key_Up | Key_KP_Up:  return V_PREVIOUS
+	 (AmperShift & "\t") | Key_Up | Key_KP_Up:  return V_PREVIOUS
          "\t" | Key_Down | Key_KP_Down:		return V_NEXT
          "\r" | "\l": {
 	    self.callback.V.set(self.callback, self, self.data)

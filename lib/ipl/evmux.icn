@@ -46,7 +46,7 @@
 #
 #	The event set *ev* can be either:
 #	    -- a cset or string specifying particular keypresses of interest
-#	    -- one of the event keywords (&lpress, &rdrag, &resize, etc.)
+#	    -- one of the event keywords (Mouse_LeftPress, Mouse_RightDrag, &resize, etc.)
 #
 #	When a matching event occurs, proc(win, arg, x, y, e) is called.  proc,
 #	win, and arg are as recorded from the sensor call.  x and y give the
@@ -99,6 +99,7 @@ package ipl.evmux
 record EvMux_Rec(ev, proc, arg, x, y, w, h)
 global EvMux_Windows
 
+$include "keysyms.icn"
 
 ## sensor(win, ev, proc, arg, x, y, w, h) -- register an event responder.
 
@@ -166,16 +167,16 @@ end
 
 procedure evchar(s)
    return case s of {
-      &lpress:    "\237"	# mouse button 1 down
-      &mpress:    "\236"	# mouse button 2 down
-      &rpress:    "\235"	# mouse button 3 down
-      &lrelease:  "\234"	# mouse button 1 up
-      &mrelease:  "\233"	# mouse button 2 up
-      &rrelease:  "\232"	# mouse button 3 up
-      &ldrag:     "\231"	# mouse button 1 is dragging
-      &mdrag:     "\230"	# mouse button 2 is dragging
-      &rdrag:     "\227"	# mouse button 3 is dragging
-      &resize:    "\226"	# window has resized
+      Mouse_LeftPress:    "\237"	# mouse button 1 down
+      Mouse_MiddlePress:    "\236"	# mouse button 2 down
+      Mouse_RightPress:    "\235"	# mouse button 3 down
+      Mouse_LeftRelease:  "\234"	# mouse button 1 up
+      Mouse_MiddleRelease:  "\233"	# mouse button 2 up
+      Mouse_RightRelease:  "\232"	# mouse button 3 up
+      Mouse_LeftDrag:     "\231"	# mouse button 1 is dragging
+      Mouse_MiddleDrag:     "\230"	# mouse button 2 is dragging
+      Mouse_RightDrag:     "\227"	# mouse button 3 is dragging
+      Window_Resize:    "\226"	# window has resized
    }
    fail
 end
@@ -195,8 +196,8 @@ procedure evhandle(win)
 
    t := (\EvMux_Windows)[win] | stop("no events registered for window")
    ev := NextEvent(win)
-   x := &x
-   y := &y
+   x := AmperX
+   y := AmperY
 
    # convert event code to single character
    if type(ev) == "integer" then

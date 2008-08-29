@@ -42,6 +42,8 @@ import
                 ptrim),
    ipl.vidgets(vsetup)
 
+$include "keysyms.icn"
+
 global cellsize
 global flip_horiz				# icon for horizontal flip
 global flip_left				# icon for left flip
@@ -132,12 +134,12 @@ procedure grid_cb(vidget, e)
       ypos := grid_vidgets["grid"].ay
       }
 
-   if e === (&lpress | &rpress | &ldrag | &rdrag) then {
-      j := (&x - xpos) / cellsize
-      i := (&y - ypos) / cellsize
+   if e === (Mouse_LeftPress | Mouse_RightPress | Mouse_LeftDrag | Mouse_RightDrag) then {
+      j := (AmperX - xpos) / cellsize
+      i := (AmperY - ypos) / cellsize
       if j < 0 | j >= hbits | i < 0 | i >= vbits then return
 
-      if e === (&lpress | &ldrag) then setbit(i, j, "1")
+      if e === (Mouse_LeftPress | Mouse_LeftDrag) then setbit(i, j, "1")
       else setbit(i, j, "0")
 
       tile_touched := 1
@@ -181,14 +183,14 @@ procedure grid_init()
 
 #  Set up vidgets
 
-   window_save := &window		# save current subject window
-   &window := &null			# clear for new subject
+   window_save := amper_window		# save current subject window
+   amper_window := &null			# clear for new subject
    atts := grid_ui_atts()
    put(atts, "canvas=hidden")
    (WOpen ! atts) | stop("*** can't open tie-up editor window")
    grid_vidgets := grid_ui()
-   grid_window := &window
-   &window := window_save 		# restore previous subject window
+   grid_window := amper_window
+   amper_window := window_save 		# restore previous subject window
 
    grid_root := grid_vidgets["root"]
 
@@ -312,7 +314,7 @@ procedure grid_shortcuts(e)
 
    if (e === "\r") & \subservient then return_tile()	# subservient role
 
-   if &meta then case map(e) of {
+   if AmperMeta then case map(e) of {
       "c"  :  copy_tile()
       "i"  :  tile_info()
       "n"  :  new_tile()
@@ -580,9 +582,9 @@ end
 procedure symmet_cb(vidget, e)
    local col, row, symcount
 
-   if e === (&lpress | &rpress | &mpress) then {
-      col := (&x - symmet_xpos) / IconSize + 1
-      row := (&y - symmet_yoff) / IconSize + 1
+   if e === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
+      col := (AmperX - symmet_xpos) / IconSize + 1
+      row := (AmperY - symmet_yoff) / IconSize + 1
       sym_state[row, col] *:= -1
       sym_image_current[row, col] :=: sym_image_next[row, col]
       place(symmet_xpos, symmet_yoff, col - 1, row - 1,
@@ -742,10 +744,10 @@ end
 procedure xform_cb(vidget, e)
    local col, row
 
-   if e === (&lpress | &rpress | &mpress) then {
+   if e === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
       old_pat := rows2pat(grid_rows)
-      col := (&x - xform_xpos) / IconSize
-      row := (&y - xform_ypos) / IconSize
+      col := (AmperX - xform_xpos) / IconSize
+      row := (AmperY - xform_ypos) / IconSize
       grid_rows := xform(col, row) | fail
       return setup()
       }

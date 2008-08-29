@@ -47,11 +47,11 @@ procedure eval(expr)
 
    expr ? {
       p := trim(tab(upto('(')), '\t ') | {
-         write(&errout, "*** syntax error")
+         ewrite("*** syntax error")
          fail
          }
       p := proc(p, 2 | 1 | 3) | {
-         write(&errout, "*** invalid operation")
+         ewrite("*** invalid operation")
          fail
          }
       move(1)

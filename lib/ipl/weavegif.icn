@@ -52,7 +52,7 @@ procedure weavegif(draft, attribs)
       draft.height)
 
    win := (WOpen ! attribs) | {
-      write(&errout, "Cannot open window for woven image.")
+      ewrite("Cannot open window for woven image.")
       fail
       }
 

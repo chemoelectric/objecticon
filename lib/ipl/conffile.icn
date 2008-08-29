@@ -67,7 +67,7 @@
 #      l1 is a list of file names or open files, each element of l1 is tried 
 #         in turn until a file is opened or an open file is encountered.
 #
-#            For example: [ "my/rules", "/etc/rules", &input ]
+#            For example: [ "my/rules", "/etc/rules"]
 #
 #      t1 is a table of specifications for parsing and handling each directive
 #      s1 the comment character, default "#"
@@ -153,7 +153,7 @@
 #
 #      # 2. Read, parse and build a table based upon the spec and the file
 #
-#           cfg := ReadDirectives( ["my.conf",&input], cfgspec )
+#           cfg := ReadDirectives( ["my.conf"], cfgspec )
 #
 #      # 3. Process the output 
 #
@@ -301,7 +301,7 @@ every fn := !fnL do
 }
 if /f then
 {
-   write(&errout,"ReadDirectives: no open(able) files in: ",every image(!fnL) )
+   ewrite("ReadDirectives: no open(able) files in: ",every image(!fnL) )
    \errp() | fail
 }
 

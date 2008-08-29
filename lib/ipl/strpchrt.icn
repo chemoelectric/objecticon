@@ -62,9 +62,6 @@ record StripChart_Rec(win, x0, y, w, h, x, n, last)
 
 # create stripchart
 procedure stripchart(win, x, y, w, h)		
-   if type(win) ~== "window" then
-      return stripchart((\&window | runerr(140)), win, x, y, w)
-
    /x := -WAttrib(win, "dx")
    /y := -WAttrib(win, "dy")
    /w := WAttrib(win, "width") - (x + WAttrib(win, "dx"))

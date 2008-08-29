@@ -121,10 +121,6 @@ end
 procedure RankFonts(w, args[])		
    local tokens, cklist, sclist, fspec, ranks, r
 
-   if type(w) ~== "window" & type(w) ~== "list" then {
-      push(args, w)
-      w := &window
-      }
    XBF_defaults()			# set default values
    XBF_wantsize := XFW_defsize		# set target size to default
    tokens := XBF_tokenlist(args)	# break args into list of tokens

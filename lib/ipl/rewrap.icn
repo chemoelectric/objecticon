@@ -31,7 +31,7 @@
 #  program reads the standard input, producing fully rewrapped output.
 #
 #  procedure main()
-#      every write(rewrap(!&input))
+#      every write(rewrap())
 #      write(rewrap())
 #  end
 #
@@ -40,7 +40,7 @@
 #  graph basis, as in
 #
 #  procedure main()
-#      while line := read(&input) do {
+#      while line := read() do {
 #          if line == "" then {
 #              write("" ~== rewrap())
 #              write(line)

@@ -82,13 +82,13 @@
 #   Produces a file resulting from opening s for reading ("r" option),
 #   but fails if the file cannot be opened.  if s is missing or
 #   the value of s is &null, then standard input is opened and
-#   &input is returned.  Unlike the Icon open function, bufopen()
+#   input is returned.  Unlike the Icon open function, bufopen()
 #   can and must be called prior to any call to bufread or bufnext
 #   involving standard input.  Unlike named files, only one buffered
 #   standard input may be open at any given time.
 #   
 #   Default:
-#   s   &null   (indicates &input should be opened for buffered
+#   s   &null   (indicates input should be opened for buffered
 #               reading)
 #               
 #   Errors (from open):
@@ -109,11 +109,11 @@
 #   been reached AND the internal buffer is empty.
 #   
 #   Default:
-#   f   &input
+#   f   input
 #   
 #   Errors:
 #   f is not a file
-#   f not opened for buffered reads (includes &input)
+#   f not opened for buffered reads (includes input)
 #   
 #   
 #   bufnext(f, n)
@@ -123,12 +123,12 @@
 #   has been reached.
 #   
 #   Default:
-#   f   &input
+#   f   amperInput
 #   n   1 (the next line after the current one)
 #   
 #   Errors:
 #   f is not a file
-#   f not opened for buffered reads (includes &input)
+#   f not opened for buffered reads (includes amperInput)
 #   n not convertible to integer
 #   n not positive
 #
@@ -144,7 +144,7 @@
 #   internal buffer for garbage collection.
 #   
 #   Default:
-#   f   &input
+#   f   amperInput
 #   
 #   Errors (from close):
 #   105     f not file
@@ -162,12 +162,6 @@ procedure bufopen(fname)
     if /__buf then
         __buf := table(&null)
     
-    if /fname then {
-        /__buf[&input] | stop("bufopen: Standard input is already open")
-        __buf[&input] := []
-        return &input
-    }
-    else
         if file := open(fname, "r") then {
             __buf[file] := []
             return file
@@ -181,15 +175,9 @@ procedure bufclose(file)
     if /__buf then
         __buf := table(&null)
         
-    if /file then {
-        __buf[&input] := &null
-        return &input
-    }
-    else {
         close(file)
         __buf[file] := &null
         return file
-    }
 
 end
 
@@ -200,9 +188,6 @@ procedure bufread(file)
     if /__buf then
         __buf := table(&null)
         
-    if /file then
-        file := &input
-
     type(file) == "file" | stop("bufread: Parameter is not a file")
     buf := \__buf[file] | stop("bufread: File not open for buffered reads")
     return get(buf) | read(file)
@@ -216,9 +201,6 @@ procedure bufnext(file, n)
     if /__buf then
         __buf := table(&null)
     
-    if /file then
-        file := &input
-        
     if /n then
         n := 1
         

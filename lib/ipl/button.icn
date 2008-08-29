@@ -101,6 +101,7 @@ import
    ipl.evmux(ontarget, sensor),
    ipl.graphics(BevelRectangle, CenterString)
 
+$include "keysyms.icn"
 $define BORDER 2	# border width
 
 record Button_Rec(win, label, proc, arg, x, y, w, h)
@@ -112,7 +113,7 @@ procedure button(win, label, proc, arg, x, y, w, h)
    buttonlabel(r, label)
    if \proc then {
       BevelRectangle(win, x, y, w, h, BORDER)
-      sensor(win, &lpress, Exec_Button, r, x, y, w, h)
+      sensor(win, Mouse_LeftPress, Exec_Button, r, x, y, w, h)
       }
    return r
 end
@@ -158,10 +159,10 @@ procedure Exec_Button(win, r, x, y)
    BevelRectangle(win, r.x, r.y, r.w, r.h, b := -BORDER)
 
    while e := NextEvent(win) do {
-      x := &x
-      y := &y
+      x := AmperX
+      y := AmperY
       case e of {
-         &ldrag: {			# drag
+         Mouse_LeftDrag: {			# drag
             t := (if ontarget(r, x, y) then -BORDER else BORDER)
             if b ~===:= t then {
                BevelRectangle(win, r.x, r.y, r.w, r.h, b)
@@ -169,7 +170,7 @@ procedure Exec_Button(win, r, x, y)
                   r.x + BORDER, r.y + BORDER, r.w - 2*BORDER, r.h - 2*BORDER)
                }
             }
-         &lrelease: {			# release leftbutton
+         Mouse_LeftRelease: {			# release leftbutton
             if b < 0 then {
                BevelRectangle(win, r.x, r.y, r.w, r.h, BORDER)
                FillRectangle(win,

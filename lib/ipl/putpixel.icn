@@ -115,12 +115,6 @@ procedure PutPixel(win, x, y, color)
 
    initial if /XPP_qtab then PixInit()
 
-   # default win to &window if omitted
-   if type(win) ~== "window" then {
-      win :=: x :=: y :=: color
-      win := &window
-      }
-
    # convert color to 8-bit r, g, b
    if type(color) == "integer" then {
       # mutable -- don't quantize
