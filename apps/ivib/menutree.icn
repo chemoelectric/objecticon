@@ -13,7 +13,7 @@ $define SPACING 25
 
 class MenuTree(SelectableScrollArea)
    public calculate_line_height()
-      return WAttrib(self.cbwin, "fheight")
+      return self.cbwin.attrib("fheight")
    end
 
    public draw_line_data(xp, yp, lh, i, r)
@@ -22,23 +22,23 @@ class MenuTree(SelectableScrollArea)
       y0 := yp + self.line_height / 2
       s := contents[i]
 
-      dashed := Clone(view.cbwin, "pattern=gray", "fillstyle=textured")
+      dashed := view.cbwin.clone("pattern=gray", "fillstyle=textured")
       lp := xp
       every 1 to s.depth do {
-         DrawLine(dashed, lp + SPACING / 2, yp, lp + SPACING / 2, yp + self.line_height - 1)
+         dashed.draw_line(lp + SPACING / 2, yp, lp + SPACING / 2, yp + self.line_height - 1)
          
          lp +:= SPACING
       }
       if \s.owner then {
          if contents[i + 1].depth > s.depth then
-            DrawLine(dashed, lp + SPACING / 2, y0, lp + SPACING / 2, yp + self.line_height - 1)
+            dashed.draw_line(lp + SPACING / 2, y0, lp + SPACING / 2, yp + self.line_height - 1)
 
-         DrawLine(dashed, lp - SPACING / 2, y0, lp + SPACING, y0)
+         dashed.draw_line(lp - SPACING / 2, y0, lp + SPACING, y0)
          lp +:= SPACING
          DrawStringEx(view.cbwin, lp, yp, s.owner.get_string_label())
       }
 
-      Uncouple(dashed)
+      dashed.uncouple()
    end
 
    public get_rec(n)
@@ -61,7 +61,7 @@ class MenuTree(SelectableScrollArea)
       every s := !self.contents do {
          ww := SPACING * s.depth
          if \s.owner then
-            ww +:= 2 * SPACING + TextWidth(self.cbwin, s.owner.get_string_label())
+            ww +:= 2 * SPACING + self.cbwin.text_width(s.owner.get_string_label())
          mw <:= ww
       }
       return mw

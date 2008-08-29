@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io
+import lang, gui, io, graphics
 
 $include "keysyms.icn"
 
@@ -35,13 +35,13 @@ class BorderOfCanvas(Component)
       self.add(self.canvas)
    end
 
-   public get_pointer()
-      if in_resize_corner() then
+   public get_pointer(e)
+      if in_resize_corner(e) then
          return "bottom right corner"
    end
 
-   public handle_lpress()
-      if in_resize_corner() then {
+   public handle_lpress(e)
+      if in_resize_corner(e) then {
          #
          # Save for possible push onto undo list.
          #
@@ -61,19 +61,19 @@ class BorderOfCanvas(Component)
          #
          # Set offsets.
          #
-         self.drag_x_offset := &x - (self.x + self.w)
-         self.drag_y_offset := &y - (self.y + self.h)
+         self.drag_x_offset := e.x - (self.x + self.w)
+         self.drag_y_offset := e.y - (self.y + self.h)
       }
    end
 
-   public handle_ldrag()
+   public handle_ldrag(e)
       local x1, y1, w_new, h_new
       if \self.is_resizing then {
          #
          # Compute adjust x, y cursor position.
          #
-         x1 := &x - self.drag_x_offset
-         y1 := &y - self.drag_y_offset
+         x1 := e.x - self.drag_x_offset
+         y1 := e.y - self.drag_y_offset
 
          #
          # Adjust within acceptable range.
@@ -126,11 +126,11 @@ class BorderOfCanvas(Component)
    #
    # Return whether the pointer is on the resize corner in the bottom right hand corner.
    #
-   public in_resize_corner()
-      return ((self.x + self.w - EDGE <= &x < self.x + self.w) & 
-              (self.y + self.h - RSW <= &y < self.y + self.h)) | 
-         ((self.x + self.w - RSW <= &x < self.x + self.w) & 
-          (self.y + self.h - EDGE <= &y < self.y + self.h)) 
+   public in_resize_corner(e)
+      return ((self.x + self.w - EDGE <= e.x < self.x + self.w) & 
+              (self.y + self.h - RSW <= e.y < self.y + self.h)) | 
+         ((self.x + self.w - RSW <= e.x < self.x + self.w) & 
+          (self.y + self.h - EDGE <= e.y < self.y + self.h)) 
    end
 
    public display(r)
@@ -138,29 +138,29 @@ class BorderOfCanvas(Component)
       #
       # Draw the border.
       #
-      cw := Clone(self.cbwin, "fg=black")
+      cw := self.cbwin.clone("fg=black")
       every i := 0 to EDGE - 1 do
          Rectangle(cw, self.x + i , self.y + i, self.w - 2 * i, self.h - 2 *i)
 
       #
       # Draw the resizing corner in the bottom right hand corner.
       #
-      WAttrib(cw, "fg=red")
+      cw.attrib("fg=red")
       every i := 0 to EDGE - 1 do
-         DrawLine(cw, self.x + self.w - EDGE - 1 - RSW, self.y + self.h - EDGE + i, 
-                  self.x + self.w - EDGE + i, self.y + self.h - EDGE + i, 
-                  self.x + self.w - EDGE + i, self.y + self.h - EDGE - 1 - RSW)
+         cw.draw_line(self.x + self.w - EDGE - 1 - RSW, self.y + self.h - EDGE + i, 
+                      self.x + self.w - EDGE + i, self.y + self.h - EDGE + i, 
+                      self.x + self.w - EDGE + i, self.y + self.h - EDGE - 1 - RSW)
 
-      Uncouple(cw)
+      cw.uncouple()
 
       display_children(r)
    end
 
    public new(a[])
       cast(self,Component).new()
-      connect(self.handle_lpress, &lpress)
-      connect(self.handle_ldrag, &ldrag)
-      connect(self.handle_lrelease, &lrelease)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       set_fields(a)
       return
    end
@@ -1029,21 +1029,21 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public initially()
       # The size will be set up in resize()...
-      item_buff_win := WOpen!(["canvas=hidden"] ||| wattribs_to_list(self.dialog_struct.wattribs))
+      item_buff_win := Window.open!(["canvas=hidden"] ||| wattribs_to_list(self.dialog_struct.wattribs))
       cast(self,Component).initially()
    end
 
    public finally()
       cast(self,Component).finally()
-      WClose(item_buff_win)
+      item_buff_win.close()
    end
 
    #
    # Called on resize - resize temporary window.
    #
    public layout()
-      WAttrib(item_buff_win, "size=" || self.parent_dialog.w || "," || 
-              self.parent_dialog.h)
+      item_buff_win.attrib("size=" || self.parent_dialog.w || "," || 
+                           self.parent_dialog.h)
       cast(self,Component).layout()
    end
 
@@ -1055,10 +1055,22 @@ class Canvas(Component,SelectiveObjectCodec)
    # Reset the item window attributes.
    #  
    public reset_windows()
-      WClose(item_buff_win)
-      item_buff_win := WOpen!(["canvas=hidden"] ||| wattribs_to_list(self.dialog_struct.wattribs) |||
+      local t
+
+      # Create a new buffer window, keeping a reference to the outgoing one.
+      t := item_buff_win
+      item_buff_win := Window.open!(["canvas=hidden"] ||| wattribs_to_list(self.dialog_struct.wattribs) |||
                ["size=" || self.parent_dialog.w || "," || 
                 self.parent_dialog.h]) | stop("Couldn't open item_buff_win")
+
+      # Switch all components to the new window
+      reset_all()
+
+      # Close the old window
+      t.close()
+
+      # Now resize everything, as fonts etc may now be different.
+      reset_layout()
    end
 
    # The children don't draw into a Clone of self.cbwin, but rather a different buffer.  This
@@ -1069,9 +1081,9 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public show_moving()
       local cw
-      cw := Clone(item_buff_win, "fg=red","linestyle=dashed")
+      cw := item_buff_win.clone("fg=red","linestyle=dashed")
       Rectangle(cw, moving.mx, moving.my, moving.mw, moving.mh)
-      Uncouple(cw)
+      cw.uncouple()
    end
 
    #
@@ -1092,10 +1104,10 @@ class Canvas(Component,SelectiveObjectCodec)
       if \moving then
          show_moving()
 
-      CopyArea(item_buff_win, self.cbwin, 
-               self.x, self.y, 
-               self.w, self.h, 
-               self.x, self.y)
+      Window.copy_area(item_buff_win, self.cbwin, 
+                       self.x, self.y, 
+                       self.w, self.h, 
+                       self.x, self.y)
 
       (\layout_delegate).display()
    end
@@ -1112,15 +1124,17 @@ class Canvas(Component,SelectiveObjectCodec)
    end
 
    public handle_key(e)
+      local ec
+      ec := e.code
       if \self.held_flag then {
-         if e === "\e" then {
+         if ec === "\e" then {
             moving := held_flag := resize_mode := &null
             self.invalidate()
          }
          fail
       }
 
-      (e === (Key_Up | Key_Down | Key_Left | Key_Right)) | fail
+      (ec === (Key_Up | Key_Down | Key_Left | Key_Right)) | fail
       something_selected() | fail
 
       moving := selected
@@ -1136,15 +1150,15 @@ class Canvas(Component,SelectiveObjectCodec)
       w_new := orig_w_spec := moving.w_spec
       h_new := orig_h_spec := moving.h_spec
 
-      if &shift then {
-         case e of {
+      if \e.shift then {
+         case ec of {
             Key_Up : resize_down(orig_y + orig_h - 1)
             Key_Down : resize_down(orig_y + orig_h + 1)
             Key_Left : resize_right(orig_x + orig_w - 1)
             Key_Right : resize_right(orig_x + orig_w + 1)
          }
       } else {
-         case e of {
+         case ec of {
             Key_Up : move_vertically(orig_y - 1)
             Key_Down : move_vertically(orig_y + 1)
             Key_Left : move_horizontally(orig_x - 1)
@@ -1317,14 +1331,14 @@ class Canvas(Component,SelectiveObjectCodec)
       self.set_modified()
    end
 
-   public get_pointer()
+   public get_pointer(e)
       local i
       if \self.moving then {
          i := self.resize_mode
          if /i then
             return "fleur"
       } else
-         i := self.which_cursor_over().in_resize_region()
+         i := self.which_cursor_over(e).in_resize_region(e)
       return case i of {
          1 : "top left corner"
          2 : "top right corner"
@@ -1340,15 +1354,15 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    # Handle left button press.
    #
-   public handle_lpress()
+   public handle_lpress(e)
       #
       # If the cursor is over an object...
       #
-      if moving := self.which_cursor_over() then {
+      if moving := self.which_cursor_over(e) then {
          #
          # Select this object.
          #
-         self.select(moving, if &control then 1 else &null)
+         self.select(moving, if \e.ctrl then 1 else &null)
 
          #
          # Save for possible push onto undo list.
@@ -1364,7 +1378,7 @@ class Canvas(Component,SelectiveObjectCodec)
          # Determine which corner the cursor is over; resize_mode null implies
          # moving not resizing.
          #
-         self.resize_mode := moving.in_resize_region()
+         self.resize_mode := moving.in_resize_region(e)
 
          #
          # Display into buffer
@@ -1380,36 +1394,36 @@ class Canvas(Component,SelectiveObjectCodec)
             # Resizing from top left corner
             #
             1 : {
-               self.drag_x_offset := &x - moving.x
-               self.drag_y_offset := &y - moving.y
+               self.drag_x_offset := e.x - moving.x
+               self.drag_y_offset := e.y - moving.y
             }
             #
             # Resizing from top right corner
             #
             2 : {
-               self.drag_x_offset := &x - (moving.x + moving.w)
-               self.drag_y_offset := &y - moving.y
+               self.drag_x_offset := e.x - (moving.x + moving.w)
+               self.drag_y_offset := e.y - moving.y
             }
             #
             # Resizing from bottom left corner
             #
             3 : {
-               self.drag_x_offset := &x - moving.x
-               self.drag_y_offset := &y - (moving.y + moving.h)
+               self.drag_x_offset := e.x - moving.x
+               self.drag_y_offset := e.y - (moving.y + moving.h)
             }
             #
             # Resizing from bottom right corner
             #
             4 : {
-               self.drag_x_offset := &x - (moving.x + moving.w)
-               self.drag_y_offset := &y - (moving.y + moving.h)
+               self.drag_x_offset := e.x - (moving.x + moving.w)
+               self.drag_y_offset := e.y - (moving.y + moving.h)
             }                              
             #
             # Moving, not resizing.
             #
             &null : {
-               self.drag_x_offset := &x - moving.x
-               self.drag_y_offset := &y - moving.y
+               self.drag_x_offset := e.x - moving.x
+               self.drag_y_offset := e.y - moving.y
             }
          }
          
@@ -1424,7 +1438,7 @@ class Canvas(Component,SelectiveObjectCodec)
          y_new := orig_y_spec := moving.y_spec
          w_new := orig_w_spec := moving.w_spec
          h_new := orig_h_spec := moving.h_spec
-      } else if self.in_region() then {
+      } else if self.in_region(e) then {
          #
          # Not over anything but in canvas.  De-select all.
          #
@@ -1436,7 +1450,7 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    # Mouse left drag.
    #
-   public handle_ldrag()
+   public handle_ldrag(e)
       local x1, y1
       if \self.held_flag then {
          #
@@ -1446,8 +1460,8 @@ class Canvas(Component,SelectiveObjectCodec)
          #
          # Adjust cursor position using offsets.
          #
-         x1 := &x - self.drag_x_offset
-         y1 := &y - self.drag_y_offset
+         x1 := e.x - self.drag_x_offset
+         y1 := e.y - self.drag_y_offset
 
          #
          # Calculate new x position and width
@@ -1518,21 +1532,21 @@ class Canvas(Component,SelectiveObjectCodec)
    # Handle right button press.  Same as left button press, but without
    # the resizing or moving functionality.
    #
-   public handle_rpress()
+   public handle_rpress(e)
       local i, pm
 
       /self.held_flag | fail
-      if i := self.which_cursor_over() then {
-         self.select(i, if &control then 1 else &null)
-         if not(&control) then {
+      if i := self.which_cursor_over(e) then {
+         self.select(i, if \e.ctrl then 1 else &null)
+         if not(\e.ctrl) then {
             pm := PopupMenu()
-            pm.popup(self.parent_dialog, i.create_menu())
+            pm.popup(self.parent_dialog, i.create_menu(), e.x, e.y)
          }
-      } else if self.in_region() then {
+      } else if self.in_region(e) then {
          self.clear_selections()
-         if not(&control) then {
+         if not(\e.ctrl) then {
             pm := PopupMenu()
-            pm.popup(self.parent_dialog, self.create_menu())
+            pm.popup(self.parent_dialog, self.create_menu(), e.x, e.y)
          }
       }
       self.arrow_flag := &null
@@ -1638,16 +1652,16 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    # Which item, if any, is the cursor over?
    #
-   public which_cursor_over()
+   public which_cursor_over(e)
       local i, o
 
-      if self.in_region() then {
+      if self.in_region(e) then {
          #
          # Search in reverse order so that the item displayed on top
          # will be found first.
          #
          every i := !self.reverse_z_children do
-            if o := i.which_cursor_over() then
+            if o := i.which_cursor_over(e) then
                return o
       }
    end
@@ -1901,12 +1915,12 @@ class Canvas(Component,SelectiveObjectCodec)
       self.dialog_iw := Canvas.DEFAULT_WIDTH
       self.dialog_ih := Canvas.DEFAULT_HEIGHT
       set_accepts_focus("t")
-      connect(self.handle_move, &mousemove)
-      connect(self.handle_lpress, &lpress)
-      connect(self.handle_rpress, &rpress)
-      connect(self.handle_ldrag, &ldrag)
-      connect(self.handle_lrelease, &lrelease)
-      connect(self.handle_key, Event.KEY)
+      connect(self.handle_move, Event.MOUSE_MOVEMENT)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(self.handle_key, Event.KEY_PRESS)
       return
    end
 end

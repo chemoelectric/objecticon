@@ -1,9 +1,9 @@
 import gui
 
 class ComponentTree(Tree)
-   public can_drop(drag)
+   public can_drop(drag, e)
       local o
-      o := cast(self,Tree).can_drop(drag) | fail
+      o := cast(self,Tree).can_drop(drag, e) | fail
       if ((o === root_node) | o.component.allows_add()) then
          return o
    end
@@ -143,10 +143,10 @@ class ComponentTreeDialog(Dialog)
       tree := ComponentTree()
       tree.set_size(320, 320)
       tree.connect(self.on_tree_sel_change, Event.SELECTION_CHANGED)
-      tree.connect(self.on_tree_press, &rpress)
+      tree.connect(self.on_tree_press, Event.MOUSE_RIGHT_PRESS)
       tree.set_select_mode(Select.MANY)
       self.add(tree)
-      self.connect(self.on_close_button, &windowclose)
+      self.connect(self.on_close_button, Event.WINDOW_CLOSE_BUTTON)
    end
 
    public new(main)

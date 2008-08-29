@@ -99,12 +99,12 @@ class CanvasSplit(CanvasComponent,Split)
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over()
+   public which_cursor_over(e)
       local o
-      cast(self,CanvasComponent).which_cursor_over() | fail
-      if in_resize_region() then
+      cast(self,CanvasComponent).which_cursor_over(e) | fail
+      if in_resize_region(e) then
          return self
-      if o := (self.first | self.second).which_cursor_over() then
+      if o := (self.first | self.second).which_cursor_over(e) then
          return o
       return self
    end
@@ -203,10 +203,10 @@ class CanvasSplitContent(CanvasComponent,Component)
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over()
-      local e, o
-      every e := !self.reverse_z_children do
-         if o := e.which_cursor_over() then
+   public which_cursor_over(e)
+      local t, o
+      every t := !self.reverse_z_children do
+         if o := t.which_cursor_over(e) then
             return o
    end
 

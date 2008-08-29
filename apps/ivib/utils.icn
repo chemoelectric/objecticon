@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui, util, ipl.graphics, ipl.imscolor, io
+import gui, util, ipl.graphics, ipl.imscolor, io, graphics
 
 #
 # Convert a list l to a string representation.
@@ -40,9 +40,9 @@ end
 procedure read_gif_icon(dialog, s)
    local w, raw
 
-   w := WOpen("canvas=hidden", "image=" || s) | return alert_error(dialog, "Couldn't open file " || s)
+   w := graphics.Window.open("canvas=hidden", "image=" || s) | return alert_error(dialog, "Couldn't open file " || s)
    raw := Capture(w, "c6")
-   WClose(w)
+   w.close()
 
    return raw
 end
@@ -105,7 +105,7 @@ procedure util_check_attribs(dialog, t)
    local s
    static test_win, attrib_table
    initial {
-      test_win := WOpen("canvas=hidden") | stop("couldn't open window")
+      test_win := graphics.Window.open("canvas=hidden") | stop("couldn't open window")
       attrib_table := set()
       every insert(attrib_table, 
                    "label" | "posx" | "pos" | "posy" | "resize" | "size" | "height" | 
@@ -123,7 +123,7 @@ procedure util_check_attribs(dialog, t)
          next
       if not member(attrib_table, s[1]) then
          return alert_error(dialog, "Invalid attribute " || s[1])
-      if not(WAttrib(test_win, s[1] || "=" || s[2])) then
+      if not(test_win.attrib(s[1] || "=" || s[2])) then
          return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
    }
    return
@@ -159,8 +159,8 @@ end
 
 procedure center_string(win, x, y, s, k)
    DrawStringEx(win, 
-                x - TextWidth(win, s) / 2, 
-                y - WAttrib(win, "fheight") / 2, 
+                x - win.text_width(s) / 2, 
+                y - win.attrib("fheight") / 2, 
                 s, k)
 end
 

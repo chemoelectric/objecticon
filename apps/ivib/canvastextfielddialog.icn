@@ -61,7 +61,7 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
          is_editable_cb.set_is_checked("t")
       p.add(is_editable_cb)
 
-      move_on_rpress_cb := CheckBox("label=Move on &rpress", "c:w=2")
+      move_on_rpress_cb := CheckBox("label=Move cursor on right mouse", "c:w=2")
       if \c.move_on_rpress_flag then
          move_on_rpress_cb.set_is_checked("t")
       p.add(move_on_rpress_cb)

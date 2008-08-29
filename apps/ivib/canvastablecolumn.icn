@@ -19,8 +19,8 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    #
    # CanvasComponent has an in_resize_region too, but we want TableColumn's (for preview).
    #
-   public in_resize_region()
-      return cast(self,TableColumn).in_resize_region()
+   public in_resize_region(e)
+      return cast(self,TableColumn).in_resize_region(e)
    end
 
    #

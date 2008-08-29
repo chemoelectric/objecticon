@@ -8,6 +8,7 @@
 
 import lang, util, gui, io
 
+$include "keysyms.icn"
 $include "version.icn"
 
 class Ivib()
@@ -574,9 +575,6 @@ class Main(Dialog)
          # Firstly, create a new buffer window based on the (possibly) new window attribs,
          # and apply the new window to all of the children.
          canvas.reset_windows()
-         canvas.reset_all()
-         # Now resize everything, as fonts etc may now be different.
-         canvas.reset_layout()
          canvas.set_modified()
       } else
          self.undo_to(t)
@@ -792,7 +790,7 @@ class Main(Dialog)
       every bg := !t.button_groups do
          bg.buttons := bg.get_members()
       d.set_focus((\t.initial_focus).find_focus())
-      d.connect(d.dispose, &windowclose)
+      d.connect(d.dispose, Event.WINDOW_CLOSE_BUTTON)
       d.show_modal(self)
    end
 
@@ -838,10 +836,10 @@ class Main(Dialog)
    # Handle dialog events.
    #
    public dialog_event(e)
-      if e === (&lpress | &rpress | &mpress) then
+      if e.code === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then
          info_label.set_label("")
 
-      case e of {
+      case /e.release & e.code of {
          "\r" : if /self.menu_mode then op_dialog()
          "\^q" : op_quit()
          "\^o" : op_open_file()
@@ -1366,7 +1364,7 @@ class Main(Dialog)
 
       self.add(p)
 
-      self.connect(self.op_quit, &windowclose)
+      self.connect(self.op_quit, Event.WINDOW_CLOSE_BUTTON)
 
       self.attrib("label=Ivib", "height=600", "minheight=400")
       self.set_only_enlarge_width("t")

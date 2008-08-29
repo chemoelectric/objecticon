@@ -411,7 +411,7 @@ class GridPaintEdit(PaintEdit)
       input := EditableTextList("c:x_weight=0", "size=250,200")
       self.set_focus(input.find_focus())
       input.connect(self.on_input, Event.CONTENT_CHANGED)
-      input.connect(self.on_input_press, &rpress)
+      input.connect(self.on_input_press, Event.MOUSE_RIGHT_PRESS)
       input.set_contents_str(\c.fmt)
       p.add(input)
 

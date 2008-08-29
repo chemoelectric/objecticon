@@ -266,51 +266,51 @@ class CanvasComponent(CanvasObject)
    public do_highlight(W)
       local cw, i, r
       r := self.get_clip_rect() | fail
-      cw := Clone(W, "linestyle=dashed")
+      cw := W.clone("linestyle=dashed")
       #Rectangle(cw, self.x - RST, self.y - RST, self.w + 2 * RST, self.h + 2 * RST)
-      Clip(cw, r.x, r.y, r.w, r.h)
-      WAttrib(cw, "linestyle=solid")
+      cw.clip(r.x, r.y, r.w, r.h)
+      cw.attrib("linestyle=solid")
       if self === self.parent_Canvas.selected then
-         WAttrib(cw, "fg=red")
+         cw.attrib("fg=red")
 
       every i := 0 to RST - 1 do {
-         DrawLine(cw, self.x + i, self.y + RSW, self.x + i, self.y + i, self.x + RSW, self.y + i)
+         cw.draw_line(self.x + i, self.y + RSW, self.x + i, self.y + i, self.x + RSW, self.y + i)
 
-         DrawLine(cw, self.x + self.w - 1 - RSW, self.y + i, self.x + self.w - 1 - i, self.y + i, self.x + self.w - 1 - i, self.y + RSW)
+         cw.draw_line(self.x + self.w - 1 - RSW, self.y + i, self.x + self.w - 1 - i, self.y + i, self.x + self.w - 1 - i, self.y + RSW)
 
-         DrawLine(cw, self.x + i, self.y + self.h - 1  - RSW, self.x + i, self.y + self.h - 1 - i, self.x + RSW, self.y + self.h - 1 - i)
+         cw.draw_line(self.x + i, self.y + self.h - 1  - RSW, self.x + i, self.y + self.h - 1 - i, self.x + RSW, self.y + self.h - 1 - i)
 
 
-         DrawLine(cw, self.x + self.w - 1 - RSW, self.y + self.h - 1 - i, self.x + self.w - 1 - i, self.y + self.h - 1 - i, self.x + self.w - 1 - i, self.y + self.h - 1 - RSW)
+         cw.draw_line(self.x + self.w - 1 - RSW, self.y + self.h - 1 - i, self.x + self.w - 1 - i, self.y + self.h - 1 - i, self.x + self.w - 1 - i, self.y + self.h - 1 - RSW)
 
       }
 
       if *self.parent_Canvas.selections > 1 then {
-         WAttrib(cw, "fg=blue")
-         Clip(cw)
-         FillCircle(cw, self.x + self.w, self.y, 8)
-         WAttrib(cw, "fg=white", "font=serif,10")
+         cw.attrib("fg=blue")
+         cw.clip()
+         cw.fill_circle(self.x + self.w, self.y, 8)
+         cw.attrib("fg=white", "font=serif,10")
          center_string(cw, self.x + self.w, self.y, 
                        keyof(self.parent_Canvas.selections, self))
       }
 
-      Uncouple(cw)
+      cw.uncouple()
    end
 
    #
    # Is the cursor on the resize corners?
    #
-   public in_resize_region()
-      if ((self.x <= &x < self.x + RSW) & (self.y <= &y < self.y + RST)) | ((self.x <= &x < self.x + RST) & (self.y <= &y < self.y + RSW)) then
+   public in_resize_region(e)
+      if ((self.x <= e.x < self.x + RSW) & (self.y <= e.y < self.y + RST)) | ((self.x <= e.x < self.x + RST) & (self.y <= e.y < self.y + RSW)) then
          return 1       # Top left
 
-      if ((self.x + self.w - RSW <= &x < self.x + self.w) & (self.y <= &y < self.y + RST)) | ((self.x + self.w - RST <= &x < self.x + self.w) & (self.y <= &y < self.y + RSW)) then
+      if ((self.x + self.w - RSW <= e.x < self.x + self.w) & (self.y <= e.y < self.y + RST)) | ((self.x + self.w - RST <= e.x < self.x + self.w) & (self.y <= e.y < self.y + RSW)) then
          return 2       # Top right
 
-      if ((self.x <= &x < self.x + RSW) & (self.y + self.h - RST <= &y < self.y + self.h)) | ((self.x <= &x < self.x + RST) & (self.y + self.h - RSW <= &y < self.y + self.h)) then
+      if ((self.x <= e.x < self.x + RSW) & (self.y + self.h - RST <= e.y < self.y + self.h)) | ((self.x <= e.x < self.x + RST) & (self.y + self.h - RSW <= e.y < self.y + self.h)) then
          return 3       # Bottom left
 
-      if ((self.x + self.w - RSW <= &x < self.x + self.w) & (self.y + self.h - RST <= &y < self.y + self.h)) | ((self.x + self.w - RST <= &x < self.x + self.w) & (self.y + self.h - RSW <= &y < self.y + self.h)) then
+      if ((self.x + self.w - RSW <= e.x < self.x + self.w) & (self.y + self.h - RST <= e.y < self.y + self.h)) | ((self.x + self.w - RST <= e.x < self.x + self.w) & (self.y + self.h - RSW <= e.y < self.y + self.h)) then
          return 4       # Bottom right
 
       fail
@@ -320,8 +320,8 @@ class CanvasComponent(CanvasObject)
    # If the cursor is over the object, return it.  This will be over-ridden for
    # container subclasses.
    #
-   public which_cursor_over()
-      if ((self.x <= &x < self.x + self.w) & (self.y  <= &y < self.y + self.h)) then
+   public which_cursor_over(e)
+      if ((self.x <= e.x < self.x + self.w) & (self.y  <= e.y < self.y + self.h)) then
          return self
    end
 

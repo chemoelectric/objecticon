@@ -63,12 +63,12 @@ class CanvasOverlaySet(CanvasComponent,OverlaySet)
    #
    # Overrides CanvasComponent.which_cursor_over() 
    #
-   public which_cursor_over()
+   public which_cursor_over(e)
       local o
-      cast(self,CanvasComponent).which_cursor_over() | fail
-      if in_resize_region() then
+      cast(self,CanvasComponent).which_cursor_over(e) | fail
+      if in_resize_region(e) then
          return self
-      if o := self.which_one.which_cursor_over() then
+      if o := self.which_one.which_cursor_over(e) then
          return o
       return self
    end
