@@ -235,15 +235,6 @@ void icon_init(char *name)
     rootpstate.K_errortext = "";
     rootpstate.K_errorvalue = nulldesc;
     rootpstate.T_errorvalue = nulldesc;
-    rootpstate.AmperErrno = zerodesc;
-
-#ifdef Graphics
-    rootpstate.AmperX = zerodesc;
-    rootpstate.AmperY = zerodesc;
-    rootpstate.AmperInterval = zerodesc;
-    rootpstate.LastEventWin = nulldesc;
-    rootpstate.Kywd_xwin[XKey_Window] = nulldesc;
-#endif					/* Graphics */
 
     rootpstate.Coexp_ser = 2;
     rootpstate.List_ser  = 1;
@@ -268,10 +259,6 @@ void icon_init(char *name)
     rootpstate.Deref = deref_0;
     rootpstate.Alcbignum = alcbignum_0;
     rootpstate.Alccset = alccset_0;
-    rootpstate.Alcfile = alcfile_0;
-#ifdef Graphics
-    rootpstate.Alcwindow = alcwindow_0;
-#endif
     rootpstate.Alchash = alchash_0;
     rootpstate.Alcsegment = alcsegment_0;
     rootpstate.Alclist_raw = alclist_raw_0;
@@ -797,50 +784,10 @@ int pstrnmcmp(a,b)
  */
 void datainit()
 {
-#ifdef MSWindows
-    extern FILE *finredir, *fouredir, *ferredir;
-#endif					/* MSWindows */
-
     /*
      * Initializations that cannot be performed statically (at least for
      * some compilers).					[[I?]]
      */
-
-    k_errout.title = T_File;
-    k_input.title = T_File;
-    k_output.title = T_File;
-
-#ifdef MSWindows
-    if (ferredir != NULL)
-        k_errout.u.fp = ferredir;
-    else
-#endif					/* MSWindows */
-        k_errout.u.fp = stderr;
-    StrLen(k_errout.fname) = 7;
-    StrLoc(k_errout.fname) = "&errout";
-    k_errout.status = Fs_Write | Fs_Stdio;
-
-#ifdef MSWindows
-    if (finredir != NULL)
-        k_input.u.fp = finredir;
-    else
-#endif					/* MSWindows */
-        if (k_input.u.fp == NULL)
-            k_input.u.fp = stdin;
-    StrLen(k_input.fname) = 6;
-    StrLoc(k_input.fname) = "&input";
-    k_input.status = Fs_Read | Fs_Stdio;
-
-#ifdef MSWindows
-    if (fouredir != NULL)
-        k_output.fd.fp = fouredir;
-    else
-#endif					/* MSWindows */
-        if (k_output.u.fp == NULL)
-            k_output.u.fp = stdout;
-    StrLen(k_output.fname) = 7;
-    StrLoc(k_output.fname) = "&output";
-    k_output.status = Fs_Write | Fs_Stdio;
 
     IntVal(kywd_pos) = 1;
     IntVal(kywd_ran) = 0;
@@ -928,14 +875,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->K_main.dword = D_Coexpr;
     BlkLoc(pstate->K_main) = (union block *) pstate->Mainhead;
 
-#ifdef Graphics
-    pstate->AmperX = zerodesc;
-    pstate->AmperY = zerodesc;
-    pstate->AmperInterval = zerodesc;
-    pstate->LastEventWin = nulldesc;
-    pstate->Kywd_xwin[XKey_Window] = nulldesc;
-#endif					/* Graphics */
-
     pstate->Coexp_ser = 2;
     pstate->List_ser = 1;
     pstate->Set_ser = 1;
@@ -986,10 +925,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->Deref = deref_0;
     pstate->Alcbignum = alcbignum_0;
     pstate->Alccset = alccset_0;
-    pstate->Alcfile = alcfile_0;
-#ifdef Graphics
-    pstate->Alcwindow = alcwindow_0;
-#endif
     pstate->Alchash = alchash_0;
     pstate->Alcsegment = alcsegment_0;
     pstate->Alclist_raw = alclist_raw_0;
@@ -1015,9 +950,8 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
 /*
  * loadicode - initialize memory particular to a given icode file
  */
-struct b_coexpr * loadicode(name, theInput, theOutput, theError, bs, ss, stk)
+struct b_coexpr * loadicode(name, bs, ss, stk)
     char *name;
-    struct b_file *theInput, *theOutput, *theError;
     C_integer bs, ss, stk;
 {
     struct b_coexpr *coexp;
@@ -1080,9 +1014,6 @@ struct b_coexpr * loadicode(name, theInput, theOutput, theError, bs, ss, stk)
     pstate->Ilines = (struct ipc_line *)(pstate->Efilenms);
     pstate->Elines = (struct ipc_line *)(pstate->Code + hdr.Strcons);
     pstate->Strcons = (char *)(pstate->Elines);
-    pstate->K_errout = *theError;
-    pstate->K_input  = *theInput;
-    pstate->K_output = *theOutput;
 
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, pstate->Code);
@@ -1213,12 +1144,12 @@ static int isdescrip(word *p){
         return 1;
 
     return (i==D_Null || i==D_Integer || i==D_Lrgint || i==D_Real ||
-            i==D_Cset || i==D_File || i==D_Proc || i==D_Record || i==D_List ||
+            i==D_Cset || i==D_Proc || i==D_Record || i==D_List ||
             i==D_Lelem || i==D_Set || i==D_Selem || i==D_Table || i==D_Telem ||
             i==D_Tvtbl || i==D_Slots || i==D_Tvsubs || i==D_Refresh || i==D_Coexpr ||
-            i==D_External || i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj || i==D_Kywdwin ||
+            i==D_External || i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj ||
             i==D_Kywdstr || i==D_Kywdevent || i==D_Class || i==D_Object || i==D_Cast || 
-            i==D_Constructor || i==D_Window || i==D_Methp);
+            i==D_Constructor || i==D_Methp);
 }
 
 char *cstr(struct descrip *sd) {
@@ -1278,8 +1209,6 @@ static char* vword2str(dptr d) {
         case D_Lrgint:
         case D_Real: 
         case D_Cset: 
-        case D_File: 
-        case D_Window: 
         case D_Record:
         case D_List: 
         case D_Lelem:
@@ -1301,7 +1230,6 @@ static char* vword2str(dptr d) {
         case D_Kywdint: return "";
         case D_Kywdpos: return "";
         case D_Kywdsubj: return "";
-        case D_Kywdwin: return "";
         case D_Kywdstr: return "";
         case D_Kywdevent: return "";
         default:return "?";
@@ -1330,7 +1258,6 @@ static char* dword2str(dptr d) {
             case D_Lrgint: t = "T_Lrgint"; break;
             case D_Real: t = "T_Real"; break;
             case D_Cset: t = "T_Cset"; break;
-            case D_File: t = "T_File"; break;
             case D_Proc: t = "T_proc"; break;
             case D_Record: t = "T_Record"; break;
             case D_List: t = "T_List"; break;
@@ -1348,7 +1275,6 @@ static char* dword2str(dptr d) {
             case D_Kywdint: t = "T_Kywdint"; break;
             case D_Kywdpos: t = "T_Kywdpos"; break;
             case D_Kywdsubj: t = "T_Kywdsubj"; break;
-            case D_Kywdwin: t = "T_Kywdwin"; break;
             case D_Kywdstr: t = "T_Kywdstr"; break;
             case D_Kywdevent: t = "T_Kywdevent"; break;
             case D_Class: t = "T_Class"; break;
@@ -1356,7 +1282,6 @@ static char* dword2str(dptr d) {
             case D_Cast: t = "T_Cast"; break;
             case D_Methp: t = "T_Methp"; break;
             case D_Constructor: t = "T_Constructor"; break;
-            case D_Window: t = "T_Window"; break;
             default: return "?";
         }
         strcat(buff, " ");

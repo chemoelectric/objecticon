@@ -242,16 +242,6 @@ keyword{0,1} errorvalue
       }
 end
 
-"&errout - standard error output."
-keyword{1} errout
-    abstract {
-       return file
-       }
-    inline {
-       return file(&k_errout);
-       }
-end
-
 "&fail - just fail"
 keyword{0} fail
    abstract {
@@ -355,16 +345,6 @@ keyword{1} host
       }
 end
 
-"&input - the standard input file"
-keyword{1} input
-   abstract {
-      return file
-      }
-   inline {
-      return file(&k_input);
-      }
-end
-
 "&lcase - a cset consisting of the 26 lower case letters"
 keyword{1} lcase
    constant 'abcdefghijklmnopqrstuvwxyz'
@@ -413,16 +393,6 @@ keyword{1} null
       }
    inline {
       return nulldesc;
-      }
-end
-
-"&output - the standard output file."
-keyword{1} output
-   abstract {
-      return file
-      }
-   inline {
-      return file(&k_output);
       }
 end
 
@@ -583,191 +553,6 @@ keyword{1} version
    constant Version
 end
 
-"&errno - variable containing error number from previous posix command."
-keyword{1} errno
-   abstract {
-      return kywdint
-      }
-   inline {
-      return kywdint(&amperErrno);
-      }
-end
-
-
-"&window - variable containing the current graphics rendering context."
-#ifdef Graphics
-keyword{1} window
-   abstract {
-      return kywdwin
-      }
-   inline {
-      return kywdwin(kywd_xwin + XKey_Window);
-      }
-end
-#else					/* Graphics */
-keyword{0} window
-   abstract {
-      return empty_type
-      }
-   inline {
-      fail;
-      }
-end
-#endif					/* Graphics */
-
-#ifdef Graphics
-
-"&x - mouse horizontal position."
-keyword{1} x
-   abstract { return kywdint }
-   inline { if (is:null(lastEventWin)) runerr(140, lastEventWin);
-	    else return kywdint(&amperX); }
-end
-
-"&y - mouse vertical position."
-keyword{1} y
-   abstract { return kywdint }
-   inline { if (is:null(lastEventWin)) runerr(140, lastEventWin);
-	    else return kywdint(&amperY); }
-end
-
-"&interval - milliseconds since previous event."
-keyword{1} interval
-   abstract { return kywdint }
-   inline { if (is:null(lastEventWin)) runerr(140, lastEventWin);
-	    else return kywdint(&amperInterval); }
-end
-
-"&control - null if control key was down on last X event, else failure"
-keyword{0,1} control
-   abstract { return null }
-   inline { if (is:null(lastEventWin)) runerr(140, lastEventWin);
-	    else if (xmod_control) return nulldesc; else fail; }
-end
-
-"&shift - null if shift key was down on last X event, else failure"
-keyword{0,1} shift
-   abstract { return null }
-   inline { if (is:null(lastEventWin)) runerr(140, lastEventWin);
-	    else if (xmod_shift) return nulldesc; else fail; }
-end
-
-"&meta - null if meta key was down on last X event, else failure"
-keyword{0,1} meta
-   abstract { return null }
-   inline { if (is:null(lastEventWin)) runerr(140, lastEventWin);
-	    else if (xmod_meta) return nulldesc; else fail; }
-end
-#else					/* Graphics */
-
-"&x - mouse horizontal position."
-keyword{0} x
-   abstract { return empty_type }
-   inline { fail; }
-end
-
-"&y - mouse vertical position."
-keyword{0} y
-   abstract { return empty_type }
-   inline { fail; }
-end
-
-"&interval - milliseconds since previous event."
-keyword{0} interval
-   abstract { return empty_type }
-   inline { fail; }
-end
-
-"&control - null if control key was down on last X event, else failure"
-keyword{0} control
-   abstract { return empty_type}
-   inline { fail; }
-end
-
-"&shift - null if shift key was down on last X event, else failure"
-keyword{0} shift
-   abstract { return empty_type }
-   inline { fail; }
-end
-
-"&meta - null if meta key was down on last X event, else failure"
-keyword{0} meta
-   abstract { return empty_type }
-   inline { fail; }
-end
-#endif					/* Graphics */
-
-"&lpress - left button press."
-keyword{1} lpress
-   abstract { return integer} inline { return C_integer MOUSELEFT; }
-end
-
-"&mpress - middle button press."
-keyword{1} mpress
-   abstract { return integer} inline { return C_integer MOUSEMID; }
-end
-
-"&rpress - right button press."
-keyword{1} rpress
-   abstract { return integer} inline { return C_integer MOUSERIGHT; }
-end
-
-"&lrelease - left button release."
-keyword{1} lrelease
-   abstract { return integer} inline { return C_integer MOUSELEFTUP; }
-end
-
-"&mrelease - middle button release."
-keyword{1} mrelease
-   abstract { return integer} inline { return C_integer MOUSEMIDUP; }
-end
-
-"&rrelease - right button release."
-keyword{1} rrelease
-   abstract { return integer} inline { return C_integer MOUSERIGHTUP; }
-end
-
-"&ldrag - left button drag."
-keyword{1} ldrag
-   abstract { return integer} inline { return C_integer MOUSELEFTDRAG; }
-end
-
-"&mdrag - middle button drag."
-keyword{1} mdrag
-   abstract { return integer} inline { return C_integer MOUSEMIDDRAG; }
-end
-
-"&rdrag - right button drag."
-keyword{1} rdrag
-   abstract { return integer} inline { return C_integer MOUSERIGHTDRAG; }
-end
-
-"&resize - window resize."
-keyword{1} resize
-   abstract { return integer} inline { return C_integer RESIZED; }
-end
-
-"&windowclose - window close button"
-keyword{1} windowclose
-   abstract { return integer } inline { return C_integer WINDOWCLOSED; }
-end
-
-"&mousemove - mouse movement"
-keyword{1} mousemove
-   abstract { return integer } inline { return C_integer MOUSEMOVED; }
-end
-
-"&wheelup - mouse wheel up"
-keyword{1} wheelup
-   abstract { return integer } inline { return C_integer MOUSE4UP; }
-end
-
-"&wheeldown - mouse wheel down "
-keyword{1} wheeldown
-   abstract { return integer } inline { return C_integer MOUSE5UP; }
-end
-
-
 "&ascii - a cset consisting of the 128 ascii characters"
 keyword{1} ascii
 constant '\
@@ -802,7 +587,7 @@ constant '\
 \360\361\362\363\364\365\366\367\370\371\372\373\374\375\376\377'
 end
 
-"&why - a variable containing the program name."
+"&why - a string giving information about the cause of failure"
 keyword{1} why
    abstract {
       return kywdstr

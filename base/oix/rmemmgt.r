@@ -50,7 +50,7 @@ int bsizes[] = {
      0,                       /* T_Lrgint (2), large integer */
      sizeof(struct b_real),   /* T_Real (3), real number */
      sizeof(struct b_cset),   /* T_Cset (4), cset */
-     sizeof(struct b_file),   /* T_File (5), file block */
+     0,                       /* T_Constructor (5), record constructor */
      0,                       /* T_Proc (6), procedure block */
      0,                       /* T_Record (7), record block */
      sizeof(struct b_list),   /* T_List (8), list header block */
@@ -68,15 +68,12 @@ int bsizes[] = {
      -1,                      /* T_Kywdint (20), integer keyword variable */
      -1,                      /* T_Kywdpos (21), keyword &pos */
      -1,                      /* T_Kywdsubj (22), keyword &subject */
-     -1,                      /* T_Kywdwin (23), keyword &window */
-     -1,                      /* T_Kywdstr (24), string keyword variable */
-     -1,                      /* T_Kywdevent (25), event keyword variable */
-     0,                       /* T_Class (26), class */
-     0,                       /* T_Object (27), object */
-     sizeof(struct b_cast),   /* T_Cast (28), cast */
-     sizeof(struct b_methp),  /* T_Methp (29), method pointer */
-     0,                       /* T_Constructor (30), record constructor */
-     sizeof(struct b_window), /* T_Window (31), window */
+     -1,                      /* T_Kywdstr (23), string keyword variable */
+     -1,                      /* T_Kywdevent (24), event keyword variable */
+     0,                       /* T_Class (25), class */
+     0,                       /* T_Object (26), object */
+     sizeof(struct b_cast),   /* T_Cast (27), cast */
+     sizeof(struct b_methp),  /* T_Methp (28), method pointer */
     };
 
 /*
@@ -89,7 +86,7 @@ int firstd[] = {
      0,                       /* T_Lrgint (2), large integer */
      0,                       /* T_Real (3), real number */
      0,                       /* T_Cset (4), cset */
-     3*WordSize,              /* T_File (5), file block */
+     6*WordSize,              /* T_Constructor (5), record constructor */
 
      9*WordSize,              /* T_Proc (6), procedure block */
 
@@ -111,15 +108,12 @@ int firstd[] = {
      -1,                      /* T_Kywdint (20), integer keyword variable */
      -1,                      /* T_Kywdpos (21), keyword &pos */
      -1,                      /* T_Kywdsubj (22), keyword &subject */
-     -1,                      /* T_Kywdwin (23), keyword &window */
-     -1,                      /* T_Kywdstr (24), string keyword variable */
-     -1,                      /* T_Kywdevent (25), event keyword variable */
-     -1,                      /* T_Class (26), class, just contains static data in icode */
-     5*WordSize,              /* T_Object (27), object */
-     0,                       /* T_Cast (28), cast */
-     0,                       /* T_Methp (29), methp */
-     6*WordSize,              /* T_Constructor (30), record constructor */
-     0,                       /* T_Window (31), window */
+     -1,                      /* T_Kywdstr (23), string keyword variable */
+     -1,                      /* T_Kywdevent (24), event keyword variable */
+     -1,                      /* T_Class (25), class, just contains static data in icode */
+     5*WordSize,              /* T_Object (26), object */
+     0,                       /* T_Cast (27), cast */
+     0,                       /* T_Methp (28), methp */
     };
 
 /*
@@ -132,7 +126,7 @@ int firstp[] = {
      0,                       /* T_Lrgint (2), large integer */
      0,                       /* T_Real (3), real number */
      0,                       /* T_Cset (4), cset */
-     0,                       /* T_File (5), file block */
+     0,                       /* T_Constructor (5), record constructor */
      0,                       /* T_Proc (6), procedure block */
      3*WordSize,              /* T_Record (7), record block */
      3*WordSize,              /* T_List (8), list header block */
@@ -150,15 +144,12 @@ int firstp[] = {
      -1,                      /* T_Kywdint (20), integer keyword variable */
      -1,                      /* T_Kywdpos (21), keyword &pos */
      -1,                      /* T_Kywdsubj (22), keyword &subject */
-     -1,                      /* T_Kywdwin (23), keyword &window */
-     -1,                      /* T_Kywdstr (24), string keyword variable */
-     -1,                      /* T_Kywdevent (25), event keyword variable */
-     -1,                      /* T_Class (26), class, just contains static data in icode */
-     0,                       /* T_Object (27), object, just a pointer to the class, which is static */
-     1*WordSize,              /* T_Cast (28), cast */
-     1*WordSize,              /* T_Methp (29), methp */
-     0,                       /* T_Constructor (30), record constructor */
-     0,                       /* T_Window (31), window */
+     -1,                      /* T_Kywdstr (23), string keyword variable */
+     -1,                      /* T_Kywdevent (24), event keyword variable */
+     -1,                      /* T_Class (25), class, just contains static data in icode */
+     0,                       /* T_Object (26), object, just a pointer to the class, which is static */
+     1*WordSize,              /* T_Cast (27), cast */
+     1*WordSize,              /* T_Methp (28), methp */
     };
 
 /*
@@ -171,7 +162,7 @@ int ptrno[] = {
     -1,                       /* T_Lrgint (2), large integer */
     -1,                       /* T_Real (3), real number */
     -1,                       /* T_Cset (4), cset */
-    -1,                       /* T_File (5), file block */
+    -1,                       /* T_Constructor (5), record constructor */
     -1,                       /* T_Proc (6), procedure block */
      1,                       /* T_Record (7), record block */
      2,                       /* T_List (8), list header block */
@@ -189,15 +180,12 @@ int ptrno[] = {
     -1,                       /* T_Kywdint (20), integer keyword variable */
     -1,                       /* T_Kywdpos (21), keyword &pos */
     -1,                       /* T_Kywdsubj (22), keyword &subject */
-    -1,                       /* T_Kywdwin (23), keyword &window */
-    -1,                       /* T_Kywdstr (24), string keyword variable */
-    -1,                       /* T_Kywdevent (25), event keyword variable */
-    -1,                       /* T_Class (26), class */
-    -1,                       /* T_Object (27), object */
-     2,                       /* T_Cast (28), cast */
-     2,                       /* T_Methp (29), method pointer */
-    -1,                       /* T_Constructor (30), record constructor */
-    -1,                       /* T_Window (31), window */
+    -1,                       /* T_Kywdstr (23), string keyword variable */
+    -1,                       /* T_Kywdevent (24), event keyword variable */
+    -1,                       /* T_Class (25), class */
+    -1,                       /* T_Object (26), object */
+     2,                       /* T_Cast (27), cast */
+     2,                       /* T_Methp (28), method pointer */
     };
 
 /*
@@ -209,7 +197,7 @@ char *blkname[] = {
    "large integer",                     /* T_Largint (2) */
    "real number",                       /* T_Real (3) */
    "cset",                              /* T_Cset (4) */
-   "file",                              /* T_File (5) */
+   "constructor",                       /* T_Constructor (5), record constructor */
    "procedure",                         /* T_Proc (6) */
    "record",                            /* T_Record (7) */
    "list",                              /* T_List (8) */
@@ -227,15 +215,12 @@ char *blkname[] = {
    "integer keyword variable",          /* T_Kywdint (20) */
    "&pos",                              /* T_Kywdpos (21) */
    "&subject",                          /* T_Kywdsubj (22) */
-   "illegal object",                    /* T_Kywdwin (23) */
-   "illegal object",                    /* T_Kywdstr (24) */
-   "illegal object",                    /* T_Kywdevent (25) */
-   "class",                             /* T_Class (26) */
-   "object",                            /* T_Object (27) */
-   "cast",                              /* T_Cast (28) */
-   "methp",                             /* T_Methp (29) */
-   "constructor",                       /* T_Constructor (30), record constructor */
-   "window",                            /* T_Window (31), window */
+   "illegal object",                    /* T_Kywdstr (23) */
+   "illegal object",                    /* T_Kywdevent (24) */
+   "class",                             /* T_Class (25) */
+   "object",                            /* T_Object (26) */
+   "cast",                              /* T_Cast (27) */
+   "methp",                             /* T_Methp (28) */
    };
 
 /*
@@ -416,8 +401,6 @@ int region;
      wsp ws;
 
      for (ws = wstates; ws ; ws = ws->next) {
-	    if (is:window(ws->filep))
-	      markblock(&(ws->filep));
 	    if (is:list(ws->listp))
 	      markblock(&(ws->listp));
         }
@@ -516,14 +499,6 @@ struct progstate *pstate;
 	 postqual(dp);
       else if (Pointer(*dp))
 	 markblock(dp);
-
-   /*
-    * no marking for &x, &y, &row, &col, &interval, all integers
-    */
-#ifdef Graphics
-   PostDescrip(pstate->LastEventWin);	/* last Event() win */
-   PostDescrip(pstate->Kywd_xwin[XKey_Window]);	/* &window */
-#endif					/* Graphics */
 
    PostDescrip(pstate->K_errorvalue);
    PostDescrip(pstate->T_errorvalue);

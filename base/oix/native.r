@@ -324,6 +324,82 @@ function{1} lang_Class_set_method(field, pr)
    }
 end
 
+static struct b_proc *try_load(void *handle, char *classname, char *methname)
+{
+    char *fq, *p, *t;
+    struct b_proc *blk;
+
+    Protect(fq = malloc(strlen(classname) + strlen(methname) + 3), fatalerr(0,NULL));
+    p = fq;
+    *p++ = 'B';
+    for (t = classname; *t; ++t)
+        *p++ = *t == '.' ? '_':*t;
+    *p++ = '_';
+    strcpy(p, methname);
+
+    blk = (struct b_proc *)dlsym(handle, fq);
+    if (!blk) {
+        free(fq);
+        return 0;
+    }
+
+    /* Sanity check. */
+    if (blk->title != T_Proc) {
+        fprintf(stderr, "\nlang.Class.load_lib() - symbol %s not a procedure block\n", fq);
+        fatalerr(218, NULL);
+    }
+
+    free(fq);
+
+    return blk;
+}
+
+function{1} lang_Class_load_library(lib)
+   if !cnv:C_string(lib) then
+      runerr(103, lib)
+   body {
+        dptr pp = (dptr)pfp - (pfp->pf_nargs + 1);
+        struct b_proc *caller_proc, *new_proc;
+        struct b_class *class;
+        struct class_field *cf;
+        int i;
+        void *handle;
+
+        if (pp->dword != D_Proc) {
+            showstack();
+            syserr("couldn't find proc on stack");
+        }
+        caller_proc = &BlkLoc(*pp)->proc;
+        if (!caller_proc->field)
+            runerr(616);
+        class = caller_proc->field->defining_class;
+
+        handle = dlopen(lib, RTLD_LAZY);
+        if (!handle) {
+            fprintf(stderr, "\nlang.Class.load_lib(\"%s\") - dlopen() failed :-\n\t%s\n", lib, dlerror());
+            runerr(217);
+        }
+
+        for (i = 0; i < class->n_instance_fields + class->n_class_fields; ++i) {
+            struct class_field *cf = class->fields[i];
+            if ((cf->defining_class == class) &&
+                (cf->flags & M_Method) &&
+                BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
+                struct b_proc *bp = try_load(handle, StrLoc(class->name), StrLoc(cf->name));
+                /*fprintf(stderr,"%d %s_%s -> %p\n",getpid(),StrLoc(class->name), StrLoc(cf->name),bp);*/
+                if (bp) {
+                    if (bp->field)
+                        runerr(618, cf->name);
+                    BlkLoc(*cf->field_descriptor) = (union block *)bp;
+                    bp->field = cf;
+                }
+            }
+        }
+
+        return nulldesc;
+   }
+end
+
 function{0,1} lang_Class_for_name(s, c)
    if !cnv:tmp_string(s) then
       runerr(103, s)
@@ -441,6 +517,18 @@ end
 
 #endif
 
+static struct sdescrip fdf = {2, "fd"};
+static struct sdescrip f_eoff = {5, "f_eof"};
+
+#begdef FdParam(p, m)
+int m;
+dptr m##_dptr;
+if (!is:object(p))
+    runerr(602, p);
+m##_dptr = c_get_instance_data(&p, (dptr)&fdf);
+(m) = IntVal(*m##_dptr);
+#enddef
+
 function{0,1} io_FileStream_open_impl(path, flags, mode)
    if !cnv:C_string(path) then
       runerr(103, path)
@@ -464,14 +552,17 @@ function{0,1} io_FileStream_open_impl(path, flags, mode)
    }
 end
 
-function{0,1} io_FileStream_in_impl(fd, i)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
+function{0,1} io_FileStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
        int nread;
        tended struct descrip s;
+       dptr eof;
+       FdParam(self, fd);
+
+       eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       *eof = nulldesc;
 
        if (i <= 0) {
            irunerr(205, i);
@@ -495,6 +586,7 @@ function{0,1} io_FileStream_in_impl(fd, i)
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
+           *eof = onedesc;
            on_error(XE_EOF);
            fail;
        }
@@ -508,16 +600,14 @@ function{0,1} io_FileStream_in_impl(fd, i)
 
        return s;
    }
-
 end
 
-function{0,1} io_FileStream_out_impl(fd, s)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
+function{0,1} io_FileStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
        int rc;
+       FdParam(self, fd);
        if ((rc = write(fd, StrLoc(s), StrLen(s))) < 0) {
            on_error(errno);
            fail;
@@ -526,10 +616,9 @@ function{0,1} io_FileStream_out_impl(fd, s)
    }
 end
 
-function{0,1} io_FileStream_close_impl(fd)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
+function{0,1} io_FileStream_close(self)
    body {
+       FdParam(self, fd);
        if (close(fd) < 0) {
            on_error(errno);
            fail;
@@ -538,31 +627,48 @@ function{0,1} io_FileStream_close_impl(fd)
    }
 end
 
-function{0,1} io_FileStream_seek_impl(fd, offset, whence)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
+function{0,1} io_FileStream_seek(self, offset)
    if !cnv:C_integer(offset) then
       runerr(101, offset)
-   if !cnv:C_integer(whence) then
-      runerr(101, whence)
    body {
-       int rc;
+       int whence, rc;
+       FdParam(self, fd);
+       if (offset > 0) {
+           --offset;
+           whence = SEEK_SET;
+       } else
+           whence = SEEK_END;
        if ((rc = lseek(fd, offset, whence)) < 0) {
            on_error(errno);
            fail;
        }
-       return C_integer rc;
+       return C_integer(rc + 1);
    }
 end
 
-function{0,1} io_SocketStream_in_impl(fd, i)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
+function{0,1} io_FileStream_tell(self)
+   body {
+       int rc;
+       FdParam(self, fd);
+       if ((rc = lseek(fd, 0, SEEK_CUR)) < 0) {
+           on_error(errno);
+           fail;
+       }
+       return C_integer(rc + 1);
+   }
+end
+
+function{0,1} io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
        int nread;
        tended struct descrip s;
+       dptr eof;
+       FdParam(self, fd);
+
+       eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       *eof = nulldesc;
 
        if (i <= 0) {
            irunerr(205, i);
@@ -586,6 +692,7 @@ function{0,1} io_SocketStream_in_impl(fd, i)
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
+           *eof = onedesc;
            on_error(XE_EOF);
            fail;
        }
@@ -599,7 +706,6 @@ function{0,1} io_SocketStream_in_impl(fd, i)
 
        return s;
    }
-
 end
 
 function{0,1} io_SocketStream_socket_impl(domain, typ)
@@ -621,13 +727,12 @@ function{0,1} io_SocketStream_socket_impl(domain, typ)
    }
 end
 
-function{0,1} io_SocketStream_out_impl(fd, s)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
+function{0,1} io_SocketStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
        int rc;
+       FdParam(self, fd);
        /* 
         * If possible use MSG_NOSIGNAL so that we get the EPIPE error
         * code, rather than the SIGPIPE signal.
@@ -645,10 +750,9 @@ function{0,1} io_SocketStream_out_impl(fd, s)
    }
 end
 
-function{0,1} io_SocketStream_close_impl(fd)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
+function{0,1} io_SocketStream_close(self)
    body {
+       FdParam(self, fd);
        if (close(fd) < 0) {
            on_error(errno);
            fail;
@@ -682,16 +786,13 @@ function{0,1} io_SocketStream_socketpair_impl(typ)
    }
 end
 
-function{0,1} io_SocketStream_connect_impl(fd, addr)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
-   
+function{0,1} io_SocketStream_connect(self, addr)
    if !cnv:C_string(addr) then
       runerr(103, addr)
-
    body {
        struct sockaddr *sa;
        int len;
+       FdParam(self, fd);
 
        sa = parse_sockaddr(addr, &len);
        if (!sa) {
@@ -708,10 +809,7 @@ function{0,1} io_SocketStream_connect_impl(fd, addr)
    }
 end
 
-function{0,1} io_SocketStream_bind_impl(fd, addr)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
-   
+function{0,1} io_SocketStream_bind(self, addr)
    if !cnv:string(addr) then
       runerr(103, addr)
 
@@ -719,6 +817,7 @@ function{0,1} io_SocketStream_bind_impl(fd, addr)
        tended char *addrstr;
        struct sockaddr *sa;
        int len;
+       FdParam(self, fd);
 
        /*
         * get a C string for the address.
@@ -741,14 +840,12 @@ function{0,1} io_SocketStream_bind_impl(fd, addr)
    }
 end
 
-function{0,1} io_SocketStream_listen_impl(fd, backlog)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
-   
+function{0,1} io_SocketStream_listen(self, backlog)
    if !cnv:C_integer(backlog) then
       runerr(101, backlog)
 
    body {
+       FdParam(self, fd);
        if (listen(fd, backlog) < 0) {
            on_error(errno);
            fail;
@@ -757,12 +854,10 @@ function{0,1} io_SocketStream_listen_impl(fd, backlog)
    }
 end
 
-function{0,1} io_SocketStream_accept_impl(fd)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
-
+function{0,1} io_SocketStream_accept_impl(self)
    body {
        SOCKET sockfd;
+       FdParam(self, fd);
 
        if ((sockfd = accept(fd, 0, 0)) < 0) {
            on_error(errno);
@@ -919,10 +1014,7 @@ function{0,1} io_DescStream_poll_impl(a[n])
    }
 end
 
-function{0,1} io_DescStream_flag_impl(fd, on, off)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
-
+function{0,1} io_DescStream_flag(self, on, off)
     if !def:C_integer(on, 0) then
       runerr(101, on)
 
@@ -931,6 +1023,7 @@ function{0,1} io_DescStream_flag_impl(fd, on, off)
 
     body {
         int i;
+        FdParam(self, fd);
 
         if ((i = fcntl(fd, F_GETFL, 0)) < 0) {
            on_error(errno);
@@ -948,6 +1041,19 @@ function{0,1} io_DescStream_flag_impl(fd, on, off)
     }
 end
 
+static struct sdescrip ddf = {2, "dd"};
+
+#begdef DirParam(p, m)
+DIR *m;
+dptr m##_dptr;
+if (!is:object(p))
+    runerr(602, p);
+m##_dptr = c_get_instance_data(&p, (dptr)&ddf);
+(m) = (DIR*)IntVal(*m##_dptr);
+if (!(m))
+    runerr(205, p);
+#enddef
+
 function{0,1} io_DirStream_open_impl(path)
    if !cnv:C_string(path) then
       runerr(103, path)
@@ -964,36 +1070,41 @@ function{0,1} io_DirStream_open_impl(path)
    }
 end
 
-function{0,1} io_DirStream_read_impl(dd)
-   if !cnv:C_integer(dd) then
-      runerr(101, dd)
+function{0,1} io_DirStream_read_impl(self)
    body {
        struct dirent *de;
+       dptr eof;
+       DirParam(self, dd);
+
+       eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       *eof = nulldesc;
        errno = 0;
-       de = readdir((DIR*)dd);
+       de = readdir(dd);
        if (!de) {
            if (errno)
                on_error(errno);
-           else
+           else {
+               *eof = onedesc;
                on_error(XE_EOF);
+           }
            fail;
        }
        return cstr2string(de->d_name);
    }
 end
 
-function{0,1} io_DirStream_close_impl(dd)
-   if !cnv:C_integer(dd) then
-      runerr(101, dd)
+function{0,1} io_DirStream_close(self)
    body {
-       int rc;
-       if ((rc = closedir((DIR*)dd)) < 0) {
+       DirParam(self, dd);
+       if ((closedir(dd)) < 0) {
            on_error(errno);
            fail;
        }
        return nulldesc;
    }
 end
+
+static struct sdescrip pidf = {3, "pid"};
 
 function{0,1} io_ProgStream_open_impl(cmd, flags)
    if !cnv:C_string(cmd) then
@@ -1055,18 +1166,19 @@ function{0,1} io_ProgStream_open_impl(cmd, flags)
    }    
 end
 
-function{0,1} io_ProgStream_close_impl(fd, pid)
-   if !cnv:C_integer(fd) then
-      runerr(101, fd)
-   if !cnv:C_integer(pid) then
-      runerr(101, pid)
+function{0,1} io_ProgStream_close(self)
    body {
+       dptr pid;
+       FdParam(self, fd);
+
+       pid = c_get_instance_data(&self, (dptr)&pidf);
+
        if (close(fd) < 0) {
            on_error(errno);
            fail;
        }
        
-       if (waitpid(pid, 0, 0) < 0) {
+       if (waitpid(IntVal(*pid), 0, 0) < 0) {
            on_error(errno);
            fail;
        }

@@ -187,9 +187,6 @@ struct b_cset  k_letters = {
  * Keyword variables.
  */
 
-#ifdef FncTrace
-struct descrip kywd_ftrc = {D_Integer};	/* &ftrace */
-#endif					/* FncTrace */
 
 struct descrip kywd_dmp = {D_Integer};	/* &dump */
 
@@ -317,8 +314,8 @@ struct errtab errtab[] = {
    214, "input/output error",
    215, "attempt to refresh &main",
    216, "external function not found",
-   217, "attempt to use file which is not open for reading or writing",
-   218, "attempt to use file which is closed",
+   217, "external library not found",
+   218, "external library inconsistency",
 
    301, "evaluation stack overflow",
    302, "memory violation",
@@ -363,6 +360,7 @@ struct errtab errtab[] = {
    623, "can only set a method on an unresolved field",
    624, "record, class, cast or object expected",
    625, "record or constructor expected",
+   626, "internal error looking up object field",
 
    1040, "socket error",		 
    1041, "cannot initialize network library",

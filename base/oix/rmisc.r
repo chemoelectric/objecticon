@@ -72,11 +72,6 @@ int getvar(s,vp)
          VarLoc(*vp) = &kywd_err;
          return Succeeded;
          }
-      else if (strcmp(s,"&errno") == 0) {
-         vp->dword = D_Kywdint;
-         VarLoc(*vp) = &amperErrno;
-         return Succeeded;
-         }
       else if (strcmp(s,"&pos") == 0) {
          vp->dword = D_Kywdpos;
          VarLoc(*vp) = &kywd_pos;
@@ -107,27 +102,11 @@ int getvar(s,vp)
          VarLoc(*vp) = &kywd_trc;
          return Succeeded;
          }
-
-#ifdef FncTrace
-      else if (strcmp(s,"&ftrace") == 0) {
-         vp->dword = D_Kywdint;
-         VarLoc(*vp) = &kywd_ftrc;
-         return Succeeded;
-         }
-#endif					/* FncTrace */
-
       else if (strcmp(s,"&dump") == 0) {
          vp->dword = D_Kywdint;
          VarLoc(*vp) = &kywd_dmp;
          return Succeeded;
          }
-#ifdef Graphics
-      else if (strcmp(s,"&window") == 0) {
-         vp->dword = D_Kywdwin;
-         VarLoc(*vp) = &(kywd_xwin[XKey_Window]);
-         return Succeeded;
-         }
-#endif					/* Graphics */
 
       else if (strcmp(s,"&eventvalue") == 0) {
          vp->dword = D_Var;
@@ -446,50 +425,6 @@ int noimage;
          putc('\'', f);
          }
 
-      file: {
-         /*
-          * Check for distinguished files by looking at the address of
-          *  of the object to image.  If one is found, print its name.
-          */
-         if ((fd = BlkLoc(*dp)->file.u.fp) == stdin)
-            fprintf(f, "&input");
-         else if (fd == stdout)
-            fprintf(f, "&output");
-         else if (fd == stderr)
-            fprintf(f, "&errout");
-         else {
-            /*
-             * The file isn't a special one, just print "file(name)".
-             */
-	    i = StrLen(BlkLoc(*dp)->file.fname);
-	    s = StrLoc(BlkLoc(*dp)->file.fname);
-            fprintf(f, "file(");
-	    while (i-- > 0)
-	       printimage(f, *s++, '\0');
-	    putc(')', f);
-            }
-         }
-
-#ifdef Graphics
-     window: {
-      wbp w = BlkLoc(*dp)->window.wb;
-      if (BlkLoc(*dp)->window.isopen &&
-           (s = w->window->windowlabel)) {
-           i = strlen(s);
-           fprintf(f, "window_%d:%d(",
-                   w->window->serial,
-                   w->context->serial
-               );
-       }
-       else {
-           i = 0;
-           fprintf(f, "window_-1:-1(");
-       }
-       while (i-- > 0)
-         printimage(f, *s++, '\0');
-       putc(')', f);
-     }
-#endif					/* Graphics */
 
      class: {
            /* produce "class " + the class name */
@@ -744,12 +679,6 @@ int noimage;
             fprintf(f, "&random = ");
          else if (VarLoc(*dp) == &kywd_trc)
             fprintf(f, "&trace = ");
-
-#ifdef FncTrace
-         else if (VarLoc(*dp) == &kywd_ftrc)
-            fprintf(f, "&ftrace = ");
-#endif					/* FncTrace */
-
          else if (VarLoc(*dp) == &kywd_dmp)
             fprintf(f, "&dump = ");
          else if (VarLoc(*dp) == &kywd_err)
@@ -778,10 +707,6 @@ int noimage;
 
       kywdsubj: {
          fprintf(f, "&subject = ");
-         outimage(f, VarLoc(*dp), noimage);
-         }
-      kywdwin: {
-         fprintf(f, "&window = ");
          outimage(f, VarLoc(*dp), noimage);
          }
 
@@ -1354,69 +1279,6 @@ dptr dp1, dp2;
          ++StrLen(*dp2);
          }
 
-#ifdef Graphics
-      window: {
-         wbp w = BlkLoc(source)->window.wb;
-
-         if (BlkLoc(source)->window.isopen && (s = w->window->windowlabel)){
-             len = strlen(s);
-             Protect (reserve(Strings, (len << 2) + 16), return Error);
-             sprintf(sbuf, "window_%d:%d(", 
-                       w->window->serial,
-                       w->context->serial
-                       );
-         }
-         else {
-             len = 0;
-             Protect (reserve(Strings, 16), return Error);
-             sprintf(sbuf, "window_-1:-1(");
-         }
-         Protect(t = alcstr(sbuf, (word)(strlen(sbuf))), return Error);
-         StrLoc(*dp2) = t;
-         StrLen(*dp2) = strlen(sbuf);
-         while (len-- > 0)
-               StrLen(*dp2) += doimage(*s++, '\0');
-         Protect(alcstr(")", 1), return Error);
-         ++StrLen(*dp2);
-      }
-#endif					/* Graphics */
-
-      file: {
-         /*
-          * Check for distinguished files by looking at the address of
-          *  of the object to image.  If one is found, make a string
-          *  naming it and return.
-          */
-         if ((fd = BlkLoc(source)->file.u.fp) == stdin) {
-            StrLen(*dp2) = 6;
-            StrLoc(*dp2) = "&input";
-            }
-         else if (fd == stdout) {
-            StrLen(*dp2) = 7;
-            StrLoc(*dp2) = "&output";
-            }
-         else if (fd == stderr) {
-            StrLen(*dp2) = 7;
-            StrLoc(*dp2) = "&errout";
-            }
-         else {
-             /*
-              * The file is not a standard one; form a string of the form
-              *	file(nm) where nm is the argument originally given to
-              *	open.
-              */
-             s = StrLoc(BlkLoc(source)->file.fname);
-             len = StrLen(BlkLoc(source)->file.fname);
-             Protect (reserve(Strings, (len << 2) + 12), return Error);
-             Protect(t = alcstr("file(", 5), return Error);
-             StrLoc(*dp2) = t;
-             StrLen(*dp2) = 5;
-             while (len-- > 0)
-                 StrLen(*dp2) += doimage(*s++, '\0');
-             Protect(alcstr(")", 1), return Error);
-             ++StrLen(*dp2);
-             }
-         }
 
       proc: {
          struct class_field *field = BlkLoc(source)->proc.field;
@@ -2075,7 +1937,6 @@ void on_error(int n)
                msg = (char *)sys_errlist[n];
         #endif
     }
-    IntVal(amperErrno) = n;
     if (!msg)
         msg = "Unknown system error";
     sprintf(buff, " (errno=%d)", n);
@@ -2087,3 +1948,25 @@ void on_error(int n)
     StrLoc(kywd_why) = t;
     StrLen(kywd_why) = len;
 }
+
+/*
+ * Set &why to a simple string.
+ */
+void why(char *s)
+{
+    kywd_why = cstr2string(s);
+}
+
+/*
+ * Set &why using a printf-style format.
+ */
+void whyf(char *fmt, ...)
+{
+    char buff[128];
+    va_list argp;
+    va_start(argp, fmt);
+    vsnprintf(buff, sizeof(buff), fmt, argp);
+    va_end(argp);
+    kywd_why = cstr2string(buff);
+}
+

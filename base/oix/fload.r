@@ -74,7 +74,6 @@ abstract {
 }
 body
 {
-    int (*func)() = 0;
     struct b_proc *blk;
     static char *curfile;
     static void *handle;
@@ -93,29 +92,26 @@ body
      * Load the function.  Diagnose both library and function errors here.
      */
     if (handle) {
-        Protect(tname = malloc(strlen(funcname) + 3), runerr(0));
-        sprintf(tname, "Z%s", funcname);
-        func = (int (*)())dlsym(handle, tname);
-        if (!func) {
-            /*
-             * If no function, try again by prepending an underscore.
-             * (for OpenBSD and similar systems.)
-             */
-            sprintf(tname, "_Z%s", funcname);
-            func = (int (*)())dlsym(handle, tname);
-        }
+        Protect(tname = malloc(strlen(funcname) + 3), fatalerr(0,NULL));
         sprintf(tname, "B%s", funcname);
         blk = (struct b_proc *)dlsym(handle, tname);
         if (!blk) {
             sprintf(tname, "_B%s", funcname);
-            func = (int (*)())dlsym(handle, tname);
+            blk = (struct b_proc *)dlsym(handle, tname);
         }
     }
-    if (!handle || !func || !blk) {
+    if (!handle || !blk) {
         fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): %s\n",
                 filename, funcname, dlerror());
         runerr(216);
     }
+    /* Sanity check. */
+    if (blk->title != T_Proc) {
+        fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): Loaded block didn't have D_Proc in its dword%s\n",
+                filename, funcname);
+        runerr(218);
+    }
+
     free(tname);
     return proc(blk);
 }

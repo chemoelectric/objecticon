@@ -1,38 +1,7 @@
 /*
  * File: fwindow.r - Icon graphics interface
  *
- * Contents: Active, Bg, Color, CopyArea, Couple,
- *  DrawArc, DrawCircle, DrawCurve, DrawImage, DrawLine,
- *  DrawSegment, DrawPoint, DrawPolygon, DrawString,
- *  DrawRectangle, DrawTorus, DrawCylinder, DrawDisk, DrawCube, 
- *  DrawSphere,  EraseArea, NextEvent, Fg, FillArc, FillCircle,
- *  FillRectangle, FillPolygon, Font, FreeColor, GotoRC, GotoXY,
- *  NewColor, Pattern, PaletteChars, PaletteColor, PaletteKey,
- *  Pending, PopMatrix, PushMatrix, QueryPointer, ReadImage, Rotate,
- *  Scale, Translate, TextWidth, Texture, Texcoord, Uncouple,
- *  WAttrib, WDefault, WFlush, WSync, WriteImage
  */
-
-#begdef MissingGraphicsFunc(funcname)
-"an unavailable graphics function"
-function{} funcname()
-   runerr(121)
-end
-#enddef
-
-#begdef MissingGraphicsFunc1(funcname)
-"an unavailable graphics function"
-function{} funcname(x)
-   runerr(121)
-end
-#enddef
-
-#begdef MissingGraphicsFuncV(funcname)
-"an unavailable graphics function"
-function{0} funcname(argv[warg])
-   runerr(121)
-end
-#enddef
 
 #ifdef Graphics
 
@@ -43,2161 +12,12 @@ end
  *  &col, &row, &x, &y, &interval, timestamp, and modifier keys.
  */
 int pollctr;
-FILE *ConsoleBinding = NULL;
-/*
- * the global buffer used as work space for printing string, etc 
- */
-char ConsoleStringBuf[MaxReadStr * 48];
-char *ConsoleStringBufPtr = ConsoleStringBuf;
-unsigned long ConsoleFlags = 0;			 /* Console flags */
 
-
-
-"Active() - produce the next active window"
-
-function{0,1} Active()
-   abstract {
-      return window
-      }
-   body {
-      wsp ws;
-      if (!wstates || !(ws = getactivewindow())) fail;
-      return ws->filep;
-      }
-end
-
-
-"Alert(w,volume) - Alert the user"
-
-function{1} Alert(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int warg = 0;
-      C_integer volume;
-      OptWindow(w);
-
-      if (argc == warg) volume = 0;
-      else if (!def:C_integer(argv[warg], 0, volume))
-        runerr(101, argv[warg]);
-      walert(w, volume);
-      ReturnWindow;
-      }
-end
-
-"Bg(w,s) - background color"
-
-function{0,1} Bg(argv[argc])
-   abstract {
-      return string
-      }
-   body {
-      wbp w;
-      char sbuf1[MaxCvtLen];
-      int len;
-      tended char *tmp;
-      int warg = 0;
-      OptWindow(w);
-
-      /*
-       * If there is a (non-window) argument we are setting by
-       * either a mutable color (negative int) or a string name.
-       */
-      if (argc - warg > 0) {
-	 if (is:integer(argv[warg])) {    /* mutable color or packed RGB */
-	    if (isetbg(w, IntVal(argv[warg])) == Failed) fail;
-	    }
-	 else {
-	    if (!cnv:C_string(argv[warg], tmp))
-	       runerr(103,argv[warg]);
-	    if(setbg(w, tmp) == Failed) fail;
-	    }
-
-         }
-
-      /*
-       * In any event, this function returns the current background color.
-       */
-      getbg(w, sbuf1);
-      len = strlen(sbuf1);
-      Protect(tmp = alcstr(sbuf1, len), runerr(0));
-      return string(len, tmp);
-      }
-end
-
-
-"Clip(w, x, y, w, h) - set context clip rectangle"
-
-function{1} Clip(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int warg = 0, r;
-      C_integer x, y, width, height;
-      wcp wc;
-      OptWindow(w);
-
-      wc = w->context;
-
-      if (argc <= warg) {
-         wc->clipx = wc->clipy = 0;
-         wc->clipw = wc->cliph = -1;
-         unsetclip(w);
-         }
-      else {
-         r = rectargs(w, argc, argv, warg, &x, &y, &width, &height);
-         if (r >= 0)
-            runerr(101, argv[r]);
-         wc->clipx = x;
-         wc->clipy = y;
-         wc->clipw = width;
-         wc->cliph = height;
-         setclip(w);
-         }
-
-      ReturnWindow;
-      }
-end
-
-
-"Clone(w, attribs...) - create a new context bound to w's canvas"
-
-function{1} Clone(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w, w2;
-      int warg = 0, n;
-      tended struct descrip sbuf, sbuf2;
-      char answer[128];
-      char child_window=0;
-
-      OptWindow(w);
-
-      for (n=warg; n<argc; n++) {
-         if (!is:string(argv[n])) runerr(103, argv[n]);
-	 }
-
-      Protect(w2 = alc_wbinding(), runerr(0));
-      {
-        int f1=0;
-        for (n=warg; n<argc; n++) {
-          if (StrLen(argv[n])==2 && !strncmp(StrLoc(argv[n]), "gl", 2))
-              f1++;
-        }
-        if (f1==1) {
-	   runerr(150, argv[n]);
-	   }
-        else {
-          for (n=warg; n<argc; n++) {
-            if (StrLen(argv[n])==1 && !strncmp(StrLoc(argv[n]), "g", 1))
-                f1++;
-          }
-          if (f1==1) child_window=1;
-        }
-      }
-      if (!child_window) {
-        w2->window = w->window;
-        w2->window->refcount++;
-      }
-      else warg++;
-
-      if (argc>warg && is:window(argv[warg])) {
-         if (!BlkLoc(argv[warg])->window.isopen)
-	    runerr(142,argv[warg]);
-        if (ISCLOSED(BlkLoc(argv[warg])->window.wb))
-            runerr(142,argv[warg]);
-         if (child_window) child_window_stuff(w2, w, child_window);
-	 else Protect(w2->context =
-		 clone_context((wbp)BlkLoc(argv[warg])->window.wb),runerr(0));
-	 warg++;
-	 }
-      else {
-         if (child_window) child_window_stuff(w2, w, child_window);
-	 else Protect(w2->context = clone_context(w), runerr(0));
-	 }
-
-
-      for (n = warg; n < argc; n++) {
-	 if (!is:null(argv[n])) {
-	    if (!cnv:tmp_string(argv[n], sbuf))
-	       runerr(109, argv[n]);
-	    switch (wattrib(w2, StrLoc(argv[n]), StrLen(argv[n]), &sbuf2, answer)) {
-	    case Failed: fail;
-	    case Error: runerr(0, argv[n]);
-	       }
-	    }
-	 }
-      if (child_window) my_wmap(w2);
-
-      Protect(BlkLoc(result) = (union block *)alcwindow(w2, 1), runerr(0));
-      result.dword = D_Window;
-      return result;
-      }
-end
-
-
-
-"Color(argv[]) - return or set color map entries"
-
-function{0,1} Color(argv[argc])
-   abstract {
-      return window ++ string
-      }
-   body {
-      wbp w;
-      int warg = 0;
-      int i, len;
-      C_integer n;
-      char *colorname, *srcname;
-      tended char *tmp;
-
-      OptWindow(w);
-      if (argc - warg == 0) runerr(101);
-
-      if (argc - warg == 1) {			/* if this is a query */
-         CnvCInteger(argv[warg], n)
-         if ((colorname = get_mutable_name(w, n)) == NULL)
-            fail;
-         len = strlen(colorname);
-         Protect(tmp = alcstr(colorname, len), runerr(0));
-         return string(len, tmp);
-         }
-
-      CheckArgMultiple(2);
-
-      for (i = warg; i < argc; i += 2) {
-         CnvCInteger(argv[i], n)
-         if ((colorname = get_mutable_name(w, n)) == NULL)
-            fail;
-
-         if (is:integer(argv[i+1])) {		/* copy another mutable  */
-            if (IntVal(argv[i+1]) >= 0)
-               runerr(205, argv[i+1]);		/* must be negative */
-            if ((srcname = get_mutable_name(w, IntVal(argv[i+1]))) == NULL)
-               fail;
-            if (set_mutable(w, n, srcname) == Failed) fail;
-            strcpy(colorname, srcname);
-            }
-   
-         else {					/* specified by name */
-            tended char *tmp;
-            if (!cnv:C_string(argv[i+1],tmp))
-               runerr(103,argv[i+1]);
-   
-            if (set_mutable(w, n, tmp) == Failed) fail;
-            strcpy(colorname, tmp);
-            }
-         }
-
-      ReturnWindow;
-      }
-end
-
-
-"ColorValue(w,s) - produce RGB components from string color name"
-
-function{0,1} ColorValue(argv[argc])
-   abstract {
-      return string
-      }
-   body {
-      wbp w;
-      C_integer n;
-      int warg = 0, len;
-      long r, g, b, a = 65535;
-      tended char *s;
-      char tmp[32], *t;
-
-      if (is:window(argv[0])) {
-         w = BlkLoc(argv[0])->window.wb;	/* explicit window */	
-         warg = 1;
-         }
-      else if (is:window(kywd_xwin[XKey_Window]) &&
-               BlkLoc(kywd_xwin[XKey_Window])->window.isopen) {
-         w = BlkLoc(kywd_xwin[XKey_Window])->window.wb;	/* &window */
-	 }
-      else {
-         w = NULL;			/* no window (but proceed anyway) */
-	 }
-
-      if (!(warg < argc))
-         runerr(103);
-
-      if (cnv:C_integer(argv[warg], n)) {
-         if (w != NULL && (t = get_mutable_name(w, n)))
-            Protect(s = alcstr(t, (word)strlen(t)+1), runerr(306));
-         else
-            fail;
-         }
-      else if (!cnv:C_string(argv[warg], s))
-         runerr(103,argv[warg]);
-
-      if (parsecolor(w, s, &r, &g, &b, &a) == Succeeded) {
-	 if (a < 65535)
-            sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
-	 else
-            sprintf(tmp,"%ld,%ld,%ld", r, g, b);
-	 len = strlen(tmp);
-	 Protect(s = alcstr(tmp,len), runerr(306));
-	 return string(len, s);
-         }
-      fail;
-      }
-end
-
-
-"CopyArea(w,w2,x,y,width,height,x2,y2) - copy area"
-
-function{0,1} CopyArea(argv[argc]) /* w,w2,x,y,width,height,x2,y2 */
-   abstract {
-      return window
-      }
-   body {
-      int warg = 0, n, r;
-      C_integer x, y, width, height, x2, y2, width2, height2;
-      wbp w, w2;
-      OptWindow(w);
-
-      /*
-       * 2nd window defaults to value of first window
-       */
-      if (argc>warg && is:window(argv[warg])) {
-         if (!BlkLoc(argv[warg])->window.isopen)
-           runerr(142,argv[warg]);
-	 w2 = BlkLoc(argv[warg])->window.wb;
-	 if (ISCLOSED(w2))
-	    runerr(142,argv[warg]);
-	 warg++;
-	 }
-      else {
-	 w2 = w;
-	 }
-
-      /*
-       * x1, y1, width, and height follow standard conventions.
-       */
-      r = rectargs(w, argc, argv, warg, &x, &y, &width, &height);
-      if (r >= 0)
-         runerr(101, argv[r]);
-
-      /*
-       * get x2 and y2, ignoring width and height.
-       */
-      n = argc;
-      if (n > warg + 6)
-         n = warg + 6;
-      r = rectargs(w2, n, argv, warg + 4, &x2, &y2, &width2, &height2);
-      if (r >= 0)
-         runerr(101, argv[r]);
-
-      if (copyArea(w, w2, x, y, width, height, x2, y2) == Failed)
-         fail;
-      ReturnWindow;
-      }
-end
-
-/*
- * Bind the canvas associated with w to the context
- *  associated with w2.  If w2 is omitted, create a new context.
- *  Produces a new window variable.
- */
-"Couple(w,w2) - couple canvas to context"
-
-function{0,1} Couple(w,w2)
-   abstract {
-      return window
-      }
-   body {
-      tended struct descrip sbuf, sbuf2;
-      wbp wb, wb_new;
-      wsp ws;
-
-      /*
-       * make the new binding
-       */
-      Protect(wb_new = alc_wbinding(), runerr(0));
-
-      /*
-       * if w is a file, then we bind to an existing window
-       */
-      if (is:window(w)) {
-	 wb = BlkLoc(w)->window.wb;
-	 wb_new->window = ws = wb->window;
-	 if (is:window(w2)) {
-	    /*
-	     * Bind an existing window to an existing context,
-	     * and up the context's reference count.
-	     */
-	    if (rebind(wb_new, BlkLoc(w2)->window.wb) == Failed) fail;
-	    wb_new->context->refcount++;
-	    }
-	 else 
-	    runerr(140, w2);
-
-	 /* bump up refcount to ws */
-	 ws->refcount++;
-	 }
-      else
-	 runerr(140, w);
-
-      Protect(BlkLoc(result) = (union block *)alcwindow(wb_new, 1),runerr(0));
-      result.dword = D_Window;
-      return result;
-      }
-end
-
-/*
- * DrawArc(w, x1, y1, width1, height1, angle11, angle21,...)
- */
-"DrawArc(argv[]){1} - draw arc"
-
-function{1} DrawArc(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, j, r, warg = 0;
-      XArc arcs[MAXXOBJS];
-      C_integer x, y, width, height;
-      double a1, a2;
-
-      OptWindow(w);
-      j = 0;
-      for (i = warg; i < argc || i == warg; i += 6) {
-         if (j == MAXXOBJS) {
-            drawarcs(w, arcs, MAXXOBJS);
-            j = 0;
-            }
-         r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
-         if (r >= 0)
-            runerr(101, argv[r]);
-
-         arcs[j].x = x;
-         arcs[j].y = y;
-         ARCWIDTH(arcs[j]) = width;
-         ARCHEIGHT(arcs[j]) = height;
-
-	 /*
-	  * Angle 1 processing.  Computes in radians and 64'ths of a degree,
-	  *  bounds checks, and handles wraparound.
-	  */
-         if (i + 4 >= argc || is:null(argv[i + 4]))
-	    a1 = 0.0;
-         else {
-            if (!cnv:C_double(argv[i + 4], a1))
-               runerr(102, argv[i + 4]);
-            if (a1 >= 0.0)
-               a1 = fmod(a1, 2 * Pi);
-            else
-               a1 = -fmod(-a1, 2 * Pi);
-            }
-	 /*
-	  * Angle 2 processing
-	  */
-         if (i + 5 >= argc || is:null(argv[i + 5]))
-	    a2 = 2 * Pi;
-         else {
-            if (!cnv:C_double(argv[i + 5], a2))
-               runerr(102, argv[i + 5]);
-            if (fabs(a2) > 3 * Pi)
-               runerr(101, argv[i + 5]);
-            }
-         if (fabs(a2) >= 2 * Pi) {
-	    a2 = 2 * Pi;
-	    }
-         else {
-            if (a2 < 0.0) {
-               a1 += a2;
-               a2 = fabs(a2);
-               }
-            }
-         if (a1 < 0.0)
-            a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
-         else
-            a1 = fmod(a1, 2 * Pi);
-         arcs[j].angle1 = ANGLE(a1);
-         arcs[j].angle2 = EXTENT(a2);
-
-         j++;
-         }
-
-      drawarcs(w, arcs, j);
-      ReturnWindow;
-      }
-end
-
-/*
- * DrawCircle(w, x1, y1, r1, angle11, angle21, ...)
- */
-"DrawCircle(argv[]){1} - draw circle"
-
-function{1} DrawCircle(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int warg = 0, r;
-
-      OptWindow(w);
-      r = docircles(w, argc - warg, argv + warg, 0);
-      if (r < 0)
-         ReturnWindow;
-      else if (r >= argc - warg)
-         runerr(146);
-      else 
-         runerr(102, argv[warg + r]);
-      }
-end
-
-/*
- * DrawCurve(w,x1,y1,...xN,yN)
- *  Draw a smooth curve through the given points.
- */
-"DrawCurve(argv[]){1} - draw curve"
-
-function{1} DrawCurve(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, n, closed = 0, warg = 0;
-      C_integer dx, dy, x0, y0, xN, yN;
-      XPoint *points;
-
-      OptWindow(w);
-      CheckArgMultiple(2);
-
-      dx = w->context->dx;
-      dy = w->context->dy;
-
-      Protect(points = (XPoint *)malloc(sizeof(XPoint) * (n+2)), runerr(305));
-
-      if (n > 1) {
-	 CnvCInteger(argv[warg], x0)
-	 CnvCInteger(argv[warg + 1], y0)
-	 CnvCInteger(argv[argc - 2], xN)
-	 CnvCInteger(argv[argc - 1], yN)
-         if ((x0 == xN) && (y0 == yN)) {
-            closed = 1;               /* duplicate the next to last point */
-	    CnvCShort(argv[argc-4], points[0].x);
-	    CnvCShort(argv[argc-3], points[0].y);
-	    points[0].x += w->context->dx;
-	    points[0].y += w->context->dy;
-            }
-         else {                       /* duplicate the first point */
-	    CnvCShort(argv[warg], points[0].x);
-	    CnvCShort(argv[warg + 1], points[0].y);
-	    points[0].x += w->context->dx;
-	    points[0].y += w->context->dy;
-            }
-         for (i = 1; i <= n; i++) {
-	    int base = warg + (i-1) * 2;
-            CnvCShort(argv[base], points[i].x);
-            CnvCShort(argv[base + 1], points[i].y);
-	    points[i].x += dx;
-	    points[i].y += dy;
-            }
-         if (closed) {                /* duplicate the second point */
-            points[i] = points[2];
-            }
-         else {                       /* duplicate the last point */
-            points[i] = points[i-1];
-            }
-	 if (n < 3) {
-	    drawlines(w, points+1, n);
-	    }
-	 else {
-	    drawCurve(w, points, n+2);
-	    }
-         }
-      free(points);
-      ReturnWindow;
-      }
-end
-
-
-"DrawImage(w,x,y,s) - draw bitmapped figure"
-
-function{0,1} DrawImage(argv[argc])
-   abstract {
-      return null++integer
-      }
-   body {
-      wbp w;
-      int warg = 0;
-      int c, i, width, height, row, p;
-      C_integer x, y;
-      word nchars;
-      unsigned char *s, *t, *z;
-      struct descrip d;
-      struct palentry *e;
-      OptWindow(w);
-
-      /*
-       * X or y can be defaulted but s is required.
-       * Validate x/y first so that the error message makes more sense.
-       */
-      if (argc - warg >= 1 && !def:C_integer(argv[warg], -w->context->dx, x))
-         runerr(101, argv[warg]);
-      if (argc - warg >= 2 && !def:C_integer(argv[warg + 1], -w->context->dy, y))
-         runerr(101, argv[warg + 1]);
-      if (argc - warg < 3)
-         runerr(103);			/* missing s */
-      if (!cnv:tmp_string(argv[warg+2], d))
-         runerr(103, argv[warg + 2]);
-
-      x += w->context->dx;
-      y += w->context->dy;
-      /*
-       * Extract the Width and skip the following comma.
-       */
-      s = (unsigned char *)StrLoc(d);
-      z = s + StrLen(d);		/* end+1 of string */
-      width = 0;
-      while (s < z && *s == ' ')	/* skip blanks */
-	 s++;
-      while (s < z && isdigit(*s))	/* scan number */
-         width = 10 * width + *s++ - '0';
-      while (s < z && *s == ' ')	/* skip blanks */
-	 s++;
-      if (width == 0 || *s++ != ',')	/* skip comma */
-         fail;
-      while (s < z && *s == ' ')	/* skip blanks */
-	 s++;
-      if (s >= z)			/* if end of string */
-	 fail;
-
-      /*
-       * Check for a bilevel format.
-       */
-      if ((c = *s) == '#' || c == '~') {
-         s++;
-         nchars = 0;
-         for (t = s; t < z; t++)
-            if (isxdigit(*t))
-               nchars++;			/* count hex digits */
-            else if (*t != PCH1 && *t != PCH2)
-               fail;				/* illegal punctuation */
-         if (nchars == 0)
-            fail;
-         row = (width + 3) / 4;			/* digits per row */
-         if (nchars % row != 0)
-            fail;
-         height = nchars / row;
-         if (blimage(w, x, y, width, height, c, s, (word)(z - s)) == Error)
-            runerr(305);
-         else
-            return nulldesc;
-         }
-
-      /*
-       * Extract the palette name and skip its comma.
-       */
-      c = *s++;					/* save initial character */
-      p = 0;
-      while (s < z && isdigit(*s))		/* scan digits */
-         p = 10 * p + *s++ - '0';
-      while (s < z && *s == ' ')		/* skip blanks */
-	 s++;
-      if (s >= z || p == 0 || *s++ != ',')	/* skip comma */
-         fail;
-      if (c == 'g' && p >= 2 && p <= 256)	/* validate grayscale number */
-         p = -p;
-      else if (c != 'c' || p < 1 || p > 6)	/* validate color number */
-         fail;
-
-      /*
-       * Scan the image to see which colors are needed.
-       */
-      e = palsetup(p); 
-      if (e == NULL)
-         runerr(305);
-      for (i = 0; i < 256; i++)
-         e[i].used = 0;
-      nchars = 0;
-      for (t = s; t < z; t++) {
-         c = *t; 
-         e[c].used = 1;
-         if (e[c].valid || e[c].transpt)
-            nchars++;			/* valid color, or transparent */
-         else if (c != PCH1 && c != PCH2)
-            fail;
-         }
-      if (nchars == 0)
-         fail;					/* empty image */
-      if (nchars % width != 0)
-         fail;					/* not rectangular */
-
-      /*
-       * Call platform-dependent code to draw the image.
-       */
-      height = nchars / width;
-      i = strimage(w, x, y, width, height, e, s, (word)(z - s), 0);
-      if (i == 0)
-         return nulldesc;
-      else if (i < 0)
-         runerr(305);
-      else
-         return C_integer i;
-      }
-end
-
-/*
- * DrawLine(w,x1,y1,...xN,yN)
- */
-"DrawLine(argv[]){1} - draw line"
-
-function{1} DrawLine(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, j, n, warg = 0;
-      XPoint points[MAXXOBJS];
-      int dx, dy;
-      OptWindow(w);
-
-     {
-      CheckArgMultiple(2);
-
-      dx = w->context->dx;
-      dy = w->context->dy;
-      for(i=0, j=0;i<n;i++, j++) {
-	 int base = warg + i * 2;
-         if (j==MAXXOBJS) {
-	    drawlines(w, points, MAXXOBJS);
-	    points[0] = points[MAXXOBJS-1];
-   	    j = 1;
-            }
-         CnvCShort(argv[base], points[j].x);
-         CnvCShort(argv[base + 1], points[j].y);
-	 points[j].x += dx;
-	 points[j].y += dy;
-         }
-      drawlines(w, points, j);
-      ReturnWindow;
-        }
-      }
-end
-
-/*
- * DrawPoint(w, x1, y1, ...xN, yN)
- */
-"DrawPoint(argv[]){1} - draw point"
-
-function{1} DrawPoint(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, j, n, warg = 0;
-      XPoint points[MAXXOBJS];
-      int dx, dy;
-
-      OptWindow(w);
-  
-     {
-     CheckArgMultiple(2);
-      dx = w->context->dx;
-      dy = w->context->dy;
-      for(i=0, j=0; i < n; i++, j++) {
-	 int base = warg + i * 2;
-         if (j == MAXXOBJS) {
-	    drawpoints(w, points, MAXXOBJS);
-            j = 0;
-            }
-         CnvCShort(argv[base], points[j].x);
-         CnvCShort(argv[base + 1], points[j].y);
-	 points[j].x += dx;
-	 points[j].y += dy;
-       }
-      drawpoints(w, points, j);
-      ReturnWindow;
-
-        }
-     }
-end
-
-/*
- * DrawPolygon(w,x1,y1,...xN,yN)
- */
-"DrawPolygon(argv[]){1} - draw polygon"
-
-function{1} DrawPolygon(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, j, n, base, dx, dy, warg = 0;
-      XPoint points[MAXXOBJS];
-      OptWindow(w);
-
-     {
-      CheckArgMultiple(2);
-
-      dx = w->context->dx;
-      dy = w->context->dy;
-
-      /*
-       * To make a closed polygon, start with the *last* point.
-       */
-      CnvCShort(argv[argc - 2], points[0].x);
-      CnvCShort(argv[argc - 1], points[0].y);
-      points[0].x += dx;
-      points[0].y += dy;
-
-      /*
-       * Now add all points from beginning to end, including last point again.
-       */
-      for(i = 0, j = 1; i < n; i++, j++) {
-         base = warg + i * 2;
-         if (j == MAXXOBJS) {
-            drawlines(w, points, MAXXOBJS);
-            points[0] = points[MAXXOBJS-1];
-            j = 1;
-            }
-         CnvCShort(argv[base], points[j].x);
-         CnvCShort(argv[base + 1], points[j].y);
-         points[j].x += dx;
-         points[j].y += dy;
-         }
-      drawlines(w, points, j);
-      ReturnWindow;
-       }
-     }
-end
-
-
-/*
- * DrawRectangle(w, x1, y1, width1, height1, ..., xN, yN, widthN,heightN)
- */
-"DrawRectangle(argv[]){1} - draw rectangle"
-
-function{1} DrawRectangle(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, j, r, warg = 0;
-      XRectangle recs[MAXXOBJS];
-      C_integer x, y, width, height;
-
-      OptWindow(w);
-      j = 0;
-
-      for (i = warg; i < argc || i == warg; i += 4) {
-         r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
-         if (r >= 0)
-            runerr(101, argv[r]);
-         if (j == MAXXOBJS) {
-            drawrectangles(w,recs,MAXXOBJS);
-            j = 0;
-            }
-         RECX(recs[j]) = x;
-         RECY(recs[j]) = y;
-         RECWIDTH(recs[j]) = width;
-         RECHEIGHT(recs[j]) = height;
-         j++;
-         }
-
-      drawrectangles(w, recs, j);
-      ReturnWindow;
-      }
-end
-
-/*
- * DrawSegment(x11,y11,x12,y12,...,xN1,yN1,xN2,yN2)
- */
-"DrawSegment(argv[]){1} - draw line segment"
-
-function{1} DrawSegment(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, j, n, warg = 0, dx, dy;
-      XSegment segs[MAXXOBJS];
-
-      OptWindow(w);
-
-     {
-
-      CheckArgMultiple(4);
-
-      dx = w->context->dx;
-      dy = w->context->dy;
-      for(i=0, j=0; i < n; i++, j++) {
-	 int base = warg + i * 4;
-         if (j == MAXXOBJS) {
-	    drawsegments(w, segs, MAXXOBJS);
-            j = 0;
-            }
-         CnvCShort(argv[base], segs[j].x1);
-         CnvCShort(argv[base + 1], segs[j].y1);
-         CnvCShort(argv[base + 2], segs[j].x2);
-         CnvCShort(argv[base + 3], segs[j].y2);
-	 segs[j].x1 += dx;
-	 segs[j].x2 += dx;
-	 segs[j].y1 += dy;
-	 segs[j].y2 += dy;
-         }
-      drawsegments(w, segs, j);
-	 }
-      ReturnWindow;
-      }
-end
-
-/*
- * DrawString(w, x1, y1, s1, ..., xN, yN, sN)
- */
-"DrawString(argv[]){1} - draw text"
-
-function{1} DrawString(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, n, len, warg = 0;
-      char *s;
-      int dx, dy;
-
-      OptWindow(w);
-      CheckArgMultiple(3);
-
-      for(i=0; i < n; i++) {
-         C_integer x, y;
-	 int base = warg + i * 3;
-         CnvCInteger(argv[base], x);
-         CnvCInteger(argv[base + 1], y);
-	 x += w->context->dx;
-	 y += w->context->dy;
-         CnvTmpString(argv[base + 2], argv[base + 2]);
-	 s = StrLoc(argv[base + 2]);
-	 len = StrLen(argv[base + 2]);
-	 drawstrng(w, x, y, s, len);
-         }
-      ReturnWindow;
-      }
-end
-
-
-"EraseArea(w,x,y,width,height) - clear an area of the window"
-
-function{1} EraseArea(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int warg = 0, i, r;
-      C_integer x, y, width, height;
-      OptWindow(w);
-
-
-      for (i = warg; i < argc || i == warg; i += 4) {
-         r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
-         if (r >= 0)
-            runerr(101, argv[r]);
-         eraseArea(w, x, y, width, height);
-         }
-
-      ReturnWindow;
-      }
-end
-
-
-"NextEvent(w) - return an event from a window"
-
-function{1} NextEvent(argv[argc])
-   abstract {
-      return string ++ integer
-      }
-   body {
-      wbp w;
-      C_integer i, t;
-      tended struct descrip d;
-      int warg = 0;
-      if (argc>warg && is:window(argv[warg])) {
-	 d = argv[warg++];
-         }
-      else {
-	 d = kywd_xwin[XKey_Window];
-	 }
-      if (is:null(d))
-	 runerr(140,d);
-      if (!BlkLoc(d)->window.isopen)
-         runerr(142,d);
-      w = BlkLoc(d)->window.wb;
-
-      if (ISCLOSED(w) && BlkLoc(w->window->listp)->list.size == 0)
-	 runerr(142,d);
-      if (argc - warg < 1)
-	 t = -1;
-      else
-	 CnvCInteger(argv[warg], t)
-      d = nulldesc;
-      i = wgetevent(w, &d, t);
-      if (i == -3) {
-         if (t < 0) {
-            /* Something's wrong, but what?  */
-            runerr(-1);
-            }
-         fail;
-         }
-      if (i == 0) {
-         if (is:window(kywd_xwin[XKey_Window]) &&
-               w == BlkLoc(kywd_xwin[XKey_Window])->window.wb)
-	    lastEventWin = kywd_xwin[XKey_Window];
-	 else
-	    lastEventWin = argv[warg-1];
-         lastEvFWidth = FWIDTH(BlkLoc(lastEventWin)->window.wb);
-         lastEvAscent = ASCENT(BlkLoc(lastEventWin)->window.wb);
-	 if (is:integer(d) && IntVal(d)==WINDOWCLOSED && 
-	     !(w->window->inputmask & WindowClosureMask)) {
-	    /* closed, don't accept more I/O on it */
-            BlkLoc(lastEventWin)->window.isopen = 0;
-	    }
-	 return d;
-	 }
-      else if (i == -1)
-	 runerr(141);
-      else
-	 runerr(143);
-      }
-end
-
-
-"Fg(w,s) - foreground color"
-
-function{0,1} Fg(argv[argc])
-   abstract {
-      return string
-      }
-   body {
-      wbp w;
-      char sbuf1[MaxCvtLen];
-      int len;
-      tended char *tmp;
-	char *temp;
-
-      int warg = 0;
-
-      OptWindow(w);
-
-      /*
-       * If there is a (non-window) argument we are setting by
-       *  either a mutable color (negative int) or a string name.
-       */
-      if (argc - warg > 0) {
-	  if (is:integer(argv[warg])) {	/* mutable color or packed RGB */
-	    if (isetfg(w, IntVal(argv[warg])) == Failed) fail;
-	    }
-	  else {
-	    if (!cnv:C_string(argv[warg], tmp))
-	       runerr(103,argv[warg]);
-	     if(setfg(w, tmp) == Failed) fail;
- 	 }
-
-      }
-
-      /*
-       * In any case, this function returns the current foreground color.
-       */
-
-      getfg(w, sbuf1);
-
-      len = strlen(sbuf1);
-      Protect(tmp = alcstr(sbuf1, len), runerr(0));
-      return string(len, tmp);
-      }
-end
-
-/*
- * FillArc(w, x1, y1, width1, height1, angle11, angle21,...)
- */
-"FillArc(argv[]){1} - fill arc"
-
-function{1} FillArc(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, j, r, warg = 0;
-      XArc arcs[MAXXOBJS];
-      C_integer x, y, width, height;
-      double a1, a2;
-
-      OptWindow(w);
-      j = 0;
-      for (i = warg; i < argc || i == warg; i += 6) {
-         if (j == MAXXOBJS) {
-            fillarcs(w, arcs, MAXXOBJS);
-            j = 0;
-            }
-         r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
-         if (r >= 0)
-            runerr(101, argv[r]);
-
-         arcs[j].x = x;
-         arcs[j].y = y;
-         ARCWIDTH(arcs[j]) = width;
-         ARCHEIGHT(arcs[j]) = height;
-
-         if (i + 4 >= argc || is:null(argv[i + 4])) {
-            a1 = 0.0;
-	    }
-         else {
-            if (!cnv:C_double(argv[i + 4], a1))
-               runerr(102, argv[i + 4]);
-            if (a1 >= 0.0)
-               a1 = fmod(a1, 2 * Pi);
-            else
-               a1 = -fmod(-a1, 2 * Pi);
-            }
-         if (i + 5 >= argc || is:null(argv[i + 5]))
-	    a2 = 2 * Pi;
-         else {
-            if (!cnv:C_double(argv[i + 5], a2))
-               runerr(102, argv[i + 5]);
-            if (fabs(a2) > 3 * Pi)
-               runerr(101, argv[i + 5]);
-            }
-         if (fabs(a2) >= 2 * Pi) {
-	    a2 = 2 * Pi;
-	    }
-         else {
-            if (a2 < 0.0) {
-               a1 += a2;
-               a2 = fabs(a2);
-               }
-            }
-         arcs[j].angle2 = EXTENT(a2);
-         if (a1 < 0.0)
-            a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
-         else
-           a1 = fmod(a1, 2 * Pi);
-         arcs[j].angle1 = ANGLE(a1);
-
-         j++;
-         }
-
-      fillarcs(w, arcs, j);
-      ReturnWindow;
-      }
-end
-
-/*
- * FillCircle(w, x1, y1, r1, angle11, angle21, ...)
- */
-"FillCircle(argv[]){1} - draw filled circle"
-
-function{1} FillCircle(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int warg = 0, r;
-
-      OptWindow(w);
-      r = docircles(w, argc - warg, argv + warg, 1);
-      if (r < 0)
-         ReturnWindow;
-      else if (r >= argc - warg)
-         runerr(146);
-      else 
-         runerr(102, argv[warg + r]);
-      }
-end
-
-/*
- * FillPolygon(w, x1, y1, ...xN, yN)
- */
-"FillPolygon(argv[]){1} - fill polygon"
-
-function{1} FillPolygon(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, j, n, warg = 0;
-      XPoint *points;
-      int dx, dy;
-      OptWindow(w);
-
-      {
-      CheckArgMultiple(2);
-
-      /*
-       * Allocate space for all the points in a contiguous array,
-       * because a FillPolygon must be performed in a single call.
-       */
-      n = argc>>1;
-      Protect(points = (XPoint *)malloc(sizeof(XPoint) * n), runerr(305));
-      dx = w->context->dx;
-      dy = w->context->dy;
-      for(i=0; i < n; i++) {
-	 int base = warg + i * 2;
-	 CnvCShort(argv[base], points[i].x);
-	 CnvCShort(argv[base + 1], points[i].y);
-	 points[i].x += dx;
-	 points[i].y += dy;
-	 }
-      fillpolygon(w, points, n);
-      free(points);
-      ReturnWindow;
-       }
-      }
-
-end
-
-/*
- * FillRectangle(w, x1, y1, width1, height1,...,xN, yN, widthN, heightN)
- */
-"FillRectangle(argv[]){1} - draw filled rectangle"
-
-function{1} FillRectangle(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int i, j, r, warg = 0;
-      XRectangle recs[MAXXOBJS];
-      C_integer x, y, width, height;
-
-      OptWindow(w);
-      j = 0;
-
-      for (i = warg; i < argc || i == warg; i += 4) {
-         r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
-         if (r >= 0)
-            runerr(101, argv[r]);
-         if (j == MAXXOBJS) {
-            fillrectangles(w,recs,MAXXOBJS);
-            j = 0;
-            }
-         RECX(recs[j]) = x;
-         RECY(recs[j]) = y;
-         RECWIDTH(recs[j]) = width;
-         RECHEIGHT(recs[j]) = height;
-         j++;
-         }
-
-      fillrectangles(w, recs, j);
-      ReturnWindow;
-      }
-end
-
-
-
-"Font(w,s) - get/set font"
-
-function{0,1} Font(argv[argc])
-   abstract {
-      return string
-      }
-   body {
-      tended char *tmp;
-      int len;
-      wbp w;
-      int warg = 0;
-      char buf[MaxCvtLen];
-      OptWindow(w);
-
-      if (warg < argc) {
-         if (!cnv:C_string(argv[warg],tmp))
-            runerr(103,argv[warg]);
-         if (setfont(w,&tmp) == Failed) fail;
-         }
-      getfntnam(w, buf);
-      len = strlen(buf);
-      Protect(tmp = alcstr(buf, len), runerr(0));
-      return string(len,tmp);
-      }
-end
-
-
-"FreeColor(argv[]) - free colors"
-
-function{1} FreeColor(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int warg = 0;
-      int i;
-      C_integer n;
-      tended char *s;
-
-      OptWindow(w);
-      if (argc - warg == 0) runerr(103);
-
-      for (i = warg; i < argc; i++) {
-         if (is:integer(argv[i])) {
-            CnvCInteger(argv[i], n)
-            if (n < 0)
-               free_mutable(w, n);
-            }
-         else {
-            if (!cnv:C_string(argv[i], s))
-               runerr(103,argv[i]);
-            freecolor(w, s);
-            }
-         }
-
-      ReturnWindow;
-      }
-
-end
-
-
-
-"Lower(w) - lower w to the bottom of the window stack"
-
-function{1} Lower(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int warg = 0;
-      OptWindow(w);
-      lowerWindow(w);
-      ReturnWindow;
-      }
-end
-
-
-"NewColor(w,s) - allocate an entry in the color map"
-
-function{0,1} NewColor(argv[argc])
-   abstract {
-      return integer
-      }
-   body {
-      wbp w;
-      int rv;
-      int warg = 0;
-      OptWindow(w);
-
-      if (mutable_color(w, argv+warg, argc-warg, &rv) == Failed) fail;
-      return C_integer rv;
-      }
-end
-
-
-
-"PaletteChars(w,p) - return the characters forming keys to palette p"
-
-function{0,1} PaletteChars(argv[argc])
-   abstract {
-      return string
-      }
-   body {
-      int n, warg;
-      extern char c1list[], c2list[], c3list[], c4list[];
-
-      if (is:window(argv[0]))
-         warg = 1;
-      else
-         warg = 0;		/* window not required */
-      if (argc - warg < 1)
-         n = 1;
-      else
-         n = palnum(&argv[warg]);
-      switch (n) {
-         case -1:  runerr(103, argv[warg]);		/* not a string */
-         case  0:  fail;				/* unrecognized */
-         case  1:  return string(90, c1list);			/* c1 */
-         case  2:  return string(9, c2list);			/* c2 */
-         case  3:  return string(31, c3list);			/* c3 */
-         case  4:  return string(73, c4list);			/* c4 */
-         case  5:  return string(141, (char *)allchars);	/* c5 */
-         case  6:  return string(241, (char *)allchars);	/* c6 */
-         default:					/* gn */
-            if (n >= -64)
-               return string(-n, c4list);
-            else
-               return string(-n, (char *)allchars);
-         }
-      fail; /* NOTREACHED */ /* avoid spurious rtt warning message */
-      }
-end
-
-
-"PaletteColor(w,p,s) - return color of key s in palette p"
-
-function{0,1} PaletteColor(argv[argc])
-   abstract {
-      return string
-      }
-   body {
-      int p, warg, len;
-      char tmp[24], *s;
-      struct palentry *e;
-      tended struct descrip d;
-
-      if (is:window(argv[0]))
-         warg = 1;
-      else
-         warg = 0;			/* window not required */
-      if (argc - warg < 2)
-         runerr(103);
-      p = palnum(&argv[warg]);
-      if (p == -1)
-         runerr(103, argv[warg]);
-      if (p == 0)
-         fail;
-      if (!cnv:tmp_string(argv[warg + 1], d))
-         runerr(103, argv[warg + 1]);
-      if (StrLen(d) != 1)
-         runerr(205, d);
-      e = palsetup(p); 
-      if (e == NULL)
-         runerr(305);
-      e += *StrLoc(d) & 0xFF;
-      if (!e->valid)
-         fail;
-      sprintf(tmp, "%ld,%ld,%ld", e->clr.red, e->clr.green, e->clr.blue);
-      len = strlen(tmp);
-      Protect(s = alcstr(tmp, len), runerr(306));
-      return string(len, s);
-      }
-end
-
-
-"PaletteKey(w,p,s) - return key of closest color to s in palette p"
-
-function{0,1} PaletteKey(argv[argc])
-   abstract {
-      return string
-      }
-   body {
-      wbp w;
-      int warg = 0, p;
-      C_integer n;
-      tended char *s;
-      long r, g, b, a;
-
-      if (is:window(argv[0])) {
-         w = BlkLoc(argv[0])->window.wb;	/* explicit window */	
-         warg = 1;
-         }
-      else if (is:window(kywd_xwin[XKey_Window]))
-         w = BlkLoc(kywd_xwin[XKey_Window])->window.wb;	/* &window */
-      else
-         w = NULL;			/* no window (but proceed anyway) */
-
-      if (argc - warg < 2)
-         runerr(103);
-      p = palnum(&argv[warg]);
-      if (p == -1)
-         runerr(103, argv[warg]);
-      if (p == 0)
-         fail;
-
-      if (cnv:C_integer(argv[warg + 1], n)) {
-         if (w == NULL || (s = get_mutable_name(w, n)) == NULL)
-            fail;
-         }
-      else if (!cnv:C_string(argv[warg + 1], s))
-         runerr(103, argv[warg + 1]);
-
-      if (parsecolor(w, s, &r, &g, &b, &a) == Succeeded)
-         return string(1, rgbkey(p, r / 65535.0, g / 65535.0, b / 65535.0));
-      else
-         fail;
-      }
-end
-
-
-"Pattern(w,s) - sets the context fill pattern by string name"
-
-function{1} Pattern(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      int warg = 0;
-      wbp w;
-      OptWindow(w);
-
-      if (argc - warg == 0)
-         runerr(103, nulldesc);
-
-      if (! cnv:string(argv[warg], argv[warg]))
-         runerr(103, nulldesc);
-
-      switch (SetPattern(w, StrLoc(argv[warg]), StrLen(argv[warg]))) {
-         case Error:
-            runerr(0, argv[warg]);
-         case Failed:
-            fail;
-         }
-
-      ReturnWindow;
-      }
-end
-
-
-"Pending(w,x[]) - produce a list of events pending on window"
-
-function{0,1} Pending(argv[argc])
-   abstract {
-      return list
-      }
-   body {
-      wbp w;
-      int warg = 0;
-      wsp ws;
-      int i;
-      int isclosed = 0;
-
-      /* not using OptWindow() macro here since Pending() does no I/O */
-
-      if (argc>warg && is:window(argv[warg])) {
-         w = BlkLoc(argv[warg])->window.wb;
-         if (!BlkLoc(argv[warg])->window.isopen)
-            isclosed = 1;
-         warg++;
-         }
-      else {
-         if (!(is:window(kywd_xwin[XKey_Window])))
-	    runerr(140,kywd_xwin[XKey_Window]);
-         if (!BlkLoc(kywd_xwin[XKey_Window])->window.isopen)
-            isclosed = 1;
-         w = BlkLoc(kywd_xwin[XKey_Window])->window.wb;
-         if (ISCLOSED(w))
-	    isclosed = 1;
-         }
-
-      ws = w->window;
-      if (isclosed == 0)
-	 wsync(w);
-
-      /*
-       * put additional arguments to Pending on the pending list in
-       * guaranteed consecutive order.
-       */
-      for (i = warg; i < argc; i++) {
-         c_put(&(ws->listp), &argv[i]);
-         }
-
-      /*
-       * retrieve any events that might be relevant before returning the
-       * pending queue.
-       */
-      switch (pollevent()) {
-         case -1: runerr(141);
-         case 0: fail;
-	 }
-      return ws->listp;
-      }
-end
-
-
-
-"Pixel(w,x,y,width,height) - produce the contents of some pixels"
-
-function{3} Pixel(argv[argc])
-   abstract {
-      return integer ++ string
-      }
-   body {
-      struct imgmem imem;
-      C_integer x, y, width, height;
-      wbp w;
-      int warg = 0, slen, r;
-      tended struct descrip lastval;
-      char strout[50];
-      OptWindow(w);
-
-      r = rectargs(w, argc, argv, warg, &x, &y, &width, &height);
-      if (r >= 0)
-         runerr(101, argv[r]);
-
-      {
-      int i, j;
-      long rv;
-      wsp ws = w->window;
-
-#ifndef max
-#define max(x,y) (((x)<(y))?(y):(x))
-#define min(x,y) (((x)>(y))?(y):(x))
-#endif
-
-      imem.x = max(x,0);
-      imem.y = max(y,0);
-      imem.width = min(width, (int)ws->width - imem.x);
-      imem.height = min(height, (int)ws->height - imem.y);
-
-      if (getpixel_init(w, &imem) == Failed) fail;
-
-      lastval = emptystr;
-
-      for (j=y; j < y + height; j++) {
-         for (i=x; i < x + width; i++) {
-            getpixel(w, i, j, &rv, strout, &imem);
-	
-            slen = strlen(strout);
-            if (rv >= 0) {
-	       int signal;
-               if (slen != StrLen(lastval) ||
-                     strncmp(strout, StrLoc(lastval), slen)) {
-                  Protect((StrLoc(lastval) = alcstr(strout, slen)), runerr(0));
-                  StrLen(lastval) = slen;
-                  }
-	       /*
-		* suspend, but free up imem if vanquished; RTL workaround.
-		* Needs implementing under the compiler iconc.
-		*/
-	       r_args[0] = lastval;
-	       if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {
-		  tend = r_tend.previous;
-		  getpixel_term(w, &imem);
-		  VanquishReturn(signal);
-		  }
-               }
-            else {
-	       int signal;
-	       /*
-		* suspend, but free up imem if vanquished; RTL workaround
-		* Needs implementing under the compiler.
-		*/
-	       r_args[0].dword = D_Integer;
-	       r_args[0].vword.integr = rv;
-	       if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {
-		  tend = r_tend.previous;
-		  getpixel_term(w, &imem);
-		  VanquishReturn(signal);
-		  }
-               }
-            }
-         }
-      getpixel_term(w, &imem);
-      fail;
-      }
-      }
-end
-
-
-"QueryPointer(w) - produce mouse position"
-
-function{0,2} QueryPointer(w)
-
-   declare {
-      XPoint xp;
-      }
-   abstract {
-      return integer
-      }
-   body {
-      pollevent();
-      if (is:null(w)) {
-	 query_rootpointer(&xp);
-	 }
-      else {
-	 if (!is:window(w))
-	    runerr(140, w);
-	 query_pointer(BlkLoc(w)->window.wb, &xp);
-	 }
-      suspend C_integer xp.x;
-      suspend C_integer xp.y;
-      fail;
-      }
-end
-
-
-"Raise(w) - raise w to the top of the window stack"
-
-function{1} Raise(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int warg = 0;
-      OptWindow(w);
-      raiseWindow(w);
-      ReturnWindow;
-      }
-end
-
-
-"ReadImage(w, s, x, y, p) - load image file"
-
-function{0,1} ReadImage(argv[argc])
-   abstract {
-      return integer
-      }
-   body {
-      wbp w;
-      char filename[MaxPath + 1];
-      tended char *tmp;
-      int status, warg = 0;
-      C_integer x, y;
-      int p, r;
-      struct imgdata imd;
-      OptWindow(w);
-
-      if (argc - warg == 0)
-	 runerr(103,nulldesc);
-      if (!cnv:C_string(argv[warg], tmp))
-	 runerr(103,argv[warg]);
-
-      /*
-       * x and y must be integers; they default to the upper left pixel.
-       */
-      if (argc - warg < 2) x = -w->context->dx;
-      else if (!def:C_integer(argv[warg+1], -w->context->dx, x))
-         runerr(101, argv[warg+1]);
-      if (argc - warg < 3) y = -w->context->dy;
-      else if (!def:C_integer(argv[warg+2], -w->context->dy, y))
-         runerr(101, argv[warg+2]);
-
-      /*
-       * p is an optional palette name.
-       */
-      if (argc - warg < 4 || is:null(argv[warg+3])) p = 0;
-      else {
-         p = palnum(&argv[warg+3]);
-         if (p == -1)
-            runerr(103, argv[warg+3]);
-         if (p == 0)
-            fail;
-         }
-
-      x += w->context->dx;
-      y += w->context->dy;
-      strncpy(filename, tmp, MaxPath);   /* copy to loc that won't move*/
-      filename[MaxPath] = '\0';
-
-      /*
-       * First try to read as a GIF file.
-       * If that doesn't work, try platform-dependent image reading code.
-       */
-      r = readGIF(filename, p, &imd);
-      if (r != Succeeded) r = readBMP(filename, p, &imd);
-      if (r == Succeeded) {
-         status = strimage(w, x, y, imd.width, imd.height, imd.paltbl,
-			   imd.data, (word)imd.width * (word)imd.height, 0);
-         if (status < 0)
-            r = Error;
-         free((pointer)imd.paltbl);
-         free((pointer)imd.data);
-         }
-      else if (r == Failed)
-         r = readimage(w, filename, x, y, &status);
-      if (r == Error)
-         runerr(305);
-      if (r == Failed)
-         fail;
-      if (status == 0)
-         return nulldesc;
-      else
-         return C_integer (word)status;
-      }
-end
-
-
-
-"WSync(w) - synchronize with server"
-
-function{1} WSync(w)
-   abstract {
-      return window++null
-      }
-   body {
-      wbp _w_;
-
-      if (is:null(w)) {
-	 _w_ = NULL;
-	 }
-      else if (!is:window(w)) runerr(140,w);
-      else {
-         _w_ = BlkLoc(w)->window.wb;
-	 }
-
-      wsync(_w_);
-      pollevent();
-      return w;
-      }
-end
-
-
-"TextWidth(w,s) - compute text pixel width"
-
-function{1} TextWidth(argv[argc])
-   abstract {
-      return integer
-      }
-   body {
-      wbp w;
-      int warg=0;
-      C_integer i;
-      OptWindow(w);
-
-      if (warg == argc) runerr(103,nulldesc);
-      else if (!cnv:tmp_string(argv[warg],argv[warg]))
-	 runerr(103,argv[warg]);
-       
-      i = TEXTWIDTH(w, StrLoc(argv[warg]), StrLen(argv[warg]));
-      return C_integer i;
-      }
-end
-
-
-"Uncouple(w) - uncouple window"
-
-function{1} Uncouple(w)
-   abstract {
-      return window
-      }
-   body {
-      wbp _w_;
-      if (!is:window(w)) 
-          runerr(140,w);
-      if (!BlkLoc(w)->window.isopen) 
-          runerr(142,w);
-      _w_ = BlkLoc(w)->window.wb;
-      free_binding(_w_);
-      return w;
-      }
-end
-
-"WAttrib(argv[]) - read/write window attributes"
-
-function{*} WAttrib(argv[argc])
-   abstract {
-      return window++string++integer
-      }
-   body {
-      wbp w, wsave;
-      word n;
-      tended struct descrip sbuf, sbuf2 = nulldesc;
-      char answer[4096];
-      int  pass, config = 0;
-      int warg = 0;
-      OptWindow(w);
-
-      wsave = w;
-      /*
-       * Loop through the arguments.
-       */
-
-      for (pass = 1; pass <= 2; pass++) {
-	 w = wsave;
-	 if (config && pass == 2) {
-	    if (do_config(w, config) == Failed) fail;
-	    }
-         for (n = warg; n < argc; n++) {
-            if (is:window(argv[n])) {/* Current argument is a file */
-               /*
-                * Switch the current file to the file named by the
-                *  current argument providing it is a file.  argv[n]
-                *  is made to be a empty string to avoid a special case.
-                */
-               w = BlkLoc(argv[n])->window.wb;
-	       if (config && pass == 2) {
-		  if (do_config(w, config) == Failed) fail;
-		  }
-               }
-            else {	/* Current argument should be a string */
-	       /*
-		* In pass 1, a null argument is an error; failed attribute
-		*  assignments are turned into null descriptors for pass 2
-		*  and are ignored.
-		*/
-               if (is:null(argv[n])) {
-		  if (pass == 2)
-		     continue;
-		  else runerr(109, argv[n]);
-		  }
-               /*
-                * If its an integer or real, it can't be a valid attribute.
-                */
-	       if (is:integer(argv[n]) || is:real(argv[n])) {
-		  runerr(145, argv[n]);
-		  }
-               /*
-                * Convert the argument to a string
-                */
-               if (!cnv:tmp_string(argv[n], sbuf)) 
-                  runerr(109, argv[n]);
-               /*
-                * Read/write the attribute
-                */
-               if (pass == 1) {
-            
-		  char *tmp_s = StrLoc(sbuf);
-		  char *tmp_s2 = StrLoc(sbuf) + StrLen(sbuf); 
-		  for ( ; tmp_s < tmp_s2; tmp_s++)
-		     if (*tmp_s == '=') break;
-		  if (tmp_s < tmp_s2) {
-		     /*
-		      * pass 1: perform attribute assignments
-		      */  
-
-
-		     switch (wattrib(w, StrLoc(sbuf), StrLen(sbuf),
-				     &sbuf2, answer)) {
-		     case Failed:
-		        /*
-			 * Mark the attribute so we don't produce a result
-			 */
-		        argv[n] = nulldesc;
-		        continue;
-		     case Error: runerr(0, argv[n]);
-               
-
-		     }
-		     if (StrLen(sbuf) > 4) {
-			if (!strncmp(StrLoc(sbuf), "pos=", 4)) config |= 1;
-			if (StrLen(sbuf) > 5) {
-			   if (!strncmp(StrLoc(sbuf), "posx=", 5)) config |= 1;
-			   if (!strncmp(StrLoc(sbuf), "posy=", 5)) config |= 1;
-			   if (!strncmp(StrLoc(sbuf), "rows=", 5)) config |= 2;
-			   if (!strncmp(StrLoc(sbuf), "size=", 5)) config |= 2;
-			   if (StrLen(sbuf) > 6) {
-			      if (!strncmp(StrLoc(sbuf), "width=", 6))
-				 config |= 2;
-			      if (!strncmp(StrLoc(sbuf), "lines=", 6))
-				 config |= 2;
-			      if (StrLen(sbuf) > 7) {
-				 if (!strncmp(StrLoc(sbuf), "height=", 7))
-				    config |= 2;
-				 if (!strncmp(StrLoc(sbuf), "resize=", 7))
-				    config |= 2;
-				 if (StrLen(sbuf) > 8) {
-				    if (!strncmp(StrLoc(sbuf), "columns=", 8))
-				       config |= 2;
-				    if (StrLen(sbuf) > 9) {
-				       if (!strncmp(StrLoc(sbuf),
-						    "geometry=", 9))
-					  config |= 3;
-				       }
-				    }
-				 }
-			      }
-			   }
-			}
-		     }
-		  }
-	       /*
-		* pass 2: perform attribute queries, suspend result(s)
-		*/
-               else if (pass==2) {
-		  char *stmp, *stmp2;
-		  /*
-		   * Turn assignments into queries.
-		   */
- 		  for( stmp = StrLoc(sbuf), 
- 		      stmp2 = stmp + StrLen(sbuf); stmp < stmp2; stmp++)
- 		     if (*stmp == '=') break;
- 		  if (stmp < stmp2)
-		     StrLen(sbuf) = stmp - StrLoc(sbuf);
-
-		  switch (wattrib(w, StrLoc(sbuf), StrLen(sbuf),
-				  &sbuf2, answer)) {
-		  case Failed: continue;
-		  case Error:  runerr(0, argv[n]);
-		     }
-		  if (is:string(sbuf2)) {
-	             char *p=StrLoc(sbuf2);
-		     Protect(StrLoc(sbuf2) = alcstr(StrLoc(sbuf2),StrLen(sbuf2)), runerr(0));
-                     if (p != answer) free(p);
-                     }
-                  suspend sbuf2;
-                  }
-               }
-            }
-	 }
-      fail;
-      }
-end
-
-
-"WDefault(w,program,option) - get a default value from the environment"
-
-function{0,1} WDefault(argv[argc])
-   abstract {
-      return string
-      }
-   body {
-      wbp w;
-      int warg = 0;
-      long l;
-      tended char *prog, *opt;
-      char sbuf1[MaxCvtLen];
-      OptWindow(w);
-
-      if (argc-warg < 2)
-         runerr(103);
-      if (!cnv:C_string(argv[warg],prog))
-         runerr(103,argv[warg]);
-      if (!cnv:C_string(argv[warg+1],opt))
-         runerr(103,argv[warg+1]);
-
-      if (getdefault(w, prog, opt, sbuf1) == Failed) fail;
-      l = strlen(sbuf1);
-      Protect(prog = alcstr(sbuf1,l),runerr(0));
-      return string(l,prog);
-      }
-end
-
-
-"WFlush(w) - flush all output to window w"
-
-function{1} WFlush(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int warg = 0;
-      OptWindow(w);
-      wflush(w);
-      ReturnWindow;
-      }
-end
-
-
-"WriteImage(w,filename,x,y,width,height) - write an image to a file"
-
-function{0,1} WriteImage(argv[argc])
-   abstract {
-      return window
-      }
-   body {
-      wbp w;
-      int r;
-      C_integer x, y, width, height, warg = 0;
-      tended char *s;
-      OptWindow(w);
-
-      if (argc - warg == 0)
-         runerr(103, nulldesc);
-      else if (!cnv:C_string(argv[warg], s))
-         runerr(103, argv[warg]);
-
-      r = rectargs(w, argc, argv, warg + 1, &x, &y, &width, &height);
-      if (r >= 0)
-         runerr(101, argv[r]);
-
-      /*
-       * clip image to window, and fail if zero-sized.
-       * (the casts to long are necessary to avoid unsigned comparison.)
-       */
-      if (x < 0) {
-	 width += x;
-	 x = 0;
-         }
-      if (y < 0) {
-	 height += y;
-	 y = 0;
-         }
-      if (x + width > (long) w->window->width)
-	 width = w->window->width - x;
-      if (y + height > (long) w->window->height)
-	 height = w->window->height - y;
-      if (width <= 0 || height <= 0)
-	 fail;
-
-      /*
-       * try platform-dependent code first; it will reject the call
-       * if the file name s does not specify a platform-dependent format.
-       */
-      r = dumpimage(w, s, x, y, width, height);
-#ifdef HAVE_LIBJPEG
-      if ((r == NoCvt) &&
-	  (strcmp(s + strlen(s)-4, ".jpg")==0 ||
-          (strcmp(s + strlen(s)-4, ".JPG")==0))) {
-	 r = writeJPEG(w, s, x, y, width, height);
-         }
-#endif					/* HAVE_LIBJPEG */
-      if (r == NoCvt)
-         r = writeBMP(w, s, x, y, width, height);
-      if (r == NoCvt)
-         r = writeGIF(w, s, x, y, width, height);
-      if (r != Succeeded)
-         fail;
-      ReturnWindow;
-      }
-end
-
-
-"OwnSelection(win,selection,callback) - set the window system's selection"
-
-function{1} OwnSelection(win, selection, callback)
-   if !is:window(win) then
-       runerr(140,win);
-   if !cnv:C_string(selection) then
-      runerr(103,selection)
-   if !is:proc(callback) then
-      runerr(106,callback);
-   abstract {
-      return window
-      }
-   body {
-       wbp w;
-       w = (wbp)BlkLoc(win)->window.wb;
-       w->window->selectionproc = callback;
-       ownselection(w, selection);
-       return win;
-   }
-end
-
-"GetSelectionContent(win,selection,target_type) - get the window system's selection"
-
-function{0,1} GetSelectionContent(win, selection,target_type)
-   if !is:window(win) then
-       runerr(140,win);
-   if !cnv:C_string(selection) then
-      runerr(103,selection)
-   if !def:C_string(target_type, "STRING") then
-      runerr(103,target_type)
-   abstract {
-      return string
-      }
-   body {
-       struct descrip s;
-       wbp w;
-       w = (wbp)BlkLoc(win)->window.wb;
-       s = getselectioncontent(w, selection,target_type);
-       if (is:null(s))
-           fail;
-       return s;
-   }
-end
-
-function{0,1} WOpen(attr[n])
-   abstract {
-      return window
-      }
+function{0,1} graphics_Window_open_impl(attr[n])
    body {
       int j, err_index = -1;
       tended struct b_list *hp;
       wbp f;
-      tended struct b_window *fl;
 
       /*
        * allocate an empty event queue for the window
@@ -2222,96 +42,1621 @@ function{0,1} WOpen(attr[n])
           else runerr(305);
       }
 
-      Protect(fl = alcwindow(f, 1), runerr(0));
+      return C_integer((long int)f);
+   }
+end
+
+static struct sdescrip wbpf = {3, "wbp"};
+
+#begdef WindowParam(p, w)
+wbp w;
+dptr w##_dptr;
+if (!is:object(p))
+    runerr(602, p);
+w##_dptr = c_get_instance_data(&p, (dptr)&wbpf);
+(w) = (wbp)IntVal(*w##_dptr);
+if (!(w))
+    runerr(142, p);
+if (ISCLOSED(w))
+    runerr(142, p);
+#enddef
+
+
+function{1} graphics_Window_alert(self, volume)
+   if !def:C_integer(volume, 0) then
+      runerr(101, volume)
+   body {
+       WindowParam(self, w);
+       walert(w, volume);
+       return nulldesc;
+   }
+end
+
+function{0,1} graphics_Window_bg(self, colr)
+   body {
+      char sbuf1[MaxCvtLen];
+      int len;
+      tended char *tmp;
+      WindowParam(self, w);
 
       /*
-       * link in the Icon file value so this window can find it
+       * If there is an argument we are setting by either a mutable
+       * color (negative int) or a string name.
        */
-      f->window->filep.dword = D_Window;
-      BlkLoc(f->window->filep) = (union block *)fl;
-      if (is:null(lastEventWin)) {
-          lastEventWin = f->window->filep;
-          lastEvFWidth = FWIDTH(f);
-          lastEvAscent = ASCENT(f);
+      if (!is:null(colr)) {
+          if (is:integer(colr)) {    /* mutable color or packed RGB */
+              if (isetbg(w, IntVal(colr)) == Failed) 
+                  fail;
+          }
+          else {
+              if (!cnv:C_string(colr, tmp))
+                  runerr(103, colr);
+              if(setbg(w, tmp) == Failed)
+                  fail;
+          }
       }
 
-      if (is:null(kywd_xwin[XKey_Window])) {
-          kywd_xwin[XKey_Window].dword = D_Window;
-          BlkLoc(kywd_xwin[XKey_Window]) = (union block *)fl;
-      }
-
-      return window(fl);
+      /*
+       * In any event, this function returns the current background color.
+       */
+      getbg(w, sbuf1);
+      len = strlen(sbuf1);
+      Protect(tmp = alcstr(sbuf1, len), runerr(0));
+      return string(len, tmp);
    }
 end
 
-function{1} WClose(f)
-   if !is:window(f) then
-      runerr(140, f);
+function{1} graphics_Window_clip(self, argv[argc])
    body {
+      int r;
+      C_integer x, y, width, height;
+      wcp wc;
+      WindowParam(self, w);
 
-     if (BlkLoc(f)->window.isopen) { /* not already closed? */
-         BlkLoc(f)->window.isopen = 0;
-         SETCLOSED(BlkLoc(f)->window.wb);
-         wclose(BlkLoc(f)->window.wb);
-         if (EqlDesc(f, kywd_xwin[XKey_Window]))
-             kywd_xwin[XKey_Window] = nulldesc;
-     }
-     return f;
+      wc = w->context;
+
+      if (argc == 0) {
+          wc->clipx = wc->clipy = 0;
+          wc->clipw = wc->cliph = -1;
+          unsetclip(w);
+      }
+      else {
+          r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
+          if (r >= 0)
+              runerr(101, argv[r]);
+          wc->clipx = x;
+          wc->clipy = y;
+          wc->clipw = width;
+          wc->cliph = height;
+          setclip(w);
+      }
+
+      return self;
+   }
+end
+
+function{1} graphics_Window_clone_impl(self, argv[argc])
+   body {
+       wbp w2;
+       int n;
+       tended struct descrip sbuf, sbuf2;
+       char answer[128];
+       WindowParam(self, w);
+
+       Protect(w2 = alc_wbinding(), runerr(0));
+       w2->window = w->window;
+       w2->window->refcount++;
+       Protect(w2->context = clone_context(w), runerr(0));
+
+       for (n = 0; n < argc; n++) {
+           if (!is:null(argv[n])) {
+               if (!cnv:tmp_string(argv[n], sbuf))
+                   runerr(109, argv[n]);
+               switch (wattrib(w2, StrLoc(argv[n]), StrLen(argv[n]), &sbuf2, answer)) {
+                   case Failed: fail;
+                   case Error: runerr(0, argv[n]);
+	       }
+           }
+       }
+
+       return C_integer((long int)w2);
+   }
+end
+
+function{0,1} graphics_Window_color(self, argv[argc])
+   body {
+      int i, len;
+      C_integer n;
+      char *colorname, *srcname;
+      tended char *tmp;
+      WindowParam(self, w);
+
+      if (argc == 0) runerr(101);
+
+      if (argc == 1) {			/* if this is a query */
+          CnvCInteger(argv[0], n)
+              if ((colorname = get_mutable_name(w, n)) == NULL)
+                  fail;
+          len = strlen(colorname);
+          Protect(tmp = alcstr(colorname, len), runerr(0));
+          return string(len, tmp);
+      }
+
+      CheckArgMultipleOf(2);
+
+      for (i = 0; i < argc; i += 2) {
+          CnvCInteger(argv[i], n)
+              if ((colorname = get_mutable_name(w, n)) == NULL)
+                  fail;
+
+          if (is:integer(argv[i+1])) {		/* copy another mutable  */
+              if (IntVal(argv[i+1]) >= 0)
+                  runerr(205, argv[i+1]);		/* must be negative */
+              if ((srcname = get_mutable_name(w, IntVal(argv[i+1]))) == NULL)
+                  fail;
+              if (set_mutable(w, n, srcname) == Failed) fail;
+              strcpy(colorname, srcname);
+          }
+   
+          else {					/* specified by name */
+              tended char *tmp;
+              if (!cnv:C_string(argv[i+1],tmp))
+                  runerr(103,argv[i+1]);
+   
+              if (set_mutable(w, n, tmp) == Failed) fail;
+              strcpy(colorname, tmp);
+          }
+      }
+
+      return self;
+   }
+end
+
+function{0,1} graphics_Window_color_value(self, k)
+   body {
+      C_integer n;
+      int len;
+      long r, g, b, a = 65535;
+      tended char *s;
+      char tmp[32], *t;
+      WindowParam(self, w);
+
+      if (is:null(k))
+          runerr(103);
+
+      if (cnv:C_integer(k, n)) {
+          if ((t = get_mutable_name(w, n)))
+              Protect(s = alcstr(t, (word)strlen(t)+1), runerr(306));
+          else
+              fail;
+      }
+      else if (!cnv:C_string(k, s))
+          runerr(103, k);
+
+      if (parsecolor(w, s, &r, &g, &b, &a) == Succeeded) {
+          if (a < 65535)
+              sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
+          else
+              sprintf(tmp,"%ld,%ld,%ld", r, g, b);
+          len = strlen(tmp);
+          Protect(s = alcstr(tmp,len), runerr(306));
+          return string(len, s);
+      }
+      fail;
+   }
+end
+
+function{0,1} graphics_Window_copy_area(src, dest, argv[argc])
+   body {
+      int n, r;
+      C_integer x, y, width, height, x2, y2, width2, height2;
+      wbp w2;
+
+      WindowParam(src, w);
+      if (is:null(dest))
+          w2 = w;
+      else {
+          WindowParam(dest, tmp);
+          w2 = tmp;
+      }
+
+      /*
+       * x1, y1, width, and height follow standard conventions.
+       */
+      r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
+      if (r >= 0)
+          runerr(101, argv[r]);
+
+      /*
+       * get x2 and y2, ignoring width and height.
+       */
+      n = argc;
+      if (n > 6)
+          n = 6;
+      r = rectargs(w2, n, argv, 4, &x2, &y2, &width2, &height2);
+      if (r >= 0)
+          runerr(101, argv[r]);
+
+      if (copyArea(w, w2, x, y, width, height, x2, y2) == Failed)
+          fail;
+
+      return nulldesc;
+   }
+end
+
+function{0,1} graphics_Window_couple_impl(win, win2)
+   body {
+      tended struct descrip sbuf, sbuf2;
+      wbp wb, wb2, wb_new;
+      wsp ws;
+
+      {
+          WindowParam(win, tmp);
+          wb = tmp;
+      }
+      {
+          WindowParam(win2, tmp);
+          wb2 = tmp;
+      }
+
+      /*
+       * make the new binding
+       */
+      Protect(wb_new = alc_wbinding(), runerr(0));
+
+      wb_new->window = ws = wb->window;
+      /*
+       * Bind an existing window to an existing context,
+       * and up the context's reference count.
+       */
+      if (rebind(wb_new, wb2) == Failed) 
+          fail;
+      wb_new->context->refcount++;
+
+      /* bump up refcount to ws */
+      ws->refcount++;
+
+      return C_integer((long int)wb_new);
    }
 end
 
 
-#else					/* Graphics */
+function{1} graphics_Window_draw_arc(self, argv[argc])
+   body {
+      int i, j, r;
+      XArc arcs[MAXXOBJS];
+      C_integer x, y, width, height;
+      double a1, a2;
 
-MissingGraphicsFunc(Active)
-MissingGraphicsFuncV(Alert)
-MissingGraphicsFuncV(Bg)
-MissingGraphicsFuncV(Clip)
-MissingGraphicsFuncV(Clone)
-MissingGraphicsFuncV(Color)
-MissingGraphicsFuncV(ColorValue)
-MissingGraphicsFuncV(CopyArea)
-MissingGraphicsFuncV(Couple)
-MissingGraphicsFuncV(DrawArc)
-MissingGraphicsFuncV(DrawCircle)
-MissingGraphicsFuncV(DrawCurve)
-MissingGraphicsFuncV(DrawImage)
-MissingGraphicsFuncV(DrawLine)
-MissingGraphicsFuncV(DrawPoint)
-MissingGraphicsFuncV(DrawPolygon)
-MissingGraphicsFuncV(DrawRectangle)
-MissingGraphicsFuncV(DrawSegment)
-MissingGraphicsFuncV(DrawString)
-MissingGraphicsFuncV(EraseArea)
-MissingGraphicsFuncV(Fg)
-MissingGraphicsFuncV(FillArc)
-MissingGraphicsFuncV(FillCircle)
-MissingGraphicsFuncV(FillPolygon)
-MissingGraphicsFuncV(FillRectangle)
-MissingGraphicsFuncV(Font)
-MissingGraphicsFuncV(FreeColor)
-MissingGraphicsFuncV(Lower)
-MissingGraphicsFuncV(NewColor)
-MissingGraphicsFuncV(NextEvent)
-MissingGraphicsFuncV(GetSelectionContent)
-MissingGraphicsFuncV(OwnSelection)
-MissingGraphicsFuncV(PaletteChars)
-MissingGraphicsFuncV(PaletteColor)
-MissingGraphicsFuncV(PaletteKey)
-MissingGraphicsFuncV(Pattern)
-MissingGraphicsFuncV(Pending)
-MissingGraphicsFuncV(Pixel)
-MissingGraphicsFunc1(QueryPointer)
-MissingGraphicsFuncV(Raise)
-MissingGraphicsFuncV(ReadImage)
-MissingGraphicsFuncV(TextWidth)
-MissingGraphicsFunc1(Uncouple)
-MissingGraphicsFunc1(WClose)
-MissingGraphicsFuncV(WAttrib)
-MissingGraphicsFuncV(WOpen)
-MissingGraphicsFuncV(WDefault)
-MissingGraphicsFuncV(WFlush)
-MissingGraphicsFuncV(WriteImage)
-MissingGraphicsFunc1(WSync)
+      WindowParam(self, w);
 
-#endif					/* Graphics */
+      j = 0;
+      for (i = 0; i < argc || i == 0; i += 6) {
+          if (j == MAXXOBJS) {
+              drawarcs(w, arcs, MAXXOBJS);
+              j = 0;
+          }
+          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          if (r >= 0)
+              runerr(101, argv[r]);
+
+          arcs[j].x = x;
+          arcs[j].y = y;
+          ARCWIDTH(arcs[j]) = width;
+          ARCHEIGHT(arcs[j]) = height;
+
+          /*
+           * Angle 1 processing.  Computes in radians and 64'ths of a degree,
+           *  bounds checks, and handles wraparound.
+           */
+          if (i + 4 >= argc || is:null(argv[i + 4]))
+              a1 = 0.0;
+          else {
+              if (!cnv:C_double(argv[i + 4], a1))
+                  runerr(102, argv[i + 4]);
+              if (a1 >= 0.0)
+                  a1 = fmod(a1, 2 * Pi);
+              else
+                  a1 = -fmod(-a1, 2 * Pi);
+          }
+          /*
+           * Angle 2 processing
+           */
+          if (i + 5 >= argc || is:null(argv[i + 5]))
+              a2 = 2 * Pi;
+          else {
+              if (!cnv:C_double(argv[i + 5], a2))
+                  runerr(102, argv[i + 5]);
+              if (fabs(a2) > 3 * Pi)
+                  runerr(101, argv[i + 5]);
+          }
+          if (fabs(a2) >= 2 * Pi) {
+              a2 = 2 * Pi;
+          }
+          else {
+              if (a2 < 0.0) {
+                  a1 += a2;
+                  a2 = fabs(a2);
+              }
+          }
+          if (a1 < 0.0)
+              a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
+          else
+              a1 = fmod(a1, 2 * Pi);
+          arcs[j].angle1 = ANGLE(a1);
+          arcs[j].angle2 = EXTENT(a2);
+
+          j++;
+      }
+
+      drawarcs(w, arcs, j);
+
+      return self;
+   }
+end
+
+function{1} graphics_Window_draw_circle(self, argv[argc])
+   body {
+      int r;
+      WindowParam(self, w);
+
+      r = docircles(w, argc, argv, 0);
+      if (r < 0)
+         return self;
+      else if (r >= argc)
+         runerr(146);
+      else 
+         runerr(102, argv[r]);
+   }
+end
+
+function{1} graphics_Window_draw_curve(self, argv[argc])
+   body {
+      int i, n, closed = 0;
+      C_integer dx, dy, x0, y0, xN, yN;
+      XPoint *points;
+      WindowParam(self, w);
+
+      CheckArgMultipleOf(2);
+
+      dx = w->context->dx;
+      dy = w->context->dy;
+
+      Protect(points = (XPoint *)malloc(sizeof(XPoint) * (n+2)), runerr(305));
+
+      if (n > 1) {
+          CnvCInteger(argv[0], x0)
+              CnvCInteger(argv[1], y0)
+              CnvCInteger(argv[argc - 2], xN)
+              CnvCInteger(argv[argc - 1], yN)
+              if ((x0 == xN) && (y0 == yN)) {
+                  closed = 1;               /* duplicate the next to last point */
+                  CnvCShort(argv[argc-4], points[0].x);
+                  CnvCShort(argv[argc-3], points[0].y);
+                  points[0].x += w->context->dx;
+                  points[0].y += w->context->dy;
+              }
+              else {                       /* duplicate the first point */
+                  CnvCShort(argv[0], points[0].x);
+                  CnvCShort(argv[1], points[0].y);
+                  points[0].x += w->context->dx;
+                  points[0].y += w->context->dy;
+              }
+          for (i = 1; i <= n; i++) {
+              int base = (i-1) * 2;
+              CnvCShort(argv[base], points[i].x);
+              CnvCShort(argv[base + 1], points[i].y);
+              points[i].x += dx;
+              points[i].y += dy;
+          }
+          if (closed) {                /* duplicate the second point */
+              points[i] = points[2];
+          }
+          else {                       /* duplicate the last point */
+              points[i] = points[i-1];
+          }
+          if (n < 3) {
+              drawlines(w, points+1, n);
+          }
+          else {
+              drawCurve(w, points, n+2);
+          }
+      }
+      free(points);
+
+      return self;
+   }
+end
+
+
+function{0,1} graphics_Window_draw_image(self, argv[argc])
+   body {
+      int c, i, width, height, row, p;
+      C_integer x, y;
+      word nchars;
+      unsigned char *s, *t, *z;
+      struct descrip d;
+      struct palentry *e;
+      WindowParam(self, w);
+
+      /*
+       * X or y can be defaulted but s is required.
+       * Validate x/y first so that the error message makes more sense.
+       */
+      if (argc >= 1 && !def:C_integer(argv[0], -w->context->dx, x))
+          runerr(101, argv[0]);
+      if (argc >= 2 && !def:C_integer(argv[1], -w->context->dy, y))
+          runerr(101, argv[1]);
+      if (argc < 3)
+          runerr(103);			/* missing s */
+      if (!cnv:tmp_string(argv[2], d))
+          runerr(103, argv[2]);
+
+      x += w->context->dx;
+      y += w->context->dy;
+      /*
+       * Extract the Width and skip the following comma.
+       */
+      s = (unsigned char *)StrLoc(d);
+      z = s + StrLen(d);		/* end+1 of string */
+      width = 0;
+      while (s < z && *s == ' ')	/* skip blanks */
+          s++;
+      while (s < z && isdigit(*s))	/* scan number */
+          width = 10 * width + *s++ - '0';
+      while (s < z && *s == ' ')	/* skip blanks */
+          s++;
+      if (width == 0 || *s++ != ',')	/* skip comma */
+          fail;
+      while (s < z && *s == ' ')	/* skip blanks */
+          s++;
+      if (s >= z)			/* if end of string */
+          fail;
+
+      /*
+       * Check for a bilevel format.
+       */
+      if ((c = *s) == '#' || c == '~') {
+          s++;
+          nchars = 0;
+          for (t = s; t < z; t++)
+              if (isxdigit(*t))
+                  nchars++;			/* count hex digits */
+              else if (*t != PCH1 && *t != PCH2)
+                  fail;				/* illegal punctuation */
+          if (nchars == 0)
+              fail;
+          row = (width + 3) / 4;			/* digits per row */
+          if (nchars % row != 0)
+              fail;
+          height = nchars / row;
+          if (blimage(w, x, y, width, height, c, s, (word)(z - s)) == Error)
+              runerr(305);
+          else
+              return nulldesc;
+      }
+
+      /*
+       * Extract the palette name and skip its comma.
+       */
+      c = *s++;					/* save initial character */
+      p = 0;
+      while (s < z && isdigit(*s))		/* scan digits */
+          p = 10 * p + *s++ - '0';
+      while (s < z && *s == ' ')		/* skip blanks */
+          s++;
+      if (s >= z || p == 0 || *s++ != ',')	/* skip comma */
+          fail;
+      if (c == 'g' && p >= 2 && p <= 256)	/* validate grayscale number */
+          p = -p;
+      else if (c != 'c' || p < 1 || p > 6)	/* validate color number */
+          fail;
+
+      /*
+       * Scan the image to see which colors are needed.
+       */
+      e = palsetup(p); 
+      if (e == NULL)
+          runerr(305);
+      for (i = 0; i < 256; i++)
+          e[i].used = 0;
+      nchars = 0;
+      for (t = s; t < z; t++) {
+          c = *t; 
+          e[c].used = 1;
+          if (e[c].valid || e[c].transpt)
+              nchars++;			/* valid color, or transparent */
+          else if (c != PCH1 && c != PCH2)
+              fail;
+      }
+      if (nchars == 0)
+          fail;					/* empty image */
+      if (nchars % width != 0)
+          fail;					/* not rectangular */
+
+      /*
+       * Call platform-dependent code to draw the image.
+       */
+      height = nchars / width;
+      i = strimage(w, x, y, width, height, e, s, (word)(z - s), 0);
+      if (i == 0)
+          return nulldesc;
+      else if (i < 0)
+          runerr(305);
+      else
+          return C_integer i;
+   }
+end
+
+
+function{1} graphics_Window_draw_line(self, argv[argc])
+   body {
+      int i, j, n;
+      XPoint points[MAXXOBJS];
+      int dx, dy;
+
+      WindowParam(self, w);
+
+      CheckArgMultipleOf(2);
+
+      dx = w->context->dx;
+      dy = w->context->dy;
+      for(i = 0, j = 0; i < n; i++, j++) {
+          int base = i * 2;
+          if (j == MAXXOBJS) {
+              drawlines(w, points, MAXXOBJS);
+              points[0] = points[MAXXOBJS-1];
+              j = 1;
+          }
+          CnvCShort(argv[base], points[j].x);
+          CnvCShort(argv[base + 1], points[j].y);
+          points[j].x += dx;
+          points[j].y += dy;
+      }
+      drawlines(w, points, j);
+
+      return self;
+   }
+end
+
+function{1} graphics_Window_draw_point(self, argv[argc])
+   body {
+      int i, j, n;
+      XPoint points[MAXXOBJS];
+      int dx, dy;
+
+      WindowParam(self, w);
+      CheckArgMultipleOf(2);
+
+      dx = w->context->dx;
+      dy = w->context->dy;
+      for(i=0, j=0; i < n; i++, j++) {
+          int base = i * 2;
+          if (j == MAXXOBJS) {
+              drawpoints(w, points, MAXXOBJS);
+              j = 0;
+          }
+          CnvCShort(argv[base], points[j].x);
+          CnvCShort(argv[base + 1], points[j].y);
+          points[j].x += dx;
+          points[j].y += dy;
+      }
+      drawpoints(w, points, j);
+      
+      return self;
+   }
+end
+
+function{1} graphics_Window_draw_polygon(self, argv[argc])
+   body {
+      int i, j, n, base, dx, dy;
+      XPoint points[MAXXOBJS];
+
+      WindowParam(self, w);
+      CheckArgMultipleOf(2);
+
+      dx = w->context->dx;
+      dy = w->context->dy;
+
+      /*
+       * To make a closed polygon, start with the *last* point.
+       */
+      CnvCShort(argv[argc - 2], points[0].x);
+      CnvCShort(argv[argc - 1], points[0].y);
+      points[0].x += dx;
+      points[0].y += dy;
+
+      /*
+       * Now add all points from beginning to end, including last point again.
+       */
+      for(i = 0, j = 1; i < n; i++, j++) {
+          base = i * 2;
+          if (j == MAXXOBJS) {
+              drawlines(w, points, MAXXOBJS);
+              points[0] = points[MAXXOBJS-1];
+              j = 1;
+          }
+          CnvCShort(argv[base], points[j].x);
+          CnvCShort(argv[base + 1], points[j].y);
+          points[j].x += dx;
+          points[j].y += dy;
+      }
+      drawlines(w, points, j);
+
+      return self;
+   }
+end
+
+function{1} graphics_Window_draw_rectangle(self, argv[argc])
+   body {
+      int i, j, r;
+      XRectangle recs[MAXXOBJS];
+      C_integer x, y, width, height;
+
+      WindowParam(self, w);
+
+      j = 0;
+
+      for (i = 0; i < argc || i == 0; i += 4) {
+          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          if (r >= 0)
+              runerr(101, argv[r]);
+          if (j == MAXXOBJS) {
+              drawrectangles(w,recs,MAXXOBJS);
+              j = 0;
+          }
+          RECX(recs[j]) = x;
+          RECY(recs[j]) = y;
+          RECWIDTH(recs[j]) = width;
+          RECHEIGHT(recs[j]) = height;
+          j++;
+      }
+
+      drawrectangles(w, recs, j);
+
+      return self;
+   }
+end
+
+function{1} graphics_Window_draw_segment(self, argv[argc])
+   body {
+      int i, j, n, dx, dy;
+      XSegment segs[MAXXOBJS];
+
+      WindowParam(self, w);
+      CheckArgMultipleOf(4);
+
+      dx = w->context->dx;
+      dy = w->context->dy;
+      for(i=0, j=0; i < n; i++, j++) {
+          int base = i * 4;
+          if (j == MAXXOBJS) {
+              drawsegments(w, segs, MAXXOBJS);
+              j = 0;
+          }
+          CnvCShort(argv[base], segs[j].x1);
+          CnvCShort(argv[base + 1], segs[j].y1);
+          CnvCShort(argv[base + 2], segs[j].x2);
+          CnvCShort(argv[base + 3], segs[j].y2);
+          segs[j].x1 += dx;
+          segs[j].x2 += dx;
+          segs[j].y1 += dy;
+          segs[j].y2 += dy;
+      }
+      drawsegments(w, segs, j);
+
+      return self;
+    }
+end
+
+function{1} graphics_Window_draw_string(self, argv[argc])
+   body {
+      int i, n, len;
+      char *s;
+      int dx, dy;
+
+      WindowParam(self, w);
+      CheckArgMultipleOf(3);
+
+      for(i=0; i < n; i++) {
+          C_integer x, y;
+          int base = i * 3;
+          CnvCInteger(argv[base], x);
+          CnvCInteger(argv[base + 1], y);
+          x += w->context->dx;
+          y += w->context->dy;
+          CnvTmpString(argv[base + 2], argv[base + 2]);
+          s = StrLoc(argv[base + 2]);
+          len = StrLen(argv[base + 2]);
+          drawstrng(w, x, y, s, len);
+      }
+      return self;
+   }
+end
+
+
+function{1} graphics_Window_erase_area(self, argv[argc])
+   body {
+      int i, r;
+      C_integer x, y, width, height;
+      WindowParam(self, w);
+
+      for (i = 0; i < argc || i == 0; i += 4) {
+          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          if (r >= 0)
+              runerr(101, argv[r]);
+          eraseArea(w, x, y, width, height);
+      }
+      return self;
+   }
+end
+
+
+
+function{1} graphics_Window_event(self, timeout)
+   if !def:C_integer(timeout, -1) then
+      runerr(101, timeout)
+   body {
+      C_integer i;
+      tended struct descrip d;
+      WindowParam(self, w);
+
+      d = create_list(8);
+      i = wgetevent2(w, &d, timeout);
+      if (i == -3) {
+          if (timeout < 0) {
+              /* Something's wrong, but what?  */
+              runerr(-1);
+          }
+          fail;
+      }
+      if (i == 0)
+          return d;
+      else if (i == -1)
+          runerr(141);
+      else
+          runerr(143);
+   }
+end
+
+function{0,1} graphics_Window_pending(self, argv[argc])
+   body {
+      wsp ws;
+      int i;
+      WindowParam(self, w);
+
+      ws = w->window;
+      wsync(w);
+
+      /*
+       * put additional arguments to Pending on the pending list in
+       * guaranteed consecutive order.
+       */
+      for (i = 0; i < argc; i++) {
+          c_put(&(ws->listp), &argv[i]);
+      }
+
+      /*
+       * retrieve any events that might be relevant before returning the
+       * pending queue.
+       */
+      switch (pollevent()) {
+          case -1: runerr(141);
+          case 0: fail;
+      }
+      return ws->listp;
+   }
+end
+
+
+function{0,1} graphics_Window_fg(self, colr)
+   body {
+      char sbuf1[MaxCvtLen];
+      int len;
+      tended char *tmp;
+      char *temp;
+      WindowParam(self, w);
+
+      /*
+       * If there is a (non-window) argument we are setting by
+       *  either a mutable color (negative int) or a string name.
+       */
+      if (!is:null(colr)) {
+	  if (is:integer(colr)) {	/* mutable color or packed RGB */
+              if (isetfg(w, IntVal(colr)) == Failed) 
+                  fail;
+          }
+	  else {
+              if (!cnv:C_string(colr, tmp))
+                  runerr(103, colr);
+              if(setfg(w, tmp) == Failed)
+                  fail;
+          }
+
+      }
+
+      /*
+       * In any case, this function returns the current foreground color.
+       */
+
+      getfg(w, sbuf1);
+
+      len = strlen(sbuf1);
+      Protect(tmp = alcstr(sbuf1, len), runerr(0));
+      return string(len, tmp);
+   }
+end
+
+function{1} graphics_Window_fill_arc(self, argv[argc])
+   body {
+      int i, j, r;
+      XArc arcs[MAXXOBJS];
+      C_integer x, y, width, height;
+      double a1, a2;
+
+      WindowParam(self, w);
+
+      j = 0;
+      for (i = 0; i < argc || i == 0; i += 6) {
+          if (j == MAXXOBJS) {
+              fillarcs(w, arcs, MAXXOBJS);
+              j = 0;
+          }
+          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          if (r >= 0)
+              runerr(101, argv[r]);
+
+          arcs[j].x = x;
+          arcs[j].y = y;
+          ARCWIDTH(arcs[j]) = width;
+          ARCHEIGHT(arcs[j]) = height;
+
+          if (i + 4 >= argc || is:null(argv[i + 4])) {
+              a1 = 0.0;
+          }
+          else {
+              if (!cnv:C_double(argv[i + 4], a1))
+                  runerr(102, argv[i + 4]);
+              if (a1 >= 0.0)
+                  a1 = fmod(a1, 2 * Pi);
+              else
+                  a1 = -fmod(-a1, 2 * Pi);
+          }
+          if (i + 5 >= argc || is:null(argv[i + 5]))
+              a2 = 2 * Pi;
+          else {
+              if (!cnv:C_double(argv[i + 5], a2))
+                  runerr(102, argv[i + 5]);
+              if (fabs(a2) > 3 * Pi)
+                  runerr(101, argv[i + 5]);
+          }
+          if (fabs(a2) >= 2 * Pi) {
+              a2 = 2 * Pi;
+          }
+          else {
+              if (a2 < 0.0) {
+                  a1 += a2;
+                  a2 = fabs(a2);
+              }
+          }
+          arcs[j].angle2 = EXTENT(a2);
+          if (a1 < 0.0)
+              a1 = 2 * Pi - fmod(fabs(a1), 2 * Pi);
+          else
+              a1 = fmod(a1, 2 * Pi);
+          arcs[j].angle1 = ANGLE(a1);
+
+          j++;
+      }
+
+      fillarcs(w, arcs, j);
+
+      return self;
+   }
+end
+
+function{1} graphics_Window_fill_circle(self, argv[argc])
+   body {
+      int r;
+      WindowParam(self, w);
+
+      r = docircles(w, argc, argv, 1);
+      if (r < 0)
+          return self;
+      else if (r >= argc)
+         runerr(146);
+      else 
+         runerr(102, argv[r]);
+   }
+end
+
+function{1} graphics_Window_fill_polygon(self, argv[argc])
+   body {
+      int i, j, n;
+      XPoint *points;
+      int dx, dy;
+      WindowParam(self, w);
+
+      CheckArgMultipleOf(2);
+
+      /*
+       * Allocate space for all the points in a contiguous array,
+       * because a FillPolygon must be performed in a single call.
+       */
+      n = argc>>1;
+      Protect(points = (XPoint *)malloc(sizeof(XPoint) * n), runerr(305));
+      dx = w->context->dx;
+      dy = w->context->dy;
+      for(i=0; i < n; i++) {
+          int base = i * 2;
+          CnvCShort(argv[base], points[i].x);
+          CnvCShort(argv[base + 1], points[i].y);
+          points[i].x += dx;
+          points[i].y += dy;
+      }
+      fillpolygon(w, points, n);
+      free(points);
+
+      return self;
+   }
+end
+
+function{1} graphics_Window_fill_rectangle(self, argv[argc])
+   body {
+      int i, j, r;
+      XRectangle recs[MAXXOBJS];
+      C_integer x, y, width, height;
+
+      WindowParam(self, w);
+
+      j = 0;
+
+      for (i = 0; i < argc || i == 0; i += 4) {
+          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          if (r >= 0)
+              runerr(101, argv[r]);
+          if (j == MAXXOBJS) {
+              fillrectangles(w,recs,MAXXOBJS);
+              j = 0;
+          }
+          RECX(recs[j]) = x;
+          RECY(recs[j]) = y;
+          RECWIDTH(recs[j]) = width;
+          RECHEIGHT(recs[j]) = height;
+          j++;
+      }
+
+      fillrectangles(w, recs, j);
+
+      return self;
+   }
+end
+
+function{0,1} graphics_Window_font(self, f)
+   body {
+      tended char *tmp;
+      int len;
+      char buf[MaxCvtLen];
+      WindowParam(self, w);
+
+      if (!is:null(f)) {
+          if (!cnv:C_string(f, tmp))
+              runerr(103, f);
+          if (setfont(w,&tmp) == Failed) 
+              fail;
+      }
+      getfntnam(w, buf);
+      len = strlen(buf);
+      Protect(tmp = alcstr(buf, len), runerr(0));
+      return string(len,tmp);
+   }
+end
+
+function{1} graphics_Window_free_color(self, argv[argc])
+   body {
+      int i;
+      C_integer n;
+      tended char *s;
+      WindowParam(self, w);
+
+      if (argc == 0)
+          runerr(103);
+
+      for (i = 0; i < argc; i++) {
+          if (is:integer(argv[i])) {
+              CnvCInteger(argv[i], n)
+              if (n < 0)
+                  free_mutable(w, n);
+          }
+          else {
+              if (!cnv:C_string(argv[i], s))
+                  runerr(103,argv[i]);
+              freecolor(w, s);
+          }
+      }
+
+      return self;
+   }
+end
+
+function{1} graphics_Window_lower(self)
+   body {
+      WindowParam(self, w);
+      lowerWindow(w);
+      return self;
+   }
+end
+
+
+function{0,1} graphics_Window_new_color(self, argv[argc])
+   body {
+      int rv;
+      WindowParam(self, w);
+
+      if (mutable_color(w, argv, argc, &rv) == Failed) 
+          fail;
+      return C_integer rv;
+   }
+end
+
+function{0,1} graphics_Window_palette_chars(p)
+   body {
+      int n;
+      extern char c1list[], c2list[], c3list[], c4list[];
+
+      if (is:null(p))
+          n = 1;
+      else
+          n = palnum(&p);
+      switch (n) {
+          case -1:  runerr(103, p);		/* not a string */
+          case  0:  fail;				/* unrecognized */
+          case  1:  return string(90, c1list);			/* c1 */
+          case  2:  return string(9, c2list);			/* c2 */
+          case  3:  return string(31, c3list);			/* c3 */
+          case  4:  return string(73, c4list);			/* c4 */
+          case  5:  return string(141, (char *)allchars);	/* c5 */
+          case  6:  return string(241, (char *)allchars);	/* c6 */
+          default:					/* gn */
+              if (n >= -64)
+                  return string(-n, c4list);
+              else
+                  return string(-n, (char *)allchars);
+      }
+      fail; /* NOTREACHED */ /* avoid spurious rtt warning message */
+   }
+end
+
+function{0,1} graphics_Window_palette_color(s1, s2)
+   body {
+      int p, len;
+      char tmp[24], *s;
+      struct palentry *e;
+      tended struct descrip d;
+
+      p = palnum(&s1);
+      if (p == -1)
+          runerr(103, s1);
+      if (p == 0)
+          fail;
+
+      if (!cnv:tmp_string(s2, d))
+          runerr(103, s2);
+      if (StrLen(d) != 1)
+          runerr(205, d);
+      e = palsetup(p); 
+      if (e == NULL)
+          runerr(305);
+      e += *StrLoc(d) & 0xFF;
+      if (!e->valid)
+          fail;
+      sprintf(tmp, "%ld,%ld,%ld", e->clr.red, e->clr.green, e->clr.blue);
+      len = strlen(tmp);
+      Protect(s = alcstr(tmp, len), runerr(306));
+      return string(len, s);
+   }
+end
+
+function{0,1} graphics_Window_palette_key(self, s1, s2)
+   body {
+      int p;
+      C_integer n;
+      tended char *s;
+      long r, g, b, a;
+
+      WindowParam(self, w);
+
+      p = palnum(&s1);
+      if (p == -1)
+          runerr(103, s1);
+      if (p == 0)
+          fail;
+
+      if (cnv:C_integer(s2, n)) {
+          if ((s = get_mutable_name(w, n)) == NULL)
+              fail;
+      }
+      else if (!cnv:C_string(s2, s))
+          runerr(103, s2);
+
+      if (parsecolor(w, s, &r, &g, &b, &a) == Succeeded)
+          return string(1, rgbkey(p, r / 65535.0, g / 65535.0, b / 65535.0));
+      else
+          fail;
+   }
+end
+
+function{1} graphics_Window_pattern(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+      WindowParam(self, w);
+
+      switch (SetPattern(w, StrLoc(s), StrLen(s))) {
+          case Error:
+              runerr(0, s);
+          case Failed:
+              fail;
+      }
+
+      return self;
+   }
+end
+
+function{3} graphics_Window_pixel(self, argv[argc])
+   body {
+      struct imgmem imem;
+      C_integer x, y, width, height;
+      int slen, r;
+      tended struct descrip lastval;
+      char strout[50];
+      WindowParam(self, w);
+
+      r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
+      if (r >= 0)
+          runerr(101, argv[r]);
+
+      {
+          int i, j;
+          long rv;
+          wsp ws = w->window;
+
+          imem.x = Max(x,0);
+          imem.y = Max(y,0);
+          imem.width = Min(width, (int)ws->width - imem.x);
+          imem.height = Min(height, (int)ws->height - imem.y);
+
+          if (getpixel_init(w, &imem) == Failed) fail;
+
+          lastval = emptystr;
+
+          for (j=y; j < y + height; j++) {
+              for (i=x; i < x + width; i++) {
+                  getpixel(w, i, j, &rv, strout, &imem);
+	
+                  slen = strlen(strout);
+                  if (rv >= 0) {
+                      int signal;
+                      if (slen != StrLen(lastval) ||
+                          strncmp(strout, StrLoc(lastval), slen)) {
+                          Protect((StrLoc(lastval) = alcstr(strout, slen)), runerr(0));
+                          StrLen(lastval) = slen;
+                      }
+                      /*
+                       * suspend, but free up imem if vanquished; RTL workaround.
+                       * Needs implementing under the compiler iconc.
+                       */
+                      r_args[0] = lastval;
+                      if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {
+                          tend = r_tend.previous;
+                          getpixel_term(w, &imem);
+                          VanquishReturn(signal);
+                      }
+                  }
+                  else {
+                      int signal;
+                      /*
+                       * suspend, but free up imem if vanquished; RTL workaround
+                       * Needs implementing under the compiler.
+                       */
+                      r_args[0].dword = D_Integer;
+                      r_args[0].vword.integr = rv;
+                      if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {
+                          tend = r_tend.previous;
+                          getpixel_term(w, &imem);
+                          VanquishReturn(signal);
+                      }
+                  }
+              }
+          }
+          getpixel_term(w, &imem);
+          fail;
+      }
+   }
+end
+
+function{1} graphics_Window_query_root_pointer()
+   body {
+      XPoint xp;
+      struct descrip t;
+      pollevent();
+      query_rootpointer(&xp);
+      result = create_list(2);
+      MakeInt(xp.x, &t);
+      c_put(&result, &t);
+      MakeInt(xp.y, &t);
+      c_put(&result, &t);
+      return result;
+   }
+end
+
+function{1} graphics_Window_raise(self)
+   body {
+      WindowParam(self, w);
+      raiseWindow(w);
+      return self;
+   }
+end
+
+function{0,1} graphics_Window_read_image(self, argv[argc])
+   body {
+      char filename[MaxPath + 1];
+      tended char *tmp;
+      int status;
+      C_integer x, y;
+      int p, r;
+      struct imgdata imd;
+      WindowParam(self, w);
+
+      if (argc == 0)
+          runerr(103,nulldesc);
+      if (!cnv:C_string(argv[0], tmp))
+          runerr(103,argv[0]);
+
+      /*
+       * x and y must be integers; they default to the upper left pixel.
+       */
+      if (argc < 2) 
+          x = -w->context->dx;
+      else if (!def:C_integer(argv[1], -w->context->dx, x))
+          runerr(101, argv[1]);
+      if (argc < 3)
+          y = -w->context->dy;
+      else if (!def:C_integer(argv[2], -w->context->dy, y))
+          runerr(101, argv[2]);
+
+      /*
+       * p is an optional palette name.
+       */
+      if (argc < 4 || is:null(argv[3])) 
+          p = 0;
+      else {
+          p = palnum(&argv[3]);
+          if (p == -1)
+              runerr(103, argv[3]);
+          if (p == 0)
+              fail;
+      }
+
+      x += w->context->dx;
+      y += w->context->dy;
+      strncpy(filename, tmp, MaxPath);   /* copy to loc that won't move*/
+      filename[MaxPath] = '\0';
+
+      /*
+       * First try to read as a GIF file.
+       * If that doesn't work, try platform-dependent image reading code.
+       */
+      r = readGIF(filename, p, &imd);
+      if (r != Succeeded) r = readBMP(filename, p, &imd);
+      if (r == Succeeded) {
+          status = strimage(w, x, y, imd.width, imd.height, imd.paltbl,
+                            imd.data, (word)imd.width * (word)imd.height, 0);
+          if (status < 0)
+              r = Error;
+          free((pointer)imd.paltbl);
+          free((pointer)imd.data);
+      }
+      else if (r == Failed)
+          r = readimage(w, filename, x, y, &status);
+      if (r == Error)
+          runerr(305);
+      if (r == Failed)
+          fail;
+      if (status == 0)
+          return nulldesc;
+      else
+          return C_integer (word)status;
+   }
+end
+
+function{1} graphics_Window_sync()
+   body {
+      wsync(0);
+      pollevent();
+      return nulldesc;
+   }
+end
+
+function{1} graphics_Window_text_width(self, s)
+   if !cnv:tmp_string(s) then
+      runerr(103, s)
+   body {
+      C_integer i;
+      WindowParam(self, w);
+      i = TEXTWIDTH(w, StrLoc(s), StrLen(s));
+      return C_integer i;
+   }
+end
+
+"Uncouple(w) - uncouple window"
+
+function{1} graphics_Window_uncouple(self)
+   body {
+      WindowParam(self, w);
+      *w_dptr = zerodesc;
+      free_binding(w);
+      return self;
+   }
+end
+
+function{*} graphics_Window_attrib(self, argv[argc])
+   body {
+      wbp wsave;
+      word n;
+      tended struct descrip sbuf, sbuf2 = nulldesc;
+      char answer[4096];
+      int  pass, config = 0;
+
+      WindowParam(self, w);
+
+      wsave = w;
+      /*
+       * Loop through the arguments.
+       */
+
+      for (pass = 1; pass <= 2; pass++) {
+          w = wsave;
+          if (config && pass == 2) {
+              if (do_config(w, config) == Failed) fail;
+          }
+          for (n = 0; n < argc; n++) {
+              /*
+               * In pass 1, a null argument is an error; failed attribute
+               *  assignments are turned into null descriptors for pass 2
+               *  and are ignored.
+               */
+              if (is:null(argv[n])) {
+                  if (pass == 2)
+                      continue;
+                  else runerr(109, argv[n]);
+              }
+              /*
+               * If its an integer or real, it can't be a valid attribute.
+               */
+              if (is:integer(argv[n]) || is:real(argv[n])) {
+                  runerr(145, argv[n]);
+              }
+              /*
+               * Convert the argument to a string
+               */
+              if (!cnv:tmp_string(argv[n], sbuf)) 
+                  runerr(109, argv[n]);
+              /*
+               * Read/write the attribute
+               */
+              if (pass == 1) {
+            
+                  char *tmp_s = StrLoc(sbuf);
+                  char *tmp_s2 = StrLoc(sbuf) + StrLen(sbuf); 
+                  for ( ; tmp_s < tmp_s2; tmp_s++)
+                      if (*tmp_s == '=') break;
+                  if (tmp_s < tmp_s2) {
+                      /*
+                       * pass 1: perform attribute assignments
+                       */  
+
+
+                      switch (wattrib(w, StrLoc(sbuf), StrLen(sbuf),
+                                      &sbuf2, answer)) {
+                          case Failed:
+                              /*
+                               * Mark the attribute so we don't produce a result
+                               */
+                              argv[n] = nulldesc;
+                              continue;
+                          case Error: runerr(0, argv[n]);
+               
+
+                      }
+                      if (StrLen(sbuf) > 4) {
+                          if (!strncmp(StrLoc(sbuf), "pos=", 4)) config |= 1;
+                          if (StrLen(sbuf) > 5) {
+                              if (!strncmp(StrLoc(sbuf), "posx=", 5)) config |= 1;
+                              if (!strncmp(StrLoc(sbuf), "posy=", 5)) config |= 1;
+                              if (!strncmp(StrLoc(sbuf), "rows=", 5)) config |= 2;
+                              if (!strncmp(StrLoc(sbuf), "size=", 5)) config |= 2;
+                              if (StrLen(sbuf) > 6) {
+                                  if (!strncmp(StrLoc(sbuf), "width=", 6))
+                                      config |= 2;
+                                  if (!strncmp(StrLoc(sbuf), "lines=", 6))
+                                      config |= 2;
+                                  if (StrLen(sbuf) > 7) {
+                                      if (!strncmp(StrLoc(sbuf), "height=", 7))
+                                          config |= 2;
+                                      if (!strncmp(StrLoc(sbuf), "resize=", 7))
+                                          config |= 2;
+                                      if (StrLen(sbuf) > 8) {
+                                          if (!strncmp(StrLoc(sbuf), "columns=", 8))
+                                              config |= 2;
+                                          if (StrLen(sbuf) > 9) {
+                                              if (!strncmp(StrLoc(sbuf),
+                                                           "geometry=", 9))
+                                                  config |= 3;
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+              /*
+               * pass 2: perform attribute queries, suspend result(s)
+               */
+              else if (pass==2) {
+                  char *stmp, *stmp2;
+                  /*
+                   * Turn assignments into queries.
+                   */
+                  for( stmp = StrLoc(sbuf), 
+                           stmp2 = stmp + StrLen(sbuf); stmp < stmp2; stmp++)
+                      if (*stmp == '=') break;
+                  if (stmp < stmp2)
+                      StrLen(sbuf) = stmp - StrLoc(sbuf);
+
+                  switch (wattrib(w, StrLoc(sbuf), StrLen(sbuf),
+                                  &sbuf2, answer)) {
+                      case Failed: continue;
+                      case Error:  runerr(0, argv[n]);
+                  }
+                  if (is:string(sbuf2)) {
+                      char *p=StrLoc(sbuf2);
+                      Protect(StrLoc(sbuf2) = alcstr(StrLoc(sbuf2),StrLen(sbuf2)), runerr(0));
+                      if (p != answer) free(p);
+                  }
+                  suspend sbuf2;
+              }
+          }
+      }
+      fail;
+   }
+end
+
+function{0,1} graphics_Window_wdefault(self, prog, opt)
+   if !cnv:C_string(prog) then
+       runerr(103, prog)
+   if !cnv:C_string(opt) then
+       runerr(103, opt)
+   body {
+      long l;
+      char sbuf1[MaxCvtLen];
+      WindowParam(self, w);
+
+      if (getdefault(w, prog, opt, sbuf1) == Failed) 
+          fail;
+      l = strlen(sbuf1);
+      Protect(prog = alcstr(sbuf1,l),runerr(0));
+      return string(l,prog);
+   }
+end
+
+function{1} graphics_Window_flush(self)
+   body {
+      WindowParam(self, w);
+      wflush(w);
+      return self;
+   }
+end
+
+function{0,1} graphics_Window_write_image(self, s, argv[argc])
+   if !cnv:C_string(s) then
+       runerr(103, s)
+   body {
+      int r;
+      C_integer x, y, width, height;
+      WindowParam(self, w);
+
+      r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
+      if (r >= 0)
+          runerr(101, argv[r]);
+
+      /*
+       * clip image to window, and fail if zero-sized.
+       * (the casts to long are necessary to avoid unsigned comparison.)
+       */
+      if (x < 0) {
+          width += x;
+          x = 0;
+      }
+      if (y < 0) {
+          height += y;
+          y = 0;
+      }
+      if (x + width > (long) w->window->width)
+          width = w->window->width - x;
+      if (y + height > (long) w->window->height)
+          height = w->window->height - y;
+      if (width <= 0 || height <= 0)
+          fail;
+
+      /*
+       * try platform-dependent code first; it will reject the call
+       * if the file name s does not specify a platform-dependent format.
+       */
+      r = dumpimage(w, s, x, y, width, height);
+#ifdef HAVE_LIBJPEG
+      if ((r == NoCvt) &&
+	  (strcmp(s + strlen(s)-4, ".jpg")==0 ||
+           (strcmp(s + strlen(s)-4, ".JPG")==0))) {
+          r = writeJPEG(w, s, x, y, width, height);
+      }
+#endif					/* HAVE_LIBJPEG */
+      if (r == NoCvt)
+          r = writeBMP(w, s, x, y, width, height);
+      if (r == NoCvt)
+          r = writeGIF(w, s, x, y, width, height);
+      if (r != Succeeded)
+         fail;
+
+      return self;
+   }
+end
+
+function{1} graphics_Window_own_selection(self, selection, callback)
+   if !cnv:C_string(selection) then
+      runerr(103,selection)
+   if !is:proc(callback) then
+      runerr(106,callback);
+   body {
+       WindowParam(self, w);
+       w->window->selectionproc = callback;
+       ownselection(w, selection);
+       return self;
+   }
+end
+
+function{0,1} graphics_Window_get_selection_content(self, selection,target_type)
+   if !cnv:C_string(selection) then
+      runerr(103,selection)
+   if !def:C_string(target_type, "STRING") then
+      runerr(103,target_type)
+   body {
+       tended struct descrip s;
+       WindowParam(self, w);
+       s = getselectioncontent(w, selection,target_type);
+       if (is:null(s))
+           fail;
+       return s;
+   }
+end
+
+function{1} graphics_Window_close(self)
+   body {
+     WindowParam(self, w);
+
+     *w_dptr = zerodesc;
+     SETCLOSED(w);
+     wclose(w);
+
+     return self;
+   }
+end
+
+#else  /* Graphics */
+
+function{0,1} graphics_Window_open_impl(attr[n])
+   runerr(121)
+end
+
+#endif   /* Graphics */

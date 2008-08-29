@@ -206,14 +206,6 @@ int get_name(dptr dp1,dptr dp0)
             StrLen(*dp0) = 6;
             StrLoc(*dp0) = "&trace";
         }
-
-#ifdef FncTrace
-        else if (VarLoc(*dp1) == &kywd_ftrc) {
-            StrLen(*dp0) = 7;
-            StrLoc(*dp0) = "&ftrace";
-        }
-#endif					/* FncTrace */
-
         else if (VarLoc(*dp1) == &kywd_dmp) {
             StrLen(*dp0) = 5;
             StrLoc(*dp0) = "&dump";
@@ -222,24 +214,6 @@ int get_name(dptr dp1,dptr dp0)
             StrLen(*dp0) = 6;
             StrLoc(*dp0) = "&error";
         }
-        else if (VarLoc(*dp1) == &amperErrno) {
-            StrLen(*dp0) = 6;
-            StrLoc(*dp0) = "&errno";
-        }
-#ifdef Graphics
-        else if (VarLoc(*dp1) == &amperX) {
-            StrLen(*dp0) = 2;
-            StrLoc(*dp0) = "&x";
-        }
-        else if (VarLoc(*dp1) == &amperY) {
-            StrLen(*dp0) = 2;
-            StrLoc(*dp0) = "&y";
-        }
-        else if (VarLoc(*dp1) == &amperInterval) {
-            StrLen(*dp0) = 9;
-            StrLoc(*dp0) = "&interval";
-        }
-#endif					/* Graphics */
         else
             syserr("name: unknown integer keyword variable");
             
@@ -259,11 +233,6 @@ int get_name(dptr dp1,dptr dp0)
         else
             syserr("name: unknown event keyword variable");
             
-      kywdwin: {
-            StrLen(*dp0) = 7;
-            StrLoc(*dp0) = "&window";
-        }
-
       kywdstr: {
           if (VarLoc(*dp1) == &kywd_prog) {
               StrLen(*dp0) = 9;

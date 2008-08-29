@@ -642,7 +642,6 @@ void f(dptr s, dptr d)
       kywdpos:
       kywdsubj:
       kywdevent:
-      kywdwin:
       kywdstr:
          *d = *VarLoc(*s);
 

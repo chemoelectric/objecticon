@@ -179,14 +179,12 @@ function{1} copy(x)
       cset:
       integer:
       real:
-      file:
       proc:
       methp:
       cast:
       object:
       class:
       constructor:
-      window:
       coexpr:
          inline {
             /*
@@ -682,12 +680,6 @@ function {0,1} serial(x)
       coexpr:   inline {
          return C_integer BlkLoc(x)->coexpr.id;
          }
-#ifdef Graphics
-      window:   inline {
-         wsp ws = BlkLoc(x)->window.wb->window;
-         return C_integer ws->serial;
-         }
-#endif					/* Graphics */
       default:
          inline { fail; }
       }
@@ -1246,7 +1238,6 @@ function{1} type(x)
       integer:  inline { return C_string "integer";   }
       real:     inline { return C_string "real";      }
       cset:     inline { return C_string "cset";      }
-      file:     inline { return C_string "file";    }
       proc:     inline { return C_string "procedure"; }
       list:     inline { return C_string "list";      }
       table:    inline { return C_string "table";     }
@@ -1254,7 +1245,6 @@ function{1} type(x)
       class:    inline { return C_string "class";       }
       constructor: 
                 inline { return C_string "constructor";       }
-      window:   inline { return C_string "window";       }
       record:   inline { return C_string "record";    }
       object:   inline { return C_string "object";    }
       methp:    inline { return C_string "methp";    }
@@ -1283,7 +1273,6 @@ function{0,1} subtype(x)
          class:   return BlkLoc(x)->class.name;
          record:  return BlkLoc(x)->record.constructor->name; 
          object:  return BlkLoc(x)->object.class->name;
-         file:    return BlkLoc(x)->file.fname;
          constructor:
                   return BlkLoc(x)->constructor.name;
          default: fail;
@@ -1604,10 +1593,10 @@ function{1,*} paramnames(ce,i)
 end
 
 
-"load(s,arglist,input,output,error,blocksize,stringsize,stacksize) - load"
+"load(s,arglist,blocksize,stringsize,stacksize) - load"
 " a program corresponding to string s as a co-expression."
 
-function{1} load(s,arglist,infile,outfile,errfile,
+function{1} load(s,arglist,
 		 blocksize, stringsize, stacksize)
    declare {
       tended char *loadstring;
@@ -1630,7 +1619,6 @@ function{1} load(s,arglist,infile,outfile,errfile,
       register struct b_coexpr *sblkp;
       struct ef_marker *newefp;
       register word *savedsp;
-      struct b_file *theInput = NULL, *theOutput = NULL, *theError = NULL;
       extern char *prog_name;
 
       /*
@@ -1663,34 +1651,8 @@ function{1} load(s,arglist,infile,outfile,errfile,
       if (!is:null(arglist) && !is:list(arglist))
          runerr(108,arglist);
 
-      /*
-       * input, output, and error must be files
-       */
-      if (is:null(infile))
-	 theInput = &(curpstate->K_input);
-      else {
-	 if (!is:file(infile))
-	    runerr(105,infile);
-	 else theInput = &(BlkLoc(infile)->file);
-         }
-      if (is:null(outfile))
-	 theOutput = &(curpstate->K_output);
-      else {
-	 if (!is:file(outfile))
-	    runerr(105,outfile);
-	 else theOutput = &(BlkLoc(outfile)->file);
-         }
-      if (is:null(errfile))
-	 theError = &(curpstate->K_errout);
-      else {
-	 if (!is:file(errfile))
-	    runerr(105,errfile);
-	 else theError = &(BlkLoc(errfile)->file);
-         }
-
       stack =
-	(word *)(sblkp = loadicode(loadstring,theInput,theOutput,theError,
-				   _bs_,_ss_,_stk_));
+	(word *)(sblkp = loadicode(loadstring, _bs_,_ss_,_stk_));
       if(!stack) {
 	 fail;
          }
@@ -1904,9 +1866,6 @@ function{*} keyword(keyname,ce)
       else if (strcmp(kname,"errorvalue") == 0) {
 	 return p->K_errorvalue;
 	 }
-      else if (strcmp(kname,"errout") == 0) {
-	 return file(&(p->K_errout));
-	 }
       else if (strcmp(kname,"eventcode") == 0) {
 	 return kywdevent(&(p->eventcode));
 	 }
@@ -1929,9 +1888,6 @@ function{*} keyword(keyname,ce)
 	 if (!strcmp(StrLoc(s),"?")) fail;
 	 return s;
 	 }
-      else if (strcmp(kname,"input") == 0) {
-	 return file(&(p->K_input));
-	 }
       else if (strcmp(kname,"level") == 0) {
 	 /*
 	  * Bug; levels aren't maintained per program yet.
@@ -1948,9 +1904,6 @@ function{*} keyword(keyname,ce)
 	 }
       else if (strcmp(kname,"main") == 0) {
 	 return p->K_main;
-	 }
-      else if (strcmp(kname,"output") == 0) {
-	 return file(&(p->K_output));
 	 }
       else if (strcmp(kname,"pos") == 0) {
 	 return kywdpos(&(p->Kywd_pos));
@@ -2022,38 +1975,6 @@ function{*} keyword(keyname,ce)
       else if (strcmp(kname,"trace") == 0) {
 	 return kywdint(&(p->Kywd_trc));
 	 }
-#ifdef Graphics
-      else if (strcmp(kname,"window") == 0) {
-	 return kywdwin(&(p->Kywd_xwin[XKey_Window]));
-	 }
-      else if (strcmp(kname,"x") == 0) {
-	 return kywdint(&(p->AmperX));
-	 }
-      else if (strcmp(kname,"y") == 0) {
-	 return kywdint(&(p->AmperY));
-	 }
-      else if (strcmp(kname,"interval") == 0) {
-	 return kywdint(&(p->AmperInterval));
-	 }
-      else if (strcmp(kname,"control") == 0) {
-	 if (p->Xmod_Control)
-	    return nulldesc;
-	 else
-	     fail;
-	 }
-      else if (strcmp(kname,"shift") == 0) {
-	 if (p->Xmod_Shift)
-	    return nulldesc;
-	 else
-	     fail;
-	 }
-      else if (strcmp(kname,"meta") == 0) {
-	 if (p->Xmod_Meta)
-	    return nulldesc;
-	 else
-	     fail;
-	 }
-#endif					/* Graphics */
       runerr(205, keyname);
       }
 end

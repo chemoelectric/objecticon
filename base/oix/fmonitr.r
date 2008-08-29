@@ -63,8 +63,6 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       ((Testb((word)ToAscii(E_Lrgint),cs)) ? alcbignum_1:alcbignum_0);
    p->Alccset =
       ((Testb((word)ToAscii(E_Cset), cs)) ? alccset_1 : alccset_0);
-   p->Alcfile =
-      ((Testb((word)ToAscii(E_File), cs)) ? alcfile_1 : alcfile_0);
    p->Alcsegment =
       ((Testb((word)ToAscii(E_Slots), cs)) ? alcsegment_1 : alcsegment_0);
    p->Alcreal =
@@ -181,109 +179,6 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       p->Interp = interp_0;
 }
 
-/*
- * EvGet(eventmask, valuemask, flag) - user function for reading event streams.
- * Installs cset eventmask (and optional table valuemask) in the event source,
- * then activates it.
- * EvGet returns the code of the matched token.  These keywords are also set:
- *    &eventcode     token code
- *    &eventvalue    token value
- */
-
-"EvGet(c,flag) - read through the next event token having a code matched "
-" by cset c."
-
-function{0,1} EvGet(cs,vmask,flag)
-   if !def:cset(cs,fullcs) then
-      runerr(104,cs)
-   if !is:null(vmask) then
-      if !is:table(vmask) then
-         runerr(124,vmask)
-
-   body {
-      register int c;
-      tended struct descrip dummy;
-      struct progstate *p = NULL;
-
-      /*
-       * Be sure an eventsource is available
-       */
-      if (!is:coexpr(curpstate->eventsource))
-         runerr(118,curpstate->eventsource);
-      if (!is:null(vmask))
-         BlkLoc(curpstate->eventsource)->coexpr.program->valuemask = vmask;
-
-      /*
-       * If our event source is a child of ours, assign its event mask.
-       */
-      p = BlkLoc(curpstate->eventsource)->coexpr.program;
-      if (p->parent == curpstate) {
-	 if (BlkLoc(p->eventmask) != BlkLoc(cs)) {
-	    assign_event_functions(p, cs);
-	    }
-	 }
-
-#ifdef Graphics
-      if (Testb((word)ToAscii(E_MXevent), cs) &&
-	  is:window(kywd_xwin[XKey_Window])) {
-	 wbp _w_ = BlkLoc(kywd_xwin[XKey_Window])->window.wb;
-	 wsync(_w_);
-	 pollctr = pollevent();
-	 if (pollctr == -1)
-	    fatalerr(141, NULL);
-	 if (BlkLoc(_w_->window->listp)->list.size > 0) {
-	    c = wgetevent(_w_, &curpstate->eventval, -1);
-	    if (c == 0) {
-	       StrLen(curpstate->eventcode) = 1;
-	       StrLoc(curpstate->eventcode) =
-		  (char *)&allchars[FromAscii(E_MXevent) & 0xFF];
-	       return curpstate->eventcode;
-	       }
-	    else if (c == -1)
-	       runerr(141);
-	    else
-	       runerr(143);
-	    }
-	 }
-#endif					/* Graphics */
-
-      /*
-       * Loop until we read an event allowed.
-       */
-      while (1) {
-         /*
-          * Activate the event source to produce the next event.
-          */
-	 dummy = cs;
-	 if (mt_activate(&dummy, &curpstate->eventcode,
-			 (struct b_coexpr *)BlkLoc(curpstate->eventsource)) ==
-	     A_Cofail) fail;
-	 deref(&curpstate->eventcode, &curpstate->eventcode);
-	 if (!is:string(curpstate->eventcode) ||
-	     StrLen(curpstate->eventcode) != 1) {
-	    /*
-	     * this event is out-of-band data; return or reject it
-	     * depending on whether flag is null.
-	     */
-	    if (!is:null(flag))
-	       return curpstate->eventcode;
-	    else continue;
-	    }
-
-#if E_Cofail || E_Coret
-	 switch(*StrLoc(curpstate->eventcode)) {
-	 case E_Cofail: case E_Coret: {
-	    if (BlkLoc(curpstate->eventsource)->coexpr.id == 1) {
-	       fail;
-	       }
-	    }
-	    }
-#endif					/* E_Cofail || E_Coret */
-
-	 return curpstate->eventcode;
-	 }
-      }
-end
 
 /*
  * Prototypes.
@@ -403,7 +298,6 @@ void EVInit()
 
    typech[T_Real]    = E_Real;		/* real number */
    typech[T_Cset]    = E_Cset;		/* cset */
-   typech[T_File]    = E_File;		/* file block */
    typech[T_Record]  = E_Record;	/* record block */
    typech[T_Tvsubs]  = E_Tvsubs;	/* substring trapped variable */
    typech[T_External]= E_External;	/* external block */

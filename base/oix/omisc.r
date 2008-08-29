@@ -79,10 +79,6 @@ operator{1} * size(x)
       coexpr: inline {
          return C_integer BlkLoc(x)->coexpr.size;
          }
-      file: inline {
-	 int status = BlkLoc(x)->file.status;
-	 runerr(1100, x); /* not ODBC file */
-	 }
       default: {
          /*
           * Try to convert it to a string.

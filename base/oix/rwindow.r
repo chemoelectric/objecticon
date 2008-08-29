@@ -42,18 +42,13 @@ char *evquesub(w,i)
 }
 
 
-/*
- * get event from window, assigning to &x, &y, and &interval
- *
- * returns 0 for success, -1 if window died or EOF, -2 for malformed queue,
- *    -3 if timeout expired
- */
-int wgetevent(w,res,t)
+int wgetevent2(w,res,timeout)
     wbp w;
     dptr res;
-    int t;
+    int timeout;
 {
-    struct descrip xdesc, ydesc;
+    struct descrip xdesc, ydesc, qval;
+    int t;
     uword i;
     int retval;
 
@@ -76,7 +71,7 @@ int wgetevent(w,res,t)
         }
     }
 
-    retval = wgetq(w,res,t);
+    retval = wgetq(w, &qval, timeout);
     if (retval == -1)
         return -1;					/* window died */
     if (retval == -2)
@@ -85,28 +80,54 @@ int wgetevent(w,res,t)
     if (BlkLoc(w->window->listp)->list.size < 2)
         return -2;					/* malformed queue */
 
+    c_put(res, &qval);
+
     wgetq(w,&xdesc,-1);
     wgetq(w,&ydesc,-1);
 
     if (xdesc.dword != D_Integer || ydesc.dword != D_Integer)
         return -2;			/* bad values on queue */
 
-    IntVal(amperX) = IntVal(xdesc) & 0xFFFF;		/* &x */
-    if (IntVal(amperX) >= 0x8000)
-        IntVal(amperX) -= 0x10000;
-    IntVal(amperY) = IntVal(ydesc) & 0xFFFF;		/* &y */
-    if (IntVal(amperY) >= 0x8000)
-        IntVal(amperY) -= 0x10000;
-    IntVal(amperX) -= w->context->dx;
-    IntVal(amperY) -= w->context->dy;
+    /* x location */
+    t = IntVal(xdesc) & 0xFFFF;		
+    if (t >= 0x8000)
+        t -= 0x10000;
+    t -= w->context->dx;
+    MakeInt(t, &qval);
+    c_put(res, &qval);
 
-    xmod_control = IntVal(xdesc) & EQ_MOD_CONTROL;	/* &control */
-    xmod_meta = IntVal(xdesc) & EQ_MOD_META;		/* &meta */
-    xmod_shift = IntVal(xdesc) & EQ_MOD_SHIFT;		/* &shift */
+    t = IntVal(ydesc) & 0xFFFF;		/* &y */
+    if (t >= 0x8000)
+        t -= 0x10000;
+    t -= w->context->dy;
+    MakeInt(t, &qval);
+    c_put(res, &qval);
 
+    t = IntVal(xdesc);
+    if (t & EQ_MOD_CONTROL)
+        c_put(res, &onedesc);
+    else
+        c_put(res, &nulldesc);
+    if (t & EQ_MOD_META)
+        c_put(res, &onedesc);
+    else
+        c_put(res, &nulldesc);
+    if (t & EQ_MOD_SHIFT)
+        c_put(res, &onedesc);
+    else
+        c_put(res, &nulldesc);
+    if (t & EQ_MOD_RELEASE)
+        c_put(res, &onedesc);
+    else
+        c_put(res, &nulldesc);
+
+    /* Interval */
     i = (((uword) IntVal(ydesc)) >> 16) & 0xFFF;		/* mantissa */
     i <<= 4 * ((((uword) IntVal(ydesc)) >> 28) & 0x7);	/* scale it */
-    IntVal(amperInterval) = i;				/* &interval */
+
+    MakeInt(i, &qval);
+    c_put(res, &qval);
+
     return 0;
 }
 
@@ -122,7 +143,7 @@ wsp getactivewindow()
 
     if (wstates == NULL) return NULL;
     for(ws = wstates; ws; ws=ws->next) nwindows++;
-    if (ConsoleBinding) stdws = ((wbp)ConsoleBinding)->window;
+
     /*
      * make sure we are still in bounds
      */
@@ -166,12 +187,13 @@ wsp getactivewindow()
 /*
  * Enqueue an event, encoding time interval and key state with x and y values.
  */
-void qevent(ws,e,x,y,t,f)
-    wsp ws;		/* canvas */
-    dptr e;		/* event code (descriptor pointer) */
-    int x, y;	/* x and y values */
-    uword t;	/* ms clock value */
-    long f;		/* modifier key flags */
+void qevent(wsp ws,             /* canvas */
+            dptr e,             /* event code (descriptor pointer) */
+            int x,              /* x and y values */
+            int y,      
+            uword t,            /* ms clock value */
+            long f,             /* modifier key flags */
+            int krel)           /* key release flag */
 {
     dptr q = &(ws->listp);	/* a window's event queue (Icon list value) */
     struct descrip d;
@@ -182,6 +204,7 @@ void qevent(ws,e,x,y,t,f)
     if (f & ControlMask) mod |= EQ_MOD_CONTROL;
     if (f & Mod1Mask)    mod |= EQ_MOD_META;
     if (f & ShiftMask)   mod |= EQ_MOD_SHIFT;
+    if (krel) mod |= EQ_MOD_RELEASE;
 
     if (t != ~(uword)0) {		/* if clock value supplied */
         if (ws->timestamp == 0)		/* if first time */
@@ -2850,8 +2873,6 @@ int wattrib(w, s, len, answer, abuf)
                     *s++ = 'm';
                 if (mask & KeyReleaseMask)
                     *s++ = 'k';
-                if (mask & WindowClosureMask)
-                    *s++ = 'c';
                 *s = 0;
                 MakeStr(abuf, strlen(abuf), answer);
                 break;

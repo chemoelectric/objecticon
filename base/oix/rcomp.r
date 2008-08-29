@@ -69,43 +69,6 @@ dptr dp1, dp2;
          return csetcmp((unsigned int *)((struct b_cset *)BlkLoc(*dp1))->bits,
             (unsigned int *)((struct b_cset *)BlkLoc(*dp2))->bits);
 
-      case T_File:
-         /*
-          * Collate on file name or window label.
-          */
-	 {
-	 struct descrip s1, s2; /* live only long enough to lexcmp them */
-	 dptr ps1 = &(BlkLoc(*dp1)->file.fname);
-	 dptr ps2 = &(BlkLoc(*dp2)->file.fname);
-         return lexcmp(ps1, ps2);
-         }
-
-#ifdef Graphics
-       case T_Window:
-       {
-           struct descrip s1, s2; /* live only long enough to lexcmp them */
-           wbp w = BlkLoc(*dp1)->window.wb;
-           if (w->window) {
-	       StrLoc(s1) = w->window->windowlabel;
-	       StrLen(s1) = strlen(StrLoc(s1));
-           }
-           else {
-	       StrLoc(s1) = "";
-	       StrLen(s1) = 0;
-           } 
-           w = BlkLoc(*dp2)->window.wb;
-           if (w->window) {
-	       StrLoc(s2) = w->window->windowlabel;
-	       StrLen(s2) = strlen(StrLoc(s2));
-           }
-           else {
-	       StrLoc(s2) = "";
-	       StrLen(s2) = 0;
-           }
-           return lexcmp(&s1, &s2);
-       }
-#endif					/* Graphics */
-
       case T_List:
          /*
           * Collate on list id.
@@ -281,8 +244,8 @@ dptr dp;
 
       case T_Cset:
 	 return 4;
-      case T_File:
-	 return 5;
+      case T_Constructor:
+         return 5;
       case T_Coexpr:
 	 return 6;
       case T_Proc:
@@ -305,10 +268,6 @@ dptr dp;
          return 15;
       case T_Methp:
          return 16;
-      case T_Window:
-         return 17;
-      case T_Constructor:
-         return 18;
       default:
 	 syserr("order: unknown datatype.");
 	 /*NOTREACHED*/

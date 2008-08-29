@@ -30,10 +30,10 @@ extern int errno;
 } while (0)
 
 
-"strerror() - get the error string corresponding to an &errno value."
+"strerror() - get the error string corresponding to an errno value."
 
 function{0,1} strerror(e)
-   if !def:C_integer(e, IntVal(amperErrno)) then
+   if !cnv:C_integer(e) then
       runerr(101, e)
    abstract {
       return string
@@ -70,7 +70,7 @@ function{0,1} getppid()
       return integer
       }
    body {
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
@@ -86,7 +86,7 @@ function{0,1} getpid()
       return integer
       }
    inline {
-     IntVal(amperErrno) = 0;
+     
 #if MSWIN32
 #define getpid _getpid
 #endif
@@ -105,12 +105,12 @@ function{0,1} hardlink(s1, s2)
       return null
       }
    inline {
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
       if (link(s1, s2) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
          }
       return nulldesc;
@@ -129,12 +129,12 @@ function{0,1} symlink(s1, s2)
       return null
       }
    inline {
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
       if (symlink(s1, s2) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
          }
       return nulldesc;
@@ -156,7 +156,7 @@ function{0,1} readlink(s)
       char *out;
       long n;
 
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
@@ -169,7 +169,7 @@ function{0,1} readlink(s)
          strtotal += n;
          strfree = StrLoc(result);              /* reset free pointer */
 
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
          }
 
@@ -199,12 +199,12 @@ function{0,1} kill(pid, signal)
       return null
       }
    body {
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
       if (kill(pid, signal) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
       return nulldesc;
@@ -301,13 +301,13 @@ function{0,1} chown(s, u, g)
 	 body {
 	    tended char *fname;
 
-	    IntVal(amperErrno) = 0;
+	    
             cnv:C_string(s, fname);
 #if MSWIN32
 	    fail;
 #else					/* MSWIN32 */
 	    if (chown(fname, i_u, i_g) != 0) {
-	       IntVal(amperErrno) = errno;
+	       on_error(errno);
 	       fail;
 	       }
 	    return nulldesc;
@@ -334,13 +334,13 @@ function{0,1} chmod(s, m)
 	 body {
 	    C_integer i;
 	    tended char *fname, *cmode;
-	    IntVal(amperErrno) = 0;
+	    
             cnv:C_string(s, fname);
 	    if (is:string(m)) {
 	       cnv:C_string(m, cmode);
 	       i = getmodenam(fname, cmode);
 	       if (i == -1) {
-		  IntVal(amperErrno) = errno;
+		  on_error(errno);
 		  fail;
 		  }
 	       if (i == -2)
@@ -353,7 +353,7 @@ function{0,1} chmod(s, m)
 #define chmod _chmod
 #endif
 	    if (chmod(fname, i) != 0) {
-	       IntVal(amperErrno) = errno;
+	       on_error(errno);
 	       fail;
 	    }
 	    return nulldesc;
@@ -373,12 +373,12 @@ function{0,1} chroot(d)
       return null
       }
    inline {
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
       if (chroot(d) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
       return nulldesc;
@@ -395,12 +395,12 @@ function{0,1} rmdir(s)
       return null
       }
    inline {
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
 #define rmdir _rmdir
 #endif
       if (rmdir(s) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
          }
       return nulldesc;
@@ -428,7 +428,7 @@ function{0,1} mkdir(s, m)
          cnv:C_string(m, cmode);
 	 mode = getmodenam(0, cmode);
 	 if (mode == -1) {
-	    IntVal(amperErrno) = errno;
+	    on_error(errno);
 	    fail;
 	 }
 	 if (mode == -2)
@@ -438,12 +438,12 @@ function{0,1} mkdir(s, m)
          cnv:C_integer(m, mode);
       }
 
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
 #define mkdir(s,mode) _mkdir(s)		/* in MSWIN32, _mkdir don't have mode*/
 #endif
       if (mkdir(s, mode) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
       }
       return nulldesc;
@@ -464,19 +464,19 @@ function{0,1} truncate(f, l)
 	    tended char *s;
 	    int fd = 0;
 
-	    IntVal(amperErrno) = 0;
+	    
             cnv:C_string(f, s);
 
 #if MSWIN32
 	    if (((fd = _open(s, _O_RDWR | _O_CREAT, _S_IWRITE)) == -1) ||
 		(_chsize(fd, l) != 0)) {
-	       IntVal(amperErrno) = errno;
+	       on_error(errno);
 	       fail;
 	       }
 	    _close(fd);
 #else					/* MSWIN32 */
 	    if (truncate(s, l) != 0) {
-	       IntVal(amperErrno) = errno;
+	       on_error(errno);
 	       fail;
 	       }
 #endif					/* MSWIN32 */
@@ -508,9 +508,9 @@ function{0,1} utime(f, atime, mtime)
       struct utimbuf t;
       t.actime = atime;
       t.modtime = mtime;
-      IntVal(amperErrno) = 0;
+      
       if (utime(f, &t) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
       return nulldesc;
@@ -530,12 +530,12 @@ function{0,1} fork()
       }
    inline {
       int pid;
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       runerr(121);
 #else					/* MSWIN32 */
       if ((pid = fork()) < 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
 #ifdef Graphics
@@ -569,7 +569,7 @@ function{0,1} exec(f, argv[argc])
 				   a nil pointer at the end of the list */
       if (argc > 200)
     	 runerr(0);
-      IntVal(amperErrno) = 0;
+      
       for(i = 0; i < argc; i++) {
          if (!cnv:C_string(argv[i], p))
 	    runerr(103, argv[i]);
@@ -577,7 +577,7 @@ function{0,1} exec(f, argv[argc])
       }
       margv[i] = 0;
       if (execvp(f, margv) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
       return nulldesc;
@@ -698,12 +698,12 @@ function{0,1} setuid(u)
       return null
       }
    inline {
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
       if (setuid(u) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
       return nulldesc;
@@ -720,12 +720,12 @@ function{0,1} setgid(g)
       return null
       }
    inline {
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
       if (setgid(g) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
       return nulldesc;
@@ -755,12 +755,12 @@ function{0,1} setpgrp()
       return null
       }
    inline {
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       fail;
 #else					/* MSWIN32 */
       if (Setpgrp() != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
       return nulldesc;
@@ -877,9 +877,9 @@ function{0,1} wait(pid, options)
 	 case 'u' : option |= WUNTRACED; break;
 	 }
 
-      IntVal(amperErrno) = 0;
+      
       if ((wpid = wait4(pid, &status, option, &rusage)) < 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
       }
 
@@ -887,9 +887,9 @@ function{0,1} wait(pid, options)
 
       /* HP and Solaris */
       if (pid == -1) {
-	 IntVal(amperErrno) = 0;
+	 
 	 if ((wpid = wait(&status)) < 0) {
-	    IntVal(amperErrno) = errno;
+	    on_error(errno);
 	    fail;
 	 }
       } else {
@@ -899,9 +899,9 @@ function{0,1} wait(pid, options)
 	    case 'u' : option |= WUNTRACED; break;
 	    }
 
-	 IntVal(amperErrno) = 0;
+	 
 	 if ((wpid = waitpid(pid, &status, option)) < 0) {
-	    IntVal(amperErrno) = errno;
+	    on_error(errno);
 	    fail;
 	 }
       }
@@ -938,9 +938,9 @@ function{0,1} wait(pid, options)
 	 case 'u' : option |= _WAIT_GRANDCHILD; break;
 	 }
 
-      IntVal(amperErrno) = 0;
+      
       if ((wpid = _cwait(&termstat, pid, option)) < 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
       sprintf(retval, "%d terminated:%d", wpid, termstat);
@@ -995,12 +995,12 @@ function{0,1} gettimeofday()
       struct b_record *rp; /* does not need to be tended */
       static dptr constr;
 
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
       _ftime( &wtp );
 #else					/* MSWIN32 */
       if (gettimeofday(&tp, 0) < 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
 	 }
 #endif					/* MSWIN32 */
@@ -1040,12 +1040,12 @@ function{0,1} lstat(f)
 #endif					/* MSWIN32 */
       static dptr constr;
 
-      IntVal(amperErrno) = 0;
+      
 #if MSWIN32
 #define lstat _stat
 #endif					/* MSWIN32 */
       if (lstat(f, &sbuf) != 0) {
-	 IntVal(amperErrno) = errno;
+	 on_error(errno);
 	 fail;
       }
 
@@ -1078,9 +1078,9 @@ function{0,1} stat(f)
 	    static dptr constr;
 
             cnv:C_string(f, fname);
-	    IntVal(amperErrno) = 0;
+	    
 	    if (lstat(fname, &sbuf) != 0) {
-	       IntVal(amperErrno) = errno;
+	       on_error(errno);
 	       fail;
 	    }
 	    if (!constr)
@@ -1098,8 +1098,6 @@ function{0,1} stat(f)
 	       char *out;
 	       long n;
 
-	       IntVal(amperErrno) = 0;
-
 	       reserve(Strings, NAME_MAX);
 	       Protect(StrLoc(rp->fields[13]) = 
 		       alcstr(NULL, NAME_MAX), runerr(0));
@@ -1111,7 +1109,7 @@ function{0,1} stat(f)
 		  /* reset free pointer */
 		  strfree = StrLoc(rp->fields[13]);
 
-		  IntVal(amperErrno) = errno;
+		  on_error(errno);
 		  fail;
 	       }
 

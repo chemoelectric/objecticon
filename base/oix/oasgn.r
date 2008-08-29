@@ -41,18 +41,7 @@
 	 body {
 	    *VarLoc(x) = y;
 	    }
-      kywdwin:
-	 body {
-#ifdef Graphics
-	    if (is:null(y))
-	       *VarLoc(x) = y;
-	    else {
-               if ((!is:window(y)))
-		  runerr(140,y);
-	       *VarLoc(x) = y;
-	       }
-#endif					/* Graphics */
-	    }
+
       kywdint: 
 	 {
          /*
@@ -469,12 +458,6 @@ const dptr src;
     */
    bp = (struct b_tvtbl *) BlkLoc(*dest);	/* Save params to tended vars */
    tval = *src;
-
-   if (BlkType(bp->clink) == T_File) {
-      int status = bp->clink->file.status;
-	 return Failed; /* should set runerr instead, or maybe syserr */
-      }
-
    Protect(te = alctelem(), return Error);
 
    /*

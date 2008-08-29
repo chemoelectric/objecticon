@@ -1047,7 +1047,6 @@ wsp alc_winstate()
     GRFX_ALLOC(ws, _wstate);
     ws->serial = ++canvas_serial;
     ws->bits = 1024;				/* echo ON; others OFF */
-    ws->filep = nulldesc;
     ws->listp = nulldesc;
     ws->theCursor = stringint_str2int(cursorsyms, "left ptr") >> 1;
     ws->inputmask =

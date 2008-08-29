@@ -359,7 +359,7 @@ int lookup_class_field_by_name(struct b_class *class, dptr name)
     int i, c, m, l = 0, r = class->n_instance_fields + class->n_class_fields - 1;
     while (l <= r) {
         m = (l + r) / 2;
-        i = class->name_sorted_fields[m];
+        i = class->sorted_fields[m];
         c = lexcmp(&class->fields[i]->name, name);
         if (c == Greater)
             r = m - 1;
@@ -380,7 +380,7 @@ int lookup_class_field_by_fnum(struct b_class *class, int fnum)
     int i, c, m, l = 0, r = class->n_instance_fields + class->n_class_fields - 1;
     while (l <= r) {
         m = (l + r) / 2;
-        i = class->fnum_sorted_fields[m];
+        i = class->sorted_fields[m];
         c = class->fields[i]->fnum - fnum;
         if (c > 0)
             r = m - 1;
@@ -724,5 +724,21 @@ LibDcl(escan,1,"escan")
         pfp->pf_scan = VarLoc(Arg1);
 
     return rc;
+}
+
+/*
+ * Little c-level utility for accessing an instance field by name in
+ * an object.  A fatal error occurs if the field is unknown, or the
+ * field is a static or a method.
+ */
+
+dptr c_get_instance_data(dptr x, dptr fname)
+{
+    struct b_object *obj = &BlkLoc(*x)->object;
+    struct b_class *class = obj->class;
+    int i = lookup_class_field_by_name(class, fname);
+    if (i == -1 || i >= class->n_instance_fields)
+        fatalerr(626, fname);
+    return &obj->fields[i];
 }
 

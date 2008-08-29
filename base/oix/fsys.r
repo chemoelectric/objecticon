@@ -82,12 +82,11 @@ function{0,1} remove(s)
 
    inline {
       if (remove(s) != 0) {
-	 IntVal(amperErrno) = 0;
 #if MSWIN32
 #define rmdir _rmdir
 #endif					/* MSWIN32 */
 	 if (rmdir(s) != 0) {
-	    IntVal(amperErrno) = errno;
+            on_error(errno);
 	    fail;
             }
 	 fail;

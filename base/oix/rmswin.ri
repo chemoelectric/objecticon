@@ -992,18 +992,9 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         p->refcount--;
       }
       if (ws->refcount > 0) {
-         /*
-          * if the application can handle window closure events, do 1
-          */
-         if (ws->inputmask & WindowClosureMask) {
-	    struct descrip d;
-            MakeInt(WINDOWCLOSED, &d);
-	    qevent(ws ,&d, 0, 0, 0, 0);
-            }
-         else { /* terminate on unhandled unexpected window closure */
-	    PostQuitMessage(0);
-	    return 0;
-	    }
+          struct descrip d;
+          MakeInt(WINDOWCLOSED, &d);
+          qevent(ws ,&d, 0, 0, 0, 0);
          }
       else if (ws->refcount < 0) { /* window was closed by program */
          ws->refcount = -ws->refcount;
@@ -4077,12 +4068,6 @@ int setinputmask(wbp w, char *val)
       }
    else {
       ws->inputmask &= ~KeyReleaseMask;
-      }
-   if (strchr(val,'c')) {
-      ws->inputmask |= WindowClosureMask;
-      }
-   else {
-      ws->inputmask &= ~WindowClosureMask;
       }
    return Succeeded;
 }

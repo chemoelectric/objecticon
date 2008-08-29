@@ -626,19 +626,9 @@ int handle_misc(wd, w)
                      * only client message we handle at present are destroy requests
                      */
                     struct descrip d;
-                    int ret = 0;
-                    if (w && (evwin == w->window->win)) ret = 1;
-                    if (ws->inputmask & WindowClosureMask) {
-                        MakeInt(WINDOWCLOSED, &d);
-                        qevent(wb->window, &d, 0, 0, 0, 0);
-                        return 1;
-                    }
-                    SETCLOSED((wbp)wb);
-                    wclose(wb);
                     MakeInt(WINDOWCLOSED, &d);
-                    qevent(wb->window, &d, 0, 0, 0, 0);
-                    BlkLoc(lastEventWin)->file.status &= ~(Fs_Write);
-                    if (ret) return 1;
+                    qevent(wb->window, &d, 0, 0, 0, 0, 0);
+                    return 1;
                     break;
                 }
                 case DestroyNotify:
@@ -1699,12 +1689,6 @@ int setinputmask(wbp w, char *val)
     else {
         ws->inputmask &= ~PointerMotionMask;
     }
-    if (strchr(val,'c')) {
-        ws->inputmask |= WindowClosureMask;
-    }
-    else {
-        ws->inputmask &= ~WindowClosureMask;
-    }
 
     if (ws->win)
         XSelectInput(ws->display->display, ws->win, XMasks(ws->inputmask));
@@ -2521,7 +2505,7 @@ static int handle_config(w, event)
         return 1;
 
     MakeInt(RESIZED, &d);
-    qevent(w->window, &d, ws->width, ws->height, ~(uword)0, 0);
+    qevent(w->window, &d, ws->width, ws->height, ~(uword)0, 0, 0);
     return 1;
 }
 
@@ -2540,28 +2524,22 @@ static void handle_keypress(w,event)
     w->window->pointerx = event->x;
     w->window->pointery = event->y;
 
-    switch (i=translate_key_event(event, s, &k)) {
+    switch (i = translate_key_event(event, s, &k)) {
         case -1:
             return;
         case 0:
-            if (event->type == KeyRelease) k = -k - 128;
             MakeInt(k, &d);
             qevent(w->window, &d, event->x, event->y,
-                   (uword)event->time, event->state);
+                   (uword)event->time, event->state,
+                   (event->type == KeyRelease) );
             break;
         default:
             StrLen(d) = 1;
             for (j = 0; j < i; j++) {
-                if (event->type == KeyRelease) {
-                    MakeInt(-(FromAscii(s[j]) & 0xFF)-128, &d);
-                    qevent(w->window, &d, event->x, event->y,
-                           (uword)event->time, event->state);
-                }
-                else {
-                    StrLoc(d) = (char *)&allchars[FromAscii(s[j]) & 0xFF];
-                    qevent(w->window, &d, event->x, event->y,
-                           (uword)event->time, event->state);
-                }
+                StrLoc(d) = (char *)&allchars[FromAscii(s[j]) & 0xFF];
+                qevent(w->window, &d, event->x, event->y,
+                       (uword)event->time, event->state,
+                       (event->type == KeyRelease) );
             }
     }
 }
@@ -2665,7 +2643,7 @@ static void handle_mouse(w,event)
 
     MakeInt(eventcode,&d);
 
-    qevent(w->window, &d, event->x, event->y, (uword)event->time, event->state);
+    qevent(w->window, &d, event->x, event->y, (uword)event->time, event->state, 0);
 }
 
 
@@ -3801,38 +3779,8 @@ int seticonimage(w, dp)
     tended char *tmp;
     {
         STDLOCALS(w);
-        /*
-         * get the preloaded (in another window value) pixmap image
-         */
-        if (is:window(*dp)) {
-            wbp x = BlkLoc(*dp)->window.wb;
-            if ((ws->iconimage = salloc(x->window->windowlabel)) == NULL)
-                ReturnErrNum(305, Error);
-            pix = XCreatePixmap(stddpy, DefaultRootWindow(stddpy),
-                                x->window->width, x->window->height,
-                                DefaultDepth(stddpy,wd->screen));
-
-            XCopyArea(stddpy, x->window->pix, pix, wd->icongc, 0, 0,
-                      x->window->width, x->window->height, 0, 0);
-            if (ws->iconpix) {
-                XSync(stddpy, False);
-                XFreePixmap(stddpy, ws->iconpix);
-            }
-            ws->iconpix = pix;
-            ws->iconw = x->window->width;
-            ws->iconh = x->window->height;
-/**
-            if (!ws->iconx && !ws->icony) {
-                ws->iconx = ws->x;
-                ws->icony = ws->y;
-            }
-**/
-            if (remap(w,ws->iconx,ws->icony) == -1)
-                ReturnErrNum(144, Error);
-
-        }
         /* get the pixmap file named by x */
-        else if (is:string(*dp)) {
+        if (is:string(*dp)) {
             unsigned int height, width;
             if (!cnv:C_string(*dp,tmp))
                 ReturnErrVal(103, *dp, Error);

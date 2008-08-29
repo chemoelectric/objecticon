@@ -210,53 +210,6 @@ struct b_cset *f()
 alccset_macro(alccset_0,0)
 alccset_macro(alccset_1,E_Cset)
 
-
-#begdef alcfile_macro(f, e_file)
-/*
- * alcfile - allocate a file block in the block region.
- */
-
-struct b_file *f(int status, dptr name)
-   {
-   tended struct descrip tname = *name;
-   register struct b_file *blk;
-
-   EVVal(sizeof (struct b_file), e_file);
-   AlcFixBlk(blk, b_file, T_File)
-   blk->status = status;
-   blk->fname = tname;
-   return blk;
-   }
-#enddef
-
-alcfile_macro(alcfile_0,0)
-alcfile_macro(alcfile_1,E_File)
-
-
-
-#ifdef Graphics
-
-#begdef alcwindow_macro(f, e_window)
-/*
- * alcwindow - allocate a window block in the block region.
- */
-
-struct b_window *f(wbp w, word isopen)
-   {
-   register struct b_window *blk;
-   EVVal(sizeof (struct b_window), e_window);
-   AlcFixBlk(blk, b_window, T_Window)
-   blk->wb = w;
-   blk->isopen = isopen;
-   return blk;
-   }
-#enddef
-
-alcwindow_macro(alcwindow_0,0)
-alcwindow_macro(alcwindow_1,E_Window)
-
-#endif
-
 
 #begdef alchash_macro(f, e_table, e_set)
 /*
