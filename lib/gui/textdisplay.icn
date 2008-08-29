@@ -159,7 +159,7 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    public calculate_line_height()
-      return WAttrib(view.cbwin, "fheight")
+      return view.cbwin.attrib("fheight")
    end
 
    public calculate_subject_width()

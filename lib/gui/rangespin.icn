@@ -77,7 +77,7 @@ class RangeSpin(EditSpin)
       local t
       t := 0
       # Bit difficult if we don't have a maximum...
-      every t <:= TextWidth(self.cbwin, (view.contents | \self.hi) || " ")
+      every t <:= self.cbwin.text_width((view.contents | \self.hi) || " ")
       return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
    end
 

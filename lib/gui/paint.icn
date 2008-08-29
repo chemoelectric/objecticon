@@ -1,6 +1,6 @@
 package gui
 
-import util, lang, ipl.graphics
+import util, lang, graphics, ipl.graphics(Zoom)
 
 class Paint(Size)
    public defer initially(c, accel)
@@ -28,8 +28,8 @@ class TextPaint(Paint)
 
    public initially(c, accel)
       self.accel := accel
-      self.h := WAttrib(c.cbwin, "fheight")
-      self.w := TextWidth(c.cbwin, str)
+      self.h := c.cbwin.attrib("fheight")
+      self.w := c.cbwin.text_width(str)
    end
 
    public draw(W, x, y)
@@ -64,12 +64,12 @@ class ImageWindowPaint(Paint)
    public win
 
    public initially()
-      self.w := WAttrib(win, "width")
-      self.h := WAttrib(win, "height")
+      self.w := win.attrib("width")
+      self.h := win.attrib("height")
    end
 
    public draw(W, x, y)
-      CopyArea(\win, W,,,,, x, y)
+      Window.copy_area(\win, W,,,,, x, y)
    end
 
    public new(w)
@@ -97,7 +97,7 @@ class GridPaint(Paint)
       accel
 
    public draw(W, x, y)
-      CopyArea(\win, W,,,,, x, y)
+      Window.copy_area(\win, W,,,,, x, y)
    end
 
    public initially(c, accel)
@@ -105,7 +105,7 @@ class GridPaint(Paint)
 
       /win | fatal(self, "init called out of sequence")
       attribs := wattribs_to_list(c.get_effective_wattribs())
-      win := WOpen!(attribs ||| ["size=1,1", "canvas=hidden"]) | fatal(self, "Couldn't open window")
+      win := Window.open!(attribs ||| ["size=1,1", "canvas=hidden"]) | fatal(self, "Couldn't open window")
       g := Grid("extra=ignore")
       pass := 1
       ia_x := ia_y := Align.C
@@ -116,7 +116,7 @@ class GridPaint(Paint)
       w := g.get_preferred_width()
       h := g.get_preferred_height()
       if (w > 0) & (h > 0) then {
-         win := WOpen!(attribs ||| ["size=" || w || "," || h, 
+         win := Window.open!(attribs ||| ["size=" || w || "," || h, 
                                     "canvas=hidden"]) | fatal(self, "Couldn't open window")
          pass := 2
          curr_cell := &null
@@ -220,20 +220,20 @@ class GridPaint(Paint)
    public str(s)
       local y1
       if pass = 1 then {
-         llen +:= TextWidth(win, s)
-         lheight <:= WAttrib(win, "fheight")
+         llen +:= win.text_width(s)
+         lheight <:= win.attrib("fheight")
       } else {
          ready_to_output() | fail
          y1 := case ia_y of {
             Align.T : y
-            Align.C : y + (curr_cell.obj[lno].h - WAttrib(win, "fheight")) / 2
-            Align.B : y + curr_cell.obj[lno].h - WAttrib(win, "fheight")
+            Align.C : y + (curr_cell.obj[lno].h - win.attrib("fheight")) / 2
+            Align.B : y + curr_cell.obj[lno].h - win.attrib("fheight")
          }
          DrawStringEx(win, x, y1, s, accel)
          # Just print the accelerator once.
          if upto(\accel, map(s)) then
             accel := &null
-         x +:= TextWidth(win, s)
+         x +:= win.text_width(s)
       }
    end
 
@@ -267,7 +267,7 @@ class GridPaint(Paint)
                val := ""
          }
          if member(attrib_set, key) then
-            WAttrib(win, a)
+            win.attrib(a)
          else case key of {
             "ia_x" : ia_x := (val === (Align.L | Align.R)) | Align.C
             "ia_y" : ia_y := (val === (Align.T | Align.B)) | Align.C
@@ -307,17 +307,17 @@ class GridPaint(Paint)
       local W, y1
       W := ImageCache.get(args[1]) | fail
       if pass = 1 then {
-         llen +:= WAttrib(W, "width")
-         lheight <:= WAttrib(W, "height")
+         llen +:= W.attrib("width")
+         lheight <:= W.attrib("height")
       } else {
          ready_to_output() | fail
          y1 := case ia_y of {
             Align.T : y
-            Align.C : y + (curr_cell.obj[lno].h - WAttrib(W, "height")) / 2
-            Align.B : y + curr_cell.obj[lno].h - WAttrib(W, "height")
+            Align.C : y + (curr_cell.obj[lno].h - W.attrib("height")) / 2
+            Align.B : y + curr_cell.obj[lno].h - W.attrib("height")
          }
-         CopyArea(W, win,,,,, x, y1)
-         x +:= WAttrib(W, "width")
+         Window.copy_area(W, win,,,,, x, y1)
+         x +:= W.attrib("width")
       }
    end
 
@@ -338,7 +338,7 @@ class GridPaint(Paint)
 
    public close_win()
       if \win then {
-         WClose(win)
+         win.close()
          Gui.style.dispose(win)
       }
       win := &null
@@ -362,7 +362,7 @@ class GridPaint(Paint)
                    g.slice(i.y, i.h, g.a_row_h))
       }
 
-      Uncouple(cw)
+      cw.uncouple()
    end
 
    public new(s)
@@ -450,8 +450,8 @@ class ImagePaint(Paint,SetFields)
       load_image(c)
       zoom_image()
       if \win then {
-         self.w := WAttrib(win, "width")
-         self.h := WAttrib(win, "height")
+         self.w := win.attrib("width")
+         self.h := win.attrib("height")
       } else
          self.w := self.h := 0
    end
@@ -462,7 +462,7 @@ class ImagePaint(Paint,SetFields)
 
    public close_image()
       if \win & /dont_close then {
-         WClose(win)
+         win.close()
          Gui.style.dispose(win)
       }
       dont_close := win := &null
@@ -472,7 +472,7 @@ class ImagePaint(Paint,SetFields)
       local attribs
       if \self.image_str then {
          attribs := wattribs_to_list(c.get_effective_wattribs())
-         win := WOpen!(attribs ||| ["size=" || (0 < image_width(self.image_str)) || 
+         win := Window.open!(attribs ||| ["size=" || (0 < image_width(self.image_str)) || 
                                     "," || (0 < image_height(self.image_str)),
                                     "canvas=hidden"])
          DrawImageEx(\win, 0, 0, self.image_str)
@@ -481,7 +481,7 @@ class ImagePaint(Paint,SetFields)
             if win := ImageCache.get(self.image_file) then
                dont_close := 1
          } else
-            win := WOpen("image=" || self.image_file, "canvas=hidden")
+            win := Window.open("image=" || self.image_file, "canvas=hidden")
       } else if \self.image_window then {
          win := self.image_window
          dont_close := 1
@@ -495,8 +495,8 @@ class ImagePaint(Paint,SetFields)
       if /win | (/max_w & /max_h) then
          fail
 
-      img_w := WAttrib(win, "width")
-      img_h := WAttrib(win, "height")
+      img_w := win.attrib("width")
+      img_h := win.attrib("height")
       if /self.scale_up_flag & 
          (/max_w | img_w <= max_w)\1 & (/max_h | img_h <= \max_h) then
          return
@@ -527,8 +527,8 @@ class ImagePaint(Paint,SetFields)
       zoom_w <:= 1
       zoom_h <:= 1
 
-      zoom_win := WOpen("size=" || zoom_w || "," || zoom_h, 
-                        "canvas=hidden") | fatal(self, "Couldn't open temp window")
+      zoom_win := Window.open("size=" || zoom_w || "," || zoom_h, 
+                              "canvas=hidden") | fatal(self, "Couldn't open temp window")
       Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
 
       # Now swap the zoomed window into win.
@@ -537,7 +537,7 @@ class ImagePaint(Paint,SetFields)
    end
 
    public draw(W, x, y)
-      CopyArea(\win, W,,,,, x, y)
+      Window.copy_area(\win, W,,,,, x, y)
    end
 
    public set_one(f)

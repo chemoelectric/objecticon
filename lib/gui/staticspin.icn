@@ -12,7 +12,7 @@ $include "keysyms.icn"
 
 class SpinLabel(Label)
    public keeps(e)
-      return e === (Key_Up | Key_Down)
+      return e.code === (Key_Up | Key_Down)
    end
 
    public on_key(e)
@@ -25,7 +25,7 @@ class SpinLabel(Label)
    public new(a[])
       cast(self,Label).new()
       self.set_label("")
-      self.connect(self.on_key, Event.KEY)
+      self.connect(self.on_key, Event.KEY_PRESS)
       self.set_accepts_focus("t")
       self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
       set_fields(a)

@@ -14,7 +14,7 @@ $include "keysyms.icn"
 
 class CirculateLabel(Label)
    public keeps(e)
-      return e === (Key_Up | Key_Down)
+      return e.code === (Key_Up | Key_Down)
    end
 
    public go_up(e)
@@ -35,9 +35,9 @@ class CirculateLabel(Label)
    public new(a[])
       cast(self,Label).new()
       self.set_label("")
-      connect(self.on_key, Event.KEY)
-      connect(self.go_up, &wheelup)
-      connect(self.go_down, &wheeldown)
+      connect(self.on_key, Event.KEY_PRESS)
+      connect(self.go_up, Event.MOUSE_WHEEL_UP)
+      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
       self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
       set_fields(a)
       return
@@ -67,7 +67,7 @@ class Circulate(SelectionList,Component)
    public get_default_width()
       local t
       t := 0
-      every t <:= TextWidth(self.cbwin, !self.selection_list)
+      every t <:= self.cbwin.text_width(!self.selection_list)
       return border.get_total_width() + b.get_preferred_width() + t + l.border.get_total_width()
    end
 

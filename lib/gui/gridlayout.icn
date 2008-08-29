@@ -72,7 +72,7 @@ class GridLayout(Layout,SetFields)
                    g.slice(i.y, i.h, g.a_row_h))
       }
 
-      Uncouple(cw)
+      cw.uncouple()
    end
 
    public layout()

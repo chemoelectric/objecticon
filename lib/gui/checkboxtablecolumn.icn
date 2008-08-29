@@ -39,10 +39,10 @@ class CheckBoxTableColumn(TableColumn)
       self.img_h := image_height(x) = image_height(y) | fatal(self, "Image heights differ")
    end
 
-   public mouse_down()
+   public mouse_down(e)
       local line, col
-      self.x <= &x < self.x + self.w | fail
-      line := get_table_content().get_line_under_pointer() | fail
+      self.x <= e.x < self.x + self.w | fail
+      line := get_table_content().get_line_under_pointer(e) | fail
       col := get_column_index()
       if \self.single_selection_flag then {
          every get_table_content().slice(col) := "n"
@@ -64,7 +64,7 @@ class CheckBoxTableColumn(TableColumn)
          else
             self.set_images(Icon.DIAMOND_UP, Icon.DIAMOND_DOWN)
       }
-      get_table_content().connect(self.mouse_down, &lpress)
+      get_table_content().connect(self.mouse_down, Event.MOUSE_LEFT_PRESS)
       cast(self,TableColumn).initially()
    end
 

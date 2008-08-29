@@ -29,7 +29,7 @@ class ABorder(Insets,Align,SetFields)
       local cw
       cw := Gui.style.get_focus_clone(W)
       Rectangle(cw, x, y, w, h)
-      Uncouple(cw)
+      cw.uncouple()
    end
 
    #
@@ -144,7 +144,7 @@ class LineBorder(ABorder)
       Rectangle(cw, 
                 x + line_width + 1, y + line_width + 1, 
                 w - 2 * line_width - 2, h - 2 * line_width - 2)
-      Uncouple(cw)
+      cw.uncouple()
    end
 
    public get_line_width()

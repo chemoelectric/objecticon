@@ -216,20 +216,20 @@ class Slider(Component)
 
    public handle_lpress(e)
       start_handle(e)
-      if (self.slider_area.slider_x <= &x < self.slider_area.slider_x + self.slider_area.slider_w) & (self.slider_area.slider_y  <= &y < self.slider_area.slider_y + self.slider_area.slider_h) then {
+      if (self.slider_area.slider_x <= e.x < self.slider_area.slider_x + self.slider_area.slider_w) & (self.slider_area.slider_y  <= e.y < self.slider_area.slider_y + self.slider_area.slider_h) then {
          #
          # Click on slider; set flag and save offset between top of slider and pointer position
          #
          self.slider_down := 1
          if /self.is_horizontal_flag then
-            self.slider_down_offset := &y - self.slider_pos
+            self.slider_down_offset := e.y - self.slider_pos
          else
-            self.slider_down_offset := &x - self.slider_pos
-      } else if (/self.is_horizontal_flag & (self.slider_area.x <= &x < self.slider_area.x + self.slider_area.w) & (self.slider_area.y  <= &y < self.slider_area.slider_y)) | ((self.slider_area.y <= &y < self.slider_area.y + self.slider_area.h) & (self.slider_area.x  <= &x < self.slider_area.slider_x)) then {
+            self.slider_down_offset := e.x - self.slider_pos
+      } else if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & (self.slider_area.y  <= e.y < self.slider_area.slider_y)) | ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & (self.slider_area.x  <= e.x < self.slider_area.slider_x)) then {
          self.move_value(self.get_value() - self.increment_size)
          self.set_pos_from_value()
          start_paging(-1)
-      } else  if (/self.is_horizontal_flag & (self.slider_area.x <= &x < self.slider_area.x + self.slider_area.w) & ( self.slider_area.slider_y + self.slider_area.slider_h  <= &y <  self.slider_area.y + self.slider_area.h)) | ((self.slider_area.y <= &y < self.slider_area.y + self.slider_area.h) & ( self.slider_area.slider_x + self.slider_area.slider_w  <= &x <  self.slider_area.x + self.slider_area.w)) then {
+      } else  if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & ( self.slider_area.slider_y + self.slider_area.slider_h  <= e.y <  self.slider_area.y + self.slider_area.h)) | ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & ( self.slider_area.slider_x + self.slider_area.slider_w  <= e.x <  self.slider_area.x + self.slider_area.w)) then {
          self.move_value(self.get_value() + self.increment_size)
          self.set_pos_from_value()
          start_paging(1)
@@ -278,9 +278,9 @@ class Slider(Component)
       # Slider dragged; compute new position
       #
       if /self.is_horizontal_flag then
-         self.move_slider_pos(&y - self.slider_down_offset)
+         self.move_slider_pos(e.y - self.slider_down_offset)
       else
-         self.move_slider_pos(&x - self.slider_down_offset)
+         self.move_slider_pos(e.x - self.slider_down_offset)
       self.set_value_from_pos()
       end_handle(e)
    end
@@ -320,7 +320,7 @@ class Slider(Component)
       if /self.is_horizontal_flag then {
          w := SLIDER_H + border.get_total_width()
          if \self.labels then
-            w +:= TextWidth(self.cbwin, self.hi) + Gui.X_INSET
+            w +:= self.cbwin.text_width(self.hi) + Gui.X_INSET
          if \self.ticks then
             w +:= SLIDER_TICK_H + Gui.X_INSET
          return w
@@ -332,7 +332,7 @@ class Slider(Component)
       if \self.is_horizontal_flag then {
          h := SLIDER_H + border.get_total_height()
          if \self.labels then
-            h +:= WAttrib(self.cbwin, "fheight") + Gui.Y_INSET
+            h +:= self.cbwin.attrib("fheight") + Gui.Y_INSET
          if \self.ticks then
             h +:= SLIDER_TICK_H + Gui.Y_INSET
          return h
@@ -364,7 +364,7 @@ class Slider(Component)
       } else {
          if \self.labels then
             labels_pos := self.y + border.get_t_inset() + SLIDER_H + 
-                              Gui.Y_INSET + WAttrib(self.cbwin, "fheight") / 2
+                              Gui.Y_INSET + self.cbwin.attrib("fheight") / 2
          if \self.ticks then {
             ticks_pos := self.y + border.get_t_inset() + SLIDER_H + Gui.Y_INSET
             \labels_pos +:= SLIDER_TICK_H + Gui.Y_INSET
@@ -393,14 +393,14 @@ class Slider(Component)
          i := self.lo
          while i <= self.hi do {
             yp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            DrawLine(self.cbwin, ticks_pos, yp, ticks_pos + SLIDER_TICK_H - 1, yp)
+            self.cbwin.draw_line(ticks_pos, yp, ticks_pos + SLIDER_TICK_H - 1, yp)
             i +:= ticks
          }
       } else {
          i := self.lo
          while i <= self.hi do {
             xp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            DrawLine(self.cbwin, xp, ticks_pos, xp, ticks_pos + SLIDER_TICK_H - 1)
+            self.cbwin.draw_line(xp, ticks_pos, xp, ticks_pos + SLIDER_TICK_H - 1)
             i +:= ticks
          }
       }
@@ -408,7 +408,7 @@ class Slider(Component)
 
    public draw_labels()
       local i, xp, yp, fh
-      fh := WAttrib(self.cbwin, "fheight")
+      fh := self.cbwin.attrib("fheight")
       if /self.is_horizontal_flag then {
          i := self.lo
          while i <= self.hi do {
@@ -420,7 +420,7 @@ class Slider(Component)
          i := self.lo
          while i <= self.hi do {
             xp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            DrawStringEx(self.cbwin, xp - TextWidth(self.cbwin, i) / 2, labels_pos - fh / 2, i)
+            DrawStringEx(self.cbwin, xp - self.cbwin.text_width(i) / 2, labels_pos - fh / 2, i)
             i +:= labels
          }
       }
@@ -467,11 +467,11 @@ class Slider(Component)
       self.wheel_factor := 1
       self.set_border(EmptyBorder("flush"))
       add(self.slider_area)
-      connect(self.handle_lpress, &lpress)
-      connect(self.handle_ldrag, &ldrag)
-      connect(self.handle_lrelease, &lrelease)
-      connect(self.handle_wheel_up, &wheelup)
-      connect(self.handle_wheel_down, &wheeldown)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(self.handle_wheel_up, Event.MOUSE_WHEEL_UP)
+      connect(self.handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
       set_fields(a)
       return
    end

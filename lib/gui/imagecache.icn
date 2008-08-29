@@ -1,6 +1,6 @@
 package gui
 
-import util
+import util, graphics
 
 class ImageCache()
    public static 
@@ -34,7 +34,7 @@ class ImageCache()
          if w := \map[f] then
             return w
          if stat(f).mode[1] == "-" then {
-            w := WOpen("image=" || f, "canvas=hidden") | return error("Couldn't load image from file " || f)
+            w := Window.open("image=" || f, "canvas=hidden") | return error("Couldn't load image from file " || f)
             insert(map, f, w)
             insert(map, w, f)
             return w
@@ -47,7 +47,7 @@ class ImageCache()
       local f, w
       every f := get_paths(s) do {
          if w := \map[f] then {
-            WClose(w)
+            w.close()
             default.delete(map, f)
             default.delete(map, w)
             return

@@ -9,6 +9,8 @@
 package gui
 import lang, util
 
+$include "keysyms.icn"
+
 #
 #
 # This class handles Icon events, dispatching them to
@@ -138,24 +140,25 @@ class Dispatcher()
       local d, bag, e
       bag := []
       every d := !dialogs do {
-         if *Pending(d.win) > 0 then {
+         if *d.win.pending() > 0 then {
             if /d.is_blocked_flag then
                put(bag, d)
             else {
-               while *Pending(d.win) > 0 do {
+               while *d.win.pending() > 0 do {
                   #
                   # Discard the event and beep in the window.
                   # 
-                  e := default.NextEvent(d.win)
-                  if not(e === (&mousemove | &lrelease | &rrelease | 
-                                &mrelease | &ldrag | &rdrag | &mdrag)) then
-                     Alert(d.win)
+                  e := d.win.event()
+                  if not(e[1] === (Mouse_Movement | Mouse_LeftRelease | 
+                                   Mouse_RightRelease | Mouse_MiddleRelease | 
+                                   Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag)) then
+                     d.win.alert()
                }
             }
          }
       }
       if d := ?bag then {
-         d.process_event(default.NextEvent(d.win))
+         d.process_event(d.win.event())
          return
       }
    end

@@ -22,7 +22,7 @@ class EditableTextList(LineBasedScrollArea)
    public 
       contents,                                     
       is_editable_flag,        # Are we editable?
-      move_on_rpress_flag,     # Move on &rpress event?
+      move_on_rpress_flag,     # Move on mouse right press event?
       cursor_x,                #                
       cursor_y,                #                
       mark_x,                  #
@@ -242,7 +242,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    #
-   # Move the cursor on &rpress?
+   # Move the cursor on mouse right press?
    #
    public set_move_on_rpress(s)
       self.move_on_rpress_flag := to_flag(s)
@@ -348,7 +348,7 @@ class EditableTextList(LineBasedScrollArea)
       # Simulate a drag event if appropriate in order to keep the
       # cursor in synch.
       #
-      if view.is_held(&lpress) then
+      if view.is_held(Mouse_LeftPress) then
          handle_ldrag(ev)
    end
 
@@ -417,8 +417,8 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_key(e)
       # Stop dragging on any keypress.
-      parent_dialog.release(view, &lpress)
-      case e of {
+      parent_dialog.release(view, Mouse_LeftPress)
+      case e.code of {
          Key_Home : handle_key_home(e)
          Key_End : handle_key_end(e)
          Key_PgUp : handle_key_page_up(e)
@@ -434,8 +434,8 @@ class EditableTextList(LineBasedScrollArea)
          "\^e" : handle_end_of_line(e)
          "\d" | "\^d" : handle_delete_right(e)
          "\^x" :  handle_cut(e)
-         (&control & Key_Insert) | "\^c" :  handle_copy(e)
-         (&shift & Key_Insert) | "\^v" :  handle_paste(e)
+         (\e.ctrl & Key_Insert) | "\^c" :  handle_copy(e)
+         (\e.shift & Key_Insert) | "\^v" :  handle_paste(e)
          "\^z" :  handle_undo(e)
          "\^y" :  handle_redo(e)
          default : handle_default(e)
@@ -443,19 +443,19 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    #
-   # Set cursor from the current &x, &y
+   # Set cursor from the current x, y
    #
-   private set_cursor_from_pos()
+   private set_cursor_from_pos(e)
       local l, s, i, v
 
-      v := self.view_list[get_nearest_line_to_pointer()]
+      v := self.view_list[get_nearest_line_to_pointer(e)]
 
       self.cursor_y := v.index
 
       s := v.str
       i := 1
       l := self.get_left_pos()
-      while (i < *s) & (TextWidthEx(view.cbwin, s, 1, i + 1, self.tab_width) < &x - l) do
+      while (i < *s) & (TextWidthEx(view.cbwin, s, 1, i + 1, self.tab_width) < e.x - l) do
          i+:= 1
 
       self.cursor_x := v.first + i - 1
@@ -474,12 +474,12 @@ class EditableTextList(LineBasedScrollArea)
       #
       # Button down in region - move to cursor position.
       #
-      if &shift then {
+      if \e.shift then {
          /self.mark_y := self.cursor_y
          /self.mark_x := self.cursor_x
-         set_cursor_from_pos()
+         set_cursor_from_pos(e)
       } else {
-         set_cursor_from_pos()
+         set_cursor_from_pos(e)
          case (parent_dialog.get_click_count() - 1) % 3 of {
             0 : {
                self.mark_y := self.cursor_y
@@ -507,7 +507,7 @@ class EditableTextList(LineBasedScrollArea)
       \self.move_on_rpress_flag | fail
 
       start_handle(e)
-      set_cursor_from_pos()
+      set_cursor_from_pos(e)
       clear_mark()
       end_handle(e)
    end
@@ -518,7 +518,7 @@ class EditableTextList(LineBasedScrollArea)
 
       start_handle(e)
 
-      set_cursor_from_pos()
+      set_cursor_from_pos(e)
       clear_mark()
       if s := apply_filter(string(gui.Selection.get_content(Selection.PRIMARY))) then {
          ed := EditableTextListPasteEdit(self, s)
@@ -554,23 +554,23 @@ class EditableTextList(LineBasedScrollArea)
       vi := get_view_list_index()
       v := view_list[vi]
 
-      if vi > 1 & &y < self.view.y then {
+      if vi > 1 & e.y < self.view.y then {
          direction := "up"
-         check_ticker(self.view.y - &y)
-      } else if vi < *view_list & &y >= self.view.y + self.view.h then {
+         check_ticker(self.view.y - e.y)
+      } else if vi < *view_list & e.y >= self.view.y + self.view.h then {
          direction := "down"
-         check_ticker(&y - (self.view.y + self.view.h))
-      } else if self.cursor_x > v.first & &x < self.view.x then {
+         check_ticker(e.y - (self.view.y + self.view.h))
+      } else if self.cursor_x > v.first & e.x < self.view.x then {
          direction := "left"
-         check_ticker(self.view.x - &x)
-      } else if &x >= self.view.x + self.view.w & 
+         check_ticker(self.view.x - e.x)
+      } else if e.x >= self.view.x + self.view.w & 
                 self.cursor_x - v.first + 1 < *v.str then {
          direction := "right"
-         check_ticker(&x - (self.view.x + self.view.w))
+         check_ticker(e.x - (self.view.x + self.view.w))
       } else {
          direction := &null
          stop_ticker()
-         set_cursor_from_pos()
+         set_cursor_from_pos(e)
       }
 
       end_handle(e)
@@ -645,8 +645,8 @@ class EditableTextList(LineBasedScrollArea)
       end_handle(e)
    end
 
-   public keyboard_mark()
-      if &shift then {
+   public keyboard_mark(e)
+      if \e.shift then {
          /mark_x := cursor_x
          /mark_y := cursor_y
       } else
@@ -655,29 +655,29 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_start_of_line(e)
       start_handle(e)
-      keyboard_mark()
+      keyboard_mark(e)
       cursor_x := 1
       end_handle(e)
    end
 
    public handle_end_of_line(e)
       start_handle(e)
-      keyboard_mark()
+      keyboard_mark(e)
       cursor_x := *contents[cursor_y] + 1
       end_handle(e)
    end
 
    public handle_key_up(e)
       start_handle(e)
-      keyboard_mark()
+      keyboard_mark(e)
       self.set_cursor_y(self.cursor_y - 1)
       end_handle(e)
    end
 
    public handle_key_home(e)
       start_handle(e)
-      keyboard_mark()
-      if &control then
+      keyboard_mark(e)
+      if \e.ctrl then
          cursor_y := 1
       cursor_x := 1
       end_handle(e)
@@ -685,8 +685,8 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_key_end(e)
       start_handle(e)
-      keyboard_mark()
-      if &control then
+      keyboard_mark(e)
+      if \e.ctrl then
          cursor_y := *contents
       cursor_x := *contents[cursor_y] + 1
       end_handle(e)
@@ -702,14 +702,14 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_key_down(e)
       start_handle(e)
-      keyboard_mark()
+      keyboard_mark(e)
       self.set_cursor_y(self.cursor_y + 1)
       end_handle(e)
    end
 
    public handle_key_left(e)
       start_handle(e)
-      keyboard_mark()
+      keyboard_mark(e)
       if self.cursor_x = 1 then {
          if self.cursor_y > 1 then {
             self.cursor_y -:= 1
@@ -722,7 +722,7 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_key_right(e)
       start_handle(e)
-      keyboard_mark()
+      keyboard_mark(e)
       if self.cursor_x = *self.contents[self.cursor_y] + 1 then {
          if self.cursor_y < *self.contents then {
             self.cursor_x := 1
@@ -735,14 +735,14 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_key_page_up(e)
       start_handle(e)
-      keyboard_mark()
+      keyboard_mark(e)
       self.set_cursor_y(self.cursor_y - self.view.h / self.line_height)
       end_handle(e)
    end
 
    public handle_key_page_down(e)
       start_handle(e)
-      keyboard_mark()
+      keyboard_mark(e)
       self.set_cursor_y(self.cursor_y + self.view.h / self.line_height)
       end_handle(e)
    end
@@ -851,10 +851,12 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public handle_default(e)
-      local ce, ed
+      local ce, ed, ec
 
-      if /self.is_editable_flag | type(e) ~== "string" |
-         &control | &meta | not(any(Gui.PRINTABLE_N, e)) then
+      ec := e.code
+
+      if /self.is_editable_flag | type(ec) ~== "string" |
+         \e.ctrl | \e.meta | not(any(Gui.PRINTABLE_N, ec)) then
          fail
 
       start_handle(e)
@@ -866,13 +868,13 @@ class EditableTextList(LineBasedScrollArea)
          ed := EditableTextListDeleteRegionEdit(self)
          ed.doit()
          ce.add_edit(ed)
-         ed := EditableTextListDefaultEdit(self, e)
+         ed := EditableTextListDefaultEdit(self, ec)
          ed.doit()
          ce.add_edit(ed)
          ce.close()
          undo_manager.add_edit(ce)
       } else {
-         ed := EditableTextListDefaultEdit(self, e)
+         ed := EditableTextListDefaultEdit(self, ec)
          ed.doit()
          undo_manager.add_edit(ed)
       }
@@ -914,7 +916,7 @@ class EditableTextList(LineBasedScrollArea)
          yp +:= self.line_height
       }
 
-      Uncouple(rev)
+      rev.uncouple()
    end
 
    public draw_line(xp, yp, i, rev)
@@ -933,12 +935,12 @@ class EditableTextList(LineBasedScrollArea)
                               CharWidth(view.cbwin, s[si]), self.line_height)
                if s[si] ~== "\t" then
                   DrawStringEx(cw, xp + off, yp, s[si])
-               Uncouple(cw)
+               cw.uncouple()
             } else {
                cw := Gui.style.get_focus_clone(view.cbwin)
                Rectangle(cw, xp + off, yp, 
                          CharWidth(view.cbwin, s[si]), self.line_height)
-               Uncouple(cw)
+               cw.uncouple()
             }
          } else if \self.is_editable_flag | has_region() then {
             cw := Gui.style.get_dashed_clone(view.cbwin)
@@ -947,7 +949,7 @@ class EditableTextList(LineBasedScrollArea)
                       yp, 
                       CharWidth(view.cbwin, s[si]), 
                       self.line_height)
-            Uncouple(cw)
+            cw.uncouple()
          }
       }
 
@@ -979,7 +981,7 @@ class EditableTextList(LineBasedScrollArea)
          if \r then {
             off1 := TextWidthEx(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
             off2 := TextWidthEx(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
-            FillRectangle(rev, xp + off1, yp,  off2 - off1, self.line_height)
+            rev.fill_rectangle(xp + off1, yp,  off2 - off1, self.line_height)
          }
       }
    end
@@ -1000,14 +1002,14 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public calculate_line_height()
-      return WAttrib(view.cbwin, "fheight")
+      return view.cbwin.attrib("fheight")
    end
 
    public keeps(e)
       # This component keeps all events if editable, but not tab if not editable.
       if \is_editable_flag then
          return
-      return e === (Key_Up | Key_Down | Key_Left | Key_Right)
+      return e.code === (Key_Up | Key_Down | Key_Left | Key_Right)
    end
 
    public calculate_subject_width()
@@ -1211,13 +1213,13 @@ class EditableTextList(LineBasedScrollArea)
       self.move_on_rpress_flag := 1
       self.primary_selection_owner := EditableTextListPrimarySelectionOwner(self)
       self.clipboard_selection_owner := EditableTextListClipboardSelectionOwner(self)
-      view.connect(self.handle_lpress, &lpress)
-      view.connect(self.handle_rpress, &rpress)
-      view.connect(self.handle_mpress, &mpress)
-      view.connect(self.handle_ldrag, &ldrag)
-      view.connect(self.handle_lrelease, &lrelease)
+      view.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      view.connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
+      view.connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS)
+      view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      view.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       view.set_pointer("xterm")
-      connect(self.handle_key, Event.KEY)
+      connect(self.handle_key, Event.KEY_PRESS)
       set_fields(a)
       return
    end

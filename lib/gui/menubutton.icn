@@ -10,6 +10,8 @@ package gui
 
 import lang
 
+$include "keysyms.icn"
+
 #
 # This is similar to {MenuBar}, but holds just a single
 # drop-down menu, rather than several.  It may be placed anywhere on
@@ -50,8 +52,8 @@ class MenuButton(Component)
       menu.draw_label(self.cbwin, 0, menu.label_w, 0)
       if menu.is_shaded() then {
          cw := Gui.style.get_filter_clone(self.cbwin)
-         FillRectangle(cw, self.x, self.y, self.w, self.h)
-         Uncouple(cw)
+         cw.fill_rectangle(self.x, self.y, self.w, self.h)
+         cw.uncouple()
       }
       border.draw_rect(self.cbwin, self)
    end
@@ -85,7 +87,7 @@ class MenuButton(Component)
    end
 
    public handle_press(e)
-      if self.in_region() then {
+      if self.in_region(e) then {
          if /self.which_open then {
             if menu.is_unshaded() then
                self.open_menu()
@@ -96,7 +98,7 @@ class MenuButton(Component)
    end
 
    public handle_release(e)
-      if not in_region() then
+      if not in_region(e) then
          (\self.which_open).handle_event(e)
    end
 
@@ -113,14 +115,15 @@ class MenuButton(Component)
    end
 
    public dialog_event(e)
+      local ec
       (self.is_unshaded() & self.is_unhidden() &
             \self.cbwin & \self.parent_dialog.is_open_flag) | fail
-
+      ec := e.code
       if e === accel_skip then
          accel_skip := &null
-      else if e === (&lpress | &rpress | &mpress) then 
+      else if ec === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then 
          handle_press(e)
-      else if e === (&lrelease | &rrelease | &mrelease) then 
+      else if ec === (Mouse_LeftRelease | Mouse_RightRelease | Mouse_MiddleRelease) then 
          handle_release(e)
       else
          (\self.which_open).handle_event(e)

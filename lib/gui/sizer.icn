@@ -10,9 +10,11 @@ package gui
 
 import util
 
+$include "keysyms.icn"
+
 #
 # This class provides a component which can be dragged across the
-# window, allowing panes within the window to be resized.  A Event.SIZER_RELEASED is
+# window, allowing panes within the window to be resized.  A Event.SIZER_RELEASE is
 # generated when the {Sizer} has been dragged and released.  The new position
 # may then be obtained and the dialog adjusted accordingly.
 #
@@ -84,11 +86,11 @@ class Sizer(Component)
       }
    end
 
-   public set_curr_pos()
+   public set_curr_pos(e)
       if \self.is_horizontal_flag then
-         curr_pos := &y - drag_offset - parent.y
+         curr_pos := e.y - drag_offset - parent.y
       else
-         curr_pos := &x - drag_offset - parent.x
+         curr_pos := e.x - drag_offset - parent.x
 
       curr_pos <:= \lo
       curr_pos >:= \hi
@@ -115,13 +117,13 @@ class Sizer(Component)
 
    public handle_lpress(e)
       if \self.is_horizontal_flag then {
-         drag_offset := &y - self.y
+         drag_offset := e.y - self.y
          temp_orig := self.y
       } else {
-         drag_offset := &x - self.x
+         drag_offset := e.x - self.x
          temp_orig := self.x
       }
-      start_pos := set_curr_pos()
+      start_pos := set_curr_pos(e)
       if \self.show_inter_flag then {
          self.temp_win := SliderDragComponent()
          self.temp_win.set_pos(self.x, 
@@ -133,11 +135,11 @@ class Sizer(Component)
          self.temp_win.resize()
          self.temp_win.invalidate()
       }
-      fire(Event.SIZER_PRESSED, e)
+      fire(Event.SIZER_PRESS, e)
    end
 
    public handle_ldrag(e)
-      set_curr_pos()
+      set_curr_pos(e)
       if \self.show_inter_flag then {
          if \is_horizontal_flag then {
             self.temp_win.y_spec := temp_orig + get_delta()
@@ -148,18 +150,18 @@ class Sizer(Component)
          self.temp_win.resize()
          self.temp_win.invalidate()
       }
-      fire(Event.SIZER_DRAGGED, e)
+      fire(Event.SIZER_DRAG, e)
    end
 
    public handle_lrelease(e)
-      set_curr_pos()
+      set_curr_pos(e)
       if \self.show_inter_flag then {
          self.temp_win.invalidate()
          self.parent_dialog.remove(self.temp_win)
          self.temp_win.finally()
          self.temp_win := &null
       }
-      fire(Event.SIZER_RELEASED, e)
+      fire(Event.SIZER_RELEASE, e)
    end
 
    public set_one(f)
@@ -174,9 +176,9 @@ class Sizer(Component)
 
    public new(a[])
       cast(self,Component).new()
-      connect(self.handle_lpress, &lpress)
-      connect(self.handle_ldrag, &ldrag)
-      connect(self.handle_lrelease, &lrelease)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       set_fields(a)
       return
    end
@@ -185,7 +187,7 @@ end
 
 class SliderDragComponent(Component)
    public display()
-      FillRectangle(self.cbwin, self.x, self.y, self.w, self.h)
+      self.cbwin.fill_rectangle(self.x, self.y, self.w, self.h)
    end
 
    public new()

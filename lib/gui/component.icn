@@ -399,15 +399,15 @@ class Component(Rect,Align,SetFields,Connectable)
 
    public invoke_display(r)
       local cw
-      Clip(self.cbwin, r.x, r.y, r.w, r.h)
-      EraseRectangle(self.cbwin, r.x, r.y, r.w, r.h)
+      self.cbwin.clip(r.x, r.y, r.w, r.h)
+      self.cbwin.erase_rectangle(r.x, r.y, r.w, r.h)
       self.display(r)
       if \self.show_layout_flag then
          (\layout_delegate).display()
       if is_shaded() then {
          cw := Gui.style.get_filter_clone(self.cbwin)
-         FillRectangle(cw, r.x, r.y, r.w, r.h)
-         Uncouple(cw)
+         cw.fill_rectangle(r.x, r.y, r.w, r.h)
+         cw.uncouple()
       }
    end
 
@@ -509,24 +509,31 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    # Which component does the point lie in, searching in z-order?
    #
-   public whose_point()
+   public whose_point(ex, ey)
       local c
       every c := !reverse_z_children do {
-         if c.is_unhidden() & c.inside(&x, &y) then
+         if c.is_unhidden() & c.inside(ex, ey) then
             return c
       }
    end
 
    #
-   # Is the current mouse click within this component?
+   # Is the given Point (normally the current event) within this
+   # component?
    #
-   public in_region()
-      return keyof(parent_dialog.point_chain, self)
+   public in_region(e)
+      #
+      # Use the point chain if we can
+      #
+      if e === parent_dialog.point_chain_source then
+         return keyof(parent_dialog.point_chain, self)
+      else
+         return get_clip_rect().inside(e.x, e.y)
    end
 
    #
    # Succeed if this component is held with the given button press.
-   # @param e The mouse press event - &lpress, &mpress or &rpress.
+   # @param e The mouse press event code - Mouse_LeftPress, Mouse_RightPress or Mouse_MiddlePress
    #
    public is_held(e)
       return keyof(\parent_dialog.held[e], self)
@@ -721,22 +728,23 @@ class Component(Rect,Align,SetFields,Connectable)
       self.compute_z_order()
       self.compute_tab_order()
       attribs := wattribs_to_list(self.wattribs)
-      if not(cbwin := (Clone ! ([parent.get_cbwin()] ||| attribs))) then {
+      if not(cbwin := (parent.get_cbwin().clone!attribs)) then {
 	 # Clone failed, what to do?  Try to drop a single
 	 # attribute, as that will identify which one is hurting us.
 	 every i := 1 to *attribs do {
 	    p := pop(attribs)
-	    if cbwin := (Clone ! ([parent.get_cbwin()] ||| attribs)) then {
-	       write(&errout, "clone failed, had to discard attribute ", image(p))
+	    if cbwin := (parent.get_cbwin().clone!attribs) then {
+               ewrite("clone failed, had to discard attribute ", image(p))
 	       break
             }
 	    push(attribs, p)
          }
 	 if /cbwin then {
-	    write(&errout, "clone failed, discarding attributes:")
-	    every write(&errout, "\t", ! attribs)
-	    cbwin := Clone(parent.get_cbwin())
-	    if /cbwin then fatal(self, "multiple bad attributes")
+	    ewrite("clone failed, discarding attributes:")
+	    every ewrite("\t", ! attribs)
+	    cbwin := parent.get_cbwin().clone()
+	    if /cbwin then 
+               fatal(self, "multiple bad attributes")
          }
       }
       (\self.border).initially(self)
@@ -766,7 +774,7 @@ class Component(Rect,Align,SetFields,Connectable)
    public finally()
       stop_ticker()
       (\self.border).finally()
-      Uncouple(self.cbwin)
+      self.cbwin.uncouple()
       Gui.style.dispose(self.cbwin)
       self.cbwin := &null
       #
@@ -893,10 +901,10 @@ class Component(Rect,Align,SetFields,Connectable)
       }
    end
 
-   public build_point_chain(l)
+   public build_point_chain(l, ex, ey)
       local c
-      if c := whose_point() then {
-         c.build_point_chain(l)
+      if c := whose_point(ex, ey) then {
+         c.build_point_chain(l, ex, ey)
          put(l, c)
       }
       return l
@@ -1141,7 +1149,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    # NB - this method will only be invoked if the allow_drag flag is non-null.
    #
-   # @param e the Icon event, one of &ldrag, &rdrag, &mdrag.
+   # @param e the event, an instance of WindowEvent
    #
    public can_drag(e)
    end

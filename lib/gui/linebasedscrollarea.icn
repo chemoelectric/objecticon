@@ -199,9 +199,9 @@ class LineBasedScrollArea(DrawScrollArea)
    # pointer is above all lines, >get_line_count() if below.  The view window is not
    # taken into account, so the result may not actually be visible.
    # @p
-   public pointer_to_line()
-      local s, h, a, r, e
-      a := &y - self.view.y + get_area_y()
+   public pointer_to_line(e)
+      local s, h, a, r, i
+      a := e.y - self.view.y + get_area_y()
       if integer(h := get_line_height()) then 
          return a / h + 1
       else {
@@ -209,11 +209,11 @@ class LineBasedScrollArea(DrawScrollArea)
             return 0
          s := 0
          r := 1
-         every e := !h do {
-            if s <= a < s + e then
+         every i := !h do {
+            if s <= a < s + i then
                break
             r +:= 1
-            s +:= e
+            s +:= i
          }
          return r
       }
@@ -222,10 +222,10 @@ class LineBasedScrollArea(DrawScrollArea)
    #
    # Return the line under the current x, y cursor, or fail if not over a line.
    #
-   public get_line_under_pointer()
+   public get_line_under_pointer(e)
       local r, i
-      (view.in_region() & has_lines()) | fail
-      r := pointer_to_line()
+      (view.in_region(e) & has_lines()) | fail
+      r := pointer_to_line(e)
       i := get_line_info() | fail
       if i.first <= r <= i.last then
          return r
@@ -234,10 +234,10 @@ class LineBasedScrollArea(DrawScrollArea)
    #
    # Return the nearest line to the pointer; fails only if there are no lines.
    #
-   public get_nearest_line_to_pointer()
+   public get_nearest_line_to_pointer(e)
       local r, i
       has_lines() | fail
-      r := pointer_to_line()
+      r := pointer_to_line(e)
       i := get_line_info() | fail
       r <:= i.first
       r >:= i.last
@@ -353,7 +353,7 @@ class LineBasedScrollArea(DrawScrollArea)
    end
 
    public get_default_horizontal_increment()
-      return TextWidth(self.cbwin, "m")
+      return self.cbwin.text_width("m")
    end
 
    public dump()

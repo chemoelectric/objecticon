@@ -176,9 +176,9 @@ class MenuComponent(Rect,SetFields,Connectable)
       return \self.is_decorative_flag
    end
 
-   public in_label_region()
-      return (self.label_y <= &y < self.label_y + self.label_h) & 
-         (self.label_x <= &x < self.label_x + self.label_w)
+   public in_label_region(e)
+      return (self.label_y <= e.y < self.label_y + self.label_h) & 
+         (self.label_x <= e.x < self.label_x + self.label_w)
    end
 
    #
@@ -264,9 +264,9 @@ class MenuComponent(Rect,SetFields,Connectable)
 
    #
    # Is the cursor over us?
-   # @p
-   public in_region()
-      return temp_win.in_region()
+   # 
+   public in_region(e)
+      return temp_win.in_region(e)
    end
 
    #

@@ -33,8 +33,8 @@ class TextButton(Button)
 
       if \self.is_down then {
          cw := Gui.style.get_down_clone(self.cbwin)
-         FillRectangle(cw, self.x, self.y, self.w, self.h)
-         Uncouple(cw)
+         cw.fill_rectangle(self.x, self.y, self.w, self.h)
+         cw.uncouple()
          border.draw_rev_rect(self.cbwin, self)
       } else if /self.is_checked_flag then
          border.draw_rect(self.cbwin, self)

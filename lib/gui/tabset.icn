@@ -84,7 +84,7 @@ class TabSet(Component)
    end
 
    public keeps(e)
-      return e === (Key_Left | Key_Right)
+      return e.code === (Key_Left | Key_Right)
    end
 
    public display_tabs_at_top()
@@ -114,8 +114,8 @@ class TabSet(Component)
 
             if c.is_shaded() then {
                fw := Gui.style.get_filter_clone(self.cbwin)
-               FillRectangle(fw, c.tab_x, ypos, c.tab_w, self.label_h)
-               Uncouple(fw)
+               fw.fill_rectangle(c.tab_x, ypos, c.tab_w, self.label_h)
+               fw.uncouple()
             }
             
          }
@@ -164,8 +164,8 @@ class TabSet(Component)
 
             if c.is_shaded() then {
                fw := Gui.style.get_filter_clone(self.cbwin)
-               FillRectangle(fw, c.tab_x, ypos, c.tab_w, self.label_h)
-               Uncouple(fw)
+               fw.fill_rectangle(c.tab_x, ypos, c.tab_w, self.label_h)
+               fw.uncouple()
             }
             
          }
@@ -259,15 +259,15 @@ class TabSet(Component)
    # Determine which tab if any mouse is over.
    #
    # @p
-   public which_tab()
+   public which_tab(e)
       local l, c
       if /self.tabs_at_bottom_flag then
-         l := (&y - (self.y + border.get_t_inset())) / (self.label_h + Gui.BORDER_WIDTH) + 1
+         l := (e.y - (self.y + border.get_t_inset())) / (self.label_h + Gui.BORDER_WIDTH) + 1
       else
-         l := (self.y + self.h - border.get_b_inset() - &y) / (self.label_h + Gui.BORDER_WIDTH) + 1
+         l := (self.y + self.h - border.get_b_inset() - e.y) / (self.label_h + Gui.BORDER_WIDTH) + 1
       every c := !self.line_break[l] do {
          if c.is_unshaded() & 
-            (c.tab_x - Gui.BORDER_WIDTH <= &x < c.tab_x + c.tab_w + Gui.BORDER_WIDTH) then
+            (c.tab_x - Gui.BORDER_WIDTH <= e.x < c.tab_x + c.tab_w + Gui.BORDER_WIDTH) then
             return c
       }
    end
@@ -329,9 +329,9 @@ class TabSet(Component)
    end
 
    public handle_lpress(e)
-      in_tab_region() | fail
+      in_tab_region(e) | fail
       start_handle(e)
-      set_which_one(which_tab())
+      set_which_one(which_tab(e))
       end_handle(e)
    end
 
@@ -362,26 +362,27 @@ class TabSet(Component)
    end
 
    public handle_key(e)
-      if e === Key_Left then
+      if e.code === Key_Left then
          handle_key_left(e)
-      else if e === Key_Right then
+      else if e.code === Key_Right then
          handle_key_right(e)
    end
 
-   public in_tab_region()
-      in_region() & 
-         (self.x + border.get_l_inset() <= &x < self.x + self.w - border.get_r_inset()) | fail 
+   public in_tab_region(e)
+      in_region(e) & 
+         (self.x + border.get_l_inset() <= e.x < self.x + self.w - border.get_r_inset()) | fail 
       return if /self.tabs_at_bottom_flag then
-         self.y + border.get_t_inset() <= &y < self.y + border.get_t_inset() + self.tab_h
+         self.y + border.get_t_inset() <= e.y < self.y + border.get_t_inset() + self.tab_h
       else
-         self.y + self.h - border.get_b_inset() - self.tab_h <= &y < self.y + self.h - border.get_b_inset()
+         self.y + self.h - border.get_b_inset() - self.tab_h <= e.y < self.y + self.h - border.get_b_inset()
    end
 
    public accepts_focus(e)
-      if e === &lpress & \self.no_click_focus_flag then
+      if e.code === Mouse_LeftPress & \self.no_click_focus_flag then
          fail
       # Outside of tabs never gives focus.
-      if e === (&lpress | &rpress | &mpress) & not self.in_tab_region() then
+      if e.code === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) & 
+                not self.in_tab_region(e) then
          fail
       return cast(self,Component).accepts_focus(e)
    end
@@ -677,8 +678,8 @@ class TabSet(Component)
       self.set_constraint("y_fill", "")
       self.set_constraint("x_weight", "1")
       self.set_constraint("y_weight", "1")
-      connect(self.handle_lpress, &lpress)
-      connect(self.handle_key, Event.KEY)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_key, Event.KEY_PRESS)
       set_border(RaisedBorder())
       set_fields(a)
       return

@@ -10,6 +10,8 @@ package gui
 
 import lang
 
+$include "keysyms.icn"
+
 #
 # This class is just a superclass of {List} and {EditList}.
 #
@@ -101,7 +103,7 @@ class DropDown(SelectionList,Component)
    public open_textlist(ev)
       local fh, max_h, spc_below
 
-      fh := WAttrib(self.cbwin, "fheight")
+      fh := self.cbwin.attrib("fheight")
       # Space available for downward popup
       spc_below := parent_dialog.h - (self.y + self.h)
       max_h := case self.direction of {
@@ -166,8 +168,9 @@ class DropDown(SelectionList,Component)
    end
 
    public dialog_event(e)
-      if ((e === "\e") | 
-          ((e === (&lpress | &rpress | &mpress)) & not(tl.in_region()) & not(b.in_region()))) then 
+      if ((/e.release & (e.code === "\e")) | 
+          ((e.code === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress)) & 
+                not(tl.in_region(e)) & not(b.in_region(e)))) then 
       {
          #
          # Mouse click outside textlist.  Close.
@@ -243,8 +246,8 @@ class DropDown(SelectionList,Component)
       self.set_constraint("x_fill", "")
       self.set_constraint("x_align", Align.L)
       self.set_constraint("x_weight", "1")
-      connect(self.go_up, &wheelup)
-      connect(self.go_down, &wheeldown)
+      connect(self.go_up, Event.MOUSE_WHEEL_UP)
+      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
       set_fields(a)
       return
    end

@@ -1,5 +1,7 @@
 package gui
 
+import graphics
+
 class ItemPaint()
    public initially(c)
    end
@@ -45,12 +47,13 @@ end
 
 class TextItemPaint(ItemPaint)
    public fh
+
    public initially(c)
-      fh := WAttrib(c.cbwin, "fheight")
+      fh := c.cbwin.attrib("fheight")
    end
 
    public get_width(W, data)
-      return TextWidth(W, detab(data))
+      return W.text_width(detab(data))
    end
 
    public get_constant_height(W)
@@ -58,7 +61,7 @@ class TextItemPaint(ItemPaint)
    end
 
    public get_size(W, data)
-      return Size(TextWidth(W, detab(data)), fh)
+      return Size(W.text_width(detab(data)), fh)
    end
 
    public draw(W, data, x, y)
@@ -88,19 +91,19 @@ end
 
 class ImageWindowItemPaint(ItemPaint)
    public get_width(W, data)
-      return WAttrib(data, "width")
+      return data.attrib("width")
    end
 
    public get_height(W, data)
-      return WAttrib(data, "height")
+      return data.attrib("height")
    end
 
    public get_size(W, data)
-      return Size(WAttrib(data, "width"), WAttrib(data, "height"))
+      return Size(data.attrib("width"), data.attrib("height"))
    end
 
    public draw(W, data, x, y)
-      CopyArea(data, W,,,,, x, y)
+      Window.copy_area(data, W,,,,, x, y)
    end
 end
 

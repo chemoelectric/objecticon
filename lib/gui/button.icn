@@ -10,6 +10,8 @@ package gui
 
 import util
 
+$include "keysyms.icn"
+
 #
 # This is the parent class of the button classes, including
 # checkboxes.
@@ -85,7 +87,7 @@ class Button(Toggle,Component)
       #
       # Button held down; toggle on/off as it goes over the button 
       #
-      if self.in_region() then {
+      if self.in_region(e) then {
          if /self.is_down then {
             go_down()
             invalidate()
@@ -123,7 +125,7 @@ class Button(Toggle,Component)
    end
 
    public handle_key(e)
-      if e == ("\r"|"\l"|" ") then
+      if e.code == ("\r"|"\l"|" ") then
          on_action(e)
    end
 
@@ -136,7 +138,7 @@ class Button(Toggle,Component)
    end
 
    public accepts_focus(e)
-      if e === &lpress & \self.no_click_focus_flag then
+      if e.code === Mouse_LeftPress & \self.no_click_focus_flag then
          fail
       return cast(self,Component).accepts_focus(e)
    end
@@ -168,10 +170,10 @@ class Button(Toggle,Component)
    public new(a[])
       cast(self,Component).new()
       self.accepts_focus_flag := 1
-      connect(self.handle_lpress, &lpress)
-      connect(self.handle_ldrag, &ldrag)
-      connect(self.handle_lrelease, &lrelease)
-      connect(self.handle_key, Event.KEY)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(self.handle_key, Event.KEY_PRESS)
       set_fields(a)
       return
    end

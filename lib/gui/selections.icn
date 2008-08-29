@@ -56,9 +56,7 @@ class Selection()
             return
          }
       }
-      OwnSelection(obj.get_win(),
-                   selection,
-                   selection_callback)
+      obj.get_win().own_selection(selection, selection_callback)
       owners[selection] := obj
    end
 
@@ -80,7 +78,7 @@ class Selection()
          curr.get_targets() == target | fail
          return curr.get_content(target)
       }
-      return GetSelectionContent((?Dispatcher.dialogs).win, selection, target)
+      return (?Dispatcher.dialogs).win.get_selection_content(selection, target)
    end
 
    #

@@ -8,7 +8,7 @@
 
 package gui
 
-import util, lang, ipl.graphics
+import util, lang, ipl.graphics(Zoom), graphics
 
 #
 # This class scales and displays an image.  The image source can
@@ -95,7 +95,7 @@ class Image(Component)
          # Use our own attribs so that shade and highlight in the icon image
          # comes out according to our own cbwin.
          attribs := wattribs_to_list(self.get_effective_wattribs())
-         win := WOpen!(attribs ||| ["size=" || (0 < image_width(self.image_str)) || 
+         win := Window.open!(attribs ||| ["size=" || (0 < image_width(self.image_str)) || 
                                           "," || (0 < image_height(self.image_str)),
                                           "canvas=hidden"])
          DrawImageEx(\win, 0, 0, self.image_str)
@@ -104,7 +104,7 @@ class Image(Component)
             if win := ImageCache.get(self.image_file) then
                dont_close := 1
          } else
-            win := WOpen("image=" || self.image_file, "canvas=hidden")
+            win := Window.open("image=" || self.image_file, "canvas=hidden")
       } else if \self.image_window then {
          win := self.image_window
          dont_close := 1
@@ -124,10 +124,10 @@ class Image(Component)
 
    public close_image()
       if \win & /dont_close then {
-         WClose(win)
+         win.close()
          Gui.style.dispose(win)
       }
-      WClose(\zoom_win)
+      (\zoom_win).close()
       dont_close := win := zoom_win := &null
    end
 
@@ -140,11 +140,11 @@ class Image(Component)
    end
 
    public get_default_width()
-      return WAttrib(\win, "width") + border.get_total_width()
+      return (\win).attrib("width") + border.get_total_width()
    end
 
    public get_default_height()
-      return WAttrib(\win, "height") + border.get_total_height()
+      return (\win).attrib("height") + border.get_total_height()
    end
 
    public display()
@@ -157,14 +157,14 @@ class Image(Component)
 
       ir := border.get_inner_rect(self)
 
-      img_w := WAttrib(win, "width")
-      img_h := WAttrib(win, "height")
+      img_w := win.attrib("width")
+      img_h := win.attrib("height")
 
       if img_w = ir.w & img_h = ir.h then {
-         CopyArea(win, 
-                  self.cbwin,,,,, 
-                  self.x + border.get_l_inset(),
-                  self.y + border.get_l_inset())
+         Window.copy_area(win, 
+                          self.cbwin,,,,, 
+                          self.x + border.get_l_inset(),
+                          self.y + border.get_l_inset())
       } else {
          #
          # Scale the image to the desired size
@@ -192,15 +192,15 @@ class Image(Component)
          zoom_h <:= 1
 
          if \zoom_win &
-            WAttrib(zoom_win, "width") = zoom_w & 
-            WAttrib(zoom_win,"height") = zoom_h then
-               CopyArea(zoom_win, self.cbwin, , , , , pt.x, pt.y)
+            zoom_win.attrib("width") = zoom_w & 
+            zoom_win.attrib("height") = zoom_h then
+               Window.copy_area(zoom_win, self.cbwin, , , , , pt.x, pt.y)
          else {
-            WClose(\zoom_win)
-            zoom_win := WOpen("size=" || zoom_w || "," || zoom_h, 
+            (\zoom_win).close()
+            zoom_win := Window.open("size=" || zoom_w || "," || zoom_h, 
                               "canvas=hidden") | fatal(self, "Couldn't open temp window")
             Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
-            CopyArea(zoom_win, self.cbwin, , , , , pt.x, pt.y)
+            Window.copy_area(zoom_win, self.cbwin, , , , , pt.x, pt.y)
          }
       }
    end

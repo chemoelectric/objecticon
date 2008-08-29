@@ -121,7 +121,7 @@ class CheckBox(Button)
          cw := Gui.style.get_focus_clone(self.cbwin)
          Rectangle(cw, self.tx - Gui.TEXT_INSET, self.y, 
                    self.tw + 2 * Gui.TEXT_INSET, self.h)
-         Uncouple(cw)
+         cw.uncouple()
       }
    end
 

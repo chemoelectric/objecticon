@@ -12,7 +12,7 @@ $include "keysyms.icn"
 
 class EditListTextField(TextField)
    public keeps(e)
-      return e === (Key_Up | Key_Down | Key_Left | Key_Right)
+      return e.code === (Key_Up | Key_Down | Key_Left | Key_Right)
    end
 
    public on_key(e)
@@ -24,7 +24,7 @@ class EditListTextField(TextField)
 
    public new(a[])
       cast(self,TextField).new()
-      self.connect(self.on_key, Event.KEY)
+      self.connect(self.on_key, Event.KEY_PRESS)
       self.set_border(EmptyBorder("l_inset=",Gui.TEXT_INSET,
                                   "r_inset=",Gui.TEXT_INSET))
       set_fields(a)
@@ -111,7 +111,7 @@ class EditList(DropDown)
       local t
       t := 0
       # Max string length + space for cursor (cf TextField's get_view() method)
-      every t <:= TextWidth(self.cbwin, (view.contents | !self.selection_list) || " ")
+      every t <:= self.cbwin.text_width((view.contents | !self.selection_list) || " ")
       return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
    end
 

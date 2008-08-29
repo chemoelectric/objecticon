@@ -124,17 +124,17 @@ class TreeTableContent(Tree)
          clip_x := max(col.x, r.x)
          clip_w := min(col.x + col.w, r.x + r.w) - clip_x
          if clip_w > 0 then {
-            Clip(view.cbwin, clip_x, self.view.y, clip_w, self.view.h)
+            view.cbwin.clip(clip_x, self.view.y, clip_w, self.view.h)
             if j = 1 then
                cast(self,Tree).draw_line(xp, yp, lh, i, r)
             else
                col.draw_cell(view.cbwin, (\N.contents)[j - 1], i, j, yp, lh)
          }
       }
-      Clip(view.cbwin, r.x, r.y, r.w, r.h)
+      view.cbwin.clip(r.x, r.y, r.w, r.h)
 
       if \selection_cw then
-         FillRectangle(selection_cw, self.view.x, yp, self.view.w, lh)
+         selection_cw.fill_rectangle(self.view.x, yp, self.view.w, lh)
 
       if \cursor_cw then 
          Rectangle(cursor_cw, self.view.x, yp, self.view.w, lh)

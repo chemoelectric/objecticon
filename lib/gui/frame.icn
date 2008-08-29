@@ -17,8 +17,8 @@ class Frame(Component)
       FRAME_RSW := 12
    end
 
-   public can_drag()
-      return bar.can_drag()
+   public can_drag(e)
+      return bar.can_drag(e)
    end
 
    public setup()
@@ -34,12 +34,12 @@ class Frame(Component)
       bar.set_title(s)
    end
 
-   public in_resize_corner()
-      return in_region() & 
-         (((self.x + self.w - FRAME_RSW <= &x < self.x + self.w) & 
-          (self.y + self.h - border.get_b_inset() <= &y < self.y + self.h)) | 
-          ((self.x + self.w - border.get_r_inset() <= &x < self.x + self.w) & 
-           (self.y + self.h - FRAME_RSW <= &y < self.y + self.h)))
+   public in_resize_corner(e)
+      return in_region(e) & 
+         (((self.x + self.w - FRAME_RSW <= e.x < self.x + self.w) & 
+          (self.y + self.h - border.get_b_inset() <= e.y < self.y + self.h)) | 
+          ((self.x + self.w - border.get_r_inset() <= e.x < self.x + self.w) & 
+           (self.y + self.h - FRAME_RSW <= e.y < self.y + self.h)))
    end
 
    public display(r)
@@ -77,22 +77,22 @@ class Frame(Component)
       return border.get_total_height() + bar.get_preferred_height() + content.get_preferred_height()
    end
 
-   public get_pointer()
-      if in_resize_corner() then
+   public get_pointer(e)
+      if in_resize_corner(e) then
          return "bottom right corner"
    end
 
    public handle_lpress(e)
-      if in_region() then
+      if in_region(e) then
          to_top()
-      if can_drag() then {
+      if can_drag(e) then {
          self.held_flag := 1
-         self.drag_x_offset := &x - self.x
-         self.drag_y_offset := &y - self.y
-      } else if in_resize_corner() then {
+         self.drag_x_offset := e.x - self.x
+         self.drag_y_offset := e.y - self.y
+      } else if in_resize_corner(e) then {
          self.held_flag := 2
-         self.drag_x_offset := &x - (self.x + self.w)
-         self.drag_y_offset := &y - (self.y + self.h)
+         self.drag_x_offset := e.x - (self.x + self.w)
+         self.drag_y_offset := e.y - (self.y + self.h)
       }
    end
 
@@ -100,12 +100,12 @@ class Frame(Component)
       \self.held_flag | fail
       case self.held_flag of {
          1: {
-            self.x_spec := &x - drag_x_offset - parent.x
-            self.y_spec := &y - drag_y_offset - parent.y
+            self.x_spec := e.x - drag_x_offset - parent.x
+            self.y_spec := e.y - drag_y_offset - parent.y
          }
          2: {
-            self.w_spec := &x - drag_x_offset - self.x
-            self.h_spec := &y - drag_y_offset - self.y
+            self.w_spec := e.x - drag_x_offset - self.x
+            self.h_spec := e.y - drag_y_offset - self.y
          }
       }
 
@@ -144,9 +144,9 @@ class Frame(Component)
       cast(self,Component).new()
       set_border(RaisedBorder())
       setup()
-      connect(self.handle_lpress, &lpress)
-      connect(self.handle_ldrag, &ldrag)
-      connect(self.handle_lrelease, &lrelease)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       set_fields(a)
       return
    end
@@ -163,8 +163,8 @@ class FrameBar(Component)
       lab.set_label(s)
    end
 
-   public can_drag()
-      return lab.in_region()
+   public can_drag(e)
+      return lab.in_region(e)
    end
 
    public setup()

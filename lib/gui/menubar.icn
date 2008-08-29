@@ -92,13 +92,13 @@ class MenuBar(Component)
             m.draw_label(self.cbwin, 0, m.label_w, 0)
             if m === \self.which_highlight then {
                rw := Gui.style.get_down_clone(self.cbwin)
-               FillRectangle(rw, m.label_x, m.label_y, m.label_w, m.label_h)
-               Uncouple(rw)
+               rw.fill_rectangle(m.label_x, m.label_y, m.label_w, m.label_h)
+               rw.uncouple()
             }
             if m.is_shaded() then {
                cw := Gui.style.get_filter_clone(self.cbwin)
-               FillRectangle(cw, m.label_x, m.label_y, m.label_w, m.label_h)
-               Uncouple(cw)
+               cw.fill_rectangle(m.label_x, m.label_y, m.label_w, m.label_h)
+               cw.uncouple()
             }
          }
       }
@@ -108,10 +108,10 @@ class MenuBar(Component)
    # Determine which of the menu labels is selected, if any, given we're in region.
    #
    # @p
-   public which_item()
+   public which_item(e)
       local m
       every m := !self.menus do {
-         if /m.is_shaded_flag & m.in_label_region() then
+         if /m.is_shaded_flag & m.in_label_region(e) then
             return m
       }
    end
@@ -191,7 +191,7 @@ class MenuBar(Component)
 
    public handle_accel(e)
       local m
-      m := find_key(e) | fail
+      m := find_key(e.code) | fail
       # The accelerator event will be passed to handle_key below; we don't want
       # to pass this on to the menu in case it matches one of its menus - that would
       # be two "accelerations" on one keypress.
@@ -207,7 +207,7 @@ class MenuBar(Component)
    public handle_default(e)
       local m
       if /self.which_open & \self.which_highlight then {
-         if m := find_key(e) then {
+         if m := find_key(e.code) then {
             set_which_open(m)
             m.cursor_on()
          }
@@ -263,8 +263,8 @@ class MenuBar(Component)
 
    public handle_press(e)
       local t
-      if in_region() then {
-         if t := which_item() then {
+      if in_region(e) then {
+         if t := which_item(e) then {
             if t === self.which_open then
                set_which_highlight(t)
             else
@@ -292,8 +292,8 @@ class MenuBar(Component)
       #
       (\self.which_open).handle_event(e)
 
-      if in_region() then {
-         if t := which_item() then {
+      if in_region(e) then {
+         if t := which_item(e) then {
             #
             # Over a (different) item - highlight or open it, depending on whether the
             # current one is open or just highlighted.
@@ -303,7 +303,7 @@ class MenuBar(Component)
             else
                self.set_which_open(t)
          }
-      } else if /self.which_open & e = &mousemove then
+      } else if /self.which_open & e.code = Mouse_Movement then
          #
          # Submenu not open (just highlighted), and a mouse move outside of the
          # bar - this clears the highlight (and leaves menu mode).
@@ -312,11 +312,11 @@ class MenuBar(Component)
    end
 
    public handle_release(e) 
-      if in_region() & \self.which_highlight then {
+      if in_region(e) & \self.which_highlight then {
          #
          # Released with menu open.  If not on a label then close
          #
-         which_item() | self.set_which_highlight()
+         which_item(e) | self.set_which_highlight()
       } else {
          if \self.which_open then
             #
@@ -336,7 +336,7 @@ class MenuBar(Component)
          self.which_open.handle_event(e)
          return
       }
-      case e of {
+      case /e.release & e.code of {
          Key_Down | " " | "\r": handle_key_down(e)
          Key_Right: handle_key_right(e)
          Key_Left: handle_key_left(e)
@@ -346,18 +346,22 @@ class MenuBar(Component)
    end
 
    public dialog_event(e)
+      local ec
+
       (self.is_unshaded() & self.is_unhidden() &
             \self.cbwin & \self.parent_dialog.is_open_flag) | fail
 
+      ec := e.code
+
       if e === accel_skip then
          accel_skip := &null
-      else if e === (&lpress | &rpress | &mpress) then 
+      else if ec === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then 
          handle_press(e)
-      else if e === (&lrelease | &rrelease | &mrelease) then 
+      else if ec === (Mouse_LeftRelease | Mouse_RightRelease | Mouse_MiddleRelease) then 
          handle_release(e)
-      else if e === (&mousemove | &ldrag | &rdrag | &mdrag) then 
+      else if ec === (Mouse_Movement | Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag) then 
          handle_move(e)
-      else if Gui.is_key_event(e) then 
+      else if Gui.is_key_event(ec) then 
          handle_key(e)
       else
          (\self.which_open).handle_event(e)

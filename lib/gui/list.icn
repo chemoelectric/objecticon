@@ -13,7 +13,7 @@ $include "keysyms.icn"
 
 class ListLabel(Label)
    public keeps(e)
-      return e === (Key_Up | Key_Down)
+      return e.code === (Key_Up | Key_Down)
    end
 
    public on_key(e)
@@ -27,7 +27,7 @@ class ListLabel(Label)
       cast(self,Label).new()
       self.set_label("")
       self.set_accepts_focus("t")
-      self.connect(self.on_key, Event.KEY)
+      self.connect(self.on_key, Event.KEY_PRESS)
       # Align with the text in the textlist.
       self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
       set_fields(a)
@@ -79,10 +79,10 @@ class List(DropDown)
    public get_default_width()
       local t
       if \self.constant_label then
-         t := TextWidth(self.cbwin, self.constant_label)
+         t := self.cbwin.text_width(self.constant_label)
       else {
          t := 0
-         every t <:= TextWidth(self.cbwin, !self.selection_list)
+         every t <:= self.cbwin.text_width(!self.selection_list)
       }
       return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
    end

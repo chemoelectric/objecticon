@@ -64,10 +64,10 @@ class Menu(TextMenuItem)
    # Deduce which label is under pointer, if any, given we're in the region.
    #
    # @p
-   public which_item()
+   public which_item(e)
       local m
       every m := !self.children do {
-         if /m.is_shaded_flag & /m.is_decorative_flag & m.in_label_region() then
+         if /m.is_shaded_flag & /m.is_decorative_flag & m.in_label_region(e) then
             return m
       }
    end
@@ -89,15 +89,15 @@ class Menu(TextMenuItem)
             c.draw_label(cw, self.max_label_left_w, self.max_label_mid_w, self.max_label_right_w)
             if c === \self.which_highlight then {
                rw := Gui.style.get_down_clone(cw)
-               FillRectangle(rw, c.label_x, c.label_y, c.label_w, c.label_h)
-               Uncouple(rw)
+               rw.fill_rectangle(c.label_x, c.label_y, c.label_w, c.label_h)
+               rw.uncouple()
             } else if c.is_shaded() then {
                #
                # Filter if shaded
                #
                fw := Gui.style.get_filter_clone(cw)
-               FillRectangle(fw, c.label_x, c.label_y, c.label_w, c.label_h)
-               Uncouple(fw)
+               fw.fill_rectangle(c.label_x, c.label_y, c.label_w, c.label_h)
+               fw.uncouple()
             }
          }
       }
@@ -223,12 +223,12 @@ class Menu(TextMenuItem)
    public handle_press(e)
       local m
 
-      if in_region() then {
+      if in_region(e) then {
          #
          # Mouse press in region.  Open the item where the pointer is
          # or clear highlight (eg if over a shaded item).
          #
-         if m := self.which_item() then {
+         if m := self.which_item(e) then {
             if m.is_sub_menu() then {
                if m === self.which_open then
                   self.set_which_highlight(m)
@@ -253,7 +253,7 @@ class Menu(TextMenuItem)
    end
 
    public handle_release(e)
-      if in_region() then {
+      if in_region(e) then {
          #
          # Mouse released over region
          #
@@ -290,8 +290,8 @@ class Menu(TextMenuItem)
       #
       (\self.which_open).handle_event(e)
 
-      if in_region() then {
-         if m := self.which_item() then {
+      if in_region(e) then {
+         if m := self.which_item(e) then {
             # 
             # If this is the current highlight, do nothing, as a sub-menu may
             # be highlighted but not open (due to a click) and we don't
@@ -321,7 +321,7 @@ class Menu(TextMenuItem)
 
    public handle_default(e)
       local m
-      if m := find_key(e) then {
+      if m := find_key(e.code) then {
          if m.is_sub_menu() then {
             set_which_open(m)
             m.cursor_on()
@@ -343,7 +343,7 @@ class Menu(TextMenuItem)
          self.which_open.handle_event(e)
          return
       }
-      case e of {
+      case /e.release & e.code of {
          Key_Up: handle_key_up(e)
          Key_Down: handle_key_down(e)
          Key_Right: handle_key_right(e)
@@ -355,13 +355,15 @@ class Menu(TextMenuItem)
    end
 
    public handle_event(e)
-      if e === (&lpress | &rpress | &mpress) then
+      local ec
+      ec := e.code
+      if ec === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then
          handle_press(e)
-      else if e === (&lrelease | &rrelease | &mrelease) then
+      else if ec === (Mouse_LeftRelease | Mouse_RightRelease | Mouse_MiddleRelease) then
          handle_release(e)
-      else if e === (&mousemove | &ldrag | &rdrag | &mdrag) then
+      else if ec === (Mouse_Movement | Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag) then
          handle_move(e)
-      else if Gui.is_key_event(e) then
+      else if Gui.is_key_event(ec) then
          handle_key(e)
       else
          (\self.which_open).handle_event(e)

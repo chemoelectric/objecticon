@@ -9,9 +9,9 @@
 package gui
 
 import 
+   graphics,
    util,
-   lang,
-   ipl.graphics
+   lang
 
 $include "keysyms.icn"
 
@@ -39,8 +39,6 @@ class Dialog(Component)
       menu_mode,               # Do we have a menu open?
       buffer_win,              # Buffer window for double buffering                 
       click_count,             # Variables controlling multiple clicks
-      prev_x,
-      prev_y,
       prev_time,
       prev_event,
       is_blocked_flag,
@@ -61,6 +59,7 @@ class Dialog(Component)
       tooltip_continue_time,
       tooltip_component, 
       point_chain,
+      point_chain_source,
       copy_rect,
       only_enlarge_width_flag,
       only_enlarge_height_flag,
@@ -83,7 +82,7 @@ class Dialog(Component)
 
       self.invoke_display(r)
 
-      CopyArea(buffer_win, win, r.x, r.y, r.w, r.h, r.x, r.y)
+      Window.copy_area(buffer_win, win, r.x, r.y, r.w, r.h, r.x, r.y)
    end
 
    public invalidate_rect(r)
@@ -95,20 +94,20 @@ class Dialog(Component)
 
    public block()
       self.is_blocked_flag := 1
-      self.resize_attrib := WAttrib(self.win, "resize")
-      WAttrib(self.win, "resize=off")
+      self.resize_attrib := self.win.attrib("resize")
+      self.win.attrib("resize=off")
    end
 
    public unblock()
       self.is_blocked_flag := &null
-      WAttrib(self.win, "resize=" || self.resize_attrib)
+      self.win.attrib("resize=" || self.resize_attrib)
    end
 
    #
-   # Raise the window, by using Icon's Raise() function.
+   # Raise the window
    #
    public raise()
-      Raise(self.win)
+      self.win.raise()
    end
 
    #
@@ -124,8 +123,8 @@ class Dialog(Component)
    public compute_absolutes()
       self.x := 0
       self.y := 0
-      self.w := WAttrib(self.win, "width")
-      self.h := WAttrib(self.win, "height")
+      self.w := self.win.attrib("width")
+      self.h := self.win.attrib("height")
    end
 
    #
@@ -139,7 +138,7 @@ class Dialog(Component)
    # Change pointer
    #
    public change_pointer(s)
-      WAttrib(self.win, "pointer=" || s)
+      self.win.attrib("pointer=" || s)
    end
 
    #
@@ -240,8 +239,8 @@ class Dialog(Component)
    end
 
    public resize_win(w, h)
-      WAttrib(self.win, "size=" || w || "," || h)
-      Enqueue(self.win, &resize)      
+      self.win.attrib("size=" || w || "," || h)
+      self.win.enqueue(Window_Resize)      
    end
 
    public initially()
@@ -254,12 +253,12 @@ class Dialog(Component)
                    "minwidth" | "minheight" | "minsize")
       self.compute_z_order()
       self.compute_tab_order()
-      self.cbwin := Clone(self.buffer_win)
+      self.cbwin := self.buffer_win.clone()
       every (!self.children).initially()
    end
 
    public open_buffer_win()
-      self.buffer_win := (WOpen ! (["canvas=hidden"] ||| 
+      self.buffer_win := (Window.open ! (["canvas=hidden"] ||| 
                                    wattribs_to_list(self.wattribs))) | fatal(self, "couldn't open window")
    end
 
@@ -309,19 +308,19 @@ class Dialog(Component)
       ensure_size()
       ensure_pos()
 
-      self.win := (WOpen ! (["inputmask=mc"] ||| 
+      self.win := (Window.open ! (["inputmask=mk"] ||| 
                             wattribs_to_list(self.wattribs))) | fatal(self, "couldn't open window")
       # Make the buffer the same size as the visible win.
-      WAttrib(self.buffer_win, "size=" || WAttrib(self.win, "size"))
+      self.buffer_win.attrib("size=" || self.win.attrib("size"))
       if \self.only_enlarge_width_flag then
-         WAttrib(self.win, "minwidth=" || WAttrib(self.win, "width"))
+         self.win.attrib("minwidth=" || self.win.attrib("width"))
       if \self.only_enlarge_height_flag then
-         WAttrib(self.win, "minheight=" || WAttrib(self.win, "height"))
+         self.win.attrib("minheight=" || self.win.attrib("height"))
    end
 
    public close_win()
-      WClose(self.buffer_win)
-      WClose(self.win)
+      self.buffer_win.close()
+      self.win.close()
    end
 
    public get_buffer_win()
@@ -410,23 +409,28 @@ class Dialog(Component)
       fire(Event.DIALOG_CLOSED)
    end
 
-   public consume_same(e)
-      while *Pending(self.win) > 0 & Pending(self.win)[1] === e do
-         e := default.NextEvent(self.win)
+   public consume_same(code)
+      while self.win.pending()[1] === code do
+         self.win.event()
    end
 
-   public create_point_chain()
+   public create_point_chain(e)
       self.point_chain := []
-      self.build_point_chain(self.point_chain)
-      if self.inside(&x, &y) then
+      self.point_chain_source := e
+      self.build_point_chain(self.point_chain, e.x, e.y)
+      if self.inside(e.x, e.y) then
          put(self.point_chain, self)
    end
 
-   public process_event(e)
-      if e === (&ldrag | &rdrag | &mdrag | &mousemove) then
-         consume_same(e)
+   public process_event(l)
+      local e
 
-      create_point_chain()
+      if l[1] === (Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag | Mouse_Movement) then
+         consume_same(l[1])
+
+      e := WinEvent!l
+
+      create_point_chain(e)
 
       if /self.curr_drag then 
          check_dnd(e)
@@ -441,17 +445,20 @@ class Dialog(Component)
    # Normal event processing - not dnd
    # 
    private process_normal(e)
-      local c
-      if e === (&lpress | &rpress | &mpress) then {
+      local c, ec, old_n_held
+      ec := e.code
+
+      old_n_held := *held
+      if ec === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
          check_click_count(e)
          if c := (!self.point_chain).find_focus(e) then
             self.set_focus(c, e)
-      } else if e === Event.INVOKE_LATER then
+      } else if ec === Event.INVOKE_LATER then
          do_invoke()
-      else if e === &resize then
+      else if ec === Window_Resize then
          handle_resize(e)
-      else if &meta & type(e) == "string" then {
-         if c := self.find_accel(e) then
+      else if \e.meta & /e.release & type(ec) == "string" then {
+         if c := self.find_accel(ec) then
             c.handle_accel(e)
       }
 
@@ -467,13 +474,13 @@ class Dialog(Component)
       # Check for focus keyboard movement, but not in menu mode; this would get muddled up
       # with the menu's cursor movement.
       #
-      if /self.menu_mode then {
-         if (e === ("\t" | Key_Right | Key_Down)) & (/self.focus | 
+      if /e.release & /self.menu_mode then {
+         if (ec === ("\t" | Key_Right | Key_Down)) & (/self.focus | 
                                                      self.focus.is_hidden() |
                                                      self.focus.is_shaded() | 
                                                      not(self.focus.keeps(e))) then 
             self.set_focus(find_next_focus(e), e)
-         else if e === (Shift_Tab | Key_Left | Key_Up) & (/self.focus | 
+         else if ec === (Shift_Tab | Key_Left | Key_Up) & (/self.focus | 
                                                           self.focus.is_hidden() |
                                                           self.focus.is_shaded() | 
                                                           not(self.focus.keeps(e))) then 
@@ -484,29 +491,38 @@ class Dialog(Component)
       # The event may have changed what's above the cursor, eg a menu may have
       # closed revealing something below, so re-create the point chain.
       #
-      create_point_chain()
+      create_point_chain(e)
       process_tooltip_event(e)
-      synch_pointer(e)
+
+      #
+      # Synch the pointer if either there were no buttons down before or after
+      # this event.  This means we synch at the start and end of a drag, but not
+      # during a drag.
+      #
+      if (old_n_held | *held) = 0 then
+         synch_pointer(e)
    end
 
    #
    # Artificially "hold" a component down.
    # @param c The component
-   # @param e The simulated mouse event - &lpress, &mpress or &rpress.
+   # @param e The mouse event
    #
    public hold(c, e)
-      self.held[e] := copy(\self.held[e]) | fail
-      put(self.held[e], c)
+      local ec
+      ec := e.code
+      self.held[ec] := copy(\self.held[ec]) | fail
+      put(self.held[ec], c)
    end
 
    #
    # Artificially "release" a component which is held.
-   # @param c The component
-   # @param e The simulated mouse event - &lpress, &mpress or &rpress.
+   # @param c  The component
+   # @param ec The simulated mouse event code
    #
-   public release(c, e)
-      self.held[e] := copy(\self.held[e]) | fail
-      list_del(self.held[e], c)
+   public release(c, ec)
+      self.held[ec] := copy(\self.held[ec]) | fail
+      list_del(self.held[ec], c)
    end
 
    #
@@ -517,33 +533,36 @@ class Dialog(Component)
    end
 
    public generate_events(e)
-      local s1, s2
-      if e === (&wheelup | &wheeldown) then {
-         fire_list(point_chain, e, e)
-      } else if e === (&lpress | &rpress | &mpress) then {
-         held[e] := copy(point_chain)
-         fire_list(held[e], e, e)
-      } else if e === (&ldrag | &rdrag | &mdrag | &mousemove) then {
+      local s1, s2, ec, ke
+
+      ec := e.code
+      if ec === (Mouse_WheelUp | Mouse_WheelDown) then {
+         fire_list(point_chain, ec, e)
+      } else if ec === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
+         held[ec] := copy(point_chain)
+         fire_list(held[ec], ec, e)
+      } else if ec === (Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag | Mouse_Movement) then {
          s1 := set(\moving) | set()
          s2 := set(point_chain)
          fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
          fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
-         if e === &mousemove then 
-            fire_list(point_chain, e, e)
+         if ec === Mouse_Movement then 
+            fire_list(point_chain, ec, e)
          else
-            fire_list(\held[e + 6], e, e)
+            fire_list(\held[ec + 6], ec, e)
          moving := copy(point_chain)
-      } else if e === (&lrelease | &rrelease | &mrelease) then {
-         fire_list(\held[e + 3], e, e)
-         delete(held, e + 3)
-      } else if e === &windowclose then {
-         fire(e, e)
-      } else if Gui.is_key_event(e) then {
+      } else if ec === (Mouse_LeftRelease | Mouse_RightRelease | Mouse_MiddleRelease) then {
+         fire_list(\held[ec + 3], ec, e)
+         delete(held, ec + 3)
+      } else if ec === (Window_CloseButton | Window_Resize) then {
+         fire(ec, e)
+      } else if Gui.is_key_event(ec) then {
+         ke := if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS
          if \self.menu_mode then
-            fire_list([self.menu_mode], Event.KEY, e)
+            fire_list([self.menu_mode], ke, e)
          else
-            fire_list([\self.focus], Event.KEY, e)
-         self.fire(Event.KEY, e)
+            fire_list([\self.focus], ke, e)
+         self.fire(ke, e)
       }
       fire(Event.ICON, e)
    end
@@ -578,11 +597,11 @@ class Dialog(Component)
    #
    # Show the tooltip at the given cursor position.
    # 
-   private show_tooltip(obj, tip)
+   private show_tooltip(obj, tip, e)
       if \self.tooltip_component then
          hide_tooltip()
       self.tooltip_component := obj.create_tooltip_component(tip)
-      self.tooltip_component.set_pos(&x + TOOLTIP_X_OFFSET, &y + TOOLTIP_Y_OFFSET)
+      self.tooltip_component.set_pos(e.x + TOOLTIP_X_OFFSET, e.y + TOOLTIP_Y_OFFSET)
       self.tooltip_component.set_z(get_top_z())
       self.add(self.tooltip_component)
       self.tooltip_component.initially()
@@ -592,11 +611,11 @@ class Dialog(Component)
       # Ensure it's on-screen; adjust and resize again if not.
       #
       if self.tooltip_component.x + self.tooltip_component.w > self.w then {
-         self.tooltip_component.x_spec := max(0, &x - TOOLTIP_X_OFFSET - self.tooltip_component.w)
+         self.tooltip_component.x_spec := max(0, e.x - TOOLTIP_X_OFFSET - self.tooltip_component.w)
          self.tooltip_component.resize()
       }
       if self.tooltip_component.y + self.tooltip_component.h > self.h then {
-         self.tooltip_component.y_spec := max(0, &y - TOOLTIP_Y_OFFSET - self.tooltip_component.h)
+         self.tooltip_component.y_spec := max(0, e.y - TOOLTIP_Y_OFFSET - self.tooltip_component.h)
          self.tooltip_component.resize()
       }
 
@@ -647,8 +666,8 @@ class Dialog(Component)
    # Tooltip processing during an event.
    # 
    private process_tooltip_event(e)
-      if e === &mousemove then
-         tooltip_states()
+      if e.code === Mouse_Movement then
+         tooltip_states(e)
       else {
          if tooltip_state = 2 then
             hide_tooltip()
@@ -664,39 +683,44 @@ class Dialog(Component)
    # Tooltip processing on a tick.
    # 
    private process_tooltip_tick()
+      local e
       #
       # Don't process ticks whilst blocked, or button held.
       #
       if \self.is_blocked_flag | (get_held_count() > 0) then
          return
 
-      &x := WAttrib(self.win, "pointerx")
-      &y := WAttrib(self.win, "pointery")
-      create_point_chain()
-
-      tooltip_states()
+      #
+      # Create an artificial event and process it.
+      #
+      e := WinEvent(0, 
+                    self.win.attrib("pointerx"),
+                    self.win.attrib("pointery"))
+      create_point_chain(e)
+      tooltip_states(e)
    end
 
    #
    # Tooltip state processing.
    # 
-   private tooltip_states()
+   private tooltip_states(e)
       local obj, t, c, tip
 
       #
       # If over tooltip, behave as though over current object.
       #
-      if (\self.tooltip_component).in_region() then {
-         if tip := self.tooltip_last_obj.get_tooltip() then
+      if (\self.tooltip_component).in_region(e) then {
+         if tip := self.tooltip_last_obj.get_tooltip(e) then
             obj := self.tooltip_last_obj
       } else {
          every c := !self.point_chain do {
-            if tip := c.get_tooltip() then {
+            if tip := c.get_tooltip(e) then {
                obj := c
                break
             }
          }
       }
+      #write("last=",image(obj), "  obj=",image(obj), " tip=",image(tip), "  state=",tooltip_state)
 
       t := curr_time_millis()
 
@@ -714,7 +738,7 @@ class Dialog(Component)
                else
                   self.tooltip_start_time := t + obj.get_tooltip_start_delay()
             } else if t >= self.tooltip_start_time then {
-               show_tooltip(obj, tip)
+               show_tooltip(obj, tip, e)
                self.tooltip_state := 2
                self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
             }
@@ -726,14 +750,14 @@ class Dialog(Component)
                   self.tooltip_state := 3
                   self.tooltip_continue_time := t + TOOLTIP_CONTINUE_DELAY
                } else {
-                  show_tooltip(obj, tip)
+                  show_tooltip(obj, tip, e)
                   self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
                }
             } else if tip ~=== self.tooltip_last_tip then {
                if /obj.tooltip_follows_mouse_flag then
                   update_tooltip(obj, tip)
                else
-                  show_tooltip(obj, tip)
+                  show_tooltip(obj, tip, e)
                self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
             } else if t >= \self.tooltip_end_time then {
                hide_tooltip()
@@ -743,7 +767,7 @@ class Dialog(Component)
          }
          3 : {
             if \obj ~=== self.tooltip_last_obj then {
-               show_tooltip(obj, tip)
+               show_tooltip(obj, tip, e)
                self.tooltip_state := 2
                self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
             } else if t >= self.tooltip_continue_time then
@@ -761,8 +785,8 @@ class Dialog(Component)
    public synch_pointer(e)
       local c, ptr
 
-      if get_held_count() > 0 then
-         return
+      #if get_held_count() > 0 then
+      #   return
 
       if \self.menu_mode then
          ptr := "left ptr"
@@ -780,17 +804,18 @@ class Dialog(Component)
    # Drag & drop mode processing
    # 
    private process_dnd(e)
-      local o
+      local o, ec
 
+      ec := e.code
       #
       # Wheel events are treated normally and then passed on as though
       # they were a drag event, in order to keep the drag holder
       # display in synch.
       #
-      if e === (&wheelup | &wheeldown) then
-         fire_list(point_chain, e, e)
+      if ec === (Mouse_WheelUp | Mouse_WheelDown) then
+         fire_list(point_chain, ec, e)
 
-      if e === (&wheelup | &wheeldown | curr_drag.event) then {
+      if ec === (Mouse_WheelUp | Mouse_WheelDown | curr_drag.event.code) then {
          # Try the drag holder's drag_event method first...
          if not((\self.curr_drag_holder).drag_event(self.curr_drag, e)) then {
             # No luck with the drag holder, so try to search for a new drag holder.
@@ -805,16 +830,16 @@ class Dialog(Component)
             change_pointer("exchange")
             self.curr_drop := &null
          }
-      } else if e === curr_drag.event + 3 then {
+      } else if ec === curr_drag.event.code + 3 then {
          # If we have a prospective drop from can_drop, try to perform it.
          if (\self.curr_drop).get_source().perform_drop(self.curr_drag, self.curr_drop, e) then
             self.curr_drag.get_source().end_drag(self.curr_drag, self.curr_drop, e)
          self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
-         delete(self.held, e + 3)   # Now held should be empty
+         delete(self.held, ec + 3)   # Now held should be empty
          self.invoke_drag_reset(e)
          synch_pointer(e)
-      } else if e === "\e" then {
-         self.held[curr_drag.event + 6] := []    # Now held should hold this one empty list
+      } else if /e.release & (ec === "\e") then {
+         self.held[curr_drag.event.code + 6] := []    # Now held should hold this one empty list
          self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
          self.invoke_drag_reset(e)
          change_pointer(DEFAULT_POINTER)
@@ -829,13 +854,13 @@ class Dialog(Component)
       # There must be only one button held, and the event must be
       # a drag.
       #
-      if *self.held = 1 & e === (&ldrag | &rdrag | &mdrag) then {
+      if *self.held = 1 & e.code === (Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag) then {
          # Note the position of the start of a drag
-         /self.drag_gesture_x := &x
-         /self.drag_gesture_y := &y
+         /self.drag_gesture_x := e.x
+         /self.drag_gesture_y := e.y
          if /self.tried_drag &
-            (abs(&x - self.drag_gesture_x) > 3 |
-             abs(&y - self.drag_gesture_y) > 3 ) then {
+            (abs(e.x - self.drag_gesture_x) > 3 |
+             abs(e.y - self.drag_gesture_y) > 3 ) then {
                 # Try to begin a drag.
                 self.curr_drag := self.invoke_can_drag(e) 
                 self.tried_drag := 1
@@ -848,7 +873,7 @@ class Dialog(Component)
 
    public invoke_can_drag(ev)
       local c, o
-      every c := !\self.held[ev + 6] do
+      every c := !\self.held[ev.code + 6] do
          if c.is_unshaded() & \c.allow_drag_flag & o := c.can_drag(ev) then
             return Drag(c, o, ev)
    end
@@ -856,7 +881,7 @@ class Dialog(Component)
    public invoke_drag_event(d, ev)
       local c
       every c := !self.point_chain do
-         if c.is_unshaded() & \c.allow_drop_flag & c.drag_event(d) then
+         if c.is_unshaded() & \c.allow_drop_flag & c.drag_event(d, ev) then
             return c
    end
 
@@ -868,7 +893,7 @@ class Dialog(Component)
       #
       # Resize buffer canvas
       #
-      WAttrib(self.buffer_win, "size=" || WAttrib(self.win, "size"))
+      self.buffer_win.attrib("size=" || self.win.attrib("size"))
       self.resize()
       self.invalidate()
    end
@@ -880,15 +905,14 @@ class Dialog(Component)
       local t
 
       t := curr_time_millis()
-      if e = \prev_event & prev_x = &x & prev_y = &y & (t - prev_time < DOUBLE_CLICK_DELAY) then
+      if e.code = (\prev_event).code & prev_event.x = e.x & prev_event.y = e.y & 
+                                 (t - prev_time < DOUBLE_CLICK_DELAY) then
          click_count +:= 1
       else
          click_count := 1
 
       prev_event := e
       prev_time := t
-      prev_x := &x
-      prev_y := &y
    end
 
    public get_focus_list(e)
@@ -937,7 +961,7 @@ class Dialog(Component)
    #
    public invoke_later(proc, param)
       put(self.invokes, [proc, param])
-      Enqueue(self.win, Event.INVOKE_LATER)
+      self.win.enqueue(Event.INVOKE_LATER)
    end
 
    #
@@ -995,6 +1019,28 @@ class Dialog(Component)
       self.tooltip_ticker := Ticker("interval=200")
       self.tooltip_ticker.connect(self.process_tooltip_tick, Event.TICK)
       set_fields(a)
+      return
+   end
+end
+
+class WinEvent(Point)
+   public
+      code,
+      shift,
+      meta,
+      ctrl,
+      release,
+      interval
+
+   public new(code, x, y, ctrl, meta, shift, release, interval)
+      self.code := code
+      self.x := x
+      self.y := y
+      self.shift := shift
+      self.meta := meta
+      self.ctrl := ctrl
+      self.release := release
+      self.interval := interval
       return
    end
 end

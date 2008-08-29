@@ -77,11 +77,11 @@ class TableContent(SelectableScrollArea)
    #
    # Return the column under the current x, y cursor.
    #
-   public get_column_under_pointer()
+   public get_column_under_pointer(e)
       local c
-      view.in_region() | fail
+      view.in_region(e) | fail
       every c := !parent.table_header.children do
-         if c.x <= &x < c.x + c.w then
+         if c.x <= e.x < c.x + c.w then
             return c
    end
 
@@ -95,11 +95,11 @@ class TableContent(SelectableScrollArea)
          clip_x := max(col.x, r.x)
          clip_w := min(col.x + col.w, r.x + r.w) - clip_x
          if clip_w > 0 then {
-            Clip(view.cbwin, clip_x, r.y, clip_w, r.h)
+            view.cbwin.clip(clip_x, r.y, clip_w, r.h)
             col.draw_cell(view.cbwin, l[j], i, j, yp, lh)
          }
       }
-      Clip(view.cbwin, r.x, r.y, r.w, r.h)
+      view.cbwin.clip(r.x, r.y, r.w, r.h)
    end
 end
 
@@ -254,12 +254,12 @@ class Table(Component)
       return self.table_content.get_last_line()
    end
 
-   public get_line_under_pointer()
-      return self.table_content.get_line_under_pointer()
+   public get_line_under_pointer(e)
+      return self.table_content.get_line_under_pointer(e)
    end
 
-   public get_column_under_pointer()
-      return self.table_content.get_column_under_pointer()
+   public get_column_under_pointer(e)
+      return self.table_content.get_column_under_pointer(e)
    end
 
    #

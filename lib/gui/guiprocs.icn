@@ -8,12 +8,30 @@
 
 package gui
 
+import graphics
+
 $include "keysyms.icn"     
 
 class Event()
    public static const
-      INVOKE_LATER,        # The synthetic event for invocation via the event queue.
-      ICON,                # Events fired by Components.
+      MOUSE_LEFT_PRESS,
+      MOUSE_MIDDLE_PRESS,
+      MOUSE_RIGHT_PRESS,
+      MOUSE_LEFT_RELEASE,
+      MOUSE_MIDDLE_RELEASE,
+      MOUSE_RIGHT_RELEASE,
+      MOUSE_LEFT_DRAG,
+      MOUSE_MIDDLE_DRAG,
+      MOUSE_RIGHT_DRAG,
+      MOUSE_MOVEMENT,
+      MOUSE_WHEEL_UP,
+      MOUSE_WHEEL_DOWN,
+      WINDOW_RESIZE,
+      WINDOW_CLOSE_BUTTON,
+      # The synthetic event for invocation via the event queue.
+      INVOKE_LATER,        
+      # This event listens for all window-system generated events
+      ICON,
       BUTTON_RELEASE,
       BUTTON_PRESS,
       BUTTON_HELD,
@@ -23,18 +41,33 @@ class Event()
       VALUE_CHANGED,
       ACTION,
       TREE_NODE_EXPANSION,
-      SIZER_PRESSED,
-      SIZER_DRAGGED,
-      SIZER_RELEASED,
+      SIZER_PRESS,
+      SIZER_DRAG,
+      SIZER_RELEASE,
       MOUSE_ENTER,
       MOUSE_EXIT,
-      KEY,
+      KEY_PRESS,
+      KEY_RELEASE,
       TICK,
       GOT_FOCUS,
       LOST_FOCUS,
       DIALOG_CLOSED
 
    private static init()
+      MOUSE_LEFT_PRESS := Mouse_LeftPress
+      MOUSE_MIDDLE_PRESS := Mouse_MiddlePress
+      MOUSE_RIGHT_PRESS := Mouse_RightPress
+      MOUSE_LEFT_RELEASE := Mouse_LeftRelease
+      MOUSE_MIDDLE_RELEASE := Mouse_MiddleRelease
+      MOUSE_RIGHT_RELEASE := Mouse_RightRelease
+      MOUSE_LEFT_DRAG := Mouse_LeftDrag
+      MOUSE_MIDDLE_DRAG := Mouse_MiddleDrag
+      MOUSE_RIGHT_DRAG := Mouse_RightDrag
+      MOUSE_MOVEMENT := Mouse_Movement
+      MOUSE_WHEEL_UP := Mouse_WheelUp
+      MOUSE_WHEEL_DOWN := Mouse_WheelDown
+      WINDOW_RESIZE := Window_Resize
+      WINDOW_CLOSE_BUTTON := Window_CloseButton
       INVOKE_LATER := 1000
       ICON := 1
       BUTTON_RELEASE := 20
@@ -46,12 +79,13 @@ class Event()
       VALUE_CHANGED := 55
       ACTION := 60
       TREE_NODE_EXPANSION := 70
-      SIZER_PRESSED := 80
-      SIZER_DRAGGED := 81
-      SIZER_RELEASED := 82
+      SIZER_PRESS := 80
+      SIZER_DRAG := 81
+      SIZER_RELEASE := 82
       MOUSE_ENTER := 94
       MOUSE_EXIT := 95
-      KEY := 100
+      KEY_PRESS := 100
+      KEY_RELEASE := 101
       TICK := 300
       GOT_FOCUS := 400
       LOST_FOCUS := 401
@@ -151,7 +185,7 @@ procedure EraseRectangle(W, x, y, w, h)
       y := 0
    }
 
-   return EraseArea(W, x, y, w, h)
+   return W.erase_area(x, y, w, h)
 end
 
 
@@ -164,7 +198,7 @@ procedure DrawImageEx(W, x, y, i)
    #
    if x + image_width(i) < 0 & y + image_height(i) < 0 then
       return
-   DrawImage(W, x, y, i)
+   W.draw_image(x, y, i)
 end
 
 
@@ -173,12 +207,12 @@ procedure PaletteKeyEx(W, palette, spec)
    color := case spec of {
       "hilite" : Gui.style.get_hilite_color(W)
       "shadow" : Gui.style.get_shadow_color(W)
-      "fg" : WAttrib(W, "fg")
-      "bg" : WAttrib(W, "bg")
+      "fg" : W.attrib("fg")
+      "bg" : W.attrib("bg")
       "trans" : return "\377"
       default : spec
    }
-   return PaletteKey(W, palette, color)
+   return W.palette_key(palette, color)
 end
 
 
@@ -209,7 +243,7 @@ end
 
 
 procedure Rectangle(W, x, y, w, h)
-   return DrawRectangle(W, x, y, w - 1, h - 1)
+   return W.draw_rectangle(x, y, w - 1, h - 1)
 end
 
 
@@ -218,9 +252,9 @@ end
 #
 procedure CharWidth(win, ch)
    if ch == "\t" then
-      return TextWidth(win, " ")
+      return win.text_width(" ")
    else
-      return TextWidth(win, ch)
+      return win.text_width(ch)
 end
 
 
@@ -241,7 +275,7 @@ procedure TextWidthEx(win, s, i, j, tw)
    }
 
    if not upto('\t', s) then
-      return TextWidth(win,s[i:j])
+      return win.text_width(s[i:j])
 
    /tw := 8
    tp := 0
@@ -256,13 +290,13 @@ procedure TextWidthEx(win, s, i, j, tw)
 
       if ch == "\t" then {
          repeat {
-            w +:= TextWidth(win, " ")
+            w +:= win.text_width(" ")
             tp +:= 1
             if tp % tw = 0 then 
                break
          }
       } else {
-         w +:= TextWidth(win, ch)
+         w +:= win.text_width(ch)
          tp +:= 1
       }
    }
@@ -272,12 +306,12 @@ end
 
 procedure DrawStringEx(win, x, y, s, k)
    local i, x1, y1
-   y +:= WAttrib(win, "ascent")
-   DrawString(win, x, y, s)
+   y +:= win.attrib("ascent")
+   win.draw_string(x, y, s)
    if i := upto(\k, map(s)) then {
-      x1 := x + TextWidth(win, s[1:i])
-      y1 := y + WAttrib(win, "descent") - 1
-      DrawLine(win, x1, y1, x1 + TextWidth(win, s[i]), y1)
+      x1 := x + win.text_width(s[1:i])
+      y1 := y + win.attrib("descent") - 1
+      win.draw_line(x1, y1, x1 + win.text_width(s[i]), y1)
    }
 end
 
@@ -337,9 +371,7 @@ end
 # The absolute pointer x position on the screen.
 #
 procedure get_pointerx()
-   local d
-   d := ?Dispatcher.dialogs | fail
-   return WAttrib(d.win, "posx") + WAttrib(d.win, "pointerx")
+   return Window.query_root_pointer()[1]
 end
 
 
@@ -347,9 +379,7 @@ end
 # The absolute pointer y position on the screen.
 #
 procedure get_pointery()
-   local d
-   d := ?Dispatcher.dialogs | fail
-   return WAttrib(d.win, "posy") + WAttrib(d.win, "pointery")
+   return Window.query_root_pointer()[2]
 end
 
 
