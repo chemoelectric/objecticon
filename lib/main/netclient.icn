@@ -83,7 +83,7 @@ class NetClient(Connectable, SetFields)
 
       fire(CONNECTING_EVENT)
       connection.connect(addr) | {
-         if \timeout > 0 & &errno = EINPROGRESS then {
+         if \timeout > 0 & errno() = EINPROGRESS then {
             #write("** in progress")
             l1 := [connection]
             l2 := [connection]

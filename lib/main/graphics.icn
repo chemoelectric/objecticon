@@ -1,0 +1,341 @@
+package graphics
+      
+class Window()
+   private
+      wbp
+
+   public static open(a[])
+      return Window(open_impl!a)
+   end
+
+   public clone(a[])
+      return Window(clone_impl!a)
+   end
+
+   public static couple(w1, w2)
+      return Window(couple_impl(w1, w2))
+   end
+
+   private static defer open_impl(a[])
+   private defer clone_impl(a[])
+   private static defer couple_impl(w1, w2)
+
+   #
+   # Produces a beep or other signal to attract attention.
+   #
+   public defer alert(volume)
+
+   #
+   # Returns the background color. If colr is supplied, the color is
+   # first set to that specification; failure occurs if the request
+   # cannot be satisfied. Setting the background color does not change
+   # the appearance of the window, but subsequent drawing operations
+   # that use the background color are affected.
+   #
+   public defer bg(colr)
+
+   #
+   # Sets the clipping region to the specified rectangle; subsequent
+   # output extending outside its bounds is discarded. If clip() is
+   # called with no arguments, clipping is disabled and the entire
+   # canvas is writable.
+   #
+   public defer clip(x, y, w, h)
+
+   #
+   # Returns the setting of mutable color i if k1 is omitted. If k1 is
+   # supplied, color i is changed as specified, with an immediate
+   # effect on any visible pixels of that color. Additional index and
+   # color pairs may be supplied to set multiple entries with one
+   # call. Color() fails if a color specification is invalid.
+   #
+   public defer color(a[])
+
+   #
+   #
+   #
+   public defer color_value(k)
+
+   #
+   # draw_arc(x1, y1, width1, height1, angle11, angle21,...)
+   #
+   public defer draw_arc(a[])
+
+   #
+   # event() - return an event from this window
+   #
+   public defer event(timeout)
+
+   #
+   # draw_circle(x1, y1, r1, angle11, angle21, ...)
+   #
+   public defer draw_circle(a[])
+
+   #
+   # draw_curve(x1,y1,...xN,yN)
+   # Draw a smooth curve through the given points.
+   #
+   public defer draw_curve(a[])
+
+   #
+   # draw_image(x,y,s) - draw bitmapped figure
+   #
+   public defer draw_image(x, y, s)
+
+   #
+   # Copy an area between two windows
+   #
+   public static defer copy_area(src, dest, x1, y1, w, h, x2, y2)
+
+   #
+   # draw_line(x1,y1,...xN,yN)
+   #
+   public defer draw_line(a[])
+
+   #
+   # draw_point(x1, y1, ...xN, yN)
+   #
+   public defer draw_point(a[])
+
+   #
+   # draw_polygon(x1,y1,...xN,yN)
+   #
+   public defer draw_polygon(a[])
+
+   #
+   # draw_rectangle(x1, y1, width1, height1, ..., xN, yN, widthN,heightN)
+   #
+   public defer draw_rectangle(a[])
+
+   #
+   # draw_segment(x11,y11,x12,y12,...,xN1,yN1,xN2,yN2)
+   #
+   public defer draw_segment(a[])
+
+   #
+   # draw_string(x1, y1, s1, ..., xN, yN, sN)
+   #
+   public defer draw_string(a[])
+
+   #
+   # erase_area(x,y,width,height) - clear an area of the window
+   #
+   public defer erase_area(a[])
+
+   #
+   # pending(x[]) - add to and then produce a list of events pending on window
+   #
+   public defer pending(a[])
+
+   #
+   # Set foreground color
+   #
+   public defer fg(colr)
+
+   #
+   # fill_arc(x1, y1, width1, height1, angle11, angle21,...)
+   #
+   public defer fill_arc(a[])
+
+   #
+   # fill_circle(x1, y1, r1, angle11, angle21, ...)
+   #
+   public defer fill_circle(a[])
+
+   #
+   # fill_polygon(x1, y1, ...xN, yN)
+   #
+   public defer fill_polygon(a[])
+
+   #
+   # fill_rectangle(x1, y1, width1, height1,...,xN, yN, widthN, heightN)
+   #
+   public defer fill_rectangle(a[])
+
+   #
+   # font(f) - get/set font
+   #
+   public defer font(f)
+
+   #
+   # free_color(a[]) - free colors
+   #
+   public defer free_color(a[])
+
+   #
+   # Lower this window to the bottom of the window stack
+   #
+   public defer lower()
+
+   #
+   # new_color(a[]) - allocate an entry in the color map
+   #
+   public defer new_color(a[])
+
+   #
+   # Return the characters forming keys to palette p
+   #
+   public static defer palette_chars(p)
+
+   #
+   # Return color of key s1 in palette s2
+   #
+   public static defer palette_color(s1, s2)
+
+   #
+   # Return key of closest color to s in palette p
+   #
+   public defer palette_key(s1, s2)
+
+   #
+   # Sets the context fill pattern by string name
+   #
+   public defer pattern(s)
+
+   #
+   # Produce the contents of some pixels
+   #
+   public defer pixel(x, y, width, height)
+   
+   #
+   # Return the current root x, y position as a two-element list.
+   #
+   public static defer query_root_pointer()
+
+   #
+   # Raise window to the top of the window stack
+   #
+   public defer raise()
+
+   #
+   # Load image file
+   #
+   public defer read_image(s, x, y, p)
+
+   #
+   # Synchronize with server
+   #
+   public static defer sync()
+
+   #
+   # Returns the width of string s, in pixels, as drawn using the
+   # current font.
+   #
+   public defer text_width(s)
+
+   #
+   # Frees the window. If no other bindings to the same canvas exist,
+   # the window is closed.
+   #
+   public defer uncouple()
+
+   #
+   # attrib() sets and generates window attribute values. Each string
+   # of the form name=value sets a value; a string with just a name is
+   # an inquiry. First, any requested values are set. Then attrib()
+   # generates the values of all referenced attributes. Each value has
+   # the data type appropriate to the attribute it
+   # represents. attrib() ignores unrecognized names and illegal
+   # values, producing no result; if all arguments are invalid,
+   # attrib() fails.
+   #
+   public defer attrib(a[])
+
+   #
+   # Returns the value of option s2 for the program named s1 as
+   # registered with the graphics system. If no such value is
+   # available, or if the system provides no registry, wdefault()
+   # fails.
+   #
+   public defer wdefault(s1, s2)
+
+   #
+   # Forces the execution of any window commands that have been
+   # buffered internally and not yet executed.
+   #
+   public defer flush()
+
+   #
+   # Writes an image of the rectangular area (x,y,w,h) to the file
+   # s. It fails if s cannot be written or if the specified area,
+   # after clipping by the window's edges, has a width or height of
+   # zero. The file is normally written in GIF format, but some forms
+   # of file names may select different formats on some graphics
+   # systems.
+   #
+   public defer write_image(s, x, y, w, h)
+
+   #
+   # Set the window system's selection
+   #
+   public defer own_selection(selection, callback)
+
+   #
+   # Get the window system's selection
+   #
+   public defer get_selection_content(selection,target_type)
+
+   #
+   # Close this window.
+   #
+   public defer close()
+
+   public enqueue(eventcode, x, y, modkeys, interval)	
+      /x := 0
+      /y := 0
+      x +:= attrib("dx")
+      y +:= attrib("dy")
+      return put(pending(),
+                 eventcode,
+                 ior(pack_modkeys(\modkeys | ""), iand(x, 16rFFFF)),
+                 ior(pack_intrvl(\interval | 0), iand(y, 16rFFFF)))
+   end
+
+   # encode modifier keys
+   private static pack_modkeys(s)			
+      local b, c
+
+      b := 0
+      s := string(s) | runerr(103, s)		# ensure string value
+      every c := !s do case c of {			# set bit for each flag
+         "c":	b := ior(b, 16r10000)
+         "m":	b := ior(b, 16r20000)
+         "s":	b := ior(b, 16r40000)
+         default:	runerr(205, s)			# diagnose bad flag
+      }
+      return b					# return result
+   end
+
+   private static pack_intrvl(n)			
+      local e
+
+      n := integer(n) | runerr(101, n)	# ensure integer
+      n <:= 0				# ensure nonnegative
+      e := 0				# assume exponent of 0
+
+      while n >= 16r1000 do {		# if too big
+         n := ishift(n, -4)		# reduce significance
+         e +:= 16r1000			# increase exponent
+      }
+      return ishift(e + n, 16)		# return shifted result
+   end
+
+   public erase_rectangle(x, y, w, h)
+      if x < 0 then {
+         w +:= x
+         x := 0
+      }
+
+      if y < 0 then {
+         h +:= y
+         y := 0
+      }
+
+      return erase_area(x, y, w, h)
+   end
+
+   private new(wbp)
+      self.wbp := wbp
+      return
+   end
+end

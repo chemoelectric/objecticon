@@ -181,6 +181,19 @@ class Class()
    #
    public static defer set_method(field, proc)   
 
+   # This method tries to resolve all the unresolved deferred methods
+   # declared in the class from which is called, from the dll {lib}.
+   # Methods are matched to functions in the dll using the same scheme
+   # for native methods in the main runtime interpreter, namely by
+   # using the form "<class>_<method>", with all dots in <class>
+   # replaced by underscores.  Any methods not found are simply
+   # ignored.
+   # 
+   # @param lib the name of the dll
+   # @runerr if the library cannot be found.
+   #
+   public static defer load_library(lib)   
+
    # Lookup a class by name
    # 
    # @param s a class name

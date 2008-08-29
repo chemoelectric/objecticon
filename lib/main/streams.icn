@@ -1,7 +1,6 @@
 package io
 
-import util(error, errno, to_flag,
-            SetFields)
+import util(error, to_flag, SetFields)
 
 $include "posix.icn"
 
@@ -356,13 +355,10 @@ class DescStream(Stream)
       return poll_impl!l
    end
 
-   public flag(on, off)
-      return flag_impl(fd, on, off)
-   end
+   public defer flag(on, off)
 
    private static defer select_impl(rl, wl, el, timeout)
    private static defer poll_impl(a[])
-   private static defer flag_impl(fd, on, off)
 
    package new(fd)
       self.fd := fd
@@ -385,6 +381,14 @@ procedure open(name, mode)
 end
 
 procedure popen(cmd, mode)
+end
+
+procedure ewrite(a[])
+   return write!(FileStream.stderr ||| a)
+end
+
+procedure ewrites(a[])
+   return writes!(FileStream.stderr ||| a)
 end
 
 procedure write(a[])
@@ -471,6 +475,8 @@ class FileStream(DescStream)
       return FileStream(open_impl(name, flags))
    end
 
+   private static defer open_impl(path, flags, mode)
+
    private static init()
       stdin := FileStream(0)
       stdout := FileStream(1)
@@ -480,47 +486,19 @@ class FileStream(DescStream)
       b_stderr := BufferStream("other=",stderr, "flush_on_nl=t")
    end
 
-   public in(n)
-      local s
-      f_eof := &null
-      if s := in_impl(fd, n) then
-         return s
-      if errno() = XE_EOF then
-         f_eof := 1
-   end
+   public defer in(n)
 
-   public out(s)
-      return out_impl(fd, s)
-   end
+   public defer out(s)
 
-   public seek(offset)
-      if offset > 0 then
-         return 1 + seek_impl(fd, offset - 1, SEEK_SET)
-      else
-         return 1 + seek_impl(fd, offset, SEEK_END)
-   end
+   public defer seek(offset)
 
-   public tell()
-      return seek_impl(fd, 0, SEEK_CUR) + 1
-   end
+   public defer tell()
 
-   public close()
-      return close_impl(fd)
-   end
+   public defer close()
 
    public eof()
       return \f_eof
    end
-
-   private static defer open_impl(path, flags, mode)
-
-   private static defer in_impl(fd, i)
-
-   private static defer out_impl(fd, s)
-
-   private static defer close_impl(fd)
-
-   private static defer seek_impl(fd, offset, whence)
 end
 
 class SocketStream(DescStream)
@@ -537,38 +515,23 @@ class SocketStream(DescStream)
       return [SocketStream(t[1]), SocketStream(t[2])]
    end
 
-   public in(n)
-      local s
-      f_eof := &null
-      if s := in_impl(fd, n) then
-         return s
-      if errno() = XE_EOF then
-         f_eof := 1
-   end
+   public defer in(n)
 
-   public connect(addr)
-      return connect_impl(fd, addr)
-   end
+   public defer connect(addr)
 
-   public bind(addr)
-      return bind_impl(fd, addr)
-   end
+   public defer bind(addr)
 
-   public listen(backlog)
-      return SocketStream(listen_impl(fd, backlog))
-   end
+   public defer listen(backlog)
 
    public accept()
-      return accept_impl(fd)
+      return SocketStream(accept_impl())
    end
 
-   public out(s)
-      return out_impl(fd, s)
-   end
+   private defer accept_impl()
 
-   public close()
-      return close_impl(fd)
-   end
+   public defer out(s)
+
+   public defer close()
 
    public eof()
       return \f_eof
@@ -577,20 +540,6 @@ class SocketStream(DescStream)
    private static defer socketpair_impl(typ)
 
    private static defer socket_impl(domain, typ)
-
-   private static defer connect_impl(fd, addr)
-
-   private static defer bind_impl(fd, addr)
-
-   private static defer listen_impl(fd, backlog)
-
-   private static defer accept_impl(fd)
-
-   private static defer in_impl(fd, i)
-
-   private static defer out_impl(fd, s)
-
-   private static defer close_impl(fd)
 end
 
 class DirStream(Stream)
@@ -613,8 +562,6 @@ class DirStream(Stream)
       }
       if t := read_impl(dd) then
          return t
-      if errno() = XE_EOF then
-         f_eof := 1
    end
 
    public in(n)
@@ -627,23 +574,17 @@ class DirStream(Stream)
          }
          return t
       }
-      if errno() = XE_EOF then
-         f_eof := 1
    end
 
-   public close()
-      return close_impl(dd)
-   end
+   private defer read_impl(dd)
+
+   public defer close()
 
    public eof()
       return \f_eof
    end
 
    private static defer open_impl(path)
-
-   private static defer read_impl(dd)
-
-   private static defer close_impl(dd)
 
    package new(dd)
       self.dd := dd
@@ -661,13 +602,9 @@ class ProgStream(FileStream)
       return ProgStream(l[1], l[2])
    end
 
-   public close()
-      return close_impl(fd, pid)
-   end
+   public defer close()
 
    private static defer open_impl(cmd, flags)
-
-   private static defer close_impl(fd, pid)
 
    package new(fd, pid)
       cast(self,FileStream).new(fd)

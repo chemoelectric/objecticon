@@ -28,7 +28,6 @@ class ContentSpec()
    #
    public print_structure(f, indent)
       local i, j, e
-      /f := &output
       /indent := 0
       i := repl(" ", indent * 5)
       write(f, i || "Op : ", op)

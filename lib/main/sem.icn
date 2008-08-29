@@ -25,16 +25,12 @@ class Sem()
    #
    # Set the value of the semaphore to x
    #
-   public set_value(x)
-      sem_set_value(id, x)
-   end
+   public defer set_value(x)
 
    #
    # Get the current semaphore value.
    #
-   public get_value()
-      return sem_get_value(id)
-   end
+   public defer get_value()
 
    #
    # Perform the wait operation, defined as {semop(-1)}
@@ -63,17 +59,13 @@ class Sem()
    # the value is >= abs(n), then abs(n) is subtracted.  If n is zero,
    # then the process suspends until the semaphore value is zero.
    #
-   public semop(n)
-      sem_semop(id, n)
-   end
+   public defer semop(n)
 
    # 
    # Peform a semop with the IPC_NOWAIT flag set.  This is the same as
    # {semop()}, but instead of suspending the call will fail.
    #
-   public semop_nowait(n)
-      return sem_semop_nowait(id, n)
-   end
+   public defer semop_nowait(n)
 
    # 
    # Repeatedly peform {semop_nowait()}, sleeping for a short period between each try
@@ -98,9 +90,7 @@ class Sem()
    # Clean up the resources used by the semaphore.  This should be called by
    # the parent process after the semaphore is no longer needed.
    #
-   public remove()
-      sem_remove(id)
-   end
+   public defer remove()
 
    #
    # Return the underlying id of the semaphore.
@@ -109,24 +99,12 @@ class Sem()
       return id
    end
 
-   private static defer sem_set_value()
-   private static defer sem_get_value()
-   private static defer sem_semop()
-   private static defer sem_semop_nowait()
-   private static defer sem_remove()
-   private static defer sem_open_public()
-   private static defer sem_create_public()
-   private static defer sem_create_private()
+   private static defer open_public_impl()
+   private static defer create_public_impl()
+   private static defer create_private_impl()
 
    private static init()
-      Class.set_method("sem_set_value", loadfunc(LIB, "sem_set_value"))
-      Class.set_method("sem_get_value", loadfunc(LIB, "sem_get_value"))
-      Class.set_method("sem_semop", loadfunc(LIB, "sem_semop"))
-      Class.set_method("sem_semop_nowait", loadfunc(LIB, "sem_semop_nowait"))
-      Class.set_method("sem_remove", loadfunc(LIB, "sem_remove"))
-      Class.set_method("sem_open_public", loadfunc(LIB, "sem_open_public"))
-      Class.set_method("sem_create_public", loadfunc(LIB, "sem_create_public"))
-      Class.set_method("sem_create_private", loadfunc(LIB, "sem_create_private"))
+      Class.load_library(LIB)
    end
 
    private new(id)
@@ -139,7 +117,7 @@ class Sem()
    # if no such semaphore exists.
    #
    public static open_public(key)
-      return Sem(sem_open_public(key))
+      return Sem(open_public_impl(key))
    end
 
    #
@@ -147,7 +125,7 @@ class Sem()
    #
    public static create_public(key, val)
       /val := 1
-      return Sem(sem_create_public(key, val))
+      return Sem(create_public_impl(key, val))
    end
 
    #
@@ -155,6 +133,6 @@ class Sem()
    #
    public static create_private(val)
       /val := 1
-      return Sem(sem_create_private(val))
+      return Sem(create_private_impl(val))
    end
 end

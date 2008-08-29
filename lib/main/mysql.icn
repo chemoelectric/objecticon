@@ -10,7 +10,7 @@ $define LIB "objecticonmysqllib.so"
 
 package mysql
 
-import lang
+import lang, util(to_flag)
 
 #
 # This class provides a wrapper around the MySql C API.  Nearly all the
@@ -80,150 +80,102 @@ class MySql()
    #
    # Invoke mysql_affected_rows() for the current connection.
    #
-   public get_affected_rows()
-      return unimysql_affected_rows(ptr)
-   end
+   public defer get_affected_rows()
 
    #
    # Invoke mysql_change_user() for the current connection.
    #
-   public change_user(user, password, db)
-      return unimysql_change_user(ptr, user, password, db)
-   end
+   public defer change_user(user, password, db)
 
    #
    # Invoke mysql_get_character_set_name() for the current connection.
    #
-   public get_character_set_name()
-      return unimysql_character_set_name(ptr)
-   end
+   public defer get_character_set_name()
 
    #
    # Invoke mysql_close() for the current connection.
    #
-   public close()
-      return unimysql_close(ptr)
-   end
+   public defer close()
 
    #
    # Invoke mysql_set_server_option() for the current connection.
    #
-   public set_server_option(option)
-      return unimysql_set_server_option(ptr, option)
-   end
+   public defer set_server_option(option)
 
    #
    # Invoke mysql_sqlstate() for the current connection.
    #
-   public get_sqlstate()
-      return unimysql_sqlstate(ptr)
-   end
+   public defer get_sqlstate()
 
    #
    # Invoke mysql_ssl_set() for the current connection.
    #
-   public ssl_set(key, cert, ca, capath, cipher)
-      return unimysql_ssl_set(ptr, key, cert, ca, capath, cipher)
-   end
+   public defer ssl_set(key, cert, ca, capath, cipher)
 
    #
    # Invoke mysql_dump_debug_info() for the current connection.
    #
-   public dump_debug_info()
-      return unimysql_dump_debug_info(ptr)
-   end
+   public defer dump_debug_info()
 
    #
    # Invoke mysql_errno() for the current connection.
    #
-   public get_errno()
-      return unimysql_errno(ptr)
-   end
+   public defer get_errno()
 
    #
    # Invoke mysql_error() for the current connection.
    #
-   public get_error()
-      return unimysql_error(ptr)
-   end
-
-   #
-   # Returns the result of get_error() - used for consistency with the
-   # Error superclass.
-   #
-   public get_reason()
-      return get_error()
-   end
+   public defer get_error()
 
    #
    # Invoke mysql_field_count() for the current connection.
    #
-   public get_field_count()
-      return unimysql_field_count(ptr)
-   end
+   public defer get_field_count()
 
    #
    # Invoke mysql_get_client_info() for the current connection.
    #
-   public get_client_info()
-      return unimysql_get_client_info()
-   end
+   public static defer get_client_info()
 
    #
    # Invoke mysql_get_client_version() for the current connection.
    #
-   public get_client_version()
-      return unimysql_get_client_version()
-   end
+   public static defer get_client_version()
 
    #
    # Invoke mysql_get_host_info() for the current connection.
    #
-   public get_host_info()
-      return unimysql_get_host_info(ptr)
-   end
+   public defer get_host_info()
 
    #
    # Invoke mysql_get_proto_info() for the current connection.
    #
-   public get_proto_info()
-      return unimysql_get_proto_info(ptr)
-   end
+   public defer get_proto_info()
 
    #
    # Invoke mysql_get_server_info() for the current connection.
    #
-   public get_server_info()
-      return unimysql_get_server_info(ptr)
-   end
+   public defer get_server_info()
 
    #
    # Invoke mysql_get_server_version() for the current connection.
    #
-   public get_server_version()
-      return unimysql_get_server_version(ptr)
-   end
+   public defer get_server_version()
 
    #
    # Invoke mysql_info() for the current connection.
    #
-   public get_info()
-      return unimysql_info(ptr)
-   end
+   public defer get_info()
 
    #
    # Invoke mysql_insert_id() for the current connection.
    #
-   public get_insert_id()
-      return unimysql_insert_id(ptr)
-   end
+   public defer get_insert_id()
 
    #
    # Invoke mysql_kill() for the current connection.
    #
-   public kill(pid)
-      return unimysql_kill(ptr)
-   end
+   public defer kill(pid)
 
    #
    # Invoke mysql_list_dbs() for the current connection.
@@ -231,8 +183,10 @@ class MySql()
    # @return an {MySqlRes} instance
    #
    public list_dbs(wild)
-      return MySqlRes(unimysql_list_dbs(ptr, wild))
+      return MySqlRes(list_dbs_impl(wild))
    end
+
+   private defer list_dbs_impl(wild)
 
    #
    # Invoke mysql_list_fields() for the current connection.
@@ -240,8 +194,10 @@ class MySql()
    # @return an {MySqlRes} instance
    #
    public list_fields(table, wild)
-      return MySqlRes(unimysql_list_fields(ptr, table, wild))
+      return MySqlRes(list_fields_impl(table, wild))
    end
+
+   private defer list_fields_impl(table, wild)
 
    #
    # Invoke mysql_list_processes() for the current connection.
@@ -249,8 +205,10 @@ class MySql()
    # @return an {MySqlRes} instance
    #
    public list_processes()
-      return MySqlRes(unimysql_list_processes(ptr))
+      return MySqlRes(list_processes_impl())
    end
+
+   private defer list_processes_impl()
 
    #
    # Invoke mysql_list_tables() for the current connection.
@@ -258,44 +216,36 @@ class MySql()
    # @return an {MySqlRes} instance
    #
    public list_tables(wild)
-      return MySqlRes(unimysql_list_tables(ptr, wild))
+      return MySqlRes(list_tables_impl(wild))
    end
+
+   private defer list_tables_impl(wild)
 
    #
    # Invoke mysql_options() for the current connection.
    #
-   public options(option, arg)
-      return unimysql_options(ptr, option, arg)
-   end
+   public defer options(option, arg)
 
    #
    # Invoke mysql_ping() for the current connection.
    #
-   public ping()
-      return unimysql_ping(ptr)
-   end
+   public defer ping()
 
    #
    # Invoke mysql_query() for the current connection.
    #
-   public query(query)
-      return unimysql_query(ptr, query)
-   end
+   public defer query(q)
 
    #
    # Invoke mysql_connect() for the current connection.
    #
-   public connect(host, user, passwd, db, port, unix_socket, client_flag)
-      return unimysql_real_connect(ptr, host, user, passwd, db, port, unix_socket, client_flag)
-   end
+   public defer connect(host, user, passwd, db, port, unix_socket, client_flag)
 
    #
    # Invoke mysql_real_escape_string() for the current connection.  This
    # should be used to escape any strings used to create SQL.
    #
-   public esc(s)
-      return unimysql_real_escape_string(ptr, s)
-   end
+   public defer esc(s)
 
    #
    # Convenience method to escape a string and place single quotes 
@@ -344,9 +294,7 @@ class MySql()
    #
    # Invoke mysql_stat() for the current connection.
    #
-   public get_stat()
-      return unimysql_stat(ptr)
-   end
+   public defer get_stat()
 
    #
    # Invoke mysql_store_result() for the current connection.
@@ -354,15 +302,15 @@ class MySql()
    # @return an {MySqlRes} instance
    #
    public store_result()
-      return MySqlRes(unimysql_store_result(ptr))
+      return MySqlRes(store_result_impl())
    end
+
+   private defer store_result_impl()
 
    #
    # Invoke mysql_thread_id() for the current connection.
    #
-   public get_thread_id()
-      return unimysql_thread_id(ptr)
-   end
+   public defer get_thread_id()
 
    #
    # Invoke mysql_use_result() for the current connection.
@@ -370,121 +318,56 @@ class MySql()
    # @return an {MySqlRes} instance
    #
    public use_result()
-      return MySqlRes(unimysql_use_result(ptr))
+      return MySqlRes(use_result_impl())
    end
+
+   private defer use_result_impl()
 
    #
    # Invoke mysql_warning_count() for the current connection.
    #
-   public get_warning_count()
-      return unimysql_warning_count(ptr)
-   end
+   public defer get_warning_count()
 
    #
    # Invoke mysql_commit() for the current connection.
    #
-   public commit()
-      return unimysql_commit(ptr)
-   end
+   public defer commit()
 
    #
    # Invoke mysql_rollback() for the current connection.
    #
-   public rollback()
-      return unimysql_rollback(ptr)
-   end
+   public defer rollback()
 
    #
-   # Turn autocommit on.
+   # Turn autocommit on or off
    # 
-   public set_autocommit()
-      return autocommit(1)
+   public set_autocommit(s)
+      return set_autocommit_impl(if \to_flag(s) then 1 else 0)
    end
 
-   #
-   # Turn autocommit off.
-   # 
-   public clear_autocommit()
-      return autocommit(0)
-   end
-
-   #
-   # Invoke mysql_autocommit() for the current connection.
-   #
-   public autocommit(mode)
-      return unimysql_autocommit(ptr, mode)
-   end
+   private defer set_autocommit_impl(s)
 
    #
    # Invoke mysql_more_results() for the current connection.
    #
-   public more_results()
-      return unimysql_more_results(ptr)
-   end
+   public defer more_results()
 
    #
    # Invoke mysql_next_result() for the current connection.
    #
-   public next_result()
-      return unimysql_next_result(ptr)
-   end
+   public defer next_result()
 
    #
    # Invoke mysql_select_db() for the current connection.
    #
-   public select_db(db)
-      return unimysql_select_db(ptr, db)
-   end
+   public defer select_db(db)
 
    #
    # Invoke mysql_shutdown() for the current connection.
    #
-   public shutdown()
-      return unimysql_shutdown(ptr)
-   end
+   public defer shutdown()
 
-   private static defer unimysql_affected_rows()
-   private static defer unimysql_change_user()
-   private static defer unimysql_character_set_name()
-   private static defer unimysql_close()
-   private static defer unimysql_set_server_option()
-   private static defer unimysql_sqlstate()
-   private static defer unimysql_ssl_set()
-   private static defer unimysql_dump_debug_info()
-   private static defer unimysql_errno()
-   private static defer unimysql_error()
-   private static defer unimysql_field_count()
-   private static defer unimysql_get_client_info()
-   private static defer unimysql_get_client_version()
-   private static defer unimysql_get_host_info()
-   private static defer unimysql_get_proto_info()
-   private static defer unimysql_get_server_info()
-   private static defer unimysql_get_server_version()
-   private static defer unimysql_info()
-   private static defer unimysql_insert_id()
-   private static defer unimysql_kill()
-   private static defer unimysql_list_dbs()
-   private static defer unimysql_list_fields()
-   private static defer unimysql_list_processes()
-   private static defer unimysql_list_tables()
-   private static defer unimysql_options()
-   private static defer unimysql_ping()
-   private static defer unimysql_query()
-   private static defer unimysql_real_connect()
-   private static defer unimysql_real_escape_string()
-   private static defer unimysql_stat()
-   private static defer unimysql_store_result()
-   private static defer unimysql_thread_id()
-   private static defer unimysql_use_result()
-   private static defer unimysql_warning_count()
-   private static defer unimysql_commit()
-   private static defer unimysql_rollback()
-   private static defer unimysql_autocommit()
-   private static defer unimysql_more_results()
-   private static defer unimysql_next_result()
-   private static defer unimysql_select_db()
-   private static defer unimysql_shutdown()
-   private static defer unimysql_init()
+   private static defer new_impl()
 
    private static init()
       FIELD_TYPE_DECIMAL := 0
@@ -542,52 +425,11 @@ class MySql()
       CLIENT_MULTI_RESULTS :=    131072  
       CLIENT_REMEMBER_OPTIONS := 2147483648  # ((ulong) (1L << 31))
 
-      Class.set_method("unimysql_affected_rows", loadfunc(LIB, "unimysql_affected_rows"))
-      Class.set_method("unimysql_change_user", loadfunc(LIB, "unimysql_change_user"))
-      Class.set_method("unimysql_character_set_name", loadfunc(LIB, "unimysql_character_set_name"))
-      Class.set_method("unimysql_close", loadfunc(LIB, "unimysql_close"))
-      Class.set_method("unimysql_set_server_option", loadfunc(LIB, "unimysql_set_server_option"))
-      Class.set_method("unimysql_sqlstate", loadfunc(LIB, "unimysql_sqlstate"))
-      Class.set_method("unimysql_ssl_set", loadfunc(LIB, "unimysql_ssl_set"))
-      Class.set_method("unimysql_dump_debug_info", loadfunc(LIB, "unimysql_dump_debug_info"))
-      Class.set_method("unimysql_errno", loadfunc(LIB, "unimysql_errno"))
-      Class.set_method("unimysql_error", loadfunc(LIB, "unimysql_error"))
-      Class.set_method("unimysql_field_count", loadfunc(LIB, "unimysql_field_count"))
-      Class.set_method("unimysql_get_client_info", loadfunc(LIB, "unimysql_get_client_info"))
-      Class.set_method("unimysql_get_client_version", loadfunc(LIB, "unimysql_get_client_version"))
-      Class.set_method("unimysql_get_host_info", loadfunc(LIB, "unimysql_get_host_info"))
-      Class.set_method("unimysql_get_proto_info", loadfunc(LIB, "unimysql_get_proto_info"))
-      Class.set_method("unimysql_get_server_info", loadfunc(LIB, "unimysql_get_server_info"))
-      Class.set_method("unimysql_get_server_version", loadfunc(LIB, "unimysql_get_server_version"))
-      Class.set_method("unimysql_info", loadfunc(LIB, "unimysql_info"))
-      Class.set_method("unimysql_insert_id", loadfunc(LIB, "unimysql_insert_id"))
-      Class.set_method("unimysql_kill", loadfunc(LIB, "unimysql_kill"))
-      Class.set_method("unimysql_list_dbs", loadfunc(LIB, "unimysql_list_dbs"))
-      Class.set_method("unimysql_list_fields", loadfunc(LIB, "unimysql_list_fields"))
-      Class.set_method("unimysql_list_processes", loadfunc(LIB, "unimysql_list_processes"))
-      Class.set_method("unimysql_list_tables", loadfunc(LIB, "unimysql_list_tables"))
-      Class.set_method("unimysql_options", loadfunc(LIB, "unimysql_options"))
-      Class.set_method("unimysql_ping", loadfunc(LIB, "unimysql_ping"))
-      Class.set_method("unimysql_query", loadfunc(LIB, "unimysql_query"))
-      Class.set_method("unimysql_real_connect", loadfunc(LIB, "unimysql_real_connect"))
-      Class.set_method("unimysql_real_escape_string", loadfunc(LIB, "unimysql_real_escape_string"))
-      Class.set_method("unimysql_stat", loadfunc(LIB, "unimysql_stat"))
-      Class.set_method("unimysql_store_result", loadfunc(LIB, "unimysql_store_result"))
-      Class.set_method("unimysql_thread_id", loadfunc(LIB, "unimysql_thread_id"))
-      Class.set_method("unimysql_use_result", loadfunc(LIB, "unimysql_use_result"))
-      Class.set_method("unimysql_warning_count", loadfunc(LIB, "unimysql_warning_count"))
-      Class.set_method("unimysql_commit", loadfunc(LIB, "unimysql_commit"))
-      Class.set_method("unimysql_rollback", loadfunc(LIB, "unimysql_rollback"))
-      Class.set_method("unimysql_autocommit", loadfunc(LIB, "unimysql_autocommit"))
-      Class.set_method("unimysql_more_results", loadfunc(LIB, "unimysql_more_results"))
-      Class.set_method("unimysql_next_result", loadfunc(LIB, "unimysql_next_result"))
-      Class.set_method("unimysql_select_db", loadfunc(LIB, "unimysql_select_db"))
-      Class.set_method("unimysql_shutdown", loadfunc(LIB, "unimysql_shutdown"))
-      Class.set_method("unimysql_init", loadfunc(LIB, "unimysql_init"))
+      Class.load_library(LIB)
    end
 
    public new()
-      ptr := unimysql_init() | fail
+      ptr := new_impl() | fail
       return
    end
 end

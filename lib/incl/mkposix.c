@@ -692,6 +692,29 @@ int main(void)
         Const(AF_MAX)
 #endif
 
+#ifdef SOCK_STREAM
+        Const(SOCK_STREAM)
+#endif
+
+#ifdef SOCK_DGRAM
+        Const(SOCK_DGRAM)
+#endif
+
+#ifdef SOCK_SEQPACKET
+        Const(SOCK_SEQPACKET)
+#endif
+
+#ifdef SOCK_RAW
+        Const(SOCK_RAW)
+#endif
+
+#ifdef SOCK_RDM
+        Const(SOCK_RDM)
+#endif
+
+#ifdef SOCK_PACKET
+        Const(SOCK_PACKET)
+#endif
 
 #ifdef LOCK_SH
         Const(LOCK_SH)
@@ -863,15 +886,6 @@ Const(XE_TIMEOUT)
 Const(XE_NAMETOOLONG)
 Const(XE_BADADDRFMT)
 Const(XE_EOF)
-
-Const(Fs_Read)
-Const(Fs_Write)
-Const(Fs_Directory)
-Const(Fs_Socket)
-Const(Fs_Stdio)
-Const(Fs_Desc)
-Const(Fs_Prog)
-Const(Fs_Closed)
 
         exit(0);
 }

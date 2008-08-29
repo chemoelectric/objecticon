@@ -134,7 +134,6 @@ class Element(Node)
    #
    public print_structure(f, indent, flags)
       local s, x, i, j, e
-      /f := &output
       /indent := 0
       i := repl(" ", indent * 5)
       write(f, i || "Tag : <" || self.name || ">")

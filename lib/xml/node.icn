@@ -194,7 +194,6 @@ class Node()
    #
    public print_structure(f, indent, flags)
       local i, j, e
-      /f := &output
       /indent := 0
       i := repl(" ", indent * 5)
       write(f, i || to_string(self))

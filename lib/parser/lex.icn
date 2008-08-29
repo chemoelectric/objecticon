@@ -422,7 +422,7 @@ procedure do_literal()
       yytext ||:= move(1)
       if yytext[-1] == "\n" then {
          if not yytext[-2] == "_" then {
-            write(&errout, "unterminated string constant")
+            ewrite("unterminated string constant")
          }
          else {
             yylineno +:= 1

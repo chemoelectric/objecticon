@@ -57,7 +57,18 @@ static int semop_ex(int semid, struct sembuf *sops, size_t nsops);
 static resource resources[MAX_RESOURCES];
 static int num_resources = 0;
 
-function{0,1} shm_open_public(key)
+static struct sdescrip idf = {2, "id"};
+
+#begdef IdParam(p, m)
+int m;
+dptr m##_dptr;
+if (!is:object(p))
+    runerr(602, p);
+m##_dptr = c_get_instance_data(&p, (dptr)&idf);
+(m) = IntVal(*m##_dptr);
+#enddef
+
+function{0,1} ipc_Shm_open_public_impl(key)
    if !cnv:C_integer(key) then
        runerr(101, key)
    body {
@@ -65,15 +76,17 @@ function{0,1} shm_open_public(key)
        top_id = shmget(key, sizeof(shm_top), 0600);
        if (top_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
-           if (errno == ENOENT)
+           if (errno == ENOENT) {
+               on_error(errno);
                fail;
+           }
            aborted("Couldn't get shm id");
        }
        return C_integer top_id;
    }
 end
 
-function{0,1} shm_create_public(key, str)
+function{0,1} ipc_Shm_create_public_impl(key, str)
    if !cnv:C_integer(key) then
        runerr(101, key)
    if !cnv:string(str) then
@@ -88,8 +101,10 @@ function{0,1} shm_create_public(key, str)
        top_id = shmget(key, sizeof(shm_top), IPC_EXCL | IPC_CREAT | 0600);
        if (top_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
-           if (errno == EEXIST)
+           if (errno == EEXIST) {
+               on_error(errno);
                fail;
+           }
            aborted("Couldn't get shm id");
        }
        data = StrLoc(str);
@@ -127,7 +142,7 @@ function{0,1} shm_create_public(key, str)
    }
 end
 
-function{0,1} shm_create_private(str)
+function{0,1} ipc_Shm_create_private_impl(str)
    if !cnv:string(str) then
        runerr(103, str)
    body {
@@ -177,11 +192,11 @@ function{0,1} shm_create_private(str)
    }
 end
 
-function{0} shm_remove(top_id)
-    if !cnv:C_integer(top_id) then
-       runerr(101, top_id)
+function{0} ipc_Shm_remove(self)
     body {
        shm_top *tp;
+       IdParam(self, top_id);
+
        tp = (shm_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
            aborted("Couldn't attach to shm");
@@ -196,9 +211,7 @@ function{0} shm_remove(top_id)
    }
 end
 
-function{1} shm_set_value(top_id, str)
-   if !cnv:C_integer(top_id) then
-       runerr(101, top_id)
+function{1} ipc_Shm_set_value_impl(self, str)
    if !cnv:string(str) then
        runerr(103, str)
    body {
@@ -207,6 +220,7 @@ function{1} shm_set_value(top_id, str)
        int size;
        struct sembuf p_buf;
        struct shmid_ds shminfo;
+       IdParam(self, top_id);
 
        tp = (shm_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -261,13 +275,12 @@ function{1} shm_set_value(top_id, str)
    }
 end
 
-function{1} shm_get_value(top_id)
-   if !cnv:C_integer(top_id) then
-       runerr(101, top_id)
+function{1} ipc_Shm_get_value_impl(self)
     body {
        shm_top *tp;
        char *data;
        struct sembuf p_buf;
+       IdParam(self, top_id);
 
        tp = (shm_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -298,7 +311,7 @@ function{1} shm_get_value(top_id)
    }
 end
 
-function{0,1} sem_open_public(key)
+function{0,1} ipc_Sem_open_public_impl(key)
    if !cnv:C_integer(key) then
        runerr(101, key)
    body {
@@ -306,15 +319,17 @@ function{0,1} sem_open_public(key)
        sem_id = semget(key, 0, 0600);
        if (sem_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
-           if (errno == ENOENT)
+           if (errno == ENOENT) {
+               on_error(errno);
                fail;
+           }
            aborted("Couldn't get sem id");
        }
        return C_integer sem_id;
    }
 end
 
-function{0,1} sem_create_public(key, val)
+function{0,1} ipc_Sem_create_public_impl(key, val)
    if !cnv:C_integer(key) then
        runerr(101, key)
    if !cnv:C_integer(val) then
@@ -327,8 +342,10 @@ function{0,1} sem_create_public(key, val)
        sem_id = semget(key, 1, IPC_EXCL | IPC_CREAT | 0600);
        if (sem_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
-           if (errno == EEXIST)
+           if (errno == EEXIST) {
+               on_error(errno);
                fail;
+           }
            aborted("Couldn't get sem id");
        }
 
@@ -340,7 +357,7 @@ function{0,1} sem_create_public(key, val)
    }
 end
 
-function{0,1} sem_create_private(val)
+function{0,1} ipc_Sem_create_private_impl(val)
    if !cnv:C_integer(val) then
        runerr(101, val)
    body {
@@ -362,13 +379,13 @@ function{0,1} sem_create_private(val)
    }
 end
 
-function{1} sem_set_value(sem_id, val)
-   if !cnv:C_integer(sem_id) then
-       runerr(101, sem_id)
+function{1} ipc_Sem_set_value(self, val)
    if !cnv:C_integer(val) then
        runerr(101, val)
    body {
        semun arg;
+       IdParam(self, sem_id);
+
        arg.val = val;
        if (semctl(sem_id, 0, SETVAL, arg) == -1)
            aborted("Couldn't do semctl");
@@ -376,12 +393,12 @@ function{1} sem_set_value(sem_id, val)
    }
 end
 
-function{1} sem_get_value(sem_id)
-   if !cnv:C_integer(sem_id) then
-       runerr(101, sem_id)
+function{1} ipc_Sem_get_value(self)
    body {
        int ret;
        semun arg;
+       IdParam(self, sem_id);
+
        ret = semctl(sem_id, 0, GETVAL, arg);
        if (ret == -1)
            aborted("Couldn't do semctl");
@@ -389,13 +406,12 @@ function{1} sem_get_value(sem_id)
    }
 end
 
-function{1} sem_semop(sem_id, n)
-   if !cnv:C_integer(sem_id) then
-       runerr(101, sem_id)
+function{1} ipc_Sem_semop(self, n)
    if !cnv:C_integer(n) then
        runerr(101, n)
    body {
        struct sembuf p_buf;
+       IdParam(self, sem_id);
        p_buf.sem_num = 0;
        p_buf.sem_op = n;
        p_buf.sem_flg = SEM_UNDO;
@@ -405,20 +421,21 @@ function{1} sem_semop(sem_id, n)
    }
 end
 
-function{1} sem_semop_nowait(sem_id, n)
-   if !cnv:C_integer(sem_id) then
-       runerr(101, sem_id)
+function{1} ipc_Sem_semop_nowait(self, n)
    if !cnv:C_integer(n) then
        runerr(101, n)
    body {
        struct sembuf p_buf;
+       IdParam(self, sem_id);
        p_buf.sem_num = 0;
        p_buf.sem_op = n;
        p_buf.sem_flg = SEM_UNDO | IPC_NOWAIT;
        if (semop_ex(sem_id, &p_buf, 1) == -1) {
-           if (errno == EAGAIN)
+           if (errno == EAGAIN) {
                /* Okay, it's not ready,so fail */
+               on_error(errno);
                fail;
+           }
            /* A runtime error. */
            aborted("semop failed");
        }
@@ -426,17 +443,16 @@ function{1} sem_semop_nowait(sem_id, n)
    }
 end
 
-function{1} sem_remove(sem_id)
-   if !cnv:C_integer(sem_id) then
-       runerr(101, sem_id)
+function{1} ipc_Sem_remove(self)
    body {
+       IdParam(self, sem_id);
        semctl(sem_id, -1, IPC_RMID, 0);
        remove_resource(sem_id, 1);
        return nulldesc;
    }
 end
 
-function{0,1} msg_open_public(key)
+function{0,1} ipc_Msg_open_public_impl(key)
    if !cnv:C_integer(key) then
        runerr(101, key)
    body {
@@ -444,15 +460,17 @@ function{0,1} msg_open_public(key)
        top_id = shmget(key, sizeof(msg_top), 0600);
        if (top_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
-           if (errno == ENOENT)
+           if (errno == ENOENT) {
+               on_error(errno);
                fail;
+           }
            aborted("Couldn't get top id");
        }
        return C_integer top_id;
    }
 end
 
-function{0,1} msg_create_public(key)
+function{0,1} ipc_Msg_create_public_impl(key)
    if !cnv:C_integer(key) then
        runerr(101, key)
    body {
@@ -462,8 +480,10 @@ function{0,1} msg_create_public(key)
        top_id = shmget(key, sizeof(msg_top), IPC_EXCL | IPC_CREAT | 0600);
        if (top_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
-           if (errno == EEXIST)
+           if (errno == EEXIST) {
+               on_error(errno);
                fail;
+           }
            aborted("Couldn't get shm id");
        }
 
@@ -499,7 +519,7 @@ function{0,1} msg_create_public(key)
    }
 end
 
-function{1} msg_create_private()
+function{1} ipc_Msg_create_private_impl()
    body {
       int top_id, msg_id, rcv_sem_id, snd_sem_id;
       msg_top *tp;
@@ -542,11 +562,11 @@ function{1} msg_create_private()
    }
 end
 
-function{1} msg_remove(top_id)
-    if !cnv:C_integer(top_id) then
-        runerr(101, top_id)
+function{1} ipc_Msg_remove(self)
     body {
         msg_top *tp;
+        IdParam(self, top_id);
+
         tp = (msg_top*)shmat(top_id, 0, 0);
         if ((void*)tp == (void*)-1)
             aborted("Couldn't attach to shm");
@@ -562,9 +582,7 @@ function{1} msg_remove(top_id)
    }
 end
 
-function{1} msg_send(top_id, str)
-   if !cnv:C_integer(top_id) then
-       runerr(101, top_id)
+function{1} ipc_Msg_send_impl(self, str)
    if !cnv:string(str) then
        runerr(103, str)
    body {
@@ -574,6 +592,7 @@ function{1} msg_send(top_id, str)
        msgblock mb;
        struct sembuf p_buf;
        int size, blocks, i, residue;
+       IdParam(self, top_id);
 
        tp = (msg_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -620,9 +639,7 @@ function{1} msg_send(top_id, str)
    }
 end
 
-function{1} msg_receive(top_id)
-   if !cnv:C_integer(top_id) then
-       runerr(101, top_id)
+function{1} ipc_Msg_receive_impl(self)
    body {
        msg_top *tp;
        int size, blocks, residue, i;
@@ -630,6 +647,7 @@ function{1} msg_receive(top_id)
        msghead mh;
        msgblock mb;
        char *data, *p;
+       IdParam(self, top_id);
 
        tp = (msg_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -677,9 +695,7 @@ function{1} msg_receive(top_id)
    }
 end
 
-function{0,1} msg_receive_nowait(top_id)
-   if !cnv:C_integer(top_id) then
-       runerr(101, top_id)
+function{0,1} ipc_Msg_attempt_impl(self)
    body {
        msg_top *tp;
        int size, blocks, residue, i;
@@ -687,6 +703,7 @@ function{0,1} msg_receive_nowait(top_id)
        msghead mh;
        msgblock mb;
        char *data, *p;
+       IdParam(self, top_id);
 
        tp = (msg_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -702,6 +719,7 @@ function{0,1} msg_receive_nowait(top_id)
        if (msgrcv_ex(tp->msg_id, &mh, sizeof(mh.u), 0, IPC_NOWAIT) == -1) {
            if (errno == ENOMSG) {
                /* Okay, it's not ready,so fail.  First signal. */
+               on_error(errno);
                p_buf.sem_op = 1;
                if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
                    aborted("signal failed");

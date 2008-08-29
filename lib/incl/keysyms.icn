@@ -23,6 +23,21 @@
 #
 ############################################################################
 
+$define Mouse_LeftPress            -1
+$define Mouse_MiddlePress          -2
+$define Mouse_RightPress           -3
+$define Mouse_LeftRelease          -4
+$define Mouse_MiddleRelease        -5
+$define Mouse_RightRelease         -6
+$define Mouse_LeftDrag             -7
+$define Mouse_MiddleDrag           -8
+$define Mouse_RightDrag            -9
+$define Mouse_Movement            -12
+$define Mouse_WheelUp             -16
+$define Mouse_WheelDown           -17
+$define Window_Resize             -10
+$define Window_CloseButton        -11
+
 $ifdef _X_WINDOW_SYSTEM
 $define Shift_Tab               65056
 

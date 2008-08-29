@@ -20,7 +20,8 @@ import lang
 # methods {open_public}, {create_public} and {create_private}
 #
 class Shm()
-   private id
+   private 
+      id
 
    #
    # Set the value to the given object.  The object may be an arbitrary
@@ -28,23 +29,25 @@ class Shm()
    # procedure.
    #
    public set_value(o)
-      shm_set_value(id, encode(o))
+      set_value_impl(encode(o))
    end
+
+   private defer set_value_impl(s)
 
    #
    # Get the value of the object.
    #
    public get_value()
-      return decode(shm_get_value(id))
+      return decode(get_value_impl())
    end
+
+   private defer get_value_impl()
 
    #
    # Clean up the resources used by the variable.  This should be called by
    # the parent process after the shared variable is no longer needed.
    #
-   public remove()
-      shm_remove(id)
-   end
+   public defer remove()
 
    #
    # Return the underlying id of the shared variable.
@@ -53,20 +56,12 @@ class Shm()
       return id
    end
 
-   private static defer shm_set_value()
-   private static defer shm_get_value()
-   private static defer shm_remove()
-   private static defer shm_open_public()
-   private static defer shm_create_public()
-   private static defer shm_create_private()
+   private static defer open_public_impl()
+   private static defer create_public_impl()
+   private static defer create_private_impl()
 
    private static init()
-      Class.set_method("shm_set_value", loadfunc(LIB, "shm_set_value"))
-      Class.set_method("shm_get_value", loadfunc(LIB, "shm_get_value"))
-      Class.set_method("shm_remove", loadfunc(LIB, "shm_remove"))
-      Class.set_method("shm_open_public", loadfunc(LIB, "shm_open_public"))
-      Class.set_method("shm_create_public", loadfunc(LIB, "shm_create_public"))
-      Class.set_method("shm_create_private", loadfunc(LIB, "shm_create_private"))
+      Class.load_library(LIB)
    end
 
    private new(id)
@@ -79,20 +74,20 @@ class Shm()
    # if no such shared variable exists.
    #
    public static open_public(key)
-      return Shm(shm_open_public(key))
+      return Shm(open_public_impl(key))
    end
 
    #
    # Create a new public shared variable with the given key and initial value
    #
    public static create_public(key, o)
-      return Shm(shm_create_public(key, encode(o)))
+      return Shm(create_public_impl(key, encode(o)))
    end
 
    #
    # Create a new private shared variable with the given initial value
    #
    public static create_private(o)
-      return Shm(shm_create_private(encode(o)))
+      return Shm(create_private_impl(encode(o)))
    end
 end

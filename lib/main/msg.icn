@@ -27,23 +27,29 @@ class Msg()
    # encoded into a string by the {encode()} procedure.
    #
    public send(o)
-      msg_send(id, encode(o))
+      send_impl(encode(o))
    end
+
+   private defer send_impl(s)
 
    #
    # Receive an object from the queue, waiting if necessary.
    #
    public receive()
-      return decode(msg_receive(id))
+      return decode(receive_impl())
    end
+
+   private defer receive_impl()
 
    #
    # Attempt to get an object from the queue, failing if one is not
    # ready immediately.
    #
    public attempt()
-      return decode(msg_receive_nowait(id))
+      return decode(attempt_impl())
    end
+
+   private defer attempt_impl()
 
    #
    # Poll the queue for an object for t milliseconds.  If an object is
@@ -65,9 +71,7 @@ class Msg()
    # Clean up the resources used by the queue.  This should be called by
    # the parent process after the queue is no longer needed.
    #
-   public remove()
-      msg_remove(id)
-   end
+   public defer remove()
 
    #
    # Return the underlying id of the queue.
@@ -76,22 +80,12 @@ class Msg()
       return id
    end
 
-   private static defer msg_send()
-   private static defer msg_receive()
-   private static defer msg_receive_nowait()
-   private static defer msg_remove()
-   private static defer msg_open_public()
-   private static defer msg_create_public()
-   private static defer msg_create_private()
+   private static defer open_public_impl()
+   private static defer create_public_impl()
+   private static defer create_private_impl()
 
    private static init()
-      Class.set_method("msg_send", loadfunc(LIB, "msg_send"))
-      Class.set_method("msg_receive", loadfunc(LIB, "msg_receive"))
-      Class.set_method("msg_receive_nowait", loadfunc(LIB, "msg_receive_nowait"))
-      Class.set_method("msg_remove", loadfunc(LIB, "msg_remove"))
-      Class.set_method("msg_open_public", loadfunc(LIB, "msg_open_public"))
-      Class.set_method("msg_create_public", loadfunc(LIB, "msg_create_public"))
-      Class.set_method("msg_create_private", loadfunc(LIB, "msg_create_private"))
+      Class.load_library(LIB)
    end
 
    private new(id)
@@ -104,20 +98,20 @@ class Msg()
    # if no such queue exists.
    #
    public static open_public(key)
-      return Msg(msg_open_public(key))
+      return Msg(open_public_impl(key))
    end
 
    #
    # Create a new public queue with the given key
    #
    public static create_public(key)
-      return Msg(msg_create_public(key))
+      return Msg(create_public_impl(key))
    end
 
    #
    # Create a new private queue
    #
    public static create_private()
-      return Msg(msg_create_private())
+      return Msg(create_private_impl())
    end
 end
