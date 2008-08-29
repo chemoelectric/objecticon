@@ -11,7 +11,7 @@ import parser, ipl.options, io
 global opts, arg_packs
 
 procedure warn(s)
-   write(&errout, s)
+   ewrite(s)
 end
 
 procedure note(s)

@@ -21,8 +21,6 @@ class GroffOutputter(Outputter)
 
       if s := \opts["o"] then
          output_file := open(s, "w") | stop("couldn't open output file ", s)
-      else
-         output_file := &output
 
       every c := get_classes_in(get_packages()) do {
          l := []
