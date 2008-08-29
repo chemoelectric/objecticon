@@ -18,7 +18,7 @@ procedure main(args)
    if *args > 0 then
       f := open(args[1]) | stop("can't open ", args[1])
    else
-      f := &input
+      stop("Need an arg")
 
    g := gedload(f)
    close(f)
@@ -162,7 +162,7 @@ procedure gedload(f)		#: load GEDCOM data from file f
 	 next
 
       if not (r := gedscan(line)) then {
-         write(&errout, "ERR, line ", lnum, ": ", line)
+         ewrite("ERR, line ", lnum, ": ", line)
          next
       }
       r.lnum := lnum

@@ -327,13 +327,11 @@ oops -- function char(65536)
 oops -- function char(123456) 
 oops -- function char("abc") 
 oops -- function char(&lcase) 
-oops -- function char(&errout) 
-oops -- function char(list_4729(0)) 
+oops -- function char(list_4727(0)) 
 oops -- function ord("") 
 oops -- function ord("ab") 
 oops -- function ord("antidisestablishmentarianism") 
 oops -- function ord(47) 
-oops -- function ord(&output) 
 oops -- function ord(table_1(0)) 
 found file: .
 found file: ..
@@ -347,31 +345,31 @@ found file: recogn.dat
 &letters
 &letters
 &lcase
-list_4755(1)
-list_4756(2)
-list_4757(3)
-list_4758(4)
-list_4759(0)
+list_4751(1)
+list_4752(2)
+list_4753(3)
+list_4754(4)
+list_4755(0)
 p(1):
    image(a):1
    image(b):&null
-   image(c):list_4788(0)
+   image(c):list_4784(0)
    every write("\t", !c):
 p(1, 2):
    image(a):1
    image(b):2
-   image(c):list_4799(0)
+   image(c):list_4795(0)
    every write("\t", !c):
 p(1, 2, 3):
    image(a):1
    image(b):2
-   image(c):list_4810(1)
+   image(c):list_4806(1)
    every write("\t", !c):
 	3
 p(1, 2, 3, 4, 5):
    image(a):1
    image(b):2
-   image(c):list_4823(3)
+   image(c):list_4819(3)
    every write("\t", !c):
 	3
 	4
@@ -437,5 +435,5 @@ t[] --> "default"
 x := r1([t, [1, [2, 3]]]) --> record r1_4(1)
 x[1, 1, "one"] --> 1
 x[1, 2, 2, 2] --> 3
-x[1, 2] := ["abcd", "defg"] --> list_4996(2)
+x[1, 2] := ["abcd", "defg"] --> list_4992(2)
 x[1, 2, 2, 2] --> "e"

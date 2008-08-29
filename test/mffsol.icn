@@ -23,7 +23,7 @@ procedure main (args)
     if *args > 0 then
 	f := open(args[1]) | stop("can't open ",args[1])
     else
-	f := &input
+       stop("Need an arg")
 
     # read input and save in memory
     # (this first pass just accumulates a list of players)

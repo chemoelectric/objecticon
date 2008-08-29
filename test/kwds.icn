@@ -9,7 +9,6 @@ procedure main()
    print{"ascii", &ascii}
    pr_type{"clock", &clock}
    pr_type{"collections", &collections}
-   print{"control", &control}
    print{"cset", &cset}
    print{"current", &current}
    pr_type{"date", &date}
@@ -17,12 +16,10 @@ procedure main()
    print{"digits", &digits}
    pr_type{"dump", &dump}
    pr_type{"e", &e}
-   print{"errno", &errno}
    print{"error", &error}
    print{"errornumber", &errornumber}
    print{"errortext", &errortext}
    print{"errorvalue", &errorvalue}
-   print{"errout", &errout}
    print{"eventcode", &eventcode}
    print{"eventsource", &eventsource}
    print{"eventvalue", &eventvalue}
@@ -30,34 +27,19 @@ procedure main()
    pr_seq_type{"features", &features}
    print{"file", &file}
    pr_type{"host", &host}
-   print{"input", &input}
-   pr_type{"interval", &interval}
    print{"lcase", &lcase}
-   print{"ldrag", &ldrag}
    print{"letters", &letters}
    print{"level", &level}
    print{"line", &line}
-   print{"lpress", &lpress}
-   print{"lrelease", &lrelease}
    print{"main", &main}
-   print{"mdrag", &mdrag}
-   print{"meta", &meta}
-   print{"mpress", &mpress}
-   print{"mrelease", &mrelease}
    pr_type{"now", &now}
    print{"null", &null}
-   print{"output", &output}
    pr_type{"phi", &phi}
    pr_type{"pi", &pi}
    print{"pos", &pos}
    print{"progname", &progname}
    print{"random", &random}
-   print{"rdrag", &rdrag}
    pr_type{"regions", &regions}
-   print{"resize", &resize}
-   print{"rpress", &rpress}
-   print{"rrelease", &rrelease}
-   print{"shift", &shift}
    print{"source", &source}
    pr_type{"storage", &storage}
    print{"subject", &subject}
@@ -65,11 +47,4 @@ procedure main()
    print{"trace", &trace}
    print{"ucase", &ucase}
    pr_type{"version", &version}
-   print{"window", &window}
-   print{"x", &x}
-   print{"y", &y}
-   print{"windowclose", &windowclose}
-   print{"mousemove", &mousemove}
-   print{"wheelup", &wheelup}
-   print{"wheeldown", &wheeldown}
 end

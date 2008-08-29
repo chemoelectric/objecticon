@@ -6,7 +6,6 @@ copy(main) ----> procedure main
 copy([1,2,3]) ----> list_21(3)
 copy(table(0)) ----> table_2(0)
 copy() ----> &null
-copy(&input) ----> &input
 w := copy(write) ----> procedure io.write
 procedure io.write
 w(image(w)) ----> "procedure io.write"
@@ -19,7 +18,7 @@ v := copy(c) ----> &null
 x := repl("123",4) ----> "123123123123"
 t := table() ----> table_3(0)
 every i := 1 to 100 do t[i] := i ----> none
-x := sort(t) ----> list_54(100)
+x := sort(t) ----> list_52(100)
 1
 2
 3
@@ -331,15 +330,14 @@ image(2) ----> "2"
 image('cab') ----> "'abc'"
 image(&lcase) ----> "&lcase"
 image('abcdefghijklmnopqrstuvwxyz') ----> "&lcase"
-image(&input) ----> "&input"
 image() ----> "&null"
 image(&null) ----> "&null"
-image([1,2,3]) ----> "list_785(3)"
-image([]) ----> "list_788(0)"
-image([,]) ----> "list_791(2)"
+image([1,2,3]) ----> "list_781(3)"
+image([]) ----> "list_784(0)"
+image([,]) ----> "list_787(2)"
 image(table()) ----> "table_4(0)"
 image(table(3)) ----> "table_5(0)"
-image(list(0)) ----> "list_798(0)"
+image(list(0)) ----> "list_794(0)"
 image(set()) ----> "set_1(0)"
 image(set([1,2,3,3,3,3,3,4])) ----> "set_2(4)"
 image(repl) ----> "function repl"

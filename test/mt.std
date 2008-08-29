@@ -73,15 +73,15 @@ Test test22
 Test test23
 subtype(obj): "sometype"
 test23.obj: {1, 2, 3}
-test23.names: {"record sometype_1.a", "record sometype_1.b", "record sometype_1.c"}
+test23.names: {"record sometype_*.a", "record sometype_*.b", "record sometype_*.c"}
 child23.r: {1, 2, 3}
 subtype(res): "sometype"
 test23.res: {7, 8, 9}
-test23.names: {"record sometype_2.a", "record sometype_2.b", "record sometype_2.c"}
+test23.names: {"record sometype_*.a", "record sometype_*.b", "record sometype_*.c"}
 Test test24
 test24.o: {1, 2, 3}
 subtype(o): "othertype"
-test24.names: {"record othertype_1.a", "record othertype_1.b", "record othertype_1.c"}
+test24.names: {"record othertype_*.a", "record othertype_*.b", "record othertype_*.c"}
 Test test25
 child25:object X25_1(0),3,4
 99

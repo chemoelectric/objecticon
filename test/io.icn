@@ -9,7 +9,7 @@ import io
 procedure main()
    local L, f, m, n, t1, t2
 
-   L := [&input, &output, &errout,
+   L := [FileStream.stdin, FileStream.stdout, FileStream.stderr,
    	m := open("/etc/motd"), n := open("/dev/null", "w")]
    L := sort(L)
    every f := !L do

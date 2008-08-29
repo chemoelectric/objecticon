@@ -161,9 +161,9 @@ procedure do_class(c)
       write("\tName: ", Class.get_field_name(c, f))
       write("\tIndex: ", Class.get_field_index(c, f))
       write("\tFlags: ", Class.get_field_flags(c, f))
-      write("\tDefining class: ", image(Class.get_field_defining_class(c, f)))
-      write("\tValue via class: ", image(Class.getf(c, f)) | "Not accessible")
-      write("\tValue via instance: ", image(Class.getf(o, f)) | "Not accessible")
+      write("\tDefining class: ", imagex(Class.get_field_defining_class(c, f)))
+      write("\tValue via class: ", imagex(Class.getf(c, f)) | "Not accessible")
+      write("\tValue via instance: ", imagex(Class.getf(o, f)) | "Not accessible")
       if v := Class.getf(o, f) & type(v) == "methp" then
          yes_no{"\tClass.methp_has_object(v, o)", Class.methp_has_object(v, o)}
       i +:= 1
@@ -220,7 +220,7 @@ end
 
 procedure clone_check(a)
    local b
-   write("Clone check: ", to_string(a,1))
+   write("Clone check: ", to_stringx(a,1))
    b := clone(a)
    yes_no{"\tequals(a,a)", equals(a,a)}
    yes_no{"\tequals(b,b)", equals(b,b)}
@@ -234,7 +234,7 @@ procedure clone_check(a)
 end
 
 procedure equals_check(a,b)
-   write("Equals check: ", to_string(a,1), " -v- ", to_string(b,1))
+   write("Equals check: ", to_stringx(a,1), " -v- ", to_stringx(b,1))
    yes_no{"\tequals(a,a)", equals(a,a)}
    yes_no{"\tequals(b,b)", equals(b,b)}
    yes_no{"\tequals(a,b)", equals(a,b)}
@@ -247,7 +247,7 @@ procedure equals_check(a,b)
 end
 
 procedure to_string_check(a)
-   write("to_string: ",to_string(a))
+   write("to_string: ",to_stringx(a))
 end
 
 procedure proc1()
@@ -524,8 +524,8 @@ procedure test_rand_objects()
    every 1 to 200 do {
       x := rand_obj()
       c := clone(x)
-      hash(c) = hash(x) | write("FAILED(hash): ", to_string(x))
-      equals(c, x) | write("FAILED(equals): ", to_string(x))
+      hash(c) = hash(x) | write("FAILED(hash): ", to_stringx(x))
+      equals(c, x) | write("FAILED(equals): ", to_stringx(x))
    }
    write("Random object test finished")
 end

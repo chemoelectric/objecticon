@@ -15,7 +15,6 @@ procedure p1()
    write("copy([1,2,3]) ----> ",image(copy([1,2,3])) | "none")
    write("copy(table(0)) ----> ",image(copy(table(0))) | "none")
    write("copy() ----> ",image(copy()) | "none")
-   write("copy(&input) ----> ",image(copy(&input)) | "none")
    write("w := copy(write) ----> ",image(w := copy(write)) | "none")
 end
 
@@ -55,7 +54,6 @@ procedure p4()
    write("image('cab') ----> ",image(image('cab')) | "none")
    write("image(&lcase) ----> ",image(image(&lcase)) | "none")
    write("image('abcdefghijklmnopqrstuvwxyz') ----> ",image(image('abcdefghijklmnopqrstuvwxyz')) | "none")
-   write("image(&input) ----> ",image(image(&input)) | "none")
 end
 
 procedure p5()

@@ -37,7 +37,7 @@ procedure main(x)
          default:   stop("usage: [-t] [-l n]")
          }
       }
-   ifile := [&input]
+   ifile := [FileStream.stdin]
    prompt := ""
    test := ["<a>::=1|2|3","<a>10","->","<b>::=<a>|<a><a>|<b><b>","<b>5",
       "<c>::=<b><b><b>","<c>100","<b>100"]

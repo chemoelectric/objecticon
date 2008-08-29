@@ -81,7 +81,7 @@ procedure main(args)
    cmdtable["divert"] := divert
 
    if *args = 0 then
-      infile := &input
+      stop("Need an arg")
    else
       infile := open(args[1]) | stop("can't open ", args[1])
 
@@ -313,8 +313,7 @@ end
 
 procedure warn(a[])
    push(a, "  ")
-   push(a, &errout)
-   write ! a
+   ewrite ! a
    errors +:= 1
    return
 end

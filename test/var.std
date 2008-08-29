@@ -7,19 +7,19 @@
 "a"
 &null
 "&error"
-"table_1[\"abc\"]"
-"table_1[\"abc\"]"
-"list_25[1]"
-"list_25[2]"
-"list_25[3]"
-"list_25[200]"
-"list_25[191]"
-"list_26[1]"
-"list_26[2]"
-"list_26[3]"
-"list_26[200]"
-"list_26[191]"
-"record complex_1.r"
+"table_*[\"abc\"]"
+"table_*[\"abc\"]"
+"list_*[1]"
+"list_*[2]"
+"list_*[3]"
+"list_*[200]"
+"list_*[191]"
+"list_*[1]"
+"list_*[2]"
+"list_*[3]"
+"list_*[200]"
+"list_*[191]"
+"record complex_*.r"
 
 ----------------------------------------------------------------------
 co-expression_1(1)
@@ -50,6 +50,7 @@ global identifiers:
    find = function find
    get = function get
    image = function image
+   imagex = procedure imagex
    integer = function integer
    io.BufferStream = class io.BufferStream
    io.DescStream = class io.DescStream
@@ -83,9 +84,7 @@ global identifiers:
    upto = function upto
    util.Field = class util.Field
    util.SetFields = class util.SetFields
-   util.errno = procedure util.errno
    util.error = procedure util.error
-   util.find_and_skip = procedure util.find_and_skip
    util.to_flag = procedure util.to_flag
    variable = function variable
 ----------------------------------------------------------------------
@@ -141,6 +140,7 @@ global identifiers:
    find = function find
    get = function get
    image = function image
+   imagex = procedure imagex
    integer = function integer
    io.BufferStream = class io.BufferStream
    io.DescStream = class io.DescStream
@@ -174,9 +174,7 @@ global identifiers:
    upto = function upto
    util.Field = class util.Field
    util.SetFields = class util.SetFields
-   util.errno = procedure util.errno
    util.error = procedure util.error
-   util.find_and_skip = procedure util.find_and_skip
    util.to_flag = procedure util.to_flag
    variable = function variable
 ----------------------------------------------------------------------

@@ -28,7 +28,7 @@ procedure main(args)
    if *args > 0 then
       f := open(args[1]) | stop(&progname, ": can't open ", args[1])
    else
-      f := &input
+      stop("Need an arg")
 
    while line := read(f) do line ? {
       if ="count" then

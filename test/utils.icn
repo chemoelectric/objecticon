@@ -1,10 +1,40 @@
-import io
+import io, lang
+
+procedure imagex(o)
+   local t
+   t := ""
+   image(o) ? {
+      repeat {
+         t ||:= tab(find("_") | 0)
+         if pos(0) then
+            return t
+         t ||:= move(1)
+         if tab(many(&digits)) then
+            t ||:= "*"
+      }
+   }
+end
+
+procedure to_stringx(o)
+   local t
+   t := ""
+   to_string(o) ? {
+      repeat {
+         t ||:= tab(find("<") | 0)
+         if pos(0) then
+            return t
+         t ||:= move(1)
+         if tab(many(&digits)) then
+            t ||:= "*"
+      }
+   }
+end
 
 procedure pr_seq(s, e)
    local t
    writes(@s, ": {")
    t := ""
-   while writes(t, image(@e)) do
+   while writes(t, imagex(@e)) do
       t := ", "
    write("}")
 end
@@ -23,7 +53,7 @@ procedure try(s, e)
    if &errornumber then
       write("Error ", &errornumber)
    else
-      write("No error, gave ", image(x))
+      write("No error, gave ", imagex(x))
    &error := 0
    return \x
 end
@@ -32,7 +62,7 @@ procedure print(s, e)
    local o
    writes(@s, ": ")
    if o := @e then
-      write(image(o))
+      write(imagex(o))
    else
       write("Failed")
    return o

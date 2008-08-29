@@ -39,19 +39,19 @@ record complex(r,i)
 procedure main2(a)
    local T, L, L1
    static s
-   every write(image(name(main | T | L | s | a)))
+   every write(imagex(name(main | T | L | s | a)))
    T := table()
    L := list(200)
    L1 := []
    every 1 to 200 do push(L1,1)
    write(image(L[10]))
    write(image(name(&error)))
-   write(image(name(T["abc"])))
+   write(imagex(name(T["abc"])))
    T["abc"] := 1
-   write(image(name(T["abc"])))
-   every write(image(name(L[1 | 2 | 3 | -1 | -10])))
-   every write(image(name(L1[1 | 2 | 3 | -1 | -10])))
-   write(image(name(complex().r)))
+   write(imagex(name(T["abc"])))
+   every write(imagex(name(L[1 | 2 | 3 | -1 | -10])))
+   every write(imagex(name(L1[1 | 2 | 3 | -1 | -10])))
+   write(imagex(name(complex().r)))
    return
 end
 

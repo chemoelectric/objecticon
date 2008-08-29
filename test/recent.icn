@@ -91,9 +91,9 @@ procedure main ()
       write ("oops -- type conversion failed in ord()")
 
    every ferr (char, -65536 | -337 | -1 | 256 | 4713 | 65536 | 123456, 205)
-   every ferr (char, "abc" | &lcase | &errout | [], 101)
+   every ferr (char, "abc" | &lcase | [], 101)
    every ferr (ord, "" | "ab" | "antidisestablishmentarianism" | 47, 205)
-   every ferr (ord, &output | table(), 103)
+   every ferr (ord, table(), 103)
 
 #  test getenv()
    #  DISABLED
