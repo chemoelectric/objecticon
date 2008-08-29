@@ -170,18 +170,6 @@ void generate_code()
     codep = 0;
 }
 
-static int lookup_field(char *s)
-{
-    int i = 0;
-    struct fentry *fp;
-    for (fp = lffirst; fp; fp = fp->next) {
-        if (!strcmp(fp->name, s))
-            return i;
-        ++i;
-    }
-    return -1;
-}
-
 char *native_methods[] = {
 #define NativeDef(x) Lit(x),
 #include "../h/nativedefs.h"
@@ -931,65 +919,34 @@ static void lemitproc(struct lfunction *func)
     }
 }
 
-struct name_field_sort_item {
+struct field_sort_item {
     int n;
-    char *name;
+    struct fentry *fp;
 };
 
-static int name_field_sort_compare(const void *p1, const void *p2)
+static int field_sort_compare(const void *p1, const void *p2)
 {
-    struct name_field_sort_item *f1, *f2;
-    f1 = (struct name_field_sort_item *)p1;
-    f2 = (struct name_field_sort_item *)p2;
-    return strcmp(f1->name, f2->name);
+    struct field_sort_item *f1, *f2;
+    f1 = (struct field_sort_item *)p1;
+    f2 = (struct field_sort_item *)p2;
+    return f1->fp->field_id - f2->fp->field_id;
 }
 
-static struct name_field_sort_item *name_sorted_fields(struct lclass *cl)
+static struct field_sort_item *sorted_fields(struct lclass *cl)
 {
     struct lclass_field_ref *fr;
     int n = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
-    struct name_field_sort_item *a = calloc(n, sizeof(struct name_field_sort_item));
+    struct field_sort_item *a = calloc(n, sizeof(struct field_sort_item));
     int i = 0;
     for (fr = cl->implemented_instance_fields; fr; fr = fr->next, ++i) {
         a[i].n = i;
-        a[i].name = fr->field->name;
+        a[i].fp = fr->field->ftab_entry;
     }
     for (fr = cl->implemented_class_fields; fr; fr = fr->next, ++i) {
         a[i].n = i;
-        a[i].name = fr->field->name;
+        a[i].fp = fr->field->ftab_entry;
     }
-    qsort(a, n, sizeof(struct name_field_sort_item), name_field_sort_compare);
-    return a;
-}
-
-struct fnum_field_sort_item {
-    int n;
-    word fnum;
-};
-
-static int fnum_field_sort_compare(const void *p1, const void *p2)
-{
-    struct fnum_field_sort_item *f1, *f2;
-    f1 = (struct fnum_field_sort_item *)p1;
-    f2 = (struct fnum_field_sort_item *)p2;
-    return f1->fnum - f2->fnum;
-}
-
-static struct fnum_field_sort_item *fnum_sorted_fields(struct lclass *cl)
-{
-    struct lclass_field_ref *fr;
-    int n = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
-    struct fnum_field_sort_item *a = calloc(n, sizeof(struct fnum_field_sort_item));
-    int i = 0;
-    for (fr = cl->implemented_instance_fields; fr; fr = fr->next, ++i) {
-        a[i].n = i;
-        a[i].fnum = fr->field->fnum;
-    }
-    for (fr = cl->implemented_class_fields; fr; fr = fr->next, ++i) {
-        a[i].n = i;
-        a[i].fnum = fr->field->fnum;
-    }
-    qsort(a, n, sizeof(struct fnum_field_sort_item), fnum_field_sort_compare);
+    qsort(a, n, sizeof(struct field_sort_item), field_sort_compare);
     return a;
 }
 
@@ -997,8 +954,7 @@ static void genclass(struct lclass *cl)
 {
     struct lclass_ref *cr;
     struct lclass_field_ref *fr;
-    struct name_field_sort_item *name_sortf;
-    struct fnum_field_sort_item *fnum_sortf;
+    struct field_sort_item *sortf;
     char *name;
     int i, ap, n_fields;
     struct strconst *sp;
@@ -1045,28 +1001,24 @@ static void genclass(struct lclass *cl)
      * Pointers to the four tables that follow.
      */
     if (Dflag) {
-        ap = pc + 5 * WordSize;
+        ap = pc + 4 * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to superclass array\n", ap);
         ap += cl->n_supers * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to implemented classes array\n", ap);
         ap += cl->n_implemented_classes * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field info array\n", ap);
         ap += n_fields * WordSize;
-        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to name sorted array\n", ap);
-        ap += n_fields * ShortSize;
-        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to fnum sorted array\n", ap);
+        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field sort array\n", ap);
         ap += n_fields * ShortSize;
     }
 
-    ap = pc + 5 * WordSize;
+    ap = pc + 4 * WordSize;
     outword(ap);
     ap += cl->n_supers * WordSize;
     outword(ap);
     ap += cl->n_implemented_classes * WordSize;
     outword(ap);
     ap += n_fields * WordSize;
-    outword(ap);
-    ap += n_fields * ShortSize;
     outword(ap);
     ap += n_fields * ShortSize;
     ap += nalign(ap);
@@ -1111,27 +1063,20 @@ static void genclass(struct lclass *cl)
         outword(fr->field->ipc);
 
     /* 
-     * The two sorted lookup tables.
+     * The sorted fields table.
      */
-    name_sortf = name_sorted_fields(cl);
+    sortf = sorted_fields(cl);
     if (Dflag) {
-        fprintf(dbgfile, "%ld:\t\t\t\t\t# Sorted fields array (by name)\n", (long)pc);
+        fprintf(dbgfile, "%ld:\t\t\t\t\t# Sorted fields array\n", (long)pc);
         for (i = 0; i < n_fields; ++i)
-            fprintf(dbgfile, "\t%d\t\t\t\t#   Field index (name=%s)\n", name_sortf[i].n, name_sortf[i].name);
+            fprintf(dbgfile, "\t%d\t\t\t\t#   Field %s (fnum=%d)\n", 
+                    sortf[i].n, 
+                    sortf[i].fp->name,
+                    sortf[i].fp->field_id);
     }
     for (i = 0; i < n_fields; ++i)
-        outshort(name_sortf[i].n);
-    free(name_sortf);
-
-    fnum_sortf = fnum_sorted_fields(cl);
-    if (Dflag) {
-        fprintf(dbgfile, "%ld:\t\t\t\t\t# Sorted fields array (by fnum)\n", (long)pc);
-        for (i = 0; i < n_fields; ++i)
-            fprintf(dbgfile, "\t%d\t\t\t\t#   Field index (fnum=%d)\n", fnum_sortf[i].n, fnum_sortf[i].fnum);
-    }
-    for (i = 0; i < n_fields; ++i)
-        outshort(fnum_sortf[i].n);
-    free(fnum_sortf);
+        outshort(sortf[i].n);
+    free(sortf);
 
     if (Dflag) {
         fprintf(dbgfile, "%ld:\t\t\t\t\t# Padding bytes (%d)\n", (long)pc, nalign(pc));
@@ -1221,12 +1166,12 @@ static void genclasses()
     for (cl = lclasses; cl; cl = cl->next) {
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
-        cl->size = WordSize * (17 +
+        cl->size = WordSize * (16 +
                                1 + 
                                cl->n_supers +
                                cl->n_implemented_classes +
                                n_fields) +
-                   ShortSize * 2 * n_fields;
+                   ShortSize * n_fields;
         cl->size += nalign(cl->size);
         x += cl->size;
     }
@@ -1244,7 +1189,7 @@ static void genclasses()
                 fprintf(dbgfile, "%ld:\t\t\t\t\t# Field info for %s.%s\n", 
                         (long)pc, cl->global->name, cf->name);
                 fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   Name %s\n", sp->len, sp->offset, cf->name);
-                fprintf(dbgfile, "\t%d\t\t\t#   Fnum\n", cf->fnum);
+                fprintf(dbgfile, "\t%d\t\t\t#   Fnum\n", cf->ftab_entry->field_id);
                 fprintf(dbgfile, "\t%08o\t\t\t#   Flags\n", cf->flag);
                 fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Defining class\n", cf->class->pc);
                 fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Pointer to descriptor\n", cf->dpc);
@@ -1252,7 +1197,7 @@ static void genclasses()
             }
             outword(sp->len);		/* name of field: size and offset */
             outword(sp->offset);
-            outword(cf->fnum);
+            outword(cf->ftab_entry->field_id);
             outword(cf->flag);
             outword(cf->class->pc);
             outword(cf->dpc);
@@ -1349,9 +1294,9 @@ static void gentables()
         }
     }
 
-/*
- * Output record/field table.
- */
+    /*
+     * Output record/field table.
+     */
     if (Tflag) {
         align();
         if (Dflag)
@@ -1377,7 +1322,9 @@ static void gentables()
     hdr.StandardFields = pc;
     for (i = 0; i < asize(standard_field_names); ++i) {
         char *s = standard_field_names[i];
-        int j = lookup_field(s);
+        int j = -1;
+        if ((fp = flocate(s)))
+            j = fp->field_id;
         if (Dflag)
             fprintf(dbgfile, "%ld:\t\t\t\t\t#   %d(%s)->%d\n", (long)pc, i, s, j);
         outword(j);

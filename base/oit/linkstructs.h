@@ -106,7 +106,7 @@ struct lclass_field {
     word flag;
     int dpc;                             /* Address of descriptor, if a static or method */
     int ipc;                             /* Address of info block */
-    int fnum;                            /* Field table entry number */
+    struct fentry *ftab_entry;           /* Field table entry (gives field number) */
     struct lclass *class;                /* Pointer back to owning class */
     struct lclass_field *b_next, *next;  /* Next and hash links */
     struct lfunction *func;              /* If it's a method */

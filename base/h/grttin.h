@@ -192,7 +192,7 @@ typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;
 typedef int SOCKET;
 typedef int u_short;
 typedef int fd_set;
-extern int amperErrno;
+
 struct timeval {
    long    tv_sec;
    long    tv_usec;
@@ -302,6 +302,14 @@ typedef int siptr, stringint, inst;
    {
      if ((argc-warg) % (mult)) runerr(146);
      n = (argc-warg)/mult;
+     if (!n) runerr(146);
+   }
+   #enddef				/* CheckArgMultiple */
+
+   #begdef CheckArgMultipleOf(mult)
+   {
+     if ((argc) % (mult)) runerr(146);
+     n = (argc)/mult;
      if (!n) runerr(146);
    }
    #enddef				/* CheckArgMultiple */

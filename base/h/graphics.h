@@ -78,6 +78,7 @@
 #define EQ_MOD_CONTROL (1L<<16L)
 #define EQ_MOD_META    (1L<<17L)
 #define EQ_MOD_SHIFT   (1L<<18L)
+#define EQ_MOD_RELEASE (1L<<19L)
 
 #define EVQUESUB(w,i) *evquesub(w,i)
 #define EQUEUELEN 256
@@ -321,7 +322,7 @@ typedef struct _wstate {
   char		eventQueue[EQUEUELEN];  /* queue of cooked-mode keystrokes */
   int		eQfront, eQback;
   char		*cursorname;
-  struct descrip filep, listp;		/* icon values for this window */
+  struct descrip listp;		/* icon values for this window */
   struct wbind_list *children;
   struct _wbinding *parent;
 #ifdef XWindows

@@ -59,10 +59,6 @@ extern struct tend_desc *tend;  /* chain of tended descriptors */
  */
 
 
-#ifdef FncTrace
-   extern struct descrip kywd_ftrc;	/* descriptor for &ftrace */
-#endif					/* FncTrace */
-
 #ifdef Graphics
    extern int pollctr;
 #endif					/* Graphics */

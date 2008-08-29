@@ -76,12 +76,6 @@
 #define HiddenState IconicState+3
 
 /*
- * Input masks not defined by X itself, but stored in the
- * inputmask field of the wstate structure.
- */
-#define WindowClosureMask    (1L<<30)
-
-/*
  * This macro allows the "true" X input masks to be
  * obtained from the inputmask field.
  */

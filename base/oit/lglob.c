@@ -402,7 +402,7 @@ static void reference(struct gentry *gp)
     }
 }
 
-static int add_fieldtable_entry(char *name, int column_num, int field_num)
+static struct fentry *add_fieldtable_entry(char *name, int column_num, int field_num)
 {
     struct fentry *fp;
     int i = hasher(name, lfhash), j;
@@ -412,7 +412,7 @@ static int add_fieldtable_entry(char *name, int column_num, int field_num)
     if (!fp) {
         fp = New(struct fentry);
         fp->name = name;
-        fp->field_id = nfields++;
+        nfields++;
         if (Tflag) {
             /* Allocate and init the data for this row */
             fp->rowdata = malloc(fieldtable_cols * sizeof(int));
@@ -435,7 +435,15 @@ static int add_fieldtable_entry(char *name, int column_num, int field_num)
             quit("Unexpected fieldtable clash");
         fp->rowdata[column_num] = field_num;
     }
-    return fp->field_id;
+    return fp;
+}
+
+static int fieldtable_sort_compare(const void *p1, const void *p2)
+{
+    struct fentry *f1, *f2;
+    f1 = *((struct fentry **)p1);
+    f2 = *((struct fentry **)p2);
+    return strcmp(f1->name, f2->name);
 }
 
 void build_fieldtable()
@@ -443,8 +451,14 @@ void build_fieldtable()
     struct gentry *gp;
     struct lfield *fd;
     struct lclass_field_ref *fr; 
+    struct fentry *fp;
+    struct fentry **a;
+    int i = 0;
 
-    /* Set the fieldtable column numbers for a record/class */
+    /* 
+     * Set the fieldtable column numbers for a record/class and count
+     * the total number of columns.
+     */
     fieldtable_cols = 0;
     for (gp = lgfirst; gp; gp = gp->g_next) {
         if (gp->record)
@@ -453,6 +467,10 @@ void build_fieldtable()
             gp->class->fieldtable_col = fieldtable_cols++;
     }
 
+    /*
+     * Build the field table, counting the total number of entries.
+     */
+    nfields = 0;
     for (gp = lgfirst; gp; gp = gp->g_next) {
         int i = 0;
         if (gp->record) {
@@ -461,11 +479,41 @@ void build_fieldtable()
             }
         } else if (gp->class) {
             for (fr = gp->class->implemented_instance_fields; fr; fr = fr->next)
-                fr->field->fnum = add_fieldtable_entry(fr->field->name, gp->class->fieldtable_col, i++);
+                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name, 
+                                                             gp->class->fieldtable_col, 
+                                                             i++);
             for (fr = gp->class->implemented_class_fields; fr; fr = fr->next)
-                fr->field->fnum = add_fieldtable_entry(fr->field->name, gp->class->fieldtable_col, i++);
+                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name, 
+                                                             gp->class->fieldtable_col, 
+                                                             i++);
         }
     }
+
+    /*
+     * Now create a sorted index of the field table.
+     */
+    a = tcalloc(nfields, sizeof(struct fentry *));
+    for (fp = lffirst; fp; fp = fp->next)
+        a[i++] = fp;
+    qsort(a, nfields, sizeof(struct fentry *), fieldtable_sort_compare);
+
+    /*
+     * Finally set the field numbers for each fentry and rebuild the
+     * linked list.
+     */
+    lffirst = lflast = 0;
+    for (i = 0; i < nfields; ++i) {
+        fp = a[i];
+        fp->field_id = i;
+        fp->next = 0;
+        if (lflast) {
+            lflast->next = fp;
+            lflast = fp;
+        } else
+            lffirst = lflast = fp;
+    }
+
+    free(a);
 }
 
 static int global_sort_compare(const void *p1, const void *p2)
@@ -482,7 +530,7 @@ void sort_global_table()
     int i = 0, n = 0;
     for (gp = lgfirst; gp; gp = gp->g_next)
         ++n;
-    a = calloc(n, sizeof(struct gentry *));
+    a = tcalloc(n, sizeof(struct gentry *));
     for (gp = lgfirst; gp; gp = gp->g_next)
         a[i++] = gp;
     qsort(a, n, sizeof(struct gentry *), global_sort_compare);

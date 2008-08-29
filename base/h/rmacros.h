@@ -35,18 +35,6 @@
 #define Initializing  02
 #define Initialized   04
 
-/*
- * File status flags in status field of file blocks.
- */
-#define Fs_Read		 01	/* read access */
-#define Fs_Write	 02	/* write access */
-#define Fs_Directory     04	
-#define Fs_Socket       010
-#define Fs_Stdio        020
-#define Fs_Desc         040
-#define Fs_Prog        0100
-#define Fs_Closed      0200     /* indicates close was called */
-
 #ifdef Graphics
    #define XKey_Window 0
    #define XKey_Fg 1
@@ -305,7 +293,7 @@
 #define T_Lrgint	 2	/* long integer */
 #define T_Real		 3	/* real number */
 #define T_Cset		 4	/* cset */
-#define T_File		 5	/* file */
+#define T_Constructor    5      /* record constructor */
 #define T_Proc		 6	/* procedure */
 #define T_Record	 7	/* record */
 #define T_List		 8	/* list header */
@@ -323,16 +311,13 @@
 #define T_Kywdint	20	/* integer keyword */
 #define T_Kywdpos	21	/* keyword &pos */
 #define T_Kywdsubj	22	/* keyword &subject */
-#define T_Kywdwin	23	/* keyword &window */
-#define T_Kywdstr	24	/* string keyword */
-#define T_Kywdevent	25	/* keyword &eventsource, etc. */
-#define T_Class         26      /* class */
-#define T_Object        27      /* object */
-#define T_Cast          28      /* cast */
-#define T_Methp         29      /* method pointer */
-#define T_Constructor   30      /* record constructor */
-#define T_Window        31      /* window */
-#define MaxType		31	/* maximum type number */
+#define T_Kywdstr	23	/* string keyword */
+#define T_Kywdevent	24	/* keyword &eventsource, etc. */
+#define T_Class         25      /* class */
+#define T_Object        26      /* object */
+#define T_Cast          27      /* cast */
+#define T_Methp         28      /* method pointer */
+#define MaxType		28	/* maximum type number */
 
 /*
  * Definitions for keywords.
@@ -343,10 +328,6 @@
 #define k_trace kywd_trc.vword.integr	/* value of &trace */
 #define k_dump kywd_dmp.vword.integr	/* value of &dump */
 
-#ifdef FncTrace
-   #define k_ftrace kywd_ftrc.vword.integr	/* value of &ftrace */
-#endif					/* FncTrace */
-
 /*
  * Descriptor types and flags.
  */
@@ -356,14 +337,12 @@
 #define D_Lrgint	(T_Lrgint | D_Typecode | F_Ptr)
 #define D_Real		(T_Real     | D_Typecode | F_Ptr)
 #define D_Cset		(T_Cset     | D_Typecode | F_Ptr)
-#define D_File		(T_File     | D_Typecode | F_Ptr)
 #define D_Proc		(T_Proc     | D_Typecode | F_Ptr)
 #define D_Class		(T_Class    | D_Typecode | F_Ptr)
 #define D_Object	(T_Object   | D_Typecode | F_Ptr)
 #define D_Cast  	(T_Cast     | D_Typecode | F_Ptr)
 #define D_Methp 	(T_Methp    | D_Typecode | F_Ptr)
 #define D_Constructor 	(T_Constructor    | D_Typecode | F_Ptr)
-#define D_Window 	(T_Window   | D_Typecode | F_Ptr)
 #define D_List		(T_List     | D_Typecode | F_Ptr)
 #define D_Lelem		(T_Lelem    | D_Typecode | F_Ptr)
 #define D_Table		(T_Table    | D_Typecode | F_Ptr)
@@ -380,7 +359,6 @@
 #define D_Coexpr	(T_Coexpr   | D_Typecode | F_Ptr)
 #define D_External	(T_External | D_Typecode | F_Ptr)
 #define D_Slots		(T_Slots    | D_Typecode | F_Ptr)
-#define D_Kywdwin	(T_Kywdwin  | D_Typecode | F_Ptr | F_Var)
 #define D_Kywdstr	(T_Kywdstr  | D_Typecode | F_Ptr | F_Var)
 #define D_Kywdevent	(T_Kywdevent| D_Typecode | F_Ptr | F_Var)
 
@@ -627,21 +605,7 @@
       #define current_line_ptr (curpstate->Current_line_ptr)
       #define standard_fields (curpstate->StandardFields)
       #define main_proc (curpstate->MainProc)
-      #define amperErrno (curpstate->AmperErrno)
 
-      #ifdef Graphics
-         #define amperX   (curpstate->AmperX)
-         #define amperY   (curpstate->AmperY)
-         #define amperInterval (curpstate->AmperInterval)
-         #define lastEventWin (curpstate->LastEventWin)
-         #define lastEvFWidth (curpstate->LastEvFWidth)
-         #define lastEvAscent (curpstate->LastEvAscent)
-         #define kywd_xwin (curpstate->Kywd_xwin)
-         #define xmod_control (curpstate->Xmod_Control)
-         #define xmod_shift (curpstate->Xmod_Shift)
-         #define xmod_meta (curpstate->Xmod_Meta)
-      #endif				/* Graphics */
-      
       #define line_num  (curpstate->Line_num)
       #define lastline (curpstate->Lastline)
       
@@ -677,9 +641,6 @@
       #define t_errorvalue  (curpstate->T_errorvalue)
       
       #define k_main        (curpstate->K_main)
-      #define k_errout      (curpstate->K_errout)
-      #define k_input       (curpstate->K_input)
-      #define k_output      (curpstate->K_output)
       
       #define cplist	    (curpstate->Cplist)
       #define cpset	    (curpstate->Cpset)
@@ -695,8 +656,6 @@
       #define deref	    (curpstate->Deref)
       #define alcbignum	    (curpstate->Alcbignum)
       #define alccset	    (curpstate->Alccset)
-      #define alcfile	    (curpstate->Alcfile)
-      #define alcwindow	    (curpstate->Alcwindow)
       #define alchash	    (curpstate->Alchash)
       #define alcsegment    (curpstate->Alcsegment)
       #define alclist_raw   (curpstate->Alclist_raw)

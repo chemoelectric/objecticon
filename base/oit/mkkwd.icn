@@ -6,6 +6,8 @@
 #	    keyword.h
 #	    kdefs.h
 
+import io
+
 procedure main()
    local kywds, klist, line, k, i, hfile, lfile, kname
  
@@ -31,6 +33,8 @@ procedure main()
       write(hfile, "#define ", left(kname,13), right(i+:=1,3))
       write(lfile, "KDef(", k, ",", kname, ")")
       }
+   close(hfile)
+   close(lfile)
 end
 
 

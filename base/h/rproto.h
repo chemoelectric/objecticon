@@ -164,9 +164,7 @@ dptr            call_icon       (dptr proc, ...);
 dptr            call_icon_va    (dptr proc, va_list ap);
 
    void	resolve			(struct progstate *pstate);
-   struct b_coexpr *loadicode (char *name, struct b_file *theInput,
-      struct b_file *theOutput, struct b_file *theError,
-      C_integer bs, C_integer ss, C_integer stk);
+   struct b_coexpr *loadicode (char *name,  C_integer bs, C_integer ss, C_integer stk);
    void actparent (int eventcode);
    int mt_activate   (dptr tvalp, dptr rslt, struct b_coexpr *ncp);
    struct progstate *findprogramforblock(union block *p);
@@ -231,7 +229,7 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    int	parsefont	(char *s, char *fam, int *sty, int *sz);
    int	parsegeometry	(char *buf, SHORT *x, SHORT *y, SHORT *w, SHORT *h);
    int	parsepattern	(char *s, int len, int *w, int *nbits, C_integer *bits);
-   void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f);
+void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    int	readGIF		(char *fname, int p, struct imgdata *d);
 #ifdef HAVE_LIBJPEG
    int	readJPEG	(char *fname, int p, struct imgdata *d);
@@ -636,3 +634,6 @@ char *stringint_int2str(stringint * sip, int i);
 stringint *stringint_lookup(stringint *sip, char *s);
 
 void on_error(int n);
+dptr c_get_instance_data(dptr x, dptr fname);
+void why(char *s);
+void whyf(char *fmt, ...);

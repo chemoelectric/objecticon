@@ -67,26 +67,6 @@ struct b_cset {			/* cset block */
     unsigned int bits[CsetSize];		/*   array of bits */
 };
 
-struct b_file {			/* file block */
-    word title;			/*   T_File */
-    union {
-        FILE *fp;		/*   stdio file pointer (Fs_Stdio) */
-        DIR *dir;               /*   from opendir() (Fs_Directory) */
-        SOCKET sd;              /*   socket descriptor (Fs_Socket) */
-        int fd;			/*   file descriptor (Fs_Desc) */
-    } u;
-    word status;		/*   file status */
-    struct descrip fname;	/*   file name (string qualifier) */
-};
-
-struct b_window {		/* window block */
-    word title;			/*   T_Window */
-#ifdef Graphics
-    struct _wbinding *wb;	/*   window */
-#endif /* Graphics */
-    word isopen;		/*  open status */
-};
-
 struct b_lelem {		/* list-element block */
     word title;			/*   T_Lelem */
     word blksize;		/*   size of block */
@@ -176,8 +156,8 @@ struct b_class {
     struct b_class **supers;
     struct b_class **implemented_classes;
     struct class_field **fields;  /* Pointers to field info; one for each field */
-    short *name_sorted_fields;  /* An array of indices into fields, giving the order sorted by name */
-    short *fnum_sorted_fields;  /* An array of indices into fields, giving the order sorted by fnum */
+    short *sorted_fields;       /* An array of indices into fields, giving the order sorted by
+                                 * field number (and hence also sorted by name) */
 };
 
 struct b_object {		/* object block */
@@ -407,19 +387,7 @@ struct progstate {
     struct ipc_line *Ilines, *Elines;
     struct ipc_line * Current_line_ptr;
     dptr MainProc;
-    struct descrip AmperErrno;
 
-#ifdef Graphics
-    struct descrip AmperX, AmperY;               /* &x, &y */
-    struct descrip AmperInterval;			/* &interval */
-    struct descrip LastEventWin;			/* last Event() win */
-    int LastEvFWidth;
-    int LastEvAscent;
-    uword PrevTimeStamp;				/* previous timestamp */
-    uword Xmod_Control, Xmod_Shift, Xmod_Meta;	/* control,shift,meta */
-    struct descrip Kywd_xwin[2];			/* &window + ... */
-#endif				/* Graphics */
-   
     word Line_num, Lastline;
 
     word Coexp_ser;			/* this program's serial numbers */
@@ -455,9 +423,6 @@ struct progstate {
     struct descrip T_errorvalue;
 
     struct descrip K_main;
-    struct b_file K_errout;
-    struct b_file K_input;
-    struct b_file K_output;
 
     /*
      * Function Instrumentation Fields.
@@ -476,10 +441,6 @@ struct progstate {
     void (*Deref)(dptr,dptr);
     struct b_bignum * (*Alcbignum)(word);
     struct b_cset * (*Alccset)();
-    struct b_file * (*Alcfile)(int,dptr);
-#ifdef Graphics
-    struct b_window * (*Alcwindow)(struct _wbinding *, word);
-#endif
     union block * (*Alchash)(int);
     struct b_slots * (*Alcsegment)(word);
     struct b_list *(*Alclist_raw)(uword,uword);
@@ -603,7 +564,6 @@ struct b_refresh {		/* co-expression block */
 union block {			/* general block */
     struct b_real realblk;
     struct b_cset cset;
-    struct b_file file;
     struct b_proc proc;
     struct b_list list;
     struct b_lelem lelem;
@@ -623,7 +583,6 @@ union block {			/* general block */
     struct b_cast cast;
     struct b_methp methp;
     struct b_constructor constructor;
-    struct b_window window;
     struct b_bignum bignumblk;
 };
 

@@ -28,9 +28,6 @@
     methp:        simple
                   return block_pointer
 
-    window:       simple
-                  return block_pointer
-
     constructor:  simple
                   return block_pointer
 
@@ -74,9 +71,6 @@
 #    The third group of types appear only in RTL code. They have no special
 #    semantics nor any special uses by iconc.
 
-       file{f}:  simple
-                 return block_pointer
-
        set{S}:   aggregate(set_elem)
                  return block_pointer
 
@@ -94,10 +88,6 @@
 
        # &eventsource, &eventvalue, &eventcode
        kywdevent: variable always any_value
-                 return descriptor_pointer
-
-       # &window
-       kywdwin: variable always file ++ null
                  return descriptor_pointer
 
        # &fg and friends
