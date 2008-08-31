@@ -206,6 +206,7 @@ struct descrip nulldesc = {D_Null};	/* null value */
 struct descrip onedesc = {D_Integer};	/* integer 1 */
 struct descrip ucase;			/* string of uppercase letters */
 struct descrip zerodesc = {D_Integer};	/* integer 0 */
+struct descrip minusonedesc = {D_Integer};	/* integer -1 */
 
 /*
  * Descriptors used by event monitoring.
@@ -384,24 +385,6 @@ struct errtab errtab[] = {
    0,	""
    };
 
-/*
- * Extra custom values for errno and corresponding messages.  These have
- * to avoid clashing with any external errno values of course.
- */
-struct errtab xerrnotab[] = {
-    XE_UNKNOWN, "Unknown reason",
-    XE_NOTSUPPORTED, "Operation not supported",
-    XE_DIRTOOLONG, "Directory entry too long",
-    XE_HOSTNOTFOUND, "Name lookup failure: host not found",
-    XE_NOIPADDR, "Name lookup failure: no IP address for host",
-    XE_NAMESRVERR, "Name lookup failure: name server error",
-    XE_TMPNAMESRVERR, "Name lookup failure: temporary name server error",
-    XE_TIMEOUT, "Timeout",
-    XE_NAMETOOLONG, "Name too long",
-    XE_BADADDRFMT, "Bad socket address format",
-    XE_EOF, "End of file",
-    0,	""
-   };
 
 /*
  * Note:  the following material is here to avoid a bug in the Cray C compiler.

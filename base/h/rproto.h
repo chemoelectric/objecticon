@@ -167,7 +167,6 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    struct b_coexpr *loadicode (char *name,  C_integer bs, C_integer ss, C_integer stk);
    void actparent (int eventcode);
    int mt_activate   (dptr tvalp, dptr rslt, struct b_coexpr *ncp);
-   struct progstate *findprogramforblock(union block *p);
    struct progstate *findprogramforicode(inst x);
    void changeprogstate(struct progstate *p);
    void showicode();
@@ -633,7 +632,7 @@ int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);
 stringint *stringint_lookup(stringint *sip, char *s);
 
-void on_error(int n);
+void on_error();
 dptr c_get_instance_data(dptr x, dptr fname);
 void why(char *s);
 void whyf(char *fmt, ...);

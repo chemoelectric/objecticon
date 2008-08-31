@@ -41,6 +41,7 @@ extern struct descrip nulldesc;	/* null value */
 extern struct descrip onedesc;	/* one */
 extern struct descrip ucase;	/* uppercase string */
 extern struct descrip zerodesc;	/* zero */
+extern struct descrip minusonedesc;	/* -ve one */
 
 extern struct b_iproc Bdeferred_method_stub;  /* Deferred method block */
 
@@ -72,7 +73,6 @@ extern struct descrip rzerodesc;	/* real descriptor */
 extern struct b_real realzero;		/* real zero block */
 
 extern struct errtab errtab[];          /* error numbers and messages */
-extern struct errtab xerrnotab[];       /* extra errno numbers and messages */
 
 /*
  * Externals conditional on multithreading.
@@ -142,5 +142,3 @@ extern stringint attribs[], drawops[];
 
 #endif					/* Graphics */
 
-extern struct descrip posix_lock, posix_timeval, posix_stat, posix_message,
-  posix_passwd, posix_group, posix_servent, posix_hostent;

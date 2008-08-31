@@ -382,7 +382,7 @@ end
 
 #begdef  bitop(func_name, c_op, operation)
 #func_name "(i,j) - produce bitwise " operation " of i and j."
-function{1} func_name(i,j)
+function{1} func_name(i, j, a[n])
    /*
     * i and j must be integers
     */
@@ -391,16 +391,29 @@ function{1} func_name(i,j)
    if !cnv:integer(j) then
       runerr(101,j)
 
-   abstract {
-      return integer
-      }
    inline {
+      int k ;
       if ((Type(i)==T_Lrgint) || (Type(j)==T_Lrgint)) {
-         big_ ## c_op(i,j);
-         }
-      else
-      return C_integer IntVal(i) c_op IntVal(j);
+         big_ ## c_op(i, j);
       }
+      else
+          MakeInt(IntVal(i) c_op IntVal(j), &result);
+
+      /*
+       * Process any optional additonal params.
+       */
+      for (k = 0; k < n; ++k) {
+          if (!cnv:integer(a[k], a[k]))
+              runerr(101, a[k]);
+          if ((Type(result) == T_Lrgint) || (Type(a[k]) == T_Lrgint)) {
+              big_ ## c_op(result, a[k]);
+          }
+          else
+              MakeInt(IntVal(result) c_op IntVal(a[k]), &result);
+      }
+
+      return result;
+   }
 end
 #enddef
 
@@ -411,21 +424,18 @@ end
 {
    if (bigand(&x, &y, &result) == Error)  /* alcbignum failed */
       runerr(0);
-   return result;
 }
 #enddef
 #begdef big_bitor(x,y)
 {
    if (bigor(&x, &y, &result) == Error)  /* alcbignum failed */
       runerr(0);
-   return result;
 }
 #enddef
 #begdef big_bitxor(x,y)
 {
    if (bigxor(&x, &y, &result) == Error)  /* alcbignum failed */
       runerr(0);
-   return result;
 }
 #enddef
 

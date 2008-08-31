@@ -1914,32 +1914,26 @@ stringint *stringint_lookup(stringint *sip, char *s)
     return (stringint *)qsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),sicmp);
 }
 
-void on_error(int n)
+/*
+ * Set &why to an error message based on errno.
+ */
+void on_error()
 {
     char *msg = 0;
     char buff[32];
     char *t;
     int len;
 
-    if (n > XE_BASE) {
-       struct errtab *p;
-       for (p = xerrnotab; p->err_no > 0; p++) {
-           if (p->err_no == n) {
-               msg = p->errmsg;
-               break;
-           }
-       }
-    } else {
-        #ifdef HAVE_STRERROR
-           msg = strerror(n);
-        #elif HAVE_SYS_NERR && HAVE_SYS_ERRLIST
-           if (n > 0 && n <= sys_nerr)
-               msg = (char *)sys_errlist[n];
-        #endif
-    }
+    #ifdef HAVE_STRERROR
+       msg = strerror(errno);
+    #elif HAVE_SYS_NERR && HAVE_SYS_ERRLIST
+       if (errno > 0 && errno <= sys_nerr)
+           msg = (char *)sys_errlist[errno];
+    #endif
+
     if (!msg)
         msg = "Unknown system error";
-    sprintf(buff, " (errno=%d)", n);
+    sprintf(buff, " (errno=%d)", errno);
 
     len = strlen(buff) + strlen(msg);
     Protect (reserve(Strings, len), fatalerr(0,NULL));

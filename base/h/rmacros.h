@@ -712,16 +712,3 @@
 #endif					/* no S_ISDIR */
 #endif					/* MSWIN32 */
 
-#define XE_BASE            1000
-
-#define XE_UNKNOWN         1001
-#define XE_NOTSUPPORTED    1002
-#define XE_DIRTOOLONG      1003
-#define XE_HOSTNOTFOUND    1004
-#define XE_NOIPADDR        1005
-#define XE_NAMESRVERR      1006
-#define XE_TMPNAMESRVERR   1007
-#define XE_TIMEOUT         1008
-#define XE_NAMETOOLONG     1009
-#define XE_BADADDRFMT      1010
-#define XE_EOF             1011

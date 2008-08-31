@@ -810,6 +810,7 @@ void datainit()
     IntVal(nulldesc) = 0;
     k_errorvalue = nulldesc;
     IntVal(onedesc) = 1;
+    IntVal(minusonedesc) = -1;
     StrLen(ucase) = 26;
     StrLoc(ucase) = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     IntVal(zerodesc) = 0;
@@ -1033,35 +1034,6 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     resolve(pstate);
 
     return coexp;
-}
-
-/*
- * To which program does arbitrary icode address p belong?
- *
- * For now, walk through the co-expression block list, looking for
- * programs that way.  Needs to be optimized; at the very least it
- * would be easy to build a sorted array of the programs' addresses
- * and do binary search.
- */
-struct progstate *findprogramforblock(union block *p)
-{
-    struct b_coexpr *ce = stklist;
-    struct progstate *tmpp;
-
-    if ((p == BlkLoc(posix_lock)) || (p == BlkLoc(posix_timeval)) ||
-        (p == BlkLoc(posix_stat)) || (p == BlkLoc(posix_message)) ||
-        (p == BlkLoc(posix_passwd)) || (p == BlkLoc(posix_group)) ||
-        (p == BlkLoc(posix_servent)) || (p == BlkLoc(posix_hostent)))
-        return curpstate;
-
-    while (ce != NULL) {
-        tmpp = ce->program;
-        if (InRange(tmpp->Code, p, tmpp->Elines)) {
-            return tmpp;
-        }
-        ce = ce->nextstk;
-    }
-    return NULL;
 }
 
 void showicode()

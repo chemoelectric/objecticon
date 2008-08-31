@@ -1,5 +1,7 @@
 #include "../h/modflags.h"
 
+static struct descrip stat2list(struct stat *st);
+
 /*
  * Helper method to get a class from a descriptor; if a class
  * descriptor then obviously the block is returned; if an object then
@@ -480,7 +482,7 @@ function{1} parser_UReader_raw_convert(s)
 end
 
 #if MSWIN32
-function{*} util_WindowsFileSystem_get_roots()
+function{*} io_WindowsFileSystem_get_roots()
     body {
         DWORD n = GetLogicalDrives();
         char t[4], c = 'A';
@@ -497,7 +499,7 @@ function{*} util_WindowsFileSystem_get_roots()
     }
 end
 
-function{0,1} util_WindowsFilePath_getdcwd(d)
+function{0,1} io_WindowsFilePath_getdcwd(d)
    if !cnv:tmp_string(d) then
       runerr(103, d)
    body {
@@ -527,6 +529,8 @@ if (!is:object(p))
     runerr(602, p);
 m##_dptr = c_get_instance_data(&p, (dptr)&fdf);
 (m) = IntVal(*m##_dptr);
+if (m < 0)
+    runerr(205, p);
 #enddef
 
 function{0,1} io_FileStream_open_impl(path, flags, mode)
@@ -544,7 +548,7 @@ function{0,1} io_FileStream_open_impl(path, flags, mode)
 
        fd = open(path, flags, mode);
        if (fd < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
 
@@ -578,7 +582,7 @@ function{0,1} io_FileStream_in(self, i)
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
-           on_error(errno);
+           on_error();
            fail;
        }
 
@@ -587,7 +591,7 @@ function{0,1} io_FileStream_in(self, i)
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
            *eof = onedesc;
-           on_error(XE_EOF);
+           why("End of file");
            fail;
        }
 
@@ -609,7 +613,7 @@ function{0,1} io_FileStream_out(self, s)
        int rc;
        FdParam(self, fd);
        if ((rc = write(fd, StrLoc(s), StrLen(s))) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
        return C_integer rc;
@@ -620,10 +624,36 @@ function{0,1} io_FileStream_close(self)
    body {
        FdParam(self, fd);
        if (close(fd) < 0) {
-           on_error(errno);
+           on_error();
+           fail;
+       }
+       *fd_dptr = minusonedesc;
+       return nulldesc;
+   }
+end
+
+function{0,1} io_FileStream_truncate(self, len)
+   if !cnv:C_integer(len) then
+      runerr(101, len)
+   body {
+       FdParam(self, fd);
+       if (ftruncate(fd, len) < 0) {
+           on_error();
            fail;
        }
        return nulldesc;
+   }
+end
+
+function{0,1} io_FileStream_stat_impl(self)
+   body {
+       struct stat st;
+       FdParam(self, fd);
+       if (fstat(fd, &st) < 0) {
+           on_error();
+           fail;
+       }
+       return stat2list(&st);
    }
 end
 
@@ -639,7 +669,7 @@ function{0,1} io_FileStream_seek(self, offset)
        } else
            whence = SEEK_END;
        if ((rc = lseek(fd, offset, whence)) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
        return C_integer(rc + 1);
@@ -651,7 +681,7 @@ function{0,1} io_FileStream_tell(self)
        int rc;
        FdParam(self, fd);
        if ((rc = lseek(fd, 0, SEEK_CUR)) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
        return C_integer(rc + 1);
@@ -684,7 +714,7 @@ function{0,1} io_SocketStream_in(self, i)
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
-           on_error(errno);
+           on_error();
            fail;
        }
 
@@ -693,7 +723,7 @@ function{0,1} io_SocketStream_in(self, i)
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
            *eof = onedesc;
-           on_error(XE_EOF);
+           why("End of file");
            fail;
        }
 
@@ -720,7 +750,7 @@ function{0,1} io_SocketStream_socket_impl(domain, typ)
        struct descrip fname;
        sockfd = socket(domain, typ, 0);
        if (sockfd < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
        return C_integer sockfd;
@@ -743,7 +773,7 @@ function{0,1} io_SocketStream_out(self, s)
        rc = send(fd, StrLoc(s), StrLen(s), 0);
 #endif
        if (rc < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
        return C_integer rc;
@@ -754,9 +784,10 @@ function{0,1} io_SocketStream_close(self)
    body {
        FdParam(self, fd);
        if (close(fd) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
+       *fd_dptr = minusonedesc;
        return nulldesc;
    }
 end
@@ -770,7 +801,7 @@ function{0,1} io_SocketStream_socketpair_impl(typ)
        struct descrip t;
 
        if (socketpair(AF_UNIX, typ, 0, fds) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
 
@@ -786,6 +817,64 @@ function{0,1} io_SocketStream_socketpair_impl(typ)
    }
 end
 
+struct sockaddr *parse_sockaddr(char *s, int *len)
+{
+    if (strncmp(s, "unix:", 5) == 0) {
+        static struct sockaddr_un us;
+        char *t = s + 5;
+        if (strlen(t) >= sizeof(us.sun_path)) {
+            why("Name too long");
+            return 0;
+        }
+        us.sun_family = AF_UNIX;
+        strcpy(us.sun_path, t);
+        *len = sizeof(us.sun_family) + strlen(us.sun_path);
+        return (struct sockaddr *)&us;
+    } 
+
+    if (strncmp(s, "inet:", 5) == 0) {
+        static struct sockaddr_in iss;
+        char *t = s + 5, host[128], *p;
+        int port;
+        struct hostent *hp;
+
+        if (strlen(t) >= sizeof(host)) {
+            why("Name too long");
+            return 0;
+        }
+        strcpy(host, t);
+        p = strchr(host, ':');
+        if (!p) {
+            why("Bad socket address format");
+            return 0;
+        }
+        *p++ = 0;
+        port = atoi(p);
+        iss.sin_family = AF_INET;
+        iss.sin_port = htons((u_short)port);
+        if (strcmp(host, "INADDR_ANY") == 0)
+            iss.sin_addr.s_addr = INADDR_ANY;
+        else {
+            if ((hp = gethostbyname(host)) == NULL) {
+                switch (h_errno) {
+                    case HOST_NOT_FOUND: why("Name lookup failure: host not found"); break;
+                    case NO_DATA: why("Name lookup failure: no IP address for host") ; break;
+                    case NO_RECOVERY: why("Name lookup failure: name server error") ; break;
+                    case TRY_AGAIN: why("Name lookup failure: temporary name server error") ; break;
+                    default: why("Name lookup failure") ; break;
+                }
+                return 0;
+            }
+            memcpy(&iss.sin_addr, hp->h_addr, hp->h_length);
+        }
+        *len = sizeof(iss);
+        return (struct sockaddr *)&iss;
+    }
+
+    why("Bad socket address format");
+    return 0;
+}
+
 function{0,1} io_SocketStream_connect(self, addr)
    if !cnv:C_string(addr) then
       runerr(103, addr)
@@ -796,12 +885,12 @@ function{0,1} io_SocketStream_connect(self, addr)
 
        sa = parse_sockaddr(addr, &len);
        if (!sa) {
-           on_error(errno);
+           /* &why already set by parse_sockaddr */
            fail;
        }
 
        if (connect(fd, sa, len) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
 
@@ -827,12 +916,12 @@ function{0,1} io_SocketStream_bind(self, addr)
 
        sa = parse_sockaddr(addrstr, &len);
        if (!sa) {
-           on_error(errno);
+           /* &why already set by parse_sockaddr */
            fail;
        }
 
        if (bind(fd, sa, len) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
 
@@ -847,7 +936,7 @@ function{0,1} io_SocketStream_listen(self, backlog)
    body {
        FdParam(self, fd);
        if (listen(fd, backlog) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
        return nulldesc;
@@ -860,7 +949,7 @@ function{0,1} io_SocketStream_accept_impl(self)
        FdParam(self, fd);
 
        if ((sockfd = accept(fd, 0, 0)) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
 
@@ -921,7 +1010,7 @@ function{0,1} io_DescStream_select_impl(rl, wl, el, timeout)
        if ((list2fd_set(&rl, &rtmp, &rset) < 0) ||
            (list2fd_set(&wl, &wtmp, &wset) < 0) ||
            (list2fd_set(&el, &etmp, &eset) < 0)) {
-           on_error(errno);
+           on_error();
            fail;
        }
 
@@ -938,12 +1027,12 @@ function{0,1} io_DescStream_select_impl(rl, wl, el, timeout)
 
        rc = select(FD_SETSIZE, &rset, &wset, &eset, ptv);
        if (rc < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
-       /* A rc of zero means timeout; we fail with a custom &errno */
+       /* A rc of zero means timeout */
        if (rc == 0) {
-           on_error(XE_TIMEOUT);
+           why("Timeout");
            fail;
        }
 
@@ -988,13 +1077,13 @@ function{0,1} io_DescStream_poll_impl(a[n])
        rc = poll(ufds, nfds, timeout);
        if (rc < 0) {
            free(ufds);
-           on_error(errno);
+           on_error();
            fail;
        }
-       /* A rc of zero means timeout; we fail with a custom &errno */
+       /* A rc of zero means timeout */
        if (rc == 0) {
            free(ufds);
-           on_error(XE_TIMEOUT);
+           why("Timeout");
            fail;
        }
 
@@ -1026,13 +1115,13 @@ function{0,1} io_DescStream_flag(self, on, off)
         FdParam(self, fd);
 
         if ((i = fcntl(fd, F_GETFL, 0)) < 0) {
-           on_error(errno);
+           on_error();
            fail;
         }
         if (on || off) {
             i = (i | on) & (~off);
             if (fcntl(fd, F_SETFL, i) < 0) {
-                on_error(errno);
+                on_error();
                 fail;
             }
         }
@@ -1062,7 +1151,7 @@ function{0,1} io_DirStream_open_impl(path)
 
        dd = opendir(path);
        if (!dd) {
-           on_error(errno);
+           on_error();
            fail;
        }
 
@@ -1082,10 +1171,10 @@ function{0,1} io_DirStream_read_impl(self)
        de = readdir(dd);
        if (!de) {
            if (errno)
-               on_error(errno);
+               on_error();
            else {
                *eof = onedesc;
-               on_error(XE_EOF);
+               why("End of file");
            }
            fail;
        }
@@ -1097,9 +1186,10 @@ function{0,1} io_DirStream_close(self)
    body {
        DirParam(self, dd);
        if ((closedir(dd)) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
+       *dd_dptr = zerodesc;
        return nulldesc;
    }
 end
@@ -1120,12 +1210,12 @@ function{0,1} io_ProgStream_open_impl(cmd, flags)
        }
 
        if ((pipe(fd) < 0)) {
-           on_error(errno);
+           on_error();
            fail;
        }
 
        if ((pid = fork()) < 0) {
-           on_error(errno);
+           on_error();
            close(fd[0]);
            close(fd[1]);
            fail;
@@ -1174,15 +1264,307 @@ function{0,1} io_ProgStream_close(self)
        pid = c_get_instance_data(&self, (dptr)&pidf);
 
        if (close(fd) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
+       *fd_dptr = minusonedesc;
        
        if (waitpid(IntVal(*pid), 0, 0) < 0) {
-           on_error(errno);
+           on_error();
            fail;
        }
 
        return nulldesc;
+   }
+end
+
+function{0,1} io_Files_rename(s1,s2)
+   /*
+    * Make C-style strings out of s1 and s2
+    */
+   if !cnv:C_string(s1) then
+      runerr(103,s1)
+   if !cnv:C_string(s2) then
+      runerr(103,s2)
+
+   body {
+       if (rename(s1, s2) < 0) {
+           on_error();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function{0,1} io_Files_hardlink(s1, s2)
+   if !cnv:C_string(s1) then
+      runerr(103, s1)
+   if !cnv:C_string(s2) then
+      runerr(103, s2)
+   body {
+#if MSWIN32
+      runerr(121);
+#else					/* MSWIN32 */
+      if (link(s1, s2) < 0) {
+	 on_error();
+	 fail;
+      }
+      return nulldesc;
+#endif					/* MSWIN32 */
+   }
+end
+
+function{0,1} io_Files_symlink(s1, s2)
+   if !cnv:C_string(s1) then
+      runerr(103, s1)
+   if !cnv:C_string(s2) then
+      runerr(103, s2)
+   body {
+#if MSWIN32
+      runerr(121);
+#else					/* MSWIN32 */
+      if (symlink(s1, s2) < 0) {
+	 on_error();
+	 fail;
+      }
+      return nulldesc;
+#endif					/* MSWIN32 */
+   }
+end
+
+function{0,1} io_Files_readlink(s)
+   if !cnv:C_string(s) then
+      runerr(103, s)
+   body {
+       int len;
+       char *out;
+       long n;
+      
+#if MSWIN32
+       runerr(121);
+#else					/* MSWIN32 */
+       reserve(Strings, NAME_MAX);
+       Protect(StrLoc(result) = alcstr(NULL, NAME_MAX), runerr(0));
+       if ((len = readlink(s, StrLoc(result), NAME_MAX)) < 0) {
+           /* Give back the string */
+           n = DiffPtrs(StrLoc(result),strfree); /* note the deallocation */
+           strtotal += n;
+           strfree = StrLoc(result);              /* reset free pointer */
+           on_error();
+           fail;
+       }
+
+       /* Return the extra characters at the end */
+       out = StrLoc(result) + len;
+       StrLen(result) = DiffPtrs(out,StrLoc(result));
+       n = DiffPtrs(out,strfree);             /* note the deallocation */
+       strtotal += n;
+       strfree = out;                         /* give back unused space */
+
+       return result;
+#endif					/* MSWIN32 */
+      }
+end
+
+function{0,1} io_Files_mkdir(s, mode)
+   if !cnv:C_string(s) then
+      runerr(103, s)
+   if !def:C_integer(mode, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) then
+      runerr(101, mode)
+   body {
+      if (mkdir(s, mode) < 0) {
+	 on_error();
+	 fail;
+      }
+      return nulldesc;
+   }
+end
+
+function{0,1} io_Files_remove(s)
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   body {
+      if (remove(s) < 0) {
+          on_error();
+          fail;
+      }
+      return nulldesc;
+   }
+end
+
+function{0,1} io_Files_truncate(s, len)
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   if !cnv:C_integer(len) then
+      runerr(101, len)
+   body {
+      if (truncate(s, len) < 0) {
+          on_error();
+          fail;
+      }
+      return nulldesc;
+   }
+end
+
+static struct descrip stat2list(struct stat *st)
+{
+   tended struct descrip tmp, res;
+   char mode[12], *user, *group;
+   struct passwd *pw;
+   struct group *gr;
+
+   res = create_list(13);
+   MakeInt((int)st->st_dev, &tmp);
+   c_put(&res, &tmp);
+   MakeInt((int)st->st_ino, &tmp);
+   c_put(&res, &tmp);
+
+   strcpy(mode, "----------");
+#if MSWIN32
+   if (st->st_mode & _S_IFREG) mode[0] = '-';
+   else if (st->st_mode & _S_IFDIR) mode[0] = 'd';
+   else if (st->st_mode & _S_IFCHR) mode[0] = 'c';
+   else if (st->st_mode & _S_IFMT) mode[0] = 'm';
+
+   if (st->st_mode & S_IREAD) mode[1] = mode[4] = mode[7] = 'r';
+   if (st->st_mode & S_IWRITE) mode[2] = mode[5] = mode[8] = 'w';
+   if (st->st_mode & S_IEXEC) mode[3] = mode[6] = mode[9] = 'x';
+#else					/* MSWIN32 */
+   if (S_ISLNK(st->st_mode)) mode[0] = 'l';
+   else if (S_ISREG(st->st_mode)) mode[0] = '-';
+   else if (S_ISDIR(st->st_mode)) mode[0] = 'd';
+   else if (S_ISCHR(st->st_mode)) mode[0] = 'c';
+   else if (S_ISBLK(st->st_mode)) mode[0] = 'b';
+   else if (S_ISFIFO(st->st_mode)) mode[0] = '|';
+   else if (S_ISSOCK(st->st_mode)) mode[0] = 's';
+
+   if (S_IRUSR & st->st_mode) mode[1] = 'r';
+   if (S_IWUSR & st->st_mode) mode[2] = 'w';
+   if (S_IXUSR & st->st_mode) mode[3] = 'x';
+   if (S_IRGRP & st->st_mode) mode[4] = 'r';
+   if (S_IWGRP & st->st_mode) mode[5] = 'w';
+   if (S_IXGRP & st->st_mode) mode[6] = 'x';
+   if (S_IROTH & st->st_mode) mode[7] = 'r';
+   if (S_IWOTH & st->st_mode) mode[8] = 'w';
+   if (S_IXOTH & st->st_mode) mode[9] = 'x';
+
+   if (S_ISUID & st->st_mode) mode[3] = (mode[3] == 'x') ? 's' : 'S';
+   if (S_ISGID & st->st_mode) mode[6] = (mode[6] == 'x') ? 's' : 'S';
+   if (S_ISVTX & st->st_mode) mode[9] = (mode[9] == 'x') ? 't' : 'T';
+#endif					/* MSWIN32 */
+   tmp = cstr2string(mode);
+   c_put(&res, &tmp);
+
+   MakeInt((int)st->st_nlink, &tmp);
+   c_put(&res, &tmp);
+
+#if MSWIN32
+   c_put(&res, emptystr);
+   c_put(&res, emptystr);
+#else					/* MSWIN32 */
+   pw = getpwuid(st->st_uid);
+   if (!pw) {
+      sprintf(mode, "%d", st->st_uid);
+      user = mode;
+   } else
+      user = pw->pw_name;
+   tmp = cstr2string(user);
+   c_put(&res, &tmp);
+   
+   gr = getgrgid(st->st_gid);
+   if (!gr) {
+      sprintf(mode, "%d", st->st_gid);
+      group = mode;
+   } else
+      group = gr->gr_name;
+   tmp = cstr2string(group);
+   c_put(&res, &tmp);
+#endif					/* MSWIN32 */
+
+   MakeInt((int)st->st_rdev, &tmp);
+   c_put(&res, &tmp);
+   MakeInt((int)st->st_size, &tmp);
+   c_put(&res, &tmp);
+#if MSWIN32
+   c_put(&res, zerodesc);
+   c_put(&res, zerodesc);
+#else
+   MakeInt((int)st->st_blksize, &tmp);
+   c_put(&res, &tmp);
+   MakeInt((int)st->st_blocks, &tmp);
+   c_put(&res, &tmp);
+#endif
+   MakeInt((int)st->st_atime, &tmp);
+   c_put(&res, &tmp);
+   MakeInt((int)st->st_mtime, &tmp);
+   c_put(&res, &tmp);
+   MakeInt((int)st->st_ctime, &tmp);
+   c_put(&res, &tmp);
+
+   return res;
+}
+
+function{0,1} io_Files_stat_impl(s)
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   body {
+      struct stat st;
+      if (stat(s, &st) < 0) {
+          on_error();
+          fail;
+      }
+      return stat2list(&st);
+   }
+end
+
+function{0,1} io_Files_lstat_impl(s)
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   body {
+      struct stat st;
+      if (lstat(s, &st) < 0) {
+          on_error();
+          fail;
+      }
+      return stat2list(&st);
+   }
+end
+
+function{0,1} io_Files_access(s, mode)
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   if !def:C_integer(mode, F_OK) then
+      runerr(101, mode)
+   body {
+      if (access(s, mode) < 0) {
+          on_error();
+          fail;
+      }
+      return nulldesc;
+   }
+end
+
+function{1} util_Timezone_get_system_timezone()
+   body {
+      int tz_sec;
+      time_t t;
+      struct tm *ct;
+      tended struct descrip tmp;
+
+      tzset();
+      time(&t);
+      ct = localtime(&t);
+
+      result = create_list(2);
+
+      MakeInt(ct->tm_gmtoff, &tmp);
+      c_put(&result, &tmp);
+
+      if (ct->tm_isdst >= 0) {
+          tmp = cstr2string(tzname[ct->tm_isdst ? 1 : 0]);
+          c_put(&result, &tmp);
+      }
+
+      return result;
    }
 end
