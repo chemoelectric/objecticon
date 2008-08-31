@@ -240,8 +240,26 @@ fi
 
 ])
 
+AC_DEFUN([AC_STRUCT_TIMEZONE_GMTOFF],
+[ AC_REQUIRE([AC_STRUCT_TIMEZONE])dnl
+  AC_CACHE_CHECK(for struct tm.tm_gmtoff, rb_cv_member_struct_tm_tm_gmtoff,
+  [AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_gmtoff = 3600;],
+        [rb_cv_member_struct_tm_tm_gmtoff=yes],
+        [rb_cv_member_struct_tm_tm_gmtoff=no])])
+  AC_CACHE_CHECK(for struct tm.tm_isdst, rb_cv_member_struct_tm_tm_isdst,
+  [AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_isdst = 1;],
+        [rb_cv_member_struct_tm_tm_isdst=yes],
+        [rb_cv_member_struct_tm_tm_isdst=no])])
+  if test "$rb_cv_member_struct_tm_tm_gmtoff" = yes; then
+     AC_DEFINE(HAVE_STRUCT_TM_TM_GMTOFF)
+  fi
+  if test "$rb_cv_member_struct_tm_tm_isdst" = yes; then
+     AC_DEFINE(HAVE_STRUCT_TM_TM_ISDST)
+  fi
+])
+
 AC_DEFUN([AC_VAR_TIMEZONE_EXTERNALS],
-[  AC_REQUIRE([AC_STRUCT_TIMEZONE])dnl
+[  
    AC_CACHE_CHECK(for timezone external, mb_cv_var_timezone,
    [  AC_TRY_LINK([#include <time.h>], [return (int)timezone;],
          mb_cv_var_timezone=yes,
@@ -257,6 +275,11 @@ AC_DEFUN([AC_VAR_TIMEZONE_EXTERNALS],
          mb_cv_var_daylight=yes,
          mb_cv_var_daylight=no)
    ])
+   AC_CACHE_CHECK(for tzname external, mb_cv_var_tzname,
+   [  AC_TRY_LINK([#include <time.h>], [return (int)tzname;],
+         mb_cv_var_tzname=yes,
+         mb_cv_var_tzname=no)
+   ])
    if test $mb_cv_var_timezone = yes; then
       AC_DEFINE([HAVE_TIMEZONE], 1,
               [Define if you have the external `timezone' variable.])
@@ -268,6 +291,10 @@ AC_DEFUN([AC_VAR_TIMEZONE_EXTERNALS],
    if test $mb_cv_var_daylight = yes; then
       AC_DEFINE([HAVE_DAYLIGHT], 1,
               [Define if you have the external `daylight' variable.])
+   fi
+   if test $mb_cv_var_tzname = yes; then
+      AC_DEFINE([HAVE_TZNAME], 1,
+              [Define if you have the external `tzname' variable.])
    fi
 ])
 

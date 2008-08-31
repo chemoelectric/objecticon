@@ -1,8 +1,8 @@
-object: object io.BufferStream_4(7)
-object: object io.BufferStream_5(7)
-object: object io.FileStream_1(2)
-object: object io.FileStream_2(2)
-object: object io.FileStream_3(2)
+object: object io.BufferStream_*(7)
+object: object io.BufferStream_*(7)
+object: object io.FileStream_*(3)
+object: object io.FileStream_*(3)
+object: object io.FileStream_*(3)
 
 aaa
 bbbb
@@ -15,13 +15,9 @@ hhhhhhhhhh
 
 flush /etc/motd: &null
 close /etc/motd: &null
-close /etc/motd: FAILED
-flush /etc/motd: &null
 
 flush /dev/null: &null
 close /dev/null: &null
-close /dev/null: FAILED
-flush /dev/null: &null
 
 read  /dev/null:	
    !f:		 
@@ -76,8 +72,8 @@ read  tmp2:	 cleared anew
    reads():	 clear ed.an ew.
    nonseq:	 ?????????????????.wena.deraelc?.wena.deraelc-----------------
 
-object io.BufferStream_20(7)
-object io.BufferStream_21(7)
+object io.BufferStream_*(7)
+object io.BufferStream_*(7)
 >stdout>stdout>stdout
 
 >stdout
@@ -107,10 +103,10 @@ io.dat
 io.icn
 io.std
 
-object io.ProgStream_1(3)
+object io.ProgStream_*(4)
 > hello world
 
-object io.ProgStream_2(3)
+object io.ProgStream_*(4)
 > =()= #SRC: JCON
 > =()= #  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
 > =()= 
@@ -122,12 +118,12 @@ object io.ProgStream_2(3)
 > =()= procedure main()
 > =()=    local L, f, m, n, t1, t2
 
-object io.ProgStream_3(3)
+object io.ProgStream_*(4)
 > io.dat
 > io.icn
 > io.std
 
-object io.ProgStream_4(3)
+object io.ProgStream_*(4)
 --- closing output pipe
 unca ipun o medneght draory
 twu ruods devargad en o yalluw wuud

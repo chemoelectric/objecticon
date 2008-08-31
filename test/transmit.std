@@ -1,394 +1,103 @@
-transmit.icn :   13  | main; co-expression_1 : &null @ co-expression_4
-transmit.icn :   12  | output()
-             :       | | init()
-             :       | | | new(object io.FileStream_1(&null,&null),0)
-streams.icn  :  322  | | | new returned &null
-             :       | | | new(object io.FileStream_2(&null,&null),1)
-streams.icn  :  322  | | | new returned &null
-             :       | | | new(object io.FileStream_3(&null,&null),2)
-streams.icn  :  322  | | | new returned &null
-             :       | | | new(object io.BufferStream_1(&null,&null,&null,&null,&null,&null,&null),list_1 = ["other=",object io.FileStream_1(2),"flush_on_nl=t"])
-streams.icn  :  242  | | | | set_fields(object io.BufferStream_1(&null,&null,list_2 = [],0,"",&null,1024),list_1 = ["other=",object io.FileStream_1(2),"flush_on_nl=t"])
-             :       | | | | | new(object util.Field_1(&null,&null,&null),"other",object io.FileStream_1(&null,0),object io.BufferStream_1(&null,&null,list_2 = [],0,"",&null,1024))
-setfields.icn:  138  | | | | | new returned &null
-setfields.icn:  164  | | | | | set_one(object io.BufferStream_1(&null,&null,list_2 = [],0,"",&null,1024),object util.Field_1("other",object io.FileStream_1(2),object io.BufferStream_1(7)))
-streams.icn  :  229  | | | | | | object_val(object util.Field_1("other",object io.FileStream_1(2),object io.BufferStream_1(7)),class io.Stream)
-setfields.icn:   65  | | | | | | object_val returned object io.FileStream_1(&null,0)
-streams.icn  :  229  | | | | | | set_other(object io.BufferStream_1(&null,&null,list_2 = [],0,"",&null,1024),object io.FileStream_1(&null,0))
-streams.icn  :  106  | | | | | | set_other failed
-streams.icn  :  234  | | | | | set_one returned &null
-             :       | | | | | new(object util.Field_2(&null,&null,&null),"flush_on_nl","t",object io.BufferStream_1(object io.FileStream_1(2),&null,list_2 = [],0,"",&null,1024))
-setfields.icn:  138  | | | | | new returned &null
-setfields.icn:  164  | | | | | set_one(object io.BufferStream_1(object io.FileStream_1(2),&null,list_2 = [],0,"",&null,1024),object util.Field_2("flush_on_nl","t",object io.BufferStream_1(7)))
-streams.icn  :  231  | | | | | | flag_val(object util.Field_2("flush_on_nl","t",object io.BufferStream_1(7)))
-setfields.icn:   20  | | | | | | | util.to_flag("t")
-setfields.icn:  191  | | | | | | | util.to_flag returned 1
-setfields.icn:   20  | | | | | | flag_val returned 1
-streams.icn  :  231  | | | | | | set_flush_on_nl(object io.BufferStream_1(object io.FileStream_1(2),&null,list_2 = [],0,"",&null,1024),1)
-streams.icn  :  109  | | | | | | | util.to_flag(1)
-setfields.icn:  187  | | | | | | | util.to_flag returned 1
-streams.icn  :  110  | | | | | | set_flush_on_nl failed
-streams.icn  :  234  | | | | | set_one returned &null
-setfields.icn:  169  | | | | set_fields failed
-streams.icn  :  243  | | | new returned &null
-             :       | | | new(object io.BufferStream_2(&null,&null,&null,&null,&null,&null,&null),list_4 = ["other=",object io.FileStream_2(2),"flush_on_nl=t"])
-streams.icn  :  242  | | | | set_fields(object io.BufferStream_2(&null,&null,list_5 = [],0,"",&null,1024),list_4 = ["other=",object io.FileStream_2(2),"flush_on_nl=t"])
-             :       | | | | | new(object util.Field_3(&null,&null,&null),"other",object io.FileStream_2(&null,1),object io.BufferStream_2(&null,&null,list_5 = [],0,"",&null,1024))
-setfields.icn:  138  | | | | | new returned &null
-setfields.icn:  164  | | | | | set_one(object io.BufferStream_2(&null,&null,list_5 = [],0,"",&null,1024),object util.Field_3("other",object io.FileStream_2(2),object io.BufferStream_2(7)))
-streams.icn  :  229  | | | | | | object_val(object util.Field_3("other",object io.FileStream_2(2),object io.BufferStream_2(7)),class io.Stream)
-setfields.icn:   65  | | | | | | object_val returned object io.FileStream_2(&null,1)
-streams.icn  :  229  | | | | | | set_other(object io.BufferStream_2(&null,&null,list_5 = [],0,"",&null,1024),object io.FileStream_2(&null,1))
-streams.icn  :  106  | | | | | | set_other failed
-streams.icn  :  234  | | | | | set_one returned &null
-             :       | | | | | new(object util.Field_4(&null,&null,&null),"flush_on_nl","t",object io.BufferStream_2(object io.FileStream_2(2),&null,list_5 = [],0,"",&null,1024))
-setfields.icn:  138  | | | | | new returned &null
-setfields.icn:  164  | | | | | set_one(object io.BufferStream_2(object io.FileStream_2(2),&null,list_5 = [],0,"",&null,1024),object util.Field_4("flush_on_nl","t",object io.BufferStream_2(7)))
-streams.icn  :  231  | | | | | | flag_val(object util.Field_4("flush_on_nl","t",object io.BufferStream_2(7)))
-setfields.icn:   20  | | | | | | | util.to_flag("t")
-setfields.icn:  191  | | | | | | | util.to_flag returned 1
-setfields.icn:   20  | | | | | | flag_val returned 1
-streams.icn  :  231  | | | | | | set_flush_on_nl(object io.BufferStream_2(object io.FileStream_2(2),&null,list_5 = [],0,"",&null,1024),1)
-streams.icn  :  109  | | | | | | | util.to_flag(1)
-setfields.icn:  187  | | | | | | | util.to_flag returned 1
-streams.icn  :  110  | | | | | | set_flush_on_nl failed
-streams.icn  :  234  | | | | | set_one returned &null
-setfields.icn:  169  | | | | set_fields failed
-streams.icn  :  243  | | | new returned &null
-             :       | | | new(object io.BufferStream_3(&null,&null,&null,&null,&null,&null,&null),list_7 = ["other=",object io.FileStream_3(2),"flush_on_nl=t"])
-streams.icn  :  242  | | | | set_fields(object io.BufferStream_3(&null,&null,list_8 = [],0,"",&null,1024),list_7 = ["other=",object io.FileStream_3(2),"flush_on_nl=t"])
-             :       | | | | | new(object util.Field_5(&null,&null,&null),"other",object io.FileStream_3(&null,2),object io.BufferStream_3(&null,&null,list_8 = [],0,"",&null,1024))
-setfields.icn:  138  | | | | | new returned &null
-setfields.icn:  164  | | | | | set_one(object io.BufferStream_3(&null,&null,list_8 = [],0,"",&null,1024),object util.Field_5("other",object io.FileStream_3(2),object io.BufferStream_3(7)))
-streams.icn  :  229  | | | | | | object_val(object util.Field_5("other",object io.FileStream_3(2),object io.BufferStream_3(7)),class io.Stream)
-setfields.icn:   65  | | | | | | object_val returned object io.FileStream_3(&null,2)
-streams.icn  :  229  | | | | | | set_other(object io.BufferStream_3(&null,&null,list_8 = [],0,"",&null,1024),object io.FileStream_3(&null,2))
-streams.icn  :  106  | | | | | | set_other failed
-streams.icn  :  234  | | | | | set_one returned &null
-             :       | | | | | new(object util.Field_6(&null,&null,&null),"flush_on_nl","t",object io.BufferStream_3(object io.FileStream_3(2),&null,list_8 = [],0,"",&null,1024))
-setfields.icn:  138  | | | | | new returned &null
-setfields.icn:  164  | | | | | set_one(object io.BufferStream_3(object io.FileStream_3(2),&null,list_8 = [],0,"",&null,1024),object util.Field_6("flush_on_nl","t",object io.BufferStream_3(7)))
-streams.icn  :  231  | | | | | | flag_val(object util.Field_6("flush_on_nl","t",object io.BufferStream_3(7)))
-setfields.icn:   20  | | | | | | | util.to_flag("t")
-setfields.icn:  191  | | | | | | | util.to_flag returned 1
-setfields.icn:   20  | | | | | | flag_val returned 1
-streams.icn  :  231  | | | | | | set_flush_on_nl(object io.BufferStream_3(object io.FileStream_3(2),&null,list_8 = [],0,"",&null,1024),1)
-streams.icn  :  109  | | | | | | | util.to_flag(1)
-setfields.icn:  187  | | | | | | | util.to_flag returned 1
-streams.icn  :  110  | | | | | | set_flush_on_nl failed
-streams.icn  :  234  | | | | | set_one returned &null
-setfields.icn:  169  | | | | set_fields failed
-streams.icn  :  243  | | | new returned &null
-streams.icn  :  448  | | init failed
-transmit.icn :   29  | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   10  | | word()
-transmit.icn :   19  | | | word; co-expression_2 : &null @ co-expression_3
-transmit.icn :   11  | | | reader()
-transmit.icn :   25  | | | | io.read(&null)
-streams.icn  :  396  | | | | | read(object io.BufferStream_1(object io.FileStream_1(2),&null,list_2 = [],0,"",1,1024))
-streams.icn  :  118  | | | | | | flush(object io.BufferStream_1(object io.FileStream_1(2),&null,list_2 = [],0,"",1,1024))
-streams.icn  :  181  | | | | | | flush returned &null
-streams.icn  :  128  | | | | | | tell(object io.FileStream_1(&null,0))
-streams.icn  :  471  | | | | | | tell returned 1
-streams.icn  :  129  | | | | | | reads(object io.FileStream_1(&null,0),1024)
-streams.icn  :  454  | | | | | | reads returned "Version 7 of Ico..."
-streams.icn  :  144  | | | | | read returned "Version 7 of Ico..."
-streams.icn  :  396  | | | | io.read returned "Version 7 of Ico..."
-transmit.icn :   25  | | | | reader; co-expression_3 : "Version 7 of Ico..." @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "Version" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_10 = [object io.FileStream_3(2),"Version"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"Version")
-Versionstreams.icn  :  460  | | | | | writes returned 7
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "Version"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "of" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_11 = [object io.FileStream_3(2),"of"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"of")
-ofstreams.icn  :  460  | | | | | writes returned 2
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "of"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "Icon" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_12 = [object io.FileStream_3(2),"Icon"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"Icon")
-Iconstreams.icn  :  460  | | | | | writes returned 4
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "Icon"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "corrects" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_13 = [object io.FileStream_3(2),"corrects"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"corrects")
-correctsstreams.icn  :  460  | | | | | writes returned 8
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "corrects"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "a" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_14 = [object io.FileStream_3(2),"a"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"a")
-astreams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "a"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "number" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_15 = [object io.FileStream_3(2),"number"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"number")
-numberstreams.icn  :  460  | | | | | writes returned 6
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "number"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "of" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_16 = [object io.FileStream_3(2),"of"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"of")
-ofstreams.icn  :  460  | | | | | writes returned 2
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "of"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "problems" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_17 = [object io.FileStream_3(2),"problems"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"problems")
-problemsstreams.icn  :  460  | | | | | writes returned 8
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "problems"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   19  | | | | word; co-expression_2 : &null @ co-expression_3
-transmit.icn :   25  | | | | io.read(&null)
-streams.icn  :  396  | | | | | read(object io.BufferStream_1(object io.FileStream_1(2),49,list_2 = [],0,"with co-expressi...",1,1024))
-streams.icn  :  118  | | | | | | flush(object io.BufferStream_1(object io.FileStream_1(2),49,list_2 = [],0,"with co-expressi...",1,1024))
-streams.icn  :  181  | | | | | | flush returned &null
-streams.icn  :  144  | | | | | read returned "with co-expressi..."
-streams.icn  :  396  | | | | io.read returned "with co-expressi..."
-transmit.icn :   25  | | | | reader; co-expression_3 : "with co-expressi..." @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "with" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_18 = [object io.FileStream_3(2),"with"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"with")
-withstreams.icn  :  460  | | | | | writes returned 4
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "with"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "co" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_19 = [object io.FileStream_3(2),"co"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"co")
-costreams.icn  :  460  | | | | | writes returned 2
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "co"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "expressions" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_20 = [object io.FileStream_3(2),"expressions"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"expressions")
-expressionsstreams.icn  :  460  | | | | | writes returned 11
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "expressions"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "that" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_21 = [object io.FileStream_3(2),"that"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"that")
-thatstreams.icn  :  460  | | | | | writes returned 4
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "that"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "existed" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_22 = [object io.FileStream_3(2),"existed"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"existed")
-existedstreams.icn  :  460  | | | | | writes returned 7
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "existed"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "in" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_23 = [object io.FileStream_3(2),"in"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"in")
-instreams.icn  :  460  | | | | | writes returned 2
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "in"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "previous" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_24 = [object io.FileStream_3(2),"previous"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"previous")
-previousstreams.icn  :  460  | | | | | writes returned 8
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "previous"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   19  | | | | word; co-expression_2 : &null @ co-expression_3
-transmit.icn :   25  | | | | io.read(&null)
-streams.icn  :  396  | | | | | read(object io.BufferStream_1(object io.FileStream_1(2),94,list_2 = [],0,"versions. The mo...",1,1024))
-streams.icn  :  118  | | | | | | flush(object io.BufferStream_1(object io.FileStream_1(2),94,list_2 = [],0,"versions. The mo...",1,1024))
-streams.icn  :  181  | | | | | | flush returned &null
-streams.icn  :  144  | | | | | read returned "versions. The mo..."
-streams.icn  :  396  | | | | io.read returned "versions. The mo..."
-transmit.icn :   25  | | | | reader; co-expression_3 : "versions. The mo..." @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "versions" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_25 = [object io.FileStream_3(2),"versions"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"versions")
-versionsstreams.icn  :  460  | | | | | writes returned 8
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "versions"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "The" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_26 = [object io.FileStream_3(2),"The"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"The")
-Thestreams.icn  :  460  | | | | | writes returned 3
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "The"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "most" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_27 = [object io.FileStream_3(2),"most"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"most")
-moststreams.icn  :  460  | | | | | writes returned 4
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "most"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "significant" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_28 = [object io.FileStream_3(2),"significant"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"significant")
-significantstreams.icn  :  460  | | | | | writes returned 11
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "significant"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "one" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_29 = [object io.FileStream_3(2),"one"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"one")
-onestreams.icn  :  460  | | | | | writes returned 3
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "one"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "is" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_30 = [object io.FileStream_3(2),"is"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"is")
-isstreams.icn  :  460  | | | | | writes returned 2
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "is"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "proper" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_31 = [object io.FileStream_3(2),"proper"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"proper")
-properstreams.icn  :  460  | | | | | writes returned 6
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "proper"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   19  | | | | word; co-expression_2 : &null @ co-expression_3
-transmit.icn :   25  | | | | io.read(&null)
-streams.icn  :  396  | | | | | read(object io.BufferStream_1(object io.FileStream_1(2),139,list_2 = [],0,"handling of co-e...",1,1024))
-streams.icn  :  118  | | | | | | flush(object io.BufferStream_1(object io.FileStream_1(2),139,list_2 = [],0,"handling of co-e...",1,1024))
-streams.icn  :  181  | | | | | | flush returned &null
-streams.icn  :  144  | | | | | read returned "handling of co-e..."
-streams.icn  :  396  | | | | io.read returned "handling of co-e..."
-transmit.icn :   25  | | | | reader; co-expression_3 : "handling of co-e..." @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "handling" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_32 = [object io.FileStream_3(2),"handling"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"handling")
-handlingstreams.icn  :  460  | | | | | writes returned 8
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "handling"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "of" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_33 = [object io.FileStream_3(2),"of"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"of")
-ofstreams.icn  :  460  | | | | | writes returned 2
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "of"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "co" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_34 = [object io.FileStream_3(2),"co"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"co")
-costreams.icn  :  460  | | | | | writes returned 2
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "co"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "expression" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_35 = [object io.FileStream_3(2),"expression"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"expression")
-expressionstreams.icn  :  460  | | | | | writes returned 10
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "expression"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "return" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_36 = [object io.FileStream_3(2),"return"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"return")
-returnstreams.icn  :  460  | | | | | writes returned 6
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "return"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   21  | | | | word; co-expression_2 : "points" @ co-expression_4
-transmit.icn :   29  | | | | io.write(list_37 = [object io.FileStream_3(2),"points"])
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"points")
-pointsstreams.icn  :  460  | | | | | writes returned 6
-streams.icn  :  359  | | | | | writes(object io.FileStream_3(&null,2),"\n")
-
-streams.icn  :  460  | | | | | writes returned 1
-streams.icn  :  362  | | | | io.write returned "points"
-transmit.icn :   29  | | | | output; co-expression_4 : &null @ co-expression_2
-transmit.icn :   19  | | | | word; co-expression_2 : &null @ co-expression_3
-transmit.icn :   25  | | | | io.read(&null)
-streams.icn  :  396  | | | | | read(object io.BufferStream_1(object io.FileStream_1(2),180,list_2 = [],0,"",1,1024))
-streams.icn  :  118  | | | | | | flush(object io.BufferStream_1(object io.FileStream_1(2),180,list_2 = [],0,"",1,1024))
-streams.icn  :  181  | | | | | | flush returned &null
-streams.icn  :  129  | | | | | | reads(object io.FileStream_1(&null,0),1024)
-streams.icn  :  455  | | | | | | | util.errno()
-misc.icn     :   91  | | | | | | | | util.find_and_skip("(errno=")
-misc.icn     :   86  | | | | | | | | util.find_and_skip returned "End of file (err..."
-misc.icn     :   92  | | | | | | | util.errno returned 1011
-streams.icn  :  457  | | | | | | reads failed
-streams.icn  :  130  | | | | | | eof(object io.FileStream_1(1,0))
-streams.icn  :  479  | | | | | | eof returned (variable = 1)
-streams.icn  :  138  | | | | | read failed
-streams.icn  :  396  | | | | io.read failed
-transmit.icn :   26  | | | reader failed
-transmit.icn :   11  | | | main; co-expression_3 failed to co-expression_2
-transmit.icn :   22  | | word failed
-transmit.icn :   10  | | main; co-expression_2 failed to co-expression_4
-transmit.icn :   30  | | output; co-expression_4 : &null @ co-expression_1
-transmit.icn :   14  | main failed
+transmit.icn :   17  | main; co-expression_1 : &null @ co-expression_4
+transmit.icn :   16  | output()
+transmit.icn :   35  | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   14  | | word()
+transmit.icn :   25  | | | word; co-expression_2 : &null @ co-expression_3
+transmit.icn :   15  | | | reader()
+transmit.icn :   31  | | | | reader; co-expression_3 : "Version 7 of Ico..." @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "Version" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "of" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "Icon" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "corrects" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "a" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "number" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "of" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "problems" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   25  | | | | word; co-expression_2 : &null @ co-expression_3
+transmit.icn :   31  | | | | reader; co-expression_3 : "with co-expressi..." @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "with" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "co" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "expressions" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "that" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "existed" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "in" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "previous" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   25  | | | | word; co-expression_2 : &null @ co-expression_3
+transmit.icn :   31  | | | | reader; co-expression_3 : "versions. The mo..." @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "versions" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "The" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "most" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "significant" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "one" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "is" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "proper" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   25  | | | | word; co-expression_2 : &null @ co-expression_3
+transmit.icn :   31  | | | | reader; co-expression_3 : "handling of co-e..." @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "handling" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "of" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "co" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "expression" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "return" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   27  | | | | word; co-expression_2 : "points" @ co-expression_4
+transmit.icn :   35  | | | | output; co-expression_4 : &null @ co-expression_2
+transmit.icn :   25  | | | | word; co-expression_2 : &null @ co-expression_3
+transmit.icn :   32  | | | reader failed
+transmit.icn :   15  | | | main; co-expression_3 failed to co-expression_2
+transmit.icn :   28  | | word failed
+transmit.icn :   14  | | main; co-expression_2 failed to co-expression_4
+transmit.icn :   36  | | output; co-expression_4 : &null @ co-expression_1
+Version
+of
+Icon
+corrects
+a
+number
+of
+problems
+with
+co
+expressions
+that
+existed
+in
+previous
+versions
+The
+most
+significant
+one
+is
+proper
+handling
+of
+co
+expression
+return
+points

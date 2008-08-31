@@ -13,7 +13,7 @@ procedure main()
    	m := open("/etc/motd"), n := open("/dev/null", "w")]
    L := sort(L)
    every f := !L do
-      write(type(f), ": ", image(f))
+      write(type(f), ": ", imagex(f))
 
    write()
    write(read())
@@ -24,16 +24,16 @@ procedure main()
    every write(|read()) \ 2
 
    write()
-   write("flush /etc/motd: ", image(m.flush()) | "FAILED")
-   write("close /etc/motd: ", image(m.close()) | "FAILED")
-   write("close /etc/motd: ", image(m.close()) | "FAILED")
-   write("flush /etc/motd: ", image(m.flush()) | "FAILED")
+   write("flush /etc/motd: ", imagex(m.flush()) | "FAILED")
+   write("close /etc/motd: ", imagex(m.close()) | "FAILED")
+   #write("close /etc/motd: ", image(m.close()) | "FAILED")
+   #write("flush /etc/motd: ", image(m.flush()) | "FAILED")
 
    write()
-   write("flush /dev/null: ", image(n.flush()) | "FAILED")
-   write("close /dev/null: ", image(n.close()) | "FAILED")
-   write("close /dev/null: ", image(n.close()) | "FAILED")
-   write("flush /dev/null: ", image(n.flush()) | "FAILED")
+   write("flush /dev/null: ", imagex(n.flush()) | "FAILED")
+   write("close /dev/null: ", imagex(n.close()) | "FAILED")
+   #write("close /dev/null: ", image(n.close()) | "FAILED")
+   #write("flush /dev/null: ", image(n.flush()) | "FAILED")
 
    every remove("tmp1" | "tmp2")
    every remove("tmp1" | "tmp2")
@@ -57,8 +57,8 @@ procedure main()
    rfile("tmp2")
 
    write()
-   write(image(t1 := open("tmp1", "w")) | "can't open tmp1")
-   write(image(t2 := open("tmp2", "w")) | "can't open tmp2")
+   write(imagex(t1 := open("tmp1", "w")) | "can't open tmp1")
+   write(imagex(t2 := open("tmp2", "w")) | "can't open tmp2")
    writes(">stdout", t1, ">1a", t2, ">2a", FileStream.b_stdout)
    writes(">stdout", t2, ">2b", t1, ">1b", FileStream.b_stdout)
    write(">stdout", t1, ">1c", t2, t2, ">2c", FileStream.b_stdout)
@@ -183,28 +183,28 @@ procedure tpipe()
    # very simple case
    write()
    p := ProgStream.open("echo hello world", O_RDONLY) | stop("can't open echo pipe")
-   write(image(p))
+   write(imagex(p))
    while write("> ", read(p))
    close(p)
 
    # check unclosed pipe
    write()
    p := ProgStream.open("sed 's/^/=()= /' io.icn", O_RDONLY) | stop("can't open od pipe")
-   write(image(p))
+   write(imagex(p))
    every 1 to 10 do write("> ", read(p))
    # p is deliberately left unclosed
 
    # check wildcarding, and also !pipe
    write()
    p := ProgStream.open("ls io.i?n io.d?t io.s?d", O_RDONLY) | stop("can't open ls pipe")
-   write(image(p))
+   write(imagex(p))
    every write("> ", |read(p))
    close(p)
 
    # check output pipe
    write()
    p := ProgStream.open("tr aeiou oaeui", O_WRONLY) | stop("can't open tr pipe")
-   write(image(p))
+   write(imagex(p))
    write(p, "once upon a midnight dreary")
    write(p, "two roads diverged in a yellow wood")
    write(p, "and the mome raths outgrabe")

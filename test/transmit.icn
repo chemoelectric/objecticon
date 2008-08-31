@@ -1,16 +1,22 @@
 import io
 
-global words, lines, writer, line
+global datain, dataout, words, lines, writer, line
 
 procedure main()
    if not(&features == "co-expressions") then
       stop("co-expressions not supported")
+   dataout := []
+   datain := []
+   while put(datain, read())
+
    &trace := -1
 
    words := create word()
    lines := create reader()
    writer := create output()
    @writer
+   &trace := 0
+   every write(!dataout)
 end
 
 procedure word()
@@ -22,10 +28,10 @@ procedure word()
 end
 
 procedure reader()
-   while read() @ words
+   while pop(datain) @ words
 end
 
 procedure output()
-   while write(FileStream.stderr,@words)
+   while put(dataout,@words)
    @&main
 end

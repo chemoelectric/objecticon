@@ -15,9 +15,6 @@
 /* define as 1 if we have jpeg */
 #undef HAVE_LIBJPEG
 
-/* define as 1 if we have crypt */
-#undef HAVE_LIBCRYPT
-
 /* define as 1 if we have dl */
 #undef HAVE_LIBDL
 
@@ -30,14 +27,20 @@
 /* define as 1 if we have a timezone variable */
 #undef HAVE_TIMEZONE
 
+/* define as 1 if we have a daylight variable */
+#undef HAVE_DAYLIGHT
+
+/* define as 1 if tzname exists */
+#undef HAVE_TZNAME
+
 /* define as 1 if struct tm has a tm_zone field */
 #undef HAVE_STRUCT_TM_TM_ZONE
 
 /* define as 1 if struct tm has a tm_gmtoff field */
 #undef HAVE_STRUCT_TM_TM_GMTOFF
 
-/* define as 1 if tzname exists */
-#undef HAVE_TZNAME
+/* define as 1 if struct tm has a tm_isdst field */
+#undef HAVE_STRUCT_TM_TM_ISDST
 
 /* define as 1 if X11 is found */
 #undef HAVE_LIBX11

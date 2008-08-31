@@ -39,7 +39,6 @@ OI_ADD_LIB(m)
 if ! test "$ac_cv_lib_m_main" == yes; then
         AC_MSG_ERROR([*** Couldn't find the math library (-lm) - can't compile without it.])
 fi
-OI_ADD_LIB(crypt)
 OI_ADD_LIB(dl)
 
 AX_LIB_MYSQL()
@@ -62,7 +61,8 @@ AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll)
 AC_CHECK_GLOBAL(sys_nerr)
 AC_CHECK_GLOBAL(sys_errlist)
 AC_VAR_TIMEZONE_EXTERNALS()
-AC_STRUCT_TIMEZONE()
+AC_STRUCT_TIMEZONE_GMTOFF()
+
 AC_CONFIG_COMMANDS(system, [
         cp $CSWITCH base/common
 	AS_MKDIR_P(bin)
@@ -128,12 +128,6 @@ else
 fi
 echo -n "dynamic loading        : "
 if test "$ac_cv_lib_dl_main" == yes; then
-        echo yes
-else
-        echo no
-fi
-echo -n "crypt lib              : "
-if test "$ac_cv_lib_crypt_main" == yes; then
         echo yes
 else
         echo no

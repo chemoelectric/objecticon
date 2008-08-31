@@ -6,10 +6,11 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, util, gui, io
+import lang, gui, io
 
 $include "keysyms.icn"
 $include "version.icn"
+$include "posix.icn"
 
 class Ivib()
    public static const
@@ -233,7 +234,7 @@ class Main(Dialog)
       show_modeless()
       if *self.args > 0  then {
          s := self.args[1]
-         if stat(s) then {
+         if Files.access(s, R_OK) then {
             c := load_canvas(s) | fail
             c.set_parent_dialog(self)
             c.set_pos(Canvas.SURROUND, Canvas.SURROUND)
@@ -1242,8 +1243,8 @@ class Main(Dialog)
       plugins := table()
       pp := Files.get_path(prefs.plugin_directory)
       every f := !Files.list(pp.str()) do {
-         if f.mode[1] == "-" & upto('x', f.mode) then {
-            fn := pp.child(f.name).str()
+         if f[2].mode[1] == "-" & upto('x', f[2].mode) then {
+            fn := pp.child(f[1]).str()
             ce := load(fn) | stop("Failed to load plugin:", fn)
             plugin := variable("main", ce)() | stop("Plugin didn't return a Plugin from main")
             insert(plugins, plugin.get_unique_id(), plugin)

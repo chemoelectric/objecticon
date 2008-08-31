@@ -1,8 +1,6 @@
 package ivib.plugin
 
-import util
-
-class Plugin(Error)
+class Plugin()
    public get_unique_id()
       return get_ui_category() || "/" || get_ui_name()
    end
