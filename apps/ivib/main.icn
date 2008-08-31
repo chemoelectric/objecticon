@@ -6,11 +6,9 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io
+import lang, gui, io, graphics
 
-$include "keysyms.icn"
 $include "version.icn"
-$include "posix.icn"
 
 class Ivib()
    public static const
@@ -234,7 +232,7 @@ class Main(Dialog)
       show_modeless()
       if *self.args > 0  then {
          s := self.args[1]
-         if Files.access(s, R_OK) then {
+         if Files.access(s, Access.R_OK) then {
             c := load_canvas(s) | fail
             c.set_parent_dialog(self)
             c.set_pos(Canvas.SURROUND, Canvas.SURROUND)
@@ -837,7 +835,7 @@ class Main(Dialog)
    # Handle dialog events.
    #
    public dialog_event(e)
-      if e.code === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then
+      if member(Mouse.PRESS, e.code) then
          info_label.set_label("")
 
       case /e.release & e.code of {

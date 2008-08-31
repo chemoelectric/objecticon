@@ -34,7 +34,8 @@ import
               TextDialog, dialog_value),
    ipl.graphics(Blend, WClose, WOpen),
    ipl.interact(load_file, save_as, unsupported),
-   ipl.vidgets(dpopup, dsetup)
+   ipl.vidgets(dpopup, dsetup),
+   graphics
 
 global save_colortbl_name
 
@@ -45,8 +46,6 @@ $define	ColorField	20
 $define	NumberField	 3
 $define	WPad		20
 $define	HPad		45
-
-$include "keysyms.icn"
 
 global	colors
 global	colortbl
@@ -98,7 +97,7 @@ procedure color_palette()
    repeat {
       e := NextEvent(pal_win)
       if AmperMeta & (map(e) == "q") then break
-      if e === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
+      if member(Mouse.PRESS, e) then {
          if ((AmperX % CellSize) | (AmperY % CellSize)) = 0 then next	# on border
          put(colors_tmp, c := Pixel(pal_win, AmperX, AmperY, 1, 1))
          Fg(color_win, c)

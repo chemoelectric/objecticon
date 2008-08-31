@@ -50,8 +50,9 @@
 
 package ipl.vidgets
 
+import graphics
+
 $include "vdefns.icn"
-$include "keysyms.icn"
 
 procedure VDraw(vid, code)
    static type
@@ -333,7 +334,7 @@ procedure ProcessEvent(vidget, missed, all, resize)
 
    event := NextEvent(vidget.win)
 
-   if event === Window_Resize then {
+   if event === Mouse.WINDOW_RESIZE then {
       (\resize)(vidget, event, AmperX, AmperY)
       VEvent(vidget, event, AmperX, AmperY)
       }

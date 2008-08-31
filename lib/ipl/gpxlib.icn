@@ -113,7 +113,7 @@ procedure ScratchCanvas(win, w, h, id)
 
    d := win.attrib("display")
    s := d || "," || image(id)
-   /dpytab[s] := graphics.Window.open("width=" || w, "height=" || h, "canvas=hidden",
+   /dpytab[s] := Window.open("width=" || w, "height=" || h, "canvas=hidden",
       "display=" || d)
    win := dpytab[s]
    if /win then

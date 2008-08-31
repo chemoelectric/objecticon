@@ -8,7 +8,7 @@
 
 package gui
 
-$include "keysyms.icn"
+import graphics
 
 #
 # This class encapsulates a drop down menu, or a sub-menu.
@@ -344,10 +344,10 @@ class Menu(TextMenuItem)
          return
       }
       case /e.release & e.code of {
-         Key_Up: handle_key_up(e)
-         Key_Down: handle_key_down(e)
-         Key_Right: handle_key_right(e)
-         Key_Left: handle_key_left(e)
+         Key.UP: handle_key_up(e)
+         Key.DOWN: handle_key_down(e)
+         Key.RIGHT: handle_key_right(e)
+         Key.LEFT: handle_key_left(e)
          "\e" : handle_key_escape(e)
          "\r" | " " : handle_key_return(e)
          default: handle_default(e)
@@ -357,13 +357,13 @@ class Menu(TextMenuItem)
    public handle_event(e)
       local ec
       ec := e.code
-      if ec === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then
+      if member(Mouse.PRESS, ec) then
          handle_press(e)
-      else if ec === (Mouse_LeftRelease | Mouse_RightRelease | Mouse_MiddleRelease) then
+      else if member(Mouse.RELEASE, ec) then
          handle_release(e)
-      else if ec === (Mouse_Movement | Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag) then
+      else if member(Mouse.DRAG_OR_MOVEMENT, ec) then
          handle_move(e)
-      else if Gui.is_key_event(ec) then
+      else if member(Key.ALL, ec) then
          handle_key(e)
       else
          (\self.which_open).handle_event(e)

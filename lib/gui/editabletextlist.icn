@@ -8,9 +8,7 @@
 
 package gui
 
-import undo, lang, util
-
-$include "keysyms.icn"
+import undo, lang, util, graphics
 
 #
 # A scrollable editable text area.  
@@ -348,7 +346,7 @@ class EditableTextList(LineBasedScrollArea)
       # Simulate a drag event if appropriate in order to keep the
       # cursor in synch.
       #
-      if view.is_held(Mouse_LeftPress) then
+      if view.is_held(Mouse.LEFT_PRESS) then
          handle_ldrag(ev)
    end
 
@@ -417,16 +415,16 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_key(e)
       # Stop dragging on any keypress.
-      parent_dialog.release(view, Mouse_LeftPress)
+      parent_dialog.release(view, Mouse.LEFT_PRESS)
       case e.code of {
-         Key_Home : handle_key_home(e)
-         Key_End : handle_key_end(e)
-         Key_PgUp : handle_key_page_up(e)
-         Key_PgDn : handle_key_page_down(e)
-         Key_Up : handle_key_up(e)
-         Key_Down : handle_key_down(e)
-         Key_Left : handle_key_left(e)
-         Key_Right : handle_key_right(e)
+         Key.HOME : handle_key_home(e)
+         Key.END : handle_key_end(e)
+         Key.PGUP : handle_key_page_up(e)
+         Key.PGDN : handle_key_page_down(e)
+         Key.UP : handle_key_up(e)
+         Key.DOWN : handle_key_down(e)
+         Key.LEFT : handle_key_left(e)
+         Key.RIGHT : handle_key_right(e)
          "\b" : handle_delete_left(e)
          "\r" | "\l": handle_return(e)
          "\^k" : handle_delete_line(e)
@@ -434,8 +432,8 @@ class EditableTextList(LineBasedScrollArea)
          "\^e" : handle_end_of_line(e)
          "\d" | "\^d" : handle_delete_right(e)
          "\^x" :  handle_cut(e)
-         (\e.ctrl & Key_Insert) | "\^c" :  handle_copy(e)
-         (\e.shift & Key_Insert) | "\^v" :  handle_paste(e)
+         (\e.ctrl & Key.INSERT) | "\^c" :  handle_copy(e)
+         (\e.shift & Key.INSERT) | "\^v" :  handle_paste(e)
          "\^z" :  handle_undo(e)
          "\^y" :  handle_redo(e)
          default : handle_default(e)
@@ -1006,10 +1004,11 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public keeps(e)
-      # This component keeps all events if editable, but not tab if not editable.
+      # This component keeps all events if editable, but just the four
+      # cursor keys otherwise.
       if \is_editable_flag then
          return
-      return e.code === (Key_Up | Key_Down | Key_Left | Key_Right)
+      return member(Key.CURSOR, e.code)
    end
 
    public calculate_subject_width()

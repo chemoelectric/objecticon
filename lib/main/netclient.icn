@@ -9,8 +9,6 @@ import
    util, 
    io
 
-$include "posix.icn"
-
 #
 # Common base class for a client class which holds a connection to a
 # server and communicates using CRLF-terminated lines.
@@ -66,10 +64,10 @@ class NetClient(Connectable, SetFields)
       local l1, l2, domain, addr
 
       if \server then {
-         domain := PF_INET
+         domain := ProtocolFormat.INET
          addr := "inet:" || server || ":" || port
       } else if \path then {
-         domain := PF_UNIX
+         domain := ProtocolFormat.UNIX
          addr := "unix:" || path
       } else
          fatal(self, "Neither server/port nor path set")
@@ -79,11 +77,11 @@ class NetClient(Connectable, SetFields)
 
       # If we are using a timeout, put the socket into non-blocking mode
       if \timeout > 0 then
-         connection.flag(O_NONBLOCK)
+         connection.flag(FileOpt.NONBLOCK)
 
       fire(CONNECTING_EVENT)
       connection.connect(addr) | {
-         if \timeout > 0 & errno() = EINPROGRESS then {
+         if \timeout > 0 & errno() = Errno.EINPROGRESS then {
             #write("** in progress")
             l1 := [connection]
             l2 := [connection]

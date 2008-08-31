@@ -8,9 +8,7 @@
 
 package gui
 
-import util, lang, io
-
-$include "keysyms.icn"
+import util, lang, io, graphics
 
 $define X_PADDING_INC 5
 
@@ -84,7 +82,7 @@ class TabSet(Component)
    end
 
    public keeps(e)
-      return e.code === (Key_Left | Key_Right)
+      return member(Key.CURSOR_H, e.code)
    end
 
    public display_tabs_at_top()
@@ -362,9 +360,9 @@ class TabSet(Component)
    end
 
    public handle_key(e)
-      if e.code === Key_Left then
+      if e.code === Key.LEFT then
          handle_key_left(e)
-      else if e.code === Key_Right then
+      else if e.code === Key.RIGHT then
          handle_key_right(e)
    end
 
@@ -378,11 +376,10 @@ class TabSet(Component)
    end
 
    public accepts_focus(e)
-      if e.code === Mouse_LeftPress & \self.no_click_focus_flag then
+      if e.code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
          fail
       # Outside of tabs never gives focus.
-      if e.code === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) & 
-                not self.in_tab_region(e) then
+      if member(Mouse.PRESS, e.code) & not self.in_tab_region(e) then
          fail
       return cast(self,Component).accepts_focus(e)
    end

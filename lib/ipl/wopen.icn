@@ -50,9 +50,7 @@
 
 package ipl.graphics
 
-import graphics()
-
-$include "keysyms.icn"
+import graphics(Mouse,Window)
 
 procedure WDelay(window, n)
    static delay, type
@@ -107,13 +105,13 @@ procedure ZDone(win)
    y0 := -win.attrib( "dy")
    w := win.attrib( "width")
    h := win.attrib( "height")
-   org := graphics.Window.open("width=" || w, "height=" || h, "canvas=hidden") | WDone()
-   graphics.Window.copy_area(org, x0, y0)
+   org := Window.open("width=" || w, "height=" || h, "canvas=hidden") | WDone()
+   Window.copy_area(org, x0, y0)
    win.attrib( "resize=on")
    while e := win.event()[1] do case e of {
       QuitEvents():
          exit()
-      Window_Resize:
+      Mouse.WINDOW_RESIZE:
          Zoom(org, win, , , , , x0, y0)
       !"123456789": {
          ww := e * w

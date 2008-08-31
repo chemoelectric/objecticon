@@ -13,8 +13,6 @@ import
    util,
    lang
 
-$include "keysyms.icn"
-
 #
 #
 # This is the parent class of a dialog window.
@@ -240,7 +238,7 @@ class Dialog(Component)
 
    public resize_win(w, h)
       self.win.attrib("size=" || w || "," || h)
-      self.win.enqueue(Window_Resize)      
+      self.win.enqueue(Mouse.WINDOW_RESIZE)      
    end
 
    public initially()
@@ -425,7 +423,7 @@ class Dialog(Component)
    public process_event(l)
       local e
 
-      if l[1] === (Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag | Mouse_Movement) then
+      if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then
          consume_same(l[1])
 
       e := WinEvent!l
@@ -445,17 +443,23 @@ class Dialog(Component)
    # Normal event processing - not dnd
    # 
    private process_normal(e)
+      static focus_up, focus_down
       local c, ec, old_n_held
+      initial {
+         focus_up := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
+         focus_down := set("\t", Key.RIGHT, Key.DOWN)
+      }
+
       ec := e.code
 
       old_n_held := *held
-      if ec === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
+      if member(Mouse.PRESS, ec) then {
          check_click_count(e)
          if c := (!self.point_chain).find_focus(e) then
             self.set_focus(c, e)
       } else if ec === Event.INVOKE_LATER then
          do_invoke()
-      else if ec === Window_Resize then
+      else if ec === Mouse.WINDOW_RESIZE then
          handle_resize(e)
       else if \e.meta & /e.release & type(ec) == "string" then {
          if c := self.find_accel(ec) then
@@ -475,15 +479,15 @@ class Dialog(Component)
       # with the menu's cursor movement.
       #
       if /e.release & /self.menu_mode then {
-         if (ec === ("\t" | Key_Right | Key_Down)) & (/self.focus | 
-                                                     self.focus.is_hidden() |
-                                                     self.focus.is_shaded() | 
-                                                     not(self.focus.keeps(e))) then 
+         if member(focus_down, ec) & (/self.focus | 
+                                      self.focus.is_hidden() |
+                                      self.focus.is_shaded() | 
+                                      not(self.focus.keeps(e))) then 
             self.set_focus(find_next_focus(e), e)
-         else if ec === (Shift_Tab | Key_Left | Key_Up) & (/self.focus | 
-                                                          self.focus.is_hidden() |
-                                                          self.focus.is_shaded() | 
-                                                          not(self.focus.keeps(e))) then 
+         else if member(focus_up, ec) & (/self.focus | 
+                                         self.focus.is_hidden() |
+                                         self.focus.is_shaded() | 
+                                         not(self.focus.keeps(e))) then 
             self.set_focus(find_previous_focus(e), e)
       }
 
@@ -536,27 +540,27 @@ class Dialog(Component)
       local s1, s2, ec, ke
 
       ec := e.code
-      if ec === (Mouse_WheelUp | Mouse_WheelDown) then {
+      if member(Mouse.WHEEL, ec) then {
          fire_list(point_chain, ec, e)
-      } else if ec === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
+      } else if member(Mouse.PRESS, ec) then {
          held[ec] := copy(point_chain)
          fire_list(held[ec], ec, e)
-      } else if ec === (Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag | Mouse_Movement) then {
+      } else if member(Mouse.DRAG_OR_MOVEMENT, ec) then {
          s1 := set(\moving) | set()
          s2 := set(point_chain)
          fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
          fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
-         if ec === Mouse_Movement then 
+         if ec === Mouse.MOVEMENT then 
             fire_list(point_chain, ec, e)
          else
             fire_list(\held[ec + 6], ec, e)
          moving := copy(point_chain)
-      } else if ec === (Mouse_LeftRelease | Mouse_RightRelease | Mouse_MiddleRelease) then {
+      } else if member(Mouse.RELEASE, ec) then {
          fire_list(\held[ec + 3], ec, e)
          delete(held, ec + 3)
-      } else if ec === (Window_CloseButton | Window_Resize) then {
+      } else if member(Mouse.WINDOW, ec) then {
          fire(ec, e)
-      } else if Gui.is_key_event(ec) then {
+      } else if member(Key.ALL, ec) then {
          ke := if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS
          if \self.menu_mode then
             fire_list([self.menu_mode], ke, e)
@@ -666,7 +670,7 @@ class Dialog(Component)
    # Tooltip processing during an event.
    # 
    private process_tooltip_event(e)
-      if e.code === Mouse_Movement then
+      if e.code === Mouse.MOVEMENT then
          tooltip_states(e)
       else {
          if tooltip_state = 2 then
@@ -812,10 +816,10 @@ class Dialog(Component)
       # they were a drag event, in order to keep the drag holder
       # display in synch.
       #
-      if ec === (Mouse_WheelUp | Mouse_WheelDown) then
+      if member(Mouse.WHEEL, ec) then
          fire_list(point_chain, ec, e)
 
-      if ec === (Mouse_WheelUp | Mouse_WheelDown | curr_drag.event.code) then {
+      if (ec === curr_drag.event.code) | member(Mouse.WHEEL, ec) then {
          # Try the drag holder's drag_event method first...
          if not((\self.curr_drag_holder).drag_event(self.curr_drag, e)) then {
             # No luck with the drag holder, so try to search for a new drag holder.
@@ -854,7 +858,7 @@ class Dialog(Component)
       # There must be only one button held, and the event must be
       # a drag.
       #
-      if *self.held = 1 & e.code === (Mouse_LeftDrag | Mouse_RightDrag | Mouse_MiddleDrag) then {
+      if (*self.held = 1) & member(Mouse.DRAG, e.code) then {
          # Note the position of the start of a drag
          /self.drag_gesture_x := e.x
          /self.drag_gesture_y := e.y

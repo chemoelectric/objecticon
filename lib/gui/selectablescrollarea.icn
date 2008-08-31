@@ -8,9 +8,7 @@
 
 package gui
 
-import util, lang
-
-$include "keysyms.icn"
+import util, lang, graphics
 
 #
 # This class extends LineBasedScrollArea to provide selection on lines,
@@ -529,7 +527,7 @@ class SelectableScrollArea(LineBasedScrollArea)
       # Simulate drag or move events if appropriate in order to
       # keep the cursor in synch.
       #
-      if view.is_held(Mouse_LeftPress) then
+      if view.is_held(Mouse.LEFT_PRESS) then
          handle_ldrag(e)
       else if (parent_dialog.get_held_count() = 0) & view.in_region(e) then
          handle_move(e)
@@ -647,14 +645,14 @@ class SelectableScrollArea(LineBasedScrollArea)
 
    public handle_key(e)
       case e.code of {
-         Key_Home : handle_key_home(e)
-         Key_End : handle_key_end(e)
-         Key_PgUp : handle_key_page_up(e)
-         Key_PgDn : handle_key_page_down(e)
-         Key_Up : handle_key_up(e)
-         Key_Down : handle_key_down(e)
-         Key_Left : handle_key_left(e)
-         Key_Right : handle_key_right(e)
+         Key.HOME : handle_key_home(e)
+         Key.END : handle_key_end(e)
+         Key.PGUP : handle_key_page_up(e)
+         Key.PGDN : handle_key_page_down(e)
+         Key.UP : handle_key_up(e)
+         Key.DOWN : handle_key_down(e)
+         Key.LEFT : handle_key_left(e)
+         Key.RIGHT : handle_key_right(e)
          "\r" | "\l": handle_return(e)
          "\e" : handle_key_escape(e)
          "\^a" : handle_select_all(e)
@@ -662,7 +660,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public keeps(e)
-      return e.code === (Key_Left | Key_Right | Key_Up | Key_Down)
+      return member(Key.CURSOR, e.code)
    end
 
    public object_get_gesture_selections()
@@ -769,7 +767,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    public defer draw_line_data(xp, yp, lh, i, r)
 
    public can_drag(ev)
-      if (ev.code === Mouse_LeftDrag) & view.is_held(Mouse_LeftPress) & 
+      if (ev.code === Mouse.LEFT_DRAG) & view.is_held(Mouse.LEFT_PRESS) & 
                    /self.draggable_cursor & \self.on_a_line then
          return self.object_get_gesture_selections()
    end

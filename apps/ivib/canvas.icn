@@ -8,8 +8,6 @@
 
 import lang, gui, io, graphics
 
-$include "keysyms.icn"
-
 #
 # Constant definitions.
 #
@@ -1134,7 +1132,7 @@ class Canvas(Component,SelectiveObjectCodec)
          fail
       }
 
-      (ec === (Key_Up | Key_Down | Key_Left | Key_Right)) | fail
+      member(Key.CURSOR, ec) | fail
       something_selected() | fail
 
       moving := selected
@@ -1152,17 +1150,17 @@ class Canvas(Component,SelectiveObjectCodec)
 
       if \e.shift then {
          case ec of {
-            Key_Up : resize_down(orig_y + orig_h - 1)
-            Key_Down : resize_down(orig_y + orig_h + 1)
-            Key_Left : resize_right(orig_x + orig_w - 1)
-            Key_Right : resize_right(orig_x + orig_w + 1)
+            Key.UP : resize_down(orig_y + orig_h - 1)
+            Key.DOWN : resize_down(orig_y + orig_h + 1)
+            Key.LEFT : resize_right(orig_x + orig_w - 1)
+            Key.RIGHT : resize_right(orig_x + orig_w + 1)
          }
       } else {
          case ec of {
-            Key_Up : move_vertically(orig_y - 1)
-            Key_Down : move_vertically(orig_y + 1)
-            Key_Left : move_horizontally(orig_x - 1)
-            Key_Right : move_horizontally(orig_x + 1)
+            Key.UP : move_vertically(orig_y - 1)
+            Key.DOWN : move_vertically(orig_y + 1)
+            Key.LEFT : move_horizontally(orig_x - 1)
+            Key.RIGHT : move_horizontally(orig_x + 1)
          }
       }
 

@@ -8,7 +8,7 @@
 
 package lang
 
-$include "posix.icn"
+import io
 
 #
 # This class is a convenient way of creating a sub-process in a program,
@@ -43,7 +43,7 @@ class Process()
    # Called by the parent to kill the child.  Then the {join} method is invoked.
    #
    public stop()
-      kill(\pid, "SIGTERM")
+      kill(\pid, Signal.SIGTERM)
       join()
    end
 

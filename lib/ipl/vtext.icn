@@ -23,10 +23,6 @@
 #
 ############################################################################
 #
-#  Includes:  keysyms
-#
-############################################################################
-#
 #  Links:  vidgets
 #
 ############################################################################
@@ -34,27 +30,8 @@
 package ipl.vidgets
 
 import
-   ipl.graphics(BevelRectangle)
-
-$include "keysyms.icn"
-
-
-$ifndef Key_KP_Up
-   $define Key_KP_Up Key_Up
-$endif
-
-$ifndef Key_KP_Down
-   $define Key_KP_Down Key_Down
-$endif
-
-$ifndef Key_KP_Left
-   $define Key_KP_Left Key_Left
-$endif
-
-$ifndef Key_KP_Right
-   $define Key_KP_Right Key_Right
-$endif
-
+   ipl.graphics(BevelRectangle),
+   graphics
 
 
 
@@ -296,7 +273,7 @@ procedure event_Vtext(self, e, x, y)
    if \self.callback.locked then fail
    /x := AmperX; /y := AmperY
    self.T.DataLength := *self.data
-   if e === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) then {
+   if member(Mouse.PRESS,e) then {
       WAttrib(self.win, "pointer=xterm")
       otb := self.T.ta := self.T.tb := self.T.CursorPos :=
          get_pos_Vtext(self, AmperX-(self.ax+self.T.dx))
@@ -304,7 +281,7 @@ procedure event_Vtext(self, e, x, y)
          self.T.ta := 1
       draw_data_Vtext(self)
       draw_cursor_Vtext(self)
-      until e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) do {
+      until member(Mouse.RELEASE,e) do {
          self.T.tb := get_pos_Vtext(self, AmperX-(self.ax+self.T.dx))
          if otb ~= self.T.tb then {
             draw_data_Vtext(self)
@@ -320,12 +297,12 @@ procedure event_Vtext(self, e, x, y)
    else if (not AmperMeta) & (not (integer(e) < 0)) then  {
       ## it's a keypress
       if rv := case e of {
-         "\^b" | Key_Left | Key_KP_Left:	move_cursor_Vtext(self, -1)
-         "\^f" | Key_Right | Key_KP_Right:	move_cursor_Vtext(self, 1)
+         "\^b" | Key.LEFT | Key.KP_LEFT:	move_cursor_Vtext(self, -1)
+         "\^f" | Key.RIGHT | Key.KP_RIGHT:	move_cursor_Vtext(self, 1)
          "\b" | "\d":				delete_left_Vtext(self)
          "\^k" | "\^u" | "\^x":			delete_line_Vtext(self)
-	 (AmperShift & "\t") | Key_Up | Key_KP_Up:  return V_PREVIOUS
-         "\t" | Key_Down | Key_KP_Down:		return V_NEXT
+	 (AmperShift & "\t") | Key.UP | Key.KP_UP:  return V_PREVIOUS
+         "\t" | Key.DOWN | Key.KP_DOWN:		return V_NEXT
          "\r" | "\l": {
 	    self.callback.V.set(self.callback, self, self.data)
 	    V_NEXT

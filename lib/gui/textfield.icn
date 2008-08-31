@@ -8,9 +8,7 @@
 
 package gui
 
-import undo, util
-
-$include "keysyms.icn"
+import undo, util, graphics
 
 #
 # A class for a single input line of text.  The text can
@@ -452,7 +450,7 @@ class TextField(Component)
    end
 
    public keeps(e)
-      return e.code === (Key_Left | Key_Right)
+      return member(Key.CURSOR_H, e.code)
    end
 
    public apply_filter(t)
@@ -549,16 +547,16 @@ class TextField(Component)
          "\b" : handle_delete_left(e)
          "\r" | "\l": handle_return(e)
          "\^k" : handle_delete_line(e)
-         Key_Home : handle_key_home(e)
-         Key_End : handle_key_end(e)
-         Key_Right : handle_key_right(e)
-         Key_Left : handle_key_left(e)
+         Key.HOME : handle_key_home(e)
+         Key.END : handle_key_end(e)
+         Key.RIGHT : handle_key_right(e)
+         Key.LEFT : handle_key_left(e)
          "\^a" : handle_select_all(e)
          "\^e" : handle_end_of_line(e)
          "\d" | "\^d" : handle_delete_right(e)
          "\^x" :  handle_cut(e)
-         (\e.ctrl & Key_Insert) | "\^c" :  handle_copy(e)
-         (\e.shift & Key_Insert) | "\^v" :  handle_paste(e)
+         (\e.ctrl & Key.INSERT) | "\^c" :  handle_copy(e)
+         (\e.shift & Key.INSERT) | "\^v" :  handle_paste(e)
          "\^z" :  handle_undo(e)
          "\^y" :  handle_redo(e)
          default : handle_default(e)

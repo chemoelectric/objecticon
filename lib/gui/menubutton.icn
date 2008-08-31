@@ -8,9 +8,7 @@
 
 package gui
 
-import lang
-
-$include "keysyms.icn"
+import lang, graphics
 
 #
 # This is similar to {MenuBar}, but holds just a single
@@ -121,9 +119,9 @@ class MenuButton(Component)
       ec := e.code
       if e === accel_skip then
          accel_skip := &null
-      else if ec === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then 
+      else if member(Mouse.PRESS, ec) then 
          handle_press(e)
-      else if ec === (Mouse_LeftRelease | Mouse_RightRelease | Mouse_MiddleRelease) then 
+      else if member(Mouse.RELEASE, ec) then 
          handle_release(e)
       else
          (\self.which_open).handle_event(e)

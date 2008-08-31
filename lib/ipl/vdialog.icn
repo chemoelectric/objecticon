@@ -31,9 +31,8 @@
 package ipl.vidgets
 
 import
-   ipl.graphics(BevelRectangle, Enqueue)
-
-$include "keysyms.icn"
+   ipl.graphics(BevelRectangle, Enqueue),
+   graphics
 
 record DL_pos_rec(x,y)		# dialog position record
 
@@ -183,10 +182,10 @@ procedure open_dialog_Vdialog(self, x, y, values, def_str)
       e := NextEvent(self.win)
       if e === "\r" then {
          if \def then {
-            e := Mouse_LeftPress
+            e := Mouse.LEFT_PRESS
             AmperX := def.ax + 1
             AmperY := def.ay + 1
-            Enqueue(def.win, Mouse_LeftRelease, def.ax + 1, def.ay + 1)
+            Enqueue(def.win, Mouse.LEFT_RELEASE, def.ax + 1, def.ay + 1)
          }
          else next
       }

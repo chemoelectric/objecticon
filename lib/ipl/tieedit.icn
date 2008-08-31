@@ -40,9 +40,8 @@ import
    ipl.patxform(pborder, pcenter, pcrop, pflip,
                 pinvert, protate, pscramble, pshift,
                 ptrim),
-   ipl.vidgets(vsetup)
-
-$include "keysyms.icn"
+   ipl.vidgets(vsetup),
+   graphics
 
 global cellsize
 global flip_horiz				# icon for horizontal flip
@@ -134,12 +133,12 @@ procedure grid_cb(vidget, e)
       ypos := grid_vidgets["grid"].ay
       }
 
-   if e === (Mouse_LeftPress | Mouse_RightPress | Mouse_LeftDrag | Mouse_RightDrag) then {
+   if e === (Mouse.LEFT_PRESS | Mouse.RIGHT_PRESS | Mouse.LEFT_DRAG | Mouse.RIGHT_DRAG) then {
       j := (AmperX - xpos) / cellsize
       i := (AmperY - ypos) / cellsize
       if j < 0 | j >= hbits | i < 0 | i >= vbits then return
 
-      if e === (Mouse_LeftPress | Mouse_LeftDrag) then setbit(i, j, "1")
+      if e === (Mouse.LEFT_PRESS | Mouse.LEFT_DRAG) then setbit(i, j, "1")
       else setbit(i, j, "0")
 
       tile_touched := 1
@@ -582,7 +581,7 @@ end
 procedure symmet_cb(vidget, e)
    local col, row, symcount
 
-   if e === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
+   if member(Mouse.PRESS, e) then {
       col := (AmperX - symmet_xpos) / IconSize + 1
       row := (AmperY - symmet_yoff) / IconSize + 1
       sym_state[row, col] *:= -1
@@ -744,7 +743,7 @@ end
 procedure xform_cb(vidget, e)
    local col, row
 
-   if e === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress) then {
+   if member(Mouse.PRESS, e) then {
       old_pat := rows2pat(grid_rows)
       col := (AmperX - xform_xpos) / IconSize
       row := (AmperY - xform_ypos) / IconSize

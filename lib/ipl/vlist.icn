@@ -59,12 +59,12 @@
 
 
 $include "vdefns.icn"
-$include "keysyms.icn"
 
 package ipl.vidgets
 
 import
-   ipl.graphics(BevelRectangle, DrawGroove)
+   ipl.graphics(BevelRectangle, DrawGroove),
+   graphics
 
 $define V_READONLY	"r"
 $define V_SELECT	"w"
@@ -797,7 +797,7 @@ end
 #    highlighting the line that was selected by the user with the mouse
 #    or by the programmer using VSetState().  Only one line at a time
 #    can be highlighted.  The list vidget callback is not called until
-#    a Mouse_LeftRelease event is detected (releasing the mouse button implies
+#    a Mouse.LEFT_RELEASE event is detected (releasing the mouse button implies
 #    the user has made a selection).  It also supports dragging the mouse
 #    across the list, highlighting and unhighlighting each line in turn.
 #
@@ -815,7 +815,7 @@ end
 procedure event_Vlist(self, e, x, y)
    local cb, dl, tl, sl, selectmode, selected, cb_data, cb_items, i, mode
 
-   if e ~=== Mouse_LeftPress then
+   if e ~=== Mouse.LEFT_PRESS then
       fail				# not our event
 
    mode := storage_Vlist(self.id, "read", "mode")
@@ -851,9 +851,9 @@ procedure event_Vlist(self, e, x, y)
          }
       drawlist_Vlist(self, dl, tl)
 
-      while (e := NextEvent(self.win)) ~=== Mouse_LeftRelease do {
+      while (e := NextEvent(self.win)) ~=== Mouse.LEFT_RELEASE do {
 
-         if e ~=== Mouse_LeftDrag then
+         if e ~=== Mouse.LEFT_DRAG then
             next
 
          selected := vlist_selection(self, AmperY)
@@ -896,8 +896,8 @@ procedure event_Vlist(self, e, x, y)
    dl[selected][1] := selectmode
    drawlist_Vlist(self, dl, tl)
 
-   while (e := NextEvent(self.win)) ~=== Mouse_LeftRelease do
-      if e === Mouse_LeftDrag then {
+   while (e := NextEvent(self.win)) ~=== Mouse.LEFT_RELEASE do
+      if e === Mouse.LEFT_DRAG then {
          dl[vlist_selection(self, AmperY)][1] := selectmode
          drawlist_Vlist(self, dl, tl)
          }

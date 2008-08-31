@@ -1,0 +1,190 @@
+import io
+
+# A stream that reads and writes n chars at a time.
+class NStream(Stream)
+   private
+      n,
+      ch,
+      inex,
+      wrote
+
+   public in(n)
+      local s
+      s := ""
+      n >:= self.n
+      every 1 to n do
+         s ||:= @inex
+      return s
+   end
+
+   public out(s)
+      local t
+      t := min(*s, n)
+      wrote ||:= s[1+:t]
+      return t
+   end
+   
+   public get_mode()
+      return "rw"
+   end
+
+   public close()
+   end
+
+   public get_wrote()
+      local t
+      t := wrote
+      wrote := ""
+      return t
+   end
+
+   public new(n)
+      self.n := n
+      inex := create |(!&ucase | "\n")
+      wrote := ""
+      return
+   end
+end
+
+procedure test_modes()
+   local f
+   f := FileStream.open("test", ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   print{"Write mode",f.get_mode()}
+   f.close()
+   f := FileStream.open("test", FileOpt.RDWR) | stop(&why)
+   print{"Read-Write mode",f.get_mode()}
+   f.close()
+   f := FileStream.open("test", FileOpt.RDONLY) | stop(&why)
+   print{"Read mode",f.get_mode()}
+   f.close()
+   f := DirStream.open(".") | stop(&why)
+   print{"Dir read mode",f.get_mode()}
+   f.close()
+   f := ProgStream.open("echo hello", FileOpt.RDONLY) | stop(&why)
+   print{"Prog read mode",f.get_mode()}
+   while f.read()
+   f.close()
+   f := ProgStream.open("cat >/dev/null", FileOpt.WRONLY) | stop(&why)
+   print{"Prog write mode",f.get_mode()}
+   f.close()
+   f := SocketStream.socket()
+   print{"Socket mode",f.get_mode()}
+   f.close()
+   f := StringStream("abc")
+   print{"String mode",f.get_mode()}
+   f.close()
+end
+
+procedure check_file(f, data)
+   local i, s
+   f.writes(data) | stop(&why)
+   comp_with(f,data)
+   # Add to the end
+   f.seek(0)
+   f.writes(&digits)
+   data ||:= &digits
+   comp_with(f,data)
+   # Seek beyond the end
+   f.seek(f.tell() + 20)
+   f.writes(&digits)
+   data ||:= repl("\0",20) || &digits
+   comp_with(f,data)
+   # Write some data in the middle
+   every i := 1 to *data by 5 do {
+      f.seek(i)
+      f.writes("X")
+      data[i] := "X"
+   }
+   comp_with(f,data)
+   # Write some more data in the middle
+   every i := 1 to *data by 7 do {
+      f.seek(i)
+      f.writes("ABC")
+      data[i:min(i+3,*data+1)] := "ABC"
+   }
+   comp_with(f,data)
+
+   # Write some lines and read them back
+   every i := 1 to *data by 200 do {
+      f.seek(i)
+      s := "The quick brown fox" || repl("*",i/50) || "\n"
+      f.writes(s)
+      data[i:min(i+*s,*data+1)] := s
+      f.seek(i)
+      yes_no{"Line read", f.read() == s[1:-1]}
+   }
+   comp_with(f,data)
+
+   f.close()
+end
+
+procedure comp_with(f, data)
+   local s
+   f.seek(1) | stop(&why)
+   s := ""
+   while s ||:= f.in(100)
+   f.eof() | stop(&why)
+   yes_no{"Comparing", s == data}
+end
+
+procedure test_stream(x)
+   local s, i, buff
+   buff := BufferStream("other=",x, "buff_size=5")
+   every i := 1 to 26 do {
+      s := &ucase[1:i]
+      buff.writes(s)
+      yes_no{"Reading", buff.read() == &ucase}
+      yes_no{"Comparing", s == x.get_wrote()}
+      yes_no{"Reading", buff.reads(26) == &ucase}
+      s := repl(&digits, 20)
+      buff.writes(s)
+      yes_no{"Reading", buff.reads(1) == "\n"}
+      yes_no{"Comparing", s == x.get_wrote()}
+   }
+end
+
+procedure test_dir()
+   local s, f
+   system("mkdir testdir")
+   system("echo a >testdir/one")
+   system("echo a >testdir/two")
+   system("echo a >testdir/three")
+   f := DirStream.open("testdir") | stop(&why)
+   s := f.reads(1000)
+   print{"Dir", s}
+   f.close()
+   f := DirStream.open("testdir") | stop(&why)
+   pr_seq{"Dir", |f.read()}
+   f.close()
+   system("rm -r testdir")
+end
+
+procedure main()
+   test_modes()
+   check_file(FileStream.open("test", ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)),
+              repl(&ucase, 100))
+   check_file(BufferStream("other=", FileStream.open("test", ior(FileOpt.RDWR, 
+                                                                 FileOpt.TRUNC, 
+                                                                 FileOpt.CREAT))),
+              repl(&ucase, 100))
+   check_file(BufferStream("other=", FileStream.open("test", ior(FileOpt.RDWR, 
+                                                                 FileOpt.TRUNC, 
+                                                                 FileOpt.CREAT)),
+                           "buff_size=5"),
+              repl(&ucase, 100))
+   check_file(BufferStream("other=",
+                           BufferStream("other=", 
+                                        FileStream.open("test", ior(FileOpt.RDWR, 
+                                                                    FileOpt.TRUNC, 
+                                                                    FileOpt.CREAT))
+                                        ),
+                                        "buff_size=5"),
+                                        repl(&ucase, 100))
+   check_file(StringStream(), repl(&ucase, 100))
+   check_file(BufferStream("other=",StringStream()), repl(&ucase, 100))
+
+   test_stream(NStream(1))
+   test_stream(NStream(10))
+
+   test_dir()
+end

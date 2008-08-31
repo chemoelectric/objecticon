@@ -10,8 +10,6 @@ package gui
 
 import graphics
 
-$include "keysyms.icn"     
-
 class Event()
    public static const
       MOUSE_LEFT_PRESS,
@@ -54,20 +52,20 @@ class Event()
       DIALOG_CLOSED
 
    private static init()
-      MOUSE_LEFT_PRESS := Mouse_LeftPress
-      MOUSE_MIDDLE_PRESS := Mouse_MiddlePress
-      MOUSE_RIGHT_PRESS := Mouse_RightPress
-      MOUSE_LEFT_RELEASE := Mouse_LeftRelease
-      MOUSE_MIDDLE_RELEASE := Mouse_MiddleRelease
-      MOUSE_RIGHT_RELEASE := Mouse_RightRelease
-      MOUSE_LEFT_DRAG := Mouse_LeftDrag
-      MOUSE_MIDDLE_DRAG := Mouse_MiddleDrag
-      MOUSE_RIGHT_DRAG := Mouse_RightDrag
-      MOUSE_MOVEMENT := Mouse_Movement
-      MOUSE_WHEEL_UP := Mouse_WheelUp
-      MOUSE_WHEEL_DOWN := Mouse_WheelDown
-      WINDOW_RESIZE := Window_Resize
-      WINDOW_CLOSE_BUTTON := Window_CloseButton
+      MOUSE_LEFT_PRESS := Mouse.LEFT_PRESS
+      MOUSE_MIDDLE_PRESS := Mouse.MIDDLE_PRESS
+      MOUSE_RIGHT_PRESS := Mouse.RIGHT_PRESS
+      MOUSE_LEFT_RELEASE := Mouse.LEFT_RELEASE
+      MOUSE_MIDDLE_RELEASE := Mouse.MIDDLE_RELEASE
+      MOUSE_RIGHT_RELEASE := Mouse.RIGHT_RELEASE
+      MOUSE_LEFT_DRAG := Mouse.LEFT_DRAG
+      MOUSE_MIDDLE_DRAG := Mouse.MIDDLE_DRAG
+      MOUSE_RIGHT_DRAG := Mouse.RIGHT_DRAG
+      MOUSE_MOVEMENT := Mouse.MOVEMENT
+      MOUSE_WHEEL_UP := Mouse.WHEEL_UP
+      MOUSE_WHEEL_DOWN := Mouse.WHEEL_DOWN
+      WINDOW_RESIZE := Mouse.WINDOW_RESIZE
+      WINDOW_CLOSE_BUTTON := Mouse.WINDOW_CLOSE_BUTTON
       INVOKE_LATER := 1000
       ICON := 1
       BUTTON_RELEASE := 20
@@ -120,7 +118,6 @@ class Gui()
    public static const 
       CONSTRAINT_SET,
       WATTRIB_SET,
-      KEY_CODE_SET,
       PRINTABLE_1,              # Printable on a single line of text
       PRINTABLE_N               # Printable on multi lines of text
 
@@ -147,18 +144,6 @@ class Gui()
                    "font" | "fheight" | "fwidth" | "ascent" | "descent" | "leading" | "linewidth" | 
                    "linestyle" | "fillstyle" | "pattern" | "clipx" | "clipy" | "clipw" | "cliph" | 
                    "dx" | "dy" | "inputmask" | "minwidth" | "minheight" | "minsize")
-      KEY_CODE_SET := set()
-      every insert(KEY_CODE_SET, 
-                   Shift_Tab|Key_Compose|Key_Do|Key_Down|Key_End|Key_F1|Key_F2|
-                   Key_F3|Key_F4|Key_F5|Key_F6|Key_F7|Key_F8|Key_F9|Key_F10|Key_F11|
-                   Key_F12|Key_F13|Key_F14|Key_F15|Key_F16|Key_F17|Key_F18|Key_F19|Key_F20|
-                   Key_Find|Key_Help|Key_Home|Key_Insert|Key_KP_Down|Key_KP_Left|
-                   Key_KP_Right|Key_KP_Up|Key_L1|
-                   Key_L2|Key_L3|Key_L4|Key_L5|Key_L6|Key_L7|Key_L8|Key_L9|Key_L10|
-                   Key_Left|Key_PF1|Key_PF2|Key_PF3|Key_PF4|Key_Pause|Key_PgDn|Key_PgUp|Key_PrSc|
-                   Key_R1|Key_R2|Key_R3|Key_R4|Key_R5|Key_R6|Key_R7|Key_R8|Key_R9|
-                   Key_R10|Key_R11|Key_R12|Key_R13|Key_R14|Key_R15|Key_Right|
-                   Key_ScrollLock|Key_Select|Key_Up)
    end
 
    public static is_constraint(s)
@@ -167,10 +152,6 @@ class Gui()
 
    public static is_window_attrib(s)
       return member(WATTRIB_SET, s)
-   end
-
-   public static is_key_event(e)
-      return (type(e) == "string") | member(KEY_CODE_SET, e)
    end
 end
 

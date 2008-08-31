@@ -2,8 +2,6 @@ package io
 
 import util(error, to_flag, SetFields)
 
-$include "posix.icn"
-
 class Stream()
    public defer in(n)
 
@@ -396,12 +394,12 @@ end
 procedure open(name, mode)
    local i
    i := case mode of {
-      &null | "r" : O_RDONLY
-      "w" : ior(O_WRONLY, O_TRUNC, O_CREAT)
-      "b"|"rw"|"r+" : O_RDWR
-      "crw"|"w+" : ior(O_RDWR, O_TRUNC, O_CREAT)
-      "a" : ior(O_WRONLY, O_APPEND, O_CREAT)
-      "a+" : ior(O_RDWR, O_APPEND, O_CREAT)
+      &null | "r" : FileOpt.RDONLY
+      "w" : ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)
+      "b"|"rw"|"r+" : FileOpt.RDWR
+      "crw"|"w+" : ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)
+      "a" : ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)
+      "a+" : ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT)
       default: return error("Invalid mode flag: " || mode)
    }
    return BufferStream("other=",FileStream.open(name, i))
@@ -497,9 +495,9 @@ class FileStream(DescStream)
 
    public static open(name, flags, perm)
       local mode
-      if iand(flags, O_WRONLY) ~= 0 then
+      if iand(flags, FileOpt.WRONLY) ~= 0 then
          mode := "w"
-      else if iand(flags, O_RDWR) ~= 0 then
+      else if iand(flags, FileOpt.RDWR) ~= 0 then
          mode := "rw"
       else
          mode := "r"
@@ -631,7 +629,7 @@ class ProgStream(FileStream)
 
    public static open(cmd, flags)
       local l, mode
-      if iand(flags, O_WRONLY) ~= 0 then
+      if iand(flags, FileOpt.WRONLY) ~= 0 then
          mode := "w"
       else
          mode := "r"

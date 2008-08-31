@@ -4,8 +4,6 @@ import
    util,
    ipl.random
 
-$include "posix.icn"
-
 #
 # This class has several static methods which provide
 # system-independent access to the file system.
@@ -108,7 +106,7 @@ class Files()
    #
    public static file_to_string(fn)
       local res, f
-      f := FileStream.open(fn, O_RDONLY) | return error("Couldn't open " || fn || ":" || &why)
+      f := FileStream.open(fn, FileOpt.RDONLY) | return error("Couldn't open " || fn || ":" || &why)
       res := ""
       while res ||:= f.reads(8192)
       f.close()
@@ -121,7 +119,7 @@ class Files()
    #
    public static string_to_file(fn, s)
       local f
-      f := FileStream.open(fn, ior(O_WRONLY, O_TRUNC, O_CREAT)) | 
+      f := FileStream.open(fn, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | 
          return error("Couldn't open " || fn || ":" || &why)
       f.writes(s) | {
          f.close()
@@ -154,7 +152,7 @@ class Files()
          name := p.child(prefix || left(&random, len, "0") || suffix).str()
          if not access(name) then {
             # Touch the filename to stop anyone else using it.
-            f := FileStream.open(name, ior(O_WRONLY, O_CREAT)) | fail
+            f := FileStream.open(name, ior(FileOpt.WRONLY, FileOpt.CREAT)) | fail
             f.close()
             return name
          }
@@ -169,8 +167,8 @@ class Files()
 
       stat(s1).size = stat(s2).size | fail
 
-      f1 := FileStream.open(s1, O_RDONLY) | return error("Couldn't open " || s1 || ":" || &why)
-      f2 := FileStream.open(s2, O_RDONLY) | {
+      f1 := FileStream.open(s1, FileOpt.RDONLY) | return error("Couldn't open " || s1 || ":" || &why)
+      f2 := FileStream.open(s2, FileOpt.RDONLY) | {
          f1.close()
          return error("Couldn't open " || s2 || ":" || &why)
       }
@@ -312,8 +310,8 @@ class Files()
    #
    public static copy(s1, s2)
       local f1, f2
-      f1 := FileStream.open(s1, O_RDONLY) | return error("Couldn't open " || s1 || ":" || &why)
-      f2 := FileStream.open(s2, ior(O_WRONLY, O_TRUNC, O_CREAT)) | {
+      f1 := FileStream.open(s1, FileOpt.RDONLY) | return error("Couldn't open " || s1 || ":" || &why)
+      f2 := FileStream.open(s2, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | {
          f1.close()
          return error("Couldn't open " || s2 || ":" || &why)
       }
@@ -331,8 +329,8 @@ class Files()
    #
    public static append(s1, s2)
       local f1, f2
-      f1 := FileStream.open(s1, O_RDONLY) | return error("Couldn't open " || s1 || ":" || &why)
-      f2 := FileStream.open(s2, ior(O_WRONLY, O_APPEND, O_CREAT)) | {
+      f1 := FileStream.open(s1, FileOpt.RDONLY) | return error("Couldn't open " || s1 || ":" || &why)
+      f2 := FileStream.open(s2, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)) | {
          f1.close()
          return error("Couldn't open " || s2 || ":" || &why)
       }
@@ -373,7 +371,7 @@ class Files()
    public static path_find(f, n, mode)
       local p, s
 
-      /mode := F_OK
+      /mode := Access.F_OK
       # First of all see if it exists without any search
       if access(f, mode) then
          return f

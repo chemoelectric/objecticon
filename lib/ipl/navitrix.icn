@@ -99,9 +99,8 @@ package ipl.navitrix
 import
    ipl.dialog(Notice),
    ipl.graphics(WOpen),
-   ipl.vidgets(VSetItems, VSetState, vsetup)
-
-$include "keysyms.icn"
+   ipl.vidgets(VSetItems, VSetState, vsetup),
+   graphics(Key)
 
 global directory
 global dir
@@ -220,8 +219,8 @@ procedure nav_keyboard(e)
 
    case e of {
       "\r"      :  nav_okay_cb()
-      Key_Home  :  VSetState(files, 1)
-      Key_End   :  VSetState(files, *file_list)
+      Key.HOME  :  VSetState(files, 1)
+      Key.END   :  VSetState(files, *file_list)
       default   :  if type(e) == "string" then nav_locate(e)
       }
 

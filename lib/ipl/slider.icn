@@ -99,9 +99,9 @@ package ipl.slider
 
 import
    ipl.evmux(sensor),
-   ipl.graphics(BevelRectangle)
+   ipl.graphics(BevelRectangle),
+   graphics
 
-$include "keysyms.icn"
 $define MARGIN 10
 
 record Slider_Rec(win, proc, arg, x, y, w, h, lb, ub, n)
@@ -112,9 +112,9 @@ procedure slider(win, proc, arg, x, y, w, h, lb, iv, ub)
    r := Slider_Rec(win, proc, arg, x, y, w, h, lb, ub)
    slidervalue(r, iv)
    if h > w then 	# vertical slider
-      sensor(win, Mouse_LeftPress, Exec_Vert_Slider, r, x, y - MARGIN, w, h + 2*MARGIN)
+      sensor(win, Mouse.LEFT_PRESS, Exec_Vert_Slider, r, x, y - MARGIN, w, h + 2*MARGIN)
    else			# horizontal slider
-      sensor(win, Mouse_LeftPress, Exec_Horiz_Slider, r, x - MARGIN, y, w + 2*MARGIN, h)
+      sensor(win, Mouse.LEFT_PRESS, Exec_Horiz_Slider, r, x - MARGIN, y, w + 2*MARGIN, h)
    return r
 end
 
@@ -166,7 +166,7 @@ end
 procedure Exec_Vert_Slider(win, r, x, y)
    local e,     v
 
-   e := Mouse_LeftPress
+   e := Mouse.LEFT_PRESS
    repeat {
       if type(e) == "integer" then {	# if a mouse event
          y <:= r.y
@@ -179,7 +179,7 @@ procedure Exec_Vert_Slider(win, r, x, y)
             v := v * (r.ub - r.lb) + r.lb			# user range
             r.proc(win, r.arg, v)
             }
-         if e = Mouse_LeftRelease then
+         if e = Mouse.LEFT_RELEASE then
             return
          }
       e := NextEvent(win)
@@ -191,7 +191,7 @@ end
 procedure Exec_Horiz_Slider(win, r, x, y)
    local e,     v
 
-   e := Mouse_LeftPress
+   e := Mouse.LEFT_PRESS
    repeat {
       if type(e) == "integer" then {	# if a mouse event
          x <:= r.x
@@ -204,7 +204,7 @@ procedure Exec_Horiz_Slider(win, r, x, y)
             v := v * (r.ub - r.lb) + r.lb		# user range
             r.proc(win, r.arg, v)
             }
-         if e = Mouse_LeftRelease then
+         if e = Mouse.LEFT_RELEASE then
             return
          }
       e := NextEvent(win)

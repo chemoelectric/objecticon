@@ -42,9 +42,8 @@
 package ipl.vidgets
 
 import
-   ipl.graphics(BevelRectangle)
-
-$include "keysyms.icn"
+   ipl.graphics(BevelRectangle),
+   graphics
 
 ############################################################################
 # Vmenu_item
@@ -149,13 +148,13 @@ local  rv
             rv :=  (push(\rv, self.uid))
          }
 
-      else if (\self.menu, e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease)) then rv := &null
-      else if e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) then rv :=  [self.uid]
+      else if (\self.menu, member(Mouse.RELEASE,e)) then rv := &null
+      else if member(Mouse.RELEASE,e) then rv :=  [self.uid]
       else if self.V.inrange(self, AmperX, AmperY) then rv := V_DRAGGING
       if \rv === V_DRAGGING then {
          e := NextEvent(self.win)
          if e === "\^s" then
-            until NextEvent(self.win) === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) ;
+            until member(Mouse.PRESS,NextEvent(self.win)) ;
          rv := V_FAIL
          }
       else break
@@ -213,12 +212,12 @@ end
 procedure event_Vmenu_bar_item(self, e)
 local rv, callback, i, t, labels
 
-   if e ~=== Mouse_LeftPress & e ~=== Mouse_MiddlePress & e ~=== Mouse_RightPress then
+   if not member(Mouse.PRESS, e) then
       fail				# not our event
    self.D.draw_on(self)
    show_Vmenu_frame(\self.menu)
    repeat {
-      if e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) then rv := &null
+      if member(Mouse.RELEASE, e) then rv := &null
       else if self.V.inrange(self, AmperX, AmperY) then rv := V_DRAGGING
       else if (self.ax <= AmperX <= self.ax+self.aw) & (AmperY >= self.ay+self.ah) then
          rv := (\self.menu).F.pick(self.menu, e)
@@ -337,11 +336,11 @@ local  focus, rv
    rv :=  V_DRAGGING
    repeat {
       focus := self.V.lookup(self, AmperX, AmperY) | &null
-      if (e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) & /focus) then fail
+      if (member(Mouse.RELEASE, e) & /focus) then fail
       else if (/sub, AmperY < self.ay) | (\sub, AmperX < self.ax) then return V_DRAGGING
       else if rv := (\focus).V.event(focus, e, sub) then return rv
       else if (e === "\^s" & /focus) then
-         until NextEvent(self.win) === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) ;
+         until member(Mouse.PRESS, NextEvent(self.win)) ;
       e := NextEvent(self.win)
    }
 end
@@ -503,7 +502,7 @@ local rv
    show_Vmenu_frame(\self.pd)
    rv := V_DRAGGING
    repeat {
-      if \e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) then rv := &null
+      if member(Mouse.RELEASE, \e) then rv := &null
       else if self.V.inrange(self, AmperX, AmperY) then rv := V_DRAGGING
       else if (self.ax <= AmperX <= self.ax+self.aw) & (AmperY >= self.ay+self.ah) then
          rv := (\self.pd).F.pick(self.pd, e)

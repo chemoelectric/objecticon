@@ -8,9 +8,7 @@
 
 package gui
 
-import util, lang
-
-$include "keysyms.icn"
+import util, lang, graphics
 
 #
 # This class represents a tree object.  A {Event.TREE_NODE_EXPANSION} event occurs when
@@ -228,7 +226,7 @@ class Tree(SelectableScrollArea)
                N.toggle_expanded()
                self.last_expanded := N
                tree_structure_changed()
-               parent_dialog.release(self.view, Mouse_LeftPress)
+               parent_dialog.release(self.view, Mouse.LEFT_PRESS)
                if curr_cursor ~=== self.cursor then
                   fire(Event.CURSOR_MOVED, e)
                # Just monitor the number of selections to detect a change.

@@ -102,7 +102,7 @@
 
 package ipl.graphics
 
-import graphics()
+import graphics(Window)
 
 # scale with gamma correction
 procedure ScaleGamma(v, g)		
@@ -232,7 +232,7 @@ procedure RandomColor(win, palette)
          n := integer(move(1))
          s := s[1 +: n * n * n]
          }
-   return graphics.Window.palette_color(palette, ?s)
+   return Window.palette_color(palette, ?s)
 
 end
 
@@ -250,7 +250,7 @@ procedure PaletteGrays(win, palette)
    palette := string(palette) | runerr(103, palette)
 
    if palette ? ="g" then
-      return graphics.Window.palette_chars(palette)
+      return Window.palette_chars(palette)
 
    return case palette of {
       "c1":	"0123456"

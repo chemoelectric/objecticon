@@ -30,9 +30,8 @@
 package ipl.vidgets
 
 import
-   ipl.graphics(GrooveRectangle)
-
-$include "keysyms.icn"
+   ipl.graphics(GrooveRectangle),
+   graphics
 
 ############################################################################
 # Vradio - the radio button.
@@ -109,7 +108,7 @@ procedure event_Vradio_entry(self, e)
       self.D.draw_on(self)
       self.don := 1
       }
-   if \e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) then 
+   if member(Mouse.RELEASE, \e) then 
       return self
 end
 
@@ -156,13 +155,13 @@ procedure event_Vradio_frame(self, e, x, y)
    local focus, rv
 
    if \self.callback.locked then fail
-   if e ~=== Mouse_LeftPress & e ~=== Mouse_MiddlePress & e ~=== Mouse_RightPress then fail
+   if e ~=== Mouse.LEFT_PRESS & e ~=== Mouse.MIDDLE_PRESS & e ~=== Mouse.RIGHT_PRESS then fail
    focus := self.V.lookup(self, x, y)
    (\focus).V.event(focus, e)
    repeat {
       e := NextEvent(self.win)
       if e === "\^s" then
-         until NextEvent(self.win) === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) ;
+         until member(Mouse.PRESS, NextEvent(self.win)) ;
       if self.V.inrange(self, AmperX, AmperY) then 
          focus := self.V.lookup(self, AmperX, AmperY)
       if rv := (\focus).V.event(focus, e) then {

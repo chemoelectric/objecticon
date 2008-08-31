@@ -46,7 +46,7 @@
 #
 #	The event set *ev* can be either:
 #	    -- a cset or string specifying particular keypresses of interest
-#	    -- one of the event keywords (Mouse_LeftPress, Mouse_RightDrag, &resize, etc.)
+#	    -- one of the events (Mouse.LEFT_PRESS, Mouse.RIGHT_DRAG, etc.)
 #
 #	When a matching event occurs, proc(win, arg, x, y, e) is called.  proc,
 #	win, and arg are as recorded from the sensor call.  x and y give the
@@ -96,10 +96,10 @@
 
 package ipl.evmux
 
+import graphics
+
 record EvMux_Rec(ev, proc, arg, x, y, w, h)
 global EvMux_Windows
-
-$include "keysyms.icn"
 
 ## sensor(win, ev, proc, arg, x, y, w, h) -- register an event responder.
 
@@ -167,16 +167,16 @@ end
 
 procedure evchar(s)
    return case s of {
-      Mouse_LeftPress:    "\237"	# mouse button 1 down
-      Mouse_MiddlePress:    "\236"	# mouse button 2 down
-      Mouse_RightPress:    "\235"	# mouse button 3 down
-      Mouse_LeftRelease:  "\234"	# mouse button 1 up
-      Mouse_MiddleRelease:  "\233"	# mouse button 2 up
-      Mouse_RightRelease:  "\232"	# mouse button 3 up
-      Mouse_LeftDrag:     "\231"	# mouse button 1 is dragging
-      Mouse_MiddleDrag:     "\230"	# mouse button 2 is dragging
-      Mouse_RightDrag:     "\227"	# mouse button 3 is dragging
-      Window_Resize:    "\226"	# window has resized
+      Mouse.LEFT_PRESS:    "\237"	# mouse button 1 down
+      Mouse.MIDDLE_PRESS:    "\236"	# mouse button 2 down
+      Mouse.RIGHT_PRESS:    "\235"	# mouse button 3 down
+      Mouse.LEFT_RELEASE:  "\234"	# mouse button 1 up
+      Mouse.MIDDLE_RELEASE:  "\233"	# mouse button 2 up
+      Mouse.RIGHT_RELEASE:  "\232"	# mouse button 3 up
+      Mouse.LEFT_DRAG:     "\231"	# mouse button 1 is dragging
+      Mouse.MIDDLE_DRAG:     "\230"	# mouse button 2 is dragging
+      Mouse.RIGHT_DRAG:     "\227"	# mouse button 3 is dragging
+      Mouse.WINDOW_RESIZE:    "\226"	# window has resized
    }
    fail
 end

@@ -8,7 +8,7 @@
 
 package gui
 
-$include "keysyms.icn"
+import graphics
 
 #
 # This is a class for popup menus.  It is an invisible placeholder
@@ -63,9 +63,7 @@ class PopupMenu(Component)
 
    public dialog_event(e)
       if \self.menu &
-         not(e.code === (Mouse_LeftPress | Mouse_RightPress | Mouse_MiddlePress | 
-                    Mouse_LeftRelease | Mouse_RightRelease | Mouse_MiddleRelease) & 
-                   e.x = px & e.y = py) then
+         not(e.x = px & e.y = py & member(Mouse.PRESS | Mouse.RELEASE, e.code)) then
          self.menu.handle_event(e)
    end
 

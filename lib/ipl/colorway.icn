@@ -97,9 +97,10 @@ import
    ipl.strings(maxlen),
    ipl.tables(keylist),
    ipl.vidgets(VSetState, vsetup),
-   ipl.xcode(xdecodet, xencodet)
+   ipl.xcode(xdecodet, xencodet),
+   graphics
 
-$include "keysyms.icn"
+
 
 global cw_active			# edit-mode switch
 global cw_active_vidget		# edit-mode vidget 
@@ -152,7 +153,7 @@ procedure edit_cw()
 
    repeat {
       case NextEvent(cw_win) of {
-         Mouse_LeftPress | Mouse_MiddlePress | Mouse_RightPress:   {
+         Mouse.LEFT_PRESS | Mouse.MIDDLE_PRESS | Mouse.RIGHT_PRESS:   {
             name := cw_names[(AmperY / Lheight) + 1]
             if AmperMeta then {
                delete(cw.table, name)

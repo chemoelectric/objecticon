@@ -8,7 +8,7 @@
 
 package gui
 
-$include "keysyms.icn"
+import graphics
 
 #
 # This is a base class for displaying an arbitrarily large object
@@ -394,14 +394,14 @@ class ScrollArea(Component)
 
    public default_on_key(e)
       case e of {
-         Key_Home : goto_vpos(0)
-         Key_End : goto_vpos((\self.vsb).total_size)
-         Key_PgUp : goto_vpos(get_area_y() - (\self.vsb).page_size)
-         Key_PgDn : goto_vpos(get_area_y() + (\self.vsb).page_size)
-         Key_Up : goto_vpos(get_area_y() - (\self.vsb).increment_size)
-         Key_Down : goto_vpos(get_area_y() + (\self.vsb).increment_size)
-         Key_Left : goto_hpos(get_area_x() - (\self.hsb).increment_size)
-         Key_Right : goto_hpos(get_area_x() + (\self.hsb).increment_size)
+         Key.HOME : goto_vpos(0)
+         Key.END : goto_vpos((\self.vsb).total_size)
+         Key.PGUP : goto_vpos(get_area_y() - (\self.vsb).page_size)
+         Key.PGDN : goto_vpos(get_area_y() + (\self.vsb).page_size)
+         Key.UP : goto_vpos(get_area_y() - (\self.vsb).increment_size)
+         Key.DOWN : goto_vpos(get_area_y() + (\self.vsb).increment_size)
+         Key.LEFT : goto_hpos(get_area_x() - (\self.hsb).increment_size)
+         Key.RIGHT : goto_hpos(get_area_x() + (\self.hsb).increment_size)
       }
    end
 
@@ -412,8 +412,7 @@ class ScrollArea(Component)
    end
 
    public keeps(e)
-      return \use_default_keys_flag &
-         e.code === (Key_Left | Key_Right | Key_Up | Key_Down)
+      return \use_default_keys_flag & member(Key.CURSOR, e.code)
    end
 
    #

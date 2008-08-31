@@ -42,9 +42,9 @@
 package ipl.vidgets
 
 import
-   ipl.graphics(BevelRectangle, BevelTriangle, FillTriangle)
+   ipl.graphics(BevelRectangle, BevelTriangle, FillTriangle),
+   graphics
 
-$include "keysyms.icn"
 $include "vdefns.icn"
 
 ############################################################################
@@ -80,13 +80,13 @@ static delay
    initial delay := proc("delay", 0)	# protect attractive name
 
    if \s.callback.locked then fail
-   if e === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) then {
+   if member(Mouse.PRESS, e) then {
       FillTriangle(s.win, s.ax + s.r, s.ay + s.r, s.r - 2, s.dir)
       BevelTriangle(s.win, s.ax + s.r, s.ay + s.r, s.r, s.dir, -2)
       s.callback.V.set(s.callback, s, prev := press_Varrow(s))
       delay(200)
       while (*Pending(s.win) = 0) |
-	    (NextEvent(s.win) === (Mouse_LeftDrag|Mouse_MiddleDrag|Mouse_RightDrag)) do {
+	    (member(Mouse.DRAG, NextEvent(s.win))) do {
          new := press_Varrow(s)
 	 if new ~= prev then
             s.callback.V.set(s.callback, s, prev := new)
@@ -172,9 +172,9 @@ procedure event_Vvthumb(s, e)
 local value, offset
 
    if \s.callback.locked then fail
-   if e === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) then {
+   if member(Mouse.PRESS,e) then {
       offset := (s.th + 1) / 2
-      until e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) do {
+      until member(Mouse.RELEASE,e) do {
          value := ((AmperY - offset - s.ay) / (0 ~= s.ws)) * s.cv_range | 0
          if \s.rev then
             s.callback.V.set(s.callback, s, s.callback.max - value, s.discont)
@@ -288,9 +288,9 @@ procedure event_Vhthumb(s, e)
 local value, offset
 
    if \s.callback.locked then fail
-   if e === (Mouse_LeftPress|Mouse_MiddlePress|Mouse_RightPress) then {
+   if member(Mouse.PRESS,e) then {
       offset := (s.tw + 1) / 2
-      until e === (Mouse_LeftRelease|Mouse_MiddleRelease|Mouse_RightRelease) do {
+      until member(Mouse.RELEASE,e) do {
          value := ((AmperX - offset - s.ax)/(0 ~= s.ws)) * s.cv_range | 0
          if \s.rev then
             s.callback.V.set(s.callback, s, s.callback.max - value, s.discont)

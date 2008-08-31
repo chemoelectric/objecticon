@@ -1,7 +1,5 @@
 import io
 
-$include "posix.icn"
-
 procedure test1(p, abs)
    local s
    s := Files.get_path(p).absolute().str()
@@ -20,7 +18,7 @@ procedure test3()
    Files.string_to_file("testfile", repl(&ucase,20)) | stop(&why)
    st1 := Files.stat("testfile")
    yes_no{"1.Stat size", st1.size = 520}
-   f := FileStream.open("testfile", O_RDWR)
+   f := FileStream.open("testfile", FileOpt.RDWR)
    st1 := f.stat()
    f.truncate(1000) | stop(&why)
    st2 := f.stat()

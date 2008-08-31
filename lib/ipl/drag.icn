@@ -50,7 +50,8 @@
 package ipl.drag
 
 import
-   ipl.graphics(ScratchCanvas)
+   ipl.graphics(ScratchCanvas),
+   graphics
 
 
 #  Drag(x, y, w, h) -- opaque drag
@@ -87,7 +88,7 @@ procedure Drag(win, x, y, w, h)
    xoff := x - AmperX
    yoff := y - AmperY
 
-   until NextEvent(win) === (Mouse_LeftRelease | Mouse_MiddleRelease | Mouse_RightRelease) do {
+   until member(Mouse.RELEASE, NextEvent(win)) do {
 
       # move the rectangle
       xnew := AmperX + xoff
@@ -153,7 +154,7 @@ procedure DragOutline(win, x, y, w, h)
    h -:= 1
 
    DrawRectangle(wrev, x, y, w, h)		# draw initial rectangle
-   until NextEvent(wrev) === (Mouse_LeftRelease | Mouse_MiddleRelease | Mouse_RightRelease) do {
+   until member(Mouse.RELEASE, NextEvent(wrev)) do {
       DrawRectangle(wrev, x, y, w, h)		# erase old rectangle
       x := AmperX + xoff
       y := AmperY + yoff

@@ -14,7 +14,7 @@
 #
 ############################################################################
 #
-#  Window() opens a window with provisions for option processing and
+#  OpenWindow() opens a window with provisions for option processing and
 #  error handling.  
 #
 #  The characteristics of the window are set from several sources:
@@ -24,23 +24,23 @@
 #
 ############################################################################
 #
-#  With one exception, arguments to Window() are attribute specifications
+#  With one exception, arguments to OpenWindow() are attribute specifications
 #  such as those used with open() and WAttrib().  Order is significant,
 #  with later attributes overriding earlier ones.
 #
 #  Additionally, the program argument list -- the single argument passed
-#  to the main procedure -- can be passed as an argument to Window().
+#  to the main procedure -- can be passed as an argument to OpenWindow().
 #  Options specified with a capital letter are removed from the list and
 #  interpreted as attribute specifications, again in a manner consistent
 #  with optwindow().
 #
-#  Because the Window() arguments are processed in order, attributes that
+#  Because the OpenWindow() arguments are processed in order, attributes that
 #  appear before the program arglist can be overridden by command-line
 #  options when the program is executed.  If attributes appear after the
 #  program arglist, they cannot be overridden.  For example, with
 #
 #	procedure main(args)
-#	Window("size=600,400", "fg=yellow", args, "bg=black")
+#	OpenWindow("size=600,400", "fg=yellow", args, "bg=black")
 #
 #  the program user can change the size and foreground color
 #  but not the background color.
@@ -54,7 +54,7 @@
 #  The following table lists the options recognized in the program arglist,
 #  the corresponding attribute (and WDefault()) names, the default values
 #  if any, and the meanings.  All legal attributes are allowed in the
-#  Window() call, but only these are set from the command line or
+#  OpenWindow() call, but only these are set from the command line or
 #  environment:
 #
 #	arg	attribute	default		meaning
@@ -101,9 +101,9 @@ import io, graphics
 global wdw_debug			# non-null if to trace open call
 
 
-#  Window(att, ..., arglist, ..., att) -- open window
+#  OpenWindow(att, ..., arglist, ..., att) -- open window
 
-procedure Window(args[])
+procedure OpenWindow(args[])
    local cs, pname, att, omit1, omit2, name, val, a, win
    static type
 
@@ -180,7 +180,7 @@ procedure wdw_defaults(att, arglist, pname)
    dpy := ("display=" || wdw_peekopt(arglist, "D")) | "fg=black"
 
    # Open an offscreen window.
-   w := graphics.Window.open("canvas=hidden", "size=32,32", dpy) |
+   w := Window.open("canvas=hidden", "size=32,32", dpy) |
       stop(&progname, ": can't open display")
 
    # Set attributes from environment.  Order is significant here:
@@ -356,7 +356,7 @@ procedure wdw_open(att, omit)
       ewrite(")")
       }
 
-   return graphics.Window.open ! args
+   return Window.open ! args
 end
 
 

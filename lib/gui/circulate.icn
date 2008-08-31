@@ -8,13 +8,11 @@
 
 package gui
 
-import lang
-
-$include "keysyms.icn"
+import graphics, lang
 
 class CirculateLabel(Label)
    public keeps(e)
-      return e.code === (Key_Up | Key_Down)
+      return member(Key.CURSOR_V, e.code)
    end
 
    public go_up(e)
@@ -26,9 +24,9 @@ class CirculateLabel(Label)
    end
 
    public on_key(e)
-      case e of {
-         Key_Up : parent.go_up(e)
-         Key_Down : parent.go_down(e)
+      case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
       }
    end
 

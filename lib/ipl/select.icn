@@ -29,9 +29,9 @@
 package ipl.select
 
 import
-   ipl.grecords(rect)
+   ipl.grecords(rect),
+   graphics
 
-$include "keysyms.icn"
 
 # interactive selection from window
 procedure select(win)		
@@ -50,7 +50,7 @@ procedure select(win)
       case state of {
          "wait": {			# waiting for selection
             case event of {
-               Mouse_LeftPress: {
+               Mouse.LEFT_PRESS: {
                   x1 := x0 := AmperX	# initial coordinates
                   y1 := y0 := AmperY
                   DrawRectangle(win, x0, y0, 0, 0)	# start selection
@@ -60,13 +60,13 @@ procedure select(win)
             }
          "select": {			# select the rectangle
             case event of {
-               Mouse_LeftDrag: {		# selecting ...
+               Mouse.LEFT_DRAG: {		# selecting ...
                   DrawRectangle(win, x0, y0, x1 - x0, y1 - y0) # erase
                   x1 := AmperX		# new opposite corner
                   y1 := AmperY
                   DrawRectangle(win, x0, y0, x1 - x0, y1 - y0) # draw
                   }
-               Mouse_LeftRelease: {		# got it!
+               Mouse.LEFT_RELEASE: {		# got it!
                   DrawRectangle(win, x0, y0, x1 - x0, y1 - y0) # erase
                   x1 := AmperX		# new opposite corner
                   y1 := AmperY

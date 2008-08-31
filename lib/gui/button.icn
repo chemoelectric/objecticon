@@ -8,9 +8,7 @@
 
 package gui
 
-import util
-
-$include "keysyms.icn"
+import graphics, util
 
 #
 # This is the parent class of the button classes, including
@@ -138,7 +136,7 @@ class Button(Toggle,Component)
    end
 
    public accepts_focus(e)
-      if e.code === Mouse_LeftPress & \self.no_click_focus_flag then
+      if e.code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
          fail
       return cast(self,Component).accepts_focus(e)
    end

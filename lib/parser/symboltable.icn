@@ -5,8 +5,6 @@ import
    lang(fatal), 
    io
 
-$include "posix.icn"
-
 class Symbol()
    public const
       scanned_file,
@@ -338,23 +336,23 @@ class SymbolTable(Connectable,SetFields)
       fi := f || ".icn"
       case file_mode of {
          PREFER_SRC : {
-            if Files.access(fi, R_OK) then 
+            if Files.access(fi, Access.R_OK) then 
                return fi
-            if Files.access(fu, R_OK) then
+            if Files.access(fu, Access.R_OK) then
                return fu
          }
          PREFER_U : {
-            if Files.access(fu, R_OK) then
+            if Files.access(fu, Access.R_OK) then
                return fu
-            if Files.access(fi, R_OK) then 
+            if Files.access(fi, Access.R_OK) then 
                return fi
          }
          ALWAYS_SRC : {
-            if Files.access(fi, R_OK) then 
+            if Files.access(fi, Access.R_OK) then 
                return fi
          }
          ALWAYS_U : {
-            if Files.access(fu, R_OK) then
+            if Files.access(fu, Access.R_OK) then
                return fu
          }
       }

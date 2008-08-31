@@ -36,7 +36,7 @@
 
 package ipl.vidgets
 
-$include "keysyms.icn"
+import graphics
 
 ############################################################################
 #	frame vidget -
@@ -288,7 +288,7 @@ end
 procedure event_Vroot_frame(s,e,x,y)
 local dest
 
-   if e === Window_Resize then {
+   if e === Mouse.WINDOW_RESIZE then {
       s.V.resize(s)
       return &null
    }
