@@ -463,6 +463,40 @@ int main(void)
         Const(O_LARGEFILE)
 #endif
 
+#ifdef S_IFMT
+        Const(S_IFMT)
+#endif
+#ifdef S_IFSOCK
+        Const(S_IFSOCK)
+#endif
+#ifdef S_IFLNK
+        Const(S_IFLNK)
+#endif
+#ifdef S_IFREG
+        Const(S_IFREG)
+#endif
+#ifdef S_IFBLK
+        Const(S_IFBLK)
+#endif
+#ifdef S_IFDIR
+        Const(S_IFDIR)
+#endif
+#ifdef S_IFCHR
+        Const(S_IFCHR)
+#endif
+#ifdef S_IFIFO
+        Const(S_IFIFO)
+#endif
+#ifdef S_ISUID
+        Const(S_ISUID)
+#endif
+#ifdef S_ISGID
+        Const(S_ISGID)
+#endif
+#ifdef S_ISVTX
+        Const(S_ISVTX)
+#endif
+
 #ifdef S_IRUSR
         Const(S_IRUSR)
 #endif
@@ -870,22 +904,24 @@ Const(POLLWRBAND)
 Const(POLLMSG)
 #endif
 
+#ifdef R_OK
+        Const(R_OK)
+#endif
+#ifdef W_OK
+        Const(W_OK)
+#endif
+#ifdef X_OK
+        Const(X_OK)
+#endif
+#ifdef F_OK
+        Const(F_OK)
+#endif
+
+
 Const(SEEK_SET)
 Const(SEEK_CUR)
 Const(SEEK_END)
 
-
-Const(XE_UNKNOWN)
-Const(XE_NOTSUPPORTED)
-Const(XE_DIRTOOLONG)
-Const(XE_HOSTNOTFOUND)
-Const(XE_NOIPADDR)
-Const(XE_NAMESRVERR)
-Const(XE_TMPNAMESRVERR)
-Const(XE_TIMEOUT)
-Const(XE_NAMETOOLONG)
-Const(XE_BADADDRFMT)
-Const(XE_EOF)
 
         exit(0);
 }

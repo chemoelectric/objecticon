@@ -2,7 +2,8 @@ package gui
 
 import 
    util,
-   ipl.sort
+   ipl.sort,
+   io
 
 #
 #
@@ -84,11 +85,11 @@ class DirectoryDialog(Dialog)
       }
       dir_list := []
       every e := !l do {
-         if e.mode[1] == "d" &
-            not(Files.is_relative_dir(e.name)) &
+         if e[2].mode[1] == "d" &
+            not(Files.is_relative_dir(e[1])) &
             (show_hidden_cb.is_checked() | 
-               not(Files.is_hidden(e.name))) then
-            put(dir_list, e.name)
+               not(Files.is_hidden(e[1]))) then
+            put(dir_list, e[1])
       }
       return isort(dir_list, map)
    end
@@ -222,10 +223,10 @@ class DirectoryDialog(Dialog)
       d.show_modal(self)
       if \d.okay then {
          s := self.get_dir_path().child(d.result).str()
-         if mkdir(s) then
+         if Files.mkdir(s) then
             goto_dir(s)
          else
-            msg("mkdir failed: " || image(s))
+            msg("mkdir failed: " || &why)
       }
    end
 

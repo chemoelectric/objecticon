@@ -1,6 +1,6 @@
 package gui
 
-import util, graphics
+import util, graphics, io
 
 class ImageCache()
    public static 
@@ -33,7 +33,7 @@ class ImageCache()
       every f := get_paths(s) do {
          if w := \map[f] then
             return w
-         if stat(f).mode[1] == "-" then {
+         if Files.stat(f).mode[1] == "-" then {
             w := Window.open("image=" || f, "canvas=hidden") | return error("Couldn't load image from file " || f)
             insert(map, f, w)
             insert(map, w, f)

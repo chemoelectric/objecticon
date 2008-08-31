@@ -51,31 +51,31 @@ class Time()
    # Constant data for time functions
    #
    public static const
-      TIME_MONTHS,
-      TIME_BASE_YEAR,
-      TIME_WEEK_DAYS,
-      TIME_TZCHARS,
-      TIME_UNIX_BASE_OFFSET,
-      TIME_DEFAULT_FORMAT,
-      TIME_MDAYS,
-      TIME_LEAP_MDAYS, 
-      TIME_CUM_MDAYS,
-      TIME_LEAP_CUM_MDAYS
+      MONTHS,
+      BASE_YEAR,
+      WEEK_DAYS,
+      TZCHARS,
+      UNIX_BASE_OFFSET,
+      DEFAULT_FORMAT,
+      MDAYS,
+      LEAP_MDAYS, 
+      CUM_MDAYS,
+      LEAP_CUM_MDAYS
 
    private static init()
-      TIME_DEFAULT_FORMAT := "yyyy/MM/dd HH:mm:ss zzz"
-      TIME_MONTHS := ["January", "February", "March", "April", "May",
+      DEFAULT_FORMAT := "yyyy/MM/dd HH:mm:ss zzz"
+      MONTHS := ["January", "February", "March", "April", "May",
                        "June", "July", "August", "September", "October",
                        "November", "December"]
-      TIME_WEEK_DAYS := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+      WEEK_DAYS := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
                           "Saturday", "Sunday"]
-      TIME_MDAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-      TIME_LEAP_MDAYS := [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-      TIME_CUM_MDAYS := [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
-      TIME_LEAP_CUM_MDAYS := [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
-      TIME_TZCHARS := '+-' ++ &digits ++ &ucase
-      TIME_BASE_YEAR := 1600     # must be a multiple of 400
-      TIME_UNIX_BASE_OFFSET := 11676096000
+      MDAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+      LEAP_MDAYS := [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+      CUM_MDAYS := [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
+      LEAP_CUM_MDAYS := [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
+      TZCHARS := '+-' ++ &digits ++ &ucase
+      BASE_YEAR := 1600     # must be a multiple of 400
+      UNIX_BASE_OFFSET := 11676096000
    end
 
    #
@@ -102,7 +102,7 @@ class Time()
    # 
    private format_weekday(w)
       local s
-      s := TIME_WEEK_DAYS[self.week_day() + 1]
+      s := WEEK_DAYS[self.week_day() + 1]
       if w < 4 then
          return s[1:4]
       else
@@ -118,7 +118,7 @@ class Time()
       if w < 3 then
          return format_int(self.month, w)
 
-      s := TIME_MONTHS[self.month]
+      s := MONTHS[self.month]
       if w = 3 then
          return s[1:4]
       else
@@ -191,7 +191,7 @@ class Time()
    public format(p)
       local res, ch, w
       
-      /p := TIME_DEFAULT_FORMAT
+      /p := DEFAULT_FORMAT
 
       res := ""
       p ? {
@@ -261,7 +261,7 @@ class Time()
    #
    private parse_timezone()
       local j, z
-      j := many(TIME_TZCHARS, psub, ppos) | return error("Timezone expected")
+      j := many(TZCHARS, psub, ppos) | return error("Timezone expected")
       z := Timezone.get_known_timezone(psub[ppos:j]) | return error("Invalid timezone")
       ppos := j
       return z
@@ -376,7 +376,7 @@ class Time()
    public parse(s, p)
       local y, d, m, hh, mm, ss, z, ampm, lit, ch, w
       
-      /p := TIME_DEFAULT_FORMAT
+      /p := DEFAULT_FORMAT
 
       psub := s
       ppos := 1
@@ -457,7 +457,7 @@ class Time()
    # timezone.
    #
    public to_date_clock()
-      return format(TIME_DEFAULT_FORMAT)
+      return format(DEFAULT_FORMAT)
    end
 
    #
@@ -498,7 +498,7 @@ class Time()
    end
 
    #
-   # Compute day of week.  0 = Sunday etc.  Add 6 because 1/1/TIME_BASE_YEAR
+   # Compute day of week.  0 = Sunday etc.  Add 6 because 1/1/BASE_YEAR
    # is always a Saturday
    #
    public week_day()
@@ -582,7 +582,7 @@ class Time()
          self.mday +:= get_mdays(self.year, self.month)
       }
 
-      year_diff := self.year - TIME_BASE_YEAR
+      year_diff := self.year - BASE_YEAR
 
       days := 365 * year_diff + (year_diff + 3) / 4 - (year_diff + 99) / 100 +
                (year_diff + 399) / 400 + get_cum_mdays(self.year, self.month) + self.mday - 1
@@ -604,7 +604,7 @@ class Time()
       n := n / 24
 
       # Reduce down to 400 year period - 400 years = 400 * 365.25 - 3
-      year := TIME_BASE_YEAR + 400 * (n / 146097)
+      year := BASE_YEAR + 400 * (n / 146097)
       n %:= 146097
 
       # Case analysis within the 400 years to reduce to 4 years of 1460 or 1461 days
@@ -804,9 +804,9 @@ class Time()
    #
    private get_cum_mdays(y, m)
       return if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
-         TIME_LEAP_CUM_MDAYS[m]   # leap year
+         LEAP_CUM_MDAYS[m]   # leap year
       else
-         TIME_CUM_MDAYS[m]   # non-leap year
+         CUM_MDAYS[m]   # non-leap year
    end
    
    #
@@ -815,9 +815,9 @@ class Time()
    #
    private get_mdays(y, m)
       return if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
-         TIME_LEAP_MDAYS[m]               # leap year
+         LEAP_MDAYS[m]               # leap year
       else
-         TIME_MDAYS[m]               # non-leap year
+         MDAYS[m]               # non-leap year
    end
 
    #
@@ -843,8 +843,8 @@ class Time()
          hh := get_int() | 0
          mm := get_int() | 0
          ss := get_int() | 0
-         if tab(upto(TIME_TZCHARS)) then
-            z := Timezone.get_known_timezone(tab(many(TIME_TZCHARS))) | return error("No timezone")
+         if tab(upto(TZCHARS)) then
+            z := Timezone.get_known_timezone(tab(many(TZCHARS))) | return error("No timezone")
          else
             z := Timezone.SYSTEM_TIMEZONE
       }
@@ -857,7 +857,15 @@ class Time()
    # @param z an optional {Timezone}.  If omitted, the system timezone is used.
    #
    public set_current_time(z)
-      set_seconds(TIME_UNIX_BASE_OFFSET + gettimeofday()[1], z)
+      set_seconds(UNIX_BASE_OFFSET + gettimeofday()[1], z)
+   end
+
+   #
+   # Set to a time based on the number of seconds past the Unix base date.
+   # @param z an optional {Timezone}.  If omitted, the system timezone is used.
+   #
+   public set_unix_seconds(t, z)
+      set_seconds(UNIX_BASE_OFFSET + t, z)
    end
 
    #
@@ -865,14 +873,14 @@ class Time()
    # time represented by this object.
    #
    public get_age()
-      return TIME_UNIX_BASE_OFFSET + gettimeofday()[1] - self.seconds
+      return UNIX_BASE_OFFSET + gettimeofday()[1] - self.seconds
    end
 
    #
    # Set the fields
    #
    public set_fields(year, month, mday, hour, min, sec, zone)   
-      self.year := \year | TIME_BASE_YEAR
+      self.year := \year | BASE_YEAR
       self.month := \month | 1
       self.mday := \mday | 1
       self.hour := \hour | 0
@@ -899,8 +907,8 @@ class Time()
    public static month_to_num(s)
       local i
       s := map(s)
-      every i := 1 to *TIME_MONTHS do {
-         if match(s, map(TIME_MONTHS[i])) then
+      every i := 1 to *MONTHS do {
+         if match(s, map(MONTHS[i])) then
             return i
       }
    end

@@ -1,9 +1,11 @@
 package parser
 
 import 
-   util(Files, Connectable, SetFields, error), 
+   util(Connectable, SetFields, error), 
    lang(fatal), 
    io
+
+$include "posix.icn"
 
 class Symbol()
    public const
@@ -336,23 +338,23 @@ class SymbolTable(Connectable,SetFields)
       fi := f || ".icn"
       case file_mode of {
          PREFER_SRC : {
-            if stat(fi) then 
+            if Files.access(fi, R_OK) then 
                return fi
-            if stat(fu) then
+            if Files.access(fu, R_OK) then
                return fu
          }
          PREFER_U : {
-            if stat(fu) then
+            if Files.access(fu, R_OK) then
                return fu
-            if stat(fi) then 
+            if Files.access(fi, R_OK) then 
                return fi
          }
          ALWAYS_SRC : {
-            if stat(fi) then 
+            if Files.access(fi, R_OK) then 
                return fi
          }
          ALWAYS_U : {
-            if stat(fu) then
+            if Files.access(fu, R_OK) then
                return fu
          }
       }

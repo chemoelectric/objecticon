@@ -5,21 +5,15 @@ import util(error, to_flag, SetFields)
 $include "posix.icn"
 
 class Stream()
-   public in(n)
-      return error("This type of stream is write-only")
-   end
+   public defer in(n)
 
-   public out(s)
-      return error("This type of stream is read-only")
-   end
+   public defer out(s)
 
-   public seek(offset)
-      return error("This type of stream is not seekable")
-   end
+   public defer seek(offset)
 
-   public tell()
-      return error("This type of stream is not seekable")
-   end
+   public defer tell()
+
+   public defer get_mode()
 
    public defer close()
 
@@ -46,7 +40,20 @@ class Stream()
    end
 
    public reads(n)
-      return in(n)
+      local s, t
+      s := ""
+      while n > 0 do {
+         if t := in(n) then {
+            s ||:= t
+            n -:= *t
+         } else {
+            if eof() & (*s > 0) then
+               return s
+            else
+               fail
+         }
+      }
+      return s
    end
 
    public writes(a[])
@@ -120,8 +127,12 @@ class StringStream(Stream)
    public close()
    end
 
+   public get_mode()
+      return "rws"
+   end
+
    public eof()
-      return \f_eof
+      return \.f_eof
    end
 
    public get_str()
@@ -170,8 +181,8 @@ class BufferStream(Stream, SetFields)
                break
             }
          }
-         if *rbuff = 0 then
-            rpos := other.tell() | &null
+         if *rbuff = 0 & upto('s', other.get_mode()) then
+            rpos := other.tell() | fail
          rbuff ||:= other.in(buff_size) | {
             other.eof() | fail
             t := rbuff
@@ -200,7 +211,8 @@ class BufferStream(Stream, SetFields)
             \rpos +:= *t
          }
       } else if n < buff_size then {
-         rpos := other.tell() | &null
+         if upto('s', other.get_mode()) then
+            rpos := other.tell() | fail
          rbuff := other.in(buff_size) | fail
          rbuff ? {
             t := move(n) | tab(0)
@@ -237,7 +249,7 @@ class BufferStream(Stream, SetFields)
    end
 
    public unbuff()
-      if *rbuff > 0 & \rpos then {
+      if *rbuff > 0 & \rpos & upto('s', other.get_mode()) then {
          other.seek(rpos) | fail
          rbuff := ""
          rpos := &null
@@ -266,6 +278,10 @@ class BufferStream(Stream, SetFields)
       return other.tell()
    end
 
+   public get_mode()
+      return other.get_mode()
+   end
+
    public eof()
       return other.eof()
    end
@@ -292,10 +308,20 @@ end
 
 class DescStream(Stream)
    protected 
-      fd
+      fd,
+      mode,
+      f_eof
 
    public get_fd()
       return .fd
+   end
+
+   public get_mode()
+      return .mode
+   end
+
+   public eof()
+      return \.f_eof
    end
 
    private static get_fds(l)
@@ -360,8 +386,9 @@ class DescStream(Stream)
    private static defer select_impl(rl, wl, el, timeout)
    private static defer poll_impl(a[])
 
-   package new(fd)
+   protected new(fd, mode)
       self.fd := fd
+      self.mode := mode
       return
    end
 end
@@ -370,11 +397,11 @@ procedure open(name, mode)
    local i
    i := case mode of {
       &null | "r" : O_RDONLY
-      "w" : ior(O_WRONLY, ior(O_TRUNC, O_CREAT))
+      "w" : ior(O_WRONLY, O_TRUNC, O_CREAT)
       "b"|"rw"|"r+" : O_RDWR
-      "crw"|"w+" : ior(O_RDWR, ior(O_TRUNC, O_CREAT))
-      "a" : ior(O_WRONLY, ior(O_APPEND, O_CREAT))
-      "a+" : ior(O_RDWR, ior(O_APPEND, O_CREAT))
+      "crw"|"w+" : ior(O_RDWR, O_TRUNC, O_CREAT)
+      "a" : ior(O_WRONLY, O_APPEND, O_CREAT)
+      "a+" : ior(O_RDWR, O_APPEND, O_CREAT)
       default: return error("Invalid mode flag: " || mode)
    }
    return BufferStream("other=",FileStream.open(name, i))
@@ -451,7 +478,7 @@ end
 procedure reads(f, n)
    /f := FileStream.b_stdin
    /n := 1
-   return f.in(n)
+   return f.reads(n)
 end
 
 procedure close(f)
@@ -460,9 +487,6 @@ procedure close(f)
 end
 
 class FileStream(DescStream)
-   private 
-      f_eof
-
    public static const
       stdin, 
       stdout,
@@ -471,11 +495,19 @@ class FileStream(DescStream)
       b_stdout,
       b_stderr
 
-   public static open(name, flags)
-      return FileStream(open_impl(name, flags))
+   public static open(name, flags, perm)
+      local mode
+      if iand(flags, O_WRONLY) ~= 0 then
+         mode := "w"
+      else if iand(flags, O_RDWR) ~= 0 then
+         mode := "rw"
+      else
+         mode := "r"
+      mode ||:= "s"
+      return FileStream(open_impl(name, flags, perm), mode)
    end
 
-   private static defer open_impl(path, flags, mode)
+   private static defer open_impl(path, flags, perm)
 
    private static init()
       stdin := FileStream(0)
@@ -494,25 +526,26 @@ class FileStream(DescStream)
 
    public defer tell()
 
-   public defer close()
+   public defer truncate(len)
 
-   public eof()
-      return \f_eof
+   public stat()
+      return Stat!stat_impl()
    end
+
+   private defer stat_impl()
+
+   public defer close()
 end
 
 class SocketStream(DescStream)
-   private 
-      f_eof
-
    public static socket(domain, typ)
-      return SocketStream(socket_impl(domain, typ))
+      return SocketStream(socket_impl(domain, typ), "rw")
    end
 
    public static socketpair(typ)
       local t
       t := socketpair_impl(typ) | fail
-      return [SocketStream(t[1]), SocketStream(t[2])]
+      return [SocketStream(t[1], "rw"), SocketStream(t[2], "rw")]
    end
 
    public defer in(n)
@@ -524,7 +557,7 @@ class SocketStream(DescStream)
    public defer listen(backlog)
 
    public accept()
-      return SocketStream(accept_impl())
+      return SocketStream(accept_impl(), "rw")
    end
 
    private defer accept_impl()
@@ -532,10 +565,6 @@ class SocketStream(DescStream)
    public defer out(s)
 
    public defer close()
-
-   public eof()
-      return \f_eof
-   end
 
    private static defer socketpair_impl(typ)
 
@@ -581,12 +610,16 @@ class DirStream(Stream)
    public defer close()
 
    public eof()
-      return \f_eof
+      return \.f_eof
+   end
+
+   public get_mode()
+      return "r"
    end
 
    private static defer open_impl(path)
 
-   package new(dd)
+   private new(dd)
       self.dd := dd
       return
    end
@@ -597,17 +630,21 @@ class ProgStream(FileStream)
       pid
 
    public static open(cmd, flags)
-      local l
+      local l, mode
+      if iand(flags, O_WRONLY) ~= 0 then
+         mode := "w"
+      else
+         mode := "r"
       l := open_impl(cmd, flags) | fail
-      return ProgStream(l[1], l[2])
+      return ProgStream(l[1], l[2], mode)
    end
 
    public defer close()
 
    private static defer open_impl(cmd, flags)
 
-   package new(fd, pid)
-      cast(self,FileStream).new(fd)
+   private new(fd, pid, mode)
+      cast(self,FileStream).new(fd, mode)
       self.pid := pid
       return
    end

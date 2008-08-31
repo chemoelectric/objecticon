@@ -566,7 +566,7 @@ end
 
 # succeed if name is a directory
 procedure directory(name)		
-   if stat(name).mode[1] == "d" then
+   if Files.stat(name).mode[1] == "d" then
       return name
 end
 

@@ -141,8 +141,10 @@ class URL()
             return error("No address")
          if =":" then {
             set_port(integer(tab(many(&digits)))) | return error("Bad port")
-         } else
-            set_port(getserv(get_protocol() | "www").port) | return error("Unknown protocol")
+         } else if protocol == "http" then
+            set_port(80)
+         else
+            return error("Port required")
 
          if pos(0) then
             set_file("/")

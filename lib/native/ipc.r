@@ -66,6 +66,8 @@ if (!is:object(p))
     runerr(602, p);
 m##_dptr = c_get_instance_data(&p, (dptr)&idf);
 (m) = IntVal(*m##_dptr);
+if (m < 0)
+    runerr(205, p);
 #enddef
 
 function{0,1} ipc_Shm_open_public_impl(key)
@@ -77,7 +79,7 @@ function{0,1} ipc_Shm_open_public_impl(key)
        if (top_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
            if (errno == ENOENT) {
-               on_error(errno);
+               on_error();
                fail;
            }
            aborted("Couldn't get shm id");
@@ -102,7 +104,7 @@ function{0,1} ipc_Shm_create_public_impl(key, str)
        if (top_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
            if (errno == EEXIST) {
-               on_error(errno);
+               on_error();
                fail;
            }
            aborted("Couldn't get shm id");
@@ -206,6 +208,8 @@ function{0} ipc_Shm_remove(self)
        shmctl(top_id, IPC_RMID, 0);
        shmdt(tp);
        remove_resource(top_id, 0);
+
+       *top_id_dptr = minusonedesc;
 
        return nulldesc;
    }
@@ -320,7 +324,7 @@ function{0,1} ipc_Sem_open_public_impl(key)
        if (sem_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
            if (errno == ENOENT) {
-               on_error(errno);
+               on_error();
                fail;
            }
            aborted("Couldn't get sem id");
@@ -343,7 +347,7 @@ function{0,1} ipc_Sem_create_public_impl(key, val)
        if (sem_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
            if (errno == EEXIST) {
-               on_error(errno);
+               on_error();
                fail;
            }
            aborted("Couldn't get sem id");
@@ -433,7 +437,7 @@ function{1} ipc_Sem_semop_nowait(self, n)
        if (semop_ex(sem_id, &p_buf, 1) == -1) {
            if (errno == EAGAIN) {
                /* Okay, it's not ready,so fail */
-               on_error(errno);
+               on_error();
                fail;
            }
            /* A runtime error. */
@@ -448,6 +452,7 @@ function{1} ipc_Sem_remove(self)
        IdParam(self, sem_id);
        semctl(sem_id, -1, IPC_RMID, 0);
        remove_resource(sem_id, 1);
+       *sem_id_dptr = minusonedesc;
        return nulldesc;
    }
 end
@@ -461,7 +466,7 @@ function{0,1} ipc_Msg_open_public_impl(key)
        if (top_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
            if (errno == ENOENT) {
-               on_error(errno);
+               on_error();
                fail;
            }
            aborted("Couldn't get top id");
@@ -481,7 +486,7 @@ function{0,1} ipc_Msg_create_public_impl(key)
        if (top_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
            if (errno == EEXIST) {
-               on_error(errno);
+               on_error();
                fail;
            }
            aborted("Couldn't get shm id");
@@ -577,8 +582,9 @@ function{1} ipc_Msg_remove(self)
         shmctl(top_id, IPC_RMID, 0);
         shmdt(tp);
         remove_resource(top_id, 2);
+        *top_id_dptr = minusonedesc;
 
-       return nulldesc;
+        return nulldesc;
    }
 end
 
@@ -719,7 +725,7 @@ function{0,1} ipc_Msg_attempt_impl(self)
        if (msgrcv_ex(tp->msg_id, &mh, sizeof(mh.u), 0, IPC_NOWAIT) == -1) {
            if (errno == ENOMSG) {
                /* Okay, it's not ready,so fail.  First signal. */
-               on_error(errno);
+               on_error();
                p_buf.sem_op = 1;
                if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
                    aborted("signal failed");

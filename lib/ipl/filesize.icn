@@ -21,18 +21,9 @@
 
 package ipl.filesize
 
+import io
+
 # file size
 procedure filesize(s)			
-
-
-$ifdef _POSIX
-   return stat(s).size
-$else
-
-   input := open(s) | fail
-   size := 0
-   while size +:= *reads(input, 10000)
-   close(input)
-   return size
-$endif
+   return Files.stat(s).size
 end
