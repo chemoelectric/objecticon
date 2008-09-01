@@ -33,7 +33,7 @@ class TextPaint(Paint)
    end
 
    public draw(W, x, y)
-      DrawStringEx(W, x, y, str, accel)
+      draw_string_ex(W, x, y, str, accel)
    end
 
    public new(s)
@@ -51,7 +51,7 @@ class ImageStringPaint(Paint)
    end
 
    public draw(W, x, y)
-      DrawImageEx(W, x, y, str)
+      draw_image_ex(W, x, y, str)
    end
 
    public new(s)
@@ -229,7 +229,7 @@ class GridPaint(Paint)
             Align.C : y + (curr_cell.obj[lno].h - win.attrib("fheight")) / 2
             Align.B : y + curr_cell.obj[lno].h - win.attrib("fheight")
          }
-         DrawStringEx(win, x, y1, s, accel)
+         draw_string_ex(win, x, y1, s, accel)
          # Just print the accelerator once.
          if upto(\accel, map(s)) then
             accel := &null
@@ -295,7 +295,7 @@ class GridPaint(Paint)
             Align.C : y + (curr_cell.obj[lno].h - image_height(icon)) / 2
             Align.B : y + curr_cell.obj[lno].h - image_height(icon)
          }
-         DrawImageEx(win, 
+         draw_image_ex(win, 
                      x, 
                      y1,
                      icon)
@@ -352,10 +352,10 @@ class GridPaint(Paint)
 
       cw := Gui.style.get_dashed_clone(win)
 
-      Rectangle(cw, 0, 0, w, h)
+      rectangle(cw, 0, 0, w, h)
 
       every i := !(\g).info do {
-         Rectangle(cw,
+         rectangle(cw,
                    g.col_x[i.x],
                    g.row_y[i.y],
                    g.slice(i.x, i.w, g.a_col_w),
@@ -475,7 +475,7 @@ class ImagePaint(Paint,SetFields)
          win := Window.open!(attribs ||| ["size=" || (0 < image_width(self.image_str)) || 
                                     "," || (0 < image_height(self.image_str)),
                                     "canvas=hidden"])
-         DrawImageEx(\win, 0, 0, self.image_str)
+         draw_image_ex(\win, 0, 0, self.image_str)
       } else if \self.image_file then {
          if \self.use_cache_flag then {
             if win := ImageCache.get(self.image_file) then

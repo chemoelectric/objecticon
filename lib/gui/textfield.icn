@@ -276,7 +276,7 @@ class TextField(Component)
 
       s := get_view()
       i := self.cbwin.text_width(s[1:self.cursor])
-      j := i + CharWidth(self.cbwin, s[self.cursor])
+      j := i + char_width(self.cbwin, s[self.cursor])
       if loff > i then
          loff := i
       else if loff + self.tw < j then
@@ -599,7 +599,7 @@ class TextField(Component)
       y1 := self.y + (self.h - fh) / 2
       s := get_view()
 
-      DrawStringEx(self.cbwin, self.tx - loff, y1, s)
+      draw_string_ex(self.cbwin, self.tx - loff, y1, s)
 
       border.draw_rect(self.cbwin, self)
 
@@ -609,20 +609,20 @@ class TextField(Component)
       if self.has_focus() & self.is_unshaded() then {
          if \self.is_editable_flag then {
             cw := Gui.style.get_cursor_clone(self.cbwin)
-            cw.erase_rectangle(self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
+            erase_rectangle(cw, self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
                                y1, self.cbwin.text_width(s[cursor]), fh)
-            DrawStringEx(cw, self.tx - loff + cw.text_width(s[1:cursor]), y1, s[cursor])
+            draw_string_ex(cw, self.tx - loff + cw.text_width(s[1:cursor]), y1, s[cursor])
             cw.uncouple()
          } else {
             cw := Gui.style.get_focus_clone(self.cbwin)
-            Rectangle(cw, 
+            rectangle(cw, 
                       self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
                       y1, self.cbwin.text_width(s[cursor]), fh)
             cw.uncouple()
          }
       } else if \self.is_editable_flag | has_region() then {
          cw := Gui.style.get_dashed_clone(self.cbwin)
-         Rectangle(cw, self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
+         rectangle(cw, self.tx - loff + self.cbwin.text_width(s[1:cursor]), 
                    y1, self.cbwin.text_width(s[cursor]), fh)
          cw.uncouple()
       }

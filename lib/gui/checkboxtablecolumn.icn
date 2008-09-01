@@ -82,7 +82,7 @@ class CheckBoxTableColumn(TableColumn)
          default : fatal(self, "Bad column alignment")
       }
       y1 := cy + (ch - img_h) / 2
-      DrawImageEx(W, x1, y1, 
+      draw_image_ex(W, x1, y1, 
                   if data == "y" then img_down else img_up)
    end
 

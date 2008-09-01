@@ -20,7 +20,7 @@ class SliderArea(Component)
                                   self.inner_x, self.inner_y, 
                                   self.inner_w, self.inner_h,
                                   Gui.BORDER_WIDTH)
-      EraseRectangle(self.cbwin, self.slider_x, self.slider_y, self.slider_w, self.slider_h)
+      erase_rectangle(self.cbwin, self.slider_x, self.slider_y, self.slider_w, self.slider_h)
       Gui.style.draw_raised_rectangle(self.cbwin, 
                                   self.slider_x, self.slider_y, 
                                   self.slider_w, self.slider_h,
@@ -413,14 +413,14 @@ class Slider(Component)
          i := self.lo
          while i <= self.hi do {
             yp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            DrawStringEx(self.cbwin, labels_pos, yp - fh / 2, i)
+            draw_string_ex(self.cbwin, labels_pos, yp - fh / 2, i)
             i +:= labels
          }
       } else {
          i := self.lo
          while i <= self.hi do {
             xp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            DrawStringEx(self.cbwin, xp - self.cbwin.text_width(i) / 2, labels_pos - fh / 2, i)
+            draw_string_ex(self.cbwin, xp - self.cbwin.text_width(i) / 2, labels_pos - fh / 2, i)
             i +:= labels
          }
       }

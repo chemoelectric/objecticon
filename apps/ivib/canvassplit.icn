@@ -119,7 +119,7 @@ class CanvasSplit(CanvasComponent,Split)
          center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Split>")
          display_child(r, first)
          display_child(r, second)
-         Rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         rectangle(self.cbwin, self.x, self.y, self.w, self.h)
       }
    end
 
@@ -227,7 +227,7 @@ class CanvasSplitContent(CanvasComponent,Component)
       if in_preview() then
          cast(self,Component).display(r)
       else {
-         Rectangle(parent.cbwin, parent.x, parent.y, parent.w, parent.h)
+         rectangle(parent.cbwin, parent.x, parent.y, parent.w, parent.h)
          center_string(self.cbwin, parent.x + parent.w / 2, parent.y + 10, "<Split>")
          display_children(r)
       }

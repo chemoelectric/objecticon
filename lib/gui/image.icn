@@ -98,7 +98,7 @@ class Image(Component)
          win := Window.open!(attribs ||| ["size=" || (0 < image_width(self.image_str)) || 
                                           "," || (0 < image_height(self.image_str)),
                                           "canvas=hidden"])
-         DrawImageEx(\win, 0, 0, self.image_str)
+         draw_image_ex(\win, 0, 0, self.image_str)
       } else if \self.image_file then {
          if \self.use_cache_flag then {
             if win := ImageCache.get(self.image_file) then

@@ -182,10 +182,10 @@ class EditableTextList(LineBasedScrollArea)
 
       # Search for the nearest x position on the new line corresponding to
       # the current x position.
-      d := TextWidthEx(view.cbwin, self.contents[cursor_y], 1, self.cursor_x, self.tab_width)
+      d := text_width_ex(view.cbwin, self.contents[cursor_y], 1, self.cursor_x, self.tab_width)
       dest := self.contents[n]
       i := 1
-      while (i <= *dest) & (TextWidthEx(view.cbwin, dest, 1, i, self.tab_width) < d) do
+      while (i <= *dest) & (text_width_ex(view.cbwin, dest, 1, i, self.tab_width) < d) do
          i +:= 1
 
       self.cursor_x := i
@@ -218,16 +218,16 @@ class EditableTextList(LineBasedScrollArea)
       }
 
       s := v.str
-      i := TextWidthEx(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
-      j := i + CharWidth(view.cbwin, s[self.cursor_x - v.first + 1])
+      i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
+      j := i + char_width(view.cbwin, s[self.cursor_x - v.first + 1])
       l := self.get_left_pos()
       if self.view.x - l > i then {
          while (self.cursor_x - v.first + 1 < *s) & 
-            (TextWidthEx(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width) < self.view.x - l) do
+            (text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width) < self.view.x - l) do
             self.cursor_x +:= 1
       } else if self.view.x - l + self.view.w < j then {
          while (self.cursor_x - v.first + 1 > 1) & 
-            TextWidthEx(view.cbwin, s, 1, self.cursor_x - v.first + 2, self.tab_width) > self.view.x - l + self.view.w do
+            text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 2, self.tab_width) > self.view.x - l + self.view.w do
             self.cursor_x -:= 1
       }
    end
@@ -258,8 +258,8 @@ class EditableTextList(LineBasedScrollArea)
 
       v := self.view_list[vi]
       s := v.str
-      i := TextWidthEx(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
-      j := i + CharWidth(view.cbwin, s[self.cursor_x - v.first + 1])
+      i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
+      j := i + char_width(view.cbwin, s[self.cursor_x - v.first + 1])
       l := self.get_left_pos()
       if self.view.x - l > i then
          goto_hpos(i)
@@ -453,7 +453,7 @@ class EditableTextList(LineBasedScrollArea)
       s := v.str
       i := 1
       l := self.get_left_pos()
-      while (i < *s) & (TextWidthEx(view.cbwin, s, 1, i + 1, self.tab_width) < e.x - l) do
+      while (i < *s) & (text_width_ex(view.cbwin, s, 1, i + 1, self.tab_width) < e.x - l) do
          i+:= 1
 
       self.cursor_x := v.first + i - 1
@@ -610,7 +610,7 @@ class EditableTextList(LineBasedScrollArea)
             l := self.get_left_pos()
             s := v.str
             while (self.cursor_x > v.first) & 
-               TextWidthEx(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
+               text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
                            self.tab_width) >= self.view.x - l do {
                self.cursor_x -:= 1
             }
@@ -620,7 +620,7 @@ class EditableTextList(LineBasedScrollArea)
             l := self.get_left_pos()
             s := v.str
             while (self.cursor_x - v.first + 1 < *s) & 
-               TextWidthEx(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
+               text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
                            self.tab_width) < self.view.x - l + self.view.w do {
                self.cursor_x +:= 1
             }
@@ -923,29 +923,29 @@ class EditableTextList(LineBasedScrollArea)
       v := self.view_list[i]
       s := v.str
       si := self.cursor_x - v.first + 1
-      DrawStringEx(view.cbwin, xp, yp, detab(s, self.tab_width + 1))
+      draw_string_ex(view.cbwin, xp, yp, detab(s, self.tab_width + 1))
       if (v.index = \self.cursor_y) & (v.first <= \self.cursor_x <= v.last) then {
          if self.has_focus() & self.is_unshaded()then {
-            off := TextWidthEx(view.cbwin, s, 1, si, self.tab_width)
+            off := text_width_ex(view.cbwin, s, 1, si, self.tab_width)
             if \self.is_editable_flag then {
                cw := Gui.style.get_cursor_clone(view.cbwin)
-               EraseRectangle(cw, xp + off, yp, 
-                              CharWidth(view.cbwin, s[si]), self.line_height)
+               erase_rectangle(cw, xp + off, yp, 
+                              char_width(view.cbwin, s[si]), self.line_height)
                if s[si] ~== "\t" then
-                  DrawStringEx(cw, xp + off, yp, s[si])
+                  draw_string_ex(cw, xp + off, yp, s[si])
                cw.uncouple()
             } else {
                cw := Gui.style.get_focus_clone(view.cbwin)
-               Rectangle(cw, xp + off, yp, 
-                         CharWidth(view.cbwin, s[si]), self.line_height)
+               rectangle(cw, xp + off, yp, 
+                         char_width(view.cbwin, s[si]), self.line_height)
                cw.uncouple()
             }
          } else if \self.is_editable_flag | has_region() then {
             cw := Gui.style.get_dashed_clone(view.cbwin)
-            Rectangle(cw,
-                      xp + TextWidthEx(view.cbwin, s, 1, si, self.tab_width), 
+            rectangle(cw,
+                      xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
                       yp, 
-                      CharWidth(view.cbwin, s[si]), 
+                      char_width(view.cbwin, s[si]), 
                       self.line_height)
             cw.uncouple()
          }
@@ -977,8 +977,8 @@ class EditableTextList(LineBasedScrollArea)
             }
          }
          if \r then {
-            off1 := TextWidthEx(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
-            off2 := TextWidthEx(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
+            off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
+            off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
             rev.fill_rectangle(xp + off1, yp,  off2 - off1, self.line_height)
          }
       }
@@ -1052,7 +1052,7 @@ class EditableTextList(LineBasedScrollArea)
          every j := line_splitter.split(s) do {
             p := s[pos:j]
             put(view_list, ViewLine(i, p, pos, j - 1, 
-                                    TextWidthEx(view.cbwin, p,,, self.tab_width)))
+                                    text_width_ex(view.cbwin, p,,, self.tab_width)))
             pos := j
          }
       }
@@ -1118,7 +1118,7 @@ class EditableTextList(LineBasedScrollArea)
          s := self.contents[i] || " "
          every j := line_splitter.split(s) do {
             p := s[pos:j]
-            v := ViewLine(i, p, pos, j - 1, TextWidthEx(view.cbwin, p,,, self.tab_width))
+            v := ViewLine(i, p, pos, j - 1, text_width_ex(view.cbwin, p,,, self.tab_width))
             insert(view_list, vi, v)
             if /long_line | (v.tw > long_line.tw) then
                long_line := v
@@ -1672,7 +1672,7 @@ class WidthLineSplitter(LineSplitter)
       s ? {
          while ch := move(1) do {
             ds ||:= ch
-            if TextWidthEx(parent.view.cbwin, ds,,, parent.tab_width) > width then {
+            if text_width_ex(parent.view.cbwin, ds,,, parent.tab_width) > width then {
                if *ds > 1 then {
                   ds[-1] := ""
                   move(-1)

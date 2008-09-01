@@ -54,7 +54,7 @@ class Tree(SelectableScrollArea)
    end
 
    public draw_node_data(n, xp, yp)
-      DrawStringEx(view.cbwin, 
+      draw_string_ex(view.cbwin, 
                    xp + Gui.TEXT_INSET,
                    yp + (self.line_height - view.cbwin.attrib("fheight")) / 2,
                    n.label)
@@ -286,9 +286,9 @@ class Tree(SelectableScrollArea)
          }
          # Erase first as the little +/- are not opaque images, and we may have drawn a line here.
          view.cbwin.erase_area(lp - col_w / 2 - little_w / 2, y0 - little_h / 2, little_w, little_h)
-         DrawImageEx(view.cbwin, lp - col_w / 2 - little_w / 2, y0 - little_h / 2, little)
+         draw_image_ex(view.cbwin, lp - col_w / 2 - little_w / 2, y0 - little_h / 2, little)
       }
-      DrawImageEx(view.cbwin, lp + col_w / 2 - img_w / 2, y0 - img_h / 2, \img)
+      draw_image_ex(view.cbwin, lp + col_w / 2 - img_w / 2, y0 - img_h / 2, \img)
       draw_node_data(N, lp + col_w, yp, lh)
 
       if \selection_cw then
@@ -296,11 +296,11 @@ class Tree(SelectableScrollArea)
                                      yp, get_node_data_width(N), lh)
 
       if \cursor_cw then
-         Rectangle(cursor_cw, lp + col_w,
+         rectangle(cursor_cw, lp + col_w,
                    yp, get_node_data_width(N), lh)
 
       if \highlight_cw then
-         Rectangle(highlight_cw, lp + col_w,
+         rectangle(highlight_cw, lp + col_w,
                    yp, get_node_data_width(N), lh)
 
       dashed.uncouple()

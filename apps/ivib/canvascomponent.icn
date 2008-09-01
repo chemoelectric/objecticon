@@ -267,7 +267,7 @@ class CanvasComponent(CanvasObject)
       local cw, i, r
       r := self.get_clip_rect() | fail
       cw := W.clone("linestyle=dashed")
-      #Rectangle(cw, self.x - RST, self.y - RST, self.w + 2 * RST, self.h + 2 * RST)
+      #rectangle(cw, self.x - RST, self.y - RST, self.w + 2 * RST, self.h + 2 * RST)
       cw.clip(r.x, r.y, r.w, r.h)
       cw.attrib("linestyle=solid")
       if self === self.parent_Canvas.selected then

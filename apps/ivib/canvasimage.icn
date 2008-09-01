@@ -60,7 +60,7 @@ class CanvasImage(CanvasComponent,Image)
       if in_preview() | \self.win then
          cast(self,Image).display()
       else {
-         Rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         rectangle(self.cbwin, self.x, self.y, self.w, self.h)
          center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Image>")
       }
    end

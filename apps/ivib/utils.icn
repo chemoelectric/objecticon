@@ -158,7 +158,7 @@ end
 
 
 procedure center_string(win, x, y, s, k)
-   DrawStringEx(win, 
+   draw_string_ex(win, 
                 x - win.text_width(s) / 2, 
                 y - win.attrib("fheight") / 2, 
                 s, k)

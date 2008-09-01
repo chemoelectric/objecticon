@@ -163,7 +163,7 @@ class TableColumn(TextButton)
          default : fatal(self, "Bad column alignment")
       }
       y1 := cy + (ch - W.attrib("fheight")) / 2
-      DrawStringEx(W, x1, y1, data)
+      draw_string_ex(W, x1, y1, data)
    end
 
    #

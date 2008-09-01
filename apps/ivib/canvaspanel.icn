@@ -87,7 +87,7 @@ class CanvasPanel(CanvasComponent,Panel)
       else {
          center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Panel>")
          display_children(r)
-         Rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         rectangle(self.cbwin, self.x, self.y, self.w, self.h)
       }
    end
 

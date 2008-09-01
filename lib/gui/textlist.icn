@@ -30,7 +30,7 @@ class TextList(SelectableScrollArea)
       # Cosmetic - add a little to the left of xp; this looks better 
       # with the cursor, selection and highlight.
       #
-      DrawStringEx(view.cbwin, xp + Gui.TEXT_INSET, yp, detab(contents[i]))
+      draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, detab(contents[i]))
    end
 
    public set_one(f)

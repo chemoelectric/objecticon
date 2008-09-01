@@ -138,7 +138,7 @@ class BorderOfCanvas(Component)
       #
       cw := self.cbwin.clone("fg=black")
       every i := 0 to EDGE - 1 do
-         Rectangle(cw, self.x + i , self.y + i, self.w - 2 * i, self.h - 2 *i)
+         rectangle(cw, self.x + i , self.y + i, self.w - 2 * i, self.h - 2 *i)
 
       #
       # Draw the resizing corner in the bottom right hand corner.
@@ -1080,7 +1080,7 @@ class Canvas(Component,SelectiveObjectCodec)
    public show_moving()
       local cw
       cw := item_buff_win.clone("fg=red","linestyle=dashed")
-      Rectangle(cw, moving.mx, moving.my, moving.mw, moving.mh)
+      rectangle(cw, moving.mx, moving.my, moving.mw, moving.mh)
       cw.uncouple()
    end
 
@@ -1088,7 +1088,7 @@ class Canvas(Component,SelectiveObjectCodec)
    # Display the canvas.
    #
    public display(r)
-      EraseRectangle(item_buff_win,
+      erase_rectangle(item_buff_win,
                      self.x, self.y, 
                      self.w, self.h) 
 

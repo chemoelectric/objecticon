@@ -62,10 +62,10 @@ class GridLayout(Layout,SetFields)
 
       cw := Gui.style.get_dashed_clone(self.parent.cbwin)
 
-      Rectangle(cw, parent.x, parent.y, parent.w, parent.h)
+      rectangle(cw, parent.x, parent.y, parent.w, parent.h)
 
       every i := !g.info do {
-         Rectangle(cw,
+         rectangle(cw,
                    g.col_x[i.x],
                    g.row_y[i.y],
                    g.slice(i.x, i.w, g.a_col_w),

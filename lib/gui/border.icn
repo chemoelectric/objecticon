@@ -78,7 +78,7 @@ class Border(Component)
       border.draw(self.cbwin, self.x, y0, self.w, h0)
       if \title then {
          # A little space to the left and right of the title.
-         EraseRectangle(self.cbwin, 
+         erase_rectangle(self.cbwin, 
                         title.x - TITLE_SPACING, y0,
                         title.w + 2 * TITLE_SPACING, border.get_t_inset())
       }

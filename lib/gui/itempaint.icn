@@ -65,7 +65,7 @@ class TextItemPaint(ItemPaint)
    end
 
    public draw(W, data, x, y)
-      DrawStringEx(W, x, y, detab(data))
+      draw_string_ex(W, x, y, detab(data))
    end
 end
 
@@ -84,7 +84,7 @@ class ImageStringItemPaint(ItemPaint)
    end
 
    public draw(W, data, x, y)
-      DrawImageEx(W, x, y, data)
+      draw_image_ex(W, x, y, data)
    end
 end
 

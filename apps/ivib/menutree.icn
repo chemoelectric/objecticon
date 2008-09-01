@@ -35,7 +35,7 @@ class MenuTree(SelectableScrollArea)
 
          dashed.draw_line(lp - SPACING / 2, y0, lp + SPACING, y0)
          lp +:= SPACING
-         DrawStringEx(view.cbwin, lp, yp, s.owner.get_string_label())
+         draw_string_ex(view.cbwin, lp, yp, s.owner.get_string_label())
       }
 
       dashed.uncouple()

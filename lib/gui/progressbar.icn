@@ -19,7 +19,7 @@ class ProgressBar(Component)
       border.draw_rect(self.cbwin, self)
       r := border.get_inner_rect(self)
       s := p || "%"
-      DrawStringEx(self.cbwin,
+      draw_string_ex(self.cbwin,
                    r.x + (r.w - self.cbwin.text_width(s)) / 2,
                    r.y + (r.h - self.cbwin.attrib("fheight")) / 2,
                    s)

@@ -133,7 +133,7 @@ class CanvasBorder(CanvasComponent,Border)
       cast(self,Border).display(r)
       if in_ivib() then {
          cw := self.cbwin.clone("linestyle=dashed")
-         Rectangle(cw, self.x + self.w - INSIDE_BOX, self.y + self.h - INSIDE_BOX, INSIDE_BOX - Gui.BORDER_WIDTH, INSIDE_BOX- Gui.BORDER_WIDTH)
+         rectangle(cw, self.x + self.w - INSIDE_BOX, self.y + self.h - INSIDE_BOX, INSIDE_BOX - Gui.BORDER_WIDTH, INSIDE_BOX- Gui.BORDER_WIDTH)
          cw.uncouple()
       }
    end

@@ -137,10 +137,10 @@ class TreeTableContent(Tree)
          selection_cw.fill_rectangle(self.view.x, yp, self.view.w, lh)
 
       if \cursor_cw then 
-         Rectangle(cursor_cw, self.view.x, yp, self.view.w, lh)
+         rectangle(cursor_cw, self.view.x, yp, self.view.w, lh)
 
       if \highlight_cw then
-         Rectangle(highlight_cw, self.view.x, yp, self.view.w, lh)
+         rectangle(highlight_cw, self.view.x, yp, self.view.w, lh)
    end
 end
 

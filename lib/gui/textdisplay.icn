@@ -111,7 +111,7 @@ class TextDisplay(LineBasedScrollArea)
          s := self.contents[i]
          every j := line_splitter.split(s) do {
             p := s[pos:j]
-            v := ViewLine(i, p, pos, j - 1, TextWidthEx(view.cbwin, p,,, self.tab_width))
+            v := ViewLine(i, p, pos, j - 1, text_width_ex(view.cbwin, p,,, self.tab_width))
             insert(view_list, vi, v)
             if /long_line | (v.tw > long_line.tw) then
                long_line := v
@@ -170,7 +170,7 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    public draw_line(xp, yp, lh, i)
-      DrawStringEx(view.cbwin, xp, yp, detab(view_list[i].str, self.tab_width + 1))
+      draw_string_ex(view.cbwin, xp, yp, detab(view_list[i].str, self.tab_width + 1))
    end
 
    #
@@ -186,7 +186,7 @@ class TextDisplay(LineBasedScrollArea)
          every j := line_splitter.split(s) do {
             p := s[pos:j]
             put(view_list, ViewLine(i, p, pos, j - 1, 
-                                    TextWidthEx(view.cbwin, p,,, self.tab_width)))
+                                    text_width_ex(view.cbwin, p,,, self.tab_width)))
             pos := j
          }
       }
