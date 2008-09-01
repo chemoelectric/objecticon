@@ -957,62 +957,54 @@ function{0,1} io_SocketStream_accept_impl(self)
    }
 end
 
+/*
+ * These two are macros since they call runerr (so does FdParam).
+ */
 
-
-static int list2fd_set(dptr l, dptr tmpl, fd_set *s)
+#begdef list2fd_set(l, tmpl, s)
 {
     tended struct descrip e;
 
-    FD_ZERO(s);
-    if (is:null(*l))
-        return 0;
-    if (!is:list(*l)) {
-        err_msg(108, l);
-        return -1;
-    }
-    *tmpl = create_list(BlkLoc(*l)->list.size);
-
-    while (c_get(&BlkLoc(*l)->list, &e)) {
-        C_integer t;
-        if (!cnv:C_integer(e, t)) {
-            err_msg(101, &e);
-            return -1;
+    FD_ZERO(&s);
+    if (!is:null(l)) {
+        if (!is:list(l))
+            runerr(108, l);
+        tmpl = create_list(BlkLoc(l)->list.size);
+        while (c_get(&BlkLoc(l)->list, &e)) {
+            FdParam(e, fd);
+            c_put(&tmpl, &e);
+            FD_SET(fd, &s);
         }
-        c_put(tmpl, &e);
-        FD_SET(t, s);
     }
-    return 0;
 }
+#enddef
 
-static void fd_set2list(dptr l, dptr tmpl, fd_set *s)
+#begdef fd_set2list(l, tmpl, s)
 {
     tended struct descrip e;
 
-    if (is:null(*l))
-        return;
-
-    while (c_get(&BlkLoc(*tmpl)->list, &e)) {
-        C_integer t;
-        if (!cnv:C_integer(e, t))
-            continue; /* Should never happen */
-        if (FD_ISSET(t, s))
-            c_put(l, &e);
+    if (!is:null(l)) {
+        while (c_get(&BlkLoc(tmpl)->list, &e)) {
+            FdParam(e, fd);
+            if (FD_ISSET(fd, &s)) {
+                c_put(&l, &e);
+                ++count;
+            }
+        }
     }
 }
+#enddef
 
-function{0,1} io_DescStream_select_impl(rl, wl, el, timeout)
+function{0,1} io_DescStream_select(rl, wl, el, timeout)
     body {
        fd_set rset, wset, eset;
        struct timeval tv, *ptv;
        tended struct descrip rtmp, wtmp, etmp;
-       int rc;
+       int rc, count;
 
-       if ((list2fd_set(&rl, &rtmp, &rset) < 0) ||
-           (list2fd_set(&wl, &wtmp, &wset) < 0) ||
-           (list2fd_set(&el, &etmp, &eset) < 0)) {
-           on_error();
-           fail;
-       }
+       list2fd_set(rl, rtmp, rset);
+       list2fd_set(wl, wtmp, wset);
+       list2fd_set(el, etmp, eset);
 
        if (is:null(timeout))
            ptv = 0;
@@ -1036,42 +1028,58 @@ function{0,1} io_DescStream_select_impl(rl, wl, el, timeout)
            fail;
        }
 
-       fd_set2list(&rl, &rtmp, &rset);
-       fd_set2list(&wl, &wtmp, &wset);
-       fd_set2list(&el, &etmp, &eset);
+       count = 0;
+       fd_set2list(rl, rtmp, rset);
+       fd_set2list(wl, wtmp, wset);
+       fd_set2list(el, etmp, eset);
+
+       if (count != rc) {
+           why("Unexpected mismatch between FD_SETs and list sizes");
+           fail;
+       }
 
        return C_integer rc;
     }
 end
 
-function{0,1} io_DescStream_poll_impl(a[n])
+function{0,1} io_DescStream_poll(a[n])
    body {
 #ifdef HAVE_POLL
        struct pollfd *ufds;
        unsigned int nfds;
        int timeout, i, rc;
+       tended struct descrip ints;
 
        nfds = n / 2;
        if (n % 2 == 0)
            timeout = -1;
-       else {
-           if (!cnv:C_integer(a[n - 1], timeout))
-               runerr(101, a[n - 1]);
+       else if (!cnv:C_integer(a[n - 1], timeout))
+           runerr(101, a[n - 1]);
+
+       /*
+        * Validate all params, building up a list of ints, being fds
+        * and event masks.
+        */
+       ints = create_list(2 * nfds);
+       for (i = 0; i < nfds; ++i) {
+           int events;
+           struct descrip id;
+           FdParam(a[2 * i], fd);
+           if (!cnv:C_integer(a[2 * i + 1], events))
+               runerr(101, a[2 * i + 1]);
+           MakeInt(fd, &id);
+           c_put(&ints, &id);
+           MakeInt(events, &id);
+           c_put(&ints, &id);
        }
 
        Protect(ufds = calloc(nfds, sizeof(struct pollfd)), runerr(0));
        for (i = 0; i < nfds; ++i) {
-           int events, fd;
-           if (!cnv:C_integer(a[2 * i], fd)) {
-               free(ufds);
-               runerr(101, a[2 * i]);
-           }
-           if (!cnv:C_integer(a[2 * i + 1], events)) {
-               free(ufds);
-               runerr(101, a[2 * i + 1]);
-           }
-           ufds[i].fd = fd;
-           ufds[i].events = events;
+           struct descrip id;
+           c_get(&BlkLoc(ints)->list, &id);
+           ufds[i].fd = IntVal(id);
+           c_get(&BlkLoc(ints)->list, &id);
+           ufds[i].events = IntVal(id);
        }
 
        rc = poll(ufds, nfds, timeout);

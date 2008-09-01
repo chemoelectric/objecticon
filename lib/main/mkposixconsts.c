@@ -934,7 +934,7 @@ int main(void)
 #endif
 
     end_class();
-        start_class("Poll",0);
+        start_class("Poll","POLL");
 
 #ifdef POLLIN
 Const(POLLIN)

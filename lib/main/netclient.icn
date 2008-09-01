@@ -77,12 +77,11 @@ class NetClient(Connectable, SetFields)
 
       # If we are using a timeout, put the socket into non-blocking mode
       if \timeout > 0 then
-         connection.flag(FileOpt.NONBLOCK)
+         connection.flag(FileOpt.NONBLOCK) | fail
 
       fire(CONNECTING_EVENT)
       connection.connect(addr) | {
          if \timeout > 0 & errno() = Errno.EINPROGRESS then {
-            #write("** in progress")
             l1 := [connection]
             l2 := [connection]
             DescStream.select(&null, l1, l2, timeout) | {
@@ -93,7 +92,6 @@ class NetClient(Connectable, SetFields)
                close()
                return error("Couldn't connect to " || addr || " (socket error)")
             }
-            #write("select success ", *l1, " ", *l2)
          } else {
             close()
             return error("Couldn't connect to " || addr || ":" || &why)
