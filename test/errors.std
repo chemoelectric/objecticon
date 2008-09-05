@@ -24,7 +24,7 @@ error in line 12:
    &error = -5
    &errornumber = 120
    &errortext = "two csets or two sets expected"
-   &errorvalue = set_1(0)
+   &errorvalue = set#1(0)
 (set([]) ++ 'a') | monitor(&line) ----> 12
 
 error in line 14:
@@ -80,14 +80,14 @@ error in line 32:
    &error = -13
    &errornumber = 118
    &errortext = "co-expression expected"
-   &errorvalue = list_154(0)
+   &errorvalue = list#154(0)
 display(,[]) | monitor(&line) ----> 32
 
 error in line 34:
    &error = -14
    &errornumber = 103
    &errortext = "string expected"
-   &errorvalue = list_168(0)
+   &errorvalue = list#168(0)
 ([] ~== "x") | monitor(&line) ----> 34
 
 error in line 36:
@@ -115,7 +115,7 @@ error in line 42:
    &error = -18
    &errornumber = 120
    &errortext = "two csets or two sets expected"
-   &errorvalue = list_221(0)
+   &errorvalue = list#221(0)
 (&cset ++ []) | monitor(&line) ----> 42
 
 error in line 44:
@@ -191,7 +191,7 @@ error in line 68:
    &error = -29
    &errornumber = 120
    &errortext = "two csets or two sets expected"
-   &errorvalue = list_363(0)
+   &errorvalue = list#363(0)
 ([] ** "abc") | monitor(&line) ----> 68
 
 error in line 70:
@@ -261,14 +261,14 @@ error in line 92:
    &error = -39
    &errornumber = 103
    &errortext = "string expected"
-   &errorvalue = list_494(0)
+   &errorvalue = list#494(0)
 (&subject := []) | monitor(&line) ----> 92
 
 error in line 94:
    &error = -40
    &errornumber = 103
    &errortext = "string expected"
-   &errorvalue = list_508(0)
+   &errorvalue = list#508(0)
 ([] ? []) | monitor(&line) ----> 94
 
 error in line 96:
@@ -289,7 +289,7 @@ error in line 104:
    &error = -43
    &errornumber = 102
    &errortext = "numeric expected"
-   &errorvalue = list_549(0)
+   &errorvalue = list#549(0)
 ([] ^ i) | monitor(&line) ----> 104
 
 error in line 106:
@@ -331,7 +331,7 @@ error in line 116:
    &error = -49
    &errornumber = 103
    &errortext = "string expected"
-   &errorvalue = list_628(0)
+   &errorvalue = list#628(0)
 =[] | monitor(&line) ----> 116
 
 error in line 118:
@@ -373,21 +373,21 @@ error in line 131:
    &error = -55
    &errornumber = 104
    &errortext = "cset expected"
-   &errorvalue = list_707(0)
+   &errorvalue = list#707(0)
 trim(&lcase,[]) | monitor(&line) ----> 131
 
 error in line 133:
    &error = -56
    &errornumber = 101
    &errortext = "integer expected or out of range"
-   &errorvalue = list_721(0)
+   &errorvalue = list#721(0)
 list([]) | monitor(&line) ----> 133
 
 error in line 135:
    &error = -57
    &errornumber = 104
    &errortext = "cset expected"
-   &errorvalue = list_735(0)
+   &errorvalue = list#735(0)
 bal([],,,"") | monitor(&line) ----> 135
 
 error in line 137:

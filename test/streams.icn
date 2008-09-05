@@ -70,7 +70,7 @@ procedure test_modes()
    f := SocketStream.socket()
    print{"Socket mode",f.get_mode()}
    f.close()
-   f := StringStream("abc")
+   f := RamStream("abc")
    print{"String mode",f.get_mode()}
    f.close()
 end
@@ -180,6 +180,9 @@ procedure main()
                                         ),
                                         "buff_size=5"),
                                         repl(&ucase, 100))
+   check_file(RamStream(), repl(&ucase, 100))
+   check_file(BufferStream("other=",RamStream()), repl(&ucase, 100))
+
    check_file(StringStream(), repl(&ucase, 100))
    check_file(BufferStream("other=",StringStream()), repl(&ucase, 100))
 

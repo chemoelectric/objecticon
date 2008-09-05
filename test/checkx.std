@@ -4,12 +4,12 @@ image(&lcase) ----> "&lcase"
 image('abcdefghijklmnopqrstuvwxyz') ----> "&lcase"
 image() ----> "&null"
 image(&null) ----> "&null"
-image([1,2,3]) ----> "list_*(3)"
-image([]) ----> "list_*(0)"
-image([,]) ----> "list_*(2)"
-image(table()) ----> "table_*(0)"
-image(table(3)) ----> "table_*(0)"
-image(list(0)) ----> "list_*(0)"
+image([1,2,3]) ----> "list#*(3)"
+image([]) ----> "list#*(0)"
+image([,]) ----> "list#*(2)"
+image(table()) ----> "table#*(0)"
+image(table(3)) ----> "table#*(0)"
+image(list(0)) ----> "list#*(0)"
 image(repl) ----> "function repl"
 image(main) ----> "procedure main"
 image(repl(&lcase,10)) ----> "\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\""
@@ -81,9 +81,9 @@ numeric(++2) ----> 2
 numeric(--2) ----> 2
 36 ^ -9 ----> 0
 -36 ^ -9 ----> 0
-f := open("foo.baz","w") ----> object io.BufferStream_*(7)
+f := open("foo.baz","w") ----> object io.BufferStream#*(7)
 write(f,"hello world") ----> "hello world"
-close(f) ----> object io.BufferStream_*(7)
+close(f) ----> object io.BufferStream#*(7)
 
 cset sizes and images:
   0 ''

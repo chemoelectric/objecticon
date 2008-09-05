@@ -6,4 +6,4 @@ rm -f tracing.out
 oit -s tracing.icn 
 ./tracing 2>tracing.out
 set -e 
-cmp tracing.std tracing.out
+cmp tracing.out tracing.std

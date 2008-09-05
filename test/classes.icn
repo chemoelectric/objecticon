@@ -17,8 +17,8 @@ class Two()
       return id=other.id
    end
 
-   public object_to_string()
-      return "Two{id="||id||"}"
+   public object_output(o)
+      return o.writes("id=" || id)
    end
 
    public object_clone()
@@ -55,8 +55,8 @@ class Four()
 end
 
 class Five()
-   public object_to_string()
-      return "Five"
+   public object_output(oo)
+      return oo.writes("Nothing here")
    end
 end
 
@@ -70,11 +70,11 @@ class Six()
    end
 end
 
-class Seven(SelectiveToString)
+class Seven()
    public a,b,c,d
 
-   private fields_to_string()
-      suspend "a"|"c"
+   private object_output(oo)
+      return oo.object_selected(self, "a","c")
    end
 
    public new()

@@ -5,7 +5,7 @@ procedure imagex(o)
    t := ""
    image(o) ? {
       repeat {
-         t ||:= tab(find("_") | 0)
+         t ||:= tab(find("#") | 0)
          if pos(0) then
             return t
          t ||:= move(1)
@@ -20,7 +20,7 @@ procedure to_stringx(o)
    t := ""
    to_string(o) ? {
       repeat {
-         t ||:= tab(find("<") | 0)
+         t ||:= tab(find("#") | 0)
          if pos(0) then
             return t
          t ||:= move(1)

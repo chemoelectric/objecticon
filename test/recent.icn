@@ -34,11 +34,11 @@ procedure main ()
    name2 := "temp2"
    data := "Here's the data"
 
-   every remove (name1 | name2)		# just in case
+   every Files.remove (name1 | name2)		# just in case
    open (name1) & stop ("can't remove ", name1, " to initialize test")
    open (name2) & stop ("can't remove ", name2, " to initialize test")
-   remove (name1) & stop ("successfully removed nonexistent file")
-   rename (name1, name2) & stop ("successfully renamed nonexistent file")
+   Files.remove (name1) & stop ("successfully removed nonexistent file")
+   Files.rename (name1, name2) & stop ("successfully renamed nonexistent file")
 
    f := open (name1, "w") | stop ("can't open ",name1," for write")
    write (f, data)
@@ -49,14 +49,14 @@ procedure main ()
    close(f)
    s == data | stop ("data lost after write")
 
-   rename (name1, name2) | stop ("can't rename(",name1,",",name2,")")
+   Files.rename (name1, name2) | stop ("can't rename(",name1,",",name2,")")
    f := open (name2) | stop ("can't open ",name2," after rename")
    s := read (f) | ""
    close(f)
    s == data | stop ("data lost after rename")
 
-   remove (name1) & stop ("remove succeeded on file already renamed")
-   remove (name2) | stop ("can't remove renamed file")
+   Files.remove (name1) & stop ("remove succeeded on file already renamed")
+   Files.remove (name2) | stop ("can't remove renamed file")
    open (name1) & stop (name1, " still around at end of test")
    open (name2) & stop (name2, " still around at end of test")
 

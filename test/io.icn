@@ -32,8 +32,8 @@ procedure main()
    #write("close /dev/null: ", image(n.close()) | "FAILED")
    #write("flush /dev/null: ", image(n.flush()) | "FAILED")
 
-   every remove("tmp1" | "tmp2")
-   every remove("tmp1" | "tmp2")
+   every Files.remove("tmp1" | "tmp2")
+   every Files.remove("tmp1" | "tmp2")
    write(image(open("tmp1")))		# should fail
 
    write()
@@ -50,7 +50,7 @@ procedure main()
    rfile("tmp1")
    wfile("tmp1", "crw", "cleared anew")
    rfile("tmp1")
-   rename("tmp1", "tmp2")
+   Files.rename("tmp1", "tmp2")
    rfile("tmp2")
 
    write()
@@ -69,8 +69,8 @@ procedure main()
    rfile("tmp1")
    rfile("tmp2")
 
-   every remove("tmp1" | "tmp2")
-   every remove("tmp1" | "tmp2")
+   every Files.remove("tmp1" | "tmp2")
+   every Files.remove("tmp1" | "tmp2")
 
    write()
    writes("abc")
@@ -208,7 +208,7 @@ procedure tpipe()
    write("--- closing output pipe")
    close(p)
    write("--- done closing output pipe")
-   remove("tmp1")
+   Files.remove("tmp1")
 
    return
 end

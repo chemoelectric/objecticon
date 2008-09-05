@@ -1,13 +1,13 @@
  ----> &null
-list(0) ----> list_*(0)
-list(0,1) ----> list_*(0)
-list(1,1) ----> list_*(1)
-list(100,"a") ----> list_*(100)
-table() ----> table_*(0)
-table(0) ----> table_*(0)
-a := [] ----> list_*(0)
+list(0) ----> list#*(0)
+list(0,1) ----> list#*(0)
+list(1,1) ----> list#*(1)
+list(100,"a") ----> list#*(100)
+table() ----> table#*(0)
+table(0) ----> table#*(0)
+a := [] ----> list#*(0)
 every put(a,!&lcase) ----> none
-a1 := sort(a) ----> list_*(26)
+a1 := sort(a) ----> list#*(26)
 a
 b
 c
@@ -35,11 +35,11 @@ x
 y
 z
 every write(!a1) ----> none
-sort(a1) ----> list_*(26)
-t := table() ----> table_*(0)
+sort(a1) ----> list#*(26)
+t := table() ----> table#*(0)
 every t[!&lcase] := 1 ----> none
-sort(t) ----> list_*(26)
-a := sort(t) ----> list_*(26)
+sort(t) ----> list#*(26)
+a := sort(t) ----> list#*(26)
 a
 b
 c
@@ -94,9 +94,9 @@ every write((!a)[1]) ----> none
 1
 1
 every write((!a)[2]) ----> none
-set([1,0,1,0,1,0,1,0]) ----> set_*(2)
-set([]) ----> set_*(0)
-s := set([1,2,3,4,5,6,7,8,9,10]) ----> set_*(10)
+set([1,0,1,0,1,0,1,0]) ----> set#*(2)
+set([]) ----> set#*(0)
+s := set([1,2,3,4,5,6,7,8,9,10]) ----> set#*(10)
 *s ----> 10
 1
 2
@@ -110,87 +110,87 @@ s := set([1,2,3,4,5,6,7,8,9,10]) ----> set_*(10)
 10
 every write(!sort(s)) ----> none
 *copy(s) ----> 10
-image(s) ----> "set_*(10)"
+image(s) ----> "set#*(10)"
 type(s) ----> "set"
 member(s,8) ----> 8
 member(s,"8") ----> none
-s := set([]) ----> set_*(0)
+s := set([]) ----> set#*(0)
 every insert(s,1 to 100) ----> none
 *s ----> 100
 every delete(s,15 to 30) ----> none
 *s ----> 84
 every s1 := insert(set([]),!&lcase) ----> none
-s2 := set(["a","aa","ab","b",1,2,3,4]) ----> set_*(8)
-s3 := s1 ++ s2 ----> set_*(32)
-s4 := s1 ** s2 ----> set_*(2)
-s5 := s1 -- s2 ----> set_*(24)
+s2 := set(["a","aa","ab","b",1,2,3,4]) ----> set#*(8)
+s3 := s1 ++ s2 ----> set#*(32)
+s4 := s1 ** s2 ----> set#*(2)
+s5 := s1 -- s2 ----> set#*(24)
 *s3 ----> 32
 *s4 ----> 2
 *s5 ----> 24
-t := table() ----> table_*(0)
+t := table() ----> table#*(0)
 every t[1 | &cset | [] | "hello" | main | 2 | table()] := ?100 ----> none
-a := sort(t,3) ----> list_*(14)
+a := sort(t,3) ----> list#*(14)
 1 22
 2 31
 "hello" 52
 &cset 42
 procedure main 43
-list_*(0) 32
-table_*(0) 8
+list#*(0) 32
+table#*(0) 8
 every i := 1 to *a - 1 by 2 do write(imagex(a[i])," ",a[i + 1]) ----> none
-a := sort(t,4) ----> list_*(14)
-table_*(0) 8
+a := sort(t,4) ----> list#*(14)
+table#*(0) 8
 1 22
 2 31
-list_*(0) 32
+list#*(0) 32
 &cset 42
 procedure main 43
 "hello" 52
 every i := 1 to *a - 1 by 2 do write(imagex(a[i])," ",a[i + 1]) ----> none
-t := table() ----> table_*(0)
+t := table() ----> table#*(0)
 every t[1 | &cset | [] | "hello" | main | 2 | table()] := ?100 ----> none
-a := sort(t,3) ----> list_*(14)
+a := sort(t,3) ----> list#*(14)
 1 74
 2 54
 "hello" 14
 &cset 6
 procedure main 34
-list_*(0) 72
-table_*(0) 63
+list#*(0) 72
+table#*(0) 63
 every i := 1 to *a - 1 by 2 do write(imagex(a[i])," ",a[i + 1]) ----> none
-a := sort(t,4) ----> list_*(14)
+a := sort(t,4) ----> list#*(14)
 &cset 6
 "hello" 14
 procedure main 34
 2 54
-table_*(0) 63
-list_*(0) 72
+table#*(0) 63
+list#*(0) 72
 1 74
 every i := 1 to *a - 1 by 2 do write(imagex(a[i])," ",a[i + 1]) ----> none
-x := [array(),table(),write,[],1,"abc",'aa',&null] ----> list_*(8)
-x := sort(x) ----> list_*(8)
+x := [array(),table(),write,[],1,"abc",'aa',&null] ----> list#*(8)
+x := sort(x) ----> list#*(8)
 &null
 1
 "abc"
 'a'
 procedure io.write
-list_*(0)
-table_*(0)
-record array_*(7)
+list#*(0)
+table#*(0)
+record array#*(7)
 every write(imagex(!x)) ----> none
-t := table(table()) ----> table_*(0)
-table_*(1)
-table_*(2)
-table_*(3)
-table_*(4)
-table_*(5)
-table_*(6)
-table_*(7)
-table_*(8)
-table_*(9)
-table_*(10)
+t := table(table()) ----> table#*(0)
+table#*(1)
+table#*(2)
+table#*(3)
+table#*(4)
+table#*(5)
+table#*(6)
+table#*(7)
+table#*(8)
+table#*(9)
+table#*(10)
 every t[1 to 10] := 1 do write(imagex(t)) ----> none
-t := table() ----> table_*(0)
+t := table() ----> table#*(0)
 1
 2
 3
@@ -208,7 +208,7 @@ t[] ----> 6
 t[&null] := 7 ----> 7
 t[] ----> 7
 *t ----> 11
-x := [] ----> list_*(0)
+x := [] ----> list#*(0)
 *x ----> 0
 every push(x,1 to 10) ----> none
 10
@@ -250,44 +250,44 @@ every push(x,1 to 10) ----> none
 9
 10
 every 1 to 10 do write(pull(x)) ----> none
-x := [1,2,3,4,5,6,7,8,9,0] ----> list_*(10)
-list_*(10)
-list_*(9)
-list_*(8)
-list_*(7)
-list_*(6)
-list_*(5)
-list_*(4)
-list_*(3)
-list_*(2)
-list_*(1)
-list_*(0)
+x := [1,2,3,4,5,6,7,8,9,0] ----> list#*(10)
+list#*(10)
+list#*(9)
+list#*(8)
+list#*(7)
+list#*(6)
+list#*(5)
+list#*(4)
+list#*(3)
+list#*(2)
+list#*(1)
+list#*(0)
 every write(imagex(x[1:0 to -20 by -1])) ----> none
-a := [1,2,3,4,5,6,7,8] ----> list_*(8)
-a1 := a[2:4] ----> list_*(2)
-a2 := a[7:2] ----> list_*(5)
-a3 := a[2+:3] ----> list_*(3)
-a4 := a[-1-:3] ----> list_*(3)
+a := [1,2,3,4,5,6,7,8] ----> list#*(8)
+a1 := a[2:4] ----> list#*(2)
+a2 := a[7:2] ----> list#*(5)
+a3 := a[2+:3] ----> list#*(3)
+a4 := a[-1-:3] ----> list#*(3)
 a1[1] ----> 2
 a2[1] ----> 2
 a3[1] ----> 2
 a4[1] ----> 5
-a4[1] := a ----> list_*(8)
-a := [1,2,3,4] ----> list_*(4)
-a1 := a[1:2] ----> list_*(1)
+a4[1] := a ----> list#*(8)
+a := [1,2,3,4] ----> list#*(4)
+a1 := a[1:2] ----> list#*(1)
 1
 every write(!a1) ----> none
-a2 := a[3:0] ----> list_*(2)
+a2 := a[3:0] ----> list#*(2)
 3
 4
 every write(!a2) ----> none
-a4 := a[2:2] ----> list_*(0)
+a4 := a[2:2] ----> list#*(0)
 every write(!a4) ----> none
-a5 := a[0-:2] ----> list_*(2)
+a5 := a[0-:2] ----> list#*(2)
 3
 4
 every write(!a5) ----> none
-a3 := a[0:3] ----> list_*(2)
+a3 := a[0:3] ----> list#*(2)
 3
 4
 every write(!a3) ----> none
@@ -309,10 +309,10 @@ a5 := a[0-:2] ----> "cd"
 c
 d
 every write(!a5) ----> none
-[] ||| [] ----> list_*(0)
-[1,2,3] ||| [] ----> list_*(3)
-[] ||| [1,2,3] ----> list_*(3)
-r := array(1,2,3,4,5,6,7,8,9) ----> record array_*(7)
+[] ||| [] ----> list#*(0)
+[1,2,3] ||| [] ----> list#*(3)
+[] ||| [1,2,3] ----> list#*(3)
+r := array(1,2,3,4,5,6,7,8,9) ----> record array#*(7)
 r.a ----> 1
 r.b ----> 2
 r.c ----> 3
@@ -320,7 +320,7 @@ r.d ----> 4
 r.e ----> 5
 r.f ----> 6
 type(r) ----> "record"
-imagex(r) ----> "record array_*(7)"
+imagex(r) ----> "record array#*(7)"
 r.a +:= 0 ----> 1
 r.b +:= 0 ----> 2
 r.c +:= 0 ----> 3
@@ -333,21 +333,21 @@ r.c ----> 3
 r.d ----> 4
 r.e ----> 5
 r.f ----> 6
-r := array("a",2,array(),r,main) ----> record array_*(7)
+r := array("a",2,array(),r,main) ----> record array#*(7)
 "a"
 2
 3.5
-record array_*(7)
-record array_*(7)
+record array#*(7)
+record array#*(7)
 procedure main
 &null
 every write(imagex(!r)) ----> none
-r[1] :=: r.d ----> record array_*(7)
-record array_*(7)
+r[1] :=: r.d ----> record array#*(7)
+record array#*(7)
 2
 3.5
 "a"
-record array_*(7)
+record array#*(7)
 procedure main
 &null
 every write(imagex(!r)) ----> none

@@ -327,12 +327,12 @@ oops -- function char(65536)
 oops -- function char(123456) 
 oops -- function char("abc") 
 oops -- function char(&lcase) 
-oops -- function char(list_4727(0)) 
+oops -- function char(list#4727(0)) 
 oops -- function ord("") 
 oops -- function ord("ab") 
 oops -- function ord("antidisestablishmentarianism") 
 oops -- function ord(47) 
-oops -- function ord(table_1(0)) 
+oops -- function ord(table#1(0)) 
 found file: .
 found file: ..
 found file: Makefile
@@ -345,31 +345,31 @@ found file: recogn.dat
 &letters
 &letters
 &lcase
-list_4751(1)
-list_4752(2)
-list_4753(3)
-list_4754(4)
-list_4755(0)
+list#4751(1)
+list#4752(2)
+list#4753(3)
+list#4754(4)
+list#4755(0)
 p(1):
    image(a):1
    image(b):&null
-   image(c):list_4784(0)
+   image(c):list#4784(0)
    every write("\t", !c):
 p(1, 2):
    image(a):1
    image(b):2
-   image(c):list_4795(0)
+   image(c):list#4795(0)
    every write("\t", !c):
 p(1, 2, 3):
    image(a):1
    image(b):2
-   image(c):list_4806(1)
+   image(c):list#4806(1)
    every write("\t", !c):
 	3
 p(1, 2, 3, 4, 5):
    image(a):1
    image(b):2
-   image(c):list_4819(3)
+   image(c):list#4819(3)
    every write("\t", !c):
 	3
 	4
@@ -378,15 +378,15 @@ q(1, 2):
    every write("\t", !a):
 	1
 	2
-t := table("default") --> table_2(0)
+t := table("default") --> table#2(0)
    *t --> 0
    t["xyz"] --> "default"
    member(t, "xyz") --> failure
    contents of t:
 
-insert(t, 3, 4) --> table_2(1)
-insert(t, "xyz", "abc") --> table_2(2)
-insert(t, &digits) --> table_2(3)
+insert(t, 3, 4) --> table#2(1)
+insert(t, "xyz", "abc") --> table#2(2)
+insert(t, &digits) --> table#2(3)
    *t --> 3
    t["xyz"] --> "abc"
    member(t, "xyz") --> "xyz"
@@ -404,7 +404,7 @@ t["xyz"] := "new value" --> "new value"
 	"xyz" : "new value"
 	&digits : &null
 
-insert(t, "xyz", "def") --> table_2(3)
+insert(t, "xyz", "def") --> table#2(3)
    *t --> 3
    t["xyz"] --> "def"
    member(t, "xyz") --> "xyz"
@@ -413,7 +413,7 @@ insert(t, "xyz", "def") --> table_2(3)
 	"xyz" : "def"
 	&digits : &null
 
-delete(t, "xyz") -- > table_2(2)
+delete(t, "xyz") -- > table#2(2)
    *t --> 2
    t["xyz"] --> "default"
    member(t, "xyz") --> failure
@@ -421,7 +421,7 @@ delete(t, "xyz") -- > table_2(2)
 	3 : 4
 	&digits : &null
 
-delete(t, "xyz") -- > table_2(2)
+delete(t, "xyz") -- > table#2(2)
    *t --> 2
    t["xyz"] --> "default"
    member(t, "xyz") --> failure
@@ -429,11 +429,11 @@ delete(t, "xyz") -- > table_2(2)
 	3 : 4
 	&digits : &null
 
-t := table("default") --> table_3(0)
+t := table("default") --> table#3(0)
 t["one"] := 1 --> 1
 t[] --> "default"
-x := r1([t, [1, [2, 3]]]) --> record r1_4(1)
+x := r1([t, [1, [2, 3]]]) --> record r1#4(1)
 x[1, 1, "one"] --> 1
 x[1, 2, 2, 2] --> 3
-x[1, 2] := ["abcd", "defg"] --> list_4992(2)
+x[1, 2] := ["abcd", "defg"] --> list#4992(2)
 x[1, 2, 2, 2] --> "e"
