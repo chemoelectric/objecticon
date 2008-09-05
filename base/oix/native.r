@@ -1601,7 +1601,7 @@ function{1} io_RamStream_close(self)
        PtrParam(self, p);
        free(p->data);
        free(p);
-       *p_dptr = minusonedesc;
+       *p_dptr = zerodesc;
        return nulldesc;
    }
 end
