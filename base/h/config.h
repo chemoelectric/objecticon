@@ -174,12 +174,6 @@
  * Features enabled by default under certain systems
  */
 
-#ifndef Pipes
-   #if UNIX
-      #define Pipes
-   #endif	
-#endif					/* Pipes */
-
 
 /*
  * Default sizing and such.

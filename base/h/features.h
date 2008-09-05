@@ -55,9 +55,7 @@
 
    Feature(1, "_MULTITASKING", "multiple programs")
 
-#ifdef Pipes
    Feature(1, "_PIPES", "pipes")
-#endif					/* Pipes */
 
    Feature(1, "_SYSTEM_FUNCTION", "system function")
 
