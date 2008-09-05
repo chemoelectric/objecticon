@@ -29,40 +29,15 @@ keyword{2} clock
       return string
       }
    inline {
-      int i, tz_sec, offset_hrs;
       time_t t;
       struct tm *ct;
-      char sbuf[128], *tmp;
+      char sbuf[9], *tmp;
 
       time(&t);
       ct = localtime(&t);
-
-#if defined(HAVE_TIMEZONE)
-      tz_sec = timezone;
-#else					/* HAVE_TIMEZONE */
-      tz_sec = ct->tm_gmtoff;
-#endif					/* HAVE_TIMEZONE */
-
       sprintf(sbuf,"%02d:%02d:%02d", ct->tm_hour, ct->tm_min, ct->tm_sec);
       Protect(tmp = alcstr(sbuf,(word)8), runerr(0));
-      suspend string(8, tmp);
-
-      /* Timezone information. Warning: portability problem here. */
-      offset_hrs = tz_sec/3600;
-      if (ct->tm_isdst) offset_hrs--;
-
-#if defined(HAVE_TZNAME)
-      sprintf(sbuf, "UTC%+d %s", offset_hrs, ct->tm_isdst?tzname[1]:tzname[0]);
-#else if defined(HAVE_STRUCT_TM_TM_ZONE)
-      sprintf(sbuf, "UTC%+d %s", offset_hrs, ct->tm_zone);
-#else
-      sprintf(sbuf, "UTC%+d (unknown timezone)", offset_hrs);
-#endif
-
-      i = strlen(sbuf);
-      Protect(tmp = alcstr(sbuf, i), runerr(0));
-      suspend string(i, tmp);
-      fail;
+      return string(8, tmp);
       }
 end
 
@@ -288,30 +263,8 @@ keyword{1,*} features
       return string
       }
    body {
-#ifdef RefPath
-      char *refpath = RefPath;
-#else					/* RefPath */
-      char *refpath = "";
-#endif					/* RefPath */
-
-      if (!*refpath) {
-          char *ploc = findexe("oix");
-          if (ploc) {
-              struct fileparts *fps = fparse(canonicalize(ploc));
-              refpath = salloc(fps->dir);
-          }
-      }
-
 #define Feature(guard,sym,kwval) if (kwval) suspend C_string kwval;
 #include "../h/features.h"
-
-      if (refpath && strlen(refpath) > 0) {
-	 char *s;
-	 s = alcstr(NULL, strlen(refpath) + strlen("Binaries at ") + 1);
-	 strcpy(s, "Binaries at ");
-	 strcat(s, refpath);
-	 suspend C_string s;
-	 }
       fail;
       }
 end

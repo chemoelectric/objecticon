@@ -1561,14 +1561,27 @@ function{1} util_Timezone_get_system_timezone()
       ct = localtime(&t);
 
       result = create_list(2);
-
-      MakeInt(ct->tm_gmtoff, &tmp);
-      c_put(&result, &tmp);
-
-      if (ct->tm_isdst >= 0) {
-          tmp = cstr2string(tzname[ct->tm_isdst ? 1 : 0]);
-          c_put(&result, &tmp);
-      }
+      #if HAVE_STRUCT_TM_TM_GMTOFF
+         MakeInt(ct->tm_gmtoff, &tmp);
+         c_put(&result, &tmp);
+         #if HAVE_TZNAME
+         if (ct->tm_isdst >= 0) {
+             tmp = cstr2string(tzname[ct->tm_isdst ? 1 : 0]);
+             c_put(&result, &tmp);
+         }
+         #endif
+      #elif HAVE_TIMEZONE      
+         MakeInt(timezone, &tmp);
+         c_put(&result, &tmp);
+         #if HAVE_TZNAME
+         if (ct->tm_isdst >= 0) {
+             tmp = cstr2string(tzname[ct->tm_isdst ? 1 : 0]);
+             c_put(&result, &tmp);
+         }
+         #endif
+      #else
+         c_put(&result, &zerodesc);
+      #endif
 
       return result;
    }

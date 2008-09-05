@@ -19,7 +19,7 @@ class Timezone()
       id
 
    private static init()
-      local stz, l
+      local stz, l, t
       KNOWN_TIMEZONES := table()
 
       UTC_TIMEZONE := Timezone(0, "UTC")
@@ -44,8 +44,8 @@ class Timezone()
       # If possible, use a symbolic representation, eg "EST" instead of -0500
       if l[2] then {
          # Only use a known symbol, whose offset agrees with the one just calculated
-         if (\KNOWN_TIMEZONES[l[2]]).get_offset() = stz.get_offset() then
-            stz := KNOWN_TIMEZONES[l[2]]
+         if t := \KNOWN_TIMEZONES[l[2]] & t.get_offset() = stz.get_offset() then
+            stz := t
       }
       SYSTEM_TIMEZONE := stz
    end
