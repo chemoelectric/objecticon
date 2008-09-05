@@ -319,7 +319,7 @@ int get_name(dptr dp1,dptr dp0)
                             blkptr = blkptr->lelem.listprev;
                             i += blkptr->lelem.nused;
                         }
-                        sprintf(sbuf,"list_%d[%ld]",
+                        sprintf(sbuf,"list#%d[%ld]",
                                 (long)blkptr->lelem.listprev->list.id, (long)i);
                         i = strlen(sbuf);
                         Protect(StrLoc(*dp0) = alcstr(sbuf,i), return Error);
@@ -328,7 +328,7 @@ int get_name(dptr dp1,dptr dp0)
                     case T_Record: { 		/* record */
                         struct b_constructor *c = blkptr->record.constructor;
                         i = varptr - blkptr->record.fields;
-                        sprintf(sbuf,"record %s_%d.%s", StrLoc(c->name),
+                        sprintf(sbuf,"record %s#%d.%s", StrLoc(c->name),
                                 blkptr->record.id,
                                 StrLoc(c->field_names[i]));
                         i = strlen(sbuf);
@@ -339,7 +339,7 @@ int get_name(dptr dp1,dptr dp0)
                     case T_Object: { 		/* object */
                         struct b_class *c = blkptr->object.class;
                         i = varptr - blkptr->object.fields;
-                        sprintf(sbuf,"object %s_%d.%s", StrLoc(c->name),
+                        sprintf(sbuf,"object %s#%d.%s", StrLoc(c->name),
                                 blkptr->object.id,
                                 StrLoc(c->fields[i]->name));
                         i = strlen(sbuf);
@@ -388,7 +388,7 @@ static int keyref(bp, dp)
     else
         while(BlkType(bp) == T_Telem)
             bp = bp->telem.clink;
-        sprintf(sbuf, "table_%d[", bp->table.id);
+        sprintf(sbuf, "table#%d[", bp->table.id);
     { char * dest = sbuf + strlen(sbuf);
         strncpy(dest, s2, len);
         dest[len] = '\0';
