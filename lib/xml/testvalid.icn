@@ -31,7 +31,7 @@ procedure main(a)
 
       t := Files.file_to_string(a[2]) | stop("couldnt open" || a[2])
 
-      x := fmt.format(d)
+      x := fmt.format_to_string(d)
       if x == t then
          exit(0)
 

@@ -30,8 +30,11 @@ final class Token()
       return .chunk
    end
 
-   public write(f)
-      io.writes(f, chunk)
+   #
+   # Output this token to the given stream.
+   #
+   public output(f)
+      return f.writes(chunk)
    end
 
    public new(tok, s, chunk, line, column, filename)
@@ -84,8 +87,14 @@ class Node()
       return s
    end
 
-   public write(f)
-      every (!children).write(f)
+   #
+   # Output this node to the given stream.
+   #
+   public output(f)
+      local c
+      every c := !children do
+         c.output(f) | fail
+      return
    end
 
    public new(label, children[])

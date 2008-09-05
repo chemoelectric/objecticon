@@ -77,10 +77,10 @@ class Time()
    end
 
    #
-   # Convert to a string
+   # Output object
    #
-   private object_to_string()
-      return format("MMMM d, yyyy H:mm.ss z")
+   private object_output(oo)
+      return oo.writes(format("MMMM d, yyyy H:mm.ss z"))
    end
 
    #
@@ -493,6 +493,24 @@ class Time()
    #
    private object_hash()
       return self.seconds
+   end
+
+   #
+   # Encode just stores the seconds and zone information.  Note that
+   # the object is expected to have been set to a time before
+   # encoding.
+   #
+   private object_encode(c)
+      c.encode(self.seconds) | fail
+      c.encode(self.zone) | fail
+      return
+   end
+
+   private object_decode(c)
+      self.seconds := c.decode() | fail
+      self.zone := c.decode() | fail
+      compute_broken_down_fields()
+      return
    end
 
    #

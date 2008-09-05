@@ -101,17 +101,19 @@ class DefaultResolver(Resolver)
    end
 
    public get_http(sys_id)
-      local hc, url, hp, hr
+      local hc, url, hp, hr, sb
 
       hc := HttpClient()
       url := URL(sys_id) | fail
 
-      hr := HttpRequest()
-      hr.set_url(url)
+      sb := RamStream()
+      hr := HttpRequest("url=",url, "data_stream=",sb)
+      hp := hc.retrieve(hr) | {
+         sb.close()
+         fail
+      }
 
-      hp := hc.retrieve(hr) | fail
-
-      return hp.get_data()
+      return sb.done()
    end
 
    public new()

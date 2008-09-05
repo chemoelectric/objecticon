@@ -8,7 +8,6 @@
 
 package xml
 
-import lang
 #
 # This represents the DocumentType declaration.
 #
@@ -50,15 +49,6 @@ class DocType(Node)
    #
    public get_type()
       return "doctype"
-   end
-
-   #
-   # Get a string representation of this object.
-   #
-   public object_to_string() 
-      local s
-      s := to_string(\external_id) | image(external_id)
-      return "DocType[" || image(name) || "," || s || "]"
    end
 
    public new(n, i)

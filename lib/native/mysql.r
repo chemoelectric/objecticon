@@ -11,6 +11,8 @@ dptr m##_dptr;
 if (!is:object(p))
     runerr(602, p);
 m##_dptr = c_get_instance_data(&p, (dptr)&ptrf);
+if (!m##_dptr)
+    runerr(207,*(dptr)&ptrf);
 (m) = (MYSQL*)IntVal(*m##_dptr);
 if (!(m))
     runerr(205, p);
@@ -22,6 +24,8 @@ dptr m##_dptr;
 if (!is:object(p))
     runerr(602, p);
 m##_dptr = c_get_instance_data(&p, (dptr)&ptrf);
+if (!m##_dptr)
+    runerr(207,*(dptr)&ptrf);
 (m) = (MYSQL_RES*)IntVal(*m##_dptr);
 if (!(m))
     runerr(205, p);

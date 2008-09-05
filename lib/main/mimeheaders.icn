@@ -7,7 +7,8 @@ import io(write)
 # and request objects).
 #
 class MimeHeaders()
-   private readable headers
+   private readable 
+      headers
 
    #
    # Show the header table (useful debug)
@@ -88,6 +89,13 @@ class MimeHeaders()
    #
    public has_header(key)
       return headers.member(key)
+   end
+
+   #
+   # Set all the headers from the given {ClTable}
+   #
+   public set_headers(t)
+      self.headers := t
    end
 
    public new()

@@ -158,10 +158,6 @@ class XmlDocument(Document)
       return id_attribute_values
    end
 
-   public object_to_string()
-      return "Document[]"
-   end
-
    public new()
       cast(self,Document).new()
       parameter_entities := table()

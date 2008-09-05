@@ -12,18 +12,20 @@ package xml
 # A formatter for outputting HTML documents
 #
 class HtmlFormatter(Formatter)
-   public format_document(n, level)
-      local s
-      s := ""
-      every s ||:= format(!n.children, level + 1) || "\n"
-      return s
+   public format_document(out, n, level)
+      local c
+      every c := !n.children do {
+         format(out, c, level + 1) | fail
+         out.write() | fail
+      }
+      return
    end
 
-   public format_content(s, level)
-      return s
+   public format_content(out, s, level)
+      return out.writes(s)
    end
 
-   public format_doctype(n, level)
+   public format_doctype(out, n, level)
       local s, x
       s := "<!DOCTYPE "
       s ||:= \n.name
@@ -34,14 +36,15 @@ class HtmlFormatter(Formatter)
          else
             s ||:= " SYSTEM \"" || x.system_id || "\""
       }
-      return s || ">"
+      s ||:= ">"
+      return out.writes(s)
    end
 
-   public format_comment(n, level)
-      return "<!--" || n.comment || "-->"
+   public format_comment(out, n, level)
+      return out.writes("<!--" || n.comment || "-->")
    end
 
-   public format_element(n, level)
+   public format_element(out, n, level)
       local s, l, e
 
       s := "<" || n.name
@@ -54,17 +57,19 @@ class HtmlFormatter(Formatter)
       }
 
       s ||:= ">"
+      out.writes(s) | fail
 
       every e := !n.children do {
          if string(e) then
-            s ||:= xml_escape(e, '&<>\"')
+            out.writes(xml_escape(e, '&<>\"')) | fail
          else
-            s ||:= format(e, level + 1)
+            format(out, e, level + 1)
       }
 
       if not(HtmlParser.html_is_standalone_tag(n.name)) then
-         s ||:= "</" || n.name || ">"
-      return s
+         out.writes("</" || n.name || ">")
+
+      return
    end
 end
 

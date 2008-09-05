@@ -8,8 +8,6 @@
 
 package xml
 
-import lang
-
 #
 # Represents the definition of an entity.
 #
@@ -41,18 +39,6 @@ class EntityDef()
    #
    public get_notation()
       return notation
-   end
-
-   #
-   # Get a string representation of this object.
-   #
-   public object_to_string()
-      local s
-      if \str then
-         return str
-      s := to_string(external_id)
-      s ||:= " NOTATION " || \notation
-      return s
    end
 
    public new(str)

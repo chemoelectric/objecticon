@@ -12,7 +12,8 @@ package xml
 #  This class represents a comment.
 #
 class Comment(Node)
-   public comment
+   public 
+      comment
 
    #
    # Get the comment body.
@@ -33,13 +34,6 @@ class Comment(Node)
    #
    public get_type()
       return "comment"
-   end
-
-   #
-   # Get a string representation of this object.
-   #
-   public object_to_string()
-      return "Comment[" || image(comment) || "]"
    end
 
    public new(s)

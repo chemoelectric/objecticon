@@ -12,10 +12,10 @@ import util, net, mail, io
 class HttpRequest(SetFields, MimeHeaders)
    private readable 
       url,
-      post_data,
-      post_file,
+      post_stream,
       method,
       data_file,
+      data_stream,
       username,
       password,
       referer,
@@ -50,24 +50,14 @@ class HttpRequest(SetFields, MimeHeaders)
    end
 
    #
-   # Set the data to be used in a POST request, and set the method to "POST".
-   #
-   # @param   post_data    A string
-   #
-   public set_post_data(post_data)
-      set_method("POST")
-      self.post_data := post_data
-   end
-
-   #
-   # Set the data to be used in a POST request, as a file to be read, and set
+   # Set the data to be used in a POST request, as a stream to be read, and set
    # the method to "POST".
    #
    # @param   post_file    A filename
    #
-   public set_post_file(post_file)
+   public set_post_stream(post_stream)
       set_method("POST")
-      self.post_file := post_file
+      self.post_stream := post_stream
    end
 
    #
@@ -76,7 +66,7 @@ class HttpRequest(SetFields, MimeHeaders)
    # is set appropriately too.
    #
    public set_html_form_data(t)
-      set_post_data(URL.make_cgi_string(t))
+      set_post_stream(StringStream(URL.make_cgi_string(t)))
       set_content_type("application/x-www-form-urlencoded")
    end
 
@@ -89,7 +79,7 @@ class HttpRequest(SetFields, MimeHeaders)
    # and have an appropriate MultiPart set as its content object.
    #
    public set_multipart_form_data(m)
-      set_post_data(m.to_rfc822())
+      set_post_stream(StringStream(m.to_rfc822()))
       set_content_type(m.get_content_type().to_rfc1521())
    end
 
@@ -130,30 +120,26 @@ class HttpRequest(SetFields, MimeHeaders)
    end
 
    #
-   # Setup a temporary file for the {HttpClient} object to use
-   # as a data file.  On success, this will be returned as a field in the
-   # {HttpPage} object.
+   # Set a stream to use to receive the data.
    #
-   public set_use_temporary_data_file()
-      set_data_file(Files.make_temp_filename("httpclient.", ".bin"))
+   public set_data_stream(f)
+      self.data_stream := f
    end
 
    public set_one(f)
       case f.attr of {
          "url": set_url(f.object_val(URL))
-         "data_file": set_data_file(f.string_val())
-         "use_temporary_data_file" : set_use_temporary_data_file()
+         "data_stream": set_data_stream(f.object_val(Stream))
+         "post_stream": set_post_stream(f.object_val(Stream))
          "range": set_range!(f.int_list_val())
          "method": set_method(f.string_val())
          "referer": set_referer(f.string_val())
          "username": set_username(f.string_val())
          "password": set_password(f.string_val())
          "content_type": set_content_type(f.string_val())
-         "post_data": set_post_data(f.string_val())
-         "post_file": set_post_file(f.string_val())
          "html_form_data": set_html_form_data(f.table_val())
          "multipart_form_data": set_multipart_form_data(f.object_val(Message))
-         default: return cast(self,NetClient).set_one(f)
+         default: fail
       }
       return
    end

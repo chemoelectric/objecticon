@@ -42,12 +42,5 @@ class GlobalName()
    public get_uri()
       return uri
    end
-
-   public object_to_string()
-      if /uri then
-         return local_name
-      else
-         return "GlobalName[" || local_name || "," || uri || "]"
-   end
 end
 

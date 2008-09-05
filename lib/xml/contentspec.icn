@@ -146,16 +146,17 @@ class ContentSpec()
    end
 
    #
-   # Get a string representation of this object.
+   # Output object
    #
-   public object_to_string()
+   private object_output(oo)
       local s, x
+      oo.object_start(self) | fail
       case op of {
          "ANY" | "EMPTY" | "#PCDATA" :
-            return op
+            oo.writes(op) | fail
 
          "name" :
-            return arg1
+            oo.writes(arg1) | fail
 
          "," | "|" : {
             s := ""
@@ -167,12 +168,21 @@ class ContentSpec()
                   break
                x := x.arg2
             }
-            return "(" || s || to_string(x.arg2) || ")"
+            oo.writes("(" || s) | fail
+            oo.traverse(x.arg2) | fail
+            oo.writes(")") | fail
          }
 
-         "+" | "*" | "?" : 
-            return to_string(arg1) || op
+         "+" | "*" | "?" :  {
+            oo.traverse(arg1) | fail
+            oo.writes(op) | fail
+         }
+
+         default:
+            oo.writes("?") | fail
       }
+
+      return oo.object_end(self)
    end
 
    public new(op, arg1, arg2)

@@ -66,13 +66,6 @@ class XmlDecl(Node)
       return "xmldecl"
    end
 
-   #
-   # Get a string representation of this object.
-   #
-   public object_to_string()
-      return "XmlDecl[" || image(version) || "," || image(encoding) || "," || image(standalone) || "]"
-   end
-
    public new(v, e, s)
       cast(self,Node).new()
       self.version := v

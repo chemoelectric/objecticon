@@ -35,13 +35,6 @@ class CData(Node)
       return "cdata"
    end
 
-   #
-   # Get a string representation of this object.
-   #
-   public object_to_string()
-      return "CData[" || image(content) || "]"
-   end
-
    public new(s)
       cast(self,Node).new()
       content := s

@@ -8,45 +8,58 @@
 
 package xml
 
+import io
+
 #
 # This is an abstract base class for Formatters, which take a Document
 # object (or a Node within a Document), and output that document to a
-# string.
+# stream.
 #
 class Formatter()
-   public format(n, level)
+   public format_to_string(n, level)
+      local f
+      f := RamStream()
+      format(f, n, level) | {
+         f.close()
+         fail
+      }
+      return f.done()
+   end
+
+   public format(out, n, level)
       local s
       /level := 0
+      /out := FileStream.b_stdout
 
       if s := string(n) then
-         return format_content(s, level)
+         return format_content(out, s, level)
 
       return case n.get_type() of {
-         "doctype" : format_doctype(n, level)
-         "comment" : format_comment(n, level)
-         "pi" : format_pi(n, level)
-         "element" : format_element(n, level)
-         "cdata" : format_cdata(n, level)
-         "document": format_document(n, level)
-         "xmldecl": format_xmldecl(n, level)
+         "doctype" : format_doctype(out, n, level)
+         "comment" : format_comment(out, n, level)
+         "pi" : format_pi(out, n, level)
+         "element" : format_element(out, n, level)
+         "cdata" : format_cdata(out, n, level)
+         "document": format_document(out, n, level)
+         "xmldecl": format_xmldecl(out, n, level)
       }
    end
 
-   public defer format_document(n, level)
+   public defer format_document(out, n, level)
 
-   public defer format_content(s, level)
+   public defer format_content(out, s, level)
 
-   public defer format_doctype(n, level)
+   public defer format_doctype(out, n, level)
 
-   public defer format_comment(n, level)
+   public defer format_comment(out, n, level)
 
-   public defer format_pi(n, level)
+   public defer format_pi(out, n, level)
 
-   public defer format_element(n, level)
+   public defer format_element(out, n, level)
 
-   public defer format_cdata(n, level)
+   public defer format_cdata(out, n, level)
 
-   public defer format_xmldecl(n, level)
+   public defer format_xmldecl(out, n, level)
 end
 
 

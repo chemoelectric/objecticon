@@ -17,7 +17,7 @@ procedure main(a)
    every e := !a do {
       s := Files.file_to_string(e) | stop("couldnt open" || e)
       d := p.parse(s) | stop("couldnt parse " || e)
-      write(fmt.format(d))
+      fmt.format(,d)
       d.print_structure()
       write("------------")
    }

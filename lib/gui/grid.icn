@@ -28,11 +28,12 @@ class CellInfo(Insets,Align)
       x_weight,
       y_weight
 
-   private object_to_string()
+   #
+   # Output object
+   #
+   private object_output(oo)
       local t
-
       t := s || ": "
-      t ||:= "obj=" || subtype(obj) || "<" || serial(obj) || ">"
       t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
          " component pref size=" || pw || "," || ph
       t ||:= "\n\tcell desired size=" || dw || "," || dh
@@ -42,8 +43,7 @@ class CellInfo(Insets,Align)
          " weight=" || x_weight || "," || y_weight ||
          " align=" || image(x_align) || "," || image(y_align) ||
          " insets=l:" || l_inset || " t:" || t_inset || " r:" || r_inset || " b:" || b_inset
-
-      return t
+      return oo.object_string(self, t)
    end
 end
 

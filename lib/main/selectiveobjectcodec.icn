@@ -67,12 +67,13 @@ class SelectiveObjectCodec()
       pre_encode()
       p := self.load_structs()
       m := p[1]
-      e.encode(*p[2])
+      e.encode(*p[2]) | fail
       every x := !p[2] do {
-         e.encode(x[1])
-         e.encode(Class.get(self, m[x[1]]))
+         e.encode(x[1]) | fail
+         e.encode(Class.get(self, m[x[1]])) | fail
       }
       post_encode()
+      return
    end
 
    private object_decode(e)
@@ -91,29 +92,6 @@ class SelectiveObjectCodec()
 
       every 1 to n do {
          (f := e.decode() &
-          v := e.decode()) | fail
-         Class.get(self, \m[f]) := v
-      }
-
-      post_decode()
-      return
-   end
-
-   private legacy_object_decode(e)
-      local n, m, p, x, v, f
-
-      n := integer(e.line_in()) | fail
-      p := self.load_structs()
-      m := p[1]
-
-      #
-      # Set up any defaults specified
-      #
-      every x := !p[2] do 
-         Class.get(self, m[x[1]]) := x[3]
-
-      every 1 to n do {
-         (f := e.line_in() &
           v := e.decode()) | fail
          Class.get(self, \m[f]) := v
       }

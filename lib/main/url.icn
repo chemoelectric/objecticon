@@ -95,13 +95,13 @@ class URL()
    end
 
    #
-   # Return a string representation of the URL.
+   # Output object
    #
-   private object_to_string()
+   private object_output(oo)
       local s
       s := self.protocol || "://" || self.address || ":" || self.port || self.file
       s ||:= "#" || \self.ref
-      return s
+      return oo.writes(s)
    end
    
    #

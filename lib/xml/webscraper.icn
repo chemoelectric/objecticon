@@ -7,24 +7,11 @@ package xml
 import util, ipl.noncase, io
 
 class WebScraper()
-   public paths
+   public 
+      paths
 
    public load_file(fn)
       return set_page(Files.file_to_string(fn)) 
-   end
-
-   public object_to_string()
-      local s, e, p
-      s := "[WebScraper\n"
-      every e := !sort(paths) do {
-         s ||:= e[1] || "->\n"
-         every p := !e[2] do {
-            s ||:= "\t"
-            every s ||:= image(!p) || " "
-            s  ||:= "\n"
-         }
-      }
-      return s || "]\n"
    end
 
    public set_page(data)

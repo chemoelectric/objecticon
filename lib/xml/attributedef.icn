@@ -58,21 +58,5 @@ class AttributeDef()
    public get_default_value()
       return default_value
    end
-
-   #
-   # Returns a string representation of this object.
-   #
-   public object_to_string()
-      local s
-      s := def_type
-      if \def_set then {
-         s ||:= " ("
-         every s ||:= (!def_set) || " "
-         s ||:= ") "
-      }
-      s ||:= \default_decl
-      s ||:= " " || \default_value
-      return s
-   end
 end
 

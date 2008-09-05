@@ -1,4 +1,4 @@
-import xml, io
+import xml
 
 procedure main()
    local fmt, d, decl, dt, el, el2
@@ -24,7 +24,7 @@ procedure main()
    el.add(Comment("here is a comment"))
    d.add(el)
 
-   writes(fmt.format(d))
+   fmt.format(,d)
 
 end
 

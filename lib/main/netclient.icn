@@ -61,7 +61,7 @@ class NetClient(Connectable, SetFields)
    # Open the connection.
    #
    public open()
-      local l1, l2, domain, addr
+      local r, domain, addr
 
       if \server then {
          domain := ProtocolFormat.INET
@@ -82,13 +82,11 @@ class NetClient(Connectable, SetFields)
       fire(CONNECTING_EVENT)
       connection.connect(addr) | {
          if \timeout > 0 & errno() = Errno.EINPROGRESS then {
-            l1 := [connection]
-            l2 := [connection]
-            DescStream.select(&null, l1, l2, timeout) | {
+            r := DescStream.poll(connection, Poll.OUT, timeout)[1] | {
                close()
                return error("Couldn't connect to " || addr || ":" || &why)
             }
-            if *l2 > 0 then {
+            if r ~= Poll.OUT then {
                close()
                return error("Couldn't connect to " || addr || " (socket error)")
             }
@@ -139,14 +137,12 @@ class NetClient(Connectable, SetFields)
    # Low-level write on the connection. 
    #
    private send(s)
-      local i, l1, l2
+      local i, r
 
       while *s > 0 do {
          if \timeout > 0 then {
-            l1 := [connection]
-            l2 := [connection]
-            DescStream.select(&null, l1, l2, timeout) | fail
-            if *l2 > 0 then
+            r := DescStream.poll(connection, Poll.OUT, timeout)[1] | fail
+            if r ~= Poll.OUT then
                return error("Send failed (socket error)")
          }
          i := connection.out(s) | fail
@@ -159,13 +155,11 @@ class NetClient(Connectable, SetFields)
    # Low-level read on the connection. 
    #
    private recv(len)
-      local l1, l2
+      local r
 
       if \timeout > 0 then {
-         l1 := [connection]
-         l2 := [connection]
-         DescStream.select(l1, &null, l2, timeout) | fail
-         if *l2 > 0 then
+         r := DescStream.poll(connection, Poll.IN, timeout)[1] | fail
+         if r ~= Poll.IN then
             return error("Receive failed (socket error)")
       }
       return connection.in(len)

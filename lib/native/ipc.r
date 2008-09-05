@@ -65,6 +65,8 @@ dptr m##_dptr;
 if (!is:object(p))
     runerr(602, p);
 m##_dptr = c_get_instance_data(&p, (dptr)&idf);
+if (!m##_dptr)
+    runerr(207,*(dptr)&idf);
 (m) = IntVal(*m##_dptr);
 if (m < 0)
     runerr(205, p);

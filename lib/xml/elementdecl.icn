@@ -8,8 +8,6 @@
 
 package xml
 
-import lang
-
 #
 # This class represents the result of parsing an <!ELEMENT> declaration.
 # It contains the root of the parsed ContentSpec tree which defines the
@@ -28,10 +26,6 @@ class ElementDecl()
    #
    public get_content_spec()
       return content_spec
-   end
-
-   public object_to_string()
-      return to_string(content_spec)
    end
 end
 

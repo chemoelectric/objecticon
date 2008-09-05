@@ -50,11 +50,9 @@ class HttpClient(NetClient)
       request,
       response,
       open_url,
-      data_out,
       retries,
       retry_while_data_flag,
       length,
-      string_buff,
       read,
       http_version,
       http_error,
@@ -165,22 +163,42 @@ class HttpClient(NetClient)
    # @param request - an {HttpRequest} instance
    # @return an {HttpResponse} object.
    public retrieve(request)
-      self.request := clone(request)
+      # Create our own copy of the request as we may modify it during
+      # redirects
+      self.request := HttpRequest()
+      self.request.set_url(clone(request.url))
+      self.request.set_method(request.method)
+      self.request.set_headers(clone(request.headers))
+      self.request.set_username(request.username)
+      self.request.set_password(request.password)
+      self.request.set_referer(request.referer)
+      self.request.set_range(request.range_start, request.range_end)
+      self.request.set_content_type(request.content_type)
+      if /request.data_stream then
+         request.method === "HEAD" | fatal(self, "No data stream set")
+      else {
+         upto('w', request.data_stream.get_mode()) | fatal(self, "Data stream not writable")
+         upto('t', request.data_stream.get_mode()) | fatal(self, "Data stream not truncatable")
+         self.request.set_data_stream(request.data_stream)
+      }
+      if /request.post_stream then
+         request.method ~=== "POST" | fatal(self, "No data stream set on a POST")
+      else {
+         upto('r', request.post_stream.get_mode()) | fatal(self, "Post stream not readable")
+         upto('s', request.post_stream.get_mode()) | fatal(self, "Post stream not seekable")
+         self.request.set_post_stream(request.post_stream)
+      }
+
       auth_req_count := 0
       redir_set := set()
       abort_flag := &null
       repeat {
          http_error := &null
 
-         if not retrieve_page() then {
-            remove(\request.data_file)
-            fail
-         }
+         retrieve_page() | fail
 
          if find("200"|"206", response.get_status()) then
             return response
-
-         remove(\request.data_file)
 
          if find("401", response.get_status()) then
             handle_authentication() | fail
@@ -219,7 +237,7 @@ class HttpClient(NetClient)
       #
       if request.method == "POST" then {
          request.method := "GET"
-         request.post_file := request.post_data := &null
+         request.post_stream := &null
          request.unset_header("content-length")
          request.unset_header("content-type")
       }
@@ -302,7 +320,7 @@ class HttpClient(NetClient)
    #
    # 
    private create_digest_authorization_header()
-      local md5, nc, h, t, hentity, ha2, f, s
+      local md5, nc, h, t, hentity, ha2, s
 
       self.nonce_count +:= 1
       nc := map(format_int_to_string(self.nonce_count, 16, 8))
@@ -314,15 +332,12 @@ class HttpClient(NetClient)
       if \qop == "auth-int" then {
          # Calculate H(entity)
          t := MD5()
-         if \request.post_data then
-            t.update(request.post_data)
-         else if \request.post_file then {
+         if \request.post_stream then {
             # Just fail; the whole request will surely fail anyway.
-            f := io.open(request.post_file, "r") | fail
-            while s := reads(f, 8192) do {
+            request.post_stream.seek(1) | fail
+            while s := request.post_stream.reads(8192) do
                t.update(s)
-            }
-            f.close()
+            request.post_stream.eof() | fail
          }
          hentity := t.final_str()
          md5.update(":" || hentity)
@@ -615,6 +630,7 @@ class HttpClient(NetClient)
       i := retries
 
       self.read := self.length := &null
+
       repeat {
          prev_read := self.read
          if tryone() then {
@@ -631,9 +647,9 @@ class HttpClient(NetClient)
             i := retries
          } else if (i -:= 1) < 0 then {
             fire(FAILED_EVENT)
-            if retries = 0 then
+            if retries = 0 then {
                fail
-            else
+            } else
                return error("Gave up after " || (1+retries) || " attempts - last reason:" || &why)
          }
 
@@ -704,7 +720,7 @@ class HttpClient(NetClient)
    #
    # 
    private write_request()
-      local f, rs, sz, s
+      local rs, sz, s, f
       request.set_header("user-agent", user_agent)
       request.set_header("host", request.url.get_address())
       request.set_header("referer", \request.referer)
@@ -729,32 +745,22 @@ class HttpClient(NetClient)
       write_line(request.method || " " || request.url.get_file() || 
                  " HTTP/" || http_version) | fail
 
-      if \request.post_data then {
+      if \request.post_stream then {
          \request.content_type | fatal(self, "Content-type header not set on a POST")
          request.set_header("content-type", request.content_type)
-         request.set_header("content-length", *request.post_data)
-         request.set_header("authorization", create_authorization_header())
-         write_request_headers() | fail
-         write_line() | fail
-         write_str(request.post_data) | fail
-      } else if \request.post_file then {
-         \request.content_type | fatal(self, "Content-type header not set on a POST")
-         request.set_header("content-type", request.content_type)
-         sz := Files.stat(request.post_file).size | return error("Couldn't stat post file:" ||
-                                                           request.post_file ||
-                                                           ":" || &why)
+         sz := request.post_stream.seek(0) - 1 | fail
          request.set_header("content-length", sz)
          request.set_header("authorization", create_authorization_header())
          write_request_headers() | fail
          write_line() | fail
-         f := io.open(request.post_file, "r") | return error("Couldn't open:" || request.post_file)
-         while s := f.reads(8192) do {
+         request.post_stream.seek(1) | fail
+         while s := request.post_stream.reads(8192) do {
             if not write_str(s) then {
                f.close()
                fail
             }
          }
-         f.close()
+         request.post_stream.eof() | fail
       } else {
          request.set_header("authorization", create_authorization_header())
          write_request_headers() | fail
@@ -796,55 +802,22 @@ class HttpClient(NetClient)
    #
    # 
    private read_data()
-      if \self.read & find("206", response.get_status()) then {
-         #
-         # Continue a partial read.  The self.read and self.length values
-         # continue from the previous attempt.
-         #
-         if \request.data_file then
-            data_out := io.open(request.data_file, "a") | fatal(self, "Couldn't open " ||
-                                                                request.data_file)
-      } else {
-         #
-         # Set up either a new data file or a string buffer, and reset
-         # the self.read and self.length values.
-         #
-         if /request.data_file then
-            string_buff := StringBuff()
-         else
-            data_out := io.open(request.data_file, "w") | fatal(self, "Couldn't open " ||
-                                                                 request.data_file)
-
+      #
+      # See whether we are continuing a partial read.  If so, the
+      # self.read and self.length values continue from the previous
+      # attempt.  Otherwise, they are reset and the output stream
+      # truncated.
+      #
+      if not(\self.read & find("206", response.get_status())) then {
+         request.data_stream.truncate(0) | fail
          self.length := integer(response.get_first_header("content-length")) | &null
          self.read := 0
       }
 
-      if not read_data_impl() then {
-         if \request.data_file then
-            data_out.close()
-         fail
-      }
-
-      #
-      # Close the response
-      #
-      if /request.data_file then 
-         response.set_data(string_buff.get_string())
-      else {
-         data_out.close()
-         response.set_data_file(request.data_file)
-      }
-
-      return
-   end
-
-   #
-   # 
-   private read_data_impl()
       #
       # Read the data.
       #
-      if map(response.get_first_header("transfer-encoding")) == "chunked" then
+      if trim(map(response.get_first_header("transfer-encoding"))) == "chunked" then
          return read_chunked()
       else if /length then
          return read_to_eof()
@@ -866,7 +839,7 @@ class HttpClient(NetClient)
             break
          while chunk > 0 do {
             s := read_str(min(1024, chunk)) | fail
-            add_some(s)
+            add_some(s) | fail
             chunk -:= *s
          }
          l := read_line() | fail
@@ -895,14 +868,16 @@ class HttpClient(NetClient)
       # No content length.  Read until eof, then close.
       #
       while s := read_str(1024) do
-         add_some(s)
-
-      close()
-
+         add_some(s) | fail
+      # 
+      # Make sure we actually read to the end of file
       #
-      # Succeed iff the stream is at EOF
-      #
-      return eof()
+      eof() | {
+         close()
+         fail
+      }
+
+      return
    end
 
    #
@@ -915,7 +890,7 @@ class HttpClient(NetClient)
       #
       while self.read < length do {
          s := read_str(min(1024, length - self.read)) | fail
-         add_some(s)
+         add_some(s) | fail
       }
 
       maybe_close()
@@ -942,10 +917,7 @@ class HttpClient(NetClient)
    private add_some(s)
       self.read +:= *s
       fire(PROGRESS_EVENT)
-      if /request.data_file then
-         string_buff.add(s)
-      else
-         writes(data_out, s)
+      return request.data_stream.writes(s)
    end
 
    public set_one(f)

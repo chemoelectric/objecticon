@@ -51,13 +51,6 @@ class ProcessingInstruction(Node)
       return "pi"
    end
 
-   #
-   # Get a string representation of this object.
-   #
-   public object_to_string()
-      return "ProcessingInstruction[" || image(target) || "," || image(content) || "]"
-   end
-
    public new(t, c)
       cast(self,Node).new()
       self.target := t

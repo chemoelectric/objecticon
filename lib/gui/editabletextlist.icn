@@ -1275,10 +1275,6 @@ class ViewLine()
       last,
       tw
 
-   private object_to_string()
-      return "ViewLine(" || index || "," || str || "," || first || "," || last || ")"
-   end
-
    public new(index, str, first, last, tw)
       self.index := index
       self.str := str

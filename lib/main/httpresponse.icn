@@ -16,9 +16,7 @@ import util
 class HttpResponse(MimeHeaders)
    private readable 
       url, 
-      status,
-      data,
-      data_file
+      status
 
    #
    # Set the url
@@ -47,38 +45,5 @@ class HttpResponse(MimeHeaders)
    #
    public status_okay()
       return find("200", status)
-   end
-
-   #
-   # Set the data of the response.
-   #
-   public set_data(s)
-      self.data := s 
-   end
-
-   #
-   # Return the data.
-   # @return  A string representing the data (which may be binary data).
-   #
-   public get_data()
-      return data
-   end
-
-   #
-   # Set the data file for responses that save the data in a file,
-   # rather than as part of this object.
-   # @param s the filename.
-   #
-   public set_data_file(s)
-      self.data_file := s
-   end
-
-   #
-   # Return the data file for this response, or null if there is no
-   # such file.
-   # @return The filename
-   #
-   public get_data_file()
-      return data_file
    end
 end

@@ -57,18 +57,20 @@ class XmlFormatter(Formatter,SetFields)
       as_read_flag := to_flag(s)
    end
 
-   public format_document(n, level)
-      local s
-      s := ""
-      every s ||:= format(!n.children, level + 1) || "\n"
-      return s
+   public format_document(out, n, level)
+      local c
+      every c := !n.children do {
+         format(out, c, level + 1) | fail
+         out.write() | fail
+      }
+      return
    end
 
-   public format_content(s, level)
-      return s
+   public format_content(out, s, level)
+      return out.writes(s)
    end
 
-   public format_doctype(n, level)
+   public format_doctype(out, n, level)
       local s, x
       s := "<!DOCTYPE "
       s ||:= \n.name
@@ -79,22 +81,24 @@ class XmlFormatter(Formatter,SetFields)
          else
             s ||:= " SYSTEM \"" || x.system_id || "\""
       }
-      return s || ">"
+      s ||:= ">"
+      return out.writes(s)
    end
 
-   public format_comment(n, level)
-      return "<!--" || n.comment || "-->"
+   public format_comment(out, n, level)
+      return out.writes("<!--" || n.comment || "-->")
    end
 
-   public format_pi(n, level)
+   public format_pi(out, n, level)
       local s
       s := "<?" || n.target
       if \n.content then
          s ||:= " " || n.content 
-      return s || "?>"
+      s ||:= "?>"
+      return out.writes(s)
    end
 
-   public format_element(n, level)
+   public format_element(out, n, level)
       local s, istr1, istr2, x, l, e
 
       if \indent then {
@@ -111,28 +115,29 @@ class XmlFormatter(Formatter,SetFields)
       }
       if *n.children = 0 then
          s ||:= "/>"
-      else {
+      else
          s ||:= ">"
+      out.writes(s) | fail
+
+      if *n.children > 0 then {
          l := get_children(n)
          if *l = 1 & string(l[1]) then {
-            s ||:= xml_escape(l[1], '&<>\"')
+            out.writes(xml_escape(l[1], '&<>\"')) | fail
          } else {
             every e := !l do {
-               if \indent then {
-                  s ||:= istr1
-               }
+               if \indent then
+                  out.writes(istr1) | fail
                if string(e) then
-                  s ||:= xml_escape(e, '&<>\"')
+                  out.writes(xml_escape(e, '&<>\"')) | fail
                else
-                  s ||:= format(e, level + 1)
+                  format(out, e, level + 1) | fail
             }
-            if \indent then {
-               s ||:= istr2
-            }
+            if \indent then
+               out.writes(istr2) | fail
          }
-         s ||:= "</" || n.name || ">"
+         out.writes("</" || n.name || ">") | fail
       }
-      return s
+      return
    end
 
    public get_children(el)
@@ -146,11 +151,11 @@ class XmlFormatter(Formatter,SetFields)
       return el.children
    end
 
-   public format_cdata(n, level)
-      return "<![CDATA[" || n.content || "]]>"
+   public format_cdata(out, n, level)
+      return out.writes("<![CDATA[" || n.content || "]]>")
    end
 
-   public format_xmldecl(n, level)
+   public format_xmldecl(out, n, level)
       local s
       s := "<?xml "
       if \n.version then
@@ -159,7 +164,8 @@ class XmlFormatter(Formatter,SetFields)
          s ||:= "encoding='" || n.encoding || "' "
       if \n.standalone then
          s ||:= "standalone='" || n.standalone || "' "
-      return s || "?>"
+      s ||:= "?>"
+      return out.writes(s)
    end
 
    public set_one(f)

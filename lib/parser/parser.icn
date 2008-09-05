@@ -124,12 +124,14 @@ class Parser(Connectable)
    public preprocess(fname, predefined_syms)
       local sb
       first_err := &null
-      sb := StringBuff()
-      every sb.add(preprocess_gen(fname, predefined_syms))
+      sb := RamStream()
+      every sb.out(preprocess_gen(fname, predefined_syms) || "\n")
       if preproc_err_count = 0 then
-         return sb.get_string("\n")
-      else
+         return sb.done()
+      else {
+         sb.close()
          return error(first_err)
+      }
    end
 
    #

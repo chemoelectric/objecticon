@@ -301,6 +301,7 @@ class Window()
          "c":	b := ior(b, 16r10000)
          "m":	b := ior(b, 16r20000)
          "s":	b := ior(b, 16r40000)
+         "r":	b := ior(b, 16r80000)
          default:	runerr(205, s)			# diagnose bad flag
       }
       return b					# return result
@@ -318,20 +319,6 @@ class Window()
          e +:= 16r1000			# increase exponent
       }
       return ishift(e + n, 16)		# return shifted result
-   end
-
-   public erase_rectangle(x, y, w, h)
-      if x < 0 then {
-         w +:= x
-         x := 0
-      }
-
-      if y < 0 then {
-         h +:= y
-         y := 0
-      }
-
-      return erase_area(x, y, w, h)
    end
 
    private new(wbp)

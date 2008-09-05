@@ -149,14 +149,23 @@ class Message(SetFields, MimeHeaders)
    # Return a string representation of the message in RFC822 format.
    # 
    public to_rfc822()
-      local s, h
-      s := ""
-      every h := !headers.sort() do {
-         every s ||:= fold(h[1] || ": " || !h[2]) || "\r\n"
-      }
-      s ||:= "\r\n" || content
+      local b
+      b := RamStream()
+      to_rfc822_stream(b)
+      return b.done()
+   end
 
-      return s
+   #
+   # Output the message in RFC822 format to the given stream.
+   #
+   public to_rfc822_stream(f)
+      local h, t
+      every h := !headers.sort() do {
+         every t := !h[2] do
+            f.writes(fold(h[1] || ": " || t), "\r\n") | fail
+      }
+      f.writes("\r\n", content) | fail
+      return
    end
 
    #

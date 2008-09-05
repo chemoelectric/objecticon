@@ -13,25 +13,24 @@ package xml
 # is used for testing purposes.
 #
 class CanonicalXmlFormatter(XmlFormatter)
-   public format_cdata(n, level)
-      return xml_escape(n.content, '\n\r\t&<>\"')
+   public format_cdata(out, n, level)
+      return out.writes(xml_escape(n.content, '\n\r\t&<>\"'))
    end
 
-   public format_document(n, level)
-      local s, el
-      s := ""
+   public format_document(out, n, level)
+      local el
       every el := !n.children do {
          if el.get_type() == ("doctype" | "pi" | "element") then
-            s ||:= format(el, level + 1)
+            format(out, el, level + 1) | fail
       }
-      return s
+      return
    end
 
-   public format_doctype(n, level)
+   public format_doctype(out, n, level)
       local s, x
 
       if *n.parent.notation_declarations = 0 then
-         return ""
+         return
       
       s := "<!DOCTYPE " || n.name
       s ||:= " [\n"
@@ -47,10 +46,11 @@ class CanonicalXmlFormatter(XmlFormatter)
          }
          s ||:= ">\n"
       }
-      return s || "]>\n"
+      s ||:= "]>\n"
+      return out.writes(s)
    end
 
-   public format_element(n, level)
+   public format_element(out, n, level)
       local s, x, e
 
       s := "<" || n.name
@@ -62,23 +62,26 @@ class CanonicalXmlFormatter(XmlFormatter)
          s[-1] := ""
       }
       s ||:= ">"
+      out.writes(s) | fail
       every e := !n.children do {
          if string(e) then
-            s ||:= xml_escape(e, '\n\r\t&<>\"')
+            out.writes(xml_escape(e, '\n\r\t&<>\"')) | fail
          else if e.get_type() ~== "comment" then
-            s ||:= format(e, level + 1)
+            format(out, e, level + 1) | fail
       }
-      s ||:= "</" || n.name || ">"
 
-      return s
+      out.writes("</" || n.name || ">") | fail
+
+      return
    end
 
-   public format_pi(n, level)
+   public format_pi(out, n, level)
       local s
       s := "<?" || n.target || " "
       if \n.content then
          s ||:= n.content
-      return s || "?>"
+      s ||:= "?>"
+      return out.writes(s)
    end
 end
 

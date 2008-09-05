@@ -8,19 +8,53 @@
 
 package util
 
+import io
+
 #
 # This class is a way around Icon's inefficiency in concatenating long
 # strings.  It creates a list of strings which it then concatenates all at
 # once in a loop which takes advantage of an Icon optimization.
 #
-class StringBuff()
-   private buff
+# It also functions as an output-only {Stream}.
+#
+class StringBuff(Stream)
+   private 
+      buff
 
    #
    # Add the string to the buffer list.
    #
    public add(s)
       put(buff, s)
+   end
+
+   public out(s)
+      put(buff, s)
+      return *s
+   end
+
+   public writes(a[])
+      every put(buff, !a)
+      return
+   end
+
+   public truncate(len)
+      local s
+      s := get_string()
+      if len > *s then
+         s ||:= repl("\0", len - *s)
+      else
+         s := s[1:len + 1]
+      buff := [s]
+      return
+   end
+
+   public get_mode()
+      return "wt"
+   end
+
+   public close()
+      return
    end
 
    #

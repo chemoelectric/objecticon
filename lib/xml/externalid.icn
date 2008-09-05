@@ -44,13 +44,6 @@ class ExternalID()
       return system_id := s
    end
 
-   #
-   # Get a string representation of this object.
-   #
-   public object_to_string()
-      return "ExternalID[" || image(public_id) || "," || image(system_id) || "]"
-   end
-
    public new(system_id, public_id)
       self.system_id := system_id
       self.public_id := public_id

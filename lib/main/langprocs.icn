@@ -1,6 +1,6 @@
 package lang
 
-import util, io
+import io
 
 #
 # Stop with a fatal error message.
@@ -30,214 +30,319 @@ end
 # Convert the object to string, descending structures to the given depth
 #
 # @param o       The object to be converted.
+# @param indent  Output newlines and indentation to show the object structure
 # @param depth   The depth of recursion; default is all levels
 #
-procedure to_string(o, depth, seen)
-   local ty, string_buff, s, i, e, pairs, mp
-
-   /seen := table()
-   /depth := -1
-
-   if \seen[o] then {
-      if s := subtype(o) then
-         return "ref " || type(o) || " " || s || "<" || serial(o) || ">"
-      else
-         return "ref " || type(o) || "<" || serial(o) || ">"
-   }
-
-   string_buff := StringBuff()
-
-   ty := type(o)
-
-   case ty of {
-      "record" : {
-         seen[o] := 1
-         string_buff.add(ty || " " || subtype(o) || "<" || serial(o) || ">")
-         if depth ~= 0 then {
-            string_buff.add("(")
-            i := 1
-            every s := generate_record_names(o) do {
-               string_buff.add(s || "=")
-               string_buff.add(to_string(o[i], depth - 1, seen))
-               string_buff.add(";")
-               i +:= 1
-            }
-            string_buff.drop_last(";")
-            string_buff.add(")")
-         }
-      }
-
-      "object" : {
-         seen[o] := 1
-         if mp := Class.getf(o, "object_to_string") then
-            string_buff.add(mp(depth, seen))
-         else {
-            string_buff.add(type(o) || " " || subtype(o) || "<" || serial(o) || ">")
-            if depth ~= 0 then {
-               string_buff.add("(")
-               every i := 1 to Class.get_n_instance_fields(o) do {
-                  string_buff.add(Class.get_field_name(o, i) || "=")
-                  string_buff.add(to_string(Class.getf(o, i), depth - 1, seen))
-                  string_buff.add(";")
-                  i +:= 1
-               }
-               string_buff.drop_last(";")
-               string_buff.add(")")
-            }
-         }
-      }
-
-      "class" : {
-         seen[o] := 1
-         string_buff.add(ty || " " || subtype(o))
-         if depth ~= 0 then {
-            string_buff.add("(")
-            every i := Class.get_n_instance_fields(o) + 1 to Class.get_n_fields(o) do {
-               # Only show non-methods
-               if iand(Class.get_field_flags(o, i), Class.M_Method) = 0 then {
-                  string_buff.add(Class.get_field_name(o, i) || "=")
-                  string_buff.add(to_string(Class.getf(o, i), depth - 1, seen))
-                  string_buff.add(";")
-               }
-               i +:= 1
-            }
-            string_buff.drop_last(";")
-            string_buff.add(")")
-         }
-      }
-
-      "cast" : {
-         string_buff.add("cast(")
-         if depth ~= 0 then {
-            string_buff.add(to_string(Class.get_cast_object(o), depth - 1, seen))
-            string_buff.add(",")
-            string_buff.add(to_string(Class.get_cast_class(o), depth - 1, seen))
-         }
-         string_buff.add(")")
-      }
-
-      "methp" : {
-         string_buff.add("methp(")
-         if depth ~= 0 then {
-            string_buff.add(to_string(Class.get_methp_object(o), depth - 1, seen))
-            string_buff.add(",")
-            string_buff.add(to_string(Class.get_methp_proc(o), depth - 1, seen))
-         }
-         string_buff.add(")")
-      }
-
-      "constructor" | "procedure" :
-         # Just let image() do the work.
-         string_buff.add(image(o))   
-
-      "null" :
-         string_buff.add("&null")
-      
-      "string" :
-         string_buff.add("\"" || format_escape(o) || "\"")
-      
-      "cset" :
-         string_buff.add("\'" || format_escape(o) || "\'")
-
-      "integer" :
-         string_buff.add(o)
-
-      "real" :
-         string_buff.add(o)
-
-      "set" : {
-         seen[o] := 1
-         string_buff.add(ty || "<" || serial(o) || ">")
-         if depth ~= 0 then {
-            string_buff.add("{")
-            every e := !o do {
-               string_buff.add(to_string(e, depth - 1, seen))
-               string_buff.add(", ")
-            }
-            string_buff.drop_last(", ")
-            string_buff.add("}")
-         }
-      }
-
-      "list" : {
-         seen[o] := 1
-         string_buff.add(ty || "<" || serial(o) || ">")
-         if depth ~= 0 then {
-            string_buff.add("[")
-            every e := !o do {
-               string_buff.add(to_string(e, depth - 1, seen))
-               string_buff.add(", ")
-            }
-            string_buff.drop_last(", ")
-            string_buff.add("]")
-         }
-      }
-
-      "table" : {
-         seen[o] := 1
-         string_buff.add(ty || "<" || serial(o) || ">")
-         if depth ~= 0 then {
-            string_buff.add("def=")
-            string_buff.add(to_string(o[[]], depth - 1, seen))
-            pairs := sort(o)
-            string_buff.add("[")
-            every e := !pairs do {
-               string_buff.add(to_string(e[1], depth - 1, seen))
-               string_buff.add("=")
-               string_buff.add(to_string(e[2], depth - 1, seen))
-               string_buff.add(";")
-            }
-            string_buff.drop_last(";")
-            string_buff.add("]")
-         }
-      }
-
-      "co-expression" : {
-         string_buff.add(ty || "<" || serial(o) || ">")
-      }
-
-      "file" : {
-         string_buff.add(ty || "(" || subtype(o) || ")")
-      }
-
-      "window" : {
-         string_buff.add(ty || "<" || serial(o) || ">(" || subtype(o) || ")")
-      }
-
-      default : 
-         string_buff.add("unknown type")
-   }
-
-   return string_buff.get_string()
+procedure to_string(o, indent, depth)
+   local sb, oo
+   sb := RamStream()
+   oo := ObjectOutputStream(sb, indent, depth)
+   oo.traverse(o)
+   return sb.done()
 end
 
-#
-# A helper class for producing a custom to_string on just some
-# selected fields.
-#
-class SelectiveToString()
-   private object_to_string(depth, seen)
-      local string_buff, s
-      string_buff := StringBuff()
-      string_buff.add(type(self) || " " || subtype(self) || "<" || serial(self) || ">")
-      if depth ~= 0 then {
-         string_buff.add("(")
-         every s := fields_to_string() do {
-            string_buff.add(s || "=")
-            string_buff.add(to_string(Class.getf(self, s), depth - 1, seen))
-            string_buff.add(";")
-         }
-         string_buff.drop_last(";")
-         string_buff.add(")")
-      }
-      return string_buff.get_string()
+class ObjectOutputStream(Stream)
+   private readable
+      depth,
+      indent,
+      level,
+      ilevel
+      
+   private
+      stuff,
+      seen, 
+      f
+
+   public out(s)
+      stuff := 1
+      return f.out(s)
    end
 
-   #
-   # This method should be overridden to generate the names of the
-   # fields which should be put in the to_string result.
-   #
-   private defer fields_to_string()
+   public get_mode()
+      return "w"
+   end
+
+   public nl()
+      if \stuff then {
+         write() | fail
+         writes(repl(" ", indent * ilevel)) | fail
+         stuff := &null
+      }
+      return
+   end
+
+   public iplus()
+      ilevel +:= 1
+   end
+
+   public iminus()
+      ilevel -:= 1
+   end
+
+   public traverse(o)
+      local ty, s, i, e, pairs, mp, sep, desc
+
+      if \seen[o] then {
+         if s := subtype(o) then
+            return writes("ref " || type(o) || " " || s || "#" || serial(o))
+         else
+            return writes("ref " || type(o) || "#" || serial(o))
+      }
+
+      ty := type(o)
+      level +:= 1
+      if /depth | (level <= depth) then
+         desc := 1
+
+      case ty of {
+         "record" : {
+            seen[o] := 1
+            if /desc then 
+               writes(ty || " " || subtype(o) || "#" || serial(o)) | fail
+            else if simple{!o} then {
+               writes(ty || " " || subtype(o) || "#" || serial(o) || "(") | fail
+               i := 1
+               every s := generate_record_names(o) do {
+                  if i > 1 then
+                     writes(";") | fail
+                  writes(s || "=") | fail
+                  traverse(o[i]) | fail
+                  i +:= 1
+               }
+               writes(")") | fail
+            } else {
+               nl() | fail
+               writes(ty || " " || subtype(o) || "#" || serial(o) || "(") | fail
+               iplus()
+               i := 1
+               every s := generate_record_names(o) do {
+                  nl() | fail
+                  iplus()
+                  writes(s || "=") | fail
+                  traverse(o[i]) | fail
+                  iminus()
+                  i +:= 1
+               }
+               iminus()
+               nl() | fail
+               writes(")") | fail
+            }
+         }
+
+         "object" : {
+            seen[o] := 1
+            if /desc then
+               writes(type(o) || " " || subtype(o) || "#" || serial(o)) | fail
+            else if mp := Class.getf(o, "object_output") then
+               mp(self) | fail
+            else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
+               writes(type(o) || " " || subtype(o) || "#" || serial(o) || "(") | fail
+               every i := 1 to Class.get_n_instance_fields(o) do {
+                  if i > 1 then
+                     writes(";") | fail
+                  writes(Class.get_field_name(o, i) || "=") | fail
+                  traverse(Class.getf(o, i)) | fail
+                  i +:= 1
+               }
+               writes(")") | fail
+            } else {
+               nl() | fail
+               writes(type(o) || " " || subtype(o) || "#" || serial(o) || "(") | fail
+               iplus()
+               every i := 1 to Class.get_n_instance_fields(o) do {
+                  nl() | fail
+                  writes(Class.get_field_name(o, i) || "=") | fail
+                  iplus()
+                  traverse(Class.getf(o, i)) | fail
+                  iminus()
+                  i +:= 1
+               }
+               iminus()
+               nl() | fail
+               writes(")") | fail
+            }
+         }
+
+         "set" : {
+            seen[o] := 1
+            if /desc then
+               writes(ty || "#" || serial(o)) | fail
+            else if simple{!o} then {
+               writes(ty || "#" || serial(o) || "{") | fail
+               every e := !o do {
+                  if \sep then
+                     writes(",") | fail
+                  traverse(e) | fail
+                  sep := 1
+               }
+               writes("}") | fail
+            } else {
+               nl() | fail
+               writes(ty || "#" || serial(o) || "{") | fail
+               iplus()
+               every e := !o do {
+                  if \sep then
+                     writes(",") | fail
+                  nl() | fail
+                  traverse(e) | fail
+                  sep := 1
+               }
+               iminus()
+               nl() | fail
+               writes("}") | fail
+            }
+         }
+
+         "list" : {
+            seen[o] := 1
+            if /desc then
+               writes(ty || "#" || serial(o)) | fail
+            if simple{!o} then {
+               writes(ty || "#" || serial(o) || "[") | fail
+               every e := !o do {
+                  if \sep then
+                     writes(",") | fail
+                  traverse(e) | fail
+                  sep := 1
+               }
+               writes("]") | fail
+            } else {
+               nl() | fail
+               writes(ty || "#" || serial(o) || "[") | fail
+               iplus()
+               every e := !o do {
+                  if \sep then
+                     writes(",") | fail
+                  nl() | fail
+                  traverse(e) | fail
+                  sep := 1
+               }
+               iminus()
+               nl() | fail
+               writes("]")
+            }
+         }
+
+         "table" : {
+            seen[o] := 1
+            if /desc then
+               writes(ty || "#" || serial(o)) | fail
+            else if simple{o[[]] | key(o) | !o} then {
+               writes(ty || "#" || serial(o)) | fail
+               if \o[[]] then {
+                  writes(";def=")
+                  traverse(o[[]]) | fail
+               }
+               pairs := sort(o)
+               writes("{") | fail
+               every e := !pairs do {
+                  if \sep then
+                     writes(";") | fail
+                  traverse(e[1]) | fail
+                  writes("->") | fail
+                  traverse(e[2]) | fail
+                  sep := 1
+               }
+               writes("}") | fail
+            } else {
+               nl() | fail
+               writes(ty || "#" || serial(o)) | fail
+               if \o[[]] then {
+                  writes(";def=") | fail
+                  iplus()
+                  traverse(o[[]]) | fail
+                  iminus()
+               }
+               pairs := sort(o)
+               writes("{") | fail
+               iplus()
+               every e := !pairs do {
+                  nl() | fail
+                  traverse(e[1]) | fail
+                  writes("->") | fail
+                  iplus()
+                  traverse(e[2]) | fail
+                  iminus()
+               }
+               iminus()
+               nl() | fail
+               writes("}") | fail
+            }
+         }
+
+         default : 
+            writes(image(o)) | fail
+      }
+
+      level -:= 1
+      return
+   end
+   
+   public object_start(o)
+      return writes(type(o) || " " || subtype(o) || "#" || serial(o) || "(")
+   end
+
+   public object_end(o)
+      return writes(")")
+   end
+
+   public object_string(o, s)
+      object_start(o) | fail
+      writes(s) | fail
+      return object_end(o)
+   end
+
+   public object_selected(o, fields[])
+      local s, sep
+      if simple{Class.getf(o, !fields)} then {
+         object_start(o) | fail
+         every s := !fields do {
+            if \sep then
+               writes(";") | fail
+            writes(s || "=") | fail
+            traverse(Class.getf(o, s)) | fail
+            sep := 1
+         }
+         object_end(o) | fail
+      } else {
+         nl() | fail
+         object_start(o) | fail
+         iplus()
+         every s := !fields do {
+            nl() | fail
+            writes(s || "=") | fail
+            iplus()
+            traverse(Class.getf(o, s)) | fail
+            iminus()
+         }
+         iminus()
+         nl() | fail
+         object_end(o) | fail
+      }
+      return
+   end
+
+   public simple(x)
+      local e
+      static s
+      initial s := set("null", "string", "cset", "integer", 
+                       "real", "co-expression", "constructor", "procedure")
+      if /indent then
+         return
+      while e := @x do
+         member(seen, e) | member(s, type(e)) | fail
+      return 
+   end
+
+   public new(f, indent, depth)
+      self.seen := table()
+      self.level := 0
+      self.ilevel := 0
+      self.depth := depth
+      self.indent := indent
+      self.f := f
+      return
+   end
 end
 
 #

@@ -59,7 +59,7 @@ procedure main(a)
       if d := p.parse(s) then {
          write("--- Parsing complete.  Document was well-formed")
          write("--- Formatted input")
-         write(fmt.format(d))
+         fmt.format(, d)
          write("--- Document structure")
          if \t["g"] then
             d.print_structure(,,1)

@@ -126,7 +126,7 @@ class Element(Node)
    # @fail if there is no such element.
    #
    public get_nth_trimmed_string(n)
-      return do_trim(get_nth_string(n))
+      return xml_trim(get_nth_string(n))
    end
 
    #

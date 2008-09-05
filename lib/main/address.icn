@@ -11,7 +11,10 @@ class Address()
 
    public defer generate_mailboxes()
 
-   private object_to_string()
-      return to_rfc822()
+   #
+   # Output object
+   #
+   private object_output(oo)
+      return oo.writes(to_rfc822())
    end
 end

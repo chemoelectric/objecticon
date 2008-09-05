@@ -2,6 +2,13 @@ package io
 
 import util(error, to_flag, SetFields)
 
+$ifdef _UNIX
+$define EOL "\n"
+$endif
+$ifdef _MS_WIN32
+$define EOL "\r\n"
+$endif
+
 #
 # This is the top-level stream class.  It is not instantiated
 # directly.
@@ -42,9 +49,16 @@ class Stream()
    public defer tell()
 
    #
+   # Truncate this stream to the given length, and set the position to the
+   # new end of the stream (ie, len + 1).
+   #
+   public defer truncate(len)
+
+   #
    # Return a string indicating which functions the stream supports.
    # If the string contains "r", the stream is readable; "w" indicates
-   # the stream is writable and "s" indicates that it is seekable.
+   # the stream is writable, "s" indicates that it is seekable, and
+   # "t" that it is truncatable.
    #
    public defer get_mode()
 
@@ -131,7 +145,7 @@ class Stream()
    #
    public write(a[])
       local e, n
-      every e := !a | "\n" do {
+      every e := !a | EOL do {
          while *e > 0 do {
             n := out(e) | fail
             e := e[n + 1:0]
@@ -144,30 +158,30 @@ end
 class StringStream(Stream)
    private 
       f_eof,
-      str,
+      subj,
       pos
 
    public in(n)
       local t, e
       f_eof := &null
-      if pos > *str then {
+      if pos > *subj then {
          f_eof := 1
          return error("End of file")
       }
-      e := min(pos + n, *str + 1)
-      t := str[pos:e]
+      e := min(pos + n, *subj + 1)
+      t := subj[pos:e]
       pos := e
       return t
    end
 
    public out(s)
       local e
-      if pos > *str then {
-         str ||:= repl("\0", pos - *str - 1) || s
-         pos := *str + 1
+      if pos > *subj then {
+         subj ||:= repl("\0", pos - *subj - 1) || s
+         pos := *subj + 1
       } else {
-         e := min(pos + *s, *str + 1)
-         str[pos:e] := s
+         e := min(pos + *s, *subj + 1)
+         subj[pos:e] := s
          pos +:= *s
       }
       return *s
@@ -176,8 +190,8 @@ class StringStream(Stream)
    public seek(offset)
       return if offset > 0 then
          pos := offset
-      else if -offset <= *str then
-         pos := *str + 1 + offset
+      else if -offset <= *subj then
+         pos := *subj + 1 + offset
       else
          error("Seek out of range")
    end
@@ -187,23 +201,33 @@ class StringStream(Stream)
    end
 
    public close()
+      return
    end
 
    public get_mode()
-      return "rws"
+      return "rwst"
+   end
+
+   public truncate(len)
+      if len > *subj then
+         subj ||:= repl("\0", len - *subj)
+      else
+         subj := subj[1:len + 1]
+      pos := *subj + 1
+      return
    end
 
    public eof()
       return \.f_eof
    end
 
-   public get_str()
-      return .str
+   public str()
+      return .subj
    end
 
-   public new(str)
-      /str := ""
-      self.str := str
+   public new(subj)
+      /subj := ""
+      self.subj := subj
       self.pos := 1
       return
    end
@@ -366,6 +390,11 @@ class BufferStream(Stream, SetFields)
       return other.tell()
    end
 
+   public truncate(len)
+      synch() | fail
+      return other.truncate(len)
+   end
+
    public get_mode()
       return other.get_mode()
    end
@@ -506,9 +535,9 @@ procedure write(a[])
       f := pop(a)
    else
       f := FileStream.b_stdout
-   every e := \!a | "\n" do {
+   every e := \!a | EOL do {
       if type(e) == "object" then {
-         f.out("\n")
+         f.out(EOL)
          f := e
       } else {
          e := string(e) | runerr(103, e)
@@ -611,12 +640,11 @@ class FileStream(DescStream)
    public static open(name, flags, perm)
       local mode
       if iand(flags, FileOpt.WRONLY) ~= 0 then
-         mode := "w"
+         mode := "wst"
       else if iand(flags, FileOpt.RDWR) ~= 0 then
-         mode := "rw"
+         mode := "rwst"
       else
-         mode := "r"
-      mode ||:= "s"
+         mode := "rs"
       return FileStream(open_impl(name, flags, perm), mode)
    end
 
@@ -639,9 +667,6 @@ class FileStream(DescStream)
 
    public defer tell()
 
-   #
-   # Truncate this file to the given length.
-   #
    public defer truncate(len)
 
    #
@@ -755,7 +780,7 @@ class DirStream(Stream)
    public in(n)
       local t
       f_eof := &null
-      if (*\line > 0) | (line := read_impl(dd) || "\n") then {
+      if (*\line > 0) | (line := read_impl(dd) || EOL) then {
          line ? {
             t := move(n) | tab(0)
             line := tab(0)
@@ -814,6 +839,66 @@ class ProgStream(FileStream)
    private new(fd, pid, mode)
       cast(self,FileStream).new(fd, mode)
       self.pid := pid
+      return
+   end
+end
+
+#
+# This class provides a {Stream} which stores its data in memory.  It
+# can be used to efficiently concatenate together many strings, or as
+# a convenient temporary stream.
+#
+class RamStream(Stream)
+   private
+      f_eof,
+      ptr
+
+   public defer in(n)
+
+   public defer out(s)
+
+   public defer seek(offset)
+
+   public defer tell()
+
+   public defer truncate(len)
+
+   #
+   # Return the current content of the {RamStream} as a string.
+   #
+   public defer str()
+
+   public defer close()
+
+   #
+   # Close the stream and return the finished content as a string.
+   #
+   public done()
+      local s
+      s := str()
+      close()
+      return s
+   end
+
+   private static defer new_impl(s)
+
+   public get_mode()
+      return "rwst"
+   end
+
+   public eof()
+      return \.f_eof
+   end
+
+   #
+   # Create a new {RamStream}, with initial value of {s}.
+   #
+   # @param s the initial value of the stream; defaults to empty 
+   # @      string.
+   #
+   public new(s)
+      /s := ""
+      ptr := new_impl(s)
       return
    end
 end

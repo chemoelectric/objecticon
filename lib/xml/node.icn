@@ -121,7 +121,7 @@ class Node()
       l := []
       every e := !get_children_no_whitespace() do {
          if string(e) then
-            e := do_trim(e)
+            e := xml_trim(e)
          put(l, e)
       }
       return l
@@ -148,7 +148,7 @@ class Node()
       local s, e
       s := ""
       every e := !self.children do {
-         s ||:= do_trim(string(e))
+         s ||:= xml_trim(string(e))
       }
       return s
    end
@@ -165,7 +165,7 @@ class Node()
    # comparison.
    #
    public has_trimmed_string(s)
-      return do_trim(string(!self.children)) == s
+      return xml_trim(string(!self.children)) == s
    end
 
    #
@@ -196,7 +196,7 @@ class Node()
       local i, j, e
       /indent := 0
       i := repl(" ", indent * 5)
-      write(f, i || to_string(self))
+      write(f, i || to_string(self, 3))
       every j := 1 to *children do {
          writes(i || j || ":")
          e := children[j]
@@ -210,13 +210,10 @@ class Node()
    end
 
    #
-   # Trim xml.xml_space chars from both ends of the given element
+   # Trim xml.xml_space chars from both ends of the given string
    #
-   public do_trim(s)
-      s ? {
-         tab(many(XmlParser.XML_SPACE))
-         return trim(tab(0), XmlParser.XML_SPACE)
-      }
+   public static xml_trim(s)
+      return trim(s, XmlParser.XML_SPACE)
    end
 
    public new()
