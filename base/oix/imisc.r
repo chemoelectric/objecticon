@@ -728,8 +728,8 @@ LibDcl(escan,1,"escan")
 
 /*
  * Little c-level utility for accessing an instance field by name in
- * an object.  A fatal error occurs if the field is unknown, or the
- * field is a static or a method.
+ * an object.  Returns null if the field is unknown, or the field is a
+ * static or a method.
  */
 
 dptr c_get_instance_data(dptr x, dptr fname)
@@ -738,7 +738,7 @@ dptr c_get_instance_data(dptr x, dptr fname)
     struct b_class *class = obj->class;
     int i = lookup_class_field_by_name(class, fname);
     if (i == -1 || i >= class->n_instance_fields)
-        fatalerr(626, fname);
+        return 0;
     return &obj->fields[i];
 }
 

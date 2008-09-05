@@ -362,6 +362,7 @@ struct errtab errtab[] = {
    624, "record, class, cast or object expected",
    625, "record or constructor expected",
    626, "internal error looking up object field",
+   627, "field not found",
 
    1040, "socket error",		 
    1041, "cannot initialize network library",

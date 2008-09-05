@@ -143,7 +143,7 @@ class Code()
       generate_methods(prog, cl)
 
       f := open(s, "w") | return alert_error("Couldn't open " || s)
-      prog.pos.write(f)
+      prog.pos.output(f)
       writes(f, "\n\n")
 
       if t := resolve_layout_filename(s, \parent_Canvas.layout_filename) then {
@@ -184,7 +184,7 @@ class Code()
 
       p := Parser()
       s := Files.file_to_string(src_name) | return alert_error("Couldn't load " || src_name)
-      prog := p.parse(s) | return alert_error(["Couldn't parse ", p.get_reason()])
+      prog := p.parse(s) | return alert_error(["Couldn't parse ", &why])
       seen_importspec := table()
       every d := prog.gen() do {
          case classof(d) of {
@@ -264,7 +264,7 @@ class Code()
       temp_name := dest_name || ".temp"
       f := open(temp_name, "w") | return alert_error("Couldn't open " || temp_name)
 
-      prog.pos.write(f)
+      prog.pos.output(f)
       writes(f, "\n\n")
 
       if l_name := resolve_layout_filename(dest_name,
@@ -298,13 +298,13 @@ class Code()
       # Everything okay, so rename
       #
       if \l_name then {
-         remove(l_name)
-         rename(l_temp_name, l_name) | stop("Couldn't rename new layout file ", 
-                                            l_temp_name, " to ", l_name)
+         Files.remove(l_name)
+         Files.move(l_temp_name, l_name) | stop("Couldn't rename new layout file ", 
+                                                l_temp_name, " to ", l_name)
       }
-      remove(dest_name)
-      rename(temp_name, dest_name) | stop("Couldn't rename new source file ", 
-                                          temp_name, " to ", dest_name)
+      Files.remove(dest_name)
+      Files.move(temp_name, dest_name) | stop("Couldn't rename new source file ", 
+                                              temp_name, " to ", dest_name)
       return
    end
 

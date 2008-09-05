@@ -67,69 +67,6 @@ function{0,1} getenv(s)
 end
 
 
-"remove(s) - remove the file named s."
-
-function{0,1} remove(s)
-
-   /*
-    * Make a C-style string out of s
-    */
-   if !cnv:C_string(s) then
-      runerr(103,s)
-   abstract {
-      return null
-      }
-
-   inline {
-      if (remove(s) != 0) {
-#if MSWIN32
-#define rmdir _rmdir
-#endif					/* MSWIN32 */
-	 if (rmdir(s) != 0) {
-            on_error(errno);
-	    fail;
-            }
-	 fail;
-         }
-      return nulldesc;
-      }
-end
-
-
-"rename(s1,s2) - rename the file named s1 to have the name s2."
-
-function{0,1} rename(s1,s2)
-
-   /*
-    * Make C-style strings out of s1 and s2
-    */
-   if !cnv:C_string(s1) then
-      runerr(103,s1)
-   if !cnv:C_string(s2) then
-      runerr(103,s2)
-
-   abstract {
-      return null
-      }
-
-   body {
-#if MSWIN32
-      int i=0;
-      if ((i = rename(s1,s2)) != 0) {
-	 remove(s2);
-	 if (rename(s1,s2) != 0)
-	    fail;
-	 }
-      return nulldesc;
-#else					/*NT*/
-      if (rename(s1,s2) != 0)
-	 fail;
-      return nulldesc;
-#endif					/* MSWIN32 */
-      }
-end
-
-
 "getch() - return a character from console."
 
 function{0,1} getch()

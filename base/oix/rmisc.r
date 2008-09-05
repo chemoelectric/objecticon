@@ -491,17 +491,17 @@ int noimage;
 
       table: {
          /*
-          * Print "table_m(n)" where n is the size of the table.
+          * Print "table#m(n)" where n is the size of the table.
           */
-         fprintf(f, "table_%ld(%ld)", (long)BlkLoc(*dp)->table.id,
+         fprintf(f, "table#%ld(%ld)", (long)BlkLoc(*dp)->table.id,
             (long)BlkLoc(*dp)->table.size);
          }
 
       set: {
 	/*
-         * print "set_m(n)" where n is the cardinality of the set
+         * print "set#m(n)" where n is the cardinality of the set
          */
-	fprintf(f,"set_%ld(%ld)",(long)BlkLoc(*dp)->set.id,
+	fprintf(f,"set#%ld(%ld)",(long)BlkLoc(*dp)->set.id,
            (long)BlkLoc(*dp)->set.size);
         }
 
@@ -564,7 +564,7 @@ int noimage;
              fprintf(f, "object ");
              while (i-- > 0)
                  printimage(f, *s++, '\0');
-             fprintf(f, "_%ld", (long)bp->object.id);
+             fprintf(f, "#%ld", (long)bp->object.id);
              j = bp->object.class->n_instance_fields;
              if (j <= 0)
                  fprintf(f, "()");
@@ -595,7 +595,7 @@ int noimage;
          fprintf(f, "record ");
          while (i-- > 0)
             printimage(f, *s++, '\0');
-        fprintf(f, "_%ld", (long)bp->record.id);
+        fprintf(f, "#%ld", (long)bp->record.id);
          j = bp->record.constructor->n_fields;
          if (j <= 0)
             fprintf(f, "()");
@@ -615,7 +615,7 @@ int noimage;
          }
 
       coexpr: {
-         fprintf(f, "co-expression_%ld(%ld)",
+         fprintf(f, "co-expression#%ld(%ld)",
             (long)((struct b_coexpr *)BlkLoc(*dp))->id,
             (long)((struct b_coexpr *)BlkLoc(*dp))->size);
          }
@@ -822,7 +822,7 @@ int noimage;
       /*
        * Just give indication of size if the list isn't empty.
        */
-      fprintf(f, "list_%ld(%ld)", (long)lp->id, (long)size);
+      fprintf(f, "list#%ld(%ld)", (long)lp->id, (long)size);
       return;
       }
 
@@ -832,7 +832,7 @@ int noimage;
     *  last ListLimit elements.
     */
 
-   fprintf(f, "list_%ld = [", (long)lp->id);
+   fprintf(f, "list#%ld = [", (long)lp->id);
 
    count = 1;
    i = 0;
@@ -1323,11 +1323,11 @@ dptr dp1, dp2;
       list: {
          /*
           * Produce:
-          *  "list_m(n)"
+          *  "list#m(n)"
           * where n is the current size of the list.
           */
          bp = BlkLoc(*dp1);
-         sprintf(sbuf, "list_%ld(%ld)", (long)bp->list.id, (long)bp->list.size);
+         sprintf(sbuf, "list#%ld(%ld)", (long)bp->list.id, (long)bp->list.size);
          len = strlen(sbuf);
          Protect(t = alcstr(sbuf, len), return Error);
          StrLoc(*dp2) = t;
@@ -1337,11 +1337,11 @@ dptr dp1, dp2;
       table: {
          /*
           * Produce:
-          *  "table_m(n)"
+          *  "table#m(n)"
           * where n is the size of the table.
           */
          bp = BlkLoc(*dp1);
-         sprintf(sbuf, "table_%ld(%ld)", (long)bp->table.id,
+         sprintf(sbuf, "table#%ld(%ld)", (long)bp->table.id,
             (long)bp->table.size);
          len = strlen(sbuf);
          Protect(t = alcstr(sbuf, len), return Error);
@@ -1351,10 +1351,10 @@ dptr dp1, dp2;
 
       set: {
          /*
-          * Produce "set_m(n)" where n is size of the set.
+          * Produce "set#m(n)" where n is size of the set.
           */
          bp = BlkLoc(*dp1);
-         sprintf(sbuf, "set_%ld(%ld)", (long)bp->set.id, (long)bp->set.size);
+         sprintf(sbuf, "set#%ld(%ld)", (long)bp->set.id, (long)bp->set.size);
          len = strlen(sbuf);
          Protect(t = alcstr(sbuf,len), return Error);
          StrLoc(*dp2) = t;
@@ -1369,7 +1369,7 @@ dptr dp1, dp2;
           */
          bp = BlkLoc(*dp1);
          rnlen = StrLen(bp->record.constructor->name);
-         sprintf(sbuf, "_%ld(%ld)", (long)bp->record.id,
+         sprintf(sbuf, "#%ld(%ld)", (long)bp->record.id,
             (long)bp->record.constructor->n_fields);
          len = strlen(sbuf);
 	 Protect (reserve(Strings, 7 + len + rnlen), return Error);
@@ -1390,14 +1390,14 @@ dptr dp1, dp2;
            struct b_class *cast_class, *obj_class;
            /*
             * Produce:
-            *  "cast(object objectname_m(n),class classname)"     
+            *  "cast(object objectname#m(n),class classname)"     
             */
            bp = BlkLoc(*dp1);
            obj = bp->cast.object;
            obj_class = obj->class;
            cast_class = bp->cast.class;
 
-           sprintf(sbuf, "_%ld(%ld),class ", (long)obj->id, (long)obj_class->n_instance_fields);
+           sprintf(sbuf, "#%ld(%ld),class ", (long)obj->id, (long)obj_class->n_instance_fields);
            len = StrLen(obj_class->name) + StrLen(cast_class->name) + strlen(sbuf) + 13;
            Protect (reserve(Strings, len), return Error);
            Protect(t = alcstr("cast(object ", 12), return Error);
@@ -1419,13 +1419,13 @@ dptr dp1, dp2;
            bp = BlkLoc(*dp1);
            obj = bp->methp.object;
            obj_class = obj->class;
-           sprintf(sbuf, "_%ld(%ld),method ", (long)obj->id, (long)obj_class->n_instance_fields);
+           sprintf(sbuf, "#%ld(%ld),method ", (long)obj->id, (long)obj_class->n_instance_fields);
            proc = bp->methp.proc;
            field = proc->field;
            if (field) {
                /*
                 * Produce:
-                *  "methp(objectname_m(n),method classname.fieldname)"
+                *  "methp(objectname#m(n),method classname.fieldname)"
                 */
                field_name = &field->name;
                field_class = field->defining_class;
@@ -1444,7 +1444,7 @@ dptr dp1, dp2;
            } else {
                /*
                 * Produce:
-                *  "methp(objectname_m(n),procname)"
+                *  "methp(objectname#m(n),procname)"
                 */
                len = StrLen(obj_class->name) + StrLen(proc->pname) + strlen(sbuf) + 14;
                Protect (reserve(Strings, len), return Error);
@@ -1462,14 +1462,14 @@ dptr dp1, dp2;
      object: {
            /*
             * Produce:
-            *  "object name_m(n)"     
+            *  "object name#m(n)"     
             * where n is the number of fields.
             */
            struct b_class *obj_class;
            bp = BlkLoc(*dp1);
            obj_class = bp->object.class;   
            rnlen = StrLen(obj_class->name);
-           sprintf(sbuf, "_%ld(%ld)", (long)bp->object.id,
+           sprintf(sbuf, "#%ld(%ld)", (long)bp->object.id,
                    (long)obj_class->n_instance_fields);
            len = strlen(sbuf);
            Protect (reserve(Strings, 7 + len + rnlen), return Error);
@@ -1487,12 +1487,12 @@ dptr dp1, dp2;
       coexpr: {
          /*
           * Produce:
-          *  "co-expression_m (n)"
+          *  "co-expression#m (n)"
           *  where m is the number of the co-expressions and n is the
           *  number of results that have been produced.
           */
 
-         sprintf(sbuf, "_%ld(%ld)", (long)BlkLoc(source)->coexpr.id,
+         sprintf(sbuf, "#%ld(%ld)", (long)BlkLoc(source)->coexpr.id,
             (long)BlkLoc(source)->coexpr.size);
          len = strlen(sbuf);
 	 Protect (reserve(Strings, len + 13), return Error);

@@ -696,7 +696,7 @@ function{1} trim(s,c,ends)
    if !def:tmp_cset(c,blankcs) then
       runerr(104, c)
 
-   if !def:C_integer(ends,-1) then
+   if !def:C_integer(ends,0) then
       runerr(101, ends)
 
    abstract {

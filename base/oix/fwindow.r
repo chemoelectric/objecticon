@@ -54,6 +54,8 @@ dptr w##_dptr;
 if (!is:object(p))
     runerr(602, p);
 w##_dptr = c_get_instance_data(&p, (dptr)&wbpf);
+if (!w##_dptr)
+    runerr(207,*(dptr)&wbpf);
 (w) = (wbp)IntVal(*w##_dptr);
 if (!(w))
     runerr(142, p);

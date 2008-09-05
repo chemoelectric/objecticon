@@ -528,6 +528,8 @@ dptr m##_dptr;
 if (!is:object(p))
     runerr(602, p);
 m##_dptr = c_get_instance_data(&p, (dptr)&fdf);
+if (!m##_dptr)
+    runerr(207,*(dptr)&fdf);
 (m) = IntVal(*m##_dptr);
 if (m < 0)
     runerr(205, p);
@@ -566,6 +568,8 @@ function{0,1} io_FileStream_in(self, i)
        FdParam(self, fd);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       if (!eof)
+           runerr(207,*(dptr)&f_eoff);
        *eof = nulldesc;
 
        if (i <= 0) {
@@ -637,6 +641,11 @@ function{0,1} io_FileStream_truncate(self, len)
       runerr(101, len)
    body {
        FdParam(self, fd);
+       if (lseek(fd, len, SEEK_SET) < 0) {
+           on_error();
+           fail;
+       }
+
        if (ftruncate(fd, len) < 0) {
            on_error();
            fail;
@@ -698,6 +707,8 @@ function{0,1} io_SocketStream_in(self, i)
        FdParam(self, fd);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       if (!eof)
+           runerr(207,*(dptr)&f_eoff);
        *eof = nulldesc;
 
        if (i <= 0) {
@@ -1045,10 +1056,9 @@ end
 function{0,1} io_DescStream_poll(a[n])
    body {
 #ifdef HAVE_POLL
-       struct pollfd *ufds;
+       static struct pollfd *ufds = 0;
        unsigned int nfds;
        int timeout, i, rc;
-       tended struct descrip ints;
 
        nfds = n / 2;
        if (n % 2 == 0)
@@ -1056,41 +1066,24 @@ function{0,1} io_DescStream_poll(a[n])
        else if (!cnv:C_integer(a[n - 1], timeout))
            runerr(101, a[n - 1]);
 
-       /*
-        * Validate all params, building up a list of ints, being fds
-        * and event masks.
-        */
-       ints = create_list(2 * nfds);
+       Protect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)), fatalerr(0, NULL));
+
        for (i = 0; i < nfds; ++i) {
            int events;
-           struct descrip id;
            FdParam(a[2 * i], fd);
            if (!cnv:C_integer(a[2 * i + 1], events))
                runerr(101, a[2 * i + 1]);
-           MakeInt(fd, &id);
-           c_put(&ints, &id);
-           MakeInt(events, &id);
-           c_put(&ints, &id);
-       }
-
-       Protect(ufds = calloc(nfds, sizeof(struct pollfd)), runerr(0));
-       for (i = 0; i < nfds; ++i) {
-           struct descrip id;
-           c_get(&BlkLoc(ints)->list, &id);
-           ufds[i].fd = IntVal(id);
-           c_get(&BlkLoc(ints)->list, &id);
-           ufds[i].events = IntVal(id);
+           ufds[i].fd = fd;
+           ufds[i].events = events;
        }
 
        rc = poll(ufds, nfds, timeout);
        if (rc < 0) {
-           free(ufds);
            on_error();
            fail;
        }
        /* A rc of zero means timeout */
        if (rc == 0) {
-           free(ufds);
            why("Timeout");
            fail;
        }
@@ -1101,8 +1094,6 @@ function{0,1} io_DescStream_poll(a[n])
            MakeInt(ufds[i].revents, &tmp);
            c_put(&result, &tmp);
        }
-
-       free(ufds);
 
        return result;
 #else
@@ -1146,6 +1137,8 @@ dptr m##_dptr;
 if (!is:object(p))
     runerr(602, p);
 m##_dptr = c_get_instance_data(&p, (dptr)&ddf);
+if (!m##_dptr)
+    runerr(207,*(dptr)&ddf);
 (m) = (DIR*)IntVal(*m##_dptr);
 if (!(m))
     runerr(205, p);
@@ -1174,6 +1167,8 @@ function{0,1} io_DirStream_read_impl(self)
        DirParam(self, dd);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       if (!eof)
+           runerr(207,*(dptr)&f_eoff);
        *eof = nulldesc;
        errno = 0;
        de = readdir(dd);
@@ -1270,6 +1265,8 @@ function{0,1} io_ProgStream_close(self)
        FdParam(self, fd);
 
        pid = c_get_instance_data(&self, (dptr)&pidf);
+       if (!pid)
+           runerr(207,*(dptr)&pidf);
 
        if (close(fd) < 0) {
            on_error();
@@ -1574,5 +1571,151 @@ function{1} util_Timezone_get_system_timezone()
       }
 
       return result;
+   }
+end
+
+/* RamStream implementation */
+
+static struct sdescrip ptrf = {3, "ptr"};
+
+struct ramstream {
+    int pos, size, avail;
+    char *data;
+};
+
+#begdef PtrParam(p, m)
+struct ramstream *m;
+dptr m##_dptr;
+if (!is:object(p))
+    runerr(602, p);
+m##_dptr = c_get_instance_data(&p, (dptr)&ptrf);
+if (!m##_dptr)
+    runerr(207,*(dptr)&ptrf);
+(m) = (struct ramstream*)IntVal(*m##_dptr);
+if (!(m))
+    runerr(205, p);
+#enddef
+
+function{1} io_RamStream_close(self)
+   body {
+       PtrParam(self, p);
+       free(p->data);
+       free(p);
+       *p_dptr = minusonedesc;
+       return nulldesc;
+   }
+end
+
+function{0,1} io_RamStream_in(self, i)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+       dptr eof;
+       PtrParam(self, p);
+
+       eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       if (!eof)
+           runerr(207,*(dptr)&f_eoff);
+       *eof = nulldesc;
+
+       if (i <= 0) {
+           irunerr(205, i);
+           errorfail;
+       }
+
+       if (p->pos >= p->size) {
+           *eof = onedesc;
+           why("End of file");
+           fail;
+       }
+
+       i = Min(i, p->size - p->pos);
+       result = bytes2string(&p->data[p->pos], i);
+       p->pos += i;
+       
+       return result;
+   }
+end
+
+function{1} io_RamStream_new_impl(s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       struct ramstream *p;
+       Protect(p = malloc(sizeof(*p)), fatalerr(0,NULL));
+       p->avail = StrLen(s) + 1024;
+       p->pos = p->size = StrLen(s);
+       Protect(p->data = malloc(p->avail), fatalerr(0,NULL));
+       memcpy(p->data, StrLoc(s), p->size);
+       return C_integer((long int)p);
+   }
+end
+
+function{1} io_RamStream_out(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       PtrParam(self, p);
+       if (p->pos + StrLen(s) > p->avail) {
+           p->avail = 2 * (p->pos + StrLen(s));
+           Protect(p->data = realloc(p->data, p->avail), fatalerr(0,NULL));
+       }
+
+       if (p->pos > p->size)
+           memset(&p->data[p->size], 0, p->pos - p->size);
+
+       memcpy(&p->data[p->pos], StrLoc(s), StrLen(s));
+       p->pos += StrLen(s);
+       if (p->pos > p->size)
+           p->size = p->pos;
+
+       return C_integer StrLen(s);
+   }
+end
+
+function{0,1} io_RamStream_seek(self, offset)
+   if !cnv:C_integer(offset) then
+      runerr(101, offset)
+   body {
+       PtrParam(self, p);
+       if (offset > 0)
+           p->pos = offset - 1;
+       else {
+           if (p->size < -offset) {
+               why("Invalid value to seek");
+               fail;
+           }
+           p->pos = p->size + offset;
+       }
+       return C_integer(p->pos + 1);
+   }
+end
+
+function{1} io_RamStream_tell(self)
+   body {
+       PtrParam(self, p);
+       return C_integer(p->pos + 1);
+   }
+end
+
+function{1} io_RamStream_truncate(self, len)
+   if !cnv:C_integer(len) then
+      runerr(101, len)
+   body {
+       PtrParam(self, p);
+       p->pos = len;
+       p->avail = len + 1024;
+       Protect(p->data = realloc(p->data, p->avail), fatalerr(0,NULL));
+       if (p->size < len)
+           memset(&p->data[p->size], 0, len - p->size);
+       p->size = len;
+       return nulldesc;
+   }
+end
+
+function{1} io_RamStream_str(self)
+   body {
+       PtrParam(self, p);
+       return bytes2string(p->data, p->size);
    }
 end

@@ -558,6 +558,12 @@ class ClassProxy()
 
    public add(name, val)
       local i
+      #
+      # Check if we need to convert an object into its proxy (eg
+      # a CanvasTextPaint).
+      #
+      if type(val) == "object" & not is(val, ClassProxy) then
+         val := (encode(val) ? CustomDecode().decode())
       if i := \t[name] then
          l[i][2] := val
       else {
@@ -589,8 +595,121 @@ end
 #
 # An amended Decoder with decode_class changed to output to ClassProxy instances.
 #
-class LegacyCustomDecode(LegacyDecode)
-   private cs
+class LegacyCustomDecode()
+   private readable
+      tag_count, 
+      cs,
+      seen
+
+   protected decode_string(s)
+      local r
+      static esc
+      initial
+         esc := ~'\\'
+      r := ""
+      s ? {
+         repeat {
+            r ||:= tab(many(esc))
+            if pos(0) then
+               return r
+            move(1)
+            r ||:= char(move(3))
+         }
+      }
+   end
+
+   protected line_in()
+      local s
+      if s := tab(upto('|')) then {
+         move(1)
+         return s
+      }
+   end
+
+   protected note_seen(o)
+      seen[tag_count +:= 1] := o
+   end
+
+   protected decode_record()
+      local rname, n, res, i
+      (rname := line_in() &
+       n := integer(line_in())) | fail
+      res := proc(rname)()
+      note_seen(res)
+      every i := 1 to n do
+         res[i] := decode() | fail
+      
+      return res
+   end
+
+   public decode()
+      local i, n, t, res, def, key, val
+
+      t := line_in() | fail
+
+      if i := integer(t) then
+         return \seen[i]
+
+      case t of {
+         "null":
+            return
+
+         "procedure" :
+            return proc(line_in())
+
+         "record" :
+            return decode_record()
+
+         "class" :
+            return decode_object()
+
+         "string" :
+            return decode_string(line_in())
+
+         "integer" :
+            return integer(line_in())
+
+         "real" :
+            return real(line_in())
+
+         "cset" :
+            return cset(decode_string(line_in()))
+
+         "list" : {
+            n := integer(line_in()) | fail
+            res := []
+            note_seen(res)
+            every 1 to n do 
+               put(res, decode()) | fail
+            return res
+         }
+
+         "set" : {
+            n := integer(line_in()) | fail
+            res := set()
+            note_seen(res)
+            every 1 to n do 
+               insert(res, decode()) | fail
+            return res
+         }
+
+         "table" : {
+            def := decode() | fail
+            res := table(def)
+            n := integer(line_in()) | fail
+            note_seen(res)
+            every 1 to n do {
+               (key := decode() &
+               val := decode()) | fail
+               res[key] := val
+            }
+            return res
+         }            
+
+         default :
+            return
+      }            
+   end
 
    private decode_object()
       local cname, res, n, i, key, val, c
@@ -619,20 +738,149 @@ class LegacyCustomDecode(LegacyDecode)
    end
 
    public new(cs)
-      cast(self,LegacyDecode).new()
+      tag_count := 0
+      seen := table()
       self.cs := cs
       return
    end
 end
 
-class CustomDecode(Decode)
-   private cs
+class CustomDecode()
+   private cs,
+      tag_count,
+      seen
+
+   private decode_string(s)
+      local r
+      static esc
+      initial
+         esc := ~'\\'
+      r := ""
+      s ? {
+         repeat {
+            r ||:= tab(many(esc))
+            if pos(0) then
+               return r
+            move(1)
+            r ||:= char(move(3))
+         }
+      }
+   end
+
+   private line_in()
+      local s
+      if s := tab(upto(Codec.CODE_SEPARATOR)) then {
+         move(1)
+         return s
+      }
+   end
+
+   private int_in()
+      local s
+      if s := tab(many(&digits ++ '-')) then
+         return integer(s)
+   end
+
+   private char_in()
+      return move(1)
+   end
+
+   private note_seen(o)
+      seen[tag_count +:= 1] := o
+   end
+
+   public decode()
+      local i, n, rname, t, res, def, con
+
+      t := char_in() | fail
+
+      case t of {
+         Codec.REF_CODE : {
+            i := int_in() | fail
+            return \seen[i]
+         }
+
+         Codec.NULL_CODE :
+            return
+
+         Codec.CLASS_CODE :
+            return Class.for_name(line_in())
+
+         Codec.CONSTRUCTOR_CODE : {
+            rname := line_in() | fail
+            con := glob(rname) | fail
+            type(con) == "constructor" | fail
+            return con
+         }
+
+         Codec.PROCEDURE_CODE :
+            return proc(line_in())
+
+         Codec.OBJECT_CODE :
+            return decode_object()
+
+         Codec.STRING_CODE :
+            return decode_string(line_in())
+
+         Codec.INTEGER_CODE :
+            return int_in()
+
+         Codec.REAL_CODE :
+            return real(line_in())
+
+         Codec.CSET_CODE :
+            return cset(decode_string(line_in()))
+
+         Codec.RECORD_CODE : {
+            (rname := line_in() &
+             n := int_in()) | fail
+            con := glob(rname) | fail
+            type(con) == "constructor" | fail
+            res := con()
+            note_seen(res)
+            every i := 1 to n do
+               res[i] := decode() | fail
+            return res
+         }
+
+         Codec.LIST_CODE : {
+            n := int_in() | fail
+            res := []
+            note_seen(res)
+            every 1 to n do 
+               put(res, decode()) | fail
+            return res
+         }
+
+         Codec.SET_CODE : {
+            n := int_in() | fail
+            res := set()
+            note_seen(res)
+            every 1 to n do 
+               insert(res, decode()) | fail
+            return res
+         }
+
+         Codec.TABLE_CODE : {
+            n := int_in() | fail
+            def := decode() | fail
+            res := table(def)
+            note_seen(res)
+            every 1 to n do
+               insert(res, decode(), decode()) | fail
+            return res
+         }            
+
+         default :
+            fail
+      }            
+   end
 
    private decode_object()
       local cname, res, n, i, key, val, c
 
       cname := line_in() | fail
-      if c := cs.get_converter(cname) then {
+      if c := (\cs).get_converter(cname) then {
          res := ClassProxy(c.get_new_name())
          note_seen(res)
          n := integer(decode()) | fail
@@ -657,7 +905,8 @@ class CustomDecode(Decode)
    end
 
    public new(cs)
-      cast(self,Decode).new()
+      tag_count := 0
+      seen := table()
       self.cs := cs
       return
    end
@@ -667,21 +916,160 @@ end
 #
 # The converse of CustomDecode, this creates the amended string.
 #
-class CustomEncode(Encode)
+class CustomEncode()
+   private readable
+      tag_count,
+      seen, 
+      string_buff
+
+   public get_string()
+      return string_buff.done()
+   end
+
+   private note_seen(o)
+      seen[o] := (tag_count +:= 1)
+   end
+
+   private encode_string(s)
+      local r
+      static printable
+      initial {
+         printable := cset(&ascii[33:128]) -- '\\' -- Codec.CODE_SEPARATOR
+      }
+      r := ""
+      s ? {
+         repeat {
+            r ||:= tab(many(printable))
+            if pos(0) then
+               return r
+            # This MUST be done in two steps to take advantage of
+            # catenation optimisation - very slow otherwise!
+            r ||:= "\\"
+            r ||:= right(ord(move(1)), 3, "0")
+         }
+      }	 
+   end
+
+   public encode(o)
+      local ty, i, pairs
+
+      if i := \seen[o] then {
+         chars_out(Codec.REF_CODE)
+         int_out(i)
+         return
+      }
+
+      ty := type(o)
+      case ty of {
+         "object" : {
+            chars_out(Codec.OBJECT_CODE)
+            encode_object(o)
+         }
+
+         "class": {
+            chars_out(Codec.CLASS_CODE)
+            line_out(subtype(o))
+         }
+
+         "procedure" : {
+            chars_out(Codec.PROCEDURE_CODE)
+            line_out(subtype(o))
+         }
+
+         "constructor" : {
+            chars_out(Codec.CONSTRUCTOR_CODE)
+            line_out(subtype(o))
+         }
+
+         "null" :
+            chars_out(Codec.NULL_CODE)
+
+         "string" : {
+            chars_out(Codec.STRING_CODE)
+            line_out(encode_string(o))
+         }
+
+         "cset" : {
+            chars_out(Codec.CSET_CODE)
+            line_out(encode_string(string(o)))
+         }
+
+         "integer" : {
+            chars_out(Codec.INTEGER_CODE)
+            int_out(string(o))
+         }
+
+         "real" : {
+            chars_out(Codec.REAL_CODE)
+            line_out(string(o))
+         }
+
+         "record" : {
+            chars_out(Codec.RECORD_CODE)
+            line_out(subtype(o))
+            int_out(*o)
+            note_seen(o)
+            every encode(!o)
+         }
+
+         "list" : {
+            chars_out(Codec.LIST_CODE)
+            int_out(*o)
+            note_seen(o)
+            every encode(!o)
+            }
+
+         "set" : {
+            chars_out(Codec.SET_CODE)
+            int_out(*o)
+            note_seen(o)
+            every encode(!o)
+         }
+
+         "table" : {
+            chars_out(Codec.TABLE_CODE)
+            int_out(*o)
+            encode(o[[]])
+            note_seen(o)
+            pairs := sort(o)
+            every encode(!!pairs)
+         }
+
+         default : 
+            chars_out(Codec.NULL_CODE)
+      }
+   end
+
+   private line_out(s)
+      string_buff.out(s || Codec.CODE_SEPARATOR)
+   end
+
+   private chars_out(s)
+      string_buff.out(s)
+   end
+
+   private int_out(i)
+      string_buff.out(string(i))
+   end
+
    private encode_object(o)
       local l, e
-      if is(o, ClassProxy) then {
-         line_out(o.get_name())
-         note_seen(o)
-         l := o.get_map()
-         encode(*l)
-         every e := !l do {
-            encode(e[1])
-            encode(e[2])
-         }
-      } else {
-         cast(self,Encode).encode_object(o)
+      is(o, ClassProxy) | stop("Expected ClassProxy, got:", image(o))
+      line_out(o.get_name())
+      note_seen(o)
+      l := o.get_map()
+      encode(*l)
+      every e := !l do {
+         encode(e[1])
+         encode(e[2])
       }
+   end
+
+   public new()
+      tag_count := 0
+      seen := table()
+      string_buff := RamStream()
+      return
    end
 end
 

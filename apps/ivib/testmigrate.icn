@@ -1,10 +1,10 @@
-import lang
+import lang, io
 
 procedure main(args)
    local l, s, res
 
    l := Loader(args[1])
-   s := l.load() | stop(l.get_reason())
+   s := l.load() | stop(&why)
 
    write("Source:")
    if any(&lcase, s.code) then
