@@ -375,13 +375,6 @@ void icon_init(char *name)
     eclassfields = (struct class_field *)(code + hdr.Classes);
     classes = (word *)(code + hdr.Classes);
     records = (word *)(code + hdr.Records);
-    /*
-     * The field table is optional and will be zero if not generated.
-     */
-    if (hdr.Ftab)
-        ftabp = (short *)(code + hdr.Ftab);
-    else
-        ftabp = 0;
     standardfields = (word *)(code + hdr.StandardFields);
     fnames = (dptr)(code + hdr.Fnames);
     globals = efnames = (dptr)(code + hdr.Globals);
@@ -430,14 +423,6 @@ void icon_init(char *name)
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, code);
     fclose(ifile);
-
-    /*
-     * Set the ftabwidth - quicker for Field table lookup
-     */
-    if (hdr.Ftab)
-        ftabwidth = *classes + *records;
-    else
-        ftabwidth = 0;
 
     /*
      * Initialize the event monitoring system, if configured.
@@ -995,13 +980,6 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     pstate->EClassFields = (struct class_field *)(pstate->Code + hdr.Classes);
     pstate->Classes = (word *)(pstate->Code + hdr.Classes);
     pstate->Records = (word *)(pstate->Code + hdr.Records);
-    /*
-     * The field table is optional and will be zero if not generated.
-     */
-    if (hdr.Ftab)
-        pstate->Ftabp = (short *)(pstate->Code + hdr.Ftab);
-    else
-        pstate->Ftabp = 0;
     pstate->StandardFields = (word *)(pstate->Code + hdr.StandardFields);
     pstate->Fnames  = (dptr)(pstate->Code + hdr.Fnames);
     pstate->Globals = pstate->Efnames = (dptr)(pstate->Code + hdr.Globals);
@@ -1018,11 +996,6 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
 
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, pstate->Code);
-
-    if (hdr.Ftab)
-        pstate->FtabWidth = *pstate->Classes + *pstate->Records;
-    else
-        pstate->FtabWidth = 0;
 
     fclose(ifile);
 

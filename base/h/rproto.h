@@ -512,7 +512,7 @@ struct b_tvsubs *alcsubs_0	(word len,word pos,dptr var);
 struct b_tvsubs *alcsubs_1	(word len,word pos,dptr var);
 int     field_access(dptr cargp);
 int     check_access(struct class_field *cf, struct b_class *instance_class);
-int     lookup_class_field(struct b_class *class, dptr query, int query_flag);
+int     lookup_class_field(struct b_class *class, dptr query, struct inline_cache *ic);
 dptr    lookup_global(dptr name, struct progstate *prog);
 int     lookup_class_field_by_name(struct b_class *class, dptr name);
 int     lookup_class_field_by_fnum(struct b_class *class, int fnum);
@@ -631,7 +631,7 @@ int convert_flag(struct descrip s, char *deflt, int *res, stringint *tbl);
 int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);
 stringint *stringint_lookup(stringint *sip, char *s);
-
+char *lookup_err_msg(int n);
 void on_error();
 dptr c_get_instance_data(dptr x, dptr fname);
 void why(char *s);

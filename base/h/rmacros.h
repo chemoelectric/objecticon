@@ -583,8 +583,6 @@
       #define eclassfields (curpstate->EClassFields)
       #define classes (curpstate->Classes)
       #define records (curpstate->Records)
-      #define ftabp (curpstate->Ftabp)
-      #define ftabwidth (curpstate->FtabWidth)
       #define standardfields (curpstate->StandardFields)
       #define fnames (curpstate->Fnames)
       #define efnames (curpstate->Efnames)

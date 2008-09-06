@@ -418,7 +418,6 @@ void dumpstate()
     struct lclass_field_ref *vr; 
     struct lentry *le;
     struct centry *ce;
-    struct fentry *fe;
     struct lfield *lfd;
     struct linvocable *inv;
     int i;
@@ -481,8 +480,8 @@ void dumpstate()
         }
         if (gl->class) {
             cl = gl->class;
-            fprintf(stderr, "\tfieldtable_col=%d class defined in %s   flags=%s\n", 
-                   cl->fieldtable_col,cl->global->defined->name,m_flag2str(cl->flag));
+            fprintf(stderr, "\tclass defined in %s   flags=%s\n", 
+                   cl->global->defined->name,m_flag2str(cl->flag));
             fprintf(stderr, "\tSource super names:\n");
             for (sup = cl->supers; sup; sup = sup->next)
                 fprintf(stderr, "\t\t%s\n", sup->name);
@@ -539,20 +538,9 @@ void dumpstate()
             }
         }
         if (gl->record) {
-            fprintf(stderr, "\tfieldtable_col=%d\n", gl->record->fieldtable_col);
             for (lfd = gl->record->fields; lfd; lfd = lfd->next) {
                 fprintf(stderr, "\tfield %s\n", lfd->name);
             }
-        }
-    }
-    if (Tflag) {
-        fprintf(stderr, "Field table\n---------\n");
-        for (fe = lffirst; fe; fe = fe->next) {
-            fprintf(stderr, "Field %s id=%d\n\t", fe->name, fe->field_id);
-            for (i = 0; i < fieldtable_cols; i++) {
-                fprintf(stderr, "%3d ", fe->rowdata[i]);
-            }
-            fprintf(stderr, "\n");
         }
     }
     fflush(stderr);

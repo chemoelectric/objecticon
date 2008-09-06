@@ -57,8 +57,6 @@ static struct b_iproc *native_methods[] = {
 #undef NativeDef
 };
 
-static int lookup_field(char *s, dptr field_names, int ftab_rows);
-
 /*
  * Initial icode sequence. This is used to invoke the main procedure with one
  *  argument.  If main returns, the Op_Quit is executed.
@@ -523,7 +521,6 @@ void resolve(pstate)
 #ifdef DEBUG_LOAD
                 printf("%8x\t\t\tClass\n", cb);
                 printf("\t%d\t\t\t  Title\n", cb->title);
-                printf("\t%d\t\t\t  Fieldtable col\n", cb->fieldtable_col);
                 printf("\t%d\t\t\t  N supers\n", cb->n_supers);
                 printf("\t%d\t\t\t  N implemented classes\n", cb->n_implemented_classes);
                 printf("\t%d\t\t\t  N implemented instance class fields\n", cb->n_instance_fields);
@@ -631,10 +628,7 @@ struct class_field *lookup_standard_field(int standard_field_num, struct b_class
     int i;
     if (fnum == -1)
         return 0;
-    if (p->Ftabp)
-        i = p->Ftabp[fnum * p->FtabWidth + class->fieldtable_col];
-    else
-        i = lookup_class_field_by_fnum(class, fnum);
+    i = lookup_class_field_by_fnum(class, fnum);
     if (i == -1)
         return 0;
     return class->fields[i];

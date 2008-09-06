@@ -6,13 +6,6 @@
  * Structures common to the compiler and interpreter.
  */
 
-/*
- * Run-time error numbers and text.
- */
-struct errtab {
-    int err_no;			/* error number */
-    char *errmsg;		/* error message */
-};
 
 /*
  * Descriptor
@@ -111,7 +104,6 @@ struct b_proc {			/* procedure block */
 struct b_constructor {		/* constructor block */
     word title;			/*   T_Constructor */
     word blksize;		/*   size of block */
-    word fieldtable_col;
     struct progstate *program;  /*   program in which this constructor resides */
     word instance_ids;          /*   Sequence for instance ids */
     word n_fields;
@@ -143,7 +135,6 @@ struct class_field {
 struct b_class {
     word title;
     word blksize;
-    word fieldtable_col;         /* The column number in the field table */
     struct progstate *program;   /*   program in which this class resides */
     word instance_ids;           /* Sequence for instance ids */
     word init_state;             /* State of initialization */
@@ -291,6 +282,11 @@ struct dpair {
     struct descrip dv;
 };
 
+struct inline_cache {
+    union block *class;
+    int index;
+};
+
 /*
  * Allocated memory region structure.  Each program has linked lists of
  * string and block regions.
@@ -374,8 +370,6 @@ struct progstate {
     struct class_field *ClassFields, *EClassFields;
     word *Classes;
     word *Records;
-    word  FtabWidth;   /* Number of cols in field table */
-    short *Ftabp;
     dptr Fnames, Efnames;
     word *StandardFields;
     dptr Globals, Eglobals;

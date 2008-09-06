@@ -72,8 +72,6 @@ extern struct b_iproc mt_llist;
 extern struct descrip rzerodesc;	/* real descriptor */
 extern struct b_real realzero;		/* real zero block */
 
-extern struct errtab errtab[];          /* error numbers and messages */
-
 /*
  * Externals conditional on multithreading.
  */

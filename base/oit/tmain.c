@@ -24,7 +24,6 @@ int neweronly	=0;	/* -n: only translate .icn if newer than .u */
 int Dflag       =0;     /* -L: link debug */
 int Zflag	=0;	/* -Z: icode-gz compression */
 int Bflag       =0;     /* -B: bundle iconx in output file */
-int Tflag       =0;     /* -T: generate field table */
 
 /*
  * Some convenient interned strings.
@@ -263,10 +262,6 @@ int main(int argc, char **argv)
 
             case 'Z':
                 Zflag = 1;
-                break;
-
-            case 'T':
-                Tflag = 1;
                 break;
 
             default:

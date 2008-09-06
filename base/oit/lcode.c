@@ -17,7 +17,7 @@
 #include "../h/header.h"
 #include "../h/rmacros.h"
 
-#define RecordBlkSize(gp) ((8*WordSize)+(gp)->record->nfields * 2 * WordSize)
+#define RecordBlkSize(gp) ((7*WordSize)+(gp)->record->nfields * 2 * WordSize)
 
 int nstatics = 0;               /* Running count of static variables */
 
@@ -377,6 +377,12 @@ static void gencode(struct lfile *lf)
                     struct unref *p = get_unref(s);
                     lemitn(op, (word) p->num, name);
                 }
+                if (Dflag) {
+                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                }
+                outword(0);
+                outword(0);
                 break;
             }
 
@@ -478,6 +484,12 @@ static void gencode(struct lfile *lf)
                     else
                         lemitn(Op_Arg, 0, "arg");          /* inst var, "self" is the 0th argument */
                     lemitn(Op_Field, (word)(fp->field_id), "field");
+                    if (Dflag) {
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                    }
+                    outword(0);
+                    outword(0);
                 } else
                     lemitn(Op_Local, lp->l_val.index, "local");
                 break;
@@ -972,7 +984,6 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "%ld:\n", (long)pc);
         fprintf(dbgfile, "\t%d\t\t\t\t# T_Class\n", T_Class);
         fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", cl->size);
-        fprintf(dbgfile, "\t%d\t\t\t\t# Fieldtable col\n", cl->fieldtable_col);
         fprintf(dbgfile, "\t0\t\t\t\t# Owning prog\n");    /* owning prog space */
         fprintf(dbgfile, "\t0\t\t\t\t# Instance ids counter\n");
         fprintf(dbgfile, "\t%d\t\t\t\t# Initialization state\n", Uninitialized);
@@ -985,7 +996,6 @@ static void genclass(struct lclass *cl)
     }
     outword(T_Class);		/* type code */
     outword(cl->size);
-    outword(cl->fieldtable_col);/* fieldtable column */
     outword(0);
     outword(0);
     outword(Uninitialized);
@@ -1166,7 +1176,7 @@ static void genclasses()
     for (cl = lclasses; cl; cl = cl->next) {
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
-        cl->size = WordSize * (16 +
+        cl->size = WordSize * (15 +
                                1 + 
                                cl->n_supers +
                                cl->n_implemented_classes +
@@ -1269,7 +1279,6 @@ static void gentables()
                 fprintf(dbgfile, "%ld:\n", (long)pc);
                 fprintf(dbgfile, "\t%d\t\t\t\t# T_Constructor\n", T_Constructor);
                 fprintf(dbgfile, "\t%d\n", RecordBlkSize(gp));
-                fprintf(dbgfile, "\t%d\n", gp->record->fieldtable_col);
                 fprintf(dbgfile, "\t0\n");
                 fprintf(dbgfile, "\t0\n");
                 fprintf(dbgfile, "\t%d\n", gp->record->nfields);
@@ -1278,7 +1287,6 @@ static void gentables()
 
             outword(T_Constructor);		/* type code */
             outword(RecordBlkSize(gp));
-            outword(gp->record->fieldtable_col);/* fieldtable column */
             outword(0);			/* progstate (filled in by interp)*/
             outword(0);			/* serial number counter */
             outword(gp->record->nfields);		/* number of fields */
@@ -1293,28 +1301,6 @@ static void gentables()
             }
         }
     }
-
-    /*
-     * Output record/field table.
-     */
-    if (Tflag) {
-        align();
-        if (Dflag)
-            fprintf(dbgfile, "\n%ld:\t\t\t\t\t# Field table\n", (long)pc);
-        hdr.Ftab = pc;
-        for (fp = lffirst; fp; fp = fp->next) {
-            if (Dflag)
-                fprintf(dbgfile, "%ld:\t\t\t\t\t# %s id=%d\n", (long)pc, fp->name, fp->field_id);
-            for (i = 0; i < fieldtable_cols; i++) {
-                if (Dflag)
-                    fprintf(dbgfile, "\t%d", fp->rowdata[i]);
-                outshort(fp->rowdata[i]);
-                if (Dflag && (i == fieldtable_cols - 1 || ((i + 1) % 8) == 0))
-                    putc('\n', dbgfile);
-            }
-        }
-    } else
-        hdr.Ftab = 0;
 
     align();
     if (Dflag)
@@ -1531,7 +1517,6 @@ static void gentables()
         fprintf(dbgfile, "class fields:     %ld\n", (long)hdr.ClassFields);
         fprintf(dbgfile, "classes:          %ld\n", (long)hdr.Classes);
         fprintf(dbgfile, "records:          %ld\n", (long)hdr.Records);
-        fprintf(dbgfile, "ftab:             %ld\n", (long)hdr.Ftab);
         fprintf(dbgfile, "standardfields:   %ld\n", (long)hdr.StandardFields);
         fprintf(dbgfile, "fnames:           %ld\n", (long)hdr.Fnames);
         fprintf(dbgfile, "globals:          %ld\n", (long)hdr.Globals);
@@ -1557,11 +1542,7 @@ static void gentables()
         report("  Class statics   %7ld", (long)(hdr.ClassFields - hdr.ClassStatics));
         report("  Class fields    %7ld", (long)(hdr.Classes - hdr.ClassFields));
         report("  Classes         %7ld", (long)(hdr.Records - hdr.Classes));
-        if (hdr.Ftab) {
-            report("  Records         %7ld", (long)(hdr.Ftab - hdr.Records));
-            report("  Field table     %7ld", (long)(hdr.StandardFields - hdr.Ftab));
-        } else
-            report("  Records         %7ld", (long)(hdr.StandardFields - hdr.Records));
+        report("  Records         %7ld", (long)(hdr.StandardFields - hdr.Records));
         report("  Std fields      %7ld", (long)(hdr.Fnames  - hdr.StandardFields));
         report("  Field names     %7ld", (long)(hdr.Globals - hdr.Fnames));
         report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));

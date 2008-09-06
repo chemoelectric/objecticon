@@ -8,35 +8,38 @@
 /*
  * x.y - access field y of record x.
  */
-static int cast_access(dptr cargp, int query_flag);
-static int instance_access(dptr cargp, int query_flag);
-static int class_access(dptr cargp, int query_flag);
-static int lookup_record_field(struct b_constructor *recdef, dptr num);
+static int cast_access(dptr cargp, struct inline_cache *ic);
+static int instance_access(dptr cargp, struct inline_cache *ic);
+static int class_access(dptr cargp, struct inline_cache *ic);
+static int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_cache *ic);
 static int in_lang(dptr s);
 static int same_package(dptr n1, dptr n2);
 static int in_hierarchy(struct b_class *c1, struct b_class *c2);
-static int record_access(dptr cargp);
+static int record_access(dptr cargp, struct inline_cache *ic);
 
 LibDcl(field,2,".")
 {
     int r;
+    struct inline_cache *ic;
     Deref(Arg1);
     Deref(Arg2);
+    ic = (struct inline_cache*)ipc.opnd;
+    ipc.opnd += 2;
     type_case Arg1 of {
       record: {
-            r = record_access(cargp);
+            r = record_access(cargp, ic);
       }
 
       cast: {
-            r = cast_access(cargp, 1);
+            r = cast_access(cargp, ic);
       }
 
       class: {
-            r = class_access(cargp, 1);
+            r = class_access(cargp, ic);
       }
 
       object: {
-            r = instance_access(cargp, 1);
+            r = instance_access(cargp, ic);
       }
 
       default: {
@@ -71,7 +74,7 @@ int field_access(dptr cargp)
    }
 }
 
-static int cast_access(dptr cargp, int query_flag)
+static int cast_access(dptr cargp, struct inline_cache *ic)
 {
     struct b_cast *cast = &BlkLoc(Arg1)->cast;
     struct b_object *obj = cast->object;
@@ -80,70 +83,43 @@ static int cast_access(dptr cargp, int query_flag)
     struct class_field *cf;
     int i, ac;
 
-    /* Lookup field in the object's own class first */
-    i = lookup_class_field(obj_class, &Arg2, query_flag);
+    /* Lookup in the cast's class */
+    i = lookup_class_field(cast_class, &Arg2, ic);
     if (i < 0)
         return 207;
-    cf = obj_class->fields[i];
-    
-    if (cf->flags & (M_Method | M_Static)) {
-        /* It's not an instance variable, so lookup in the cast's class */
-        i = lookup_class_field(cast_class, &Arg2, query_flag);
-        if (i < 0)
-            return 207;
-        cf = cast_class->fields[i];
 
-        if (cf->flags & M_Static)
-            return 601;
+    cf = cast_class->fields[i];
 
-        /* It should be a method, otherwise it would have been inherited as an
-         * instance variable in the object's own class
-         */
-        if (!(cf->flags & M_Method))
-            syserr("method expected in cast");
+    if (cf->flags & M_Static)
+        return 601;
 
-        /* Can't access new except whilst initializing */
-        if ((cf->flags & M_Special) && obj->init_state != Initializing)
-            return 622;
+    if (!(cf->flags & M_Method))
+        return 628;
 
-        ac = check_access(cf, obj_class);
-        if (ac != 0)
-            return ac;
-        /*
-         * Instance method.
-         */
-        Protect(mp = alcmethp(), fatalerr(0,NULL));
-        /*
-         * Refresh pointers after allocation.
-         */
-        cast = &BlkLoc(Arg1)->cast;
-        obj = cast->object;
-        mp->object = obj;
-        mp->proc = &BlkLoc(*cf->field_descriptor)->proc;
-        Arg0.dword = D_Methp;
-        BlkLoc(Arg0) = (union block *)mp;
-        return 0;
-    } else {
-        /* An instance field, simply return it like an access to the object itself */
-        dptr dp = &obj->fields[i];
-        ac = check_access(cf, obj_class);
-        if (ac == 0 &&
-            (!(cf->flags & M_Const) || obj->init_state == Initializing))
-        {
-            /* Return a pointer to the field */
-            Arg0.dword = D_Var + ((word *)dp - (word *)obj);
-            BlkLoc(Arg0) = (union block *)obj;
-            return 0;
-        }
-        if (ac == 0 || (cf->flags & M_Readable)) {
-            Arg0 = *dp;
-            return 0;
-        }
+    /* Can't access new except whilst initializing */
+    if ((cf->flags & M_Special) && obj->init_state != Initializing)
+        return 622;
+
+    ac = check_access(cf, obj_class);
+    if (ac != 0)
         return ac;
-    }
+    /*
+     * Instance method.
+     */
+    Protect(mp = alcmethp(), fatalerr(0,NULL));
+    /*
+     * Refresh pointers after allocation.
+     */
+    cast = &BlkLoc(Arg1)->cast;
+    obj = cast->object;
+    mp->object = obj;
+    mp->proc = &BlkLoc(*cf->field_descriptor)->proc;
+    Arg0.dword = D_Methp;
+    BlkLoc(Arg0) = (union block *)mp;
+    return 0;
 }
 
-static int class_access(dptr cargp, int query_flag)
+static int class_access(dptr cargp, struct inline_cache *ic)
 {
     struct b_class *class = &BlkLoc(Arg1)->class;
     struct class_field *cf;
@@ -151,7 +127,7 @@ static int class_access(dptr cargp, int query_flag)
     int i, ac;
 
     ensure_initialized(class);
-    i = lookup_class_field(class, &Arg2, query_flag);
+    i = lookup_class_field(class, &Arg2, ic);
     if (i < 0)
         return 207;
     cf = class->fields[i];
@@ -183,7 +159,7 @@ static int class_access(dptr cargp, int query_flag)
     return ac;
 }
 
-static int instance_access(dptr cargp, int query_flag)
+static int instance_access(dptr cargp, struct inline_cache *ic)
 {
     struct b_object *obj = &BlkLoc(Arg1)->object;
     struct b_class *class = obj->class;
@@ -191,7 +167,7 @@ static int instance_access(dptr cargp, int query_flag)
     struct class_field *cf;
     int i, ac;
 
-    i = lookup_class_field(class, &Arg2, query_flag);
+    i = lookup_class_field(class, &Arg2, ic);
     if (i < 0)
         return 207;
     cf = class->fields[i];
@@ -394,58 +370,74 @@ int lookup_class_field_by_fnum(struct b_class *class, int fnum)
 
 /*
  * Lookup a field in a class.  The parameter query points to a
- * descriptor which is interpreted differently depending on query_flag.
- * If the flag is set, then it is a field number from an Op_Field
- * instruction; otherwise it is a string or an integer from a function
- * such as Class.get().
+ * descriptor which is interpreted differently depending on whether we
+ * are being invoked from an Op_Field instruction, in which case it is
+ * a field number, or from a function such as Class.get(), in which
+ * case it is a string or an integer.  The presence of an inline_cache
+ * parameter decides which of the two types of query it is.
  * 
  * In either case, the index into the class's fields array is returned
  * to provide the corresponding field, or -1 if the field was not
  * found.
  */
-int lookup_class_field(struct b_class *class, dptr query, int query_flag)
+int lookup_class_field(struct b_class *class, dptr query, struct inline_cache *ic)
 {
-    if (query_flag) {
-        int fnum;
+    if (ic) {
+        int fnum, index;
+
+/**
+        {
+        static int yes,total;
+        ++total;
+        if(ic->class == (union block*)class) ++yes;
+        if (total % 8192 == 0) printf("%d/%d=%f\n",yes,total,(float)yes/(float)total);
+        }
+**/
+
+        /*
+         * Check if we have a inline cache match.
+         */
+        if (ic->class == (union block *)class)
+            return ic->index;
+
         /*
          * Query is a field number (from an Op_field).
          */
         fnum = IntVal(*query);
         if (fnum < 0) {
             /*
-             * This means the field is not in the field table (ie was not
-             * encountered as a field of a class/record during linking).
-             * Its name is stored in the field names table however, and
-             * the offset from the end is the given number.
+             * This means the field was not encountered as a field of
+             * a class/record during linking.  The field lookup may
+             * still work however, if the class is in another program.
              * 
-             * So we forget about field tables, and look up by string
-             * comparison using the class's field info.
+             * The field name is stored in the field names table and
+             * the offset from the end is the given number, so we look
+             * up by string comparison.
              */
-            return lookup_class_field_by_name(class, &efnames[fnum]);
-        }
-
-        if (class->program != curpstate) {
+            index = lookup_class_field_by_name(class, &efnames[fnum]);
+        } else if (class->program != curpstate) {
             /*
-             * The class was defined in another prog - so we can't use our
-             * own fieldtable - the target class doesn't have a column in
-             * it.  Likewise, we can't use fnum in the other prog's
-             * fieldtable.  So we do string lookup here too.
+             * The class was defined in another program, but the field
+             * just happens to match one defined in this program.  We
+             * can't lookup by field number - the target class will
+             * have a different set of field numbers.  So we do string
+             * lookup here too.
              */
-            return lookup_class_field_by_name(class, &fnames[fnum]);
-        }
-
-        if (ftabp) {
+            index = lookup_class_field_by_name(class, &fnames[fnum]);
+        } else {
             /*
-             * The simple case - use the field table.
+             * Lookup by fnum in the sorted field table.
              */
-            return ftabp[fnum * ftabwidth + class->fieldtable_col];
+            index = lookup_class_field_by_fnum(class, fnum);
         }
 
         /*
-         * No field table, so lookup in the sorted fnum table.
+         * Cache the result.
          */
-        return lookup_class_field_by_fnum(class, fnum);
+        ic->class = (union block *)class;
+        ic->index = index;
 
+        return index;
     } else {
         int i, nf = class->n_instance_fields + class->n_class_fields;
         /*
@@ -478,12 +470,12 @@ int lookup_class_field(struct b_class *class, dptr query, int query_flag)
     }
 }
 
-static int record_access(dptr cargp)
+static int record_access(dptr cargp, struct inline_cache *ic)
 {
     struct b_record *rec = &BlkLoc(Arg1)->record;
     struct b_constructor *recdef = BlkLoc(Arg1)->record.constructor;
     dptr dp;
-    int i = lookup_record_field(recdef, &Arg2);
+    int i = lookup_record_field(recdef, &Arg2, ic);
     if (i < 0)
         return 207;
     /*
@@ -495,40 +487,41 @@ static int record_access(dptr cargp)
     return 0;
 }
 
+static int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
+{
+    int i;
+    for (i = 0; i < recdef->n_fields; ++i) {
+        if (StrLen(*name) == StrLen(recdef->field_names[i]) &&
+            !strncmp(StrLoc(*name), StrLoc(recdef->field_names[i]), StrLen(*name)))
+            return i;
+    }
+    return -1;
+}
+
 /*
  * This follows similar logic to lookup_class_field above.
  */
-static int lookup_record_field(struct b_constructor *recdef, dptr num)
+static int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_cache *ic)
 {
-    struct descrip s;
-    int i;
-    int fnum = IntVal(*num);
+    int fnum, index;
 
-    if (fnum < 0) {
-        s = efnames[fnum];
-        for (i = 0; i < recdef->n_fields; ++i) {
-            if (StrLen(s) == StrLen(recdef->field_names[i]) &&
-                !strncmp(StrLoc(s), StrLoc(recdef->field_names[i]), StrLen(s)))
-                break;
-        }
-        if (i < recdef->n_fields)
-            return i;
-        return -1;
-    }
+    /*
+     * Check if we have a inline cache match.
+     */
+    if (ic->class == (union block *)recdef)
+        return ic->index;
 
-    if (!ftabp || recdef->program != curpstate) {
-        s = fnames[fnum];
-        for (i = 0; i < recdef->n_fields; ++i) {
-            if (StrLen(s) == StrLen(recdef->field_names[i]) &&
-                !strncmp(StrLoc(s), StrLoc(recdef->field_names[i]), StrLen(s)))
-                break;
-        }
-        if (i < recdef->n_fields)
-            return i;
-        return -1;
-    }
+    fnum = IntVal(*num);
 
-    return ftabp[fnum * ftabwidth + recdef->fieldtable_col];
+    if (fnum < 0)
+        index = lookup_record_field_by_name(recdef, &efnames[fnum]);
+    else
+        index = lookup_record_field_by_name(recdef, &fnames[fnum]);
+
+    ic->class = (union block *)recdef;
+    ic->index = index;
+
+    return index;
 }
 
 /*

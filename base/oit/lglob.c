@@ -21,8 +21,6 @@ static void	reference(struct gentry *gp);
 static double   parse_real(char *data);
 static long     parse_int(char *data);
 
-int fieldtable_cols = 0;		/* number of records in program */
-
 /*
  * readglob reads the global information from lf
  */
@@ -402,10 +400,10 @@ static void reference(struct gentry *gp)
     }
 }
 
-static struct fentry *add_fieldtable_entry(char *name, int column_num, int field_num)
+static struct fentry *add_fieldtable_entry(char *name, int field_num)
 {
     struct fentry *fp;
-    int i = hasher(name, lfhash), j;
+    int i = hasher(name, lfhash);
     fp = lfhash[i];
     while (fp && fp->name != name)
         fp = fp->b_next;
@@ -413,15 +411,6 @@ static struct fentry *add_fieldtable_entry(char *name, int column_num, int field
         fp = New(struct fentry);
         fp->name = name;
         nfields++;
-        if (Tflag) {
-            /* Allocate and init the data for this row */
-            fp->rowdata = malloc(fieldtable_cols * sizeof(int));
-            if (!fp->rowdata)
-                quit("Out of memory");
-            for (j = 0; j < fieldtable_cols; ++j)
-                fp->rowdata[j] = -1;
-        } else
-            fp->rowdata = 0;
         fp->b_next = lfhash[i];
         lfhash[i] = fp;
         if (lflast) {
@@ -429,11 +418,6 @@ static struct fentry *add_fieldtable_entry(char *name, int column_num, int field
             lflast = fp;
         } else
             lffirst = lflast = fp;
-    }
-    if (Tflag) {
-        if (fp->rowdata[column_num] != -1)
-            quit("Unexpected fieldtable clash");
-        fp->rowdata[column_num] = field_num;
     }
     return fp;
 }
@@ -455,18 +439,6 @@ void build_fieldtable()
     struct fentry **a;
     int i = 0;
 
-    /* 
-     * Set the fieldtable column numbers for a record/class and count
-     * the total number of columns.
-     */
-    fieldtable_cols = 0;
-    for (gp = lgfirst; gp; gp = gp->g_next) {
-        if (gp->record)
-            gp->record->fieldtable_col = fieldtable_cols++;
-        else if (gp->class)
-            gp->class->fieldtable_col = fieldtable_cols++;
-    }
-
     /*
      * Build the field table, counting the total number of entries.
      */
@@ -475,17 +447,13 @@ void build_fieldtable()
         int i = 0;
         if (gp->record) {
             for (fd = gp->record->fields; fd; fd = fd->next) {
-                add_fieldtable_entry(fd->name, gp->record->fieldtable_col, i++);
+                add_fieldtable_entry(fd->name, i++);
             }
         } else if (gp->class) {
             for (fr = gp->class->implemented_instance_fields; fr; fr = fr->next)
-                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name, 
-                                                             gp->class->fieldtable_col, 
-                                                             i++);
+                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name, i++);
             for (fr = gp->class->implemented_class_fields; fr; fr = fr->next)
-                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name, 
-                                                             gp->class->fieldtable_col, 
-                                                             i++);
+                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name, i++);
         }
     }
 

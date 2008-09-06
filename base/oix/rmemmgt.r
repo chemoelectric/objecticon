@@ -86,7 +86,7 @@ int firstd[] = {
      0,                       /* T_Lrgint (2), large integer */
      0,                       /* T_Real (3), real number */
      0,                       /* T_Cset (4), cset */
-     6*WordSize,              /* T_Constructor (5), record constructor */
+    -1,                       /* T_Constructor (5), record constructor */
 
      9*WordSize,              /* T_Proc (6), procedure block */
 

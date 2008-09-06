@@ -59,7 +59,6 @@ struct lbuiltin {
 
 struct lrecord {
     int pc;
-    int fieldtable_col;
     int nfields;
     struct lfield *fields, *last_field;
 };
@@ -90,7 +89,6 @@ struct centry {                 /* constant table entry */
 struct fentry {                 /* field table header entry */
     char *name;                 /*   field name, in the string space */
     int field_id;               /*   field id */
-    int *rowdata;               /* the column data for this row */
     struct fentry *b_next, *next;       /*   next field name in allocation order */
 };
 
@@ -118,7 +116,6 @@ struct lclass {
     struct lclass_field *field_hash[32], *fields, *last_field;
     struct gentry *global;      /* Pointer back to global table entry */
     struct lclass *next;        /* Link in the list of all lclass objects */
-    int fieldtable_col;         /* Column in the field table */
     int seen;                   /* Flag for computing superclass set */
     int pc;                     /* Location of definition in icode */
     int size;                   /* Computed size of block in icode */

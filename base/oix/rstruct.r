@@ -589,7 +589,6 @@ struct b_constructor *dynrecord(dptr s, dptr fields, int n)
     bp->title = T_Constructor;
     bp->blksize = sizeof(struct b_constructor) + sizeof(struct descrip) * n;
     bp->n_fields = n;
-    bp->fieldtable_col = -1;  /* Never used, since bp->program = 0 => always use string search */
     bp->instance_ids = 0;
     bp->program = 0;
     StrLoc(bp->name) = malloc(StrLen(*s)+1);
