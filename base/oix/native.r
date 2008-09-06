@@ -527,9 +527,10 @@ static struct sdescrip f_eoff = {5, "f_eof"};
 #begdef FdParam(p, m)
 int m;
 dptr m##_dptr;
+static struct inline_cache m##_ic;
 if (!is:object(p))
     runerr(602, p);
-m##_dptr = c_get_instance_data(&p, (dptr)&fdf);
+m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&fdf);
 (m) = IntVal(*m##_dptr);
@@ -567,9 +568,10 @@ function{0,1} io_FileStream_in(self, i)
        int nread;
        tended struct descrip s;
        dptr eof;
+       static struct inline_cache eof_ic;
        FdParam(self, fd);
 
-       eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
        if (!eof)
            runerr(207,*(dptr)&f_eoff);
        *eof = nulldesc;
@@ -706,9 +708,10 @@ function{0,1} io_SocketStream_in(self, i)
        int nread;
        tended struct descrip s;
        dptr eof;
+       static struct inline_cache eof_ic;
        FdParam(self, fd);
 
-       eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
        if (!eof)
            runerr(207,*(dptr)&f_eoff);
        *eof = nulldesc;
@@ -1136,9 +1139,10 @@ static struct sdescrip ddf = {2, "dd"};
 #begdef DirParam(p, m)
 DIR *m;
 dptr m##_dptr;
+static struct inline_cache m##_ic;
 if (!is:object(p))
     runerr(602, p);
-m##_dptr = c_get_instance_data(&p, (dptr)&ddf);
+m##_dptr = c_get_instance_data(&p, (dptr)&ddf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ddf);
 (m) = (DIR*)IntVal(*m##_dptr);
@@ -1165,10 +1169,11 @@ end
 function{0,1} io_DirStream_read_impl(self)
    body {
        struct dirent *de;
+       static struct inline_cache eof_ic;
        dptr eof;
        DirParam(self, dd);
 
-       eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
        if (!eof)
            runerr(207,*(dptr)&f_eoff);
        *eof = nulldesc;
@@ -1264,9 +1269,10 @@ end
 function{0,1} io_ProgStream_close(self)
    body {
        dptr pid;
+       static struct inline_cache pid_ic;
        FdParam(self, fd);
 
-       pid = c_get_instance_data(&self, (dptr)&pidf);
+       pid = c_get_instance_data(&self, (dptr)&pidf, &pid_ic);
        if (!pid)
            runerr(207,*(dptr)&pidf);
 
@@ -1601,9 +1607,10 @@ struct ramstream {
 #begdef PtrParam(p, m)
 struct ramstream *m;
 dptr m##_dptr;
+static struct inline_cache m##_ic;
 if (!is:object(p))
     runerr(602, p);
-m##_dptr = c_get_instance_data(&p, (dptr)&ptrf);
+m##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ptrf);
 (m) = (struct ramstream*)IntVal(*m##_dptr);
@@ -1626,9 +1633,10 @@ function{0,1} io_RamStream_in(self, i)
       runerr(101, i)
    body {
        dptr eof;
+       static struct inline_cache eof_ic;
        PtrParam(self, p);
 
-       eof = c_get_instance_data(&self, (dptr)&f_eoff);
+       eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
        if (!eof)
            runerr(207,*(dptr)&f_eoff);
        *eof = nulldesc;

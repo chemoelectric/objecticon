@@ -385,15 +385,6 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_cache *i
     if (ic) {
         int fnum, index;
 
-/**
-        {
-        static int yes,total;
-        ++total;
-        if(ic->class == (union block*)class) ++yes;
-        if (total % 8192 == 0) printf("%d/%d=%f\n",yes,total,(float)yes/(float)total);
-        }
-**/
-
         /*
          * Check if we have a inline cache match.
          */
@@ -722,14 +713,28 @@ LibDcl(escan,1,"escan")
 /*
  * Little c-level utility for accessing an instance field by name in
  * an object.  Returns null if the field is unknown, or the field is a
- * static or a method.
+ * static or a method.  An optional inline_cache can be provided, and
+ * in this case the name must be the same for every call with the same
+ * cache (they should both really be pointers to static data).
  */
 
-dptr c_get_instance_data(dptr x, dptr fname)
+dptr c_get_instance_data(dptr x, dptr fname, struct inline_cache *ic)
 {
     struct b_object *obj = &BlkLoc(*x)->object;
     struct b_class *class = obj->class;
-    int i = lookup_class_field_by_name(class, fname);
+    int i;
+
+    if (ic) {
+        if (ic->class == (union block *)class)
+            i = ic->index;
+        else {
+            i = lookup_class_field_by_name(class, fname);
+            ic->class = (union block *)class;
+            ic->index = i;
+        }
+    } else
+        i = lookup_class_field_by_name(class, fname);
+
     if (i == -1 || i >= class->n_instance_fields)
         return 0;
     return &obj->fields[i];

@@ -51,9 +51,10 @@ static struct sdescrip wbpf = {3, "wbp"};
 #begdef WindowParam(p, w)
 wbp w;
 dptr w##_dptr;
+static struct inline_cache w##_ic;
 if (!is:object(p))
     runerr(602, p);
-w##_dptr = c_get_instance_data(&p, (dptr)&wbpf);
+w##_dptr = c_get_instance_data(&p, (dptr)&wbpf, &w##_ic);
 if (!w##_dptr)
     runerr(207,*(dptr)&wbpf);
 (w) = (wbp)IntVal(*w##_dptr);

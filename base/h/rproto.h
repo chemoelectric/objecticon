@@ -633,6 +633,6 @@ char *stringint_int2str(stringint * sip, int i);
 stringint *stringint_lookup(stringint *sip, char *s);
 char *lookup_err_msg(int n);
 void on_error();
-dptr c_get_instance_data(dptr x, dptr fname);
+dptr c_get_instance_data(dptr x, dptr fname, struct inline_cache *ic);
 void why(char *s);
 void whyf(char *fmt, ...);
