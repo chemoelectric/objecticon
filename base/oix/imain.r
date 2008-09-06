@@ -10,36 +10,15 @@
 #include "../h/modflags.h"
 
 
-/*
- * Prototypes.
- */
-static	void	env_err	(char *msg,char *name,char *val);
-
-/*
- * The following code is operating-system dependent [@imain.01].  Declarations
- *   that are system-dependent.
- */
-
-#if PORT
-/* probably needs something more */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-
 /* #define DEBUG_LOAD 1  */
 
 /*
  * End of operating-system specific code.
  */
 
-extern int set_up;
-
 /*
  * A number of important variables follow.
  */
-
-
-extern int_setup;
 
 function{0} deferred_method_stub()
    body {
