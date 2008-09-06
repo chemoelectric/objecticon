@@ -84,19 +84,6 @@ keyword{1} date
       }
 end
 
-"&now - the system time"
-keyword{1} now
-   abstract {
-      return integer
-      }
-   inline {
-      time_t t;
-
-      time(&t);
-      return C_integer t;
-      }
-end
-
 "&dateline - current date and time"
 keyword{2} dateline
    abstract {
@@ -117,17 +104,9 @@ keyword{2} dateline
       int hour;
       char *merid, *tmp;
       int i;
-      int tz_sec, offset_hrs;
 
       time(&t);
       ct = localtime(&t);
-
-#if defined(HAVE_TIMEZONE)
-      tz_sec = timezone;
-#else
-      tz_sec = ct->tm_gmtoff;
-#endif
-
       if ((hour = ct->tm_hour) >= 12) {
          merid = "pm";
          if (hour > 12)
@@ -139,25 +118,12 @@ keyword{2} dateline
             hour += 12;
          }
       sprintf(sbuf, "%s, %s %d, %d  %d:%02d %s", day[ct->tm_wday],
-         month[ct->tm_mon], ct->tm_mday, 1900 + ct->tm_year, hour, ct->tm_min, merid);
-      i = strlen(sbuf);
-      Protect(tmp = alcstr(sbuf, i), runerr(0));
-      suspend string(i, tmp);
-
-      offset_hrs = tz_sec/3600;
-      if (ct->tm_isdst) offset_hrs--;
-#if defined(HAVE_TZNAME)
-      sprintf(sbuf, "UTC%+d %s", offset_hrs, ct->tm_isdst?tzname[1]:tzname[0]);
-#else if defined(HAVE_STRUCT_TM_TM_ZONE)
-      sprintf(sbuf, "UTC%+d %s", offset_hrs, ct->tm_zone);
-#else
-      sprintf(sbuf, "UTC%+d (unknown timezone)", offset_hrs);
-#endif
-      i = strlen(sbuf);
-      Protect(tmp = alcstr(sbuf, i), runerr(0));
-      suspend string(i, tmp);
-      fail;
-      }
+         month[ct->tm_mon], ct->tm_mday, 1900 + ct->tm_year, hour,
+         ct->tm_min, merid);
+       i = strlen(sbuf);
+       Protect(tmp = alcstr(sbuf, i), runerr(0));
+       return string(i, tmp);
+       }
 end
 
 "&digits - a cset consisting of the 10 decimal digits"
