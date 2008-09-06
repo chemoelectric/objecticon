@@ -152,6 +152,7 @@ class Class()
 
    # Get the value of the field in {x}, behaving in exactly the same way
    # as though the "." operation had been invoked with equivalent values.
+   #
    # @param x either a class, cast or object
    # @param field either a field name or number
    # @return the field value
@@ -161,7 +162,9 @@ class Class()
 
    # This behaves in exactly the same way as {get} above, but fails
    # rather than stops with a runtime error, if the field is unknown
-   # or access is denied.
+   # or access is denied.  On failure, {&why} is set to an appropriate
+   # message.
+   #
    # @param x either a class, cast or object
    # @param field either a field name or number
    # @return the field value

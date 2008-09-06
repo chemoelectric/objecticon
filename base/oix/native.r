@@ -274,8 +274,10 @@ function{0,1} lang_Class_getf(obj, field)
        PushDesc(field);
        rc = field_access((dptr)(sp - 5));
        sp -= 6;
-       if (rc != 0) 
+       if (rc != 0) {
+           whyf("%s (error %d)", lookup_err_msg(rc), rc);
            fail;
+       }
        res = *((dptr)(sp + 1));
        return res;
    }
