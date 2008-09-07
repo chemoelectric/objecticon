@@ -27,7 +27,7 @@ end
 
 Here the method `Y.f()` overrides `X.f()`.  Without a cast, it would be impossible to call the latter on an instance of class `Y`. Note that `cast` is just a builtin function, and does not use any special syntax.
 
-The cast contains two things, namely an object and a target class, which must be one of the object's [Inheritance#Implemented_classes implemented classes].  The result is something that will use the cast class, rather than the object's class, to resolve static and method field values.  Instance fields come from the object in the normal way.  So in the above example `cast(i,X).f()`, the value of `f` comes from the class `X`, and hence the overridden method is invoked.
+The cast contains two things, namely an object and a target class, which must be one of the object's [Inheritance#Implemented_classes implemented classes].  The result is something that will use the cast class, rather than the object's class, to resolve method field values.  So in the above example `cast(i,X).f()`, the value of `f` comes from the class `X`, and hence the overridden method is invoked.
 
 Usually casts are used in a method which has overridden another method. So for example, if the `Y.f()` needed to call `X.f()`, then it could do so as follows:-
 
@@ -39,3 +39,5 @@ class Y(X)
    end
 end
 }}}
+
+Note that you can only access instance methods via a cast.  Any attempt to access a static method or a variable causes a runtime error.
