@@ -33,14 +33,14 @@
 package ipl.win
 
 import
-   ipl.graphics(WOpen)
+   graphics, io
 
 procedure win(width, height)
 
    /width := 500
    /height := 500
 
-   return WOpen("size=" || width || "," || height) |
+   return Window.open("size=" || width || "," || height) |
       stop("*** can't open window")
 
    return
@@ -52,6 +52,6 @@ procedure winf(width, height)
    /width := 500
    /height := 500
 
-   return WOpen("size=" || width || "," || height) | fail
+   return Window.open("size=" || width || "," || height) | fail
 
 end

@@ -41,6 +41,8 @@
 
 package ipl.glib
 
+import io
+
 record point(x,y)
 
 ############################################################################
@@ -199,7 +201,7 @@ procedure f_flake(t, len, n, lr, cp)
 
    if n > 0 then {
       # if nextcolor is available, change the foreground color
-      Fg ! ([t.win.vp.screen] ||| @\nextcolor)
+      t.win.vp.screen.fg ! (@\nextcolor)
       Left(t,lr*60)
       f_flake(t, len*0.333333, n-1, -lr, cp)
       f_flake(t, len*0.333333, n-1,  lr, cp)
@@ -316,7 +318,7 @@ procedure DrwLine(w,pnts[])
 
    if *pnts < 2 then fail		# ... not enough points
 
-   return DrawLine ! ([w.vp.screen]|||transform_points(pnts,w.xform_mat[1]))
+   return w.vp.screen.draw_line ! (transform_points(pnts,w.xform_mat[1]))
 end
 
 # clip to polygon
@@ -431,7 +433,7 @@ procedure set_window(win, ll, ur, vp)
    if /vp then {	# make vp the entire 'screen'
       vp := viewport()
       vp.ul := [0,0]
-      vp.lr := [numeric(WAttrib(win,"width")), numeric(WAttrib(win,"height"))]
+      vp.lr := [numeric(win.attrib("width")), numeric(win.attrib("height"))]
       vp.screen := win
       }
 
@@ -547,7 +549,7 @@ procedure moveto(t,p)
 end
 
 procedure lineto(t,p)
-   Fg(t.win.vp.screen, \@\(t.color))
+   t.win.vp.screen.fg(\@\(t.color))
    DrwLine(t.win, t.pos, p)
    return t.pos := p
 end

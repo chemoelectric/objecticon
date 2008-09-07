@@ -38,7 +38,8 @@
 package ipl.rawimage
 
 import
-   ipl.graphics(WOpen)
+   io,
+   graphics
 
 $define LineLen 64
 
@@ -46,8 +47,8 @@ procedure WriteRaw(win, x, y, w, h)
    local nextid, palette, line, c, temp, tempname
 
 
-   /w := WAttrib(win, "width")
-   /h := WAttrib(win, "height")
+   /w := win.attrib("width")
+   /h := win.attrib("height")
    /x := 0
    /y := 0
 
@@ -61,7 +62,7 @@ procedure WriteRaw(win, x, y, w, h)
 
    nextid := create !"0123456789abcdef" || !"0123456789abcdef"
 
-   every c := Pixel(win, x, y, w, h) do {
+   every c := win.pixel(x, y, w, h) do {
       /palette[c] := @nextid
       line ||:= palette[c]
       line ?:= {
@@ -86,7 +87,7 @@ procedure WriteRaw(win, x, y, w, h)
    while writes(reads(temp, 10000))	# copy image data
 
    close(temp)
-   remove(tempname)
+   Files.remove(tempname)
 
    return 
 
@@ -97,7 +98,7 @@ procedure ReadRaw(win, s, x, y)
 
    input := open(s) | stop("*** cannot read raw image file")
 
-   temp := WOpen("size=" || (size := read(input)), "canvas=hidden") |
+   temp := Window.open("size=" || (size := read(input)), "canvas=hidden") |
       stop("*** malformed raw image file")
 
    size ? {
@@ -119,8 +120,8 @@ procedure ReadRaw(win, s, x, y)
       line := read(input) | break
       line ? {
          while c := move(2) do {
-            Fg(temp, palette[c]) | stop("***invalid color: ", c)
-            DrawPoint(temp, x, y)
+            temp.fg(palette[c]) | stop("***invalid color: ", c)
+            temp.draw_point(x, y)
             x +:= 1
             if x = width then {
                x := 0
@@ -130,7 +131,7 @@ procedure ReadRaw(win, s, x, y)
          }
       }
 
-   CopyArea(temp, win, 0, 0, width, height, x, y)
+   Window.copy_area(temp, win, 0, 0, width, height, x, y)
 
    return
            

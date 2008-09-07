@@ -50,6 +50,8 @@
 
 package ipl.putpixel
 
+import graphics
+
 global XPP_qtab, XPP_gtab, XPP_dtab, XPP_rtab, XPP_gadjust
 
 #  PixInit -- set parameters and build tables
@@ -118,12 +120,12 @@ procedure PutPixel(win, x, y, color)
    # convert color to 8-bit r, g, b
    if type(color) == "integer" then {
       # mutable -- don't quantize
-      Fg(win, color)
-      DrawPoint(win, x, y)
+      win.fg(color)
+      win.draw_point(x, y)
       return
       }
 
-   (color | ColorValue(color) | fail) ? (
+   (color | Window.generic_color_value(color) | fail) ? (
       (r := tab(many(&digits))) & move(1) &
       (g := tab(many(&digits))) & move(1) &
       (b := tab(many(&digits)))
@@ -155,7 +157,7 @@ procedure PutPixel(win, x, y, color)
       }
 
    # finally, put the pixel on the screen
-   Fg(win, r || "," || g || "," || b)
-   DrawPoint(win, x, y)
+   win.fg(r || "," || g || "," || b)
+   win.draw_point(x, y)
    return
 end

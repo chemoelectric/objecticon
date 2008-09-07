@@ -21,11 +21,13 @@
 
 package ipl.ifg
 
+import io, graphics
+
 procedure ifg()
    local win
 
    if (&features == "graphics") &
-      win := open("", "x", "canvas=hidden") then {
+      win := Window.open("canvas=hidden") then {
          close(win)
          return
          }

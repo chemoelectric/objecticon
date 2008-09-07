@@ -40,20 +40,22 @@
 
 package ipl.wipe
 
+import io
+
 procedure wipe(window, color, direction, x1, y1, w, h)
    local x, y, x2, y2, fg
 
-   /color := Bg(window)			# establish defaults
+   /color := window.bg()			# establish defaults
    /direction := "right"
    /x1 := 0
    /y1 := 0
-   /w := WAttrib(window, "width")
-   /h := WAttrib(window, "height")
+   /w := window.attrib("width")
+   /h := window.attrib("height")
    x2 := x1 + w
    y2 := y1 + h
 
-   fg := Fg(window)				# save present foreground color
-   Fg(window, color)				# set foreground for wiping
+   fg := window.fg()				# save present foreground color
+   window.fg(color)				# set foreground for wiping
 
    if not(integer(x1) & integer(x2) & integer(y1) & integer(y2)) |
       (x1 > x2) | (y1 > y2) then stop("*** illegal coordinates in wipe()")
@@ -61,43 +63,43 @@ procedure wipe(window, color, direction, x1, y1, w, h)
    case direction of {
       "right": {
          every x := x1 to x2 do {
-            DrawLine(window, x, y1, x, y2)
+            window.draw_line(x, y1, x, y2)
             }
          }
       "left": {
          every x := x2 to x1 by -1 do {
-            DrawLine(window, x, y1, x, y2)
+            window.draw_line(x, y1, x, y2)
             }
          }
       "left-right": {
          until (x2 < x1) do {
-           DrawLine(window, x1, y1, x1, y2)
-           DrawLine(window, x2, y1, x2, y2)
+           window.draw_line(x1, y1, x1, y2)
+           window.draw_line(x2, y1, x2, y2)
            x1 +:= 1
            x2 -:= 1
            }
          }
       "up-down": {
           until y2 < y1 do {
-            DrawLine(window, x1, y1, x2, y1)
-            DrawLine(window, x1, y2, x2, y2)
+            window.draw_line(x1, y1, x2, y1)
+            window.draw_line(x1, y2, x2, y2)
             y1 +:= 1
             y2 -:= 1
             }
          }
       "down": {
          every y := y1 to y2 do {
-            DrawLine(window, x1, y, x2, y)
+            window.draw_line(x1, y, x2, y)
             }
          }
       "up": {
          every y := y2 to y1 by -1 do {
-            DrawLine(window, x1, y, x2, y)
+            window.draw_line(x1, y, x2, y)
             }
          }
       "in": {
          until (x2 < x1) | (y2 < y1) do {
-            DrawLine(window, x1, y1, x1, y2, x2, y2, x2, y1, x1, y1)
+            window.draw_line(x1, y1, x1, y2, x2, y2, x2, y1, x1, y1)
             x1 +:= 1
             x2 -:= 1
             y1 +:= 1
@@ -107,7 +109,7 @@ procedure wipe(window, color, direction, x1, y1, w, h)
       default: stop("*** illegal direction specificaion in wipe()")
       }
 
-   Fg(window, fg)			# restore foreground color
+   window.fg(fg)			# restore foreground color
 
    return
 

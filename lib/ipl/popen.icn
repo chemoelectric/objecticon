@@ -37,6 +37,8 @@
 
 package ipl.popen
 
+import io
+
 global PIPE_cmd, PIPE_fname
 
 procedure popen(cmd, mode)
@@ -66,7 +68,7 @@ procedure pclose(pipe)
     status := system(PIPE_cmd[pipe])
   }
   else status := close(pipe)
-  remove(PIPE_fname[pipe])
+  Files.remove(PIPE_fname[pipe])
   PIPE_cmd[pipe] := PIPE_fname[pipe] := &null
   return status
 end
