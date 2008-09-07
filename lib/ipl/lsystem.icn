@@ -39,7 +39,7 @@
 package ipl.lsystem
 
 import
-   io,
+   io(read, stop, write),
    ipl.glib(Left, Line_Forward, Move_Forward, Right)
 
 record Lsys(order, dist, delta, axiom, rewrite)

@@ -226,7 +226,8 @@
 package ipl.conffile
 
 import
-   ipl.lastc(findp), io
+   io(ewrite, open, read),
+   ipl.lastc(findp)
 
 record _DirectivesSpec_(classproc,editproc,minargs,maxargs)
 

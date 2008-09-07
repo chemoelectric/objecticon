@@ -58,7 +58,7 @@ $include "xnames.icn"
 package ipl.imsutils
 
 import
-   io,
+   io(read, reads, write, writes),
    ipl.convert(exbase10)
 
 record tdim(w, h)

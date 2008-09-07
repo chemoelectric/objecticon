@@ -258,10 +258,11 @@
 package ipl.io
 
 import
+   io(Files, close, open, read,
+      reads, stop, write, writes),
    ipl.getpaths(getpaths),
    ipl.random(randomize),
-   ipl.strings(replace),
-   io
+   ipl.strings(replace)
 
 global buffer_in, buffer_out, Eof
 

@@ -32,7 +32,8 @@ invocable all
 package ipl.feval
 
 import
-   ipl.ivalue(ivalue), io
+   io(ewrite),
+   ipl.ivalue(ivalue)
 
 procedure feval(s)
    local fnc, argl

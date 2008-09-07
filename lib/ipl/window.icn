@@ -96,7 +96,9 @@ $include "vdefns.icn"
 
 package ipl.graphics
 
-import io, graphics
+import
+   graphics(Window),
+   io(ewrite, ewrites, stop)
 
 global wdw_debug			# non-null if to trace open call
 

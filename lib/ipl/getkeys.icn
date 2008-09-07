@@ -39,7 +39,7 @@
 package ipl.getkeys
 
 import
-   io,
+   io(close, open, read, stop),
    ipl.adjuncts(Pathname, _baselen, _slash, getidxname)
 
 procedure getkeys(FNAME)
