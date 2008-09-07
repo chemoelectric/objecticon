@@ -57,7 +57,8 @@ package ipl.abkform
 
 import
    ipl.bkutil(bk_int, bk_read_int),
-   ipl.pbkform(pbk_id)
+   ipl.pbkform(pbk_id),
+   io
 
 # HP 95LX Appointment Book File Format
 # 
@@ -156,8 +157,8 @@ end
 procedure abk_read_daily(f)
    local alarmEnable,year,month,day,startTime,endTime,leadTime,
 	 apptText,noteText,apptLength,noteLength,next_rec
-   (reads(f) == "\x01" | (seek(f,where(f) - 1),&fail) &
-   next_rec := bk_read_int(f) + where(f) &
+   (reads(f) == "\x01" | (f.seek(f.tell(f) - 1),&fail) &
+   next_rec := bk_read_int(f) + f.tell() &
    alarmEnable := iand(ord(reads(f)),1) = 1 | &null &
    year := ord(reads(f)) &
    month := ord(reads(f)) &
@@ -219,8 +220,8 @@ procedure abk_read_weekly(f)
    local alarmEnable,dayOfWeek,startTime,startYear,startMonth,startDay,
 	 endTime,endYear,endMonth,endDay,leadTime,apptLength,noteLength,
 	 apptText,noteText,next_rec
-   (reads(f) == "\x02" | (seek(f,where(f) - 1),&fail) &
-   next_rec := bk_read_int(f) + where(f) &
+   (reads(f) == "\x02" | (f.seek(f.tell() - 1),&fail) &
+   next_rec := bk_read_int(f) + f.tell() &
    alarmEnable := iand(ord(reads(f)),1) = 1 | &null &
    dayOfWeek := ord(reads(f)) &
    startTime := bk_read_int(f) &
@@ -287,8 +288,8 @@ procedure abk_read_monthly(f)
    local alarmEnable,dayOfMonth,startTime,startYear,startMonth,startDay,
 	 endTime,endYear,endMonth,endDay,leadTime,apptLength,noteLength,
 	 apptText,noteText,next_rec
-   (reads(f) == "\x03" | (seek(f,where(f) - 1),&fail) &
-   next_rec := bk_read_int(f) + where(f) &
+   (reads(f) == "\x03" | (f.seek(f.tell() - 1),&fail) &
+   next_rec := bk_read_int(f) + f.tell() &
    alarmEnable := iand(ord(reads(f)),1) = 1 | &null &
    dayOfMonth := ord(reads(f)) &
    startTime := bk_read_int(f) &
@@ -357,8 +358,8 @@ procedure abk_read_monthly_pos(f)
    local alarmEnable,weekOfMonth,dayOfWeek,startTime,startYear,startMonth,
 	 startDay,endTime,endYear,endMonth,endDay,leadTime,apptLength,noteLength,
 	 apptText,noteText,next_rec
-   (reads(f) == "\x04" | (seek(f,where(f) - 1),&fail) &
-   next_rec := bk_read_int(f) + where(f) &
+   (reads(f) == "\x04" | (f.seek(f.tell() - 1),&fail) &
+   next_rec := bk_read_int(f) + f.tell() &
    alarmEnable := iand(ord(reads(f)),1) = 1 | &null &
    weekOfMonth := ord(reads(f)) &
    dayOfWeek := ord(reads(f)) &
@@ -429,8 +430,8 @@ procedure abk_read_yearly(f)
    local alarmEnable,monthOfYear,dayOfMonth,startTime,startYear,startMonth,
 	 startDay,endTime,endYear,endMonth,endDay,leadTime,apptLength,noteLength,
 	 apptText,noteText,next_rec
-   (reads(f) == "\x05" | (seek(f,where(f) - 1),&fail) &
-   next_rec := bk_read_int(f) + where(f) &
+   (reads(f) == "\x05" | (f.seek(f.tell() - 1),&fail) &
+   next_rec := bk_read_int(f) + f.tell() &
    alarmEnable := iand(ord(reads(f)),1) = 1 | &null &
    monthOfYear := ord(reads(f)) &
    dayOfMonth := ord(reads(f)) &
@@ -497,8 +498,8 @@ procedure abk_read_todo(f)
    local carryForward,checkOff,priority,startYear,startMonth,
 	 startDay,CheckOffYear,CheckOffMonth,CheckOffDay,toDoLength,noteLength,
 	 toDoText,toDoNote,toDoState,next_rec
-   (reads(f) == "\x06" | (seek(f,where(f) - 1),&fail) &
-   next_rec := bk_read_int(f) + where(f) &
+   (reads(f) == "\x06" | (f.seek(f.tell() - 1),&fail) &
+   next_rec := bk_read_int(f) + f.tell() &
    toDoState := ord(reads(f)) &
    carryForward := iand(toDoState,1) = 1 | &null &
    checkOff := iand(toDoState,2) = 1 | &null &

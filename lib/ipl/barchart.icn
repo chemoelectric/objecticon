@@ -126,9 +126,9 @@ procedure setbar(bc, n, v)
          x := bc.x + (n - 1) * bc.dx
          y := bc.y + oldlen
          if incr < 0 then
-            FillRectangle(bc.win, x, y + incr, bc.w, -incr)
+            bc.win.fill_rectangle(x, y + incr, bc.w, -incr)
          else
-            FillRectangle(bc.win, x, y, bc.w, incr)
+            bc.win.fill_rectangle(x, y, bc.w, incr)
          }
 
       else {
@@ -137,9 +137,9 @@ procedure setbar(bc, n, v)
          x := bc.x + oldlen
          y := bc.y + (n - 1) * bc.dy
          if incr < 0 then
-            FillRectangle(bc.win, x + incr, y, -incr, bc.w)
+            bc.win.fill_rectangle(x + incr, y, -incr, bc.w)
          else
-            FillRectangle(bc.win, x, y, incr, bc.w)
+            bc.win.fill_rectangle(x, y, incr, bc.w)
          }
       bc.len[n] := newlen
       bc.val[n] := v
@@ -181,7 +181,7 @@ procedure rebar(bc, sf)
       y +:= dy
       dy := -dy
       }
-   EraseArea(bc.win, x, y, dx, dy)
+   bc.win.erase_area(x, y, dx, dy)
 
    bc.len := list(bc.n, 0)
    bc.sf := sf

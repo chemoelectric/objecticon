@@ -58,6 +58,7 @@ $include "xnames.icn"
 package ipl.imsutils
 
 import
+   io,
    ipl.convert(exbase10)
 
 record tdim(w, h)
@@ -84,11 +85,11 @@ end
 procedure XDrawTile(win, xoff, yoff, pattern, magnif, mode)
    local x, y, row, pixel, dims, arglist
 
-   if magnif = 1 then XDrawImage(win, xoff, yoff, pattern, mode)
+   if magnif = 1 then win.draw_image(xoff, yoff, pattern, mode)
    else {
       if \mode then {
          dims := tiledim(pattern)
-         XEraseArea(xoff, yoff, dims.w * magnif, dims.h * magnif)
+         win.erase_area(xoff, yoff, dims.w * magnif, dims.h * magnif)
          }
       y := yoff
       every row := rowbits(pattern) do {		# draw a row
@@ -100,7 +101,7 @@ procedure XDrawTile(win, xoff, yoff, pattern, magnif, mode)
             }
          y +:= magnif
          if *arglist = 0 then next
-         XFillRectangle ! arglist
+         win.fill_rectangle ! arglist
          }
       }
 
@@ -119,7 +120,7 @@ procedure XDrawRows(win, xoff, yoff, imx, magnif, mode)
    y := yoff
 
    if \mode then
-      XEraseArea(xoff, yoff, *imx[1] * magnif, *imx * magnif)
+      win.erase_area(xoff, yoff, *imx[1] * magnif, *imx * magnif)
 
    every row := !imx do {		# draw a row
       x := xoff
@@ -140,7 +141,7 @@ procedure XDrawRows(win, xoff, yoff, imx, magnif, mode)
          y +:= magnif
          }
       if *arglist = 0 then next
-      if magnif = 1 then XDrawPoint ! arglist else XFillRectangle ! arglist
+      if magnif = 1 then win.drawpoint ! arglist else win.fill_rectangle ! arglist
       }
 
    return
@@ -403,7 +404,7 @@ procedure pix2pat(window, x, y, cols, rows)
 
    every y0 := 0 to rows - 1 do {
       pixels := ""
-      every c := Pixel(window, x, y0 + y, cols, 1) do
+      every c := window.pixel(x, y0 + y, cols, 1) do
          pixels ||:= (if c == "0,0,0" then "1" else "0")
       pattern ||:= bits2hex(pixels)
       }

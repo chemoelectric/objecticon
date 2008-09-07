@@ -31,7 +31,7 @@
 package ipl.pixelmap
 
 import
-   ipl.graphics(WOpen)
+   io, graphics
 
 procedure pixelmap(name, p, args[])
    local input, width, height, x, y, win
@@ -48,13 +48,13 @@ procedure pixelmap(name, p, args[])
       height := tab(many(&digits))
       } | stop("*** invalid pixel list header")
 
-   win := WOpen("width=" || width, "height=" || height)
+   win := Window.open("width=" || width, "height=" || height)
 
    every y := 0 to height - 1 do
       every x := 0 to width - 1 do {
          args[1] := read(input) | stop("*** short data in pixel list")
-         Fg(win, p ! args)
-         DrawPoint(x, y)
+         win.fg(p ! args)
+         win.draw_point(x, y)
          }
 
    return win

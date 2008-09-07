@@ -42,7 +42,7 @@ procedure DrawClipped(a[])
 
    win := pop(a)
 
-   DrawSegment ! push(ClipLine(win, a), win)
+   win.draw_segment ! ClipLine(win, a)
    return win
 end
 
@@ -56,10 +56,10 @@ end
 procedure ClipLine(win, L, x, y, w, h)	
    local i, ret, tin, tout, delx, dely, x0, x1, xmax, y0, y1, ymax
 
-   /x := WAttrib(win, "clipx") - WAttrib(win, "dx")
-   /y := WAttrib(win, "clipy") - WAttrib(win, "dy")
-   /w := WAttrib(win, "clipw")
-   /h := WAttrib(win, "cliph")
+   /x := win.attrib("clipx") - win.attrib("dx")
+   /y := win.attrib("clipy") - win.attrib("dy")
+   /w := win.attrib("clipw")
+   /h := win.attrib("cliph")
    if w < 0 then
       x -:= (w := -w)
    if h < 0 then

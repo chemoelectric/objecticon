@@ -60,7 +60,7 @@
 package ipl.cells
 
 import
-   ipl.graphics(WOpen)
+   io, graphics
 
 record Cell(n, m, color)
 record Panel(window, n, m, size, fg, bg, pg)
@@ -77,7 +77,7 @@ procedure makepanel(n, m, cellsize, fg, bg, pg)
    width := (n * cellsize + 1)
    height := (m * cellsize + 1)
 
-   window := WOpen("width=" || width, "height=" || height,
+   window := Window.open("width=" || width, "height=" || height,
       "fg=" || fg, "bg=" || bg, "canvas=hidden") | fail
 
    panel := Panel(window, n, m, cellsize, fg, bg, pg)
@@ -92,22 +92,22 @@ procedure clearpanel(panel)
    local width, height, x, y
    
    if \panel.pg then {			# default is textured
-      WAttrib(panel.window, "fillstyle=textured")
-      Pattern(panel.window, "checkers")
-      Bg(panel.window, "very dark gray")
+      panel.window.attrib("fillstyle=textured")
+      panel.window.pattern("checkers")
+      panel.window.bg("very dark gray")
       }
-   else Fg(panel.window, panel.fg)
+   else panel.window.fg(panel.fg)
 
-   width := WAttrib(panel.window, "width")
-   height := WAttrib(panel.window, "height")
+   width := panel.window.attrib("width")
+   height := panel.window.attrib("height")
 
    every x := 0 to width by panel.size do
-      DrawLine(panel.window, x, 0, x, height)
+      panel.window.draw_line(x, 0, x, height)
 
    every y := 0 to height by panel.size do
-      DrawLine(panel.window, 0, y, width, y)
+      panel.window.draw_line(0, y, width, y)
 
-   WAttrib(panel.window, "fillstyle=solid")
+   panel.window.attrib("fillstyle=solid")
 
    return panel
 
@@ -128,9 +128,9 @@ procedure colorcell(panel, n, m, color)
 
    cellsize := panel.size
 
-   Fg(panel.window, color)
+   panel.window.fg( color)
 
-   FillRectangle(panel.window, (n - 1) * cellsize + 1, (m - 1) * cellsize + 1,
+   panel.window.fill_rectangle((n - 1) * cellsize + 1, (m - 1) * cellsize + 1,
        cellsize - 1, cellsize - 1)
 
    return panel
@@ -151,10 +151,10 @@ procedure colorcells(panel, matrix)
          # fudge 0/1 matrix
          if matrix[i, j] === "1" then matrix[i, j] := "white"
          else if matrix[i, j] === "0" then matrix[i, j] := "black"
-         Fg(panel.window, matrix[i, j])
+         panel.window.fg(matrix[i, j])
             stop("Fg() failed in colorcells() with matrix[" ||
               i || "," || j || "]=" || matrix[i, j] || ".")
-         FillRectangle(panel.window, (j - 1) * cellsize + 1, (i - 1) * cellsize + 1,
+         panel.window.fill_rectangle((j - 1) * cellsize + 1, (i - 1) * cellsize + 1,
             cellsize - 1, cellsize - 1)
          }
       }
@@ -175,9 +175,9 @@ procedure tiercells(panel, tier)
 
    every i := 1 to m do {
       every j := 1 to n do {
-         if matrix[i, j] === "1" then Fg(panel.window, "white")
-         else Fg(panel.window, "black")
-         FillRectangle(panel.window, (j - 1) * cellsize + 1, (i - 1) * cellsize + 1,
+         if matrix[i, j] === "1" then panel.window.fg("white")
+         else panel.window.fg("black")
+         panel.window.fill_rectangle((j - 1) * cellsize + 1, (i - 1) * cellsize + 1,
             cellsize - 1, cellsize - 1)
          }
       }
@@ -194,6 +194,6 @@ procedure cell(panel, x, y)
 
    if (n > panel.n) | (m > panel.m) then fail
 
-   return Cell(n, m, Pixel(panel.window, x, y))
+   return Cell(n, m, panel.window.pixel(x, y))
 
 end

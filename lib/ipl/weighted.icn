@@ -30,7 +30,7 @@
 
 package ipl.weighted
 
-procedure WeightedShuffle (sample, percentage)
+procedure WeightedShuffle(sample, percentage)
 local lcv, pairs, weight, size, newlist, legal, illegal
   numeric(percentage) | fail
   (0 <= percentage <= 100) | fail
