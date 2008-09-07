@@ -8,7 +8,7 @@
 
 package gui
 
-import io(stop)
+import lang(fatal)
 
 class SelectionOwner()
    public defer get_content(target)
@@ -137,7 +137,7 @@ class Selection()
          "clear": {
             clear(selection)
          }
-         default: stop("Unknown query to selection callback:", q)
+         default: fatal(Selection, "Unknown query to selection callback:" || q)
       }
    end
 end
