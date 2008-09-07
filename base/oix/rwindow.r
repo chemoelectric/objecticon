@@ -540,8 +540,8 @@ static int colorphrase(buf, r, g, b, a)
     ebuf = buf + len;
 
     /* check for diaphaneity adjective */
-    p = qsearch(buf, (char *)transptable,
-                ElemCount(transptable), ElemSize(transptable), strcmp);
+    p = bsearch(buf, (char *)transptable,
+                ElemCount(transptable), ElemSize(transptable), (int(*)())strcmp);
 
     if (p) {
         /* skip past word */
@@ -564,8 +564,8 @@ static int colorphrase(buf, r, g, b, a)
         very = 0;
 
     /* check for lightness adjective */
-    p = qsearch(buf, (char *)lighttable,
-                ElemCount(lighttable), ElemSize(lighttable), strcmp);
+    p = bsearch(buf, (char *)lighttable,
+                ElemCount(lighttable), ElemSize(lighttable), (int(*)())strcmp);
     if (p) {
         /* set the "very" flag for "pale" or "deep" */
         if (strcmp(buf, "pale") == 0)
@@ -584,8 +584,8 @@ static int colorphrase(buf, r, g, b, a)
         return 0;
 
     /* check for saturation adjective */
-    p = qsearch(buf, (char *)sattable,
-                ElemCount(sattable), ElemSize(sattable), strcmp);
+    p = bsearch(buf, (char *)sattable,
+                ElemCount(sattable), ElemSize(sattable), (int(*)())strcmp);
     if (p) {
         sat = ((colrmod *)p) -> val / 100.0;
         buf += strlen(buf) + 1;
@@ -597,12 +597,12 @@ static int colorphrase(buf, r, g, b, a)
         blend = h1 = l1 = s1 = 0.0;		/* only one word left */
     else {
         /* we have two (or more) name words; get the first */
-        if ((p = qsearch(buf, colortable[0].name,
-                         ElemCount(colortable), ElemSize(colortable), strcmp)) != NULL) {
+        if ((p = bsearch(buf, colortable[0].name,
+                         ElemCount(colortable), ElemSize(colortable), (int(*)())strcmp)) != NULL) {
             blend = 0.5;
         }
-        else if ((p = qsearch(buf, colortable[0].ish,
-                              ElemCount(colortable), ElemSize(colortable), strcmp)) != NULL) {
+        else if ((p = bsearch(buf, colortable[0].ish,
+                              ElemCount(colortable), ElemSize(colortable), (int(*)())strcmp)) != NULL) {
             p -= sizeof(colortable[0].name);
             blend = 0.25;
         }
@@ -616,8 +616,8 @@ static int colorphrase(buf, r, g, b, a)
     }
 
     /* process second (or only) name word */
-    p = qsearch(buf, colortable[0].name,
-                ElemCount(colortable), ElemSize(colortable), strcmp);
+    p = bsearch(buf, colortable[0].name,
+                ElemCount(colortable), ElemSize(colortable), (int(*)())strcmp);
     if (!p || buf + strlen(buf) < ebuf)
         return 0;
     h2 = ((colrname *)p) -> hue;
@@ -3315,21 +3315,6 @@ void drawCurve(w, p, n)
 }
 
 
-/*
- * Compare two unsigned long values for qsort or qsearch.
- */
-int ulcmp(p1, p2)
-    pointer p1, p2;
-{
-    register unsigned long u1 = *(unsigned int *)p1;
-    register unsigned long u2 = *(unsigned int *)p2;
-
-    if (u1 < u2)
-        return -1;
-    else
-        return (u1 > u2);
-}
-
 
 /*
  * And now, the stringint data.

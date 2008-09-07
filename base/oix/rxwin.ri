@@ -3278,6 +3278,21 @@ int strimage(w, x, y, width, height, e, s, len, on_icon)
  */
 
 /*
+ * Compare two unsigned long values for qsort or bsearch.
+ */
+static int ulcmp(const void *p1, const void *p2)
+{
+    register unsigned long u1 = *(unsigned int *)p1;
+    register unsigned long u2 = *(unsigned int *)p2;
+
+    if (u1 < u2)
+        return -1;
+    else
+        return (u1 > u2);
+}
+
+
+/*
  * The getimstr() code assumes that a maximum of 256 colors can be onscreen
  * at one time.  If DMAXCOLORS maximum is raised, code must be added for the
  * depth>8 case to reduce the local copy of the image to no more than the
@@ -3334,13 +3349,13 @@ unsigned char *data;
         for (cp = wd->colors; cp < wd->colors + wd->numColors; cp++)
             *lp++ = cp->c;
         ncolors = lp - clist;
-        qsort((char *)clist, ncolors, sizeof(*clist), (int (*)())ulcmp);
+        qsort((char *)clist, ncolors, sizeof(*clist), ulcmp);
 
         for (y = 0; y < height; y++)
             for (x = 0; x < width; x++) {
                 px = XGetPixel(im, x, y);
-                lp = (unsigned long *)qsearch((char *)&px, (char *)clist,
-                                              ncolors, sizeof(*clist), (int (*)())ulcmp);
+                lp = (unsigned long *)bsearch((char *)&px, (char *)clist,
+                                              ncolors, sizeof(*clist), ulcmp);
                 if (lp)
                     i = lp - clist;
                 else

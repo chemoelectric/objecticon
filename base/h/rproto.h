@@ -99,7 +99,6 @@ int		def_tstr	(char *sbuf, dptr s, dptr df, dptr d);
 word		div3		(word a,word b);
 int		doasgn		(dptr dp1,dptr dp2);
 int		doimage		(int c,int q);
-int		dp_pnmcmp	(struct pstrnm *pne,dptr dp);
 void		drunerr		(int n, double v);
 void		dumpact		(struct b_coexpr *ce);
 struct b_constructor * dynrecord	(dptr s, dptr fields, int n);
@@ -143,8 +142,6 @@ word		prescan		(dptr d);
 int		pstrnmcmp	(struct pstrnm *a,struct pstrnm *b);
 int		pushact		(struct b_coexpr *ce, struct b_coexpr *actvtr);
 int		putstr		(FILE *f,dptr d);
-char		*qsearch	(char *key, char *base, int nel, int width,
-				   int (*cmp)());
 int		qtos		(dptr dp,char *sbuf);
 int    		 radix		(int sign, register int r, register char *s,
 				   register char *end_s, union numeric *result);
@@ -240,7 +237,6 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    int	setselection	(wbp w, dptr val);
    int	setsize		(wbp w, char *s);
    int	setminsize	(wbp w, char *s);
-   int	ulcmp		(pointer p1, pointer p2);
    int	wattrib		(wbp w, char *s, long len, dptr answer, char *abuf);
    int	wgetevent	(wbp w, dptr res, int t);
    int	writeGIF	(wbp w, char *filename,
@@ -624,9 +620,6 @@ struct descrip bytes2string(char *s, int len);
 struct descrip cstrs2string(char **s, char *delim);
 int eq(dptr d1, dptr d2);
 int ceq(dptr dp, char *s);
-
-int convert_flag_set(struct descrip s, char *deflt, int *res, stringint *tbl);
-int convert_flag(struct descrip s, char *deflt, int *res, stringint *tbl);
 
 int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);
