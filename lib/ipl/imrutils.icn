@@ -84,7 +84,7 @@
 package ipl.imrutils
 
 import
-   ipl.graphics(WClose, WOpen),
+   graphics,
    ipl.strings(rotate)
 
 record ImageRecord(width, palette, pixels)
@@ -150,7 +150,7 @@ procedure imrdraw(win, x, y, imr)
    /x := 0
    /y := 0
 
-   return DrawImage(win, x, y, imrtoims(imr))
+   return win.draw_image(x, y, imrtoims(imr))
 
 end
 
@@ -213,7 +213,7 @@ end
 procedure imrnegative(imr)		
    local chars
 
-   chars := PaletteChars(imr.palette)
+   chars := Window.palette_chars(imr.palette)
 
    imr.pixels := map(imr.pixels, chars, reverse(chars))
 
@@ -225,11 +225,11 @@ end
 procedure imropen(imr)			
    local win
 
-   win := WOpen("canvas=hidden","size=" || imr.width || "," ||
+   win := Window.open("canvas=hidden","size=" || imr.width || "," ||
       *imr.pixels / imr.width)
 
    imrdraw(win, 0, 0, imr) | {
-      WClose(win)
+      win.close()
       fail
       }
 
@@ -241,7 +241,7 @@ end
 procedure imrpshift(imr, i)		
    local chars
 
-   chars := PaletteChars(imr.palette)
+   chars := Window.palette_chars(imr.palette)
 
    imr.pixels := map(imr.pixels, chars, rotate(chars, i))
 

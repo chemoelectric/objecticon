@@ -32,7 +32,7 @@
 package ipl.xformimg
 
 import
-   ipl.graphics(WOpen),
+   graphics, io,
    ipl.wattrib(Height, Width)
 
 procedure wreflect(win1, dir)
@@ -43,15 +43,15 @@ procedure wreflect(win1, dir)
    height := Height(win1)
    width := Width(win1)
 
-   win2 := WOpen("canvas=hidden", "width=" || width, "height=" || height) |
+   win2 := Window.open("canvas=hidden", "width=" || width, "height=" || height) |
       stop("*** cannot window for reflection")
 
    case dir of {
       "h":  {
          x2 := 0
          y2 := height - 1
-         every Fg(win2, Pixel(win1)) do {
-            DrawPoint(win2, x2, y2)
+         every win2.fg(win1.pixel()) do {
+            win2.draw_point(x2, y2)
             if x2 = width - 1 then {
                x2 := 0
                y2 -:= 1
@@ -62,8 +62,8 @@ procedure wreflect(win1, dir)
       "v":  {
          x2 := width - 1
          y2 := 0
-         every Fg(win2, Pixel(win1)) do {
-            DrawPoint(win2, x2, y2)
+         every win2.fg(win1.pixel()) do {
+            win2.draw_point(x2, y2)
             if x2 = 0 then {
                x2 := width - 1
                y2 +:= 1
@@ -91,10 +91,10 @@ procedure wrotate(win1, dir)
       90:  {
          x2 := height - 1
          y2 := 0
-         win2 := WOpen("canvas=hidden", "width=" || height,
+         win2 := Window.open("canvas=hidden", "width=" || height,
             "height=" || width) | stop("*** cannot open target window")
-         every Fg(win2, Pixel(win1)) do {
-            DrawPoint(win2, x2, y2)
+         every win2.fg(win1.pixel()) do {
+            win2.draw_point(x2, y2)
             if y2 = width - 1 then {
                y2 := 0
                x2 -:= 1
@@ -103,12 +103,12 @@ procedure wrotate(win1, dir)
             }
          }
       -90:  {
-         win2 := WOpen("canvas=hidden", "width=" || height,
+         win2 := Window.open("canvas=hidden", "width=" || height,
             "height=" || width) | stop("*** cannot open target window")
          x2 := 0
          y2 := width - 1
-         every Fg(win2, Pixel(win1)) do {
-            DrawPoint(win2, x2, y2)
+         every win2.fg(win1.pixel()) do {
+            win2.draw_point(x2, y2)
             if y2 = 0 then {
                y2 := width - 1
                x2 +:= 1
@@ -117,12 +117,12 @@ procedure wrotate(win1, dir)
             }
          }
       180:  {
-         win2 := WOpen("canvas=hidden", "width=" || width,
+         win2 := Window.open("canvas=hidden", "width=" || width,
             "height=" || height) | stop("*** cannot open target window")
          x2 := width - 1
          y2 := height - 1
-         every Fg(win2, Pixel(win1)) do {
-            DrawPoint(win2, x2, y2)
+         every win2.fg(win1.pixel()) do {
+            win2.draw_point(x2, y2)
             if x2 = 0 then {
                x2 := width - 1
                y2 -:= 1
@@ -149,18 +149,18 @@ procedure wcatenate(win1, win2, dir)
 
    case dir of {
       "h":  {
-         win3 := WOpen("canvas=hidden", "width=" || (width1 + width2),
+         win3 := Window.open("canvas=hidden", "width=" || (width1 + width2),
             "height=" || max(height1, height2)) |
                stop("*** cannot open window for concatenation")
-         CopyArea(win1, win3)
-         CopyArea(win2, win3, 0, 0, width2, height2, width1, 0)
+         Window.copy_area(win1, win3)
+         Window.copy_area(win2, win3, 0, 0, width2, height2, width1, 0)
          }
       "v":  {
-         win3 := WOpen("canvas=hidden", "width=" || max(width1, width2),
+         win3 := Window.open("canvas=hidden", "width=" || max(width1, width2),
             "height=" || (height1 + height2)) |
                stop("*** cannot open window for concatenation")
-         CopyArea(win1, win3)
-         CopyArea(win2, win3, 0, 0, width2, height2, 0, height1)
+         Window.copy_area(win1, win3)
+         Window.copy_area(win2, win3, 0, 0, width2, height2, 0, height1)
          }
       default:  stop("*** invalid specification for catenate()")
       }

@@ -30,18 +30,18 @@ package ipl.wattrib
 
 procedure Width(win)
 
-   return WAttrib(win, "width")
+   return win.attrib("width")
 
 end
 
 procedure Height(win)
 
-   return WAttrib(win, "height")
+   return win.attrib("height")
 
 end
 
 procedure LineWidth(win)
 
-   return WAttrib(win, "linewidth")
+   return win.attrib("linewidth")
 
 end

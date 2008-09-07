@@ -36,7 +36,7 @@
 
 package ipl.polystuf
 
-procedure poly (terms[])
+procedure poly(terms[])
 local p, coef, expn
   if *terms % 2 = 1 then fail              # Odd number of terms means the 
                                            # list does not contain all
@@ -55,15 +55,15 @@ local p, coef, expn
   return p
 end
 
-procedure is_zero (n)
+procedure is_zero(n)
   if ((n = integer(n)) & (n = 0)) then return else fail
 end
 
-procedure is_zero_poly (p)
+procedure is_zero_poly(p)
   if ((*p = 1) & is_zero(p[real(0)])) then return else fail
 end
 
-procedure poly_add (p1, p2)
+procedure poly_add(p1, p2)
 local p3, z
   p3 := copy(p1)                           # Make a copy to start with.
   if is_zero_poly (p3) then delete (p3, real(0))
@@ -83,7 +83,7 @@ local p3, z
   return p3
 end
 
-procedure poly_sub (p1, p2)
+procedure poly_sub(p1, p2)
 local p3, z
   p3 := copy(p1)                           # Similar process to poly_add.
   if is_zero_poly (p3) then delete (p3, real(0))
@@ -96,7 +96,7 @@ local p3, z
   return p3
 end
 
-procedure poly_mul (p1, p2)
+procedure poly_mul(p1, p2)
 local p3, c, e, y, z
   p3 := table()
   every y := key(p1) do                    # Multiply every term in p1 by
@@ -111,7 +111,7 @@ local p3, c, e, y, z
   return p3
 end
 
-procedure poly_eval (p, x)
+procedure poly_eval(p, x)
 local e, sum
   sum := 0
   every e := key(p) do                     # Increase sum by coef * x ^ exp.
@@ -121,7 +121,7 @@ local e, sum
   return sum
 end
 
-procedure term2string (c, e)
+procedure term2string(c, e)
 local t
   t := ""
   if e = integer(e) then e := integer(e)   # Removes unnecessary ".0"
@@ -138,7 +138,7 @@ local t
   return t
 end
 
-procedure poly_string (p)
+procedure poly_string(p)
 local pstr, plist, c, e
   pstr := ""
   plist := sort(p, 3)                      # Sort table into key-value pairs.

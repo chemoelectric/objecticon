@@ -60,6 +60,7 @@
 package ipl.vrml
 
 import
+   io, graphics,
    ipl.ptutils(pt2coord),
    ipl.records(field)
 
@@ -163,7 +164,7 @@ procedure vrml_color(s)
 
    initial factor := real(2 ^ 16 - 1)
 
-   s := ColorValue(s) | fail
+   s := Window.generic_color_value(s) | fail
 
    result := ""
 

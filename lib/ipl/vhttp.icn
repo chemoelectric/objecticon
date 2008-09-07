@@ -99,6 +99,7 @@
 package ipl.vhttp
 
 import
+   io,
    ipl.cfunc(fpoll, tconnect)
 
 global vhttp_agent			# User_agent:
@@ -167,8 +168,8 @@ procedure vhttp_contact(host, port, path)
    write(f, "User-agent: ", \vhttp_agent)
    write(f, "From: ", \vhttp_from)
    write(f)
-   flush(f)
-   seek(f, 1)
+   f.flush()
+   f.seek(1)
 
    if not fpoll(f, MAX_WAIT * 1000) then {
       close(f)
@@ -230,7 +231,7 @@ procedure vhttp_inithist()
          val := tab(0)
          vhttp_htable[key] := val
          }
-      seek(vhttp_hfile, 0)	# to allow switch to writing
+      vhttp_hfile.seek(0)	# to allow switch to writing
       }
    else {
       close(\vhttp_hfile)
