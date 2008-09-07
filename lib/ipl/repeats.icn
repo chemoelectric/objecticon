@@ -29,7 +29,7 @@
 package ipl.repeats
 
 import
-   ipl.graphics(WClose, WOpen),
+   io, graphics,
    ipl.tile(tile)
 
 # repeat image
@@ -40,18 +40,18 @@ procedure repeats(name, i, j)
    /i := 1			# horizontal repeats
    /j := 1			# vertical repeats
 
-   win1 := WOpen("canvas=hidden", "image=" || name) | fail
-   width := WAttrib(win1, "width")
-   height := WAttrib(win1, "height")
+   win1 := Window.open("canvas=hidden", "image=" || name) | fail
+   width := win1.attrib("width")
+   height := win1.attrib("height")
    hdim := height * i
    wdim := width * j
 
-   win2 := WOpen("canvas=hidden", "width=" || wdim, "height=" || hdim) |
+   win2 := Window.open("canvas=hidden", "width=" || wdim, "height=" || hdim) |
       stop("*** cannot open window for repeat")
 
    tile(win1, win2)
 
-   WClose(win1)
+   win1.close()
 
    return win2
 end

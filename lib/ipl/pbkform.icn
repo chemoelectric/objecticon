@@ -51,7 +51,8 @@
 package ipl.pbkform
 
 import
-   ipl.bkutil(bk_int, bk_read_int)
+   ipl.bkutil(bk_int, bk_read_int),
+   io
 
 record pbk_id(releaseNum,fileType)
 
@@ -101,14 +102,14 @@ end
 
 procedure pbk_read_data(f,id)
    local next_rec,name_len,number_len,address_len,data
-   (reads(f) == "\x01" | (seek(f,where(f) - 1),&fail) &
-   next_rec := bk_read_int(f) + where(f) &
+   (reads(f) == "\x01" | (f.seek(f.tell() - 1),&fail) &
+   next_rec := bk_read_int(f) + f.tell() &
    name_len := ord(reads(f)) &
    number_len := ord(reads(f)) &
    address_len := bk_read_int(f) &
    data := pbk_data(reads(f,0 ~= name_len) | "",reads(f,0 ~= number_len) | "",
 	 reads(f,0 ~= address_len) | "") | fail &
-   seek(f,next_rec)) | fail
+   f.seek(next_rec)) | fail
    return data
 end
 

@@ -32,7 +32,7 @@
 package ipl.evplay
 
 import
-   ipl.ivalue(ivalue)
+   ipl.ivalue(ivalue), io
 
 global EventFile
 
@@ -43,7 +43,7 @@ procedure evplay(win)
    event2 := ivalue(read(EventFile)) | stop("*** short event history")
    event3 := ivalue(read(EventFile)) | stop("*** short event history")
 
-   put(Pending(win), event1, event2, event3)
+   put(win.pending(), event1, event2, event3)
 
    return
 

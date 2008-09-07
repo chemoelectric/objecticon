@@ -19,7 +19,8 @@
 package ipl.cgi
 
 import
-   ipl.optwindw(optwindow)
+   ipl.optwindw(optwindow),
+   io
 
 global cgi			# table of input fields
 
@@ -249,7 +250,6 @@ end
 #
 
 procedure cgiColorToHex(s)
-   local rv
 static ColorTbl
 initial {
    ColorTbl:=table(0)
@@ -269,9 +269,9 @@ initial {
    ColorTbl["magenta"]:="cc0066"
    }
 
-   if rv := ColorValue(s) then {
-      # unfinished; convert 16-bit decimal values into 8-bits/component hex
-      }
+#   if rv := ColorValue(s) then {
+#      # unfinished; convert 16-bit decimal values into 8-bits/component hex
+#      }
    return ColorTbl[s]
 end	
 

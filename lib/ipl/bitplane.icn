@@ -204,7 +204,7 @@ procedure AlcPlane(win, n)
 
    if n < 1 | n > 7 then
       runerr(205, n)
-   fg := Fg(win)
+   fg := win.fg()
 
    ncolors := 2 ^ n
    mask := ncolors - 1
@@ -214,12 +214,12 @@ procedure AlcPlane(win, n)
 
    # alternatives on Color are in case current fg/bg would cause failure
 
-   b := NewColor(win, fg | "black") | fail
+   b := win.new_color(fg | "black") | fail
    clist := [b]
    seqlen := 1
    while seqlen < ncolors | iand(-1 - b, mask) ~= mask do {
       prev := b
-      b := NewColor(win, fg | "black") | fail
+      b := win.new_color(fg | "black") | fail
       push(clist, b)
       if prev - b ~= 1 then
          seqlen := 1
@@ -231,12 +231,11 @@ procedure AlcPlane(win, n)
    every 1 to ncolors do
       pop(clist)
    if *clist > 0 then {
-      push(clist, win)
-      FreeColor ! clist
+      win.free_color ! clist
       }
 
    # set base color to background and return result
-   Color(win, b, Bg(win) | "white")
+   win.color( b, win.bg() | "white")
    /Plane_Mask := table()
    every Plane_Mask [b to b + mask] := mask
    return b
@@ -256,7 +255,7 @@ procedure FrontPlane(win, bp, color)
    /color := bp
    every i := base to base + mask do
       if iand(i, bits) = bits then
-         Color(win, i, color)
+         win.color( i, color)
    return win
 end
 
@@ -271,10 +270,10 @@ procedure BackPlane(win, bp, color)
    mask := \Plane_Mask[bp] | runerr(205, bp)
    base := iand(icom(mask), bp)
    bits := bp - base
-   Color(win, bp, \color)			# set color if specified
+   win.color( bp, \color)			# set color if specified
    every i := base to base + mask do
       if iand(i, bits) = bits & i ~= bp then
-         Color(win, i, ixor(i, bits))		# set color as if plane unset
+         win.color( i, ixor(i, bits))		# set color as if plane unset
    return win
 end
 
@@ -292,18 +291,18 @@ procedure PlaneOp(win, bp, op)
 
    case op of {
       "copy": {
-         WAttrib(win, "drawop=copy")
-         Fg(win, bp)
+         win.attrib( "drawop=copy")
+         win.fg( bp)
          }
       "set": {
          i := base + bits
-         WAttrib(win, "drawop=and")
-         Fg(win, i)
+         win.attrib( "drawop=and")
+         win.fg( i)
          }
       "clear": {
          i := base + (mask - bits)
-         WAttrib(win, "drawop=or")
-         Fg(win, i)
+         win.attrib( "drawop=or")
+         win.fg( i)
          }
       default:
          runerr(205, op)
@@ -316,7 +315,7 @@ end
 #  Deplane(win, color) -- restore normal drawop and set fg to color
 
 procedure Deplane(win, color)
-   WAttrib(win, "drawop=copy")
-   Fg(win, \color)
+   win.attrib("drawop=copy")
+   win.fg( \color)
    return win
 end

@@ -72,6 +72,8 @@ $define AnySep	'!\x1E\x1F'	# any separator, as cset
 
 package ipl.ddfread
 
+import io
+
 record ddf_info(	# basic DDF file handle
    file,		# underlying file
    header,		# last header

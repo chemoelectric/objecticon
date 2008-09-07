@@ -54,6 +54,8 @@
 
 package ipl.rexx
 
+import io
+
 # return whether an EXEC is active
 procedure RexxActive()     
    if callout("rexxvar", "a") == "Rexx error: No EXEC is active" then

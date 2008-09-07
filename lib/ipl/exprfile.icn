@@ -53,7 +53,7 @@
 package ipl.exprfile
 
 import
-   ipl.io(tempfile)
+   ipl.io(tempfile), io
 
 global expr_error
 
@@ -64,7 +64,7 @@ procedure exprfile(exp, links[])
 
    expr_error := &null
 
-   remove(\name)			# remove former executable
+   Files.remove(\name)			# remove former executable
    close(\input)			# and close last pipe
 
    output := tempfile("expr", ".icn", "/tmp")
@@ -85,15 +85,15 @@ procedure exprfile(exp, links[])
    if system("icont -o " || name || " -s " || name ||
       " >/dev/null 2>/dev/null") ~= 0 then {
           expr_error := 1
-          remove(name || ".icn")
+          Files.remove(name || ".icn")
           fail
           }
 
-   remove(name || ".icn")		# remove source code file
+   Files.remove(name || ".icn")		# remove source code file
 
    #  Return a pipe for the executable.  Error messages are discarded.
 
-   return input := open(name || " 2>/dev/null", "p")
+   return input := ProgStream.open(name || " 2>/dev/null", FileOpt.RDONLY)
    
 end
 
