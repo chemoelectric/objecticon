@@ -162,7 +162,8 @@
 package ipl.ichartp
 
 import
-   io,
+   io(close, ewrites, open, read,
+      stop, write),
    ipl.rewrap(rewrap),
    ipl.scan(slashbal, slshupto),
    ipl.strings(replace),

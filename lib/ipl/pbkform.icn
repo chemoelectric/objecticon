@@ -51,8 +51,8 @@
 package ipl.pbkform
 
 import
-   ipl.bkutil(bk_int, bk_read_int),
-   io
+   io(reads, writes),
+   ipl.bkutil(bk_int, bk_read_int)
 
 record pbk_id(releaseNum,fileType)
 

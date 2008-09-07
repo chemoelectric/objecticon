@@ -53,7 +53,9 @@
 package ipl.exprfile
 
 import
-   ipl.io(tempfile), io
+   io(FileOpt, Files, ProgStream, close,
+      write),
+   ipl.io(tempfile)
 
 global expr_error
 

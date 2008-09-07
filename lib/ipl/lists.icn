@@ -321,10 +321,10 @@
 package ipl.lists
 
 import
+   io(open, stop),
    ipl.equiv(equiv),
    ipl.indices(indices),
-   ipl.numbers(residue),
-   io(stop,open)
+   ipl.numbers(residue)
 
 # create list from lines in file
 procedure file2lst(s)			

@@ -103,7 +103,8 @@ $include "vdefns.icn"
 
 package ipl.optwindw
 
-import io
+import
+   io(ewrite, ewrites, open, stop)
 
 procedure winoptions()
    return "!B:D:F:L:T:X+Y+W+H+M+G:P:S:"

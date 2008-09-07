@@ -19,8 +19,9 @@
 package ipl.cgi
 
 import
-   ipl.optwindw(optwindow),
-   io
+   io(open, read, reads, stop,
+      write, writes),
+   ipl.optwindw(optwindow)
 
 global cgi			# table of input fields
 

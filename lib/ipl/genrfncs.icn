@@ -139,6 +139,7 @@
 package ipl.genrfncs
 
 import
+   io(close),
    ipl.convert(exbase10),
    ipl.io(dopen),
    ipl.lists(lequiv, lreverse),
@@ -148,8 +149,7 @@ import
    ipl.polynom(poly2profile, polyadd, polyexp, polymul,
                polysub, str2poly),
    ipl.strings(csort, deletec),
-   ipl.xcode(xdecode),
-   io
+   ipl.xcode(xdecode)
 
 # arithmetic sequence with random intervals
 procedure arandseq(i, j)	
