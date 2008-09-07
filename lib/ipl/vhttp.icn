@@ -99,7 +99,8 @@
 package ipl.vhttp
 
 import
-   io,
+   io(close, open, read, stop,
+      write),
    ipl.cfunc(fpoll, tconnect)
 
 global vhttp_agent			# User_agent:

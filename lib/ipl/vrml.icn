@@ -60,7 +60,9 @@
 package ipl.vrml
 
 import
-   io, graphics,
+   graphics(Window),
+   io(close, open, read, stop,
+      write, writes),
    ipl.ptutils(pt2coord),
    ipl.records(field)
 

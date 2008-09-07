@@ -38,11 +38,11 @@
 package ipl.expander
 
 import
+   io(ewrite),
    ipl.strings(collate, deletec, replacem, rotate),
    ipl.weaving(Block, DownUp, Downto, Extend,
                Interleave, Palindrome, Pbox, Permute,
-               Template, UpDown, Upto),
-   io
+               Template, UpDown, Upto)
 
 # pattern-form to plain string
 procedure pfl2str(pattern)		
