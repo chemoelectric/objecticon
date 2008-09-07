@@ -24,9 +24,11 @@
 
 package ipl.ftype
 
+import io
+
 procedure ftype(file)
    
-   read(open("file " || file, "p")) ? {
+   read(ProgStream.open("file " || file, FileOpt.RDONLY)) ? {
       tab(upto('\t'))
       tab(many('\t'))
       return tab(0)

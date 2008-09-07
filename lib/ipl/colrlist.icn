@@ -31,7 +31,8 @@
 package ipl.colrlist
 
 import
-   ipl.io(dopen)
+   ipl.io(dopen),
+   graphics, io
 
 # list of colors from file
 procedure colrlist(f)			
@@ -41,7 +42,7 @@ procedure colrlist(f)
    colors := []
 
    while line := read(input) do
-      put(colors, ColorValue(line ? tab(upto('\t') | 0)))
+      put(colors, Window.generic_color_value(line ? tab(upto('\t') | 0)))
 
    close(input)
 
@@ -57,7 +58,7 @@ procedure colrplte(p)
 
    colors := []
  
-   every put(colors, PaletteColor(p, !PaletteChars(p)))
+   every put(colors, Window.palette_color(p, !Window.palette_chars(p)))
 
    if *colors = 0 then fail			# invalid palette
 

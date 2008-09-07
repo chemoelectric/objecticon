@@ -50,6 +50,8 @@
 
 package ipl.ispf
 
+import io
+
 # detect presence or absence of ISPF
 procedure ISPQry()     
    return callout("ispqry")

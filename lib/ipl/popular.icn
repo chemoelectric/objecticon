@@ -29,6 +29,7 @@
 package ipl.popular
 
 import
+   graphics, io,
    ipl.imrutils(imstoimr)
 
 # color popularity in image string
@@ -39,7 +40,7 @@ procedure popularity(ims)
 
    color_tbl := table(0)
 
-   every color_tbl[PaletteColor(imr.palette, !imr.pixels)] +:= 1
+   every color_tbl[Window.palette_color(imr.palette, !imr.pixels)] +:= 1
 
    color_list := sort(color_tbl, 4)
 

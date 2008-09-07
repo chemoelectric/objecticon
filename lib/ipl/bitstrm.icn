@@ -54,6 +54,8 @@
 
 package ipl.bitstrm
 
+import io
+
 procedure BitStreamWrite(outfile,bits,value,outproc)
     local outvalue
     static buffer,bufferbits

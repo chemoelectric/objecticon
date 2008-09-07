@@ -55,6 +55,8 @@
 
 package ipl.strpchrt
 
+import graphics
+
 record StripChart_Rec(win, x0, y, w, h, x, n, last)
 
 
@@ -62,17 +64,17 @@ record StripChart_Rec(win, x0, y, w, h, x, n, last)
 
 # create stripchart
 procedure stripchart(win, x, y, w, h)		
-   /x := -WAttrib(win, "dx")
-   /y := -WAttrib(win, "dy")
-   /w := WAttrib(win, "width") - (x + WAttrib(win, "dx"))
-   /h := WAttrib(win, "height") - (y + WAttrib(win, "dy"))
+   /x := -win.attrib("dx")
+   /y := -win.attrib("dy")
+   /w := win.attrib("width") - (x + win.attrib("dx"))
+   /h := win.attrib("height") - (y + win.attrib("dy"))
 
    if w < 0 then
       x -:= (w := -w)
    if h < 0 then
       y -:= (h := -h)
 
-   EraseArea(win, x, y, w, h)
+   win.erase_area(x, y, w, h)
    return StripChart_Rec(win, x, y, w, h, x, 0, list(y + h, -1))
 end
 
@@ -87,8 +89,8 @@ procedure sadvance(sc, n)
       if sc.x < (sc.x0 + sc.w - 1) then
          sc.x +:= 1
       else
-         CopyArea(sc.win, sc.x0 + 1, sc.y, sc.w - 1, sc.h, sc.x0, sc.y)
-      EraseArea(sc.win, sc.x, sc.y, 1, sc.h)
+         Window.copy_area(sc.win, sc.x0 + 1, sc.y, sc.w - 1, sc.h, sc.x0, sc.y)
+      sc.win.erase_area(sc.x, sc.y, 1, sc.h)
       sc.n +:= 1
       }
    return
@@ -101,7 +103,7 @@ end
 procedure smark(sc, y1, y2)			
    y1 := integer(y1)
    if sc.last[y1] <:= sc.n then
-      DrawLine(sc.win, sc.x, y1, sc.x, \y2) | DrawPoint(sc.win, sc.x, y1)
+      sc.win.draw_line(sc.x, y1, sc.x, \y2) | sc.win.draw_point(sc.x, y1)
    return
 end
 

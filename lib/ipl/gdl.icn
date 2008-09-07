@@ -32,6 +32,8 @@
 
 package ipl.gdl
 
+import io
+
 procedure gdl(dir)
 
     local getdir
@@ -101,7 +103,7 @@ procedure msdos_get_dir(dir)
     }
 
     # Clean up.
-    close(in_dir) & remove(temp_name)
+    close(in_dir) & Files.remove(temp_name)
 
     # Check to be sure we actually managed to read some files.
     if *filename_list = 0 then fail
