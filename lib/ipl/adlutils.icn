@@ -36,11 +36,11 @@
 package ipl.adlutils
 
 import
+   io(write),
    ipl.io(PutBack, Read),
    ipl.lastname(lastname),
    ipl.namepfx(namepfx),
-   ipl.title(title),
-   io(write)
+   ipl.title(title)
 
 record label(header, text, comments)
 

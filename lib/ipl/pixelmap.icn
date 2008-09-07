@@ -31,7 +31,8 @@
 package ipl.pixelmap
 
 import
-   io, graphics
+   graphics(Window),
+   io(open, read, stop)
 
 procedure pixelmap(name, p, args[])
    local input, width, height, x, y, win

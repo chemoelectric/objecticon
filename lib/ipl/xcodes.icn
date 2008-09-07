@@ -215,7 +215,8 @@
 package ipl.xcodes
 
 import
-   io,
+   io(close, open, read, stop,
+      write),
    ipl.escape(escape)
 
 record xcode_rec(file,ioProc,done,nextTag)
@@ -364,7 +365,7 @@ procedure xdecode_1(data)
 	    "N": numeric(tab(0))
 	    "\"": escape(tab(-1))
 	    "'": cset(escape(tab(-1)))
-	    "p": proc(xdecode_1(data) | main)
+	    "p": proc(xdecode_1(data)) | stop("bad proc")
 	    "L": list(xdecode_1(data)) | stop("bad list")
 	    "S": {sz := xdecode_1(data) | stop("bad set"); set()}
 	    "T": {sz := xdecode_1(data) | stop("bad table"); table(xdecode_1(data)) | stop("bad table")}

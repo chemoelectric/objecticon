@@ -105,7 +105,8 @@
 
 package ipl.options
 
-import io(stop,open,read)
+import
+   io(open, read, stop)
 
 procedure options(arg,optstring,errproc)
    local f,fList,fileArg,fn,ignore,optname,opttable,opttype,p,x,option,optcs

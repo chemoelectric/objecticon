@@ -38,8 +38,9 @@
 package ipl.rawimage
 
 import
-   io,
-   graphics
+   graphics(Window),
+   io(Files, close, open, read,
+      reads, stop, write, writes)
 
 $define LineLen 64
 

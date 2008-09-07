@@ -195,7 +195,8 @@
 package ipl.getchlib
 
 import
-   io,
+   io(close, open, reads, stop,
+      writes),
    ipl.itlib(getval)
 
 global c_cc, current_mode		# what mode are we in, raw or cooked?

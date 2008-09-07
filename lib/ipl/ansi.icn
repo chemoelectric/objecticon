@@ -69,7 +69,7 @@ invocable all
 package ipl.ansi
 
 import
-   io,
+   io(stop, writes),
    ipl.iolib(getname, getval, igoto, iputs)
 
 procedure _isANSI()

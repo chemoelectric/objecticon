@@ -60,7 +60,8 @@
 package ipl.cells
 
 import
-   io, graphics
+   graphics(Window),
+   io(stop)
 
 record Cell(n, m, color)
 record Panel(window, n, m, size, fg, bg, pg)
