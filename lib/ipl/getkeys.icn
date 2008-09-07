@@ -39,6 +39,7 @@
 package ipl.getkeys
 
 import
+   io,
    ipl.adjuncts(Pathname, _baselen, _slash, getidxname)
 
 procedure getkeys(FNAME)
@@ -73,7 +74,7 @@ procedure getkeys(FNAME)
     }
 
     intext := open(FNAME) | stop("getkeys:  ",FNAME," not found")
-    seek(intext, \start_unindexed_part | 1)
+    intext.seek(\start_unindexed_part | 1)
     while line := read(intext) do
 	line ? { suspend (="::", tab(0)) \ 1 }
 

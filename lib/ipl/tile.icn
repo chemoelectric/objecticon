@@ -25,16 +25,18 @@
 
 package ipl.tile
 
+import graphics
+
 # tile area with image
 procedure tile(win1, win2, x1, y1, w1, h1)	
    local   wmax, hmax
 
    /x1 := 0
    /y1 := 0
-   /w1 := WAttrib(win1, "width")
-   /h1 := WAttrib(win1, "height")
-   wmax := WAttrib(win2, "width")
-   hmax := WAttrib(win2, "height")
+   /w1 := win1.attrib("width")
+   /h1 := win1.attrib("height")
+   wmax := win2.attrib("width")
+   hmax := win2.attrib("height")
 
    if (w1 | h1) = 0 then fail
 
@@ -48,15 +50,15 @@ procedure tile(win1, win2, x1, y1, w1, h1)
       y1 -:= h1
       }
 
-   CopyArea(win1, win2, x1, y1, w1, h1)		# initial copy 
+   Window.copy_area(win1, win2, x1, y1, w1, h1)		# initial copy 
 
    while w1 < wmax do {				# copy and double
-      CopyArea(win2, win2, 0, 0, w1, h1, w1, 0)
+      Window.copy_area(win2, win2, 0, 0, w1, h1, w1, 0)
       w1 *:= 2
       }
 
    while h1 < hmax do {				# copy and double
-      CopyArea(win2, win2, 0, 0, w1, h1, 0, h1)
+      Window.copy_area(win2, win2, 0, 0, w1, h1, 0, h1)
       h1 *:= 2
       }
 

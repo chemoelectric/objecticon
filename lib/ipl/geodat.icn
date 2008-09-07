@@ -107,7 +107,8 @@ package ipl.geodat
 import
    ipl.cartog(compose),
    ipl.io(dopen),
-   ipl.numbers(ceil)
+   ipl.numbers(ceil),
+   io
 
 
 
@@ -249,7 +250,7 @@ procedure gdt_nadcon_initGrids(names)
          ewrite(g.name, " incompatible or corrupt files.")
          next
          }
-      g.offset := where(lonf)
+      g.offset := lonf.tell()
 
       if g.offset = 141 then
          g.termLen := 2
@@ -303,11 +304,11 @@ procedure gdt_nadcon_box(f, g, xcol, yrow)
    pos := g.offset + charsPerRow * (yrow - 1) +
       (72 + g.termLen) * integer((xcol - 1) / 6) + 12 * ((xcol - 1) % 6)
 
-   seek(f, pos)
+   f.seek(pos)
    t1 := reads(f, 12)
    if (xcol % 6 = 0) then reads(f, g.termLen)	# line termination
    t3 := reads(f, 12)
-   seek(f, pos + 12 * g.nc + g.termLen * ceil(g.nc / 6.0))
+   f.seek(pos + 12 * g.nc + g.termLen * ceil(g.nc / 6.0))
    t2 := reads(f, 12)
    if (xcol % 6 = 0) then reads(f, g.termLen)	# line termination
    t4 := reads(f, 12)

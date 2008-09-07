@@ -103,6 +103,8 @@ $include "vdefns.icn"
 
 package ipl.optwindw
 
+import io
+
 procedure winoptions()
    return "!B:D:F:L:T:X+Y+W+H+M+G:P:S:"
 end
@@ -160,18 +162,18 @@ procedure optwindow(opts, args[])
       }
    w := open ! args | stop(args[1], ": can't open window")
    if \opts["T"] then
-      Font(w, opts["T"]) | stop(args[1], ": invalid font: ", opts["T"])
+      w.font(opts["T"]) | stop(args[1], ": invalid font: ", opts["T"])
 
    # store actual values returned after window placement
-   WAttrib(w, "pos") ? {
+   w.attrib("pos") ? {
       opts["X"] := integer(tab(many('+-0123456789')))
       move(1)
       opts["Y"] := integer(tab(many('+-0123456789')))
    }
    opts["P"] := opts["X"] || "," || opts["Y"]
-   opts["W"] := WAttrib(w, "width") - 2 * opts["M"]
-   opts["H"] := WAttrib(w, "height") - 2 * opts["M"]
-   opts["S"] := WAttrib(w, "width") || "," || WAttrib(w, "height")
+   opts["W"] := w.attrib("width") - 2 * opts["M"]
+   opts["H"] := w.attrib("height") - 2 * opts["M"]
+   opts["S"] := w.attrib("width") || "," || w.attrib("height")
    return w
 end
 

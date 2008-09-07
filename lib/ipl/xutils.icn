@@ -24,13 +24,13 @@ import
    ipl.graphics(QuitEvents)
 
 procedure Quit(win)
-   while *Pending(win) > 0 do
-      if NextEvent(win) === QuitEvents() then
+   while *win.pending() > 0 do
+      if win.event()[1] === QuitEvents() then
          return win
    fail
 end
 
 procedure Done(win)
-   until NextEvent(win) === QuitEvents()
+   until win.event()[1] === QuitEvents()
    exit()
 end

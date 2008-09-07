@@ -66,6 +66,8 @@ $define VertMargin  1.0
 
 package ipl.pscript
 
+import io
+
 # write PostScript header
 procedure epsheader(f, x, y, w, h, flags)	
    local xctr, yctr, xsize, ysize, xscale, yscale, dx, dy

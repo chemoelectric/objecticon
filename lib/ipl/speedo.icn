@@ -43,6 +43,8 @@
 
 package ipl.speedo
 
+import io
+
 record SpeedoRec(max,length,file,lastOut,string)
 
 procedure SpeedoNew(max,length,file,str)
@@ -74,11 +76,11 @@ procedure FileSpeedo(file,length,outFile,str)
 	 return
 	    }
     if \length then {
-	 savePos := where(file)
-	 seek(file,0)
-	 fileSize := where(file)
-	 seek(file,savePos)
+	 savePos := file.tell()
+	 file.seek(0)
+	 fileSize := file.tell()
+	 file.seek(savePos)
 	 return speedo := SpeedoNew(fileSize,length,outFile,str)
 	    }
-    return SpeedoValue(speedo,where(file))
+    return SpeedoValue(speedo,file.tell())
 end

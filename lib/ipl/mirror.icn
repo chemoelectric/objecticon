@@ -30,7 +30,7 @@
 package ipl.mirror
 
 import
-   ipl.graphics(WOpen)
+   graphics
 
 # mirror with p2mm symmetry
 procedure mirror(win, x, y, w, h)	
@@ -38,8 +38,8 @@ procedure mirror(win, x, y, w, h)
 
    /x := 0
    /y := 0
-   /w := WAttrib(win, "width")
-   /h := WAttrib(win, "height")
+   /w := win.attrib("width")
+   /h := win.attrib("height")
 
    if w < 0 then {
       w := -w
@@ -54,15 +54,15 @@ procedure mirror(win, x, y, w, h)
    width := 2 * w
    height := 2 * h
 
-   sym := WOpen("canvas=hidden", "size=" || width || "," || height) | fail
+   sym := Window.open("canvas=hidden", "size=" || width || "," || height) | fail
 
-   CopyArea(win, sym, x, y, w, h)
+   Window.copy_area(win, sym, x, y, w, h)
 
    every x := 0 to w - 1 do 
-      CopyArea(sym, sym, x, 0, 1, h, width - x - 1, 0)
+      Window.copy_area(sym, sym, x, 0, 1, h, width - x - 1, 0)
 
    every y := 0 to h - 1 do
-      CopyArea(sym, sym, 0, y, width, 1, 0, height - y - 1)
+      Window.copy_area(sym, sym, 0, y, width, 1, 0, height - y - 1)
 
    return sym
 
