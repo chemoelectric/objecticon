@@ -25,7 +25,8 @@
 package ipl.matrix
 
 import
-   ipl.lu(lu_back_sub, lu_decomp), io
+   io(stop, write, writes),
+   ipl.lu(lu_back_sub, lu_decomp)
 
 procedure matrix_width(M)
 

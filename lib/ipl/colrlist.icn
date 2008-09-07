@@ -31,8 +31,9 @@
 package ipl.colrlist
 
 import
-   ipl.io(dopen),
-   graphics, io
+   graphics(Window),
+   io(close, read),
+   ipl.io(dopen)
 
 # list of colors from file
 procedure colrlist(f)			

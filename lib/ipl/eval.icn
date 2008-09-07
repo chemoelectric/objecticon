@@ -38,7 +38,8 @@ invocable all
 package ipl.eval
 
 import
-   ipl.ivalue(ivalue), io
+   io(ewrite),
+   ipl.ivalue(ivalue)
 
 procedure eval(expr)
    local p, args, tok

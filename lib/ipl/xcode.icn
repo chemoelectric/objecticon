@@ -206,7 +206,9 @@
 package ipl.xcode
 
 import
-   ipl.escape(escape), io
+   io(close, open, read, stop,
+      write),
+   ipl.escape(escape)
 
 record xcode_rec(file,ioProc,done,nextTag)
 
