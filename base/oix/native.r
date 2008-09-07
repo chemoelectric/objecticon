@@ -349,7 +349,7 @@ static struct b_proc *try_load(void *handle, char *classname, char *methname)
 
     /* Sanity check. */
     if (blk->title != T_Proc) {
-        fprintf(stderr, "\nlang.Class.load_lib() - symbol %s not a procedure block\n", fq);
+        fprintf(stderr, "\nlang.Class.load_library() - symbol %s not a procedure block\n", fq);
         fatalerr(218, NULL);
     }
 
@@ -380,8 +380,8 @@ function{1} lang_Class_load_library(lib)
 
         handle = dlopen(lib, RTLD_LAZY);
         if (!handle) {
-            fprintf(stderr, "\nlang.Class.load_lib(\"%s\") - dlopen() failed :-\n\t%s\n", lib, dlerror());
-            runerr(217);
+            why(dlerror());
+            fail;
         }
 
         for (i = 0; i < class->n_instance_fields + class->n_class_fields; ++i) {

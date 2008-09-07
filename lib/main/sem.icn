@@ -104,7 +104,7 @@ class Sem()
    private static defer create_private_impl()
 
    private static init()
-      Class.load_library(LIB)
+      Class.load_library(LIB) | fatal(Sem, &why)
    end
 
    private new(id)

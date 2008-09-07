@@ -88,28 +88,30 @@ body
         curfile = salloc(filename);	/* save the new name */
         handle = dlopen(filename, RTLD_LAZY);	/* get the handle */
     }
+    if (!handle) {
+        why(dlerror());
+        fail;
+    }
     /*
      * Load the function.  Diagnose both library and function errors here.
      */
-    if (handle) {
-        Protect(tname = malloc(strlen(funcname) + 3), fatalerr(0,NULL));
-        sprintf(tname, "B%s", funcname);
+    Protect(tname = malloc(strlen(funcname) + 3), fatalerr(0,NULL));
+    sprintf(tname, "B%s", funcname);
+    blk = (struct b_proc *)dlsym(handle, tname);
+    if (!blk) {
+        sprintf(tname, "_B%s", funcname);
         blk = (struct b_proc *)dlsym(handle, tname);
-        if (!blk) {
-            sprintf(tname, "_B%s", funcname);
-            blk = (struct b_proc *)dlsym(handle, tname);
-        }
     }
-    if (!handle || !blk) {
-        fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): %s\n",
-                filename, funcname, dlerror());
-        runerr(216);
+    if (!blk) {
+        free(tname);
+        whyf("Symbol '%s' not found in library", funcname);
+        fail;
     }
     /* Sanity check. */
     if (blk->title != T_Proc) {
         fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): Loaded block didn't have D_Proc in its dword%s\n",
                 filename, funcname);
-        runerr(218);
+        fatalerr(218, NULL);
     }
 
     free(tname);

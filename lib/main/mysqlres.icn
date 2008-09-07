@@ -182,7 +182,7 @@ class MySqlRes()
    end
 
    private static init()
-      Class.load_library(LIB)
+      Class.load_library(LIB) | fatal(MySqlRes, &why)
    end
 
    package new(ptr)

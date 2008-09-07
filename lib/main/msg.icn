@@ -85,7 +85,7 @@ class Msg()
    private static defer create_private_impl()
 
    private static init()
-      Class.load_library(LIB)
+      Class.load_library(LIB) | fatal(Msg, &why)
    end
 
    private new(id)

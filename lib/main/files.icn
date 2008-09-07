@@ -1,6 +1,7 @@
 package io
 
 import 
+   lang(fatal),
    util,
    ipl.random
 
@@ -18,7 +19,7 @@ class Files()
          else if has_feature("UNIX") then
             UnixFileSystem()
          else
-            stop("Can't init_file_system: unknown o/s type")
+            fatal(Files, "Can't init_file_system: unknown o/s type")
    end
 
    #
