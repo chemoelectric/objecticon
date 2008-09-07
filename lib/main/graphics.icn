@@ -280,6 +280,18 @@ class Window()
    #
    public defer close()
 
+   #
+   # A static version of {palette_key}, which does not query an
+   # underlying window.
+   #
+   public static defer generic_palette_key(s1, s2)
+
+   #
+   # A static version of {color_value}, which does not query an
+   # underlying window.
+   #
+   public static defer generic_color_value(k)
+
    public enqueue(eventcode, x, y, modkeys, interval)	
       /x := 0
       /y := 0

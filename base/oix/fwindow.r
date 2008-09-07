@@ -1656,6 +1656,60 @@ function{1} graphics_Window_close(self)
    }
 end
 
+function{0,1} graphics_Window_generic_palette_key(s1, s2)
+   body {
+      int p;
+      C_integer n;
+      tended char *s;
+      long r, g, b, a;
+
+      p = palnum(&s1);
+      if (p == -1)
+          runerr(103, s1);
+      if (p == 0)
+          fail;
+
+      if (cnv:C_integer(s2, n))
+              fail;
+      if (!cnv:C_string(s2, s))
+          runerr(103, s2);
+
+      if (parsecolor(0, s, &r, &g, &b, &a) == Succeeded)
+          return string(1, rgbkey(p, r / 65535.0, g / 65535.0, b / 65535.0));
+      else
+          fail;
+   }
+end
+
+function{0,1} graphics_Window_generic_color_value(k)
+   body {
+      C_integer n;
+      int len;
+      long r, g, b, a = 65535;
+      tended char *s;
+      char tmp[32], *t;
+
+      if (is:null(k))
+          runerr(103);
+
+      if (cnv:C_integer(k, n))
+          fail;
+      if (!cnv:C_string(k, s))
+          runerr(103, k);
+
+      if (parsecolor(0, s, &r, &g, &b, &a) == Succeeded) {
+          if (a < 65535)
+              sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
+          else
+              sprintf(tmp,"%ld,%ld,%ld", r, g, b);
+          len = strlen(tmp);
+          Protect(s = alcstr(tmp,len), runerr(306));
+          return string(len, s);
+      }
+      fail;
+   }
+end
+
 #else  /* Graphics */
 
 function{0,1} graphics_Window_open_impl(attr[n])
