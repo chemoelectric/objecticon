@@ -675,7 +675,7 @@ function{1} ipc_Msg_receive_impl(self)
        size = mh.u.size;
        blocks = size / sizeof(mb.mtext);
 
-       p = data = malloc(size);
+       MemProtect(p = data = malloc(size));
    
        for (i = 0; i < blocks; ++i) {
            if (msgrcv_ex(tp->msg_id, &mb, sizeof(mb.mtext), 0, 0) == -1)
@@ -739,7 +739,7 @@ function{0,1} ipc_Msg_attempt_impl(self)
        size = mh.u.size;
        blocks = size / sizeof(mb.mtext);
 
-       p = data = malloc(size);
+       MemProtect(p = data = malloc(size));
    
        for (i = 0; i < blocks; ++i) {
            if (msgrcv_ex(tp->msg_id, &mb, sizeof(mb.mtext), 0, 0) == -1)

@@ -165,7 +165,7 @@ function{1} mysql_MySql_esc(self, str)
       char *to;
       unsigned long to_len;
       MySqlParam(self, mysql);
-      Protect(to = malloc(2 * StrLen(str) + 1), fatalerr(0, NULL));
+      MemProtect(to = malloc(2 * StrLen(str) + 1));
       to_len = mysql_real_escape_string(mysql, to, StrLoc(str), StrLen(str));
       result = bytes2string(to, to_len);
       free(to);
