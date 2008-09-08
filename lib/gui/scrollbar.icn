@@ -8,7 +8,7 @@
 
 package gui
 
-import util, lang
+import util
 
 #
 # Component representing the bar area
@@ -390,10 +390,10 @@ class ScrollBar(Component)
       # Check sensible values
       if /self.is_range_flag then {
          if self.page_size <= 0 then
-            fatal(self, "invalid page size")
+            runerr("Invalid page size", self.page_size)
       } else {
          if \self.lo >= \self.hi then
-            fatal(self, "invalid range")
+            runerr("Invalid range")
       }
 
       if /self.is_range_flag then {
@@ -446,11 +446,11 @@ class ScrollBar(Component)
 
    public initially()
       if /self.is_range_flag then {
-         \self.total_size | fatal(self, "total size not set")
-         \self.page_size | fatal(self, "page size not set")
+         \self.total_size | runerr("Total size not set")
+         \self.page_size | runerr("Page size not set")
       }
-      \self.increment_size | fatal(self, "increment size not set")
-      \self.value | fatal(self, "value not set")
+      \self.increment_size | runerr("Increment size not set")
+      \self.value | runerr("Value not set")
 
       if /self.is_horizontal_flag then {
          b1.set_image(Icon.ARROW_UP)

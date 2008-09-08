@@ -8,7 +8,7 @@
 
 package gui
 
-import util, lang, graphics
+import util, graphics
 
 #
 # This class represents a tree object.  A {Event.TREE_NODE_EXPANSION} event occurs when
@@ -72,8 +72,8 @@ class Tree(SelectableScrollArea)
    public set_handle_images(i1, i2)
       self.plus := i1
       self.minus := i2
-      self.little_w := image_width(i1) = image_width(i2) | fatal(self, "Image widths differ")
-      self.little_h := image_height(i1) = image_height(i2) | fatal(self, "Image heights differ")
+      self.little_w := image_width(i1) = image_width(i2) | runerr("Image widths differ")
+      self.little_h := image_height(i1) = image_height(i2) | runerr("Image heights differ")
    end
 
    #

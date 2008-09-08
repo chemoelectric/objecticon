@@ -3,8 +3,6 @@
 
 package gui
 
-import lang
-
 #
 # This {Component} contains two children whose sizes can be adjusted with
 # a {Sizer} component between them.
@@ -59,9 +57,9 @@ class Split(Component)
    end
 
    public initially()
-      \self.first | fatal(self, "Left/top not set")
-      \self.second | fatal(self, "Right/bottom not set")
-      *self.children = 3 | fatal(self, "Should be exactly 3 children")
+      \self.first | runerr("Left/top not set")
+      \self.second | runerr("Right/bottom not set")
+      *self.children = 3 | runerr("Should be exactly 3 children")
       cast(self,Component).initially()
    end
 

@@ -8,8 +8,6 @@
 
 package gui
 
-import lang(fatal)
-
 class SelectionOwner()
    public defer get_content(target)
    public defer lost_ownership()
@@ -137,7 +135,7 @@ class Selection()
          "clear": {
             clear(selection)
          }
-         default: fatal(Selection, "Unknown query to selection callback:" || q)
+         default: syserr("Unknown query to selection callback" || q)
       }
    end
 end

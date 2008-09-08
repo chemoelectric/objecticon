@@ -8,9 +8,6 @@
 
 package gui
 
-
-import lang
-
 #
 # Selection from a list with edit
 #
@@ -71,7 +68,7 @@ class EditListSpin(SelectionList,EditSpin)
    end
 
    public initially()
-      \self.selection_list | fatal(self, "no selection list specified")
+      \self.selection_list | runerr("no selection list specified")
       cast(self,EditSpin).initially()
    end
 

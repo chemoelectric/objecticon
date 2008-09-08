@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, lang
+import graphics
 
 class CirculateLabel(Label)
    public keeps(e)
@@ -131,7 +131,7 @@ class Circulate(SelectionList,Component)
    end
 
    public initially()
-      \self.selection_list | fatal(self, "no selection list specified")
+      \self.selection_list | runerr("no selection list specified")
       cast(self,Component).initially()
    end
 

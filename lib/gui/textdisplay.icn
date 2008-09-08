@@ -8,7 +8,7 @@
 
 package gui
 
-import util, lang
+import util
 
 #
 # This class displays a list of strings.
@@ -93,7 +93,7 @@ class TextDisplay(LineBasedScrollArea)
       if del = 0 & ((*view_list = 0 & index = 1) | (index = view_list[-1].index + 1)) then
          vi := *view_list + 1
       else {
-         vi := get_view_list_index(1, index) | fatal(self, "No such index:" || index)
+         vi := get_view_list_index(1, index) | syserr("No such view index:" || index)
          # Do the deletions
          while view_list[vi].index <= index + del - 1 do {
             if view_list[vi] === long_line then
@@ -260,7 +260,7 @@ class TextDisplay(LineBasedScrollArea)
       else if s == "width" then
          line_splitter := WidthLineSplitter(self)
       else
-         fatal(self, "Bad wrap mode:" || s)
+         runerr("Bad wrap mode", s)
 
       if is_live() then {
          clear_view_list()

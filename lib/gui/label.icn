@@ -8,8 +8,6 @@
 
 package gui
 
-import lang
-
 #
 # This class implements a Text label.  The default width and 
 # height are determined by dimensions of text
@@ -56,7 +54,7 @@ class Label(Component)
 
    public initially()
       local key
-      \self.paint | fatal(self, "no label specified")
+      \self.paint | runerr("no label specified")
       cast(self,Component).initially()
       key := (\linked_accel).accel
       paint.initially(self, key)

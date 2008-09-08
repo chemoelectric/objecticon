@@ -1,6 +1,6 @@
 package gui
 
-import util, lang, graphics, ipl.graphics(Zoom)
+import util, graphics, ipl.graphics(Zoom)
 
 class Paint(Size)
    public defer initially(c, accel)
@@ -103,9 +103,9 @@ class GridPaint(Paint)
    public initially(c, accel)
       local attribs
 
-      /win | fatal(self, "init called out of sequence")
+      /win | syserr("init called out of sequence")
       attribs := wattribs_to_list(c.get_effective_wattribs())
-      win := Window.open!(attribs ||| ["size=1,1", "canvas=hidden"]) | fatal(self, "Couldn't open window")
+      win := Window.open!(attribs ||| ["size=1,1", "canvas=hidden"]) | runerr("Couldn't open window")
       g := Grid("extra=ignore")
       pass := 1
       ia_x := ia_y := Align.C
@@ -117,7 +117,7 @@ class GridPaint(Paint)
       h := g.get_preferred_height()
       if (w > 0) & (h > 0) then {
          win := Window.open!(attribs ||| ["size=" || w || "," || h, 
-                                    "canvas=hidden"]) | fatal(self, "Couldn't open window")
+                                    "canvas=hidden"]) | runerr("Couldn't open window")
          pass := 2
          curr_cell := &null
          ii := 0
@@ -446,7 +446,7 @@ class ImagePaint(Paint,SetFields)
    end
 
    public initially(c)
-      /win | fatal(self, "init called out of sequence")
+      /win | syserr("init called out of sequence")
       load_image(c)
       zoom_image()
       if \win then {
@@ -528,7 +528,7 @@ class ImagePaint(Paint,SetFields)
       zoom_h <:= 1
 
       zoom_win := Window.open("size=" || zoom_w || "," || zoom_h, 
-                              "canvas=hidden") | fatal(self, "Couldn't open temp window")
+                              "canvas=hidden") | runerr("Couldn't open temp window")
       Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
 
       # Now swap the zoomed window into win.

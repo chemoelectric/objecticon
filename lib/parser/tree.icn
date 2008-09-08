@@ -2,7 +2,7 @@ package parser
 
 $include "oigram_tab.icn"
 
-import lang(fatal), util, io
+import util, io
 
 final class Token()
    public const
@@ -412,7 +412,7 @@ class Prog(List)
             "global": Global(t)
             "link": Link(t)
             "invocable": Invocable(t)
-            default: fatal(self, "Unknown declaration node:" || image(t.label))
+            default: syserr("Unknown declaration node:" || t.label)
          })
          n := n.child(1)
       }
@@ -533,7 +533,7 @@ class Factory()
          "const": CONST
          "readable": READABLE
          "final": FINAL
-         default: fatal("Bad access value:" || s)
+         default: runerr("Bad access value", s)
       }
       return Leaf(Token(t, s, pad || s))
    end
@@ -543,7 +543,7 @@ class Factory()
       t := case s of {
          "local": LOCAL
          "static": STATIC
-         default: fatal("Bad retention value:" || s)
+         default: runerr("Bad retention value", s)
       }
       /pad := " "
       return Leaf(Token(t, s, pad || s))

@@ -3,15 +3,6 @@ package lang
 import io
 
 #
-# Stop with a fatal error message.
-# @param obj the object causing the message
-#
-procedure fatal(obj, msg)
-   msg := image(\obj)  || ": " || msg
-   stop("fatal error: ", msg)
-end
-
-#
 # Generate the record names for a record.  The results are undefined for a
 # non-record type of object.
 #

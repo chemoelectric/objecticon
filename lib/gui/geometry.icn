@@ -1,7 +1,5 @@
 package gui
 
-import lang
-
 class Point()
    public x, y
 
@@ -97,13 +95,13 @@ class Rect(Point,Size)
          Align.C : self.x + (self.w - s.w) / 2
          Align.L : self.x
          Align.R : self.x + self.w - s.w
-         default : fatal(self, "incorrect x_align specifier: " || image(a.x_align))
+         default : runerr("incorrect x_align specifier", a.x_align)
       }         
       y1 := case a.y_align of {
          Align.C : self.y + (self.h - s.h) / 2
          Align.T : self.y
          Align.B : self.y + self.h - s.h
-         default : fatal(self, "incorrect y_align specifier: " || image(a.y_align))
+         default : runerr("incorrect y_align specifier", a.y_align)
       }         
       return Point(x1, y1)
    end

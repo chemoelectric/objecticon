@@ -2,7 +2,6 @@ package parser
 
 import 
    util(Connectable, SetFields, error), 
-   lang(fatal), 
    io
 
 class Symbol()
@@ -470,7 +469,7 @@ class SymbolTable(Connectable,SetFields)
                   }
                }
             }
-            default : fatal(self, "Unknown global dec type:" || image(d))
+            default : syserr("Unknown global dec type:" || d)
          }
       }
       return
@@ -501,13 +500,13 @@ class SymbolTable(Connectable,SetFields)
                      UVariable :
                         c.add_field(ClassVariable(c, e, e.name, e))
                      default :
-                        fatal(self, "Unknown type:" || image(e))
+                        syserr("Unknown type:" || e)
                   }
                }
                add_symbol(c) | fail
             }
             URecord : add_symbol(RecordSymbol(sf, d, d.name)) | fail
-            default : fatal(self, "Unknown ufile type:" || image(d))
+            default : syserr("Unknown ufile type:" || d)
          }
       }
       return

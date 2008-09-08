@@ -8,8 +8,6 @@
 
 package gui
 
-import lang
-
 #
 # This class encapsulates a check box in a menu.
 #
@@ -30,8 +28,8 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
    public set_images(x, y)
       self.img_up := x
       self.img_down := y
-      image_width(x) = image_width(y) | fatal(self, "Image widths differ")
-      image_height(x) = image_height(y) | fatal(self, "Image heights differ")
+      image_width(x) = image_width(y) | runerr("Image widths differ")
+      image_height(x) = image_height(y) | runerr("Image heights differ")
    end
 
    public initially()

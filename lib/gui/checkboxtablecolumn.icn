@@ -1,6 +1,6 @@
 package gui
 
-import util, lang
+import util
 
 #
 # A table column that provides on/off checkbox-like behaviour for
@@ -35,8 +35,8 @@ class CheckBoxTableColumn(TableColumn)
    public set_images(x, y)
       self.img_up := x
       self.img_down := y
-      self.img_w := image_width(x) = image_width(y) | fatal(self, "Image widths differ")
-      self.img_h := image_height(x) = image_height(y) | fatal(self, "Image heights differ")
+      self.img_w := image_width(x) = image_width(y) | runerr("Image widths differ")
+      self.img_h := image_height(x) = image_height(y) | runerr("Image heights differ")
    end
 
    public mouse_down(e)
@@ -79,7 +79,7 @@ class CheckBoxTableColumn(TableColumn)
          Align.R : self.tx + self.tw - img_w
          Align.C : self.tx + (self.tw - img_w)/2
          Align.L : self.tx
-         default : fatal(self, "Bad column alignment")
+         default : runerr("Bad column alignment", border.x_align)
       }
       y1 := cy + (ch - img_h) / 2
       draw_image_ex(W, x1, y1, 

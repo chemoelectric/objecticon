@@ -8,7 +8,7 @@
 
 package gui
 
-import lang, graphics
+import graphics
 
 #
 # This is similar to {MenuBar}, but holds just a single
@@ -30,7 +30,7 @@ class MenuButton(Component)
    end
 
    public initially()
-      \self.menu | fatal(self, "no menu set")
+      \self.menu | runerr("no menu set")
       cast(self,Component).initially()
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
       self.menu.set_parent_component(self)         

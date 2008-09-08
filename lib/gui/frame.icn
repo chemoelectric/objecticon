@@ -1,7 +1,5 @@
 package gui
 
-import lang
-
 class Frame(Component)
    public
       held_flag,
@@ -53,7 +51,7 @@ class Frame(Component)
    end
 
    public initially()
-      \self.content | fatal(self, "no content component specified")
+      \self.content | runerr("no content component specified")
       cast(self,Component).initially()
    end
 

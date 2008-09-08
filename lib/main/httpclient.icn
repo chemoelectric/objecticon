@@ -175,17 +175,17 @@ class HttpClient(NetClient)
       self.request.set_range(request.range_start, request.range_end)
       self.request.set_content_type(request.content_type)
       if /request.data_stream then
-         request.method === "HEAD" | fatal(self, "No data stream set")
+         request.method === "HEAD" | runerr("No data stream set")
       else {
-         upto('w', request.data_stream.get_mode()) | fatal(self, "Data stream not writable")
-         upto('t', request.data_stream.get_mode()) | fatal(self, "Data stream not truncatable")
+         upto('w', request.data_stream.get_mode()) | runerr("Data stream not writable")
+         upto('t', request.data_stream.get_mode()) | runerr("Data stream not truncatable")
          self.request.set_data_stream(request.data_stream)
       }
       if /request.post_stream then
-         request.method ~=== "POST" | fatal(self, "No data stream set on a POST")
+         request.method ~=== "POST" | runerr("No data stream set on a POST")
       else {
-         upto('r', request.post_stream.get_mode()) | fatal(self, "Post stream not readable")
-         upto('s', request.post_stream.get_mode()) | fatal(self, "Post stream not seekable")
+         upto('r', request.post_stream.get_mode()) | runerr("Post stream not readable")
+         upto('s', request.post_stream.get_mode()) | runerr("Post stream not seekable")
          self.request.set_post_stream(request.post_stream)
       }
 
@@ -746,7 +746,7 @@ class HttpClient(NetClient)
                  " HTTP/" || http_version) | fail
 
       if \request.post_stream then {
-         \request.content_type | fatal(self, "Content-type header not set on a POST")
+         \request.content_type | runerr("Content-type header not set on a POST")
          request.set_header("content-type", request.content_type)
          sz := request.post_stream.seek(0) - 1 | fail
          request.set_header("content-length", sz)

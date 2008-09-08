@@ -8,7 +8,7 @@
 
 package gui
 
-import lang, graphics
+import graphics
 
 #
 # This class is just a superclass of {List} and {EditList}.
@@ -108,7 +108,7 @@ class DropDown(SelectionList,Component)
          "up": self.y
          "down": spc_below
          "best": if spc_below >= 7 * fh then spc_below else max(self.y, spc_below)
-         default: fatal(self, "Unknown direction")
+         default: runerr("Unknown direction", self.direction)
       }
 
       #
@@ -178,7 +178,7 @@ class DropDown(SelectionList,Component)
    end
 
    public initially()
-      \self.selection_list | fatal(self, "no selection list specified")
+      \self.selection_list | runerr("no selection list specified")
       cast(self,Component).initially()
    end
 

@@ -134,7 +134,7 @@ class SelectiveObjectCodec()
       #
       map := table()
       every e := !template do
-         /map[e[1]] := Class.get_field_index(self, e[2]) | fatal(self, 
+         /map[e[1]] := Class.get_field_index(self, e[2]) | runerr(
                                              "invalid template: can't map " || e[1] || " to " || e[2])
 
       p := [map, template]

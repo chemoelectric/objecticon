@@ -10,8 +10,7 @@ package gui
 
 import 
    graphics,
-   util,
-   lang
+   util
 
 #
 #
@@ -257,7 +256,7 @@ class Dialog(Component)
 
    public open_buffer_win()
       self.buffer_win := (Window.open ! (["canvas=hidden"] ||| 
-                                   wattribs_to_list(self.wattribs))) | fatal(self, "couldn't open window")
+                                   wattribs_to_list(self.wattribs))) | runerr("couldn't open window")
    end
 
    #
@@ -307,7 +306,7 @@ class Dialog(Component)
       ensure_pos()
 
       self.win := (Window.open ! (["inputmask=mk"] ||| 
-                            wattribs_to_list(self.wattribs))) | fatal(self, "couldn't open window")
+                            wattribs_to_list(self.wattribs))) | runerr("couldn't open window")
       # Make the buffer the same size as the visible win.
       self.buffer_win.attrib("size=" || self.win.attrib("size"))
       if \self.only_enlarge_width_flag then
@@ -329,11 +328,11 @@ class Dialog(Component)
       # If already in menu mode, force ourselves out of it.
       if \self.menu_mode then
          self.menu_mode.close_all()
-      (/self.menu_mode := c) | fatal(self, "internal error - already in menu mode")
+      (/self.menu_mode := c) | syserr("internal error - already in menu mode")
    end
 
    public exit_menu_mode()
-      (\self.menu_mode := &null) | fatal(self, "internal error - not  in menu mode.")
+      (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
    end
 
    #

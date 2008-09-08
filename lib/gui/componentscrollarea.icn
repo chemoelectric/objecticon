@@ -8,8 +8,6 @@
 
 package gui
 
-import lang
-
 class ComponentScrollAreaView(Component)
    public
       inner, 
@@ -17,7 +15,7 @@ class ComponentScrollAreaView(Component)
       inner_h
 
    public initially()
-      \self.inner | fatal(self, "no inner component specified")
+      \self.inner | runerr("no inner component specified")
       cast(self,Component).initially()
    end
 

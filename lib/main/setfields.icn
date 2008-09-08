@@ -4,8 +4,6 @@
 
 package util
 
-import lang
-
 class Field()
    public const 
       attr,
@@ -124,11 +122,11 @@ class Field()
 
    #
    # Invoked on a field setup error: stop with an error.  This is
-   # always a fatal error.
+   # always a runerr.
    # @param s the error message
    #
    public field_error(s)
-      fatal(obj, "attribute: " || attr || ": " || s)
+      runerr("attribute: " || attr || ": " || s, val)
    end
 
    public new(attr, val, obj)
@@ -152,8 +150,7 @@ class SetFields()
             if attr := tab(find("=")) then {
                ="="
                if pos(0) then
-                  val := pop(l) | fatal(self, 
-                                        "setfields: Missing last param, attribute: " || attr)
+                  val := pop(l) | runerr("setfields: Missing last param, attribute: " || attr)
                else
                   val := tab(0)
             } else {
@@ -161,10 +158,8 @@ class SetFields()
                val := 1
             }
          }
-         if not self.set_one(Field(attr, val, self)) then {
-            fatal(self, 
-                  "setfields: Unknown attribute: " || attr)
-         }
+         if not self.set_one(Field(attr, val, self)) then
+            runerr("setfields: Unknown attribute", attr)
       }
    end
 

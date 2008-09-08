@@ -8,7 +8,7 @@
 
 package gui
 
-import lang, util, graphics
+import util, graphics
 
 #
 #
@@ -69,9 +69,9 @@ class Dispatcher()
          fail
       # Times must be > 0 if set
       if \t.times <= 0 then
-         fatal(t, "Times must be >0 if set")
+         runerr("Times must be >0 if set", t.times)
       # One-time tick, or need an interval.
-      \t.times = 1 | \t.interval | fatal(t, "Ticker interval not set")
+      \t.times = 1 | \t.interval | runerr("Ticker interval not set")
       insert(tickers, t)
       t.last_tick_time := &null
       t.start_time := curr_time_millis()

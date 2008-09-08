@@ -1,6 +1,6 @@
 package parser
 
-import lang, util, io
+import util, io
 
 class ErrorDetail()
    public const src, line, msg
@@ -169,7 +169,7 @@ class Parser(Connectable)
    #
    private preproc_new(fname,predefined_syms)
       if not(preproc_file := open(fname)) then {
-         fatal(self, "cannot open " || image(fname))
+         runerr("cannot open " || image(fname))
       }
       preproc_sym_table := \predefined_syms | copy(DEFAULT_SYMBOLS)
       preproc_if_stack := []

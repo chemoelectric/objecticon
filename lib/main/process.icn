@@ -22,7 +22,7 @@ class Process()
    # Called by the parent process to start the child
    #
    public start()
-      pid := fork() | fatal(self, "Couldn't fork")
+      pid := fork() | runerr("Couldn't fork")
       if pid = 0 then {
          run()
          exit(0)

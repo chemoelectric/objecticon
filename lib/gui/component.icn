@@ -10,7 +10,6 @@ package gui
 
 import 
    ipl.sort,
-   lang,
    util,
    io
 
@@ -717,7 +716,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public initially()
       local i, p, attribs, e
-      \self.parent | fatal(self, "incorrect ancestry (parent null)")
+      \self.parent | runerr("incorrect ancestry (parent null)")
       parent_dialog := parent.get_parent_dialog()
       self.effective_is_hidden_flag := if parent.is_hidden() | \self.is_hidden_flag then 1 else &null
       self.effective_is_shaded_flag := if parent.is_shaded() | \self.is_shaded_flag then 1 else &null
@@ -744,7 +743,7 @@ class Component(Rect,Align,SetFields,Connectable)
 	    every ewrite("\t", ! attribs)
 	    cbwin := parent.get_cbwin().clone()
 	    if /cbwin then 
-               fatal(self, "multiple bad attributes")
+               runerr("multiple bad attributes")
          }
       }
       (\self.border).initially(self)
@@ -811,11 +810,11 @@ class Component(Rect,Align,SetFields,Connectable)
    end
 
    public get_preferred_width()
-      return integer(self.w_spec) | get_default_width() | (\layout_delegate).get_preferred_width() | fatal(self, "width must be specified")
+      return integer(self.w_spec) | get_default_width() | (\layout_delegate).get_preferred_width() | runerr("width must be specified")
    end
 
    public get_preferred_height()
-      return integer(self.h_spec) | get_default_height() | (\layout_delegate).get_preferred_height() | fatal(self, "height must be specified")
+      return integer(self.h_spec) | get_default_height() | (\layout_delegate).get_preferred_height() | runerr("height must be specified")
    end
 
    #
@@ -873,16 +872,16 @@ class Component(Rect,Align,SetFields,Connectable)
       #
       # Check for unspecified fields
       #
-      \self.x_spec | fatal(self, "x position unspecified")
-      \self.y_spec | fatal(self, "y position unspecified")
+      \self.x_spec | runerr("x position unspecified")
+      \self.y_spec | runerr("y position unspecified")
 
       wspec := \self.w_spec | get_preferred_width()
       hspec := \self.h_spec | get_preferred_height()
 
-      self.x := parent.x + parse_pos(parent.w, self.x_spec) | fatal(self, "invalid x position specification: " || image(self.x_spec))
-      self.y := parent.y + parse_pos(parent.h, self.y_spec) | fatal(self, "invalid y position specification: " || image(self.y_spec))
-      self.w := parse_pos(parent.w, wspec) | fatal(self, "invalid width specification: " || image(wspec))
-      self.h := parse_pos(parent.h, hspec) | fatal(self, "invalid height specification: " || image(hspec))
+      self.x := parent.x + parse_pos(parent.w, self.x_spec) | runerr("invalid x position specification", self.x_spec)
+      self.y := parent.y + parse_pos(parent.h, self.y_spec) | runerr("invalid y position specification", self.y_spec)
+      self.w := parse_pos(parent.w, wspec) | runerr("invalid width specification", wspec)
+      self.h := parse_pos(parent.h, hspec) | runerr("invalid height specification", hspec)
 
       #
       # Adjust x, y based on alignments
@@ -891,13 +890,13 @@ class Component(Rect,Align,SetFields,Connectable)
          Align.C : self.x -:= self.w / 2
          Align.R : self.x -:= self.w
          Align.L : &null
-         default : fatal(self, "incorrect x alignment specifier: " || image(self.x_align))
+         default : runerr("incorrect x alignment specifier", self.x_align)
       }
       case self.y_align of {
          Align.C : self.y -:= self.h / 2
          Align.B : self.y -:= self.h
          Align.T : &null
-         default : fatal(self, "incorrect y alignment specifier: " || image(self.y_align))
+         default : runerr("incorrect y alignment specifier", self.y_align)
       }
    end
 

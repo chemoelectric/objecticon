@@ -8,8 +8,6 @@
 
 package gui
 
-import lang
-
 #
 # This class represents a single pane in a {TabSet}.  {Components}
 # can be added to the {TabItem} using {Component}'s {add} method.
@@ -56,7 +54,7 @@ class TabItem(Component)
    end
 
    public initially()
-      \self.paint | fatal(self, "no label specified")
+      \self.paint | runerr("no label specified")
       cast(self,Component).initially()
       # We are painted on the TabSet's attributes, so init
       # the label border and paint on it too.

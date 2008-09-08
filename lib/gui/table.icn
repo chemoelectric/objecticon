@@ -8,8 +8,6 @@
 
 package gui
 
-import lang
-
 class TableContent(SelectableScrollArea)
    public calculate_line_height()
       local t, m, h, r, e, i
@@ -29,7 +27,7 @@ class TableContent(SelectableScrollArea)
 
       r := list(*t[1], m)
       every e := !t do {
-         *e = *r | fatal(self, "Inconsistent table column line height list sizes returned")
+         *e = *r | syserr("Inconsistent table column line height list sizes returned")
          every i := 1 to *r do
             r[i] <:= e[i]
       }

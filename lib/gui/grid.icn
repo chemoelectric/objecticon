@@ -323,7 +323,7 @@ class Grid(SetFields)
          EXTRA_IGNORE : {
             self.pad_w := self.pad_h := 0
          }
-         default : fatal(self, "Bad value for extra:" || image(self.extra))
+         default : runerr("Bad value for extra", self.extra)
       }
 
       col_x := []

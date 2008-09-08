@@ -1,14 +1,12 @@
 package gui
 
-import lang
-
 class ItemPaintTableColumn(TableColumn)
    public
       item_paint,
       item_border
 
    public initially()
-      \self.item_paint | fatal(self, "ItemPaint not set")
+      \self.item_paint | runerr("ItemPaint not set")
       cast(self,TableColumn).initially()
       self.item_paint.initially(self)
       self.item_border.initially(self)

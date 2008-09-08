@@ -447,7 +447,7 @@ class TabSet(Component)
 
    public initially()
       if *self.children = 0 then
-         fatal(self, "no TabItems in TabSet")
+         runerr("no TabItems in TabSet")
       /self.which_one := self.children[1]
       set_hidden_flags()
       cast(self,Component).initially()

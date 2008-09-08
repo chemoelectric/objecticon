@@ -11,7 +11,8 @@ class Connectable()
    public fire(type, param)
       local l
 
-      if /type then fatal(self, "null type to fire")
+      if /type then 
+         runerr("null type to fire")
 
       every l := !listeners do {
          if /l.type | l.type === type then

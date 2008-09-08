@@ -8,8 +8,6 @@
 
 package gui
 
-import lang
-
 #
 # An instance of this class is a small button with a label
 # which is either in an on or off state.  The button is an
@@ -46,8 +44,8 @@ class CheckBox(Button)
    public set_images(x, y)
       self.img_up := x
       self.img_down := y
-      self.img_w := image_width(x) = image_width(y) | fatal(self, "Image widths differ")
-      self.img_h := image_height(x) = image_height(y) | fatal(self, "Image heights differ")
+      self.img_w := image_width(x) = image_width(y) | runerr("Image widths differ")
+      self.img_h := image_height(x) = image_height(y) | runerr("Image heights differ")
    end
 
    #
@@ -77,7 +75,7 @@ class CheckBox(Button)
          else
             self.set_images(Icon.DIAMOND_UP, Icon.DIAMOND_DOWN)
       }
-      \self.paint | fatal(self, "no label specified")
+      \self.paint | runerr("no label specified")
       cast(self,Component).initially()
       self.paint.initially(self, self.accel)
    end

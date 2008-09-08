@@ -8,7 +8,7 @@
 
 package gui
 
-import util, lang
+import util
 
 #
 # Component representing the slider area
@@ -427,9 +427,9 @@ class Slider(Component)
    end
 
    public initially()
-      \self.value | fatal(self, "value not set")
+      \self.value | runerr("value not set")
       if /(self.lo | self.hi) then
-         fatal(self, "range not set")
+         runerr("range not set")
       cast(self,Component).initially()
    end
 

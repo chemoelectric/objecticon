@@ -8,8 +8,6 @@
 
 package gui
 
-import lang
-
 #
 # A node in a {TreeTable}.  It provides the column data
 # for the extra (non-tree) columns.  For example if
@@ -69,7 +67,7 @@ class TreeTableContent(Tree)
 
       r := list(*t[1], m)
       every e := !t do {
-         *e = *r | fatal(self, "Inconsistent table column row height list sizes returned")
+         *e = *r | syserr("Inconsistent table column row height list sizes returned")
          every i := 1 to *r do
             r[i] <:= e[i]
       }

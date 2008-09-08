@@ -8,8 +8,6 @@
 
 package gui
 
-import lang
-
 #
 # A button with a text label.
 #
@@ -110,7 +108,7 @@ class TextButton(Button)
    end
 
    public initially()
-      \self.paint | fatal(self, "no label specified")
+      \self.paint | runerr("no label specified")
       cast(self,Component).initially()
       self.paint.initially(self, self.accel)
       (\self.paint_down).initially(self, self.accel)

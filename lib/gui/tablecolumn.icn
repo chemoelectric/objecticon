@@ -8,8 +8,6 @@
 
 package gui
 
-import lang
-
 #
 # This class provides one column within a {Table}, which
 # displays a table of data.  A column has a label with a
@@ -160,7 +158,7 @@ class TableColumn(TextButton)
          Align.R : self.tx + self.tw - W.text_width(data)
          Align.C : self.tx + (self.tw - W.text_width(data)) / 2
          Align.L : self.tx
-         default : fatal(self, "Bad column alignment")
+         default : runerr("Bad column alignment", border.x_align)
       }
       y1 := cy + (ch - W.attrib("fheight")) / 2
       draw_string_ex(W, x1, y1, data)
