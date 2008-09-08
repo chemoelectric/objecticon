@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui, lang
+import gui
 
 ############################################################################
 #
@@ -260,7 +260,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       }
       c.set_string_rep()
       struct.set_contents(c.get_string_rep())
-      i := struct.find_index(t) | fatal(self, "Lost the component")
+      i := struct.find_index(t) | syserr("Lost the component")
       struct.set_selections([i])
       struct.set_cursor(i)
       update_grey()
@@ -302,7 +302,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       }
       c.set_string_rep()
       struct.set_contents(c.get_string_rep())
-      i := struct.find_index(t) | fatal(self, "Lost the component")
+      i := struct.find_index(t) | syserr("Lost the component")
       struct.set_selections([i])
       struct.set_cursor(i)
       update_grey()

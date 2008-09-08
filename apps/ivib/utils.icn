@@ -40,7 +40,7 @@ end
 procedure read_gif_icon(dialog, s)
    local w, raw
 
-   w := graphics.Window.open("canvas=hidden", "image=" || s) | return alert_error(dialog, "Couldn't open file " || s)
+   w := Window.open("canvas=hidden", "image=" || s) | return alert_error(dialog, "Couldn't open file " || s)
    raw := Capture(w, "c6")
    w.close()
 
@@ -105,7 +105,7 @@ procedure util_check_attribs(dialog, t)
    local s
    static test_win, attrib_table
    initial {
-      test_win := graphics.Window.open("canvas=hidden") | stop("couldn't open window")
+      test_win := Window.open("canvas=hidden") | stop("couldn't open window")
       attrib_table := set()
       every insert(attrib_table, 
                    "label" | "posx" | "pos" | "posy" | "resize" | "size" | "height" | 
