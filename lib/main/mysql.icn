@@ -425,7 +425,7 @@ class MySql()
       CLIENT_MULTI_RESULTS :=    131072  
       CLIENT_REMEMBER_OPTIONS := 2147483648  # ((ulong) (1L << 31))
 
-      Class.load_library(LIB) | runerr("Couldn't load dynamic library " || LIB || ":" || &why)
+      Class.load_library(LIB) | runerr("Couldn't load dynamic library " || &why)
    end
 
    public new()

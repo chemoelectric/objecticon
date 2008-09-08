@@ -182,7 +182,7 @@ class MySqlRes()
    end
 
    private static init()
-      Class.load_library(LIB) | runerr("Couldn't load dynamic library " || LIB || ":" || &why)
+      Class.load_library(LIB) | runerr("Couldn't load dynamic library " || &why)
    end
 
    package new(ptr)

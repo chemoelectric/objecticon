@@ -61,7 +61,7 @@ class Shm()
    private static defer create_private_impl()
 
    private static init()
-      Class.load_library(LIB) | runerr("Couldn't load dynamic library " || LIB || ":" || &why)
+      Class.load_library(LIB) | runerr("Couldn't load dynamic library " || &why)
    end
 
    private new(id)
