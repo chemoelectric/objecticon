@@ -99,9 +99,6 @@ struct region rootstring, rootblock;
 
 
 
-int debug_info=1;			/* flag: debugging information IS available */
-int err_conv=1;				/* flag: error conversion IS supported */
-
 int op_tbl_sz = (sizeof(init_op_tbl) / sizeof(struct b_proc));
 struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
 
@@ -232,7 +229,7 @@ void icon_init(char *name)
     rootpstate.T_errornumber = 0;
     rootpstate.Have_errval = 0;
     rootpstate.T_have_val = 0;
-    rootpstate.K_errortext = "";
+    rootpstate.K_errortext = emptystr;
     rootpstate.K_errorvalue = nulldesc;
     rootpstate.T_errorvalue = nulldesc;
 
@@ -699,34 +696,10 @@ void c_exit(i)
         xdisp(pfp,glbl_argp,k_level,stderr);
     }
 
-#if MSWIN32
-    /*
-     * free dynamic record types
-     */
-    if(dr_arrays) {
-        int i, j;
-        struct b_proc_list *bpelem, *to_free;
-        for(i=0;i<longest_dr;i++) {
-            if (dr_arrays[i] != NULL) {
-                for(bpelem = dr_arrays[i]; bpelem; ) {
-                    free(StrLoc(bpelem->this->recname));
-                    for(j=0;j<bpelem->this->nparam;j++)
-                        free(StrLoc(bpelem->this->lnames[j]));
-                    free(bpelem->this);
-                    to_free = bpelem;
-                    bpelem = bpelem->next;
-                    free(to_free);
-                }
-            }
-        }
-        free(dr_arrays);
-    }
-
 #ifdef MSWindows
     PostQuitMessage(0);
     while (wstates != NULL) pollevent();
 #endif					/* MSWindows */
-#endif                                  /* MSWIN32 */
 
     exit(i);
 
@@ -852,7 +825,7 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->T_errornumber = 0;
     pstate->Have_errval = 0;
     pstate->T_have_val = 0;
-    pstate->K_errortext = "";
+    pstate->K_errortext = emptystr;
     pstate->K_errorvalue = nulldesc;
     pstate->T_errorvalue = nulldesc;
     pstate->Kywd_time_elsewhere = millisec();

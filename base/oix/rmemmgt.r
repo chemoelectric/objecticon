@@ -501,6 +501,7 @@ struct progstate *pstate;
 	 markblock(dp);
 
    PostDescrip(pstate->K_errorvalue);
+   PostDescrip(pstate->K_errortext);
    PostDescrip(pstate->T_errorvalue);
    }
 

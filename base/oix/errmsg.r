@@ -161,7 +161,8 @@ char *lookup_err_msg(int n)
                                sizeof(struct errtab), lookup_err_msg_compare);
     if (p)
         return p->errmsg;
-    syserr("Invalid runtime error no:%d", n);
+    else
+        return 0;
 }
 
 /*
@@ -170,6 +171,8 @@ char *lookup_err_msg(int n)
  */
 void err_msg(int n, dptr v)
 {
+    char *em;
+
     if (n == 0) {
         k_errornumber = t_errornumber;
         k_errorvalue = t_errorvalue;
@@ -187,12 +190,16 @@ void err_msg(int n, dptr v)
         }
     }
 
-    k_errortext = lookup_err_msg(k_errornumber);
+    em = lookup_err_msg(k_errornumber);
+    if (em)
+        MakeCStr(em, &k_errortext);
+    else
+        k_errortext = emptystr;
 
     EVVal((word)k_errornumber,E_Error);
 
     if (pfp != NULL) {
-        if (IntVal(kywd_err) == 0 || !err_conv) {
+        if (IntVal(kywd_err) == 0) {
             fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
             fprintf(stderr, "File %s; Line %ld\n", findfile(ipc.opnd),
                     (long)findline(ipc.opnd));
@@ -204,7 +211,9 @@ void err_msg(int n, dptr v)
     }
     else
         fprintf(stderr, "\nRun-time error %d in startup code\n", n);
-    fprintf(stderr, "%s\n", k_errortext);
+
+    if (em)
+        fprintf(stderr, "%s\n", em);
 
     if (have_errval) {
         fprintf(stderr, "offending value: ");
@@ -212,9 +221,6 @@ void err_msg(int n, dptr v)
         putc('\n', stderr);
     }
 
-
-    if (!debug_info)
-        c_exit(EXIT_FAILURE);
 
     if (pfp == NULL) {		/* skip if start-up problem */
         if (dodump)

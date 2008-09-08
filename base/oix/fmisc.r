@@ -310,9 +310,6 @@ function{1} display(i,c)
       FILE *std_f = stderr;
       int r;
 
-      if (!debug_info)
-         runerr(402);
-
       /*
        * Produce error if i is negative; constrain i to be <= &level.
        */
@@ -350,7 +347,7 @@ function{1} errorclear()
       }
    body {
       k_errornumber = 0;
-      k_errortext = "";
+      k_errortext = emptystr;
       k_errorvalue = nulldesc;
       have_errval = 0;
       return nulldesc;
@@ -564,8 +561,6 @@ function{1} name(underef v, c)
 
    body {
       C_integer i;
-      if (!debug_info)
-         runerr(402);
 
       savedprog = curpstate;
       if (is:null(c)) {
@@ -592,21 +587,91 @@ end
 
 "runerr(i,x) - produce runtime error i with value x."
 
-function{} runerr(i,x[n])
-
-   if !cnv:C_integer(i) then
-      runerr(101,i)
+function{} runerr(i, x[n])
    body {
-      if (i <= 0) {
-         irunerr(205,i);
-         errorfail;
-         }
-      if (n == 0) 
-         runerr((int)i);
-      else
-         runerr((int)i, x[0]);
+      int err_num;
+      if (cnv:C_integer(i, err_num)) {
+          char *em;
+          if (err_num <= 0)
+              runerr(205, i);
+          k_errornumber = err_num;
+          em = lookup_err_msg(k_errornumber);
+          if (em)
+              MakeCStr(em, &k_errortext);
+          else
+              k_errortext = emptystr;
+      } else if (is:string(i)) {
+          k_errornumber = -1;
+          k_errortext = i;
+      } else
+          runerr(170, i);
+
+      if (n == 0) {
+          k_errorvalue = nulldesc;
+          have_errval = 0;
       }
+      else {
+          k_errorvalue = x[0];
+          have_errval = 1;
+      }
+
+      if (IntVal(kywd_err) == 0) {
+          char *s = StrLoc(k_errortext);
+          int i = StrLen(k_errortext);
+          if (k_errornumber > 0)
+              fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
+          else 
+              fprintf(stderr, "\nRun-time error: ");
+          while (i-- > 0)
+              fputc(*s++, stderr);
+          fputc('\n', stderr);
+      }
+      else {
+          IntVal(kywd_err)--;
+          errorfail;
+      }
+
+      if (have_errval) {
+          fprintf(stderr, "offending value: ");
+          outimage(stderr, &k_errorvalue, 0);
+          putc('\n', stderr);
+      }
+
+      fprintf(stderr, "Traceback:\n");
+      tracebk(pfp, glbl_argp);
+      fflush(stderr);
+
+      if (dodump)
+          abort();
+
+      c_exit(EXIT_FAILURE);
+
+      errorfail;
+   }
 end
+
+function{} syserr(msg)
+   body {
+      char *s = StrLoc(msg);
+      int i = StrLen(msg);
+      fprintf(stderr, "\nIcon-level internal error: ");
+      while (i-- > 0)
+          fputc(*s++, stderr);
+      fputc('\n', stderr);
+      fprintf(stderr, "File %s; Line %ld\n", findfile(ipc.opnd), (long)findline(ipc.opnd));
+
+      fprintf(stderr, "Traceback:\n");
+      tracebk(pfp, glbl_argp);
+      fflush(stderr);
+
+      if (dodump)
+          abort();
+
+      c_exit(EXIT_FAILURE);
+      fail;
+   }
+end
+
 
 "seq(i, j) - generate i, i+j, i+2*j, ... ."
 
@@ -1871,7 +1936,7 @@ function{*} keyword(keyname,ce)
 	 return C_integer p->K_errornumber;
 	 }
       else if (strcmp(kname,"errortext") == 0) {
-	 return C_string p->K_errortext;
+	 return p->K_errortext;
 	 }
       else if (strcmp(kname,"errorvalue") == 0) {
 	 return p->K_errorvalue;
