@@ -651,6 +651,9 @@ function{} runerr(i, x[n])
 end
 
 function{} syserr(msg)
+   if !cnv:string(msg) then
+      runerr(103, msg)
+
    body {
       char *s = StrLoc(msg);
       int i = StrLen(msg);
