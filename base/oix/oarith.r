@@ -512,7 +512,7 @@ dptr drslt;
       r *= r;
       n >>= 1;
       }
-   Protect(BlkLoc(*drslt) = (union block *)alcreal(retval), return Error);
+   MemProtect(BlkLoc(*drslt) = (union block *)alcreal(retval));
    drslt->dword = D_Real;
    return Succeeded;
    }

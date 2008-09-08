@@ -106,7 +106,7 @@ static int cast_access(dptr cargp, struct inline_cache *ic)
     /*
      * Instance method.
      */
-    Protect(mp = alcmethp(), fatalerr(0,NULL));
+    MemProtect(mp = alcmethp());
     /*
      * Refresh pointers after allocation.
      */
@@ -188,7 +188,7 @@ static int instance_access(dptr cargp, struct inline_cache *ic)
         /*
          * Instance method.  Return a method pointer.
          */
-        Protect(mp = alcmethp(), fatalerr(0,NULL));
+        MemProtect(mp = alcmethp());
         /*
          * Refresh pointers after allocation.
          */

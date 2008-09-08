@@ -94,6 +94,7 @@ struct errtab errtab[] = {
    306, "inadequate space in string region",
    307, "inadequate space in block region",
    308, "system stack overflow in co-expression",
+   309, "out of memory, allocation returned null",
 
 #if IntBits == 16
    316, "interpreter stack too large",

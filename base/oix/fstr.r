@@ -60,7 +60,7 @@ function{1} center(s1,n,s2)
        *  of the new string and copy s2 into it from right to left as
        *  many times as will fit in the right half of the new string.
        */
-      Protect(sbuf = alcstr(NULL, n), runerr(0));
+      MemProtect(sbuf = alcstr(NULL, n));
 
       slen = StrLen(s2);
       s3 = StrLoc(s2);
@@ -153,7 +153,7 @@ function{1} detab(s,i[n])
       /*
        * Start out assuming the result will be the same size as the argument.
        */
-      Protect(StrLoc(result) = alcstr(NULL, StrLen(s)), runerr(0));
+      MemProtect(StrLoc(result) = alcstr(NULL, StrLen(s)));
       StrLen(result) = StrLen(s);
 
       /*
@@ -193,7 +193,7 @@ function{1} detab(s,i[n])
                nxttab(&target, &tablst, endlst, &last, &interval);
                expand = target - col - 1;
                if (expand > 0) {
-                  Protect(alcstr(NULL, expand), runerr(0));
+                  MemProtect(alcstr(NULL, expand));
                   StrLen(result) += expand;
                   }
                while (col < target) {
@@ -254,7 +254,7 @@ function{1} entab(s,i[n])
        * Get memory for result at end of string space.  We may give some back
        *  if not all needed, or all of it if no tabs can be inserted.
        */
-      Protect(StrLoc(result) = alcstr(NULL, StrLen(s)), runerr(0));
+      MemProtect(StrLoc(result) = alcstr(NULL, StrLen(s)));
       StrLen(result) = StrLen(s);
 
       /*
@@ -397,7 +397,7 @@ function{1} left(s1,n,s2)
        *  string and copy s2 into the new string as many times as it fits.
        *  Note that s2 is copied from right to left.
        */
-      Protect(sbuf = alcstr(NULL, n), runerr(0));
+      MemProtect(sbuf = alcstr(NULL, n));
 
       slen = StrLen(s2);
       s3 = StrLoc(s2);
@@ -494,7 +494,7 @@ function{1} map(s1,s2,s3)
        *  string, but specify no value for it.
        */
       StrLen(result) = slen = StrLen(s1);
-      Protect(StrLoc(result) = alcstr(NULL, slen), runerr(0));
+      MemProtect(StrLoc(result) = alcstr(NULL, slen));
       str1 = StrLoc(s1);
       str2 = StrLoc(result);
 
@@ -554,7 +554,7 @@ function{1} repl(s,n)
       /*
        * Make result a descriptor for the replicated string.
        */
-      Protect(resloc = alcstr(NULL, size), runerr(0));
+      MemProtect(resloc = alcstr(NULL, size));
 
       StrLoc(result) = resloc;
       StrLen(result) = size;
@@ -616,7 +616,7 @@ function{1} reverse(x)
        * Allocate a copy of x.
        */
       slen = StrLen(x);
-      Protect(StrLoc(result) = alcstr(StrLoc(x), slen), runerr(0));
+      MemProtect(StrLoc(result) = alcstr(StrLoc(x), slen));
       StrLen(result) = slen;
 
       /*
@@ -653,7 +653,7 @@ function{1} right(s1,n,s2)
        * Get n bytes of string space.  Start at the left end of the new
        *  string and copy s2 into the new string as many times as it fits.
        */
-      Protect(sbuf = alcstr(NULL, n), runerr(0));
+      MemProtect(sbuf = alcstr(NULL, n));
 
       slen = StrLen(s2);
       s3 = StrLoc(s2);

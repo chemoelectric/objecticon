@@ -52,7 +52,7 @@ operator{1} || cater(x, y)
 	 /*
 	  * Append y to the end of the string space.
 	  */
-	 Protect(alcstr(StrLoc(y),StrLen(y)), runerr(0));
+	 MemProtect(alcstr(StrLoc(y),StrLen(y)));
 	 /*
 	  *  Set the length of the result and return.
 	  */
@@ -64,7 +64,7 @@ operator{1} || cater(x, y)
        * Otherwise, allocate space for x and y, and copy them
        *  to the end of the string space.
        */
-      Protect(StrLoc(result) = alcstr(NULL, StrLen(x) + StrLen(y)), runerr(0));
+      MemProtect(StrLoc(result) = alcstr(NULL, StrLen(x) + StrLen(y)));
       memcpy(StrLoc(result), StrLoc(x), StrLen(x));
       memcpy(StrLoc(result) + StrLen(x), StrLoc(y), StrLen(y));
 
@@ -104,7 +104,7 @@ operator{1} ||| lconcat(x, y)
       size2 = BlkLoc(y)->list.size;
       size3 = size1 + size2;
 
-      Protect(bp1 = (struct b_list *)alclist_raw(size3, size3), runerr(0));
+      MemProtect(bp1 = (struct b_list *)alclist_raw(size3, size3));
       lp1 = (struct b_lelem *) (bp1->listhead);
 
       /*

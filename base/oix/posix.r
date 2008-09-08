@@ -21,16 +21,6 @@
 #define fstat _fstat
 #endif					/* MSWIN32 */
 
-extern int errno;
-
-#define String(d, s) do {                               \
-      int len = strlen(s);                              \
-      Protect(StrLoc(d) = alcstr((s), len), runerr(0)); \
-      StrLen(d) = len;                                  \
-} while (0)
-
-
-
 "kill() - send a signal to a process."
 
 function{0,1} kill(pid, signal)
@@ -244,8 +234,7 @@ function{0,1} wait(pid, options)
       sprintf(retval, "%d terminated:%d", wpid, termstat);
 #endif					/* MSWIN32 */
 
-      String(result, retval);
-      return result;
+      return cstr2string(retval);
    }
 end
 

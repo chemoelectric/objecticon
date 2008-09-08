@@ -407,7 +407,7 @@ void icon_init(char *name)
 					/*  This really is a bug. */
     mainhead->program = &rootpstate;
 
-    Protect(mainhead->es_actstk = alcactiv(), fatalerr(0,NULL));
+    MemProtect(mainhead->es_actstk = alcactiv());
     pushact(mainhead, mainhead);
 
     /*

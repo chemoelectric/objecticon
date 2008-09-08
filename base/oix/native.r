@@ -52,6 +52,7 @@ function{0,1} glob(s, c)
    body {
        struct progstate *prog;
        dptr p;
+
        if (is:coexpr(c))
            prog = BlkLoc(c)->coexpr.program;
        else
@@ -333,7 +334,7 @@ static struct b_proc *try_load(void *handle, char *classname, char *methname)
     char *fq, *p, *t;
     struct b_proc *blk;
 
-    Protect(fq = malloc(strlen(classname) + strlen(methname) + 3), fatalerr(0,NULL));
+    MemProtect(fq = malloc(strlen(classname) + strlen(methname) + 3));
     p = fq;
     *p++ = 'B';
     for (t = classname; *t; ++t)
@@ -429,7 +430,7 @@ function{1} lang_Class_create_raw(c)
         struct b_object *obj;
         struct b_class *class = &BlkLoc(c)->class;
         ensure_initialized(class);
-        Protect(obj = alcobject(class), runerr(0));
+        MemProtect(obj = alcobject(class));
         obj->init_state = Initializing;
         return object(obj);
     }
@@ -583,7 +584,7 @@ function{0,1} io_FileStream_in(self, i)
        /*
         * For now, assume we can read the full number of bytes.
         */
-       Protect(StrLoc(s) = alcstr(NULL, i), runerr(0));
+       MemProtect(StrLoc(s) = alcstr(NULL, i));
 
        nread = read(fd, StrLoc(s), i);
        if (nread < 0) {
@@ -723,7 +724,7 @@ function{0,1} io_SocketStream_in(self, i)
        /*
         * For now, assume we can read the full number of bytes.
         */
-       Protect(StrLoc(s) = alcstr(NULL, i), runerr(0));
+       MemProtect(StrLoc(s) = alcstr(NULL, i));
 
        nread = recv(fd, StrLoc(s), i, 0);
        if (nread < 0) {
@@ -1071,7 +1072,7 @@ function{0,1} io_DescStream_poll(a[n])
        else if (!cnv:C_integer(a[n - 1], timeout))
            runerr(101, a[n - 1]);
 
-       Protect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)), fatalerr(0, NULL));
+       MemProtect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)));
 
        for (i = 0; i < nfds; ++i) {
            int events;
@@ -1356,8 +1357,8 @@ function{0,1} io_Files_readlink(s)
 #if MSWIN32
        runerr(121);
 #else					/* MSWIN32 */
-       reserve(Strings, NAME_MAX);
-       Protect(StrLoc(result) = alcstr(NULL, NAME_MAX), runerr(0));
+       MemProtect(reserve(Strings, NAME_MAX));
+       MemProtect(StrLoc(result) = alcstr(NULL, NAME_MAX));
        if ((len = readlink(s, StrLoc(result), NAME_MAX)) < 0) {
            /* Give back the string */
            n = DiffPtrs(StrLoc(result),strfree); /* note the deallocation */
@@ -1665,10 +1666,10 @@ function{1} io_RamStream_new_impl(s)
       runerr(103, s)
    body {
        struct ramstream *p;
-       Protect(p = malloc(sizeof(*p)), fatalerr(0,NULL));
+       MemProtect(p = malloc(sizeof(*p)));
        p->avail = StrLen(s) + 1024;
        p->pos = p->size = StrLen(s);
-       Protect(p->data = malloc(p->avail), fatalerr(0,NULL));
+       MemProtect(p->data = malloc(p->avail));
        memcpy(p->data, StrLoc(s), p->size);
        return C_integer((long int)p);
    }
@@ -1681,7 +1682,7 @@ function{1} io_RamStream_out(self, s)
        PtrParam(self, p);
        if (p->pos + StrLen(s) > p->avail) {
            p->avail = 2 * (p->pos + StrLen(s));
-           Protect(p->data = realloc(p->data, p->avail), fatalerr(0,NULL));
+           MemProtect(p->data = realloc(p->data, p->avail));
        }
 
        if (p->pos > p->size)
@@ -1728,7 +1729,7 @@ function{1} io_RamStream_truncate(self, len)
        PtrParam(self, p);
        p->pos = len;
        p->avail = len + 1024;
-       Protect(p->data = realloc(p->data, p->avail), fatalerr(0,NULL));
+       MemProtect(p->data = realloc(p->data, p->avail));
        if (p->size < len)
            memset(&p->data[p->size], 0, len - p->size);
        p->size = len;

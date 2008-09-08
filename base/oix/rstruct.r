@@ -82,7 +82,7 @@ int f(dptr dp1, dptr dp2, word i, word j)
    if (nslots == 0)
       nslots = MinListSlots;
 
-   Protect(lp2 = (struct b_list *) alclist(size, nslots), return Error);
+   MemProtect(lp2 = (struct b_list *) alclist(size, nslots));
    cpslots(dp1, lp2->listhead->lelem.lslots, i, j);
 
    /*
@@ -166,11 +166,11 @@ int tcode;
 	      ep != NULL && BlkType(ep) != T_Table;
 	      ep = (struct b_selem *)ep->clink) {
 	    if (tcode == T_Set) {
-               Protect(se = alcselem(&ep->setmem, ep->hashnum), return Error);
+               MemProtect(se = alcselem(&ep->setmem, ep->hashnum));
                se->clink = ep->clink;
 	       }
 	    else {
-	       Protect(se = (struct b_selem *)alctelem(), return Error);
+	       MemProtect(se = (struct b_selem *)alctelem());
 	       *(struct b_telem *)se = *(struct b_telem *)ep; /* copy table entry */
 	       if (BlkType(se->clink) == T_Table)
 		  se->clink = dst;
@@ -556,13 +556,11 @@ struct b_constructor *dynrecord(dptr s, dptr fields, int n)
     int i;
     if (n > longest_dr) {
         if (longest_dr==0) {
-            dr_arrays = calloc(n, sizeof (struct b_constructor *));
-            if (dr_arrays == NULL) return NULL;
+            MemProtect(dr_arrays = calloc(n, sizeof (struct b_constructor *)));
 	    longest_dr = n;
         }
         else {
-	    dr_arrays = realloc(dr_arrays, n * sizeof (struct b_constructor *));
-            if (dr_arrays == NULL) return NULL;
+	    MemProtect(dr_arrays = realloc(dr_arrays, n * sizeof (struct b_constructor *)));
 	    while(longest_dr<n) {
                 dr_arrays[longest_dr++] = NULL;
             }
@@ -583,28 +581,23 @@ struct b_constructor *dynrecord(dptr s, dptr fields, int n)
             }
         }
 
-    bp = (struct b_constructor *)malloc(sizeof(struct b_constructor) +
-                                 sizeof(struct descrip) * n);
-    if (bp == NULL) return NULL;
+    MemProtect(bp = malloc(sizeof(struct b_constructor) + sizeof(struct descrip) * n));
     bp->title = T_Constructor;
     bp->blksize = sizeof(struct b_constructor) + sizeof(struct descrip) * n;
     bp->n_fields = n;
     bp->instance_ids = 0;
     bp->program = 0;
-    StrLoc(bp->name) = malloc(StrLen(*s)+1);
+    MemProtect(StrLoc(bp->name) = malloc(StrLen(*s)+1));
     strncpy(StrLoc(bp->name), StrLoc(*s), StrLen(*s));
-    if (StrLoc(bp->name) == NULL) return NULL;
     StrLen(bp->name) = StrLen(*s);
     StrLoc(bp->name)[StrLen(*s)] = '\0';
     for(i=0;i<n;i++) {
         StrLen(bp->field_names[i]) = StrLen(fields[i]);
-        StrLoc(bp->field_names[i]) = malloc(StrLen(fields[i])+1);
-        if (StrLoc(bp->field_names[i]) == NULL) return NULL;
+        MemProtect(StrLoc(bp->field_names[i]) = malloc(StrLen(fields[i])+1));
         strncpy(StrLoc(bp->field_names[i]), StrLoc(fields[i]), StrLen(fields[i]));
         StrLoc(bp->field_names[i])[StrLen(fields[i])] = '\0';
     }
-    bpelem = malloc(sizeof (struct b_constructor_list));
-    if (bpelem == NULL) return NULL;
+    MemProtect(bpelem = malloc(sizeof (struct b_constructor_list)));
     bpelem->this = bp;
     bpelem->next = dr_arrays[n-1];
     dr_arrays[n-1] = bpelem;

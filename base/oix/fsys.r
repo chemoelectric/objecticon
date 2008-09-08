@@ -57,7 +57,7 @@ function{0,1} getenv(s)
 
       if ((p = getenv(s)) != NULL) {	/* get environment variable */
 	 l = strlen(p);
-	 Protect(p = alcstr(p,l),runerr(0));
+	 MemProtect(p = alcstr(p,l));
 	 return string(l,p);
 	 }
       else 				/* fail if not in environment */
@@ -141,7 +141,7 @@ function{0,1} chdir(s)
 	  fail;
 
       len = strlen(path);
-      Protect(StrLoc(result) = alcstr(path, len), runerr(0));
+      MemProtect(StrLoc(result) = alcstr(path, len));
       StrLen(result) = len;
       return result;
 

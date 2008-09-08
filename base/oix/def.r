@@ -114,7 +114,7 @@ DefConvert(def_int, C_integer, dptr, cnv_int, IntAsgn)
  */
 
 #begdef RealAsgn
-   Protect(BlkLoc(*d) = (union block *)alcreal(df), fatalerr(0,NULL));
+   MemProtect(BlkLoc(*d) = (union block *)alcreal(df));
    d->dword = D_Real;
 #enddef
 

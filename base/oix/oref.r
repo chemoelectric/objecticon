@@ -84,7 +84,7 @@ operator{*} ! bang(underef x -> dx)
 
                   EVValD(&ep->telem.tval, E_Tval);
 
-		  Protect(tp = alctvtbl(&dx, &ep->telem.tref, ep->telem.hashnum), runerr(0));
+		  MemProtect(tp = alctvtbl(&dx, &ep->telem.tref, ep->telem.hashnum));
 		  suspend tvtbl(tp);
                   }
             }
@@ -312,7 +312,7 @@ operator{0,1} ? random(underef x -> dx)
 		       BlkType(ep) == T_Telem;
 		       ep = ep->telem.clink)
                      if (--n <= 0) {
-			Protect(tp = alctvtbl(&dx, &ep->telem.tref, ep->telem.hashnum), runerr(0));
+			MemProtect(tp = alctvtbl(&dx, &ep->telem.tref, ep->telem.hashnum));
 			return tvtbl(tp);
 			}
             syserr("table reference out of bounds in random");
@@ -616,7 +616,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
             EVValD(&y, E_Tsub);
 
 	    hn = hash(&y);
-            Protect(tp = alctvtbl(&dx, &y, hn), runerr(0));
+            MemProtect(tp = alctvtbl(&dx, &y, hn));
             return tvtbl(tp);
             }
          }

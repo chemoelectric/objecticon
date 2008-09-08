@@ -22,7 +22,7 @@ function{0,1} graphics_Window_open_impl(attr[n])
       /*
        * allocate an empty event queue for the window
        */
-      Protect(hp = alclist(0, MinListSlots), runerr(0));
+      MemProtect(hp = alclist(0, MinListSlots));
 
       /*
        * loop through attributes, checking validity
@@ -104,7 +104,7 @@ function{0,1} graphics_Window_bg(self, colr)
        */
       getbg(w, sbuf1);
       len = strlen(sbuf1);
-      Protect(tmp = alcstr(sbuf1, len), runerr(0));
+      MemProtect(tmp = alcstr(sbuf1, len));
       return string(len, tmp);
    }
 end
@@ -146,10 +146,10 @@ function{1} graphics_Window_clone_impl(self, argv[argc])
        char answer[128];
        WindowParam(self, w);
 
-       Protect(w2 = alc_wbinding(), runerr(0));
+       MemProtect(w2 = alc_wbinding());
        w2->window = w->window;
        w2->window->refcount++;
-       Protect(w2->context = clone_context(w), runerr(0));
+       MemProtect(w2->context = clone_context(w));
 
        for (n = 0; n < argc; n++) {
            if (!is:null(argv[n])) {
@@ -181,7 +181,7 @@ function{0,1} graphics_Window_color(self, argv[argc])
               if ((colorname = get_mutable_name(w, n)) == NULL)
                   fail;
           len = strlen(colorname);
-          Protect(tmp = alcstr(colorname, len), runerr(0));
+          MemProtect(tmp = alcstr(colorname, len));
           return string(len, tmp);
       }
 
@@ -229,7 +229,7 @@ function{0,1} graphics_Window_color_value(self, k)
 
       if (cnv:C_integer(k, n)) {
           if ((t = get_mutable_name(w, n)))
-              Protect(s = alcstr(t, (word)strlen(t)+1), runerr(306));
+              MemProtect(s = alcstr(t, (word)strlen(t)+1));
           else
               fail;
       }
@@ -242,7 +242,7 @@ function{0,1} graphics_Window_color_value(self, k)
           else
               sprintf(tmp,"%ld,%ld,%ld", r, g, b);
           len = strlen(tmp);
-          Protect(s = alcstr(tmp,len), runerr(306));
+          MemProtect(s = alcstr(tmp,len));
           return string(len, s);
       }
       fail;
@@ -305,7 +305,7 @@ function{0,1} graphics_Window_couple_impl(win, win2)
       /*
        * make the new binding
        */
-      Protect(wb_new = alc_wbinding(), runerr(0));
+      MemProtect(wb_new = alc_wbinding());
 
       wb_new->window = ws = wb->window;
       /*
@@ -425,7 +425,7 @@ function{1} graphics_Window_draw_curve(self, argv[argc])
       dx = w->context->dx;
       dy = w->context->dy;
 
-      Protect(points = (XPoint *)malloc(sizeof(XPoint) * (n+2)), runerr(305));
+      MemProtect(points = (XPoint *)malloc(sizeof(XPoint) * (n+2)));
 
       if (n > 1) {
           CnvCInteger(argv[0], x0)
@@ -885,7 +885,7 @@ function{0,1} graphics_Window_fg(self, colr)
       getfg(w, sbuf1);
 
       len = strlen(sbuf1);
-      Protect(tmp = alcstr(sbuf1, len), runerr(0));
+      MemProtect(tmp = alcstr(sbuf1, len));
       return string(len, tmp);
    }
 end
@@ -987,7 +987,7 @@ function{1} graphics_Window_fill_polygon(self, argv[argc])
        * because a FillPolygon must be performed in a single call.
        */
       n = argc>>1;
-      Protect(points = (XPoint *)malloc(sizeof(XPoint) * n), runerr(305));
+      MemProtect(points = (XPoint *)malloc(sizeof(XPoint) * n));
       dx = w->context->dx;
       dy = w->context->dy;
       for(i=0; i < n; i++) {
@@ -1050,7 +1050,7 @@ function{0,1} graphics_Window_font(self, f)
       }
       getfntnam(w, buf);
       len = strlen(buf);
-      Protect(tmp = alcstr(buf, len), runerr(0));
+      MemProtect(tmp = alcstr(buf, len));
       return string(len,tmp);
    }
 end
@@ -1155,7 +1155,7 @@ function{0,1} graphics_Window_palette_color(s1, s2)
           fail;
       sprintf(tmp, "%ld,%ld,%ld", e->clr.red, e->clr.green, e->clr.blue);
       len = strlen(tmp);
-      Protect(s = alcstr(tmp, len), runerr(306));
+      MemProtect(s = alcstr(tmp, len));
       return string(len, s);
    }
 end
@@ -1242,7 +1242,7 @@ function{3} graphics_Window_pixel(self, argv[argc])
                       int signal;
                       if (slen != StrLen(lastval) ||
                           strncmp(strout, StrLoc(lastval), slen)) {
-                          Protect((StrLoc(lastval) = alcstr(strout, slen)), runerr(0));
+                          MemProtect((StrLoc(lastval) = alcstr(strout, slen)));
                           StrLen(lastval) = slen;
                       }
                       /*
@@ -1525,7 +1525,7 @@ function{*} graphics_Window_attrib(self, argv[argc])
                   }
                   if (is:string(sbuf2)) {
                       char *p=StrLoc(sbuf2);
-                      Protect(StrLoc(sbuf2) = alcstr(StrLoc(sbuf2),StrLen(sbuf2)), runerr(0));
+                      MemProtect(StrLoc(sbuf2) = alcstr(StrLoc(sbuf2),StrLen(sbuf2)));
                       if (p != answer) free(p);
                   }
                   suspend sbuf2;
@@ -1549,7 +1549,7 @@ function{0,1} graphics_Window_wdefault(self, prog, opt)
       if (getdefault(w, prog, opt, sbuf1) == Failed) 
           fail;
       l = strlen(sbuf1);
-      Protect(prog = alcstr(sbuf1,l),runerr(0));
+      MemProtect(prog = alcstr(sbuf1,l));
       return string(l,prog);
    }
 end
@@ -1703,7 +1703,7 @@ function{0,1} graphics_Window_generic_color_value(k)
           else
               sprintf(tmp,"%ld,%ld,%ld", r, g, b);
           len = strlen(tmp);
-          Protect(s = alcstr(tmp,len), runerr(306));
+          MemProtect(s = alcstr(tmp,len));
           return string(len, s);
       }
       fail;

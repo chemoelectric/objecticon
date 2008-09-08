@@ -127,7 +127,7 @@ function{0,1} string(x[n])
 	  * if t is not at the end of the string region, make it so
 	  */
 	 if (StrLoc(t) + StrLen(t) != strfree) {
-	    Protect(StrLoc(t) = alcstr(StrLoc(t), StrLen(t)), runerr(0));
+             MemProtect(StrLoc(t) = alcstr(StrLoc(t), StrLen(t)));
 	    }
 	 if (!cnv:string(x[i], x[i])) fail;
 
@@ -138,11 +138,11 @@ function{0,1} string(x[n])
 	    StrLen(t) += StrLen(x[i]);
 	    }
 	 else if ((StrLoc(t) + StrLen(t) == strfree) && (DiffPtrs(strend,strfree) > StrLen(x[i]))) {
-	    Protect(alcstr(StrLoc(x[i]), StrLen(x[i])), runerr(0));
+            MemProtect(alcstr(StrLoc(x[i]), StrLen(x[i])));
 	    StrLen(t) += StrLen(x[i]);
 	    }
 	 else {
-	    Protect(tmp = alcstr(NULL, StrLen(t)+StrLen(x[i])), runerr(0));
+            MemProtect(tmp = alcstr(NULL, StrLen(t)+StrLen(x[i])));
 	    s = tmp;
 	    s2 = StrLoc(t);
 	    len = StrLen(t);

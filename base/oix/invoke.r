@@ -330,7 +330,7 @@ static int construct_object(int nargs, dptr newargp)
     class = (struct b_class*)BlkLoc(*newargp);
     ensure_initialized(class);
 
-    Protect(object = alcobject(class), fatalerr(0,NULL));
+    MemProtect(object = alcobject(class));
 
     new_field = lookup_standard_field(NEW_FIELD, class);
     if (!new_field) {
@@ -406,7 +406,7 @@ static int construct_record(int nargs, dptr newargp)
     int i, n;
 
     con = (struct b_constructor*)BlkLoc(*newargp);
-    Protect(rec = alcrecd(con), fatalerr(0,NULL));
+    MemProtect(rec = alcrecd(con));
     newargp[0].dword = D_Record;
     BlkLoc(newargp[0]) = (union block *)rec;
     n = Min(nargs, con->n_fields);

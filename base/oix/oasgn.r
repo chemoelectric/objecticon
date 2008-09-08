@@ -381,7 +381,7 @@ const dptr src;
     *  Start by allocating space for the entire result.
     */
    len = prelen + StrLen(srcstr) + StrLen(deststr) - poststrt;
-   Protect(s = alcstr(NULL, len), return Error);
+   MemProtect(s = alcstr(NULL, len));
    StrLoc(rsltstr) = s;
    StrLen(rsltstr) = len;
    /*
@@ -458,7 +458,7 @@ const dptr src;
     */
    bp = (struct b_tvtbl *) BlkLoc(*dest);	/* Save params to tended vars */
    tval = *src;
-   Protect(te = alctelem(), return Error);
+   MemProtect(te = alctelem());
 
    /*
     * First see if reference is in the table; if it is, just update

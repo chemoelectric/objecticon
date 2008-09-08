@@ -1745,7 +1745,7 @@ register struct b_coexpr *ncp;
     * Set activator in new co-expression.
     */
    if (ncp->es_actstk == NULL) {
-      Protect(ncp->es_actstk = alcactiv(), { err_msg(0, NULL); exit(1); });
+      MemProtect(ncp->es_actstk = alcactiv());
       /*
        * If no one ever explicitly activates this co-expression, fail to
        * the implicit activator.

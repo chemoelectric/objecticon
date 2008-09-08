@@ -36,7 +36,7 @@ keyword{2} clock
       time(&t);
       ct = localtime(&t);
       sprintf(sbuf,"%02d:%02d:%02d", ct->tm_hour, ct->tm_min, ct->tm_sec);
-      Protect(tmp = alcstr(sbuf,(word)8), runerr(0));
+      MemProtect(tmp = alcstr(sbuf,(word)8));
       return string(8, tmp);
       }
 end
@@ -79,7 +79,7 @@ keyword{1} date
       ct = localtime(&t);
       sprintf(sbuf, "%04d/%02d/%02d",
          1900 + ct->tm_year, ct->tm_mon + 1, ct->tm_mday);
-      Protect(tmp = alcstr(sbuf,(word)10), runerr(0));
+      MemProtect(tmp = alcstr(sbuf,(word)10));
       return string(10, tmp);
       }
 end
@@ -121,7 +121,7 @@ keyword{2} dateline
          month[ct->tm_mon], ct->tm_mday, 1900 + ct->tm_year, hour,
          ct->tm_min, merid);
        i = strlen(sbuf);
-       Protect(tmp = alcstr(sbuf, i), runerr(0));
+       MemProtect(tmp = alcstr(sbuf, i));
        return string(i, tmp);
        }
 end
@@ -259,7 +259,7 @@ keyword{1} host
 
       iconhost(sbuf);
       i = strlen(sbuf);
-      Protect(tmp = alcstr(sbuf, i), runerr(0));
+      MemProtect(tmp = alcstr(sbuf, i));
       return string(i, tmp);
       }
 end

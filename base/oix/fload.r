@@ -95,7 +95,7 @@ body
     /*
      * Load the function.  Diagnose both library and function errors here.
      */
-    Protect(tname = malloc(strlen(funcname) + 3), fatalerr(0,NULL));
+    MemProtect(tname = malloc(strlen(funcname) + 3));
     sprintf(tname, "B%s", funcname);
     blk = (struct b_proc *)dlsym(handle, tname);
     if (!blk) {

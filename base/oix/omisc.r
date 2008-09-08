@@ -20,7 +20,7 @@ operator{1} ^ refresh(x)
       /*
        * Get a new co-expression stack and initialize.
        */
-      Protect(sblkp = alccoexp(0, 0), runerr(0));
+      MemProtect(sblkp = alccoexp(0, 0));
 
       sblkp->freshblk = BlkLoc(x)->coexpr.freshblk;
       if (ChkNull(sblkp->freshblk))	/* &main cannot be refreshed */
@@ -255,7 +255,7 @@ operator{1} [...] llist(elems[n])
       /*
        * Allocate the list and a list block.
        */
-      Protect(hp = alclist_raw(n, nslots), runerr(0));
+      MemProtect(hp = alclist_raw(n, nslots));
    
       /*
        * Assign each argument to a list element.

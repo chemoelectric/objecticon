@@ -23,7 +23,7 @@ operator{1} ~ compl(x)
        * Allocate a new cset and then copy each cset word from x
        *  into the new cset words, complementing each bit.
        */
-      Protect(cp = alccset(), runerr(0));
+      MemProtect(cp = alccset());
       cpx = (struct b_cset *)BlkLoc(x);      /* must come after alccset() */
       for (i = 0; i < CsetSize; i++) 
           cp->bits[i] = ~cpx->bits[i];
@@ -64,7 +64,7 @@ operator{1} -- diff(x,y)
           */
          srcp = BlkLoc(x);
          tstp = BlkLoc(y);
-         Protect(np = alcselem(&nulldesc, (uword)0), runerr(0));
+         MemProtect(np = alcselem(&nulldesc, (uword)0));
 
          for (i = 0; i < HSegs && (seg = srcp->set.hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
@@ -76,7 +76,7 @@ operator{1} -- diff(x,y)
 		     np->setmem = ep->setmem;
 		     np->hashnum = ep->hashnum;
                      addmem(&dstp->set, np, hook);
-                     Protect(np = alcselem(&nulldesc, (uword)0), runerr(0));
+                     MemProtect(np = alcselem(&nulldesc, (uword)0));
                      }
                   ep = (struct b_selem *)ep->clink;
                   }
@@ -105,7 +105,7 @@ operator{1} -- diff(x,y)
          struct b_cset *cp, *cpx, *cpy;
          register int i;
 
-         Protect(cp = alccset(), runerr(0));
+         MemProtect(cp = alccset());
          cpx = (struct b_cset *)BlkLoc(x);  /* must come after alccset() */
          cpy = (struct b_cset *)BlkLoc(y);  /* must come after alccset() */
          for (i = 0; i < CsetSize; i++)
@@ -156,7 +156,7 @@ operator{1} ** inter(x,y)
             srcp = BlkLoc(y);
             tstp = BlkLoc(x);
             }
-         Protect(np = alcselem(&nulldesc, (uword)0), runerr(0));
+         MemProtect(np = alcselem(&nulldesc, (uword)0));
          for (i = 0; i < HSegs && (seg = srcp->set.hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
                ep = (struct b_selem *)seg->hslots[slotnum];
@@ -167,7 +167,7 @@ operator{1} ** inter(x,y)
 		     np->setmem = ep->setmem;
 		     np->hashnum = ep->hashnum;
                      addmem(&dstp->set, np, hook);
-                     Protect(np = alcselem(&nulldesc, (uword)0), runerr(0));
+                     MemProtect(np = alcselem(&nulldesc, (uword)0));
                      }
                   ep = (struct b_selem *)ep->clink;
                   }
@@ -198,7 +198,7 @@ operator{1} ** inter(x,y)
          struct b_cset *cp, *cpx, *cpy;
          register int i;
 
-         Protect(cp = alccset(), runerr(0));
+         MemProtect(cp = alccset());
          cpx = (struct b_cset *)BlkLoc(x);  /* must come after alccset() */
          cpy = (struct b_cset *)BlkLoc(y);  /* must come after alccset() */
          for (i = 0; i < CsetSize; i++) {
@@ -254,7 +254,7 @@ operator{1} ++ union(x,y)
 	  *  advance, and stay one ahead, because hook can't be tended.
           */
          dstp = BlkLoc(result);
-         Protect(np = alcselem(&nulldesc, (uword)0), runerr(0));
+         MemProtect(np = alcselem(&nulldesc, (uword)0));
          for (i = 0; i < HSegs && (seg = BlkLoc(y)->set.hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
                ep = (struct b_selem *)seg->hslots[slotnum];
@@ -264,7 +264,7 @@ operator{1} ++ union(x,y)
 		     np->setmem = ep->setmem;
 		     np->hashnum = ep->hashnum;
                      addmem(&dstp->set, np, hook);
-                     Protect(np = alcselem(&nulldesc, (uword)0), runerr(0));
+                     MemProtect(np = alcselem(&nulldesc, (uword)0));
                      }
                   ep = (struct b_selem *)ep->clink;
                   }
@@ -294,7 +294,7 @@ operator{1} ++ union(x,y)
          struct b_cset *cp, *cpx, *cpy;
          register int i;
 
-         Protect(cp = alccset(), runerr(0));
+         MemProtect(cp = alccset());
          cpx = (struct b_cset *)BlkLoc(x);  /* must come after alccset() */
          cpy = (struct b_cset *)BlkLoc(y);  /* must come after alccset() */
          for (i = 0; i < CsetSize; i++)

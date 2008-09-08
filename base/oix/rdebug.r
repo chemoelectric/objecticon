@@ -180,7 +180,7 @@ int get_name(dptr dp1,dptr dp0)
              * allocate space for both the name and the subscript image,
              *  and then copy both parts into the allocated space
              */
-            Protect(s = alcstr(NULL, k + j), return Error);
+            MemProtect(s = alcstr(NULL, k + j));
             s2 = StrLoc(*dp0);
             StrLoc(*dp0) = s;
             StrLen(*dp0) = j + k;
@@ -272,7 +272,7 @@ int get_name(dptr dp1,dptr dp0)
                     struct b_class *c = cf->defining_class;
                     sprintf(sbuf,"class %s.%s", StrLoc(c->name), StrLoc(cf->name));
                     i = strlen(sbuf);
-                    Protect(StrLoc(*dp0) = alcstr(sbuf,i), return Error);
+                    MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                     StrLen(*dp0) = i;
                     return FieldName;
                 }
@@ -322,7 +322,7 @@ int get_name(dptr dp1,dptr dp0)
                         sprintf(sbuf,"list#%d[%ld]",
                                 (long)blkptr->lelem.listprev->list.id, (long)i);
                         i = strlen(sbuf);
-                        Protect(StrLoc(*dp0) = alcstr(sbuf,i), return Error);
+                        MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                         StrLen(*dp0) = i;
                         break;
                     case T_Record: { 		/* record */
@@ -332,7 +332,7 @@ int get_name(dptr dp1,dptr dp0)
                                 blkptr->record.id,
                                 StrLoc(c->field_names[i]));
                         i = strlen(sbuf);
-                        Protect(StrLoc(*dp0) = alcstr(sbuf,i), return Error);
+                        MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                         StrLen(*dp0) = i;
                         break;
                     }
@@ -343,7 +343,7 @@ int get_name(dptr dp1,dptr dp0)
                                 blkptr->object.id,
                                 StrLoc(c->fields[i]->name));
                         i = strlen(sbuf);
-                        Protect(StrLoc(*dp0) = alcstr(sbuf,i), return Error);
+                        MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                         StrLen(*dp0) = i;
                         break;
                     }
@@ -395,7 +395,7 @@ static int keyref(bp, dp)
     }
     strcat(sbuf, "]");
     len = strlen(sbuf);
-    Protect(s = alcstr(sbuf, len), return Error);
+    MemProtect(s = alcstr(sbuf, len));
     StrLoc(*dp) = s;
     StrLen(*dp) = len;
     return Succeeded;

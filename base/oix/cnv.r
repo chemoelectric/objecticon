@@ -183,13 +183,13 @@ dptr d;
     * and there is room for one more byte.
     */
    if ((StrLoc(*d) + StrLen(*d) == strfree) && (strfree != strend)) {
-      Protect(alcstr("\0", 1), fatalerr(0,NULL));
+      MemProtect(alcstr("\0", 1));
       ++StrLen(*d);
       }
    else {
       register word slen = StrLen(*d);
       register char *sp, *dp;
-      Protect(dp = alcstr(NULL,slen+1), fatalerr(0,NULL));
+      MemProtect(dp = alcstr(NULL,slen+1));
       StrLen(*d) = StrLen(*d)+1;
       sp = StrLoc(*d);
       StrLoc(*d) = dp;
@@ -224,7 +224,7 @@ int f(dptr s, dptr d)
     * convert to a string and then add its contents to the cset
     */
    if (tmp_str(sbuf, s, &str)) {
-      Protect(BlkLoc(*d) = (union block *)alccset(), fatalerr(0,NULL));
+      MemProtect(BlkLoc(*d) = (union block *)alccset());
       d->dword = D_Cset;
       s1 = StrLoc(str);
       l = StrLen(str);
@@ -448,7 +448,7 @@ int f(dptr s, dptr d)
    EVValD(&rzerodesc, e_tconv);
 
    if (cnv_c_dbl(s, &dbl)) {
-      Protect(BlkLoc(*d) = (union block *)alcreal(dbl), fatalerr(0,NULL));
+      MemProtect(BlkLoc(*d) = (union block *)alcreal(dbl));
       d->dword = D_Real;
       EVValD(d, e_sconv);
       return 1;
@@ -506,7 +506,7 @@ int f(dptr s, dptr d)
          return 0;
          }
       }
-   Protect(StrLoc(*d) = alcstr(StrLoc(*d), StrLen(*d)), fatalerr(0,NULL));
+   MemProtect(StrLoc(*d) = alcstr(StrLoc(*d), StrLen(*d)));
    EVValD(d, e_sconv);
    return 1;
    }

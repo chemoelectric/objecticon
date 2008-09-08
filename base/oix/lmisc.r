@@ -32,7 +32,7 @@ register dptr cargp;
     * Get a new co-expression stack and initialize.
     */
 
-   Protect(sblkp = alccoexp(0, 0), err_msg(0, NULL));
+   MemProtect(sblkp = alccoexp(0, 0));
 
 
    if (!sblkp)
@@ -41,7 +41,7 @@ register dptr cargp;
    /*
     * Get a refresh block for the new co-expression.
     */
-   Protect(rblkp = alcrefresh(entryp, na, nl),err_msg(0,NULL));
+   MemProtect(rblkp = alcrefresh(entryp, na, nl));
    if (!rblkp)
       Fail;
 
@@ -98,7 +98,7 @@ dptr result;
     * Set activator in new co-expression.
     */
    if (ncp->es_actstk == NULL) {
-      Protect(ncp->es_actstk = alcactiv(),RunErr(0,NULL));
+      MemProtect(ncp->es_actstk = alcactiv());
       first = 0;
       }
    else

@@ -245,7 +245,7 @@ function{1} copy(x)
             i = old_rec->constructor->n_fields;
 
             /* #%#% param changed ? */
-            Protect(new_rec = alcrecd(old_rec->constructor), runerr(0));
+            MemProtect(new_rec = alcrecd(old_rec->constructor));
             d1 = new_rec->fields;
             d2 = old_rec->fields;
             while (i--)
@@ -268,7 +268,7 @@ function{1} copy(x)
             op = BlkLoc(x);
             n = (op->externl.blksize - (sizeof(struct b_external) - 
                  sizeof(word))) / sizeof(word);
-            Protect(bp = (union block *)alcextrnl(n), runerr(0));
+            MemProtect(bp = (union block *)alcextrnl(n));
             while (n--)
                bp->externl.exdata[n] = op->externl.exdata[n];
             result.dword = D_External;
@@ -806,7 +806,7 @@ function{1} sort(t, i)
              */
             size = BlkLoc(t)->record.constructor->n_fields;
 
-            Protect(lp = alclist_raw(size, size), runerr(0));
+            MemProtect(lp = alclist_raw(size, size));
 
             bp = BlkLoc(t);  /* need not be tended if not set until now */
 
@@ -841,7 +841,7 @@ function{1} sort(t, i)
              */
             size = BlkLoc(t)->set.size;
 
-            Protect(lp = alclist(size, size), runerr(0));
+            MemProtect(lp = alclist(size, size));
 
             bp = BlkLoc(t);  /* need not be tended if not set until now */
 
@@ -906,7 +906,7 @@ function{1} sort(t, i)
                 *  that will hold the the result of sorting the table.
                 */
                bp = (struct b_table *)BlkLoc(t);
-               Protect(lp = alclist(size, size), runerr(0));
+               MemProtect(lp = alclist(size, size));
 
                /*
                 * If the table is empty, there is no need to sort anything.
@@ -928,7 +928,7 @@ function{1} sort(t, i)
                      for (ep= seg->hslots[k];
 			  BlkType(ep) == T_Telem;
 			  ep = ep->telem.clink){
-                        Protect(tp = alclist_raw(2, 2), runerr(0));
+                        MemProtect(tp = alclist_raw(2, 2));
                         tp->listhead->lelem.lslots[0] = ep->telem.tref;
                         tp->listhead->lelem.lslots[1] = ep->telem.tval;
                         d1 = &lp->listhead->lelem.lslots[n++];
@@ -966,7 +966,7 @@ function{1} sort(t, i)
              *  that will hold the the result of sorting the table.
              */
             bp = (struct b_table *)BlkLoc(t);
-            Protect(lp = alclist(size, size), runerr(0));
+            MemProtect(lp = alclist(size, size));
 
             /*
              * If the table is empty there's no need to sort anything.
@@ -1146,7 +1146,7 @@ function{1} sortf(t, i)
              */
             size = BlkLoc(t)->record.constructor->n_fields;
 
-            Protect(lp = alclist_raw(size, size), runerr(0));
+            MemProtect(lp = alclist_raw(size, size));
 
             bp = BlkLoc(t);  /* need not be tended if not set until now */
 
@@ -1190,7 +1190,7 @@ function{1} sortf(t, i)
              */
             size = BlkLoc(t)->set.size;
 
-            Protect(lp = alclist(size, size), runerr(0));
+            MemProtect(lp = alclist(size, size));
 
             bp = BlkLoc(t);  /* need not be tended if not set until now */
 
@@ -2167,7 +2167,7 @@ function{1} cast(o,c)
       }
       if (i == obj->class->n_implemented_classes)
           runerr(604, c);
-      Protect(p = alccast(), runerr(0));
+      MemProtect(p = alccast());
       /*
        * Refresh pointers after allocation
        */

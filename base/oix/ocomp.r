@@ -124,7 +124,7 @@ operator{0,1} icon_op func_name(x,y)
           */
          result = y;
          if (temp_str)
-            Protect(StrLoc(result) = alcstr(StrLoc(result), StrLen(result)), runerr(0));
+             MemProtect(StrLoc(result) = alcstr(StrLoc(result), StrLen(result)));
          return result;
          }
       else

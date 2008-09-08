@@ -250,7 +250,7 @@ function{1} insert(s, x[n])
 		*/
 
 	       /* get this now because can't tend pd */
-	       Protect(se = alcselem(x+argc, hn), runerr(0));
+	       MemProtect(se = alcselem(x+argc, hn));
 
 	       pd = memb(bp, x+argc, hn, &res);
 	       if (res == 0) {
@@ -355,7 +355,7 @@ function{1} insert(s, x[n])
 	       hn = hash(x+argc);
 
 	       /* get this now because can't tend pd */
-	       Protect(te = alctelem(), runerr(0));
+	       MemProtect(te = alctelem());
 
 	       pd = memb(bp, x+argc, hn, &res);	/* search table for key */
 	       if (res == 0) {
@@ -432,7 +432,7 @@ function{1} list(n, x)
        *  Note that nslots is the number of slots in the list-element
        *  block while size is the number of elements in the list.
        */
-      Protect(hp = alclist_raw(size, nslots), runerr(0));
+      MemProtect(hp = alclist_raw(size, nslots));
       bp = (struct b_lelem *)hp->listhead;
 
       /*

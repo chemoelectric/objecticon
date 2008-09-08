@@ -237,7 +237,7 @@ union numeric *result;          /* output T_Integer or T_Lrgint */
    if (r == 0)
       return CvtFail;
    len = ceil((end_s - s) * ln(r) / ln(B));
-   Protect(b = alcbignum(len), return Error);
+   MemProtect(b = alcbignum(len));
    bd = DIG(b,0);
 
    bdzero(bd, len);
@@ -339,7 +339,7 @@ dptr da, dx;
       blen += 1;
       }
 
-   Protect(b = alcbignum(blen), return Error);
+   MemProtect(b = alcbignum(blen));
    for (i = 0; i < blen; i++) {
       d = (x *= B);
       *DIG(b,i) = d;
@@ -363,10 +363,10 @@ dptr da, dx;
    char *p, *q;
 
    a = LrgInt(da);
-   Protect(temp = alcbignum(alen), fatalerr(0,NULL));
+   MemProtect(temp = alcbignum(alen));
    if (a->sign)
       slen++;
-   Protect(q = alcstr(NULL,slen), fatalerr(0,NULL));
+   MemProtect(q = alcstr(NULL,slen));
    bdcopy(DIG(a,0),
           DIG(temp,0),
           alen);
@@ -410,7 +410,7 @@ dptr da;
       }
 
    /* not worth passing this one back */
-   Protect(temp = alcbignum(alen), fatalerr(0, NULL));
+   MemProtect(temp = alcbignum(alen));
 
    a = LrgInt(da);
    bdcopy(DIG(a,0),
@@ -448,7 +448,7 @@ dptr da, dx;
    struct b_bignum *a, *x;
    word alen = LEN(LrgInt(da));
 
-   Protect(x = alcbignum(alen), return Error);
+   MemProtect(x = alcbignum(alen));
    a = LrgInt(da);
    bdcopy(DIG(a,0),
           DIG(x,0),
@@ -477,7 +477,7 @@ dptr dx;
       b = LrgInt(db);
       if (a->sign == b->sign) {
          if (alen > blen) {
-            Protect(x = alcbignum(alen + 1), return Error);
+            MemProtect(x = alcbignum(alen + 1));
             c = add1(DIG(a,alen-blen),
                      DIG(b,0),
                      DIG(x,alen-blen+1),
@@ -489,7 +489,7 @@ dptr dx;
                       alen-blen);
             }
          else if (alen == blen) {
-            Protect(x = alcbignum(alen + 1), return Error);
+            MemProtect(x = alcbignum(alen + 1));
             *DIG(x,0) =
                add1(DIG(a,0),
                     DIG(b,0),
@@ -497,7 +497,7 @@ dptr dx;
                     alen);
             }
          else {
-            Protect(x = alcbignum(blen + 1), return Error);
+            MemProtect(x = alcbignum(blen + 1));
             c = add1(DIG(b,blen-alen),
                      DIG(a,0),
                      DIG(x,blen-alen+1),
@@ -512,7 +512,7 @@ dptr dx;
          }
       else {
          if (alen > blen) {
-            Protect(x = alcbignum(alen), return Error);
+            MemProtect(x = alcbignum(alen));
             c = sub1(DIG(a,alen-blen),
                      DIG(b,0),
                      DIG(x,alen-blen),
@@ -524,7 +524,7 @@ dptr dx;
             x->sign = a->sign;
             }
          else if (alen == blen) {
-            Protect(x = alcbignum(alen), return Error);
+            MemProtect(x = alcbignum(alen));
             if (cmp1(DIG(a,0),
                      DIG(b,0),
                      alen) > 0) {
@@ -543,7 +543,7 @@ dptr dx;
                }
             }
          else {
-            Protect(x = alcbignum(blen), return Error);
+            MemProtect(x = alcbignum(blen));
             c = sub1(DIG(b,blen-alen),
                      DIG(a,0),
                      DIG(x,blen-alen),
@@ -591,7 +591,7 @@ dptr da, db, dx;
       b = LrgInt(db);
       if (a->sign != b->sign) {
          if (alen > blen) {
-            Protect(x = alcbignum(alen + 1), return Error);
+            MemProtect(x = alcbignum(alen + 1));
             c = add1(DIG(a,alen-blen),
                      DIG(b,0),
                      DIG(x,alen-blen+1),
@@ -603,7 +603,7 @@ dptr da, db, dx;
                      alen-blen);
             }
          else if (alen == blen) {
-            Protect(x = alcbignum(alen + 1), return Error);
+            MemProtect(x = alcbignum(alen + 1));
             *DIG(x,0) =
                add1(DIG(a,0),
                     DIG(b,0),
@@ -611,7 +611,7 @@ dptr da, db, dx;
                     alen);
             }
          else {
-            Protect(x = alcbignum(blen + 1), return Error);
+            MemProtect(x = alcbignum(blen + 1));
             c = add1(DIG(b,blen-alen),
                      DIG(a,0),
                      DIG(x,blen-alen+1),
@@ -626,7 +626,7 @@ dptr da, db, dx;
          }
       else {
          if (alen > blen) {
-            Protect(x = alcbignum(alen), return Error);
+            MemProtect(x = alcbignum(alen));
             c = sub1(DIG(a,alen-blen),
                      DIG(b,0),
                      DIG(x,alen-blen),
@@ -638,7 +638,7 @@ dptr da, db, dx;
             x->sign = a->sign;
             }
          else if (alen == blen) {
-            Protect(x = alcbignum(alen), return Error);
+            MemProtect(x = alcbignum(alen));
             if (cmp1(DIG(a,0),
                      DIG(b,0),
                      alen) > 0) {
@@ -657,7 +657,7 @@ dptr da, db, dx;
                }
             }
          else {
-            Protect(x = alcbignum(blen), return Error);
+            MemProtect(x = alcbignum(blen));
             c = sub1(DIG(b,blen-alen),
                      DIG(a,0),
                      DIG(x,blen-alen),
@@ -681,7 +681,7 @@ dptr da, db, dx;
       b = LrgInt(db);
       if (a->sign != b->sign) {
          if (alen == blen) {
-            Protect(x = alcbignum(alen + 1), return Error);
+            MemProtect(x = alcbignum(alen + 1));
             *DIG(x,0) =
                add1(DIG(a,0),
                     DIG(b,0),
@@ -689,7 +689,7 @@ dptr da, db, dx;
                     alen);
             }
          else {
-            Protect(x = alcbignum(blen + 1), return Error);
+            MemProtect(x = alcbignum(blen + 1));
             c = add1(DIG(b,blen-alen),
                      DIG(a,0),
                      DIG(x,blen-alen+1),
@@ -704,7 +704,7 @@ dptr da, db, dx;
          }
       else {
          if (alen == blen) {
-            Protect(x = alcbignum(alen), return Error);
+            MemProtect(x = alcbignum(alen));
             if (cmp1(DIG(a,0),
                      DIG(b,0),
                      alen) > 0) {
@@ -723,7 +723,7 @@ dptr da, db, dx;
                }
             }
          else {
-            Protect(x = alcbignum(blen), return Error);
+            MemProtect(x = alcbignum(blen));
             c = sub1(DIG(b,blen-alen),
                      DIG(a,0),
                      DIG(x,blen-alen),
@@ -760,7 +760,7 @@ dptr da, db, dx;
       blen = LEN(LrgInt(db));
       a = LrgInt(da);
       b = LrgInt(db);
-      Protect(x = alcbignum(alen + blen), return Error);
+      MemProtect(x = alcbignum(alen + blen));
       mul1(DIG(a,0),
            DIG(b,0),
            DIG(x,0),
@@ -808,15 +808,15 @@ dptr da, db, dx;
          }
       a = LrgInt(da);
       b = LrgInt(db);
-      Protect(x = alcbignum(alen - blen + 1), return Error);
+      MemProtect(x = alcbignum(alen - blen + 1));
       if (blen == 1)
          divi1(DIG(a,0),
                (word)*DIG(b,0),
                DIG(x,0),
                alen);
       else {
-         Protect(tu = alcbignum(alen + 1), return Error);
-         Protect(tv = alcbignum(blen), return Error);
+         MemProtect(tu = alcbignum(alen + 1));
+         MemProtect(tv = alcbignum(blen));
          if (div1(DIG(a,0),
                   DIG(b,0),
                   DIG(x,0),
@@ -857,9 +857,9 @@ dptr da, db, dx;
          }
       a = LrgInt(da);
       b = LrgInt(db);
-      Protect(x = alcbignum(blen), return Error);
+      MemProtect(x = alcbignum(blen));
       if (blen == 1) {
-	 Protect(temp = alcbignum(alen), return Error);
+	 MemProtect(temp = alcbignum(alen));
          *DIG(x,0) =
             divi1(DIG(a,0),
                   (word)*DIG(b,0),
@@ -867,8 +867,8 @@ dptr da, db, dx;
                   alen);
          }
       else {
-         Protect(tu = alcbignum(alen + 1), return Error);
-         Protect(tv = alcbignum(blen), return Error);
+         MemProtect(tu = alcbignum(alen + 1));
+         MemProtect(tv = alcbignum(blen));
          if (div1(DIG(a,0),
                   DIG(b,0),
                   NULL,
@@ -1023,7 +1023,7 @@ dptr   db, drslt;
 	 }
       }
 
-   Protect(BlkLoc(*drslt) = (union block *)alcreal(retval), return Error);
+   MemProtect(BlkLoc(*drslt) = (union block *)alcreal(retval));
    drslt->dword = D_Real;
    return Succeeded;
 }
@@ -1048,12 +1048,12 @@ dptr da, db, dx;
       xlen = alen > blen ? alen : blen;
       a = LrgInt(da);
       b = LrgInt(db);
-      Protect(x = alcbignum(xlen), return Error);
+      MemProtect(x = alcbignum(xlen));
 
       if (alen == xlen && !a->sign)
          ad = DIG(a,0);
       else {
-         Protect(tad = alcbignum(xlen), return Error);
+         MemProtect(tad = alcbignum(xlen));
          ad = DIG(tad,0);
          bdzero(ad, xlen - alen);
          bdcopy(DIG(a,0),
@@ -1065,7 +1065,7 @@ dptr da, db, dx;
       if (blen == xlen && !b->sign)
          bd = DIG(b,0);
       else {
-         Protect(tbd = alcbignum(xlen), return Error);
+         MemProtect(tbd = alcbignum(xlen));
          bd = DIG(tbd,0);
          bdzero(bd, xlen - blen);
          bdcopy(DIG(b,0),
@@ -1092,12 +1092,12 @@ dptr da, db, dx;
       xlen = alen > blen ? alen : blen;
       a = LrgInt(da);
       b = LrgInt(&td);
-      Protect(x = alcbignum(alen), return Error);
+      MemProtect(x = alcbignum(alen));
 
       if (alen == xlen && !a->sign)
          ad = DIG(a,0);
       else {
-         Protect(tad = alcbignum(xlen), return Error);
+         MemProtect(tad = alcbignum(xlen));
          ad = DIG(tad,0);
          bdzero(ad, xlen - alen);
          bdcopy(DIG(a,0),
@@ -1109,7 +1109,7 @@ dptr da, db, dx;
       if (blen == xlen && !b->sign)
          bd = DIG(b,0);
       else {
-         Protect(tbd = alcbignum(xlen), return Error);
+         MemProtect(tbd = alcbignum(xlen));
          bd = DIG(tbd,0);
          bdzero(bd, xlen - blen);
          bdcopy(DIG(b,0),
@@ -1136,12 +1136,12 @@ dptr da, db, dx;
       xlen = alen > blen ? alen : blen;
       a = LrgInt(&td);
       b = LrgInt(db);
-      Protect(x = alcbignum(blen), return Error);
+      MemProtect(x = alcbignum(blen));
 
       if (alen == xlen && !a->sign)
          ad = DIG(a,0);
       else {
-         Protect(tad = alcbignum(xlen), return Error);
+         MemProtect(tad = alcbignum(xlen));
          ad = DIG(tad,0);
          bdzero(ad, xlen - alen);
          bdcopy(DIG(a,0),
@@ -1153,7 +1153,7 @@ dptr da, db, dx;
       if (blen == xlen && !b->sign)
          bd = DIG(b,0);
       else {
-         Protect(tbd = alcbignum(xlen), return Error);
+         MemProtect(tbd = alcbignum(xlen));
          bd = DIG(tbd,0);
          bdzero(bd, xlen - blen);
          bdcopy(DIG(b,0),
@@ -1198,12 +1198,12 @@ dptr da, db, dx;
       xlen = alen > blen ? alen : blen;
       a = LrgInt(da);
       b = LrgInt(db);
-      Protect(x = alcbignum(xlen), return Error);
+      MemProtect(x = alcbignum(xlen));
 
       if (alen == xlen && !a->sign)
          ad = DIG(a,0);
       else {
-         Protect(tad = alcbignum(xlen), return Error);
+         MemProtect(tad = alcbignum(xlen));
          ad = DIG(tad,0);
          bdzero(ad, xlen - alen);
          bdcopy(DIG(a,0),
@@ -1215,7 +1215,7 @@ dptr da, db, dx;
       if (blen == xlen && !b->sign)
          bd = DIG(b,0);
       else {
-         Protect(tbd = alcbignum(xlen), return Error);
+         MemProtect(tbd = alcbignum(xlen));
          bd = DIG(tbd,0);
          bdzero(bd, xlen - blen);
          bdcopy(DIG(b,0),
@@ -1242,12 +1242,12 @@ dptr da, db, dx;
       xlen = alen > blen ? alen : blen;
       a = LrgInt(da);
       b = LrgInt(&td);
-      Protect(x = alcbignum(alen), return Error);
+      MemProtect(x = alcbignum(alen));
 
       if (alen == xlen && !a->sign)
          ad = DIG(a,0);
       else {
-         Protect(tad = alcbignum(xlen), return Error);
+         MemProtect(tad = alcbignum(xlen));
          ad = DIG(tad,0);
          bdzero(ad, xlen - alen);
          bdcopy(DIG(a,0),
@@ -1259,7 +1259,7 @@ dptr da, db, dx;
       if (blen == xlen && !b->sign)
          bd = DIG(b,0);
       else {
-         Protect(tbd = alcbignum(xlen), return Error);
+         MemProtect(tbd = alcbignum(xlen));
          bd = DIG(tbd,0);
          bdzero(bd, xlen - blen);
          bdcopy(DIG(b,0),
@@ -1286,12 +1286,12 @@ dptr da, db, dx;
       xlen = alen > blen ? alen : blen;
       a = LrgInt(&td);
       b = LrgInt(db);
-      Protect(x = alcbignum(blen), return Error);
+      MemProtect(x = alcbignum(blen));
 
       if (alen == xlen && !a->sign)
          ad = DIG(a,0);
       else {
-         Protect(tad = alcbignum(xlen), return Error);
+         MemProtect(tad = alcbignum(xlen));
          ad = DIG(tad,0);
          bdzero(ad, xlen - alen);
          bdcopy(DIG(a,0),
@@ -1303,7 +1303,7 @@ dptr da, db, dx;
       if (blen == xlen && !b->sign)
          bd = DIG(b,0);
       else {
-         Protect(tbd = alcbignum(xlen), return Error);
+         MemProtect(tbd = alcbignum(xlen));
          bd = DIG(tbd,0);
          bdzero(bd, xlen - blen);
          bdcopy(DIG(b,0),
@@ -1348,12 +1348,12 @@ dptr da, db, dx;
       xlen = alen > blen ? alen : blen;
       a = LrgInt(da);
       b = LrgInt(db);
-      Protect(x = alcbignum(xlen), return Error);
+      MemProtect(x = alcbignum(xlen));
 
       if (alen == xlen && !a->sign)
          ad = DIG(a,0);
       else {
-         Protect(tad = alcbignum(xlen), return Error);
+         MemProtect(tad = alcbignum(xlen));
          ad = DIG(tad,0);
          bdzero(ad, xlen - alen);
          bdcopy(DIG(a,0),
@@ -1365,7 +1365,7 @@ dptr da, db, dx;
       if (blen == xlen && !b->sign)
          bd = DIG(b,0);
       else {
-         Protect(tbd = alcbignum(xlen), return Error);
+         MemProtect(tbd = alcbignum(xlen));
          bd = DIG(tbd,0);
          bdzero(bd, xlen - blen);
          bdcopy(DIG(b,0),
@@ -1392,12 +1392,12 @@ dptr da, db, dx;
       xlen = alen > blen ? alen : blen;
       a = LrgInt(da);
       b = LrgInt(&td);
-      Protect(x = alcbignum(alen), return Error);
+      MemProtect(x = alcbignum(alen));
 
       if (alen == xlen && !a->sign)
          ad = DIG(a,0);
       else {
-         Protect(tad = alcbignum(xlen), return Error);
+         MemProtect(tad = alcbignum(xlen));
          ad = DIG(tad,0);
          bdzero(ad, xlen - alen);
          bdcopy(DIG(a,0),
@@ -1409,7 +1409,7 @@ dptr da, db, dx;
       if (blen == xlen && !b->sign)
          bd = DIG(b,0);
       else {
-         Protect(tbd = alcbignum(xlen), return Error);
+         MemProtect(tbd = alcbignum(xlen));
          bd = DIG(tbd,0);
          bdzero(bd, xlen - blen);
          bdcopy(DIG(b,0),
@@ -1436,12 +1436,12 @@ dptr da, db, dx;
       xlen = alen > blen ? alen : blen;
       a = LrgInt(&td);
       b = LrgInt(db);
-      Protect(x = alcbignum(blen), return Error);
+      MemProtect(x = alcbignum(blen));
 
       if (alen == xlen && !a->sign)
          ad = DIG(a,0);
       else {
-         Protect(tad = alcbignum(xlen), return Error);
+         MemProtect(tad = alcbignum(xlen));
          ad = DIG(tad,0);
          bdzero(ad, xlen - alen);
          bdcopy(DIG(a,0),
@@ -1453,7 +1453,7 @@ dptr da, db, dx;
       if (blen == xlen && !b->sign)
          bd = DIG(b,0);
       else {
-         Protect(tbd = alcbignum(xlen), return Error);
+         MemProtect(tbd = alcbignum(xlen));
          bd = DIG(tbd,0);
          bdzero(bd, xlen - blen);
          bdcopy(DIG(b,0),
@@ -1507,10 +1507,10 @@ dptr da, db, dx;
       }
    else {
       a = LrgInt(da);
-      Protect(x = alcbignum(xlen), return Error);
+      MemProtect(x = alcbignum(xlen));
 
       if (a->sign) {
-         Protect(tad = alcbignum(alen), return Error);
+         MemProtect(tad = alcbignum(alen));
          ad = DIG(tad,0);
          bdcopy(DIG(a,0),
                 ad, alen);
@@ -1600,8 +1600,8 @@ dptr da, dx;
    word i;
    double rval;
 
-   Protect(x = alcbignum(alen), return Error);
-   Protect(td = alcbignum(alen + 1), return Error);
+   MemProtect(x = alcbignum(alen));
+   MemProtect(td = alcbignum(alen + 1));
    d = DIG(td,0);
    a = LrgInt(da);
 
@@ -1610,8 +1610,8 @@ dptr da, dx;
       d[i] = rval * B;
       }
     
-   Protect(tu = alcbignum(alen + 2), return Error);
-   Protect(tv = alcbignum(alen), return Error);
+   MemProtect(tu = alcbignum(alen + 2));
+   MemProtect(tv = alcbignum(alen));
    if (div1(d, DIG(a,0),
             NULL,
             DIG(x,0),
@@ -1649,14 +1649,14 @@ word i;
       alen = LEN(LrgInt(da));
       a = LrgInt(da);
       if (a->sign) {
-	 Protect(x = alcbignum(alen), return Error);
+	 MemProtect(x = alcbignum(alen));
          subi1(DIG(a,0),
                i,
                DIG(x,0),
                alen);
          }
       else {
-         Protect(x = alcbignum(alen + 1), return Error);
+         MemProtect(x = alcbignum(alen + 1));
          *DIG(x,0) =
             addi1(DIG(a,0),
                   i,
@@ -1693,7 +1693,7 @@ word i;
       alen = LEN(LrgInt(da));
       a = LrgInt(da);
       if (a->sign) {
-         Protect(x = alcbignum(alen + 1), return Error);
+         MemProtect(x = alcbignum(alen + 1));
          *DIG(x,0) =
             addi1(DIG(a,0),
                   i,
@@ -1701,7 +1701,7 @@ word i;
                   alen);
          }
       else {
-         Protect(x = alcbignum(alen), return Error);
+         MemProtect(x = alcbignum(alen));
          subi1(DIG(a,0),
                i,
                DIG(x,0),
@@ -1734,7 +1734,7 @@ word i;
    else {
       alen = LEN(LrgInt(da));
       a = LrgInt(da);
-      Protect(x = alcbignum(alen + 1), return Error);
+      MemProtect(x = alcbignum(alen + 1));
       if (i >= 0)
          x->sign = a->sign;
       else {
@@ -1772,7 +1772,7 @@ word i;
    else {
       alen = LEN(LrgInt(da));
       a = LrgInt(da);
-      Protect(x = alcbignum(alen), return Error);
+      MemProtect(x = alcbignum(alen));
       if (i >= 0)
          x->sign = a->sign;
       else {
@@ -1810,7 +1810,7 @@ word i;
       alen = LEN(LrgInt(da));
       a = LrgInt(da);
       temp = a;			/* avoid trash pointer */
-      Protect(temp = alcbignum(alen), return Error);
+      MemProtect(temp = alcbignum(alen));
       x = divi1(DIG(a,0),
                 Abs(i),
                 DIG(temp,0),
