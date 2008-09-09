@@ -1697,7 +1697,6 @@ function{1} load(s,arglist,
       register struct b_coexpr *sblkp;
       struct ef_marker *newefp;
       register word *savedsp;
-      extern char *prog_name;
 
       /*
        * Fragments of pseudo-icode to get loaded programs started,
@@ -1720,8 +1719,6 @@ function{1} load(s,arglist,
       *tipc.op++ = Op_Cofail;
       *tipc.op++ = Op_Agoto;
       *tipc.opnd = (word)lterm;
-
-      prog_name = loadstring;			/* set up for &progname */
 
       /*
        * arglist must be a list

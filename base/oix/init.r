@@ -902,13 +902,12 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     /*
      * Allocate memory for icode and the struct that describes it
      */
-    Protect(coexp = initprogram(hdr.hsize, stk, ss, bs),
-            {fprintf(stderr,"can't malloc new icode region\n");c_exit(EXIT_FAILURE);});
+    MemProtect(coexp = initprogram(hdr.hsize, stk, ss, bs));
 
     pstate = coexp->program;
     pstate->K_current.dword = D_Coexpr;
 
-    MakeCStr(prog_name, &pstate->Kywd_prog);
+    MakeCStr(name, &pstate->Kywd_prog);
     MakeInt(hdr.trace, &pstate->Kywd_trc);
 
     /*
