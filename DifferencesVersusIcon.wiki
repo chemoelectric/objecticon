@@ -2,10 +2,12 @@
 
 = Differences between Object Icon and Icon =
 
-Although Object Icon is nearly completely compatible with Icon source code, there are a few minor differences.
+Although Object Icon is quite compatible with Icon source code, there are a few minor differences.
 
  * New reserved words : `class`, `const`, `defer`, `final`, `import`, `package`, `private`, `protected`, `public`, `readable`.
- * A few new builtin functions : `cast()`, `is()`, `classof()`, `keyof()`, `subtype()`
+ * A few new builtin functions : `cast()`, `is()`, `classof()`, `keyof()`, `subtype()`, `glob()`, `progof()`
+ * I/O has been completely rewritten in Object Icon; there are no builtin I/O functions (`write`, `read` etc), nor is there a builtin `file` type.  Rather, I/O is implemented using a new set of classes in the `io` package.
+ * Icon's various graphical builtin facilities have been moved into a package `graphics`.  Most notably, the class `Window` represents an window, rather than Icon's builtin `file` type.  Most of the graphics functions are now instance methods of `Window`.  The various Icon graphics keywords don't exist in Object Icon.
  * For a record, `type()` returns the record type name in Icon, whereas in Object Icon it returns "record"; a new builtin function, `subtype()`, returns the type name.
  * The invocation of PDCO procedures passes the co-expressions as individual parameters, rather than collected as a list in one parameter.  So the syntax 
 {{{
@@ -20,12 +22,11 @@ proc(create expr1, create expr2, ...)
 proc([create expr1, create expr2, ...])
 }}}
  * In Icon, an undeclared identifier produces a compiler warning; in Object Icon it is an error.
- * Icon's builtin function `Event()` is called `NextEvent()`.  This is just to avoid cluttering up the top-level namespace with a common class name.
  * Given a list `x`, the builtin function `insert(x, i, o)` will accept the parameter `i` if it is zero, or `*x+1`, and this is equivalent to `put(x, o)`.  In Icon, this would simply fail.
  * A different ucode format - you can't link Icon and Object Icon ucode files.
  * Different executable names.  Icon has `icont` and `iconx`; Object Icon has `oit` and `oix`.
  * Different path variables.  Whereas Icon has `IPATH` and `LPATH`, Object Icon has `OIPATH` and `OLPATH`.  Furthermore, these path variables use the platform's path syntax rather than Icon's space-separated syntax.
- * Icon program library.  The IPL is available in Object Icon, but uses Object Icon's package system to avoid filename and symbol clashes.  Generally, this just means changing a link declaration like 
+ * Icon program library.  Most of the IPL is available in Object Icon, but uses Object Icon's package system to avoid filename and symbol clashes.  Generally, this just means changing a link declaration like 
 {{{
 link options
 }}}
