@@ -155,6 +155,12 @@ class Stream()
    end
 end
 
+#
+# This is a stream based on an Icon string.  An initial string can be
+# provided to the constructor.  Reading from the stream will be quite
+# efficient, but writing will be relatively slow, particularly if the
+# string is long.  For a much faster alternative, see {RamStream}.
+#
 class StringStream(Stream)
    private 
       f_eof,
@@ -225,6 +231,12 @@ class StringStream(Stream)
       return .subj
    end
 
+   #
+   # Create a new {StringStream}, with initial value of {subj}.
+   #
+   # @param subj the initial value of the stream; defaults to empty 
+   # @      string.
+   #
    public new(subj)
       /subj := ""
       self.subj := subj
