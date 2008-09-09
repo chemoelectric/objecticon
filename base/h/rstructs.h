@@ -282,9 +282,14 @@ struct dpair {
     struct descrip dv;
 };
 
-struct inline_cache {
+struct inline_field_cache {
     union block *class;
     int index;
+};
+
+struct inline_global_cache {
+    struct progstate *program;
+    dptr global;
 };
 
 /*

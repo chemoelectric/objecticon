@@ -62,9 +62,7 @@ static struct sdescrip idf = {2, "id"};
 #begdef IdParam(p, m)
 int m;
 dptr m##_dptr;
-static struct inline_cache m##_ic;
-if (!is:object(p))
-    runerr(602, p);
+static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&p, (dptr)&idf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&idf);

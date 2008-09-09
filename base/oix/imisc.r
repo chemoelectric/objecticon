@@ -8,22 +8,22 @@
 /*
  * x.y - access field y of record x.
  */
-static int cast_access(dptr cargp, struct inline_cache *ic);
-static int instance_access(dptr cargp, struct inline_cache *ic);
-static int class_access(dptr cargp, struct inline_cache *ic);
-static int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_cache *ic);
+static int cast_access(dptr cargp, struct inline_field_cache *ic);
+static int instance_access(dptr cargp, struct inline_field_cache *ic);
+static int class_access(dptr cargp, struct inline_field_cache *ic);
+static int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_field_cache *ic);
 static int in_lang(dptr s);
 static int same_package(dptr n1, dptr n2);
 static int in_hierarchy(struct b_class *c1, struct b_class *c2);
-static int record_access(dptr cargp, struct inline_cache *ic);
+static int record_access(dptr cargp, struct inline_field_cache *ic);
 
 LibDcl(field,2,".")
 {
     int r;
-    struct inline_cache *ic;
+    struct inline_field_cache *ic;
     Deref(Arg1);
     Deref(Arg2);
-    ic = (struct inline_cache*)ipc.opnd;
+    ic = (struct inline_field_cache*)ipc.opnd;
     ipc.opnd += 2;
     type_case Arg1 of {
       record: {
@@ -74,7 +74,7 @@ int field_access(dptr cargp)
    }
 }
 
-static int cast_access(dptr cargp, struct inline_cache *ic)
+static int cast_access(dptr cargp, struct inline_field_cache *ic)
 {
     struct b_cast *cast = &BlkLoc(Arg1)->cast;
     struct b_object *obj = cast->object;
@@ -119,7 +119,7 @@ static int cast_access(dptr cargp, struct inline_cache *ic)
     return 0;
 }
 
-static int class_access(dptr cargp, struct inline_cache *ic)
+static int class_access(dptr cargp, struct inline_field_cache *ic)
 {
     struct b_class *class = &BlkLoc(Arg1)->class;
     struct class_field *cf;
@@ -159,7 +159,7 @@ static int class_access(dptr cargp, struct inline_cache *ic)
     return ac;
 }
 
-static int instance_access(dptr cargp, struct inline_cache *ic)
+static int instance_access(dptr cargp, struct inline_field_cache *ic)
 {
     struct b_object *obj = &BlkLoc(Arg1)->object;
     struct b_class *class = obj->class;
@@ -373,14 +373,14 @@ int lookup_class_field_by_fnum(struct b_class *class, int fnum)
  * descriptor which is interpreted differently depending on whether we
  * are being invoked from an Op_Field instruction, in which case it is
  * a field number, or from a function such as Class.get(), in which
- * case it is a string or an integer.  The presence of an inline_cache
+ * case it is a string or an integer.  The presence of an inline_field_cache
  * parameter decides which of the two types of query it is.
  * 
  * In either case, the index into the class's fields array is returned
  * to provide the corresponding field, or -1 if the field was not
  * found.
  */
-int lookup_class_field(struct b_class *class, dptr query, struct inline_cache *ic)
+int lookup_class_field(struct b_class *class, dptr query, struct inline_field_cache *ic)
 {
     if (ic) {
         int fnum, index;
@@ -461,7 +461,7 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_cache *i
     }
 }
 
-static int record_access(dptr cargp, struct inline_cache *ic)
+static int record_access(dptr cargp, struct inline_field_cache *ic)
 {
     struct b_record *rec = &BlkLoc(Arg1)->record;
     struct b_constructor *recdef = BlkLoc(Arg1)->record.constructor;
@@ -492,7 +492,7 @@ static int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
 /*
  * This follows similar logic to lookup_class_field above.
  */
-static int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_cache *ic)
+static int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_field_cache *ic)
 {
     int fnum, index;
 
@@ -713,12 +713,12 @@ LibDcl(escan,1,"escan")
 /*
  * Little c-level utility for accessing an instance field by name in
  * an object.  Returns null if the field is unknown, or the field is a
- * static or a method.  An optional inline_cache can be provided, and
+ * static or a method.  An optional inline_field_cache can be provided, and
  * in this case the name must be the same for every call with the same
  * cache (they should both really be pointers to static data).
  */
 
-dptr c_get_instance_data(dptr x, dptr fname, struct inline_cache *ic)
+dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
 {
     struct b_object *obj = &BlkLoc(*x)->object;
     struct b_class *class = obj->class;
@@ -740,3 +740,35 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_cache *ic)
     return &obj->fields[i];
 }
 
+/*
+ * C-level util to check if a given object x implements a class named
+ * by cname.  An inline cache makes this efficient and if used the
+ * same name must always be passed with the same cache.
+ */
+int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
+{
+    struct b_object *obj = &BlkLoc(*x)->object;
+    struct b_class *class = obj->class;
+    dptr p;
+
+    if (ic) {
+        if (class->program == ic->program)
+            p = ic->global;
+        else {
+            p = lookup_global(cname, class->program);
+            ic->program = class->program;
+            ic->global = p;
+        }
+    } else
+        p = lookup_global(cname, class->program);
+
+    if (p && is:class(*p)) {
+        struct b_class *target = &BlkLoc(*p)->class;
+        int i;
+        for (i = 0; i < class->n_implemented_classes; ++i) {
+            if (class->implemented_classes[i] == target)
+                return 1;
+        }
+    }
+    return 0;
+}

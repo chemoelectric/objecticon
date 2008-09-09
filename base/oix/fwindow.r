@@ -46,14 +46,33 @@ function{0,1} graphics_Window_open_impl(attr[n])
    }
 end
 
+static struct sdescrip wclassname = {15, "graphics.Window"};
+
 static struct sdescrip wbpf = {3, "wbp"};
+
+#begdef StaticWindowParam(p, w)
+wbp w;
+dptr w##_dptr;
+static struct inline_field_cache w##_ic;
+static struct inline_global_cache w##_igc;
+if (!is:object(p))
+    runerr(602, p);
+if (!c_is(&p, (dptr)&wclassname, &w##_igc))
+    runerr(205, p);
+w##_dptr = c_get_instance_data(&p, (dptr)&wbpf, &w##_ic);
+if (!w##_dptr)
+    runerr(207,*(dptr)&wbpf);
+(w) = (wbp)IntVal(*w##_dptr);
+if (!(w))
+    runerr(142, p);
+if (ISCLOSED(w))
+    runerr(142, p);
+#enddef
 
 #begdef WindowParam(p, w)
 wbp w;
 dptr w##_dptr;
-static struct inline_cache w##_ic;
-if (!is:object(p))
-    runerr(602, p);
+static struct inline_field_cache w##_ic;
 w##_dptr = c_get_instance_data(&p, (dptr)&wbpf, &w##_ic);
 if (!w##_dptr)
     runerr(207,*(dptr)&wbpf);
@@ -253,13 +272,16 @@ function{0,1} graphics_Window_copy_area(src, dest, argv[argc])
    body {
       int n, r;
       C_integer x, y, width, height, x2, y2, width2, height2;
-      wbp w2;
+      wbp w, w2;
 
-      WindowParam(src, w);
+      {
+          StaticWindowParam(src, tmp);
+          w = tmp;
+      }
       if (is:null(dest))
           w2 = w;
       else {
-          WindowParam(dest, tmp);
+          StaticWindowParam(dest, tmp);
           w2 = tmp;
       }
 
@@ -294,11 +316,11 @@ function{0,1} graphics_Window_couple_impl(win, win2)
       wsp ws;
 
       {
-          WindowParam(win, tmp);
+          StaticWindowParam(win, tmp);
           wb = tmp;
       }
       {
-          WindowParam(win2, tmp);
+          StaticWindowParam(win2, tmp);
           wb2 = tmp;
       }
 

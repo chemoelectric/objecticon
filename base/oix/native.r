@@ -545,13 +545,29 @@ end
 
 static struct sdescrip fdf = {2, "fd"};
 static struct sdescrip f_eoff = {5, "f_eof"};
+static struct sdescrip dsclassname = {13, "io.DescStream"};
+
+#begdef StaticFdParam(p, m)
+int m;
+dptr m##_dptr;
+static struct inline_field_cache m##_ic;
+static struct inline_global_cache m##_igc;
+if (!is:object(p))
+    runerr(602, p);
+if (!c_is(&p, (dptr)&dsclassname, &m##_igc))
+    runerr(205, p);
+m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);
+if (!m##_dptr)
+    runerr(207,*(dptr)&fdf);
+(m) = IntVal(*m##_dptr);
+if (m < 0)
+    runerr(205, p);
+#enddef
 
 #begdef FdParam(p, m)
 int m;
 dptr m##_dptr;
-static struct inline_cache m##_ic;
-if (!is:object(p))
-    runerr(602, p);
+static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&fdf);
@@ -590,7 +606,7 @@ function{0,1} io_FileStream_in(self, i)
        int nread;
        tended struct descrip s;
        dptr eof;
-       static struct inline_cache eof_ic;
+       static struct inline_field_cache eof_ic;
        FdParam(self, fd);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
@@ -730,7 +746,7 @@ function{0,1} io_SocketStream_in(self, i)
        int nread;
        tended struct descrip s;
        dptr eof;
-       static struct inline_cache eof_ic;
+       static struct inline_field_cache eof_ic;
        FdParam(self, fd);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
@@ -1009,7 +1025,7 @@ end
             runerr(108, l);
         tmpl = create_list(BlkLoc(l)->list.size);
         while (c_get(&BlkLoc(l)->list, &e)) {
-            FdParam(e, fd);
+            StaticFdParam(e, fd);
             c_put(&tmpl, &e);
             FD_SET(fd, &s);
         }
@@ -1097,7 +1113,7 @@ function{0,1} io_DescStream_poll(a[n])
 
        for (i = 0; i < nfds; ++i) {
            int events;
-           FdParam(a[2 * i], fd);
+           StaticFdParam(a[2 * i], fd);
            if (!cnv:C_integer(a[2 * i + 1], events))
                runerr(101, a[2 * i + 1]);
            ufds[i].fd = fd;
@@ -1161,9 +1177,7 @@ static struct sdescrip ddf = {2, "dd"};
 #begdef DirParam(p, m)
 DIR *m;
 dptr m##_dptr;
-static struct inline_cache m##_ic;
-if (!is:object(p))
-    runerr(602, p);
+static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&p, (dptr)&ddf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ddf);
@@ -1191,7 +1205,7 @@ end
 function{0,1} io_DirStream_read_impl(self)
    body {
        struct dirent *de;
-       static struct inline_cache eof_ic;
+       static struct inline_field_cache eof_ic;
        dptr eof;
        DirParam(self, dd);
 
@@ -1291,7 +1305,7 @@ end
 function{0,1} io_ProgStream_close(self)
    body {
        dptr pid;
-       static struct inline_cache pid_ic;
+       static struct inline_field_cache pid_ic;
        FdParam(self, fd);
 
        pid = c_get_instance_data(&self, (dptr)&pidf, &pid_ic);
@@ -1629,9 +1643,7 @@ struct ramstream {
 #begdef PtrParam(p, m)
 struct ramstream *m;
 dptr m##_dptr;
-static struct inline_cache m##_ic;
-if (!is:object(p))
-    runerr(602, p);
+static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ptrf);
@@ -1655,7 +1667,7 @@ function{0,1} io_RamStream_in(self, i)
       runerr(101, i)
    body {
        dptr eof;
-       static struct inline_cache eof_ic;
+       static struct inline_field_cache eof_ic;
        PtrParam(self, p);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);

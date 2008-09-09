@@ -8,9 +8,7 @@ static struct sdescrip ptrf = {3, "ptr"};
 #begdef MySqlParam(p, m)
 MYSQL *m;
 dptr m##_dptr;
-static struct inline_cache m##_ic;
-if (!is:object(p))
-    runerr(602, p);
+static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ptrf);
@@ -22,9 +20,7 @@ if (!(m))
 #begdef MySqlResParam(p, m)
 MYSQL_RES *m;
 dptr m##_dptr;
-static struct inline_cache m##_ic;
-if (!is:object(p))
-    runerr(602, p);
+static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ptrf);
