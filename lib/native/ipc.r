@@ -65,7 +65,7 @@ dptr m##_dptr;
 static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&self, (dptr)&idf, &m##_ic);
 if (!m##_dptr)
-    runerr(207,*(dptr)&idf);
+    syserr("Missing id field");
 (m) = IntVal(*m##_dptr);
 if (m < 0)
     runerr(205, self);

@@ -558,7 +558,7 @@ if (!c_is(&p, (dptr)&dsclassname, &m##_igc))
     runerr(205, p);
 m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);
 if (!m##_dptr)
-    runerr(207,*(dptr)&fdf);
+    syserr("Missing fd field");
 (m) = IntVal(*m##_dptr);
 if (m < 0)
     runerr(205, p);
@@ -570,7 +570,7 @@ dptr m##_dptr;
 static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&self, (dptr)&fdf, &m##_ic);
 if (!m##_dptr)
-    runerr(207,*(dptr)&fdf);
+    syserr("Missing fd field");
 (m) = IntVal(*m##_dptr);
 if (m < 0)
     runerr(205, self);
@@ -1180,7 +1180,7 @@ dptr m##_dptr;
 static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&self, (dptr)&ddf, &m##_ic);
 if (!m##_dptr)
-    runerr(207,*(dptr)&ddf);
+    syserr("Missing dd field");
 (m) = (DIR*)IntVal(*m##_dptr);
 if (!(m))
     runerr(205, self);
@@ -1646,7 +1646,7 @@ dptr m##_dptr;
 static struct inline_field_cache m##_ic;
 m##_dptr = c_get_instance_data(&self, (dptr)&ptrf, &m##_ic);
 if (!m##_dptr)
-    runerr(207,*(dptr)&ptrf);
+    syserr("Missing ptr field");
 (m) = (struct ramstream*)IntVal(*m##_dptr);
 if (!(m))
     runerr(205, self);

@@ -61,11 +61,9 @@ if (!c_is(&p, (dptr)&wclassname, &w##_igc))
     runerr(205, p);
 w##_dptr = c_get_instance_data(&p, (dptr)&wbpf, &w##_ic);
 if (!w##_dptr)
-    runerr(207,*(dptr)&wbpf);
+    syserr("Missing wbp field");
 (w) = (wbp)IntVal(*w##_dptr);
-if (!(w))
-    runerr(142, p);
-if (ISCLOSED(w))
+if (!(w) || ISCLOSED(w))
     runerr(142, p);
 #enddef
 
@@ -75,11 +73,9 @@ dptr w##_dptr;
 static struct inline_field_cache w##_ic;
 w##_dptr = c_get_instance_data(&self, (dptr)&wbpf, &w##_ic);
 if (!w##_dptr)
-    runerr(207,*(dptr)&wbpf);
+    syserr("Missing wbp field");
 (w) = (wbp)IntVal(*w##_dptr);
-if (!(w))
-    runerr(142, self);
-if (ISCLOSED(w))
+if (!(w) || ISCLOSED(w))
     runerr(142, self);
 #enddef
 
