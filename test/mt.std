@@ -1,5 +1,7 @@
+progof main: yes
 in subchild0
 Test test1
+progof: yes
 test1.p(4): {101, 102, 103, 104}
 Test test2
 test2.p(4): {4}
@@ -23,6 +25,7 @@ Test test11
 test11.l: {100, 101, 102, 103, 104, 105}
 Test test12
 constructor rec12
+progof: yes
 test12.i2: {1, 2, 3}
 test12.i2: {7, 8, 9}
 Test test13
@@ -141,4 +144,7 @@ trace: 0
 ucase: &ucase
 version: string
 why: ""
+Test test29
+main &why: ""
+child &why: "failure message"
 exit

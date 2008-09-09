@@ -10,15 +10,15 @@ static struct descrip stat2list(struct stat *st);
 static struct b_class *get_class_for(dptr x)
 {
     type_case *x of {
-      class: {
+      class: 
             return &BlkLoc(*x)->class;
-        }
-      object: {
+        
+      object: 
             return BlkLoc(*x)->object.class;
-        }
-     default: {
+        
+     default: 
             return 0;
-        }
+        
     }
 }
 
@@ -28,6 +28,27 @@ function{1} classof(o)
     body {
        return class(BlkLoc(o)->object.class);
     }
+end
+
+function{1} progof(x)
+   body {
+      struct progstate *p = 0;
+      type_case x of {
+         constructor:
+            p = BlkLoc(x)->constructor.program;
+         record: 
+            p = BlkLoc(x)->record.constructor->program;
+         class:
+            p = BlkLoc(x)->class.program;
+         object:
+            p = BlkLoc(x)->object.class->program;
+         proc:
+            p = BlkLoc(x)->proc.program;
+      }
+      if (!p)
+         fail;
+      return p->K_main;
+   }
 end
 
 function{0,1} is(x,c)

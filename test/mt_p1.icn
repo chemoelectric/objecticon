@@ -7,6 +7,8 @@ global c, what
 procedure main()
    local i,s,p
 
+   yes_no{"progof main", progof(main) === &main}
+
    what := 50
    c := load("mt_c1") | stop("Couldn't load mt_c1")
    @c
@@ -26,6 +28,7 @@ end
 procedure test1()
    local p
    p := glob("child1",c) | stop("no child1 found")
+   yes_no{"progof", progof(p) === c}
    pr_seq{"test1.p(4)", p(4)}
 end
 
@@ -126,6 +129,7 @@ procedure test12()
    p := glob("rec12",c) | stop("no rec12 found")
    q := glob("child12",c) | stop("no child12 found")
    write(image(p))
+   yes_no{"progof", progof(p) === c}
    i := p()
    i.r := 3
    i.q := 2
@@ -341,4 +345,13 @@ procedure test28()
    local c
    c := load("kwds") | stop("Couldn't load kwds.icn")
    @c
+end
+
+procedure test29()
+   local p
+   p := glob("child29",c) | stop("no child29 found")
+   &why := ""
+   p()
+   print{"main &why", &why}
+   print{"child &why", keyword("why", progof(p))}
 end
