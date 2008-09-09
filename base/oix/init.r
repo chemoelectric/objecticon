@@ -202,6 +202,36 @@ void icon_init(char *name)
     prog_name = name;			/* Set icode file name */
 
     /*
+     * Initializations that cannot be performed statically (at least for
+     * some compilers).					[[I?]]
+     */
+
+    StrLen(blank) = 1;
+    StrLoc(blank) = " ";
+    StrLen(emptystr) = 0;
+    StrLoc(emptystr) = "";
+    BlkLoc(nullptr) = (union block *)NULL;
+    StrLen(lcase) = 26;
+    StrLoc(lcase) = "abcdefghijklmnopqrstuvwxyz";
+    StrLen(letr) = 1;
+    StrLoc(letr) = "r";
+    IntVal(nulldesc) = 0;
+    IntVal(zerodesc) = 0;
+    IntVal(onedesc) = 1;
+    IntVal(minusonedesc) = -1;
+    StrLen(ucase) = 26;
+    StrLoc(ucase) = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    /*
+     *  Initialization needed for event monitoring
+     */
+    BlkLoc(csetdesc) = (union block *)&fullcs;
+    BlkLoc(rzerodesc) = (union block *)&realzero;
+
+    maps2 = nulldesc;
+    maps3 = nulldesc;
+
+    /*
      * initialize root pstate
      */
     curpstate = &rootpstate;
@@ -217,13 +247,10 @@ void icon_init(char *name)
     rootpstate.eventsource = nulldesc;
     rootpstate.Glbl_argp = NULL;
     rootpstate.Kywd_err = zerodesc;
-    MakeInt(1, &(rootpstate.Kywd_pos));
-    StrLen(rootpstate.ksub) = 0;
-    StrLoc(rootpstate.ksub) = "";
-    MakeInt(0, &(rootpstate.Kywd_trc));
-    StrLen(rootpstate.Kywd_prog) = strlen(prog_name);
-    StrLoc(rootpstate.Kywd_prog) = prog_name;
-    rootpstate.Kywd_why = nulldesc;
+    MakeCStr(prog_name, &rootpstate.Kywd_prog);
+    rootpstate.Kywd_pos = onedesc;
+    rootpstate.ksub = emptystr;
+    rootpstate.Kywd_why = emptystr;
     rootpstate.Kywd_ran = zerodesc;
     rootpstate.K_errornumber = 0;
     rootpstate.T_errornumber = 0;
@@ -317,12 +344,6 @@ void icon_init(char *name)
  * End of operating-system specific code.
  */
 
-
-    /*
-     * Initialize data that can't be initialized statically.
-     */
-    datainit();
-
     if (!name)
         error("No interpreter file supplied");
 
@@ -336,7 +357,7 @@ void icon_init(char *name)
     if (ifile == NULL) 
         error("cannot open interpreter file %s", name);
 
-    k_trace = hdr.trace;
+    MakeInt(hdr.trace, &rootpstate.Kywd_trc);
 
     /*
      * Examine the environment and make appropriate settings.    [[I?]]
@@ -738,52 +759,6 @@ int pstrnmcmp(a,b)
 }
 
 /*
- * datainit - initialize some global variables.
- */
-void datainit()
-{
-    /*
-     * Initializations that cannot be performed statically (at least for
-     * some compilers).					[[I?]]
-     */
-
-    IntVal(kywd_pos) = 1;
-    IntVal(kywd_ran) = 0;
-    StrLen(kywd_prog) = strlen(prog_name);
-    StrLoc(kywd_prog) = prog_name;
-    kywd_why = nulldesc;
-    StrLen(k_subject) = 0;
-    StrLoc(k_subject) = "";
-
-
-    StrLen(blank) = 1;
-    StrLoc(blank) = " ";
-    StrLen(emptystr) = 0;
-    StrLoc(emptystr) = "";
-    BlkLoc(nullptr) = (union block *)NULL;
-    StrLen(lcase) = 26;
-    StrLoc(lcase) = "abcdefghijklmnopqrstuvwxyz";
-    StrLen(letr) = 1;
-    StrLoc(letr) = "r";
-    IntVal(nulldesc) = 0;
-    k_errorvalue = nulldesc;
-    IntVal(onedesc) = 1;
-    IntVal(minusonedesc) = -1;
-    StrLen(ucase) = 26;
-    StrLoc(ucase) = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    IntVal(zerodesc) = 0;
-
-    /*
-     *  Initialization needed for event monitoring
-     */
-    BlkLoc(csetdesc) = (union block *)&fullcs;
-    BlkLoc(rzerodesc) = (union block *)&realzero;
-
-    maps2 = nulldesc;
-    maps3 = nulldesc;
-}
-
-/*
  * Initialize a loaded program.  Unicon programs will have an
  * interesting icodesize; non-Unicon programs will send a fake
  * icodesize (nonzero, perhaps good if longword-aligned) to alccoexp.
@@ -810,12 +785,11 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->eventcode= nulldesc;
     pstate->eventval = nulldesc;
     pstate->eventsource = nulldesc;
-    pstate->Kywd_why = nulldesc;
+    pstate->Kywd_why = emptystr;
     pstate->Glbl_argp = NULL;
     pstate->Kywd_err = zerodesc;
     pstate->Kywd_pos = onedesc;
-    StrLen(pstate->ksub) = 0;
-    StrLoc(pstate->ksub) = "";
+    pstate->ksub = emptystr;
     pstate->Kywd_ran = zerodesc;
     pstate->Line_num = pstate->Lastline = 0;
     pstate->Lastop = 0;
@@ -934,9 +908,8 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     pstate = coexp->program;
     pstate->K_current.dword = D_Coexpr;
 
-    StrLen(pstate->Kywd_prog) = strlen(prog_name);
-    StrLoc(pstate->Kywd_prog) = prog_name;
-    MakeInt(hdr.trace, &(pstate->Kywd_trc));
+    MakeCStr(prog_name, &pstate->Kywd_prog);
+    MakeInt(hdr.trace, &pstate->Kywd_trc);
 
     /*
      * might want to override from TRACE environment variable here.
