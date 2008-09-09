@@ -336,3 +336,9 @@ procedure test27()
    p([4,5,6])
    p([7,8,9])
 end
+
+procedure test28()
+   local c
+   c := load("kwds") | stop("Couldn't load kwds.icn")
+   @c
+end
