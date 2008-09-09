@@ -188,32 +188,30 @@ struct b_cset  k_letters = {
  */
 
 
-struct descrip kywd_dmp = {D_Integer};	/* &dump */
-
-struct descrip nullptr =
-   {F_Ptr | F_Nqual};	                /* descriptor with null block pointer */
-struct descrip trashcan;		/* descriptor that is never read */
+struct descrip kywd_dmp;               	/* &dump */
 
 /*
- * Various constant descriptors.
+ * Various constant descriptors, initialised in init.r
  */
 
+struct descrip nullptr;                 /* descriptor with null block pointer */
+struct descrip trashcan;		/* descriptor that is never read */
 struct descrip blank; 			/* one-character blank string */
 struct descrip emptystr; 		/* zero-length empty string */
 struct descrip lcase;			/* string of lowercase letters */
 struct descrip letr;			/* "r" */
-struct descrip nulldesc = {D_Null};	/* null value */
-struct descrip onedesc = {D_Integer};	/* integer 1 */
+struct descrip nulldesc;           	/* null value */
+struct descrip onedesc;              	/* integer 1 */
 struct descrip ucase;			/* string of uppercase letters */
-struct descrip zerodesc = {D_Integer};	/* integer 0 */
-struct descrip minusonedesc = {D_Integer};	/* integer -1 */
-
+struct descrip zerodesc;              	/* integer 0 */
+struct descrip minusonedesc;           	/* integer -1 */
 /*
  * Descriptors used by event monitoring.
  */
-struct descrip csetdesc = {D_Cset};
+struct descrip csetdesc;
 struct descrip eventdesc;
-struct descrip rzerodesc = {D_Real};
+struct descrip rzerodesc;
+
 /*
  *  Real block needed for event monitoring.
  */

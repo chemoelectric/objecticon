@@ -206,26 +206,26 @@ void icon_init(char *name)
      * some compilers).					[[I?]]
      */
 
-    StrLen(blank) = 1;
-    StrLoc(blank) = " ";
-    StrLen(emptystr) = 0;
-    StrLoc(emptystr) = "";
-    BlkLoc(nullptr) = (union block *)NULL;
-    StrLen(lcase) = 26;
-    StrLoc(lcase) = "abcdefghijklmnopqrstuvwxyz";
-    StrLen(letr) = 1;
-    StrLoc(letr) = "r";
-    IntVal(nulldesc) = 0;
-    IntVal(zerodesc) = 0;
-    IntVal(onedesc) = 1;
-    IntVal(minusonedesc) = -1;
-    StrLen(ucase) = 26;
-    StrLoc(ucase) = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    MakeStr(" ", 1, &blank);
+    MakeStr("", 0, &emptystr);
+    MakeStr("abcdefghijklmnopqrstuvwxyz", 26, &lcase);
+    MakeStr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 26, &ucase);
+    MakeStr("r", 1, &letr);
+    MakeInt(0, &zerodesc);
+    MakeInt(1, &onedesc);
+    MakeInt(-1, &minusonedesc);
+    MakeInt(0, &kywd_dmp);
 
-    /*
-     *  Initialization needed for event monitoring
-     */
+    nullptr.dword = F_Ptr | F_Nqual;
+    BlkLoc(nullptr) = 0;
+
+    nulldesc.dword = D_Null;
+    IntVal(nulldesc) = 0;
+
+    csetdesc.dword = D_Cset;
     BlkLoc(csetdesc) = (union block *)&fullcs;
+
+    rzerodesc.dword = D_Real;
     BlkLoc(rzerodesc) = (union block *)&realzero;
 
     maps2 = nulldesc;
@@ -766,10 +766,12 @@ int pstrnmcmp(a,b)
 struct b_coexpr *initprogram(word icodesize, word stacksize,
 			     word stringsiz, word blocksiz)
 {
-    struct b_coexpr *coexp = alccoexp(icodesize, stacksize);
-    struct progstate *pstate = NULL;
-    if (coexp == NULL) return NULL;
+    struct b_coexpr *coexp;
+    struct progstate *pstate;
+
+    MemProtect(coexp = alccoexp(icodesize, stacksize));
     pstate = coexp->program;
+
     /*
      * Initialize values.
      */
@@ -902,7 +904,7 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     /*
      * Allocate memory for icode and the struct that describes it
      */
-    MemProtect(coexp = initprogram(hdr.hsize, stk, ss, bs));
+    coexp = initprogram(hdr.hsize, stk, ss, bs);
 
     pstate = coexp->program;
     pstate->K_current.dword = D_Coexpr;
