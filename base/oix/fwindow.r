@@ -50,7 +50,7 @@ static struct sdescrip wclassname = {15, "graphics.Window"};
 
 static struct sdescrip wbpf = {3, "wbp"};
 
-#begdef StaticWindowParam(p, w)
+#begdef WindowStaticParam(p, w)
 wbp w;
 dptr w##_dptr;
 static struct inline_field_cache w##_ic;
@@ -69,18 +69,18 @@ if (ISCLOSED(w))
     runerr(142, p);
 #enddef
 
-#begdef WindowParam(p, w)
+#begdef WindowSelfParam(w)
 wbp w;
 dptr w##_dptr;
 static struct inline_field_cache w##_ic;
-w##_dptr = c_get_instance_data(&p, (dptr)&wbpf, &w##_ic);
+w##_dptr = c_get_instance_data(&self, (dptr)&wbpf, &w##_ic);
 if (!w##_dptr)
     runerr(207,*(dptr)&wbpf);
 (w) = (wbp)IntVal(*w##_dptr);
 if (!(w))
-    runerr(142, p);
+    runerr(142, self);
 if (ISCLOSED(w))
-    runerr(142, p);
+    runerr(142, self);
 #enddef
 
 
@@ -88,7 +88,7 @@ function{1} graphics_Window_alert(self, volume)
    if !def:C_integer(volume, 0) then
       runerr(101, volume)
    body {
-       WindowParam(self, w);
+       WindowSelfParam(w);
        walert(w, volume);
        return nulldesc;
    }
@@ -99,7 +99,7 @@ function{0,1} graphics_Window_bg(self, colr)
       char sbuf1[MaxCvtLen];
       int len;
       tended char *tmp;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       /*
        * If there is an argument we are setting by either a mutable
@@ -133,7 +133,7 @@ function{1} graphics_Window_clip(self, argv[argc])
       int r;
       C_integer x, y, width, height;
       wcp wc;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       wc = w->context;
 
@@ -163,7 +163,7 @@ function{1} graphics_Window_clone_impl(self, argv[argc])
        int n;
        tended struct descrip sbuf, sbuf2;
        char answer[128];
-       WindowParam(self, w);
+       WindowSelfParam(w);
 
        MemProtect(w2 = alc_wbinding());
        w2->window = w->window;
@@ -191,7 +191,7 @@ function{0,1} graphics_Window_color(self, argv[argc])
       C_integer n;
       char *colorname, *srcname;
       tended char *tmp;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       if (argc == 0) runerr(101);
 
@@ -241,7 +241,7 @@ function{0,1} graphics_Window_color_value(self, k)
       long r, g, b, a = 65535;
       tended char *s;
       char tmp[32], *t;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       if (is:null(k))
           runerr(103);
@@ -275,13 +275,13 @@ function{0,1} graphics_Window_copy_area(src, dest, argv[argc])
       wbp w, w2;
 
       {
-          StaticWindowParam(src, tmp);
+          WindowStaticParam(src, tmp);
           w = tmp;
       }
       if (is:null(dest))
           w2 = w;
       else {
-          StaticWindowParam(dest, tmp);
+          WindowStaticParam(dest, tmp);
           w2 = tmp;
       }
 
@@ -316,11 +316,11 @@ function{0,1} graphics_Window_couple_impl(win, win2)
       wsp ws;
 
       {
-          StaticWindowParam(win, tmp);
+          WindowStaticParam(win, tmp);
           wb = tmp;
       }
       {
-          StaticWindowParam(win2, tmp);
+          WindowStaticParam(win2, tmp);
           wb2 = tmp;
       }
 
@@ -353,7 +353,7 @@ function{1} graphics_Window_draw_arc(self, argv[argc])
       C_integer x, y, width, height;
       double a1, a2;
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       j = 0;
       for (i = 0; i < argc || i == 0; i += 6) {
@@ -423,7 +423,7 @@ end
 function{1} graphics_Window_draw_circle(self, argv[argc])
    body {
       int r;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       r = docircles(w, argc, argv, 0);
       if (r < 0)
@@ -440,7 +440,7 @@ function{1} graphics_Window_draw_curve(self, argv[argc])
       int i, n, closed = 0;
       C_integer dx, dy, x0, y0, xN, yN;
       XPoint *points;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       CheckArgMultipleOf(2);
 
@@ -502,7 +502,7 @@ function{0,1} graphics_Window_draw_image(self, argv[argc])
       unsigned char *s, *t, *z;
       struct descrip d;
       struct palentry *e;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       /*
        * X or y can be defaulted but s is required.
@@ -620,7 +620,7 @@ function{1} graphics_Window_draw_line(self, argv[argc])
       XPoint points[MAXXOBJS];
       int dx, dy;
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       CheckArgMultipleOf(2);
 
@@ -650,7 +650,7 @@ function{1} graphics_Window_draw_point(self, argv[argc])
       XPoint points[MAXXOBJS];
       int dx, dy;
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
       CheckArgMultipleOf(2);
 
       dx = w->context->dx;
@@ -677,7 +677,7 @@ function{1} graphics_Window_draw_polygon(self, argv[argc])
       int i, j, n, base, dx, dy;
       XPoint points[MAXXOBJS];
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
       CheckArgMultipleOf(2);
 
       dx = w->context->dx;
@@ -718,7 +718,7 @@ function{1} graphics_Window_draw_rectangle(self, argv[argc])
       XRectangle recs[MAXXOBJS];
       C_integer x, y, width, height;
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       j = 0;
 
@@ -748,7 +748,7 @@ function{1} graphics_Window_draw_segment(self, argv[argc])
       int i, j, n, dx, dy;
       XSegment segs[MAXXOBJS];
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
       CheckArgMultipleOf(4);
 
       dx = w->context->dx;
@@ -780,7 +780,7 @@ function{1} graphics_Window_draw_string(self, argv[argc])
       char *s;
       int dx, dy;
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
       CheckArgMultipleOf(3);
 
       for(i=0; i < n; i++) {
@@ -804,7 +804,7 @@ function{1} graphics_Window_erase_area(self, argv[argc])
    body {
       int i, r;
       C_integer x, y, width, height;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       for (i = 0; i < argc || i == 0; i += 4) {
           r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
@@ -824,7 +824,7 @@ function{1} graphics_Window_event(self, timeout)
    body {
       C_integer i;
       tended struct descrip d;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       d = create_list(8);
       i = wgetevent2(w, &d, timeout);
@@ -848,7 +848,7 @@ function{0,1} graphics_Window_pending(self, argv[argc])
    body {
       wsp ws;
       int i;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       ws = w->window;
       wsync(w);
@@ -880,7 +880,7 @@ function{0,1} graphics_Window_fg(self, colr)
       int len;
       tended char *tmp;
       char *temp;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       /*
        * If there is a (non-window) argument we are setting by
@@ -919,7 +919,7 @@ function{1} graphics_Window_fill_arc(self, argv[argc])
       C_integer x, y, width, height;
       double a1, a2;
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       j = 0;
       for (i = 0; i < argc || i == 0; i += 6) {
@@ -983,7 +983,7 @@ end
 function{1} graphics_Window_fill_circle(self, argv[argc])
    body {
       int r;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       r = docircles(w, argc, argv, 1);
       if (r < 0)
@@ -1000,7 +1000,7 @@ function{1} graphics_Window_fill_polygon(self, argv[argc])
       int i, j, n;
       XPoint *points;
       int dx, dy;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       CheckArgMultipleOf(2);
 
@@ -1032,7 +1032,7 @@ function{1} graphics_Window_fill_rectangle(self, argv[argc])
       XRectangle recs[MAXXOBJS];
       C_integer x, y, width, height;
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       j = 0;
 
@@ -1062,7 +1062,7 @@ function{0,1} graphics_Window_font(self, f)
       tended char *tmp;
       int len;
       char buf[MaxCvtLen];
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       if (!is:null(f)) {
           if (!cnv:C_string(f, tmp))
@@ -1082,7 +1082,7 @@ function{1} graphics_Window_free_color(self, argv[argc])
       int i;
       C_integer n;
       tended char *s;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       if (argc == 0)
           runerr(103);
@@ -1106,7 +1106,7 @@ end
 
 function{1} graphics_Window_lower(self)
    body {
-      WindowParam(self, w);
+      WindowSelfParam(w);
       lowerWindow(w);
       return self;
    }
@@ -1116,7 +1116,7 @@ end
 function{0,1} graphics_Window_new_color(self, argv[argc])
    body {
       int rv;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       if (mutable_color(w, argv, argc, &rv) == Failed) 
           fail;
@@ -1189,7 +1189,7 @@ function{0,1} graphics_Window_palette_key(self, s1, s2)
       tended char *s;
       long r, g, b, a;
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       p = palnum(&s1);
       if (p == -1)
@@ -1215,7 +1215,7 @@ function{1} graphics_Window_pattern(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       switch (SetPattern(w, StrLoc(s), StrLen(s))) {
           case Error:
@@ -1235,7 +1235,7 @@ function{3} graphics_Window_pixel(self, argv[argc])
       int slen, r;
       tended struct descrip lastval;
       char strout[50];
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
       if (r >= 0)
@@ -1317,7 +1317,7 @@ end
 
 function{1} graphics_Window_raise(self)
    body {
-      WindowParam(self, w);
+      WindowSelfParam(w);
       raiseWindow(w);
       return self;
    }
@@ -1331,7 +1331,7 @@ function{0,1} graphics_Window_read_image(self, argv[argc])
       C_integer x, y;
       int p, r;
       struct imgdata imd;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       if (argc == 0)
           runerr(103,nulldesc);
@@ -1408,7 +1408,7 @@ function{1} graphics_Window_text_width(self, s)
       runerr(103, s)
    body {
       C_integer i;
-      WindowParam(self, w);
+      WindowSelfParam(w);
       i = TEXTWIDTH(w, StrLoc(s), StrLen(s));
       return C_integer i;
    }
@@ -1418,7 +1418,7 @@ end
 
 function{1} graphics_Window_uncouple(self)
    body {
-      WindowParam(self, w);
+      WindowSelfParam(w);
       *w_dptr = zerodesc;
       free_binding(w);
       return self;
@@ -1433,7 +1433,7 @@ function{*} graphics_Window_attrib(self, argv[argc])
       char answer[4096];
       int  pass, config = 0;
 
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       wsave = w;
       /*
@@ -1566,7 +1566,7 @@ function{0,1} graphics_Window_wdefault(self, prog, opt)
    body {
       long l;
       char sbuf1[MaxCvtLen];
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       if (getdefault(w, prog, opt, sbuf1) == Failed) 
           fail;
@@ -1578,7 +1578,7 @@ end
 
 function{1} graphics_Window_flush(self)
    body {
-      WindowParam(self, w);
+      WindowSelfParam(w);
       wflush(w);
       return self;
    }
@@ -1590,7 +1590,7 @@ function{0,1} graphics_Window_write_image(self, s, argv[argc])
    body {
       int r;
       C_integer x, y, width, height;
-      WindowParam(self, w);
+      WindowSelfParam(w);
 
       r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
       if (r >= 0)
@@ -1644,7 +1644,7 @@ function{1} graphics_Window_own_selection(self, selection, callback)
    if !is:proc(callback) then
       runerr(106,callback);
    body {
-       WindowParam(self, w);
+       WindowSelfParam(w);
        w->window->selectionproc = callback;
        ownselection(w, selection);
        return self;
@@ -1658,7 +1658,7 @@ function{0,1} graphics_Window_get_selection_content(self, selection,target_type)
       runerr(103,target_type)
    body {
        tended struct descrip s;
-       WindowParam(self, w);
+       WindowSelfParam(w);
        s = getselectioncontent(w, selection,target_type);
        if (is:null(s))
            fail;
@@ -1668,7 +1668,7 @@ end
 
 function{1} graphics_Window_close(self)
    body {
-     WindowParam(self, w);
+     WindowSelfParam(w);
 
      *w_dptr = zerodesc;
      SETCLOSED(w);

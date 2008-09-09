@@ -59,16 +59,16 @@ static int num_resources = 0;
 
 static struct sdescrip idf = {2, "id"};
 
-#begdef IdParam(p, m)
+#begdef IdSelfParam(m)
 int m;
 dptr m##_dptr;
 static struct inline_field_cache m##_ic;
-m##_dptr = c_get_instance_data(&p, (dptr)&idf, &m##_ic);
+m##_dptr = c_get_instance_data(&self, (dptr)&idf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&idf);
 (m) = IntVal(*m##_dptr);
 if (m < 0)
-    runerr(205, p);
+    runerr(205, self);
 #enddef
 
 function{0,1} ipc_Shm_open_public_impl(key)
@@ -198,7 +198,7 @@ end
 function{0} ipc_Shm_remove(self)
     body {
        shm_top *tp;
-       IdParam(self, top_id);
+       IdSelfParam(top_id);
 
        tp = (shm_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -225,7 +225,7 @@ function{1} ipc_Shm_set_value_impl(self, str)
        int size;
        struct sembuf p_buf;
        struct shmid_ds shminfo;
-       IdParam(self, top_id);
+       IdSelfParam(top_id);
 
        tp = (shm_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -285,7 +285,7 @@ function{1} ipc_Shm_get_value_impl(self)
        shm_top *tp;
        char *data;
        struct sembuf p_buf;
-       IdParam(self, top_id);
+       IdSelfParam(top_id);
 
        tp = (shm_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -389,7 +389,7 @@ function{1} ipc_Sem_set_value(self, val)
        runerr(101, val)
    body {
        semun arg;
-       IdParam(self, sem_id);
+       IdSelfParam(sem_id);
 
        arg.val = val;
        if (semctl(sem_id, 0, SETVAL, arg) == -1)
@@ -402,7 +402,7 @@ function{1} ipc_Sem_get_value(self)
    body {
        int ret;
        semun arg;
-       IdParam(self, sem_id);
+       IdSelfParam(sem_id);
 
        ret = semctl(sem_id, 0, GETVAL, arg);
        if (ret == -1)
@@ -416,7 +416,7 @@ function{1} ipc_Sem_semop(self, n)
        runerr(101, n)
    body {
        struct sembuf p_buf;
-       IdParam(self, sem_id);
+       IdSelfParam(sem_id);
        p_buf.sem_num = 0;
        p_buf.sem_op = n;
        p_buf.sem_flg = SEM_UNDO;
@@ -431,7 +431,7 @@ function{1} ipc_Sem_semop_nowait(self, n)
        runerr(101, n)
    body {
        struct sembuf p_buf;
-       IdParam(self, sem_id);
+       IdSelfParam(sem_id);
        p_buf.sem_num = 0;
        p_buf.sem_op = n;
        p_buf.sem_flg = SEM_UNDO | IPC_NOWAIT;
@@ -450,7 +450,7 @@ end
 
 function{1} ipc_Sem_remove(self)
    body {
-       IdParam(self, sem_id);
+       IdSelfParam(sem_id);
        semctl(sem_id, -1, IPC_RMID, 0);
        remove_resource(sem_id, 1);
        *sem_id_dptr = minusonedesc;
@@ -571,7 +571,7 @@ end
 function{1} ipc_Msg_remove(self)
     body {
         msg_top *tp;
-        IdParam(self, top_id);
+        IdSelfParam(top_id);
 
         tp = (msg_top*)shmat(top_id, 0, 0);
         if ((void*)tp == (void*)-1)
@@ -599,7 +599,7 @@ function{1} ipc_Msg_send_impl(self, str)
        msgblock mb;
        struct sembuf p_buf;
        int size, blocks, i, residue;
-       IdParam(self, top_id);
+       IdSelfParam(top_id);
 
        tp = (msg_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -654,7 +654,7 @@ function{1} ipc_Msg_receive_impl(self)
        msghead mh;
        msgblock mb;
        char *data, *p;
-       IdParam(self, top_id);
+       IdSelfParam(top_id);
 
        tp = (msg_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)
@@ -710,7 +710,7 @@ function{0,1} ipc_Msg_attempt_impl(self)
        msghead mh;
        msgblock mb;
        char *data, *p;
-       IdParam(self, top_id);
+       IdSelfParam(top_id);
 
        tp = (msg_top*)shmat(top_id, 0, 0);
        if ((void*)tp == (void*)-1)

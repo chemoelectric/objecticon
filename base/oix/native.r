@@ -547,7 +547,7 @@ static struct sdescrip fdf = {2, "fd"};
 static struct sdescrip f_eoff = {5, "f_eof"};
 static struct sdescrip dsclassname = {13, "io.DescStream"};
 
-#begdef StaticFdParam(p, m)
+#begdef FdStaticParam(p, m)
 int m;
 dptr m##_dptr;
 static struct inline_field_cache m##_ic;
@@ -564,16 +564,16 @@ if (m < 0)
     runerr(205, p);
 #enddef
 
-#begdef FdParam(p, m)
+#begdef FdSelfParam(m)
 int m;
 dptr m##_dptr;
 static struct inline_field_cache m##_ic;
-m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);
+m##_dptr = c_get_instance_data(&self, (dptr)&fdf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&fdf);
 (m) = IntVal(*m##_dptr);
 if (m < 0)
-    runerr(205, p);
+    runerr(205, self);
 #enddef
 
 function{0,1} io_FileStream_open_impl(path, flags, mode)
@@ -607,7 +607,7 @@ function{0,1} io_FileStream_in(self, i)
        tended struct descrip s;
        dptr eof;
        static struct inline_field_cache eof_ic;
-       FdParam(self, fd);
+       FdSelfParam(fd);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
        if (!eof)
@@ -657,7 +657,7 @@ function{0,1} io_FileStream_out(self, s)
       runerr(103, s)
    body {
        int rc;
-       FdParam(self, fd);
+       FdSelfParam(fd);
        if ((rc = write(fd, StrLoc(s), StrLen(s))) < 0) {
            on_error();
            fail;
@@ -668,7 +668,7 @@ end
 
 function{0,1} io_FileStream_close(self)
    body {
-       FdParam(self, fd);
+       FdSelfParam(fd);
        if (close(fd) < 0) {
            on_error();
            fail;
@@ -682,7 +682,7 @@ function{0,1} io_FileStream_truncate(self, len)
    if !cnv:C_integer(len) then
       runerr(101, len)
    body {
-       FdParam(self, fd);
+       FdSelfParam(fd);
        if (lseek(fd, len, SEEK_SET) < 0) {
            on_error();
            fail;
@@ -699,7 +699,7 @@ end
 function{0,1} io_FileStream_stat_impl(self)
    body {
        struct stat st;
-       FdParam(self, fd);
+       FdSelfParam(fd);
        if (fstat(fd, &st) < 0) {
            on_error();
            fail;
@@ -713,7 +713,7 @@ function{0,1} io_FileStream_seek(self, offset)
       runerr(101, offset)
    body {
        int whence, rc;
-       FdParam(self, fd);
+       FdSelfParam(fd);
        if (offset > 0) {
            --offset;
            whence = SEEK_SET;
@@ -730,7 +730,7 @@ end
 function{0,1} io_FileStream_tell(self)
    body {
        int rc;
-       FdParam(self, fd);
+       FdSelfParam(fd);
        if ((rc = lseek(fd, 0, SEEK_CUR)) < 0) {
            on_error();
            fail;
@@ -747,7 +747,7 @@ function{0,1} io_SocketStream_in(self, i)
        tended struct descrip s;
        dptr eof;
        static struct inline_field_cache eof_ic;
-       FdParam(self, fd);
+       FdSelfParam(fd);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
        if (!eof)
@@ -816,7 +816,7 @@ function{0,1} io_SocketStream_out(self, s)
       runerr(103, s)
    body {
        int rc;
-       FdParam(self, fd);
+       FdSelfParam(fd);
        /* 
         * If possible use MSG_NOSIGNAL so that we get the EPIPE error
         * code, rather than the SIGPIPE signal.
@@ -836,7 +836,7 @@ end
 
 function{0,1} io_SocketStream_close(self)
    body {
-       FdParam(self, fd);
+       FdSelfParam(fd);
        if (close(fd) < 0) {
            on_error();
            fail;
@@ -935,7 +935,7 @@ function{0,1} io_SocketStream_connect(self, addr)
    body {
        struct sockaddr *sa;
        int len;
-       FdParam(self, fd);
+       FdSelfParam(fd);
 
        sa = parse_sockaddr(addr, &len);
        if (!sa) {
@@ -960,7 +960,7 @@ function{0,1} io_SocketStream_bind(self, addr)
        tended char *addrstr;
        struct sockaddr *sa;
        int len;
-       FdParam(self, fd);
+       FdSelfParam(fd);
 
        /*
         * get a C string for the address.
@@ -988,7 +988,7 @@ function{0,1} io_SocketStream_listen(self, backlog)
       runerr(101, backlog)
 
    body {
-       FdParam(self, fd);
+       FdSelfParam(fd);
        if (listen(fd, backlog) < 0) {
            on_error();
            fail;
@@ -1000,7 +1000,7 @@ end
 function{0,1} io_SocketStream_accept_impl(self)
    body {
        SOCKET sockfd;
-       FdParam(self, fd);
+       FdSelfParam(fd);
 
        if ((sockfd = accept(fd, 0, 0)) < 0) {
            on_error();
@@ -1025,7 +1025,7 @@ end
             runerr(108, l);
         tmpl = create_list(BlkLoc(l)->list.size);
         while (c_get(&BlkLoc(l)->list, &e)) {
-            StaticFdParam(e, fd);
+            FdStaticParam(e, fd);
             c_put(&tmpl, &e);
             FD_SET(fd, &s);
         }
@@ -1039,7 +1039,7 @@ end
 
     if (!is:null(l)) {
         while (c_get(&BlkLoc(tmpl)->list, &e)) {
-            FdParam(e, fd);
+            FdStaticParam(e, fd);
             if (FD_ISSET(fd, &s)) {
                 c_put(&l, &e);
                 ++count;
@@ -1113,7 +1113,7 @@ function{0,1} io_DescStream_poll(a[n])
 
        for (i = 0; i < nfds; ++i) {
            int events;
-           StaticFdParam(a[2 * i], fd);
+           FdStaticParam(a[2 * i], fd);
            if (!cnv:C_integer(a[2 * i + 1], events))
                runerr(101, a[2 * i + 1]);
            ufds[i].fd = fd;
@@ -1154,7 +1154,7 @@ function{0,1} io_DescStream_flag(self, on, off)
 
     body {
         int i;
-        FdParam(self, fd);
+        FdSelfParam(fd);
 
         if ((i = fcntl(fd, F_GETFL, 0)) < 0) {
            on_error();
@@ -1174,16 +1174,16 @@ end
 
 static struct sdescrip ddf = {2, "dd"};
 
-#begdef DirParam(p, m)
+#begdef DirSelfParam(m)
 DIR *m;
 dptr m##_dptr;
 static struct inline_field_cache m##_ic;
-m##_dptr = c_get_instance_data(&p, (dptr)&ddf, &m##_ic);
+m##_dptr = c_get_instance_data(&self, (dptr)&ddf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ddf);
 (m) = (DIR*)IntVal(*m##_dptr);
 if (!(m))
-    runerr(205, p);
+    runerr(205, self);
 #enddef
 
 function{0,1} io_DirStream_open_impl(path)
@@ -1207,7 +1207,7 @@ function{0,1} io_DirStream_read_impl(self)
        struct dirent *de;
        static struct inline_field_cache eof_ic;
        dptr eof;
-       DirParam(self, dd);
+       DirSelfParam(dd);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
        if (!eof)
@@ -1230,7 +1230,7 @@ end
 
 function{0,1} io_DirStream_close(self)
    body {
-       DirParam(self, dd);
+       DirSelfParam(dd);
        if ((closedir(dd)) < 0) {
            on_error();
            fail;
@@ -1306,7 +1306,7 @@ function{0,1} io_ProgStream_close(self)
    body {
        dptr pid;
        static struct inline_field_cache pid_ic;
-       FdParam(self, fd);
+       FdSelfParam(fd);
 
        pid = c_get_instance_data(&self, (dptr)&pidf, &pid_ic);
        if (!pid)
@@ -1640,21 +1640,21 @@ struct ramstream {
     char *data;
 };
 
-#begdef PtrParam(p, m)
+#begdef PtrSelfParam(m)
 struct ramstream *m;
 dptr m##_dptr;
 static struct inline_field_cache m##_ic;
-m##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &m##_ic);
+m##_dptr = c_get_instance_data(&self, (dptr)&ptrf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ptrf);
 (m) = (struct ramstream*)IntVal(*m##_dptr);
 if (!(m))
-    runerr(205, p);
+    runerr(205, self);
 #enddef
 
 function{1} io_RamStream_close(self)
    body {
-       PtrParam(self, p);
+       PtrSelfParam(p);
        free(p->data);
        free(p);
        *p_dptr = zerodesc;
@@ -1668,7 +1668,7 @@ function{0,1} io_RamStream_in(self, i)
    body {
        dptr eof;
        static struct inline_field_cache eof_ic;
-       PtrParam(self, p);
+       PtrSelfParam(p);
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
        if (!eof)
@@ -1712,7 +1712,7 @@ function{1} io_RamStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-       PtrParam(self, p);
+       PtrSelfParam(p);
        if (p->pos + StrLen(s) > p->avail) {
            p->avail = 2 * (p->pos + StrLen(s));
            MemProtect(p->data = realloc(p->data, p->avail));
@@ -1734,7 +1734,7 @@ function{0,1} io_RamStream_seek(self, offset)
    if !cnv:C_integer(offset) then
       runerr(101, offset)
    body {
-       PtrParam(self, p);
+       PtrSelfParam(p);
        if (offset > 0)
            p->pos = offset - 1;
        else {
@@ -1750,7 +1750,7 @@ end
 
 function{1} io_RamStream_tell(self)
    body {
-       PtrParam(self, p);
+       PtrSelfParam(p);
        return C_integer(p->pos + 1);
    }
 end
@@ -1759,7 +1759,7 @@ function{1} io_RamStream_truncate(self, len)
    if !cnv:C_integer(len) then
       runerr(101, len)
    body {
-       PtrParam(self, p);
+       PtrSelfParam(p);
        p->pos = len;
        p->avail = len + 1024;
        MemProtect(p->data = realloc(p->data, p->avail));
@@ -1772,7 +1772,7 @@ end
 
 function{1} io_RamStream_str(self)
    body {
-       PtrParam(self, p);
+       PtrSelfParam(p);
        return bytes2string(p->data, p->size);
    }
 end

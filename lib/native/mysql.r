@@ -5,28 +5,28 @@ static struct descrip field_to_list(MYSQL_FIELD *field);
 
 static struct sdescrip ptrf = {3, "ptr"};
 
-#begdef MySqlParam(p, m)
+#begdef MySqlSelfParam(m)
 MYSQL *m;
 dptr m##_dptr;
 static struct inline_field_cache m##_ic;
-m##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &m##_ic);
+m##_dptr = c_get_instance_data(&self, (dptr)&ptrf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ptrf);
 (m) = (MYSQL*)IntVal(*m##_dptr);
 if (!(m))
-    runerr(205, p);
+    runerr(205, self);
 #enddef
 
-#begdef MySqlResParam(p, m)
+#begdef MySqlResSelfParam(m)
 MYSQL_RES *m;
 dptr m##_dptr;
 static struct inline_field_cache m##_ic;
-m##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &m##_ic);
+m##_dptr = c_get_instance_data(&self, (dptr)&ptrf, &m##_ic);
 if (!m##_dptr)
     runerr(207,*(dptr)&ptrf);
 (m) = (MYSQL_RES*)IntVal(*m##_dptr);
 if (!(m))
-    runerr(205, p);
+    runerr(205, self);
 #enddef
 
 static void on_mysql_error(MYSQL *p)
@@ -57,7 +57,7 @@ end
 
 function{1} mysql_MySql_close(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       mysql_close(mysql);
       *mysql_dptr = zerodesc;
       return nulldesc;
@@ -69,7 +69,7 @@ function{0,1} mysql_MySql_set_server_option(self, opt)
        runerr(101, opt)
    body {
       enum enum_mysql_set_option option;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       option = (enum enum_mysql_set_option)opt;
       if (mysql_set_server_option(mysql, option)) {
           on_mysql_error(mysql);
@@ -86,7 +86,7 @@ function{0,1} mysql_MySql_options(self, option, arg)
    body {
       tended char *c_arg;
       unsigned int int_arg;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
 
       switch (option) {
           /*
@@ -145,7 +145,7 @@ end
 
 function{0,1} mysql_MySql_ping(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_ping(mysql)) {
           on_mysql_error(mysql);
           fail;
@@ -160,7 +160,7 @@ function{1} mysql_MySql_esc(self, str)
    body {
       char *to;
       unsigned long to_len;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       MemProtect(to = malloc(2 * StrLen(str) + 1));
       to_len = mysql_real_escape_string(mysql, to, StrLoc(str), StrLen(str));
       result = bytes2string(to, to_len);
@@ -173,7 +173,7 @@ function{0,1} mysql_MySql_select_db(self, db)
    if !cnv:C_string(db) then
        runerr(103, db)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_select_db(mysql, db)) {
           on_mysql_error(mysql);
           fail;
@@ -184,7 +184,7 @@ end
 
 function{0,1} mysql_MySql_shutdown(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_shutdown(mysql)) {
           on_mysql_error(mysql);
           fail;
@@ -198,7 +198,7 @@ function{0,1} mysql_MySql_change_user(self, user, passwd, db)
       tended char *c_user;
       tended char *c_passwd;
       tended char *c_db;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
 
       if (is:null(user))
           c_user = NULL;
@@ -225,14 +225,14 @@ end
 
 function{1} mysql_MySql_get_character_set_name(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return cstr2string((char*)mysql_character_set_name(mysql));
    }
 end
 
 function{0,1} mysql_MySql_dump_debug_info(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_dump_debug_info(mysql)) {
           on_mysql_error(mysql);
           fail;
@@ -255,42 +255,42 @@ end
 
 function{1} mysql_MySql_get_host_info(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return cstr2string((char*)mysql_get_host_info(mysql));
    }
 end
 
 function{1} mysql_MySql_get_sqlstate(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return cstr2string((char*)mysql_sqlstate(mysql));
    }
 end
 
 function{1} mysql_MySql_get_proto_info(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return C_integer mysql_get_proto_info(mysql);
    }
 end
 
 function{1} mysql_MySql_get_server_info(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return cstr2string((char*)mysql_get_server_info(mysql));
    }
 end
 
 function{1} mysql_MySql_get_server_version(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return C_integer mysql_get_server_version(mysql);
    }
 end
 
 function{1} mysql_MySql_get_info(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return cstr2string((char*)mysql_info(mysql));
    }
 end
@@ -298,7 +298,7 @@ end
 function{0,1} mysql_MySql_get_stat(self)
    body {
       char *s;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       s = (char*)mysql_stat(mysql);
       if (s == NULL) {
           on_mysql_error(mysql);
@@ -310,7 +310,7 @@ end
 
 function{0,1} mysql_MySql_commit(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_commit(mysql)) {
           on_mysql_error(mysql);
           fail;
@@ -321,7 +321,7 @@ end
 
 function{0,1} mysql_MySql_rollback(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_rollback(mysql)) {
           on_mysql_error(mysql);
           fail;
@@ -334,7 +334,7 @@ function{0,1} mysql_MySql_set_autocommit_impl(self, mode)
    if !cnv:C_integer(mode) then
        runerr(101, mode)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_autocommit(mysql, (my_bool)mode)) {
           on_mysql_error(mysql);
           fail;
@@ -345,7 +345,7 @@ end
 
 function{0,1} mysql_MySql_more_results(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_more_results(mysql))
           return nulldesc;
       else {
@@ -357,7 +357,7 @@ end
 
 function{0,1} mysql_MySql_next_result(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_next_result(mysql)) {
           on_mysql_error(mysql);
           fail;
@@ -368,7 +368,7 @@ end
 
 function{1} mysql_MySql_get_affected_rows(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return C_integer mysql_affected_rows(mysql);
    }
 end
@@ -383,7 +383,7 @@ function{0,1} mysql_MySql_connect(self, host, user, passwd, db,
       unsigned int c_port;
       tended char *c_unix_socket;
       unsigned int c_client_flag;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
 
       if (is:null(host))
           c_host = NULL;
@@ -437,7 +437,7 @@ function{0,1} mysql_MySql_ssl_set(self, key, cert, ca, capath, cipher)
       tended char *c_ca;
       tended char *c_capath;
       tended char *c_cipher;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
 
       if (is:null(key))
           c_key = NULL;
@@ -471,28 +471,28 @@ end
 
 function{1} mysql_MySql_get_error(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return cstr2string((char*)mysql_error(mysql));
    }
 end
 
 function{1} mysql_MySql_get_errno(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return C_integer mysql_errno(mysql);
    }
 end
 
 function{1} mysql_MySql_get_thread_id(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return C_integer mysql_thread_id(mysql);
    }
 end
 
 function{1} mysql_MySql_get_warning_count(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return C_integer mysql_warning_count(mysql);
    }
 end
@@ -501,7 +501,7 @@ function{0,1} mysql_MySql_query(self, q)
    if !cnv:string(q) then
        runerr(103, q)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_real_query(mysql, StrLoc(q), StrLen(q))) {
           on_mysql_error(mysql);
           fail;
@@ -512,14 +512,14 @@ end
 
 function{1} mysql_MySql_get_field_count(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return C_integer mysql_field_count(mysql);
    }
 end
 
 function{1} mysql_MySql_get_insert_id(self)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       return C_integer mysql_insert_id(mysql);
    }
 end
@@ -528,7 +528,7 @@ function{0,1} mysql_MySql_kill(self, pid)
    if !cnv:C_integer(pid) then
        runerr(101, pid)
    body {
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       if (mysql_kill(mysql, pid)) {
           on_mysql_error(mysql);
           fail;
@@ -541,7 +541,7 @@ function{0,1} mysql_MySql_list_dbs_impl(self, wild)
    body {
       MYSQL_RES *res;
       tended char *c_wild;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
 
       if (is:null(wild))
           c_wild = NULL;
@@ -562,7 +562,7 @@ function{0,1} mysql_MySql_list_fields_impl(self, table, wild)
       MYSQL_RES *res;
       tended char *c_table;
       tended char *c_wild;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
 
       if (!cnv:C_string(table, c_table))
           runerr(103, table);
@@ -584,7 +584,7 @@ end
 function{0,1} mysql_MySql_list_processes_impl(self)
    body {
       MYSQL_RES *res;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
       res = mysql_list_processes(mysql);
       if (!res) {
           on_mysql_error(mysql);
@@ -598,7 +598,7 @@ function{0,1} mysql_MySql_list_tables_impl(self, wild)
    body {
       MYSQL_RES *res;
       tended char *c_wild;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
 
       if (is:null(wild))
           c_wild = NULL;
@@ -617,7 +617,7 @@ end
 function{0,1} mysql_MySql_use_result_impl(self)
    body {
       MYSQL_RES *res;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
 
       res = mysql_use_result(mysql);
       if (!res) {
@@ -631,7 +631,7 @@ end
 function{0,1} mysql_MySql_store_result_impl(self)
    body {
       MYSQL_RES *res;
-      MySqlParam(self, mysql);
+      MySqlSelfParam(mysql);
 
       res = mysql_store_result(mysql);
       if (!res) {
@@ -644,7 +644,7 @@ end
 
 function{1} mysql_MySqlRes_get_num_fields(self)
    body {
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        return C_integer mysql_num_fields(mysql_res);
    }
 end
@@ -652,7 +652,7 @@ end
 function{0,1} mysql_MySqlRes_fetch_field_impl(self)
    body {
        MYSQL_FIELD *field;
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        field = mysql_fetch_field(mysql_res);
        if (!field) {
            why("No more fields");
@@ -698,7 +698,7 @@ function{0,1} mysql_MySqlRes_fetch_field_direct_impl(self, fieldnr)
        runerr(101, fieldnr)
    body {
        MYSQL_FIELD *field;
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        field = mysql_fetch_field_direct(mysql_res, fieldnr);
        if (!field) {
            why("No more fields");
@@ -712,7 +712,7 @@ function{0,1} mysql_MySqlRes_fetch_fields_impl(self)
    body {
        MYSQL_FIELD *fields;
        int i, n;
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
 
        fields = mysql_fetch_fields(mysql_res);
        if (!fields) {
@@ -734,14 +734,14 @@ function{1} mysql_MySqlRes_field_seek(self, offset)
    if !cnv:C_integer(offset) then
        runerr(101, offset)
    body {
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        return C_integer mysql_field_seek(mysql_res, (MYSQL_FIELD_OFFSET)offset);
    }
 end
 
 function{1} mysql_MySqlRes_field_tell(self)
    body {
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        return C_integer mysql_field_tell(mysql_res);
    }
 end
@@ -750,7 +750,7 @@ function{0,1} mysql_MySqlRes_fetch_lengths(self)
    body {
        int i, n;
        unsigned long *lengths;
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        lengths = mysql_fetch_lengths(mysql_res);
        if (!lengths) {
            why("mysql_fetch_lengths returned null");
@@ -772,7 +772,7 @@ function{0,1} mysql_MySqlRes_fetch_row(self)
        int i, n;
        unsigned long *lengths;
        MYSQL_ROW row;
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        row = mysql_fetch_row(mysql_res);
        if (!row) {
            on_mysql_res_error(mysql_res);
@@ -798,14 +798,14 @@ function{1} mysql_MySqlRes_row_seek(self, offset)
    if !cnv:C_integer(offset) then
        runerr(101, offset)
    body {
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        return C_integer((long int)mysql_row_seek(mysql_res, (MYSQL_ROW_OFFSET)offset));
    }
 end
 
 function{1} mysql_MySqlRes_row_tell(self)
    body {
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        return C_integer((long int)mysql_row_tell(mysql_res));
    }
 end
@@ -814,7 +814,7 @@ function{1} mysql_MySqlRes_data_seek(self, offset)
    if !cnv:C_integer(offset) then
        runerr(101, offset)
    body {
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        mysql_data_seek(mysql_res, (my_ulonglong)offset);
        return nulldesc;
    }
@@ -822,14 +822,14 @@ end
 
 function{1} mysql_MySqlRes_get_num_rows(self)
    body {
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        return C_integer mysql_num_rows(mysql_res);
    }
 end
 
 function{1} mysql_MySqlRes_free(self)
    body {
-       MySqlResParam(self, mysql_res);
+       MySqlResSelfParam(mysql_res);
        mysql_free_result(mysql_res);
        *mysql_res_dptr = zerodesc;
        return nulldesc;
