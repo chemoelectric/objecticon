@@ -67,15 +67,15 @@ if (!(w) || ISCLOSED(w))
     runerr(142, p);
 #enddef
 
-#begdef WindowSelfParam(w)
-wbp w;
-dptr w##_dptr;
-static struct inline_field_cache w##_ic;
-w##_dptr = c_get_instance_data(&self, (dptr)&wbpf, &w##_ic);
-if (!w##_dptr)
+#begdef GetSelfW()
+wbp self_w;
+dptr self_w_dptr;
+static struct inline_field_cache self_w_ic;
+self_w_dptr = c_get_instance_data(&self, (dptr)&wbpf, &self_w_ic);
+if (!self_w_dptr)
     syserr("Missing wbp field");
-(w) = (wbp)IntVal(*w##_dptr);
-if (!(w) || ISCLOSED(w))
+self_w = (wbp)IntVal(*self_w_dptr);
+if (!self_w || ISCLOSED(self_w))
     runerr(142, self);
 #enddef
 
@@ -84,8 +84,8 @@ function{1} graphics_Window_alert(self, volume)
    if !def:C_integer(volume, 0) then
       runerr(101, volume)
    body {
-       WindowSelfParam(w);
-       walert(w, volume);
+       GetSelfW();
+       walert(self_w, volume);
        return nulldesc;
    }
 end
@@ -95,7 +95,7 @@ function{0,1} graphics_Window_bg(self, colr)
       char sbuf1[MaxCvtLen];
       int len;
       tended char *tmp;
-      WindowSelfParam(w);
+      GetSelfW();
 
       /*
        * If there is an argument we are setting by either a mutable
@@ -103,13 +103,13 @@ function{0,1} graphics_Window_bg(self, colr)
        */
       if (!is:null(colr)) {
           if (is:integer(colr)) {    /* mutable color or packed RGB */
-              if (isetbg(w, IntVal(colr)) == Failed) 
+              if (isetbg(self_w, IntVal(colr)) == Failed) 
                   fail;
           }
           else {
               if (!cnv:C_string(colr, tmp))
                   runerr(103, colr);
-              if(setbg(w, tmp) == Failed)
+              if(setbg(self_w, tmp) == Failed)
                   fail;
           }
       }
@@ -117,7 +117,7 @@ function{0,1} graphics_Window_bg(self, colr)
       /*
        * In any event, this function returns the current background color.
        */
-      getbg(w, sbuf1);
+      getbg(self_w, sbuf1);
       len = strlen(sbuf1);
       MemProtect(tmp = alcstr(sbuf1, len));
       return string(len, tmp);
@@ -129,24 +129,24 @@ function{1} graphics_Window_clip(self, argv[argc])
       int r;
       C_integer x, y, width, height;
       wcp wc;
-      WindowSelfParam(w);
+      GetSelfW();
 
-      wc = w->context;
+      wc = self_w->context;
 
       if (argc == 0) {
           wc->clipx = wc->clipy = 0;
           wc->clipw = wc->cliph = -1;
-          unsetclip(w);
+          unsetclip(self_w);
       }
       else {
-          r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
+          r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
           if (r >= 0)
               runerr(101, argv[r]);
           wc->clipx = x;
           wc->clipy = y;
           wc->clipw = width;
           wc->cliph = height;
-          setclip(w);
+          setclip(self_w);
       }
 
       return self;
@@ -159,12 +159,12 @@ function{1} graphics_Window_clone_impl(self, argv[argc])
        int n;
        tended struct descrip sbuf, sbuf2;
        char answer[128];
-       WindowSelfParam(w);
+       GetSelfW();
 
        MemProtect(w2 = alc_wbinding());
-       w2->window = w->window;
+       w2->window = self_w->window;
        w2->window->refcount++;
-       MemProtect(w2->context = clone_context(w));
+       MemProtect(w2->context = clone_context(self_w));
 
        for (n = 0; n < argc; n++) {
            if (!is:null(argv[n])) {
@@ -187,13 +187,13 @@ function{0,1} graphics_Window_color(self, argv[argc])
       C_integer n;
       char *colorname, *srcname;
       tended char *tmp;
-      WindowSelfParam(w);
+      GetSelfW();
 
       if (argc == 0) runerr(101);
 
       if (argc == 1) {			/* if this is a query */
           CnvCInteger(argv[0], n)
-              if ((colorname = get_mutable_name(w, n)) == NULL)
+              if ((colorname = get_mutable_name(self_w, n)) == NULL)
                   fail;
           len = strlen(colorname);
           MemProtect(tmp = alcstr(colorname, len));
@@ -204,15 +204,15 @@ function{0,1} graphics_Window_color(self, argv[argc])
 
       for (i = 0; i < argc; i += 2) {
           CnvCInteger(argv[i], n)
-              if ((colorname = get_mutable_name(w, n)) == NULL)
+              if ((colorname = get_mutable_name(self_w, n)) == NULL)
                   fail;
 
           if (is:integer(argv[i+1])) {		/* copy another mutable  */
               if (IntVal(argv[i+1]) >= 0)
                   runerr(205, argv[i+1]);		/* must be negative */
-              if ((srcname = get_mutable_name(w, IntVal(argv[i+1]))) == NULL)
+              if ((srcname = get_mutable_name(self_w, IntVal(argv[i+1]))) == NULL)
                   fail;
-              if (set_mutable(w, n, srcname) == Failed) fail;
+              if (set_mutable(self_w, n, srcname) == Failed) fail;
               strcpy(colorname, srcname);
           }
    
@@ -221,7 +221,7 @@ function{0,1} graphics_Window_color(self, argv[argc])
               if (!cnv:C_string(argv[i+1],tmp))
                   runerr(103,argv[i+1]);
    
-              if (set_mutable(w, n, tmp) == Failed) fail;
+              if (set_mutable(self_w, n, tmp) == Failed) fail;
               strcpy(colorname, tmp);
           }
       }
@@ -237,13 +237,13 @@ function{0,1} graphics_Window_color_value(self, k)
       long r, g, b, a = 65535;
       tended char *s;
       char tmp[32], *t;
-      WindowSelfParam(w);
+      GetSelfW();
 
       if (is:null(k))
           runerr(103);
 
       if (cnv:C_integer(k, n)) {
-          if ((t = get_mutable_name(w, n)))
+          if ((t = get_mutable_name(self_w, n)))
               MemProtect(s = alcstr(t, (word)strlen(t)+1));
           else
               fail;
@@ -251,7 +251,7 @@ function{0,1} graphics_Window_color_value(self, k)
       else if (!cnv:C_string(k, s))
           runerr(103, k);
 
-      if (parsecolor(w, s, &r, &g, &b, &a) == Succeeded) {
+      if (parsecolor(self_w, s, &r, &g, &b, &a) == Succeeded) {
           if (a < 65535)
               sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
           else
@@ -349,15 +349,15 @@ function{1} graphics_Window_draw_arc(self, argv[argc])
       C_integer x, y, width, height;
       double a1, a2;
 
-      WindowSelfParam(w);
+      GetSelfW();
 
       j = 0;
       for (i = 0; i < argc || i == 0; i += 6) {
           if (j == MAXXOBJS) {
-              drawarcs(w, arcs, MAXXOBJS);
+              drawarcs(self_w, arcs, MAXXOBJS);
               j = 0;
           }
-          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
           if (r >= 0)
               runerr(101, argv[r]);
 
@@ -410,7 +410,7 @@ function{1} graphics_Window_draw_arc(self, argv[argc])
           j++;
       }
 
-      drawarcs(w, arcs, j);
+      drawarcs(self_w, arcs, j);
 
       return self;
    }
@@ -419,9 +419,9 @@ end
 function{1} graphics_Window_draw_circle(self, argv[argc])
    body {
       int r;
-      WindowSelfParam(w);
+      GetSelfW();
 
-      r = docircles(w, argc, argv, 0);
+      r = docircles(self_w, argc, argv, 0);
       if (r < 0)
          return self;
       else if (r >= argc)
@@ -436,12 +436,12 @@ function{1} graphics_Window_draw_curve(self, argv[argc])
       int i, n, closed = 0;
       C_integer dx, dy, x0, y0, xN, yN;
       XPoint *points;
-      WindowSelfParam(w);
+      GetSelfW();
 
       CheckArgMultipleOf(2);
 
-      dx = w->context->dx;
-      dy = w->context->dy;
+      dx = self_w->context->dx;
+      dy = self_w->context->dy;
 
       MemProtect(points = (XPoint *)malloc(sizeof(XPoint) * (n+2)));
 
@@ -454,14 +454,14 @@ function{1} graphics_Window_draw_curve(self, argv[argc])
                   closed = 1;               /* duplicate the next to last point */
                   CnvCShort(argv[argc-4], points[0].x);
                   CnvCShort(argv[argc-3], points[0].y);
-                  points[0].x += w->context->dx;
-                  points[0].y += w->context->dy;
+                  points[0].x += self_w->context->dx;
+                  points[0].y += self_w->context->dy;
               }
               else {                       /* duplicate the first point */
                   CnvCShort(argv[0], points[0].x);
                   CnvCShort(argv[1], points[0].y);
-                  points[0].x += w->context->dx;
-                  points[0].y += w->context->dy;
+                  points[0].x += self_w->context->dx;
+                  points[0].y += self_w->context->dy;
               }
           for (i = 1; i <= n; i++) {
               int base = (i-1) * 2;
@@ -477,10 +477,10 @@ function{1} graphics_Window_draw_curve(self, argv[argc])
               points[i] = points[i-1];
           }
           if (n < 3) {
-              drawlines(w, points+1, n);
+              drawlines(self_w, points+1, n);
           }
           else {
-              drawCurve(w, points, n+2);
+              drawCurve(self_w, points, n+2);
           }
       }
       free(points);
@@ -498,23 +498,23 @@ function{0,1} graphics_Window_draw_image(self, argv[argc])
       unsigned char *s, *t, *z;
       struct descrip d;
       struct palentry *e;
-      WindowSelfParam(w);
+      GetSelfW();
 
       /*
        * X or y can be defaulted but s is required.
        * Validate x/y first so that the error message makes more sense.
        */
-      if (argc >= 1 && !def:C_integer(argv[0], -w->context->dx, x))
+      if (argc >= 1 && !def:C_integer(argv[0], -self_w->context->dx, x))
           runerr(101, argv[0]);
-      if (argc >= 2 && !def:C_integer(argv[1], -w->context->dy, y))
+      if (argc >= 2 && !def:C_integer(argv[1], -self_w->context->dy, y))
           runerr(101, argv[1]);
       if (argc < 3)
           runerr(103);			/* missing s */
       if (!cnv:tmp_string(argv[2], d))
           runerr(103, argv[2]);
 
-      x += w->context->dx;
-      y += w->context->dy;
+      x += self_w->context->dx;
+      y += self_w->context->dy;
       /*
        * Extract the Width and skip the following comma.
        */
@@ -551,7 +551,7 @@ function{0,1} graphics_Window_draw_image(self, argv[argc])
           if (nchars % row != 0)
               fail;
           height = nchars / row;
-          if (blimage(w, x, y, width, height, c, s, (word)(z - s)) == Error)
+          if (blimage(self_w, x, y, width, height, c, s, (word)(z - s)) == Error)
               runerr(305);
           else
               return nulldesc;
@@ -599,7 +599,7 @@ function{0,1} graphics_Window_draw_image(self, argv[argc])
        * Call platform-dependent code to draw the image.
        */
       height = nchars / width;
-      i = strimage(w, x, y, width, height, e, s, (word)(z - s), 0);
+      i = strimage(self_w, x, y, width, height, e, s, (word)(z - s), 0);
       if (i == 0)
           return nulldesc;
       else if (i < 0)
@@ -616,16 +616,16 @@ function{1} graphics_Window_draw_line(self, argv[argc])
       XPoint points[MAXXOBJS];
       int dx, dy;
 
-      WindowSelfParam(w);
+      GetSelfW();
 
       CheckArgMultipleOf(2);
 
-      dx = w->context->dx;
-      dy = w->context->dy;
+      dx = self_w->context->dx;
+      dy = self_w->context->dy;
       for(i = 0, j = 0; i < n; i++, j++) {
           int base = i * 2;
           if (j == MAXXOBJS) {
-              drawlines(w, points, MAXXOBJS);
+              drawlines(self_w, points, MAXXOBJS);
               points[0] = points[MAXXOBJS-1];
               j = 1;
           }
@@ -634,7 +634,7 @@ function{1} graphics_Window_draw_line(self, argv[argc])
           points[j].x += dx;
           points[j].y += dy;
       }
-      drawlines(w, points, j);
+      drawlines(self_w, points, j);
 
       return self;
    }
@@ -646,15 +646,15 @@ function{1} graphics_Window_draw_point(self, argv[argc])
       XPoint points[MAXXOBJS];
       int dx, dy;
 
-      WindowSelfParam(w);
+      GetSelfW();
       CheckArgMultipleOf(2);
 
-      dx = w->context->dx;
-      dy = w->context->dy;
+      dx = self_w->context->dx;
+      dy = self_w->context->dy;
       for(i=0, j=0; i < n; i++, j++) {
           int base = i * 2;
           if (j == MAXXOBJS) {
-              drawpoints(w, points, MAXXOBJS);
+              drawpoints(self_w, points, MAXXOBJS);
               j = 0;
           }
           CnvCShort(argv[base], points[j].x);
@@ -662,7 +662,7 @@ function{1} graphics_Window_draw_point(self, argv[argc])
           points[j].x += dx;
           points[j].y += dy;
       }
-      drawpoints(w, points, j);
+      drawpoints(self_w, points, j);
       
       return self;
    }
@@ -673,11 +673,11 @@ function{1} graphics_Window_draw_polygon(self, argv[argc])
       int i, j, n, base, dx, dy;
       XPoint points[MAXXOBJS];
 
-      WindowSelfParam(w);
+      GetSelfW();
       CheckArgMultipleOf(2);
 
-      dx = w->context->dx;
-      dy = w->context->dy;
+      dx = self_w->context->dx;
+      dy = self_w->context->dy;
 
       /*
        * To make a closed polygon, start with the *last* point.
@@ -693,7 +693,7 @@ function{1} graphics_Window_draw_polygon(self, argv[argc])
       for(i = 0, j = 1; i < n; i++, j++) {
           base = i * 2;
           if (j == MAXXOBJS) {
-              drawlines(w, points, MAXXOBJS);
+              drawlines(self_w, points, MAXXOBJS);
               points[0] = points[MAXXOBJS-1];
               j = 1;
           }
@@ -702,7 +702,7 @@ function{1} graphics_Window_draw_polygon(self, argv[argc])
           points[j].x += dx;
           points[j].y += dy;
       }
-      drawlines(w, points, j);
+      drawlines(self_w, points, j);
 
       return self;
    }
@@ -714,16 +714,16 @@ function{1} graphics_Window_draw_rectangle(self, argv[argc])
       XRectangle recs[MAXXOBJS];
       C_integer x, y, width, height;
 
-      WindowSelfParam(w);
+      GetSelfW();
 
       j = 0;
 
       for (i = 0; i < argc || i == 0; i += 4) {
-          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
           if (r >= 0)
               runerr(101, argv[r]);
           if (j == MAXXOBJS) {
-              drawrectangles(w,recs,MAXXOBJS);
+              drawrectangles(self_w,recs,MAXXOBJS);
               j = 0;
           }
           RECX(recs[j]) = x;
@@ -733,7 +733,7 @@ function{1} graphics_Window_draw_rectangle(self, argv[argc])
           j++;
       }
 
-      drawrectangles(w, recs, j);
+      drawrectangles(self_w, recs, j);
 
       return self;
    }
@@ -744,15 +744,15 @@ function{1} graphics_Window_draw_segment(self, argv[argc])
       int i, j, n, dx, dy;
       XSegment segs[MAXXOBJS];
 
-      WindowSelfParam(w);
+      GetSelfW();
       CheckArgMultipleOf(4);
 
-      dx = w->context->dx;
-      dy = w->context->dy;
+      dx = self_w->context->dx;
+      dy = self_w->context->dy;
       for(i=0, j=0; i < n; i++, j++) {
           int base = i * 4;
           if (j == MAXXOBJS) {
-              drawsegments(w, segs, MAXXOBJS);
+              drawsegments(self_w, segs, MAXXOBJS);
               j = 0;
           }
           CnvCShort(argv[base], segs[j].x1);
@@ -764,7 +764,7 @@ function{1} graphics_Window_draw_segment(self, argv[argc])
           segs[j].y1 += dy;
           segs[j].y2 += dy;
       }
-      drawsegments(w, segs, j);
+      drawsegments(self_w, segs, j);
 
       return self;
     }
@@ -776,7 +776,7 @@ function{1} graphics_Window_draw_string(self, argv[argc])
       char *s;
       int dx, dy;
 
-      WindowSelfParam(w);
+      GetSelfW();
       CheckArgMultipleOf(3);
 
       for(i=0; i < n; i++) {
@@ -784,12 +784,12 @@ function{1} graphics_Window_draw_string(self, argv[argc])
           int base = i * 3;
           CnvCInteger(argv[base], x);
           CnvCInteger(argv[base + 1], y);
-          x += w->context->dx;
-          y += w->context->dy;
+          x += self_w->context->dx;
+          y += self_w->context->dy;
           CnvTmpString(argv[base + 2], argv[base + 2]);
           s = StrLoc(argv[base + 2]);
           len = StrLen(argv[base + 2]);
-          drawstrng(w, x, y, s, len);
+          drawstrng(self_w, x, y, s, len);
       }
       return self;
    }
@@ -800,13 +800,13 @@ function{1} graphics_Window_erase_area(self, argv[argc])
    body {
       int i, r;
       C_integer x, y, width, height;
-      WindowSelfParam(w);
+      GetSelfW();
 
       for (i = 0; i < argc || i == 0; i += 4) {
-          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
           if (r >= 0)
               runerr(101, argv[r]);
-          eraseArea(w, x, y, width, height);
+          eraseArea(self_w, x, y, width, height);
       }
       return self;
    }
@@ -820,10 +820,10 @@ function{1} graphics_Window_event(self, timeout)
    body {
       C_integer i;
       tended struct descrip d;
-      WindowSelfParam(w);
+      GetSelfW();
 
       d = create_list(8);
-      i = wgetevent2(w, &d, timeout);
+      i = wgetevent2(self_w, &d, timeout);
       if (i == -3) {
           if (timeout < 0) {
               /* Something's wrong, but what?  */
@@ -844,10 +844,10 @@ function{0,1} graphics_Window_pending(self, argv[argc])
    body {
       wsp ws;
       int i;
-      WindowSelfParam(w);
+      GetSelfW();
 
-      ws = w->window;
-      wsync(w);
+      ws = self_w->window;
+      wsync(self_w);
 
       /*
        * put additional arguments to Pending on the pending list in
@@ -876,7 +876,7 @@ function{0,1} graphics_Window_fg(self, colr)
       int len;
       tended char *tmp;
       char *temp;
-      WindowSelfParam(w);
+      GetSelfW();
 
       /*
        * If there is a (non-window) argument we are setting by
@@ -884,13 +884,13 @@ function{0,1} graphics_Window_fg(self, colr)
        */
       if (!is:null(colr)) {
 	  if (is:integer(colr)) {	/* mutable color or packed RGB */
-              if (isetfg(w, IntVal(colr)) == Failed) 
+              if (isetfg(self_w, IntVal(colr)) == Failed) 
                   fail;
           }
 	  else {
               if (!cnv:C_string(colr, tmp))
                   runerr(103, colr);
-              if(setfg(w, tmp) == Failed)
+              if(setfg(self_w, tmp) == Failed)
                   fail;
           }
 
@@ -900,7 +900,7 @@ function{0,1} graphics_Window_fg(self, colr)
        * In any case, this function returns the current foreground color.
        */
 
-      getfg(w, sbuf1);
+      getfg(self_w, sbuf1);
 
       len = strlen(sbuf1);
       MemProtect(tmp = alcstr(sbuf1, len));
@@ -915,15 +915,15 @@ function{1} graphics_Window_fill_arc(self, argv[argc])
       C_integer x, y, width, height;
       double a1, a2;
 
-      WindowSelfParam(w);
+      GetSelfW();
 
       j = 0;
       for (i = 0; i < argc || i == 0; i += 6) {
           if (j == MAXXOBJS) {
-              fillarcs(w, arcs, MAXXOBJS);
+              fillarcs(self_w, arcs, MAXXOBJS);
               j = 0;
           }
-          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
           if (r >= 0)
               runerr(101, argv[r]);
 
@@ -970,7 +970,7 @@ function{1} graphics_Window_fill_arc(self, argv[argc])
           j++;
       }
 
-      fillarcs(w, arcs, j);
+      fillarcs(self_w, arcs, j);
 
       return self;
    }
@@ -979,9 +979,9 @@ end
 function{1} graphics_Window_fill_circle(self, argv[argc])
    body {
       int r;
-      WindowSelfParam(w);
+      GetSelfW();
 
-      r = docircles(w, argc, argv, 1);
+      r = docircles(self_w, argc, argv, 1);
       if (r < 0)
           return self;
       else if (r >= argc)
@@ -996,7 +996,7 @@ function{1} graphics_Window_fill_polygon(self, argv[argc])
       int i, j, n;
       XPoint *points;
       int dx, dy;
-      WindowSelfParam(w);
+      GetSelfW();
 
       CheckArgMultipleOf(2);
 
@@ -1006,8 +1006,8 @@ function{1} graphics_Window_fill_polygon(self, argv[argc])
        */
       n = argc>>1;
       MemProtect(points = (XPoint *)malloc(sizeof(XPoint) * n));
-      dx = w->context->dx;
-      dy = w->context->dy;
+      dx = self_w->context->dx;
+      dy = self_w->context->dy;
       for(i=0; i < n; i++) {
           int base = i * 2;
           CnvCShort(argv[base], points[i].x);
@@ -1015,7 +1015,7 @@ function{1} graphics_Window_fill_polygon(self, argv[argc])
           points[i].x += dx;
           points[i].y += dy;
       }
-      fillpolygon(w, points, n);
+      fillpolygon(self_w, points, n);
       free(points);
 
       return self;
@@ -1028,16 +1028,16 @@ function{1} graphics_Window_fill_rectangle(self, argv[argc])
       XRectangle recs[MAXXOBJS];
       C_integer x, y, width, height;
 
-      WindowSelfParam(w);
+      GetSelfW();
 
       j = 0;
 
       for (i = 0; i < argc || i == 0; i += 4) {
-          r = rectargs(w, argc, argv, i, &x, &y, &width, &height);
+          r = rectargs(self_w, argc, argv, i, &x, &y, &width, &height);
           if (r >= 0)
               runerr(101, argv[r]);
           if (j == MAXXOBJS) {
-              fillrectangles(w,recs,MAXXOBJS);
+              fillrectangles(self_w,recs,MAXXOBJS);
               j = 0;
           }
           RECX(recs[j]) = x;
@@ -1047,7 +1047,7 @@ function{1} graphics_Window_fill_rectangle(self, argv[argc])
           j++;
       }
 
-      fillrectangles(w, recs, j);
+      fillrectangles(self_w, recs, j);
 
       return self;
    }
@@ -1058,15 +1058,15 @@ function{0,1} graphics_Window_font(self, f)
       tended char *tmp;
       int len;
       char buf[MaxCvtLen];
-      WindowSelfParam(w);
+      GetSelfW();
 
       if (!is:null(f)) {
           if (!cnv:C_string(f, tmp))
               runerr(103, f);
-          if (setfont(w,&tmp) == Failed) 
+          if (setfont(self_w,&tmp) == Failed) 
               fail;
       }
-      getfntnam(w, buf);
+      getfntnam(self_w, buf);
       len = strlen(buf);
       MemProtect(tmp = alcstr(buf, len));
       return string(len,tmp);
@@ -1078,7 +1078,7 @@ function{1} graphics_Window_free_color(self, argv[argc])
       int i;
       C_integer n;
       tended char *s;
-      WindowSelfParam(w);
+      GetSelfW();
 
       if (argc == 0)
           runerr(103);
@@ -1087,12 +1087,12 @@ function{1} graphics_Window_free_color(self, argv[argc])
           if (is:integer(argv[i])) {
               CnvCInteger(argv[i], n)
               if (n < 0)
-                  free_mutable(w, n);
+                  free_mutable(self_w, n);
           }
           else {
               if (!cnv:C_string(argv[i], s))
                   runerr(103,argv[i]);
-              freecolor(w, s);
+              freecolor(self_w, s);
           }
       }
 
@@ -1102,8 +1102,8 @@ end
 
 function{1} graphics_Window_lower(self)
    body {
-      WindowSelfParam(w);
-      lowerWindow(w);
+      GetSelfW();
+      lowerWindow(self_w);
       return self;
    }
 end
@@ -1112,9 +1112,9 @@ end
 function{0,1} graphics_Window_new_color(self, argv[argc])
    body {
       int rv;
-      WindowSelfParam(w);
+      GetSelfW();
 
-      if (mutable_color(w, argv, argc, &rv) == Failed) 
+      if (mutable_color(self_w, argv, argc, &rv) == Failed) 
           fail;
       return C_integer rv;
    }
@@ -1185,7 +1185,7 @@ function{0,1} graphics_Window_palette_key(self, s1, s2)
       tended char *s;
       long r, g, b, a;
 
-      WindowSelfParam(w);
+      GetSelfW();
 
       p = palnum(&s1);
       if (p == -1)
@@ -1194,13 +1194,13 @@ function{0,1} graphics_Window_palette_key(self, s1, s2)
           fail;
 
       if (cnv:C_integer(s2, n)) {
-          if ((s = get_mutable_name(w, n)) == NULL)
+          if ((s = get_mutable_name(self_w, n)) == NULL)
               fail;
       }
       else if (!cnv:C_string(s2, s))
           runerr(103, s2);
 
-      if (parsecolor(w, s, &r, &g, &b, &a) == Succeeded)
+      if (parsecolor(self_w, s, &r, &g, &b, &a) == Succeeded)
           return string(1, rgbkey(p, r / 65535.0, g / 65535.0, b / 65535.0));
       else
           fail;
@@ -1211,9 +1211,9 @@ function{1} graphics_Window_pattern(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-      WindowSelfParam(w);
+      GetSelfW();
 
-      switch (SetPattern(w, StrLoc(s), StrLen(s))) {
+      switch (SetPattern(self_w, StrLoc(s), StrLen(s))) {
           case Error:
               runerr(0, s);
           case Failed:
@@ -1231,29 +1231,29 @@ function{3} graphics_Window_pixel(self, argv[argc])
       int slen, r;
       tended struct descrip lastval;
       char strout[50];
-      WindowSelfParam(w);
+      GetSelfW();
 
-      r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
+      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
       if (r >= 0)
           runerr(101, argv[r]);
 
       {
           int i, j;
           long rv;
-          wsp ws = w->window;
+          wsp ws = self_w->window;
 
           imem.x = Max(x,0);
           imem.y = Max(y,0);
           imem.width = Min(width, (int)ws->width - imem.x);
           imem.height = Min(height, (int)ws->height - imem.y);
 
-          if (getpixel_init(w, &imem) == Failed) fail;
+          if (getpixel_init(self_w, &imem) == Failed) fail;
 
           lastval = emptystr;
 
           for (j=y; j < y + height; j++) {
               for (i=x; i < x + width; i++) {
-                  getpixel(w, i, j, &rv, strout, &imem);
+                  getpixel(self_w, i, j, &rv, strout, &imem);
 	
                   slen = strlen(strout);
                   if (rv >= 0) {
@@ -1270,7 +1270,7 @@ function{3} graphics_Window_pixel(self, argv[argc])
                       r_args[0] = lastval;
                       if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {
                           tend = r_tend.previous;
-                          getpixel_term(w, &imem);
+                          getpixel_term(self_w, &imem);
                           VanquishReturn(signal);
                       }
                   }
@@ -1284,13 +1284,13 @@ function{3} graphics_Window_pixel(self, argv[argc])
                       r_args[0].vword.integr = rv;
                       if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {
                           tend = r_tend.previous;
-                          getpixel_term(w, &imem);
+                          getpixel_term(self_w, &imem);
                           VanquishReturn(signal);
                       }
                   }
               }
           }
-          getpixel_term(w, &imem);
+          getpixel_term(self_w, &imem);
           fail;
       }
    }
@@ -1313,8 +1313,8 @@ end
 
 function{1} graphics_Window_raise(self)
    body {
-      WindowSelfParam(w);
-      raiseWindow(w);
+      GetSelfW();
+      raiseWindow(self_w);
       return self;
    }
 end
@@ -1327,7 +1327,7 @@ function{0,1} graphics_Window_read_image(self, argv[argc])
       C_integer x, y;
       int p, r;
       struct imgdata imd;
-      WindowSelfParam(w);
+      GetSelfW();
 
       if (argc == 0)
           runerr(103,nulldesc);
@@ -1338,12 +1338,12 @@ function{0,1} graphics_Window_read_image(self, argv[argc])
        * x and y must be integers; they default to the upper left pixel.
        */
       if (argc < 2) 
-          x = -w->context->dx;
-      else if (!def:C_integer(argv[1], -w->context->dx, x))
+          x = -self_w->context->dx;
+      else if (!def:C_integer(argv[1], -self_w->context->dx, x))
           runerr(101, argv[1]);
       if (argc < 3)
-          y = -w->context->dy;
-      else if (!def:C_integer(argv[2], -w->context->dy, y))
+          y = -self_w->context->dy;
+      else if (!def:C_integer(argv[2], -self_w->context->dy, y))
           runerr(101, argv[2]);
 
       /*
@@ -1359,8 +1359,8 @@ function{0,1} graphics_Window_read_image(self, argv[argc])
               fail;
       }
 
-      x += w->context->dx;
-      y += w->context->dy;
+      x += self_w->context->dx;
+      y += self_w->context->dy;
       strncpy(filename, tmp, MaxPath);   /* copy to loc that won't move*/
       filename[MaxPath] = '\0';
 
@@ -1371,7 +1371,7 @@ function{0,1} graphics_Window_read_image(self, argv[argc])
       r = readGIF(filename, p, &imd);
       if (r != Succeeded) r = readBMP(filename, p, &imd);
       if (r == Succeeded) {
-          status = strimage(w, x, y, imd.width, imd.height, imd.paltbl,
+          status = strimage(self_w, x, y, imd.width, imd.height, imd.paltbl,
                             imd.data, (word)imd.width * (word)imd.height, 0);
           if (status < 0)
               r = Error;
@@ -1379,7 +1379,7 @@ function{0,1} graphics_Window_read_image(self, argv[argc])
           free((pointer)imd.data);
       }
       else if (r == Failed)
-          r = readimage(w, filename, x, y, &status);
+          r = readimage(self_w, filename, x, y, &status);
       if (r == Error)
           runerr(305);
       if (r == Failed)
@@ -1404,8 +1404,8 @@ function{1} graphics_Window_text_width(self, s)
       runerr(103, s)
    body {
       C_integer i;
-      WindowSelfParam(w);
-      i = TEXTWIDTH(w, StrLoc(s), StrLen(s));
+      GetSelfW();
+      i = TEXTWIDTH(self_w, StrLoc(s), StrLen(s));
       return C_integer i;
    }
 end
@@ -1414,9 +1414,9 @@ end
 
 function{1} graphics_Window_uncouple(self)
    body {
-      WindowSelfParam(w);
-      *w_dptr = zerodesc;
-      free_binding(w);
+      GetSelfW();
+      *self_w_dptr = zerodesc;
+      free_binding(self_w);
       return self;
    }
 end
@@ -1429,17 +1429,17 @@ function{*} graphics_Window_attrib(self, argv[argc])
       char answer[4096];
       int  pass, config = 0;
 
-      WindowSelfParam(w);
+      GetSelfW();
 
-      wsave = w;
+      wsave = self_w;
       /*
        * Loop through the arguments.
        */
 
       for (pass = 1; pass <= 2; pass++) {
-          w = wsave;
+          self_w = wsave;
           if (config && pass == 2) {
-              if (do_config(w, config) == Failed) fail;
+              if (do_config(self_w, config) == Failed) fail;
           }
           for (n = 0; n < argc; n++) {
               /*
@@ -1478,7 +1478,7 @@ function{*} graphics_Window_attrib(self, argv[argc])
                        */  
 
 
-                      switch (wattrib(w, StrLoc(sbuf), StrLen(sbuf),
+                      switch (wattrib(self_w, StrLoc(sbuf), StrLen(sbuf),
                                       &sbuf2, answer)) {
                           case Failed:
                               /*
@@ -1536,7 +1536,7 @@ function{*} graphics_Window_attrib(self, argv[argc])
                   if (stmp < stmp2)
                       StrLen(sbuf) = stmp - StrLoc(sbuf);
 
-                  switch (wattrib(w, StrLoc(sbuf), StrLen(sbuf),
+                  switch (wattrib(self_w, StrLoc(sbuf), StrLen(sbuf),
                                   &sbuf2, answer)) {
                       case Failed: continue;
                       case Error:  runerr(0, argv[n]);
@@ -1562,9 +1562,9 @@ function{0,1} graphics_Window_wdefault(self, prog, opt)
    body {
       long l;
       char sbuf1[MaxCvtLen];
-      WindowSelfParam(w);
+      GetSelfW();
 
-      if (getdefault(w, prog, opt, sbuf1) == Failed) 
+      if (getdefault(self_w, prog, opt, sbuf1) == Failed) 
           fail;
       l = strlen(sbuf1);
       MemProtect(prog = alcstr(sbuf1,l));
@@ -1574,8 +1574,8 @@ end
 
 function{1} graphics_Window_flush(self)
    body {
-      WindowSelfParam(w);
-      wflush(w);
+      GetSelfW();
+      wflush(self_w);
       return self;
    }
 end
@@ -1586,9 +1586,9 @@ function{0,1} graphics_Window_write_image(self, s, argv[argc])
    body {
       int r;
       C_integer x, y, width, height;
-      WindowSelfParam(w);
+      GetSelfW();
 
-      r = rectargs(w, argc, argv, 0, &x, &y, &width, &height);
+      r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
       if (r >= 0)
           runerr(101, argv[r]);
 
@@ -1604,10 +1604,10 @@ function{0,1} graphics_Window_write_image(self, s, argv[argc])
           height += y;
           y = 0;
       }
-      if (x + width > (long) w->window->width)
-          width = w->window->width - x;
-      if (y + height > (long) w->window->height)
-          height = w->window->height - y;
+      if (x + width > (long) self_w->window->width)
+          width = self_w->window->width - x;
+      if (y + height > (long) self_w->window->height)
+          height = self_w->window->height - y;
       if (width <= 0 || height <= 0)
           fail;
 
@@ -1615,18 +1615,18 @@ function{0,1} graphics_Window_write_image(self, s, argv[argc])
        * try platform-dependent code first; it will reject the call
        * if the file name s does not specify a platform-dependent format.
        */
-      r = dumpimage(w, s, x, y, width, height);
+      r = dumpimage(self_w, s, x, y, width, height);
 #ifdef HAVE_LIBJPEG
       if ((r == NoCvt) &&
 	  (strcmp(s + strlen(s)-4, ".jpg")==0 ||
            (strcmp(s + strlen(s)-4, ".JPG")==0))) {
-          r = writeJPEG(w, s, x, y, width, height);
+          r = writeJPEG(self_w, s, x, y, width, height);
       }
 #endif					/* HAVE_LIBJPEG */
       if (r == NoCvt)
-          r = writeBMP(w, s, x, y, width, height);
+          r = writeBMP(self_w, s, x, y, width, height);
       if (r == NoCvt)
-          r = writeGIF(w, s, x, y, width, height);
+          r = writeGIF(self_w, s, x, y, width, height);
       if (r != Succeeded)
          fail;
 
@@ -1640,9 +1640,9 @@ function{1} graphics_Window_own_selection(self, selection, callback)
    if !is:proc(callback) then
       runerr(106,callback);
    body {
-       WindowSelfParam(w);
-       w->window->selectionproc = callback;
-       ownselection(w, selection);
+       GetSelfW();
+       self_w->window->selectionproc = callback;
+       ownselection(self_w, selection);
        return self;
    }
 end
@@ -1654,8 +1654,8 @@ function{0,1} graphics_Window_get_selection_content(self, selection,target_type)
       runerr(103,target_type)
    body {
        tended struct descrip s;
-       WindowSelfParam(w);
-       s = getselectioncontent(w, selection,target_type);
+       GetSelfW();
+       s = getselectioncontent(self_w, selection,target_type);
        if (is:null(s))
            fail;
        return s;
@@ -1664,11 +1664,11 @@ end
 
 function{1} graphics_Window_close(self)
    body {
-     WindowSelfParam(w);
+     GetSelfW();
 
-     *w_dptr = zerodesc;
-     SETCLOSED(w);
-     wclose(w);
+     *self_w_dptr = zerodesc;
+     SETCLOSED(self_w);
+     wclose(self_w);
 
      return self;
    }
