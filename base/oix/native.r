@@ -1640,24 +1640,24 @@ struct ramstream {
     char *data;
 };
 
-#begdef GetSelfPtr()
-struct ramstream *self_ptr;
-dptr self_ptr_dptr;
-static struct inline_field_cache self_ptr_ic;
-self_ptr_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_ptr_ic);
-if (!self_ptr_dptr)
+#begdef GetSelfRs()
+struct ramstream *self_rs;
+dptr self_rs_dptr;
+static struct inline_field_cache self_rs_ic;
+self_rs_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_rs_ic);
+if (!self_rs_dptr)
     syserr("Missing ptr field");
-self_ptr = (struct ramstream*)IntVal(*self_ptr_dptr);
-if (!self_ptr)
+self_rs = (struct ramstream*)IntVal(*self_rs_dptr);
+if (!self_rs)
     runerr(205, self);
 #enddef
 
 function{1} io_RamStream_close(self)
    body {
-       GetSelfPtr();
-       free(self_ptr->data);
-       free(self_ptr);
-       *self_ptr_dptr = zerodesc;
+       GetSelfRs();
+       free(self_rs->data);
+       free(self_rs);
+       *self_rs_dptr = zerodesc;
        return nulldesc;
    }
 end
@@ -1668,7 +1668,7 @@ function{0,1} io_RamStream_in(self, i)
    body {
        dptr eof;
        static struct inline_field_cache eof_ic;
-       GetSelfPtr();
+       GetSelfRs();
 
        eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
        if (!eof)
@@ -1680,15 +1680,15 @@ function{0,1} io_RamStream_in(self, i)
            errorfail;
        }
 
-       if (self_ptr->pos >= self_ptr->size) {
+       if (self_rs->pos >= self_rs->size) {
            *eof = onedesc;
            why("End of file");
            fail;
        }
 
-       i = Min(i, self_ptr->size - self_ptr->pos);
-       result = bytes2string(&self_ptr->data[self_ptr->pos], i);
-       self_ptr->pos += i;
+       i = Min(i, self_rs->size - self_rs->pos);
+       result = bytes2string(&self_rs->data[self_rs->pos], i);
+       self_rs->pos += i;
        
        return result;
    }
@@ -1712,19 +1712,19 @@ function{1} io_RamStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-       GetSelfPtr();
-       if (self_ptr->pos + StrLen(s) > self_ptr->avail) {
-           self_ptr->avail = 2 * (self_ptr->pos + StrLen(s));
-           MemProtect(self_ptr->data = realloc(self_ptr->data, self_ptr->avail));
+       GetSelfRs();
+       if (self_rs->pos + StrLen(s) > self_rs->avail) {
+           self_rs->avail = 2 * (self_rs->pos + StrLen(s));
+           MemProtect(self_rs->data = realloc(self_rs->data, self_rs->avail));
        }
 
-       if (self_ptr->pos > self_ptr->size)
-           memset(&self_ptr->data[self_ptr->size], 0, self_ptr->pos - self_ptr->size);
+       if (self_rs->pos > self_rs->size)
+           memset(&self_rs->data[self_rs->size], 0, self_rs->pos - self_rs->size);
 
-       memcpy(&self_ptr->data[self_ptr->pos], StrLoc(s), StrLen(s));
-       self_ptr->pos += StrLen(s);
-       if (self_ptr->pos > self_ptr->size)
-           self_ptr->size = self_ptr->pos;
+       memcpy(&self_rs->data[self_rs->pos], StrLoc(s), StrLen(s));
+       self_rs->pos += StrLen(s);
+       if (self_rs->pos > self_rs->size)
+           self_rs->size = self_rs->pos;
 
        return C_integer StrLen(s);
    }
@@ -1734,24 +1734,24 @@ function{0,1} io_RamStream_seek(self, offset)
    if !cnv:C_integer(offset) then
       runerr(101, offset)
    body {
-       GetSelfPtr();
+       GetSelfRs();
        if (offset > 0)
-           self_ptr->pos = offset - 1;
+           self_rs->pos = offset - 1;
        else {
-           if (self_ptr->size < -offset) {
+           if (self_rs->size < -offset) {
                why("Invalid value to seek");
                fail;
            }
-           self_ptr->pos = self_ptr->size + offset;
+           self_rs->pos = self_rs->size + offset;
        }
-       return C_integer(self_ptr->pos + 1);
+       return C_integer(self_rs->pos + 1);
    }
 end
 
 function{1} io_RamStream_tell(self)
    body {
-       GetSelfPtr();
-       return C_integer(self_ptr->pos + 1);
+       GetSelfRs();
+       return C_integer(self_rs->pos + 1);
    }
 end
 
@@ -1759,20 +1759,20 @@ function{1} io_RamStream_truncate(self, len)
    if !cnv:C_integer(len) then
       runerr(101, len)
    body {
-       GetSelfPtr();
-       self_ptr->pos = len;
-       self_ptr->avail = len + 1024;
-       MemProtect(self_ptr->data = realloc(self_ptr->data, self_ptr->avail));
-       if (self_ptr->size < len)
-           memset(&self_ptr->data[self_ptr->size], 0, len - self_ptr->size);
-       self_ptr->size = len;
+       GetSelfRs();
+       self_rs->pos = len;
+       self_rs->avail = len + 1024;
+       MemProtect(self_rs->data = realloc(self_rs->data, self_rs->avail));
+       if (self_rs->size < len)
+           memset(&self_rs->data[self_rs->size], 0, len - self_rs->size);
+       self_rs->size = len;
        return nulldesc;
    }
 end
 
 function{1} io_RamStream_str(self)
    body {
-       GetSelfPtr();
-       return bytes2string(self_ptr->data, self_ptr->size);
+       GetSelfRs();
+       return bytes2string(self_rs->data, self_rs->size);
    }
 end
