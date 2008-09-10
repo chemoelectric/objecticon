@@ -44,6 +44,8 @@ function{1} progof(x)
             p = BlkLoc(x)->object.class->program;
          proc:
             p = BlkLoc(x)->proc.program;
+         default: 
+            runerr(123, x);
       }
       if (!p)
          fail;
