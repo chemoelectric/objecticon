@@ -259,6 +259,7 @@ void icon_init(char *name)
     rootpstate.K_errortext = emptystr;
     rootpstate.K_errorvalue = nulldesc;
     rootpstate.T_errorvalue = nulldesc;
+    rootpstate.T_errortext = emptystr;
 
     rootpstate.Coexp_ser = 2;
     rootpstate.List_ser  = 1;
@@ -681,8 +682,19 @@ void syserr(char *fmt, ...)
     fprintf(stderr,"\n");
     fflush(stderr);
     va_end(argp);
+
+    if (pfp == NULL) {		/* skip if start-up problem */
+        if (dodump)
+            abort();
+        c_exit(EXIT_FAILURE);
+    }
+    fprintf(stderr, "Traceback:\n");
+    tracebk(pfp, glbl_argp);
+    fflush(stderr);
+
     if (dodump)
         abort();
+
     c_exit(EXIT_FAILURE);
 }
 
@@ -804,6 +816,7 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->K_errortext = emptystr;
     pstate->K_errorvalue = nulldesc;
     pstate->T_errorvalue = nulldesc;
+    pstate->T_errortext = emptystr;
     pstate->Kywd_time_elsewhere = millisec();
     pstate->Kywd_time_out = 0;
     pstate->Mainhead= ((struct b_coexpr *)pstate)-1;

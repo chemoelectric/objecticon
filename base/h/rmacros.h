@@ -637,6 +637,7 @@
       #define t_errornumber (curpstate->T_errornumber)
       #define t_have_val    (curpstate->T_have_val)
       #define t_errorvalue  (curpstate->T_errorvalue)
+      #define t_errortext   (curpstate->T_errortext)
       
       #define k_main        (curpstate->K_main)
       

@@ -417,6 +417,7 @@ struct progstate {
     struct descrip K_errortext;
     struct descrip K_errorvalue;
     int Have_errval;
+    struct descrip T_errortext;
     int T_errornumber;
     int T_have_val;
     struct descrip T_errorvalue;

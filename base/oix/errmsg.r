@@ -191,20 +191,35 @@ void err_msg(int n, dptr v)
             have_errval = 1;
         }
     }
-
-    em = lookup_err_msg(k_errornumber);
-    if (em)
-        MakeCStr(em, &k_errortext);
-    else
-        k_errortext = emptystr;
+    if (k_errornumber == -1)
+        k_errortext = t_errortext;
+    else {
+        em = lookup_err_msg(k_errornumber);
+        if (em)
+            MakeCStr(em, &k_errortext);
+        else
+            k_errortext = emptystr;
+    }
 
     EVVal((word)k_errornumber,E_Error);
 
     if (pfp != NULL) {
         if (IntVal(kywd_err) == 0) {
-            fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-            fprintf(stderr, "File %s; Line %ld\n", findfile(ipc.opnd),
-                    (long)findline(ipc.opnd));
+            char *s = StrLoc(k_errortext);
+            int i = StrLen(k_errortext);
+            if (k_errornumber == -1) {
+                fprintf(stderr, "\nRun-time error: ");
+                while (i-- > 0)
+                    fputc(*s++, stderr);
+                fputc('\n', stderr);
+                fprintf(stderr, "File %s; Line %d\n", findfile(ipc.opnd), findline(ipc.opnd));
+            } else {
+                fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
+                fprintf(stderr, "File %s; Line %d\n", findfile(ipc.opnd), findline(ipc.opnd));
+                while (i-- > 0)
+                    fputc(*s++, stderr);
+                fputc('\n', stderr);
+            }
         }
         else {
             IntVal(kywd_err)--;
@@ -214,15 +229,11 @@ void err_msg(int n, dptr v)
     else
         fprintf(stderr, "\nRun-time error %d in startup code\n", n);
 
-    if (em)
-        fprintf(stderr, "%s\n", em);
-
     if (have_errval) {
         fprintf(stderr, "offending value: ");
         outimage(stderr, &k_errorvalue, 0);
         putc('\n', stderr);
     }
-
 
     if (pfp == NULL) {		/* skip if start-up problem */
         if (dodump)
@@ -232,7 +243,6 @@ void err_msg(int n, dptr v)
     fprintf(stderr, "Traceback:\n");
     tracebk(pfp, glbl_argp);
     fflush(stderr);
-
 
     if (dodump)
         abort();
@@ -271,54 +281,4 @@ void drunerr(n, v)
     t_errorvalue.dword = D_Real;
     t_have_val = 1;
     err_msg(0,NULL);
-}
-
-/*
- * Produce a runtime error based on a string message, rather than one
- * of the standard errnor numbers.  This is useful for external
- * libraries which cannot edit the error message table.  &errornumber
- * is set to -1.
- */
-void s_err_msg(char *em, dptr v)
-{
-    k_errornumber = -1;
-    if (v == NULL) {
-        k_errorvalue = nulldesc;
-        have_errval = 0;
-    }
-    else {
-        k_errorvalue = *v;
-        have_errval = 1;
-    }
-
-    k_errortext = cstr2string(em);
-
-    if (IntVal(kywd_err) == 0) {
-        char *s = StrLoc(k_errortext);
-        int i = StrLen(k_errortext);
-        fprintf(stderr, "\nRun-time error: ");
-        while (i-- > 0)
-            fputc(*s++, stderr);
-        fprintf(stderr, "\nFile %s; Line %ld\n", findfile(ipc.opnd),
-                (long)findline(ipc.opnd));
-    }
-    else {
-        IntVal(kywd_err)--;
-        return;
-    }
-
-    if (have_errval) {
-        fprintf(stderr, "offending value: ");
-        outimage(stderr, &k_errorvalue, 0);
-        putc('\n', stderr);
-    }
-
-    fprintf(stderr, "Traceback:\n");
-    tracebk(pfp, glbl_argp);
-    fflush(stderr);
-
-    if (dodump)
-        abort();
-
-    c_exit(EXIT_FAILURE);
 }
