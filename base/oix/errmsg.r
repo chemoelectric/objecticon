@@ -85,6 +85,7 @@ struct errtab errtab[] = {
    216, "external function not found",
    217, "external library not found",
    218, "external library inconsistency",
+   219, "already closed",
 
    301, "evaluation stack overflow",
    302, "memory violation",

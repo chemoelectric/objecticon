@@ -14,7 +14,7 @@ if (!self_mysql_dptr)
     syserr("Missing ptr field");
 self_mysql = (MYSQL*)IntVal(*self_mysql_dptr);
 if (!self_mysql)
-    runerr(205, self);
+    runerr(219, self);
 #enddef
 
 #begdef GetSelfMySqlRes()
@@ -26,7 +26,7 @@ if (!self_mysql_res_dptr)
     syserr("Missing ptr field");
 self_mysql_res = (MYSQL_RES*)IntVal(*self_mysql_res_dptr);
 if (!self_mysql_res)
-    runerr(205, self);
+    runerr(219, self);
 #enddef
 
 static void on_mysql_error(MYSQL *p)

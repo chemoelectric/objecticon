@@ -68,7 +68,7 @@ if (!self_id_dptr)
     syserr("Missing id field");
 self_id = IntVal(*self_id_dptr);
 if (self_id < 0)
-    runerr(205, self);
+    runerr(219, self);
 #enddef
 
 function{0,1} ipc_Shm_open_public_impl(key)

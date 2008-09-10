@@ -125,6 +125,7 @@ int		idelay		(int n);
 int		interp_0	(int fsig,dptr cargp);
 int		interp_1	(int fsig,dptr cargp);
 void		inttrap		(void);
+void            s_err_msg       (char *em, dptr v);
 void		irunerr		(int n, C_integer v);
 int		lexcmp		(dptr dp1,dptr dp2);
 word		longread	(char *s,int width,long len,FILE *fname);

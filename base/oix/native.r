@@ -561,7 +561,7 @@ if (!m##_dptr)
     syserr("Missing fd field");
 (m) = IntVal(*m##_dptr);
 if (m < 0)
-    runerr(205, p);
+    runerr(219, p);
 #enddef
 
 #begdef GetSelfFd()
@@ -573,7 +573,7 @@ if (!self_fd_dptr)
     syserr("Missing fd field");
 self_fd = IntVal(*self_fd_dptr);
 if (self_fd < 0)
-    runerr(205, self);
+    runerr(219, self);
 #enddef
 
 function{0,1} io_FileStream_open_impl(path, flags, mode)
@@ -1183,7 +1183,7 @@ if (!self_dir_dptr)
     syserr("Missing dd field");
 self_dir = (DIR*)IntVal(*self_dir_dptr);
 if (!self_dir)
-    runerr(205, self);
+    runerr(219, self);
 #enddef
 
 function{0,1} io_DirStream_open_impl(path)
@@ -1649,7 +1649,7 @@ if (!self_rs_dptr)
     syserr("Missing ptr field");
 self_rs = (struct ramstream*)IntVal(*self_rs_dptr);
 if (!self_rs)
-    runerr(205, self);
+    runerr(219, self);
 #enddef
 
 function{1} io_RamStream_close(self)
