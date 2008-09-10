@@ -39,7 +39,7 @@ function{0,1} kill(pid, signal)
       fail;
 #else					/* MSWIN32 */
       if (kill(pid, signal) != 0) {
-	 on_error();
+	 errno2why();
 	 fail;
 	 }
       return nulldesc;
@@ -93,7 +93,7 @@ function{0,1} fork()
       runerr(121);
 #else					/* MSWIN32 */
       if ((pid = fork()) < 0) {
-	 on_error();
+	 errno2why();
 	 fail;
 	 }
 #ifdef Graphics
@@ -135,7 +135,7 @@ function{0,1} exec(f, argv[argc])
       }
       margv[i] = 0;
       if (execvp(f, margv) != 0) {
-	 on_error();
+	 errno2why();
 	 fail;
 	 }
       return nulldesc;
@@ -167,7 +167,7 @@ function{0,1} wait(pid, options)
 
       
       if ((wpid = wait4(pid, &status, option, &rusage)) < 0) {
-	 on_error();
+	 errno2why();
 	 fail;
       }
 
@@ -177,7 +177,7 @@ function{0,1} wait(pid, options)
       if (pid == -1) {
 	 
 	 if ((wpid = wait(&status)) < 0) {
-	    on_error();
+	    errno2why();
 	    fail;
 	 }
       } else {
@@ -189,7 +189,7 @@ function{0,1} wait(pid, options)
 
 	 
 	 if ((wpid = waitpid(pid, &status, option)) < 0) {
-	    on_error();
+	    errno2why();
 	    fail;
 	 }
       }
@@ -228,7 +228,7 @@ function{0,1} wait(pid, options)
 
       
       if ((wpid = _cwait(&termstat, pid, option)) < 0) {
-	 on_error();
+	 errno2why();
 	 fail;
 	 }
       sprintf(retval, "%d terminated:%d", wpid, termstat);
@@ -256,7 +256,7 @@ function{0,1} gettimeofday()
       _ftime( &wtp );
 #else					/* MSWIN32 */
       if (gettimeofday(&tp, 0) < 0) {
-	 on_error();
+	 errno2why();
 	 fail;
       }
 #endif					/* MSWIN32 */

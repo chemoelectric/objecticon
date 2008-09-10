@@ -208,7 +208,7 @@
  * Assign a C string to a descriptor. Assume it is reasonable to use the
  *   descriptor expression more than once, but not the string expression.
  */
-#define MakeCStr(s,dp) do { \
+#define CMakeStr(s,dp) do { \
                  	 StrLoc(*dp) = (s); \
                          StrLen(*dp) = strlen(StrLoc(*dp));  \
 			 } while (0)

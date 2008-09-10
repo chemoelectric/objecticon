@@ -597,7 +597,7 @@ function{} runerr(i, x[n])
           k_errornumber = err_num;
           em = lookup_err_msg(k_errornumber);
           if (em)
-              MakeCStr(em, &k_errortext);
+              CMakeStr(em, &k_errortext);
           else
               k_errortext = emptystr;
       } else if (is:string(i)) {

@@ -443,7 +443,7 @@ int handle_misc(wd, w)
                          * Get the types we are handling
                          */
                         target_list[0] = XA_TARGETS;
-                        MakeCStr("targets", &str0);
+                        CMakeStr("targets", &str0);
                         str1 = cstr2string(selection_name);
                         val = call(&proc, &str0, &str1, 0);
                         if (!val || !is:list(*val))
@@ -499,7 +499,7 @@ int handle_misc(wd, w)
                             /*
                              * Get the value
                              */
-                            MakeCStr("content", &str0);
+                            CMakeStr("content", &str0);
                             str1 = cstr2string(selection_name);
                             str2 = cstr2string(target_name);
                             val = call(&proc, &str0, &str1, &str2, 0);
@@ -558,7 +558,7 @@ int handle_misc(wd, w)
                         break;
                     }
 
-                    MakeCStr("clear", &str0);
+                    CMakeStr("clear", &str0);
                     str1 = cstr2string(an);
                     XFree(an);
                     call(&proc, &str0, &str1, 0);

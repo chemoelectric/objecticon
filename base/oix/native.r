@@ -591,7 +591,7 @@ function{0,1} io_FileStream_open_impl(path, flags, mode)
 
        fd = open(path, flags, mode);
        if (fd < 0) {
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -628,7 +628,7 @@ function{0,1} io_FileStream_in(self, i)
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -659,7 +659,7 @@ function{0,1} io_FileStream_out(self, s)
        int rc;
        GetSelfFd();
        if ((rc = write(self_fd, StrLoc(s), StrLen(s))) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        return C_integer rc;
@@ -670,7 +670,7 @@ function{0,1} io_FileStream_close(self)
    body {
        GetSelfFd();
        if (close(self_fd) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        *self_fd_dptr = minusonedesc;
@@ -684,12 +684,12 @@ function{0,1} io_FileStream_truncate(self, len)
    body {
        GetSelfFd();
        if (lseek(self_fd, len, SEEK_SET) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
 
        if (ftruncate(self_fd, len) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        return nulldesc;
@@ -701,7 +701,7 @@ function{0,1} io_FileStream_stat_impl(self)
        struct stat st;
        GetSelfFd();
        if (fstat(self_fd, &st) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        return stat2list(&st);
@@ -720,7 +720,7 @@ function{0,1} io_FileStream_seek(self, offset)
        } else
            whence = SEEK_END;
        if ((rc = lseek(self_fd, offset, whence)) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        return C_integer(rc + 1);
@@ -732,7 +732,7 @@ function{0,1} io_FileStream_tell(self)
        int rc;
        GetSelfFd();
        if ((rc = lseek(self_fd, 0, SEEK_CUR)) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        return C_integer(rc + 1);
@@ -768,7 +768,7 @@ function{0,1} io_SocketStream_in(self, i)
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -804,7 +804,7 @@ function{0,1} io_SocketStream_socket_impl(domain, typ)
        struct descrip fname;
        sockfd = socket(domain, typ, 0);
        if (sockfd < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        return C_integer sockfd;
@@ -827,7 +827,7 @@ function{0,1} io_SocketStream_out(self, s)
        rc = send(self_fd, StrLoc(s), StrLen(s), 0);
 #endif
        if (rc < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        return C_integer rc;
@@ -838,7 +838,7 @@ function{0,1} io_SocketStream_close(self)
    body {
        GetSelfFd();
        if (close(self_fd) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        *self_fd_dptr = minusonedesc;
@@ -855,7 +855,7 @@ function{0,1} io_SocketStream_socketpair_impl(typ)
        struct descrip t;
 
        if (socketpair(AF_UNIX, typ, 0, fds) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -944,7 +944,7 @@ function{0,1} io_SocketStream_connect(self, addr)
        }
 
        if (connect(self_fd, sa, len) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -975,7 +975,7 @@ function{0,1} io_SocketStream_bind(self, addr)
        }
 
        if (bind(self_fd, sa, len) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -990,7 +990,7 @@ function{0,1} io_SocketStream_listen(self, backlog)
    body {
        GetSelfFd();
        if (listen(self_fd, backlog) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        return nulldesc;
@@ -1003,7 +1003,7 @@ function{0,1} io_SocketStream_accept_impl(self)
        GetSelfFd();
 
        if ((sockfd = accept(self_fd, 0, 0)) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -1073,7 +1073,7 @@ function{0,1} io_DescStream_select(rl, wl, el, timeout)
 
        rc = select(FD_SETSIZE, &rset, &wset, &eset, ptv);
        if (rc < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        /* A rc of zero means timeout */
@@ -1122,7 +1122,7 @@ function{0,1} io_DescStream_poll(a[n])
 
        rc = poll(ufds, nfds, timeout);
        if (rc < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        /* A rc of zero means timeout */
@@ -1157,13 +1157,13 @@ function{0,1} io_DescStream_flag(self, on, off)
         GetSelfFd();
 
         if ((i = fcntl(self_fd, F_GETFL, 0)) < 0) {
-           on_error();
+           errno2why();
            fail;
         }
         if (on || off) {
             i = (i | on) & (~off);
             if (fcntl(self_fd, F_SETFL, i) < 0) {
-                on_error();
+                errno2why();
                 fail;
             }
         }
@@ -1194,7 +1194,7 @@ function{0,1} io_DirStream_open_impl(path)
 
        dd = opendir(path);
        if (!dd) {
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -1217,7 +1217,7 @@ function{0,1} io_DirStream_read_impl(self)
        de = readdir(self_dir);
        if (!de) {
            if (errno)
-               on_error();
+               errno2why();
            else {
                *eof = onedesc;
                why("End of file");
@@ -1232,7 +1232,7 @@ function{0,1} io_DirStream_close(self)
    body {
        GetSelfDir();
        if ((closedir(self_dir)) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        *self_dir_dptr = zerodesc;
@@ -1256,12 +1256,12 @@ function{0,1} io_ProgStream_open_impl(cmd, flags)
        }
 
        if ((pipe(fd) < 0)) {
-           on_error();
+           errno2why();
            fail;
        }
 
        if ((pid = fork()) < 0) {
-           on_error();
+           errno2why();
            close(fd[0]);
            close(fd[1]);
            fail;
@@ -1313,13 +1313,13 @@ function{0,1} io_ProgStream_close(self)
            runerr(207,*(dptr)&pidf);
 
        if (close(self_fd) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        *self_fd_dptr = minusonedesc;
        
        if (waitpid(IntVal(*pid), 0, 0) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -1338,7 +1338,7 @@ function{0,1} io_Files_rename(s1,s2)
 
    body {
        if (rename(s1, s2) < 0) {
-           on_error();
+           errno2why();
            fail;
        }
        return nulldesc;
@@ -1355,7 +1355,7 @@ function{0,1} io_Files_hardlink(s1, s2)
       runerr(121);
 #else					/* MSWIN32 */
       if (link(s1, s2) < 0) {
-	 on_error();
+	 errno2why();
 	 fail;
       }
       return nulldesc;
@@ -1373,7 +1373,7 @@ function{0,1} io_Files_symlink(s1, s2)
       runerr(121);
 #else					/* MSWIN32 */
       if (symlink(s1, s2) < 0) {
-	 on_error();
+	 errno2why();
 	 fail;
       }
       return nulldesc;
@@ -1399,7 +1399,7 @@ function{0,1} io_Files_readlink(s)
            n = DiffPtrs(StrLoc(result),strfree); /* note the deallocation */
            strtotal += n;
            strfree = StrLoc(result);              /* reset free pointer */
-           on_error();
+           errno2why();
            fail;
        }
 
@@ -1422,7 +1422,7 @@ function{0,1} io_Files_mkdir(s, mode)
       runerr(101, mode)
    body {
       if (mkdir(s, mode) < 0) {
-	 on_error();
+	 errno2why();
 	 fail;
       }
       return nulldesc;
@@ -1434,7 +1434,7 @@ function{0,1} io_Files_remove(s)
       runerr(103,s)
    body {
       if (remove(s) < 0) {
-          on_error();
+          errno2why();
           fail;
       }
       return nulldesc;
@@ -1448,7 +1448,7 @@ function{0,1} io_Files_truncate(s, len)
       runerr(101, len)
    body {
       if (truncate(s, len) < 0) {
-          on_error();
+          errno2why();
           fail;
       }
       return nulldesc;
@@ -1559,7 +1559,7 @@ function{0,1} io_Files_stat_impl(s)
    body {
       struct stat st;
       if (stat(s, &st) < 0) {
-          on_error();
+          errno2why();
           fail;
       }
       return stat2list(&st);
@@ -1572,7 +1572,7 @@ function{0,1} io_Files_lstat_impl(s)
    body {
       struct stat st;
       if (lstat(s, &st) < 0) {
-          on_error();
+          errno2why();
           fail;
       }
       return stat2list(&st);
@@ -1586,7 +1586,7 @@ function{0,1} io_Files_access(s, mode)
       runerr(101, mode)
    body {
       if (access(s, mode) < 0) {
-          on_error();
+          errno2why();
           fail;
       }
       return nulldesc;

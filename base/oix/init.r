@@ -247,7 +247,7 @@ void icon_init(char *name)
     rootpstate.eventsource = nulldesc;
     rootpstate.Glbl_argp = NULL;
     rootpstate.Kywd_err = zerodesc;
-    MakeCStr(prog_name, &rootpstate.Kywd_prog);
+    CMakeStr(prog_name, &rootpstate.Kywd_prog);
     rootpstate.Kywd_pos = onedesc;
     rootpstate.ksub = emptystr;
     rootpstate.Kywd_why = emptystr;
@@ -922,7 +922,7 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     pstate = coexp->program;
     pstate->K_current.dword = D_Coexpr;
 
-    MakeCStr(name, &pstate->Kywd_prog);
+    CMakeStr(name, &pstate->Kywd_prog);
     MakeInt(hdr.trace, &pstate->Kywd_trc);
 
     /*

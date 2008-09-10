@@ -358,7 +358,7 @@ int main(int argc, char **argv)
         tended struct descrip args = create_list(argc - 2);
         for (i = 2; i < argc; i++) {
             struct descrip t;
-            MakeCStr(argv[i], &t);
+            CMakeStr(argv[i], &t);
             c_put(&args, &t);
         }
         PushDesc(args);

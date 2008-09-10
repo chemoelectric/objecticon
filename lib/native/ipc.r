@@ -80,7 +80,7 @@ function{0,1} ipc_Shm_open_public_impl(key)
        if (top_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
            if (errno == ENOENT) {
-               on_error();
+               errno2why();
                fail;
            }
            aborted("Couldn't get shm id");
@@ -105,7 +105,7 @@ function{0,1} ipc_Shm_create_public_impl(key, str)
        if (top_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
            if (errno == EEXIST) {
-               on_error();
+               errno2why();
                fail;
            }
            aborted("Couldn't get shm id");
@@ -325,7 +325,7 @@ function{0,1} ipc_Sem_open_public_impl(key)
        if (sem_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
            if (errno == ENOENT) {
-               on_error();
+               errno2why();
                fail;
            }
            aborted("Couldn't get sem id");
@@ -348,7 +348,7 @@ function{0,1} ipc_Sem_create_public_impl(key, val)
        if (sem_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
            if (errno == EEXIST) {
-               on_error();
+               errno2why();
                fail;
            }
            aborted("Couldn't get sem id");
@@ -438,7 +438,7 @@ function{1} ipc_Sem_semop_nowait(self, n)
        if (semop_ex(self_id, &p_buf, 1) == -1) {
            if (errno == EAGAIN) {
                /* Okay, it's not ready,so fail */
-               on_error();
+               errno2why();
                fail;
            }
            /* A runtime error. */
@@ -467,7 +467,7 @@ function{0,1} ipc_Msg_open_public_impl(key)
        if (top_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
            if (errno == ENOENT) {
-               on_error();
+               errno2why();
                fail;
            }
            aborted("Couldn't get top id");
@@ -487,7 +487,7 @@ function{0,1} ipc_Msg_create_public_impl(key)
        if (top_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
            if (errno == EEXIST) {
-               on_error();
+               errno2why();
                fail;
            }
            aborted("Couldn't get shm id");
@@ -726,7 +726,7 @@ function{0,1} ipc_Msg_attempt_impl(self)
        if (msgrcv_ex(tp->msg_id, &mh, sizeof(mh.u), 0, IPC_NOWAIT) == -1) {
            if (errno == ENOMSG) {
                /* Okay, it's not ready,so fail.  First signal. */
-               on_error();
+               errno2why();
                p_buf.sem_op = 1;
                if (semop_ex(tp->rcv_sem_id, &p_buf, 1) == -1)
                    aborted("signal failed");

@@ -42,7 +42,7 @@ int eq(dptr d1, dptr d2)
 int ceq(dptr dp, char *s)
 {
     struct descrip t;
-    MakeCStr(s, &t);
+    CMakeStr(s, &t);
     return eq(&t, dp);
 }
 
@@ -1848,7 +1848,7 @@ stringint *stringint_lookup(stringint *sip, char *s)
 /*
  * Set &why to an error message based on errno.
  */
-void on_error()
+void errno2why()
 {
     char *msg = 0;
     char buff[32];

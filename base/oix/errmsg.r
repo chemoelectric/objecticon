@@ -196,7 +196,7 @@ void err_msg(int n, dptr v)
     else {
         em = lookup_err_msg(k_errornumber);
         if (em)
-            MakeCStr(em, &k_errortext);
+            CMakeStr(em, &k_errortext);
         else
             k_errortext = emptystr;
     }
