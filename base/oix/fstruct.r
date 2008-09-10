@@ -1066,17 +1066,18 @@ end
 function{1} constructor(s, x[n])
    abstract {
       return constructor
-	}
-   if !cnv:string(s) then runerr(103,s)
+   }
+   if !cnv:string(s) then 
+      runerr(103,s)
    inline {
       int i;
       struct b_constructor *bp;
-      for(i=0;i<n;i++)
-         if (!is:string(x[i])) runerr(103, x[i]);
+      for(i = 0; i < n; i++)
+         if (!is:string(x[i])) 
+             runerr(103, x[i]);
       bp = dynrecord(&s, x, n);
-      if (bp == NULL) syserr("out of memory in constructor()");
       return constructor(bp);
-      }
+    }
 end
 
 function{1} constructorof(r)
@@ -1095,9 +1096,6 @@ function{*} keyof(s,x)
    }
    type_case s of {
       list: {
-	 abstract {
-	    return integer
-	    }
 	 body {
             C_integer index = 1, i, j;
             for (ep = BlkLoc(s)->list.listhead;
@@ -1116,10 +1114,7 @@ function{*} keyof(s,x)
          }
       }
       table: {
-	 abstract {
-	    return store[type(s).tbl_key]
-	 }
-	 inline {
+         body {
 	    struct hgstate state;
 	    for (ep = hgfirst(BlkLoc(s), &state); ep != 0;
 		 ep = hgnext(BlkLoc(s), &state, ep)) {
