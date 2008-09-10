@@ -264,12 +264,60 @@ void drunerr(n, v)
 {
     union block *bp;
 
-    bp = (union block *)alcreal(v);
-    if (bp != NULL) {
-        t_errornumber = n;
-        BlkLoc(t_errorvalue) = bp;
-        t_errorvalue.dword = D_Real;
-        t_have_val = 1;
-    }
+    MemProtect(bp = (union block *)alcreal(v));
+    t_errornumber = n;
+    BlkLoc(t_errorvalue) = bp;
+    t_errorvalue.dword = D_Real;
+    t_have_val = 1;
     err_msg(0,NULL);
+}
+
+/*
+ * Produce a runtime error based on a string message, rather than one
+ * of the standard errnor numbers.  This is useful for external
+ * libraries which cannot edit the error message table.  &errornumber
+ * is set to -1.
+ */
+void s_err_msg(char *em, dptr v)
+{
+    k_errornumber = -1;
+    if (v == NULL) {
+        k_errorvalue = nulldesc;
+        have_errval = 0;
+    }
+    else {
+        k_errorvalue = *v;
+        have_errval = 1;
+    }
+
+    k_errortext = cstr2string(em);
+
+    if (IntVal(kywd_err) == 0) {
+        char *s = StrLoc(k_errortext);
+        int i = StrLen(k_errortext);
+        fprintf(stderr, "\nRun-time error: ");
+        while (i-- > 0)
+            fputc(*s++, stderr);
+        fprintf(stderr, "\nFile %s; Line %ld\n", findfile(ipc.opnd),
+                (long)findline(ipc.opnd));
+    }
+    else {
+        IntVal(kywd_err)--;
+        return;
+    }
+
+    if (have_errval) {
+        fprintf(stderr, "offending value: ");
+        outimage(stderr, &k_errorvalue, 0);
+        putc('\n', stderr);
+    }
+
+    fprintf(stderr, "Traceback:\n");
+    tracebk(pfp, glbl_argp);
+    fflush(stderr);
+
+    if (dodump)
+        abort();
+
+    c_exit(EXIT_FAILURE);
 }
