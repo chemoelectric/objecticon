@@ -14,6 +14,23 @@ $endif
 # directly.
 #
 class Stream()
+   public static const
+      READ,
+      WRITE,
+      SEEK,
+      TRUNCATE,
+      READ_WRITE,
+      ALL
+
+   private static init()
+      READ := 'r'
+      WRITE := 'w'
+      SEEK := 's'
+      TRUNCATE := 't'
+      READ_WRITE := 'rw'
+      ALL := 'rwst'
+   end
+
    #
    # Return at least one, and up to n characters from the stream, or
    # fail if either at end-of-file or on error.  After failure, the
@@ -55,10 +72,12 @@ class Stream()
    public defer truncate(len)
 
    #
-   # Return a string indicating which functions the stream supports.
-   # If the string contains "r", the stream is readable; "w" indicates
-   # the stream is writable, "s" indicates that it is seekable, and
-   # "t" that it is truncatable.
+   # Return a cset indicating which functions the stream supports.
+   # The possible character members are listed as constants above.  If
+   # the cset contains {READ}, the stream is readable; {WRITE}
+   # indicates the stream is writable, {SEEK} indicates that it is
+   # seekable (and supports {tell} too), and {TRUNCATE} that it is
+   # truncatable.
    #
    public defer get_mode()
 
@@ -74,6 +93,13 @@ class Stream()
    # the end-of-file.
    #
    public defer eof()
+
+   #
+   # Succeed iff the stream's mode has all the chars in {c}
+   #
+   public can(c)
+      return get_mode() ** c === c
+   end
 
    #
    # Read a complete line from the stream, reading up to the next "\n"
@@ -211,7 +237,7 @@ class StringStream(Stream)
    end
 
    public get_mode()
-      return "rwst"
+      return ALL
    end
 
    public truncate(len)
@@ -293,7 +319,7 @@ class BufferStream(Stream, SetFields)
                break
             }
          }
-         if *rbuff = 0 & upto('s', other.get_mode()) then
+         if *rbuff = 0 & other.can(SEEK) then
             rpos := other.tell() | fail
          rbuff ||:= other.in(buff_size) | {
             other.eof() | fail
@@ -323,7 +349,7 @@ class BufferStream(Stream, SetFields)
             \rpos +:= *t
          }
       } else if n < buff_size then {
-         if upto('s', other.get_mode()) then
+         if other.can(SEEK) then
             rpos := other.tell() | fail
          rbuff := other.in(buff_size) | fail
          rbuff ? {
@@ -370,7 +396,7 @@ class BufferStream(Stream, SetFields)
    # stream, this call has no effect.
    #
    public unbuff()
-      if *rbuff > 0 & \rpos & upto('s', other.get_mode()) then {
+      if *rbuff > 0 & \rpos & other.can(SEEK) then {
          other.seek(rpos) | fail
          rbuff := ""
          rpos := &null
@@ -652,20 +678,20 @@ class FileStream(DescStream)
    public static open(name, flags, perm)
       local mode
       if iand(flags, FileOpt.WRONLY) ~= 0 then
-         mode := "wst"
+         mode := WRITE ++ SEEK ++ TRUNCATE
       else if iand(flags, FileOpt.RDWR) ~= 0 then
-         mode := "rwst"
+         mode := ALL
       else
-         mode := "rs"
+         mode := READ ++ SEEK
       return FileStream(open_impl(name, flags, perm), mode)
    end
 
    private static defer open_impl(path, flags, perm)
 
    private static init()
-      stdin := FileStream(0)
-      stdout := FileStream(1)
-      stderr := FileStream(2)
+      stdin := FileStream(0, READ)
+      stdout := FileStream(1, WRITE)
+      stderr := FileStream(2, WRITE)
       b_stdin := BufferStream("other=",stdin, "flush_on_nl=t")
       b_stdout := BufferStream("other=",stdout, "flush_on_nl=t")
       b_stderr := BufferStream("other=",stderr, "flush_on_nl=t")
@@ -706,7 +732,7 @@ class SocketStream(DescStream)
    # @    {SocketType.STREAM}.
    #
    public static socket(domain, typ)
-      return SocketStream(socket_impl(domain, typ), "rw")
+      return SocketStream(socket_impl(domain, typ), READ_WRITE)
    end
 
    #
@@ -718,7 +744,7 @@ class SocketStream(DescStream)
    public static socketpair(typ)
       local t
       t := socketpair_impl(typ) | fail
-      return [SocketStream(t[1], "rw"), SocketStream(t[2], "rw")]
+      return [SocketStream(t[1], READ_WRITE), SocketStream(t[2], READ_WRITE)]
    end
 
    public defer in(n)
@@ -746,7 +772,7 @@ class SocketStream(DescStream)
    # Accept a new connection, returning a new {SocketStream}.
    #
    public accept()
-      return SocketStream(accept_impl(), "rw")
+      return SocketStream(accept_impl(), READ_WRITE)
    end
 
    private defer accept_impl()
@@ -810,7 +836,7 @@ class DirStream(Stream)
    end
 
    public get_mode()
-      return "r"
+      return READ
    end
 
    private static defer open_impl(path)
@@ -837,9 +863,9 @@ class ProgStream(FileStream)
    public static open(cmd, flags)
       local l, mode
       if iand(flags, FileOpt.WRONLY) ~= 0 then
-         mode := "w"
+         mode := WRITE
       else
-         mode := "r"
+         mode := READ
       l := open_impl(cmd, flags) | fail
       return ProgStream(l[1], l[2], mode)
    end
@@ -895,7 +921,7 @@ class RamStream(Stream)
    private static defer new_impl(s)
 
    public get_mode()
-      return "rwst"
+      return ALL
    end
 
    public eof()

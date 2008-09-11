@@ -1,11 +1,67 @@
-Write mode: "wst"
-Read-Write mode: "rwst"
-Read mode: "rs"
-Dir read mode: "r"
-Prog read mode: "r"
-Prog write mode: "w"
-Socket mode: "rw"
-String mode: "rwst"
+Writable
+Mode: 'stw'
+Can read: no
+Can write: yes
+Can readwrite: no
+Can seek: yes
+Can truncate: yes
+Can all: no
+Read/write
+Mode: 'rstw'
+Can read: yes
+Can write: yes
+Can readwrite: yes
+Can seek: yes
+Can truncate: yes
+Can all: yes
+Read only
+Mode: 'rs'
+Can read: yes
+Can write: no
+Can readwrite: no
+Can seek: yes
+Can truncate: no
+Can all: no
+Dir Read
+Mode: 'r'
+Can read: yes
+Can write: no
+Can readwrite: no
+Can seek: no
+Can truncate: no
+Can all: no
+Prog Read
+Mode: 'r'
+Can read: yes
+Can write: no
+Can readwrite: no
+Can seek: no
+Can truncate: no
+Can all: no
+Prog write
+Mode: 'w'
+Can read: no
+Can write: yes
+Can readwrite: no
+Can seek: no
+Can truncate: no
+Can all: no
+Socket
+Mode: 'rw'
+Can read: yes
+Can write: yes
+Can readwrite: yes
+Can seek: no
+Can truncate: no
+Can all: no
+Ram stream
+Mode: 'rstw'
+Can read: yes
+Can write: yes
+Can readwrite: yes
+Can seek: yes
+Can truncate: yes
+Can all: yes
 Comparing: yes
 Comparing: yes
 Comparing: yes

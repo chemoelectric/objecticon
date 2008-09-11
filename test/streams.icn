@@ -25,7 +25,7 @@ class NStream(Stream)
    end
    
    public get_mode()
-      return "rw"
+      return READ_WRITE
    end
 
    public close()
@@ -46,32 +46,58 @@ class NStream(Stream)
    end
 end
 
+procedure do_mode(f)
+   print{"Mode",f.get_mode()}
+   yes_no{"Can read",f.can(Stream.READ)}
+   yes_no{"Can write",f.can(Stream.WRITE)}
+   yes_no{"Can readwrite",f.can(Stream.READ_WRITE)}
+   yes_no{"Can seek",f.can(Stream.SEEK)}
+   yes_no{"Can truncate",f.can(Stream.TRUNCATE)}
+   yes_no{"Can all",f.can(Stream.ALL)}
+end
+
 procedure test_modes()
    local f
+
+   write("Writable")
    f := FileStream.open("test", ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
-   print{"Write mode",f.get_mode()}
+   do_mode(f)
    f.close()
+
+   write("Read/write")
    f := FileStream.open("test", FileOpt.RDWR) | stop(&why)
-   print{"Read-Write mode",f.get_mode()}
+   do_mode(f)
    f.close()
+
+   write("Read only")
    f := FileStream.open("test", FileOpt.RDONLY) | stop(&why)
-   print{"Read mode",f.get_mode()}
+   do_mode(f)
    f.close()
+
+   write("Dir Read")
    f := DirStream.open(".") | stop(&why)
-   print{"Dir read mode",f.get_mode()}
+   do_mode(f)
    f.close()
+
+   write("Prog Read")
    f := ProgStream.open("echo hello", FileOpt.RDONLY) | stop(&why)
-   print{"Prog read mode",f.get_mode()}
+   do_mode(f)
    while f.read()
    f.close()
+
+   write("Prog write")
    f := ProgStream.open("cat >/dev/null", FileOpt.WRONLY) | stop(&why)
-   print{"Prog write mode",f.get_mode()}
+   do_mode(f)
    f.close()
+
+   write("Socket")
    f := SocketStream.socket()
-   print{"Socket mode",f.get_mode()}
+   do_mode(f)
    f.close()
+
+   write("Ram stream")
    f := RamStream("abc")
-   print{"String mode",f.get_mode()}
+   do_mode(f)
    f.close()
 end
 
