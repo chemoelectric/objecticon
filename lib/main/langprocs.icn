@@ -50,7 +50,7 @@ class ObjectOutputStream(Stream)
    end
 
    public get_mode()
-      return "w"
+      return WRITE
    end
 
    public nl()
@@ -573,4 +573,14 @@ procedure in_bucket(e, l, seen)
          return
       }
    }
+end
+
+class NoCopy()
+   private final object_clone()
+      return self
+   end
+
+   private final object_encode()
+      runerr("Not encodable", self)
+   end
 end

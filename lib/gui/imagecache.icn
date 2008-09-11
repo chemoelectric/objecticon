@@ -1,8 +1,8 @@
 package gui
 
-import util, graphics, io
+import util, graphics, io, lang
 
-class ImageCache()
+class ImageCache(NoCopy)
    public static 
       map,
       path

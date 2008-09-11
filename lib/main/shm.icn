@@ -19,7 +19,7 @@ import lang
 # Instances of this class should not be created directly, but rather using the static
 # methods {open_public}, {create_public} and {create_private}
 #
-class Shm()
+class Shm(NoCopy)
    private 
       id
 

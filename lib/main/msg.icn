@@ -19,8 +19,9 @@ import lang, util
 # Instances of this class should not be created directly, but rather using the factory
 # procedures {open_public}, {create_public} and {create_private}
 #
-class Msg()
-   private id
+class Msg(NoCopy)
+   private 
+      id
 
    #
    # Send the given object.  The object may be an arbitrary Icon structure, and will be

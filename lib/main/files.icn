@@ -2,14 +2,16 @@ package io
 
 import 
    util,
+   lang,
    ipl.random
 
 #
 # This class has several static methods which provide
 # system-independent access to the file system.
 #
-class Files()
-   private static const FS
+class Files(NoCopy)
+   private static const 
+      FS
 
    private static init()
       FS := 

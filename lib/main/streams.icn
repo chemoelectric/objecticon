@@ -1,6 +1,9 @@
 package io
 
-import util(error, to_flag, SetFields)
+import
+   util(error, to_flag, SetFields),
+   lang(NoCopy)
+
 
 $ifdef _UNIX
 $define EOL "\n"
@@ -465,7 +468,7 @@ end
 # This is the parent class of streams based on a posix-style
 # integer-based file descriptor.
 #
-class DescStream(Stream)
+class DescStream(Stream, NoCopy)
    protected 
       fd,
       mode,
@@ -789,7 +792,7 @@ end
 #
 # This class is used to read directory contents.
 #
-class DirStream(Stream)
+class DirStream(Stream, NoCopy)
    private 
       dd,
       line,
@@ -851,7 +854,7 @@ end
 # This stream represents a pipe to a command running in a forked child
 # process.  The pipe is either readable or writable, but not both.
 #
-class ProgStream(FileStream)
+class ProgStream(FileStream, NoCopy)
    private
       pid
 
@@ -886,7 +889,7 @@ end
 # can be used to efficiently concatenate together many strings, or as
 # a convenient temporary stream.
 #
-class RamStream(Stream)
+class RamStream(Stream, NoCopy)
    private
       f_eof,
       ptr

@@ -93,7 +93,7 @@ class Encode()
    end
 
    public encode(o)
-      local ty, i, pairs, cname, p, n
+      local ty, i, cname, p, n, e
 
       if i := \seen[o] then {
          chars_out(Codec.REF_CODE) | fail
@@ -113,7 +113,8 @@ class Encode()
             else {
                n := Class.get_n_instance_fields(o)
                int_out(n) | fail
-               every encode(Class.get(o, 1 to n))
+               every e := Class.get(o, 1 to n) do
+                  encode(e) | fail
             }
          }
 
@@ -160,30 +161,33 @@ class Encode()
             line_out(subtype(o)) | fail
             int_out(*o) | fail
             note_seen(o)
-            every encode(!o)
+            every e := !o do
+               encode(e) | fail
          }
 
          "list" : {
             chars_out(Codec.LIST_CODE) | fail
             int_out(*o) | fail
             note_seen(o)
-            every encode(!o)
-            }
+            every e := !o do
+               encode(e) | fail
+         }
 
          "set" : {
             chars_out(Codec.SET_CODE) | fail
             int_out(*o) | fail
             note_seen(o)
-            every encode(!o)
+            every e := !o do
+               encode(e) | fail
          }
 
          "table" : {
             chars_out(Codec.TABLE_CODE) | fail
             int_out(*o) | fail
-            encode(o[[]])
+            encode(o[[]]) | fail
             note_seen(o)
-            pairs := sort(o)
-            every encode(!!pairs)
+            every e := !!sort(o) do
+               encode(e) | fail
          }
 
          default : 

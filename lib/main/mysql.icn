@@ -17,7 +17,7 @@ import lang, util(to_flag)
 # methods have a single underlying corresponding C function - see the MySql
 # documentation for details on what the underlying function does.
 #
-class MySql()
+class MySql(NoCopy)
    public static const 
       FIELD_TYPE_DECIMAL,
       FIELD_TYPE_TINY,

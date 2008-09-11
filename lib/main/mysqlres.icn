@@ -15,7 +15,7 @@ import lang, util, io
 #
 # This class provides a wrapper around an MYSQL_RES object.
 #
-class MySqlRes()
+class MySqlRes(NoCopy)
    private
       ptr,
       fields
