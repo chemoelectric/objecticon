@@ -218,7 +218,7 @@ class HttpClient(NetClient)
       #
       l := response.get_first_header("Location") | return on_http_error("No Location in a redirect response")
       if match("http://", l) then {
-         u := URL(l) | return on_http_error("Invalid Location in a redirect response:" || l)
+         u := URL.parse(l) | return on_http_error("Invalid Location in a redirect response:" || l)
          request.set_url(u)
       } else
          #
@@ -470,8 +470,7 @@ class HttpClient(NetClient)
          } else {
             case map(k) of {
                "expires" : {
-                  t := Time()
-                  if t.parse(v, "EEE, dd-MMM-yyyy hh:mm:ss zzz") then
+                  if t := Time.parse(v, "EEE, dd-MMM-yyyy hh:mm:ss zzz") then
                      c.expires := t
                }
                "path" : c.path := v
@@ -479,7 +478,7 @@ class HttpClient(NetClient)
                "secure" : c.secure := 1
                "max-age" : {
                   if d := integer(v) then {
-                     t := Time.get_current_time()
+                     t := Time()
                      t.set_seconds(t.seconds + d)
                      c.expires := t
                   }
@@ -541,7 +540,6 @@ class HttpClient(NetClient)
       host := map(request.url.get_address())
       path := request.url.get_file()
       now := Time()
-      now.set_current_time()
       s := ""
       every e := !sort(cookies) do {
          if host[0-:*e[1]] == e[1] then {

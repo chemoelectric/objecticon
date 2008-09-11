@@ -79,8 +79,7 @@ class PopClient(NetClient)
       s := ""
       every s ||:= !l || "\r\n"
 
-      m := Message()
-      m.parse(s) | return error(m)
+      m := Message.parse(s) | fail
 
       return m
    end

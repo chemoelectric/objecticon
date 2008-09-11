@@ -73,10 +73,10 @@ class Mailbox(Address)
       return oo.writes(to_rfc822())
    end
 
-   public parse(s)
+   public static parse(s)
       local p
       p := RFC822Parser()
-      return p.parse_mailbox(s, self)
+      return p.parse_mailbox(s)
    end   
 
    public generate_mailboxes()
@@ -94,15 +94,13 @@ class Mailbox(Address)
       return s
    end
 
-   public new(a[])
-      if *a = 1 then
-         parse(a[1]) | fail
-      else if *a >= 2 then {
-         local_part := a[1]
-         domain := a[2]
-         phrase := a[3] | ""
-         route := a[4] | []
-      }
+   public new(local_part, domain, phrase, route)
+      /phrase := ""
+      /route := []
+      self.local_part := local_part
+      self.domain := domain
+      self.phrase := phrase
+      self.route := route
       return
    end
 end

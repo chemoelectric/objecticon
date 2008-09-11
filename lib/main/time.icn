@@ -11,24 +11,20 @@ package util
 import io(write)
 
 #
-# This class is used to represent a date/time.  The representation may be
-# retrieved from the class either as the constituent parts of a date, or
-# as the number of seconds since a base date, which is 1/1/1600.
+# This class is used to represent a date/time.  The representation may
+# be retrieved from the class either as the constituent parts of a
+# date, or as the number of seconds since a base date, which is
+# 1/1/1600.
 #
-# The "seconds" viewpoint is always in UTC, whilst the "broken down" viewpoint
-# is always in the local timezone.
+# The "seconds" viewpoint is always in UTC, whilst the "broken down"
+# viewpoint is always in the local timezone.
 #
 # The timezone is specified as a timezone object.
 #
-# If not specified as a parameter the timezone defaults to a value extracted
-# from the system, if possible.
-#
-# @example
-# @ t := Time()           # t is uninitialized
-# @ t.set_current_time(Timezone(-18000))  # t now represents the current time; time zone GMT-5hrs
-# @ t.parse("1990/12/2 11:22:03 -0500")  # the given date 
-# @ t.set_fields(1990, 12, 2, 11, 22, 03, Timezone(-18000))  # the same date
-# @ t.set_seconds(n, z)      # n seconds past the base date in GMT, +/-z mins
+# The constructor accepts various parameters; see the {new()} method
+# for details.  Alternatively, the static methods {Time.parse} and
+# {Time.simple_parse} can be used to create new instances from
+# formatted strings.
 #
 class Time()
    private readable 
@@ -40,10 +36,6 @@ class Time()
       min,
       sec,
       zone
-
-   private 
-      psub,
-      ppos
 
    #
    # Constant data for time functions
@@ -234,76 +226,12 @@ class Time()
       }
       return res
    end
-
-   # 
-   # Get the next parsed int
-   #
-   private parse_int(w)
-      local j, n
-      j := many(&digits, psub, ppos) | return error("Digit expected")
-      #
-      # If there is a numeric field immediately following, limit
-      # the length of this field.  This allows for example yyyyMMdd to
-      # parse 20001201.
-      #
-      if any('ydHMhms') then 
-         j >:= ppos + w
-
-      n := integer(psub[ppos:j])
-      ppos := j
-      return n
-   end
-
-   # 
-   # Get the next parsed timezone
-   #
-   private parse_timezone()
-      local j, z
-      j := many(TZCHARS, psub, ppos) | return error("Timezone expected")
-      z := Timezone.get_known_timezone(psub[ppos:j]) | return error("Invalid timezone")
-      ppos := j
-      return z
-   end
-
-   # 
-   # Get the next parsed am/pm
-   #
-   private parse_ampm()
-      local s
-      s := map(psub[ppos+:2]) | return error("am/pm expected")
-      s == ("am" | "pm") | return error("am/pm expected")
-      ppos +:= 2
-      return s
-   end
-
-   # 
-   # Get the next parsed month
-   # 
-   private parse_month(w)
-      local j, m
-      if w < 3 then
-         return parse_int(w)
-      j := many(&ucase ++ &lcase, psub, ppos) | return error("Month expected")
-      m := month_to_num(psub[ppos:j]) | return error("Invalid month")
-      ppos := j
-      return m
-   end
-
-   # 
-   # Get the next parsed weekday
-   # 
-   private parse_weekday()
-      local j
-      j := many(&ucase ++ &lcase, psub, ppos) | return error("Weekday expected")
-      ppos := j
-      return
-   end
-
+      
    #
    # Match a literal, which begins with a ', and ends with the next ', except
    # that two ' together means a single ' in the result.
    # 
-   private match_literal()
+   public static match_literal()
       local s
       ="\'"
       s := ""
@@ -318,102 +246,6 @@ class Time()
       return s
    end
 
-   # 
-   # Get the next parsed month
-   # 
-   private parse_year(w)
-      local n
-      n := parse_int(w) | fail
-      if n < 70 then
-         return 2000 + n
-      else if n < 100 then
-         return 1900 + n
-      else
-         return n
-   end
-
-   # 
-   # Parse the instance using the given pattern string.  The pattern
-   # consists of pattern chars and other chars.  Succeeds if the 
-   # string could be parsed; fails and sets &why otherwise.
-   # 
-   # The "width" of a field is the number of successive equal pattern
-   # chars.  For example in the pattern
-   # 
-   # yyyy/MMM/dd
-   # 
-   # the widths are 4, 3 and 2 respectively.
-   # 
-   # Except for the month (see below), the only use of the width is to
-   # separate adjacent fields, eg yyyyMMdd with input "19991201".
-   # 
-   # The possible pattern chars are :-
-   # 
-   # E - The weekday (eg Mon) - this is just a sequence of upper and lower
-   # case chars and is otherwise ignored.
-   # 
-   # y - The year.  If the year is less than 70 it is taken to be 20xx; if
-   # it is less than 100 it is taken to be 19xx, otherwise it is as given.
-   # 
-   # d - The day of the month
-   # 
-   # H/h - The hour in the day
-   # 
-   # M - The month of the year.  If the width is less than 3 then the
-   # numeric value is expected, otherwise the textual value is expected.
-   # 
-   # m - The minute in the hour
-   # 
-   # s - The second in the minute
-   # 
-   # a/A - am or pm.  Case is ignored.  If pm, then the hour is
-   # adjusted accordingly in the result.
-   # 
-   # z - The timezone (eg UTC or +0400).
-   #
-   public parse(s, p)
-      local y, d, m, hh, mm, ss, z, ampm, lit, ch, w
-      
-      /p := DEFAULT_FORMAT
-
-      psub := s
-      ppos := 1
-
-      p ? {
-         while not pos(0) do {
-            if any('EydHMhmsaAz') then {
-               ch := p[&pos]
-               w := *tab(many(ch))
-               case ch of {
-                  "E": parse_weekday() | fail
-                  "y": y := parse_year(w) | fail
-                  "M": m := parse_month(w) | fail
-                  "d": d := parse_int(w) | fail
-                  "h"|"H": hh := parse_int(w) | fail
-                  "m": mm := parse_int(w) | fail
-                  "s": ss := parse_int(w) | fail
-                  "z": z := parse_timezone() | fail
-                  "A"|"a": {
-                     ampm := parse_ampm() | fail
-                     if ampm == "pm" & (0 < \hh < 12) then 
-                        hh +:= 12
-                  }
-               }
-            } else if any('\'') then {
-               lit := match_literal()
-               ppos := match(lit, psub, ppos) | return error("Expected literal:" || lit)
-            } else {
-               ch := move(1)
-               while psub[ppos] == ch do
-                  ppos +:= 1
-            }
-         }
-      }
-
-      set_fields(y, m, d, hh, mm, ss, z)
-      return
-   end
-      
    #
    # Convert to string in accordance with RFC 822.
    #
@@ -466,6 +298,17 @@ class Time()
    end
 
    #
+   # Create a Time instance using the given format string; see
+   # {TimeParser.parse} for more details.
+   #
+   public static parse(s, p)
+      local t
+      /p := DEFAULT_FORMAT
+      t := TimeParser()
+      return t.parse(s, p)
+   end
+
+   #
    # Succeed if date is after d
    #
    public after(d)
@@ -496,9 +339,7 @@ class Time()
    end
 
    #
-   # Encode just stores the seconds and zone information.  Note that
-   # the object is expected to have been set to a time before
-   # encoding.
+   # Encode just stores the seconds and zone information.
    #
    private object_encode(c)
       c.encode(self.seconds) | fail
@@ -762,56 +603,56 @@ class Time()
    # Get the time zone
    #
    public get_zone()
-      return self.zone
+      return .self.zone
    end
    
    #
    # Get the seconds past the base date
    #
    public get_seconds()
-      return self.seconds
+      return .self.seconds
    end
 
    #
    # Get the year.
    #
    public get_year()
-      return self.year
+      return .self.year
    end
 
    #
    # Get the month.
    #
    public get_month()
-      return self.month
+      return .self.month
    end
 
    #
    # Get the mday.
    #
    public get_mday()
-      return self.mday
+      return .self.mday
    end
 
    #
    # Get the hour.
    #
    public get_hour()
-      return self.hour
+      return .self.hour
    end
 
    #
    # Get the min.
    #
    public get_min()
-      return self.min
+      return .self.min
    end
 
    #
    # Get the seconds past the hour.
    #
    public get_sec()
-      return self.sec
+      return .self.sec
    end
 
    #
@@ -840,7 +681,7 @@ class Time()
    # Utility to get next integer
    #
    #
-   private get_int()
+   private static get_int()
       suspend tab(upto(&digits)) & integer(tab(many(&digits)))
    end
 
@@ -850,7 +691,7 @@ class Time()
    # day are mandatory, but hours, mins, secs are optional. Finally, an optional
    # timezone is allowed.
    #
-   public simple_parse(s)
+   public static simple_parse(s)
       local y, d, m, hh, mm, ss, z
       s ? {
          (y := get_int() &
@@ -864,16 +705,7 @@ class Time()
          else
             z := Timezone.SYSTEM_TIMEZONE
       }
-      set_fields(y, m, d, hh, mm, ss, z)
-      return
-   end
-
-   #
-   # Set to the current time
-   # @param z an optional {Timezone}.  If omitted, the system timezone is used.
-   #
-   public set_current_time(z)
-      set_seconds(UNIX_BASE_OFFSET + gettimeofday()[1], z)
+      return Time(y, m, d, hh, mm, ss, z)
    end
 
    #
@@ -893,7 +725,10 @@ class Time()
    end
 
    #
-   # Set the fields
+   # Set the fields, and then recompute the seconds.  Any omitted
+   # fields are set to a default, which is the smallest legal value
+   # for that field, except the zone, which is set to the default zone
+   # if omitted.
    #
    public set_fields(year, month, mday, hour, min, sec, zone)   
       self.year := \year | BASE_YEAR
@@ -907,32 +742,28 @@ class Time()
    end
 
    #
-   # Get the current time as a {Time} object
-   # @param z an optional {Timezone}.  If omitted, the system timezone is used.
+   # The constructor to {Time()} does different things depending on
+   # the number of arguments provided.  
    #
-   public static get_current_time(z)
-      local t
-      t := Time()
-      t.set_current_time(z)
-      return t
-   end
-
+   # With no arguments, the instance is set to the current time.
    #
-   # Convert a month string to an month number, eg "feb"->2
+   # A single argument is taken as the number of seconds past the
+   # base date in the default zone.
    #
-   public static month_to_num(s)
-      local i
-      s := map(s)
-      every i := 1 to *MONTHS do {
-         if match(s, map(MONTHS[i])) then
-            return i
-      }
-   end
-
+   # With two arguments, the first is the number of seconds past the
+   # base date and the second is a {Timezone}.
+   #
+   # With three or more arguments, they are used as parameters to
+   # {set_fields} in order to initialize the object.
+   #
    public new(a[])
-      if *a = 1 then
-         simple_parse(a[1]) | fail
-      else if *a >= 3 then
+      if *a = 0 then
+         set_seconds(UNIX_BASE_OFFSET + gettimeofday()[1])
+      else if *a = 1 then
+         set_seconds(a[1])
+      else if *a = 2 then
+         set_seconds(a[1], a[2])
+      else
          set_fields!a
       return
    end
@@ -958,4 +789,181 @@ procedure note_time(s)
    if t > 0 then
       write(curr_time_millis() - t, ": ", \s)
    t := curr_time_millis()
+end
+
+#
+# This class is used to create {Time} objects from format strings.
+#
+class TimeParser()
+   private
+      psub,
+      ppos
+
+   #
+   # Convert a month string to an month number, eg "feb"->2
+   #
+   private static month_to_num(s)
+      local i
+      s := map(s)
+      every i := 1 to *Time.MONTHS do {
+         if match(s, map(Time.MONTHS[i])) then
+            return i
+      }
+   end
+
+   # 
+   # Get the next parsed int
+   #
+   private parse_int(w)
+      local j, n
+      j := many(&digits, psub, ppos) | return error("Digit expected")
+      #
+      # If there is a numeric field immediately following, limit
+      # the length of this field.  This allows for example yyyyMMdd to
+      # parse 20001201.
+      #
+      if any('ydHMhms') then 
+         j >:= ppos + w
+
+      n := integer(psub[ppos:j])
+      ppos := j
+      return n
+   end
+
+   # 
+   # Get the next parsed timezone
+   #
+   private parse_timezone()
+      local j, z
+      j := many(Time.TZCHARS, psub, ppos) | return error("Timezone expected")
+      z := Timezone.get_known_timezone(psub[ppos:j]) | return error("Invalid timezone")
+      ppos := j
+      return z
+   end
+
+   # 
+   # Get the next parsed am/pm
+   #
+   private parse_ampm()
+      local s
+      s := map(psub[ppos+:2]) | return error("am/pm expected")
+      s == ("am" | "pm") | return error("am/pm expected")
+      ppos +:= 2
+      return s
+   end
+
+   # 
+   # Get the next parsed month
+   # 
+   private parse_month(w)
+      local j, m
+      if w < 3 then
+         return parse_int(w)
+      j := many(&ucase ++ &lcase, psub, ppos) | return error("Month expected")
+      m := month_to_num(psub[ppos:j]) | return error("Invalid month")
+      ppos := j
+      return m
+   end
+
+   # 
+   # Get the next parsed weekday
+   # 
+   private parse_weekday()
+      local j
+      j := many(&ucase ++ &lcase, psub, ppos) | return error("Weekday expected")
+      ppos := j
+      return
+   end
+
+   # 
+   # Get the next parsed month
+   # 
+   private parse_year(w)
+      local n
+      n := parse_int(w) | fail
+      if n < 70 then
+         return 2000 + n
+      else if n < 100 then
+         return 1900 + n
+      else
+         return n
+   end
+
+   # 
+   # Parse the instance using the given pattern string.  The pattern
+   # consists of pattern chars and other chars.  Succeeds if the 
+   # string could be parsed; fails and sets &why otherwise.
+   # 
+   # The "width" of a field is the number of successive equal pattern
+   # chars.  For example in the pattern
+   # 
+   # yyyy/MMM/dd
+   # 
+   # the widths are 4, 3 and 2 respectively.
+   # 
+   # Except for the month (see below), the only use of the width is to
+   # separate adjacent fields, eg yyyyMMdd with input "19991201".
+   # 
+   # The possible pattern chars are :-
+   # 
+   # E - The weekday (eg Mon) - this is just a sequence of upper and lower
+   # case chars and is otherwise ignored.
+   # 
+   # y - The year.  If the year is less than 70 it is taken to be 20xx; if
+   # it is less than 100 it is taken to be 19xx, otherwise it is as given.
+   # 
+   # d - The day of the month
+   # 
+   # H/h - The hour in the day
+   # 
+   # M - The month of the year.  If the width is less than 3 then the
+   # numeric value is expected, otherwise the textual value is expected.
+   # 
+   # m - The minute in the hour
+   # 
+   # s - The second in the minute
+   # 
+   # a/A - am or pm.  Case is ignored.  If pm, then the hour is
+   # adjusted accordingly in the result.
+   # 
+   # z - The timezone (eg UTC or +0400).
+   #
+   public parse(s, p)
+      local y, d, m, hh, mm, ss, z, ampm, lit, ch, w
+      
+      psub := s
+      ppos := 1
+
+      p ? {
+         while not pos(0) do {
+            if any('EydHMhmsaAz') then {
+               ch := p[&pos]
+               w := *tab(many(ch))
+               case ch of {
+                  "E": parse_weekday() | fail
+                  "y": y := parse_year(w) | fail
+                  "M": m := parse_month(w) | fail
+                  "d": d := parse_int(w) | fail
+                  "h"|"H": hh := parse_int(w) | fail
+                  "m": mm := parse_int(w) | fail
+                  "s": ss := parse_int(w) | fail
+                  "z": z := parse_timezone() | fail
+                  "A"|"a": {
+                     ampm := parse_ampm() | fail
+                     if ampm == "pm" & (0 < \hh < 12) then 
+                        hh +:= 12
+                  }
+               }
+            } else if any('\'') then {
+               lit := Time.match_literal()
+               ppos := match(lit, psub, ppos) | return error("Expected literal:" || lit)
+            } else {
+               ch := move(1)
+               while psub[ppos] == ch do
+                  ppos +:= 1
+            }
+         }
+      }
+      return Time(y, m, d, hh, mm, ss, z)
+   end
 end

@@ -26,7 +26,7 @@ class ContentType()
    # Get the type
    #
    public get_type()
-      return type
+      return .type
    end
 
    #
@@ -40,7 +40,7 @@ class ContentType()
    # Get the subtype
    #
    public get_subtype()
-      return subtype
+      return .subtype
    end
 
    #
@@ -61,10 +61,10 @@ class ContentType()
       parameters.insert(key, value)
    end
 
-   public parse(s)
+   public static parse(s)
       local p
       p := RFC822Parser()
-      return p.parse_content_type(s, self)
+      return p.parse_content_type(s)
    end   
 
    public to_rfc1521()
@@ -83,10 +83,11 @@ class ContentType()
       return s
    end
 
-   public new(s)
-      parameters := ClTable()
-      if \s then
-         parse(s) | fail
+   public new(type, subtype, parameters)
+      /parameters := ClTable()
+      self.type := type
+      self.subtype := subtype
+      self.parameters := parameters
       return
    end
 end

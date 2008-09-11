@@ -276,9 +276,9 @@ class RFC822Parser()
    #
    # mailbox = addr-spec | phrase route-addr
    #
-   private parse_mailbox_impl(mb)
-      local x, t
-      /mb := Mailbox()
+   private parse_mailbox_impl()
+      local x, t, mb
+      mb := Mailbox()
       #
       # The lookahead is complex, so try parsing as a simple address
       # first, and if that fails try the more complex alternative.
@@ -301,13 +301,10 @@ class RFC822Parser()
    # group =  phrase ":" [#mailbox] ";"
    # #X means empty or X,X,X...
    #    
-   private parse_group_impl(group)
-      local mb, t
+   private parse_group_impl()
+      local mb, p, t
 
-      /group := Group()
-      t := parse_phrase() | fail
-      group.set_phrase(t) 
-
+      p := parse_phrase() | fail
       t := []
       next_token() | fail
       =":" | return error(": expected")
@@ -323,9 +320,7 @@ class RFC822Parser()
          }
          =";" | return error("; expected")
       }
-      group.set_mailboxes(t)
-
-      return group
+      return Group(t, p)
    end
 
    private parse_mailbox_or_group()
@@ -426,9 +421,7 @@ class RFC822Parser()
    # hour =  2DIGIT ":" 2DIGIT [":" 2DIGIT]
    #
    private parse_date_time_impl()
-      local d, m, y, s, t, hh, mm, ss, zz
-
-      t := Time()
+      local d, m, y, s, hh, mm, ss, zz
 
       next_token() | fail
       if =(!DAYS) then {
@@ -453,9 +446,7 @@ class RFC822Parser()
       s := parse_zone() | fail
       zz := Timezone.get_known_timezone(s) | Timezone(0, s)
 
-      t.set_fields(y, m, d, hh, mm, ss, zz)
-
-      return t
+      return Time(y, m, d, hh, mm, ss, zz)
    end
 
    #
@@ -623,20 +614,17 @@ class RFC822Parser()
    #
    #  value := token / quoted-string
    #
-   private parse_content_type_impl(ct)
-      local ty, st
+   private parse_content_type_impl()
+      local ty, st, ct
 
       next_token() | fail
-
-      /ct := ContentType()
 
       ty := parse_type() | fail
       next_token() | fail
       ="/" | return error("/ expected")
       next_token() | fail
       st := parse_subtype() | fail
-      ct.set_type(ty)
-      ct.set_subtype(st)
+      ct := ContentType(ty, st)
 
       repeat {
          next_token() | fail
@@ -701,15 +689,12 @@ class RFC822Parser()
    #                   ; contents MUST be an RFC 822 `date-time'
    #                   ; numeric timezones (+HHMM or -HHMM) MUST be used
    #
-   private parse_content_disposition_impl(cd)
-      local ty
+   private parse_content_disposition_impl()
+      local ty, cd
 
       next_token() | fail
-
-      /cd := ContentDisposition()
-
       ty := parse_disposition_type() | fail
-      cd.set_type(ty)
+      cd := ContentDisposition(ty)
 
       repeat {
          next_token() | fail
@@ -721,12 +706,12 @@ class RFC822Parser()
       return cd
    end
 
-   public parse_mailbox(s, mb)
-      return s ? parse_mailbox_impl(mb)
+   public parse_mailbox(s)
+      return s ? parse_mailbox_impl()
    end
 
-   public parse_group(s, group)
-      return s ? parse_group_impl(group)
+   public parse_group(s)
+      return s ? parse_group_impl()
    end
 
    public parse_address_list(s, can_be_empty)
@@ -745,12 +730,12 @@ class RFC822Parser()
       return s ? parse_field_impl(message)
    end
 
-   public parse_content_type(s, ct)
-      return s ? parse_content_type_impl(ct)
+   public parse_content_type(s)
+      return s ? parse_content_type_impl()
    end
 
-   public parse_content_disposition(s, ct)
-      return s ? parse_content_disposition_impl(ct)
+   public parse_content_disposition(s)
+      return s ? parse_content_disposition_impl()
    end
 
    public parse_content_transfer_encoding(s)

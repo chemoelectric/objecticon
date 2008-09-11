@@ -11,8 +11,7 @@ class MessageHandler(TypeHandler)
 
    public convert_to_object(m,  data)
       local res
-      res := Message()
-      res.parse(data) | fail
+      res := Message.parse(data) | fail
       return res
    end
 

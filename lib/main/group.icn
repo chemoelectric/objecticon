@@ -14,7 +14,7 @@ class Group(Address)
       phrase
 
    public get_phrase() 
-      return phrase
+      return .phrase
    end
 
    public set_phrase(x)
@@ -22,7 +22,7 @@ class Group(Address)
    end
 
    public get_mailboxes() 
-      return mailboxes
+      return .mailboxes
    end
 
    public set_mailboxes(x)
@@ -46,23 +46,21 @@ class Group(Address)
          return ": " || tmp || " ;"
    end
 
-   public parse(s)
+   public static parse(s)
       local p
       p := RFC822Parser()
-      return p.parse_group(s, self)
+      return p.parse_group(s)
    end   
 
    public generate_mailboxes()
       suspend !mailboxes
    end
 
-   public new(a[])
-      if (*a = 1) & (type(a[1]) == "string") then
-         parse(a[1]) | fail
-      else {
-         mailboxes := a[1] | []
-         phrase := a[2] | ""
-      }
+   public new(mailboxes, phrase)
+      /mailboxes := []
+      /phrase := ""
+      self.mailboxes := mailboxes
+      self.phrase := phrase
       return
    end
 end

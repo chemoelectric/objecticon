@@ -39,8 +39,7 @@ class MultipartHandler(TypeHandler)
 
             data := tab(find(b)) | return error("Boundary not found")
             =b
-            sm := Message()
-            sm.parse(data) | fail
+            sm := Message.parse(data) | fail
             res.add_part(sm)
          }
          res.set_epilogue(tab(0))

@@ -7,7 +7,7 @@ package mail
 import util(ClTable, error)
 
 #
-# This class represents a content type
+# This class represents a content disposition
 #
 class ContentDisposition()
    private readable
@@ -25,7 +25,7 @@ class ContentDisposition()
    # Get the type
    #
    public get_type()
-      return type
+      return .type
    end
 
    #
@@ -140,10 +140,10 @@ class ContentDisposition()
       set_parameter("size", string(integer(n)))
    end
 
-   public parse(s)
+   public static parse(s)
       local p
       p := RFC822Parser()
-      return p.parse_content_disposition(s, self)
+      return p.parse_content_disposition(s)
    end   
 
    public to_rfc1521()
@@ -162,10 +162,10 @@ class ContentDisposition()
       return s
    end
 
-   public new(s)
-      parameters := ClTable()
-      if \s then
-         parse(s) | fail
+   public new(type, parameters)
+      /parameters := ClTable()
+      self.type := type
+      self.parameters := parameters
       return
    end
 end

@@ -104,7 +104,7 @@ class DefaultResolver(Resolver)
       local hc, url, hp, hr, sb
 
       hc := HttpClient()
-      url := URL(sys_id) | fail
+      url := URL.parse(sys_id) | fail
 
       sb := RamStream()
       hr := HttpRequest("url=",url, "data_stream=",sb)

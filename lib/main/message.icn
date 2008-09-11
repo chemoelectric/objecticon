@@ -116,7 +116,7 @@ class Message(SetFields, MimeHeaders)
       if has_header("Content-Type") then
          return get_content_type()
       else
-         return ContentType("text/plain")
+         return ContentType.parse("text/plain")
    end
 
    #
@@ -229,10 +229,11 @@ class Message(SetFields, MimeHeaders)
    end
 
    #
-   # Parse the given raw data into the message data structures.
+   # Parse the given raw data into a Message.
    #
-   public parse(data)
-      local s, p
+   public static parse(data)
+      local s, p, m
+      m := Message()
       p := RFC822Parser()
       data ? {
          while s := tab(find("\r\n")) do {
@@ -243,10 +244,10 @@ class Message(SetFields, MimeHeaders)
                move(2)
             }
             if *s = 0 then {
-               content := tab(0)
-               return
+               m.content := tab(0)
+               return m
             }
-            p.parse_field(s, self) | fail
+            p.parse_field(s, m) | fail
          }
          return error("Unexpected end of message")
       }

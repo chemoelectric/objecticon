@@ -144,21 +144,18 @@ class MySqlRes(NoCopy)
                   put(res)
 
                MySql.FIELD_TYPE_DATE : {
-                  t := Time()
-                  t.parse(o, "yyyy-MM-dd") | stop("Expected date:", o)
+                  t := Time.parse(o, "yyyy-MM-dd") | stop("Expected date:", o)
                   put(res, t)
                }
                
                MySql.FIELD_TYPE_TIME: {
-                  t := Time()
-                  t.parse(o, "HH:mm:ss") | stop("Expected time:", o)
+                  t := Time.parse(o, "HH:mm:ss") | stop("Expected time:", o)
                   put(res, t)
                }
 
                MySql.FIELD_TYPE_DATETIME |
                   MySql.FIELD_TYPE_TIMESTAMP: {
-                     t := Time()
-                     t.parse(o, "yyyy-MM-dd HH:mm:ss") | stop("Expected timestamp:", o)
+                     t := Time.parse(o, "yyyy-MM-dd HH:mm:ss") | stop("Expected timestamp:", o)
                      put(res, t)
                   }
 

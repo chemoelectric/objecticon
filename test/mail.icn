@@ -93,8 +93,7 @@ procedure test_base64()
    bin := "hereissomebinarydata"
    m.set_decoded_content(bin) | stop("failed to encode base64 data")
    s := m.to_rfc822()
-   m2 := Message()
-   m2.parse(s)
+   m2 := Message.parse(s)
    bin2 := m.get_decoded_content() | stop("base64 failed to decode content ", &why)
    bin == bin2 | stop("base64 - different binary content")
 end
@@ -117,7 +116,7 @@ end
 procedure test_mailbox(s, c)
    local a
    /c := s
-   a := Mailbox(s) | stop("Couldn't make a Mailbox from:" ,s)
+   a := Mailbox.parse(s) | stop("Couldn't make a Mailbox from:" ,s)
    yes_no{"Mailbox rfc822 on " || s, a.to_rfc822() == c}
 end
 
@@ -135,7 +134,7 @@ end
 procedure test_group(s, c)
    local g
    /c := s
-   g := Group(s) | stop("Couldn't make a Group from:" ,s)
+   g := Group.parse(s) | stop("Couldn't make a Group from:" ,s)
    yes_no{"Group rfc822 on " || s, g.to_rfc822() == c}
 end
 
@@ -169,9 +168,9 @@ end
 procedure testmsg1()
    local m
    m := Message()
-   m.set_from(Mailbox("rparlett@viviance.com"))
-   m.set_to(Mailbox("jsoap@soap.com"))
-   m.add_to(Group("People: smit@kjadf.com,plog@rog.com;"))
+   m.set_from(Mailbox.parse("rparlett@viviance.com"))
+   m.set_to(Mailbox.parse("jsoap@soap.com"))
+   m.add_to(Group.parse("People: smit@kjadf.com,plog@rog.com;"))
    m.set_subject("here is the subject")
    m.set_content("here is the content")
    m.add_header("Custom", "value") 
@@ -183,8 +182,8 @@ end
 procedure testsmtp()
    local m,t
    m := Message()
-   m.set_from(Mailbox("\"Billy Bob Parlett\" <rparlett@viviance.com>"))
-   m.set_to(Mailbox("\"Robert Parlett\" <rparlett@tweedle.bracknell>"))
+   m.set_from(Mailbox.parse("\"Billy Bob Parlett\" <rparlett@viviance.com>"))
+   m.set_to(Mailbox.parse("\"Robert Parlett\" <rparlett@tweedle.bracknell>"))
    m.set_content("here it is")
    m.set_subject("the subject")
    m.set_header("X-Oddball", "doodle")
@@ -216,7 +215,7 @@ procedure test_from()
    m := Message()
 
    s := "\"Robert Parlett\"    <r.parlett @ somewhere.com>"
-   mb := Mailbox(s) | stop("Couldn't make Mailbox")
+   mb := Mailbox.parse(s) | stop("Couldn't make Mailbox")
    
    m.set_from(mb)
    yes_no{"MB1.from rfc822", m.get_first_header("From") == mb.to_rfc822()}
@@ -231,7 +230,7 @@ procedure test_to()
    m := Message()
 
    s := "Cruisers: Port@Portugal, Jones@SEA ;"
-   g := Group(s) | stop("Couldn't make group:",s)
+   g := Group.parse(s) | stop("Couldn't make group:",s)
 
    m.set_to(g)
    yes_no{"G1.rfc822",  m.get_first_header("To") == g.to_rfc822()}
@@ -263,7 +262,7 @@ end
 procedure test_message()
    local m, dt, mb
 
-   mb := Mailbox("robert@abc.com")
+   mb := Mailbox.parse("robert@abc.com")
    dt := Time(2003, 3, 1, 9, 45, 30, Timezone.UTC_TIMEZONE)
 
    m := Message("content=123")
@@ -308,10 +307,10 @@ procedure test_message()
    m := Message("resent_date=",dt)
    print{"M14.date header", m.get_first_header("Resent-Date")}
 
-   m := Message("content_type=",ContentType("text/html"))
+   m := Message("content_type=",ContentType.parse("text/html"))
    print{"M15.content type", m.get_first_header("Content-type")}
 
-   m := Message("content_disposition=",ContentDisposition("attachment ; filename=abc.xml")) |
+   m := Message("content_disposition=",ContentDisposition.parse("attachment ; filename=abc.xml")) |
       stop("Failed to create Message")
    print{"M16.content disposition", 
             m.get_first_header("Content-disposition")}
@@ -330,27 +329,24 @@ end
 procedure test_content_type()
    local c
 
-   yes_no{"Bad ContentType", ContentType("junk")}
-   yes_no{"Good ContentType", ContentType("junk/stuff")}
+   yes_no{"Bad ContentType", ContentType.parse("junk")}
+   yes_no{"Good ContentType", ContentType.parse("junk/stuff")}
    yes_no{"Empty ContentType", ContentType()}
 
-   c := ContentType("text/html") | stop("Couldn't create ContentType")
+   c := ContentType.parse("text/html") | stop("Couldn't create ContentType")
    print{"Content type 1", c.to_rfc1521()}
 
-   c := ContentType()
-   yes_no{"Parse content type 1", 
-             c.parse("text/html; one=p-one; two=\"p-two\"; three = p-three")}
+   c := ContentType.parse("text/html; one=p-one; two=\"p-two\"; three = p-three") | stop(&why)
    print{"Content param one", c.get_parameter("one")}
    print{"Content param two", c.get_parameter("two")}
    print{"Content param three", c.get_parameter("three")}
 
-   c := ContentType("text/plain; (Fred) charset=\"us-ascii\" (Plain text)") |
+   c := ContentType.parse("text/plain; (Fred) charset=\"us-ascii\" (Plain text)") |
       stop("Couldn't create ContentType")
    print{"Content type 2", c.to_rfc1521()}
 
-   c := ContentType()
    yes_no{"Parse content type 2", 
-             c.parse("application/x-stuff; title*=us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A")}
+             ContentType.parse("application/x-stuff; title*=us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A")}
 end
 
 procedure test_content_disposition()
@@ -358,18 +354,16 @@ procedure test_content_disposition()
 
    t := Time(2003, 3, 1, 9, 45, 30, Timezone.UTC_TIMEZONE)
 
-   yes_no{"Bad ContentDisposition", ContentDisposition("junk")}
-   yes_no{"Good ContentDisposition", ContentDisposition("attachment; filename=junk")}
+   yes_no{"Bad ContentDisposition", ContentDisposition.parse("junk")}
+   yes_no{"Good ContentDisposition", ContentDisposition.parse("attachment; filename=junk")}
    yes_no{"Empty ContentDisposition", ContentDisposition()}
 
-   c := ContentDisposition("attachment; filename=fred.xml") |
+   c := ContentDisposition.parse("attachment; filename=fred.xml") |
       stop("Couldn't create ContentDisposition")
    print{"Parameter", c.get_parameter("filename")}
    print{"Filename", c.get_filename()}
 
-   c := ContentDisposition()
-   yes_no{"CD1.Parse",
-          c.parse("attachment; creation-date=\"Sat, 1 Mar 2003 09:45:30 UTC\"")}
+   c := ContentDisposition.parse("attachment; creation-date=\"Sat, 1 Mar 2003 09:45:30 UTC\"") | stop(&why)
    print{"CD1.date", c.get_parameter("creation-date")}
    yes_no{"CD1.date=t", equals(c.get_creation_date(), t)}
 
@@ -377,9 +371,7 @@ procedure test_content_disposition()
    c.set_creation_date(t)
    print{"CD2.date", c.get_parameter("creation-date")}
 
-   c := ContentDisposition()
-   yes_no{"CD2.parse",
-             c.parse("attachment; modification-date=\"Sat, 1 Mar 2003 09:45:30 UTC\"")}
+   c := ContentDisposition.parse("attachment; modification-date=\"Sat, 1 Mar 2003 09:45:30 UTC\"") | stop(&why)
    print{"CD2.moddate", c.get_parameter("modification-date")}
    yes_no{"CD2.moddate=t", equals(c.get_modification_date(), t)}
 
@@ -388,9 +380,7 @@ procedure test_content_disposition()
    print{"CD3.moddate", c.get_parameter("modification-date")}
    yes_no{"CD3.moddate=t", equals(c.get_modification_date(), t)}
 
-   c := ContentDisposition()
-   yes_no{"CD4.parse",
-             c.parse("attachment; read-date=\"Sat, 1 Mar 2003 09:45:30 UTC\"")}
+   c := ContentDisposition.parse("attachment; read-date=\"Sat, 1 Mar 2003 09:45:30 UTC\"") | stop(&why)
    print{"CD4.readdate", c.get_parameter("read-date")}
    yes_no{"CD4.readdate=t", equals(c.get_read_date(), t)}
 
@@ -400,8 +390,7 @@ procedure test_content_disposition()
    print{"CD5.readdate", c.get_parameter("read-date")}
    print{"CD5.rfc1521", c.to_rfc1521()}
 
-   c := ContentDisposition()
-   yes_no{"CD5.parse", c.parse("attachment; size=2000")}
+   c := ContentDisposition.parse("attachment; size=2000") | stop(&why)
    print{"CD5.size param", c.get_parameter("size")}
    print{"CD5.get_size", c.get_size()}
 
@@ -410,20 +399,19 @@ procedure test_content_disposition()
    print{"CD6.size param", c.get_parameter("size")}
    print{"CD6.junk param", c.get_parameter("junk")}
 
-   c := ContentDisposition()
-   yes_no{"CD6.parse", c.parse("attachment; one=p-one; two=\"p-two\"; three = p-three")}
+   c := ContentDisposition.parse("attachment; one=p-one; two=\"p-two\"; three = p-three") | &null
+   yes_no{"CD6.parse", \c}
    print{"CD6.param one", c.get_parameter("one")}
    print{"CD6.param two", c.get_parameter("two")}
    print{"CD6.param three", c.get_parameter("three")}
 
-   c := ContentDisposition()
    yes_no{"CD7.parse 1", 
-             c.parse("attachment; filename=genome.jpeg; modification-date=\"Wed, 12 Feb 1997 16:29:51 -0500\"")}
+             ContentDisposition.parse("attachment; filename=genome.jpeg; modification-date=\"Wed, 12 Feb 1997 16:29:51 -0500\"")}
    yes_no{"CD7.parse 2",
-             c.parse("attachment; filename==?UTF-8?B?cm9zZV8wMDcucmFy?=")}
+             ContentDisposition.parse("attachment; filename==?UTF-8?B?cm9zZV8wMDcucmFy?=")}
 
    yes_no{"CD7.parse 3",
-             c.parse("attachment; filename*=UTF-8''filename.zip")}
+             ContentDisposition.parse("attachment; filename*=UTF-8''filename.zip")}
 end
 
 procedure test_message1()
@@ -431,8 +419,8 @@ procedure test_message1()
 
    # A part (gif)
    p := Message()
-   ct := ContentType("image/gif") | stop("Couldn't construct ContentType")
-   cd := ContentDisposition("attachment; filename=\"babbage.gif\"") |
+   ct := ContentType.parse("image/gif") | stop("Couldn't construct ContentType")
+   cd := ContentDisposition.parse("attachment; filename=\"babbage.gif\"") |
       stop("Couldn't construct ContentDisposition")
    p.set_content_disposition(cd)
    p.set_content_type(ct) 
@@ -441,8 +429,8 @@ procedure test_message1()
 
    # Another part
    q := Message()
-   ct := ContentType("text/xml") | stop("Couldn't construct ContentType")
-   cd := ContentDisposition("attachment; filename=\"some.xml\"") |
+   ct := ContentType.parse("text/xml") | stop("Couldn't construct ContentType")
+   cd := ContentDisposition.parse("attachment; filename=\"some.xml\"") |
       stop("Couldn't construct ContentDisposition")
    q.set_content_disposition(cd)
    q.set_content_type(ct) 
@@ -460,15 +448,14 @@ procedure test_message1()
    m.set_header("Content-Type", "multipart/thing")
    m.set_content_object(mp) | stop("Failed to set_content_object:",&why)
    m.set_subject("Here is some stuff")
-   m.set_from(Mailbox("rparlett@localhost"))
-   m.set_to(Mailbox("rparlett@localhost"))
+   m.set_from(Mailbox.parse("rparlett@localhost"))
+   m.set_to(Mailbox.parse("rparlett@localhost"))
 
    # Parse the string value back to a message, and see if we can extract the same
    # image and xml values.
    #
    s := m.to_rfc822()
-   z := Message()
-   z.parse(s)
+   z := Message.parse(s)
 
    yes_no{"Test decoded content", 
              z.get_content_object().parts[1].get_decoded_content() == img}
@@ -482,24 +469,21 @@ procedure test_message2()
    m := Message()
    m.set_content_object(orig := repl("a", 300))
    s := m.to_rfc822()
-   z := Message()
-   z.parse(s)
+   z := Message.parse(s)
    yes_no{"Test same content object 1", z.get_content_object() == orig}
 
    m := Message()
    m.set_content_transfer_encoding("base64")
    m.set_content_object(orig := repl("a", 300))
    s := m.to_rfc822()
-   z := Message()
-   z.parse(s)
+   z := Message.parse(s)
    yes_no{"Test same content object 2", z.get_content_object() == orig}
 
    m := Message()
    m.set_content_transfer_encoding("quoted-printable")
    m.set_content_object(orig := repl("a", 300))
    s := m.to_rfc822()
-   z := Message()
-   z.parse(s)
+   z := Message.parse(s)
    yes_no{"Test same content object 3", z.get_content_object() == orig}
 end
 
@@ -517,8 +501,7 @@ procedure test_message3()
    m.set_content_object(p) | stop("Failed to set_content_object:",&why)
 
    s := m.to_rfc822()
-   z := Message()
-   z.parse(s)
+   z := Message.parse(s)
    p2 := z.get_content_object() | stop("Couldn't get content object")
 
    yes_no{"Test same content", p2.get_content() == orig}

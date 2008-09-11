@@ -21,77 +21,76 @@ class URL()
       address,
       file,
       ref,
-      port,
-      header
+      port
 
    #
    # Set the protocol field.
    #
    public set_protocol(x)
-      return self.protocol := x
+      self.protocol := x
    end
 
    #
    # Get the protocol field.
    #
    public get_protocol()
-      return self.protocol
+      return .self.protocol
    end
 
    #
    # Set the port field.
    #
    public set_port(x)
-      return self.port := x
+      self.port := x
    end
 
    #
    # Get the port field.
    #
    public get_port()
-      return self.port
+      return .self.port
    end
 
    #
    # Set the file field.
    #
    public set_file(x)
-      return self.file := x
+      self.file := x
    end
 
    #
    # Get the file field.
    #
    public get_file()
-      return self.file
+      return .self.file
    end
 
    #
    # Set the ref field.
    #
    public set_ref(x)
-      return self.ref := x
+      self.ref := x
    end
 
    #
    # Get the ref field.  This is {&null} if no ref is set.
    #
    public get_ref()
-      return self.ref
+      return .self.ref
    end
 
    #
    # Set the address (host) field.
    #
    public set_address(x)
-      return self.address := x
+      self.address := x
    end
 
    #
    # Get the address field.
    #
    public get_address()
-      return self.address
+      return .self.address
    end
 
    #
@@ -128,34 +127,35 @@ class URL()
    end
 
    #
-   # Parse the fields of the {URL} object given the string s.  Succeeds if okay,
+   # Create a URL by parsing the given string.  Returns a new {URL} if okay,
    # or sets &why on failure.
    #
-   public parse(s)
+   public static parse(s)
+      local protocol, address, file, ref, port
       s ? {
-         set_protocol(1(tab(many(&lcase ++ &ucase)), ="://") | "http")
-         set_address(tab(upto(':/') | 0))
+         protocol := 1(tab(many(&lcase ++ &ucase)), ="://") | "http"
+         address := tab(upto(':/') | 0)
          if *address = 0 then
             return error("No address")
          if =":" then {
-            set_port(integer(tab(many(&digits)))) | return error("Bad port")
+            port := integer(tab(many(&digits))) | return error("Bad port")
          } else if protocol == "http" then
-            set_port(80)
+            port := 80
          else
             return error("Port required")
 
          if pos(0) then
-            set_file("/")
+            file := "/"
          else {
             any('/') | return error("File part should start with /")
-            set_file(tab(upto('#') | 0))
+            file := tab(upto('#') | 0)
             if any('#') then {
                move(1)
-               set_ref(tab(0))
+               ref := tab(0)
             }
          }
       }
-      return
+      return URL(protocol, address, port, file, ref)
    end
 
    #
@@ -216,9 +216,15 @@ class URL()
       }
    end
 
-   public new(s)
-      if \s then
-         parse(s) | fail
+   #
+   # Create a new URL from the given constituent parts.
+   #
+   public new(protocol, address, port, file, ref)
+      self.protocol := protocol
+      self.address := address
+      self.port := port
+      self.file := file
+      self.ref := ref
       return
    end
 
