@@ -228,7 +228,7 @@ procedure clone_check(a)
    yes_no{"\tequals(b,a)", equals(b,a)}
    yes_no{"\thash(a)=hash(b)", hash(a)=hash(b)}
    yes_no{"\ttype(a)==type(b)", type(a)==type(b)}
-   yes_no{"\tsubtype(a)==subtype(b)", subtype(a)==subtype(b)}
+   try{"\tsubtype(a)==subtype(b)", subtype(a)==subtype(b)}
    if type(a) == "object" then
       yes_no{"\tclassof(a)===classof(b)", classof(a)===classof(b)}
 end
@@ -241,7 +241,7 @@ procedure equals_check(a,b)
    yes_no{"\tequals(b,a)", equals(b,a)}
    yes_no{"\thash(a)=hash(b)", hash(a)=hash(b)}
    yes_no{"\ttype(a)==type(b)", type(a)==type(b)}
-   yes_no{"\tsubtype(a)==subtype(b)", subtype(a)==subtype(b)}
+   try{"\tsubtype(a)==subtype(b)", subtype(a)==subtype(b)}
    if type(a) == type(b) == "object" then
       yes_no{"\tclassof(a)===classof(b)", classof(a)===classof(b)}
 end

@@ -62,10 +62,8 @@ end
 
 
 procedure dump(x)
-   local n
-
-   if n := serial(x) then
-      writes("#", n, "  ", "*", *x)
+   if type(x) == ("list"|"set"|"table"|"record"|"object"|"co-expression") then
+      writes("#", serial(x), "  ", "*", *x)
    else if type(x) === ("string" | "cset" | "real" | "integer") then
       writes("    *", *x)
    write("\t", type(x), " : ", image(x))

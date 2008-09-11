@@ -28,15 +28,15 @@ class PaintField(Border)
       d := c.dialog()
       d.show_modal(self.parent_dialog)
       if \d.okay_result then {
-         case subtype(c) of {
-            "CanvasTextPaint": {
+         case classof(c) of {
+            CanvasTextPaint: {
             }
-            "CanvasImagePaint": {
+            CanvasImagePaint: {
                img.clear_image()
                img.set_file(\c.image_file)
                img.set_image(\c.image_str)
             }
-            "CanvasGridPaint": {
+            CanvasGridPaint: {
                grid_label.set_label(*c.fmt || " chars.")
             }
          }
@@ -62,18 +62,18 @@ class PaintField(Border)
       if /c then
          edit_paint_button.set_is_shaded("t")
       else {
-         case subtype(c) of {
-            "CanvasTextPaint": {
+         case classof(c) of {
+            CanvasTextPaint: {
                paints.set_selection(2)
                tf.set_contents(c.str)
             }
-            "CanvasImagePaint": {
+            CanvasImagePaint: {
                paints.set_selection(3)
                img.clear_image()
                img.set_file(\c.image_file)
                img.set_image(\c.image_str)
             }
-            "CanvasGridPaint": {
+            CanvasGridPaint: {
                paints.set_selection(4)
                grid_label.set_label(*c.fmt || " chars.")
             }

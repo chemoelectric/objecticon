@@ -741,15 +741,24 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
 }
 
 /*
- * C-level util to check if a given object x implements a class named
- * by cname.  An inline cache makes this efficient and if used the
- * same name must always be passed with the same cache.
+ * C-level util which behaves like the builtin is() function.  It
+ * checks if a given dptr is an object, and if so whether it
+ * implements a class named by cname.  An inline cache makes this
+ * latter test efficient and if used the same name must always be
+ * passed with the same cache.  Returns 1 if x is an object and
+ * implements the class; 0 otherwise.
  */
 int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
 {
-    struct b_object *obj = &BlkLoc(*x)->object;
-    struct b_class *class = obj->class;
+    struct b_object *obj;
+    struct b_class *class;
     dptr p;
+
+    if (!is:object(*x))
+        return 0;
+
+    obj = &BlkLoc(*x)->object;
+    class = obj->class;
 
     if (ic) {
         if (class->program == ic->program)

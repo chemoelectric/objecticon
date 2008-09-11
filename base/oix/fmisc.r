@@ -759,7 +759,9 @@ function {0,1} serial(x)
          return C_integer BlkLoc(x)->coexpr.id;
          }
       default:
-         inline { fail; }
+         inline { 
+            runerr(123,x);
+         }
       }
 end
 
@@ -1353,7 +1355,7 @@ function{0,1} subtype(x)
          object:  return BlkLoc(x)->object.class->name;
          constructor:
                   return BlkLoc(x)->constructor.name;
-         default: fail;
+         default: runerr(123, x);
     }
    }
 end

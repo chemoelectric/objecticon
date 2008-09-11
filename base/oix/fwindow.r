@@ -55,8 +55,6 @@ wbp w;
 dptr w##_dptr;
 static struct inline_field_cache w##_ic;
 static struct inline_global_cache w##_igc;
-if (!is:object(p))
-    runerr(602, p);
 if (!c_is(&p, (dptr)&wclassname, &w##_igc))
     runerr(205, p);
 w##_dptr = c_get_instance_data(&p, (dptr)&wbpf, &w##_ic);

@@ -1,17 +1,17 @@
 classof(x): class Eight
 is(x,Eight): yes
 is(x,Class): no
-is(Eight,Eight): yes
-is(Eleven,Eight): yes
-is(Eleven,Ten): yes
+is(Eight,Eight): no
+is(Eleven,Eight): no
+is(Eleven,Ten): no
 is(Eight,Eleven): no
 Class.for_name("junk"): no
 Class.for_name([]): Error 103
 is(): Error 603
 is("junk"): Error 603
 is(x,"junk"): Error 603
-is("junk",Eleven): Error 619
-classof(Time()): No error, gave class util.Time
+is("junk",Eleven): Failed
+classof(Time()): Succeeded with class util.Time
 classof(): Error 602
 classof("abc"): Error 602
 Class.get_supers(): Error 619
@@ -31,7 +31,7 @@ Num class fields: 8
 Class field names: {"a", "b", "c", "eleven1", "new", "thing", "dm", "ten1"}
 Num instance fields: 9
 Instance field names: {"z", "one", "two", "three", "four", "five", "six", "seven", "eight"}
-is(c,c): yes
+is(c,c): no
 is(c,Class): no
 Class.for_name check: yes
 Field count check: yes
@@ -170,7 +170,7 @@ Num class fields: 2
 Class field names: {"thing", "dm"}
 Num instance fields: 0
 Instance field names: {}
-is(c,c): yes
+is(c,c): no
 is(c,Class): no
 Class.for_name check: yes
 Field count check: yes
@@ -203,7 +203,7 @@ Num class fields: 0
 Class field names: {}
 Num instance fields: 0
 Instance field names: {}
-is(c,c): yes
+is(c,c): no
 is(c,Class): no
 Class.for_name check: yes
 Field count check: yes
@@ -220,7 +220,7 @@ Num class fields: 1
 Class field names: {"ten1"}
 Num instance fields: 0
 Instance field names: {}
-is(c,c): yes
+is(c,c): no
 is(c,Class): no
 Class.for_name check: yes
 Field count check: yes
@@ -233,12 +233,12 @@ Field ten1 index 1
 	Defining class: class Ten
 	Value via class: method Ten.ten1
 	Value via instance: Not accessible
-Test eleven1: No error, gave "in eleven1"
-Test set: No error, gave 99
+Test eleven1: Succeeded with "in eleven1"
+Test set: Succeeded with 99
 x.z = 99: yes
 to_string: list#*[object Seven#*(a=1;c=3),ref object Seven#*]
 Class.get(Eleven, "rubbish"): Error 207
-Class.get(Eleven, "a"): No error, gave &null
+Class.get(Eleven, "a"): Succeeded with &null
 Class.junk: Error 207
 Clone check: object One#*(x=1;y=2)
 	equals(a,a): yes
@@ -247,7 +247,7 @@ Clone check: object One#*(x=1;y=2)
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "One"
 	classof(a)===classof(b): yes
 Clone check: record rec1#*(a=1;b=2;c=3)
 	equals(a,a): yes
@@ -256,7 +256,7 @@ Clone check: record rec1#*(a=1;b=2;c=3)
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "rec1"
 Clone check: &null
 	equals(a,a): yes
 	equals(b,b): yes
@@ -264,7 +264,7 @@ Clone check: &null
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Clone check: 1
 	equals(a,a): yes
 	equals(b,b): yes
@@ -272,7 +272,7 @@ Clone check: 1
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Clone check: "fred"
 	equals(a,a): yes
 	equals(b,b): yes
@@ -280,7 +280,7 @@ Clone check: "fred"
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Clone check: list#*["fred","mary",100,3.2,'abc',72057594037927935]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -288,7 +288,7 @@ Clone check: list#*["fred","mary",100,3.2,'abc',72057594037927935]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Clone check: list#*[6,7,8]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -296,7 +296,7 @@ Clone check: list#*[6,7,8]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[list#*[6,7,8],list#*[6,7,8],1,list#*[ref list#*,ref list#*],3,4,5,ref list#*] -v- list#*[list#*[6,7,8],list#*[6,7,8],1,list#*[ref list#*,ref list#*],3,4,5,ref list#*]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -304,7 +304,7 @@ Equals check: list#*[list#*[6,7,8],list#*[6,7,8],1,list#*[ref list#*,ref list#*]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[list#*[6,7,8],list#*[6,7,8],1,list#*[ref list#*,ref list#*],3,4,5,ref list#*] -v- list#*[list#*[6,7,8],list#*[6,7,8],1,list#*[ref list#*,ref list#*],3,4,5,ref list#*,5]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -312,7 +312,7 @@ Equals check: list#*[list#*[6,7,8],list#*[6,7,8],1,list#*[ref list#*,ref list#*]
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: 1 -v- 1.0
 	equals(a,a): yes
 	equals(b,b): yes
@@ -320,7 +320,7 @@ Equals check: 1 -v- 1.0
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): no
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: 1 -v- 1
 	equals(a,a): yes
 	equals(b,b): yes
@@ -328,7 +328,7 @@ Equals check: 1 -v- 1
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: "fred" -v- "fred"
 	equals(a,a): yes
 	equals(b,b): yes
@@ -336,7 +336,7 @@ Equals check: "fred" -v- "fred"
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: "bred" -v- "fred"
 	equals(a,a): yes
 	equals(b,b): yes
@@ -344,7 +344,7 @@ Equals check: "bred" -v- "fred"
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: procedure proc1 -v- procedure proc1
 	equals(a,a): yes
 	equals(b,b): yes
@@ -352,7 +352,7 @@ Equals check: procedure proc1 -v- procedure proc1
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "proc1"
 Equals check: procedure proc1 -v- procedure proc1
 	equals(a,a): yes
 	equals(b,b): yes
@@ -360,7 +360,7 @@ Equals check: procedure proc1 -v- procedure proc1
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "proc1"
 p===q: yes
 Equals check: procedure proc1 -v- procedure proc2
 	equals(a,a): yes
@@ -369,7 +369,7 @@ Equals check: procedure proc1 -v- procedure proc2
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Failed
 Equals check: list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,4]]]] -v- list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,4]]]]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -377,7 +377,7 @@ Equals check: list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,4]]]] -v- l
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,4]]]],ref list#*,ref list#*] -v- list#*[list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,4]]]],ref list#*,ref list#*]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -385,7 +385,7 @@ Equals check: list#*[list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,4]]]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,5]]]] -v- list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,4]]]]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -393,7 +393,7 @@ Equals check: list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,5]]]] -v- l
 	equals(b,a): no
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,5]]]] -v- list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,5]]]]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -401,7 +401,7 @@ Equals check: list#*[1,2,list#*[3,4],list#*[],list#*[list#*[list#*[3,5]]]] -v- l
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: &null -v- &null
 	equals(a,a): yes
 	equals(b,b): yes
@@ -409,7 +409,7 @@ Equals check: &null -v- &null
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*["the","cat","sat","on","the","mat"] -v- list#*["the","cat","sat","on","the","mat"]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -417,7 +417,7 @@ Equals check: list#*["the","cat","sat","on","the","mat"] -v- list#*["the","cat",
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*["the","cat","sat","off","the","mat"] -v- list#*["the","cat","sat","on","the","mat"]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -425,7 +425,7 @@ Equals check: list#*["the","cat","sat","off","the","mat"] -v- list#*["the","cat"
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[1,2,ref list#*] -v- list#*[1,2,ref list#*]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -433,7 +433,7 @@ Equals check: list#*[1,2,ref list#*] -v- list#*[1,2,ref list#*]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Clone check: list#*[1,2,ref list#*]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -441,7 +441,7 @@ Clone check: list#*[1,2,ref list#*]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[1,2,ref list#*] -v- list#*[1,2,list#*[1,2,ref list#*]]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -449,7 +449,7 @@ Equals check: list#*[1,2,ref list#*] -v- list#*[1,2,list#*[1,2,ref list#*]]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[list#*[1,2],ref list#*] -v- list#*[list#*[1,2],list#*[1,2]]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -457,7 +457,7 @@ Equals check: list#*[list#*[1,2],ref list#*] -v- list#*[list#*[1,2],list#*[1,2]]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[list#*[],ref list#*] -v- list#*[list#*[],1]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -465,7 +465,7 @@ Equals check: list#*[list#*[],ref list#*] -v- list#*[list#*[],1]
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[ref list#*] -v- list#*[ref list#*]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -473,7 +473,7 @@ Equals check: list#*[ref list#*] -v- list#*[ref list#*]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: object Three#*(x=&null;y=&null) -v- object Three#*(x=&null;y=&null)
 	equals(a,a): yes
 	equals(b,b): yes
@@ -481,7 +481,7 @@ Equals check: object Three#*(x=&null;y=&null) -v- object Three#*(x=&null;y=&null
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "Three"
 	classof(a)===classof(b): yes
 Equals check: object Three#*(x=&null;y=&null) -v- object Three#*(x=&null;y=&null)
 	equals(a,a): yes
@@ -490,7 +490,7 @@ Equals check: object Three#*(x=&null;y=&null) -v- object Three#*(x=&null;y=&null
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "Three"
 	classof(a)===classof(b): yes
 Equals check: list#*[object Three#*(x=&null;y=&null),ref object Three#*] -v- list#*[object Three#*(x=&null;y=&null),object Three#*(x=&null;y=&null)]
 	equals(a,a): yes
@@ -499,7 +499,7 @@ Equals check: list#*[object Three#*(x=&null;y=&null),ref object Three#*] -v- lis
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: object One#*(x=1;y=id=1) -v- object One#*(x=1;y=id=1)
 	equals(a,a): yes
 	equals(b,b): yes
@@ -507,7 +507,7 @@ Equals check: object One#*(x=1;y=id=1) -v- object One#*(x=1;y=id=1)
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "One"
 	classof(a)===classof(b): yes
 Equals check: object One#*(x=1;y=id=1) -v- object One#*(x=1;y=3)
 	equals(a,a): yes
@@ -516,7 +516,7 @@ Equals check: object One#*(x=1;y=id=1) -v- object One#*(x=1;y=3)
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "One"
 	classof(a)===classof(b): yes
 Clone check: list#*[id=1,id=2,id=3]
 	equals(a,a): yes
@@ -525,7 +525,7 @@ Clone check: list#*[id=1,id=2,id=3]
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Clone check: object One#*(x=id=5;y=id=6)
 	equals(a,a): yes
 	equals(b,b): yes
@@ -533,7 +533,7 @@ Clone check: object One#*(x=id=5;y=id=6)
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "One"
 	classof(a)===classof(b): yes
 Clone check: list#*[object One#*(x=1;y=object Three#*(x=3;y="junk")),ref object One#*]
 	equals(a,a): yes
@@ -542,7 +542,7 @@ Clone check: list#*[object One#*(x=1;y=object Three#*(x=3;y="junk")),ref object 
 	equals(b,a): no
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: object One#*(x="hello";y=id=1) -v- object One#*(x="hello";y=id=1)
 	equals(a,a): yes
 	equals(b,b): yes
@@ -550,7 +550,7 @@ Equals check: object One#*(x="hello";y=id=1) -v- object One#*(x="hello";y=id=1)
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "One"
 	classof(a)===classof(b): yes
 Clone check: object One#*(x=object One#*(x=object One#*(x=object One#*(x=ref object One#*;y=ref object One#*);y=&null);y=&null);y=ref object One#*)
 	equals(a,a): yes
@@ -559,7 +559,7 @@ Clone check: object One#*(x=object One#*(x=object One#*(x=object One#*(x=ref obj
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "One"
 	classof(a)===classof(b): yes
 Clone check: object Four#*(x=&null;y=&null;z=&null)
 	equals(a,a): yes
@@ -568,7 +568,7 @@ Clone check: object Four#*(x=&null;y=&null;z=&null)
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "Four"
 	classof(a)===classof(b): yes
 Clone check: object One#*(x=set#*{ref object One#*};y=&null)
 	equals(a,a): yes
@@ -577,7 +577,7 @@ Clone check: object One#*(x=set#*{ref object One#*};y=&null)
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "One"
 	classof(a)===classof(b): yes
 Clone check: Nothing here
 	equals(a,a): yes
@@ -586,7 +586,7 @@ Clone check: Nothing here
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "Five"
 	classof(a)===classof(b): yes
 Clone check: object util.ClTable#*(1->id=22;2->ref object Two#*)
 	equals(a,a): yes
@@ -595,7 +595,7 @@ Clone check: object util.ClTable#*(1->id=22;2->ref object Two#*)
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "util.ClTable"
 	classof(a)===classof(b): yes
 Clone check: object Six#*(x=100;y=ref object Six#*)
 	equals(a,a): yes
@@ -604,7 +604,7 @@ Clone check: object Six#*(x=100;y=ref object Six#*)
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "Six"
 	classof(a)===classof(b): yes
 Clone check: object util.ClTable#*(10->list#*[])
 	equals(a,a): yes
@@ -613,7 +613,7 @@ Clone check: object util.ClTable#*(10->list#*[])
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "util.ClTable"
 	classof(a)===classof(b): yes
 Equals check: table#*{1->2;3->4;ref table#*->ref table#*} -v- table#*{1->2;3->4;ref table#*->ref table#*}
 	equals(a,a): yes
@@ -622,7 +622,7 @@ Equals check: table#*{1->2;3->4;ref table#*->ref table#*} -v- table#*{1->2;3->4;
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Clone check: table#*{1->2;3->4;ref table#*->ref table#*}
 	equals(a,a): yes
 	equals(b,b): yes
@@ -630,7 +630,7 @@ Clone check: table#*{1->2;3->4;ref table#*->ref table#*}
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: list#*[list#*[ref list#*],ref list#*] -v- list#*[list#*[ref list#*],list#*[ref list#*]]
 	equals(a,a): yes
 	equals(b,b): yes
@@ -638,7 +638,7 @@ Equals check: list#*[list#*[ref list#*],ref list#*] -v- list#*[list#*[ref list#*
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: set#*{list#*[1,2,3],list#*[],list#*[2]} -v- set#*{list#*[2],list#*[],list#*[1,2,3]}
 	equals(a,a): yes
 	equals(b,b): yes
@@ -646,7 +646,7 @@ Equals check: set#*{list#*[1,2,3],list#*[],list#*[2]} -v- set#*{list#*[2],list#*
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: set#*{ref set#*} -v- set#*{ref set#*}
 	equals(a,a): yes
 	equals(b,b): yes
@@ -654,7 +654,7 @@ Equals check: set#*{ref set#*} -v- set#*{ref set#*}
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: set#*{list#*[2,2],list#*[2,2],list#*[3],list#*[1]} -v- set#*{list#*[1],list#*[2,2],list#*[2,2],list#*[3]}
 	equals(a,a): yes
 	equals(b,b): yes
@@ -662,7 +662,7 @@ Equals check: set#*{list#*[2,2],list#*[2,2],list#*[3],list#*[1]} -v- set#*{list#
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: set#*{list#*[3],list#*[1],list#*[2,2],list#*[1]} -v- set#*{list#*[2,2],list#*[3],list#*[1],list#*[2,2]}
 	equals(a,a): yes
 	equals(b,b): yes
@@ -670,7 +670,7 @@ Equals check: set#*{list#*[3],list#*[1],list#*[2,2],list#*[1]} -v- set#*{list#*[
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 20:11.33 BST
 	equals(a,a): yes
 	equals(b,b): yes
@@ -678,7 +678,7 @@ Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 20:11.33 BST
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "util.Time"
 	classof(a)===classof(b): yes
 Equals check: set#*{October 10, 2000 20:11.33 BST} -v- set#*{October 10, 2000 20:11.33 BST}
 	equals(a,a): yes
@@ -687,7 +687,7 @@ Equals check: set#*{October 10, 2000 20:11.33 BST} -v- set#*{October 10, 2000 20
 	equals(b,a): yes
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 11:11.33 BST
 	equals(a,a): yes
 	equals(b,b): yes
@@ -695,7 +695,7 @@ Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 11:11.33 BST
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): yes
+	subtype(a)==subtype(b): Succeeded with "util.Time"
 	classof(a)===classof(b): yes
 Equals check: set#*{October 10, 2000 20:11.33 BST} -v- set#*{October 10, 2000 11:11.33 BST}
 	equals(a,a): yes
@@ -704,7 +704,7 @@ Equals check: set#*{October 10, 2000 20:11.33 BST} -v- set#*{October 10, 2000 11
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Error 123
 Equals check: October 10, 2000 20:11.33 BST -v- object One#*(x=1;y=2)
 	equals(a,a): yes
 	equals(b,b): yes
@@ -712,7 +712,7 @@ Equals check: October 10, 2000 20:11.33 BST -v- object One#*(x=1;y=2)
 	equals(b,a): no
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
-	subtype(a)==subtype(b): no
+	subtype(a)==subtype(b): Failed
 	classof(a)===classof(b): no
 Random object test starting
 Random object test finished

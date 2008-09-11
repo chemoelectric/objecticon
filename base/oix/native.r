@@ -53,14 +53,15 @@ function{1} progof(x)
    }
 end
 
-function{0,1} is(x,c)
+function{0,1} is(o, c)
    if !is:class(c) then
        runerr(603, c)
     body {
         struct b_class *class, *target = &BlkLoc(c)->class;
         int i;
-        if (!(class = get_class_for(&x)))
-            runerr(619, x);
+        if (!is:object(o))
+            fail;
+        class = BlkLoc(o)->object.class;
         for (i = 0; i < class->n_implemented_classes; ++i) {
             if (class->implemented_classes[i] == target)
                 return c;
@@ -554,8 +555,6 @@ int m;
 dptr m##_dptr;
 static struct inline_field_cache m##_ic;
 static struct inline_global_cache m##_igc;
-if (!is:object(p))
-    runerr(602, p);
 if (!c_is(&p, (dptr)&dsclassname, &m##_igc))
     runerr(205, p);
 m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);

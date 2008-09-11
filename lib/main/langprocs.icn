@@ -73,12 +73,8 @@ class ObjectOutputStream(Stream)
    public traverse(o)
       local ty, s, i, e, pairs, mp, sep, desc
 
-      if \seen[o] then {
-         if s := subtype(o) then
-            return writes("ref " || type(o) || " " || s || "#" || serial(o))
-         else
-            return writes("ref " || type(o) || "#" || serial(o))
-      }
+      if s := \seen[o] then
+         return writes("ref " || s)
 
       ty := type(o)
       level +:= 1
@@ -87,11 +83,12 @@ class ObjectOutputStream(Stream)
 
       case ty of {
          "record" : {
-            seen[o] := 1
+            s := ty || " " || subtype(o) || "#" || serial(o)
+            seen[o] := s
             if /desc then 
-               writes(ty || " " || subtype(o) || "#" || serial(o)) | fail
+               writes(s) | fail
             else if simple{!o} then {
-               writes(ty || " " || subtype(o) || "#" || serial(o) || "(") | fail
+               writes(s || "(") | fail
                i := 1
                every s := generate_record_names(o) do {
                   if i > 1 then
@@ -103,7 +100,7 @@ class ObjectOutputStream(Stream)
                writes(")") | fail
             } else {
                nl() | fail
-               writes(ty || " " || subtype(o) || "#" || serial(o) || "(") | fail
+               writes(s || "(") | fail
                iplus()
                i := 1
                every s := generate_record_names(o) do {
@@ -121,13 +118,14 @@ class ObjectOutputStream(Stream)
          }
 
          "object" : {
-            seen[o] := 1
+            s := type(o) || " " || subtype(o) || "#" || serial(o)
+            seen[o] := s
             if /desc then
-               writes(type(o) || " " || subtype(o) || "#" || serial(o)) | fail
+               writes(s) | fail
             else if mp := Class.getf(o, "object_output") then
                mp(self) | fail
             else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
-               writes(type(o) || " " || subtype(o) || "#" || serial(o) || "(") | fail
+               writes(s || "(") | fail
                every i := 1 to Class.get_n_instance_fields(o) do {
                   if i > 1 then
                      writes(";") | fail
@@ -138,7 +136,7 @@ class ObjectOutputStream(Stream)
                writes(")") | fail
             } else {
                nl() | fail
-               writes(type(o) || " " || subtype(o) || "#" || serial(o) || "(") | fail
+               writes(s || "(") | fail
                iplus()
                every i := 1 to Class.get_n_instance_fields(o) do {
                   nl() | fail
@@ -155,11 +153,12 @@ class ObjectOutputStream(Stream)
          }
 
          "set" : {
-            seen[o] := 1
+            s := ty || "#" || serial(o)
+            seen[o] := s
             if /desc then
-               writes(ty || "#" || serial(o)) | fail
+               writes(s) | fail
             else if simple{!o} then {
-               writes(ty || "#" || serial(o) || "{") | fail
+               writes(s || "{") | fail
                every e := !o do {
                   if \sep then
                      writes(",") | fail
@@ -169,7 +168,7 @@ class ObjectOutputStream(Stream)
                writes("}") | fail
             } else {
                nl() | fail
-               writes(ty || "#" || serial(o) || "{") | fail
+               writes(s || "{") | fail
                iplus()
                every e := !o do {
                   if \sep then
@@ -185,11 +184,12 @@ class ObjectOutputStream(Stream)
          }
 
          "list" : {
-            seen[o] := 1
+            s := ty || "#" || serial(o)
+            seen[o] := s
             if /desc then
-               writes(ty || "#" || serial(o)) | fail
+               writes(s) | fail
             if simple{!o} then {
-               writes(ty || "#" || serial(o) || "[") | fail
+               writes(s || "[") | fail
                every e := !o do {
                   if \sep then
                      writes(",") | fail
@@ -199,7 +199,7 @@ class ObjectOutputStream(Stream)
                writes("]") | fail
             } else {
                nl() | fail
-               writes(ty || "#" || serial(o) || "[") | fail
+               writes(s || "[") | fail
                iplus()
                every e := !o do {
                   if \sep then
@@ -215,11 +215,12 @@ class ObjectOutputStream(Stream)
          }
 
          "table" : {
-            seen[o] := 1
+            s := ty || "#" || serial(o)
+            seen[o] := s
             if /desc then
-               writes(ty || "#" || serial(o)) | fail
+               writes(s) | fail
             else if simple{o[[]] | key(o) | !o} then {
-               writes(ty || "#" || serial(o)) | fail
+               writes(s) | fail
                if \o[[]] then {
                   writes(";def=")
                   traverse(o[[]]) | fail
@@ -237,7 +238,7 @@ class ObjectOutputStream(Stream)
                writes("}") | fail
             } else {
                nl() | fail
-               writes(ty || "#" || serial(o)) | fail
+               writes(s) | fail
                if \o[[]] then {
                   writes(";def=") | fail
                   iplus()
@@ -474,8 +475,11 @@ procedure hash(x, depth)
       "real" :
          return hash_string(string(x))
 
+      "procedure" | "class" | "constructor" :
+         return hash_string(subtype(x))
+
       default :
-         return hash_string(subtype(x)) | 0
+         return 0
    }
 end
 

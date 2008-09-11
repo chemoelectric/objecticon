@@ -47,12 +47,12 @@ class BorderField(Component)
       if /c then
          edit_border_button.set_is_shaded("t")
       else {
-         borders.set_selection(case subtype(c) of {
-            "CanvasEmptyBorder" : 2
-            "CanvasRaisedBorder" : 3
-            "CanvasSunkenBorder" : 4
-            "CanvasBevelledBorder" : 5
-            "CanvasPlainBorder" : 6
+         borders.set_selection(case classof(c) of {
+            CanvasEmptyBorder : 2
+            CanvasRaisedBorder : 3
+            CanvasSunkenBorder : 4
+            CanvasBevelledBorder : 5
+            CanvasPlainBorder : 6
             default : stop("Unknown border type")
          })
          border_tbl[borders.get_selection()] := c

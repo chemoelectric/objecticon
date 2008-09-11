@@ -572,12 +572,12 @@ end
 procedure write(a[])
    local e, f, r, n
    r := a[-1]
-   if type(a[1]) == "object" then
+   if is(a[1], Stream) then
       f := pop(a)
    else
       f := FileStream.b_stdout
    every e := \!a | EOL do {
-      if type(e) == "object" then {
+      if is(e, Stream) then {
          f.out(EOL)
          f := e
       } else {
@@ -597,12 +597,12 @@ end
 procedure writes(a[])
    local e, f, r, n
    r := a[-1]
-   if type(a[1]) == "object" then
+   if is(a[1], Stream) then
       f := pop(a)
    else
       f := FileStream.b_stdout
    every e := \!a do {
-      if type(e) == "object" then {
+      if is(e, Stream) then {
          if f === FileStream.b_stdout then
             f.flush() | fail
          f := e

@@ -45,8 +45,8 @@ class LayoutField(Component)
       if /c then
          edit_layout_button.set_is_shaded("t")
       else {
-         layouts.set_selection(case subtype(c) of {
-            "CanvasGridLayout" : 2
+         layouts.set_selection(case classof(c) of {
+            CanvasGridLayout : 2
             default : stop("Unknown layout type")
          })
          layout_tbl[layouts.get_selection()] := c
