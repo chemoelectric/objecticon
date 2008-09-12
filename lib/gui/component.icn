@@ -773,8 +773,8 @@ class Component(Rect,Align,SetFields,Connectable)
    public finally()
       stop_ticker()
       (\self.border).finally()
-      self.cbwin.uncouple()
       Gui.style.dispose(self.cbwin)
+      self.cbwin.uncouple()
       self.cbwin := &null
       #
       # Can't use !self.children here because some finally() methods

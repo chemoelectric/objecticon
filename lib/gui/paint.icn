@@ -338,8 +338,8 @@ class GridPaint(Paint)
 
    public close_win()
       if \win then {
-         win.close()
          Gui.style.dispose(win)
+         win.close()
       }
       win := &null
    end
@@ -462,8 +462,8 @@ class ImagePaint(Paint,SetFields)
 
    public close_image()
       if \win & /dont_close then {
-         win.close()
          Gui.style.dispose(win)
+         win.close()
       }
       dont_close := win := &null
    end
