@@ -323,8 +323,6 @@ typedef struct _wstate {
   int		eQfront, eQback;
   char		*cursorname;
   struct descrip listp;		/* icon values for this window */
-  struct wbind_list *children;
-  struct _wbinding *parent;
 #ifdef XWindows
   wdp		display;
   Window	win;			/* X window */

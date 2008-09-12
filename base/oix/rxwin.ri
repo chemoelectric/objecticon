@@ -725,10 +725,6 @@ int wgetq(w,res,t)
 int wclose(w)
     wbp w;
 {
-    wbp tmp_wb;
-    wbp p;
-    struct wbind_list *wbl, *t, *b;
-
     STDLOCALS(w);
 
     XSync(stddpy, False);
@@ -738,42 +734,6 @@ int wclose(w)
     /*
      * Force window to close (turn into a pixmap)
      */
-
-    while (w->window->children) {
-        tmp_wb = w->window->children->child;
-        wbl = w->window->children;
-        w->window->children = w->window->children->next;
-        w->window->display->refcount--;
-        tmp_wb->refcount--;
-        tmp_wb->window->parent=NULL;
-        w->refcount--;
-        tmp_wb->window->win = (Window) 0;
-        /* added next line */
-        SETCLOSED(tmp_wb);
-        wbl->next=NULL;
-        free(wbl);
-    }
-    p = w->window->parent;
-    if (p) {
-        t = p->window->children;
-        b = NULL;
-        while (t) {
-            if (t->child->window==w->window) {
-                if (b==NULL)
-                    p->window->children = t->next;
-                else b->next = t->next;
-                t->next = NULL;
-                t->child = NULL;
-                free(t);
-                w->refcount--;
-                break;
-	    }
-            b=t;
-            t = t->next;
-        }
-        w->window->parent=NULL;
-        p->refcount--;
-    }
     if (ws->win && ws->refcount > 1) {
         SETZOMBIE(w);
 #ifdef HAVE_LIBXFT
@@ -884,9 +844,6 @@ wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index, int i
     ws = w->window;
 
     ws->vis = DefaultVisual(ws->display->display, ws->display->screen); 
-
-    w->window->children=NULL;
-    w->window->parent = NULL;
 
     ws->listp.dword = D_List;
     BlkLoc(ws->listp) = (union block *)tlp;
@@ -1249,22 +1206,6 @@ int wmap(wbp w)
      *  in an iconic state
      */
     CLRZOMBIE(w);
-
-/***
- * RPP This blocks this function when the window is under another window, or when a
- * screensaver is active.
- if (ws->win != (Window) NULL) {
- int hm;
- while (!ISEXPOSED(w) && (ws->iconic != IconicState || ws->iconwin)) {
- if ((hm = handle_misc(wd, w)) < 1) {
- if (hm == -1) return Error;
- else if (hm == 0) {
- /* how to handle failure? *
- }
- }
- }
- }
-***/
 
     XSetFunction(stddpy, stdgc, wc->drawop);
     XSync(stddpy, False);
@@ -1739,10 +1680,7 @@ int setcanvas(w,s)
                 ws->iconic = NormalState;
                 ws->initialPix = ws->pix;
                 ws->pix = (Window) NULL;
-                if (ws->parent) { 
-                    my_wmap(w); 
-                }
-                else wmap(w);
+                wmap(w);
 	    }
             else if (ws->iconic == IconicState) {
                 XMapWindow(stddpy, stdwin);
@@ -4209,392 +4147,6 @@ int walert(w, volume)
     return Succeeded;
 }
 
-#else					/* Graphics */
-static char junk;		/* avoid empty module */
-#endif					/* Graphics */
-
-int children_close(w)
-    wbp w;
-{
-    wbp tmp_wb;
-    struct wbind_list *wbl;
-
-    STDLOCALS(w);
-
-    XSync(stddpy, False);
-    if (pollevent() == -1) return -1;
-
-    /*
-     * Force window to close (turn into a pixmap)
-     */
-
-    while (w->window->children) {
-        tmp_wb = w->window->children->child;
-        wbl = w->window->children;
-        w->window->children = w->window->children->next;
-        children_close(tmp_wb);
-        w->window->refcount--;
-        wbl->next=NULL;
-        free(wbl);
-    }
-
-    SETCLOSED(w);
-    if (ws->win && ws->refcount > 1) {
-        SETZOMBIE(w);
-#ifdef HAVE_LIBXFT
-        if (ws->winDraw) {
-            XftDrawDestroy(ws->winDraw);
-            ws->winDraw = NULL;
-        }
-#endif
-        XDestroyWindow(stddpy,stdwin);
-        XFlush(stddpy);
-        ws->refcount--;
-        while (ws->win)
-            if (pollevent() == -1) return -1;
-    }
-    /*
-     * Entire canvas terminates
-     */
-    else {
-        free_xcolors(w, 2);
-        free_xcolors(w, 1);
-/*      free_window(ws);  */
-        w->window->display->refcount--;
-        w->window->display->refcount--;
-        free_binding(w);
-    }
-
-    return 0;
-}
-
-char child_window_stuff(wbp w, wbp wp, char child_window)
-{
-    wsp ws;
-    int is_3d=0, query;
-    struct wbind_list *curr;
-    wdp wd;
-
-    if (child_window==2) {
-        printf("3D subwindow requested on VM built without 3D facilities\n");
-    }
-
-    if ((w->window = alc_winstate()) == NULL) {
-        free_binding(w);    
-        return 0;
-    }
-    ws = w->window;
-    if (child_window==1) {
-        ws->display = wp->window->display;
-        wp->window->display->refcount++;
-    }
-    else {
-        ws->display = wd;
-        wd->refcount++;
-    }
-    ws->vis = DefaultVisual(ws->display->display, ws->display->screen);
-
-    ws->children=NULL;
-    ws->parent = wp;
-    wp->refcount++;
-
-    curr = (struct wbind_list *) malloc(sizeof(struct wbind_list));
-    curr->child = w;
-    curr->next = wp->window->children;
-    wp->window->children = curr;
-    w->refcount++;
-  
-    ws->listp.dword = D_List;
-    BlkLoc(ws->listp) = (union block *) alclist(0, MinListSlots);
-  
-    if ((w->context = alc_context(w)) == NULL) {
-        /*      *err_index = -2; */
-        free_binding(w);
-        return 0;
-    }
-	
-    /*
-     * some attributes of the context determine window defaults
-     */
-    ws->height = w->context->font->height * 12;
-    ws->width  = w->context->font->maxwidth * 80;
-    return 1;
-}
-
-char my_wmap(wbp w)
-{
-    double tb;
-    XWindowAttributes attrs;
-    XGCValues gcv;
-    unsigned long gcmask =
-        GCFont | GCForeground | GCBackground | GCFillStyle | GCCapStyle;
-    struct imgdata *imd=NULL;
-    int i, r;
-    int new_pixmap = 0;
-    char *p=NULL, *s=NULL, sbuf[256];
-    XWMHints wmhints;
-    XClassHint clhints;
-    XSizeHints size_hints;
-    wsp ws = w->window;
-    wcp wc = w->context;
-    wdp wd = w->window->display;
-    wbp wp;
-    char child_window=1;
-
-/*   STDLOCALS(w); */
-
-    wp = ws->parent;
-    /*
-     *  Create a pixmap for this canvas if there isn't one already.
-     */
-    if (ws->pix == (Pixmap) NULL) {
-        if (ws->initialPix) {
-            ws->pix = ws->initialPix;
-            ws->initialPix = (Pixmap) NULL;
-            ws->pixwidth = ws->width;
-            ws->pixheight = ws->height;
-        }
-        else {
-            ws->pix = XCreatePixmap(wd->display, /* RootWindow(wd->display, wd->vis->screen) */
-                                    wp->window->win ? wp->window->win : wp->window->pix,
-                                    ws->width, ws->height,
-                                    DefaultDepth(wd->display, wd->screen));
-            ws->pixwidth = ws->width;
-            ws->pixheight = ws->height;
-            new_pixmap = 1;
-        }
-/*      stdpix = ws->pix; */
-    }
-
-
-    /*
-     * create the X window (or use the DefaultRootWindow if requested)
-     */
-    if (ws->iconic != HiddenState && wp->window->iconic != HiddenState) {
-
-        XSetWindowAttributes attr;
-        attr.background_pixmap = None;
-        attr.background_pixel = wd->colors[wc->bg].c;
-        attr.border_pixel = wd->colors[wc->fg].c;
-	attr.event_mask = StructureNotifyMask | ExposureMask;
- 
-        ws->win = ((ws->iconic == RootState) ? DefaultRootWindow(wd->display) :
-
-                   XCreateSimpleWindow(wd->display, (wp->window->win?wp->window->win:wp->window->pix), /*DefaultRootWindow(stddpy), */
-                                       ws->posx < 0 ? 0 : ws->posx,
-                                       ws->posy < 0 ? 0 : ws->posy, ws->width,
-                                       ws->height, 1,
-                                       wd->colors[wc->fg].c,
-                                       wd->colors[wc->bg].c));
-
-        if (ws->win == (Window) NULL)
-            return 0;
-/*      stdwin = ws->win; */
-        XClearWindow(wd->display, ws->win);
-
-    }
-
-    /*
-     * before creating the graphics context, construct a description
-     * of any non-default initial graphics context values.
-     */
-    gcv.foreground = wd->colors[wc->fg].c ^ (ISXORREVERSE(w) ? wd->colors[wc->bg].c : 0);
-    gcv.background = wd->colors[wc->bg].c;
-#ifdef HAVE_LIBXFT
-    gcv.font       = wd->xfont->fid;
-#else
-    gcv.font       = wc->font->fsp->fid;
-#endif
-    if (wc->fillstyle)
-        gcv.fill_style = wc->fillstyle;
-    else
-        gcv.fill_style = wc->fillstyle = FillSolid;
-    if (wc->linestyle || wc->linewidth) {
-        gcmask |= (GCLineWidth | GCLineStyle);
-        gcv.line_width = wc->linewidth;
-        gcv.line_style = wc->linestyle;
-        if (wc->linewidth > 1) {
-            gcv.dashes = 3 * wc->linewidth;
-            gcmask |= GCDashList;
-        }
-    }
-    else
-        wc->linestyle = LineSolid;
-    gcv.cap_style = CapProjecting;
-
-    /*
-     * Create a graphics context (or change an existing one to conform
-     * with initial values).
-     */
-    if (wc->gc == NULL) {
-        wc->gc = XCreateGC(wd->display, ws->pix, gcmask, &gcv);
-        if (wc->gc == NULL) return 0;
-    }
-    else
-        XChangeGC(wd->display, wc->gc, gcmask, &gcv);
-
-
-    if (wc->clipw >= 0)
-        setclip(w);
-
-    if (new_pixmap) {
-        XSetForeground(wd->display, wc->gc, wd->colors[wc->bg].c);
-        XFillRectangle(wd->display, ws->pix, wc->gc, 0, 0, ws->width, ws->height);
-        XSetForeground(wd->display, wc->gc,
-                       wd->colors[wc->fg].c ^(ISXORREVERSE(w)?wd->colors[wc->bg].c:0));
-    }
-
-    imd = &ws->initimage;
-    if (imd->width) {
-        r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, (word)imd->width * (word)imd->height, 0);
-        free((pointer)imd->paltbl);
-        free((pointer)imd->data);
-        imd->width = 0;
-        if (r < 0)
-            return 0;
-    }
-
-    imd = &ws->initicon;
-    if (imd->width) {
-        r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-                     imd->data, (word)imd->width * (word)imd->height, 1);
-        free((pointer)imd->paltbl);
-        free((pointer)imd->data);
-        imd->width = 0;
-        if (r < 0)
-            return 0;
-        wmhints.icon_window = ws->iconwin;
-        ws->wmhintflags |= IconWindowHint;
-    }
-
-    if (wc->patternname != NULL) {
-        if (SetPattern(w, wc->patternname, strlen(wc->patternname)) != Succeeded)
-            return 0;
-    }
-
-    /*
-     *  if we are opening a pixmap, we are done at this point.
-     */
-    if (ws->win == (Window) NULL) return 1;
-
-    if (ws->iconic != RootState) {
-        size_hints.flags = PSize | PMinSize | PMaxSize;
-        size_hints.width = ws->width;
-        size_hints.height= ws->height;
-        if (ws->posx == -(MaxInt)) ws->posx = 0;
-        else size_hints.flags |= USPosition;
-        if (ws->posy == -(MaxInt)) ws->posy = 0;
-        else size_hints.flags |= USPosition;
-        size_hints.x = ws->posx;
-        size_hints.y = ws->posy;
-        if (ISRESIZABLE(w)) {
-            size_hints.min_width = 0;
-            size_hints.min_height = 0;
-            size_hints.max_width = DisplayWidth(wd->display, wd->screen);
-            size_hints.max_height = DisplayHeight(wd->display, wd->screen);
-        }
-        else {
-            size_hints.min_width = size_hints.max_width = ws->width;
-            size_hints.min_height = size_hints.max_height = ws->height;
-        }
-/*
-  if (ws->iconlabel == NULL) {
-  if ((ws->iconlabel = salloc(ws->windowlabel)) == NULL)
-  ReturnErrNum(305, Error);
-  }
-*/
-        XSetStandardProperties(wd->display, ws->win, ws->windowlabel, ws->iconlabel,
-                               0,0,0, &size_hints);
-        XSelectInput(wd->display, ws->win, XMasks(ws->inputmask));
-    }
-
-    wmhints.input = True;
-    wmhints.flags = InputHint;
-/*
-  if (ws->iconic != RootState) {
-  if (ws->iconimage != NULL) {
-  makeIcon(w, ws->posx < 0 ? 0 : ws->posx, ws->posy < 0 ? 0 : ws->posy);
-  wmhints.icon_window = ws->iconwin;
-  ws->wmhintflags |= IconWindowHint;
-  }
-  wmhints.flags |= (ws->wmhintflags | StateHint);
-  wmhints.initial_state = ws->iconic;
-  wmhints.icon_x = ws->iconx;
-  wmhints.icon_y = ws->icony;
-  }
-*/
-    XSetWMHints(wd->display, ws->win, &wmhints);
-
-    /*
-     * Set the class hints that name the program (for reference by the
-     * window manager) following conventions given in O'Reilly.
-     */
-    if (! (s = getenv("RESOURCE_NAME"))) {
-        p = StrLoc(kywd_prog);
-        s = p + StrLen(kywd_prog);
-        while (s > p && s[-1] != '/')
-            s--;				/* find tail of prog_name */
-    }
-    clhints.res_name = sbuf;
-    clhints.res_class = "IconProg";
-    for (i=0; s < p+StrLen(kywd_prog); ) clhints.res_name[i++] = *s++;
-    clhints.res_name[i] = '\0';
-    XSetClassHint(wd->display, ws->win, &clhints);
-
-/*
-  if (wd->cmap != DefaultColormap(wd->display,wd->screen)) {
-  XSetWindowColormap(wd->display, ws->win, wd->cmap);
-  }
-*/
-
-    XSync(wd->display, False);
- 
-    if (ws->iconic != RootState) {
-        CLREXPOSED(w);
-        XMapWindow(wd->display, ws->win);
-    }
-
-    XGetWindowAttributes(wd->display, ws->win, &attrs);
-    ws->width = attrs.width;
-    ws->height = attrs.height;
-    if (!resizePixmap(w, ws->width, ws->height)) return 0;
-
-    if (ws->win) {
-        i = ws->theCursor;
-        if (!(wd->cursors[i]))
-            wd->cursors[i] = XCreateFontCursor(wd->display, 2 * i);
-        XDefineCursor(wd->display, ws->win, wd->cursors[i]);
-    }
-
-    /*
-     * busy loop for an expose event, unless of course we are starting out
-     *  in an iconic state
-     */
-    CLRZOMBIE(w);
-    if (ws->win != (Window) NULL) {
-        int hm;
-        while (!ISEXPOSED(w) && (ws->iconic != IconicState || ws->iconwin)) {
-            if ((hm = handle_misc(wd, w)) < 1) {
-                if (hm == -1) return 0;
-                else if (hm == 0) {
-                    /* how to handle failure? */
-                }
-	    }
-        }
-    }
-
-    XSetFunction(wd->display, wc->gc, wc->drawop);
-    XSync(wd->display, False);
-
-    if (ws->win) {
-        Atom WMDeleteWindow = XInternAtom(ws->display->display, "WM_DELETE_WINDOW", True);
-        XSetWMProtocols(ws->display->display, ws->win, &WMDeleteWindow, 1);
-    }
-   
-    return 1;
-}
-
 dptr call(dptr proc, ...)
 {
     wdp saved_wdsplys = wdsplys;
@@ -4692,4 +4244,7 @@ void drawstrng(wbp w, int x, int y, char *str, int slen)
                         slen);
 }
 
-#endif
+#endif            /* HAVE_LIBXFT */
+
+#endif            /* Graphics */
+
