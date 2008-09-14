@@ -37,14 +37,13 @@ to see them.  The `configure` script prints a summary of features when it finish
 
 {{{
 Summary:-
-Install prefix         : /opt/objecticon
+Install prefix         : /usr/local
 X11 graphics           : yes
 jpeg library           : yes
 Xft anti-aliased fonts : yes
 Xpm                    : yes
 zlib compression       : yes
 dynamic loading        : yes
-crypt lib              : yes
 mysql lib              : yes
 context switch         : config/system/linux_x86/rswitch.s
 }}}
@@ -56,9 +55,8 @@ The meaning of these various options is as follows.
  * *jpeg library* -Allows loading of jpeg images.
  * *Xft anti-aliased fonts* - Fonts are drawn with smooth edges using the xft and freetype libraries. This looks nice, but is considerably slower than using traditional X bitmap fonts.  If this is a problem, you can force the use of traditional X11 bitmap fonts by giving `configure` the option `--without-xft`.
  * *Xpm* -Allows loading of xpm images.
- * *zlib* compression - This allows icode files to be compressed with the -Z flag given to `oit`.
+ * *zlib compression* - This allows icode files to be compressed with the -Z flag given to `oit`.
  * *dynamic loading* -Allows shared library (.so) files containing native functions to be loaded at runtime.
- * *crypt lib* -This just enables the builtin crypt() function.
  * *mysql lib* -Allows a dynamic library to be built which provides an interface to mysql.  Has no effect either way on the runtime system proper.
  * *context switch* -This is a system-dependent source file which is used by co-expressions.  If the value is {{{config/system/default/rswitch.c}}}, then co-expressions will not be functional (activation will end with a runtime error).
 
@@ -89,7 +87,7 @@ Object Icon requires some environment variables to be setup correctly.  To make 
 
 Include this file by adding a line like this to your `.bashrc` file (or equivalent)
 {{{
-. /opt/objecticon/lib/objecticon/paths.sh
+. /usr/local/lib/objecticon/paths.sh
 }}}
 
 == Uninstallation ==
