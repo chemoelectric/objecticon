@@ -56,7 +56,7 @@ The meaning of these various options is as follows.
  * *jpeg library* -Allows loading of jpeg images.
  * *Xft anti-aliased fonts* - Fonts are drawn with smooth edges using the xft and freetype libraries. This looks nice, but is considerably slower than using traditional X bitmap fonts.  If this is a problem, you can force the use of traditional X11 bitmap fonts by giving `configure` the option `--without-xft`.
  * *Xpm* -Allows loading of xpm images.
- * *zlib* compression - Allows zlib compressed files (ie .gz files), to be read/written via the "z" flag in the open function.  Also allows icode files to be compressed with the -Z flag given to `oit`.
+ * *zlib* compression - This allows icode files to be compressed with the -Z flag given to `oit`.
  * *dynamic loading* -Allows shared library (.so) files containing native functions to be loaded at runtime.
  * *crypt lib* -This just enables the builtin crypt() function.
  * *mysql lib* -Allows a dynamic library to be built which provides an interface to mysql.  Has no effect either way on the runtime system proper.
