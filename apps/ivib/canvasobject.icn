@@ -115,9 +115,11 @@ class CanvasObject(SelectiveObjectCodec)
    end
 
    #
-   # Generate the tree of CanvasObjects rooted at this one.
-   public gen_tree()
-      suspend self | gen_cos().gen_tree()
+   # Traverse the tree of CanvasObjects rooted at this one.
+   #
+   public traverse_tree()
+      self @ &source
+      every gen_cos().traverse_tree()
    end
 
    public get_template()

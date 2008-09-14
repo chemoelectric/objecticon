@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, util
 
 
 ############################################################################
@@ -24,7 +24,7 @@ class CanvasButtonGroup(CanvasObject,ButtonGroup)
    public get_members()
       local o, l
       l := []
-      every o := self.parent_Canvas.gen_cos().gen_tree() do {
+      every o := coexp_seq{self.parent_Canvas.gen_cos().traverse_tree()} do {
          if (is(o, gui.Button) &
              o.parent_button_group === self) then
             put(l, o)

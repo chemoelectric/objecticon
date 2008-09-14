@@ -863,6 +863,10 @@ class Main(Dialog)
 
       write("Dup test:")
       test_dup()
+
+      write("---------------")
+      write("traverse")
+      every write(image(coexp_seq{canvas.gen_cos().traverse_tree()}))
    end
 
    public test_cbgs()
@@ -873,7 +877,7 @@ class Main(Dialog)
                " which_one=", image(b.which_one))
       }
       write("..")
-      every o := canvas.gen_cos().gen_tree() do {
+      every o := coexp_seq{canvas.gen_cos().traverse_tree()} do {
          if is(o, gui.Toggle) then
             write(o.get_name(), ":", image(o), " ---> ", image(o.parent_check_box_group))
       }
@@ -884,7 +888,7 @@ class Main(Dialog)
                " which_one=", image(b.which_one))
       }
       write("..")
-      every o := d.gen_cos().gen_tree() do {
+      every o := coexp_seq{d.gen_cos().traverse_tree()} do {
          if is(o, gui.Toggle) then
             write(o.get_name(), ":", image(o), " ---> ", image(o.parent_check_box_group))
       }
@@ -895,8 +899,8 @@ class Main(Dialog)
 
       d := canvas.dup()
 
-      e1 := create canvas.gen_cos().gen_tree()
-      e2 := create d.gen_cos().gen_tree()
+      e1 := create canvas.gen_cos().traverse_tree()
+      e2 := create d.gen_cos().traverse_tree()
 
       # Selections
       *canvas.selections = *d.selections | failure("Different num of selections")
