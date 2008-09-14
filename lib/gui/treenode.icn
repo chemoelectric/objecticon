@@ -25,39 +25,41 @@ class TreeNode(SetFields)
       parent
 
    #
-   # Generate all the {TreeNode}s in this subtree, including this {TreeNode},
-   # in preorder ordering.
+   # Traverse all the {TreeNode}s in this subtree, including this
+   # {TreeNode}, in preorder ordering.
    #
-   public generate_all_preorder()
-      suspend self | (!children).generate_all_preorder()
+   public traverse_all_preorder()
+      self @ &source
+      every (!children).traverse_all_preorder()
    end
 
    #
-   # Generate all the {TreeNode}s in this subtree, including this {TreeNode},
-   # in postorder ordering.
+   # Traverse all the {TreeNode}s in this subtree, including this
+   # {TreeNode}, in postorder ordering.
    #
-   public generate_all_postorder()
-      suspend (!children).generate_all_postorder() | self
+   public traverse_all_postorder()
+      every (!children).traverse_all_postorder()
+      self @ &source
    end
 
    #
-   # Generate all the open {TreeNode}s in this subtree, including this {TreeNode},
-   # in preorder ordering.
+   # Traverse all the open {TreeNode}s in this subtree, including this
+   # {TreeNode}, in preorder ordering.
    #
-   public generate_open_preorder()
-      suspend self
+   public traverse_open_preorder()
+      self @ &source
       if \self.is_expanded_flag then
-         suspend (!children).generate_open_preorder()
+         every (!children).traverse_open_preorder()
    end
 
    #
-   # Generate all open {TreeNode}s in this subtree, including this {TreeNode},
-   # in postorder ordering.
+   # Traverse all open {TreeNode}s in this subtree, including this
+   # {TreeNode}, in postorder ordering.
    #
-   public generate_open_postorder()
+   public traverse_open_postorder()
       if \self.is_expanded_flag then
-         suspend (!children).generate_open_postorder()
-      suspend self
+         every (!children).traverse_open_postorder()
+      self @ &source
    end
 
    #
@@ -66,7 +68,7 @@ class TreeNode(SetFields)
    #
    public expand(force)
       local n
-      every n := generate_all_postorder() do
+      every n := coexp_seq{traverse_all_postorder()} do
          if \force | *n.children > 0 then
             n.is_expanded_flag := 1
    end

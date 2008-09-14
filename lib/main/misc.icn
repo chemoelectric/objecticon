@@ -96,3 +96,10 @@ end
 procedure error(s)
    &why := s
 end
+
+#
+# Generate the results of a co-expression as a sequence.
+#
+procedure coexp_seq(e)
+   suspend |@e
+end

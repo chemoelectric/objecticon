@@ -1,4 +1,4 @@
-import gui
+import gui, util
 
 class ComponentTree(Tree)
    public can_drop(drag, e)
@@ -48,7 +48,7 @@ class ComponentTreeDialog(Dialog)
 
    public find_node_for(c)
       local n
-      every n := tree.get_root_node().generate_all_preorder() do {
+      every n := coexp_seq{tree.get_root_node().traverse_all_preorder()} do {
          if n.component === c then
             return n
       }
@@ -131,10 +131,10 @@ class ComponentTreeDialog(Dialog)
 
    public on_tree_press(ev)
       local n, pm
-      tree.get_line_under_pointer() | fail
+      tree.get_line_under_pointer(ev) | fail
       n := tree.object_get_cursor() | fail
       pm := PopupMenu()
-      pm.popup(self, n.create_menu())
+      pm.popup(self, n.create_menu(), ev.x, ev.y)
     end
 
    public setup()

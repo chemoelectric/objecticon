@@ -24,7 +24,7 @@ class WebScraper()
 
       paths := table()
 
-      every n := d.generate_nodes() do {
+      every n := coexp_seq{d.traverse_nodes_preorder()} do {
          if n.get_type() == "element" & s := n.get_attribute("scrapeId") then {
             do_insert(s, n, anchors) | fail
          }
@@ -59,7 +59,7 @@ class WebScraper()
       local n, s, id, str, res
 
       res := table()
-      every n := d.generate_nodes() do {
+      every n := coexp_seq{d.traverse_nodes_preorder()} do {
          every s := string(!n.children) do {
             s ? if tab(c_match("$anchorid=")) then {
                id := tab(upto('$')) | return error("Unclosed anchor id")

@@ -8,7 +8,7 @@
 
 package xml
 
-import lang, io
+import lang, io, util
 
 #
 # This class represents an element in an XML document.  It has extra
@@ -123,7 +123,7 @@ class XmlElement(Element)
    #
    public search_tree_global_name(s)
       local n
-      every n := generate_nodes() do
+      every n := coexp_seq{traverse_nodes_preorder()} do
          if n.get_type() == "element" & (/s | equals(n.get_global_name(), s)) then
             suspend n
    end

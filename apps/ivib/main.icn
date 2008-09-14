@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics
+import lang, gui, io, graphics, util
 
 $include "version.icn"
 
@@ -769,7 +769,7 @@ class Main(Dialog)
       local d, t, m, bg
 
       t := canvas.dup()
-      every t.generate_components_preorder().set_show_layout("f")
+      every coexp_seq{t.traverse_components_preorder()}.set_show_layout("f")
       d := Dialog()
       d.set_layout(t.layout_delegate)
       every d.add(!t.children)

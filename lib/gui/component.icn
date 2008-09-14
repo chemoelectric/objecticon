@@ -910,19 +910,21 @@ class Component(Rect,Align,SetFields,Connectable)
    end
 
    #
-   # Generate all the components, including subcomponents, with a post-order
-   # traversal.
+   # Traverse all the components, including subcomponents, with a
+   # post-order traversal.
    #
-   public generate_components_postorder()
-      suspend (!self.children).generate_components_postorder() | self
+   public traverse_components_postorder()
+      every (!self.children).traverse_components_postorder()
+      self @ &source
    end
 
    #
-   # Generate all the components, including subcomponents, with a pre-order
-   # traversal.
+   # Traverse all the components, including subcomponents, with a
+   # pre-order traversal.
    #
-   public generate_components_preorder()
-      suspend self | (!self.children).generate_components_preorder()
+   public traverse_components_preorder()
+      self @ &source
+      every (!self.children).traverse_components_preorder()
    end
 
    #
@@ -964,11 +966,12 @@ class Component(Rect,Align,SetFields,Connectable)
    end
 
    #
-   # Generate the components under this tree in the order in which
+   # Traverse the components under this tree in the order in which
    # tab focus should iterate over them.
    #
-   public generate_tab_order()
-      suspend self | (!self.tab_children).generate_tab_order()
+   public traverse_tab_order()
+      self @ &source
+      every (!self.tab_children).traverse_tab_order()
    end
 
    #

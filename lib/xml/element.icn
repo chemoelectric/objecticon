@@ -8,7 +8,7 @@
 
 package xml
 
-import io
+import io, util
 
 #
 # Represents an element in the document.
@@ -68,7 +68,7 @@ class Element(Node)
    #
    public search_tree(s)
       local n
-      every n := generate_nodes() do
+      every n := coexp_seq{traverse_nodes_preorder()} do
          if n.get_type() == "element" & (/s | n.get_name() == s) then
             suspend n
    end

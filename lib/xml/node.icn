@@ -8,7 +8,7 @@
 
 package xml
 
-import lang, io
+import lang, io, util
 
 #
 # This is the base class for all objects in the document, including
@@ -76,14 +76,25 @@ class Node()
    end
 
    #
-   # Generate all the nodes in this {Node}
+   # Traverse all the nodes in this {Node} with a preorder traversal.
    #
-   public generate_nodes()
+   public traverse_nodes_preorder()
       local e
-      suspend self
+      self @ &source
       every e := !children do
          if not(string(e)) then
-            suspend e.generate_nodes()
+            e.traverse_nodes_preorder()
+   end
+
+   #
+   # Traverse all the nodes in this {Node} with a preorder traversal.
+   #
+   public traverse_nodes_postorder()
+      local e
+      every e := !children do
+         if not(string(e)) then
+            e.traverse_nodes_postorder()
+      self @ &source
    end
 
    #
@@ -174,7 +185,7 @@ class Node()
    #
    public find_string(s)
       local n
-      every n := generate_nodes() do
+      every n := coexp_seq{traverse_nodes_preorder()} do
          if n.has_string(s) then
             suspend n
    end
@@ -184,7 +195,7 @@ class Node()
    #
    public find_trimmed_string(s)
       local n
-      every n := generate_nodes() do
+      every n := coexp_seq{traverse_nodes_preorder()} do
          if n.has_trimmed_string(s) then
             suspend n
    end
