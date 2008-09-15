@@ -393,7 +393,7 @@ class ScrollArea(Component)
    end
 
    public default_on_key(e)
-      case e of {
+      case e.code of {
          Key.HOME : goto_vpos(0)
          Key.END : goto_vpos((\self.vsb).total_size)
          Key.PGUP : goto_vpos(get_area_y() - (\self.vsb).page_size)
