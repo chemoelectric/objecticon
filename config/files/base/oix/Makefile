@@ -20,7 +20,7 @@ XOBJS=	cnv.o data.o def.o errmsg.o extcall.o fconv.o fload.o fmath.o\
 	rwinrsc.o rwinsys.o rwindow.o posix.o rposix.o
 
 COBJS=	../common/long.o ../common/time.o \
-	../common/rswitch.o ../common/redirerr.o ../common/xwindow.o \
+	../common/rswitch.o ../common/redirerr.o \
 	../common/alloc.o ../common/mlocal.o
 
 OBJS=	$(XOBJS) $(COBJS)
