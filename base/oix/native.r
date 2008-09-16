@@ -1637,7 +1637,7 @@ end
 static struct sdescrip ptrf = {3, "ptr"};
 
 struct ramstream {
-    int pos, size, avail;
+    int pos, size, avail, wiggle;
     char *data;
 };
 
@@ -1695,14 +1695,21 @@ function{0,1} io_RamStream_in(self, i)
    }
 end
 
-function{1} io_RamStream_new_impl(s)
-   if !cnv:string(s) then
+function{1} io_RamStream_new_impl(s, wiggle)
+   if !def:string(s, emptystr) then
       runerr(103, s)
+   if !def:C_integer(wiggle, 512) then
+      runerr(101, wiggle)
    body {
        struct ramstream *p;
+       if (wiggle < 0) {
+           irunerr(205, wiggle);
+           errorfail;
+       }
        MemProtect(p = malloc(sizeof(*p)));
-       p->avail = StrLen(s) + 1024;
+       p->wiggle = wiggle;
        p->pos = p->size = StrLen(s);
+       p->avail = p->size + p->wiggle;
        MemProtect(p->data = malloc(p->avail));
        memcpy(p->data, StrLoc(s), p->size);
        return C_integer((long int)p);
@@ -1762,7 +1769,7 @@ function{1} io_RamStream_truncate(self, len)
    body {
        GetSelfRs();
        self_rs->pos = len;
-       self_rs->avail = len + 1024;
+       self_rs->avail = len + self_rs->wiggle;
        MemProtect(self_rs->data = realloc(self_rs->data, self_rs->avail));
        if (self_rs->size < len)
            memset(&self_rs->data[self_rs->size], 0, len - self_rs->size);

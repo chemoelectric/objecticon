@@ -936,10 +936,11 @@ class RamStream(Stream, NoCopy)
    #
    # @param s the initial value of the stream; defaults to empty 
    # @      string.
+   # @param wiggle the extra space to reserve for growth of the buffer,
+   # @      default is 512 bytes.
    #
-   public new(s)
-      /s := ""
-      ptr := new_impl(s)
+   public new(s, wiggle)
+      ptr := new_impl(s, wiggle)
       return
    end
 end
