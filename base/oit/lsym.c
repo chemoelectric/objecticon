@@ -25,7 +25,7 @@ struct gentry *putglobal(char *name, int flag, struct lfile *lf, struct loc *pos
         p = p->g_blink;
     if (p)
         quitf("Attempted to add an global which already existed:%s", name);
-    p = New(struct gentry);
+    p = Alloc(struct gentry);
     p->g_blink = lghash[i];
     lghash[i] = p;
     if (lglast) {
@@ -55,7 +55,7 @@ struct gentry *glocate(char *name)
 
 void add_local(struct lfunction *func, char *name, int flags, struct loc *pos)
 {
-    struct lentry *lp = New(struct lentry);
+    struct lentry *lp = Alloc(struct lentry);
     if (func->local_last) {
         func->local_last->next = lp;
         func->local_last = lp;
@@ -70,7 +70,7 @@ void add_local(struct lfunction *func, char *name, int flags, struct loc *pos)
 void add_constant(struct lfunction *func, 
                   int flags, int len, union xval *valp)
 {
-    struct centry *p = New(struct centry);
+    struct centry *p = Alloc(struct centry);
     p->c_flag = flags;
     if (flags & F_IntLit) {
         p->c_val.ival = valp->ival;

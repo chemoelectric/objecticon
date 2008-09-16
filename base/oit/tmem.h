@@ -4,7 +4,6 @@
 #include "tree.h"
 #include "transtructs.h"
 
-void tmalloc();
 void tminit();
 void tmfilefree();
 void tmfree();

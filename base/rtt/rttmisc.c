@@ -112,3 +112,13 @@ struct node *typ;
       }
    }
 
+/*
+ * salloc - allocate and initialize string
+ */
+
+char *salloc(char *s)
+   {
+   register char *s1;
+   s1 = (char *)safe_alloc(strlen(s) + 1);
+   return strcpy(s1, s);
+   }

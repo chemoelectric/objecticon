@@ -85,7 +85,7 @@ void readglob(struct lfile *lf)
                     curr_class = 0;
                 } else {
                     gp = putglobal(name, F_Class, lf, &pos);
-                    curr_class = New(struct lclass);
+                    curr_class = Alloc(struct lclass);
                     curr_class->global = gp;
                     curr_class->flag = k;
                     gp->class = curr_class;
@@ -138,7 +138,7 @@ void readglob(struct lfile *lf)
                     curr_record = 0;
                 } else {
                     gp = putglobal(name, F_Record, lf, &pos);
-                    curr_record = New(struct lrecord);
+                    curr_record = Alloc(struct lrecord);
                     gp->record = curr_record;
                 }
                 curr_class = 0;
@@ -157,7 +157,7 @@ void readglob(struct lfile *lf)
                            name, abbreviate(gp->pos.file), gp->pos.line);
                 else
                     gp = putglobal(name, F_Proc, lf, &pos);
-                curr_func = gp->func = New(struct lfunction);
+                curr_func = gp->func = Alloc(struct lfunction);
                 curr_func->defined = lf;
                 curr_func->proc = gp;
                 break;
@@ -250,13 +250,13 @@ static void resolve_locals_impl(struct lfunction *f)
      */
     if (f->nlocals > 0) {
         int i = 0;
-        f->local_table = calloc(f->nlocals, sizeof(struct lentry *));
+        f->local_table = safe_calloc(f->nlocals, sizeof(struct lentry *));
         for (e = f->locals; e; e = e->next)
             f->local_table[i++] = e;
     }
     if (f->nconstants > 0) {
         int i = 0;
-        f->constant_table = calloc(f->nconstants, sizeof(struct centry *));
+        f->constant_table = safe_calloc(f->nconstants, sizeof(struct centry *));
         for (c = f->constants; c; c = c->next)
             f->constant_table[i++] = c;
     }
@@ -408,7 +408,7 @@ static struct fentry *add_fieldtable_entry(char *name, int field_num)
     while (fp && fp->name != name)
         fp = fp->b_next;
     if (!fp) {
-        fp = New(struct fentry);
+        fp = Alloc(struct fentry);
         fp->name = name;
         nfields++;
         fp->b_next = lfhash[i];
@@ -460,7 +460,7 @@ void build_fieldtable()
     /*
      * Now create a sorted index of the field table.
      */
-    a = tcalloc(nfields, sizeof(struct fentry *));
+    a = safe_calloc(nfields, sizeof(struct fentry *));
     for (fp = lffirst; fp; fp = fp->next)
         a[i++] = fp;
     qsort(a, nfields, sizeof(struct fentry *), fieldtable_sort_compare);
@@ -498,7 +498,7 @@ void sort_global_table()
     int i = 0, n = 0;
     for (gp = lgfirst; gp; gp = gp->g_next)
         ++n;
-    a = tcalloc(n, sizeof(struct gentry *));
+    a = safe_calloc(n, sizeof(struct gentry *));
     for (gp = lgfirst; gp; gp = gp->g_next)
         a[i++] = gp;
     qsort(a, n, sizeof(struct gentry *), global_sort_compare);

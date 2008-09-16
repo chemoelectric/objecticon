@@ -111,7 +111,7 @@ void trans(struct file_param *trans_files, int *fatals, int *warnings)
 {
     struct file_param *p;
 
-    tmalloc();			/* allocate memory for translation */
+    init_package_db();
 
     awarnings = afatals = 0;
 

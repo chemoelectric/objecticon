@@ -182,7 +182,7 @@ int m4;
    if (f == NULL) {
       return 0;
       }
-   fs = (infile *)alloc((unsigned int)sizeof(infile));
+   fs = safe_alloc(sizeof(infile));
    fs->prev = curfile;
    fs->fp = f;
    fs->fname = intern(fname);
@@ -203,7 +203,7 @@ char *filename;
 #if UNIX
       {
       FILE *f;
-      char *s = alloc((unsigned int)(4 + strlen(filename)));
+      char *s = safe_alloc(4 + strlen(filename));
       sprintf(s, "m4 %s", filename);
       f = popen(s, ReadText);
       free(s);
@@ -409,7 +409,7 @@ FILE *fp;
 
    /* if first time, allocate buffer */
    if (!lbuf) {
-      lbuf = alloc(LINE_SIZE_INIT);
+      lbuf = safe_alloc(LINE_SIZE_INIT);
       llen = LINE_SIZE_INIT;
       }
 
@@ -457,7 +457,7 @@ cdefn *d;
    d->inuse = 1;
    b = bfree;
    if (b == NULL)
-      b = (buffer *)alloc(sizeof(buffer));
+      b = safe_alloc(sizeof(buffer));
    else
       bfree = b->prev;
    b->prev = bstack;
@@ -959,7 +959,7 @@ char *val;
       return NULL;
    nlen = strlen(name);
    vlen = strlen(val);
-   d = (cdefn *)alloc(sizeof(*d) - sizeof(d->s) + nlen + vlen + 1);
+   d = safe_alloc(sizeof(*d) - sizeof(d->s) + nlen + vlen + 1);
    d->nlen = nlen;
    d->vlen = vlen;
    d->inuse = 0;

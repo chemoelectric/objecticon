@@ -7,22 +7,10 @@
 
 
 /*
- * tcalloc - allocate and zero m*n bytes
- */
-void *tcalloc(unsigned int m, unsigned int n)
-{
-    void * a;
-
-    if ((a = calloc(m,n)) == 0 )
-        quit("out of memory");
-    return a;
-}
-
-/*
- * trealloc - realloc a table making it half again larger and zero the
+ * expand_table - realloc a table making it half again larger and zero the
  *   new part of the table.
  */
-void * trealloc(void * table,      /* table to be realloc()ed */
+void * expand_table(void * table,      /* table to be realloc()ed */
                 void * tblfree,    /* reference to table free pointer if there is one */
                 unsigned int *size, /* size of table */
                 int unit_size,      /* number of bytes in a unit of the table */

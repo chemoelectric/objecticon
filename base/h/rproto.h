@@ -629,3 +629,4 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic);
 int c_is(dptr x, dptr cname, struct inline_global_cache *ic);
 void why(char *s);
 void whyf(char *fmt, ...);
+char *salloc(char *s);

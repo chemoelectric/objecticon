@@ -127,7 +127,7 @@ char *srcname;
     * If an entry for the source file was not found, create one.
     */
    if (sfile == NULL) {
-      sfile = NewStruct(srcfile);
+      sfile = Alloc(struct srcfile);
       sfile->name = srcname;
       sfile->dependents = NULL;
       sfile->next = dhash[hashval];
@@ -147,7 +147,7 @@ char *c_name;
    {
    struct cfile *cf;
 
-   cf = NewStruct(cfile);
+   cf = Alloc(struct cfile);
    cf->name = c_name;
    cf->next = sfile->dependents;
    sfile->dependents = cf;
@@ -257,7 +257,7 @@ char *pre;
     * If the operation is not in the hash table, put it there.
     */
    if ((ptr = db_ilkup(name_s, tbl)) == NULL) {
-      ptr = NewStruct(implement);
+      ptr = Alloc(struct implement);
       hashval = IHasher(name_s);
       ptr->blink = tbl[hashval];
       ptr->oper_typ = ((op_type == TokFunction) ? 'F' : 'K');
@@ -321,7 +321,7 @@ struct implement *ptr;
        */
       nargs = params->u.param_info.param_num + 1;
       ptr->nargs = nargs;
-      ptr->arg_flgs = (int *)alloc((unsigned int)(sizeof(int) * nargs));
+      ptr->arg_flgs = safe_alloc((unsigned int)(sizeof(int) * nargs));
       for (i = 0; i < nargs; ++i)
          ptr->arg_flgs[i] = 0;
       for (sym = params; sym != NULL; sym = sym->u.param_info.next)
@@ -368,7 +368,7 @@ struct token *name;
    while (ptr != NULL && (ptr->op != op || ptr->nargs != nargs))
       ptr = ptr->blink;
    if (ptr == NULL) {
-      ptr = NewStruct(implement);
+      ptr = Alloc(struct implement);
       ptr->blink = ohash[hashval];
       ptr->oper_typ = 'O';
       nxt_pre(ptr->prefix, op_pre, 2);   /* allocate a unique prefix */

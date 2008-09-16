@@ -31,8 +31,7 @@ void init_str()
     int h;
 
     if (str_tbl == NULL) {
-        str_tbl = (struct str_entry **)alloc((unsigned int)(StrTblSz *
-                                                            sizeof(struct str_entry *)));
+        str_tbl = safe_alloc(StrTblSz * sizeof(struct str_entry *));
         for (h = 0; h < StrTblSz; ++h)
             str_tbl[h] = NULL;
     }
@@ -129,8 +128,7 @@ void new_sbuf(struct str_buf *sbuf)
     }
 
     s1 = sbuf->strtimage;
-    sbf = (struct str_buf_frag *)alloc((unsigned int)
-                                       (sizeof(struct str_buf_frag) + (sbuf->size - 1)));
+    sbf = safe_alloc(sizeof(struct str_buf_frag) + (sbuf->size - 1));
     sbf->next = sbuf->frag_lst;
     sbuf->frag_lst = sbf;
     sbuf->strtimage = sbf->s;
@@ -167,7 +165,7 @@ char *spec_str(s)
     for (se = str_tbl[h]; se != NULL; se = se->next)
         if (l == se->length && streq(l, s, se->s))
             return se->s;
-    se = NewStruct(str_entry);
+    se = Alloc(struct str_entry);
     se->s = s;
     se->length = l;
     se->next = str_tbl[h];
@@ -216,7 +214,7 @@ char *str_install(struct str_buf *sbuf)
      * The string is not in the table. Add the copy from the buffer to the
      *  table.
      */
-    se = NewStruct(str_entry);
+    se = Alloc(struct str_entry);
     se->s = s;
     se->length = l;
     sbuf->strtimage = e;

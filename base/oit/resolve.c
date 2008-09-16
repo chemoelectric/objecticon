@@ -50,7 +50,7 @@ static struct gentry *gb_locate(char *name)
         struct loc bl = {"Builtin", 0};
         /* Builtin function, add to global table so we see it next time */
         gl = putglobal(name, F_Builtin | F_Proc, 0, &bl);
-        gl->builtin = New(struct lbuiltin);
+        gl->builtin = Alloc(struct lbuiltin);
         gl->builtin->builtin_id = bn;
     }
     return gl;
@@ -269,7 +269,7 @@ void resolve_supers()
         for (sup = cl->supers; sup; sup = sup->next) {
             rsup = resolve_super(cl, sup);
             if (rsup) {
-                el = New(struct lclass_ref);
+                el = Alloc(struct lclass_ref);
                 el->class = rsup->class;
                 if (cl->last_resolved_super) {
                     cl->last_resolved_super->next = el;
@@ -292,7 +292,7 @@ static void compute_impl(struct lclass *cl)
         x->seen = 0;
 
     /* Init the queue with the class to resolve */
-    queue_last = queue = New(struct lclass_ref);
+    queue_last = queue = Alloc(struct lclass_ref);
     queue->class = cl;
 
     /* Carry out a breadth first traversal of the class hierarchy */
@@ -330,7 +330,7 @@ static void compute_impl(struct lclass *cl)
         for (t = x->resolved_supers; t; t = t->next) {
             if (t->class->seen)
                 continue;
-            u = New(struct lclass_ref);
+            u = Alloc(struct lclass_ref);
             u->class = t->class;
             if (queue_last) {
                 queue_last->next = u;
@@ -347,7 +347,7 @@ static void merge(struct lclass *cl, struct lclass *super)
     struct lclass_field *f;
 
     /* Add a reference to super into the implemented_classes list. */
-    cr = New(struct lclass_ref);
+    cr = Alloc(struct lclass_ref);
     cr->class = super;
     if (cl->last_implemented_class) {
         cl->last_implemented_class->next = cr;
@@ -396,7 +396,7 @@ static void merge(struct lclass *cl, struct lclass *super)
                     );
         } else {
             /* Not found, so add it */
-            fr = New(struct lclass_field_ref);
+            fr = Alloc(struct lclass_field_ref);
             fr->field = f;
             fr->b_next = cl->implemented_field_hash[i];
             cl->implemented_field_hash[i] = fr;

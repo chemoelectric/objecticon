@@ -40,21 +40,21 @@ void free_package_db()
 
 struct package_dir *create_package_dir(char *path)
 {
-    struct package_dir *p = New(struct package_dir);
+    struct package_dir *p = Alloc(struct package_dir);
     p->path = path;
     return p;
 }
 
 struct package_file *create_package_file(char *name)
 {
-    struct package_file *p = New(struct package_file);
+    struct package_file *p = Alloc(struct package_file);
     p->name = name;
     return p;
 }
 
 struct package *create_package(char *name)
 {
-    struct package *p = New(struct package);
+    struct package *p = Alloc(struct package);
     p->name = name;
     return p;
 }

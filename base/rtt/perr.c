@@ -136,7 +136,7 @@ FILE *f;
    {
    struct finfo_lst *id;
 
-   id = NewStruct ( finfo_lst );
+   id = Alloc(struct finfo_lst);
    id->name = fname;
    id->file = f;
    id->next = file_lst;

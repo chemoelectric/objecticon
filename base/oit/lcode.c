@@ -79,7 +79,7 @@ static struct unref *get_unref(char *s)
     while (p && p->name != s)
         p = p->b_next;
     if (!p) {
-        p = New(struct unref);
+        p = Alloc(struct unref);
         p->b_next = unref_hash[i];
         unref_hash[i] = p;
         p->name = s;
@@ -97,7 +97,7 @@ static struct strconst *inst_strconst(char *s, int len)
     while (p && p->s != s)
         p = p->b_next;
     if (!p) {
-        p = New(struct strconst);
+        p = Alloc(struct strconst);
         p->b_next = strconst_hash[i];
         strconst_hash[i] = p;
         p->s = s;
@@ -136,10 +136,10 @@ void generate_code()
     /*
      * Initialize some dynamically-sized tables.
      */
-    lnfree = lntable = tcalloc(nsize, sizeof(struct ipc_line));
-    fnmfree = fnmtbl = tcalloc(fnmsize, sizeof(struct ipc_fname));
-    labels  = tcalloc(maxlabels, sizeof(word));
-    codep = codeb = tcalloc(maxcode, 1);
+    lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
+    fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
+    labels  = safe_calloc(maxlabels, sizeof(word));
+    codep = codeb = safe_calloc(maxcode, 1);
 
     /*
      * Loop through input files and generate code for each.
@@ -240,7 +240,7 @@ word pc = 0;		/* simulated program counter */
 #define outchar(n)	charout((unsigned char)(n))
 #define outshort(n)	shortout((short)(n))
 #define CodeCheck(n) if ((long)codep + (n) > (long)((long)codeb + maxcode)) \
-codeb = (char *) trealloc(codeb, &codep, &maxcode, 1,                   \
+codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
                           (n), "code buffer");
 
 /*
@@ -622,7 +622,7 @@ void synch_file()
         return;
 
     if (fnmfree >= &fnmtbl[fnmsize])
-        fnmtbl = (struct ipc_fname *) trealloc(fnmtbl, &fnmfree,
+        fnmtbl = (struct ipc_fname *) expand_table(fnmtbl, &fnmfree,
                                                &fnmsize, sizeof(struct ipc_fname), 1, "file name table");
     last_fnmtbl_filen = curr_file;
     fnmfree->ipc = pc;
@@ -634,7 +634,7 @@ void synch_file()
 void synch_line()
 {
     if (lnfree >= &lntable[nsize])
-        lntable  = (struct ipc_line *)trealloc(lntable, &lnfree, &nsize,
+        lntable  = (struct ipc_line *)expand_table(lntable, &lnfree, &nsize,
                                                sizeof(struct ipc_line), 1, "line number table");
     lnfree->ipc = pc;
     lnfree->line = curr_line;
@@ -680,7 +680,7 @@ static void lemitl(op, lab, name)
         fprintf(dbgfile, "%ld:\t%d\tL%d\t\t\t# %s\n", (long)pc, op, lab, name);
 
     if (lab >= maxlabels)
-        labels  = (word *) trealloc(labels, NULL, &maxlabels, sizeof(word),
+        labels  = (word *) expand_table(labels, NULL, &maxlabels, sizeof(word),
                                     lab - maxlabels + 1, "labels");
     outop(op);
     if (labels[lab] <= 0) {		/* forward reference */
@@ -948,7 +948,7 @@ static struct field_sort_item *sorted_fields(struct lclass *cl)
 {
     struct lclass_field_ref *fr;
     int n = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
-    struct field_sort_item *a = calloc(n, sizeof(struct field_sort_item));
+    struct field_sort_item *a = safe_calloc(n, sizeof(struct field_sort_item));
     int i = 0;
     for (fr = cl->implemented_instance_fields; fr; fr = fr->next, ++i) {
         a[i].n = i;
@@ -1716,7 +1716,7 @@ static void backpatch(lab)
     int j;
 
     if (lab >= maxlabels)
-        labels  = (word *) trealloc(labels, NULL, &maxlabels, sizeof(word),
+        labels  = (word *) expand_table(labels, NULL, &maxlabels, sizeof(word),
                                     lab - maxlabels + 1, "labels");
 
     p = labels[lab];

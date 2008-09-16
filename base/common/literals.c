@@ -95,8 +95,7 @@ int len;
    register unsigned short *bv;
    register int i;
 
-   bv =
-    (unsigned short *)alloc((unsigned int)((BVectSize)*sizeof(unsigned short)));
+   bv = safe_alloc((unsigned int)((BVectSize)*sizeof(unsigned short)));
    for (i = 0; i < BVectSize; ++i)
        bv[i] = 0;
    while (len-- > 0) {

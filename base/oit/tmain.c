@@ -103,7 +103,7 @@ struct file_param *trans_files = 0, *last_trans_file = 0,
 
 static void add_trans_file(char *s)
 {
-    struct file_param *p = New(struct file_param);
+    struct file_param *p = Alloc(struct file_param);
     p->name = intern(s);
     if (last_trans_file) {
         last_trans_file->next = p;
@@ -114,7 +114,7 @@ static void add_trans_file(char *s)
 
 static void add_link_file(char *s)
 {
-    struct file_param *p = New(struct file_param);
+    struct file_param *p = Alloc(struct file_param);
     p->name = intern(s);
     if (last_link_file) {
         last_link_file->next = p;
@@ -125,7 +125,7 @@ static void add_link_file(char *s)
 
 static void add_remove_file(char *s)
 {
-    struct file_param *p = New(struct file_param);
+    struct file_param *p = Alloc(struct file_param);
     p->name = intern(s);
     if (last_remove_file) {
         last_remove_file->next = p;
@@ -396,7 +396,7 @@ static void execute(char *ofile, char *efile, char **args)
 
    for (n = 0; args[n] != NULL; n++)	/* count arguments */
       ;
-   p = argv = (char **)alloc((unsigned int)((n + 5) * sizeof(char *)));
+   p = argv = safe_alloc((n + 5) * sizeof(char *));
 
 #if !UNIX	/* exec the file, not iconx; stderr already redirected  */
    *p++ = iconxloc;			/* set iconx pathname */
@@ -494,7 +494,7 @@ static void file_comp(char *ofile)
     int n, c;
     char buf[200], *tmp = intern(makename(0, ofile, ".tmp"));
   
-    hdr = malloc(sizeof(struct header));
+    hdr = safe_alloc(sizeof(struct header));
     
     /* use fopen() to open the target file then read the header and add "z" to the hdr->config. */
     
@@ -657,7 +657,6 @@ static int ldbg(int argc, char **argv)
     }
 
     lpath = getenv(LPATH);
-    tmalloc();			/* allocate memory for translation */
 
     if (!ppinit(argv[1],lpath,0))
         quitf("cannot open %s", argv[1]);

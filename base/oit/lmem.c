@@ -85,7 +85,7 @@ static void ensure_lfile(char *ifile)
     if (verbose > 2)
         report("Linking file %s", ifile);
 
-    x = New(struct lfile);
+    x = Alloc(struct lfile);
     x->b_next = lfile_hash[i];
     lfile_hash[i] = x;
     x->name = ifile;
@@ -150,7 +150,7 @@ void alsoimport(char *package, struct lfile *lf, struct loc *pos)
     /* No, so note it as done, and use the package db to scan all the
      * files in the package, and add them to the lfiles list.
      */
-    x = New(struct lpackage);
+    x = Alloc(struct lpackage);
     x->b_next = lpackage_hash[i];
     lpackage_hash[i] = x;
     x->name = package;
@@ -178,7 +178,7 @@ void alsoimport(char *package, struct lfile *lf, struct loc *pos)
  */
 void addinvk(char *name, struct lfile *lf, struct loc *pos)
 {
-    struct linvocable *p = New(struct linvocable);
+    struct linvocable *p = Alloc(struct linvocable);
     p->iv_name = name;
     p->defined = lf;
     p->pos = *pos;
@@ -240,7 +240,7 @@ void add_super(struct lclass *x, char *name, struct loc *pos)
         cs = cs->b_next;
     if (cs) 
         quitf("duplicate superclass: %s", name);
-    cs = New(struct lclass_super);
+    cs = Alloc(struct lclass_super);
     cs->b_next = x->super_hash[i];
     x->super_hash[i] = cs;
     cs->name = name;
@@ -260,7 +260,7 @@ void add_field(struct lclass *x, char *name, int flag, struct loc *pos)
         cf = cf->b_next;
     if (cf) 
         quitf("duplicate class field: %s", name);
-    cf = New(struct lclass_field);
+    cf = Alloc(struct lclass_field);
     cf->b_next = x->field_hash[i];
     x->field_hash[i] = cf;
     cf->name = name;
@@ -276,7 +276,7 @@ void add_field(struct lclass *x, char *name, int flag, struct loc *pos)
 
 void add_method(struct lfile *lf, struct lclass *x, char *name, int flag, struct loc *pos)
 {
-    struct lfunction *f = New(struct lfunction);
+    struct lfunction *f = Alloc(struct lfunction);
     add_field(x, name, flag, pos);
     x->last_field->func = f;
     f->defined = lf;
@@ -286,7 +286,7 @@ void add_method(struct lfile *lf, struct lclass *x, char *name, int flag, struct
 void add_fimport(struct lfile *lf, char *package, int qualified, struct loc *pos)
 {
     int i = hasher(package, lf->import_hash);
-    struct fimport *fimp = New(struct fimport);
+    struct fimport *fimp = Alloc(struct fimport);
     fimp->b_next = lf->import_hash[i];
     lf->import_hash[i] = fimp;
     fimp->name = package;
@@ -314,7 +314,7 @@ struct fimport *lookup_fimport(struct lfile *lf, char *package)
 void add_fimport_symbol(struct lfile *lf, char *symbol, struct loc *pos)
 {
     int i = hasher(symbol, lf->last_import->symbol_hash);
-    struct fimport_symbol *x = New(struct fimport_symbol);
+    struct fimport_symbol *x = Alloc(struct fimport_symbol);
     x->b_next = lf->last_import->symbol_hash[i];
     lf->last_import->symbol_hash[i] = x;
     x->name = symbol;
@@ -341,7 +341,7 @@ struct fimport_symbol *lookup_fimport_symbol(struct fimport *p, char *symbol)
 
 void add_record_field(struct lrecord *lr, char *name, struct loc *pos)
 {
-    struct lfield *x = New(struct lfield);
+    struct lfield *x = Alloc(struct lfield);
     ++lr->nfields;
     x->name = name;
     x->pos = *pos;

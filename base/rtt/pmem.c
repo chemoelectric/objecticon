@@ -21,7 +21,7 @@ struct tok_lst *body;
    {
    struct macro *mp;
 
-   mp = NewStruct(macro);
+   mp = Alloc(struct macro);
    mp->mname = mname;
    mp->category = category;
    mp->multi_line = multi_line;
@@ -44,7 +44,7 @@ int line;
    {
    struct token *t;
 
-   t = NewStruct(token);
+   t = Alloc(struct token);
    t->tok_id = id;
    t->image = image;
    t->fname = fname;
@@ -64,7 +64,7 @@ struct token *t;
    if (t == NULL)
       return NULL;
 
-   t1 = NewStruct(token);
+   t1 = Alloc(struct token);
    *t1 = *t;
    return t1;
    }
@@ -77,7 +77,7 @@ struct token *tok;
    {
    struct tok_lst *tlst;
 
-   tlst = NewStruct(tok_lst);
+   tlst = Alloc(struct tok_lst);
    tlst->t = tok;
    tlst->next = NULL;
    return tlst;
@@ -91,7 +91,7 @@ char *id;
    {
    struct id_lst *ilst;
 
-   ilst = NewStruct(id_lst);
+   ilst = Alloc(struct id_lst);
    ilst->id = id;
    ilst->next = NULL;
    return ilst;
@@ -108,9 +108,9 @@ int bufsize;
    {
    struct char_src *cs;
 
-   cs = NewStruct(char_src);
-   cs->char_buf = (int *)alloc((unsigned int)(sizeof(int) * bufsize));
-   cs->line_buf = (int *)alloc((unsigned int)(sizeof(int) * bufsize));
+   cs = Alloc(struct char_src);
+   cs->char_buf = safe_alloc((unsigned int)(sizeof(int) * bufsize));
+   cs->line_buf = safe_alloc((unsigned int)(sizeof(int) * bufsize));
    cs->bufsize = bufsize;
    cs->fname = fname;
    cs->f = f;
@@ -132,7 +132,7 @@ struct tok_lst **exp_args;
    {
    struct mac_expand *me;
 
-   me = NewStruct(mac_expand);
+   me = Alloc(struct mac_expand);
    me->m = m;
    me->args = args;
    me->exp_args = exp_args;
@@ -152,7 +152,7 @@ struct paste_lsts *plst;
    {
    struct paste_lsts *plsts;
 
-   plsts = NewStruct(paste_lsts);
+   plsts = Alloc(struct paste_lsts);
    plsts->trigger = trigger;
    plsts->tlst = tlst;
    plsts->next = plst;
@@ -170,7 +170,7 @@ union src_ref *ref;
    {
    struct src *sp;
 
-   sp = NewStruct(src);
+   sp = Alloc(struct src);
    sp->flag = flag;
    sp->cond = NULL;
    sp->u = *ref;

@@ -274,7 +274,7 @@ Deliberate Syntax Error
    /*
     * Set up the array of standard locations to search for header files.
     */
-   incl_search = (char **)alloc((unsigned int)(sizeof(char *)*(n_paths + 1)));
+   incl_search = safe_alloc((unsigned int)(sizeof(char *)*(n_paths + 1)));
    j = 0;
   
 /*
@@ -305,7 +305,7 @@ Deliberate Syntax Error
    for (i = 0; opt_lst[i] != '\0'; ++i)
       if (opt_lst[i] == 'I') {
          s = opt_args[i];
-         s1 = (char *) alloc((unsigned int)(strlen(s)+1));
+         s1 = safe_alloc((unsigned int)(strlen(s)+1));
          strcpy(s1, s);
          
 /*

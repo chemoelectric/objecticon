@@ -2,7 +2,6 @@
  * mproto.h -- prototypes for functions common to several modules.
  */
 
-pointer	alloc		(unsigned int n);
 unsigned short *bitvect	(char *image, int len);
 void	clear_sbuf	(struct str_buf *sbuf);
 int	cmp_pre		(char *pre1, char *pre2);
@@ -29,7 +28,6 @@ void	ppecho		(void);
 int	ppinit		(char *fname, char *inclpath, int m4flag);
 int	prt_i_str	(FILE *f, char *s, int len);
 int	redirerr	(char *p);
-char	*salloc		(char *s);
 int	smatch		(char *s,char *t);
 char	*spec_str	(char *s);
 char	*str_install	(struct str_buf *sbuf);
@@ -50,10 +48,14 @@ void    clear_local_sbufs();
    void	lqsort		(char *base, int nel, int width, int (*cmp)());
 #endif					/* IntBits == 16 */
 
-#define NewStruct(type)\
-   (struct type *)alloc((unsigned int) sizeof (struct type))
+#define Alloc(type) safe_alloc(sizeof(type))
 
 char *findexe(char *name);
 char *relfile	(char *prog, char *mod);
 void normalize(char *path);
 char *canonicalize(char *path);
+void *safe_calloc(size_t m, size_t n);
+void *safe_alloc(size_t size);
+void *safe_realloc(void *ptr, size_t size);
+
+

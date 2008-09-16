@@ -101,3 +101,4 @@ struct implement *db_impl  (int oper_typ);
 int	db_open		(char *s, char **lrgintflg);
 char	*db_string	(void);
 int	db_tbl		(char *section, struct implement **tbl);
+char    *salloc(char *s);

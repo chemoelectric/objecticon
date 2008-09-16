@@ -49,7 +49,7 @@ void init_sym()
       first_time = 0;
       for (i = 0; i < HashSize; ++i)
          sym_tbl[i] = NULL;
-      dcl_stk = NewStruct(lvl_entry);
+      dcl_stk = Alloc(struct lvl_entry);
       dcl_stk->nest_lvl = 1;
       dcl_stk->next = NULL;
       block = spec_str(block);
@@ -130,7 +130,7 @@ int nest_lvl;
     * No entry exists for the symbol, create one, fill in its fields, and add
     *  it to the table.
     */
-   sym = NewStruct(sym_entry);
+   sym = Alloc(struct sym_entry);
    sym->tok_id = tok_id;
    sym->image = image;
    sym->id_type =  id_type;
@@ -174,7 +174,7 @@ int lvl_incr;
    {
    struct lvl_entry *entry;
 
-   entry = NewStruct(lvl_entry);
+   entry = Alloc(struct lvl_entry);
    entry->nest_lvl = dcl_stk->nest_lvl + lvl_incr;
    entry->kind_dcl = OtherDcl;
    entry->parms_done = 0;
@@ -284,7 +284,7 @@ int lvl;
     * Allocate a new tended slot, compute its index in the array, and
     *  set initialization and other information.
     */
-   tnd = NewStruct(init_tend);
+   tnd = Alloc(struct init_tend);
 
    if (tend_lst == NULL)
       tnd->t_indx = 0;

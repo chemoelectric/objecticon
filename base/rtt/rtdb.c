@@ -90,7 +90,7 @@ char **lrgintflg;
     */
    s = db_string();
    if (strcmp(s, DVersion) != 0) {
-      msg_buf = (char *)alloc((unsigned int) 35 + (int)(strlen(s) +
+      msg_buf = safe_alloc((unsigned int) 35 + (int)(strlen(s) +
          strlen(progname) + strlen(DVersion)));
       sprintf(msg_buf, "found version %s, %s requires version %s",
            s, progname, DVersion);
@@ -105,7 +105,7 @@ char **lrgintflg;
     *  be different if types have been added to the program since the
     *  data base was created.
     */
-   type_map = (int *)alloc((unsigned int)(num_typs * sizeof(int)));
+   type_map = safe_alloc((unsigned int)(num_typs * sizeof(int)));
    db_chstr("", "types");   /* verify section header */
    c = getc(db);
    SkipWhSp(c)
@@ -129,7 +129,7 @@ char **lrgintflg;
       }
    db_chstr("", "endsect");
 
-   compnt_map = (int *)alloc((unsigned int)(num_cmpnts * sizeof(int)));
+   compnt_map = safe_alloc((unsigned int)(num_cmpnts * sizeof(int)));
    db_chstr("", "components");   /* verify section header */
    c = getc(db);
    SkipWhSp(c)
@@ -213,7 +213,7 @@ int oper_typ;
    /*
     * Create an internal structure to hold the data base entry.
     */
-   ip = NewStruct(implement);
+   ip = Alloc(struct implement);
    ip->blink = NULL;
    ip->iconc_flgs = 0;         /* reserved for internal use by compiler */
    ip->oper_typ = oper_typ;
@@ -253,7 +253,7 @@ int oper_typ;
    if (n == 0)
       ip->arg_flgs = NULL;
    else
-      ip->arg_flgs = (int *)alloc((unsigned int) (sizeof(int) * n));
+      ip->arg_flgs = safe_alloc((unsigned int) (sizeof(int) * n));
    if (c != '(')
       db_err2(1, "parameter flags missing for", ip->name);
    c = getc(db);
@@ -391,7 +391,7 @@ struct implement *ip;
    if (n == 0)
       ip->tnds = NULL;
    else
-      ip->tnds = (struct tend_var *)alloc((unsigned int)
+      ip->tnds = safe_alloc((unsigned int)
          (sizeof(struct tend_var) * n));
    for (i = 0; i < n; ++i) {
       var_type = db_tndtyp();  /* type of tended declaration */
@@ -425,7 +425,7 @@ struct implement *ip;
    if (n == 0)
       ip->vars = NULL;
    else
-      ip->vars = (struct ord_var *)alloc((unsigned int)
+      ip->vars = safe_alloc((unsigned int)
          (sizeof(struct ord_var) * n));
    for (i = 0; i < n; ++i) {
       s = db_string();             /* variable name */
@@ -883,7 +883,7 @@ int num_cases;
       SkipWhSp(c)
       GetInt(num_types, c)
       il->u[indx++].n = num_types;
-      typ_vect = (int *)alloc((unsigned int)(sizeof(int) * num_types));
+      typ_vect = safe_alloc((unsigned int)(sizeof(int) * num_types));
       il->u[indx++].vect = typ_vect;
       for (j = 0; j < num_types; ++j)
          typ_vect[j] = db_icntyp();           /* type code */
@@ -1395,7 +1395,7 @@ int il_c_type;
    struct il_c *ilc;
    int i;
 
-   ilc = NewStruct(il_c);
+   ilc = Alloc(struct il_c);
    ilc->next = NULL;
    ilc->il_c_type = il_c_type;
    for (i = 0; i < 3; ++i)
@@ -1415,7 +1415,7 @@ int size;
    {
    struct il_code *il;
 
-   il = (struct il_code *)alloc((unsigned int)
+   il = safe_alloc((unsigned int)
       (sizeof(struct il_code) + (size-1) * sizeof(union il_fld)));
    il->il_type = il_type;
    return il;

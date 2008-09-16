@@ -78,7 +78,7 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
         x = x->g_blink;
     if (x)
         tfatal_at(n, "global redeclaration: %s previously declared at line %d", name, Line(x->pos));
-    x = New(struct tgentry);
+    x = Alloc(struct tgentry);
     x->g_blink = ghash[i];
     ghash[i] = x;
     x->g_name = name;
@@ -106,7 +106,7 @@ struct tlentry *put_local(char *name, int flag, struct node *n, int unique)
             tfatal_at(n, "local redeclaration: %s previously declared at line %d", name, Line(x->pos));
         return x;
     }
-    x = New(struct tlentry);
+    x = Alloc(struct tlentry);
     x->l_blink = curr_func->lhash[i];
     curr_func->lhash[i] = x;
     x->l_name = name;
@@ -178,7 +178,7 @@ static struct tcentry *alclit(struct tcentry *blink, char *name, int len, int fl
 {
     register struct tcentry *cp;
 
-    cp = New(struct tcentry);
+    cp = Alloc(struct tcentry);
     cp->c_blink = blink;
     cp->c_name = name;
     cp->c_length = len;

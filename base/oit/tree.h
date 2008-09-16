@@ -22,8 +22,7 @@ struct node {
    union field n_field[1];      /* variable-content fields */
    };
 
-#define NewNode(size) (struct node *)alloc((unsigned int)\
-    (sizeof(struct node) + (size-1) * sizeof(union field)))
+#define NewNode(size) safe_alloc(sizeof(struct node) + (size-1) * sizeof(union field))
 
 /*
  * Macros to access fields of parse tree nodes.

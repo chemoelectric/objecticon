@@ -1895,3 +1895,13 @@ void whyf(char *fmt, ...)
     kywd_why = cstr2string(buff);
 }
 
+/*
+ * salloc - allocate and initialize string
+ */
+
+char *salloc(char *s)
+{
+    register char *s1;
+    MemProtect(s1 = malloc(strlen(s) + 1));
+    return strcpy(s1, s);
+}

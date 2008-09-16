@@ -25,14 +25,6 @@ struct tinvocable *tinvocables = 0, *last_tinvocable = 0;
 static void free_class_hashes(struct tclass *c);
 static void free_function_hash(struct tfunction *f);
 
-/*
- * tmalloc - allocate memory for the translator
- */
-
-void tmalloc()
-{
-    init_package_db();
-}
 
 /*
  * meminit - clear tables for use in translating the next file
@@ -163,7 +155,7 @@ void tmfree()
 
 void next_function(int flag)
 {
-    struct tfunction *f = New(struct tfunction);
+    struct tfunction *f = Alloc(struct tfunction);
     f->flag = flag;
     if (curr_func) {
         curr_func->next = f;
@@ -175,7 +167,7 @@ void next_function(int flag)
 
 void next_class(char *name, int flag, struct node *n)
 {
-    struct tclass *c = New(struct tclass);
+    struct tclass *c = Alloc(struct tclass);
     c->flag = flag;
     if (curr_class) {
         curr_class->next = c;
@@ -195,7 +187,7 @@ void next_super(char *name, struct node *n)
         cs = cs->b_next;
     if (cs)
         tfatal_at(n, "duplicate superclass: %s", name);
-    cs = New(struct tclass_super);
+    cs = Alloc(struct tclass_super);
     cs->b_next = curr_class->super_hash[i];
     curr_class->super_hash[i] = cs;
     cs->name = name;
@@ -258,7 +250,7 @@ void next_field(char *name, int flag, struct node *n)
         cv = cv->b_next;
     if (cv)
         tfatal_at(n, "duplicate class field: %s", name);
-    cv = New(struct tclass_field);
+    cv = Alloc(struct tclass_field);
     cv->b_next = curr_class->field_hash[i];
     curr_class->field_hash[i] = cv;
     cv->name = name;
@@ -340,7 +332,7 @@ void next_import(char *s, int qualified, struct node *n)
         curr_import = x;
         return;
     }
-    x = New(struct timport);
+    x = Alloc(struct timport);
     x->b_next = import_hash[i];
     import_hash[i] = x;
     x->name = s;
@@ -363,7 +355,7 @@ void add_import_symbol(char *s, struct node *n)
         x = x->b_next;
     if (x)
         tfatal_at(n, "duplicate imported symbol: %s", s);
-    x = New(struct timport_symbol);
+    x = Alloc(struct timport_symbol);
     x->b_next = curr_import->symbol_hash[i];
     curr_import->symbol_hash[i] = x;
     x->name = s;
@@ -378,7 +370,7 @@ void add_import_symbol(char *s, struct node *n)
 
 void add_link(char *s, struct node *n) 
 {
-    struct link *i = New(struct link);
+    struct link *i = Alloc(struct link);
     i->name = s;
     i->pos = n;
     if (last_link) {
@@ -404,7 +396,7 @@ void add_invocable(char *name, int x, struct node *n)
     else if (!isalpha(name[1]) && (name[1] != '_'))
         return;				/* if operator, ignore */
 
-    p = New(struct tinvocable);
+    p = Alloc(struct tinvocable);
     p->name = name;
     p->pos = n;
     if (last_tinvocable) {
