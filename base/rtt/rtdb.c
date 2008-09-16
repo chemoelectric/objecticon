@@ -1,8 +1,7 @@
 /*
  * Routines to read a data base of run-time information.
  */
-#include "../h/gsupport.h"
-#include "../h/version.h"
+#include "rtt.h"
 #include "icontype.h"
 
 /*
