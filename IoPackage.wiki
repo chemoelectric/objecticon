@@ -1,0 +1,15 @@
+#summary Describes the io package
+
+= Introduction =
+
+This page gives an overview of the `io` package, which provides Object Icon's object-oriented replacement to Icon's builtin `File` type.
+
+= Details =
+
+The central class in the `io` package is `Stream`.  This class models a file-like object which can have some or all of the following operations :-
+ * input
+ * output
+ * seek and tell
+ * truncation
+
+The `io` package also provides some procedures which emulate the old Icon buitlin functions which the package replaces (`write`, `open`, etc).
