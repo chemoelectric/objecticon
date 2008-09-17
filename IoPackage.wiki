@@ -12,4 +12,27 @@ The central class in the `io` package is `Stream`.  This class models a file-lik
  * seek and tell
  * truncation
 
-The `io` package also provides some procedures which emulate the old Icon buitlin functions which the package replaces (`write`, `open`, etc).
+The `io` package also provides some procedures which emulate the old Icon builtin functions which the package replaces (`write`, `open`, etc).
+
+= File I/O =
+
+The class `FileStream` provides conventional filesystem I/O.  To open a new `FileStream`, use the static `open` method :-
+{{{
+   f := FileStream.open("test.txt", ior(FileOpt.WRONLY, 
+                                        FileOpt.TRUNC, 
+                                        FileOpt.CREAT)) | stop(&why)
+   f.write("some text")
+   f.close()
+}}}
+The second parameter is made up by taking some constants from the `FileOpt` class and or-ing them together.  These constants match the constants used in the underlying Posix `open` system call, except that their names lack the "O" prefix.  So in the above example the `open` call is logically equivalent to the C call
+{{{
+   f = open("test.txt", O_WRONLY | O_TRUNC | O_CREAT);
+}}}
+
+As an alternative to using `FileStream` directly, the `open` procedure can be used to open a file, as follows :-
+{{{
+   f := open("test.txt", "w") | stop(&why)
+   f.write("some text")
+   f.close()
+}}}
+`open` emulates the traditional Icon builtin function of the same name.  It also a different type of `Stream` - rather than a `FileStream`, it returns a `BufferStream` wrapping a `FileStream`.  This provides better performance than a raw `FileStream` because it tends to read or write data to the underlying filesystem in larger chunks.
