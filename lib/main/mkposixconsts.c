@@ -38,7 +38,7 @@ void end_class()
 
 void add_entry(char *name, int val)
 {
-    if (n_entries >= asize(buff))
+    if (n_entries >= ElemCount(buff))
         exit(1);
     buff[n_entries].origname = name;
     if (abbr && strncmp(name, abbr, strlen(abbr)) == 0)
