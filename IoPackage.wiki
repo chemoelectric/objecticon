@@ -67,3 +67,20 @@ procedure main()
    write("n=", n)
 end
 }}}
+
+= Socket I/O =
+The `SocketStream` class represents a stream based on an underlying socket.  There are several static methods in that class to create sockets either for a client or a server.  Both local and network sockets are supported.
+
+Here is a simple example to create a client to perform a HTTP HEAD request.
+{{{
+import io
+
+procedure main()
+   local f
+   f := SocketStream.socket()
+   f.connect("inet:www.google.com:80") | stop(&why)
+   f.writes("HEAD / HTTP/1.1\r\nConnection: close\r\n\r\n")
+   while write(f.read())
+   f.close()
+end
+}}}
