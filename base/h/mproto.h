@@ -48,7 +48,6 @@ void    clear_local_sbufs();
    void	lqsort		(char *base, int nel, int width, int (*cmp)());
 #endif					/* IntBits == 16 */
 
-#define Alloc(type) safe_alloc(sizeof(type))
 
 char *findexe(char *name);
 char *relfile	(char *prog, char *mod);

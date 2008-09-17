@@ -39,9 +39,9 @@ void linit()
     load_package_db_from_ipath();
 
     lfiles = lfiles_last = 0;		/* Zero queue of files to link. */
-    clear(lfile_hash);
+    ArrClear(lfile_hash);
 
-    clear(lpackage_hash);
+    ArrClear(lpackage_hash);
 
     lffirst = lflast = 0;
     lgfirst = lglast = 0;
@@ -51,8 +51,8 @@ void linit()
     /*
      * Zero out the hash tables.
      */
-    clear(lghash);
-    clear(lfhash);
+    ArrClear(lghash);
+    ArrClear(lfhash);
 }
 
 
@@ -217,13 +217,13 @@ void lmfree()
     lglast = 0;
     lclasses = lclass_last = 0;
 
-    for (i = 0; i < asize(lpackage_hash); ++i) {
+    for (i = 0; i < ElemCount(lpackage_hash); ++i) {
         for (lp = lpackage_hash[i]; lp; lp = lp1) {
             lp1 = lp->b_next;
             free(lp);
         }
     }
-    clear(lpackage_hash);
+    ArrClear(lpackage_hash);
 
     for (lf = lfiles; lf != NULL; lf = nlf) {
         nlf = lf->next;

@@ -43,5 +43,18 @@ struct str_buf {
  */
 #define BVectSize 16
 
-#define asize(obj)      ((sizeof(obj)/sizeof(obj[0])))
-#define clear(obj)      (memset(obj, 0, sizeof(obj)))
+/*
+ * Number of elements of a C array, and element size.
+ */
+#define ElemCount(a)  (sizeof(a)/sizeof(a[0]))
+#define ElemSize(a)   (sizeof(a[0]))
+
+/*
+ * Clear an object
+ */
+#define ArrClear(obj) (memset(obj, 0, sizeof(obj)))
+
+/*
+ * Allocate an object
+ */
+#define Alloc(type)   safe_alloc(sizeof(type))

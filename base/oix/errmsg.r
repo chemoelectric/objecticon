@@ -159,7 +159,7 @@ static int lookup_err_msg_compare(const void *key, const void *item)
 
 char *lookup_err_msg(int n)
 {
-    struct errtab *p = bsearch(&n, errtab, asize(errtab), 
+    struct errtab *p = bsearch(&n, errtab, ElemCount(errtab), 
                                sizeof(struct errtab), lookup_err_msg_compare);
     if (p)
         return p->errmsg;

@@ -127,9 +127,9 @@ void generate_code()
     nstatics = 0;
     strconst_offset = 0;
     first_strconst = last_strconst = 0;
-    clear(strconst_hash);
+    ArrClear(strconst_hash);
     first_unref = 0;
-    clear(unref_hash);
+    ArrClear(unref_hash);
     curr_file = last_fnmtbl_filen = 0;
     curr_line = 0;
 
@@ -200,7 +200,7 @@ static int resolve_native_method(char *class, char *field)
         AppChar(sb, *field++);
     AppChar(sb, 0);
 
-    p = bsearch(sb.strtimage, native_methods, asize(native_methods), 
+    p = bsearch(sb.strtimage, native_methods, ElemCount(native_methods), 
                 sizeof(char *), native_cmp);
     if (!p)
         return -1;
@@ -1306,7 +1306,7 @@ static void gentables()
     if (Dflag)
         fprintf(dbgfile, "\n%ld:\t\t\t\t\t# Standard field table\n", (long)pc);
     hdr.StandardFields = pc;
-    for (i = 0; i < asize(standard_field_names); ++i) {
+    for (i = 0; i < ElemCount(standard_field_names); ++i) {
         char *s = standard_field_names[i];
         int j = -1;
         if ((fp = flocate(s)))

@@ -32,6 +32,6 @@
 /*
  * Hash functions for symbol tables.
  */
-#define hasher(x,obj)   (((word)x)%asize(obj))
+#define hasher(x,obj)   (((word)x)%ElemCount(obj))
 
 #endif

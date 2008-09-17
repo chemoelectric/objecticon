@@ -504,7 +504,7 @@ void sort_global_table()
     qsort(a, n, sizeof(struct gentry *), global_sort_compare);
 
     lgfirst = lglast = 0;
-    clear(lghash);
+    ArrClear(lghash);
     for (i = 0; i < n; ++i) {
         struct gentry *p = a[i];
         int h = hasher(p->name, lghash);

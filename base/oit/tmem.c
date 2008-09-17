@@ -32,11 +32,11 @@ static void free_function_hash(struct tfunction *f);
 void tminit()
 {
     gfirst = glast = 0;
-    clear(ghash);
+    ArrClear(ghash);
     classes = curr_class = 0;
     package_name = 0;
     imports = last_import = curr_import = 0;
-    clear(import_hash);
+    ArrClear(import_hash);
     links = last_link = 0;
     tinvocables = last_tinvocable = 0;
 }
@@ -71,7 +71,7 @@ void tmfilefree()
         free(im);
     }
     curr_import = imports = last_import = 0;
-    clear(import_hash);
+    ArrClear(import_hash);
 
     for (li = links; li; li = tli) {
         tli = li->next;
@@ -95,7 +95,7 @@ static void free_function_hash(struct tfunction *f)
     /*
      * Clear local table, freeing entries.
      */
-    for (i = 0; i < asize(f->lhash); i++) {
+    for (i = 0; i < ElemCount(f->lhash); i++) {
         for (lptr = f->lhash[i]; lptr != NULL; lptr = lptr1) {
             lptr1 = lptr->l_blink;
             free(lptr);
@@ -108,7 +108,7 @@ static void free_function_hash(struct tfunction *f)
     /*
      * Clear constant table, freeing entries.
      */
-    for (i = 0; i < asize(f->chash); i++) {
+    for (i = 0; i < ElemCount(f->chash); i++) {
         for (cptr = f->chash[i]; cptr != NULL; cptr = cptr1) {
             cptr1 = cptr->c_blink;
             free(cptr);

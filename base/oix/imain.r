@@ -420,7 +420,7 @@ void resolve(pstate)
                 if (cf->field_descriptor->dword == D_Proc) {
                     /* Resolved to native method, do sanity checks, set pointer */
                     int n = IntVal(*cf->field_descriptor);
-                    if (n < 0 || n >= asize(native_methods))
+                    if (n < 0 || n >= ElemCount(native_methods))
                         error("Native method index out of range: %d", n);
                     pp = (struct b_proc *)native_methods[n];
 

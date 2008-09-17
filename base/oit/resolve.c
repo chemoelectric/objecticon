@@ -30,7 +30,7 @@ static int builtin_table_cmp(const void *key, const void *item)
  */
 static int blocate(char *s)
 {
-    char **p = bsearch(s, builtin_table, asize(builtin_table), 
+    char **p = bsearch(s, builtin_table, ElemCount(builtin_table), 
                        sizeof(char *), builtin_table_cmp);
     if (!p)
         return -1;

@@ -415,7 +415,7 @@ struct ucode_op *uin_op()
     opcode = getc(ucodefile);
     if (opcode == EOF)
         return 0;
-    if (opcode >= asize(ucode_op_table))
+    if (opcode >= ElemCount(ucode_op_table))
         quitf("Illegal opcode: %d", opcode);
     op = &ucode_op_table[opcode];
     if (op->opcode == 0)
@@ -488,7 +488,7 @@ int udis(int argc, char **argv)
                 printf("\t%s\n", buff);
             } else if (i % 8 == 7) {
                 printf("\t%s\n        ", buff);
-                clear(buff);
+                ArrClear(buff);
             }
         }
     }

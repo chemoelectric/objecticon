@@ -176,12 +176,6 @@
 
 
 /*
- * Number of elements of a C array, and element size.
- */
-#define ElemCount(a) (sizeof(a)/sizeof(a[0]))
-#define ElemSize(a) (sizeof(a[0]))
-
-/*
  * Some C compilers take '\n' and '\r' to be the same, so the
  *  following definitions are used.
  */

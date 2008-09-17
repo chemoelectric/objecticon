@@ -11,7 +11,7 @@ struct package_dir *package_dir_hash[16], *package_dirs, *package_dir_last;
 
 void init_package_db()
 {
-    clear(package_dir_hash);
+    ArrClear(package_dir_hash);
     package_dirs = package_dir_last = 0;
 }
 
@@ -34,7 +34,7 @@ void free_package_db()
         free(pd);
     }
 
-    clear(package_dir_hash);
+    ArrClear(package_dir_hash);
     package_dirs = package_dir_last = 0;
 }
 

@@ -272,7 +272,7 @@ static int tcount = 0;
 struct str_buf *get_sbuf()
 {
     struct str_buf *sbuf;
-    if (tcount >= asize(tbuf)) {
+    if (tcount >= ElemCount(tbuf)) {
         fprintf(stderr, "get_sbuf: out of buffers to allocate\n");
         exit(EXIT_FAILURE);
     }
@@ -303,7 +303,7 @@ void clear_local_sbufs()
 {
     int i;
     clear_sbuf(&util);
-    for (i = 0; i < asize(tbuf); ++i)
+    for (i = 0; i < ElemCount(tbuf); ++i)
         clear_sbuf(&tbuf[i]);
     tcount = 0;
 }
