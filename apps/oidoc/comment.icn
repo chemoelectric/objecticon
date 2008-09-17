@@ -39,8 +39,6 @@ class Comment()
                      #
                      # Continuation - add to end of last field.
                      #
-                     # Tab over the first space, if present.
-                     =" "
                      put(fields[\key][-1], tab(0))
                   }
                } else

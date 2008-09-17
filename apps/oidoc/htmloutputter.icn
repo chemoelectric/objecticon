@@ -388,10 +388,10 @@ class HtmlOutputter(Outputter)
    end
 
    private html_unbracket(f, s, c)
-      local r, t
+      local r, t, w
       r := ""
       s ? {
-         tab(many(whitespace_cset))
+         w := tab(many(whitespace_cset))
          while r ||:= xml_escape(tab(upto('{')), '<>&') do {
             move(1)
             t := tab(upto('}') | 0)
@@ -402,6 +402,9 @@ class HtmlOutputter(Outputter)
       }
       if *r = 0 then
          r := "<p>"
+      else if (*\w > 1) then
+         r := "<br>" || repl("&nbsp;", *w - 1) || r
+
       write(f, r)
    end
 
