@@ -18,11 +18,18 @@ $endif
 #
 class Stream()
    public static const
+      # Constant indicating read capability
       READ,
+      # Constant indicating write capability
       WRITE,
+      # Constant indicating seek (and tell) capability
       SEEK,
+      # Constant indicating trucate capability
       TRUNCATE,
+      # Constant indicating read and write capability
       READ_WRITE,
+      # Constant representing all capabilities (read, write, seek and
+      # truncate).
       ALL
 
    private static init()
@@ -534,9 +541,19 @@ class DescStream(Stream, NoCopy)
 end
 
 #
-# This procedure emulates the old Icon builtin function of the
-# same name.  It always returns a {BufferStream} wrapping a
-# {FileStream}.
+# This procedure emulates the old Icon builtin function of the same
+# name.  It always returns a {BufferStream} wrapping a {FileStream},
+# or fails and sets {&why}.
+# 
+# @param name The file name
+# @param mode The mode; possible values and their
+# @ equivalent {FileOpt} parameters are :-
+# @    "r" - RDONLY
+# @    "w" - WRONLY, TRUNC, CREAT
+# @    "b"|"rw"|"r+" - RDWR
+# @    "crw"|"w+" - RDWR, TRUNC, CREAT
+# @    "a" - WRONLY, APPEND, CREAT
+# @    "a+" - RDWR, APPEND, CREAT
 #
 procedure open(name, mode)
    local i
