@@ -592,10 +592,10 @@ procedure write(a[])
    if is(a[1], Stream) then
       f := pop(a)
    else
-      f := FileStream.b_stdout
+      f := FileStream.stdout
    every e := \!a | EOL do {
       if is(e, Stream) then {
-         f.out(EOL)
+         f.out(EOL) | fail
          f := e
       } else {
          e := string(e) | runerr(103, e)
@@ -617,11 +617,9 @@ procedure writes(a[])
    if is(a[1], Stream) then
       f := pop(a)
    else
-      f := FileStream.b_stdout
+      f := FileStream.stdout
    every e := \!a do {
       if is(e, Stream) then {
-         if f === FileStream.b_stdout then
-            f.flush() | fail
          f := e
       } else {
          e := string(e) | runerr(103, e)
@@ -631,8 +629,6 @@ procedure writes(a[])
          }
       }
    }
-   if f === FileStream.b_stdout then
-      f.flush() | fail
    return r
 end
 
@@ -648,7 +644,7 @@ end
 # This procedure emulates the old Icon builtin {read} function.
 #
 procedure read(f)
-   /f := FileStream.b_stdin
+   /f := FileStream.stdin
    return f.read()
 end
 
@@ -656,7 +652,7 @@ end
 # This procedure emulates the old Icon builtin {reads} function.
 #
 procedure reads(f, n)
-   /f := FileStream.b_stdin
+   /f := FileStream.stdin
    /n := 1
    return f.reads(n)
 end
@@ -679,13 +675,7 @@ class FileStream(DescStream)
       # A {FileStream} representing standard output
       stdout,
       # A {FileStream} representing standard error
-      stderr,
-      # A {BufferStream} wrapping stdin
-      b_stdin, 
-      # A {BufferStream} wrapping stdout
-      b_stdout,
-      # A {BufferStream} wrapping stderr
-      b_stderr
+      stderr
 
    #
    # Open a new {FileStream} using the underlying system open
@@ -712,9 +702,6 @@ class FileStream(DescStream)
       stdin := FileStream(0, READ)
       stdout := FileStream(1, WRITE)
       stderr := FileStream(2, WRITE)
-      b_stdin := BufferStream("other=",stdin, "flush_on_nl=t")
-      b_stdout := BufferStream("other=",stdout, "flush_on_nl=t")
-      b_stderr := BufferStream("other=",stderr, "flush_on_nl=t")
    end
 
    public defer in(n)

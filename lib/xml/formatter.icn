@@ -29,7 +29,7 @@ class Formatter()
    public format(out, n, level)
       local s
       /level := 0
-      /out := FileStream.b_stdout
+      /out := FileStream.stdout
 
       if s := string(n) then
          return format_content(out, s, level)

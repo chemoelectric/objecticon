@@ -75,7 +75,7 @@ procedure main(args)
    errors := 0
    tagstack := []
 
-   stdout := FileStream.b_stdout
+   stdout := FileStream.stdout
 
    cmdtable := table()
    cmdtable["divert"] := divert
