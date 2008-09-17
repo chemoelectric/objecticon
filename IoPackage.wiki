@@ -35,4 +35,35 @@ As an alternative to using `FileStream` directly, the `open` procedure can be us
    f.write("some text")
    f.close()
 }}}
-`open` emulates the traditional Icon builtin function of the same name.  It also a different type of `Stream` - rather than a `FileStream`, it returns a `BufferStream` wrapping a `FileStream`.  This provides better performance than a raw `FileStream` because it tends to read or write data to the underlying filesystem in larger chunks.
+`open` emulates the traditional Icon builtin function of the same name.  It also returns a different type of `Stream` - rather than a `FileStream`, it returns a `BufferStream` wrapping a `FileStream`.  This provides better performance than a raw `FileStream` because it tends to read or write data to the underlying filesystem in larger chunks.
+
+== Standard input and output ==
+Standard input and output, and error output, are available via the following static constants.
+ * `FileStream.stdin` - standard input
+ * `FileStream.stdout` - standard output
+ * `FileStream.stderr` - standard error output
+These are all `FileStream` instances, and are hence unbuffered.  If you intend to read or write a large amount of data to one of these streams, performance will be improved by using a `BufferStream` wrapper.  For example, consider the following program to count lines :-
+{{{
+import io
+
+procedure main()
+   local n
+   n := 0
+   while read() do
+      n +:= 1
+   write("n=", n)
+end
+}}}
+On my system this takes about 2.4 seconds to read a 47000-line file.  The following simple change reduces the run time to only 0.45 seconds :-
+{{{
+import io
+
+procedure main()
+   local n, f
+   n := 0
+   f := BufferStream("other=",FileStream.stdin)
+   while f.read() do
+      n +:= 1
+   write("n=", n)
+end
+}}}
