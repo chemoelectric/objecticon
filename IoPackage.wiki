@@ -84,3 +84,18 @@ procedure main()
    f.close()
 end
 }}}
+
+= Poll and Select =
+One problem with the bit of socket code shown above is that it is vulnerable to network problems.  Either the `connect`, `writes` or `read` calls could potentially hang and never return.  The `io` package provides the necessary interface to the underlying system calls which can be used to deal with this problem.
+
+== Non-blocking mode ==
+This mode is used to ensure an i/o request won't block.  To enable it, use the `flag` method as follows :-
+{{{
+   f.flag(FileOpt.NONBLOCK)
+}}}
+`flag` accepts a second parameter, which are flags to turn off, so you could turn non-blocking mode off again as follows :-
+{{{
+   f.flag(, FileOpt.NONBLOCK)
+}}}
+When set, calls to a stream's `in` and `out` methods will fail, setting `&why` to a message like "Resource temporarily unavailable (errno=11)".  The `errno` constant can be extracted from `&why` with the `errno()` procedure, found in the `util` package.  In this case, `errno()` would return 11, which is equal to the constant `Errno.EAGAIN`
+
