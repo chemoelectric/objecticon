@@ -1105,7 +1105,7 @@ function{0,1} io_DescStream_poll(a[n])
        int timeout, i, rc;
 
        nfds = n / 2;
-       if (n % 2 == 0)
+       if (n % 2 == 0 || is:null(a[n - 1]))
            timeout = -1;
        else if (!cnv:C_integer(a[n - 1], timeout))
            runerr(101, a[n - 1]);
