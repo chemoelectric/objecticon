@@ -119,7 +119,7 @@ procedure main ()
    g := '123456789'
    h := &digits
    A := sort([h,g,a,c,b,d,f,e,&lcase,[],&cset,&ascii])
-   every write(image(!A))
+   every write(imagex(!A))
 
 # test varargs
 
@@ -136,37 +136,37 @@ procedure main ()
 
 # test Version 7 table features
 
-   write("t := table(\"default\") --> ", image(t := table("default")) |
+   write("t := table(\"default\") --> ", imagex(t := table("default")) |
       "failure")
    show(t)
-   write("insert(t, 3, 4) --> ", image(insert(t, 3, 4)) | "failure")
-   write("insert(t, \"xyz\", \"abc\") --> ", image(insert(t, "xyz", "abc")) |
+   write("insert(t, 3, 4) --> ", imagex(insert(t, 3, 4)) | "failure")
+   write("insert(t, \"xyz\", \"abc\") --> ", imagex(insert(t, "xyz", "abc")) |
       "failure")
-   write("insert(t, &digits) --> ", image(insert(t, &digits)) | "failure")
+   write("insert(t, &digits) --> ", imagex(insert(t, &digits)) | "failure")
    show(t)
    write("t[\"xyz\"] := \"new value\" --> ", image(t["xyz"] := "new value") |
       "failure")
    show(t)
-   write("insert(t, \"xyz\", \"def\") --> ", image(insert(t, "xyz", "def")) |
+   write("insert(t, \"xyz\", \"def\") --> ", imagex(insert(t, "xyz", "def")) |
       "failure")
    show(t)
-   write("delete(t, \"xyz\") -- > ", image(delete(t, "xyz")) | "failure")
+   write("delete(t, \"xyz\") -- > ", imagex(delete(t, "xyz")) | "failure")
    show(t)
-   write("delete(t, \"xyz\") -- > ", image(delete(t, "xyz")) | "failure")
+   write("delete(t, \"xyz\") -- > ", imagex(delete(t, "xyz")) | "failure")
    show(t)
 
 #  test multiple subscripts
    
-   write("t := table(\"default\") --> ", image(t := table("default")) |
+   write("t := table(\"default\") --> ", imagex(t := table("default")) |
       "failure")
    write("t[\"one\"] := 1 --> ", image(t["one"] := 1) | "failure")
    write("t[] --> ", image(t[]) | "failure")
-   write("x := r1([t, [1, [2, 3]]]) --> ", image(x := r1([t, [1, [2, 3]]])) |
+   write("x := r1([t, [1, [2, 3]]]) --> ", imagex(x := r1([t, [1, [2, 3]]])) |
       "failure")
    write("x[1, 1, \"one\"] --> ", image(x[1, 1, "one"]) | "failure")
    write("x[1, 2, 2, 2] --> ", image(x[1, 2, 2, 2]) | "failure")
    write("x[1, 2] := [\"abcd\", \"defg\"] --> ",
-      image(x[1, 2] := ["abcd", "defg"]) | "failure")
+      imagex(x[1, 2] := ["abcd", "defg"]) | "failure")
    write("x[1, 2, 2, 2] --> ", image(x[1, 2, 2, 2]) | "failure")
 
 #  test run-time error mechanism
@@ -190,14 +190,14 @@ procedure xd (v, n)
 
 procedure ferr (func, val, err)
    local msg
-   write(msg := "oops -- " || image(func) || "(" || image (val) || ") ")
+   write(msg := "oops -- " || imagex(func) || "(" || imagex(val) || ") ")
    return
 end
 
 procedure p(a, b, c[])
    write("   image(a):", image(a))
    write("   image(b):", image(b))
-   write("   image(c):", image(c))
+   write("   image(c):", imagex(c))
    write("   every write(\"\\t\", !c):")
    every write("\t", !c)
 end

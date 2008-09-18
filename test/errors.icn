@@ -200,6 +200,6 @@ procedure monitor(line)
    write("   &errornumber = ",&errornumber)
    write("   &errortext = ",
       image(&errortext))
-   write("   &errorvalue = ", image(&errorvalue))
+   write("   &errorvalue = ", imagex(&errorvalue))
    return line
 end
