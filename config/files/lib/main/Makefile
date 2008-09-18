@@ -4,13 +4,13 @@ LIBSRC=$(wildcard *.icn)
 
 LIBU=$(LIBSRC:.icn=.u)
 
-all: mkposixconsts $(LIBU) posixconsts.u
+all: mkconsts $(LIBU) ioconsts.u posixconsts.u
 
 clean:
-	$(RM) mkposixconsts posixconsts.icn *.u packages.txt
+	$(RM) mkconsts posixconsts.icn ioconsts.icn *.u packages.txt
 
-posixconsts.icn: 	mkposixconsts
-	./mkposixconsts >posixconsts.icn
+ioconsts.icn posixconsts.icn: 	mkconsts
+	./mkconsts
 
 $(LIBU): %.u: %.icn
 	oit -snc $(LIBSRC)

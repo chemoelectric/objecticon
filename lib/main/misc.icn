@@ -106,21 +106,6 @@ procedure find_and_skip(s)
 end
 
 #
-# Extract the value of errno from {&why}.
-#
-# If {&why} was set by a native method which failed due to an error
-# which has a corresponding errno value, then it will set {&why} to a
-# string in a format which includes the errno value.  This procedure
-# parses the string and extracts the value.
-#
-procedure errno()
-   \&why ? {
-      find_and_skip("(errno=") | fail
-      return integer(tab(many(&digits)))
-   }
-end
-
-#
 # Convenient procedure to set {&why} to the given string and fail.
 #
 procedure error(s)
