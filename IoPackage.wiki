@@ -85,7 +85,7 @@ procedure main()
 end
 }}}
 
-= Poll and Select =
+= More robust socket i/o =
 One problem with the bit of socket code shown above is that it is vulnerable to network problems.  Either the `connect`, `writes` or `read` calls could potentially hang and never return.  The `io` package provides the necessary interface to the underlying system calls which can be used to deal with this problem.
 
 == Non-blocking mode ==
@@ -97,5 +97,7 @@ This mode is used to ensure an i/o request won't block.  To enable it, use the `
 {{{
    f.flag(, FileOpt.NONBLOCK)
 }}}
-When set, calls to a stream's `in` and `out` methods will fail, setting `&why` to a message like "Resource temporarily unavailable (errno=11)".  The `errno` constant can be extracted from `&why` with the `errno()` procedure, found in the `util` package.  In this case, `errno()` would return 11, which is equal to the constant `Errno.EAGAIN`
+When set, calls to a stream's `in` and `out` methods will fail, setting `&why` to a message like "Resource temporarily unavailable (errno=11)".  The `errno` constant can be extracted from `&why` with the `errno()` procedure; in this case it would return 11, which is equal to the constant `Errno.EAGAIN`.  Both `errno` and `Errno` can be found in the `posix` package (they aren't in the `io` package because the errno feature applies more generally than just to i/o).
 
+== The poll() method ==
+`poll` is a static method in the `DescStream` class (the common parent of `FileStream` and `SocketStream`).  It provides an interface to the posix function of the same name, and is used to wait, with an optional timeout, for one or more files to become ready for i/o.
