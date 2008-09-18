@@ -36,9 +36,11 @@ class NetClient(Connectable, SetFields)
       path,
       server,
       port,
-      connection,
-      sbuff,
       timeout
+
+   private
+      connection,
+      sbuff
 
    # 
    # Fail and set the error code, and close the connection.
@@ -59,7 +61,7 @@ class NetClient(Connectable, SetFields)
    #
    # Open the connection.
    #
-   public open()
+   protected open()
       local r, domain, addr
 
       if \server then {
@@ -96,13 +98,13 @@ class NetClient(Connectable, SetFields)
       }
       sbuff := ""
       fire(CONNECTED_EVENT)
-      return connection
+      return
    end
 
    #
    # Close the connection
    #
-   public close()
+   protected close()
       if \connection then {
          connection.close() | return error("Failed to close connection:" || &why)
          fire(CLOSED_EVENT)
@@ -167,7 +169,7 @@ class NetClient(Connectable, SetFields)
    #
    # Write the given string to the connection.
    #
-   public write_str(s)
+   protected write_str(s)
       fire(SENDING_STRING_EVENT, s)
       return send(s)
    end
@@ -175,7 +177,7 @@ class NetClient(Connectable, SetFields)
    #
    # Write a single line to the connection, appending CRLF to the output stream.
    # 
-   public write_line(s)
+   protected write_line(s)
       /s := ""
       fire(SENDING_LINE_EVENT, s)
       return send(s || "\r\n") 
@@ -184,7 +186,7 @@ class NetClient(Connectable, SetFields)
    #
    # Read a single line from the connection, and return it.
    #
-   public read_line()
+   protected read_line()
       local line
 
       repeat {
@@ -206,7 +208,7 @@ class NetClient(Connectable, SetFields)
    #
    # Read up to len bytes on the connection.
    #
-   public read_str(len)
+   protected read_str(len)
       local t
       #
       # Use the line buffer if it has anything in it.
@@ -223,7 +225,12 @@ class NetClient(Connectable, SetFields)
       return t
    end
 
-   public eof()
+   protected is_open()
+      if \self.connection then
+         return
+   end
+
+   protected eof()
       return connection.eof()
    end
 
@@ -238,7 +245,7 @@ class NetClient(Connectable, SetFields)
       return
    end
 
-   public new(a[])
+   protected new(a[])
       cast(self,Connectable).new()
       sbuff := ""
       set_fields(a)

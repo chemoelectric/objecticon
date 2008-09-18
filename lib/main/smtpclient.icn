@@ -34,7 +34,7 @@ class SmtpClient(NetClient)
       s := read_response() | fail
       if not(s[1:4] == "220") then
          return error_and_close("Failed to get initial 220:" || s)
-      return connection
+      return
    end
 
    public close_connection()

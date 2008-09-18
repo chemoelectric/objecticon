@@ -39,7 +39,7 @@ class PopClient(NetClient)
    public open_connection()
       open() | fail
       read_response() | fail
-      return connection
+      return
    end
 
    #

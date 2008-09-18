@@ -606,7 +606,7 @@ class HttpClient(NetClient)
    #
    # 
    private maybe_open()
-      if /connection | /open_url | open_url.get_address() ~== request.url.get_address() |
+      if not(is_open()) | /open_url | open_url.get_address() ~== request.url.get_address() |
          open_url.get_port() ~= request.url.get_port() then 
       {
          close()
