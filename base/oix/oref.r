@@ -640,7 +640,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
             bp = BlkLoc(dx);
             bp2 = BlkLoc(dx)->record.constructor;
             i = lookup_record_field_by_name(bp2, &y);
-            if (i == -1)
+            if (i < 0)
                fail;
 
             EVValD(&dx, E_Rref);

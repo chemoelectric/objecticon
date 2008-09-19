@@ -740,7 +740,7 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
     } else
         i = lookup_class_field_by_name(class, fname);
 
-    if (i == -1 || i >= class->n_instance_fields)
+    if (i < 0 || i >= class->n_instance_fields)
         return 0;
     return &obj->fields[i];
 }
