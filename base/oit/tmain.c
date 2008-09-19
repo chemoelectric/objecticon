@@ -11,6 +11,7 @@
 #include "tlex.h"
 #include "util.h"
 #include "../h/header.h"
+#include "../h/standardfields.h"
 
 int warnings = 0;           /* count of warnings */
 int errors = 0;		    /* translator and linker errors */
@@ -35,6 +36,7 @@ char *new_string;
 char *init_string;
 char *all_string;
 char *package_marker_string;
+char *standard_field_names[N_STANDARD_FIELDS];
 
 /*
  * Variables related to command processing.
@@ -641,6 +643,8 @@ void init_strings()
     init_string = spec_str("init");
     all_string = spec_str("all");
     package_marker_string = spec_str(">package");
+    standard_field_names[0] = init_string;
+    standard_field_names[1] = new_string;
 }
 
 #include "tree.h"

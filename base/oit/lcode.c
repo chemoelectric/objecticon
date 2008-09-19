@@ -982,10 +982,6 @@ static void genclass(struct lclass *cl)
     char *name;
     int i, ap, n_fields;
     struct strconst *sp;
-    char *standard_field_names[] = {
-        init_string, 
-        new_string,
-    };
     
     if (cl->pc != pc)
         quitf("I got my sums wrong(a): %d != %d", pc, cl->pc);
