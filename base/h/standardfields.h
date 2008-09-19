@@ -6,3 +6,5 @@
  */
 #define INIT_FIELD          0
 #define NEW_FIELD           1
+
+#define N_STANDARD_FIELDS   2

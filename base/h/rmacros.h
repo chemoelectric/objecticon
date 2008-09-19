@@ -577,7 +577,6 @@
       #define eclassfields (curpstate->EClassFields)
       #define classes (curpstate->Classes)
       #define records (curpstate->Records)
-      #define standardfields (curpstate->StandardFields)
       #define fnames (curpstate->Fnames)
       #define efnames (curpstate->Efnames)
       #define globals (curpstate->Globals)
@@ -595,7 +594,6 @@
       #define ilines (curpstate->Ilines)
       #define elines (curpstate->Elines)
       #define current_line_ptr (curpstate->Current_line_ptr)
-      #define standard_fields (curpstate->StandardFields)
       #define main_proc (curpstate->MainProc)
 
       #define line_num  (curpstate->Line_num)

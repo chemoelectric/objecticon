@@ -140,10 +140,11 @@ struct lclass_ref {
 };
 
 /*
- * A reference to a field in another class.
+ * A reference to a class field.
  */
 struct lclass_field_ref {
     struct lclass_field *field;
+    int index;      /* Index in class's fields; set on code generation */
     struct lclass_field_ref *next, *b_next;
 };
 

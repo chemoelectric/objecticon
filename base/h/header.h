@@ -10,7 +10,6 @@ struct header {
     word ClassFields;           /* class field info */
     word Classes;               /* class info */
     word Records;               /* record info */
-    word StandardFields;        /* location of standard field number table */
     word Fnames;		/* location of names of fields */
     word Globals;		/* location of global variables */
     word Gnames;		/* location of names of globals */

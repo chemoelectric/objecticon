@@ -16,6 +16,7 @@
 #include "../h/opdefs.h"
 #include "../h/header.h"
 #include "../h/rmacros.h"
+#include "../h/standardfields.h"
 
 int nstatics = 0;               /* Running count of static variables */
 
@@ -949,11 +950,11 @@ static struct field_sort_item *sorted_fields(struct lclass *cl)
     struct field_sort_item *a = safe_calloc(n, sizeof(struct field_sort_item));
     int i = 0;
     for (fr = cl->implemented_instance_fields; fr; fr = fr->next, ++i) {
-        a[i].n = i;
+        a[i].n = fr->index = i;
         a[i].fp = fr->field->ftab_entry;
     }
     for (fr = cl->implemented_class_fields; fr; fr = fr->next, ++i) {
-        a[i].n = i;
+        a[i].n = fr->index = i;
         a[i].fp = fr->field->ftab_entry;
     }
     qsort(a, n, sizeof(struct field_sort_item), field_sort_compare);
@@ -981,6 +982,10 @@ static void genclass(struct lclass *cl)
     char *name;
     int i, ap, n_fields;
     struct strconst *sp;
+    char *standard_field_names[] = {
+        init_string, 
+        new_string,
+    };
     
     if (cl->pc != pc)
         quitf("I got my sums wrong(a): %d != %d", pc, cl->pc);
@@ -1019,7 +1024,7 @@ static void genclass(struct lclass *cl)
     outword(sp->offset);
 
     /*
-     * Pointers to the four tables that follow.
+     * Pointers to the tables that follow.
      */
     if (Dflag) {
         ap = pc + 4 * WordSize;
@@ -1030,9 +1035,11 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field info array\n", ap);
         ap += n_fields * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field sort array\n", ap);
+        ap += n_fields * ShortSize;
+        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to standard field array\n", ap);
     }
 
-    ap = pc + 4 * WordSize;
+    ap = pc + 5 * WordSize;
     outword(ap);
     ap += cl->n_supers * WordSize;
     outword(ap);
@@ -1041,6 +1048,8 @@ static void genclass(struct lclass *cl)
     ap += n_fields * WordSize;
     outword(ap);
     ap += n_fields * ShortSize;
+    outword(ap);
+    ap += N_STANDARD_FIELDS * ShortSize;
     ap += nalign(ap);
 
     /*
@@ -1098,9 +1107,27 @@ static void genclass(struct lclass *cl)
         outshort(sortf[i].n);
     free(sortf);
 
-    if (Dflag) {
+    /* 
+     * The standard fields table.
+     */
+    if (Dflag)
+        fprintf(dbgfile, "%ld:\t\t\t\t\t# Standard fields array\n", (long)pc);
+    for (i = 0; i < N_STANDARD_FIELDS; ++i) {
+        int n = -1, j = hasher(standard_field_names[i], cl->implemented_field_hash);
+        fr = cl->implemented_field_hash[j];
+        while (fr && fr->field->name != standard_field_names[i])
+            fr = fr->b_next;
+        if (fr)
+            n = fr->index;
+        if (Dflag)
+            fprintf(dbgfile, "%ld:\t%d\t\t\t\t#   %d(%s)->%d\n", 
+                    (long)pc, n, i, standard_field_names[i], n);
+        outshort(n);
+    }        
+
+    if (Dflag) 
         fprintf(dbgfile, "%ld:\t\t\t\t\t# Padding bytes (%d)\n", (long)pc, nalign(pc));
-    }
+
     align();
 
     /* Check our calculations were right */
@@ -1186,12 +1213,13 @@ static void genclasses()
     for (cl = lclasses; cl; cl = cl->next) {
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
-        cl->size = WordSize * (15 +
+        cl->size = WordSize * (16 +
                                1 + 
                                cl->n_supers +
                                cl->n_implemented_classes +
                                n_fields) +
-                   ShortSize * n_fields;
+            ShortSize * n_fields + 
+            ShortSize * N_STANDARD_FIELDS;
         cl->size += nalign(cl->size);
         x += cl->size;
     }
@@ -1248,11 +1276,6 @@ static void gentables()
     struct lfield *fd;
     struct unref *up;
     struct strconst *sp;
-    char *standard_field_names[] = {
-        init_string, 
-        new_string,
-    };
-
 
     if (Dflag) {
         fprintf(dbgfile,"\n\n# global tables\n");
@@ -1363,20 +1386,6 @@ static void gentables()
             if (gp->record->pc + size != pc)
                 quitf("I got my sums wrong(c): %d != %d", gp->record->pc + size, pc);
         }
-    }
-
-    align();
-    if (Dflag)
-        fprintf(dbgfile, "\n%ld:\t\t\t\t\t# Standard field table\n", (long)pc);
-    hdr.StandardFields = pc;
-    for (i = 0; i < ElemCount(standard_field_names); ++i) {
-        char *s = standard_field_names[i];
-        int j = -1;
-        if ((fp = flocate(s)))
-            j = fp->field_id;
-        if (Dflag)
-            fprintf(dbgfile, "%ld:\t\t\t\t\t#   %d(%s)->%d\n", (long)pc, i, s, j);
-        outword(j);
     }
 
     /*
@@ -1580,7 +1589,6 @@ static void gentables()
         fprintf(dbgfile, "class fields:     %ld\n", (long)hdr.ClassFields);
         fprintf(dbgfile, "classes:          %ld\n", (long)hdr.Classes);
         fprintf(dbgfile, "records:          %ld\n", (long)hdr.Records);
-        fprintf(dbgfile, "standardfields:   %ld\n", (long)hdr.StandardFields);
         fprintf(dbgfile, "fnames:           %ld\n", (long)hdr.Fnames);
         fprintf(dbgfile, "globals:          %ld\n", (long)hdr.Globals);
         fprintf(dbgfile, "gnames:           %ld\n", (long)hdr.Gnames);
@@ -1605,8 +1613,7 @@ static void gentables()
         report("  Class statics   %7ld", (long)(hdr.ClassFields - hdr.ClassStatics));
         report("  Class fields    %7ld", (long)(hdr.Classes - hdr.ClassFields));
         report("  Classes         %7ld", (long)(hdr.Records - hdr.Classes));
-        report("  Records         %7ld", (long)(hdr.StandardFields - hdr.Records));
-        report("  Std fields      %7ld", (long)(hdr.Fnames  - hdr.StandardFields));
+        report("  Records         %7ld", (long)(hdr.Fnames - hdr.Records));
         report("  Field names     %7ld", (long)(hdr.Globals - hdr.Fnames));
         report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));
         report("  Global names    %7ld", (long)(hdr.Statics - hdr.Gnames));

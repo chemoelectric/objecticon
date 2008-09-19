@@ -400,7 +400,7 @@ static void reference(struct gentry *gp)
     }
 }
 
-static struct fentry *add_fieldtable_entry(char *name, int field_num)
+static struct fentry *add_fieldtable_entry(char *name)
 {
     struct fentry *fp;
     int i = hasher(name, lfhash);
@@ -444,16 +444,14 @@ void build_fieldtable()
      */
     nfields = 0;
     for (gp = lgfirst; gp; gp = gp->g_next) {
-        int i = 0;
         if (gp->record) {
-            for (fd = gp->record->fields; fd; fd = fd->next) {
-                fd->ftab_entry = add_fieldtable_entry(fd->name, i++);
-            }
+            for (fd = gp->record->fields; fd; fd = fd->next)
+                fd->ftab_entry = add_fieldtable_entry(fd->name);
         } else if (gp->class) {
             for (fr = gp->class->implemented_instance_fields; fr; fr = fr->next)
-                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name, i++);
+                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name);
             for (fr = gp->class->implemented_class_fields; fr; fr = fr->next)
-                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name, i++);
+                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name);
         }
     }
 

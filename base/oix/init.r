@@ -394,7 +394,6 @@ void icon_init(char *name)
     eclassfields = (struct class_field *)(code + hdr.Classes);
     classes = (word *)(code + hdr.Classes);
     records = (word *)(code + hdr.Records);
-    standardfields = (word *)(code + hdr.StandardFields);
     fnames = (dptr)(code + hdr.Fnames);
     globals = efnames = (dptr)(code + hdr.Globals);
     gnames = eglobals = (dptr)(code + hdr.Gnames);
@@ -940,7 +939,6 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     pstate->EClassFields = (struct class_field *)(pstate->Code + hdr.Classes);
     pstate->Classes = (word *)(pstate->Code + hdr.Classes);
     pstate->Records = (word *)(pstate->Code + hdr.Records);
-    pstate->StandardFields = (word *)(pstate->Code + hdr.StandardFields);
     pstate->Fnames  = (dptr)(pstate->Code + hdr.Fnames);
     pstate->Globals = pstate->Efnames = (dptr)(pstate->Code + hdr.Globals);
     pstate->Gnames  = pstate->Eglobals = (dptr)(pstate->Code + hdr.Gnames);

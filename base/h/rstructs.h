@@ -150,6 +150,8 @@ struct b_class {
     struct class_field **fields;  /* Pointers to field info; one for each field */
     short *sorted_fields;       /* An array of indices into fields, giving the order sorted by
                                  * field number (and hence also sorted by name) */
+    short *standard_fields;     /* An array of indices into fields, giving the index of the
+                                 * standard fields (new, init). */
 };
 
 struct b_object {		/* object block */
@@ -377,7 +379,6 @@ struct progstate {
     word *Classes;
     word *Records;
     dptr Fnames, Efnames;
-    word *StandardFields;
     dptr Globals, Eglobals;
     dptr Gnames, Egnames;
     dptr Statics, Estatics;

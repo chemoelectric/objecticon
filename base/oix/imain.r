@@ -497,6 +497,7 @@ void resolve(pstate)
                 for (i = 0; i < n_fields; ++i) 
                     cb->fields[i] = (struct class_field*)(code + (int)cb->fields[i]);
                 cb->sorted_fields = (short *)(code + (int)cb->sorted_fields);
+                cb->standard_fields = (short *)(code + (int)cb->standard_fields);
 #ifdef DEBUG_LOAD
                 printf("%8x\t\t\tClass\n", cb);
                 printf("\t%d\t\t\t  Title\n", cb->title);
@@ -604,12 +605,7 @@ void resolve(pstate)
  */
 struct class_field *lookup_standard_field(int standard_field_num, struct b_class *class)
 {
-    struct progstate *p = class->program;
-    word fnum = p->StandardFields[standard_field_num];
-    int i;
-    if (fnum == -1)
-        return 0;
-    i = lookup_class_field_by_fnum(class, fnum);
+    int i = class->standard_fields[standard_field_num];
     if (i == -1)
         return 0;
     return class->fields[i];
