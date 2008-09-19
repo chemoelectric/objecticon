@@ -522,6 +522,8 @@ void resolve(pstate)
                 c = (struct b_constructor *)(code + i);
                 BlkLoc(globals[j]) = (union block *)c;
                 c->program = pstate ? pstate:&rootpstate;
+                c->field_names = (struct descrip *)(code + (int)c->field_names);
+                c->sorted_fields = (short *)(code + (int)c->sorted_fields);
                 /*
                  * Relocate the name and fields
                  */

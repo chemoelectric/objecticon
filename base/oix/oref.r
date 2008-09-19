@@ -629,39 +629,28 @@ operator{0,1} [] subsc(underef x -> dx,y)
           * x is a record.  Convert y to an integer and be sure that it
           *  it is in range as a field number.
           */
-	 if !cnv:C_integer(y) then body {
-	    if (!cnv:tmp_string(y,y))
-	       runerr(101,y);
-	    else {
-	       register union block *bp;  /* doesn't need to be tended */
-	       register struct b_constructor *bp2; /* doesn't need to be tended */
-	       register word i;
-	       register int len;
-	       char *loc;
-	       int nf;
-	       bp = BlkLoc(dx);
-	       bp2 = BlkLoc(dx)->record.constructor;
-	       nf = bp2->n_fields;
-	       loc = StrLoc(y);
-	       len = StrLen(y);
-	       for(i=0; i<nf; i++) {
-		  if (len == StrLen(bp2->field_names[i]) &&
-		      !strncmp(loc, StrLoc(bp2->field_names[i]), len)) {
+         if !cnv:C_integer(y) then body {
+            register union block *bp;  /* doesn't need to be tended */
+            register struct b_constructor *bp2; /* doesn't need to be tended */
+            register word i;
 
-		     EVValD(&dx, E_Rref);
-		     EVVal(i+1, E_Rsub);
+            if (!cnv:tmp_string(y,y))
+               runerr(101,y);
 
-		     /*
-		      * Found the field, return a pointer to it.
-		      */
-		     return struct_var(&bp->record.fields[i], bp);
-		     }
-		  }
-	       fail;
-               }
-	    }
-	 else
-         body {
+            bp = BlkLoc(dx);
+            bp2 = BlkLoc(dx)->record.constructor;
+            i = lookup_record_field_by_name(bp2, &y);
+            if (i == -1)
+               fail;
+
+            EVValD(&dx, E_Rref);
+            EVVal(i+1, E_Rsub);
+
+            /*
+             * Found the field, return a pointer to it.
+             */
+            return struct_var(&bp->record.fields[i], bp);
+         } else body {
             word i;
             register union block *bp; /* doesn't need to be tended */
 

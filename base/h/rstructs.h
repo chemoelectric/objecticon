@@ -107,8 +107,9 @@ struct b_constructor {		/* constructor block */
     struct progstate *program;  /*   program in which this constructor resides */
     word instance_ids;          /*   Sequence for instance ids */
     word n_fields;
-    struct descrip name;	/*   procedure name (string qualifier) */
-    struct descrip field_names[1];	/*   list of field names (qualifiers) */
+    struct descrip name;	/*   record type name (string qualifier) */
+    struct descrip *field_names; /* Pointers to field names array */
+    short *sorted_fields;       /* An array of indices giving the order sorted by name */
 };
 
 struct b_record {		/* record block */

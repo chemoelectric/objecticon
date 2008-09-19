@@ -17,8 +17,6 @@
 #include "../h/header.h"
 #include "../h/rmacros.h"
 
-#define RecordBlkSize(gp) ((7*WordSize)+(gp)->record->nfields * 2 * WordSize)
-
 int nstatics = 0;               /* Running count of static variables */
 
 /*
@@ -962,6 +960,19 @@ static struct field_sort_item *sorted_fields(struct lclass *cl)
     return a;
 }
 
+static struct field_sort_item *sorted_record_fields(struct lrecord *cl)
+{
+    struct lfield *lf;
+    struct field_sort_item *a = safe_calloc(cl->nfields, sizeof(struct field_sort_item));
+    int i = 0;
+    for (lf = cl->fields; lf; lf = lf->next, ++i) {
+        a[i].n = i;
+        a[i].fp = lf->ftab_entry;
+    }
+    qsort(a, cl->nfields, sizeof(struct field_sort_item), field_sort_compare);
+    return a;
+}
+
 static void genclass(struct lclass *cl)
 {
     struct lclass_ref *cr;
@@ -1019,7 +1030,6 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field info array\n", ap);
         ap += n_fields * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field sort array\n", ap);
-        ap += n_fields * ShortSize;
     }
 
     ap = pc + 4 * WordSize;
@@ -1270,15 +1280,19 @@ static void gentables()
     outword(nrecords);
     for (gp = lgfirst; gp; gp = gp->g_next) {
         if (gp->g_flag & F_Record) {
+            struct field_sort_item *sortf;
+            int ap, size;
+
             s = gp->name;
             gp->record->pc = pc;
             sp = inst_c_strconst(gp->name);
-
+            size = 9 * WordSize + gp->record->nfields * (2 * WordSize + ShortSize);
+            size += nalign(size);
             if (Dflag) {
-                fprintf(dbgfile, "\n# record %s\n", s);
+                fprintf(dbgfile, "\n# constructor %s\n", s);
                 fprintf(dbgfile, "%ld:\n", (long)pc);
                 fprintf(dbgfile, "\t%d\t\t\t\t# T_Constructor\n", T_Constructor);
-                fprintf(dbgfile, "\t%d\n", RecordBlkSize(gp));
+                fprintf(dbgfile, "\t%d\n", size);
                 fprintf(dbgfile, "\t0\n");
                 fprintf(dbgfile, "\t0\n");
                 fprintf(dbgfile, "\t%d\n", gp->record->nfields);
@@ -1286,12 +1300,34 @@ static void gentables()
             }
 
             outword(T_Constructor);		/* type code */
-            outword(RecordBlkSize(gp));
+            outword(size);
             outword(0);			/* progstate (filled in by interp)*/
             outword(0);			/* serial number counter */
             outword(gp->record->nfields);		/* number of fields */
             outword(sp->len);		/* name of record: size and offset */
             outword(sp->offset);
+
+            /*
+             * Pointers to the two tables that follow.
+             */
+            if (Dflag) {
+                ap = pc + 2 * WordSize;
+                fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field_names array\n", ap);
+                ap += gp->record->nfields * 2 * WordSize;
+                fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field sort array\n", ap);
+            }
+            ap = pc + 2 * WordSize;
+            outword(ap);
+            ap += gp->record->nfields * 2 * WordSize;
+            outword(ap);
+            ap += gp->record->nfields * ShortSize;
+            ap += nalign(ap);
+
+            /*
+             * Field names
+             */
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\t\t\t\t\t# Field names array\n", (long)pc);
             for (fd = gp->record->fields; fd; fd = fd->next) {
                 sp = inst_c_strconst(fd->name);
                 if (Dflag)
@@ -1299,6 +1335,33 @@ static void gentables()
                 outword(sp->len);
                 outword(sp->offset);
             }
+
+            /* 
+             * The sorted fields table.
+             */
+            sortf = sorted_record_fields(gp->record);
+            if (Dflag) {
+                fprintf(dbgfile, "%ld:\t\t\t\t\t# Sorted fields array\n", (long)pc);
+                for (i = 0; i < gp->record->nfields; ++i)
+                    fprintf(dbgfile, "\t%d\t\t\t\t#   Field %s (fnum=%d)\n", 
+                            sortf[i].n, 
+                            sortf[i].fp->name,
+                            sortf[i].fp->field_id);
+            }
+            for (i = 0; i < gp->record->nfields; ++i)
+                outshort(sortf[i].n);
+            free(sortf);
+
+            if (Dflag) {
+                fprintf(dbgfile, "%ld:\t\t\t\t\t# Padding bytes (%d)\n", (long)pc, nalign(pc));
+            }
+            align();
+
+            /* Check our calculations were right */
+            if (ap != pc)
+                quitf("I got my sums wrong(b): %d != %d", ap, pc);
+            if (gp->record->pc + size != pc)
+                quitf("I got my sums wrong(c): %d != %d", gp->record->pc + size, pc);
         }
     }
 

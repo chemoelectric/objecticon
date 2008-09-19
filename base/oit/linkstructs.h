@@ -66,6 +66,7 @@ struct lrecord {
 struct lfield {
     char *name;
     struct loc pos;
+    struct fentry *ftab_entry;           /* Field table entry (gives field number) */
     struct lfield *next;
 };
 

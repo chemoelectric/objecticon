@@ -535,72 +535,85 @@ union block **memb(union block *pb, dptr x, uword hn, int *res)
    return lp;
    }
 
-/*
- * dynamic records code.  originally this just did a malloc and returned it,
- * but the memory leak implied by this behavior was significant since this
- * function gets called every fetch.  So now it stores an array of pointers
- * to arrays of procedure blocks, and returns an existing procedure block
- * when it finds one with identical fields **need to match record name also.
- * Array subscript == #of fields-1, so you are searching among all dynamic
- * records with the same number of fields to try and find a match. May need
- * to make this smarter someday.
- */
 
-int longest_dr = 0;
-struct b_constructor_list **dr_arrays;
+static int longest_dr = -1;
+static struct b_constructor_list **dr_arrays = 0;
+
+struct field_sort_item {
+    int n;
+    dptr name;
+};
+
+static int field_sort_compare(const void *p1, const void *p2)
+{
+    struct field_sort_item *f1, *f2;
+    f1 = (struct field_sort_item *)p1;
+    f2 = (struct field_sort_item *)p2;
+    return lexcmp(f1->name, f2->name);
+}
 
 struct b_constructor *dynrecord(dptr s, dptr fields, int n)
 {
     struct b_constructor_list *bpelem = NULL;
     struct b_constructor *bp = NULL;
+    struct field_sort_item *sortf;
     int i;
+
     if (n > longest_dr) {
-        if (longest_dr==0) {
-            MemProtect(dr_arrays = calloc(n, sizeof (struct b_constructor *)));
-	    longest_dr = n;
-        }
-        else {
-	    MemProtect(dr_arrays = realloc(dr_arrays, n * sizeof (struct b_constructor *)));
-	    while(longest_dr<n) {
-                dr_arrays[longest_dr++] = NULL;
+        if (dr_arrays) {
+	    MemProtect(dr_arrays = realloc(dr_arrays, (n + 1) * sizeof (struct b_constructor *)));
+            /* Zero new elements */
+            for (i = longest_dr + 1; i <= n; ++i)
+                dr_arrays[i] = NULL;
+        } else
+            MemProtect(dr_arrays = calloc(n + 1, sizeof (struct b_constructor *)));
+        longest_dr = n;
+    }
+
+    for(bpelem = dr_arrays[n]; bpelem; bpelem = bpelem->next) {
+        bp = bpelem->this;
+        if (eq(&bp->name, s)) {
+            for (i = 0; i < n; i++) {
+                if (!eq(&fields[i], &bp->field_names[i]))
+                    break;
             }
+            if (i == n)  /* Found a match */
+                return bp;
         }
     }
 
-    if (n>0)
-        for(bpelem = dr_arrays[n-1]; bpelem; bpelem = bpelem->next) {
-            bp = bpelem->this;
-            if (eq(&bp->name, s)) {
-                for (i=0; i<n; i++) {
-                    if((StrLen(fields[i]) != StrLen(bp->field_names[i])) ||
-                       strncmp(StrLoc(fields[i]), StrLoc(bp->field_names[i]),StrLen(fields[i]))) break;
-                }
-                if(i==n) {
-                    return bp;
-                }
-            }
-        }
-
-    MemProtect(bp = malloc(sizeof(struct b_constructor) + sizeof(struct descrip) * n));
+    MemProtect(bp = malloc(sizeof(struct b_constructor)));
     bp->title = T_Constructor;
-    bp->blksize = sizeof(struct b_constructor) + sizeof(struct descrip) * n;
+    bp->blksize = sizeof(struct b_constructor);
     bp->n_fields = n;
     bp->instance_ids = 0;
     bp->program = 0;
-    MemProtect(StrLoc(bp->name) = malloc(StrLen(*s)+1));
+    MemProtect(StrLoc(bp->name) = malloc(StrLen(*s) + 1));
     strncpy(StrLoc(bp->name), StrLoc(*s), StrLen(*s));
     StrLen(bp->name) = StrLen(*s);
     StrLoc(bp->name)[StrLen(*s)] = '\0';
-    for(i=0;i<n;i++) {
+    MemProtect(bp->field_names = calloc(n, sizeof(struct descrip)));
+    MemProtect(bp->sorted_fields = calloc(n, sizeof(short)));
+    for(i = 0; i < n; i++) {
         StrLen(bp->field_names[i]) = StrLen(fields[i]);
-        MemProtect(StrLoc(bp->field_names[i]) = malloc(StrLen(fields[i])+1));
+        MemProtect(StrLoc(bp->field_names[i]) = malloc(StrLen(fields[i]) + 1));
         strncpy(StrLoc(bp->field_names[i]), StrLoc(fields[i]), StrLen(fields[i]));
         StrLoc(bp->field_names[i])[StrLen(fields[i])] = '\0';
     }
+    MemProtect(sortf = calloc(n, sizeof(struct field_sort_item)));
+    for(i = 0; i < n; i++) {
+        sortf[i].n = i;
+        sortf[i].name = &fields[i];
+    }
+    qsort(sortf, n, sizeof(struct field_sort_item), field_sort_compare);
+    for(i = 0; i < n; i++)
+        bp->sorted_fields[i] = sortf[i].n;
+    free(sortf);
+
     MemProtect(bpelem = malloc(sizeof (struct b_constructor_list)));
     bpelem->this = bp;
-    bpelem->next = dr_arrays[n-1];
-    dr_arrays[n-1] = bpelem;
+    bpelem->next = dr_arrays[n];
+    dr_arrays[n] = bpelem;
     return bp;
 }
 

@@ -7,7 +7,7 @@ record rec(f1, f2)
 
 procedure main()
    local a, b
-   local rec1,rec2,rec3,rec4
+   local rec1,rec2,rec3,rec4, rec5,rec6,rec7,rec8
    local i1,i2,i3,i4
 
    a := rec()
@@ -49,9 +49,15 @@ procedure main()
    rec2 := constructor("rec2","a","b","c")
    rec3 := constructor("rec2","a","b","c")
    rec4 := constructor("rec2","x","y","z")
+   rec5 := constructor("small")
+   rec6 := constructor("small")
+   rec7 := constructor("big", "x","y","z","a","b","c")
+   rec8 := constructor("big", "x","y","z","a","b","c")
    yes_no{"rec1===rec2",rec1===rec2}
    yes_no{"rec2===rec3",rec2===rec3}
    yes_no{"rec3===rec4",rec3===rec4}
+   yes_no{"rec5===rec6",rec5===rec6}
+   yes_no{"rec7===rec8",rec7===rec8}
 
    i1 := rec1(1,2,3)
    i2 := rec2(1,2,3)

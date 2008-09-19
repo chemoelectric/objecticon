@@ -447,7 +447,7 @@ void build_fieldtable()
         int i = 0;
         if (gp->record) {
             for (fd = gp->record->fields; fd; fd = fd->next) {
-                add_fieldtable_entry(fd->name, i++);
+                fd->ftab_entry = add_fieldtable_entry(fd->name, i++);
             }
         } else if (gp->class) {
             for (fr = gp->class->implemented_instance_fields; fr; fr = fr->next)

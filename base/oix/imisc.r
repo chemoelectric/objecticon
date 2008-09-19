@@ -11,7 +11,6 @@
 static int cast_access(dptr cargp, struct inline_field_cache *ic);
 static int instance_access(dptr cargp, struct inline_field_cache *ic);
 static int class_access(dptr cargp, struct inline_field_cache *ic);
-static int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_field_cache *ic);
 static int in_lang(dptr s);
 static int same_package(dptr n1, dptr n2);
 static int in_hierarchy(struct b_class *c1, struct b_class *c2);
@@ -478,12 +477,18 @@ static int record_access(dptr cargp, struct inline_field_cache *ic)
     return 0;
 }
 
-static int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
+int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
 {
-    int i;
-    for (i = 0; i < recdef->n_fields; ++i) {
-        if (StrLen(*name) == StrLen(recdef->field_names[i]) &&
-            !strncmp(StrLoc(*name), StrLoc(recdef->field_names[i]), StrLen(*name)))
+    int i, c, m, l = 0, r = recdef->n_fields - 1;
+    while (l <= r) {
+        m = (l + r) / 2;
+        i = recdef->sorted_fields[m];
+        c = lexcmp(&recdef->field_names[i], name);
+        if (c == Greater)
+            r = m - 1;
+        else if (c == Less)
+            l = m + 1;
+        else
             return i;
     }
     return -1;
@@ -492,7 +497,7 @@ static int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
 /*
  * This follows similar logic to lookup_class_field above.
  */
-static int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_field_cache *ic)
+int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_field_cache *ic)
 {
     int fnum, index;
 
