@@ -1023,7 +1023,7 @@ static void genclass(struct lclass *cl)
      * Pointers to the tables that follow.
      */
     if (Dflag) {
-        ap = pc + 4 * WordSize;
+        ap = pc + 5 * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to superclass array\n", ap);
         ap += cl->n_supers * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to implemented classes array\n", ap);
