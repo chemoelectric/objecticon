@@ -106,6 +106,7 @@ r := DescStream.poll(f1, Poll.OUT, f2, ior(Poll.IN,Poll.OUT), 5000)
 }}}
 This will wait for up to 5 seconds, polling `f1` for input and `f2` for input or output.  The return value is a list with an integer element for each pair indicating the flags which poll detected (or zero if no flags matched for that particular stream).   The call fails on timeout or error and sets `&why` appropriately.
 
+Here is a longer example showing how to do the HTTP HEAD request of the previous example using `poll` on a non-blocking socket.
 {{{
 import io, posix
 
@@ -124,12 +125,13 @@ procedure main()
    #
    f.connect("inet:www.google.com:80") | {
       errno() = Errno.EINPROGRESS | stop("Couldn't connect:" || &why)
+      # Wait up to 5s for the connection to complete
       r := DescStream.poll(f, Poll.OUT, 5000) | stop(&why)
       r[1] = Poll.OUT | stop("Socket error")
    }
 
    #
-   # Send the request, in more than one piece if necesary.
+   # Send the request, in more than one piece if necessary.
    #
    s := "HEAD / HTTP/1.1\r\nConnection: close\r\n\r\n"
    while *s > 0 do {
@@ -154,5 +156,7 @@ procedure main()
 
    f.close()
 end
-
 }}}
+Note that this code uses the methods `in` and `out` to read and write data, rather than `read`, `reads`, `write` and `writes`.   This is because those latter functions are implemented in terms of `in` and `out` and may call them several times in one invocation.  This makes them unsuitable for use with a non-blocking file, because we need to call `poll` or select immediately before each i/o call to ensure that call has something to read or write.  For similar reasons, it is not possible to use `BufferStream` to wrap a non-blocking stream.
+
+
