@@ -33,7 +33,6 @@ struct keyent {
 #define KDef(p,n) { Lit(p), n },
 static struct keyent keytab[] = {
 #include "../h/kdefs.h"
-    { NULL, -1 }
 };
 
 /*
@@ -155,19 +154,23 @@ static struct tcentry *clookup(char *id, int flag)
     return ptr;
 }
 
+static int keytab_cmp(const void *key, const void *item)
+{
+    return strcmp((char*)key, ((struct keyent *)item)->keyname);
+}
+
 /*
  * klookup looks up keyword named by id in keyword table and returns
  *  its number (keyid).
  */
 int klookup(char *id)
 {
-    register struct keyent *kp;
+    struct keyent *ke = bsearch(id, keytab, ElemCount(keytab), 
+                                ElemSize(keytab), keytab_cmp);
+    if (!ke)
+        return 0;
 
-    for (kp = keytab; kp->keyid >= 0; kp++)
-        if (strcmp(kp->keyname,id) == 0)
-            return (kp->keyid);
-
-    return 0;
+    return ke->keyid;
 }
 
 /*
