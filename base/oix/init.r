@@ -29,8 +29,6 @@ Deliberate Syntax Error
  * End of operating-system specific code.
  */
 
-char *prog_name;			/* name of icode file */
-
 #passthru #define OpDef(p,n,s,u) int Cat(O,p) (dptr cargp);
 #passthru #include "../h/odefs.h"
 #passthru #undef OpDef
@@ -199,7 +197,6 @@ void icon_init(char *name)
     struct header hdr;
     FILE *ifile = 0;
     char *t;
-    prog_name = name;			/* Set icode file name */
 
     /*
      * Initializations that cannot be performed statically (at least for
@@ -247,7 +244,6 @@ void icon_init(char *name)
     rootpstate.eventsource = nulldesc;
     rootpstate.Glbl_argp = NULL;
     rootpstate.Kywd_err = zerodesc;
-    CMakeStr(prog_name, &rootpstate.Kywd_prog);
     rootpstate.Kywd_pos = onedesc;
     rootpstate.ksub = emptystr;
     rootpstate.Kywd_why = emptystr;
@@ -358,6 +354,7 @@ void icon_init(char *name)
     if (ifile == NULL) 
         error("cannot open interpreter file %s", name);
 
+    CMakeStr(name, &rootpstate.Kywd_prog);
     MakeInt(hdr.trace, &rootpstate.Kywd_trc);
 
     /*
