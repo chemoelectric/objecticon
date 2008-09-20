@@ -704,6 +704,17 @@ class FileStream(DescStream)
       stderr := FileStream(2, WRITE)
    end
 
+   #
+   # Create a pair of {FileStream}s using the pipe system call.
+   #
+   public static pipe()
+      local t
+      t := pipe_impl() | fail
+      return [FileStream(t[1], READ), FileStream(t[2], WRITE)]
+   end
+
+   private static defer pipe_impl()
+
    public defer in(n)
 
    public defer out(s)

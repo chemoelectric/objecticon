@@ -740,6 +740,28 @@ function{0,1} io_FileStream_tell(self)
    }
 end
 
+function{0,1} io_FileStream_pipe_impl()
+   body {
+       int fds[2];
+       struct descrip t;
+
+       if (pipe(fds) < 0) {
+           errno2why();
+           fail;
+       }
+
+      result = create_list(2);
+
+      MakeInt(fds[0], &t);
+      c_put(&result, &t);
+
+      MakeInt(fds[1], &t);
+      c_put(&result, &t);
+
+      return result;
+   }
+end
+
 function{0,1} io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
