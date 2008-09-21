@@ -311,13 +311,19 @@ class Files(NoCopy)
    # @param s2 the target filename
    #
    public static copy(s1, s2)
-      local f1, f2
+      local f1, f2, s
       f1 := FileStream.open(s1, FileOpt.RDONLY) | return error("Couldn't open " || s1 || ":" || &why)
       f2 := FileStream.open(s2, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | {
          f1.close()
          return error("Couldn't open " || s2 || ":" || &why)
       }
-      while f2.writes(f1.reads(8192))
+      while s := f1.reads(8192) do {
+         f2.writes(s) | {
+            f1.close()
+            f2.close()
+            fail
+         }
+      }
       f1.close()
       f2.close() | return error("Failed to close " || s2 || ":" || &why)
       f1.eof() | fail
@@ -330,13 +336,19 @@ class Files(NoCopy)
    # @param s2 the target filename
    #
    public static append(s1, s2)
-      local f1, f2
+      local f1, f2, s
       f1 := FileStream.open(s1, FileOpt.RDONLY) | return error("Couldn't open " || s1 || ":" || &why)
       f2 := FileStream.open(s2, ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)) | {
          f1.close()
          return error("Couldn't open " || s2 || ":" || &why)
       }
-      while f2.writes(f1.reads(8192))
+      while s := f1.reads(8192) do {
+         f2.writes(s) | {
+            f1.close()
+            f2.close()
+            fail
+         }
+      }
       f1.close()
       f2.close() | return error("Failed to close " || s2 || ":" || &why)
       f1.eof() | fail
