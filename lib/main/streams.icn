@@ -32,6 +32,9 @@ class Stream()
       # truncate).
       ALL
 
+   protected
+      f_eof
+
    private static init()
       READ := 'r'
       WRITE := 'w'
@@ -98,11 +101,15 @@ class Stream()
    public defer close()
 
    #
-   # After an attempt to read from the stream has failed, this method
-   # can be used to see if the failure was because the stream was at
-   # the end-of-file.
+   # After an attempt to read from the stream (by calling {in},
+   # {read}, or {reads}) has failed, this method can be used to see if
+   # the failure was because the stream was at the end-of-file.  Note
+   # that this flag does not convey any meaningful information if the
+   # read succeeded, or at any other time.
    #
-   public defer eof()
+   public eof()
+      return \.f_eof
+   end
 
    #
    # Succeed iff the stream's mode has all the chars in {c}
@@ -199,13 +206,11 @@ end
 #
 class StringStream(Stream)
    private 
-      f_eof,
       subj,
       pos
 
    public in(n)
       local t, e
-      f_eof := &null
       if pos > *subj then {
          f_eof := 1
          return error("End of file")
@@ -257,10 +262,6 @@ class StringStream(Stream)
          subj := subj[1:len + 1]
       pos := *subj + 1
       return
-   end
-
-   public eof()
-      return \.f_eof
    end
 
    public str()
@@ -319,6 +320,7 @@ class BufferStream(Stream, SetFields)
 
    public read()
       local t
+      f_eof := &null
       flush() | fail
       repeat {
          rbuff ? {
@@ -339,8 +341,11 @@ class BufferStream(Stream, SetFields)
             break
          }
       }
-      if *t = 0 then
+      if *t = 0 then {
+         # other.in should've set &why
+         f_eof := 1
          fail
+      }
       if t[-1] == "\n" then {
          t[-1] := ""
          if t[-1] == "\r" then
@@ -351,6 +356,7 @@ class BufferStream(Stream, SetFields)
 
    public in(n)
       local t
+      f_eof := &null
       flush() | fail
       if *rbuff > 0 then {
          rbuff ? {
@@ -361,14 +367,23 @@ class BufferStream(Stream, SetFields)
       } else if n < buff_size then {
          if other.can(SEEK) then
             rpos := other.tell() | fail
-         rbuff := other.in(buff_size) | fail
+         rbuff := other.in(buff_size) | {
+            if other.eof() then
+               f_eof := 1
+            fail
+         }
          rbuff ? {
             t := move(n) | tab(0)
             rbuff := tab(0)
             \rpos +:= *t
          }
-      } else
-         t := other.in(n) | fail
+      } else {
+         t := other.in(n) | {
+            if other.eof() then
+               f_eof := 1
+            fail
+         }
+      }
       return t
    end
 
@@ -447,10 +462,6 @@ class BufferStream(Stream, SetFields)
       return other.get_mode()
    end
 
-   public eof()
-      return other.eof()
-   end
-
    public set_one(f)
       case f.attr of {
          "other" : set_other(f.object_val(Stream))
@@ -478,8 +489,7 @@ end
 class DescStream(Stream, NoCopy)
    protected 
       fd,
-      mode,
-      f_eof
+      mode
 
    #
    # Return the integer file descriptor.
@@ -490,10 +500,6 @@ class DescStream(Stream, NoCopy)
 
    public get_mode()
       return .mode
-   end
-
-   public eof()
-      return \.f_eof
    end
 
    #
@@ -810,8 +816,7 @@ end
 class DirStream(Stream, NoCopy)
    private 
       dd,
-      line,
-      f_eof
+      line
 
    #
    # Open the given directory.  Entries may be read one at a time
@@ -823,20 +828,17 @@ class DirStream(Stream, NoCopy)
 
    public read()
       local t
-      f_eof := &null
       if (*\line > 0) then {
          t := line[1:-1]
          line := ""
          return t
       }
-      if t := read_impl(dd) then
-         return t
+      return read_impl()
    end
 
    public in(n)
       local t
-      f_eof := &null
-      if (*\line > 0) | (line := read_impl(dd) || EOL) then {
+      if (*\line > 0) | (line := read_impl() || EOL) then {
          line ? {
             t := move(n) | tab(0)
             line := tab(0)
@@ -845,13 +847,9 @@ class DirStream(Stream, NoCopy)
       }
    end
 
-   private defer read_impl(dd)
+   private defer read_impl()
 
    public defer close()
-
-   public eof()
-      return \.f_eof
-   end
 
    public get_mode()
       return READ
@@ -906,7 +904,6 @@ end
 #
 class RamStream(Stream, NoCopy)
    private
-      f_eof,
       ptr
 
    public defer in(n)
@@ -940,10 +937,6 @@ class RamStream(Stream, NoCopy)
 
    public get_mode()
       return ALL
-   end
-
-   public eof()
-      return \.f_eof
    end
 
    #

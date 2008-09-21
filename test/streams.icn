@@ -181,6 +181,7 @@ procedure test_dir()
    f.close()
    f := DirStream.open("testdir") | stop(&why)
    pr_seq{"Dir", |f.read()}
+   print{"eof()", f.eof()}
    f.close()
    system("rm -r testdir")
 end

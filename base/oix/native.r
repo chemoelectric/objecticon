@@ -550,6 +550,14 @@ static struct sdescrip fdf = {2, "fd"};
 static struct sdescrip f_eoff = {5, "f_eof"};
 static struct sdescrip dsclassname = {13, "io.DescStream"};
 
+#begdef GetEof()
+dptr eof;
+static struct inline_field_cache eof_ic;
+eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
+if (!eof)
+   syserr("Missing f_eof field");
+#enddef
+
 #begdef FdStaticParam(p, m)
 int m;
 dptr m##_dptr;
@@ -606,14 +614,7 @@ function{0,1} io_FileStream_in(self, i)
    body {
        int nread;
        tended struct descrip s;
-       dptr eof;
-       static struct inline_field_cache eof_ic;
        GetSelfFd();
-
-       eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
-       if (!eof)
-           runerr(207,*(dptr)&f_eoff);
-       *eof = nulldesc;
 
        if (i <= 0) {
            irunerr(205, i);
@@ -625,20 +626,20 @@ function{0,1} io_FileStream_in(self, i)
        MemProtect(StrLoc(s) = alcstr(NULL, i));
 
        nread = read(self_fd, StrLoc(s), i);
-       if (nread < 0) {
-           /* Reset the memory just allocated */
-           strtotal += DiffPtrs(StrLoc(s), strfree);
-           strfree = StrLoc(s);
-           errno2why();
-           fail;
-       }
+       if (nread <= 0) {
+           GetEof();
 
-       if (nread == 0) {
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
-           *eof = onedesc;
-           why("End of file");
+
+           if (nread < 0) {
+               *eof = nulldesc;
+               errno2why();
+           } else {  /* nread == 0 */
+               *eof = onedesc;
+               why("End of file");
+           }
            fail;
        }
 
@@ -768,14 +769,7 @@ function{0,1} io_SocketStream_in(self, i)
    body {
        int nread;
        tended struct descrip s;
-       dptr eof;
-       static struct inline_field_cache eof_ic;
        GetSelfFd();
-
-       eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
-       if (!eof)
-           runerr(207,*(dptr)&f_eoff);
-       *eof = nulldesc;
 
        if (i <= 0) {
            irunerr(205, i);
@@ -787,20 +781,20 @@ function{0,1} io_SocketStream_in(self, i)
        MemProtect(StrLoc(s) = alcstr(NULL, i));
 
        nread = recv(self_fd, StrLoc(s), i, 0);
-       if (nread < 0) {
-           /* Reset the memory just allocated */
-           strtotal += DiffPtrs(StrLoc(s), strfree);
-           strfree = StrLoc(s);
-           errno2why();
-           fail;
-       }
+       if (nread <= 0) {
+           GetEof();
 
-       if (nread == 0) {
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
-           *eof = onedesc;
-           why("End of file");
+
+           if (nread < 0) {
+               *eof = nulldesc;
+               errno2why();
+           } else {  /* nread == 0 */
+               *eof = onedesc;
+               why("End of file");
+           }
            fail;
        }
 
@@ -1228,20 +1222,15 @@ end
 function{0,1} io_DirStream_read_impl(self)
    body {
        struct dirent *de;
-       static struct inline_field_cache eof_ic;
-       dptr eof;
        GetSelfDir();
-
-       eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
-       if (!eof)
-           runerr(207,*(dptr)&f_eoff);
-       *eof = nulldesc;
        errno = 0;
        de = readdir(self_dir);
        if (!de) {
-           if (errno)
+           GetEof();
+           if (errno) {
+               *eof = nulldesc;
                errno2why();
-           else {
+           } else {
                *eof = onedesc;
                why("End of file");
            }
@@ -1693,17 +1682,13 @@ function{0,1} io_RamStream_in(self, i)
        static struct inline_field_cache eof_ic;
        GetSelfRs();
 
-       eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
-       if (!eof)
-           runerr(207,*(dptr)&f_eoff);
-       *eof = nulldesc;
-
        if (i <= 0) {
            irunerr(205, i);
            errorfail;
        }
 
        if (self_rs->pos >= self_rs->size) {
+           GetEof();
            *eof = onedesc;
            why("End of file");
            fail;
