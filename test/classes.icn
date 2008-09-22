@@ -530,8 +530,52 @@ procedure test_rand_objects()
    write("Random object test finished")
 end
 
+class Thirteen()
+   private var
+
+   public defer tryit1()
+
+   public defer tryit2()
+
+   public static setup1()
+      Class.set_method("tryit1", default.tryit1)
+   end
+
+   public static setup3()
+      try{"Setup err4", Class.set_method("var", default.tryit2)}
+      try{"Setup err5", Class.set_method("setup1", default.tryit2)}
+   end
+end
+
+class Fourteen(Thirteen)
+   public static setup2()
+      try{"Setup err3", Class.set_method("tryit2", default.tryit2)}
+   end
+end
+
+procedure tryit1(o)
+   write("Tryit1 ", imagex(o))
+   yes_no{"getf", Class.getf(o, "var")}
+end
+
+procedure tryit2()
+end
+
+procedure test_set_method()
+   local t
+   t := Thirteen()
+   tryit1(t)
+   Thirteen.setup1()
+   t.tryit1()
+   try{"Setup err1", Thirteen.setup1()}
+   try{"Setup err2", Class.set_method("abc", tryit2)}
+   Fourteen.setup2()
+   Thirteen.setup3()
+end
+
 procedure main()
    test_Class()
    test_langprocs()
+   test_set_method()
    test_rand_objects()
 end
