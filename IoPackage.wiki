@@ -159,4 +159,42 @@ end
 }}}
 Note that this code uses the methods `in` and `out` to read and write data, rather than `read`, `reads`, `write` and `writes`.   This is because those latter functions are implemented in terms of `in` and `out` and may call them several times in one invocation.  This makes them unsuitable for use with a non-blocking file, because we need to call `poll` or select immediately before each i/o call to ensure that call has something to read or write.  For similar reasons, it is not possible to use `BufferStream` to wrap a non-blocking stream.
 
+= In-memory I/O =
+There are two types of stream which operate entirely on data in memory.  The first is `StringStream` which represents the stream's data as an Icon string.  The second is `RamStream` which represents uses memory allocated independently from Icon's allocation system.  `StringStream` is useful when a constant string needs to be represented as a stream, but `RamStream` is much faster when the stream will be written to and changed.
 
+`RamStream` can be used to efficiently concatenate long strings together.  This is a potential problem if you are not careful, because of the way Icon allocates strings.  For example, consider the following program.
+{{{
+import io
+
+procedure main()
+   local s, i
+   s := ""
+   every i := 1 to 20000 do {
+      if i % 200 = 0 then
+         write(i)
+      s ||:= repl(i, 5)
+   }
+   write("Done, *s=", *s)
+end
+}}}
+This program builds up a long string s consisting of each integer replicated 5 times.  If you run this program you will see that the longer `s` becomes, the longer each iteration of the loop takes.  This is because the call of `repl` allocates a string at the end of the string space, meaning that the concatenation operation has to copy `s` in its entirety rather than just append to the already existing string.
+
+One way to dramatically speed this program up is to use a `RamStream`, to build up the string independently of Icon's string allocation, as follows :-
+{{{
+import io
+
+procedure main()
+   local s, i
+   s := RamStream()
+   every i := 1 to 20000 do {
+      if i % 200 = 0 then
+         write(i)
+      s.writes(repl(i, 5))
+   }
+   write("Done, *s=", *s.str())
+   s.close()
+end
+}}}
+The `RamStream`'s `str()` method returns its content as an Icon string.
+
+Note that it is most important to remember to close a `RamStream` in order to free its internal memory - Icon's garbage collector won't do it for us.
