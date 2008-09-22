@@ -550,11 +550,11 @@ static struct sdescrip fdf = {2, "fd"};
 static struct sdescrip f_eoff = {5, "f_eof"};
 static struct sdescrip dsclassname = {13, "io.DescStream"};
 
-#begdef GetEof()
-dptr eof;
-static struct inline_field_cache eof_ic;
-eof = c_get_instance_data(&self, (dptr)&f_eoff, &eof_ic);
-if (!eof)
+#begdef GetSelfFEof()
+dptr self_f_eof;
+static struct inline_field_cache self_f_eof_ic;
+self_f_eof = c_get_instance_data(&self, (dptr)&f_eoff, &self_f_eof_ic);
+if (!self_f_eof)
    syserr("Missing f_eof field");
 #enddef
 
@@ -627,17 +627,17 @@ function{0,1} io_FileStream_in(self, i)
 
        nread = read(self_fd, StrLoc(s), i);
        if (nread <= 0) {
-           GetEof();
+           GetSelfFEof();
 
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
 
            if (nread < 0) {
-               *eof = nulldesc;
+               *self_f_eof = nulldesc;
                errno2why();
            } else {  /* nread == 0 */
-               *eof = onedesc;
+               *self_f_eof = onedesc;
                why("End of file");
            }
            fail;
@@ -782,17 +782,17 @@ function{0,1} io_SocketStream_in(self, i)
 
        nread = recv(self_fd, StrLoc(s), i, 0);
        if (nread <= 0) {
-           GetEof();
+           GetSelfFEof();
 
            /* Reset the memory just allocated */
            strtotal += DiffPtrs(StrLoc(s), strfree);
            strfree = StrLoc(s);
 
            if (nread < 0) {
-               *eof = nulldesc;
+               *self_f_eof = nulldesc;
                errno2why();
            } else {  /* nread == 0 */
-               *eof = onedesc;
+               *self_f_eof = onedesc;
                why("End of file");
            }
            fail;
@@ -1207,14 +1207,11 @@ function{0,1} io_DirStream_open_impl(path)
    if !cnv:C_string(path) then
       runerr(103, path)
    body {
-       DIR *dd;
-
-       dd = opendir(path);
+       DIR *dd = opendir(path);
        if (!dd) {
            errno2why();
            fail;
        }
-
        return C_integer((long int)dd);
    }
 end
@@ -1226,12 +1223,12 @@ function{0,1} io_DirStream_read_impl(self)
        errno = 0;
        de = readdir(self_dir);
        if (!de) {
-           GetEof();
+           GetSelfFEof();
            if (errno) {
-               *eof = nulldesc;
+               *self_f_eof = nulldesc;
                errno2why();
            } else {
-               *eof = onedesc;
+               *self_f_eof = onedesc;
                why("End of file");
            }
            fail;
@@ -1678,8 +1675,6 @@ function{0,1} io_RamStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
-       dptr eof;
-       static struct inline_field_cache eof_ic;
        GetSelfRs();
 
        if (i <= 0) {
@@ -1688,8 +1683,8 @@ function{0,1} io_RamStream_in(self, i)
        }
 
        if (self_rs->pos >= self_rs->size) {
-           GetEof();
-           *eof = onedesc;
+           GetSelfFEof();
+           *self_f_eof = onedesc;
            why("End of file");
            fail;
        }
