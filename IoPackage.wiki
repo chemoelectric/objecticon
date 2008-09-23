@@ -162,7 +162,7 @@ Note that this code uses the methods `in` and `out` to read and write data, rath
 = In-memory I/O =
 There are two types of stream which operate entirely on data in memory.  The first is `StringStream` which represents the stream's data as an Icon string.  The second is `RamStream` which represents uses memory allocated independently from Icon's allocation system.  `StringStream` is useful when a constant string needs to be represented as a stream, but `RamStream` is much faster when the stream will be written to and changed.
 
-`RamStream` can be used to efficiently concatenate long strings together.  This is a potential problem if you are not careful, because of the way Icon allocates strings.  For example, consider the following program.
+`RamStream` can be used to efficiently concatenate long strings together.  This is a potential problem in Icon if you are not careful, because of the way strings are allocated.  For example, consider the following program.
 {{{
 import io
 
@@ -177,7 +177,7 @@ procedure main()
    write("Done, *s=", *s)
 end
 }}}
-This program builds up a long string s consisting of each integer replicated 5 times.  If you run this program you will see that the longer `s` becomes, the longer each iteration of the loop takes.  This is because the call of `repl` allocates a string at the end of the string space, meaning that the concatenation operation has to copy `s` in its entirety rather than just append to the already existing string.
+This program builds up a long string s consisting of each integer replicated 5 times.  If you run this program you will see that the longer `s` becomes, the longer each iteration of the loop takes.  This is because the implicit conversion of `i` to a string in the `repl` call creates a temporary string which separates the result of `repl` from `s`, meaning that the concatenation operation has to copy `s` in its entirety - an operation that becomes slower as `s` becomes longer.
 
 One way to dramatically speed this program up is to use a `RamStream`, to build up the string independently of Icon's string allocation, as follows :-
 {{{
