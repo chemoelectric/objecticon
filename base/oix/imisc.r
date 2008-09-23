@@ -11,8 +11,6 @@
 static int cast_access(dptr cargp, struct inline_field_cache *ic);
 static int instance_access(dptr cargp, struct inline_field_cache *ic);
 static int class_access(dptr cargp, struct inline_field_cache *ic);
-static int in_lang(dptr s);
-static int same_package(dptr n1, dptr n2);
 static int in_hierarchy(struct b_class *c1, struct b_class *c2);
 static int record_access(dptr cargp, struct inline_field_cache *ic);
 
@@ -230,7 +228,6 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     struct class_field *caller_field;
     struct b_class *caller_class = 0;
     struct b_proc *caller_proc;
-    dptr caller_fq;   /* Either the class name or the procedure name; gives the caller package */
 
     if (cf->flags & M_Public)
         return 0;
@@ -243,13 +240,10 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     caller_proc = &BlkLoc(*pp)->proc;
 
     caller_field = caller_proc->field;
-    if (caller_field) {
+    if (caller_field)
         caller_class = caller_field->defining_class;
-        caller_fq = &caller_class->name;
-    } else
-        caller_fq = &caller_proc->pname;
 
-    if (in_lang(caller_fq))
+    if (caller_proc->package_id == 1)  /* Is the caller in lang? */
         return 0;
 
     if (cf->flags & M_Private) {
@@ -277,7 +271,7 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
          * distinct.
          */
         if (caller_proc->program == cf->defining_class->program &&
-                same_package(caller_fq, &cf->defining_class->name))
+            caller_proc->package_id == cf->defining_class->package_id)
             return 0;
         return 611;
     }
@@ -297,32 +291,6 @@ static int in_hierarchy(struct b_class *c1, struct b_class *c2)
         if (c2->implemented_classes[i] == c1)
             return 1;
     return 0;
-}
-
-static int pack_end(dptr p)
-{
-    char *s = StrLoc(*p);
-    int i = StrLen(*p) - 1;
-    while (i >= 0) {
-        if (s[i] == '.')
-            break;
-        --i;
-    }
-    return i;
-}
-
-static int in_lang(dptr p)
-{
-    return pack_end(p) == 4 && !strncmp(StrLoc(*p), "lang", 4);
-}
-
-static int same_package(dptr p1, dptr p2)
-{
-    int i1 = pack_end(p1);
-    int i2 = pack_end(p2);
-    if (i1 < 0 || i2 < 0)
-        return i1 == i2;
-    return i1 == i2 && !strncmp(StrLoc(*p1), StrLoc(*p2), i1);
 }
 
 /*

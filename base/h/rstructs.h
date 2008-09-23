@@ -94,6 +94,8 @@ struct b_proc {			/* procedure block */
     word nstatic;		/*   number of static locals */
     word fstatic;		/*   index (in global table) of first static */
     struct progstate *program;   /*   program in which this procedure resides */
+    word package_id;            /* package id of package in which this proc resides; 0=not in 
+                                 * a package; 1=lang; >1=other package */
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only
                                  * exception is the deferred method stub, which can be pointed to by
                                  * many different fields of course. */
@@ -137,6 +139,7 @@ struct b_class {
     word title;
     word blksize;
     struct progstate *program;   /*   program in which this class resides */
+    word package_id;             /*   package id of this class's package */
     word instance_ids;           /* Sequence for instance ids */
     word init_state;             /* State of initialization */
     word flags;                  /* Modifier flags from the source code */
@@ -526,6 +529,7 @@ struct b_iproc {		/* procedure block */
     word ip_nstatic;		/*   number of static locals */
     word ip_fstatic;		/*   index (in global table) of first static */
     struct progstate *ip_program;/*   not set */
+    word package_id;
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field */
     struct sdescrip ip_pname;	/*   procedure name (string qualifier) */
     struct descrip ip_lnames[1];	/*   list of local names (qualifiers) */

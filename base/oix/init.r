@@ -46,10 +46,11 @@ Deliberate Syntax Error
     -1,                                         \
     underef,                                    \
     0,                                          \
-    &rootpstate,                                \
     0,                                          \
-    {{sizeof(sname)-1,sname}}},
-#passthru static B_IProc(2) init_op_tbl[] = {
+    0,                                          \
+    0,                                          \
+    {sizeof(sname)-1,sname}},
+#passthru static struct b_iproc init_op_tbl[] = {
 #passthru #include "../h/odefs.h"
 #passthru   };
 #undef OpDef

@@ -378,12 +378,6 @@
       (dest)->vword.bptr = (union block *)alcsubs(len, pos, (var));\
    (dest)->dword = D_Tvsubs;
 
-/*
- * Macro for initialized procedure block.
- */
-#define B_IProc(n) struct {word title; word blksize; int (*ccode)();\
-   word nparam; word ndynam; word nstatic; word fstatic;\
-   struct progstate *program; struct class_field *field; struct sdescrip quals[n];}
 
 #define ssize    (curstring->size)
 #define strbase  (curstring->base)
@@ -488,7 +482,7 @@
       	Cat(Z,f),\
       	nargs,\
       	-1,\
-      	deref, 0, 0, 0,                       \
+      	deref, 0, 0, 0, 0,                       \
       	{sizeof(Lit(f))-1,Lit(f)}};
 
    /*
@@ -502,7 +496,7 @@
    	nargs,\
    	-1,\
    	xtrargs,\
-   	0,0,0,                                \
+   	0,0,0,0,                                \
    	{sizeof(sname)-1,sname}};
 
    

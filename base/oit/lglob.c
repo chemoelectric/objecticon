@@ -21,6 +21,32 @@ static void	reference(struct gentry *gp);
 static double   parse_real(char *data);
 static long     parse_int(char *data);
 
+struct package_id {
+    char *name;
+    int id;
+    struct package_id *b_next;
+};
+
+#define PACKAGE_ID_HASH_SIZE 128
+struct package_id *package_id_hash[PACKAGE_ID_HASH_SIZE];
+
+int get_package_id(char *s)
+{
+    int i = hasher(s, package_id_hash);
+    struct package_id *x = package_id_hash[i];
+    static int next_package_id = 1;
+    while (x && x->name != s)
+        x = x->b_next;
+    if (!x) {
+        x = Alloc(struct package_id);
+        x->b_next = package_id_hash[i];
+        package_id_hash[i] = x;
+        x->name = s;
+        x->id = next_package_id++;
+    }
+    return x->id;
+}
+
 /*
  * readglob reads the global information from lf
  */
@@ -60,6 +86,7 @@ void readglob(struct lfile *lf)
 
             case Op_Package:
                 lf->package = uin_str();
+                lf->package_id = get_package_id(lf->package);
                 break;
 
             case Op_Import:		/* import the named package */

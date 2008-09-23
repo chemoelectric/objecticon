@@ -852,7 +852,7 @@ static void lemitproc(struct lfunction *func)
     if (abs(func->nargs) != func->narguments)
         quitf("Mismatch between ufile's nargs and narguments");
 
-    size = (11*WordSize) + (2*WordSize) * (func->narguments + func->ndynamic + func->nstatics);
+    size = (12*WordSize) + (2*WordSize) * (func->narguments + func->ndynamic + func->nstatics);
     if (func->proc)
         p = func->proc->name;
     else
@@ -869,6 +869,7 @@ static void lemitproc(struct lfunction *func)
         fprintf(dbgfile, "\t%d\t\t\t\t# Num static\n", func->nstatics);	/* # static locals */
         fprintf(dbgfile, "\t%d\t\t\t\t# First static\n", nstatics);		/* first static */
         fprintf(dbgfile, "\t0\n");		        /* owning prog space */
+        fprintf(dbgfile, "\t%d\t\t\t\t# Package id\n", func->defined->package_id);       /* package id */
         fprintf(dbgfile, "\t0\n");		        /* field */
         fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n",	/* name of procedure */
                 sp->len, sp->offset, p);
@@ -883,6 +884,7 @@ static void lemitproc(struct lfunction *func)
     outword(func->nstatics);
     outword(nstatics);
     outword(0);
+    outword(func->defined->package_id);
     outword(0);
     outword(sp->len);          /* procedure name: length & offset */
     outword(sp->offset);
@@ -996,7 +998,8 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "%ld:\n", (long)pc);
         fprintf(dbgfile, "\t%d\t\t\t\t# T_Class\n", T_Class);
         fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", cl->size);
-        fprintf(dbgfile, "\t0\t\t\t\t# Owning prog\n");    /* owning prog space */
+        fprintf(dbgfile, "\t0\t\t\t\t# Owning prog\n");
+        fprintf(dbgfile, "\t%d\t\t\t\t# Package id\n", cl->global->defined->package_id);
         fprintf(dbgfile, "\t0\t\t\t\t# Instance ids counter\n");
         fprintf(dbgfile, "\t%d\t\t\t\t# Initialization state\n", Uninitialized);
         fprintf(dbgfile, "\t%08o\t\t\t# Flags\n", cl->flag);
@@ -1009,6 +1012,7 @@ static void genclass(struct lclass *cl)
     outword(T_Class);		/* type code */
     outword(cl->size);
     outword(0);
+    outword(cl->global->defined->package_id);
     outword(0);
     outword(Uninitialized);
     outword(cl->flag);
@@ -1209,7 +1213,7 @@ static void genclasses()
     for (cl = lclasses; cl; cl = cl->next) {
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
-        cl->size = WordSize * (16 +
+        cl->size = WordSize * (17 +
                                1 + 
                                cl->n_supers +
                                cl->n_implemented_classes +

@@ -35,6 +35,7 @@ char *self_string;
 char *new_string;
 char *init_string;
 char *all_string;
+char *lang_string;
 char *package_marker_string;
 char *standard_field_names[N_STANDARD_FIELDS];
 
@@ -642,6 +643,7 @@ void init_strings()
     new_string = spec_str("new");
     init_string = spec_str("init");
     all_string = spec_str("all");
+    lang_string = spec_str("lang");
     package_marker_string = spec_str(">package");
     standard_field_names[0] = init_string;
     standard_field_names[1] = new_string;

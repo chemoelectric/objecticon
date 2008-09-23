@@ -39,6 +39,7 @@ extern char *self_string;
 extern char *new_string;
 extern char *init_string;
 extern char *all_string;
+extern char *lang_string;
 extern char *package_marker_string;
 extern char *standard_field_names[];
 

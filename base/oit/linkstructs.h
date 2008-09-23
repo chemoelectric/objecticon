@@ -171,6 +171,7 @@ struct lfile {
     char *name;                           /* name of the file */
     int declend_offset;                      /* file offset of declend */
     char *package;                           /* package of this file, or null */
+    int package_id;                          /* id number of package */
     struct fimport *import_hash[64], *imports, *last_import;  /* imports in this file */
     struct lfile *next, *b_next;             /* pointer to next file */
 };

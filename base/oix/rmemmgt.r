@@ -87,9 +87,7 @@ int firstd[] = {
      0,                       /* T_Real (3), real number */
      0,                       /* T_Cset (4), cset */
     -1,                       /* T_Constructor (5), record constructor */
-
-     9*WordSize,              /* T_Proc (6), procedure block */
-
+    -1,                       /* T_Proc (6), procedure block */
      4*WordSize,              /* T_Record (7), record block */
      0,                       /* T_List (8), list header block */
      7*WordSize,              /* T_Lelem (9), list element block */

@@ -8,6 +8,7 @@
 #include "lmem.h"
 #include "util.h"
 #include "tmain.h"
+#include "lglob.h"
 
 #include "../h/rmacros.h"
 
@@ -53,6 +54,11 @@ void linit()
      */
     ArrClear(lghash);
     ArrClear(lfhash);
+
+    /*
+     * Ensure "lang" is package id number 1.
+     */
+    get_package_id(lang_string);
 }
 
 
