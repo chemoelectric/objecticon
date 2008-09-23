@@ -28,10 +28,10 @@ import util
 class Ticker(SetFields,Connectable)
    private readable
       interval,
-      delay,
-      times
+      delay
 
    package readable
+      times,
       start_time,        # Time start() called
       last_tick_time,    # Time tick() last called, or &null
       next_tick_time
