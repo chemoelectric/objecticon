@@ -66,9 +66,19 @@ After running `configure` successfully, just run the command
 make
 }}}
 to build everything.  Note that GNU make is required.
-
+== Testing ==
+After `make` has completed successfully, you can optionally run some tests, as follows :-
+{{{
+make test
+}}}
+Various output will follow, which should hopefully end with the message "Testing successful."  If not, the problem with the failed test can be examined by comparing the expected output of a test with the actual output.  For example, if the io test failed, run
+{{{
+cd test
+diff io.out io.std
+}}}
+to see the problem.
 == Installing ==
-After `make` has completed successfully, you can optionally install to the directory specified with the `configure --prefix` option (by default `/usr/local`).   This is optional, because it is quite possible to run Object Icon from the same directory it was compiled in (see below).
+You can optionally install to the directory specified with the `configure --prefix` option (by default `/usr/local`).   This is optional, because it is quite possible to run Object Icon from the same directory it was compiled in (see below).
 
 If you do wish to install to the `--prefix` directory, then run the command
 {{{
