@@ -98,7 +98,7 @@ struct region rootstring, rootblock;
 
 
 
-int op_tbl_sz = (sizeof(init_op_tbl) / sizeof(struct b_proc));
+int op_tbl_sz = ElemCount(init_op_tbl);
 struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
 
 
