@@ -58,16 +58,8 @@ end
  */
 int class_is(struct b_class *class, struct b_class *target)
 {
-    if (class->is_table) {
-        /*
-         * Use an already-created bitfield table.
-         */
-        word id;
-        if (class->program != target->program)
-            return 0;
-        id = target->class_id;
-        return class->is_table[id / WordBits] & (1 << (id % WordBits));
-    } else {
+    word id;
+    if (!class->is_table) {
         int i, n = class->n_implemented_classes;
         if (n > 4) {
             /*
@@ -77,10 +69,9 @@ int class_is(struct b_class *class, struct b_class *target)
             MemProtect(class->is_table = calloc(1 + (*class->program->Classes - 1) / WordBits,
                                                 WordSize));
             for (i = 0; i < n; ++i) {
-                word id = class->implemented_classes[i]->class_id;
+                id = class->implemented_classes[i]->class_id;
                 class->is_table[id / WordBits] |= (1 << id % WordBits);
             }
-            return class_is(class, target);
         } else {
             /*
              * Simple linear search
@@ -92,6 +83,14 @@ int class_is(struct b_class *class, struct b_class *target)
             return 0;
         }
     }
+
+    /*
+     * Use an already-created bitfield table.
+     */
+    if (class->program != target->program)
+        return 0;
+    id = target->class_id;
+    return class->is_table[id / WordBits] & (1 << (id % WordBits));
 }
 
 function{0,1} is(o, c)
