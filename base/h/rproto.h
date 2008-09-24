@@ -632,3 +632,4 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic);
 void why(char *s);
 void whyf(char *fmt, ...);
 char *salloc(char *s);
+int class_is(struct b_class *class1, struct b_class *class2);

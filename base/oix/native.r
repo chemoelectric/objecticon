@@ -53,20 +53,55 @@ function{1} progof(x)
    }
 end
 
+/*
+ * Evaluate whether target is an implemented class of class.
+ */
+int class_is(struct b_class *class, struct b_class *target)
+{
+    if (class->is_table) {
+        /*
+         * Use an already-created bitfield table.
+         */
+        word id;
+        if (class->program != target->program)
+            return 0;
+        id = target->class_id;
+        return class->is_table[id / WordBits] & (1 << (id % WordBits));
+    } else {
+        int i, n = class->n_implemented_classes;
+        if (n > 4) {
+            /*
+             * Create a bitfield
+             */
+            /*printf("creating for class %s with %d\n",StrLoc(class->name), n);*/
+            MemProtect(class->is_table = calloc(1 + (*class->program->Classes - 1) / WordBits,
+                                                WordSize));
+            for (i = 0; i < n; ++i) {
+                word id = class->implemented_classes[i]->class_id;
+                class->is_table[id / WordBits] |= (1 << id % WordBits);
+            }
+            return class_is(class, target);
+        } else {
+            /*
+             * Simple linear search
+             */
+            for (i = 0; i < n; ++i) {
+                if (class->implemented_classes[i] == target)
+                    return 1;
+            }
+            return 0;
+        }
+    }
+}
+
 function{0,1} is(o, c)
    if !is:class(c) then
        runerr(603, c)
     body {
-        struct b_class *class, *target = &BlkLoc(c)->class;
-        int i;
-        if (!is:object(o))
+        if (is:object(o) && class_is(BlkLoc(o)->object.class, &BlkLoc(c)->class))
+            return c;
+        else
             fail;
-        class = BlkLoc(o)->object.class;
-        for (i = 0; i < class->n_implemented_classes; ++i) {
-            if (class->implemented_classes[i] == target)
-                return c;
-        }
-        fail;
     }
 end
 

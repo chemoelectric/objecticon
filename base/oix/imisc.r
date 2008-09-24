@@ -11,7 +11,6 @@
 static int cast_access(dptr cargp, struct inline_field_cache *ic);
 static int instance_access(dptr cargp, struct inline_field_cache *ic);
 static int class_access(dptr cargp, struct inline_field_cache *ic);
-static int in_hierarchy(struct b_class *c1, struct b_class *c2);
 static int record_access(dptr cargp, struct inline_field_cache *ic);
 
 LibDcl(field,2,".")
@@ -255,12 +254,12 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     if (cf->flags & M_Protected) {
         if (instance_class) {
             /* Instance access, caller must be in instance's implemented classes */
-            if (caller_class && in_hierarchy(caller_class, instance_class))
+            if (caller_class && class_is(instance_class, caller_class))
                 return 0;
             return 609;
         } else {
             /* Static access, definition must be in caller's implemented classes */
-            if (caller_class && in_hierarchy(cf->defining_class, caller_class))
+            if (caller_class && class_is(caller_class, cf->defining_class))
                 return 0;
             return 610;
         }
@@ -278,19 +277,6 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
 
     syserr("unknown/missing access modifier");
     return 0; /* Not reached */
-}
-
-/*
- * Is c1 in the hierarchy of c2, ie in its list of implemented
- * classes?
- */
-static int in_hierarchy(struct b_class *c1, struct b_class *c2)
-{
-    int i;
-    for (i = 0; i < c2->n_implemented_classes; ++i)
-        if (c2->implemented_classes[i] == c1)
-            return 1;
-    return 0;
 }
 
 /*
@@ -723,15 +709,13 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
  */
 int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
 {
-    struct b_object *obj;
     struct b_class *class;
     dptr p;
 
     if (!is:object(*x))
         return 0;
 
-    obj = &BlkLoc(*x)->object;
-    class = obj->class;
+    class = BlkLoc(*x)->object.class;
 
     if (ic) {
         if (class->program == ic->program)
@@ -744,13 +728,8 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
     } else
         p = lookup_global(cname, class->program);
 
-    if (p && is:class(*p)) {
-        struct b_class *target = &BlkLoc(*p)->class;
-        int i;
-        for (i = 0; i < class->n_implemented_classes; ++i) {
-            if (class->implemented_classes[i] == target)
-                return 1;
-        }
-    }
-    return 0;
+    if (p && is:class(*p) && class_is(class, &BlkLoc(*p)->class))
+        return 1;
+    else
+        return 0;
 }

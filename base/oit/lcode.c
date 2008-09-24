@@ -999,6 +999,8 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "\t%d\t\t\t\t# T_Class\n", T_Class);
         fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", cl->size);
         fprintf(dbgfile, "\t0\t\t\t\t# Owning prog\n");
+        fprintf(dbgfile, "\t0\t\t\t\t# is() lookup table\n");
+        fprintf(dbgfile, "\t%d\t\t\t\t# Class id\n", cl->id);
         fprintf(dbgfile, "\t%d\t\t\t\t# Package id\n", cl->global->defined->package_id);
         fprintf(dbgfile, "\t0\t\t\t\t# Instance ids counter\n");
         fprintf(dbgfile, "\t%d\t\t\t\t# Initialization state\n", Uninitialized);
@@ -1012,6 +1014,8 @@ static void genclass(struct lclass *cl)
     outword(T_Class);		/* type code */
     outword(cl->size);
     outword(0);
+    outword(0);
+    outword(cl->id);
     outword(cl->global->defined->package_id);
     outword(0);
     outword(Uninitialized);
@@ -1160,6 +1164,7 @@ static void genclasses()
     if (Dflag)
         fprintf(dbgfile, "\n# class static and method descriptors\n");
     for (cl = lclasses; cl; cl = cl->next) {
+        cl->id = n_classes;
         for (cf = cl->fields; cf; cf = cf->next) {
             if (cf->flag & M_Defer) {
                 /* Try and resolve to a builtin native method number */
@@ -1213,13 +1218,13 @@ static void genclasses()
     for (cl = lclasses; cl; cl = cl->next) {
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
-        cl->size = WordSize * (17 +
+        cl->size = WordSize * (19 +
                                1 + 
                                cl->n_supers +
                                cl->n_implemented_classes +
-                               n_fields) +
-            ShortSize * n_fields + 
-            ShortSize * N_STANDARD_FIELDS;
+                               n_fields) + 
+            ShortSize * (n_fields + N_STANDARD_FIELDS);
+
         cl->size += nalign(cl->size);
         x += cl->size;
     }

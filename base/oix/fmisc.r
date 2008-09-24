@@ -2150,26 +2150,15 @@ function{1} cast(o,c)
        runerr(602, o)
    if !is:class(c) then
        runerr(603, c)
-   abstract {
-      return cast
-      }
    body {
       struct b_cast *p;
-      struct b_object *obj = &BlkLoc(o)->object;
-      struct b_class *class = &BlkLoc(c)->class;
-      int i;
-      /* Check the cast makes sense, ie it is to a class the object
-       * implements */
-      for (i = 0; i < obj->class->n_implemented_classes; ++i) {
-          if (obj->class->implemented_classes[i] == class)
-              break;
-      }
-      if (i == obj->class->n_implemented_classes)
+      /* 
+       * Check the cast makes sense, ie it is to a class the object
+       * implements 
+       */
+      if (!class_is(BlkLoc(o)->object.class, &BlkLoc(c)->class))
           runerr(604, c);
       MemProtect(p = alccast());
-      /*
-       * Refresh pointers after allocation
-       */
       p->object = &BlkLoc(o)->object;
       p->class = &BlkLoc(c)->class;;
       return cast(p);

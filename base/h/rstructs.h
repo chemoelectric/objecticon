@@ -135,21 +135,24 @@ struct class_field {
     struct descrip *field_descriptor;  /* Pointer to descriptor; null if an instance field */
 };
 
-struct b_class {
-    word title;
+struct b_class {                 /* block representing a class - always static, never allocated */
+    word title;                  /* T_Class */
     word blksize;
-    struct progstate *program;   /*   program in which this class resides */
-    word package_id;             /*   package id of this class's package */
+    struct progstate *program;   /* Program in which this class resides */
+    word *is_table;              /* Lookup bitfield table for constant time is() */
+    word class_id;               /* Sequence id of this class; an ascending zero-based sequence
+                                  *   used to index the above is_table bitfield */
+    word package_id;             /* Package id of this class's package - see b_proc above */
     word instance_ids;           /* Sequence for instance ids */
     word init_state;             /* State of initialization */
     word flags;                  /* Modifier flags from the source code */
-    word n_supers;
-    word n_implemented_classes;
-    word n_instance_fields;
-    word n_class_fields;
-    struct descrip name;	/*   class name (string qualifier) */
-    struct b_class **supers;
-    struct b_class **implemented_classes;
+    word n_supers;               /* Number of supers */
+    word n_implemented_classes;  /* Number of implemented classes */
+    word n_instance_fields;      /* Number of instance fields */
+    word n_class_fields;         /* Number of class fields (statics & methods) */
+    struct descrip name;	 /*  Class name (string qualifier) */
+    struct b_class **supers;     /* Array of pointers to supers */
+    struct b_class **implemented_classes;  /* Array of pointers to implemented classes */
     struct class_field **fields;  /* Pointers to field info; one for each field */
     short *sorted_fields;       /* An array of indices into fields, giving the order sorted by
                                  * field number (and hence also sorted by name) */
