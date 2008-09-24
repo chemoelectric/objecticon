@@ -59,13 +59,19 @@ end
 int class_is(struct b_class *class, struct b_class *target)
 {
     word id;
+
+    /* 
+     * Different programs never share classes
+     */
+    if (class->program != target->program)
+        return 0;
+
     if (!class->is_table) {
         int i, n = class->n_implemented_classes;
         if (n > 4) {
             /*
              * Create a bitfield
              */
-            /*printf("creating for class %s with %d\n",StrLoc(class->name), n);*/
             MemProtect(class->is_table = calloc(1 + (*class->program->Classes - 1) / WordBits,
                                                 WordSize));
             for (i = 0; i < n; ++i) {
@@ -87,8 +93,6 @@ int class_is(struct b_class *class, struct b_class *target)
     /*
      * Use an already-created bitfield table.
      */
-    if (class->program != target->program)
-        return 0;
     id = target->class_id;
     return class->is_table[id / WordBits] & (1 << (id % WordBits));
 }
