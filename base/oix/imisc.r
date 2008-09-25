@@ -245,37 +245,41 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     if (caller_proc->package_id == 1)  /* Is the caller in lang? */
         return 0;
 
-    if (cf->flags & M_Private) {
-        if (caller_class == cf->defining_class)
-            return 0;
-        return 608;
-    }
+    switch (cf->flags & (M_Private|M_Protected|M_Package)) {
+        case M_Private: {
+            if (caller_class == cf->defining_class)
+                return 0;
+            return 608;
+        }
 
-    if (cf->flags & M_Protected) {
-        if (instance_class) {
-            /* Instance access, caller must be in instance's implemented classes */
-            if (caller_class && class_is(instance_class, caller_class))
+        case M_Protected: {
+            if (instance_class) {
+                /* Instance access, caller must be in instance's implemented classes */
+                if (caller_class && class_is(instance_class, caller_class))
+                    return 0;
+                return 609;
+            } else {
+                /* Static access, definition must be in caller's implemented classes */
+                if (caller_class && class_is(caller_class, cf->defining_class))
+                    return 0;
+                return 610;
+            }
+        }
+
+        case M_Package: {
+            /* Check for same package.  Note that packages in different programs are
+             * distinct.
+             */
+            if (caller_proc->program == cf->defining_class->program &&
+                caller_proc->package_id == cf->defining_class->package_id)
                 return 0;
-            return 609;
-        } else {
-            /* Static access, definition must be in caller's implemented classes */
-            if (caller_class && class_is(caller_class, cf->defining_class))
-                return 0;
-            return 610;
+            return 611;
+        }
+
+        default: {
+            syserr("unknown/missing access modifier");
         }
     }
-
-    if (cf->flags & M_Package) {
-        /* Check for same package.  Note that packages in different programs are
-         * distinct.
-         */
-        if (caller_proc->program == cf->defining_class->program &&
-            caller_proc->package_id == cf->defining_class->package_id)
-            return 0;
-        return 611;
-    }
-
-    syserr("unknown/missing access modifier");
     return 0; /* Not reached */
 }
 
