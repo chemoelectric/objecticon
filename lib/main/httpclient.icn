@@ -279,6 +279,7 @@ class HttpClient(NetClient)
       b64h := Base64Handler()
       s := b64h.encode_data(&null, request.username || ":" || request.password, 1)
       basic_auth_header := "Basic " || s
+      return
    end
 
    #
