@@ -143,7 +143,9 @@ procedure do_class(c)
    write("Num instance fields: ", Class.get_n_instance_fields(c))
    pr_seq{"Instance field names", Class.get_instance_field_names(c)}
    yes_no{"is(c,c)", is(c,c)}
+   yes_no{"Class.implements(c,c)", Class.implements(c,c)}
    yes_no{"is(c,Class)", is(c,Class)}
+   yes_no{"Class.implements(c,Class)", Class.implements(c,Class)}
    yes_no{"Class.for_name check", Class.for_name(subtype(c)) === c}
    yes_no{"Field count check", Class.get_n_fields(c) = Class.get_n_class_fields(c) +
              Class.get_n_instance_fields(c)}
@@ -179,10 +181,10 @@ procedure test_Class()
 
    yes_no{"is(x,Eight)", is(x,Eight)}
    yes_no{"is(x,Class)", is(x,Class)}
-   yes_no{"is(Eight,Eight)", is(Eight,Eight)}
-   yes_no{"is(Eleven,Eight)", is(Eleven,Eight)}
-   yes_no{"is(Eleven,Ten)", is(Eleven,Ten)}
-   yes_no{"is(Eight,Eleven)", is(Eight,Eleven)}
+   yes_no{"Class.implements(Eight,Eight)", Class.implements(Eight,Eight)}
+   yes_no{"Class.implements(Eleven,Eight)", Class.implements(Eleven,Eight)}
+   yes_no{"Class.implements(Eleven,Ten)", Class.implements(Eleven,Ten)}
+   yes_no{"Class.implements(Eight,Eleven)", Class.implements(Eight,Eleven)}
    yes_no{"Class.for_name(\"junk\")", Class.for_name("junk")}
    try{"Class.for_name([])", Class.for_name([])}
    try{"is()", is()}

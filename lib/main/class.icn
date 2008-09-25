@@ -54,6 +54,12 @@ class Class()
    #
    public static defer get_implemented_classes(c)
 
+   # Succeed iff the class {c} implements the class {target}.  This is
+   # similar to the builtin is() function, but takes a class as its
+   # first argument, whereas is() takes an object (or fails).
+   #
+   public static defer implements(c, target)
+
    # Generate the field names of the class {c}.  The instance fields
    # come first, followed by the class fields.
    #

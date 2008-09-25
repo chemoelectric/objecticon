@@ -1,10 +1,10 @@
 classof(x): class Eight
 is(x,Eight): yes
 is(x,Class): no
-is(Eight,Eight): no
-is(Eleven,Eight): no
-is(Eleven,Ten): no
-is(Eight,Eleven): no
+Class.implements(Eight,Eight): yes
+Class.implements(Eleven,Eight): yes
+Class.implements(Eleven,Ten): yes
+Class.implements(Eight,Eleven): no
 Class.for_name("junk"): no
 Class.for_name([]): Error 103
 is(): Error 603
@@ -32,7 +32,9 @@ Class field names: {"a", "b", "c", "eleven1", "new", "thing", "dm", "ten1"}
 Num instance fields: 9
 Instance field names: {"z", "one", "two", "three", "four", "five", "six", "seven", "eight"}
 is(c,c): no
+Class.implements(c,c): yes
 is(c,Class): no
+Class.implements(c,Class): no
 Class.for_name check: yes
 Field count check: yes
 Name set check1: yes
@@ -171,7 +173,9 @@ Class field names: {"thing", "dm"}
 Num instance fields: 0
 Instance field names: {}
 is(c,c): no
+Class.implements(c,c): yes
 is(c,Class): no
+Class.implements(c,Class): no
 Class.for_name check: yes
 Field count check: yes
 Name set check1: yes
@@ -204,7 +208,9 @@ Class field names: {}
 Num instance fields: 0
 Instance field names: {}
 is(c,c): no
+Class.implements(c,c): yes
 is(c,Class): no
+Class.implements(c,Class): no
 Class.for_name check: yes
 Field count check: yes
 Name set check1: yes
@@ -221,7 +227,9 @@ Class field names: {"ten1"}
 Num instance fields: 0
 Instance field names: {}
 is(c,c): no
+Class.implements(c,c): yes
 is(c,Class): no
+Class.implements(c,Class): no
 Class.for_name check: yes
 Field count check: yes
 Name set check1: yes
@@ -639,7 +647,7 @@ Equals check: list#*[list#*[ref list#*],ref list#*] -v- list#*[list#*[ref list#*
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: set#*{list#*[1,2,3],list#*[],list#*[2]} -v- set#*{list#*[1,2,3],list#*[2],list#*[]}
+Equals check: set#*{list#*[1,2,3],list#*[],list#*[2]} -v- set#*{list#*[2],list#*[],list#*[1,2,3]}
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes

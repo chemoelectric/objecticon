@@ -97,12 +97,12 @@ int class_is(struct b_class *class, struct b_class *target)
     return class->is_table[id / WordBits] & (1 << (id % WordBits));
 }
 
-function{0,1} is(o, c)
-   if !is:class(c) then
-       runerr(603, c)
+function{0,1} is(o, target)
+   if !is:class(target) then
+       runerr(603, target)
     body {
-        if (is:object(o) && class_is(BlkLoc(o)->object.class, &BlkLoc(c)->class))
-            return c;
+        if (is:object(o) && class_is(BlkLoc(o)->object.class, &BlkLoc(target)->class))
+            return target;
         else
             fail;
     }
@@ -150,6 +150,20 @@ function{*} lang_Class_get_implemented_classes(c)
         for (i = 0; i < class->n_implemented_classes; ++i)
             suspend class(class->implemented_classes[i]);
         fail;
+    }
+end
+
+function{0,1} lang_Class_implements(c, target)
+   if !is:class(target) then
+       runerr(603, target)
+    body {
+        struct b_class *class;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
+        if (class_is(class, &BlkLoc(target)->class))
+            return target;
+        else
+            fail;
     }
 end
 
