@@ -222,14 +222,13 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
  */
 int check_access(struct class_field *cf, struct b_class *instance_class)
 {
-    struct pf_marker *fp = pfp;
-    dptr pp = (dptr)fp - (pfp->pf_nargs + 1);
-    struct class_field *caller_field;
-    struct b_class *caller_class = 0;
+    dptr pp;
     struct b_proc *caller_proc;
 
     if (cf->flags & M_Public)
         return 0;
+
+    pp = (dptr)pfp - (pfp->pf_nargs + 1);
 
     if (pp->dword != D_Proc) {
         showstack();
@@ -238,29 +237,29 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
 
     caller_proc = &BlkLoc(*pp)->proc;
 
-    caller_field = caller_proc->field;
-    if (caller_field)
-        caller_class = caller_field->defining_class;
-
     if (caller_proc->package_id == 1)  /* Is the caller in lang? */
         return 0;
 
     switch (cf->flags & (M_Private|M_Protected|M_Package)) {
         case M_Private: {
-            if (caller_class == cf->defining_class)
+            struct class_field *caller_field = caller_proc->field;
+            if (caller_field && caller_field->defining_class == cf->defining_class)
                 return 0;
             return 608;
         }
 
         case M_Protected: {
+            struct class_field *caller_field = caller_proc->field;
             if (instance_class) {
                 /* Instance access, caller must be in instance's implemented classes */
-                if (caller_class && class_is(instance_class, caller_class))
+                if (caller_field && class_is(instance_class, 
+                                             caller_field->defining_class))
                     return 0;
                 return 609;
             } else {
                 /* Static access, definition must be in caller's implemented classes */
-                if (caller_class && class_is(caller_class, cf->defining_class))
+                if (caller_field && class_is(caller_field->defining_class, 
+                                             cf->defining_class))
                     return 0;
                 return 610;
             }
