@@ -410,12 +410,8 @@ void icon_init(char *name)
      * Allocate stack and initialize &main.
      */
 
-    stack = (word *)malloc((msize)mstksize);
+    Protect(stack = malloc(mstksize), fatalerr(303, NULL));
     mainhead = (struct b_coexpr *)stack;
-
-
-    if (mainhead == NULL)
-        fatalerr(303, NULL);
 
     mainhead->title = T_Coexpr;
     mainhead->id = 1;
@@ -469,7 +465,7 @@ void icon_init(char *name)
         else {
             char *buf;
 
-            buf = (char *)malloc((msize)BUFSIZ);
+            buf = malloc(BUFSIZ);
             if (buf == NULL)
                 fatalerr(305, NULL);
             setbuf(stderr, buf);
@@ -481,7 +477,7 @@ void icon_init(char *name)
         setbuf(stderr, NULL);
     else {
 #ifndef MSWindows
-        char *buf = (char *)malloc((msize)BUFSIZ);
+        char *buf = malloc(BUFSIZ);
         if (buf == NULL)
             fatalerr(305, NULL);
         setbuf(stderr, buf);

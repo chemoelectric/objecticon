@@ -67,14 +67,14 @@ struct astkblk *alcactiv()
    {
    struct astkblk *abp;
 
-   abp = (struct astkblk *)malloc((msize)sizeof(struct astkblk));
+   abp = malloc(sizeof(struct astkblk));
 
    /*
     * If malloc failed, attempt to free some co-expression blocks and retry.
     */
    if (abp == NULL) {
       collect(Static);
-      abp = (struct astkblk *)malloc((msize)sizeof(struct astkblk));
+      abp = malloc(sizeof(struct astkblk));
       }
 
    if (abp == NULL)
@@ -128,13 +128,12 @@ long icodesize, stacksize;
    struct b_coexpr *ep;
 
    if (icodesize > 0) {
-      ep = (struct b_coexpr *)
-	calloc(1, (msize)(stacksize + icodesize +
+      ep = calloc(1, (stacksize + icodesize +
 			  sizeof(struct progstate) + sizeof(struct b_coexpr)));
       }
    else
       {
-   ep = (struct b_coexpr *)malloc((msize)stksize);
+   ep = malloc(stksize);
    }
 
    /*
@@ -146,12 +145,11 @@ long icodesize, stacksize;
       collect(Static);
 
       if (icodesize>0) {
-         ep = (struct b_coexpr *)
-	    malloc((msize)(mstksize+icodesize+sizeof(struct progstate)));
+         ep = malloc(mstksize+icodesize+sizeof(struct progstate));
          }
       else
 
-         ep = (struct b_coexpr *)malloc((msize)stksize);
+         ep = malloc(stksize);
       }
    if (ep == NULL)
       ReturnErrNum(305, NULL);
@@ -852,7 +850,7 @@ word nbytes,stdsize;
    if ((uword)nbytes > minSize)
       minSize = (uword)nbytes;
 
-   rp = (struct region *)malloc(sizeof(struct region));
+   rp = malloc(sizeof(struct region));
    if (rp) {
       rp->size = stdsize;
 #if IntBits == 16

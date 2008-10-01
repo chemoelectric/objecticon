@@ -134,10 +134,6 @@
  * Other defaults.
  */
 
-#ifndef AllocType
-   #define AllocType unsigned int
-#endif					/* AllocType */
-
 #ifndef MaxPath
    #define MaxPath 1024
 #endif					/* MaxPath */
@@ -275,7 +271,7 @@ Deliberate Syntax Error
 #endif					/* DiffPtrs */
 
 #ifndef AllocReg
-   #define AllocReg(n) malloc((msize)n)
+   #define AllocReg(n) malloc(n)
 #endif					/* AllocReg */
 
 #ifndef RttSuffix

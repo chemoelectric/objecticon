@@ -877,14 +877,14 @@ int readBMP(char *filename, int p, struct imgdata *imd)
     colorsimportant = *(int *)(headerstuff+48);
 
     if (bitcount <= 8) {
-        if ((colortable = (int *)malloc(4 * numcolors)) == NULL) {
+        if ((colortable = malloc(4 * numcolors)) == NULL) {
             fclose(f); return Failed;
 	}
         if (fread(colortable, 4, numcolors, f) < numcolors) {
             fclose(f); return Failed;
 	}
     }
-    if ((rasterdata = (char *)malloc(imagesize))) {
+    if ((rasterdata = malloc(imagesize))) {
         if (fread(rasterdata, 1, imagesize, f) < imagesize) {
             fclose(f); return Failed;
 	}
@@ -963,7 +963,7 @@ static int gfread(filename, p)
     gf_suffix = NULL;
     gf_string = NULL;
 
-    if (!(gf_paltbl=(struct palentry *)malloc(256 * sizeof(struct palentry))))
+    if (!(gf_paltbl=malloc(256 * sizeof(struct palentry))))
         return Failed;
 
 #ifdef MSWindows
@@ -1133,9 +1133,9 @@ static int gfsetup()
     word len;
 
     len = (word)gf_width * (word)gf_height;
-    gf_string = (unsigned char *)malloc((msize)len);
-    gf_prefix = (short *)malloc(GifTableSize * sizeof(short));
-    gf_suffix = (short *)malloc(GifTableSize * sizeof(short));
+    gf_string = malloc(len);
+    gf_prefix = malloc(GifTableSize * sizeof(short));
+    gf_suffix = malloc(GifTableSize * sizeof(short));
     if (!gf_string || !gf_prefix || !gf_suffix)
         return 0;
     for (i = 0; i < GifTableSize; i++) {
@@ -1396,7 +1396,7 @@ static int jpegread(char *filename, int p)
     row_stride = cinfo.output_width * cinfo.output_components; /* actual width of the image */
 
     if (p == 1) {
-        if (!(gf_paltbl=(struct palentry *)malloc(256 * sizeof(struct palentry))))
+        if (!(gf_paltbl=malloc(256 * sizeof(struct palentry))))
             return Failed;
 
         for (i = 0; i < cinfo.actual_number_of_colors; i++) {
@@ -1497,7 +1497,7 @@ static int bmpwrite(wbp w, char *filename, int x, int y, int width, int height)
 
     if (!(gf_f = fopen(filename, "wb")))
         return Failed;
-    if (!(gf_string = (unsigned char*)malloc((msize)len)))
+    if (!(gf_string = malloc(len)))
         return Error;
 
     for (i = 0; i < DMAXCOLORS; i++)
@@ -1580,7 +1580,7 @@ static int gfwrite(w, filename, x, y, width, height)
 
     if (!(gf_f = fopen(filename, "wb")))
         return Failed;
-    if (!(gf_string = (unsigned char*)malloc((msize)len)))
+    if (!(gf_string = malloc(len)))
         return Error;
 
     for (i = 0; i < DMAXCOLORS; i++)
@@ -1825,7 +1825,7 @@ static int jpegwrite(wbp w, char *filename, int x, int y, int width,int height)
 
     len = (long)width * (long)height ;	/* total length of data */
 
-    if (!(gf_string = (unsigned char*)malloc((msize)len)))
+    if (!(gf_string = malloc(len)))
         return Error;
 
     for (i = 0; i < DMAXCOLORS; i++)
@@ -2130,7 +2130,7 @@ struct palentry *palsetup(p)
         return palsetup_palette;
     if (palsetup_palette == NULL) {
         palsetup_palette =
-            (struct palentry *)malloc(256 * sizeof(struct palentry));
+            malloc(256 * sizeof(struct palentry));
         if (palsetup_palette == NULL)
             return NULL;
     }
@@ -3255,7 +3255,7 @@ void genCurve(w, p, n, helper)
 
         if (steps+4 > npoints) {
             if (thepoints != NULL) free(thepoints);
-            thepoints = (XPoint *)malloc((steps+4) * sizeof(XPoint));
+            thepoints = malloc((steps+4) * sizeof(XPoint));
             npoints = steps+4;
         }
 

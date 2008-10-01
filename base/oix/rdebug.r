@@ -901,7 +901,7 @@ int xdisp(fp,dp,count,f)
 
     nglobals = eglobals - globals;
 
-    indices = (word *)malloc((msize)nglobals * sizeof(word));
+    indices = malloc(nglobals * sizeof(word));
     if (indices == NULL)
         return Failed;
     else {
