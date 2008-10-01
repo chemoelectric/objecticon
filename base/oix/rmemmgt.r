@@ -182,8 +182,8 @@ int ptrno[] = {
     -1,                       /* T_Kywdevent (24), event keyword variable */
     -1,                       /* T_Class (25), class */
     -1,                       /* T_Object (26), object */
-     2,                       /* T_Cast (27), cast */
-     2,                       /* T_Methp (28), method pointer */
+     1,                       /* T_Cast (27), cast */
+     1,                       /* T_Methp (28), method pointer */
     };
 
 /*
