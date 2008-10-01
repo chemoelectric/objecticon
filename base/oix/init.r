@@ -445,7 +445,7 @@ void icon_init(char *name)
     /*
      * Resolve references from icode to run-time system.
      */
-    resolve(NULL);
+    resolve(&rootpstate);
 
 /*
  * The following code is operating-system dependent [@init.03].  Allocate and

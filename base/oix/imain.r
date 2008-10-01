@@ -394,17 +394,16 @@ int main(int argc, char **argv)
  * resolve - perform various fix-ups on the data read from the icode
  *  file.
  */
-void resolve(pstate)
-    struct progstate *pstate;
-
+void resolve(struct progstate *pstate)
 {
     word i, j, n_fields;
     struct b_proc *pp;
     struct b_class *class_blocks;
     struct class_field *cf;
     dptr dp;
-    register struct progstate *savedstate = curpstate;
-    if (pstate) curpstate = pstate;
+    struct progstate *savedstate = curpstate;
+
+    ENTERPSTATE(pstate);
 
     /*
      * For each class field info block, relocate the pointer to the
@@ -454,7 +453,7 @@ void resolve(pstate)
                 /* The variables */
                 for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++)
                     StrLoc(pp->lnames[i]) = strcons + (uword)StrLoc(pp->lnames[i]);
-                pp->program = pstate ? pstate:&rootpstate;
+                pp->program = pstate;
             }
         }
 #ifdef DEBUG_LOAD
@@ -485,7 +484,7 @@ void resolve(pstate)
                 cb = (struct b_class *)(code + i);
                 BlkLoc(globals[j]) = (union block *)cb;
                 StrLoc(cb->name) = strcons + (uword)StrLoc(cb->name);
-                cb->program = pstate ? pstate:&rootpstate;
+                cb->program = pstate;
                 n_fields = cb->n_class_fields + cb->n_instance_fields;
                 cb->supers = (struct b_class **)(code + (int)cb->supers);
                 for (i = 0; i < cb->n_supers; ++i) 
@@ -522,7 +521,7 @@ void resolve(pstate)
                 i = IntVal(globals[j]);
                 c = (struct b_constructor *)(code + i);
                 BlkLoc(globals[j]) = (union block *)c;
-                c->program = pstate ? pstate:&rootpstate;
+                c->program = pstate;
                 c->field_names = (struct descrip *)(code + (int)c->field_names);
                 c->sorted_fields = (short *)(code + (int)c->sorted_fields);
                 /*
@@ -582,7 +581,7 @@ void resolve(pstate)
                         !strncmp(StrLoc(pp->pname), "main", 4))
                         main_proc = &globals[j];
 
-                    pp->program = pstate ? pstate:&rootpstate;
+                    pp->program = pstate;
                 }
                 break;
             }
@@ -596,7 +595,7 @@ void resolve(pstate)
     for (dp = fnames; dp < efnames; dp++)
         StrLoc(*dp) = strcons + (uword)StrLoc(*dp);
 
-    curpstate = savedstate;
+    ENTERPSTATE(savedstate);
 }
 
 /*
