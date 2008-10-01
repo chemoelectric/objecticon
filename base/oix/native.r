@@ -115,10 +115,13 @@ function{0,1} glob(s, c)
        struct progstate *prog;
        dptr p;
 
-       if (is:coexpr(c))
+       if (is:null(c))
+           prog = curpstate;
+       else if (is:coexpr(c))
            prog = BlkLoc(c)->coexpr.program;
        else
-           prog = curpstate;
+           runerr(118, c);
+           
        p = lookup_global(&s, prog);
        if (p) {
            result.dword = D_Var;
@@ -487,10 +490,14 @@ function{0,1} lang_Class_for_name(s, c)
    body {
        struct progstate *prog;
        dptr p;
-       if (is:coexpr(c))
+
+       if (is:null(c))
+           prog = curpstate;
+       else if (is:coexpr(c))
            prog = BlkLoc(c)->coexpr.program;
        else
-           prog = curpstate;
+           runerr(118, c);
+
        p = lookup_global(&s, prog);
        if (p && is:class(*p))
            return *p;
