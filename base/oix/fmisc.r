@@ -2110,6 +2110,7 @@ function {*} structure(x)
             case T_List:
             case T_Set:
             case T_Table:
+            case T_Object:
             case T_Record: {
                BlkLoc(descr) = (union block *)bp;
                descr.dword = type | F_Ptr | D_Typecode;
@@ -2128,6 +2129,7 @@ function {*} structure(x)
             case T_List:
             case T_Set:
             case T_Table:
+            case T_Object:
             case T_Record: {
                BlkLoc(descr) = (union block *)bp;
                descr.dword = type | F_Ptr | D_Typecode;
