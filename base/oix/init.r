@@ -1061,76 +1061,81 @@ char *cstr(struct descrip *sd) {
 
 static char* vword2str(dptr d) {
     static char res[1024];
-    if (isvar((word*)d)) {
+
+    if (!(d->dword & F_Nqual)) {
+        return cstr(d);
+    }
+
+    if (d->dword & F_Typecode) {
+        switch(d->dword & TypeMask) {
+            case T_Null: return "0";
+            case T_Integer: sprintf(res, "%d", d->vword.integr); break;
+            case T_Proc: {
+                struct b_proc *p = (struct b_proc*)BlkLoc(*d);
+                sprintf(res, "%s() prog:%p", cstr(&p->pname), p->program);
+                break;
+            }
+            case T_Class: {
+                struct b_class *p = (struct b_class*)BlkLoc(*d);
+                sprintf(res, "class %s prog:%p", cstr(&p->name), p->program);
+                break;
+            }
+            case T_Constructor: {
+                struct b_constructor *p = (struct b_constructor*)BlkLoc(*d);
+                sprintf(res, "constructor %s prog:%p", cstr(&p->name), p->program);
+                break;
+            }
+            case T_Object: {
+                struct b_object *p = (struct b_object*)BlkLoc(*d);
+                sprintf(res, "object %p %s(%d)", BlkLoc(*d), cstr(&p->class->name), p->id);
+                break;
+            }
+            case T_Cast: {
+                struct b_cast *p = (struct b_cast*)BlkLoc(*d);
+                sprintf(res, "cast ");
+                strcat(res, cstr(&p->object->class->name));
+                strcat(res, ",");
+                strcat(res, cstr(&p->class->name));
+                break;
+            }
+            case T_Methp: {
+                struct b_methp *p = (struct b_methp*)BlkLoc(*d);
+                sprintf(res, "methp %s(%d),", cstr(&p->object->class->name), p->object->id);
+                strcat(res, cstr(&p->proc->pname));
+                break;
+            }
+            case T_Lrgint:
+            case T_Real: 
+            case T_Cset: 
+            case T_Record:
+            case T_List: 
+            case T_Lelem:
+            case T_Set: 
+            case T_Selem:
+            case T_Table:
+            case T_Telem:
+            case T_Coexpr: {
+                sprintf(res, "bptr=%p", BlkLoc(*d));
+                break;
+            }
+
+            case T_Tvtbl: return "";
+            case T_Slots: return "";
+            case T_Tvsubs: return "";
+            case T_Refresh: return "";
+            case T_External: return "";
+            case T_Kywdint: return "";
+            case T_Kywdpos: return "";
+            case T_Kywdsubj: return "";
+            case T_Kywdstr: return "";
+            case T_Kywdevent: return "";
+            default:return "?";
+        }
+    } else if (d->dword & F_Var) 
         sprintf(res, "bptr=%p", BlkLoc(*d));
-        return res;
-    }
+    else
+        return "?";
 
-    switch(d->dword) {
-        case D_Null: return "0";
-        case D_Integer: sprintf(res, "%d", d->vword.integr); break;
-        case D_Proc: {
-            struct b_proc *p = (struct b_proc*)BlkLoc(*d);
-            sprintf(res, "%s() prog:%p", cstr(&p->pname), p->program);
-            break;
-        }
-        case D_Class: {
-            struct b_class *p = (struct b_class*)BlkLoc(*d);
-            sprintf(res, "class %s prog:%p", cstr(&p->name), p->program);
-            break;
-        }
-        case D_Constructor: {
-            struct b_constructor *p = (struct b_constructor*)BlkLoc(*d);
-            sprintf(res, "constructor %s prog:%p", cstr(&p->name), p->program);
-            break;
-        }
-        case D_Object: {
-            struct b_object *p = (struct b_object*)BlkLoc(*d);
-            sprintf(res, "object %p %s(%d)", BlkLoc(*d), cstr(&p->class->name), p->id);
-            break;
-        }
-        case D_Cast: {
-            struct b_cast *p = (struct b_cast*)BlkLoc(*d);
-            sprintf(res, "cast ");
-            strcat(res, cstr(&p->object->class->name));
-            strcat(res, ",");
-            strcat(res, cstr(&p->class->name));
-            break;
-        }
-        case D_Methp: {
-            struct b_methp *p = (struct b_methp*)BlkLoc(*d);
-            sprintf(res, "methp %s(%d),", cstr(&p->object->class->name), p->object->id);
-            strcat(res, cstr(&p->proc->pname));
-            break;
-        }
-        case D_Lrgint:
-        case D_Real: 
-        case D_Cset: 
-        case D_Record:
-        case D_List: 
-        case D_Lelem:
-        case D_Set: 
-        case D_Selem:
-        case D_Table:
-        case D_Telem:
-        case D_Var:
-        case D_Coexpr: {
-            sprintf(res, "bptr=%p", BlkLoc(*d));
-            break;
-        }
-
-        case D_Tvtbl: return "";
-        case D_Slots: return "";
-        case D_Tvsubs: return "";
-        case D_Refresh: return "";
-        case D_External: return "";
-        case D_Kywdint: return "";
-        case D_Kywdpos: return "";
-        case D_Kywdsubj: return "";
-        case D_Kywdstr: return "";
-        case D_Kywdevent: return "";
-        default:return "?";
-    }
     return res;
 }
 
@@ -1139,50 +1144,57 @@ static char* dword2str(dptr d) {
     char *s = buff, *t;
     if (d->dword & F_Nqual)
         *s++ = 'n';
+    else {
+        /* String */
+        sprintf(buff, "%d", d->dword);
+        return buff;
+    }
     if (d->dword & F_Var)
         *s++ = 'v';
+    if (d->dword & F_Typecode)
+        *s++ = 't';
     if (d->dword & F_Ptr)
         *s++ = 'p';
     *s = 0;
-    if (d->dword & F_Var) {
-        sprintf(offset, " off:%d", d->dword & OffsetMask);
-        strcat(buff, offset);
-    }
-    else if (d->dword & F_Typecode) {
-        switch(d->dword) {
-            case D_Null: t = "T_Null"; break;
-            case D_Integer: t = "T_Integer"; break;
-            case D_Lrgint: t = "T_Lrgint"; break;
-            case D_Real: t = "T_Real"; break;
-            case D_Cset: t = "T_Cset"; break;
-            case D_Proc: t = "T_proc"; break;
-            case D_Record: t = "T_Record"; break;
-            case D_List: t = "T_List"; break;
-            case D_Lelem: t = "T_Lelem"; break;
-            case D_Set: t = "T_Set"; break;
-            case D_Selem: t = "T_Selem"; break;
-            case D_Table: t = "T_Table"; break;
-            case D_Telem: t = "T_Telem"; break;
-            case D_Tvtbl: t = "T_Tvtbl"; break;
-            case D_Slots: t = "T_Slots"; break;
-            case D_Tvsubs: t = "T_Tvsubs"; break;
-            case D_Refresh: t = "T_Refresh"; break;
-            case D_Coexpr: t = "T_Coexpr"; break;
-            case D_External: t = "T_External"; break;
-            case D_Kywdint: t = "T_Kywdint"; break;
-            case D_Kywdpos: t = "T_Kywdpos"; break;
-            case D_Kywdsubj: t = "T_Kywdsubj"; break;
-            case D_Kywdstr: t = "T_Kywdstr"; break;
-            case D_Kywdevent: t = "T_Kywdevent"; break;
-            case D_Class: t = "T_Class"; break;
-            case D_Object: t = "T_Object"; break;
-            case D_Cast: t = "T_Cast"; break;
-            case D_Methp: t = "T_Methp"; break;
-            case D_Constructor: t = "T_Constructor"; break;
+    if (d->dword & F_Typecode) {
+        switch(d->dword & TypeMask) {
+            case T_Null: t = "T_Null"; break;
+            case T_Integer: t = "T_Integer"; break;
+            case T_Lrgint: t = "T_Lrgint"; break;
+            case T_Real: t = "T_Real"; break;
+            case T_Cset: t = "T_Cset"; break;
+            case T_Proc: t = "T_proc"; break;
+            case T_Record: t = "T_Record"; break;
+            case T_List: t = "T_List"; break;
+            case T_Lelem: t = "T_Lelem"; break;
+            case T_Set: t = "T_Set"; break;
+            case T_Selem: t = "T_Selem"; break;
+            case T_Table: t = "T_Table"; break;
+            case T_Telem: t = "T_Telem"; break;
+            case T_Tvtbl: t = "T_Tvtbl"; break;
+            case T_Slots: t = "T_Slots"; break;
+            case T_Tvsubs: t = "T_Tvsubs"; break;
+            case T_Refresh: t = "T_Refresh"; break;
+            case T_Coexpr: t = "T_Coexpr"; break;
+            case T_External: t = "T_External"; break;
+            case T_Kywdint: t = "T_Kywdint"; break;
+            case T_Kywdpos: t = "T_Kywdpos"; break;
+            case T_Kywdsubj: t = "T_Kywdsubj"; break;
+            case T_Kywdstr: t = "T_Kywdstr"; break;
+            case T_Kywdevent: t = "T_Kywdevent"; break;
+            case T_Class: t = "T_Class"; break;
+            case T_Object: t = "T_Object"; break;
+            case T_Cast: t = "T_Cast"; break;
+            case T_Methp: t = "T_Methp"; break;
+            case T_Constructor: t = "T_Constructor"; break;
             default: return "?";
         }
         strcat(buff, " ");
         strcat(buff, t);
+    }
+    else if (d->dword & F_Var) {
+        sprintf(offset, " off:%d", d->dword & OffsetMask);
+        strcat(buff, offset);
     }
 
     return buff;
@@ -1190,10 +1202,7 @@ static char* dword2str(dptr d) {
 
 char *tostring(dptr d) {
     static char res[1096];
-    if (is:string(*d))
-        sprintf(res, "String(%d):%s", d->dword, cstr(d));
-    else
-        sprintf(res, "D:%s V:%s", dword2str(d), vword2str(d));
+    sprintf(res, "D:%s V:%s", dword2str(d), vword2str(d));
     return res;
 }
 
@@ -1353,10 +1362,7 @@ void showstack()
             p += (sizeof(struct pf_marker)-sizeof(struct descrip))/sizeof(word);
         } else if (isdescrip(p)) {
             dptr d = (dptr)p;
-            if (Qual(*d)) {
-                printf("%s\t%p\tdescrip\tString:%d\n", ptr(p), p, StrLen(*d));
-                printf("%s\t\t\t%s\n", ptr(&d->vword), cstr(d));
-            } else if (isvar(p)) {
+            if (isvar(p)) {
                 struct descrip tmp;
                 char *t;
                 deref(d, &tmp);
