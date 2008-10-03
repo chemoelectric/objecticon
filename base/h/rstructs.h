@@ -139,7 +139,7 @@ struct b_class {                 /* block representing a class - always static, 
     word title;                  /* T_Class */
     word blksize;
     struct progstate *program;   /* Program in which this class resides */
-    word *is_table;              /* Lookup bitfield table for constant time is() */
+    char *is_table;              /* Lookup bitfield table for constant time is() */
     word class_id;               /* Sequence id of this class; an ascending zero-based sequence
                                   *   used to index the above is_table bitfield */
     word package_id;             /* Package id of this class's package - see b_proc above */

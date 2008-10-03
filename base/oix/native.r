@@ -72,11 +72,10 @@ int class_is(struct b_class *class, struct b_class *target)
             /*
              * Create a bitfield
              */
-            MemProtect(class->is_table = calloc(1 + (*class->program->Classes - 1) / WordBits,
-                                                WordSize));
+            MemProtect(class->is_table = calloc(1 + (*class->program->Classes - 1) / CHAR_BIT, 1));
             for (i = 0; i < n; ++i) {
                 id = class->implemented_classes[i]->class_id;
-                class->is_table[id / WordBits] |= (1 << id % WordBits);
+                class->is_table[id / CHAR_BIT] |= (1 << id % CHAR_BIT);
             }
         } else {
             /*
@@ -94,7 +93,7 @@ int class_is(struct b_class *class, struct b_class *target)
      * Use an already-created bitfield table.
      */
     id = target->class_id;
-    return class->is_table[id / WordBits] & (1 << (id % WordBits));
+    return class->is_table[id / CHAR_BIT] & (1 << (id % CHAR_BIT));
 }
 
 function{0,1} is(o, target)
