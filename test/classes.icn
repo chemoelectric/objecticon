@@ -130,7 +130,7 @@ procedure eset(e)
 end
 
 procedure do_class(c)
-   local f, i, o, v, s1, s2, s3
+   local f, i, o, s1, s2, s3
 
    write("-------------\nClass ", subtype(c))
    pr_seq{"Supers", Class.get_supers(c)}
@@ -166,8 +166,6 @@ procedure do_class(c)
       write("\tDefining class: ", imagex(Class.get_field_defining_class(c, f)))
       write("\tValue via class: ", imagex(Class.getf(c, f)) | "Not accessible")
       write("\tValue via instance: ", imagex(Class.getf(o, f)) | "Not accessible")
-      if v := Class.getf(o, f) & type(v) == "methp" then
-         yes_no{"\tClass.methp_has_object(v, o)", Class.methp_has_object(v, o)}
       i +:= 1
    }
 

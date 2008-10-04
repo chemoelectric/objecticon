@@ -130,7 +130,6 @@ Field eleven1 index 13
 	Defining class: class Eleven
 	Value via class: Not accessible
 	Value via instance: methp(object Eleven#*(9),method Eleven.eleven1)
-	Class.methp_has_object(v, o): yes
 Field new index 14
 	Name: new
 	Index: 14
@@ -145,7 +144,6 @@ Field thing index 15
 	Defining class: class Eight
 	Value via class: Not accessible
 	Value via instance: methp(object Eleven#*(9),method Eight.thing)
-	Class.methp_has_object(v, o): yes
 Field dm index 16
 	Name: dm
 	Index: 16
@@ -153,7 +151,6 @@ Field dm index 16
 	Defining class: class Eight
 	Value via class: Not accessible
 	Value via instance: methp(object Eleven#*(9),function deferred_method_stub)
-	Class.methp_has_object(v, o): yes
 Field ten1 index 17
 	Name: ten1
 	Index: 17
@@ -187,7 +184,6 @@ Field thing index 1
 	Defining class: class Eight
 	Value via class: Not accessible
 	Value via instance: methp(object Eight#*(0),method Eight.thing)
-	Class.methp_has_object(v, o): yes
 Field dm index 2
 	Name: dm
 	Index: 2
@@ -195,7 +191,6 @@ Field dm index 2
 	Defining class: class Eight
 	Value via class: Not accessible
 	Value via instance: methp(object Eight#*(0),function deferred_method_stub)
-	Class.methp_has_object(v, o): yes
 -------------
 Class Nine
 Supers: {}
@@ -647,7 +642,7 @@ Equals check: list#*[list#*[ref list#*],ref list#*] -v- list#*[list#*[ref list#*
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: set#*{list#*[1,2,3],list#*[],list#*[2]} -v- set#*{list#*[2],list#*[],list#*[1,2,3]}
+Equals check: set#*{list#*[],list#*[2],list#*[1,2,3]} -v- set#*{list#*[2],list#*[],list#*[1,2,3]}
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
@@ -663,7 +658,7 @@ Equals check: set#*{ref set#*} -v- set#*{ref set#*}
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: set#*{list#*[2,2],list#*[3],list#*[1],list#*[2,2]} -v- set#*{list#*[2,2],list#*[3],list#*[1],list#*[2,2]}
+Equals check: set#*{list#*[3],list#*[1],list#*[2,2],list#*[2,2]} -v- set#*{list#*[3],list#*[1],list#*[2,2],list#*[2,2]}
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
@@ -671,7 +666,7 @@ Equals check: set#*{list#*[2,2],list#*[3],list#*[1],list#*[2,2]} -v- set#*{list#
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: set#*{list#*[1],list#*[3],list#*[1],list#*[2,2]} -v- set#*{list#*[2,2],list#*[3],list#*[1],list#*[2,2]}
+Equals check: set#*{list#*[3],list#*[1],list#*[2,2],list#*[1]} -v- set#*{list#*[2,2],list#*[3],list#*[1],list#*[2,2]}
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): no

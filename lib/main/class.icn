@@ -122,40 +122,6 @@ class Class()
    #
    public static defer get_field_defining_class(c, field)
 
-   #
-   # Succeed iff the given method pointer has {o} as its associated
-   # object.
-   # @param mp a methp structure
-   # @param o an arbitrary object
-   #
-   public static methp_has_object(mp, o)
-      return get_methp_object(mp) === o
-   end
-
-   # Return the object part of a method pointer.
-   # @param mp a methp structure
-   # @return an object
-   #
-   private static defer get_methp_object(mp)
-
-   # Return the procedure part of a method pointer.
-   # @param mp a methp structure
-   # @return a procedure object (which will be an instance method)
-   #
-   private static defer get_methp_proc(mp)
-
-   # Return the object part of a cast.
-   # @param mp a cast structure created with the {cast()} function
-   # @return an object
-   #
-   private static defer get_cast_object(c)
-
-   # Return the class part of a cast.
-   # @param mp a cast structure created with the {cast()} function
-   # @return a class
-   #
-   private static defer get_cast_class(c)
-
    # Get the value of the field in {x}, behaving in exactly the same way
    # as though the "." operation had been invoked with equivalent values.
    #
