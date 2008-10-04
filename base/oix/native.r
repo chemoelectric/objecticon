@@ -169,13 +169,11 @@ function{0,1} lang_Class_implements(c, target)
     }
 end
 
-function{1} util_Connectable_methp_has_object(mp, o)
-   if !is:methp(mp) then
-       runerr(613, mp)
+function{1} util_Connectable_is_methp_with_object(mp, o)
    if !is:object(o) then
        runerr(602, o)
     body {
-       if (BlkLoc(mp)->methp.object == &BlkLoc(o)->object)
+       if (is:methp(mp) && BlkLoc(mp)->methp.object == &BlkLoc(o)->object)
            return nulldesc;
        else
            fail;
