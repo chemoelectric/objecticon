@@ -169,25 +169,20 @@ void generate_code()
     codep = 0;
 }
 
-struct native_method {
-    char *name;
-    struct lclass_field *seen;
-};
-
-struct native_method native_methods[] = {
-#define NativeDef(x) {Lit(x), 0},
+char *native_methods[] = {
+#define NativeDef(x) Lit(x),
 #include "../h/nativedefs.h"
 #undef NativeDef
 };
 
 static int native_cmp(const void *key, const void *item)
 {
-    return strcmp((char*)key, ((struct native_method *)item)->name);
+    return strcmp((char*)key, *((char **)item));
 }
 
 static int resolve_native_method(struct lclass_field *cf)
 {
-    struct native_method *p;
+    char **p;
     char *class = cf->class->global->name, *field = cf->name;
     static struct str_buf sb;
 
@@ -209,18 +204,6 @@ static int resolve_native_method(struct lclass_field *cf)
                 ElemSize(native_methods), native_cmp);
     if (!p)
         return -1;
-    if (p->seen) {
-        lfatal(cf->class->global->defined, &cf->pos,
-               "Duplicate native method '%s.%s', first seen in class %s (%s; Line %d)", 
-               cf->class->global->name, cf->name,
-               p->seen->class->global->name,
-               abbreviate(p->seen->pos.file),
-               p->seen->pos.line
-            );
-        return -1;
-    }
-    p->seen = cf;
-
     return (p - native_methods);
 }
 
