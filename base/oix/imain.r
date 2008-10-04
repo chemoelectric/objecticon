@@ -428,8 +428,6 @@ void resolve(struct progstate *pstate)
                                StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(cf->name)))
                         error("Native method name mismatch: %s", StrLoc(cf->name));
 
-                    /* Pointer back to the corresponding field */
-                    pp->field = cf;
                     BlkLoc(*cf->field_descriptor) = (union block *)pp;
                 } else {
                     /* Unresolved, point to stub */

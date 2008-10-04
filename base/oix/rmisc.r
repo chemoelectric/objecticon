@@ -529,26 +529,10 @@ int noimage;
              tdp.dword = D_Object;
              BlkLoc(tdp) = (union block*)bp->methp.object;
              outimage(f, &tdp, noimage);
-             fprintf(f, ",method ");
-             if (field) {
-                 dp = &field->defining_class->name;
-                 i = StrLen(*dp);
-                 s = StrLoc(*dp);
-                 while (i-- > 0)
-                     printimage(f, *s++, '\0');
-                 fprintf(f, ".");
-                 dp = &field->name;
-                 i = StrLen(*dp);
-                 s = StrLoc(*dp);
-                 while (i-- > 0)
-                     printimage(f, *s++, '\0');
-             } else {
-                 dp = &proc->pname;
-                 i = StrLen(*dp);
-                 s = StrLoc(*dp);
-                 while (i-- > 0)
-                     printimage(f, *s++, '\0');
-             }
+             fprintf(f, ",");
+             tdp.dword = D_Proc;
+             BlkLoc(tdp) = (union block*)bp->methp.proc;
+             outimage(f, &tdp, noimage);
              fprintf(f, ")");
      }
 
@@ -1352,17 +1336,17 @@ dptr dp1, dp2;
            bp = BlkLoc(*dp1);
            obj = bp->methp.object;
            obj_class = obj->class;
-           sprintf(sbuf, "#%ld(%ld),method ", (long)obj->id, (long)obj_class->n_instance_fields);
+           sprintf(sbuf, "#%ld(%ld),", (long)obj->id, (long)obj_class->n_instance_fields);
            proc = bp->methp.proc;
            field = proc->field;
            if (field) {
                /*
                 * Produce:
-                *  "methp(objectname#m(n),method classname.fieldname)"
+                *  "methp(object objectname#m(n),method classname.fieldname)"
                 */
                field_name = &field->name;
                field_class = field->defining_class;
-               len = StrLen(obj_class->name) + StrLen(field_class->name) + StrLen(*field_name) + strlen(sbuf) + 15;
+               len = StrLen(obj_class->name) + StrLen(field_class->name) + StrLen(*field_name) + strlen(sbuf) + 22;
                MemProtect (reserve(Strings, len));
                MemProtect(t = alcstr("methp(object ", 13));
                /* No need to refresh pointers, everything is static data */
@@ -1370,6 +1354,7 @@ dptr dp1, dp2;
                StrLen(*dp2) = len;
                MemProtect(alcstr(StrLoc(obj_class->name),StrLen(obj_class->name)));
                MemProtect(alcstr(sbuf, strlen(sbuf)));
+               MemProtect(alcstr("method ", 7));
                MemProtect(alcstr(StrLoc(field_class->name),StrLen(field_class->name)));
                MemProtect(alcstr(".", 1));
                MemProtect(alcstr(StrLoc(*field_name),StrLen(*field_name)));
@@ -1377,9 +1362,15 @@ dptr dp1, dp2;
            } else {
                /*
                 * Produce:
-                *  "methp(objectname#m(n),procname)"
+                *  "methp(object objectname#m(n),procedure procname)"
+                *  OR
+                *  "methp(object objectname#m(n),function procname)"
                 */
-               len = StrLen(obj_class->name) + StrLen(proc->pname) + strlen(sbuf) + 14;
+               switch (proc->ndynam) {
+                   default:  type = "procedure "; outlen = 10; break;
+                   case -1:  type = "function "; outlen = 9; break;
+               }
+               len = StrLen(obj_class->name) + StrLen(proc->pname) + strlen(sbuf) + outlen + 14;
                MemProtect (reserve(Strings, len));
                MemProtect(t = alcstr("methp(object ", 13));
                /* No need to refresh pointers, everything is static data */
@@ -1387,6 +1378,7 @@ dptr dp1, dp2;
                StrLen(*dp2) = len;
                MemProtect(alcstr(StrLoc(obj_class->name),StrLen(obj_class->name)));
                MemProtect(alcstr(sbuf, strlen(sbuf)));
+               MemProtect(alcstr(type, outlen));
                MemProtect(alcstr(StrLoc(proc->pname),StrLen(proc->pname)));
                MemProtect(alcstr(")", 1));
            }

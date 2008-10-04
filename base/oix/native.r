@@ -401,7 +401,6 @@ function{1} lang_Class_set_method(field, pr)
             runerr(623, field);
 
         BlkLoc(*cf->field_descriptor) = (union block *)new_proc;
-        new_proc->field = cf;
 
         return pr;
    }
@@ -469,13 +468,8 @@ function{1} lang_Class_load_library(lib)
                 (cf->flags & M_Method) &&
                 BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
                 struct b_proc *bp = try_load(handle, StrLoc(class->name), StrLoc(cf->name));
-                /*fprintf(stderr,"%d %s_%s -> %p\n",getpid(),StrLoc(class->name), StrLoc(cf->name),bp);*/
-                if (bp) {
-                    if (bp->field)
-                        runerr(618, cf->name);
+                if (bp)
                     BlkLoc(*cf->field_descriptor) = (union block *)bp;
-                    bp->field = cf;
-                }
             }
         }
 

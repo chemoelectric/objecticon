@@ -123,7 +123,7 @@ struct errtab errtab[] = {
    615, "procedure expected",
    616, "can only set a method from within the defining class",
    617, "the given field is not a method",
-   618, "the given procedure is already a method",
+   618, "the given procedure is a method",
    619, "class or object expected",
    620, "class, cast or object expected",
    621, "init cannot be accessed via a field",

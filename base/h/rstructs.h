@@ -96,9 +96,9 @@ struct b_proc {			/* procedure block */
     struct progstate *program;   /*   program in which this procedure resides */
     word package_id;            /* package id of package in which this proc resides; 0=not in 
                                  * a package; 1=lang; >1=other package */
-    struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only
-                                 * exception is the deferred method stub, which can be pointed to by
-                                 * many different fields of course. */
+    struct class_field *field;  /* For a method defined in the icode, a pointer to the 
+                                 *  corresponding class_field.  For all other types of b_proc
+                                 *  this is null. */
     struct descrip pname;	/*   procedure name (string qualifier) */
     struct descrip lnames[1];	/*   list of local names (qualifiers) */
 };
