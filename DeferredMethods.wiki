@@ -38,9 +38,10 @@ Obviously this doesn't apply to static methods, which can't be overridden.
 == Deferred methods in the runtime system ==
 This necessitates editing and re-building the C/RTL source code of the runtime system and the translator.
 
-The first step is to convert the name of the deferred method to be implemented into the name of the runtime function to be implemented, by taking the fully qualified name of the class in which the method resides, adding a "." and the method name, and then changing all dots to underscores.  So, for example, say we were implementing method `my_method` in class `MyClass` in package `my.package`, then we would write a runtime function named `my_package_MyClass_my_method`.
-
-The next step is to add this name to the file `base/h/nativedefs.h`, ensuring that the file stays in ascending ascii order.
+The first step is to add a line to the file `base/h/nativedefs.h` defining the class, method and name of the implementing RTL function.  By convention, the name of the RTL function is the class followed by an underscore, followed by the method name, with dots in the class name being replaced by underscores.  So, for example, say we were implementing method `my_method` in class `MyClass` in package `my.package`, then we would write a runtime function named `my_package_MyClass_my_method` and add a line to `nativedefs.h`
+{{{
+NativeDef(my.package.MyClass,my_method,my_package_MyClass_my_method)
+}}}
 
 Next, the function must be implemented somewhere in the runtime, as an RTL function, which might look like this :-
 
