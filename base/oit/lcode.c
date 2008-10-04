@@ -169,20 +169,26 @@ void generate_code()
     codep = 0;
 }
 
-char *native_methods[] = {
-#define NativeDef(x) Lit(x),
+struct native_method {
+    char *name;
+    struct lclass_field *seen;
+};
+
+struct native_method native_methods[] = {
+#define NativeDef(x) {Lit(x), 0},
 #include "../h/nativedefs.h"
 #undef NativeDef
 };
 
 static int native_cmp(const void *key, const void *item)
 {
-    return strcmp((char*)key, *((char **)item));
+    return strcmp((char*)key, ((struct native_method *)item)->name);
 }
 
-static int resolve_native_method(char *class, char *field)
+static int resolve_native_method(struct lclass_field *cf)
 {
-    char **p;
+    struct native_method *p;
+    char *class = cf->class->global->name, *field = cf->name;
     static struct str_buf sb;
 
     /*
@@ -200,9 +206,21 @@ static int resolve_native_method(char *class, char *field)
     AppChar(sb, 0);
 
     p = bsearch(sb.strtimage, native_methods, ElemCount(native_methods), 
-                sizeof(char *), native_cmp);
+                ElemSize(native_methods), native_cmp);
     if (!p)
         return -1;
+    if (p->seen) {
+        lfatal(cf->class->global->defined, &cf->pos,
+               "Duplicate native method '%s.%s', first seen in class %s (%s; Line %d)", 
+               cf->class->global->name, cf->name,
+               p->seen->class->global->name,
+               abbreviate(p->seen->pos.file),
+               p->seen->pos.line
+            );
+        return -1;
+    }
+    p->seen = cf;
+
     return (p - native_methods);
 }
 
@@ -1168,7 +1186,7 @@ static void genclasses()
         for (cf = cl->fields; cf; cf = cf->next) {
             if (cf->flag & M_Defer) {
                 /* Try and resolve to a builtin native method number */
-                int i = resolve_native_method(cf->class->global->name, cf->name);
+                int i = resolve_native_method(cf);
                 cf->dpc = pc;
                 if (i == -1) {
                     if (Dflag)
