@@ -23,6 +23,7 @@ struct fentry *lfhash[LFHASH_SIZE];	/* hash area for field table */
 struct lfile *lfile_hash[LFILE_HASH_SIZE], *lfiles = 0, *lfiles_last = 0;
 struct lpackage *lpackage_hash[LPACKAGE_HASH_SIZE];
 struct lclass *lclasses = 0, *lclass_last = 0;
+struct lrecord *lrecords = 0, *lrecord_last = 0;
 struct linvocable *linvocables = 0, *last_linvocable = 0;
 
 struct fentry *lffirst;		/* first field table entry */
@@ -48,6 +49,7 @@ void linit()
     lgfirst = lglast = 0;
 
     lclasses = lclass_last = 0;
+    lrecords = lrecord_last = 0;
 
     /*
      * Zero out the hash tables.
@@ -216,12 +218,17 @@ void lmfree()
     for (gp = lgfirst; gp; gp = gp1) {
         if (gp->class)
             free(gp->class);
+        else if (gp->record)
+            free(gp->record);
+        else if (gp->func)
+            free(gp->func);
         gp1 = gp->g_next;
         free(gp);
     }
     lgfirst = 0;
     lglast = 0;
     lclasses = lclass_last = 0;
+    lrecords = lrecord_last = 0;
 
     for (i = 0; i < ElemCount(lpackage_hash); ++i) {
         for (lp = lpackage_hash[i]; lp; lp = lp1) {
@@ -287,6 +294,7 @@ void add_method(struct lfile *lf, struct lclass *x, char *name, int flag, struct
     x->last_field->func = f;
     f->defined = lf;
     f->method = x->last_field;
+    f->native_method_id = -1;
 }
 
 void add_fimport(struct lfile *lf, char *package, int qualified, struct loc *pos)

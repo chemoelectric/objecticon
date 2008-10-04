@@ -169,44 +169,6 @@ void generate_code()
     codep = 0;
 }
 
-char *native_methods[] = {
-#define NativeDef(x) Lit(x),
-#include "../h/nativedefs.h"
-#undef NativeDef
-};
-
-static int native_cmp(const void *key, const void *item)
-{
-    return strcmp((char*)key, *((char **)item));
-}
-
-static int resolve_native_method(struct lclass_field *cf)
-{
-    char **p;
-    char *class = cf->class->global->name, *field = cf->name;
-    static struct str_buf sb;
-
-    /*
-     * Create a function name to look for, using the sbuf as a
-     * temporary string buffer.
-     */
-    zero_sbuf(&sb);
-    while (*class) {
-        AppChar(sb, *class == '.' ? '_' : *class);
-        ++class;
-    }
-    AppChar(sb, '_');
-    while (*field)
-        AppChar(sb, *field++);
-    AppChar(sb, 0);
-
-    p = bsearch(sb.strtimage, native_methods, ElemCount(native_methods), 
-                ElemSize(native_methods), native_cmp);
-    if (!p)
-        return -1;
-    return (p - native_methods);
-}
-
 /*
  * Prototypes.
  */
@@ -1168,10 +1130,9 @@ static void genclasses()
         cl->id = n_classes;
         for (cf = cl->fields; cf; cf = cf->next) {
             if (cf->flag & M_Defer) {
-                /* Try and resolve to a builtin native method number */
-                int i = resolve_native_method(cf);
+                /* Deferred method, perhaps resolved to native method */
                 cf->dpc = pc;
-                if (i == -1) {
+                if (cf->func->native_method_id == -1) {
                     if (Dflag)
                         fprintf(dbgfile, "%ld:\t0\t0\t\t\t# Unresolved deferred method %s.%s\n", (long)pc, 
                                 cl->global->name, cf->name);
@@ -1180,9 +1141,9 @@ static void genclasses()
                 } else {
                     if (Dflag)
                         fprintf(dbgfile, "%ld:\t%06o\tN+%d\t\t# Resolved native method %s.%s\n",
-                                (long)pc, D_Proc, i, cl->global->name, cf->name);
+                                (long)pc, D_Proc, cf->func->native_method_id, cl->global->name, cf->name);
                     outword(D_Proc);
-                    outword(i);
+                    outword(cf->func->native_method_id);
                 }
             } else if (cf->flag & M_Method) {
                 /* Method, with definition in the icode file  */
@@ -1278,6 +1239,7 @@ static void gentables()
     int i, nrecords;
     char *s;
     struct gentry *gp;
+    struct lrecord *rec;
     struct fentry *fp;
     struct lfield *fd;
     struct unref *up;
@@ -1291,10 +1253,8 @@ static void gentables()
 
     /* Count how many records we have. */
     nrecords = 0;
-    for (gp = lgfirst; gp; gp = gp->g_next) {
-        if (gp->g_flag & F_Record) 
-            ++nrecords;
-    }
+    for (rec = lrecords; rec; rec = rec->next)
+        ++nrecords;
 
     /*
      * Output record constructor procedure blocks.
@@ -1307,91 +1267,88 @@ static void gentables()
     }
 
     outword(nrecords);
-    for (gp = lgfirst; gp; gp = gp->g_next) {
-        if (gp->g_flag & F_Record) {
-            struct field_sort_item *sortf;
-            int ap, size;
-
-            s = gp->name;
-            gp->record->pc = pc;
-            sp = inst_c_strconst(gp->name);
-            size = 9 * WordSize + gp->record->nfields * (2 * WordSize + ShortSize);
-            size += nalign(size);
-            if (Dflag) {
-                fprintf(dbgfile, "\n# constructor %s\n", s);
-                fprintf(dbgfile, "%ld:\n", (long)pc);
-                fprintf(dbgfile, "\t%d\t\t\t\t# T_Constructor\n", T_Constructor);
-                fprintf(dbgfile, "\t%d\n", size);
-                fprintf(dbgfile, "\t0\n");
-                fprintf(dbgfile, "\t0\n");
-                fprintf(dbgfile, "\t%d\n", gp->record->nfields);
-                fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, s);
-            }
-
-            outword(T_Constructor);		/* type code */
-            outword(size);
-            outword(0);			/* progstate (filled in by interp)*/
-            outword(0);			/* serial number counter */
-            outword(gp->record->nfields);		/* number of fields */
-            outword(sp->len);		/* name of record: size and offset */
-            outword(sp->offset);
-
-            /*
-             * Pointers to the two tables that follow.
-             */
-            if (Dflag) {
-                ap = pc + 2 * WordSize;
-                fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field_names array\n", ap);
-                ap += gp->record->nfields * 2 * WordSize;
-                fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field sort array\n", ap);
-            }
-            ap = pc + 2 * WordSize;
-            outword(ap);
-            ap += gp->record->nfields * 2 * WordSize;
-            outword(ap);
-            ap += gp->record->nfields * ShortSize;
-            ap += nalign(ap);
-
-            /*
-             * Field names
-             */
-            if (Dflag)
-                fprintf(dbgfile, "%ld:\t\t\t\t\t# Field names array\n", (long)pc);
-            for (fd = gp->record->fields; fd; fd = fd->next) {
-                sp = inst_c_strconst(fd->name);
-                if (Dflag)
-                    fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, fd->name);
-                outword(sp->len);
-                outword(sp->offset);
-            }
-
-            /* 
-             * The sorted fields table.
-             */
-            sortf = sorted_record_fields(gp->record);
-            if (Dflag) {
-                fprintf(dbgfile, "%ld:\t\t\t\t\t# Sorted fields array\n", (long)pc);
-                for (i = 0; i < gp->record->nfields; ++i)
-                    fprintf(dbgfile, "\t%d\t\t\t\t#   Field %s (fnum=%d)\n", 
-                            sortf[i].n, 
-                            sortf[i].fp->name,
-                            sortf[i].fp->field_id);
-            }
-            for (i = 0; i < gp->record->nfields; ++i)
-                outshort(sortf[i].n);
-            free(sortf);
-
-            if (Dflag) {
-                fprintf(dbgfile, "%ld:\t\t\t\t\t# Padding bytes (%d)\n", (long)pc, nalign(pc));
-            }
-            align();
-
-            /* Check our calculations were right */
-            if (ap != pc)
-                quitf("I got my sums wrong(b): %d != %d", ap, pc);
-            if (gp->record->pc + size != pc)
-                quitf("I got my sums wrong(c): %d != %d", gp->record->pc + size, pc);
+    for (rec = lrecords; rec; rec = rec->next) {
+        struct field_sort_item *sortf;
+        int ap, size;
+        s = rec->global->name;
+        rec->pc = pc;
+        sp = inst_c_strconst(s);
+        size = 9 * WordSize + rec->nfields * (2 * WordSize + ShortSize);
+        size += nalign(size);
+        if (Dflag) {
+            fprintf(dbgfile, "\n# constructor %s\n", s);
+            fprintf(dbgfile, "%ld:\n", (long)pc);
+            fprintf(dbgfile, "\t%d\t\t\t\t# T_Constructor\n", T_Constructor);
+            fprintf(dbgfile, "\t%d\n", size);
+            fprintf(dbgfile, "\t0\n");
+            fprintf(dbgfile, "\t0\n");
+            fprintf(dbgfile, "\t%d\n", rec->nfields);
+            fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, s);
         }
+
+        outword(T_Constructor);		/* type code */
+        outword(size);
+        outword(0);			/* progstate (filled in by interp)*/
+        outword(0);			/* serial number counter */
+        outword(rec->nfields);		/* number of fields */
+        outword(sp->len);		/* name of record: size and offset */
+        outword(sp->offset);
+
+        /*
+         * Pointers to the two tables that follow.
+         */
+        if (Dflag) {
+            ap = pc + 2 * WordSize;
+            fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field_names array\n", ap);
+            ap += rec->nfields * 2 * WordSize;
+            fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field sort array\n", ap);
+        }
+        ap = pc + 2 * WordSize;
+        outword(ap);
+        ap += rec->nfields * 2 * WordSize;
+        outword(ap);
+        ap += rec->nfields * ShortSize;
+        ap += nalign(ap);
+
+        /*
+         * Field names
+         */
+        if (Dflag)
+            fprintf(dbgfile, "%ld:\t\t\t\t\t# Field names array\n", (long)pc);
+        for (fd = rec->fields; fd; fd = fd->next) {
+            sp = inst_c_strconst(fd->name);
+            if (Dflag)
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, fd->name);
+            outword(sp->len);
+            outword(sp->offset);
+        }
+
+        /* 
+         * The sorted fields table.
+         */
+        sortf = sorted_record_fields(rec);
+        if (Dflag) {
+            fprintf(dbgfile, "%ld:\t\t\t\t\t# Sorted fields array\n", (long)pc);
+            for (i = 0; i < rec->nfields; ++i)
+                fprintf(dbgfile, "\t%d\t\t\t\t#   Field %s (fnum=%d)\n", 
+                        sortf[i].n, 
+                        sortf[i].fp->name,
+                        sortf[i].fp->field_id);
+        }
+        for (i = 0; i < rec->nfields; ++i)
+            outshort(sortf[i].n);
+        free(sortf);
+
+        if (Dflag) {
+            fprintf(dbgfile, "%ld:\t\t\t\t\t# Padding bytes (%d)\n", (long)pc, nalign(pc));
+        }
+        align();
+
+        /* Check our calculations were right */
+        if (ap != pc)
+            quitf("I got my sums wrong(b): %d != %d", ap, pc);
+        if (rec->pc + size != pc)
+            quitf("I got my sums wrong(c): %d != %d", rec->pc + size, pc);
     }
 
     /*

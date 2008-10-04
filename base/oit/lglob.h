@@ -7,5 +7,6 @@ void resolve_locals();
 void scanrefs();
 void build_fieldtable();
 void sort_global_table();
+void resolve_native_methods();
 
 #endif

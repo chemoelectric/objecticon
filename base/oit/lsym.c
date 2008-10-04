@@ -147,7 +147,7 @@ struct lclass_field *lookup_method(char *class, char *method)
     while (cf && cf->name != method)
         cf = cf->b_next;
     /* Check it's a method and not a variable */
-    if (!cf->func)
+    if (!cf || !cf->func)
         return 0;
     return cf;
 }

@@ -24,6 +24,7 @@ extern struct gentry *lgfirst;	/* first global table entry */
 extern struct gentry *lglast;	/* last global table entry */
 
 extern struct lclass *lclasses, *lclass_last;
+extern struct lrecord *lrecords, *lrecord_last;
 
 extern struct linvocable *linvocables,
                     *last_linvocable; /* invocables in link stage */

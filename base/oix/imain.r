@@ -26,12 +26,12 @@ function{0} deferred_method_stub()
    }
 end
 
-#define NativeDef(f) extern struct b_iproc B##f##;
+#define NativeDef(class,field,func) extern struct b_iproc B##func##;
 #include "../h/nativedefs.h"
 #undef NativeDef
 
 static struct b_iproc *native_methods[] = {
-#define NativeDef(f) &B##f##,
+#define NativeDef(class,field,func) &B##func##,
 #include "../h/nativedefs.h"
 #undef NativeDef
 };

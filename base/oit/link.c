@@ -118,6 +118,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
 
     sort_global_table();
     build_fieldtable();
+    resolve_native_methods();
 
     /* Phase III: generate code. */
 

@@ -61,6 +61,8 @@ struct lrecord {
     int pc;
     int nfields;
     struct lfield *fields, *last_field;
+    struct gentry *global;      /* Pointer back to global table entry */
+    struct lrecord *next;        /* Link in the list of all lrecord objects */
 };
 
 struct lfield {
@@ -157,6 +159,7 @@ struct lfunction {
     int nargs;            /* Read from the ufile, will be -ve for varargs */
     int nlocals;          /* Number of local symbols - may be any sort */
     int nconstants;       /* Number of constants */
+    int native_method_id; /* For a deferred method, the native method number, or -1 */
     struct lfile *defined;            /* The file this function was defined in */
     struct lclass_field *method;      /* Pointer to method, if a method */
     struct gentry *proc;              /* Pointer to proc, if a proc */

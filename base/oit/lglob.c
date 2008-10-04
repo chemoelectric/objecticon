@@ -166,7 +166,13 @@ void readglob(struct lfile *lf)
                 } else {
                     gp = putglobal(name, F_Record, lf, &pos);
                     curr_record = Alloc(struct lrecord);
+                    curr_record->global = gp;
                     gp->record = curr_record;
+                    if (lrecord_last) {
+                        lrecord_last->next = curr_record;
+                        lrecord_last = curr_record;
+                    } else 
+                        lrecords = lrecord_last = curr_record;
                 }
                 curr_class = 0;
                 break;
@@ -322,6 +328,7 @@ void scanrefs()
     struct gentry *gp, **gpp, *gmain;
     struct linvocable *inv;
     struct lclass *cp, **cpp;
+    struct lrecord *rp, **rpp;
 
     /*
      * Mark every global as unreferenced; search for main.
@@ -391,6 +398,17 @@ void scanrefs()
         else
             cpp = &cp->next;
     }
+
+    /*
+     * Rebuild the list of records.
+     */
+    rpp = &lrecords;
+    while ((rp = *rpp)) {
+        if (rp->global->g_flag & F_Unref)
+            *rpp = rp->next;
+        else
+            rpp = &rp->next;
+    }
 }
 
 /*
@@ -459,28 +477,24 @@ static int fieldtable_sort_compare(const void *p1, const void *p2)
 
 void build_fieldtable()
 {
-    struct gentry *gp;
     struct lfield *fd;
-    struct lclass_field_ref *fr; 
+    struct lclass_field *cf; 
     struct fentry *fp;
     struct fentry **a;
+    struct lrecord *rec;
+    struct lclass *cl;
     int i = 0;
 
     /*
      * Build the field table, counting the total number of entries.
      */
     nfields = 0;
-    for (gp = lgfirst; gp; gp = gp->g_next) {
-        if (gp->record) {
-            for (fd = gp->record->fields; fd; fd = fd->next)
-                fd->ftab_entry = add_fieldtable_entry(fd->name);
-        } else if (gp->class) {
-            for (fr = gp->class->implemented_instance_fields; fr; fr = fr->next)
-                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name);
-            for (fr = gp->class->implemented_class_fields; fr; fr = fr->next)
-                fr->field->ftab_entry = add_fieldtable_entry(fr->field->name);
-        }
-    }
+    for (rec = lrecords; rec; rec = rec->next)
+        for (fd = rec->fields; fd; fd = fd->next)
+            fd->ftab_entry = add_fieldtable_entry(fd->name);
+    for (cl = lclasses; cl; cl = cl->next)
+        for (cf = cl->fields; cf; cf = cf->next)
+            cf->ftab_entry = add_fieldtable_entry(cf->name);
 
     /*
      * Now create a sorted index of the field table.
@@ -545,6 +559,52 @@ void sort_global_table()
     }
     free(a);
 }
+
+struct native_method { 
+    char *class, *field;
+};
+
+struct native_method native_methods[] = {
+#define NativeDef(class,field,func) {Lit(class),Lit(field)},
+#include "../h/nativedefs.h"
+#undef NativeDef
+};
+
+/*
+ * Go through the list of native methods, resolving them to class
+ * fields.  The native_method_id field is set to the index number for
+ * any found.
+ */
+void resolve_native_methods()
+{
+    int n;
+    char *class_name = "";
+    struct lclass *cl = 0;
+    
+    for (n = 0; n < ElemCount(native_methods); ++n) {
+        if (strcmp(class_name, native_methods[n].class)) {
+            struct gentry *gl;
+            class_name = intern(native_methods[n].class);
+            gl = glocate(class_name);
+            if (gl)
+                cl = gl->class;
+            else
+                cl = 0;
+        }
+        if (cl) {
+            /* Lookup the method in the class's method table */
+            char *method_name = intern(native_methods[n].field);
+            int i = hasher(method_name, cl->field_hash);
+            struct lclass_field *cf = cl->field_hash[i];
+            while (cf && cf->name != method_name)
+                cf = cf->b_next;
+            /* Check it's a method and not a variable */
+            if (cf && cf->func)
+                cf->func->native_method_id = n;
+        }
+    }
+}
+
 
 /*
  * getreal - get an Icon real number from infile, and return it.
