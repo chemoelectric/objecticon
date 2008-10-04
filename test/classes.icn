@@ -539,6 +539,8 @@ class Thirteen()
 
    public defer tryit2()
 
+   public defer tryit3()
+
    public static setup1()
       Class.set_method("tryit1", default.tryit1)
    end
@@ -546,6 +548,7 @@ class Thirteen()
    public static setup3()
       try{"Setup err4", Class.set_method("var", default.tryit2)}
       try{"Setup err5", Class.set_method("setup1", default.tryit2)}
+      try{"Setup err6", Class.set_method("tryit3", Fourteen.setup2)}
    end
 end
 
