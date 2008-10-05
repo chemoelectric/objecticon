@@ -1118,10 +1118,8 @@ static void genclasses()
      * Output descriptors for class variables :-
      *   static class variables get a null descriptor
      *   class instance variables don't get an entry
-     *   defer methods which resolve to native methods in nativedefs.h
-     *      get a proc descriptor with the native method number in
-     *      the vword
-     *   other deferred methods get a null descriptor
+     *   defer methods get a proc descriptor with the 
+     *      native method number (-1 if unresolved) in the vword
      *   other methods get a proc descriptor pointing to the b_proc
      */
     if (Dflag)
@@ -1131,10 +1129,10 @@ static void genclasses()
         for (cf = cl->fields; cf; cf = cf->next) {
             if (cf->flag & M_Defer) {
                 /* Deferred method, perhaps resolved to native method */
-                cf->dpc = pc;
                 if (Dflag)
                     fprintf(dbgfile, "%ld:\t%06o\tN+%d\t\t# Deferred method %s.%s\n",
                             (long)pc, D_Proc, cf->func->native_method_id, cl->global->name, cf->name);
+                cf->dpc = pc;
                 outword(D_Proc);
                 outword(cf->func->native_method_id);
             } else if (cf->flag & M_Method) {
