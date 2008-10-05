@@ -1,6 +1,6 @@
 package lang
 
-import io
+import io, util(error)
 
 class Codec()
    public static const 
@@ -191,7 +191,7 @@ class Encode()
          }
 
          default : 
-            chars_out(Codec.NULL_CODE) | fail
+            return error("Type not encodable: " || ty)
       }
 
       return
@@ -249,16 +249,18 @@ class Decode()
          move(1)
          return s
       }
+      &why := "missing separator"
    end
 
    private int_in()
       local s
       if s := tab(many(&digits ++ '-')) then
          return integer(s)
+      &why := "int expected"
    end
 
    private char_in()
-      return move(1)
+      return move(1) | error("char expected")
    end
 
    private note_seen(o)
@@ -279,31 +281,38 @@ class Decode()
          Codec.NULL_CODE :
             return
 
-         Codec.CLASS_CODE :
-            return Class.for_name(line_in())
+         Codec.CLASS_CODE : {
+            cname := line_in() | fail
+            cl := Class.for_name(cname) | return error("No such class " || cname)
+            return cl
+         }
 
          Codec.CONSTRUCTOR_CODE : {
             rname := line_in() | fail
-            con := glob(rname) | fail
-            type(con) == "constructor" | fail
+            (con := glob(rname) &
+             type(con) == "constructor") | return error("No such constructor " || rname)
             return con
          }
 
-         Codec.PROCEDURE_CODE :
-            return proc(line_in())
+         Codec.PROCEDURE_CODE : {
+            t := line_in() | fail
+            return proc(t) | error("No such proc " || t)
+         }
 
          Codec.OBJECT_CODE : {
             cname := line_in() | fail
             #
             # Create an instance
             #
-            cl := Class.for_name(cname) | fail
+            cl := Class.for_name(cname) | return error("No such class " || cname)
             res := Class.create_raw(cl)
             note_seen(res)
             if p := Class.getf(res, "object_decode") then
                p(self) | fail
             else {
                n := int_in() | fail
+               n = Class.get_n_instance_fields(res) | 
+                  return error("Inconsistent number of fields in " || image(res))
                every i := 1 to n do
                   Class.get(res, i) := decode() | fail
             }
@@ -326,9 +335,10 @@ class Decode()
          Codec.RECORD_CODE : {
             (rname := line_in() &
              n := int_in()) | fail
-            con := glob(rname) | fail
-            type(con) == "constructor" | fail
+            (con := glob(rname) &
+             type(con) == "constructor") | return error("No such constructor " || rname)
             res := con()
+            n = *res | return error("Inconsistent number of fields in " || image(res))
             note_seen(res)
             every i := 1 to n do
                res[i] := decode() | fail
@@ -364,7 +374,7 @@ class Decode()
          }            
 
          default :
-            fail
+            return error("Unknown type code:" || image(t))
       }            
    end
 

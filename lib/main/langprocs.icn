@@ -188,7 +188,7 @@ class ObjectOutputStream(Stream)
             seen[o] := s
             if /desc then
                writes(s) | fail
-            if simple{!o} then {
+            else if simple{!o} then {
                writes(s || "[") | fail
                every e := !o do {
                   if \sep then
@@ -263,15 +263,47 @@ class ObjectOutputStream(Stream)
          }
 
          "methp" : {
-            writes("methp(") | fail
-            traverse(Class.get_methp_object(o)) | fail
-            writes(",", image(Class.get_methp_proc(o)), ")") | fail
+            if /desc then 
+               writes("methp()") | fail
+            else if simple{Class.get_methp_object(o)} then {
+               writes("methp(") | fail
+               traverse(Class.get_methp_object(o)) | fail
+               writes(",", image(Class.get_methp_proc(o)), ")") | fail
+            } else {
+               nl() | fail
+               writes("methp(") | fail
+               iplus()
+               nl() | fail
+               traverse(Class.get_methp_object(o)) | fail
+               writes(",") | fail
+               nl() | fail
+               writes(image(Class.get_methp_proc(o))) | fail
+               iminus()
+               nl() | fail
+               writes(")")
+            }
          }
 
          "cast" : {
-            writes("cast(") | fail
-            traverse(Class.get_cast_object(o)) | fail
-            writes(",", image(Class.get_cast_class(o)), ")") | fail
+            if /desc then 
+               writes("cast()") | fail
+            else if simple{Class.get_cast_object(o)} then {
+               writes("cast(") | fail
+               traverse(Class.get_cast_object(o)) | fail
+               writes(",", image(Class.get_cast_class(o)), ")") | fail
+            } else {
+               nl() | fail
+               writes("cast(") | fail
+               iplus()
+               nl() | fail
+               traverse(Class.get_cast_object(o)) | fail
+               writes(",") | fail
+               nl() | fail
+               writes(image(Class.get_cast_class(o))) | fail
+               iminus()
+               nl() | fail
+               writes(")")
+            }
          }
 
          default : 
@@ -329,9 +361,9 @@ class ObjectOutputStream(Stream)
    public simple(x)
       local e
       static s
-      initial s := set("null", "string", "cset", "integer", 
+      initial s := set("null", "string", "cset", "integer", "class",
                        "real", "co-expression", "constructor", "procedure")
-      if /indent then
+      if /indent | (level = \depth) then
          return
       while e := @x do
          member(seen, e) | member(s, type(e)) | fail
@@ -619,6 +651,6 @@ class NoCopy()
    end
 
    private final object_encode()
-      runerr("Not encodable", self)
+      &why := "Not encodable: " || image(self)
    end
 end
