@@ -169,14 +169,35 @@ function{0,1} lang_Class_implements(c, target)
     }
 end
 
-function{1} util_Connectable_is_methp_with_object(mp, o)
-   if !is:object(o) then
-       runerr(602, o)
+function{1} lang_Class_get_methp_object(mp)
+   if !is:methp(mp) then
+       runerr(613, mp)
     body {
-       if (is:methp(mp) && BlkLoc(mp)->methp.object == &BlkLoc(o)->object)
-           return nulldesc;
-       else
-           fail;
+       return object(BlkLoc(mp)->methp.object);
+    }
+end
+
+function{1} lang_Class_get_methp_proc(mp)
+   if !is:methp(mp) then
+       runerr(613, mp)
+    body {
+        return proc(BlkLoc(mp)->methp.proc);
+    }
+end
+
+function{1} lang_Class_get_cast_object(c)
+   if !is:cast(c) then
+       runerr(614, c)
+    body {
+       return object(BlkLoc(c)->cast.object);
+    }
+end
+
+function{1} lang_Class_get_cast_class(c)
+   if !is:cast(c) then
+       runerr(614, c)
+    body {
+       return class(BlkLoc(c)->cast.class);
     }
 end
 
@@ -1816,4 +1837,15 @@ function{1} io_RamStream_str(self)
        GetSelfRs();
        return bytes2string(self_rs->data, self_rs->size);
    }
+end
+
+function{1} util_Connectable_is_methp_with_object(mp, o)
+   if !is:object(o) then
+       runerr(602, o)
+    body {
+       if (is:methp(mp) && BlkLoc(mp)->methp.object == &BlkLoc(o)->object)
+           return nulldesc;
+       else
+           fail;
+    }
 end

@@ -717,6 +717,63 @@ Equals check: October 10, 2000 20:11.33 BST -v- object One#*(x=1;y=2)
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Failed
 	classof(a)===classof(b): no
+Equals check: methp(object Sixteen#*(val=&null),method Sixteen.g) -v- methp(object Sixteen#*(val=&null),method Sixteen.g)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): Error 123
+Equals check: methp(object Sixteen#*(val=&null),method Fifteen.f) -v- methp(object Fifteen#*(val=&null),method Fifteen.f)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): Error 123
+Equals check: methp(object Sixteen#*(val=&null),method Fifteen.f) -v- methp(object Sixteen#*(val=&null),method Sixteen.g)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): Error 123
+Equals check: cast(object Sixteen#*(val=&null),class Fifteen) -v- cast(object Sixteen#*(val=&null),class Fifteen)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): Error 123
+Equals check: cast(object Sixteen#*(val=&null),class Fifteen) -v- cast(object Fifteen#*(val=&null),class Fifteen)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): Error 123
+Equals check: cast(object Sixteen#*(val=&null),class Fifteen) -v- cast(object Sixteen#*(val=&null),class Sixteen)
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): no
+	equals(b,a): no
+	hash(a)=hash(b): no
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): Error 123
+Equals check: object Fifteen#*(val=methp(ref object Fifteen#*,method Fifteen.f)) -v- object Fifteen#*(val=methp(ref object Fifteen#*,method Fifteen.f))
+	equals(a,a): yes
+	equals(b,b): yes
+	equals(a,b): yes
+	equals(b,a): yes
+	hash(a)=hash(b): yes
+	type(a)==type(b): yes
+	subtype(a)==subtype(b): Succeeded with "Fifteen"
+	classof(a)===classof(b): yes
 Tryit1 object Thirteen#*(1)
 getf: no
 Tryit1 object Thirteen#*(1)

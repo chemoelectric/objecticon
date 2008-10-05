@@ -514,6 +514,27 @@ procedure test_langprocs()
    equals_check(set([t1]), set([t2]))
 
    equals_check(t1, One(1,2))
+
+   a := Sixteen()
+   b := Sixteen()
+   c := Fifteen()
+   equals_check(a.g, b.g)
+   equals_check(a.f, c.f)
+   equals_check(a.f, a.g)
+
+   a := cast(Sixteen(), Fifteen)
+   b := cast(Sixteen(), Fifteen)
+   c := cast(Fifteen(), Fifteen)
+   d := cast(Sixteen(), Sixteen)
+   equals_check(a, b)
+   equals_check(a, c)
+   equals_check(a, d)
+
+   a := Fifteen()
+   b := Fifteen()
+   a.val := a.f
+   b.val := b.f
+   equals_check(a,b)
 end
 
 procedure test_rand_objects()
@@ -553,6 +574,18 @@ end
 class Fourteen(Thirteen)
    public static setup2()
       try{"Setup err3", Class.set_method("tryit2", default.tryit2)}
+   end
+end
+
+class Fifteen()
+   public val
+
+   public f()
+   end
+end
+
+class Sixteen(Fifteen)
+   public g()
    end
 end
 
