@@ -416,9 +416,12 @@ void resolve(struct progstate *pstate)
             cf->field_descriptor = (dptr)(code + (int)cf->field_descriptor);
             /* Follow the same logic as lcode.c */
             if (cf->flags & M_Defer) {
-                if (cf->field_descriptor->dword == D_Proc) {
+                int n = IntVal(*cf->field_descriptor);
+                if (n == -1) {
+                    /* Unresolved, point to stub */
+                    BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
+                } else {
                     /* Resolved to native method, do sanity checks, set pointer */
-                    int n = IntVal(*cf->field_descriptor);
                     if (n < 0 || n >= ElemCount(native_methods))
                         error("Native method index out of range: %d", n);
                     pp = (struct b_proc *)native_methods[n];
@@ -429,10 +432,6 @@ void resolve(struct progstate *pstate)
                         error("Native method name mismatch: %s", StrLoc(cf->name));
 
                     BlkLoc(*cf->field_descriptor) = (union block *)pp;
-                } else {
-                    /* Unresolved, point to stub */
-                    cf->field_descriptor->dword = D_Proc;
-                    BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
                 }
             } else if (cf->flags & M_Method) {
                 /*

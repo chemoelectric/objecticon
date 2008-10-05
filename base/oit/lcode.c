@@ -1132,19 +1132,11 @@ static void genclasses()
             if (cf->flag & M_Defer) {
                 /* Deferred method, perhaps resolved to native method */
                 cf->dpc = pc;
-                if (cf->func->native_method_id == -1) {
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\t0\t0\t\t\t# Unresolved deferred method %s.%s\n", (long)pc, 
-                                cl->global->name, cf->name);
-                    outword(D_Null);
-                    outword(0);
-                } else {
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\t%06o\tN+%d\t\t# Resolved native method %s.%s\n",
-                                (long)pc, D_Proc, cf->func->native_method_id, cl->global->name, cf->name);
-                    outword(D_Proc);
-                    outword(cf->func->native_method_id);
-                }
+                if (Dflag)
+                    fprintf(dbgfile, "%ld:\t%06o\tN+%d\t\t# Deferred method %s.%s\n",
+                            (long)pc, D_Proc, cf->func->native_method_id, cl->global->name, cf->name);
+                outword(D_Proc);
+                outword(cf->func->native_method_id);
             } else if (cf->flag & M_Method) {
                 /* Method, with definition in the icode file  */
                 if (Dflag)
