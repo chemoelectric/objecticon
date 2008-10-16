@@ -326,8 +326,7 @@ typedef int siptr, stringint, inst;
  */
 #begdef GRFX_ALLOC(var,type)
    do {
-      var = (struct type *)calloc(1, sizeof(struct type));
-      if (var == NULL) ReturnErrNum(305, NULL);
+      MemProtect(var = calloc(1, sizeof(struct type)));
       var->refcount = 1;
    } while(0)
 #enddef				/* GRFX_ALLOC */
