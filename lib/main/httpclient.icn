@@ -705,6 +705,13 @@ class HttpClient(NetClient)
 
       return
    end
+   
+   #
+   # Close any open connection to the server.
+   #
+   public close_connection()
+      close()
+   end
 
    #
    # 
