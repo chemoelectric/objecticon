@@ -105,7 +105,7 @@ class NetClient(Connectable, SetFields)
    #
    # Close the connection
    #
-   protected close()
+   public close()
       if \connection then {
          connection.close() | return error("Failed to close connection:" || &why)
          fire(CLOSED_EVENT)
