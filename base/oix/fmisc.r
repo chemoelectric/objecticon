@@ -2162,7 +2162,7 @@ function{1} cast(o,c)
           runerr(604, c);
       MemProtect(p = alccast());
       p->object = &BlkLoc(o)->object;
-      p->class = &BlkLoc(c)->class;;
+      p->class = &BlkLoc(c)->class;
       return cast(p);
       }
 end
