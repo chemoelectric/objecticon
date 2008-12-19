@@ -623,9 +623,7 @@ void quitf(char *fmt, ...)
 char *abbreviate(char *name)
 {
     char *l = last_pathelem(name);
-    FILE *f = fopen(name, ReadBinary);
-    if (f) {
-        fclose(f);
+    if (!access(name, R_OK)) {
         if (strcmp(canonicalize(l), name))
             return name;
         else
