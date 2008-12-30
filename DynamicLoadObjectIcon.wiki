@@ -1,5 +1,5 @@
 #summary Dynamically loading Object Icon programs.
-
+<wiki:toc max_depth="3" />
 = Dynamically loading Object Icon code =
 Object Icon includes a small enhancement to MT Icon which allows procedures and classes to be loaded and invoked dynamically from other icode files (ie executable files created by the linker).
 
@@ -38,7 +38,7 @@ procedure main()
 end
 }}}
 
-Some points to note.
+== Some points to note. ==
 
  * The "library" program needs a dummy `main` procedure.  It also needs to declare the procedure and class as invocable, so that the linker doesn't discard them as unreferenced symbols.
  * The class could also be accessed via `Class.for_name("X", prog)()` (after importing `lang.Class`).
