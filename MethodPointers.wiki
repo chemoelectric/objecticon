@@ -1,5 +1,5 @@
 #summary Pointers to instance methods
-
+<wiki:toc max_depth="3" />
 = Method pointers =
 
 When a static method field is accessed, the result is a procedure value.  For example :-
@@ -64,6 +64,7 @@ and the effect of this is to call the method `g` with the given parameters, as w
 
 One other general point to note about methods is that access permissions are checked when the field is accessed, not when the method is called, which can be done at any later time from any location in the program.
 
+== Method pointers like closures ==
 Method pointers also allow some closure-like behaviour which would otherwise be difficult or impossible to achieve.  For example, consider the problem of writing a function which takes a parameter `n`, and returns another function which adds `n` to its argument.  This can be done as follows :-
 
 {{{
