@@ -1,5 +1,5 @@
 #summary Deferred methods
-
+<wiki:toc max_depth="3" />
 = Deferred methods =
 A deferred method is one in which there is no body, and the actual functionality of the method is defined elsewhere.  For example :-
 
@@ -119,7 +119,7 @@ Setting a normal procedure to be a deferred method's definition isn't particular
 
 For a page explaining how to create a dynamic library of RTL/C code, see [DynamicLoadC here].
 
-=== Resolving several methods at once ==
+== Resolving several methods at once ==
 The above technique of using `Class.set_method` to resolve a method loaded from a dynamic library can be pretty tedious if you have several methods to resolve.  For this reason, another method is provided, `Class.load_library`, which resolves many methods at once.  It does this by going through the deferred methods in the class from which it was called and trying to match them to methods in the given library.  It uses the same method naming convention used for native methods in the runtime, described above.  Any methods which don't have a match are simply skipped.
 
 For working examples, see the source files `lib/main/mysql.icn` and its corresponding RTL source files in `lib/native`.
