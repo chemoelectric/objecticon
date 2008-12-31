@@ -53,7 +53,7 @@ class HttpRequest(SetFields, MimeHeaders)
    # Set the data to be used in a POST request, as a stream to be read, and set
    # the method to "POST".
    #
-   # @param   post_file    A filename
+   # @param post_stream A Stream instance
    #
    public set_post_stream(post_stream)
       set_method("POST")
