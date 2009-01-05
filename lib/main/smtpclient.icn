@@ -130,7 +130,7 @@ class SmtpClient(NetClient)
    end
 
    private send_headers(m)
-      local x
+      local k
 
       send_first_header(m, "Resent-Date")
       send_first_header(m, "Sender")
@@ -153,10 +153,8 @@ class SmtpClient(NetClient)
       send_first_header(m, "Comments")
       send_first_header(m, "Encrypted")
 
-      every x := map(m.headers.keys()) do {
-         if not member(RFC822_HEADERS, x) then 
-            send_headers_list(m, x)
-      }
+      every k := m.headers.keys() do
+         member(RFC822_HEADERS, map(k)) | send_headers_list(m, k)
 
       return
    end
@@ -171,8 +169,9 @@ class SmtpClient(NetClient)
 
    public new(a[])
       cast(self,NetClient).new()
-      port := 25
-      server := "localhost"
+      set_port(25)
+      set_server("localhost")
       set_fields(a)
+      return
    end
 end
