@@ -18,8 +18,8 @@ class NetClient(Connectable, SetFields)
       CONNECTING_EVENT,
       CONNECTED_EVENT,
       CLOSED_EVENT,
-      SENDING_STRING_EVENT,
-      SENDING_LINE_EVENT,
+      WRITING_STRING_EVENT,
+      WRITING_LINE_EVENT,
       READ_LINE_EVENT,
       READ_STRING_EVENT
 
@@ -27,8 +27,8 @@ class NetClient(Connectable, SetFields)
       CONNECTING_EVENT := "Connecting"
       CONNECTED_EVENT := "Connected"
       CLOSED_EVENT := "Closed"
-      SENDING_STRING_EVENT := "Sending string"
-      SENDING_LINE_EVENT := "Sending line"
+      WRITING_STRING_EVENT := "Writing string"
+      WRITING_LINE_EVENT := "Writing line"
       READ_LINE_EVENT := "Read line"
       READ_STRING_EVENT := "Read string"
    end
@@ -169,7 +169,7 @@ class NetClient(Connectable, SetFields)
    # Write the given string to the connection.
    #
    protected write_str(s)
-      fire(SENDING_STRING_EVENT, s)
+      fire(WRITING_STRING_EVENT, s)
       return send(s)
    end
 
@@ -178,7 +178,7 @@ class NetClient(Connectable, SetFields)
    # 
    protected write_line(s)
       /s := ""
-      fire(SENDING_LINE_EVENT, s)
+      fire(WRITING_LINE_EVENT, s)
       return send(s || "\r\n") 
    end
 
