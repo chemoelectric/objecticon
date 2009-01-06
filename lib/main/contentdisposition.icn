@@ -147,18 +147,10 @@ class ContentDisposition()
    end   
 
    public to_rfc1521()
-      static c
-      local s, e, v
-      initial {
-         c := ~RFC822Parser.ATOM_CHAR_1521
-      }
+      local s, e
       s := type 
-      every e := !parameters.sort() do {
-         v := e[2]
-         if upto(c, v) then
-            v := "\"" || v || "\""
-         s ||:= " ; " || e[1] || "=" || v
-      }
+      every e := !parameters.sort() do
+         s ||:= "; " || e[1] || "=" || RFC822Parser.escape_1521_value(e[2])
       return s
    end
 

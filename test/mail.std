@@ -18,7 +18,7 @@ Content type 1: "text/html"
 Content param one: "p-one"
 Content param two: "p-two"
 Content param three: "p-three"
-Content type 2: "text/plain ; charset=us-ascii"
+Content type 2: "text/plain; charset=us-ascii"
 Parse content type 2: yes
 Bad ContentDisposition: no
 Good ContentDisposition: yes
@@ -35,7 +35,7 @@ CD3.moddate=t: yes
 CD4.readdate: "Sat, 1 Mar 2003 09:45:30 UTC"
 CD4.readdate=t: yes
 CD5.readdate: "Sat, 1 Mar 2003 09:45:30 UTC"
-CD5.rfc1521: "attachment ; read-date=\"Sat, 1 Mar 2003 09:45:30 UTC\""
+CD5.rfc1521: "attachment; read-date=\"Sat, 1 Mar 2003 09:45:30 UTC\""
 CD5.size param: "2000"
 CD5.get_size: 2000
 CD6.size param: "2000"
@@ -62,7 +62,7 @@ M12.rfc check: yes
 M13.rfc check: yes
 M14.date header: "Sat, 1 Mar 2003 09:45:30 UTC"
 M15.content type: "text/html"
-M16.content disposition: "attachment ; filename=abc.xml"
+M16.content disposition: "attachment; filename=abc.xml"
 M17.content transfer encoding: "quoted-printable"
 M18.subject: "ABCD"
 M19.subject: Failed

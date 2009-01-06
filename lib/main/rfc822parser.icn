@@ -58,17 +58,10 @@ class RFC822Parser()
    #
    # Must be preceded by a call to next_token()
    #
-   # @param omit - if non-null, omit the quotes from the result
-   #
-   private parse_quoted_string(omit)
+   private parse_quoted_string()
       local res
 
-      if /omit then
-         res := move(1)
-      else {
-         res := ""
-         move(1)
-      }
+      res := move(1)
 
       repeat {
          if any('\\') then {
@@ -76,15 +69,55 @@ class RFC822Parser()
          } else if any(QTEXT_CHAR) then
             res ||:= tab(many(QTEXT_CHAR))
          else if any('\"') then {
-            if /omit then 
-               res ||:= move(1)
-            else
-               move(1)
+            res ||:= move(1)
             return res
          } else
             # Missing closing quote or illegal char
             return error("Missing closing quote or illegal char")
       }
+   end
+
+   #
+   # As above, but returns the string without the surrounding quotes, and any
+   # escape sequences converted.
+   #
+   private parse_and_convert_quoted_string()
+      local res
+
+      res := ""
+      move(1)
+
+      repeat {
+         if any('\\') then {
+            move(1)
+            res ||:= move(1) | return error("Unterminated quoted string")
+         } else if any(QTEXT_CHAR) then
+            res ||:= tab(many(QTEXT_CHAR))
+         else if any('\"') then {
+            move(1)
+            return res
+         } else
+            # Missing closing quote or illegal char
+            return error("Missing closing quote or illegal char")
+      }
+   end
+
+   #
+   # Little utility function for quoting a string (if necessary).
+   #
+   public static escape_1521_value(s)
+      local t
+      # If non-empty and all chars are atom chars, no quotes needed.
+      if many(ATOM_CHAR_1521, s) = *s + 1 then
+         return s
+      t := "\""
+      s ? repeat {
+         t ||:= tab(many(QTEXT_CHAR))
+         if pos(0) then
+            break
+         t ||:= "\\" || move(1)
+      }
+      return t || "\""
    end
 
    #
@@ -575,7 +608,7 @@ class RFC822Parser()
    #
    private parse_value()
       if any('\"') then
-         return parse_quoted_string(1)
+         return parse_and_convert_quoted_string()
       else
          return parse_token_1521()
    end
