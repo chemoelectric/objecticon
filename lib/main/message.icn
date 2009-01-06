@@ -137,7 +137,7 @@ class Message(SetFields, MimeHeaders)
    #
    private get_type_handler()
       local ct, e
-      ct := get_actual_content_type()
+      ct := get_actual_content_type() | fail
       every e := !TypeHandler.TYPE_HANDLERS do {
          if e.can_handle(ct) then
             return e
@@ -238,14 +238,14 @@ class Message(SetFields, MimeHeaders)
       data ? {
          while s := tab(find("\r\n")) do {
             move(2)
+            if *s = 0 then {
+               m.content := tab(0)
+               return m
+            }
             while any(' \t') do {
                s ||:= tab(many(' \t'))
                s ||:= tab(find("\r\n")) | return error("Unexpected end of message")
                move(2)
-            }
-            if *s = 0 then {
-               m.content := tab(0)
-               return m
             }
             p.parse_field(s, m) | fail
          }
