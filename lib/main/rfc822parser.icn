@@ -494,6 +494,8 @@ class RFC822Parser()
       next_token() | fail
       =":" | return error(": expected")
       next_token() | fail
+      # The handling of folding is done by the caller, so we just take the
+      # rest of the string as the field-body.
       v := tab(0)
       message.add_header(f, v)
       return
@@ -739,24 +741,30 @@ class RFC822Parser()
       return cd
    end
 
+   private end_check(o)
+      next_token() | fail
+      pos(0) | return error("Extraneous input:" || tab(0))
+      return o
+   end
+
    public parse_mailbox(s)
-      return s ? parse_mailbox_impl()
+      return s ? end_check(parse_mailbox_impl())
    end
 
    public parse_group(s)
-      return s ? parse_group_impl()
+      return s ? end_check(parse_group_impl())
    end
 
    public parse_address_list(s, can_be_empty)
-      return s ? parse_address_list_impl(can_be_empty)
+      return s ? end_check(parse_address_list_impl(can_be_empty))
    end
 
    public parse_mailbox_list(s, can_be_empty)
-      return s ? parse_mailbox_list_impl(can_be_empty)
+      return s ? end_check(parse_mailbox_list_impl(can_be_empty))
    end
 
    public parse_date_time(s)
-      return s ? parse_date_time_impl()
+      return s ? end_check(parse_date_time_impl())
    end
 
    public parse_field(s, message)
@@ -764,14 +772,14 @@ class RFC822Parser()
    end
 
    public parse_content_type(s)
-      return s ? parse_content_type_impl()
+      return s ? end_check(parse_content_type_impl())
    end
 
    public parse_content_disposition(s)
-      return s ? parse_content_disposition_impl()
+      return s ? end_check(parse_content_disposition_impl())
    end
 
    public parse_content_transfer_encoding(s)
-      return s ? parse_content_transfer_encoding_impl()
+      return s ? end_check(parse_content_transfer_encoding_impl())
    end
 end
