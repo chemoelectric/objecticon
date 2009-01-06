@@ -243,7 +243,6 @@ class Message(SetFields, MimeHeaders)
                return m
             }
             while any(' \t') do {
-               s ||:= tab(many(' \t'))
                s ||:= tab(find("\r\n")) | return error("Unexpected end of message")
                move(2)
             }
