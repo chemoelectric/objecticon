@@ -42,5 +42,11 @@ class GlobalName()
    public get_uri()
       return uri
    end
+
+   public new(local_name, uri)
+      self.local_name := local_name
+      self.uri := uri
+      return
+   end
 end
 
