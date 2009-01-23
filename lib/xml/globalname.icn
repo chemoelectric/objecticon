@@ -24,7 +24,7 @@ package xml
 # GlobalName("Envelope", "http://schemas.xmlsoap.org/soap/envelope/")
 #
 class GlobalName()
-   public 
+   private readable
       local_name,
       uri
 
@@ -32,7 +32,7 @@ class GlobalName()
    # Return the original tag local_name
    # 
    public get_local_name()
-      return local_name
+      return .local_name
    end
 
    #
@@ -40,7 +40,7 @@ class GlobalName()
    # which is just a local name, then this is &null.
    #
    public get_uri()
-      return uri
+      return .uri
    end
 
    public new(local_name, uri)
