@@ -33,7 +33,7 @@ class Stream()
       ALL
 
    protected
-      f_eof
+      eof_flag
 
    private static init()
       READ := 'r'
@@ -108,7 +108,7 @@ class Stream()
    # read succeeded, or at any other time.
    #
    public eof()
-      return \.f_eof
+      return \.eof_flag
    end
 
    #
@@ -212,7 +212,7 @@ class StringStream(Stream)
    public in(n)
       local t, e
       if pos > *subj then {
-         f_eof := 1
+         eof_flag := 1
          return error("End of file")
       }
       e := min(pos + n, *subj + 1)
@@ -320,7 +320,7 @@ class BufferStream(Stream, SetFields)
 
    public read()
       local t
-      f_eof := &null
+      eof_flag := &null
       flush() | fail
       repeat {
          rbuff ? {
@@ -343,7 +343,7 @@ class BufferStream(Stream, SetFields)
       }
       if *t = 0 then {
          # other.in should've set &why
-         f_eof := 1
+         eof_flag := 1
          fail
       }
       if t[-1] == "\n" then {
@@ -356,7 +356,7 @@ class BufferStream(Stream, SetFields)
 
    public in(n)
       local t
-      f_eof := &null
+      eof_flag := &null
       flush() | fail
       if *rbuff > 0 then {
          rbuff ? {
@@ -369,7 +369,7 @@ class BufferStream(Stream, SetFields)
             rpos := other.tell() | fail
          rbuff := other.in(buff_size) | {
             if other.eof() then
-               f_eof := 1
+               eof_flag := 1
             fail
          }
          rbuff ? {
@@ -380,7 +380,7 @@ class BufferStream(Stream, SetFields)
       } else {
          t := other.in(n) | {
             if other.eof() then
-               f_eof := 1
+               eof_flag := 1
             fail
          }
       }
