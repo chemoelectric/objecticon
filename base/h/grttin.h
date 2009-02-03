@@ -348,8 +348,3 @@ typedef int siptr, stringint, inst;
       free(var);
    } while(0)
 #enddef				/* GRFX_UNLINK */
-
-
-#if HAVE_OGG
-typedef int OggVorbis_File, vorbis_info;
-#endif					/* HAVE_OGG */
