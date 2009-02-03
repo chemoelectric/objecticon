@@ -61,7 +61,7 @@ import io
 procedure main()
    local n, f
    n := 0
-   f := BufferStream("other=",FileStream.stdin)
+   f := BufferStream(FileStream.stdin)
    while f.read() do
       n +:= 1
    write("n=", n)
