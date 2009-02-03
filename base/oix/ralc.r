@@ -862,7 +862,7 @@ word nbytes,stdsize;
 #endif					/* IntBits == 16 */
 
       do {
-         rp->free = rp->base = (char *)AllocReg(rp->size);
+         rp->free = rp->base = malloc(rp->size);
          if (rp->free != NULL) {
             rp->end = rp->base + rp->size;
             return rp;

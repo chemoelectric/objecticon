@@ -464,10 +464,7 @@ void icon_init(char *name)
             setbuf(stderr, NULL);
         else {
             char *buf;
-
-            buf = malloc(BUFSIZ);
-            if (buf == NULL)
-                fatalerr(305, NULL);
+            Protect(buf = malloc(BUFSIZ), fatalerr(305, NULL));
             setbuf(stderr, buf);
         }
 #endif					/* UNIX */
@@ -477,9 +474,8 @@ void icon_init(char *name)
         setbuf(stderr, NULL);
     else {
 #ifndef MSWindows
-        char *buf = malloc(BUFSIZ);
-        if (buf == NULL)
-            fatalerr(305, NULL);
+        char *buf;
+        Protect(buf = malloc(BUFSIZ), fatalerr(305, NULL));
         setbuf(stderr, buf);
 #endif					/* MSWindows */
     }
@@ -825,8 +821,8 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
         pstate->colltot     = pstate->collstat   =
         pstate->collstr     = pstate->collblk    = 0;
 
-    pstate->stringregion = (struct region *)malloc(sizeof(struct region));
-    pstate->blockregion  = (struct region *)malloc(sizeof(struct region));
+    MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
+    MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
     pstate->stringregion->size = stringsiz;
     pstate->blockregion->size = blocksiz;
 

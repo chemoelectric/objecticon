@@ -270,10 +270,6 @@ Deliberate Syntax Error
    #define DiffPtrs(p1,p2) (word)((p1)-(p2))
 #endif					/* DiffPtrs */
 
-#ifndef AllocReg
-   #define AllocReg(n) malloc(n)
-#endif					/* AllocReg */
-
 #ifndef RttSuffix
    #define RttSuffix ".r"
 #endif					/* RttSuffix */
