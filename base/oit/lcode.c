@@ -16,7 +16,6 @@
 #include "../h/opdefs.h"
 #include "../h/header.h"
 #include "../h/rmacros.h"
-#include "../h/standardfields.h"
 
 int nstatics = 0;               /* Running count of static variables */
 
@@ -947,7 +946,8 @@ static void genclass(struct lclass *cl)
     char *name;
     int i, ap, n_fields;
     struct strconst *sp;
-    
+    word p;
+
     if (cl->pc != pc)
         quitf("I got my sums wrong(a): %d != %d", pc, cl->pc);
     
@@ -990,11 +990,35 @@ static void genclass(struct lclass *cl)
     outword(sp->len);		/* name of class: size and offset */
     outword(sp->offset);
 
+    i = hasher(init_string, cl->implemented_field_hash);
+    fr = cl->implemented_field_hash[i];
+    while (fr && fr->field->name != init_string)
+        fr = fr->b_next;
+    if (fr)
+        p = fr->field->ipc;
+    else
+        p = 0;
+    if (Dflag)
+        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to init field\n", p);
+    outword(p);
+
+    i = hasher(new_string, cl->implemented_field_hash);
+    fr = cl->implemented_field_hash[i];
+    while (fr && fr->field->name != new_string)
+        fr = fr->b_next;
+    if (fr)
+        p = fr->field->ipc;
+    else
+        p = 0;
+    if (Dflag)
+        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to new field\n", p);
+    outword(p);
+
     /*
      * Pointers to the tables that follow.
      */
     if (Dflag) {
-        ap = pc + 5 * WordSize;
+        ap = pc + 4 * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to superclass array\n", ap);
         ap += cl->n_supers * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to implemented classes array\n", ap);
@@ -1002,11 +1026,9 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field info array\n", ap);
         ap += n_fields * WordSize;
         fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field sort array\n", ap);
-        ap += n_fields * ShortSize;
-        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to standard field array\n", ap);
     }
 
-    ap = pc + 5 * WordSize;
+    ap = pc + 4 * WordSize;
     outword(ap);
     ap += cl->n_supers * WordSize;
     outword(ap);
@@ -1015,8 +1037,6 @@ static void genclass(struct lclass *cl)
     ap += n_fields * WordSize;
     outword(ap);
     ap += n_fields * ShortSize;
-    outword(ap);
-    ap += N_STANDARD_FIELDS * ShortSize;
     ap += nalign(ap);
 
     /*
@@ -1073,24 +1093,6 @@ static void genclass(struct lclass *cl)
     for (i = 0; i < n_fields; ++i)
         outshort(sortf[i].n);
     free(sortf);
-
-    /* 
-     * The standard fields table.
-     */
-    if (Dflag)
-        fprintf(dbgfile, "%ld:\t\t\t\t\t# Standard fields array\n", (long)pc);
-    for (i = 0; i < N_STANDARD_FIELDS; ++i) {
-        int n = -1, j = hasher(standard_field_names[i], cl->implemented_field_hash);
-        fr = cl->implemented_field_hash[j];
-        while (fr && fr->field->name != standard_field_names[i])
-            fr = fr->b_next;
-        if (fr)
-            n = fr->index;
-        if (Dflag)
-            fprintf(dbgfile, "%ld:\t%d\t\t\t\t#   %d(%s)->%d\n", 
-                    (long)pc, n, i, standard_field_names[i], n);
-        outshort(n);
-    }        
 
     if (Dflag) 
         fprintf(dbgfile, "%ld:\t\t\t\t\t# Padding bytes (%d)\n", (long)pc, nalign(pc));
@@ -1170,12 +1172,12 @@ static void genclasses()
     for (cl = lclasses; cl; cl = cl->next) {
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
-        cl->size = WordSize * (19 +
+        cl->size = WordSize * (20 +
                                1 + 
                                cl->n_supers +
                                cl->n_implemented_classes +
                                n_fields) + 
-            ShortSize * (n_fields + N_STANDARD_FIELDS);
+            ShortSize * n_fields;
 
         cl->size += nalign(cl->size);
         x += cl->size;
@@ -1336,9 +1338,9 @@ static void gentables()
 
         /* Check our calculations were right */
         if (ap != pc)
-            quitf("I got my sums wrong(b): %d != %d", ap, pc);
+            quitf("I got my sums wrong(d): %d != %d", ap, pc);
         if (rec->pc + size != pc)
-            quitf("I got my sums wrong(c): %d != %d", rec->pc + size, pc);
+            quitf("I got my sums wrong(e): %d != %d", rec->pc + size, pc);
     }
 
     /*

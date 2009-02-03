@@ -6,7 +6,6 @@
  *  type, variable
  */
 #include "../h/opdefs.h"
-#include "../h/standardfields.h"
 
 "args(x,i) - produce number of arguments for procedure x."
 
@@ -30,7 +29,7 @@ function{0,1} args(x,i)
       /* Class - lookup the constructor - also deduct 1 for the self param */
       inline { 
           struct b_class *class = (struct b_class*)BlkLoc(x);
-          struct class_field *new_field = lookup_standard_field(NEW_FIELD, class);
+          struct class_field *new_field = class->new_field;
           if (new_field)
               return C_integer ((struct b_proc *)BlkLoc(*new_field->field_descriptor))->nparam - 1;
           else

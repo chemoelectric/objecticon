@@ -151,13 +151,13 @@ struct b_class {                 /* block representing a class - always static, 
     word n_instance_fields;      /* Number of instance fields */
     word n_class_fields;         /* Number of class fields (statics & methods) */
     struct descrip name;	 /*  Class name (string qualifier) */
+    struct class_field *init_field; /* Pointer to "init" field, or null if absent */
+    struct class_field *new_field;  /* Pointer to "new" field, or null if absent */
     struct b_class **supers;     /* Array of pointers to supers */
     struct b_class **implemented_classes;  /* Array of pointers to implemented classes */
     struct class_field **fields;  /* Pointers to field info; one for each field */
     short *sorted_fields;       /* An array of indices into fields, giving the order sorted by
                                  * field number (and hence also sorted by name) */
-    short *standard_fields;     /* An array of indices into fields, giving the index of the
-                                 * standard fields (new, init). */
 };
 
 struct b_object {		/* object block */

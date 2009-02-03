@@ -7,7 +7,6 @@
 #endif					/* E_Ecall */
 
 #include "../h/modflags.h"
-#include "../h/standardfields.h"
 
 static int invoke_methp(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
 static int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
@@ -332,7 +331,7 @@ static int construct_object(int nargs, dptr newargp)
 
     MemProtect(object = alcobject(class));
 
-    new_field = lookup_standard_field(NEW_FIELD, class);
+    new_field = class->new_field;
     if (!new_field) {
         /*
          * No constructor function, so just put the object in Arg0.
@@ -439,7 +438,7 @@ void ensure_initialized(struct b_class *class)
      * Look for an init method defined in this class; if not found,
      * then return.
      */
-    init_field = lookup_standard_field(INIT_FIELD, class);
+    init_field = class->init_field;
     if (init_field && init_field->defining_class == class) {
         /*
          * Check the initial function is a static method.

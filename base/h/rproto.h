@@ -153,7 +153,6 @@ word		sub		(word a,word b);
 void		syserr		(char *fmt, ...);
 struct b_coexpr	*topact		(struct b_coexpr *ce);
 void		xmfree		(void);
-struct class_field *lookup_standard_field(int standard_field_num, struct b_class *class);
 void            ensure_initialized(struct b_class *class);
 dptr            do_invoke       (dptr proc);
 dptr            call_icon       (dptr proc, ...);

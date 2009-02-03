@@ -481,6 +481,10 @@ void resolve(struct progstate *pstate)
                 cb = (struct b_class *)(code + i);
                 BlkLoc(globals[j]) = (union block *)cb;
                 StrLoc(cb->name) = strcons + (uword)StrLoc(cb->name);
+                if (cb->init_field)
+                    cb->init_field = (struct class_field *)(code + (int)cb->init_field);
+                if (cb->new_field)
+                    cb->new_field = (struct class_field *)(code + (int)cb->new_field);
                 cb->program = pstate;
                 n_fields = cb->n_class_fields + cb->n_instance_fields;
                 cb->supers = (struct b_class **)(code + (int)cb->supers);
@@ -493,7 +497,6 @@ void resolve(struct progstate *pstate)
                 for (i = 0; i < n_fields; ++i) 
                     cb->fields[i] = (struct class_field*)(code + (int)cb->fields[i]);
                 cb->sorted_fields = (short *)(code + (int)cb->sorted_fields);
-                cb->standard_fields = (short *)(code + (int)cb->standard_fields);
 #ifdef DEBUG_LOAD
                 printf("%8x\t\t\tClass\n", cb);
                 printf("\t%d\t\t\t  Title\n", cb->title);
@@ -593,18 +596,6 @@ void resolve(struct progstate *pstate)
         StrLoc(*dp) = strcons + (uword)StrLoc(*dp);
 
     ENTERPSTATE(savedstate);
-}
-
-/*
- * Lookup one of the standard fields in the given class.  Returns the
- * corresponding class_field object, or null if not found.
- */
-struct class_field *lookup_standard_field(int standard_field_num, struct b_class *class)
-{
-    int i = class->standard_fields[standard_field_num];
-    if (i == -1)
-        return 0;
-    return class->fields[i];
 }
 
 static int lookup_global_compare(const void *p1, const void *p2)
