@@ -472,7 +472,8 @@ class BufferStream(Stream, SetFields)
       return
    end
 
-   public new(a[])
+   public new(other, a[])
+      self.other := other
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0
@@ -572,7 +573,7 @@ procedure open(name, mode)
       "a+" : ior(FileOpt.RDWR, FileOpt.APPEND, FileOpt.CREAT)
       default: return error("Invalid mode flag: " || mode)
    }
-   return BufferStream("other=",FileStream.open(name, i))
+   return BufferStream(FileStream.open(name, i))
 end
 
 #
