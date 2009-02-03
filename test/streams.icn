@@ -155,7 +155,7 @@ end
 
 procedure test_stream(x)
    local s, i, buff
-   buff := BufferStream("other=",x, "buff_size=5")
+   buff := BufferStream(x, "buff_size=5")
    every i := 1 to 26 do {
       s := &ucase[1:i]
       buff.writes(s)
@@ -190,28 +190,26 @@ procedure main()
    test_modes()
    check_file(FileStream.open("test", ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)),
               repl(&ucase, 100))
-   check_file(BufferStream("other=", FileStream.open("test", ior(FileOpt.RDWR, 
-                                                                 FileOpt.TRUNC, 
-                                                                 FileOpt.CREAT))),
+   check_file(BufferStream(FileStream.open("test", ior(FileOpt.RDWR, 
+                                                       FileOpt.TRUNC, 
+                                                       FileOpt.CREAT))),
               repl(&ucase, 100))
-   check_file(BufferStream("other=", FileStream.open("test", ior(FileOpt.RDWR, 
-                                                                 FileOpt.TRUNC, 
-                                                                 FileOpt.CREAT)),
-                           "buff_size=5"),
+   check_file(BufferStream(FileStream.open("test", ior(FileOpt.RDWR, 
+                                                       FileOpt.TRUNC, 
+                                                       FileOpt.CREAT)),
+                                                       "buff_size=5"),
               repl(&ucase, 100))
-   check_file(BufferStream("other=",
-                           BufferStream("other=", 
-                                        FileStream.open("test", ior(FileOpt.RDWR, 
+   check_file(BufferStream(BufferStream(FileStream.open("test", ior(FileOpt.RDWR, 
                                                                     FileOpt.TRUNC, 
                                                                     FileOpt.CREAT))
                                         ),
                                         "buff_size=5"),
                                         repl(&ucase, 100))
    check_file(RamStream(), repl(&ucase, 100))
-   check_file(BufferStream("other=",RamStream()), repl(&ucase, 100))
+   check_file(BufferStream(RamStream()), repl(&ucase, 100))
 
    check_file(StringStream(), repl(&ucase, 100))
-   check_file(BufferStream("other=",StringStream()), repl(&ucase, 100))
+   check_file(BufferStream(StringStream()), repl(&ucase, 100))
 
    test_stream(NStream(1))
    test_stream(NStream(10))

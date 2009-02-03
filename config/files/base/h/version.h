@@ -24,4 +24,4 @@
  */
    
 #define UVersion "U1.0.05"
-#define IVersion "I1.0.15"
+#define IVersion "I1.0.16"
