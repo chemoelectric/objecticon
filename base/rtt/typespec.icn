@@ -339,7 +339,7 @@ procedure next_token(may_be_eof)
    else if \may_be_eof then
       fail
    else {
-      write(&errout, prog_name, ", unexpected EOF")
+      ewrite(prog_name, ", unexpected EOF")
       exit(1)
       }
 end
@@ -353,7 +353,7 @@ procedure req_type(id)
    if indx := \type_indx[id] then
       return indx
    else {
-      write(&errout, prog_name, ", the type ", id, " is required")
+      ewrite(prog_name, ", the type ", id, " is required")
       exit(1)
       }
 end
@@ -367,7 +367,7 @@ procedure req_compnt(id)
    if indx := \compnt_indx[id] then
       return indx
    else {
-      write(&errout, prog_name, ", the component ", id, " is required")
+      ewrite(prog_name, ", the component ", id, " is required")
       exit(1)
       }
 end
@@ -392,7 +392,7 @@ procedure output_typ(typ)
          else if indx := \type_indx[s] + 1 then
             typ_str[indx] := icontypes[indx].abrv[1]
          else {
-            write(&errout, prog_name, ", the specification for ", typ.id,
+            ewrite(prog_name, ", the specification for ", typ.id,
                " contains an illegal type: ", s)
             exit(1)
             }
@@ -478,7 +478,7 @@ procedure err(msg, save_pos)
    strt_msg ||:= s[1:-1]             # strip ending quote from image
    s := image(tab(0))                # get end of line
    s := s[2:0]                       # strip first quote from image
-   write(&errout, strt_msg, s)
-   write(&errout, repl(" ", *strt_msg), "^")  # show location of error
+   ewrite(strt_msg, s)
+   ewrite(repl(" ", *strt_msg), "^")  # show location of error
    exit(1)
 end
