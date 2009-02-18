@@ -258,7 +258,7 @@ class XmlParser(Connectable,SetFields)
       local docname, e
 
       every e := !doc.children do {
-         if not(string(e)) & (e.get_type() == "doctype") then {
+         if not(text(e)) & (e.get_type() == "doctype") then {
             docname := e.get_name()
             break
          }
@@ -290,14 +290,14 @@ class XmlParser(Connectable,SetFields)
       if any(XML_NAME_START) then
          return move(1) || tab(many_star(XML_NAME_CHAR))
       else
-         return /quiet & err(XML_NAME_START || " expected")
+         return /quiet & err("Valid name start character expected")
    end
 
    #
    # Same as parse_name, but within a DTD
    #
    private dtd_parse_name()
-      dtd_any(XML_NAME_START) | return err(XML_NAME_START || " expected")
+      dtd_any(XML_NAME_START) | return err("Valid name start character expected")
       return move(1) ||  tab(dtd_many_star(XML_NAME_CHAR))
    end
 
@@ -327,14 +327,14 @@ class XmlParser(Connectable,SetFields)
    private parse_nmtoken(quiet)
       if any(XML_NAME_CHAR) then
          return tab(many(XML_NAME_CHAR))
-      return /quiet & err(XML_NAME_CHAR || " expected")
+      return /quiet & err("Valid name character expected")
    end
 
    #
    # Same as parse_nmtoken, but within a DTD
    #
    private dtd_parse_nmtoken()
-      dtd_any(XML_NAME_CHAR) | return err(XML_NAME_CHAR || " expected")
+      dtd_any(XML_NAME_CHAR) | return err("Valid name character expected")
       return tab(dtd_many(XML_NAME_CHAR))
    end
 
@@ -1483,12 +1483,12 @@ class XmlParser(Connectable,SetFields)
       if any('x') then {
          s ||:= move(1)
          c := '0-9a-fA-F'
-         any(c) | return err(c || " expected")
+         any(c) | return err("Hex digit expected")
          digs := tab(many(c)) 
          i := format_string_to_int(digs, 16) | 63
       } else {
          c := &digits
-         any(c) | return err(c || " expected")
+         any(c) | return err("Digit expected")
          digs := tab(many(c)) 
          i := integer(digs) | 63
       }
@@ -1740,7 +1740,7 @@ class XmlParser(Connectable,SetFields)
       local c1, c2
       c1 := 'A-Za-z'
       c2 := 'A-Za-z0-9._\-'
-      any(c1) | return err(c1 || " expected")
+      any(c1) | return err("Letter expected")
       return tab(many(c2))
    end
 
@@ -2219,11 +2219,8 @@ class XmlParser(Connectable,SetFields)
       #
       # Process the children
       #
-      every sub := !el.children do {
-         if not(string(sub)) then {
-            do_namespace_processing_element(resolve_table, sub) | fail
-         }
-      }
+      every sub := !el.children do
+         text(sub) | do_namespace_processing_element(resolve_table, sub) | fail
 
       return el
    end

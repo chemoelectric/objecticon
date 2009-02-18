@@ -137,7 +137,7 @@ class XmlElement(Element)
    public search_children_global_name(s)
       local n
       every n := !children do
-         if not(string(n)) & n.get_type() == "element" & (/s | equals(n.get_global_name(), s)) then
+         if not(text(n)) & n.get_type() == "element" & (/s | equals(n.get_global_name(), s)) then
             suspend n
    end
 
@@ -161,7 +161,7 @@ class XmlElement(Element)
       every j := 1 to *children do {
          writes(i || j || ":")
          e := children[j]
-         if string(e) then
+         if text(e) then
             write(f, image(e))
          else {
             write(f)

@@ -64,7 +64,7 @@ class CanonicalXmlFormatter(XmlFormatter)
       s ||:= ">"
       out.writes(s) | fail
       every e := !n.children do {
-         if string(e) then
+         if text(e) then
             out.writes(xml_escape(e, '\n\r\t&<>\"')) | fail
          else if e.get_type() ~== "comment" then
             format(out, e, level + 1) | fail

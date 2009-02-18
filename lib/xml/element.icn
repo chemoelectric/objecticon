@@ -82,7 +82,7 @@ class Element(Node)
    public search_children(s)
       local n
       every n := !children do
-         if not(string(n)) & n.get_type() == "element" & (/s | n.get_name() == s) then
+         if not(text(n)) & n.get_type() == "element" & (/s | n.get_name() == s) then
             suspend n
    end
 
@@ -104,14 +104,14 @@ class Element(Node)
    end
 
    #
-   # Return the nth sub-element which is a string.
+   # Return the nth sub-element which is a string/ucs.
    #
    # @param n the index to look for; 1 being the first.
    # @fail if there is no such element.
    #
    public get_nth_string(n)
       local s
-      every s := string(!children) do {
+      every s := text(!children) do {
          if n = 1 then
             return s
          n -:= 1
@@ -146,7 +146,7 @@ class Element(Node)
       every j := 1 to *children do {
          writes(i || j || ":")
          e := children[j]
-         if string(e) then
+         if text(e) then
             write(f, image(e))
          else {
             write(f)

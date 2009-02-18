@@ -34,7 +34,7 @@ class ContentSpec()
       j := 1
       every e:= \arg1 | \arg2 do {
          writes(i || j || ":")
-         if string(e) then
+         if text(e) then
             write(f, image(e))
          else {
             write(f)
@@ -56,7 +56,7 @@ class ContentSpec()
       #
       t := []
       every x := !el.children do {
-         if string(x) then {
+         if text(x) then {
             /t[-1] | put(t)
          } else {
             if x.get_type() == "element" then

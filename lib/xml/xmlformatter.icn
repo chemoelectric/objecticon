@@ -121,13 +121,13 @@ class XmlFormatter(Formatter,SetFields)
 
       if *n.children > 0 then {
          l := get_children(n)
-         if *l = 1 & string(l[1]) then {
+         if *l = 1 & text(l[1]) then {
             out.writes(xml_escape(l[1], '&<>\"')) | fail
          } else {
             every e := !l do {
                if \indent then
                   out.writes(istr1) | fail
-               if string(e) then
+               if text(e) then
                   out.writes(xml_escape(e, '&<>\"')) | fail
                else
                   format(out, e, level + 1) | fail

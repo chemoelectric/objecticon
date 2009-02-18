@@ -85,7 +85,9 @@ end
 
 
 class HtmlParser()
-   public doc
+   public 
+      doc,
+      utf8_flag
 
    public static const
       HTML_IDINTRO,
@@ -102,13 +104,13 @@ class HtmlParser()
    private static init()
       local e
 
-      HTML_SPACE := ' \t\n\r'
-      HTML_IDINTRO := &lcase ++ &ucase
-      HTML_IDCHARS := HTML_IDINTRO ++ &digits ++ '.\-'
-      HTML_KEYCHARS := &lcase ++ &ucase ++ "_" ++ &digits
+      HTML_SPACE := '\x20\x09\x0D\x0A'
+      HTML_IDINTRO := 'A-Za-z'
+      HTML_IDCHARS := 'A-Za-z0-9.\-'
+      HTML_KEYCHARS := 'A-Za-z0-9_'
       HTML_VALCHARS := &ascii -- ' \t\n\r>'
       HTML_DELIM := '\"\''
-      HTML_PUBID_CHAR := ' \n\r' ++ &lcase ++ &ucase ++ &digits ++ '\-\'()+,./:=?;!*#@$_%'
+      HTML_PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
       HTML_STANDALONE := set()
       every insert(HTML_STANDALONE, "IMG" | "BR" | "HR" | "META" | "BASE" | "INPUT" | "AREA" | 
                    "OPTION" | "BASEFONT" | "BGSOUND" | "COL" | "COLGROUP" | "ISINDEX" | 
@@ -119,39 +121,39 @@ class HtmlParser()
       every insert(HTML_AUTOCLOSE, "LI" | "P" | "DD" | "DT" | "FONT")
 
       HTML_ENTITIES := table()
-      every e := ![["amp", "&"], ["lt", "<"], ["gt", ">"], ["quot", "\""],
-                   ["nbsp", char(160)], ["iexcl", char(161)], ["cent", char(162)],
-                   ["pound", char(163)], ["curren", char(164)], ["yen", char(165)],
-                   ["brvbar", char(166)], ["sect", char(167)], ["uml", char(168)],
-                   ["copy", char(169)], ["ordf", char(170)], ["laquo", char(171)],
-                   ["not", char(172)], ["shy", char(173)], ["reg", char(174)],
-                   ["macr", char(175)], ["deg", char(176)], ["plusmn", char(177)],
-                   ["sup2", char(178)], ["sup3", char(179)], ["acute", char(180)],
-                   ["micro", char(181)], ["para", char(182)], ["middot", char(183)],
-                   ["cedil", char(184)], ["sup1", char(185)], ["ordm", char(186)],
-                   ["raquo", char(187)], ["frac14", char(188)], ["frac12", char(189)],
-                   ["frac34", char(190)], ["iquest", char(191)], ["Agrave", char(192)],
-                   ["Aacute", char(193)], ["Acirc", char(194)], ["Atilde", char(195)],
-                   ["Auml", char(196)], ["Aring", char(197)], ["AElig", char(198)],
-                   ["Ccedil", char(199)], ["Egrave", char(200)], ["Eacute", char(201)],
-                   ["Ecirc", char(202)], ["Euml", char(203)], ["Igrave", char(204)],
-                   ["Iacute", char(205)], ["Icirc", char(206)], ["Iuml", char(207)],
-                   ["ETH", char(208)], ["Ntilde", char(209)], ["Ograve", char(210)],
-                   ["Oacute", char(211)], ["Ocirc", char(212)], ["Otilde", char(213)],
-                   ["Ouml", char(214)], ["times", char(215)], ["Oslash", char(216)],
-                   ["Ugrave", char(217)], ["Uacute", char(218)], ["Ucirc", char(219)],
-                   ["Uuml", char(220)], ["Yacute", char(221)], ["THORN", char(222)],
-                   ["szlig", char(223)], ["agrave", char(224)], ["aacute", char(225)],
-                   ["acirc", char(226)], ["atilde", char(227)], ["auml", char(228)],
-                   ["aring", char(229)], ["aelig", char(230)], ["ccedil", char(231)],
-                   ["egrave", char(232)], ["eacute", char(233)], ["ecirc", char(234)],
-                   ["euml", char(235)], ["igrave", char(236)], ["iacute", char(237)],
-                   ["icirc", char(238)], ["iuml", char(239)], ["eth", char(240)],
-                   ["ntilde", char(241)], ["ograve", char(242)], ["oacute", char(243)],
-                   ["ocirc", char(244)], ["otilde", char(245)], ["ouml", char(246)],
-                   ["divide", char(247)], ["oslash", char(248)], ["ugrave", char(249)],
-                   ["uacute", char(250)], ["ucirc", char(251)], ["uuml", char(252)],
-                   ["yacute", char(253)], ["thorn", char(254)], ["yuml", char(255)]] do
+      every e := ![["amp", 38], ["lt", 60], ["gt", 62], ["quot", 34],
+                   ["nbsp", 160], ["iexcl", 161], ["cent", 162],
+                   ["pound", 163], ["curren", 164], ["yen", 165],
+                   ["brvbar", 166], ["sect", 167], ["uml", 168],
+                   ["copy", 169], ["ordf", 170], ["laquo", 171],
+                   ["not", 172], ["shy", 173], ["reg", 174],
+                   ["macr", 175], ["deg", 176], ["plusmn", 177],
+                   ["sup2", 178], ["sup3", 179], ["acute", 180],
+                   ["micro", 181], ["para", 182], ["middot", 183],
+                   ["cedil", 184], ["sup1", 185], ["ordm", 186],
+                   ["raquo", 187], ["frac14", 188], ["frac12", 189],
+                   ["frac34", 190], ["iquest", 191], ["Agrave", 192],
+                   ["Aacute", 193], ["Acirc", 194], ["Atilde", 195],
+                   ["Auml", 196], ["Aring", 197], ["AElig", 198],
+                   ["Ccedil", 199], ["Egrave", 200], ["Eacute", 201],
+                   ["Ecirc", 202], ["Euml", 203], ["Igrave", 204],
+                   ["Iacute", 205], ["Icirc", 206], ["Iuml", 207],
+                   ["ETH", 208], ["Ntilde", 209], ["Ograve", 210],
+                   ["Oacute", 211], ["Ocirc", 212], ["Otilde", 213],
+                   ["Ouml", 214], ["times", 215], ["Oslash", 216],
+                   ["Ugrave", 217], ["Uacute", 218], ["Ucirc", 219],
+                   ["Uuml", 220], ["Yacute", 221], ["THORN", 222],
+                   ["szlig", 223], ["agrave", 224], ["aacute", 225],
+                   ["acirc", 226], ["atilde", 227], ["auml", 228],
+                   ["aring", 229], ["aelig", 230], ["ccedil", 231],
+                   ["egrave", 232], ["eacute", 233], ["ecirc", 234],
+                   ["euml", 235], ["igrave", 236], ["iacute", 237],
+                   ["icirc", 238], ["iuml", 239], ["eth", 240],
+                   ["ntilde", 241], ["ograve", 242], ["oacute", 243],
+                   ["ocirc", 244], ["otilde", 245], ["ouml", 246],
+                   ["divide", 247], ["oslash", 248], ["ugrave", 249],
+                   ["uacute", 250], ["ucirc", 251], ["uuml", 252],
+                   ["yacute", 253], ["thorn", 254], ["yuml", 255]] do
          HTML_ENTITIES[e[1]] := e[2]
    end
 
@@ -161,6 +163,12 @@ class HtmlParser()
    public parse(s)
       local i, node
       doc := HtmlDocument()
+
+      if type(s) == "ucs" then {
+         utf8_flag := 1
+      } else {
+         utf8_flag := &null
+      }
 
       s ? {
          repeat {
@@ -438,13 +446,19 @@ class HtmlParser()
             ="&"
             if ="#" then {
                if i := (256 > integer(tab(many(&digits)))) then {
-                  res ||:= char(i)
+                  if \utf8_flag then
+                     res ||:= uchar(i)
+                  else
+                     res ||:= char(i)
                   =";"
                } else
                   res ||:= "&#"
             } else {
-               if s := \HTML_ENTITIES[tab(many(&ucase ++ &lcase))] then {
-                  res ||:= s
+               if i := \HTML_ENTITIES[string(tab(many(&ucase ++ &lcase)))] then {
+                  if \utf8_flag then
+                     res ||:= uchar(i)
+                  else
+                     res ||:= char(i)
                   =";"
                } else
                   res ||:= "&"
@@ -466,7 +480,7 @@ class HtmlParser()
    # matching closing tag.
    #
    public static html_is_standalone_tag(name)
-      return member(HTML_STANDALONE, name)
+      return member(HTML_STANDALONE, string(name))
    end
 
    #
@@ -474,6 +488,6 @@ class HtmlParser()
    # tag is encountered at the same level.
    #
    public static html_is_autoclose_tag(name)
-      return member(HTML_AUTOCLOSE, name)
+      return member(HTML_AUTOCLOSE, string(name))
    end
 end

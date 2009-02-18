@@ -31,7 +31,7 @@ class Formatter()
       /level := 0
       /out := FileStream.stdout
 
-      if s := string(n) then
+      if s := text(n) then
          return format_content(out, s, level)
 
       return case n.get_type() of {

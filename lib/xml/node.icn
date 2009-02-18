@@ -37,13 +37,13 @@ class Node()
    # Add a child at the given pos.  If pos is not specified, the
    # child is appended to the end.
    #
-   # @param obj - either a string or a Node subclass
+   # @param obj - either a string/ucs or a Node subclass
    # @param pos - the pos to insert
    #
    public add(obj, pos)
       /pos := 0
       insert(children, pos, obj)
-      if not string(obj) then
+      if not text(obj) then
          obj.parent := self
       return obj
    end
@@ -55,19 +55,19 @@ class Node()
    # This differs from the above {add()} method in that adjacent
    # strings will be compacted together to form one longer string.
    #
-   # @param s - a string
+   # @param s - a string/ucs
    # @param pos - the pos to insert
    #
    public add_string(s, pos)
       if /pos then {
-         if string(children[-1]) then
+         if text(children[-1]) then
             children[-1] ||:= s
          else
             put(children, s)
       } else {
-         if string(children[pos - 1]) then
+         if text(children[pos - 1]) then
             children[pos - 1] ||:= s
-         else if string(children[pos]) then
+         else if text(children[pos]) then
             children[pos] := s || children[pos]
          else
             insert(children, pos, s)
@@ -82,8 +82,7 @@ class Node()
       local e
       self @ &source
       every e := !children do
-         if not(string(e)) then
-            e.traverse_nodes_preorder()
+         text(e) | e.traverse_nodes_preorder()
    end
 
    #
@@ -92,8 +91,7 @@ class Node()
    public traverse_nodes_postorder()
       local e
       every e := !children do
-         if not(string(e)) then
-            e.traverse_nodes_postorder()
+         text(e) | e.traverse_nodes_postorder()
       self @ &source
    end
 
@@ -117,7 +115,7 @@ class Node()
       local l, e
       l := []
       every e := !children do {
-         if not(string(e) & (many(XmlParser.XML_SPACE, e) = *e + 1)) then
+         if not(text(e) & (many(XmlParser.XML_SPACE, e) = *e + 1)) then
             put(l, e)
       }
       return l
@@ -131,7 +129,7 @@ class Node()
       local l, e
       l := []
       every e := !get_children_no_whitespace() do {
-         if string(e) then
+         if text(e) then
             e := xml_trim(e)
          put(l, e)
       }
@@ -145,9 +143,8 @@ class Node()
    public get_string_content()
       local s, e
       s := ""
-      every e := !self.children do {
-         s ||:= string(e)
-      }
+      every e := !self.children do
+         s ||:= text(e)
       return s
    end
 
@@ -158,9 +155,8 @@ class Node()
    public get_trimmed_string_content()
       local s, e
       s := ""
-      every e := !self.children do {
-         s ||:= xml_trim(string(e))
-      }
+      every e := !self.children do
+         s ||:= xml_trim(text(e))
       return s
    end
 
@@ -168,7 +164,7 @@ class Node()
    # Succeed if this node has string s as a child.
    #
    public has_string(s)
-      return string(!self.children) == s
+      return text(!self.children) == s
    end
 
    #
@@ -176,7 +172,7 @@ class Node()
    # comparison.
    #
    public has_trimmed_string(s)
-      return xml_trim(string(!self.children)) == s
+      return xml_trim(text(!self.children)) == s
    end
 
    #
@@ -211,7 +207,7 @@ class Node()
       every j := 1 to *children do {
          writes(i || j || ":")
          e := children[j]
-         if string(e) then
+         if text(e) then
             write(f, image(e))
          else {
             write(f)

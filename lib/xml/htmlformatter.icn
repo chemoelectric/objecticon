@@ -31,10 +31,13 @@ class HtmlFormatter(Formatter)
       s ||:= \n.name
       x := n.external_id
       if \x then {
-         if \x.public_id then
-            s ||:= " PUBLIC \"" || x.public_id || "\" \"" || x.system_id || "\""
-         else
-            s ||:= " SYSTEM \"" || x.system_id || "\""
+         if \x.public_id then {
+            if \x.system_id then
+               s ||:= " PUBLIC \"" || x.public_id || "\" \"" || x.system_id || "\""
+            else
+               s ||:= " PUBLIC \"" || x.public_id
+         } else
+            s ||:= " SYSTEM \"" || \x.system_id || "\""
       }
       s ||:= ">"
       return out.writes(s)
@@ -60,7 +63,7 @@ class HtmlFormatter(Formatter)
       out.writes(s) | fail
 
       every e := !n.children do {
-         if string(e) then
+         if text(e) then
             out.writes(xml_escape(e, '&<>\"')) | fail
          else
             format(out, e, level + 1)

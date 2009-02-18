@@ -22,7 +22,7 @@ class Document(Node)
    public get_root_element()
       local n
       every n := !children do
-         if not(string(n)) & n.get_type() == "element" then
+         if not(text(n)) & n.get_type() == "element" then
             return n
    end
 end
