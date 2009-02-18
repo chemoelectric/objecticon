@@ -118,7 +118,7 @@ class EditList(DropDown)
    public set_one(f)
       case f.attr of {
          "filter" : set_filter(f.cset_val())
-         "contents" : set_contents(f.string_val())
+         "contents" : set_contents(f.text_val())
          default: return cast(self,DropDown).set_one(f)
       }
       return

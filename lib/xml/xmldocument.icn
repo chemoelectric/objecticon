@@ -53,12 +53,12 @@ class XmlDocument(Document)
       local x
       write("--- Parameter entities")
       every x := !sort(parameter_entities) do {
-         write(x[1], " -> ",to_string(x[2]))
+         write(image(x[1]), " -> ",to_string(x[2]))
       }
       write()
       write("--- General entities")
       every x := !sort(general_entities) do  {
-         write(x[1], " -> ",to_string(x[2]))
+         write(image(x[1]), " -> ",to_string(x[2]))
       }
       write()
    end
@@ -70,7 +70,7 @@ class XmlDocument(Document)
       local x
       write("--- Element declarations")
       every x := !sort(element_declarations) do  {
-         write(x[1], " -> ", to_string(x[2]))
+         write(image(x[1]), " -> ", to_string(x[2]))
       }
       write()
    end
@@ -82,7 +82,7 @@ class XmlDocument(Document)
       local x
       write("--- Notation declarations")
       every x := !sort(notation_declarations) do  {
-         write(x[1], " -> ", to_string(x[2]))
+         write(image(x[1]), " -> ", to_string(x[2]))
       }
       write()
    end
@@ -94,9 +94,9 @@ class XmlDocument(Document)
       local x, y
       write("--- Attribute lists")
       every x := !sort(attribute_lists) do  {
-         write(x[1], " -> ")
+         write(image(x[1]), " -> ")
          every y := !sort(x[2].attribute_defs) do
-            write("       ", y[1], " -> ", to_string(y[2]))
+            write("       ", image(y[1]), " -> ", to_string(y[2]))
       }
       write()
    end
@@ -162,13 +162,6 @@ class XmlDocument(Document)
       cast(self,Document).new()
       parameter_entities := table()
       general_entities := table()
-      # The predefined entities.  Note that the values are in each case valid content.
-      # The chars "&" and "<" on their own would not be valid content.
-      insert(general_entities, "lt", EntityDef("&#60;"))
-      insert(general_entities, "gt", EntityDef(">"))
-      insert(general_entities, "amp", EntityDef("&#38;"))
-      insert(general_entities, "apos", EntityDef("\'"))
-      insert(general_entities, "quot", EntityDef("\""))
       element_declarations := table()
       notation_declarations := table()
       attribute_lists := table()

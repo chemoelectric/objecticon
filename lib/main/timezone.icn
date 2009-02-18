@@ -66,8 +66,8 @@ class Timezone()
          return KNOWN_TIMEZONES[id]
 
       id ? {
-         if any('+-') then {
-            if any('-') then 
+         if any('+\-') then {
+            if any('\-') then 
                sign := -1
             else
                sign := 1

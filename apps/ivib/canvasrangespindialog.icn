@@ -113,10 +113,10 @@ class CanvasRangeSpinDialog(CanvasComponentDialog)
       increment_size.set_contents("")
       p.add(increment_size)
 
-      lo.set_filter(&digits ++ '.-')
-      hi.set_filter(&digits ++ '.-')
-      increment_size.set_filter(&digits ++ '.-')
-      value.set_filter(&digits ++ '.-')
+      lo.set_filter(&digits ++ '.\-')
+      hi.set_filter(&digits ++ '.\-')
+      increment_size.set_filter(&digits ++ '.\-')
+      value.set_filter(&digits ++ '.\-')
 
       if /c.hi then {
          hi.set_is_shaded("t")

@@ -83,7 +83,8 @@ class EditListSpin(SelectionList,EditSpin)
    public set_one(f)
       case f.attr of {
          "selection" : set_selection(f.int_val())
-         "selection_list" : set_selection_list(f.string_list_val())
+         "selection_list" : set_selection_list(f.text_list_val())
+         "contents" : set_contents(f.text_val())
          default: return cast(self,EditSpin).set_one(f)
       }
       return

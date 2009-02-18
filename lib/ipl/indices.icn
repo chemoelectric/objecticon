@@ -55,7 +55,7 @@ procedure indices(spec, last)
              next
              }
          else item ? {
-            (lo := (0 < integer(tab(upto('-')))) | fail)
+            (lo := (0 < integer(tab(upto('\-')))) | fail)
             move(1)
             hi := (if pos(0) then last else
                ((0 < integer(tab(0)) | fail)))

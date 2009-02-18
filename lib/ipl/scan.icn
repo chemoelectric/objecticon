@@ -204,7 +204,7 @@ end
 #  For example,
 #
 #     "((a+b)-delta)/(c*d))" ? {
-#	 tab(bal('+-/*'))
+#	 tab(bal('+\-/*'))
 #	 snapshot("example")
 #	 }
 #
@@ -278,6 +278,8 @@ procedure snapshot(title,len)
    prefix := "&subject = "
    is := image(&subject)
    is0 := *image(&subject[1:&pos]) | fail
+   if type(&subject)=="ucs" then
+      is0 -:= 1  # Because of the closing bracket image gives
 
    #
    # Set up top and bottom bars (not exceeding len width, if

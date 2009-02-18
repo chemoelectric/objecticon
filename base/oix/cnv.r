@@ -23,10 +23,13 @@
 /*
  * Prototypes for static functions.
  */
-static void cstos (unsigned int *cs, dptr dp, char *s);
 static void itos (C_integer num, dptr dp, char *s);
 static int ston (dptr sp, union numeric *result);
-static int tmp_str (char *sbuf, dptr s, dptr d);
+
+static void cset2str(dptr src, dptr dest)
+{
+    *dest = cset_to_str(&BlkLoc(*src)->cset, 1, BlkLoc(*src)->cset.size);
+}
 
 /*
  * cnv_c_dbl - cnv:C_double(*s, *d), convert a value directly into a C double
@@ -35,11 +38,7 @@ int cnv_c_dbl(s, d)
 dptr s;
 double *d;
    {
-
-   tended	/* need to be tended if ston allocates largeint blocks */
-
-   struct descrip result, cnvstr;
-   char sbuf[MaxCvtLen];
+   tended struct descrip result, cnvstr;
 
    union numeric numrc;
 
@@ -61,8 +60,11 @@ double *d;
       string: {
          /* fall through */
          }
+      ucs: {
+          s = &BlkLoc(*s)->ucs.utf8;
+         }
       cset: {
-        tmp_str(sbuf, s, &cnvstr);
+        cset2str(s, &cnvstr);
         s = &cnvstr;
         }
       default: {
@@ -99,12 +101,8 @@ int cnv_c_int(s, d)
 dptr s;
 C_integer *d;
    {
-
-   tended  /* tended since ston now allocates blocks */
-
-   struct descrip cnvstr, result;			/* not tended */
+   tended struct descrip cnvstr, result;
    union numeric numrc;
-   char sbuf[MaxCvtLen];
 
    type_case *s of {
       integer: {
@@ -128,8 +126,11 @@ C_integer *d;
       string: {
          /* fall through */
          }
+      ucs: {
+          s = &BlkLoc(*s)->ucs.utf8;
+         }
       cset: {
-        tmp_str(sbuf, s, &cnvstr);
+        cset2str(s, &cnvstr);
         s = &cnvstr;
         }
       default: {
@@ -201,6 +202,7 @@ dptr d;
    return 1;
    }
 
+
 #begdef cnv_cset_macro(f,e_aconv,e_tconv,e_nconv,e_sconv,e_fconv)
 /*
  * cnv_cset - cnv:cset(*s, *d), convert to a cset
@@ -208,9 +210,6 @@ dptr d;
 int f(dptr s, dptr d)
    {
    tended struct descrip str;
-   char sbuf[MaxCvtLen];
-   register C_integer l;
-   register char *s1;        /* does not need to be tended */
 
    EVValD(s, e_aconv);
    EVValD(&csetdesc, e_tconv);
@@ -220,30 +219,95 @@ int f(dptr s, dptr d)
       EVValD(s, e_nconv);
       return 1;
       }
-   /*
-    * convert to a string and then add its contents to the cset
-    */
-   if (tmp_str(sbuf, s, &str)) {
-      MemProtect(BlkLoc(*d) = (union block *)alccset());
-      d->dword = D_Cset;
-      s1 = StrLoc(str);
-      l = StrLen(str);
-      while(l--) {
-         Setb(*s1, *d);
-	 s1++;
-         }
-      EVValD(d, e_sconv);
-      return 1;
-      }
-   else {
-      EVValD(s, e_fconv);
-      return 0;
-      }
+
+   if (is:ucs(*s)) {
+       char *s1, *e1;
+       struct rangeset *rs = init_rangeset();
+       int l = BlkLoc(*s)->ucs.length;
+       s1 = StrLoc(BlkLoc(*s)->ucs.utf8);
+       while (l-- > 0) {
+           int i = utf8_iter(&s1);
+           add_range(rs, i, i);
+       }
+       d->dword = D_Cset;
+       BlkLoc(*d) = (union block *)rangeset_to_block(rs);
+       free_rangeset(rs);
+       return 1;
+   }
+
+   if (cnv:string(*s, str)) {
+       C_integer l;
+       char *s1;        /* does not need to be tended */
+       struct rangeset *rs = init_rangeset();
+       s1 = StrLoc(str);
+       l = StrLen(str);
+       while(l--) {
+           int i = *s1++ & 0xff;
+           add_range(rs, i, i);
+       }
+       d->dword = D_Cset;
+       BlkLoc(*d) = (union block *)rangeset_to_block(rs);
+       free_rangeset(rs);
+       return 1;
+     }
+
+     return 0;
+
   }
 #enddef
 
 cnv_cset_macro(cnv_cset_0,0,0,0,0,0)
 cnv_cset_macro(cnv_cset_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
+
+#begdef cnv_ucs_macro(f,e_aconv,e_tconv,e_nconv,e_sconv,e_fconv)
+/*
+ * cnv_ucs - cnv:ucs(*s, *d), convert to a ucs
+ */
+int f(dptr s, dptr d)
+{
+    tended struct descrip str;
+
+    if (is:ucs(*s)) {
+        *d = *s;
+        return 1;
+    }
+    if (is:cset(*s)) {
+        tended struct b_ucs *p;
+        p = cset_to_ucs_block(&BlkLoc(*s)->cset, 1, BlkLoc(*s)->cset.size);
+        d->dword = D_Ucs;
+        BlkLoc(*d) = (union block *)p;
+        return 1;
+    }
+
+    if (cnv:string(*s, str)) {
+        tended struct b_ucs *p;
+        char *s1, *e1;
+        int n = 0;
+
+        s1 = StrLoc(str);
+        e1 = s1 + StrLen(str);
+
+        while (s1 < e1) {
+            char *t = s1;
+            int i = utf8_check(&s1, e1);
+            ++n;
+            if (i < 0 || i > MAX_CODE_POINT) {
+                whyf("Invalid utf-8 at sequence beginning at char %d", 1 + (t - StrLoc(str)));
+                return 0;
+            }
+        }
+        p = make_ucs_block(&str, n);
+        d->dword = D_Ucs;
+        BlkLoc(*d) = (union block *)p;
+        return 1;
+    }
+
+    return 0;
+}
+#enddef
+
+cnv_ucs_macro(cnv_ucs_0,0,0,0,0,0)
+cnv_ucs_macro(cnv_ucs_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 
 /*
  * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
@@ -252,12 +316,8 @@ int cnv_ec_int(s, d)
 dptr s;
 C_integer *d;
    {
-
-   tended  /* tended since ston now allocates blocks */
-
-   struct descrip cnvstr;			/* not tended */
+   tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
-   char sbuf[MaxCvtLen];
 
    type_case *s of {
       integer: {
@@ -271,8 +331,11 @@ C_integer *d;
       string: {
          /* fall through */
          }
+      ucs: {
+          s = &BlkLoc(*s)->ucs.utf8;
+         }
       cset: {
-        tmp_str(sbuf, s, &cnvstr);
+        cset2str(s, &cnvstr);
         s = &cnvstr;
         }
       default: {
@@ -298,11 +361,7 @@ C_integer *d;
 int cnv_eint(s, d)
 dptr s, d;
    {
-
-   tended  /* tended since ston now allocates blocks */
-
-   struct descrip cnvstr;			/* not tended */
-   char sbuf[MaxCvtLen];
+   tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
 
    type_case *s of {
@@ -313,8 +372,11 @@ dptr s, d;
       string: {
          /* fall through */
          }
+      ucs: {
+          s = &BlkLoc(*s)->ucs.utf8;
+         }
       cset: {
-        tmp_str(sbuf, s, &cnvstr);
+        cset2str(s, &cnvstr);
         s = &cnvstr;
         }
       default: {
@@ -347,11 +409,7 @@ dptr s, d;
 int f(s, d)
 dptr s, d;
    {
-
-   tended   /* tended since ston now allocates blocks */
-
-   struct descrip cnvstr;			/* not tended */
-   char sbuf[MaxCvtLen];
+   tended struct descrip cnvstr; /* tended since ston allocates blocks */
    union numeric numrc;
 
    EVValD(s, e_aconv);
@@ -384,8 +442,11 @@ dptr s, d;
       string: {
          /* fall through */
          }
+      ucs: {
+          s = &BlkLoc(*s)->ucs.utf8;
+         }
       cset: {
-        tmp_str(sbuf, s, &cnvstr);
+        cset2str(s, &cnvstr);
         s = &cnvstr;
         }
       default: {
@@ -480,27 +541,33 @@ int f(dptr s, dptr d)
          EVValD(s, e_nconv);
          return 1;
          }
+     ucs: {
+           *d = BlkLoc(*s)->ucs.utf8;
+           return 1;
+       }
       integer: {
 
          if (Type(*s) == T_Lrgint) {
             word slen;
             word dlen;
-
             slen = (BlkLoc(*s)->bignumblk.lsd - BlkLoc(*s)->bignumblk.msd +1);
             dlen = slen * NB * 0.3010299956639812;	/* 1 / log2(10) */
 	    bigtos(s,d);
-	    }
+            return 1;
+          }
          else
-
-         itos(IntVal(*s), d, sbuf);
-	 }
+            itos(IntVal(*s), d, sbuf);
+       }
       real: {
          double res;
          GetReal(s, res);
          rtos(res, d, sbuf);
          }
-      cset:
-         cstos(BlkLoc(*s)->cset.bits, d, sbuf);
+     cset: {
+         cset2str(s, d);
+         return 1;
+      }
+
       default: {
          EVValD(s, e_fconv);
          return 0;
@@ -515,48 +582,6 @@ int f(dptr s, dptr d)
 cnv_str_macro(cnv_str_0,0,0,0,0,0)
 cnv_str_macro(cnv_str_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 
-#begdef cnv_tcset_macro(f, e_aconv, e_tconv, e_nconv, e_sconv, e_fconv)
-/*
- * cnv_tcset - cnv:tmp_cset(*s, *d), convert to a temporary cset
- */
-int f(struct b_cset *cbuf, dptr s, dptr d)
-   {
-   struct descrip tmpstr;
-   char sbuf[MaxCvtLen];
-   register char *s1;
-   C_integer l;
-
-   EVValD(s, e_aconv);
-   EVValD(&csetdesc, e_tconv);
-
-   if (is:cset(*s)) {
-      *d = *s;
-      EVValD(s, e_nconv);
-      return 1;
-      }
-   if (tmp_str(sbuf, s, &tmpstr)) {
-      for (l = 0; l < CsetSize; l++) 
-          cbuf->bits[l] = 0;
-      d->dword = D_Cset;
-      BlkLoc(*d) = (union block *)cbuf;
-      s1 = StrLoc(tmpstr);
-      l = StrLen(tmpstr);
-      while(l--) {
-         Setb(*s1, *d);
-	 s1++;
-         }
-      EVValD(d, e_sconv);
-      return 1;
-      }
-   else {
-      EVValD(s, e_fconv);
-      return 0;
-      }
-   }
-#enddef
-
-cnv_tcset_macro(cnv_tcset_0,0,0,0,0,0)
-cnv_tcset_macro(cnv_tcset_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 
 #begdef cnv_tstr_macro(f,e_aconv,e_tconv,e_nconv,e_sconv,e_fconv)
 /*
@@ -564,24 +589,93 @@ cnv_tcset_macro(cnv_tcset_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
  */
 int f(char *sbuf, dptr s, dptr d)
    {
-   EVValD(s, e_aconv);
-   EVValD(&emptystr, e_tconv);
+   type_case *s of {
+      string:
+         *d = *s;
+      ucs:
+         *d = BlkLoc(*s)->ucs.utf8;
+      integer: {
+         if (Type(*s) == T_Lrgint) {
+            word slen;
+            word dlen;
 
-   if (is:string(*s)) {
-      *d = *s;
-      EVValD(s, e_nconv);
-      return 1;
+            slen = (BlkLoc(*s)->bignumblk.lsd - BlkLoc(*s)->bignumblk.msd +1);
+            dlen = slen * NB * 0.3010299956639812;	/* 1 / log2(10) */
+	    bigtos(s,d);
+           }
+         else
+            itos(IntVal(*s), d, sbuf);
       }
-   else if (tmp_str(sbuf, s, d)) {
-      EVValD(d, e_sconv);
-      return 1;
+      real: {
+         double res;
+         GetReal(s, res);
+         rtos(res, d, sbuf);
+         }
+      cset:
+         cset2str(s, d);
+      default:
+         return 0;
       }
-   else {
-      EVValD(s, e_fconv);
-      return 0;
-      }
+   return 1;
    }
 #enddef
+
+static void deref_tvsubs(dptr s, dptr d)
+{
+    tended union block *bp;
+    tended struct descrip v;
+
+    /*
+     * A substring trapped variable is being dereferenced.
+     *  Point bp to the trapped variable block and v to
+     *  the string.
+     */
+    bp = BlkLoc(*s);
+    deref(&bp->tvsubs.ssvar, &v);
+    type_case v of {
+      string: {
+            if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > StrLen(v))
+                fatalerr(205, NULL);
+            /*
+             * Make a descriptor for the substring by getting the
+             *  length and pointing into the string.
+             */
+            StrLen(*d) = bp->tvsubs.sslen;
+            StrLoc(*d) = StrLoc(v) + bp->tvsubs.sspos - 1;
+        }
+      ucs: {
+            if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > BlkLoc(v)->ucs.length)
+                fatalerr(205, NULL);
+            d->dword = D_Ucs;
+            BlkLoc(*d) = (union block *)make_ucs_substring(&BlkLoc(v)->ucs, 
+                                                           bp->tvsubs.sspos, 
+                                                           bp->tvsubs.sslen);
+        }
+      default: {
+            fatalerr(129, &v);
+        }
+    }
+}
+
+static void deref_tvtbl(dptr s, dptr d)
+{
+   /*
+    * no allocation is done, so nothing need be tended.
+    */
+    union block *bp;
+    union block **ep;
+    int res;
+
+    /*
+     * Look up the element in the table.
+     */
+    bp = BlkLoc(*s);
+    ep = memb(bp->tvtbl.clink,&bp->tvtbl.tref,bp->tvtbl.hashnum,&res);
+    if (res == 1)
+        *d = (*ep)->telem.tval;			/* found; use value */
+    else
+        *d = bp->tvtbl.clink->table.defvalue;	/* nope; use default */
+}
 
 cnv_tstr_macro(cnv_tstr_0,0,0,0,0,0)
 cnv_tstr_macro(cnv_tstr_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
@@ -592,13 +686,6 @@ cnv_tstr_macro(cnv_tstr_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
  */
 void f(dptr s, dptr d)
    {
-   /*
-    * no allocation is done, so nothing need be tended.
-    */
-   register union block *bp;
-   struct descrip v;
-   register union block **ep;
-   int res;
 
    EVVar(s, e_deref);
 
@@ -606,37 +693,11 @@ void f(dptr s, dptr d)
       *d = *s;
       }
    else type_case *s of {
-      tvsubs: {
-         /*
-          * A substring trapped variable is being dereferenced.
-          *  Point bp to the trapped variable block and v to
-          *  the string.
-          */
-         bp = BlkLoc(*s);
-         deref(&bp->tvsubs.ssvar, &v);
-         if (!is:string(v))
-            fatalerr(103, &v);
-         if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > StrLen(v))
-            fatalerr(205, NULL);
-         /*
-          * Make a descriptor for the substring by getting the
-          *  length and pointing into the string.
-          */
-         StrLen(*d) = bp->tvsubs.sslen;
-         StrLoc(*d) = StrLoc(v) + bp->tvsubs.sspos - 1;
-        }
+      tvsubs:
+         deref_tvsubs(s, d);
 
-      tvtbl: {
-         /*
-          * Look up the element in the table.
-          */
-         bp = BlkLoc(*s);
-         ep = memb(bp->tvtbl.clink,&bp->tvtbl.tref,bp->tvtbl.hashnum,&res);
-         if (res == 1)
-            *d = (*ep)->telem.tval;			/* found; use value */
-         else
-            *d = bp->tvtbl.clink->table.defvalue;	/* nope; use default */
-         }
+      tvtbl:
+         deref_tvtbl(s, d);
 
       kywdint:
       kywdpos:
@@ -666,44 +727,6 @@ dptr dp;
    double d;
    GetReal(dp, d);
    return d;
-   }
-
-/*
- * tmp_str - Convert to temporary string.
- */
-static int tmp_str(sbuf, s, d)
-char *sbuf;
-dptr s;
-dptr d;
-   {
-   type_case *s of {
-      string:
-         *d = *s;
-      integer: {
-
-         if (Type(*s) == T_Lrgint) {
-            word slen;
-            word dlen;
-
-            slen = (BlkLoc(*s)->bignumblk.lsd - BlkLoc(*s)->bignumblk.msd +1);
-            dlen = slen * NB * 0.3010299956639812;	/* 1 / log2(10) */
-	    bigtos(s,d);
-	    }
-         else
-
-         itos(IntVal(*s), d, sbuf);
-	 }
-      real: {
-         double res;
-         GetReal(s, res);
-         rtos(res, d, sbuf);
-         }
-      cset:
-         cstos(BlkLoc(*s)->cset.bits, d, sbuf);
-      default:
-         return 0;
-      }
-   return 1;
    }
 
 /*
@@ -1085,32 +1108,3 @@ char *s;
    StrLen(*dp) = strlen(s);
    StrLoc(*dp) = s;
    }
-
-/*
- * cstos - convert the cset bit array pointed at by cs into a string using
- *  s as a buffer and making a descriptor for the resulting string.
- */
-
-static void cstos(cs, dp, s)
-unsigned int *cs;
-dptr dp;
-char *s;
-   {
-   register unsigned int w;
-   register int j, i;
-   register char *p;
-
-   p = s;
-   for (i = 0; i < CsetSize; i++) {
-      if (cs[i])
-	 for (j=i*IntBits, w=cs[i]; w; j++, w >>= 1)
-	    if (w & 01)
-	       *p++ = FromAscii((char)j);
-      }
-   *p = '\0';
-
-   StrLen(*dp) = p - s;
-   StrLoc(*dp) = s;
-   }
-
-

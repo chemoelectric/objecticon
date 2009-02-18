@@ -15,7 +15,7 @@ end
 
 procedure prefix(s)
    s := strip(s)
-   return lassoc(s,'+-' | '*/') | rassoc(s,'^') | s
+   return lassoc(s,'+\-' | '*/') | rassoc(s,'^') | s
 end
 
 procedure strip(s)

@@ -2,7 +2,7 @@
  * File: rmisc.r
  *  Contents: deref, eq, getvar, hash, outimage,
  *  qtos, pushact, popact, topact, [dumpact], 
- *  findline, findipc, findfile, doimage, getimage
+ *  findline, findipc, findfile, getimage
  *  printable, sig_rsm, cmd_line, varargs.
  *
  *  Integer overflow checking.
@@ -14,7 +14,6 @@
 
 static void	listimage
    (FILE *f,struct b_list *lp, int noimage);
-static void	printimage	(FILE *f,int c,int q);
 static char *	csname		(dptr dp);
 
 
@@ -207,7 +206,6 @@ dptr dp;
    register char *s;
    register uword i;
    register word j, n;
-   register unsigned int *bitarr;
    double r;
 
    if (Qual(*dp)) {
@@ -269,14 +267,15 @@ dptr dp;
 
          /*
           * The hash value of a cset is based on a convoluted combination
-          *  of all its bits.
+          *  of all its range values.
           */
          case T_Cset:
             i = 0;
-            bitarr = BlkLoc(*dp)->cset.bits + CsetSize - 1;
-            for (j = 0; j < CsetSize; j++) {
-               i += *bitarr--;
-               i *= 37;			/* better distribution */
+            for (j = 0; j < BlkLoc(*dp)->cset.n_ranges; j++) {
+                i += BlkLoc(*dp)->cset.range[j].from;
+                i *= 37;			/* better distribution */
+                i += BlkLoc(*dp)->cset.range[j].to;
+                i *= 37;			/* better distribution */
                }
             i %= 1048583;		/* scramble the bits */
             break;
@@ -321,6 +320,10 @@ dptr dp;
             i = (13255 * BlkLoc(*dp)->methp.object->id) >> 10;
             break;
 
+	 case T_Ucs:
+	    dp = &(BlkLoc(*dp)->ucs.utf8);
+	    goto hashstring;
+
 	 case T_Proc:
 	    dp = &(BlkLoc(*dp)->proc.pname);
 	    goto hashstring;
@@ -338,7 +341,139 @@ dptr dp;
    return i;
    }
 
-
+
+#define CHAR_CVT_LEN 10
+
+static int charstr(int c, char *b)
+{
+    static char cbuf[12];
+    if (printable(c)) {
+        /*
+         * c is printable, but special case ", ', - and \.
+         */
+        switch (c) {
+            case '"':
+                if (b) strncpy(b, "\\\"", 2);
+                return 2;
+            case '\'':
+                if (b) strncpy(b, "\\'", 2);
+                return 2;
+            case '\\':
+                if (b) strncpy(b, "\\\\", 2);
+                return 2;
+            default:
+                if (b) *b = c;
+                return 1;
+        }
+    }
+
+    if (c < 256) {
+        /*
+         * c is some sort of unprintable character.	If it one of the common
+         *  ones, produce a special representation for it, otherwise, produce
+         *  its hex value.
+         */
+        switch (c) {
+            case '\b':			/* backspace */
+                if (b) strncpy(b, "\\b", 2);
+                return 2;
+
+            case '\177':			/* delete */
+                if (b) strncpy(b, "\\d", 2);
+                return 2;
+            case '\33':			/* escape */
+                if (b) strncpy(b, "\\e", 2);
+                return 2;
+            case '\f':			/* form feed */
+                if (b) strncpy(b, "\\f", 2);
+                return 2;
+            case LineFeed:			/* new line */
+                if (b) strncpy(b, "\\n", 2);
+                return 2;
+
+            case CarriageReturn:		/* carriage return b */
+                if (b) strncpy(b, "\\r", 2);
+                return 2;
+            case '\t':			/* horizontal tab */
+                if (b) strncpy(b, "\\t", 2);
+                return 2;
+            case '\13':			/* vertical tab */
+                if (b) strncpy(b, "\\v", 2);
+                return 2;
+            default: {				/* hex escape sequence */
+                if (b) {
+                    sprintf(cbuf, "\\x%02x", c);
+                    strncpy(b, cbuf, 4);
+                }
+                return 4;
+            }
+        }
+    }
+    if (c < 65536) {
+        if (b) {
+            sprintf(cbuf, "\\u%04x", c);
+            strncpy(b, cbuf, 6);
+        }
+        return 6;
+    }
+
+    if (b) {
+        sprintf(cbuf, "\\U%06x", c);
+        strncpy(b, cbuf, 8);
+    }
+    return 8;
+}
+
+static int cset_charstr(int c, char *b)
+{
+    if (c == '\"') {
+        if (b) *b = c;
+        return 1;
+    }
+    if (c == '-') {
+        if (b) strncpy(b, "\\-", 2);
+        return 2;
+    }
+    return charstr(c, b);
+}
+
+static int str_charstr(int c, char *b)
+{
+    if (c == '\'') {
+        if (b) *b = c;
+        return 1;
+    }
+    return charstr(c, b);
+}
+
+static int ucs_charstr(int c, char *b)
+{
+    static char cbuf[12];
+    if (c == '\'') {
+        if (b) *b = c;
+        return 1;
+    }
+    if (c > 127 && c < 256) {
+        if (b) {
+            sprintf(cbuf, "\\u%04x", c);
+            strncpy(b, cbuf, 6);
+        }
+        return 6;
+    }
+
+    return charstr(c, b);
+}
+
+static int cset_do_range(int from, int to)
+{
+    if (to - from <= 1)
+        return 0;
+    if (isascii(from) && isascii(to))
+        return 0;
+    return 1;
+}
+
+
 #define StringLimit	16		/* limit on length of imaged string */
 #define ListLimit	 6		/* limit on list items in image */
 
@@ -352,31 +487,50 @@ FILE *f;
 dptr dp;
 int noimage;
    {
-   register word i, j;
-   register char *s;
-   register union block *bp;
+   word i, j, k;
+   char *s;
+   union block *bp;
    char *type, *csn;
    FILE *fd;
    struct descrip q;
    double rresult;
    tended struct descrip tdp;
+   char cbuf[CHAR_CVT_LEN];
 
    type_case *dp of {
       string: {
          /*
           * *dp is a string qualifier.  Print StringLimit characters of it
-          *  using printimage and denote the presence of additional characters
+          *  and denote the presence of additional characters
           *  by terminating the string with "...".
           */
          i = StrLen(*dp);
          s = StrLoc(*dp);
          j = Min(i, StringLimit);
          putc('"', f);
-         while (j-- > 0)
-            printimage(f, *s++, '"');
+         while (j-- > 0) {
+             int n = str_charstr(*s++ & 0xff, cbuf);
+             fwrite(cbuf, 1, n, f);
+         }
          if (i > StringLimit)
-            fprintf(f, "...");
+             fprintf(f, "...");
          putc('"', f);
+         }
+
+      ucs: {
+         i = BlkLoc(*dp)->ucs.length;
+         s = StrLoc(BlkLoc(*dp)->ucs.utf8);
+         j = Min(i, StringLimit);
+         fprintf(f, "ucs(\"");
+         while (j-- > 0) {
+             int n;
+             k = utf8_iter(&s);
+             n = ucs_charstr(k, cbuf);
+             fwrite(cbuf, 1, n, f);
+         }
+         if (i > StringLimit)
+             fprintf(f, "...");
+         fprintf(f, "\")");
          }
 
       null:
@@ -406,24 +560,39 @@ int noimage;
 	    fprintf(f, csn);
 	    return;
 	    }
-         /*
-          * Use printimage to print each character in the cset.  Follow
-          *  with "..." if the cset contains more than StringLimit
-          *  characters.
-          */
          putc('\'', f);
          j = StringLimit;
-         for (i = 0; i < 256; i++) {
-            if (Testb(i, *dp)) {
-               if (j-- <= 0) {
-                  fprintf(f, "...");
-                  break;
-                  }
-               printimage(f, (int)i, '\'');
-               }
-            }
-         putc('\'', f);
+         for (i = 0; i < BlkLoc(*dp)->cset.n_ranges; ++i) {
+             int from, to, n;
+             from = BlkLoc(*dp)->cset.range[i].from;
+             to = BlkLoc(*dp)->cset.range[i].to;
+             if (cset_do_range(from, to)) {
+                 if (j <= 0) {
+                     fprintf(f, "...");
+                     i = BlkLoc(*dp)->cset.n_ranges;
+                     break;
+                 }
+                 n = cset_charstr(from, cbuf);
+                 fwrite(cbuf, 1, n, f);
+                 putc('-', f);
+                 n = cset_charstr(to, cbuf);
+                 fwrite(cbuf, 1, n, f);
+                 j -= 2;
+             } else {
+                 int k;
+                 for (k = from; k <= to; ++k) {
+                     if (j-- <= 0) {
+                         fprintf(f, "...");
+                         i = BlkLoc(*dp)->cset.n_ranges;
+                         break;
+                     }
+                     n = cset_charstr(k, cbuf);
+                     fwrite(cbuf, 1, n, f);
+                 }
+             }
          }
+         putc('\'', f);
+        }
 
 
      class: {
@@ -431,8 +600,7 @@ int noimage;
          i = StrLen(BlkLoc(*dp)->class.name);
          s = StrLoc(BlkLoc(*dp)->class.name);
          fprintf(f, "class ");
-         while (i-- > 0)
-            printimage(f, *s++, '\0');
+         fwrite(s, 1, i, f);
          }
 
      constructor: {
@@ -440,8 +608,7 @@ int noimage;
          i = StrLen(BlkLoc(*dp)->constructor.name);
          s = StrLoc(BlkLoc(*dp)->constructor.name);
          fprintf(f, "constructor ");
-         while (i-- > 0)
-            printimage(f, *s++, '\0');
+         fwrite(s, 1, i, f);
          }
 
       proc: {
@@ -454,14 +621,12 @@ int noimage;
              dp = &field->defining_class->name;
              i = StrLen(*dp);
              s = StrLoc(*dp);
-             while (i-- > 0)
-                 printimage(f, *s++, '\0');
+             fwrite(s, 1, i, f);
              fprintf(f, ".");
              dp = &field->name;
              i = StrLen(*dp);
              s = StrLoc(*dp);
-             while (i-- > 0)
-                 printimage(f, *s++, '\0');
+             fwrite(s, 1, i, f);
          } else {
              /*
               * Produce one of:
@@ -478,8 +643,7 @@ int noimage;
                  case -1:  type = "function"; break;
              }
              fprintf(f, "%s ", type);
-             while (i-- > 0)
-                 printimage(f, *s++, '\0');
+             fwrite(s, 1, i, f);
          }
       }
       list: {
@@ -546,8 +710,7 @@ int noimage;
              i = StrLen(bp->object.class->name);
              s = StrLoc(bp->object.class->name);
              fprintf(f, "object ");
-             while (i-- > 0)
-                 printimage(f, *s++, '\0');
+             fwrite(s, 1, i, f);
              fprintf(f, "#%ld", (long)bp->object.id);
              j = bp->object.class->n_instance_fields;
              if (j <= 0)
@@ -577,9 +740,8 @@ int noimage;
          i = StrLen(bp->record.constructor->name);
          s = StrLoc(bp->record.constructor->name);
          fprintf(f, "record ");
-         while (i-- > 0)
-            printimage(f, *s++, '\0');
-        fprintf(f, "#%ld", (long)bp->record.id);
+         fwrite(s, 1, i, f);
+         fprintf(f, "#%ld", (long)bp->record.id);
          j = bp->record.constructor->n_fields;
          if (j <= 0)
             fprintf(f, "()");
@@ -612,33 +774,56 @@ int noimage;
           *  (j) is one, just produce "v[i] = value".
           */
          bp = BlkLoc(*dp);
-	 dp = VarLoc(bp->tvsubs.ssvar);
          if (is:kywdsubj(bp->tvsubs.ssvar)) {
+            dp = VarLoc(bp->tvsubs.ssvar);
             fprintf(f, "&subject");
             fflush(f);
             }
-         else {
-            dp = (dptr)((word *)dp + Offset(bp->tvsubs.ssvar));
+         else if (is:variable(bp->tvsubs.ssvar)) {
+            dp = (dptr)((word *)VarLoc(bp->tvsubs.ssvar) + Offset(bp->tvsubs.ssvar));
             outimage(f, dp, noimage);
             }
+         else {
+            dp = &bp->tvsubs.ssvar;
+            outimage(f, dp, noimage);
+         }
 
          if (bp->tvsubs.sslen == 1)
             fprintf(f, "[%ld]", (long)bp->tvsubs.sspos);
-
          else
+            fprintf(f, "[%ld+:%ld]", (long)bp->tvsubs.sspos, (long)bp->tvsubs.sslen);
 
-            fprintf(f, "[%ld+:%ld]", (long)bp->tvsubs.sspos,
+         if (is:ucs(*dp)) {
+             struct descrip utf8_subs;
+             if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > BlkLoc(*dp)->ucs.length)
+                 return;
+             utf8_subs = utf8_substr(&BlkLoc(*dp)->ucs,
+                                     bp->tvsubs.sspos,
+                                     bp->tvsubs.sslen);
+             i = bp->tvsubs.sslen;
+             s = StrLoc(utf8_subs);
+             j = Min(i, StringLimit);
+             fprintf(f, " = ucs(\"");
+             while (j-- > 0) {
+                 int n;
+                 k = utf8_iter(&s);
+                 n = ucs_charstr(k, cbuf);
+                 fwrite(cbuf, 1, n, f);
+             }
+             if (i > StringLimit)
+                 fprintf(f, "...");
+             fprintf(f, "\")");
+                                         
+         }
+         else if (Qual(*dp)) {
+             if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > StrLen(*dp))
+                 return;
+             StrLen(q) = bp->tvsubs.sslen;
+             StrLoc(q) = StrLoc(*dp) + bp->tvsubs.sspos - 1;
+             fprintf(f, " = ");
+             outimage(f, &q, noimage);
+         }
 
-               (long)bp->tvsubs.sslen);
-
-         if (Qual(*dp)) {
-            if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > StrLen(*dp))
-               return;
-            StrLen(q) = bp->tvsubs.sslen;
-            StrLoc(q) = StrLoc(*dp) + bp->tvsubs.sspos - 1;
-            fprintf(f, " = ");
-            outimage(f, &q, noimage);
-            }
         }
 
       tvtbl: {
@@ -715,77 +900,7 @@ int noimage;
       }
    }
 
-/*
- * printimage - print character c on file f using escape conventions
- *  if c is unprintable, '\', or equal to q.
- */
 
-static void printimage(f, c, q)
-FILE *f;
-int c, q;
-   {
-   if (printable(c)) {
-      /*
-       * c is printable, but special case ", ', and \.
-       */
-      switch (c) {
-         case '"':
-            if (c != q) goto deflt;
-            fprintf(f, "\\\"");
-            return;
-         case '\'':
-            if (c != q) goto deflt;
-            fprintf(f, "\\'");
-            return;
-         case '\\':
-            fprintf(f, "\\\\");
-            return;
-         default:
-         deflt:
-            putc(c, f);
-            return;
-         }
-      }
-
-   /*
-    * c is some sort of unprintable character.	If it one of the common
-    *  ones, produce a special representation for it, otherwise, produce
-    *  its hex value.
-    */
-   switch (c) {
-      case '\b':			/* backspace */
-         fprintf(f, "\\b");
-         return;
-
-      case '\177':			/* delete */
-
-         fprintf(f, "\\d");
-         return;
-      case '\33':			/* escape */
-         fprintf(f, "\\e");
-         return;
-      case '\f':			/* form feed */
-         fprintf(f, "\\f");
-         return;
-      case LineFeed:			/* new line */
-         fprintf(f, "\\n");
-         return;
-
-      case CarriageReturn:		/* carriage return */
-         fprintf(f, "\\r");
-         return;
-      case '\t':			/* horizontal tab */
-         fprintf(f, "\\t");
-         return;
-      case '\13':			/* vertical tab */
-         fprintf(f, "\\v");
-         return;
-      default:				/* hex escape sequence */
-         fprintf(f, "\\x%02x", ToAscii(c & 0xff));
-         return;
-      }
-   }
-
 /*
  * listimage - print an image of a list.
  */
@@ -994,85 +1109,7 @@ word *ipc;
    /*NOTREACHED*/
    return 0;  /* avoid compiler warning */
 }
-
-/*
- * doimage(c,q) - allocate character c in string space, with escape
- *  conventions if c is unprintable, '\', or equal to q.
- *  Returns number of characters allocated.
- */
 
-int doimage(c, q)
-int c, q;
-   {
-   static char cbuf[5];
-
-   if (printable(c)) {
-
-      /*
-       * c is printable, but special case ", ', and \.
-       */
-      switch (c) {
-         case '"':
-            if (c != q) goto deflt;
-            MemProtect(alcstr("\\\"", 2));
-            return 2;
-         case '\'':
-            if (c != q) goto deflt;
-            MemProtect(alcstr("\\'", 2));
-            return 2;
-         case '\\':
-            MemProtect(alcstr("\\\\", 2));
-            return 2;
-         default:
-         deflt:
-            cbuf[0] = c;
-            MemProtect(alcstr(cbuf, 1));
-            return 1;
-         }
-      }
-
-   /*
-    * c is some sort of unprintable character.	If it is one of the common
-    *  ones, produce a special representation for it, otherwise, produce
-    *  its hex value.
-    */
-   switch (c) {
-      case '\b':			/*	   backspace	*/
-         MemProtect(alcstr("\\b", 2));
-         return 2;
-
-      case '\177':			/*      delete	  */
-
-         MemProtect(alcstr("\\d", 2));
-         return 2;
-
-      case '\33':			/*	    escape	 */
-
-         MemProtect(alcstr("\\e", 2));
-         return 2;
-      case '\f':			/*	   form feed	*/
-         MemProtect(alcstr("\\f", 2));
-         return 2;
-
-      case LineFeed:			/*	   new line	*/
-         MemProtect(alcstr("\\n", 2));
-         return 2;
-      case CarriageReturn:		/*	   return	*/
-         MemProtect(alcstr("\\r", 2));
-         return 2;
-      case '\t':			/*	   horizontal tab     */
-         MemProtect(alcstr("\\t", 2));
-         return 2;
-      case '\13':			/*	    vertical tab     */
-         MemProtect(alcstr("\\v", 2));
-         return 2;
-      default:				/*	  hex escape sequence  */
-         sprintf(cbuf, "\\x%02x", ToAscii(c & 0xff));
-         MemProtect(alcstr(cbuf, 4));
-         return 4;
-      }
-   }
-
 /*
  * getimage(dp1,dp2) - return string image of object dp1 in dp2.
  */
@@ -1081,34 +1118,58 @@ int getimage(dp1,dp2)
 dptr dp1, dp2;
    {
    register word len, outlen, rnlen;
-   int i;
+   int i, j;
    tended char *s;
    tended struct descrip source = *dp1;    /* the source may move during gc */
    register union block *bp;
    char *type, *t, *csn;
    char sbuf[MaxCvtLen];
+   char cbuf[CHAR_CVT_LEN];
    FILE *fd;
 
    type_case source of {
       string: {
-         /*
-          * Form the image by putting a quote in the string space, calling
-          *  doimage with each character in the string, and then putting
-          *  a quote at then end. Note that doimage directly writes into the
-          *  string space.  (Hence the indentation.)  This technique is used
-          *  several times in this routine.
-          */
          s = StrLoc(source);
-         len = StrLen(source);
-	 MemProtect (reserve(Strings, (len << 2) + 2));
+         i = StrLen(source);
+         len = 2;  /* quotes */
+         while (i-- > 0)
+             len += str_charstr(*s++ & 0xff, 0);
+	 MemProtect(reserve(Strings, len));
          MemProtect(t = alcstr("\"", 1));
          StrLoc(*dp2) = t;
-         StrLen(*dp2) = 1;
-
-         while (len-- > 0)
-            StrLen(*dp2) += doimage(*s++, '"');
+         StrLen(*dp2) = len;
+         s = StrLoc(source);
+         i = StrLen(source);
+         while (i-- > 0) {
+             int n = str_charstr(*s++ & 0xff, cbuf);
+             MemProtect(alcstr(cbuf, n));
+         }
          MemProtect(alcstr("\"", 1));
-         ++StrLen(*dp2);
+         }
+
+      ucs: {
+         s = StrLoc(BlkLoc(source)->ucs.utf8);
+         i = BlkLoc(source)->ucs.length;
+         len = 7;  /* ucs("") */
+         while (i-- > 0) {
+             j = utf8_iter(&s);
+             len += ucs_charstr(j, 0);
+         }
+	 MemProtect(reserve(Strings, len));
+         MemProtect(t = alcstr("ucs(\"", 5));
+         StrLoc(*dp2) = t;
+         StrLen(*dp2) = len;
+             
+         s = StrLoc(BlkLoc(source)->ucs.utf8);
+         i = BlkLoc(source)->ucs.length;
+         while (i-- > 0) {
+             int n;
+             j = utf8_iter(&s);
+             n = ucs_charstr(j, cbuf);
+             MemProtect(alcstr(cbuf, n));
+         }
+
+         MemProtect(alcstr("\")", 2));
          }
 
       null: {
@@ -1167,6 +1228,7 @@ dptr dp1, dp2;
          }
 
       cset: {
+         int from, to, j;
          /*
 	  * Check for the value of a predefined cset; use keyword name if found.
 	  */
@@ -1178,22 +1240,40 @@ dptr dp1, dp2;
 	 /*
 	  * Otherwise, describe it in terms of the character membership.
 	  */
+         len = 2;   /* 2 quotes */
+         for (i = 0; i < BlkLoc(source)->cset.n_ranges; ++i) {
+             from = BlkLoc(source)->cset.range[i].from;
+             to = BlkLoc(source)->cset.range[i].to;
+             if (cset_do_range(from, to))
+                 len += cset_charstr(from, 0) + 1 + cset_charstr(to, 0);
+             else {
+                 for (j = from; j <= to; ++j)
+                     len += cset_charstr(j, 0);
+             }
+         }
 
-	 i = BlkLoc(source)->cset.size;
-	 if (i < 0)
-	    i = cssize(&source);
-	 i = (i << 2) + 2;
-	 if (i > 730) i = 730;
-	 MemProtect (reserve(Strings, i));
-
+	 MemProtect (reserve(Strings, len));
          MemProtect(t = alcstr("'", 1));
          StrLoc(*dp2) = t;
-         StrLen(*dp2) = 1;
-         for (i = 0; i < 256; ++i)
-            if (Testb(i, source))
-               StrLen(*dp2) += doimage((char)i, '\'');
+         StrLen(*dp2) = len;
+         for (i = 0; i < BlkLoc(source)->cset.n_ranges; ++i) {
+             int n;
+             from = BlkLoc(source)->cset.range[i].from;
+             to = BlkLoc(source)->cset.range[i].to;
+             if (cset_do_range(from, to)) {
+                 n = cset_charstr(from, cbuf);
+                 MemProtect(alcstr(cbuf, n));
+                 MemProtect(alcstr("-",1));
+                 n = cset_charstr(to, cbuf);
+                 MemProtect(alcstr(cbuf, n));
+             } else {
+                 for (j = from; j <= to; ++j) {
+                     n = cset_charstr(j, cbuf);
+                     MemProtect(alcstr(cbuf, n));
+                 }
+             }
+         }
          MemProtect(alcstr("'", 1));
-         ++StrLen(*dp2);
          }
 
 
@@ -1449,63 +1529,43 @@ dptr dp1, dp2;
  */
 static char *csname(dp)
 dptr dp;
-   {
-   register int n;
-
-   n = BlkLoc(*dp)->cset.size;
-   if (n < 0) 
-      n = cssize(dp);
-
-
-   /*
-    * Check for a cset we recognize using a hardwired decision tree.
-    *  In ASCII, each of &lcase/&ucase/&digits are complete within 32 bits.
-    */
-   if (n == 52) {
-      if ((Cset32('a',*dp) & Cset32('A',*dp)) == (0377777777l << CsetOff('a')))
-	 return ("&letters");
-      }
-   else if (n < 52) {
-      if (n == 26) {
-	 if (Cset32('a',*dp) == (0377777777l << CsetOff('a')))
-	    return ("&lcase");
-	 else if (Cset32('A',*dp) == (0377777777l << CsetOff('A')))
-	    return ("&ucase");
-	 }
-      else if (n == 10 && *CsetPtr('0',*dp) == (01777 << CsetOff('0')))
-	 return ("&digits");
-      }
-   else /* n > 52 */ {
-      if (n == 256)
-	 return "&cset";
-      else if (n == 128 && ~0 ==
-	 (Cset32(0,*dp) & Cset32(32,*dp) & Cset32(64,*dp) & Cset32(96,*dp)))
-	    return "&ascii";
-      }
-   return NULL;
-
-   }
-
-/*
- * cssize(dp) - calculate cset size, store it, and return it
- */
-int cssize(dp)
-dptr dp;
 {
-   register int i, n;
-   register unsigned int w, *wp;
-   register struct b_cset *cs;
+    int n = BlkLoc(*dp)->cset.size;
+    struct b_cset_range *r = &BlkLoc(*dp)->cset.range[0];
+    
+    if (n == 0)
+        return NULL;
+    /*
+     * Check for a cset we recognize using a hardwired decision tree.
+     */
+    if (n == 52) {
+        if (r->from == 'A' && r->to == 'Z' &&
+            r[1].from == 'a' && r[1].to == 'z')
+            return "&letters";
+    }
+    else if (n < 52) {
+        if (n == 26) {
+            if (r->from == 'a' && r->to == 'z')
+                return "&lcase";
+            if (r->from == 'A' && r->to == 'Z')
+                return "&ucase";
+        }
+        else if (n == 10 && r->from == '0' && r->to == '9')
+            return "&digits";
+    }
+    else /* n > 52 */ {
+        if (n == 256 && r->from == 0 && r->to == 255)
+            return "&cset";
+        if (n == 128 && r->from == 0 && r->to == 127)
+	    return "&ascii";
+        if (n == 0x110000 && r->from == 0 && r->to == 0x10FFFF)
+	    return "&uset";
+    }
+    return NULL;
 
-   cs = &BlkLoc(*dp)->cset;
-   wp = (unsigned int *)cs->bits;
-   n = 0;
-   for (i = CsetSize; --i >= 0; )
-      for (w = *wp++; w != 0; w >>= 1)
-	 n += (w & 1);
-   cs->size = n;
-   return n;
 }
 
+
 /*
  * printable(c) -- is c a "printable" character?
  */
@@ -1669,9 +1729,13 @@ word *high;
    {
    struct b_tvsubs *tvb;
    word *loc;
-
    if (Type(*valp) == T_Tvsubs) {
       tvb = (struct b_tvsubs *)BlkLoc(*valp);
+      /* Check if the tvsubs actually contains a variable - it may contain
+       * a ucs descriptor as a result of, eg, return (ucs("abc") ? move(2))
+       */
+      if (!is:variable(tvb->ssvar))
+          return;
       loc = (word *)VarLoc(tvb->ssvar);
       }
    else
@@ -1897,3 +1961,4 @@ char *salloc(char *s)
     MemProtect(s1 = malloc(strlen(s) + 1));
     return strcpy(s1, s);
 }
+

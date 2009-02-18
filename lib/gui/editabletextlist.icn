@@ -93,11 +93,20 @@ class EditableTextList(LineBasedScrollArea)
    # set with {set_contents()}, has changed.
    #
    public contents_changed()
+      local t
+
       if *self.contents = 0 then
          #
          # Must have somewhere for the cursor to go.
          #
          self.contents := [""]
+
+      #
+      # Ensure elements all of the same type
+      #
+      t := type(self.contents[1])
+      if type(!self.contents) ~== t then
+         runerr("Contents of EditableTextList must be all string or all ucs")
 
       if is_live() then {
          clear_view_list()
@@ -309,7 +318,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public handle_paste(e)
-      insert_string(string(gui.Selection.get_content(Selection.CLIPBOARD)), e)
+      insert_string(ucs(gui.Selection.get_content(Selection.CLIPBOARD, Selection.UTF8_STRING_TARGET)), e)
    end
 
    #
@@ -319,6 +328,7 @@ class EditableTextList(LineBasedScrollArea)
       local ce, ed
 
       \self.is_editable_flag | fail
+      s := text_convert(s, type(self.contents[1])) | fail
 
       start_handle(e)
       if s := apply_filter(s) then {
@@ -518,7 +528,9 @@ class EditableTextList(LineBasedScrollArea)
 
       set_cursor_from_pos(e)
       clear_mark()
-      if s := apply_filter(string(gui.Selection.get_content(Selection.PRIMARY))) then {
+      if s := apply_filter(text_convert(ucs(gui.Selection.get_content(Selection.PRIMARY, 
+                                                                      Selection.UTF8_STRING_TARGET)),
+                                        type(self.contents[1]))) then {
          ed := EditableTextListPasteEdit(self, s)
          ed.doit()
          undo_manager.add_edit(ed)
@@ -853,9 +865,11 @@ class EditableTextList(LineBasedScrollArea)
 
       ec := e.code
 
-      if /self.is_editable_flag | type(ec) ~== "string" |
+      if /self.is_editable_flag | not(type(ec) == ("string" | "ucs")) |
          \e.ctrl | \e.meta | not(any(Gui.PRINTABLE_N, ec)) then
          fail
+
+      ec := text_convert(ec, type(self.contents[1]))
 
       start_handle(e)
       # 
@@ -1192,7 +1206,7 @@ class EditableTextList(LineBasedScrollArea)
          "wrap_mode": set_wrap_mode(f.string_val())
          "split_words": set_split_words(f.flag_val())
          "tab_width": set_tab_width(f.int_val())
-         "contents" : set_contents(f.string_list_val())
+         "contents" : set_contents(f.text_list_val())
          "is_editable" : set_is_editable(f.flag_val()) 
          "move_on_rpress" : set_move_on_rpress(f.flag_val()) 
          default: return cast(self,LineBasedScrollArea).set_one(f)
@@ -1224,10 +1238,10 @@ class EditableTextList(LineBasedScrollArea)
    end
 end
 
-class EditableTextListPrimarySelectionOwner(SelectionOwner)
+class EditableTextListPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
-   public get_content()
+   protected get_text()
       return parent.get_region() | list2str(\parent.remembered_region, "\n")
    end
 
@@ -1247,10 +1261,10 @@ class EditableTextListPrimarySelectionOwner(SelectionOwner)
    end
 end
 
-class EditableTextListClipboardSelectionOwner(SelectionOwner)
+class EditableTextListClipboardSelectionOwner(TextSelectionOwner)
    private parent
 
-   public get_content()
+   protected get_text()
       return list2str(\parent.clipboard, "\n")
    end
 

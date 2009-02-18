@@ -50,7 +50,7 @@ procedure pfl2str(pattern)
    static operator, optbl
 
    initial {
-      operator := '*-!|+,/~:?%<>#`'
+      operator := '*\-!|+,/~:?%<>#`'
 
       optbl := table()
 
@@ -102,7 +102,7 @@ procedure pfl2pwl(pattern)
    static operator, optbl
 
    initial {
-      operator := '*-!|+,;/~:?%<>#`'
+      operator := '*\-!|+,;/~:?%<>#`'
 
       optbl := table()
 
@@ -160,7 +160,7 @@ procedure pfl2gxp(pattern, arg)
 
    initial {
 
-      operator := ',.*-!|+;/~:?%<>#`'
+      operator := ',.*\-!|+;/~:?%<>#`'
 
       optbl := table()
 
@@ -336,7 +336,7 @@ procedure pwlcvt(wexpr)
    result := ""
 
    wexpr ? {
-      while result ||:= form2(pwlcvt(tab(bal('->:#*=~', '([', ')]'))),
+      while result ||:= form2(pwlcvt(tab(bal('\->:#*=~', '([', ')]'))),
          =("#" | "*" | "->" | "~" | ":" | "=="), pwlcvt(tab(0)))
       result ||:= tab(0)
       }
@@ -354,7 +354,7 @@ procedure pwlcvt(wexpr)
    result := ""
  
    wexpr ? {
-      while result ||:= form2(pwlcvt(tab(bal('<->,', '([', ')]'))),
+      while result ||:= form2(pwlcvt(tab(bal('<\->,', '([', ')]'))),
          =(">" | "<" | "-" | ","), pwlcvt(tab(0)))
       result ||:= tab(0)
       }

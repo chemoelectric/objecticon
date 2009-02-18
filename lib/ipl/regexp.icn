@@ -483,7 +483,7 @@ procedure Re_cset()
          return &null
    c ? {
       e := (="-" | "")
-      while chars := tab(upto('-\\')) do {
+      while chars := tab(upto('\-\\')) do {
          e ++:= case move(1) of {
             "-": chars[1:-1] ++
                   &cset[ord(chars[-1]) + 1:ord(move(1)) + 2] | return &null

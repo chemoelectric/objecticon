@@ -100,67 +100,35 @@ end
 ReturnYourselfAs(cset)     /* cset(x) - convert to cset or fail */
 ReturnYourselfAs(integer)  /* integer(x) - convert to integer or fail */
 ReturnYourselfAs(real)     /* real(x) - convert to real or fail */
+ReturnYourselfAs(ucs)      /* ucs(x) - convert to ucs or fail */
+ReturnYourselfAs(string)   /* string(x) - convert to string or fail */
 
-"string(x) - produces a value of type string resulting from the conversion"
-" of x, but fails if the conversion is not possible."
-function{0,1} string(x[n])
 
-   abstract {
-      return string ++ empty_type
+"text(x) - if x is a ucs, it is just returned.  If x is a cset then it is"
+"converted to a string if its highest char is < 256; otherwise it is converted"
+"to a ucs.  For any other type, normal string conversion is attempted."
+
+function{0,1} text(x)
+  body {
+    type_case x of {
+      ucs: return x;
+      cset: {
+        struct b_cset *c = &BlkLoc(x)->cset;
+        if (c->n_ranges == 0 || c->range[c->n_ranges - 1].to < 256)
+            cnv:string(x, x);
+        else
+            cnv:ucs(x, x);
+        return x;
       }
-   body {
-      int i, j, len;
-      char *tmp, *s, *s2;
-      tended struct descrip t;
-      if (n == 0)
-	 return emptystr;
-
-      /*
-       * convert x[0] to a string
-       */
-      if (!cnv:string(x[0], x[0]))
-	 fail;
-      t = x[0];
-
-      for (i = 1; i < n; i++) {
-	 /*
-	  * if t is not at the end of the string region, make it so
-	  */
-	 if (StrLoc(t) + StrLen(t) != strfree) {
-             MemProtect(StrLoc(t) = alcstr(StrLoc(t), StrLen(t)));
-	    }
-	 if (!cnv:string(x[i], x[i])) fail;
-
-	 /*
-	  * concatenate t and x[i] and store result in t
-	  */
-	 if (StrLoc(t) + StrLen(t) == StrLoc(x[i])) {
-	    StrLen(t) += StrLen(x[i]);
-	    }
-	 else if ((StrLoc(t) + StrLen(t) == strfree) && (DiffPtrs(strend,strfree) > StrLen(x[i]))) {
-            MemProtect(alcstr(StrLoc(x[i]), StrLen(x[i])));
-	    StrLen(t) += StrLen(x[i]);
-	    }
-	 else {
-            MemProtect(tmp = alcstr(NULL, StrLen(t)+StrLen(x[i])));
-	    s = tmp;
-	    s2 = StrLoc(t);
-	    len = StrLen(t);
-	    for (j = 0; j < len; j++)
-	       *s++ = *s2++;
-	    s2 = StrLoc(x[i]);
-	    len = StrLen(x[i]);
-	    for (j = 0; j < len; j++)
-	       *s++ = *s2++;
-	    StrLoc(t) = tmp;
-	    StrLen(t) += len;
-	    }
-         }
-      return t;
+      default: {
+         if (!cnv:string(x, x))
+           fail;
+         return x;
       }
+    }
+   }
 end
 
-
 
 "numeric(x) - produces an integer or real number resulting from the "
 "type conversion of x, but fails if the conversion is not possible."

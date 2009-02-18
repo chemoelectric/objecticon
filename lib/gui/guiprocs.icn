@@ -130,8 +130,8 @@ class Gui()
       REPEAT_RATE := 100
       TAB_WIDTH := 8
       style := Style()
-      PRINTABLE_1 := cset(&cset[33:0])
-      PRINTABLE_N := cset(&cset[33:0]) ++ '\t\n'
+      PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
+      PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
       CONSTRAINT_SET := set()
       every insert(CONSTRAINT_SET, "tab"|"eol"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset"|
                    "x_fill"|"y_fill"|"x_align"|"y_align"|"x_weight"|"y_weight")
@@ -338,5 +338,37 @@ procedure wattribs_to_list(t)
    every e := !sort(t) do
       put(l, e[1] || "=" || e[2])
    return l
+end
+
+#
+# This utility takes a string or ucs and returns a string or ucs
+# according to the target parameter.  Strings are assumed to be in
+# iso-8859 format, rather than utf8 format.
+#
+procedure text_convert(s, target)
+   local t, i
+
+   s := text(s) | fail
+
+   if type(s) == target then
+      return s
+
+   case target of {
+      "ucs": {
+         # Note it's much faster to build up a utf8 string first and
+         # then create a ucs, rather than catenate ucs's together as
+         # we go along.
+         t := ""
+         every t ||:= string(uchar(ord(!s)))
+         return ucs(t)
+      }
+      "string": {
+         t := ""
+         every i := ord(!s) do
+            t ||:= char(256 > i | 63)
+         return t
+      }
+      default: runerr("Bad target type", target)
+   }
 end
 

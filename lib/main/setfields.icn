@@ -55,6 +55,22 @@ class Field()
       return list_val(n, "string")
    end
 
+   public ucs_val()
+      return /val | ucs(val) | field_error("Need a single ucs parameter")
+   end
+
+   public ucs_list_val(n)
+      return list_val(n, "ucs")
+   end
+
+   public text_val()
+      return /val | text(val) | field_error("Need a single text (ucs/string) parameter")
+   end
+
+   public text_list_val(n)
+      return list_val(n, "text")
+   end
+
    public object_val(t)
       if /val then
          return val
@@ -81,12 +97,19 @@ class Field()
          if *val < \n then
             field_error("Need " || n || " parameters")
          if \p then {
-            if type_name == "numeric" then {
-               every e := !val do
-                  type(e) == ("null" | "real" | "integer") | field_error("Need " || type_name || " parameters")
-            } else {
-               every e := !val do
-                  type(e) == ("null" | type_name) | field_error("Need " || type_name || " parameters")
+            case type_name of {
+               "numeric": {
+                  every e := !val do
+                     type(e) == ("null" | "real" | "integer") | field_error("Need " || type_name || " parameters")
+               }
+               "text": {
+                  every e := !val do
+                     type(e) == ("null" | "string" | "ucs") | field_error("Need " || type_name || " parameters")
+               }
+               default: {
+                  every e := !val do
+                     type(e) == ("null" | type_name) | field_error("Need " || type_name || " parameters")
+               }
             }
          }
          return val

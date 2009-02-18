@@ -73,7 +73,7 @@ procedure xml_escape(s, c)
       if pos(0) then
          break
 
-      r ||:= case ch := move(1) of {
+      r ||:= case string(ch := move(1)) of {
          "&" : "&amp;"
          "<" : "&lt;"
          ">" : "&gt;"

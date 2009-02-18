@@ -62,12 +62,6 @@ struct unref *first_unref, *unref_hash[128];
 struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
 int strconst_offset;
 
-/*
- *  This needs fixing ...
- */
-#undef CsetPtr
-#define CsetPtr(b,c)	((c) + (((b)&0377) >> LogIntBits))
-
 struct header hdr;
 
 static struct unref *get_unref(char *s)
@@ -729,9 +723,6 @@ static void lemitint(op, i, name)
 
 static void lemitcon(struct centry *ce)
 {
-    int i, j;
-    char *s;
-    int csbuf[CsetSize];
     union {
         char ovly[1];  /* Array used to overlay l and f on a bytewise basis. */
         long l;
@@ -771,32 +762,53 @@ static void lemitcon(struct centry *ce)
         outblock(x.ovly,sizeof(double));
     }
     else if (ce->c_flag & F_CsetLit) {
+        int i, j, x;
+        int csbuf[CsetSize];
+        int npair = ce->c_length / sizeof(struct range);
+        int size = 0;
+        struct range *pair = safe_alloc(ce->c_length);
+        memcpy(pair, ce->c_val.sval, ce->c_length);
         for (i = 0; i < CsetSize; i++)
             csbuf[i] = 0;
-        s = ce->c_val.sval;
-        i = ce->c_length;
-        while (i--) {
-            Setb(ToAscii(*s), csbuf);
-            s++;
+        for (i = 0; i < npair; ++i) {
+            size += pair[i].to - pair[i].from + 1;
+            for (j = pair[i].from; j <= pair[i].to; ++j) {
+                if (j > 0xff)
+                    break;
+                Setb(j, csbuf);
+            }
         }
-        j = 0;
-        for (i = 0; i < 256; i++) {
-            if (Testb(i, csbuf))
-                j++;
-        }
-
         if (Dflag) {
-            fprintf(dbgfile, "%ld:\t%d\n",(long) pc, T_Cset);
-            fprintf(dbgfile, "\t%d\n",j);
+            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Cset\n",(long) pc, T_Cset);
+            fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", (CsetSize + 4 + 3 * npair) * WordSize);
+            fprintf(dbgfile, "\t%d\t\t\t\t# Cset size\n", size);
+            for (i = 0; i < CsetSize; ++i)
+                fprintf(dbgfile, "\t%08x\t\t\t#    Binary map\n", csbuf[i]);
+            fprintf(dbgfile, "\t%d\t\t\t\t# Npair\n", npair);
+            x = 0;
+            for (i = 0; i < npair; ++i) {
+                fprintf(dbgfile, "\t%d\t\t\t\t#    Index\n", x);
+                fprintf(dbgfile, "\t%d\t\t\t\t#    From\n", pair[i].from);
+                fprintf(dbgfile, "\t%d\t\t\t\t#    To\n", pair[i].to);
+                x += pair[i].to - pair[i].from + 1;
+            }
         }
 
         outword(T_Cset);
-        outword(j);		   /* cset size */
-        outblock((char *)csbuf,sizeof(csbuf));
+        outword((CsetSize + 4 + 3 * npair) * WordSize);
+        outword(size);		   /* cset size */
+        for (i = 0; i < CsetSize; ++i)
+            outword(csbuf[i]);
+        outword(npair);
+        x = 0;
+        for (i = 0; i < npair; ++i) {
+            outword(x);
+            outword(pair[i].from);
+            outword(pair[i].to);
+            x += pair[i].to - pair[i].from + 1;
+        }
 
-        if (Dflag)
-            dumpblock((char *)csbuf,CsetSize);
-
+        free(pair);
     }
 }
 

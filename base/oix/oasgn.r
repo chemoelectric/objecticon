@@ -61,11 +61,16 @@
           */
          body {
             C_integer i;
+            dptr sub;
 
             if (!cnv:C_integer(y, i))
                runerr(101, y);
 
-	    i = cvpos((long)i, StrLen(*(VarLoc(x)+1)));
+            sub = VarLoc(x)+1;
+            if (is:string(*sub))
+                i = cvpos((long)i, StrLen(*sub));
+            else
+                i = cvpos((long)i, BlkLoc(*sub)->ucs.length);
 
             if (i == CvtFail)
                fail;
@@ -79,9 +84,11 @@
           * No side effect in the type realm - &subject is still a string
           *  and &pos is still an int.
           */
-         if !cnv:string(y, *VarLoc(x)) then
-            runerr(103, y);
          inline {
+            if (is:ucs(y))
+               *VarLoc(x) = y;
+            else if (!cnv:string(y, *VarLoc(x)))
+               runerr(103, y);
 	    IntVal(*(VarLoc(x)-1)) = 1;
             EVVal(k_pos, E_Spos);
             }
@@ -358,61 +365,136 @@ const dptr src;
    word prelen;   /* length of portion of string before substring */
    word poststrt; /* start of portion of string following substring */
    word postlen;  /* length of portion of string following substring */
+   word newsslen;
 
-   if (!cnv:tmp_string(*src, srcstr))
-      ReturnErrVal(103, *src, Error);
-
-   /*
-    * Be sure that the variable in the trapped variable points
-    *  to a string and that the string is big enough to contain
-    *  the substring.
-    */
    tvsub = (struct b_tvsubs *)BlkLoc(*dest);
    deref(&tvsub->ssvar, &deststr);
-   if (!is:string(deststr))
-      ReturnErrVal(103, deststr, Error);
-   prelen = tvsub->sspos - 1;
-   poststrt = prelen + tvsub->sslen;
-   if (poststrt > StrLen(deststr))
-      ReturnErrNum(205, Error);
 
-   /*
-    * Form the result string.
-    *  Start by allocating space for the entire result.
-    */
-   len = prelen + StrLen(srcstr) + StrLen(deststr) - poststrt;
-   MemProtect(s = alcstr(NULL, len));
-   StrLoc(rsltstr) = s;
-   StrLen(rsltstr) = len;
-   /*
-    * First, copy the portion of the substring string to the left of
-    *  the substring into the string space.
-    */
+    type_case deststr of {
+      ucs: {
+            tended struct descrip utf8_mid;
+            tended struct descrip utf8_new;
+
+            if (!cnv:ucs(*src, srcstr))
+                ReturnErrVal(128, *src, Error);
+
+            if (tvsub->sspos + tvsub->sslen - 1 > BlkLoc(deststr)->ucs.length)
+                ReturnErrNum(205, Error);
+
+            utf8_mid = utf8_substr(&BlkLoc(deststr)->ucs,
+                                   tvsub->sspos,
+                                   tvsub->sslen);
+
+            prelen = StrLoc(utf8_mid) - StrLoc(BlkLoc(deststr)->ucs.utf8);
+            poststrt = prelen + StrLen(utf8_mid);
+            postlen = StrLen(BlkLoc(deststr)->ucs.utf8) - poststrt;
+            /*
+             * Form the result string.
+             *  Start by allocating space for the entire result.
+             */
+            len = prelen + StrLen(BlkLoc(srcstr)->ucs.utf8) + postlen;
+            MemProtect(s = alcstr(NULL, len));
+            StrLoc(utf8_new) = s;
+            StrLen(utf8_new) = len;
+
+            /*
+             * First, copy the portion of the substring string to the left of
+             *  the substring into the string space.
+             */
+            memcpy(StrLoc(utf8_new), 
+                   StrLoc(BlkLoc(deststr)->ucs.utf8), 
+                   prelen);
+
+            /*
+             * Copy the string to be assigned into the string space,
+             *  effectively concatenating it.
+             */
+            memcpy(StrLoc(utf8_new) + prelen, 
+                   StrLoc(BlkLoc(srcstr)->ucs.utf8),
+                   StrLen(BlkLoc(srcstr)->ucs.utf8));
+
+            /*
+             * Copy the portion of the substring to the right of
+             *  the substring into the string space, completing the
+             *  result.
+             */
+            memcpy(StrLoc(utf8_new) + prelen + StrLen(BlkLoc(srcstr)->ucs.utf8), 
+                   StrLoc(BlkLoc(deststr)->ucs.utf8) + poststrt, 
+                   postlen);
+
+            rsltstr.dword = D_Ucs;
+            BlkLoc(rsltstr) = (union block *)
+                make_ucs_block(&utf8_new,
+                               BlkLoc(deststr)->ucs.length - tvsub->sslen + BlkLoc(srcstr)->ucs.length);
+
+            newsslen = BlkLoc(srcstr)->ucs.length;
+        }
+
+      string: {
+            if (!cnv:tmp_string(*src, srcstr))
+                ReturnErrVal(103, *src, Error);
+
+            /*
+             * Be sure that the variable in the trapped variable points
+             *  to a string and that the string is big enough to contain
+             *  the substring.
+             */
+            prelen = tvsub->sspos - 1;
+            poststrt = prelen + tvsub->sslen;
+            if (poststrt > StrLen(deststr))
+                ReturnErrNum(205, Error);
+
+            /*
+             * Form the result string.
+             *  Start by allocating space for the entire result.
+             */
+            len = prelen + StrLen(srcstr) + StrLen(deststr) - poststrt;
+            MemProtect(s = alcstr(NULL, len));
+            StrLoc(rsltstr) = s;
+            StrLen(rsltstr) = len;
+            /*
+             * First, copy the portion of the substring string to the left of
+             *  the substring into the string space.
+             */
    
-   memcpy(StrLoc(rsltstr), StrLoc(deststr), prelen);
+            memcpy(StrLoc(rsltstr), StrLoc(deststr), prelen);
    
-   /*
-    * Copy the string to be assigned into the string space,
-    *  effectively concatenating it.
-    */
+            /*
+             * Copy the string to be assigned into the string space,
+             *  effectively concatenating it.
+             */
    
-   memcpy(StrLoc(rsltstr)+prelen, StrLoc(srcstr), StrLen(srcstr));
+            memcpy(StrLoc(rsltstr)+prelen, StrLoc(srcstr), StrLen(srcstr));
    
-   /*
-    * Copy the portion of the substring to the right of
-    *  the substring into the string space, completing the
-    *  result.
-    */
+            /*
+             * Copy the portion of the substring to the right of
+             *  the substring into the string space, completing the
+             *  result.
+             */
     
    
-   postlen = StrLen(deststr) - poststrt;
+            postlen = StrLen(deststr) - poststrt;
    
-   memcpy(StrLoc(rsltstr)+prelen+StrLen(srcstr), StrLoc(deststr)+poststrt, postlen);
-   
+            memcpy(StrLoc(rsltstr)+prelen+StrLen(srcstr), StrLoc(deststr)+poststrt, postlen);
+
+            newsslen = StrLen(srcstr);
+        }
+        default: {
+            ReturnErrVal(103, deststr, Error);
+        }
+    }
    /*
-    * Perform the assignment and update the trapped variable.
+    * Perform the assignment and update the trapped variable.  Note that the ssvar can
+    * actually be a ucs value - see move and tab for the ucs case in fscan.r.  The string
+    * case is just for completeness' sake.
     */
    type_case tvsub->ssvar of {
+      string: {
+          ReturnErrVal(205, tvsub->ssvar, Error);
+      }
+      ucs: {
+          ReturnErrVal(205, tvsub->ssvar, Error);
+      }
       kywdevent: {
          *VarLoc(tvsub->ssvar) = rsltstr;
          }
@@ -431,7 +513,8 @@ const dptr src;
          Asgn(tvsub->ssvar, rsltstr);
          }
       }
-   tvsub->sslen = StrLen(srcstr);
+
+   tvsub->sslen = newsslen;
 
    EVVal(tvsub->sslen, E_Ssasgn);
    return Succeeded;

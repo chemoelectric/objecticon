@@ -56,6 +56,9 @@ operator{1} * size(x)
       string: inline {
          return C_integer StrLen(x);
          }
+      ucs: inline {
+         return C_integer BlkLoc(x)->ucs.length;
+         }
       list: inline {
          return C_integer BlkLoc(x)->list.size;
          }
@@ -66,12 +69,7 @@ operator{1} * size(x)
          return C_integer BlkLoc(x)->set.size;
          }
       cset: inline {
-         register word i;
-
-         i = BlkLoc(x)->cset.size;
-	 if (i < 0)
-	    i = cssize(&x);
-         return C_integer i;
+         return C_integer BlkLoc(x)->cset.size;
          }
       record: inline {
          return C_integer BlkLoc(x)->record.constructor->n_fields;
@@ -96,65 +94,111 @@ end
 "=x - tab(match(x)).  Reverses effects if resumed."
 
 operator{*} = tabmat(x)
-   /*
-    * x must be a string.
-    */
-   if !cnv:string(x) then
-      runerr(103, x)
-   abstract {
-      return string
-      }
-
    body {
       register word l;
-      register char *s1, *s2;
+      char *s1, *s2;
       C_integer i, j;
       /*
        * Make a copy of &pos.
        */
       i = k_pos;
 
-      /*
-       * Fail if &subject[&pos:0] is not of sufficient length to contain x.
-       */
-      j = StrLen(k_subject) - i + 1;
-      if (j < StrLen(x))
-         fail;
+      if (is:ucs(k_subject)) {
+          /*
+           * x must be a string.
+           */
+          if (!cnv:ucs(x,x))
+              runerr(128, x);
 
-      /*
-       * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
-       *  basis and fail if s1 doesn't match s2 for *s1 characters.
-       */
-      s1 = StrLoc(x);
-      s2 = StrLoc(k_subject) + i - 1;
-      l = StrLen(x);
-      while (l-- > 0) {
-         if (*s1++ != *s2++)
-            fail;
-         }
+          /*
+           * Fail if &subject[&pos:0] is not of sufficient length to contain x.
+           */
+          j = BlkLoc(k_subject)->ucs.length - i + 1;
+          if (j < BlkLoc(x)->ucs.length)
+              fail;
 
-      /*
-       * Increment &pos to tab over the matched string and suspend the
-       *  matched string.
-       */
-      l = StrLen(x);
-      k_pos += l;
+          /*
+           * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
+           *  basis and fail if s1 doesn't match s2 for *s1 characters.
+           */
+          s1 = StrLoc(BlkLoc(x)->ucs.utf8);
+          s2 = ucs_utf8_ptr(&BlkLoc(k_subject)->ucs, i);
+          l = BlkLoc(x)->ucs.length;
+          while (l-- > 0) {
+              if (utf8_iter(&s1) != utf8_iter(&s2))
+                  fail;
+          }
 
-      EVVal(k_pos, E_Spos);
+          /*
+           * Increment &pos to tab over the matched string and suspend the
+           *  matched string.
+           */
+          l = BlkLoc(x)->ucs.length;
+          k_pos += l;
 
-      suspend x;
+          EVVal(k_pos, E_Spos);
 
-      /*
-       * tabmat has been resumed, restore &pos and fail.
-       */
-      if (i > StrLen(k_subject) + 1)
-         runerr(205, kywd_pos);
-      else {
-         k_pos = i;
-         EVVal(k_pos, E_Spos);
-         }
-      fail;
+          suspend x;
+
+          /*
+           * tabmat has been resumed, restore &pos and fail.
+           */
+          if (i > BlkLoc(k_subject)->ucs.length + 1)
+              runerr(205, kywd_pos);
+          else {
+              k_pos = i;
+              EVVal(k_pos, E_Spos);
+          }
+          fail;
+      } else {
+          /*
+           * x must be a string.
+           */
+          if (!cnv:string(x,x))
+              runerr(103, x);
+
+          /*
+           * Fail if &subject[&pos:0] is not of sufficient length to contain x.
+           */
+          j = StrLen(k_subject) - i + 1;
+          if (j < StrLen(x))
+              fail;
+
+          /*
+           * Get pointers to x (s1) and &subject (s2).  Compare them on a byte-wise
+           *  basis and fail if s1 doesn't match s2 for *s1 characters.
+           */
+          s1 = StrLoc(x);
+          s2 = StrLoc(k_subject) + i - 1;
+          l = StrLen(x);
+          while (l-- > 0) {
+              if (*s1++ != *s2++)
+                  fail;
+          }
+
+          /*
+           * Increment &pos to tab over the matched string and suspend the
+           *  matched string.
+           */
+          l = StrLen(x);
+          k_pos += l;
+
+          EVVal(k_pos, E_Spos);
+
+          suspend x;
+
+          /*
+           * tabmat has been resumed, restore &pos and fail.
+           */
+          if (i > StrLen(k_subject) + 1)
+              runerr(205, kywd_pos);
+          else {
+              k_pos = i;
+              EVVal(k_pos, E_Spos);
+          }
+          fail;
       }
+   }
 end
 
 

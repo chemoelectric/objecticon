@@ -41,6 +41,9 @@ struct errtab errtab[] = {
    125, "list, record, or set expected",
    126, "list or record expected",
    127, "list or table expected",
+   128, "ucs expected",
+   129, "string or ucs expected",
+   130, "even number of parameters expected",
 
 #ifdef Graphics
    140, "window expected",

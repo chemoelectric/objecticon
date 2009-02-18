@@ -10,10 +10,8 @@ int		activate	(dptr val, struct b_coexpr *ncp, dptr result);
 word		add		(word a,word b);
 void		addmem 	(struct b_set *ps,struct b_selem *pe, union block **pl);
 struct astkblk	*alcactiv	(void);
-struct b_cset	*alccset_0	(void);
-struct b_cset	*alccset_1	(void);
-struct b_file	*alcfile_0	(int status,dptr name);
-struct b_file	*alcfile_1	(int status,dptr name);
+struct b_cset	*alccset_0	(word n);
+struct b_cset	*alccset_1	(word n);
 #ifdef Graphics
 struct b_window	*alcwindow_0	(wbp w, word isopen);
 struct b_window	*alcwindow_1	(wbp w, word isopen);
@@ -50,6 +48,8 @@ int		cnv_c_int	(dptr s, C_integer *d);
 int		cnv_c_str	(dptr s, dptr d);
 int		cnv_cset_0	(dptr s, dptr d);
 int		cnv_cset_1	(dptr s, dptr d);
+int		cnv_ucs_0	(dptr s, dptr d);
+int		cnv_ucs_1	(dptr s, dptr d);
 int		cnv_ec_int	(dptr s, C_integer *d);
 int		cnv_eint	(dptr s, dptr d);
 int		cnv_int_0	(dptr s, dptr d);
@@ -58,8 +58,6 @@ int		cnv_real_0	(dptr s, dptr d);
 int		cnv_real_1	(dptr s, dptr d);
 int		cnv_str_0	(dptr s, dptr d);
 int		cnv_str_1	(dptr s, dptr d);
-int		cnv_tcset_0	(struct b_cset *cbuf, dptr s, dptr d);
-int		cnv_tcset_1	(struct b_cset *cbuf, dptr s, dptr d);
 int		cnv_tstr_0	(char *sbuf, dptr s, dptr d);
 int		cnv_tstr_1	(char *sbuf, dptr s, dptr d);
 int		co_chng		(struct b_coexpr *ncp, struct descrip *valloc,
@@ -80,7 +78,6 @@ void		EVStrAlc_0	(word n);
 void		EVStrAlc_1	(word n);
 void		cpslots		(dptr dp1,dptr slotptr,word i, word j);
 int		csetcmp		(unsigned int *cs1,unsigned int *cs2);
-int		cssize		(dptr dp);
 word		cvpos		(long pos,long len);
 void		datainit	(void);
 void		deallocate_0	(union block *bp);
@@ -89,12 +86,12 @@ int		def_c_dbl	(dptr s, double df, double * d);
 int		def_c_int	(dptr s, C_integer df, C_integer * d);
 int		def_c_str	(dptr s, char * df, dptr d);
 int		def_cset	(dptr s, struct b_cset * df, dptr d);
+int		def_ucs	        (dptr s, struct b_ucs * df, dptr d);
 int		def_ec_int	(dptr s, C_integer df, C_integer * d);
 int		def_eint	(dptr s, C_integer df, dptr d);
 int		def_int		(dptr s, C_integer df, dptr d);
 int		def_real	(dptr s, double df, dptr d);
 int		def_str		(dptr s, dptr df, dptr d);
-int		def_tcset (struct b_cset *cbuf,dptr s,struct b_cset *df,dptr d);
 int		def_tstr	(char *sbuf, dptr s, dptr df, dptr d);
 word		div3		(word a,word b);
 int		doasgn		(dptr dp1,dptr dp2);
@@ -381,6 +378,7 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
       void scrubcursor(wbp);
 #ifdef HAVE_LIBXFT
       void drawstrng(wbp w, int x, int y, char *str, int slen);
+      void drawutf8(wbp w, int x, int y, char *str, int slen);
 #endif
       char my_wmap(wbp w);
 
@@ -425,67 +423,6 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
 
    #endif				/* MSWindows */
 
-   #ifdef PresentationManager
-      /*
-       * Implementation routines specific to OS/2 Presentation Manager
-       */
-      wsp ObtainEvents(wsp ws, SHORT blockflag, ULONG messg, QMSG *msg);
-      void InterpThreadStartup(void *args);
-      void InterpThreadShutdown(void);
-      void DestroyWindow(wsp ws);
-      void LoadDefAttrs(wbinding *wb, wsp ws, wcp wc);
-      void ResizeBackingBitmap(wsp ws, SHORT x, SHORT y);
-      int  moveResizeWindow(wbp w,int x, int y, int width, int height);
-      void moveWindow(wbp w, int x, int y);
-      int  resizeWindow(wbp w,int width,int height);
-      int SetNewBitPattern(wcp wc, PBYTE bits);
-      int LoadFont(wbp wb, char *family, LONG attr, ULONG fontsize);
-      void FreeIdTable(void);
-      void FreeLocalID(LONG id);
-
-      /* -- not needed because of macro definitions
-      void SetCharContext(wbp wb, wsp ws, wcp wc);
-      void SetAreaContext(wbp wb, wsp ws, wcp wc);
-      void SetLineContext(wbp wb, wsp ws, wcp wc);
-      void SetImageContext(wbp wb, wsp ws, wcp wc);
-         -- */
-
-      void SetClipContext(wbp wb, wsp ws, wcp wc);
-      void UnsetContext(wcp wc, void (*f)(wcp, wsp));
-      void UCharContext(wcp wc, wsp ws);
-      void ULineContext(wcp wc, wsp ws);
-      void UAreaContext(wcp wc, wsp ws);
-      void UImageContext(wcp wc, wsp ws);
-      void UClipContext(wcp wc, wsp ws);
-      void UAllContext(wcp wc, wsp ws);
-      void drawpoints(wbp wb, XPoint *pts, int npts);
-      void drawsegments(wbp wb, XSegment *segs, int nsegs);
-      void drawstrng(wbp wb, int x, int y, char *str, int slen);
-      void drawarcs(wbp w, XArc *arcs, int narcs);
-      void drawlines(wbp wb, XPoint *pts, int npts);
-      void drawrectangles(wbp wb, XRectangle *recs, int nrecs);
-      int dumpimage(wbp wb, char *filename, int x, int y, int width, int height);
-      void fillpolygon(wbp wb, XPoint *pts, int npts);
-      HBITMAP loadimage(wbp wb, char *filename, int *width, int *height);
-      void InitializeIdTable(void);
-      void InitializeColorTable(void);
-      void FreeColorTable(void);
-      LONG GetColorIndex(char *buf, double gamma);
-      void AddLocalIdToWindow(wsp ws, LONG id);
-      void ReleaseLocalId(LONG id);
-      void ReleaseColor(LONG indx);
-      void ColorInitPS(wbp wb);
-      void GetColorName(LONG indx, char *buf, int len);
-      void EnsureColorAvailable(LONG indx);
-      int GetTextWidth(wbp wb, char *text, int len);
-      int AddWindowDep(wsp ws, wcp wc);
-      int AddContextDep(wsp ws, wcp wc);
-      FILE *PMOpenConsole(void);
-      void UpdateCursorConfig(wsp ws, wcp wc);
-      void UpdateCursorPos(wsp ws, wcp wc);
-
-   #endif				/* PresentationManager */
-
 #endif					/* Graphics */
 
 
@@ -502,6 +439,8 @@ struct b_cast   *alccast_0      ();
 struct b_cast   *alccast_1      ();
 struct b_methp  *alcmethp_0     ();
 struct b_methp  *alcmethp_1     ();
+struct b_ucs    *alcucs_0     (int n);
+struct b_ucs    *alcucs_1     (int n);
 struct b_tvsubs *alcsubs_0	(word len,word pos,dptr var);
 struct b_tvsubs *alcsubs_1	(word len,word pos,dptr var);
 int     field_access(dptr cargp);
@@ -632,3 +571,14 @@ void why(char *s);
 void whyf(char *fmt, ...);
 char *salloc(char *s);
 int class_is(struct b_class *class1, struct b_class *class2);
+struct b_cset *rangeset_to_block(struct rangeset *rs);
+struct b_ucs *make_ucs_block(dptr utf8, int length);
+struct b_ucs *make_one_char_ucs_block(int i);
+struct descrip utf8_substr(struct b_ucs *b, int pos, int len);
+int ucs_char(struct b_ucs *b, int pos);
+int in_cset(struct b_cset *b, int c);
+char *ucs_utf8_ptr(struct b_ucs *b, int pos);
+struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len);
+struct descrip cset_to_str(struct b_cset *b, int pos, int len);
+struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len);
+int cset_range_of_pos(struct b_cset *b, int pos);

@@ -127,7 +127,7 @@ procedure wild_pat(s)
 	 #
 	 \c ? {
 	    complement := ="!" | &null
-	    special := '-]'
+	    special := '\-]'
 	    e := ''
 	    while ch := tab(any(special)) do {
 	       e ++:= ch

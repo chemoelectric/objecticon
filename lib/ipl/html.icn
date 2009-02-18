@@ -222,7 +222,7 @@ end
 procedure httag(s)			
    static idset, wset, lcase, ucase
    initial {
-      idset := &letters ++ &digits ++ '.-/'
+      idset := &letters ++ &digits ++ '.\-/'
       wset := ' \t\r\n\v\f'
       lcase := string(&lcase)
       ucase := string(&ucase)

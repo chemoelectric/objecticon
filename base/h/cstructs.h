@@ -53,8 +53,32 @@ struct str_buf {
  * Clear an object
  */
 #define ArrClear(obj) (memset(obj, 0, sizeof(obj)))
+#define StructClear(obj) (memset(&obj, 0, sizeof(obj)))
 
 /*
  * Allocate an object
  */
 #define Alloc(type)   safe_alloc(sizeof(type))
+
+/*
+ * Miscellaneous definitions
+ */
+
+#define MAX_CODE_POINT 0x10FFFF
+#define MAX_UTF8_SEQ_LEN 6
+extern int utf8_seq_len_arr[];
+#define UTF8_SEQ_LEN(ch) utf8_seq_len_arr[(ch) & 0xff]
+
+/* Data structures for cset char ranges */
+
+struct range {
+    word from, to;
+};
+
+struct rangeset {
+    word n_ranges;         /* Number of entries in range */
+    word n_alloc;          /* Alloced space in both range & temp */
+    struct range *range;   /* Range data */
+    struct range *temp;    /* Temporary area */
+};
+

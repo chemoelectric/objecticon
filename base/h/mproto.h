@@ -57,4 +57,12 @@ void *safe_calloc(size_t m, size_t n);
 void *safe_alloc(size_t size);
 void *safe_realloc(void *ptr, size_t size);
 
+int utf8_check(char **p, char *end);
+int utf8_iter(char **p);
+int utf8_rev_iter(char **p);
+int utf8_seq(int c, char *s);
 
+struct rangeset *init_rangeset(void);
+void free_rangeset(struct rangeset *rs);
+void add_range(struct rangeset *cs, int from, int to);
+void print_rangeset(struct rangeset *rs);

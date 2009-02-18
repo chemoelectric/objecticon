@@ -832,6 +832,10 @@ int *dflt_to_ptr;
             }
          else if (typcd == int_typ)
             strcat(buf, "int");
+         else if (typcd == ucs_typ) {
+            strcat(buf, "ucs");
+            by_ref = 1;
+            }
          else if (typcd == real_typ)
             strcat(buf, "real");
          else if (typcd == str_typ) {

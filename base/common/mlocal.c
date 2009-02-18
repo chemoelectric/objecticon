@@ -462,3 +462,391 @@ int smatch(char *s, char *t)
     }
 }
 
+
+struct rangeset *init_rangeset()
+{
+    struct rangeset *rs = safe_alloc(sizeof(struct rangeset));
+    rs->n_ranges = 0;
+    rs->n_alloc = 8;
+    rs->range = safe_alloc(rs->n_alloc * sizeof(struct range));
+    rs->temp = safe_alloc(rs->n_alloc * sizeof(struct range));
+    return rs;
+}
+
+void free_rangeset(struct rangeset *rs)
+{
+    free(rs->range);
+    free(rs->temp);
+    free(rs);
+}
+
+static int merge_range(struct range *r1, struct range *r2)
+{
+    if (r1->from < r2->from) {
+        if (r1->to >= r2->from - 1) {
+            if (r2->to > r1->to)
+                r1->to = r2->to;
+            return 1;
+        }
+    } else {
+        if (r2->to >= r1->from - 1) {
+            r1->from = r2->from;
+            if (r2->to > r1->to)
+                r1->to = r2->to;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void ensure_rangeset_size(struct rangeset *rs, int n)
+{
+    if (rs->n_alloc >= n)
+        return;
+    rs->n_alloc = n * 2;
+    rs->range = safe_realloc(rs->range, rs->n_alloc * sizeof(struct range));
+    rs->temp = safe_realloc(rs->temp, rs->n_alloc * sizeof(struct range));
+}
+
+void add_range(struct rangeset *rs, int from, int to)
+{
+    int i, n;
+    struct range new;
+    struct range *t;
+    if (from < 0 || from > MAX_CODE_POINT || to < 0 || to > MAX_CODE_POINT) {
+        fprintf(stderr, "tried to add invalid code point to range set\n");
+        exit(EXIT_FAILURE);
+    }
+    if (from > to)
+        return;
+
+    /*
+     * Easy case if we can just add the new range to the end.
+     */
+    if (rs->n_ranges == 0 || from > rs->range[rs->n_ranges - 1].to + 1) {
+        ensure_rangeset_size(rs, ++rs->n_ranges);
+        rs->range[rs->n_ranges - 1].from = from;
+        rs->range[rs->n_ranges - 1].to = to;
+        return;
+    }
+
+    /* Allocates room for rs->n_ranges + 1 ranges: it can grow by at most one range */
+    ensure_rangeset_size(rs, (1 + rs->n_ranges));
+    n = 0;
+    new.from = from;
+    new.to = to;
+    for (i = 0; i < rs->n_ranges; ++i) {
+        if (!merge_range(&new, &rs->range[i])) {
+            if (rs->range[i].from > new.from)
+                break;
+            rs->temp[n++] = rs->range[i];
+        }
+    }
+    rs->temp[n++] = new;
+    for (; i < rs->n_ranges; ++i)
+        rs->temp[n++] = rs->range[i];
+
+    /*
+     * Set the new size and swap the range and temp arrays.
+     */
+    rs->n_ranges = n;
+    t = rs->range;
+    rs->range = rs->temp;
+    rs->temp = t;
+}
+
+void print_rangeset(struct rangeset *rs)
+{
+    int i ;
+    for (i = 0; i < rs->n_ranges; ++i)
+        printf("%d   %d(%c) - %d(%c)\n", i, rs->range[i].from, (char)rs->range[i].from,
+               rs->range[i].to, (char)rs->range[i].to);
+}
+
+/*
+ * # Bits  Min val(hex)     Bit pattern
+ * 1    7                   0xxxxxxx
+ * 2   11     00000080      110xxxxx 10xxxxxx
+ * 3   16     00000800      1110xxxx 10xxxxxx 10xxxxxx
+ * 4   21     00010000      11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+ * 5   26     00200000      111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+ * 6   31     04000000      1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+ *
+ */
+
+#define ISCONT(b) (((b) & 0xc0) == 0x80)
+
+int utf8_check(char **p, char *end)
+{
+    int b1 = (unsigned int)*(*p)++;
+    switch ((b1 >> 4) & 0x0f) {
+        case 0: case 1: case 2: case 3:
+        case 4: case 5: case 6: case 7: {
+            /* 1 byte, 7 bits: 0xxxxxxx */
+            return b1 & 0x7f;
+        }
+        case 12: case 13: {
+            int i, b2;
+            /* 2 bytes, 11 bits: 110xxxxx 10xxxxxx */
+            if (*p >= end)
+                return -1;
+            b2 = (unsigned int)*(*p)++;
+            if (!ISCONT(b2)) return -1;
+            i = ((((b1 & 0x1f) << 6) |
+                  ((b2 & 0x3f))));
+            if (i < 0x80)
+                return -1;
+            return i;
+        }
+        case 14: {
+            int i, b2, b3;
+            /* 3 bytes, 16 bits: 1110xxxx 10xxxxxx 10xxxxxx */
+            if (end - *p < 2)
+                return -1;
+            b2 = (unsigned int)*(*p)++;
+            if (!ISCONT(b2)) return -1;
+            b3 = (unsigned int)*(*p)++;
+            if (!ISCONT(b3)) return -1;
+            i = ((((b1 & 0x0f) << 12) |
+                  ((b2 & 0x3f) << 06) |
+                  ((b3 & 0x3f))));
+            if (i < 0x800)
+                return -1;
+            return i;
+        }
+        case 15: {
+            switch (b1 & 0x0f) {
+                case 0: case 1: case 2: case 3:
+                case 4: case 5: case 6: case 7: {
+                    int i, b2, b3, b4;
+                    /* 4 bytes, 21 bits */
+                    if (end - *p < 3)
+                        return -1;
+                    b2 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b2)) return -1;
+                    b3 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b3)) return -1;
+                    b4 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b4)) return -1;
+                    i = (((b1 & 0x07) << 18) |
+                         ((b2 & 0x3f) << 12) |
+                         ((b3 & 0x3f) << 06) |
+                         ((b4 & 0x3f)));
+                    if (i < 0x10000)
+                        return -1;
+                    return i;
+                }
+
+                case 8: case 9: case 10: case 11: {
+                    int i, b2, b3, b4, b5;
+                    /* 5 bytes, 26 bits */
+                    if (end - *p < 4)
+                        return -1;
+                    b2 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b2)) return -1;
+                    b3 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b3)) return -1;
+                    b4 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b4)) return -1;
+                    b5 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b5)) return -1;
+                    i = (((b1 & 0x03) << 24) |
+                         ((b2 & 0x3f) << 18) |
+                         ((b3 & 0x3f) << 12) |
+                         ((b4 & 0x3f) << 06) |
+                         ((b5 & 0x3f)));
+                    if (i < 0x200000)
+                        return -1;
+                    return i;
+                }
+
+                case 12: case 13: {
+                    int i, b2, b3, b4, b5, b6;
+                    /* 6 bytes, 31 bits */
+                    if (end - *p < 5)
+                        return -1;
+                    b2 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b2)) return -1;
+                    b3 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b3)) return -1;
+                    b4 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b4)) return -1;
+                    b5 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b5)) return -1;
+                    b6 = (unsigned int)*(*p)++;
+                    if (!ISCONT(b6)) return -1;
+                    i = (((b1 & 0x01) << 30) |
+                         ((b2 & 0x3f) << 24) |
+                         ((b3 & 0x3f) << 18) |
+                         ((b4 & 0x3f) << 12) |
+                         ((b5 & 0x3f) << 06) |
+                         ((b6 & 0x3f)));
+                    if (i < 0x4000000)
+                        return -1;
+                    return i;
+                }
+
+                default:
+                    return -1;
+            }
+        }
+    }
+    return -1; /* Not reached */
+}
+
+int utf8_iter(char **p)
+{
+    int b1 = (unsigned int)*(*p)++;
+    switch ((b1 >> 4) & 0x0f) {
+        case 0: case 1: case 2: case 3:
+        case 4: case 5: case 6: case 7: {
+            /* 1 byte, 7 bits: 0xxxxxxx */
+            return b1 & 0x7f;
+        }
+        case 12: case 13: {
+            int i, b2;
+            /* 2 bytes, 11 bits: 110xxxxx 10xxxxxx */
+            b2 = (unsigned int)*(*p)++;
+            i = ((((b1 & 0x1f) << 6) |
+                  ((b2 & 0x3f))));
+            return i;
+        }
+        case 14: {
+            int i, b2, b3;
+            /* 3 bytes, 16 bits: 1110xxxx 10xxxxxx 10xxxxxx */
+            b2 = (unsigned int)*(*p)++;
+            b3 = (unsigned int)*(*p)++;
+            i = ((((b1 & 0x0f) << 12) |
+                  ((b2 & 0x3f) << 06) |
+                  ((b3 & 0x3f))));
+            return i;
+        }
+        case 15: {
+            switch (b1 & 0x0f) {
+                case 0: case 1: case 2: case 3:
+                case 4: case 5: case 6: case 7: {
+                    int i, b2, b3, b4;
+                    /* 4 bytes, 21 bits */
+                    b2 = (unsigned int)*(*p)++;
+                    b3 = (unsigned int)*(*p)++;
+                    b4 = (unsigned int)*(*p)++;
+                    i = (((b1 & 0x07) << 18) |
+                         ((b2 & 0x3f) << 12) |
+                         ((b3 & 0x3f) << 06) |
+                         ((b4 & 0x3f)));
+                    return i;
+                }
+
+                case 8: case 9: case 10: case 11: {
+                    int i, b2, b3, b4, b5;
+                    /* 5 bytes, 26 bits */
+                    b2 = (unsigned int)*(*p)++;
+                    b3 = (unsigned int)*(*p)++;
+                    b4 = (unsigned int)*(*p)++;
+                    b5 = (unsigned int)*(*p)++;
+                    i = (((b1 & 0x03) << 24) |
+                         ((b2 & 0x3f) << 18) |
+                         ((b3 & 0x3f) << 12) |
+                         ((b4 & 0x3f) << 06) |
+                         ((b5 & 0x3f)));
+                    return i;
+                }
+
+                case 12: case 13: {
+                    int i, b2, b3, b4, b5, b6;
+                    /* 6 bytes, 31 bits */
+                    b2 = (unsigned int)*(*p)++;
+                    b3 = (unsigned int)*(*p)++;
+                    b4 = (unsigned int)*(*p)++;
+                    b5 = (unsigned int)*(*p)++;
+                    b6 = (unsigned int)*(*p)++;
+                    i = (((b1 & 0x01) << 30) |
+                         ((b2 & 0x3f) << 24) |
+                         ((b3 & 0x3f) << 18) |
+                         ((b4 & 0x3f) << 12) |
+                         ((b5 & 0x3f) << 06) |
+                         ((b6 & 0x3f)));
+                    return i;
+                }
+
+                default:
+                    return 0;
+            }
+        }
+    }
+    return 0; /* Not reached */
+}
+
+int utf8_rev_iter(char **p)
+{
+    for (;;) {
+        if (!ISCONT(*--(*p))) {
+            char *t = *p;
+            return utf8_iter(&t);
+        }
+    }
+}
+
+int utf8_seq(int c, char *s)
+{
+    if (c < 0x80) {
+        if (s) s[0] = (char)c;
+        return 1;
+    }
+    if (c < 0x800) {
+        if (s) {
+            s[0] = (char)(0xc0 | ((c >> 6)));
+            s[1] = (char)(0x80 | (c & 0x3f));
+        }
+        return 2;
+    }
+    if (c < 0x10000) {
+        if (s) {
+            s[0] = (char)(0xe0 | ((c >> 12)));
+            s[1] = (char)(0x80 | ((c >> 6) & 0x3f));
+            s[2] = (char)(0x80 | (c & 0x3f));
+        }
+        return 3;
+    }
+    if (c < 0x200000) {
+        if (s) {
+            s[0] = (char)(0xf0 | ((c >> 18)));
+            s[1] = (char)(0x80 | ((c >> 12) & 0x3f));
+            s[2] = (char)(0x80 | ((c >> 6) & 0x3f));
+            s[3] = (char)(0x80 | (c & 0x3f));
+        }
+        return 4;
+    }
+    if (c < 0x400000) {
+        if (s) {
+            s[0] = (char)(0xf8 | ((c >> 24)));
+            s[1] = (char)(0x80 | ((c >> 18) & 0x3f));
+            s[2] = (char)(0x80 | ((c >> 12) & 0x3f));
+            s[3] = (char)(0x80 | ((c >> 6) & 0x3f));
+            s[4] = (char)(0x80 | (c & 0x3f));
+        }
+        return 5;
+    }
+
+    if (s) {
+        s[0] = (char)(0xfc | ((c >> 30)));
+        s[1] = (char)(0x80 | ((c >> 24) & 0x3f));
+        s[2] = (char)(0x80 | ((c >> 18) & 0x3f));
+        s[3] = (char)(0x80 | ((c >> 12) & 0x3f));
+        s[4] = (char)(0x80 | ((c >> 6) & 0x3f));
+        s[5] = (char)(0x80 | (c & 0x3f));
+    }
+    return 6;
+}
+
+int 
+utf8_seq_len_arr[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        -1,-1,-1,-1,-1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+        2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,
+        5,5,5,5,6,6,-1,-1};

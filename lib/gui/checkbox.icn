@@ -126,7 +126,7 @@ class CheckBox(Button)
    public set_one(f)
       case f.attr of {
          "images" : set_images!(f.string_list_val(2))
-         "label" : set_label(f.string_val())
+         "label" : set_label(f.text_val())
          "paint" : set_paint(f.object_val(gui.Paint))
          default: return cast(self,Button).set_one(f)
       }

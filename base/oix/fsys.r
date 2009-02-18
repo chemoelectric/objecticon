@@ -78,7 +78,7 @@ function{0,1} getch()
       i = getch();
       if (i<0 || i>255)
 	 fail;
-      return string(1, (char *)&allchars[FromAscii(i) & 0xFF]);
+      return string(1, (char *)&allchars[i & 0xFF]);
       }
 end
 
@@ -93,7 +93,7 @@ function{0,1} getche()
       i = getche();
       if (i<0 || i>255)
 	 fail;
-      return string(1, (char *)&allchars[FromAscii(i) & 0xFF]);
+      return string(1, (char *)&allchars[i & 0xFF]);
       }
 end
 

@@ -12,9 +12,21 @@ class SelectionOwner()
    public defer get_content(target)
    public defer lost_ownership()
    public defer get_win()
+   public defer get_targets()
+end
+
+class TextSelectionOwner(SelectionOwner)
+   protected defer get_text()
 
    public get_targets()
-      return Selection.STRING_TARGET
+      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET
+   end
+
+   public get_content(target)
+      case target of {
+         Selection.STRING_TARGET: return string(text_convert(get_text(), "string"))
+         Selection.UTF8_STRING_TARGET: return string(text_convert(get_text(), "ucs"))
+      }
    end
 end
 
@@ -23,6 +35,7 @@ class Selection()
       PRIMARY,         # Selection constants
       SECONDARY,
       CLIPBOARD,
+      UTF8_STRING_TARGET,
       STRING_TARGET,
       TARGETS_TARGET
 
@@ -33,6 +46,7 @@ class Selection()
       SECONDARY := "SECONDARY"
       CLIPBOARD := "CLIPBOARD"
       STRING_TARGET := "STRING"
+      UTF8_STRING_TARGET := "UTF8_STRING"
       TARGETS_TARGET := "TARGETS"
       owners := table()
    end

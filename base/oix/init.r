@@ -87,6 +87,8 @@ int noerrbuf;				/* if nonzero, do not buffer stderr */
 
 struct descrip maps2;			/* second cached argument of map */
 struct descrip maps3;			/* third cached argument of map */
+struct descrip maps2u;			/* second cached argument of map */
+struct descrip maps3u;			/* third cached argument of map */
 
 
 struct b_coexpr *stklist;	/* base of co-expression block list */
@@ -188,6 +190,48 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
 #endif					/* HAVE_LIBZ */
 }
 
+#passthru #define _INT int
+static struct b_cset *make_static_cset_block(int n_ranges, ...)
+{
+    struct b_cset *b;
+    uword blksize;
+    int i, j;
+    va_list argp;
+    va_start(argp, n_ranges);
+    blksize = sizeof(struct b_cset) + ((n_ranges - 1) * sizeof(struct b_cset_range));
+    MemProtect(b = calloc(blksize, 1));
+    b->blksize = blksize;
+    b->n_ranges = n_ranges;
+    b->size = 0;
+    for (i = 0; i < n_ranges; ++i) {
+        b->range[i].from = va_arg(argp, _INT);
+        b->range[i].to = va_arg(argp, _INT);
+        b->range[i].index = b->size;
+        b->size += b->range[i].to - b->range[i].from + 1;
+        for (j = b->range[i].from; j <= b->range[i].to; ++j) {
+            if (j > 0xff)
+                break;
+            Setb(j, b->bits);
+        }
+    }
+    va_end(argp);
+    return b;
+}
+
+static struct b_ucs *make_static_ucs_block(dptr utf8, int length)
+{
+    struct b_ucs *p;
+    int i, j, n;
+    MemProtect(p = calloc(sizeof(struct b_ucs), 1));
+    p->utf8 = *utf8;
+    p->length = length;
+    p->off[0] = 0;
+    p->n_off_indexed = 1;
+    p->index_step = 4;
+    if (p->length > p->index_step)
+        syserr("make_static_ucs_block: too long");
+    return p;
+}
 
 /*
  * init/icon_init - initialize memory and prepare for Icon execution.
@@ -220,14 +264,30 @@ void icon_init(char *name)
     nulldesc.dword = D_Null;
     IntVal(nulldesc) = 0;
 
-    csetdesc.dword = D_Cset;
-    BlkLoc(csetdesc) = (union block *)&fullcs;
-
     rzerodesc.dword = D_Real;
     BlkLoc(rzerodesc) = (union block *)&realzero;
 
     maps2 = nulldesc;
     maps3 = nulldesc;
+    maps2u = nulldesc;
+    maps3u = nulldesc;
+
+    k_cset = make_static_cset_block(1, 0, 255);
+    k_uset = make_static_cset_block(1, 0, MAX_CODE_POINT);
+    k_ascii = make_static_cset_block(1, 0, 127);
+    k_digits = make_static_cset_block(1, '0', '9');
+    k_lcase = make_static_cset_block(1, 'a', 'z');
+    k_ucase = make_static_cset_block(1, 'A', 'Z');
+    k_letters = make_static_cset_block(2, 'A', 'Z', 'a', 'z');
+    lparcs = make_static_cset_block(1, '(', '(');
+    rparcs = make_static_cset_block(1, ')', ')');
+    blankcs = make_static_cset_block(1, ' ', ' ');
+
+    emptystr_ucs = make_static_ucs_block(&emptystr, 0);
+    blank_ucs = make_static_ucs_block(&blank, 1);
+
+    csetdesc.dword = D_Cset;
+    BlkLoc(csetdesc) = (union block *)k_cset;
 
     /*
      * initialize root pstate
@@ -273,10 +333,10 @@ void icon_init(char *name)
     rootpstate.EVstralc = EVStrAlc_0;
     rootpstate.Interp = interp_0;
     rootpstate.Cnvcset = cnv_cset_0;
+    rootpstate.Cnvucs = cnv_ucs_0;
     rootpstate.Cnvint = cnv_int_0;
     rootpstate.Cnvreal = cnv_real_0;
     rootpstate.Cnvstr = cnv_str_0;
-    rootpstate.Cnvtcset = cnv_tcset_0;
     rootpstate.Cnvtstr = cnv_tstr_0;
     rootpstate.Deref = deref_0;
     rootpstate.Alcbignum = alcbignum_0;
@@ -291,6 +351,7 @@ void icon_init(char *name)
     rootpstate.Alcobject = alcobject_0;
     rootpstate.Alccast = alccast_0;
     rootpstate.Alcmethp = alcmethp_0;
+    rootpstate.Alcucs = alcucs_0;
     rootpstate.Alcrefresh = alcrefresh_0;
     rootpstate.Alcselem = alcselem_0;
     rootpstate.Alcstr = alcstr_0;
@@ -854,10 +915,10 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->EVstralc = EVStrAlc_0;
     pstate->Interp = interp_0;
     pstate->Cnvcset = cnv_cset_0;
+    pstate->Cnvucs = cnv_ucs_0;
     pstate->Cnvint = cnv_int_0;
     pstate->Cnvreal = cnv_real_0;
     pstate->Cnvstr = cnv_str_0;
-    pstate->Cnvtcset = cnv_tcset_0;
     pstate->Cnvtstr = cnv_tstr_0;
     pstate->Deref = deref_0;
     pstate->Alcbignum = alcbignum_0;
@@ -872,6 +933,7 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->Alcobject = alcobject_0;
     pstate->Alccast = alccast_0;
     pstate->Alcmethp = alcmethp_0;
+    pstate->Alcucs = alcucs_0;
     pstate->Alcrefresh = alcrefresh_0;
     pstate->Alcselem = alcselem_0;
     pstate->Alcstr = alcstr_0;
@@ -1100,6 +1162,12 @@ static char* vword2str(dptr d) {
                 strcat(res, cstr(&p->proc->pname));
                 break;
             }
+            case T_Ucs:{
+                struct b_ucs *p = (struct b_ucs*)BlkLoc(*d);
+                sprintf(res, "ucs(%d,%s)", p->length,cstr(&p->utf8));
+                break;
+            }
+
             case T_Lrgint:
             case T_Real: 
             case T_Cset: 
@@ -1183,6 +1251,7 @@ static char* dword2str(dptr d) {
             case T_Cast: t = "T_Cast"; break;
             case T_Methp: t = "T_Methp"; break;
             case T_Constructor: t = "T_Constructor"; break;
+            case T_Ucs: t = "T_Ucs"; break;
             default: return "?";
         }
         strcat(buff, " ");

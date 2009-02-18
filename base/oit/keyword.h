@@ -48,5 +48,6 @@
 #define K_TIME        38
 #define K_TRACE       39
 #define K_UCASE       40
-#define K_VERSION     41
-#define K_WHY         42
+#define K_USET        41
+#define K_VERSION     42
+#define K_WHY         43

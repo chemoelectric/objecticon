@@ -284,7 +284,7 @@ class TextDisplay(LineBasedScrollArea)
          "wrap_mode": set_wrap_mode(f.string_val())
          "split_words": set_split_words(f.flag_val())
          "tab_width": set_tab_width(f.int_val())
-         "contents" : set_contents(f.string_list_val())
+         "contents" : set_contents(f.text_list_val())
          default: return cast(self,LineBasedScrollArea).set_one(f)
       }
       return

@@ -21,7 +21,7 @@ XOBJS=	cnv.o data.o def.o errmsg.o extcall.o fconv.o fload.o fmath.o\
 
 COBJS=	../common/long.o ../common/time.o \
 	../common/rswitch.o ../common/redirerr.o \
-	../common/mlocal.o
+	../common/mlocal.o ../common/alloc.o
 
 OBJS=	$(XOBJS) $(COBJS)
 

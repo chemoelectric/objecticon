@@ -188,20 +188,15 @@ long icodesize, stacksize;
  * alccset - allocate a cset in the block region.
  */
 
-struct b_cset *f()
+struct b_cset *f(word n)
    {
    register struct b_cset *blk;
-   register int i;
+   register uword size;
 
-   EVVal(sizeof (struct b_cset), e_cset);
-   AlcFixBlk(blk, b_cset, T_Cset)
-   blk->size = -1;              /* flag size as not yet computed */
+   size = sizeof(struct b_cset) + ((n - 1) * sizeof(struct b_cset_range));
+   AlcBlk(blk, b_cset, T_Cset, size);
+   blk->blksize = size;
 
-   /*
-    * Zero the bit array.
-    */
-   for (i = 0; i < CsetSize; i++)
-     blk->bits[i] = 0;
    return blk;
    }
 #enddef
@@ -492,6 +487,26 @@ alcmethp_macro(alcmethp_0,0)
 alcmethp_macro(alcmethp_1,E_Methp)
 
 
+
+#begdef alcucs_macro(f,e_ucs)
+/*
+ * alcucs - allocate a ucs value in the block region.
+ */
+
+struct b_ucs *f(int n)
+   {
+   register struct b_ucs *blk;
+   register uword size;
+   size = sizeof(struct b_ucs) + ((n - 1) * sizeof(word));
+   AlcBlk(blk, b_ucs, T_Ucs, size);
+   blk->blksize = size;
+   blk->utf8 = nulldesc;
+   return blk;
+   }
+#enddef
+
+alcucs_macro(alcucs_0,0)
+alcucs_macro(alcucs_1,E_Ucs)
 
 
 /*

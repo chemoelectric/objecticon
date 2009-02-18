@@ -54,10 +54,19 @@ struct b_real {			/* real block */
     double realval;		/*   value */
 };
 
+struct b_cset_range {
+    word index,                 /* Index (zero-based) of first element */
+        from,                   /* First element in range */
+        to;                     /* Last element, >= first */
+};
+
 struct b_cset {			/* cset block */
     word title;			/*   T_Cset */
+    word blksize;		/*   block size */
     word size;			/*   size of cset */
     unsigned int bits[CsetSize];		/*   array of bits */
+    word n_ranges;
+    struct b_cset_range range[1];
 };
 
 struct b_lelem {		/* list-element block */
@@ -182,6 +191,19 @@ struct b_methp {                /* method pointer */
     word title;                 /*   T_Methp */
     struct b_object *object;	/*   the instance */
     struct b_proc *proc;	/*   the method */
+};
+
+/*
+ * Unicode character string.
+ */
+struct b_ucs {
+    word title;                 /*   T_Ucs */
+    word blksize;		/*   block size */
+    word length;                /*   unicode string length */
+    struct descrip utf8;	/*   the utf-8 representation */
+    word n_off_indexed;         /*   how many offsets entries have already been calculated */
+    word index_step;            /*   how many unicode chars between offset entries */
+    word off[1];                /*   offsets - 1 + (length-1) / index_step are allocated */
 };
 
 struct b_selem {		/* set-element block */
@@ -441,10 +463,10 @@ struct progstate {
     void (*EVstralc)(word);
     int (*Interp)(int,dptr);
     int (*Cnvcset)(dptr,dptr);
+    int (*Cnvucs)(dptr,dptr);
     int (*Cnvint)(dptr,dptr);
     int (*Cnvreal)(dptr,dptr);
     int (*Cnvstr)(dptr,dptr);
-    int (*Cnvtcset)(struct b_cset *,dptr,dptr);
     int (*Cnvtstr)(char *,dptr,dptr);
     void (*Deref)(dptr,dptr);
     struct b_bignum * (*Alcbignum)(word);
@@ -459,6 +481,7 @@ struct progstate {
     struct b_object *(*Alcobject)(struct b_class *);
     struct b_cast *(*Alccast)();
     struct b_methp *(*Alcmethp)();
+    struct b_ucs *(*Alcucs)();
     struct b_refresh *(*Alcrefresh)(word *, int, int);
     struct b_selem *(*Alcselem)(dptr, uword);
     char *(*Alcstr)(char *, word);
@@ -592,6 +615,7 @@ union block {			/* general block */
     struct b_cast cast;
     struct b_methp methp;
     struct b_constructor constructor;
+    struct b_ucs ucs;
     struct b_bignum bignumblk;
 };
 

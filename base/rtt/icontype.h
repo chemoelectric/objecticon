@@ -5,18 +5,19 @@
 int str_typ = 0;
 int int_typ = 1;
 int rec_typ = 2;
-int proc_typ = 8;
-int coexp_typ = 9;
-int stv_typ = 10;
-int ttv_typ = 11;
-int null_typ = 12;
-int cset_typ = 13;
-int real_typ = 14;
-int list_typ = 15;
-int tbl_typ = 16;
+int proc_typ = 9;
+int coexp_typ = 10;
+int stv_typ = 11;
+int ttv_typ = 12;
+int null_typ = 13;
+int cset_typ = 14;
+int real_typ = 15;
+int list_typ = 16;
+int tbl_typ = 17;
+int ucs_typ = 8;
 
-int num_typs = 23;
-struct icon_type icontypes[23] = {
+int num_typs = 24;
+struct icon_type icontypes[24] = {
   {"string", 0, DrfNone, TRetSpcl, NULL, 0, 0, "s", "String"},
   {"integer", 0, DrfNone, TRetNone, NULL, 0, 0, "i", "Integer"},
   {"record", 0, DrfNone, TRetBlkP, NULL, 0, 0, "R", "Record"},
@@ -25,6 +26,7 @@ struct icon_type icontypes[23] = {
   {"cast", 0, DrfNone, TRetBlkP, NULL, 0, 0, "cast", "Cast"},
   {"methp", 0, DrfNone, TRetBlkP, NULL, 0, 0, "methp", "Methp"},
   {"constructor", 0, DrfNone, TRetBlkP, NULL, 0, 0, "constructor", "Constructor"},
+  {"ucs", 0, DrfNone, TRetBlkP, NULL, 0, 0, "ucs", "Ucs"},
   {"proc", 0, DrfNone, TRetBlkP, NULL, 0, 0, "proc", "Proc"},
   {"coexpr", 0, DrfNone, TRetBlkP, NULL, 0, 0, "C", "Coexpr"},
   {"tvsubs", 1, DrfSpcl, TRetSpcl, NULL, 1, 0, "sstv", "Tvsubs"},
@@ -35,11 +37,11 @@ struct icon_type icontypes[23] = {
   {"list", 1, DrfNone, TRetBlkP, NULL, 1, 2, "L", "List"},
   {"table", 1, DrfNone, TRetBlkP, NULL, 3, 3, "T", "Table"},
   {"set", 1, DrfNone, TRetBlkP, NULL, 1, 6, "S", "Set"},
-  {"kywdint", 0, DrfCnst, TRetDescP, ".i.....................", 0, 0, "kywdint", "Kywdint"},
-  {"kywdsubj", 0, DrfCnst, TRetDescP, "s......................", 0, 0, "kywdsubj", "Kywdsubj"},
-  {"kywdpos", 0, DrfCnst, TRetDescP, ".i.....................", 0, 0, "kywdpos", "Kywdpos"},
-  {"kywdevent", 0, DrfCnst, TRetDescP, "siRcocmcpC..ncrLTS.....", 0, 0, "kywdevent", "Kywdevent"},
-  {"kywdstr", 0, DrfCnst, TRetDescP, "s......................", 0, 0, "kywdstr", "Kywdstr"}};
+  {"kywdint", 0, DrfCnst, TRetDescP, ".i......................", 0, 0, "kywdint", "Kywdint"},
+  {"kywdsubj", 0, DrfCnst, TRetDescP, "s.......................", 0, 0, "kywdsubj", "Kywdsubj"},
+  {"kywdpos", 0, DrfCnst, TRetDescP, ".i......................", 0, 0, "kywdpos", "Kywdpos"},
+  {"kywdevent", 0, DrfCnst, TRetDescP, "siRcocmcupC..ncrLTS.....", 0, 0, "kywdevent", "Kywdevent"},
+  {"kywdstr", 0, DrfCnst, TRetDescP, "s.......................", 0, 0, "kywdstr", "Kywdstr"}};
 
 int str_var = 0;
 int trpd_tbl = 1;
@@ -49,10 +51,10 @@ int tbl_val = 4;
 
 int num_cmpnts = 7;
 struct typ_compnt typecompnt[7] = {
-  {"str_var", 0, 0, 10, NULL},
-  {"trpd_tbl", 0, 0, 11, NULL},
-  {"lst_elem", 0, 1, 15, "LE"},
-  {"tbl_key", 0, 0, 16, NULL},
-  {"tbl_val", 1, 1, 16, "TV"},
-  {"tbl_dflt", 2, 0, 16, NULL},
-  {"set_elem", 0, 0, 17, NULL}};
+  {"str_var", 0, 0, 11, NULL},
+  {"trpd_tbl", 0, 0, 12, NULL},
+  {"lst_elem", 0, 1, 16, "LE"},
+  {"tbl_key", 0, 0, 17, NULL},
+  {"tbl_val", 1, 1, 17, "TV"},
+  {"tbl_dflt", 2, 0, 17, NULL},
+  {"set_elem", 0, 0, 18, NULL}};

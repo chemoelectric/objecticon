@@ -37,7 +37,7 @@ class RFC822Parser()
       LWSP_CHAR := ' \t'
       DAYS := ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
       MONTHS := ["Jan", "Feb",  "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-      TZ_CHARS := '+-' ++ &digits ++ &ucase
+      TZ_CHARS := '+\-' ++ &digits ++ &ucase
       # RCF 1521 defs
       TSPECIALS := '()<>@,;:\\\"/[]?='
       ATOM_CHAR_1521 := &ascii -- CTL_CHAR -- SPACE -- TSPECIALS

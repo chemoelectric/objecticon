@@ -6,16 +6,19 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import xml, io
+import xml, ipl.options, io
 
 procedure main(a)
-   local fmt, p, s, d, t, x
+   local fmt, p, s, d, t, x, opt
    fmt := CanonicalXmlFormatter()
    p := XmlParser("preserve_insignificant_whitespace=t", "do_namespaces=f")
 
+   opt := options(a, "-u!")
    *a > 0 | stop("usage: testcase source [output]")
 
    s := Files.file_to_string(a[1]) | stop("couldnt open" || a[1])
+   if \opt["u"] then
+      s := ucs(s)
 
    if d := p.parse(s) then {
       if *a = 1 then 

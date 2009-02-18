@@ -23,10 +23,10 @@ extern uword segsize[];		/* size of hash bucket segment */
 extern int k_level;		/* value of &level */
 
 extern struct b_coexpr *stklist;/* base of co-expression stack list */
-extern struct b_cset blankcs;   /* ' ' */
-extern struct b_cset lparcs;    /* '(' */
-extern struct b_cset rparcs;    /* ')' */
-extern struct b_cset fullcs;    /* cset containing all characters */
+extern struct b_cset *blankcs;   /* ' ' */
+extern struct b_cset *lparcs;    /* '(' */
+extern struct b_cset *rparcs;    /* ')' */
+
 extern struct descrip blank;	/* blank */
 extern struct descrip emptystr;	/* empty string */
 
@@ -36,6 +36,8 @@ extern struct descrip lcase;	/* lowercase string */
 extern struct descrip letr;	/* letter "r" */
 extern struct descrip maps2;	/* second argument to map() */
 extern struct descrip maps3;	/* third argument to map() */
+extern struct descrip maps2u;	/* second argument to map(), ucs case */
+extern struct descrip maps3u;	/* third argument to map(), ucs case */
 extern struct descrip nulldesc;	/* null value */
 extern struct descrip onedesc;	/* one */
 extern struct descrip ucase;	/* uppercase string */
@@ -80,35 +82,36 @@ extern int longest_dr;
 extern struct b_constructor_list **dr_arrays;
 
 /*
- * Externals that differ between compiler and interpreter.
+ * External declarations for the interpreter.
  */
-   /*
-    * External declarations for the interpreter.
-    */
    
-   extern inst ipc;			/* interpreter program counter */
-   extern int ilevel;			/* interpreter level */
-   extern int ntended;			/* number of active tended descriptors*/
-   extern struct b_cset k_ascii;	/* value of &ascii */
-   extern struct b_cset k_cset;		/* value of &cset */
-   extern struct b_cset k_digits;	/* value of &lcase */
-   extern struct b_cset k_lcase;	/* value of &lcase */
-   extern struct b_cset k_letters;	/* value of &letters */
-   extern struct b_cset k_ucase;	/* value of &ucase */
-   extern struct descrip tended[];	/* tended descriptors */
-   extern struct ef_marker *efp;	/* expression frame pointer */
-   extern struct gf_marker *gfp;	/* generator frame pointer */
-   extern struct pf_marker *pfp;	/* procedure frame pointer */
-   extern word *sp;			/* interpreter stack pointer */
-   extern word *stack;			/* interpreter stack base */
-   extern word *stackend;		/* end of evaluation stack */
+extern inst ipc;			/* interpreter program counter */
+extern int ilevel;			/* interpreter level */
+extern int ntended;			/* number of active tended descriptors*/
+extern struct b_cset *k_ascii;	/* value of &ascii */
+extern struct b_cset *k_cset;	/* value of &cset */
+extern struct b_cset *k_uset;	/* value of &uset */
+extern struct b_cset *k_digits;	/* value of &lcase */
+extern struct b_cset *k_lcase;	/* value of &lcase */
+extern struct b_cset *k_letters;	/* value of &letters */
+extern struct b_cset *k_ucase;	/* value of &ucase */
+extern struct b_ucs *emptystr_ucs;     /* ucs empty string */
+extern struct b_ucs *blank_ucs;        /* ucs blank string */
+
+extern struct descrip tended[];	/* tended descriptors */
+extern struct ef_marker *efp;	/* expression frame pointer */
+extern struct gf_marker *gfp;	/* generator frame pointer */
+extern struct pf_marker *pfp;	/* procedure frame pointer */
+extern word *sp;			/* interpreter stack pointer */
+extern word *stack;			/* interpreter stack base */
+extern word *stackend;		/* end of evaluation stack */
    
-   extern struct pstrnm pntab[];
-   extern int pnsize;
+extern struct pstrnm pntab[];
+extern int pnsize;
    
-      extern struct progstate *curpstate;
-      extern struct progstate rootpstate;
-      extern int noMTevents;		/* no MT events during GC */
+extern struct progstate *curpstate;
+extern struct progstate rootpstate;
+extern int noMTevents;		/* no MT events during GC */
    
 
 extern stringint attribs[], drawops[];
@@ -118,24 +121,24 @@ extern stringint attribs[], drawops[];
  */
 #ifdef Graphics
    
-   extern wbp wbndngs;
-   extern wcp wcntxts;
-   extern wsp wstates;
-   extern int GraphicsLeft, GraphicsUp, GraphicsRight, GraphicsDown;
-   extern int GraphicsHome, GraphicsPrior, GraphicsNext, GraphicsEnd;
-   extern int win_highwater, canvas_serial, context_serial;
-   extern clock_t starttime;		/* start time in milliseconds */
+extern wbp wbndngs;
+extern wcp wcntxts;
+extern wsp wstates;
+extern int GraphicsLeft, GraphicsUp, GraphicsRight, GraphicsDown;
+extern int GraphicsHome, GraphicsPrior, GraphicsNext, GraphicsEnd;
+extern int win_highwater, canvas_serial, context_serial;
+extern clock_t starttime;		/* start time in milliseconds */
 
 
-   #ifdef XWindows
+#ifdef XWindows
       extern struct _wdisplay * wdsplys;
       extern stringint cursorsyms[];
-   #endif				/* XWindows */
+#endif				/* XWindows */
 
-   #ifdef MSWindows
+#ifdef MSWindows
       extern HINSTANCE mswinInstance;
       extern int ncmdShow;
-   #endif				/* MSWindows */
+#endif				/* MSWindows */
 
 #endif					/* Graphics */
 

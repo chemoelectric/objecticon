@@ -280,7 +280,7 @@ end
 
 procedure oper(str)
 
-   return str ? form(tab(bal('-+*^')), move(1), tab(0))
+   return str ? form(tab(bal('\-+*^')), move(1), tab(0))
 
 end
 

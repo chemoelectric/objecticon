@@ -153,9 +153,9 @@ class GridPaint(Paint)
                   if pos(0) then
                      break
                   t := tab(upto(' ') | 0)
-                  put(args, t)
+                  put(args, string(t))
                }
-               case cmd of {
+               case string(cmd) of {
                   "cell" : do_cell(args)
                   "br" : do_brk(args)
                   "img" : do_img(args)

@@ -777,7 +777,7 @@ class CustomDecode()
 
    private int_in()
       local s
-      if s := tab(many(&digits ++ '-')) then
+      if s := tab(many(&digits ++ '\-')) then
          return integer(s)
    end
 

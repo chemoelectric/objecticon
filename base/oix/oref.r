@@ -108,6 +108,45 @@ operator{*} ! bang(underef x -> dx)
 	    }
          }
 
+      cset: {
+         inline {
+            for (i = 0; i < BlkLoc(dx)->cset.n_ranges; i++) {
+               int from, to;
+               from = BlkLoc(dx)->cset.range[i].from;
+               to = BlkLoc(dx)->cset.range[i].to;
+               for (j = from; j <= to; ++j) {
+                   if (j < 256)
+                       suspend string(1, (char *)&allchars[j]);
+                   else
+                       suspend ucs(make_one_char_ucs_block(j));
+               }
+            }
+         }
+      }
+
+     ucs: {
+       if is:variable(x) then {
+          inline {
+             for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
+                suspend tvsubs(&x, i, (word)1);
+                deref(&x, &dx);
+                if (!is:ucs(dx)) 
+                  runerr(128, dx);
+            }
+          }
+       } else {
+          inline {
+             tended char *p = StrLoc(BlkLoc(dx)->ucs.utf8);
+             for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
+                 tended struct descrip utf8;
+                 StrLoc(utf8) = p;
+                 StrLen(utf8) = UTF8_SEQ_LEN(*p);
+                 p += StrLen(utf8);
+                 suspend ucs(make_ucs_block(&utf8, 1));
+             }
+          }
+       }
+     }
       record: {
          abstract {
             return type(dx).all_fields
@@ -142,7 +181,7 @@ operator{*} ! bang(underef x -> dx)
                 */
                for (i = 1; i <= StrLen(dx); i++) {
                   ch = *(StrLoc(dx) + i - 1);
-                  suspend string(1, (char *)&allchars[FromAscii(ch) & 0xFF]);
+                  suspend string(1, (char *)&allchars[ch & 0xFF]);
                   }
                }
             }
@@ -204,29 +243,42 @@ operator{0,1} ? random(underef x -> dx)
             }
          }
 
-      cset: {
-         /*
-          * x is a cset.  Convert it to a string, select a random character
-          *  of that string and return it. A substring trapped variable is
-          *  not needed.
-          */
-         if !cnv:tmp_string(dx) then
-            { /* cannot fail */ }
-         abstract {
-            return string
-            }
+      ucs: {
          body {
             C_integer val;
             double rval;
-	    char ch;
+            int i;
 
-            if ((val = StrLen(dx)) <= 0)
+            if ((val = BlkLoc(dx)->ucs.length) <= 0)
                fail;
             rval = RandVal;
             rval *= val;
-            ch = *(StrLoc(dx) + (word)rval);
-            return string(1, (char *)&allchars[FromAscii(ch) & 0xFF]);
-            }
+            i = Min((int)rval + 1, BlkLoc(dx)->ucs.length);
+            if (is:variable(x))
+               return tvsubs(&x, i, (word)1);
+            else {
+                return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+             }
+          }
+       }
+
+      cset: {
+         body {
+             C_integer val;
+             double rval;
+             int i, k, ch;
+             if ((val = BlkLoc(dx)->cset.size) <= 0)
+                 fail;
+             rval = RandVal;
+             rval *= val;
+             i = Min((int)rval + 1, BlkLoc(dx)->cset.size);
+             k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
+             ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
+             if (ch < 256)
+                 return string(1, (char *)&allchars[ch]);
+             else
+                 return ucs(make_one_char_ucs_block(ch));
+           }
          }
 
       list: {
@@ -439,7 +491,8 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
       int use_trap = 0;
       }
 
-   if is:list(dx) then {
+   type_case dx of {
+      list: {
       abstract {
          return type(dx)
          }
@@ -475,7 +528,97 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
          return result;
          }
       }
-   else {
+
+     ucs: {
+         if is:variable(x) then {
+            inline {
+               use_trap = 1;
+            }
+         }
+         /*
+          * If it isn't a C integer, but is a large integer, fail on
+          * the out-of-range index.
+          */
+         if !cnv:C_integer(i) then {
+             if cnv : integer(i) then inline { fail; }
+             runerr(101, i)
+                 }
+         if !cnv:C_integer(j) then {
+             if cnv : integer(j) then inline { fail; }
+             runerr(101, j)
+          }
+
+         body {
+             C_integer t;
+             i = cvpos((long)i, BlkLoc(dx)->ucs.length);
+             if (i == CvtFail)
+                 fail;
+             j = cvpos((long)j, BlkLoc(dx)->ucs.length);
+             if (j == CvtFail)
+                 fail;
+             if (i > j) { 			/* convert section to substring */
+                 t = i;
+                 i = j;
+                 j = t - j;
+             }
+             else
+                 j = j - i;
+   
+             if (use_trap) {
+                 return tvsubs(&x, i, j);
+             }
+             else {
+                 return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, j));
+            }
+         }       
+       }
+
+     cset: {
+         /*
+          * If it isn't a C integer, but is a large integer, fail on
+          * the out-of-range index.
+          */
+         if !cnv:C_integer(i) then {
+             if cnv : integer(i) then inline { fail; }
+             runerr(101, i)
+                 }
+         if !cnv:C_integer(j) then {
+             if cnv : integer(j) then inline { fail; }
+             runerr(101, j)
+          }
+
+         body {
+             C_integer t;
+             int k, last;
+
+             i = cvpos((long)i, BlkLoc(dx)->cset.size);
+             if (i == CvtFail)
+                 fail;
+             j = cvpos((long)j, BlkLoc(dx)->cset.size);
+             if (j == CvtFail)
+                 fail;
+             if (i > j) { 			/* convert section to substring */
+                 t = i;
+                 i = j;
+                 j = t - j;
+             }
+             else
+                 j = j - i;
+
+             if (j == 0)
+                 return emptystr;
+
+             /* Search for the last char, see if it's < 256 */
+             last = i + j - 1;
+             k = cset_range_of_pos(&BlkLoc(dx)->cset, last);
+             if (BlkLoc(dx)->cset.range[k].from + last - 1 - BlkLoc(dx)->cset.range[k].index < 256)
+                 return cset_to_str(&BlkLoc(dx)->cset, i, j);
+             else
+                 return ucs(cset_to_ucs_block(&BlkLoc(dx)->cset, i, j));
+         }       
+       }
+
+    default: {
 
       /*
        * x should be a string. If x is a variable, we must create a
@@ -533,6 +676,7 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
             return string(j, StrLoc(dx)+i-1);
          }
       }
+   }
 end
 
 "x[y] - access yth character or element of x."
@@ -669,6 +813,73 @@ operator{0,1} [] subsc(underef x -> dx,y)
             }
          }
 
+     ucs: {
+         if is:variable(x) then {
+            inline {
+               use_trap = 1;
+            }
+         }
+         /*
+          * Make sure that y is a C integer.
+          */
+         if !cnv:C_integer(y) then {
+	    /*
+	     * If it isn't a C integer, but is a large integer, fail on
+	     * the out-of-range index.
+	     */
+	    if cnv : integer(y) then inline { fail; }
+	    runerr(101, y)
+	    }
+
+         body {
+            word i;
+
+            /*
+             * Convert y to a position in x and fail if the position
+             *  is out of bounds.
+             */
+            i = cvpos(y, BlkLoc(dx)->ucs.length);
+            if (i == CvtFail || i > BlkLoc(dx)->ucs.length)
+               fail;
+            if (use_trap) {
+               /*
+                * x is a string, make a substring trapped variable for the
+                * one character substring selected and return it.
+                */
+               return tvsubs(&x, i, (word)1);
+               }
+            else {
+                return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+            }
+         }       
+       }
+
+      cset: {
+         /*
+          * Make sure that y is a C integer.
+          */
+         if !cnv:C_integer(y) then {
+            /*
+             * If it isn't a C integer, but is a large integer, fail on
+             * the out-of-range index.
+             */
+            if cnv : integer(y) then inline { fail; }
+            runerr(101, y)
+            }
+         body {
+            int i, j, k, ch;
+            i = cvpos(y, BlkLoc(dx)->cset.size);
+            if (i == CvtFail || i > BlkLoc(dx)->cset.size)
+               fail;
+            k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
+            ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
+            if (ch < 256)
+                return string(1, (char *)&allchars[ch]);
+            else
+                return ucs(make_one_char_ucs_block(ch));
+         }
+       }
+
       default: {
          /*
           * dx must either be a string or be convertible to one. Decide
@@ -726,7 +937,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
                 * character.
                 */
                ch = *(StrLoc(dx)+i-1);
-               return string(1, (char *)&allchars[FromAscii(ch) & 0xFF]);
+               return string(1, (char *)&allchars[ch & 0xFF]);
                }
             }
          }

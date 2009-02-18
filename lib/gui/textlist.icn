@@ -35,7 +35,7 @@ class TextList(SelectableScrollArea)
 
    public set_one(f)
       case f.attr of {
-         "contents" : set_contents(f.string_list_val())
+         "contents" : set_contents(f.text_list_val())
          default: return cast(self,SelectableScrollArea).set_one(f)
       }
       return

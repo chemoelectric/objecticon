@@ -133,7 +133,7 @@ initial {
 	      line := tab(find("\n"))
 	      move(1)
 	      line ? {
-		  s := tab(many(&letters++'-')) | stop("bogons")
+		  s := tab(many(&letters++'\-')) | stop("bogons")
 		  case s of {
 		  "Content-Disposition": {
 		      move (2)

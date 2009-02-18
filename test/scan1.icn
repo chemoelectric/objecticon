@@ -56,7 +56,7 @@ procedure main()
 
    # test upto, including some chars with 8th bit set
    write()
-   skips := '\x00\x0f\x1e-<KZix\x87\x96\xa5\xb4\xc3\xd2\xe1\xf0\xff'
+   skips := '\x00\x0f\x1e\-<KZix\x87\x96\xa5\xb4\xc3\xd2\xe1\xf0\xff'
    vowels := 'aeoiuAEIOU'
    uppers := &cset -- &ascii
    &ascii ? {

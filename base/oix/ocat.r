@@ -4,76 +4,122 @@
 "x || y - concatenate strings x and y." 
 
 operator{1} || cater(x, y)
-
-   if !cnv:string(x) then
-      runerr(103, x)
-   if !cnv:string(y) then
-      runerr(103, y)
-
-   abstract {
-      return string
-      }
-
    body {
-      /*
-       *  Optimization 0:  Check for zero-length operands.
-       */
+     if (is:ucs(x) || is:ucs(y)) {
+         tended struct descrip utf8_x;
+         tended struct descrip utf8_y;
+         tended struct descrip utf8;
 
-      if (StrLen(x) == 0) {
-         StrLoc(result) = StrLoc(y);
-         StrLen(result) = StrLen(y);
-         return result;
+         if (!cnv:ucs(x,x))
+             runerr(128, x);
+         if (!cnv:ucs(y,y))
+             runerr(128, y);
+
+         utf8_x = BlkLoc(x)->ucs.utf8;
+         utf8_y = BlkLoc(y)->ucs.utf8;
+
+         /*
+          *  Optimization 0:  Check for zero-length operands.
+          */
+
+         if (StrLen(utf8_x) == 0)
+             return y;
+         if (StrLen(utf8_y) == 0)
+             return x;
+
+         /*
+          *  Optimization 1:  The strings to be concatenated are already
+          *   adjacent in memory; no allocation is required.
+          */
+         if (StrLoc(utf8_x) + StrLen(utf8_x) == StrLoc(utf8_y)) {
+             StrLoc(utf8) = StrLoc(utf8_x);
+             StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
          }
-      if (StrLen(y) == 0) {
-         StrLoc(result) = StrLoc(x);
-         StrLen(result) = StrLen(x);
-         return result;
+         /*
+          * Optimization 2: The end of x is at the end of the string space.
+          *  Hence, x was the last string allocated and need not be
+          *  re-allocated. y is appended to the string space and the
+          *  result is pointed to the start of x.
+          */
+         else if ((StrLoc(utf8_x) + StrLen(utf8_x) == strfree) &&
+                  (DiffPtrs(strend,strfree) > StrLen(utf8_y))) {
+             /*
+              * Append y to the end of the string space.
+              */
+             MemProtect(alcstr(StrLoc(utf8_y),StrLen(utf8_y)));
+             StrLoc(utf8) = StrLoc(utf8_x);
+             StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
+         }
+         /*
+          * Otherwise, allocate space for x and y, and copy them
+          *  to the end of the string space.
+          */
+         else {
+             MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(utf8_x) + StrLen(utf8_y)));
+             memcpy(StrLoc(utf8), StrLoc(utf8_x), StrLen(utf8_x));
+             memcpy(StrLoc(utf8) + StrLen(utf8_x), StrLoc(utf8_y), StrLen(utf8_y));
+             StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
+         }
+         return ucs(make_ucs_block(&utf8, BlkLoc(x)->ucs.length + BlkLoc(y)->ucs.length));
+     } else {
+         if (!cnv:string(x,x))
+             runerr(103, x);
+         if (!cnv:string(y,y))
+             runerr(103, y);
+
+         /*
+          *  Optimization 0:  Check for zero-length operands.
+          */
+         if (StrLen(x) == 0)
+             return y;
+         if (StrLen(y) == 0)
+             return x;
+
+         /*
+          *  Optimization 1:  The strings to be concatenated are already
+          *   adjacent in memory; no allocation is required.
+          */
+         if (StrLoc(x) + StrLen(x) == StrLoc(y)) {
+             StrLoc(result) = StrLoc(x);
+             StrLen(result) = StrLen(x) + StrLen(y);
+             return result;
          }
 
-      /*
-       *  Optimization 1:  The strings to be concatenated are already
-       *   adjacent in memory; no allocation is required.
-       */
-      if (StrLoc(x) + StrLen(x) == StrLoc(y)) {
-         StrLoc(result) = StrLoc(x);
+         /*
+          * Optimization 2: The end of x is at the end of the string space.
+          *  Hence, x was the last string allocated and need not be
+          *  re-allocated. y is appended to the string space and the
+          *  result is pointed to the start of x.
+          */
+         if ((StrLoc(x) + StrLen(x) == strfree) &&
+             (DiffPtrs(strend,strfree) > StrLen(y))) {
+             /*
+              * Append y to the end of the string space.
+              */
+             MemProtect(alcstr(StrLoc(y),StrLen(y)));
+             /*
+              *  Set the result and return.
+              */
+             StrLoc(result) = StrLoc(x);
+             StrLen(result) = StrLen(x) + StrLen(y);
+             return result;
+         }
+
+         /*
+          * Otherwise, allocate space for x and y, and copy them
+          *  to the end of the string space.
+          */
+         MemProtect(StrLoc(result) = alcstr(NULL, StrLen(x) + StrLen(y)));
+         memcpy(StrLoc(result), StrLoc(x), StrLen(x));
+         memcpy(StrLoc(result) + StrLen(x), StrLoc(y), StrLen(y));
+
+         /*
+          *  Set the length of the result and return.
+          */
          StrLen(result) = StrLen(x) + StrLen(y);
          return result;
-         }
-
-      /*
-       * Optimization 2: The end of x is at the end of the string space.
-       *  Hence, x was the last string allocated and need not be
-       *  re-allocated. y is appended to the string space and the
-       *  result is pointed to the start of x.
-       */
-      if ((StrLoc(x) + StrLen(x) == strfree) &&
-          (DiffPtrs(strend,strfree) > StrLen(y))) {
-	 result = x;
-	 /*
-	  * Append y to the end of the string space.
-	  */
-	 MemProtect(alcstr(StrLoc(y),StrLen(y)));
-	 /*
-	  *  Set the length of the result and return.
-	  */
-	 StrLen(result) = StrLen(x) + StrLen(y);
-	 return result;
-         }
-
-      /*
-       * Otherwise, allocate space for x and y, and copy them
-       *  to the end of the string space.
-       */
-      MemProtect(StrLoc(result) = alcstr(NULL, StrLen(x) + StrLen(y)));
-      memcpy(StrLoc(result), StrLoc(x), StrLen(x));
-      memcpy(StrLoc(result) + StrLen(x), StrLoc(y), StrLen(y));
-
-      /*
-       *  Set the length of the result and return.
-       */
-      StrLen(result) = StrLen(x) + StrLen(y);
-      return result;
-      }
+     }
+   }
 end
 
 

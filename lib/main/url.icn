@@ -251,7 +251,7 @@ class URL()
       local res
       static convert_chars
       initial 
-         convert_chars := &lcase ++ &ucase ++ &digits ++ '_*.- '
+         convert_chars := &lcase ++ &ucase ++ &digits ++ '_*.\- '
 
       res := ""
       s ? repeat {

@@ -98,7 +98,7 @@ wclrp alc_rgb(w,s,r,g,b,is_iconcolor)
         if (*numColors >= *sizColors-1) {
             if (*numColors >= 2 << DefaultDepth(wd->display, wd->screen))
                 return NULL;
-            (*theColors) = realloc(*theColors, *sizColors * 2 * sizeof(short));
+            MemProtect((*theColors) = realloc(*theColors, *sizColors * 2 * sizeof(short)));
             *sizColors *= 2;
             /*
              * reallocated color table to *sizColors
@@ -154,9 +154,8 @@ int alc_centry(wd)
             break;
     if (j >= wd->sizColors-1) {
         if (j >= 2 << DefaultDepth(wd->display, wd->screen)) return 0;
-        wd->colors = realloc(wd->colors,
-                             wd->sizColors * 2 * sizeof (struct wcolor));
-        if (wd->colors == NULL) return 0;
+        MemProtect(wd->colors = realloc(wd->colors,
+                                        wd->sizColors * 2 * sizeof (struct wcolor)));
         for(i=wd->sizColors;i<wd->sizColors*2;i++) wd->colors[i].refcount=0;
         wd->sizColors *= 2;
         /*

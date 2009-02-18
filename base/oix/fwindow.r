@@ -784,10 +784,16 @@ function{1} graphics_Window_draw_string(self, argv[argc])
           CnvCInteger(argv[base + 1], y);
           x += self_w->context->dx;
           y += self_w->context->dy;
-          CnvTmpString(argv[base + 2], argv[base + 2]);
-          s = StrLoc(argv[base + 2]);
-          len = StrLen(argv[base + 2]);
-          drawstrng(self_w, x, y, s, len);
+          if (is:ucs(argv[base + 2])) {
+              s = StrLoc(BlkLoc(argv[base + 2])->ucs.utf8);
+              len = StrLen(BlkLoc(argv[base + 2])->ucs.utf8);
+              drawutf8(self_w, x, y, s, len);
+          } else {
+              CnvTmpString(argv[base + 2], argv[base + 2]);
+              s = StrLoc(argv[base + 2]);
+              len = StrLen(argv[base + 2]);
+              drawstrng(self_w, x, y, s, len);
+          }
       }
       return self;
    }
@@ -1398,12 +1404,16 @@ function{1} graphics_Window_sync()
 end
 
 function{1} graphics_Window_text_width(self, s)
-   if !cnv:tmp_string(s) then
-      runerr(103, s)
+   if !is:ucs(s) then
+      if !cnv:string(s) then
+         runerr(129, s)
    body {
       C_integer i;
       GetSelfW();
-      i = TEXTWIDTH(self_w, StrLoc(s), StrLen(s));
+      if (is:ucs(s))
+          i = UTF8WIDTH(self_w, StrLoc(BlkLoc(s)->ucs.utf8), StrLen(BlkLoc(s)->ucs.utf8));
+      else
+          i = TEXTWIDTH(self_w, StrLoc(s), StrLen(s));
       return C_integer i;
    }
 end

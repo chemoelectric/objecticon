@@ -20,7 +20,6 @@
 
 #define MaxCvtLen	   257	/* largest string in conversions; the extra
 				 *  one is for a terminating null */
-#define MaxReadStr	   512	/* largest string to read() in one piece */
 #define MaxIn		  32767	/* largest number of bytes to read() at once */
 #define RandA        1103515245	/* random seed multiplier */
 #define RandC	      453816694	/* random seed additive constant */
@@ -76,11 +75,6 @@
 #define ParamName	2
 #define LocalName	3
 #define FieldName	4
-
-#undef ToAscii
-#undef FromAscii
-#define ToAscii(e) (e)
-#define FromAscii(e) (e)
 
 /*
  * Pointer to block.
@@ -311,7 +305,8 @@
 #define T_Object        26      /* object */
 #define T_Cast          27      /* cast */
 #define T_Methp         28      /* method pointer */
-#define MaxType		28	/* maximum type number */
+#define T_Ucs           29      /* unicode character string */
+#define MaxType		29	/* maximum type number */
 
 /*
  * Definitions for keywords.
@@ -355,6 +350,7 @@
 #define D_Slots		(T_Slots    | D_Typecode | F_Ptr)
 #define D_Kywdstr	(T_Kywdstr  | D_Typecode | F_Ptr | F_Var)
 #define D_Kywdevent	(T_Kywdevent| D_Typecode | F_Ptr | F_Var)
+#define D_Ucs   	(T_Ucs      | D_Typecode | F_Ptr)
 
 #define D_Var		(F_Var | F_Nqual | F_Ptr)
 #define D_Typecode	(F_Nqual | F_Typecode)
@@ -528,7 +524,7 @@
     * Type field of n-th argument.
     */
    #define ArgType(n)	(cargp[n].dword)
-   
+
    /*
     * Value field of n-th argument.
     */
@@ -633,10 +629,10 @@
       #define EVStrAlc	    (curpstate->EVstralc)
       #define interp	    (curpstate->Interp)
       #define cnv_cset	    (curpstate->Cnvcset)
+      #define cnv_ucs	    (curpstate->Cnvucs)
       #define cnv_int	    (curpstate->Cnvint)
       #define cnv_real	    (curpstate->Cnvreal)
       #define cnv_str	    (curpstate->Cnvstr)
-      #define cnv_tcset	    (curpstate->Cnvtcset)
       #define cnv_tstr	    (curpstate->Cnvtstr)
       #define deref	    (curpstate->Deref)
       #define alcbignum	    (curpstate->Alcbignum)
@@ -651,6 +647,7 @@
       #define alcobject	    (curpstate->Alcobject)
       #define alccast  	    (curpstate->Alccast)
       #define alcmethp      (curpstate->Alcmethp)
+      #define alcucs        (curpstate->Alcucs)
       #define alcrefresh    (curpstate->Alcrefresh)
       #define alcselem      (curpstate->Alcselem)
       #define alcstr        (curpstate->Alcstr)
@@ -682,9 +679,9 @@
    #define A_Trapfail	13	/* Fail from stub  */
 
 /*
- * Address of word containing cset bit b (c is a struct descrip of type Cset).
+ * Address of word containing cset bit b
  */
-#define CsetPtr(b,c)	(BlkLoc(c)->cset.bits + (((b)&0377) >> LogIntBits))
+#define CsetPtr(b,c)	((c) + (((b)&0377) >> LogIntBits))
 
 #if MSWIN32
       #define ptr2word(x) (uword)x
@@ -696,4 +693,3 @@
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
 #endif					/* MSWIN32 */
-

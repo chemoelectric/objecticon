@@ -107,7 +107,7 @@ procedure rewrap(s,i)
     s ? {
 
 	# While it is possible to find places to break s, do so.
-	while any(' -',line := EndToFront(i),-1) do {
+	while any(' \-',line := EndToFront(i),-1) do {
 	    # Clean up and suspend the last piece of s tabbed over.
 	    line ?:= (tab(many(' ')), trim(tab(0)))
             if *&subject - &pos + *line > i
@@ -126,7 +126,7 @@ procedure rewrap(s,i)
 	# the thing as-is.
 	if *old_line > i then {
 	    old_line ? {
-		if extra_bit := tab(upto(' -')+1) || (tab(many(' ')) | "")
+		if extra_bit := tab(upto(' \-')+1) || (tab(many(' ')) | "")
 		then old_line := tab(0)
 		else extra_bit := old_line & old_line := ""
 		return trim(extra_bit)

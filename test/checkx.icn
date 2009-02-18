@@ -162,7 +162,7 @@ procedure p8()
    every e := !L do {
       s := image(e)	# do this first to make image() calc the cset size
       s[76:0] := ""
-      write (right(*e,3), " ", s)
+      write (right(*e,8), " ", s)
       }
    write()
 end

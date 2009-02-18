@@ -83,7 +83,7 @@ class Label(Component)
    public set_one(f)
       case f.attr of {
          "image" : set_image(f.string_val())
-         "label" : set_label(f.string_val())
+         "label" : set_label(f.text_val())
          "paint" : set_paint(f.object_val(gui.Paint))
          default: return cast(self,Component).set_one(f)
       }

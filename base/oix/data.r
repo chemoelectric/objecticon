@@ -87,101 +87,6 @@ int pnsize = (sizeof(pntab) / sizeof(struct pstrnm));
  *  initializations, all parts are initialized later if any have to be.
  */
 
-/*
- * blankcs; a cset consisting solely of ' '.
- */
-struct b_cset  blankcs = {
-   T_Cset,
-   1,
-   cset_display(0, 0, 01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
-   };
-
-/*
- * lparcs; a cset consisting solely of '('.
- */
-struct b_cset  lparcs = {
-   T_Cset,
-   1,
-   cset_display(0, 0, 0400, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-   };
-
-/*
- * rparcs; a cset consisting solely of ')'.
- */
-struct b_cset  rparcs = {
-   T_Cset,
-   1,
-   cset_display(0, 0, 01000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-   };
-
-/*
- * fullcs - all 256 bits on.
- */
-struct b_cset  fullcs = {
-   T_Cset,
-   256,
-   cset_display(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
-		~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0)
-   };
-
-
-/*
- * Built-in csets
- */
-
-/*
- * &digits; bits corresponding to 0-9 are on.
- */
-struct b_cset  k_digits = {
-   T_Cset,
-   10,
-
-   cset_display(0,  0,	0,  0x3ff, 0,  0, 0,  0,
-		0,  0,	0,  0,	 0,  0,	 0,  0)
-
-   };
-
-/*
- * Cset for &lcase; bits corresponding to lowercase letters are on.
- */
-struct b_cset  k_lcase = {
-   T_Cset,
-   26,
-
-   cset_display(0,  0,	0,  0,	0,  0,	~01,  03777,
-		0,  0,	0,  0,	0,  0,	0,  0)
-
-   };
-
-/*
- * &ucase; bits corresponding to uppercase characters are on.
- */
-struct b_cset  k_ucase = {
-   T_Cset,
-   26,
-
-   cset_display(0,  0,	0,  0,	~01,  03777, 0, 0,
-		0,  0,	0,  0,	0,  0,	0,  0)
-
-   };
-
-/*
- * &letters; bits corresponding to letters are on.
- */
-struct b_cset  k_letters = {
-   T_Cset,
-   52,
-
-   cset_display(0,  0,	0,  0,	~01,  03777, ~01, 03777,
-		0,  0,	0,  0,	0,  0,	0,  0)
-
-   };
-
-/*
- * Built-in files.
- */
-
 
 /*
  * Keyword variables.
@@ -205,12 +110,28 @@ struct descrip onedesc;              	/* integer 1 */
 struct descrip ucase;			/* string of uppercase letters */
 struct descrip zerodesc;              	/* integer 0 */
 struct descrip minusonedesc;           	/* integer -1 */
+
+struct b_cset *blankcs;   /* ' ' */
+struct b_cset *lparcs;    /* '(' */
+struct b_cset *rparcs;    /* ')' */
+
 /*
  * Descriptors used by event monitoring.
  */
 struct descrip csetdesc;
 struct descrip eventdesc;
 struct descrip rzerodesc;
+
+struct b_cset *k_ascii;	        /* value of &ascii */
+struct b_cset *k_cset;	        /* value of &cset */
+struct b_cset *k_uset;	        /* value of &uset */
+struct b_cset *k_digits;	/* value of &lcase */
+struct b_cset *k_lcase;	        /* value of &lcase */
+struct b_cset *k_letters;	/* value of &letters */
+struct b_cset *k_ucase;	        /* value of &ucase */
+
+struct b_ucs *emptystr_ucs;     /* ucs empty string */
+struct b_ucs *blank_ucs;        /* ucs blank string */
 
 /*
  *  Real block needed for event monitoring.

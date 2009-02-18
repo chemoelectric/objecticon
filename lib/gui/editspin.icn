@@ -38,13 +38,26 @@ end
 # TextField to display/edit the current value.
 #
 class EditSpin(Spin)
-   public old_contents
+   public 
+      old_contents
 
    public on_textfield(ev, src, type)
       # Fire the event with self as source.
       fire(type, ev)
    end
 
+   #
+   # Set the text field's filter (see {TextField} for details).
+   # @param c  The filter
+   #
+   public set_filter(c)
+      return self.view.set_filter(c)
+   end
+
+   #
+   # Return the contents of the text field (which may have
+   # been edited).
+   #
    public get_contents()
       return view.get_contents()
    end
@@ -63,6 +76,14 @@ class EditSpin(Spin)
       tf := SpinTextField()
       every tf.connect(self.on_textfield, Event.CONTENT_CHANGED|Event.ACTION)
       return tf
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "filter" : set_filter(f.cset_val())
+         default: return cast(self,Spin).set_one(f)
+      }
+      return
    end
 end
 

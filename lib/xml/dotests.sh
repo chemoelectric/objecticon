@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#set -e
 DIR=`pwd`
 TESTS=$DIR/xmlconf
 
@@ -15,10 +15,11 @@ if [ ! -d $TESTS ] ; then
     exit 1
 fi
 
-PROG_VALID=$DIR/testvalid
-PROG_WF=$DIR/testwf
-PROG_NOTWF=$DIR/testnotwf
-PROG_INVALID=$DIR/testinvalid
+UCS="-u"
+PROG_VALID="$DIR/testvalid $UCS"
+PROG_WF="$DIR/testwf $UCS"
+PROG_NOTWF="$DIR/testnotwf $UCS"
+PROG_INVALID="$DIR/testinvalid $UCS"
 
 cd $TESTS/rpp
 $PROG_VALID 001.xml
@@ -129,7 +130,7 @@ $PROG_VALID not-sa03.xml out/not-sa03.xml
 $PROG_VALID not-sa04.xml out/not-sa04.xml
 $PROG_VALID notation01.xml out/notation01.xml
 $PROG_VALID optional.xml out/optional.xml
-$PROG_VALID pe00.xml out/pe00.xml
+$PROG_VALID -u pe00.xml out/pe00.xml
 $PROG_VALID pe01.xml out/pe01.xml
 $PROG_VALID pe02.xml out/pe02.xml
 $PROG_VALID required00.xml out/required00.xml
@@ -196,7 +197,7 @@ $PROG_VALID 045.xml out/045.xml
 $PROG_VALID 046.xml out/046.xml
 $PROG_VALID 047.xml out/047.xml
 $PROG_VALID 048.xml out/048.xml
-#Omitted: need Unicode
+#Omitted: need UTF-16
 #$PROG_VALID 049.xml out/049.xml
 #$PROG_VALID 050.xml out/050.xml
 #$PROG_VALID 051.xml out/051.xml
@@ -209,11 +210,10 @@ $PROG_VALID 057.xml out/057.xml
 $PROG_VALID 058.xml out/058.xml
 $PROG_VALID 059.xml out/059.xml
 $PROG_VALID 060.xml out/060.xml
-#Omitted: needs Unicode
-#$PROG_VALID 061.xml out/061.xml
-#$PROG_VALID 062.xml out/062.xml
-#$PROG_VALID 063.xml out/063.xml
-#$PROG_VALID 064.xml out/064.xml
+$PROG_VALID -u 061.xml out/061.xml
+$PROG_VALID -u 062.xml out/062.xml
+$PROG_VALID -u 063.xml out/063.xml
+$PROG_VALID -u 064.xml out/064.xml
 $PROG_VALID 065.xml out/065.xml
 $PROG_VALID 066.xml out/066.xml
 $PROG_VALID 067.xml out/067.xml
@@ -239,8 +239,7 @@ $PROG_VALID 085.xml out/085.xml
 $PROG_VALID 086.xml out/086.xml
 $PROG_VALID 087.xml out/087.xml
 $PROG_VALID 088.xml out/088.xml
-#Omitted: needs Unicode
-#$PROG_VALID 089.xml out/089.xml
+$PROG_VALID -u 089.xml out/089.xml
 $PROG_VALID 090.xml out/090.xml
 $PROG_VALID 091.xml out/091.xml
 $PROG_VALID 092.xml out/092.xml
@@ -317,7 +316,7 @@ $PROG_VALID 003.xml out/003.xml
 $PROG_VALID 004.xml out/004.xml
 $PROG_VALID 005.xml out/005.xml
 $PROG_VALID 006.xml out/006.xml
-#Omitted: unicode
+#Omitted: utf-16 in the external entity
 #$PROG_VALID 007.xml out/007.xml
 #$PROG_VALID 008.xml out/008.xml
 $PROG_VALID 009.xml out/009.xml
@@ -325,7 +324,7 @@ $PROG_VALID 010.xml out/010.xml
 $PROG_VALID 011.xml out/011.xml
 $PROG_VALID 012.xml out/012.xml
 $PROG_VALID 013.xml out/013.xml
-# Omitted: unicode
+# Omitted: utf-16 in the external entity
 #$PROG_VALID 014.xml out/014.xml
 
 cd $TESTS/xmltest/invalid
@@ -519,20 +518,18 @@ $PROG_NOTWF 162.xml
 $PROG_NOTWF 163.xml
 $PROG_NOTWF 164.xml
 $PROG_NOTWF 165.xml
-# Omitted - requires unicode?
-#
-#$PROG_NOTWF 166.xml
-#$PROG_NOTWF 167.xml
-#$PROG_NOTWF 168.xml
-#$PROG_NOTWF 169.xml
-#$PROG_NOTWF 170.xml
-#$PROG_NOTWF 171.xml
-#$PROG_NOTWF 172.xml
-#$PROG_NOTWF 173.xml
-#$PROG_NOTWF 174.xml
-#$PROG_NOTWF 175.xml
+$PROG_NOTWF -u 166.xml
+$PROG_NOTWF -u 167.xml
+$PROG_NOTWF -u 168.xml
+$PROG_NOTWF -u 169.xml
+$PROG_NOTWF -u 170.xml
+$PROG_NOTWF -u 171.xml
+$PROG_NOTWF -u 172.xml
+$PROG_NOTWF -u 173.xml
+$PROG_NOTWF -u 174.xml
+$PROG_NOTWF -u 175.xml
 $PROG_NOTWF 176.xml
-#$PROG_NOTWF 177.xml
+$PROG_NOTWF -u 177.xml
 $PROG_NOTWF 178.xml
 $PROG_NOTWF 179.xml
 $PROG_NOTWF 180.xml
@@ -616,7 +613,7 @@ $PROG_NOTWF p05fail1.xml
 $PROG_NOTWF p05fail2.xml
 $PROG_NOTWF p05fail3.xml
 $PROG_NOTWF p05fail4.xml
-$PROG_NOTWF p05fail5.xml
+$PROG_NOTWF -u p05fail5.xml
 $PROG_INVALID p06fail1.xml
 $PROG_INVALID p08fail1.xml
 $PROG_INVALID p08fail2.xml
@@ -800,8 +797,7 @@ $PROG_WF p01pass1.xml
 $PROG_WF p01pass2.xml
 $PROG_WF p01pass3.xml
 $PROG_WF p03pass1.xml
-#omitted - needs unicode
-#$PROG_WF p04pass1.xml
+$PROG_WF -u p04pass1.xml
 $PROG_WF p05pass1.xml
 $PROG_WF p06pass1.xml
 $PROG_WF p07pass1.xml
@@ -1125,10 +1121,10 @@ cd $TESTS/ibm/not-wf/P05
 $PROG_NOTWF ibm05n03.xml
 
 cd $TESTS/ibm/not-wf/P05
-$PROG_NOTWF ibm05n04.xml
+$PROG_NOTWF -u ibm05n04.xml
 
 cd $TESTS/ibm/not-wf/P05
-$PROG_NOTWF ibm05n05.xml
+$PROG_NOTWF -u ibm05n05.xml
 
 cd $TESTS/ibm/not-wf/P09
 $PROG_NOTWF ibm09n01.xml
@@ -2198,6 +2194,9 @@ $PROG_NOTWF ibm83n03.xml
 cd $TESTS/ibm/not-wf/P83
 $PROG_NOTWF ibm83n04.xml
 
+# Omitted -they check invalid chars which are now valid in the later spec revision
+if false ; then
+
 cd $TESTS/ibm/not-wf/P83
 $PROG_NOTWF ibm83n05.xml
 
@@ -3122,6 +3121,8 @@ $PROG_NOTWF ibm89n04.xml
 cd $TESTS/ibm/not-wf/P89
 $PROG_NOTWF ibm89n05.xml
 
+fi
+
 cd $TESTS/ibm/not-wf/P89
 $PROG_NOTWF ibm89n06.xml
 
@@ -3239,29 +3240,28 @@ $PROG_NOTWF ibm02n28.xml
 cd $TESTS/ibm/not-wf/P02
 $PROG_NOTWF ibm02n29.xml
 
-# Omitted, need unicode
-#cd $TESTS/ibm/not-wf/P02
-#$PROG_NOTWF ibm02n30.xml
-#
-#cd $TESTS/ibm/not-wf/P02
-#$PROG_NOTWF ibm02n31.xml
-#
-#cd $TESTS/ibm/not-wf/P02
-#$PROG_NOTWF ibm02n32.xml
-##
-#cd $TESTS/ibm/not-wf/P02
-#$PROG_NOTWF ibm02n33.xml
-#
+cd $TESTS/ibm/not-wf/P02
+$PROG_NOTWF -u ibm02n30.xml
+
+cd $TESTS/ibm/not-wf/P02
+$PROG_NOTWF -u ibm02n31.xml
+
+cd $TESTS/ibm/not-wf/P02
+$PROG_NOTWF -u ibm02n32.xml
+
+cd $TESTS/ibm/not-wf/P02
+$PROG_NOTWF -u ibm02n33.xml
+
 cd $TESTS/ibm/not-wf/P03
 $PROG_NOTWF ibm03n01.xml
 
 cd $TESTS/ibm/valid/P01
 $PROG_VALID ibm01v01.xml out/ibm01v01.xml
 
-# Omitted - needs unicode
+# This file doesn't seem to be valid utf8
 #cd $TESTS/ibm/valid/P02
-#$PROG_VALID ibm02v01.xml out/ibm02v01.xml
-#
+#$PROG_VALID -u ibm02v01.xml out/ibm02v01.xml
+
 cd $TESTS/ibm/valid/P03
 $PROG_VALID ibm03v01.xml out/ibm03v01.xml
 
@@ -3658,10 +3658,9 @@ $PROG_VALID ibm65v01.xml out/ibm65v01.xml
 cd $TESTS/ibm/valid/P65
 $PROG_VALID ibm65v02.xml out/ibm65v02.xml
 
-# Omitted - needs unicode
-#cd $TESTS/ibm/valid/P66
-#$PROG_VALID ibm66v01.xml out/ibm66v01.xml
-#
+cd $TESTS/ibm/valid/P66
+$PROG_VALID -u ibm66v01.xml out/ibm66v01.xml
+
 cd $TESTS/ibm/valid/P67
 $PROG_VALID ibm67v01.xml out/ibm67v01.xml
 
@@ -3689,19 +3688,18 @@ $PROG_VALID ibm79v01.xml out/ibm79v01.xml
 cd $TESTS/ibm/valid/P82
 $PROG_VALID ibm82v01.xml out/ibm82v01.xml
 
-# Omitted as they require unicode.
-#cd $TESTS/ibm/valid/P85
-#$PROG_VALID ibm85v01.xml out/ibm85v01.xml
-#
-#cd $TESTS/ibm/valid/P86
-#$PROG_VALID ibm86v01.xml out/ibm86v01.xml
-#
-#cd $TESTS/ibm/valid/P87
-#$PROG_VALID ibm87v01.xml out/ibm87v01.xml
-#
-#cd $TESTS/ibm/valid/P88
-#$PROG_VALID ibm88v01.xml out/ibm88v01.xml
-#
-#cd $TESTS/ibm/valid/P89
-#$PROG_VALID ibm89v01.xml out/ibm89v01.xml
-#
+cd $TESTS/ibm/valid/P85
+$PROG_VALID -u ibm85v01.xml out/ibm85v01.xml
+
+cd $TESTS/ibm/valid/P86
+$PROG_VALID -u ibm86v01.xml out/ibm86v01.xml
+
+cd $TESTS/ibm/valid/P87
+$PROG_VALID -u ibm87v01.xml out/ibm87v01.xml
+
+cd $TESTS/ibm/valid/P88
+$PROG_VALID -u ibm88v01.xml out/ibm88v01.xml
+
+cd $TESTS/ibm/valid/P89
+$PROG_VALID -u ibm89v01.xml out/ibm89v01.xml
+

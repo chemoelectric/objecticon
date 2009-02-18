@@ -386,7 +386,6 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
 
         return index;
     } else {
-        int i, nf = class->n_instance_fields + class->n_class_fields;
         /*
          * Query is a string (field name) or int (field index).
          */
@@ -395,18 +394,14 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
             return lookup_class_field_by_name(class, query);
 
         if (is:integer(*query)) {
+            int nf = class->n_instance_fields + class->n_class_fields;
             /*
              * Simple index into fields array, using conventional icon
              * semantics.  Falls through if out-of-range.
              */
-            i = IntVal(*query);
-            if (i > 0) {
-                if (i <= nf)
-                    return i - 1;
-            } else if (i < 0) {
-                if (i >= -nf)
-                    return nf + i;
-            }
+            int i = cvpos(IntVal(*query), nf);
+            if (i != CvtFail && i <= nf)
+                return i - 1;
         }
 
         /*
@@ -529,8 +524,8 @@ LibDcl(bscan,2,"?")
      */
     Deref(Arg0);
 
-    if (!cnv:string(Arg0,Arg0))
-        RunErr(103, &Arg0);
+    if (!is:ucs(Arg0) &&!cnv:string(Arg0,Arg0))
+       RunErr(103, &Arg0);
 
     EVValD(&Arg0, E_Snew);
 

@@ -18,6 +18,7 @@ class Codec()
       SET_CODE,
       TABLE_CODE,
       REF_CODE,
+      UCS_CODE,
       CODE_SEPARATOR
 
    private static init()
@@ -35,6 +36,7 @@ class Codec()
       LIST_CODE := "L"
       SET_CODE := "E"
       TABLE_CODE := "T"
+      UCS_CODE := "U"
       REF_CODE := "X"
    end
 end
@@ -76,7 +78,7 @@ class Encode()
       local r
       static printable
       initial {
-         printable := cset(&ascii[33:128]) -- '\\' -- Codec.CODE_SEPARATOR
+         printable := '\x20-\x7e' -- '\\' -- Codec.CODE_SEPARATOR
       }
       r := ""
       s ? {
@@ -93,7 +95,7 @@ class Encode()
    end
 
    public encode(o)
-      local ty, i, cname, p, n, e
+      local ty, i, cname, p, n, e, l
 
       if i := \seen[o] then {
          chars_out(Codec.REF_CODE) | fail
@@ -141,9 +143,18 @@ class Encode()
             line_out(encode_string(o)) | fail
          }
 
+         "ucs": {
+            chars_out(Codec.UCS_CODE) | fail
+            line_out(encode_string(string(o))) | fail
+         }
+
          "cset" : {
             chars_out(Codec.CSET_CODE) | fail
-            line_out(encode_string(string(o))) | fail
+            l := []
+            every put(l, rangesof(o))
+            int_out(*l) | fail
+            every e := !l do
+               encode(e) | fail
          }
 
          "integer" : {
@@ -254,7 +265,7 @@ class Decode()
 
    private int_in()
       local s
-      if s := tab(many(&digits ++ '-')) then
+      if s := tab(many(&digits ++ '\-')) then
          return integer(s)
       &why := "int expected"
    end
@@ -268,7 +279,7 @@ class Decode()
    end
 
    public decode()
-      local i, n, rname, t, res, def, con, cl, p, cname
+      local i, n, rname, t, res, def, con, cl, p, cname, l
 
       t := char_in() | fail
 
@@ -329,8 +340,16 @@ class Decode()
          Codec.REAL_CODE :
             return real(line_in())
 
-         Codec.CSET_CODE :
-            return cset(decode_string(line_in()))
+         Codec.CSET_CODE : {
+             n := int_in() | fail
+             l := []
+             every 1 to n do 
+                put(l, decode()) | fail
+             return ranges!l
+          }
+
+         Codec.UCS_CODE :
+            return ucs(decode_string(line_in()))
 
          Codec.RECORD_CODE : {
             (rname := line_in() &

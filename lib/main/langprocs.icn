@@ -510,8 +510,15 @@ procedure hash(x, depth)
       "string" :
          return hash_string(x)
       
-      "cset" :
+      "ucs" :
          return hash_string(string(x))
+
+      "cset" : {
+         n := *x
+         every i := rangesof(x) do
+            n := 13 * n + i
+         return n
+      }
 
       "integer" :
          return abs(x)

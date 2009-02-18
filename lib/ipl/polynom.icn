@@ -36,10 +36,10 @@ procedure str2poly(str)
    poly := table(0)
 
    str ? {
-      while term := (move(1) || tab(upto('-+') | 0)) do {	# possible sign
+      while term := (move(1) || tab(upto('\-+') | 0)) do {	# possible sign
          term ? {
             factor := 1			# default
-            factor := tab(many(&digits ++ '+-'))
+            factor := tab(many(&digits ++ '+\-'))
             tab(0) ? {
                vars := ""
                while var := move(1) do {

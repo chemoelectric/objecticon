@@ -114,7 +114,7 @@ class TextField(Component)
    # @param x   The contents
    #
    public set_contents(x)
-      self.contents := string(x)
+      self.contents := text(x)
       self.cursor := *self.contents + 1
       self.loff := 0
       clear_mark()
@@ -218,7 +218,9 @@ class TextField(Component)
       start_handle(e)
       self.cursor := whereis_x(e)
       clear_mark()
-      if s := apply_filter(string(gui.Selection.get_content(Selection.PRIMARY))) then {
+      if s := apply_filter(text_convert(ucs(gui.Selection.get_content(Selection.PRIMARY, 
+                                                                      Selection.UTF8_STRING_TARGET)),
+                                        type(self.contents))) then {
          ed := TextFieldPasteEdit(self, s)
          ed.doit()
          undo_manager.add_edit(ed)
@@ -466,7 +468,7 @@ class TextField(Component)
    end
 
    public handle_paste(e)
-      insert_string(string(gui.Selection.get_content(Selection.CLIPBOARD)), e)
+      insert_string(ucs(gui.Selection.get_content(Selection.CLIPBOARD, Selection.UTF8_STRING_TARGET)), e)
    end
 
    #
@@ -476,6 +478,7 @@ class TextField(Component)
       local ce, ed
 
       \self.is_editable_flag | fail
+      s := text_convert(s, type(self.contents)) | fail
 
       start_handle(e)
       if s := apply_filter(s) then {
@@ -498,10 +501,12 @@ class TextField(Component)
       local ce, ed, ec
 
       ec := e.code
-      if /self.is_editable_flag | type(ec) ~== "string" |
+      if /self.is_editable_flag | not(type(ec) == ("string" | "ucs")) |
          \e.ctrl | \e.meta | not(any(filter, ec)) then
          fail
-      
+
+      ec := text_convert(ec, type(self.contents))
+
       start_handle(e)
       # 
       # Add the printable character at cursor position
@@ -652,8 +657,8 @@ class TextField(Component)
    public set_one(f)
       case f.attr of {
          "filter" : set_filter(f.cset_val())
-         "displaychar" : set_displaychar(f.string_val())
-         "contents" : set_contents(f.string_val())
+         "displaychar" : set_displaychar(f.text_val())
+         "contents" : set_contents(f.text_val())
          "is_editable" :  set_is_editable(f.flag_val()) 
          "move_on_rpress" :  set_move_on_rpress(f.flag_val()) 
          default: return cast(self,Component).set_one(f)
@@ -693,11 +698,10 @@ class TextField(Component)
    end
 end
 
-
-class TextFieldPrimarySelectionOwner(SelectionOwner)
+class TextFieldPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
-   public get_content()
+   protected get_text()
       return parent.get_region() | \parent.remembered_region
    end
 
@@ -718,10 +722,10 @@ class TextFieldPrimarySelectionOwner(SelectionOwner)
 end
 
 
-class TextFieldClipboardSelectionOwner(SelectionOwner)
+class TextFieldClipboardSelectionOwner(TextSelectionOwner)
    private parent
 
-   public get_content()
+   protected get_text()
       return \parent.clipboard
    end
 

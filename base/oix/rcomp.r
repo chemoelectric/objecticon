@@ -65,9 +65,33 @@ dptr dp1, dp2;
             return Equal;
          return ((lresult > 0) ? Greater : Less);
 
-      case T_Cset:
-         return csetcmp((unsigned int *)((struct b_cset *)BlkLoc(*dp1))->bits,
-            (unsigned int *)((struct b_cset *)BlkLoc(*dp2))->bits);
+      case T_Cset: {
+          int i = 0, j = 0;
+          while (i < BlkLoc(*dp1)->cset.n_ranges &&
+                 j < BlkLoc(*dp2)->cset.n_ranges) {
+              int from1 = BlkLoc(*dp1)->cset.range[i].from;
+              int to1 = BlkLoc(*dp1)->cset.range[i].to;
+              int from2 = BlkLoc(*dp2)->cset.range[j].from;
+              int to2 = BlkLoc(*dp2)->cset.range[j].to;
+              if (from1 < from2)
+                  return Less;
+              if (from2 < from1)
+                  return Greater;
+              if (to1 < to2)
+                  ++i;
+              else if (to2 < to1)
+                  ++j;
+              else {
+                  ++i;
+                  ++j;
+              }
+          }
+          if (i < BlkLoc(*dp1)->cset.n_ranges)
+              return Greater;
+          if (j < BlkLoc(*dp2)->cset.n_ranges)
+              return Less;
+          return Equal;
+      }
 
       case T_List:
          /*
@@ -87,6 +111,13 @@ dptr dp1, dp2;
           */
          return lexcmp(&(BlkLoc(*dp1)->proc.pname),
             &(BlkLoc(*dp2)->proc.pname));
+
+      case T_Ucs:
+         /*
+          * Collate on utf8 data.
+          */
+         return lexcmp(&(BlkLoc(*dp1)->ucs.utf8),
+            &(BlkLoc(*dp2)->ucs.utf8));
 
       case T_Real:
          GetReal(dp1,rres1);
@@ -268,6 +299,8 @@ dptr dp;
          return 15;
       case T_Methp:
          return 16;
+      case T_Ucs:
+         return 17;
       default:
 	 syserr("order: unknown datatype.");
 	 /*NOTREACHED*/
@@ -334,17 +367,27 @@ dptr dp1, dp2;
             result = (rres1 == rres2);
 	    break;
 
-	 case T_Cset:
+          case T_Ucs:
+              /* Compare the utf8 strings */
+              result = equiv(&BlkLoc(*dp1)->ucs.utf8, &BlkLoc(*dp2)->ucs.utf8);
+              break;
+
+          case T_Cset: {
 	    /*
-	     * Compare the bit arrays of the csets.
+	     * Compare the ranges.
 	     */
-	    result = 1;
-	    for (i = 0; i < CsetSize; i++)
-	       if (BlkLoc(*dp1)->cset.bits[i] != BlkLoc(*dp2)->cset.bits[i]) {
-		  result = 0;
-		  break;
-		  }
-	 }
+             result = (BlkLoc(*dp1)->cset.n_ranges == BlkLoc(*dp2)->cset.n_ranges);
+             if (result) {
+                 for (i = 0; i < BlkLoc(*dp1)->cset.n_ranges; i++) {
+                     if (BlkLoc(*dp1)->cset.range[i].from != BlkLoc(*dp2)->cset.range[i].from ||
+                         BlkLoc(*dp1)->cset.range[i].to != BlkLoc(*dp2)->cset.range[i].to) {
+                         result = 0;
+                         break;
+                     }
+                 }
+             }
+          }
+	}
    else
       /*
        * dp1 and dp2 are of different types, so they can't be
@@ -387,7 +430,7 @@ dptr dp1, dp2;
     */
    while (minlen--)
       if (*s1++ != *s2++)
-         return (ToAscii(*--s1 & 0377) > ToAscii(*--s2 & 0377) ?
+         return ((*--s1 & 0377) > (*--s2 & 0377) ?
                  Greater : Less);
    /*
     * The strings compared equal for the length of the shorter.
@@ -399,82 +442,4 @@ dptr dp1, dp2;
    else
       return Less;
 
-   }
-
-/*
- * csetcmp - compare two cset bit arrays.
- *  The order defined by this function is identical to the lexical order of
- *  the two strings that the csets would be converted into.
- */
-
-int csetcmp(cs1, cs2)
-unsigned int *cs1, *cs2;
-   {
-   unsigned int nbit, mask, *cs_end;
-
-   if (cs1 == cs2) return Equal;
-
-   /*
-    * The longest common prefix of the two bit arrays converts to some
-    *  common prefix string.  The first bit on which the csets disagree is
-    *  the first character of the conversion strings that disagree, and so this
-    *  is the character on which the order is determined.  The cset that has
-    *  this first non-common bit = one, has in that position the lowest
-    *  character, so this cset is lexically least iff the other cset has some
-    *  following bit set.  If the other cset has no bits set after the first
-    *  point of disagreement, then it is a prefix of the other, and is therefor
-    *  lexically less.
-    *
-    * Find the first word where cs1 and cs2 are different.
-    */
-   for (cs_end = cs1 + CsetSize; cs1 < cs_end; cs1++, cs2++)
-      if (*cs1 != *cs2) {
-	 /*
-	  * Let n be the position at which the bits first differ within
-	  *  the word.  Set nbit to some integer for which the nth bit
-	  *  is the first bit in the word that is one.  Note here and in the
-	  *  following, that bits go from right to left within a word, so
-	  *  the _first_ bit is the _rightmost_ bit.
-	  */
-	 nbit = *cs1 ^ *cs2;
-
-	 /* Set mask to an integer that has all zeros in bit positions
-	  *  upto and including position n, and all ones in bit positions
-	  *  _after_ bit position n.
-	  */
-	 for (mask = (unsigned)MaxLong << 1; !(~mask & nbit); mask <<= 1);
-
-	 /*
-	  * nbit & ~mask contains zeros everywhere except position n, which
-	  *  is a one, so *cs2 & (nbit & ~mask) is non-zero iff the nth bit
-	  *  of *cs2 is one.
-	  */
-	 if (*cs2 & (nbit & ~mask)) {
-	    /*
-	     * If there are bits set in cs1 after bit position n in the
-	     *  current word, then cs1 is lexically greater than cs2.
-	     */
-	    if (*cs1 & mask) return Greater;
-	    while (++cs1 < cs_end)
-	       if (*cs1) return Greater;
-
-	    /*
-	     * Otherwise cs1 is a proper prefix of cs2 and is therefore
-	     *  lexically less.
-	     */
-	     return Less;
-	     }
-
-	 /*
-	  * If the nth bit of *cs2 isn't one, then the nth bit of cs1
-	  *  must be one.  Just reverse the logic for the previous
-	  *  case.
-	  */
-	 if (*cs2 & mask) return Less;
-	 cs_end = cs2 + (cs_end - cs1);
-	 while (++cs2 < cs_end)
-	    if (*cs2) return Less;
-	 return Greater;
-	 }
-   return Equal;
    }

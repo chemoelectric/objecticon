@@ -6,13 +6,14 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import xml, ipl.options, io
+import xml, ipl.options, io, lang
 
 procedure main(a)
    local p, fmt, t, e, s, d, eh
    if *a = 0 then {
       write("Usage: testxml [FILE]... [OPTIONS]")
       write("Test parse FILE(s)")
+      write("  -u                      Input is utf8")
       write("  -g                      Show global names")
       write("  -nc                     Don't preserve comments")
       write("  -nv                     Don't validate")
@@ -30,7 +31,7 @@ procedure main(a)
 
    fmt := XmlFormatter()
 
-   t := options(a, "-g!-nc!-nv!-fnw!-fi+-ftt!-far!")
+   t := options(a, "-u!-g!-nc!-nv!-fnw!-fi+-ftt!-far!")
 
    if \t["nv"] then
       p.set_validate("f")
@@ -55,16 +56,20 @@ procedure main(a)
 
    every e := !a do {
       s := Files.file_to_string(e) | stop("couldnt open" || e)
+      if \t["u"] then
+         s := ucs(s) | stop("Couldn't convert utf8:", &why)
+
       write("--- Parsing ", e)
       if d := p.parse(s) then {
          write("--- Parsing complete.  Document was well-formed")
          write("--- Formatted input")
          fmt.format(, d)
          write("--- Document structure")
-         if \t["g"] then
-            d.print_structure(,,1)
-         else
-            d.print_structure()
+         ObjectOutputStream(FileStream.stdout,3).traverse(d)
+#         if \t["g"] then
+#            d.print_structure(,,1)
+#         else
+#            d.print_structure()
          d.show_entities()
          d.show_element_declarations()
          d.show_notation_declarations()

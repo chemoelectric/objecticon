@@ -176,9 +176,9 @@ class TextMenuItem(MenuComponent)
 
    public set_one(f)
       case f.attr of {
-         "label" : set_label(f.string_val())
-         "label_left" : set_label_left(f.string_val())
-         "label_right" : set_label_right(f.string_val())
+         "label" : set_label(f.text_val())
+         "label_left" : set_label_left(f.text_val())
+         "label_right" : set_label_right(f.text_val())
          "paint"|"paint_mid" : set_paint_mid(f.object_val(gui.Paint))
          "paint_left" : set_paint_left(f.object_val(gui.Paint))
          "paint_right" : set_paint_right(f.object_val(gui.Paint))

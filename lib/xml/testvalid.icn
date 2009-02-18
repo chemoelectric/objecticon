@@ -6,16 +6,19 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import xml, io
+import xml, ipl.options, io
 
 procedure main(a)
-   local fmt, p, s, d, t, x
+   local fmt, p, s, d, t, x, opt
    fmt := CanonicalXmlFormatter()
    p := XmlParser("preserve_insignificant_whitespace=t", "do_namespaces=f")
 
+   opt := options(a, "-u!")
    *a > 0 | stop("usage: testcase source [output]")
 
-   s := Files.file_to_string(a[1]) | stop("couldnt open" || a[1])
+   s := Files.file_to_string(a[1]) | stop("couldn't open" || a[1])
+   if \opt["u"] then
+      s := ucs(s) | stop("Invalid utf-8 in valid case ", a[1], ": ",  &why)
 
    if d := p.parse(s) then {
       if d.validity_errors > 0 then {
@@ -53,4 +56,19 @@ procedure main(a)
 
 end
 
+
+procedure to_utf8(s)
+   local t, c
+write("fallback")
+   if type(s) == "ucs" then
+      return string(s)
+   t := ""
+   every c := !s do {
+      if ord(c) > 127 then
+         t ||:= string(uchar(ord(c)))
+      else
+         t ||:= c
+   }
+   return t
+end
 

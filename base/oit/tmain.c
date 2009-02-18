@@ -24,6 +24,7 @@ int neweronly	=0;	/* -n: only translate .icn if newer than .u */
 int Dflag       =0;     /* -L: link debug */
 int Zflag	=0;	/* -Z: icode-gz compression */
 int Bflag       =0;     /* -B: bundle iconx in output file */
+int uflag       =0;     /* -u: utf-8 source code */
 
 /*
  * Some convenient interned strings.
@@ -204,7 +205,7 @@ int main(int argc, char **argv)
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
 #define Usage "[-cBstuE] [-f s] [-o ofile] [-v i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBe:fmno:stv:ELZTV")) != EOF) {
+    while ((c = getopt(argc,argv, "cBe:fmno:stuv:ELZTV")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -221,6 +222,10 @@ int main(int argc, char **argv)
 
             case 'L':			/* -L: enable linker debugging */
                 Dflag = 1;
+                break;
+
+            case 'u':			/* -u: source code is in utf8 format */
+                uflag = 1;
                 break;
 
             case 'V':

@@ -203,7 +203,7 @@ procedure sentence(infile)
             }
          # There is no valid sentence end so far.  Remove a trailing hyphen
          # from the current line, or add a word-separating space.
-         if line [-1] == '-' & any (&letters, line [-2]) then {
+         if line [-1] == "-" & any (&letters, line [-2]) then {
             line := line [1:-1]
             }
          else {

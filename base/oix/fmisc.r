@@ -115,7 +115,7 @@ function{1} char(i)
          irunerr(205, i);
          errorfail;
          }
-      return string(1, (char *)&allchars[FromAscii(i) & 0xFF]);
+      return string(1, (char *)&allchars[i & 0xFF]);
       }
 end
 
@@ -175,6 +175,7 @@ function{1} copy(x)
    type_case x of {
       null:
       string:
+      ucs:
       cset:
       integer:
       real:
@@ -529,15 +530,24 @@ end
 "ord(s) - produce integer ordinal (value) of single character."
 
 function{1} ord(s)
-   if !cnv:tmp_string(s) then
-      runerr(103, s)
    abstract {
       return integer
       }
    body {
+       if (is:ucs(s)) {
+           char *s1;
+           if (BlkLoc(s)->ucs.length != 1)
+               runerr(205, s);
+           s1 = StrLoc(BlkLoc(s)->ucs.utf8);
+           return C_integer utf8_iter(&s1);
+       }
+
+       if (!cnv:tmp_string(s,s))
+          runerr(103, s);
+      
       if (StrLen(s) != 1)
          runerr(205, s);
-      return C_integer ToAscii(*StrLoc(s) & 0xFF);
+      return C_integer (*StrLoc(s) & 0xFF);
       }
 end
 
@@ -1328,6 +1338,7 @@ function{1} type(x)
       object:   inline { return C_string "object";    }
       methp:    inline { return C_string "methp";    }
       cast:     inline { return C_string "cast";    }
+      ucs:      inline { return C_string "ucs";    }
       coexpr:   inline { return C_string "co-expression"; }
       default:
          inline {
@@ -2082,68 +2093,6 @@ function{1} opmask(ce,cs)
 end
 
 
-"structure(x) -- generate all structures allocated in program x"
-function {*} structure(x)
-
-   if !is:coexpr(x) then
-       runerr(118, x)
-
-   abstract {
-      return list ++ set ++ table ++ record
-      }
-
-   body {
-      tended char *bp;
-      char *free;
-      tended struct descrip descr;
-      word type;
-      struct region *theregion, *rp;
-
-      theregion = ((struct b_coexpr *)BlkLoc(x))->program->blockregion;
-      for(rp = theregion; rp; rp = rp->next) {
-	 bp = rp->base;
-	 free = rp->free;
-	 while (bp < free) {
-	    type = BlkType(bp);
-	    switch (type) {
-            case T_List:
-            case T_Set:
-            case T_Table:
-            case T_Object:
-            case T_Record: {
-               BlkLoc(descr) = (union block *)bp;
-               descr.dword = type | F_Ptr | D_Typecode;
-               suspend descr;
-               }
-	       }
-	    bp += BlkSize(bp);
-	    }
-	 }
-      for(rp = theregion->prev; rp; rp = rp->prev) {
-	 bp = rp->base;
-	 free = rp->free;
-	 while (bp < free) {
-	    type = BlkType(bp);
-	    switch (type) {
-            case T_List:
-            case T_Set:
-            case T_Table:
-            case T_Object:
-            case T_Record: {
-               BlkLoc(descr) = (union block *)bp;
-               descr.dword = type | F_Ptr | D_Typecode;
-               suspend descr;
-               }
-	       }
-	    bp += BlkSize(bp);
-	    }
-	 }
-      fail;
-      }
-end
-
-
-
 "cast(o,c) - cast object o to class c."
 
 function{1} cast(o,c)
@@ -2165,3 +2114,506 @@ function{1} cast(o,c)
       return cast(p);
       }
 end
+
+/*
+ * Lookup a pointer into the utf8 string for the given ucs block at
+ * unicode char position n (zero-based).  n may be b->length in which
+ * case a pointer just past the end of the utf8 string is returned;
+ * otherwise n must be >= 0 and < b->length.  For each ucs block, there
+ * are (1+(b->length-1)/b->index_step) offset slots.  off[x] gives the
+ * offset of unicode char (x * b->index_step).  For example if 
+ * b->index_step = 8, then for a length of 16 there are two offset entries
+ * for chars 0 and 8.
+ */
+static char *get_ucs_off(struct b_ucs *b, int n)
+{
+    int d = n / b->index_step;
+    int r = n % b->index_step;
+    int i;
+    char *p = StrLoc(b->utf8);
+    /*printf("req: len=%d s=%d n=%d\n",b->length,b->index_step,n);*/
+
+    /*
+     * Special case of looking up just past the end of the last char.
+     */
+    if (n == b->length)
+        return p + StrLen(b->utf8);
+
+    /*
+     * Otherwise, n < b->length.  Hence n <= b->length-1 and 
+     * n/b->index_step <= (b->length-1)/b->step < 1 + (b->length-1)/b->step,
+     * the number of offset slots allocated.
+     */
+
+    /*
+     * Have we indexed this one already.  If so start at the offset and
+     * move forwards.
+     */
+    if (d < b->n_off_indexed) {
+        p += b->off[d];
+        while (r-- > 0)
+            p += UTF8_SEQ_LEN(*p);
+        return p;
+    }
+
+    /*
+     * Otherwise start at the last offset calculated and move forward, saving
+     * all the intermediate offset points.
+     */
+
+    p += b->off[b->n_off_indexed - 1];
+    i = (b->n_off_indexed - 1) * b->index_step;
+    /* I: 1+(i/b->index_step) = b->n_off_indexed */
+    while (i < n) {
+        p += UTF8_SEQ_LEN(*p);
+        ++i;
+        /* After incrementing i, 1+((i-1)/b->index_step) = b->n_off_indexed
+         * But i <= n < b->length, so 
+         *       1+((i-1)/b->index_step) < 1+((b->length-1)/b->index_step)
+         *  so   b->n_off_indexed < 1+((b->length-1)/b->index_step), the allocated size.
+         */
+        if (i % b->index_step == 0) {
+            if (b->n_off_indexed >= 1+((b->length-1)/b->index_step))
+                syserr("Out of range");
+            b->off[b->n_off_indexed++] = p - StrLoc(b->utf8);
+        }
+    }
+
+    return p;
+}
+
+static int calc_index_step(int length)
+{
+    int i = 1;
+    length /= 32;
+    /* Round up to the next power of 2 */
+    while (length > i)
+        i *= 2;
+    return Max(i, 4);
+}
+
+/*
+ * Allocate and initialize a ucs block given a utf8 string and a
+ * unicode length.  The utf8 string must be valid and have length
+ * unicode chars in it.
+ */
+struct b_ucs *make_ucs_block(dptr utf8, int length)
+{
+    tended struct b_ucs *p;
+    tended struct descrip t = *utf8;   /* In case *utf8 isn't tended */
+    int index_step, n_offs;
+
+    if (length == 0)
+        return emptystr_ucs;
+
+    index_step = calc_index_step(length);
+    n_offs = 1 + (length - 1) / index_step;
+    MemProtect(p = alcucs(n_offs));
+    p->index_step = index_step;
+    p->utf8 = t;
+    p->length = length;
+    p->n_off_indexed = 1;
+    memset(p->off, 0, n_offs * WordSize);
+    return p;
+}
+
+/*
+ * Convenient function to build a one-char ucs block for the
+ * given code point.
+ */
+struct b_ucs *make_one_char_ucs_block(int i)
+{
+    tended struct descrip s;
+    char utf8[MAX_UTF8_SEQ_LEN];
+    int n;
+    if (i < 0 || i > MAX_CODE_POINT)
+        syserr("Bad codepoint to make_one_char_ucs_block");
+    n = utf8_seq(i, utf8);
+    MemProtect(StrLoc(s) = alcstr(utf8, n));
+    StrLen(s) = n;
+    return make_ucs_block(&s, 1);
+}
+
+/*
+ * Helper function to make a new ucs block which is a substring of the
+ * given ucs block.
+ */
+struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len)
+{
+    tended struct descrip utf8;
+    if (len == 0)
+        return emptystr_ucs;
+    utf8 = utf8_substr(b, pos, len);
+    return make_ucs_block(&utf8, len);
+}
+
+/*
+ * Given a ucs block, this function returns the utf8 substring correspoding to
+ * the slice pos:len.  No allocation is done.  pos,len must be a valid range
+ * for the string.
+ */
+struct descrip utf8_substr(struct b_ucs *b, int pos, int len)
+{
+    char *p, *q;
+    struct descrip res;
+    int first, last;
+
+    if (len == 0)
+        return emptystr;
+
+    first = pos - 1;
+    last = first + len - 1;
+
+    if (len < 0 || first < 0 || last < 0 || first >= b->length || last >= b->length)
+        syserr("Invalid pos/len to uf8_substr");
+
+    p = get_ucs_off(b, first);
+    StrLoc(res) = p;
+    if (last / b->index_step > first / b->index_step) {
+        q = get_ucs_off(b, last + 1);
+    } else {
+        q = p;
+        while (len-- > 0)
+            q += UTF8_SEQ_LEN(*q);
+    }
+    StrLen(res) = q - p;
+
+    return res;
+}
+
+/*
+ * Given a ucs block, this function returns the unicode character
+ * at the requested position.  NB pos is one-based.
+ */
+int ucs_char(struct b_ucs *b, int pos)
+{
+    char *p;
+    --pos;  /* Make pos zero-based */
+    if (pos < 0 || pos >= b->length)
+        syserr("Invalid pos to ucs_char");
+    p = get_ucs_off(b, pos);
+    return utf8_iter(&p);
+}
+
+/*
+ * Given a ucs block, this function returns a pointer into the utf8
+ * string for the given unicode character.  NB pos is one-based, but
+ * may be b->length + 1, in which case the char just after the end of
+ * the utf8 string is returned (it may not be dereferenced).
+ */
+char *ucs_utf8_ptr(struct b_ucs *b, int pos)
+{
+    char *p;
+    --pos;  /* Make pos zero-based */
+    if (pos < 0 || pos > b->length)
+        syserr("Invalid pos to ucs_utf8_ptr");
+    return get_ucs_off(b, pos);
+}
+
+struct b_cset *rangeset_to_block(struct rangeset *rs)
+{
+    struct b_cset *blk;
+    int i, j;
+
+    MemProtect(blk = alccset(rs->n_ranges));
+    blk->n_ranges = rs->n_ranges;
+    blk->size = 0;
+    memset(blk->bits, 0, sizeof(blk->bits));
+    for (i = 0; i < blk->n_ranges; ++i) {
+        blk->range[i].from = rs->range[i].from;
+        blk->range[i].to = rs->range[i].to;
+        blk->range[i].index = blk->size;
+        blk->size += blk->range[i].to - blk->range[i].from + 1;
+        for (j = blk->range[i].from; j <= blk->range[i].to; ++j) {
+            if (j > 0xff)
+                break;
+            Setb(j, blk->bits);
+        }
+    }
+    return blk;
+}
+
+/*
+ * Test whether character (code point) c is in the given cset block.
+ */
+int in_cset(struct b_cset *b, int c)
+{
+    int l, r, m;
+    if (c < 256)
+        return Testb(c, b->bits);
+    l = 0;
+    r = b->n_ranges - 1;
+    while (l <= r) {
+        m = (l + r) / 2;
+        if (c < b->range[m].from)
+            r = m - 1;
+        else if (c > b->range[m].to)
+            l = m + 1;
+        else  /* c >= b->range[m].from && c <= b->range[m].to */
+            return 1;
+    }
+    return 0;
+}
+
+/*
+ * Return the index of the range which contains the given index (one-based),
+ * which must be valid.
+ */
+int cset_range_of_pos(struct b_cset *b, int pos)
+{
+    int l, r, m;
+    l = 0;
+    r = b->n_ranges - 1;
+    --pos;
+    /* Common case of looking up first pos */
+    if (pos == 0 && b->n_ranges > 0)
+        return 0;
+    while (l <= r) {
+        m = (l + r) / 2;
+        if (pos < b->range[m].index)
+            r = m - 1;
+        else if (pos > b->range[m].index + b->range[m].to - b->range[m].from)
+            l = m + 1;
+        else /* b->range[m].index <= pos <= b->range[m].index + b->range[m].to - b->range[m].from */
+            return m;
+    }
+    syserr("Invalid index to cset_range_of_pos");
+}
+
+/*
+ * Create a ucs block consisting of the characters from the given cset,
+ * in the range pos:len.
+ */
+struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len)
+{
+    char buf[MAX_UTF8_SEQ_LEN];
+    tended struct b_cset *b = b0;
+    tended struct descrip utf8;
+    int i, first, j, l0, p0, from, to, utf8_len;
+
+    if (len == 0)
+        return emptystr_ucs;
+
+    first = cset_range_of_pos(b, pos);  /* The first row of interest */
+    --pos;  /* Make zero-based */
+
+    /*
+     * Calcuate utf8 length
+     */
+
+    l0 = len;
+    i = first;
+    p0 = pos - b->range[i].index;   /* Offset into first range */
+    utf8_len = 0;
+    for (; l0 > 0 && i < b->n_ranges; ++i) {
+        from = b->range[i].from;
+        to = b->range[i].to;
+        for (j = p0 + from; l0 > 0 && j <= to; ++j) {
+            utf8_len += utf8_seq(j, 0);
+            --l0;
+        }
+        p0 = 0;
+    }
+    /* Ensure we found len chars. */
+    if (l0)
+        syserr("cset_to_ucs_block inconsistent parameters");
+
+    MemProtect(StrLoc(utf8) = reserve(Strings, utf8_len));
+    StrLen(utf8) = utf8_len;
+
+    /*
+     * Same loop again, to build utf8 string.
+     */
+    l0 = len;
+    i = first;
+    p0 = pos - b->range[i].index;
+    for (; l0 > 0 && i < b->n_ranges; ++i) {
+        from = b->range[i].from;
+        to = b->range[i].to;
+        for (j = p0 + from; l0 > 0 && j <= to; ++j) {
+            int n = utf8_seq(j, buf);
+            MemProtect(alcstr(buf, n));
+            --l0;
+        }
+        p0 = 0;
+    }
+
+    return make_ucs_block(&utf8, len);
+}
+
+struct descrip cset_to_str(struct b_cset *b, int pos, int len)
+{
+    tended struct descrip res;
+    int i, j, from, to, out_len = 0;
+    static char c[256];
+
+    if (len == 0)
+        return emptystr;
+
+    i = cset_range_of_pos(b, pos);  /* The first row of interest */
+    --pos;
+    pos -= b->range[i].index;       /* Offset into first range */
+    out_len = 0;
+    for (; len > 0 && i < b->n_ranges; ++i) {
+        from = b->range[i].from;
+        to = b->range[i].to;
+        for (j = pos + from; len > 0 && j <= to; ++j) {
+            if (j < 256) {
+                c[out_len++] = (char)j;
+                --len;
+            } else
+                len = 0;
+        }
+        pos = 0;
+    }
+    /* Ensure we found len chars. */
+    if (len)
+        syserr("cset_to_str inconsistent parameters");
+    MemProtect(StrLoc(res) = alcstr(c, out_len));
+    StrLen(res) = out_len;
+    return res;
+}
+
+"uchar(i) - produce a ucs consisting of character i."
+
+function{1} uchar(i)
+
+   if !cnv:C_integer(i) then
+      runerr(101,i)
+   body {
+      if (i < 0 || i > MAX_CODE_POINT) {
+         irunerr(205, i);
+         errorfail;
+      }
+      return ucs(make_one_char_ucs_block(i));
+   }
+end
+
+
+"ranges(x[n]) - produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc."
+
+function{1} ranges(x[n])
+   body {
+     struct rangeset *rs;
+     tended struct b_cset *b;
+     C_integer from, to;
+     int i;
+
+     rs = init_rangeset();
+     for (i = 0; i < n; i += 2) {
+         if (!cnv:C_integer(x[i], from)) {
+             free_rangeset(rs);
+             runerr(101, x[i]);
+         }
+         if (from < 0 || from > MAX_CODE_POINT) {
+             free_rangeset(rs);
+             irunerr(205, from);
+             errorfail;
+         }
+         if (i + 1 < n) {
+             if (!cnv:C_integer(x[i + 1], to)) {
+                 free_rangeset(rs);
+                 runerr(101, x[i + 1]);
+             }
+             if (to < 0 || to > MAX_CODE_POINT) {
+                 free_rangeset(rs);
+                 irunerr(205, to);
+                 errorfail;
+             }
+         } else
+             to = from;
+         add_range(rs, from, to);
+     }
+     b = rangeset_to_block(rs);
+     free_rangeset(rs);
+     return cset(b);
+   }
+end
+
+"rangesof(c) - generate the ranges in a cset, as a sequence of from-to pairs."
+
+function{*} rangesof(c)
+   if !cnv:cset(c) then
+      runerr(120, c)
+   body {
+       int i;
+       for (i = 0; i < BlkLoc(c)->cset.n_ranges; ++i) {
+           suspend C_integer BlkLoc(c)->cset.range[i].from;
+           suspend C_integer BlkLoc(c)->cset.range[i].to;
+       }
+       fail;
+   }
+end
+
+
+"hasord(c, x) - succeed if the cset c contains the code point x, returning its index in the cset"
+
+function{0,1} hasord(c, x)
+   if !cnv:cset(c) then
+      runerr(120, c)
+   if !cnv:C_integer(x) then
+      runerr(101, x)
+   body {
+    int l, r, m;
+    struct b_cset *b = &BlkLoc(c)->cset;
+    l = 0;
+    r = b->n_ranges - 1;
+    while (l <= r) {
+        m = (l + r) / 2;
+        if (x < b->range[m].from)
+            r = m - 1;
+        else if (x > b->range[m].to)
+            l = m + 1;
+        else  /*  b->range[m].from <= x <= b->range[m].to */
+            return C_integer b->range[m].index + x - b->range[m].from + 1;
+    }
+    fail;
+   }
+end
+
+
+"ords(c) - generate the code points in a cset, for the range of entries i:j"
+
+function{*} ords(c, i, j)
+   if !cnv:cset(c) then
+      runerr(120, c)
+   if !def:C_integer(i, 1) then
+      runerr(101, i)
+   if !def:C_integer(j, 0) then
+      runerr(101, j)
+   body {
+       int a, b, pos, len, from, to;
+
+       i = cvpos(i, BlkLoc(c)->cset.size);
+       if (i == CvtFail)
+           fail;
+       j = cvpos(j, BlkLoc(c)->cset.size);
+       if (j == CvtFail)
+           fail;
+       if (i > j) {
+           C_integer t = i;
+           i = j;
+           len = t - j;
+       } else
+           len = j - i;
+
+       if (len == 0)
+           fail;
+
+       a = cset_range_of_pos(&BlkLoc(c)->cset, i);    /* First range of interest */
+       pos = i - 1 - BlkLoc(c)->cset.range[a].index;  /* Offset into that range */
+       for (; len > 0 && a < BlkLoc(c)->cset.n_ranges; ++a) {
+           from = BlkLoc(c)->cset.range[a].from;
+           to = BlkLoc(c)->cset.range[a].to;
+           for (b = pos + from; len > 0 && b <= to; ++b) {
+               suspend C_integer b;
+               --len;
+           }
+           pos = 0;
+       }
+       if (len)
+           syserr("ords inconsistent parameters");
+       fail;
+   }
+end
+

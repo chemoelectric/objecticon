@@ -33,7 +33,7 @@ static dptr call(dptr proc, ...);
 static void await_selectionnotify(wsp ws);
 
 #ifdef HAVE_LIBXFT
-int xft_textwidth(wbp w, char *s, int n);
+int xft_stringwidth(wbp w, char *s, int n);
 #endif
 
 stringint drawops[] = {
@@ -1036,7 +1036,7 @@ void makeIcon(w, x, y)
             wd->fonts->descent + 5;
         if (ws->iconlabel == NULL) ws->iconlabel = "";
 #ifdef HAVE_LIBXFT
-        ws->iconw = xft_textwidth(w, ws->iconlabel,
+        ws->iconw = xft_stringwidth(w, ws->iconlabel,
                                   strlen(ws->iconlabel)) + 6;
 #else
         ws->iconw = XTextWidth(wd->fonts->fsp, ws->iconlabel,
@@ -2599,7 +2599,7 @@ static void handle_keypress(w,event)
         default:
             StrLen(d) = 1;
             for (j = 0; j < i; j++) {
-                StrLoc(d) = (char *)&allchars[FromAscii(s[j]) & 0xFF];
+                StrLoc(d) = (char *)&allchars[s[j] & 0xFF];
                 qevent(w->window, &d, event->x, event->y,
                        (uword)event->time, event->state,
                        (event->type == KeyRelease) );
@@ -4288,7 +4288,7 @@ dptr call(dptr proc, ...)
 }
 
 #ifdef HAVE_LIBXFT
-int xft_textwidth(wbp w, char *s, int n)
+int xft_stringwidth(wbp w, char *s, int n)
 {
     XGlyphInfo	extents; 
 
@@ -4297,6 +4297,18 @@ int xft_textwidth(wbp w, char *s, int n)
                      s,
                      n,
                      &extents);
+    return extents.xOff;
+}
+
+int xft_utf8width(wbp w, char *s, int n)
+{
+    XGlyphInfo	extents; 
+
+    XftTextExtentsUtf8 (w->window->display->display,
+                        w->context->font->fsp,
+                        s,
+                        n,
+                        &extents);
     return extents.xOff;
 }
 
@@ -4367,6 +4379,74 @@ void drawstrng(wbp w, int x, int y, char *str, int slen)
                         y,
                         str,
                         slen);
+}
+
+void drawutf8(wbp w, int x, int y, char *str, int slen)
+{
+    XftColor color;
+    Region r;
+    XRectangle rec;
+    struct wcolor *cc;
+    STDLOCALS(w);
+
+    if (ws->win && !ws->winDraw)
+        ws->winDraw = XftDrawCreate(ws->display->display,
+                                    ws->win,
+                                    ws->vis,
+                                    ws->display->cmap);
+
+    if (!ws->pixDraw)
+        ws->pixDraw = XftDrawCreate(ws->display->display,
+                                    ws->pix,
+                                    ws->vis,
+                                    ws->display->cmap);
+    /* Don't think xft can do XOR drawing, so just swap bg/fg instead */
+    if (ISXORREVERSE(w))
+        cc = &wd->colors[wc->bg];
+    else
+        cc = &wd->colors[wc->fg];
+    color.pixel = cc->c;
+    color.color.red = cc->r;
+    color.color.green = cc->g;
+    color.color.blue = cc->b;
+    color.color.alpha = 0xffff;
+
+    if (wc->clipw >= 0 && wc->cliph >=0) {
+        r = XCreateRegion();
+        rec.x = wc->clipx;
+        rec.y = wc->clipy;
+        rec.width = wc->clipw;
+        rec.height = wc->cliph;
+        XUnionRectWithRegion(&rec, r, r);
+        if (ws->winDraw) 
+            XftDrawSetClip(w->window->winDraw, r);
+        if (ws->pixDraw) 
+            XftDrawSetClip(w->window->pixDraw, r);
+        XDestroyRegion(r);
+    } else {
+        if (ws->winDraw) 
+            XftDrawSetClip(w->window->winDraw, 0);
+        if (ws->pixDraw) 
+            XftDrawSetClip(w->window->pixDraw, 0);
+    }
+
+    if (ws->winDraw)
+        XftDrawStringUtf8 (ws->winDraw,
+                           &color,
+                           wc->font->fsp,
+                           x,
+                           y,
+                           str,
+                           slen);
+
+    if (ws->pixDraw)
+        XftDrawStringUtf8 (ws->pixDraw,
+                           &color,
+                           wc->font->fsp,
+                           x,
+                           y,
+                           str,
+                           slen);
 }
 
 #endif            /* HAVE_LIBXFT */

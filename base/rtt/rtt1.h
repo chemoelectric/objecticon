@@ -436,6 +436,7 @@ extern int ttv_typ;                  /* index of table-elem trapped var type */
 extern int null_typ;                 /* index of null type */
 extern int cset_typ;                 /* index of cset type */
 extern int real_typ;                 /* index of real type */
+extern int ucs_typ;                  /* index of ucs type */
 extern int list_typ;                 /* index of list type */
 extern int tbl_typ;                  /* index of table type */
 

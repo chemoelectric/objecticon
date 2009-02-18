@@ -20,7 +20,6 @@ static  int nextchar();
 #include "lextab.h"
 #include "../h/esctab.h"
 
-
 /*
  * Prototypes.
  */
@@ -30,12 +29,13 @@ static	struct toktab   *findres	(void);
 static	struct toktab   *getident	(int ac,int *cc);
 static	struct toktab   *getnum		(int ac,int *cc);
 static	struct toktab   *getstring	(int ac,int *cc);
+static	struct toktab   *getcset	(int ac,int *cc);
 static	int		setfilenm	(int c);
 static	int		setlineno	(void);
 static	int	ctlesc		(void);
-static	int	hexesc		(void);
+static	int	hexesc		(int digs);
 static	int	octesc		(int ac);
-
+static  int     read_utf_char(int c);
 #define isletter(s)	(isupper(c) | islower(c))
 
 
@@ -74,6 +74,7 @@ int yylex()
     static nodeptr lastval;
     static struct node semi_loc;
     nlflag = 0;
+    zero_sbuf(&lex_sbuf);
     if (lasttok != NULL) {
         /*
          * A semicolon was inserted and returned on the last call to yylex,
@@ -169,8 +170,12 @@ int yylex()
         if ((t = getnum(c, &cc)) == NULL)
             goto loop;
     }
-    else if (c == '"' || c == '\'') {    /* gather string or cset literal */
+    else if (c == '"') {    /* gather string literal */
         if ((t = getstring(c, &cc)) == NULL)
+            goto loop;
+    }
+    else if (c == '\'') {    /* gather cset literal */
+        if ((t = getcset(c, &cc)) == NULL)
             goto loop;
     }
     else {			/* gather longest legal operator */
@@ -388,73 +393,173 @@ static struct toktab *getstring(ac, cc)
     int ac;
     int *cc;
 {
-    register int c, sc;
-    int sav_indx;
+    int c, i, n;
     int len;
+    char utf8[MAX_UTF8_SEQ_LEN];
 
-    sc = ac;
-    sav_indx = -1;
     c = NextChar;
-    while (c != sc && c != '\n' && c != EOF) {
+    while (c != '"' && c != '\n' && c != EOF) {
         /*
-         * If a '_' is the last non-white space before a new-line,
-         *  we must remember where it is.
+         * If a '_' is the last before a new-line, skip over any whitespace.
          */
-        if (c == '_')
-            sav_indx = lex_sbuf.endimage - lex_sbuf.strtimage;
-        else if (!isspace(c))
-            sav_indx = -1;
+        if (c == '_') {
+            int t = NextChar;
+            if (t == '\n' || t == '\r') {
+                while ((c = NextChar) != EOF && isspace(c))
+                    ;
+                continue;
+            } else
+                PushChar(t);
+        }
 
         if (c == Escape) {
             c = NextChar;
             if (c == EOF)
                 break;
             if (isoctal(c))
-                c = octesc(c);
+                AppChar(lex_sbuf, octesc(c));
             else if (c == 'x')
-                c = hexesc();
+                AppChar(lex_sbuf, hexesc(2));
+            else if (c == 'u') {
+                c = hexesc(4);
+                n = utf8_seq(c, utf8);
+                for (i = 0; i < n; ++i)
+                    AppChar(lex_sbuf, utf8[i]);
+            }
+            else if (c == 'U') {
+                c = hexesc(6);
+                if (c > MAX_CODE_POINT)
+                    tfatal("code point out of range");
+                n = utf8_seq(c, utf8);
+                for (i = 0; i < n; ++i)
+                    AppChar(lex_sbuf, utf8[i]);
+            }
             else if (c == '^')
-                c = ctlesc();
+                AppChar(lex_sbuf, ctlesc());
             else
-                c = esctab[c];
-
+                AppChar(lex_sbuf, esctab[c]);
+        } else {
+            if (uflag && c > 127) {
+                n = utf8_seq(c, utf8);
+                for (i = 0; i < n; ++i)
+                    AppChar(lex_sbuf, utf8[i]);
+            } else
+                AppChar(lex_sbuf, c);
         }
-        AppChar(lex_sbuf, c);
+
         c = NextChar;
-
-        /*
-         * If a '_' is the last non-white space before a new-line, the
-         *  string continues at the first non-white space on the next line
-         *  and everything from the '_' to the end of this line is ignored.
-         */
-        if (c == '\n' && sav_indx >= 0) {
-            lex_sbuf.endimage = lex_sbuf.strtimage + sav_indx;
-            while ((c = NextChar) != EOF && isspace(c))
-                ;
-        }
     }
-    if (c == sc)
+    if (c == '"')
         *cc = ' ';
     else {
         tfatal("unclosed quote");
         *cc = c;
     }
     len = lex_sbuf.endimage - lex_sbuf.strtimage;
-    if (ac == '"') {     /* a string literal */
-        yylval = StrNode(str_install(&lex_sbuf), len);
-        return T_String;
-    }
-    else {		/* a cset literal */
-        yylval = CsetNode(str_install(&lex_sbuf), len);
-        return T_Cset;
-    }
+    yylval = StrNode(str_install(&lex_sbuf), len);
+    return T_String;
 }
 
 
 /*
- * ctlesc - translate a control escape -- backslash followed by
- *  caret and one character.
+ * getcset - gather a cset literal starting with ac and place the
+ *  character following the literal in *cc.
  */
+static struct toktab *getcset(ac, cc)
+    int ac;
+    int *cc;
+{
+    register int c, prev = 0, i, len;
+    struct rangeset *cs;
+    int state = 0;
+    int esc_flag;
+    char *p;
+
+    cs = init_rangeset();
+
+    c = NextChar;
+    while (c != '\'' && c != '\n' && c != EOF) {
+        /*
+         * If a '_' is the last before a new-line, skip over any whitespace.
+         */
+        if (c == '_') {
+            int t = NextChar;
+            if (t == '\n' || t == '\r') {
+                while ((c = NextChar) != EOF && isspace(c))
+                    ;
+                continue;
+            } else
+                PushChar(t);
+        }
+
+        esc_flag = (c == Escape);
+        if (esc_flag) {
+            c = NextChar;
+            if (c == EOF)
+                break;
+            if (isoctal(c))
+                c = octesc(c);
+            else if (c == 'x')
+                c = hexesc(2);
+            else if (c == 'u')
+                c = hexesc(4);
+            else if (c == 'U') {
+                c = hexesc(6);
+                if (c > MAX_CODE_POINT)
+                    tfatal("code point out of range");
+            }
+            else if (c == '^')
+                c = ctlesc();
+            else
+                c = esctab[c];
+        }
+
+        switch (state) {
+            case 0:
+                prev = c;
+                ++state;
+                break;
+            case 1:
+                if (!esc_flag && c == '-')
+                    ++state;
+                else {
+                    add_range(cs, prev, prev);
+                    prev = c;
+                }
+                break;
+            case 2:
+                add_range(cs, prev, c);
+                state = 0;
+                break;
+        }
+        c = NextChar;
+    }
+    if (c == '\'') {
+        if (state == 1)
+            add_range(cs, prev, prev);
+        else if (state == 2)
+            tfatal("incomplete cset range");
+        *cc = ' ';
+    } else {
+        tfatal("unclosed quote");
+        *cc = c;
+    }
+
+    /*
+     * Turn into a string for output to u file.
+     */
+    p = (char *)cs->range;
+    len = cs->n_ranges * sizeof(struct range);
+    for (i = 0; i < len; ++i)
+        AppChar(lex_sbuf, *p++);
+    yylval = CsetNode(str_install(&lex_sbuf), len);
+
+    free_rangeset(cs);
+
+    return T_Cset;
+}
+
+
 
 static int ctlesc()
 {
@@ -493,16 +598,16 @@ static int octesc(ac)
 
 /*
  * hexesc - translate a hexadecimal escape -- backslash-x
- *  followed by one or two hexadecimal digits.
+ *  followed by up to 'digs' hexadecimal digits.
  */
 
-static int hexesc()
+static int hexesc(int digs)
 {
     register int c, nc, i;
 
     c = 0;
     i = 0;
-    while (i++ < 2) {
+    while (i++ < digs) {
         nc = NextChar;
         if (nc == EOF)
             return EOF;
@@ -616,11 +721,43 @@ static int nextchar()
             if (incol)
                 incol--;
             break;
-        default:
+        default: {
+            if (c > 127 && uflag)
+                c = read_utf_char(c);
             incol++;
+        }
     }
     return c;
 }
+
+static int read_utf_char(int c)
+{
+    char utf8[MAX_UTF8_SEQ_LEN], *p = utf8;
+    int i, n = UTF8_SEQ_LEN(c);
+    if (n < 1) {
+        tfatal("invalid utf-8 start char");
+        return EOF;
+    }
+    utf8[0] = c;
+    for (i = 1; i < n; ++i) {
+        c = ppch();
+        if (c == EOF)
+            return c;
+        utf8[i] = c;
+    }
+    c = utf8_check(&p, utf8 + n);
+    if (c == -1) {
+        tfatal("invalid utf-8 sequence");
+        return EOF;
+    }
+    if (c < 0 || c > MAX_CODE_POINT) {
+        tfatal("utf-8 code point out of range");
+        return EOF;
+    }
+
+    return c;
+}
+
 
 /*
  * Prototype.

@@ -70,6 +70,19 @@ DefConvert(def_c_str, char *, dptr, cnv_c_str, C_StrAsgn)
 DefConvert(def_cset, struct b_cset *, dptr, cnv_cset, CsetAsgn)
 
 /*
+ * def_ucs - def:ucs(*s, *df, *d), convert to ucs with a default value.
+ *  Default is of type "struct b_ucs *"; if used, point destination descriptor
+ *  to it.
+ */
+
+#begdef UcsAsgn
+   d->dword = D_Ucs;
+   BlkLoc(*d) = (union block *)df;
+#enddef
+
+DefConvert(def_ucs, struct b_ucs *, dptr, cnv_ucs, UcsAsgn)
+
+/*
  * def_ec_int - def:(exact)C_integer(*s, df, *d), convert to C Integer
  *  with a default value, but disallow conversions from reals. Default
  *  is of type C_Integer; if used, just copy to destination.
@@ -131,24 +144,6 @@ DefConvert(def_real, double, dptr, cnv_real, RealAsgn)
 #enddef
 
 DefConvert(def_str, dptr, dptr, cnv_str, StrAsgn)
-
-/*
- * def_tcset - def:tmp_cset(*s, *df, *d), conversion to temporary cset with
- *  a default value. Default is of type "struct b_cset *"; if used,
- *  point destination descriptor to it. Note that this routine needs
- *  a cset buffer (cset block) to perform an actual conversion.
- */
-int def_tcset(cbuf, s, df, d)
-struct b_cset *cbuf, *df;
-dptr s, d;
-{
-   if (is:null(*s)) {
-      d->dword = D_Cset;
-      BlkLoc(*d) = (union block *)df;
-      return 1;
-      }
-   return cnv_tcset(cbuf, s, d);
-   }
 
 /*
  * def_tstr - def:tmp_string(*s, *df, *d), conversion to temporary string

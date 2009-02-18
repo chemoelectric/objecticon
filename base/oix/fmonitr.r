@@ -46,65 +46,66 @@ end
 
 void assign_event_functions(struct progstate *p, struct descrip cs)
 {
+   unsigned int *bits = BlkLoc(cs)->cset.bits;
    p->eventmask = cs;
 
    /*
     * Most instrumentation functions depend on a single event.
     */
    p->Cplist =
-      ((Testb((word)ToAscii(E_Lcreate), cs)) ? cplist_1 : cplist_0);
+      ((Testb((word)(E_Lcreate), bits)) ? cplist_1 : cplist_0);
    p->Cpset =
-      ((Testb((word)ToAscii(E_Screate), cs)) ? cpset_1 : cpset_0);
+      ((Testb((word)(E_Screate), bits)) ? cpset_1 : cpset_0);
    p->Cptable =
-      ((Testb((word)ToAscii(E_Tcreate), cs)) ? cptable_1 : cptable_0);
+      ((Testb((word)(E_Tcreate), bits)) ? cptable_1 : cptable_0);
    p->Deref =
-      ((Testb((word)ToAscii(E_Deref), cs)) ? deref_1 : deref_0);
+      ((Testb((word)(E_Deref), bits)) ? deref_1 : deref_0);
    p->Alcbignum =
-      ((Testb((word)ToAscii(E_Lrgint),cs)) ? alcbignum_1:alcbignum_0);
+      ((Testb((word)(E_Lrgint),bits)) ? alcbignum_1:alcbignum_0);
    p->Alccset =
-      ((Testb((word)ToAscii(E_Cset), cs)) ? alccset_1 : alccset_0);
+      ((Testb((word)(E_Cset), bits)) ? alccset_1 : alccset_0);
    p->Alcsegment =
-      ((Testb((word)ToAscii(E_Slots), cs)) ? alcsegment_1 : alcsegment_0);
+      ((Testb((word)(E_Slots), bits)) ? alcsegment_1 : alcsegment_0);
    p->Alcreal =
-      ((Testb((word)ToAscii(E_Real), cs)) ? alcreal_1 : alcreal_0);
+      ((Testb((word)(E_Real), bits)) ? alcreal_1 : alcreal_0);
    p->Alcrecd =
-      ((Testb((word)ToAscii(E_Record), cs)) ? alcrecd_1 : alcrecd_0);
+      ((Testb((word)(E_Record), bits)) ? alcrecd_1 : alcrecd_0);
    p->Alcrefresh =
-      ((Testb((word)ToAscii(E_Refresh), cs)) ? alcrefresh_1 : alcrefresh_0);
+      ((Testb((word)(E_Refresh), bits)) ? alcrefresh_1 : alcrefresh_0);
    p->Alcselem =
-      ((Testb((word)ToAscii(E_Selem), cs)) ? alcselem_1 : alcselem_0);
+      ((Testb((word)(E_Selem), bits)) ? alcselem_1 : alcselem_0);
    p->Alcstr =
-      ((Testb((word)ToAscii(E_String), cs)) ? alcstr_1 : alcstr_0);
+      ((Testb((word)(E_String), bits)) ? alcstr_1 : alcstr_0);
    p->Alcsubs =
-      ((Testb((word)ToAscii(E_Tvsubs), cs)) ? alcsubs_1 : alcsubs_0);
+      ((Testb((word)(E_Tvsubs), bits)) ? alcsubs_1 : alcsubs_0);
    p->Alctelem =
-      ((Testb((word)ToAscii(E_Telem), cs)) ? alctelem_1 : alctelem_0);
+      ((Testb((word)(E_Telem), bits)) ? alctelem_1 : alctelem_0);
    p->Alctvtbl =
-      ((Testb((word)ToAscii(E_Tvtbl), cs)) ? alctvtbl_1 : alctvtbl_0);
+      ((Testb((word)(E_Tvtbl), bits)) ? alctvtbl_1 : alctvtbl_0);
    p->Deallocate =
-      ((Testb((word)ToAscii(E_BlkDeAlc), cs)) ? deallocate_1 : deallocate_0);
+      ((Testb((word)(E_BlkDeAlc), bits)) ? deallocate_1 : deallocate_0);
 
    /*
     * A few functions enable more than one event code.
     */
    p->EVstralc =
-      (((Testb((word)ToAscii(E_String), cs)) ||
-	(Testb((word)ToAscii(E_StrDeAlc), cs)))
+      (((Testb((word)(E_String), bits)) ||
+	(Testb((word)(E_StrDeAlc), bits)))
        ? EVStrAlc_1 : EVStrAlc_0);
    p->Alchash =
-      (((Testb((word)ToAscii(E_Table), cs)) ||
-	(Testb((word)ToAscii(E_Set), cs)))
+      (((Testb((word)(E_Table), bits)) ||
+	(Testb((word)(E_Set), bits)))
        ? alchash_1 : alchash_0);
    p->Reserve =
-      (((Testb((word)ToAscii(E_TenureString), cs)) ||
-	(Testb((word)ToAscii(E_TenureBlock), cs)))
+      (((Testb((word)(E_TenureString), bits)) ||
+	(Testb((word)(E_TenureBlock), bits)))
        ? reserve_1 : reserve_0);
 
    /*
     * Multiple functions all triggered by same events
     */
-   if ((Testb((word)ToAscii(E_List), cs)) ||
-       (Testb((word)ToAscii(E_Lelem), cs))) {
+   if ((Testb((word)(E_List), bits)) ||
+       (Testb((word)(E_Lelem), bits))) {
       p->Alclist_raw = alclist_raw_1;
       p->Alclist = alclist_1;
       p->Alclstb = alclstb_1;
@@ -115,25 +116,25 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       p->Alclstb = alclstb_0;
       }
 
-   if ((Testb((word)ToAscii(E_Aconv), cs)) ||
-       (Testb((word)ToAscii(E_Tconv), cs)) ||
-       (Testb((word)ToAscii(E_Nconv), cs)) ||
-       (Testb((word)ToAscii(E_Sconv), cs)) ||
-       (Testb((word)ToAscii(E_Fconv), cs))) {
+   if ((Testb((word)(E_Aconv), bits)) ||
+       (Testb((word)(E_Tconv), bits)) ||
+       (Testb((word)(E_Nconv), bits)) ||
+       (Testb((word)(E_Sconv), bits)) ||
+       (Testb((word)(E_Fconv), bits))) {
 
       p->Cnvcset = cnv_cset_1;
+      p->Cnvucs = cnv_ucs_1;
       p->Cnvint = cnv_int_1;
       p->Cnvreal = cnv_real_1;
       p->Cnvstr = cnv_str_1;
-      p->Cnvtcset = cnv_tcset_1;
       p->Cnvtstr = cnv_tstr_1;
       }
    else {
       p->Cnvcset = cnv_cset_0;
+      p->Cnvucs = cnv_ucs_0;
       p->Cnvint = cnv_int_0;
       p->Cnvreal = cnv_real_0;
       p->Cnvstr = cnv_str_0;
-      p->Cnvtcset = cnv_tcset_0;
       p->Cnvtstr = cnv_tstr_0;
       }
 
@@ -143,36 +144,36 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
     * Heck, we should redo the event codes so any bit in one
     * particular word means: "use the instrumented interp".
     */
-   if (Testb((word)ToAscii(E_Intcall), cs) ||
-       Testb((word)ToAscii(E_Stack), cs) ||
-       Testb((word)ToAscii(E_Fsusp), cs) ||
-       Testb((word)ToAscii(E_Osusp), cs) ||
-       Testb((word)ToAscii(E_Bsusp), cs) ||
-       Testb((word)ToAscii(E_Ocall), cs) ||
-       Testb((word)ToAscii(E_Ofail), cs) ||
-       Testb((word)ToAscii(E_Tick), cs) ||
-       Testb((word)ToAscii(E_Line), cs) ||
-       Testb((word)ToAscii(E_Loc), cs) ||
-       Testb((word)ToAscii(E_Opcode), cs) ||
-       Testb((word)ToAscii(E_Fcall), cs) ||
-       Testb((word)ToAscii(E_Prem), cs) ||
-       Testb((word)ToAscii(E_Erem), cs) ||
-       Testb((word)ToAscii(E_Intret), cs) ||
-       Testb((word)ToAscii(E_Psusp), cs) ||
-       Testb((word)ToAscii(E_Ssusp), cs) ||
-       Testb((word)ToAscii(E_Pret), cs) ||
-       Testb((word)ToAscii(E_Efail), cs) ||
-       Testb((word)ToAscii(E_Sresum), cs) ||
-       Testb((word)ToAscii(E_Fresum), cs) ||
-       Testb((word)ToAscii(E_Oresum), cs) ||
-       Testb((word)ToAscii(E_Eresum), cs) ||
-       Testb((word)ToAscii(E_Presum), cs) ||
-       Testb((word)ToAscii(E_Pfail), cs) ||
-       Testb((word)ToAscii(E_Ffail), cs) ||
-       Testb((word)ToAscii(E_Frem), cs) ||
-       Testb((word)ToAscii(E_Orem), cs) ||
-       Testb((word)ToAscii(E_Fret), cs) ||
-       Testb((word)ToAscii(E_Oret), cs)
+   if (Testb((word)(E_Intcall), bits) ||
+       Testb((word)(E_Stack), bits) ||
+       Testb((word)(E_Fsusp), bits) ||
+       Testb((word)(E_Osusp), bits) ||
+       Testb((word)(E_Bsusp), bits) ||
+       Testb((word)(E_Ocall), bits) ||
+       Testb((word)(E_Ofail), bits) ||
+       Testb((word)(E_Tick), bits) ||
+       Testb((word)(E_Line), bits) ||
+       Testb((word)(E_Loc), bits) ||
+       Testb((word)(E_Opcode), bits) ||
+       Testb((word)(E_Fcall), bits) ||
+       Testb((word)(E_Prem), bits) ||
+       Testb((word)(E_Erem), bits) ||
+       Testb((word)(E_Intret), bits) ||
+       Testb((word)(E_Psusp), bits) ||
+       Testb((word)(E_Ssusp), bits) ||
+       Testb((word)(E_Pret), bits) ||
+       Testb((word)(E_Efail), bits) ||
+       Testb((word)(E_Sresum), bits) ||
+       Testb((word)(E_Fresum), bits) ||
+       Testb((word)(E_Oresum), bits) ||
+       Testb((word)(E_Eresum), bits) ||
+       Testb((word)(E_Presum), bits) ||
+       Testb((word)(E_Pfail), bits) ||
+       Testb((word)(E_Ffail), bits) ||
+       Testb((word)(E_Frem), bits) ||
+       Testb((word)(E_Orem), bits) ||
+       Testb((word)(E_Fret), bits) ||
+       Testb((word)(E_Oret), bits)
        )
       p->Interp = interp_1;
    else
@@ -359,7 +360,7 @@ void mmrefresh()
     * can handle these memory allocation "redraw" events.
     */
   if (!is:null(curpstate->eventmask) &&
-       Testb((word)ToAscii(E_EndCollect), curpstate->eventmask)) {
+      Testb((word)(E_EndCollect), BlkLoc(curpstate->eventmask)->cset.bits)) {
       for (p = blkbase; p < blkfree; p += n) {
 	 n = BlkSize(p);
 #if E_Lrgint || E_Real || E_Cset || E_File || E_Record || E_Tvsubs || E_External || E_List || E_Lelem || E_Table || E_Telem || E_Tvtbl || E_Set || E_Selem || E_Slots || E_Coexpr || E_Refresh

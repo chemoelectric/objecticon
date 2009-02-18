@@ -30,9 +30,11 @@
 #define XLFD_CharSet	13
 
 #ifdef HAVE_LIBXFT
-#define TEXTWIDTH(w,s,n) xft_textwidth(w, s, n)
+#define TEXTWIDTH(w,s,n) xft_stringwidth(w, s, n)
+#define UTF8WIDTH(w,s,n) xft_utf8width(w, s, n)
 #else
 #define TEXTWIDTH(w,s,n) XTextWidth((w)->context->font->fsp, s, n)
+#define UTF8WIDTH(w,s,n) XTextWidth((w)->context->font->fsp, s, n)
 #endif
 #define FWIDTH(w) ((w)->context->font->maxwidth)
 #define MAXDESCENDER(w) (w->context->font->descent)
@@ -141,6 +143,8 @@
    { STDLOCALS(w); RENDER2(XDrawSegments,segs,nsegs); }
 #ifndef HAVE_LIBXFT
 #define drawstrng(w, x, y, s, slen) \
+   { STDLOCALS(w); RENDER4(XDrawString, x, y, s, slen); }
+#define drawutf8(w, x, y, s, slen) \
    { STDLOCALS(w); RENDER4(XDrawString, x, y, s, slen); }
 #endif
 #define fillarcs(w, arcs, narcs) \

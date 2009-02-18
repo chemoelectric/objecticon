@@ -49,7 +49,7 @@ int bsizes[] = {
     -1,                       /* T_Integer (1), not block */
      0,                       /* T_Lrgint (2), large integer */
      sizeof(struct b_real),   /* T_Real (3), real number */
-     sizeof(struct b_cset),   /* T_Cset (4), cset */
+     0,                       /* T_Cset (4), cset */
      0,                       /* T_Constructor (5), record constructor */
      0,                       /* T_Proc (6), procedure block */
      0,                       /* T_Record (7), record block */
@@ -74,6 +74,7 @@ int bsizes[] = {
      0,                       /* T_Object (26), object */
      sizeof(struct b_cast),   /* T_Cast (27), cast */
      sizeof(struct b_methp),  /* T_Methp (28), method pointer */
+     0,                       /* T_Ucs (29), unicode string */
     };
 
 /*
@@ -112,6 +113,7 @@ int firstd[] = {
      5*WordSize,              /* T_Object (26), object */
      0,                       /* T_Cast (27), cast */
      0,                       /* T_Methp (28), methp */
+     3*WordSize,              /* T_Ucs (29), unicode string */
     };
 
 /*
@@ -148,6 +150,7 @@ int firstp[] = {
      0,                       /* T_Object (26), object, just a pointer to the class, which is static */
      1*WordSize,              /* T_Cast (27), cast */
      1*WordSize,              /* T_Methp (28), methp */
+     0,                       /* T_Ucs (29), unicode string */
     };
 
 /*
@@ -184,8 +187,46 @@ int ptrno[] = {
     -1,                       /* T_Object (26), object */
      1,                       /* T_Cast (27), cast */
      1,                       /* T_Methp (28), method pointer */
+    -1,                       /* T_Ucs (29), unicode string */
     };
 
+/*
+ * Table of number of descriptors in blocks.  -1 is for types not allocated and
+ *  types without descriptors, 0 for descriptors through the end of the block.
+ */
+int descno[] = {
+    -1,                       /* T_Null (0), not block */
+    -1,                       /* T_Integer (1), not block */
+    -1,                       /* T_Lrgint (2), large integer */
+    -1,                       /* T_Real (3), real number */
+    -1,                       /* T_Cset (4), cset */
+    -1,                       /* T_Constructor (5), record constructor */
+    -1,                       /* T_Proc (6), procedure block */
+     0,                       /* T_Record (7), record block */
+    -1,                       /* T_List (8), list header block */
+     0,                       /* T_Lelem (9), list element block */
+    -1,                       /* T_Set (10), set header block */
+     0,                       /* T_Selem (11), set element block */
+     0,                       /* T_Table (12), table header block */
+     0,                       /* T_Telem (13), table element block */
+     0,                       /* T_Tvtbl (14), table element trapped variable */
+    -1,                       /* T_Slots (15), set/table hash block */
+     0,                       /* T_Tvsubs (16), substring trapped variable */
+     0,                       /* T_Refresh (17), refresh block */
+    -1,                       /* T_Coexpr (18), co-expression block */
+    -1,                       /* T_External (19), external block */
+    -1,                       /* T_Kywdint (20), integer keyword variable */
+    -1,                       /* T_Kywdpos (21), keyword &pos */
+    -1,                       /* T_Kywdsubj (22), keyword &subject */
+    -1,                       /* T_Kywdstr (23), string keyword variable */
+    -1,                       /* T_Kywdevent (24), event keyword variable */
+    -1,                       /* T_Class (25), class, just contains static data in icode */
+     0,                       /* T_Object (26), object */
+    -1,                       /* T_Cast (27), cast */
+    -1,                       /* T_Methp (28), methp */
+     1,                       /* T_Ucs (29), unicode string */
+};
+
 /*
  * Table of block names used by debugging functions.
  */
@@ -219,6 +260,7 @@ char *blkname[] = {
    "object",                            /* T_Object (26) */
    "cast",                              /* T_Cast (27) */
    "methp",                             /* T_Methp (28) */
+   "ucs",                               /* T_Ucs (29), unicode string */
    };
 
 /*
@@ -239,7 +281,14 @@ uword segsize[] = {
    ((uword)HSlots) << 9,		/* segment 10 */
    ((uword)HSlots) << 10,		/* segment 11 */
    };
-
+
+#define PostDescrip(d) \
+   if (Qual(d)) \
+      postqual(&(d)); \
+   else if (Pointer(d))\
+      markblock(&(d));
+
+
 /*
  * initalloc - initialization routine to allocate memory regions
  */
@@ -378,16 +427,13 @@ int region;
    markblock(&k_main);
    markblock(&k_current);
    /*
-    * Mark &subject and the cached s2 and s3 strings for map.
+    * Mark the cached s2 and s3 strings for map.
     */
-   if (Qual(maps2))                     /*  caution: the cached arguments of */
-      postqual(&maps2);                 /*  map may not be strings. */
-   else if (Pointer(maps2))
-      markblock(&maps2);
-   if (Qual(maps3))
-      postqual(&maps3);
-   else if (Pointer(maps3))
-      markblock(&maps3);
+   PostDescrip(maps2);                  /*  caution: the cached arguments of */
+                                        /*  map may not be strings. */
+   PostDescrip(maps3);
+   PostDescrip(maps2u);
+   PostDescrip(maps3u);
 
 #ifdef Graphics
    /*
@@ -446,12 +492,6 @@ int region;
  * markprogram - traverse pointers out of a program state structure
  */
 
-#define PostDescrip(d) \
-   if (Qual(d)) \
-      postqual(&(d)); \
-   else if (Pointer(d))\
-      markblock(&(d));
-
 static void markprogram(pstate)
 struct progstate *pstate;
    {
@@ -469,9 +509,9 @@ struct progstate *pstate;
 
    /* Kywd_err, &error, always an integer */
    /* Kywd_pos, &pos, always an integer */
-   postqual(&(pstate->ksub));
-   postqual(&(pstate->Kywd_prog));
-   postqual(&(pstate->Kywd_why));
+   PostDescrip(pstate->ksub);
+   PostDescrip(pstate->Kywd_prog);
+   PostDescrip(pstate->Kywd_why);
    /* Kywd_ran, &random, always an integer */
    /* Kywd_trc, &trace, always an integer */
 
@@ -479,22 +519,13 @@ struct progstate *pstate;
     * Mark the globals and the statics.
     */
    for (dp = pstate->Globals; dp < pstate->Eglobals; dp++)
-      if (Qual(*dp))
-	 postqual(dp);
-      else if (Pointer(*dp))
-	 markblock(dp);
+      PostDescrip(*dp);
 
    for (dp = pstate->Statics; dp < pstate->Estatics; dp++)
-      if (Qual(*dp))
-	 postqual(dp);
-      else if (Pointer(*dp))
-	 markblock(dp);
+      PostDescrip(*dp);
 
    for (dp = pstate->ClassStatics; dp < pstate->EClassStatics; dp++)
-      if (Qual(*dp))
-	 postqual(dp);
-      else if (Pointer(*dp))
-	 markblock(dp);
+      PostDescrip(*dp);
 
    PostDescrip(pstate->K_errorvalue);
    PostDescrip(pstate->K_errortext);
@@ -547,10 +578,10 @@ dptr dp;
 static void markblock(dp)
 dptr dp;
    {
-   register dptr dp1;
+   register dptr dp1, lastdesc;
    register char *block, *endblock;
    word type, fdesc;
-   int numptr;
+   int numptr, numdesc;
    register union block **ptr, **lastptr;
 
    if (Var(*dp)) {
@@ -616,17 +647,20 @@ dptr dp;
 	       if (*ptr != NULL)
                   markptr(ptr);
 	    }
-         if ((fdesc = firstd[type]) > 0)
+         if ((fdesc = firstd[type]) > 0) {
+            dp1 = (dptr)(block + fdesc);
+            numdesc = descno[type];
+            if (numdesc > 0)
+                lastdesc = dp1 + numdesc;
+            else
+                lastdesc = (dptr)endblock;
             /*
              * The block contains descriptors; mark each descriptor.
              */
-            for (dp1 = (dptr)(block + fdesc);
-                 (char *)dp1 < endblock; dp1++) {
-               if (Qual(*dp1))
-                  postqual(dp1);
-               else if (Pointer(*dp1))
-                  markblock(dp1);
+            for (; dp1 < lastdesc; dp1++) {
+               PostDescrip(*dp1);
                }
+            }
          }
       }
 
@@ -727,17 +761,20 @@ dptr dp;
 	    if (*ptr != NULL)
                markptr(ptr);
 	 }
-      if ((fdesc = firstd[type]) > 0)
+      if ((fdesc = firstd[type]) > 0) {
          /*
           * The block contains descriptors; mark each descriptor.
           */
-         for (dp1 = (dptr)(block + fdesc);
-              (char *)dp1 < endblock; dp1++) {
-            if (Qual(*dp1))
-               postqual(dp1);
-            else if (Pointer(*dp1))
-               markblock(dp1);
+         dp1 = (dptr)(block + fdesc);
+         numdesc = descno[type];
+         if (numdesc > 0)
+             lastdesc = dp1 + numdesc;
+         else
+             lastdesc = (dptr)endblock;
+         for (; dp1 < lastdesc; dp1++) {
+            PostDescrip(*dp1);
             }
+         }
       }
    }
 
@@ -749,10 +786,10 @@ dptr dp;
 static void markptr(ptr)
 union block **ptr;
    {
-   register dptr dp;
+   register dptr dp, lastdesc;
    register char *block, *endblock;
    word type, fdesc;
-   int numptr;
+   int numptr, numdesc;
    register union block **ptr1, **lastptr;
 
    /*
@@ -796,17 +833,20 @@ union block **ptr;
                if (*ptr1 != NULL)
                   markptr(ptr1);
             }
-         if ((fdesc = firstd[type]) > 0)
+         if ((fdesc = firstd[type]) > 0) {
             /*
              * The block contains descriptors; mark each descriptor.
              */
-            for (dp = (dptr)(block + fdesc);
-                 (char *)dp < endblock; dp++) {
-               if (Qual(*dp))
-                  postqual(dp);
-               else if (Pointer(*dp))
-                  markblock(dp);
+            dp = (dptr)(block + fdesc);
+            numdesc = descno[type];
+            if (numdesc > 0)
+                lastdesc = dp + numdesc;
+            else
+                lastdesc = (dptr)endblock;
+            for (; dp < lastdesc; dp++) {
+               PostDescrip(*dp);
                }
+            }
          }
       }
 
@@ -863,18 +903,21 @@ union block **ptr;
 	    if (*ptr1 != NULL)
                markptr(ptr1);
 	 }
-      if ((fdesc = firstd[type]) > 0)
+      if ((fdesc = firstd[type]) > 0) {
          /*
           * The block contains descriptors; mark each descriptor.
           */
-         for (dp = (dptr)(block + fdesc);
-              (char *)dp < endblock; dp++) {
-            if (Qual(*dp))
-               postqual(dp);
-            else if (Pointer(*dp))
-               markblock(dp);
+         dp = (dptr)(block + fdesc);
+         numdesc = descno[type];
+         if (numdesc > 0)
+             lastdesc = dp + numdesc;
+         else
+             lastdesc = (dptr)endblock;
+         for (; dp < lastdesc; dp++) {
+            PostDescrip(*dp);
             }
          }
+      }
    }
 
 /*

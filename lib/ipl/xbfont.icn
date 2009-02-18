@@ -285,8 +285,8 @@ procedure XBF_eval(fontname, cklist)
    # find the size and look up its score in the XBF_sizval array
    fontname ? {
       every 1 to 7 do
-         tab(upto('-')) & move(1)
-      t := XBF_sizval [1 + integer(tab(upto('-')))] | 0
+         tab(upto('\-')) & move(1)
+      t := XBF_sizval [1 + integer(tab(upto('\-')))] | 0
    }
 
    # add the corresponding value for every substring that matches
@@ -310,14 +310,14 @@ procedure XBF_spec(fontname, size)
    fontname ? {
       s := tab(find("-0-0-")) | return fontname	# return if not scalable
       move(5)					# skip pixel size, point size
-      tab(upto('-')) & move(1)			# skip x-resolution
-      tab(upto('-')) & move(1)			# skip y-resolution
+      tab(upto('\-')) & move(1)			# skip x-resolution
+      tab(upto('\-')) & move(1)			# skip y-resolution
       s ||:= "-"
       s ||:= size				# spec pixel size
       s ||:= "-*-*-*-"				# wildcard ptsize & resolutions
-      s ||:= tab(upto('-'))			# copy spacing field
+      s ||:= tab(upto('\-'))			# copy spacing field
       s ||:= move(1)
-      tab(upto('-'))				# skip average width
+      tab(upto('\-'))				# skip average width
       s ||:= "*"
       s ||:= tab(0)				# copy the rest
       }

@@ -22,7 +22,7 @@ import http, net, util, io
 #
 # Otherwise, the system id is treated as a filename.
 #
-class DefaultResolver(Resolver)
+class DefaultResolver(Resolver,SetFields)
    public
       public_mapping,
       uri_cache,
@@ -116,10 +116,19 @@ class DefaultResolver(Resolver)
       return sb.done()
    end
 
-   public new()
+   public set_one(f)
+      case f.attr of {
+         "cache_uris": set_cache_uris(f.flag_val())
+         default : fail
+      }
+      return
+   end
+
+   public new(a[])
       public_mapping := table()
       uri_cache := table()
       cache_uris_flag := 1
+      set_fields(a)
       return
    end
 end

@@ -9,25 +9,28 @@ operator{1} ~ compl(x)
    /*
     * x must be a cset.
     */
-   if !cnv:tmp_cset(x) then
+   if !cnv:cset(x) then
       runerr(104, x)
 
    abstract {
       return cset
       }
    body {
-      register int i;
-      struct b_cset *cp, *cpx;
-
-      /*
-       * Allocate a new cset and then copy each cset word from x
-       *  into the new cset words, complementing each bit.
-       */
-      MemProtect(cp = alccset());
-      cpx = (struct b_cset *)BlkLoc(x);      /* must come after alccset() */
-      for (i = 0; i < CsetSize; i++) 
-          cp->bits[i] = ~cpx->bits[i];
-      return cset(cp);
+       struct rangeset *rs = init_rangeset();
+       struct b_cset *blk;
+       int i, prev = 0;
+       for (i = 0; i < BlkLoc(x)->cset.n_ranges; ++i) {
+           int from = BlkLoc(x)->cset.range[i].from;
+           int to = BlkLoc(x)->cset.range[i].to;
+           if (from > prev)
+               add_range(rs, prev, from - 1);
+           prev = to + 1;
+       }
+       if (prev <= MAX_CODE_POINT)
+           add_range(rs, prev, MAX_CODE_POINT);
+       blk = rangeset_to_block(rs);
+       free_rangeset(rs);
+       return cset(blk);
       }
 end
 
@@ -89,28 +92,54 @@ operator{1} -- diff(x,y)
          }
       }
    else {
-      if !cnv:tmp_cset(x) then
+      if !cnv:cset(x) then
          runerr(120, x)
-      if !cnv:tmp_cset(y) then
+      if !cnv:cset(y) then
          runerr(120, y)
       abstract {
          return cset
          }
-      /*
-       * Allocate a new cset and in each word of it, compute the value
-       *  of the bitwise difference of the corresponding words in the
-       *  Arg1 and Arg2 csets.
-       */
       body {
-         struct b_cset *cp, *cpx, *cpy;
-         register int i;
+          struct rangeset *y_comp = init_rangeset();
+          struct rangeset *rs = init_rangeset();
+          struct b_cset *blk;
+          int i_x, i_y, prev = 0;
+          /*
+           * Calculate ~y
+           */
+          for (i_y = 0; i_y < BlkLoc(y)->cset.n_ranges; ++i_y) {
+              int from = BlkLoc(y)->cset.range[i_y].from;
+              int to = BlkLoc(y)->cset.range[i_y].to;
+              if (from > prev)
+                  add_range(y_comp, prev, from - 1);
+              prev = to + 1;
+          }
+          if (prev <= MAX_CODE_POINT)
+              add_range(y_comp, prev, MAX_CODE_POINT);
 
-         MemProtect(cp = alccset());
-         cpx = (struct b_cset *)BlkLoc(x);  /* must come after alccset() */
-         cpy = (struct b_cset *)BlkLoc(y);  /* must come after alccset() */
-         for (i = 0; i < CsetSize; i++)
-            cp->bits[i] = cpx->bits[i] & ~cpy->bits[i];
-         return cset(cp);
+          /*
+           * Calculate x ** ~y
+           */
+          i_x = i_y = 0;
+          while (i_x < BlkLoc(x)->cset.n_ranges &&
+                 i_y < y_comp->n_ranges) {
+              int from_x = BlkLoc(x)->cset.range[i_x].from;
+              int to_x = BlkLoc(x)->cset.range[i_x].to;
+              int from_y = y_comp->range[i_y].from;
+              int to_y = y_comp->range[i_y].to;
+              if (to_x < to_y) {
+                  add_range(rs, Max(from_x, from_y), to_x);
+                  ++i_x;
+              }
+              else {
+                  add_range(rs, Max(from_x, from_y), to_y);
+                  ++i_y;
+              }
+          }
+          blk = rangeset_to_block(rs);
+          free_rangeset(rs);
+          free_rangeset(y_comp);
+          return cset(blk);
          }
       }
 end
@@ -181,30 +210,37 @@ operator{1} ** inter(x,y)
       }
    else {
 
-      if !cnv:tmp_cset(x) then
+      if !cnv:cset(x) then
          runerr(120, x)
-      if !cnv:tmp_cset(y) then
+      if !cnv:cset(y) then
          runerr(120, y)
       abstract {
          return cset
          }
 
-      /*
-       * Allocate a new cset and in each word of it, compute the value
-       *  of the bitwise intersection of the corresponding words in the
-       *  x and y csets.
-       */
       body {
-         struct b_cset *cp, *cpx, *cpy;
-         register int i;
-
-         MemProtect(cp = alccset());
-         cpx = (struct b_cset *)BlkLoc(x);  /* must come after alccset() */
-         cpy = (struct b_cset *)BlkLoc(y);  /* must come after alccset() */
-         for (i = 0; i < CsetSize; i++) {
-            cp->bits[i] = cpx->bits[i] & cpy->bits[i];
-            }
-         return cset(cp);
+          struct rangeset *rs = init_rangeset();
+          struct b_cset *blk;
+          int i_x, i_y;
+          i_x = i_y = 0;
+          while (i_x < BlkLoc(x)->cset.n_ranges &&
+                 i_y < BlkLoc(y)->cset.n_ranges) {
+              int from_x = BlkLoc(x)->cset.range[i_x].from;
+              int to_x = BlkLoc(x)->cset.range[i_x].to;
+              int from_y = BlkLoc(y)->cset.range[i_y].from;
+              int to_y = BlkLoc(y)->cset.range[i_y].to;
+              if (to_x < to_y) {
+                  add_range(rs, Max(from_x, from_y), to_x);
+                  ++i_x;
+              }
+              else {
+                  add_range(rs, Max(from_x, from_y), to_y);
+                  ++i_y;
+              }
+          }
+          blk = rangeset_to_block(rs);
+          free_rangeset(rs);
+          return cset(blk);
          }
       }
 end
@@ -277,29 +313,31 @@ operator{1} ++ union(x,y)
 	 }
       }
    else {
-      if !cnv:tmp_cset(x) then
+      if !cnv:cset(x) then
          runerr(120, x)
-      if !cnv:tmp_cset(y) then
+      if !cnv:cset(y) then
          runerr(120, y)
       abstract {
          return cset
          }
 
-      /*
-       * Allocate a new cset and in each word of it, compute the value
-       *  of the bitwise union of the corresponding words in the
-       *  x and y csets.
-       */
       body {
-         struct b_cset *cp, *cpx, *cpy;
-         register int i;
-
-         MemProtect(cp = alccset());
-         cpx = (struct b_cset *)BlkLoc(x);  /* must come after alccset() */
-         cpy = (struct b_cset *)BlkLoc(y);  /* must come after alccset() */
-         for (i = 0; i < CsetSize; i++)
-            cp->bits[i] = cpx->bits[i] | cpy->bits[i];
-         return cset(cp);
+          struct rangeset *rs = init_rangeset();
+          struct b_cset *blk;
+          int i;
+          for (i = 0; i < BlkLoc(x)->cset.n_ranges; ++i) {
+              add_range(rs, 
+                        BlkLoc(x)->cset.range[i].from,
+                        BlkLoc(x)->cset.range[i].to);
+          }
+          for (i = 0; i < BlkLoc(y)->cset.n_ranges; ++i) {
+              add_range(rs, 
+                        BlkLoc(y)->cset.range[i].from,
+                        BlkLoc(y)->cset.range[i].to);
+          }
+          blk = rangeset_to_block(rs);
+          free_rangeset(rs);
+          return cset(blk);
          }
       }
 end

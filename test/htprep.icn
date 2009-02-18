@@ -69,7 +69,7 @@ global idset			# identifier characters
 procedure main(args)
    local line, t
 
-   idset := &letters ++ &digits ++ '.-'
+   idset := &letters ++ &digits ++ '.\-'
    
    lineno := 0
    errors := 0

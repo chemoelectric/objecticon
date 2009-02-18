@@ -24,40 +24,88 @@ function{0,1+} move(i)
        */
       oldpos = j = k_pos;
 
-      /*
-       * If attempted move is past either end of the string, fail.
-       */
-      if (i + j <= 0 || i + j > StrLen(k_subject) + 1)
-         fail;
+      if (is:string(k_subject)) {
+          /*
+           * If attempted move is past either end of the string, fail.
+           */
+          if (i + j <= 0 || i + j > StrLen(k_subject) + 1)
+              fail;
 
-      /*
-       * Set new &pos.
-       */
-      k_pos += i;
-      EVVal(k_pos, E_Spos);
+          /*
+           * Set new &pos.
+           */
+          k_pos += i;
+          EVVal(k_pos, E_Spos);
 
-      /*
-       * Make sure i >= 0.
-       */
-      if (i < 0) {
-         j += i;
-         i = -i;
-         }
+          /*
+           * Make sure i >= 0.
+           */
+          if (i < 0) {
+              j += i;
+              i = -i;
+          }
 
-      /*
-       * Suspend substring of &subject that was moved over.
-       */
-      suspend string(i, StrLoc(k_subject) + j - 1);
+          /*
+           * Suspend substring of &subject that was moved over.
+           */
+          suspend string(i, StrLoc(k_subject) + j - 1);
 
-      /*
-       * If move is resumed, restore the old position and fail.
-       */
-      if (oldpos > StrLen(k_subject) + 1)
-         runerr(205, kywd_pos);
-      else {
-         k_pos = oldpos;
-         EVVal(k_pos, E_Spos);
-         }
+          /*
+           * If move is resumed, restore the old position and fail.
+           */
+          if (oldpos > StrLen(k_subject) + 1)
+              runerr(205, kywd_pos);
+          else {
+              k_pos = oldpos;
+              EVVal(k_pos, E_Spos);
+          }
+      } else {
+          /*
+           * If attempted move is past either end of the string, fail.
+           */
+          if (i + j <= 0 || i + j > BlkLoc(k_subject)->ucs.length + 1)
+              fail;
+
+          /*
+           * Set new &pos.
+           */
+          k_pos += i;
+          EVVal(k_pos, E_Spos);
+
+          /*
+           * Make sure i >= 0.
+           */
+          if (i < 0) {
+              j += i;
+              i = -i;
+          }
+
+          /*
+           * Suspend substring of &subject that was moved over.  Note
+           * we suspend a tvsubs, but one with a value rather than a
+           * variable in the tvsubs ssvar field - a D_Ucs descriptor.
+           * This is to avoid the expense of creating a ucs substring;
+           * that will only be done if and when the tvsubs is
+           * dereferenced.  An attempt to assign to the tvsubs gives a
+           * runtime error (see oasgn.r).
+           * 
+           * Note that we can't store a variable pointint to k_subject
+           * in ssvar because k_subject might change before we
+           * dereference it, notably when scanning ends - for example
+           * in write(ucs("abcd") ? move(5)).
+           */
+          suspend tvsubs(&k_subject, j, i);
+
+          /*
+           * If move is resumed, restore the old position and fail.
+           */
+          if (oldpos > BlkLoc(k_subject)->ucs.length + 1)
+              runerr(205, kywd_pos);
+          else {
+              k_pos = oldpos;
+              EVVal(k_pos, E_Spos);
+          }
+      }
 
       fail;
       }
@@ -75,11 +123,20 @@ function{0,1} pos(i)
       return integer
       }
    body {
-      /*
-       * Fail if &pos is not equivalent to i, return i otherwise.
-       */
-      if ((i = cvpos(i, StrLen(k_subject))) != k_pos)
-         fail;
+      if (is:string(k_subject)) {
+          /*
+           * Fail if &pos is not equivalent to i, return i otherwise.
+           */
+          if ((i = cvpos(i, StrLen(k_subject))) != k_pos)
+              fail;
+      } else {
+          /*
+           * Fail if &pos is not equivalent to i, return i otherwise.
+           */
+          if ((i = cvpos(i, BlkLoc(k_subject)->ucs.length)) != k_pos)
+              fail;
+      }
+
       return C_integer i;
       }
 end
@@ -100,49 +157,96 @@ function{0,1+} tab(i)
    body {
       C_integer j, t, oldpos;
 
-      /*
-       * Convert i to an absolute position.
-       */
-      i = cvpos(i, StrLen(k_subject));
-      if (i == CvtFail)
-         fail;
+      if (is:string(k_subject)) {
+          /*
+           * Convert i to an absolute position.
+           */
+          i = cvpos(i, StrLen(k_subject));
+          if (i == CvtFail)
+              fail;
 
-      /*
-       * Save old &pos.  Local variable j holds &pos before the tab.
-       */
-      oldpos = j = k_pos;
+          /*
+           * Save old &pos.  Local variable j holds &pos before the tab.
+           */
+          oldpos = j = k_pos;
 
-      /*
-       * Set new &pos.
-       */
-      k_pos = i;
-      EVVal(k_pos, E_Spos);
+          /*
+           * Set new &pos.
+           */
+          k_pos = i;
+          EVVal(k_pos, E_Spos);
 
-      /*
-       *  Make i the length of the substring &subject[i:j]
-       */
-      if (j > i) {
-         t = j;
-         j = i;
-         i = t - j;
-         }
-      else
-         i = i - j;
+          /*
+           *  Make i the length of the substring &subject[i:j]
+           */
+          if (j > i) {
+              t = j;
+              j = i;
+              i = t - j;
+          }
+          else
+              i = i - j;
 
-      /*
-       * Suspend the portion of &subject that was tabbed over.
-       */
-      suspend string(i, StrLoc(k_subject) + j - 1);
+          /*
+           * Suspend the portion of &subject that was tabbed over.
+           */
+          suspend string(i, StrLoc(k_subject) + j - 1);
 
-      /*
-       * If tab is resumed, restore the old position and fail.
-       */
-      if (oldpos > StrLen(k_subject) + 1)
-         runerr(205, kywd_pos);
-      else {
-         k_pos = oldpos;
-         EVVal(k_pos, E_Spos);
-         }
+          /*
+           * If tab is resumed, restore the old position and fail.
+           */
+          if (oldpos > StrLen(k_subject) + 1)
+              runerr(205, kywd_pos);
+          else {
+              k_pos = oldpos;
+              EVVal(k_pos, E_Spos);
+          }
+      } else {
+          /*
+           * Convert i to an absolute position.
+           */
+          i = cvpos(i, BlkLoc(k_subject)->ucs.length);
+          if (i == CvtFail)
+              fail;
+
+          /*
+           * Save old &pos.  Local variable j holds &pos before the tab.
+           */
+          oldpos = j = k_pos;
+
+          /*
+           * Set new &pos.
+           */
+          k_pos = i;
+          EVVal(k_pos, E_Spos);
+
+          /*
+           *  Make i the length of the substring &subject[i:j]
+           */
+          if (j > i) {
+              t = j;
+              j = i;
+              i = t - j;
+          }
+          else
+              i = i - j;
+
+          /*
+           * Suspend the portion of &subject that was tabbed over.  See comment
+           * in move() above
+           */
+          suspend tvsubs(&k_subject, j, i);
+
+          /*
+           * If tab is resumed, restore the old position and fail.
+           */
+          if (oldpos > BlkLoc(k_subject)->ucs.length + 1)
+              runerr(205, kywd_pos);
+          else {
+              k_pos = oldpos;
+              EVVal(k_pos, E_Spos);
+          }
+      }
 
       fail;
       }

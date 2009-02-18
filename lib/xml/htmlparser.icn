@@ -104,11 +104,11 @@ class HtmlParser()
 
       HTML_SPACE := ' \t\n\r'
       HTML_IDINTRO := &lcase ++ &ucase
-      HTML_IDCHARS := HTML_IDINTRO ++ &digits ++ '.-'
+      HTML_IDCHARS := HTML_IDINTRO ++ &digits ++ '.\-'
       HTML_KEYCHARS := &lcase ++ &ucase ++ "_" ++ &digits
       HTML_VALCHARS := &ascii -- ' \t\n\r>'
       HTML_DELIM := '\"\''
-      HTML_PUBID_CHAR := ' \n\r' ++ &lcase ++ &ucase ++ &digits ++ '-\'()+,./:=?;!*#@$_%'
+      HTML_PUBID_CHAR := ' \n\r' ++ &lcase ++ &ucase ++ &digits ++ '\-\'()+,./:=?;!*#@$_%'
       HTML_STANDALONE := set()
       every insert(HTML_STANDALONE, "IMG" | "BR" | "HR" | "META" | "BASE" | "INPUT" | "AREA" | 
                    "OPTION" | "BASEFONT" | "BGSOUND" | "COL" | "COLGROUP" | "ISINDEX" | 

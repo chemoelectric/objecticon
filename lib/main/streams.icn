@@ -174,6 +174,7 @@ class Stream()
    public writes(a[])
       local e, n
       every e := !a do {
+         e := string(e) | runerr(103, e)
          while *e > 0 do {
             n := out(e) | fail
             e := e[n + 1:0]
@@ -189,6 +190,7 @@ class Stream()
    public write(a[])
       local e, n
       every e := !a | EOL do {
+         e := string(e) | runerr(103, e)
          while *e > 0 do {
             n := out(e) | fail
             e := e[n + 1:0]
@@ -223,6 +225,7 @@ class StringStream(Stream)
 
    public out(s)
       local e
+      s := string(s) | runerr(103, s)
       if pos > *subj then {
          subj ||:= repl("\0", pos - *subj - 1) || s
          pos := *subj + 1
@@ -388,6 +391,7 @@ class BufferStream(Stream, SetFields)
    end
 
    public out(s)
+      s := string(s) | runerr(103, s)
       unbuff() | fail
       put(wbuff, s)
       wbuff_len +:= *s

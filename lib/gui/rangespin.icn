@@ -86,14 +86,14 @@ class RangeSpin(EditSpin)
          "value" : set_value(f.numeric_val())
          "increment_size" : set_increment_size(f.numeric_val())
          "range" : set_range!(f.numeric_list_val(2))
-         default: return cast(self,Spin).set_one(f)
+         default: return cast(self,EditSpin).set_one(f)
       }
       return
    end
 
    public new(a[])
       cast(self,EditSpin).new()
-      view.set_filter(&digits ++ '.-')
+      view.set_filter(&digits ++ '.\-')
       self.increment_size := 1
       set_fields(a)
       return

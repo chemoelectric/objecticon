@@ -81,7 +81,7 @@
 #begdef RealEVVal(value,event)
    do {
       if (is:null(curpstate->eventmask)) break;
-      else if (!Testb((word)ToAscii(event), curpstate->eventmask)) break;
+      else if (!Testb((word)event, curpstate->eventmask)) break;
       MakeInt(value, &(curpstate->parent->eventval));
       if (!is:null(curpstate->valuemask) &&
 	  !invaluemask(curpstate, event, &(curpstate->parent->eventval)))
@@ -99,7 +99,7 @@
 #if event
    do {
       if (is:null(curpstate->eventmask)) break;
-      else if (!Testb((word)ToAscii(event), curpstate->eventmask)) break;
+      else if (!Testb((word)event, curpstate->eventmask)) break;
       curpstate->parent->eventval = *(dp);
       if (!is:null(curpstate->valuemask) &&
 	  !invaluemask(curpstate, event, &(curpstate->parent->eventval)))
@@ -113,7 +113,7 @@
    do {
       struct progstate *parent = curpstate->parent;
       if (is:null(curpstate->eventmask)) break;
-      else if (!Testb((word)ToAscii(event), curpstate->eventmask)) break;
+      else if (!Testb((word)event, curpstate->eventmask)) break;
       parent->eventval.dword = D_Coexpr;
       BlkLoc(parent->eventval) = (union block *)(bp);
       if (!is:null(curpstate->valuemask) &&
@@ -127,7 +127,7 @@
 #if e
    do {
       if (!is:null(curpstate->eventmask) &&
-         Testb((word)ToAscii(e), curpstate->eventmask)) {
+         Testb((word)e, curpstate->eventmask)) {
             EVVariable(dp, e);
 	    }
    } while(0)

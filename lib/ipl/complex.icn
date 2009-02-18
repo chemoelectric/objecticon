@@ -42,7 +42,7 @@ procedure strcpx(s)
 
    s ? {
       ="(" | fail
-      return complex(numeric(upto('+-')),
+      return complex(numeric(upto('+\-')),
          2(move(1), numeric(upto(')')), tab(-1)))
       }
 

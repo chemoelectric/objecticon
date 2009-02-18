@@ -242,6 +242,9 @@ procedure main()
    indx := req_type("table")
    write("int tbl_typ = ", indx, ";")
 
+   indx := req_type("ucs")
+   write("int ucs_typ = ", indx, ";")
+
    #
    # Output the type table.
    #

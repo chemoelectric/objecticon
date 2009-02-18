@@ -127,16 +127,16 @@ procedure optwindow(opts, args[])
          opts["H"] := integer(tab(many(&digits))) - 2*opts["M"] | Optw_Err("G")
       }
       if not pos(0) then {
-         opts["X"] := integer(tab(any('+-'))||tab(many(&digits)))|Optw_Err("G")
-         opts["Y"] := integer(tab(any('+-'))||tab(many(&digits)))|Optw_Err("G")
+         opts["X"] := integer(tab(any('+\-'))||tab(many(&digits)))|Optw_Err("G")
+         opts["Y"] := integer(tab(any('+\-'))||tab(many(&digits)))|Optw_Err("G")
       }
       if not pos(0) then
          Optw_Err("G")
    }
    \opts["P"] ? {
-      opts["X"] := integer(tab(many('+-0123456789'))) | Optw_Err("P")
+      opts["X"] := integer(tab(many('+\-0123456789'))) | Optw_Err("P")
       move(1)
-      opts["Y"] := integer(tab(many('+-0123456789'))) | Optw_Err("P")
+      opts["Y"] := integer(tab(many('+\-0123456789'))) | Optw_Err("P")
       if not pos(0) then
          Optw_Err("P")
    }
@@ -167,9 +167,9 @@ procedure optwindow(opts, args[])
 
    # store actual values returned after window placement
    w.attrib("pos") ? {
-      opts["X"] := integer(tab(many('+-0123456789')))
+      opts["X"] := integer(tab(many('+\-0123456789')))
       move(1)
-      opts["Y"] := integer(tab(many('+-0123456789')))
+      opts["Y"] := integer(tab(many('+\-0123456789')))
    }
    opts["P"] := opts["X"] || "," || opts["Y"]
    opts["W"] := w.attrib("width") - 2 * opts["M"]
