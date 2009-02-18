@@ -104,13 +104,14 @@ ReturnYourselfAs(ucs)      /* ucs(x) - convert to ucs or fail */
 ReturnYourselfAs(string)   /* string(x) - convert to string or fail */
 
 
-"text(x) - if x is a ucs, it is just returned.  If x is a cset then it is"
+"text(x) - if x is a string or ucs, it is just returned.  If x is a cset then it is"
 "converted to a string if its highest char is < 256; otherwise it is converted"
 "to a ucs.  For any other type, normal string conversion is attempted."
 
 function{0,1} text(x)
   body {
     type_case x of {
+      string: return x;
       ucs: return x;
       cset: {
         struct b_cset *c = &BlkLoc(x)->cset;
