@@ -2194,9 +2194,6 @@ $PROG_NOTWF ibm83n03.xml
 cd $TESTS/ibm/not-wf/P83
 $PROG_NOTWF ibm83n04.xml
 
-# Omitted -they check invalid chars which are now valid in the later spec revision
-if false ; then
-
 cd $TESTS/ibm/not-wf/P83
 $PROG_NOTWF ibm83n05.xml
 
@@ -3120,8 +3117,6 @@ $PROG_NOTWF ibm89n04.xml
 
 cd $TESTS/ibm/not-wf/P89
 $PROG_NOTWF ibm89n05.xml
-
-fi
 
 cd $TESTS/ibm/not-wf/P89
 $PROG_NOTWF ibm89n06.xml
