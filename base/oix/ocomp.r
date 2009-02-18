@@ -93,53 +93,51 @@ NumComp( ~=, numne, NumNe, not equal to)
 /*
  * StrComp is a macro that defines the form of a string comparisons.
  */
-#begdef StrComp(icon_op, func_name, special_test, c_comp, comp_value, descript)
+#begdef StrComp(icon_op, func_name, special_test_str, special_test_ucs, c_comp, comp_value, descript)
 "x " #icon_op " y - test if x is lexically " #descript " y."
 operator{0,1} icon_op func_name(x,y)
-   declare {
-      int temp_str = 0;
-      }
-   abstract {
-      return string
-      }
-   if !cnv:tmp_string(x) then
-      runerr(103,x)
-   if !is:string(y) then 
-      if cnv:tmp_string(y) then
-          inline {
-             temp_str = 1;
-             }
-      else
-         runerr(103,y)
-
    body {
+     if (is:ucs(x) || is:ucs(y)) {
+         if (!cnv:ucs(x,x))
+             runerr(128, x);
+         if (!cnv:ucs(y,y))
+             runerr(128, y);
 
-      /*
-       * lexcmp does the work.
-       */
-      if (special_test (lexcmp(&x, &y) c_comp comp_value)) {
          /*
-          * Return y as the result of the comparison.  If y was converted to
-          *  a string, a copy of it is allocated.
+          * lexcmp does the work.
           */
-         result = y;
-         if (temp_str)
-             MemProtect(StrLoc(result) = alcstr(StrLoc(result), StrLen(result)));
-         return result;
-         }
-      else
-         fail;
-      }
+         if (special_test_ucs (lexcmp(&BlkLoc(x)->ucs.utf8, 
+                                      &BlkLoc(y)->ucs.utf8) c_comp comp_value))
+             return y;
+         else
+             fail;
+     } else {
+         if (!cnv:string(x,x))
+             runerr(103, x);
+         if (!cnv:string(y,y))
+             runerr(103, y);
+
+         /*
+          * lexcmp does the work.
+          */
+         if (special_test_str (lexcmp(&x, &y) c_comp comp_value))
+             return y;
+         else
+             fail;
+
+     }
+   }
 end
 #enddef
 
-StrComp(==,  lexeq, (StrLen(x) == StrLen(y)) &&, ==, Equal, equal to) 
-StrComp(~==, lexne, (StrLen(x) != StrLen(y)) ||, !=, Equal, not equal to)
-
-StrComp(>>=, lexge, , !=, Less,    greater than or equal to) 
-StrComp(>>,  lexgt, , ==, Greater, greater than)
-StrComp(<<=, lexle, , !=, Greater, less than or equal to)
-StrComp(<<,  lexlt, , ==, Less,    less than)
+StrComp(==,  lexeq, (StrLen(x) == StrLen(y)) &&, 
+        (StrLen(BlkLoc(x)->ucs.utf8) == StrLen(BlkLoc(y)->ucs.utf8)) &&,==, Equal, equal to) 
+StrComp(~==, lexne, (StrLen(x) != StrLen(y)) ||, 
+        (StrLen(BlkLoc(x)->ucs.utf8) != StrLen(BlkLoc(y)->ucs.utf8)) ||, !=, Equal, not equal to)
+StrComp(>>=, lexge, , , !=, Less,    greater than or equal to) 
+StrComp(>>,  lexgt, , , ==, Greater, greater than)
+StrComp(<<=, lexle, , , !=, Greater, less than or equal to)
+StrComp(<<,  lexlt, , , ==, Less,    less than)
 
 
 "x === y - test equivalence of x and y."
