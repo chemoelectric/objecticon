@@ -428,8 +428,10 @@ static struct toktab *getstring(ac, cc)
             }
             else if (c == 'U') {
                 c = hexesc(6);
-                if (c > MAX_CODE_POINT)
+                if (c > MAX_CODE_POINT) {
                     tfatal("code point out of range");
+                    c = 0;
+                }
                 n = utf8_seq(c, utf8);
                 for (i = 0; i < n; ++i)
                     AppChar(lex_sbuf, utf8[i]);
@@ -505,8 +507,10 @@ static struct toktab *getcset(ac, cc)
                 c = hexesc(4);
             else if (c == 'U') {
                 c = hexesc(6);
-                if (c > MAX_CODE_POINT)
+                if (c > MAX_CODE_POINT) {
                     tfatal("code point out of range");
+                    c = 0;
+                }
             }
             else if (c == '^')
                 c = ctlesc();
