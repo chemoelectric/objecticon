@@ -73,7 +73,7 @@ function{1} detab(s,i[n])
                           last = 1;
                           break;
                       default:
-                          if (isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
+                          if (ch < 256 && isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -127,7 +127,7 @@ function{1} detab(s,i[n])
                           last = 1;
                           break;
                       default:
-                          if (isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
+                          if (ch < 256 && isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -315,7 +315,7 @@ function{1} entab(s,i[n])
                       case ' ':
                           break;
                       default:
-                          if (isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
+                          if (ch < 256 && isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -401,7 +401,7 @@ function{1} entab(s,i[n])
                       case ' ':
                           break;
                       default:
-                          if (isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
+                          if (ch < 256 && isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }

@@ -3,7 +3,7 @@
  *  Contents: deref, eq, getvar, hash, outimage,
  *  qtos, pushact, popact, topact, [dumpact], 
  *  findline, findipc, findfile, getimage
- *  printable, sig_rsm, cmd_line, varargs.
+ *  sig_rsm, cmd_line, varargs.
  *
  *  Integer overflow checking.
  */
@@ -347,7 +347,7 @@ dptr dp;
 static int charstr(int c, char *b)
 {
     static char cbuf[12];
-    if (printable(c)) {
+    if (c < 128 && isprint(c)) {
         /*
          * c is printable, but special case ", ', - and \.
          */
@@ -468,7 +468,7 @@ static int cset_do_range(int from, int to)
 {
     if (to - from <= 1)
         return 0;
-    if (isascii(from) && isascii(to))
+    if (from < 128 && to < 128)
         return 0;
     return 1;
 }
@@ -1566,33 +1566,6 @@ dptr dp;
 }
 
 
-/*
- * printable(c) -- is c a "printable" character?
- */
-
-int printable(c)
-int c;
-   {
-
-/*
- * The following code is operating-system dependent [@rmisc.01].
- *  Determine if a character is "printable".
- */
-
-#if PORT
-   return isprint(c);
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if MSWIN32 || UNIX
-   return (isascii(c) && isprint(c));
-#endif		
-
-/*
- * End of operating-system specific code.
- */
-   }
-
 #ifndef AsmOver
 /*
  * add, sub, mul, neg with overflow check
