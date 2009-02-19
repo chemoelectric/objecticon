@@ -16,14 +16,14 @@
 
 %token <t> Identifier StrLit LStrLit FltConst DblConst LDblConst
 %token <t> CharConst LCharConst IntConst UIntConst LIntConst ULIntConst 
-%token <t> Arrow Incr Decr LShft RShft Leq Geq Equal Neq
+%token <t> Arrow Incr Decr LShft RShft Leq Geq TokEqual Neq
 %token <t> And Or MultAsgn DivAsgn ModAsgn PlusAsgn
 %token <t> MinusAsgn LShftAsgn RShftAsgn AndAsgn
 %token <t> XorAsgn OrAsgn Sizeof Intersect OpSym
 
-%token <t> Typedef Extern Static Auto Register Tended
-%token <t> Char Short Int Long Signed Unsigned Float Doubl Const Volatile
-%token <t> Void TypeDefName Struct Union Enum Ellipsis
+%token <t> Typedef Extern Static Auto TokRegister Tended
+%token <t> TokChar TokShort Int TokLong Signed Unsigned Float Doubl Const Volatile
+%token <t> Void TypeDefName Struct Union TokEnum Ellipsis
 
 %token <t> Case Default If Else Switch While Do For Goto Continue Break Return
 
@@ -31,10 +31,10 @@
 %token <t> '^' ':' ';' '<' '=' '>' '?' '!' '@' '\\'
 
 %token <t> Runerr Is Cnv Def Exact Empty_type IconType Component Variable
-%token <t> Any_value Named_var Struct_var C_Integer Arith_case
-%token <t> C_Double C_String Tmp_string Tmp_cset Body End Function Keyword
+%token <t> Any_value Named_var Struct_var C_Integer Arith_case Str_Or_Ucs
+%token <t> C_Double C_String Tmp_string Tmp_cset Body End TokFunction Keyword
 %token <t> Operator Underef Declare Suspend Fail Inline Abstract Store
-%token <t> Type New All_fields Then Type_case Of Len_case Constant Errorfail
+%token <t> TokType New All_fields Then Type_case Of Len_case Constant Errorfail
 
 %type <t> unary_op assign_op struct_or_union typedefname
 %type <t> identifier op_name key_const union attrb_name
@@ -173,7 +173,7 @@ relational_expr
 
 equality_expr
    : relational_expr
-   | equality_expr Equal relational_expr {$$ = node2(BinryNd, $2, $1, $3);}
+   | equality_expr TokEqual relational_expr {$$ = node2(BinryNd, $2, $1, $3);}
    | equality_expr Neq   relational_expr {$$ = node2(BinryNd, $2, $1, $3);}
    ;
 
@@ -315,7 +315,7 @@ storage_class_spec
    | Extern   {$$ = node0(PrimryNd, $1);}
    | Static   {$$ = node0(PrimryNd, $1);}
    | Auto     {$$ = node0(PrimryNd, $1);}
-   | Register {$$ = node0(PrimryNd, $1);}
+   | TokRegister {$$ = node0(PrimryNd, $1);}
    ;
 
 type_spec
@@ -325,10 +325,10 @@ type_spec
 
 stnd_type
    : Void                {$$ = node0(PrimryNd, $1);}
-   | Char                {$$ = node0(PrimryNd, $1);}
-   | Short               {$$ = node0(PrimryNd, $1);}
+   | TokChar                {$$ = node0(PrimryNd, $1);}
+   | TokShort               {$$ = node0(PrimryNd, $1);}
    | Int                 {$$ = node0(PrimryNd, $1);}
-   | Long                {$$ = node0(PrimryNd, $1);}
+   | TokLong                {$$ = node0(PrimryNd, $1);}
    | Float               {$$ = node0(PrimryNd, $1);}
    | Doubl               {$$ = node0(PrimryNd, $1);}
    | Signed              {$$ = node0(PrimryNd, $1);}
@@ -407,11 +407,11 @@ struct_no_tdn_dcltor
    ;
 
 enum_spec
-   : Enum {push_cntxt(0);} '{' enumerator_lst '}'
+   : TokEnum {push_cntxt(0);} '{' enumerator_lst '}'
        {$$ = node2(BinryNd, $1, NULL, $4); pop_cntxt(); free_t($3); free_t($5);}
-   | Enum any_ident {push_cntxt(0);} '{' enumerator_lst '}'
+   | TokEnum any_ident {push_cntxt(0);} '{' enumerator_lst '}'
        {$$ = node2(BinryNd, $1, $2,  $5); pop_cntxt(); free_t($4); free_t($6);}
-   | Enum any_ident {$$ = node2(BinryNd, $1, $2,  NULL);}
+   | TokEnum any_ident {$$ = node2(BinryNd, $1, $2,  NULL);}
    ;
 
 enumerator_lst
@@ -619,7 +619,7 @@ local_dcl
    ;
 
 tended_type
-   : Char		{tnd_char(); free_t($1);}
+   : TokChar		{tnd_char(); free_t($1);}
    | Struct identifier  {tnd_strct($2); free_t($1);}
    | Struct TypeDefName {tnd_strct($2); free_t($1);}
    | Union  identifier  {tnd_union($2); free_t($1);}
@@ -749,7 +749,7 @@ description
    ;
 
 fnc_oper
-   : Function '{' result_seq '}' op_name '(' opt_s_parm_lst ')'
+   : TokFunction '{' result_seq '}' op_name '(' opt_s_parm_lst ')'
       {impl_fnc($5); free_t($1); free_t($2); free_t($4); free_t($6);
        free_t($8);}
    | Operator '{' result_seq {lex_state = OpHead;} '}' OpSym
@@ -793,7 +793,7 @@ identifier
    | Then
    | Tmp_cset
    | Tmp_string
-   | Type
+   | TokType
    | Underef
    | Variable
    ;
@@ -807,7 +807,7 @@ op_name
    | Auto
    | Break
    | Case
-   | Char
+   | TokChar
    | Cnv
    | Const
    | Continue
@@ -816,24 +816,24 @@ op_name
    | Do
    | Doubl
    | Else
-   | Enum
+   | TokEnum
    | Errorfail
    | Extern
    | Fail
    | Float
    | For
-   | Function
+   | TokFunction
    | Goto
    | If
    | Int
    | Is
    | Keyword
-   | Long
+   | TokLong
    | Operator
-   | Register
+   | TokRegister
    | Return
    | Runerr
-   | Short
+   | TokShort
    | Signed
    | Sizeof
    | Static
@@ -1015,6 +1015,7 @@ dest_type
    | C_Integer               {$$ = node0(PrimryNd, $1);}
    | C_Double                {$$ = node0(PrimryNd, $1);}
    | C_String                {$$ = node0(PrimryNd, $1);}
+   | Str_Or_Ucs              {$$ = node0(PrimryNd, $1);}
    | Tmp_string              {$$ = node0(PrimryNd, $1); ++n_tmp_str;}
    | Tmp_cset                {$$ = node0(PrimryNd, $1); ++n_tmp_cset;}
    | '(' Exact ')' IconType  {$$ = node0(ExactCnv, chk_exct($4)); free_t($1);
@@ -1061,7 +1062,7 @@ type
 basic_type
    : i_type_name                        {$$ = node1(IcnTypNd,
                                          copy_t($1->tok), $1);}
-   | Type '(' variable ')'              {$$ = node1(PrefxNd, $1, $3);
+   | TokType '(' variable ')'              {$$ = node1(PrefxNd, $1, $3);
                                          free_t($2); free_t($4);}
    | New i_type_name '(' type_lst ')'   {$$ = node2(BinryNd, $1, $2, $4);
                                          free_t($3); free_t($5);}
@@ -1088,14 +1089,3 @@ attrb_name
 
 %%
 
-/*
- * xfree(p) -- used with free(p) macro to avoid compiler errors from
- *  miscast free calls generated by Yacc.
- */
-static void xfree(p)
-char *p;
-{
-   free(p);
-}
-
-#define free(p) xfree((char*)p)

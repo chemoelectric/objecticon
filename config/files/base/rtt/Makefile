@@ -62,6 +62,7 @@ icontype.h: typespec.txt typespec
 typespec: typespec.icn
 	oit -s typespec
 endif
+
 #
 # The following entry is commented out because it is not normally
 # necessary to recreate rttparse.c and ltoken.h unless the grammar
@@ -70,8 +71,11 @@ endif
 # on some systems, yacc may not have large enough internal tables to
 # translate this grammar.
 #
-#rttparse.c ltoken.h: rttgram.y
-#	yacc -d $(YFLAGS) rttgram.y
-#	fgrep -v -x "extern char *malloc(), *realloc();" y.tab.c > rttparse.c
-#	rm y.tab.c
-#	mv y.tab.h ltoken.h
+# Compile with make GRAM=Y
+ifeq ($(GRAM),Y)
+rttparse.c ltoken.h: rttgram.y
+	yacc -v -d rttgram.y
+	cp y.tab.c rttparse.c
+	mv y.tab.h ltoken.h
+	rm -f y.tab.c
+endif

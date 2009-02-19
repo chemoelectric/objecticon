@@ -50,6 +50,7 @@ int		cnv_cset_0	(dptr s, dptr d);
 int		cnv_cset_1	(dptr s, dptr d);
 int		cnv_ucs_0	(dptr s, dptr d);
 int		cnv_ucs_1	(dptr s, dptr d);
+int		cnv_str_or_ucs	(dptr s, dptr d);
 int		cnv_ec_int	(dptr s, C_integer *d);
 int		cnv_eint	(dptr s, dptr d);
 int		cnv_int_0	(dptr s, dptr d);

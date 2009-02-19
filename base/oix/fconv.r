@@ -110,23 +110,10 @@ ReturnYourselfAs(string)   /* string(x) - convert to string or fail */
 
 function{0,1} text(x)
   body {
-    type_case x of {
-      string: return x;
-      ucs: return x;
-      cset: {
-        struct b_cset *c = &BlkLoc(x)->cset;
-        if (c->n_ranges == 0 || c->range[c->n_ranges - 1].to < 256)
-            cnv:string(x, x);
-        else
-            cnv:ucs(x, x);
+    if (cnv:string_or_ucs(x,x))
         return x;
-      }
-      default: {
-         if (!cnv:string(x, x))
-           fail;
-         return x;
-      }
-    }
+    else
+        fail;
    }
 end
 

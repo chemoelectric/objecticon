@@ -99,6 +99,8 @@ struct node *typ;
                return TypTStr;
             case Tmp_cset:
                return TypTCset;
+            case Str_Or_Ucs:
+               return TypStrOrUcs;
             }
 
       case SymNd:

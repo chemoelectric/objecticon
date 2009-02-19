@@ -161,3 +161,16 @@ dptr s, df, d;
       }
    return cnv_tstr(sbuf, s, d);
    }
+
+
+/*
+ * def_string_or_ucs - def:string_or_ucs(*s, *df, *d), convert to string/ucs with a default
+ *  value. Default is of type "struct descrip *"; if used, copy the
+ *  decriptor value to the destination.
+ */
+
+#begdef StrOrUcsAsgn
+   *d = *df;
+#enddef
+
+DefConvert(def_str_or_ucs, dptr, dptr, cnv_str_or_ucs, StrOrUcsAsgn)

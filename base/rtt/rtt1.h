@@ -329,10 +329,11 @@ struct il_code {
 #define TypECInt  -8
 #define TypTStr   -9
 #define TypTCset -10
-#define RetDesc  -11
-#define RetNVar  -12
-#define RetSVar  -13
-#define RetNone  -14
+#define TypStrOrUcs -11
+#define RetDesc  -12
+#define RetNVar  -13
+#define RetSVar  -14
+#define RetNone  -15
 
 /*
  * il_c describes a piece of C code.

@@ -788,7 +788,7 @@ int typcd;
 struct node *dflt;
 int *dflt_to_ptr;
    {
-   static char buf[15];
+   static char buf[25];
    int by_ref;
 
    /*
@@ -824,6 +824,10 @@ int *dflt_to_ptr;
          break;
       case TypECInt:
          strcat(buf, "ec_int");
+         break;
+      case TypStrOrUcs:
+         strcat(buf, "str_or_ucs");
+         by_ref = 1;
          break;
       default:
          if (typcd == cset_typ) {

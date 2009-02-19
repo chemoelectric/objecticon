@@ -784,12 +784,13 @@ function{1} graphics_Window_draw_string(self, argv[argc])
           CnvCInteger(argv[base + 1], y);
           x += self_w->context->dx;
           y += self_w->context->dy;
+          if (!cnv:string_or_ucs(argv[base + 2],argv[base + 2]))
+              runerr(129, argv[base + 2]);
           if (is:ucs(argv[base + 2])) {
               s = StrLoc(BlkLoc(argv[base + 2])->ucs.utf8);
               len = StrLen(BlkLoc(argv[base + 2])->ucs.utf8);
               drawutf8(self_w, x, y, s, len);
           } else {
-              CnvTmpString(argv[base + 2], argv[base + 2]);
               s = StrLoc(argv[base + 2]);
               len = StrLen(argv[base + 2]);
               drawstrng(self_w, x, y, s, len);
@@ -1404,9 +1405,8 @@ function{1} graphics_Window_sync()
 end
 
 function{1} graphics_Window_text_width(self, s)
-   if !is:ucs(s) then
-      if !cnv:string(s) then
-         runerr(129, s)
+   if !cnv:string_or_ucs(s) then
+      runerr(129, s)
    body {
       C_integer i;
       GetSelfW();

@@ -266,8 +266,8 @@ error in line 92:
 
 error in line 94:
    &error = -40
-   &errornumber = 103
-   &errortext = "string expected"
+   &errornumber = 129
+   &errortext = "string or ucs expected"
    &errorvalue = list#*(0)
 ([] ? []) | monitor(&line) ----> 94
 
@@ -294,8 +294,8 @@ error in line 104:
 
 error in line 106:
    &error = -44
-   &errornumber = 103
-   &errortext = "string expected"
+   &errornumber = 129
+   &errortext = "string or ucs expected"
    &errorvalue = &null
 (s ?:= &subject[3]) | monitor(&line) ----> 106
 

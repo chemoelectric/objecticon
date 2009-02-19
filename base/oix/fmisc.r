@@ -2462,7 +2462,7 @@ struct descrip cset_to_str(struct b_cset *b, int pos, int len)
                 c[out_len++] = (char)j;
                 --len;
             } else
-                len = 0;
+                syserr("attempt to convert cset_to_str with chars > 255");
         }
         pos = 0;
     }

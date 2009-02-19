@@ -7,10 +7,8 @@
 "detab(s,i,...) - replace tabs with spaces, with stops at columns indicated."
 
 function{1} detab(s,i[n])
-
-   if !is:ucs(s) then
-      if !cnv:string(s) then
-         runerr(129,s)
+   if !cnv:string_or_ucs(s) then
+      runerr(129,s)
 
    abstract {
       return string
@@ -217,9 +215,8 @@ end
 "entab(s,i,...) - replace spaces with tabs, with stops at columns indicated."
 
 function{1} entab(s,i[n])
-   if !is:ucs(s) then
-      if !cnv:string(s) then
-         runerr(129,s)
+   if !cnv:string_or_ucs(s) then
+      runerr(129,s)
 
    abstract {
       return string
@@ -555,9 +552,8 @@ function{1} map(s1,s2,s3)
     * s1 must be a string; s2 and s3 default to (string conversions of)
     *  &ucase and &lcase, respectively.
     */
-   if !is:ucs(s1) then
-      if !cnv:string(s1) then
-         runerr(129,s1)
+   if !cnv:string_or_ucs(s1) then
+      runerr(129,s1)
 
    body {
       if (is:null(s2))
@@ -723,9 +719,8 @@ end
 "repl(s,i) - concatenate i copies of string s."
 
 function{1} repl(s,n)
-   if !is:ucs(s) then
-      if !cnv:string(s) then
-        runerr(129,s)
+   if !cnv:string_or_ucs(s) then
+      runerr(129,s)
 
    if !cnv:C_integer(n) then
       runerr(101,n)
@@ -826,73 +821,74 @@ function{1} repl(s,n)
 end
 
 
-"reverse(s) - reverse string s."
+"reverse(x) - reverse ucs, string or list x."
 
 function{1} reverse(x)
-  type_case x of {
-    list: body {
-	 int i=0, size = BlkLoc(x)->list.size;
-	 struct descrip temp;
-	 dptr dp;
-	 cplist(&x, &result, 1, size+1);
-	 dp = BlkLoc(result)->list.listhead->lelem.lslots;
-	 while (i<size-1) {
-	    temp = dp[i]; dp[i] = dp[size-1]; dp[size-1] = temp;
-	    i++; size--;
-	    }
-	 return result;
+   if is:list(x) then {
+      body {
+         int i=0, size = BlkLoc(x)->list.size;
+         struct descrip temp;
+         dptr dp;
+         cplist(&x, &result, 1, size+1);
+         dp = BlkLoc(result)->list.listhead->lelem.lslots;
+         while (i<size-1) {
+            temp = dp[i]; dp[i] = dp[size-1]; dp[size-1] = temp;
+            i++; size--;
+            }
+         return result;
+         }
       }
+   else {
 
-   ucs: body {
-      tended struct descrip utf8;
-      char *p, *q;   /* Don't need to be tended */
-      int i;
-      MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(BlkLoc(x)->ucs.utf8)));
-      StrLen(utf8) = StrLen(BlkLoc(x)->ucs.utf8);
+      if !cnv:string_or_ucs(x) then
+         runerr(129,x)
 
-      p = StrLoc(BlkLoc(x)->ucs.utf8);
-      q = StrLoc(utf8) + StrLen(utf8);
-      i = BlkLoc(x)->ucs.length;
-      while (i-- > 0) {
-          int n = UTF8_SEQ_LEN(*p);
-          q -= n;
-          memcpy(q, p, n);
-          p += n;
-      }
+      body {
+           if (is:ucs(x)) {
+               tended struct descrip utf8;
+               char *p, *q;   /* Don't need to be tended */
+               int i;
+               MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(BlkLoc(x)->ucs.utf8)));
+               StrLen(utf8) = StrLen(BlkLoc(x)->ucs.utf8);
 
-      return ucs(make_ucs_block(&utf8, BlkLoc(x)->ucs.length));
-   }
+               p = StrLoc(BlkLoc(x)->ucs.utf8);
+               q = StrLoc(utf8) + StrLen(utf8);
+               i = BlkLoc(x)->ucs.length;
+               while (i-- > 0) {
+                   int n = UTF8_SEQ_LEN(*p);
+                   q -= n;
+                   memcpy(q, p, n);
+                   p += n;
+               }
 
-   default: {
-      if !cnv:string(x) then
-         runerr(103,x)
-       body {
-          register char c, *floc, *lloc;
-          register word slen;
+               return ucs(make_ucs_block(&utf8, BlkLoc(x)->ucs.length));
+           } else {
+               register char c, *floc, *lloc;
+               register word slen;
 
-          /*
-           * Allocate a copy of x.
-           */
-          slen = StrLen(x);
-          MemProtect(StrLoc(result) = alcstr(StrLoc(x), slen));
-          StrLen(result) = slen;
+               /*
+                * Allocate a copy of x.
+                */
+               slen = StrLen(x);
+               MemProtect(StrLoc(result) = alcstr(StrLoc(x), slen));
+               StrLen(result) = slen;
 
-          /*
-           * Point floc at the start of s and lloc at the end of s.  Work floc
-           *  and sloc along s in opposite directions, swapping the characters
-           *  at floc and lloc.
-           */
-          floc = StrLoc(result);
-          lloc = floc + --slen;
-          while (floc < lloc) {
-              c = *floc;
-              *floc++ = *lloc;
-              *lloc-- = c;
-          }
-          return result;
+               /*
+                * Point floc at the start of s and lloc at the end of s.  Work floc
+                *  and sloc along s in opposite directions, swapping the characters
+                *  at floc and lloc.
+                */
+               floc = StrLoc(result);
+               lloc = floc + --slen;
+               while (floc < lloc) {
+                   c = *floc;
+                   *floc++ = *lloc;
+                   *lloc-- = c;
+               }
+               return result;
+           }
        }
     }
-  }
 
 end
 
@@ -904,12 +900,12 @@ function{1} left(s1,n,s2)
     * s1 must be a string.  n must be a non-negative integer and defaults
     *  to 1.  s2 must be a string and defaults to a blank.
     */
+   if !cnv:string_or_ucs(s1) then
+         runerr(129,s1)
    if is:ucs(s1) then {
       if !def:ucs(s2, *blank_ucs) then
          runerr(129, s2)
    } else {
-      if !cnv:string(s1) then
-         runerr(129,s1)
       if !def:tmp_string(s2,blank) then
          runerr(103, s2)
    }
@@ -1042,12 +1038,12 @@ function{1} right(s1,n,s2)
     * s1 must be a string.  n must be a non-negative integer and defaults
     *  to 1.  s2 must be a string and defaults to a blank.
     */
+   if !cnv:string_or_ucs(s1) then
+      runerr(129,s1)
    if is:ucs(s1) then {
       if !def:ucs(s2, *blank_ucs) then
          runerr(129, s2)
    } else {
-      if !cnv:string(s1) then
-         runerr(129,s1)
       if !def:tmp_string(s2,blank) then
          runerr(103, s2)
    }
@@ -1180,12 +1176,12 @@ function{1} center(s1,n,s2)
     * s1 must be a string.  n must be a non-negative integer and defaults
     *  to 1.  s2 must be a string and defaults to a blank.
     */
+   if !cnv:string_or_ucs(s1) then
+      runerr(129,s1)
    if is:ucs(s1) then {
       if !def:ucs(s2, *blank_ucs) then
          runerr(129, s2)
    } else {
-      if !cnv:string(s1) then
-         runerr(129,s1)
       if !def:tmp_string(s2,blank) then
          runerr(103, s2)
    }
@@ -1369,9 +1365,8 @@ end
 
 function{1} trim(s,c,ends)
 
-   if !is:ucs(s) then
-      if !cnv:string(s) then
-        runerr(129,s)
+   if !cnv:string_or_ucs(s) then
+     runerr(129,s)
 
    /*
     * c defaults to a cset containing a blank.

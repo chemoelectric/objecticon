@@ -26,9 +26,14 @@
 static void itos (C_integer num, dptr dp, char *s);
 static int ston (dptr sp, union numeric *result);
 
-static void cset2str(dptr src, dptr dest)
+static int cset2str(dptr src, dptr dest)
 {
-    *dest = cset_to_str(&BlkLoc(*src)->cset, 1, BlkLoc(*src)->cset.size);
+    struct b_cset *c = &BlkLoc(*src)->cset;  /* Doesn't need to be tended */
+    if (c->n_ranges == 0 || c->range[c->n_ranges - 1].to < 256) {
+        *dest = cset_to_str(c, 1, c->size);
+        return 1;
+    } else
+        return 0;
 }
 
 /*
@@ -64,7 +69,8 @@ double *d;
           s = &BlkLoc(*s)->ucs.utf8;
          }
       cset: {
-        cset2str(s, &cnvstr);
+        if (!cset2str(s, &cnvstr))
+           return 0;
         s = &cnvstr;
         }
       default: {
@@ -130,7 +136,8 @@ C_integer *d;
           s = &BlkLoc(*s)->ucs.utf8;
          }
       cset: {
-        cset2str(s, &cnvstr);
+        if (!cset2str(s, &cnvstr))
+           return 0;
         s = &cnvstr;
         }
       default: {
@@ -310,6 +317,32 @@ cnv_ucs_macro(cnv_ucs_0,0,0,0,0,0)
 cnv_ucs_macro(cnv_ucs_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 
 /*
+ * cnv_str_or_ucs - cnv:string_or_ucs(*s, *d), convert to a string or ucs type
+ */
+int cnv_str_or_ucs(dptr s, dptr d)
+{
+   type_case *s of {
+     string: {
+        *d = *s;
+        return 1;
+       }
+     ucs: {
+        *d = *s;
+        return 1;
+       }
+     cset: {
+        if (cnv_str(s, d))
+            return 1;
+        else
+            return cnv_ucs(s, d);
+      }
+     default: {
+        return cnv_str(s, d);
+      }
+   }
+}
+
+/*
  * cnv_ec_int - cnv:(exact)C_integer(*s, *d), convert to an exact C integer
  */
 int cnv_ec_int(s, d)
@@ -335,7 +368,8 @@ C_integer *d;
           s = &BlkLoc(*s)->ucs.utf8;
          }
       cset: {
-        cset2str(s, &cnvstr);
+        if (!cset2str(s, &cnvstr))
+           return 0;
         s = &cnvstr;
         }
       default: {
@@ -376,7 +410,8 @@ dptr s, d;
           s = &BlkLoc(*s)->ucs.utf8;
          }
       cset: {
-        cset2str(s, &cnvstr);
+       if (!cset2str(s, &cnvstr))
+           return 0;
         s = &cnvstr;
         }
       default: {
@@ -446,7 +481,8 @@ dptr s, d;
           s = &BlkLoc(*s)->ucs.utf8;
          }
       cset: {
-        cset2str(s, &cnvstr);
+        if (!cset2str(s, &cnvstr))
+            return 0;
         s = &cnvstr;
         }
       default: {
@@ -564,8 +600,7 @@ int f(dptr s, dptr d)
          rtos(res, d, sbuf);
          }
      cset: {
-         cset2str(s, d);
-         return 1;
+         return cset2str(s, d);
       }
 
       default: {
@@ -611,8 +646,10 @@ int f(char *sbuf, dptr s, dptr d)
          GetReal(s, res);
          rtos(res, d, sbuf);
          }
-      cset:
-         cset2str(s, d);
+     cset: {
+        if (!cset2str(s, d))
+           return 0;
+      }
       default:
          return 0;
       }

@@ -22,7 +22,7 @@
       if (is:null(i))
          cnv_ ## i = k_pos;
    } else {
-      if (!is:ucs(s) && !cnv:string(s,s))
+      if (!cnv:string_or_ucs(s,s))
          runerr(129,s);
       if (is:null(i))
          cnv_ ## i = 1;

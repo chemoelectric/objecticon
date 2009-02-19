@@ -524,8 +524,8 @@ LibDcl(bscan,2,"?")
      */
     Deref(Arg0);
 
-    if (!is:ucs(Arg0) &&!cnv:string(Arg0,Arg0))
-       RunErr(103, &Arg0);
+    if (!cnv:string_or_ucs(Arg0,Arg0))
+       RunErr(129, &Arg0);
 
     EVValD(&Arg0, E_Snew);
 
