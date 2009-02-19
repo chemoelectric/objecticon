@@ -2189,7 +2189,11 @@ static int calc_index_step(int length)
     /* Round up to the next power of 2 */
     while (length > i)
         i *= 2;
-    return Max(i, 4);
+    if (i < 4)
+        i = 4;
+    else if (i > 256)
+        i = 256;
+    return i;
 }
 
 /*
