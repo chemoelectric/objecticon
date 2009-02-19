@@ -2496,33 +2496,71 @@ function{1} ranges(x[n])
    body {
      struct rangeset *rs;
      tended struct b_cset *b;
-     C_integer from, to;
-     int i;
+     int from, to, i;
 
      rs = init_rangeset();
-     for (i = 0; i < n; i += 2) {
-         if (!cnv:C_integer(x[i], from)) {
-             free_rangeset(rs);
-             runerr(101, x[i]);
-         }
-         if (from < 0 || from > MAX_CODE_POINT) {
-             free_rangeset(rs);
-             irunerr(205, from);
-             errorfail;
-         }
-         if (i + 1 < n) {
-             if (!cnv:C_integer(x[i + 1], to)) {
-                 free_rangeset(rs);
-                 runerr(101, x[i + 1]);
+     i = 0;
+     while (i < n) {
+         if (is:list(x[i])) {
+             union block *pb = BlkLoc(x[i]);
+             int j, k;
+             /*
+              * Chain through each list block and add the ranges
+              */
+             from = -1;
+             for (pb = pb->list.listhead;
+                  pb && (BlkType(pb) == T_Lelem);
+                  pb = pb->lelem.listnext) {
+                 for (j = 0; j < pb->lelem.nused; j++) {
+                     k = pb->lelem.first + j;
+                     if (k >= pb->lelem.nslots)
+                         k -= pb->lelem.nslots;
+                     if (!cnv:C_integer(pb->lelem.lslots[k], to)) {
+                         free_rangeset(rs);
+                         runerr(101, pb->lelem.lslots[j]);
+                     }
+                     if (to < 0 || to > MAX_CODE_POINT) {
+                         free_rangeset(rs);
+                         irunerr(205, to);
+                         errorfail;
+                     }
+                     if (from == -1)
+                         from = to;
+                     else {
+                         add_range(rs, from, to);
+                         from = -1;
+                     }
+                 }
              }
-             if (to < 0 || to > MAX_CODE_POINT) {
+             if (from != -1)
+                 add_range(rs, from, from);
+             ++i;
+         } else {
+             if (!cnv:C_integer(x[i], from)) {
                  free_rangeset(rs);
-                 irunerr(205, to);
+                 runerr(101, x[i]);
+             }
+             if (from < 0 || from > MAX_CODE_POINT) {
+                 free_rangeset(rs);
+                 irunerr(205, from);
                  errorfail;
              }
-         } else
-             to = from;
-         add_range(rs, from, to);
+             ++i;
+             if (i < n) {
+                 if (!cnv:C_integer(x[i], to)) {
+                     free_rangeset(rs);
+                     runerr(101, x[i]);
+                 }
+                 if (to < 0 || to > MAX_CODE_POINT) {
+                     free_rangeset(rs);
+                     irunerr(205, to);
+                     errorfail;
+                 }
+                 add_range(rs, from, to);
+                 ++i;
+             } else
+                 add_range(rs, from, from);
+         }
      }
      b = rangeset_to_block(rs);
      free_rangeset(rs);

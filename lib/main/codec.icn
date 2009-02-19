@@ -345,7 +345,7 @@ class Decode()
              l := []
              every 1 to n do 
                 put(l, decode()) | fail
-             return ranges!l
+             return ranges(l)
           }
 
          Codec.UCS_CODE :
