@@ -2204,7 +2204,7 @@ cd $TESTS/ibm/not-wf/P85
 $PROG_NOTWF ibm85n01.xml
 
 cd $TESTS/ibm/not-wf/P85
-$PROG_NOTWF ibm85n02.xml
+$PROG_NOTWF -u ibm85n02.xml
 
 cd $TESTS/ibm/not-wf/P85
 $PROG_NOTWF ibm85n03.xml
