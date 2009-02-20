@@ -344,7 +344,7 @@ function{1} lang_Class_get(obj, field)
    }
 end
 
-function{0,1} lang_Class_getf(obj, field)
+function{0,1} lang_Class_getf(obj, field, quiet)
    body {
        struct descrip res;
        int rc;
@@ -354,7 +354,8 @@ function{0,1} lang_Class_getf(obj, field)
        rc = field_access((dptr)(sp - 5));
        sp -= 6;
        if (rc != 0) {
-           whyf("%s (error %d)", lookup_err_msg(rc), rc);
+           if (is:null(quiet))
+               whyf("%s (error %d)", lookup_err_msg(rc), rc);
            fail;
        }
        res = *((dptr)(sp + 1));

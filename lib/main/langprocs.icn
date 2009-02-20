@@ -122,7 +122,7 @@ class ObjectOutputStream(Stream)
             seen[o] := s
             if /desc then
                writes(s) | fail
-            else if mp := Class.getf(o, "object_output") then
+            else if mp := Class.getf(o, "object_output", 1) then
                mp(self) | fail
             else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
                writes(s || "(") | fail
@@ -396,7 +396,7 @@ procedure clone(o, seen)
 
    case ty of {
       "object" : {
-         if mp := Class.getf(o, "object_clone") then {
+         if mp := Class.getf(o, "object_clone", 1) then {
             res := mp(seen)
             seen[o] := res
          } else {
@@ -472,7 +472,7 @@ procedure hash(x, depth)
    
    case type(x) of {
       "object" : {
-         if mp := Class.getf(x, "object_hash") then
+         if mp := Class.getf(x, "object_hash", 1) then
             return mp(depth)
          l := n := Class.get_n_instance_fields(x)
          if depth > 1 then {
@@ -567,7 +567,7 @@ procedure equals_impl(x, y, seen)
    case type(x) of {
       "object" : {
          classof(x) === classof(y) | fail
-         if mp := Class.getf(x, "object_equals") then
+         if mp := Class.getf(x, "object_equals", 1) then
             return mp(y, seen)
          every i := 1 to Class.get_n_instance_fields(x) do 
             equals(Class.get(x, i), Class.get(y, i), seen) | fail

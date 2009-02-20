@@ -110,7 +110,7 @@ class Encode()
             cname := subtype(o)
             line_out(cname) | fail
             note_seen(o)
-            if p := Class.getf(o, "object_encode") then
+            if p := Class.getf(o, "object_encode", 1) then
                p(self) | fail
             else {
                n := Class.get_n_instance_fields(o)
@@ -318,7 +318,7 @@ class Decode()
             cl := Class.for_name(cname) | return error("No such class " || cname)
             res := Class.create_raw(cl)
             note_seen(res)
-            if p := Class.getf(res, "object_decode") then
+            if p := Class.getf(res, "object_decode", 1) then
                p(self) | fail
             else {
                n := int_in() | fail

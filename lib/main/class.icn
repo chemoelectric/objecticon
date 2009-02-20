@@ -163,10 +163,11 @@ class Class()
    #
    # @param x either a class, cast or object
    # @param field either a field name or number
+   # @param quiet if non-null, don't set {&why} on failure
    # @return the field value
    # @fail if the field is unknown or access is not permitted
    #
-   public static defer getf(x, field)
+   public static defer getf(x, field, quiet)
 
    # Set the given field, which must be a method, in the class from
    # which this method was invoked, to be the given procedure.
