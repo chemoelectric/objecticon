@@ -372,7 +372,6 @@ const dptr src;
 
     type_case deststr of {
       ucs: {
-            tended struct descrip utf8_mid;
             tended struct descrip utf8_new;
 
             if (!cnv:ucs(*src, srcstr))
@@ -381,46 +380,31 @@ const dptr src;
             if (tvsub->sspos + tvsub->sslen - 1 > BlkLoc(deststr)->ucs.length)
                 ReturnErrNum(205, Error);
 
-            utf8_mid = utf8_substr(&BlkLoc(deststr)->ucs,
-                                   tvsub->sspos,
-                                   tvsub->sslen);
-
-            prelen = StrLoc(utf8_mid) - StrLoc(BlkLoc(deststr)->ucs.utf8);
-            poststrt = prelen + StrLen(utf8_mid);
+            if (tvsub->sslen == 0) {
+                poststrt = prelen = ucs_utf8_ptr(&BlkLoc(deststr)->ucs, tvsub->sspos) - 
+                                                       StrLoc(BlkLoc(deststr)->ucs.utf8);
+            } else {
+                struct descrip utf8_mid = utf8_substr(&BlkLoc(deststr)->ucs,
+                                                      tvsub->sspos,
+                                                      tvsub->sslen);
+                prelen = StrLoc(utf8_mid) - StrLoc(BlkLoc(deststr)->ucs.utf8);
+                poststrt = prelen + StrLen(utf8_mid);
+            }
             postlen = StrLen(BlkLoc(deststr)->ucs.utf8) - poststrt;
             /*
              * Form the result string.
              *  Start by allocating space for the entire result.
              */
             len = prelen + StrLen(BlkLoc(srcstr)->ucs.utf8) + postlen;
-            MemProtect(s = alcstr(NULL, len));
-            StrLoc(utf8_new) = s;
+            MemProtect(StrLoc(utf8_new) = reserve(Strings, len));
             StrLen(utf8_new) = len;
 
             /*
-             * First, copy the portion of the substring string to the left of
-             *  the substring into the string space.
+             * Copy the three sections into the reserved space.
              */
-            memcpy(StrLoc(utf8_new), 
-                   StrLoc(BlkLoc(deststr)->ucs.utf8), 
-                   prelen);
-
-            /*
-             * Copy the string to be assigned into the string space,
-             *  effectively concatenating it.
-             */
-            memcpy(StrLoc(utf8_new) + prelen, 
-                   StrLoc(BlkLoc(srcstr)->ucs.utf8),
-                   StrLen(BlkLoc(srcstr)->ucs.utf8));
-
-            /*
-             * Copy the portion of the substring to the right of
-             *  the substring into the string space, completing the
-             *  result.
-             */
-            memcpy(StrLoc(utf8_new) + prelen + StrLen(BlkLoc(srcstr)->ucs.utf8), 
-                   StrLoc(BlkLoc(deststr)->ucs.utf8) + poststrt, 
-                   postlen);
+            alcstr(StrLoc(BlkLoc(deststr)->ucs.utf8), prelen);
+            alcstr(StrLoc(BlkLoc(srcstr)->ucs.utf8), StrLen(BlkLoc(srcstr)->ucs.utf8));
+            alcstr(StrLoc(BlkLoc(deststr)->ucs.utf8) + poststrt, postlen);
 
             rsltstr.dword = D_Ucs;
             BlkLoc(rsltstr) = (union block *)
