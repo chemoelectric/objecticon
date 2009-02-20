@@ -73,7 +73,7 @@ function{1} detab(s,i[n])
                           last = 1;
                           break;
                       default:
-                          if (ch < 256 && isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
+                          if (ch > 127 || isprint(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -127,7 +127,7 @@ function{1} detab(s,i[n])
                           last = 1;
                           break;
                       default:
-                          if (ch < 256 && isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
+                          if (ch > 127 || isprint(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -259,7 +259,7 @@ function{1} entab(s,i[n])
               int ch = utf8_iter(&in_p);
               if (ch == ' ') {
                   target = col + 1;
-                  while (in_count < BlkLoc(s)->ucs.length && *in_p == ' ')
+                  while (in_count < BlkLoc(s)->ucs.length - 1 && *in_p == ' ')
                       in_count++, target++, in_p++;
                   if (target - col > 1) { /* never tab just 1; already copied space */
                       nt = col;
@@ -315,7 +315,7 @@ function{1} entab(s,i[n])
                       case ' ':
                           break;
                       default:
-                          if (ch < 256 && isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
+                          if (ch > 127 || isprint(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -350,7 +350,7 @@ function{1} entab(s,i[n])
               int ch = utf8_iter(&in_p);
               if (ch == ' ') {
                   target = col + 1;
-                  while (in_count < BlkLoc(s)->ucs.length && *in_p == ' ')
+                  while (in_count < BlkLoc(s)->ucs.length - 1 && *in_p == ' ')
                       in_count++, target++, in_p++;
                   if (target - col > 1) { /* never tab just 1; already copied space */
                       nt = col;
@@ -401,7 +401,7 @@ function{1} entab(s,i[n])
                       case ' ':
                           break;
                       default:
-                          if (ch < 256 && isprint(ch) || ch > 127)  /* Assume extended ascii chars are printable */
+                          if (ch > 127 || isprint(ch))  /* Assume extended ascii chars are printable */
                               col++;
                   }
               }
@@ -536,11 +536,19 @@ C_integer *interval;
    }
 
 struct mappair { 
-    int from, utf8_len;
+    int from, pos, utf8_len;
     char utf8[MAX_UTF8_SEQ_LEN];
 };
 
-static int mappair_compare(const void *key, const void *item)
+static int mappair_sort_compare(const void *item1, const void *item2)
+{
+    if (((struct mappair *)item1)->from == ((struct mappair *)item2)->from)
+        return ((struct mappair *)item1)->pos - ((struct mappair *)item2)->pos;
+    else
+        return ((struct mappair *)item1)->from - ((struct mappair *)item2)->from;
+}
+
+static int mappair_search_compare(const void *key, const void *item)
 {
     return *((int *)key) - ((struct mappair *)item)->from;
 }
@@ -597,10 +605,18 @@ function{1} map(s1,s2,s3)
               p3 = StrLoc(BlkLoc(s3)->ucs.utf8);
               for (i = 0; i < BlkLoc(s2)->ucs.length; ++i) {
                   char *t = p3;
+                  maptab[i].pos = i;
                   maptab[i].from = utf8_iter(&p2);
                   utf8_iter(&p3);
                   maptab[i].utf8_len = p3 - t;
                   memcpy(maptab[i].utf8, t, p3 - t);
+              }
+
+              qsort(maptab, maptab_len, sizeof(struct mappair), mappair_sort_compare);
+              /* Now make duplicated entries equate to the last occurence (highest pos) */
+              for (i = maptab_len - 1; i > 0; --i) {
+                  if (maptab[i].from == maptab[i - 1].from)
+                      maptab[i - 1] = maptab[i];
               }
           }
 
@@ -616,7 +632,7 @@ function{1} map(s1,s2,s3)
               char *t = p1;
               int ch = utf8_iter(&p1);
               struct mappair *mp = bsearch(&ch, maptab, maptab_len, 
-                                           sizeof(struct mappair), mappair_compare);
+                                           sizeof(struct mappair), mappair_search_compare);
               if (mp)
                   utf8_size += mp->utf8_len;
               else
@@ -637,7 +653,7 @@ function{1} map(s1,s2,s3)
               char *t = p1;
               int ch = utf8_iter(&p1);
               struct mappair *mp = bsearch(&ch, maptab, maptab_len, 
-                                           sizeof(struct mappair), mappair_compare);
+                                           sizeof(struct mappair), mappair_search_compare);
               if (mp)
                   alcstr(mp->utf8, mp->utf8_len);
               else
@@ -1248,10 +1264,6 @@ function{1} center(s1,n,s2)
           utf8_size = StrLen(BlkLoc(s1)->ucs.utf8) + 
               StrLen(odd_left_utf8) + StrLen(odd_right_utf8) +
               StrLen(BlkLoc(s2)->ucs.utf8) * (whole_left_len + whole_right_len);
-
-          /*printf("%d %d - %d %d - %d %d - %d\n", left, right, whole_left_len, odd_left_len,
-                 whole_right_len, odd_right_len, utf8_size);
-          */
 
           /*
            * Make a descriptor for the result's utf8 string.
