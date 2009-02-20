@@ -40,8 +40,13 @@ procedure pr_seq(s, e)
 end
 
 procedure yes_no(s, e)
+   local x
    writes(@s, ": ")
-   if @e then write("yes") else write("no")
+   if x := @e then
+      write("yes")
+   else 
+      write("no")
+   return \x
 end
 
 procedure try(s, e)
@@ -88,4 +93,26 @@ procedure pr_seq_type(s, e)
    every writes(t, !sort(x)) do
       t := ", "
    write("}")
+end
+
+procedure require(s, e)
+   return @e | stop(s)
+end
+
+procedure cmp_seq(s, e1, e2)
+   local x1
+   writes(@s, ": ")
+   while x1 := @e1 do {
+      (x1 === @e2) | {
+         write("different")
+         fail
+      }
+   }
+   if @e2 then {
+      write("different")
+      fail
+   } else {
+      write("same")
+      return
+   }
 end
