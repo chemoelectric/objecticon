@@ -2175,7 +2175,10 @@ class XmlParser(Connectable,SetFields)
       local t
       
       t := table()
-      insert(t, "xml", "http://www.w3.org/XML/1998/namespace")
+      if \utf8_flag then
+         insert(t, ucs("xml"), ucs("http://www.w3.org/XML/1998/namespace"))
+      else
+         insert(t, "xml", "http://www.w3.org/XML/1998/namespace")
 
       return do_namespace_processing_element(t, doc.get_root_element())
    end
