@@ -2120,16 +2120,16 @@ end
  * unicode char position n (zero-based).  n may be b->length in which
  * case a pointer just past the end of the utf8 string is returned;
  * otherwise n must be >= 0 and < b->length.  For each ucs block, there
- * are (1+(b->length-1)/b->index_step) offset slots.  off[x] gives the
- * offset of unicode char (x * b->index_step).  For example if 
- * b->index_step = 8, then for a length of 16 there are two offset entries
- * for chars 0 and 8.
+ * are (b->length-1)/b->index_step offset slots.  off[x] gives the
+ * offset of unicode char ((x+1) * b->index_step).  For example if 
+ * b->index_step = 8, then for a length of 20 there are two offset entries
+ * for unicode chars 8 and 16 (zero based).
  */
 static char *get_ucs_off(struct b_ucs *b, int n)
 {
-    int d, r, i;
+    int d, i;
     char *p = StrLoc(b->utf8);
-    /*printf("req: len=%d s=%d n=%d\n",b->length,b->index_step,n);*/
+    /*printf("req: len=%d step=%d n=%d n_indexed=%d\n",b->length,b->index_step,n,b->n_off_indexed);*/
 
     /*
      * Special case of looking up just past the end of the last char.
@@ -2137,20 +2137,33 @@ static char *get_ucs_off(struct b_ucs *b, int n)
     if (n == b->length)
         return p + StrLen(b->utf8);
 
-    d = n / b->index_step;
-    r = n % b->index_step;
+    /*
+     * In the first step range, there is no offset to use.
+     */
+    if (n < b->index_step) {
+        while (n-- > 0)
+            p += UTF8_SEQ_LEN(*p);
+        return p;
+    }
 
     /*
-     * Otherwise, n < b->length.  Hence n <= b->length-1 and 
-     * n/b->index_step <= (b->length-1)/b->step < 1 + (b->length-1)/b->step,
+     * Get the index into off before n
+     */
+    d = n / b->index_step - 1;
+
+    /*
+     * Now b->index_step <= n < b->length.  Hence d >= 0.
+     * Also, n <= b->length-1 and so
+     * d = n/b->index_step - 1 <= (b->length-1)/b->step - 1 < (b->length-1)/b->step,
      * the number of offset slots allocated.
      */
 
     /*
-     * Have we indexed this one already.  If so start at the offset and
+     * Have we indexed this one already?  If so start at the offset and
      * move forwards.
      */
     if (d < b->n_off_indexed) {
+        int r = n % b->index_step;
         p += b->off[d];
         while (r-- > 0)
             p += UTF8_SEQ_LEN(*p);
@@ -2158,43 +2171,28 @@ static char *get_ucs_off(struct b_ucs *b, int n)
     }
 
     /*
-     * Otherwise start at the last offset calculated and move forward, saving
-     * all the intermediate offset points.
+     * Otherwise start at the last offset calculated (if any) and move
+     * forward, saving all the intermediate offset points.
      */
-
-    p += b->off[b->n_off_indexed - 1];
-    i = (b->n_off_indexed - 1) * b->index_step;
-    /* I: 1+(i/b->index_step) = b->n_off_indexed */
+    if (b->n_off_indexed > 0) {
+        p += b->off[b->n_off_indexed - 1];
+        i = b->n_off_indexed * b->index_step;
+    } else
+        i = 0;
+    /* I: i/b->index_step = b->n_off_indexed */
     while (i < n) {
         p += UTF8_SEQ_LEN(*p);
         ++i;
-        /* After incrementing i, 1+((i-1)/b->index_step) = b->n_off_indexed
+        /* After incrementing i, ((i-1)/b->index_step) = b->n_off_indexed
          * But i <= n < b->length, so 
-         *       1+((i-1)/b->index_step) < 1+((b->length-1)/b->index_step)
-         *  so   b->n_off_indexed < 1+((b->length-1)/b->index_step), the allocated size.
+         *       ((i-1)/b->index_step) < ((b->length-1)/b->index_step)
+         *  so   b->n_off_indexed < ((b->length-1)/b->index_step), the allocated size.
          */
-        if (i % b->index_step == 0) {
-            if (b->n_off_indexed >= 1+((b->length-1)/b->index_step))
-                syserr("Out of range");
+        if (i % b->index_step == 0)
             b->off[b->n_off_indexed++] = p - StrLoc(b->utf8);
-        }
     }
 
     return p;
-}
-
-static int calc_index_step(int length)
-{
-    int i = 1;
-    length /= 32;
-    /* Round up to the next power of 2 */
-    while (length > i)
-        i *= 2;
-    if (i < 4)
-        i = 4;
-    else if (i > 256)
-        i = 256;
-    return i;
 }
 
 /*
@@ -2211,14 +2209,13 @@ struct b_ucs *make_ucs_block(dptr utf8, int length)
     if (length == 0)
         return emptystr_ucs;
 
-    index_step = calc_index_step(length);
-    n_offs = 1 + (length - 1) / index_step;
+    index_step = calc_ucs_index_step(length);
+    n_offs = (length - 1) / index_step;
     MemProtect(p = alcucs(n_offs));
     p->index_step = index_step;
     p->utf8 = t;
     p->length = length;
-    p->n_off_indexed = 1;
-    memset(p->off, 0, n_offs * WordSize);
+    p->n_off_indexed = 0;
     return p;
 }
 

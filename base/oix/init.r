@@ -278,8 +278,7 @@ void icon_init(char *name)
     MemProtect(blank_ucs = calloc(sizeof(struct b_ucs), 1));
     blank_ucs->utf8 = blank;
     blank_ucs->length = 1;
-    blank_ucs->off[0] = 0;
-    blank_ucs->n_off_indexed = 1;
+    blank_ucs->n_off_indexed = 0;
     blank_ucs->index_step = 4;
 
     csetdesc.dword = D_Cset;

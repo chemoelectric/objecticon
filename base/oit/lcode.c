@@ -832,8 +832,8 @@ static void lemitcon(struct centry *ce)
         if (length == 0)
             index_step = n_offs = 0;
         else {
-            index_step = 4;
-            n_offs = 1 + (length - 1) / index_step;
+            index_step = calc_ucs_index_step(length);
+            n_offs = (length - 1) / index_step;
         }
 
         if (Dflag) {
@@ -852,14 +852,17 @@ static void lemitcon(struct centry *ce)
         outword(n_offs);
         outword(index_step);
 
+        /* This mirrors the loop in fmisc.r (get_ucs_off) */
         p = utf8->s;
-        for (i = 0; i < length; ++i) {
+        i = 0;
+        while (i < length - 1) {
+            p += UTF8_SEQ_LEN(*p);
+            ++i;
             if (i % index_step == 0) {
                 if (Dflag)
                     fprintf(dbgfile, "\t%d\t\t\t\t#    Off of char %d\n", p - utf8->s, i);
                 outword(p - utf8->s);
             }
-            p += UTF8_SEQ_LEN(*p);
         }
     }
 }

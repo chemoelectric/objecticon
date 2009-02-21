@@ -203,8 +203,8 @@ struct b_ucs {
     struct descrip utf8;	/*   the utf-8 representation */
     word n_off_indexed;         /*   how many offsets entries have already been calculated */
     word index_step;            /*   how many unicode chars between offset entries */
-    word off[1];                /*   offsets: (1 + (length-1) / index_step) are allocated */
-};                              /*         for a non-empty string */
+    word off[1];                /*   offsets: ((length-1) / index_step) are allocated */
+};
 
 struct b_selem {		/* set-element block */
     word title;			/*   T_Selem */
