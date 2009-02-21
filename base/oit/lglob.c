@@ -223,11 +223,7 @@ void readglob(struct lfile *lf)
                     gg.rval = parse_real(data);
                     add_constant(curr_func, k, 0, &gg);
                 }
-                else if (k & F_StrLit) {
-                    gg.sval = data;
-                    add_constant(curr_func, k, len, &gg);
-                }
-                else if (k & F_CsetLit) {
+                else if (k & (F_StrLit | F_CsetLit | F_UcsLit)) {
                     gg.sval = data;
                     add_constant(curr_func, k, len, &gg);
                 }

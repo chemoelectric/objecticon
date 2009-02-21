@@ -267,6 +267,11 @@ static int traverse(t)
             uout_short((int)Val0(t));
             break;
 
+        case N_Ucs:			/* ucs literal */
+            uout_op(Op_Ucs);
+            uout_short((int)Val0(t));
+            break;
+
         case N_Elist:			/* expression list */
             n = traverse(Tree0(t));
             n += traverse(Tree1(t));

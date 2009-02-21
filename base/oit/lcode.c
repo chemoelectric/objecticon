@@ -316,6 +316,7 @@ static void gencode(struct lfile *lf)
                 lemitl(op, lab, name);
                 break;
 
+            case Op_Ucs:
             case Op_Cset:
             case Op_Real:
                 k = uin_short();
@@ -766,6 +767,7 @@ static void lemitcon(struct centry *ce)
         int csbuf[CsetSize];
         int npair = ce->c_length / sizeof(struct range);
         int size = 0;
+        /* Need to alloc not cast because string data might not be aligned */
         struct range *pair = safe_alloc(ce->c_length);
         memcpy(pair, ce->c_val.sval, ce->c_length);
         for (i = 0; i < CsetSize; i++)
@@ -809,6 +811,56 @@ static void lemitcon(struct centry *ce)
         }
 
         free(pair);
+    }
+    else if (ce->c_flag & F_UcsLit) {
+        int index_step, n_offs, length, i;
+        struct strconst *utf8;
+        char *p, *e;
+
+        /* Install the uft8 data */
+        utf8 = inst_strconst(ce->c_val.sval, ce->c_length);
+
+        /* Calculate the length in unicode chars */
+        p = utf8->s;
+        e = p + utf8->len;
+        length = 0;
+        while (p < e) {
+            p += UTF8_SEQ_LEN(*p);
+            ++length;
+        }
+
+        if (length == 0)
+            index_step = n_offs = 0;
+        else {
+            index_step = 4;
+            n_offs = 1 + (length - 1) / index_step;
+        }
+
+        if (Dflag) {
+            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# -T_Ucs\n",(long) pc, -T_Ucs);
+            fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", (7 + n_offs) * WordSize);
+            fprintf(dbgfile, "\t%d\t\t\t\t# Length\n", length);
+            fprintf(dbgfile, "\t%d\tS+%d\t\t\t# UTF8 data\n", utf8->len, utf8->offset);
+            fprintf(dbgfile, "\t%d\t\t\t\t# N indexed\n", n_offs);
+            fprintf(dbgfile, "\t%d\t\t\t\t# Index step\n", index_step);
+        }
+        outword(-T_Ucs);             /* -ve title indicates to Op_Ucs in interp.r to resolve offset */
+        outword((7 + n_offs) * WordSize);
+        outword(length);
+        outword(utf8->len);          /* utf8: length & offset */
+        outword(utf8->offset);       
+        outword(n_offs);
+        outword(index_step);
+
+        p = utf8->s;
+        for (i = 0; i < length; ++i) {
+            if (i % index_step == 0) {
+                if (Dflag)
+                    fprintf(dbgfile, "\t%d\t\t\t\t#    Off of char %d\n", p - utf8->s, i);
+                outword(p - utf8->s);
+            }
+            p += UTF8_SEQ_LEN(*p);
+        }
     }
 }
 

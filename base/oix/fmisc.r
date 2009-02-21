@@ -2127,9 +2127,7 @@ end
  */
 static char *get_ucs_off(struct b_ucs *b, int n)
 {
-    int d = n / b->index_step;
-    int r = n % b->index_step;
-    int i;
+    int d, r, i;
     char *p = StrLoc(b->utf8);
     /*printf("req: len=%d s=%d n=%d\n",b->length,b->index_step,n);*/
 
@@ -2138,6 +2136,9 @@ static char *get_ucs_off(struct b_ucs *b, int n)
      */
     if (n == b->length)
         return p + StrLen(b->utf8);
+
+    d = n / b->index_step;
+    r = n % b->index_step;
 
     /*
      * Otherwise, n < b->length.  Hence n <= b->length-1 and 

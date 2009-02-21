@@ -4,6 +4,8 @@
 # from token description file "tokens.txt" and operator description
 # file "op.txt".
 
+import io
+
 global token, tokval, bflag, eflag, head, oper, tail, count
 global restable, flagtable, op_lst, asgn_loc, semicol_loc, plus_loc, minus_loc
 global white_sp, unary_set
@@ -258,6 +260,12 @@ repeat {
    wrt(toktab, 1, "tfatal(\"invalid character\", (char *)NULL);")
    wrt(toktab, 1, "return -1;")
    wrt(toktab, 1, "}")
+
+   close(tokfile)
+   close(opfile)
+   close(toktab)
+   close(tok_dot_h)
+
 end
 
 procedure makeline(token,tokval,flag,count)	# build an output line for token table.
@@ -372,7 +380,7 @@ procedure unary_str(op)
 end
 
 procedure err(file, line, msg)
-   stop(&errout, "file: ", file, ", line: ", line, " - ", msg)
+   stop("file: ", file, ", line: ", line, " - ", msg)
 end
 
 procedure build_trie(ops)

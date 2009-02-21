@@ -37,7 +37,8 @@ extern struct toktab *restab[];	/* reserved word index */
 #define T_Real		&toktab[2]
 #define T_String	&toktab[3]
 #define T_Cset		&toktab[4]
-#define T_Eof		&toktab[5]
+#define T_Ucs 		&toktab[5]
+#define T_Eof		&toktab[6]
 
 /*
  * t_flags values for token table.

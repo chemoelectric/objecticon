@@ -86,7 +86,7 @@ struct ucode_op ucode_op_table[] = {
     /*  76 */         { Op_Sdup, "sdup", {0,0,0}, "\t%-12s" },                 
     /*  77 */         { Op_Str, "str", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                  
     /*  78 */         { Op_Unmark, "unmark", {0,0,0}, "\t%-12s" },             
-    /*  79 */         INVALID,                                    
+    /*  79 */         { Op_Ucs, "ucs", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                
     /*  80 */         { Op_Var, "var", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                  
     /*  81 */         { Op_Arg, "arg", {0,0,0}, "\t%-12s" },                   
     /*  82 */         { Op_Static, "static", {0,0,0}, "\t%-12s" },             

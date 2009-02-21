@@ -69,6 +69,7 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Conj		10		/* conjunction operator */
 #define N_Create	11		/* create control structure */
 #define N_Cset		12		/* cset literal */
+#define N_Ucs 		13		/* ucs literal */
 #define N_Elist		14		/* list of expressions */
 #define N_Empty		15		/* empty expression or statement */
 #define N_Field		16		/* record field reference */
@@ -103,6 +104,7 @@ extern struct node tok_loc;     /* "model" token holding current location */
  */
 
 #define CsetNode(a,b)		i_str_leaf(N_Cset,&tok_loc,a,b) 
+#define UcsNode(a,b)		i_str_leaf(N_Ucs,&tok_loc,a,b) 
 #define IdNode(a)		c_str_leaf(N_Id,&tok_loc,a) 
 #define IntNode(a)		c_str_leaf(N_Int,&tok_loc,a) 
 #define OpNode(a)		int_leaf(N_Op,&tok_loc,optab[a].tok.t_type) 

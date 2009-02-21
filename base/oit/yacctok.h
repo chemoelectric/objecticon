@@ -11,6 +11,7 @@
 %token	REALLIT
 %token	STRINGLIT
 %token	CSETLIT
+%token	UCSLIT
 %token	EOFX
 
 /* reserved words */

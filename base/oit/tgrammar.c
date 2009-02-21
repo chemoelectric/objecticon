@@ -133,6 +133,7 @@ int modflag;
 #define Method2(x1,x2,x3,x4)    curr_func->code = tree6(N_Proc,x1,x1,x2,x3,x4)
 
 #define Cliter(x)		Val0(x) = putlit(Str0(x),F_CsetLit,(int)Val1(x))
+#define Uliter(x)		Val0(x) = putlit(Str0(x),F_UcsLit,(int)Val1(x))
 #define Colon(x)		$$ = x
 #define Compound(x1,x2,x3)	$$ = tree4(N_Slist,x2,x1,x3) 
 #define Create(x1,x2)		$$ = tree3(N_Create,x1,x2) 

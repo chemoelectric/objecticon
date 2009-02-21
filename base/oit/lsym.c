@@ -75,11 +75,7 @@ void add_constant(struct lfunction *func,
     if (flags & F_IntLit) {
         p->c_val.ival = valp->ival;
     }
-    else if (flags & F_StrLit) {
-        p->c_val.sval = valp->sval;
-        p->c_length = len;
-    }
-    else if (flags & F_CsetLit) {
+    else if (flags & (F_StrLit | F_CsetLit | F_UcsLit)) {
         p->c_val.sval = valp->sval;
         p->c_length = len;
     }

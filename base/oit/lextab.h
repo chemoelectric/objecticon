@@ -18,48 +18,49 @@ struct toktab toktab[] = {
    { "real-literal",     REALLIT,       Beginner+Ender},   /*   2 */
    { "string-literal",   STRINGLIT,     Beginner+Ender},   /*   3 */
    { "cset-literal",     CSETLIT,       Beginner+Ender},   /*   4 */
-   { "end-of-file",      EOFX,          0},                /*   5 */
+   { "ucs-literal",      UCSLIT,        Beginner+Ender},   /*   5 */
+   { "end-of-file",      EOFX,          0},                /*   6 */
 
    /* reserved words */
-   { "break",            BREAK,         Beginner+Ender},   /*   6 */
-   { "by",               BY,            0},                /*   7 */
-   { "case",             CASE,          Beginner},         /*   8 */
-   { "class",            CLASS,         0},                /*   9 */
-   { "const",            CONST,         0},                /*  10 */
-   { "create",           CREATE,        Beginner},         /*  11 */
-   { "default",          DEFAULT,       Beginner},         /*  12 */
-   { "defer",            DEFER,         0},                /*  13 */
-   { "do",               DO,            0},                /*  14 */
-   { "else",             ELSE,          0},                /*  15 */
-   { "end",              END,           Beginner},         /*  16 */
-   { "every",            EVERY,         Beginner},         /*  17 */
-   { "fail",             FAIL,          Beginner+Ender},   /*  18 */
-   { "final",            FINAL,         0},                /*  19 */
-   { "global",           GLOBAL,        0},                /*  20 */
-   { "if",               IF,            Beginner},         /*  21 */
-   { "import",           IMPORT,        0},                /*  22 */
-   { "initial",          INITIAL,       0},                /*  23 */
-   { "invocable",        INVOCABLE,     0},                /*  24 */
-   { "link",             LINK,          0},                /*  25 */
-   { "local",            LOCAL,         0},                /*  26 */
-   { "next",             NEXT,          Beginner+Ender},   /*  27 */
-   { "not",              NOT,           Beginner},         /*  28 */
-   { "of",               OF,            0},                /*  29 */
-   { "package",          PACKAGE,       0},                /*  30 */
-   { "private",          PRIVATE,       0},                /*  31 */
-   { "procedure",        PROCEDURE,     0},                /*  32 */
-   { "protected",        PROTECTED,     0},                /*  33 */
-   { "public",           PUBLIC,        0},                /*  34 */
-   { "readable",         READABLE,      0},                /*  35 */
-   { "record",           RECORD,        0},                /*  36 */
-   { "repeat",           REPEAT,        Beginner},         /*  37 */
-   { "return",           RETURN,        Beginner+Ender},   /*  38 */
-   { "static",           STATIC,        0},                /*  39 */
-   { "suspend",          SUSPEND,       Beginner+Ender},   /*  40 */
-   { "then",             THEN,          0},                /*  41 */
-   { "to",               TO,            0},                /*  42 */
-   { "until",            UNTIL,         Beginner},         /*  43 */
-   { "while",            WHILE,         Beginner},         /*  44 */
+   { "break",            BREAK,         Beginner+Ender},   /*   7 */
+   { "by",               BY,            0},                /*   8 */
+   { "case",             CASE,          Beginner},         /*   9 */
+   { "class",            CLASS,         0},                /*  10 */
+   { "const",            CONST,         0},                /*  11 */
+   { "create",           CREATE,        Beginner},         /*  12 */
+   { "default",          DEFAULT,       Beginner},         /*  13 */
+   { "defer",            DEFER,         0},                /*  14 */
+   { "do",               DO,            0},                /*  15 */
+   { "else",             ELSE,          0},                /*  16 */
+   { "end",              END,           Beginner},         /*  17 */
+   { "every",            EVERY,         Beginner},         /*  18 */
+   { "fail",             FAIL,          Beginner+Ender},   /*  19 */
+   { "final",            FINAL,         0},                /*  20 */
+   { "global",           GLOBAL,        0},                /*  21 */
+   { "if",               IF,            Beginner},         /*  22 */
+   { "import",           IMPORT,        0},                /*  23 */
+   { "initial",          INITIAL,       0},                /*  24 */
+   { "invocable",        INVOCABLE,     0},                /*  25 */
+   { "link",             LINK,          0},                /*  26 */
+   { "local",            LOCAL,         0},                /*  27 */
+   { "next",             NEXT,          Beginner+Ender},   /*  28 */
+   { "not",              NOT,           Beginner},         /*  29 */
+   { "of",               OF,            0},                /*  30 */
+   { "package",          PACKAGE,       0},                /*  31 */
+   { "private",          PRIVATE,       0},                /*  32 */
+   { "procedure",        PROCEDURE,     0},                /*  33 */
+   { "protected",        PROTECTED,     0},                /*  34 */
+   { "public",           PUBLIC,        0},                /*  35 */
+   { "readable",         READABLE,      0},                /*  36 */
+   { "record",           RECORD,        0},                /*  37 */
+   { "repeat",           REPEAT,        Beginner},         /*  38 */
+   { "return",           RETURN,        Beginner+Ender},   /*  39 */
+   { "static",           STATIC,        0},                /*  40 */
+   { "suspend",          SUSPEND,       Beginner+Ender},   /*  41 */
+   { "then",             THEN,          0},                /*  42 */
+   { "to",               TO,            0},                /*  43 */
+   { "until",            UNTIL,         Beginner},         /*  44 */
+   { "while",            WHILE,         Beginner},         /*  45 */
    { "end-of-file",      0,             0},
    };
 
@@ -69,12 +70,12 @@ struct toktab toktab[] = {
  */
 
 struct toktab *restab[] = {
-   NULL,        &toktab[ 6], &toktab[ 8], &toktab[12], /* 61-64 abcd */
-   &toktab[15], &toktab[18], &toktab[20], NULL,        /* 65-68 efgh */
-   &toktab[21], NULL,        NULL,        &toktab[25], /* 69-6C ijkl */
-   NULL,        &toktab[27], &toktab[29], &toktab[30], /* 6D-70 mnop */
-   NULL,        &toktab[35], &toktab[39], &toktab[41], /* 71-74 qrst */
-   &toktab[43], NULL,        &toktab[44], NULL,        /* 75-78 uvwx */
+   NULL,        &toktab[ 7], &toktab[ 9], &toktab[13], /* 61-64 abcd */
+   &toktab[16], &toktab[19], &toktab[21], NULL,        /* 65-68 efgh */
+   &toktab[22], NULL,        NULL,        &toktab[26], /* 69-6C ijkl */
+   NULL,        &toktab[28], &toktab[30], &toktab[31], /* 6D-70 mnop */
+   NULL,        &toktab[36], &toktab[40], &toktab[42], /* 71-74 qrst */
+   &toktab[44], NULL,        &toktab[45], NULL,        /* 75-78 uvwx */
    NULL,        NULL,                                  /* 79-7A yz */
    };
 

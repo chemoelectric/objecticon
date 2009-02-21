@@ -521,7 +521,7 @@ int noimage;
          i = BlkLoc(*dp)->ucs.length;
          s = StrLoc(BlkLoc(*dp)->ucs.utf8);
          j = Min(i, StringLimit);
-         fprintf(f, "ucs(\"");
+         fprintf(f, "u\"");
          while (j-- > 0) {
              int n;
              k = utf8_iter(&s);
@@ -530,7 +530,7 @@ int noimage;
          }
          if (i > StringLimit)
              fprintf(f, "...");
-         fprintf(f, "\")");
+         fprintf(f, "\"");
          }
 
       null:
@@ -803,7 +803,7 @@ int noimage;
              i = bp->tvsubs.sslen;
              s = StrLoc(utf8_subs);
              j = Min(i, StringLimit);
-             fprintf(f, " = ucs(\"");
+             fprintf(f, " = u\"");
              while (j-- > 0) {
                  int n;
                  k = utf8_iter(&s);
@@ -812,7 +812,7 @@ int noimage;
              }
              if (i > StringLimit)
                  fprintf(f, "...");
-             fprintf(f, "\")");
+             fprintf(f, "\"");
                                          
          }
          else if (Qual(*dp)) {
@@ -1150,13 +1150,13 @@ dptr dp1, dp2;
       ucs: {
          s = StrLoc(BlkLoc(source)->ucs.utf8);
          i = BlkLoc(source)->ucs.length;
-         len = 7;  /* ucs("") */
+         len = 3;  /* u"" */
          while (i-- > 0) {
              j = utf8_iter(&s);
              len += ucs_charstr(j, 0);
          }
 	 MemProtect(reserve(Strings, len));
-         MemProtect(t = alcstr("ucs(\"", 5));
+         MemProtect(t = alcstr("u\"", 2));
          StrLoc(*dp2) = t;
          StrLen(*dp2) = len;
              
@@ -1169,7 +1169,7 @@ dptr dp1, dp2;
              MemProtect(alcstr(cbuf, n));
          }
 
-         MemProtect(alcstr("\")", 2));
+         MemProtect(alcstr("\"", 1));
          }
 
       null: {

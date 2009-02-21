@@ -218,20 +218,6 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
     return b;
 }
 
-static struct b_ucs *make_static_ucs_block(dptr utf8, int length)
-{
-    struct b_ucs *p;
-    int i, j, n;
-    MemProtect(p = calloc(sizeof(struct b_ucs), 1));
-    p->utf8 = *utf8;
-    p->length = length;
-    p->off[0] = 0;
-    p->n_off_indexed = 1;
-    p->index_step = 4;
-    if (p->length > p->index_step)
-        syserr("make_static_ucs_block: too long");
-    return p;
-}
 
 /*
  * init/icon_init - initialize memory and prepare for Icon execution.
@@ -283,8 +269,18 @@ void icon_init(char *name)
     rparcs = make_static_cset_block(1, ')', ')');
     blankcs = make_static_cset_block(1, ' ', ' ');
 
-    emptystr_ucs = make_static_ucs_block(&emptystr, 0);
-    blank_ucs = make_static_ucs_block(&blank, 1);
+    MemProtect(emptystr_ucs = calloc(sizeof(struct b_ucs), 1));
+    emptystr_ucs->utf8 = emptystr;
+    emptystr_ucs->length = 0;
+    emptystr_ucs->n_off_indexed = 0;
+    emptystr_ucs->index_step = 0;
+
+    MemProtect(blank_ucs = calloc(sizeof(struct b_ucs), 1));
+    blank_ucs->utf8 = blank;
+    blank_ucs->length = 1;
+    blank_ucs->off[0] = 0;
+    blank_ucs->n_off_indexed = 1;
+    blank_ucs->index_step = 4;
 
     csetdesc.dword = D_Cset;
     BlkLoc(csetdesc) = (union block *)k_cset;

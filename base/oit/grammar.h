@@ -303,6 +303,7 @@ literal	: INTLIT {Iliter($1);} ;
 	| REALLIT {Rliter($1);} ;
 	| STRINGLIT {Sliter($1);} ;
 	| CSETLIT {Cliter($1);} ;
+	| UCSLIT {Uliter($1);} ;
 
 section	: expr11 LBRACK expr sectop expr RBRACK {Section($1,$2,$3,$4,$5,$6);} ;
 

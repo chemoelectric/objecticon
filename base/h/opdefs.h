@@ -88,6 +88,7 @@
 #define Op_Sdup   	 76
 #define Op_Str    	 77
 #define Op_Unmark 	 78
+#define Op_Ucs           79
 #define Op_Var    	 80
 #define Op_Arg		 81
 #define Op_Static	 82
@@ -111,6 +112,7 @@
 #define Op_Astatic	 94
 #define Op_Agoto	 95
 #define Op_Amark	 96
+#define Op_Aucs 	 97
 
 
 #define Op_Noop		 98

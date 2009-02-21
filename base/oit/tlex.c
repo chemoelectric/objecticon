@@ -29,6 +29,7 @@ static	struct toktab   *findres	(void);
 static	struct toktab   *getident	(int ac,int *cc);
 static	struct toktab   *getnum		(int ac,int *cc);
 static	struct toktab   *getstring	(int ac,int *cc);
+static	struct toktab   *getucs     	(int ac,int *cc);
 static	struct toktab   *getcset	(int ac,int *cc);
 static	int		setfilenm	(int c);
 static	int		setlineno	(void);
@@ -162,7 +163,18 @@ int yylex()
      *  is next and take the appropriate action.  Note that the various
      *  token gathering routines write a value into cc.
      */
-    if (isalpha(c) || (c == '_')) {   /* gather ident or reserved word */
+    if (c == 'u' || c == 'U') {
+        int c1 = NextChar;
+        if (c1 == '"') {
+            if ((t = getucs(c1, &cc)) == NULL)
+                goto loop;
+        } else {
+            PushChar(c1);
+            if ((t = getident(c, &cc)) == NULL)
+                goto loop;
+        }
+    }
+    else if (isalpha(c) || (c == '_')) {   /* gather ident or reserved word */
         if ((t = getident(c, &cc)) == NULL)
             goto loop;
     }
@@ -460,6 +472,98 @@ static struct toktab *getstring(ac, cc)
     len = lex_sbuf.endimage - lex_sbuf.strtimage;
     yylval = StrNode(str_install(&lex_sbuf), len);
     return T_String;
+}
+
+/*
+ * getstring - gather a ucs string literal starting with ac and place the
+ *  character following the literal in *cc.
+ */
+static struct toktab *getucs(ac, cc)
+    int ac;
+    int *cc;
+{
+    int c, i, n;
+    int len;
+    char utf8[MAX_UTF8_SEQ_LEN];
+    char *p;
+
+    c = NextChar;
+    while (c != '"' && c != '\n' && c != EOF) {
+        /*
+         * If a '_' is the last before a new-line, skip over any whitespace.
+         */
+        if (c == '_') {
+            int t = NextChar;
+            if (t == '\n' || t == '\r') {
+                while ((c = NextChar) != EOF && isspace(c))
+                    ;
+                continue;
+            } else
+                PushChar(t);
+        }
+
+        if (c == Escape) {
+            c = NextChar;
+            if (c == EOF)
+                break;
+            if (isoctal(c))
+                AppChar(lex_sbuf, octesc(c));
+            else if (c == 'x')
+                AppChar(lex_sbuf, hexesc(2));
+            else if (c == 'u') {
+                c = hexesc(4);
+                n = utf8_seq(c, utf8);
+                for (i = 0; i < n; ++i)
+                    AppChar(lex_sbuf, utf8[i]);
+            }
+            else if (c == 'U') {
+                c = hexesc(6);
+                if (c > MAX_CODE_POINT) {
+                    tfatal("code point out of range");
+                    c = 0;
+                }
+                n = utf8_seq(c, utf8);
+                for (i = 0; i < n; ++i)
+                    AppChar(lex_sbuf, utf8[i]);
+            }
+            else if (c == '^')
+                AppChar(lex_sbuf, ctlesc());
+            else
+                AppChar(lex_sbuf, esctab[c]);
+        } else {
+            if (uflag && c > 127) {
+                n = utf8_seq(c, utf8);
+                for (i = 0; i < n; ++i)
+                    AppChar(lex_sbuf, utf8[i]);
+            } else
+                AppChar(lex_sbuf, c);
+        }
+
+        c = NextChar;
+    }
+    if (c == '"')
+        *cc = ' ';
+    else {
+        tfatal("unclosed quote");
+        *cc = c;
+    }
+
+    /*
+     * Validate the utf-8.
+     */
+    p = lex_sbuf.strtimage;
+    while (p < lex_sbuf.endimage) {
+        char *t = p;
+        int i = utf8_check(&p, lex_sbuf.endimage);
+        if (i < 0 || i > MAX_CODE_POINT) {
+            tfatal("Invalid utf-8 at sequence beginning at char %d", 1 + (t - lex_sbuf.strtimage));
+            break;
+        }
+    }
+
+    len = lex_sbuf.endimage - lex_sbuf.strtimage;
+    yylval = UcsNode(str_install(&lex_sbuf), len);
+    return T_Ucs;
 }
 
 

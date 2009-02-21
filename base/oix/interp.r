@@ -453,6 +453,29 @@ fflush(stdout);
 	    InterpEVValD((dptr)(rsp-1), e_literal);
 	    break;
 
+         case Op_Ucs: {		/* ucs */
+            struct b_ucs *bp;
+	    PutOp(Op_Aucs);
+	    PushVal(D_Ucs);
+	    opnd = GetWord;
+	    opnd += (word)ipc.opnd;
+	    PutWord(opnd);
+	    PushAVal(opnd);
+            bp = (struct b_ucs *)opnd;
+            if (bp->title < 0) {  /* -ve title means we must resolve the utf8 pointer */
+                bp->title = -bp->title;
+                StrLoc(bp->utf8) = strcons + (uword)StrLoc(bp->utf8);
+            }
+	    InterpEVValD((dptr)(rsp-1), e_literal);
+	    break;
+         }
+
+	 case Op_Aucs: 	/* ucs, absolute address */
+	    PushVal(D_Ucs);
+	    PushAVal(GetWord);
+	    InterpEVValD((dptr)(rsp-1), e_literal);
+	    break;
+
 	 case Op_Int:		/* integer */
 	    PushVal(D_Integer);
 	    PushVal(GetWord);
