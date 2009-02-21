@@ -508,6 +508,26 @@ static void ensure_rangeset_size(struct rangeset *rs, int n)
     rs->temp = safe_realloc(rs->temp, rs->n_alloc * sizeof(struct range));
 }
 
+/*
+ * Does the rangeset have a range which includes the given from-to.
+ */
+static int has_range(struct rangeset *rs, int from, int to)
+{
+    int l, r, m;
+    l = 0;
+    r = rs->n_ranges - 1;
+    while (l <= r) {
+        m = (l + r) / 2;
+        if (from < rs->range[m].from)
+            r = m - 1;
+        else if (from > rs->range[m].to)
+            l = m + 1;
+        else  /* from >= rs->range[m].from && from <= rs->range[m].to */
+            return to <= rs->range[m].to;
+    }
+    return 0;
+}
+
 void add_range(struct rangeset *rs, int from, int to)
 {
     int i, n;
@@ -530,8 +550,17 @@ void add_range(struct rangeset *rs, int from, int to)
         return;
     }
 
+    /*
+     * Use binary search to see if this range is already contained within
+     * an existing range; if so no need to do anything.
+     */
+    if (has_range(rs, from, to))
+        return;
+
     /* Allocates room for rs->n_ranges + 1 ranges: it can grow by at most one range */
     ensure_rangeset_size(rs, (1 + rs->n_ranges));
+
+    /* Merge the new range with existing ranges */
     n = 0;
     new.from = from;
     new.to = to;
@@ -542,6 +571,8 @@ void add_range(struct rangeset *rs, int from, int to)
             rs->temp[n++] = rs->range[i];
         }
     }
+
+    /* Add the new range and any remaining old ones */
     rs->temp[n++] = new;
     for (; i < rs->n_ranges; ++i)
         rs->temp[n++] = rs->range[i];
@@ -559,8 +590,7 @@ void print_rangeset(struct rangeset *rs)
 {
     int i ;
     for (i = 0; i < rs->n_ranges; ++i)
-        printf("%d   %d(%c) - %d(%c)\n", i, rs->range[i].from, (char)rs->range[i].from,
-               rs->range[i].to, (char)rs->range[i].to);
+        printf("%d   %d - %d\n", i, rs->range[i].from, rs->range[i].to);
 }
 
 /*
@@ -850,3 +880,17 @@ utf8_seq_len_arr[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         -1,-1,-1,-1,-1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
         2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,
         5,5,5,5,6,6,-1,-1};
+
+int calc_ucs_index_step(int length)
+{
+    int i = 1;
+    length /= 32;
+    /* Round up to the next power of 2 */
+    while (length > i)
+        i *= 2;
+    if (i < 8)
+        i = 8;
+    else if (i > 256)
+        i = 256;
+    return i;
+}
