@@ -6,6 +6,7 @@
 %token	REALLIT
 %token	STRINGLIT
 %token	CSETLIT
+%token	UCSLIT
 %token	EOFX
 
 /* reserved words */
@@ -433,6 +434,7 @@ literal	: INTLIT ;
 	| REALLIT ;
 	| STRINGLIT ;
 	| CSETLIT ;
+	| UCSLIT ;
 
 section	: expr11 LBRACK expr sectop expr RBRACK { $$ := Node("section", $1,$2,$3,$4,$5,$6);} ;
 

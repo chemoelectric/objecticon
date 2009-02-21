@@ -176,13 +176,16 @@ class UConst()
       # literal is a string 
       F_StrLit,
       # literal is a cset 
-      F_CsetLit
+      F_CsetLit,
+      # literal is a ucs 
+      F_UcsLit
 
    private static init()
       F_IntLit := 8r02000
       F_RealLit := 8r04000
       F_StrLit := 8r010000
       F_CsetLit := 8r020000
+      F_UcsLit := 8r040000
    end
 
    package new(val, flags)

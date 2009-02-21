@@ -123,6 +123,7 @@ procedure yylex2()
       punc_table[";"] := do_semi
       every punc_table[!&digits] := do_digits
       every punc_table["_" | !&letters] := do_letters
+      every punc_table["u"|"U"] := do_u
    }
 
    yycolno +:= *yytext
@@ -160,6 +161,31 @@ procedure yylex2()
 
       yytext := move(1)
       return punc_table[yytext]()
+   }
+end
+
+procedure do_u()
+   if yytext ||:= ="\"" then {
+      until yytext ||:= ="\"" do {
+         yytext ||:= ="\\"
+         # need more logic here to eat escape chars
+         yytext ||:= move(1)
+         if yytext[-1] == "\n" then {
+            if not yytext[-2] == "_" then {
+               ewrite("unterminated string constant")
+            }
+            else {
+               yylineno +:= 1
+               yycolno := 1
+               yytext := yytext[1:-2]
+               tab(many(' \t'))
+            }
+         }
+      }
+      tokflags +:= Beginner + Ender
+      return UCSLIT
+   } else {
+      return do_letters()
    }
 end
 
