@@ -9,10 +9,6 @@
 
 int over_flow = 0;
 
-#ifdef DataParallel
-int list_add(dptr x, dptr y, dptr z);
-#endif					/* DataParallel */
-
 #begdef ArithOp(icon_op, func_name, c_int_op, c_real_op, c_list_op)
 
    operator{1} icon_op func_name(x, y)
@@ -20,15 +16,6 @@ int list_add(dptr x, dptr y, dptr z);
          tended struct descrip lx, ly;
 	 C_integer irslt;
          }
-#ifdef DataParallel
-      if is:list(x) then {
-         abstract {
-            return type(x) ++ type(y)
-	    }
-	 inline { c_list_op(&x, &y, &result); return result; }
-         }
-      else
-#endif					/* DataParallel */
       arith_case (x, y) of {
          C_integer: {
             abstract {
@@ -328,84 +315,6 @@ end
 #define RealAdd(x,y) return C_double (x + y);
 
 ArithOp( + , plus , Add , RealAdd, list_add )
-
-#ifdef DataParallel
-
-int list_add(dptr x, dptr y, dptr z)
-{
-   tended struct b_list *lp1;
-   tended struct b_lelem *bp1;
-   tended struct descrip lx, ly;
-   struct descrip *slotptr;
-   word size1, size2;
-   word i, j, slot;
-   if (is:list(*x) && is:list(*y)) {
-      size1 = BlkLoc(*x)->list.size;
-      size2 = BlkLoc(*y)->list.size;
-      if (size1 != size2) return Error;
-      if (cplist(x, z, (word)1, size1 + 1) == Error)
-         return Error;
-      /* add in values from y */
-
-      lp1 = (struct b_list *) BlkLoc(*y);
-      bp1 = (struct b_lelem *) lp1->listhead;
-      i = 1;
-      slot = 0;
-      while (size2 > 0) {
-         j = bp1->first + i - 1;
-         if (j >= bp1->nslots)
-            j -= bp1->nslots;
-         slotptr = BlkLoc(*z)->list.listhead->lelem.lslots + slot++;
-         list_add(slotptr, bp1->lslots+j, slotptr);
-         if (++i > bp1->nused) {
-            i = 1;
-            bp1 = (struct b_lelem *) bp1->listnext;
-            }
-         size2--;
-         }
-      }
-   else if (is:list(*x)) {
-      /* x a list, y a scalar */
-      size1 = BlkLoc(*x)->list.size;
-      if (cplist(x, z, (word)1, size1 + 1) == Error)
-         return Error;
-      for (i=0; i<size1; i++) {
-         slotptr = BlkLoc(*z)->list.listhead->lelem.lslots + i;
-         list_add(slotptr, y, slotptr);
-	 }
-      }
-   else if (is:list(*y)) {
-      /* y a list, x a scalar */
-      size1 = BlkLoc(*y)->list.size;
-      if (cplist(y, z, (word)1, size1 + 1) == Error)
-         return Error;
-      for (i=0; i<size1; i++) {
-         slotptr = BlkLoc(*z)->list.listhead->lelem.lslots + i;
-         list_add(slotptr, x, slotptr);
-	 }
-      }
-   else {
-      C_integer tmp, tmp2, irslt;
-      double tmp3, tmp4;
-      /* x, y must be numeric */
-      if (cnv:(exact)C_integer(*x, tmp) && cnv:(exact)C_integer(*y, tmp2)) {
-         irslt = add(tmp,tmp2);
-	 if (over_flow) {
-            MakeInt(x,&lx);
-            MakeInt(y,&ly);
-            if (bigadd(&lx, &ly, z) == Error)  /* alcbignum failed */
-               return Error;
-	    }
-	 else MakeInt(irslt, z);
-         }
-      else if (cnv:C_double(*x, tmp3) && cnv:C_double(*y, tmp4)) {
-         }
-      else return Error;
-      }
-   return Succeeded;
-}
-#endif					/* DataParallel */
-
 
 
 

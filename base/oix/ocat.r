@@ -4,6 +4,10 @@
 "x || y - concatenate strings x and y." 
 
 operator{1} || cater(x, y)
+   if !cnv:string_or_ucs(x) then
+      runerr(129,x)
+   if !cnv:string_or_ucs(y) then
+      runerr(129,y)
    body {
      if (is:ucs(x) || is:ucs(y)) {
          tended struct descrip utf8_x;
@@ -62,10 +66,7 @@ operator{1} || cater(x, y)
          }
          return ucs(make_ucs_block(&utf8, BlkLoc(x)->ucs.length + BlkLoc(y)->ucs.length));
      } else {
-         if (!cnv:string(x,x))
-             runerr(103, x);
-         if (!cnv:string(y,y))
-             runerr(103, y);
+         /* Neither ucs, so both args must be strings */
 
          /*
           *  Optimization 0:  Check for zero-length operands.

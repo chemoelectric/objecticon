@@ -85,8 +85,8 @@ display(,[]) | monitor(&line) ----> 32
 
 error in line 34:
    &error = -14
-   &errornumber = 103
-   &errortext = "string expected"
+   &errornumber = 129
+   &errortext = "string or ucs expected"
    &errorvalue = list#*(0)
 ([] ~== "x") | monitor(&line) ----> 34
 
@@ -203,8 +203,8 @@ error in line 70:
 
 error in line 76:
    &error = -31
-   &errornumber = 103
-   &errortext = "string expected"
+   &errornumber = 129
+   &errortext = "string or ucs expected"
    &errorvalue = function numeric
 (&lcase || numeric) | monitor(&line) ----> 76
 
@@ -301,8 +301,8 @@ error in line 106:
 
 error in line 108:
    &error = -45
-   &errornumber = 103
-   &errortext = "string expected"
+   &errornumber = 129
+   &errortext = "string or ucs expected"
    &errorvalue = &null
 (s >>:= 0) | monitor(&line) ----> 108
 

@@ -96,6 +96,10 @@ NumComp( ~=, numne, NumNe, not equal to)
 #begdef StrComp(icon_op, func_name, special_test_str, special_test_ucs, c_comp, comp_value, descript)
 "x " #icon_op " y - test if x is lexically " #descript " y."
 operator{0,1} icon_op func_name(x,y)
+   if !cnv:string_or_ucs(x) then
+      runerr(129,x)
+   if !cnv:string_or_ucs(y) then
+      runerr(129,y)
    body {
      if (is:ucs(x) || is:ucs(y)) {
          if (!cnv:ucs(x,x))
@@ -112,10 +116,7 @@ operator{0,1} icon_op func_name(x,y)
          else
              fail;
      } else {
-         if (!cnv:string(x,x))
-             runerr(103, x);
-         if (!cnv:string(y,y))
-             runerr(103, y);
+         /* Neither ucs, so both args must be strings */
 
          /*
           * lexcmp does the work.
