@@ -3,9 +3,6 @@
  */
 
 #include "icont.h"
-#undef T_Real
-#undef T_String
-#undef T_Cset
 #include "ttoken.h"
 #include "tsym.h"
 #include "tmem.h"
@@ -555,8 +552,12 @@ static struct toktab *getucs(ac, cc)
     while (p < lex_sbuf.endimage) {
         char *t = p;
         int i = utf8_check(&p, lex_sbuf.endimage);
+        if (i == -1) {
+            tfatal("Invalid utf-8 sequence beginning at char %d", 1 + (t - lex_sbuf.strtimage));
+            break;
+        }
         if (i < 0 || i > MAX_CODE_POINT) {
-            tfatal("Invalid utf-8 at sequence beginning at char %d", 1 + (t - lex_sbuf.strtimage));
+            tfatal("utf-8 code point out of range beginning at char %d", 1 + (t - lex_sbuf.strtimage));
             break;
         }
     }
@@ -844,7 +845,7 @@ static int read_utf_char(int c)
     int i, n = UTF8_SEQ_LEN(c);
     if (n < 1) {
         tfatal("invalid utf-8 start char");
-        return EOF;
+        return ' ';  /* Returning space keeps down follow-through error messages */
     }
     utf8[0] = c;
     for (i = 1; i < n; ++i) {
@@ -856,11 +857,11 @@ static int read_utf_char(int c)
     c = utf8_check(&p, utf8 + n);
     if (c == -1) {
         tfatal("invalid utf-8 sequence");
-        return EOF;
+        return ' ';
     }
     if (c < 0 || c > MAX_CODE_POINT) {
         tfatal("utf-8 code point out of range");
-        return EOF;
+        return ' ';
     }
 
     return c;
