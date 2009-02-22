@@ -282,8 +282,7 @@ union numeric *result;          /* output T_Integer or T_Lrgint */
  *  bignum -> real
  */
 
-double bigtoreal(da)
-dptr da;
+int bigtoreal(dptr da, double *d)
 {
    word i;
    double r = 0;
@@ -291,8 +290,16 @@ dptr da;
 
    for (i = b->msd; i <= b->lsd; i++)
       r = r * B + b->digits[i];
+   
+   /* Check for "inf" */
+   if (r > DBL_MAX)
+       return CvtFail;
 
-   return (b->sign ? -r : r);
+   if (b->sign)
+       r = -r;
+
+   *d = r;
+   return Succeeded;
 }
 
 /*
@@ -323,6 +330,12 @@ dptr da, dx;
 		*rq = *rp;
 	}
 #endif					/* Double */
+
+   /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of
+    * blen below, which causes a segfault.
+    */
+   if (x > DBL_MAX || x < -DBL_MAX)
+       return CvtFail;
 
    if (x > 0.9999 * MinLong && x < 0.9999 * MaxLong) {
       MakeInt((word)x, dx);

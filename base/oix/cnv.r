@@ -54,10 +54,10 @@ double *d;
          }
       integer: {
 
-         if (Type(*s) == T_Lrgint)
-            *d = bigtoreal(s);
-         else
-
+         if (Type(*s) == T_Lrgint) {
+            if (bigtoreal(s, d) != Succeeded)
+               return 0;
+         } else
             *d = IntVal(*s);
 
          return 1;
@@ -89,7 +89,8 @@ double *d;
       case T_Lrgint:
          result.dword = D_Lrgint;
 	 BlkLoc(result) = (union block *)numrc.big;
-         *d = bigtoreal(&result);
+         if (bigtoreal(&result, d) != Succeeded)
+             return 0;
          return 1;
 
       case T_Real:

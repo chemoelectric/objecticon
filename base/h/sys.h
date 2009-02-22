@@ -16,6 +16,7 @@
 #include <time.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <float.h>
 
 /*
  * Operating-system-dependent includes.

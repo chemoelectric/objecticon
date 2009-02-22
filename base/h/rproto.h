@@ -178,7 +178,7 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    struct b_bignum *alcbignum_1	(word n);
    word		bigradix	(int sign, int r, char *s, char *x,
 						   union numeric *result);
-   double	bigtoreal	(dptr da);
+   int   	bigtoreal	(dptr da, double *d);
    int		realtobig	(dptr da, dptr dx);
    int		bigtos		(dptr da, dptr dx);
    void		bigprint	(FILE *f, dptr da);
