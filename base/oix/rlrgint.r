@@ -290,13 +290,12 @@ int bigtoreal(dptr da, double *d)
 
    for (i = b->msd; i <= b->lsd; i++)
       r = r * B + b->digits[i];
-   
-   /* Check for "inf" */
-   if (r > DBL_MAX)
-       return CvtFail;
-
    if (b->sign)
        r = -r;
+
+   /* Check for inf */
+   if (r > DBL_MAX || r < -DBL_MAX)
+       return CvtFail;
 
    *d = r;
    return Succeeded;
