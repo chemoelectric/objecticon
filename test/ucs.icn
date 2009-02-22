@@ -74,6 +74,22 @@ procedure check_substr(s, l)
    }
 end
 
+procedure test_cat_comp()
+   local s1,s2
+   every s1 := gen_odd() do {
+      every s2 := gen_odd() do {
+         try{image(s1)||"=="||image(s2), s1==s2}
+         try{image(s1)||"||"||image(s2), s1||s2}
+      }
+   }
+end
+
+procedure gen_odd()
+   suspend "abc" | u"abc" | 'abc' | 
+      "abc\u1234" | u"abc\u1234" | 'abc\u1234"' |
+      "abc\xff" | u"abc\u00ff" | 'abc\xff' | "" | u"" | ''
+end
+
 procedure main()
    local p
    every p := [ucs(""),[]] | (|mkstr(32))\50 do {
@@ -82,5 +98,6 @@ procedure main()
       check_assign(p[1],p[2])
       check_substr(p[1],p[2])
    }
+   test_cat_comp()
    write("ok")
 end

@@ -30,10 +30,10 @@ procedure trans(u)
    every i := ord(!u) do {
       if i < 256 then {
          if hasord('A-I', i) then
-            stop("illegal char")
+            stop("illegal char:",i)
          s ||:= char(i)
       } else
-         s ||:= \map[i] | stop("illegal char")
+         s ||:= \map[i] | stop("illegal char:",i)
    }
    return s
 end
@@ -53,7 +53,7 @@ procedure test_lrc()
    cmp_seq{"right",trans(right(s1,50)), right(trans(s1),50,)}
    cmp_seq{"center",trans(center(s1,50)), center(trans(s1),50,)}
 
-   every 1 to 400 do {
+   every 1 to 200 do {
       s1 := mkstr(32)
       s2 := mkstr(10)
       n := ?100
@@ -70,7 +70,7 @@ procedure test_entab()
          32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
          32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,
          100,120,200,220,300,400,500,1000,2000,3000,4000,5000,10000]
-   every 1 to 400 do {
+   every 1 to 200 do {
       s := mkstr(100,l)
       cmp_seq{"entab1",trans(entab(s)), entab(trans(s))}
       cmp_seq{"entab2",trans(entab(s,2,6,9,11,13)), entab(trans(s),2,6,9,11,13)}
@@ -82,7 +82,7 @@ procedure test_detab()
    l := [10,32,32,32,32,32,32,32,32,32,32,
          9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
          100,120,200,220,300,400,500,1000,2000,3000,4000,5000,10000]
-   every 1 to 400 do {
+   every 1 to 200 do {
       s := mkstr(100,l)
       cmp_seq{"detab1",trans(detab(s)), detab(trans(s))}
       cmp_seq{"detab2",trans(detab(s,2,6,9,11,13)), detab(trans(s),2,6,9,11,13)}
@@ -112,7 +112,7 @@ end
 procedure test_map()
    local s1, s2, s3
 
-   every 1 to 400 do {
+   every 1 to 200 do {
       s1 := mkstr(32)
       s2 := mkstr(10)
       s3 := mkstr(10)
@@ -139,7 +139,98 @@ procedure test_trim()
    }
 end
 
+procedure test_find()
+   local s1, s2, s3, i, j
+
+   every 1 to 200 do {
+      s1 := mkstr(32)
+      s2 := s1[?(*s1+1):?(*s1+1)] | stop("no sub")
+      s1 := repl(s1, ?10) 
+      i := ?(*s1+1)
+      j := ?(*s1+1)
+      s3 := mkstr(10)
+      cmp_seq{"find1", find(s2,s1), find(trans(s2),trans(s1))}
+      cmp_seq{"find2", find(s2,s1,i,j), find(trans(s2),trans(s1),i,j)}
+      cmp_seq{"find3", find(s3,s1), find(trans(s3),trans(s1))}
+   }
+   s1 := mkstr(32)
+   cmp_seq{"find4", find(u"",s1), find("",trans(s1))}
+   cmp_seq{"find5", find(u"",u""), find("","")}
+end
+
+procedure test_any_many_upto()
+   local s, c, i, j
+
+   every 1 to 200 do {
+      s := mkstr(32)
+      c := mkstr(5)
+      i := ?(*s+1)
+      j := ?(*s+1)
+      cmp_seq{"any", any(c,s,i,j), any(trans(c),trans(s),i,j)}
+      cmp_seq{"many", many(c,s,i,j), many(trans(c),trans(s),i,j)}
+      cmp_seq{"upto", upto(c,s,i,j), upto(trans(c),trans(s),i,j)}
+   }
+end
+
+procedure test_match()
+   local s1, s2, i, j
+
+   every 1 to 200 do {
+      s1 := mkstr(32)
+      i := ?(*s1+1)
+      j := ?(*s1+1)
+      if i>j then i:=:j
+      s2 := s1[i+:?5] | u""
+      cmp_seq{"match1", match(s2,s1,i,j), match(trans(s2),trans(s1),i,j)}
+      cmp_seq{"match2", match(u"123",s1,i,j), match("123",trans(s1),i,j)}
+   }
+end
+
+procedure test_bal()
+   local s, c1, c2, c3, i, j
+
+   every 1 to 200 do {
+      s := mkstr(32)
+      c1 := mkstr(5)
+      c2 := mkstr(5)
+      c3 := mkstr(5)
+      i := ?(*s+1)
+      j := ?(*s+1)
+      cmp_seq{"bal", bal(c1,c2,c3,s,i,j), 
+                 bal(trans(c1),trans(c2),trans(c3),trans(s),i,j)}
+   }
+end
+
+procedure test_tabmat()
+   local s1,s2,i
+   every 1 to 200 do {
+      s1 := mkstr(32)
+      i := ?(*s1+1)
+      s2 := s1[i+:?5] | u""
+      cmp_seq{"tabmat1", trans(s1?(tab(i)&=s2)), trans(s1)?(tab(i)&=trans(s2))}
+   }
+end
+
+procedure test_tab_move_pos()
+   local s,i,j
+   every 1 to 200 do {
+      s := mkstr(32)
+      i := ?(*s+1)
+      j := ?(*s+1)
+      cmp_seq{"tab", trans(s?(tab(i)&tab(j))), trans(s)?(tab(i)&tab(j))}
+      j := ?*s/2-*s
+      cmp_seq{"move", trans(s?(tab(i)&move(j))), trans(s)?(tab(i)&move(j))}
+      cmp_seq{"pos", s?(tab(i)&pos(i)), trans(s)?(tab(i)&pos(i))}
+   }
+end
+
 procedure main()
+   test_tab_move_pos()
+   test_tabmat()
+   test_bal()
+   test_match()
+   test_any_many_upto()
+   test_find()
    test_trim()
    test_lrc()
    test_entab()
