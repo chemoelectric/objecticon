@@ -920,7 +920,7 @@ function{1} left(s1,n,s2)
          runerr(129,s1)
    if is:ucs(s1) then {
       if !def:ucs(s2, *blank_ucs) then
-         runerr(129, s2)
+         runerr(128, s2)
    } else {
       if !def:tmp_string(s2,blank) then
          runerr(103, s2)
@@ -1058,7 +1058,7 @@ function{1} right(s1,n,s2)
       runerr(129,s1)
    if is:ucs(s1) then {
       if !def:ucs(s2, *blank_ucs) then
-         runerr(129, s2)
+         runerr(128, s2)
    } else {
       if !def:tmp_string(s2,blank) then
          runerr(103, s2)
@@ -1196,7 +1196,7 @@ function{1} center(s1,n,s2)
       runerr(129,s1)
    if is:ucs(s1) then {
       if !def:ucs(s2, *blank_ucs) then
-         runerr(129, s2)
+         runerr(128, s2)
    } else {
       if !def:tmp_string(s2,blank) then
          runerr(103, s2)
