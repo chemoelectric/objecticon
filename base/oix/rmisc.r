@@ -2,7 +2,7 @@
  * File: rmisc.r
  *  Contents: deref, eq, getvar, hash, outimage,
  *  qtos, pushact, popact, topact, [dumpact], 
- *  findline, findipc, findfile, getimage
+ *  findline, findfile, getimage
  *  sig_rsm, cmd_line, varargs.
  *
  *  Integer overflow checking.
@@ -1031,84 +1031,58 @@ struct b_coexpr *ce;
  * findline - find the source line number associated with the ipc
  */
 
-int findline(ipc)
-word *ipc;
+int findline(word *ipc)
 {
    uword ipc_offset;
-   uword size;
-   struct ipc_line *base;
-
-
-   static int two = 2;	/* some compilers generate bad code for division
-			   by a constant that is a power of two ... */
-
+   int size, l, r, m;
+   
    if (!InRange(code,ipc,ecode))
       return 0;
    ipc_offset = DiffPtrs((char *)ipc,(char *)code);
-   base = ilines;
-   size = DiffPtrs((char *)elines,(char *)ilines) / sizeof(struct ipc_line *);
-   while (size > 1) {
-      if (ipc_offset >= base[size / two].ipc) {
-         base = &base[size / two];
-         size -= size / two;
-         }
-      else
-         size = size / two;
-      }
-   /*
-    * return the line component of the location (column is top 16 bits)
-    */
-   return (int)(base->line);
+   size = elines - ilines;
+   l = 0;
+   r = size - 1;
+   while (l <= r) {
+       m = (l + r) / 2;
+       if (ipc_offset < ilines[m].ipc)
+           r = m - 1;
+       else if (m < size - 1 && ipc_offset >= ilines[m + 1].ipc)
+           l = m + 1;
+       else  /* ipc_offset >= ilines[m].ipc && (m == size - 1 || ipc_offset < ilines[m + 1].ipc) */
+           return ilines[m].line;
+   }
+   return 0;
 }
-/*
- * findipc - find the first ipc associated with a source-code line number.
- */
-int findipc(line)
-int line;
-{
-   uword size;
-   struct ipc_line *base;
 
 
-   static int two = 2;	/* some compilers generate bad code for division
-			   by a constant that is a power of two ... */
-
-   base = ilines;
-   size = DiffPtrs((char *)elines,(char *)ilines) / sizeof(struct ipc_line *);
-   while (size > 1) {
-      if (line >= base[size / two].line) {
-         base = &base[size / two];
-         size -= size / two;
-         }
-      else
-         size = size / two;
-      }
-   return base->ipc;
-}
-
 /*
  * findfile - find source file name associated with the ipc
  */
-char *findfile(ipc)
-word *ipc;
+dptr findfile(word *ipc)
 {
    uword ipc_offset;
-   struct ipc_fname *p;
-
+   int size, l, r, m;
 
    if (!InRange(code,ipc,ecode))
-      return "?";
-   ipc_offset = DiffPtrs((char *)ipc,(char *)code);
-   for (p = efilenms - 1; p >= filenms; p--)
-      if (ipc_offset >= p->ipc)
-         return strcons + p->fname;
-   fprintf(stderr,"bad ipc/file name table %d\n", ipc_offset);
-   fflush(stderr);
+       return 0;
 
-   c_exit(EXIT_FAILURE);
-   /*NOTREACHED*/
-   return 0;  /* avoid compiler warning */
+   ipc_offset = DiffPtrs((char *)ipc,(char *)code);
+
+   size = efilenms - filenms;
+   l = 0;
+   r = size - 1;
+   while (l <= r) {
+       m = (l + r) / 2;
+       if (ipc_offset < filenms[m].ipc)
+           r = m - 1;
+       else if (m < size - 1 && ipc_offset >= filenms[m + 1].ipc)
+           l = m + 1;
+       else  /* ipc_offset >= filenms[m].ipc && (m == size - 1 || ipc_offset < filenms[m + 1].ipc) */
+           return &filenms[m].fname;
+   }
+   return 0;
 }
+
 
 /*
  * getimage(dp1,dp2) - return string image of object dp1 in dp2.

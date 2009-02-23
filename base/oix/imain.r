@@ -402,6 +402,7 @@ void resolve(struct progstate *pstate)
     struct class_field *cf;
     dptr dp;
     struct progstate *savedstate = curpstate;
+    struct ipc_fname *fnptr;
 
     ENTERPSTATE(pstate);
 
@@ -427,8 +428,9 @@ void resolve(struct progstate *pstate)
                     pp = (struct b_proc *)native_methods[n];
 
                     /* The field name should match the end of the procedure block's name */
-                    if (strcmp(StrLoc(cf->name),
-                               StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(cf->name)))
+                    if (strncmp(StrLoc(cf->name),
+                                StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(cf->name),
+                                StrLen(cf->name)))
                         error("Native method name mismatch: %s", StrLoc(cf->name));
 
                     BlkLoc(*cf->field_descriptor) = (union block *)pp;
@@ -456,7 +458,7 @@ void resolve(struct progstate *pstate)
 #ifdef DEBUG_LOAD
         printf("%8x\t\tClass field struct\n", cf);
         printf("\t%08o\t  Flags\n", cf->flags);
-        printf("\t%s\t\t  Fname\n", StrLoc(cf->name));
+        printf("\t%.*s\t\t  Fname\n", StrLen(cf->name), StrLoc(cf->name));
         printf("\t%8x\t  Defining class\n", cf->defining_class);
         printf("\t%8x\t  Descriptor\n", cf->field_descriptor);
 #endif
@@ -591,9 +593,14 @@ void resolve(struct progstate *pstate)
     /*
      * Relocate the names of the fields.
      */
-
     for (dp = fnames; dp < efnames; dp++)
         StrLoc(*dp) = strcons + (uword)StrLoc(*dp);
+
+    /*
+     * Relocate the names of the files in the ipc->filename table.
+     */
+    for (fnptr = filenms; fnptr < efilenms; ++fnptr)
+        StrLoc(fnptr->fname) = strcons + (uword)StrLoc(fnptr->fname);
 
     ENTERPSTATE(savedstate);
 }

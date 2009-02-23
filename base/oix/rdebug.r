@@ -8,10 +8,10 @@
  */
 static int     glbcmp    (char *pi, char *pj);
 static int     keyref    (union block *bp, dptr dp);
-static void showline  (char *f, int l);
+static void showline  (dptr f, int l);
 static void showlevel (register int n);
 static void ttrace	(void);
-static void xtrace(struct b_proc *bp, word nargs, dptr arg, int pline, char *pfile);
+static void xtrace(struct b_proc *bp, word nargs, dptr arg, int pline, dptr pfile);
 
 
 
@@ -74,7 +74,7 @@ static void xtrace(bp, nargs, arg, pline, pfile)
     word nargs;
     dptr arg;
     int pline;
-    char *pfile;
+    dptr pfile;
 {
 
     fprintf(stderr, "   ");
@@ -99,8 +99,12 @@ static void xtrace(bp, nargs, arg, pline, pfile)
         putc(')', stderr);
     }
 	 
-    if (pline != 0)
-        fprintf(stderr, " from line %d in %s", pline, pfile);
+    if (pline != 0) {
+        if (pfile)
+            fprintf(stderr, " from line %d in %.*s", pline, StrLen(*pfile), StrLoc(*pfile));
+        else
+            fprintf(stderr, " from line %d in ?", pline);
+    }
     putc('\n', stderr);
     fflush(stderr);
 }
@@ -270,7 +274,8 @@ int get_name(dptr dp1,dptr dp0)
                      */
                     struct class_field *cf = find_class_field_for_dptr(dp);
                     struct b_class *c = cf->defining_class;
-                    sprintf(sbuf,"class %s.%s", StrLoc(c->name), StrLoc(cf->name));
+                    sprintf(sbuf,"class %.*s.%.*s", StrLen(c->name), StrLoc(c->name), 
+                            StrLen(cf->name), StrLoc(cf->name));
                     i = strlen(sbuf);
                     MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                     StrLen(*dp0) = i;
@@ -328,9 +333,9 @@ int get_name(dptr dp1,dptr dp0)
                     case T_Record: { 		/* record */
                         struct b_constructor *c = blkptr->record.constructor;
                         i = varptr - blkptr->record.fields;
-                        sprintf(sbuf,"record %s#%d.%s", StrLoc(c->name),
+                        sprintf(sbuf,"record %.*s#%d.%.*s", StrLen(c->name), StrLoc(c->name),
                                 blkptr->record.id,
-                                StrLoc(c->field_names[i]));
+                                StrLen(c->field_names[i]), StrLoc(c->field_names[i]));
                         i = strlen(sbuf);
                         MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                         StrLen(*dp0) = i;
@@ -339,9 +344,9 @@ int get_name(dptr dp1,dptr dp0)
                     case T_Object: { 		/* object */
                         struct b_class *c = blkptr->object.class;
                         i = varptr - blkptr->object.fields;
-                        sprintf(sbuf,"object %s#%d.%s", StrLoc(c->name),
+                        sprintf(sbuf,"object %.*s#%d.%.*s", StrLen(c->name), StrLoc(c->name),
                                 blkptr->object.id,
-                                StrLoc(c->fields[i]->name));
+                                StrLen(c->fields[i]->name), StrLoc(c->fields[i]->name));
                         i = strlen(sbuf);
                         MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                         StrLen(*dp0) = i;
@@ -449,22 +454,23 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
 /*
  * showline - print file and line number information.
  */
-static void showline(f, l)
-    char *f;
-    int l;
+static void showline(dptr f, int l)
 {
-    int i;
+    if (l > 0) {
+        if (f) {
+            int i = StrLen(*f);
+            char *p = StrLoc(*f);
+            while (i > 13) {
+                p++;
+                i--;
+            }
 
-    i = (int)strlen(f);
+            fprintf(stderr, "%-13.*s: %4d  ",i,p, l);
+        } else {
+            fprintf(stderr, "%-13s: %4d  ","?", l);
+        }
 
-    while (i > 13) {
-        f++;
-        i--;
-    }
-    if (l > 0)
-
-        fprintf(stderr, "%-13s: %4d  ",f, l);
-    else
+    } else
         fprintf(stderr, "             :       ");
     
 }
@@ -585,9 +591,9 @@ static void ttrace()
             fprintf(stderr, " . ");
             ++xargp;
             if (IntVal(*xargp) < 0 && fnames-efnames < IntVal(*xargp))
-                fprintf(stderr, "%s", StrLoc(efnames[IntVal(*xargp)]));
+                fprintf(stderr, "%.*s", StrLen(efnames[IntVal(*xargp)]), StrLoc(efnames[IntVal(*xargp)]));
             else if (0 <= IntVal(*xargp) && IntVal(*xargp) < efnames - fnames)
-                fprintf(stderr, "%s", StrLoc(fnames[IntVal(*xargp)]));
+                fprintf(stderr, "%.*s", StrLen(fnames[IntVal(*xargp)]), StrLoc(fnames[IntVal(*xargp)]));
             else
                 fprintf(stderr, "field");
 
@@ -630,9 +636,13 @@ static void ttrace()
             putc('}', stderr);
     }
 	 
-    if (ipc.opnd != NULL)
-        fprintf(stderr, " from line %d in %s", findline(ipc.opnd),
-                findfile(ipc.opnd));
+    if (ipc.opnd != NULL) {
+        dptr fn = findfile(ipc.opnd);
+        if (fn)
+            fprintf(stderr, " from line %d in %.*s", findline(ipc.opnd), StrLen(*fn), StrLoc(*fn));
+        else
+            fprintf(stderr, " from line %d in ?", findline(ipc.opnd));
+    }
 
     putc('\n', stderr);
 

@@ -666,11 +666,15 @@ function{} syserr(msg)
    body {
       char *s = StrLoc(msg);
       int i = StrLen(msg);
+      dptr fn = findfile(ipc.opnd);
       fprintf(stderr, "\nIcon-level internal error: ");
       while (i-- > 0)
           fputc(*s++, stderr);
       fputc('\n', stderr);
-      fprintf(stderr, "File %s; Line %ld\n", findfile(ipc.opnd), (long)findline(ipc.opnd));
+      if (fn)
+          fprintf(stderr, "File %.*s; Line %ld\n", StrLen(*fn), StrLoc(*fn), (long)findline(ipc.opnd));
+      else
+          fprintf(stderr, "File ?; Line %ld\n", (long)findline(ipc.opnd));
 
       fprintf(stderr, "Traceback:\n");
       tracebk(pfp, glbl_argp);
@@ -1967,13 +1971,13 @@ function{*} keyword(keyname,ce)
 	 }
       else if (strcmp(kname,"file") == 0) {
 	 struct progstate *savedp = curpstate;
-	 struct descrip s;
+         dptr fn;
 	 ENTERPSTATE(p);
-	 StrLoc(s) = findfile(BlkLoc(d)->coexpr.es_ipc.opnd);
-	 StrLen(s) = strlen(StrLoc(s));
+         fn = findfile(BlkLoc(d)->coexpr.es_ipc.opnd);
 	 ENTERPSTATE(savedp);
-	 if (!strcmp(StrLoc(s),"?")) fail;
-	 return s;
+	 if (!fn)
+             fail;
+	 return *fn;
 	 }
       else if (strcmp(kname,"level") == 0) {
 	 /*

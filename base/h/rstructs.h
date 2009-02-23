@@ -361,8 +361,8 @@ union numeric {			/* long integers or real numbers */
  *  source program location.
  */
 struct ipc_fname {
-    word ipc;		/* offset of instruction into code region */
-    word fname;		/* offset of file name into string region */
+    word ipc;		  /* offset of instruction into code region */
+    struct descrip fname; /* file name string descriptor */
 };
 
 struct ipc_line {

@@ -243,10 +243,10 @@ keyword{1} file
       return string
       }
    inline {
-      char *s;
-      s = findfile(ipc.opnd);
-      if (!strcmp(s,"?")) fail;
-      return C_string s;
+      dptr f = findfile(ipc.opnd);
+      if (!f)
+          fail;
+      return *f;
       }
 end
 

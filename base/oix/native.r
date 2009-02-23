@@ -407,18 +407,21 @@ function{1} lang_Class_set_method(field, pr)
    }
 end
 
-static struct b_proc *try_load(void *handle, char *classname, char *methname)
+static struct b_proc *try_load(void *handle, struct b_class *class,  struct class_field *cf)
 {
+    int i;
     char *fq, *p, *t;
     struct b_proc *blk;
 
-    MemProtect(fq = malloc(strlen(classname) + strlen(methname) + 3));
+    MemProtect(fq = malloc(StrLen(class->name) + StrLen(cf->name) + 3));
     p = fq;
     *p++ = 'B';
-    for (t = classname; *t; ++t)
-        *p++ = *t == '.' ? '_':*t;
+    t = StrLoc(class->name);
+    for (i = 0; i < StrLen(class->name); ++i)
+        *p++ = (t[i] == '.') ? '_' : t[i];
     *p++ = '_';
-    strcpy(p, methname);
+    strncpy(p, StrLoc(cf->name), StrLen(cf->name));
+    p[StrLen(cf->name)] = 0;
 
     blk = (struct b_proc *)dlsym(handle, fq);
     if (!blk) {
@@ -468,7 +471,7 @@ function{1} lang_Class_load_library(lib)
             if ((cf->defining_class == class) &&
                 (cf->flags & M_Method) &&
                 BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
-                struct b_proc *bp = try_load(handle, StrLoc(class->name), StrLoc(cf->name));
+                struct b_proc *bp = try_load(handle, class, cf);
                 if (bp)
                     BlkLoc(*cf->field_descriptor) = (union block *)bp;
             }

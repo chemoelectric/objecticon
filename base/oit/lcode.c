@@ -58,6 +58,20 @@ struct strconst {
     struct strconst *next, *b_next;
 };
 
+/*
+ * Declarations for entries in tables associating icode location with
+ *  source program location.
+ */
+struct ipc_fname {
+    word ipc;             /* offset of instruction into code region */
+    struct strconst *sc;  /* installed string */
+};
+
+struct ipc_line {
+    word ipc;           /* offset of instruction into code region */
+    int line;           /* line number */
+};
+
 struct unref *first_unref, *unref_hash[128];
 struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
 int strconst_offset;
@@ -95,9 +109,7 @@ static struct strconst *inst_strconst(char *s, int len)
         p->s = s;
         p->len = len;
         p->offset = strconst_offset;
-        /* We include the zero added by str_install (strtbl.c) 
-         * when the string was interned */
-        strconst_offset += p->len + 1;  
+        strconst_offset += p->len;
         if (last_strconst) {
             last_strconst->next = p;
             last_strconst = p;
@@ -132,6 +144,12 @@ void generate_code()
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
     labels  = safe_calloc(maxlabels, sizeof(word));
     codep = codeb = safe_calloc(maxcode, 1);
+
+    /*
+     * This ensures empty strings point to the start of the string region,
+     * which is a bit tidier than pointing to some arbitrary offset.
+     */
+    inst_c_strconst(intern(""));
 
     /*
      * Loop through input files and generate code for each.
@@ -569,8 +587,6 @@ void skip_proc()
 
 void synch_file()
 {
-    struct strconst *sp;
-
     /*
      * Avoid adjacent entries with the same name.
      */
@@ -582,8 +598,7 @@ void synch_file()
                                                &fnmsize, sizeof(struct ipc_fname), 1, "file name table");
     last_fnmtbl_filen = curr_file;
     fnmfree->ipc = pc;
-    sp = inst_c_strconst(intern(last_pathelem(curr_file)));
-    fnmfree->fname = sp->offset;
+    fnmfree->sc = inst_c_strconst(intern(last_pathelem(curr_file)));
     fnmfree++;
 }
 
@@ -1303,6 +1318,8 @@ static void gentables()
     struct lfield *fd;
     struct unref *up;
     struct strconst *sp;
+    struct ipc_fname *fnptr;
+    struct ipc_line *lnptr;
 
     if (Dflag) {
         fprintf(dbgfile,"\n\n# global tables\n");
@@ -1515,7 +1532,6 @@ static void gentables()
         outword(D_Null);
         outword(0);
     }
-    flushcode();
 
     /*
      * Output the string constant table and the two tables associating icode
@@ -1524,75 +1540,60 @@ static void gentables()
      */
 
     if (Dflag)
-        fprintf(dbgfile, "\n%ld:\t\t\t\t\t# Filenms table\n", (long)pc);
+        fprintf(dbgfile, "\n%ld:\t\t\t\t\t# File names table\n", (long)pc);
     hdr.Filenms = pc;
-    if (longwrite((char *)fnmtbl, (long)((char *)fnmfree - (char *)fnmtbl),
-                  outfile) < 0)
-        quit("cannot write icode file");
-
-    if (Dflag) {
-        int k = 0;
-        struct ipc_fname *ptr;
-        for (ptr = fnmtbl; ptr < fnmfree; ptr++) {
-            fprintf(dbgfile, "%ld:\t%03d\tS+%03d\t\t\t#   Str offset %d\n",
-                    (long)(pc + k), ptr->ipc, ptr->fname, ptr->fname);
-            k = k + 8;
-        }
-        putc('\n', dbgfile);
+    for (fnptr = fnmtbl; fnptr < fnmfree; fnptr++) {
+        if (Dflag)
+            fprintf(dbgfile, "%ld:\t%03d\t%d\tS+%03d\t\t#  File %s\n",
+                    (long)pc, fnptr->ipc, fnptr->sc->len, fnptr->sc->offset, fnptr->sc->s);
+        outword(fnptr->ipc);
+        outword(fnptr->sc->len);
+        outword(fnptr->sc->offset);
     }
 
-
-    pc += (char *)fnmfree - (char *)fnmtbl;
-
+    if (Dflag)
+        fprintf(dbgfile, "\n%ld:\t\t\t\t\t# Line number table\n", (long)pc);
     hdr.linenums = pc;
-    if (longwrite((char *)lntable, (long)((char *)lnfree - (char *)lntable),
-                  outfile) < 0)
-        quit("cannot write icode file");
-
-    if (Dflag) {
-        int k = 0;
-        struct ipc_line *ptr;
-        for (ptr = lntable; ptr < lnfree; ptr++) {
-            fprintf(dbgfile, "%ld:\t%03d\tl:%03d\n", (long)(pc + k),
-                    ptr->ipc, 
-                    ptr->line);
-            k = k + 8;
-        }
-        putc('\n', dbgfile);
+    for (lnptr = lntable; lnptr < lnfree; lnptr++) {
+        if (Dflag)
+            fprintf(dbgfile, "%ld:\t%03d\tl:%03d\n", (long)pc, lnptr->ipc, lnptr->line);
+        outword(lnptr->ipc);
+        outword(lnptr->line);        
     }
 
-
-    pc += (char *)lnfree - (char *)lntable;
-
+    flushcode();
+    
     if (Dflag)
         fprintf(dbgfile, "\n# string constants table\n");
 
     hdr.Strcons = pc;
     for (sp = first_strconst; sp; sp = sp->next) {
-        if (Dflag) {
-            char *s = sp->s, t[9];
-            int i, j = 0;
-            for (i = 0; i < sp->len + 1; ++i) {
-                if (i == 0)
-                    fprintf(dbgfile, "%ld:(+%d)\t", (long)pc, sp->offset);
-                else if (i % 8 == 0) {
-                    t[j] = 0;
-                    fprintf(dbgfile, "   %s\n%ld:\t\t", t, (long)pc + i);
-                    j = 0;
+        if (sp->len > 0) {
+            if (Dflag) {
+                char *s = sp->s, t[9];
+                int i, j = 0;
+                for (i = 0; i < sp->len; ++i) {
+                    if (i == 0)
+                        fprintf(dbgfile, "%ld:(+%d)\t", (long)pc, sp->offset);
+                    else if (i % 8 == 0) {
+                        t[j] = 0;
+                        fprintf(dbgfile, "   %s\n%ld:\t\t", t, (long)pc + i);
+                        j = 0;
+                    }
+                    fprintf(dbgfile, " %02x", s[i]);
+                    t[j++] = isprint(s[i]) ? s[i] : ' ';
                 }
-                fprintf(dbgfile, " %02x", s[i]);
-                t[j++] = isprint(s[i]) ? s[i] : ' ';
+                t[j] = 0;
+                while (i % 8 != 0) {
+                    fprintf(dbgfile, "   ");
+                    ++i;
+                }
+                fprintf(dbgfile, "   %s\n", t);
             }
-            t[j] = 0;
-            while (i % 8 != 0) {
-                fprintf(dbgfile, "   ");
-                ++i;
-            }
-            fprintf(dbgfile, "   %s\n", t);
+            if (longwrite(sp->s, sp->len, outfile) < 0)
+                quit("cannot write icode file");
+            pc += sp->len;
         }
-        if (longwrite(sp->s, sp->len + 1, outfile) < 0)
-            quit("cannot write icode file");
-        pc += sp->len + 1;
     }
 
     /*

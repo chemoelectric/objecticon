@@ -719,8 +719,11 @@ void syserr(char *fmt, ...)
     if (pfp == NULL)
         fprintf(stderr, " in startup code");
     else {
-        fprintf(stderr, " at line %ld in %s", (long)findline(ipc.opnd),
-                findfile(ipc.opnd));
+        dptr fn = findfile(ipc.opnd);
+        if (fn)
+            fprintf(stderr, " at line %ld in %.*s", (long)findline(ipc.opnd), StrLen(*fn), StrLoc(*fn));
+        else
+            fprintf(stderr, " at line %ld in ?", (long)findline(ipc.opnd));
     }
     fprintf(stderr, "\n");
     vfprintf(stderr, fmt, argp);

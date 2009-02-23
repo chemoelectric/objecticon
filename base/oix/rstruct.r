@@ -588,17 +588,15 @@ struct b_constructor *dynrecord(dptr s, dptr fields, int n)
     bp->n_fields = n;
     bp->instance_ids = 0;
     bp->program = 0;
-    MemProtect(StrLoc(bp->name) = malloc(StrLen(*s) + 1));
+    MemProtect(StrLoc(bp->name) = malloc(StrLen(*s)));
     strncpy(StrLoc(bp->name), StrLoc(*s), StrLen(*s));
     StrLen(bp->name) = StrLen(*s);
-    StrLoc(bp->name)[StrLen(*s)] = '\0';
     MemProtect(bp->field_names = calloc(n, sizeof(struct descrip)));
     MemProtect(bp->sorted_fields = calloc(n, sizeof(short)));
     for(i = 0; i < n; i++) {
         StrLen(bp->field_names[i]) = StrLen(fields[i]);
-        MemProtect(StrLoc(bp->field_names[i]) = malloc(StrLen(fields[i]) + 1));
+        MemProtect(StrLoc(bp->field_names[i]) = malloc(StrLen(fields[i])));
         strncpy(StrLoc(bp->field_names[i]), StrLoc(fields[i]), StrLen(fields[i]));
-        StrLoc(bp->field_names[i])[StrLen(fields[i])] = '\0';
     }
     MemProtect(sortf = calloc(n, sizeof(struct field_sort_item)));
     for(i = 0; i < n; i++) {

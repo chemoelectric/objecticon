@@ -210,15 +210,24 @@ void err_msg(int n, dptr v)
         if (IntVal(kywd_err) == 0) {
             char *s = StrLoc(k_errortext);
             int i = StrLen(k_errortext);
+            dptr fn;
             if (k_errornumber == -1) {
                 fprintf(stderr, "\nRun-time error: ");
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);
-                fprintf(stderr, "File %s; Line %d\n", findfile(ipc.opnd), findline(ipc.opnd));
+                fn = findfile(ipc.opnd);
+                if (fn)
+                    fprintf(stderr, "File %.*s; Line %d\n", StrLen(*fn), StrLoc(*fn), findline(ipc.opnd));
+                else
+                    fprintf(stderr, "File ?; Line %d\n", findline(ipc.opnd));
             } else {
                 fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-                fprintf(stderr, "File %s; Line %d\n", findfile(ipc.opnd), findline(ipc.opnd));
+                fn = findfile(ipc.opnd);
+                if (fn)
+                    fprintf(stderr, "File %.*s; Line %d\n", StrLen(*fn), StrLoc(*fn), findline(ipc.opnd));
+                else
+                    fprintf(stderr, "File ?; Line %d\n", findline(ipc.opnd));
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);

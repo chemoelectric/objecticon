@@ -13,19 +13,6 @@ struct loc {
     int line;
 };
 
-/*
- * Declarations for entries in tables associating icode location with
- *  source program location.
- */
-struct ipc_fname {
-    word ipc;           /* offset of instruction into code region */
-    word fname;         /* offset of file name into string region */
-};
-
-struct ipc_line {
-    word ipc;           /* offset of instruction into code region */
-    int line;           /* line number */
-};
 
 struct lentry {                 /* local table entry */
     char *name;                 /*   name of variable, in string space */
