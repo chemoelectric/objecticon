@@ -177,15 +177,15 @@ class HttpClient(NetClient)
       if /request.data_stream then
          request.method === "HEAD" | runerr("No data stream set")
       else {
-         upto('w', request.data_stream.get_mode()) | runerr("Data stream not writable")
-         upto('t', request.data_stream.get_mode()) | runerr("Data stream not truncatable")
+         request.data_stream.can(Stream.WRITE) | runerr("Data stream not writable")
+         request.data_stream.can(Stream.TRUNCATE) | runerr("Data stream not truncatable")
          self.request.set_data_stream(request.data_stream)
       }
       if /request.post_stream then
          request.method ~=== "POST" | runerr("No data stream set on a POST")
       else {
-         upto('r', request.post_stream.get_mode()) | runerr("Post stream not readable")
-         upto('s', request.post_stream.get_mode()) | runerr("Post stream not seekable")
+         request.post_stream.can(Stream.READ) | runerr("Post stream not readable")
+         request.post_stream.can(Stream.SEEK) | runerr("Post stream not seekable")
          self.request.set_post_stream(request.post_stream)
       }
 
