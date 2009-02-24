@@ -6,7 +6,8 @@ struct header {
     word hsize;			/* size of interpreter code */
     word trace;			/* initial value of &trace */
 
-    word ClassStatics;          /* class field descriptors */
+    word ClassStatics;          /* class field descriptors (statics) */
+    word ClassMethods;          /* class field descriptors (methods) */
     word ClassFields;           /* class field info */
     word Classes;               /* class info */
     word Records;               /* record info */

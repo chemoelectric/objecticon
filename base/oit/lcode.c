@@ -1199,17 +1199,45 @@ static void genclasses()
     hdr.ClassStatics = pc;
 
     /*
-     * Output descriptors for class variables :-
-     *   static class variables get a null descriptor
-     *   class instance variables don't get an entry
+     * Output descriptors for class static variables.  Each gets a
+     * null descriptor.  This loop also counts up the number of classes
+     * and fields of all types.
+     * 
+     * Note that statics and methods are put in separate lists in
+     * order to help the garbage collector scan faster (methods don't
+     * need to be scanned).
+     */
+    if (Dflag)
+        fprintf(dbgfile, "\n# class static descriptors\n");
+    for (cl = lclasses; cl; cl = cl->next) {
+        cl->id = n_classes;
+        for (cf = cl->fields; cf; cf = cf->next) {
+            if ((cf->flag & (M_Method | M_Static)) == M_Static) {
+                /* Null descriptor */
+                if (Dflag)
+                    fprintf(dbgfile, "%ld:\t%06o\t0\t\t# Static var %s.%s\n", 
+                            (long)pc, D_Null, cl->global->name, cf->name);
+                cf->dpc = pc;
+                outword(D_Null);
+                outword(0);
+            }
+            ++n_fields;
+        }
+        ++n_classes;
+    }
+
+    align();
+    hdr.ClassMethods = pc;
+
+    /*
+     * Output descriptors for class methods :-
      *   defer methods get a proc descriptor with the 
      *      native method number (-1 if unresolved) in the vword
      *   other methods get a proc descriptor pointing to the b_proc
      */
     if (Dflag)
-        fprintf(dbgfile, "\n# class static and method descriptors\n");
+        fprintf(dbgfile, "\n# class method descriptors\n");
     for (cl = lclasses; cl; cl = cl->next) {
-        cl->id = n_classes;
         for (cf = cl->fields; cf; cf = cf->next) {
             if (cf->flag & M_Defer) {
                 /* Deferred method, perhaps resolved to native method */
@@ -1227,19 +1255,10 @@ static void genclasses()
                 cf->dpc = pc;
                 outword(D_Proc);
                 outword(cf->func->pc);
-            } else if (cf->flag & M_Static) {
-                /* Null descriptor */
-                if (Dflag)
-                    fprintf(dbgfile, "%ld:\t0\t0\t\t\t# Static var %s.%s\n", 
-                            (long)pc, cl->global->name, cf->name);
-                cf->dpc = pc;
-                outword(D_Null);
-                outword(0);
             }
-            ++n_fields;
         }
-        ++n_classes;
     }
+
 
     align();
     hdr.ClassFields = pc;
@@ -1609,6 +1628,7 @@ static void gentables()
         fprintf(dbgfile, "hsize:            %ld\n", (long)hdr.hsize);
         fprintf(dbgfile, "trace:            %ld\n", (long)hdr.trace);
         fprintf(dbgfile, "class statics:    %ld\n", (long)hdr.ClassStatics);
+        fprintf(dbgfile, "class methods:    %ld\n", (long)hdr.ClassMethods);
         fprintf(dbgfile, "class fields:     %ld\n", (long)hdr.ClassFields);
         fprintf(dbgfile, "classes:          %ld\n", (long)hdr.Classes);
         fprintf(dbgfile, "records:          %ld\n", (long)hdr.Records);
@@ -1633,7 +1653,8 @@ static void gentables()
         tsize += hdrsize;
         report("  Header          %7ld", (long)sizeof(hdr));
         report("  Procedures      %7ld", (long)hdr.ClassStatics);
-        report("  Class statics   %7ld", (long)(hdr.ClassFields - hdr.ClassStatics));
+        report("  Class statics   %7ld", (long)(hdr.ClassMethods - hdr.ClassStatics));
+        report("  Class methods   %7ld", (long)(hdr.ClassFields - hdr.ClassMethods));
         report("  Class fields    %7ld", (long)(hdr.Classes - hdr.ClassFields));
         report("  Classes         %7ld", (long)(hdr.Records - hdr.Classes));
         report("  Records         %7ld", (long)(hdr.Fnames - hdr.Records));

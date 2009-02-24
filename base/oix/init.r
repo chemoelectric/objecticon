@@ -443,7 +443,9 @@ void icon_init(char *name)
      */
     ecode = code + hdr.ClassStatics;
     classstatics = (dptr)(code + hdr.ClassStatics);
-    eclassstatics = (dptr)(code + hdr.ClassFields);
+    eclassstatics = (dptr)(code + hdr.ClassMethods);
+    classmethods = (dptr)(code + hdr.ClassMethods);
+    eclassmethods = (dptr)(code + hdr.ClassFields);
     classfields = (struct class_field *)(code + hdr.ClassFields);
     eclassfields = (struct class_field *)(code + hdr.Classes);
     classes = (word *)(code + hdr.Classes);
@@ -984,7 +986,9 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     pstate->Code    = (char *)(pstate + 1);
     pstate->Ecode    = (char *)(pstate->Code + hdr.ClassStatics);
     pstate->ClassStatics = (dptr)(pstate->Code + hdr.ClassStatics);
-    pstate->EClassStatics = (dptr)(pstate->Code + hdr.ClassFields);
+    pstate->EClassStatics = (dptr)(pstate->Code + hdr.ClassMethods);
+    pstate->ClassMethods = (dptr)(pstate->Code + hdr.ClassMethods);
+    pstate->EClassMethods = (dptr)(pstate->Code + hdr.ClassFields);
     pstate->ClassFields = (struct class_field *)(pstate->Code + hdr.ClassFields);
     pstate->EClassFields = (struct class_field *)(pstate->Code + hdr.Classes);
     pstate->Classes = (word *)(pstate->Code + hdr.Classes);
@@ -1201,7 +1205,7 @@ static char* vword2str(dptr d) {
     return res;
 }
 
-static char* dword2str(dptr d) {
+char* dword2str(dptr d) {
     static char buff[32], offset[32];
     char *s = buff, *t;
     if (d->dword & F_Nqual)

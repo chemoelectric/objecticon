@@ -582,3 +582,6 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len);
 struct descrip cset_to_str(struct b_cset *b, int pos, int len);
 struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len);
 int cset_range_of_pos(struct b_cset *b, int pos);
+
+/* Debug func. */
+char* dword2str(dptr d);

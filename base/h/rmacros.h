@@ -563,6 +563,8 @@
       #define ecode (curpstate->Ecode)
       #define classstatics (curpstate->ClassStatics)
       #define eclassstatics (curpstate->EClassStatics)
+      #define classmethods (curpstate->ClassMethods)
+      #define eclassmethods (curpstate->EClassMethods)
       #define classfields (curpstate->ClassFields)
       #define eclassfields (curpstate->EClassFields)
       #define classes (curpstate->Classes)

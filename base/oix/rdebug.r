@@ -3,6 +3,8 @@
  *   atrace, cotrace
  */
 
+#include "../h/modflags.h"
+
 /*
  * Prototypes.
  */
@@ -115,10 +117,10 @@ static void xtrace(bp, nargs, arg, pline, pfile)
  * the corresponding class_field in the classfields area, ie a
  * class_field cf so that cf->field_descriptor == d.
  * 
- * We can use binary search since the pointers in the classfields
- * increase, but the search is complicated by the fact that some of
- * the class_fields have a null field_descriptor field (they are
- * instance fields).
+ * We can use binary search since the pointers into the classstatics
+ * area increase, but the search is complicated by the fact that some
+ * of the class_fields aren't static variables; they can be methods or
+ * instance fields.
  */
 
 /* Find the nearest index in classfields to m, with a non-null
@@ -127,9 +129,9 @@ static int nearest_with_dptr(int m, int n)
 {
     int off;
     for (off = 0; off < n; ++off) {
-        if (m + off < n && classfields[m + off].field_descriptor)
+        if (m + off < n && (classfields[m + off].flags & (M_Method | M_Static)) == M_Static)
             return m + off;
-        if (m - off >= 0 && classfields[m - off].field_descriptor)
+        if (m - off >= 0 && (classfields[m - off].flags & (M_Method | M_Static)) == M_Static)
             return m - off;
     }    
     syserr("name: no field_descriptors in classfields area");
@@ -270,7 +272,7 @@ int get_name(dptr dp1,dptr dp0)
                 }
                 else if (InRange(classstatics,dp,eclassstatics)) {
                     /*
-                     * Class static field, or method
+                     * Class static field
                      */
                     struct class_field *cf = find_class_field_for_dptr(dp);
                     struct b_class *c = cf->defining_class;

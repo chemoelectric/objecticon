@@ -403,6 +403,7 @@ struct progstate {
     char *Ecode;
 
     dptr ClassStatics, EClassStatics;
+    dptr ClassMethods, EClassMethods;
     struct class_field *ClassFields, *EClassFields;
     word *Classes;
     word *Records;
