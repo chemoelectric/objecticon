@@ -36,12 +36,12 @@ class Stream()
       eof_flag
 
    private static init()
-      READ := 'r'
-      WRITE := 'w'
-      SEEK := 's'
-      TRUNCATE := 't'
-      READ_WRITE := 'rw'
-      ALL := 'rwst'
+      READ := 8r01
+      WRITE := 8r02
+      SEEK := 8r04
+      TRUNCATE := 8r010
+      READ_WRITE := READ + WRITE
+      ALL := READ + WRITE + SEEK + TRUNCATE
    end
 
    #
@@ -85,12 +85,12 @@ class Stream()
    public defer truncate(len)
 
    #
-   # Return a cset indicating which functions the stream supports.
-   # The possible character members are listed as constants above.  If
-   # the cset contains {READ}, the stream is readable; {WRITE}
-   # indicates the stream is writable, {SEEK} indicates that it is
-   # seekable (and supports {tell} too), and {TRUNCATE} that it is
-   # truncatable.
+   # Return an integer indicating which functions the stream supports.
+   # The possible bits which can be set are listed as constants above.
+   # If the integer has the {READ} bit set, the stream is readable;
+   # {WRITE} indicates the stream is writable, {SEEK} indicates that
+   # it is seekable (and supports {tell} too), and {TRUNCATE} that it
+   # is truncatable.
    #
    public defer get_mode()
 
@@ -112,10 +112,10 @@ class Stream()
    end
 
    #
-   # Succeed iff the stream's mode has all the chars in {c}
+   # Succeed iff the stream's mode has all the flags in {c}
    #
    public can(c)
-      return get_mode() ** c === c
+      return iand(get_mode(), c) = c
    end
 
    #
@@ -699,11 +699,11 @@ class FileStream(DescStream)
    public static open(name, flags, perm)
       local mode
       if iand(flags, FileOpt.WRONLY) ~= 0 then
-         mode := WRITE ++ SEEK ++ TRUNCATE
+         mode := WRITE + SEEK + TRUNCATE
       else if iand(flags, FileOpt.RDWR) ~= 0 then
          mode := ALL
       else
-         mode := READ ++ SEEK
+         mode := READ + SEEK
       return FileStream(open_impl(name, flags, perm), mode)
    end
 
