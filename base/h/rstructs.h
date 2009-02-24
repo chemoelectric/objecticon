@@ -148,9 +148,6 @@ struct b_class {                 /* block representing a class - always static, 
     word title;                  /* T_Class */
     word blksize;
     struct progstate *program;   /* Program in which this class resides */
-    char *is_table;              /* Lookup bitfield table for constant time is() */
-    word class_id;               /* Sequence id of this class; an ascending zero-based sequence
-                                  *   used to index the above is_table bitfield */
     word package_id;             /* Package id of this class's package - see b_proc above */
     word instance_ids;           /* Sequence for instance ids */
     word init_state;             /* State of initialization */
@@ -163,7 +160,8 @@ struct b_class {                 /* block representing a class - always static, 
     struct class_field *init_field; /* Pointer to "init" field, or null if absent */
     struct class_field *new_field;  /* Pointer to "new" field, or null if absent */
     struct b_class **supers;     /* Array of pointers to supers */
-    struct b_class **implemented_classes;  /* Array of pointers to implemented classes */
+    struct b_class **implemented_classes;  /* Array of pointers to implemented classes, sorted by 
+                                            * ascending address to allow binary search */
     struct class_field **fields;  /* Pointers to field info; one for each field */
     short *sorted_fields;       /* An array of indices into fields, giving the order sorted by
                                  * field number (and hence also sorted by name) */

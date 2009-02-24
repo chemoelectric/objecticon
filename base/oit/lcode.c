@@ -996,11 +996,11 @@ static struct field_sort_item *sorted_fields(struct lclass *cl)
     struct field_sort_item *a = safe_calloc(n, sizeof(struct field_sort_item));
     int i = 0;
     for (fr = cl->implemented_instance_fields; fr; fr = fr->next, ++i) {
-        a[i].n = fr->index = i;
+        a[i].n = i;
         a[i].fp = fr->field->ftab_entry;
     }
     for (fr = cl->implemented_class_fields; fr; fr = fr->next, ++i) {
-        a[i].n = fr->index = i;
+        a[i].n = i;
         a[i].fp = fr->field->ftab_entry;
     }
     qsort(a, n, sizeof(struct field_sort_item), field_sort_compare);
@@ -1020,11 +1020,31 @@ static struct field_sort_item *sorted_record_fields(struct lrecord *cl)
     return a;
 }
 
+static int implemented_classes_sort_compare(const void *p1, const void *p2)
+{
+    struct lclass *f1, *f2;
+    f1 = *((struct lclass **)p1);
+    f2 = *((struct lclass **)p2);
+    return f1->pc - f2->pc;
+}
+
+static struct lclass **sorted_implemented_classes(struct lclass *cl)
+{
+    struct lclass_ref *cr;
+    struct lclass **a = safe_calloc(cl->n_implemented_classes, sizeof(struct lclass *));
+    int i = 0;
+    for (cr = cl->implemented_classes; cr; cr = cr->next, ++i)
+        a[i] = cr->class;
+    qsort(a, cl->n_implemented_classes, sizeof(struct lclass *), implemented_classes_sort_compare);
+    return a;
+}
+
 static void genclass(struct lclass *cl)
 {
     struct lclass_ref *cr;
     struct lclass_field_ref *fr;
     struct field_sort_item *sortf;
+    struct lclass **ic_sort;
     char *name;
     int i, ap, n_fields;
     struct strconst *sp;
@@ -1044,8 +1064,6 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "\t%d\t\t\t\t# T_Class\n", T_Class);
         fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", cl->size);
         fprintf(dbgfile, "\t0\t\t\t\t# Owning prog\n");
-        fprintf(dbgfile, "\t0\t\t\t\t# is() lookup table\n");
-        fprintf(dbgfile, "\t%d\t\t\t\t# Class id\n", cl->id);
         fprintf(dbgfile, "\t%d\t\t\t\t# Package id\n", cl->global->defined->package_id);
         fprintf(dbgfile, "\t0\t\t\t\t# Instance ids counter\n");
         fprintf(dbgfile, "\t%d\t\t\t\t# Initialization state\n", Uninitialized);
@@ -1059,8 +1077,6 @@ static void genclass(struct lclass *cl)
     outword(T_Class);		/* type code */
     outword(cl->size);
     outword(0);
-    outword(0);
-    outword(cl->id);
     outword(cl->global->defined->package_id);
     outword(0);
     outword(Uninitialized);
@@ -1133,15 +1149,18 @@ static void genclass(struct lclass *cl)
         outword(cr->class->pc);
 
     /*
-     * Implemented classes array.
+     * Implemented classes array.  They are sorted by ascending class id number.
      */
+    ic_sort = sorted_implemented_classes(cl);
     if (Dflag) {
         fprintf(dbgfile, "%ld:\t\t\t\t\t# Implemented classes array\n", (long)pc);
-        for (cr = cl->implemented_classes; cr; cr = cr->next)
-            fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Pointer to implemented class\n", cr->class->pc);
+        for (i = 0; i < cl->n_implemented_classes; ++i)
+            fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Pointer to implemented class %s\n", 
+                    ic_sort[i]->pc, ic_sort[i]->global->name);
     }
-    for (cr = cl->implemented_classes; cr; cr = cr->next)
-        outword(cr->class->pc);
+    for (i = 0; i < cl->n_implemented_classes; ++i)
+        outword(ic_sort[i]->pc);
+    free(ic_sort);
 
     /* 
      * An array of pointers to the field info of each field 
@@ -1210,7 +1229,6 @@ static void genclasses()
     if (Dflag)
         fprintf(dbgfile, "\n# class static descriptors\n");
     for (cl = lclasses; cl; cl = cl->next) {
-        cl->id = n_classes;
         for (cf = cl->fields; cf; cf = cf->next) {
             if ((cf->flag & (M_Method | M_Static)) == M_Static) {
                 /* Null descriptor */
@@ -1273,7 +1291,7 @@ static void genclasses()
     for (cl = lclasses; cl; cl = cl->next) {
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
-        cl->size = WordSize * (20 +
+        cl->size = WordSize * (18 +
                                1 + 
                                cl->n_supers +
                                cl->n_implemented_classes +

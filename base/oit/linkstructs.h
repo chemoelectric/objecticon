@@ -109,7 +109,6 @@ struct lclass {
     int seen;                   /* Flag for computing superclass set */
     int pc;                     /* Location of definition in icode */
     int size;                   /* Computed size of block in icode */
-    int id;                     /* Id sequence number (set during code generation) */
     struct lclass_ref *resolved_supers, *last_resolved_super;
     struct lclass_ref *implemented_classes, *last_implemented_class;
     struct lclass_field_ref *implemented_field_hash[32], 
@@ -134,7 +133,6 @@ struct lclass_ref {
  */
 struct lclass_field_ref {
     struct lclass_field *field;
-    int index;      /* Index in class's fields; set on code generation */
     struct lclass_field_ref *next, *b_next;
 };
 

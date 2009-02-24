@@ -58,7 +58,7 @@ end
  */
 int class_is(struct b_class *class, struct b_class *target)
 {
-    word id;
+    int l, r, m, c;
 
     /* 
      * Different programs never share classes
@@ -66,35 +66,22 @@ int class_is(struct b_class *class, struct b_class *target)
     if (class->program != target->program)
         return 0;
 
-    if (!class->is_table) {
-        int i, n = class->n_implemented_classes;
-        if (n > 4) {
-            /*
-             * Create a bitfield
-             */
-            MemProtect(class->is_table = calloc(1 + (*class->program->Classes - 1) / CHAR_BIT, 1));
-            for (i = 0; i < n; ++i) {
-                id = class->implemented_classes[i]->class_id;
-                class->is_table[id / CHAR_BIT] |= (1 << id % CHAR_BIT);
-            }
-        } else {
-            /*
-             * Simple linear search
-             */
-            for (i = 0; i < n; ++i) {
-                if (class->implemented_classes[i] == target)
-                    return 1;
-            }
-            return 0;
-        }
+    l = 0;
+    r = class->n_implemented_classes - 1;
+    while (l <= r) {
+        m = (l + r) / 2;
+        /* c = class->implemented_classes[m]->class_id - target->class_id; */
+        c = (char *)class->implemented_classes[m] - (char *)target;
+        if (c > 0)
+            r = m - 1;
+        else if (c < 0)
+            l = m + 1;
+        else
+            return 1;
     }
-
-    /*
-     * Use an already-created bitfield table.
-     */
-    id = target->class_id;
-    return class->is_table[id / CHAR_BIT] & (1 << (id % CHAR_BIT));
+    return 0;
 }
+
 
 function{0,1} is(o, target)
    if !is:class(target) then

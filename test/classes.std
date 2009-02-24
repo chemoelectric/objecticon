@@ -19,11 +19,11 @@ Class.get_supers(1): Error 619
 Class.get_implemented_classes(): Error 619
 Class.get_implemented_classes(1): Error 619
 Class.get_supers(Eleven): {class Eight, class Ten}
-Class.get_implemented_classes(Eleven): {class Eleven, class Eight, class Ten, class Nine}
+Class.get_implemented_classes(Eleven): {class Eight, class Nine, class Ten, class Eleven}
 -------------
 Class Eleven
 Supers: {class Eight, class Ten}
-Implemented classes: {class Eleven, class Eight, class Ten, class Nine}
+Implemented classes: {class Eight, class Nine, class Ten, class Eleven}
 Flags: 0
 Num fields: 17
 Field names: {"z", "one", "two", "three", "four", "five", "six", "seven", "eight", "a", "b", "c", "eleven1", "new", "thing", "dm", "ten1"}
@@ -213,7 +213,7 @@ Name set check2: yes
 -------------
 Class Ten
 Supers: {class Nine}
-Implemented classes: {class Ten, class Nine}
+Implemented classes: {class Nine, class Ten}
 Flags: 0
 Num fields: 1
 Field names: {"ten1"}
