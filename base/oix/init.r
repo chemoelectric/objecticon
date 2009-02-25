@@ -1202,7 +1202,7 @@ static char* vword2str(dptr d) {
             default:return "?";
         }
     } else if ((d->dword & D_Var)== D_Var)
-        sprintf(res, "%p -> {%s}", VarLoc(*d), tostring(VarLoc(*d)));
+        sprintf(res, "%p+%d -> {%s}", VarLoc(*d), Offset(*d), tostring((dptr)((word*)VarLoc(*d)+Offset(*d))));
     else
         return "?";
 
