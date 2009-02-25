@@ -1106,7 +1106,7 @@ static int isdescrip(word *p){
             i==D_Tvtbl || i==D_Slots || i==D_Tvsubs || i==D_Refresh || i==D_Coexpr ||
             i==D_External || i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj ||
             i==D_Kywdstr || i==D_Kywdevent || i==D_Class || i==D_Object || i==D_Cast || 
-            i==D_Constructor || i==D_Methp);
+            i==D_Constructor || i==D_Methp || i==D_Ucs);
 }
 
 char *cstr(struct descrip *sd) {
@@ -1171,7 +1171,7 @@ static char* vword2str(dptr d) {
             }
             case T_Tvsubs:{
                 struct b_tvsubs *p = (struct b_tvsubs*)BlkLoc(*d);
-                sprintf(res, "ssvar=%s", tostring(&p->ssvar));
+                sprintf(res, "ssvar={%s}", tostring(&p->ssvar));
                 break;
             }
 
@@ -1201,11 +1201,23 @@ static char* vword2str(dptr d) {
             case T_Kywdevent: return "";
             default:return "?";
         }
-    } else if (d->dword & F_Var) 
-        sprintf(res, "bptr=%p", BlkLoc(*d));
+    } else if ((d->dword & D_Var)== D_Var)
+        sprintf(res, "%p -> {%s}", VarLoc(*d), tostring(VarLoc(*d)));
     else
         return "?";
 
+    return res;
+}
+
+char *binstr(unsigned int n)
+{
+    static char res[33];
+    int i;
+    res[32] = 0;
+    for (i = 0; i < 32; ++i) {
+        res[31-i] = '0'+(n&1);
+        n>>=1;
+    }
     return res;
 }
 

@@ -585,3 +585,4 @@ int cset_range_of_pos(struct b_cset *b, int pos);
 
 /* Debug func. */
 char* dword2str(dptr d);
+char *binstr(unsigned int n);
