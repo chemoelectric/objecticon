@@ -1169,6 +1169,11 @@ static char* vword2str(dptr d) {
                 sprintf(res, "ucs(%d,%s)", p->length,cstr(&p->utf8));
                 break;
             }
+            case T_Tvsubs:{
+                struct b_tvsubs *p = (struct b_tvsubs*)BlkLoc(*d);
+                sprintf(res, "ssvar=%s", tostring(&p->ssvar));
+                break;
+            }
 
             case T_Lrgint:
             case T_Real: 
@@ -1187,7 +1192,6 @@ static char* vword2str(dptr d) {
 
             case T_Tvtbl: return "";
             case T_Slots: return "";
-            case T_Tvsubs: return "";
             case T_Refresh: return "";
             case T_External: return "";
             case T_Kywdint: return "";
