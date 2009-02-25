@@ -192,8 +192,9 @@ operator{0,1+} <-> rswap(underef x -> dx, underef y -> dy)
       body {
          bp_x = BlkLoc(x);
          bp_y = BlkLoc(y);
-         if (VarLoc(bp_x->tvsubs.ssvar) == VarLoc(bp_y->tvsubs.ssvar) &&
-   	  Offset(bp_x->tvsubs.ssvar) == Offset(bp_y->tvsubs.ssvar)) {
+         if (Var(bp_x->tvsubs.ssvar) && Var(bp_y->tvsubs.ssvar) &&
+             VarLoc(bp_x->tvsubs.ssvar) == VarLoc(bp_y->tvsubs.ssvar) &&
+     	     Offset(bp_x->tvsubs.ssvar) == Offset(bp_y->tvsubs.ssvar)) {
             /*
              * x and y are both substrings of the same string, set
              *  adj1 and adj2 for use in locating the substrings after
@@ -293,8 +294,9 @@ operator{0,1} :=: swap(underef x -> dx, underef y -> dy)
       body {
          bp_x = BlkLoc(x);
          bp_y = BlkLoc(y);
-         if (VarLoc(bp_x->tvsubs.ssvar) == VarLoc(bp_y->tvsubs.ssvar) &&
-   	  Offset(bp_x->tvsubs.ssvar) == Offset(bp_y->tvsubs.ssvar)) {
+         if (Var(bp_x->tvsubs.ssvar) && Var(bp_y->tvsubs.ssvar) &&
+             VarLoc(bp_x->tvsubs.ssvar) == VarLoc(bp_y->tvsubs.ssvar) &&
+   	     Offset(bp_x->tvsubs.ssvar) == Offset(bp_y->tvsubs.ssvar)) {
             /*
              * x and y are both substrings of the same string, set
              *  adj1 and adj2 for use in locating the substrings after

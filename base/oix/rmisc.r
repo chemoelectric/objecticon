@@ -1676,6 +1676,7 @@ word *high;
    {
    struct b_tvsubs *tvb;
    word *loc;
+
    if (Type(*valp) == T_Tvsubs) {
       tvb = (struct b_tvsubs *)BlkLoc(*valp);
       /* Check if the tvsubs actually contains a variable - it may contain
@@ -1684,12 +1685,17 @@ word *high;
       if (!is:variable(tvb->ssvar))
           return;
       loc = (word *)VarLoc(tvb->ssvar);
-      }
-   else
-      loc = (word *)VarLoc(*valp) + Offset(*valp);
+   }
+   else if (valp->dword & F_Typecode) {
+       return;   /* tvtbl, or one of the keyword variable types */
+   } else {
+       /* Must be D_Var */
+       loc = (word *)VarLoc(*valp) + Offset(*valp);
+   }
+
    if (InRange(low, loc, high))
       deref(valp, valp);
-   }
+}
 
 #if MSWIN32
 #ifndef NTGCC
