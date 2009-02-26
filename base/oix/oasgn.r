@@ -85,10 +85,8 @@
           *  and &pos is still an int.
           */
          inline {
-            if (is:ucs(y))
-               *VarLoc(x) = y;
-            else if (!cnv:string(y, *VarLoc(x)))
-               runerr(103, y);
+            if (!cnv:string_or_ucs(y, *VarLoc(x)))
+               runerr(129, y);
 	    IntVal(*(VarLoc(x)-1)) = 1;
             EVVal(k_pos, E_Spos);
             }
@@ -97,8 +95,8 @@
          /*
           *  No side effect in the type realm.
           */
-         if !cnv:string(y, *VarLoc(x)) then
-            runerr(103, y);
+         if !cnv:string_or_ucs(y, *VarLoc(x)) then
+            runerr(129, y);
          }
       default: {
          abstract {
