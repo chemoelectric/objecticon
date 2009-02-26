@@ -1078,6 +1078,7 @@ int wmap(wbp w)
     struct imgdata *imd;
     int i, r;
     int new_pixmap = 0;
+    struct descrip progname;
     char *p, *s, sbuf[256];
     XWMHints wmhints;
     XClassHint clhints;
@@ -1271,15 +1272,16 @@ int wmap(wbp w)
      * Set the class hints that name the program (for reference by the
      * window manager) following conventions given in O'Reilly.
      */
+    cnv:string(kywd_prog, progname);
     if (! (s = getenv("RESOURCE_NAME"))) {
-        p = StrLoc(kywd_prog);
-        s = p + StrLen(kywd_prog);
+        p = StrLoc(progname);
+        s = p + StrLen(progname);
         while (s > p && s[-1] != '/')
             s--;				/* find tail of prog_name */
     }
     clhints.res_name = sbuf;
     clhints.res_class = "IconProg";
-    for (i=0; s < p+StrLen(kywd_prog); ) clhints.res_name[i++] = *s++;
+    for (i=0; s < p+StrLen(progname); ) clhints.res_name[i++] = *s++;
     clhints.res_name[i] = '\0';
     XSetClassHint(stddpy, stdwin, &clhints);
 
