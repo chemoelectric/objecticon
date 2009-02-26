@@ -132,6 +132,11 @@
 #define Var(d)		((d).dword & F_Var)
 
 /*
+ * Check for D_Var + Offset in a dword.
+ */
+#define DVar(d)		(((d).dword & (F_Var | F_Nqual | F_Ptr | F_Typecode)) == D_Var)
+
+/*
  * Location of the value of a variable.
  */
 #define VarLoc(d)	((d).vword.descptr)
