@@ -590,6 +590,8 @@ dptr dp;
              case T_Kywdint:
              case T_Kywdpos:
              case T_Kywdsubj:
+             case T_Kywdstr:
+             case T_Kywdevent:
                 /*
                  * The descriptor points to a keyword, not a block.
                  */

@@ -1196,8 +1196,13 @@ static char* vword2str(dptr d) {
             case T_External: return "";
             case T_Kywdint: return "";
             case T_Kywdpos: return "";
-            case T_Kywdsubj: return "";
-            case T_Kywdstr: return "";
+
+            case T_Kywdsubj:
+            case T_Kywdstr: {
+                sprintf(res, "%p -> {%s}", VarLoc(*d), tostring(VarLoc(*d)));
+                break;
+            }
+
             case T_Kywdevent: return "";
             default:return "?";
         }
