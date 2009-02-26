@@ -166,8 +166,11 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    void checkcoexps(char *s);
    void dumpcoexp(char *s, struct b_coexpr *p);
    void showstack();
-   char *tostring(dptr d);
-   char *cstr(struct descrip *sd);
+char *cstr(struct descrip *sd);
+void print_desc(FILE *f, dptr d);
+void print_vword(FILE *f, dptr d);
+void print_dword(FILE *f, dptr d);
+
    void EVVariable(dptr dx, int eventcode);
 
    dptr	extcall			(dptr x, int nargs, int *signal);
