@@ -1116,13 +1116,14 @@ char *cstr(struct descrip *sd)
 void print_desc(FILE *f, dptr d) {
     putc('{', f);
     print_dword(f, d);
-    putc(',', f);
+    fputs(", ", f); 
     print_vword(f, d);
     putc('}', f);
 }
 
 void print_vword(FILE *f, dptr d) {
     if (Qual(*d)) {
+        fprintf(f, "%p -> ", StrLoc(*d));
         outimage(f, d, 0);
     } else if (DVar(*d)) {
         /* D_Var (with an offset) */
@@ -1133,14 +1134,14 @@ void print_vword(FILE *f, dptr d) {
         switch (d->dword) {
             case D_Tvsubs : {
                 struct b_tvsubs *p = (struct b_tvsubs *)BlkLoc(*d);
-                fprintf(f, "%p ssvar = ", p);
+                fprintf(f, "%p -> sub=%d+:%d ssvar=", p, p->sspos, p->sslen);
                 print_desc(f, &p->ssvar);
                 break;
             }
 
             case D_Tvtbl : {
                 struct b_tvtbl *p = (struct b_tvtbl *)BlkLoc(*d);
-                fprintf(f, "%p tref = ", p);
+                fprintf(f, "%p -> tref=", p);
                 print_desc(f, &p->tref);
                 break;
             }
@@ -1177,21 +1178,21 @@ void print_vword(FILE *f, dptr d) {
 
             case D_Proc : {
                 struct b_proc *p = (struct b_proc*)BlkLoc(*d);
-                fprintf(f, "%p prog:%p = ", p, p->program);
+                fprintf(f, "%p -> prog:%p=", p, p->program);
                 outimage(f, d, 0);
                 break;
             }
 
             case D_Class : {
                 struct b_class *p = (struct b_class*)BlkLoc(*d);
-                fprintf(f, "%p prog:%p = ", p, p->program);
+                fprintf(f, "%p -> prog:%p=", p, p->program);
                 outimage(f, d, 0);
                 break;
             }
 
             case D_Constructor : {
                 struct b_constructor *p = (struct b_constructor*)BlkLoc(*d);
-                fprintf(f, "%p prog:%p = ", p, p->program);
+                fprintf(f, "%p -> prog:%p=", p, p->program);
                 outimage(f, d, 0);
                 break;
             }
@@ -1208,7 +1209,7 @@ void print_vword(FILE *f, dptr d) {
             case D_Ucs :
             case D_Cast :
             case D_Object : {
-                fprintf(f, "%p = ", BlkLoc(*d));
+                fprintf(f, "%p -> ", BlkLoc(*d));
                 outimage(f, d, 0);
                 break;
             }
