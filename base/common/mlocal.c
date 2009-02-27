@@ -721,7 +721,7 @@ int utf8_check(char **p, char *end)
             }
         }
     }
-    return -1; /* Not reached */
+    return -1;
 }
 
 int utf8_iter(char **p)
@@ -804,7 +804,7 @@ int utf8_iter(char **p)
             }
         }
     }
-    return 0; /* Not reached */
+    return 0;
 }
 
 int utf8_rev_iter(char **p)
@@ -881,16 +881,23 @@ utf8_seq_len_arr[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,
         5,5,5,5,6,6,-1,-1};
 
-int calc_ucs_index_step(int length)
+int calc_ucs_index_step(int n)
 {
-    int i = 1;
-    length /= 32;
-    /* Round up to the next power of 2 */
-    while (length > i)
-        i *= 2;
-    if (i < 8)
-        i = 8;
-    else if (i > 256)
-        i = 256;
-    return i;
+    static short cache[256];
+    short s;
+    if (n <= 1)
+        return n;
+    if (n < ElemCount(cache) && cache[n] > 0)
+        return cache[n];
+    s = (short)(log(n) * 4.5);
+    if (s >= n)
+        s = n;
+    else {
+        /* Make s as small as possible without altering the number of offsets */
+        while ((n - 1) / s == (n - 1) / (s - 1))
+            --s;
+    }
+    if (n < ElemCount(cache))
+        cache[n] = s;
+    return s;
 }

@@ -15,21 +15,16 @@ COBJS = ../common/getopt.o ../common/time.o \
 	  ../common/mlocal.o ../common/literals.o \
 	  ../common/alloc.o
 
-OBJ = $(ROBJS) $(COBJS)
+OBJS = $(ROBJS) $(COBJS)
 
 all:	rtt
 
 clean:		
 	rm -f *.o rtt typespec
 
-rtt:	$(OBJ)
-	$(CC) $(LDFLAGS) -o rtt $(OBJ)
+rtt:	$(OBJS)
+	$(CC) $(LDFLAGS) -o rtt $(OBJS) $(LIBS)
 	cp rtt $(OIBIN)
-
-library:	$(OBJ)
-		rm -rf rtt.a
-		ar qc rtt.a $(OBJ)
-		-(test -f ../../NoRanlib) || (ranlib rtt.a)
 
 $(ROBJS): rtt.h rtt1.h rttproto.h preproc.h pproto.h ltoken.h ../h/mproto.h\
 	        ../h/define.h ../h/config.h ../h/typedefs.h \
