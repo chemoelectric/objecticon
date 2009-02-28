@@ -34,16 +34,10 @@ register dptr cargp;
 
    MemProtect(sblkp = alccoexp(0, 0));
 
-
-   if (!sblkp)
-      Fail;
-
    /*
     * Get a refresh block for the new co-expression.
     */
    MemProtect(rblkp = alcrefresh(entryp, na, nl));
-   if (!rblkp)
-      Fail;
 
    sblkp->freshblk.dword = D_Refresh;
    BlkLoc(sblkp->freshblk) = (union block *) rblkp;

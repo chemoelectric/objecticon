@@ -160,6 +160,7 @@ long icodesize, stacksize;
    ep->es_gfp = NULL;
    ep->es_argp = NULL;
    ep->tvalloc = NULL;
+   ep->es_sp = NULL;
 
    if (icodesize > 0)
       ep->id = 1;

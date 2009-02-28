@@ -969,6 +969,12 @@ struct b_coexpr *ce;
    register struct ef_marker *s_efp;
    word nargs, type = 0, gsize = 0;
 
+   /* The stack pointer may be null if a gc has been triggerred between allocating the
+    * coexpression block and the refresh block (alcrefresh) - see Ocreate in lmisc.r
+    */
+   if (ce->es_sp == 0)
+       return;
+
    fp = ce->es_pfp;
    s_gfp = ce->es_gfp;
    if (s_gfp != 0) {
