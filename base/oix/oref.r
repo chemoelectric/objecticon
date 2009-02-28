@@ -9,13 +9,12 @@ operator{*} ! bang(underef x -> dx)
    declare {
       register C_integer i, j;
       tended union block *ep;
-      struct hgstate state;
-      char ch;
       }
 
    type_case dx of {
      string : {
         inline {
+            char ch;
             if (is:variable(x)) {
                 for (i = 1; i <= StrLen(dx); i++) {
                     suspend tvsubs(&x, i, (word)1);
@@ -72,6 +71,7 @@ operator{*} ! bang(underef x -> dx)
 	       }
          inline {
             struct b_tvtbl *tp;
+            struct hgstate state;
 
             EVValD(&dx, E_Tbang);
 
@@ -95,6 +95,7 @@ operator{*} ! bang(underef x -> dx)
             return store[type(dx).set_elem]
             }
          inline {
+            struct hgstate state;
             EVValD(&dx, E_Sbang);
             /*
              *  This is similar to the method for tables except that a
@@ -173,6 +174,7 @@ operator{*} ! bang(underef x -> dx)
                return string
                }
             inline {
+               char ch;
                /*
                 * A (converted or non-variable) string is being banged.
                 * Loop through the string suspending simple one character
