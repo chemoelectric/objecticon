@@ -12,25 +12,25 @@ operator{*} ! bang(underef x -> dx)
       struct hgstate state;
       char ch;
       }
-   if is:variable(x) && is:string(dx) then {
-      abstract {
-         return new tvsubs(type(x))
-         }
-      inline {
-         /*
-          * A nonconverted string from a variable is being banged.
-          *  Loop through the string suspending one-character substring
-          *  trapped variables.
-          */
-         for (i = 1; i <= StrLen(dx); i++) {
-            suspend tvsubs(&x, i, (word)1);
-            deref(&x, &dx);
-            if (!is:string(dx)) 
-               runerr(103, dx);
+
+   type_case dx of {
+     string : {
+        inline {
+            if (is:variable(x)) {
+                for (i = 1; i <= StrLen(dx); i++) {
+                    suspend tvsubs(&x, i, (word)1);
+                    deref(&x, &dx);
+                    if (!is:string(dx)) 
+                        runerr(103, dx);
+                }
+            } else {
+                for (i = 1; i <= StrLen(dx); i++) {
+                    ch = *(StrLoc(dx) + i - 1);
+                    suspend string(1, (char *)&allchars[ch & 0xFF]);
+                }
             }
-         }
-      }
-   else type_case dx of {
+        }
+     }
 
       list: {
          abstract {
@@ -125,29 +125,28 @@ operator{*} ! bang(underef x -> dx)
       }
 
      ucs: {
-       if is:variable(x) then {
-          inline {
-             for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
-                suspend tvsubs(&x, i, (word)1);
-                deref(&x, &dx);
-                if (!is:ucs(dx)) 
-                  runerr(128, dx);
-            }
-          }
-       } else {
-          inline {
-             tended char *p = StrLoc(BlkLoc(dx)->ucs.utf8);
-             for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
-                 tended struct descrip utf8;
-                 StrLoc(utf8) = p;
-                 StrLen(utf8) = UTF8_SEQ_LEN(*p);
-                 p += StrLen(utf8);
-                 suspend ucs(make_ucs_block(&utf8, 1));
-             }
+       inline {
+          if (is:variable(x)) {
+              for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
+                  suspend tvsubs(&x, i, (word)1);
+                  deref(&x, &dx);
+                  if (!is:ucs(dx)) 
+                      runerr(128, dx);
+              }
+          } else {
+              tended char *p = StrLoc(BlkLoc(dx)->ucs.utf8);
+              for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
+                  tended struct descrip utf8;
+                  StrLoc(utf8) = p;
+                  StrLen(utf8) = UTF8_SEQ_LEN(*p);
+                  p += StrLen(utf8);
+                  suspend ucs(make_ucs_block(&utf8, 1));
+              }
           }
        }
      }
-      record: {
+
+     record: {
          abstract {
             return type(dx).all_fields
 	       }
@@ -200,37 +199,8 @@ end
 "?x - produce a randomly selected element of x."
 
 operator{0,1} ? random(underef x -> dx)
-
-
-   if is:variable(x) && is:string(dx) then {
-      abstract {
-         return new tvsubs(type(x))
-         }
-      body {
-         C_integer val;
-         double rval;
-
-         /*
-          * A string from a variable is being banged. Produce a one
-          *  character substring trapped variable.
-          */
-         if ((val = StrLen(dx)) <= 0)
-            fail;
-         rval = RandVal;	/* This form is used to get around */
-         rval *= val;		/* a bug in a certain C compiler */
-         return tvsubs(&x, (word)rval + 1, (word)1);
-         }
-      }
-   else type_case dx of {
+   type_case dx of {
       string: {
-         /*
-          * x is a string, but it is not a variable. Produce a
-          *   random character in it as the result; a substring
-          *   trapped variable is not needed.
-          */
-         abstract {
-            return string
-            }
          body {
             C_integer val;
             double rval;
@@ -239,7 +209,10 @@ operator{0,1} ? random(underef x -> dx)
                fail;
             rval = RandVal;
             rval *= val;
-            return string(1, StrLoc(dx)+(word)rval);
+            if (is:variable(x))
+                return tvsubs(&x, (word)rval + 1, (word)1);
+            else
+                return string(1, StrLoc(dx)+(word)rval);
             }
          }
 
