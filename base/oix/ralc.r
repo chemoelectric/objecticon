@@ -127,14 +127,11 @@ long icodesize, stacksize;
    {
    struct b_coexpr *ep;
 
-   if (icodesize > 0) {
+   if (icodesize > 0)
       ep = calloc(1, (stacksize + icodesize +
 			  sizeof(struct progstate) + sizeof(struct b_coexpr)));
-      }
    else
-      {
-   ep = malloc(stksize);
-   }
+      ep = malloc(stksize);
 
    /*
     * If malloc failed or there have been too many co-expression allocations
@@ -143,14 +140,14 @@ long icodesize, stacksize;
 
    if (ep == NULL || alcnum > AlcMax) {
       collect(Static);
-
-      if (icodesize>0) {
-         ep = malloc(mstksize+icodesize+sizeof(struct progstate));
-         }
-      else
-
-         ep = malloc(stksize);
+      if (ep == NULL) {
+          if (icodesize > 0)
+              ep = calloc(1, (stacksize + icodesize +
+                              sizeof(struct progstate) + sizeof(struct b_coexpr)));
+          else
+              ep = malloc(stksize);
       }
+   }
    if (ep == NULL)
       ReturnErrNum(305, NULL);
 
