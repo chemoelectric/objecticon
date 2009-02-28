@@ -128,8 +128,8 @@ long icodesize, stacksize;
    struct b_coexpr *ep;
 
    if (icodesize > 0)
-      ep = calloc(1, (stacksize + icodesize +
-			  sizeof(struct progstate) + sizeof(struct b_coexpr)));
+      ep = malloc(stacksize + icodesize +
+                  sizeof(struct progstate) + sizeof(struct b_coexpr));
    else
       ep = malloc(stksize);
 
@@ -142,8 +142,8 @@ long icodesize, stacksize;
       collect(Static);
       if (ep == NULL) {
           if (icodesize > 0)
-              ep = calloc(1, (stacksize + icodesize +
-                              sizeof(struct progstate) + sizeof(struct b_coexpr)));
+              ep = malloc(stacksize + icodesize +
+                          sizeof(struct progstate) + sizeof(struct b_coexpr));
           else
               ep = malloc(stksize);
       }
@@ -173,6 +173,7 @@ long icodesize, stacksize;
    if (icodesize > 0) {
       ep->id = 1;
       ep->program = (struct progstate *)(ep + 1);
+      memset(ep->program, 0, sizeof(struct progstate));
    } else {
       ep->id = coexp_ser++;
       ep->program = curpstate;
