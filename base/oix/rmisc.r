@@ -866,6 +866,10 @@ int noimage;
          }
 
       kywdstr: {
+         if (VarLoc(*dp) == &kywd_prog)
+            fprintf(f, "&progname = ");
+         if (VarLoc(*dp) == &kywd_why)
+            fprintf(f, "&why = ");
          outimage(f, VarLoc(*dp), noimage);
          }
 
