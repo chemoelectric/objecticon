@@ -25,11 +25,32 @@ end
 # @param depth   The depth of recursion; default is all levels
 #
 procedure to_string(o, indent, depth)
-   local sb, oo
+   local sb
    sb := RamStream()
-   oo := ObjectOutputStream(sb, indent, depth)
-   oo.traverse(o)
+   ObjectOutputStream(sb, indent, depth).traverse(o)
    return sb.done()
+end
+
+#
+# Like to_string, but send the output direct to FileStream.stdout.
+#
+# @param o       The object to be output.
+# @param indent  Output newlines and indentation to show the object structure
+# @param depth   The depth of recursion; default is all levels
+#
+procedure to_stdout(o, indent, depth)
+   return ObjectOutputStream(FileStream.stdout, indent, depth).traverse(o)
+end
+
+#
+# Like to_string, but send the output direct to FileStream.stderr.
+#
+# @param o       The object to be output.
+# @param indent  Output newlines and indentation to show the object structure
+# @param depth   The depth of recursion; default is all levels
+#
+procedure to_stderr(o, indent, depth)
+   return ObjectOutputStream(FileStream.stdout, indent, depth).traverse(o)
 end
 
 class ObjectOutputStream(Stream)
@@ -74,7 +95,7 @@ class ObjectOutputStream(Stream)
       local ty, s, i, e, pairs, mp, sep, desc
 
       if s := \seen[o] then
-         return writes("ref " || s)
+         return writes("ref ", s)
 
       ty := type(o)
       level +:= 1
@@ -88,25 +109,25 @@ class ObjectOutputStream(Stream)
             if /desc then 
                writes(s) | fail
             else if simple{!o} then {
-               writes(s || "(") | fail
+               writes(s, "(") | fail
                i := 1
                every s := generate_record_names(o) do {
                   if i > 1 then
                      writes(";") | fail
-                  writes(s || "=") | fail
+                  writes(s, "=") | fail
                   traverse(o[i]) | fail
                   i +:= 1
                }
                writes(")") | fail
             } else {
                nl() | fail
-               writes(s || "(") | fail
+               writes(s, "(") | fail
                iplus()
                i := 1
                every s := generate_record_names(o) do {
                   nl() | fail
                   iplus()
-                  writes(s || "=") | fail
+                  writes(s, "=") | fail
                   traverse(o[i]) | fail
                   iminus()
                   i +:= 1
@@ -125,22 +146,22 @@ class ObjectOutputStream(Stream)
             else if mp := Class.getf(o, "object_output", 1) then
                mp(self) | fail
             else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
-               writes(s || "(") | fail
+               writes(s, "(") | fail
                every i := 1 to Class.get_n_instance_fields(o) do {
                   if i > 1 then
                      writes(";") | fail
-                  writes(Class.get_field_name(o, i) || "=") | fail
+                  writes(Class.get_field_name(o, i), "=") | fail
                   traverse(Class.getf(o, i)) | fail
                   i +:= 1
                }
                writes(")") | fail
             } else {
                nl() | fail
-               writes(s || "(") | fail
+               writes(s, "(") | fail
                iplus()
                every i := 1 to Class.get_n_instance_fields(o) do {
                   nl() | fail
-                  writes(Class.get_field_name(o, i) || "=") | fail
+                  writes(Class.get_field_name(o, i), "=") | fail
                   iplus()
                   traverse(Class.getf(o, i)) | fail
                   iminus()
@@ -158,7 +179,7 @@ class ObjectOutputStream(Stream)
             if /desc then
                writes(s) | fail
             else if simple{!o} then {
-               writes(s || "{") | fail
+               writes(s, "{") | fail
                every e := !o do {
                   if \sep then
                      writes(",") | fail
@@ -168,7 +189,7 @@ class ObjectOutputStream(Stream)
                writes("}") | fail
             } else {
                nl() | fail
-               writes(s || "{") | fail
+               writes(s, "{") | fail
                iplus()
                every e := !o do {
                   if \sep then
@@ -189,7 +210,7 @@ class ObjectOutputStream(Stream)
             if /desc then
                writes(s) | fail
             else if simple{!o} then {
-               writes(s || "[") | fail
+               writes(s, "[") | fail
                every e := !o do {
                   if \sep then
                      writes(",") | fail
@@ -199,7 +220,7 @@ class ObjectOutputStream(Stream)
                writes("]") | fail
             } else {
                nl() | fail
-               writes(s || "[") | fail
+               writes(s, "[") | fail
                iplus()
                every e := !o do {
                   if \sep then
@@ -315,7 +336,7 @@ class ObjectOutputStream(Stream)
    end
    
    public object_start(o)
-      return writes(type(o) || " " || subtype(o) || "#" || serial(o) || "(")
+      return writes(type(o), " ", subtype(o), "#", serial(o), "(")
    end
 
    public object_end(o)
@@ -335,7 +356,7 @@ class ObjectOutputStream(Stream)
          every s := !fields do {
             if \sep then
                writes(";") | fail
-            writes(s || "=") | fail
+            writes(s, "=") | fail
             traverse(Class.getf(o, s)) | fail
             sep := 1
          }
@@ -346,7 +367,7 @@ class ObjectOutputStream(Stream)
          iplus()
          every s := !fields do {
             nl() | fail
-            writes(s || "=") | fail
+            writes(s, "=") | fail
             iplus()
             traverse(Class.getf(o, s)) | fail
             iminus()
@@ -377,6 +398,7 @@ class ObjectOutputStream(Stream)
       self.depth := depth
       self.indent := indent
       self.f := f
+      f.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", f)
       return
    end
 end
