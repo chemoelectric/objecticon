@@ -156,26 +156,29 @@ long icodesize, stacksize;
    ep->title = T_Coexpr;
    ep->es_actstk = NULL;
    ep->size = 0;
+   ep->es_efp = NULL;
    ep->es_pfp = NULL;
    ep->es_gfp = NULL;
    ep->es_argp = NULL;
    ep->tvalloc = NULL;
    ep->es_sp = NULL;
-
-   if (icodesize > 0)
-      ep->id = 1;
-   else
-      ep->id = coexp_ser++;
-   ep->nextstk = stklist;
    ep->es_tend = NULL;
+   ep->freshblk = nulldesc;
+   ep->es_ipc.op = NULL;
+   ep->es_ilevel = 0;
 
    /*
-    * Initialize program state to self for &main; curpstate for others.
+    * Initialize id, and program state to self for &main; curpstate for others.
     */
-   if(icodesize>0) ep->program = (struct progstate *)(ep+1);
-   else ep->program = curpstate;
+   if (icodesize > 0) {
+      ep->id = 1;
+      ep->program = (struct progstate *)(ep + 1);
+   } else {
+      ep->id = coexp_ser++;
+      ep->program = curpstate;
+   }
 
-
+   ep->nextstk = stklist;
    stklist = ep;
 
    return ep;
