@@ -1095,12 +1095,11 @@ dptr findfile(word *ipc)
 int getimage(dp1,dp2)
 dptr dp1, dp2;
    {
-   register word len, outlen, rnlen;
+   register word len;
    int i, j;
    tended char *s;
    tended struct descrip source = *dp1;    /* the source may move during gc */
    register union block *bp;
-   char *type, *t, *csn;
    char sbuf[64];
    char cbuf[CHAR_CVT_LEN];
    FILE *fd;
@@ -1112,17 +1111,16 @@ dptr dp1, dp2;
          len = 2;  /* quotes */
          while (i-- > 0)
              len += str_charstr(*s++ & 0xff, 0);
-	 MemProtect(reserve(Strings, len));
-         MemProtect(t = alcstr("\"", 1));
-         StrLoc(*dp2) = t;
+	 MemProtect(StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
+         alcstr("\"", 1);
          s = StrLoc(source);
          i = StrLen(source);
          while (i-- > 0) {
              int n = str_charstr(*s++ & 0xff, cbuf);
-             MemProtect(alcstr(cbuf, n));
+             alcstr(cbuf, n);
          }
-         MemProtect(alcstr("\"", 1));
+         alcstr("\"", 1);
          }
 
       ucs: {
@@ -1133,10 +1131,10 @@ dptr dp1, dp2;
              j = utf8_iter(&s);
              len += ucs_charstr(j, 0);
          }
-	 MemProtect(reserve(Strings, len));
-         MemProtect(t = alcstr("u\"", 2));
-         StrLoc(*dp2) = t;
+	 MemProtect(StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
+
+         alcstr("u\"", 2);
              
          s = StrLoc(BlkLoc(source)->ucs.utf8);
          i = BlkLoc(source)->ucs.length;
@@ -1144,10 +1142,10 @@ dptr dp1, dp2;
              int n;
              j = utf8_iter(&s);
              n = ucs_charstr(j, cbuf);
-             MemProtect(alcstr(cbuf, n));
+             alcstr(cbuf, n);
          }
 
-         MemProtect(alcstr("\"", 1));
+         alcstr("\"", 1);
          }
 
       null: {
@@ -1157,24 +1155,20 @@ dptr dp1, dp2;
 
      class: {
            /* produce "class " + the class name */
-         len = StrLen(BlkLoc(source)->class.name);
-         s = StrLoc(BlkLoc(source)->class.name);
-	 MemProtect (reserve(Strings, len + 6));
-         MemProtect(t = alcstr("class ", 6));
-         MemProtect(alcstr(s, len));
-         StrLoc(*dp2) = t;
-         StrLen(*dp2) = len + 6;
+         len = 6 + StrLen(BlkLoc(source)->class.name);
+	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+         StrLen(*dp2) = len;
+         alcstr("class ", 6);
+         alcstr(StrLoc(BlkLoc(source)->class.name), StrLen(BlkLoc(source)->class.name));
        }
 
      constructor: {
           /* produce "constructor " + the type name */
-         len = StrLen(BlkLoc(source)->constructor.name);
-         s = StrLoc(BlkLoc(source)->constructor.name);
-	 MemProtect (reserve(Strings, len + 12));
-         MemProtect(t = alcstr("constructor ", 12));
-         MemProtect(alcstr(s, len));
-         StrLoc(*dp2) = t;
-         StrLen(*dp2) = len + 12;
+         len = 12 + StrLen(BlkLoc(source)->constructor.name);
+	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+         StrLen(*dp2) = len;
+         alcstr("constructor ", 12);
+         alcstr(StrLoc(BlkLoc(source)->constructor.name), StrLen(BlkLoc(source)->constructor.name));
        }
 
       integer: {
@@ -1206,7 +1200,8 @@ dptr dp1, dp2;
          }
 
       cset: {
-         int from, to, j;
+         int from, to;
+         char *csn;
          /*
 	  * Check for the value of a predefined cset; use keyword name if found.
 	  */
@@ -1230,28 +1225,27 @@ dptr dp1, dp2;
              }
          }
 
-	 MemProtect (reserve(Strings, len));
-         MemProtect(t = alcstr("'", 1));
-         StrLoc(*dp2) = t;
+	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
+         alcstr("'", 1);
          for (i = 0; i < BlkLoc(source)->cset.n_ranges; ++i) {
              int n;
              from = BlkLoc(source)->cset.range[i].from;
              to = BlkLoc(source)->cset.range[i].to;
              if (cset_do_range(from, to)) {
                  n = cset_charstr(from, cbuf);
-                 MemProtect(alcstr(cbuf, n));
-                 MemProtect(alcstr("-",1));
+                 alcstr(cbuf, n);
+                 alcstr("-",1);
                  n = cset_charstr(to, cbuf);
-                 MemProtect(alcstr(cbuf, n));
+                 alcstr(cbuf, n);
              } else {
                  for (j = from; j <= to; ++j) {
                      n = cset_charstr(j, cbuf);
-                     MemProtect(alcstr(cbuf, n));
+                     alcstr(cbuf, n);
                  }
              }
          }
-         MemProtect(alcstr("'", 1));
+         alcstr("'", 1);
          }
 
 
@@ -1264,15 +1258,15 @@ dptr dp1, dp2;
              dptr field_name = &field->name;
              struct b_class *field_class = field->defining_class;
              len = StrLen(field_class->name) + StrLen(*field_name) + 8;
-             MemProtect (reserve(Strings, len));
-             MemProtect(t = alcstr("method ", 7));
-             /* No need to refresh pointers, everything is static data */
-             StrLoc(*dp2) = t;
+             MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
-             MemProtect(alcstr(StrLoc(field_class->name),StrLen(field_class->name)));
-             MemProtect(alcstr(".", 1));
-             MemProtect(alcstr(StrLoc(*field_name),StrLen(*field_name)));
+             /* No need to refresh pointers, everything is static data */
+             alcstr("method ", 7);
+             alcstr(StrLoc(field_class->name),StrLen(field_class->name));
+             alcstr(".", 1);
+             alcstr(StrLoc(*field_name),StrLen(*field_name));
          } else {
+             char *type;
              /*
               * Produce one of:
               *  "procedure name"
@@ -1281,17 +1275,15 @@ dptr dp1, dp2;
               * Note that the number of dynamic locals is used to determine
               *  what type of "procedure" is at hand.
               */
-             len = StrLen(BlkLoc(source)->proc.pname);
-             s = StrLoc(BlkLoc(source)->proc.pname);
-             MemProtect (reserve(Strings, len + 22));
              switch ((int)BlkLoc(source)->proc.ndynam) {
-                 default:  type = "procedure "; outlen = 10; break;
-                 case -1:  type = "function "; outlen = 9; break;
+                 default:  type = "procedure "; break;
+                 case -1:  type = "function "; break;
              }
-             MemProtect(t = alcstr(type, outlen));
-             StrLoc(*dp2) = t;
-             MemProtect(alcstr(s, len));
-             StrLen(*dp2) = len + outlen;
+             len = strlen(type) + StrLen(BlkLoc(source)->proc.pname);
+             MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+             StrLen(*dp2) = len;
+             alcstr(type, strlen(type));
+             alcstr(StrLoc(BlkLoc(source)->proc.pname), StrLen(BlkLoc(source)->proc.pname));
          }
       }
 
@@ -1304,8 +1296,7 @@ dptr dp1, dp2;
          bp = BlkLoc(*dp1);
          sprintf(sbuf, "list#%ld(%ld)", (long)bp->list.id, (long)bp->list.size);
          len = strlen(sbuf);
-         MemProtect(t = alcstr(sbuf, len));
-         StrLoc(*dp2) = t;
+         MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
          StrLen(*dp2) = len;
          }
 
@@ -1319,8 +1310,7 @@ dptr dp1, dp2;
          sprintf(sbuf, "table#%ld(%ld)", (long)bp->table.id,
             (long)bp->table.size);
          len = strlen(sbuf);
-         MemProtect(t = alcstr(sbuf, len));
-         StrLoc(*dp2) = t;
+         MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
          StrLen(*dp2) = len;
          }
 
@@ -1331,8 +1321,7 @@ dptr dp1, dp2;
          bp = BlkLoc(*dp1);
          sprintf(sbuf, "set#%ld(%ld)", (long)bp->set.id, (long)bp->set.size);
          len = strlen(sbuf);
-         MemProtect(t = alcstr(sbuf,len));
-         StrLoc(*dp2) = t;
+         MemProtect(StrLoc(*dp2) = alcstr(sbuf,len));
          StrLen(*dp2) = len;
          }
 
@@ -1342,21 +1331,17 @@ dptr dp1, dp2;
           *  "record name_m(n)"	-- under construction
           * where n is the number of fields.
           */
+         struct b_constructor *rec_const;
          bp = BlkLoc(*dp1);
-         rnlen = StrLen(bp->record.constructor->name);
-         sprintf(sbuf, "#%ld(%ld)", (long)bp->record.id,
-            (long)bp->record.constructor->n_fields);
-         len = strlen(sbuf);
-	 MemProtect (reserve(Strings, 7 + len + rnlen));
-         MemProtect(t = alcstr("record ", (word)(7)));
-         bp = BlkLoc(*dp1);		/* refresh pointer */
-         StrLoc(*dp2) = t;
-	 StrLen(*dp2) = 7;
-         Protect(alcstr(StrLoc(bp->record.constructor->name),rnlen),
-	            return Error);
-         StrLen(*dp2) += rnlen;
-         MemProtect(alcstr(sbuf, len));
-         StrLen(*dp2) += len;
+         rec_const = bp->record.constructor;
+         sprintf(sbuf, "#%ld(%ld)", (long)bp->record.id, (long)rec_const->n_fields);
+         len = 7 + strlen(sbuf) + StrLen(rec_const->name);
+	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+         StrLen(*dp2) = len;
+         /* No need to refresh pointer, rec_const is static */
+         alcstr("record ", 7);
+         alcstr(StrLoc(rec_const->name),StrLen(rec_const->name));
+         alcstr(sbuf, strlen(sbuf));
          }
 
   
@@ -1374,15 +1359,15 @@ dptr dp1, dp2;
 
            sprintf(sbuf, "#%ld(%ld),class ", (long)obj->id, (long)obj_class->n_instance_fields);
            len = StrLen(obj_class->name) + StrLen(cast_class->name) + strlen(sbuf) + 13;
-           MemProtect (reserve(Strings, len));
-           MemProtect(t = alcstr("cast(object ", 12));
-           /* No need to refresh pointers, everything is static data */
-           StrLoc(*dp2) = t;
+
+           MemProtect (StrLoc(*dp2) = reserve(Strings, len));
            StrLen(*dp2) = len;
-           MemProtect(alcstr(StrLoc(obj_class->name),StrLen(obj_class->name)));
-           MemProtect(alcstr(sbuf, strlen(sbuf)));
-           MemProtect(alcstr(StrLoc(cast_class->name),StrLen(cast_class->name)));
-           MemProtect(alcstr(")", 1));
+           /* No need to refresh pointers, everything is static data */
+           alcstr("cast(object ", 12);
+           alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
+           alcstr(sbuf, strlen(sbuf));
+           alcstr(StrLoc(cast_class->name),StrLen(cast_class->name));
+           alcstr(")", 1);
        }
 
      methp: {
@@ -1405,19 +1390,19 @@ dptr dp1, dp2;
                field_name = &field->name;
                field_class = field->defining_class;
                len = StrLen(obj_class->name) + StrLen(field_class->name) + StrLen(*field_name) + strlen(sbuf) + 22;
-               MemProtect (reserve(Strings, len));
-               MemProtect(t = alcstr("methp(object ", 13));
-               /* No need to refresh pointers, everything is static data */
-               StrLoc(*dp2) = t;
+               MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;
-               MemProtect(alcstr(StrLoc(obj_class->name),StrLen(obj_class->name)));
-               MemProtect(alcstr(sbuf, strlen(sbuf)));
-               MemProtect(alcstr("method ", 7));
-               MemProtect(alcstr(StrLoc(field_class->name),StrLen(field_class->name)));
-               MemProtect(alcstr(".", 1));
-               MemProtect(alcstr(StrLoc(*field_name),StrLen(*field_name)));
-               MemProtect(alcstr(")", 1));
+               /* No need to refresh pointers, everything is static data */
+               alcstr("methp(object ", 13);
+               alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
+               alcstr(sbuf, strlen(sbuf));
+               alcstr("method ", 7);
+               alcstr(StrLoc(field_class->name),StrLen(field_class->name));
+               alcstr(".", 1);
+               alcstr(StrLoc(*field_name),StrLen(*field_name));
+               alcstr(")", 1);
            } else {
+               char *type;
                /*
                 * Produce:
                 *  "methp(object objectname#m(n),procedure procname)"
@@ -1425,20 +1410,19 @@ dptr dp1, dp2;
                 *  "methp(object objectname#m(n),function procname)"
                 */
                switch (proc->ndynam) {
-                   default:  type = "procedure "; outlen = 10; break;
-                   case -1:  type = "function "; outlen = 9; break;
+                   default:  type = "procedure "; break;
+                   case -1:  type = "function "; break;
                }
-               len = StrLen(obj_class->name) + StrLen(proc->pname) + strlen(sbuf) + outlen + 14;
-               MemProtect (reserve(Strings, len));
-               MemProtect(t = alcstr("methp(object ", 13));
-               /* No need to refresh pointers, everything is static data */
-               StrLoc(*dp2) = t;
+               len = StrLen(obj_class->name) + StrLen(proc->pname) + strlen(sbuf) + strlen(type) + 14;
+               MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;
-               MemProtect(alcstr(StrLoc(obj_class->name),StrLen(obj_class->name)));
-               MemProtect(alcstr(sbuf, strlen(sbuf)));
-               MemProtect(alcstr(type, outlen));
-               MemProtect(alcstr(StrLoc(proc->pname),StrLen(proc->pname)));
-               MemProtect(alcstr(")", 1));
+               /* No need to refresh pointers, everything is static data */
+               alcstr("methp(object ", 13);
+               alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
+               alcstr(sbuf, strlen(sbuf));
+               alcstr(type, strlen(type));
+               alcstr(StrLoc(proc->pname),StrLen(proc->pname));
+               alcstr(")", 1);
            }
        }
 
@@ -1451,19 +1435,14 @@ dptr dp1, dp2;
            struct b_class *obj_class;
            bp = BlkLoc(*dp1);
            obj_class = bp->object.class;   
-           rnlen = StrLen(obj_class->name);
-           sprintf(sbuf, "#%ld(%ld)", (long)bp->object.id,
-                   (long)obj_class->n_instance_fields);
-           len = strlen(sbuf);
-           MemProtect (reserve(Strings, 7 + len + rnlen));
-           MemProtect(t = alcstr("object ", (word)(7)));
+           sprintf(sbuf, "#%ld(%ld)", (long)bp->object.id, (long)obj_class->n_instance_fields);
+           len = 7 + strlen(sbuf) + StrLen(obj_class->name);
+           MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+           StrLen(*dp2) = len;
            /* No need to refresh pointer, obj_class is static */
-           StrLoc(*dp2) = t;
-           StrLen(*dp2) = 7;
-           MemProtect(alcstr(StrLoc(obj_class->name),rnlen));
-           StrLen(*dp2) += rnlen;
-           MemProtect(alcstr(sbuf, len));
-           StrLen(*dp2) += len;
+           alcstr("object ", 7);
+           alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
+           alcstr(sbuf, strlen(sbuf));
        }
 
       coexpr: {
@@ -1476,12 +1455,11 @@ dptr dp1, dp2;
 
          sprintf(sbuf, "#%ld(%ld)", (long)BlkLoc(source)->coexpr.id,
             (long)BlkLoc(source)->coexpr.size);
-         len = strlen(sbuf);
-	 MemProtect (reserve(Strings, len + 13));
-         MemProtect(t = alcstr("co-expression", (word)(13)));
-         StrLoc(*dp2) = t;
-         MemProtect(alcstr(sbuf, len));
-         StrLen(*dp2) = 13 + len;
+         len = strlen(sbuf) + 13;
+	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+         StrLen(*dp2) = len;
+         alcstr("co-expression", 13);
+         alcstr(sbuf, strlen(sbuf));
          }
 
       default:
@@ -1491,8 +1469,7 @@ dptr dp1, dp2;
             */
            sprintf(sbuf, "external(%ld)", (long)BlkLoc(*dp1)->externl.blksize);
            len = strlen(sbuf);
-           MemProtect(t = alcstr(sbuf, len));
-           StrLoc(*dp2) = t;
+           MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
            StrLen(*dp2) = len;
            }
          else {
