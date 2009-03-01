@@ -13,6 +13,9 @@
  */
 int pollctr;
 
+static char attr_buff[4096];     /* Buff for attribute values */
+
+
 function{0,1} graphics_Window_open_impl(attr[n])
    body {
       int j, err_index = -1;
@@ -90,8 +93,6 @@ end
 
 function{0,1} graphics_Window_bg(self, colr)
    body {
-      char sbuf1[MaxCvtLen];
-      int len;
       tended char *tmp;
       GetSelfW();
 
@@ -115,10 +116,8 @@ function{0,1} graphics_Window_bg(self, colr)
       /*
        * In any event, this function returns the current background color.
        */
-      getbg(self_w, sbuf1);
-      len = strlen(sbuf1);
-      MemProtect(tmp = alcstr(sbuf1, len));
-      return string(len, tmp);
+      getbg(self_w, attr_buff);
+      return cstr2string(attr_buff);
    }
 end
 
@@ -156,7 +155,6 @@ function{1} graphics_Window_clone_impl(self, argv[argc])
        wbp w2;
        int n;
        tended struct descrip sbuf, sbuf2;
-       char answer[128];
        GetSelfW();
 
        MemProtect(w2 = alc_wbinding());
@@ -168,7 +166,7 @@ function{1} graphics_Window_clone_impl(self, argv[argc])
            if (!is:null(argv[n])) {
                if (!cnv:tmp_string(argv[n], sbuf))
                    runerr(109, argv[n]);
-               switch (wattrib(w2, StrLoc(argv[n]), StrLen(argv[n]), &sbuf2, answer)) {
+               switch (wattrib(w2, StrLoc(argv[n]), StrLen(argv[n]), &sbuf2, attr_buff)) {
                    case Failed: fail;
                    case Error: runerr(0, argv[n]);
 	       }
@@ -181,7 +179,7 @@ end
 
 function{0,1} graphics_Window_color(self, argv[argc])
    body {
-      int i, len;
+      int i;
       C_integer n;
       char *colorname, *srcname;
       tended char *tmp;
@@ -191,11 +189,9 @@ function{0,1} graphics_Window_color(self, argv[argc])
 
       if (argc == 1) {			/* if this is a query */
           CnvCInteger(argv[0], n)
-              if ((colorname = get_mutable_name(self_w, n)) == NULL)
-                  fail;
-          len = strlen(colorname);
-          MemProtect(tmp = alcstr(colorname, len));
-          return string(len, tmp);
+          if ((colorname = get_mutable_name(self_w, n)) == NULL)
+              fail;
+          return cstr2string(colorname);
       }
 
       CheckArgMultipleOf(2);
@@ -231,7 +227,6 @@ end
 function{0,1} graphics_Window_color_value(self, k)
    body {
       C_integer n;
-      int len;
       long r, g, b, a = 65535;
       tended char *s;
       char tmp[32], *t;
@@ -254,9 +249,7 @@ function{0,1} graphics_Window_color_value(self, k)
               sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
           else
               sprintf(tmp,"%ld,%ld,%ld", r, g, b);
-          len = strlen(tmp);
-          MemProtect(s = alcstr(tmp,len));
-          return string(len, s);
+          return cstr2string(tmp);
       }
       fail;
    }
@@ -877,8 +870,6 @@ end
 
 function{0,1} graphics_Window_fg(self, colr)
    body {
-      char sbuf1[MaxCvtLen];
-      int len;
       tended char *tmp;
       char *temp;
       GetSelfW();
@@ -905,11 +896,8 @@ function{0,1} graphics_Window_fg(self, colr)
        * In any case, this function returns the current foreground color.
        */
 
-      getfg(self_w, sbuf1);
-
-      len = strlen(sbuf1);
-      MemProtect(tmp = alcstr(sbuf1, len));
-      return string(len, tmp);
+      getfg(self_w, attr_buff);
+      return cstr2string(attr_buff);
    }
 end
 
@@ -1061,8 +1049,6 @@ end
 function{0,1} graphics_Window_font(self, f)
    body {
       tended char *tmp;
-      int len;
-      char buf[MaxCvtLen];
       GetSelfW();
 
       if (!is:null(f)) {
@@ -1071,10 +1057,8 @@ function{0,1} graphics_Window_font(self, f)
           if (setfont(self_w,&tmp) == Failed) 
               fail;
       }
-      getfntnam(self_w, buf);
-      len = strlen(buf);
-      MemProtect(tmp = alcstr(buf, len));
-      return string(len,tmp);
+      getfntnam(self_w, attr_buff);
+      return cstr2string(attr_buff);
    }
 end
 
@@ -1155,8 +1139,8 @@ end
 
 function{0,1} graphics_Window_palette_color(s1, s2)
    body {
-      int p, len;
-      char tmp[24], *s;
+      int p;
+      char tmp[32], *s;
       struct palentry *e;
       tended struct descrip d;
 
@@ -1177,9 +1161,7 @@ function{0,1} graphics_Window_palette_color(s1, s2)
       if (!e->valid)
           fail;
       sprintf(tmp, "%ld,%ld,%ld", e->clr.red, e->clr.green, e->clr.blue);
-      len = strlen(tmp);
-      MemProtect(s = alcstr(tmp, len));
-      return string(len, s);
+      return cstr2string(tmp);
    }
 end
 
@@ -1434,7 +1416,6 @@ function{*} graphics_Window_attrib(self, argv[argc])
       wbp wsave;
       word n;
       tended struct descrip sbuf, sbuf2 = nulldesc;
-      char answer[4096];
       int  pass, config = 0;
 
       GetSelfW();
@@ -1487,7 +1468,7 @@ function{*} graphics_Window_attrib(self, argv[argc])
 
 
                       switch (wattrib(self_w, StrLoc(sbuf), StrLen(sbuf),
-                                      &sbuf2, answer)) {
+                                      &sbuf2, attr_buff)) {
                           case Failed:
                               /*
                                * Mark the attribute so we don't produce a result
@@ -1545,14 +1526,14 @@ function{*} graphics_Window_attrib(self, argv[argc])
                       StrLen(sbuf) = stmp - StrLoc(sbuf);
 
                   switch (wattrib(self_w, StrLoc(sbuf), StrLen(sbuf),
-                                  &sbuf2, answer)) {
+                                  &sbuf2, attr_buff)) {
                       case Failed: continue;
                       case Error:  runerr(0, argv[n]);
                   }
                   if (is:string(sbuf2)) {
                       char *p=StrLoc(sbuf2);
                       MemProtect(StrLoc(sbuf2) = alcstr(StrLoc(sbuf2),StrLen(sbuf2)));
-                      if (p != answer) free(p);
+                      if (p != attr_buff) free(p);
                   }
                   suspend sbuf2;
               }
@@ -1568,15 +1549,11 @@ function{0,1} graphics_Window_wdefault(self, prog, opt)
    if !cnv:C_string(opt) then
        runerr(103, opt)
    body {
-      long l;
-      char sbuf1[MaxCvtLen];
       GetSelfW();
 
-      if (getdefault(self_w, prog, opt, sbuf1) == Failed) 
+      if (getdefault(self_w, prog, opt, attr_buff) == Failed) 
           fail;
-      l = strlen(sbuf1);
-      MemProtect(prog = alcstr(sbuf1,l));
-      return string(l,prog);
+      return cstr2string(attr_buff);
    }
 end
 
@@ -1710,7 +1687,6 @@ end
 function{0,1} graphics_Window_generic_color_value(k)
    body {
       C_integer n;
-      int len;
       long r, g, b, a = 65535;
       tended char *s;
       char tmp[32], *t;
@@ -1728,9 +1704,7 @@ function{0,1} graphics_Window_generic_color_value(k)
               sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
           else
               sprintf(tmp,"%ld,%ld,%ld", r, g, b);
-          len = strlen(tmp);
-          MemProtect(s = alcstr(tmp,len));
-          return string(len, s);
+          return cstr2string(tmp);
       }
       fail;
    }
