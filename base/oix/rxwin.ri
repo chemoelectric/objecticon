@@ -2098,7 +2098,7 @@ int setfgrgb(w, r, g, b)
     wbp w;
     int r, g, b;
 {
-    char sbuf1[MaxCvtLen];
+    char sbuf1[32];
     sprintf(sbuf1, "%d,%d,%d", r, g, b);
     return setfg(w, sbuf1);
 }
@@ -2152,7 +2152,7 @@ int setbgrgb(w, r, g, b)
     wbp w;
     int r, g, b;
 {
-    char sbuf1[MaxCvtLen];
+    char sbuf1[32];
     sprintf(sbuf1, "%d,%d,%d", r, g, b);
     return setbg(w, sbuf1);
 }
