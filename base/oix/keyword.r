@@ -100,7 +100,7 @@ keyword{2} dateline
          };
       time_t t;
       struct tm *ct;
-      char sbuf[MaxCvtLen];
+      char sbuf[256];
       int hour;
       char *merid, *tmp;
       int i;
@@ -256,13 +256,9 @@ keyword{1} host
      return string
      }
    inline {
-      char sbuf[MaxCvtLen], *tmp;
-      int i;
-
-      iconhost(sbuf);
-      i = strlen(sbuf);
-      MemProtect(tmp = alcstr(sbuf, i));
-      return string(i, tmp);
+       struct utsname utsn;
+       uname(&utsn);
+       return cstr2string(utsn.nodename);
       }
 end
 
