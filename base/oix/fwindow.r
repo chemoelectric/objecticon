@@ -1530,11 +1530,8 @@ function{*} graphics_Window_attrib(self, argv[argc])
                       case Failed: continue;
                       case Error:  runerr(0, argv[n]);
                   }
-                  if (is:string(sbuf2)) {
-                      char *p=StrLoc(sbuf2);
+                  if (is:string(sbuf2))
                       MemProtect(StrLoc(sbuf2) = alcstr(StrLoc(sbuf2),StrLen(sbuf2)));
-                      if (p != attr_buff) free(p);
-                  }
                   suspend sbuf2;
               }
           }
