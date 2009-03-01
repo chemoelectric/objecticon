@@ -11,33 +11,7 @@
 #endif
 #endif
 
-/*
- * iconhost - return some sort of host name into the buffer pointed at
- *  by hostname.  This code accommodates several different host name
- *  fetching schemes.
- */
-void iconhost(hostname)
-char *hostname;
-   {
 
-#ifdef HostStr
-   /*
-    * The string constant HostStr contains the host name.
-    */
-   strcpy(hostname,HostStr);
-#else					/* HostStr */
-   {
-   /*
-    * Use the uname system call.  (POSIX)
-    */
-   struct utsname utsn;
-   uname(&utsn);
-   strcpy(hostname,utsn.nodename);
-   }
-#endif					/* HostStr */
-
-   }
-
 /*
  * Read a long string in shorter parts. (Standard read may not handle long
  *  strings.)
