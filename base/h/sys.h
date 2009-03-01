@@ -61,6 +61,7 @@
    #include <sys/times.h>
    #include <sys/types.h>
    #include <termios.h>
+   #include <sys/utsname.h>
    #ifdef SysSelectH
       #include <sys/select.h>
    #endif
@@ -127,13 +128,6 @@
 #ifdef Graphics
    #define VanquishReturn(s) return s;
 #endif					/* Graphics */
-
-/*
- * Feature-dependent includes.
- */
-#ifndef HostStr
-      #include <sys/utsname.h>
-#endif					/* HostStr */
 
 #ifdef HAVE_LIBDL
 #if MSWIN32
