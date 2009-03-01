@@ -1310,16 +1310,14 @@ class Main(Dialog)
       move_selection_up_order_button.set_image(
                                 $include "icon/icn33.icon"
                                 )
-      move_selection_up_order_button.connect(self, 
-                                             "op_move_selection_up_order_button", Event.ACTION)
+      move_selection_up_order_button.connect(self.op_move_selection_up_order_button, Event.ACTION)
       tb.add_button(move_selection_up_order_button)
 
       move_selection_down_order_button := IconButton("tooltip=Order Down")
       move_selection_down_order_button.set_image(
                            $include "icon/icn34.icon"
                            )
-      move_selection_down_order_button.connect(self, 
-                                               "op_move_selection_down_order_button", Event.ACTION)
+      move_selection_down_order_button.connect(self.op_move_selection_down_order_button, Event.ACTION)
       tb.add_button(move_selection_down_order_button)
 
       i := IconButton("tooltip=Preview")
