@@ -1101,7 +1101,7 @@ dptr dp1, dp2;
    tended struct descrip source = *dp1;    /* the source may move during gc */
    register union block *bp;
    char *type, *t, *csn;
-   char sbuf[MaxCvtLen];
+   char sbuf[64];
    char cbuf[CHAR_CVT_LEN];
    FILE *fd;
 
