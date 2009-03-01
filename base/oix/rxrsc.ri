@@ -47,8 +47,7 @@ wclrp alc_rgb(w,s,r,g,b,is_iconcolor)
 
     if (is_iconcolor) {
         if (ws->iconColors == NULL) {
-            ws->iconColors = (short *)calloc(WMAXCOLORS, sizeof(short));
-            if (ws->iconColors == NULL) return NULL;
+            MemProtect(ws->iconColors = calloc(WMAXCOLORS, sizeof(short)));
             ws->siziColors = WMAXCOLORS;
         }
         numColors = &(ws->numiColors);
@@ -57,8 +56,7 @@ wclrp alc_rgb(w,s,r,g,b,is_iconcolor)
     }
     else {
         if (ws->theColors == NULL) {
-            ws->theColors = (short *)calloc(WMAXCOLORS*2, sizeof(short));
-            if (ws->theColors == NULL) return NULL;
+            MemProtect(ws->theColors = calloc(WMAXCOLORS*2, sizeof(short)));
             ws->sizColors = WMAXCOLORS*2;
         }
         numColors = &(ws->numColors);
@@ -218,9 +216,7 @@ void copy_colors(w1, w2)
                 wd->colors[j].refcount++;
                 if (ws2->numColors < WMAXCOLORS) {
                     if (ws2->theColors == NULL)
-                        ws2->theColors = (short *)calloc(WMAXCOLORS, sizeof(short));
-                    if (ws2->theColors == NULL)
-                        break; /* unlikely bug; should fail or something */
+                        MemProtect(ws2->theColors = calloc(WMAXCOLORS, sizeof(short)));
                     ws2->sizColors = WMAXCOLORS;
                     ws2->theColors[ws2->numColors++] = j;
                 }
@@ -388,7 +384,7 @@ wdp alc_display(s)
      * if we later switch to a virtual colormap.
      */
     wd->sizColors = DMAXCOLORS;
-    wd->colors = calloc(DMAXCOLORS, sizeof (struct wcolor));
+    MemProtect(wd->colors = calloc(DMAXCOLORS, sizeof (struct wcolor)));
     strcpy(wd->colors[0].name,"black");
     wd->colors[0].refcount = 1;
     wd->colors[0].type = SHARED;
@@ -892,10 +888,7 @@ wfp loadfont(wd,s)
 {
     wfp rv;
     GRFX_ALLOC(rv, _wfont);
-    rv->name = (char *)malloc((int)strlen(s)+1);
-    if (rv->name == NULL) ReturnErrNum(305, NULL);
-    strcpy(rv->name, s);
-    /*printf("opening %s\n",rv->name);*/
+    rv->name = salloc(s);
 #ifdef HAVE_LIBXFT
     rv->fsp = XftFontOpenName(wd->display, wd->screen, rv->name);
 #else

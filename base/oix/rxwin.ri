@@ -293,7 +293,7 @@ char* PropertyToString(Display* display, Atom target, int number_items,
         long_array = (unsigned long*) data;
 
         length = number_items * 30;
-        string = malloc( length + 1 );
+        MemProtect(string = malloc( length + 1 ));
         string[0] = '\0';
 
         /* Convert to atom names. */
@@ -314,7 +314,7 @@ char* PropertyToString(Display* display, Atom target, int number_items,
         }
     }
     else if (new_target == XA_STRING) {
-        string = malloc(number_items + 1);
+        MemProtect(string = malloc(number_items + 1));
         strcpy(string, data);
     }
     else if ((new_target == XA_INTEGER) ||
@@ -324,7 +324,7 @@ char* PropertyToString(Display* display, Atom target, int number_items,
         int_array = (int*) data;
 
         length = number_items * 20;
-        string = malloc( length + 1 );
+        MemProtect(string = malloc( length + 1 ));
         string[0] = '\0';
 
         for (i = 0; i < number_items; i++) {
@@ -342,7 +342,7 @@ char* PropertyToString(Display* display, Atom target, int number_items,
         long_array = (unsigned long*) data;
 
         length = number_items * 12;
-        string = malloc( length + 1 );
+        MemProtect(string = malloc( length + 1 ));
         string[0] = '\0';
 
         for (i = 0; i < number_items; i++) {
@@ -990,10 +990,6 @@ wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index, int i
     }
     if (ws->windowlabel == NULL) {
         ws->windowlabel = salloc(name);
-        if (ws->windowlabel == NULL) { /* out of memory */
-            *err_index = -2;
-            return NULL;
-        }
     }
     if ((i = wmap(w)) != Succeeded) {
         if (i == Failed) *err_index = -1;
@@ -1245,8 +1241,7 @@ int wmap(wbp w)
             size_hints.min_height = size_hints.max_height = ws->height;
         }
         if (ws->iconlabel == NULL) {
-            if ((ws->iconlabel = salloc(ws->windowlabel)) == NULL)
-                ReturnErrNum(305, Error);
+            ws->iconlabel = salloc(ws->windowlabel);
         }
         XSetStandardProperties(stddpy, stdwin, ws->windowlabel, ws->iconlabel,
                                0,0,0, &size_hints);
@@ -1574,8 +1569,7 @@ int seticonlabel(w, val)
 {
     STDLOCALS(w);
     if (ws->iconlabel != NULL) free(ws->iconlabel);
-    if ((ws->iconlabel = salloc(val)) == NULL)
-        ReturnErrNum(305, Error);
+    ws->iconlabel = salloc(val);
    
     if (stddpy && stdwin) {
         XSetIconName(stddpy, stdwin, w->window->iconlabel);
@@ -1598,8 +1592,8 @@ int setwindowlabel(w, s)
 {
     wsp ws = w->window;
     if (ws->windowlabel != NULL) free(ws->windowlabel);
-    if ((ws->windowlabel = salloc(s)) == NULL)
-        ReturnErrNum(305, Error);
+    ws->windowlabel = salloc(s);
+
     if (ws->display && ws->display->display && ws->win)
         XStoreName(ws->display->display, ws->win,
                    *ws->windowlabel ? ws->windowlabel : " ");    /* empty string fails */
@@ -3036,9 +3030,7 @@ int mutable_color(w, argv, ac, retval)
 
         if (ws->numColors < WMAXCOLORS) {
             if (ws->theColors == NULL) {
-                ws->theColors = (short *)calloc(WMAXCOLORS, sizeof(short));
-                if (ws->theColors == NULL)
-                    return Error;
+                MemProtect(ws->theColors = calloc(WMAXCOLORS, sizeof(short)));
             }
             ws->theColors[ws->numColors++] = i;
         }
@@ -3722,10 +3714,7 @@ int SetPattern(w, name, len)
 
     if (wc->patternname != NULL)
         free(wc->patternname);
-    wc->patternname = malloc(len+1);
-    if (wc->patternname == NULL) ReturnErrNum(305, Error);
-    strncpy(wc->patternname, name, len);
-    wc->patternname[len] = '\0';
+    wc->patternname = salloc(name);
    
     /*
      * If the pattern starts with a number it is a width , bits encoding
@@ -3867,8 +3856,8 @@ int seticonimage(w, dp)
 
             if ((ws->iconimage != NULL) && strcmp(ws->iconimage, ""))
                 free(ws->iconimage);
-            if ((ws->iconimage = salloc(tmp)) == NULL)
-                ReturnErrNum(305, Error);
+            ws->iconimage = salloc(tmp);
+
             if (ws->iconwin == (Window) NULL) makeIcon(w,0,0);
             else {
                 pix = loadimage(w, ws->iconimage, &height, &width, 0, &status);
@@ -4130,9 +4119,7 @@ Pixmap loadimage(w, filename, height, width, atorigin, status)
                 ;
             else {
                 if (ws->theColors == NULL) {
-                    ws->theColors = (short *)calloc(WMAXCOLORS, sizeof(short));
-                    if (ws->theColors == NULL)
-                        return (Pixmap) NULL;
+                    MemProtect(ws->theColors = calloc(WMAXCOLORS, sizeof(short)));
                 }
                 ws->theColors[ws->numColors++] = j;
 	    }
