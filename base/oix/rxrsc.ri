@@ -907,9 +907,11 @@ wfp loadfont(wd,s)
         int i;
 
         /*
-         * Xft seems to give strange values in its font ascent/descent fields; therefore
-         * calculate the GlyphInfo for a string comprising all 256 chars and work out
-         * ascent/descent from the resulting dimensions.
+         * Xft seems to sometimes give too-small values in its font
+         * ascent/descent fields; therefore calculate the GlyphInfo
+         * for a sample string comprising the first 256 chars and take
+         * the maximum ascent/descent of the sample and the font's
+         * reported values.
          */
         for (i = 0; i < 256; ++i) s[i] = (char)i;
         XftTextExtents8 (wd->display,
@@ -917,8 +919,8 @@ wfp loadfont(wd,s)
                          s,
                          256,
                          &extents);
-        rv->ascent = extents.y;
-        rv->descent = extents.height - extents.y;
+        rv->ascent = Max(rv->fsp->ascent, extents.y);
+        rv->descent = Max(rv->fsp->descent, extents.height - extents.y);
         rv->maxwidth = rv->fsp->max_advance_width;
     }
 #else
