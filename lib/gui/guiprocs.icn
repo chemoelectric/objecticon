@@ -359,12 +359,12 @@ procedure text_convert(s, target)
          # then create a ucs, rather than catenate ucs's together as
          # we go along.
          t := ""
-         every t ||:= utf8seq(ord(!s))
+         every t ||:= utf8seq(ord(s))
          return ucs(t)
       }
       "string": {
          t := ""
-         every i := ord(!s) do
+         every i := ord(s) do
             t ||:= char(256 > i | 63)
          return t
       }

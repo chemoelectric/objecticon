@@ -466,22 +466,23 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
       int use_trap = 0;
       }
 
+    /*
+    * If it isn't a C integer, but is a large integer, fail on
+    * the out-of-range index.
+    */
+   if !cnv:C_integer(i) then {
+      if cnv : integer(i) then inline { fail; }
+      runerr(101, i)
+   }
+   if !cnv:C_integer(j) then {
+      if cnv : integer(j) then inline { fail; }
+      runerr(101, j)
+   }
+
    type_case dx of {
       list: {
       abstract {
          return type(dx)
-         }
-      /*
-       * If it isn't a C integer, but is a large integer, fail on
-       * the out-of-range index.
-       */
-      if !cnv:C_integer(i) then {
-	 if cnv : integer(i) then inline { fail; }
-	 runerr(101, i)
-	 }
-      if !cnv:C_integer(j) then {
-         if cnv : integer(j) then inline { fail; }
-	 runerr(101, j)
          }
 
       body {
@@ -510,18 +511,6 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
                use_trap = 1;
             }
          }
-         /*
-          * If it isn't a C integer, but is a large integer, fail on
-          * the out-of-range index.
-          */
-         if !cnv:C_integer(i) then {
-             if cnv : integer(i) then inline { fail; }
-             runerr(101, i)
-                 }
-         if !cnv:C_integer(j) then {
-             if cnv : integer(j) then inline { fail; }
-             runerr(101, j)
-          }
 
          body {
              C_integer t;
@@ -549,19 +538,6 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
        }
 
      cset: {
-         /*
-          * If it isn't a C integer, but is a large integer, fail on
-          * the out-of-range index.
-          */
-         if !cnv:C_integer(i) then {
-             if cnv : integer(i) then inline { fail; }
-             runerr(101, i)
-                 }
-         if !cnv:C_integer(j) then {
-             if cnv : integer(j) then inline { fail; }
-             runerr(101, j)
-          }
-
          body {
              C_integer t;
              int k, last;
@@ -612,20 +588,7 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
             return string
             }
       else
-         runerr(110, dx)
-
-      /*
-       * If it isn't a C integer, but is a large integer, fail on
-       * the out-of-range index.
-       */
-      if !cnv:C_integer(i) then {
-	 if cnv : integer(i) then inline { fail; }
-	 runerr(101, i)
-	 }
-      if !cnv:C_integer(j) then {
-         if cnv : integer(j) then inline { fail; }
-	 runerr(101, j)
-         }
+         runerr(131, dx)
 
       body {
          C_integer t;

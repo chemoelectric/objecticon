@@ -525,32 +525,7 @@ function{1} ishift(i,j)
          return C_integer ~(~ci >> -cj);	/* sign extending shift */
       }
 end
-
 
-"ord(s) - produce integer ordinal (value) of single character."
-
-function{1} ord(s)
-   abstract {
-      return integer
-      }
-   body {
-       if (is:ucs(s)) {
-           char *s1;
-           if (BlkLoc(s)->ucs.length != 1)
-               runerr(205, s);
-           s1 = StrLoc(BlkLoc(s)->ucs.utf8);
-           return C_integer utf8_iter(&s1);
-       }
-
-       if (!cnv:tmp_string(s,s))
-          runerr(103, s);
-      
-      if (StrLen(s) != 1)
-         runerr(205, s);
-      return C_integer (*StrLoc(s) & 0xFF);
-      }
-end
-
 
 "name(v) - return the name of a variable."
 
@@ -2309,7 +2284,6 @@ int ucs_char(struct b_ucs *b, int pos)
  */
 char *ucs_utf8_ptr(struct b_ucs *b, int pos)
 {
-    char *p;
     --pos;  /* Make pos zero-based */
     if (pos < 0 || pos > b->length)
         syserr("Invalid pos to ucs_utf8_ptr");
@@ -2635,48 +2609,107 @@ function{0,1} hasord(c, x)
 end
 
 
-"ords(c) - generate the code points in a cset, for the range of entries i:j"
+"ord(c) - generate the code points in a cset, ucs or string for the range of entries i:j"
 
-function{*} ords(c, i, j)
-   if !cnv:cset(c) then
-      runerr(120, c)
+function{*} ord(x, i, j)
    if !def:C_integer(i, 1) then
       runerr(101, i)
    if !def:C_integer(j, 0) then
       runerr(101, j)
    body {
-       int a, b, pos, len, from, to;
+       int len;
 
-       i = cvpos(i, BlkLoc(c)->cset.size);
-       if (i == CvtFail)
-           fail;
-       j = cvpos(j, BlkLoc(c)->cset.size);
-       if (j == CvtFail)
-           fail;
-       if (i > j) {
-           C_integer t = i;
-           i = j;
-           len = t - j;
-       } else
-           len = j - i;
+       type_case x of {
+         cset: {
+            int a, b, pos, from, to;
 
-       if (len == 0)
-           fail;
+            i = cvpos(i, BlkLoc(x)->cset.size);
+            if (i == CvtFail)
+                fail;
+            j = cvpos(j, BlkLoc(x)->cset.size);
+            if (j == CvtFail)
+                fail;
+            if (i > j) {
+                C_integer t = i;
+                i = j;
+                len = t - j;
+            } else
+                len = j - i;
 
-       a = cset_range_of_pos(&BlkLoc(c)->cset, i);    /* First range of interest */
-       pos = i - 1 - BlkLoc(c)->cset.range[a].index;  /* Offset into that range */
-       for (; len > 0 && a < BlkLoc(c)->cset.n_ranges; ++a) {
-           from = BlkLoc(c)->cset.range[a].from;
-           to = BlkLoc(c)->cset.range[a].to;
-           for (b = pos + from; len > 0 && b <= to; ++b) {
-               suspend C_integer b;
-               --len;
-           }
-           pos = 0;
-       }
-       if (len)
-           syserr("ords inconsistent parameters");
-       fail;
+            if (len == 0)
+                fail;
+
+            a = cset_range_of_pos(&BlkLoc(x)->cset, i);    /* First range of interest */
+            pos = i - 1 - BlkLoc(x)->cset.range[a].index;  /* Offset into that range */
+            for (; len > 0 && a < BlkLoc(x)->cset.n_ranges; ++a) {
+                from = BlkLoc(x)->cset.range[a].from;
+                to = BlkLoc(x)->cset.range[a].to;
+                for (b = pos + from; len > 0 && b <= to; ++b) {
+                    suspend C_integer b;
+                    --len;
+                }
+                pos = 0;
+            }
+            if (len)
+                syserr("ords inconsistent parameters");
+            fail;
+         }
+
+         ucs : {
+            tended char *p;
+
+            i = cvpos(i, BlkLoc(x)->ucs.length);
+            if (i == CvtFail)
+                fail;
+            j = cvpos(j, BlkLoc(x)->ucs.length);
+            if (j == CvtFail)
+                fail;
+            if (i > j) {
+                C_integer t = i;
+                i = j;
+                len = t - j;
+            } else
+                len = j - i;
+
+            if (len == 0)
+                fail;
+
+            p = ucs_utf8_ptr(&BlkLoc(x)->ucs, i);
+            while (len-- > 0)
+                suspend C_integer utf8_iter(&p);
+
+            fail;
+         }
+
+         default : {
+            tended char *p;
+
+            if (!cnv:string(x,x))
+                runerr(132, x);
+
+            i = cvpos(i, StrLen(x));
+            if (i == CvtFail)
+                fail;
+            j = cvpos(j, StrLen(x));
+            if (j == CvtFail)
+                fail;
+            if (i > j) {
+                C_integer t = i;
+                i = j;
+                len = t - j;
+            } else
+                len = j - i;
+
+            if (len == 0)
+                fail;
+
+            p = StrLoc(x) + i - 1;
+            while (len-- > 0)
+                suspend C_integer (*p++) & 0xff;
+
+            fail;
+         }         
+      }
    }
 end
 
