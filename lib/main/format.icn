@@ -211,7 +211,7 @@ procedure format_escape(subject)
    local s, res, ch
    static printable
    initial
-      printable := cset(&ascii[33:128]) -- '\\'
+      printable := '\x20-\x7e' -- '\\'
 
    s := string(subject) | fail
    
