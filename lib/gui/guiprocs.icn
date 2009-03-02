@@ -359,7 +359,7 @@ procedure text_convert(s, target)
          # then create a ucs, rather than catenate ucs's together as
          # we go along.
          t := ""
-         every t ||:= string(uchar(ord(!s)))
+         every t ||:= utf8seq(ord(!s))
          return ucs(t)
       }
       "string": {

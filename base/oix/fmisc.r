@@ -2494,7 +2494,26 @@ function{1} uchar(i)
       return ucs(make_one_char_ucs_block(i));
    }
 end
-
+
+
+"utf8seq(i) - produce a string containing the utf-8 sequence of chars for character i."
+
+function{1} utf8seq(i)
+
+   if !cnv:C_integer(i) then
+      runerr(101,i)
+   body {
+      int n;
+      char utf8[MAX_UTF8_SEQ_LEN], *a;
+      if (i < 0 || i > MAX_CODE_POINT) {
+         irunerr(205, i);
+         errorfail;
+      }
+      n = utf8_seq(i, utf8);
+      MemProtect(a = alcstr(utf8, n));
+      return string(n, a);
+   }
+end
 
 "ranges(x[n]) - produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc."
 
