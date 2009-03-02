@@ -2438,7 +2438,7 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len)
         to = b->range[i].to;
         for (j = p0 + from; l0 > 0 && j <= to; ++j) {
             int n = utf8_seq(j, buf);
-            MemProtect(alcstr(buf, n));
+            alcstr(buf, n);
             --l0;
         }
         p0 = 0;
