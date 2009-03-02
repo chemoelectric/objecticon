@@ -1842,7 +1842,6 @@ void errno2why()
 {
     char *msg = 0;
     char buff[32];
-    char *t;
     int len;
 
     #ifdef HAVE_STRERROR
@@ -1857,11 +1856,11 @@ void errno2why()
     sprintf(buff, " (errno=%d)", errno);
 
     len = strlen(buff) + strlen(msg);
-    MemProtect(reserve(Strings, len));
-    MemProtect(t = alcstr(msg, strlen(msg)));
-    MemProtect(alcstr(buff, strlen(buff)));
-    StrLoc(kywd_why) = t;
+
+    MemProtect(StrLoc(kywd_why) = reserve(Strings, len));
     StrLen(kywd_why) = len;
+    alcstr(msg, strlen(msg));
+    alcstr(buff, strlen(buff));
 }
 
 /*
