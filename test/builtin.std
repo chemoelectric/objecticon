@@ -41,6 +41,7 @@ function getenv: yes
 function gettimeofday: yes
 function glob: yes
 function globalnames: yes
+function hasord: yes
 function iand: yes
 function icom: yes
 function image: yes
@@ -72,6 +73,9 @@ function name: yes
 function numeric: yes
 function opmask: yes
 function ord: yes
+function ordrange: yes
+function ordrangeof: yes
+function ords: yes
 function paramnames: yes
 function parent: yes
 function pop: yes
@@ -81,8 +85,6 @@ function progof: yes
 function pull: yes
 function push: yes
 function put: yes
-function ranges: yes
-function rangesof: yes
 function real: yes
 function repl: yes
 function reverse: yes
@@ -111,6 +113,7 @@ function type: yes
 function uchar: yes
 function ucs: yes
 function upto: yes
+function utf8seq: yes
 function variable: yes
 function wait: yes
 abs: yes
@@ -188,6 +191,8 @@ name: yes
 numeric: yes
 opmask: yes
 ord: yes
+ordrange: yes
+ordrangeof: yes
 ords: yes
 paramnames: yes
 parent: yes
@@ -198,8 +203,6 @@ progof: yes
 pull: yes
 push: yes
 put: yes
-ranges: yes
-rangesof: yes
 real: yes
 repl: yes
 reverse: yes

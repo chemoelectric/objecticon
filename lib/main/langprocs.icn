@@ -537,7 +537,7 @@ procedure hash(x, depth)
 
       "cset" : {
          n := *x
-         every i := rangesof(x) do
+         every i := ordrangeof(x) do
             n := 13 * n + i
          return n
       }
