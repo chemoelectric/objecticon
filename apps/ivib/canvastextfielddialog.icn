@@ -18,7 +18,8 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       contents, 
       filter,
       is_editable_cb,
-      move_on_rpress_cb
+      move_on_rpress_cb,
+      ucs_cb
 
    public set_vals()
       cast(self,CanvasComponentDialog).set_vals()
@@ -28,13 +29,23 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       c.move_on_rpress_flag := move_on_rpress_cb.get_status()
    end
 
+   private on_ucs_cb()
+      if ucs_cb.is_checked() then {
+         contents.set_contents(u"")
+         filter.set_contents(u"")
+      } else {
+         contents.set_contents("")
+         filter.set_contents("")
+      }
+   end
+
    public setup()
       local p, l
 
       cast(self,CanvasComponentDialog).setup()
 
       p := TabItem()
-      p.set_layout(GridLayout("extra=borders"))
+      p.set_layout(GridLayout("extra=cells"))
       p.set_label("General")
       add_tab_at_front(p)
 
@@ -43,7 +54,6 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       p.add(l)
       
       contents := TextField("c:eol")
-      contents.set_size(100)
       contents.set_contents(c.contents)
       p.add(contents)
 
@@ -52,7 +62,6 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       p.add(l)
       
       filter := TextField("c:eol")
-      filter.set_size(100)
       filter.set_contents(c.filter_str)
       p.add(filter)
 
@@ -61,10 +70,16 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
          is_editable_cb.set_is_checked("t")
       p.add(is_editable_cb)
 
-      move_on_rpress_cb := CheckBox("label=Move cursor on right mouse", "c:w=2")
+      move_on_rpress_cb := CheckBox("label=Move cursor on &rpress", "c:eol", "c:w=2")
       if \c.move_on_rpress_flag then
          move_on_rpress_cb.set_is_checked("t")
       p.add(move_on_rpress_cb)
+
+      ucs_cb := CheckBox("label=Ucs content", "c:w=2")
+      if type(c.contents) == "ucs" then
+         ucs_cb.set_is_checked("t")
+      ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
+      p.add(ucs_cb)
    end
 end
 

@@ -790,7 +790,7 @@ class CustomDecode()
    end
 
    public decode()
-      local i, n, rname, t, res, def, con
+      local i, n, rname, t, res, def, con, l
 
       t := char_in() | fail
 
@@ -828,8 +828,16 @@ class CustomDecode()
          Codec.REAL_CODE :
             return real(line_in())
 
-         Codec.CSET_CODE :
-            return cset(decode_string(line_in()))
+         Codec.CSET_CODE : {
+             n := int_in() | fail
+             l := []
+             every 1 to n do 
+                put(l, decode()) | fail
+             return makecset(l)
+          }
+
+         Codec.UCS_CODE :
+            return ucs(decode_string(line_in()))
 
          Codec.RECORD_CODE : {
             (rname := line_in() &
@@ -951,7 +959,7 @@ class CustomEncode()
    end
 
    public encode(o)
-      local ty, i, pairs
+      local ty, i, pairs, l
 
       if i := \seen[o] then {
          chars_out(Codec.REF_CODE)
@@ -989,9 +997,17 @@ class CustomEncode()
             line_out(encode_string(o))
          }
 
+         "ucs": {
+            chars_out(Codec.UCS_CODE)
+            line_out(encode_string(string(o)))
+         }
+
          "cset" : {
             chars_out(Codec.CSET_CODE)
-            line_out(encode_string(string(o)))
+            l := []
+            every put(l, ordrange(o))
+            int_out(*l)
+            every encode(!l)
          }
 
          "integer" : {

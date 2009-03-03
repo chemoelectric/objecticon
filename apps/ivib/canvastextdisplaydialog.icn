@@ -13,7 +13,8 @@ import gui
 #
 class CanvasTextDisplayDialog(CanvasComponentDialog)
    public 
-      contents
+      contents,
+      ucs_cb
 
    public set_vals()
       cast(self,CanvasComponentDialog).set_vals()
@@ -21,6 +22,13 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
          c.set_contents([])
       else
          c.set_contents(contents.get_contents())
+   end
+
+   private on_ucs_cb()
+      if ucs_cb.is_checked() then
+         contents.set_contents([u""])
+      else
+         contents.set_contents([""])
    end
 
    public setup()
@@ -33,10 +41,16 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
       add_tab_at_front(p)
       p.set_label("Contents")
 
-      contents := EditableTextList()
+      contents := EditableTextList("c:eol")
       contents.set_size(200, 200)
       contents.set_contents(copy(c.get_contents()))
       p.add(contents)
+
+      ucs_cb := CheckBox("label=Ucs content")
+      if type(c.contents[1]) == "ucs" then
+         ucs_cb.set_is_checked("t")
+      ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
+      p.add(ucs_cb)
    end
 end
 

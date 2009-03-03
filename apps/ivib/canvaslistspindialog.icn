@@ -19,7 +19,8 @@ class CanvasListSpinDialog(CanvasComponentDialog)
       set_selection,   
       selection,       
       group,           
-      default_setting
+      default_setting,
+      ucs_cb
 
    public validate_input()
       #
@@ -37,6 +38,13 @@ class CanvasListSpinDialog(CanvasComponentDialog)
          set_selection : c.set_selection(integer(selection.get_contents()))
          default_setting : c.set_selection(1)
       }
+   end
+
+   private on_ucs_cb()
+      if ucs_cb.is_checked() then
+         selection_list.set_contents([u""])
+      else
+         selection_list.set_contents([""])
    end
 
    public on_set_selection()
@@ -74,16 +82,23 @@ class CanvasListSpinDialog(CanvasComponentDialog)
       q.add(set_selection)
       group.add(set_selection)
 
-      selection := TextField("c:eol")
+      selection := TextField("c:eol","filter=",&digits)
       selection.set_size(100)
       selection.set_contents(c.selection)
       q.add(selection)
 
-      default_setting := CheckBox()
+      default_setting := CheckBox("c:eol")
       default_setting.connect(self.on_default_setting, Event.ACTION)
       default_setting.set_label("Default")
       q.add(default_setting)
       group.add(default_setting)
+
+      ucs_cb := CheckBox("label=Ucs content")
+      if type(c.selection_list[1]) == "ucs" then
+         ucs_cb.set_is_checked("t")
+      ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
+      q.add(ucs_cb)
+
       p.add(q)
       if \c.selection ~= 1 then {
          group.set_which_one(set_selection)

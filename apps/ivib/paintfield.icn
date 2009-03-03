@@ -5,8 +5,10 @@ class PaintField(Border)
       paints, 
       os, 
       img, 
-      tf,
-      grid_label,
+      tf1,
+      tf2,
+      grid_label1,
+      grid_label2,
       paint_tbl,
       edit_paint_button
 
@@ -18,8 +20,12 @@ class PaintField(Border)
       os.set_which_one(os.children[paints.get_selection()])
    end
 
-   public on_tf()
-      get_contents().str := tf.get_contents()
+   public on_tf1()
+      get_contents().str := tf1.get_contents()
+   end
+
+   public on_tf2()
+      get_contents().str := tf2.get_contents()
    end
 
    public on_edit_paint()
@@ -28,16 +34,17 @@ class PaintField(Border)
       d := c.dialog()
       d.show_modal(self.parent_dialog)
       if \d.okay_result then {
-         case classof(c) of {
-            CanvasTextPaint: {
-            }
-            CanvasImagePaint: {
+         case paints.get_selection() of {
+            4: {
                img.clear_image()
                img.set_file(\c.image_file)
                img.set_image(\c.image_str)
             }
-            CanvasGridPaint: {
-               grid_label.set_label(*c.fmt || " chars.")
+            5 : {
+               grid_label1.set_label(*c.fmt || " chars.")
+            }
+            6: {
+               grid_label2.set_label(*c.fmt || " chars.")
             }
          }
       }
@@ -47,10 +54,10 @@ class PaintField(Border)
       local t
       t := get_contents()
       case paints.get_selection() of {
-         3 : 
+         4 : 
             if /t.image_str & /t.image_file then
                return alert_error(parent_dialog, "No image provided")
-         4 :
+         5 :
             if /t.fmt then
                return alert_error(parent_dialog, "No grid format string")
       }
@@ -64,18 +71,28 @@ class PaintField(Border)
       else {
          case classof(c) of {
             CanvasTextPaint: {
-               paints.set_selection(2)
-               tf.set_contents(c.str)
+               if type(c.str) == "string" then {
+                  paints.set_selection(2)
+                  tf1.set_contents(c.str)
+               } else {
+                  paints.set_selection(3)
+                  tf2.set_contents(c.str)
+               }
             }
             CanvasImagePaint: {
-               paints.set_selection(3)
+               paints.set_selection(4)
                img.clear_image()
                img.set_file(\c.image_file)
                img.set_image(\c.image_str)
             }
             CanvasGridPaint: {
-               paints.set_selection(4)
-               grid_label.set_label(*c.fmt || " chars.")
+               if type(c.fmt) == "string" then {
+                  paints.set_selection(5)
+                  grid_label1.set_label(*c.fmt || " chars.")
+               } else {
+                  paints.set_selection(6)
+                  grid_label2.set_label(*c.fmt || " chars.")
+               }
             }
          }
          paint_tbl[paints.get_selection()] := c
@@ -92,9 +109,11 @@ class PaintField(Border)
       p := paint_tbl[i]
       if /p then {
          p := case i of {
-            2 : CanvasTextPaint(tf.get_contents())
-            3 : CanvasImagePaint()
-            4 : CanvasGridPaint()
+            2 : CanvasTextPaint(tf1.get_contents())
+            3 : CanvasTextPaint(tf2.get_contents())
+            4 : CanvasImagePaint()
+            5 : CanvasGridPaint()
+            6 : CanvasGridPaint(u"")
          }
          p.change_canvas(parent_dialog.c.parent_Canvas)
          p.rename()
@@ -110,7 +129,7 @@ class PaintField(Border)
       cc.set_layout(GridLayout())
       os := OverlaySet()
       cc.add(os)
-      paints := List("c:x_weight=0", "selection_list=&null,Text,Image,Grid")
+      paints := List("c:x_weight=0", "selection_list=&null,Text,Text(Ucs),Image,Grid,Grid(Ucs)")
       paints.connect(self.on_sel_change, Event.SELECTION_CHANGED)
       cc.add(paints)
       edit_paint_button := TextButton("label=Edit...")
@@ -120,9 +139,15 @@ class PaintField(Border)
       os.add(Component("size=0,0"))
 
       p := Panel("layout=",GridLayout("flush"))
-      tf := TextField("size=120")
-      tf.connect(self.on_tf, Event.CONTENT_CHANGED)
-      p.add(tf)
+      tf1 := TextField("size=120")
+      tf1.connect(self.on_tf1, Event.CONTENT_CHANGED)
+      p.add(tf1)
+      os.add(p)
+
+      p := Panel("layout=",GridLayout("flush"))
+      tf2 := TextField("size=120", "contents=",u"")
+      tf2.connect(self.on_tf2, Event.CONTENT_CHANGED)
+      p.add(tf2)
       os.add(p)
 
       p := Panel("layout=",GridLayout("flush"))
@@ -130,8 +155,11 @@ class PaintField(Border)
       p.add(img)
       os.add(p)
 
-      grid_label := Label("c:x_weight=1", "c:x_fill=y", "label=No format set.")
-      os.add(grid_label)
+      grid_label1 := Label("c:x_weight=1", "c:x_fill=y", "label=No format set.")
+      os.add(grid_label1)
+
+      grid_label2 := Label("c:x_weight=1", "c:x_fill=y", "label=No format set.")
+      os.add(grid_label2)
    end
 
    public new(a[])

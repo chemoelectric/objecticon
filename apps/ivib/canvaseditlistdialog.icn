@@ -21,7 +21,8 @@ class CanvasEditListDialog(CanvasComponentDialog)
       initial_text,            #                    
       group,                   #             
       filter,                  #
-      default_setting
+      default_setting,
+      ucs_cb
 
    public validate_input()
       if (group.get_which_one() === set_selection) & not(integer(selection.get_contents())) then
@@ -38,6 +39,18 @@ class CanvasEditListDialog(CanvasComponentDialog)
          default_setting : c.set_selection(1) #c.set_contents(c.selection_list[1])
       }
       c.filter_str := filter.get_contents()
+   end
+
+   private on_ucs_cb()
+      if ucs_cb.is_checked() then {
+         selection_list.set_contents([u""])
+         initial_text.set_contents(u"")
+         filter.set_contents(u"")
+      } else {
+         selection_list.set_contents([""])
+         initial_text.set_contents("")
+         filter.set_contents("")
+      }
    end
 
    public on_set_initial_text()
@@ -82,7 +95,7 @@ class CanvasEditListDialog(CanvasComponentDialog)
       q.add(set_selection)
       group.add(set_selection)
 
-      selection := TextField("c:eol")
+      selection := TextField("c:eol", "filter=",&digits)
       selection.set_size(100)
       selection.set_contents(c.selection)
       q.add(selection)
@@ -126,6 +139,12 @@ class CanvasEditListDialog(CanvasComponentDialog)
       filter.set_align("l", "c")
       filter.set_contents(c.filter_str)
       q.add(filter)
+
+      ucs_cb := CheckBox("label=Ucs content")
+      if type(c.selection_list[1]) == "ucs" then
+         ucs_cb.set_is_checked("t")
+      ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
+      q.add(ucs_cb)
 
       p.add(q)
    end

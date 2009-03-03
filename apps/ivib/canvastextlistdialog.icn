@@ -16,6 +16,7 @@ import gui
 class CanvasTextListDialog(CanvasComponentDialog)
    public 
       contents,
+      ucs_cb,
       select_group
 
    public set_vals()
@@ -27,6 +28,13 @@ class CanvasTextListDialog(CanvasComponentDialog)
       c.set_select_mode(select_group.get_select_mode())
    end
 
+   private on_ucs_cb()
+      if ucs_cb.is_checked() then
+         contents.set_contents([u""])
+      else
+         contents.set_contents([""])
+   end
+
    public setup()
       local p
 
@@ -36,10 +44,16 @@ class CanvasTextListDialog(CanvasComponentDialog)
       p.set_layout(GridLayout())
       add_tab_at_front(p)
       p.set_label("Contents")
-      contents := EditableTextList()
+      contents := EditableTextList("c:eol")
       contents.set_size(200, 200)
       contents.set_contents(copy(c.get_contents()))
       p.add(contents)
+
+      ucs_cb := CheckBox("label=Ucs content")
+      if type(c.contents[1]) == "ucs" then
+         ucs_cb.set_is_checked("t")
+      ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
+      p.add(ucs_cb)
 
       p := TabItem()
       p.set_layout(GridLayout("extra=borders"))
