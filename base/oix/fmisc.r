@@ -584,7 +584,7 @@ function{} runerr(i, x[n])
               CMakeStr(em, &k_errortext);
           else
               k_errortext = emptystr;
-      } else if (is:string(i)) {
+      } else if (cnv:string(i,i)) {
           k_errornumber = -1;
           k_errortext = i;
       } else
