@@ -42,7 +42,7 @@ LibDcl(field,2,".")
           RunErr(624, &Arg1);
       }
     }
-    if (r != Succeeded)
+    if (r == Error)
         RunErr(0, &Arg1);
     Return;
 }
@@ -97,7 +97,7 @@ static int cast_access(dptr cargp, struct inline_field_cache *ic)
         ReturnErrNum(622, Error);
 
     ac = check_access(cf, obj_class);
-    if (ac != Succeeded)
+    if (ac == Error)
         return ac;
     /*
      * Instance method.
@@ -178,7 +178,7 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
             ReturnErrNum(622, Error);
 
         ac = check_access(cf, class);
-        if (ac != Succeeded)
+        if (ac == Error)
             return ac;
 
         /*

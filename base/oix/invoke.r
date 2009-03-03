@@ -347,7 +347,7 @@ static int construct_object(int nargs, dptr newargp)
             return I_Fail;
         }
 
-        if (check_access(new_field, class) != Succeeded) {
+        if (check_access(new_field, class) == Error) {
             err_msg(0, newargp);
             return I_Fail;
         }
