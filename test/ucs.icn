@@ -20,7 +20,7 @@ procedure check_assign_impl(s, l, i, j)
    t[i:j] := n[1]
    ln := l[1:i] ||| n[2] ||| l[j:0]
    yes_no{"Correct length of constructed string", *t = *s - (j - i) + *n[1]}
-   cmp_seq{"Correct ords of constructed string", ord(!t), !ln}
+   cmp_seq{"Correct ords of constructed string", ord(t), !ln}
 end
 
 procedure check_assign(s, l)
@@ -34,7 +34,8 @@ procedure check_assign(s, l)
 end
 
 procedure check_iter(s, l)
-   cmp_seq{"Iterator ord sequence", ord(!s), !l}
+   cmp_seq{"ord(s) -vs ord(!s)", ord(s), ord(!s)}
+   cmp_seq{"Iterator ord sequence", ord(s), !l}
 end
 
 procedure check_substr(s, l)
