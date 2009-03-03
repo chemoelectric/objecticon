@@ -182,8 +182,14 @@ void err_msg(int n, dptr v)
 
     if (n == 0) {
         k_errornumber = t_errornumber;
-        k_errorvalue = t_errorvalue;
-        have_errval = t_have_val;
+        /* Allow v to override the t_ settings */
+        if (v) {
+            k_errorvalue = *v;
+            have_errval = 1;
+        } else {
+            k_errorvalue = t_errorvalue;
+            have_errval = t_have_val;
+        }
     }
     else {
         k_errornumber = n;

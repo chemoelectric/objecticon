@@ -39,11 +39,11 @@ LibDcl(field,2,".")
       }
 
       default: {
-            r = 624;
+          RunErr(624, &Arg1);
       }
     }
-    if (r != 0)
-        RunErr(r, &Arg1);
+    if (r != Succeeded)
+        RunErr(0, &Arg1);
     Return;
 }
 
@@ -65,7 +65,7 @@ int field_access(dptr cargp)
       }
 
       default: {
-            return 620;
+          ReturnErrNum(620, Error);
       }
    }
 }
@@ -82,22 +82,22 @@ static int cast_access(dptr cargp, struct inline_field_cache *ic)
     /* Lookup in the cast's class */
     i = lookup_class_field(cast_class, &Arg2, ic);
     if (i < 0)
-        return 207;
+        ReturnErrNum(207, Error);
 
     cf = cast_class->fields[i];
 
     if (cf->flags & M_Static)
-        return 601;
+        ReturnErrNum(601, Error);
 
     if (!(cf->flags & M_Method))
-        return 628;
+        ReturnErrNum(628, Error);
 
     /* Can't access new except whilst initializing */
     if ((cf->flags & M_Special) && obj->init_state != Initializing)
-        return 622;
+        ReturnErrNum(622, Error);
 
     ac = check_access(cf, obj_class);
-    if (ac != 0)
+    if (ac != Succeeded)
         return ac;
     /*
      * Instance method.
@@ -112,7 +112,7 @@ static int cast_access(dptr cargp, struct inline_field_cache *ic)
     mp->proc = &BlkLoc(*cf->field_descriptor)->proc;
     Arg0.dword = D_Methp;
     BlkLoc(Arg0) = (union block *)mp;
-    return 0;
+    return Succeeded;
 }
 
 static int class_access(dptr cargp, struct inline_field_cache *ic)
@@ -125,31 +125,31 @@ static int class_access(dptr cargp, struct inline_field_cache *ic)
     ensure_initialized(class);
     i = lookup_class_field(class, &Arg2, ic);
     if (i < 0)
-        return 207;
+        ReturnErrNum(207, Error);
     cf = class->fields[i];
 
     /* Can only access a static field (var or meth) via the class */
     if (!(cf->flags & M_Static))
-        return 600;
+        ReturnErrNum(600, Error);
 
     /* Can't access static init method via a field */
     if (cf->flags & M_Special)
-        return 621;
+        ReturnErrNum(621, Error);
 
     dp = cf->field_descriptor;
     ac = check_access(cf, 0);
 
-    if (ac == 0 && 
+    if (ac == Succeeded && 
         !(cf->flags & M_Method) &&        /* Don't return a ref to a static method */
         (!(cf->flags & M_Const) || class->init_state == Initializing))
     {
         Arg0.dword = D_Var;
         VarLoc(Arg0) = dp;
-        return 0;
+        return Succeeded;
     }
-    if (ac == 0 || (cf->flags & M_Readable)) {
+    if (ac == Succeeded || (cf->flags & M_Readable)) {
         Arg0 = *dp;
-        return 0;
+        return Succeeded;
     }
 
     return ac;
@@ -165,20 +165,20 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
 
     i = lookup_class_field(class, &Arg2, ic);
     if (i < 0)
-        return 207;
+        ReturnErrNum(207, Error);
     cf = class->fields[i];
 
     /* Can't access a static (var or meth) via an instance */
     if (cf->flags & M_Static)
-        return 601;
+        ReturnErrNum(601, Error);
 
     if (cf->flags & M_Method) {
         /* Can't access new except whilst initializing */
         if ((cf->flags & M_Special) && obj->init_state != Initializing)
-            return 622;
+            ReturnErrNum(622, Error);
 
         ac = check_access(cf, class);
-        if (ac != 0)
+        if (ac != Succeeded)
             return ac;
 
         /*
@@ -193,21 +193,21 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
         mp->proc = &BlkLoc(*cf->field_descriptor)->proc;
         Arg0.dword = D_Methp;
         BlkLoc(Arg0) = (union block *)mp;
-        return 0;
+        return Succeeded;
     } else {
         dptr dp = &obj->fields[i];
         ac = check_access(cf, class);
-        if (ac == 0 &&
+        if (ac == Succeeded &&
             (!(cf->flags & M_Const) || obj->init_state == Initializing))
         {
             /* Return a pointer to the field */
             Arg0.dword = D_Var + ((word *)dp - (word *)obj);
             BlkLoc(Arg0) = (union block *)obj;
-            return 0;
+            return Succeeded;
         }
-        if (ac == 0 || (cf->flags & M_Readable)) {
+        if (ac == Succeeded || (cf->flags & M_Readable)) {
             Arg0 = *dp;
-            return 0;
+            return Succeeded;
         }
         return ac;
     }
@@ -216,9 +216,9 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
 /*
  * Check whether the calling procedure (deduced from the stack) has
  * access to the given field of the given instance class (which is
- * null for a static access).  Returns zero if it does have access, or
- * an error number if it doesn't.  The error number can then be used
- * to produce a runtime error message, or simply to cause failure.
+ * null for a static access).  Returns Succeeded if it does have
+ * access, or an Error if it doesn't, setting the appropriate error
+ * number, which can then be used to produce a runtime error message.
  */
 int check_access(struct class_field *cf, struct b_class *instance_class)
 {
@@ -226,7 +226,7 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     struct b_proc *caller_proc;
 
     if (cf->flags & M_Public)
-        return 0;
+        return Succeeded;
 
     pp = (dptr)pfp - (pfp->pf_nargs + 1);
 
@@ -238,14 +238,14 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     caller_proc = &BlkLoc(*pp)->proc;
 
     if (caller_proc->package_id == 1)  /* Is the caller in lang? */
-        return 0;
+        return Succeeded;
 
     switch (cf->flags & (M_Private|M_Protected|M_Package)) {
         case M_Private: {
             struct class_field *caller_field = caller_proc->field;
             if (caller_field && caller_field->defining_class == cf->defining_class)
-                return 0;
-            return 608;
+                return Succeeded;
+            ReturnErrNum(608, Error);
         }
 
         case M_Protected: {
@@ -254,14 +254,14 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
                 /* Instance access, caller must be in instance's implemented classes */
                 if (caller_field && class_is(instance_class, 
                                              caller_field->defining_class))
-                    return 0;
-                return 609;
+                    return Succeeded;
+                ReturnErrNum(609, Error);
             } else {
                 /* Static access, definition must be in caller's implemented classes */
                 if (caller_field && class_is(caller_field->defining_class, 
                                              cf->defining_class))
-                    return 0;
-                return 610;
+                    return Succeeded;
+                ReturnErrNum(610, Error);
             }
         }
 
@@ -271,15 +271,15 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
              */
             if (caller_proc->program == cf->defining_class->program &&
                 caller_proc->package_id == cf->defining_class->package_id)
-                return 0;
-            return 611;
+                return Succeeded;
+            ReturnErrNum(611, Error);
         }
 
         default: {
             syserr("unknown/missing access modifier");
         }
     }
-    return 0; /* Not reached */
+    return Succeeded; /* Not reached */
 }
 
 /*
@@ -418,14 +418,14 @@ static int record_access(dptr cargp, struct inline_field_cache *ic)
     dptr dp;
     int i = lookup_record_field(recdef, &Arg2, ic);
     if (i < 0)
-        return 207;
+        ReturnErrNum(207, Error);
     /*
      * Return a pointer to the descriptor for the appropriate field.
      */
     dp = &rec->fields[i];
     Arg0.dword = D_Var + ((word *)dp - (word *)rec);
     BlkLoc(Arg0) = (union block *)rec;
-    return 0;
+    return Succeeded;
 }
 
 int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)

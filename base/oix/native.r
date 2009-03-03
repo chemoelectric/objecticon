@@ -324,8 +324,8 @@ function{1} lang_Class_get(obj, field)
        PushDesc(field);
        rc = field_access((dptr)(sp - 5));
        sp -= 6;
-       if (rc != 0) 
-           runerr(rc, obj);
+       if (rc != Succeeded) 
+           runerr(0, obj);
        res = *((dptr)(sp + 1));
        return res;
    }
@@ -340,9 +340,9 @@ function{0,1} lang_Class_getf(obj, field, quiet)
        PushDesc(field);
        rc = field_access((dptr)(sp - 5));
        sp -= 6;
-       if (rc != 0) {
+       if (rc != Succeeded) {
            if (is:null(quiet))
-               whyf("%s (error %d)", lookup_err_msg(rc), rc);
+               whyf("%s (error %d)", lookup_err_msg(t_errornumber), t_errornumber);
            fail;
        }
        res = *((dptr)(sp + 1));

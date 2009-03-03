@@ -350,8 +350,8 @@ static int construct_object(int nargs, dptr newargp)
         }
 
         ac = check_access(new_field, class);
-        if (ac != 0) {
-            err_msg(ac, newargp);
+        if (ac != Succeeded) {
+            err_msg(0, newargp);
             return I_Fail;
         }
 
