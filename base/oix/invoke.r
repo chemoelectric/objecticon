@@ -339,8 +339,6 @@ static int construct_object(int nargs, dptr newargp)
         newargp[0].dword = D_Object;
         BlkLoc(newargp[0]) = (union block *)object;
     } else {
-        int ac;
-
         /*
          * Check the constructor function is a non-static method.
          */
@@ -349,8 +347,7 @@ static int construct_object(int nargs, dptr newargp)
             return I_Fail;
         }
 
-        ac = check_access(new_field, class);
-        if (ac != Succeeded) {
+        if (check_access(new_field, class) != Succeeded) {
             err_msg(0, newargp);
             return I_Fail;
         }
