@@ -7,8 +7,7 @@ class PaintField(Border)
       img, 
       tf1,
       tf2,
-      grid_label1,
-      grid_label2,
+      grid_label,
       paint_tbl,
       edit_paint_button
 
@@ -41,10 +40,7 @@ class PaintField(Border)
                img.set_image(\c.image_str)
             }
             5 : {
-               grid_label1.set_label(*c.fmt || " chars.")
-            }
-            6: {
-               grid_label2.set_label(*c.fmt || " chars.")
+               grid_label.set_label(*c.fmt || " chars.")
             }
          }
       }
@@ -86,13 +82,8 @@ class PaintField(Border)
                img.set_image(\c.image_str)
             }
             CanvasGridPaint: {
-               if type(c.fmt) == "string" then {
-                  paints.set_selection(5)
-                  grid_label1.set_label(*c.fmt || " chars.")
-               } else {
-                  paints.set_selection(6)
-                  grid_label2.set_label(*c.fmt || " chars.")
-               }
+               paints.set_selection(5)
+               grid_label.set_label(*c.fmt || " chars.")
             }
          }
          paint_tbl[paints.get_selection()] := c
@@ -113,7 +104,6 @@ class PaintField(Border)
             3 : CanvasTextPaint(tf2.get_contents())
             4 : CanvasImagePaint()
             5 : CanvasGridPaint()
-            6 : CanvasGridPaint(u"")
          }
          p.change_canvas(parent_dialog.c.parent_Canvas)
          p.rename()
@@ -129,7 +119,7 @@ class PaintField(Border)
       cc.set_layout(GridLayout())
       os := OverlaySet()
       cc.add(os)
-      paints := List("c:x_weight=0", "selection_list=&null,Text,Text(Ucs),Image,Grid,Grid(Ucs)")
+      paints := List("c:x_weight=0", "selection_list=&null,Text,Text(Ucs),Image,Grid")
       paints.connect(self.on_sel_change, Event.SELECTION_CHANGED)
       cc.add(paints)
       edit_paint_button := TextButton("label=Edit...")
@@ -155,11 +145,8 @@ class PaintField(Border)
       p.add(img)
       os.add(p)
 
-      grid_label1 := Label("c:x_weight=1", "c:x_fill=y", "label=No format set.")
-      os.add(grid_label1)
-
-      grid_label2 := Label("c:x_weight=1", "c:x_fill=y", "label=No format set.")
-      os.add(grid_label2)
+      grid_label := Label("c:x_weight=1", "c:x_fill=y", "label=No format set.")
+      os.add(grid_label)
    end
 
    public new(a[])

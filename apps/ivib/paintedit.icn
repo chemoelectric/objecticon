@@ -306,7 +306,8 @@ class GridPaintEdit(PaintEdit)
       res,
       input,
       output, 
-      clipboard
+      clipboard,
+      ucs_cb
 
    public on_input(ev)
       render()
@@ -323,6 +324,14 @@ class GridPaintEdit(PaintEdit)
 
    public render(ev)
       output.set_spec(input.get_contents_str())
+   end
+
+   private on_ucs_cb()
+      if ucs_cb.is_checked() then
+         input.set_contents([u""])
+      else
+         input.set_contents([""])
+      render()
    end
 
    public on_input_press(ev)
@@ -417,6 +426,12 @@ class GridPaintEdit(PaintEdit)
 
       output := ShowGridPaint("size=150,200", "c:eol")
       p.add(output)
+
+      ucs_cb := CheckBox("label=Ucs content")
+      if type(c.fmt) == "ucs" then
+         ucs_cb.set_is_checked("t")
+      ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
+      p.add(ucs_cb)
    end
 end
 
