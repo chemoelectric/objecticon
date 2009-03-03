@@ -151,7 +151,7 @@ class Encode()
          "cset" : {
             chars_out(Codec.CSET_CODE) | fail
             l := []
-            every put(l, ordrangeof(o))
+            every put(l, ordrange(o))
             int_out(*l) | fail
             every e := !l do
                encode(e) | fail
@@ -345,7 +345,7 @@ class Decode()
              l := []
              every 1 to n do 
                 put(l, decode()) | fail
-             return ordrange(l)
+             return makecset(l)
           }
 
          Codec.UCS_CODE :

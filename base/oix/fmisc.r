@@ -2489,9 +2489,9 @@ function{1} utf8seq(i)
    }
 end
 
-"ordrange(x[n]) - produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc."
+"makecset(x[n]) - produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc."
 
-function{1} ordrange(x[n])
+function{1} makecset(x[n])
    body {
      struct rangeset *rs;
      tended struct b_cset *b;
@@ -2567,9 +2567,9 @@ function{1} ordrange(x[n])
    }
 end
 
-"ordrangeof(c) - generate the ranges in a cset, as a sequence of from-to pairs."
+"ordrange(c) - generate the ranges in a cset, as a sequence of from-to pairs."
 
-function{*} ordrangeof(c)
+function{*} ordrange(c)
    if !cnv:cset(c) then
       runerr(120, c)
    body {

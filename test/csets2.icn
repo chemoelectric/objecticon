@@ -31,10 +31,10 @@ procedure check_build(c)
    local t,i,e,f
    t := ''
    every i := ord(c) do
-      t ++:= ordrange(i)
+      t ++:= makecset(i)
    yes_no{"Set built from ords === c", c === t}
    # check ranges don't overlap
-   e := create ordrangeof(c)
+   e := create ordrange(c)
    t := &null
    while f := @e do {
       if \t then 
