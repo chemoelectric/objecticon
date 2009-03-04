@@ -3,6 +3,8 @@
 
 static int convert_KeySym_to_code_point(KeySym k)
 {
+    if (k >= 0x01000100 && k <= 0x0110ffff)
+       return k - 0x01000000;
     switch(k) {
         case 0x20: return 0x20;	/*  space */
         case 0x21: return 0x21;	/*  exclam */
