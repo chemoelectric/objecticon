@@ -218,8 +218,7 @@ class TextField(Component)
       start_handle(e)
       self.cursor := whereis_x(e)
       clear_mark()
-      if s := apply_filter(text_convert(ucs(gui.Selection.get_content(Selection.PRIMARY, 
-                                                                      Selection.UTF8_STRING_TARGET)),
+      if s := apply_filter(text_convert(get_text_selection(Selection.PRIMARY),
                                         type(self.contents))) then {
          ed := TextFieldPasteEdit(self, s)
          ed.doit()
@@ -468,7 +467,7 @@ class TextField(Component)
    end
 
    public handle_paste(e)
-      insert_string(ucs(gui.Selection.get_content(Selection.CLIPBOARD, Selection.UTF8_STRING_TARGET)), e)
+      insert_string(get_text_selection(Selection.CLIPBOARD), e)
    end
 
    #

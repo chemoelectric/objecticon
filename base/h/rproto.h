@@ -321,7 +321,7 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    int	setwidth	(wbp w, SHORT new_width);
    int	setminwidth	(wbp w, SHORT new_width);
    int  ownselection    (wbp w, char *selection);
-   struct descrip getselectioncontent (wbp w, char *selection, char *target_type);
+   int getselectioncontent(wbp w, char *selname, char *targetname, dptr res);
    int	setwindowlabel	(wbp w, char *val);
    int	strimage	(wbp w, int x, int y, int width, int height,
 			   struct palentry *e, unsigned char *s,

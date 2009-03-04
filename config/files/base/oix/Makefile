@@ -25,8 +25,8 @@ COBJS=	../common/long.o ../common/time.o \
 
 OBJS=	$(XOBJS) $(COBJS)
 
-rwinsys.o: rxwin.ri rmswin.ri
-rwinrsc.o: rxrsc.ri rxkeysyms.ri
+rwinsys.o: rxwin.ri rmswin.ri rxkeysyms.ri
+rwinrsc.o: rxrsc.ri
 
 all:	oix
 

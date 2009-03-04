@@ -1449,9 +1449,8 @@ int ownselection(wbp w, char *selname)
     return Succeeded;
 }
 
-struct descrip getselectioncontent(wbp w, char *selname, char *targetname)
+int getselectioncontent(wbp w, char *selname, char *targetname, dptr res)
 {
-    struct descrip res;
     Atom selection, property, target;
     Atom  actual_type;
     int actual_format;
@@ -1484,12 +1483,12 @@ struct descrip getselectioncontent(wbp w, char *selname, char *targetname)
     if (!got_SelectionNotify_event) {
         fprintf(stderr,"timed out waiting for SelectionNotify event\n");
         fflush(stderr);
-        return nulldesc;
+        return Failed;
     }
 
     /* Means there is no selection... */
     if ((SelectionNotify_event.xselection.property == None))
-        return nulldesc;
+        return Failed;
 
     status = XGetWindowProperty(ws->display->display,
                                 ws->win,
@@ -1507,16 +1506,16 @@ struct descrip getselectioncontent(wbp w, char *selname, char *targetname)
     if (status != Success) {
         fprintf(stderr, "XGetWindowProperty failed\n");
         fflush(stderr);
-        return nulldesc;
+        return Failed;
     }
 
     /* Means the owner couldn't convert to our target type (string). */
     if (actual_type == None)
-        return nulldesc;
+        return Failed;
    
     /* Shouldn't ever happen */
     if (!prop)  
-        return nulldesc;
+        return Failed;
 
     bytes_read = nitems * (actual_format/8);
 
@@ -1529,16 +1528,16 @@ struct descrip getselectioncontent(wbp w, char *selname, char *targetname)
                                 prop);
     if (conv_str) {
         /* Make an Icon string out of the data */
-        res = cstr2string(conv_str);
+        *res = cstr2string(conv_str);
         free(conv_str);
     } else {
         /* Make an Icon string out of the data */
-        res = bytes2string(prop, bytes_read);
+        *res = bytes2string(prop, bytes_read);
     }
 
     XFree(prop);
 
-    return res;
+    return Succeeded;
 }
 
 

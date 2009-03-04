@@ -355,9 +355,6 @@ procedure text_convert(s, target)
 
    case target of {
       "ucs": {
-         # Note it's much faster to build up a utf8 string first and
-         # then create a ucs, rather than catenate ucs's together as
-         # we go along.
          t := ""
          every t ||:= utf8seq(ord(s))
          return ucs(t)
@@ -370,4 +367,9 @@ procedure text_convert(s, target)
       }
       default: runerr("Bad target type", target)
    }
+end
+
+procedure get_text_selection(sel)
+   return ucs(Selection.get_content(sel, Selection.UTF8_STRING_TARGET)) |
+      Selection.get_content(sel, Selection.STRING_TARGET)
 end

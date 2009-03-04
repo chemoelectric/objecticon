@@ -1637,8 +1637,7 @@ function{0,1} graphics_Window_get_selection_content(self, selection,target_type)
    body {
        tended struct descrip s;
        GetSelfW();
-       s = getselectioncontent(self_w, selection,target_type);
-       if (is:null(s))
+       if (getselectioncontent(self_w, selection,target_type, &s) == Failed)
            fail;
        return s;
    }

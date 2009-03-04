@@ -318,7 +318,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public handle_paste(e)
-      insert_string(ucs(gui.Selection.get_content(Selection.CLIPBOARD, Selection.UTF8_STRING_TARGET)), e)
+      insert_string(get_text_selection(Selection.CLIPBOARD), e)
    end
 
    #
@@ -528,8 +528,7 @@ class EditableTextList(LineBasedScrollArea)
 
       set_cursor_from_pos(e)
       clear_mark()
-      if s := apply_filter(text_convert(ucs(gui.Selection.get_content(Selection.PRIMARY, 
-                                                                      Selection.UTF8_STRING_TARGET)),
+      if s := apply_filter(text_convert(get_text_selection(Selection.PRIMARY),
                                         type(self.contents[1]))) then {
          ed := EditableTextListPasteEdit(self, s)
          ed.doit()
