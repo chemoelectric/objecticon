@@ -2564,7 +2564,7 @@ static void handle_keypress(w,event)
     w->window->pointery = event->y;
 
     /* First try to convert the event to a simple char string, and a KeySym */
-    i = XLookupString(event, s, 10, &k, NULL);
+    i = XLookupString(event, s, sizeof(s), &k, NULL);
     if (i > 0) {
         /* Found a char string, so generate string event(s) */
         StrLen(d) = 1;
@@ -2578,11 +2578,16 @@ static void handle_keypress(w,event)
     }
 
     /* Second try is to convert to a unicode char; if found generate a 1-char
-     * ucs string */
+     * ucs/string */
     i = convert_KeySym_to_code_point(k);
     if (i > 0) {
-        d.dword = D_Ucs;
-        BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
+        if (i < 256) {
+            StrLen(d) = 1;
+            StrLoc(d) = (char *)&allchars[i];
+        } else {
+            d.dword = D_Ucs;
+            BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
+        }
         qevent(w->window, &d, event->x, event->y,
                (uword)event->time, event->state,
                (event->type == KeyRelease) );
