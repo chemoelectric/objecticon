@@ -576,12 +576,12 @@ int class_is(struct b_class *class1, struct b_class *class2);
 struct b_cset *rangeset_to_block(struct rangeset *rs);
 struct b_ucs *make_ucs_block(dptr utf8, int length);
 struct b_ucs *make_one_char_ucs_block(int i);
-struct descrip utf8_substr(struct b_ucs *b, int pos, int len);
+void utf8_substr(struct b_ucs *b, int pos, int len, dptr res);
 int ucs_char(struct b_ucs *b, int pos);
 int in_cset(struct b_cset *b, int c);
 char *ucs_utf8_ptr(struct b_ucs *b, int pos);
 struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len);
-struct descrip cset_to_str(struct b_cset *b, int pos, int len);
+void cset_to_str(struct b_cset *b, int pos, int len, dptr res);
 struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len);
 int cset_range_of_pos(struct b_cset *b, int pos);
 

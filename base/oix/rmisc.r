@@ -797,9 +797,10 @@ int noimage;
              struct descrip utf8_subs;
              if (bp->tvsubs.sspos + bp->tvsubs.sslen - 1 > BlkLoc(*dp)->ucs.length)
                  return;
-             utf8_subs = utf8_substr(&BlkLoc(*dp)->ucs,
-                                     bp->tvsubs.sspos,
-                                     bp->tvsubs.sslen);
+             utf8_substr(&BlkLoc(*dp)->ucs,
+                         bp->tvsubs.sspos,
+                         bp->tvsubs.sslen,
+                         &utf8_subs);
              i = bp->tvsubs.sslen;
              s = StrLoc(utf8_subs);
              j = Min(i, StringLimit);

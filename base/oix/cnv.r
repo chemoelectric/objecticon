@@ -30,7 +30,7 @@ static int cset2str(dptr src, dptr dest)
 {
     struct b_cset *c = &BlkLoc(*src)->cset;  /* Doesn't need to be tended */
     if (c->n_ranges == 0 || c->range[c->n_ranges - 1].to < 256) {
-        *dest = cset_to_str(c, 1, c->size);
+        cset_to_str(c, 1, c->size, dest);
         return 1;
     } else
         return 0;

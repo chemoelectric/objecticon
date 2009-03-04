@@ -963,9 +963,10 @@ function{1} left(s1,n,s2)
           whole_len = (n - BlkLoc(s1)->ucs.length) / BlkLoc(s2)->ucs.length;
           odd_len = (n - BlkLoc(s1)->ucs.length) % BlkLoc(s2)->ucs.length;
           /* Last odd_len chars of s2, may be empty string */
-          odd_utf8 = utf8_substr(&BlkLoc(s2)->ucs, 
-                                 BlkLoc(s2)->ucs.length - odd_len + 1,
-                                 odd_len);
+          utf8_substr(&BlkLoc(s2)->ucs, 
+                      BlkLoc(s2)->ucs.length - odd_len + 1,
+                      odd_len,
+                      &odd_utf8);
 
           utf8_size = StrLen(BlkLoc(s1)->ucs.utf8) + 
               StrLen(odd_utf8) +
@@ -1103,9 +1104,10 @@ function{1} right(s1,n,s2)
           whole_len = (n - BlkLoc(s1)->ucs.length) / BlkLoc(s2)->ucs.length;
           odd_len = (n - BlkLoc(s1)->ucs.length) % BlkLoc(s2)->ucs.length;
           /* First odd_len chars of s2, may be empty string */
-          odd_utf8 = utf8_substr(&BlkLoc(s2)->ucs, 
-                                 1,
-                                 odd_len);
+          utf8_substr(&BlkLoc(s2)->ucs, 
+                      1,
+                      odd_len,
+                      &odd_utf8);
 
           utf8_size = StrLen(BlkLoc(s1)->ucs.utf8) + 
               StrLen(odd_utf8) +
@@ -1250,16 +1252,18 @@ function{1} center(s1,n,s2)
           odd_left_len = left % BlkLoc(s2)->ucs.length;
 
           /* First odd_left_len chars of s2, may be empty string */
-          odd_left_utf8 = utf8_substr(&BlkLoc(s2)->ucs, 
-                                      1,
-                                      odd_left_len);
+          utf8_substr(&BlkLoc(s2)->ucs, 
+                      1,
+                      odd_left_len,
+                      &odd_left_utf8);
 
           whole_right_len = right / BlkLoc(s2)->ucs.length;
           odd_right_len = right % BlkLoc(s2)->ucs.length;
           /* Last odd_right_len chars of s2, may be empty string */
-          odd_right_utf8 = utf8_substr(&BlkLoc(s2)->ucs, 
-                                       BlkLoc(s2)->ucs.length - odd_right_len + 1,
-                                       odd_right_len);
+          utf8_substr(&BlkLoc(s2)->ucs, 
+                      BlkLoc(s2)->ucs.length - odd_right_len + 1,
+                      odd_right_len,
+                      &odd_right_utf8);
 
           utf8_size = StrLen(BlkLoc(s1)->ucs.utf8) + 
               StrLen(odd_left_utf8) + StrLen(odd_right_utf8) +

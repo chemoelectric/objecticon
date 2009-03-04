@@ -392,9 +392,11 @@ const dptr src;
            poststrt = prelen = ucs_utf8_ptr(&BlkLoc(deststr)->ucs, tvsub->sspos) - 
                StrLoc(BlkLoc(deststr)->ucs.utf8);
        } else {
-           struct descrip utf8_mid = utf8_substr(&BlkLoc(deststr)->ucs,
-                                                 tvsub->sspos,
-                                                 tvsub->sslen);
+           struct descrip utf8_mid;
+           utf8_substr(&BlkLoc(deststr)->ucs,
+                       tvsub->sspos,
+                       tvsub->sslen,
+                       &utf8_mid);
            prelen = StrLoc(utf8_mid) - StrLoc(BlkLoc(deststr)->ucs.utf8);
            poststrt = prelen + StrLen(utf8_mid);
        }

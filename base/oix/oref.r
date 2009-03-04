@@ -562,9 +562,10 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
              /* Search for the last char, see if it's < 256 */
              last = i + j - 1;
              k = cset_range_of_pos(&BlkLoc(dx)->cset, last);
-             if (BlkLoc(dx)->cset.range[k].from + last - 1 - BlkLoc(dx)->cset.range[k].index < 256)
-                 return cset_to_str(&BlkLoc(dx)->cset, i, j);
-             else
+             if (BlkLoc(dx)->cset.range[k].from + last - 1 - BlkLoc(dx)->cset.range[k].index < 256) {
+                 cset_to_str(&BlkLoc(dx)->cset, i, j, &result);
+                 return result;
+             } else
                  return ucs(cset_to_ucs_block(&BlkLoc(dx)->cset, i, j));
          }       
        }

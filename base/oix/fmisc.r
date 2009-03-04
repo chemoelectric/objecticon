@@ -2224,7 +2224,7 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len)
     tended struct descrip utf8;
     if (len == 0)
         return emptystr_ucs;
-    utf8 = utf8_substr(b, pos, len);
+    utf8_substr(b, pos, len, &utf8);
     return make_ucs_block(&utf8, len);
 }
 
@@ -2233,14 +2233,15 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len)
  * the slice pos:len.  No allocation is done.  pos,len must be a valid range
  * for the string.
  */
-struct descrip utf8_substr(struct b_ucs *b, int pos, int len)
+void utf8_substr(struct b_ucs *b, int pos, int len, dptr res)
 {
     char *p, *q;
-    struct descrip res;
     int first, last;
 
-    if (len == 0)
-        return emptystr;
+    if (len == 0) {
+        *res = emptystr;
+        return;
+    }
 
     first = pos - 1;
     last = first + len - 1;
@@ -2249,7 +2250,7 @@ struct descrip utf8_substr(struct b_ucs *b, int pos, int len)
         syserr("Invalid pos/len to uf8_substr");
 
     p = get_ucs_off(b, first);
-    StrLoc(res) = p;
+    StrLoc(*res) = p;
     if (last / b->index_step > first / b->index_step) {
         q = get_ucs_off(b, last + 1);
     } else {
@@ -2257,9 +2258,7 @@ struct descrip utf8_substr(struct b_ucs *b, int pos, int len)
         while (len-- > 0)
             q += UTF8_SEQ_LEN(*q);
     }
-    StrLen(res) = q - p;
-
-    return res;
+    StrLen(*res) = q - p;
 }
 
 /*
@@ -2421,14 +2420,15 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len)
     return make_ucs_block(&utf8, len);
 }
 
-struct descrip cset_to_str(struct b_cset *b, int pos, int len)
+void cset_to_str(struct b_cset *b, int pos, int len, dptr res)
 {
-    tended struct descrip res;
     int i, j, from, to, out_len = 0;
     static char c[256];
 
-    if (len == 0)
-        return emptystr;
+    if (len == 0) {
+        *res = emptystr;
+        return;
+    }
 
     i = cset_range_of_pos(b, pos);  /* The first row of interest */
     --pos;
@@ -2449,9 +2449,8 @@ struct descrip cset_to_str(struct b_cset *b, int pos, int len)
     /* Ensure we found len chars. */
     if (len)
         syserr("cset_to_str inconsistent parameters");
-    MemProtect(StrLoc(res) = alcstr(c, out_len));
-    StrLen(res) = out_len;
-    return res;
+    MemProtect(StrLoc(*res) = alcstr(c, out_len));
+    StrLen(*res) = out_len;
 }
 
 "uchar(i) - produce a ucs consisting of character i."
