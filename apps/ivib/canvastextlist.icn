@@ -38,6 +38,7 @@ class CanvasTextList(CanvasComponent,TextList)
          Select.ONE : c.line(self.name || ".set_select_mode(Select.ONE)")
          Select.MANY : c.line(self.name || ".set_select_mode(Select.MANY)")
       }
+      c.add_import("gui", "Select")
       c.line(name || ".set_contents([" || list2string(self.contents) || "])")
    end
 

@@ -38,6 +38,7 @@ class CanvasTree(CanvasComponent,Tree)
          Select.ONE : c.line(self.name || ".set_select_mode(Select.ONE)")
          Select.MANY : c.line(self.name || ".set_select_mode(Select.MANY)")
       }
+      c.add_import("gui", "Select")
       if /self.show_root_flag then
          c.line(self.name || ".set_show_root(\"f\")")
       if /self.show_root_handles_flag then

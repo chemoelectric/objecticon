@@ -43,6 +43,7 @@ class CanvasTable(CanvasComponent,Table)
          Select.ONE : c.line(self.name || ".set_select_mode(Select.ONE)")
          Select.MANY : c.line(self.name || ".set_select_mode(Select.MANY)")
       }
+      c.add_import("gui", "Select")
       c.line(self.name || ".set_contents([])")
 
       every i := !self.get_columns() do {
