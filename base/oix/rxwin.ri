@@ -692,7 +692,6 @@ int handle_misc(wd, w)
                 }
                 case KeyPress:
                     handle_keypress(wb, (XKeyEvent *)&event);
-                    collect(Blocks);
                     break;
                 case ButtonPress:
                     presscount++;
