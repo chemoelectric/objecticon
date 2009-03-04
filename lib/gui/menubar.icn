@@ -355,16 +355,17 @@ class MenuBar(Component)
 
       if e === accel_skip then
          accel_skip := &null
-      else if member(Mouse.PRESS, ec) then 
-         handle_press(e)
-      else if member(Mouse.RELEASE, ec) then 
-         handle_release(e)
-      else if member(Mouse.DRAG_OR_MOVEMENT, ec) then 
-         handle_move(e)
-      else if member(Key.ALL, ec) then 
+      else if integer(ec) < 0 then {
+         if member(Mouse.PRESS, ec) then 
+            handle_press(e)
+         else if member(Mouse.RELEASE, ec) then 
+            handle_release(e)
+         else if member(Mouse.DRAG_OR_MOVEMENT, ec) then 
+            handle_move(e)
+         else
+            (\self.which_open).handle_event(e)
+      } else
          handle_key(e)
-      else
-         (\self.which_open).handle_event(e)
    end
 
    public get_default_height()

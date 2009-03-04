@@ -357,16 +357,17 @@ class Menu(TextMenuItem)
    public handle_event(e)
       local ec
       ec := e.code
-      if member(Mouse.PRESS, ec) then
-         handle_press(e)
-      else if member(Mouse.RELEASE, ec) then
-         handle_release(e)
-      else if member(Mouse.DRAG_OR_MOVEMENT, ec) then
-         handle_move(e)
-      else if member(Key.ALL, ec) then
+      if integer(ec) < 0 then {
+         if member(Mouse.PRESS, ec) then
+            handle_press(e)
+         else if member(Mouse.RELEASE, ec) then
+            handle_release(e)
+         else if member(Mouse.DRAG_OR_MOVEMENT, ec) then
+            handle_move(e)
+         else
+            (\self.which_open).handle_event(e)
+      } else
          handle_key(e)
-      else
-         (\self.which_open).handle_event(e)
    end
 
    #

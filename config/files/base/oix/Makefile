@@ -26,7 +26,7 @@ COBJS=	../common/long.o ../common/time.o \
 OBJS=	$(XOBJS) $(COBJS)
 
 rwinsys.o: rxwin.ri rmswin.ri
-rwinrsc.o: rxrsc.ri
+rwinrsc.o: rxrsc.ri rxkeysyms.ri
 
 all:	oix
 
@@ -40,4 +40,15 @@ oix:	$(OBJS)
 	$(RM) $*.c
 
 clean:		
-	rm -f *.o *.c rt.db rt.a rttcur.lst rttfull.lst oix
+	rm -f *.o *.c rt.db rt.a rttcur.lst rttfull.lst oix keysymtocodepoint
+
+# Compile with make KEYSYMS=Y
+ifeq ($(KEYSYMS),Y)
+
+keysymtocodepoint: keysymtocodepoint.icn
+	oit -s keysymtocodepoint.icn
+
+rxkeysyms.ri:	keysyms.txt keysymtocodepoint
+	keysymtocodepoint <keysyms.txt >rxkeysyms.ri
+
+endif

@@ -460,7 +460,7 @@ class Dialog(Component)
          do_invoke()
       else if ec === Mouse.WINDOW_RESIZE then
          handle_resize(e)
-      else if \e.meta & /e.release & type(ec) == "string" then {
+      else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
          if c := self.find_accel(ec) then
             c.handle_accel(e)
       }
@@ -539,27 +539,31 @@ class Dialog(Component)
       local s1, s2, ec, ke
 
       ec := e.code
-      if member(Mouse.WHEEL, ec) then {
-         fire_list(point_chain, ec, e)
-      } else if member(Mouse.PRESS, ec) then {
-         held[ec] := copy(point_chain)
-         fire_list(held[ec], ec, e)
-      } else if member(Mouse.DRAG_OR_MOVEMENT, ec) then {
-         s1 := set(\moving) | set()
-         s2 := set(point_chain)
-         fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
-         fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
-         if ec === Mouse.MOVEMENT then 
+      if integer(ec) < 0 then {
+         # Non-keyboard event
+         if member(Mouse.WHEEL, ec) then {
             fire_list(point_chain, ec, e)
-         else
-            fire_list(\held[ec + 6], ec, e)
-         moving := copy(point_chain)
-      } else if member(Mouse.RELEASE, ec) then {
-         fire_list(\held[ec + 3], ec, e)
-         delete(held, ec + 3)
-      } else if member(Mouse.WINDOW, ec) then {
-         fire(ec, e)
-      } else if member(Key.ALL, ec) then {
+         } else if member(Mouse.PRESS, ec) then {
+            held[ec] := copy(point_chain)
+            fire_list(held[ec], ec, e)
+         } else if member(Mouse.DRAG_OR_MOVEMENT, ec) then {
+            s1 := set(\moving) | set()
+            s2 := set(point_chain)
+            fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
+            fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
+            if ec === Mouse.MOVEMENT then 
+               fire_list(point_chain, ec, e)
+            else
+               fire_list(\held[ec + 6], ec, e)
+            moving := copy(point_chain)
+         } else if member(Mouse.RELEASE, ec) then {
+            fire_list(\held[ec + 3], ec, e)
+            delete(held, ec + 3)
+         } else if member(Mouse.WINDOW, ec) then {
+            fire(ec, e)
+         }
+      } else {
+         # Keyboard event
          ke := if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS
          if \self.menu_mode then
             fire_list([self.menu_mode], ke, e)

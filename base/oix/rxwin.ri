@@ -31,6 +31,7 @@ Pixmap		     loadimage	      (wbp w, char *filename, unsigned int *height, unsig
 void unsetclip (wbp w);
 static dptr call(dptr proc, ...);
 static void await_selectionnotify(wsp ws);
+static int convert_KeySym_to_code_point(KeySym k);
 
 #ifdef HAVE_LIBXFT
 int xft_stringwidth(wbp w, char *s, int n);
@@ -691,6 +692,7 @@ int handle_misc(wd, w)
                 }
                 case KeyPress:
                     handle_keypress(wb, (XKeyEvent *)&event);
+                    collect(Blocks);
                     break;
                 case ButtonPress:
                     presscount++;
@@ -2548,27 +2550,6 @@ static int handle_config(w, event)
 }
 
 /*
- * Translate a key event.  Put ascii result if any in s.
- * Return number of ascii (>0) if the key was "normal" and s is filled in.
- * Return 0 if the key was strange and keysym should be returned.
- * Return -1 if the key was a modifier key and should be dropped.
- */
-int translate_key_event(event, s, k)
-XKeyEvent *event;
-char *s;
-KeySym *k;
-{
-   int i = XLookupString(event, s, 10, k, NULL);
-
-   if (i > 0)
-      return i;			/* "normal" key */
-   else if (IsModifierKey(*k))
-      return -1;		/* modifier key */
-   else
-      return 0;			/* other (e.g. function key) */
-}
-
-/*
  * Queue up characters for keypress events.
  */
 static void handle_keypress(w,event)
@@ -2577,31 +2558,48 @@ static void handle_keypress(w,event)
 {
     int i,j;
     char s[10];
-    struct descrip d;
+    tended struct descrip d;
     KeySym k;
 
     w->window->pointerx = event->x;
     w->window->pointery = event->y;
 
-    switch (i = translate_key_event(event, s, &k)) {
-        case -1:
-            return;
-        case 0:
-            MakeInt(k, &d);
+    /* First try to convert the event to a simple char string, and a KeySym */
+    i = XLookupString(event, s, 10, &k, NULL);
+    if (i > 0) {
+        /* Found a char string, so generate string event(s) */
+        StrLen(d) = 1;
+        for (j = 0; j < i; j++) {
+            StrLoc(d) = (char *)&allchars[s[j] & 0xFF];
             qevent(w->window, &d, event->x, event->y,
                    (uword)event->time, event->state,
                    (event->type == KeyRelease) );
-            break;
-        default:
-            StrLen(d) = 1;
-            for (j = 0; j < i; j++) {
-                StrLoc(d) = (char *)&allchars[s[j] & 0xFF];
-                qevent(w->window, &d, event->x, event->y,
-                       (uword)event->time, event->state,
-                       (event->type == KeyRelease) );
-            }
+        }
+        return;
     }
+
+    /* Second try is to convert to a unicode char; if found generate a 1-char
+     * ucs string */
+    i = convert_KeySym_to_code_point(k);
+    if (i > 0) {
+        d.dword = D_Ucs;
+        BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
+        qevent(w->window, &d, event->x, event->y,
+               (uword)event->time, event->state,
+               (event->type == KeyRelease) );
+        return;
+    }
+
+    /* Neither of those worked, so it must be a non-character key (cursor key, etc).
+     * So just generate the numerical value of the KeySym as an integer.
+     */
+    MakeInt(k, &d);
+    qevent(w->window, &d, event->x, event->y,
+           (uword)event->time, event->state,
+           (event->type == KeyRelease) );
 }
+
+#include "rxkeysyms.ri"
 
 #define swap(a,b) { tmp = a; a = b; b = tmp; }
 /*

@@ -464,8 +464,7 @@ class Key()
       UP,
       CURSOR,
       CURSOR_V,
-      CURSOR_H,
-      ALL
+      CURSOR_H
 
    private static init()
 $ifdef _X_WINDOW_SYSTEM
@@ -622,14 +621,5 @@ $endif
       CURSOR := set(UP, DOWN, LEFT, RIGHT)
       CURSOR_V := set(UP, DOWN)
       CURSOR_H := set(LEFT, RIGHT)
-      ALL := set()
-      every insert(ALL, !&cset | 
-                   SHIFT_TAB |  COMPOSE | DO | DOWN | END | F1 | F2 | F3 | F4 | F5 |
-                   F6 | F7 | F8 | F9 | F10 | F11 | F12 | F13 | F14 | F15 | F16 | F17 |
-                   F18 | F19 | F20 | FIND | HELP | HOME | INSERT | KP_DOWN | KP_LEFT |
-                   KP_RIGHT | KP_UP | L1 | L2 | L3 | L4 | L5 | L6 | L7 | L8 | L9 | L10 |
-                   LEFT | PF1 | PF2 | PF3 | PF4 | PAUSE | PGDN | PGUP | PRSC | R1 | R2 |
-                   R3 | R4 | R5 | R6 | R7 | R8 | R9 | R10 | R11 | R12 | R13 | R14 | R15 |
-                   RIGHT | SCROLL_LOCK | SELECT | UP)
    end
 end
