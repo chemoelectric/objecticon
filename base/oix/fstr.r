@@ -199,10 +199,7 @@ function{1} detab(s,i[n])
           if (is_expanded)
               return result;
           else {
-              long n = DiffPtrs(StrLoc(result),strfree); /* note deallocation */
-              EVStrAlc(n);
-              strtotal += n;
-              strfree = StrLoc(result);		/* reset the free pointer */
+              returnstr(StrLoc(result));        /* return allocated string to string region */
               return s;				/* return original string */
           }
 
@@ -483,22 +480,15 @@ function{1} entab(s,i[n])
 
           /*
            * Return new string if indeed tabs were inserted; otherwise return
-           *  original string (and reset strfree) to conserve memory.
+           *  original string to conserve memory.
            */
           if (inserted) {
-              long n;
               StrLen(result) = DiffPtrs(out,StrLoc(result));
-              n = DiffPtrs(out,strfree);		/* note the deallocation */
-              EVStrAlc(n);
-              strtotal += n;
-              strfree = out;				/* give back unused space */
+              returnstr(out);                           /* give back unused space */
               return result;				/* return new string */
           }
           else {
-              long n = DiffPtrs(StrLoc(result),strfree); /* note the deallocation */
-              EVStrAlc(n);
-              strtotal += n;
-              strfree = StrLoc(result);		/* reset free pointer */
+              returnstr(StrLoc(result));                /* give back allocated string */
               return s;				/* return original string */
           }
 

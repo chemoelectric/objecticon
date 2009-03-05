@@ -674,8 +674,7 @@ function{0,1} io_FileStream_in(self, i)
            GetSelfEofFlag();
 
            /* Reset the memory just allocated */
-           strtotal += DiffPtrs(StrLoc(s), strfree);
-           strfree = StrLoc(s);
+           returnstr(StrLoc(s));
 
            if (nread < 0) {
                *self_eof_flag = nulldesc;
@@ -691,8 +690,7 @@ function{0,1} io_FileStream_in(self, i)
        /*
         * We may not have used the entire amount of storage we reserved.
         */
-       strtotal += DiffPtrs(StrLoc(s) + nread, strfree);
-       strfree = StrLoc(s) + nread;
+       returnstr(StrLoc(s) + nread);
 
        return s;
    }
@@ -829,8 +827,7 @@ function{0,1} io_SocketStream_in(self, i)
            GetSelfEofFlag();
 
            /* Reset the memory just allocated */
-           strtotal += DiffPtrs(StrLoc(s), strfree);
-           strfree = StrLoc(s);
+           returnstr(StrLoc(s));
 
            if (nread < 0) {
                *self_eof_flag = nulldesc;
@@ -843,11 +840,11 @@ function{0,1} io_SocketStream_in(self, i)
        }
 
        StrLen(s) = nread;
+
        /*
         * We may not have used the entire amount of storage we reserved.
         */
-       strtotal += DiffPtrs(StrLoc(s) + nread, strfree);
-       strfree = StrLoc(s) + nread;
+       returnstr(StrLoc(s) + nread);
 
        return s;
    }
@@ -1440,29 +1437,22 @@ function{0,1} io_Files_readlink(s)
       runerr(103, s)
    body {
        int len;
-       char *out;
-       long n;
       
 #if MSWIN32
        runerr(121);
 #else					/* MSWIN32 */
-       MemProtect(reserve(Strings, NAME_MAX));
        MemProtect(StrLoc(result) = alcstr(NULL, NAME_MAX));
        if ((len = readlink(s, StrLoc(result), NAME_MAX)) < 0) {
            /* Give back the string */
-           n = DiffPtrs(StrLoc(result),strfree); /* note the deallocation */
-           strtotal += n;
-           strfree = StrLoc(result);              /* reset free pointer */
+           returnstr(StrLoc(result));
            errno2why();
            fail;
        }
 
        /* Return the extra characters at the end */
-       out = StrLoc(result) + len;
-       StrLen(result) = DiffPtrs(out,StrLoc(result));
-       n = DiffPtrs(out,strfree);             /* note the deallocation */
-       strtotal += n;
-       strfree = out;                         /* give back unused space */
+       StrLen(result) = len;
+       /* give back unused space */
+       returnstr(StrLoc(result) + len);
 
        return result;
 #endif					/* MSWIN32 */
