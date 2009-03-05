@@ -625,7 +625,7 @@ function{} runerr(i, x[n])
       tracebk(pfp, glbl_argp);
       fflush(stderr);
 
-      if (dodump)
+      if (dodump > 1)
           abort();
 
       c_exit(EXIT_FAILURE);
@@ -655,7 +655,7 @@ function{} syserr(msg)
       tracebk(pfp, glbl_argp);
       fflush(stderr);
 
-      if (dodump)
+      if (dodump > 1)
           abort();
 
       c_exit(EXIT_FAILURE);

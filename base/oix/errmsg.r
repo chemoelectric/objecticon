@@ -256,7 +256,7 @@ void err_msg(int n, dptr v)
     }
 
     if (pfp == NULL) {		/* skip if start-up problem */
-        if (dodump)
+        if (dodump > 1)
             abort();
         c_exit(EXIT_FAILURE);
     }
@@ -264,7 +264,7 @@ void err_msg(int n, dptr v)
     tracebk(pfp, glbl_argp);
     fflush(stderr);
 
-    if (dodump)
+    if (dodump > 1)
         abort();
 
     c_exit(EXIT_FAILURE);

@@ -82,7 +82,11 @@ word memgrowth = RegionGrowth;		/* memory region growth factor */
 
 uword stattotal = 0;			/* cumulative total static allocation */
 
-int dodump;				/* if nonzero, core dump on error */
+int dodump = 1;				/* if zero never core dump;
+                                         * if 1 core dump on C-level internal error (call to syserr)
+                                         * if 2 core dump on all errors
+                                         */
+
 int noerrbuf;				/* if nonzero, do not buffer stderr */
 
 struct descrip maps2;			/* second cached argument of map */
@@ -576,42 +580,7 @@ void envset()
     env_int(QLSIZE, &qualsize, 1, (uword)MaxBlock);
     env_int("IXCUSHION", &memcushion, 1, (uword)100);	/* max 100 % */
     env_int("IXGROWTH", &memgrowth, 1, (uword)10000);	/* max 100x growth */
-
-/*
- * The following code is operating-system dependent [@init.04].  Check any
- *  system-dependent environment variables.
- */
-
-#if PORT
-    /* nothing to do */
-    Deliberate Syntax Error
-#endif					/* PORT */
-
-/*
- * End of operating-system specific code.
- */
-
-    if ((p = getenv(ICONCORE)) != NULL && *p != '\0') {
-
-/*
- * The following code is operating-system dependent [@init.05].  Set trap to
- *  give dump on abnormal termination if ICONCORE is set.
- */
-
-#if PORT
-        /* can't handle */
-        Deliberate Syntax Error
-#endif					/* PORT */
-
-#if UNIX
-        signal(SIGSEGV, SIG_DFL);
-#endif					/* UNIX */
-
-/*
- * End of operating-system specific code.
- */
-        dodump++;
-    }
+    env_int("OICORE", &dodump, 1, (uword)2);
 }
 
 /*
@@ -705,7 +674,7 @@ void error(char *fmt, ...)
     fprintf(stderr,"\n");
     fflush(stderr);
     va_end(argp);
-    if (dodump)
+    if (dodump > 1)
         abort();
     c_exit(EXIT_FAILURE);
 }
