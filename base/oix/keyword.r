@@ -258,7 +258,8 @@ keyword{1} host
    inline {
        struct utsname utsn;
        uname(&utsn);
-       return cstr2string(utsn.nodename);
+       cstr2string(utsn.nodename, &result);
+       return result;
       }
 end
 

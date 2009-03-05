@@ -549,7 +549,7 @@ int handle_misc(wd, w)
                          */
                         target_list[0] = XA_TARGETS;
                         CMakeStr("targets", &str0);
-                        str1 = cstr2string(selection_name);
+                        cstr2string(selection_name, &str1);
                         val = call(&proc, &str0, &str1, 0);
                         if (!val || !is:list(*val))
                             fatalerr(148, NULL);
@@ -605,8 +605,8 @@ int handle_misc(wd, w)
                              * Get the value
                              */
                             CMakeStr("content", &str0);
-                            str1 = cstr2string(selection_name);
-                            str2 = cstr2string(target_name);
+                            cstr2string(selection_name, &str1);
+                            cstr2string(target_name, &str2);
                             val = call(&proc, &str0, &str1, &str2, 0);
                             if (!val || !is:string(*val))
                                 fatalerr(148, NULL);
@@ -664,7 +664,7 @@ int handle_misc(wd, w)
                     }
 
                     CMakeStr("clear", &str0);
-                    str1 = cstr2string(an);
+                    cstr2string(an, &str1);
                     XFree(an);
                     call(&proc, &str0, &str1, 0);
 
@@ -1528,11 +1528,11 @@ int getselectioncontent(wbp w, char *selname, char *targetname, dptr res)
                                 prop);
     if (conv_str) {
         /* Make an Icon string out of the data */
-        *res = cstr2string(conv_str);
+        cstr2string(conv_str, res);
         free(conv_str);
     } else {
         /* Make an Icon string out of the data */
-        *res = bytes2string(prop, bytes_read);
+        bytes2string(prop, bytes_read, res);
     }
 
     XFree(prop);

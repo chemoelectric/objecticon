@@ -714,8 +714,9 @@ function{1} map(s1,s2,s3)
            * The result is a string the size of s1; create the result
            *  string, but specify no value for it.
            */
-          StrLen(result) = slen = StrLen(s1);
+          slen = StrLen(s1);
           MemProtect(StrLoc(result) = alcstr(NULL, slen));
+          StrLen(result) = slen;
           str1 = StrLoc(s1);
           str2 = StrLoc(result);
 

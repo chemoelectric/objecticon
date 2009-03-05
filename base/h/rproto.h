@@ -555,10 +555,10 @@ dptr u_read			(int fd, int n, dptr d);
       void	initalloc	(word codesize, struct progstate *p);
 
 
-struct descrip create_list(uword nslots);
-struct descrip cstr2string(char *s);
-struct descrip bytes2string(char *s, int len);
-struct descrip cstrs2string(char **s, char *delim);
+void create_list(uword nslots, dptr d);
+void cstr2string(char *s, dptr d);
+void bytes2string(char *s, int len, dptr d);
+void cstrs2string(char **s, char *delim, dptr d);
 int eq(dptr d1, dptr d2);
 int ceq(dptr dp, char *s);
 

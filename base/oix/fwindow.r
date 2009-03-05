@@ -117,7 +117,8 @@ function{0,1} graphics_Window_bg(self, colr)
        * In any event, this function returns the current background color.
        */
       getbg(self_w, attr_buff);
-      return cstr2string(attr_buff);
+      cstr2string(attr_buff, &result);
+      return result;
    }
 end
 
@@ -191,7 +192,8 @@ function{0,1} graphics_Window_color(self, argv[argc])
           CnvCInteger(argv[0], n)
           if ((colorname = get_mutable_name(self_w, n)) == NULL)
               fail;
-          return cstr2string(colorname);
+          cstr2string(colorname, &result);
+          return result;
       }
 
       CheckArgMultipleOf(2);
@@ -249,7 +251,8 @@ function{0,1} graphics_Window_color_value(self, k)
               sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
           else
               sprintf(tmp,"%ld,%ld,%ld", r, g, b);
-          return cstr2string(tmp);
+          cstr2string(tmp, &result);
+          return result;
       }
       fail;
    }
@@ -820,7 +823,7 @@ function{1} graphics_Window_event(self, timeout)
       tended struct descrip d;
       GetSelfW();
 
-      d = create_list(8);
+      create_list(8, &d);
       i = wgetevent2(self_w, &d, timeout);
       if (i == -3) {
           if (timeout < 0) {
@@ -897,7 +900,8 @@ function{0,1} graphics_Window_fg(self, colr)
        */
 
       getfg(self_w, attr_buff);
-      return cstr2string(attr_buff);
+      cstr2string(attr_buff, &result);
+      return result;
    }
 end
 
@@ -1058,7 +1062,8 @@ function{0,1} graphics_Window_font(self, f)
               fail;
       }
       getfntnam(self_w, attr_buff);
-      return cstr2string(attr_buff);
+      cstr2string(attr_buff, &result);
+      return result;
    }
 end
 
@@ -1161,7 +1166,8 @@ function{0,1} graphics_Window_palette_color(s1, s2)
       if (!e->valid)
           fail;
       sprintf(tmp, "%ld,%ld,%ld", e->clr.red, e->clr.green, e->clr.blue);
-      return cstr2string(tmp);
+      cstr2string(tmp, &result);
+      return result;
    }
 end
 
@@ -1289,7 +1295,7 @@ function{1} graphics_Window_query_root_pointer()
       struct descrip t;
       pollevent();
       query_rootpointer(&xp);
-      result = create_list(2);
+      create_list(2, &result);
       MakeInt(xp.x, &t);
       c_put(&result, &t);
       MakeInt(xp.y, &t);
@@ -1550,7 +1556,8 @@ function{0,1} graphics_Window_wdefault(self, prog, opt)
 
       if (getdefault(self_w, prog, opt, attr_buff) == Failed) 
           fail;
-      return cstr2string(attr_buff);
+      cstr2string(attr_buff, &result);
+      return result;
    }
 end
 
@@ -1635,11 +1642,10 @@ function{0,1} graphics_Window_get_selection_content(self, selection,target_type)
    if !def:C_string(target_type, "STRING") then
       runerr(103,target_type)
    body {
-       tended struct descrip s;
        GetSelfW();
-       if (getselectioncontent(self_w, selection,target_type, &s) == Failed)
+       if (getselectioncontent(self_w, selection,target_type, &result) == Failed)
            fail;
-       return s;
+       return result;
    }
 end
 
@@ -1700,7 +1706,8 @@ function{0,1} graphics_Window_generic_color_value(k)
               sprintf(tmp,"%ld,%ld,%ld,%ld", r, g, b, a);
           else
               sprintf(tmp,"%ld,%ld,%ld", r, g, b);
-          return cstr2string(tmp);
+          cstr2string(tmp, &result);
+          return result;
       }
       fail;
    }

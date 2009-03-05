@@ -234,7 +234,8 @@ function{0,1} wait(pid, options)
       sprintf(retval, "%d terminated:%d", wpid, termstat);
 #endif					/* MSWIN32 */
 
-      return cstr2string(retval);
+      cstr2string(retval, &result);
+      return result;
    }
 end
 
@@ -260,7 +261,7 @@ function{0,1} gettimeofday()
 	 fail;
       }
 #endif					/* MSWIN32 */
-      result = create_list(2);
+      create_list(2, &result);
 
 #if MSWIN32
       MakeInt(wtp.time, &tmp);

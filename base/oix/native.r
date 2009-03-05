@@ -560,7 +560,8 @@ function{*} io_WindowsFileSystem_get_roots()
         while (n) {
 	   if (n & 1) {
 	      t[0] = c;
-	      suspend cstr2string(t);
+	      cstr2string(t, &result);
+              suspend result;
 	   }
 	   n /= 2;
 	   ++c;
@@ -581,7 +582,7 @@ function{0,1} io_WindowsFilePath_getdcwd(d)
       p = _getdcwd(dir, 0, 32);
       if (!p)
 	 fail;
-      result = cstr2string(p);
+      cstr2string(p, &result);
       free(p);
       return result;
    }
@@ -794,7 +795,7 @@ function{0,1} io_FileStream_pipe_impl()
            fail;
        }
 
-      result = create_list(2);
+       create_list(2, &result);
 
       MakeInt(fds[0], &t);
       c_put(&result, &t);
@@ -919,7 +920,7 @@ function{0,1} io_SocketStream_socketpair_impl(typ)
            fail;
        }
 
-      result = create_list(2);
+       create_list(2, &result);
 
       MakeInt(fds[0], &t);
       c_put(&result, &t);
@@ -1083,7 +1084,7 @@ end
     if (!is:null(l)) {
         if (!is:list(l))
             runerr(108, l);
-        tmpl = create_list(BlkLoc(l)->list.size);
+        create_list(BlkLoc(l)->list.size, &tmpl);
         while (c_get(&BlkLoc(l)->list, &e)) {
             FdStaticParam(e, fd);
             c_put(&tmpl, &e);
@@ -1191,7 +1192,7 @@ function{0,1} io_DescStream_poll(a[n])
            fail;
        }
 
-       result = create_list(nfds);
+       create_list(nfds, &result);
        for (i = 0; i < nfds; ++i) {
            struct descrip tmp;
            MakeInt(ufds[i].revents, &tmp);
@@ -1276,7 +1277,8 @@ function{0,1} io_DirStream_read_impl(self)
            }
            fail;
        }
-       return cstr2string(de->d_name);
+       cstr2string(de->d_name, &result);
+       return result;
    }
 end
 
@@ -1321,7 +1323,7 @@ function{0,1} io_ProgStream_open_impl(cmd, flags)
 
        if (pid) {
            struct descrip t;
-           result = create_list(2);
+           create_list(2, &result);
            if (flags == O_RDONLY) {
                close(fd[1]);
                MakeInt(fd[0], &t);
@@ -1514,7 +1516,7 @@ static struct descrip stat2list(struct stat *st)
    struct passwd *pw;
    struct group *gr;
 
-   res = create_list(13);
+   create_list(13, &res);
    MakeInt((int)st->st_dev, &tmp);
    c_put(&res, &tmp);
    MakeInt((int)st->st_ino, &tmp);
@@ -1553,7 +1555,7 @@ static struct descrip stat2list(struct stat *st)
    if (S_ISGID & st->st_mode) mode[6] = (mode[6] == 'x') ? 's' : 'S';
    if (S_ISVTX & st->st_mode) mode[9] = (mode[9] == 'x') ? 't' : 'T';
 #endif					/* MSWIN32 */
-   tmp = cstr2string(mode);
+   cstr2string(mode, &tmp);
    c_put(&res, &tmp);
 
    MakeInt((int)st->st_nlink, &tmp);
@@ -1569,7 +1571,7 @@ static struct descrip stat2list(struct stat *st)
       user = mode;
    } else
       user = pw->pw_name;
-   tmp = cstr2string(user);
+   cstr2string(user, &tmp);
    c_put(&res, &tmp);
    
    gr = getgrgid(st->st_gid);
@@ -1578,7 +1580,7 @@ static struct descrip stat2list(struct stat *st)
       group = mode;
    } else
       group = gr->gr_name;
-   tmp = cstr2string(group);
+   cstr2string(group, &tmp);
    c_put(&res, &tmp);
 #endif					/* MSWIN32 */
 
@@ -1656,13 +1658,13 @@ function{1} util_Timezone_get_system_timezone()
       time(&t);
       ct = localtime(&t);
 
-      result = create_list(2);
+      create_list(2, &result);
       #if HAVE_STRUCT_TM_TM_GMTOFF
          MakeInt(ct->tm_gmtoff, &tmp);
          c_put(&result, &tmp);
          #if HAVE_TZNAME
          if (ct->tm_isdst >= 0) {
-             tmp = cstr2string(tzname[ct->tm_isdst ? 1 : 0]);
+             cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
              c_put(&result, &tmp);
          }
          #endif
@@ -1671,7 +1673,7 @@ function{1} util_Timezone_get_system_timezone()
          c_put(&result, &tmp);
          #if HAVE_TZNAME
          if (ct->tm_isdst >= 0) {
-             tmp = cstr2string(tzname[ct->tm_isdst ? 1 : 0]);
+             cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
              c_put(&result, &tmp);
          }
          #endif
@@ -1733,7 +1735,7 @@ function{0,1} io_RamStream_in(self, i)
        }
 
        i = Min(i, self_rs->size - self_rs->pos);
-       result = bytes2string(&self_rs->data[self_rs->pos], i);
+       bytes2string(&self_rs->data[self_rs->pos], i, &result);
        self_rs->pos += i;
        
        return result;
@@ -1826,7 +1828,8 @@ end
 function{1} io_RamStream_str(self)
    body {
        GetSelfRs();
-       return bytes2string(self_rs->data, self_rs->size);
+       bytes2string(self_rs->data, self_rs->size, &result);
+       return result;
    }
 end
 

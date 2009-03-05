@@ -1705,71 +1705,67 @@ int strncasecmp(char *s1, char *s2, int n)
 #endif					/* MSWIN32 */
 
 /*
- * Create an empty list, with initial number of slots.
+ * Create a descriptor for an empty list, with initial number of slots.
  */
-struct descrip create_list(uword nslots) 
+void create_list(uword nslots, dptr d) 
 {
-   struct descrip res;
    struct b_list *hp;
  
    if (nslots == 0)
       nslots = MinListSlots;
    MemProtect(hp = alclist(0, nslots));
  
-   res.dword = D_List;
-   res.vword.bptr = (union  block *)hp;
-
-   return res;
+   d->dword = D_List;
+   d->vword.bptr = (union  block *)hp;
 }
 
 /*
- * Create a string from a null-terminated C string.  If s is
- * null, return the null descriptor.
+ * Allocate a string and initialize it based on the given
+ * null-terminated C string.  The result is stored in the
+ * given dptr.  If s is null, nulldesc is written to d.
  */
-struct descrip cstr2string(char *s) 
+void cstr2string(char *s, dptr d) 
 {
-    struct descrip res;
     char *a;
     int n;
 
-    if (!s)
-        return nulldesc;
+    if (!s) {
+        *d = nulldesc;
+        return;
+    }
     n = strlen(s);
     MemProtect(a = alcstr(s, n));
-    MakeStr(a, n, &res);
-
-    return res;
+    MakeStr(a, n, d);
 }
 
 /*
- * Create a string from a string of bytes of the given length.  If s
- * is null, return the null descriptor.
+ * Allocate a string and initialize it based on the given pointer and
+ * length.  The result is stored in the given dptr.  If s is null,
+ * nulldesc is written to d.
  */
-struct descrip bytes2string(char *s, int len) 
+void bytes2string(char *s, int len, dptr d) 
 {
-    struct descrip res;
     char *a;
 
-    if (!s)
-        return nulldesc;
+    if (!s) {
+        *d = nulldesc;
+        return;
+    }
     MemProtect(a = alcstr(s, len));
-    MakeStr(a, len, &res);
-
-    return res;
+    MakeStr(a, len, d);
 }
 
 /*
  * Catenate the given C strings, terminated by a null pointer.  The
  * resulting string has the string delim between each element.
  */
-struct descrip cstrs2string(char **s, char *delim) 
+void cstrs2string(char **s, char *delim, dptr d) 
 {
-    struct descrip res;
     int n, len = 0;
     for (n = 0; s[n]; ++n)
         len += strlen(s[n]);
     if (n == 0)
-        MakeStr("", 0, &res);
+        *d = emptystr;
     else {
         int i;
         char *a, *p, *q;
@@ -1786,9 +1782,8 @@ struct descrip cstrs2string(char **s, char *delim)
             while (*q)
                 *p++ = *q++;
         }
-        MakeStr(a, len, &res);
+        MakeStr(a, len, d);
     }
-    return res;
 }
 
 
@@ -1869,7 +1864,7 @@ void errno2why()
  */
 void why(char *s)
 {
-    kywd_why = cstr2string(s);
+    cstr2string(s, &kywd_why);
 }
 
 /*
@@ -1882,7 +1877,7 @@ void whyf(char *fmt, ...)
     va_start(argp, fmt);
     vsnprintf(buff, sizeof(buff), fmt, argp);
     va_end(argp);
-    kywd_why = cstr2string(buff);
+    cstr2string(buff, &kywd_why);
 }
 
 /*

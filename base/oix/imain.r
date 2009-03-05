@@ -355,7 +355,8 @@ int main(int argc, char **argv)
      * a list unnecessarily.
      */
     if (((struct b_proc *)BlkLoc(*main_proc))->nparam) {
-        tended struct descrip args = create_list(argc - 2);
+        tended struct descrip args;
+        create_list(argc - 2, &args);
         for (i = 2; i < argc; i++) {
             struct descrip t;
             CMakeStr(argv[i], &t);

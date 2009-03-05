@@ -302,7 +302,7 @@ function{1} ipc_Shm_get_value_impl(self)
        if ((void*)data == (void*)-1)
            aborted("Couldn't attach to shm");
 
-       result = bytes2string(data, tp->data_size);
+       bytes2string(data, tp->data_size, &result);
        shmdt(data);
 
        /* Signal */
@@ -688,7 +688,7 @@ function{1} ipc_Msg_receive_impl(self)
            memcpy(data, mb.mtext, residue);
        }
 
-       result = bytes2string(p, size);
+       bytes2string(p, size, &result);
        free(p);
 
        /* Signal */
@@ -752,7 +752,7 @@ function{0,1} ipc_Msg_attempt_impl(self)
            memcpy(data, mb.mtext, residue);
        }
 
-       result = bytes2string(p, size);
+       bytes2string(p, size, &result);
        free(p);
 
        /* Signal */

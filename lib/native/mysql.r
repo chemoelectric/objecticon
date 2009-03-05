@@ -163,7 +163,7 @@ function{1} mysql_MySql_esc(self, str)
       GetSelfMySql();
       MemProtect(to = malloc(2 * StrLen(str) + 1));
       to_len = mysql_real_escape_string(self_mysql, to, StrLoc(str), StrLen(str));
-      result = bytes2string(to, to_len);
+      bytes2string(to, to_len, &result);
       free(to);
       return result;
    }
@@ -226,7 +226,8 @@ end
 function{1} mysql_MySql_get_character_set_name(self)
    body {
       GetSelfMySql();
-      return cstr2string((char*)mysql_character_set_name(self_mysql));
+      cstr2string((char*)mysql_character_set_name(self_mysql), &result);
+      return result;
    }
 end
 
@@ -243,7 +244,8 @@ end
 
 function{1} mysql_MySql_get_client_info()
    body {
-      return cstr2string((char*)mysql_get_client_info());
+    cstr2string((char*)mysql_get_client_info(), &result);
+    return result;
    }
 end
 
@@ -256,14 +258,16 @@ end
 function{1} mysql_MySql_get_host_info(self)
    body {
       GetSelfMySql();
-      return cstr2string((char*)mysql_get_host_info(self_mysql));
+      cstr2string((char*)mysql_get_host_info(self_mysql), &result);
+      return result;
    }
 end
 
 function{1} mysql_MySql_get_sqlstate(self)
    body {
       GetSelfMySql();
-      return cstr2string((char*)mysql_sqlstate(self_mysql));
+      cstr2string((char*)mysql_sqlstate(self_mysql), &result);
+      return result;
    }
 end
 
@@ -277,7 +281,8 @@ end
 function{1} mysql_MySql_get_server_info(self)
    body {
       GetSelfMySql();
-      return cstr2string((char*)mysql_get_server_info(self_mysql));
+      cstr2string((char*)mysql_get_server_info(self_mysql), &result);
+      return result;
    }
 end
 
@@ -291,7 +296,8 @@ end
 function{1} mysql_MySql_get_info(self)
    body {
       GetSelfMySql();
-      return cstr2string((char*)mysql_info(self_mysql));
+      cstr2string((char*)mysql_info(self_mysql), &result);
+      return result;
    }
 end
 
@@ -304,7 +310,8 @@ function{0,1} mysql_MySql_get_stat(self)
           on_mysql_error(self_mysql);
           fail;
       }
-      return cstr2string(s);
+      cstr2string(s, &result);
+      return result;
    }
 end
 
@@ -472,7 +479,8 @@ end
 function{1} mysql_MySql_get_error(self)
    body {
       GetSelfMySql();
-      return cstr2string((char*)mysql_error(self_mysql));
+      cstr2string((char*)mysql_error(self_mysql), &result);
+      return result;
    }
 end
 
@@ -668,16 +676,16 @@ end
 static struct descrip field_to_list(MYSQL_FIELD *field) {
    tended struct descrip tmp, res;
 
-   res = create_list(10);
-   tmp = cstr2string(field->name);
+   create_list(10, &res);
+   cstr2string(field->name, &tmp);
    c_put(&res, &tmp);
-   tmp = cstr2string(field->table);
+   cstr2string(field->table, &tmp);
    c_put(&res, &tmp);
-   tmp = cstr2string(field->org_table);
+   cstr2string(field->org_table, &tmp);
    c_put(&res, &tmp);
-   tmp = cstr2string(field->db);
+   cstr2string(field->db, &tmp);
    c_put(&res, &tmp);
-   tmp = cstr2string(field->_DEF);
+   cstr2string(field->_DEF, &tmp);
    c_put(&res, &tmp);
    MakeInt(field->length, &tmp);
    c_put(&res, &tmp);
@@ -721,7 +729,7 @@ function{0,1} mysql_MySqlRes_fetch_fields_impl(self)
        }
 
        n = mysql_num_fields(self_mysql_res);
-       result = create_list(n);
+       create_list(n, &result);
        for (i = 0; i < n; ++i) {
            tended struct descrip tmp = field_to_list(&fields[i]);
            c_put(&result, &tmp);
@@ -757,7 +765,7 @@ function{0,1} mysql_MySqlRes_fetch_lengths(self)
            fail;
        }
        n = mysql_num_fields(self_mysql_res);
-       result = create_list(n);
+       create_list(n, &result);
        for (i = 0; i < n; ++i) {
            struct descrip tmp;
            MakeInt(lengths[i], &tmp);
@@ -785,9 +793,10 @@ function{0,1} mysql_MySqlRes_fetch_row(self)
        }
 
        n = mysql_num_fields(self_mysql_res);
-       result = create_list(n);
+       create_list(n, &result);
        for (i = 0; i < n; ++i) {
-           tended struct descrip tmp = bytes2string(row[i], lengths[i]);
+           tended struct descrip tmp;
+           bytes2string(row[i], lengths[i], &tmp);
            c_put(&result, &tmp);
        }
        return result;
