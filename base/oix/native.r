@@ -674,7 +674,7 @@ function{0,1} io_FileStream_in(self, i)
            GetSelfEofFlag();
 
            /* Reset the memory just allocated */
-           returnstr(StrLoc(s));
+           dealcstr(StrLoc(s));
 
            if (nread < 0) {
                *self_eof_flag = nulldesc;
@@ -690,7 +690,7 @@ function{0,1} io_FileStream_in(self, i)
        /*
         * We may not have used the entire amount of storage we reserved.
         */
-       returnstr(StrLoc(s) + nread);
+       dealcstr(StrLoc(s) + nread);
 
        return s;
    }
@@ -827,7 +827,7 @@ function{0,1} io_SocketStream_in(self, i)
            GetSelfEofFlag();
 
            /* Reset the memory just allocated */
-           returnstr(StrLoc(s));
+           dealcstr(StrLoc(s));
 
            if (nread < 0) {
                *self_eof_flag = nulldesc;
@@ -844,7 +844,7 @@ function{0,1} io_SocketStream_in(self, i)
        /*
         * We may not have used the entire amount of storage we reserved.
         */
-       returnstr(StrLoc(s) + nread);
+       dealcstr(StrLoc(s) + nread);
 
        return s;
    }
@@ -1444,7 +1444,7 @@ function{0,1} io_Files_readlink(s)
        MemProtect(StrLoc(result) = alcstr(NULL, NAME_MAX));
        if ((len = readlink(s, StrLoc(result), NAME_MAX)) < 0) {
            /* Give back the string */
-           returnstr(StrLoc(result));
+           dealcstr(StrLoc(result));
            errno2why();
            fail;
        }
@@ -1452,7 +1452,7 @@ function{0,1} io_Files_readlink(s)
        /* Return the extra characters at the end */
        StrLen(result) = len;
        /* give back unused space */
-       returnstr(StrLoc(result) + len);
+       dealcstr(StrLoc(result) + len);
 
        return result;
 #endif					/* MSWIN32 */

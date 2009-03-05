@@ -897,10 +897,10 @@ word nbytes,stdsize;
  * Return a string (or part of it) just allocated at the end of the
  * string region.
  */
-void returnstr(char *p)
+void dealcstr(char *p)
 {
     if (!InRange(strbase, p, strfree + 1))
-        syserr("Attempt to returnstr, but pointer not in current string region");
+        syserr("Attempt to dealcstr, but pointer not in current string region");
     strtotal += DiffPtrs(p, strfree);
     strfree = p;
 }

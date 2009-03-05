@@ -199,7 +199,7 @@ function{1} detab(s,i[n])
           if (is_expanded)
               return result;
           else {
-              returnstr(StrLoc(result));        /* return allocated string to string region */
+              dealcstr(StrLoc(result));        /* return allocated string to string region */
               return s;				/* return original string */
           }
 
@@ -484,11 +484,11 @@ function{1} entab(s,i[n])
            */
           if (inserted) {
               StrLen(result) = DiffPtrs(out,StrLoc(result));
-              returnstr(out);                           /* give back unused space */
+              dealcstr(out);                           /* give back unused space */
               return result;				/* return new string */
           }
           else {
-              returnstr(StrLoc(result));                /* give back allocated string */
+              dealcstr(StrLoc(result));                /* give back allocated string */
               return s;				/* return original string */
           }
 
