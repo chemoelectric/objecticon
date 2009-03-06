@@ -509,43 +509,13 @@ void icon_init(char *name)
      */
     resolve(&rootpstate);
 
-/*
- * The following code is operating-system dependent [@init.03].  Allocate and
- *  assign a buffer to stderr if possible.
- */
-
-#if PORT
-    /* probably nothing */
-    Deliberate Syntax Error
-#endif					/* PORT */
-
-#if UNIX
-
-
-        if (noerrbuf)
-            setbuf(stderr, NULL);
-        else {
-            char *buf;
-            Protect(buf = malloc(BUFSIZ), fatalerr(305, NULL));
-            setbuf(stderr, buf);
-        }
-#endif					/* UNIX */
-
-#if MSWIN32
     if (noerrbuf)
         setbuf(stderr, NULL);
     else {
-#ifndef MSWindows
         char *buf;
-        Protect(buf = malloc(BUFSIZ), fatalerr(305, NULL));
+        MemProtect(buf = malloc(BUFSIZ));
         setbuf(stderr, buf);
-#endif					/* MSWindows */
     }
-#endif					/* MSWIN32 */
-
-/*
- * End of operating-system specific code.
- */
 
     /*
      * Start timing execution.
@@ -566,21 +536,17 @@ void envset()
 {
     register char *p;
 
-    if ((p = getenv("NOERRBUF")) != NULL)
+    if ((p = getenv(NOERRBUF)) != NULL)
         noerrbuf++;
     env_int(TRACE, &k_trace, 0, (uword)0);
     env_int(COEXPSIZE, &stksize, 1, (uword)MaxUnsigned);
     env_int(STRSIZE, &ssize, 1, (uword)MaxBlock);
-    env_int(HEAPSIZE, &abrsize, 1, (uword)MaxBlock);
-#ifndef BSD_4_4_LITE
-    env_int(BLOCKSIZE, &abrsize, 1, (uword)MaxBlock);    /* synonym */
-#endif					/* BSD_4_4_LITE */
     env_int(BLKSIZE, &abrsize, 1, (uword)MaxBlock);      /* synonym */
     env_int(MSTKSIZE, &mstksize, 1, (uword)MaxUnsigned);
     env_int(QLSIZE, &qualsize, 1, (uword)MaxBlock);
-    env_int("IXCUSHION", &memcushion, 1, (uword)100);	/* max 100 % */
-    env_int("IXGROWTH", &memgrowth, 1, (uword)10000);	/* max 100x growth */
-    env_int("OICORE", &dodump, 1, (uword)2);
+    env_int(IXCUSHION, &memcushion, 1, (uword)100);	/* max 100 % */
+    env_int(IXGROWTH, &memgrowth, 1, (uword)10000);	/* max 100x growth */
+    env_int(OICORE, &dodump, 1, (uword)2);
 }
 
 /*

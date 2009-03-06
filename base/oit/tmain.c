@@ -308,8 +308,8 @@ int main(int argc, char **argv)
     if (!link_files)
         usage();				/* error -- no files named */
 
-    ipath = getenv(IPATH);	/* set library search paths */
-    lpath = getenv(LPATH);
+    ipath = getenv(OIPATH);	/* set library search paths */
+    lpath = getenv(OLPATH);
 
     /*
      * Translate .icn files to make .u files.
@@ -661,7 +661,7 @@ static int ldbg(int argc, char **argv)
         exit(1);
     }
 
-    lpath = getenv(LPATH);
+    lpath = getenv(OLPATH);
 
     if (!ppinit(argv[1],lpath,0))
         quitf("cannot open %s", argv[1]);

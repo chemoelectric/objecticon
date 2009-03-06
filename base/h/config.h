@@ -88,14 +88,6 @@
    #define STRSIZE "STRSIZE"
 #endif
 
-#ifndef HEAPSIZE
-   #define HEAPSIZE "HEAPSIZE"
-#endif
-
-#ifndef BLOCKSIZE
-   #define BLOCKSIZE "BLOCKSIZE"
-#endif
-
 #ifndef BLKSIZE
    #define BLKSIZE "BLKSIZE"
 #endif
@@ -108,16 +100,24 @@
    #define QLSIZE "QLSIZE"
 #endif
 
-#ifndef ICONCORE
-   #define ICONCORE "ICONCORE"
+#ifndef IXGROWTH
+   #define IXGROWTH "IXGROWTH"
 #endif
 
-#ifndef IPATH
-   #define IPATH "OIPATH"
+#ifndef IXCUSHION
+   #define IXCUSHION "IXCUSHION"
 #endif
 
-#ifndef LPATH
-   #define LPATH "OLPATH"
+#ifndef OICORE
+   #define OICORE "OICORE"
+#endif
+
+#ifndef OIPATH
+   #define OIPATH "OIPATH"
+#endif
+
+#ifndef OLPATH
+   #define OLPATH "OLPATH"
 #endif
 
 #ifdef MSWindows
