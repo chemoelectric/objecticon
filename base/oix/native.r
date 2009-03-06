@@ -1441,7 +1441,7 @@ function{0,1} io_Files_readlink(s)
 #else					/* MSWIN32 */
        int buff_size, rc;
        char *buff;
-       buff_size = 4;
+       buff_size = 32;
        for (;;) {
            MemProtect(buff = alcstr(0, buff_size));
            rc = readlink(s, buff, buff_size);
@@ -1455,8 +1455,8 @@ function{0,1} io_Files_readlink(s)
                dealcstr(buff + rc);
                return string(rc, buff);
            }
-           /* Didn't fit (or perhaps did fit exactly) - so increase 
-            * buff_size and repeat */
+           /* Didn't fit (or perhaps did fit exactly) - so deallocate
+            * buff, increase buff_size and repeat */
            dealcstr(buff);
            buff_size *= 2;
        }
