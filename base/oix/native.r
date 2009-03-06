@@ -1436,25 +1436,30 @@ function{0,1} io_Files_readlink(s)
    if !cnv:C_string(s) then
       runerr(103, s)
    body {
-       int len;
-      
 #if MSWIN32
        runerr(121);
 #else					/* MSWIN32 */
-       MemProtect(StrLoc(result) = alcstr(NULL, NAME_MAX));
-       if ((len = readlink(s, StrLoc(result), NAME_MAX)) < 0) {
-           /* Give back the string */
-           dealcstr(StrLoc(result));
-           errno2why();
-           fail;
+       int buff_size, rc;
+       char *buff;
+       buff_size = 4;
+       for (;;) {
+           MemProtect(buff = alcstr(0, buff_size));
+           rc = readlink(s, buff, buff_size);
+           if (rc < 0) {
+               dealcstr(buff);
+               errno2why();
+               fail;
+           }
+           if (rc < buff_size) {
+               /* Fitted okay, so deallocate surplus and return */
+               dealcstr(buff + rc);
+               return string(rc, buff);
+           }
+           /* Didn't fit (or perhaps did fit exactly) - so increase 
+            * buff_size and repeat */
+           dealcstr(buff);
+           buff_size *= 2;
        }
-
-       /* Return the extra characters at the end */
-       StrLen(result) = len;
-       /* give back unused space */
-       dealcstr(StrLoc(result) + len);
-
-       return result;
 #endif					/* MSWIN32 */
       }
 end

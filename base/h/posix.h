@@ -43,8 +43,6 @@
 #include <io.h>
 #include <time.h>
 #include <process.h>
-#define NAME_MAX FILENAME_MAX
-#define MAXHOSTNAMELEN		256
 #endif					/* MSWIN32 */
 
 #if defined(SUN) || defined(HP) || defined(IRIS4D)
@@ -52,12 +50,6 @@
 
 extern int sys_nerr;
 extern char *sys_errlist[];
-
-#ifndef UX10
-#ifndef NAME_MAX
-#define NAME_MAX 1024
-#endif					/* NAME_MAX */
-#endif
 
 
 #ifdef SYSV
