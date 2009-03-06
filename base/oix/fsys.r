@@ -114,38 +114,40 @@ end
 
 "chdir(s) - change working directory to s."
 function{0,1} chdir(s)
-   if !cnv:string(s) then
-       if !is:null(s) then
-	  runerr(103, s)
-   abstract {
-      return string
-   }
    body {
+       int buff_size, rc;
+       char *buff;
 
-#if PORT
-   Deliberate Syntax Error
-#endif                                  /* PORT */
+       if (!is:null(s)) {
+           tended char *dir;
+           if (!cnv:C_string(s, dir))
+               runerr(103, s);
+           if (chdir(dir) < 0) {
+               errno2why();
+               fail;
+           }
+       }
 
-#if MSWIN32 || UNIX
-
-      char path[MaxPath];
-      int len;
-
-      if (is:string(s)) {
-	 tended char *dir;
-	 cnv:C_string(s, dir);
-	 if (chdir(dir) != 0)
-	    fail;
-	 }
-      if (getcwd(path, sizeof(path)) == NULL)
-	  fail;
-
-      len = strlen(path);
-      MemProtect(StrLoc(result) = alcstr(path, len));
-      StrLen(result) = len;
-      return result;
-
-#endif
+       buff_size = 32;
+       for (;;) {
+           MemProtect(buff = alcstr(0, buff_size));
+           if (getcwd(buff, buff_size)) {
+               int len = strlen(buff);
+               /* Success - free surplus and return */
+               dealcstr(buff + len);
+               return string(len, buff);
+           }
+           if (errno != ERANGE) {
+               /* Failed; free buff and fail */
+               dealcstr(buff);
+               errno2why();
+               fail;
+           }
+           /* Didn't fit (errno == ERANGE) - so deallocate buff,
+            * increase buff_size and repeat */
+           dealcstr(buff);
+           buff_size *= 2;
+       }
    }
 end
 
