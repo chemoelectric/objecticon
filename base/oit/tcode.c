@@ -111,11 +111,7 @@ static int traverse(t)
             loopsp->markcount++;
             traverse(Tree0(t));		/* evaluate first alternative */
             loopsp->markcount--;
-
-#ifdef EventMon
             ensure_pos(t);
-#endif					/* EventMon */
-
             uout_op(Op_Esusp);                 /*  and suspend with its result */
             uout_op(Op_Goto);
             uout_short(lab+1);
