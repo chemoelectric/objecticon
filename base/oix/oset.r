@@ -84,7 +84,7 @@ operator{1} -- diff(x,y)
                   ep = (struct b_selem *)ep->clink;
                   }
                }
-	 deallocate((union block *)np);
+	 dealcblk((union block *)np);
          if (TooSparse(dstp))
             hshrink(dstp);
          Desc_EVValD(dstp, E_Screate, D_Set);
@@ -201,7 +201,7 @@ operator{1} ** inter(x,y)
                   ep = (struct b_selem *)ep->clink;
                   }
                }
-	 deallocate((union block *)np);
+	 dealcblk((union block *)np);
          if (TooSparse(dstp))
             hshrink(dstp);
          Desc_EVValD(dstp, E_Screate, D_Set);
@@ -305,7 +305,7 @@ operator{1} ++ union(x,y)
                   ep = (struct b_selem *)ep->clink;
                   }
                }
-	 deallocate((union block *)np);
+	 dealcblk((union block *)np);
          if (TooCrowded(dstp)) {	/* if the union got too big, enlarge */
             hgrow(dstp);
             }

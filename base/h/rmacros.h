@@ -661,7 +661,8 @@
       #define alcsubs       (curpstate->Alcsubs)
       #define alctelem      (curpstate->Alctelem)
       #define alctvtbl      (curpstate->Alctvtbl)
-      #define deallocate    (curpstate->Deallocate)
+      #define dealcblk      (curpstate->Dealcblk)
+      #define dealcstr      (curpstate->Dealcstr)
       #define reserve       (curpstate->Reserve)
 
       #define ENTERPSTATE(p) if (((p)!=NULL)) { curpstate = (p); }

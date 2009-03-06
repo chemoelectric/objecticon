@@ -541,7 +541,7 @@ const dptr src;
       /*
        * Do not need new te, just update existing entry.
        */
-      deallocate((union block *) te);
+      dealcblk((union block *) te);
       (*slot)->telem.tval = tval;
       }
    else {

@@ -81,8 +81,10 @@ void		cpslots		(dptr dp1,dptr slotptr,word i, word j);
 int		csetcmp		(unsigned int *cs1,unsigned int *cs2);
 word		cvpos		(long pos,long len);
 void		datainit	(void);
-void		deallocate_0	(union block *bp);
-void		deallocate_1	(union block *bp);
+void		dealcblk_0	(union block *bp);
+void		dealcblk_1	(union block *bp);
+void            dealcstr_0      (char *p);
+void            dealcstr_1      (char *p);
 int		def_c_dbl	(dptr s, double df, double * d);
 int		def_c_int	(dptr s, C_integer df, C_integer * d);
 int		def_c_str	(dptr s, char * df, dptr d);
@@ -584,7 +586,6 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len);
 void cset_to_str(struct b_cset *b, int pos, int len, dptr res);
 struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len);
 int cset_range_of_pos(struct b_cset *b, int pos);
-void dealcstr(char *p);
 
 /* Debug func. */
 char* dword2str(dptr d);

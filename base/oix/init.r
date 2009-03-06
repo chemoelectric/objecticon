@@ -357,7 +357,8 @@ void icon_init(char *name)
     rootpstate.Alcsubs = alcsubs_0;
     rootpstate.Alctelem = alctelem_0;
     rootpstate.Alctvtbl = alctvtbl_0;
-    rootpstate.Deallocate = deallocate_0;
+    rootpstate.Dealcblk = dealcblk_0;
+    rootpstate.Dealcstr = dealcstr_0;
     rootpstate.Reserve = reserve_0;
 
     rootstring.size = MaxStrSpace;
@@ -875,7 +876,8 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->Alcsubs = alcsubs_0;
     pstate->Alctelem = alctelem_0;
     pstate->Alctvtbl = alctvtbl_0;
-    pstate->Deallocate = deallocate_0;
+    pstate->Dealcblk = dealcblk_0;
+    pstate->Dealcstr = dealcstr_0;
     pstate->Reserve = reserve_0;
 
     return coexp;

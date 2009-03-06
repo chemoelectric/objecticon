@@ -82,8 +82,8 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       ((Testb((word)(E_Telem), bits)) ? alctelem_1 : alctelem_0);
    p->Alctvtbl =
       ((Testb((word)(E_Tvtbl), bits)) ? alctvtbl_1 : alctvtbl_0);
-   p->Deallocate =
-      ((Testb((word)(E_BlkDeAlc), bits)) ? deallocate_1 : deallocate_0);
+   p->Dealcblk =
+      ((Testb((word)(E_BlkDeAlc), bits)) ? dealcblk_1 : dealcblk_0);
 
    /*
     * A few functions enable more than one event code.

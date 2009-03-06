@@ -673,9 +673,9 @@ struct b_tvtbl *f(register dptr tbl, register dptr ref, uword hashnum)
 alctvtbl_macro(alctvtbl_0,0)
 alctvtbl_macro(alctvtbl_1,E_Tvtbl)
 
-#begdef deallocate_macro(f,e_blkdealc)
+#begdef dealcblk_macro(f,e_blkdealc)
 /*
- * deallocate - return a block to the heap.
+ * dealcblk - return a block to the heap.
  *
  *  The block must be the one that is at the very end of a block region.
  */
@@ -700,9 +700,33 @@ void f (union block *bp)
 }
 #enddef
 
-deallocate_macro(deallocate_0,0)
-deallocate_macro(deallocate_1,E_BlkDeAlc)
+dealcblk_macro(dealcblk_0,0)
+dealcblk_macro(dealcblk_1,E_BlkDeAlc)
 
+
+
+#begdef dealcstr_macro(f,e_strdealc)
+/*
+ * Return a string (or part of it) just allocated at the end of the
+ * current string region.
+ */
+void f (char *p)
+{
+    word nbytes;
+    if (!InRange(strbase, p, strfree + 1))
+        syserr("Attempt to dealcstr, but pointer not in current string region");
+    nbytes = DiffPtrs(strfree, p);
+    strtotal -= nbytes;
+    strfree = p;
+    EVVal(nbytes, E_StrDeAlc);
+}
+#enddef
+
+dealcstr_macro(dealcstr_0,0)
+dealcstr_macro(dealcstr_1,E_StrDeAlc)
+
+
+
 #begdef reserve_macro(f,e_tenurestring,e_tenureblock)
 /*
  * reserve -- ensure space in either string or block region.
@@ -891,17 +915,3 @@ word nbytes,stdsize;
       }
    return NULL;
 }
-
-
-/*
- * Return a string (or part of it) just allocated at the end of the
- * string region.
- */
-void dealcstr(char *p)
-{
-    if (!InRange(strbase, p, strfree + 1))
-        syserr("Attempt to dealcstr, but pointer not in current string region");
-    strtotal += DiffPtrs(p, strfree);
-    strfree = p;
-}
-

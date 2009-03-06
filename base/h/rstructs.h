@@ -487,7 +487,8 @@ struct progstate {
     struct b_tvsubs *(*Alcsubs)(word, word, dptr);
     struct b_telem *(*Alctelem)(void);
     struct b_tvtbl *(*Alctvtbl)(dptr, dptr, uword);
-    void (*Deallocate)(union block *);
+    void (*Dealcblk)(union block *);
+    void (*Dealcstr)(char *);
     char * (*Reserve)(int, word);
 };
 

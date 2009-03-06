@@ -262,7 +262,7 @@ function{1} insert(s, x[n])
 		     hgrow(bp);
 		  }
 	       else
-		  deallocate((union block *)se);
+		  dealcblk((union block *)se);
 
 	       EVValD(&s, E_Sinsert);
 	       EVValD(x+argc, E_Sval);
@@ -378,7 +378,7 @@ function{1} insert(s, x[n])
 		  /*
 		   * We found an existing entry; just change its value.
 		   */
-		  deallocate((union block *)te);
+		  dealcblk((union block *)te);
 		  te = (struct b_telem *) *pd;
 		  if (argc+1 < n)
 		     te->tval = x[argc+1];
@@ -941,7 +941,7 @@ end
          ne->hashnum = hn;
          addmem((struct b_set *)ps, ne, pe);
          }
-      else deallocate((union block *)ne);
+      else dealcblk((union block *)ne);
       }
    else res = -1;
    res = 0;
