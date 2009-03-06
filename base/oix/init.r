@@ -1093,7 +1093,7 @@ void print_desc(FILE *f, dptr d) {
 void print_vword(FILE *f, dptr d) {
     if (Qual(*d)) {
         fprintf(f, "%p -> ", StrLoc(*d));
-        outimage(f, d, 0);
+        outimage(f, d, 1);
     } else if (DVar(*d)) {
         /* D_Var (with an offset) */
         fprintf(f, "D_Var off:%d", Offset(*d));
@@ -1148,21 +1148,21 @@ void print_vword(FILE *f, dptr d) {
             case D_Proc : {
                 struct b_proc *p = (struct b_proc*)BlkLoc(*d);
                 fprintf(f, "%p -> prog:%p=", p, p->program);
-                outimage(f, d, 0);
+                outimage(f, d, 1);
                 break;
             }
 
             case D_Class : {
                 struct b_class *p = (struct b_class*)BlkLoc(*d);
                 fprintf(f, "%p -> prog:%p=", p, p->program);
-                outimage(f, d, 0);
+                outimage(f, d, 1);
                 break;
             }
 
             case D_Constructor : {
                 struct b_constructor *p = (struct b_constructor*)BlkLoc(*d);
                 fprintf(f, "%p -> prog:%p=", p, p->program);
-                outimage(f, d, 0);
+                outimage(f, d, 1);
                 break;
             }
 
@@ -1179,7 +1179,7 @@ void print_vword(FILE *f, dptr d) {
             case D_Cast :
             case D_Object : {
                 fprintf(f, "%p -> ", BlkLoc(*d));
-                outimage(f, d, 0);
+                outimage(f, d, 1);
                 break;
             }
 
