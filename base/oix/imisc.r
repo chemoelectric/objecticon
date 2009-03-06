@@ -386,28 +386,26 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
 
         return index;
     } else {
-        int tn;
-
         /*
          * Query is a string (field name) or int (field index).
          */
-        if (cnv:C_integer(*query, tn)) {
+        if (is:string(*query))
+            return lookup_class_field_by_name(class, query);
+
+        if (query->dword == D_Integer) {
             int nf = class->n_instance_fields + class->n_class_fields;
             /*
              * Simple index into fields array, using conventional icon
-             * semantics.  Falls through if out-of-range.
+             * semantics.
              */
-            int i = cvpos(tn, nf);
+            int i = cvpos(IntVal(*query), nf);
             if (i != CvtFail && i <= nf)
                 return i - 1;
-        } else if (cnv:string(*query, *query))
-            return lookup_class_field_by_name(class, query);
+            else
+                return -1;
+        }
 
-        /*
-         * Wrong type, or out of range.
-         */
-
-        return -1;
+        syserr("Invalid query type to lookup_class_field");
     }
 }
 

@@ -188,10 +188,21 @@ function{1} lang_Class_get_cast_class(c)
     }
 end
 
+#begdef CheckField(field)
+{
+    int x;
+    if (cnv:C_integer(field, x))
+        MakeInt(x, &field);
+    else if (!cnv:string(field,field))
+        runerr(170,field);
+}
+#enddef
+
 function{1} lang_Class_get_field_flags(c, field)
    body {
         struct b_class *class;
         int i;
+        CheckField(field);
         if (!(class = get_class_for(&c)))
             runerr(619, c);
         i = lookup_class_field(class, &field, 0);
@@ -214,6 +225,7 @@ function{0,1} lang_Class_get_field_index(c, field)
    body {
         struct b_class *class;
         int i;
+        CheckField(field);
         if (!(class = get_class_for(&c)))
             runerr(619, c);
         i = lookup_class_field(class, &field, 0);
@@ -227,6 +239,7 @@ function{0,1} lang_Class_get_field_name(c, field)
    body {
         struct b_class *class;
         int i;
+        CheckField(field);
         if (!(class = get_class_for(&c)))
             runerr(619, c);
         i = lookup_class_field(class, &field, 0);
@@ -240,6 +253,7 @@ function{0,1} lang_Class_get_field_defining_class(c, field)
    body {
         struct b_class *class;
         int i;
+        CheckField(field);
         if (!(class = get_class_for(&c)))
             runerr(619, c);
         i = lookup_class_field(class, &field, 0);
@@ -319,6 +333,7 @@ function{1} lang_Class_get(obj, field)
    body {
        struct descrip res;
        int rc;
+       CheckField(field);
        PushNull;
        PushDesc(obj);
        PushDesc(field);
@@ -335,6 +350,7 @@ function{0,1} lang_Class_getf(obj, field, quiet)
    body {
        struct descrip res;
        int rc;
+       CheckField(field);
        PushNull;
        PushDesc(obj);
        PushDesc(field);
@@ -358,6 +374,7 @@ function{1} lang_Class_set_method(field, pr)
         struct class_field *cf;
         int i;
 
+        CheckField(field);
         if (pp->dword != D_Proc) {
             showstack();
             syserr("couldn't find proc on stack");
