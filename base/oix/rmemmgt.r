@@ -1459,6 +1459,30 @@ void blkdump()
    fprintf(stderr,"end of block region.\n");
    }
 
+void show_regions()
+{
+   struct region *br;
+
+   printf("Type            Addr         Size         Base         End          Free     End-Free\n");
+
+   br = curblock;
+   while (br->Gprev)
+       br = br->Gprev;
+   for (; br; br = br->Gnext) {
+       printf("Block   %12p %12d %12p %12p %12p %12d\n",
+              br, br->size, br->base, br->end, br->free, (br->end-br->free));
+   }
+
+   br = curstring;
+   while (br->Gprev)
+       br = br->Gprev;
+   for (; br; br = br->Gnext) {
+       printf("String  %12p %12d %12p %12p %12p %12d\n",
+              br, br->size, br->base, br->end, br->free, (br->end-br->free));
+   }
+}
+
+
 long physicalmemorysize()
 {
    char buf[80], *p;

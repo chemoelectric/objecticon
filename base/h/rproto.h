@@ -589,3 +589,4 @@ void dealcstr(char *p);
 /* Debug func. */
 char* dword2str(dptr d);
 char *binstr(unsigned int n);
+void show_regions();
