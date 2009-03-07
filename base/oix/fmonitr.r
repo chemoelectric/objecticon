@@ -84,6 +84,16 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       ((Testb((word)(E_Tvtbl), bits)) ? alctvtbl_1 : alctvtbl_0);
    p->Dealcblk =
       ((Testb((word)(E_BlkDeAlc), bits)) ? dealcblk_1 : dealcblk_0);
+   p->Dealcstr =
+      ((Testb((word)(E_StrDeAlc), bits)) ? dealcstr_1 : dealcstr_0);
+   p->Alcobject =
+      ((Testb((word)(E_Object), bits)) ? alcobject_1 : alcobject_0);
+   p->Alccast =
+      ((Testb((word)(E_Cast), bits)) ? alccast_1 : alccast_0);
+   p->Alcmethp =
+      ((Testb((word)(E_Methp), bits)) ? alcmethp_1 : alcmethp_0);
+   p->Alcucs =
+      ((Testb((word)(E_Ucs), bits)) ? alcucs_1 : alcucs_0);
 
    /*
     * A few functions enable more than one event code.
@@ -180,6 +190,85 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       p->Interp = interp_0;
 }
 
+/*
+ * EvGet(eventmask, valuemask, flag) - user function for reading event streams.
+ * Installs cset eventmask (and optional table valuemask) in the event source,
+ * then activates it.
+ * EvGet returns the code of the matched token.  These keywords are also set:
+ *    &eventcode     token code
+ *    &eventvalue    token value
+ */
+
+"evget(c,flag) - read through the next event token having a code matched "
+" by cset c."
+
+function{0,1} evget(cs,vmask,flag)
+   if !def:cset(cs,*k_cset) then
+      runerr(104,cs)
+   if !is:null(vmask) then
+      if !is:table(vmask) then
+         runerr(124,vmask)
+
+   body {
+      register int c;
+      tended struct descrip dummy;
+      struct progstate *p = NULL;
+
+      /*
+       * Be sure an eventsource is available
+       */
+      if (!is:coexpr(curpstate->eventsource))
+         runerr(118,curpstate->eventsource);
+      if (!is:null(vmask))
+         BlkLoc(curpstate->eventsource)->coexpr.program->valuemask = vmask;
+
+      /*
+       * If our event source is a child of ours, assign its event mask.
+       */
+      p = BlkLoc(curpstate->eventsource)->coexpr.program;
+      if (p->parent == curpstate) {
+	 if (BlkLoc(p->eventmask) != BlkLoc(cs)) {
+	    assign_event_functions(p, cs);
+	    }
+	 }
+
+      /*
+       * Loop until we read an event allowed.
+       */
+      while (1) {
+         /*
+          * Activate the event source to produce the next event.
+          */
+	 dummy = cs;
+	 if (mt_activate(&dummy, &curpstate->eventcode,
+			 (struct b_coexpr *)BlkLoc(curpstate->eventsource)) ==
+	     A_Cofail) fail;
+	 deref(&curpstate->eventcode, &curpstate->eventcode);
+	 if (!is:string(curpstate->eventcode) ||
+	     StrLen(curpstate->eventcode) != 1) {
+	    /*
+	     * this event is out-of-band data; return or reject it
+	     * depending on whether flag is null.
+	     */
+	    if (!is:null(flag))
+	       return curpstate->eventcode;
+	    else continue;
+	    }
+
+#if E_Cofail || E_Coret
+	 switch(*StrLoc(curpstate->eventcode)) {
+	 case E_Cofail: case E_Coret: {
+	    if (BlkLoc(curpstate->eventsource)->coexpr.id == 1) {
+	       fail;
+	       }
+	    }
+	    }
+#endif					/* E_Cofail || E_Coret */
+
+	 return curpstate->eventcode;
+	 }
+      }
+end
 
 /*
  * Prototypes.
@@ -194,13 +283,10 @@ char typech[MaxType+1];	/* output character for each type */
 
 int noMTevents;			/* don't produce events in EVAsgn */
 
-#ifdef HaveProfil
-union { 			/* clock ticker -- keep in sync w/ interp.r */
-   unsigned short s[16];	/* four counters */
-   unsigned long l[8];		/* two longs are easier to check */
-} ticker;
-unsigned long oldtick;		/* previous sum of the two longs */
-#endif					/* HaveProfil */
+#if UNIX && E_Tick
+union tickerdata ticker;
+unsigned long oldtick;
+#endif					/* UNIX && E_Tick */
 
 #if UNIX
 /*

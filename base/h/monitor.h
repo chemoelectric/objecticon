@@ -49,6 +49,34 @@
 #define E_Record 0
 #endif
 
+#if defined(EventMon) || defined(E_Object)
+#undef E_Object
+#define E_Object	'\200'		/* Object allocation */
+#else
+#define E_Object 0
+#endif
+
+#if defined(EventMon) || defined(E_Cast)
+#undef E_Cast
+#define E_Cast	'\201'		/* Cast allocation */
+#else
+#define E_Cast 0
+#endif
+
+#if defined(EventMon) || defined(E_Methp)
+#undef E_Methp
+#define E_Methp	'\202'		/* Methp allocation */
+#else
+#define E_Methp 0
+#endif
+
+#if defined(EventMon) || defined(E_Ucs)
+#undef E_Ucs
+#define E_Ucs	'\203'		/* Ucs allocation */
+#else
+#define E_Ucs 0
+#endif
+
 #if defined(EventMon) || defined(E_Tvsubs)
 #undef E_Tvsubs
 #define E_Tvsubs	'\151'		/* Substring tv allocation */
@@ -947,7 +975,7 @@
 137
 162
 
-200 201 202 203 204 205 206 207
+204 205 206 207
 210 211 212 213 214 215 216 217
 220 221 222 223 224 225 226 227
 230 231 232 233 234 235 236 237

@@ -657,7 +657,7 @@ int handle_misc(wd, w)
 
                     proc = ws->selectionproc;
                     if (is:null(proc)) {
-                        fprintf(stderr, "Got an unexpected SelectionClear: %x", 
+                        fprintf(stderr, "Got an unexpected SelectionClear: %x\n", 
                                 event.xselectionclear.selection);
                         fflush(stderr);
                         break;
@@ -1431,15 +1431,46 @@ int setminwidth(wbp w, SHORT new_width)
 int ownselection(wbp w, char *selname)
 {
     Atom selection;
+    wsp x;
+    Window curr;
     STDLOCALS(w);
 
     selection = XInternAtom(ws->display->display, selname, False);
 
+    curr = XGetSelectionOwner(ws->display->display, selection);
+    /* Check for no change in selection */
+    if (curr == ws->win)
+        return Succeeded;
+
     if (selection_debug)
         printf("Owner of selection %s set from %x -> %x\n", 
                atom_fmt(ws, selection),
-               XGetSelectionOwner(ws->display->display, selection), 
+               curr,
                ws->win);
+
+    /*
+     * X doesn't send a SelectionClear event to us when the selection
+     * changes between our own windows, so if the current owner is one
+     * our windows, call its callback proc with a  "clear" message.
+     */
+    if (curr) {
+        for (x = wstates; x; x = x->next) {
+            if (x->win == curr) {
+                struct descrip proc = x->selectionproc;
+                if (is:null(proc)) {
+                    fprintf(stderr, "No selection proc for window %x\n", x);
+                    fflush(stderr);
+                } else {
+                    struct descrip str0;
+                    tended struct descrip str1;
+                    CMakeStr("clear", &str0);
+                    cstr2string(selname, &str1);
+                    call(&proc, &str0, &str1, 0);
+                }
+                break;
+            }
+        }
+    }
 
     XSetSelectionOwner(ws->display->display, 
                        selection,

@@ -500,6 +500,7 @@ struct b_ucs *f(int n)
    register struct b_ucs *blk;
    register uword size;
    size = sizeof(struct b_ucs) + ((n - 1) * sizeof(word));
+   EVVal(size,e_ucs);
    AlcBlk(blk, b_ucs, T_Ucs, size);
    blk->blksize = size;
    blk->utf8 = nulldesc;

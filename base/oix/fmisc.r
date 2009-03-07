@@ -1717,11 +1717,12 @@ function{1} load(s,arglist,
       if (!is:null(arglist) && !is:list(arglist))
          runerr(108,arglist);
 
-      stack =
-	(word *)(sblkp = loadicode(loadstring, _bs_,_ss_,_stk_));
-      if(!stack) {
-	 fail;
-         }
+      stack = (word *)(sblkp = loadicode(loadstring, _bs_,_ss_,_stk_));
+      if (!stack) {
+          /* The file couldn't be opened (any format error causes termination) */
+          errno2why();
+          fail;
+      }
       pstate = sblkp->program;
       pstate->parent = curpstate;
       pstate->parentdesc = k_main;

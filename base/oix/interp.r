@@ -11,7 +11,7 @@ extern word istart[4]; extern int mterm;
 /*
  * Prototypes for static functions.
  */
-#if e_prem || e_erem
+#if E_Prem || E_Erem
 static struct ef_marker *vanq_bound (struct ef_marker *efp_v,
                                       struct gf_marker *gfp_v);
 static void vanq_proc (struct ef_marker *efp_v, struct gf_marker *gfp_v);
@@ -41,15 +41,6 @@ struct ef_marker *efp;		/* Expression frame pointer */
 struct gf_marker *gfp;		/* Generator frame pointer */
 inst ipc;			/* Interpreter program counter */
 word *sp = NULL;		/* Stack pointer */
-
-
-#if UNIX && E_Tick
-extern union { 			/* clock ticker -- keep in sync w/ fmonitor.r */
-   unsigned short s[16];	/* 16 counters */
-   unsigned long l[8];		/* 8 longs are easier to check */
-} ticker;
-extern unsigned long oldtick;	/* previous sum of the two longs */
-#endif					/* UNIX && E_Tick */
 
 
 int ilevel;			/* Depth of recursion in interp() */
@@ -317,13 +308,13 @@ int interp_x(int fsig,dptr cargp)
     */
    if (!is:null(curpstate->eventmask) && (
 #if e_loc
-       Testb((word)(E_Loc), curpstate->eventmask)
+           Testb((word)(E_Loc), BlkLoc(curpstate->eventmask)->cset.bits)
 #if e_line
 	 ||
 #endif
 #endif
 #if e_line
-       Testb((word)(E_Line), curpstate->eventmask)
+           Testb((word)(E_Line), BlkLoc(curpstate->eventmask)->cset.bits)
 #endif
        )) {
 
@@ -366,7 +357,7 @@ int interp_x(int fsig,dptr cargp)
             temp_no = line_num & 65535;
             if ((lastline & 65535) != temp_no) {
 #if e_line
-               if (Testb((word)(E_Line), curpstate->eventmask))
+                if (Testb((word)(E_Line), BlkLoc(curpstate->eventmask)->cset.bits))
                      if (temp_no)
                         InterpEVVal(temp_no, e_line);
 #endif
@@ -374,7 +365,7 @@ int interp_x(int fsig,dptr cargp)
 	    if (lastline != line_num) {
 	       lastline = line_num;
 #if e_loc
-	       if (Testb((word)(E_Loc), curpstate->eventmask) &&
+	       if (Testb((word)(E_Loc), BlkLoc(curpstate->eventmask)->cset.bits) &&
 		   current_line_ptr->line >> 16)
 		  InterpEVVal(current_line_ptr->line, e_loc);
 #endif
@@ -409,9 +400,9 @@ Deliberate Syntax Error
        * generate an MT-style event.
        */
       if ((!is:null(curpstate->eventmask) &&
-	   Testb((word)(E_Opcode), curpstate->eventmask)) &&
+	   Testb((word)(E_Opcode), BlkLoc(curpstate->eventmask)->cset.bits)) &&
 	  (is:null(curpstate->opcodemask) ||
-	   Testb((word)(lastop), curpstate->opcodemask))) {
+	   Testb((word)(lastop), BlkLoc(curpstate->opcodemask)->cset.bits))) {
 	 ExInterp;
 	 MakeInt(lastop, &(curpstate->parent->eventval));
 	 actparent(E_Opcode);

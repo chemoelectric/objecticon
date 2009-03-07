@@ -135,6 +135,16 @@ class Dispatcher()
       }
    end
 
+   public static service(r)
+      if /r then {
+         while *dialogs > 0 do
+            do_event() | do_validate() | do_ticker() | break
+      } else {
+         while \r.is_open_flag do
+            do_event() | do_validate() | do_ticker() | break
+      }
+   end
+
    public static do_event()
       local d, bag, e
       bag := []

@@ -619,3 +619,7 @@ union block {			/* general block */
     struct b_bignum bignumblk;
 };
 
+union tickerdata { 			/* clock ticker -- keep in sync w/ fmonitor.r */
+   unsigned short s[16];	/* 16 counters */
+   unsigned long l[8];		/* 8 longs are easier to check */
+};

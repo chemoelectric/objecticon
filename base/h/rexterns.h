@@ -142,3 +142,7 @@ extern clock_t starttime;		/* start time in milliseconds */
 
 #endif					/* Graphics */
 
+#if UNIX && E_Tick
+extern union tickerdata ticker;
+extern unsigned long oldtick;
+#endif					/* UNIX && E_Tick */
