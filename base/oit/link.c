@@ -87,6 +87,12 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
         fclose(ucodefile);
     }
 
+    if (lfatals > 0) {
+        *warnings = lwarnings;
+        *fatals = lfatals;
+        return;
+    }
+
     /*
      * Open the .ux file if debugging is on.
      */
