@@ -10,9 +10,6 @@
 operator{1} ^ refresh(x)
    if !is:coexpr(x) then
        runerr(118, x)
-   abstract {
-      return coexpr
-      }
 
    body {
       register struct b_coexpr *sblkp;
@@ -49,45 +46,26 @@ end
 "*x - return size of string or object x."
 
 operator{1} * size(x)
-   abstract {
-      return integer
-      }
+  body {
    type_case x of {
-      string: inline {
-         return C_integer StrLen(x);
-         }
-      ucs: inline {
-         return C_integer BlkLoc(x)->ucs.length;
-         }
-      list: inline {
-         return C_integer BlkLoc(x)->list.size;
-         }
-      table: inline {
-         return C_integer BlkLoc(x)->table.size;
-         }
-      set: inline {
-         return C_integer BlkLoc(x)->set.size;
-         }
-      cset: inline {
-         return C_integer BlkLoc(x)->cset.size;
-         }
-      record: inline {
-         return C_integer BlkLoc(x)->record.constructor->n_fields;
-         }
-      coexpr: inline {
-         return C_integer BlkLoc(x)->coexpr.size;
-         }
+      string: return C_integer StrLen(x);
+      ucs:    return C_integer BlkLoc(x)->ucs.length;
+      list:   return C_integer BlkLoc(x)->list.size;
+      table:  return C_integer BlkLoc(x)->table.size;
+      set:    return C_integer BlkLoc(x)->set.size;
+      cset:   return C_integer BlkLoc(x)->cset.size;
+      record: return C_integer BlkLoc(x)->record.constructor->n_fields;
+      coexpr: return C_integer BlkLoc(x)->coexpr.size;
       default: {
          /*
           * Try to convert it to a string.
           */
-         if !cnv:tmp_string(x) then
+         if (!cnv:tmp_string(x,x))
             runerr(112, x);	/* no notion of size */
-         inline {
-	    return C_integer StrLen(x);
-            }
-         }
+         return C_integer StrLen(x);
       }
+   }
+ }
 end
 
 
@@ -209,9 +187,6 @@ operator{*} ... toby(from, to, by)
     tended struct descrip by1, from1, to1;
    }
    if cnv:(exact)C_integer(by) && cnv:(exact)C_integer(from) && cnv:C_integer(to) then {
-       abstract {
-           return integer
-               }
        inline {
            /*
             * by must not be zero.
@@ -237,7 +212,6 @@ operator{*} ... toby(from, to, by)
        }
    }
    else if cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)  && cnv:integer(to,to1) then {
-       abstract { return integer }
        inline {
            tended struct descrip t;
            word sn = bigcmp(&by1, &zerodesc);
@@ -260,7 +234,6 @@ operator{*} ... toby(from, to, by)
        }
    }
    else if cnv:C_double(from) && cnv:C_double(to) && cnv:C_double(by) then {
-       abstract { return real }
        inline {
            if (by == 0) {
                irunerr(211, (int)by);
@@ -284,9 +257,6 @@ end
 " [x1, x2, ... ] - create an explicitly specified list."
 
 operator{1} [...] llist(elems[n])
-   abstract {
-      return new list(type(elems))
-      }
    body {
       tended struct b_list *hp;
       register word i;

@@ -13,32 +13,20 @@
  *  a variable and y is has been dereferenced.
  */
 #begdef GeneralAsgn(x, y)
-
-   body {
-      EVVar(&x, E_Assign);
-      }
+{
+   EVVar(&x, E_Assign);
 
    type_case x of {
       tvsubs: {
-        abstract {
-           store[store[type(x).str_var]] = string
-           }
-        inline {
            if (subs_asgn(&x, (const dptr)&y) == Error)
               runerr(0);
-           }
         }
       tvtbl: {
-        abstract {
-           store[store[type(x).trpd_tbl].tbl_val] = type(y)
-           }
-        inline {
            if (tvtbl_asgn(&x, (const dptr)&y) == Error)
               runerr(0);
-           }
          }
       kywdevent:
-	 body {
+	 {
 	    *VarLoc(x) = y;
 	    }
 
@@ -47,19 +35,16 @@
          /*
           * No side effect in the type realm - keyword x is still an int.
           */
-         body {
             C_integer i;
 
             if (!cnv:C_integer(y, i))
                runerr(101, y);
             IntVal(*VarLoc(x)) = i;
-	    }
 	}
       kywdpos: {
          /*
           * No side effect in the type realm - &pos is still an int.
           */
-         body {
             C_integer i;
             dptr sub;
 
@@ -77,43 +62,33 @@
 	    IntVal(*VarLoc(x)) = i;
 
             EVVal(k_pos, E_Spos);
-            }
          }
       kywdsubj: {
          /*
           * No side effect in the type realm - &subject is still a string
           *  and &pos is still an int.
           */
-         inline {
             if (!cnv:string_or_ucs(y, *VarLoc(x)))
                runerr(129, y);
 	    IntVal(*(VarLoc(x)-1)) = 1;
             EVVal(k_pos, E_Spos);
-            }
          }
       kywdstr: {
          /*
           *  No side effect in the type realm.
           */
-         if !cnv:string_or_ucs(y, *VarLoc(x)) then
+         if (!cnv:string_or_ucs(y, *VarLoc(x)))
             runerr(129, y);
-         }
+      }
       default: {
-         abstract {
-            store[type(x)] = type(y)
-            }
-         inline {
-            Asgn(x, y)
-            }
-         }
+         Asgn(x, y)
       }
+   }
 
-#if E_Value
-   body {
-      EVValD(&y, E_Value);
-      }
-#endif					/* E_Value */
 
+   EVValD(&y, E_Value);
+
+}
 #enddef
 
 
@@ -124,19 +99,16 @@ operator{0,1} := asgn(underef x, y)
    if !is:variable(x) then
       runerr(111, x)
 
-   abstract {
-      return type(x)
-      }
+  body {
 
-   GeneralAsgn(x, y)
+      GeneralAsgn(x, y)
 
-   inline {
       /*
        * The returned result is the variable to which assignment is being
        *  made.
        */
       return x;
-      }
+   }
 end
 
 
@@ -148,21 +120,12 @@ operator{0,1+} <- rasgn(underef x -> saved_x, y)
    if !is:variable(x) then
       runerr(111, x)
 
-   abstract {
-      return type(x)
-      }
-
-   GeneralAsgn(x, y)
-
-   inline {
+   body {
+      GeneralAsgn(x, y)
       suspend x;
-      }
-
-   GeneralAsgn(x, saved_x)
-
-   inline {
+      GeneralAsgn(x, saved_x)
       fail;
-      }
+ }
 end
 
 
@@ -171,23 +134,17 @@ end
 
 operator{0,1+} <-> rswap(underef x -> dx, underef y -> dy)
 
-   declare {
-      tended union block *bp_x, *bp_y;
-      word adj1 = 0;
-      word adj2 = 0;
-      }
-
    if !is:variable(x) then
       runerr(111, x)
    if !is:variable(y) then
       runerr(111, y)
 
-   abstract {
-      return type(x)
-      }
+   body {
+      tended union block *bp_x, *bp_y;
+      word adj1 = 0;
+      word adj2 = 0;
 
-   if is:tvsubs(x) && is:tvsubs(y) then
-      body {
+      if (is:tvsubs(x) && is:tvsubs(y)) {
          bp_x = BlkLoc(x);
          bp_y = BlkLoc(y);
          if (Var(bp_x->tvsubs.ssvar) && Var(bp_y->tvsubs.ssvar) &&
@@ -206,15 +163,14 @@ operator{0,1+} <-> rswap(underef x -> dx, underef y -> dy)
             else if (bp_y->tvsubs.sspos > bp_x->tvsubs.sspos)
                adj2 = bp_y->tvsubs.sslen - bp_x->tvsubs.sslen;
    	    }
-         }
+      }
 
-   /*
-    * Do x := y
-    */
-   GeneralAsgn(x, dy)
+      /*
+       * Do x := y
+       */
+      GeneralAsgn(x, dy)
 
-   if is:tvsubs(x) && is:tvsubs(y) then
-      inline {
+      if (is:tvsubs(x) && is:tvsubs(y)) {
          if (adj2 != 0)
             /*
              * Arg2 is to the right of Arg1 and the assignment Arg1 := Arg2 has
@@ -222,15 +178,14 @@ operator{0,1+} <-> rswap(underef x -> dx, underef y -> dy)
              *  to account for the replacement of Arg1 by Arg2.
              */
             bp_y->tvsubs.sspos += adj2;
-         }
+      }
 
-   /*
-    * Do y := x
-    */
-   GeneralAsgn(y, dx)
+      /*
+       * Do y := x
+       */
+       GeneralAsgn(y, dx)
 
-   if is:tvsubs(x) && is:tvsubs(y) then
-      inline {
+       if (is:tvsubs(x) && is:tvsubs(y)) {
          if (adj1 != 0)
             /*
              * Arg1 is to the right of Arg2 and the assignment Arg2 := Arg1
@@ -238,44 +193,35 @@ operator{0,1+} <-> rswap(underef x -> dx, underef y -> dy)
              *  of Arg1 to account for the replacement of Arg2 by Arg1.
              */
             bp_x->tvsubs.sspos += adj1;
-         }
+       }
 
-   inline {
+
       suspend x;
-      }
-   /*
-    * If resumed, the assignments are undone.  Note that the string position
-    *  adjustments are opposite those done earlier.
-    */
-   GeneralAsgn(x, dx)
-   if is:tvsubs(x) && is:tvsubs(y) then
-      inline {
+
+      /*
+       * If resumed, the assignments are undone.  Note that the string position
+       *  adjustments are opposite those done earlier.
+       */
+      GeneralAsgn(x, dx)
+      if (is:tvsubs(x) && is:tvsubs(y)) {
          if (adj2 != 0)
            bp_y->tvsubs.sspos -= adj2;
-         }
+      }
 
-   GeneralAsgn(y, dy)
-   if is:tvsubs(x) && is:tvsubs(y) then
-      inline {
+      GeneralAsgn(y, dy)
+      if (is:tvsubs(x) && is:tvsubs(y)) {
          if (adj1 != 0)
             bp_x->tvsubs.sspos -= adj1;
-         }
-
-   inline {
-      fail;
       }
+
+      fail;
+   }
 end
 
 
 "x :=: y - swap values of x and y."
 
 operator{0,1} :=: swap(underef x -> dx, underef y -> dy)
-   declare {
-      tended union block *bp_x, *bp_y;
-      word adj1 = 0;
-      word adj2 = 0;
-      }
-
    /*
     * x and y must be variables.
     */
@@ -284,12 +230,12 @@ operator{0,1} :=: swap(underef x -> dx, underef y -> dy)
    if !is:variable(y) then
       runerr(111, y)
 
-   abstract {
-      return type(x)
-      }
+   body {
+      tended union block *bp_x, *bp_y;
+      word adj1 = 0;
+      word adj2 = 0;
 
-   if is:tvsubs(x) && is:tvsubs(y) then
-      body {
+      if (is:tvsubs(x) && is:tvsubs(y)) {
          bp_x = BlkLoc(x);
          bp_y = BlkLoc(y);
          if (Var(bp_x->tvsubs.ssvar) && Var(bp_y->tvsubs.ssvar) &&
@@ -308,15 +254,14 @@ operator{0,1} :=: swap(underef x -> dx, underef y -> dy)
             else if (bp_y->tvsubs.sspos > bp_x->tvsubs.sspos)
                adj2 = bp_y->tvsubs.sslen - bp_x->tvsubs.sslen;
    	    }
-         }
+      }
 
-   /*
-    * Do x := y
-    */
-   GeneralAsgn(x, dy)
+      /*
+       * Do x := y
+       */
+      GeneralAsgn(x, dy)
 
-   if is:tvsubs(x) && is:tvsubs(y) then
-      inline {
+      if (is:tvsubs(x) && is:tvsubs(y)) {
          if (adj2 != 0)
             /*
              * Arg2 is to the right of Arg1 and the assignment Arg1 := Arg2 has
@@ -324,15 +269,14 @@ operator{0,1} :=: swap(underef x -> dx, underef y -> dy)
              *  to account for the replacement of Arg1 by Arg2.
              */
             bp_y->tvsubs.sspos += adj2;
-         }
+      }
 
-   /*
-    * Do y := x
-    */
-   GeneralAsgn(y, dx)
+      /*
+       * Do y := x
+       */
+      GeneralAsgn(y, dx)
 
-   if is:tvsubs(x) && is:tvsubs(y) then
-      inline {
+      if (is:tvsubs(x) && is:tvsubs(y)) {
          if (adj1 != 0)
             /*
              * Arg1 is to the right of Arg2 and the assignment Arg2 := Arg1
@@ -340,11 +284,10 @@ operator{0,1} :=: swap(underef x -> dx, underef y -> dy)
              *  of Arg1 to account for the replacement of Arg2 by Arg1.
              */
             bp_x->tvsubs.sspos += adj1;
-         }
-
-   inline {
-      return x;
       }
+
+      return x;
+   }
 end
 
 /*

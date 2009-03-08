@@ -6,15 +6,14 @@
 "!x - generate successive values from object x."
 
 operator{*} ! bang(underef x -> dx)
-   declare {
+   body {
       register C_integer i, j;
       tended union block *ep;
-      }
 
    type_case dx of {
      string : {
-        inline {
             char ch;
+            EVValD(&dx, E_Stringbang);
             if (is:variable(x)) {
                 for (i = 1; i <= StrLen(dx); i++) {
                     suspend tvsubs(&x, i, (word)1);
@@ -28,14 +27,9 @@ operator{*} ! bang(underef x -> dx)
                     suspend string(1, (char *)&allchars[ch & 0xFF]);
                 }
             }
-        }
      }
 
       list: {
-         abstract {
-            return type(dx).lst_elem
-	    }
-         inline {
 #if E_Lsub
             word xi = 0;
 #endif					/* E_Lsub */
@@ -62,14 +56,9 @@ operator{*} ! bang(underef x -> dx)
                   suspend struct_var(&ep->lelem.lslots[j], ep);
                   }
                }
-            }
          }
 
       table: {
-         abstract {
-            return type(dx).tbl_val
-	       }
-         inline {
             struct b_tvtbl *tp;
             struct hgstate state;
 
@@ -88,13 +77,8 @@ operator{*} ! bang(underef x -> dx)
 		  suspend tvtbl(tp);
                   }
             }
-         }
 
       set: {
-         abstract {
-            return store[type(dx).set_elem]
-            }
-         inline {
             struct hgstate state;
             EVValD(&dx, E_Sbang);
             /*
@@ -107,10 +91,9 @@ operator{*} ! bang(underef x -> dx)
                   suspend ep->selem.setmem;
                   }
 	    }
-         }
 
       cset: {
-         inline {
+            EVValD(&dx, E_Csetbang);
             for (i = 0; i < BlkLoc(dx)->cset.n_ranges; i++) {
                int from, to;
                from = BlkLoc(dx)->cset.range[i].from;
@@ -123,10 +106,9 @@ operator{*} ! bang(underef x -> dx)
                }
             }
          }
-      }
 
      ucs: {
-       inline {
+          EVValD(&dx, E_Ucsbang);
           if (is:variable(x)) {
               for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
                   suspend tvsubs(&x, i, (word)1);
@@ -145,13 +127,8 @@ operator{*} ! bang(underef x -> dx)
               }
           }
        }
-     }
 
      record: {
-         abstract {
-            return type(dx).all_fields
-	       }
-         inline {
             /*
              * x is a record.  Loop through the fields and suspend
              * a variable pointing to each one.
@@ -166,14 +143,9 @@ operator{*} ! bang(underef x -> dx)
                   (struct b_record *)BlkLoc(dx));
                }
             }
-         }
 
-      default:
-         if cnv:tmp_string(dx) then {
-            abstract {
-               return string
-               }
-            inline {
+       default: {
+           if (cnv:tmp_string(dx,dx)) {
                char ch;
                /*
                 * A (converted or non-variable) string is being banged.
@@ -184,15 +156,13 @@ operator{*} ! bang(underef x -> dx)
                   ch = *(StrLoc(dx) + i - 1);
                   suspend string(1, (char *)&allchars[ch & 0xFF]);
                   }
-               }
             }
          else
             runerr(116, dx);
       }
-
-   inline {
-      fail;
-      }
+   }
+   fail;
+   }
 end      
 
 
@@ -201,13 +171,13 @@ end
 "?x - produce a randomly selected element of x."
 
 operator{0,1} ? random(underef x -> dx)
+   body{
    type_case dx of {
       string: {
-         body {
             C_integer val;
             double rval;
 
-            if ((val = StrLen(dx)) <= 0)
+            if ((val = StrLen(dx)) == 0)
                fail;
             rval = RandVal;
             rval *= val;
@@ -215,62 +185,51 @@ operator{0,1} ? random(underef x -> dx)
                 return tvsubs(&x, (word)rval + 1, (word)1);
             else
                 return string(1, StrLoc(dx)+(word)rval);
-            }
          }
 
       ucs: {
-         body {
             C_integer val;
             double rval;
             int i;
 
-            if ((val = BlkLoc(dx)->ucs.length) <= 0)
+            if ((val = BlkLoc(dx)->ucs.length) == 0)
                fail;
             rval = RandVal;
             rval *= val;
-            i = Min((int)rval + 1, BlkLoc(dx)->ucs.length);
+            i = (int)rval + 1;
             if (is:variable(x))
                return tvsubs(&x, i, (word)1);
-            else {
+            else
                 return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
-             }
-          }
        }
 
       cset: {
-         body {
              C_integer val;
              double rval;
              int i, k, ch;
-             if ((val = BlkLoc(dx)->cset.size) <= 0)
+             if ((val = BlkLoc(dx)->cset.size) == 0)
                  fail;
              rval = RandVal;
              rval *= val;
-             i = Min((int)rval + 1, BlkLoc(dx)->cset.size);
+             i = (int)rval + 1;
              k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
              ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
              if (ch < 256)
                  return string(1, (char *)&allchars[ch]);
              else
                  return ucs(make_one_char_ucs_block(ch));
-           }
          }
 
       list: {
-         abstract {
-            return type(dx).lst_elem
-            }
          /*
           * x is a list.  Set i to a random number in the range [1,*x],
           *  failing if the list is empty.
           */
-         body {
             C_integer val;
             double rval;
             register C_integer i, j;
             union block *bp;     /* doesn't need to be tended */
-            val = BlkLoc(dx)->list.size;
-            if (val <= 0)
+            if ((val = BlkLoc(dx)->list.size) == 0)
                fail;
             rval = RandVal;
             rval *= val;
@@ -299,18 +258,13 @@ operator{0,1} ? random(underef x -> dx)
             if (i >= bp->lelem.nslots)
                i -= bp->lelem.nslots;
             return struct_var(&bp->lelem.lslots[i], bp);
-            }
          }
 
       table: {
-         abstract {
-            return type(dx).tbl_val
-            }
           /*
            * x is a table.  Set n to a random number in the range [1,*x],
            *  failing if the table is empty.
            */
-         body {
             C_integer val;
             double rval;
             register C_integer i, j, n;
@@ -319,8 +273,7 @@ operator{0,1} ? random(underef x -> dx)
 	    struct b_tvtbl *tp;
 
             bp = BlkLoc(dx);
-            val = bp->table.size;
-            if (val <= 0)
+            if ((val = bp->table.size) == 0)
                fail;
             rval = RandVal;
             rval *= val;
@@ -343,18 +296,13 @@ operator{0,1} ? random(underef x -> dx)
 			return tvtbl(tp);
 			}
             syserr("table reference out of bounds in random");
-            }
          }
 
       set: {
-         abstract {
-            return store[type(dx).set_elem]
-            }
          /*
           * x is a set.  Set n to a random number in the range [1,*x],
           *  failing if the set is empty.
           */
-         body {
             C_integer val;
             double rval;
             register C_integer i, j, n;
@@ -362,8 +310,7 @@ operator{0,1} ? random(underef x -> dx)
 	    struct b_slots *seg;
 
             bp = BlkLoc(dx);
-            val = bp->set.size;
-            if (val <= 0)
+            if ((val = bp->set.size) == 0)
                fail;
             rval = RandVal;
             rval *= val;
@@ -382,26 +329,20 @@ operator{0,1} ? random(underef x -> dx)
                         return ep->selem.setmem;
 			}
             syserr("set reference out of bounds in random");
-            }
          }
 
       record: {
-         abstract {
-            return type(dx).all_fields
-            }
          /*
           * x is a record.  Set val to a random number in the range
           *  [1,*x] (*x is the number of fields), failing if the
           *  record has no fields.
           */
-         body {
             C_integer val;
             double rval;
             struct b_record *rec;  /* doesn't need to be tended */
 
             rec = (struct b_record *)BlkLoc(dx);
-            val = rec->constructor->n_fields;
-            if (val <= 0)
+            if ((val = rec->constructor->n_fields) == 0)
                fail;
             /*
              * Locate the selected element and return a variable
@@ -412,60 +353,50 @@ operator{0,1} ? random(underef x -> dx)
             EVValD(&dx, E_Rrand);
             EVVal(rval + 1, E_Rsub);
             return struct_var(&rec->fields[(word)rval], rec);
-            }
          }
 
       default: {
+          double rval;
+          C_integer v;
 
-         if !cnv:integer(dx) then
-            runerr(113, dx)
+          if (!cnv:integer(dx,dx))
+              runerr(113, dx);
 
-         abstract {
-            return integer ++ real
-            }
-         body {
-            double rval;
-
-            C_integer v;
-            if (Type(dx) == T_Lrgint) {
-	       if (bigrand(&dx, &result) == Error)  /* alcbignum failed */
+          if (Type(dx) == T_Lrgint) {
+              if (bigrand(&dx, &result) == Error)  /* alcbignum failed */
 	          runerr(0);
-	       return result;
-	       }
+              return result;
+          }
 
-            v = IntVal(dx);
-            /*
-             * x is an integer, be sure that it's non-negative.
-             */
-            if (v < 0) 
-               runerr(205, dx);
+          v = IntVal(dx);
+          /*
+           * x is an integer, be sure that it's non-negative.
+           */
+          if (v < 0) 
+              runerr(205, dx);
 
-            /*
-             * val contains the integer value of x. If val is 0, return
-             *	a real in the range [0,1), else return an integer in the
-             *	range [1,val].
-             */
-            if (v == 0) {
-               rval = RandVal;
-               return C_double rval;
-               }
-            else {
-               rval = RandVal;
-               rval *= v;
-               return C_integer (long)rval + 1;
-               }
-            }
-         }
+          /*
+           * val contains the integer value of x. If val is 0, return
+           *	a real in the range [0,1), else return an integer in the
+           *	range [1,val].
+           */
+          if (v == 0) {
+              rval = RandVal;
+              return C_double rval;
+          }
+          else {
+              rval = RandVal;
+              rval *= v;
+              return C_integer (long)rval + 1;
+          }
       }
+   }
+}
 end
 
 "x[i:j] - form a substring or list section of x."
 
 operator{0,1} [:] sect(underef x -> dx, i, j)
-   declare {
-      int use_trap = 0;
-      }
-
     /*
     * If it isn't a C integer, but is a large integer, fail on
     * the out-of-range index.
@@ -479,13 +410,11 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
       runerr(101, j)
    }
 
-   type_case dx of {
-      list: {
-      abstract {
-         return type(dx)
-         }
+   body {
+      int use_trap = 0;
 
-      body {
+      type_case dx of {
+      list: {
          C_integer t;
 
          i = cvpos((long)i, (long)BlkLoc(dx)->list.size);
@@ -502,97 +431,76 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
          if (cplist(&dx, &result, i, j) == Error)
 	    runerr(0);
          return result;
-         }
       }
 
      ucs: {
-         if is:variable(x) then {
-            inline {
+         C_integer t;
+         if (is:variable(x))
                use_trap = 1;
-            }
-         }
 
-         body {
-             C_integer t;
-             i = cvpos((long)i, BlkLoc(dx)->ucs.length);
-             if (i == CvtFail)
-                 fail;
-             j = cvpos((long)j, BlkLoc(dx)->ucs.length);
-             if (j == CvtFail)
-                 fail;
-             if (i > j) { 			/* convert section to substring */
-                 t = i;
-                 i = j;
-                 j = t - j;
-             }
-             else
-                 j = j - i;
+         i = cvpos((long)i, BlkLoc(dx)->ucs.length);
+         if (i == CvtFail)
+             fail;
+         j = cvpos((long)j, BlkLoc(dx)->ucs.length);
+         if (j == CvtFail)
+             fail;
+         if (i > j) { 			/* convert section to substring */
+             t = i;
+             i = j;
+             j = t - j;
+         }
+         else
+             j = j - i;
    
-             if (use_trap) {
-                 return tvsubs(&x, i, j);
-             }
-             else {
-                 return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, j));
-            }
-         }       
-       }
+         if (use_trap) 
+             return tvsubs(&x, i, j);
+         else 
+             return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, j));
+
+      }       
 
      cset: {
-         body {
-             C_integer t;
-             int k, last;
+         C_integer t;
+         int k, last;
 
-             i = cvpos((long)i, BlkLoc(dx)->cset.size);
-             if (i == CvtFail)
-                 fail;
-             j = cvpos((long)j, BlkLoc(dx)->cset.size);
-             if (j == CvtFail)
-                 fail;
-             if (i > j) { 			/* convert section to substring */
-                 t = i;
-                 i = j;
-                 j = t - j;
-             }
-             else
-                 j = j - i;
+         i = cvpos((long)i, BlkLoc(dx)->cset.size);
+         if (i == CvtFail)
+             fail;
+         j = cvpos((long)j, BlkLoc(dx)->cset.size);
+         if (j == CvtFail)
+             fail;
+         if (i > j) { 			/* convert section to substring */
+             t = i;
+             i = j;
+             j = t - j;
+         }
+         else
+             j = j - i;
 
-             if (j == 0)
-                 return emptystr;
+         if (j == 0)
+             return emptystr;
 
-             /* Search for the last char, see if it's < 256 */
-             last = i + j - 1;
-             k = cset_range_of_pos(&BlkLoc(dx)->cset, last);
-             if (BlkLoc(dx)->cset.range[k].from + last - 1 - BlkLoc(dx)->cset.range[k].index < 256) {
-                 cset_to_str(&BlkLoc(dx)->cset, i, j, &result);
-                 return result;
-             } else
-                 return ucs(cset_to_ucs_block(&BlkLoc(dx)->cset, i, j));
-         }       
-       }
+         /* Search for the last char, see if it's < 256 */
+         last = i + j - 1;
+         k = cset_range_of_pos(&BlkLoc(dx)->cset, last);
+         if (BlkLoc(dx)->cset.range[k].from + last - 1 - BlkLoc(dx)->cset.range[k].index < 256) {
+             cset_to_str(&BlkLoc(dx)->cset, i, j, &result);
+             return result;
+         } else
+             return ucs(cset_to_ucs_block(&BlkLoc(dx)->cset, i, j));
+      }       
 
     default: {
-
-      /*
-       * x should be a string. If x is a variable, we must create a
-       *  substring trapped variable.
-       */
-      if is:variable(x) && is:string(dx) then {
-         abstract {
-            return new tvsubs(type(x))
-            }
-         inline {
-            use_trap = 1;
-            }
-         }
-      else if cnv:string(dx) then
-         abstract {
-            return string
-            }
-      else
-         runerr(131, dx)
-
-      body {
          C_integer t;
+
+        /*
+         * x should be a string. If x is a variable, we must create a
+         *  substring trapped variable.
+         */
+         if (is:variable(x) && is:string(dx))
+             use_trap = 1;
+         else if (!cnv:string(dx,dx))
+             runerr(131, dx);
 
          i = cvpos((long)i, (long)StrLen(dx));
          if (i == CvtFail)
@@ -608,90 +516,82 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
          else
             j = j - i;
    
-         if (use_trap) {
+         if (use_trap)
             return tvsubs(&x, i, j);
-            }
          else
             return string(j, StrLoc(dx)+i-1);
-         }
-      }
+       }
+     }
    }
 end
 
 "x[y] - access yth character or element of x."
 
 operator{0,1} [] subsc(underef x -> dx,y)
-   declare {
-      int use_trap = 0;
-      }
+ body {
+   int use_trap = 0;
+   C_integer yi;
 
    type_case dx of {
       list: {
-         abstract {
-            return type(dx).lst_elem
-            }
+         word i, j;
+         register union block *bp; /* doesn't need to be tended */
+         struct b_list *lp;        /* doesn't need to be tended */
          /*
           * Make sure that y is a C integer.
           */
-         if !cnv:C_integer(y) then {
+          if (!cnv:C_integer(y,yi)) {
 	    /*
 	     * If it isn't a C integer, but is a large integer, fail on
 	     * the out-of-range index.
 	     */
-	    if cnv : integer(y) then inline { fail; }
-	    runerr(101, y)
-	    }
-         body {
-            word i, j;
-            register union block *bp; /* doesn't need to be tended */
-            struct b_list *lp;        /* doesn't need to be tended */
-
-            EVValD(&dx, E_Lref);
-            EVVal(y, E_Lsub);
-
-	    /*
-	     * Make sure that subscript y is in range.
-	     */
-            lp = (struct b_list *)BlkLoc(dx);
-            i = cvpos((long)y, (long)lp->size);
-            if (i == CvtFail || i > lp->size)
-               fail;
-            /*
-             * Locate the list-element block containing the desired
-             *  element.
-             */
-            bp = lp->listhead;
-            j = 1;
-	    /*
-	     * y is in range, so bp can never be null here. if it was, a memory
-	     * violation would occur in the code that follows, anyhow, so
-	     * exiting the loop on a NULL bp makes no sense.
-	     */
-            while (i >= j + bp->lelem.nused) {
-               j += bp->lelem.nused;
-               bp = bp->lelem.listnext;
-               }
-
-            /*
-             * Locate the desired element and return a pointer to it.
-             */
-            i += bp->lelem.first - j;
-            if (i >= bp->lelem.nslots)
-               i -= bp->lelem.nslots;
-            return struct_var(&bp->lelem.lslots[i], bp);
-            }
+             if (cnv:integer(y,y))
+                fail;
+	    runerr(101, y);
          }
 
+          /*
+           * Make sure that subscript y is in range.
+           */
+          lp = (struct b_list *)BlkLoc(dx);
+          i = cvpos(yi, (long)lp->size);
+          if (i == CvtFail || i > lp->size)
+              fail;
+
+          EVValD(&dx, E_Lref);
+          EVVal(i, E_Lsub);
+
+          /*
+           * Locate the list-element block containing the desired
+           *  element.
+           */
+          bp = lp->listhead;
+          j = 1;
+          /*
+           * y is in range, so bp can never be null here. if it was, a memory
+           * violation would occur in the code that follows, anyhow, so
+           * exiting the loop on a NULL bp makes no sense.
+           */
+          while (i >= j + bp->lelem.nused) {
+              j += bp->lelem.nused;
+              bp = bp->lelem.listnext;
+          }
+
+          /*
+           * Locate the desired element and return a pointer to it.
+           */
+          i += bp->lelem.first - j;
+          if (i >= bp->lelem.nslots)
+              i -= bp->lelem.nslots;
+          return struct_var(&bp->lelem.lslots[i], bp);
+       }
+
+
       table: {
-         abstract {
-            store[type(dx).tbl_key] = type(y) /* the key might be added */
-            return type(dx).tbl_val ++ new tvtbl(type(dx))
-            }
          /*
           * x is a table.  Return a table element trapped variable
 	  *  representing the result; defer actual lookup until later.
           */
-         body {
             uword hn;
 	    struct b_tvtbl *tp;
 
@@ -701,18 +601,14 @@ operator{0,1} [] subsc(underef x -> dx,y)
 	    hn = hash(&y);
             MemProtect(tp = alctvtbl(&dx, &y, hn));
             return tvtbl(tp);
-            }
          }
 
       record: {
-         abstract {
-            return type(dx).all_fields
-            }
          /*
           * x is a record.  Convert y to an integer and be sure that it
           *  it is in range as a field number.
           */
-         if !cnv:C_integer(y) then body {
+         if (!cnv:C_integer(y,yi)) {
             register union block *bp;  /* doesn't need to be tended */
             register struct b_constructor *bp2; /* doesn't need to be tended */
             register word i;
@@ -733,12 +629,12 @@ operator{0,1} [] subsc(underef x -> dx,y)
              * Found the field, return a pointer to it.
              */
             return struct_var(&bp->record.fields[i], bp);
-         } else body {
+         } else {
             word i;
             register union block *bp; /* doesn't need to be tended */
 
             bp = BlkLoc(dx);
-            i = cvpos(y, (word)(bp->record.constructor->n_fields));
+            i = cvpos(yi, (word)(bp->record.constructor->n_fields));
             if (i == CvtFail || i > bp->record.constructor->n_fields)
                fail;
 
@@ -749,136 +645,119 @@ operator{0,1} [] subsc(underef x -> dx,y)
              * Locate the appropriate field and return a pointer to it.
              */
             return struct_var(&bp->record.fields[i-1], bp);
-            }
          }
+       }
 
      ucs: {
-         if is:variable(x) then {
-            inline {
-               use_trap = 1;
-            }
-         }
+        word i;
+        if (is:variable(x))
+            use_trap = 1;
          /*
           * Make sure that y is a C integer.
           */
-         if !cnv:C_integer(y) then {
+        if (!cnv:C_integer(y,yi)) {
 	    /*
 	     * If it isn't a C integer, but is a large integer, fail on
 	     * the out-of-range index.
 	     */
-	    if cnv : integer(y) then inline { fail; }
-	    runerr(101, y)
-	    }
+	    if (cnv:integer(y,y))
+                fail;
+            runerr(101, y);
+        }
 
-         body {
-            word i;
-
+        /*
+         * Convert y to a position in x and fail if the position
+         *  is out of bounds.
+         */
+        i = cvpos(yi, BlkLoc(dx)->ucs.length);
+        if (i == CvtFail || i > BlkLoc(dx)->ucs.length)
+            fail;
+        if (use_trap)
             /*
-             * Convert y to a position in x and fail if the position
-             *  is out of bounds.
+             * x is a string, make a substring trapped variable for the
+             * one character substring selected and return it.
              */
-            i = cvpos(y, BlkLoc(dx)->ucs.length);
-            if (i == CvtFail || i > BlkLoc(dx)->ucs.length)
-               fail;
-            if (use_trap) {
-               /*
-                * x is a string, make a substring trapped variable for the
-                * one character substring selected and return it.
-                */
-               return tvsubs(&x, i, (word)1);
-               }
-            else {
-                return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
-            }
-         }       
-       }
+            return tvsubs(&x, i, (word)1);
+        else
+            return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+      }
 
       cset: {
+         int i, j, k, ch;
          /*
           * Make sure that y is a C integer.
           */
-         if !cnv:C_integer(y) then {
+         if (!cnv:C_integer(y,yi)) {
             /*
              * If it isn't a C integer, but is a large integer, fail on
              * the out-of-range index.
              */
-            if cnv : integer(y) then inline { fail; }
-            runerr(101, y)
-            }
-         body {
-            int i, j, k, ch;
-            i = cvpos(y, BlkLoc(dx)->cset.size);
-            if (i == CvtFail || i > BlkLoc(dx)->cset.size)
-               fail;
-            k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
-            ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
-            if (ch < 256)
-                return string(1, (char *)&allchars[ch]);
-            else
-                return ucs(make_one_char_ucs_block(ch));
+            if (cnv:integer(y,y))
+                fail;
+            runerr(101, y);
          }
+
+         i = cvpos(yi, BlkLoc(dx)->cset.size);
+         if (i == CvtFail || i > BlkLoc(dx)->cset.size)
+             fail;
+         k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
+         ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
+         if (ch < 256)
+             return string(1, (char *)&allchars[ch]);
+         else
+             return ucs(make_one_char_ucs_block(ch));
        }
 
       default: {
+         char ch;
+         word i;
+
          /*
           * dx must either be a string or be convertible to one. Decide
           *  whether a substring trapped variable can be created.
           */
-         if is:variable(x) && is:string(dx) then {
-            abstract {
-               return new tvsubs(type(x))
-               }
-            inline {
-               use_trap = 1;
-               }
-            }
-         else if cnv:tmp_string(dx) then
-            abstract {
-               return string
-               }
-         else
-            runerr(114, dx)
+         if (is:variable(x) && is:string(dx))
+            use_trap = 1;
+         else if (!cnv:tmp_string(dx,dx))
+            runerr(114, dx);
 
          /*
           * Make sure that y is a C integer.
           */
-         if !cnv:C_integer(y) then {
+         if (!cnv:C_integer(y,yi)) {
 	    /*
 	     * If it isn't a C integer, but is a large integer, fail on
 	     * the out-of-range index.
 	     */
-	    if cnv : integer(y) then inline { fail; }
-	    runerr(101, y)
-	    }
+            if (cnv:integer(y,y))
+                fail;
+            runerr(101, y);
+         }
 
-         body {
-            char ch;
-            word i;
-
-            /*
-             * Convert y to a position in x and fail if the position
-             *  is out of bounds.
-             */
-            i = cvpos(y, StrLen(dx));
-            if (i == CvtFail || i > StrLen(dx))
-               fail;
-            if (use_trap) {
-               /*
-                * x is a string, make a substring trapped variable for the
-                * one character substring selected and return it.
-                */
-               return tvsubs(&x, i, (word)1);
-               }
-            else {
-               /*
-                * x was converted to a string, so it cannot be assigned
-                * back into. Just return a string containing the selected
-                * character.
-                */
-               ch = *(StrLoc(dx)+i-1);
-               return string(1, (char *)&allchars[ch & 0xFF]);
-               }
-            }
+         /*
+          * Convert y to a position in x and fail if the position
+          *  is out of bounds.
+          */
+         i = cvpos(yi, StrLen(dx));
+         if (i == CvtFail || i > StrLen(dx))
+             fail;
+         if (use_trap) {
+             /*
+              * x is a string, make a substring trapped variable for the
+              * one character substring selected and return it.
+              */
+             return tvsubs(&x, i, (word)1);
+         }
+         else {
+             /*
+              * x was converted to a string, so it cannot be assigned
+              * back into. Just return a string containing the selected
+              * character.
+              */
+             ch = *(StrLoc(dx)+i-1);
+             return string(1, (char *)&allchars[ch & 0xFF]);
          }
       }
+    }
+  }
 end

@@ -615,6 +615,27 @@
 #define E_Objectcreate 0
 #endif
 
+#if defined(EventMon) || defined(E_Stringbang)
+#undef E_Stringbang
+#define	E_Stringbang		'\217'		/* String generation */
+#else
+#define E_Stringbang 0
+#endif
+
+#if defined(EventMon) || defined(E_Ucsbang)
+#undef E_Ucsbang
+#define	E_Ucsbang		'\220'		/* Ucs generation */
+#else
+#define E_Ucsbang 0
+#endif
+
+#if defined(EventMon) || defined(E_Csetbang)
+#undef E_Csetbang
+#define	E_Csetbang		'\221'		/* Cset generation */
+#else
+#define E_Csetbang 0
+#endif
+
 
    /*
     * Scanning events
@@ -1025,8 +1046,7 @@
 162
 
 204 205 206 207
-217
-220 221 222 223 224 225 226 227
+222 223 224 225 226 227
 230 231 232 233 234 235 236 237
 240 241 242 243 244 245 246 247
 250 251 252 253 254 255 256 257
