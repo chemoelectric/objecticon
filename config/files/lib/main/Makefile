@@ -1,15 +1,17 @@
 include ../../Makedefs
 
 LIBSRC=$(wildcard *.icn)
+AUTOSRC=posixconsts.icn ioconsts.icn evmonconsts.icn
 
 LIBU=$(LIBSRC:.icn=.u)
+AUTOU=$(AUTOSRC:.icn=.u)
 
-all: mkconsts $(LIBU) ioconsts.u posixconsts.u
+all: mkconsts $(LIBU) $(AUTOU)
 
 clean:
-	$(RM) mkconsts posixconsts.icn ioconsts.icn *.u packages.txt
+	$(RM) mkconsts $(AUTOSRC) *.u packages.txt
 
-ioconsts.icn posixconsts.icn: 	mkconsts
+$(AUTOSRC): 	mkconsts
 	./mkconsts
 
 $(LIBU): %.u: %.icn

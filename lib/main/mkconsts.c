@@ -3,13 +3,18 @@
 struct entry {
     char *name;
     char *origname;
-    int val;
+    char *val;
+    char *comment;
 };
 
-struct entry buff[200];
+void add_entry(char *name, char *val, char *comment);
+
+struct entry buff[400];
 int n_entries;
 char *abbr;
 FILE *out = 0;
+int tab_flag = 0;
+int desc_flag = 0;
 
 void start_file(char *name, char *pkg)
 {
@@ -24,11 +29,34 @@ void start_file(char *name, char *pkg)
     fprintf(out, "package %s\n\n", pkg);
 }
 
-void start_class(char *s, char *a)
+void scan_file(char *path)
+{
+    FILE *f;
+    char buff[128];
+    if ((f = fopen(path, "r")) == NULL) {
+        fprintf(stderr, "Couldn't open %s\n", path);
+        exit(1);
+    }
+    while (fgets(buff, sizeof(buff), f)) {
+        char *p;
+        p = strtok(buff, " \t\r\n");
+        if (p && strcmp(p, "#define") == 0) {
+            char *key, *val;
+            key = strtok(0, " \t\r\n");
+            val = strtok(0, " \t\r\n");
+            /*printf("key='%s' val='%s'\n",key,val);*/
+            add_entry(strdup(key), strdup(val), 0);
+        }
+    }
+}
+
+void start_class(char *s, char *a, int t1, int t2)
 {
     fprintf(out, "class %s()\n", s);
     abbr = a;
     n_entries = 0;
+    tab_flag = t1;
+    desc_flag = t2;
 }
 
 void end_class()
@@ -36,40 +64,108 @@ void end_class()
     int i;
     fprintf(out, "   public static const\n");
     for (i = 0; i < n_entries; ++i) {
-        fprintf(out, "      # %s\n", buff[i].origname);
+        if (strcmp(buff[i].name, buff[i].origname) != 0)
+            fprintf(out, "      # %s\n", buff[i].origname);
         if (i == n_entries - 1)
             fprintf(out, "      %s\n\n", buff[i].name);
         else
             fprintf(out, "      %s,\n", buff[i].name);
     }
+    if (tab_flag) {
+        fprintf(out, "   private static const\n      map\n\n");
+    }
+    if (desc_flag) {
+        fprintf(out, "   private static const\n      desc\n\n");
+    }
 
     fprintf(out, "   private static init()\n");
     for (i = 0; i < n_entries; ++i) {
-        fprintf(out, "      %s := %d\n", buff[i].name, buff[i].val);
+        fprintf(out, "      %s := %s\n", buff[i].name, buff[i].val);
     }
-    fprintf(out, "   end\nend\n\n");
+    if (tab_flag) {
+        fprintf(out, "      map := table()\n");
+        for (i = 0; i < n_entries; ++i) {
+            fprintf(out, "      map[%s] := \"%s\"\n", buff[i].val, buff[i].origname);
+        }
+    }
+    if (desc_flag) {
+        fprintf(out, "      desc := table()\n");
+        for (i = 0; i < n_entries; ++i) {
+            if (buff[i].comment)
+                fprintf(out, "      desc[%s] := \"%s\"\n", buff[i].val, buff[i].comment);
+        }
+    }
+    fprintf(out, "   end\n");
+    if (tab_flag) {
+        fprintf(out, "\n   public static get_sym(k)\n");
+        fprintf(out, "      return .\\map[k]\n");
+        fprintf(out, "   end\n");
+    }
+    if (desc_flag) {
+        fprintf(out, "\n   public static get_desc(k)\n");
+        fprintf(out, "      return .\\desc[k]\n");
+        fprintf(out, "   end\n");
+    }
+    fprintf(out, "end\n\n");
 }
 
-void add_entry(char *name, int val)
+void add_ientry(char *name, int val)
 {
-    if (n_entries >= ElemCount(buff))
+    char buff[32];
+    sprintf(buff, "%d", val);
+    add_entry(name, strdup(buff), 0);
+}
+
+void add_entry(char *name, char *val, char *comment)
+{
+    if (n_entries >= ElemCount(buff)) {
+        fprintf(stderr, "mkconsts:Too many entries\n");
         exit(1);
+    }
     buff[n_entries].origname = name;
     if (abbr && strncmp(name, abbr, strlen(abbr)) == 0)
         buff[n_entries].name = name + strlen(abbr); 
     else
         buff[n_entries].name = name;
     buff[n_entries].val = val; 
+    buff[n_entries].comment = comment; 
     n_entries++;
+}
+
+void scan_monitor_h(char *path)
+{
+    FILE *f;
+    char buff[128];
+    if ((f = fopen(path, "r")) == NULL) {
+        fprintf(stderr, "Couldn't open %s\n", path);
+        exit(1);
+    }
+    while (fgets(buff, sizeof(buff), f)) {
+        char *p;
+        p = strtok(buff, " \t\r\n");
+        if (p && strcmp(p, "#define") == 0) {
+            char *key, *val;
+            key = strtok(0, " \t\r\n");
+            val = strtok(0, " \t\r\n");
+            if (strcmp(val, "0") != 0) {
+                char *comm = val + strlen(val) + 1;
+                while (isspace(*comm) || *comm == '/' || *comm == '*')
+                    ++comm;
+                comm[strlen(comm) - 4] = 0;
+                val[0] = val[strlen(val)-1] = '\"';
+                add_entry(strdup(key), strdup(val), strdup(comm));
+            }
+        }
+    }
 }
 
 int main(void)
 {
     start_file("posixconsts.icn", "posix");
 
-    start_class("Errno", 0);
+    start_class("Errno", 0, 0, 0);
 
-#define Const(x) add_entry(#x,x);
+#define Const(x) add_ientry(#x,x);
 
 #ifdef EPERM
     Const(EPERM)
@@ -458,7 +554,7 @@ int main(void)
 
     end_class();
 
-        start_class("Signal",0);
+    start_class("Signal",0, 0, 0);
 
 #ifdef SIGHUP 
         Const(SIGHUP)
@@ -570,7 +666,7 @@ int main(void)
 
     start_file("ioconsts.icn", "io");
 
-    start_class("FileOpt", "O_");
+    start_class("FileOpt", "O_", 0, 0);
 
 #ifdef O_ACCMODE
         Const(O_ACCMODE)
@@ -637,7 +733,7 @@ int main(void)
 #endif
 
     end_class();
-        start_class("Mode", "S_");
+        start_class("Mode", "S_", 0, 0);
 
 #ifdef S_IFMT
         Const(S_IFMT)
@@ -720,7 +816,7 @@ int main(void)
 #endif
 
     end_class();
-        start_class("ProtocolFormat", "PF_");
+        start_class("ProtocolFormat", "PF_", 0, 0);
 
 #ifdef PF_UNSPEC
         Const(PF_UNSPEC)
@@ -814,7 +910,7 @@ int main(void)
 #endif
 
     end_class();
-        start_class("AddressFormat", "AF_");
+        start_class("AddressFormat", "AF_", 0, 0);
 
 #ifdef AF_UNSPEC
         Const(AF_UNSPEC)
@@ -908,7 +1004,7 @@ int main(void)
 #endif
 
     end_class();
-        start_class("SocketType", "SOCK_");
+        start_class("SocketType", "SOCK_", 0, 0);
 
 #ifdef SOCK_STREAM
         Const(SOCK_STREAM)
@@ -935,7 +1031,7 @@ int main(void)
 #endif
 
     end_class();
-        start_class("Lock", "LOCK_");
+        start_class("Lock", "LOCK_", 0, 0);
 
 #ifdef LOCK_SH
         Const(LOCK_SH)
@@ -951,7 +1047,7 @@ int main(void)
 #endif
 
     end_class();
-        start_class("Poll","POLL");
+        start_class("Poll","POLL", 0, 0);
 
 #ifdef POLLIN
 Const(POLLIN)
@@ -988,7 +1084,7 @@ Const(POLLMSG)
 #endif
 
     end_class();
-start_class("Access", 0);
+start_class("Access", 0, 0, 0);
 
 #ifdef R_OK
         Const(R_OK)
@@ -1005,7 +1101,7 @@ start_class("Access", 0);
 
 
     end_class();
-        start_class("Seek", "SEEK_");
+        start_class("Seek", "SEEK_", 0, 0);
 
 Const(SEEK_SET)
 Const(SEEK_CUR)
@@ -1013,6 +1109,50 @@ Const(SEEK_END)
 
     end_class();
 
-fclose(out);
-        exit(0);
+    start_file("evmonconsts.icn", "evmon");
+
+    start_class("OpCode", "Op_", 1, 0);
+    scan_file("../../base/h/opdefs.h");
+    end_class();
+
+    start_class("EventCode", "E_", 1, 1);
+    scan_monitor_h("../../base/h/monitor.h");
+    end_class();
+
+    start_class("TypeCode", "T_", 1, 0);
+    Const(T_String)
+        Const(T_Null)
+        Const(T_Integer)
+        Const(T_Lrgint)
+        Const(T_Real)
+        Const(T_Cset)
+        Const(T_Constructor)
+        Const(T_Proc)
+        Const(T_Record)
+        Const(T_List)
+        Const(T_Lelem)
+        Const(T_Set)
+        Const(T_Selem)
+        Const(T_Table)
+        Const(T_Telem)
+        Const(T_Tvtbl)
+        Const(T_Slots)
+        Const(T_Tvsubs)
+        Const(T_Refresh)
+        Const(T_Coexpr)
+        Const(T_External)
+        Const(T_Kywdint)
+        Const(T_Kywdpos)
+        Const(T_Kywdsubj)
+        Const(T_Kywdstr)
+        Const(T_Kywdevent)
+        Const(T_Class)
+        Const(T_Object)
+        Const(T_Cast)
+        Const(T_Methp)
+        Const(T_Ucs)
+    end_class();
+
+    fclose(out);
+    exit(0);
 }

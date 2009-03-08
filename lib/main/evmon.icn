@@ -1,202 +1,7 @@
 package evmon
 
-class TypeCode()
+class EventSet()
    public static const
-      T_String,
-      T_Null,
-      T_Integer,
-      T_Lrgint,
-      T_Real,
-      T_Cset,
-      T_Constructor,
-      T_Proc,
-      T_Record,
-      T_List,
-      T_Lelem,
-      T_Set,
-      T_Selem,
-      T_Table,
-      T_Telem,
-      T_Tvtbl,
-      T_Slots,
-      T_Tvsubs,
-      T_Refresh,
-      T_Coexpr,
-      T_External,
-      T_Kywdint,
-      T_Kywdpos,
-      T_Kywdsubj,
-      T_Kywdstr,
-      T_Kywdevent,
-      T_Class,
-      T_Object,
-      T_Cast,
-      T_Methp,
-      T_Ucs
-
-   private static init()
-      T_String :=	-1
-      T_Null :=		 0
-      T_Integer :=	 1
-      T_Lrgint :=	 2
-      T_Real :=		 3
-      T_Cset :=		 4
-      T_Constructor :=   5
-      T_Proc :=		 6
-      T_Record :=	 7
-      T_List :=		 8
-      T_Lelem :=	 9
-      T_Set :=		10
-      T_Selem :=	11
-      T_Table :=	12
-      T_Telem :=	13
-      T_Tvtbl :=	14
-      T_Slots :=	15
-      T_Tvsubs :=	16
-      T_Refresh :=	17
-      T_Coexpr :=	18
-      T_External :=	19
-      T_Kywdint :=	20
-      T_Kywdpos :=	21
-      T_Kywdsubj :=	22
-      T_Kywdstr :=	23
-      T_Kywdevent :=	24
-      T_Class :=        25
-      T_Object :=       26
-      T_Cast :=         27
-      T_Methp :=        28
-      T_Ucs :=          29
-   end
-end
-
-
-
-class Event()
-   public static const
-      E_Lrgint,
-      E_Real,
-      E_Cset,
-      E_File,
-      E_Record,
-      E_Object,
-      E_Cast,
-      E_Methp,
-      E_Ucs,
-      E_Tvsubs,
-      E_External,
-      E_List,
-      E_Lelem,
-      E_Table,
-      E_Telem,
-      E_Tvtbl,
-      E_Set,
-      E_Selem,
-      E_Slots,
-      E_Coexpr,
-      E_Refresh,
-      E_Alien,
-      E_Free,
-      E_String,
-      E_BlkDeAlc,
-      E_StrDeAlc,
-      E_Integer,
-      E_Null,
-      E_Proc,
-      E_Kywdint,
-      E_Kywdpos,
-      E_Kywdsubj,
-      E_Tick,
-      E_Loc,
-      E_Line,
-      E_Opcode,
-      E_Aconv,
-      E_Tconv,
-      E_Nconv,
-      E_Sconv,
-      E_Fconv,
-      E_Lbang,
-      E_Lcreate,
-      E_Lget,
-      E_Lpop,
-      E_Lpull,
-      E_Lpush,
-      E_Lput,
-      E_Lrand,
-      E_Lref,
-      E_Lsub,
-      E_Ldelete,
-      E_Rbang,
-      E_Rcreate,
-      E_Rrand,
-      E_Rref,
-      E_Rsub,
-      E_Sbang,
-      E_Screate,
-      E_Sdelete,
-      E_Sinsert,
-      E_Smember,
-      E_Srand,
-      E_Sval,
-      E_Tbang,
-      E_Tcreate,
-      E_Tdelete,
-      E_Tinsert,
-      E_Tkey,
-      E_Tmember,
-      E_Trand,
-      E_Tref,
-      E_Tsub,
-      E_Tval,
-      E_Snew,
-      E_Sfail,
-      E_Ssusp,
-      E_Sresum,
-      E_Srem,
-      E_Spos,
-      E_Assign,
-      E_Value,
-      E_Deref,
-      E_Ssasgn,
-      E_Intcall,
-      E_Intret,
-      E_Stack,
-      E_Ecall,
-      E_Efail,
-      E_Bsusp,
-      E_Esusp,
-      E_Lsusp,
-      E_Eresum,
-      E_Erem,
-      E_Coact,
-      E_Coret,
-      E_Cofail,
-      E_Pcall,
-      E_Pfail,
-      E_Pret,
-      E_Psusp,
-      E_Presum,
-      E_Prem,
-      E_Fcall,
-      E_Ffail,
-      E_Fret,
-      E_Fsusp,
-      E_Fresum,
-      E_Frem,
-      E_Ocall,
-      E_Ofail,
-      E_Oret,
-      E_Osusp,
-      E_Oresum,
-      E_Orem,
-      E_Collect,
-      E_EndCollect,
-      E_TenureString,
-      E_TenureBlock,
-      E_Error,
-      E_Exit,
-      E_MXevent,
-      E_Literal,
-
       AllocMask,
       AssignMask,
       TypeMask,
@@ -210,431 +15,62 @@ class Event()
       ScanMask,
       SetMask,
       TableMask,
+      OOMask,
       StructMask,
       EmptyMask,
-      AllMask,
-
-      E_Disable,
-      E_Enable,
-      E_Quit,
-      E_ALoc,
-      E_Spoof,
-
-      desc_map,
-      sym_map
-
-   
+      AllMask
 
    private static init()
-      E_Lrgint :=	"\114"		# Large integer allocation
-      E_Real :=		"\144"		# Real allocation
-      E_Cset :=		"\145"		# Cset allocation
-      E_File :=		"\147"		# File allocation
-      E_Record :=	"\150"		# Record allocation
-      E_Object :=	"\200"		# Object allocation
-      E_Cast :=	        "\201"		# Cast allocation
-      E_Methp :=	"\202"		# Methp allocation
-      E_Ucs :=	        "\203"		# Ucs allocation
-      E_Tvsubs :=	"\151"		# Substring tv allocation
-      E_External :=	"\152"		# External allocation
-      E_List :=		"\153"		# List allocation
-      E_Lelem :=	"\155"		# List element allocation
-      E_Table :=	"\156"		# Table allocation
-      E_Telem :=	"\157"		# Table element allocation
-      E_Tvtbl :=	"\160"		# Table-element tv allocation
-      E_Set :=		"\161"		# Set allocation
-      E_Selem :=	"\164"		# Set element allocation
-      E_Slots :=	"\167"		# Hash header allocation
-      E_Coexpr :=	"\170"		# Co-expression allocation
-      E_Refresh :=	"\171"		# Refresh allocation
-      E_Alien :=	"\172"		# Alien allocation
-      E_Free :=		"\132"		# Free region
-      E_String :=	"\163"		# String allocation
-      E_BlkDeAlc :=	"\055"		# Block deallocation
-      E_StrDeAlc :=	"\176"		# String deallocation
-      E_Integer :=	"\100"		# Integer value pseudo-event
-      E_Null :=		"\044"		# Null value pseudo-event
-      E_Proc :=		"\045"		# Procedure value pseudo-event
-      E_Kywdint :=	"\136"		# Integer keyword value pseudo-event
-      E_Kywdpos :=	"\046"		# Position value pseudo-event
-      E_Kywdsubj :=	"\052"		# Subject value pseudo-event
-      E_Tick :=		"\056"		# Clock tick
-      E_Loc :=		"\174"		# Location change
-      E_Line :=		"\355"		# Line change
-      E_Opcode :=	"\117"		# Virtual-machine instruction
-      E_Aconv :=	"\111"		# Conversion attempt
-      E_Tconv :=	"\113"		# Conversion target
-      E_Nconv :=	"\116"		# Conversion not needed
-      E_Sconv :=	"\121"		# Conversion success
-      E_Fconv :=	"\112"		# Conversion failure
-      E_Lbang :=	"\301"		# List generation
-      E_Lcreate :=	"\302"		# List creation
-      E_Lget :=		"\356"		# List get/pop -- only E_Lget used
-      E_Lpop :=		"\356"		# List get/pop
-      E_Lpull :=	"\304"		# List pull
-      E_Lpush :=	"\305"		# List push
-      E_Lput :=		"\306"		# List put
-      E_Lrand :=	"\307"		# List random reference
-      E_Lref :=		"\310"		# List reference
-      E_Lsub :=		"\311"		# List subscript
-      E_Ldelete :=	"\357"		# List delete
-      E_Rbang :=	"\312"		# Record generation
-      E_Rcreate :=	"\313"		# Record creation
-      E_Rrand :=	"\314"		# Record random reference
-      E_Rref :=		"\315"		# Record reference
-      E_Rsub :=		"\316"		# Record subscript
-      E_Sbang :=	"\317"		# Set generation
-      E_Screate :=	"\320"		# Set creation
-      E_Sdelete :=	"\321"		# Set deletion
-      E_Sinsert :=	"\322"		# Set insertion
-      E_Smember :=	"\323"		# Set membership
-      E_Srand :=	"\336"		# Set random reference
-      E_Sval :=		"\324"		# Set value
-      E_Tbang :=	"\325"		# Table generation
-      E_Tcreate :=	"\326"		# Table creation
-      E_Tdelete :=	"\327"		# Table deletion
-      E_Tinsert :=	"\330"		# Table insertion
-      E_Tkey :=		"\331"		# Table key generation
-      E_Tmember :=	"\332"		# Table membership
-      E_Trand :=	"\337"		# Table random reference
-      E_Tref :=		"\333"		# Table reference
-      E_Tsub :=		"\334"		# Table subscript
-      E_Tval :=		"\335"		# Table value
-      E_Snew :=		"\340"		# Scanning environment creation
-      E_Sfail :=	"\341"		# Scanning failure
-      E_Ssusp :=	"\342"		# Scanning suspension
-      E_Sresum :=	"\343"		# Scanning resumption
-      E_Srem :=		"\344"		# Scanning environment removal
-      E_Spos :=		"\346"		# Scanning position
-      E_Assign :=	"\347"		# Assignment
-      E_Value :=	"\350"		# Value assigned
-      E_Deref :=	"\363"		# Dereference
-      E_Ssasgn :=	"\354"		# Sub-string assignment
-      E_Intcall :=	"\351"		# interpreter call
-      E_Intret :=	"\352"		# interpreter return
-      E_Stack :=	"\353"		# stack depth
-      E_Ecall :=	"\143"		# Call of operation
-      E_Efail :=	"\146"		# Failure from expression
-      E_Bsusp :=	"\142"		# Suspension from operation
-      E_Esusp :=	"\141"		# Suspension from alternation
-      E_Lsusp :=	"\154"		# Suspension from limitation
-      E_Eresum :=	"\165"		# Resumption of expression
-      E_Erem :=		"\166"		# Removal of a suspended generator
-      E_Coact :=	"\101"		# Co-expression activation
-      E_Coret :=	"\102"		# Co-expression return
-      E_Cofail :=	"\104"		# Co-expression failure
-      E_Pcall :=	"\103"		# Procedure call
-      E_Pfail :=	"\106"		# Procedure failure
-      E_Pret :=		"\122"		# Procedure return
-      E_Psusp :=	"\123"		# Procedure suspension
-      E_Presum :=	"\125"		# Procedure resumption
-      E_Prem :=		"\126"		# Suspended procedure removal
-      E_Fcall :=	"\072"		# Function call
-      E_Ffail :=	"\115"		# Function failure
-      E_Fret :=		"\120"		# Function return
-      E_Fsusp :=	"\127"		# Function suspension
-      E_Fresum :=	"\131"		# Function resumption
-      E_Frem :=		"\133"		# Function suspension removal
-      E_Ocall :=	"\134"		# Operator call
-      E_Ofail :=	"\135"		# Operator failure
-      E_Oret :=		"\140"		# Operator return
-      E_Osusp :=	"\173"		# Operator suspension
-      E_Oresum :=	"\175"		# Operator resumption
-      E_Orem :=		"\177"		# Operator suspension removal
-      E_Collect :=	"\107"		# Garbage collection
-      E_EndCollect :=	"\360"		# End of garbage collection
-      E_TenureString :=	"\361"		# Tenure a string region
-      E_TenureBlock :=	"\362"		# Tenure a block region
-      E_Error :=	"\105"		# Run-time error
-      E_Exit :=		"\130"		# Program exit
-      E_MXevent :=	"\370"		# monitor input event
-      E_Literal	:=      "\364"          # Literal
+      AllocMask := cset(EventCode.List || EventCode.Lelem || EventCode.File || 
+                        EventCode.Lrgint || EventCode.Real || EventCode.Record || 
+                        EventCode.Selem || EventCode.Set || EventCode.Slots || 
+                        EventCode.Table || EventCode.Telem || EventCode.Tvsubs || 
+                        EventCode.Tvtbl || EventCode.Cset || EventCode.Refresh || 
+                        EventCode.String || EventCode.Coexpr ||
+                        EventCode.Object || EventCode.Cast || EventCode.Methp || 
+                        EventCode.Ucs)
 
-      AllocMask := cset(E_List || E_Lelem || E_File || E_Lrgint || E_Real || E_Record || 
-                        E_Selem || E_Set || E_Slots || E_Table || E_Telem || E_Tvsubs || 
-                        E_Tvtbl || E_Cset || E_Refresh || E_String || E_Coexpr ||
-                        E_Object || E_Cast || E_Methp || E_Ucs)
-      AssignMask := cset(E_Assign || E_Value)
-      TypeMask := AllocMask ++ (E_Integer || E_Null || E_Proc)
-      ConvMask := cset(E_Aconv || E_Tconv || E_Sconv || E_Nconv || E_Fconv)
-      ProcMask := cset(E_Pcall || E_Pfail || E_Pret || E_Psusp || E_Presum || E_Prem)
-      FncMask := cset(E_Fcall || E_Ffail || E_Fret || E_Fsusp || E_Fresum || E_Frem)
-      OperMask := cset(E_Ocall || E_Ofail || E_Oret || E_Osusp || E_Oresum || E_Orem)
-      EvalMask := (FncMask ++ ProcMask ++ OperMask)
-      ListMask := cset(E_Lbang || E_Lcreate || E_Lpop || E_Lpull || E_Lpush || E_Lput || 
-                       E_Lrand || E_Lsub)
-      RecordMask := cset(E_Rbang || E_Rcreate || E_Rrand || E_Rsub)
-      ScanMask := cset(E_Snew || E_Sfail || E_Spos || E_Ssusp || E_Sresum || E_Srem)
-      SetMask := cset(E_Sbang || E_Screate || E_Sdelete || E_Sinsert || E_Smember || E_Sval)
-      TableMask := cset(E_Tbang || E_Tcreate || E_Tdelete || E_Tinsert || E_Tkey || 
-                        E_Tmember || E_Trand || E_Tsub)
-      StructMask := ListMask ++ RecordMask ++ SetMask ++ TableMask
+      AssignMask := cset(EventCode.Assign || EventCode.Value)
+
+      TypeMask := AllocMask ++ (EventCode.Integer || EventCode.Null || EventCode.Proc)
+
+      ConvMask := cset(EventCode.Aconv || EventCode.Tconv || EventCode.Sconv || 
+                       EventCode.Nconv || EventCode.Fconv)
+
+      ProcMask := cset(EventCode.Pcall || EventCode.Pfail || EventCode.Pret || 
+                       EventCode.Psusp || EventCode.Presum || EventCode.Prem)
+
+      FncMask := cset(EventCode.Fcall || EventCode.Ffail || EventCode.Fret || 
+                      EventCode.Fsusp || EventCode.Fresum || EventCode.Frem)
+
+      OperMask := cset(EventCode.Ocall || EventCode.Ofail || EventCode.Oret || 
+                       EventCode.Osusp || EventCode.Oresum || EventCode.Orem)
+
+      EvalMask := FncMask ++ ProcMask ++ OperMask
+
+      ListMask := cset(EventCode.Lbang || EventCode.Lcreate || EventCode.Lpop || 
+                       EventCode.Lpull || EventCode.Lpush || EventCode.Lput || 
+                       EventCode.Lrand || EventCode.Lsub)
+
+      RecordMask := cset(EventCode.Rbang || EventCode.Rcreate || EventCode.Rrand ||
+                         EventCode.Rref || EventCode.Rsub)
+
+      ScanMask := cset(EventCode.Snew || EventCode.Sfail || EventCode.Spos || 
+                       EventCode.Ssusp || EventCode.Sresum || EventCode.Srem)
+
+      SetMask := cset(EventCode.Sbang || EventCode.Screate || EventCode.Sdelete ||
+                      EventCode.Sinsert || EventCode.Smember || EventCode.Sval)
+
+      TableMask := cset(EventCode.Tbang || EventCode.Tcreate || EventCode.Tdelete || 
+                        EventCode.Tinsert || EventCode.Tkey || EventCode.Tmember ||
+                        EventCode.Trand || EventCode.Tsub)
+
+      OOMask := cset(EventCode.Objectref || EventCode.Objectsub || EventCode.Classref ||
+                     EventCode.Classsub || EventCode.Castref || EventCode.Castsub ||
+                     EventCode.Objectcreate)
+
+      StructMask := ListMask ++ RecordMask ++ SetMask ++ TableMask ++ OOMask
       EmptyMask := ''
       AllMask := &cset
-
-      E_Disable := 1000000
-      E_Enable := 1000001
-      E_Quit := 1000002
-      E_ALoc := 2000000
-      E_Spoof := 1728345
-
-      desc_map := table("unknown event")
-      desc_map[E_Lrgint] :=	"Large integer allocation"
-      desc_map[E_Real] :=	"Real allocation"
-      desc_map[E_Cset] :=	"Cset allocation"
-      desc_map[E_File] :=	"File allocation"
-      desc_map[E_Record] :=	"Record allocation"
-      desc_map[E_Object] :=	"Object allocation"
-      desc_map[E_Cast] :=	"Cast allocation"
-      desc_map[E_Methp] :=	"Methp allocation"
-      desc_map[E_Ucs] :=	"Ucs allocation"
-      desc_map[E_Tvsubs] :=	"Substring tv allocation"
-      desc_map[E_External] :=	"External allocation"
-      desc_map[E_List] :=	"List allocation"
-      desc_map[E_Lelem] :=	"List element allocation"
-      desc_map[E_Table] :=	"Table allocation"
-      desc_map[E_Telem] :=	"Table element allocation"
-      desc_map[E_Tvtbl] :=	"Table-element tv allocation"
-      desc_map[E_Set] :=	"Set allocation"
-      desc_map[E_Selem] :=	"Set element allocation"
-      desc_map[E_Slots] :=	"Hash header allocation"
-      desc_map[E_Coexpr] :=	"Co-expression allocation"
-      desc_map[E_Refresh] :=	"Refresh allocation"
-      desc_map[E_Alien] :=	"Alien allocation"
-      desc_map[E_Free] :=	"Free region"
-      desc_map[E_String] :=	"String allocation"
-      desc_map[E_BlkDeAlc] :=	"Block deallocation"
-      desc_map[E_StrDeAlc] :=	"String deallocation"
-      desc_map[E_Integer] :=	"Integer value pseudo-event"
-      desc_map[E_Null] :=	"Null value pseudo-event"
-      desc_map[E_Proc] :=	"Procedure value pseudo-event"
-      desc_map[E_Kywdint] :=	"Integer keyword value pseudo-event"
-      desc_map[E_Kywdpos] :=	"Position value pseudo-event"
-      desc_map[E_Kywdsubj] :=	"Subject value pseudo-event"
-      desc_map[E_Tick] :=	"Clock tick"
-      desc_map[E_Loc] :=	"Location change"
-      desc_map[E_Line] :=	"Line change"
-      desc_map[E_Opcode] :=	"Virtual-machine instruction"
-      desc_map[E_Aconv] :=	"Conversion attempt"
-      desc_map[E_Tconv] :=	"Conversion target"
-      desc_map[E_Nconv] :=	"Conversion not needed"
-      desc_map[E_Sconv] :=	"Conversion success"
-      desc_map[E_Fconv] :=	"Conversion failure"
-      desc_map[E_Lbang] :=	"List generation"
-      desc_map[E_Lcreate] :=	"List creation"
-      desc_map[E_Lget] :=	"List get/pop -- only E_Lget used"
-      desc_map[E_Lpop] :=	"List get/pop"
-      desc_map[E_Lpull] :=	"List pull"
-      desc_map[E_Lpush] :=	"List push"
-      desc_map[E_Lput] :=	"List put"
-      desc_map[E_Lrand] :=	"List random reference"
-      desc_map[E_Lref] :=	"List reference"
-      desc_map[E_Lsub] :=	"List subscript"
-      desc_map[E_Ldelete] :=	"List delete"
-      desc_map[E_Rbang] :=	"Record generation"
-      desc_map[E_Rcreate] :=	"Record creation"
-      desc_map[E_Rrand] :=	"Record random reference"
-      desc_map[E_Rref] :=	"Record reference"
-      desc_map[E_Rsub] :=	"Record subscript"
-      desc_map[E_Sbang] :=	"Set generation"
-      desc_map[E_Screate] :=	"Set creation"
-      desc_map[E_Sdelete] :=	"Set deletion"
-      desc_map[E_Sinsert] :=	"Set insertion"
-      desc_map[E_Smember] :=	"Set membership"
-      desc_map[E_Srand] :=	"Set random reference"
-      desc_map[E_Sval] :=	"Set value"
-      desc_map[E_Tbang] :=	"Table generation"
-      desc_map[E_Tcreate] :=	"Table creation"
-      desc_map[E_Tdelete] :=	"Table deletion"
-      desc_map[E_Tinsert] :=	"Table insertion"
-      desc_map[E_Tkey] :=	"Table key generation"
-      desc_map[E_Tmember] :=	"Table membership"
-      desc_map[E_Trand] :=	"Table random reference"
-      desc_map[E_Tref] :=	"Table reference"
-      desc_map[E_Tsub] :=	"Table subscript"
-      desc_map[E_Tval] :=	"Table value"
-      desc_map[E_Snew] :=	"Scanning environment creation"
-      desc_map[E_Sfail] :=	"Scanning failure"
-      desc_map[E_Ssusp] :=	"Scanning suspension"
-      desc_map[E_Sresum] :=	"Scanning resumption"
-      desc_map[E_Srem] :=	"Scanning environment removal"
-      desc_map[E_Spos] :=	"Scanning position"
-      desc_map[E_Assign] :=	"Assignment"
-      desc_map[E_Value] :=	"Value assigned"
-      desc_map[E_Deref] :=	"Dereference"
-      desc_map[E_Ssasgn] :=	"Sub-string assignment"
-      desc_map[E_Intcall] :=	"interpreter call"
-      desc_map[E_Intret] :=	"interpreter return"
-      desc_map[E_Stack] :=	"stack depth"
-      desc_map[E_Ecall] :=	"Call of operation"
-      desc_map[E_Efail] :=	"Failure from expression"
-      desc_map[E_Bsusp] :=	"Suspension from operation"
-      desc_map[E_Esusp] :=	"Suspension from alternation"
-      desc_map[E_Lsusp] :=	"Suspension from limitation"
-      desc_map[E_Eresum] :=	"Resumption of expression"
-      desc_map[E_Erem] :=	"Removal of a suspended generator"
-      desc_map[E_Coact] :=	"Co-expression activation"
-      desc_map[E_Coret] :=	"Co-expression return"
-      desc_map[E_Cofail] :=	"Co-expression failure"
-      desc_map[E_Pcall] :=	"Procedure call"
-      desc_map[E_Pfail] :=	"Procedure failure"
-      desc_map[E_Pret] :=	"Procedure return"
-      desc_map[E_Psusp] :=	"Procedure suspension"
-      desc_map[E_Presum] :=	"Procedure resumption"
-      desc_map[E_Prem] :=	"Suspended procedure removal"
-      desc_map[E_Fcall] :=	"Function call"
-      desc_map[E_Ffail] :=	"Function failure"
-      desc_map[E_Fret] :=	"Function return"
-      desc_map[E_Fsusp] :=	"Function suspension"
-      desc_map[E_Fresum] :=	"Function resumption"
-      desc_map[E_Frem] :=	"Function suspension removal"
-      desc_map[E_Ocall] :=	"Operator call"
-      desc_map[E_Ofail] :=	"Operator failure"
-      desc_map[E_Oret] :=	"Operator return"
-      desc_map[E_Osusp] :=	"Operator suspension"
-      desc_map[E_Oresum] :=	"Operator resumption"
-      desc_map[E_Orem] :=	"Operator suspension removal"
-      desc_map[E_Collect] :=	"Garbage collection"
-      desc_map[E_EndCollect] :=	"End of garbage collection"
-      desc_map[E_TenureString] :=	"Tenure a string region"
-      desc_map[E_TenureBlock] :=	"Tenure a block region"
-      desc_map[E_Error] :=	"Run-time error"
-      desc_map[E_Exit] :=	"Program exit"
-      desc_map[E_MXevent] :=	"monitor input event"
-      desc_map[E_Literal]	:= "Literal"
-
-      sym_map := table("unknown event")
-      sym_map[E_Lrgint] := "E_Lrgint"
-      sym_map[E_Real] := "E_Real"
-      sym_map[E_Cset] := "E_Cset"
-      sym_map[E_File] := "E_File"
-      sym_map[E_Record] := "E_Record"
-      sym_map[E_Object] := "E_Object"
-      sym_map[E_Cast] := "E_Cast"
-      sym_map[E_Methp] := "E_Methp"
-      sym_map[E_Ucs] := "E_Ucs"
-      sym_map[E_Tvsubs] := "E_Tvsubs"
-      sym_map[E_External] := "E_External"
-      sym_map[E_List] := "E_List"
-      sym_map[E_Lelem] := "E_Lelem"
-      sym_map[E_Table] := "E_Table"
-      sym_map[E_Telem] := "E_Telem"
-      sym_map[E_Tvtbl] := "E_Tvtbl"
-      sym_map[E_Set] := "E_Set"
-      sym_map[E_Selem] := "E_Selem"
-      sym_map[E_Slots] := "E_Slots"
-      sym_map[E_Coexpr] := "E_Coexpr"
-      sym_map[E_Refresh] := "E_Refresh"
-      sym_map[E_Alien] := "E_Alien"
-      sym_map[E_Free] := "E_Free"
-      sym_map[E_String] := "E_String"
-      sym_map[E_BlkDeAlc] := "E_BlkDeAlc"
-      sym_map[E_StrDeAlc] := "E_StrDeAlc"
-      sym_map[E_Integer] := "E_Integer"
-      sym_map[E_Null] := "E_Null"
-      sym_map[E_Proc] := "E_Proc"
-      sym_map[E_Kywdint] := "E_Kywdint"
-      sym_map[E_Kywdpos] := "E_Kywdpos"
-      sym_map[E_Kywdsubj] := "E_Kywdsubj"
-      sym_map[E_Tick] := "E_Tick"
-      sym_map[E_Loc] := "E_Loc"
-      sym_map[E_Line] := "E_Line"
-      sym_map[E_Opcode] := "E_Opcode"
-      sym_map[E_Aconv] := "E_Aconv"
-      sym_map[E_Tconv] := "E_Tconv"
-      sym_map[E_Nconv] := "E_Nconv"
-      sym_map[E_Sconv] := "E_Sconv"
-      sym_map[E_Fconv] := "E_Fconv"
-      sym_map[E_Lbang] := "E_Lbang"
-      sym_map[E_Lcreate] := "E_Lcreate"
-      sym_map[E_Lget] := "E_Lget"
-      sym_map[E_Lpop] := "E_Lpop"
-      sym_map[E_Lpull] := "E_Lpull"
-      sym_map[E_Lpush] := "E_Lpush"
-      sym_map[E_Lput] := "E_Lput"
-      sym_map[E_Lrand] := "E_Lrand"
-      sym_map[E_Lref] := "E_Lref"
-      sym_map[E_Lsub] := "E_Lsub"
-      sym_map[E_Ldelete] := "E_Ldelete"
-      sym_map[E_Rbang] := "E_Rbang"
-      sym_map[E_Rcreate] := "E_Rcreate"
-      sym_map[E_Rrand] := "E_Rrand"
-      sym_map[E_Rref] := "E_Rref"
-      sym_map[E_Rsub] := "E_Rsub"
-      sym_map[E_Sbang] := "E_Sbang"
-      sym_map[E_Screate] := "E_Screate"
-      sym_map[E_Sdelete] := "E_Sdelete"
-      sym_map[E_Sinsert] := "E_Sinsert"
-      sym_map[E_Smember] := "E_Smember"
-      sym_map[E_Srand] := "E_Srand"
-      sym_map[E_Sval] := "E_Sval"
-      sym_map[E_Tbang] := "E_Tbang"
-      sym_map[E_Tcreate] := "E_Tcreate"
-      sym_map[E_Tdelete] := "E_Tdelete"
-      sym_map[E_Tinsert] := "E_Tinsert"
-      sym_map[E_Tkey] := "E_Tkey"
-      sym_map[E_Tmember] := "E_Tmember"
-      sym_map[E_Trand] := "E_Trand"
-      sym_map[E_Tref] := "E_Tref"
-      sym_map[E_Tsub] := "E_Tsub"
-      sym_map[E_Tval] := "E_Tval"
-      sym_map[E_Snew] := "E_Snew"
-      sym_map[E_Sfail] := "E_Sfail"
-      sym_map[E_Ssusp] := "E_Ssusp"
-      sym_map[E_Sresum] := "E_Sresum"
-      sym_map[E_Srem] := "E_Srem"
-      sym_map[E_Spos] := "E_Spos"
-      sym_map[E_Assign] := "E_Assign"
-      sym_map[E_Value] := "E_Value"
-      sym_map[E_Deref] := "E_Deref"
-      sym_map[E_Ssasgn] := "E_Ssasgn"
-      sym_map[E_Intcall] := "E_Intcall"
-      sym_map[E_Intret] := "E_Intret"
-      sym_map[E_Stack] := "E_Stack"
-      sym_map[E_Ecall] := "E_Ecall"
-      sym_map[E_Efail] := "E_Efail"
-      sym_map[E_Bsusp] := "E_Bsusp"
-      sym_map[E_Esusp] := "E_Esusp"
-      sym_map[E_Lsusp] := "E_Lsusp"
-      sym_map[E_Eresum] := "E_Eresum"
-      sym_map[E_Erem] := "E_Erem"
-      sym_map[E_Coact] := "E_Coact"
-      sym_map[E_Coret] := "E_Coret"
-      sym_map[E_Cofail] := "E_Cofail"
-      sym_map[E_Pcall] := "E_Pcall"
-      sym_map[E_Pfail] := "E_Pfail"
-      sym_map[E_Pret] := "E_Pret"
-      sym_map[E_Psusp] := "E_Psusp"
-      sym_map[E_Presum] := "E_Presum"
-      sym_map[E_Prem] := "E_Prem"
-      sym_map[E_Fcall] := "E_Fcall"
-      sym_map[E_Ffail] := "E_Ffail"
-      sym_map[E_Fret] := "E_Fret"
-      sym_map[E_Fsusp] := "E_Fsusp"
-      sym_map[E_Fresum] := "E_Fresum"
-      sym_map[E_Frem] := "E_Frem"
-      sym_map[E_Ocall] := "E_Ocall"
-      sym_map[E_Ofail] := "E_Ofail"
-      sym_map[E_Oret] := "E_Oret"
-      sym_map[E_Osusp] := "E_Osusp"
-      sym_map[E_Oresum] := "E_Oresum"
-      sym_map[E_Orem] := "E_Orem"
-      sym_map[E_Collect] := "E_Collect"
-      sym_map[E_EndCollect] := "E_EndCollect"
-      sym_map[E_TenureString] := "E_TenureString"
-      sym_map[E_TenureBlock] := "E_TenureBlock"
-      sym_map[E_Error] := "E_Error"
-      sym_map[E_Exit] := "E_Exit"
-      sym_map[E_MXevent] := "E_MXevent"
-      sym_map[E_Literal]	:= "E_Literal"
    end
-
-   public static get_sym(x)
-      return sym_map[x]
-   end
-
-   public static get_desc(x)
-      return desc_map[x]
-   end
-
 end

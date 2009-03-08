@@ -2,9 +2,8 @@ package parser
 
 import
    util(error),
-   lang()
-
-$include "opdefs.icn"
+   lang(),
+   evmon(OpCode)
 
 class UFile()
    private readable
@@ -276,53 +275,53 @@ class UReader()
          curr_record, curr_func
       uf := UFile()
       uop := uin_expectop() | fail
-      uop == Op_Version | return error("Missing version identification")
+      uop == OpCode.Version | return error("Missing version identification")
       s := uin_str() | fail
       uf.set_version(s)
       repeat {
          uop := uin_expectop() | fail
          case uop of {
-            Op_Filen:
+            OpCode.Filen:
                file := uin_str() | fail
 
-            Op_Line:
+            OpCode.Line:
                line := uin_short() | fail
 
-            Op_Declend: {
+            OpCode.Declend: {
                uf.set_declend_offset(&pos)
                break
             }
 
-            Op_Package: {
+            OpCode.Package: {
                s := uin_str() | fail
                uf.set_package(s)
             }
 
-            Op_Import: {
+            OpCode.Import: {
                s := uin_str() | fail
                n := uin_short() | fail
                curr_import := if n = 0 then ImportDec(s) else ImportDec(s, 1)
                uf.add_import(curr_import)
             }
 
-            Op_Importsym: {
+            OpCode.Importsym: {
                s := uin_str() | fail
                curr_import.add(s)
             }
 
-            Op_Class: {
+            OpCode.Class: {
                n := uin_word() | fail
                s := uin_str() | fail
                curr_class := UClass(s, file, line, n)
                uf.add_symbol(curr_class)
             }
 
-            Op_Super: {
+            OpCode.Super: {
                s := uin_str() | fail
                curr_class.add_super(s)
             }
 
-            Op_Classfield: {
+            OpCode.Classfield: {
                n := uin_word() | fail
                s := uin_str() | fail
                if iand(n, lang.Class.M_Method) ~= 0 then {
@@ -332,50 +331,50 @@ class UReader()
                   curr_class.add_field(UVariable(s, file, line, n))
             }
 
-             Op_Nargs: {
+             OpCode.Nargs: {
                 n := uin_short() | fail
                 curr_func.set_nargs(n)
              }
 
-             Op_Recordfield: {
+             OpCode.Recordfield: {
                 s := uin_str() | fail
                 curr_record.add_field(s)
              }
 
-             Op_Record: {
+             OpCode.Record: {
                 s := uin_str() | fail
                 curr_record := URecord(s, file, line)
                 uf.add_symbol(curr_record)
              }
 
-             Op_Trace: {
+             OpCode.Trace: {
                 uf.set_trace(-1)
              }
 
-             Op_Procdecl: {
+             OpCode.Procdecl: {
                 s := uin_str() | fail
                 curr_func := UProcedure(s, file, line)
                 uf.add_symbol(curr_func)
              }
 
-             Op_Local: {
+             OpCode.Local: {
                 n := uin_word() | fail
                 s := uin_str() | fail
                 curr_func.add_local(ULocal(s, n))
              }
 
-             Op_Con: {
+             OpCode.Con: {
                 n := uin_word() | fail
                 s := uin_bin() | fail
                 curr_func.add_const(UConst(s, n))
              }
 
-             Op_Global: {
+             OpCode.Global: {
                 s := uin_str() | fail
                 uf.add_symbol(UGlobal(s, file, line))
              }
 
-             Op_Invocable: {
+             OpCode.Invocable: {
                 s := uin_str() | fail
                 if s == "0" then
                    uf.set_strinv(1)
@@ -383,7 +382,7 @@ class UReader()
                    uf.add_invocable(s)
              }
 
-             Op_Link: {
+             OpCode.Link: {
                 s := uin_str() | fail
                 uf.add_link(s)
              }
@@ -401,7 +400,7 @@ class UReader()
    end
 
    private uin_op()
-      return move(1)
+      return ord(move(1))
    end
 
    private uin_str()
