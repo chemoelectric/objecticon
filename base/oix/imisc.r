@@ -112,6 +112,10 @@ static int cast_access(dptr cargp, struct inline_field_cache *ic)
     mp->proc = &BlkLoc(*cf->field_descriptor)->proc;
     Arg0.dword = D_Methp;
     BlkLoc(Arg0) = (union block *)mp;
+
+    EVValD(&Arg1, E_Castref);
+    EVVal(i + 1, E_Castsub);
+
     return Succeeded;
 }
 
@@ -145,14 +149,14 @@ static int class_access(dptr cargp, struct inline_field_cache *ic)
     {
         Arg0.dword = D_Var;
         VarLoc(Arg0) = dp;
-        return Succeeded;
-    }
-    if (ac == Succeeded || (cf->flags & M_Readable)) {
+    } else if (ac == Succeeded || (cf->flags & M_Readable))
         Arg0 = *dp;
-        return Succeeded;
-    }
+    else
+        return ac;
 
-    return ac;
+    EVValD(&Arg1, E_Classref);
+    EVVal(i + 1, E_Classsub);
+    return Succeeded;
 }
 
 static int instance_access(dptr cargp, struct inline_field_cache *ic)
@@ -193,7 +197,6 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
         mp->proc = &BlkLoc(*cf->field_descriptor)->proc;
         Arg0.dword = D_Methp;
         BlkLoc(Arg0) = (union block *)mp;
-        return Succeeded;
     } else {
         dptr dp = &obj->fields[i];
         ac = check_access(cf, class);
@@ -203,14 +206,15 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
             /* Return a pointer to the field */
             Arg0.dword = D_Var + ((word *)dp - (word *)obj);
             BlkLoc(Arg0) = (union block *)obj;
-            return Succeeded;
-        }
-        if (ac == Succeeded || (cf->flags & M_Readable)) {
+        } else if (ac == Succeeded || (cf->flags & M_Readable))
             Arg0 = *dp;
-            return Succeeded;
-        }
-        return ac;
+        else
+            return ac;
     }
+
+    EVValD(&Arg1, E_Objectref);
+    EVVal(i + 1, E_Objectsub);
+    return Succeeded;
 }
 
 /*
@@ -423,6 +427,10 @@ static int record_access(dptr cargp, struct inline_field_cache *ic)
     dp = &rec->fields[i];
     Arg0.dword = D_Var + ((word *)dp - (word *)rec);
     BlkLoc(Arg0) = (union block *)rec;
+
+    EVValD(&Arg1, E_Rref);
+    EVVal(i + 1, E_Rsub);
+
     return Succeeded;
 }
 

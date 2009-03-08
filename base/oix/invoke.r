@@ -392,6 +392,9 @@ static int construct_object(int nargs, dptr newargp)
     BlkLoc(newargp[0])->object.init_state = Initialized;
 
     sp = (word *)newargp + 1;
+
+    EVValD(newargp, E_Objectcreate);
+
     return I_Continue;
 }
 
@@ -412,6 +415,9 @@ static int construct_record(int nargs, dptr newargp)
     }
 
     sp = (word *)newargp + 1;
+
+    EVValD(newargp, E_Rcreate);
+
     return I_Continue;
 }
 

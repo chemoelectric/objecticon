@@ -566,6 +566,55 @@
 #define E_Tval 0
 #endif
 
+#if defined(EventMon) || defined(E_Objectref)
+#undef E_Objectref
+#define	E_Objectref		'\210'		/* Object reference */
+#else
+#define E_Objectref 0
+#endif
+
+#if defined(EventMon) || defined(E_Objectsub)
+#undef E_Objectsub
+#define E_Objectsub		'\211'		/* Object subscript */
+#else
+#define E_Objectsub 0
+#endif
+
+#if defined(EventMon) || defined(E_Classref)
+#undef E_Classref
+#define	E_Classref		'\212'		/* Class reference */
+#else
+#define E_Classref 0
+#endif
+
+#if defined(EventMon) || defined(E_Classsub)
+#undef E_Classsub
+#define E_Classsub		'\213'		/* Class subscript */
+#else
+#define E_Classsub 0
+#endif
+
+#if defined(EventMon) || defined(E_Castref)
+#undef E_Castref
+#define	E_Castref		'\214'		/* Cast reference */
+#else
+#define E_Castref 0
+#endif
+
+#if defined(EventMon) || defined(E_Castsub)
+#undef E_Castsub
+#define E_Castsub		'\215'		/* Cast subscript */
+#else
+#define E_Castsub 0
+#endif
+
+#if defined(EventMon) || defined(E_Objectcreate)
+#undef E_Objectcreate
+#define	E_Objectcreate	'\216'		/* Object creation */
+#else
+#define E_Objectcreate 0
+#endif
+
 
    /*
     * Scanning events
@@ -954,7 +1003,7 @@
 
 #if defined(EventMon) || defined(E_Literal)
 #undef E_Literal
-#define E_Literal	'\364'
+#define E_Literal	'\364'          /* literal */
 #else
 #define E_Literal 0
 #endif
@@ -976,7 +1025,7 @@
 162
 
 204 205 206 207
-210 211 212 213 214 215 216 217
+217
 220 221 222 223 224 225 226 227
 230 231 232 233 234 235 236 237
 240 241 242 243 244 245 246 247

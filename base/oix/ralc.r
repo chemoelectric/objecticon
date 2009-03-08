@@ -567,7 +567,7 @@ char *f(register char *s, register word slen)
 
    StrLen(ts) = slen;
    StrLoc(ts) = s;
-#if E_String
+#if e_string
    if (!noMTevents)
       EVVal(slen, e_string);
 #endif					/* E_String */
