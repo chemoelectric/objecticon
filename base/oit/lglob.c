@@ -212,20 +212,24 @@ void readglob(struct lfile *lf)
                     long m = parse_int(data);
                     if (m < 0) { 		/* negative indicates integer too big */
                         gg.sval = data;	        /* convert to a string */
-                        add_constant(curr_func, F_StrLit, len, &gg);
+                        if (curr_func)
+                            add_constant(curr_func, F_StrLit, len, &gg);
                     }
                     else {			/* integer  is small enough */
                         gg.ival = m;
-                        add_constant(curr_func, k, 0, &gg);
+                        if (curr_func)
+                            add_constant(curr_func, k, 0, &gg);
                     }
                 }
                 else if (k & F_RealLit) {
                     gg.rval = parse_real(data);
-                    add_constant(curr_func, k, 0, &gg);
+                    if (curr_func)
+                        add_constant(curr_func, k, 0, &gg);
                 }
                 else if (k & (F_StrLit | F_CsetLit | F_UcsLit)) {
                     gg.sval = data;
-                    add_constant(curr_func, k, len, &gg);
+                    if (curr_func)
+                        add_constant(curr_func, k, len, &gg);
                 }
                 else
                     quit("illegal constant");
