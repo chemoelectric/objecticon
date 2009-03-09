@@ -48,6 +48,7 @@ void scan_file(char *path)
             add_entry(strdup(key), strdup(val), 0);
         }
     }
+    fclose(f);
 }
 
 void start_class(char *s, char *a, int t1, int t2)
@@ -144,19 +145,18 @@ void scan_monitor_h(char *path)
         char *p;
         p = strtok(buff, " \t\r\n");
         if (p && strcmp(p, "#define") == 0) {
-            char *key, *val;
+            char *key, *val, *comm;
             key = strtok(0, " \t\r\n");
             val = strtok(0, " \t\r\n");
-            if (strcmp(val, "0") != 0) {
-                char *comm = val + strlen(val) + 1;
-                while (isspace(*comm) || *comm == '/' || *comm == '*')
-                    ++comm;
-                comm[strlen(comm) - 4] = 0;
-                val[0] = val[strlen(val)-1] = '\"';
-                add_entry(strdup(key), strdup(val), strdup(comm));
-            }
+            comm = val + strlen(val) + 1;
+            while (isspace(*comm) || *comm == '/' || *comm == '*')
+                ++comm;
+            comm[strlen(comm) - 4] = 0;
+            val[0] = val[strlen(val)-1] = '\"';
+            add_entry(strdup(key), strdup(val), strdup(comm));
         }
     }
+    fclose(f);
 }
 
 int main(void)

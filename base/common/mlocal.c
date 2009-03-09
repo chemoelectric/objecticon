@@ -3,25 +3,6 @@
  */
 #include "../h/gsupport.h"
 
-/*
- * The following code is operating-system dependent [@filepart.01].
- *
- *  Define symbols for building file names.
- *  1. PREFIX: the characters that terminate a file name prefix
- *  2. FILESEP: the char to insert after a dir name, if any
- *  3. PATHSEP: separator character on $PATH, $OIPATH etc.
- */
-
-#if UNIX
-#define FILESEP '/'
-#define PREFIX "/"
-#define PATHSEP ':'
-#endif
-#if MSWIN32
-#define FILESEP '\\'
-#define PREFIX "/:\\"
-#define PATHSEP ';'
-#endif
 
 static char *tryfile(char *dir, char *name, char *extn);
 static char *tryexe(char *dir, char *name);
@@ -63,7 +44,7 @@ char *findexe(char *name)
 
     /* Does name have a separator char? If so, don't search $PATH */
     for (p = name; *p; ++p) {
-        if (strchr(PREFIX, *p))
+        if (strchr(FILEPREFIX, *p))
             return tryexe(0, name);
     }
 
@@ -274,7 +255,7 @@ char *canonicalize(char *path)
             fprintf(stderr, "path too long to canonicalize: %s", path);
             exit(1);
         }
-        if (!strchr(PREFIX, result[l - 1]))
+        if (!strchr(FILEPREFIX, result[l - 1]))
             result[l++] = FILESEP;
         strcpy(&result[l], path);
     }
@@ -353,7 +334,7 @@ char *pathelem(char **ps)
         return 0;
     }
     memcpy(buf, s, n);
-    if (!strchr(PREFIX, buf[n - 1]))
+    if (!strchr(FILEPREFIX, buf[n - 1]))
         buf[n++] = FILESEP;
     buf[n] = 0;
     if (*e)
@@ -370,7 +351,7 @@ char *last_pathelem(char *s)
 {
     char *p = s + strlen(s);
     while (--p >= s) {
-        if (strchr(PREFIX, *p))
+        if (strchr(FILEPREFIX, *p))
             return p + 1;
     }
     return s;
@@ -408,7 +389,7 @@ struct fileparts *fparse(char *s)
     while (--p >= s) {
         if (*p == '.' && *fp.ext == '\0')
             fp.ext = p;
-        else if (strchr(PREFIX,*p)) {
+        else if (strchr(FILEPREFIX,*p)) {
             q = p+1;
             break;
         }

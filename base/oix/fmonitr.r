@@ -48,7 +48,7 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
 {
    unsigned int *bits = BlkLoc(cs)->cset.bits;
    p->eventmask = cs;
-
+#ifdef EventMon
    /*
     * Most instrumentation functions depend on a single event.
     */
@@ -98,10 +98,6 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
    /*
     * A few functions enable more than one event code.
     */
-   p->EVstralc =
-      (((Testb((word)(E_String), bits)) ||
-	(Testb((word)(E_StrDeAlc), bits)))
-       ? EVStrAlc_1 : EVStrAlc_0);
    p->Alchash =
       (((Testb((word)(E_Table), bits)) ||
 	(Testb((word)(E_Set), bits)))
@@ -163,7 +159,7 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
        Testb((word)(E_Ofail), bits) ||
        Testb((word)(E_Tick), bits) ||
        Testb((word)(E_Line), bits) ||
-       Testb((word)(E_Loc), bits) ||
+       Testb((word)(E_Fname), bits) ||
        Testb((word)(E_Opcode), bits) ||
        Testb((word)(E_Fcall), bits) ||
        Testb((word)(E_Prem), bits) ||
@@ -188,6 +184,7 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       p->Interp = interp_1;
    else
       p->Interp = interp_0;
+#endif
 }
 
 /*
@@ -381,8 +378,8 @@ void EVInit()
    for (i = 0; i <= MaxType; i++)
       typech[i] = '?';	/* initialize with error character */
 
+#ifdef EventMon
    typech[T_Lrgint]  = E_Lrgint;	/* long integer */
-
    typech[T_Real]    = E_Real;		/* real number */
    typech[T_Cset]    = E_Cset;		/* cset */
    typech[T_Record]  = E_Record;	/* record block */
@@ -398,7 +395,11 @@ void EVInit()
    typech[T_Slots]   = E_Slots;		/* set/table hash slots */
    typech[T_Coexpr]  = E_Coexpr;	/* co-expression block (static) */
    typech[T_Refresh] = E_Refresh;	/* co-expression refresh block */
-
+   typech[T_Object]  = E_Object;        /* object */
+   typech[T_Cast ]   = E_Cast;          /* cast */
+   typech[T_Methp]   = E_Methp;         /* method pointer */
+   typech[T_Ucs]     = E_Ucs;	        /* ucs block */
+#endif
 
    /*
     * codes used elsewhere but not shown here:
@@ -431,43 +432,31 @@ void EVInit()
 #endif					/* UNIX */
 
    }
-
+
+
+#ifdef EventMon
+
 /*
  * mmrefresh() - redraw screen, initially or after garbage collection.
  */
 
 void mmrefresh()
-   {
-   char *p = NULL;
-   word n;
-
-   /*
-    * If the monitor is asking for E_EndCollect events, then it
-    * can handle these memory allocation "redraw" events.
-    */
-  if (!is:null(curpstate->eventmask) &&
-      Testb((word)(E_EndCollect), BlkLoc(curpstate->eventmask)->cset.bits)) {
-      for (p = blkbase; p < blkfree; p += n) {
-	 n = BlkSize(p);
-#if E_Lrgint || E_Real || E_Cset || E_File || E_Record || E_Tvsubs || E_External || E_List || E_Lelem || E_Table || E_Telem || E_Tvtbl || E_Set || E_Selem || E_Slots || E_Coexpr || E_Refresh
-	 RealEVVal(n, typech[(int)BlkType(p)]);	/* block region */
-#endif					/* instrument allocation events */
-	 }
-      EVVal(DiffPtrs(strfree, strbase), E_String);	/* string region */
-      }
-   }
-
-
-void EVStrAlc_0(word n) { ; }
-
-void EVStrAlc_1(word n)
 {
-   if (n < 0) {
-      EVVal(-n, E_StrDeAlc);
-      }
-   else {
-      EVVal(n, E_String);
-      }
+    char *p = NULL;
+    word n;
+
+    /*
+     * If the monitor is asking for E_EndCollect events, then it
+     * can handle these memory allocation "redraw" events.
+     */
+    if (!is:null(curpstate->eventmask) &&
+        Testb((word)(E_EndCollect), BlkLoc(curpstate->eventmask)->cset.bits)) {
+        for (p = blkbase; p < blkfree; p += n) {
+            n = BlkSize(p);
+            RealEVVal(n, typech[(int)BlkType(p)]);	/* block region */
+        }
+        EVVal(DiffPtrs(strfree, strbase), E_String);	/* string region */
+    }
 }
 
-
+#endif

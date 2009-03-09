@@ -414,9 +414,8 @@ struct progstate {
     struct ipc_fname *Filenms, *Efilenms;
     struct ipc_line *Ilines, *Elines;
     struct ipc_line * Current_line_ptr;
+    struct ipc_fname * Current_fname_ptr;
     dptr MainProc;
-
-    word Line_num, Lastline;
 
     word Coexp_ser;			/* this program's serial numbers */
     word List_ser;
@@ -459,7 +458,6 @@ struct progstate {
     int (*Cplist)(dptr, dptr, word, word);
     int (*Cpset)(dptr, dptr, word);
     int (*Cptable)(dptr, dptr, word);
-    void (*EVstralc)(word);
     int (*Interp)(int,dptr);
     int (*Cnvcset)(dptr,dptr);
     int (*Cnvucs)(dptr,dptr);

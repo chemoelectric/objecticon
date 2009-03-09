@@ -102,9 +102,11 @@ static void xtrace(bp, nargs, arg, pline, pfile)
     }
 	 
     if (pline != 0) {
-        if (pfile)
-            fprintf(stderr, " from line %d in %.*s", pline, StrLen(*pfile), StrLoc(*pfile));
-        else
+        if (pfile) {
+            struct descrip t;
+            abbr_fname(pfile, &t);
+            fprintf(stderr, " from line %d in %.*s", pline, StrLen(t), StrLoc(t));
+        } else
             fprintf(stderr, " from line %d in ?", pline);
     }
     putc('\n', stderr);
@@ -460,8 +462,12 @@ static void showline(dptr f, int l)
 {
     if (l > 0) {
         if (f) {
-            int i = StrLen(*f);
-            char *p = StrLoc(*f);
+            struct descrip t;
+            char *p;
+            int i;
+            abbr_fname(f, &t);
+            i = StrLen(t);
+            p = StrLoc(t);
             while (i > 13) {
                 p++;
                 i--;
@@ -640,9 +646,11 @@ static void ttrace()
 	 
     if (ipc.opnd != NULL) {
         dptr fn = findfile(ipc.opnd);
-        if (fn)
-            fprintf(stderr, " from line %d in %.*s", findline(ipc.opnd), StrLen(*fn), StrLoc(*fn));
-        else
+        if (fn) {
+            struct descrip t;
+            abbr_fname(fn, &t);
+            fprintf(stderr, " from line %d in %.*s", findline(ipc.opnd), StrLen(t), StrLoc(t));
+        } else
             fprintf(stderr, " from line %d in ?", findline(ipc.opnd));
     }
 

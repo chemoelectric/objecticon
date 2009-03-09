@@ -1035,59 +1035,84 @@ struct b_coexpr *ce;
 /*
  * findline - find the source line number associated with the ipc
  */
-
-int findline(word *ipc)
+struct ipc_line *find_ipc_line(word *ipc, struct progstate *p)
 {
    uword ipc_offset;
    int size, l, r, m;
    
-   if (!InRange(code,ipc,ecode))
+   if (!InRange(p->Code,ipc,p->Ecode))
       return 0;
-   ipc_offset = DiffPtrs((char *)ipc,(char *)code);
-   size = elines - ilines;
+   ipc_offset = DiffPtrs((char *)ipc,(char *)p->Code);
+   size = p->Elines - p->Ilines;
    l = 0;
    r = size - 1;
    while (l <= r) {
        m = (l + r) / 2;
-       if (ipc_offset < ilines[m].ipc)
+       if (ipc_offset < p->Ilines[m].ipc)
            r = m - 1;
-       else if (m < size - 1 && ipc_offset >= ilines[m + 1].ipc)
+       else if (m < size - 1 && ipc_offset >= p->Ilines[m + 1].ipc)
            l = m + 1;
-       else  /* ipc_offset >= ilines[m].ipc && (m == size - 1 || ipc_offset < ilines[m + 1].ipc) */
-           return ilines[m].line;
+       else  /* ipc_offset >= p->Ilines[m].ipc && (m == size - 1 || ipc_offset < p->Ilines[m + 1].ipc) */
+           return &p->Ilines[m];
    }
    return 0;
 }
 
+int findline(word *ipc)
+{
+    struct ipc_line *p = find_ipc_line(ipc, curpstate);
+    return p ? p->line : 0;
+}
+
+struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p)
+{
+   uword ipc_offset;
+   int size, l, r, m;
+
+   if (!InRange(p->Code,ipc,p->Ecode))
+       return 0;
+
+   ipc_offset = DiffPtrs((char *)ipc,(char *)p->Code);
+
+   size = p->Efilenms - p->Filenms;
+   l = 0;
+   r = size - 1;
+   while (l <= r) {
+       m = (l + r) / 2;
+       if (ipc_offset < p->Filenms[m].ipc)
+           r = m - 1;
+       else if (m < size - 1 && ipc_offset >= p->Filenms[m + 1].ipc)
+           l = m + 1;
+       else  /* ipc_offset >= p->Filenms[m].ipc && (m == size - 1 || ipc_offset < p->Filenms[m + 1].ipc) */
+           return &p->Filenms[m];
+   }
+   return 0;
+}
 
 /*
  * findfile - find source file name associated with the ipc
  */
 dptr findfile(word *ipc)
 {
-   uword ipc_offset;
-   int size, l, r, m;
-
-   if (!InRange(code,ipc,ecode))
-       return 0;
-
-   ipc_offset = DiffPtrs((char *)ipc,(char *)code);
-
-   size = efilenms - filenms;
-   l = 0;
-   r = size - 1;
-   while (l <= r) {
-       m = (l + r) / 2;
-       if (ipc_offset < filenms[m].ipc)
-           r = m - 1;
-       else if (m < size - 1 && ipc_offset >= filenms[m + 1].ipc)
-           l = m + 1;
-       else  /* ipc_offset >= filenms[m].ipc && (m == size - 1 || ipc_offset < filenms[m + 1].ipc) */
-           return &filenms[m].fname;
-   }
-   return 0;
+    struct ipc_fname *p = find_ipc_fname(ipc, curpstate);
+    return p ? &p->fname : 0;
 }
 
+/*
+ * Get the last path element of the given filename and put the result
+ * into dptr d; eg "/tmp/abc.icn" returns "abc.icn"
+ */
+void abbr_fname(dptr s, dptr d)
+{
+    char *p = StrLoc(*s) + StrLen(*s);
+    while (--p >= StrLoc(*s)) {
+        if (strchr(FILEPREFIX, *p)) {
+            MakeStr(p + 1, StrLen(*s) - (p - StrLoc(*s) + 1), d);
+            return;
+        }
+    }
+    *d = *s;
+}
 
 /*
  * getimage(dp1,dp2) - return string image of object dp1 in dp2.

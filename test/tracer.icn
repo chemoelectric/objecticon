@@ -9,7 +9,7 @@ procedure main()
    every foo(&pos | &subject | &pos[1] | &subject[2:5])
    display()
    x(&line)
-   x(&file)
+   x(&file[-10:0])
    x(&level)
 end
 

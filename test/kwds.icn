@@ -25,7 +25,7 @@ procedure main()
    print{"eventvalue", &eventvalue}
    print{"fail", &fail}
    pr_seq_type{"features", &features}
-   print{"file", &file}
+   print{"file", &file[-8:0]}
    pr_type{"host", &host}
    print{"lcase", &lcase}
    print{"letters", &letters}

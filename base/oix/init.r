@@ -329,7 +329,6 @@ void icon_init(char *name)
     rootpstate.Cplist = cplist_0;
     rootpstate.Cpset = cpset_0;
     rootpstate.Cptable = cptable_0;
-    rootpstate.EVstralc = EVStrAlc_0;
     rootpstate.Interp = interp_0;
     rootpstate.Cnvcset = cnv_cset_0;
     rootpstate.Cnvucs = cnv_ucs_0;
@@ -646,6 +645,7 @@ void error(char *fmt, ...)
     c_exit(EXIT_FAILURE);
 }
 
+
 /*
  * syserr - print s as a system error.
  */
@@ -658,9 +658,11 @@ void syserr(char *fmt, ...)
         fprintf(stderr, " in startup code");
     else {
         dptr fn = findfile(ipc.opnd);
-        if (fn)
-            fprintf(stderr, " at line %ld in %.*s", (long)findline(ipc.opnd), StrLen(*fn), StrLoc(*fn));
-        else
+        if (fn) {
+            struct descrip t;
+            abbr_fname(fn, &t);
+            fprintf(stderr, " at line %ld in %.*s", (long)findline(ipc.opnd), StrLen(t), StrLoc(t));
+        } else
             fprintf(stderr, " at line %ld in ?", (long)findline(ipc.opnd));
     }
     fprintf(stderr, "\n");
@@ -791,7 +793,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->Kywd_pos = onedesc;
     pstate->ksub = emptystr;
     pstate->Kywd_ran = zerodesc;
-    pstate->Line_num = pstate->Lastline = 0;
     pstate->Lastop = 0;
     pstate->Xargp = NULL;
     pstate->Xnargs = 0;
@@ -848,7 +849,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->Cplist = cplist_0;
     pstate->Cpset = cpset_0;
     pstate->Cptable = cptable_0;
-    pstate->EVstralc = EVStrAlc_0;
     pstate->Interp = interp_0;
     pstate->Cnvcset = cnv_cset_0;
     pstate->Cnvucs = cnv_ucs_0;

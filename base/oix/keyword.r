@@ -294,7 +294,10 @@ keyword{1} line
       return integer;
       }
    inline {
-      return C_integer findline(ipc.opnd);
+      int i = findline(ipc.opnd);
+      if (!i)
+          fail;
+      return C_integer i;
       }
 end
 

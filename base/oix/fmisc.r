@@ -646,9 +646,11 @@ function{} syserr(msg)
       while (i-- > 0)
           fputc(*s++, stderr);
       fputc('\n', stderr);
-      if (fn)
-          fprintf(stderr, "File %.*s; Line %ld\n", StrLen(*fn), StrLoc(*fn), (long)findline(ipc.opnd));
-      else
+      if (fn) {
+          struct descrip t;
+          abbr_fname(fn, &t);
+          fprintf(stderr, "File %.*s; Line %ld\n", StrLen(t), StrLoc(t), (long)findline(ipc.opnd));
+      } else
           fprintf(stderr, "File ?; Line %ld\n", (long)findline(ipc.opnd));
 
       fprintf(stderr, "Traceback:\n");
@@ -1946,14 +1948,10 @@ function{*} keyword(keyname,ce)
 	 return kywdevent(&(p->eventval));
 	 }
       else if (strcmp(kname,"file") == 0) {
-	 struct progstate *savedp = curpstate;
-         dptr fn;
-	 ENTERPSTATE(p);
-         fn = findfile(BlkLoc(d)->coexpr.es_ipc.opnd);
-	 ENTERPSTATE(savedp);
-	 if (!fn)
-             fail;
-	 return *fn;
+          struct ipc_fname *t = find_ipc_fname(BlkLoc(d)->coexpr.es_ipc.opnd, p);
+          if (!t)
+              fail;
+          return t->fname;
 	 }
       else if (strcmp(kname,"level") == 0) {
 	 /*
@@ -1962,12 +1960,10 @@ function{*} keyword(keyname,ce)
 	  */
 	 }
       else if (strcmp(kname,"line") == 0) {
-	 struct progstate *savedp = curpstate;
-	 int i;
-	 ENTERPSTATE(p);
-	 i = findline(BlkLoc(d)->coexpr.es_ipc.opnd);
-	 ENTERPSTATE(savedp);
-	 return C_integer i;
+          struct ipc_line *t = find_ipc_line(BlkLoc(d)->coexpr.es_ipc.opnd, p);
+          if (!t)
+              fail;
+          return C_integer t->line;
 	 }
       else if (strcmp(kname,"main") == 0) {
 	 return p->K_main;

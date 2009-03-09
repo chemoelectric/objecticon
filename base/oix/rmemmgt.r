@@ -478,7 +478,7 @@ int region;
       }
    }
 
-#if E_Lrgint || E_Real || E_Cset || E_File || E_Record || E_Tvsubs || E_External || E_List || E_Lelem || E_Table || E_Telem || E_Tvtbl || E_Set || E_Selem || E_Slots || E_Coexpr || E_Refresh || E_String
+#ifdef EventMon
    if (!noMTevents) {
       mmrefresh();
       EVValD(&nulldesc, E_EndCollect);

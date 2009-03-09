@@ -82,3 +82,22 @@ struct rangeset {
     struct range *temp;    /* Temporary area */
 };
 
+/*
+ * The following code is operating-system dependent [@filepart.01].
+ *
+ *  Define symbols for building file names.
+ *  1. FILEPREFIX: the characters that terminate a file name prefix
+ *  2. FILESEP: the char to insert after a dir name, if any
+ *  3. PATHSEP: separator character on $PATH, $OIPATH etc.
+ */
+
+#if UNIX
+#define FILESEP '/'
+#define FILEPREFIX "/"
+#define PATHSEP ':'
+#endif
+#if MSWIN32
+#define FILESEP '\\'
+#define FILEPREFIX "/:\\"
+#define PATHSEP ';'
+#endif

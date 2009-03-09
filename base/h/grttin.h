@@ -95,6 +95,7 @@
    RealEVVal(value,event)
 #endif
 #enddef					/* EVVal */
+
 #begdef EVValD(dp,event)
 #if event
    do {
@@ -108,6 +109,7 @@
    } while (0)
 #endif
 #enddef					/* EVValD */
+
 #begdef EVValX(bp,event)
 #if event
    do {
@@ -123,6 +125,7 @@
    } while (0)
 #endif
 #enddef					/* EVValX */
+
 #begdef EVVar(dp, e)
 #if e
    do {
@@ -139,6 +142,7 @@
   { ExInterp; RealEVVal(value,event); EntInterp; }
 #endif
 #enddef
+
 #begdef InterpEVValD(dp,event)
 #if event
  { ExInterp; EVValD(dp,event); EntInterp; }

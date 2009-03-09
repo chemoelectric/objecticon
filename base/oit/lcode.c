@@ -598,7 +598,7 @@ void synch_file()
                                                &fnmsize, sizeof(struct ipc_fname), 1, "file name table");
     last_fnmtbl_filen = curr_file;
     fnmfree->ipc = pc;
-    fnmfree->sc = inst_c_strconst(intern(last_pathelem(curr_file)));
+    fnmfree->sc = inst_c_strconst(curr_file);
     fnmfree++;
 }
 

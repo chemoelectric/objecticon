@@ -591,11 +591,9 @@
       #define ilines (curpstate->Ilines)
       #define elines (curpstate->Elines)
       #define current_line_ptr (curpstate->Current_line_ptr)
+      #define current_fname_ptr (curpstate->Current_fname_ptr)
       #define main_proc (curpstate->MainProc)
 
-      #define line_num  (curpstate->Line_num)
-      #define lastline (curpstate->Lastline)
-      
       #define coexp_ser (curpstate->Coexp_ser)
       #define list_ser  (curpstate->List_ser)
       #define set_ser   (curpstate->Set_ser)
@@ -633,7 +631,6 @@
       #define cplist	    (curpstate->Cplist)
       #define cpset	    (curpstate->Cpset)
       #define cptable	    (curpstate->Cptable)
-      #define EVStrAlc	    (curpstate->EVstralc)
       #define interp	    (curpstate->Interp)
       #define cnv_cset	    (curpstate->Cnvcset)
       #define cnv_ucs	    (curpstate->Cnvucs)
