@@ -1,0 +1,85 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# This class encapsulates a check box in a menu.
+#
+# Several {CheckBoxMenuItems} may be added to a {CheckBoxGroup}
+# structure to give "radio buttons" within menus.
+#
+class CheckBoxMenuItem(Toggle,TextMenuItem)
+   public 
+      curr_img,                                            
+      img_up, 
+      img_down
+
+   #
+   # Set the up and down images to x and y respectively.  The
+   # default is boxes, unless the component is added to a
+   # {CheckBoxGroup} in which case the default is diamonds.
+   #
+   public set_images(x, y)
+      self.img_up := x
+      self.img_down := y
+      image_width(x) = image_width(y) | runerr("Image widths differ")
+      image_height(x) = image_height(y) | runerr("Image heights differ")
+   end
+
+   public initially()
+      #
+      # Set the icons if necessary
+      #
+      if /self.img_up then {
+         if /self.parent_check_box_group then
+            self.set_images(Icon.BOX_UP, Icon.BOX_DOWN)
+         else
+            self.set_images(Icon.DIAMOND_UP, Icon.DIAMOND_DOWN)
+      }
+      synch_left_image()
+      cast(self,TextMenuItem).initially()
+   end
+
+   public draw_label(cw, lw, mw, rw)
+      synch_left_image()
+      cast(self,TextMenuItem).draw_label(cw, lw, mw, rw)
+   end
+
+   #
+   # Set the left image to the correct up/down icon.
+   #
+   public synch_left_image()
+      local i
+      i := if \self.is_checked_flag then
+         self.img_down
+      else 
+         self.img_up
+      if i ~=== curr_img then
+         set_image_left(curr_img := i)
+   end
+
+   public succeed(e)
+      if \self.parent_check_box_group then
+         self.parent_check_box_group.set_which_one(self)
+      else
+         self.toggle_is_checked()      
+      cast(self,TextMenuItem).succeed(e)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "images" : set_images!(f.string_list_val(2))
+         "is_checked" : set_is_checked(f.flag_val())
+         default: return cast(self,TextMenuItem).set_one(f)
+      }
+      return
+   end
+end
+
+

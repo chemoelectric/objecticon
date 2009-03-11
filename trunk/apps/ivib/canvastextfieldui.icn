@@ -1,0 +1,35 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+
+
+class CanvasTextFieldUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasTextField()
+      t.set_size(60)
+      t.set_contents("")
+      t.h_fixed := 1
+      return t
+   end
+
+   public get_category()
+      return "Text"
+   end
+
+   public get_name()
+      return "TextField"
+   end
+
+   public get_icon()
+      return (
+              $include "icon/icn3.icon"
+              )
+   end
+end
+

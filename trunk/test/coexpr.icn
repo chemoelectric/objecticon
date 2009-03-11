@@ -1,0 +1,74 @@
+import io
+
+record array(a,b,c,d,e,f,g)
+
+procedure dummy(u,v,x,y,z)
+   suspend u | v
+   return x
+end
+
+
+procedure f(x,y,z)
+end
+
+procedure main()
+   local e,foo,x,input
+   if not(&features == "co-expressions") then
+      stop("co-expressions not supported")
+   write(imagex(&main))
+   write(imagex(&source))
+   write(imagex(&current))
+   e := create foo
+   write(image(foo))
+   f(&main,&source,e)
+   write(imagex(x := [array(),table(),write,input,1,"abc",'aa',&null,create 1]) | "failed")
+   write(imagex(x := sort(x)) | "failed")
+   write(imagex(every write(imagex(!x))) | "failed")
+   write(imagex(e := create 1 to 10) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(e := ^e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(@e) | "failed")
+   write(imagex(*e) | "failed")
+   write(imagex(*e) | "failed")
+   write(imagex(imagex(e)) | "failed")
+   write(imagex(tan := create {write("entering tan"); 1 | 2 | 3}) | "failed")
+   write(imagex(trim := create {write("entering trim"); @tan | (main @:= tan)}) | "failed")
+   write(imagex(@trim) | "failed")
+   write(imagex(@trim) | "failed")
+   write(imagex(trim) | "failed")
+   write(imagex(tan) | "failed")
+   write(imagex(main) | "failed")
+   &trace := -1
+   dummy{1,2,3,4}
+   dummy{}
+   dummy(image{1,2,3,4})
+   dummy("*"{1})
+   dummy(image("|||"([],[])))
+   dummy("+"(1,2))
+   dummy("+"(1))
+   dummy("image"(image(image)))
+   &trace := 0
+   e := create writer(1 to 4)
+   while write("return value ", @e)
+end
+
+procedure writer(n)
+   return write("in cx write ", n) & n
+end
+
+invocable "*", "|||", "+", "image"

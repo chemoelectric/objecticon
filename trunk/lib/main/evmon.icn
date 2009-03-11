@@ -1,0 +1,76 @@
+package evmon
+
+class EventSet()
+   public static const
+      AllocMask,
+      AssignMask,
+      TypeMask,
+      ConvMask,
+      ProcMask,
+      FuncMask,
+      OperMask,
+      EvalMask,
+      ListMask,
+      RecordMask,
+      ScanMask,
+      SetMask,
+      TableMask,
+      OOMask,
+      StructMask,
+      EmptyMask,
+      AllMask
+
+   private static init()
+      AllocMask := cset(EventCode.List || EventCode.Lelem || 
+                        EventCode.Lrgint || EventCode.Real || EventCode.Record || 
+                        EventCode.Selem || EventCode.Set || EventCode.Slots || 
+                        EventCode.Table || EventCode.Telem || EventCode.Tvsubs || 
+                        EventCode.Tvtbl || EventCode.Cset || EventCode.Refresh || 
+                        EventCode.String || EventCode.Coexpr ||
+                        EventCode.Object || EventCode.Cast || EventCode.Methp || 
+                        EventCode.Ucs)
+
+      AssignMask := cset(EventCode.Assign || EventCode.Value)
+
+      TypeMask := AllocMask ++ (EventCode.Integer || EventCode.Null || EventCode.Proc)
+
+      ConvMask := cset(EventCode.Aconv || EventCode.Tconv || EventCode.Sconv || 
+                       EventCode.Nconv || EventCode.Fconv)
+
+      ProcMask := cset(EventCode.Pcall || EventCode.Pfail || EventCode.Pret || 
+                       EventCode.Psusp || EventCode.Presum || EventCode.Prem)
+
+      FuncMask := cset(EventCode.Fcall || EventCode.Ffail || EventCode.Fret || 
+                      EventCode.Fsusp || EventCode.Fresum || EventCode.Frem)
+
+      OperMask := cset(EventCode.Ocall || EventCode.Ofail || EventCode.Oret || 
+                       EventCode.Osusp || EventCode.Oresum || EventCode.Orem)
+
+      EvalMask := FuncMask ++ ProcMask ++ OperMask
+
+      ListMask := cset(EventCode.Lbang || EventCode.Lcreate || EventCode.Lpop || 
+                       EventCode.Lpull || EventCode.Lpush || EventCode.Lput || 
+                       EventCode.Lrand || EventCode.Lsub)
+
+      RecordMask := cset(EventCode.Rbang || EventCode.Rcreate || EventCode.Rrand ||
+                         EventCode.Rref || EventCode.Rsub)
+
+      ScanMask := cset(EventCode.Snew || EventCode.Sfail || EventCode.Spos || 
+                       EventCode.Ssusp || EventCode.Sresum || EventCode.Srem)
+
+      SetMask := cset(EventCode.Sbang || EventCode.Screate || EventCode.Sdelete ||
+                      EventCode.Sinsert || EventCode.Smember || EventCode.Sval)
+
+      TableMask := cset(EventCode.Tbang || EventCode.Tcreate || EventCode.Tdelete || 
+                        EventCode.Tinsert || EventCode.Tkey || EventCode.Tmember ||
+                        EventCode.Trand || EventCode.Tsub)
+
+      OOMask := cset(EventCode.Objectref || EventCode.Objectsub || EventCode.Classref ||
+                     EventCode.Classsub || EventCode.Castref || EventCode.Castsub ||
+                     EventCode.Objectcreate)
+
+      StructMask := ListMask ++ RecordMask ++ SetMask ++ TableMask ++ OOMask
+      EmptyMask := ''
+      AllMask := &cset
+   end
+end

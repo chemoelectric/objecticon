@@ -1,0 +1,242 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util, graphics
+
+#
+#
+# This class handles Icon events, dispatching them to
+# the appropriate dialog.  It also controls any active Tickers,
+# activating them between events as and when appropriate.
+#
+class Dispatcher()
+   public static const 
+      dialogs,
+      tickers
+
+   private static 
+      idle_sleep
+
+   private static const
+      IDLE_SLEEP_MIN,
+      IDLE_SLEEP_MAX
+
+   private static init()
+      IDLE_SLEEP_MIN := 10
+      IDLE_SLEEP_MAX := 50
+      dialogs := set([])
+      tickers := set([])
+      compute_idle_sleep()
+   end
+
+   #
+   # Compute the ticker sleep rate.
+   #
+   # @p
+   private static compute_idle_sleep()
+      local t
+      idle_sleep := IDLE_SLEEP_MAX
+      every t := !tickers do
+         idle_sleep >:= \t.interval
+      #
+      # Don't make it too busy.
+      #
+      idle_sleep <:= IDLE_SLEEP_MIN
+   end
+
+   #
+   # Stop a ticker; has no effect if not running.
+   #
+   public static stop_ticker(t)
+      member(tickers, t) | fail
+      delete(tickers, t)
+      t.next_tick_time := &null
+      compute_idle_sleep()
+   end
+
+   #
+   # Start a ticker; has no effect if already running.
+   # 
+   public static start_ticker(t)
+      if member(tickers, t) then
+         fail
+      # Times must be > 0 if set
+      if \t.times <= 0 then
+         runerr("Times must be >0 if set", t.times)
+      # One-time tick, or need an interval.
+      \t.times = 1 | \t.interval | runerr("Ticker interval not set")
+      insert(tickers, t)
+      t.last_tick_time := &null
+      t.start_time := curr_time_millis()
+      if /t.delay then
+         t.next_tick_time := 0
+      else
+         t.next_tick_time := t.start_time + t.delay
+      compute_idle_sleep()
+   end
+
+   #
+   # Is a ticker active?
+   #
+   public static is_ticking(t)
+      return member(tickers, t)
+   end
+
+   #
+   # A Ticker's delay or interval have changed.  Has no effect on
+   # a Ticker that is not running.
+   # 
+   public static adjust_ticker(t)
+      member(tickers, t) | fail
+      if /t.last_tick_time then {
+         # No tick() yet, do what start_ticker does.
+         if /t.delay then
+            t.next_tick_time := 0
+         else
+            t.next_tick_time := t.start_time + t.delay
+      } else
+         # Some ticks have happened, just recompute next one.
+         t.next_tick_time := t.interval + t.last_tick_time
+      compute_idle_sleep()
+   end
+
+   #
+   # Add a dialog
+   #
+   public static add(d)
+      insert(dialogs, d)
+   end
+
+   #
+   # Delete a dialog
+   #
+   public static del(d)
+      delete(dialogs, d)
+   end
+
+   #
+   # Loop until dialog r is closed processing events and tickers.  If r
+   # is omitted, then loop until there are no open dialogs.
+   #
+   public static message_loop(r)
+      if /r then {
+         while *dialogs > 0 do
+            do_event() | do_validate() | do_ticker() | delay(idle_sleep)
+      } else {
+         while \r.is_open_flag do
+            do_event() | do_validate() | do_ticker() | delay(idle_sleep)
+      }
+   end
+
+   public static service(r)
+      if /r then {
+         while *dialogs > 0 do
+            do_event() | do_validate() | do_ticker() | break
+      } else {
+         while \r.is_open_flag do
+            do_event() | do_validate() | do_ticker() | break
+      }
+   end
+
+   public static do_event()
+      local d, bag, e
+      bag := []
+      every d := !dialogs do {
+         if *d.win.pending() > 0 then {
+            if /d.is_blocked_flag then
+               put(bag, d)
+            else {
+               while *d.win.pending() > 0 do {
+                  #
+                  # Discard the event and beep in the window.
+                  # 
+                  e := d.win.event()
+                  member(Mouse.DRAG_OR_MOVEMENT | Mouse.RELEASE, e[1]) | d.win.alert()
+               }
+            }
+         }
+      }
+      if d := ?bag then {
+         d.process_event(d.win.event())
+         return
+      }
+   end
+
+   public static do_validate()
+      local d, bag
+      bag := []
+      every d := !dialogs do {
+         if d.needs_validate() then
+            put(bag, d)
+      }
+      if d := ?bag then {
+         d.validate()
+         return
+      }
+   end
+
+   public static do_ticker()
+      local curr_time, d, bag
+
+      curr_time := curr_time_millis()
+      bag := []
+      every d := !tickers do {
+         if curr_time >= d.next_tick_time then
+            put(bag, d)
+      }
+      if d := ?bag then {
+         d.tick()
+         d.last_tick_time := curr_time_millis()
+         if \d.times then {
+            d.times -:= 1
+            if d.times <= 0 then
+               stop_ticker(d)
+         }
+         #
+         # Only set next time if still active - it times may have expired
+         # or it can have stopped itself in its tick() method.
+         #
+         if is_ticking(d) then
+            d.next_tick_time := d.interval + d.last_tick_time
+         return
+      }
+   end
+
+   #
+   # Return a list of unblocked dialogs.
+   #
+   public static list_unblocked()
+      local d, res
+
+      res := []
+      every d := !dialogs do
+         if /d.is_blocked_flag then
+            put(res, d)
+
+      return res
+   end
+
+   #
+   # Generate any (unblocked) dialogs which are instances of
+   # the given class.  If the parameter is omitted, all unblocked
+   # dialogs are generated.
+   #
+   public static find_dialog(cl)
+      local d
+      every d := !dialogs do {
+         if /d.is_blocked_flag & 
+            (/cl | is(d, cl)) then
+             suspend d
+      }
+   end
+
+   private new()
+   end
+end

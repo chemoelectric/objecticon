@@ -1,0 +1,181 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics, util
+
+#
+# This is the parent class of the button classes, including
+# checkboxes.
+#
+# A {Button} produces a {Event.BUTTON_PRESS} when the button is
+# depressed, and code {Event.BUTTON_RELEASE} when it is released,
+# as well as an {Event.ACTION}.
+# 
+# By default, when a button holds the keyboard focus a dashed
+# line appears just within the button.  Then, when return is
+# pressed an {Event.ACTION} is generated.  The method
+# {Dialog.set_initial_focus()} can be used to have the button
+# have the focus when the dialog is first displayed.
+#
+# Buttons also repeatedly produce a {Event.BUTTON_HELD} whilst they
+# are held down, rather like a repeating keyboard press.  The
+# delay between the initial repeat event and subsequent repeat
+# events is set in the {Style} object.
+#
+class Button(Toggle,Component)
+   public 
+      is_down,                 #               
+      parent_button_group,     #
+      repeat_delay,
+      no_click_focus_flag,
+      toggles_flag
+
+   public set_parent_button_group(x)
+      return self.parent_button_group := x
+   end
+
+   #
+   # Set the no-click-focus behaviour.  If set, the component will
+   # not get the focus on a left click.
+   #
+   public set_no_click_focus(s)
+      self.no_click_focus_flag := to_flag(s)
+   end
+
+   public tick()
+      if curr_time_millis() > self.repeat_delay then
+         fire(Event.BUTTON_HELD)
+   end
+
+   public go_down()
+      self.is_down := 1
+      start_ticker(Gui.REPEAT_RATE)
+   end
+
+   public go_up()
+      self.is_down := &null
+      stop_ticker()
+   end
+
+   public handle_lpress(e)
+      local b
+
+      if /self.is_down then {
+         go_down()
+         self.repeat_delay := curr_time_millis() + Gui.REPEAT_DELAY
+         every b := !(\self.parent_button_group).buttons do {
+            if b.is_unhidden() & b.is_unshaded() then {
+               parent_dialog.hold(b, e)
+               b.repeat_delay := self.repeat_delay
+            }
+         }
+         self.invalidate()
+         fire(Event.BUTTON_PRESS, e)
+      }
+   end
+
+   public handle_ldrag(e)
+      #
+      # Button held down; toggle on/off as it goes over the button 
+      #
+      if self.in_region(e) then {
+         if /self.is_down then {
+            go_down()
+            invalidate()
+         }
+      } else {
+         if \self.is_down then {
+            go_up()
+            invalidate()
+         }
+      }
+   end
+
+   public handle_lrelease(e)
+      if \self.is_down then {
+         go_up()
+         fire(Event.BUTTON_RELEASE, e)
+         on_action(e)
+      }
+   end
+
+   public on_action(e)
+      if \self.toggles_flag then {
+         if \self.parent_check_box_group then
+            self.set_is_checked("t")
+         else
+            self.toggle_is_checked()
+      } else
+         self.invalidate()
+      fire(Event.ACTION, e)
+   end
+
+   public handle_accel(e)
+      cast(self,Component).handle_accel(e)
+      on_action(e)
+   end
+
+   public handle_key(e)
+      if e.code == ("\r"|"\l"|" ") then
+         on_action(e)
+   end
+
+   #
+   # Set the status to checked.
+   #
+   public set_is_checked(s)
+      cast(self,Toggle).set_is_checked(s)
+      self.invalidate()
+   end
+
+   public accepts_focus(e)
+      if e.code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
+         fail
+      return cast(self,Component).accepts_focus(e)
+   end
+
+   #
+   # Set the button so that when it is pressed, it toggles
+   # between two states, as indicated by the is_checked
+   # flag.
+   #
+   # Instances of Checkbox have this flag on by default, but 
+   # TextButton and IconButton do not.  When the flag is on,
+   # the latter classes indicate their checked status by
+   # showing the button as being "down".
+   #
+   public set_toggles(s)
+      self.toggles_flag := to_flag(s)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "is_checked" : set_is_checked(f.flag_val())
+         "toggles" : set_toggles(f.flag_val())
+         "no_click_focus" : set_no_click_focus(f.flag_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.accepts_focus_flag := 1
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(self.handle_key, Event.KEY_PRESS)
+      set_fields(a)
+      return
+   end
+end
+
+
+

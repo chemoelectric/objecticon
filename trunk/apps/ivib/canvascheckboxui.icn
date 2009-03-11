@@ -1,0 +1,31 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+class CanvasCheckBoxUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasCheckBox()
+      t.set_paint(CanvasTextPaint("CheckBox"))
+      return t
+   end
+
+   public get_category()
+      return "Buttons"
+   end
+
+   public get_name()
+      return "CheckBox"
+   end
+
+   public get_icon()
+      return (
+              $include "icon/icn8.icon"
+              )
+   end
+end
+

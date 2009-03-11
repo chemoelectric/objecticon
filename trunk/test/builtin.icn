@@ -1,0 +1,19 @@
+global l
+
+procedure FncDef(s)
+   put(l, s)
+end
+
+procedure main()
+   local f,s
+   l := []
+   $include "../base/h/fdefs.h"
+
+   every f := !l do {
+      yes_no{image(f), f === proc(subtype(f),0)}
+   }
+
+   every s := function() do
+      yes_no{s, s === subtype(proc(s,0))}
+
+end

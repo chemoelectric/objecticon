@@ -1,0 +1,2367 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+import lang, util
+
+#
+# Holds detail of a parse position in a file
+#
+class Diversion()
+   private readable
+      id,
+      subject, 
+      pos
+
+   package new(id, subject, pos)
+      self.id := id
+      self.subject := subject
+      self.pos := pos
+      return
+   end
+end
+
+
+class ProblemDetail()
+   private readable
+      stack,
+      msg
+
+   package new(stack, msg)
+      self.stack := stack
+      self.msg := msg
+      return
+   end
+end
+
+
+#
+# Holds a attribute usage of IDREF.  Just used for validation.
+#
+class IdAttributeRef()
+   private readable 
+      val,
+      pos
+
+   package new(val, pos)
+      self.val := val
+      self.pos := pos
+      return
+   end
+end
+
+
+class XmlParser(Connectable,SetFields)
+   public static const
+      XML_SPACE,
+      XML_CHAR,
+      XML_INVALID_CHAR,
+      XML_NAME_START, 
+      XML_NAME_CHAR,
+      XML_PUBID_CHAR,
+      WARNING_EVENT,
+      VALIDITY_ERROR_EVENT, 
+      FATAL_ERROR_EVENT
+
+   public 
+      doc,
+      resolver, 
+      current_divert_id,
+      divert_stack,
+      in_ext_subset,
+      dtd_insert_shown_error,
+      do_namespaces_flag,
+      preserve_insignificant_whitespace_flag,
+      preserve_comments_flag,
+      id_attribute_refs,
+      validate_flag,
+      fatal_error,
+      utf8_flag
+
+   #
+   # Set the resolver
+   #
+   public set_resolver(r)
+      return self.resolver := r
+   end
+
+   #
+   # Get the resolver being used
+   #
+   public get_resolver()
+      return self.resolver
+   end
+
+   #
+   # Configure whether the parser does namespace post-processing (the
+   # default is yes).
+   #
+   public set_do_namespaces(s)
+      self.do_namespaces_flag := to_flag(s)
+   end
+
+   #
+   # Configure whether the parser validates (the default is yes).
+   #
+   public set_validate(s)
+      self.validate_flag := to_flag(s)
+   end
+
+   #
+   # Configure whether the parser preserves comments (the default is yes).
+   #
+   public set_preserve_comments(s)
+      preserve_comments_flag := to_flag(s)
+   end
+
+   #
+   # Configure whether the parser always keeps insignificant whitespace
+   # in the output document.  Generally only useful for testing purposes;
+   # XML canonical form needs this flag to be set because it is a byte
+   # for byte output which needs to include insignificate whitespace.
+   #
+   # The default is off.
+   #
+   public set_preserve_insignificant_whitespace(s)
+      preserve_insignificant_whitespace_flag := to_flag(s)
+   end
+
+   #
+   # Parse the string s returning an XmlDocument object.
+   #
+   # [1] document ::= prolog element Misc*
+   #
+   public parse(s)
+      doc := XmlDocument()
+
+      # The predefined entities.  Note that the values are in each case valid content.
+      # The chars "&" and "<" on their own would not be valid content.
+      if type(s) == "ucs" then {
+         insert(doc.general_entities, ucs("lt"), EntityDef(ucs("&#60;")))
+         insert(doc.general_entities, ucs("gt"), EntityDef(ucs(">")))
+         insert(doc.general_entities, ucs("amp"), EntityDef(ucs("&#38;")))
+         insert(doc.general_entities, ucs("apos"), EntityDef(ucs("\'")))
+         insert(doc.general_entities, ucs("quot"), EntityDef(ucs("\"")))
+         utf8_flag := 1
+      } else {
+         insert(doc.general_entities, "lt", EntityDef("&#60;"))
+         insert(doc.general_entities, "gt", EntityDef(">"))
+         insert(doc.general_entities, "amp", EntityDef("&#38;"))
+         insert(doc.general_entities, "apos", EntityDef("\'"))
+         insert(doc.general_entities, "quot", EntityDef("\""))
+         utf8_flag := &null
+      }
+
+      fatal_error := dtd_insert_shown_error := &null
+      current_divert_id := "input"
+      divert_stack := []
+      id_attribute_refs := []
+
+      normalize_eol(s) ? {
+         parse_prolog() | fail
+         doc.add(parse_element()) | fail
+         parse_misc_star() | fail
+         pos(0) | return err("Invalid content at end of input")
+      }
+
+      # Catch-all
+      if \fatal_error then
+         fail
+
+      validate_docname()
+      validate_idrefs()
+      validate_ndata_decls()
+      validate_attribute_definitions()
+
+      if \self.do_namespaces_flag then
+         do_namespace_processing() | fail
+
+      cleanup_source_refs()
+
+      return doc
+   end
+
+   #
+   # Remove any unwanted references to the source string from
+   # self and doc.
+   #
+   public cleanup_source_refs()
+      id_attribute_refs := &null
+      every (!doc.general_entities).pos := &null
+      every (!(!doc.attribute_lists).attribute_defs).pos := &null
+   end
+
+   public validate_ndata_decls()
+      local x
+      every x := !sort(doc.general_entities) do {
+         if \x[2].notation then
+            member(doc.notation_declarations, x[2].notation) | 
+               invalid("ENTITY " || x[1] ||
+                       ": NDATA declaration " || x[2].notation || " not declared as a NOTATION",
+                       x[2].pos)
+      }
+   end
+
+   public validate_attribute_definitions()
+      local x, y, z
+      every x := !sort(doc.attribute_lists) do  {
+         every y := !sort(x[2].attribute_defs) do {
+            case y[2].def_type of {
+               "NOTATION": {
+                  # Check for EMPTY/NOTATION clash.
+                  if (\doc.element_declarations[x[1]]).content_spec.op == "EMPTY" then
+                     invalid("ATTLIST for element " || x[1] || ", attribute " ||
+                             y[1] || ": An EMPTY element can't have a NOTATION attribute",
+                             y[2].pos)
+
+                  # Check all notations declared.
+                  every z := !y[2].def_set do {
+                     member(doc.notation_declarations, z) | 
+                        invalid("ATTLIST for element " || x[1] || ", attribute " ||
+                                y[1] || ": " || z || " not declared as a NOTATION",
+                                y[2].pos)
+                  }
+               }
+               "ENTITY" | "ENTITIES" : {
+                  # Check default value refers to an ENTITY.
+                  if \y[2].default_value then {
+                     member(doc.general_entities, y[2].default_value) | 
+                        invalid("ATTLIST for element " || x[1] || ", attribute " ||
+                                y[1] || ": default value " || y[2].default_value ||
+                                " not declared as an ENTITY",
+                                y[2].pos)
+                  }
+               }
+            }
+         }
+      }
+   end
+
+   #
+   # Validate idrefs
+   #
+   private validate_idrefs()
+      local x
+      every x := !id_attribute_refs do
+         member(doc.id_attribute_values, x.val) | invalid("an IDREF(S) attribute " ||
+                                                          x.val || " was used, which does not match any IDs",
+                                                          x.pos)
+   end
+
+   public validate_docname()
+      local docname, e
+
+      every e := !doc.children do {
+         if not(text(e)) & (e.get_type() == "doctype") then {
+            docname := e.get_name()
+            break
+         }
+      }
+
+      if \docname ~== doc.get_root_element().get_name() then
+         invalid("The document name in the DOCTYPE declaration must match the name of the root element")
+   end
+
+   #
+   # [3] S ::= (#x20 | #x9 | #xD | #xA)+
+   #
+   private spaces()
+      any(XML_SPACE) | return err("space expected")
+      return tab(many(XML_SPACE))
+   end
+
+   public dtd_spaces()
+      dtd_any(XML_SPACE) | return err("space expected")
+      return tab(dtd_many(XML_SPACE))
+   end
+
+   #
+   # [5] Name ::= (Letter | '_' | ':') (NameChar)*
+   #
+   # If quiet is non-null, just fail silently on error.
+   #
+   private parse_name(quiet)
+      if any(XML_NAME_START) then
+         return move(1) || tab(many_star(XML_NAME_CHAR))
+      else
+         return /quiet & err("Valid name start character expected")
+   end
+
+   #
+   # Same as parse_name, but within a DTD
+   #
+   private dtd_parse_name()
+      dtd_any(XML_NAME_START) | return err("Valid name start character expected")
+      return move(1) ||  tab(dtd_many_star(XML_NAME_CHAR))
+   end
+
+   #
+   # [6] Names ::= Name (S Name)*
+   #
+   # If quiet is non-null, just fail silently on error.
+   #
+   private parse_names(quiet) 
+      local l
+
+      l := []
+      repeat {
+         put(l, parse_name(quiet)) | fail
+         looking_at_space_then_cset(XML_NAME_START) | break
+         spaces()
+      }
+      
+      return l
+   end
+
+   #
+   # [7] Nmtoken ::= (NameChar)+
+   #
+   # If quiet is non-null, just fail silently on error.
+   #
+   private parse_nmtoken(quiet)
+      if any(XML_NAME_CHAR) then
+         return tab(many(XML_NAME_CHAR))
+      return /quiet & err("Valid name character expected")
+   end
+
+   #
+   # Same as parse_nmtoken, but within a DTD
+   #
+   private dtd_parse_nmtoken()
+      dtd_any(XML_NAME_CHAR) | return err("Valid name character expected")
+      return tab(dtd_many(XML_NAME_CHAR))
+   end
+
+   #
+   # [8] Nmtokens ::=  Nmtoken (S Nmtoken)*
+   #
+   # If quiet is non-null, just fail silently on error.
+   #
+   private parse_nmtokens(quiet) 
+      local l
+
+      l := []
+      repeat {
+         put(l, parse_nmtoken(quiet)) | fail
+         looking_at_space_then_cset(XML_NAME_CHAR) | break
+         spaces()
+      }
+      
+      return l
+   end
+
+   #
+   # [9] EntityValue ::= '"' ([^%&"] | PEReference | Reference)* '"' |  "'" ([^%&'] | PEReference | Reference)* "'"
+   #
+   private parse_entity_value()
+      local res, c
+      any('\'\"') | return err("\' or \" expected")
+      c := move(1)
+      res := ""
+      repeat {
+         if any('%') then {
+            # Can't reference a pe in the internal subset; see ibm test ibm29n04.xml
+            if /in_ext_subset then 
+               return err("cannnot reference a parameter entity in the internal subset")
+            # In an entity value, perefs (%..;) are always expanded
+            res ||:= resolve_entity(lookup_pe_reference(parse_pe_reference())) | fail
+         } else if match("&#") then
+            # Char refs are expanded
+            res ||:= parse_char_ref(1) | fail
+         else if any('&') then
+            # General refs aren't
+            res ||:= parse_entity_ref() | fail
+         else if =c then
+            break
+         else
+            res ||:= tab(upto('%&' ++ c)) | return err("Unexpected eof")
+      }
+      check_is_char_data(res, "entity value data") | fail
+      return res
+   end
+   
+   #
+   # [10] AttValue ::= '"' ([^<&"] | Reference)* '"' |  "'" ([^<&'] | Reference)* "'"
+   #
+   private parse_attvalue()
+      local res, c
+      any('\'\"') | return err("\' or \" expected")
+      c := move(1)
+      res := ""
+      repeat {
+         if any('&') then
+            res ||:= parse_reference() | fail
+         else if any('<') then
+            return err("'<' not allowed here")
+         else if =c then
+            break
+         else
+            res ||:= tab(upto('<&' ++ c)) | return err("Unexpected eof")
+      }
+      check_is_char_data(res, "attribute value data") | fail
+      return res
+   end
+
+   #
+   # see s3.3.3 - attribute value normalization.
+   # attlist is the attributelist for this element, or &null if unknown.
+   # att is the name of the attribute.
+   #
+   private normalize_attvalue(s, attdef)
+      local res
+
+      #
+      # Need to divert because the normalize_attvalue1 uses string scanning, and
+      # returns errors.
+      #
+      start_divert("attvalue")
+      res := normalize_attvalue1(s) | fail
+      end_divert()
+
+      #
+      # Decide if it's a CDATA element.
+      #
+      if (\attdef).def_type == "CDATA" then
+         return res
+
+      #
+      # Not a CDATA, so do extra processing on it.
+      #
+      res ? {
+         tab(many(' '))
+         res := ""
+         repeat {
+            res ||:= tab(upto(' '))
+            if any(' ') then {
+               tab(many(' '))
+               # No trailing spaces.
+               if not(pos(0)) then
+                  res ||:= " "
+            } else {
+               res ||:= tab(0)
+               break
+            }
+         }
+      }
+
+      return res
+   end
+
+   public normalize_attvalue1(s, circle)
+      local res, ref, c2, o
+      res := ""
+      s ? {
+         repeat {
+            res ||:= tab(upto('&' ++ XML_SPACE))
+            if any(XML_SPACE) then {
+               res ||:= " "
+               move(1)
+            } else if any('&') then {
+               # Char refs aren't recursively treated; entity refs are.
+               if match("&#") then
+                  res ||:= parse_char_ref(1) | fail 
+               else {
+                  ref := parse_entity_ref() | fail
+                  if member(\circle, ref) then
+                     return err("circular entity replacement")
+                  c2 := copy(\circle) | set()
+                  insert(c2, ref)
+                  o := lookup_entity_ref(ref) | fail
+
+                  #
+                  # If standalone "yes", then can't refernce the entity if it was defined in the external subset
+                  #
+                  if \doc.standalone & \o.in_ext_subset then
+                     return err("cannot reference an entity declared externally, in a standalone document")
+                  #
+                  # Can't have an external reference here.  See s3.1
+                  #
+                  \o.str | return err("reference to external entity in attribute value")
+                  #
+                  # Can't have a < char; s3.1
+                  #
+                  if upto('<', o.str) then
+                     return err("the replacement text in an attribute value cannot contain a '<' char")
+                  #
+                  # Recursively normalize the entity ref's value
+                  #
+                  res ||:= normalize_attvalue1(o.str, c2)
+               }
+            } else {
+               res ||:= tab(0)
+               break
+            }
+         }
+      }
+      return res
+   end
+
+   #
+   # Normalize end-of-line characters.
+   # \r\n combinations are replaced with \n
+   # \rx combinations are replaced with \nx where x is any character other than \n
+   #
+   private normalize_eol(s)
+      local res
+      res := ""
+      s ? repeat {
+         res ||:= tab(upto('\r'))
+         if any('\r') then {
+            move(1)
+            if any('\n') then
+               move(1)
+            res ||:= "\n"
+         } else
+            return res || tab(0)
+      }
+   end
+
+   #
+   # [11] SystemLiteral ::= ('"' [^"]* '"') | ("'" [^']* "'") 
+   #
+   private parse_system_literal()
+      local c, res
+      any('\'\"') | return err("\' or \" expected")
+      c := move(1)
+      res := tab(upto(c)) | return err("couldn't find " || c)
+      move(1)
+      check_is_char_data(res, "system literal value") | fail
+      return res
+   end
+
+   #
+   # [12] PubidLiteral ::= '"' PubidChar* '"' | "'" (PubidChar - "'")* "'"
+   #
+   private parse_pubid_literal()
+      local c, res, t
+      if any('\'') then
+         t := XML_PUBID_CHAR -- '\''
+      else if any('\"') then
+         t := XML_PUBID_CHAR
+      else
+         return err("\' or \" expected")
+      c := move(1)
+      res := tab(many(t)) | ""
+      =c | return err(c || " expected")
+
+      return res
+   end
+
+   #
+   # [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
+   #
+   private parse_comment()
+      local res, s, t
+      res := Comment()
+      ="<!--" | return err("'<!--' expected")
+      s := ""
+      repeat {
+         t := tab(upto('-')) | return err("- expected")
+         check_is_char_data(t, "comment") | fail
+         s ||:= t
+         # A double-hypen cannot be within the comment and must signify the end.
+         if match("--") then
+            break
+         s ||:= move(1)
+      }
+      ="-->" | return err("'-->' expected")
+      res.comment := s
+      return res
+   end
+
+   #
+   # [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
+   #
+   private parse_pi()
+      local res
+      res := ProcessingInstruction()
+      ="<?" | return err("'<?' expected")
+      res.target := parse_pi_target() | fail
+      if any(XML_SPACE) then {
+         spaces()
+         res.content := tab(find("?>")) | return err("missing '?>'")
+         check_is_char_data(res.content, "PI") | fail
+      }
+      ="?>" | return err("'?>' expected")
+      return res
+   end
+
+   #
+   # [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
+   #
+   private parse_pi_target()
+      local s
+      s := parse_name() | fail
+      if map(s) == "xml" then
+         return err("can't have 'xml' here")
+      return s
+   end
+
+   #
+   # [18] CDSect ::= CDStart CData CDEnd
+   # [19] CDStart ::= '<![CDATA['
+   # [20] CData ::= (Char* - (Char* ']]>' Char*)) 
+   # [21] CDEnd ::= ']]>'
+   #
+   private parse_cdsect()
+      local res
+      res := CData()
+      ="<![CDATA[" | return err("'<![CDATA[' expected")
+      res.content := tab(find("]]>")) | return err("no corresponding ']]>' in CDATA section")
+      check_is_char_data(res.content, "PI") | fail
+      ="]]>"
+      return res
+   end
+
+   #
+   # [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
+   #
+   private parse_prolog()
+      if match("<?xml") then
+         doc.add(parse_xml_decl()) | fail
+
+      parse_misc_star() | fail
+
+      if match("<!DOCTYPE") then {
+         doc.add(parse_doctype_decl()) | fail
+         parse_misc_star() | fail
+      }
+
+      return
+   end
+
+   #
+   # [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
+   #
+   private parse_xml_decl() 
+      local res
+      res := XmlDecl()
+      ="<?xml" | return err("'<?xml' expected")
+      res.version := parse_version_info() | fail
+
+      if looking_at_space_then("encoding") then
+         res.encoding := parse_encoding_decl() | fail
+
+      if looking_at_space_then("standalone") then
+         res.standalone := parse_sdecl() | fail
+
+      opt_spaces()
+
+      ="?>" | return err("'?>' expected")
+
+      return res
+   end
+
+   #
+   # [24] VersionInfo ::= S 'version' Eq ("'" VersionNum "'" | '"' VersionNum '"')
+   #
+   private parse_version_info()
+      local c, res
+      spaces() | fail
+      ="version" | return err("'version' expected")
+
+      parse_eq() | fail
+
+      any('\'\"') | return err("\' or \" expected")
+      c := move(1)
+
+      res := parse_version_num() | fail
+
+      if not(=c) then
+         return err(c || " expected")
+
+      return res
+   end
+
+   #
+   # [25] Eq ::= S? '=' S?
+   #
+   private parse_eq()
+      opt_spaces()
+      ="=" | return err("'=' expected")
+      opt_spaces()
+      return
+   end      
+
+   #
+   # [26] VersionNum ::= ([a-zA-Z0-9_.:] | '-')+
+   #
+   private parse_version_num()
+      local c
+      c := 'a-zA-Z0-9_.:\-'
+      any(c) | return err("expected " || image(c))
+      return tab(many(c))
+   end
+
+   #
+   # Misc*
+   # [27] Misc ::= Comment | PI | S
+   #
+   private parse_misc_star()
+      repeat {
+         if match("<!--") then
+            parse_and_maybe_add_comment(doc) | fail
+         else if match("<?") then
+            doc.add(parse_pi()) | fail
+         else if any(XML_SPACE) then
+            spaces()
+         else
+            break
+      }
+      return
+   end
+
+   #
+   # Parse and add a comment to the parent node, but only if the
+   # preserve_comments_flag is set.
+   #
+   private parse_and_maybe_add_comment(parent)
+      local c
+
+      c := parse_comment() | fail
+
+      if \preserve_comments_flag then
+         parent.add(c)
+
+      return c
+   end
+
+   #
+   # [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' (markupdecl | DeclSep)* ']' S?)? '>'
+   #
+   private parse_doctype_decl()
+      local res, s
+      res := DocType()
+      ="<!DOCTYPE" | return err("'<!DOCTYPE' expected")
+      spaces() | fail
+      res.name := parse_name() | fail
+      if looking_at_space_then("SYSTEM" | "PUBLIC") then {
+         spaces()
+         res.external_id := parse_external_id(res) | fail
+      }
+      opt_spaces()
+      if ="[" then {
+         parse_markup_decls(res) | fail
+         ="]" | return err("']' expected")
+         opt_spaces()
+      }
+      =">" | return err("'>' expected")
+
+      if \res.external_id then {
+         # Resolve and parse the external subset 
+         s := resolve(res.external_id) | fail
+         start_divert(to_string(res.external_id))
+         in_ext_subset := 1
+         s ? {
+            parse_ext_subset() | fail
+            pos(0) | return err("extraneous content")
+         }
+         in_ext_subset := &null
+         end_divert()
+      } 
+
+      return res
+   end
+
+   #
+   # Parse (markupdecl | DeclSep) *
+   #
+   # [28a] DeclSep ::= PEReference | S
+   # [29] markupdecl ::= elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment 
+   #
+   private parse_markup_decls()
+      local ref, o, s
+      repeat {
+         if match("<!ELEMENT") then
+            parse_element_decl() | fail
+         else if match("<!ATTLIST") then
+            parse_attlist_decl() | fail
+         else if match("<!ENTITY") then
+            parse_entity_decl() | fail
+         else if match("<!NOTATION") then
+            parse_notation_decl() | fail
+         else if match("<?") then
+            doc.add(parse_pi()) | fail
+         else if match("<!--") then
+            parse_and_maybe_add_comment(doc) | fail
+         else if any('%') then {
+            # Recursively parse the value of the pe.
+            ref := parse_pe_reference() | fail
+            o := lookup_pe_reference(ref) | fail
+            if \o.str then { 
+               start_divert("macro")
+               o.str ? {
+                  parse_markup_decls() | fail
+                  pos(0) | return err("extraneous content")
+               }
+               end_divert()
+            } else {
+               if \o.notation then
+                  return err("unparsed entity not allowed")
+               # Resolve the external entity, parse it appropriately.
+               s := resolve(o.external_id) | fail
+               start_divert(to_string(o.external_id))
+               s ? {
+                  parse_markup_decls() | fail
+                  pos(0) | return err("extraneous content")
+               }
+               end_divert()
+            }
+         } else if any(XML_SPACE) then
+            spaces()
+         else 
+            break
+      }
+      return
+   end
+   
+   #
+   # [30] extSubset ::= TextDecl? extSubsetDecl
+   #
+   private parse_ext_subset()
+      if match("<?xml") then
+         parse_text_decl() | fail
+      return parse_ext_subset_decl()
+   end
+
+   #
+   # [31] extSubsetDecl ::= ( markupdecl | conditionalSect | DeclSep)*
+   #
+   private parse_ext_subset_decl()
+      local ref, o, s
+      repeat {
+         if match("<![") then
+            parse_conditional_sect() | fail
+         else if match("<!ELEMENT") then
+            parse_element_decl() | fail
+         else if match("<!ATTLIST") then
+            parse_attlist_decl() | fail
+         else if match("<!ENTITY") then
+            parse_entity_decl() | fail
+         else if match("<!NOTATION") then
+            parse_notation_decl() | fail
+         else if match("<?") then
+            doc.add(parse_pi()) | fail
+         else if match("<!--") then
+            parse_and_maybe_add_comment(doc) | fail
+         else if any('%') then {
+            # Recursively parse the value of the pe.
+            ref := parse_pe_reference() | fail
+            o := lookup_pe_reference(ref) | fail
+            if \o.str then { 
+               start_divert("macro")
+               o.str ? {
+                  parse_ext_subset_decl() | fail
+                  pos(0) | return err("extraneous content")
+               }
+               end_divert()
+            } else {
+               if \o.notation then
+                  return err("unparsed entity not allowed")
+               # Resolve the external entity, parse it appropriately.
+               s := resolve(o.external_id) | fail
+               start_divert(to_string(o.external_id))
+               s ? {
+                  parse_ext_subset_decl() | fail
+                  pos(0) | return err("extraneous content")
+               }
+               end_divert()
+            }
+         } else if any(XML_SPACE) then
+            spaces()
+         else 
+            break
+      }
+      return
+   end
+
+   #
+   # [32] SDDecl ::= S 'standalone' Eq (("'" ('yes' | 'no') "'") | ('"' ('yes' | 'no') '"')) 
+   #
+   private parse_sdecl()
+      local c, res
+      spaces() | fail
+      ="standalone" | return err("'standalone' expected")
+
+      parse_eq() | fail
+
+      if any('\'\"') then
+         c := move(1)
+      else
+         return err("\' or \" expected")
+
+      res := ="yes" | ="no" | return err("'yes' or 'no' expected")
+
+      if res == "yes" then
+         doc.standalone := 1
+
+      if not(=c) then
+         return err(c || " expected")
+
+      return res
+   end
+
+   #
+   # [39] element ::= EmptyElemTag | STag content ETag
+   # [40] STag ::= '<' Name (S Attribute)* S? '>'
+   # [44] EmptyElemTag ::= '<' Name (S Attribute)* S? '/>'
+   #
+   private parse_element(parent_el)
+      local res, attlist, xs
+      res := XmlElement()
+      ="<" | return err("'<' expected")
+      res.name := parse_name() | fail
+
+      #
+      # Get a reference to the attlist for this element.  This is convenient here
+      # to avoid doing it many times during parse_attribute()'s call to
+      # normalize_attvalue.
+      #
+      attlist := doc.attribute_lists[res.name]
+
+      while looking_at_space_then_cset(XML_NAME_START) do {
+         spaces()
+         parse_attribute(res, attlist) | fail
+      }
+      opt_spaces()
+
+      #
+      # Validate the attributes
+      #
+      if \validate_flag then
+         validate_attributes(res)
+
+      #
+      # Process the xml:space attribute.
+      #
+      if member(res.attributes, "xml:space") then {
+         xs := res.attributes["xml:space"]
+         if  xs == "preserve" then
+            res.xml_space_preserve := 1
+         else if xs ~== "default" then
+            return err("xml:space has invalid value")
+      } else {
+         #
+         # Not present, so the value is inherited from the parent
+         #
+         res.xml_space_preserve := (\parent_el).xml_space_preserve
+      }
+
+      if =">" then {
+         parse_content(res) | fail
+         parse_etag(res) | fail
+      } else {
+         ="/>" | return err("'>' or '/>' expected")
+      }
+
+      #
+      # By default the whitespace_children is the same as the children, but validation
+      # may change this by removing "insignificant" whitespace.
+      #
+      res.whitespace_children := res.children
+
+      if \validate_flag then
+         validate_children(res, parent_el)
+
+      return res
+   end
+
+   #
+   # [41] Attribute ::= Name Eq AttValue
+   #
+   private parse_attribute(el, attlist)
+      local att, val, attdef
+      att := parse_name() | fail
+      parse_eq() | fail
+
+      #
+      # Try to get the AttributeDef for this attribute.  
+      #
+      attdef := (\attlist).attribute_defs[att]
+
+      val := normalize_attvalue(parse_attvalue(), attdef) | fail
+      if member(el.attributes, att) then
+         return err("duplicated attribute declaration: " || att)
+      insert(el.attributes, att, val)
+      return
+   end
+
+   #
+   # [42] ETag ::= '</' Name S? '>'
+   #
+   private parse_etag(el)
+      local t
+      ="</" | return err("'</' expected")
+      t := parse_name() | fail
+      t == el.name | return err("mismatched tags: " || el.name || " expected")
+      opt_spaces()
+      =">" | return err("'>' expected")
+      return
+   end
+
+   #
+   # [43] content ::= CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
+   # [14] CharData ::= [^<&]* - ([^<&]* ']]>' [^<&]*)
+   #
+   private parse_content(parent, circle)
+      local s, o, c2, ref, cd
+
+      repeat {
+         if pos(0) then
+            break
+         if any('&') then {
+            if match("&#") then
+               parent.add_string(parse_char_ref(1)) | fail
+            else {
+               ref := parse_entity_ref() | fail
+               if member(\circle, ref) then
+                  return err("circular entity replacement")
+               c2 := copy(\circle) | set()
+               insert(c2, ref)
+               o := lookup_entity_ref(ref) | fail
+               #
+               # If standalone "yes", then can't refernce the entity if it was defined in the external subset
+               #
+               if \doc.standalone & \o.in_ext_subset then
+                  return err("cannot reference an entity declared externally, in a standalone document")
+               if \o.str then { 
+                  # Simple expansion, parsed as content.
+                  start_divert("macro")
+                  o.str ? {
+                     parse_content(parent, c2) | fail
+                     pos(0) | return err("extraneous content")
+                  }
+                  end_divert()
+               } else {
+                  if \o.notation then
+                     return err("unparsed entity not allowed")
+                  # Resolve the external entity, parse it appropriately.
+                  s := resolve(o.external_id) | fail
+                  start_divert(to_string(o.external_id))
+                  s ? {
+                     parse_external_parsed_entity(parent, c2) | fail
+                     pos(0) | return err("extraneous content")
+                  }
+                  end_divert()
+               }
+            }
+         } else if match("<!--") then
+            parse_and_maybe_add_comment(parent) | fail
+         else if match("<?") then
+            parent.add(parse_pi()) | fail
+         else if match("<![CDATA[") then
+            parent.add(parse_cdsect()) | fail
+         else if any('<') then {
+            if match("</") then
+               break
+            parent.add(parse_element(parent)) | fail
+         } else {
+            #
+            # Must have more chars and initially not a < or an &
+            #
+            cd := tab(many(~'<&'))
+            if find("]]>", cd) then
+               return err("cannot have ']]>' in character content")
+
+            check_is_char_data(cd, "content character data") | fail
+
+            parent.add_string(cd)
+         }
+      }
+      return parent
+   end
+
+   public check_is_char_data(s, msg)
+      local j
+      if j := upto(XML_INVALID_CHAR, s) then
+         return err("invalid char (" || image(s[j]) || ") in " || msg)
+
+      return
+   end
+
+   #
+   # [45] elementdecl ::=  '<!ELEMENT' S Name S contentspec S? '>'
+   #
+   private parse_element_decl()
+      local name, content_spec, element_decl
+
+      tab(dtd_match("<!ELEMENT")) | return err("'<!ELEMENT' expected")
+      dtd_spaces() | fail
+      name := dtd_parse_name() | fail
+      dtd_spaces() | fail
+      content_spec := parse_content_spec() | fail
+      dtd_opt_spaces() | fail
+      =">" | return err("'>' expected")
+      element_decl := ElementDecl()
+      element_decl.in_ext_subset := in_ext_subset
+      element_decl.content_spec := content_spec
+      if member(doc.element_declarations, name) then
+         invalid("Multiple element declarations for element " || name)
+      else
+         insert(doc.element_declarations, name, element_decl)
+      return 
+   end
+
+   #
+   # [46] contentspec ::= 'EMPTY' | 'ANY' | Mixed | children 
+   #
+   private parse_content_spec()
+      local a, i
+      if tab(dtd_match("EMPTY")) then
+         return ContentSpec("EMPTY")
+      else if tab(dtd_match("ANY")) then {
+         a := ContentSpec("ANY")
+         a.is_mixed_flag := 1
+         return a
+      }
+      else if dtd_match("(") then {
+         # Awkward lookahead.
+         i := &pos
+         if tab(dtd_match("(")) & tab(dtd_many_star(XML_SPACE)) & dtd_match("#PCDATA") then {
+            tab(i)
+            return parse_mixed()
+         } else {
+            tab(i)
+            return parse_children()
+         }
+      } else
+         return err("'EMPTY', 'ANY' or '(' expected")
+   end
+
+   #
+   # [47] children ::= (choice | seq) ('?' | '*' | '+')?
+   #
+   private parse_children()
+      local x, op
+      x := parse_choiceseq() | fail
+      if dtd_any('?*+') then {
+         op := move(1)
+         return ContentSpec(op, x)
+      } else
+         return x
+   end
+
+   #
+   # [48] cp ::= (Name | choice | seq) ('?' | '*' | '+')?
+   #
+   private parse_cp()
+      local x, op
+
+      if dtd_any('(') then
+         x := parse_choiceseq() | fail
+      else if dtd_any(XML_NAME_START) then
+         x := ContentSpec("name", dtd_parse_name()) | fail
+      else
+         return err("Name or ( expected")
+      if dtd_any('?*+') then {
+         op := move(1)
+         return ContentSpec(op, x)
+      } else
+         return x
+   end
+
+   #
+   # [49] choice ::= '(' S? cp ( S? '|' S? cp )+ S? ')'
+   # [50] seq ::= '(' S? cp ( S? ',' S? cp )* S? ')'
+   #
+   private parse_choiceseq()
+      local res, op, a, t
+
+      tab(dtd_match("(")) | return err("'(' expected")
+      dtd_opt_spaces()
+      a := parse_cp() | fail
+      dtd_opt_spaces()
+
+      if dtd_any('|,') then {
+         op := move(1)
+         res := t := ContentSpec(op, a)
+         repeat {
+            dtd_opt_spaces()
+            a := parse_cp() | fail
+            dtd_opt_spaces()
+            tab(dtd_match(op)) | break
+            t.arg2 := ContentSpec(op, a)
+            t := t.arg2
+         }
+         t.arg2 := a
+      } else
+         res := a
+
+      tab(dtd_match(")")) | return err("')' expected")
+      return res
+   end
+
+   #
+   # [51] Mixed ::= '(' S? '#PCDATA' (S? '|' S? Name)* S? ')*' | '(' S? '#PCDATA' S? ')' 
+   # Converts to a string with spaces removed.
+   #
+   private parse_mixed()
+      local res, t, a, seen, n
+
+      tab(dtd_match("(")) | return err("( expected")
+      dtd_opt_spaces()
+      a := ContentSpec(tab(dtd_match("#PCDATA"))) | return err("'#PCDATA' expected")
+       
+      dtd_opt_spaces()
+
+      seen := set()
+
+      if dtd_any('|') then {
+         move(1)
+         res := t := ContentSpec("|", a)
+         repeat {
+            dtd_opt_spaces()
+            n := dtd_parse_name() | fail
+            if member(seen, n) then
+               invalid("name " || n || " appeared multiple times in mixed content spec")
+            else
+               insert(seen, n)
+            a := ContentSpec("name", n)
+            dtd_opt_spaces()
+            tab(dtd_match("|")) | break
+            t.arg2 := ContentSpec("|", a)
+            t := t.arg2
+         }
+         t.arg2 := a
+
+         tab(dtd_match(")*")) | return err("')*' expected")
+         a := ContentSpec("*", res)
+      } else {
+         tab(dtd_match(")")) | return err("')' expected")
+         if tab(dtd_match("*")) then
+            a :=  ContentSpec("*", a)
+      }
+
+      a.is_mixed_flag := 1
+
+      return a
+   end
+
+   #
+   # [52] AttlistDecl ::= '<!ATTLIST' S Name AttDef* S? '>'
+   # [53] AttDef ::= S Name S AttType S DefaultDecl
+   #
+   private parse_attlist_decl()
+      local element_name, t, attr_name, attribute_def, res
+      tab(dtd_match("<!ATTLIST")) | return err("'<!ATTLIST' expected")
+      dtd_spaces() | fail
+      element_name := dtd_parse_name() | fail
+      #
+      # See if we already have an AttList defined for this element.  If so,
+      # new AttDefs are merged into it.  In any case, multiple defs generate
+      # a warning.
+      #
+      if member(doc.attribute_lists, element_name) then {
+         warn("multiple ATTLIST definitions for element " || element_name)
+         t := doc.attribute_lists[element_name]
+      } else {
+         t := AttList()
+         insert(doc.attribute_lists, element_name, t)
+      }
+
+      repeat {
+         dtd_looking_at_space_then_cset(XML_NAME_START) | break
+         dtd_spaces() | fail
+         attr_name := dtd_parse_name() | fail
+         dtd_spaces() | fail
+         attribute_def := AttributeDef()
+         attribute_def.pos := where()
+         attribute_def.in_ext_subset := in_ext_subset
+         parse_att_type(attribute_def) | fail
+         dtd_spaces() | fail
+         parse_default_decl(attribute_def) | fail
+
+         # Check for multiple IDs
+         if attribute_def.def_type == "ID" & \t.has_id then
+            invalid("Multiple ID declarations for this element type")
+
+         #
+         # Second and subsequent definitions are ignored, but this generates a warning.
+         #
+         if member(t.attribute_defs, attr_name) then
+            warn("Multiple attribute defs for attribute " || attr_name || " in element " || element_name)
+         else
+            t.add_attribute_def(attr_name, attribute_def)
+      }
+      dtd_opt_spaces()
+      tab(dtd_match(">")) | return err("'>' expected")
+
+      return res
+   end
+
+   #
+   # [54] AttType ::= StringType | TokenizedType | EnumeratedType 
+   # [55] StringType ::= 'CDATA'
+   # [56] TokenizedType ::= 'ID' | 'IDREF'| 'IDREFS' | 'ENTITY' | 'ENTITIES' | 'NMTOKEN' | 'NMTOKENS'
+   # [57] EnumeratedType ::= NotationType | Enumeration 
+   #
+   private parse_att_type(attribute_def)
+      local s
+
+      if s := tab(dtd_match("CDATA" | "IDREFS" | "IDREF"| "ID" | "ENTITY" | "ENTITIES" | "NMTOKENS" | "NMTOKEN")) then
+         attribute_def.def_type := string(s)
+      else if dtd_match("NOTATION") then {
+         attribute_def.def_type := "NOTATION"
+         attribute_def.def_set := parse_notation_type() | fail
+      } else if dtd_any('(') then {
+         attribute_def.def_type := "ENUMERATION"
+         attribute_def.def_set := parse_enumeration() | fail
+      } else
+         return err("syntax error")
+
+      return attribute_def
+   end
+
+   #
+   # [58] NotationType ::= 'NOTATION' S '(' S? Name (S? '|' S? Name)* S? ')' 
+   #
+   private parse_notation_type()
+      local res, t
+
+      res := set()
+      tab(dtd_match("NOTATION")) | return err("'NOTATION' expected")
+      dtd_spaces() | fail
+      tab(dtd_match("(")) | return err("'(' expected")
+      repeat {
+         dtd_opt_spaces()
+         t := dtd_parse_name() | fail
+         if member(res, t) then
+            invalid("Duplicated name in notation enumeration declaration: " || t)
+         insert(res, t)
+         dtd_opt_spaces()
+         tab(dtd_match("|")) | break
+      }
+      opt_spaces()
+      tab(dtd_match(")")) | return err("')' expected")
+
+      return res
+   end
+
+   #
+   # [59] Enumeration ::= '(' S? Nmtoken (S? '|' S? Nmtoken)* S? ')'
+   #
+   private parse_enumeration()
+      local res, t
+
+      res := set()
+      tab(dtd_match("(")) | return err("'(' expected")
+      repeat {
+         dtd_opt_spaces()
+         t := dtd_parse_nmtoken() | fail
+         if member(res, t) then
+            invalid("Duplicated token in enumeration declaration: " || t)
+         insert(res, t)
+         dtd_opt_spaces()
+         tab(dtd_match("|")) | break
+      }
+      dtd_opt_spaces()
+      tab(dtd_match(")")) | return err("')' expected")
+
+      return res
+   end
+
+   #
+   # [60] DefaultDecl ::= '#REQUIRED' | '#IMPLIED' | (('#FIXED' S)? AttValue)
+   #
+   private parse_default_decl(attribute_def)
+      local s, val
+      if s := tab(dtd_match("#REQUIRED" | "#IMPLIED")) then
+         attribute_def.default_decl := string(s)
+      else {
+         if s := tab(dtd_match("#FIXED")) then {
+            attribute_def.default_decl := string(s)
+            dtd_spaces() | fail
+         }
+         val := attribute_def.default_value := normalize_attvalue(parse_attvalue(), attribute_def) | fail
+
+         if attribute_def.def_type == "ID" then
+            invalid("An attribute with type ID must have a default declaration of #IMPLIED or #REQUIRED")
+
+         #
+         # Validate default value
+         #
+         case attribute_def.def_type of {
+            "CDATA" : {
+            }
+            "ID" : {
+               if val ? not(parse_name(1) & pos(0)) then
+                  invalid("default attribute value " || val || " must be a valid name")
+            }
+            "IDREF" : {
+               if val ? not(parse_name(1) & pos(0)) then
+                  invalid("default attribute value " || val || " must be a valid name")
+            }
+            "IDREFS" : {
+               if val ? not(parse_names(1) & pos(0)) then
+                  invalid("default attribute value " || val || " must be comprised of valid names")
+            }
+            "ENTITY" : {
+               if val ? not(parse_name(1) & pos(0)) then
+                  invalid("default attribute value " || val || " must be a valid name")
+            }
+            "ENTITIES" : {
+               if val ? not(parse_names(1) & pos(0)) then
+                  invalid("default attribute value " || val || " must be comprised of valid names")
+            }
+            "NMTOKEN" : {
+               if val ? not(parse_nmtoken(1) & pos(0)) then
+                  invalid("default attribute value " || val || " must be a valid nmtoken")
+            }
+            "NMTOKENS" : {
+               if val ? not(parse_nmtokens(1) & pos(0)) then
+                  invalid("default attribute value " || val || " must be comprised of valid nmtokens")
+            }
+            "ENUMERATION" : { 
+               if not(member(attribute_def.def_set, val)) then
+                  invalid("default attribute value " || val || " is not one of the declared enumerations")
+            }
+            "NOTATION" : { 
+               if not(member(attribute_def.def_set, val)) then
+                  invalid("default attribute value " || val || " is not one of the declared notations")
+            }
+         }
+      }
+      return attribute_def
+   end
+
+   #
+   # [61] conditionalSect ::= includeSect | ignoreSect 
+   # [62] includeSect ::= '<![' S? 'INCLUDE' S? '[' extSubsetDecl ']]>' 
+   # [63] ignoreSect ::= '<![' S? 'IGNORE' S? '[' ignoreSectContents* ']]>'
+   #
+   private parse_conditional_sect()
+      tab(dtd_match("<![")) | return err("'<![' expected")
+      dtd_opt_spaces()
+      if tab(dtd_match("INCLUDE")) then {
+         dtd_opt_spaces()
+         tab(dtd_match("[")) | return err("'[' expected")
+         parse_ext_subset_decl() | fail
+      } else if tab(dtd_match("IGNORE")) then {
+         dtd_opt_spaces()
+         tab(dtd_match("[")) | return err("'[' expected")
+         parse_ignore_sect_contents() | fail
+      } else 
+         return err("'INCLUDE' or 'IGNORE' expected")
+
+      tab(dtd_match("]]>")) | return err("']]>' expected")
+
+      return
+   end
+
+   #
+   # [64] ignoreSectContents ::= Ignore ('<![' ignoreSectContents ']]>' Ignore)*
+   # [65] Ignore ::= Char* - (Char* ('<![' | ']]>') Char*) 
+   #
+   private parse_ignore_sect_contents()
+      repeat {
+         tab(upto('<]')) | return err("ignore section not closed")
+         if match("]]>") then 
+            return
+         else if ="<![" then {
+            parse_ignore_sect_contents() | fail
+            ="]]>" | return err("']]>' expected")
+         } else
+            move(1)
+      }
+   end
+
+   #
+   # [66] CharRef ::= '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
+   # [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+   #
+   private parse_char_ref(expand)
+      local s, c, digs, i
+
+      s := ="&#" | return err("'&#' expected")
+
+      if any('x') then {
+         s ||:= move(1)
+         c := '0-9a-fA-F'
+         any(c) | return err("Hex digit expected")
+         digs := tab(many(c)) 
+         i := format_string_to_int(digs, 16) | 63
+      } else {
+         c := &digits
+         any(c) | return err("Digit expected")
+         digs := tab(many(c)) 
+         i := integer(digs) | 63
+      }
+      s ||:= digs
+      s ||:= =";" | return err("';' expected")
+
+      if /expand then 
+         return s
+      else {
+         if hasord(XML_CHAR, i) then {
+            return if \utf8_flag then
+               uchar(i)
+            else
+               char(256 > i | 63)
+         }
+         return err("invalid char number :" || digs)
+      }
+   end
+
+   #
+   # [67] Reference ::= EntityRef | CharRef
+   #
+   private parse_reference()
+      if match("&#") then
+         return parse_char_ref() | fail
+      if any('&') then
+         return parse_entity_ref() | fail
+      else
+         return err("'&' expected")
+   end
+
+   #
+   # [68] EntityRef ::= '&' Name ';'
+   #
+   private parse_entity_ref()
+      local res
+      res := ="&" | return err("'&' expected")
+      res ||:= parse_name() | fail
+      res ||:= =";" | return err("';' expected")
+      return res
+   end
+
+   #
+   # [69] PEReference ::= '%' Name ';'
+   #
+   private parse_pe_reference()
+      local res
+      res := ="%" | return err("'%' expected")
+      res ||:= parse_name() | fail
+      res ||:= =";" | return err("';' expected")
+      return res
+   end
+
+   #
+   # Lookup a pe in the table, returning its value.
+   #
+   private lookup_pe_reference(s)
+      local name
+      name := s[2:-1]
+      if member(doc.parameter_entities, name) then
+         return doc.parameter_entities[name]
+      else
+         return err("No such parameter entity defined: " || name)
+   end
+
+   #
+   # Lookup a general entity in the table, returning its value.
+   #
+   private lookup_entity_ref(s)
+      local name
+      name := s[2:-1]
+      if member(doc.general_entities, name) then
+         return doc.general_entities[name]
+      else
+         return err("No such general entity defined: " || name)
+   end
+
+   #
+   # Convenience method to take a value from one of the entity tables and return it
+   # as a string, resolving it externally if necessary.
+   #
+   private resolve_entity(o)
+      if \o.str then
+         return o.str
+      if \o.notation then
+         return err("unparsed entity not allowed")
+      return resolve(o.external_id)
+   end
+
+   #
+   # [70] EntityDecl ::= GEDecl | PEDecl
+   # [71] GEDecl ::= '<!ENTITY' S Name S EntityDef S? '>'
+   # [72] PEDecl ::= '<!ENTITY' S '%' S Name S PEDef S? '>'
+   #
+   private parse_entity_decl()
+      local name, val
+      tab(dtd_match("<!ENTITY")) | return err("'<!ENTITY' expected")
+      #
+      # This could be more sophisticated to try to cover for example
+      # <!ENTITY%x; abc 'def >   where %x -> ' %'
+      #
+      spaces() | fail
+      if any('%') then {
+         ="%"
+         dtd_spaces() | fail
+         name := dtd_parse_name() | fail
+         dtd_spaces() | fail
+         val := parse_pe_def() | fail
+         # Second and subsequent definitions generate a warning, and are ignored.
+         if member(doc.parameter_entities, name) then
+            warn("multiple parameter entity definitions for " || name)
+         else
+            insert(doc.parameter_entities, name, val)
+      } else {
+         name := dtd_parse_name() | fail
+         dtd_spaces() | fail
+         val := parse_entity_def() | fail 
+         # Second and subsequent definitions generate a warning, and are ignored.
+         if member(doc.general_entities, name) then
+            warn("multiple parameter entity definitions for " || name)
+         else
+            insert(doc.general_entities, name, val)
+      }         
+      dtd_opt_spaces()
+      tab(dtd_match(">")) | return err("'>' expected")
+      return
+   end
+
+   #
+   # [73] EntityDef ::= EntityValue | (ExternalID NDataDecl?)
+   # return a string or an ExternalID
+   #
+   private parse_entity_def()
+      local res
+
+      res := EntityDef()
+      res.pos := where()
+      res.in_ext_subset := in_ext_subset
+      if dtd_match("SYSTEM" | "PUBLIC") then {
+         res.external_id := parse_external_id() | fail
+         if looking_at_space_then("NDATA") then
+            res.notation := parse_ndata_decl() | fail
+      } else 
+         res.str := parse_entity_value() | fail
+      return res
+   end
+   
+   #
+   # [74] PEDef ::= EntityValue | ExternalID
+   # return a string or an ExternalID
+   #
+   private parse_pe_def()
+      local res
+         
+      res := EntityDef()
+      res.pos := where()
+      res.in_ext_subset := in_ext_subset
+      if dtd_match("SYSTEM" | "PUBLIC") then
+         res.external_id := parse_external_id() | fail
+      else 
+         res.str := parse_entity_value() | fail
+      return res
+   end
+
+   #
+   #
+   # [75] ExternalID ::= 'SYSTEM' S SystemLiteral | 'PUBLIC' S PubidLiteral S SystemLiteral 
+   #
+   private parse_external_id()
+      local res
+      res := ExternalID()
+      if tab(dtd_match("SYSTEM")) then {
+         dtd_spaces() | fail
+         res.system_id := parse_system_literal() | fail
+      } else if tab(dtd_match("PUBLIC")) then {
+         dtd_spaces() | fail
+         res.public_id := parse_pubid_literal() | fail
+         dtd_spaces() | fail
+         res.system_id := parse_system_literal() | fail
+      } else
+         return err("SYSTEM or PUBLIC expected")
+      return res
+   end
+
+   #
+   # [76] NDataDecl ::= S 'NDATA' S Name
+   #
+   private parse_ndata_decl()
+      local n
+      dtd_spaces() | fail
+      tab(dtd_match("NDATA")) | return err("'NDATA' expected")
+      dtd_spaces()
+      n := dtd_parse_name() | fail
+      return n
+   end
+
+   #
+   # [77] TextDecl ::= '<?xml' VersionInfo? EncodingDecl S? '?>'
+   #
+   private parse_text_decl()
+      ="<?xml" | return err("'<?xml' expected")
+
+      if looking_at_space_then("version") then
+         parse_version_info() | fail
+      
+      parse_encoding_decl() | fail
+
+      opt_spaces()
+
+      ="?>" | return err("'?>' expected")
+
+      return
+   end
+
+   #
+   # [78] extParsedEnt ::= TextDecl? content
+   #
+   private parse_external_parsed_entity(parent, circle)
+      if match("<?xml") then
+         parse_text_decl() | fail
+      return parse_content(parent, circle)
+   end
+
+   #
+   # [80] EncodingDecl ::= S 'encoding' Eq ('"' EncName '"' | "'" EncName "'" ) 
+   #
+   private parse_encoding_decl()
+      local c, res
+      spaces() | fail
+      ="encoding" | return err("'encoding' expected")
+
+      parse_eq() | fail
+
+      any('\'\"') | return err("\' or \" expected")
+      c := move(1)
+
+      res := parse_enc_name() | fail
+
+      if not(=c) then
+         return err(c || " expected")
+
+      return res
+   end
+
+   #
+   # [81] EncName ::= [A-Za-z] ([A-Za-z0-9._] | '-')*
+   #
+   private parse_enc_name()
+      local c1, c2
+      c1 := 'A-Za-z'
+      c2 := 'A-Za-z0-9._\-'
+      any(c1) | return err("Letter expected")
+      return tab(many(c2))
+   end
+
+   #
+   # [82] NotationDecl ::= '<!NOTATION' S Name S (ExternalID | PublicID) S? '>'
+   # [83] PublicID ::= 'PUBLIC' S PubidLiteral 
+   #
+   private parse_notation_decl()
+      local res, name, pub, sys
+      res := NotationDecl()
+      tab(dtd_match("<!NOTATION")) | return err("'<!NOTATION' expected")
+      dtd_spaces() | fail
+      name := dtd_parse_name() | fail
+      dtd_spaces() | fail
+      if tab(dtd_match("PUBLIC")) then {
+         dtd_spaces() | fail
+         pub := parse_pubid_literal() | fail
+         if looking_at_space_then_cset('\'\"') then {
+            dtd_spaces() | fail
+            sys := parse_system_literal() | fail
+            res.external_id := ExternalID(sys, pub)
+         } else
+            res.public_id := pub
+      } else if dtd_match("SYSTEM") then
+         res.external_id := parse_external_id() | fail
+      else
+         return err("SYSTEM or PUBLIC expected")
+      dtd_opt_spaces()
+      tab(dtd_match(">")) | return err("'>' expected")
+
+      member(doc.notation_declarations, name) | insert(doc.notation_declarations, name, res)
+
+      return res
+   end
+
+   #
+   # S?
+   #
+   private opt_spaces()
+      if any(XML_SPACE) then
+         return spaces()
+      else
+         return ""
+   end
+
+   public dtd_opt_spaces()
+      if dtd_any(XML_SPACE) then
+         return dtd_spaces()
+      else
+         return ""
+   end
+
+   #
+   # Validate the given element child content; this may fail on error or just emit a warning
+   #
+   public validate_children(el, parent_el) 
+      local element_decl, tl
+
+      #
+      # Validate the element structure
+      #
+      if not member(doc.element_declarations, el.name) then {
+         invalid(el.name || " is an undeclared element name")
+         return 
+      }
+
+      element_decl := doc.element_declarations[el.name]
+
+      #
+      # If the spec isn't a mixed spec (ie one which contains #PCDATA),
+      # then we remove all whitespace-only string elements in the child list.
+      #
+      if element_decl.content_spec.isnt_mixed() then {
+         #
+         # Possibly change children to be a new list with the whitespace-only
+         # element removed.
+         #
+         tl := el.get_children_no_whitespace()
+         if *tl ~= *el.children then {
+            el.children := tl
+            #
+            # A standalone document is not allowed to have w/s removed for an element
+            # when that occurs as a result of a ELEMENT declaration in an external subset.
+            #
+            if \doc.standalone & \element_decl.in_ext_subset then
+               invalid(el.name || " had insignificant whitespace removed in a standalone document")
+         }
+      }
+
+      if not(element_decl.content_spec.pattern_match_element(el)) then
+         invalid(el.name || " does not match the declared pattern : " || to_string(element_decl.content_spec))
+
+      #
+      # If appropriate, put the children back to equal to the original whitespace_children;
+      # the former may have changed above.
+      #
+      if \el.xml_space_preserve | \self.preserve_insignificant_whitespace_flag then {
+         el.children := el.whitespace_children
+      }
+   end
+
+   #
+   # Validate the attributes of an element
+   #
+   public validate_attributes(el)
+      local attlist, x
+
+      if not(member(doc.attribute_lists, el.name)) then {
+         if *el.attributes ~= 0 then
+            invalid(el.name || " has attributes but none were declared")
+         return
+      }
+
+      #
+      # The AttList for this particular element type.
+      #
+      attlist := doc.attribute_lists[el.name]
+
+      #
+      # Check for any missing required attributes, and add any default attributes.
+      #
+      every x := !sort(attlist.attribute_defs) do {
+         if member(el.attributes, x[1]) then {
+            # A #FIXED attribute value must match the default.
+            if x[2].default_decl === "#FIXED" then {
+               if el.attributes[x[1]] ~=== x[2].default_value then
+                  invalid("attribute value " || el.attributes[x[1]] || " doesn't match the defined FIXED value " || x[2].default_value)
+            }
+         } else {
+            # A #REQUIRED attribute must be present.
+            if x[2].default_decl === "#REQUIRED" then
+               invalid("the attribute " || x[1] || " is required, but not present")
+            else {
+               # Cannot insert a default from an attdef defined in the external subset, if standalone is "yes"
+               if \doc.standalone & \x[2].in_ext_subset then
+                  invalid("cannot use a default from an attribute declared externally, in a standalone document")
+               # Insert any default value.
+               insert(el.attributes, x[1], \x[2].default_value)
+            }
+         }       
+      }
+
+      #
+      # Validate each of the attributes values.
+      #
+      every x := !sort(el.attributes) do {
+         if member(attlist.attribute_defs, x[1]) then {
+            validate_attribute_value(el.name, attlist.attribute_defs[x[1]], x[1], x[2])
+         } else {
+            invalid(x[1] || " is not a defined attribute for element " || el.name)
+         }
+      }
+   end
+
+   public validate_attribute_value(element_name, attdef, name, val) 
+      local l, entity_def, n
+      case attdef.def_type of {
+         "CDATA" : {
+         }
+         "ID" : {
+            if val ? not(parse_name(1) & pos(0)) then
+               invalid("attribute value " || val || " must be a valid name")
+            # Store the value of the id
+            if member(doc.id_attribute_values, val) then
+               invalid("duplicated ID attribute value: " || val)
+            else
+               insert(doc.id_attribute_values, val)
+         }
+         "IDREF" : {
+            if val ? not(parse_name(1) & pos(0)) then
+               invalid("attribute value " || val || " must be a valid name")
+            put(id_attribute_refs, IdAttributeRef(val, where()))
+         }
+         "IDREFS" : {
+            if val ? (l := parse_names(1) & pos(0)) then
+               every put(id_attribute_refs, IdAttributeRef(!l, where()))
+            else
+               invalid("attribute value " || val || " must be comprised of valid names")
+         }
+         "ENTITY" : {
+            if val ? (parse_name(1) & pos(0)) then {
+               if member(doc.general_entities, val) then {
+                  entity_def := doc.general_entities[val]
+                  if /entity_def.notation then
+                     invalid("attribute val " || val || " does not match an external entity")
+               } else
+                  invalid("attribute val " || val || " does not match an external entity")
+            } else
+               invalid("attribute value " || val || " must be a valid name")
+         }
+         "ENTITIES" : {
+            if val ? (l := parse_names(1) & pos(0)) then {
+               every n := !l do {
+                  if member(doc.general_entities, n) then {
+                     entity_def := doc.general_entities[n]
+                     if /entity_def.notation then
+                        invalid("attribute val " || n || " does not match an external entity")
+                  } else
+                     invalid("attribute val " || n || " does not match an external entity")
+               }
+            } else
+               invalid("attribute value " || val || " must be comprised of valid names")
+         }
+         "NMTOKEN" : {
+            if val ? not(parse_nmtoken(1) & pos(0)) then
+               invalid("attribute value " || val || " must be a valid nmtoken")
+         }
+         "NMTOKENS" : {
+            if val ? not(parse_nmtokens(1) & pos(0)) then
+               invalid("attribute value " || val || " must be comprised of valid nmtokens")
+         }
+         "ENUMERATION" : { 
+            if not(member(attdef.def_set, val)) then
+               invalid("attribute value " || val || " is not one of the declared enumerations")
+         }
+         "NOTATION" : { 
+            if not(member(attdef.def_set, val)) then
+               invalid("attribute value " || val || " is not one of the declared notations")
+         }
+      }
+   end
+
+   public start_divert(id) 
+      push(divert_stack, Diversion(current_divert_id, &subject, &pos))
+      current_divert_id := id
+   end
+
+   public end_divert()
+      current_divert_id := pop(divert_stack).id
+   end
+
+   public where()
+      local stack
+      stack := copy(divert_stack)
+      push(stack, Diversion(current_divert_id, &subject, &pos))
+      return stack
+   end
+
+   #
+   # A warning
+   #
+   public warn(s, loc)
+      # No warnings after a fatal error.
+      if \fatal_error then
+         fail
+      /loc := where()
+      fire(WARNING_EVENT, ProblemDetail(loc, s))
+      doc.warnings +:= 1
+   end
+
+   #
+   # A validity error
+   #
+   public invalid(s, loc)
+      # Ignore if not validating, or after a fatal error.
+      if /validate_flag | \fatal_error then
+         fail
+      /loc := where()
+      fire(VALIDITY_ERROR_EVENT, ProblemDetail(loc, s))
+      doc.validity_errors +:= 1
+   end
+
+   #
+   # A fatal error
+   #
+   public err(s, loc)
+      # Ensure only one fatal error is ever sent.
+      if \fatal_error then
+         fail
+      fatal_error := s
+      /loc := where()
+      error(s)
+      fire(FATAL_ERROR_EVENT, ProblemDetail(loc, s))
+   end
+
+   #
+   # Utility: succeed if we are looking at S s, fail otherwise.
+   # Does not change &pos.
+   #
+   private looking_at_space_then(s)
+      local res, i
+      any(XML_SPACE) | fail
+      i := &pos
+      tab(many(XML_SPACE))
+      res := match(s)
+      tab(i)
+      return \res
+   end
+
+   #
+   # DTD version of above
+   #
+   private dtd_looking_at_space_then(s)
+      local res, i
+      dtd_any(XML_SPACE) | fail
+      i := &pos
+      tab(dtd_many(XML_SPACE))
+      res := dtd_match(s)
+      tab(i)
+      return \res
+   end
+
+   #
+   # As above, but looks for chars in the set.
+   #
+   private looking_at_space_then_cset(c)
+      local res, i
+      any(XML_SPACE) | fail
+      i := &pos
+      tab(many(XML_SPACE))
+      res := any(c)
+      tab(i)
+      return \res
+   end
+
+   #
+   # DTD version of above
+   #
+   private dtd_looking_at_space_then_cset(c)
+      local res, i
+      dtd_any(XML_SPACE) | fail
+      i := &pos
+      tab(dtd_many(XML_SPACE))
+      res := dtd_any(c)
+      tab(i)
+      return \res
+   end
+
+   #
+   # Equivalent to match(), but checks for pe expansions
+   #
+   private dtd_match(s)
+      local i, x, c
+      i := &pos
+      repeat {
+         if x := match(s) then
+            return x
+         every c := !s do {
+            =c | break
+         }
+         try_dtd_insert(i) | fail
+      }
+   end
+   
+   #
+   # Equivalent to any(), but checks for pe expansions
+   #
+   private dtd_any(c)
+      local i, x
+      i := &pos
+      repeat {
+         if x := any(c) then
+            return x
+         try_dtd_insert(i) | fail
+      }
+   end
+
+   #
+   # Equivalent to many(), but checks for pe expansions
+   #
+   private dtd_many(c)
+      local i, x
+      i := &pos
+
+      repeat {
+         if x := many(c) then {
+            tab(x)
+            if not try_dtd_insert(i) then {
+               &pos := i
+               return x
+            }
+         }
+         else
+            try_dtd_insert(i) | fail
+      }
+   end
+
+   #
+   # Equivalent to many_star(), but checks for pe expansions
+   #
+   private dtd_many_star(c)
+      if dtd_any(c) then
+         return dtd_many(c)
+      else
+         return &pos
+   end
+
+   #
+   # If the current char is %, try and insert a pe value.  If successful, return
+   # otherwise fail.  &pos is always set to i on exit.
+   #
+   private try_dtd_insert(i)
+      local j, t
+      if any('%') then {
+         if /in_ext_subset then {
+            # Only show an error once; this prevents the same error message
+            # being produced several times.
+            if /dtd_insert_shown_error then 
+               invalid("Cannot reference a pe except in the external dtd")
+            dtd_insert_shown_error := 1
+            fail
+         }
+
+         j := &pos
+         if t := resolve_entity(lookup_pe_reference(parse_pe_reference())) then {
+            # The entity is expanded by one leading and one trailing space (4.4.8)
+            &subject := &subject[1:j] || " " || t || " " || &subject[&pos:0]
+            &pos := i
+            return
+         }
+      }
+      &pos := i
+      fail
+   end
+
+   #
+   # Resolve the given external_id, using the current resolver
+   #
+   private resolve(external_id)
+      local t
+      t := resolver.resolve(external_id)  | return err("Couldn't resolve: " || to_string(external_id) || ":" || &why)
+      if \utf8_flag then
+         t := ucs(t) | return err("Couldn't convert " || to_string(external_id) || " to utf8: " || &why)
+      return normalize_eol(t)
+   end
+
+   #
+   # This method post-processes the parsed tree to fill in the 
+   # global names in the XmlElement structures.
+   #
+   private do_namespace_processing()
+      local t
+      
+      t := table()
+      if \utf8_flag then
+         insert(t, ucs("xml"), ucs("http://www.w3.org/XML/1998/namespace"))
+      else
+         insert(t, "xml", "http://www.w3.org/XML/1998/namespace")
+
+      return do_namespace_processing_element(t, doc.get_root_element())
+   end
+
+   #
+   # Do namespace processing for a single element.
+   # @param resolve_table a table of mappings from namespace prefixes
+   #        to URI's to use for the conversion.
+   # @param el the element to process
+   #
+   private do_namespace_processing_element(resolve_table, el)
+      local k, sub
+      #
+      # Could be comment, cdata
+      #
+      if el.get_type() ~== "element" then
+         return
+
+      #
+      # Make the map from namespace prefixes -> uri's
+      #
+      el.namespace_declarations := make_declarations_map(el) | fail
+
+      if *el.namespace_declarations > 0 then {
+         #
+         # Create a new resolve_table for this level.  It is a copy of the
+         # parent, plus any defs at this level.
+         #
+         resolve_table := copy(resolve_table)
+         every k := key(el.namespace_declarations) do {
+            insert(resolve_table, k, el.namespace_declarations[k])
+         }
+      }
+
+      #
+      # Convert the element to create the global name and attribute
+      # table.
+      #
+      convert_element(resolve_table, el) | fail
+
+      #
+      # Process the children
+      #
+      every sub := !el.children do
+         text(sub) | do_namespace_processing_element(resolve_table, sub) | fail
+
+      return el
+   end
+
+   #
+   # Convert a single element.  This completes the global name field and
+   # sets up the global attributes.
+   #
+   private convert_element(resolve_table, el)
+      local k
+      el.global_name := convert_name(resolve_table, el.name) | fail
+
+      every k := key(el.attributes) do {
+         k ? {
+            if ="xmlns" then {
+               next
+            }
+            insert(el.attributes_global_name, 
+                   convert_name(resolve_table, k), el.attributes[k]) | fail
+         }
+      }
+
+      return
+   end
+
+   #
+   # Given a name "eg SOAP-ENV:Envelope", return the global name, using the 
+   # given resolve table for the conversion.  The returned value is a
+   # GlobalName instance.
+   #
+   private convert_name(resolve_table, name)
+      local prefix, local_name, uri
+
+      name ? {
+         if prefix := tab(upto(':')) then {
+            move(1)
+            local_name := tab(0)
+            member(resolve_table, prefix) | return err("Couldn't resolve namespace: " || prefix)
+            uri := resolve_table[prefix]
+            return GlobalName(local_name, uri)
+         }
+
+         if member(resolve_table, "") then {
+            uri := resolve_table[""]
+            if *uri > 0 then
+               return GlobalName(name, uri)
+         }
+
+         return GlobalName(name)
+      }
+   end
+
+   # 
+   # Make a map of namespace id's to uri's from the attributes in the
+   # given element.  
+   #
+   private make_declarations_map(el)
+      local k, uri, prefix, t
+
+      t := table()
+
+      every k := key(el.attributes) do {
+         k ? {
+            if ="xmlns" then {
+               uri := el.attributes[k]
+               if pos(0) then {
+                  insert(t, "", uri)
+               }
+               else if =":" then {
+                  prefix := tab(0)
+                  if *prefix = 0 then
+                     return err("Badly formed xmlns attribute: " || k)
+                  if match("xml", map(prefix)) then
+                     return err("xmlns namespace can't start with 'xml': " || k)
+                  insert(t, prefix, uri)
+               }
+               else
+                  return err("Badly formed xmlns attribute: " || k)
+            }
+         }
+      }
+
+      return t
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "do_namespaces" : set_do_namespaces(f.flag_val())
+         "validate" : set_validate(f.flag_val())
+         "preserve_comments" : set_preserve_comments(f.flag_val())
+         "preserve_insignificant_whitespace" : set_preserve_insignificant_whitespace(f.flag_val())
+         default : fail
+      }
+      return
+   end
+
+   private static init()
+      #
+      # [3] S ::= (#x20 | #x9 | #xD | #xA)+
+      #
+      XML_SPACE := '\x20\x09\x0D\x0A'
+
+      #
+      # [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | 
+      #                     [#x10000-#x10FFFF]
+      XML_CHAR := '\x09\x0A\x0D\x20-\ud7ff\ue000-\ufffd\U10000-\U10ffff'
+      XML_INVALID_CHAR := ~XML_CHAR
+
+      #
+      # [4] NameStartChar ::= ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | 
+      #                       [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | 
+      #                       [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | 
+      #                       [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+      XML_NAME_START := 
+        ':A-Z_a-z\xC0-\xD6\xD8-\xF6\xF8-\u02FF\u0370-\u037D\u037F-\u1FFF_
+         \u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF_
+         \uFDF0-\uFFFD\U10000-\UEFFFF'
+
+      #
+      # [4a] NameChar ::= NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
+      #
+      XML_NAME_CHAR := XML_NAME_START ++ '\-.0-9\xB7\u0300-\u036F\u203F-\u2040'
+
+      # [13] PubidChar ::= #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%]
+      XML_PUBID_CHAR := '\x20\x0D\x0Aa-zA-Z0-9\-\'()+,./:=?;!*#@$_%'
+
+      WARNING_EVENT := "warning"
+      VALIDITY_ERROR_EVENT := "validity error"
+      FATAL_ERROR_EVENT := "fatal error"
+   end
+
+   public new(a[])
+      cast(self,Connectable).new()
+      resolver := DefaultResolver()
+      do_namespaces_flag := 1
+      validate_flag := 1
+      preserve_comments_flag := 1
+      set_fields(a)
+      return
+   end
+end

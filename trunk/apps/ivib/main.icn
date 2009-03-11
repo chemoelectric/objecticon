@@ -1,0 +1,1620 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import lang, gui, io, graphics, util
+
+$include "version.icn"
+
+class Ivib()
+   public static const
+      V1_MARKER,
+      V2_MARKER,
+      V2i_MARKER,
+      IVIB_COMPONENT_TARGET
+
+   public static
+      main,
+      last_icon_dir,
+      last_layout_dir,
+      last_icn_dir
+
+   private static init()
+      V1_MARKER := "### Ivib layout ###"
+      V2_MARKER := "### Ivib-v2 layout ##"
+      V2i_MARKER := "### Ivib-v2 layout: "
+      insert(Dialog.ROOT_WATTRIBS, "font", "typewriter")
+      insert(Dialog.ROOT_WATTRIBS, "bg", "light gray")
+      insert(Dialog.ROOT_WATTRIBS, "fg", "black")
+      insert(Dialog.ROOT_WATTRIBS, "resize", "on")
+      IVIB_COMPONENT_TARGET := "IVIB_COMPONENT"
+   end
+end
+
+#
+# Class for storing preferences which are saved to a config file.
+#
+class Prefs(SelectiveObjectCodec)
+   public 
+      undo_size,                # Size of undo buffer
+      plugin_directory,
+      cache_path
+
+   public get_template()
+      return [["Undo Size", "undo_size"],
+              ["Plugin Directory", "plugin_directory"],
+              ["Cache Path", "cache_path"]]
+   end
+
+   #
+   # Default values
+   #
+   public new()
+      undo_size := 7
+      cache_path := []
+      plugin_directory := "plugins"
+      return
+   end
+end
+
+
+#
+# The main window's toolbar.
+#
+class CustomToolBar(Component)
+   public
+      x1,
+      y1,
+      img_w,
+      img_h,
+      bg
+
+   public add_button(t)
+      t.set_pos(x1, y1)
+      t.set_accepts_focus("f")
+      t.set_border(EmptyBorder("flush"))
+      bg.add(t)
+      self.add(t)
+      x1 +:= img_w
+      if *get_children() == 16 then {
+         y1 +:= img_h
+         x1 := 0
+      }
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      x1 := y1 := 0
+      bg := ButtonGroup()
+      img_w := img_h := 44
+      set_size(16 * img_w, 2 * img_h)
+      set_fields(a)
+      return
+   end
+end
+
+
+#
+# This listens for actions to either the menu/button object creation items.
+#
+class ObjectActionListener()
+   public
+      main, 
+      object_ui
+
+   public on_event(event)
+      main.create_in_canvas(object_ui)
+   end
+
+   public new(main, object_ui)
+      self.main := main
+      self.object_ui := object_ui
+      return
+   end
+end
+
+
+############################################################################
+#
+# The Dialog window of the program.
+#
+#
+class Main(Dialog)
+   public 
+      bg,                      # Button group of tool bar buttons
+      canvas_zone,             # Panel on which canvas sits
+      canvas_border,           # Border around canvas
+      canvas,                  # The drawing canvas
+      prefs,                   # Preferences structure
+      save,                    # Save file function
+      save_button,             # Save(as) button
+      selections_menu,         # Selections menu
+      button_name_label,       # Label for name of button under pointer
+      filename_label,          # Label for current filename
+      info_label,              # Label for other info
+      pos_label,               # Label for positional info
+      undo_list,               # List of canvases for undo command
+      redo_list,               # List of canvases for redo command
+      args,                    # Command line arguments
+      reorder,                 # Reorder items command
+      undo,                    # Undo
+      redo,                    # Redo
+      checkboxgroup_button,    # Toolbar buttons
+      buttongroup_button,
+      delete_button,
+      undo_button,
+      redo_button,
+      move_selection_up_order_button,
+      move_selection_down_order_button,
+      component_tree_dialog,
+      plugins,
+      clipboard_selection_owner,
+      clipboard
+
+   #
+   # Clear undo list
+   #
+   public clear_undo()
+      self.undo_list := []
+      update_grey()
+   end
+
+   # 
+   # Get undo item
+   #
+   public get_undo()
+      local res
+      res := get(undo_list)
+      update_grey()
+      return res
+   end 
+
+   #
+   # Push an undo item
+   #
+   public push_undo_list(d)
+      push(undo_list, d)
+      #
+      # Reduce to correct size.
+      #
+      while *undo_list > self.prefs.undo_size do
+         pull(undo_list)
+
+      update_grey()
+   end
+
+   #
+   # Clear redo list
+   #
+   public clear_redo()
+      self.redo_list := []
+      update_grey()
+   end
+
+   # 
+   # Get redo item
+   #
+   public get_redo()
+      local res
+      res := get(redo_list)
+      update_grey()
+      return res
+   end 
+
+   #
+   # Push an redo item
+   #
+   public push_redo_list(d)
+      push(redo_list, d)
+      update_grey()
+   end
+
+   #
+   # Set filename_label to reflect current status of canvas.
+   #
+   public set_filename_label()
+      local s
+      s := \self.canvas.filename | "Untitled"
+      if \self.canvas.modified then
+         s ||:= " *"
+      self.filename_label.set_label(Files.get_path(s).get(-1))
+   end      
+
+   #
+   # Special custom show to allow a popup during init
+   #         
+   public custom_show(a)
+      local s, c
+      self.args := a
+      show_modeless()
+      if *self.args > 0  then {
+         s := self.args[1]
+         if Files.access(s, Access.R_OK) then {
+            c := load_canvas(s) | fail
+            c.set_parent_dialog(self)
+            c.set_pos(Canvas.SURROUND, Canvas.SURROUND)
+            c.clear_selections()
+            # Ensure all canvas fields set (may not be for older versions).
+            every c.gen_cos().change_canvas(c)
+            self.undo_to(c)
+         } else {
+            #
+            # New file
+            #
+            info_label.set_label("New file")
+            self.canvas.new_file_flag := 1
+         }
+         self.canvas.set_filename(s)
+      } else
+         #
+         # Initialize the filename label.
+         #
+         canvas.set_filename()
+      update_grey()
+      Dispatcher.message_loop(self)
+   end
+
+   #
+   # Load a layout.
+   #
+   public load_canvas(fname)
+      local s, c, d, src, l
+
+      l := Loader(fname)
+      src := l.load() | return alert_error(self, l.get_reason())
+      s := src.migrate() | return alert_error(self, "Couldn't migrate " || fname)
+      c := lang.decode(s) | return alert_error(self, "Couldn't decode " || fname)
+      c.layout_filename := l.lname
+      if src.version > 1 then
+         return c
+
+      d := InfoDialog(["Ivib v1 file successfully loaded.",
+                       "",
+                       "NB - some manual editing may be needed after",
+                       "the file is next saved."],
+                       "Ivib v1 import",
+                       "Close",
+                       "c")
+      #
+      # The canvas is set as modified - so that the v2 changes can
+      # simply be saved.
+      #
+      c.modified := 1
+      d.show_modal(self)
+      return c
+   end
+
+   #
+   # Push copy of current canvas onto undo list.
+   #
+   public push_undo()
+      self.push_onto_undo(self.canvas.dup())
+   end
+
+   #
+   # Push a canvas onto undo list. 
+   #
+   public push_onto_undo(d)
+      #
+      # Reset redo list
+      #
+      self.clear_redo()
+      self.push_undo_list(d)
+   end
+
+   #
+   # Undo operation.
+   #
+   public op_undo()
+      local c
+      c := self.get_undo()
+      self.push_redo_list(self.canvas.dup())
+      self.undo_to(c)
+      info_label.set_label("Undone")
+      self.set_filename_label()
+   end
+
+   #
+   # Redo operation.
+   #
+   public op_redo()
+      local c
+      c := self.get_redo()
+      self.push_undo_list(self.canvas.dup())
+      self.undo_to(c)
+      info_label.set_label("Redone")
+      self.set_filename_label()
+   end
+
+   #
+   # Replace current canvas with c
+   #
+   public undo_to(c)
+      #
+      # Dispose of current canvas
+      #
+      self.canvas.finally()
+
+      if self.parent_dialog.focus === self.canvas then
+         self.parent_dialog.focus := &null
+
+      canvas_border.remove(self.canvas)
+      self.canvas := c
+      canvas_border.set_canvas(self.canvas)
+      canvas_zone.invalidate()
+
+      #
+      # Setup rest of fields in new canvas.
+      #
+      self.canvas.initially()
+      self.canvas.synch_size()
+      self.canvas.update_pos_label()
+      update_grey()
+      synch_tree()
+   end
+
+   public copy_to_clipboard(cc)
+      local c
+      c := cc.dup()
+      c.change_canvas(&null)
+      self.clipboard := lang.encode(c)
+      Selection.own(Selection.CLIPBOARD, self.clipboard_selection_owner)
+   end
+
+   public update_grey()
+      local o
+      every o := selections_menu | checkboxgroup_button | buttongroup_button |
+         delete_button | move_selection_up_order_button | move_selection_down_order_button do 
+      {
+         if *self.canvas.selections > 0 then
+            o.set_is_shaded("f")
+         else
+            o.set_is_shaded("t")
+      }
+
+      if *undo_list > 0 then {
+         self.undo.set_is_shaded("f")
+         self.undo_button.set_is_shaded("f")
+      } else {
+         self.undo.set_is_shaded("t")
+         self.undo_button.set_is_shaded("t")
+      }
+
+      if *redo_list > 0 then {
+         self.redo.set_is_shaded("f")
+         self.redo_button.set_is_shaded("f")
+      } else {
+         self.redo.set_is_shaded("t")
+         self.redo_button.set_is_shaded("t")
+      }
+
+      if \self.canvas.modified & \self.canvas.filename then
+         save.set_is_shaded("f")
+      else
+         save.set_is_shaded("t")
+
+      if \self.canvas.modified | /self.canvas.filename then
+         save_button.set_is_shaded("f")
+      else
+         save_button.set_is_shaded("t")
+   end
+
+   #
+   # Centre horizontally operation.
+   #
+   public op_centre_horiz_selections()
+      canvas.centre_horiz_selections()
+   end
+
+   #
+   # Centre vertically operation.
+   #
+   public op_centre_vert_selections()
+      canvas.centre_vert_selections()
+   end
+
+   #
+   # Align horizontally operation.
+   #
+   public op_align_horiz_selections()
+      canvas.align_horiz_selections()
+   end
+
+   #
+   # Align vertically operation.
+   #
+   public op_align_vert_selections()
+      canvas.align_vert_selections()
+   end
+
+   #
+   # Reorder operations
+   #
+   public op_reorder_selections()
+      canvas.reorder_selections()
+   end
+
+   public op_move_selection_up_order_button()
+      canvas.move_selection_up_order()
+   end
+
+   public op_move_selection_down_order_button()
+      canvas.move_selection_down_order()
+   end
+
+   public op_set_tab_order_from_selections()
+      canvas.set_tab_order_from_selections()
+   end
+
+   public op_set_z_order_from_selections()
+      canvas.set_z_order_from_selections()
+   end
+
+   #
+   # End-to-end horizontally
+   #
+   public op_end_to_end_selections_horizontally()
+      canvas.end_to_end_selections_horizontally()
+   end
+
+   #
+   # End-to-end vertically
+   #
+   public op_end_to_end_selections_vertically()
+      canvas.end_to_end_selections_vertically()
+   end
+
+   #
+   # Equalize widths
+   #
+   public op_equalize_width_selections()
+      canvas.equalize_width_selections()
+   end
+
+   #
+   # Equalize heights
+   #
+   public op_equalize_height_selections()
+      canvas.equalize_height_selections()
+   end
+
+   #
+   # Equalize heights
+   #
+   public op_copy_attribs()
+      canvas.copy_attribs()
+   end
+
+   #
+   # Dialog (Ctrl-d) function.
+   #
+   public op_dialog()
+      if /self.canvas.selected then
+         op_preferences()  
+      else
+         show_dialog(canvas.selected)
+   end
+
+   #
+   # Show a dialog for the given CanvasComponent
+   #
+   public show_dialog(cc)
+      local d, t
+      t := canvas.dup()
+      d := cc.dialog()
+      d.show_modal(self)
+      if \d.get_okay_result() then {
+         self.push_onto_undo(t)
+         cc.reset()
+         canvas.set_modified()
+         canvas.reset_layout()
+      } else
+         self.undo_to(t)
+   end
+   
+   #
+   # Add a new CanvasComponent using the given CanvasComponentUI to
+   # create it.
+   #
+   public create_in_canvas(object_ui)
+      local t
+      self.push_undo()
+      t := object_ui.create_canvas_component(self.canvas)
+      add_new_object(t)
+   end
+
+   #
+   # Create a CheckBoxGroup
+   #
+   public op_selections_to_cbg()
+      canvas.selections_to_cbg()
+   end
+
+   #
+   # Create a ButtonGroup
+   #
+   public op_selections_to_bg()
+      canvas.selections_to_bg()
+   end
+
+   #
+   # Delete the selected objects.
+   #
+   public op_delete_selections()
+      canvas.delete_selections()
+   end
+
+   #
+   # Fix the selected objects
+   #
+   public op_fix_selections()
+      canvas.fix_selections()
+   end
+
+   #
+   # Unfix the selected objects
+   #
+   public op_unfix_selections()
+      canvas.unfix_selections()
+   end
+
+   #
+   # Canvas dialog preferences.
+   #
+   public op_preferences()
+      local t, d
+      t := self.canvas.dup()
+      d := canvas.dialog()
+      d.show_modal(self)
+      if \d.get_okay_result() then {
+         self.push_onto_undo(t)
+         # Firstly, create a new buffer window based on the (possibly) new window attribs,
+         # and apply the new window to all of the children.
+         canvas.reset_windows()
+         canvas.set_modified()
+      } else
+         self.undo_to(t)
+   end
+
+   #
+   # Program preferences (see dialog below).
+   #
+   public op_prog_preferences()
+      local d
+      d := Preferences(self.prefs)
+      d.show_modal(self)
+      if \d.okay_result then {
+         save_config_file()
+         synch_image_cache()
+      }
+   end
+
+   #
+   # Group dialog.
+   #
+   public op_groups()
+      local t, d
+      t := self.canvas.dup()
+      d := GroupsDialog(canvas)
+      d.show_modal(self)
+      if \d.get_okay_result() then {
+         self.push_onto_undo(t)
+         canvas.set_modified()
+         canvas.reset_layout()
+      } else
+         self.undo_to(t)
+   end
+
+   #
+   # Save as... operation 
+   #
+   public op_save_as()
+      local fd, s, c
+      fd := FileDialog()
+      if /self.canvas.filename then {
+         fd.set_path(\Ivib.last_icn_dir)
+         fd.set_file("Untitled.icn")
+      } else
+         fd.set_path(self.canvas.filename)
+
+      fd.show_modal(self)
+
+      s := fd.get_result() | fail
+
+      Ivib.last_icn_dir := fd.get_directory()
+
+      c := self.canvas.gen_code()
+
+      if /self.canvas.filename | \self.canvas.new_file_flag then
+         c.output_code(s) | fail
+      else
+         c.interpose_code(self.canvas.filename, s) | fail
+
+      self.canvas.clear_modified()
+      self.canvas.set_filename(s)
+      self.info_label.set_label("Wrote " || s)
+      self.clear_undo()
+      self.clear_redo()
+      return
+   end
+
+   #
+   # Save operation.
+   #
+   public op_save()
+      local c
+      if /self.canvas.new_file_flag then {
+         if /self.canvas.modified then {
+            self.info_label.set_label("No changes need to be saved")
+            return
+         }
+         c := self.canvas.gen_code()
+         c.interpose_code(self.canvas.filename) | fail
+         self.canvas.clear_modified()
+         self.info_label.set_label("Wrote " || self.canvas.filename)
+         #
+         # Set modified flag of all in undo/redo buffer
+         every (!self.undo_list | !self.redo_list).modified := 1
+      } else {
+         c := self.canvas.gen_code()
+         c.output_code(self.canvas.filename) | fail
+         self.canvas.clear_modified()
+         self.info_label.set_label("Wrote " || self.canvas.filename)
+         #
+         # Set modified flag of all in undo/redo buffer
+         every (!self.undo_list | !self.redo_list).modified := 1
+         #
+         # Clear new flag of all in undo/redo buffer
+         every (!self.undo_list | !self.redo_list).new_file_flag := &null
+         self.canvas.new_file_flag := &null
+      }
+      return
+   end
+
+   public op_save_button()
+      if /self.canvas.filename then
+         op_save_as()
+      else
+         op_save()
+   end
+
+   #
+   # About operation.
+   #
+   public op_about()
+      local d
+      d := InfoDialog(["Ivib Version : " || version_number, 
+                       "Date : " || version_date, 
+                       "Author : " || version_author], "About ivib")
+      d.show_modeless(self)
+
+      return
+   end
+
+   #
+   # Open file operation.
+   #
+   public op_open_file()
+      local fd, s, c
+      if \self.canvas.modified then
+         self.save_if_wanted() | fail
+
+      fd := FileDialog()
+      fd.set_directory(\Ivib.last_icn_dir)
+      fd.show_modal(self)
+      Ivib.last_icn_dir := fd.get_directory()
+      s := fd.get_result() | fail
+      c := load_canvas(s) | fail
+      self.clear_undo()
+      self.clear_redo()
+      c.set_pos(Canvas.SURROUND, Canvas.SURROUND)
+      c.set_size(c.w, c.h)
+      self.undo_to(c)
+      self.canvas.set_filename(s)
+      self.canvas.clear_modified()
+      update_grey()
+   end
+
+   #
+   # Ask whether changed file should be saved; if so save it by call
+   # to appropriate operation.
+   #
+   public save_if_wanted()
+      local d
+      d := SaveChangesDialog()
+      d.show_modal(self)
+      case d.result() of {
+         "cancel" : fail
+         "no" : return
+         "yes" : {
+             return if \self.canvas.filename then
+                self.op_save()
+             else
+                self.op_save_as()
+         }
+      }      
+   end
+
+   #
+   # Quit program operation.
+   #
+   public op_quit()
+      if \self.canvas.modified then
+         self.save_if_wanted() | fail
+      self.dispose()
+   end
+
+   public synch_tree()
+      (\component_tree_dialog).synch()
+   end
+
+   public on_component_tree_dialog_close()
+      self.component_tree_dialog := &null
+   end
+
+   public op_tree()
+      if component_tree_dialog := gui.Dispatcher.find_dialog(ComponentTreeDialog) then {
+         component_tree_dialog.raise()
+      } else {
+         component_tree_dialog := ComponentTreeDialog(self)
+         component_tree_dialog.connect(self.on_component_tree_dialog_close, Event.DIALOG_CLOSED)
+         component_tree_dialog.show_modeless()
+      }
+   end
+
+   public op_preview()
+      local d, t, m, bg
+
+      t := canvas.dup()
+      every coexp_seq{t.traverse_components_preorder()}.set_show_layout("f")
+      d := Dialog()
+      d.set_layout(t.layout_delegate)
+      every d.add(!t.children)
+
+      # Attribs - do the same as code.icn
+      m := t.dialog_struct.wattribs
+      if \ (t.dialog_iw | t.dialog_ih) then {
+         if /t.dialog_iw then
+            insert(m, "height", t.dialog_ih)
+         else if /t.dialog_ih then
+            insert(m, "width", t.dialog_iw)
+         else
+            insert(m, "size", t.dialog_iw || "," || t.dialog_ih)
+      }
+      d.set_all_wattribs(m)
+
+      every bg := !t.button_groups do
+         bg.buttons := bg.get_members()
+      d.set_focus((\t.initial_focus).find_focus())
+      d.connect(d.dispose, Event.WINDOW_CLOSE_BUTTON)
+      d.show_modal(self)
+   end
+
+   #
+   # New canvas operation.
+   #
+   public op_new()
+      if \self.canvas.modified then
+         self.save_if_wanted() | fail
+      self.clear_undo()
+      self.clear_redo()
+      self.undo_to(Canvas())
+      update_grey()
+   end
+
+   #
+   # Add a new object to the canvas at pos.
+   #
+   public add_new_object(c)
+      static add_count
+      initial
+         add_count := 0
+      c.change_canvas(self.canvas)
+      if \canvas.layout_delegate then 
+         c.x_spec := c.y_spec := &null
+      else {
+         #
+         # Default x, y.  Try to avoid successive adds covering each other.
+         #
+         /c.x_spec := 10 + 7 * (add_count % 4)
+         /c.y_spec := 10 + 7 * (add_count % 4)
+      }
+      add_count +:= 1
+      c.set_align("l", "t")
+      self.canvas.add(c)
+      c.rename()
+      c.initially()
+      self.canvas.reset_layout()
+      self.canvas.set_modified()
+   end
+
+   #
+   # Handle dialog events.
+   #
+   public dialog_event(e)
+      if member(Mouse.PRESS, e.code) then
+         info_label.set_label("")
+
+      case /e.release & e.code of {
+         "\r" : if /self.menu_mode then op_dialog()
+         "\^q" : op_quit()
+         "\^o" : op_open_file()
+         "\^w" : op_save_as()
+         "\^d" : op_dialog()
+         "\^n" : op_new()
+         "\^t" : op_tree()
+         "\^a" : op_dump()
+         "\^s" : if /save.is_shaded_flag then op_save()
+         "\^z" : if /undo.is_shaded_flag then op_undo()
+         "\^y" : if /redo.is_shaded_flag then op_redo()
+         "\d" : op_delete_selections()  #swj
+      }
+   end
+
+   public op_dump()
+      collect()
+      write("CanvasObject tree dump:")
+      write("-------------------")
+      every dump(canvas.gen_cos(), 0)
+      write("-------------------")
+
+      write("Dup test:")
+      test_dup()
+
+      write("---------------")
+      write("traverse")
+      every write(image(coexp_seq{canvas.gen_cos().traverse_tree()}))
+   end
+
+   public test_cbgs()
+      local o,b,d
+      write("CBGs ********")
+      every b := !canvas.checkbox_groups do {
+         write(b.get_name(), ": ", image(b),
+               " which_one=", image(b.which_one))
+      }
+      write("..")
+      every o := coexp_seq{canvas.gen_cos().traverse_tree()} do {
+         if is(o, gui.Toggle) then
+            write(o.get_name(), ":", image(o), " ---> ", image(o.parent_check_box_group))
+      }
+      write("--------------")
+      d := canvas.dup()
+      every b := !d.checkbox_groups do {
+         write(b.get_name(), ": ", image(b),
+               " which_one=", image(b.which_one))
+      }
+      write("..")
+      every o := coexp_seq{d.gen_cos().traverse_tree()} do {
+         if is(o, gui.Toggle) then
+            write(o.get_name(), ":", image(o), " ---> ", image(o.parent_check_box_group))
+      }
+   end
+
+   public test_dup()
+      local e1, e2, x, y, d, i
+
+      d := canvas.dup()
+
+      e1 := create canvas.gen_cos().traverse_tree()
+      e2 := create d.gen_cos().traverse_tree()
+
+      # Selections
+      *canvas.selections = *d.selections | failure("Different num of selections")
+      every i := 1 to *canvas.selections do {
+         test_same(canvas.selections[i], d.selections[i]) | failure("Selections differ",
+                                                                 canvas.selections[i],
+                                                                 d.selections[i])
+      }
+      test_same(canvas.selected, d.selected) | failure("Selected obj differs",
+                                                    canvas.selected, d.selected)
+      test_same(canvas.initial_focus, d.initial_focus) | failure("Initial_Focus obj differs",
+                                                              canvas.initial_focus, d.initial_focus)
+
+      # Checkbox groups
+      every i := 1 to *canvas.checkbox_groups do {
+         test_same(canvas.checkbox_groups[i].which_one,
+                   d.checkbox_groups[i].which_one) | failure("CBG which_one different",
+                                                          canvas.checkbox_groups[i].which_one,
+                                                          d.checkbox_groups[i].which_one)
+      }
+
+      while x := @e1 do {
+         y := @e2 | return failure("Not enough objects in dup")
+         test_same(x, y) | failure("Objects differ",x,y)
+         if /y.parent_Canvas then
+            failure("Parent canvas not set on dup of:", x)
+         else
+            y.parent_Canvas ~=== x.parent_Canvas | failure("Parent canvas same", x)
+         if is(x, gui.Toggle) then {
+            test_same(x.parent_check_box_group,
+                      y.parent_check_box_group) | failure("Parent CBGs different in",
+                                                       x.parent_check_box_group,
+                                                       y.parent_check_box_group)                     
+         }
+         if is(x, gui.Button) then {
+            test_same(x.parent_button_group,
+                      y.parent_button_group) | failure("Parent CBGs different in",
+                                                       x.parent_button_group,
+                                                       y.parent_button_group)                     
+         }
+      }
+      not(@e2) | return failure("Too many objects in dup")
+      return
+   end
+
+   public test_same(x, y)
+      if /x & /y then
+         return
+      if /x | /y then
+         fail
+      # They shouldn't be identical....
+      if x === y then
+         fail
+      return subtype(x) == subtype(y) &
+         x.get_name() == y.get_name()
+   end
+
+   public failure(s, x[])
+      write("*** FAILED :",s)
+      every write("\t", image(!x))
+   end
+
+   public dump(obj, level)
+      write(repl("    ", level), obj.get_name(),":",image(obj))
+      if /obj.parent_Canvas then write("********PC NOT SET")
+      every dump(obj.gen_cos(), level + 1)
+   end
+
+   public get_config_file_name()
+      return Files.get_path(Files.get_home()).child(".ivibrc2").str()
+   end
+
+   public read_config_file()
+      local f
+      if f := io.open(get_config_file_name()) then {
+         if not(self.prefs := lang.decode(read(f))) then {
+            self.prefs := Prefs()
+            return alert_error(self, "Invalid config file format")
+         }
+      } else
+         self.prefs := Prefs()
+   end
+
+   public save_config_file()
+      local f
+      f := io.open(get_config_file_name(), "w") | return alert_error(self, "Couldn't open config file : " || get_config_file_name())
+
+      write(f, lang.encode(self.prefs))
+
+      close(f)
+      return
+   end
+
+   public synch_image_cache()
+      every ImageCache.add_dir(!self.prefs.cache_path)
+   end
+
+   public get_plugin(id)
+      return \plugins[id]
+   end
+
+   public add_ui_to_menu(m, ui)
+      local menu_item
+
+      menu_item := TextMenuItem()
+      menu_item.set_label(ui.get_name())
+
+      find_submenu(m, ui.get_category()).add(menu_item)
+
+      return menu_item
+   end
+
+   public find_submenu(m, str)
+      local s, n
+      # Search for an existing one, bit of a hack
+      every s := !m.children do
+         if s.paint_mid.str == str then
+            return s
+
+      # Create a new one
+      n := Menu()
+      n.set_label(str)
+      m.add(n)
+      return n
+   end
+
+   public new()
+      local mb, file, edit, alignment_sub_menu, copy_sub_menu, group_sub_menu,
+         uis, objects_menu, tb, ui, listener, mi, ui_button, p,
+         order_sub_menu, f, ce, plugin, pp, fn, i
+
+      cast(self,Dialog).new()
+      set_layout(GridLayout("flush", "dii=0"))
+      connect(self.dialog_event, Event.ICON)
+
+      self.clipboard_selection_owner := IvibClipboardSelectionOwner(self)
+
+      mb := MenuBar("c:eol", "c:x_fill")
+      self.add(mb)
+
+      #
+      # Set up the menu structure.
+      #
+      file := Menu("label=File", "accel=f")
+      mb.add(file)
+
+      i := TextMenuItem("label=Open", "label_right=Ctrl-o")
+      i.connect(self.op_open_file, Event.ACTION)
+      file.add(i)
+
+      save := TextMenuItem("label=Save")
+      save.set_label_right("Ctrl-s")
+      save.connect(self.op_save, Event.ACTION)
+      file.add(save)
+
+      i := TextMenuItem("label=Save as", "label_right=Ctrl-w")
+      i.connect(self.op_save_as, Event.ACTION)
+      file.add(i)
+
+      i := TextMenuItem("label=New")
+      i.set_label_right("Ctrl-n")
+      i.connect(self.op_new, Event.ACTION)
+      file.add(i)
+
+      i := TextMenuItem("label=Preferences...")
+      i.connect(self.op_prog_preferences, Event.ACTION)
+      file.add(i)
+
+      i := TextMenuItem("label=About ivib...")
+      i.connect(self.op_about, Event.ACTION)
+      file.add(i)
+
+      i := TextMenuItem("label=Quit", "label_right=Ctrl-q")
+      i.connect(self.op_quit, Event.ACTION)
+      file.add(i)
+
+      edit := Menu("label=Canvas", "accel=c")
+      mb.add(edit)
+
+      i := TextMenuItem("label=Tree...", "label_right=Ctrl-t")
+      i.connect(self.op_tree, Event.ACTION)
+      edit.add(i)
+
+      i := TextMenuItem("label=Preview...")
+      i.connect(self.op_preview, Event.ACTION)
+      edit.add(i)
+
+      i := TextMenuItem("label=Dialog prefs...")
+      i.connect(self.op_preferences, Event.ACTION)
+      edit.add(i)
+
+      i := TextMenuItem("label=Groups...")
+      i.connect(self.op_groups, Event.ACTION)
+      edit.add(i)
+
+      undo := TextMenuItem("label=Undo", "label_right=Ctrl-z")
+      undo.connect(self.op_undo, Event.ACTION)
+      edit.add(undo)
+
+      redo := TextMenuItem("label=Redo", "label_right=Ctrl-y")
+      redo.connect(self.op_redo, Event.ACTION)
+      edit.add(redo)
+
+      selections_menu := Menu("label=Selections", "accel=s")
+      mb.add(selections_menu)
+
+      alignment_sub_menu := Menu("label=Alignment")
+      selections_menu.add(alignment_sub_menu)
+
+      copy_sub_menu := Menu("label=Copy")
+      selections_menu.add(copy_sub_menu)
+
+      order_sub_menu := Menu("label=Order")
+      selections_menu.add(order_sub_menu)
+
+      group_sub_menu := Menu("label=Group")
+      selections_menu.add(group_sub_menu)
+
+      i := TextMenuItem("label=Centre horizontally")
+      i.connect(self.op_centre_horiz_selections, Event.ACTION)
+      alignment_sub_menu.add(i)
+
+      i := TextMenuItem("label=Centre vertically")
+      i.connect(self.op_centre_vert_selections, Event.ACTION)
+      alignment_sub_menu.add(i)
+
+      i := TextMenuItem("label=Align horizontally")
+      i.connect(self.op_align_horiz_selections, Event.ACTION)
+      alignment_sub_menu.add(i)
+
+      i := TextMenuItem("label=Align vertically")
+      i.connect(self.op_align_vert_selections, Event.ACTION)
+      alignment_sub_menu.add(i)
+
+      i := TextMenuItem("label=End to end horizontally")
+      i.connect(self.op_end_to_end_selections_horizontally, Event.ACTION)
+      alignment_sub_menu.add(i)
+
+      i := TextMenuItem("label=End to end vertically")
+      i.connect(self.op_end_to_end_selections_vertically, Event.ACTION)
+      alignment_sub_menu.add(i)
+
+      i := TextMenuItem("label=Equalize widths")
+      i.connect(self.op_equalize_width_selections, Event.ACTION)
+      copy_sub_menu.add(i)
+
+      i := TextMenuItem("label=Equalize heights")
+      i.connect(self.op_equalize_height_selections, Event.ACTION)
+      copy_sub_menu.add(i)
+
+      i := TextMenuItem("label=Copy attribs")
+      i.connect(self.op_copy_attribs, Event.ACTION)
+      copy_sub_menu.add(i)
+
+      i := TextMenuItem("label=Reorder in container")
+      i.connect(self.op_reorder_selections, Event.ACTION)
+      order_sub_menu.add(i)
+
+      i := TextMenuItem("label=Set tab order")
+      i.connect(self.op_set_tab_order_from_selections, Event.ACTION)
+      order_sub_menu.add(i)
+
+      i := TextMenuItem("label=Set Z order")
+      i.connect(self.op_set_z_order_from_selections, Event.ACTION)
+      order_sub_menu.add(i)
+
+      i := TextMenuItem("label=CheckBoxGroup")
+      i.connect(self.op_selections_to_cbg, Event.ACTION)
+      group_sub_menu.add(i)
+
+      i := TextMenuItem("label=ButtonGroup")
+      i.connect(self.op_selections_to_bg, Event.ACTION)
+      group_sub_menu.add(i)
+
+      i := TextMenuItem("label=Fix")
+      i.connect(self.op_fix_selections, Event.ACTION)
+      selections_menu.add(i)
+
+      i := TextMenuItem("label=Unfix")
+      i.connect(self.op_unfix_selections, Event.ACTION)
+      selections_menu.add(i)
+
+      i := TextMenuItem("label=Delete")
+      i.connect(self.op_delete_selections, Event.ACTION)
+      selections_menu.add(i)
+
+      read_config_file()
+      synch_image_cache()
+
+      uis := [CanvasTextButtonUI(),
+              CanvasLabelUI(),
+              CanvasTextFieldUI(),
+              CanvasBorderUI(),
+              CanvasIconButtonUI(),
+              CanvasIconUI(),
+              CanvasImageUI(),
+              CanvasCheckBoxUI(),
+              CanvasMenuBarUI(),
+              CanvasVScrollBarUI(),
+              CanvasHScrollBarUI(),
+              CanvasPanelUI(),
+              CanvasPanelUI2(),
+              CanvasTabSetUI(),
+              CanvasMenuButtonUI(),
+              CanvasOverlaySetUI(),
+              CanvasTextListUI(),
+              CanvasEditableTextListUI(),
+              CanvasListUI(),
+              CanvasEditListUI(),
+              CanvasListSpinUI(),
+              CanvasRangeSpinUI(),
+              CanvasHSliderUI(),
+              CanvasVSliderUI(),
+              CanvasHLineUI(),
+              CanvasVLineUI(),
+              CanvasHSizerUI(),
+              CanvasVSizerUI(),
+              CanvasTableUI(),
+              CanvasTreeUI(),
+              CanvasProgressBarUI(),
+              CanvasCustomUI(),
+              CanvasTextDisplayUI(),
+              CanvasHSplitUI(),
+              CanvasVSplitUI()
+              ]
+
+      objects_menu := Menu("label=Objects", "accel=o")
+      mb.add(objects_menu)
+
+      tb := CustomToolBar("c:eol", "c:x_align=l")
+
+      every ui := !uis do {
+         listener := ObjectActionListener(self, ui)
+         mi := add_ui_to_menu(objects_menu, ui)
+         mi.connect(listener.on_event, Event.ACTION)
+         if ui_button := ui.get_button() then {
+            tb.add_button(ui_button)
+            ui_button.connect(listener.on_event, Event.ACTION)
+         }
+      }
+
+      plugins := table()
+      pp := Files.get_path(prefs.plugin_directory)
+      every f := !Files.list(pp.str()) do {
+         if f[2].mode[1] == "-" & upto('x', f[2].mode) then {
+            fn := pp.child(f[1]).str()
+            ce := load(fn) | stop("Failed to load plugin:", fn)
+            plugin := variable("main", ce)() | stop("Plugin didn't return a Plugin from main")
+            insert(plugins, plugin.get_unique_id(), plugin)
+            ui := PluginUI(plugin)
+            listener := ObjectActionListener(self, ui)
+            mi := add_ui_to_menu(objects_menu, ui)
+            mi.connect(listener.on_event, Event.ACTION)
+         }
+      }
+
+      save_button := IconButton("tooltip=Save")
+      save_button.set_image(
+                            $include "icon/icn35.icon"
+                            )
+      save_button.connect(self.op_save_button, Event.ACTION)
+      tb.add_button(save_button)
+
+      i := IconButton("tooltip=New")
+      i.set_image(
+                  $include "icon/icn40.icon"
+                  )
+      i.connect(self.op_new, Event.ACTION)
+      tb.add_button(i)
+
+      checkboxgroup_button := IconButton("tooltip=CheckBoxGroup")
+      checkboxgroup_button.set_image(
+                                     $include "icon/icn22.icon"
+                                     )
+      checkboxgroup_button.connect(self.op_selections_to_cbg, Event.ACTION)
+      tb.add_button(checkboxgroup_button)
+
+      buttongroup_button := IconButton("tooltip=ButtonGroup")
+      buttongroup_button.set_image(
+                                   $include "icon/icn23.icon"
+                                   )
+      buttongroup_button.connect(self.op_selections_to_bg, Event.ACTION)
+      tb.add_button(buttongroup_button)
+
+      delete_button := IconButton("tooltip=Delete")
+      delete_button.set_image(
+                              $include "icon/icn24.icon"
+                              )
+      delete_button.connect(self.op_delete_selections, Event.ACTION)
+      tb.add_button(delete_button)
+
+      undo_button := IconButton("tooltip=Undo")
+      undo_button.set_image(
+                          $include "icon/icn25.icon"
+                          )
+      undo_button.connect(self.op_undo, Event.ACTION)
+      tb.add_button(undo_button)
+
+      redo_button := IconButton("tooltip=Redo")
+      redo_button.set_image(
+                            $include "icon/icn26.icon"
+                            )
+      redo_button.connect(self.op_redo, Event.ACTION)
+      tb.add_button(redo_button)
+
+      move_selection_up_order_button := IconButton("tooltip=Order Up")
+      move_selection_up_order_button.set_image(
+                                $include "icon/icn33.icon"
+                                )
+      move_selection_up_order_button.connect(self.op_move_selection_up_order_button, Event.ACTION)
+      tb.add_button(move_selection_up_order_button)
+
+      move_selection_down_order_button := IconButton("tooltip=Order Down")
+      move_selection_down_order_button.set_image(
+                           $include "icon/icn34.icon"
+                           )
+      move_selection_down_order_button.connect(self.op_move_selection_down_order_button, Event.ACTION)
+      tb.add_button(move_selection_down_order_button)
+
+      i := IconButton("tooltip=Preview")
+      i.set_image(
+                  $include "icon/icn38.icon"
+                  )
+      i.connect(self.op_preview, Event.ACTION)
+      tb.add_button(i)
+
+      i := IconButton("tooltip=Tree view")
+      i.set_image(
+                  $include "icon/icn39.icon"
+                  )
+      i.connect(self.op_tree, Event.ACTION)
+      tb.add_button(i)
+
+      self.add(tb)
+
+      #
+      # Create the three text labels below the tool bar.
+      #
+      p := Component("c:eol", "c:x_fill", "layout=",GridLayout("flush", "dii=0"))
+
+      filename_label := Label("size=200", "c:y_fill")
+      filename_label.set_border(CompoundBorder("outer=",SunkenBorder(),
+                                               "inner=",EmptyBorder("l_inset=",Gui.TEXT_INSET),
+                                               "x_align=l"))
+      filename_label.set_label("")
+      p.add(filename_label)
+
+      info_label := Label("c:x_weight=1", "c:x_fill", "c:y_fill")
+      info_label.set_border(CompoundBorder("outer=",SunkenBorder(),
+                                              "inner=",EmptyBorder("l_inset=",Gui.TEXT_INSET),
+                                              "x_align=l"))
+      info_label.set_label("")
+      p.add(info_label)
+
+      pos_label := Label("size=200", "c:y_fill")
+      pos_label.set_wattrib("font", "serif,10")
+      pos_label.set_border(CompoundBorder("outer=",SunkenBorder(),
+                                              "inner=",EmptyBorder("l_inset=",Gui.TEXT_INSET),
+                                              "x_align=l"))
+      pos_label.set_label("")
+      p.add(pos_label)
+
+      self.add(p)
+
+      self.connect(self.op_quit, Event.WINDOW_CLOSE_BUTTON)
+
+      self.attrib("label=Ivib", "height=600", "minheight=400")
+      self.set_only_enlarge_width("t")
+      canvas_zone := Panel("bg=blue", "size=50,50")
+      self.add(canvas_zone)
+
+      #
+      # Set up the Canvas object.
+      #
+      canvas_border := BorderOfCanvas()
+      canvas := Canvas()
+      canvas_border.set_canvas(canvas)
+      canvas_border.set_pos(Canvas.SURROUND, Canvas.SURROUND)
+      canvas.dialog_iw := Canvas.DEFAULT_WIDTH
+      canvas.dialog_ih := Canvas.DEFAULT_HEIGHT
+      canvas.synch_size()
+      self.canvas_zone.add(canvas_border)
+
+      #
+      # Initialize the undo/redo lists.
+      #
+      self.undo_list := []
+      self.redo_list := []
+
+      update_grey()
+      return
+   end
+end
+
+#############################################################################
+#
+# Preferences for program
+#     
+class Preferences(Dialog)
+   public 
+      c, 
+      undo_size, 
+      plugin_dir_field,
+      path_tab,
+      okay_result
+
+   public on_okay()
+      integer(self.undo_size.get_contents()) | return alert_error(self, "Non-integer undo size")
+      c.cache_path := path_tab.get_contents()
+      c.undo_size := integer(self.undo_size.get_contents())
+      c.plugin_directory := plugin_dir_field.get_contents()
+      okay_result := 1
+      self.dispose()
+   end
+
+   public on_cancel()
+      self.dispose()
+   end
+
+   public on_browse()
+      local d, s
+      d := DirectoryDialog()
+      d.set_directory(plugin_dir_field.get_contents())
+      d.show_modal(self)
+      if s := d.get_result() then
+         plugin_dir_field.set_contents(s)
+   end
+
+   public new(c)
+      local tabset, t, oc, browse
+      cast(self,Dialog).new()
+      self.c := c
+      self.set_wattrib("label", "Program Preferences")
+
+      set_layout(GridLayout())
+
+      tabset := TabSet("c:eol")
+      add(tabset)
+      t := TabItem("label=General")
+      tabset.add(t)
+
+      t.set_layout(GridLayout("extra=borders"))
+
+      t.add(Label("label=Undo buffer size"))
+      undo_size := TextField("c:eol", "c:w=2", "size=100")
+      undo_size.set_contents(c.undo_size)
+      t.add(undo_size)
+
+      t.add(Label("label=Plugin directory"))
+      plugin_dir_field := TextField("size=150")
+      plugin_dir_field.set_contents(c.plugin_directory)
+      t.add(plugin_dir_field)
+      browse := TextButton("label=...", "c:eol")
+      browse.connect(self.on_browse, Event.ACTION)
+      t.add(browse)
+
+
+      path_tab := PathTab(c)
+      tabset.add(path_tab)
+
+      oc := OkCancel()
+      oc.listen(self)
+      self.add(oc)
+      return
+   end
+end
+
+class PathTab(TabItem)
+   public 
+      c,
+      path_list,
+      path,
+      add_button,   # Buttons              
+      delete,                         
+      contents,
+      browse,
+      apply
+
+   public update_grey()
+      if *path_list.get_selections() > 0 then {
+         path.set_is_shaded("f")
+         browse.set_is_shaded("f")
+         delete.set_is_shaded("f")
+         apply.set_is_shaded("f")
+      } else {
+         path.set_is_shaded("t")
+         browse.set_is_shaded("t")
+         delete.set_is_shaded("t")
+         apply.set_is_shaded("t")
+      }
+   end
+
+   public on_add()
+      put(contents, "Edit me")
+      path_list.contents_changed()
+      path_list.goto_first(*contents)
+      path_list.set_selections([*contents])
+      path_list.set_cursor(*contents)
+      path.set_contents(contents[-1])
+      update_grey()
+      path.grab_focus()
+      path.handle_select_all()
+   end
+
+   public on_delete()
+      path_list.delete_lines(path_list.get_selections())
+      update_grey()
+   end
+
+   public on_apply()
+      local i
+      #
+      # Copy the edited item back to the table. 
+      #
+      i := path_list.get_selections()[1]
+      contents[i] := path.get_contents()
+      path_list.contents_changed()
+      path_list.clear_selections()
+      update_grey()
+   end
+
+   public on_list()
+      #
+      # Line in the table clicked - copy the line to the edit area.
+      #
+      path.set_contents(path_list.object_get_selections()[1])
+      update_grey()
+   end
+
+   public on_browse()
+      local d, s
+      d := DirectoryDialog()
+      d.set_directory("Edit me" ~== path.get_contents())
+      d.show_modal(self.parent_dialog)
+      if s := d.get_result() then {
+         path.set_contents(s)
+         on_apply()
+      }
+   end
+
+   public get_contents()
+      return contents
+   end
+
+   public new(c)
+      local p
+      cast(self,TabItem).new()
+      self.c := c
+      contents := copy(c.cache_path)
+      set_layout(GridLayout())
+      set_label("Image Paths")
+
+      path_list := TextList("size=250,150", 
+                            "c:eol",
+                            "select_mode=one",
+                            "contents=",contents)
+      path_list.connect(self.on_list, Event.SELECTION_CHANGED)
+      add(path_list)
+
+      p := Panel("c:eol", "c:y_weight=0", "layout=",GridLayout("flush"))
+      path := TextField("size=150")
+      path.connect(self.on_apply, Event.ACTION)
+      p.add(path)
+
+      browse := TextButton("label=...", "c:eol")
+      browse.connect(self.on_browse, Event.ACTION)
+      p.add(browse)
+
+      add(p)
+    
+      p := Panel("c:eol", "c:y_weight=0", "layout=",GridLayout("flush"))
+      add_button := TextButton()
+      add_button.connect(self.on_add, Event.ACTION)
+      add_button.set_label("Add")
+      p.add(add_button)
+
+      delete := TextButton()
+      delete.connect(self.on_delete, Event.ACTION)
+      delete.set_label("Delete")
+      p.add(delete)
+
+      apply := TextButton()
+      apply.connect(self.on_apply, Event.ACTION)
+      apply.set_label("Apply")
+      p.add(apply)
+
+      add(p)
+
+      update_grey()
+      return
+   end
+end
+
+class IvibClipboardSelectionOwner(SelectionOwner)
+   public parent
+
+   public get_content()
+      return parent.clipboard
+   end
+
+   public lost_ownership()
+   end
+
+   public get_targets()
+      return Ivib.IVIB_COMPONENT_TARGET
+   end
+
+   public get_win()
+      return parent.get_win()
+   end
+
+   public new(parent)
+      self.parent := parent
+      return
+   end
+end

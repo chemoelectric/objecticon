@@ -1,0 +1,1053 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import 
+   graphics,
+   util
+
+#
+#
+# This is the parent class of a dialog window.
+#
+class Dialog(Component)
+   public static 
+      ROOT_WATTRIBS, 
+      DEFAULT_POINTER,
+      DOUBLE_CLICK_DELAY,        # Repeat event delays
+      TOOLTIP_START_DELAY,       # Default tooltip delays
+      TOOLTIP_END_DELAY,
+      TOOLTIP_CONTINUE_DELAY,
+      TOOLTIP_X_OFFSET,
+      TOOLTIP_Y_OFFSET
+
+   public 
+      win,                     # The dialog's window.
+      is_open_flag,            # Flag indicates whether window is open              
+      owning_dialog,
+      child_dialogs,
+      focus,                   # Component with current focus            
+      menu_mode,               # Do we have a menu open?
+      buffer_win,              # Buffer window for double buffering                 
+      click_count,             # Variables controlling multiple clicks
+      prev_time,
+      prev_event,
+      is_blocked_flag,
+      resize_attrib,
+      drag_gesture_x,
+      drag_gesture_y,
+      curr_drag,
+      curr_drag_holder,
+      curr_drop,
+      tried_drag,
+      invokes,
+      tooltip_ticker,
+      tooltip_last_obj, 
+      tooltip_last_tip, 
+      tooltip_state,
+      tooltip_start_time,
+      tooltip_end_time,
+      tooltip_continue_time,
+      tooltip_component, 
+      point_chain,
+      point_chain_source,
+      copy_rect,
+      only_enlarge_width_flag,
+      only_enlarge_height_flag,
+      held,
+      moving
+
+   public needs_validate()
+      return \copy_rect
+   end
+
+   public validate()
+      local r
+
+      \copy_rect | fail
+
+      # Copy copy_rect just in case invoke_display invalidates something (and hence
+      # changes copy_rect unexpectedly).
+      r := copy_rect
+      copy_rect := &null
+
+      self.invoke_display(r)
+
+      Window.copy_area(buffer_win, win, r.x, r.y, r.w, r.h, r.x, r.y)
+   end
+
+   public invalidate_rect(r)
+      if /copy_rect then
+         copy_rect := Rect(r.x, r.y, r.w, r.h)
+      else
+         copy_rect := copy_rect.union(r)
+   end
+
+   public block()
+      self.is_blocked_flag := 1
+      self.resize_attrib := self.win.attrib("resize")
+      self.win.attrib("resize=off")
+   end
+
+   public unblock()
+      self.is_blocked_flag := &null
+      self.win.attrib("resize=" || self.resize_attrib)
+   end
+
+   #
+   # Raise the window
+   #
+   public raise()
+      self.win.raise()
+   end
+
+   #
+   # Returns the number of mouse clicks that have occurred
+   # consecutively, with each click in the sequence being less
+   # than {DOUBLE_CLICK_DELAY} milliseconds apart.  That variable is by default 500
+   # milliseconds, but it may be changing {DOUBLE_CLICK_DELAY}.
+   #
+   public get_click_count()
+      return self.click_count
+   end
+
+   public compute_absolutes()
+      self.x := 0
+      self.y := 0
+      self.w := self.win.attrib("width")
+      self.h := self.win.attrib("height")
+   end
+
+   #
+   # Succeed iff the dialog is open.
+   #
+   public is_open()
+      return \self.is_open_flag
+   end
+
+   #
+   # Change pointer
+   #
+   public change_pointer(s)
+      self.win.attrib("pointer=" || s)
+   end
+
+   #
+   # Return the window width from the "width" or "size" attrib.
+   #
+   public get_width_attrib()
+      local n
+      if n := integer(get_wattrib("width")) then
+         return n
+      get_wattrib("size") ? {
+         return integer(tab(upto(',')))
+      }
+   end
+
+   #
+   # Return the window height from the "height" or "size" attrib.
+   #
+   public get_height_attrib()
+      local n
+      if n := integer(get_wattrib("height")) then
+         return n
+      get_wattrib("size") ? {
+         tab(upto(','))
+         move(1)
+         return integer(tab(0))
+      }
+   end
+
+   #
+   # This is a variation on the conventional modal and modeless
+   # methods.  The dialog is opened, input to other windows is not blocked, but
+   # the call does not return until the window is closed.
+   # @param d   The parent dialog, if specified, is blocked until
+   # @ the window is closed.
+   #
+   public show_child(d)
+      set_owning_dialog(\d)
+      self.show()
+      Dispatcher.add(self)
+      if \d then {
+         d.block()
+         Dispatcher.message_loop(self)
+         d.unblock()
+      } else
+         Dispatcher.message_loop(self)
+   end
+
+   #
+   # Displays the dialog as a modeless dialog.  This 
+   # means that window events are processed by this dialog
+   # and other open dialogs concurrently.  The call to
+   # {show_modeless()} opens the dialog and returns immediately.
+   #
+   # @param d   This optional parameter specifies the parent dialog.
+   # @ When a parent dialog is closed, its child dialogs are automatically closed.
+   #
+   public show_modeless(d)
+      set_owning_dialog(\d)
+      self.show()
+      Dispatcher.add(self)
+      if \d then
+         self.is_blocked_flag := d.is_blocked_flag
+   end
+
+   #
+   # Displays the dialog as a modal dialog.  In other
+   # words, window events to any other open dialogs are blocked
+   # until the dialog is closed.  This method doesn't return
+   # until the dialog is closed.
+   # @param d   The parent dialog.  It will not normally be
+   # @ needed.
+   #
+   public show_modal(d)
+      local l
+      set_owning_dialog(\d)
+      self.show()
+      l := Dispatcher.list_unblocked()
+      every (!l).block()
+      Dispatcher.add(self)
+      Dispatcher.message_loop(self)
+      every (!l).unblock()
+   end
+
+   #
+   # Set the owning dialog to d, and insert this dialog into
+   # the parent's set of child dialogs.
+   # 
+   private set_owning_dialog(d)
+      insert(d.child_dialogs, self)
+      self.owning_dialog := d
+   end
+
+   #
+   # Returns the Icon window associated with the dialog, or fail if unset.
+   #
+   public get_win()
+      return \self.win
+   end
+
+   public resize_win(w, h)
+      self.win.attrib("size=" || w || "," || h)
+      self.win.enqueue(Mouse.WINDOW_RESIZE)      
+   end
+
+   public initially()
+      self.parent_dialog := self
+      self.effective_is_hidden_flag := self.is_hidden_flag
+      self.effective_is_shaded_flag := self.is_shaded_flag
+      self.effective_wattribs := copy(self.wattribs)
+      every delete(self.effective_wattribs, 
+                   "pos" | "posx" | "posy" | "size" | "width" | "height"|
+                   "minwidth" | "minheight" | "minsize")
+      self.compute_z_order()
+      self.compute_tab_order()
+      self.cbwin := self.buffer_win.clone()
+      every (!self.children).initially()
+   end
+
+   public open_buffer_win()
+      self.buffer_win := (Window.open ! (["canvas=hidden"] ||| 
+                                   wattribs_to_list(self.wattribs))) | runerr("couldn't open window")
+   end
+
+   #
+   # Ensure we have a position if one is not set.
+   # 
+   private ensure_pos()
+      local x1, y1
+      if get_wattrib("pos") | (get_wattrib("posx") & get_wattrib("posy")) then
+         return
+
+      if get_wattrib("posx") then {
+         # Got x, need y
+         y1 := \y_spec | "0"
+         set_wattrib("posy", y1)
+      } else if get_wattrib("posy") then {
+         # Got y, need x
+         x1 := \x_spec | "0"
+         set_wattrib("posx", x1)
+      } else {
+         x1 := \x_spec | (get_pointerx() - get_width_attrib() - 20) | "50"
+         y1 := \y_spec | (get_pointery() - get_height_attrib() - 20) | "50"
+         set_wattrib("pos", x1 || "," || y1)
+      }
+   end
+
+   #
+   # Ensure we have size attributes, setting from the preferred width/height if
+   # absent
+   # 
+   private ensure_size()
+      if get_wattrib("size") | (get_wattrib("width") & get_wattrib("height")) then
+         return
+
+      if get_wattrib("width") then 
+         # Got width, need height
+         set_wattrib("height", get_preferred_height())
+      else if get_wattrib("height") then
+         # Got height, need width
+         set_wattrib("width", get_preferred_width())
+      else
+         # Need both
+         set_wattrib("size", get_preferred_width() || "," || get_preferred_height())
+   end
+
+   public open_visible_win()
+      ensure_size()
+      ensure_pos()
+
+      self.win := (Window.open ! (["inputmask=mk"] ||| 
+                            wattribs_to_list(self.wattribs))) | runerr("couldn't open window")
+      # Make the buffer the same size as the visible win.
+      self.buffer_win.attrib("size=" || self.win.attrib("size"))
+      if \self.only_enlarge_width_flag then
+         self.win.attrib("minwidth=" || self.win.attrib("width"))
+      if \self.only_enlarge_height_flag then
+         self.win.attrib("minheight=" || self.win.attrib("height"))
+   end
+
+   public close_win()
+      self.buffer_win.close()
+      self.win.close()
+   end
+
+   public get_buffer_win()
+      return \self.buffer_win
+   end
+
+   public enter_menu_mode(c)
+      # If already in menu mode, force ourselves out of it.
+      if \self.menu_mode then
+         self.menu_mode.close_all()
+      (/self.menu_mode := c) | syserr("internal error - already in menu mode")
+   end
+
+   public exit_menu_mode()
+      (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
+   end
+
+   #
+   # Sets keyboard focus to the given component.
+   #
+   public set_focus(c, e)
+      if \self.focus === c then
+         return
+
+      (\self.focus).lost_focus(e)
+      self.focus := c
+      (\self.focus).got_focus(e)
+   end
+
+   #
+   # Clear the keyboard focus.
+   #
+   public clear_focus(e)
+      (\self.focus).lost_focus(e)
+      self.focus := &null
+   end
+
+   #
+   # This empty method is invoked just after the dialog is displayed for the first time.
+   #
+   public init_dialog()
+   end
+
+   #
+   # This empty method may be overridden to add components to the
+   # dialog.  Alternatively, components may be added in the
+   # dialog's {initially} method.
+   #
+   public component_setup()
+   end
+
+   #
+   # This empty method may be overridden.  It is invoked just
+   # before the dialog window is closed.
+   #
+   public end_dialog()
+   end
+
+   public show()
+      self.component_setup()
+      self.open_buffer_win()
+      self.initially()
+      self.open_visible_win()
+      self.is_open_flag := 1
+      self.resize()
+      self.invalidate()
+      self.tooltip_init()
+      self.init_dialog()
+   end
+
+   public dispose()
+      self.end_dialog()
+      every (!child_dialogs).dispose()
+      Selection.dispose_owners(self)
+      self.tooltip_dispose()
+      self.finally()
+      Gui.style.dispose_all()
+      self.close_win()
+      self.is_open_flag := &null
+      Dispatcher.del(self)
+      if \self.owning_dialog then {
+         delete(self.owning_dialog.child_dialogs, self)
+         self.owning_dialog.raise()
+         self.owning_dialog := &null
+      }
+      fire(Event.DIALOG_CLOSED)
+   end
+
+   public consume_same(code)
+      while self.win.pending()[1] === code do
+         self.win.event()
+   end
+
+   public create_point_chain(e)
+      self.point_chain := []
+      self.point_chain_source := e
+      self.build_point_chain(self.point_chain, e.x, e.y)
+      if self.inside(e.x, e.y) then
+         put(self.point_chain, self)
+   end
+
+   public process_event(l)
+      local e
+
+      if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then
+         consume_same(l[1])
+
+      e := WinEvent!l
+
+      create_point_chain(e)
+
+      if /self.curr_drag then 
+         check_dnd(e)
+
+      if \self.curr_drag then
+         process_dnd(e)
+      else
+         process_normal(e)
+   end
+
+   #
+   # Normal event processing - not dnd
+   # 
+   private process_normal(e)
+      static focus_up, focus_down
+      local c, ec, old_n_held
+      initial {
+         focus_up := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
+         focus_down := set("\t", Key.RIGHT, Key.DOWN)
+      }
+
+      ec := e.code
+
+      old_n_held := *held
+      if member(Mouse.PRESS, ec) then {
+         check_click_count(e)
+         if c := (!self.point_chain).find_focus(e) then
+            self.set_focus(c, e)
+      } else if ec === Event.INVOKE_LATER then
+         do_invoke()
+      else if ec === Mouse.WINDOW_RESIZE then
+         handle_resize(e)
+      else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
+         if c := self.find_accel(ec) then
+            c.handle_accel(e)
+      }
+
+      generate_events(e)
+
+      #
+      # If a handler closed us, do no more.
+      #
+      if /self.is_open_flag then
+         return
+
+      #
+      # Check for focus keyboard movement, but not in menu mode; this would get muddled up
+      # with the menu's cursor movement.
+      #
+      if /e.release & /self.menu_mode then {
+         if member(focus_down, ec) & (/self.focus | 
+                                      self.focus.is_hidden() |
+                                      self.focus.is_shaded() | 
+                                      not(self.focus.keeps(e))) then 
+            self.set_focus(find_next_focus(e), e)
+         else if member(focus_up, ec) & (/self.focus | 
+                                         self.focus.is_hidden() |
+                                         self.focus.is_shaded() | 
+                                         not(self.focus.keeps(e))) then 
+            self.set_focus(find_previous_focus(e), e)
+      }
+
+      #
+      # The event may have changed what's above the cursor, eg a menu may have
+      # closed revealing something below, so re-create the point chain.
+      #
+      create_point_chain(e)
+      process_tooltip_event(e)
+
+      #
+      # Synch the pointer if either there were no buttons down before or after
+      # this event.  This means we synch at the start and end of a drag, but not
+      # during a drag.
+      #
+      if (old_n_held | *held) = 0 then
+         synch_pointer(e)
+   end
+
+   #
+   # Artificially "hold" a component down.
+   # @param c The component
+   # @param e The mouse event
+   #
+   public hold(c, e)
+      local ec
+      ec := e.code
+      self.held[ec] := copy(\self.held[ec]) | fail
+      put(self.held[ec], c)
+   end
+
+   #
+   # Artificially "release" a component which is held.
+   # @param c  The component
+   # @param ec The simulated mouse event code
+   #
+   public release(c, ec)
+      self.held[ec] := copy(\self.held[ec]) | fail
+      list_del(self.held[ec], c)
+   end
+
+   #
+   # Return the number of buttons presently held down.
+   #
+   public get_held_count()
+      return *held
+   end
+
+   public generate_events(e)
+      local s1, s2, ec, ke
+
+      ec := e.code
+      if integer(ec) < 0 then {
+         # Non-keyboard event
+         if member(Mouse.WHEEL, ec) then {
+            fire_list(point_chain, ec, e)
+         } else if member(Mouse.PRESS, ec) then {
+            held[ec] := copy(point_chain)
+            fire_list(held[ec], ec, e)
+         } else if member(Mouse.DRAG_OR_MOVEMENT, ec) then {
+            s1 := set(\moving) | set()
+            s2 := set(point_chain)
+            fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
+            fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
+            if ec === Mouse.MOVEMENT then 
+               fire_list(point_chain, ec, e)
+            else
+               fire_list(\held[ec + 6], ec, e)
+            moving := copy(point_chain)
+         } else if member(Mouse.RELEASE, ec) then {
+            fire_list(\held[ec + 3], ec, e)
+            delete(held, ec + 3)
+         } else if member(Mouse.WINDOW, ec) then {
+            fire(ec, e)
+         }
+      } else {
+         # Keyboard event
+         ke := if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS
+         if \self.menu_mode then
+            fire_list([self.menu_mode], ke, e)
+         else
+            fire_list([\self.focus], ke, e)
+         self.fire(ke, e)
+      }
+      fire(Event.ICON, e)
+   end
+
+   # 
+   private fire_list(l, t, p)
+      local c
+      every c := !l do {
+         if c.is_unshaded() & c.is_unhidden() &
+            \c.cbwin & \self.is_open_flag then
+            c.fire(t, p)
+      }
+   end
+
+   #
+   # Initialize the tooltip state and ticker.
+   # 
+   private tooltip_init()
+      self.tooltip_state := 0
+      self.tooltip_ticker.start()
+   end
+
+   #
+   # Cleanup the tooltip settings.
+   # 
+   private tooltip_dispose()
+      self.tooltip_ticker.stop()
+      if self.tooltip_state = 2 then
+         hide_tooltip()
+   end
+
+   #
+   # Show the tooltip at the given cursor position.
+   # 
+   private show_tooltip(obj, tip, e)
+      if \self.tooltip_component then
+         hide_tooltip()
+      self.tooltip_component := obj.create_tooltip_component(tip)
+      self.tooltip_component.set_pos(e.x + TOOLTIP_X_OFFSET, e.y + TOOLTIP_Y_OFFSET)
+      self.tooltip_component.set_z(get_top_z())
+      self.add(self.tooltip_component)
+      self.tooltip_component.initially()
+      self.tooltip_component.resize()
+
+      #
+      # Ensure it's on-screen; adjust and resize again if not.
+      #
+      if self.tooltip_component.x + self.tooltip_component.w > self.w then {
+         self.tooltip_component.x_spec := max(0, e.x - TOOLTIP_X_OFFSET - self.tooltip_component.w)
+         self.tooltip_component.resize()
+      }
+      if self.tooltip_component.y + self.tooltip_component.h > self.h then {
+         self.tooltip_component.y_spec := max(0, e.y - TOOLTIP_Y_OFFSET - self.tooltip_component.h)
+         self.tooltip_component.resize()
+      }
+
+      self.tooltip_component.invalidate()
+   end
+
+   #
+   # Update the tooltip by hiding it and re-creating it.
+   # 
+   private update_tooltip(obj, tip)
+      local x, y
+      x := tooltip_component.x
+      y := tooltip_component.y
+      hide_tooltip()
+      self.tooltip_component := obj.create_tooltip_component(tip)
+      self.tooltip_component.set_pos(x, y)
+      self.tooltip_component.set_z(get_top_z())
+      self.add(self.tooltip_component)
+      self.tooltip_component.initially()
+      self.tooltip_component.resize()
+
+      #
+      # Ensure it's on-screen; adjust and resize again if not.
+      #
+      if self.tooltip_component.x + self.tooltip_component.w > self.w then {
+         self.tooltip_component.x_spec := 0 <= self.w - self.tooltip_component.w
+         self.tooltip_component.resize()
+      }
+      if self.tooltip_component.y + self.tooltip_component.h > self.h then {
+         self.tooltip_component.y_spec := 0 <= self.h - self.tooltip_component.h
+         self.tooltip_component.resize()
+      }
+
+      self.tooltip_component.invalidate()
+   end
+
+   #
+   # Hide the tooltip label.
+   # 
+   private hide_tooltip()
+      self.tooltip_component.invalidate()
+      self.remove(self.tooltip_component)
+      self.tooltip_component.finally()
+      self.tooltip_component := &null
+   end
+
+   #
+   # Tooltip processing during an event.
+   # 
+   private process_tooltip_event(e)
+      if e.code === Mouse.MOVEMENT then
+         tooltip_states(e)
+      else {
+         if tooltip_state = 2 then
+            hide_tooltip()
+         tooltip_state := 0
+         if \ (\self.tooltip_last_obj).tooltip_follows_mouse_flag then
+            # If follows_mouse_flag, then allow tooltip to re-appear over this
+            # component, after a delay.
+            self.tooltip_last_tip := self.tooltip_last_obj := &null
+      }
+   end
+
+   #
+   # Tooltip processing on a tick.
+   # 
+   private process_tooltip_tick()
+      local e
+      #
+      # Don't process ticks whilst blocked, or button held.
+      #
+      if \self.is_blocked_flag | (get_held_count() > 0) then
+         return
+
+      #
+      # Create an artificial event and process it.
+      #
+      e := WinEvent(0, 
+                    self.win.attrib("pointerx"),
+                    self.win.attrib("pointery"))
+      create_point_chain(e)
+      tooltip_states(e)
+   end
+
+   #
+   # Tooltip state processing.
+   # 
+   private tooltip_states(e)
+      local obj, t, c, tip
+
+      #
+      # If over tooltip, behave as though over current object.
+      #
+      if (\self.tooltip_component).in_region(e) then {
+         if tip := self.tooltip_last_obj.get_tooltip(e) then
+            obj := self.tooltip_last_obj
+      } else {
+         every c := !self.point_chain do {
+            if tip := c.get_tooltip(e) then {
+               obj := c
+               break
+            }
+         }
+      }
+      #write("last=",image(obj), "  obj=",image(obj), " tip=",image(tip), "  state=",tooltip_state)
+
+      t := curr_time_millis()
+
+      case self.tooltip_state of {
+         0 : {
+            if \obj ~=== self.tooltip_last_obj then {
+               self.tooltip_start_time := t + obj.get_tooltip_start_delay()
+               self.tooltip_state := 1
+            }
+         }
+         1 : {
+            if obj ~=== self.tooltip_last_obj then {
+               if /obj then
+                  self.tooltip_state := 0
+               else
+                  self.tooltip_start_time := t + obj.get_tooltip_start_delay()
+            } else if t >= self.tooltip_start_time then {
+               show_tooltip(obj, tip, e)
+               self.tooltip_state := 2
+               self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
+            }
+         }
+         2 : {
+            if obj ~=== self.tooltip_last_obj then {
+               if /obj then {
+                  hide_tooltip()
+                  self.tooltip_state := 3
+                  self.tooltip_continue_time := t + TOOLTIP_CONTINUE_DELAY
+               } else {
+                  show_tooltip(obj, tip, e)
+                  self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
+               }
+            } else if tip ~=== self.tooltip_last_tip then {
+               if /obj.tooltip_follows_mouse_flag then
+                  update_tooltip(obj, tip)
+               else
+                  show_tooltip(obj, tip, e)
+               self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
+            } else if t >= \self.tooltip_end_time then {
+               hide_tooltip()
+               self.tooltip_state := 0
+               self.tooltip_continue_time := t + TOOLTIP_CONTINUE_DELAY
+            }
+         }
+         3 : {
+            if \obj ~=== self.tooltip_last_obj then {
+               show_tooltip(obj, tip, e)
+               self.tooltip_state := 2
+               self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
+            } else if t >= self.tooltip_continue_time then
+               self.tooltip_state := 0
+         }
+      }
+
+      self.tooltip_last_obj := obj
+      self.tooltip_last_tip := tip
+   end
+
+   #
+   # Synch the mouse cursor pointer with the component it's over.
+   #
+   public synch_pointer(e)
+      local c, ptr
+
+      #if get_held_count() > 0 then
+      #   return
+
+      if \self.menu_mode then
+         ptr := "left ptr"
+      else {
+         ptr := DEFAULT_POINTER
+         every c := !\self.point_chain do {
+            if c.is_unshaded() & (ptr := c.get_pointer(e)) then
+               break
+         }
+      }
+      change_pointer(ptr)
+   end
+
+   #
+   # Drag & drop mode processing
+   # 
+   private process_dnd(e)
+      local o, ec
+
+      ec := e.code
+      #
+      # Wheel events are treated normally and then passed on as though
+      # they were a drag event, in order to keep the drag holder
+      # display in synch.
+      #
+      if member(Mouse.WHEEL, ec) then
+         fire_list(point_chain, ec, e)
+
+      if (ec === curr_drag.event.code) | member(Mouse.WHEEL, ec) then {
+         # Try the drag holder's drag_event method first...
+         if not((\self.curr_drag_holder).drag_event(self.curr_drag, e)) then {
+            # No luck with the drag holder, so try to search for a new drag holder.
+            self.curr_drag_holder := self.invoke_drag_event(self.curr_drag, e) | &null
+         }
+
+         # If we have a drag holder, see if it can drop here.
+         if o := (\self.curr_drag_holder).can_drop(self.curr_drag, e) then {
+            change_pointer("hand2")
+            self.curr_drop := Drag(self.curr_drag_holder, o, e)
+         } else {
+            change_pointer("exchange")
+            self.curr_drop := &null
+         }
+      } else if ec === curr_drag.event.code + 3 then {
+         # If we have a prospective drop from can_drop, try to perform it.
+         if (\self.curr_drop).get_source().perform_drop(self.curr_drag, self.curr_drop, e) then
+            self.curr_drag.get_source().end_drag(self.curr_drag, self.curr_drop, e)
+         self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
+         delete(self.held, ec + 3)   # Now held should be empty
+         self.invoke_drag_reset(e)
+         synch_pointer(e)
+      } else if /e.release & (ec === "\e") then {
+         self.held[curr_drag.event.code + 6] := []    # Now held should hold this one empty list
+         self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
+         self.invoke_drag_reset(e)
+         change_pointer(DEFAULT_POINTER)
+      }
+   end
+
+   #
+   # Check whether we should start a dnd (by setting curr_drag)
+   # 
+   private check_dnd(e)
+      #
+      # There must be only one button held, and the event must be
+      # a drag.
+      #
+      if (*self.held = 1) & member(Mouse.DRAG, e.code) then {
+         # Note the position of the start of a drag
+         /self.drag_gesture_x := e.x
+         /self.drag_gesture_y := e.y
+         if /self.tried_drag &
+            (abs(e.x - self.drag_gesture_x) > 3 |
+             abs(e.y - self.drag_gesture_y) > 3 ) then {
+                # Try to begin a drag.
+                self.curr_drag := self.invoke_can_drag(e) 
+                self.tried_drag := 1
+                if \self.curr_drag then
+                   change_pointer("exchange")
+             }
+      } else
+         self.tried_drag := self.drag_gesture_x := self.drag_gesture_y := &null
+   end
+
+   public invoke_can_drag(ev)
+      local c, o
+      every c := !\self.held[ev.code + 6] do
+         if c.is_unshaded() & \c.allow_drag_flag & o := c.can_drag(ev) then
+            return Drag(c, o, ev)
+   end
+
+   public invoke_drag_event(d, ev)
+      local c
+      every c := !self.point_chain do
+         if c.is_unshaded() & \c.allow_drop_flag & c.drag_event(d, ev) then
+            return c
+   end
+
+   #
+   # Process a resize 
+   # 
+   private handle_resize(e)
+      consume_same(e)
+      #
+      # Resize buffer canvas
+      #
+      self.buffer_win.attrib("size=" || self.win.attrib("size"))
+      self.resize()
+      self.invalidate()
+   end
+
+   #
+   # Maybe increment the click count
+   # 
+   private check_click_count(e)
+      local t
+
+      t := curr_time_millis()
+      if e.code = (\prev_event).code & prev_event.x = e.x & prev_event.y = e.y & 
+                                 (t - prev_time < DOUBLE_CLICK_DELAY) then
+         click_count +:= 1
+      else
+         click_count := 1
+
+      prev_event := e
+      prev_time := t
+   end
+
+   public get_focus_list(e)
+      local l, c
+      l := []
+      every c := coexp_seq{traverse_tab_order()} do {
+         if c === self.focus | (c.accepts_focus(e) & c.is_unhidden() & c.is_unshaded()) then {
+            put(l, c)
+         }
+      }
+      return l
+   end
+
+   public find_next_focus(e)
+      local l, i
+      l := get_focus_list(e)
+      every i := 1 to *l - 1 do {
+         if l[i] === self.focus then
+            return l[i + 1]
+      }
+      return l[1]
+   end
+
+   public find_previous_focus(e)
+      local l, i
+      l := get_focus_list(e)
+      every i := 2 to *l do {
+         if l[i] === self.focus then
+            return l[i - 1]
+      }
+      return l[-1]
+   end
+
+   #
+   # This method adds an otherwise meaningless event to the window's event
+   # queue.  When that event comes to be processed, the given method in the
+   # given object is invoked, with the optional parameter.
+   #
+   # This is useful if you need to take some action from within an event
+   # handler method, but that action has to take place after the current
+   # event has completed processing.
+   #
+   # @param proc    The procedure (or method pointer) to call
+   # @param param   An optional parameter which will be passed to the
+   #                method.
+   #
+   public invoke_later(proc, param)
+      put(self.invokes, [proc, param])
+      self.win.enqueue(Event.INVOKE_LATER)
+   end
+
+   #
+   # Call a method added via invoke_later().
+   # 
+   private do_invoke()
+      local e
+      if e := pop(self.invokes) then {
+         e[1](e[2])
+      }
+   end
+
+   #
+   # Configure the dialog so that it can't be reduced below its original
+   # height.
+   #
+   public set_only_enlarge_height(s)
+      self.only_enlarge_height_flag := to_flag(s)
+   end
+
+   #
+   # Configure the dialog so that it can't be reduced below its original
+   # width.
+   #
+   public set_only_enlarge_width(s)
+      self.only_enlarge_width_flag := to_flag(s)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "only_enlarge_height" : set_only_enlarge_height(f.flag_val()) 
+         "only_enlarge_width" : set_only_enlarge_width(f.flag_val()) 
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   private static init()
+      DOUBLE_CLICK_DELAY := 500
+      TOOLTIP_START_DELAY := 1000
+      TOOLTIP_END_DELAY := 4000
+      TOOLTIP_CONTINUE_DELAY := 1500
+      TOOLTIP_X_OFFSET := 5
+      TOOLTIP_Y_OFFSET := 15
+      DEFAULT_POINTER := "left ptr"
+      ROOT_WATTRIBS := table()
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.set_all_wattribs(ROOT_WATTRIBS)
+      self.child_dialogs := set([])
+      self.invokes := []
+      self.held := table()
+      self.tooltip_ticker := Ticker("interval=200")
+      self.tooltip_ticker.connect(self.process_tooltip_tick, Event.TICK)
+      set_fields(a)
+      return
+   end
+end
+
+class WinEvent(Point)
+   public
+      code,
+      shift,
+      meta,
+      ctrl,
+      release,
+      interval
+
+   public new(code, x, y, ctrl, meta, shift, release, interval)
+      self.code := code
+      self.x := x
+      self.y := y
+      self.shift := shift
+      self.meta := meta
+      self.ctrl := ctrl
+      self.release := release
+      self.interval := interval
+      return
+   end
+end

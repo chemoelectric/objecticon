@@ -1,0 +1,40 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package util
+
+#
+# This simply holds information about a single listener.
+#
+class Listener()
+   private readable 
+      proc,
+      type
+
+   #
+   # Return the procedure (or method pointer) which is invoked on an
+   # event.
+   #
+   public get_proc()
+      return proc
+   end
+
+   #
+   # The type for which we are listening, or &null implying
+   # we are listening for all types.
+   #
+   public get_type()
+      return type
+   end
+
+   package new(proc, type)
+      self.proc := proc
+      self.type := type
+      return
+   end
+end
