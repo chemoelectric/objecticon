@@ -8,7 +8,6 @@
 /*
  * Prototypes.
  */
-static int     glbcmp    (char *pi, char *pj);
 static int     keyref    (union block *bp, dptr dp);
 static void showline  (dptr f, int l);
 static void showlevel (register int n);
@@ -770,16 +769,16 @@ void atrace(dp)
  *  procedure calls to file f.
  */
 
-int xdisp(fp,dp,count,f)
-    struct pf_marker *fp;
-    register dptr dp;
-    int count;
-    FILE *f;
+void xdisp(struct pf_marker *fp,
+          dptr dp,
+          int count,
+          FILE *f,
+          struct progstate *p)
 {
     register dptr np;
     register int n;
     struct b_proc *bp;
-    word nglobals, *indices;
+    word nglobals;
 
     while (count--) {		/* go back through 'count' frames */
         if (fp == NULL)
@@ -823,7 +822,7 @@ int xdisp(fp,dp,count,f)
         /*
          * Print statics.
          */
-        dp = &statics[bp->fstatic];
+        dp = &p->Statics[bp->fstatic];
         for (n = bp->nstatic; n > 0; n--) {
             fprintf(f, "   ");
             putstr(f, np);
@@ -838,40 +837,18 @@ int xdisp(fp,dp,count,f)
     }
 
     /*
-     * Print globals.  Sort names in lexical order using temporary index array.
+     * Print globals.
      */
 
-    nglobals = eglobals - globals;
+    nglobals = p->Eglobals - p->Globals;
 
-    indices = malloc(nglobals * sizeof(word));
-    if (indices == NULL)
-        return Failed;
-    else {
-        for (n = 0; n < nglobals; n++)
-            indices[n] = n;
-        qsort ((char*)indices, (int)nglobals, sizeof(word),(QSortFncCast)glbcmp);
-        fprintf(f, "\nglobal identifiers:\n");
-        for (n = 0; n < nglobals; n++) {
-            fprintf(f, "   ");
-            putstr(f, &gnames[indices[n]]);
-            fprintf(f, " = ");
-            outimage(f, &globals[indices[n]], 0);
-            putc('\n', f);
-        }
-        fflush(f);
-        free((pointer)indices);
+    fprintf(f, "\nglobal identifiers:\n");
+    for (n = 0; n < nglobals; n++) {
+        fprintf(f, "   ");
+        putstr(f, &p->Gnames[n]);
+        fprintf(f, " = ");
+        outimage(f, &p->Globals[n], 0);
+        putc('\n', f);
     }
-    return Succeeded;
+    fflush(f);
 }
-
-/*
- * glbcmp - compare the names of two globals using their temporary indices.
- */
-static int glbcmp (pi, pj)
-    char *pi, *pj;
-{
-    register word i = *(word *)pi;
-    register word j = *(word *)pj;
-    return lexcmp(&gnames[i], &gnames[j]);
-}
-

@@ -289,7 +289,6 @@ end
 function{1} display(i,c)
    declare {
       struct b_coexpr *ce = NULL;
-      struct progstate *savedprog = 0;
       }
 
    if !def:C_integer(i,(C_integer)k_level) then
@@ -299,7 +298,6 @@ function{1} display(i,c)
       if (!is:coexpr(c)) runerr(118,c);
       else if (BlkLoc(c) != BlkLoc(k_current))
          ce = (struct b_coexpr *)BlkLoc(c);
-      savedprog = curpstate;
       }
 
    abstract {
@@ -326,14 +324,10 @@ function{1} display(i,c)
       fflush(std_f);
       if (ce) {
 	 if ((ce->es_pfp == NULL) || (ce->es_argp == NULL)) fail;
-	 ENTERPSTATE(ce->program);
-         r = xdisp(ce->es_pfp, ce->es_argp, (int)i, std_f);
-	 ENTERPSTATE(savedprog);
+         xdisp(ce->es_pfp, ce->es_argp, (int)i, std_f, ce->program);
        }
       else
-         r = xdisp(pfp, glbl_argp, (int)i, std_f);
-      if (r == Failed)
-         runerr(305);
+         xdisp(pfp, glbl_argp, (int)i, std_f, curpstate);
       return nulldesc;
       }
 end

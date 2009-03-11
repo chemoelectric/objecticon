@@ -192,9 +192,7 @@ int first;
    /*
     * Enter the program state of the co-expression being activated
     */
-   ENTERPSTATE(ncp->program);
-
-
+   curpstate = ncp->program;
    glbl_argp = ncp->es_argp;
    BlkLoc(k_current) = (union block *)ncp;
 

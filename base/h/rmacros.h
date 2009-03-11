@@ -676,7 +676,6 @@
       #define dealcstr      (curpstate->Dealcstr)
       #define reserve       (curpstate->Reserve)
 
-      #define ENTERPSTATE(p) if (((p)!=NULL)) { curpstate = (p); }
       #define CHANGEPROGSTATE(p) if (((p)!=curpstate)) { changeprogstate(p); }
    
 

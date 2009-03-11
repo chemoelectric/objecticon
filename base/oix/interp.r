@@ -1797,11 +1797,7 @@ void changeprogstate(struct progstate *p)
 {
     p->Glbl_argp = glbl_argp;
     p->K_current = k_current;
-    ENTERPSTATE(p);
+    curpstate = p;
     BlkLoc(k_current)->coexpr.program = curpstate;
-/*
-    showcoexps();
-    printf("now k_current=%p  its prog=%p\n",BlkLoc(k_current),BlkLoc(k_current)->coexpr.program);
-*/
 }
 

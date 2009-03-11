@@ -541,7 +541,7 @@ dptr u_read			(int fd, int n, dptr d);
    void	rtrace			(dptr dp, dptr rval);
    void	strace			(dptr dp, dptr rval);
    void	tracebk			(struct pf_marker *lcl_pfp, dptr argp);
-   int	xdisp			(struct pf_marker *fp, dptr dp, int n, FILE *f);
+   void	xdisp			(struct pf_marker *fp, dptr dp, int n, FILE *f, struct progstate *p);
 
    #define Fargs dptr cargp
    int	Obscan			(int nargs, Fargs);
