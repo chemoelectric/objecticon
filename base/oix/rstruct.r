@@ -588,6 +588,7 @@ struct b_constructor *dynrecord(dptr s, dptr fields, int n)
     bp->n_fields = n;
     bp->instance_ids = 0;
     bp->program = 0;
+    bp->field_locs = 0;
     MemProtect(StrLoc(bp->name) = malloc(StrLen(*s)));
     strncpy(StrLoc(bp->name), StrLoc(*s), StrLen(*s));
     StrLen(bp->name) = StrLen(*s);

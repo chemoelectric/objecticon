@@ -1793,27 +1793,15 @@ int event;
    }
 
 
-/**
-static void validateprogstate(struct progstate *p)
-{
-    if (!InRange(p->Code, ipc.op, p->Ecode) &&
-        !InRange(((char *)istart), ipc.op,((char *)istart)+sizeof(istart)) &&
-        ipc.op != &mterm) {
-        printf("<<<<<No p=%p ipc=%p\n",p,ipc.op);
-    }
-}
-*/
-
-
 void changeprogstate(struct progstate *p)
 {
-/*    printf("changing state from %lx to %lx\n",curpstate,p);   */
-/*    this test doesn't really work now because the icode could be in a dynamically
-      alloced array created in do_invoke (invoke.r) */
-/*    validateprogstate(p); */
     p->Glbl_argp = glbl_argp;
     p->K_current = k_current;
     ENTERPSTATE(p);
     BlkLoc(k_current)->coexpr.program = curpstate;
+/*
+    showcoexps();
+    printf("now k_current=%p  its prog=%p\n",BlkLoc(k_current),BlkLoc(k_current)->coexpr.program);
+*/
 }
 

@@ -74,6 +74,9 @@ struct b_coexpr *sblkp;
    sblkp->es_efp = 0;
    sblkp->es_ilevel = 0;
    sblkp->tvalloc = NULL;
+   /* The current program (in which the entry ipc lives) is found in the
+    * pf_to field of the current stack frame. */
+   sblkp->program = rblkp->pfmkr.pf_to;
 
    /*
     * Copy locals into the co-expression.

@@ -22,7 +22,7 @@ struct descrip {		/* descriptor */
 };
 
 struct sdescrip {
-    word length;			/*   length of string */
+    word length;		/*   length of string */
     char *string;		/*   pointer to string */
 };
 
@@ -39,6 +39,14 @@ typedef struct si_ stringint;
 struct b_constructor_list {
     struct b_constructor *this;
     struct b_constructor_list *next;
+};
+
+/*
+ * Location in a source file
+ */
+struct loc {
+    struct descrip fname;       /* File name */
+    int line;                   /* Line number */
 };
 
 struct b_bignum {		/* large integer block */
@@ -74,7 +82,7 @@ struct b_lelem {		/* list-element block */
     word blksize;		/*   size of block */
     union block *listprev;	/*   previous list-element block */
     union block *listnext;	/*   next list-element block */
-    word nslots;			/*   total number of slots */
+    word nslots;		/*   total number of slots */
     word first;			/*   index of first used slot */
     word nused;			/*   number of used slots */
     struct descrip lslots[1];	/*   array of slots */
@@ -93,23 +101,24 @@ struct b_proc {			/* procedure block */
     word blksize;		/*   size of block */
 
     union {			/*   entry points for */
-        int (*ccode)();	/*     C routines */
+        int (*ccode)();	        /*     C routines */
         uword ioff;		/*     and icode as offset */
         pointer icode;		/*     and icode as absolute pointer */
     } entryp;
 
-    word nparam;			/*   number of parameters */
-    word ndynam;			/*   number of dynamic locals */
+    word nparam;		/*   number of parameters */
+    word ndynam;		/*   number of dynamic locals; < 0 => builtin function */
     word nstatic;		/*   number of static locals */
     word fstatic;		/*   index (in global table) of first static */
-    struct progstate *program;   /*   program in which this procedure resides */
-    word package_id;            /* package id of package in which this proc resides; 0=not in 
-                                 * a package; 1=lang; >1=other package */
-    struct class_field *field;  /* For a method defined in the icode, a pointer to the 
-                                 *  corresponding class_field.  For all other types of b_proc
-                                 *  this is null. */
+    struct progstate *program;  /*   program in which this procedure resides */
+    word package_id;            /*   package id of package in which this proc resides; 0=not in 
+                                 *     a package; 1=lang; >1=other package */
+    struct class_field *field;  /*   For a method defined in the icode, a pointer to the 
+                                 *   corresponding class_field.  For all other types of b_proc
+                                 *   this is null. */
     struct descrip pname;	/*   procedure name (string qualifier) */
-    struct descrip lnames[1];	/*   list of local names (qualifiers) */
+    struct descrip *lnames;     /*   list of local names (qualifiers) */
+    struct loc *llocs;	        /*   locations of local names */
 };
 
 struct b_constructor {		/* constructor block */
@@ -120,6 +129,7 @@ struct b_constructor {		/* constructor block */
     word n_fields;
     struct descrip name;	/*   record type name (string qualifier) */
     struct descrip *field_names; /* Pointers to field names array */
+    struct loc *field_locs;     /* Source location of fields */
     short *sorted_fields;       /* An array of indices giving the order sorted by name */
 };
 
@@ -138,7 +148,8 @@ struct b_record {		/* record block */
  */
 struct class_field {
     struct descrip name;               /* Field name (string qualifier) */
-    word fnum;                          /* Field number */
+    struct loc loc;                    /* Location in source */
+    word fnum;                         /* Field number */
     word flags;
     struct b_class *defining_class;
     struct descrip *field_descriptor;  /* Pointer to descriptor; null if an instance field */
@@ -391,7 +402,7 @@ struct progstate {
      */
     struct descrip Kywd_err;
     struct descrip Kywd_pos;
-    struct descrip ksub;
+    struct descrip Kywd_subject;
     struct descrip Kywd_prog;
     struct descrip Kywd_why;
     struct descrip Kywd_ran;
@@ -408,6 +419,7 @@ struct progstate {
     dptr Fnames, Efnames;
     dptr Globals, Eglobals;
     dptr Gnames, Egnames;
+    struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
     int NGlobals, NStatics;
     char *Strcons, *Estrcons;
@@ -556,7 +568,8 @@ struct b_iproc {		/* procedure block */
     word package_id;
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field */
     struct sdescrip ip_pname;	/*   procedure name (string qualifier) */
-    struct descrip ip_lnames[1];	/*   list of local names (qualifiers) */
+    struct descrip *ip_lnames;	/*   list of local names (qualifiers) */
+    struct loc *ip_llocs;	/*   locations of local names */
 };
 
 struct b_coexpr {		/* co-expression stack block */
@@ -575,9 +588,7 @@ struct b_coexpr {		/* co-expression stack block */
     dptr tvalloc;		/*   where to place transmitted value */
     struct descrip freshblk;	/*   refresh block pointer */
     struct astkblk *es_actstk;	/*   pointer to activation stack structure */
-
     word cstate[CStateSize];	/*   C state information */
-
     struct progstate *program;
 };
 

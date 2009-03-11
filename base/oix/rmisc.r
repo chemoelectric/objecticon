@@ -51,150 +51,172 @@ int ceq(dptr dp, char *s)
  *  of the variable (Succeeded for keywords), or Failed if the variable
  *  does not exist.
  */
-int getvar(s,vp)
-   char *s;
-   dptr vp;
-   {
-   register dptr dp;
-   register dptr np;
-   register int i;
-   struct b_proc *bp;
-   struct pf_marker *fp = pfp;
+int getvar(dptr s, dptr vp, struct progstate *p)
+{
+    register dptr dp;
+    register dptr np;
+    register int i;
+    struct b_proc *bp;
+    struct pf_marker *fp = pfp;
 
-   /*
-    * Is it a keyword that's a variable?
-    */
-   if (*s == '&') {
+    if (StrLen(*s) == 0)
+        return Failed;
+        
+    /*
+     * Is it a keyword that's a variable?
+     */
+    if (*StrLoc(*s) == '&') {
+        char *t = StrLoc(*s) + 1;
+        switch (StrLen(*s)) {
+            case 4 : {
+                if (strncmp(t,"pos",3) == 0) {
+                    vp->dword = D_Kywdpos;
+                    VarLoc(*vp) = &p->Kywd_pos;
+                    return Succeeded;
+                }
+                if (strncmp(t,"why",3) == 0) {
+                    vp->dword = D_Kywdstr;
+                    VarLoc(*vp) = &p->Kywd_why;
+                    return Succeeded;
+                }
+                break;
+            }
+            case 5 : {
+                if (strncmp(t,"dump",4) == 0) {
+                    vp->dword = D_Kywdint;
+                    VarLoc(*vp) = &kywd_dmp;
+                    return Succeeded;
+                }
+                break;
+            }
+            case 6 : {
+                if (strncmp(t,"error",5) == 0) {
+                    vp->dword = D_Kywdint;
+                    VarLoc(*vp) = &p->Kywd_err;
+                    return Succeeded;
+                }
+                if (strncmp(t,"trace",5) == 0) {
+                    vp->dword = D_Kywdint;
+                    VarLoc(*vp) = &p->Kywd_trc;
+                    return Succeeded;
+                }
+                break;
+            }
+            case 7 : {
+                if (strncmp(t,"random",6) == 0) {
+                    vp->dword = D_Kywdint;
+                    VarLoc(*vp) = &p->Kywd_ran;
+                    return Succeeded;
+                }
+                break;
+            }
+            case 8 : {
+                if (strncmp(t,"subject",7) == 0) {
+                    vp->dword = D_Kywdsubj;
+                    VarLoc(*vp) = &p->Kywd_subject;
+                    return Succeeded;
+                }
+                break;
+            }
+            case 9 : {
+                if (strncmp(t,"progname",8) == 0) {
+                    vp->dword = D_Kywdstr;
+                    VarLoc(*vp) = &p->Kywd_prog;
+                    return Succeeded;
+                }
+                break;
+            }
+            case 10 : {
+                if (strncmp(t,"eventcode",9) == 0) {
+                    vp->dword = D_Var;
+                    VarLoc(*vp) = &p->eventcode;
+                    return Succeeded;
+                }
+                break;
+            }
+            case 11 : {
+                if (strncmp(t,"eventvalue",10) == 0) {
+                    vp->dword = D_Var;
+                    VarLoc(*vp) = &p->eventval;
+                    return Succeeded;
+                }
+                break;
+            }
+            case 12 : {
+                if (strncmp(t,"eventsource",11) == 0) {
+                    vp->dword = D_Var;
+                    VarLoc(*vp) = &p->eventsource;
+                    return Succeeded;
+                }
+                break;
+            }
+        }
+        return Failed;
+    }
 
-      if (strcmp(s,"&error") == 0) {	/* must put basic one first */
-         vp->dword = D_Kywdint;
-         VarLoc(*vp) = &kywd_err;
-         return Succeeded;
-         }
-      else if (strcmp(s,"&pos") == 0) {
-         vp->dword = D_Kywdpos;
-         VarLoc(*vp) = &kywd_pos;
-         return Succeeded;
-         }
-      else if (strcmp(s,"&progname") == 0) {
-         vp->dword = D_Kywdstr;
-         VarLoc(*vp) = &kywd_prog;
-         return Succeeded;
-         }
-      else if (strcmp(s,"&why") == 0) {
-         vp->dword = D_Kywdstr;
-         VarLoc(*vp) = &kywd_why;
-         return Succeeded;
-         }
-      else if (strcmp(s,"&random") == 0) {
-         vp->dword = D_Kywdint;
-         VarLoc(*vp) = &kywd_ran;
-         return Succeeded;
-         }
-      else if (strcmp(s,"&subject") == 0) {
-         vp->dword = D_Kywdsubj;
-         VarLoc(*vp) = &k_subject;
-         return Succeeded;
-         }
-      else if (strcmp(s,"&trace") == 0) {
-         vp->dword = D_Kywdint;
-         VarLoc(*vp) = &kywd_trc;
-         return Succeeded;
-         }
-      else if (strcmp(s,"&dump") == 0) {
-         vp->dword = D_Kywdint;
-         VarLoc(*vp) = &kywd_dmp;
-         return Succeeded;
-         }
+    /*
+     * Look for the variable the name with the local identifiers,
+     *  parameters, and static names in each Icon procedure frame on the
+     *  stack. If not found among the locals, check the global variables.
+     *  If a variable with name is found, variable() returns a variable
+     *  descriptor that points to the corresponding value descriptor. 
+     *  If no such variable exits, it fails.
+     */
 
-      else if (strcmp(s,"&eventvalue") == 0) {
-         vp->dword = D_Var;
-         VarLoc(*vp) = (dptr)&(curpstate->eventval);
-         return Succeeded;
-         }
-      else if (strcmp(s,"&eventsource") == 0) {
-         vp->dword = D_Var;
-         VarLoc(*vp) = (dptr)&(curpstate->eventsource);
-         return Succeeded;
-         }
-      else if (strcmp(s,"&eventcode") == 0) {
-         vp->dword = D_Var;
-         VarLoc(*vp) = (dptr)&(curpstate->eventcode);
-         return Succeeded;
-         }
-
-      else return Failed;
-      }
-
-   /*
-    * Look for the variable the name with the local identifiers,
-    *  parameters, and static names in each Icon procedure frame on the
-    *  stack. If not found among the locals, check the global variables.
-    *  If a variable with name is found, variable() returns a variable
-    *  descriptor that points to the corresponding value descriptor. 
-    *  If no such variable exits, it fails.
-    */
-
-   /*
-    *  If no procedure has been called (as can happen with icon_call(),
-    *  dont' try to find local identifier.
-    */
-   if (pfp == NULL)
-      goto glbvars;
-
-   dp = glbl_argp;
-   bp = (struct b_proc *)BlkLoc(*dp);	/* get address of procedure block */
+    /*
+     *  If no procedure has been called (as can happen with icon_call(),
+     *  dont' try to find local identifier.
+     */
+    if (pfp) {
+        dp = p->Glbl_argp;
+        bp = (struct b_proc *)BlkLoc(*dp);	/* get address of procedure block */
    
-   np = bp->lnames;		/* Check the formal parameter names. */
+        np = bp->lnames;		/* Check the formal parameter names. */
 
 
-   for (i = abs((int)bp->nparam); i > 0; i--) {
-      dp++;
+        for (i = abs((int)bp->nparam); i > 0; i--) {
+            dp++;
 
-      if (strcmp(s,StrLoc(*np)) == 0) {
-         vp->dword = D_Var;
-         VarLoc(*vp) = (dptr)dp;
-         return ParamName;
-         }
-      np++;
-      }
+            if (eq(s,np)) {
+                vp->dword = D_Var;
+                VarLoc(*vp) = (dptr)dp;
+                return ParamName;
+            }
+            np++;
+        }
 
-   dp = &fp->pf_locals[0];
+        dp = &fp->pf_locals[0];
 
-   for (i = (int)bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
-	 if (strcmp(s,StrLoc(*np)) == 0) {
-            vp->dword = D_Var;
-            VarLoc(*vp) = (dptr)dp;
-            return LocalName;
-	    }
-         np++;
-         dp++;
-         }
+        for (i = (int)bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
+            if (eq(s,np)) {
+                vp->dword = D_Var;
+                VarLoc(*vp) = (dptr)dp;
+                return LocalName;
+            }
+            np++;
+            dp++;
+        }
 
-   dp = &statics[bp->fstatic]; /* Check the local static names. */
-   for (i = (int)bp->nstatic; i > 0; i--) {
-         if (strcmp(s,StrLoc(*np)) == 0) {
-            vp->dword = D_Var;
-            VarLoc(*vp) = (dptr)dp;
-            return StaticName;
-	    }
-         np++;
-         dp++;
-         }
+        dp = &(p->Statics)[bp->fstatic]; /* Check the local static names. */
+        for (i = (int)bp->nstatic; i > 0; i--) {
+            if (eq(s,np)) {
+                vp->dword = D_Var;
+                VarLoc(*vp) = (dptr)dp;
+                return StaticName;
+            }
+            np++;
+            dp++;
+        }
+    }
 
-glbvars:
-   {
-       struct descrip t;
-       MakeStr(s, strlen(s), &t);
-       /* Check the global variable names. */
-       if ((dp = lookup_global(&t, curpstate))) {
-           vp->dword    =  D_Var;
-           VarLoc(*vp) =  (dptr)(dp);
-           return GlobalName;
-       }
-       return Failed;
-   }
- }
+    /* Check the global variable names. */
+    if ((dp = lookup_global(s, p))) {
+        vp->dword    =  D_Var;
+        VarLoc(*vp) =  dp;
+        return GlobalName;
+    }
+    return Failed;
+}
 
 /*
  * hash - compute hash value of arbitrary object for table and set accessing.

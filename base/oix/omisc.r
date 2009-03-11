@@ -28,15 +28,6 @@ operator{1} ^ refresh(x)
        */
       co_init(sblkp);
 
-      /*
-       * The above initialises sblkp->program to curpstate, which is
-       * the program containing the refresh (^) op, but we want it to
-       * point to the program which contains the original create,
-       * which may be different.
-       */
-      sblkp->program = findprogramforicode(sblkp->es_ipc);
-
-
       return coexpr(sblkp);
       }
 

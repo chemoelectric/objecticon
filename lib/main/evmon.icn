@@ -7,7 +7,7 @@ class EventSet()
       TypeMask,
       ConvMask,
       ProcMask,
-      FncMask,
+      FuncMask,
       OperMask,
       EvalMask,
       ListMask,
@@ -21,7 +21,7 @@ class EventSet()
       AllMask
 
    private static init()
-      AllocMask := cset(EventCode.List || EventCode.Lelem || EventCode.File || 
+      AllocMask := cset(EventCode.List || EventCode.Lelem || 
                         EventCode.Lrgint || EventCode.Real || EventCode.Record || 
                         EventCode.Selem || EventCode.Set || EventCode.Slots || 
                         EventCode.Table || EventCode.Telem || EventCode.Tvsubs || 
@@ -40,13 +40,13 @@ class EventSet()
       ProcMask := cset(EventCode.Pcall || EventCode.Pfail || EventCode.Pret || 
                        EventCode.Psusp || EventCode.Presum || EventCode.Prem)
 
-      FncMask := cset(EventCode.Fcall || EventCode.Ffail || EventCode.Fret || 
+      FuncMask := cset(EventCode.Fcall || EventCode.Ffail || EventCode.Fret || 
                       EventCode.Fsusp || EventCode.Fresum || EventCode.Frem)
 
       OperMask := cset(EventCode.Ocall || EventCode.Ofail || EventCode.Oret || 
                        EventCode.Osusp || EventCode.Oresum || EventCode.Orem)
 
-      EvalMask := FncMask ++ ProcMask ++ OperMask
+      EvalMask := FuncMask ++ ProcMask ++ OperMask
 
       ListMask := cset(EventCode.Lbang || EventCode.Lcreate || EventCode.Lpop || 
                        EventCode.Lpull || EventCode.Lpush || EventCode.Lput || 

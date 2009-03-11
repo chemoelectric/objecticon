@@ -885,7 +885,7 @@ static void lemitcon(struct centry *ce)
 static void lemitproc(struct lfunction *func)
 {
     char *p;
-    int size;
+    int size, ap;
     struct lentry *le;
     struct strconst *sp;
 
@@ -896,7 +896,7 @@ static void lemitproc(struct lfunction *func)
     if (abs(func->nargs) != func->narguments)
         quitf("Mismatch between ufile's nargs and narguments");
 
-    size = (12*WordSize) + (2*WordSize) * (func->narguments + func->ndynamic + func->nstatics);
+    size = (14*WordSize) + (2*WordSize + 3*WordSize) * (func->narguments + func->ndynamic + func->nstatics);
     if (func->proc)
         p = func->proc->name;
     else
@@ -934,6 +934,24 @@ static void lemitproc(struct lfunction *func)
     outword(sp->offset);
 
     /*
+     * Pointers to the tables that follow.
+     */
+    if (Dflag) {
+        ap = pc + 2 * WordSize;
+        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to lnames array\n", ap);
+        ap += (func->narguments + func->ndynamic + func->nstatics) * 2 * WordSize;
+        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to llocs array\n", ap);
+    }
+
+    ap = pc + 2 * WordSize;
+    outword(ap);
+    ap += (func->narguments + func->ndynamic + func->nstatics) * 2 * WordSize;
+    outword(ap);
+    ap += (func->narguments + func->ndynamic + func->nstatics) * 3 * WordSize;
+
+    if (Dflag)
+        fprintf(dbgfile, "%ld:\t\t\t\t\t# Local names array\n", (long)pc);
+    /*
      * Output string descriptors for argument names by looping through
      *  all locals, and picking out those with F_Argument set.
      */
@@ -941,7 +959,7 @@ static void lemitproc(struct lfunction *func)
         if (le->l_flag & F_Argument) {
             sp = inst_c_strconst(le->name);
             if (Dflag)
-                fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, le->name);
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   %s\n", sp->len, sp->offset, le->name);
             outword(sp->len);
             outword(sp->offset);
         }
@@ -954,7 +972,7 @@ static void lemitproc(struct lfunction *func)
         if (le->l_flag & F_Dynamic) {
             sp = inst_c_strconst(le->name);
             if (Dflag)
-                fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, le->name);
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   %s\n", sp->len, sp->offset, le->name);
             outword(sp->len);
             outword(sp->offset);
         }
@@ -969,11 +987,58 @@ static void lemitproc(struct lfunction *func)
             sp = inst_c_strconst(le->name);
             le->l_val.index = nstatics++;
             if (Dflag)
-                fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, le->name);
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   %s\n", sp->len, sp->offset, le->name);
             outword(sp->len);
             outword(sp->offset);
         }
     }
+
+    /*
+     * Field locations
+     */
+    if (Dflag)
+        fprintf(dbgfile, "%ld:\t\t\t\t\t# Local locations array\n", (long)pc);
+
+    for (le = func->locals; le; le = le->next) {
+        if (le->l_flag & F_Argument) {
+            sp = inst_c_strconst(le->pos.file);
+            if (Dflag) {
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   File %s\n", sp->len, sp->offset, le->pos.file);
+                fprintf(dbgfile, "\t%d\t\t\t\t#   Line %d\n", le->pos.line, le->pos.line);
+            }
+            outword(sp->len);
+            outword(sp->offset);
+            outword(le->pos.line);
+        }
+    }
+    for (le = func->locals; le; le = le->next) {
+        if (le->l_flag & F_Dynamic) {
+            sp = inst_c_strconst(le->pos.file);
+            if (Dflag) {
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   File %s\n", sp->len, sp->offset, le->pos.file);
+                fprintf(dbgfile, "\t%d\t\t\t\t#   Line %d\n", le->pos.line, le->pos.line);
+            }
+            outword(sp->len);
+            outword(sp->offset);
+            outword(le->pos.line);
+        }
+    }
+    for (le = func->locals; le; le = le->next) {
+        if (le->l_flag & F_Static) {
+            sp = inst_c_strconst(le->pos.file);
+            if (Dflag) {
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   File %s\n", sp->len, sp->offset, le->pos.file);
+                fprintf(dbgfile, "\t%d\t\t\t\t#   Line %d\n", le->pos.line, le->pos.line);
+            }
+            outword(sp->len);
+            outword(sp->offset);
+            outword(le->pos.line);
+        }
+    }
+
+    /* Check our calculations were right */
+    if (ap != pc)
+        quitf("I got my sums wrong(d): %d != %d", ap, pc);
 }
 
 struct field_sort_item {
@@ -1285,7 +1350,7 @@ static void genclasses()
      * Firstly work out the "address" each class will have, so we can forward
      * reference them.
      */
-    x = pc + WordSize * (1 + 6 * n_fields);  /* The size of the class
+    x = pc + WordSize * (1 + 9 * n_fields);  /* The size of the class
                                               * field table plus the
                                               * n_classes entry */
     for (cl = lclasses; cl; cl = cl->next) {
@@ -1315,14 +1380,21 @@ static void genclasses()
                 fprintf(dbgfile, "%ld:\t\t\t\t\t# Field info for %s.%s\n", 
                         (long)pc, cl->global->name, cf->name);
                 fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   Name %s\n", sp->len, sp->offset, cf->name);
-                fprintf(dbgfile, "\t%d\t\t\t#   Fnum\n", cf->ftab_entry->field_id);
-                fprintf(dbgfile, "\t%08o\t\t\t#   Flags\n", cf->flag);
-                fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Defining class\n", cf->class->pc);
-                fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Pointer to descriptor\n", cf->dpc);
-
             }
             outword(sp->len);		/* name of field: size and offset */
             outword(sp->offset);
+            sp = inst_c_strconst(cf->pos.file);
+            if (Dflag) {
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   File %s\n", sp->len, sp->offset, cf->pos.file);
+                fprintf(dbgfile, "\t%d\t\t\t\t#   Line %d\n", cf->pos.line, cf->pos.line);
+                fprintf(dbgfile, "\t%d\t\t\t\t#   Fnum\n", cf->ftab_entry->field_id);
+                fprintf(dbgfile, "\t%08o\t\t\t#   Flags\n", cf->flag);
+                fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Defining class\n", cf->class->pc);
+                fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Pointer to descriptor\n", cf->dpc);
+            }
+            outword(sp->len);		/* filename: size and offset */
+            outword(sp->offset);
+            outword(cf->pos.line);
             outword(cf->ftab_entry->field_id);
             outword(cf->flag);
             outword(cf->class->pc);
@@ -1386,7 +1458,7 @@ static void gentables()
         s = rec->global->name;
         rec->pc = pc;
         sp = inst_c_strconst(s);
-        size = 9 * WordSize + rec->nfields * (2 * WordSize + ShortSize);
+        size = 10 * WordSize + rec->nfields * (2 * WordSize + 3 * WordSize + ShortSize);
         size += nalign(size);
         if (Dflag) {
             fprintf(dbgfile, "\n# constructor %s\n", s);
@@ -1408,17 +1480,21 @@ static void gentables()
         outword(sp->offset);
 
         /*
-         * Pointers to the two tables that follow.
+         * Pointers to the three tables that follow.
          */
         if (Dflag) {
-            ap = pc + 2 * WordSize;
+            ap = pc + 3 * WordSize;
             fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field_names array\n", ap);
             ap += rec->nfields * 2 * WordSize;
+            fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field_locs array\n", ap);
+            ap += rec->nfields * 3 * WordSize;
             fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field sort array\n", ap);
         }
-        ap = pc + 2 * WordSize;
+        ap = pc + 3 * WordSize;
         outword(ap);
         ap += rec->nfields * 2 * WordSize;
+        outword(ap);
+        ap += rec->nfields * 3 * WordSize;
         outword(ap);
         ap += rec->nfields * ShortSize;
         ap += nalign(ap);
@@ -1431,9 +1507,25 @@ static void gentables()
         for (fd = rec->fields; fd; fd = fd->next) {
             sp = inst_c_strconst(fd->name);
             if (Dflag)
-                fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, fd->name);
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   %s\n", sp->len, sp->offset, fd->name);
             outword(sp->len);
             outword(sp->offset);
+        }
+
+        /*
+         * Field locations
+         */
+        if (Dflag)
+            fprintf(dbgfile, "%ld:\t\t\t\t\t# Field locations array\n", (long)pc);
+        for (fd = rec->fields; fd; fd = fd->next) {
+            sp = inst_c_strconst(fd->pos.file);
+            if (Dflag) {
+                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   File %s\n", sp->len, sp->offset, fd->pos.file);
+                fprintf(dbgfile, "\t%d\t\t\t\t#   Line %d\n", fd->pos.line, fd->pos.line);
+            }
+            outword(sp->len);
+            outword(sp->offset);
+            outword(fd->pos.line);
         }
 
         /* 
@@ -1556,6 +1648,35 @@ static void gentables()
     }
 
     /*
+     * Output locations for global variables.
+     */
+    if (Dflag)
+        fprintf(dbgfile, "\n%ld:\t\t\t\t\t# Global variable locations\n", (long)pc);
+    hdr.Glocs = pc;
+    for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
+        if (gp->g_flag & F_Builtin) {
+            if (Dflag) {
+                fprintf(dbgfile, "%ld:\t0\t0\t\t\t#   Builtin\n", (long)pc);
+                fprintf(dbgfile, "%ld:\t0\n", (long)pc);
+            }
+            outword(D_Null);
+            outword(0);
+            outword(0);
+        } else {
+            sp = inst_c_strconst(gp->pos.file);
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\t%d\tS+%d\t\t\t#   %s\n",
+                        (long)pc, sp->len, sp->offset, gp->pos.file);
+            outword(sp->len);
+            outword(sp->offset);
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\t%d\t\t\t\t#      Line %d\n",
+                        (long)pc, gp->pos.line, gp->pos.line);
+            outword(gp->pos.line);
+        }
+    }
+
+    /*
      * Output a null descriptor for each static variable.
      */
     if (Dflag)
@@ -1653,6 +1774,7 @@ static void gentables()
         fprintf(dbgfile, "fnames:           %ld\n", (long)hdr.Fnames);
         fprintf(dbgfile, "globals:          %ld\n", (long)hdr.Globals);
         fprintf(dbgfile, "gnames:           %ld\n", (long)hdr.Gnames);
+        fprintf(dbgfile, "glocs:            %ld\n", (long)hdr.Glocs);
         fprintf(dbgfile, "statics:          %ld\n", (long)hdr.Statics);
         fprintf(dbgfile, "filenms:          %ld\n", (long)hdr.Filenms);
         fprintf(dbgfile, "linenums:         %ld\n", (long)hdr.linenums);
@@ -1678,7 +1800,8 @@ static void gentables()
         report("  Records         %7ld", (long)(hdr.Fnames - hdr.Records));
         report("  Field names     %7ld", (long)(hdr.Globals - hdr.Fnames));
         report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));
-        report("  Global names    %7ld", (long)(hdr.Statics - hdr.Gnames));
+        report("  Global names    %7ld", (long)(hdr.Glocs - hdr.Gnames));
+        report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
         report("  Statics         %7ld", (long)(hdr.Filenms - hdr.Statics));
         report("  Linenums        %7ld", (long)(hdr.Strcons - hdr.Filenms));
         report("  Strings         %7ld", (long)(hdr.hsize - hdr.Strcons));

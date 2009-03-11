@@ -7,9 +7,12 @@
  */
 
 #include "../h/header.h"
+#include "../h/opdefs.h"
+#include "../h/modflags.h"
 
 static	FILE	*readhdr	(char *name, struct header *hdr);
-
+static  void    initptrs        (struct progstate *p, struct header *h);
+static void initprogstate(struct progstate *p);
 /*
  * Prototypes.
  */
@@ -40,7 +43,7 @@ Deliberate Syntax Error
 #passthru #define OpDef(f,nargs,sname,underef)  \
     {                                           \
     T_Proc,                                     \
-    Vsizeof(struct b_proc),                     \
+    sizeof(struct b_proc),                     \
     Cat(O,f),                                   \
     nargs,                                      \
     -1,                                         \
@@ -49,7 +52,8 @@ Deliberate Syntax Error
     0,                                          \
     0,                                          \
     0,                                          \
-    {sizeof(sname)-1,sname}},
+    {sizeof(sname)-1,sname},                    \
+    0,0},
 #passthru static struct b_iproc init_op_tbl[] = {
 #passthru #include "../h/odefs.h"
 #passthru   };
@@ -238,11 +242,11 @@ void icon_init(char *name)
      * some compilers).					[[I?]]
      */
 
-    MakeStr(" ", 1, &blank);
-    MakeStr("", 0, &emptystr);
-    MakeStr("abcdefghijklmnopqrstuvwxyz", 26, &lcase);
-    MakeStr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 26, &ucase);
-    MakeStr("r", 1, &letr);
+    LitStr(" ", &blank);
+    LitStr("", &emptystr);
+    LitStr("abcdefghijklmnopqrstuvwxyz", &lcase);
+    LitStr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", &ucase);
+    LitStr("r", &letr);
     MakeInt(0, &zerodesc);
     MakeInt(1, &onedesc);
     MakeInt(-1, &minusonedesc);
@@ -294,71 +298,13 @@ void icon_init(char *name)
     curpstate = &rootpstate;
     progs = &rootpstate;
     rootpstate.next = NULL;
-    rootpstate.parentdesc = nulldesc;
-    rootpstate.eventmask= nulldesc;
-    rootpstate.opcodemask = nulldesc;
-    rootpstate.eventcount = zerodesc;
-    rootpstate.valuemask = nulldesc;
-    rootpstate.eventcode= nulldesc;
-    rootpstate.eventval = nulldesc;
-    rootpstate.eventsource = nulldesc;
-    rootpstate.Glbl_argp = NULL;
-    rootpstate.Kywd_err = zerodesc;
-    rootpstate.Kywd_pos = onedesc;
-    rootpstate.ksub = emptystr;
-    rootpstate.Kywd_why = emptystr;
-    rootpstate.Kywd_ran = zerodesc;
-    rootpstate.K_errornumber = 0;
-    rootpstate.T_errornumber = 0;
-    rootpstate.Have_errval = 0;
-    rootpstate.T_have_val = 0;
-    rootpstate.K_errortext = emptystr;
-    rootpstate.K_errorvalue = nulldesc;
-    rootpstate.T_errorvalue = nulldesc;
-    rootpstate.T_errortext = emptystr;
+    initprogstate(&rootpstate);
 
-    rootpstate.Coexp_ser = 2;
-    rootpstate.List_ser  = 1;
-    rootpstate.Set_ser   = 1;
-    rootpstate.Table_ser = 1;
     rootpstate.Kywd_time_elsewhere = 0;
     rootpstate.Kywd_time_out = 0;
     rootpstate.stringregion = &rootstring;
     rootpstate.blockregion = &rootblock;
 
-    rootpstate.Cplist = cplist_0;
-    rootpstate.Cpset = cpset_0;
-    rootpstate.Cptable = cptable_0;
-    rootpstate.Interp = interp_0;
-    rootpstate.Cnvcset = cnv_cset_0;
-    rootpstate.Cnvucs = cnv_ucs_0;
-    rootpstate.Cnvint = cnv_int_0;
-    rootpstate.Cnvreal = cnv_real_0;
-    rootpstate.Cnvstr = cnv_str_0;
-    rootpstate.Cnvtstr = cnv_tstr_0;
-    rootpstate.Deref = deref_0;
-    rootpstate.Alcbignum = alcbignum_0;
-    rootpstate.Alccset = alccset_0;
-    rootpstate.Alchash = alchash_0;
-    rootpstate.Alcsegment = alcsegment_0;
-    rootpstate.Alclist_raw = alclist_raw_0;
-    rootpstate.Alclist = alclist_0;
-    rootpstate.Alclstb = alclstb_0;
-    rootpstate.Alcreal = alcreal_0;
-    rootpstate.Alcrecd = alcrecd_0;
-    rootpstate.Alcobject = alcobject_0;
-    rootpstate.Alccast = alccast_0;
-    rootpstate.Alcmethp = alcmethp_0;
-    rootpstate.Alcucs = alcucs_0;
-    rootpstate.Alcrefresh = alcrefresh_0;
-    rootpstate.Alcselem = alcselem_0;
-    rootpstate.Alcstr = alcstr_0;
-    rootpstate.Alcsubs = alcsubs_0;
-    rootpstate.Alctelem = alctelem_0;
-    rootpstate.Alctvtbl = alctvtbl_0;
-    rootpstate.Dealcblk = dealcblk_0;
-    rootpstate.Dealcstr = dealcstr_0;
-    rootpstate.Reserve = reserve_0;
 
     rootstring.size = MaxStrSpace;
     rootblock.size  = MaxAbrSize;
@@ -445,28 +391,7 @@ void icon_init(char *name)
     /*
      * Establish pointers to icode data regions.		[[I?]]
      */
-    ecode = code + hdr.ClassStatics;
-    classstatics = (dptr)(code + hdr.ClassStatics);
-    eclassstatics = (dptr)(code + hdr.ClassMethods);
-    classmethods = (dptr)(code + hdr.ClassMethods);
-    eclassmethods = (dptr)(code + hdr.ClassFields);
-    classfields = (struct class_field *)(code + hdr.ClassFields);
-    eclassfields = (struct class_field *)(code + hdr.Classes);
-    classes = (word *)(code + hdr.Classes);
-    records = (word *)(code + hdr.Records);
-    fnames = (dptr)(code + hdr.Fnames);
-    globals = efnames = (dptr)(code + hdr.Globals);
-    gnames = eglobals = (dptr)(code + hdr.Gnames);
-    statics = egnames = (dptr)(code + hdr.Statics);
-    estatics = (dptr)(code + hdr.Filenms);
-    filenms = (struct ipc_fname *)estatics;
-    efilenms = (struct ipc_fname *)(code + hdr.linenums);
-    ilines = (struct ipc_line *)efilenms;
-    elines = (struct ipc_line *)(code + hdr.Strcons);
-    strcons = (char *)elines;
-    estrcons = (char *)(code + hdr.hsize);
-    n_globals = eglobals - globals;
-    n_statics = estatics - statics;
+    initptrs(&rootpstate, &hdr);
 
     /*
      * Allocate stack and initialize &main.
@@ -779,41 +704,16 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->parent= NULL;
     pstate->next = progs;
     progs = pstate;
-    pstate->parentdesc= nulldesc;
-    pstate->eventmask= nulldesc;
-    pstate->opcodemask= nulldesc;
-    pstate->eventcount = zerodesc;
-    pstate->valuemask= nulldesc;
-    pstate->eventcode= nulldesc;
-    pstate->eventval = nulldesc;
-    pstate->eventsource = nulldesc;
-    pstate->Kywd_why = emptystr;
-    pstate->Glbl_argp = NULL;
-    pstate->Kywd_err = zerodesc;
-    pstate->Kywd_pos = onedesc;
-    pstate->ksub = emptystr;
-    pstate->Kywd_ran = zerodesc;
+    initprogstate(pstate);
     pstate->Lastop = 0;
     pstate->Xargp = NULL;
     pstate->Xnargs = 0;
-    pstate->K_errornumber = 0;
-    pstate->T_errornumber = 0;
-    pstate->Have_errval = 0;
-    pstate->T_have_val = 0;
-    pstate->K_errortext = emptystr;
-    pstate->K_errorvalue = nulldesc;
-    pstate->T_errorvalue = nulldesc;
-    pstate->T_errortext = emptystr;
     pstate->Kywd_time_elsewhere = millisec();
     pstate->Kywd_time_out = 0;
     pstate->Mainhead= ((struct b_coexpr *)pstate)-1;
     pstate->K_main.dword = D_Coexpr;
     BlkLoc(pstate->K_main) = (union block *) pstate->Mainhead;
 
-    pstate->Coexp_ser = 2;
-    pstate->List_ser = 1;
-    pstate->Set_ser = 1;
-    pstate->Table_ser = 1;
 
     pstate->stringtotal = pstate->blocktotal =
         pstate->colltot     = pstate->collstat   =
@@ -846,39 +746,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     curpstate->blockregion->Gnext = pstate->blockregion;
     initalloc(0, pstate);
 
-    pstate->Cplist = cplist_0;
-    pstate->Cpset = cpset_0;
-    pstate->Cptable = cptable_0;
-    pstate->Interp = interp_0;
-    pstate->Cnvcset = cnv_cset_0;
-    pstate->Cnvucs = cnv_ucs_0;
-    pstate->Cnvint = cnv_int_0;
-    pstate->Cnvreal = cnv_real_0;
-    pstate->Cnvstr = cnv_str_0;
-    pstate->Cnvtstr = cnv_tstr_0;
-    pstate->Deref = deref_0;
-    pstate->Alcbignum = alcbignum_0;
-    pstate->Alccset = alccset_0;
-    pstate->Alchash = alchash_0;
-    pstate->Alcsegment = alcsegment_0;
-    pstate->Alclist_raw = alclist_raw_0;
-    pstate->Alclist = alclist_0;
-    pstate->Alclstb = alclstb_0;
-    pstate->Alcreal = alcreal_0;
-    pstate->Alcrecd = alcrecd_0;
-    pstate->Alcobject = alcobject_0;
-    pstate->Alccast = alccast_0;
-    pstate->Alcmethp = alcmethp_0;
-    pstate->Alcucs = alcucs_0;
-    pstate->Alcrefresh = alcrefresh_0;
-    pstate->Alcselem = alcselem_0;
-    pstate->Alcstr = alcstr_0;
-    pstate->Alcsubs = alcsubs_0;
-    pstate->Alctelem = alctelem_0;
-    pstate->Alctvtbl = alctvtbl_0;
-    pstate->Dealcblk = dealcblk_0;
-    pstate->Dealcstr = dealcstr_0;
-    pstate->Reserve = reserve_0;
 
     return coexp;
 }
@@ -921,28 +788,7 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
      * Establish pointers to icode data regions.		[[I?]]
      */
     pstate->Code    = (char *)(pstate + 1);
-    pstate->Ecode    = (char *)(pstate->Code + hdr.ClassStatics);
-    pstate->ClassStatics = (dptr)(pstate->Code + hdr.ClassStatics);
-    pstate->EClassStatics = (dptr)(pstate->Code + hdr.ClassMethods);
-    pstate->ClassMethods = (dptr)(pstate->Code + hdr.ClassMethods);
-    pstate->EClassMethods = (dptr)(pstate->Code + hdr.ClassFields);
-    pstate->ClassFields = (struct class_field *)(pstate->Code + hdr.ClassFields);
-    pstate->EClassFields = (struct class_field *)(pstate->Code + hdr.Classes);
-    pstate->Classes = (word *)(pstate->Code + hdr.Classes);
-    pstate->Records = (word *)(pstate->Code + hdr.Records);
-    pstate->Fnames  = (dptr)(pstate->Code + hdr.Fnames);
-    pstate->Globals = pstate->Efnames = (dptr)(pstate->Code + hdr.Globals);
-    pstate->Gnames  = pstate->Eglobals = (dptr)(pstate->Code + hdr.Gnames);
-    pstate->NGlobals = pstate->Eglobals - pstate->Globals;
-    pstate->Statics = pstate->Egnames = (dptr)(pstate->Code + hdr.Statics);
-    pstate->Estatics = (dptr)(pstate->Code + hdr.Filenms);
-    pstate->NStatics = pstate->Estatics - pstate->Statics;
-    pstate->Filenms = (struct ipc_fname *)(pstate->Estatics);
-    pstate->Efilenms = (struct ipc_fname *)(pstate->Code + hdr.linenums);
-    pstate->Ilines = (struct ipc_line *)(pstate->Efilenms);
-    pstate->Elines = (struct ipc_line *)(pstate->Code + hdr.Strcons);
-    pstate->Strcons = (char *)(pstate->Elines);
-
+    initptrs(pstate, &hdr);
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, pstate->Code);
 
@@ -956,6 +802,492 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     resolve(pstate);
 
     return coexp;
+}
+
+static void initprogstate(struct progstate *p)
+{
+    p->parentdesc= nulldesc;
+    p->eventmask= nulldesc;
+    p->opcodemask= nulldesc;
+    p->eventcount = zerodesc;
+    p->valuemask= nulldesc;
+    p->eventcode= nulldesc;
+    p->eventval = nulldesc;
+    p->eventsource = nulldesc;
+    p->Glbl_argp = NULL;
+    p->Kywd_err = zerodesc;
+    p->Kywd_pos = onedesc;
+    p->Kywd_why = emptystr;
+    p->Kywd_subject = emptystr;
+    p->Kywd_ran = zerodesc;
+    p->K_errornumber = 0;
+    p->T_errornumber = 0;
+    p->Have_errval = 0;
+    p->T_have_val = 0;
+    p->K_errortext = emptystr;
+    p->K_errorvalue = nulldesc;
+    p->T_errorvalue = nulldesc;
+    p->T_errortext = emptystr;
+    p->Coexp_ser = 2;
+    p->List_ser = 1;
+    p->Set_ser = 1;
+    p->Table_ser = 1;
+
+    p->Cplist = cplist_0;
+    p->Cpset = cpset_0;
+    p->Cptable = cptable_0;
+    p->Interp = interp_0;
+    p->Cnvcset = cnv_cset_0;
+    p->Cnvucs = cnv_ucs_0;
+    p->Cnvint = cnv_int_0;
+    p->Cnvreal = cnv_real_0;
+    p->Cnvstr = cnv_str_0;
+    p->Cnvtstr = cnv_tstr_0;
+    p->Deref = deref_0;
+    p->Alcbignum = alcbignum_0;
+    p->Alccset = alccset_0;
+    p->Alchash = alchash_0;
+    p->Alcsegment = alcsegment_0;
+    p->Alclist_raw = alclist_raw_0;
+    p->Alclist = alclist_0;
+    p->Alclstb = alclstb_0;
+    p->Alcreal = alcreal_0;
+    p->Alcrecd = alcrecd_0;
+    p->Alcobject = alcobject_0;
+    p->Alccast = alccast_0;
+    p->Alcmethp = alcmethp_0;
+    p->Alcucs = alcucs_0;
+    p->Alcrefresh = alcrefresh_0;
+    p->Alcselem = alcselem_0;
+    p->Alcstr = alcstr_0;
+    p->Alcsubs = alcsubs_0;
+    p->Alctelem = alctelem_0;
+    p->Alctvtbl = alctvtbl_0;
+    p->Dealcblk = dealcblk_0;
+    p->Dealcstr = dealcstr_0;
+    p->Reserve = reserve_0;
+}
+
+static void initptrs(struct progstate *p, struct header *h)
+{
+    p->Ecode    = (char *)(p->Code + h->ClassStatics);
+    p->ClassStatics = (dptr)(p->Code + h->ClassStatics);
+    p->EClassStatics = (dptr)(p->Code + h->ClassMethods);
+    p->ClassMethods = (dptr)(p->Code + h->ClassMethods);
+    p->EClassMethods = (dptr)(p->Code + h->ClassFields);
+    p->ClassFields = (struct class_field *)(p->Code + h->ClassFields);
+    p->EClassFields = (struct class_field *)(p->Code + h->Classes);
+    p->Classes = (word *)(p->Code + h->Classes);
+    p->Records = (word *)(p->Code + h->Records);
+    p->Fnames  = (dptr)(p->Code + h->Fnames);
+    p->Globals = p->Efnames = (dptr)(p->Code + h->Globals);
+    p->Gnames  = p->Eglobals = (dptr)(p->Code + h->Gnames);
+    p->Egnames = (dptr)(p->Code + h->Glocs);
+    p->Glocs = (struct loc *)(p->Egnames);
+    p->Eglocs = (struct loc *)(p->Code + h->Statics);
+    p->NGlobals = p->Eglobals - p->Globals;
+    p->Statics = (dptr)(p->Eglocs);
+    p->Estatics = (dptr)(p->Code + h->Filenms);
+    p->NStatics = p->Estatics - p->Statics;
+    p->Filenms = (struct ipc_fname *)(p->Estatics);
+    p->Efilenms = (struct ipc_fname *)(p->Code + h->linenums);
+    p->Ilines = (struct ipc_line *)(p->Efilenms);
+    p->Elines = (struct ipc_line *)(p->Code + h->Strcons);
+    p->Strcons = (char *)(p->Elines);
+    p->Estrcons = (char *)(p->Code + h->hsize);
+}
+
+
+
+
+"load(s,arglist,blocksize,stringsize,stacksize) - load"
+" a program corresponding to string s as a co-expression."
+
+function{1} load(s,arglist,
+		 blocksize, stringsize, stacksize)
+   declare {
+      tended char *loadstring;
+      C_integer _bs_, _ss_, _stk_;
+      }
+   if !cnv:C_string(s,loadstring) then
+      runerr(103,s)
+   if !def:C_integer(blocksize,abrsize,_bs_) then
+      runerr(101,blocksize)
+   if !def:C_integer(stringsize,ssize,_ss_) then
+      runerr(101,stringsize)
+   if !def:C_integer(stacksize,mstksize,_stk_) then
+      runerr(101,stacksize)
+   abstract {
+      return coexpr
+      }
+   body {
+      word *stack;
+      struct progstate *pstate;
+      register struct b_coexpr *sblkp;
+      struct ef_marker *newefp;
+      register word *savedsp;
+
+      /*
+       * Fragments of pseudo-icode to get loaded programs started,
+       * and to handle termination.
+       */
+      static word pstart[7];
+      static word *lterm;
+
+      inst tipc;
+
+      tipc.opnd = pstart;
+      *tipc.op++ = Op_Noop; /* aligns Invokes operand */  /* ?cj? */
+      *tipc.op++ = Op_Invoke;
+      *tipc.opnd++ = 1;
+      *tipc.op++ = Op_Coret;
+      *tipc.op++ = Op_Efail;
+
+      lterm = (word *)(tipc.op);
+
+      *tipc.op++ = Op_Cofail;
+      *tipc.op++ = Op_Agoto;
+      *tipc.opnd = (word)lterm;
+
+      /*
+       * arglist must be a list
+       */
+      if (!is:null(arglist) && !is:list(arglist))
+         runerr(108,arglist);
+
+      stack = (word *)(sblkp = loadicode(loadstring, _bs_,_ss_,_stk_));
+      if (!stack) {
+          /* The file couldn't be opened (any format error causes termination) */
+          errno2why();
+          fail;
+      }
+      pstate = sblkp->program;
+      pstate->parent = curpstate;
+      pstate->parentdesc = k_main;
+
+      savedsp = sp;
+      sp = stack + Wsizeof(struct b_coexpr)
+        + Wsizeof(struct progstate) + pstate->hsize/WordSize;
+
+      if (pstate->hsize % WordSize) 
+          sp++;
+
+#ifdef UpStack
+      sblkp->cstate[0] =
+         ((word)((char *)sblkp + (_stk_ - (sizeof(*sblkp)+sizeof(struct progstate)+pstate->hsize))/2)
+            &~((word)WordSize*StackAlign-1));
+#else					/* UpStack */
+      sblkp->cstate[0] =
+	((word)((char *)sblkp + _stk_ - WordSize + sizeof(struct progstate) + pstate->hsize)
+           &~((word)WordSize*StackAlign-1));
+#endif					/* UpStack */
+
+      sblkp->es_argp = NULL;
+      sblkp->es_gfp = NULL;
+      pstate->Mainhead->freshblk = nulldesc;/* &main has no refresh block. */
+					/*  This really is a bug. */
+
+      /*
+       * Set up expression frame marker to contain execution of the
+       *  main procedure.  If failure occurs in this context, control
+       *  is transferred to lterm, the address of an ...
+       */
+      newefp = (struct ef_marker *)sp;
+#if IntBits != WordBits
+      newefp->ef_failure.op = (int *)lterm;
+#else					/* IntBits != WordBits */
+      newefp->ef_failure.op = lterm;
+#endif					/* IntBits != WordBits */
+
+      newefp->ef_gfp = 0;
+      newefp->ef_efp = 0;
+      newefp->ef_ilevel = ilevel;
+      sp += Wsizeof(*newefp) - 1;   /* SP now points to last word of efp */
+      sblkp->es_efp = newefp;
+
+      /*
+       * Check whether resolve() found the main procedure.  If not, this
+       * is noted as run-time error 117.  Otherwise, this value is
+       * pushed on the stack.
+       */
+      if (!pstate->MainProc)
+         fatalerr(117, NULL);
+
+      PushDesc(*pstate->MainProc);
+
+      /*
+       * Create a list from arguments using Ollist and push a descriptor
+       * onto new stack.  Then create procedure frame on new stack.  Push
+       * two new null descriptors, and set sblkp->es_sp when all finished.
+       */
+      if (!is:null(arglist)) {
+         PushDesc(arglist);
+	 pstate->Glbl_argp = (dptr)(sp - 1);
+         }
+      else {
+         PushNull;
+	 pstate->Glbl_argp = (dptr)(sp - 1);
+         {
+         dptr tmpargp = (dptr) (sp - 1);
+         Ollist(0, tmpargp);
+         sp = (word *)tmpargp + 1;
+         }
+         }
+      sblkp->es_sp = (word *)sp;
+      sblkp->es_ipc.opnd = pstart;
+
+      result.dword = D_Coexpr;
+      BlkLoc(result) = (union block *)sblkp;
+
+      sp = savedsp;
+
+      return result;
+      }
+end
+
+#define NativeDef(class,field,func) extern struct b_iproc B##func##;
+#include "../h/nativedefs.h"
+#undef NativeDef
+
+static struct b_iproc *native_methods[] = {
+#define NativeDef(class,field,func) &B##func##,
+#include "../h/nativedefs.h"
+#undef NativeDef
+};
+
+/*
+ * resolve - perform various fix-ups on the data read from the icode
+ *  file.
+ */
+void resolve(struct progstate *pstate)
+{
+    word i, j, n_fields;
+    struct b_proc *pp;
+    struct b_class *class_blocks;
+    struct class_field *cf;
+    dptr dp;
+    struct progstate *savedstate = curpstate;
+    struct ipc_fname *fnptr;
+    struct loc *lp;
+
+    ENTERPSTATE(pstate);
+
+    /*
+     * For each class field info block, relocate the pointer to the
+     * defining class and the descriptor.
+     */
+    for (cf = classfields; cf < eclassfields; cf++) {
+        StrLoc(cf->name) = strcons + (uword)StrLoc(cf->name);
+        StrLoc(cf->loc.fname) = strcons + (uword)StrLoc(cf->loc.fname);
+        cf->defining_class = (struct b_class*)(code + (int)cf->defining_class);
+        if (cf->field_descriptor) {
+            cf->field_descriptor = (dptr)(code + (int)cf->field_descriptor);
+            /* Follow the same logic as lcode.c */
+            if (cf->flags & M_Defer) {
+                int n = IntVal(*cf->field_descriptor);
+                if (n == -1) {
+                    /* Unresolved, point to stub */
+                    BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
+                } else {
+                    /* Resolved to native method, do sanity checks, set pointer */
+                    if (n < 0 || n >= ElemCount(native_methods))
+                        error("Native method index out of range: %d", n);
+                    pp = (struct b_proc *)native_methods[n];
+
+                    /* The field name should match the end of the procedure block's name */
+                    if (strncmp(StrLoc(cf->name),
+                                StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(cf->name),
+                                StrLen(cf->name)))
+                        error("Native method name mismatch: %s", StrLoc(cf->name));
+
+                    BlkLoc(*cf->field_descriptor) = (union block *)pp;
+                }
+            } else if (cf->flags & M_Method) {
+                /*
+                 * Method in the icode file, relocate the entry point
+                 * and the names of the parameters, locals, and static
+                 * variables.
+                 */
+                pp = (struct b_proc *)(code + IntVal(*cf->field_descriptor));
+                BlkLoc(*cf->field_descriptor) = (union block *)pp;
+                /* Pointer back to the corresponding field */
+                pp->field = cf;
+                /* Relocate the name */
+                StrLoc(pp->pname) = strcons + (uword)StrLoc(pp->pname);
+                /* The entry point */
+                pp->entryp.icode = code + pp->entryp.ioff;
+                /* The two tables */
+                pp->lnames = (dptr)(code + (int)pp->lnames);
+                pp->llocs = (struct loc *)(code + (int)pp->llocs);
+                /* The variables */
+                for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
+                    StrLoc(pp->lnames[i]) = strcons + (uword)StrLoc(pp->lnames[i]);
+                    StrLoc(pp->llocs[i].fname) = strcons + (uword)StrLoc(pp->llocs[i].fname);
+                }
+                pp->program = pstate;
+            }
+        }
+#ifdef DEBUG_LOAD
+        printf("%8x\t\tClass field struct\n", cf);
+        printf("\t%08o\t  Flags\n", cf->flags);
+        printf("\t%.*s\t\t  Fname\n", StrLen(cf->name), StrLoc(cf->name));
+        printf("\t%8x\t  Defining class\n", cf->defining_class);
+        printf("\t%8x\t  Descriptor\n", cf->field_descriptor);
+#endif
+    }
+
+    /*
+     * Relocate the names of the global variables.
+     */
+    for (dp = gnames; dp < egnames; dp++)
+        StrLoc(*dp) = strcons + (uword)StrLoc(*dp);
+
+    /*
+     * Relocate the location file names of the global variables.
+     */
+    for (lp = glocs; lp < eglocs; lp++)
+        StrLoc(lp->fname) = strcons + (uword)StrLoc(lp->fname);
+
+    /*
+     * Scan the global variable array and relocate all blocks. Also
+     * note the main procedure if found.
+     */
+    main_proc = 0;
+    for (j = 0; j < n_globals; j++) {
+        switch (globals[j].dword) {
+            case D_Class: {
+                struct b_class *cb;
+                i = IntVal(globals[j]);
+                cb = (struct b_class *)(code + i);
+                BlkLoc(globals[j]) = (union block *)cb;
+                StrLoc(cb->name) = strcons + (uword)StrLoc(cb->name);
+                if (cb->init_field)
+                    cb->init_field = (struct class_field *)(code + (int)cb->init_field);
+                if (cb->new_field)
+                    cb->new_field = (struct class_field *)(code + (int)cb->new_field);
+                cb->program = pstate;
+                n_fields = cb->n_class_fields + cb->n_instance_fields;
+                cb->supers = (struct b_class **)(code + (int)cb->supers);
+                for (i = 0; i < cb->n_supers; ++i) 
+                    cb->supers[i] = (struct b_class*)(code + (int)cb->supers[i]);
+                cb->implemented_classes = (struct b_class **)(code + (int)cb->implemented_classes);
+                for (i = 0; i < cb->n_implemented_classes; ++i) 
+                    cb->implemented_classes[i] = (struct b_class*)(code + (int)cb->implemented_classes[i]);
+                cb->fields = (struct class_field **)(code + (int)cb->fields);
+                for (i = 0; i < n_fields; ++i) 
+                    cb->fields[i] = (struct class_field*)(code + (int)cb->fields[i]);
+                cb->sorted_fields = (short *)(code + (int)cb->sorted_fields);
+#ifdef DEBUG_LOAD
+                printf("%8x\t\t\tClass\n", cb);
+                printf("\t%d\t\t\t  Title\n", cb->title);
+                printf("\t%d\t\t\t  N supers\n", cb->n_supers);
+                printf("\t%d\t\t\t  N implemented classes\n", cb->n_implemented_classes);
+                printf("\t%d\t\t\t  N implemented instance class fields\n", cb->n_instance_fields);
+                printf("\t%d\t\t\t  N implemented class fields\n", cb->n_class_fields);
+                for (i = 0; i < cb->n_supers; ++i) 
+                    printf("\t%8x\t\t\t  Superclass %d\n",cb->supers[i], i);
+                for (i = 0; i < cb->n_implemented_classes; ++i) 
+                    printf("\t%8x\t\t\t  Implemented class %d\n",cb->implemented_classes[i], i);
+                for (i = 0; i < n_fields; ++i) 
+                    printf("\t%8x\t\t\t  Field info %d\n",cb->fields[i], i);
+                for (i = 0; i < n_fields; ++i) 
+                    printf("\t%d\t\t\t  Sorted field array\n",cb->sorted_fields[i]);
+#endif
+                break;
+            }
+
+            case D_Constructor: {
+                struct b_constructor *c;
+                i = IntVal(globals[j]);
+                c = (struct b_constructor *)(code + i);
+                BlkLoc(globals[j]) = (union block *)c;
+                c->program = pstate;
+                c->field_names = (struct descrip *)(code + (int)c->field_names);
+                c->field_locs = (struct loc *)(code + (int)c->field_locs);
+                c->sorted_fields = (short *)(code + (int)c->sorted_fields);
+                /*
+                 * Relocate the name and fields
+                 */
+                StrLoc(c->name) = strcons + (uword)StrLoc(c->name);
+                for (i = 0; i < c->n_fields; i++) {
+                    StrLoc(c->field_names[i]) = strcons + (uword)StrLoc(c->field_names[i]);
+                    StrLoc(c->field_locs[i].fname) = strcons + (uword)StrLoc(c->field_locs[i].fname);
+                }
+                break;
+            }
+            case D_Proc: {
+                /*
+                 * The second word of the descriptor for procedure variables tells
+                 *  where the procedure is.  Negative values are used for built-in
+                 *  procedures and positive values are used for Icon procedures.
+                 */
+                i = IntVal(globals[j]);
+                if (i < 0) {
+                    /*
+                     * It is a builtin function.  Calculate the index and carry out
+                     * some sanity checks on it.
+                     */
+                    int n = -1 - i;
+                    if (n < 0 || n >= pnsize)
+                        error("Builtin function index out of range: %d", n);
+                    BlkLoc(globals[j]) = (union block *)pntab[n].pblock;
+                    if (!eq(&gnames[j], &pntab[n].pblock->pname))
+                        error("Builtin function index name mismatch: %s", StrLoc(gnames[j]));
+                }
+                else {
+
+                    /*
+                     * globals[j] points to an Icon procedure; i is an offset
+                     *  to location of the procedure block in the code section.  Point
+                     *  pp at the block and replace BlkLoc(globals[j]).
+                     */
+                    pp = (struct b_proc *)(code + i);
+                    BlkLoc(globals[j]) = (union block *)pp;
+
+                    /*
+                     * Relocate the address of the name of the procedure.
+                     */
+                    StrLoc(pp->pname) = strcons + (uword)StrLoc(pp->pname);
+
+                    /*
+                     * This is an Icon procedure.  Relocate the entry point and
+                     *	the names of the parameters, locals, and static variables.
+                     */
+                    pp->entryp.icode = code + pp->entryp.ioff;
+                    pp->lnames = (dptr)(code + (int)pp->lnames);
+                    pp->llocs = (struct loc *)(code + (int)pp->llocs);
+                    for (i = 0; i < abs((int)pp->nparam)+pp->ndynam+pp->nstatic; i++) {
+                        StrLoc(pp->lnames[i]) = strcons + (uword)StrLoc(pp->lnames[i]);
+                        StrLoc(pp->llocs[i].fname) = strcons + (uword)StrLoc(pp->llocs[i].fname);
+                    }
+
+                    /*
+                     * Is it the main procedure?
+                     */
+                    if (StrLen(pp->pname) == 4 &&
+                        !strncmp(StrLoc(pp->pname), "main", 4))
+                        main_proc = &globals[j];
+
+                    pp->program = pstate;
+                }
+                break;
+            }
+        }
+    }
+
+    /*
+     * Relocate the names of the fields.
+     */
+    for (dp = fnames; dp < efnames; dp++)
+        StrLoc(*dp) = strcons + (uword)StrLoc(*dp);
+
+    /*
+     * Relocate the names of the files in the ipc->filename table.
+     */
+    for (fnptr = filenms; fnptr < efilenms; ++fnptr)
+        StrLoc(fnptr->fname) = strcons + (uword)StrLoc(fnptr->fname);
+
+    ENTERPSTATE(savedstate);
 }
 
 void showicode()

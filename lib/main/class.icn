@@ -46,6 +46,14 @@ class Class()
    private static defer create_raw(c)
    private static defer complete_raw(o)
 
+   # Return the name of the class
+   #
+   public static defer get_name(c)
+
+   # Return the source location of the class
+   #
+   public static defer get_location(c)
+
    # Generate the superclasses of the class {c}
    #
    public static defer get_supers(c)
@@ -101,7 +109,7 @@ class Class()
    # Return the field index number of the given field in class{c}.
    # @param c the class
    # @param field either a field name or number
-   # @return an integer, being the OR of all the flags
+   # @return an integer, being the index
    # @fail if the field is unknown
    #
    public static defer get_field_index(c, field)
@@ -113,6 +121,15 @@ class Class()
    # @fail if the field is unknown
    #
    public static defer get_field_name(c, field)
+
+
+   # Return the source location of the given field in class{c}.
+   # @param c the class
+   # @param field either a field name or number
+   # @generate the file name followed by the line number
+   # @fail if the field is unknown
+   #
+   public static defer get_field_location(c, field)
 
    # Return the class in which the given field is defined.
    # @param c the class
@@ -126,25 +143,25 @@ class Class()
    # @param mp a methp structure
    # @return an object
    #
-   private static defer get_methp_object(mp)
+   public static defer get_methp_object(mp)
 
    # Return the procedure part of a method pointer.
    # @param mp a methp structure
    # @return a procedure object (which will be an instance method)
    #
-   private static defer get_methp_proc(mp)
+   public static defer get_methp_proc(mp)
 
    # Return the object part of a cast.
    # @param mp a cast structure created with the {cast()} function
    # @return an object
    #
-   private static defer get_cast_object(c)
-
+   public static defer get_cast_object(c)
+   
    # Return the class part of a cast.
    # @param mp a cast structure created with the {cast()} function
    # @return a class
    #
-   private static defer get_cast_class(c)
+   public static defer get_cast_class(c)
 
    # Get the value of the field in {x}, behaving in exactly the same way
    # as though the "." operation had been invoked with equivalent values.

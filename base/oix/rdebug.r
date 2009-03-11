@@ -207,57 +207,46 @@ int get_name(dptr dp1,dptr dp0)
 
       kywdint:
         if (VarLoc(*dp1) == &kywd_ran) {
-            StrLen(*dp0) = 7;
-            StrLoc(*dp0) = "&random";
+            LitStr("&random", dp0);
         }
         else if (VarLoc(*dp1) == &kywd_trc) {
-            StrLen(*dp0) = 6;
-            StrLoc(*dp0) = "&trace";
+            LitStr("&trace", dp0);
         }
         else if (VarLoc(*dp1) == &kywd_dmp) {
-            StrLen(*dp0) = 5;
-            StrLoc(*dp0) = "&dump";
+            LitStr("&dump", dp0);
         }
         else if (VarLoc(*dp1) == &kywd_err) {
-            StrLen(*dp0) = 6;
-            StrLoc(*dp0) = "&error";
+            LitStr("&error", dp0);
         }
         else
             syserr("name: unknown integer keyword variable");
             
       kywdevent:
         if (VarLoc(*dp1) == &curpstate->eventsource) {
-            StrLen(*dp0) = 12;
-            StrLoc(*dp0) = "&eventsource";
+            LitStr("&eventsource", dp0);
         }
         else if (VarLoc(*dp1) == &curpstate->eventval) {
-            StrLen(*dp0) = 11;
-            StrLoc(*dp0) = "&eventvalue";
+            LitStr("&eventvalue", dp0);
         }
         else if (VarLoc(*dp1) == &curpstate->eventcode) {
-            StrLen(*dp0) = 10;
-            StrLoc(*dp0) = "&eventcode";
+            LitStr("&eventcode", dp0);
         }
         else
             syserr("name: unknown event keyword variable");
             
       kywdstr: {
           if (VarLoc(*dp1) == &kywd_prog) {
-              StrLen(*dp0) = 9;
-              StrLoc(*dp0) = "&progname";
+              LitStr("&progname", dp0);
           } else if (VarLoc(*dp1) == &kywd_why) {
-              StrLen(*dp0) = 4;
-              StrLoc(*dp0) = "&why";
+              LitStr("&why", dp0);
           }
         }
       kywdpos: {
-            StrLen(*dp0) = 4;
-            StrLoc(*dp0) = "&pos";
+            LitStr("&pos", dp0);
         }
 
       kywdsubj: {
-            StrLen(*dp0) = 8;
-            StrLoc(*dp0) = "&subject";
+            LitStr("&subject", dp0);
         }
 
         default:
@@ -302,16 +291,14 @@ int get_name(dptr dp1,dptr dp0)
                     return LocalName;
                 }
                 else {
-                    StrLen(*dp0) = 6;
-                    StrLoc(*dp0) = "(temp)";
+                    LitStr("(temp)", dp0);
                     return Failed;
 /*               syserr("name: cannot determine variable name"); */
                 }
             }
             else {
                 if (is:string(*dp1) || (!is:variable(*dp1))) {  /* non-variable! */
-                    StrLen(*dp0) = 14;
-                    StrLoc(*dp0) = "(non-variable)";
+                    LitStr("(non-variable)", dp0);
                     return Failed;
                 }
                 /*
@@ -362,8 +349,7 @@ int get_name(dptr dp1,dptr dp0)
                             return Error;
                         break;
                     default:		/* none of the above */
-                        StrLen(*dp0) = 8;
-                        StrLoc(*dp0) = "(struct)";
+                        LitStr("(struct)", dp0);
                         return Failed;
 
                 }
@@ -431,11 +417,17 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
      */
     t_ipc.op = ipc.op - 1;
     showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
-    proc = (struct b_proc *)BlkLoc(*glbl_argp);
+    /* glbl_argp can be 0 when we come back from a loaded program. */
+    if (glbl_argp) {
+        proc = (struct b_proc *)BlkLoc(*glbl_argp);
+        showlevel(k_level);
+        putstr(stderr, &proc->pname);
+    } else {
+        showlevel(k_level);
+        fprintf(stderr, "?");
+    }
 
-    showlevel(k_level);
-    putstr(stderr, &proc->pname);
-    fprintf(stderr,"; co-expression_%ld ", (long)ccp->id);
+    fprintf(stderr,"; co-expression#%ld ", (long)ccp->id);
     switch (swtch_typ) {
         case A_Coact:
             fprintf(stderr,": ");
@@ -451,7 +443,7 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
             fprintf(stderr,"failed to ");
             break;
     }
-    fprintf(stderr,"co-expression_%ld\n", (long)ncp->id);
+    fprintf(stderr,"co-expression#%ld\n", (long)ncp->id);
     fflush(stderr);
 }
 
@@ -772,77 +764,7 @@ void atrace(dp)
     fflush(stderr);
 }
 
-/*
- * coacttrace -- co-expression is being activated; produce a trace message.
- */
-void coacttrace(ccp, ncp)
-    struct b_coexpr *ccp;
-    struct b_coexpr *ncp;
-{
-    struct b_proc *bp;
-    inst t_ipc;
 
-    bp = (struct b_proc *)BlkLoc(*glbl_argp);
-    /*
-     * Compute the ipc of the activation instruction.
-     */
-    t_ipc.op = ipc.op - 1;
-    showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
-    showlevel(k_level);
-    putstr(stderr, &(bp->pname));
-    fprintf(stderr,"; co-expression_%ld : ", (long)ccp->id);
-    outimage(stderr, (dptr)(sp - 3), 0);
-    fprintf(stderr," @ co-expression_%ld\n", (long)ncp->id);
-    fflush(stderr);
-}
-
-/*
- * corettrace -- return from co-expression; produce a trace message.
- */
-void corettrace(ccp, ncp)
-    struct b_coexpr *ccp;
-    struct b_coexpr *ncp;
-{
-    struct b_proc *bp;
-    inst t_ipc;
-
-    bp = (struct b_proc *)BlkLoc(*glbl_argp);
-    /*
-     * Compute the ipc of the coret instruction.
-     */
-    t_ipc.op = ipc.op - 1;
-    showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
-    showlevel(k_level);
-    putstr(stderr, &(bp->pname));
-    fprintf(stderr,"; co-expression_%ld returned ", (long)ccp->id);
-    outimage(stderr, (dptr)(&ncp->es_sp[-3]), 0);
-    fprintf(stderr," to co-expression_%ld\n", (long)ncp->id);
-    fflush(stderr);
-}
-
-/*
- * cofailtrace -- failure return from co-expression; produce a trace message.
- */
-void cofailtrace(ccp, ncp)
-    struct b_coexpr *ccp;
-    struct b_coexpr *ncp;
-{
-    struct b_proc *bp;
-    inst t_ipc;
-
-    bp = (struct b_proc *)BlkLoc(*glbl_argp);
-    /*
-     * Compute the ipc of the cofail instruction.
-     */
-    t_ipc.op = ipc.op - 1;
-    showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
-    showlevel(k_level);
-    putstr(stderr, &(bp->pname));
-    fprintf(stderr,"; co-expression_%ld failed to co-expression_%ld\n",
-            (long)ccp->id, (long)ncp->id);
-    fflush(stderr);
-}
-
 /*
  * Service routine to display variables in given number of
  *  procedure calls to file f.

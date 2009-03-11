@@ -529,43 +529,20 @@ end
 
 "name(v) - return the name of a variable."
 
-function{1} name(underef v, c)
-   declare {
-      struct progstate *prog, *savedprog;
-      }
+function{1} name(underef v)
    /*
     * v must be a variable
     */
    if !is:variable(v) then
       runerr(111, v);
 
-   abstract {
-      return string
-      }
-
    body {
       C_integer i;
-
-      savedprog = curpstate;
-      if (is:null(c)) {
-         prog = curpstate;
-         }
-      else if (is:coexpr(c)) {
-         prog = BlkLoc(c)->coexpr.program;
-         }
-      else {
-         runerr(118,c);
-         }
-
-      ENTERPSTATE(prog);
-      i = get_name(&v, &result);		/* return val ? #%#% */
-
-      ENTERPSTATE(savedprog);
-
+      i = get_name(&v, &result);
       if (i == Error)
          runerr(0);
       return result;
-      }
+   }
 end
 
 
@@ -1356,71 +1333,31 @@ end
 "variable(s) - find the variable with name s and return a"
 " variable descriptor which points to its value."
 
-function{0,1} variable(s,c,i)
+function{0,1} variable(s,c)
 
-   if !cnv:C_string(s) then
+   if !cnv:string(s) then
       runerr(103, s)
 
-   if !def:C_integer(i,0) then
-      runerr(101,i)
-
-   abstract {
-      return variable
-      }
-
    body {
-      register int rv;
+       int rv;
+       struct progstate *prog;
 
-      struct progstate *prog, *savedprog;
-      struct pf_marker *tmp_pfp = pfp;
-      dptr tmp_argp = glbl_argp;
+       if (is:null(c))
+           prog = curpstate;
+       else if (is:coexpr(c))
+           prog = BlkLoc(c)->coexpr.program;
+       else
+           runerr(118, c);
 
-      savedprog = curpstate;
-      if (!is:null(c)) {
-	 if (is:coexpr(c)) {
-	    prog = BlkLoc(c)->coexpr.program;
-	    pfp = BlkLoc(c)->coexpr.es_pfp;
-	    glbl_argp = BlkLoc(c)->coexpr.es_argp;
-	    ENTERPSTATE(prog);
-	    }
-	 else {
-	    runerr(118, c);
-	    }
-	 }
+       rv = getvar(&s, &result, prog);
+       if (rv == Failed)
+           fail;
 
-      /*
-       * Produce error if i is negative
-       */
-      if (i < 0) {
-         irunerr(205, i);
-         errorfail;
-         }
+       if (is:coexpr(c) && ((rv == LocalName) || (rv == StaticName)))
+           Deref(result);
 
-      while (i--) {
-	 if (pfp == NULL) fail;
-	 pfp = pfp->pf_pfp;
-         }
-      if (pfp)
-      glbl_argp = &((dptr)pfp)[-(pfp->pf_nargs) - 1];
-      else glbl_argp = NULL;
-
-      rv = getvar(s, &result);
-   
-      if (is:coexpr(c)) {
-	 ENTERPSTATE(savedprog);
-	 pfp = tmp_pfp;
-	 glbl_argp = tmp_argp;
-
-	 if ((rv == LocalName) || (rv == StaticName)) {
-	    Deref(result);
-	    }
-	 }
-
-      if (rv != Failed)
-         return result;
-      else
-         fail;
-      }
+       return result;
+   }
 end
 
 
@@ -1448,366 +1385,6 @@ function{0,1} cofail(CE)
       }
 end
 
-
-"fieldnames(r) - generate the fieldnames of record or constructor r"
-
-function{*} fieldnames(r)
-   abstract {
-      return string
-      }
-   body {
-       struct b_constructor *c;
-       int i, n;
-       type_case r of {
-          constructor: {
-             c = &BlkLoc(r)->constructor;
-             break;
-          }
-          record : {
-             c = BlkLoc(r)->record.constructor;
-             break;
-          }
-          default: {
-             runerr(625, r);
-         }
-      }
-      n = c->n_fields;
-      for(i = 0; i < n; i++)
-         suspend c->field_names[i];
-      fail;
-   }
-end
-
-
-"localnames(ce,i) - produce the names of local variables"
-" in the procedure activation i levels up in ce"
-function{*} localnames(ce,i)
-   declare {
-      tended struct descrip d;
-      }
-   abstract {
-      return string
-      }
-   if is:null(ce) then inline {
-      d = k_current;
-      BlkLoc(k_current)->coexpr.es_pfp = pfp; /* sync w/ current value */
-      }
-   else if is:proc(ce) then inline {
-      int j;
-      struct b_proc *cproc = (struct b_proc *)BlkLoc(ce);
-      for(j = 0; j < cproc->ndynam; j++) {
-	 result = cproc->lnames[j + cproc->nparam];
-	 suspend result;
-         }
-      fail;
-      }
-   else if is:coexpr(ce) then inline {
-      d = ce;
-      BlkLoc(k_current)->coexpr.es_pfp = pfp; /* sync w/ current value */
-      }
-   else runerr(118, ce)
-   if !def:C_integer(i,0) then
-      runerr(101,i)
-   body {
-      int j;
-      dptr arg;
-      struct b_proc *cproc;
-      struct pf_marker *thePfp = BlkLoc(d)->coexpr.es_pfp;
-
-      if (thePfp == NULL) fail;
-      
-      /*
-       * Produce error if i is negative
-       */
-      if (i < 0) {
-         irunerr(205, i);
-         errorfail;
-         }
-
-      while (i--) {
-	 thePfp = thePfp->pf_pfp;
-	 if (thePfp == NULL) fail;
-         }
-
-      arg = &((dptr)thePfp)[-(thePfp->pf_nargs) - 1];
-      cproc = (struct b_proc *)BlkLoc(arg[0]);    
-      for(j = 0; j < cproc->ndynam; j++) {
-	 result = cproc->lnames[j + cproc->nparam];
-	 suspend result;
-         }
-      fail;
-      }
-end
-
-
-
-"staticnames(ce,i) - produce the names of static variables"
-" in the current procedure activation in ce"
-
-function{*} staticnames(ce,i)
-   declare {
-      tended struct descrip d;
-      }
-   abstract {
-      return string
-      }
-   if is:null(ce) then inline {
-      d = k_current;
-      BlkLoc(k_current)->coexpr.es_pfp = pfp; /* sync w/ current value */
-      }
-   else if is:proc(ce) then inline {
-      int j;
-      struct b_proc *cproc = (struct b_proc *)BlkLoc(ce);
-      for(j = 0; j < cproc->nstatic; j++) {
-	 result = cproc->lnames[j + cproc->nparam + cproc->ndynam];
-	 suspend result;
-         }
-      fail;
-      }
-   else if is:coexpr(ce) then inline {
-      d = ce;
-      BlkLoc(k_current)->coexpr.es_pfp = pfp; /* sync w/ current value */
-      }
-   else runerr(118,ce)
-   if !def:C_integer(i,0) then
-      runerr(101,i)
-   body {
-      int j;
-      dptr arg;
-      struct b_proc *cproc;
-      struct pf_marker *thePfp = BlkLoc(d)->coexpr.es_pfp;
-      if (thePfp == NULL) fail;
-
-      /*
-       * Produce error if i is negative
-       */
-      if (i < 0) {
-         irunerr(205, i);
-         errorfail;
-         }
-
-      while (i--) {
-	 thePfp = thePfp->pf_pfp;
-	 if (thePfp == NULL) fail;
-         }
-
-      arg = &((dptr)thePfp)[-(thePfp->pf_nargs) - 1];
-      cproc = (struct b_proc *)BlkLoc(arg[0]);    
-      for(j=0; j < cproc->nstatic; j++) {
-	 result = cproc->lnames[j + cproc->nparam + cproc->ndynam];
-	 suspend result;
-         }
-      fail;
-      }
-end
-
-"paramnames(ce,i) - produce the names of the parameters"
-" in the current procedure activation in ce"
-
-function{1,*} paramnames(ce,i)
-   declare {
-      tended struct descrip d;
-      }
-   abstract {
-      return string
-      }
-   if is:null(ce) then inline {
-      d = k_main;
-      BlkLoc(k_main)->coexpr.es_pfp = pfp; /* sync w/ current value */
-      }
-   else if is:proc(ce) then inline {
-      int j;
-      struct b_proc *cproc = (struct b_proc *)BlkLoc(ce);
-      /* do built-ins (nparam < 0) have readable parameter names? maybe not.*/
-      for(j = 0; j < cproc->nparam; j++) {
-	 result = cproc->lnames[j];
-	 suspend result;
-         }
-      fail;
-      }
-   else if is:coexpr(ce) then inline {
-      d = ce;
-      BlkLoc(k_main)->coexpr.es_pfp = pfp; /* sync w/ current value */
-      }
-   else runerr(118,ce)
-   if !def:C_integer(i,0) then
-      runerr(101,i)
-   body {
-      int j;
-      dptr arg;
-      struct b_proc *cproc;
-      struct pf_marker *thePfp = BlkLoc(d)->coexpr.es_pfp;
-
-      if (thePfp == NULL) fail;
-
-      /*
-       * Produce error if i is negative
-       */
-      if (i < 0) {
-         irunerr(205, i);
-         errorfail;
-         }
-
-      while (i--) {
-	 thePfp = thePfp->pf_pfp;
-	 if (thePfp == NULL) fail;
-         }
-
-      arg = &((dptr)thePfp)[-(thePfp->pf_nargs) - 1];
-      cproc = (struct b_proc *)BlkLoc(arg[0]);    
-      for(j = 0; j < cproc->nparam; j++) {
-	 result = cproc->lnames[j];
-	 suspend result;
-         }
-      fail;
-      }
-end
-
-
-"load(s,arglist,blocksize,stringsize,stacksize) - load"
-" a program corresponding to string s as a co-expression."
-
-function{1} load(s,arglist,
-		 blocksize, stringsize, stacksize)
-   declare {
-      tended char *loadstring;
-      C_integer _bs_, _ss_, _stk_;
-      }
-   if !cnv:C_string(s,loadstring) then
-      runerr(103,s)
-   if !def:C_integer(blocksize,abrsize,_bs_) then
-      runerr(101,blocksize)
-   if !def:C_integer(stringsize,ssize,_ss_) then
-      runerr(101,stringsize)
-   if !def:C_integer(stacksize,mstksize,_stk_) then
-      runerr(101,stacksize)
-   abstract {
-      return coexpr
-      }
-   body {
-      word *stack;
-      struct progstate *pstate;
-      register struct b_coexpr *sblkp;
-      struct ef_marker *newefp;
-      register word *savedsp;
-
-      /*
-       * Fragments of pseudo-icode to get loaded programs started,
-       * and to handle termination.
-       */
-      static word pstart[7];
-      static word *lterm;
-
-      inst tipc;
-
-      tipc.opnd = pstart;
-      *tipc.op++ = Op_Noop; /* aligns Invokes operand */  /* ?cj? */
-      *tipc.op++ = Op_Invoke;
-      *tipc.opnd++ = 1;
-      *tipc.op++ = Op_Coret;
-      *tipc.op++ = Op_Efail;
-
-      lterm = (word *)(tipc.op);
-
-      *tipc.op++ = Op_Cofail;
-      *tipc.op++ = Op_Agoto;
-      *tipc.opnd = (word)lterm;
-
-      /*
-       * arglist must be a list
-       */
-      if (!is:null(arglist) && !is:list(arglist))
-         runerr(108,arglist);
-
-      stack = (word *)(sblkp = loadicode(loadstring, _bs_,_ss_,_stk_));
-      if (!stack) {
-          /* The file couldn't be opened (any format error causes termination) */
-          errno2why();
-          fail;
-      }
-      pstate = sblkp->program;
-      pstate->parent = curpstate;
-      pstate->parentdesc = k_main;
-
-      savedsp = sp;
-      sp = stack + Wsizeof(struct b_coexpr)
-        + Wsizeof(struct progstate) + pstate->hsize/WordSize;
-
-      if (pstate->hsize % WordSize) 
-          sp++;
-
-#ifdef UpStack
-      sblkp->cstate[0] =
-         ((word)((char *)sblkp + (_stk_ - (sizeof(*sblkp)+sizeof(struct progstate)+pstate->hsize))/2)
-            &~((word)WordSize*StackAlign-1));
-#else					/* UpStack */
-      sblkp->cstate[0] =
-	((word)((char *)sblkp + _stk_ - WordSize + sizeof(struct progstate) + pstate->hsize)
-           &~((word)WordSize*StackAlign-1));
-#endif					/* UpStack */
-
-      sblkp->es_argp = NULL;
-      sblkp->es_gfp = NULL;
-      pstate->Mainhead->freshblk = nulldesc;/* &main has no refresh block. */
-					/*  This really is a bug. */
-
-      /*
-       * Set up expression frame marker to contain execution of the
-       *  main procedure.  If failure occurs in this context, control
-       *  is transferred to lterm, the address of an ...
-       */
-      newefp = (struct ef_marker *)sp;
-#if IntBits != WordBits
-      newefp->ef_failure.op = (int *)lterm;
-#else					/* IntBits != WordBits */
-      newefp->ef_failure.op = lterm;
-#endif					/* IntBits != WordBits */
-
-      newefp->ef_gfp = 0;
-      newefp->ef_efp = 0;
-      newefp->ef_ilevel = ilevel;
-      sp += Wsizeof(*newefp) - 1;   /* SP now points to last word of efp */
-      sblkp->es_efp = newefp;
-
-      /*
-       * Check whether resolve() found the main procedure.  If not, this
-       * is noted as run-time error 117.  Otherwise, this value is
-       * pushed on the stack.
-       */
-      if (!pstate->MainProc)
-         fatalerr(117, NULL);
-
-      PushDesc(*pstate->MainProc);
-
-      /*
-       * Create a list from arguments using Ollist and push a descriptor
-       * onto new stack.  Then create procedure frame on new stack.  Push
-       * two new null descriptors, and set sblkp->es_sp when all finished.
-       */
-      if (!is:null(arglist)) {
-         PushDesc(arglist);
-	 pstate->Glbl_argp = (dptr)(sp - 1);
-         }
-      else {
-         PushNull;
-	 pstate->Glbl_argp = (dptr)(sp - 1);
-         {
-         dptr tmpargp = (dptr) (sp - 1);
-         Ollist(0, tmpargp);
-         sp = (word *)tmpargp + 1;
-         }
-         }
-      sblkp->es_sp = (word *)sp;
-      sblkp->es_ipc.opnd = pstart;
-
-      result.dword = D_Coexpr;
-      BlkLoc(result) = (union block *)sblkp;
-
-      sp = savedsp;
-
-      return result;
-      }
-end
 
 
 "parent(ce) - given a ce, return &main for that ce's parent"
@@ -1864,9 +1441,9 @@ end
 
 
 
-"globalnames(ce) - produce the names of identifiers global to ce"
+"globnames(ce) - produce the names of identifiers global to ce"
 
-function{*} globalnames(ce)
+function{*} globnames(ce)
    declare {
       struct progstate *ps;
       }
@@ -1887,159 +1464,178 @@ function{*} globalnames(ce)
 end
 
 "keyword(kname,ce) - produce a keyword in ce's thread"
-function{*} keyword(keyname,ce)
-   declare {
-      tended struct descrip d;
-      tended char *kyname;
-      }
-   abstract {
-      return any_value
-      }
-   if !cnv:C_string(keyname,kyname) then runerr(103,keyname)
-   if is:null(ce) then inline {
-      d = k_current;
-      BlkLoc(k_current)->coexpr.es_pfp = pfp; /* sync w/ current value */
-      BlkLoc(k_current)->coexpr.es_ipc.opnd = ipc.opnd;
-      }
-   else if is:coexpr(ce) then
-      inline { d = ce; }
-   else runerr(118, ce)
+function{*} keyword(s,ce)
+   if !cnv:string(s) then 
+      runerr(103, s)
+
    body {
-      struct progstate *p = BlkLoc(d)->coexpr.program;
-      char *kname = kyname;
-      if (kname[0] == '&') kname++;
-      if (strcmp(kname,"allocated") == 0) {
-	 suspend C_integer stattotal + p->stringtotal + p->blocktotal;
-	 suspend C_integer stattotal;
-	 suspend C_integer p->stringtotal;
-	 return  C_integer p->blocktotal;
-	 }
-      else if (strcmp(kname,"collections") == 0) {
-	 suspend C_integer p->colltot;
-	 suspend C_integer p->collstat;
-	 suspend C_integer p->collstr;
-	 return  C_integer p->collblk;
-	 }
-      else if (strcmp(kname,"current") == 0) {
-	 return p->K_current;
-	 }
-      else if (strcmp(kname,"error") == 0) {
-	 return kywdint(&(p->Kywd_err));
-	 }
-      else if (strcmp(kname,"errornumber") == 0) {
-	 return C_integer p->K_errornumber;
-	 }
-      else if (strcmp(kname,"errortext") == 0) {
-	 return p->K_errortext;
-	 }
-      else if (strcmp(kname,"errorvalue") == 0) {
-	 return p->K_errorvalue;
-	 }
-      else if (strcmp(kname,"eventcode") == 0) {
-	 return kywdevent(&(p->eventcode));
-	 }
-      else if (strcmp(kname,"eventcount") == 0) {
-	 return kywdevent(&(p->eventcount));
-	 }
-      else if (strcmp(kname,"eventsource") == 0) {
-	 return kywdevent(&(p->eventsource));
-	 }
-      else if (strcmp(kname,"eventvalue") == 0) {
-	 return kywdevent(&(p->eventval));
-	 }
-      else if (strcmp(kname,"file") == 0) {
-          struct ipc_fname *t = find_ipc_fname(BlkLoc(d)->coexpr.es_ipc.opnd, p);
-          if (!t)
-              fail;
-          return t->fname;
-	 }
-      else if (strcmp(kname,"level") == 0) {
-	 /*
-	  * Bug; levels aren't maintained per program yet.
-	  * But shouldn't they be per co-expression, not per program?
-	  */
-	 }
-      else if (strcmp(kname,"line") == 0) {
-          struct ipc_line *t = find_ipc_line(BlkLoc(d)->coexpr.es_ipc.opnd, p);
-          if (!t)
-              fail;
-          return C_integer t->line;
-	 }
-      else if (strcmp(kname,"main") == 0) {
-	 return p->K_main;
-	 }
-      else if (strcmp(kname,"pos") == 0) {
-	 return kywdpos(&(p->Kywd_pos));
-	 }
-      else if (strcmp(kname,"progname") == 0) {
-	 return kywdstr(&(p->Kywd_prog));
-	 }
-      else if (strcmp(kname,"why") == 0) {
-	 return kywdstr(&(p->Kywd_why));
-	 }
-      else if (strcmp(kname,"random") == 0) {
-	 return kywdint(&(p->Kywd_ran));
-	 }
-      else if (strcmp(kname,"regions") == 0) {
-         word allRegions = 0;
-         struct region *rp;
+      tended struct descrip d;
+      struct progstate *p;
+      char *t;
 
-         suspend C_integer 0;
-	 for (rp = p->stringregion; rp; rp = rp->next)
-	    allRegions += DiffPtrs(rp->end,rp->base);
-	 for (rp = p->stringregion->prev; rp; rp = rp->prev)
-	    allRegions += DiffPtrs(rp->end,rp->base);
-	 suspend C_integer allRegions;
+      if (is:null(ce)) {
+         d = k_current;
+         BlkLoc(k_current)->coexpr.es_pfp = pfp; /* sync w/ current value */
+         BlkLoc(k_current)->coexpr.es_ipc.opnd = ipc.opnd;
+      } else if (is:coexpr(ce))
+         d = ce;
+      else 
+         runerr(118, ce);
 
-	 allRegions = 0;
-	 for (rp = p->blockregion; rp; rp = rp->next)
-	    allRegions += DiffPtrs(rp->end,rp->base);
-	 for (rp = p->blockregion->prev; rp; rp = rp->prev)
-	    allRegions += DiffPtrs(rp->end,rp->base);
-	 return C_integer allRegions;
-	 }
-      else if (strcmp(kname,"source") == 0) {
-	 return coexpr(topact((struct b_coexpr *)BlkLoc(BlkLoc(d)->coexpr.program->K_current)));
-/*
-	 if (BlkLoc(d)->coexpr.es_actstk)
-	    return coexpr(topact((struct b_coexpr *)BlkLoc(d)));
-	 else return BlkLoc(d)->coexpr.program->parent->K_main;
-*/
-	 }
-      else if (strcmp(kname,"storage") == 0) {
-	 word allRegions = 0;
-	 struct region *rp;
-	 suspend C_integer 0;
-	 for (rp = p->stringregion; rp; rp = rp->next)
-	    allRegions += DiffPtrs(rp->free,rp->base);
-	 for (rp = p->stringregion->prev; rp; rp = rp->prev)
-	    allRegions += DiffPtrs(rp->free,rp->base);
-	 suspend C_integer allRegions;
+      p = BlkLoc(d)->coexpr.program;
+      if (StrLen(s) == 0 || *StrLoc(s) != '&')
+         fail;
 
-	 allRegions = 0;
-	 for (rp = p->blockregion; rp; rp = rp->next)
-	    allRegions += DiffPtrs(rp->free,rp->base);
-	 for (rp = p->blockregion->prev; rp; rp = rp->prev)
-	    allRegions += DiffPtrs(rp->free,rp->base);
-	 return C_integer allRegions;
-	 }
-      else if (strcmp(kname,"subject") == 0) {
-	 return kywdsubj(&(p->ksub));
-	 }
-      else if (strcmp(kname,"time") == 0) {
-	 /*
-	  * &time in this program = total time - time spent in other programs
-	  */
-	 if (p != curpstate)
-	    return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
-	 else
-	    return C_integer millisec() - p->Kywd_time_elsewhere;
-	 }
-      else if (strcmp(kname,"trace") == 0) {
-	 return kywdint(&(p->Kywd_trc));
-	 }
-      runerr(205, keyname);
+      t = StrLoc(s) + 1;
+      switch (StrLen(s)) {
+          case 4 : {
+              if (strncmp(t,"pos",3) == 0) {
+                  return kywdpos(&(p->Kywd_pos));
+              }
+              if (strncmp(t,"why",3) == 0) {
+                  return kywdstr(&(p->Kywd_why));
+              }
+              break;
+          }
+          case 5 : {
+              if (strncmp(t,"file",4) == 0) {
+                  struct ipc_fname *t = find_ipc_fname(BlkLoc(d)->coexpr.es_ipc.opnd, p);
+                  if (!t)
+                      fail;
+                  return t->fname;
+              }
+              if (strncmp(t,"line",4) == 0) {
+                  struct ipc_line *t = find_ipc_line(BlkLoc(d)->coexpr.es_ipc.opnd, p);
+                  if (!t)
+                      fail;
+                  return C_integer t->line;
+              }
+              if (strncmp(t,"main",4) == 0) {
+                  return p->K_main;
+              }
+              if (strncmp(t,"time",4) == 0) {
+                  /*
+                   * &time in this program = total time - time spent in other programs
+                   */
+                  if (p != curpstate)
+                      return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
+                  else
+                      return C_integer millisec() - p->Kywd_time_elsewhere;
+              }
+              break;
+          }
+          case 6 : {
+              if (strncmp(t,"trace",5) == 0) {
+                  return kywdint(&(p->Kywd_trc));
+              }
+              if (strncmp(t,"error",5) == 0) {
+                  return kywdint(&(p->Kywd_err));
+              }
+              break;
+          }
+          case 7 : {
+              if (strncmp(t,"random",6) == 0) {
+                  return kywdint(&(p->Kywd_ran));
+              }
+              if (strncmp(t,"source",6) == 0) {
+                  return coexpr(topact((struct b_coexpr *)BlkLoc(BlkLoc(d)->coexpr.program->K_current)));
+              }
+              break;
+          }
+          case 8 : {
+              if (strncmp(t,"subject",7) == 0) {
+                  return kywdsubj(&(p->Kywd_subject));
+              }
+              if (strncmp(t,"current",7) == 0) {
+                  return p->K_current;
+              }
+              if (strncmp(t,"regions",7) == 0) {
+                  word allRegions = 0;
+                  struct region *rp;
+
+                  suspend C_integer 0;
+                  for (rp = p->stringregion; rp; rp = rp->next)
+                      allRegions += DiffPtrs(rp->end,rp->base);
+                  for (rp = p->stringregion->prev; rp; rp = rp->prev)
+                      allRegions += DiffPtrs(rp->end,rp->base);
+                  suspend C_integer allRegions;
+
+                  allRegions = 0;
+                  for (rp = p->blockregion; rp; rp = rp->next)
+                      allRegions += DiffPtrs(rp->end,rp->base);
+                  for (rp = p->blockregion->prev; rp; rp = rp->prev)
+                      allRegions += DiffPtrs(rp->end,rp->base);
+                  return C_integer allRegions;
+              }
+              if (strncmp(t,"storage",7) == 0) {
+                  word allRegions = 0;
+                  struct region *rp;
+                  suspend C_integer 0;
+                  for (rp = p->stringregion; rp; rp = rp->next)
+                      allRegions += DiffPtrs(rp->free,rp->base);
+                  for (rp = p->stringregion->prev; rp; rp = rp->prev)
+                      allRegions += DiffPtrs(rp->free,rp->base);
+                  suspend C_integer allRegions;
+
+                  allRegions = 0;
+                  for (rp = p->blockregion; rp; rp = rp->next)
+                      allRegions += DiffPtrs(rp->free,rp->base);
+                  for (rp = p->blockregion->prev; rp; rp = rp->prev)
+                      allRegions += DiffPtrs(rp->free,rp->base);
+                  return C_integer allRegions;
+              }
+              break;
+          }
+          case 9 : {
+              if (strncmp(t,"progname",8) == 0) {
+                  return kywdstr(&(p->Kywd_prog));
+              }
+              break;
+          }
+          case 10: {
+              if (strncmp(t, "allocated",9) == 0) {
+                  suspend C_integer stattotal + p->stringtotal + p->blocktotal;
+                  suspend C_integer stattotal;
+                  suspend C_integer p->stringtotal;
+                  return  C_integer p->blocktotal;
+              }
+              if (strncmp(t,"errortext",9) == 0) {
+                  return p->K_errortext;
+              }
+              if (strncmp(t,"eventcode",9) == 0) {
+                  return kywdevent(&(p->eventcode));
+              }
+              break;
+          }
+
+          case 11 : {
+              if (strncmp(t,"errorvalue",10) == 0) {
+                  return p->K_errorvalue;
+              }
+              if (strncmp(t,"eventvalue",10) == 0) {
+                  return kywdevent(&(p->eventval));
+              }
+              break;
+          }
+          case 12 : {
+              if (strncmp(t,"collections",11) == 0) {
+                  suspend C_integer p->colltot;
+                  suspend C_integer p->collstat;
+                  suspend C_integer p->collstr;
+                  return  C_integer p->collblk;
+              }
+              if (strncmp(t,"errornumber",11) == 0) {
+                  return C_integer p->K_errornumber;
+              }
+              if (strncmp(t,"eventsource",11) == 0) {
+                  return kywdevent(&(p->eventsource));
+              }
+              break;
+          }
       }
+
+      runerr(205, s);
+   }
 end
 
 "opmask(ce,cs) - get or set ce's program's opcode mask"

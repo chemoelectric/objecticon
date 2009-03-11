@@ -18,7 +18,20 @@ static struct b_class *get_class_for(dptr x)
         
      default: 
             return 0;
+    }
+}
+
+static struct b_constructor *get_constructor_for(dptr x)
+{
+    type_case *x of {
+      constructor: 
+            return &BlkLoc(*x)->constructor;
         
+      record: 
+            return BlkLoc(*x)->record.constructor;
+        
+     default: 
+            return 0;
     }
 }
 
@@ -44,6 +57,8 @@ function{1} progof(x)
             p = BlkLoc(x)->object.class->program;
          proc:
             p = BlkLoc(x)->proc.program;
+         coexpr:
+            p = BlkLoc(x)->coexpr.program;
          default: 
             runerr(123, x);
       }
@@ -118,6 +133,52 @@ function{0,1} glob(s, c)
    }
 end
 
+function{0,1} globloc(s, c)
+   if !cnv:tmp_string(s) then
+      runerr(103, s)
+   body {
+       struct progstate *prog;
+       struct loc *p;
+
+       if (is:null(c))
+           prog = curpstate;
+       else if (is:coexpr(c))
+           prog = BlkLoc(c)->coexpr.program;
+       else
+           runerr(118, c);
+           
+       p = lookup_global_loc(&s, prog);
+       if (p && !is:null(p->fname)) {
+           suspend p->fname;
+           return C_integer p->line;
+       } else
+           fail;
+   }
+end
+
+function{0,1} lang_Class_get_name(c)
+    body {
+        struct b_class *class;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
+        return class->name;
+    }
+end
+
+function{0,1} lang_Class_get_location(c)
+    body {
+        struct b_class *class;
+        struct loc *p;
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
+        p = lookup_global_loc(&class->name, class->program);
+        if (!p)
+            syserr("Class name not found in global table");
+        suspend p->fname;
+        return C_integer p->line;
+    }
+end
+
 function{*} lang_Class_get_supers(c)
     body {
         struct b_class *class;
@@ -160,6 +221,10 @@ function{1} lang_Class_get_methp_object(mp)
    if !is:methp(mp) then
        runerr(613, mp)
     body {
+       struct b_proc *caller_proc = CallerProc;
+       if (caller_proc->package_id != 1 &&
+           BlkLoc(mp)->methp.object->class->program == caller_proc->program)
+           runerr(630,mp);
        return object(BlkLoc(mp)->methp.object);
     }
 end
@@ -168,6 +233,10 @@ function{1} lang_Class_get_methp_proc(mp)
    if !is:methp(mp) then
        runerr(613, mp)
     body {
+       struct b_proc *caller_proc = CallerProc;
+       if (caller_proc->package_id != 1 &&
+           BlkLoc(mp)->methp.object->class->program == caller_proc->program)
+           runerr(630,mp);
         return proc(BlkLoc(mp)->methp.proc);
     }
 end
@@ -176,6 +245,10 @@ function{1} lang_Class_get_cast_object(c)
    if !is:cast(c) then
        runerr(614, c)
     body {
+       struct b_proc *caller_proc = CallerProc;
+       if (caller_proc->package_id != 1 &&
+           BlkLoc(c)->cast.class->program == caller_proc->program)
+           runerr(630,c);
        return object(BlkLoc(c)->cast.object);
     }
 end
@@ -246,6 +319,21 @@ function{0,1} lang_Class_get_field_name(c, field)
         if (i < 0)
             fail;
         return class->fields[i]->name;
+     }
+end
+
+function{0,1} lang_Class_get_field_location(c, field)
+   body {
+        struct b_class *class;
+        int i;
+        CheckField(field);
+        if (!(class = get_class_for(&c)))
+            runerr(619, c);
+        i = lookup_class_field(class, &field, 0);
+        if (i < 0)
+            fail;
+        suspend class->fields[i]->loc.fname;
+        return C_integer class->fields[i]->loc.line;
      }
 end
 
@@ -1854,4 +1942,294 @@ function{1} util_Connectable_is_methp_with_object(mp, o)
        else
            fail;
     }
+end
+
+function{0,1} lang_Constructor_get_name(c)
+    body {
+        struct b_constructor *constructor;
+        if (!(constructor = get_constructor_for(&c)))
+            runerr(629, c);
+        return constructor->name;
+    }
+end
+
+function{0,1} lang_Constructor_get_location(c)
+    body {
+        struct b_constructor *constructor;
+        struct loc *p;
+        if (!(constructor = get_constructor_for(&c)))
+            runerr(629, c);
+        p = lookup_global_loc(&constructor->name, constructor->program);
+        if (!p)
+            syserr("Constructor name not found in global table");
+        suspend p->fname;
+        return C_integer p->line;
+    }
+end
+
+function{*} lang_Constructor_get_field_names(c)
+    body {
+        struct b_constructor *constructor;
+        int i;
+        if (!(constructor = get_constructor_for(&c)))
+            runerr(629, c);
+        for (i = 0; i < constructor->n_fields; ++i)
+            suspend constructor->field_names[i];
+        fail;
+    }
+end
+
+function{1} lang_Constructor_get_n_fields(c)
+   body {
+        struct b_constructor *constructor;
+        if (!(constructor = get_constructor_for(&c)))
+            runerr(629, c);
+        return C_integer constructor->n_fields;
+     }
+end
+
+function{0,1} lang_Constructor_get_field_index(c, field)
+   body {
+        struct b_constructor *constructor;
+        int i;
+        CheckField(field);
+        if (!(constructor = get_constructor_for(&c)))
+            runerr(629, c);
+        i = lookup_record_field(constructor, &field, 0);
+        if (i < 0)
+            fail;
+        return C_integer i + 1;
+     }
+end
+
+function{0,1} lang_Constructor_get_field_location(c, field)
+   body {
+        struct b_constructor *constructor;
+        int i;
+        CheckField(field);
+        if (!(constructor = get_constructor_for(&c)))
+            runerr(629, c);
+        i = lookup_record_field(constructor, &field, 0);
+        if (i < 0)
+            fail;
+        suspend constructor->field_locs[i].fname;
+        return C_integer constructor->field_locs[i].line;
+     }
+end
+
+function{0,1} lang_Constructor_get_field_name(c, field)
+   body {
+        struct b_constructor *constructor;
+        int i;
+        CheckField(field);
+        if (!(constructor = get_constructor_for(&c)))
+            runerr(629, c);
+        i = lookup_record_field(constructor, &field, 0);
+        if (i < 0)
+            fail;
+        return constructor->field_names[i];
+     }
+end
+
+int lookup_proc_local(struct b_proc *proc, dptr query)
+{
+    int nf;
+
+    if (proc->ndynam < 0)
+        return -1;
+
+    nf = abs(proc->nparam) + proc->ndynam + proc->nstatic;
+
+    if (is:string(*query)) {
+        int i;
+        for (i = 0; i < nf; ++i) {
+            if (eq(&proc->lnames[i], query))
+                return i;
+        }
+        return -1;
+    }
+
+    if (query->dword == D_Integer) {
+        int i = cvpos(IntVal(*query), nf);
+        if (i != CvtFail && i <= nf)
+            return i - 1;
+        else
+            return -1;
+    }
+
+    syserr("Invalid query type to lookup_proc_local");
+}
+
+function{1} lang_Proc_get_n_locals(c)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+        return C_integer abs(proc->nparam) + proc->ndynam + proc->nstatic;
+     }
+end
+
+function{1} lang_Proc_get_n_arguments(c)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+       return C_integer proc->nparam;
+     }
+end
+
+function{1} lang_Proc_get_n_dynamics(c)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+       if (proc->ndynam < 0)
+            fail;
+       return C_integer proc->ndynam;
+     }
+end
+
+function{1} lang_Proc_get_n_statics(c)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+       if (proc->ndynam < 0)
+            fail;
+        return C_integer proc->nstatic;
+     }
+end
+
+function{*} lang_Proc_get_local_names(c)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+        int i, nf;
+        if (proc->ndynam < 0)
+            fail;
+        nf = abs(proc->nparam) + proc->ndynam + proc->nstatic;
+        for (i = 0; i < nf; ++i)
+            suspend proc->lnames[i];
+        fail;
+    }
+end
+
+function{0,1} lang_Proc_get_local_index(c, id)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+        int i;
+        CheckField(id);
+        i = lookup_proc_local(proc, &id);
+        if (i < 0)
+            fail;
+        return C_integer i + 1;
+     }
+end
+
+function{0,1} lang_Proc_get_local_location(c, id)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+        int i;
+        CheckField(id);
+        i = lookup_proc_local(proc, &id);
+        if (i < 0)
+            fail;
+        suspend proc->llocs[i].fname;
+        return C_integer proc->llocs[i].line;
+     }
+end
+
+function{0,1} lang_Proc_get_local_name(c, id)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+        int i;
+        CheckField(id);
+        i = lookup_proc_local(proc, &id);
+        if (i < 0)
+            fail;
+        return proc->lnames[i];
+     }
+end
+
+function{0,1} lang_Proc_get_local_type(c, id)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+        int i;
+        CheckField(id);
+        i = lookup_proc_local(proc, &id);
+        if (i < 0)
+            fail;
+        if (i < abs(proc->nparam))
+            return C_integer 1;
+        if (i < abs(proc->nparam) + proc->ndynam)
+            return C_integer 2;
+        return C_integer 3;
+     }
+end
+
+function{0,1} lang_Proc_get_name(c)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+        if (proc->field) {
+            int len = StrLen(proc->field->defining_class->name) + StrLen(proc->pname) + 1;
+            MemProtect (StrLoc(result) = reserve(Strings, len));
+            StrLen(result) = len;
+            alcstr(StrLoc(proc->field->defining_class->name),StrLen(proc->field->defining_class->name));
+            alcstr(".", 1);
+            alcstr(StrLoc(proc->pname),StrLen(proc->pname));
+            return result;
+        } else
+            return proc->pname;
+     }
+end
+
+function{0,1} lang_Proc_get_short_name(c)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       return BlkLoc(c)->proc.pname;
+   }
+end
+
+function{0,1} lang_Proc_get_location(c)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc; 
+        struct loc *p;
+        if (proc->field)
+            p = &proc->field->loc;
+        else if (proc->ndynam < 0)
+            fail;
+        else {
+            p = lookup_global_loc(&proc->pname, proc->program);
+            if (!p)
+                syserr("Procedure name not found in global table");
+        }
+        suspend p->fname;
+        return C_integer p->line;
+     }
+end
+
+function{0,1} lang_Proc_get_defining_class(c)
+   if !is:proc(c) then
+      runerr(615, c)
+   body {
+       struct b_proc *proc = &BlkLoc(c)->proc;
+        if (proc->field)
+            return class(proc->field->defining_class);
+        else
+            fail;
+     }
 end

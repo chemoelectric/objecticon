@@ -547,6 +547,7 @@ static int traverse(t)
             ensure_pos(t);
             if (TType(Tree1(t)) != N_Empty) {
                 lab = alclab(1);
+                ensure_pos(Tree1(t));
                 uout_op(Op_Init);
                 uout_short(lab);
                 uout_op(Op_Mark);
@@ -557,9 +558,10 @@ static int traverse(t)
 	    }
             else
                 free(Tree1(t));
-            if (TType(Tree2(t)) != N_Empty)
+            if (TType(Tree2(t)) != N_Empty) {
+                ensure_pos(Tree2(t));
                 traverse(Tree2(t));
-            else
+            } else
                 free(Tree2(t));
             ensure_pos(Tree3(t));
             uout_op(Op_Pfail);

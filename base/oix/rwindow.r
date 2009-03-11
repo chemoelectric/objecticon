@@ -2845,14 +2845,14 @@ int wattrib(w, s, len, answer, abuf)
                 break;
             case A_VISUAL:
                 if (getvisual(w, abuf) == Failed) return Failed;
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_DEPTH:
                 MakeInt(SCREENDEPTH(w), answer);
                 break;
             case A_DISPLAY:
                 getdisplay(w, abuf);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_ASCENT:
                 MakeInt(ASCENT(w), answer);
@@ -2874,7 +2874,7 @@ int wattrib(w, s, len, answer, abuf)
                 if (mask & KeyReleaseMask)
                     *s++ = 'k';
                 *s = 0;
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             }
             case A_POS: case A_POSX: case A_POSY:
@@ -2883,7 +2883,7 @@ int wattrib(w, s, len, answer, abuf)
                 switch (a) {
                     case A_POS:
                         sprintf(abuf, "%d,%d", ws->posx, ws->posy);
-                        MakeStr(abuf, strlen(abuf), answer);
+                        CMakeStr(abuf, answer);
                         break;
                     case A_POSX:
                         MakeInt(ws->posx, answer);
@@ -2895,11 +2895,11 @@ int wattrib(w, s, len, answer, abuf)
                 break;
             case A_FG:      
                 getfg(w, abuf);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_BG:
                 getbg(w, abuf);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_GAMMA:
                 Protect(BlkLoc(*answer) = (union block *)alcreal(wc->gamma),
@@ -2910,11 +2910,11 @@ int wattrib(w, s, len, answer, abuf)
                 sprintf(abuf, "%s",
                         (wc->fillstyle == FS_SOLID) ? "solid" :
                         (wc->fillstyle == FS_STIPPLE) ? "masked" : "textured");
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_LINESTYLE:
                 getlinestyle(w, abuf);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_LINEWIDTH:
                 MakeInt(LINEWIDTH(w), answer);
@@ -2923,17 +2923,17 @@ int wattrib(w, s, len, answer, abuf)
             case A_WIDTH: { MakeInt(ws->width, answer); break; }
             case A_SIZE:
                 sprintf(abuf, "%d,%d", ws->width, ws->height);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_MINHEIGHT: { MakeInt(ws->minheight, answer); break; }
             case A_MINWIDTH: { MakeInt(ws->minwidth, answer); break; }
             case A_MINSIZE:
                 sprintf(abuf, "%d,%d", ws->minwidth, ws->minheight);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_RESIZE:
                 sprintf(abuf,"%s",(ISRESIZABLE(w)?"on":"off"));
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_DISPLAYHEIGHT:
                 MakeInt(DISPLAYHEIGHT(w), answer);
@@ -2943,11 +2943,11 @@ int wattrib(w, s, len, answer, abuf)
                 break;
             case A_REVERSE:
                 sprintf(abuf,"%s",(ISREVERSE(w)?"on":"off"));
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_FONT:
                 getfntnam(w, abuf);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_DX: MakeInt(wc->dx, answer); break;
             case A_DY: MakeInt(wc->dy, answer); break;
@@ -2965,11 +2965,11 @@ int wattrib(w, s, len, answer, abuf)
             }
             case A_POINTER:
                 getpointername(w, abuf);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_DRAWOP:
                 getdrawop(w, abuf);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_GEOMETRY:
                 if (getpos(w) == Failed) return Failed;
@@ -2978,51 +2978,51 @@ int wattrib(w, s, len, answer, abuf)
                             ws->width, ws->height, ws->posx, ws->posy);
                 else
                     sprintf(abuf, "%dx%d", ws->pixwidth, ws->pixheight);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_CANVAS:
                 getcanvas(w, abuf);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_ICONIC:
                 geticonic(w, abuf);
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_ICONIMAGE:
                 if (ICONFILENAME(w) != NULL)
                     sprintf(abuf, "%s", ICONFILENAME(w));
                 else *abuf = '\0';
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_ICONLABEL:
                 if (ICONLABEL(w) != NULL)
                     sprintf(abuf, "%s", ICONLABEL(w));
                 else return Failed;
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_LABEL:
             case A_WINDOWLABEL:
                 if (WINDOWLABEL(w) != NULL)
                     sprintf(abuf,"%s", WINDOWLABEL(w));
                 else return Failed;
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             case A_ICONPOS: {
                 switch (geticonpos(w,abuf)) {
                     case Failed: return Failed;
                     case Error:  return Failed;
                 }
-                MakeStr(abuf, strlen(abuf), answer);
+                CMakeStr(abuf, answer);
                 break;
             }
             case A_PATTERN: {
                 s = w->context->patternname;
                 if (s != NULL) {
                     strcpy(abuf, s);
-                    MakeStr(abuf, strlen(s), answer);
+                    CMakeStr(abuf, answer);
                 }
                 else
-                    MakeStr("black", 5, answer);
+                    LitStr("black", answer);
                 break;
             }
             case A_CLIPX:

@@ -548,7 +548,7 @@ int handle_misc(wd, w)
                          * Get the types we are handling
                          */
                         target_list[0] = XA_TARGETS;
-                        CMakeStr("targets", &str0);
+                        LitStr("targets", &str0);
                         cstr2string(selection_name, &str1);
                         val = call(&proc, &str0, &str1, 0);
                         if (!val || !is:list(*val))
@@ -604,7 +604,7 @@ int handle_misc(wd, w)
                             /*
                              * Get the value
                              */
-                            CMakeStr("content", &str0);
+                            LitStr("content", &str0);
                             cstr2string(selection_name, &str1);
                             cstr2string(target_name, &str2);
                             val = call(&proc, &str0, &str1, &str2, 0);
@@ -663,7 +663,7 @@ int handle_misc(wd, w)
                         break;
                     }
 
-                    CMakeStr("clear", &str0);
+                    LitStr("clear", &str0);
                     cstr2string(an, &str1);
                     XFree(an);
                     call(&proc, &str0, &str1, 0);
@@ -1463,7 +1463,7 @@ int ownselection(wbp w, char *selname)
                 } else {
                     struct descrip str0;
                     tended struct descrip str1;
-                    CMakeStr("clear", &str0);
+                    LitStr("clear", &str0);
                     cstr2string(selname, &str1);
                     call(&proc, &str0, &str1, 0);
                 }

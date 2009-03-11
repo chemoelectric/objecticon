@@ -35,12 +35,6 @@
  */
 
 /*
- * If COMPILER is not defined, code for the interpreter is compiled.
- */
-
-   #define COMPILER 0
-
-/*
  * The following definitions insure that all the symbols for operating
  * systems that are not relevant are defined to be 0 -- so that they
  * can be used in logical expressions in #if directives.
@@ -322,14 +316,6 @@ Deliberate Syntax Error
 #endif				/* UXSuffix */
 
 #define IcodeDelim "[executable Icon binary follows]"
-
-/*
- *  Vsizeof is for use with variable-sized (i.e., indefinite)
- *   structures containing an array of descriptors declared of size 1
- *   to avoid compiler warnings associated with 0-sized arrays.
- */
-
-#define Vsizeof(s)	(sizeof(s) - sizeof(struct descrip))
 
 /*
  * Other sizeof macros:

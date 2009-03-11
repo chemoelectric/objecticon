@@ -7,7 +7,6 @@
 #include "../h/version.h"
 #include "../h/header.h"
 #include "../h/opdefs.h"
-#include "../h/modflags.h"
 
 
 /* #define DEBUG_LOAD 1  */
@@ -26,15 +25,6 @@ function{0} deferred_method_stub()
    }
 end
 
-#define NativeDef(class,field,func) extern struct b_iproc B##func##;
-#include "../h/nativedefs.h"
-#undef NativeDef
-
-static struct b_iproc *native_methods[] = {
-#define NativeDef(class,field,func) &B##func##,
-#include "../h/nativedefs.h"
-#undef NativeDef
-};
 
 /*
  * Initial icode sequence. This is used to invoke the main procedure with one
@@ -391,220 +381,6 @@ int main(int argc, char **argv)
 #endif
 }
 
-/*
- * resolve - perform various fix-ups on the data read from the icode
- *  file.
- */
-void resolve(struct progstate *pstate)
-{
-    word i, j, n_fields;
-    struct b_proc *pp;
-    struct b_class *class_blocks;
-    struct class_field *cf;
-    dptr dp;
-    struct progstate *savedstate = curpstate;
-    struct ipc_fname *fnptr;
-
-    ENTERPSTATE(pstate);
-
-    /*
-     * For each class field info block, relocate the pointer to the
-     * defining class and the descriptor.
-     */
-    for (cf = classfields; cf < eclassfields; cf++) {
-        StrLoc(cf->name) = strcons + (uword)StrLoc(cf->name);
-        cf->defining_class = (struct b_class*)(code + (int)cf->defining_class);
-        if (cf->field_descriptor) {
-            cf->field_descriptor = (dptr)(code + (int)cf->field_descriptor);
-            /* Follow the same logic as lcode.c */
-            if (cf->flags & M_Defer) {
-                int n = IntVal(*cf->field_descriptor);
-                if (n == -1) {
-                    /* Unresolved, point to stub */
-                    BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
-                } else {
-                    /* Resolved to native method, do sanity checks, set pointer */
-                    if (n < 0 || n >= ElemCount(native_methods))
-                        error("Native method index out of range: %d", n);
-                    pp = (struct b_proc *)native_methods[n];
-
-                    /* The field name should match the end of the procedure block's name */
-                    if (strncmp(StrLoc(cf->name),
-                                StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(cf->name),
-                                StrLen(cf->name)))
-                        error("Native method name mismatch: %s", StrLoc(cf->name));
-
-                    BlkLoc(*cf->field_descriptor) = (union block *)pp;
-                }
-            } else if (cf->flags & M_Method) {
-                /*
-                 * Method in the icode file, relocate the entry point
-                 * and the names of the parameters, locals, and static
-                 * variables.
-                 */
-                pp = (struct b_proc *)(code + IntVal(*cf->field_descriptor));
-                BlkLoc(*cf->field_descriptor) = (union block *)pp;
-                /* Pointer back to the corresponding field */
-                pp->field = cf;
-                /* Relocate the name */
-                StrLoc(pp->pname) = strcons + (uword)StrLoc(pp->pname);
-                /* The entry point */
-                pp->entryp.icode = code + pp->entryp.ioff;
-                /* The variables */
-                for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++)
-                    StrLoc(pp->lnames[i]) = strcons + (uword)StrLoc(pp->lnames[i]);
-                pp->program = pstate;
-            }
-        }
-#ifdef DEBUG_LOAD
-        printf("%8x\t\tClass field struct\n", cf);
-        printf("\t%08o\t  Flags\n", cf->flags);
-        printf("\t%.*s\t\t  Fname\n", StrLen(cf->name), StrLoc(cf->name));
-        printf("\t%8x\t  Defining class\n", cf->defining_class);
-        printf("\t%8x\t  Descriptor\n", cf->field_descriptor);
-#endif
-    }
-
-    /*
-     * Relocate the names of the global variables.
-     */
-    for (dp = gnames; dp < egnames; dp++)
-        StrLoc(*dp) = strcons + (uword)StrLoc(*dp);
-
-    /*
-     * Scan the global variable array and relocate all blocks. Also
-     * note the main procedure if found.
-     */
-    main_proc = 0;
-    for (j = 0; j < n_globals; j++) {
-        switch (globals[j].dword) {
-            case D_Class: {
-                struct b_class *cb;
-                i = IntVal(globals[j]);
-                cb = (struct b_class *)(code + i);
-                BlkLoc(globals[j]) = (union block *)cb;
-                StrLoc(cb->name) = strcons + (uword)StrLoc(cb->name);
-                if (cb->init_field)
-                    cb->init_field = (struct class_field *)(code + (int)cb->init_field);
-                if (cb->new_field)
-                    cb->new_field = (struct class_field *)(code + (int)cb->new_field);
-                cb->program = pstate;
-                n_fields = cb->n_class_fields + cb->n_instance_fields;
-                cb->supers = (struct b_class **)(code + (int)cb->supers);
-                for (i = 0; i < cb->n_supers; ++i) 
-                    cb->supers[i] = (struct b_class*)(code + (int)cb->supers[i]);
-                cb->implemented_classes = (struct b_class **)(code + (int)cb->implemented_classes);
-                for (i = 0; i < cb->n_implemented_classes; ++i) 
-                    cb->implemented_classes[i] = (struct b_class*)(code + (int)cb->implemented_classes[i]);
-                cb->fields = (struct class_field **)(code + (int)cb->fields);
-                for (i = 0; i < n_fields; ++i) 
-                    cb->fields[i] = (struct class_field*)(code + (int)cb->fields[i]);
-                cb->sorted_fields = (short *)(code + (int)cb->sorted_fields);
-#ifdef DEBUG_LOAD
-                printf("%8x\t\t\tClass\n", cb);
-                printf("\t%d\t\t\t  Title\n", cb->title);
-                printf("\t%d\t\t\t  N supers\n", cb->n_supers);
-                printf("\t%d\t\t\t  N implemented classes\n", cb->n_implemented_classes);
-                printf("\t%d\t\t\t  N implemented instance class fields\n", cb->n_instance_fields);
-                printf("\t%d\t\t\t  N implemented class fields\n", cb->n_class_fields);
-                for (i = 0; i < cb->n_supers; ++i) 
-                    printf("\t%8x\t\t\t  Superclass %d\n",cb->supers[i], i);
-                for (i = 0; i < cb->n_implemented_classes; ++i) 
-                    printf("\t%8x\t\t\t  Implemented class %d\n",cb->implemented_classes[i], i);
-                for (i = 0; i < n_fields; ++i) 
-                    printf("\t%8x\t\t\t  Field info %d\n",cb->fields[i], i);
-                for (i = 0; i < n_fields; ++i) 
-                    printf("\t%d\t\t\t  Sorted field array\n",cb->sorted_fields[i]);
-#endif
-                break;
-            }
-
-            case D_Constructor: {
-                struct b_constructor *c;
-                i = IntVal(globals[j]);
-                c = (struct b_constructor *)(code + i);
-                BlkLoc(globals[j]) = (union block *)c;
-                c->program = pstate;
-                c->field_names = (struct descrip *)(code + (int)c->field_names);
-                c->sorted_fields = (short *)(code + (int)c->sorted_fields);
-                /*
-                 * Relocate the name and fields
-                 */
-                StrLoc(c->name) = strcons + (uword)StrLoc(c->name);
-                for (i = 0; i < c->n_fields; i++)
-                    StrLoc(c->field_names[i]) = strcons + (uword)StrLoc(c->field_names[i]);
-                break;
-            }
-            case D_Proc: {
-                /*
-                 * The second word of the descriptor for procedure variables tells
-                 *  where the procedure is.  Negative values are used for built-in
-                 *  procedures and positive values are used for Icon procedures.
-                 */
-                i = IntVal(globals[j]);
-                if (i < 0) {
-                    /*
-                     * It is a builtin function.  Calculate the index and carry out
-                     * some sanity checks on it.
-                     */
-                    int n = -1 - i;
-                    if (n < 0 || n >= pnsize)
-                        error("Builtin function index out of range: %d", n);
-                    BlkLoc(globals[j]) = (union block *)pntab[n].pblock;
-                    if (!eq(&gnames[j], &pntab[n].pblock->pname))
-                        error("Builtin function index name mismatch: %s", StrLoc(gnames[j]));
-                }
-                else {
-
-                    /*
-                     * globals[j] points to an Icon procedure; i is an offset
-                     *  to location of the procedure block in the code section.  Point
-                     *  pp at the block and replace BlkLoc(globals[j]).
-                     */
-                    pp = (struct b_proc *)(code + i);
-                    BlkLoc(globals[j]) = (union block *)pp;
-
-                    /*
-                     * Relocate the address of the name of the procedure.
-                     */
-                    StrLoc(pp->pname) = strcons + (uword)StrLoc(pp->pname);
-
-                    /*
-                     * This is an Icon procedure.  Relocate the entry point and
-                     *	the names of the parameters, locals, and static variables.
-                     */
-                    pp->entryp.icode = code + pp->entryp.ioff;
-                    for (i = 0; i < abs((int)pp->nparam)+pp->ndynam+pp->nstatic; i++)
-                        StrLoc(pp->lnames[i]) = strcons + (uword)StrLoc(pp->lnames[i]);
-
-                    /*
-                     * Is it the main procedure?
-                     */
-                    if (StrLen(pp->pname) == 4 &&
-                        !strncmp(StrLoc(pp->pname), "main", 4))
-                        main_proc = &globals[j];
-
-                    pp->program = pstate;
-                }
-                break;
-            }
-        }
-    }
-
-    /*
-     * Relocate the names of the fields.
-     */
-    for (dp = fnames; dp < efnames; dp++)
-        StrLoc(*dp) = strcons + (uword)StrLoc(*dp);
-
-    /*
-     * Relocate the names of the files in the ipc->filename table.
-     */
-    for (fnptr = filenms; fnptr < efilenms; ++fnptr)
-        StrLoc(fnptr->fname) = strcons + (uword)StrLoc(fnptr->fname);
-
-    ENTERPSTATE(savedstate);
-}
 
 static int lookup_global_compare(const void *p1, const void *p2)
 {
@@ -620,6 +396,17 @@ dptr lookup_global(dptr name, struct progstate *prog)
 
     /* Convert from pointer into names array to pointer into descriptor array */
     return p - (prog->Gnames - prog->Globals);
+}
+
+struct loc *lookup_global_loc(dptr name, struct progstate *prog)
+{
+    dptr p = (dptr)bsearch(name, prog->Gnames, prog->NGlobals, 
+                           sizeof(struct descrip), lookup_global_compare);
+    if (!p)
+        return 0;
+
+    /* Convert from pointer into names array to pointer into location array */
+    return prog->Glocs + (p - prog->Gnames);
 }
 
 

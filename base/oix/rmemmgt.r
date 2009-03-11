@@ -509,7 +509,7 @@ struct progstate *pstate;
 
    /* Kywd_err, &error, always an integer */
    /* Kywd_pos, &pos, always an integer */
-   PostDescrip(pstate->ksub);
+   PostDescrip(pstate->Kywd_subject);
    PostDescrip(pstate->Kywd_prog);
    PostDescrip(pstate->Kywd_why);
    /* Kywd_ran, &random, always an integer */

@@ -168,7 +168,8 @@ long icodesize, stacksize;
    ep->es_ilevel = 0;
 
    /*
-    * Initialize id, and program state to self for &main; curpstate for others.
+    * Initialize id, and program state to self for &main; 0 for others, which will
+    * have that field set by co_init()
     */
    if (icodesize > 0) {
       ep->id = 1;
@@ -176,7 +177,7 @@ long icodesize, stacksize;
       memset(ep->program, 0, sizeof(struct progstate));
    } else {
       ep->id = coexp_ser++;
-      ep->program = curpstate;
+      ep->program = 0;
    }
 
    ep->nextstk = stklist;

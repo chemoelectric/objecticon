@@ -65,9 +65,6 @@ int		co_chng		(struct b_coexpr *ncp, struct descrip *valloc,
 				   struct descrip *rsltloc,
 				   int swtch_typ, int first);
 void		co_init		(struct b_coexpr *sblkp);
-void		coacttrace	(struct b_coexpr *ccp,struct b_coexpr *ncp);
-void		cofailtrace	(struct b_coexpr *ccp,struct b_coexpr *ncp);
-void		corettrace	(struct b_coexpr *ccp,struct b_coexpr *ncp);
 int		coswitch	(word *old, word *new, int first);
 int		cplist_0	(dptr dp1,dptr dp2,word i,word j);
 int		cplist_1	(dptr dp1,dptr dp2,word i,word j);
@@ -112,7 +109,7 @@ struct ipc_line *find_ipc_line(word *ipc, struct progstate *p);
 dptr     	findfile	(word *ipc);
 int		findline	(word *ipc);
 void		fpetrap		(void);
-int		getvar		(char *s,dptr vp);
+int             getvar          (dptr s,dptr vp,struct progstate *p);
 uword		hash		(dptr dp);
 union block	**hchain	(union block *pb,uword hn);
 union block	*hgfirst	(union block *bp, struct hgstate *state);
@@ -455,6 +452,7 @@ int     lookup_class_field_by_name(struct b_class *class, dptr name);
 int     lookup_class_field_by_fnum(struct b_class *class, int fnum);
 int     lookup_record_field_by_name(struct b_constructor *recdef, dptr name);
 int     lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_field_cache *ic);
+struct loc *lookup_global_loc(dptr name, struct progstate *prog);
 
 int	bfunc		(void);
 long	ckadd		(long i, long j);
@@ -493,7 +491,7 @@ int	printable	(int c);
 int	ripow		(double r, C_integer n, dptr rslt);
 void	rtos		(double n,dptr dp,char *s);
 int	sig_rsm		(void);
-struct b_proc *strprc	(dptr s, C_integer arity);
+struct b_proc *strprc	(dptr s, C_integer arity, struct progstate *p);
 int	subs_asgn	(dptr dest, const dptr src);
 int	trcmp3		(struct dpair *dp1,struct dpair *dp2);
 int	trefcmp		(dptr d1,dptr d2);

@@ -818,9 +818,7 @@ C_integer arity;
 /*
  * strprc - convert a string to a procedure.
  */
-struct b_proc *strprc(s, arity)
-dptr s;
-C_integer arity;
+struct b_proc *strprc(dptr s, C_integer arity, struct progstate *p)
    {
    C_integer i;
    dptr t;
@@ -828,7 +826,7 @@ C_integer arity;
    /*
     * See if the string is the name of a global variable.
     */
-   if ((t = lookup_global(s, curpstate))) {
+   if ((t = lookup_global(s, p))) {
        if (is:proc(*t))
            return (struct b_proc *)BlkLoc(*t);
        else

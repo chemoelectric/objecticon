@@ -207,6 +207,16 @@
 			 } while (0)
 
 /*
+ * Make a string descriptor from a string literal.
+ */
+#define LitStr(s,dp) do { \
+                 	 StrLoc(*dp) = (s); \
+                         StrLen(*dp) = sizeof(s) - 1;       \
+			 } while (0)
+
+#define CallerProc (&BlkLoc(*((dptr)pfp - (pfp->pf_nargs + 1)))->proc)
+
+/*
  * Offset in word of cset bit.
  */
 #define CsetOff(b)	((b) & BitOffMask)
@@ -479,12 +489,13 @@
    #define FncBlock(f,nargs,deref) \
       	struct b_iproc Cat(B,f) = {\
       	T_Proc,\
-      	Vsizeof(struct b_proc),\
+      	sizeof(struct b_proc),\
       	Cat(Z,f),\
       	nargs,\
       	-1,\
       	deref, 0, 0, 0, 0,                       \
-      	{sizeof(Lit(f))-1,Lit(f)}};
+      	{sizeof(Lit(f))-1,Lit(f)},\
+        0,0};
 
    /*
     * Procedure block for an operator.
@@ -492,13 +503,14 @@
    #define OpBlock(f,nargs,sname,xtrargs)\
    	struct b_iproc Cat(B,f) = {\
    	T_Proc,\
-   	Vsizeof(struct b_proc),\
+   	sizeof(struct b_proc),\
    	Cat(O,f),\
    	nargs,\
    	-1,\
    	xtrargs,\
    	0,0,0,0,                                \
-   	{sizeof(sname)-1,sname}};
+   	{sizeof(sname)-1,sname},\
+        0,0};
 
    
    /*
@@ -561,7 +573,7 @@
       #define k_eventcode (curpstate->eventcode)
       #define k_eventsource (curpstate->eventsource)
       #define k_eventvalue (curpstate->eventval)
-      #define k_subject (curpstate->ksub)
+      #define k_subject (curpstate->Kywd_subject)
       #define kywd_trc  (curpstate->Kywd_trc)
       #define mainhead (curpstate->Mainhead)
       #define code (curpstate->Code)
@@ -580,6 +592,8 @@
       #define eglobals (curpstate->Eglobals)
       #define gnames (curpstate->Gnames)
       #define egnames (curpstate->Egnames)
+      #define glocs (curpstate->Glocs)
+      #define eglocs (curpstate->Eglocs)
       #define statics (curpstate->Statics)
       #define estatics (curpstate->Estatics)
       #define n_globals (curpstate->NGlobals)

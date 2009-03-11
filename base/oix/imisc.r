@@ -226,20 +226,12 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
  */
 int check_access(struct class_field *cf, struct b_class *instance_class)
 {
-    dptr pp;
     struct b_proc *caller_proc;
 
     if (cf->flags & M_Public)
         return Succeeded;
 
-    pp = (dptr)pfp - (pfp->pf_nargs + 1);
-
-    if (pp->dword != D_Proc) {
-        showstack();
-        syserr("couldn't find proc on stack");
-    }
-
-    caller_proc = &BlkLoc(*pp)->proc;
+    caller_proc = CallerProc;
 
     if (caller_proc->package_id == 1)  /* Is the caller in lang? */
         return Succeeded;
@@ -454,27 +446,50 @@ int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
 /*
  * This follows similar logic to lookup_class_field above.
  */
-int lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_field_cache *ic)
+int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_field_cache *ic)
 {
-    int fnum, index;
+    if (ic) {
+        int fnum, index;
 
-    /*
-     * Check if we have a inline cache match.
-     */
-    if (ic->class == (union block *)recdef)
-        return ic->index;
+        /*
+         * Check if we have a inline cache match.
+         */
+        if (ic->class == (union block *)recdef)
+            return ic->index;
 
-    fnum = IntVal(*num);
+        fnum = IntVal(*query);
 
-    if (fnum < 0)
-        index = lookup_record_field_by_name(recdef, &efnames[fnum]);
-    else
-        index = lookup_record_field_by_name(recdef, &fnames[fnum]);
+        if (fnum < 0)
+            index = lookup_record_field_by_name(recdef, &efnames[fnum]);
+        else
+            index = lookup_record_field_by_name(recdef, &fnames[fnum]);
 
-    ic->class = (union block *)recdef;
-    ic->index = index;
+        ic->class = (union block *)recdef;
+        ic->index = index;
 
-    return index;
+        return index;
+    } else {
+        /*
+         * Query is a string (field name) or int (field index).
+         */
+        if (is:string(*query))
+            return lookup_record_field_by_name(recdef, query);
+
+        if (query->dword == D_Integer) {
+            int nf = recdef->n_fields;
+            /*
+             * Simple index into fields array, using conventional icon
+             * semantics.
+             */
+            int i = cvpos(IntVal(*query), nf);
+            if (i != CvtFail && i <= nf)
+                return i - 1;
+            else
+                return -1;
+        }
+
+        syserr("Invalid query type to lookup_record_field");
+    }
 }
 
 /*

@@ -14,6 +14,7 @@ struct header {
     word Fnames;		/* location of names of fields */
     word Globals;		/* location of global variables */
     word Gnames;		/* location of names of globals */
+    word Glocs;                 /* location of positions of globals */
     word Statics;		/* location of static variables in procs/methods */
     word Strcons;		/* location of identifier table */
     word Filenms;		/* location of ipc/file name table */

@@ -231,20 +231,14 @@ function{0,1} proc(x,i,c)
       inline {
          struct b_proc *prc;
 
-	 struct progstate *prog, *savedprog;
+	 struct progstate *prog;
 
-	 savedprog = curpstate;
-	 if (is:null(c)) {
-	    prog = curpstate;
-	    }
-	 else if (is:coexpr(c)) {
-	    prog = BlkLoc(c)->coexpr.program;
-	    }
-	 else {
-	    runerr(118,c);
-	    }
-
-	 ENTERPSTATE(prog);
+         if (is:null(c))
+             prog = curpstate;
+         else if (is:coexpr(c))
+             prog = BlkLoc(c)->coexpr.program;
+         else
+             runerr(118, c);
 
          /*
           * Attempt to convert Arg0 to a procedure descriptor using i to
@@ -254,10 +248,9 @@ function{0,1} proc(x,i,c)
           */
 	 if (i == 0)
             prc = bi_strprc(&x, 0);
-	 else
-         prc = strprc(&x, i);
+	 else 
+             prc = strprc(&x, i, prog);
 
-	 ENTERPSTATE(savedprog);
          if (prc == NULL)
             fail;
          else

@@ -353,5 +353,5 @@ procedure test29()
    &why := ""
    p()
    print{"main &why", &why}
-   print{"child &why", keyword("why", progof(p))}
+   print{"child &why", keyword("&why", progof(p))}
 end
