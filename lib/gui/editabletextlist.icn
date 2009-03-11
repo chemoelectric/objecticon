@@ -229,7 +229,7 @@ class EditableTextList(LineBasedScrollArea)
       s := v.str
       i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
       j := i + char_width(view.cbwin, s[self.cursor_x - v.first + 1])
-      l := self.get_left_pos()
+      l := self.get_subject_x()
       if self.view.x - l > i then {
          while (self.cursor_x - v.first + 1 < *s) & 
             (text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width) < self.view.x - l) do
@@ -269,7 +269,7 @@ class EditableTextList(LineBasedScrollArea)
       s := v.str
       i := text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, self.tab_width)
       j := i + char_width(view.cbwin, s[self.cursor_x - v.first + 1])
-      l := self.get_left_pos()
+      l := self.get_subject_x()
       if self.view.x - l > i then
          goto_hpos(i)
       else if self.view.x - l + self.view.w < j then
@@ -462,7 +462,7 @@ class EditableTextList(LineBasedScrollArea)
 
       s := v.str
       i := 1
-      l := self.get_left_pos()
+      l := self.get_subject_x()
       while (i < *s) & (text_width_ex(view.cbwin, s, 1, i + 1, self.tab_width) < e.x - l) do
          i+:= 1
 
@@ -618,7 +618,7 @@ class EditableTextList(LineBasedScrollArea)
          }
          "left" : {
             v := view_list[vi]
-            l := self.get_left_pos()
+            l := self.get_subject_x()
             s := v.str
             while (self.cursor_x > v.first) & 
                text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 
@@ -628,7 +628,7 @@ class EditableTextList(LineBasedScrollArea)
          }
          "right" : {
             v := view_list[vi]
-            l := self.get_left_pos()
+            l := self.get_subject_x()
             s := v.str
             while (self.cursor_x - v.first + 1 < *s) & 
                text_width_ex(view.cbwin, s, 1, self.cursor_x - v.first + 1, 

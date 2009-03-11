@@ -31,13 +31,6 @@ class LineBasedScrollArea(DrawScrollArea)
       line_count
 
    #
-   # The virtual x position of a line in the canvas.
-   #
-   public get_left_pos()
-      return self.view.x - get_area_x()
-   end
-
-   #
    # Succeed if the line count is non-zero
    #
    public has_lines()

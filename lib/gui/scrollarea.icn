@@ -42,6 +42,20 @@ class ScrollArea(Component)
    end
 
    #
+   # The virtual x position of the subject
+   #
+   public get_subject_x()
+      return self.view.x - get_area_x()
+   end
+
+   #
+   # The virtual y position of the subject
+   #
+   public get_subject_y()
+      return self.view.y - get_area_y()
+   end
+
+   #
    # Recompute the scrollbars and redisplay the object.
    #
    public compute_and_invalidate()

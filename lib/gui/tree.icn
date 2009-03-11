@@ -215,7 +215,7 @@ class Tree(SelectableScrollArea)
             # Check for click on little +/- icon.
             #
             yp := self.view.y + get_height_for_line(l) / 2 + l_off - little_h / 2
-            xp := self.get_left_pos() + (N.depth - 1) * col_w + little_w / 2
+            xp := self.get_subject_x() + (N.depth - 1) * col_w + little_w / 2
             if (xp <= e.x < xp + little_w) & (yp <= e.y < yp + little_h) then {
                #
                # Clicking on the little icon ends the sequence, and sets the selection
