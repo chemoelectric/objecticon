@@ -25,6 +25,8 @@ int Dflag       =0;     /* -L: link debug */
 int Zflag	=0;	/* -Z: icode-gz compression */
 int Bflag       =0;     /* -B: bundle iconx in output file */
 int uflag       =0;     /* -u: utf-8 source code */
+int loclevel	=1;	/* -l n: amount of location info in icode 0 = none, 1 = trace info (default), 
+                         *       2 = trace & symbol info */
 
 /*
  * Some convenient interned strings.
@@ -204,8 +206,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBstuE] [-f s] [-o ofile] [-v i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBe:fmno:stuv:ELZTV")) != EOF) {
+#define Usage "[-cBstuE] [-f s] [-o ofile] [-v i] [-l i]"	/* omit -e from doc */
+    while ((c = getopt(argc,argv, "cBe:fmno:stuv:ELZTVl:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -264,6 +266,11 @@ int main(int argc, char **argv)
             case 'v':			/* -v n: set verbosity level */
                 if (sscanf(optarg, "%d%c", &verbose, &ch) != 1)
                     quitf("bad operand to -v option: %s",optarg);
+                break;
+
+            case 'l':			/* -l n: source location store level */
+                if (sscanf(optarg, "%d%c", &loclevel, &ch) != 1)
+                    quitf("bad operand to -l option: %s",optarg);
                 break;
 
             case 'Z':

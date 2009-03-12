@@ -39,6 +39,19 @@ procedure pr_seq(s, e)
    write("}")
 end
 
+procedure pr_seq2(s, e)
+   local t
+   &why := ""
+   writes(@s, ": {")
+   t := ""
+   while writes(t, imagex(@e)) do
+      t := ", "
+   if *&why > 0 then
+      write("} &why=", image(&why))
+   else
+      write("}")
+end
+
 procedure yes_no(s, e)
    local x
    writes(@s, ": ")

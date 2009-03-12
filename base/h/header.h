@@ -9,6 +9,7 @@ struct header {
     word ClassStatics;          /* class field descriptors (statics) */
     word ClassMethods;          /* class field descriptors (methods) */
     word ClassFields;           /* class field info */
+    word ClassFieldLocs;        /* class field location info */
     word Classes;               /* class info */
     word Records;               /* record info */
     word Fnames;		/* location of names of fields */

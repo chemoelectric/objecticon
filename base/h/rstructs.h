@@ -109,7 +109,7 @@ struct b_proc {			/* procedure block */
     word nparam;		/*   number of parameters */
     word ndynam;		/*   number of dynamic locals; < 0 => builtin function */
     word nstatic;		/*   number of static locals */
-    word fstatic;		/*   index (in global table) of first static */
+    dptr fstatic;		/*   pointer to first static, or null if there are none */
     struct progstate *program;  /*   program in which this procedure resides */
     word package_id;            /*   package id of package in which this proc resides; 0=not in 
                                  *     a package; 1=lang; >1=other package */
@@ -117,8 +117,8 @@ struct b_proc {			/* procedure block */
                                  *   corresponding class_field.  For all other types of b_proc
                                  *   this is null. */
     struct descrip pname;	/*   procedure name (string qualifier) */
-    struct descrip *lnames;     /*   list of local names (qualifiers) */
-    struct loc *llocs;	        /*   locations of local names */
+    dptr lnames;                /*   list of local names (qualifiers) */
+    struct loc *llocs;	        /*   locations of local names, or null if not available */
 };
 
 struct b_constructor {		/* constructor block */
@@ -128,8 +128,8 @@ struct b_constructor {		/* constructor block */
     word instance_ids;          /*   Sequence for instance ids */
     word n_fields;
     struct descrip name;	/*   record type name (string qualifier) */
-    struct descrip *field_names; /* Pointers to field names array */
-    struct loc *field_locs;     /* Source location of fields */
+    dptr field_names;           /* Pointers to field names array */
+    struct loc *field_locs;     /* Source location of fields or null if not available */
     short *sorted_fields;       /* An array of indices giving the order sorted by name */
 };
 
@@ -148,11 +148,10 @@ struct b_record {		/* record block */
  */
 struct class_field {
     struct descrip name;               /* Field name (string qualifier) */
-    struct loc loc;                    /* Location in source */
     word fnum;                         /* Field number */
     word flags;
     struct b_class *defining_class;
-    struct descrip *field_descriptor;  /* Pointer to descriptor; null if an instance field */
+    dptr field_descriptor;             /* Pointer to descriptor; null if an instance field */
 };
 
 struct b_class {                 /* block representing a class - always static, never allocated */
@@ -414,6 +413,7 @@ struct progstate {
     dptr ClassStatics, EClassStatics;
     dptr ClassMethods, EClassMethods;
     struct class_field *ClassFields, *EClassFields;
+    struct loc *ClassFieldLocs, *EClassFieldLocs;
     word *Classes;
     word *Records;
     dptr Fnames, Efnames;
@@ -563,12 +563,12 @@ struct b_iproc {		/* procedure block */
     word ip_nparam;		/*   number of parameters */
     word ip_ndynam;		/*   number of dynamic locals */
     word ip_nstatic;		/*   number of static locals */
-    word ip_fstatic;		/*   index (in global table) of first static */
+    dptr ip_fstatic;		/*   pointer to first static */
     struct progstate *ip_program;/*   not set */
     word package_id;
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field */
     struct sdescrip ip_pname;	/*   procedure name (string qualifier) */
-    struct descrip *ip_lnames;	/*   list of local names (qualifiers) */
+    dptr ip_lnames;	        /*   list of local names (qualifiers) */
     struct loc *ip_llocs;	/*   locations of local names */
 };
 

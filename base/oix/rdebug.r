@@ -274,7 +274,7 @@ int get_name(dptr dp1,dptr dp0)
                     return FieldName;
                 }
                 else if (InRange(statics,dp,estatics)) {
-                    i = dp - statics - proc->fstatic;	/* static */
+                    i = dp - proc->fstatic;	/* static */
                     if (i < 0 || i >= proc->nstatic)
                         syserr("name: unreferencable static variable");
                     i += abs((int)proc->nparam) + abs((int)proc->ndynam);
@@ -822,7 +822,7 @@ void xdisp(struct pf_marker *fp,
         /*
          * Print statics.
          */
-        dp = &p->Statics[bp->fstatic];
+        dp = bp->fstatic;
         for (n = bp->nstatic; n > 0; n--) {
             fprintf(f, "   ");
             putstr(f, np);

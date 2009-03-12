@@ -1,0 +1,71 @@
+import lang
+
+record rectype(one, two,
+               three,
+               four)
+class One()
+   public p,
+      q,
+      r,s
+
+   public one()
+   end
+
+   public two()
+   end
+
+   public defer three()
+
+   public static four()
+   end
+end
+
+procedure p(a,
+
+            b,c)
+   local d,
+      e,
+      f
+
+   static g, h,
+      i,
+      j
+
+   a:= b:= c:= d:= e:= f:= g:= h:= i:= j:= 0
+end
+
+procedure main()
+   local s, c
+
+   every s := Constructor.get_field_names(rectype) do {
+      pr_seq2{"Field loc'n of " || s, Constructor.get_field_location(rectype,s)}
+   }
+
+   every s := Class.get_field_names(One) do {
+      pr_seq2{"Field loc'n of " || s, Class.get_field_location(One,s)}
+   }
+
+   every s := "main" | "rectype" | "One" | "upto"  do {
+      pr_seq2{"Glob loc'n of " || s, globloc(s)}
+   }
+
+   every s := main | p | upto | One.four do {
+      pr_seq2{"Loc'n of proc " || image(s), Proc.get_location(s)}
+   }
+
+   pr_seq2{"Loc'n of constructor rectype", Constructor.get_location(rectype)}
+   pr_seq2{"Loc'n of class One", Class.get_location(One)}
+
+   every s := Proc.get_local_names(p) do {
+      pr_seq2{"Loc'n of local in p " || s, Proc.get_local_location(p,s)}
+   }
+
+   c := constructor("rectwo","a","b","c")
+   pr_seq2{"Loc'n of dyn constructor", Constructor.get_location(c)}
+   every s := Constructor.get_field_names(c) do {
+      pr_seq2{"Field loc'n of " || s, Constructor.get_field_location(c,s)}
+   }
+
+end
+
+

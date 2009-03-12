@@ -713,7 +713,7 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->Mainhead= ((struct b_coexpr *)pstate)-1;
     pstate->K_main.dword = D_Coexpr;
     BlkLoc(pstate->K_main) = (union block *) pstate->Mainhead;
-
+    pstate->K_current = pstate->K_main;
 
     pstate->stringtotal = pstate->blocktotal =
         pstate->colltot     = pstate->collstat   =
@@ -746,7 +746,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     curpstate->blockregion->Gnext = pstate->blockregion;
     initalloc(0, pstate);
 
-
     return coexp;
 }
 
@@ -775,7 +774,6 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     coexp = initprogram(hdr.hsize, stk, ss, bs);
 
     pstate = coexp->program;
-    pstate->K_current.dword = D_Coexpr;
 
     CMakeStr(name, &pstate->Kywd_prog);
     MakeInt(hdr.trace, &pstate->Kywd_trc);
@@ -870,14 +868,15 @@ static void initprogstate(struct progstate *p)
 
 static void initptrs(struct progstate *p, struct header *h)
 {
-    p->Ecode    = (char *)(p->Code + h->ClassStatics);
-    p->ClassStatics = (dptr)(p->Code + h->ClassStatics);
-    p->EClassStatics = (dptr)(p->Code + h->ClassMethods);
-    p->ClassMethods = (dptr)(p->Code + h->ClassMethods);
+    p->Ecode = (char *)(p->Code + h->ClassStatics);
+    p->ClassStatics = (dptr)(p->Ecode);
+    p->ClassMethods = p->EClassStatics = (dptr)(p->Code + h->ClassMethods);
     p->EClassMethods = (dptr)(p->Code + h->ClassFields);
-    p->ClassFields = (struct class_field *)(p->Code + h->ClassFields);
-    p->EClassFields = (struct class_field *)(p->Code + h->Classes);
-    p->Classes = (word *)(p->Code + h->Classes);
+    p->ClassFields = (struct class_field *)(p->EClassMethods);
+    p->EClassFields = (struct class_field *)(p->Code + h->ClassFieldLocs);
+    p->ClassFieldLocs = (struct loc *)(p->EClassFields);
+    p->EClassFieldLocs = (struct loc *)(p->Code + h->Classes);
+    p->Classes = (word *)(p->EClassFieldLocs);
     p->Records = (word *)(p->Code + h->Records);
     p->Fnames  = (dptr)(p->Code + h->Fnames);
     p->Globals = p->Efnames = (dptr)(p->Code + h->Globals);
@@ -1075,7 +1074,6 @@ void resolve(struct progstate *p)
      */
     for (cf = p->ClassFields; cf < p->EClassFields; cf++) {
         StrLoc(cf->name) = p->Strcons + (uword)StrLoc(cf->name);
-        StrLoc(cf->loc.fname) = p->Strcons + (uword)StrLoc(cf->loc.fname);
         cf->defining_class = (struct b_class*)(p->Code + (int)cf->defining_class);
         if (cf->field_descriptor) {
             cf->field_descriptor = (dptr)(p->Code + (int)cf->field_descriptor);
@@ -1113,13 +1111,20 @@ void resolve(struct progstate *p)
                 StrLoc(pp->pname) = p->Strcons + (uword)StrLoc(pp->pname);
                 /* The entry point */
                 pp->entryp.icode = p->Code + pp->entryp.ioff;
+                /* The statics */
+                if (pp->nstatic == 0)
+                    pp->fstatic = 0;
+                else
+                    pp->fstatic = (dptr)(p->Statics + (int)pp->fstatic);
                 /* The two tables */
                 pp->lnames = (dptr)(p->Code + (int)pp->lnames);
-                pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
+                if (pp->llocs)
+                    pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
                 /* The variables */
                 for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
                     StrLoc(pp->lnames[i]) = p->Strcons + (uword)StrLoc(pp->lnames[i]);
-                    StrLoc(pp->llocs[i].fname) = p->Strcons + (uword)StrLoc(pp->llocs[i].fname);
+                    if (pp->llocs)
+                        StrLoc(pp->llocs[i].fname) = p->Strcons + (uword)StrLoc(pp->llocs[i].fname);
                 }
                 pp->program = p;
             }
@@ -1132,6 +1137,12 @@ void resolve(struct progstate *p)
         printf("\t%8x\t  Descriptor\n", cf->field_descriptor);
 #endif
     }
+
+    /*
+     * Relocate the field location file names.
+     */
+    for (lp = p->ClassFieldLocs; lp < p->EClassFieldLocs; lp++)
+        StrLoc(lp->fname) = p->Strcons + (uword)StrLoc(lp->fname);
 
     /*
      * Relocate the names of the global variables.
@@ -1200,7 +1211,8 @@ void resolve(struct progstate *p)
                 BlkLoc(p->Globals[j]) = (union block *)c;
                 c->program = p;
                 c->field_names = (struct descrip *)(p->Code + (int)c->field_names);
-                c->field_locs = (struct loc *)(p->Code + (int)c->field_locs);
+                if (c->field_locs)
+                    c->field_locs = (struct loc *)(p->Code + (int)c->field_locs);
                 c->sorted_fields = (short *)(p->Code + (int)c->sorted_fields);
                 /*
                  * Relocate the name and fields
@@ -1208,7 +1220,8 @@ void resolve(struct progstate *p)
                 StrLoc(c->name) = p->Strcons + (uword)StrLoc(c->name);
                 for (i = 0; i < c->n_fields; i++) {
                     StrLoc(c->field_names[i]) = p->Strcons + (uword)StrLoc(c->field_names[i]);
-                    StrLoc(c->field_locs[i].fname) = p->Strcons + (uword)StrLoc(c->field_locs[i].fname);
+                    if (c->field_locs)
+                        StrLoc(c->field_locs[i].fname) = p->Strcons + (uword)StrLoc(c->field_locs[i].fname);
                 }
                 break;
             }
@@ -1246,16 +1259,24 @@ void resolve(struct progstate *p)
                      */
                     StrLoc(pp->pname) = p->Strcons + (uword)StrLoc(pp->pname);
 
+                    /* The statics */
+                    if (pp->nstatic == 0)
+                        pp->fstatic = 0;
+                    else
+                        pp->fstatic = (dptr)(p->Statics + (int)pp->fstatic);
+
                     /*
                      * This is an Icon procedure.  Relocate the entry point and
                      *	the names of the parameters, locals, and static variables.
                      */
                     pp->entryp.icode = p->Code + pp->entryp.ioff;
                     pp->lnames = (dptr)(p->Code + (int)pp->lnames);
-                    pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
-                    for (i = 0; i < abs((int)pp->nparam)+pp->ndynam+pp->nstatic; i++) {
+                    if (pp->llocs)
+                        pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
+                    for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
                         StrLoc(pp->lnames[i]) = p->Strcons + (uword)StrLoc(pp->lnames[i]);
-                        StrLoc(pp->llocs[i].fname) = p->Strcons + (uword)StrLoc(pp->llocs[i].fname);
+                        if (pp->llocs)
+                            StrLoc(pp->llocs[i].fname) = p->Strcons + (uword)StrLoc(pp->llocs[i].fname);
                     }
 
                     /*
@@ -1289,14 +1310,15 @@ void showicode()
 {
     struct progstate *p;
 
-    printf("Addr    Name        Glbl_argp        Code       &main\t&current\n");
+    printf("Addr        Name            Glbl_argp   Code        Ecode       &main       &current\n");
     for (p = progs; p; p = p->next) {
-        printf("%p %-10s %10p %p-%p\t%p\t%p\n", 
+        printf("%-12p%-16s%-12p%-12p%-12p%-12p%-12p\n", 
                p, 
                cstr(&p->Kywd_prog), 
                p->Glbl_argp, p->Code, p->Ecode,
-               p->Mainhead,
-               p->K_current.vword.bptr);
+               BlkLoc(p->K_main),
+               BlkLoc(p->K_current),
+               BlkLoc(p->K_main));
     }
 }
 
@@ -1305,34 +1327,51 @@ void showcoexps()
 {
     struct b_coexpr *p;
     struct b_coexpr *curr = (struct b_coexpr *)(curpstate->K_current.vword.bptr);
+    struct progstate *q;
 
-    printf("Coexpression\tprogram\tsize\tes_sp\tC sp\tS Low\tS High\tUsed\n");
-
+    printf("Coexpressions\n");
+    printf("Coexp       program     size        es_sp       C sp        ipc         pfp\n");
+    printf("---------------------------------------------------------------------------\n");
     p = rootpstate.Mainhead;
-    printf("%p\t\t%p\t%d\t%p\t%x\n",
+    printf("%-12p%-12p%-12d%-12p%-12p%-12p%-12p\n",
            p,
            p->program,
            p->size,
            p->es_sp,
-           p->cstate[0]);
+           p->cstate[0],
+           p->es_ipc.op,
+           p->es_pfp);
 
     for (p = stklist; p; p = p->nextstk) {
-        printf("%p\t\t%p\t%d\t%p\t%x\t%p\t%x\t%d\n",
+        printf("%-12p%-12p%-12d%-12p%-12p%-12p%-12p\n",
                p,
                p->program,
                p->size,
                p->es_sp,
                p->cstate[0],
-               (word *)((char *)p + sizeof(struct b_coexpr)),
-               ((word)((char *)p + stksize - WordSize) &~((word)WordSize*StackAlign-1)),
-               ((word)((char *)p + stksize - WordSize) &~((word)WordSize*StackAlign-1)) - (word)(p->cstate[0])
-            );
+               p->es_ipc.op,
+               p->es_pfp);
     }
+
+    printf("\nProgstates\n");
+    printf("Addr        Name            Glbl_argp   Code        Ecode       &main       &current\n");
+    printf("------------------------------------------------------------------------------------\n");
+    for (q = progs; q; q = q->next) {
+        printf("%-12p%-16s%-12p%-12p%-12p%-12p%-12p\n", 
+               q, 
+               cstr(&q->Kywd_prog), 
+               q->Glbl_argp, q->Code, q->Ecode,
+               BlkLoc(q->K_main),
+               BlkLoc(q->K_current),
+               BlkLoc(q->K_main));
+    }
+
+    printf("\nVariables\n");
     printf("curpstate=%p rootpstate=%p &main=%p &current=%p\n", 
            curpstate, 
            &rootpstate,
-           curpstate->K_main.vword.bptr,
-           curpstate->K_current.vword.bptr);
+           BlkLoc(curpstate->K_main),
+           BlkLoc(curpstate->K_current));
     printf("ilevel=%d ISP=%p\n", ilevel,sp);
 
     fflush(stdout);

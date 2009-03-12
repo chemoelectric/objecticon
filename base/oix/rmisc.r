@@ -57,7 +57,8 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     register dptr np;
     register int i;
     struct b_proc *bp;
-    struct pf_marker *fp = pfp;
+    struct pf_marker *t_pfp;
+    dptr t_glbl_argp;
 
     if (StrLen(*s) == 0)
         return Failed;
@@ -162,13 +163,21 @@ int getvar(dptr s, dptr vp, struct progstate *p)
      *  descriptor that points to the corresponding value descriptor. 
      *  If no such variable exits, it fails.
      */
+    if (p == curpstate) {
+        t_pfp = pfp;
+        t_glbl_argp = glbl_argp;
+    }
+    else {
+        t_pfp = BlkLoc(p->K_current)->coexpr.es_pfp;
+        t_glbl_argp = BlkLoc(p->K_current)->coexpr.es_argp;
+    }
 
     /*
      *  If no procedure has been called (as can happen with icon_call(),
      *  dont' try to find local identifier.
      */
-    if (pfp) {
-        dp = p->Glbl_argp;
+    if (t_pfp && t_glbl_argp) {
+        dp = t_glbl_argp;
         bp = (struct b_proc *)BlkLoc(*dp);	/* get address of procedure block */
    
         np = bp->lnames;		/* Check the formal parameter names. */
@@ -185,7 +194,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             np++;
         }
 
-        dp = &fp->pf_locals[0];
+        dp = &t_pfp->pf_locals[0];
 
         for (i = (int)bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
             if (eq(s,np)) {
@@ -197,7 +206,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             dp++;
         }
 
-        dp = &(p->Statics)[bp->fstatic]; /* Check the local static names. */
+        dp = bp->fstatic; /* Check the local static names. */
         for (i = (int)bp->nstatic; i > 0; i--) {
             if (eq(s,np)) {
                 vp->dword = D_Var;

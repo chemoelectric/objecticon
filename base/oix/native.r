@@ -146,13 +146,25 @@ function{0,1} globloc(s, c)
            prog = BlkLoc(c)->coexpr.program;
        else
            runerr(118, c);
+
+       if (prog->Glocs == prog->Eglocs) {
+           why("No global location data in icode");
+           fail;
+       }
            
        p = lookup_global_loc(&s, prog);
-       if (p && !is:null(p->fname)) {
-           suspend p->fname;
-           return C_integer p->line;
-       } else
+       if (!p) {
+           why("Unknown symbol");
            fail;
+       }
+
+       if (is:null(p->fname)) {
+           why("Symbol is builtin, has no location");
+           fail;
+       }
+
+       suspend p->fname;
+       return C_integer p->line;
    }
 end
 
@@ -171,6 +183,10 @@ function{0,1} lang_Class_get_location(c)
         struct loc *p;
         if (!(class = get_class_for(&c)))
             runerr(619, c);
+        if (class->program->Glocs == class->program->Eglocs) {
+            why("No global location data in icode");
+            fail;
+        }
         p = lookup_global_loc(&class->name, class->program);
         if (!p)
             syserr("Class name not found in global table");
@@ -325,15 +341,23 @@ end
 function{0,1} lang_Class_get_field_location(c, field)
    body {
         struct b_class *class;
+        struct loc *loc;
         int i;
         CheckField(field);
         if (!(class = get_class_for(&c)))
             runerr(619, c);
-        i = lookup_class_field(class, &field, 0);
-        if (i < 0)
+        if (class->program->ClassFieldLocs == class->program->EClassFieldLocs) {
+            why("No field location data in icode");
             fail;
-        suspend class->fields[i]->loc.fname;
-        return C_integer class->fields[i]->loc.line;
+        }
+        i = lookup_class_field(class, &field, 0);
+        if (i < 0) {
+            why("Unknown field");
+            fail;
+        }
+        loc = &class->program->ClassFieldLocs[class->fields[i] - class->program->ClassFields];
+        suspend loc->fname;
+        return C_integer loc->line;
      }
 end
 
@@ -1959,6 +1983,14 @@ function{0,1} lang_Constructor_get_location(c)
         struct loc *p;
         if (!(constructor = get_constructor_for(&c)))
             runerr(629, c);
+        if (!constructor->program) {
+            why("Dynamically created constructor has no location");
+            fail;
+        }
+        if (constructor->program->Glocs == constructor->program->Eglocs) {
+            why("No global location data in icode");
+            fail;
+        }
         p = lookup_global_loc(&constructor->name, constructor->program);
         if (!p)
             syserr("Constructor name not found in global table");
@@ -2009,9 +2041,19 @@ function{0,1} lang_Constructor_get_field_location(c, field)
         CheckField(field);
         if (!(constructor = get_constructor_for(&c)))
             runerr(629, c);
-        i = lookup_record_field(constructor, &field, 0);
-        if (i < 0)
+        if (!constructor->program) {
+            why("Dynamically created constructor has no location");
             fail;
+        }
+        if (!constructor->field_locs) {
+            why("No constructor field location data in icode");
+            fail;
+        }
+        i = lookup_record_field(constructor, &field, 0);
+        if (i < 0) {
+            why("Unknown field");
+            fail;
+        }
         suspend constructor->field_locs[i].fname;
         return C_integer constructor->field_locs[i].line;
      }
@@ -2136,9 +2178,15 @@ function{0,1} lang_Proc_get_local_location(c, id)
        struct b_proc *proc = &BlkLoc(c)->proc;
         int i;
         CheckField(id);
-        i = lookup_proc_local(proc, &id);
-        if (i < 0)
+        if (!proc->llocs) {
+            why("No local location data in icode");
             fail;
+        }
+        i = lookup_proc_local(proc, &id);
+        if (i < 0) {
+            why("Unknown local");
+            fail;
+        }
         suspend proc->llocs[i].fname;
         return C_integer proc->llocs[i].line;
      }
@@ -2208,15 +2256,24 @@ function{0,1} lang_Proc_get_location(c)
    body {
        struct b_proc *proc = &BlkLoc(c)->proc; 
         struct loc *p;
-        if (proc->field)
-            p = &proc->field->loc;
-        else if (proc->ndynam < 0)
+        if (proc->field) {
+            if (proc->program->ClassFieldLocs == proc->program->EClassFieldLocs) {
+                why("No field location data in icode");
+                fail;
+            }
+            p = &proc->program->ClassFieldLocs[proc->field - proc->program->ClassFields];
+        } else if (proc->ndynam < 0) {
+            why("Proc is builtin, has no location");
             fail;
-        else {
+        } else {
+            if (proc->program->Glocs == proc->program->Eglocs) {
+                why("No global location data in icode");
+                fail;
+            }
             p = lookup_global_loc(&proc->pname, proc->program);
             if (!p)
                 syserr("Procedure name not found in global table");
-        }
+         }
         suspend p->fname;
         return C_integer p->line;
      }
