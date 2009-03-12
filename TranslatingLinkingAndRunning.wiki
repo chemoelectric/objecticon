@@ -35,6 +35,7 @@ Translates and links `myprog.icn` into an executable `myprog`.
  * *-s* Suppress informative messages during translation and linking (equivalent to `-v 0`)
  * *-t* Activate runtime tracing by arranging for &trace to have an initial value of -1 upon execution.
  * *-v i* Set verbosity level of informative messages to i.
+ * *-l i* Configure the amount of source location info to store in the icode. 0 means none, 1 means store location info for procedure call and stack tracebacks (the default, adds about 10% more space compared to option 0) and 2 means additionally store location info of all symbols (costs another 5% of space).
  * *-L* During linking, output a `.ux` file giving information about the icode file
  * *-E* Direct  the results of preprocessing to standard output and inhibit further processing.
  * *-V* Announce version and configuration information on standard error.
