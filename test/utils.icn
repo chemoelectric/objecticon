@@ -108,6 +108,21 @@ procedure pr_seq_type(s, e)
    write("}")
 end
 
+procedure pr_seq_type2(s, e)
+   local x, t
+   &why := ""
+   writes(@s, ": {")
+   x := set()
+   while insert(x, type(@e))
+   t := ""
+   every writes(t, !sort(x)) do
+      t := ", "
+   if *&why > 0 then
+      write("} &why=", image(&why))
+   else
+      write("}")
+end
+
 procedure require(s, e)
    return @e | stop(s)
 end
