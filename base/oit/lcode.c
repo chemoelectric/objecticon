@@ -1483,7 +1483,7 @@ static void gentables()
         s = rec->global->name;
         rec->pc = pc;
         sp = inst_c_strconst(s);
-        size = 10 * WordSize + rec->nfields * (2 * WordSize + ShortSize);
+        size = 11 * WordSize + rec->nfields * (2 * WordSize + ShortSize);
         if (loclevel > 1)
             size += rec->nfields * 3 * WordSize;
         size += nalign(size);
@@ -1493,6 +1493,7 @@ static void gentables()
             fprintf(dbgfile, "\t%d\t\t\t\t# T_Constructor\n", T_Constructor);
             fprintf(dbgfile, "\t%d\n", size);
             fprintf(dbgfile, "\t0\n");
+            fprintf(dbgfile, "\t%d\t\t\t\t# Package id\n", rec->global->defined->package_id);
             fprintf(dbgfile, "\t0\n");
             fprintf(dbgfile, "\t%d\n", rec->nfields);
             fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n", sp->len, sp->offset, s);
@@ -1501,6 +1502,7 @@ static void gentables()
         outword(T_Constructor);		/* type code */
         outword(size);
         outword(0);			/* progstate (filled in by interp)*/
+        outword(rec->global->defined->package_id);  /* Package id */
         outword(0);			/* serial number counter */
         outword(rec->nfields);		/* number of fields */
         outword(sp->len);		/* name of record: size and offset */

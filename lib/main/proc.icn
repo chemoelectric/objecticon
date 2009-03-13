@@ -3,13 +3,23 @@ package lang
 class Proc()
    # Return the name of the proc
    #
-   public static defer get_name(c)
+   public static defer get_name(p)
 
-   public static defer get_short_name(c)
+   public static defer get_short_name(p)
+
+   # Return the program this proc resides in.  The program's &main
+   # co-expression is returned.
+   #
+   public static defer get_program(p)
+
+   # Return the name of the package in which this proc resides; fails
+   # if the proc is not in a package.
+   #
+   public static defer get_package(p)
 
    # Return the source location of the proc
    #
-   public static defer get_location(c)
+   public static defer get_location(p)
 
    public static defer get_defining_class(p)
 

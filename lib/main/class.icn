@@ -50,6 +50,16 @@ class Class()
    #
    public static defer get_name(c)
 
+   # Return the program this class resides in.  The program's &main
+   # co-expression is returned.
+   #
+   public static defer get_program(c)
+
+   # Return the name of the package in which this class resides; fails
+   # if the class is not in a package.
+   #
+   public static defer get_package(c)
+
    # Return the source location of the class
    #
    public static defer get_location(c)

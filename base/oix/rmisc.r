@@ -1138,7 +1138,8 @@ void abbr_fname(dptr s, dptr d)
     char *p = StrLoc(*s) + StrLen(*s);
     while (--p >= StrLoc(*s)) {
         if (strchr(FILEPREFIX, *p)) {
-            MakeStr(p + 1, StrLen(*s) - (p - StrLoc(*s) + 1), d);
+            ++p;
+            MakeStr(p, StrLoc(*s) + StrLen(*s) - p, d);
             return;
         }
     }

@@ -139,8 +139,8 @@ struct errtab errtab[] = {
    626, "internal error looking up object field",
    627, "field not found",
    628, "attempt to access non-method via a cast",
-   629, "constructor or record object expected",
    630, "can only access cast/methp internals from a loaded program",
+   631, "procedure or methp expected",
 
    1040, "socket error",		 
    1041, "cannot initialize network library",

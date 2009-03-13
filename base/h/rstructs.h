@@ -125,6 +125,7 @@ struct b_constructor {		/* constructor block */
     word title;			/*   T_Constructor */
     word blksize;		/*   size of block */
     struct progstate *program;  /*   program in which this constructor resides */
+    word package_id;            /*   Package id of this constructor's package - see b_proc above */
     word instance_ids;          /*   Sequence for instance ids */
     word n_fields;
     struct descrip name;	/*   record type name (string qualifier) */

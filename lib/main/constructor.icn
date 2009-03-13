@@ -9,6 +9,16 @@ class Constructor()
    #
    public static defer get_name(c)
 
+   # Return the program this constructor resides in.  The program's &main
+   # co-expression is returned.
+   #
+   public static defer get_program(c)
+
+   # Return the name of the package in which this constructor resides; fails
+   # if the constructor is not in a package.
+   #
+   public static defer get_package(c)
+
    # Return the source location of the constructor
    #
    public static defer get_location(c)
