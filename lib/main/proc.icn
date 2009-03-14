@@ -3,9 +3,7 @@ package lang
 class Proc()
    # Return the name of the proc
    #
-   public static defer get_name(p)
-
-   public static defer get_short_name(p)
+   public static defer get_name(p, flag)
 
    # Return the program this proc resides in.  The program's &main
    # co-expression is returned.

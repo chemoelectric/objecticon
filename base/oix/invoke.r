@@ -176,7 +176,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
     /*
      * Adjust the argument list to conform to what the routine being invoked
      *  expects (proc->nparam).  If nparam is less than 0, the number of
-     *  arguments is variable. For functions (ndynam = -1) with a
+     *  arguments is variable. For functions (program = 0) with a
      *  variable number of arguments, nothing need be done.  For Icon procedures
      *  with a variable number of arguments, arguments beyond abs(nparam) are
      *  put in a list which becomes the last argument.  For fix argument
@@ -202,7 +202,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
         xnargs = nargs;
     }
     else {
-        if (proc->ndynam >= 0) { /* this is a procedure */
+        if (proc->program) { /* this is a procedure */
             int lelems, absnparam = abs(nparam);
             dptr llargp;
 
@@ -232,7 +232,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
         }
     }
 
-    if (proc->ndynam < 0) {
+    if (!proc->program) {
         /*
          * A function is being invoked, so nothing else here needs to be done.
          */

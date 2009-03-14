@@ -277,7 +277,7 @@ int get_name(dptr dp1,dptr dp0)
                     i = dp - proc->fstatic;	/* static */
                     if (i < 0 || i >= proc->nstatic)
                         syserr("name: unreferencable static variable");
-                    i += abs((int)proc->nparam) + abs((int)proc->ndynam);
+                    i += abs((int)proc->nparam) + (int)proc->ndynam;
                     *dp0 = proc->lnames[i];
                     return StaticName;
                 }

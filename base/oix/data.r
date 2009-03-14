@@ -9,8 +9,8 @@ struct b_proc Bnoproc;
  * A procedure block for list construction, used by event monitoring.
  */
 struct b_iproc mt_llist = {
-   6, (sizeof(struct b_proc) - sizeof(struct descrip)), Ollist,
-   0, -1,  0, 0, 0, 0, 0, {sizeof( "[...]")-1, "[...]"}};
+   T_Proc, sizeof(struct b_proc), Ollist,
+   0, 0, 0, 0, 0, 0, 0, {sizeof( "[...]")-1, "[...]"}, 0, 0};
 
 /*
  * External declarations for function blocks.

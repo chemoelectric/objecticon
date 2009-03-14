@@ -9,3 +9,13 @@ end
 procedure access_other(o)
    yes_no{"Class.getf(o, \"var\")",Class.getf(o, "var")}
 end
+
+class Q()
+   package static var
+
+   public static defer f()
+
+   public static inject(p)
+      Class.set_method("f", p)
+   end
+end

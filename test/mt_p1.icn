@@ -355,3 +355,27 @@ procedure test29()
    print{"main &why", &why}
    print{"child &why", keyword("&why", Proc.get_program(p))}
 end
+
+procedure some_proc()
+   write("In some_proc")
+   try{"Access any.pack.Q.var", any.pack.Q.var}
+end
+
+procedure some_proc2()
+   write("In some_proc2, what=",what)
+   try{"Access any.pack.Q.var", glob("any.pack.Q",c).var}
+end
+
+procedure test30()
+   any.pack.Q.inject(some_proc)
+   print{"Q.f", Q.f}
+   Q.f()
+   some_proc()
+
+   # Same again in prog c
+   glob("any.pack.Q",c).inject(some_proc2)
+   print{"Q.f", glob("any.pack.Q",c).f}
+   glob("any.pack.Q",c).f()
+   some_proc2()
+   
+end

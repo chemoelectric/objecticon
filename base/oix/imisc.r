@@ -227,6 +227,7 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
 int check_access(struct class_field *cf, struct b_class *instance_class)
 {
     struct b_proc *caller_proc;
+    struct class_field *caller_field;
 
     if (cf->flags & M_Public)
         return Succeeded;
@@ -236,16 +237,15 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     if (caller_proc->package_id == 1)  /* Is the caller in lang? */
         return Succeeded;
 
+    caller_field = caller_proc->field;
     switch (cf->flags & (M_Private|M_Protected|M_Package)) {
         case M_Private: {
-            struct class_field *caller_field = caller_proc->field;
             if (caller_field && caller_field->defining_class == cf->defining_class)
                 return Succeeded;
             ReturnErrNum(608, Error);
         }
 
         case M_Protected: {
-            struct class_field *caller_field = caller_proc->field;
             if (instance_class) {
                 /* Instance access, caller must be in instance's implemented classes */
                 if (caller_field && class_is(instance_class, 
@@ -262,11 +262,18 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
         }
 
         case M_Package: {
-            /* Check for same package.  Note that packages in different programs are
-             * distinct.
+            /* Check for same package.  Note that packages in
+             * different programs are distinct.  Note also that the
+             * field's prog/package - may be different from the proc's
+             * if it was created via set_method.  In any case, we
+             * allow access for a prog/package match on either field
+             * or proc.
              */
-            if (caller_proc->program == cf->defining_class->program &&
-                caller_proc->package_id == cf->defining_class->package_id)
+            if ((caller_proc->program == cf->defining_class->program &&
+                 caller_proc->package_id == cf->defining_class->package_id) ||
+                (caller_field &&
+                 caller_field->defining_class->program == cf->defining_class->program &&
+                 caller_field->defining_class->package_id == cf->defining_class->package_id))
                 return Succeeded;
             ReturnErrNum(611, Error);
         }

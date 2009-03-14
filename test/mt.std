@@ -147,4 +147,15 @@ why: ""
 Test test29
 main &why: ""
 child &why: "failure message"
+Test test30
+Q.f: method any.pack.Q.f
+In some_proc
+Access any.pack.Q.var: Succeeded with &null
+In some_proc
+Access any.pack.Q.var: Error 611
+Q.f: method any.pack.Q.f
+In some_proc2, what=50
+Access any.pack.Q.var: Succeeded with &null
+In some_proc2, what=50
+Access any.pack.Q.var: Error 611
 exit

@@ -46,12 +46,9 @@ Deliberate Syntax Error
     sizeof(struct b_proc),                     \
     Cat(O,f),                                   \
     nargs,                                      \
-    -1,                                         \
+    0,                                         \
     underef,                                    \
-    0,                                          \
-    0,                                          \
-    0,                                          \
-    0,                                          \
+    0,0,0,0,  \
     {sizeof(sname)-1,sname},                    \
     0,0},
 #passthru static struct b_iproc init_op_tbl[] = {
@@ -1095,6 +1092,8 @@ void resolve(struct progstate *p)
                                 StrLen(cf->name)))
                         error("Native method name mismatch: %s", StrLoc(cf->name));
 
+                    /* Pointer back to the corresponding field */
+                    pp->field = cf;
                     BlkLoc(*cf->field_descriptor) = (union block *)pp;
                 }
             } else if (cf->flags & M_Method) {
@@ -1117,7 +1116,8 @@ void resolve(struct progstate *p)
                 else
                     pp->fstatic = (dptr)(p->Statics + (int)pp->fstatic);
                 /* The two tables */
-                pp->lnames = (dptr)(p->Code + (int)pp->lnames);
+                if (pp->lnames)
+                    pp->lnames = (dptr)(p->Code + (int)pp->lnames);
                 if (pp->llocs)
                     pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
                 /* The variables */
@@ -1270,7 +1270,8 @@ void resolve(struct progstate *p)
                      *	the names of the parameters, locals, and static variables.
                      */
                     pp->entryp.icode = p->Code + pp->entryp.ioff;
-                    pp->lnames = (dptr)(p->Code + (int)pp->lnames);
+                    if (pp->lnames)
+                        pp->lnames = (dptr)(p->Code + (int)pp->lnames);
                     if (pp->llocs)
                         pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
                     for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {

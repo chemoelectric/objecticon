@@ -492,8 +492,9 @@
       	sizeof(struct b_proc),\
       	Cat(Z,f),\
       	nargs,\
-      	-1,\
-      	deref, 0, 0, 0, 0,                       \
+      	0,\
+      	deref,\
+        0,0,0,0,  \
       	{sizeof(Lit(f))-1,Lit(f)},\
         0,0};
 
@@ -506,7 +507,7 @@
    	sizeof(struct b_proc),\
    	Cat(O,f),\
    	nargs,\
-   	-1,\
+   	0,\
    	xtrargs,\
    	0,0,0,0,                                \
    	{sizeof(sname)-1,sname},\

@@ -521,7 +521,7 @@ int noimage;
    word i, j, k;
    char *s;
    union block *bp;
-   char *type, *csn;
+   char *csn;
    FILE *fd;
    struct descrip q;
    double rresult;
@@ -663,17 +663,13 @@ int noimage;
               * Produce one of:
               *  "procedure name"
               *  "function name"
-              *
-              * Note that the number of dynamic locals is used to determine
-              *  what type of "procedure" is at hand.
               */
              i = StrLen(BlkLoc(*dp)->proc.pname);
              s = StrLoc(BlkLoc(*dp)->proc.pname);
-             switch ((int)BlkLoc(*dp)->proc.ndynam) {
-                 default:  type = "procedure"; break;
-                 case -1:  type = "function"; break;
-             }
-             fprintf(f, "%s ", type);
+             if (BlkLoc(*dp)->proc.program)
+                 fprintf(f, "procedure ");
+             else
+                 fprintf(f, "function ");
              fwrite(s, 1, i, f);
          }
       }
@@ -1330,13 +1326,12 @@ dptr dp1, dp2;
               *  "procedure name"
               *  "function name"
               *
-              * Note that the number of dynamic locals is used to determine
-              *  what type of "procedure" is at hand.
               */
-             switch ((int)BlkLoc(source)->proc.ndynam) {
-                 default:  type = "procedure "; break;
-                 case -1:  type = "function "; break;
-             }
+             if (BlkLoc(source)->proc.program)
+                 type = "procedure ";
+             else
+                 type = "function ";
+
              len = strlen(type) + StrLen(BlkLoc(source)->proc.pname);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
@@ -1467,10 +1462,10 @@ dptr dp1, dp2;
                 *  OR
                 *  "methp(object objectname#m(n),function procname)"
                 */
-               switch (proc->ndynam) {
-                   default:  type = "procedure "; break;
-                   case -1:  type = "function "; break;
-               }
+               if (proc->program)
+                   type = "procedure ";
+               else
+                   type = "function ";
                len = StrLen(obj_class->name) + StrLen(proc->pname) + strlen(sbuf) + strlen(type) + 14;
                MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;

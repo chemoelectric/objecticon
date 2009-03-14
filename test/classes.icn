@@ -1,4 +1,4 @@
-import lang, util, io
+import lang, util, io, first, second
 
 invocable proc1, proc2
 
@@ -598,15 +598,29 @@ procedure tryit2()
 end
 
 procedure test_set_method()
-   local t
+   local t, e
    t := Thirteen()
    tryit1(t)
    Thirteen.setup1()
+   tryit1(t)
    t.tryit1()
    try{"Setup err1", Thirteen.setup1()}
    try{"Setup err2", Class.set_method("abc", tryit2)}
    Fourteen.setup2()
    Thirteen.setup3()
+   
+   second.p()
+   first.FirstOne.inject(second.p)
+   second.p()
+   first.FirstOne.f()
+   write(Proc.get_name(second.p))
+   write(Proc.get_name(FirstOne.f))
+   write(Proc.get_name(FirstOne.f,1))
+   write(Proc.get_package(second.p))
+   write(Proc.get_package(FirstOne.f))
+   write(Proc.get_package(FirstOne.f,1))
+   e := create Proc.get_location(second.p) | Proc.get_location(FirstOne.f) | Proc.get_location(FirstOne.f,1)
+   while write((@e)[-21:0],",",@e)
 end
 
 procedure main()

@@ -503,6 +503,14 @@ function{0,1} lang_Class_getf(obj, field, quiet)
    }
 end
 
+static struct b_proc *clone_b_proc(struct b_proc *bp)
+{
+    struct b_proc *new;
+    MemProtect(new = malloc(sizeof(struct b_proc)));
+    memcpy(new, bp, sizeof(struct b_proc));
+    return new;
+}
+
 function{1} lang_Class_set_method(field, pr)
    body {
         struct b_proc *caller_proc, *new_proc;
@@ -537,7 +545,9 @@ function{1} lang_Class_set_method(field, pr)
         if (BlkLoc(*cf->field_descriptor) != (union block *)&Bdeferred_method_stub)
             runerr(623, field);
 
+        new_proc = clone_b_proc(new_proc);
         BlkLoc(*cf->field_descriptor) = (union block *)new_proc;
+        new_proc->field = cf;
 
         return pr;
    }
@@ -603,8 +613,11 @@ function{1} lang_Class_load_library(lib)
                 (cf->flags & M_Method) &&
                 BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
                 struct b_proc *bp = try_load(handle, class, cf);
-                if (bp)
+                if (bp) {
+                    bp = clone_b_proc(bp);
                     BlkLoc(*cf->field_descriptor) = (union block *)bp;
+                    bp->field = cf;
+                }
             }
         }
 
@@ -2117,7 +2130,7 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
 {
     int nf;
 
-    if (proc->ndynam < 0)
+    if (!proc->program)
         return -1;
 
     nf = abs(proc->nparam) + proc->ndynam + proc->nstatic;
@@ -2147,6 +2160,8 @@ function{1} lang_Proc_get_n_locals(c)
         struct b_proc *proc;
         if (!(proc = get_proc_for(&c)))
            runerr(0);
+       if (!proc->program)
+            fail;
         return C_integer abs(proc->nparam) + proc->ndynam + proc->nstatic;
      }
 end
@@ -2165,7 +2180,7 @@ function{1} lang_Proc_get_n_dynamics(c)
        struct b_proc *proc;
        if (!(proc = get_proc_for(&c)))
            runerr(0);
-       if (proc->ndynam < 0)
+       if (!proc->program)
             fail;
        return C_integer proc->ndynam;
      }
@@ -2176,7 +2191,7 @@ function{1} lang_Proc_get_n_statics(c)
        struct b_proc *proc;
        if (!(proc = get_proc_for(&c)))
           runerr(0);
-       if (proc->ndynam < 0)
+       if (!proc->program)
             fail;
         return C_integer proc->nstatic;
      }
@@ -2188,7 +2203,7 @@ function{*} lang_Proc_get_local_names(c)
         int i, nf;
         if (!(proc = get_proc_for(&c)))
            runerr(0);
-        if (proc->ndynam < 0)
+        if (!proc->program)
             fail;
         nf = abs(proc->nparam) + proc->ndynam + proc->nstatic;
         for (i = 0; i < nf; ++i)
@@ -2264,74 +2279,75 @@ function{0,1} lang_Proc_get_local_type(c, id)
      }
 end
 
-function{1} lang_Proc_get_name(c)
+function{1} lang_Proc_get_name(c, flag)
    body {
         struct b_proc *proc;
         if (!(proc = get_proc_for(&c)))
            runerr(0);
-        if (proc->field) {
-            int len = StrLen(proc->field->defining_class->name) + StrLen(proc->pname) + 1;
+        if (proc->field && is:null(flag)) {
+            int len = StrLen(proc->field->defining_class->name) + StrLen(proc->field->name) + 1;
             MemProtect (StrLoc(result) = reserve(Strings, len));
             StrLen(result) = len;
             alcstr(StrLoc(proc->field->defining_class->name),StrLen(proc->field->defining_class->name));
             alcstr(".", 1);
-            alcstr(StrLoc(proc->pname),StrLen(proc->pname));
+            alcstr(StrLoc(proc->field->name),StrLen(proc->field->name));
             return result;
         } else
             return proc->pname;
      }
 end
 
-function{0,1} lang_Proc_get_short_name(c)
-   body {
-        struct b_proc *proc;
-        if (!(proc = get_proc_for(&c)))
-           runerr(0);
-       return proc->pname;
-   }
-end
-
-function{0,1} lang_Proc_get_package(c)
+function{0,1} lang_Proc_get_package(c, flag)
    body {
         struct b_proc *proc;
         if (!(proc = get_proc_for(&c)))
             runerr(0);
-        if (proc->package_id == 0)
-            fail;
-        if (proc->field)
+        if (proc->field && is:null(flag)) {
+            if (proc->field->defining_class->package_id == 0)
+                fail;
             extract_package(&proc->field->defining_class->name, &result);
-        else
+        } else {
+            if (proc->package_id == 0)
+                fail;
             extract_package(&proc->pname, &result);
+        }
         return result;
     }
 end
 
-function{1} lang_Proc_get_program(c)
+function{1} lang_Proc_get_program(c, flag)
     body {
         struct b_proc *proc;
         struct progstate *prog;
         if (!(proc = get_proc_for(&c)))
             runerr(0);
-        prog = proc->program;
+        if (proc->field && is:null(flag))
+            prog = proc->field->defining_class->program;
+        else
+            prog = proc->program;
         if (!prog)
             fail;
         return prog->K_main;
     }
 end
 
-function{0,1} lang_Proc_get_location(c)
+function{0,1} lang_Proc_get_location(c, flag)
    body {
         struct b_proc *proc;
         struct loc *p;
         if (!(proc = get_proc_for(&c)))
             runerr(0);
-        if (proc->field) {
+        /* The check for M_Defer here is to avoid (if flag is 1), looking up a non-deferred
+         * method's name in the global name table.
+         */
+        if (proc->field && (is:null(flag) ||
+                            !(proc->field->flags & M_Defer))) {
             if (proc->program->ClassFieldLocs == proc->program->EClassFieldLocs) {
                 why("No field location data in icode");
                 fail;
             }
             p = &proc->program->ClassFieldLocs[proc->field - proc->program->ClassFields];
-        } else if (proc->ndynam < 0) {
+        } else if (!proc->program) {
             why("Proc is builtin, has no location");
             fail;
         } else {
@@ -2342,7 +2358,7 @@ function{0,1} lang_Proc_get_location(c)
             p = lookup_global_loc(&proc->pname, proc->program);
             if (!p)
                 syserr("Procedure name not found in global table");
-         }
+        }
         suspend p->fname;
         return C_integer p->line;
      }

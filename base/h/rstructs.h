@@ -107,17 +107,18 @@ struct b_proc {			/* procedure block */
     } entryp;
 
     word nparam;		/*   number of parameters */
-    word ndynam;		/*   number of dynamic locals; < 0 => builtin function */
+    word ndynam;		/*   number of dynamic locals */
     word nstatic;		/*   number of static locals */
     dptr fstatic;		/*   pointer to first static, or null if there are none */
-    struct progstate *program;  /*   program in which this procedure resides */
+    struct progstate *program;  /*   program in which this procedure resides; 
+                                 *     null => builtin function */
     word package_id;            /*   package id of package in which this proc resides; 0=not in 
                                  *     a package; 1=lang; >1=other package */
-    struct class_field *field;  /*   For a method defined in the icode, a pointer to the 
-                                 *   corresponding class_field.  For all other types of b_proc
-                                 *   this is null. */
+    struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only
+                                 *     exception is the deferred method stub, which can be pointed to by
+                                 *     many different fields of course. */
     struct descrip pname;	/*   procedure name (string qualifier) */
-    dptr lnames;                /*   list of local names (qualifiers) */
+    dptr lnames;                /*   list of local names (qualifiers), null for a function */
     struct loc *llocs;	        /*   locations of local names, or null if not available */
 };
 
