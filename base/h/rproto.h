@@ -159,7 +159,6 @@ dptr            call_icon_va    (dptr proc, va_list ap);
    int mt_activate   (dptr tvalp, dptr rslt, struct b_coexpr *ncp);
    struct progstate *findprogramforicode(inst x);
    void changeprogstate(struct progstate *p);
-   void showicode();
    void showcoexps();
    void checkcoexps(char *s);
    void dumpcoexp(char *s, struct b_coexpr *p);

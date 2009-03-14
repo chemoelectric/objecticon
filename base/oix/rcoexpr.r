@@ -151,7 +151,7 @@ int first;
        * Determine if we need to dereference the transmitted value. 
        */
       if (Var(*valloc))
-         retderef(valloc, (word *)glbl_argp, sp);
+         retderef(valloc, (word *)argp, sp);
 
       if (ncp->tvalloc != NULL)
          *ncp->tvalloc = *valloc;
@@ -163,7 +163,7 @@ int first;
     * Save state of current co-expression.
     */
    ccp->es_pfp = pfp;
-   ccp->es_argp = glbl_argp;
+   ccp->es_argp = argp;
    ccp->es_tend = tend;
 
    ccp->es_efp = efp;
@@ -186,6 +186,7 @@ int first;
    efp = ncp->es_efp;
    gfp = ncp->es_gfp;
    ipc = ncp->es_ipc;
+   argp = ncp->es_argp;
    sp = ncp->es_sp;
    ilevel = (int)ncp->es_ilevel;
 
@@ -193,7 +194,6 @@ int first;
     * Enter the program state of the co-expression being activated
     */
    curpstate = ncp->program;
-   glbl_argp = ncp->es_argp;
    BlkLoc(k_current) = (union block *)ncp;
 
 

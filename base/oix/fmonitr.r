@@ -306,16 +306,16 @@ void EVVariable(dptr dx, int eventcode)
    struct progstate *parent = curpstate->parent;
    struct region *rp = curpstate->stringregion;
 
-   if (dx == glbl_argp) {
+   if (dx == argp) {
       /*
-       * we are dereferencing a result, glbl_argp is not the procedure.
+       * we are dereferencing a result, argp is not the procedure.
        * is this a stable state to leave the TP in?
        */
       actparent(eventcode);
       return;
       }
 
-   procname = &((&BlkLoc(*glbl_argp)->proc)->pname);
+   procname = &((&BlkLoc(*argp)->proc)->pname);
    /*
     * call get_name, allocating out of the monitor if necessary.
     */

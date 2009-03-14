@@ -264,7 +264,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
      */
     newpfp = (struct pf_marker *)(newsp + 1);
     newpfp->pf_nargs = nargs;
-    newpfp->pf_argp = glbl_argp;
+    newpfp->pf_argp = argp;
     newpfp->pf_pfp = pfp;
     newpfp->pf_ilevel = ilevel;
     newpfp->pf_scan = NULL;
@@ -273,7 +273,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
     newpfp->pf_gfp = gfp;
     newpfp->pf_efp = efp;
 
-    glbl_argp = newargp;
+    argp = newargp;
     pfp = newpfp;
     newsp += Vwsizeof(*pfp);
 

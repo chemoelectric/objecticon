@@ -396,7 +396,6 @@ struct progstate {
     struct descrip eventcode;		/* &eventcode */
     struct descrip eventval;		/* &eventval */
     struct descrip eventsource;		/* &eventsource */
-    dptr Glbl_argp;			/* global argp */
 
     /*
      * trapped variable keywords' values

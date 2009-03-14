@@ -174,7 +174,7 @@ function{0,1} proc(x,i,c)
 	    }
 	 else {
 	    fp = pfp;
-	    dp = glbl_argp;
+	    dp = argp;
 	    }
 	 /* follow upwards, i levels */
 	 while (i--) {

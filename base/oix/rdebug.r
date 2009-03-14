@@ -170,9 +170,9 @@ int get_name(dptr dp1,dptr dp0)
     word i, j, k;
     int t;
 
-    arg1 = &glbl_argp[1];
+    arg1 = &argp[1];
     loc1 = pfp->pf_locals;
-    proc = &BlkLoc(*glbl_argp)->proc;
+    proc = &BlkLoc(*argp)->proc;
 
     type_case *dp1 of {
       tvsubs: {
@@ -416,9 +416,9 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
      */
     t_ipc.op = ipc.op - 1;
     showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
-    /* glbl_argp can be 0 when we come back from a loaded program. */
-    if (glbl_argp) {
-        proc = (struct b_proc *)BlkLoc(*glbl_argp);
+    /* argp can be 0 when we come back from a loaded program. */
+    if (argp) {
+        proc = (struct b_proc *)BlkLoc(*argp);
         showlevel(k_level);
         putstr(stderr, &proc->pname);
     } else {

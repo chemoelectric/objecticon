@@ -20,7 +20,7 @@ register dptr cargp;
    struct b_proc *cproc;
 
    /* cproc is the Icon procedure that create occurs in */
-   cproc = (struct b_proc *)BlkLoc(glbl_argp[0]);
+   cproc = (struct b_proc *)BlkLoc(argp[0]);
 
    /*
     * Calculate number of arguments and number of local variables.
@@ -52,7 +52,7 @@ register dptr cargp;
     * Copy arguments into refresh block.
     */
    ndp = rblkp->elems;
-   dp = glbl_argp;
+   dp = argp;
    for (i = 1; i <= na; i++)
       *ndp++ = *dp++;
 

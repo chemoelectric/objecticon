@@ -481,7 +481,7 @@ fflush(stdout);
 
 	 case Op_Arg:		/* argument */
 	    PushVal(D_Var);
-	    PushAVal(&glbl_argp[GetWord + 1]);
+	    PushAVal(&argp[GetWord + 1]);
 	    break;
 
 	 case Op_Global:	/* global */
@@ -1003,7 +1003,7 @@ Lsusp_uw:
 	    svalp = (dptr)(rsp - 1);
 	    if (Var(*svalp)) {
                ExInterp;
-               retderef(svalp, (word *)glbl_argp, sp);
+               retderef(svalp, (word *)argp, sp);
                EntInterp;
                }
 
@@ -1016,7 +1016,7 @@ Lsusp_uw:
 	    newgfp->gf_gfp = gfp;
 	    newgfp->gf_efp = efp;
 	    newgfp->gf_ipc = ipc;
-	    newgfp->gf_argp = glbl_argp;
+	    newgfp->gf_argp = argp;
 	    newgfp->gf_pfp = pfp;
 	    gfp = newgfp;
 	    rsp += Wsizeof(*gfp);
@@ -1036,7 +1036,7 @@ Lsusp_uw:
 	       }
 	    else
 	       firstwd = (word *)pfp->pf_efp + Wsizeof(*efp);
-	    lastwd = (word *)glbl_argp - 1;
+	    lastwd = (word *)argp - 1;
 	       efp = efp->ef_efp;
 
 	    /*
@@ -1050,7 +1050,7 @@ Lsusp_uw:
 	    --k_level;
 	    if (k_trace) {
                k_trace--;
-	       sproc = (struct b_proc *)BlkLoc(*glbl_argp);
+	       sproc = (struct b_proc *)BlkLoc(*argp);
 	       strace(&(sproc->pname), svalp);
 	       }
 
@@ -1071,7 +1071,7 @@ Lsusp_uw:
 
 	    efp = pfp->pf_efp;
 	    ipc = pfp->pf_ipc;
-	    glbl_argp = pfp->pf_argp;
+	    argp = pfp->pf_argp;
             CHANGEPROGSTATE(pfp->pf_from);
 	    pfp = pfp->pf_pfp;
 
@@ -1122,8 +1122,8 @@ Eret_uw:
 	     *	values are restored from the procedure frame.
 	     */
 	    struct b_proc *rproc;
-	    rproc = (struct b_proc *)BlkLoc(*glbl_argp);
-            oldargp = *glbl_argp;
+	    rproc = (struct b_proc *)BlkLoc(*argp);
+            oldargp = *argp;
 #if e_prem || e_erem
 	    ExInterp;
             vanq_proc(efp, gfp);
@@ -1131,17 +1131,17 @@ Eret_uw:
 	    /* used to InterpEVValD(argp,E_Pret); here */
 #endif					/* E_Prem || E_Erem */
 
-	    *glbl_argp = *(dptr)(rsp - 1);
-	    if (Var(*glbl_argp)) {
+	    *argp = *(dptr)(rsp - 1);
+	    if (Var(*argp)) {
                ExInterp;
-               retderef(glbl_argp, (word *)glbl_argp, sp);
+               retderef(argp, (word *)argp, sp);
                EntInterp;
                }
 
 	    --k_level;
 	    if (k_trace) {
                k_trace--;
-	       rtrace(&(rproc->pname), glbl_argp);
+	       rtrace(&(rproc->pname), argp);
                }
 Pret_uw:
 	    if (pfp->pf_ilevel < ilevel) {
@@ -1156,11 +1156,11 @@ Pret_uw:
 	   
 	   if (!is:proc(oldargp) && is:proc(unwinder))
 	      oldargp = unwinder;
-	    rsp = (word *)glbl_argp + 1;
+	    rsp = (word *)argp + 1;
 	    efp = pfp->pf_efp;
 	    gfp = pfp->pf_gfp;
 	    ipc = pfp->pf_ipc;
-	    glbl_argp = pfp->pf_argp;
+	    argp = pfp->pf_argp;
             CHANGEPROGSTATE(pfp->pf_from);
 	    pfp = pfp->pf_pfp;
 #if e_pret
@@ -1219,11 +1219,11 @@ efail_noev:
 	       type = (int)resgfp->gf_gentype;
 
 	       if (type == G_Psusp) {
-		  glbl_argp = resgfp->gf_argp;
+		  argp = resgfp->gf_argp;
 		  if (k_trace) {	/* procedure tracing */
                      k_trace--;
 		     ExInterp;
-		     atrace(&(((struct b_proc *)BlkLoc(*glbl_argp))->pname));
+		     atrace(&(((struct b_proc *)BlkLoc(*argp))->pname));
 		     EntInterp;
 		     }
 		  }
@@ -1284,7 +1284,7 @@ efail_noev:
 		     goto efail_noev;
 
 		  case G_Psusp:		/* resuming a procedure */
-                     InterpEVValD(glbl_argp, e_presum);
+                     InterpEVValD(argp, e_presum);
 		     break;
 		  }
 
@@ -1297,7 +1297,7 @@ efail_noev:
 #if e_prem || e_erem
             vanq_proc(efp, gfp);
 #endif					/* E_Prem || E_Erem */
-            EVValD(glbl_argp, e_pfail);
+            EVValD(argp, e_pfail);
 	    EntInterp;
 #endif					/* E_Pfail || E_Prem || E_Erem */
 
@@ -1311,7 +1311,7 @@ efail_noev:
 	    --k_level;
 	    if (k_trace) {
                k_trace--;
-	       failtrace(&(((struct b_proc *)BlkLoc(*glbl_argp))->pname));
+	       failtrace(&(((struct b_proc *)BlkLoc(*argp))->pname));
                }
 Pfail_uw:
 
@@ -1326,7 +1326,7 @@ Pfail_uw:
 	    efp = pfp->pf_efp;
 	    gfp = pfp->pf_gfp;
 	    ipc = pfp->pf_ipc;
-	    glbl_argp = pfp->pf_argp;
+	    argp = pfp->pf_argp;
             CHANGEPROGSTATE(pfp->pf_from);
 	    pfp = pfp->pf_pfp;
 
@@ -1795,7 +1795,6 @@ int event;
 
 void changeprogstate(struct progstate *p)
 {
-    p->Glbl_argp = glbl_argp;
     p->K_current = k_current;
     curpstate = p;
     BlkLoc(k_current)->coexpr.program = curpstate;

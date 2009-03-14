@@ -107,6 +107,7 @@ struct region rootstring, rootblock;
 
 int op_tbl_sz = ElemCount(init_op_tbl);
 struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
+dptr argp;			        /* global argp */
 
 
 struct progstate *curpstate;		/* lastop accessed in program state */
@@ -201,16 +202,16 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
     struct b_cset *b;
     uword blksize;
     int i, j;
-    va_list argp;
-    va_start(argp, n_ranges);
+    va_list ap;
+    va_start(ap, n_ranges);
     blksize = sizeof(struct b_cset) + ((n_ranges - 1) * sizeof(struct b_cset_range));
     MemProtect(b = calloc(blksize, 1));
     b->blksize = blksize;
     b->n_ranges = n_ranges;
     b->size = 0;
     for (i = 0; i < n_ranges; ++i) {
-        b->range[i].from = va_arg(argp, _INT);
-        b->range[i].to = va_arg(argp, _INT);
+        b->range[i].from = va_arg(ap, _INT);
+        b->range[i].to = va_arg(ap, _INT);
         b->range[i].index = b->size;
         b->size += b->range[i].to - b->range[i].from + 1;
         for (j = b->range[i].from; j <= b->range[i].to; ++j) {
@@ -219,7 +220,7 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
             Setb(j, b->bits);
         }
     }
-    va_end(argp);
+    va_end(ap);
     return b;
 }
 
@@ -555,13 +556,13 @@ void segvtrap()
  */
 void error(char *fmt, ...)
 {
-    va_list argp;
-    va_start(argp, fmt);
+    va_list ap;
+    va_start(ap, fmt);
     fprintf(stderr, "error in startup code\n");
-    vfprintf(stderr, fmt, argp);
+    vfprintf(stderr, fmt, ap);
     fprintf(stderr,"\n");
     fflush(stderr);
-    va_end(argp);
+    va_end(ap);
     if (dodump > 1)
         abort();
     c_exit(EXIT_FAILURE);
@@ -573,8 +574,8 @@ void error(char *fmt, ...)
  */
 void syserr(char *fmt, ...)
 {
-    va_list argp;
-    va_start(argp, fmt);
+    va_list ap;
+    va_start(ap, fmt);
     fprintf(stderr, "System error");
     if (pfp == NULL)
         fprintf(stderr, " in startup code");
@@ -588,10 +589,10 @@ void syserr(char *fmt, ...)
             fprintf(stderr, " at line %ld in ?", (long)findline(ipc.opnd));
     }
     fprintf(stderr, "\n");
-    vfprintf(stderr, fmt, argp);
+    vfprintf(stderr, fmt, ap);
     fprintf(stderr,"\n");
     fflush(stderr);
-    va_end(argp);
+    va_end(ap);
 
     if (pfp == NULL) {		/* skip if start-up problem */
         if (dodump)
@@ -599,7 +600,7 @@ void syserr(char *fmt, ...)
         c_exit(EXIT_FAILURE);
     }
     fprintf(stderr, "Traceback:\n");
-    tracebk(pfp, glbl_argp);
+    tracebk(pfp, argp);
     fflush(stderr);
 
     if (dodump)
@@ -636,7 +637,7 @@ void c_exit(i)
                 (long)BlkLoc(k_current)->coexpr.id,
                 (long)BlkLoc(k_current)->coexpr.size);
         fflush(stderr);
-        xdisp(pfp,glbl_argp,k_level,stderr, curpstate);
+        xdisp(pfp,argp,k_level,stderr, curpstate);
     }
 
 #ifdef MSWindows
@@ -809,7 +810,6 @@ static void initprogstate(struct progstate *p)
     p->eventcode= nulldesc;
     p->eventval = nulldesc;
     p->eventsource = nulldesc;
-    p->Glbl_argp = NULL;
     p->Kywd_err = zerodesc;
     p->Kywd_pos = onedesc;
     p->Kywd_why = emptystr;
@@ -1018,11 +1018,9 @@ function{1} load(s,arglist,
        */
       if (!is:null(arglist)) {
          PushDesc(arglist);
-	 pstate->Glbl_argp = (dptr)(sp - 1);
          }
       else {
          PushNull;
-	 pstate->Glbl_argp = (dptr)(sp - 1);
          {
          dptr tmpargp = (dptr) (sp - 1);
          Ollist(0, tmpargp);
@@ -1037,6 +1035,7 @@ function{1} load(s,arglist,
 
       sp = savedsp;
 
+/*      showcoexps();*/
       return result;
       }
 end
@@ -1307,22 +1306,6 @@ void resolve(struct progstate *p)
         StrLoc(fnptr->fname) = p->Strcons + (uword)StrLoc(fnptr->fname);
 }
 
-void showicode()
-{
-    struct progstate *p;
-
-    printf("Addr        Name            Glbl_argp   Code        Ecode       &main       &current\n");
-    for (p = progs; p; p = p->next) {
-        printf("%-12p%-16s%-12p%-12p%-12p%-12p%-12p\n", 
-               p, 
-               cstr(&p->Kywd_prog), 
-               p->Glbl_argp, p->Code, p->Ecode,
-               BlkLoc(p->K_main),
-               BlkLoc(p->K_current),
-               BlkLoc(p->K_main));
-    }
-}
-
 
 void showcoexps()
 {
@@ -1331,40 +1314,42 @@ void showcoexps()
     struct progstate *q;
 
     printf("Coexpressions\n");
-    printf("Coexp       program     size        es_sp       C sp        ipc         pfp\n");
-    printf("---------------------------------------------------------------------------\n");
+    printf("Coexp       program     size        es_sp       C sp        ipc         pfp         argp\n");
+    printf("----------------------------------------------------------------------------------------\n");
     p = rootpstate.Mainhead;
-    printf("%-12p%-12p%-12d%-12p%-12p%-12p%-12p\n",
+    printf("%-12p%-12p%-12d%-12p%-12p%-12p%-12p%-12p\n",
            p,
            p->program,
            p->size,
            p->es_sp,
            p->cstate[0],
            p->es_ipc.op,
-           p->es_pfp);
+           p->es_pfp,
+           p->es_argp);
 
     for (p = stklist; p; p = p->nextstk) {
-        printf("%-12p%-12p%-12d%-12p%-12p%-12p%-12p\n",
+        printf("%-12p%-12p%-12d%-12p%-12p%-12p%-12p%-12p\n",
                p,
                p->program,
                p->size,
                p->es_sp,
                p->cstate[0],
                p->es_ipc.op,
-               p->es_pfp);
+               p->es_pfp,
+               p->es_argp);
     }
 
     printf("\nProgstates\n");
-    printf("Addr        Name            Glbl_argp   Code        Ecode       &main       &current\n");
-    printf("------------------------------------------------------------------------------------\n");
+    printf("Addr        Code        Ecode       &main       &current    Name\n");
+    printf("----------------------------------------------------------------------------\n");
     for (q = progs; q; q = q->next) {
-        printf("%-12p%-16s%-12p%-12p%-12p%-12p%-12p\n", 
+        printf("%-12p%-12p%-12p%-12p%-12p%-12p%s\n", 
                q, 
-               cstr(&q->Kywd_prog), 
-               q->Glbl_argp, q->Code, q->Ecode,
+               q->Code, 
+               q->Ecode,
                BlkLoc(q->K_main),
                BlkLoc(q->K_current),
-               BlkLoc(q->K_main));
+               cstr(&q->Kywd_prog));
     }
 
     printf("\nVariables\n");
@@ -1640,7 +1625,7 @@ char *ptr(void *p) {
         return "gfp->";
     else if (p == sp)
         return "sp->";
-    else if (p == glbl_argp)
+    else if (p == argp)
         return "argp->";
     else
         return "";

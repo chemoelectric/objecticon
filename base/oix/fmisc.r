@@ -10,50 +10,34 @@
 "args(x,i) - produce number of arguments for procedure x."
 
 function{0,1} args(x,i)
-
-   if is:proc(x) then {
-      abstract { return integer }
-      inline { return C_integer ((struct b_proc *)BlkLoc(x))->nparam; }
-   }
-   else if is:constructor(x) then {
-      abstract { return integer }
-      inline { return C_integer ((struct b_constructor *)BlkLoc(x))->n_fields; }
-   }
-   else if is:methp(x) then {
-      abstract { return integer }
-      /* Method pointer - deduct 1 for the automatic self param */
-      inline { return C_integer ((struct b_methp *)BlkLoc(x))->proc->nparam - 1; }
+ body {
+    type_case x of {
+      proc: {
+            return C_integer ((struct b_proc *)BlkLoc(x))->nparam;
+        }
+      constructor: {
+            return C_integer ((struct b_constructor *)BlkLoc(x))->n_fields; 
+        }
+      methp: {
+            /* Method pointer - deduct 1 for the automatic self param */
+            int i = ((struct b_methp *)BlkLoc(x))->proc->nparam;
+            return C_integer i < 0 ? i + 1 : i - 1;
       }
-   else if is:class(x) then {
-      abstract { return integer }
-      /* Class - lookup the constructor - also deduct 1 for the self param */
-      inline { 
+      class: {
+            /* Class - lookup the constructor - also deduct 1 for the self param */
           struct b_class *class = (struct b_class*)BlkLoc(x);
           struct class_field *new_field = class->new_field;
-          if (new_field)
-              return C_integer ((struct b_proc *)BlkLoc(*new_field->field_descriptor))->nparam - 1;
-          else
+          if (new_field) {
+              int i = ((struct b_proc *)BlkLoc(*new_field->field_descriptor))->nparam;
+              return C_integer i < 0 ? i + 1 : i - 1;
+          } else
               return zerodesc;
       }
+      default: {
+          runerr(106, x);
+      }
    }
-   else if !is:coexpr(x) then
-      runerr(106, x)
-   else if is:null(i) then {
-      abstract { return integer }
-      inline {
-	 return C_integer BlkLoc(x)->coexpr.program->Xnargs;
-	 }
-      }
-   else if !cnv:integer(i) then
-      runerr(103, i)
-   else {
-      abstract { return any_value }
-      inline {
-	 int c_i = IntVal(i);
-	 if ((c_i <= 0) || (c_i > BlkLoc(x)->coexpr.program->Xnargs)) fail;
-	 return BlkLoc(x)->coexpr.program->Xargp[IntVal(i)];
-	 }
-      }
+ }
 end
 
 
@@ -327,7 +311,7 @@ function{1} display(i,c)
          xdisp(ce->es_pfp, ce->es_argp, (int)i, std_f, ce->program);
        }
       else
-         xdisp(pfp, glbl_argp, (int)i, std_f, curpstate);
+         xdisp(pfp, argp, (int)i, std_f, curpstate);
       return nulldesc;
       }
 end
@@ -593,7 +577,7 @@ function{} runerr(i, x[n])
       }
 
       fprintf(stderr, "Traceback:\n");
-      tracebk(pfp, glbl_argp);
+      tracebk(pfp, argp);
       fflush(stderr);
 
       if (dodump > 1)
@@ -625,7 +609,7 @@ function{} syserr(msg)
           fprintf(stderr, "File ?; Line %ld\n", (long)findline(ipc.opnd));
 
       fprintf(stderr, "Traceback:\n");
-      tracebk(pfp, glbl_argp);
+      tracebk(pfp, argp);
       fflush(stderr);
 
       if (dodump > 1)

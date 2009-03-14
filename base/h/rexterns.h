@@ -105,6 +105,7 @@ extern struct pf_marker *pfp;	/* procedure frame pointer */
 extern word *sp;			/* interpreter stack pointer */
 extern word *stack;			/* interpreter stack base */
 extern word *stackend;		/* end of evaluation stack */
+extern dptr argp;			/* global argp */
    
 extern struct pstrnm pntab[];
 extern int pnsize;

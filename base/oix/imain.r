@@ -357,7 +357,7 @@ int main(int argc, char **argv)
     } else
         want_arg = 0;
 
-    glbl_argp = 0;
+    argp = 0;
 
     set_up = 1;			/* post fact that iconx is initialized */
 

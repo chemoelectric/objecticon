@@ -214,7 +214,7 @@
                          StrLen(*dp) = sizeof(s) - 1;       \
 			 } while (0)
 
-#define CallerProc (&BlkLoc(*((dptr)pfp - (pfp->pf_nargs + 1)))->proc)
+#define CallerProc (&BlkLoc(*argp)->proc)
 
 /*
  * Offset in word of cset bit.
@@ -565,7 +565,6 @@
     * Miscellaneous macro definitions.
     */
    
-      #define glbl_argp (curpstate->Glbl_argp)
       #define kywd_err  (curpstate->Kywd_err)
       #define kywd_pos  (curpstate->Kywd_pos)
       #define kywd_prog  (curpstate->Kywd_prog)
@@ -628,7 +627,7 @@
       
       #define lastop    (curpstate->Lastop)
       #define lastopnd  (curpstate->Lastopnd)
-      
+
       #define xargp     (curpstate->Xargp)
       #define xnargs    (curpstate->Xnargs)
       #define value_tmp (curpstate->Value_tmp)

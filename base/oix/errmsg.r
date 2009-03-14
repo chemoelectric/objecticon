@@ -267,7 +267,7 @@ void err_msg(int n, dptr v)
         c_exit(EXIT_FAILURE);
     }
     fprintf(stderr, "Traceback:\n");
-    tracebk(pfp, glbl_argp);
+    tracebk(pfp, argp);
     fflush(stderr);
 
     if (dodump > 1)

@@ -58,7 +58,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     register int i;
     struct b_proc *bp;
     struct pf_marker *t_pfp;
-    dptr t_glbl_argp;
+    dptr t_argp;
 
     if (StrLen(*s) == 0)
         return Failed;
@@ -165,19 +165,19 @@ int getvar(dptr s, dptr vp, struct progstate *p)
      */
     if (p == curpstate) {
         t_pfp = pfp;
-        t_glbl_argp = glbl_argp;
+        t_argp = argp;
     }
     else {
         t_pfp = BlkLoc(p->K_current)->coexpr.es_pfp;
-        t_glbl_argp = BlkLoc(p->K_current)->coexpr.es_argp;
+        t_argp = BlkLoc(p->K_current)->coexpr.es_argp;
     }
 
     /*
      *  If no procedure has been called (as can happen with icon_call(),
      *  dont' try to find local identifier.
      */
-    if (t_pfp && t_glbl_argp) {
-        dp = t_glbl_argp;
+    if (t_pfp && t_argp) {
+        dp = t_argp;
         bp = (struct b_proc *)BlkLoc(*dp);	/* get address of procedure block */
    
         np = bp->lnames;		/* Check the formal parameter names. */
@@ -1925,10 +1925,10 @@ void why(char *s)
 void whyf(char *fmt, ...)
 {
     char buff[128];
-    va_list argp;
-    va_start(argp, fmt);
-    vsnprintf(buff, sizeof(buff), fmt, argp);
-    va_end(argp);
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buff, sizeof(buff), fmt, ap);
+    va_end(ap);
     cstr2string(buff, &kywd_why);
 }
 
