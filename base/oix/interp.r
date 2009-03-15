@@ -1233,6 +1233,7 @@ efail_noev:
 	       rsp = (word *)resgfp - 1;
 	       if (type == G_Psusp) {
 		  pfp = resgfp->gf_pfp;
+                  CHANGEPROGSTATE(pfp->pf_to);
 
 		  /*
 		   * If the scanning environment for this procedure call is
@@ -1248,8 +1249,6 @@ efail_noev:
 		     k_pos = IntVal(tmp);
 		     InterpEVValD(&k_subject, e_sresum);
 		     }
-
-                  CHANGEPROGSTATE(pfp->pf_to);
 
 		  ++k_level;		/* adjust procedure level */
 		  }
