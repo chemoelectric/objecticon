@@ -1731,10 +1731,7 @@ register struct b_coexpr *ncp;
 
    if(ccp->tvalloc) {
      if (InRange(blkbase,ccp->tvalloc,blkfree)) {
-       fprintf(stderr,
-	       "Multiprogram garbage collection disaster in mt_activate()!\n");
-       fflush(stderr);
-       exit(1);
+        syserr("Multiprogram garbage collection disaster in mt_activate()!");
      }
      savedtvalloc = ccp->tvalloc;
    }
