@@ -163,7 +163,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
      *  descriptor that points to the corresponding value descriptor. 
      *  If no such variable exits, it fails.
      */
-    if (p == curpstate) {
+    if (BlkLoc(p->K_current) == BlkLoc(k_current)) {
         t_pfp = pfp;
         t_argp = argp;
     }
