@@ -189,3 +189,18 @@ end
 procedure child29()
    &why := "failure message"
 end
+
+procedure child31()
+   write("Child scan 0:",image(&subject))
+   "child1" ? {
+      write("Child scan 1:",image(&subject))
+      "child2" ? {
+         write("Child scan 2:",image(&subject))
+         suspend 1 to 3 do
+            write("Child scan 3:",image(&subject))
+         write("Child scan 4:",image(&subject))
+      }
+      write("Child scan 5:",image(&subject))
+   }
+   write("Child scan 6:",image(&subject))
+end

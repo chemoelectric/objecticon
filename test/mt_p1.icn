@@ -379,3 +379,18 @@ procedure test30()
    some_proc2()
    
 end
+
+procedure test31()
+   write("Parent scan 0:",image(&subject))
+   "parent1" ? {
+      write("Parent scan 1:",image(&subject))
+      "parent2" ? {
+         write("Parent scan 2:",image(&subject))
+         every glob("child31",c)() do
+            write("Parent scan 3:",image(&subject))
+         write("Parent scan 4:",image(&subject))
+      }
+      write("Parent scan 5:",image(&subject))
+   }
+   write("Parent scan 6:",image(&subject))
+end

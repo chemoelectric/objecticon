@@ -158,4 +158,23 @@ In some_proc2, what=50
 Access any.pack.Q.var: Succeeded with &null
 In some_proc2, what=50
 Access any.pack.Q.var: Error 611
+Test test31
+Parent scan 0:""
+Parent scan 1:"parent1"
+Parent scan 2:"parent2"
+Child scan 0:""
+Child scan 1:"child1"
+Child scan 2:"child2"
+Parent scan 3:"parent2"
+Child scan 3:"child2"
+Parent scan 3:"parent2"
+Child scan 3:"child2"
+Parent scan 3:"parent2"
+Child scan 3:"child2"
+Child scan 4:"child2"
+Child scan 5:"child1"
+Child scan 6:""
+Parent scan 4:"parent2"
+Parent scan 5:"parent1"
+Parent scan 6:""
 exit
