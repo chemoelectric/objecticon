@@ -1035,7 +1035,6 @@ function{1} load(s,arglist,
 
       sp = savedsp;
 
-/*      showcoexps();*/
       return result;
       }
 end
@@ -1115,8 +1114,7 @@ void resolve(struct progstate *p)
                 else
                     pp->fstatic = (dptr)(p->Statics + (int)pp->fstatic);
                 /* The two tables */
-                if (pp->lnames)
-                    pp->lnames = (dptr)(p->Code + (int)pp->lnames);
+                pp->lnames = (dptr)(p->Code + (int)pp->lnames);
                 if (pp->llocs)
                     pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
                 /* The variables */
@@ -1269,8 +1267,7 @@ void resolve(struct progstate *p)
                      *	the names of the parameters, locals, and static variables.
                      */
                     pp->entryp.icode = p->Code + pp->entryp.ioff;
-                    if (pp->lnames)
-                        pp->lnames = (dptr)(p->Code + (int)pp->lnames);
+                    pp->lnames = (dptr)(p->Code + (int)pp->lnames);
                     if (pp->llocs)
                         pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
                     for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
