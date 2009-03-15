@@ -394,3 +394,56 @@ procedure test31()
    }
    write("Parent scan 6:",image(&subject))
 end
+
+procedure test32()
+   local e
+   e := glob("child32",c)()
+   print{"c: &pos",keyword("&pos",c)}
+   print{"c: &why",keyword("&why",c)}
+   pr_type{"c: &file",keyword("&file",c)}
+   print{"c: &line",keyword("&line",c)}
+   print{"c: &main",keyword("&main",c)}
+   pr_type{"c: &time",keyword("&time",c)}
+   print{"c: &trace",keyword("&trace",c)}
+   print{"c: &error",keyword("&error",c)}
+   print{"c: &random",keyword("&random",c)}
+   print{"c: &source",keyword("&source",c)}
+   print{"c: &subject",keyword("&subject",c)}
+   print{"c: &current",keyword("&current",c)}
+   pr_type{"c: &regions",keyword("&regions",c)}
+   pr_type{"c: &storage",keyword("&storage",c)}
+   print{"c: &progname",keyword("&progname",c)}
+   pr_type{"c: &allocated",keyword("&allocated",c)}
+   print{"c: &errortext",keyword("&errortext",c)}
+   print{"c: &eventcode",keyword("&eventcode",c)}
+   print{"c: &errorvalue",keyword("&errorvalue",c)}
+   print{"c: &eventvalue",keyword("&eventvalue",c)}
+   pr_type{"c: &collections",keyword("&collections",c)}
+   print{"c: &errornumber",keyword("&errornumber",c)}
+   print{"c: &eventsource",keyword("&eventsource",c)}
+
+   @e
+   print{"e: &pos",keyword("&pos",c)}
+   print{"e: &why",keyword("&why",c)}
+   pr_type{"e: &file",keyword("&file",c)}
+   print{"e: &line",keyword("&line",c)}
+   print{"e: &main",keyword("&main",c)}
+   pr_type{"e: &time",keyword("&time",c)}
+   print{"e: &trace",keyword("&trace",c)}
+   print{"e: &error",keyword("&error",c)}
+   print{"e: &random",keyword("&random",c)}
+   print{"e: &source",keyword("&source",c)}
+   print{"e: &subject",keyword("&subject",c)}
+   print{"e: &current",keyword("&current",c)}
+   pr_type{"e: &regions",keyword("&regions",c)}
+   pr_type{"e: &storage",keyword("&storage",c)}
+   print{"e: &progname",keyword("&progname",c)}
+   pr_type{"e: &allocated",keyword("&allocated",c)}
+   print{"e: &errortext",keyword("&errortext",c)}
+   print{"e: &eventcode",keyword("&eventcode",c)}
+   print{"e: &errorvalue",keyword("&errorvalue",c)}
+   print{"e: &eventvalue",keyword("&eventvalue",c)}
+   pr_type{"e: &collections",keyword("&collections",c)}
+   print{"e: &errornumber",keyword("&errornumber",c)}
+   print{"e: &eventsource",keyword("&eventsource",c)}
+end

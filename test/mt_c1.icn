@@ -204,3 +204,33 @@ procedure child31()
    }
    write("Child scan 6:",image(&subject))
 end
+
+procedure child32()
+   &why := "why oh why"
+
+   print{"&pos",&pos}
+   print{"&why",&why}
+   pr_type{"&file",&file}
+   print{"&line",&line}
+   print{"&main",&main}
+   pr_type{"&time",&time}
+   print{"&trace",&trace}
+   print{"&error",&error}
+   print{"&random",&random}
+   print{"&source",&source}
+   print{"&subject",&subject}
+   print{"&current",&current}
+   pr_type{"&regions",&regions}
+   pr_type{"&storage",&storage}
+   print{"&progname",&progname}
+   pr_type{"&allocated",&allocated}
+   print{"&errortext",&errortext}
+   print{"&eventcode",&eventcode}
+   print{"&errorvalue",&errorvalue}
+   print{"&eventvalue",&eventvalue}
+   pr_type{"&collections",&collections}
+   print{"&errornumber",&errornumber}
+   print{"&eventsource",&eventsource}
+
+   return create 1 to 3
+end
