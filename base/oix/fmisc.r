@@ -1447,20 +1447,16 @@ function{*} keyword(s,ce)
       runerr(103, s)
 
    body {
-      tended struct descrip d;
       struct progstate *p;
       char *t;
 
-      if (is:null(ce)) {
-         d = k_current;
-         BlkLoc(k_current)->coexpr.es_pfp = pfp; /* sync w/ current value */
-         BlkLoc(k_current)->coexpr.es_ipc.opnd = ipc.opnd;
-      } else if (is:coexpr(ce))
-         d = ce;
+      if (is:null(ce))
+          p = curpstate;
+      else if (is:coexpr(ce))
+          p = BlkLoc(ce)->coexpr.program;
       else 
          runerr(118, ce);
 
-      p = BlkLoc(d)->coexpr.program;
       if (StrLen(s) == 0 || *StrLoc(s) != '&')
          fail;
 
@@ -1477,13 +1473,35 @@ function{*} keyword(s,ce)
           }
           case 5 : {
               if (strncmp(t,"file",4) == 0) {
-                  struct ipc_fname *t = find_ipc_fname(BlkLoc(d)->coexpr.es_ipc.opnd, p);
+                  word *i;
+                  struct ipc_fname *t;
+
+                  /* If the prog's &current isn't in this program, we can't look up
+                   * the file in this program's table */
+                  if (BlkLoc(p->K_current)->coexpr.program != p)
+                      fail;
+                  /* If the prog's &current is the currently executing coexpression, take
+                   * the ipc, otherwise the stored ipc in the coexpression block
+                   */
+                  if (BlkLoc(p->K_current) == BlkLoc(k_current))
+                      i = ipc.opnd;
+                  else
+                      i = BlkLoc(p->K_current)->coexpr.es_ipc.opnd;
+                  t = find_ipc_fname(i, p);
                   if (!t)
                       fail;
                   return t->fname;
               }
               if (strncmp(t,"line",4) == 0) {
-                  struct ipc_line *t = find_ipc_line(BlkLoc(d)->coexpr.es_ipc.opnd, p);
+                  word *i;
+                  struct ipc_line *t;
+                  if (BlkLoc(p->K_current)->coexpr.program != p)
+                      fail;
+                  if (BlkLoc(p->K_current) == BlkLoc(k_current))
+                      i = ipc.opnd;
+                  else
+                      i = BlkLoc(p->K_current)->coexpr.es_ipc.opnd;
+                  t = find_ipc_line(i, p);
                   if (!t)
                       fail;
                   return C_integer t->line;
@@ -1516,7 +1534,7 @@ function{*} keyword(s,ce)
                   return kywdint(&(p->Kywd_ran));
               }
               if (strncmp(t,"source",6) == 0) {
-                  return coexpr(topact((struct b_coexpr *)BlkLoc(BlkLoc(d)->coexpr.program->K_current)));
+                  return coexpr(topact((struct b_coexpr *)BlkLoc(p->K_current)));
               }
               break;
           }
