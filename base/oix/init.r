@@ -1340,7 +1340,7 @@ void showcoexps()
     printf("Addr        Code        Ecode       &main       &current    Name\n");
     printf("----------------------------------------------------------------------------\n");
     for (q = progs; q; q = q->next) {
-        printf("%-12p%-12p%-12p%-12p%-12p%-12p%s\n", 
+        printf("%-12p%-12p%-12p%-12p%-12p%s\n", 
                q, 
                q->Code, 
                q->Ecode,
@@ -1360,20 +1360,32 @@ void showcoexps()
     fflush(stdout);
 }
 
+int valid_addr(void *p) 
+{
+  extern char _etext;
+  return (p != NULL) && ((char*) p > &_etext);
+}
+
 static int isdescrip(word *p){
     struct descrip *d = (struct descrip *)p;
     word i = d->dword;
 
     if (Qual(*d))
-        return InRange(strcons, StrLoc(*d), estrcons) || InRange(strbase, StrLoc(*d), strfree);
-    
-    return (DVar(*d) || i==D_Null || i==D_Integer || i==D_Lrgint || i==D_Real ||
+        return StrLen(*d) == 0 || valid_addr(StrLoc(*d));
+
+    if (i==D_Null || i==D_Integer)
+        return 1;
+
+    if (DVar(*d) || i==D_Lrgint || i==D_Real ||
             i==D_Cset || i==D_Proc || i==D_Record || i==D_List ||
             i==D_Lelem || i==D_Set || i==D_Selem || i==D_Table || i==D_Telem ||
             i==D_Tvtbl || i==D_Slots || i==D_Tvsubs || i==D_Refresh || i==D_Coexpr ||
             i==D_External || i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj ||
             i==D_Kywdstr || i==D_Kywdevent || i==D_Class || i==D_Object || i==D_Cast ||
-            i==D_Constructor || i==D_Methp || i==D_Ucs);
+            i==D_Constructor || i==D_Methp || i==D_Ucs)
+        return valid_addr(BlkLoc(*d));
+
+    return 0;
 }
 
 char *binstr(unsigned int n)
