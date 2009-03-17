@@ -1,6 +1,6 @@
-package evmon
+package lang
 
-class EventSet()
+class MonitorCodeSet()
    public static const
       AllocMask,
       AssignMask,
@@ -21,53 +21,53 @@ class EventSet()
       AllMask
 
    private static init()
-      AllocMask := cset(EventCode.List || EventCode.Lelem || 
-                        EventCode.Lrgint || EventCode.Real || EventCode.Record || 
-                        EventCode.Selem || EventCode.Set || EventCode.Slots || 
-                        EventCode.Table || EventCode.Telem || EventCode.Tvsubs || 
-                        EventCode.Tvtbl || EventCode.Cset || EventCode.Refresh || 
-                        EventCode.String || EventCode.Coexpr ||
-                        EventCode.Object || EventCode.Cast || EventCode.Methp || 
-                        EventCode.Ucs)
+      AllocMask := cset(MonitorCode.List || MonitorCode.Lelem || 
+                        MonitorCode.Lrgint || MonitorCode.Real || MonitorCode.Record || 
+                        MonitorCode.Selem || MonitorCode.Set || MonitorCode.Slots || 
+                        MonitorCode.Table || MonitorCode.Telem || MonitorCode.Tvsubs || 
+                        MonitorCode.Tvtbl || MonitorCode.Cset || MonitorCode.Refresh || 
+                        MonitorCode.String || MonitorCode.Coexpr ||
+                        MonitorCode.Object || MonitorCode.Cast || MonitorCode.Methp || 
+                        MonitorCode.Ucs)
 
-      AssignMask := cset(EventCode.Assign || EventCode.Value)
+      AssignMask := cset(MonitorCode.Assign || MonitorCode.Value)
 
-      TypeMask := AllocMask ++ (EventCode.Integer || EventCode.Null || EventCode.Proc)
+      TypeMask := AllocMask ++ (MonitorCode.Integer || MonitorCode.Null || MonitorCode.Proc)
 
-      ConvMask := cset(EventCode.Aconv || EventCode.Tconv || EventCode.Sconv || 
-                       EventCode.Nconv || EventCode.Fconv)
+      ConvMask := cset(MonitorCode.Aconv || MonitorCode.Tconv || MonitorCode.Sconv || 
+                       MonitorCode.Nconv || MonitorCode.Fconv)
 
-      ProcMask := cset(EventCode.Pcall || EventCode.Pfail || EventCode.Pret || 
-                       EventCode.Psusp || EventCode.Presum || EventCode.Prem)
+      ProcMask := cset(MonitorCode.Pcall || MonitorCode.Pfail || MonitorCode.Pret || 
+                       MonitorCode.Psusp || MonitorCode.Presum || MonitorCode.Prem)
 
-      FuncMask := cset(EventCode.Fcall || EventCode.Ffail || EventCode.Fret || 
-                      EventCode.Fsusp || EventCode.Fresum || EventCode.Frem)
+      FuncMask := cset(MonitorCode.Fcall || MonitorCode.Ffail || MonitorCode.Fret || 
+                      MonitorCode.Fsusp || MonitorCode.Fresum || MonitorCode.Frem)
 
-      OperMask := cset(EventCode.Ocall || EventCode.Ofail || EventCode.Oret || 
-                       EventCode.Osusp || EventCode.Oresum || EventCode.Orem)
+      OperMask := cset(MonitorCode.Ocall || MonitorCode.Ofail || MonitorCode.Oret || 
+                       MonitorCode.Osusp || MonitorCode.Oresum || MonitorCode.Orem)
 
       EvalMask := FuncMask ++ ProcMask ++ OperMask
 
-      ListMask := cset(EventCode.Lbang || EventCode.Lcreate || EventCode.Lpop || 
-                       EventCode.Lpull || EventCode.Lpush || EventCode.Lput || 
-                       EventCode.Lrand || EventCode.Lsub)
+      ListMask := cset(MonitorCode.Lbang || MonitorCode.Lcreate || MonitorCode.Lpop || 
+                       MonitorCode.Lpull || MonitorCode.Lpush || MonitorCode.Lput || 
+                       MonitorCode.Lrand || MonitorCode.Lsub)
 
-      RecordMask := cset(EventCode.Rbang || EventCode.Rcreate || EventCode.Rrand ||
-                         EventCode.Rref || EventCode.Rsub)
+      RecordMask := cset(MonitorCode.Rbang || MonitorCode.Rcreate || MonitorCode.Rrand ||
+                         MonitorCode.Rref || MonitorCode.Rsub)
 
-      ScanMask := cset(EventCode.Snew || EventCode.Sfail || EventCode.Spos || 
-                       EventCode.Ssusp || EventCode.Sresum || EventCode.Srem)
+      ScanMask := cset(MonitorCode.Snew || MonitorCode.Sfail || MonitorCode.Spos || 
+                       MonitorCode.Ssusp || MonitorCode.Sresum || MonitorCode.Srem)
 
-      SetMask := cset(EventCode.Sbang || EventCode.Screate || EventCode.Sdelete ||
-                      EventCode.Sinsert || EventCode.Smember || EventCode.Sval)
+      SetMask := cset(MonitorCode.Sbang || MonitorCode.Screate || MonitorCode.Sdelete ||
+                      MonitorCode.Sinsert || MonitorCode.Smember || MonitorCode.Sval)
 
-      TableMask := cset(EventCode.Tbang || EventCode.Tcreate || EventCode.Tdelete || 
-                        EventCode.Tinsert || EventCode.Tkey || EventCode.Tmember ||
-                        EventCode.Trand || EventCode.Tsub)
+      TableMask := cset(MonitorCode.Tbang || MonitorCode.Tcreate || MonitorCode.Tdelete || 
+                        MonitorCode.Tinsert || MonitorCode.Tkey || MonitorCode.Tmember ||
+                        MonitorCode.Trand || MonitorCode.Tsub)
 
-      OOMask := cset(EventCode.Objectref || EventCode.Objectsub || EventCode.Classref ||
-                     EventCode.Classsub || EventCode.Castref || EventCode.Castsub ||
-                     EventCode.Objectcreate)
+      OOMask := cset(MonitorCode.Objectref || MonitorCode.Objectsub || MonitorCode.Classref ||
+                     MonitorCode.Classsub || MonitorCode.Castref || MonitorCode.Castsub ||
+                     MonitorCode.Objectcreate)
 
       StructMask := ListMask ++ RecordMask ++ SetMask ++ TableMask ++ OOMask
       EmptyMask := ''

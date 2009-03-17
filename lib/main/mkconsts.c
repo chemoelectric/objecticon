@@ -1121,13 +1121,13 @@ Const(SEEK_END)
 
     end_class();
 
-    start_file("evmonconsts.icn", "evmon");
+    start_file("evmonconsts.icn", "lang");
 
     start_class("OpCode", "Op_", 1, 0);
     scan_file("../../base/h/opdefs.h");
     end_class();
 
-    start_class("EventCode", "E_", 1, 1);
+    start_class("MonitorCode", "E_", 1, 1);
     scan_monitor_h("../../base/h/monitor.h");
     end_class();
 

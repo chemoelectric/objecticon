@@ -157,25 +157,25 @@ class Class()
    # @param mp a methp structure
    # @return an object
    #
-   public static defer get_methp_object(mp)
+   private static defer get_methp_object(mp)
 
    # Return the procedure part of a method pointer.
    # @param mp a methp structure
    # @return a procedure object (which will be an instance method)
    #
-   public static defer get_methp_proc(mp)
+   private static defer get_methp_proc(mp)
 
    # Return the object part of a cast.
    # @param mp a cast structure created with the {cast()} function
    # @return an object
    #
-   public static defer get_cast_object(c)
+   private static defer get_cast_object(c)
    
    # Return the class part of a cast.
    # @param mp a cast structure created with the {cast()} function
    # @return a class
    #
-   public static defer get_cast_class(c)
+   private static defer get_cast_class(c)
 
    # Get the value of the field in {x}, behaving in exactly the same way
    # as though the "." operation had been invoked with equivalent values.
