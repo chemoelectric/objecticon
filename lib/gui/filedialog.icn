@@ -43,7 +43,7 @@ class FileDialog(Dialog)
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs, chdir() | 
+      every put(init_dirs, Files.getcwd() | 
                 Files.get_home() | 
                 Files.get_temp() | 
                 Files.get_roots())
@@ -152,7 +152,7 @@ class FileDialog(Dialog)
       if t := l.parent() then
          self.init_dirs := [t.str()]
       else
-         self.init_dirs := [chdir()]
+         self.init_dirs := [Files.getcwd()]
       self.init_files := [l.get(-1)]
       return s
    end

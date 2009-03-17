@@ -132,7 +132,8 @@ package ipl.numbers
 
 import
    io(stop),
-   ipl.strings(palins)
+   ipl.strings(palins),
+   util(Math)
 
 # additive digital persistence
 procedure adp(i)		
@@ -443,7 +444,7 @@ procedure gmean(L[])
    every m *:= !L
    m := abs(m)
    if m > 0.0 then
-      return exp (log(m) / *L)
+      return Math.exp (Math.log(m) / *L)
    else
       fail
 end

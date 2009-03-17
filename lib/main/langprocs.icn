@@ -436,7 +436,7 @@ procedure clone(o, seen)
       }
 
       "record" : {
-         res := constructorof(o)()
+         res := Constructor.get_constructor(o)()
          seen[o] := res
          every i := 1 to *o do
             res[i] := clone(o[i], seen)
@@ -537,7 +537,7 @@ procedure hash(x, depth)
 
       "cset" : {
          n := *x
-         every i := ordrange(x) do
+         every i := Text.get_ord_range(x) do
             n := 13 * n + i
          return n
       }
@@ -683,3 +683,4 @@ class NoCopy()
       &why := "Not encodable: " || image(self)
    end
 end
+

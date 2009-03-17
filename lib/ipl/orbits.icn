@@ -32,7 +32,8 @@
 package ipl.orbits
 
 import
-   ipl.gobject(Point)
+   ipl.gobject(Point),
+   util(Math)
 
 procedure orbit1(x, y, extent, n, t1, t2, k1, k2, radius1, sscale,
    xfact, yfact)
@@ -51,10 +52,10 @@ procedure orbit1(x, y, extent, n, t1, t2, k1, k2, radius1, sscale,
       radius2 := sscale * (1 - i / real_n)
       angle1 +:= incr1
       angle2 +:= incr2
-      suspend Point(x + xfact * (loff + radius1 * cos(k1 * angle1) +
-         radius2 * cos(angle2)),
-         y + yfact * (loff + radius1 * sin(k2 * angle1) +
-         radius2 * sin(angle2)))
+      suspend Point(x + xfact * (loff + radius1 * Math.cos(k1 * angle1) +
+         radius2 * Math.cos(angle2)),
+         y + yfact * (loff + radius1 * Math.sin(k2 * angle1) +
+         radius2 * Math.sin(angle2)))
       }
 
 end
@@ -73,13 +74,13 @@ procedure orbit2(x, y, extent, n, t1, t2, k1, k2, radius1, sscale,
    angle1 := angle2 := 0
 
    every i := 1 to n do {
-      radius2 := sscale * (roff + rfact * cos(i * rangle))
+      radius2 := sscale * (roff + rfact * Math.cos(i * rangle))
       angle1 +:= incr1
       angle2 +:= incr2
-      suspend Point(x + xfact * (loff + radius1 * cos(k1 * angle1) +
-         radius2 * cos(angle2)),
-         y + yfact * (loff + radius1 * sin(k2 * angle1) +
-         radius2 * sin(angle2)))
+      suspend Point(x + xfact * (loff + radius1 * Math.cos(k1 * angle1) +
+         radius2 * Math.cos(angle2)),
+         y + yfact * (loff + radius1 * Math.sin(k2 * angle1) +
+         radius2 * Math.sin(angle2)))
       }
 
 end

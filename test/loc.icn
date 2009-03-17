@@ -46,7 +46,7 @@ procedure main()
    }
 
    every s := "main" | "rectype" | "One" | "upto"  do {
-      pr_seq_type2{"Glob loc'n of " || s, globloc(s)}
+      pr_seq_type2{"Glob loc'n of " || s, Prog.get_global_location(s)}
    }
 
    every s := main | p | upto | One.four do {
@@ -60,7 +60,7 @@ procedure main()
       pr_seq_type2{"Loc'n of local in p " || s, Proc.get_local_location(p,s)}
    }
 
-   c := constructor("rectwo","a","b","c")
+   c := Constructor.create_constructor("rectwo","a","b","c")
    pr_seq_type2{"Loc'n of dyn constructor", Constructor.get_location(c)}
    every s := Constructor.get_field_names(c) do {
       pr_seq_type2{"Field loc'n of " || s, Constructor.get_field_location(c,s)}

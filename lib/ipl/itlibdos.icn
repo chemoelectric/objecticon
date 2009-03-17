@@ -159,7 +159,8 @@ package ipl.itlibdos
 
 import
    io(close, ewrite, open, read,
-      stop, writes)
+      stop, writes),
+   posix(System)
 
 global tc_table
 record true()
@@ -212,7 +213,7 @@ procedure getname()
     local term
 
     check_features()
-    term := getenv("TERM") | "mono"
+    term := System.getenv("TERM") | "mono"
 	
     return \term |
 	er("getname","can't seem to determine your terminal type",1)
@@ -247,7 +248,7 @@ procedure getentry(name, termcap_string)
 
     local f, getline, line,    entry
 
-    /termcap_string := getenv("TERMCAP")
+    /termcap_string := System.getenv("TERMCAP")
 
     if \termcap_string ? (not match("\\"), pos(1) | tab(find("|")+1), =name)
     then return termcap_string

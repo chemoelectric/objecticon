@@ -9,6 +9,10 @@ class Constructor()
    #
    public static defer get_name(c)
 
+   # Return the constructor of the given record
+   #
+   public static defer get_constructor(c)
+
    # Return the program this constructor resides in.  The program's &main
    # co-expression is returned.
    #
@@ -55,4 +59,7 @@ class Constructor()
    # @fail if the field is unknown
    #
    public static defer get_field_location(c, field)
+
+   public static defer create_constructor(s, a[])
+   
 end

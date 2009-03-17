@@ -28,7 +28,8 @@
 package ipl.glabels
 
 import
-   ipl.numbers(ceil, floor)
+   ipl.numbers(ceil, floor),
+   util(Math)
 
 procedure glabels(min, max, ntick)
    local d, graphmin, graphmax, nfrac, llist, x,  range
@@ -39,7 +40,7 @@ procedure glabels(min, max, ntick)
    d := nicenum(range / (ntick - 1), 1)
    graphmin := floor(min / d) * d
    graphmax := ceil(max / d) * d
-   nfrac := max(-floor(log(d, 10)), 0)
+   nfrac := max(-floor(Math.log(d, 10)), 0)
    llist := []
    every x := graphmin to graphmax + 0.5 * d by d do
      put(llist, x)
@@ -51,7 +52,7 @@ end
 procedure nicenum(x, round)
    local exp, f, nf
 
-   exp := floor(log(x, 10))
+   exp := floor(Math.log(x, 10))
    f := x / (10 ^ exp)
    if \round then {
       if f < 1.5 then nf := 1

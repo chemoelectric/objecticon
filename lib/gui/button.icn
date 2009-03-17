@@ -50,7 +50,7 @@ class Button(Toggle,Component)
    end
 
    public tick()
-      if curr_time_millis() > self.repeat_delay then
+      if Time.get_system_millis() > self.repeat_delay then
          fire(Event.BUTTON_HELD)
    end
 
@@ -69,7 +69,7 @@ class Button(Toggle,Component)
 
       if /self.is_down then {
          go_down()
-         self.repeat_delay := curr_time_millis() + Gui.REPEAT_DELAY
+         self.repeat_delay := Time.get_system_millis() + Gui.REPEAT_DELAY
          every b := !(\self.parent_button_group).buttons do {
             if b.is_unhidden() & b.is_unshaded() then {
                parent_dialog.hold(b, e)

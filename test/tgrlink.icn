@@ -86,7 +86,7 @@
 
 
 
-import io
+import io, util(Math)
 
 
 $define DefaultError 4		# default max error for removing point
@@ -129,7 +129,7 @@ procedure main(args)
 
    latmin := hdr1[16+:7]
    latmax := hdr2[16+:7]
-   latsin := sin(((latmax + latmin) / 2.0) * (&pi / 9999999))
+   latsin := Math.sin(((latmax + latmin) / 2.0) * (&pi / 9999999))
 
    loadfile()				# load table keys
 
@@ -328,7 +328,7 @@ procedure collapse()
 
    x2 := latsin * xoff[1]
    y2 := yoff[1]
-   a2 := atan(y2, x2)
+   a2 := Math.atan(y2, x2)
 
    every i := 2 to *xoff do {
       x1 := x2
@@ -336,13 +336,13 @@ procedure collapse()
       a1 := a2
       x2 := latsin * xoff[i]
       y2 := yoff[i]
-      a2 := atan(y2, x2)
+      a2 := Math.atan(y2, x2)
 
       da := abs(a2 - a1)		# change in angle if removed
       if da > maxa then			# if too big, forget it
          next
 
-      d := abs((x1 * x1 + y1 * y1) * sin(da))	# deviation from straight line
+      d := abs((x1 * x1 + y1 * y1) * Math.sin(da))	# deviation from straight line
       if d <= maxsq then {			# if close enough
          dx := xoff[i] + xoff[i-1]
          dy := yoff[i] + yoff[i-1]
@@ -410,7 +410,7 @@ procedure crack(line)
       o.y1 := y1
       o.x2 := x2
       o.y2 := y2
-      a := atan(y2 - y1, latsin * (x2 - x1))
+      a := Math.atan(y2 - y1, latsin * (x2 - x1))
       o.aindex := 1 + integer(SECTORS * ((a / &pi) + 2.25)) % SECTORS
       }
 

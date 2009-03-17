@@ -1,6 +1,6 @@
 #SRC: V9GEN
 
-import io
+import io,util(Math)
 
 ##  mffsol.icn -- show solution graphically in mff format
 #
@@ -94,8 +94,8 @@ procedure main (args)
 
 procedure cart (r,a,dx,dy)
    local x,y
-    x := pct (50 + r * cos(a) + dy)
-    y := pct (50 + r * sin(a) + dy)
+    x := pct (50 + r * Math.cos(a) + dy)
+    y := pct (50 + r * Math.sin(a) + dy)
     writes (x," ",y," ")
     end
 

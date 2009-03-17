@@ -31,4 +31,7 @@ class Proc()
    public static defer get_local_name(p, id)
    public static defer get_local_type(p, id)
 
+   # load C function dynamically.
+   public static defer load(filename, funcname)
+
 end

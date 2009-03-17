@@ -30,7 +30,8 @@
 package ipl.wdiag
 
 import
-   io(ewrite, write)
+   io(ewrite, write),
+   lang(Prog)
 
 # write labeled global values
 procedure wdiag(names__[])		
@@ -39,7 +40,7 @@ procedure wdiag(names__[])
    wlist__ := []
 
    every put(wlist__, " ", s__ := !names__, "=") do
-      put(wlist__, image(variable(s__))) |
+      put(wlist__, image(Prog.get_variable(s__))) |
          ewrite(image(s__), " is not a variable")
 
    write ! wlist__

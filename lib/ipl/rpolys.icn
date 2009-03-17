@@ -27,7 +27,8 @@
 package ipl.rpolys
 
 import
-   ipl.gobject(Point)
+   ipl.gobject(Point),
+   util(Math)
 
 # generate polygon points
 procedure rpoly(cx, cy, radius, vertices, theta)	
@@ -37,7 +38,7 @@ procedure rpoly(cx, cy, radius, vertices, theta)
    /theta := 0			# starting angle
 
    every i := 1 to vertices do {
-      suspend Point(cx + radius * cos(theta), cy + radius * sin(theta))
+      suspend Point(cx + radius * Math.cos(theta), cy + radius * Math.sin(theta))
       theta +:= incr
       }
 

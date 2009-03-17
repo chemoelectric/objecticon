@@ -32,7 +32,8 @@
 package ipl.twists
 
 import
-   ipl.gobject(Point)
+   ipl.gobject(Point),
+   util(Math)
 
 procedure twist1(x, y, extent, n, t1, t2, j1, j2, k1, k2, rscale1, rscale2,
 sfact, sscale, soff, yfact)
@@ -49,11 +50,11 @@ sfact, sscale, soff, yfact)
    sangle := sfact * &pi / n
 
    every i := 0 to n do {
-      s := sscale * cos(sangle * i) + soff
-      c1 := cos(jangle1 * i)
-      s1 := sin(jangle2 * i)
-      c2 := s * cos(kangle1 * i)
-      s2 := s * sin(kangle2 * i)
+      s := sscale * Math.cos(sangle * i) + soff
+      c1 := Math.cos(jangle1 * i)
+      s1 := Math.sin(jangle2 * i)
+      c2 := s * Math.cos(kangle1 * i)
+      s2 := s * Math.sin(kangle2 * i)
       suspend Point(x + radius1 * c1 + radius2 * (c1 * c2 - s1 * s2),
          y + yfact * (radius1 * s1 + radius2 * (s1 * c2 + c1 * s2)))
       }
@@ -75,10 +76,10 @@ sfact, yfact)
    sangle := sfact * &pi / n
 
    every i := 0 to n do {
-      c1 := cos(jangle1 * i)
-      s1 := sin(jangle2 * i)
-      c2 := cos(kangle1 * i)
-      s2 := sin(kangle2 * i)
+      c1 := Math.cos(jangle1 * i)
+      s1 := Math.sin(jangle2 * i)
+      c2 := Math.cos(kangle1 * i)
+      s2 := Math.sin(kangle2 * i)
       suspend Point(x + radius1 * c1 + radius2 * (c1 * c2 - s1 * s2),
          y + yfact * (radius1 * s1 + radius2 * (s1 * c2 + c1 * s2)))
       }

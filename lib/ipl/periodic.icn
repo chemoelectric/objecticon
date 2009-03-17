@@ -28,7 +28,8 @@ package ipl.periodic
 import
    ipl.lists(lequiv, lextend),
    ipl.rational(addrat, divrat, mpyrat, rational,
-                ratred)
+                ratred),
+   util(Math)
 
 record perseq(pre, rep)
 
@@ -40,7 +41,7 @@ procedure Sqrt(i, j)
 
    half := rational(1, 2, 1)
 
-   rat := rational(integer(sqrt(i)), 1, 1)	# initial approximation
+   rat := rational(integer(Math.sqrt(i)), 1, 1)	# initial approximation
 
    i := rational(i, 1, 1)
 

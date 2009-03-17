@@ -33,12 +33,13 @@
 package ipl.jolygs
 
 import
-   ipl.gobject(Point)
+   ipl.gobject(Point),
+   util(Math)
 
 procedure jolyg(x, y, extent, n, angle, ratio, lfact, yfact)
    local xpos, ypos, i, offset, length
 
-   angle := dtor(angle)
+   angle := Math.dtor(angle)
    offset := 0
    length := extent * lfact
 
@@ -48,8 +49,8 @@ procedure jolyg(x, y, extent, n, angle, ratio, lfact, yfact)
    suspend Point(x + xpos, y + ypos)	# initial point
 
    every i := 0 to n do {
-      xpos +:= length * cos(offset)
-      ypos +:= length * sin(offset)
+      xpos +:= length * Math.cos(offset)
+      ypos +:= length * Math.sin(offset)
       suspend Point(x + xpos, y + yfact * ypos)
       offset +:= angle
       length *:= ratio

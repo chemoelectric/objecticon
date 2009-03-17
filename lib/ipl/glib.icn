@@ -42,7 +42,8 @@
 package ipl.glib
 
 import
-   io(stop, write, writes)
+   io(stop, write, writes),
+   util(Math)
 
 record point(x,y)
 
@@ -228,8 +229,8 @@ procedure f_flake(t, len, n, lr, cp)
       }
    else {
       if \cp then {
-         angle := dtor(t.direction)
-         p := [t.pos[1]+len*cos(angle), t.pos[2]+len*sin(angle)]
+         angle := Math.dtor(t.direction)
+         p := [t.pos[1]+len*Math.cos(angle), t.pos[2]+len*Math.sin(angle)]
          DrawConvexClipped(t.win, cp, t.pos, p)
          t.pos := p
          }
@@ -297,7 +298,7 @@ procedure fract_line(win,A,B,H,min_len,std_dev)
    if len <= min_len then
       Line_Forward(t, len)
    else {
-      f := exp((0.5-H)*log(2.0))
+      f := Math.exp((0.5-H)*Math.log(2.0))
       r := gauss() * std_dev * f
       N := point()
       N.x := 0.5*(A[1] + B[1]) - r*(B[2]-A[2]);
@@ -566,16 +567,16 @@ end
 procedure Line_Forward(t, dist)
    local angle, p
 
-   angle := dtor(t.direction)
-   p := [t.pos[1]+dist*cos(angle), t.pos[2]+dist*sin(angle)]
+   angle := Math.dtor(t.direction)
+   p := [t.pos[1]+dist*Math.cos(angle), t.pos[2]+dist*Math.sin(angle)]
    return lineto(t, p)
 end
 
 procedure Move_Forward(t, dist)
    local angle, p
 
-   angle := dtor(t.direction)
-   p := [t.pos[1]+dist*cos(angle), t.pos[2]+dist*sin(angle)]
+   angle := Math.dtor(t.direction)
+   p := [t.pos[1]+dist*Math.cos(angle), t.pos[2]+dist*Math.sin(angle)]
    return moveto(t, p)
 end
 
@@ -631,7 +632,7 @@ procedure len_vector(v)
 
    sum_sq := 0
    every sum_sq +:= (!v)^2
-   return sqrt(sum_sq)
+   return Math.sqrt(sum_sq)
 end
 
 procedure unit_vector(v)
@@ -649,7 +650,7 @@ procedure dot(v1,v2)
 end
 
 procedure angle_vectors(v1,v2)
-   return rtod(acos(dot(unit_vector(v1),unit_vector(v2))))
+   return Math.rtod(Math.acos(dot(unit_vector(v1),unit_vector(v2))))
 end
 
 procedure normal_vector(v)
@@ -680,7 +681,7 @@ procedure Rel_angle(A,B)
    rise := B[2]-A[2]
    run  := B[1]-A[1]
 
-   return rtod(atan(rise, run))
+   return Math.rtod(Math.atan(rise, run))
 end
 
 procedure normal_line(p1,p2)
@@ -756,29 +757,29 @@ procedure set_rotate(x,y,z)
 
    if /y & /z then {	# 2-D rotation
       X := Imatrix(3,3)
-      X[1][1] := cos(x)
+      X[1][1] := Math.cos(x)
       X[2][2] := X[1][1]
-      X[1][2] := sin(x)
+      X[1][2] := Math.sin(x)
       X[2][1] := -X[1][2]
       return X
       }
 
    X := Imatrix(4,4)
-   X[2][2] := cos(x)
+   X[2][2] := Math.cos(x)
    X[3][3] := X[2][2]
-   X[2][3] := sin(x)
+   X[2][3] := Math.sin(x)
    X[3][2] := -X[2][3]
 
    Y := Imatrix(4,4)
-   Y[1][1] := cos(y)
+   Y[1][1] := Math.cos(y)
    Y[3][3] := Y[1][1]
-   Y[3][1] := sin(y)
+   Y[3][1] := Math.sin(y)
    Y[1][3] := -Y[3][1]
 
    Z := Imatrix(4,4)
-   Z[1][1] := cos(z)
+   Z[1][1] := Math.cos(z)
    Z[2][2] := Z[2][2]
-   Z[1][2] := sin(z)
+   Z[1][2] := Math.sin(z)
    Z[2][1] := -Z[1][2]
 
    return mmult(X,mmult(Y,Z))

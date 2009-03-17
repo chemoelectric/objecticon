@@ -25,7 +25,8 @@
 package ipl.rstars
 
 import
-   ipl.gobject(Point)
+   ipl.gobject(Point),
+   util(Math)
 
 global size
 
@@ -54,8 +55,8 @@ procedure rstar(x, y, n, j, scale, offset, size)
    every i := 0 to n do {
       angle := jangle * i + offset
       suspend Point(
-          x + scale * cos(angle),
-          y + scale * sin(angle)
+          x + scale * Math.cos(angle),
+          y + scale * Math.sin(angle)
          )
       }
 

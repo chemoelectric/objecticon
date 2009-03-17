@@ -149,7 +149,8 @@ import
    ipl.polynom(poly2profile, polyadd, polyexp, polymul,
                polysub, str2poly),
    ipl.strings(csort, deletec),
-   ipl.xcode(xdecode)
+   ipl.xcode(xdecode),
+   util(Math)
 
 # arithmetic sequence with random intervals
 procedure arandseq(i, j)	
@@ -673,7 +674,7 @@ end
 procedure primeseq()		
    local i, k
 
-   suspend 2 | ((i := seq(3, 2)) & (not(i = (k := (3 to sqrt(i) by 2)) *
+   suspend 2 | ((i := seq(3, 2)) & (not(i = (k := (3 to Math.sqrt(i) by 2)) *
       (i / k))) & i)
 
 end

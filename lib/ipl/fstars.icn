@@ -50,7 +50,8 @@
 package ipl.fstars
 
 import
-   ipl.gobject(Point)
+   ipl.gobject(Point),
+   util(Math)
 
 global size
 
@@ -89,8 +90,8 @@ procedure fstar(x, y, n, p, r, incr, extent, xinit, yinit)
          h +:= 1
          }
       dist := extent * r ^ (p - h)
-      xloc +:= dist * cos(angle)
-      yloc +:= dist * sin(angle)
+      xloc +:= dist * Math.cos(angle)
+      yloc +:= dist * Math.sin(angle)
       suspend Point(x + xloc, y + yloc)
       angle +:= incr
       }

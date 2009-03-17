@@ -1,21 +1,21 @@
 #SRC: V9GEN
 
-import io
+import io, lang
 
 procedure main(a)
    local x, l0, l1, l2, l3, l4, l5, l6, l7, l8, l9
    static y
    x := y := &null
-   variable("a") := 1
-   variable("x") := 2
-   variable("y") := 3
-   if variable("z") then write("oops z")
+   Prog.get_variable("a") := 1
+   Prog.get_variable("x") := 2
+   Prog.get_variable("y") := 3
+   if Prog.get_variable("z") then write("oops z")
    &subject := "abcde"
    &pos := 3
-   write("&pos &subject: ", &pos, " ", variable("&subject"))
-   variable("&subject") := "wxyz"
-   write("&pos &subject: ", &pos, " ", variable("&subject"))
-   if variable("&clock") then write("oops &clock")
+   write("&pos &subject: ", &pos, " ", Prog.get_variable("&subject"))
+   Prog.get_variable("&subject") := "wxyz"
+   write("&pos &subject: ", &pos, " ", Prog.get_variable("&subject"))
+   if Prog.get_variable("&clock") then write("oops &clock")
    main2()
    write()
 

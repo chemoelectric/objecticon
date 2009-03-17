@@ -38,7 +38,8 @@
 package ipl.lcseval
 
 import
-   io(stop, write)
+   io(stop, write),
+   util(Math)
 
 procedure lcseval(a, c, m)
    local b, s
@@ -47,7 +48,7 @@ procedure lcseval(a, c, m)
    write("c=", c)
    write("m=", m, " (should be large)")
 
-   if (m / 100) < a < (m - sqrt(m)) then write("a passes range test")
+   if (m / 100) < a < (m - Math.sqrt(m)) then write("a passes range test")
    else write("*** a fails range test")
    if a % 8 = 5 then write("a passes mod test")
    else write("*** a fails mod test")

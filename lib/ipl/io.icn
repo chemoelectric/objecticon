@@ -262,7 +262,9 @@ import
       reads, stop, write, writes),
    ipl.getpaths(getpaths),
    ipl.random(randomize),
-   ipl.strings(replace)
+   ipl.strings(replace),
+   lang(Proc),
+   posix(System)
 
 global buffer_in, buffer_out, Eof
 
@@ -387,7 +389,7 @@ procedure dopen(s)
 
    if file := open(s) then return file		# look in current directory
 
-   paths := getenv("DPATH") | "."
+   paths := System.getenv("DPATH") | "."
        
    if (binpath := (&features ? (="Binaries at " & tab(0)))) |
       ((f := open((binpath:=getpaths()) ||
@@ -543,7 +545,7 @@ procedure dpath(s)
 
    if exists(s) then return s		# look in current directory
 
-   paths := getenv("DPATH") | fail
+   paths := System.getenv("DPATH") | fail
 
    s := "/" || s				# platform-specific
 
@@ -640,7 +642,7 @@ procedure pathfind(fname, path)
       fname := tab(0)			# get final component of path
       }
 
-   /path := getenv("DPATH")
+   /path := System.getenv("DPATH")
    /path := ""
    path := ". " || path
    path ? while not pos(0) do {
@@ -657,13 +659,13 @@ end
 procedure pathload(fname, entry)	
    local path, found
 
-   path := getenv("FPATH") | "."
+   path := System.getenv("FPATH") | "."
    found := pathfind(fname, path)
 
    if /found then
       stop ("cannot find \"", fname, "\" on path \". ", path, "\"")
 
-   return loadfunc(found, entry)	# aborts if unsuccessful
+   return Proc.load(found, entry)	# aborts if unsuccessful
 end
 
 # assemble backslash-continued lines

@@ -74,7 +74,8 @@ package ipl.factors
 import
    io(stop),
    ipl.io(dopen),
-   ipl.numbers(round)
+   ipl.numbers(round),
+   util(Math)
 
 # generate the divisors of n
 procedure divisors(n)			
@@ -261,7 +262,7 @@ end
 procedure prime()			
    local i, k
 
-   suspend 2 | ((i := seq(3, 2)) & (not(i = (k := (3 to sqrt(i) by 2)) *
+   suspend 2 | ((i := seq(3, 2)) & (not(i = (k := (3 to Math.sqrt(i) by 2)) *
       (i / k))) & i)
 
 end

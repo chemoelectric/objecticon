@@ -896,11 +896,10 @@ static void initptrs(struct progstate *p, struct header *h)
 
 
 
-"load(s,arglist,blocksize,stringsize,stacksize) - load"
-" a program corresponding to string s as a co-expression."
+" load a program corresponding to string s as a co-expression."
 
-function{1} load(s,arglist,
-		 blocksize, stringsize, stacksize)
+function{1} lang_Prog_load(s,arglist,
+                           blocksize, stringsize, stacksize)
    declare {
       tended char *loadstring;
       C_integer _bs_, _ss_, _stk_;

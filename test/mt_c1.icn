@@ -1,15 +1,15 @@
 invocable all
 
-import any.pack, io
+import any.pack, io, lang
 
 global what, c
 
 procedure main(a)
    local p
    what := 100
-   c := load("mt_c2") | stop("Couldn't load mt_c2")
+   c := Prog.load("mt_c2") | stop("Couldn't load mt_c2")
    @c
-   p := glob("subchild0",c) | stop("no subchild0 found")
+   p := Prog.get_global("subchild0",c) | stop("no subchild0 found")
    p()
 end
 
@@ -107,9 +107,9 @@ end
 
 procedure child17()
    local p,q,r
-   p := glob("subchild17a",c) | stop("no subchild17a found")
-   q := glob("subchild17b",c) | stop("no subchild17b found")
-   r := glob("subchild17c",c) | stop("no subchild17c found")
+   p := Prog.get_global("subchild17a",c) | stop("no subchild17a found")
+   q := Prog.get_global("subchild17b",c) | stop("no subchild17b found")
+   r := Prog.get_global("subchild17c",c) | stop("no subchild17c found")
    suspend what
    suspend p() | q() | r()
    suspend p()=q()
@@ -121,7 +121,7 @@ end
 
 procedure child18()
    local e,p
-   p := glob("subchild18",c) | stop("no subchild18 found")
+   p := Prog.get_global("subchild18",c) | stop("no subchild18 found")
    e := create p()
    @e
    return
@@ -129,7 +129,7 @@ end
 
 procedure child19()
    local p
-   p := glob("subchild19",c) | stop("no subchild18 found")
+   p := Prog.get_global("subchild19",c) | stop("no subchild18 found")
    return create p()
 end
 
@@ -177,7 +177,7 @@ procedure child23(t,r)
 end
 
 procedure child24()
-   return constructor("othertype","a","b","c")
+   return Constructor.create_constructor("othertype","a","b","c")
 end
 
 procedure child25(self,x,y)

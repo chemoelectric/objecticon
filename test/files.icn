@@ -58,7 +58,7 @@ end
 procedure main()
    local cd, pd
 
-   cd := chdir()
+   cd := Files.getcwd()
    cd ? {
       while tab(upto('/')) do move(1)
       move(-1)

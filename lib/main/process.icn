@@ -22,7 +22,7 @@ class Process()
    # Called by the parent process to start the child
    #
    public start()
-      pid := fork() | runerr("Couldn't fork")
+      pid := System.fork() | runerr("Couldn't fork")
       if pid = 0 then {
          run()
          exit(0)
@@ -35,7 +35,7 @@ class Process()
    # &null.
    #
    public join()
-      wait(\pid)
+      System.wait(\pid)
       pid := &null
    end
 
@@ -43,7 +43,7 @@ class Process()
    # Called by the parent to kill the child.  Then the {join} method is invoked.
    #
    public stop()
-      kill(\pid, Signal.SIGTERM)
+      System.kill(\pid, Signal.SIGTERM)
       join()
    end
 

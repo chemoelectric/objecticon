@@ -133,7 +133,8 @@
 package ipl.binary
 
 import
-   io(ewrite, stop)
+   io(ewrite, stop),
+   util(Math)
 
 global pack_short,pack_long,
       unpack_short,unpack_unsigned_short,
@@ -722,7 +723,7 @@ procedure pack_double_float(v)
   if v = 0.0 then return "\0\0\0\0\0\0\0\0"
   else {
     av := abs(v)
-    exp := integer(log(av,2))
+    exp := integer(Math.log(av,2))
     if exp <= -1023 then return "\0\0\0\0\0\0\0\0"
     if exp > 1023 then return if v < 0.0 then "\xff\xf0\0\0\0\0\0\0"
 	else "\x7f\xf0\0\0\0\0\0\0"
@@ -751,7 +752,7 @@ procedure pack_single_float(v)
   if v = 0.0 then return "\0\0\0\0"
   else {
     av := abs(v)
-    exp := integer(log(av,2))
+    exp := integer(Math.log(av,2))
     if exp <= -127 then return "\0\0\0\0"
     if exp > 127 then return if v < 0.0 then "\xff\x80\0\0"
 	else "\x7f\x80\0\0"
@@ -780,7 +781,7 @@ procedure pack_extended_float(v)
   if v = 0.0 then return "\0\0\0\0\0\0\0\0\0\0"
   else {
     av := abs(v)
-    exp := integer(log(av,2))
+    exp := integer(Math.log(av,2))
     if exp <= -16383 then return "\0\0\0\0\0\0\0\0\0\0"
     if exp > 16383 then return if v < 0.0 then "\xff\xff\0\0\0\0\0\0\0\0"
 	else "\x7f\xff\0\0\0\0\0\0\0\0"

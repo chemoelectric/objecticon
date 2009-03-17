@@ -1,0 +1,24 @@
+package posix
+
+class System()
+   # replace the executing Icon program with a new program.
+   public static defer exec(f, argv[])
+
+   # spawn a new identical process.
+   public static defer fork()
+
+   # send a signal to a process.
+   public static defer kill(pid, signal)
+
+   # wait for process to terminate or stop.
+   public static defer wait(pid, options)
+
+   # return contents of environment variable s.
+   public static defer getenv(s)
+   
+   # set an environment variable.
+   public static defer setenv(name, value)
+
+   # trap a signal.
+   public static defer trap(sig, handler)
+end

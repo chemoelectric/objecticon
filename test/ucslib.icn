@@ -1,4 +1,4 @@
-import io
+import io, lang
 
 procedure mkstr(n, l)
    local s, i
@@ -29,7 +29,7 @@ procedure trans(u)
    s := ""
    every i := ord(!u) do {
       if i < 256 then {
-         if hasord('A-I', i) then
+         if Text.has_ord('A-I', i) then
             stop("illegal char:",i)
          s ||:= char(i)
       } else

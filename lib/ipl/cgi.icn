@@ -21,7 +21,8 @@ package ipl.cgi
 import
    io(open, read, reads, stop,
       write, writes),
-   ipl.optwindw(optwindow)
+   ipl.optwindw(optwindow),
+   posix(System)
 
 global cgi			# table of input fields
 
@@ -78,7 +79,7 @@ record HMap(value,x1,y1,x2,y2)
 procedure cgiXYCoord(hlst)
    local title,x,y,q
    title := hlst[1]
-   getenv("QUERY_STRING") ? {
+   System.getenv("QUERY_STRING") ? {
       x := tab(find(","))
       move(1)
       y := tab(0)
@@ -92,11 +93,11 @@ procedure cgiXYCoord(hlst)
 end
 
 procedure cgiMyURL()
-   return "http://" || getenv("SERVER_NAME") || getenv("SCRIPT_NAME")
+   return "http://" || System.getenv("SERVER_NAME") || System.getenv("SCRIPT_NAME")
 end
 
 procedure cgiMethGet()
-   if getenv("REQUEST_METHOD")==="GET" then return
+   if System.getenv("REQUEST_METHOD")==="GET" then return
    # else fail
 end
 
@@ -118,8 +119,8 @@ initial {
    cgi := table(0)
    line := ""
 
-   ct := getenv("CONTENT_TYPE")
-   cl := getenv("CONTENT_LENGTH")
+   ct := System.getenv("CONTENT_TYPE")
+   cl := System.getenv("CONTENT_LENGTH")
    if match("multipart/form-data;", ct) then {
       ct ? {
 	 tab(find("boundary=") + 9)
@@ -179,8 +180,8 @@ initial {
   }
 else {
    if cgiMethGet() then
-      line := getenv("QUERY_STRING")
-   else line := reads(, getenv("CONTENT_LENGTH"))
+      line := System.getenv("QUERY_STRING")
+   else line := reads(, System.getenv("CONTENT_LENGTH"))
    line ? {
       while put(html, tab(find("&"))) do {
 	 tab(many('&'))
@@ -316,7 +317,7 @@ end
 # cgiRemoteUser(): returns the reported Web user.
 #
 procedure cgiRemoteUser()
-   return getenv("REMOTE_USER")
+   return System.getenv("REMOTE_USER")
 end
 
 #
@@ -330,8 +331,8 @@ procedure cgiRndImg(GifList, AltText)
 end
 
 procedure cgiOptwindow(opts, args[])
-   if not getenv("DISPLAY") then {
-      /opts["D"] := getenv("REMOTE_ADDR") || ":0"
+   if not System.getenv("DISPLAY") then {
+      /opts["D"] := System.getenv("REMOTE_ADDR") || ":0"
       }
    return optwindow ! push(args, opts)
 end

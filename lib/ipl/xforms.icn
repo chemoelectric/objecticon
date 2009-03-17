@@ -28,7 +28,8 @@
 package ipl.xforms
 
 import
-   ipl.matrix(identity_matrix, mult_matrix)
+   ipl.matrix(identity_matrix, mult_matrix),
+   util(Math)
 
 # transform point list by matrix
 procedure transform(p, M)		
@@ -117,9 +118,9 @@ procedure set_rotate(x)
    local M
 
    M := identity_matrix(3,3)
-   M[1][1] := cos(x)
+   M[1][1] := Math.cos(x)
    M[2][2] := M[1][1]
-   M[1][2] := sin(x)
+   M[1][2] := Math.sin(x)
    M[2][1] := -M[1][2]
 
    return M

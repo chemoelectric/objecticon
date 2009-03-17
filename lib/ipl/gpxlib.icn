@@ -64,7 +64,8 @@
 package ipl.graphics
 
 import
-   graphics(Window)
+   graphics(Window),
+   util(Math)
 
 #   PushWin(L) -- push amper_window on list if no window already there.
 
@@ -79,7 +80,7 @@ end
 procedure Distance(x1, y1, x2, y2)		
    x1 -:= x2
    y1 -:= y2
-   return sqrt(x1 * x1 + y1 * y1)
+   return Math.sqrt(x1 * x1 + y1 * y1)
 end
 
 

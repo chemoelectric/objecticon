@@ -36,6 +36,9 @@
 
 package ipl.complex
 
+import
+   util(Math)
+
 record complex(rpart, ipart)
 
 procedure strcpx(s)
@@ -92,6 +95,6 @@ end
 
 procedure cpxabs(z)
 
-   return sqrt(z.rpart ^ 2 + z.ipart ^ 2)
+   return Math.sqrt(z.rpart ^ 2 + z.ipart ^ 2)
 
 end

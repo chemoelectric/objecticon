@@ -47,8 +47,6 @@
    Feature(1, "_EVENT_MONITOR", "event monitoring")
 #endif					/* EventMon */
 
-   Feature(1, "_EXTERNAL_FUNCTIONS", "external functions")
-
    Feature(1, "_KEYBOARD_FUNCTIONS", "keyboard functions")
 
    Feature(largeints, "_LARGE_INTEGERS", "large integers")

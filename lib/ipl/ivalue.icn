@@ -37,7 +37,8 @@
 package ipl.ivalue
 
 import
-   ipl.escape(escape)
+   ipl.escape(escape),
+   lang(Prog)
 
 # convert string to Icon value
 procedure ivalue(___s___)			
@@ -86,7 +87,7 @@ procedure ivalue(___s___)
       } |
       ((*___s___ = 0) & &null) |			# empty string = &null
       \___k___[___s___] |				# non-variable keyword
-      variable(___s___) |				# variable
+      Prog.get_variable(___s___) |			# variable
       struct___(___s___) | {				# structure
       ___s___ ? {					# procedure
          if =("function " | "procedure " | "record contructor ") & tab(0)

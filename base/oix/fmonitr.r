@@ -22,7 +22,7 @@
 
 "event(x, y, C) - create event with event code x and event value y."
 
-function{0,1} event(x,y,ce)
+function{0,1} lang_Prog_send_event(x,y,ce)
    body {
       struct progstate *dest = NULL;
 
@@ -199,7 +199,7 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
 "evget(c,flag) - read through the next event token having a code matched "
 " by cset c."
 
-function{0,1} evget(cs,vmask,flag)
+function{0,1} lang_Prog_get_event(cs,vmask,flag)
    if !def:cset(cs,*k_cset) then
       runerr(104,cs)
    if !is:null(vmask) then

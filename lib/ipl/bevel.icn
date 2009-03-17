@@ -105,6 +105,7 @@ $include "vdefns.icn"
 
 package ipl.graphics
 
+import util(Math)
 
 global bev_table
 record bev_record(shadow, hilite)
@@ -438,7 +439,7 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
       upper := lower := win
       }
 
-   a := atan(y2 - y1, x2 - x1)
+   a := Math.atan(y2 - y1, x2 - x1)
    if a < 0 then
       a +:= &pi
    n := integer(8 * a / &pi)

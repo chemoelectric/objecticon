@@ -30,20 +30,21 @@ package ipl.spirals
 
 import
    ipl.gobject(Point),
-   ipl.numbers(div)
+   ipl.numbers(div),
+   util(Math)
 
 procedure spiral(x, y, extent, n, t, e, r, incr, yfact)
    local i, c, s, angle, redrad, x1, y1
 
-   incr := dtor(incr)
+   incr := Math.dtor(incr)
 
    every i := 0 to n do {
       redrad := r ^ div(i, n)
       angle := (incr * i) / n
-      x1 := redrad * cos(t * angle)
-      y1 := redrad * e * sin(t * angle)
-      c := cos(angle)
-      s := sin(angle)
+      x1 := redrad * Math.cos(t * angle)
+      y1 := redrad * e * Math.sin(t * angle)
+      c := Math.cos(angle)
+      s := Math.sin(angle)
       suspend Point(x + extent / 2 * (1 + x1 * c - y1 * s),
          y + extent / 2 * yfact * (1 + x1 * s + y1 * c))
       }

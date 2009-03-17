@@ -35,23 +35,23 @@ end
 #define erange    if (errno == ERANGE)     runerr(204);
 #define edom      if (errno == EDOM)       runerr(205);
 
-MathOp(sin, sin,  ", x in radians.", ;, ;)
-MathOp(cos, cos,  ", x in radians.", ;, ;)
-MathOp(tan, tan,  ", x in radians.", ; , erange)
-MathOp(acos,acos, ", x in radians.", aroundone, edom)
-MathOp(asin,asin, ", x in radians.", aroundone, edom)
-MathOp(exp, exp,  " - e^x.", ; , erange)
-MathOp(sqrt,sqrt, " - square root of x.", positive, edom)
+MathOp(util_Math_sin, sin,  ", x in radians.", ;, ;)
+MathOp(util_Math_cos, cos,  ", x in radians.", ;, ;)
+MathOp(util_Math_tan, tan,  ", x in radians.", ; , erange)
+MathOp(util_Math_acos,acos, ", x in radians.", aroundone, edom)
+MathOp(util_Math_asin,asin, ", x in radians.", aroundone, edom)
+MathOp(util_Math_exp, exp,  " - e^x.", ; , erange)
+MathOp(util_Math_sqrt,sqrt, " - square root of x.", positive, edom)
 #define DTOR(x) ((x) * Pi / 180)
 #define RTOD(x) ((x) * 180 / Pi)
-MathOp(dtor,DTOR, " - convert x from degrees to radians.", ; , ;)
-MathOp(rtod,RTOD, " - convert x from radians to degrees.", ; , ;)
+MathOp(util_Math_dtor,DTOR, " - convert x from degrees to radians.", ; , ;)
+MathOp(util_Math_rtod,RTOD, " - convert x from radians to degrees.", ; , ;)
 
 
 
 "atan(r1,r2) -- r1, r2  in radians; if r2 is present, produces atan2(r1,r2)."
 
-function{1} atan(x,y)
+function{1} util_Math_atan(x,y)
 
    if !cnv:C_double(x) then
       runerr(102, x)
@@ -73,7 +73,7 @@ end
 
 "log(r1,r2) - logarithm of r1 to base r2."
 
-function{1} log(x,b)
+function{1} util_Math_log(x,b)
 
    if !cnv:C_double(x) then
       runerr(102, x)

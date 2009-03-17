@@ -175,7 +175,8 @@ package ipl.iolib
 
 import
    io(close, ewrite, open, read,
-      stop, writes)
+      stop, writes),
+   posix(System)
 
 global tc_table, isDOS
 record true()
@@ -236,10 +237,10 @@ procedure getname()
     check_features()
 
     if \isDOS then {
-        term := getenv("TERM") | "mono"
+        term := System.getenv("TERM") | "mono"
     }
     else {
-	if not (term := getenv("TERM")) then {
+	if not (term := System.getenv("TERM")) then {
 	    tset_output := open("/bin/tset -","pr") |
 		er("getname","can't find tset command",1)
 	    term := !tset_output
@@ -296,7 +297,7 @@ procedure getentry(name, termcap_string)
     # ling it with a second argument - the name of the termcap file
     # to use instead of the regular one, or the one specified in the
     # termcap environment variable.
-    /termcap_string := getenv("TERMCAP")
+    /termcap_string := System.getenv("TERMCAP")
 
     if \isDOS then {
 	if \termcap_string then {

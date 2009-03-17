@@ -38,38 +38,10 @@ function{} exit(status)
 end
 
 
-"getenv(s) - return contents of environment variable s."
-
-function{0,1} getenv(s)
-
-   /*
-    * Make a C-style string out of s
-    */
-   if !cnv:C_string(s) then
-      runerr(103,s)
-   abstract {
-      return string
-      }
-
-   inline {
-      register char *p;
-      long l;
-
-      if ((p = getenv(s)) != NULL) {	/* get environment variable */
-	 l = strlen(p);
-	 MemProtect(p = alcstr(p,l));
-	 return string(l,p);
-	 }
-      else 				/* fail if not in environment */
-	 fail;
-
-      }
-end
-
 
 "getch() - return a character from console."
 
-function{0,1} getch()
+function{0,1} io_Keyboard_getch()
    abstract {
       return string;
       }
@@ -84,7 +56,7 @@ end
 
 "getche() -- return a character from console with echo."
 
-function{0,1} getche()
+function{0,1} io_Keyboard_getche()
    abstract {
       return string;
       }
@@ -100,7 +72,7 @@ end
 
 "kbhit() -- Check to see if there is a keyboard character waiting to be read."
 
-function{0,1} kbhit()
+function{0,1} io_Keyboard_kbhit()
    abstract {
       return null
       }
@@ -113,20 +85,23 @@ end
 
 
 "chdir(s) - change working directory to s."
-function{0,1} chdir(s)
+function{0,1} io_Files_chdir(s)
+   if !cnv:C_string(s) then
+      runerr(103, s)
+
+   body {
+       if (chdir(s) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function{0,1} io_Files_getcwd()
    body {
        int buff_size, rc;
        char *buff;
-
-       if (!is:null(s)) {
-           tended char *dir;
-           if (!cnv:C_string(s, dir))
-               runerr(103, s);
-           if (chdir(dir) < 0) {
-               errno2why();
-               fail;
-           }
-       }
 
        buff_size = 32;
        for (;;) {

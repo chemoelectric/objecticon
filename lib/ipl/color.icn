@@ -103,7 +103,8 @@
 package ipl.graphics
 
 import
-   graphics(Window)
+   graphics(Window),
+   posix(System)
 
 # scale with gamma correction
 procedure ScaleGamma(v, g)		
@@ -174,7 +175,7 @@ procedure Shade(win, color)
    static dmat, env, type
 
    initial {
-      env := ("" ~== map(getenv("XSHADE")))
+      env := ("" ~== map(System.getenv("XSHADE")))
       type := proc("type", 0)	# protect attractive name
       }
 

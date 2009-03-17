@@ -37,7 +37,8 @@
 package ipl.getpaths
 
 import
-   io(stop)
+   io(stop),
+   posix(System)
 
 procedure getpaths(base_paths[])
 
@@ -66,7 +67,7 @@ procedure getpaths(base_paths[])
     }
 
     suspend !base_paths
-    paths := getenv(varname)
+    paths := System.getenv(varname)
     \paths ? {
 	tab(match(sep))
 	while p := 1(tab(find(sep)), move(1))

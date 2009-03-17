@@ -112,7 +112,9 @@
 package ipl.datetime
 
 import
-   io(stop)
+   io(stop),
+   posix(System),
+   util(Math)
 
 record date1(month, day, year)
 record date2(month, year, fraction)
@@ -143,8 +145,8 @@ procedure DateInit()
 	    "July","August","September","October","November","December"]
       Days := ["Sunday","Monday","Tuesday","Wednesday","Thursday",
 	    "Friday","Saturday"]
-      /DateBaseYear := integer(getenv("DateBaseYear")) | 1970
-      /HoursFromGmt := integer(getenv("HoursFromGmt")) | 0
+      /DateBaseYear := integer(System.getenv("DateBaseYear")) | 1970
+      /HoursFromGmt := integer(System.getenv("HoursFromGmt")) | 0
       }
    return
 end
@@ -537,11 +539,11 @@ procedure pom(n, nph)
    extra := 0.75933 + 1.53058868 * c + ((1.178e-4) - (1.55e-7) * t) * t2
 
    if nph = (0 | 2) then
-      extra +:=  (0.1734 - 3.93e-4 * t) * sin(radians * as) - 0.4068 *
-          sin(radians * am)
+      extra +:=  (0.1734 - 3.93e-4 * t) * Math.sin(radians * as) - 0.4068 *
+          Math.sin(radians * am)
    else if nph = (1 | 3) then
-      extra +:= (0.1721 - 4.0e-4 * t) * sin(radians * as) - 0.6280 *
-        sin(radians * am)
+      extra +:= (0.1721 - 4.0e-4 * t) * Math.sin(radians * as) - 0.6280 *
+        Math.sin(radians * am)
    else fail
 
    if extra >= 0 then i := integer(extra)

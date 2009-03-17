@@ -1498,7 +1498,7 @@ class XmlParser(Connectable,SetFields)
       if /expand then 
          return s
       else {
-         if hasord(XML_CHAR, i) then {
+         if Text.has_ord(XML_CHAR, i) then {
             return if \utf8_flag then
                uchar(i)
             else

@@ -42,48 +42,6 @@ end
 
 
 
-/*
- * callout - call a C library routine (or any C routine that doesn't call Icon)
- *   with an argument count and a list of descriptors.  This routine
- *   doesn't build a procedure frame to prepare for calling Icon back.
- */
-function{1} callout(x[nargs])
-   body {
-      dptr retval;
-      int signal;
-
-      /*
-       * Little cheat here.  Although this is a var-arg procedure, we need
-       *  at least one argument to get started: pretend there is a null on
-       *  the stack.  NOTE:  Actually, at present, varargs functions always
-       *  have at least one argument, so this doesn't plug the hole.
-       */
-      if (nargs < 1)
-         runerr(103, nulldesc);
-
-      /*
-       * Call the 'C routine caller' with a pointer to an array of descriptors.
-       *  Note that these are being left on the stack. We are passing
-       *  the name of the routine as part of the convention of calling
-       *  routines with an argc/argv technique.
-       */
-      signal = -1;			/* presume successful completiong */
-      retval = extcall(x, nargs, &signal);
-      if (signal >= 0) {
-         if (retval == NULL)
-            runerr(signal);
-         else
-            runerr(signal, *retval); 
-         }
-      if (retval != NULL) {
-         return *retval;
-         }
-      else 
-         fail;
-      }
-end
-
-
 
 "char(i) - produce a string consisting of character i."
 
@@ -333,9 +291,9 @@ function{1} errorclear()
 end
 
 
-"function() - generate the names of the functions."
 
-function{*} function()
+
+function{*} lang_Prog_get_function_names()
    abstract {
       return string
       }
@@ -1308,10 +1266,8 @@ end
 
 
 
-"variable(s) - find the variable with name s and return a"
-" variable descriptor which points to its value."
 
-function{0,1} variable(s,c)
+function{0,1} lang_Prog_get_variable(s,c)
 
    if !cnv:string(s) then
       runerr(103, s)
@@ -1365,9 +1321,9 @@ end
 
 
 
-"parent(ce) - given a ce, return &main for that ce's parent"
 
-function{1} parent(ce)
+
+function{1} lang_Prog_get_parent(ce)
    if is:null(ce) then inline { ce = k_current; }
    else if !is:coexpr(ce) then runerr(118,ce)
    abstract {
@@ -1384,65 +1340,8 @@ function{1} parent(ce)
 end
 
 
-"eventmask(ce,cs) - given a ce, get or set that program's event mask"
 
-function{1} eventmask(ce,cs,vmask)
-   if !is:coexpr(ce) then runerr(118,ce)
-   if is:null(cs) && is:null(vmask) then {
-      abstract {
-         return cset++null
-         }
-      inline {
-         return BlkLoc(ce)->coexpr.program->eventmask;
-         }
-      }
-   else if !cnv:cset(cs) then runerr(104,cs)
-   else {
-      abstract {
-         return cset
-         }
-      body {
-	 struct progstate *p = ((struct b_coexpr *)BlkLoc(ce))->program;
-	 if (BlkLoc(cs) != BlkLoc(p->eventmask)) {
-	    p->eventmask = cs;
-	    assign_event_functions(p, cs);
-	    }
-
-	 if (!is:null(vmask)) {
-            if (!is:table(vmask)) runerr(124,vmask);
-	    BlkLoc(ce)->coexpr.program->valuemask = vmask;
-	    }
-         return cs;
-         }
-      }
-end
-
-
-
-"globnames(ce) - produce the names of identifiers global to ce"
-
-function{*} globnames(ce)
-   declare {
-      struct progstate *ps;
-      }
-   abstract {
-      return string
-      }
-   if is:null(ce) then inline { ps = curpstate; }
-   else if is:coexpr(ce) then
-      inline { ps = BlkLoc(ce)->coexpr.program; }
-   else runerr(118,ce)
-   body {
-      struct descrip *dp;
-      for (dp = ps->Gnames; dp != ps->Egnames; dp++) {
-         suspend *dp;
-         }
-      fail;
-      }
-end
-
-"keyword(kname,ce) - produce a keyword in ce's thread"
-function{*} keyword(s,ce)
+function{*} lang_Prog_get_keyword(s,ce)
    if !cnv:string(s) then 
       runerr(103, s)
 
@@ -1634,30 +1533,66 @@ function{*} keyword(s,ce)
    }
 end
 
-"opmask(ce,cs) - get or set ce's program's opcode mask"
+function{1} lang_Prog_get_eventmask(ce)
+   if !is:coexpr(ce) then 
+      runerr(118,ce)
+   body {
+         return BlkLoc(ce)->coexpr.program->eventmask;
+   }
+end
 
-function{1} opmask(ce,cs)
-   if !is:coexpr(ce) then runerr(118,ce)
-
-   if is:null(cs) then {
-      abstract {
-         return cset++null
+function{1} lang_Prog_set_eventmask(ce,cs)
+   if !is:coexpr(ce) then 
+      runerr(118,ce)
+   if !cnv:cset(cs) then 
+      runerr(104,cs)
+   body {
+	 struct progstate *p = BlkLoc(ce)->coexpr.program;
+	 if (BlkLoc(cs) != BlkLoc(p->eventmask)) {
+	    p->eventmask = cs;
+	    assign_event_functions(p, cs);
          }
-      body {
-         result = BlkLoc(ce)->coexpr.program->opcodemask;
-         return result;
-         }
-      }
-   else if !cnv:cset(cs) then runerr(104,cs)
-   else {
-      abstract {
-         return cset
-         }
-      body {
-         ((struct b_coexpr *)BlkLoc(ce))->program->opcodemask = cs;
          return cs;
-         }
-      }
+   }
+end
+
+function{1} lang_Prog_get_valuemask(ce)
+   if !is:coexpr(ce) then 
+      runerr(118,ce)
+   body {
+      return BlkLoc(ce)->coexpr.program->valuemask;
+   }
+end
+
+function{1} lang_Prog_set_valuemask(ce,vmask)
+   if !is:coexpr(ce) then 
+      runerr(118,ce)
+   if !is:table(vmask) then
+      runerr(124,vmask)
+   body {
+      BlkLoc(ce)->coexpr.program->valuemask = vmask;
+      return vmask;
+   }
+end
+
+
+function{1} lang_Prog_set_opmask(ce,cs)
+   if !is:coexpr(ce) then 
+      runerr(118,ce)
+   if !cnv:cset(cs) then 
+      runerr(104,cs)
+   body {
+         BlkLoc(ce)->coexpr.program->opcodemask = cs;
+         return cs;
+   }
+end
+
+function{1} lang_Prog_get_opmask(ce)
+   if !is:coexpr(ce) then 
+      runerr(118,ce)
+   body {
+         return BlkLoc(ce)->coexpr.program->opcodemask;
+   }
 end
 
 
@@ -2058,9 +1993,7 @@ function{1} uchar(i)
 end
 
 
-"utf8seq(i) - produce a string containing the utf-8 sequence of chars for character i."
-
-function{1} utf8seq(i)
+function{1} lang_Text_utf8_seq(i)
 
    if !cnv:C_integer(i) then
       runerr(101,i)
@@ -2077,9 +2010,8 @@ function{1} utf8seq(i)
    }
 end
 
-"makecset(x[n]) - produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc."
 
-function{1} makecset(x[n])
+function{1} lang_Text_create_cset(x[n])
    body {
      struct rangeset *rs;
      tended struct b_cset *b;
@@ -2155,9 +2087,7 @@ function{1} makecset(x[n])
    }
 end
 
-"ordrange(c) - generate the ranges in a cset, as a sequence of from-to pairs."
-
-function{*} ordrange(c)
+function{*} lang_Text_get_ord_range(c)
    if !cnv:cset(c) then
       runerr(120, c)
    body {
@@ -2171,9 +2101,8 @@ function{*} ordrange(c)
 end
 
 
-"hasord(c, x) - succeed if the cset c contains the code point x, returning its index in the cset"
 
-function{0,1} hasord(c, x)
+function{0,1} lang_Text_has_ord(c, x)
    if !cnv:cset(c) then
       runerr(120, c)
    if !cnv:C_integer(x) then

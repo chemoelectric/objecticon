@@ -151,7 +151,7 @@ class Encode()
          "cset" : {
             chars_out(Codec.CSET_CODE) | fail
             l := []
-            every put(l, ordrange(o))
+            every put(l, Text.get_ord_range(o))
             int_out(*l) | fail
             every e := !l do
                encode(e) | fail
@@ -300,7 +300,7 @@ class Decode()
 
          Codec.CONSTRUCTOR_CODE : {
             rname := line_in() | fail
-            (con := glob(rname) &
+            (con := Prog.get_global(rname) &
              type(con) == "constructor") | return error("No such constructor " || rname)
             return con
          }
@@ -345,7 +345,7 @@ class Decode()
              l := []
              every 1 to n do 
                 put(l, decode()) | fail
-             return makecset(l)
+             return Text.create_cset(l)
           }
 
          Codec.UCS_CODE :
@@ -354,7 +354,7 @@ class Decode()
          Codec.RECORD_CODE : {
             (rname := line_in() &
              n := int_in()) | fail
-            (con := glob(rname) &
+            (con := Prog.get_global(rname) &
              type(con) == "constructor") | return error("No such constructor " || rname)
             res := con()
             n = *res | return error("Inconsistent number of fields in " || image(res))

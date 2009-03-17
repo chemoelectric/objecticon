@@ -2,6 +2,7 @@ package io
 
 import 
    util,
+   posix,
    lang,
    ipl.random
 
@@ -253,6 +254,18 @@ class Files(NoCopy)
    public static defer readlink(s)
 
    #
+   # Changes the current directory to that specified in s.
+   #
+   # @param s the directory
+   #
+   public static defer chdir(s)
+
+   #
+   # Get current working directory
+   #
+   public static defer getcwd()
+
+   #
    # Remove a file, or an empty directory
    #
    # @param s the file or empty directory
@@ -396,7 +409,7 @@ class Files(NoCopy)
          fail
 
       # Search all the elements in the path
-      every s := get_path(split_paths(getenv(n))).append(p).str() do {
+      every s := get_path(split_paths(System.getenv(n))).append(p).str() do {
          if access(s, mode) then
             return s
       }
@@ -578,7 +591,7 @@ class UnixFilePath(FilePath)
    public absolute()
       if is_absolute() then
          return self
-      return Files.get_path(chdir()).append(self)
+      return Files.get_path(Files.getcwd()).append(self)
    end
 
    public canonical()
@@ -619,11 +632,11 @@ class UnixFileSystem(FileSystem)
    end
 
    public get_home()
-      return getenv("HOME")
+      return System.getenv("HOME")
    end
 
    public get_temp()
-      return getenv("TEMP") | "/tmp"
+      return System.getenv("TEMP") | "/tmp"
    end
 
    public is_hidden(s)
@@ -673,12 +686,12 @@ class WindowsFilePath(FilePath)
       if is_absolute() then
          return self
       if l[1] == "\\" then
-         return WindowsFilePath([chdir()[1:4]] ||| l[2:0])
+         return WindowsFilePath([Files.getcwd()[1:4]] ||| l[2:0])
       if l[1][2:0] == ":" then {
          s := getdcwd(l[1][1]) | l[1] || "\\"
          return Files.get_path(s).append(WindowsFilePath(l[2:0]))
       }
-      return Files.get_path(chdir()).append(self)
+      return Files.get_path(Files.getcwd()).append(self)
    end
 
    private static defer getdcwd(d)
@@ -727,11 +740,11 @@ class WindowsFileSystem(FileSystem)
    end
 
    public get_home()
-      return getenv("HOME")
+      return System.getenv("HOME")
    end
 
    public get_temp()
-      return getenv("TEMP") | "C:\\TEMP"
+      return System.getenv("TEMP") | "C:\\TEMP"
    end
 
    public is_hidden(s)

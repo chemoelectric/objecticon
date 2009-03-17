@@ -108,7 +108,8 @@ import
    io(close, ewrite, read, reads),
    ipl.cartog(compose),
    ipl.io(dopen),
-   ipl.numbers(ceil)
+   ipl.numbers(ceil),
+   util(Math)
 
 
 
@@ -435,19 +436,19 @@ procedure gdt_molo_proj(p, L)
    bbya := 1. - p.fin
    lllist := []
    every i := 1 to *L by 2 do {
-      lam := dtor(L[i])
-      slam := sin(lam)
-      clam := cos(lam)
-      phi := dtor(L[i+1])
-      sphi := sin(phi)
-      cphi := cos(phi)
+      lam := Math.dtor(L[i])
+      slam := Math.sin(lam)
+      clam := Math.cos(lam)
+      phi := Math.dtor(L[i+1])
+      sphi := Math.sin(phi)
+      cphi := Math.cos(phi)
       Rm := p.ain * (1 - e2) / (1 - e2 * sphi ^ 2) ^ (1.5)
-      Rn := p.ain / sqrt(1 - e2 * sphi ^ 2)
+      Rn := p.ain / Math.sqrt(1 - e2 * sphi ^ 2)
       dlam := (-p.dx * slam + p.dy * clam) / (Rn * cphi)
       dphi := (-p.dx * sphi * clam - p.dy * sphi * slam + p.dz * cphi +
                da * (Rn * e2 * sphi * cphi) / p.ain +
                df * (Rm / bbya + Rn * bbya) * sphi * cphi) / Rm
-      put(lllist, rtod(lam + dlam), rtod(phi + dphi))
+      put(lllist, Math.rtod(lam + dlam), Math.rtod(phi + dphi))
       }
    return lllist
 end

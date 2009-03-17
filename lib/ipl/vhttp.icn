@@ -101,7 +101,8 @@ package ipl.vhttp
 import
    io(close, open, read, stop,
       write),
-   ipl.cfunc(fpoll, tconnect)
+   ipl.cfunc(fpoll, tconnect),
+   posix(System)
 
 global vhttp_agent			# User_agent:
 global vhttp_from			# From:
@@ -224,7 +225,7 @@ procedure vhttp_inithist()
    local fname, line, key, val
 
    vhttp_htable := table()
-   fname := (getenv("HOME") | "?noHOME?") || "/" || HIST_FILE
+   fname := (System.getenv("HOME") | "?noHOME?") || "/" || HIST_FILE
    if (vhttp_hfile := open(fname, "b")) & (read(vhttp_hfile) == &date) then {
       while line := read(vhttp_hfile) do line ? {
          key := tab(upto(' ')) | next

@@ -74,7 +74,7 @@ class Dispatcher()
       \t.times = 1 | \t.interval | runerr("Ticker interval not set")
       insert(tickers, t)
       t.last_tick_time := &null
-      t.start_time := curr_time_millis()
+      t.start_time := Time.get_system_millis()
       if /t.delay then
          t.next_tick_time := 0
       else
@@ -185,7 +185,7 @@ class Dispatcher()
    public static do_ticker()
       local curr_time, d, bag
 
-      curr_time := curr_time_millis()
+      curr_time := Time.get_system_millis()
       bag := []
       every d := !tickers do {
          if curr_time >= d.next_tick_time then
@@ -193,7 +193,7 @@ class Dispatcher()
       }
       if d := ?bag then {
          d.tick()
-         d.last_tick_time := curr_time_millis()
+         d.last_tick_time := Time.get_system_millis()
          if \d.times then {
             d.times -:= 1
             if d.times <= 0 then

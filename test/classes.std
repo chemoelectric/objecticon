@@ -642,7 +642,7 @@ Equals check: list#*[list#*[ref list#*],ref list#*] -v- list#*[list#*[ref list#*
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: set#*{list#*[],list#*[2],list#*[1,2,3]} -v- set#*{list#*[2],list#*[],list#*[1,2,3]}
+Equals check: set#*{list#*[1,2,3],list#*[],list#*[2]} -v- set#*{list#*[1,2,3],list#*[2],list#*[]}
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
@@ -658,7 +658,7 @@ Equals check: set#*{ref set#*} -v- set#*{ref set#*}
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: set#*{list#*[3],list#*[1],list#*[2,2],list#*[2,2]} -v- set#*{list#*[3],list#*[1],list#*[2,2],list#*[2,2]}
+Equals check: set#*{list#*[2,2],list#*[3],list#*[1],list#*[2,2]} -v- set#*{list#*[2,2],list#*[3],list#*[1],list#*[2,2]}
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
@@ -666,7 +666,7 @@ Equals check: set#*{list#*[3],list#*[1],list#*[2,2],list#*[2,2]} -v- set#*{list#
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: set#*{list#*[3],list#*[1],list#*[2,2],list#*[1]} -v- set#*{list#*[2,2],list#*[3],list#*[1],list#*[2,2]}
+Equals check: set#*{list#*[1],list#*[3],list#*[1],list#*[2,2]} -v- set#*{list#*[2,2],list#*[2,2],list#*[3],list#*[1]}
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): no

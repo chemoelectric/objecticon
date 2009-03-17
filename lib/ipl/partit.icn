@@ -32,7 +32,8 @@ package ipl.partit
 
 import
    io(stop),
-   ipl.numbers(ceil)
+   ipl.numbers(ceil),
+   util(Math)
 
 procedure partit(i, min, max, k)
    local j
@@ -94,12 +95,12 @@ procedure fibpart(i, fib)
    local partl, n
    static m
 
-   initial    m := 1 / log(( 1 + sqrt(5)) / 2)
+   initial    m := 1 / Math.log(( 1 + Math.sqrt(5)) / 2)
 
    partl := []
 
    while i > 2 do {
-      push(partl, n := fib(ceil(log(i) * m)))
+      push(partl, n := fib(ceil(Math.log(i) * m)))
       i -:= n
       }
 

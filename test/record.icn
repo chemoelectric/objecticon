@@ -1,6 +1,6 @@
 #SRC: JCON
 
-import io
+import io,lang
 
 record simple(f)
 record rec(f1, f2)
@@ -45,14 +45,14 @@ procedure main()
    every !b +:= 70
    every writes(" ", !a | !b | "\n")
 
-   rec1 := constructor("rec1","a","b","c")
-   rec2 := constructor("rec2","a","b","c")
-   rec3 := constructor("rec2","a","b","c")
-   rec4 := constructor("rec2","x","y","z")
-   rec5 := constructor("small")
-   rec6 := constructor("small")
-   rec7 := constructor("big", "x","y","z","a","b","c")
-   rec8 := constructor("big", "x","y","z","a","b","c")
+   rec1 := Constructor.create_constructor("rec1","a","b","c")
+   rec2 := Constructor.create_constructor("rec2","a","b","c")
+   rec3 := Constructor.create_constructor("rec2","a","b","c")
+   rec4 := Constructor.create_constructor("rec2","x","y","z")
+   rec5 := Constructor.create_constructor("small")
+   rec6 := Constructor.create_constructor("small")
+   rec7 := Constructor.create_constructor("big", "x","y","z","a","b","c")
+   rec8 := Constructor.create_constructor("big", "x","y","z","a","b","c")
    yes_no{"rec1===rec2",rec1===rec2}
    yes_no{"rec2===rec3",rec2===rec3}
    yes_no{"rec3===rec4",rec3===rec4}
@@ -63,9 +63,9 @@ procedure main()
    i2 := rec2(1,2,3)
    i3 := rec3(1,2,3)
    i4 := rec4(1,2,3)
-   yes_no{"constructorof(i1)===rec1", constructorof(i1)===rec1}
-   yes_no{"constructorof(i2)===rec2", constructorof(i2)===rec2}
-   yes_no{"constructorof(i3)===rec3", constructorof(i3)===rec3}
-   yes_no{"constructorof(i4)===rec4", constructorof(i4)===rec4}
+   yes_no{"constructorof(i1)===rec1", Constructor.get_constructor(i1)===rec1}
+   yes_no{"constructorof(i2)===rec2", Constructor.get_constructor(i2)===rec2}
+   yes_no{"constructorof(i3)===rec3", Constructor.get_constructor(i3)===rec3}
+   yes_no{"constructorof(i4)===rec4", Constructor.get_constructor(i4)===rec4}
 
 end

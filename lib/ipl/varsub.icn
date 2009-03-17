@@ -35,13 +35,14 @@
 package ipl.varsub
 
 import
-   io(close, open, read)
+   io(close, open, read),
+   posix(System)
 
 procedure varsub(s,varProc)
    local var,p,user,pw,i,c,line
    static nameChar
    initial nameChar := &letters ++ &digits ++ "_"
-   /varProc := getenv
+   /varProc := System.getenv
    s ? {
       s := ""
       while s ||:= tab(upto('$~')) do {
@@ -68,7 +69,7 @@ move(1)
              }
           else &subject[p:&pos]
           }
-           else getenv("HOME") 
+           else System.getenv("HOME") 
            }
         }
      }

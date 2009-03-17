@@ -53,14 +53,15 @@
 package ipl.ibench
 
 import
-   io(write, writes)
+   io(write, writes),
+   posix(System)
 
 global Save__, Saves__, Name__, Labels__
 
 # List information before running.
 #
 procedure Init__(prog)
-   if getenv("NOBENCH") then {	# don't do benchmarking
+   if System.getenv("NOBENCH") then {	# don't do benchmarking
       Term__ := 1
       return
       }
@@ -70,7 +71,7 @@ procedure Init__(prog)
    Signature__()			# initial information
    Regions__()
    Time__()
-   if not getenv("OUTPUT") then {	# if OUTPUT is set, allow output
+   if not System.getenv("OUTPUT") then {	# if OUTPUT is set, allow output
       Save__ := write			# turn off output
       Saves__ := writes
       write := writes := -1
@@ -82,7 +83,7 @@ end
 # List information at termination.
 
 procedure Term__()
-   if not getenv("OUTPUT") then {	# if OUTPUT is not set, restore output
+   if not System.getenv("OUTPUT") then {	# if OUTPUT is not set, restore output
       write := Save__
       writes := Saves__
       }

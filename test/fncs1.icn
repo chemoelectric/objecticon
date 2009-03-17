@@ -1,6 +1,6 @@
 #SRC: V9GEN
 
-import io
+import io,util(Math)
 
 record array(a,b,c,d,e,f,g)
 global F, f
@@ -63,13 +63,13 @@ procedure q5()
 	v := 0.25 * i
 	wf (v)
 	if (v <= 1.0) then
-	    every wf ((acos | asin) (v))
+	    every wf ((Math.acos | Math.asin) (v))
 	else
 	    every wf ("" | "")
-	every wf (atan(v) | atan(v,3))
-	every wf ((cos | sin | tan) (v))
-	every wf ((sqrt | exp | log) (v))
-	wf (log(v,3))
+	every wf (Math.atan(v) | Math.atan(v,3))
+	every wf ((Math.cos | Math.sin | Math.tan) (v))
+	every wf ((Math.sqrt | Math.exp | Math.log) (v))
+	wf (Math.log(v,3))
 	write ()
     }
     end

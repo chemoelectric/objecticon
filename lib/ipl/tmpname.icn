@@ -62,7 +62,8 @@
 package ipl.tmpname
 
 import
-   ipl.io(exists)
+   ipl.io(exists),
+   posix(System)
 
 procedure tempname()
     local os, temp_name
@@ -76,7 +77,7 @@ procedure tempname()
            dir := "/tmp/"
         else
            if find("MS-DOS",os) then {
-              dir := (getenv("TEMP") | "")      # locate temp file directory
+              dir := (System.getenv("TEMP") | "")      # locate temp file directory
               dir ||:= (dir[-1] ~== "\\")       # ensure trailing \
               tname := tempname_ext
               }

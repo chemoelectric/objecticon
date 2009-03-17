@@ -83,7 +83,8 @@ package ipl.imscolor
 import
    graphics(Window),
    io(read, write),
-   ipl.graphics(CenterString, Contrast)
+   ipl.graphics(CenterString, Contrast),
+   util(Math)
 
 
 #  imspalette(im) -- return palette used by image
@@ -299,7 +300,7 @@ procedure PAL_Columns(p, s, w, h)
       "c5":	return 5
       "c6":	return 6
       default: {
-	 nw := integer(w / sqrt(w * h / *s))
+	 nw := integer(w / Math.sqrt(w * h / *s))
          nw <:= 1
          nh := (*s + nw - 1) / nw
          nh <:= 1

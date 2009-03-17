@@ -1,22 +1,22 @@
 #SRC: JCON
 
-import io
+import io, util(Math)
 
 #  test math functions including argument coercion
 
 procedure main()
-   every try_func(sqrt, 0.0 | 0.25 | 1 | 2.25 | "4" | 256.0)
-   every try_func(log, 0.1 | 0.25 | 1.0 | &e | "10" | 100 | 1000)
-   every try_func(log, 0.1 | 0.25 | 1.0 | &e | "10" | 100 | 1000, 10)
-   every try_func(exp, -3 | -1 | 0 | 1.0 | "2" | '3')
+   every try_func(Math.sqrt, 0.0 | 0.25 | 1 | 2.25 | "4" | 256.0)
+   every try_func(Math.log, 0.1 | 0.25 | 1.0 | &e | "10" | 100 | 1000)
+   every try_func(Math.log, 0.1 | 0.25 | 1.0 | &e | "10" | 100 | 1000, 10)
+   every try_func(Math.exp, -3 | -1 | 0 | 1.0 | "2" | '3')
    write()
-   every try_func(dtor, -1000 | -360 | -90 | '0' | "45" | 360 | 1000)
-   every try_func(rtod, -3 * &pi | -2 * &pi | -&pi | '0' | &pi / 3 | &pi / 2 |
+   every try_func(Math.dtor, -1000 | -360 | -90 | '0' | "45" | 360 | 1000)
+   every try_func(Math.rtod, -3 * &pi | -2 * &pi | -&pi | '0' | &pi / 3 | &pi / 2 |
    	"3.1415936535" | 2 * &pi)
-   every try_func(sin | cos | tan, -&pi / 3 | '0' | "3.1415926535")
-   every try_func(asin | acos, '-1' | -0.5 | "0" | 0.5 | 1.0)
-   every try_func(atan, "-1000" | -47 | -1 | -.5 | '0' | .5 | 1 | 47 | 1000) 
-   every try_func(atan, -1 | '0' | "1", '-1' | "0" | 1)
+   every try_func(Math.sin | Math.cos | Math.tan, -&pi / 3 | '0' | "3.1415926535")
+   every try_func(Math.asin | Math.acos, '-1' | -0.5 | "0" | 0.5 | 1.0)
+   every try_func(Math.atan, "-1000" | -47 | -1 | -.5 | '0' | .5 | 1 | 47 | 1000) 
+   every try_func(Math.atan, -1 | '0' | "1", '-1' | "0" | 1)
 end
 
 

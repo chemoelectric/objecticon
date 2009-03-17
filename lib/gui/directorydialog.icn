@@ -37,7 +37,7 @@ class DirectoryDialog(Dialog)
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs, chdir() | 
+      every put(init_dirs, Files.getcwd() | 
                 Files.get_home() | 
                 Files.get_temp() | 
                 Files.get_roots())

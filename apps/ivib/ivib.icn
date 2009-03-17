@@ -6,6 +6,8 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
+import lang(Prog)
+
 #
 # Program entry point.
 #
@@ -15,7 +17,7 @@ procedure main(args)
    #
    Ivib.main := Main()
    Ivib.main.custom_show(args)
-   cofail(parent())
+   cofail(Prog.get_parent())
 end
 
 

@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics
+import graphics, lang
 
 class Event()
    public static const
@@ -356,7 +356,7 @@ procedure text_convert(s, target)
    case target of {
       "ucs": {
          t := ""
-         every t ||:= utf8seq(ord(s))
+         every t ||:= Text.utf8_seq(ord(s))
          return ucs(t)
       }
       "string": {

@@ -113,7 +113,7 @@ function{0,1} is(o, target)
     }
 end
 
-function{0,1} glob(s, c)
+function{0,1} lang_Prog_get_global(s, c)
    if !cnv:tmp_string(s) then
       runerr(103, s)
    body {
@@ -137,7 +137,46 @@ function{0,1} glob(s, c)
    }
 end
 
-function{0,1} globloc(s, c)
+function{0,1} lang_Prog_get_globals(c)
+   body {
+       struct progstate *prog;
+       dptr dp;
+
+       if (is:null(c))
+           prog = curpstate;
+       else if (is:coexpr(c))
+           prog = BlkLoc(c)->coexpr.program;
+       else
+           runerr(118, c);
+
+      for (dp = prog->Globals; dp != prog->Eglobals; dp++)
+         suspend *dp;
+
+      fail;
+   }
+end
+
+function{0,1} lang_Prog_get_global_names(c)
+   body {
+       struct progstate *prog;
+       dptr dp;
+
+       if (is:null(c))
+           prog = curpstate;
+       else if (is:coexpr(c))
+           prog = BlkLoc(c)->coexpr.program;
+       else
+           runerr(118, c);
+
+      for (dp = prog->Gnames; dp != prog->Egnames; dp++)
+         suspend *dp;
+
+      fail;
+   }
+end
+
+
+function{0,1} lang_Prog_get_global_location(s, c)
    if !cnv:tmp_string(s) then
       runerr(103, s)
    body {
@@ -178,6 +217,15 @@ function{1} lang_Class_get_name(c)
         if (!(class = get_class_for(&c)))
             runerr(0);
         return class->name;
+    }
+end
+
+function{1} lang_Class_get_class(c)
+    body {
+        struct b_class *class;
+        if (!(class = get_class_for(&c)))
+            runerr(0);
+        return class(class);
     }
 end
 
@@ -2002,6 +2050,15 @@ function{1} lang_Constructor_get_name(c)
         if (!(constructor = get_constructor_for(&c)))
             runerr(0);
         return constructor->name;
+    }
+end
+
+function{1} lang_Constructor_get_constructor(c)
+    body {
+        struct b_constructor *constructor;
+        if (!(constructor = get_constructor_for(&c)))
+            runerr(0);
+        return constructor(constructor);
     }
 end
 

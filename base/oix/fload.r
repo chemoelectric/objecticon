@@ -60,9 +60,9 @@ char *dlerror(void)
 #passthru #endif
 #endif					/* __FreeBSD__ */
 
-"loadfunc(filename,funcname) - load C function dynamically."
 
-function{0,1} loadfunc(filename,funcname)
+
+function{0,1} lang_Proc_load(filename,funcname)
 
     if !cnv:C_string(filename) then
         runerr(103, filename)

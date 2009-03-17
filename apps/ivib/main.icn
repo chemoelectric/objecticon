@@ -1248,8 +1248,8 @@ class Main(Dialog)
       every f := !Files.list(pp.str()) do {
          if f[2].mode[1] == "-" & upto('x', f[2].mode) then {
             fn := pp.child(f[1]).str()
-            ce := load(fn) | stop("Failed to load plugin:", fn)
-            plugin := variable("main", ce)() | stop("Plugin didn't return a Plugin from main")
+            ce := Prog.load(fn) | stop("Failed to load plugin:", fn)
+            plugin := Prog.get_variable("main", ce)() | stop("Plugin didn't return a Plugin from main")
             insert(plugins, plugin.get_unique_id(), plugin)
             ui := PluginUI(plugin)
             listener := ObjectActionListener(self, ui)

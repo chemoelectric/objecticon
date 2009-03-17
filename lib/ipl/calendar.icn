@@ -225,6 +225,9 @@
 
 package ipl.calendar
 
+import
+   posix(System)
+
 global Cal_DateBaseYear,Cal_CurrentTimeZone,Cal_TimeZoneGMT,
       Cal_SecPerMin,Cal_SecPerHour,Cal_SecPerDay,Cal_SecPerWeek,
       Cal_MonthNames,Cal_DayNames,Cal_TimeZoneList,Cal_TimeZoneTable
@@ -253,11 +256,11 @@ procedure Cal_Init(initialTimeZone)
 	    "July","August","September","October","November","December"]
       Cal_DayNames := ["Sunday","Monday","Tuesday","Wednesday","Thursday",
 	    "Friday","Saturday"]
-      /Cal_DateBaseYear := integer(getenv("Cal_DateBaseYear")) | 1970
+      /Cal_DateBaseYear := integer(System.getenv("Cal_DateBaseYear")) | 1970
       tzTbl := Cal_GetTimeZoneTable()
       Cal_TimeZoneGMT := tzTbl["GMT"]
       /Cal_CurrentTimeZone := \initialTimeZone |
-	    tzTbl["" ~== getenv("Cal_TimeZone")] | Cal_TimeZoneGMT
+	    tzTbl["" ~== System.getenv("Cal_TimeZone")] | Cal_TimeZoneGMT
       }
    return
 end

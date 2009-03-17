@@ -77,11 +77,11 @@ class Sem(NoCopy)
    #
    public semop_poll(n, t)
       local c
-      c := curr_time_millis()
+      c := Time.get_system_millis()
       repeat {
          if semop_nowait(n) then
             return 
-         if curr_time_millis() - c > t then
+         if Time.get_system_millis() - c > t then
             fail
          delay(50)
       }

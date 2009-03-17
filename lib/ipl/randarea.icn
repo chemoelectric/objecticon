@@ -27,7 +27,8 @@ package ipl.randarea
 
 import
    io(stop),
-   ipl.gobject(Point)
+   ipl.gobject(Point),
+   util(Math)
 
 procedure randrect(x, y, w, h)
 
@@ -60,9 +61,9 @@ procedure randellip(x, y, w, h)
       yq := y + ?h
       xp := xq - xc
       yp := yq - yc
-      theta := -atan(yp, xp)
-      rp := sqrt(xp ^ 2 + yp ^ 2)
-      r := sqrt((r1 * cos(theta)) ^ 2 + (r2 * sin(theta)) ^ 2)
+      theta := -Math.atan(yp, xp)
+      rp := Math.sqrt(xp ^ 2 + yp ^ 2)
+      r := Math.sqrt((r1 * Math.cos(theta)) ^ 2 + (r2 * Math.sin(theta)) ^ 2)
       if r > rp then suspend Point(xq, yq)
       }
 

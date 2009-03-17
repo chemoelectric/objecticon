@@ -2,7 +2,9 @@ package parser
 
 import 
    util(Connectable, SetFields, error), 
-   io
+   lang(),
+   io,
+   posix
 
 class Symbol()
    public const
@@ -289,7 +291,7 @@ class SymbolTable(Connectable,SetFields)
       ALWAYS_SRC := "always_src"
       ALWAYS_U := "always_u"
       BUILTINS := set()
-      every insert(BUILTINS, function())
+      every insert(BUILTINS, lang.Prog.get_function_names())
    end
 
    private parse(f)
@@ -372,7 +374,7 @@ class SymbolTable(Connectable,SetFields)
          fail
 
       # Search all the elements in the path
-      every s := Files.get_path(Files.split_paths(getenv("OIPATH"))).append(p).str() do {
+      every s := Files.get_path(Files.split_paths(System.getenv("OIPATH"))).append(p).str() do {
          if t := match_stem(s) then
             return t
       }
@@ -527,7 +529,7 @@ class SymbolTable(Connectable,SetFields)
       if \package_db then
          return
       package_db := table()
-      every d := chdir() | Files.split_paths(getenv("OIPATH")) do {
+      every d := Files.getcwd() | Files.split_paths(System.getenv("OIPATH")) do {
          p := Files.get_path(d).canonical()
          s := p.str()
          if /package_db[s] then {

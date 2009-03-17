@@ -21,6 +21,9 @@
 
 package ipl.distance
 
+import 
+   util(Math)
+
 procedure distance(d[])
    local sum
 
@@ -28,6 +31,6 @@ procedure distance(d[])
 
    every sum +:= !d ^ 2
 
-   return sqrt(sum)
+   return Math.sqrt(sum)
 
 end

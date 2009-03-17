@@ -95,7 +95,8 @@ package ipl.cartog
 
 import
    ipl.geodat(ellipsoid),
-   ipl.lu(lu_back_sub, lu_decomp)
+   ipl.lu(lu_back_sub, lu_decomp),
+   util(Math)
 
 
 
@@ -338,7 +339,7 @@ procedure utm(a, f)
    p.f := f			# p.f = flattening
    p.esq := 2 * f - f ^ 2	# p.esq = eccentricity squared 
    p.epsq := p.esq / (1 - p.esq)
-   p.e := sqrt(p.esq)		# p.e = eccentricity
+   p.e := Math.sqrt(p.esq)		# p.e = eccentricity
    p.c0 := p.a * (1 - (p.e^2) / 4 - 3 * (p.e^4) / 64 - 5 * (p.e^6) / 256)
    p.c2 := p.a * (3 * (p.e^2) / 8 + 3 * (p.e^4) / 32 + 45 * (p.e^6) / 1024)
    p.c4 := p.a * (15 * (p.e^4) / 256 + 45 * (p.e^6) / 1024)
@@ -361,20 +362,20 @@ procedure ctg_utm_proj(p, L)
       lon := numeric(L[i])
       lat := numeric(L[i+1])
       zone := (185 + integer(lon)) / 6
-      phi := dtor(lat)				# latitude in radians
-      lambda := dtor(lon)			# longitude in radians
-      lamzero := dtor(-183 + 6 * zone)		# central meridian of zone
-      N := p.a / sqrt(1 - p.esq * sin(phi) ^ 2)		# (8-12)
-      T := tan(phi) ^ 2					# (4-20)
-      cosphi := cos(phi)
+      phi := Math.dtor(lat)				# latitude in radians
+      lambda := Math.dtor(lon)			# longitude in radians
+      lamzero := Math.dtor(-183 + 6 * zone)		# central meridian of zone
+      N := p.a / Math.sqrt(1 - p.esq * Math.sin(phi) ^ 2)		# (8-12)
+      T := Math.tan(phi) ^ 2					# (4-20)
+      cosphi := Math.cos(phi)
       C := epsq * cosphi ^ 2				# (8-13)
       A := (lambda - lamzero) * cosphi			# (8-15)
-      M := p.c0*phi - p.c2*sin(2.*phi) + p.c4*sin(4.*phi) - p.c6*sin(6.*phi)
+      M := p.c0*phi - p.c2*Math.sin(2.*phi) + p.c4*Math.sin(4.*phi) - p.c6*Math.sin(6.*phi)
       x := k0 * N * (A + (1 - T + C) * A^3 / 6. +
          (5. - 18. * T + T^2 + 72. * C - 58. * epsq) * A^5 / 120.)
       u := A^2 / 2 + (5 - T + 9 * C + 4 * C^2) * A^4 / 24 +
          (61. - 58. * T + T^2 + 600. * C - 330. * epsq) * A^6 / 720.
-      y := k0 * (M - M0 + N * tan(phi) * u)
+      y := k0 * (M - M0 + N * Math.tan(phi) * u)
       put(ulist, zone, x, y)
       }
    return ulist
@@ -391,7 +392,7 @@ procedure ctg_utm_inv(p)
    q.proj := ctg_iutm_proj
    q.inv := ctg_iutm_inv
    e := q.e
-   e1 := (1 - sqrt(1 - e^2)) / (1 + sqrt(1 - e^2))
+   e1 := (1 - Math.sqrt(1 - e^2)) / (1 + Math.sqrt(1 - e^2))
    q.c0 := q.a * (1 - e^2 / 4. - 3. * e^4 / 64. - 5. * e^6 / 256.)
    q.c2 := 3. * e1 / 2. - 27. * e1^3 / 32.
    q.c4 := 21. * e1^2 / 16. - 55. * e1^4 / 32.
@@ -418,15 +419,15 @@ procedure ctg_iutm_proj(p, L)
       zone := L[i]
       x := L[i + 1]
       y := L[i + 2]
-      lam0 := dtor(-183 + 6 * zone)		# central meridian of zone
+      lam0 := Math.dtor(-183 + 6 * zone)		# central meridian of zone
       mu := y / (k0 * p.c0)
-      phi1 := mu + p.c2 * sin(2. * mu) + p.c4 * sin(4. * mu) +
-         p.c6 * sin(6. * mu) + p.c8 * sin(8. * mu)
-      sin1 := sin(phi1)
-      cos1 := cos(phi1)
-      tan1 := tan(phi1)
+      phi1 := mu + p.c2 * Math.sin(2. * mu) + p.c4 * Math.sin(4. * mu) +
+         p.c6 * Math.sin(6. * mu) + p.c8 * Math.sin(8. * mu)
+      sin1 := Math.sin(phi1)
+      cos1 := Math.cos(phi1)
+      tan1 := Math.tan(phi1)
       t1 := 1 - esq * sin1^2
-      t2 := sqrt(t1)
+      t2 := Math.sqrt(t1)
       C1 := epsq * cos1^2
       T1 := tan1^2
       N1 := a / t2
@@ -439,7 +440,7 @@ procedure ctg_iutm_proj(p, L)
       lam := lam0 + (D - (1 + 2 * T1 + C1) * D^3 / 6. +
          (5. - 2. * C1 + 28. * T1 - 3. * C1 * C1 + 
          8. * epsq + 24. * T1 * T1) * D^5 / 120.) / cos1
-      put(lllist, rtod(lam), rtod(phi))
+      put(lllist, Math.rtod(lam), Math.rtod(phi))
       }
    
    return lllist

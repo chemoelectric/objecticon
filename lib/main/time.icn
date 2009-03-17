@@ -45,7 +45,7 @@ class Time()
       BASE_YEAR,
       WEEK_DAYS,
       TZCHARS,
-      UNIX_BASE_OFFSET,
+      SYSTEM_BASE_OFFSET,
       DEFAULT_FORMAT,
       MDAYS,
       LEAP_MDAYS, 
@@ -65,7 +65,7 @@ class Time()
       LEAP_CUM_MDAYS := [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
       TZCHARS := '+\-' ++ &digits ++ &ucase
       BASE_YEAR := 1600     # must be a multiple of 400
-      UNIX_BASE_OFFSET := 11676096000
+      SYSTEM_BASE_OFFSET := 11676096000
    end
 
    #
@@ -709,11 +709,11 @@ class Time()
    end
 
    #
-   # Set to a time based on the number of seconds past the Unix base date.
+   # Set to a time based on the number of seconds past the Unix base epoch.
    # @param z an optional {Timezone}.  If omitted, the system timezone is used.
    #
-   public set_unix_seconds(t, z)
-      set_seconds(UNIX_BASE_OFFSET + t, z)
+   public set_system_seconds(t, z)
+      set_seconds(SYSTEM_BASE_OFFSET + t, z)
    end
 
    #
@@ -721,7 +721,7 @@ class Time()
    # time represented by this object.
    #
    public get_age()
-      return UNIX_BASE_OFFSET + gettimeofday()[1] - self.seconds
+      return SYSTEM_BASE_OFFSET + get_system_seconds() - self.seconds
    end
 
    #
@@ -742,6 +742,21 @@ class Time()
    end
 
    #
+   # Return the number of seconds since the Unix base epoch (1 Jan 1970).
+   #
+   public static defer get_system_seconds()
+
+   #
+   # Return the number of milliseconds since the Unix base epoch (1 Jan 1970).
+   #
+   public static defer get_system_millis()
+
+   #
+   # Return the number of microseconds since the Unix base epoch (1 Jan 1970).
+   #
+   public static defer get_system_micros()
+
+   #
    # The constructor to {Time()} does different things depending on
    # the number of arguments provided.  
    #
@@ -758,7 +773,7 @@ class Time()
    #
    public new(a[])
       if *a = 0 then
-         set_seconds(UNIX_BASE_OFFSET + gettimeofday()[1])
+         set_seconds(SYSTEM_BASE_OFFSET + get_system_seconds())
       else if *a = 1 then
          set_seconds(a[1])
       else if *a = 2 then
@@ -770,15 +785,6 @@ class Time()
 end
 
 #
-# Return the current time of day from the system clock, in milliseconds.
-#
-procedure curr_time_millis()
-   local t
-   t := gettimeofday()
-   return t[1] * 1000 + t[2] / 1000
-end
-
-#
 # Helpful function to note the time elapsed between calls.
 #
 procedure note_time(s)
@@ -787,8 +793,8 @@ procedure note_time(s)
       t := 0
    }
    if t > 0 then
-      write(curr_time_millis() - t, ": ", \s)
-   t := curr_time_millis()
+      write(Time.get_system_millis() - t, ": ", \s)
+   t := Time.get_system_millis()
 end
 
 #

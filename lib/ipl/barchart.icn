@@ -83,6 +83,9 @@
 
 package ipl.barchart
 
+import 
+   util(Math)
+
 record BC_rec(win, x, y, dx, dy, sf, n, l, w, b, len, val, round)
 
 # draw barchart
@@ -108,7 +111,7 @@ end
 procedure setbar(bc, n, v)			
    local x, y,  oldlen, newlen, incr
 
-   v := log(v, \bc.b)
+   v := Math.log(v, \bc.b)
    oldlen := bc.len[n] | fail
    newlen := integer(v * bc.sf + bc.round)
 

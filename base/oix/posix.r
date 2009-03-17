@@ -23,7 +23,7 @@
 
 "kill() - send a signal to a process."
 
-function{0,1} kill(pid, signal)
+function{0,1} posix_System_kill(pid, signal)
    if !cnv:C_integer(pid) then
       runerr(101, pid)
 
@@ -49,7 +49,7 @@ end
 
 "trap() - trap a signal."
 
-function{0,1} trap(sig, handler)
+function{0,1} posix_System_trap(sig, handler)
    if !cnv:C_integer(sig) then
       runerr(101, sig)
    abstract {
@@ -78,14 +78,7 @@ end
 
 "fork() - spawn a new identical process."
 
-#if MSWIN32
-function{0} fork()
-#else					/* MSWIN32 */
-function{0,1} fork()
-#endif					/* MSWIN32 */
-   abstract {
-      return integer
-      }
+function{0,1} posix_System_fork()
    inline {
       int pid;
       
@@ -109,7 +102,7 @@ end
 
 "exec() - replace the executing Icon program with a new program."
 
-function{0,1} exec(f, argv[argc])
+function{0,1} posix_System_exec(f, argv[argc])
    if !cnv:C_string(f) then
       runerr(103, f)
    abstract {
@@ -145,7 +138,7 @@ end
 "wait() - wait for process to terminate or stop."
 "the return value is `status' from the wait(2) manpage."
 
-function{0,1} wait(pid, options)
+function{0,1} posix_System_wait(pid, options)
    if !def:C_integer(pid, -1) then
       runerr(101, pid)
    if !def:C_string(options, "") then 
@@ -240,50 +233,63 @@ function{0,1} wait(pid, options)
 end
 
 
-"gettimeofday() - get time since the epoch (Jan 1, 1970 00:00:00)."
-
-function{0,1} gettimeofday()
-   abstract {
-      return record
-   }
+function{0,1} util_Time_get_system_seconds()
    body {
       struct timeval tp;
-#if MSWIN32
-      struct _timeb wtp;
-#endif					/* MSWIN32 */
-      struct descrip tmp;
-      
-#if MSWIN32
-      _ftime( &wtp );
-#else					/* MSWIN32 */
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
 	 fail;
       }
-#endif					/* MSWIN32 */
-      create_list(2, &result);
+      return C_integer tp.tv_sec;
+   }
+end
 
-#if MSWIN32
-      MakeInt(wtp.time, &tmp);
-      c_put(&result, &tmp);
-      MakeInt(wtp.millitm * 1000, &tmp);
-      c_put(&result, &tmp);
-#else					/* MSWIN32 */
-      MakeInt(tp.tv_sec, &tmp);
-      c_put(&result, &tmp);
-      MakeInt(tp.tv_usec, &tmp);
-      c_put(&result, &tmp);
-#endif					/* MSWIN32 */
+function{0,1} util_Time_get_system_millis()
+   body {
+      struct timeval tp;
+      struct descrip ls, lm, thousand;
+      tended struct descrip lt1, lt2;
+      if (gettimeofday(&tp, 0) < 0) {
+	 errno2why();
+	 fail;
+      }
+      MakeInt(tp.tv_sec, &ls);
+      MakeInt(tp.tv_usec, &lm);
+      MakeInt(1000, &thousand);
+      if (bigmul(&ls, &thousand, &lt1) == Error ||
+          bigdiv(&lm, &thousand ,&lt2) == Error ||
+          bigadd(&lt1, &lt2, &result) == Error)
+          runerr(0);
       return result;
+   }
+end
 
+
+function{0,1} util_Time_get_system_micros()
+   body {
+      struct timeval tp;
+      struct descrip ls, lm, million;
+      tended struct descrip lt1;
+      if (gettimeofday(&tp, 0) < 0) {
+	 errno2why();
+	 fail;
+      }
+      MakeInt(tp.tv_sec, &ls);
+      MakeInt(tp.tv_usec, &lm);
+      MakeInt(1000000, &million);
+      if (bigmul(&ls, &million, &lt1) == Error ||
+          bigadd(&lt1, &lm, &result) == Error)
+          runerr(0);
+      return result;
    }
 end
 
 
 
+
 "setenv() - set an environment variable."
 
-function{0, 1} setenv(name, value)
+function{0, 1} posix_System_setenv(name, value)
    if !cnv:C_string(name) then
       runerr(103, name)
    if !cnv:C_string(value) then
@@ -342,4 +348,32 @@ end
 
 
 
+
+"getenv(s) - return contents of environment variable s."
+
+function{0,1} posix_System_getenv(s)
+
+   /*
+    * Make a C-style string out of s
+    */
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   abstract {
+      return string
+      }
+
+   inline {
+      register char *p;
+      long l;
+
+      if ((p = getenv(s)) != NULL) {	/* get environment variable */
+	 l = strlen(p);
+	 MemProtect(p = alcstr(p,l));
+	 return string(l,p);
+	 }
+      else 				/* fail if not in environment */
+	 fail;
+
+      }
+end
 

@@ -25,7 +25,8 @@
 package ipl.spokes
 
 import
-   ipl.gobject(Point)
+   ipl.gobject(Point),
+   util(Math)
 
 procedure spokes(x, y, radius1, radius2, n, m)
    local angle1, incr1
@@ -34,7 +35,7 @@ procedure spokes(x, y, radius1, radius2, n, m)
    incr1 := 2 * &pi / n
 
    every 1 to n do {
-      suspend rays(x + radius1 * cos(angle1), y + radius1 * sin(angle1),
+      suspend rays(x + radius1 * Math.cos(angle1), y + radius1 * Math.sin(angle1),
          radius2, m, angle1)
       angle1 +:= incr1
       }
@@ -48,7 +49,7 @@ procedure rays(xc, yc, r, m, angle)
 
    every 1 to m do {
       suspend Point(xc, yc)
-      suspend Point(xc + r * cos(angle), yc + r * sin(angle))
+      suspend Point(xc + r * Math.cos(angle), yc + r * Math.sin(angle))
       suspend Point(xc, yc)
       angle +:= incr
       }

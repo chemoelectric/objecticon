@@ -1061,12 +1061,7 @@ function{1} table(x)
 end
 
 
-"constructor(label, field, field...) - produce a new record constructor"
-
-function{1} constructor(s, x[n])
-   abstract {
-      return constructor
-   }
+function{1} lang_Constructor_create_constructor(s, x[n])
    if !cnv:string(s) then 
       runerr(103,s)
    inline {
@@ -1077,14 +1072,6 @@ function{1} constructor(s, x[n])
              runerr(103, x[i]);
       bp = dynrecord(&s, x, n);
       return constructor(bp);
-    }
-end
-
-function{1} constructorof(r)
-   if !is:record(r) then
-       runerr(107, r)
-    body {
-       return constructor(BlkLoc(r)->record.constructor);
     }
 end
 

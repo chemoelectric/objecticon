@@ -1,3 +1,5 @@
+import lang
+
 global l
 
 procedure FncDef(s)
@@ -13,7 +15,7 @@ procedure main()
       yes_no{image(f), f === proc(subtype(f),0)}
    }
 
-   every s := function() do
+   every s := Prog.get_function_names() do
       yes_no{s, s === subtype(proc(s,0))}
 
 end

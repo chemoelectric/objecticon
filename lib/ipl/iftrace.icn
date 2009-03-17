@@ -39,6 +39,9 @@ invocable all
 
 package ipl.iftrace
 
+import 
+   lang(Prog)
+
 # trace built-in functions
 procedure iftrace(args[])		
 
@@ -54,7 +57,7 @@ procedure set_trace(vf)
 
    initial {
       traceset := set()
-      every insert(traceset, function())
+      every insert(traceset, Prog.get_function_names())
       case1 := &lcase || &ucase
       case2 := &ucase || &lcase
       }
@@ -64,7 +67,7 @@ procedure set_trace(vf)
       vp := vf
 				# reverse case of first letter
       vp[1] := map(vp[1], case1, case2)
-      variable(vp) :=: variable(vf)
+      Prog.get_variable(vp) :=: Prog.get_variable(vf)
       return
       }
    else fail

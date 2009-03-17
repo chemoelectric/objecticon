@@ -33,7 +33,8 @@
 package ipl.gdl
 
 import
-   io(Files, close, open, stop)
+   io(Files, close, open, stop),
+   posix(System)
 
 procedure gdl(dir)
 
@@ -75,7 +76,7 @@ procedure msdos_get_dir(dir)
     static temp_dir
     initial {
         temp_dir := 
-            (trim(map(getenv("TEMPDIR"), "/", "\\"), '\\') || "\\") |
+            (trim(map(System.getenv("TEMPDIR"), "/", "\\"), '\\') || "\\") |
                 ".\\"
     }
 

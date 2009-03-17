@@ -91,7 +91,8 @@ package ipl.itlib
 
 import
    io(close, ewrite, open, read,
-      writes)
+      writes),
+   posix(System)
 
 global tc_table, tty_speed
 record true()
@@ -152,7 +153,7 @@ procedure getname()
 
     check_features()
 
-    if not (term := getenv("TERM")) then {
+    if not (term := System.getenv("TERM")) then {
 	tset_output := open("/bin/tset -","pr") |
 	    er("getname","can't find tset command",1)
 	term := !tset_output
@@ -195,7 +196,7 @@ procedure getentry(name, termcap_string)
     # ling it with a second argument - the name of the termcap file
     # to use instead of the regular one, or the one specified in the
     # termcap environment variable.
-    /termcap_string := getenv("TERMCAP")
+    /termcap_string := System.getenv("TERMCAP")
 
     if \termcap_string ? (not match("/"), pos(1) | tab(find("|")+1), =name)
     then {

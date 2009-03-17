@@ -26,7 +26,8 @@
 package ipl.xform
 
 import
-   ipl.calls(invoke)
+   ipl.calls(invoke),
+   util(Math)
 
 procedure p_xlate(call, x, y)
    local point
@@ -54,9 +55,9 @@ procedure p_rotate(call, angle)
    local point, radius
 
    every point := invoke(call) do {
-      radius := sqrt(point.x ^ 2, point.y ^ 2)
-      point.x *:= radius * cos(angle)
-      point.y *:= radius * sin(angle)
+      radius := Math.sqrt(point.x ^ 2, point.y ^ 2)
+      point.x *:= radius * Math.cos(angle)
+      point.y *:= radius * Math.sin(angle)
       suspend point
       }
 
