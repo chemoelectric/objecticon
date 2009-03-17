@@ -141,25 +141,18 @@ end
 function{0,1} posix_System_wait(pid, options)
    if !def:C_integer(pid, -1) then
       runerr(101, pid)
-   if !def:C_string(options, "") then 
+   if !def:C_integer(options, 0) then 
       runerr(103, options)
    abstract {
       return string;
       }
    body {
       char retval[64];
-      int option = 0, status = 0, wpid, i=0;
+      int status = 0, wpid, i=0;
 #if !MSWIN32
 #if defined(BSD) || defined(Linux) || defined(BSD_4_4_LITE)
       struct rusage rusage;
-      while(options[i])
-	 switch(options[i++]) {
-	 case 'n' : option |= WNOHANG; break;
-	 case 'u' : option |= WUNTRACED; break;
-	 }
-
-      
-      if ((wpid = wait4(pid, &status, option, &rusage)) < 0) {
+      if ((wpid = wait4(pid, &status, options, &rusage)) < 0) {
 	 errno2why();
 	 fail;
       }
@@ -174,14 +167,7 @@ function{0,1} posix_System_wait(pid, options)
 	    fail;
 	 }
       } else {
-	 while(options[i])
-	    switch(options[i++]) {
-	    case 'n' : option |= WNOHANG; break;
-	    case 'u' : option |= WUNTRACED; break;
-	    }
-
-	 
-	 if ((wpid = waitpid(pid, &status, option)) < 0) {
+	 if ((wpid = waitpid(pid, &status, options)) < 0) {
 	    errno2why();
 	    fail;
 	 }
@@ -212,15 +198,7 @@ function{0,1} posix_System_wait(pid, options)
 
 #else					/* MSWIN32 */
       int termstat;
-
-      while(options[i])
-	 switch(options[i++]) {
-	 case 'n' : option |= _WAIT_CHILD; break;
-	 case 'u' : option |= _WAIT_GRANDCHILD; break;
-	 }
-
-      
-      if ((wpid = _cwait(&termstat, pid, option)) < 0) {
+      if ((wpid = _cwait(&termstat, pid, options)) < 0) {
 	 errno2why();
 	 fail;
 	 }

@@ -664,6 +664,18 @@ int main(void)
 
     end_class();
 
+    start_class("WaitOpt", 0, 0, 0);
+#ifdef WNOHANG
+    Const(WNOHANG)
+#endif
+#ifdef WUNTRACED
+        Const(WUNTRACED)
+#endif
+#ifdef WCONTINUED
+        Const(WCONTINUED)
+#endif
+    end_class();
+
     start_file("ioconsts.icn", "io");
 
     start_class("FileOpt", "O_", 0, 0);
