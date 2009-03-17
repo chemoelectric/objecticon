@@ -80,13 +80,13 @@ procedure test_modes()
    f.close()
 
    write("Prog Read")
-   f := ProgStream.open("echo hello", FileOpt.RDONLY) | stop(&why)
+   f := ProgStream.open_read("echo", ["hello"]) | stop(&why)
    do_mode(f)
    while f.read()
    f.close()
 
    write("Prog write")
-   f := ProgStream.open("cat >/dev/null", FileOpt.WRONLY) | stop(&why)
+   f := ProgStream.open_write("sh", ["-c", "cat >/dev/null"]) | stop(&why)
    do_mode(f)
    f.close()
 

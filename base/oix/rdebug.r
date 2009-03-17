@@ -126,39 +126,61 @@ static void xtrace(bp, nargs, arg, pline, pfile)
 
 /* Find the nearest index in classfields to m, with a non-null
  * field_descriptor */
-static int nearest_with_dptr(int m, int n)
+static int nearest_with_dptr(int m, int n, struct progstate *prog)
 {
     int off;
     for (off = 0; off < n; ++off) {
-        if (m + off < n && (classfields[m + off].flags & (M_Method | M_Static)) == M_Static)
+        if (m + off < n && (prog->ClassFields[m + off].flags & (M_Method | M_Static)) == M_Static)
             return m + off;
-        if (m - off >= 0 && (classfields[m - off].flags & (M_Method | M_Static)) == M_Static)
+        if (m - off >= 0 && (prog->ClassFields[m - off].flags & (M_Method | M_Static)) == M_Static)
             return m - off;
     }    
     syserr("name: no field_descriptors in classfields area");
     return 0; /* Unreachable */
 }
 
-static struct class_field *find_class_field_for_dptr(dptr d)
+static struct class_field *find_class_field_for_dptr(dptr d, struct progstate *prog)
 {
-    int l = 0, m, n = eclassfields - classfields, r = n - 1;
+    int l = 0, m, n = prog->EClassFields - prog->ClassFields, r = n - 1;
     while (l <= r) {
-        m = nearest_with_dptr((l + r) / 2, n);
-        if (d < classfields[m].field_descriptor)
+        m = nearest_with_dptr((l + r) / 2, n, prog);
+        if (d < prog->ClassFields[m].field_descriptor)
             r = m - 1;
-        else if (d > classfields[m].field_descriptor)
+        else if (d > prog->ClassFields[m].field_descriptor)
             l = m + 1;
         else
-            return &classfields[m];
+            return &prog->ClassFields[m];
     }
     syserr("name: no corresponding field_descriptor in classfields area");
     return 0; /* Unreachable */
 }
 
+static struct progstate *find_global(dptr s)
+{
+    struct progstate *p;
+    for (p = progs; p; p = p->next) {
+        if (InRange(p->Globals, s, p->Eglobals)) {
+            return p;
+        }
+    }
+    return 0;
+}
+
+static struct progstate *find_class_static(dptr s)
+{
+    struct progstate *p;
+    for (p = progs; p; p = p->next) {
+        if (InRange(p->ClassStatics, s, p->EClassStatics)) {
+            return p;
+        }
+    }
+    return 0;
+}
+
 /*
  * get_name -- function to get print name of variable.
  */
-int get_name(dptr dp1,dptr dp0)
+int get_name(dptr dp1, dptr dp0)
 {
     dptr dp, varptr;
     tended union block *blkptr;
@@ -169,10 +191,11 @@ int get_name(dptr dp1,dptr dp0)
     char *s, *s2;
     word i, j, k;
     int t;
+    struct progstate *prog;
 
     arg1 = &argp[1];
     loc1 = pfp->pf_locals;
-    proc = &BlkLoc(*argp)->proc;
+    proc = CallerProc;
 
     type_case *dp1 of {
       tvsubs: {
@@ -256,15 +279,15 @@ int get_name(dptr dp1,dptr dp0)
                  * temporary stack variables as occurs for string scanning).
                  */
                 dp = VarLoc(*dp1);		 /* get address of variable */
-                if (InRange(globals,dp,eglobals)) {
-                    *dp0 = gnames[dp - globals]; 		/* global */
+                if ((prog = find_global(dp))) {
+                    *dp0 = prog->Gnames[dp - prog->Globals]; 		/* global */
                     return GlobalName;
                 }
-                else if (InRange(classstatics,dp,eclassstatics)) {
+                else if ((prog = find_class_static(dp))) {
                     /*
                      * Class static field
                      */
-                    struct class_field *cf = find_class_field_for_dptr(dp);
+                    struct class_field *cf = find_class_field_for_dptr(dp, prog);
                     struct b_class *c = cf->defining_class;
                     sprintf(sbuf,"class %.*s.%.*s", StrLen(c->name), StrLoc(c->name), 
                             StrLen(cf->name), StrLoc(cf->name));
@@ -273,7 +296,7 @@ int get_name(dptr dp1,dptr dp0)
                     StrLen(*dp0) = i;
                     return FieldName;
                 }
-                else if (InRange(statics,dp,estatics)) {
+                else if (InRange(proc->program->Statics, dp, proc->program->Estatics)) {
                     i = dp - proc->fstatic;	/* static */
                     if (i < 0 || i >= proc->nstatic)
                         syserr("name: unreferencable static variable");
@@ -292,7 +315,6 @@ int get_name(dptr dp1,dptr dp0)
                 else {
                     LitStr("(temp)", dp0);
                     return Failed;
-/*               syserr("name: cannot determine variable name"); */
                 }
             }
             else {

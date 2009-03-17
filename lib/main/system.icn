@@ -1,8 +1,33 @@
 package posix
 
+import 
+   io(Files),
+   util(error)
+
 class System()
-   # replace the executing Icon program with a new program.
-   public static defer exec(f, argv[])
+   # This provides a slightly easier to use interface to {execve}.
+   # The first argument is searched on the PATH and if found pushed
+   # onto the arg list (making the arg0 of the target program).  Then
+   # {execve} is called.
+   # @example System.exec("ls", ["-l", "/home"])
+   #
+   public static exec(f, arg, env)
+      f := Files.find_exe(f) | return error("Not found on PATH:" || f)
+      push(arg, f)
+      return execve(f, arg, env)
+   end
+
+   # Replace the executing Icon program with a new program, using the
+   # execve system call.  The first parameter is the file to execute,
+   # the second parameter is a list of strings which must have at least
+   # one parameter, and the third optional parameter is also a list of
+   # strings, which provide the environment variables - if omitted then
+   # the current program's environment is passed (obtained via the 
+   # environ variable).
+   # @example System.execve("/bin/ls", ["/bin/ls", "-l", "/home"],
+   # @                                 ["ABC=DEF", "NUM=123"])
+   #
+   public static defer execve(f, arg, env)
 
    # spawn a new identical process.
    public static defer fork()
@@ -12,6 +37,9 @@ class System()
 
    # wait for process to terminate or stop.
    public static defer wait(pid, options)
+
+   # generate the environment values as key=pair strings
+   public static defer environ()
 
    # return contents of environment variable s.
    public static defer getenv(s)

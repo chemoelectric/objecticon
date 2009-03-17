@@ -414,6 +414,34 @@ class Files(NoCopy)
             return s
       }
    end
+
+   # Find absolute executable, searching $PATH (using POSIX 1003.2
+   # rules) for executable name.  The method is similar to path_find above,
+   # but a little more strict.
+   #
+   public static find_exe(f)
+      local p, s, path
+
+      p := get_path(f)
+
+      # Anything with separators in, we just look up and ignore the
+      # path.
+      if p.is_absolute() | (p.size() > 1) then {
+         s := p.str()
+         if access(s, Access.X_OK) then
+            return s
+         else
+            fail
+      }
+
+      # Search all the elements in the path
+      path := System.getenv("PATH") | ""
+      every s := get_path(split_paths(path)).append(p).str() do {
+         if access(s, Access.X_OK) then
+            return s
+      }
+   end
+
 end
 
 #

@@ -2036,7 +2036,7 @@ function{1} lang_Text_create_cset(x[n])
                          k -= pb->lelem.nslots;
                      if (!cnv:C_integer(pb->lelem.lslots[k], to)) {
                          free_rangeset(rs);
-                         runerr(101, pb->lelem.lslots[j]);
+                         runerr(101, pb->lelem.lslots[k]);
                      }
                      if (to < 0 || to > MAX_CODE_POINT) {
                          free_rangeset(rs);

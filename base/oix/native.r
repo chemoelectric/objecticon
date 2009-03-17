@@ -149,8 +149,11 @@ function{0,1} lang_Prog_get_globals(c)
        else
            runerr(118, c);
 
-      for (dp = prog->Globals; dp != prog->Eglobals; dp++)
-         suspend *dp;
+       for (dp = prog->Globals; dp != prog->Eglobals; dp++) {
+          result.dword = D_Var;
+          VarLoc(result) = dp;
+          suspend result;
+       }
 
       fail;
    }
@@ -310,10 +313,6 @@ function{1} lang_Class_get_methp_object(mp)
    if !is:methp(mp) then
        runerr(613, mp)
     body {
-       struct b_proc *caller_proc = CallerProc;
-       if (caller_proc->package_id != 1 &&
-           BlkLoc(mp)->methp.object->class->program == caller_proc->program)
-           runerr(630,mp);
        return object(BlkLoc(mp)->methp.object);
     }
 end
@@ -322,10 +321,6 @@ function{1} lang_Class_get_methp_proc(mp)
    if !is:methp(mp) then
        runerr(613, mp)
     body {
-       struct b_proc *caller_proc = CallerProc;
-       if (caller_proc->package_id != 1 &&
-           BlkLoc(mp)->methp.object->class->program == caller_proc->program)
-           runerr(630,mp);
         return proc(BlkLoc(mp)->methp.proc);
     }
 end
@@ -334,10 +329,6 @@ function{1} lang_Class_get_cast_object(c)
    if !is:cast(c) then
        runerr(614, c)
     body {
-       struct b_proc *caller_proc = CallerProc;
-       if (caller_proc->package_id != 1 &&
-           BlkLoc(c)->cast.class->program == caller_proc->program)
-           runerr(630,c);
        return object(BlkLoc(c)->cast.object);
     }
 end
@@ -957,6 +948,30 @@ function{0,1} io_FileStream_stat_impl(self)
    }
 end
 
+function{0,1} io_FileStream_chdir(self)
+   body {
+       GetSelfFd();
+       if (fchdir(self_fd) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+   }
+end
+
+function{0,1} io_FileStream_dup2_impl(self, n)
+   if !cnv:C_integer(n) then
+      runerr(101, n)
+   body {
+       GetSelfFd();
+       if (dup2(self_fd, n) < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer n;
+   }
+end
+
 function{0,1} io_FileStream_seek(self, offset)
    if !cnv:C_integer(offset) then
       runerr(101, offset)
@@ -1496,92 +1511,6 @@ function{0,1} io_DirStream_close(self)
    }
 end
 
-static struct sdescrip pidf = {3, "pid"};
-
-function{0,1} io_ProgStream_open_impl(cmd, flags)
-   if !cnv:C_string(cmd) then
-      runerr(103, cmd)
-   if !cnv:C_integer(flags) then
-      runerr(101, flags)
-   body {
-       int pid, fd[2];
-
-       if (flags != O_RDONLY && flags != O_WRONLY) {
-           irunerr(205, flags);
-           errorfail;
-       }
-
-       if ((pipe(fd) < 0)) {
-           errno2why();
-           fail;
-       }
-
-       if ((pid = fork()) < 0) {
-           errno2why();
-           close(fd[0]);
-           close(fd[1]);
-           fail;
-       }
-
-       if (pid) {
-           struct descrip t;
-           create_list(2, &result);
-           if (flags == O_RDONLY) {
-               close(fd[1]);
-               MakeInt(fd[0], &t);
-           } else {
-               close(fd[0]);
-               MakeInt(fd[1], &t);
-           }
-           c_put(&result, &t);
-           MakeInt(pid, &t);
-           c_put(&result, &t);
-           return result;
-       } else {
-           if (flags == O_RDONLY) {
-               if (dup2(fd[1], 1) < 0) 
-                   perror("dup2 of write side of pipe failed");
-               if (dup2(fd[1], 2) < 0) 
-                   perror("dup2 of write side of pipe failed");
-           } else { 
-               if (dup2(fd[0], 0) < 0) 
-                   perror("dup2 of read side of pipe failed"); 
-           } 
-           close(fd[0]); /* close since we dup()'ed what we needed */ 
-           close(fd[1]); 
-
-           execl("/bin/sh", "sh", "-c", cmd, 0);
-           perror("execl failed");        
-           exit(1);
-           fail;  /* Not reached */
-       } 
-   }    
-end
-
-function{0,1} io_ProgStream_close(self)
-   body {
-       dptr pid;
-       static struct inline_field_cache pid_ic;
-       GetSelfFd();
-
-       pid = c_get_instance_data(&self, (dptr)&pidf, &pid_ic);
-       if (!pid)
-           runerr(207,*(dptr)&pidf);
-
-       if (close(self_fd) < 0) {
-           errno2why();
-           fail;
-       }
-       *self_fd_dptr = minusonedesc;
-       
-       if (waitpid(IntVal(*pid), 0, 0) < 0) {
-           errno2why();
-           fail;
-       }
-
-       return nulldesc;
-   }
-end
 
 function{0,1} io_Files_rename(s1,s2)
    /*

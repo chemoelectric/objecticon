@@ -99,43 +99,113 @@ function{0,1} posix_System_fork()
       }
 end
 
-"exec() - replace the executing Icon program with a new program."
+extern char **environ;
 
-function{0,1} posix_System_exec(f, argv[argc])
+function{*} posix_System_environ()
+  body {
+    char **p = environ;
+    while (*p) {
+        cstr2string(*p, &result);
+        suspend result;
+        ++p;
+    }
+    fail;
+  }
+end
+
+static char ** list2stringptrs(dptr l)
+{
+    char *data, *p, **a;
+    tended union block *pb;
+    int i, j, k, total;
+
+    /*
+     * Chain through each list block, making all elements strings
+     * and counting the string array size required (total).
+     */
+    total = 0;
+    for (pb = BlkLoc(*l)->list.listhead;
+         pb && (BlkType(pb) == T_Lelem);
+         pb = pb->lelem.listnext) {
+        for (j = 0; j < pb->lelem.nused; j++) {
+            k = pb->lelem.first + j;
+            if (k >= pb->lelem.nslots)
+                k -= pb->lelem.nslots;
+            if (!cnv:string(pb->lelem.lslots[k], pb->lelem.lslots[k])) {
+                ReturnErrVal(103, pb->lelem.lslots[k], 0);
+            }
+            total += StrLen(pb->lelem.lslots[k]) + 1;
+        }
+    }
+
+    /*
+     * Allocate the required memory for string and pointers, and go through
+     * again filling the space.
+     */
+    MemProtect(a = malloc((BlkLoc(*l)->list.size + 1) * sizeof(char *)));
+    MemProtect(data = malloc(total));
+    p = data;
+    i = 0;
+    for (pb = BlkLoc(*l)->list.listhead;
+         pb && (BlkType(pb) == T_Lelem);
+         pb = pb->lelem.listnext) {
+        for (j = 0; j < pb->lelem.nused; j++) {
+            k = pb->lelem.first + j;
+            if (k >= pb->lelem.nslots)
+                k -= pb->lelem.nslots;
+          a[i++] = p;
+          memcpy(p, StrLoc(pb->lelem.lslots[k]), StrLen(pb->lelem.lslots[k]));
+          p += StrLen(pb->lelem.lslots[k]);
+          *p++ = 0;
+        }
+    }
+    if (i != BlkLoc(*l)->list.size)
+        syserr("Inconsistent list/element size in list2stringptrs");
+    a[i] = 0;
+    return a;
+}
+
+function{0,1} posix_System_execve(f, argv, envp)
    if !cnv:C_string(f) then
       runerr(103, f)
+   if !is:list(argv) then
+      runerr(108, argv)
+   if !is:null(envp) then {
+      if !is:list(envp) then
+         runerr(108, envp)
+   }
+
    body {
-      int i, total;
-      char *data, *p, **a;
-
-      if (argc < 1)
-          runerr(176);
-
-      total = 0; /* Total size required to store args plus the zero terminators */
-      for (i = 0; i < argc; i++) {
-          if (!cnv:string(argv[i], argv[i]))
-             runerr(103, argv[i]);
-          total += StrLen(argv[i]) + 1;
+      char **c_argv, **c_envp;
+      if (BlkLoc(argv)->list.size < 1)
+          runerr(176, argv);
+      if (!(c_argv = list2stringptrs(&argv)))
+          runerr(0);
+      if (is:null(envp))
+          c_envp = environ;
+      else {
+          if (!(c_envp = list2stringptrs(&envp))) {
+              free(c_argv[0]);
+              free(c_argv);
+              runerr(0);
+          }
       }
-
-      /* Allocate arrays for pointers and space for strings */
-      MemProtect(a = malloc((argc + 1) * sizeof(char *)));
-      MemProtect(data = malloc(total));
-      p = data;
-      for (i = 0; i < argc; i++) {
-          a[i] = p;
-          memcpy(p, StrLoc(argv[i]), StrLen(argv[i]));
-          p += StrLen(argv[i]);
-          *p++ = 0;
-      }
-      a[i] = 0;
-      if (execvp(f, a) != 0) {
+      if (execve(f, c_argv, c_envp) != 0) {
+         free(c_argv[0]);
+         free(c_argv);
+         if (c_envp != environ) {
+             free(c_envp[0]);
+             free(c_envp);
+         }
 	 errno2why();
 	 fail;
       }
+      /* Not reached */
       return nulldesc;
    }
 end
+
+
 
 "wait() - wait for process to terminate or stop."
 "the return value is `status' from the wait(2) manpage."
