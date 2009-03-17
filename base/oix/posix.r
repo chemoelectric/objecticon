@@ -99,40 +99,42 @@ function{0,1} posix_System_fork()
       }
 end
 
-
 "exec() - replace the executing Icon program with a new program."
 
 function{0,1} posix_System_exec(f, argv[argc])
    if !cnv:C_string(f) then
       runerr(103, f)
-   abstract {
-      return null
-      }
    body {
-      int i;
-      /*
-       * We are subverting the RTT type system here w.r.t. garbage
-       * collection but we're going to be doing an exec() so ...
-       */
-      tended char *p;
-      /* fixme: remove static limit on margv */
-      char *margv[200];		/* We need a different array so we can put
-				   a nil pointer at the end of the list */
-      if (argc > 200)
-    	 runerr(0);
-      
-      for(i = 0; i < argc; i++) {
-         if (!cnv:C_string(argv[i], p))
-	    runerr(103, argv[i]);
-	 margv[i] = p;
+      int i, total;
+      char *data, *p, **a;
+
+      if (argc < 1)
+          runerr(176);
+
+      total = 0; /* Total size required to store args plus the zero terminators */
+      for (i = 0; i < argc; i++) {
+          if (!cnv:string(argv[i], argv[i]))
+             runerr(103, argv[i]);
+          total += StrLen(argv[i]) + 1;
       }
-      margv[i] = 0;
-      if (execvp(f, margv) != 0) {
+
+      /* Allocate arrays for pointers and space for strings */
+      MemProtect(a = malloc((argc + 1) * sizeof(char *)));
+      MemProtect(data = malloc(total));
+      p = data;
+      for (i = 0; i < argc; i++) {
+          a[i] = p;
+          memcpy(p, StrLoc(argv[i]), StrLen(argv[i]));
+          p += StrLen(argv[i]);
+          *p++ = 0;
+      }
+      a[i] = 0;
+      if (execvp(f, a) != 0) {
 	 errno2why();
 	 fail;
-	 }
-      return nulldesc;
       }
+      return nulldesc;
+   }
 end
 
 "wait() - wait for process to terminate or stop."
@@ -341,13 +343,10 @@ function{0,1} posix_System_getenv(s)
       }
 
    inline {
-      register char *p;
-      long l;
-
+      char *p;
       if ((p = getenv(s)) != NULL) {	/* get environment variable */
-	 l = strlen(p);
-	 MemProtect(p = alcstr(p,l));
-	 return string(l,p);
+          cstr2string(p, &result);
+          return result;
 	 }
       else 				/* fail if not in environment */
 	 fail;

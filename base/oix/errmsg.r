@@ -70,7 +70,7 @@ struct errtab errtab[] = {
    173, "cannot open directory for writing",
    174, "invalid file operation on directory or database",
    175, "network connection expected",
-
+   176, "exec requires at least one argument for the program",
 
    201, "division by zero",
    202, "remaindering by zero",
