@@ -1,0 +1,101 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+#
+#
+class CanvasMenu(CanvasTextMenuItem,Menu)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      local i
+      cast(self,CanvasMenuComponent).gen_code(c)
+
+      self.paint_mid.gen_code(c)
+      c.line(name || ".set_paint_mid(" || self.paint_mid.name || ")")
+      if \self.paint_left then {
+         self.paint_left.gen_code(c)
+         c.line(name || ".set_paint_left(" || self.paint_left.name || ")")
+      }
+      if \self.paint_right &
+         not(is(self.paint_right, CanvasImagePaint) &
+             paint_right.image_str === Icon.ARROW_RIGHT) then  {
+         self.paint_right.gen_code(c)
+         c.line(name || ".set_paint_right(" || self.paint_right.name || ")")
+      }
+
+      every i := !self.children do {
+         i.gen_code(c)
+         c.line(self.name || ".add(" || i.name || ")")
+      }
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup(mb)
+      local c
+      c := CanvasMenu()
+      cast(self,CanvasTextMenuItem).dup_fields(c)
+      every c.add((!self.children).dup())
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasTextMenuItem).get_template() ||| 
+         [["Children", "children"]
+         ]
+   end
+
+   #
+   # Add the menu's string representation into s.
+   #
+   public set_string_rep(s, level, parent, i)
+      local sub
+      put(s, MenuTreeNode(level, parent, i))
+      put(s, MenuTreeNode(level, parent, i, self))
+      every sub := self.children[i := 1 to *self.children] do {
+         if sub.is_sub_menu() then 
+            sub.set_string_rep(s, level + 1, self, i)
+         else {
+            put(s, MenuTreeNode(level + 1, self, i))
+            put(s, MenuTreeNode(level + 1, self, i, sub))
+         }
+      }
+      put(s, MenuTreeNode(level + 1, self, *self.children + 1))
+   end
+
+   #
+   # Get a label for the menu bar display.
+   #
+   public get_string_label()
+      if is(self.paint_mid, CanvasTextPaint) then
+         return self.paint_mid.str
+      else
+         return subtype(self.paint_mid)
+   end
+
+   public new()
+      cast(self,CanvasTextMenuItem).new()
+      cast(self,Menu).new()
+      self.class_name := "Menu"
+      self.import_name := "gui"
+      self.name := "menu"
+      return
+   end
+end
+
+

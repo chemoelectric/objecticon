@@ -1,0 +1,478 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util
+
+#
+# Component representing the slider area
+# @p
+class SliderArea(Component)
+   public inner_x, inner_y, inner_w, inner_h, slider_x, slider_y, slider_w, slider_h
+   public display()
+      Gui.style.draw_sunken_rectangle(self.cbwin, 
+                                  self.inner_x, self.inner_y, 
+                                  self.inner_w, self.inner_h,
+                                  Gui.BORDER_WIDTH)
+      erase_rectangle(self.cbwin, self.slider_x, self.slider_y, self.slider_w, self.slider_h)
+      Gui.style.draw_raised_rectangle(self.cbwin, 
+                                  self.slider_x, self.slider_y, 
+                                  self.slider_w, self.slider_h,
+                                  Gui.BORDER_WIDTH)
+   end
+end
+
+
+#
+# This component is a slider between two set values, with optional tick marks
+# and labels.
+#
+# @example
+# @ s := Slider()
+# @ s.set_pos("85%", "25%")      
+# @ s.set_size(, "40%") # Width defaults for a vertical slider
+# @ s.set_range(0,5)
+# @ s.set_value(2)
+# @ s.set_ticks(1)
+# @ s.set_labels(1)
+# @ s.set_snaps(1)
+# @ self.add(s)
+#
+class Slider(Component)
+   public 
+      value,                   
+      old_value,
+      slider_down,
+      slider_down_offset,
+      slider_area,
+      slider_pos,
+      slider_area_pos,
+      slider_area_size,
+      is_horizontal_flag,                                
+      discrete_vals,
+      ticks,
+      labels,
+      snaps,
+      ticks_pos,
+      labels_pos,
+      is_paging,
+      increment_size,
+      wheel_factor,
+      hi,                                
+      lo
+
+   # These values refer to a horizontal slider, the logic is backwards for a vertical one.
+   public static SLIDER_W, SLIDER_H, SLIDER_INNER_H, SLIDER_TICK_H
+
+   private static init()
+      SLIDER_W := 31
+      SLIDER_H := 19
+      SLIDER_INNER_H := 4
+      SLIDER_TICK_H := 10
+   end
+
+   #
+   # Configure the orientation (default is vertical).
+   #
+   public set_is_horizontal(s)
+      self.is_horizontal_flag := to_flag(s)
+   end
+
+   #
+   # Configure so that on release after a drag, the value will snap to 
+   # the nearest multiple of n.
+   #
+   public set_snaps(n)
+      self.snaps := n
+   end
+
+   #
+   # Draw ticks at the given interval
+   #
+   public set_ticks(n)
+      self.ticks := n
+   end
+
+   #
+   # Draw labels at the given interval
+   #
+   public set_labels(n)
+      self.labels := n
+   end
+
+   #
+   # Set the increment_size to increment on a click in the slider area; default is 1.
+   # @param x   The increment_size
+   #
+   public set_increment_size(x)
+      self.increment_size := x
+      self.invalidate()
+   end
+
+   #
+   # Get the increment_size
+   #
+   public get_increment_size()
+      return self.increment_size
+   end
+
+   #
+   # Set the wheel factor, being the number of increments to
+   # move on a wheel press; by default it is set to 1.
+   #
+   public set_wheel_factor(n)
+      self.wheel_factor := n
+   end
+
+   #
+   # Get the wheel_factor
+   #
+   public get_wheel_factor()
+      return self.wheel_factor
+   end
+
+   #
+   # Set the current value
+   #
+   public set_value(x)
+      if is_live() then {
+         self.move_value(x)
+         self.set_pos_from_value()
+      } else 
+         self.value := x
+   end
+
+   public move_value(x)
+      self.value := x
+      self.value <:= self.lo
+      self.value >:= self.hi
+   end
+
+   #
+   # Get the value.
+   # @return The value
+   #
+   public get_value()
+      return self.value
+   end
+
+   public set_pos_from_value()
+      if self.hi ~= self.lo then
+         self.move_slider_pos(self.slider_area_pos + integer(((self.get_value() - self.lo) * self.slider_area_size / (self.hi - self.lo))))
+      else
+         self.move_slider_pos(self.slider_area_pos)
+   end
+
+   public set_value_from_pos()
+      if self.slider_area_size ~= 0 then {
+         # For discrete vals, an adjustment is made so that, for example
+         # the ranges where the cursor set the position might be
+         # 0     1     2     3
+         # 0001111112222223333
+         # Without this adjustment 0 would only be in the leftmost position, which for
+         # small ranges is unattractive.  For non-discrete ranges this behaviour is
+         # not appropriate.
+         if \self.discrete_vals then
+            self.move_value(self.lo + ((self.slider_area_size / 2) + (self.hi - self.lo) * (self.slider_pos - self.slider_area_pos)) / self.slider_area_size)
+         else
+            self.move_value(self.lo + ((self.hi - self.lo) * (self.slider_pos - self.slider_area_pos)) / self.slider_area_size)
+      } else
+         self.move_value(self.lo)
+   end
+
+   public move_slider_pos(x)
+      self.slider_pos := x
+      self.slider_pos <:= self.slider_area_pos
+      self.slider_pos >:= self.slider_area_pos + self.slider_area_size
+      if /self.is_horizontal_flag then
+         self.slider_area.slider_y := self.slider_pos - SLIDER_W / 2
+      else
+         self.slider_area.slider_x := self.slider_pos - SLIDER_W / 2
+      self.slider_area.invalidate()
+   end
+
+   #
+   # Set the range of the slider.  The values may
+   # be integer or real.
+   #
+   # @param lo  The lower bound
+   # @param hi  The upper bound
+   #
+   public set_range(lo, hi)
+      self.lo := lo
+      self.hi := hi
+      if type(self.hi) == type(self.lo) == "integer" then
+         self.discrete_vals := 1
+      else
+         self.discrete_vals := &null
+      self.reconfigure()
+   end
+
+   public handle_lpress(e)
+      start_handle(e)
+      if (self.slider_area.slider_x <= e.x < self.slider_area.slider_x + self.slider_area.slider_w) & (self.slider_area.slider_y  <= e.y < self.slider_area.slider_y + self.slider_area.slider_h) then {
+         #
+         # Click on slider; set flag and save offset between top of slider and pointer position
+         #
+         self.slider_down := 1
+         if /self.is_horizontal_flag then
+            self.slider_down_offset := e.y - self.slider_pos
+         else
+            self.slider_down_offset := e.x - self.slider_pos
+      } else if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & (self.slider_area.y  <= e.y < self.slider_area.slider_y)) | ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & (self.slider_area.x  <= e.x < self.slider_area.slider_x)) then {
+         self.move_value(self.get_value() - self.increment_size)
+         self.set_pos_from_value()
+         start_paging(-1)
+      } else  if (/self.is_horizontal_flag & (self.slider_area.x <= e.x < self.slider_area.x + self.slider_area.w) & ( self.slider_area.slider_y + self.slider_area.slider_h  <= e.y <  self.slider_area.y + self.slider_area.h)) | ((self.slider_area.y <= e.y < self.slider_area.y + self.slider_area.h) & ( self.slider_area.slider_x + self.slider_area.slider_w  <= e.x <  self.slider_area.x + self.slider_area.w)) then {
+         self.move_value(self.get_value() + self.increment_size)
+         self.set_pos_from_value()
+         start_paging(1)
+      }
+      end_handle(e)
+   end
+
+   public handle_lrelease(e)
+      start_handle(e)
+      if \self.slider_down then {
+         #
+         # Released; clear flag
+         #
+         self.slider_down := &null
+         if \self.snaps then {
+            self.value +:= self.snaps / 2
+            self.set_value(self.value - (self.value % snaps))
+         }
+      } else if \self.is_paging then
+         stop_paging()
+      end_handle(e)
+   end
+
+   public tick()
+      start_handle()
+      self.move_value(self.get_value()  + self.is_paging * self.increment_size)
+      self.set_pos_from_value()
+      end_handle()
+   end
+
+   public start_paging(n)
+      self.is_paging := n
+      start_ticker(Gui.REPEAT_RATE, Gui.REPEAT_DELAY)
+   end
+
+   public stop_paging()
+      self.is_paging := &null
+      stop_ticker()
+   end
+
+   public handle_ldrag(e)
+      \self.slider_down | fail
+
+      start_handle(e)
+      #
+      # Slider dragged; compute new position
+      #
+      if /self.is_horizontal_flag then
+         self.move_slider_pos(e.y - self.slider_down_offset)
+      else
+         self.move_slider_pos(e.x - self.slider_down_offset)
+      self.set_value_from_pos()
+      end_handle(e)
+   end
+
+   public handle_wheel_up(e)
+      start_handle(e)
+      self.move_value(self.get_value() - self.wheel_factor * self.increment_size)
+      self.set_pos_from_value()
+      end_handle(e)
+   end
+
+   public handle_wheel_down(e)
+      start_handle(e)
+      self.move_value(self.get_value() + self.wheel_factor * self.increment_size)
+      self.set_pos_from_value()
+      end_handle(e)
+   end
+
+   public start_handle(ev)
+      old_value := value
+   end
+
+   public end_handle(ev)
+      if old_value ~=== value then
+         fire(Event.VALUE_CHANGED, ev)
+   end
+
+   public reconfigure()
+      # Don't do anything if we haven't called resized yet.
+      is_live() | fail
+      self.move_value(self.value)
+      self.set_pos_from_value()
+   end
+
+   public get_default_width()
+      local w
+      if /self.is_horizontal_flag then {
+         w := SLIDER_H + border.get_total_width()
+         if \self.labels then
+            w +:= self.cbwin.text_width(self.hi) + Gui.X_INSET
+         if \self.ticks then
+            w +:= SLIDER_TICK_H + Gui.X_INSET
+         return w
+      }
+   end
+
+   public get_default_height()
+      local h
+      if \self.is_horizontal_flag then {
+         h := SLIDER_H + border.get_total_height()
+         if \self.labels then
+            h +:= self.cbwin.attrib("fheight") + Gui.Y_INSET
+         if \self.ticks then
+            h +:= SLIDER_TICK_H + Gui.Y_INSET
+         return h
+      }
+   end
+
+   public layout()
+      self.labels_pos := self.ticks_pos := &null
+      if /self.is_horizontal_flag then {
+         if \self.labels then
+            labels_pos := self.x + border.get_l_inset() + SLIDER_H + Gui.X_INSET
+         if \self.ticks then {
+            ticks_pos := self.x + border.get_l_inset() + SLIDER_H + Gui.X_INSET
+            \labels_pos +:= SLIDER_TICK_H + Gui.X_INSET
+         }
+         slider_area.x := self.x + border.get_l_inset()
+         slider_area.y := self.y + border.get_t_inset()
+         slider_area.w := SLIDER_H
+         slider_area.h := self.h - border.get_total_height()
+         slider_area.inner_x := slider_area.x + slider_area.w / 2 - SLIDER_INNER_H  / 2
+         slider_area.inner_y := slider_area.y + SLIDER_W / 2
+         slider_area.inner_w := SLIDER_INNER_H
+         slider_area.inner_h := slider_area.h - SLIDER_W
+         slider_area.slider_x := slider_area.x
+         slider_area.slider_h := SLIDER_W
+         slider_area.slider_w := SLIDER_H
+         slider_area_pos := slider_area.inner_y
+         slider_area_size := slider_area.inner_h
+      } else {
+         if \self.labels then
+            labels_pos := self.y + border.get_t_inset() + SLIDER_H + 
+                              Gui.Y_INSET + self.cbwin.attrib("fheight") / 2
+         if \self.ticks then {
+            ticks_pos := self.y + border.get_t_inset() + SLIDER_H + Gui.Y_INSET
+            \labels_pos +:= SLIDER_TICK_H + Gui.Y_INSET
+         }
+         slider_area.x := self.x + border.get_l_inset()
+         slider_area.y := self.y + border.get_t_inset()
+         slider_area.w := self.w - border.get_total_width()
+         slider_area.h := SLIDER_H
+         slider_area.inner_x := slider_area.x + SLIDER_W  / 2
+         slider_area.inner_y := slider_area.y + slider_area.h / 2 - SLIDER_INNER_H  / 2
+         slider_area.inner_h := SLIDER_INNER_H
+         slider_area.inner_w := slider_area.w - SLIDER_W
+         slider_area.slider_y := slider_area.y
+         slider_area.slider_w := SLIDER_W
+         slider_area.slider_h := SLIDER_H
+         slider_area_pos := slider_area.inner_x
+         slider_area_size := slider_area.inner_w
+      }
+
+      reconfigure()
+   end
+
+   public draw_ticks()
+      local i, xp, yp
+      if /self.is_horizontal_flag then {
+         i := self.lo
+         while i <= self.hi do {
+            yp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
+            self.cbwin.draw_line(ticks_pos, yp, ticks_pos + SLIDER_TICK_H - 1, yp)
+            i +:= ticks
+         }
+      } else {
+         i := self.lo
+         while i <= self.hi do {
+            xp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
+            self.cbwin.draw_line(xp, ticks_pos, xp, ticks_pos + SLIDER_TICK_H - 1)
+            i +:= ticks
+         }
+      }
+   end
+
+   public draw_labels()
+      local i, xp, yp, fh
+      fh := self.cbwin.attrib("fheight")
+      if /self.is_horizontal_flag then {
+         i := self.lo
+         while i <= self.hi do {
+            yp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
+            draw_string_ex(self.cbwin, labels_pos, yp - fh / 2, i)
+            i +:= labels
+         }
+      } else {
+         i := self.lo
+         while i <= self.hi do {
+            xp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
+            draw_string_ex(self.cbwin, xp - self.cbwin.text_width(i) / 2, labels_pos - fh / 2, i)
+            i +:= labels
+         }
+      }
+   end
+
+   public initially()
+      \self.value | runerr("value not set")
+      if /(self.lo | self.hi) then
+         runerr("range not set")
+      cast(self,Component).initially()
+   end
+
+   public display(r)
+      border.draw_rect(self.cbwin, self)
+
+      if \self.labels then
+         draw_labels()
+
+      if \self.ticks then
+         draw_ticks()
+
+      self.display_children(r)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "is_horizontal" : set_is_horizontal(f.flag_val())
+         "value" : set_value(f.numeric_val())
+         "range" : set_range!(f.numeric_list_val(2))
+         "ticks" : set_ticks(f.numeric_val())
+         "labels" : set_labels(f.numeric_val())
+         "snaps" : set_snaps(f.numeric_val())
+         "increment_size" : set_increment_size(f.numeric_val())
+         "wheel_factor": set_wheel_factor(f.int_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.slider_area := SliderArea()
+      self.increment_size := 1
+      self.wheel_factor := 1
+      self.set_border(EmptyBorder("flush"))
+      add(self.slider_area)
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(self.handle_wheel_up, Event.MOUSE_WHEEL_UP)
+      connect(self.handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
+      set_fields(a)
+      return
+   end
+end

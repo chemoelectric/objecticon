@@ -1,0 +1,27 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+class CanvasRangeSpinUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasRangeSpin()
+      t.value := 0
+      t.set_value(0)
+      t.set_size(100)
+      return t
+   end
+
+   public get_category()
+      return "Spin"
+   end
+
+   public get_name()
+      return "RangeSpin"
+   end
+end
+

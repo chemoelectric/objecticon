@@ -1,0 +1,479 @@
+import gui, io
+
+class PaintEdit(Dialog)
+   public 
+      c, 
+      tabset,
+      code_tab,
+      okay_result
+
+   #
+   # Add the tab to the TabSet
+   #
+   public add_tab(t) 
+      tabset.add(t)
+   end
+
+   #
+   # Add the tab to the TabSet, as the first item
+   #
+   public add_tab_at_front(t) 
+      tabset.add(t, 1)
+   end
+
+   public setup()
+      local oc, label
+      subtype(c) ? {
+         ="Canvas"
+         label := tab(0) || " Setup"
+      }
+      self.set_wattrib("label", label)
+
+      set_layout(GridLayout())
+
+      tabset := TabSet("c:eol")
+      add(tabset)
+      code_tab := CodeTab(c)
+      tabset.add(code_tab)
+
+      oc := OkCancel()
+      oc.listen(self)
+      self.add(oc)
+   end
+
+   public on_cancel()
+      self.dispose()
+   end
+
+   public validate_input()
+      return
+   end
+
+   public on_okay()
+      self.validate_input() | fail
+      self.set_vals(c)
+      self.okay_result := 1
+      self.dispose()
+   end
+
+   public set_vals()
+      code_tab.set_vals()
+   end
+
+   public new(c)
+      cast(self,Dialog).new()
+      self.c := c
+      setup()
+      return
+   end
+end
+
+
+class ImagePaintEdit(PaintEdit)
+   public 
+      scale_up,
+      max_w, 
+      max_h, 
+      max_w_field, 
+      max_h_field,
+      img_cbg,
+      str_cb,
+      str_panel,
+      str_img,
+      file_cb,
+      file_panel,
+      file_img,
+      file_field,
+      use_cache,
+      relativize
+
+   public on_max_w()
+      max_w_field.toggle_is_shaded()
+   end
+
+   public on_max_h()
+      max_h_field.toggle_is_shaded()
+   end
+
+   public set_vals()
+      cast(self,PaintEdit).set_vals()
+      c.max_w := if max_w.is_checked() then
+         integer(max_w_field.get_contents())
+      else
+         &null
+
+      c.max_h := if max_h.is_checked() then
+         integer(max_h_field.get_contents())
+      else
+         &null
+
+      c.scale_up_flag := scale_up.get_status()
+
+      if str_cb.is_checked() then
+         c.image_str := str_img.image_str
+      else
+         c.image_str := &null
+
+      if file_cb.is_checked() then {
+         c.image_file := file_img.image_file
+         c.use_cache_flag := use_cache.get_status()
+      } else
+         c.image_file := &null
+
+   end
+
+   public on_file_field()
+      file_img.set_file(file_field.get_contents())
+      update_grey()
+   end
+
+   public on_str_browse()
+      local fd, s, l
+      fd := FileDialog()
+      l := []
+      put(l, \Ivib.last_icon_dir)
+      l |||:= Ivib.main.prefs.cache_path
+      fd.set_directories(l)
+      fd.set_filters(["*.png;*.gif","*"])
+      fd.show_modal(self)
+      Ivib.last_icon_dir := fd.get_directory()
+      if s := util_read_icon(self, fd.get_result()) then 
+         self.str_img.set_image(s)
+   end
+
+   public on_file_browse()
+      local fd, s, l, p
+      fd := FileDialog()
+      l := []
+      if \file_img.image_file then {
+         p := Files.get_path(file_img.image_file).canonical()
+         put(l, p.parent().str())
+         fd.set_file(p.get(-1))
+      }
+      put(l, \Ivib.last_icon_dir)
+      l |||:= Ivib.main.prefs.cache_path
+      fd.set_directories(l)
+      fd.set_filters(["*.gif;*.jpg;*.xpm","*"])
+      fd.show_modal(self)
+      Ivib.last_icon_dir := fd.get_directory()
+      if s := fd.get_result() then {
+         self.file_img.set_file(s)
+         file_field.set_contents(s)
+         update_grey()
+      }
+   end
+
+   public on_file_relativize()
+      local s, t
+      s := file_field.get_contents()
+      every t := !Ivib.main.prefs.cache_path do {
+         s ? if =t then {
+            ="/"
+            file_field.set_contents(tab(0))
+            on_file_field()
+            break
+         }
+      }
+   end
+
+   # Take an absolute path and try to make it relative to the image search
+   # path.
+   public make_relative(s)
+      s ? if =!Ivib.main.prefs.cache_path then
+         return tab(0)
+      return s
+   end
+
+   public update_grey()
+      if str_cb.is_checked() then
+         str_panel.set_is_shaded("f")
+      else
+         str_panel.set_is_shaded("t")
+
+      if file_cb.is_checked() then
+         file_panel.set_is_shaded("f")
+      else
+         file_panel.set_is_shaded("t")
+
+      if file_field.get_contents()[1] == "/" then
+         relativize.set_is_shaded("f")
+      else
+         relativize.set_is_shaded("t")
+   end
+
+   public setup()
+      local p, q, b, browse
+      cast(self,PaintEdit).setup()
+
+      p := TabItem("label=General")
+      p.set_layout(GridLayout("extra=borders"))
+      add_tab_at_front(p)
+
+      max_w := CheckBox("label=Max width :")
+      max_w.connect(self.on_max_w, Event.ACTION)
+      p.add(max_w)
+      max_w_field := TextField("size=130", "filter=",&digits, "c:eol")
+      p.add(max_w_field)
+      if \c.max_w then {
+         max_w.set_is_checked("t")
+         max_w_field.set_contents(c.max_w)
+      } else
+         max_w_field.set_is_shaded("t")
+
+      max_h := CheckBox("label=Max height :")
+      max_h.connect(self.on_max_h, Event.ACTION)
+      p.add(max_h)
+      max_h_field := TextField("size=130", "filter=",&digits, "c:eol")
+      p.add(max_h_field)
+      if \c.max_h then {
+         max_h.set_is_checked("t")
+         max_h_field.set_contents(c.max_h)
+      } else
+         max_h_field.set_is_shaded("t")
+
+      scale_up := CheckBox("label=Scale up", "c:eol")
+      if \c.scale_up_flag then
+         scale_up.set_is_checked("t")
+      p.add(scale_up)
+
+      p := TabItem("label=Images")
+      p.set_layout(GridLayout())
+      add_tab_at_front(p)
+
+      img_cbg := CheckBoxGroup()
+
+      str_cb := CheckBox("label=String")
+      str_cb.connect(self.update_grey, Event.ACTION)
+      img_cbg.add(str_cb)
+      str_panel := Component("layout=",GridLayout())
+      b := Border("title=",str_cb,
+                  "content=",str_panel,
+                  "c:eol", "c:y_weight=0")
+      str_img := Image("size=60,60")
+      str_img.clear_constraints()
+      str_panel.add(str_img)
+      browse := TextButton("label=Browse...", "c:x_weight=1", "c:x_align=l")
+      browse.connect(self.on_str_browse, Event.ACTION)
+      str_panel.add(browse)
+      if \c.image_str then {
+         str_img.set_image(c.image_str)
+         str_cb.set_is_checked("t")
+      }
+      p.add(b)
+
+      file_cb := CheckBox("label=File")
+      file_cb.connect(self.update_grey, Event.ACTION)
+      img_cbg.add(file_cb)
+      file_panel := Component("layout=",GridLayout())
+      b := Border("title=",file_cb,
+                  "content=",file_panel,
+                  "c:eol", "c:y_weight=0")
+      file_img := Image("size=60,60")
+      file_img.clear_constraints()
+      file_panel.add(file_img)
+      q := Component("layout=",GridLayout("flush"), 
+                     "c:eol", "c:x_weight=1", "c:x_align=l", "c:x_fill=t")
+      file_field := TextField("size=150", "c:eol", "c:w=2")
+      file_field.connect(self.on_file_field, Event.CONTENT_CHANGED)
+      q.add(file_field)
+      browse := TextButton("label=Browse...")
+      browse.connect(self.on_file_browse, Event.ACTION)
+      q.add(browse)
+      relativize := TextButton("label=Relativize", "c:x_align=l", "c:x_weight=1")
+      relativize.connect(self.on_file_relativize, Event.ACTION)
+      q.add(relativize)
+      file_panel.add(q)
+      use_cache := CheckBox("label=Use cache", "c:w=2")
+      if \c.use_cache_flag then
+         use_cache.set_is_checked("t")
+      file_panel.add(use_cache)
+      if \c.image_file then {
+         file_img.set_file(c.image_file)
+         file_field.set_contents(c.image_file)
+         file_cb.set_is_checked("t")
+      }
+      p.add(b)
+
+      update_grey()
+   end
+
+end
+
+
+
+class GridPaintEdit(PaintEdit)
+   public 
+      res,
+      input,
+      output, 
+      clipboard,
+      ucs_cb
+
+   public on_input(ev)
+      render()
+   end
+
+   public init_dialog()
+      render()
+   end
+
+   public set_vals()
+      cast(self,PaintEdit).set_vals()
+      c.fmt := input.get_contents_str()
+   end
+
+   public render(ev)
+      output.set_spec(input.get_contents_str())
+   end
+
+   private on_ucs_cb()
+      if ucs_cb.is_checked() then
+         input.set_contents([u""])
+      else
+         input.set_contents([""])
+      render()
+   end
+
+   public on_input_press(ev)
+      local m, i, pm
+      m := Menu()
+      i := TextMenuItem("label=Save to...")
+      i.connect(self.on_save_input, Event.ACTION)
+      m.add(i)
+      i := TextMenuItem("label=Load from...")
+      i.connect(self.on_load_input, Event.ACTION)
+      m.add(i)
+      i := TextMenuItem("label=Insert icon...")
+      i.connect(self.on_insert_icon, Event.ACTION)
+      m.add(i)
+      i := TextMenuItem("label=Debug")
+      i.connect(self.on_debug, Event.ACTION)
+      m.add(i)
+      pm := PopupMenu()
+      pm.popup(self, m)
+   end
+
+   public on_debug()
+      output.d.g.print_layout()
+   end
+
+   public on_save_input()
+      local d, fn, f
+      d := FileDialog("pos=100,100")
+      d.show_modal(self)
+      if fn := d.get_result() then {
+         f := open(fn, "w") | return alert_error(self, "Couldn't open " || fn)
+         every write(f, !input.get_contents())
+         close(f)
+      }
+   end
+
+   public on_load_input()
+      local l, d, fn, f
+      d := FileDialog("pos=100,100")
+      d.show_modal(self)
+      if fn := d.get_result() then {
+         f := open(fn) | return alert_error(self, "Couldn't open " || fn)
+         l := []
+         every put(l, !f)
+         close(f)
+         input.set_contents(l)
+         render()
+      }
+   end
+
+   public split_icon(s)
+      local w, r
+      w := image_width(s) | fail
+      r := ""
+      s ? {
+         tab(upto(','))
+         move(1)
+         tab(upto(','))
+         move(1)
+         r ||:= s[1:&pos] || "\n"
+         while r ||:= move(w) || "\n"
+      }
+      return r
+   end
+
+   public on_insert_icon(e)
+      local d, s
+      d := FileDialog("pos=100,100")
+      d.set_directory(\Ivib.last_icon_dir)
+      d.show_modal(self)
+      Ivib.last_icon_dir := d.get_directory()
+      s := util_read_icon(self, d.get_result()) | fail
+      s := split_icon(s)
+      s := ".img\n" || s || "$\n"
+      input.insert_string(s, e)
+   end
+
+   public setup()
+      local p
+      cast(self,PaintEdit).setup()
+
+      p := TabItem("label=Edit")
+      p.set_layout(GridLayout())
+      add_tab_at_front(p)
+
+      input := EditableTextList("c:x_weight=0", "size=250,200")
+      self.set_focus(input.find_focus())
+      input.connect(self.on_input, Event.CONTENT_CHANGED)
+      input.connect(self.on_input_press, Event.MOUSE_RIGHT_PRESS)
+      input.set_contents_str(\c.fmt)
+      p.add(input)
+
+      output := ShowGridPaint("size=150,200", "c:eol")
+      p.add(output)
+
+      ucs_cb := CheckBox("label=Ucs content")
+      if type(c.fmt) == "ucs" then
+         ucs_cb.set_is_checked("t")
+      ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
+      p.add(ucs_cb)
+   end
+end
+
+
+class ShowGridPaint(DrawScrollArea)
+   public d
+
+   public get_subject_width()
+      return (\d).w | 0
+   end
+
+   public get_subject_height()
+      return (\d).h | 0
+   end
+
+   public get_default_vertical_increment()
+      return 10
+   end
+
+   public get_default_horizontal_increment()
+      return 10
+   end
+
+   public draw(r)
+      (\d).draw(view.cbwin, 
+                view.x - get_area_x(), 
+                view.y - get_area_y())
+   end
+
+   public finally()
+      cast(self,DrawScrollArea).finally()
+      (\d).finally()
+   end
+
+   public set_spec(s)
+      (\d).finally()
+      d := GridPaint(s)
+      d.initially(self)
+      d.draw_grid()
+      compute_and_invalidate()
+   end
+end
+
+
+

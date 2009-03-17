@@ -1,0 +1,405 @@
+package lang
+
+import io, util(error)
+
+class Codec()
+   public static const 
+      OBJECT_CODE,
+      CLASS_CODE,
+      RECORD_CODE,
+      CONSTRUCTOR_CODE,
+      PROCEDURE_CODE,
+      NULL_CODE,
+      STRING_CODE,
+      CSET_CODE,
+      INTEGER_CODE,
+      REAL_CODE,
+      LIST_CODE,
+      SET_CODE,
+      TABLE_CODE,
+      REF_CODE,
+      UCS_CODE,
+      CODE_SEPARATOR
+
+   private static init()
+      CODE_SEPARATOR := "|"
+      OBJECT_CODE := "C"
+      CLASS_CODE := "D"
+      RECORD_CODE := "R"
+      CONSTRUCTOR_CODE := "K"
+      PROCEDURE_CODE := "P"
+      NULL_CODE := "N"
+      STRING_CODE := "S"
+      CSET_CODE := "A"
+      INTEGER_CODE := "I"
+      REAL_CODE := "B"
+      LIST_CODE := "L"
+      SET_CODE := "E"
+      TABLE_CODE := "T"
+      UCS_CODE := "U"
+      REF_CODE := "X"
+   end
+end
+
+#
+# Return a string, being the encoded representation of the given object.
+#
+procedure encode(o)
+   local e, f
+   f := RamStream()
+   e := Encode(f)
+   e.encode(o) | {
+      f.close()
+      fail
+   }
+   return f.done()
+end
+
+#
+# Recreate an object from the encoded string.
+#
+procedure decode(s)
+   local d
+   d := Decode()
+   return s ? d.decode()
+end
+
+class Encode()
+   private
+      tag_count,
+      seen, 
+      f
+
+   private note_seen(o)
+      seen[o] := (tag_count +:= 1)
+   end
+
+   private encode_string(s)
+      local r
+      static printable
+      initial {
+         printable := '\x20-\x7e' -- '\\' -- Codec.CODE_SEPARATOR
+      }
+      r := ""
+      s ? {
+         repeat {
+            r ||:= tab(many(printable))
+            if pos(0) then
+               return r
+            # This MUST be done in two steps to take advantage of
+            # catenation optimisation - very slow otherwise!
+            r ||:= "\\"
+            r ||:= right(ord(move(1)), 3, "0")
+         }
+      }	 
+   end
+
+   public encode(o)
+      local ty, i, cname, p, n, e, l
+
+      if i := \seen[o] then {
+         chars_out(Codec.REF_CODE) | fail
+         int_out(i) | fail
+         return
+      }
+
+      ty := type(o)
+      case ty of {
+         "object" : {
+            chars_out(Codec.OBJECT_CODE) | fail
+            cname := subtype(o)
+            line_out(cname) | fail
+            note_seen(o)
+            if p := Class.getf(o, "object_encode", 1) then
+               p(self) | fail
+            else {
+               n := Class.get_n_instance_fields(o)
+               int_out(n) | fail
+               every e := Class.get(o, 1 to n) do
+                  encode(e) | fail
+            }
+         }
+
+         "class": {
+            chars_out(Codec.CLASS_CODE) | fail
+            line_out(subtype(o)) | fail
+         }
+
+         "procedure" : {
+            chars_out(Codec.PROCEDURE_CODE) | fail
+            line_out(subtype(o)) | fail
+         }
+
+         "constructor" : {
+            chars_out(Codec.CONSTRUCTOR_CODE) | fail
+            line_out(subtype(o)) | fail
+         }
+
+         "null" :
+            chars_out(Codec.NULL_CODE) | fail
+
+         "string" : {
+            chars_out(Codec.STRING_CODE) | fail
+            line_out(encode_string(o)) | fail
+         }
+
+         "ucs": {
+            chars_out(Codec.UCS_CODE) | fail
+            line_out(encode_string(string(o))) | fail
+         }
+
+         "cset" : {
+            chars_out(Codec.CSET_CODE) | fail
+            l := []
+            every put(l, Text.get_ord_range(o))
+            int_out(*l) | fail
+            every e := !l do
+               encode(e) | fail
+         }
+
+         "integer" : {
+            chars_out(Codec.INTEGER_CODE) | fail
+            int_out(string(o)) | fail
+         }
+
+         "real" : {
+            chars_out(Codec.REAL_CODE) | fail
+            line_out(string(o)) | fail
+         }
+
+         "record" : {
+            chars_out(Codec.RECORD_CODE) | fail
+            line_out(subtype(o)) | fail
+            int_out(*o) | fail
+            note_seen(o)
+            every e := !o do
+               encode(e) | fail
+         }
+
+         "list" : {
+            chars_out(Codec.LIST_CODE) | fail
+            int_out(*o) | fail
+            note_seen(o)
+            every e := !o do
+               encode(e) | fail
+         }
+
+         "set" : {
+            chars_out(Codec.SET_CODE) | fail
+            int_out(*o) | fail
+            note_seen(o)
+            every e := !o do
+               encode(e) | fail
+         }
+
+         "table" : {
+            chars_out(Codec.TABLE_CODE) | fail
+            int_out(*o) | fail
+            encode(o[[]]) | fail
+            note_seen(o)
+            every e := !!sort(o) do
+               encode(e) | fail
+         }
+
+         default : 
+            return error("Type not encodable: " || ty)
+      }
+
+      return
+   end
+
+   private line_out(s)
+      return f.writes(s, Codec.CODE_SEPARATOR)
+   end
+
+   private chars_out(s)
+      return f.writes(s)
+   end
+
+   private int_out(i)
+      return f.writes(string(i))
+   end
+
+   public new(f)
+      tag_count := 0
+      seen := table()
+      self.f := f
+      return
+   end
+end
+
+#
+# This class is used to decode a string created by the encode process, and
+# reproduce the object.
+#
+class Decode()
+   private
+      tag_count,
+      seen
+
+   private decode_string(s)
+      local r
+      static esc
+      initial
+         esc := ~'\\'
+      r := ""
+      s ? {
+         repeat {
+            r ||:= tab(many(esc))
+            if pos(0) then
+               return r
+            move(1)
+            r ||:= char(move(3))
+         }
+      }
+   end
+
+   private line_in()
+      local s
+      if s := tab(upto(Codec.CODE_SEPARATOR)) then {
+         move(1)
+         return s
+      }
+      &why := "missing separator"
+   end
+
+   private int_in()
+      local s
+      if s := tab(many(&digits ++ '\-')) then
+         return integer(s)
+      &why := "int expected"
+   end
+
+   private char_in()
+      return move(1) | error("char expected")
+   end
+
+   private note_seen(o)
+      seen[tag_count +:= 1] := o
+   end
+
+   public decode()
+      local i, n, rname, t, res, def, con, cl, p, cname, l
+
+      t := char_in() | fail
+
+      case t of {
+         Codec.REF_CODE : {
+            i := int_in() | fail
+            return \seen[i]
+         }
+
+         Codec.NULL_CODE :
+            return
+
+         Codec.CLASS_CODE : {
+            cname := line_in() | fail
+            cl := Class.for_name(cname) | return error("No such class " || cname)
+            return cl
+         }
+
+         Codec.CONSTRUCTOR_CODE : {
+            rname := line_in() | fail
+            (con := Prog.get_global(rname) &
+             type(con) == "constructor") | return error("No such constructor " || rname)
+            return con
+         }
+
+         Codec.PROCEDURE_CODE : {
+            t := line_in() | fail
+            return proc(t) | error("No such proc " || t)
+         }
+
+         Codec.OBJECT_CODE : {
+            cname := line_in() | fail
+            #
+            # Create an instance
+            #
+            cl := Class.for_name(cname) | return error("No such class " || cname)
+            res := Class.create_raw(cl)
+            note_seen(res)
+            if p := Class.getf(res, "object_decode", 1) then
+               p(self) | fail
+            else {
+               n := int_in() | fail
+               n = Class.get_n_instance_fields(res) | 
+                  return error("Inconsistent number of fields in " || image(res))
+               every i := 1 to n do
+                  Class.get(res, i) := decode() | fail
+            }
+            Class.complete_raw(res)
+            return res
+         }
+
+         Codec.STRING_CODE :
+            return decode_string(line_in())
+
+         Codec.INTEGER_CODE :
+            return int_in()
+
+         Codec.REAL_CODE :
+            return real(line_in())
+
+         Codec.CSET_CODE : {
+             n := int_in() | fail
+             l := []
+             every 1 to n do 
+                put(l, decode()) | fail
+             return Text.create_cset(l)
+          }
+
+         Codec.UCS_CODE :
+            return ucs(decode_string(line_in()))
+
+         Codec.RECORD_CODE : {
+            (rname := line_in() &
+             n := int_in()) | fail
+            (con := Prog.get_global(rname) &
+             type(con) == "constructor") | return error("No such constructor " || rname)
+            res := con()
+            n = *res | return error("Inconsistent number of fields in " || image(res))
+            note_seen(res)
+            every i := 1 to n do
+               res[i] := decode() | fail
+            return res
+         }
+
+         Codec.LIST_CODE : {
+            n := int_in() | fail
+            res := []
+            note_seen(res)
+            every 1 to n do 
+               put(res, decode()) | fail
+            return res
+         }
+
+         Codec.SET_CODE : {
+            n := int_in() | fail
+            res := set()
+            note_seen(res)
+            every 1 to n do 
+               insert(res, decode()) | fail
+            return res
+         }
+
+         Codec.TABLE_CODE : {
+            n := int_in() | fail
+            def := decode() | fail
+            res := table(def)
+            note_seen(res)
+            every 1 to n do
+               insert(res, decode(), decode()) | fail
+            return res
+         }            
+
+         default :
+            return error("Unknown type code:" || image(t))
+      }            
+   end
+
+   public new()
+      tag_count := 0
+      seen := table()
+      return
+   end
+end

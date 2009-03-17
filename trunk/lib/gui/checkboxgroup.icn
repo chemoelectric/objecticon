@@ -1,0 +1,57 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# This class is simply a container for several objects
+# which then act together as ``radio buttons''.  The objects
+# should be subclasses of {Toggle}, but are normally checkboxes.
+#
+# The set/unset status of objects in a {CheckBoxGroup} should be set
+# with the {set_which_one} method, not by setting the individual items
+# directly with their own methods; that would result in confusion.
+#
+# NB - the objects in the group must be added to both the {CheckBoxGroup}
+# and the dialog box too; a {CheckBoxGroup} is not a {Container}.
+#
+class CheckBoxGroup()
+   public 
+      checkboxes,              #                  
+      which_one
+
+   #
+   # Returns the object is currently down.
+   #
+   public get_which_one()
+      return self.which_one
+   end
+
+   #
+   # Add the object to the CheckBoxGroup.
+   # @param c   The object to add, which must be a subclass of {Toggle}.
+   #
+   public add(c)
+      put(self.checkboxes, c)
+      c.set_parent_check_box_group(self)
+   end
+
+   #
+   # Set which CheckBox which is down.
+   # @param x   The object which is down.
+   #
+   public set_which_one(x)
+      x.set_is_checked("t")
+   end
+
+   public new()
+      self.checkboxes := []
+      return
+   end
+end
+

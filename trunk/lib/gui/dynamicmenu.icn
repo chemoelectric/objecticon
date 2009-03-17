@@ -1,0 +1,19 @@
+package gui
+
+class DynamicMenu(Menu)
+   public resize()
+      # Clear current menu contents.
+      every (!self.children).finally()
+
+      self.children := []
+      populate()
+
+      # Init new ones
+      every (!self.children).initially()
+
+      cast(self,Menu).resize()
+   end
+
+   public defer populate()
+end
+

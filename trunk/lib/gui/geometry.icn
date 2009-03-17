@@ -1,0 +1,187 @@
+package gui
+
+class Point()
+   public x, y
+
+   public get_x()
+      return x
+   end
+
+   public get_y()
+      return y
+   end
+
+   public new(x, y)
+      self.x := x
+      self.y := y
+      return
+   end
+end
+
+
+class Size()
+   public w, h
+
+   public get_w()
+      return w
+   end
+
+   public get_h()
+      return h
+   end
+
+   public empty()
+      return (w|h) = 0
+   end
+
+   public new(w, h)
+      self.w := w
+      self.h := h
+      return
+   end
+end
+
+
+class Rect(Point,Size)
+   public str()
+      return self.x || "," || self.y || "," || self.w || "," || self.h
+   end
+
+   public inside(x1, y1)
+      return (x <= x1 < x + w) & (y <= y1 < y + h)
+   end
+
+   public union(r)
+      local ux, uw, uy, uh
+
+      if r === self then
+         return self
+
+      ux := min(self.x, r.x)
+      uw := max(self.x + self.w, r.x + r.w) - ux
+
+      uy := min(self.y, r.y)
+      uh := max(self.y + self.h, r.y + r.h) - uy
+
+      return Rect(ux, uy, uw, uh)
+   end
+
+   public intersect(r)
+      local ix, iw, iy, ih
+
+      if r === self then
+         return self
+
+      ix := max(self.x, r.x)
+      iw := min(self.x + self.w, r.x + r.w) - ix
+      if iw <= 0 then
+         fail
+
+      iy := max(self.y, r.y)
+      ih := min(self.y + self.h, r.y + r.h) - iy
+      if ih <= 0 then
+         fail
+
+      return Rect(ix, iy, iw, ih)
+   end
+
+   #
+   # Float the given {Size} within this {Rect}, according to the
+   # given {Align}.   A {Point} is returned.
+   #
+   public float(s, a)
+      local x1, y1
+      x1 := case a.x_align of {
+         Align.C : self.x + (self.w - s.w) / 2
+         Align.L : self.x
+         Align.R : self.x + self.w - s.w
+         default : runerr("incorrect x_align specifier", a.x_align)
+      }         
+      y1 := case a.y_align of {
+         Align.C : self.y + (self.h - s.h) / 2
+         Align.T : self.y
+         Align.B : self.y + self.h - s.h
+         default : runerr("incorrect y_align specifier", a.y_align)
+      }         
+      return Point(x1, y1)
+   end
+
+   public new(x, y, w, h)
+      self.x := x
+      self.y := y
+      self.w := w
+      self.h := h
+      return
+   end
+end
+
+
+class Insets()
+   public 
+      l_inset, 
+      r_inset,
+      t_inset,
+      b_inset
+   
+   public get_inner_rect(r)
+      return Rect(r.x + l_inset, 
+                  r.y + t_inset,
+                  r.w - l_inset - r_inset,
+                  r.h - t_inset - b_inset)
+   end
+
+   public get_total_width()
+      return l_inset + r_inset
+   end
+
+   public get_total_height()
+      return t_inset + b_inset
+   end
+
+   public get_l_inset()
+      return l_inset
+   end
+
+   public get_t_inset()
+      return t_inset
+   end
+
+   public get_r_inset()
+      return r_inset
+   end
+
+   public get_b_inset()
+      return b_inset
+   end
+end
+
+
+class Align()
+   public static const 
+      L,      # Alignments
+      C,
+      R,
+      T,
+      B
+
+   private static init()
+      L := "l"
+      C := "c"
+      R := "r"
+      T := "t"
+      B := "b"
+   end
+
+   public x_align,
+          y_align
+
+   public get_x_align()
+      return x_align
+   end
+
+   public get_y_align()
+      return y_align
+   end
+end
+
+

@@ -1,0 +1,975 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package util
+
+import io(write)
+
+#
+# This class is used to represent a date/time.  The representation may
+# be retrieved from the class either as the constituent parts of a
+# date, or as the number of seconds since a base date, which is
+# 1/1/1600.
+#
+# The "seconds" viewpoint is always in UTC, whilst the "broken down"
+# viewpoint is always in the local timezone.
+#
+# The timezone is specified as a timezone object.
+#
+# The constructor accepts various parameters; see the {new()} method
+# for details.  Alternatively, the static methods {Time.parse} and
+# {Time.simple_parse} can be used to create new instances from
+# formatted strings.
+#
+class Time()
+   private readable 
+      seconds,
+      year,
+      month,
+      mday,
+      hour,
+      min,
+      sec,
+      zone
+
+   #
+   # Constant data for time functions
+   #
+   public static const
+      MONTHS,
+      BASE_YEAR,
+      WEEK_DAYS,
+      TZCHARS,
+      SYSTEM_BASE_OFFSET,
+      DEFAULT_FORMAT,
+      MDAYS,
+      LEAP_MDAYS, 
+      CUM_MDAYS,
+      LEAP_CUM_MDAYS
+
+   private static init()
+      DEFAULT_FORMAT := "yyyy/MM/dd HH:mm:ss zzz"
+      MONTHS := ["January", "February", "March", "April", "May",
+                       "June", "July", "August", "September", "October",
+                       "November", "December"]
+      WEEK_DAYS := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+                          "Saturday", "Sunday"]
+      MDAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+      LEAP_MDAYS := [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+      CUM_MDAYS := [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
+      LEAP_CUM_MDAYS := [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
+      TZCHARS := '+\-' ++ &digits ++ &ucase
+      BASE_YEAR := 1600     # must be a multiple of 400
+      SYSTEM_BASE_OFFSET := 11676096000
+   end
+
+   #
+   # Output object
+   #
+   private object_output(oo)
+      return oo.writes(format("MMMM d, yyyy H:mm.ss z"))
+   end
+
+   #
+   # Format the given int using the given width
+   # 
+   private format_int(n, w)
+      local s
+      s := string(n)
+      if *s < w then
+         return right(s, w, "0")
+      else
+         return s
+   end
+
+   #
+   # Format a weekday (Mon, Tue etc) given a width.
+   # 
+   private format_weekday(w)
+      local s
+      s := WEEK_DAYS[self.week_day() + 1]
+      if w < 4 then
+         return s[1:4]
+      else
+         return s
+   end
+
+   #
+   # Format a month (Jan, Feb etc) given a width
+   # 
+   private format_month(w)
+      local s
+
+      if w < 3 then
+         return format_int(self.month, w)
+
+      s := MONTHS[self.month]
+      if w = 3 then
+         return s[1:4]
+      else
+         return s
+   end
+
+   #
+   # Format a year given the width
+   # 
+   private format_year(w)
+      if w == 2 then
+         return format_int(self.year % 100, w)
+      else
+         return format_int(self.year, w)
+   end
+
+   #
+   # Format the instance using the given pattern string.  The pattern
+   # consists of pattern chars and other chars.  
+   # 
+   # The "width" of a field is the number of successive equal pattern
+   # chars.  For example in the pattern
+   # 
+   # yyyy/MMM/dd
+   # 
+   # the widths are 4, 3 and 2 respectively.
+   # 
+   # The possible pattern chars are :-
+   # 
+   # E - The weekday.  A width < 4 gives the first three chars (eg Mon), otherwise
+   # the full day is given (eg Monday)
+   # 
+   # y - The year.  If the width is 2, the year will be the least
+   # significant 2 digits (eg "99"), otherwise it is the full year
+   # padded to the width. 
+   # 
+   # d - The day of the month padded to the width.
+   # 
+   # H - The hour in the day using the 24 hour clock padded to the width.
+   # 
+   # h - The hour in the day using the 12 hour clock padded to the width.
+   # 
+   # M - The month of the year.  If the width is less than 3 then the
+   # numeric value is used, padded to the width.  If the width is 3, then
+   # the abbreviated month is used (eg "Jul"); otherwise the full month is
+   # used (eg "July").
+   # 
+   # m - The minute in the hour padded to the width.
+   # 
+   # s - The second in the minute padded to the width.
+   # 
+   # a - am or pm.  The width is ignored.
+   # 
+   # A - AM or PM  The width is ignored.
+   # 
+   # z - the timezone id (eg UTC or +0400).   The width is ignored.
+   # 
+   # Literal strings (which can include the above chars) can be
+   # included using single quotes.  Two single quotes maps to
+   # an actual single quote.
+   # 
+   # @example
+   # @
+   # @ yyyy MM dd HH mm ss -> 1999 12 17 23 30 01
+   # @ yyyy MM dd HH 'o''clock' mm ss -> 1999 12 17 23 o'clock 30 01
+   # @ yyyy/M/d HH:mm:ss zzz -> 1999/2/7 23:30:01 PST
+   # @ E MMM dd HH:mm:ss zzz yyyy -> Mon Feb 07 23:30:01 PST 1999
+   # @ yy MM dd HH mm ss -> 99 12 17 23 30 01
+   # 
+   public format(p)
+      local res, ch, w
+      
+      /p := DEFAULT_FORMAT
+
+      res := ""
+      p ? {
+         while not pos(0) do {
+            if any('EydHMhmsaAz') then {
+               ch := p[&pos]
+               w := *tab(many(ch))
+               res ||:= case ch of {
+                  "E": format_weekday(w)
+                  "y": format_year(w)
+                  "M": format_month(w)
+                  "d": format_int(self.mday, w)
+                  "h": {
+                     if self.hour < 13 then
+                        format_int(self.hour, w)
+                     else
+                        format_int(self.hour - 12, w)
+                  }
+                  "H": format_int(self.hour, w)
+                  "m": format_int(self.min, w)
+                  "s": format_int(self.sec, w)
+                  "z": zone.get_id()
+                  "Z": zone.get_offset()
+                  "a": {
+                     if self.hour < 12 then
+                        "am"
+                     else
+                        "pm"
+                  }
+                  "a": {
+                     if self.hour < 12 then
+                        "AM"
+                     else
+                        "PM"
+                  }
+               }
+            } else if any('\'') then 
+               res ||:= match_literal()
+            else 
+               res ||:= move(1)
+         }
+      }
+      return res
+   end
+      
+   #
+   # Match a literal, which begins with a ', and ends with the next ', except
+   # that two ' together means a single ' in the result.
+   # 
+   public static match_literal()
+      local s
+      ="\'"
+      s := ""
+      repeat {
+         s ||:= tab(upto('\'') | 0)
+         if pos(0) then
+            break
+         move(1)
+         # Two ''s in a row mean a single ' and press on - else break.
+         s ||:= ="'" | break
+      }
+      return s
+   end
+
+   #
+   # Convert to string in accordance with RFC 822.
+   #
+   public to_rfc822()
+      return format("E, d MMM yyyy HH:mm:ss z")
+   end
+
+   #
+   # Convert to string in a format suitable for use in a letter
+   #
+   public to_letter_string()
+      return format("d MMMM, yyyy")
+   end
+
+   #
+   # Convert to string in format d-MMM-yy
+   #
+   public to_short_string()
+      return format("d-MMM-yy")
+   end
+
+   ##      
+   # Convert to icon &date format
+   #
+   # 
+   public to_date()
+      return format("yyyy/MM/dd")
+   end
+
+   #
+   # Convert to icon &clock format
+   #
+   public to_clock()
+      return format("HH:mm:ss")
+   end
+
+   #
+   # Convert to a string in icon &date format followed by Icon &clock format followed by the
+   # timezone.
+   #
+   public to_date_clock()
+      return format(DEFAULT_FORMAT)
+   end
+
+   #
+   # Convert to a string in icon &dateline format
+   #
+   public to_dateline()
+      return format("EEEE, MMMM d, yyyy  h:mm a")
+   end
+
+   #
+   # Create a Time instance using the given format string; see
+   # {TimeParser.parse} for more details.
+   #
+   public static parse(s, p)
+      local t
+      /p := DEFAULT_FORMAT
+      t := TimeParser()
+      return t.parse(s, p)
+   end
+
+   #
+   # Succeed if date is after d
+   #
+   public after(d)
+      return self.seconds > d.seconds
+   end
+
+   #
+   # Succeed if date is before d
+   #
+   public before(d)
+      return self.seconds < d.seconds
+   end
+
+   #
+   # Succeed if date is equal to d; uses the seconds past the base date
+   # for comparison.
+   #
+   private object_equals(d)
+      return self.seconds = d.seconds
+   end
+
+   #
+   # The hash code, to be consistent with {equals()} above, returns the
+   # secons past the base date.
+   #
+   private object_hash()
+      return self.seconds
+   end
+
+   #
+   # Encode just stores the seconds and zone information.
+   #
+   private object_encode(c)
+      c.encode(self.seconds) | fail
+      c.encode(self.zone) | fail
+      return
+   end
+
+   private object_decode(c)
+      self.seconds := c.decode() | fail
+      self.zone := c.decode() | fail
+      compute_broken_down_fields()
+      return
+   end
+
+   #
+   # Compute day of week.  0 = Sunday etc.  Add 6 because 1/1/BASE_YEAR
+   # is always a Saturday
+   #
+   public week_day()
+      return (6 + (self.seconds + self.zone.get_offset()) / 86400) % 7
+   end
+
+   #
+   # Compute year day. January 1st = 1 etc
+   #
+   public year_day()
+      return get_cum_mdays(self.year, self.month) + self.mday
+   end
+
+   #
+   # Compute seconds past base date based on broken down fields.
+   #
+   public compute_seconds()
+      local days, year_diff, n
+
+      #
+      # Normalize seconds
+      #
+      self.min +:= self.sec / 60
+      self.sec %:= 60
+      if self.sec < 0 then {
+	 self.sec +:= 60
+	 self.min -:= 1
+      }
+
+      #
+      # Normalize minutes
+      #
+      self.hour +:= self.min / 60
+      self.min %:= 60
+      if self.min < 0 then {
+	 self.min +:= 60
+	 self.hour -:= 1
+      }
+
+      #
+      # Normalize hours
+      #
+      self.mday +:= self.hour / 24
+      self.hour %:= 24
+      if self.hour < 0 then {
+	 self.hour +:= 24
+	 self.mday -:= 1
+      }
+
+      #
+      # Normalize month, year
+      #
+      self.year +:= (self.month - 1) / 12
+      self.month := 1 + (self.month - 1) % 12
+      if self.month < 1 then {
+         self.year -:= 1
+         self.month +:= 12
+      }
+
+      #
+      # Normalize mday downwards, adjusting month, year as we go along
+      #     
+      while self.mday > (n := get_mdays(self.year, self.month)) do {
+         self.mday -:= n
+         self.month +:= 1
+         if self.month = 13 then {
+            self.month := 1
+            self.year +:= 1
+         }
+      }
+
+      #
+      # Normalize mday upwards, adjusting month, year as we go along
+      #     
+      while self.mday < 1 do {
+         self.month -:= 1
+         if self.month = 0 then {
+            self.month := 12
+            self.year -:= 1
+         }
+         self.mday +:= get_mdays(self.year, self.month)
+      }
+
+      year_diff := self.year - BASE_YEAR
+
+      days := 365 * year_diff + (year_diff + 3) / 4 - (year_diff + 99) / 100 +
+               (year_diff + 399) / 400 + get_cum_mdays(self.year, self.month) + self.mday - 1
+
+      return self.seconds :=  86400 * days + 3600 * self.hour + 60 * self.min + self.sec - self.zone.get_offset()
+   end
+
+   #
+   # Compute broken down fields based on seconds past base date
+   #
+   public compute_broken_down_fields()
+      local n, year, flag, i
+      n := self.seconds + self.zone.get_offset()
+      self.sec := n % 60
+      n /:= 60
+      self.min := n % 60
+      n /:= 60
+      self.hour := n % 24
+      n := n / 24
+
+      # Reduce down to 400 year period - 400 years = 400 * 365.25 - 3
+      year := BASE_YEAR + 400 * (n / 146097)
+      n %:= 146097
+
+      # Case analysis within the 400 years to reduce to 4 years of 1460 or 1461 days
+      #  - flag indicates whether block is 1460 or 1461 days
+      if n < 36525 then {                   # 1/1/1600 - 31/12/1699 - 25 blocks of 1461 days
+         year +:= 4 * (n / 1461)
+         n %:= 1461
+         flag := 1
+      } else if n < 37985 then {            # 1/1/1700 - 31/12/1703 - 1 block of 1460 days
+         year +:= 100
+         n -:= 36525
+      } else if n < 73049 then {            # 1/1/1704 - 31/12/1799 - 24 blocks of 1461 days
+         n -:= 37985
+         year +:= 104 + 4 * (n / 1461)
+         n %:= 1461
+         flag := 1
+      } else if n < 74509 then {            # 1/1/1800 - 31/12/1803 - 1 block of 1460 days
+         year +:= 200
+         n -:= 73049
+      } else if n < 109573 then {           # 1/1/1804 - 31/12/1899 - 24 blocks of 1461 days
+         n -:= 74509
+         year +:= 204 + 4 * (n / 1461)
+         n %:= 1461
+         flag := 1
+      } else if n < 111033 then {           # 1/1/1900 - 31/12/1903 - 1 block of 1460 days
+         year +:= 300
+         n -:= 109573
+      } else {        # n < 146097            1/1/1904 - 31/12/1999 - 24 blocks of 1461 days
+         n -:= 111033
+         year +:= 304 + 4 * (n / 1461)
+         n %:= 1461
+         flag := 1
+      }
+
+      if /flag then {       # 4 years of 365 days each
+         year +:= n / 365
+         n %:= 365
+      } else {              # 4 years of 366, 365, 365, 365 days
+         if n > 365 then {
+            year +:= 1 + (n - 366) / 365
+            n := (n - 366) % 365
+         }
+      }
+
+      self.year := year
+      get_cum_mdays(self.year, i := 1 to 13) > n
+      self.month := i - 1
+      self.mday := n - get_cum_mdays(self.year, self.month) + 1
+   end
+
+   #
+   # Set seconds and zone field; re-compute broken down fields
+   #
+   # @param n the seconds past the base point
+   # @param z the zone, as a {Timezone} object, or &null, in which chase
+   # @        the system timezone is used.
+   #
+   public set_seconds(n, zone)
+      self.seconds := n
+      self.zone := \zone | Timezone.SYSTEM_TIMEZONE
+      self.compute_broken_down_fields()
+   end
+
+   #
+   # Set year; recompute seconds past the base date.
+   #
+   public set_year(n)
+      self.year := n
+      self.compute_seconds()
+   end
+
+   #
+   # Set month; recompute seconds past the base date.
+   #
+   public set_month(n)
+      self.month := n
+      self.compute_seconds()
+   end
+
+   #
+   # As above,  but if mday is out of bounds for new month,
+   # truncate to end of month
+   #
+   public set_month_truncate(n)
+      local t, d
+      t := self.mday
+      self.mday := 1
+      self.month := n
+      self.compute_seconds()
+      
+      d := get_mdays(self.year, self.month)
+      if t > d then
+         t := d
+      self.mday := t
+      self.compute_seconds()
+   end
+
+   #
+   # Set mday; recompute seconds past the base date.
+   #
+   public set_mday(n)
+      self.mday := n
+      self.compute_seconds()
+   end
+
+   #
+   # Set hour; recompute seconds past the base date.
+   #
+   public set_hour(n)
+      self.hour := n
+      self.compute_seconds()
+   end
+
+   #
+   # Set min; recompute seconds past the base date.
+   #
+   public set_min(n)
+      self.min := n
+      self.compute_seconds()
+   end
+
+   #
+   # Set seconds past the hour; recompute seconds past the base date.
+   #
+   public set_sec(n)
+      self.sec := n
+      self.compute_seconds()
+   end
+
+   #
+   # Set the time zone offset.  The zone is a Timezone object.
+   #
+   public set_zone(z)
+      self.zone := z
+      self.compute_seconds()
+   end
+
+   #
+   # Get the time zone
+   #
+   public get_zone()
+      return .self.zone
+   end
+   
+   #
+   # Get the seconds past the base date
+   #
+   public get_seconds()
+      return .self.seconds
+   end
+
+   #
+   # Get the year.
+   #
+   public get_year()
+      return .self.year
+   end
+
+   #
+   # Get the month.
+   #
+   public get_month()
+      return .self.month
+   end
+
+   #
+   # Get the mday.
+   #
+   public get_mday()
+      return .self.mday
+   end
+
+   #
+   # Get the hour.
+   #
+   public get_hour()
+      return .self.hour
+   end
+
+   #
+   # Get the min.
+   #
+   public get_min()
+      return .self.min
+   end
+
+   #
+   # Get the seconds past the hour.
+   #
+   public get_sec()
+      return .self.sec
+   end
+
+   #
+   # Utility procedure - return cumulative days upto month m in year y
+   #
+   #
+   private get_cum_mdays(y, m)
+      return if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
+         LEAP_CUM_MDAYS[m]   # leap year
+      else
+         CUM_MDAYS[m]   # non-leap year
+   end
+   
+   #
+   # Utility procedure - return in month m for year y
+   #
+   #
+   private get_mdays(y, m)
+      return if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
+         LEAP_MDAYS[m]               # leap year
+      else
+         MDAYS[m]               # non-leap year
+   end
+
+   #
+   # Utility to get next integer
+   #
+   #
+   private static get_int()
+      suspend tab(upto(&digits)) & integer(tab(many(&digits)))
+   end
+
+   #
+   # An alternative more liberal form of parsing.  The numeric fields are taken
+   # as successive ints in the input: all else is ignored.  The year, month and
+   # day are mandatory, but hours, mins, secs are optional. Finally, an optional
+   # timezone is allowed.
+   #
+   public static simple_parse(s)
+      local y, d, m, hh, mm, ss, z
+      s ? {
+         (y := get_int() &
+          m := get_int() &
+          d := get_int()) | return error("y m d missing")
+         hh := get_int() | 0
+         mm := get_int() | 0
+         ss := get_int() | 0
+         if tab(upto(TZCHARS)) then
+            z := Timezone.get_known_timezone(tab(many(TZCHARS))) | return error("No timezone")
+         else
+            z := Timezone.SYSTEM_TIMEZONE
+      }
+      return Time(y, m, d, hh, mm, ss, z)
+   end
+
+   #
+   # Set to a time based on the number of seconds past the Unix base epoch.
+   # @param z an optional {Timezone}.  If omitted, the system timezone is used.
+   #
+   public set_system_seconds(t, z)
+      set_seconds(SYSTEM_BASE_OFFSET + t, z)
+   end
+
+   #
+   # Return the difference in seconds between the current system time and the
+   # time represented by this object.
+   #
+   public get_age()
+      return SYSTEM_BASE_OFFSET + get_system_seconds() - self.seconds
+   end
+
+   #
+   # Set the fields, and then recompute the seconds.  Any omitted
+   # fields are set to a default, which is the smallest legal value
+   # for that field, except the zone, which is set to the default zone
+   # if omitted.
+   #
+   public set_fields(year, month, mday, hour, min, sec, zone)   
+      self.year := \year | BASE_YEAR
+      self.month := \month | 1
+      self.mday := \mday | 1
+      self.hour := \hour | 0
+      self.min := \min | 0
+      self.sec := \sec | 0
+      self.zone := \zone | Timezone.SYSTEM_TIMEZONE
+      compute_seconds()
+   end
+
+   #
+   # Return the number of seconds since the Unix base epoch (1 Jan 1970).
+   #
+   public static defer get_system_seconds()
+
+   #
+   # Return the number of milliseconds since the Unix base epoch (1 Jan 1970).
+   #
+   public static defer get_system_millis()
+
+   #
+   # Return the number of microseconds since the Unix base epoch (1 Jan 1970).
+   #
+   public static defer get_system_micros()
+
+   #
+   # The constructor to {Time()} does different things depending on
+   # the number of arguments provided.  
+   #
+   # With no arguments, the instance is set to the current time.
+   #
+   # A single argument is taken as the number of seconds past the
+   # base date in the default zone.
+   #
+   # With two arguments, the first is the number of seconds past the
+   # base date and the second is a {Timezone}.
+   #
+   # With three or more arguments, they are used as parameters to
+   # {set_fields} in order to initialize the object.
+   #
+   public new(a[])
+      if *a = 0 then
+         set_seconds(SYSTEM_BASE_OFFSET + get_system_seconds())
+      else if *a = 1 then
+         set_seconds(a[1])
+      else if *a = 2 then
+         set_seconds(a[1], a[2])
+      else
+         set_fields!a
+      return
+   end
+end
+
+#
+# Helpful function to note the time elapsed between calls.
+#
+procedure note_time(s)
+   static t
+   initial {
+      t := 0
+   }
+   if t > 0 then
+      write(Time.get_system_millis() - t, ": ", \s)
+   t := Time.get_system_millis()
+end
+
+#
+# This class is used to create {Time} objects from format strings.
+#
+class TimeParser()
+   private
+      psub,
+      ppos
+
+   #
+   # Convert a month string to an month number, eg "feb"->2
+   #
+   private static month_to_num(s)
+      local i
+      s := map(s)
+      every i := 1 to *Time.MONTHS do {
+         if match(s, map(Time.MONTHS[i])) then
+            return i
+      }
+   end
+
+   # 
+   # Get the next parsed int
+   #
+   private parse_int(w)
+      local j, n
+      j := many(&digits, psub, ppos) | return error("Digit expected")
+      #
+      # If there is a numeric field immediately following, limit
+      # the length of this field.  This allows for example yyyyMMdd to
+      # parse 20001201.
+      #
+      if any('ydHMhms') then 
+         j >:= ppos + w
+
+      n := integer(psub[ppos:j])
+      ppos := j
+      return n
+   end
+
+   # 
+   # Get the next parsed timezone
+   #
+   private parse_timezone()
+      local j, z
+      j := many(Time.TZCHARS, psub, ppos) | return error("Timezone expected")
+      z := Timezone.get_known_timezone(psub[ppos:j]) | return error("Invalid timezone")
+      ppos := j
+      return z
+   end
+
+   # 
+   # Get the next parsed am/pm
+   #
+   private parse_ampm()
+      local s
+      s := map(psub[ppos+:2]) | return error("am/pm expected")
+      s == ("am" | "pm") | return error("am/pm expected")
+      ppos +:= 2
+      return s
+   end
+
+   # 
+   # Get the next parsed month
+   # 
+   private parse_month(w)
+      local j, m
+      if w < 3 then
+         return parse_int(w)
+      j := many(&ucase ++ &lcase, psub, ppos) | return error("Month expected")
+      m := month_to_num(psub[ppos:j]) | return error("Invalid month")
+      ppos := j
+      return m
+   end
+
+   # 
+   # Get the next parsed weekday
+   # 
+   private parse_weekday()
+      local j
+      j := many(&ucase ++ &lcase, psub, ppos) | return error("Weekday expected")
+      ppos := j
+      return
+   end
+
+   # 
+   # Get the next parsed month
+   # 
+   private parse_year(w)
+      local n
+      n := parse_int(w) | fail
+      if n < 70 then
+         return 2000 + n
+      else if n < 100 then
+         return 1900 + n
+      else
+         return n
+   end
+
+   # 
+   # Parse the instance using the given pattern string.  The pattern
+   # consists of pattern chars and other chars.  Succeeds if the 
+   # string could be parsed; fails and sets &why otherwise.
+   # 
+   # The "width" of a field is the number of successive equal pattern
+   # chars.  For example in the pattern
+   # 
+   # yyyy/MMM/dd
+   # 
+   # the widths are 4, 3 and 2 respectively.
+   # 
+   # Except for the month (see below), the only use of the width is to
+   # separate adjacent fields, eg yyyyMMdd with input "19991201".
+   # 
+   # The possible pattern chars are :-
+   # 
+   # E - The weekday (eg Mon) - this is just a sequence of upper and lower
+   # case chars and is otherwise ignored.
+   # 
+   # y - The year.  If the year is less than 70 it is taken to be 20xx; if
+   # it is less than 100 it is taken to be 19xx, otherwise it is as given.
+   # 
+   # d - The day of the month
+   # 
+   # H/h - The hour in the day
+   # 
+   # M - The month of the year.  If the width is less than 3 then the
+   # numeric value is expected, otherwise the textual value is expected.
+   # 
+   # m - The minute in the hour
+   # 
+   # s - The second in the minute
+   # 
+   # a/A - am or pm.  Case is ignored.  If pm, then the hour is
+   # adjusted accordingly in the result.
+   # 
+   # z - The timezone (eg UTC or +0400).
+   #
+   public parse(s, p)
+      local y, d, m, hh, mm, ss, z, ampm, lit, ch, w
+      
+      psub := s
+      ppos := 1
+
+      p ? {
+         while not pos(0) do {
+            if any('EydHMhmsaAz') then {
+               ch := p[&pos]
+               w := *tab(many(ch))
+               case ch of {
+                  "E": parse_weekday() | fail
+                  "y": y := parse_year(w) | fail
+                  "M": m := parse_month(w) | fail
+                  "d": d := parse_int(w) | fail
+                  "h"|"H": hh := parse_int(w) | fail
+                  "m": mm := parse_int(w) | fail
+                  "s": ss := parse_int(w) | fail
+                  "z": z := parse_timezone() | fail
+                  "A"|"a": {
+                     ampm := parse_ampm() | fail
+                     if ampm == "pm" & (0 < \hh < 12) then 
+                        hh +:= 12
+                  }
+               }
+            } else if any('\'') then {
+               lit := Time.match_literal()
+               ppos := match(lit, psub, ppos) | return error("Expected literal:" || lit)
+            } else {
+               ch := move(1)
+               while psub[ppos] == ch do
+                  ppos +:= 1
+            }
+         }
+      }
+      return Time(y, m, d, hh, mm, ss, z)
+   end
+end

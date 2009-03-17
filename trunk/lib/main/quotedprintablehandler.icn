@@ -1,0 +1,104 @@
+#
+# $Id$
+#
+
+package mail
+
+import util
+
+#
+# Handles the quoted-printable encoding of a message
+#
+class QuotedPrintableHandler(EncodingHandler)
+   public static const 
+      QUOTED_PRINTABLE_CHARS
+
+   private static init()
+      QUOTED_PRINTABLE_CHARS := cset(&ascii[33:62] || &ascii[63:128])
+   end
+
+   private res, ll
+
+   public can_handle(enc)
+      return map(enc) == "quoted-printable"
+   end
+
+   public encode_data(m, data)
+      local s
+
+      res := ""
+      ll := 0
+
+      data ? {
+         while not pos(0) do {
+            if s := tab(many(QUOTED_PRINTABLE_CHARS)) then {
+               if pos(0) & any(' \t', s[-1]) then {
+                  put(s[1:-1])
+                  escape(s[-1])
+               } else {
+                  put(s)
+               }
+            } else if ="\r\n" then {
+               nl()
+            } else {
+               escape(move(1))
+            }
+         }
+      }
+
+      return res
+   end
+
+   private escape(ch)
+      local t
+      t := "=" || format_int_to_string(ord(ch), 16, 2)
+      if ll > 72 then {
+         res ||:= "="
+         nl()
+      }
+      res ||:= t
+      ll +:= 3
+      return
+   end
+
+   private nl()
+      res ||:= "\r\n"
+      ll := 0
+      return
+   end
+
+   private put(s)
+      local lim
+      repeat {
+         lim := 75 - ll
+         if *s > lim then {
+            res ||:= s[1:lim+1] || "="
+            nl()
+            s := s[lim+1:0]
+         } else {
+            res ||:= s
+            ll +:= *s
+            return
+         }
+      }
+   end
+
+   public decode_data(m, data) 
+      local res
+      res := ""
+      data ? repeat {
+         res ||:= tab(upto('\r=') | 0)
+         if pos(0) then
+            break
+         if any('=') then {
+            move(1)
+            # If not a soft line break, then unescape the =XX format.
+            if not ="\r\n" then {
+               res ||:= char(format_string_to_int(move(2))) | return error("Bad quoted-printable data")
+            }
+         } else
+            res ||:= ="\r\n" | return error("Bad quoted-printable data")
+      }
+      return res
+   end
+end

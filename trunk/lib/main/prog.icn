@@ -1,0 +1,50 @@
+package lang
+
+class Prog()
+   # Load a program corresponding to string s as a co-expression.
+   public static defer load(s, arglist, blocksize, stringsize, stacksize)
+
+   public static defer get_globals(c)
+
+   public static defer get_global(s, c)
+
+   # produce the names of identifiers global to c
+   #
+   public static defer get_global_names(c)
+
+   # generate the names of the functions.
+   public static defer get_function_names()
+
+   public static defer get_global_location(s, c)
+
+   # produce a keyword in c's thread
+   public static defer get_keyword(s, c)
+
+   # Find the variable with name s and return a variable descriptor
+   # which points to its value.
+   #
+   public static defer get_variable(s, c)
+
+   # Given a coexpression, return &main for its parent
+   #
+   public static defer get_parent(c)
+
+   # get c's program's opcode mask
+   public static defer get_opmask(c)
+
+   # set c's program's opcode mask
+   public static defer set_opmask(c, cs)
+
+   public static defer get_eventmask(c)
+   public static defer set_eventmask(c, cs)
+
+   public static defer get_valuemask(c)
+   public static defer set_valuemask(c, t)
+
+   # create event (in c) with event code x and event value y,
+   # and activate c.
+   public static defer send_event(x, y, c)
+
+   public static defer get_event(cs, vmask, flag)
+
+end

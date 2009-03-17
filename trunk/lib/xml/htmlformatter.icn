@@ -1,0 +1,78 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+#
+# A formatter for outputting HTML documents
+#
+class HtmlFormatter(Formatter)
+   public format_document(out, n, level)
+      local c
+      every c := !n.children do {
+         format(out, c, level + 1) | fail
+         out.write() | fail
+      }
+      return
+   end
+
+   public format_content(out, s, level)
+      return out.writes(s)
+   end
+
+   public format_doctype(out, n, level)
+      local s, x
+      s := "<!DOCTYPE "
+      s ||:= \n.name
+      x := n.external_id
+      if \x then {
+         if \x.public_id then {
+            if \x.system_id then
+               s ||:= " PUBLIC \"" || x.public_id || "\" \"" || x.system_id || "\""
+            else
+               s ||:= " PUBLIC \"" || x.public_id
+         } else
+            s ||:= " SYSTEM \"" || \x.system_id || "\""
+      }
+      s ||:= ">"
+      return out.writes(s)
+   end
+
+   public format_comment(out, n, level)
+      return out.writes("<!--" || n.comment || "-->")
+   end
+
+   public format_element(out, n, level)
+      local s, l, e
+
+      s := "<" || n.name
+
+      every l := !sort(n.attributes) do {
+         if \l[2] then
+            s ||:= " " || l[1] || "=\"" || xml_escape(l[2], '&<>\"') || "\""
+         else
+            s ||:= " " || l[1]
+      }
+
+      s ||:= ">"
+      out.writes(s) | fail
+
+      every e := !n.children do {
+         if text(e) then
+            out.writes(xml_escape(e, '&<>\"')) | fail
+         else
+            format(out, e, level + 1)
+      }
+
+      if not(HtmlParser.html_is_standalone_tag(n.name)) then
+         out.writes("</" || n.name || ">")
+
+      return
+   end
+end
+

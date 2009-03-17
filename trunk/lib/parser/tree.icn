@@ -1,0 +1,997 @@
+package parser
+
+$include "oigram_tab.icn"
+
+import util, io
+
+final class Token()
+   public const
+      tok, 
+      s, 
+      line,
+      column,
+      filename
+
+   private readable 
+      chunk
+
+   public set_chunk(chunk)
+      self.chunk := chunk
+   end
+
+   public get_pad()
+      if chunk[-*s:0] == s then
+         return .chunk[1:-*s]
+      else
+         return .chunk
+   end
+
+   public str()
+      return .chunk
+   end
+
+   #
+   # Output this token to the given stream.
+   #
+   public output(f)
+      return f.writes(chunk)
+   end
+
+   public new(tok, s, chunk, line, column, filename)
+      self.tok := tok
+      self.s := s
+      self.chunk := chunk
+      self.line := line
+      self.column := column
+      self.filename := filename
+      return
+   end
+end
+
+#
+# This represents a node in the parse tree.  The children are
+# either other Nodes, or Token instances, which come from the lexer.
+#
+class Node()
+   public const 
+      label
+   private
+      children
+   public static const
+      EMPTY
+   
+   private static init()
+      EMPTY := Node("Empty")
+   end
+
+   public child(i)
+      return .children[i]
+   end
+
+   public gen()
+      suspend .!children
+   end
+
+   public set(i, x)
+      self.children[i] := x
+   end
+
+   #
+   # Return a string representation of this node.  Note - this may
+   # need considerable stack space for some programs.
+   #
+   public str()
+      local s
+      s := ""
+      every s ||:= (!children).str()
+      return s
+   end
+
+   #
+   # Output this node to the given stream.
+   #
+   public output(f)
+      local c
+      every c := !children do
+         c.output(f) | fail
+      return
+   end
+
+   public new(label, children[])
+      self.label := label
+      self.children := children
+      return
+   end
+end
+
+class Tree()
+   public const pos
+
+   public defer get_first_token()
+
+   public dumpw()
+      Util.dumpw(pos)
+   end
+
+   package new(pos)
+      self.pos := pos
+      return
+   end
+end
+
+class List(Tree)
+   package index
+
+   package defer flatten()
+   public defer put(o)
+
+   public clear()
+      pos.set(index, Node.EMPTY)
+   end
+
+   public gen()
+      suspend !flatten()
+   end
+
+   public size()
+      return *flatten()
+   end
+
+   public get(i)
+      return flatten()[i]
+   end
+
+   public set(i, o)
+      local l
+      l := flatten()
+      l[i] := o
+      clear()
+      every put(!l)
+   end
+
+   public insert(i, o)
+      local l
+      l := flatten()
+      default.insert(l, i, o)
+      clear()
+      every put(!l)
+   end
+
+   public delete(i)
+      local l
+      l := flatten()
+      default.delete(l, i)
+      clear()
+      every put(!l)
+   end
+
+   package new(pos, index)
+      cast(self,Tree).new(pos)
+      self.index := index
+      return
+   end
+end
+
+class Leaf(Tree)
+   #
+   # Return a string representation of this leaf node (typically an
+   # identifier).  Note that this doesn't include the inter-token data
+   # (comments and white space).  To get that, use pos.chunk or
+   # pos.str().
+   #
+   public str()
+      return pos.s
+   end
+
+   public get_first_token()
+      return pos
+   end
+end
+
+class Id(Tree)
+   public const comma
+
+   #
+   # Return a string representation of this Id node.  Note that this
+   # doesn't include the inter-token data (comments and white space).
+   # To get that, use pos.str().
+   #
+   public str()
+      return Util.dottedid2string(pos)
+   end
+
+   public get_first_token()
+      return pos
+   end
+
+   package new(pos, comma)
+      cast(self,Tree).new(pos)
+      /comma := Token(COMMA, ",", ",")
+      self.comma := comma
+      return
+   end
+end
+
+class IdList(List)
+   private const lab
+
+   package flatten()
+      local l, n
+      l := []
+      n := pos.child(index)
+      while n ~=== Node.EMPTY do {
+         if is(n, Node) & n.label == lab then {
+            push(l, Id(n.child(3), n.child(2)))
+            n := n.child(1)
+         } else {
+            # Leftmost token, or Node with non-matching label.
+            push(l, Id(n))
+            break
+         }
+      }
+      return l
+   end
+
+   public put(s)
+      if pos.child(index) === Node.EMPTY then
+         pos.set(index, s.pos)
+      else
+         pos.set(index, Node(lab, 
+                             pos.child(index),
+                             s.comma,
+                             s.pos))
+   end
+
+   package new(pos, index, lab)
+      cast(self,List).new(pos, index)
+      /lab := "idlist"
+      self.lab := lab
+      return
+   end
+end
+
+class AccessList(List)
+   package flatten()
+      local l, n
+      l := []
+      n := pos.child(index)
+      while n ~=== Node.EMPTY do {
+         if is(n, Node) then {
+            push(l, Leaf(n.child(2)))
+            n := n.child(1)
+         } else {
+            push(l, Leaf(n))
+            break
+         }
+      }
+      return l
+   end
+
+   public put(x)
+      if pos.child(index) === Node.EMPTY then
+         pos.set(index, x.pos)
+      else
+         pos.set(index, Node("fieldaccess",
+                             pos.child(index),
+                             x.pos))
+   end
+end
+
+class LocalsList(List)
+   package flatten()
+      local l, n
+      l := []
+      n := pos.child(index)
+      while n ~=== Node.EMPTY do {
+         push(l, Local(n))
+         n := n.child(1)
+      }
+      return l
+   end
+
+   public put(x)
+      pos.set(index, Node("locals", 
+                          pos.child(index),
+                          x.pos.child(2),
+                          x.pos.child(3)))
+   end
+end
+
+class Link(IdList)
+   public get_first_token()
+      return pos.child(1)
+   end
+
+   package new(pos)
+      cast(self,IdList).new(pos, 2, "lnklist")
+      return
+   end
+end
+
+class Invocable(List)
+   public get_first_token()
+      return pos.child(1)
+   end
+
+   package flatten()
+      local l, n, t
+      l := []
+      n := pos.child(index)
+      while n ~=== Node.EMPTY do {
+         if is(n, Node) & n.label == "invoclist" then {
+            t := n.child(3)
+            if is(t, Node) & t.label == "invocop" then
+               push(l, InvocableOp(t, n.child(2)))
+            else
+               push(l, Id(t, n.child(2)))
+            n := n.child(1)
+         } else {
+            if is(n, Node) & n.label == "invocop" then
+               push(l, InvocableOp(n))
+            else
+               push(l, Id(n))
+            break
+         }
+      }
+      return l
+   end
+
+   public put(x)
+      if pos.child(index) === Node.EMPTY then
+         pos.set(index, x.pos)
+      else
+         pos.set(index, Node("invoclist",
+                             pos.child(index),
+                             x.comma,
+                             x.pos))
+   end
+
+   package new(pos)
+      cast(self,List).new(pos, 2)
+      return
+   end
+end
+
+class Import(List)
+   public get_first_token()
+      return pos.child(1)
+   end
+
+   package flatten()
+      local l, n, t
+      l := []
+      n := pos.child(index)
+      while n ~=== Node.EMPTY do {
+         if is(n, Node) & n.label == "importlist" then {
+            t := n.child(3)
+            if is(t, Node) & t.label == "importspec" then
+               push(l, ImportSpec(t, n.child(2)))
+            else
+               push(l, Id(t, n.child(2)))
+            n := n.child(1)
+         } else {
+            if is(n, Node) & n.label == "importspec" then
+               push(l, ImportSpec(n))
+            else
+               push(l, Id(n))
+            break
+         }
+      }
+      return l
+   end
+
+   public put(x)
+      if pos.child(index) === Node.EMPTY then
+         pos.set(index, x.pos)
+      else
+         pos.set(index, Node("importlist",
+                             pos.child(index),
+                             x.comma,
+                             x.pos))
+   end
+
+   package new(pos)
+      cast(self,List).new(pos, 2)
+      return
+   end
+end
+
+class Prog(List)
+   package flatten()
+      local l, n, t
+      l := []
+      n := pos.child(index)
+      while n ~=== Node.EMPTY do {
+         t := n.child(2)
+         push(l, case t.label of {
+            "record" : Record(t)
+            "class" :  Class(t)
+            "proc" :  Procedure(t)
+            "package" : Package(t)
+            "import": Import(t)
+            "global": Global(t)
+            "link": Link(t)
+            "invocable": Invocable(t)
+            default: syserr("Unknown declaration node:" || t.label)
+         })
+         n := n.child(1)
+      }
+      return l
+   end
+
+   public put(x)
+      pos.set(index, Node("decls", 
+                          pos.child(index),
+                          x.pos))
+   end
+
+   package new(pos)
+      cast(self,List).new(pos, 1)
+      return
+   end
+end
+
+class InvocableOp(Tree)
+   public const comma
+   
+   public get_first_token()
+      return pos.child(1)
+   end
+
+   public get_op()
+      return Leaf(pos.child(1))
+   end
+
+   public get_num()
+      return Leaf(pos.child(3))
+   end
+
+   package new(pos, comma)
+      cast(self,Tree).new(pos)
+      /comma := Token(COMMA, ",", ",")
+      self.comma := comma
+      return
+   end
+end
+
+class ImportSpec(IdList)
+   public const comma
+
+   public get_package()
+      return Id(pos.child(1))
+   end
+
+   package new(pos, comma)
+      cast(self,IdList).new(pos,3)
+      /comma := Token(COMMA, ",", ",")
+      self.comma := comma
+      return
+   end
+end
+
+class Util()
+   public static dottedid2string(n)
+      local s
+      s := ""
+      repeat {
+         if is(n, Token) then {
+            s := n.s || s
+            return s
+         }
+         s := n.child(2).s || n.child(3).s || s
+         n := n.child(1)
+      }
+   end
+
+   public static first_token(n)
+      local c, t
+      if is(n, Token) then
+         return n
+      every c := n.gen() do {
+         if t := first_token(c) then
+            return t
+      }
+   end
+
+   public static dump(n, l)
+      /l := 0
+      if is(n, Node) then {
+         write(repl(" ", 3*l), n.label)
+         every dump(n.gen(), l+1)
+      }
+      else # It's a Token
+         write(repl(" ", 3*l), "Token ", image(n), " ", "s=", image(n.s), "c=", image(n.chunk))
+   end
+
+   public static dumpw(n)
+      if is(n, Node) then
+         every dumpw(n.gen())
+      else # Token
+         writes(n.chunk)
+   end
+end
+
+class Factory()
+   public static new_id(pad, s)
+      /pad := ""
+      return Id(Token(IDENT, s, pad || s),
+                Token(COMMA, ",", ","))
+   end
+
+   public static new_prog()
+      return Prog(Node("prog", Node.EMPTY, Token(EOFX, "", "")))
+   end
+
+   public static new_access(pad, s)
+      local t
+      t := case s of {
+         "private": PRIVATE
+         "public": PUBLIC
+         "protected": PROTECTED
+         "package": PACKAGE
+         "static": STATIC
+         "const": CONST
+         "readable": READABLE
+         "final": FINAL
+         default: runerr("Bad access value", s)
+      }
+      return Leaf(Token(t, s, pad || s))
+   end
+
+   public static new_retention(pad, s)
+      local t
+      t := case s of {
+         "local": LOCAL
+         "static": STATIC
+         default: runerr("Bad retention value", s)
+      }
+      /pad := " "
+      return Leaf(Token(t, s, pad || s))
+   end
+
+   public static new_procedure(pad, name, args, epad)
+      local t
+      /epad := "\n"
+      t := Procedure(Node("proc",
+                          Token(PROCEDURE, "procedure", pad || "procedure"),
+                          Token(IDENT, name, " " || name),
+                          Token(LPAREN, "(", "("),
+                          Node.EMPTY,
+                          Token(RPAREN, ")", ")"),
+                          Node.EMPTY,
+                          Node.EMPTY,
+                          Node.EMPTY,
+                          Node.EMPTY,
+                          Token(END, "end", epad || "end")))
+      t.get_args().put(new_id("", pop(args)))
+      every t.get_args().put(new_id(" ", !args))
+      return t
+   end
+
+   public static new_class(pad, name, supers, epad)
+      local t
+      /epad := "\n"
+      t := Class(Node("class",
+                       Node.EMPTY,
+                       Token(CLASS, "class", pad || "class"),
+                       Token(IDENT, name, " " || name),
+                       Token(LPAREN, "(", "("),
+                       Node.EMPTY,
+                       Token(RPAREN, ")", ")"),
+                       Node.EMPTY,
+                       Node.EMPTY,
+                       Token(END, "end", epad || "end")))
+      t.get_supers().put(new_id("", pop(supers)))
+      every t.get_supers().put(new_id(" ", !supers))
+      return t
+   end
+
+   public static new_deferred_method(pad, access, name, args)
+      local t
+      t := DeferredMethod(Node("classbody",
+                               Node.EMPTY,
+                               Node.EMPTY,
+                               Node("deferredmethod",
+                                    Token(DEFER, "defer", " defer"),
+                                    Token(IDENT, name, " " || name),
+                                    Token(LPAREN, "(", "("),
+                                    Node.EMPTY,
+                                    Token(RPAREN, ")", ")"))))
+      t.get_access().put(new_access(pad, pop(access)))
+      every t.get_access().put(new_access(" ", !access))
+
+      t.get_args().put(new_id("", pop(args)))
+      every t.get_args().put(new_id(" ", !args))
+
+      return t
+   end
+
+   public static new_method(pad, access, name, args, epad)
+      local t
+      /epad := "\n"
+      t := Method(Node("classbody",
+                       Node.EMPTY,
+                       Node.EMPTY,
+                       Node("method",
+                            Token(IDENT, name, " " || name),
+                            Token(LPAREN, "(", "("),
+                            Node.EMPTY,
+                            Token(RPAREN, ")", ")"),
+                            Node.EMPTY,
+                            Node.EMPTY,
+                            Node.EMPTY,
+                            Node.EMPTY,
+                            Token(END, "end", epad || "end"))))
+      t.get_access().put(new_access(pad, pop(access)))
+      every t.get_access().put(new_access(" ", !access))
+
+      t.get_args().put(new_id("", pop(args)))
+      every t.get_args().put(new_id(" ", !args))
+
+      return t
+   end
+
+   public static new_fields(pad, access, ids)
+      local t
+      t := FieldList(Node("classbody",
+                          Node.EMPTY,
+                          Node.EMPTY,
+                          Node.EMPTY))
+      t.get_access().put(new_access(pad, pop(access)))
+      every t.get_access().put(new_access(" ", !access))
+      every t.put(new_id(" ", !ids))
+      return t
+   end
+
+   public static new_local(pad, ret, ids)
+      local t
+      t :=  Local(Node("locals", 
+                        Node.EMPTY,
+                        Node.EMPTY,
+                        Node.EMPTY))
+      t.set_retention(new_retention(pad, ret))
+      every t.put(new_id(" ", !ids))
+      return t
+   end
+
+   public static new_record(pad, name, fields)
+      local t
+      t := Record(Node("record",
+                       Token(RECORD, "record", pad || "record"),
+                       Token(IDENT, name, " " || name),
+                       Token(LPAREN, "(", "("),
+                       Node.EMPTY,
+                       Token(RPAREN, ")", ")")))
+      t.put(new_id("", pop(fields)))
+      every t.put(new_id(" ", !fields))
+      return t
+   end
+
+   public static new_global(pad, ids)
+      local t
+      t := Global(Node("global",
+                       Token(GLOBAL, "global", pad || "global"),
+                       Node.EMPTY))
+      every t.put(new_id(" ", !ids))
+      return t
+   end
+
+   public static new_package(pad, id)
+      return Package(Node("package",
+                          Token(PACKAGE, "package", pad || "package"),
+                          Token(IDENT, id, " " || id)))
+   end
+
+   public static new_import_spec(pad, pack, syms)
+      local t
+      t := ImportSpec(Node("importspec",
+                           Token(IDENT, pack, pad || pack),
+                           Token(LPAREN, "(", "("),
+                           Node.EMPTY,
+                           Token(RPAREN, ")", ")")))
+      t.put(new_id("", pop(syms)))
+      every t.put(new_id(" ", !syms))
+      return t
+   end
+
+   public static new_import(pad, packs)
+      local t
+      t :=  Import(Node("import",
+                        Token(IMPORT, "import", pad || "import"),
+                        Node.EMPTY))
+      every t.put(new_id(" ", !packs))
+      return t
+   end
+
+   public static new_link(pad, ids)
+      local t
+      t := Link(Node("link",
+                     Token(LINK, "link", pad || "link"),
+                     Node.EMPTY))
+      every t.put(new_id(" ", !ids))
+      return t
+   end
+
+   public static new_invocable_op(pad, op, num)
+      return InvocableOp(Node("invocop",
+                              Token(STRINGLIT, op, pad || op),
+                              Token(COLON, ":", ":"),
+                              Token(INTLIT, num, num)))
+   end
+
+   public static new_invocable(pad, ids)
+      local t
+      t := Invocable(Node("invocable",
+                          Token(INVOCABLE, "invocable", pad || "invocable"),
+                          Node.EMPTY))
+      every t.put(new_id(" ", !ids))
+      return t
+   end
+end
+
+class Class(List)
+   public get_first_token()
+      return Util.first_token(pos)
+   end
+
+   package flatten()
+      local l, n, t
+      l := []
+      n := pos.child(index)
+      while n ~=== Node.EMPTY do {
+         t := n.child(3)
+         push(l, 
+              if is(t, Token) | t.label == "idlist" then
+                 FieldList(n)
+              else if t.label == "method" then
+                 Method(n)
+              else
+                 DeferredMethod(n))
+         n := n.child(1)
+      }
+      return l
+   end
+
+   public put(x)
+      pos.set(index, Node("classbody", 
+                          pos.child(index),
+                          x.pos.child(2),
+                          x.pos.child(3)))
+   end
+
+   public get_name()
+      return Leaf(pos.child(3))
+   end
+
+   public set_name(x)
+      pos.set(3, x.pos)
+   end
+
+   public get_supers()
+      return IdList(pos, 5, "super")
+   end
+
+   public is_final()
+      local c
+      c := pos.child(1)
+      return is(c, Token) & (c.tok = FINAL)
+   end
+
+   public set_final(pad, f)
+      if \to_flag(f) then {
+         if not is_final() then {
+            pos.set(1, Token(FINAL, "final", pad || "final"))
+            pos.set(2, Token(CLASS, "class", " class"))
+         }
+      }
+      else {
+         if is_final() then {
+            pos.set(1, Node.EMPTY)
+            pos.set(2, Token(CLASS, "class", pad || "class"))
+         }
+      }
+   end
+
+   package new(pos)
+      cast(self,List).new(pos, 7)
+      return
+   end
+end
+
+class Function()
+   private const
+      fpos,
+      name_index,
+      arglist_index,
+      locals_index
+
+   public get_name()
+      return Leaf(fpos.child(name_index))
+   end
+
+   public set_name(x)
+      fpos.set(name_index, x.pos)
+   end
+
+   public has_varargs()
+      local l
+      l := fpos.child(arglist_index)
+      return is(l, Node) & l.label == "arglist"
+   end
+
+   public set_varargs(f)
+      if \to_flag(f) then {
+         if not has_varargs() then
+            fpos.set(arglist_index, Node("arglist",
+                                         fpos.child(arglist_index),
+                                         Token(LBRACK, "[", "["),
+                                         Token(RBRACK, "]", "]")))
+      } else {
+         if has_varargs() then
+            fpos.set(arglist_index, fpos.child(arglist_index).child(1))
+      }
+   end
+
+   public get_args()
+      local l
+      l := fpos.child(arglist_index)
+      if is(l, Node) & l.label == "arglist" then
+         return IdList(l, 1)
+      else
+         return IdList(fpos, arglist_index)
+   end
+
+   public get_locals_list()
+      return LocalsList(fpos, \locals_index)
+   end
+
+   public set_initial(s)
+      fpos.set(\locals_index + 1, Token(STRINGLIT, s, s))
+   end
+
+   public set_body(s)
+      fpos.set(\locals_index + 3, Token(STRINGLIT, s, s))
+   end
+
+   public get_initial_node()
+      return fpos.child(\locals_index + 1)
+   end
+
+   public get_body_node()
+      return fpos.child(\locals_index + 3)
+   end
+
+   public get_end_token()
+      return fpos.child(\locals_index + 4)
+   end
+
+   package new(fpos, name_index, arglist_index, locals_index)
+      self.fpos := fpos
+      self.name_index := name_index
+      self.arglist_index := arglist_index
+      self.locals_index := locals_index
+      return
+   end
+end
+
+class Local(IdList)
+   public get_first_token()
+      return pos.child(2)
+   end
+
+   public get_retention()
+      return Leaf(pos.child(2))
+   end
+
+   public set_retention(s)
+      pos.set(2, s.pos)
+   end
+
+   package new(pos)
+      cast(self,IdList).new(pos, 3)
+      return
+   end
+end
+
+class FieldList(IdList)
+   public get_first_token()
+      return Util.first_token(pos.child(2))
+   end
+
+   public get_access()
+      return AccessList(pos, 2)
+   end
+
+   package new(pos)
+      cast(self,IdList).new(pos, 3)
+      return
+   end
+end
+
+class Method(Tree, Function)
+   public get_first_token()
+      return Util.first_token(pos.child(2))
+   end
+
+   public get_access()
+      return AccessList(pos, 2)
+   end
+
+   package new(pos)
+      cast(self,Tree).new(pos)
+      cast(self,Function).new(pos.child(3), 1, 3, 5)
+      return
+   end
+end
+
+class DeferredMethod(Tree, Function)
+   public get_first_token()
+      return Util.first_token(pos.child(2))
+   end
+
+   public get_access()
+      return AccessList(pos, 2)
+   end
+
+   package new(pos)
+      cast(self,Tree).new(pos)
+      cast(self,Function).new(pos.child(3), 2, 4)
+      return
+   end
+end
+
+class Procedure(Tree, Function)
+   public get_first_token()
+      return pos.child(1)
+   end
+
+   package new(pos)
+      cast(self,Tree).new(pos)
+      cast(self,Function).new(pos, 2, 4, 6)
+      return
+   end
+end
+
+class Record(IdList)
+   public get_first_token()
+      return pos.child(1)
+   end
+
+   public get_name()
+      return Leaf(pos.child(2))
+   end
+
+   public set_name(x)
+      pos.set(2, x.pos)
+   end
+
+   package new(pos)
+      cast(self,IdList).new(pos, 4)
+      return
+   end
+end
+
+class Global(IdList)
+   public get_first_token()
+      return pos.child(1)
+   end
+
+   package new(pos)
+      cast(self,IdList).new(pos, 2)
+      return
+   end
+end
+
+class Package(Tree)
+   public get_first_token()
+      return pos.child(1)
+   end
+
+   public get_name()
+      return Id(pos.child(2))
+   end
+
+   public set_name(x)
+      pos.set(2, x.pos)
+   end
+end

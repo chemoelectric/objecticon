@@ -1,0 +1,94 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a TextList on the canvas.
+#
+class CanvasTextList(CanvasComponent,TextList)
+   public min_height()
+      # need a smart calculation font height + borders + scrollbar
+      # for now based on constants in gui.icn, guiconst.icn we go with
+      # 14 + 8*2 + 22
+      return 52
+   end
+ 
+   public min_width()
+      # need a smart calculation font height + borders + scrollbar
+      # for now based on constants in gui.icn, guiconst.icn we go with
+      # 14 + 5*2 + 22
+      return 46
+   end
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      case self.select_mode of {
+         Select.NONE : c.line(self.name || ".set_select_mode(Select.NONE)")
+         Select.ONE : c.line(self.name || ".set_select_mode(Select.ONE)")
+         Select.MANY : c.line(self.name || ".set_select_mode(Select.MANY)")
+      }
+      c.add_import("gui", "Select")
+      c.line(name || ".set_contents([" || list2string(self.contents) || "])")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasTextList()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.select_mode := self.select_mode
+      c.set_contents(copy(self.contents))
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [["Select Mode", "select_mode"],
+          ["Contents", "contents"]
+         ]
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasTextListDialog(self)
+   end
+
+   public allows_null_height()
+      return 1
+   end
+
+   public allows_null_width()
+      return 1
+   end
+
+   public new()
+      cast(self,TextList).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "TextList"
+      self.import_name := "gui"
+      self.name := "text_list"
+      return
+   end
+end
+
+
+
+

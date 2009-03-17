@@ -1,0 +1,90 @@
+#
+# $Id$
+#
+
+package util
+
+#
+# This class represents a caseless table()
+#
+class ClTable()
+   private 
+      lookup,
+      names
+
+   public insert(key, val)
+      default.insert(lookup, map(key), val)
+      default.insert(names, map(key), key)
+   end
+
+   public member(key)
+      return default.member(lookup, map(key))
+   end
+
+   public delete(key)
+      default.delete(lookup, map(key))
+      default.delete(names, map(key))
+   end
+   
+   public get(key)
+      return lookup[map(key)]
+   end
+
+   public sort()
+      local l, e
+      l := default.sort(lookup)
+      every e := !l do
+         e[1] := names[e[1]]
+      return l
+   end
+
+   public keys()
+      local e
+      every e := !default.sort(names) do {
+         suspend e[2]
+      }
+   end
+
+   #
+   # Output object
+   #
+   private object_output(oo)
+      local pairs, e, sep
+      pairs := sort(names)
+      if oo.simple{!!pairs} then {
+         oo.object_start(self) | fail
+         every e := !pairs do {
+            if \sep then
+               oo.writes(";") | fail
+            oo.traverse(e[1]) | fail
+            oo.writes("->") | fail
+            oo.traverse(e[2]) | fail
+            sep := 1
+         }
+         oo.object_end(self) | fail
+      } else {
+         oo.nl() | fail
+         oo.object_start(self) | fail
+         oo.iplus()
+         every e := !pairs do {
+            oo.nl() | fail
+            oo.traverse(e[1]) | fail
+            oo.writes("->") | fail
+            oo.iplus()
+            oo.traverse(e[2]) | fail
+            oo.iminus()
+         }
+         oo.iminus()
+         oo.nl() | fail
+         oo.object_end(self) | fail
+      }
+      return
+   end
+
+   public new()
+      lookup := table()
+      names := table()
+      return
+   end
+end
+

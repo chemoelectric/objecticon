@@ -1,0 +1,163 @@
+import gui
+
+class MissingPlugin()
+   public id
+
+   public get_unique_id()
+      return id
+   end
+
+   public display(obj, r)
+      rectangle(obj.cbwin, obj.x, obj.y, obj.w, obj.h)
+      center_string(obj.cbwin, 
+                    obj.x + obj.w / 2, obj.y + 10, 
+                    "<Missing Plugin>")
+      center_string(obj.cbwin, 
+                    obj.x + obj.w / 2, obj.y + 10 + obj.cbwin.attrib("fheight"), 
+                    id)
+   end
+
+   public get_default_width(obj)
+      return 100
+   end
+
+   public get_default_height(obj)
+      return 50
+   end
+
+   public gen_code(code, obj)
+   end
+end
+
+
+class PluginUI(CanvasComponentUI)
+   public plugin
+
+   public get_category()
+      return plugin.get_ui_category()
+   end
+
+   public get_name()
+      return plugin.get_ui_name()
+   end
+
+   public create_canvas_component(canvas)
+      return CanvasPlugin(plugin)
+   end
+
+   public new(plugin)
+      self.plugin := plugin
+      return
+   end
+end
+
+
+class CanvasPlugin(CanvasComponent,Component)
+   public 
+      plugin,
+      config,
+      id
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      plugin.gen_code(c, self)
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasPlugin()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.config := copy(self.config)
+      c.plugin := self.plugin
+      return c
+   end
+
+   public display(r)
+      self.plugin.display(self, r)
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [["Id", "id"],
+          ["Config", "config"]]
+   end
+
+   public pre_encode()
+      cast(self,CanvasComponent).pre_encode()
+      id := plugin.get_unique_id()
+   end
+
+   public post_decode()
+      cast(self,CanvasComponent).post_decode()
+      plugin := Ivib.main.get_plugin(id) | MissingPlugin(id)
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasPluginDialog(self)
+   end
+
+   public get_default_width()
+      return self.plugin.get_default_width(self)
+   end
+
+   public get_default_height()
+      return self.plugin.get_default_height(self)
+   end
+
+   public allows_null_width()
+      return get_default_width()
+   end
+
+   public allows_null_height()
+      return get_default_height()
+   end
+
+   public new(plugin)
+      cast(self,Component).new()
+      cast(self,CanvasComponent).new()
+      # We only have this param when creating via the UI class.
+      if \plugin then {
+         self.plugin := plugin
+         self.config := table()
+         self.plugin.init_component(self)
+      }
+      return
+   end
+end
+
+
+class CanvasPluginDialog(CanvasComponentDialog)
+   public config_tab
+
+   public setup()
+      cast(self,CanvasComponentDialog).setup()
+      config_tab := MapTab("label=Config", "table=",c.config)
+      add_tab_at_front(config_tab)
+   end
+
+   public validate_input()
+      c.plugin.validate_config(c, config_tab.get_table()) |
+         return alert_error(self, c.plugin.get_reason())
+      return cast(self,CanvasComponentDialog).validate_input()
+   end
+
+   public set_vals()
+      c.config := config_tab.get_table()
+      cast(self,CanvasComponentDialog).set_vals()
+   end
+end
+
+
+

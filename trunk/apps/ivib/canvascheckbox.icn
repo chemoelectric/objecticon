@@ -1,0 +1,88 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a CheckBox on the canvas.
+#
+class CanvasCheckBox(CanvasButton,CheckBox)
+   public set_parent_check_box_group(x)
+      #
+      # Set the images to the standard ones, unless custom images already set.
+      #  
+      if \x then {
+         if self.img_up == Icon.BOX_UP & self.img_down == Icon.BOX_DOWN then 
+            self.set_images(Icon.DIAMOND_UP, Icon.DIAMOND_DOWN)
+      } else {
+         if self.img_up == Icon.DIAMOND_UP & self.img_down == Icon.DIAMOND_DOWN then 
+            self.set_images(Icon.BOX_UP, Icon.BOX_DOWN)
+      }
+      cast(self,CheckBox).set_parent_check_box_group(x)
+   end
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasButton).gen_code(c)
+      self.paint.gen_code(c)
+      c.line(name || ".set_paint(" || self.paint.name || ")")
+      if not((/self.parent_check_box_group & self.img_up == Icon.BOX_UP & self.img_down == Icon.BOX_DOWN) | 
+             (\self.parent_check_box_group & self.img_up == Icon.DIAMOND_UP & self.img_down == Icon.DIAMOND_DOWN)) then
+         c.line(name || ".set_images(" || image(self.img_up) || ", " || image(self.img_down) || ")")
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasButton).get_template() ||| 
+         [["Paint", "paint"],
+          ["Img Up", "img_up"],
+          ["Img Down", "img_down"],
+          ["Img Width", "img_w"],
+          ["Img Height", "img_h"]]
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup(pc)
+      local c
+      c := CanvasCheckBox()
+      cast(self,CanvasButton).dup_fields(c)
+      c.set_images(self.img_up, self.img_down)
+      c.set_paint(self.paint.dup(c))
+      return c
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasCheckBoxDialog(self)
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasComponent).gen_cos() | self.paint
+   end
+
+   public new()
+      cast(self,CheckBox).new()
+      cast(self,CanvasButton).new()
+      self.class_name := "CheckBox"
+      self.import_name := "gui"
+      self.name := "check_box"
+      return
+   end
+end
+
+
