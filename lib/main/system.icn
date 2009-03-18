@@ -52,6 +52,9 @@ class System()
    # set an environment variable.
    public static defer setenv(name, value)
 
+   # unset an environment variable.
+   public static defer unsetenv(name)
+
    # trap a signal.
    public static defer trap(sig, handler)
 end

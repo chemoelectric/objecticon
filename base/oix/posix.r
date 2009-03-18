@@ -143,8 +143,10 @@ static char ** list2stringptrs(dptr l)
      * again filling the space.
      */
     MemProtect(a = malloc((BlkLoc(*l)->list.size + 1) * sizeof(char *)));
-    MemProtect(data = malloc(total));
-    p = data;
+    if (total > 0) {
+        MemProtect(data = malloc(total));
+        p = data;
+    }
     i = 0;
     for (pb = BlkLoc(*l)->list.listhead;
          pb && (BlkType(pb) == T_Lelem);
@@ -335,7 +337,17 @@ function{0,1} util_Time_get_system_micros()
 end
 
 
-
+function{0, 1} posix_System_unsetenv(name)
+   if !cnv:C_string(name) then
+      runerr(103, name)
+   body {
+       if (unsetenv(name) < 0) {
+	 errno2why();
+	 fail;
+       }
+       return nulldesc;
+   }
+end
 
 "setenv() - set an environment variable."
 
@@ -344,53 +356,15 @@ function{0, 1} posix_System_setenv(name, value)
       runerr(103, name)
    if !cnv:C_string(value) then
       runerr(103, value)
-   abstract {
-      return null
-      }
-   inline {
+   body {
 #if MSWIN32
       if (!SetEnvironmentVariable(name, value))
          fail;
 #else
-#if defined(SUN) || defined(HP)
-
-      /*
-       * WARNING! I don't know if other systems require putenv with
-       * non-auto storage! If there are, they should be added to this
-       * section.
-       *
-       * putenv(3C) needs a string that's "name=value". We malloc() the
-       * the string for this; if there's another call to putenv(3C)
-       * with the same value, the old string is no longer needed. What
-       * we do is store a sentinel in front of the name=value section;
-       * before calling putenv we call getenv and see if it's a string
-       * we allocated for a previous putenv by looking for the sentinel.
-       * If it is we can free it.                  -- shamim July 2002
-       */
-
-      char *p, *q;
-      char* sentinel = "n59KxD2LlhPL1suOWsNg";
-      int slen = strlen(sentinel);
-      int n = slen + strlen(name) + strlen(value) + 1;
-
-      if ((p = malloc(n + 1)) == 0)
+      if (setenv(name, value, 1) < 0) {
+	 errno2why();
          fail;
-      snprintf(p, n+1, "%s%s=%s", sentinel, name, value);
-      p[n] = 0;
-      if ((q = getenv(name)) != 0) {
-         q -= strlen(name) + slen + 1;
-         if (strncmp(q, sentinel, slen) != 0)
-            q = 0;
       }
-      if (putenv(p + slen) != 0)
-         fail;
-      if (q)
-         free(q);
-#else
-      /* Tested on OpenBSD 3.1, FreeBSD-4.6, Linux 2.4.18 */
-      if (setenv(name, value, 1) < 0)
-         fail;
-#endif
 #endif
       return nulldesc;
    }
@@ -402,25 +376,17 @@ end
 "getenv(s) - return contents of environment variable s."
 
 function{0,1} posix_System_getenv(s)
-
-   /*
-    * Make a C-style string out of s
-    */
    if !cnv:C_string(s) then
       runerr(103,s)
-   abstract {
-      return string
-      }
-
-   inline {
+   body {
       char *p;
       if ((p = getenv(s)) != NULL) {	/* get environment variable */
           cstr2string(p, &result);
           return result;
-	 }
+      }
       else 				/* fail if not in environment */
 	 fail;
 
-      }
+   }
 end
 
