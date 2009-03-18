@@ -9,10 +9,15 @@ class System()
    # The first argument is searched on the PATH and if found pushed
    # onto the arg list (making the arg0 of the target program).  Then
    # {execve} is called.
+   # @param f the name of the command
+   # @param arg the arg list, excluding the command name.  Defaults to []
+   # @param env the env list, defaults to the current environment
+   # @           if omitted
    # @example System.exec("ls", ["-l", "/home"])
    #
    public static exec(f, arg, env)
       f := Files.find_exe(f) | return error("Not found on PATH:" || f)
+      /arg := []
       push(arg, f)
       return execve(f, arg, env)
    end
