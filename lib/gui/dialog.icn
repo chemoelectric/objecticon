@@ -679,10 +679,6 @@ class Dialog(Component)
          if tooltip_state = 2 then
             hide_tooltip()
          tooltip_state := 0
-         if \ (\self.tooltip_last_obj).tooltip_follows_mouse_flag then
-            # If follows_mouse_flag, then allow tooltip to re-appear over this
-            # component, after a delay.
-            self.tooltip_last_tip := self.tooltip_last_obj := &null
       }
    end
 
@@ -733,7 +729,8 @@ class Dialog(Component)
 
       case self.tooltip_state of {
          0 : {
-            if \obj ~=== self.tooltip_last_obj then {
+            if (\obj ~=== self.tooltip_last_obj) |
+               (\tip ~=== self.tooltip_last_tip) then {
                self.tooltip_start_time := t + obj.get_tooltip_start_delay()
                self.tooltip_state := 1
             }
