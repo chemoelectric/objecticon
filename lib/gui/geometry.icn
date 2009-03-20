@@ -51,6 +51,14 @@ class Rect(Point,Size)
       return (x <= x1 < x + w) & (y <= y1 < y + h)
    end
 
+   public contains(r)
+      return (r.x >= x) & (r.y >= y) & (r.x + r.w <= x + w) & (r.y + r.h <= y + h)
+   end
+
+   public center()
+      return Point(x + w / 2, y + h / 2)
+   end
+
    public union(r)
       local ux, uw, uy, uh
 
