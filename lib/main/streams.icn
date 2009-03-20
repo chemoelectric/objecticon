@@ -907,8 +907,10 @@ class ProgStream(FileStream, NoCopy)
          l[1].close()
          return ProgStream(l[2].get_fd(), pid, WRITE)
       } else {
-         (\stdout).dup2(1)
-         (\stderr).dup2(2)
+         if \stdout then
+            stdout.dup2(1) | fail
+         if \stderr then
+            stderr.dup2(2) | fail
          l[1].dup2(0) | fail
          l[1].close()
          l[2].close()
@@ -939,7 +941,8 @@ class ProgStream(FileStream, NoCopy)
          return ProgStream(l[1].get_fd(), pid, READ)
       } else {
          # Child
-         (\stdin).dup2(0) | fail
+         if \stdin then
+            stdin.dup2(0) | fail
          l[2].dup2(1) | fail
          l[2].dup2(2) | fail
          l[1].close()
