@@ -17,9 +17,9 @@ class Format()
       local n, digs, s, c
       n := 0
       /base := 16
-      digs := "0123456789abcdef"[1:base + 1] | fail
+      digs := "0123456789abcdef"[1:base + 1] | runerr("invalid base", base)
 
-      s := string(subject) | fail
+      s := string(subject) | runerr(103, subject)
       every c := !map(s) do
          n := base * n + find(c, digs) - 1 | fail
       return n
@@ -37,9 +37,9 @@ class Format()
       s := ""
       /base := 16
       /p := 1
-      n := integer(subject) | fail
+      n := integer(subject) | runerr(101, subject)
 
-      digs := "0123456789ABCDEF"[1:base + 1] | fail
+      digs := "0123456789ABCDEF"[1:base + 1] | runerr("invalid base", base)
       while n > 0 do {
          s := digs[n % base + 1] || s
          n /:= base
@@ -66,7 +66,7 @@ class Format()
       local n1, s, t, lim, d, zs, dig, i, n, sig_digs
 
       /f := ''
-      n := numeric(subject) | fail
+      n := numeric(subject) | runerr(102, subject)
       sig_digs := 16 - 2
       /p := 4
       n1 := abs(n)
@@ -167,7 +167,7 @@ class Format()
    public static unescape(subject)
       local s, res, ch
 
-      s := string(subject) | fail
+      s := string(subject) | runerr(103, subject)
       
       res := ""
       s ? {
@@ -214,7 +214,7 @@ class Format()
       initial
          printable := '\x20-\x7e' -- '\\'
 
-      s := string(subject) | fail
+      s := string(subject) | runerr(103, subject)
       
       res := ""
       s ? {
@@ -262,7 +262,7 @@ class Format()
          pwr10num := [1000000, 1000, 100]
       }
 
-      n := integer(subject) | fail
+      n := integer(subject) | runerr(101, subject)
 
       s := ""
 
