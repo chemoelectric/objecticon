@@ -324,7 +324,7 @@ class HttpClient(NetClient)
       local md5, nc, h, t, hentity, ha2, s
 
       self.nonce_count +:= 1
-      nc := map(format_int_to_string(self.nonce_count, 16, 8))
+      nc := map(Format.int_to_string(self.nonce_count, 16, 8))
       md5 := MD5()
       #
       # Calculate HA2

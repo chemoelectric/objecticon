@@ -258,7 +258,7 @@ class URL()
          res ||:= tab(many(convert_chars))
          if pos(0) then
             break
-         res ||:= "%" || format_int_to_string(ord(move(1)),,2)
+         res ||:= "%" || Format.int_to_string(ord(move(1)),,2)
       }
       res := map(res, " ", "+")
       return res
@@ -299,7 +299,7 @@ class URL()
          if pos(0) then
             break
          move(1)
-         res ||:= char(format_string_to_int(move(2)))
+         res ||:= char(Format.string_to_int(move(2)))
       }
       return res
    end

@@ -51,7 +51,7 @@ class QuotedPrintableHandler(EncodingHandler)
 
    private escape(ch)
       local t
-      t := "=" || format_int_to_string(ord(ch), 16, 2)
+      t := "=" || Format.int_to_string(ord(ch), 16, 2)
       if ll > 72 then {
          res ||:= "="
          nl()
@@ -94,7 +94,7 @@ class QuotedPrintableHandler(EncodingHandler)
             move(1)
             # If not a soft line break, then unescape the =XX format.
             if not ="\r\n" then {
-               res ||:= char(format_string_to_int(move(2))) | return error("Bad quoted-printable data")
+               res ||:= char(Format.string_to_int(move(2))) | return error("Bad quoted-printable data")
             }
          } else
             res ||:= ="\r\n" | return error("Bad quoted-printable data")

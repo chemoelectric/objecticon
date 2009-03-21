@@ -17,10 +17,10 @@ procedure main()
       l +:= 1
       s ? {
          if ="0x" then {
-            i := format_string_to_int(move(4)) | stop("Bad format: line ", l)
+            i := Format.string_to_int(move(4)) | stop("Bad format: line ", l)
             tab(upto('U'))
             move(1)
-            j := format_string_to_int(move(4)) | stop("Bad format: line ", l)
+            j := Format.string_to_int(move(4)) | stop("Bad format: line ", l)
             tab(many(' '))
             status := move(1) | stop("Bad format: line ", l)
             if status == "d" then
@@ -33,7 +33,7 @@ procedure main()
             if member(done, i) then 
                next
             insert(done, i)
-            write("        case 0x", format_int_to_string(i), ": return 0x", format_int_to_string(j), ";", c)
+            write("        case 0x", Format.int_to_string(i), ": return 0x", Format.int_to_string(j), ";", c)
          }
       }
    }
