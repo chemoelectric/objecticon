@@ -460,14 +460,14 @@ class SelectableScrollArea(LineBasedScrollArea)
    public handle_key_left(e)
       \self.hsb | fail
       start_handle(e)
-      goto_hpos(get_area_x() - self.hsb.increment_size)
+      set_area_x(get_area_x() - self.hsb.increment_size)
       end_handle(e)
    end
 
    public handle_key_right(e)
       \self.hsb | fail
       start_handle(e)
-      goto_hpos(get_area_x() + self.hsb.increment_size)
+      set_area_x(get_area_x() + self.hsb.increment_size)
       end_handle(e)
    end
 

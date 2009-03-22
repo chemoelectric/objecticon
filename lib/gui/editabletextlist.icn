@@ -271,9 +271,9 @@ class EditableTextList(LineBasedScrollArea)
       j := i + char_width(view.cbwin, s[self.cursor_x - v.first + 1])
       l := self.get_subject_x()
       if self.view.x - l > i then
-         goto_hpos(i)
+         set_area_x(i)
       else if self.view.x - l + self.view.w < j then
-         goto_hpos(j - self.view.w)
+         set_area_x(j - self.view.w)
    end
 
    public handle_cut(e)

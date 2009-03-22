@@ -87,7 +87,7 @@ class ScrollArea(Component)
    #
    # Goto a horizontal pos.
    #
-   public goto_hpos(horiz)
+   public set_area_x(horiz)
       if \self.hsb then {
          self.hsb.set_value(horiz)
          self.refresh()
@@ -97,7 +97,7 @@ class ScrollArea(Component)
    #
    # Goto a vertical pos.
    #
-   public goto_vpos(vert)
+   public set_area_y(vert)
       if \self.vsb then {
          self.vsb.set_value(vert)
          self.refresh()
@@ -408,14 +408,14 @@ class ScrollArea(Component)
 
    public default_on_key(e)
       case e.code of {
-         Key.HOME : goto_vpos(0)
-         Key.END : goto_vpos((\self.vsb).total_size)
-         Key.PGUP : goto_vpos(get_area_y() - (\self.vsb).page_size)
-         Key.PGDN : goto_vpos(get_area_y() + (\self.vsb).page_size)
-         Key.UP : goto_vpos(get_area_y() - (\self.vsb).increment_size)
-         Key.DOWN : goto_vpos(get_area_y() + (\self.vsb).increment_size)
-         Key.LEFT : goto_hpos(get_area_x() - (\self.hsb).increment_size)
-         Key.RIGHT : goto_hpos(get_area_x() + (\self.hsb).increment_size)
+         Key.HOME : set_area_y(0)
+         Key.END : set_area_y((\self.vsb).total_size)
+         Key.PGUP : set_area_y(get_area_y() - (\self.vsb).page_size)
+         Key.PGDN : set_area_y(get_area_y() + (\self.vsb).page_size)
+         Key.UP : set_area_y(get_area_y() - (\self.vsb).increment_size)
+         Key.DOWN : set_area_y(get_area_y() + (\self.vsb).increment_size)
+         Key.LEFT : set_area_x(get_area_x() - (\self.hsb).increment_size)
+         Key.RIGHT : set_area_x(get_area_x() + (\self.hsb).increment_size)
       }
    end
 

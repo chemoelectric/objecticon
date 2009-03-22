@@ -290,13 +290,13 @@ class FileDialog(Dialog)
          dlist.goto_first(e[2])
       } else {
          dlist.goto_first(1)
-         dlist.goto_hpos(0)
+         dlist.set_area_x(0)
          dlist.set_cursor(1)
       }
 
       flist.set_contents(l[2])
       flist.goto_first(1)
-      flist.goto_hpos(0)
+      flist.set_area_x(0)
       flist.clear_selections()
       flist.set_cursor(1)
    end
