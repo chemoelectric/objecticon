@@ -185,7 +185,7 @@ class Time()
 
       res := ""
       p ? {
-         while not pos(0) do {
+         until pos(0) do {
             if any('EydHMhmsaAz') then {
                ch := p[&pos]
                w := *tab(many(ch))
@@ -941,7 +941,7 @@ class TimeParser()
       ppos := 1
 
       p ? {
-         while not pos(0) do {
+         until pos(0) do {
             if any('EydHMhmsaAz') then {
                ch := p[&pos]
                w := *tab(many(ch))

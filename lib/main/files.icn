@@ -645,7 +645,7 @@ class UnixFileSystem(FileSystem)
       l := []
       s ? {
          put(l, ="/")
-         while not pos(0) do {
+         until pos(0) do {
             t := tab(upto('/') | 0)
             if *t > 0 then
                put(l, t)
@@ -753,7 +753,7 @@ class WindowsFileSystem(FileSystem)
             put(l, move(2))
          else if &subject[1] == "\\" then     # \X
             put(l, move(1))                
-         while not pos(0) do {
+         until pos(0) do {
             t := tab(upto('\\') | 0)
             if *t > 0 then
                put(l, t)

@@ -30,7 +30,7 @@ class QuotedPrintableHandler(EncodingHandler)
       ll := 0
 
       data ? {
-         while not pos(0) do {
+         until pos(0) do {
             if s := tab(many(QUOTED_PRINTABLE_CHARS)) then {
                if pos(0) & any(' \t', s[-1]) then {
                   put(s[1:-1])
