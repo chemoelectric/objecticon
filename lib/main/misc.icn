@@ -98,11 +98,11 @@ procedure many_star(c)
 end
 
 #
-# Search for a string; if found tab over it and succeed, otherwise
-# fail.
+# Search for a string using find and suspend the position after the string,
+# if found.
 #
-procedure find_and_skip(s)
-   return tab(find(s)) || move(*s)
+procedure past(s)
+   suspend find(s) + *s
 end
 
 #

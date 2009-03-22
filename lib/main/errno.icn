@@ -1,6 +1,6 @@
 package posix
 
-import util(find_and_skip)
+import util(past)
 
 #
 # Extract the value of errno from {&why}.
@@ -12,7 +12,7 @@ import util(find_and_skip)
 #
 procedure errno()
    \&why ? {
-      find_and_skip("(errno=") | fail
+      tab(past("(errno=")) | fail
       return integer(tab(many(&digits)))
    }
 end
