@@ -263,7 +263,7 @@ class Dialog(Component)
    # Ensure we have a position if one is not set.
    # 
    private ensure_pos()
-      local x1, y1
+      local x1, y1, rp
       if get_wattrib("pos") | (get_wattrib("posx") & get_wattrib("posy")) then
          return
 
@@ -276,8 +276,9 @@ class Dialog(Component)
          x1 := \x_spec | "0"
          set_wattrib("posx", x1)
       } else {
-         x1 := \x_spec | (get_pointerx() - get_width_attrib() - 20) | "50"
-         y1 := \y_spec | (get_pointery() - get_height_attrib() - 20) | "50"
+         rp := Window.query_root_pointer()
+         x1 := \x_spec | (rp[1] - get_width_attrib() - 20) | "50"
+         y1 := \y_spec | (rp[2] - get_height_attrib() - 20) | "50"
          set_wattrib("pos", x1 || "," || y1)
       }
    end

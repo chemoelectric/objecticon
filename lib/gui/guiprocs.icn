@@ -315,20 +315,6 @@ procedure image_height(s)
 end
 
 #
-# The absolute pointer x position on the screen.
-#
-procedure get_pointerx()
-   return Window.query_root_pointer()[1]
-end
-
-#
-# The absolute pointer y position on the screen.
-#
-procedure get_pointery()
-   return Window.query_root_pointer()[2]
-end
-
-#
 # Convert a table to an attribute list in the form
 #    ["key1=val1", "key2=val2", ...]
 #
