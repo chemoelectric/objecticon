@@ -233,16 +233,6 @@ dptr dp1, dp2;
             return Equal;
          return ((lresult > 0) ? Greater : Less);
 
-      case T_External:
-	 /*
-          * Collate these values according to the relative positions of
-          *  their blocks in the heap.
-	  */
-         lresult = ((long)BlkLoc(*dp1) - (long)BlkLoc(*dp2));
-         if (lresult == 0)
-            return Equal;
-         return ((lresult > 0) ? Greater : Less);
-
       default:
 	 syserr("anycmp: unknown datatype.");
 	 /*NOTREACHED*/
@@ -289,7 +279,7 @@ dptr dp;
 	 return 10;
       case T_Record:
 	 return 11;
-      case T_External:
+      case T_Ucs:
          return 12;
       case T_Class:
          return 13;
@@ -299,8 +289,6 @@ dptr dp;
          return 15;
       case T_Methp:
          return 16;
-      case T_Ucs:
-         return 17;
       default:
 	 syserr("order: unknown datatype.");
 	 /*NOTREACHED*/

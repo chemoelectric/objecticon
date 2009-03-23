@@ -310,7 +310,7 @@
 #define T_Tvsubs	16	/* substring trapped variable */
 #define T_Refresh	17	/* refresh block */
 #define T_Coexpr	18	/* co-expression */
-#define T_External	19	/* external block */
+#define T_Ucs           19      /* unicode character string */
 #define T_Kywdint	20	/* integer keyword */
 #define T_Kywdpos	21	/* keyword &pos */
 #define T_Kywdsubj	22	/* keyword &subject */
@@ -320,8 +320,7 @@
 #define T_Object        26      /* object */
 #define T_Cast          27      /* cast */
 #define T_Methp         28      /* method pointer */
-#define T_Ucs           29      /* unicode character string */
-#define MaxType		29	/* maximum type number */
+#define MaxType		28	/* maximum type number */
 
 /*
  * Definitions for keywords.
@@ -361,7 +360,6 @@
 #define D_Kywdsubj	(T_Kywdsubj | D_Typecode | F_Ptr | F_Var)
 #define D_Refresh	(T_Refresh  | D_Typecode | F_Ptr)
 #define D_Coexpr	(T_Coexpr   | D_Typecode | F_Ptr)
-#define D_External	(T_External | D_Typecode | F_Ptr)
 #define D_Slots		(T_Slots    | D_Typecode | F_Ptr)
 #define D_Kywdstr	(T_Kywdstr  | D_Typecode | F_Ptr | F_Var)
 #define D_Kywdevent	(T_Kywdevent| D_Typecode | F_Ptr | F_Var)

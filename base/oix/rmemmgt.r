@@ -64,7 +64,7 @@ int bsizes[] = {
      sizeof(struct b_tvsubs), /* T_Tvsubs (16), substring trapped variable */
      0,                       /* T_Refresh (17), refresh block */
     -1,                       /* T_Coexpr (18), co-expression block */
-     0,                       /* T_External (19) external block */
+     0,                       /* T_Ucs (19), unicode string */
      -1,                      /* T_Kywdint (20), integer keyword variable */
      -1,                      /* T_Kywdpos (21), keyword &pos */
      -1,                      /* T_Kywdsubj (22), keyword &subject */
@@ -74,7 +74,6 @@ int bsizes[] = {
      0,                       /* T_Object (26), object */
      sizeof(struct b_cast),   /* T_Cast (27), cast */
      sizeof(struct b_methp),  /* T_Methp (28), method pointer */
-     0,                       /* T_Ucs (29), unicode string */
     };
 
 /*
@@ -103,7 +102,7 @@ int firstd[] = {
      (4+Wsizeof(struct pf_marker))*WordSize, /* T_Refresh (17), refresh block */
 
     -1,                       /* T_Coexpr (18), co-expression block */
-     0,                       /* T_External (19), external block */
+     3*WordSize,              /* T_Ucs (19), unicode string */
      -1,                      /* T_Kywdint (20), integer keyword variable */
      -1,                      /* T_Kywdpos (21), keyword &pos */
      -1,                      /* T_Kywdsubj (22), keyword &subject */
@@ -113,7 +112,6 @@ int firstd[] = {
      5*WordSize,              /* T_Object (26), object */
      0,                       /* T_Cast (27), cast */
      0,                       /* T_Methp (28), methp */
-     3*WordSize,              /* T_Ucs (29), unicode string */
     };
 
 /*
@@ -140,7 +138,7 @@ int firstp[] = {
      0,                       /* T_Tvsubs (16), substring trapped variable */
      0,                       /* T_Refresh (17), refresh block */
     -1,                       /* T_Coexpr (18), co-expression block */
-     0,                       /* T_External (19), external block */
+     0,                       /* T_Ucs (19), unicode string */
      -1,                      /* T_Kywdint (20), integer keyword variable */
      -1,                      /* T_Kywdpos (21), keyword &pos */
      -1,                      /* T_Kywdsubj (22), keyword &subject */
@@ -150,7 +148,6 @@ int firstp[] = {
      0,                       /* T_Object (26), object, just a pointer to the class, which is static */
      1*WordSize,              /* T_Cast (27), cast */
      1*WordSize,              /* T_Methp (28), methp */
-     0,                       /* T_Ucs (29), unicode string */
     };
 
 /*
@@ -177,7 +174,7 @@ int ptrno[] = {
     -1,                       /* T_Tvsubs (16), substring trapped variable */
     -1,                       /* T_Refresh (17), refresh block */
     -1,                       /* T_Coexpr (18), co-expression block */
-    -1,                       /* T_External (19), external block */
+    -1,                       /* T_Ucs (19), unicode string */
     -1,                       /* T_Kywdint (20), integer keyword variable */
     -1,                       /* T_Kywdpos (21), keyword &pos */
     -1,                       /* T_Kywdsubj (22), keyword &subject */
@@ -187,7 +184,6 @@ int ptrno[] = {
     -1,                       /* T_Object (26), object */
      1,                       /* T_Cast (27), cast */
      1,                       /* T_Methp (28), method pointer */
-    -1,                       /* T_Ucs (29), unicode string */
     };
 
 /*
@@ -214,7 +210,7 @@ int descno[] = {
      0,                       /* T_Tvsubs (16), substring trapped variable */
      0,                       /* T_Refresh (17), refresh block */
     -1,                       /* T_Coexpr (18), co-expression block */
-    -1,                       /* T_External (19), external block */
+     1,                       /* T_Ucs (19), unicode string */
     -1,                       /* T_Kywdint (20), integer keyword variable */
     -1,                       /* T_Kywdpos (21), keyword &pos */
     -1,                       /* T_Kywdsubj (22), keyword &subject */
@@ -224,7 +220,6 @@ int descno[] = {
      0,                       /* T_Object (26), object */
     -1,                       /* T_Cast (27), cast */
     -1,                       /* T_Methp (28), methp */
-     1,                       /* T_Ucs (29), unicode string */
 };
 
 /*
@@ -250,7 +245,7 @@ char *blkname[] = {
    "substring trapped variable",        /* T_Tvsubs (16) */
    "refresh block",                     /* T_Refresh (17) */
    "co-expression",                     /* T_Coexpr (18) */
-   "external block",                    /* T_External (19) */
+   "ucs",                               /* T_Ucs (19), unicode string */
    "integer keyword variable",          /* T_Kywdint (20) */
    "&pos",                              /* T_Kywdpos (21) */
    "&subject",                          /* T_Kywdsubj (22) */
@@ -260,7 +255,6 @@ char *blkname[] = {
    "object",                            /* T_Object (26) */
    "cast",                              /* T_Cast (27) */
    "methp",                             /* T_Methp (28) */
-   "ucs",                               /* T_Ucs (29), unicode string */
    };
 
 /*

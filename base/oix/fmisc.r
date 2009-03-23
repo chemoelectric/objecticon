@@ -198,30 +198,9 @@ function{1} copy(x)
          }
 
       default: body {
-#if Never
-         if (Type(x) == T_External) {
-            word n;
-            tended union block *op, *bp;
-
-            /*
-             * Duplicate the block.  Recover number of data words in block,
-             * then allocate new block and copy the data.
-             */
-            op = BlkLoc(x);
-            n = (op->externl.blksize - (sizeof(struct b_external) - 
-                 sizeof(word))) / sizeof(word);
-            MemProtect(bp = (union block *)alcextrnl(n));
-            while (n--)
-               bp->externl.exdata[n] = op->externl.exdata[n];
-            result.dword = D_External;
-            BlkLoc(result) = bp;
-	    return result;
-            }
-         else
-#endif					/* Never */
             runerr(123,x);
          }
-         }
+      }
 end
 
 
@@ -1212,37 +1191,30 @@ dptr d;
 "type(x) - return type of x as a string."
 
 function{1} type(x)
-   abstract {
-      return string
-      }
+  body {
    type_case x of {
-      string:   inline { return C_string "string";    }
-      null:     inline { return C_string "null";      }
-      integer:  inline { return C_string "integer";   }
-      real:     inline { return C_string "real";      }
-      cset:     inline { return C_string "cset";      }
-      proc:     inline { return C_string "procedure"; }
-      list:     inline { return C_string "list";      }
-      table:    inline { return C_string "table";     }
-      set:      inline { return C_string "set";       }
-      class:    inline { return C_string "class";       }
-      constructor: 
-                inline { return C_string "constructor";       }
-      record:   inline { return C_string "record";    }
-      object:   inline { return C_string "object";    }
-      methp:    inline { return C_string "methp";    }
-      cast:     inline { return C_string "cast";    }
-      ucs:      inline { return C_string "ucs";    }
-      coexpr:   inline { return C_string "co-expression"; }
-      default:
-         inline {
-            if (!Qual(x) && (Type(x)==T_External)) {
-               return C_string "external";
-               }
-            else
-               runerr(123,x);
-	    }
-      }
+      string:    { LitStr("string", &result);    }
+      null:      { LitStr("null", &result);      }
+      integer:   { LitStr("integer", &result);   }
+      real:      { LitStr("real", &result);      }
+      cset:      { LitStr("cset", &result);      }
+      proc:      { LitStr("procedure", &result); }
+      list:      { LitStr("list", &result);      }
+      table:     { LitStr("table", &result);     }
+      set:       { LitStr("set", &result);       }
+      class:     { LitStr("class", &result);       }
+      constructor:   { LitStr("constructor", &result);       }
+      record:    { LitStr("record", &result);    }
+      object:    { LitStr("object", &result);    }
+      methp:     { LitStr("methp", &result);    }
+      cast:      { LitStr("cast", &result);    }
+      ucs:       { LitStr("ucs", &result);    }
+      coexpr:    { LitStr("co-expression", &result); }
+      default:   { runerr(123,x);
+                 }
+   }
+   return result;
+  }
 end
 
 "subtype(x) - return subtype of x as a string."

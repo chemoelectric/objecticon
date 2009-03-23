@@ -272,12 +272,6 @@ struct b_tvtbl {		/* table element trapped variable block */
     struct descrip tref;		/*   entry value */
 };
 
-struct b_external {		/* external block */
-    word title;			/*   T_External */
-    word blksize;		/*   size of block */
-    word exdata[1];		/*   words of external data */
-};
-
 struct astkblk {		  /* co-expression activator-stack block */
     int nactivators;		  /*   number of valid activator entries in
 				   *    this block */
@@ -618,7 +612,6 @@ union block {			/* general block */
     struct b_tvtbl tvtbl;
     struct b_refresh refresh;
     struct b_coexpr coexpr;
-    struct b_external externl;
     struct b_slots slots;
     struct b_class class;
     struct b_object object;

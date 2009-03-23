@@ -1379,7 +1379,7 @@ static int isdescrip(word *p){
             i==D_Cset || i==D_Proc || i==D_Record || i==D_List ||
             i==D_Lelem || i==D_Set || i==D_Selem || i==D_Table || i==D_Telem ||
             i==D_Tvtbl || i==D_Slots || i==D_Tvsubs || i==D_Refresh || i==D_Coexpr ||
-            i==D_External || i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj ||
+            i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj ||
             i==D_Kywdstr || i==D_Kywdevent || i==D_Class || i==D_Object || i==D_Cast ||
             i==D_Constructor || i==D_Methp || i==D_Ucs)
         return valid_addr(BlkLoc(*d));
@@ -1468,10 +1468,6 @@ void print_vword(FILE *f, dptr d) {
             case D_Telem :
             case D_Slots :
             case D_Refresh :
-            case D_External : {
-                fprintf(f, "%p", BlkLoc(*d));
-                break;
-            }
 
             case D_Proc : {
                 struct b_proc *p = (struct b_proc*)BlkLoc(*d);
@@ -1548,7 +1544,6 @@ void print_dword(FILE *f, dptr d) {
             case D_Slots : fputs("D_Slots", f); break;
             case D_Refresh : fputs("D_Refresh", f); break;
             case D_Coexpr : fputs("D_Coexpr", f); break;
-            case D_External : fputs("D_External", f); break;
             case D_Class : fputs("D_Class", f); break;
             case D_Object : fputs("D_Object", f); break;
             case D_Cast : fputs("D_Cast", f); break;

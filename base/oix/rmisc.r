@@ -922,8 +922,6 @@ int noimage;
             outimage(f, dp, noimage);
             putc(')', f);
             }
-         else if (Type(*dp) == T_External)
-            fprintf(f, "external(%d)",((struct b_external *)BlkLoc(*dp))->blksize);
          else if (Type(*dp) <= MaxType)
             fprintf(f, "%s", blkname[Type(*dp)]);
          else
@@ -1516,18 +1514,8 @@ dptr dp1, dp2;
          }
 
       default:
-        if (Type(*dp1) == T_External) {
-           /*
-            * For now, just produce "external(n)". 
-            */
-           sprintf(sbuf, "external(%ld)", (long)BlkLoc(*dp1)->externl.blksize);
-           len = strlen(sbuf);
-           MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
-           StrLen(*dp2) = len;
-           }
-         else {
-	    ReturnErrVal(123, source, Error);
-            }
+         ReturnErrVal(123, source, Error);
+
       }
    return Succeeded;
    }

@@ -22,7 +22,6 @@
 #define E_Methp	        '\202'		/* Methp allocation */
 #define E_Ucs	        '\203'		/* Ucs allocation */
 #define E_Tvsubs	'\151'		/* Substring tv allocation */
-#define E_External	'\152'		/* External allocation */
 #define E_List		'\153'		/* List allocation */
 #define E_Lelem		'\155'		/* List element allocation */
 #define E_Table		'\156'		/* Table allocation */
@@ -248,6 +247,7 @@
 110
 124
 137
+152
 162
 174
 204 205 206 207

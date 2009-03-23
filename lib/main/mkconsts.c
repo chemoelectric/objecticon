@@ -1152,7 +1152,7 @@ Const(SEEK_END)
         Const(T_Tvsubs)
         Const(T_Refresh)
         Const(T_Coexpr)
-        Const(T_External)
+        Const(T_Ucs)
         Const(T_Kywdint)
         Const(T_Kywdpos)
         Const(T_Kywdsubj)
@@ -1162,7 +1162,6 @@ Const(SEEK_END)
         Const(T_Object)
         Const(T_Cast)
         Const(T_Methp)
-        Const(T_Ucs)
     end_class();
 
     fclose(out);

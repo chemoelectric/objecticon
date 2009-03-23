@@ -430,7 +430,6 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
  * Prototypes for the run-time system.
  */
 
-struct b_external *alcextrnl	(int n);
 struct b_record *alcrecd_0	(struct b_constructor *con);
 struct b_record *alcrecd_1	(struct b_constructor *con);
 struct b_object *alcobject_0	(struct b_class *class);

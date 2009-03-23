@@ -384,7 +384,6 @@ void EVInit()
    typech[T_Cset]    = E_Cset;		/* cset */
    typech[T_Record]  = E_Record;	/* record block */
    typech[T_Tvsubs]  = E_Tvsubs;	/* substring trapped variable */
-   typech[T_External]= E_External;	/* external block */
    typech[T_List]    = E_List;		/* list header block */
    typech[T_Lelem]   = E_Lelem;		/* list element block */
    typech[T_Table]   = E_Table;		/* table header block */
