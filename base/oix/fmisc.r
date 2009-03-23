@@ -1193,25 +1193,24 @@ dptr d;
 function{1} type(x)
   body {
    type_case x of {
-      string:    { LitStr("string", &result);    }
-      null:      { LitStr("null", &result);      }
-      integer:   { LitStr("integer", &result);   }
-      real:      { LitStr("real", &result);      }
-      cset:      { LitStr("cset", &result);      }
-      proc:      { LitStr("procedure", &result); }
-      list:      { LitStr("list", &result);      }
-      table:     { LitStr("table", &result);     }
-      set:       { LitStr("set", &result);       }
-      class:     { LitStr("class", &result);       }
-      constructor:   { LitStr("constructor", &result);       }
-      record:    { LitStr("record", &result);    }
-      object:    { LitStr("object", &result);    }
-      methp:     { LitStr("methp", &result);    }
-      cast:      { LitStr("cast", &result);    }
-      ucs:       { LitStr("ucs", &result);    }
-      coexpr:    { LitStr("co-expression", &result); }
-      default:   { runerr(123,x);
-                 }
+      string:      LitStr("string", &result);    
+      null:        LitStr("null", &result);      
+      integer:     LitStr("integer", &result);   
+      real:        LitStr("real", &result);      
+      cset:        LitStr("cset", &result);      
+      proc:        LitStr("procedure", &result); 
+      list:        LitStr("list", &result);      
+      table:       LitStr("table", &result);     
+      set:         LitStr("set", &result);       
+      class:       LitStr("class", &result);       
+      constructor: LitStr("constructor", &result);       
+      record:      LitStr("record", &result);    
+      object:      LitStr("object", &result);    
+      methp:       LitStr("methp", &result);    
+      cast:        LitStr("cast", &result);    
+      ucs:         LitStr("ucs", &result);    
+      coexpr:      LitStr("co-expression", &result); 
+      default:     runerr(123,x);
    }
    return result;
   }
