@@ -82,8 +82,9 @@ static int invoke_methp(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr
     BlkLoc(newargp[1]) = (union block *)mp->object;
 
     sp += 2;
-
-    return invoke_proc(nargs + 1, newargp, cargp_ptr, nargs_ptr);
+    ++nargs;
+    ++xnargs;
+    return invoke_proc(nargs, newargp, cargp_ptr, nargs_ptr);
 }
 
 int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
@@ -120,17 +121,19 @@ int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
              */
             dptr p = lookup_global(newargp, curpstate);
             if (p) {
-                if (is:class(*p)) {
-                    *newargp = *p;
-                    return construct_object(nargs, newargp);
-                }
-                if (is:proc(*p)) {
-                    *newargp = *p;
-                    return invoke_proc(nargs, newargp, cargp_ptr, nargs_ptr);
-                }
-                if (is:constructor(*p)) {
-                    *newargp = *p;
-                    return construct_record(nargs, newargp);
+                type_case *p of {
+                    class: {
+                        *newargp = *p;
+                        return construct_object(nargs, newargp);
+                    }
+                    proc: {
+                        *newargp = *p;
+                        return invoke_proc(nargs, newargp, cargp_ptr, nargs_ptr);
+                    }
+                    constructor: {
+                        *newargp = *p;
+                        return construct_record(nargs, newargp);
+                    }
                 }
             } else {
                 struct b_proc *tmp;
