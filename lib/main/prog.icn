@@ -47,4 +47,15 @@ class Prog()
 
    public static defer get_event(cs, vmask, flag)
 
+   #
+   # Get the number of milliseconds since the startup time.
+   #
+   public static defer get_runtime_millis(c)
+
+   #
+   # Get the startup time (load time) of the given program, as the
+   # number of microseconds since the Unix base epoch (1 Jan 1970).
+   #
+   public static defer get_startup_micros(c)
+
 end

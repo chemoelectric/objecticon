@@ -8,7 +8,7 @@
 
 package gui
 
-import util, graphics
+import graphics, lang
 
 #
 #
@@ -74,7 +74,7 @@ class Dispatcher()
       \t.times = 1 | \t.interval | runerr("Ticker interval not set")
       insert(tickers, t)
       t.last_tick_time := &null
-      t.start_time := Time.get_system_millis()
+      t.start_time := Prog.get_runtime_millis()
       if /t.delay then
          t.next_tick_time := 0
       else
@@ -147,9 +147,9 @@ class Dispatcher()
 
    public static do_event()
       local d, bag, e
-      bag := []
       every d := !dialogs do {
          if *d.win.pending() > 0 then {
+            /bag := []
             if /d.is_blocked_flag then
                put(bag, d)
             else {
@@ -163,7 +163,7 @@ class Dispatcher()
             }
          }
       }
-      if d := ?bag then {
+      if d := ?\bag then {
          d.process_event(d.win.event())
          return
       }
@@ -171,12 +171,13 @@ class Dispatcher()
 
    public static do_validate()
       local d, bag
-      bag := []
       every d := !dialogs do {
-         if d.needs_validate() then
+         if d.needs_validate() then {
+            /bag := []
             put(bag, d)
+         }
       }
-      if d := ?bag then {
+      if d := ?\bag then {
          d.validate()
          return
       }
@@ -185,15 +186,16 @@ class Dispatcher()
    public static do_ticker()
       local curr_time, d, bag
 
-      curr_time := Time.get_system_millis()
-      bag := []
+      curr_time := Prog.get_runtime_millis()
       every d := !tickers do {
-         if curr_time >= d.next_tick_time then
+         if curr_time >= d.next_tick_time then {
+            /bag := []
             put(bag, d)
+         }
       }
-      if d := ?bag then {
+      if d := ?\bag then {
          d.tick()
-         d.last_tick_time := Time.get_system_millis()
+         d.last_tick_time := Prog.get_runtime_millis()
          if \d.times then {
             d.times -:= 1
             if d.times <= 0 then

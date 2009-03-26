@@ -13,6 +13,14 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic);
 static int class_access(dptr cargp, struct inline_field_cache *ic);
 static int record_access(dptr cargp, struct inline_field_cache *ic);
 
+/*
+ * x.y() or x.y!l - field apply/invoke combination
+ */
+static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic);
+static int cast_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic);
+static int class_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic);
+static int record_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic);
+
 LibDcl(field,2,".")
 {
     int r;
@@ -69,6 +77,179 @@ int field_access(dptr cargp)
       }
    }
 }
+
+int invokef_access(int fno, int *nargs)
+{
+    struct inline_field_cache *ic;
+    struct descrip field;
+    dptr cargp;
+    ic = (struct inline_field_cache*)ipc.opnd;
+    ipc.opnd += 2;
+    cargp = (dptr)(sp - 1) - *nargs;
+    Deref(*cargp);
+    MakeInt(fno, &field);
+    type_case *cargp of {
+      object: {
+            return instance_invokef(nargs, cargp, &field, ic);
+      }
+      class: {
+            return class_invokef(nargs, cargp, &field, ic);
+      }
+      cast: {
+            return cast_invokef(nargs, cargp, &field, ic);
+      }
+      record: {
+            return record_invokef(nargs, cargp, &field, ic);
+      }
+      default: {
+          ReturnErrNum(624, Error);
+      }
+    }
+}
+
+static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic)
+{
+    struct b_object *obj = &BlkLoc(*cargp)->object;
+    struct b_class *class = obj->class;
+    struct b_methp *mp;
+    struct class_field *cf;
+    int i, j, ac;
+
+    i = lookup_class_field(class, field, ic);
+    if (i < 0)
+        ReturnErrNum(207, Error);
+    cf = class->fields[i];
+
+    /* Can't access a static (var or meth) via an instance */
+    if (cf->flags & M_Static)
+        ReturnErrNum(601, Error);
+
+    if (cf->flags & M_Method) {
+        /* Can't access new except whilst initializing */
+        if ((cf->flags & M_Special) && obj->init_state != Initializing)
+            ReturnErrNum(622, Error);
+
+        ac = check_access(cf, class);
+        if (ac == Error)
+            return ac;
+
+        /*
+         * Instance method.  Move args down, increment nargs, slot in proc.
+         */
+        for (j = *nargs; j >= 0; j--) 
+            cargp[j + 1] = cargp[j];
+        cargp->dword = D_Proc;
+        BlkLoc(*cargp) = (union block *)&BlkLoc(*cf->field_descriptor)->proc;
+        (*nargs)++;
+        sp += 2;
+    } else {
+        ac = check_access(cf, class);
+        if (ac == Succeeded || (cf->flags & M_Readable))
+            *cargp = obj->fields[i];
+        else
+            return ac;
+    }
+
+    EVValD(&xexpr, E_Objectref);
+    EVVal(i + 1, E_Objectsub);
+    return Succeeded;
+}
+
+static int cast_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic)
+{
+    struct b_cast *cast = &BlkLoc(*cargp)->cast;
+    struct b_object *obj = cast->object;
+    struct b_methp *mp;
+    struct b_class *obj_class = obj->class, *cast_class = cast->class;
+    struct class_field *cf;
+    int i, j, ac;
+
+    /* Lookup in the cast's class */
+    i = lookup_class_field(cast_class, field, ic);
+    if (i < 0)
+        ReturnErrNum(207, Error);
+
+    cf = cast_class->fields[i];
+
+    if (cf->flags & M_Static)
+        ReturnErrNum(601, Error);
+
+    if (!(cf->flags & M_Method))
+        ReturnErrNum(628, Error);
+
+    /* Can't access new except whilst initializing */
+    if ((cf->flags & M_Special) && obj->init_state != Initializing)
+        ReturnErrNum(622, Error);
+
+    ac = check_access(cf, obj_class);
+    if (ac == Error)
+        return ac;
+
+    /*
+     * Instance method.  Move args down, increment nargs, slot in proc and object.
+     */
+    for (j = *nargs; j > 0; j--) 
+        cargp[j + 1] = cargp[j];
+
+    cargp->dword = D_Proc;
+    BlkLoc(*cargp) = (union block *)&BlkLoc(*cf->field_descriptor)->proc;
+    cargp[1].dword = D_Object;
+    BlkLoc(cargp[1]) = (union block *)obj;
+    (*nargs)++;
+    sp += 2;
+    EVValD(&xexpr, E_Castref);
+    EVVal(i + 1, E_Castsub);
+
+    return Succeeded;
+}
+
+static int class_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic)
+{
+    struct b_class *class = &BlkLoc(*cargp)->class;
+    struct class_field *cf;
+    int i, ac;
+
+    ensure_initialized(class);
+    i = lookup_class_field(class, field, ic);
+    if (i < 0)
+        ReturnErrNum(207, Error);
+    cf = class->fields[i];
+
+    /* Can only access a static field (var or meth) via the class */
+    if (!(cf->flags & M_Static))
+        ReturnErrNum(600, Error);
+
+    /* Can't access static init method via a field */
+    if (cf->flags & M_Special)
+        ReturnErrNum(621, Error);
+
+    ac = check_access(cf, 0);
+    if (ac == Succeeded || (cf->flags & M_Readable))
+        *cargp = *cf->field_descriptor;
+    else
+        return ac;
+
+    EVValD(&xexpr, E_Classref);
+    EVVal(i + 1, E_Classsub);
+    return Succeeded;
+}
+
+static int record_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic)
+{
+    struct b_record *rec = &BlkLoc(*cargp)->record;
+    struct b_constructor *recdef = BlkLoc(*cargp)->record.constructor;
+
+    int i = lookup_record_field(recdef, field, ic);
+    if (i < 0)
+        ReturnErrNum(207, Error);
+    *cargp = rec->fields[i];
+
+    EVValD(&xexpr, E_Rref);
+    EVVal(i + 1, E_Rsub);
+
+    return Succeeded;
+}
+
 
 static int cast_access(dptr cargp, struct inline_field_cache *ic)
 {

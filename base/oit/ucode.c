@@ -68,7 +68,7 @@ struct ucode_op ucode_op_table[] = {
     /*  58 */         { Op_Goto, "goto", { TYPE_SHORT,0,0 }, "\t%-12s L%d" },                
     /*  59 */         { Op_Init, "init", { TYPE_SHORT,0,0 }, "\t%-12s L%d" },                
     /*  60 */         { Op_Int, "int", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                  
-    /*  61 */         { Op_Invoke, "invoke", { TYPE_SHORT,0,0 }, "\t%-12s %d" },            
+    /*  61 */         { Op_Invoke, "invoke", { TYPE_SHORT,TYPE_SHORT,0 }, "\t%-12s %d,%d" },            
     /*  62 */         { Op_Keywd, "keywd", { TYPE_STR,0,0 }, "\t%-12s %s" },                
     /*  63 */         { Op_Limit, "limit", {0,0,0}, "\t%-12s" },               
     /*  64 */         { Op_Line, "line", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                
@@ -96,9 +96,9 @@ struct ucode_op ucode_op_table[] = {
     /*  86 */         { Op_Quit, "quit", {0,0,0}, "\t%-12s" },                 
     /*  87 */         { Op_FQuit, "fquit", {0,0,0}, "\t%-12s" },               
     /*  88 */         INVALID,
-    /*  89 */         { Op_Apply, "apply", {0,0,0}, "\t%-12s" },               
-    /*  90 */         INVALID,                                    
-    /*  91 */         INVALID,                                    
+    /*  89 */         { Op_Apply, "apply", {TYPE_SHORT,0,0}, "\t%-12s %d" },               
+    /*  90 */         { Op_Invokef, "invokef", { TYPE_STR,TYPE_SHORT,0 }, "\t%-12s %s,%d" },            
+    /*  91 */         { Op_Applyf, "applyf", { TYPE_STR,0,0 }, "\t%-12s %s" },                
     /*  92 */         INVALID,                                    
     /*  93 */         INVALID,                                    
     /*  94 */         INVALID,                                    
@@ -231,6 +231,7 @@ struct ucode_op ucode_op_table[] = {
     /* 221 */         { Op_Class, "class", { TYPE_WORD,TYPE_STR,0 }, "\t%-12s %08o %s" }, 
     /* 222 */         { Op_Super, "super", { TYPE_STR,0,0 }, "\t%-12s %s" },
     /* 223 */         { Op_Method, "method", { TYPE_STR, TYPE_STR,0 }, "%s %s.%s" },         
+    /* 224 */         { Op_Ivar, "ivar", { TYPE_SHORT,TYPE_SHORT,0 }, "\t%-12s %d,%d" },                  
 };
 
 static int last_opcode = 0, n_params = 0;

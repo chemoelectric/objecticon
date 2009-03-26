@@ -8,7 +8,10 @@
 
 package gui
 
-import graphics, util
+import 
+   graphics,
+   util,
+   lang
 
 #
 # This is the parent class of the button classes, including
@@ -50,7 +53,7 @@ class Button(Toggle,Component)
    end
 
    public tick()
-      if Time.get_system_millis() > self.repeat_delay then
+      if Prog.get_runtime_millis() > self.repeat_delay then
          fire(Event.BUTTON_HELD)
    end
 
@@ -69,7 +72,7 @@ class Button(Toggle,Component)
 
       if /self.is_down then {
          go_down()
-         self.repeat_delay := Time.get_system_millis() + Gui.REPEAT_DELAY
+         self.repeat_delay := Prog.get_runtime_millis() + Gui.REPEAT_DELAY
          every b := !(\self.parent_button_group).buttons do {
             if b.is_unhidden() & b.is_unshaded() then {
                parent_dialog.hold(b, e)

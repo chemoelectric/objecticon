@@ -98,6 +98,13 @@
 #define Op_Quit		 86
 #define Op_FQuit	 87
 #define Op_Apply	 89
+#define Op_Invokef       90
+#define Op_Applyf        91
+#define Op_Trapret       92
+#define Op_Trapfail      93
+#define Op_CopyArgs      94
+
+#define Op_Noop		 98
 
 /*
  * "Absolute" address operations.  These codes are inserted in the
@@ -105,17 +112,16 @@
  * that initially compute a location relative to locations not known until
  * the icode file is loaded.
  */
-#define Op_Acset	 90
-#define Op_Areal	 91
-#define Op_Astr		 92
-#define Op_Aglobal	 93
-#define Op_Astatic	 94
-#define Op_Agoto	 95
-#define Op_Amark	 96
-#define Op_Aucs 	 97
+#define Op_Acset	100
+#define Op_Areal	101
+#define Op_Astr		102
+#define Op_Aglobal	103
+#define Op_Astatic	104
+#define Op_Agoto	105
+#define Op_Amark	106
+#define Op_Aucs 	107
 
 
-#define Op_Noop		 98
 
 
 /*
@@ -150,10 +156,6 @@
 #define Op_Super        222
 #define Op_Method       223
 
+#define Op_Ivar         224
 
-/*
- * Extra instructions added for calling Icon from C (used by Posix functions)
- */
-#define Op_Trapret      112
-#define Op_Trapfail     113
-#define Op_CopyArgs     114
+

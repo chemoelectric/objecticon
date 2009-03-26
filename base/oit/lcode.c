@@ -24,6 +24,7 @@ int nstatics = 0;               /* Running count of static variables */
  */
 int maxcode	= 15000;        /* code space */
 int maxlabels	= 500;	        /* maximum num of labels/proc */
+int maxinvokes 	= 500;	        /* maximum num of invoke/apply sequence numbers */
 int nsize       = 1000;         /* ipc/line num. assoc. table */
 int fnmsize     = 10;           /* ipc/file name assoc. table */
 
@@ -32,6 +33,7 @@ struct ipc_line *lntable;	/* table associating ipc with line number */
 struct ipc_fname *fnmfree;	/* free pointer for ipc/file name table */
 struct ipc_line *lnfree;	/* free pointer for ipc/line number table */
 word *labels;			/* label table */
+word *invokes;		/* invoke sequence table */
 char *codeb;			/* generated code space */
 char *codep;			/* free pointer for code space */
 
@@ -44,6 +46,7 @@ static void gentables(void);
 static void skip_proc();
 static void synch_file();
 static void synch_line();
+static void convert_invoke(int no, int fno);
 
 struct unref {
     char *name;
@@ -143,6 +146,7 @@ void generate_code()
     lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
     labels  = safe_calloc(maxlabels, sizeof(word));
+    invokes  = safe_calloc(maxinvokes, sizeof(word));
     codep = codeb = safe_calloc(maxcode, 1);
 
     /*
@@ -187,7 +191,7 @@ void generate_code()
 static int      nalign(int n);
 static void	align		(void);
 static void	backpatch	(int lab);
-static void	clearlab	(void);
+static void	cleartables	(void);
 static void	flushcode	(void);
 static void	intout		(int oint);
 static void	lemit		(int op,char *name);
@@ -196,6 +200,7 @@ static void	lemitin		(int op,word offset,int n,char *name);
 static void	lemitint	(int op,long i,char *name);
 static void	lemitl		(int op,int lab,char *name);
 static void	lemitn		(int op,word n,char *name);
+static void     lemitn2         (int op, word n1, word n2, char *name);
 static void	lemitproc       (struct lfunction *func);
 static void	lemitr		(int op,word loc,char *name);
 static void	misalign	(void);
@@ -225,7 +230,7 @@ codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
  */
 static void gencode(struct lfile *lf)
 {
-    int k, op, lab, in_proc;
+    int k, l, op, lab, in_proc;
     int flags;
     char *name;
     struct centry *cp;
@@ -322,7 +327,6 @@ static void gencode(struct lfile *lf)
             case Op_Push1:
             case Op_Pushn1:
             case Op_Sdup:
-            case Op_Apply:
                 lemit(op, name);
                 break;
 
@@ -341,6 +345,23 @@ static void gencode(struct lfile *lf)
                 lemitr(op, curr_func->constant_table[k]->c_pc, name);
                 break;
 
+            case Op_Apply: {
+                l = uin_short();
+                if (invokes[l] >= 0) {
+                    /* Convert to an applyf with the particular field# */
+                    lemitn(Op_Applyf, invokes[l], "applyf");
+                    if (Dflag) {
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                    }
+                    outword(0);
+                    outword(0);
+                } else 
+                    lemit(op, name);
+                break;
+            }
+
+            case Op_Applyf:
             case Op_Field: {
                 char *s = uin_str();
                 fp = flocate(s);
@@ -380,9 +401,40 @@ static void gencode(struct lfile *lf)
                 break;
             }
 
+            case Op_Invokef: {
+                char *s = uin_str();
+                k = uin_short();
+                fp = flocate(s);
+                if (fp)
+                    lemitn2(op, (word)(fp->field_id), k, name);
+                else {
+                    /* Get or create an unref record */
+                    struct unref *p = get_unref(s);
+                    lemitn2(op, (word) p->num, k, name);
+                }
+                if (Dflag) {
+                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                }
+                outword(0);
+                outword(0);
+                break;
+            }
+
             case Op_Invoke:
                 k = uin_short();
-                lemitn(op, (word)k, name);
+                l = uin_short();
+                if (invokes[l] >= 0) {
+                    /* Convert to an invokef with the particular field# */
+                    lemitn2(Op_Invokef, invokes[l], (word)k, "invokef");
+                    if (Dflag) {
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                    }
+                    outword(0);
+                    outword(0);
+                } else
+                    lemitn(op, (word)k, name);
                 break;
 
             case Op_Keywd: {
@@ -468,6 +520,42 @@ static void gencode(struct lfile *lf)
                     lemitn(Op_Local, lp->l_val.index, "local");
                 break;
 
+            /*
+             * An identifier in an invoke (or apply), ie ID(a1,a2...) 
+             * or ID!L.  The second param links to the matching invoke
+             * instruction later on.  If we wish to convert ID to
+             * either self.ID or class.ID, then we flag the matching
+             * invoke instruction to be converted to an invokef (or
+             * apply->applyf).
+             */
+            case Op_Ivar: {
+                k = uin_short();
+                l = uin_short();
+                lp = curr_func->local_table[k];
+                flags = lp->l_flag;
+                if (flags & F_Global)
+                    lemitn(Op_Global, (word)(lp->l_val.global->g_index),
+                           "global");
+                else if (flags & F_Static)
+                    lemitn(Op_Static, lp->l_val.index, "static");
+                else if (flags & F_Argument)
+                    lemitn(Op_Arg, lp->l_val.index, "arg");
+                else if (flags & F_Field) {
+                    fp = flocate(lp->name);
+                    if (!fp)
+                        quitf("Couldn't find class field in field table:%s", lp->name);
+                    if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
+                        lemitn(Op_Global, (word)(lp->l_val.field->class->global->g_index), "global");
+                    else
+                        lemitn(Op_Arg, 0, "arg");          /* inst var, "self" is the 0th argument */
+                    /* Change matching invoke->invokef or apply->applyf */
+                    convert_invoke(l, fp->field_id);
+                } else
+                    lemitn(Op_Local, lp->l_val.index, "local");
+                break;
+
+            }
+
                 /* Declarations. */
 
             case Op_Proc: {
@@ -479,7 +567,7 @@ static void gencode(struct lfile *lf)
                     synch_file();
                     synch_line();
                     in_proc = 1;
-                    clearlab();
+                    cleartables();
                     align();
                     if (Dflag)
                         fprintf(dbgfile, "\n# procedure %s\n", s);
@@ -511,7 +599,7 @@ static void gencode(struct lfile *lf)
                     synch_file();
                     synch_line();
                     in_proc = 1;
-                    clearlab();
+                    cleartables();
                     align();
                     if (Dflag)
                         fprintf(dbgfile, "\n# method %s.%s\n", class, meth);
@@ -682,6 +770,19 @@ static void lemitn(op, n, name)
 
     outop(op);
     outword(n);
+}
+
+static void lemitn2(int op, word n1, word n2, char *name)
+{
+    misalign();
+
+    if (Dflag)
+        fprintf(dbgfile, "%ld:\t%d\t%ld,%ld\t\t\t# %s\n", (long)pc, op, (long)n1, (long)n2,
+                name);
+
+    outop(op);
+    outword(n1);
+    outword(n2);
 }
 
 
@@ -1988,15 +2089,26 @@ static void flushcode()
 }
 
 /*
- * clearlab - clear label table to all zeroes.
+ * cleartables - clear some tables to all zeroes.
  */
-static void clearlab()
+static void cleartables()
 {
     int i;
 
     for (i = 0; i < maxlabels; i++)
         labels[i] = 0;
+    for (i = 0; i < maxinvokes; i++)
+        invokes[i] = -1;
 }
+
+static void convert_invoke(int no, int fno)
+{
+    if (no >= maxinvokes)
+        invokes  = (word *) expand_table(invokes, NULL, &maxinvokes, sizeof(word),
+                                    no - maxinvokes + 1, "invokes");
+    invokes[no] = fno;
+}
+
 
 /*
  * backpatch - fill in all forward references to lab.

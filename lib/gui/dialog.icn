@@ -10,7 +10,8 @@ package gui
 
 import 
    graphics,
-   util
+   util,
+   lang
 
 #
 #
@@ -726,7 +727,7 @@ class Dialog(Component)
       }
       #write("last=",image(obj), "  obj=",image(obj), " tip=",image(tip), "  state=",tooltip_state)
 
-      t := Time.get_system_millis()
+      t := Prog.get_runtime_millis()
 
       case self.tooltip_state of {
          0 : {
@@ -909,7 +910,7 @@ class Dialog(Component)
    private check_click_count(e)
       local t
 
-      t := Time.get_system_millis()
+      t := Prog.get_runtime_millis()
       if e.code = (\prev_event).code & prev_event.x = e.x & prev_event.y = e.y & 
                                  (t - prev_time < DOUBLE_CLICK_DELAY) then
          click_count +:= 1

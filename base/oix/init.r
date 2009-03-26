@@ -827,6 +827,7 @@ static void initprogstate(struct progstate *p)
     p->List_ser = 1;
     p->Set_ser = 1;
     p->Table_ser = 1;
+    gettimeofday(&p->start_time, 0);
 
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;

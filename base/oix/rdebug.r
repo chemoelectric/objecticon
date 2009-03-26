@@ -531,6 +531,38 @@ static void ttrace()
             fprintf(stderr,"bad keyword reference");
             break;
 
+        case Op_Invokef:
+            nargs = xnargs;
+            outimage(stderr, &xexpr, 0);
+            fprintf(stderr, " . ");
+            if (xfno < 0 && fnames-efnames < xfno)
+                fprintf(stderr, "%.*s", StrLen(efnames[xfno]), StrLoc(efnames[xfno]));
+            else if (0 <= xfno && xfno < efnames - fnames)
+                fprintf(stderr, "%.*s", StrLen(fnames[xfno]), StrLoc(fnames[xfno]));
+            else
+                fprintf(stderr, "field");
+            putc('(', stderr);
+            while (nargs--) {
+                outimage(stderr, ++xargp, 0);
+                if (nargs)
+                    putc(',', stderr);
+            }
+            putc(')', stderr);
+            break;
+
+        case Op_Applyf:
+            outimage(stderr, &xexpr, 0);
+            fprintf(stderr, " . ");
+            if (xfno < 0 && fnames-efnames < xfno)
+                fprintf(stderr, "%.*s", StrLen(efnames[xfno]), StrLoc(efnames[xfno]));
+            else if (0 <= xfno && xfno < efnames - fnames)
+                fprintf(stderr, "%.*s", StrLen(fnames[xfno]), StrLoc(fnames[xfno]));
+            else
+                fprintf(stderr, "field");
+            fprintf(stderr," ! ");
+            outimage(stderr, &value_tmp, 0);
+            break;
+
         case Op_Invoke:
             bp = (struct b_proc *)BlkLoc(*xargp);
             nargs = xnargs;

@@ -24,6 +24,8 @@ static void	unopb		(int op);
 extern int tfatals;
 extern int nocode;
 
+static int      invokeseq;
+
 /*
  * Code generator parameters.
  */
@@ -325,28 +327,67 @@ static int traverse(t)
 
 
         case N_Apply:			/* application */
-            traverse(Tree0(t));
-            traverse(Tree1(t));
-            uout_op(Op_Apply);
+            if (TType(Tree0(t)) == N_Field) {
+                traverse(Tree0(Tree0(t)));
+                ensure_pos(Tree0(t));
+                traverse(Tree1(t));
+                uout_op(Op_Applyf);
+                uout_str(Str0(Tree1(Tree0(t))));
+                free(Tree1(Tree0(t)));
+            } else {
+                int tmp = ++invokeseq;
+                if (TType(Tree0(t)) == N_Id) {
+                    ensure_pos(Tree0(t));
+                    uout_op(Op_Ivar);
+                    uout_short(Val0(Tree0(t)));
+                    uout_short(tmp);
+                } else
+                    traverse(Tree0(t));
+                traverse(Tree1(t));
+                uout_op(Op_Apply);
+                uout_short(tmp);
+            }
             break;
 
         case N_Invok:			/* invocation */
-            if (TType(Tree0(t)) != N_Empty) {
-                traverse(Tree0(t));
+            if (TType(Tree0(t)) == N_Field) {
+                traverse(Tree0(Tree0(t)));
+                ensure_pos(Tree0(t));
+                if (TType(Tree1(t)) == N_Empty) {
+                    n = 0;
+                    free(Tree1(t));
+                }
+                else
+                    n = traverse(Tree1(t));
+                ensure_pos(t);
+                uout_op(Op_Invokef);
+                uout_str(Str0(Tree1(Tree0(t))));
+                free(Tree1(Tree0(t)));
+                uout_short(n);
+            } else {
+                int tmp = ++invokeseq;
+                if (TType(Tree0(t)) == N_Id) {
+                    ensure_pos(Tree0(t));
+                    uout_op(Op_Ivar);
+                    uout_short(Val0(Tree0(t)));
+                    uout_short(tmp);
+                } else if (TType(Tree0(t)) != N_Empty) {
+                    traverse(Tree0(t));
+                } else {
+                    uout_op(Op_Pushn1);             /* default to -1(e1,...,en) */
+                    free(Tree0(t));
+                }
+                if (TType(Tree1(t)) == N_Empty) {
+                    n = 0;
+                    free(Tree1(t));
+                }
+                else
+                    n = traverse(Tree1(t));
+                ensure_pos(t);
+                uout_op(Op_Invoke);
+                uout_short(n);
+                uout_short(tmp);
             }
-            else {
-                uout_op(Op_Pushn1);             /* default to -1(e1,...,en) */
-                free(Tree0(t));
-	    }
-            if (TType(Tree1(t)) == N_Empty) {
-                n = 0;
-                free(Tree1(t));
-            }
-            else
-                n = traverse(Tree1(t));
-            ensure_pos(t);
-            uout_op(Op_Invoke);
-            uout_short(n);
             n = 1;
             break;
 
@@ -542,6 +583,7 @@ static int traverse(t)
             loopsp->nextlab = 0;
             loopsp->breaklab = 0;
             loopsp->markcount = 0;
+            invokeseq = 0;
             casesp = casestk;
             creatsp = creatstk;
             ensure_pos(t);

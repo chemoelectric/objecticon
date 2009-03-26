@@ -661,14 +661,93 @@ fflush(stdout);
 
 				/* ---Other Language Operations--- */
 
+	 case Op_Invokef: {	/* invoke */
+            int r;
+            xfno = (int)GetWord;
+            args = (int)GetWord;
+            xexpr = *((dptr)(rsp - 1) - args);
+            Deref(xexpr);
+ExInterp; 
+            r = invokef_access(xfno, &args); 
+EntInterp;
+            if (r == Error) {
+               xargp = (dptr)(rsp - 1) - args;
+               xnargs = args;
+               err_msg(0, &xexpr);
+               goto efail;
+            }
+            goto invokej;
+         }
+
+         case Op_Applyf: {
+            union block *bp;
+            int i, j, r;
+
+            xfno = (int)GetWord;
+            xexpr = *(dptr)(rsp - 3);
+            Deref(xexpr);
+            args = 1;
+ExInterp; 
+            r = invokef_access(xfno, &args); 
+EntInterp;
+            /* 
+             * Note that we must set this after invokef_access, which
+             * could conceivably trigger a gc (by calling
+             * ensure_initialized() on a class access); and value_tmp
+             * isn't tended.
+             */
+            value_tmp = *(dptr)(rsp - 1);
+            Deref(value_tmp);
+
+            if (r == Error) {
+               err_msg(0, &xexpr);
+               goto efail;
+            }
+
+            type_case value_tmp of {
+               list: {
+                  rsp -= 2;				/* pop it off */
+                  bp = BlkLoc(value_tmp);
+                  args = args - 1 + (int)bp->list.size;
+                  for (bp = bp->list.listhead;
+		       BlkType(bp) == T_Lelem;
+                     bp = bp->lelem.listnext) {
+                        for (i = 0; i < bp->lelem.nused; i++) {
+                           j = bp->lelem.first + i;
+                           if (j >= bp->lelem.nslots)
+                              j -= bp->lelem.nslots;
+                           PushDesc(bp->lelem.lslots[j])
+                           }
+                        }
+		  goto invokej;
+		  }
+
+               record: {
+                  rsp -= 2;		/* pop it off */
+                  bp = BlkLoc(value_tmp);
+                  args = args - 1 + bp->record.constructor->n_fields;
+                  for (i = 0; i < args; i++) {
+                     PushDesc(bp->record.fields[i])
+                     }
+                  goto invokej;
+                  }
+
+               default: {		/* illegal type for invocation */
+                  err_msg(126, &value_tmp);
+                  goto efail;
+                  }
+               }
+
+         }
+
          case Op_Apply: {	/* apply, a.k.a. binary bang */
             union block *bp;
             int i, j;
 
             value_tmp = *(dptr)(rsp - 1);	/* argument */
             Deref(value_tmp);
-            switch (Type(value_tmp)) {
-               case T_List: {
+            type_case value_tmp of {
+               list: {
                   rsp -= 2;				/* pop it off */
                   bp = BlkLoc(value_tmp);
                   args = (int)bp->list.size;
@@ -687,7 +766,7 @@ fflush(stdout);
 		  goto invokej;
 		  }
 
-               case T_Record: {
+               record: {
                   rsp -= 2;		/* pop it off */
                   bp = BlkLoc(value_tmp);
                   args = bp->record.constructor->n_fields;

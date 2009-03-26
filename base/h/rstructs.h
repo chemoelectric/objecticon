@@ -431,6 +431,7 @@ struct progstate {
 
     word Kywd_time_elsewhere;		/* &time spent in other programs */
     word Kywd_time_out;			/* &time at last program switch out */
+    struct timeval start_time;          /* time program started */
 
     uword stringtotal;			/* cumulative total allocation */
     uword blocktotal;			/* cumulative total allocation */
@@ -445,6 +446,8 @@ struct progstate {
 
     dptr Xargp;
     word Xnargs;
+    struct descrip Xexpr;
+    int Xfno;
     struct descrip Value_tmp;
 
     struct descrip K_current;

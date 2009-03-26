@@ -336,7 +336,6 @@ function{0,1} util_Time_get_system_micros()
    }
 end
 
-
 function{0, 1} posix_System_unsetenv(name)
    if !cnv:C_string(name) then
       runerr(103, name)

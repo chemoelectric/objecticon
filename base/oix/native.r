@@ -214,6 +214,63 @@ function{0,1} lang_Prog_get_global_location(s, c)
    }
 end
 
+function{0,1} lang_Prog_get_runtime_millis(c)
+   body {
+       struct progstate *prog;
+       struct timeval tp;
+       struct descrip ls, lm, thousand;
+       tended struct descrip lt1, lt2;
+
+       if (is:null(c))
+           prog = curpstate;
+       else if (is:coexpr(c))
+           prog = BlkLoc(c)->coexpr.program;
+       else
+           runerr(118, c);
+
+      if (gettimeofday(&tp, 0) < 0) {
+	 errno2why();
+	 fail;
+      }
+      if (tp.tv_sec - prog->start_time.tv_sec < 2147483) {
+          MakeInt((tp.tv_sec - prog->start_time.tv_sec) * 1000 + 
+                  (tp.tv_usec - prog->start_time.tv_usec) / 1000, &result);
+      } else {
+          MakeInt(tp.tv_sec - prog->start_time.tv_sec, &ls);
+          MakeInt(tp.tv_usec - prog->start_time.tv_usec, &lm);
+          MakeInt(1000, &thousand);
+          if (bigmul(&ls, &thousand, &lt1) == Error ||
+              bigdiv(&lm, &thousand ,&lt2) == Error ||
+              bigadd(&lt1, &lt2, &result) == Error)
+              runerr(0);
+      }
+      return result;
+   }
+end
+
+function{0,1} lang_Prog_get_startup_micros(c)
+   body {
+       struct progstate *prog;
+       struct descrip ls, lm, million;
+       tended struct descrip lt1;
+
+       if (is:null(c))
+           prog = curpstate;
+       else if (is:coexpr(c))
+           prog = BlkLoc(c)->coexpr.program;
+       else
+           runerr(118, c);
+
+       MakeInt(prog->start_time.tv_sec, &ls);
+       MakeInt(prog->start_time.tv_usec, &lm);
+       MakeInt(1000000, &million);
+       if (bigmul(&ls, &million, &lt1) == Error ||
+           bigadd(&lt1, &lm, &result) == Error)
+           runerr(0);
+       return result;
+   }
+end
+
 function{1} lang_Class_get_name(c)
     body {
         struct b_class *class;

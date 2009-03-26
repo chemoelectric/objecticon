@@ -442,6 +442,7 @@ struct b_ucs    *alcucs_0     (int n);
 struct b_ucs    *alcucs_1     (int n);
 struct b_tvsubs *alcsubs_0	(word len,word pos,dptr var);
 struct b_tvsubs *alcsubs_1	(word len,word pos,dptr var);
+int     invokef_access(int fno, int *nargs);
 int     field_access(dptr cargp);
 int     check_access(struct class_field *cf, struct b_class *instance_class);
 int     lookup_class_field(struct b_class *class, dptr query, struct inline_field_cache *ic);
