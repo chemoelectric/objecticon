@@ -177,6 +177,7 @@ struct b_cset *f(word n)
    register uword size;
 
    size = sizeof(struct b_cset) + ((n - 1) * sizeof(struct b_cset_range));
+   EVVal(size,e_cset);
    AlcBlk(blk, b_cset, T_Cset, size);
    blk->blksize = size;
 
