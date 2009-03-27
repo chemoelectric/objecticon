@@ -1575,8 +1575,7 @@ EntInterp;
             struct b_coexpr *ncp;
 
             ExInterp;
-            ncp = popact((struct b_coexpr *)BlkLoc(k_current));
-
+            ncp = BlkLoc(k_current)->coexpr.es_activator;
             ++BlkLoc(k_current)->coexpr.size;
             co_chng(ncp, (dptr)&sp[-1], NULL, A_Coret, 1);
             EntInterp;
@@ -1589,7 +1588,7 @@ EntInterp;
             struct b_coexpr *ncp;
 
             ExInterp;
-            ncp = popact((struct b_coexpr *)BlkLoc(k_current));
+            ncp = BlkLoc(k_current)->coexpr.es_activator;
 
             co_chng(ncp, NULL, NULL, A_Cofail, 1);
             EntInterp;
@@ -1796,13 +1795,12 @@ register struct b_coexpr *ncp;
    /*
     * Set activator in new co-expression.
     */
-   if (ncp->es_actstk == NULL) {
-      MemProtect(ncp->es_actstk = alcactiv());
+   if (ncp->es_activator == NULL) {
       /*
        * If no one ever explicitly activates this co-expression, fail to
        * the implicit activator.
        */
-      ncp->es_actstk->arec[0].activator = ccp;
+      ncp->es_activator = ccp;
       first = 0;
       }
    else

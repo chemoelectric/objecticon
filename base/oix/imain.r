@@ -1,7 +1,7 @@
 /*
  * File: imain.r
  * Interpreter main program, argument handling, and such.
- * Contents: main, icon_call, icon_setup, resolve, xmfree
+ * Contents: main, icon_call, icon_setup, resolve
  */
 
 #include "../h/version.h"
@@ -153,7 +153,6 @@ int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         free(argv[argc]);
     free(argv);
     wfreersc();
-    xmfree();
 #ifdef NTGCC
     _exit(0);
 #endif					/* NTGCC */
@@ -416,64 +415,4 @@ struct loc *lookup_global_loc(dptr name, struct progstate *prog)
 }
 
 
-
-/*
- * Free malloc-ed memory; the main regions then co-expressions.  Note:
- *  this is only correct if all allocation is done by routines that are
- *  compatible with free() -- which may not be the case for all memory.
- */
-
-void xmfree()
-{
-    register struct b_coexpr **ep, *xep;
-    register struct astkblk *abp, *xabp;
-
-    if (mainhead == NULL) return;	/* already xmfreed */
-    free((pointer)mainhead->es_actstk);	/* activation block for &main */
-    mainhead->es_actstk = NULL;
-    mainhead = NULL;
-
-    free((pointer)code);			/* icode */
-    code = NULL;
-    free((pointer)stack);		/* interpreter stack */
-    stack = NULL;
-    /*
-     * more is needed to free chains of heaps, also a multithread version
-     * of this function may be needed someday.
-     */
-    if (strbase)
-        free((pointer)strbase);		/* allocated string region */
-    strbase = NULL;
-    if (blkbase)
-        free((pointer)blkbase);		/* allocated block region */
-    blkbase = NULL;
-    if (quallist)
-        free((pointer)quallist);		/* qualifier list */
-    quallist = NULL;
-
-    /*
-     * The co-expression blocks are linked together through their
-     *  nextstk fields, with stklist pointing to the head of the list.
-     *  The list is traversed and each stack is freeing.
-     */
-    ep = &stklist;
-    while (*ep != NULL) {
-        xep = *ep;
-        *ep = (*ep)->nextstk;
-        /*
-         * Free the astkblks.  There should always be one and it seems that
-         *  it's not possible to have more than one, but nonetheless, the
-         *  code provides for more than one.
-         */
-        for (abp = xep->es_actstk; abp; ) {
-            xabp = abp;
-            abp = abp->astk_nxt;
-            free((pointer)xabp);
-        }
-
-        free((pointer)xep);
-        stklist = NULL;
-    }
-
-}
 

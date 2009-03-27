@@ -21,9 +21,7 @@ struct b_coexpr *sblkp;
    /*
     * Get pointer to refresh block.
     */
-   struct b_refresh *rblkp = (struct b_refresh *)BlkLoc(sblkp->freshblk);
-
-
+   struct b_refresh *rblkp = sblkp->freshblk;
 
    na = (rblkp->pfmkr).pf_nargs + 1; /* number of arguments */
    nl = (int)rblkp->numlocals;       /* number of locals */

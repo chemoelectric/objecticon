@@ -46,10 +46,8 @@ procedure ivalue(___s___)
 
    initial {
       ___k___ := table()
-      ___k___["&allocated"] := &allocated
       ___k___["&ascii"] := &ascii
       ___k___["&clock"] := &clock
-      ___k___["&collections"] := &collections
       ___k___["&cset"] := &cset
       ___k___["&current"] := &current
       ___k___["&date"] := &date
@@ -70,9 +68,7 @@ procedure ivalue(___s___)
       ___k___["&null"] := &null
       ___k___["&phi"] := &phi
       ___k___["&pi"] := &pi
-      ___k___["&regions"] := &regions
       ___k___["&source"] := &source
-      ___k___["&storage"] := &storage
       ___k___["&time"] := &time
       ___k___["&ucase"] := &ucase
       ___k___["&version"] := &version

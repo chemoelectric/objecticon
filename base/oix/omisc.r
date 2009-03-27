@@ -14,14 +14,14 @@ operator{1} ^ refresh(x)
    body {
       register struct b_coexpr *sblkp;
 
+      if (BlkLoc(x)->coexpr.freshblk == NULL)	/* &main cannot be refreshed */
+         runerr(215, x);
+
       /*
        * Get a new co-expression stack and initialize.
        */
       MemProtect(sblkp = alccoexp(0, 0));
-
       sblkp->freshblk = BlkLoc(x)->coexpr.freshblk;
-      if (ChkNull(sblkp->freshblk))	/* &main cannot be refreshed */
-         runerr(215, x);
 
       /*
        * Use refresh block to finish initializing the new co-expression.

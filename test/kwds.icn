@@ -5,10 +5,8 @@
 procedure main()
    &error := 747
 
-   pr_type{"allocated", &allocated}
    print{"ascii", &ascii}
    pr_type{"clock", &clock}
-   pr_type{"collections", &collections}
    print{"cset", &cset}
    print{"current", &current}
    pr_type{"date", &date}
@@ -38,9 +36,7 @@ procedure main()
    print{"pos", &pos}
    print{"progname", &progname}
    print{"random", &random}
-   pr_type{"regions", &regions}
    print{"source", &source}
-   pr_type{"storage", &storage}
    print{"subject", &subject}
    pr_type{"time", &time}
    print{"trace", &trace}

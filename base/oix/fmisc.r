@@ -272,20 +272,6 @@ end
 
 
 
-function{*} lang_Prog_get_function_names()
-   abstract {
-      return string
-      }
-   body {
-      register int i;
-
-      for (i = 0; i<pnsize; i++) {
-	 suspend string(strlen(pntab[i].pstrep), pntab[i].pstrep);
-         }
-      fail;
-      }
-end
-
 
 /*
  * the bitwise operators are identical enough to be expansions
@@ -1238,33 +1224,6 @@ end
 
 
 
-function{0,1} lang_Prog_get_variable(s,c)
-
-   if !cnv:string(s) then
-      runerr(103, s)
-
-   body {
-       int rv;
-       struct progstate *prog;
-
-       if (is:null(c))
-           prog = curpstate;
-       else if (is:coexpr(c))
-           prog = BlkLoc(c)->coexpr.program;
-       else
-           runerr(118, c);
-
-       rv = getvar(&s, &result, prog);
-       if (rv == Failed)
-           fail;
-
-       if (is:coexpr(c) && ((rv == LocalName) || (rv == StaticName)))
-           Deref(result);
-
-       return result;
-   }
-end
-
 
 "cofail(CE) - transmit a co-expression failure to CE"
 
@@ -1274,7 +1233,7 @@ function{0,1} cofail(CE)
       }
    if is:null(CE) then
       body {
-	 struct b_coexpr *ce = topact((struct b_coexpr *)BlkLoc(k_current));
+	 struct b_coexpr *ce = BlkLoc(k_current)->coexpr.es_activator;
 	 if (ce != NULL) {
 	    CE.dword = D_Coexpr;
 	    BlkLoc(CE) = (union block *)ce;
@@ -1293,278 +1252,8 @@ end
 
 
 
-
-function{1} lang_Prog_get_parent(ce)
-   if is:null(ce) then inline { ce = k_current; }
-   else if !is:coexpr(ce) then runerr(118,ce)
-   abstract {
-      return coexpr
-      }
-   body {
-      if (BlkLoc(ce)->coexpr.program->parent == NULL) fail;
-
-      result.dword = D_Coexpr;
-      BlkLoc(result) =
-	(union block *)(BlkLoc(ce)->coexpr.program->parent->Mainhead);
-      return result;
-      }
-end
 
 
-
-function{*} lang_Prog_get_keyword(s,ce)
-   if !cnv:string(s) then 
-      runerr(103, s)
-
-   body {
-      struct progstate *p;
-      char *t;
-
-      if (is:null(ce))
-          p = curpstate;
-      else if (is:coexpr(ce))
-          p = BlkLoc(ce)->coexpr.program;
-      else 
-         runerr(118, ce);
-
-      if (StrLen(s) == 0 || *StrLoc(s) != '&')
-         fail;
-
-      t = StrLoc(s) + 1;
-      switch (StrLen(s)) {
-          case 4 : {
-              if (strncmp(t,"pos",3) == 0) {
-                  return kywdpos(&(p->Kywd_pos));
-              }
-              if (strncmp(t,"why",3) == 0) {
-                  return kywdstr(&(p->Kywd_why));
-              }
-              break;
-          }
-          case 5 : {
-              if (strncmp(t,"file",4) == 0) {
-                  word *i;
-                  struct ipc_fname *t;
-
-                  /* If the prog's &current isn't in this program, we can't look up
-                   * the file in this program's table */
-                  if (BlkLoc(p->K_current)->coexpr.program != p)
-                      fail;
-                  /* If the prog's &current is the currently executing coexpression, take
-                   * the ipc, otherwise the stored ipc in the coexpression block
-                   */
-                  if (BlkLoc(p->K_current) == BlkLoc(k_current))
-                      i = ipc.opnd;
-                  else
-                      i = BlkLoc(p->K_current)->coexpr.es_ipc.opnd;
-                  t = find_ipc_fname(i, p);
-                  if (!t)
-                      fail;
-                  return t->fname;
-              }
-              if (strncmp(t,"line",4) == 0) {
-                  word *i;
-                  struct ipc_line *t;
-                  if (BlkLoc(p->K_current)->coexpr.program != p)
-                      fail;
-                  if (BlkLoc(p->K_current) == BlkLoc(k_current))
-                      i = ipc.opnd;
-                  else
-                      i = BlkLoc(p->K_current)->coexpr.es_ipc.opnd;
-                  t = find_ipc_line(i, p);
-                  if (!t)
-                      fail;
-                  return C_integer t->line;
-              }
-              if (strncmp(t,"main",4) == 0) {
-                  return p->K_main;
-              }
-              if (strncmp(t,"time",4) == 0) {
-                  /*
-                   * &time in this program = total time - time spent in other programs
-                   */
-                  if (p != curpstate)
-                      return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
-                  else
-                      return C_integer millisec() - p->Kywd_time_elsewhere;
-              }
-              break;
-          }
-          case 6 : {
-              if (strncmp(t,"trace",5) == 0) {
-                  return kywdint(&(p->Kywd_trc));
-              }
-              if (strncmp(t,"error",5) == 0) {
-                  return kywdint(&(p->Kywd_err));
-              }
-              break;
-          }
-          case 7 : {
-              if (strncmp(t,"random",6) == 0) {
-                  return kywdint(&(p->Kywd_ran));
-              }
-              if (strncmp(t,"source",6) == 0) {
-                  return coexpr(topact((struct b_coexpr *)BlkLoc(p->K_current)));
-              }
-              break;
-          }
-          case 8 : {
-              if (strncmp(t,"subject",7) == 0) {
-                  return kywdsubj(&(p->Kywd_subject));
-              }
-              if (strncmp(t,"current",7) == 0) {
-                  return p->K_current;
-              }
-              if (strncmp(t,"regions",7) == 0) {
-                  word allRegions = 0;
-                  struct region *rp;
-
-                  suspend C_integer 0;
-                  for (rp = p->stringregion; rp; rp = rp->next)
-                      allRegions += DiffPtrs(rp->end,rp->base);
-                  for (rp = p->stringregion->prev; rp; rp = rp->prev)
-                      allRegions += DiffPtrs(rp->end,rp->base);
-                  suspend C_integer allRegions;
-
-                  allRegions = 0;
-                  for (rp = p->blockregion; rp; rp = rp->next)
-                      allRegions += DiffPtrs(rp->end,rp->base);
-                  for (rp = p->blockregion->prev; rp; rp = rp->prev)
-                      allRegions += DiffPtrs(rp->end,rp->base);
-                  return C_integer allRegions;
-              }
-              if (strncmp(t,"storage",7) == 0) {
-                  word allRegions = 0;
-                  struct region *rp;
-                  suspend C_integer 0;
-                  for (rp = p->stringregion; rp; rp = rp->next)
-                      allRegions += DiffPtrs(rp->free,rp->base);
-                  for (rp = p->stringregion->prev; rp; rp = rp->prev)
-                      allRegions += DiffPtrs(rp->free,rp->base);
-                  suspend C_integer allRegions;
-
-                  allRegions = 0;
-                  for (rp = p->blockregion; rp; rp = rp->next)
-                      allRegions += DiffPtrs(rp->free,rp->base);
-                  for (rp = p->blockregion->prev; rp; rp = rp->prev)
-                      allRegions += DiffPtrs(rp->free,rp->base);
-                  return C_integer allRegions;
-              }
-              break;
-          }
-          case 9 : {
-              if (strncmp(t,"progname",8) == 0) {
-                  return kywdstr(&(p->Kywd_prog));
-              }
-              break;
-          }
-          case 10: {
-              if (strncmp(t, "allocated",9) == 0) {
-                  suspend C_integer stattotal + p->stringtotal + p->blocktotal;
-                  suspend C_integer stattotal;
-                  suspend C_integer p->stringtotal;
-                  return  C_integer p->blocktotal;
-              }
-              if (strncmp(t,"errortext",9) == 0) {
-                  return p->K_errortext;
-              }
-              if (strncmp(t,"eventcode",9) == 0) {
-                  return kywdevent(&(p->eventcode));
-              }
-              break;
-          }
-
-          case 11 : {
-              if (strncmp(t,"errorvalue",10) == 0) {
-                  return p->K_errorvalue;
-              }
-              if (strncmp(t,"eventvalue",10) == 0) {
-                  return kywdevent(&(p->eventval));
-              }
-              break;
-          }
-          case 12 : {
-              if (strncmp(t,"collections",11) == 0) {
-                  suspend C_integer p->colltot;
-                  suspend C_integer p->collstat;
-                  suspend C_integer p->collstr;
-                  return  C_integer p->collblk;
-              }
-              if (strncmp(t,"errornumber",11) == 0) {
-                  return C_integer p->K_errornumber;
-              }
-              if (strncmp(t,"eventsource",11) == 0) {
-                  return kywdevent(&(p->eventsource));
-              }
-              break;
-          }
-      }
-
-      runerr(205, s);
-   }
-end
-
-function{1} lang_Prog_get_eventmask(ce)
-   if !is:coexpr(ce) then 
-      runerr(118,ce)
-   body {
-         return BlkLoc(ce)->coexpr.program->eventmask;
-   }
-end
-
-function{1} lang_Prog_set_eventmask(ce,cs)
-   if !is:coexpr(ce) then 
-      runerr(118,ce)
-   if !cnv:cset(cs) then 
-      runerr(104,cs)
-   body {
-	 struct progstate *p = BlkLoc(ce)->coexpr.program;
-	 if (BlkLoc(cs) != BlkLoc(p->eventmask)) {
-	    p->eventmask = cs;
-	    assign_event_functions(p, cs);
-         }
-         return cs;
-   }
-end
-
-function{1} lang_Prog_get_valuemask(ce)
-   if !is:coexpr(ce) then 
-      runerr(118,ce)
-   body {
-      return BlkLoc(ce)->coexpr.program->valuemask;
-   }
-end
-
-function{1} lang_Prog_set_valuemask(ce,vmask)
-   if !is:coexpr(ce) then 
-      runerr(118,ce)
-   if !is:table(vmask) then
-      runerr(124,vmask)
-   body {
-      BlkLoc(ce)->coexpr.program->valuemask = vmask;
-      return vmask;
-   }
-end
-
-
-function{1} lang_Prog_set_opmask(ce,cs)
-   if !is:coexpr(ce) then 
-      runerr(118,ce)
-   if !cnv:cset(cs) then 
-      runerr(104,cs)
-   body {
-         BlkLoc(ce)->coexpr.program->opcodemask = cs;
-         return cs;
-   }
-end
-
-function{1} lang_Prog_get_opmask(ce)
-   if !is:coexpr(ce) then 
-      runerr(118,ce)
-   body {
-         return BlkLoc(ce)->coexpr.program->opcodemask;
-   }
-end
 
 
 "cast(o,c) - cast object o to class c."

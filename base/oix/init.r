@@ -234,6 +234,7 @@ void icon_init(char *name)
     struct header hdr;
     FILE *ifile = 0;
     char *t;
+    long pmem;
 
     /*
      * Initializations that cannot be performed statically (at least for
@@ -248,6 +249,8 @@ void icon_init(char *name)
     MakeInt(0, &zerodesc);
     MakeInt(1, &onedesc);
     MakeInt(-1, &minusonedesc);
+    MakeInt(1000000, &milliondesc);
+    MakeInt(1000, &thousanddesc);
     MakeInt(0, &kywd_dmp);
 
     nullptr.dword = F_Ptr | F_Nqual;
@@ -303,18 +306,9 @@ void icon_init(char *name)
     rootpstate.stringregion = &rootstring;
     rootpstate.blockregion = &rootblock;
 
-
-    rootstring.size = MaxStrSpace;
-    rootblock.size  = MaxAbrSize;
-
-    { long l, onepercent;
-        if ((l = physicalmemorysize())) {
-            onepercent = l / 100;
-            if (rootstring.size < onepercent) rootstring.size = onepercent;
-            if (rootblock.size < onepercent) rootblock.size = onepercent;
-	}
-    }
-
+    pmem = physicalmemorysize();
+    rootstring.size = Max(pmem/200, MaxStrSpace);
+    rootblock.size  = Max(pmem/100, MaxAbrSize);
 
     op_tbl = (struct b_proc*)init_op_tbl;
 
@@ -403,12 +397,10 @@ void icon_init(char *name)
     mainhead->size = 1;			/* pretend main() does an activation */
     mainhead->nextstk = NULL;
     mainhead->es_tend = NULL;
-    mainhead->freshblk = nulldesc;	/* &main has no refresh block. */
+    mainhead->freshblk = NULL;	/* &main has no refresh block. */
 					/*  This really is a bug. */
     mainhead->program = &rootpstate;
-
-    MemProtect(mainhead->es_actstk = alcactiv());
-    pushact(mainhead, mainhead);
+    mainhead->es_activator = mainhead;
 
     /*
      * Point &main at the co-expression block for the main procedure and set
@@ -463,8 +455,8 @@ void envset()
         noerrbuf++;
     env_int(TRACE, &k_trace, 0, (uword)0);
     env_int(COEXPSIZE, &stksize, 1, (uword)MaxUnsigned);
-    env_int(STRSIZE, &ssize, 1, (uword)MaxBlock);
-    env_int(BLKSIZE, &abrsize, 1, (uword)MaxBlock);      /* synonym */
+    env_int(STRSIZE, &rootstring.size, 1, (uword)MaxBlock);
+    env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxBlock); 
     env_int(MSTKSIZE, &mstksize, 1, (uword)MaxUnsigned);
     env_int(QLSIZE, &qualsize, 1, (uword)MaxBlock);
     env_int(IXCUSHION, &memcushion, 1, (uword)100);	/* max 100 % */
@@ -703,9 +695,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     pstate->next = progs;
     progs = pstate;
     initprogstate(pstate);
-    pstate->Lastop = 0;
-    pstate->Xargp = NULL;
-    pstate->Xnargs = 0;
     pstate->Kywd_time_elsewhere = millisec();
     pstate->Kywd_time_out = 0;
     pstate->Mainhead= ((struct b_coexpr *)pstate)-1;
@@ -828,6 +817,12 @@ static void initprogstate(struct progstate *p)
     p->Set_ser = 1;
     p->Table_ser = 1;
     gettimeofday(&p->start_time, 0);
+    p->Lastop = 0;
+    p->Xargp = NULL;
+    p->Xnargs = 0;
+    p->Xexpr = nulldesc;
+    p->Xfno = 0;
+    p->Value_tmp = nulldesc;
 
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;
@@ -907,9 +902,9 @@ function{1} lang_Prog_load(s,arglist,
       }
    if !cnv:C_string(s,loadstring) then
       runerr(103,s)
-   if !def:C_integer(blocksize,abrsize,_bs_) then
+   if !def:C_integer(blocksize, rootblock.size,_bs_) then
       runerr(101,blocksize)
-   if !def:C_integer(stringsize,ssize,_ss_) then
+   if !def:C_integer(stringsize, rootstring.size,_ss_) then
       runerr(101,stringsize)
    if !def:C_integer(stacksize,mstksize,_stk_) then
       runerr(101,stacksize)
@@ -980,7 +975,7 @@ function{1} lang_Prog_load(s,arglist,
 
       sblkp->es_argp = NULL;
       sblkp->es_gfp = NULL;
-      pstate->Mainhead->freshblk = nulldesc;/* &main has no refresh block. */
+      pstate->Mainhead->freshblk = NULL;/* &main has no refresh block. */
 					/*  This really is a bug. */
 
       /*

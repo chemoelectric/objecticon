@@ -44,6 +44,8 @@ extern struct descrip onedesc;	/* one */
 extern struct descrip ucase;	/* uppercase string */
 extern struct descrip zerodesc;	/* zero */
 extern struct descrip minusonedesc;	/* -ve one */
+extern struct descrip thousanddesc;	/* 1000 */
+extern struct descrip milliondesc;	/* 1000000 */
 
 extern struct b_iproc Bdeferred_method_stub;  /* Deferred method block */
 

@@ -110,6 +110,8 @@ struct descrip onedesc;              	/* integer 1 */
 struct descrip ucase;			/* string of uppercase letters */
 struct descrip zerodesc;              	/* integer 0 */
 struct descrip minusonedesc;           	/* integer -1 */
+struct descrip thousanddesc;	        /* 1000 */
+struct descrip milliondesc;	        /* 1000000 */
 
 struct b_cset *blankcs;   /* ' ' */
 struct b_cset *lparcs;    /* '(' */

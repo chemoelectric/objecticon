@@ -133,6 +133,7 @@ package ipl.numbers
 import
    io(stop),
    ipl.strings(palins),
+   lang(Prog),
    util(Math)
 
 # additive digital persistence
@@ -476,9 +477,9 @@ end
 procedure large(i)		
    local mem
 
-   mem := &allocated
+   mem := Prog.get_allocations()
    i +:= 0
-   if &allocated > mem then return i
+   if Prog.get_allocations() > mem then return i
    else fail
 
 end

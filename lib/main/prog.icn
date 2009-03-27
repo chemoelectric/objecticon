@@ -33,13 +33,13 @@ class Prog()
    public static defer get_opmask(c)
 
    # set c's program's opcode mask
-   public static defer set_opmask(c, cs)
+   public static defer set_opmask(cs, c)
 
    public static defer get_eventmask(c)
-   public static defer set_eventmask(c, cs)
+   public static defer set_eventmask(cs, c)
 
    public static defer get_valuemask(c)
-   public static defer set_valuemask(c, t)
+   public static defer set_valuemask(t, c)
 
    # create event (in c) with event code x and event value y,
    # and activate c.
@@ -58,4 +58,7 @@ class Prog()
    #
    public static defer get_startup_micros(c)
 
+   public static defer get_collections(c)
+   public static defer get_allocations(c)
+   public static defer get_regions(c)
 end

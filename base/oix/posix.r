@@ -299,7 +299,7 @@ end
 function{0,1} util_Time_get_system_millis()
    body {
       struct timeval tp;
-      struct descrip ls, lm, thousand;
+      struct descrip ls, lm;
       tended struct descrip lt1, lt2;
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
@@ -307,9 +307,8 @@ function{0,1} util_Time_get_system_millis()
       }
       MakeInt(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec, &lm);
-      MakeInt(1000, &thousand);
-      if (bigmul(&ls, &thousand, &lt1) == Error ||
-          bigdiv(&lm, &thousand ,&lt2) == Error ||
+      if (bigmul(&ls, &thousanddesc, &lt1) == Error ||
+          bigdiv(&lm, &thousanddesc ,&lt2) == Error ||
           bigadd(&lt1, &lt2, &result) == Error)
           runerr(0);
       return result;
@@ -320,7 +319,7 @@ end
 function{0,1} util_Time_get_system_micros()
    body {
       struct timeval tp;
-      struct descrip ls, lm, million;
+      struct descrip ls, lm;
       tended struct descrip lt1;
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
@@ -328,8 +327,7 @@ function{0,1} util_Time_get_system_micros()
       }
       MakeInt(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec, &lm);
-      MakeInt(1000000, &million);
-      if (bigmul(&ls, &million, &lt1) == Error ||
+      if (bigmul(&ls, &milliondesc, &lt1) == Error ||
           bigadd(&lt1, &lm, &result) == Error)
           runerr(0);
       return result;

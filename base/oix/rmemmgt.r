@@ -335,6 +335,7 @@ int collect(region)
 int region;
    {
    struct b_coexpr *cp;
+   struct progstate *prog;
 
 #if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
    struct rlimit rl;
@@ -396,30 +397,9 @@ int region;
    qualfree = quallist;
    qualfail = 0;
 
-   /*
-    * Mark the stacks for &main and the current co-expression.
-    */
-   markprogram(&rootpstate);
+   for (prog = progs; prog; prog = prog->next)
+       markprogram(prog);
 
-   {
-     /*RPP call markblock on any coexpressions representing loaded progs. rootpstate is
-        not included in this list.  markblock calls markprogram, so each loaded program
-        is marked. */
-     struct b_coexpr *p;
-     struct descrip adesc;
-     for (p = stklist; p; p = p->nextstk) {
-      if (((struct b_coexpr *)p)+1 ==
-         (struct b_coexpr *)(p->program)) {
-	/* Create a temporary descrip */
-	adesc.dword = D_Coexpr;
-        BlkLoc(adesc) = (union block *)p;
-        markblock(&adesc);
-      }
-    }
-   }
-
-   markblock(&k_main);
-   markblock(&k_current);
    /*
     * Mark the cached s2 and s3 strings for map.
     */
@@ -491,7 +471,7 @@ struct progstate *pstate;
    {
    struct descrip *dp;
 
-/*printf("MARK PROGRAM %x\n",pstate);*/
+   /*printf("MARK PROGRAM %x\n",pstate);*/
 
    PostDescrip(pstate->parentdesc);
    PostDescrip(pstate->eventmask);
@@ -526,7 +506,11 @@ struct progstate *pstate;
    PostDescrip(pstate->K_errortext);
    PostDescrip(pstate->T_errorvalue);
    PostDescrip(pstate->T_errortext);
-   }
+
+   markblock(&pstate->K_main);
+   markblock(&pstate->K_current);
+}
+
 
 /*
  * postqual - mark a string qualifier.  Strings outside the string space
@@ -571,266 +555,187 @@ dptr dp;
  *  collection.)
  */
 static void markblock(dp)
-dptr dp;
-   {
-   register dptr dp1, lastdesc;
-   register char *block, *endblock;
-   word type, fdesc;
-   int numptr, numdesc;
-   register union block **ptr, **lastptr;
+    dptr dp;
+{
+    register dptr dp1, lastdesc;
+    register char *block, *endblock;
+    word type, fdesc;
+    int numptr, numdesc;
+    register union block **ptr, **lastptr;
 
-   if (Var(*dp)) {
-       if (dp->dword & F_Typecode) {
-          switch (Type(*dp)) {
-             case T_Kywdint:
-             case T_Kywdpos:
-             case T_Kywdsubj:
-             case T_Kywdstr:
-             case T_Kywdevent:
-                /*
-                 * The descriptor points to a keyword, not a block.
-                 */
-                return;
-             }
-          }
-       else if (Offset(*dp) == 0) {
-          /*
-           * The descriptor is a simple variable not residing in a block.
-           */
-          return;
-          }
-      }
-
-   /*
-    * Get the block to which dp points.
-    */
-   block = (char *)BlkLoc(*dp);
-
-   if (InRange(blkbase,block,blkfree)) {
-      type = BlkType(block);
-      if ((uword)type <= MaxType) {
-
-         /*
-          * The type is valid, which indicates that this block has not
-          *  been marked.  Point endblock to the byte past the end
-          *  of the block.
-          */
-         endblock = block + BlkSize(block);
-         }
-
-      /*
-       * Add dp to the back chain for the block and point the
-       *  block (via the type field) to dp.vword.
-       */
-      BlkLoc(*dp) = (union block *)type;
-      BlkType(block) = (uword)&BlkLoc(*dp);
-
-      if ((uword)type <= MaxType) {
-         /*
-          * The block was not marked; process pointers and descriptors
-          *  within the block.
-          */
-         if ((fdesc = firstp[type]) > 0) {
+    if (Var(*dp)) {
+        if (dp->dword & F_Typecode) {
+            switch (Type(*dp)) {
+                case T_Kywdint:
+                case T_Kywdpos:
+                case T_Kywdsubj:
+                case T_Kywdstr:
+                case T_Kywdevent:
+                    /*
+                     * The descriptor points to a keyword, not a block.
+                     */
+                    return;
+            }
+        }
+        else if (Offset(*dp) == 0) {
             /*
-             * The block contains pointers; mark each pointer.
+             * The descriptor is a simple variable not residing in a block.
              */
-            ptr = (union block **)(block + fdesc);
-	    numptr = ptrno[type];
-	    if (numptr > 0)
-	       lastptr = ptr + numptr;
-	    else
-	       lastptr = (union block **)endblock;
-	    for (; ptr < lastptr; ptr++)
-	       if (*ptr != NULL)
-                  markptr(ptr);
-	    }
-         if ((fdesc = firstd[type]) > 0) {
-            dp1 = (dptr)(block + fdesc);
-            numdesc = descno[type];
-            if (numdesc > 0)
-                lastdesc = dp1 + numdesc;
-            else
-                lastdesc = (dptr)endblock;
-            /*
-             * The block contains descriptors; mark each descriptor.
-             */
-            for (; dp1 < lastdesc; dp1++) {
-               PostDescrip(*dp1);
-               }
-            }
-         }
-      }
+            return;
+        }
+    }
 
-   else if ((unsigned int)BlkType(block) == T_Coexpr) {
-      struct b_coexpr *cp;
-      struct astkblk *abp;
-      int i;
-      struct descrip adesc;
+    markptr(&BlkLoc(*dp));
+}
 
-      /*
-       * dp points to a co-expression block that has not been
-       *  marked.  Point the block to dp.  Sweep the interpreter
-       *  stack in the block.  Then mark the block for the
-       *  activating co-expression and the refresh block.
-       */
-      BlkType(block) = (uword)dp;
-      sweep((struct b_coexpr *)block);
-
-      if (((struct b_coexpr *)block)+1 ==
-         (struct b_coexpr *)((struct b_coexpr *)block)->program){
-         /*
-          * This coexpr is an &main; traverse its roots
-          */
-         markprogram(((struct b_coexpr *)block)->program);
-         }
-
-      /*
-       * Mark the activators of this co-expression.   The activators are
-       *  stored as a list of addresses, but markblock requires the address
-       *  of a descriptor.  To accommodate markblock, the dummy descriptor
-       *  adesc is filled in with each activator address in turn and then
-       *  marked.  Since co-expressions and the descriptors that reference
-       *  them don't participate in the back-chaining scheme, it's ok to
-       *  reuse the descriptor in this manner.
-       */
-      cp = (struct b_coexpr *)block;
-      adesc.dword = D_Coexpr;
-      for (abp = cp->es_actstk; abp != NULL; abp = abp->astk_nxt) {
-         for (i = 1; i <= abp->nactivators; i++) {
-            BlkLoc(adesc) = (union block *)abp->arec[i-1].activator;
-            markblock(&adesc);
-            }
-         }
-      if(BlkLoc(cp->freshblk) != NULL)
-         markblock(&((struct b_coexpr *)block)->freshblk);
-      }
-
-   else {
-      struct region *rp;
-
-      /*
-       * Look for this block in other allocated block regions.
-       */
-      for (rp = curblock->Gnext; rp; rp = rp->Gnext)
-	 if (InRange(rp->base,block,rp->free)) break;
-
-      if (rp == NULL)
-         for (rp = curblock->Gprev; rp; rp = rp->Gprev)
-            if (InRange(rp->base,block,rp->free)) break;
-
-      /*
-       * If this block is not in a block region, its something else
-       *  like a procedure block.
-       */
-      if (rp == NULL)
-         return;
-
-      /*
-       * Get this block's type field; return if it is marked
-       */
-      type = BlkType(block);
-      if ((uword)type > MaxType)
-         return;
-
-      /*
-       * this is an unmarked block outside the (collecting) block region;
-       * process pointers and descriptors within the block.
-       *
-       * The type is valid, which indicates that this block has not
-       *  been marked.  Point endblock to the byte past the end
-       *  of the block.
-       */
-      endblock = block + BlkSize(block);
-
-      BlkType(block) |= F_Mark;			/* mark the block */
-
-      if ((fdesc = firstp[type]) > 0) {
-         /*
-          * The block contains pointers; mark each pointer.
-          */
-         ptr = (union block **)(block + fdesc);
-	 numptr = ptrno[type];
-	 if (numptr > 0)
-	    lastptr = ptr + numptr;
-	 else
-	    lastptr = (union block **)endblock;
-	 for (; ptr < lastptr; ptr++)
-	    if (*ptr != NULL)
-               markptr(ptr);
-	 }
-      if ((fdesc = firstd[type]) > 0) {
-         /*
-          * The block contains descriptors; mark each descriptor.
-          */
-         dp1 = (dptr)(block + fdesc);
-         numdesc = descno[type];
-         if (numdesc > 0)
-             lastdesc = dp1 + numdesc;
-         else
-             lastdesc = (dptr)endblock;
-         for (; dp1 < lastdesc; dp1++) {
-            PostDescrip(*dp1);
-            }
-         }
-      }
-   }
-
-/*
- * markptr - just like mark block except the object pointing at the block
- *  is just a block pointer, not a descriptor.
- */
 
 static void markptr(ptr)
-union block **ptr;
-   {
-   register dptr dp, lastdesc;
-   register char *block, *endblock;
-   word type, fdesc;
-   int numptr, numdesc;
-   register union block **ptr1, **lastptr;
+    union block **ptr;
+{
+    register dptr dp, lastdesc;
+    register char *block, *endblock;
+    word type, fdesc;
+    int numptr, numdesc;
+    register union block **ptr1, **lastptr;
 
-   /*
-    * Get the block to which ptr points.
-    */
-   block = (char *)*ptr;
-   if (InRange(blkbase,block,blkfree)) {
-      type = BlkType(block);
-      if ((uword)type <= MaxType) {
-         /*
-          * The type is valid, which indicates that this block has not
-          *  been marked.  Point endblock to the byte past the end
-          *  of the block.
-          */
-         endblock = block + BlkSize(block);
-         }
+    /*
+     * Get the block to which ptr points.
+     */
+    block = (char *)*ptr;
 
-      /*
-       * Add ptr to the back chain for the block and point the
-       *  block (via the type field) to ptr.
-       */
-      *ptr = (union block *)type;
-      BlkType(block) = (uword)ptr;
+/*    printf("markptr %p  type=%x\n",block, BlkType(block)); */
 
-      if ((uword)type <= MaxType) {
-         /*
-          * The block was not marked; process pointers and descriptors
-          *  within the block.
-          */
-         if ((fdesc = firstp[type]) > 0) {
+    if (InRange(blkbase,block,blkfree)) {
+        type = BlkType(block);
+        if ((uword)type <= MaxType) {
+            /*
+             * The type is valid, which indicates that this block has not
+             *  been marked.  Point endblock to the byte past the end
+             *  of the block.
+             */
+            endblock = block + BlkSize(block);
+        }
+
+        /*
+         * Add ptr to the back chain for the block and point the
+         *  block (via the type field) to ptr.
+         */
+        *ptr = (union block *)type;
+        BlkType(block) = (uword)ptr;
+
+        if ((uword)type <= MaxType) {
+            /*
+             * The block was not marked; process pointers and descriptors
+             *  within the block.
+             */
+            if ((fdesc = firstp[type]) > 0) {
+                /*
+                 * The block contains pointers; mark each pointer.
+                 */
+                ptr1 = (union block **)(block + fdesc);
+                numptr = ptrno[type];
+                if (numptr > 0)
+                    lastptr = ptr1 + numptr;
+                else
+                    lastptr = (union block **)endblock;
+                for (; ptr1 < lastptr; ptr1++)
+                    if (*ptr1 != NULL)
+                        markptr(ptr1);
+            }
+            if ((fdesc = firstd[type]) > 0) {
+                /*
+                 * The block contains descriptors; mark each descriptor.
+                 */
+                dp = (dptr)(block + fdesc);
+                numdesc = descno[type];
+                if (numdesc > 0)
+                    lastdesc = dp + numdesc;
+                else
+                    lastdesc = (dptr)endblock;
+                for (; dp < lastdesc; dp++)
+                    PostDescrip(*dp);
+            }
+        }
+    }
+
+    else if ((unsigned int)BlkType(block) == T_Coexpr) {
+        struct b_coexpr *cp;
+
+        /*
+         * dp points to a co-expression block that has not been
+         *  marked.  Point the block to dp.  Sweep the interpreter
+         *  stack in the block.  Then mark the block for the
+         *  activating co-expression and the refresh block.
+         */
+        BlkType(block) = (uword)ptr;
+        cp = (struct b_coexpr *)block;
+
+        sweep(cp);
+
+        /*
+         * Mark the activator of this co-expression.
+         */
+        if (cp->es_activator)
+            markptr((union block **)&cp->es_activator);
+
+        if (cp->freshblk)
+            markptr((union block **)&cp->freshblk);
+    }
+
+    else {
+        struct region *rp;
+
+        /*
+         * Look for this block in other allocated block regions.
+         */
+        for (rp = curblock->Gnext;rp;rp = rp->Gnext)
+            if (InRange(rp->base,block,rp->free)) break;
+
+        if (rp == NULL)
+            for (rp = curblock->Gprev;rp;rp = rp->Gprev)
+                if (InRange(rp->base,block,rp->free)) break;
+
+        /*
+         * If this block is not in a block region, its something else
+         *  like a procedure block.
+         */
+        if (rp == NULL)
+            return;
+
+        /*
+         * Get this block's type field; return if it is marked
+         */
+        type = BlkType(block);
+        if ((uword)type > MaxType)
+            return;
+
+        /*
+         * this is an unmarked block outside the (collecting) block region;
+         * process pointers and descriptors within the block.
+         *
+         * The type is valid, which indicates that this block has not
+         *  been marked.  Point endblock to the byte past the end
+         *  of the block.
+         */
+        endblock = block + BlkSize(block);
+
+        BlkType(block) |= F_Mark;			/* mark the block */
+
+        if ((fdesc = firstp[type]) > 0) {
             /*
              * The block contains pointers; mark each pointer.
              */
             ptr1 = (union block **)(block + fdesc);
             numptr = ptrno[type];
             if (numptr > 0)
-               lastptr = ptr1 + numptr;
+                lastptr = ptr1 + numptr;
             else
-               lastptr = (union block **)endblock;
+                lastptr = (union block **)endblock;
             for (; ptr1 < lastptr; ptr1++)
-               if (*ptr1 != NULL)
-                  markptr(ptr1);
-            }
-         if ((fdesc = firstd[type]) > 0) {
+                if (*ptr1 != NULL)
+                    markptr(ptr1);
+        }
+        if ((fdesc = firstd[type]) > 0) {
             /*
              * The block contains descriptors; mark each descriptor.
              */
@@ -840,82 +745,11 @@ union block **ptr;
                 lastdesc = dp + numdesc;
             else
                 lastdesc = (dptr)endblock;
-            for (; dp < lastdesc; dp++) {
-               PostDescrip(*dp);
-               }
-            }
-         }
-      }
-
-   else {
-      struct region *rp;
-
-      /*
-       * Look for this block in other allocated block regions.
-       */
-      for (rp = curblock->Gnext;rp;rp = rp->Gnext)
-	 if (InRange(rp->base,block,rp->free)) break;
-
-      if (rp == NULL)
-         for (rp = curblock->Gprev;rp;rp = rp->Gprev)
-            if (InRange(rp->base,block,rp->free)) break;
-
-      /*
-       * If this block is not in a block region, its something else
-       *  like a procedure block.
-       */
-      if (rp == NULL)
-         return;
-
-      /*
-       * Get this block's type field; return if it is marked
-       */
-      type = BlkType(block);
-      if ((uword)type > MaxType)
-         return;
-
-      /*
-       * this is an unmarked block outside the (collecting) block region;
-       * process pointers and descriptors within the block.
-       *
-       * The type is valid, which indicates that this block has not
-       *  been marked.  Point endblock to the byte past the end
-       *  of the block.
-       */
-      endblock = block + BlkSize(block);
-
-      BlkType(block) |= F_Mark;			/* mark the block */
-
-      if ((fdesc = firstp[type]) > 0) {
-         /*
-          * The block contains pointers; mark each pointer.
-          */
-         ptr1 = (union block **)(block + fdesc);
-         numptr = ptrno[type];
-         if (numptr > 0)
-	    lastptr = ptr1 + numptr;
-	 else
-	    lastptr = (union block **)endblock;
-	 for (; ptr1 < lastptr; ptr1++)
-	    if (*ptr1 != NULL)
-               markptr(ptr1);
-	 }
-      if ((fdesc = firstd[type]) > 0) {
-         /*
-          * The block contains descriptors; mark each descriptor.
-          */
-         dp = (dptr)(block + fdesc);
-         numdesc = descno[type];
-         if (numdesc > 0)
-             lastdesc = dp + numdesc;
-         else
-             lastdesc = (dptr)endblock;
-         for (; dp < lastdesc; dp++) {
-            PostDescrip(*dp);
-            }
-         }
-      }
-   }
+            for (; dp < lastdesc; dp++)
+                PostDescrip(*dp);
+        }
+    }
+}
 
 /*
  * sweep - sweep the chain of tended descriptors for a co-expression
@@ -1119,17 +953,6 @@ static void cofree()
       if (BlkType(*ep) == T_Coexpr) {
          xep = *ep;
          *ep = (*ep)->nextstk;
-         /*
-          * Free the astkblks.  There should always be one and it seems that
-          *  it's not possible to have more than one, but nonetheless, the
-          *  code provides for more than one.
-          */
-         for (abp = xep->es_actstk; abp; ) {
-            xabp = abp;
-            abp = abp->astk_nxt;
-            free((pointer)xabp);
-            }
-
          free((pointer)xep);
          }
       else {

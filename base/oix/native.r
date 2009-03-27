@@ -52,6 +52,16 @@ static struct b_proc *get_proc_for(dptr x)
     }
 }
 
+static struct progstate *get_program_for(dptr x)
+{
+    if (is:null(*x))
+        return curpstate;
+    else if (is:coexpr(*x))
+        return BlkLoc(*x)->coexpr.program;
+    else
+        ReturnErrVal(118, *x, 0);
+}
+
 function{1} classof(o)
    if !is:object(o) then
        runerr(602, o)
@@ -113,20 +123,257 @@ function{0,1} is(o, target)
     }
 end
 
+function{1} lang_Prog_get_parent(c)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+
+      if (prog->parent == NULL) 
+          fail;
+
+      return coexpr(prog->parent->Mainhead);
+    }
+end
+
+function{1} lang_Prog_get_eventmask(ce)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       return prog->eventmask;
+   }
+end
+
+function{1} lang_Prog_set_eventmask(cs, ce)
+   if !cnv:cset(cs) then 
+      runerr(104,cs)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       if (BlkLoc(cs) != BlkLoc(prog->eventmask)) {
+           prog->eventmask = cs;
+           assign_event_functions(prog, cs);
+       }
+       return cs;
+   }
+end
+
+function{1} lang_Prog_get_valuemask(ce)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       return prog->valuemask;
+   }
+end
+
+function{1} lang_Prog_set_valuemask(vmask, ce)
+   if !is:table(vmask) then
+      runerr(124,vmask)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       prog->valuemask = vmask;
+       return vmask;
+   }
+end
+
+
+function{1} lang_Prog_set_opmask(cs, ce)
+   if !cnv:cset(cs) then 
+      runerr(104,cs)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       prog->opcodemask = cs;
+       return cs;
+   }
+end
+
+function{1} lang_Prog_get_opmask(ce)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       return prog->opcodemask;
+   }
+end
+
+function{0,1} lang_Prog_get_variable(s,c)
+   if !cnv:string(s) then
+      runerr(103, s)
+
+   body {
+       int rv;
+       struct progstate *prog;
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+       rv = getvar(&s, &result, prog);
+       if (rv == Failed)
+           fail;
+
+       if (is:coexpr(c) && ((rv == LocalName) || (rv == StaticName)))
+           Deref(result);
+
+       return result;
+   }
+end
+
+
+function{*} lang_Prog_get_keyword(s,c)
+   if !cnv:string(s) then 
+      runerr(103, s)
+
+   body {
+      struct progstate *p;
+      char *t;
+
+       if (!(p = get_program_for(&c)))
+          runerr(0);
+
+      if (StrLen(s) == 0 || *StrLoc(s) != '&')
+         fail;
+
+      t = StrLoc(s) + 1;
+      switch (StrLen(s)) {
+          case 4 : {
+              if (strncmp(t,"pos",3) == 0) {
+                  return kywdpos(&(p->Kywd_pos));
+              }
+              if (strncmp(t,"why",3) == 0) {
+                  return kywdstr(&(p->Kywd_why));
+              }
+              break;
+          }
+          case 5 : {
+              if (strncmp(t,"file",4) == 0) {
+                  word *i;
+                  struct ipc_fname *t;
+
+                  /* If the prog's &current isn't in this program, we can't look up
+                   * the file in this program's table */
+                  if (BlkLoc(p->K_current)->coexpr.program != p)
+                      fail;
+                  /* If the prog's &current is the currently executing coexpression, take
+                   * the ipc, otherwise the stored ipc in the coexpression block
+                   */
+                  if (BlkLoc(p->K_current) == BlkLoc(k_current))
+                      i = ipc.opnd;
+                  else
+                      i = BlkLoc(p->K_current)->coexpr.es_ipc.opnd;
+                  t = find_ipc_fname(i, p);
+                  if (!t)
+                      fail;
+                  return t->fname;
+              }
+              if (strncmp(t,"line",4) == 0) {
+                  word *i;
+                  struct ipc_line *t;
+                  if (BlkLoc(p->K_current)->coexpr.program != p)
+                      fail;
+                  if (BlkLoc(p->K_current) == BlkLoc(k_current))
+                      i = ipc.opnd;
+                  else
+                      i = BlkLoc(p->K_current)->coexpr.es_ipc.opnd;
+                  t = find_ipc_line(i, p);
+                  if (!t)
+                      fail;
+                  return C_integer t->line;
+              }
+              if (strncmp(t,"main",4) == 0) {
+                  return p->K_main;
+              }
+              if (strncmp(t,"time",4) == 0) {
+                  /*
+                   * &time in this program = total time - time spent in other programs
+                   */
+                  if (p != curpstate)
+                      return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
+                  else
+                      return C_integer millisec() - p->Kywd_time_elsewhere;
+              }
+              break;
+          }
+          case 6 : {
+              if (strncmp(t,"trace",5) == 0) {
+                  return kywdint(&(p->Kywd_trc));
+              }
+              if (strncmp(t,"error",5) == 0) {
+                  return kywdint(&(p->Kywd_err));
+              }
+              break;
+          }
+          case 7 : {
+              if (strncmp(t,"random",6) == 0) {
+                  return kywdint(&(p->Kywd_ran));
+              }
+              if (strncmp(t,"source",6) == 0) {
+                  return coexpr(BlkLoc(p->K_current)->coexpr.es_activator);
+              }
+              break;
+          }
+          case 8 : {
+              if (strncmp(t,"subject",7) == 0) {
+                  return kywdsubj(&(p->Kywd_subject));
+              }
+              if (strncmp(t,"current",7) == 0) {
+                  return p->K_current;
+              }
+              break;
+          }
+          case 9 : {
+              if (strncmp(t,"progname",8) == 0) {
+                  return kywdstr(&(p->Kywd_prog));
+              }
+              break;
+          }
+          case 10: {
+              if (strncmp(t,"errortext",9) == 0) {
+                  return p->K_errortext;
+              }
+              if (strncmp(t,"eventcode",9) == 0) {
+                  return kywdevent(&(p->eventcode));
+              }
+              break;
+          }
+
+          case 11 : {
+              if (strncmp(t,"errorvalue",10) == 0) {
+                  return p->K_errorvalue;
+              }
+              if (strncmp(t,"eventvalue",10) == 0) {
+                  return kywdevent(&(p->eventval));
+              }
+              break;
+          }
+          case 12 : {
+              if (strncmp(t,"errornumber",11) == 0) {
+                  return C_integer p->K_errornumber;
+              }
+              if (strncmp(t,"eventsource",11) == 0) {
+                  return kywdevent(&(p->eventsource));
+              }
+              break;
+          }
+      }
+
+      runerr(205, s);
+   }
+end
+
+
 function{0,1} lang_Prog_get_global(s, c)
-   if !cnv:tmp_string(s) then
+   if !cnv:string(s) then
       runerr(103, s)
    body {
        struct progstate *prog;
        dptr p;
-
-       if (is:null(c))
-           prog = curpstate;
-       else if (is:coexpr(c))
-           prog = BlkLoc(c)->coexpr.program;
-       else
-           runerr(118, c);
-           
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
        p = lookup_global(&s, prog);
        if (p) {
            result.dword = D_Var;
@@ -141,14 +388,8 @@ function{0,1} lang_Prog_get_globals(c)
    body {
        struct progstate *prog;
        dptr dp;
-
-       if (is:null(c))
-           prog = curpstate;
-       else if (is:coexpr(c))
-           prog = BlkLoc(c)->coexpr.program;
-       else
-           runerr(118, c);
-
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
        for (dp = prog->Globals; dp != prog->Eglobals; dp++) {
           result.dword = D_Var;
           VarLoc(result) = dp;
@@ -163,35 +404,37 @@ function{0,1} lang_Prog_get_global_names(c)
    body {
        struct progstate *prog;
        dptr dp;
-
-       if (is:null(c))
-           prog = curpstate;
-       else if (is:coexpr(c))
-           prog = BlkLoc(c)->coexpr.program;
-       else
-           runerr(118, c);
-
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
       for (dp = prog->Gnames; dp != prog->Egnames; dp++)
          suspend *dp;
-
       fail;
    }
 end
 
+function{*} lang_Prog_get_function_names()
+   abstract {
+      return string
+      }
+   body {
+      register int i;
+
+      for (i = 0; i<pnsize; i++) {
+	 suspend string(strlen(pntab[i].pstrep), pntab[i].pstrep);
+         }
+      fail;
+      }
+end
+
 
 function{0,1} lang_Prog_get_global_location(s, c)
-   if !cnv:tmp_string(s) then
+   if !cnv:string(s) then
       runerr(103, s)
    body {
        struct progstate *prog;
        struct loc *p;
-
-       if (is:null(c))
-           prog = curpstate;
-       else if (is:coexpr(c))
-           prog = BlkLoc(c)->coexpr.program;
-       else
-           runerr(118, c);
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
 
        if (prog->Glocs == prog->Eglocs) {
            why("No global location data in icode");
@@ -218,15 +461,11 @@ function{0,1} lang_Prog_get_runtime_millis(c)
    body {
        struct progstate *prog;
        struct timeval tp;
-       struct descrip ls, lm, thousand;
+       struct descrip ls, lm;
        tended struct descrip lt1, lt2;
 
-       if (is:null(c))
-           prog = curpstate;
-       else if (is:coexpr(c))
-           prog = BlkLoc(c)->coexpr.program;
-       else
-           runerr(118, c);
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
 
       if (gettimeofday(&tp, 0) < 0) {
 	 errno2why();
@@ -238,9 +477,8 @@ function{0,1} lang_Prog_get_runtime_millis(c)
       } else {
           MakeInt(tp.tv_sec - prog->start_time.tv_sec, &ls);
           MakeInt(tp.tv_usec - prog->start_time.tv_usec, &lm);
-          MakeInt(1000, &thousand);
-          if (bigmul(&ls, &thousand, &lt1) == Error ||
-              bigdiv(&lm, &thousand ,&lt2) == Error ||
+          if (bigmul(&ls, &thousanddesc, &lt1) == Error ||
+              bigdiv(&lm, &thousanddesc ,&lt2) == Error ||
               bigadd(&lt1, &lt2, &result) == Error)
               runerr(0);
       }
@@ -251,23 +489,84 @@ end
 function{0,1} lang_Prog_get_startup_micros(c)
    body {
        struct progstate *prog;
-       struct descrip ls, lm, million;
+       struct descrip ls, lm;
        tended struct descrip lt1;
 
-       if (is:null(c))
-           prog = curpstate;
-       else if (is:coexpr(c))
-           prog = BlkLoc(c)->coexpr.program;
-       else
-           runerr(118, c);
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
 
        MakeInt(prog->start_time.tv_sec, &ls);
        MakeInt(prog->start_time.tv_usec, &lm);
-       MakeInt(1000000, &million);
-       if (bigmul(&ls, &million, &lt1) == Error ||
+       if (bigmul(&ls, &milliondesc, &lt1) == Error ||
            bigadd(&lt1, &lm, &result) == Error)
            runerr(0);
        return result;
+   }
+end
+
+function{4} lang_Prog_get_collections(c)
+   body {
+       struct progstate *prog;
+
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+
+       suspend C_integer prog->colltot;
+       suspend C_integer prog->collstat;
+       suspend C_integer prog->collstr;
+       return C_integer prog->collblk;
+   }
+end
+
+function{4} lang_Prog_get_allocations(c)
+   body {
+       struct progstate *prog;
+
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+
+       suspend C_integer stattotal + prog->stringtotal + prog->blocktotal;
+       suspend C_integer stattotal;
+       suspend C_integer prog->stringtotal;
+       return C_integer prog->blocktotal;
+   }
+end
+
+function{6} lang_Prog_get_regions(c)
+   body {
+       struct progstate *prog;
+       word sum1, sum2;
+       struct region *rp;
+
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+
+       suspend zerodesc;
+       suspend zerodesc;
+
+       sum1 = sum2 = 0;
+       for (rp = prog->stringregion; rp; rp = rp->next) {
+           sum1 += DiffPtrs(rp->free,rp->base);
+           sum2 += DiffPtrs(rp->end,rp->base);
+       }
+       for (rp = prog->stringregion->prev; rp; rp = rp->prev) {
+           sum1 += DiffPtrs(rp->free,rp->base);
+           sum2 += DiffPtrs(rp->end,rp->base);
+       }
+       suspend C_integer sum1;
+       suspend C_integer sum2;
+
+       sum1 = sum2 = 0;
+       for (rp = prog->blockregion; rp; rp = rp->next) {
+           sum1 += DiffPtrs(rp->free,rp->base);
+           sum2 += DiffPtrs(rp->end,rp->base);
+       }
+       for (rp = prog->blockregion->prev; rp; rp = rp->prev) {
+           sum1 += DiffPtrs(rp->free,rp->base);
+           sum2 += DiffPtrs(rp->end,rp->base);
+       }
+       suspend C_integer sum1;
+       return C_integer sum2;
    }
 end
 
@@ -722,7 +1021,7 @@ function{1} lang_Class_load_library(lib)
 end
 
 function{0,1} lang_Class_for_name(s, c)
-   if !cnv:tmp_string(s) then
+   if !cnv:string(s) then
       runerr(103, s)
    body {
        struct progstate *prog;
@@ -824,7 +1123,7 @@ function{*} io_WindowsFileSystem_get_roots()
 end
 
 function{0,1} io_WindowsFilePath_getdcwd(d)
-   if !cnv:tmp_string(d) then
+   if !cnv:string(d) then
       runerr(103, d)
    body {
       char *p;

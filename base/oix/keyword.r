@@ -9,19 +9,6 @@
 #include "../h/kdefs.h"
 #undef KDef
 
-"&allocated - the space used in the storage regions:"
-" total, static, string, and block"
-keyword{4} allocated
-   abstract {
-      return integer
-      }
-   inline {
-      suspend C_integer stattotal + strtotal + blktotal;
-      suspend C_integer stattotal;
-      suspend C_integer strtotal;
-      return  C_integer blktotal;
-      }
-end
 
 "&clock - a string consisting of the current time of day"
 keyword{2} clock
@@ -38,20 +25,6 @@ keyword{2} clock
       sprintf(sbuf,"%02d:%02d:%02d", ct->tm_hour, ct->tm_min, ct->tm_sec);
       MemProtect(tmp = alcstr(sbuf,(word)8));
       return string(8, tmp);
-      }
-end
-
-"&collections - the number of collections: total, triggered by static requests"
-" triggered by string requests, and triggered by block requests"
-keyword{4} collections
-   abstract {
-      return integer
-      }
-   inline {
-      suspend C_integer coll_tot;
-      suspend C_integer coll_stat;
-      suspend C_integer coll_str;
-      return  C_integer coll_blk;
       }
 end
 
@@ -361,68 +334,14 @@ keyword{1} random
       }
 end
 
-"&regions - generates regions sizes"
-keyword{3} regions
-   abstract {
-      return integer
-      }
-   inline {
-      word allRegions = 0;
-      struct region *rp;
-
-      suspend C_integer 0;		/* static region */
-
-      allRegions = DiffPtrs(strend,strbase);
-      for (rp = curstring->next; rp; rp = rp->next)
-	 allRegions += DiffPtrs(rp->end,rp->base);
-      for (rp = curstring->prev; rp; rp = rp->prev)
-	 allRegions += DiffPtrs(rp->end,rp->base);
-      suspend C_integer allRegions;	/* string region */
-
-      allRegions = DiffPtrs(blkend,blkbase);
-      for (rp = curblock->next; rp; rp = rp->next)
-	 allRegions += DiffPtrs(rp->end,rp->base);
-      for (rp = curblock->prev; rp; rp = rp->prev)
-	 allRegions += DiffPtrs(rp->end,rp->base);
-      return C_integer allRegions;	/* block region */
-      }
-end
-
 "&source - the co-expression that invoked the current co-expression."
 keyword{1} source
    abstract {
        return coexpr
        }
    inline {
-         return coexpr(topact((struct b_coexpr *)BlkLoc(k_current)));
+         return coexpr(BlkLoc(k_current)->coexpr.es_activator);
          }
-end
-
-"&storage - generate the amount of storage used for each region."
-keyword{3} storage
-   abstract {
-      return integer
-      }
-   inline {
-      word allRegions = 0;
-      struct region *rp;
-
-      suspend C_integer 0;		/* static region */
-
-      allRegions = DiffPtrs(strfree,strbase);
-      for (rp = curstring->next; rp; rp = rp->next)
-	 allRegions += DiffPtrs(rp->free,rp->base);
-      for (rp = curstring->prev; rp; rp = rp->prev)
-	 allRegions += DiffPtrs(rp->free,rp->base);
-      suspend C_integer allRegions;	/* string region */
-
-      allRegions = DiffPtrs(blkfree,blkbase);
-      for (rp = curblock->next; rp; rp = rp->next)
-	 allRegions += DiffPtrs(rp->free,rp->base);
-      for (rp = curblock->prev; rp; rp = rp->prev)
-	 allRegions += DiffPtrs(rp->free,rp->base);
-      return C_integer allRegions;	/* block region */
-      }
 end
 
 "&subject - variable containing the current subject of string scanning."

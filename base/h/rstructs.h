@@ -272,16 +272,6 @@ struct b_tvtbl {		/* table element trapped variable block */
     struct descrip tref;		/*   entry value */
 };
 
-struct astkblk {		  /* co-expression activator-stack block */
-    int nactivators;		  /*   number of valid activator entries in
-				   *    this block */
-    struct astkblk *astk_nxt;	  /*   next activator block */
-    struct actrec {		  /*   activator record */
-        word acount;		  /*     number of calls by this activator */
-        struct b_coexpr *activator; /*     the activator itself */
-    } arec[ActStkBlkEnts];
-};
-
 /*
  * Structure for keeping set/table generator state across a suspension.
  */
@@ -584,8 +574,8 @@ struct b_coexpr {		/* co-expression stack block */
     word es_ilevel;		/*   interpreter level */
     word *es_sp;			/*   sp */
     dptr tvalloc;		/*   where to place transmitted value */
-    struct descrip freshblk;	/*   refresh block pointer */
-    struct astkblk *es_actstk;	/*   pointer to activation stack structure */
+    struct b_refresh *freshblk;	/*   refresh block pointer */
+    struct b_coexpr *es_activator; /*     this coexpression's activator */
     word cstate[CStateSize];	/*   C state information */
     struct progstate *program;
 };

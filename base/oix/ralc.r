@@ -59,31 +59,7 @@ extern word alcnum;
    }
 #enddef
 
-/*
- * alcactiv - allocate a co-expression activation block.
- */
 
-struct astkblk *alcactiv()
-   {
-   struct astkblk *abp;
-
-   abp = malloc(sizeof(struct astkblk));
-
-   /*
-    * If malloc failed, attempt to free some co-expression blocks and retry.
-    */
-   if (abp == NULL) {
-      collect(Static);
-      abp = malloc(sizeof(struct astkblk));
-      }
-
-   if (abp == NULL)
-      ReturnErrNum(305, NULL);
-   abp->nactivators = 0;
-   abp->astk_nxt = NULL;
-   return abp;
-   }
-
 #begdef alcbignum_macro(f,e_lrgint)
 /*
  * alcbignum - allocate an n-digit bignum in the block region
@@ -154,7 +130,7 @@ long icodesize, stacksize;
    alcnum++;		/* increment allocation count since last g.c. */
 
    ep->title = T_Coexpr;
-   ep->es_actstk = NULL;
+   ep->es_activator = NULL;
    ep->size = 0;
    ep->es_efp = NULL;
    ep->es_pfp = NULL;
@@ -163,7 +139,7 @@ long icodesize, stacksize;
    ep->tvalloc = NULL;
    ep->es_sp = NULL;
    ep->es_tend = NULL;
-   ep->freshblk = nulldesc;
+   ep->freshblk = NULL;
    ep->es_ipc.op = NULL;
    ep->es_ilevel = 0;
 

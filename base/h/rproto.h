@@ -9,7 +9,6 @@ void		EVInit		(void);
 int		activate	(dptr val, struct b_coexpr *ncp, dptr result);
 word		add		(word a,word b);
 void		addmem 	(struct b_set *ps,struct b_selem *pe, union block **pl);
-struct astkblk	*alcactiv	(void);
 struct b_cset	*alccset_0	(word n);
 struct b_cset	*alccset_1	(word n);
 #ifdef Graphics
@@ -95,7 +94,6 @@ word		div3		(word a,word b);
 int		doasgn		(dptr dp1,dptr dp2);
 int		doimage		(int c,int q);
 void		drunerr		(int n, double v);
-void		dumpact		(struct b_coexpr *ce);
 struct b_constructor * dynrecord	(dptr s, dptr fields, int n);
 void		env_int	(char *name,word *variable,int non_neg, uword limit);
 int		equiv		(dptr dp1,dptr dp2);
@@ -131,11 +129,9 @@ word		neg		(word a);
 void		new_context	(int fsig, dptr cargp); /* w/o Coexpr: a stub */
 int		numcmp		(dptr dp1,dptr dp2,dptr dp3);
 void		outimage	(FILE *f,dptr dp,int noimage);
-struct b_coexpr	*popact		(struct b_coexpr *ce);
 long physicalmemorysize();
 word		prescan		(dptr d);
 int		pstrnmcmp	(struct pstrnm *a,struct pstrnm *b);
-int		pushact		(struct b_coexpr *ce, struct b_coexpr *actvtr);
 int		putstr		(FILE *f,dptr d);
 int    		 radix		(int sign, register int r, register char *s,
 				   register char *end_s, union numeric *result);
@@ -146,7 +142,6 @@ void		segvtrap	(void);
 void		stkdump		(int);
 word		sub		(word a,word b);
 void		syserr		(char *fmt, ...);
-struct b_coexpr	*topact		(struct b_coexpr *ce);
 void		xmfree		(void);
 void            ensure_initialized(struct b_class *class);
 dptr            do_invoke       (dptr proc);

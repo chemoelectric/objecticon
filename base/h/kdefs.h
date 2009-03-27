@@ -8,10 +8,8 @@
 #undef errno
 #endif
 
-KDef(allocated,K_ALLOCATED)
 KDef(ascii,K_ASCII)
 KDef(clock,K_CLOCK)
-KDef(collections,K_COLLECTIONS)
 KDef(cset,K_CSET)
 KDef(current,K_CURRENT)
 KDef(date,K_DATE)
@@ -41,9 +39,7 @@ KDef(pi,K_PI)
 KDef(pos,K_POS)
 KDef(progname,K_PROGNAME)
 KDef(random,K_RANDOM)
-KDef(regions,K_REGIONS)
 KDef(source,K_SOURCE)
-KDef(storage,K_STORAGE)
 KDef(subject,K_SUBJECT)
 KDef(time,K_TIME)
 KDef(trace,K_TRACE)

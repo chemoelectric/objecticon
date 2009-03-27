@@ -1,7 +1,7 @@
 /*
  * File: rmisc.r
  *  Contents: deref, eq, getvar, hash, outimage,
- *  qtos, pushact, popact, topact, [dumpact], 
+ *  qtos, 
  *  findline, findfile, getimage
  *  sig_rsm, cmd_line, varargs.
  *
@@ -991,70 +991,6 @@ int noimage;
    }
 
 
-/*
- * pushact - push actvtr on the activator stack of ce
- */
-int pushact(ce, actvtr)
-struct b_coexpr *ce, *actvtr;
-{
-   struct astkblk *abp = ce->es_actstk;
-
-   abp->arec[0].activator = actvtr;
-   return Succeeded;
-}
-
-/*
- * popact - pop the most recent activator from the activator stack of ce
- *  and return it.
- */
-struct b_coexpr *popact(ce)
-struct b_coexpr *ce;
-{
-
-
-   struct astkblk *abp = ce->es_actstk;
-
-   return abp->arec[0].activator;
-
-
-}
-
-/*
- * topact - return the most recent activator of ce.
- */
-struct b_coexpr *topact(ce)
-struct b_coexpr *ce;
-{
-   struct astkblk *abp = ce->es_actstk;
-   
-   return abp->arec[0].activator;
-}
-
-
-/*
- * dumpact - dump an activator stack
- */
-void dumpact(ce)
-struct b_coexpr *ce;
-{
-   struct astkblk *abp = ce->es_actstk;
-   struct actrec *arp;
-   int i;
-
-   if (abp)
-      fprintf(stderr, "Ce %ld ", (long)ce->id);
-   while (abp) {
-      fprintf(stderr, "--- Activation stack block (%x) --- nact = %d\n",
-         abp, abp->nactivators);
-      for (i = abp->nactivators; i >= 1; i--) {
-         arp = &abp->arec[i-1];
-         /*for (j = 1; j <= arp->acount; j++)*/
-         fprintf(stderr, "co-expression_%ld(%d)\n", (long)(arp->activator->id),
-            arp->acount);
-         }
-      abp = abp->astk_nxt;
-      }
-}
 
 
 /*

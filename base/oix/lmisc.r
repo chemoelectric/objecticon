@@ -13,7 +13,6 @@ register dptr cargp;
    {
 
    tended struct b_coexpr *sblkp;
-   register struct b_refresh *rblkp;
    register dptr dp, ndp;
    int na, nl, i;
 
@@ -37,21 +36,18 @@ register dptr cargp;
    /*
     * Get a refresh block for the new co-expression.
     */
-   MemProtect(rblkp = alcrefresh(entryp, na, nl));
-
-   sblkp->freshblk.dword = D_Refresh;
-   BlkLoc(sblkp->freshblk) = (union block *) rblkp;
+   MemProtect(sblkp->freshblk = alcrefresh(entryp, na, nl));
 
    /*
     * Copy current procedure frame marker into refresh block.
     */
-   rblkp->pfmkr = *pfp;
-   rblkp->pfmkr.pf_pfp = 0;
+   sblkp->freshblk->pfmkr = *pfp;
+   sblkp->freshblk->pfmkr.pf_pfp = 0;
 
    /*
     * Copy arguments into refresh block.
     */
-   ndp = rblkp->elems;
+   ndp = sblkp->freshblk->elems;
    dp = argp;
    for (i = 1; i <= na; i++)
       *ndp++ = *dp++;
@@ -91,15 +87,11 @@ dptr result;
    /*
     * Set activator in new co-expression.
     */
-   if (ncp->es_actstk == NULL) {
-      MemProtect(ncp->es_actstk = alcactiv());
+   if (ncp->es_activator == NULL)
       first = 0;
-      }
    else
       first = 1;
-
-   if (pushact(ncp, (struct b_coexpr *)BlkLoc(k_current)) == Error)
-      RunErr(0,NULL);
+   ncp->es_activator = (struct b_coexpr *)BlkLoc(k_current);
 
    if (co_chng(ncp, val, result, A_Coact, first) == A_Cofail)
       return A_Resume;

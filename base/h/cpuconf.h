@@ -261,10 +261,6 @@
    #define QualLstSize	5000		/* size of qualifier pointer region */
 #endif					/* QualLstSize */
 
-#ifndef ActStkBlkEnts
-      #define ActStkBlkEnts   25	/* number of entries in an astkblk */
-#endif					/* ActStkBlkEnts */
-
 #ifndef RegionCushion
    #define RegionCushion 10		/* % memory cushion to avoid thrashing*/
 #endif					/* RegionCushion */

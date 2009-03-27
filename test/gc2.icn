@@ -1,5 +1,5 @@
 
-import io
+import io,lang
 
 global defs, ifile, in, limit, tswitch, prompt
 
@@ -44,7 +44,7 @@ procedure main(x)
    every line := !test do {
       (!plist)(line)
       collect()
-      every write(&collections)
+      every write(Prog.get_collections())
       write("----------")
       }
 end
