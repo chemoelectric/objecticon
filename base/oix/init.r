@@ -82,6 +82,7 @@ word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
 
 uword stattotal = 0;			/* cumulative total static allocation */
+uword statcurr  = 0;			/* current static allocation */
 
 int dodump = 1;				/* if zero never core dump;
                                          * if 1 core dump on C-level internal error (call to syserr)

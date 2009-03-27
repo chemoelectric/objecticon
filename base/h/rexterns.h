@@ -55,7 +55,8 @@ extern word qualsize;		/* size of string qualifier list */
 extern word memcushion;		/* memory region cushion factor */
 extern word memgrowth;		/* memory region growth factor */
 extern uword stattotal;		/* cumulative total of all static allocations */
-				/* N.B. not currently set */
+extern uword statcurr;		/* current total of all static allocations */
+
 
 extern struct tend_desc *tend;  /* chain of tended descriptors */
 

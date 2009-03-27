@@ -214,7 +214,7 @@
  * Memory sizing. 
  */
 #ifndef AlcMax
-   #define AlcMax 25
+   #define AlcMax 50
 #endif					/* AlcMax */
 
 /*

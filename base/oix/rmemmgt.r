@@ -954,6 +954,10 @@ static void cofree()
          xep = *ep;
          *ep = (*ep)->nextstk;
          free((pointer)xep);
+         /* It can't be a program (those are all marked), so it must be a normal coexpression, and
+          * their size is always stksize (see alccoexp)
+          */
+         statcurr -= stksize;
          }
       else {
          BlkType(*ep) = T_Coexpr;

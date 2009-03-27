@@ -541,8 +541,8 @@ function{6} lang_Prog_get_regions(c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       suspend zerodesc;
-       suspend zerodesc;
+       suspend C_integer statcurr;
+       suspend C_integer statcurr;
 
        sum1 = sum2 = 0;
        for (rp = prog->stringregion; rp; rp = rp->next) {

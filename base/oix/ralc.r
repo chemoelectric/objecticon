@@ -96,18 +96,25 @@ alcbignum_macro(alcbignum_1,E_Lrgint)
  * hdr.hsize and a stacksize to use; allocate
  * sizeof(progstate) + icodesize + mstksize
  * Otherwise (icodesize==0), allocate a normal stksize...
+ * 
+ * In either case, the size of the coexpression block consumes part
+ * of the stack size.
  */
 struct b_coexpr *alccoexp(icodesize, stacksize)
 long icodesize, stacksize;
 
    {
    struct b_coexpr *ep;
+   int size;
 
    if (icodesize > 0)
-      ep = malloc(stacksize + icodesize +
-                  sizeof(struct progstate) + sizeof(struct b_coexpr));
+       size = stacksize + icodesize + sizeof(struct progstate);
    else
-      ep = malloc(stksize);
+       size = stksize;
+
+   EVVal(size, E_Coexpr);
+
+   ep = malloc(size);
 
    /*
     * If malloc failed or there have been too many co-expression allocations
@@ -116,17 +123,14 @@ long icodesize, stacksize;
 
    if (ep == NULL || alcnum > AlcMax) {
       collect(Static);
-      if (ep == NULL) {
-          if (icodesize > 0)
-              ep = malloc(stacksize + icodesize +
-                          sizeof(struct progstate) + sizeof(struct b_coexpr));
-          else
-              ep = malloc(stksize);
-      }
+      if (ep == NULL)
+          ep = malloc(size);
    }
    if (ep == NULL)
       ReturnErrNum(305, NULL);
 
+   stattotal += size;
+   statcurr += size;
    alcnum++;		/* increment allocation count since last g.c. */
 
    ep->title = T_Coexpr;
@@ -499,6 +503,7 @@ struct b_refresh *f(word *entryx, int na, int nl)
    {
    struct b_refresh *blk;
 
+   EVVal(sizeof(struct b_refresh) + (na+nl)*sizeof(struct descrip),e_refresh);
    AlcVarBlk(blk, b_refresh, T_Refresh, na + nl);
    blk->ep = entryx;
    blk->numlocals = nl;
