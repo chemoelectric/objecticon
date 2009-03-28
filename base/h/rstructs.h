@@ -425,6 +425,10 @@ struct progstate {
 
     uword stringtotal;			/* cumulative total allocation */
     uword blocktotal;			/* cumulative total allocation */
+    uword stattotal;			/* cumulative total static allocation */
+
+    uword statcurr;			/* current static allocation */
+
     word colltot;			/* total number of collections */
     word collstat;			/* number of static collect requests */
     word collstr;			/* number of string collect requests */
@@ -577,7 +581,8 @@ struct b_coexpr {		/* co-expression stack block */
     struct b_refresh *freshblk;	/*   refresh block pointer */
     struct b_coexpr *es_activator; /*     this coexpression's activator */
     word cstate[CStateSize];	/*   C state information */
-    struct progstate *program;
+    struct progstate *program;  /*   current program, in which ipc resides */
+    struct progstate *creator;  /*   curpstate when this block was allocated */
 };
 
 struct b_refresh {		/* co-expression block */

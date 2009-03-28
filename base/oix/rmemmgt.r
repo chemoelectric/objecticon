@@ -952,12 +952,10 @@ static void cofree()
    while (*ep != NULL) {
       if (BlkType(*ep) == T_Coexpr) {
          xep = *ep;
+         /* Deduct memory freed - the size must be stksize as we never release programs (see alccoexp) */
+         xep->creator->statcurr -= stksize;
          *ep = (*ep)->nextstk;
          free((pointer)xep);
-         /* It can't be a program (those are all marked), so it must be a normal coexpression, and
-          * their size is always stksize (see alccoexp)
-          */
-         statcurr -= stksize;
          }
       else {
          BlkType(*ep) = T_Coexpr;

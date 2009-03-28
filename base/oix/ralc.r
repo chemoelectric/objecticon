@@ -129,8 +129,6 @@ long icodesize, stacksize;
    if (ep == NULL)
       ReturnErrNum(305, NULL);
 
-   stattotal += size;
-   statcurr += size;
    alcnum++;		/* increment allocation count since last g.c. */
 
    ep->title = T_Coexpr;
@@ -146,6 +144,11 @@ long icodesize, stacksize;
    ep->freshblk = NULL;
    ep->es_ipc.op = NULL;
    ep->es_ilevel = 0;
+   ep->creator = curpstate;
+   /* Add the allocation to the prog's stats */
+   ep->creator->stattotal += size;
+   ep->creator->statcurr += size;
+
 
    /*
     * Initialize id, and program state to self for &main; 0 for others, which will

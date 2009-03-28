@@ -81,9 +81,6 @@ word qualsize = QualLstSize;		/* size of quallist for fixed regions */
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
 
-uword stattotal = 0;			/* cumulative total static allocation */
-uword statcurr  = 0;			/* current static allocation */
-
 int dodump = 1;				/* if zero never core dump;
                                          * if 1 core dump on C-level internal error (call to syserr)
                                          * if 2 core dump on all errors
@@ -400,7 +397,7 @@ void icon_init(char *name)
     mainhead->es_tend = NULL;
     mainhead->freshblk = NULL;	/* &main has no refresh block. */
 					/*  This really is a bug. */
-    mainhead->program = &rootpstate;
+    mainhead->creator = mainhead->program = &rootpstate;
     mainhead->es_activator = mainhead;
 
     /*
@@ -703,10 +700,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     BlkLoc(pstate->K_main) = (union block *) pstate->Mainhead;
     pstate->K_current = pstate->K_main;
 
-    pstate->stringtotal = pstate->blocktotal =
-        pstate->colltot     = pstate->collstat   =
-        pstate->collstr     = pstate->collblk    = 0;
-
     MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
     MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
     pstate->stringregion->size = stringsiz;
@@ -824,6 +817,9 @@ static void initprogstate(struct progstate *p)
     p->Xexpr = nulldesc;
     p->Xfno = 0;
     p->Value_tmp = nulldesc;
+
+    p->stringtotal = p->blocktotal = p->stattotal = p->statcurr =
+        p->colltot = p->collstat = p->collstr = p->collblk = 0;
 
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;

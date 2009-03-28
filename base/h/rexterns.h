@@ -54,8 +54,6 @@ extern word stksize;		/* size of co-expression stacks in words */
 extern word qualsize;		/* size of string qualifier list */
 extern word memcushion;		/* memory region cushion factor */
 extern word memgrowth;		/* memory region growth factor */
-extern uword stattotal;		/* cumulative total of all static allocations */
-extern uword statcurr;		/* current total of all static allocations */
 
 
 extern struct tend_desc *tend;  /* chain of tended descriptors */

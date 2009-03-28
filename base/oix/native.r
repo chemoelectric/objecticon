@@ -525,8 +525,8 @@ function{4} lang_Prog_get_allocations(c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       suspend C_integer stattotal + prog->stringtotal + prog->blocktotal;
-       suspend C_integer stattotal;
+       suspend C_integer prog->stattotal + prog->stringtotal + prog->blocktotal;
+       suspend C_integer prog->stattotal;
        suspend C_integer prog->stringtotal;
        return C_integer prog->blocktotal;
    }
@@ -541,8 +541,8 @@ function{6} lang_Prog_get_regions(c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       suspend C_integer statcurr;
-       suspend C_integer statcurr;
+       suspend C_integer prog->statcurr;
+       suspend C_integer prog->statcurr;
 
        sum1 = sum2 = 0;
        for (rp = prog->stringregion; rp; rp = rp->next) {
