@@ -28,7 +28,7 @@ class MonitorCodeSet()
                         MonitorCode.Tvtbl || MonitorCode.Cset || MonitorCode.Refresh || 
                         MonitorCode.String || MonitorCode.Coexpr ||
                         MonitorCode.Object || MonitorCode.Cast || MonitorCode.Methp || 
-                        MonitorCode.Ucs)
+                        MonitorCode.Ucs || MonitorCode.BlkDeAlc || MonitorCode.StrDeAlc)
 
       AssignMask := cset(MonitorCode.Assign || MonitorCode.Value)
 

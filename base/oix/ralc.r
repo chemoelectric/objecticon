@@ -685,7 +685,7 @@ void f (union block *bp)
       syserr ("deallocation botch");
    rp->free = (char *)bp;
    blktotal -= nbytes;
-   EVVal(nbytes, e_blkdealc);
+   EVVal(-nbytes, e_blkdealc);
 }
 #enddef
 
@@ -707,7 +707,7 @@ void f (char *p)
     nbytes = DiffPtrs(strfree, p);
     strtotal -= nbytes;
     strfree = p;
-    EVVal(nbytes, E_StrDeAlc);
+    EVVal(-nbytes, E_StrDeAlc);
 }
 #enddef
 
