@@ -211,11 +211,11 @@
 #define MaxDigits	30
 
 /*
- * Memory sizing. 
+ * Lower-bound default for coexprlim; more are allowed if memory size permits.
  */
-#ifndef AlcMax
-   #define AlcMax 50
-#endif					/* AlcMax */
+#ifndef CoexprLim
+   #define CoexprLim 15
+#endif					/* CoexprLim */
 
 /*
  * Maximum sized block that can be allocated (via malloc() or such).

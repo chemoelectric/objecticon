@@ -67,6 +67,7 @@ struct b_proc *op_tbl;			/* operators available for string invocation */
 
 word mstksize = MStackSize;		/* initial size of main stack */
 word stksize = StackSize;		/* co-expression stack size */
+word coexprlim;                          /* number of coexpression allocations before a GC is triggered */
 
 int k_level = 0;			/* &level */
 
@@ -307,6 +308,7 @@ void icon_init(char *name)
     pmem = physicalmemorysize();
     rootstring.size = Max(pmem/200, MaxStrSpace);
     rootblock.size  = Max(pmem/100, MaxAbrSize);
+    coexprlim = Max((pmem/200) / (StackSize * WordSize), CoexprLim);
 
     op_tbl = (struct b_proc*)init_op_tbl;
 
@@ -452,7 +454,8 @@ void envset()
     if ((p = getenv(NOERRBUF)) != NULL)
         noerrbuf++;
     env_int(TRACE, &k_trace, 0, (uword)0);
-    env_int(COEXPSIZE, &stksize, 1, (uword)MaxUnsigned);
+    env_int(COEXPRSIZE, &stksize, 1, (uword)MaxUnsigned);
+    env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxUnsigned);
     env_int(STRSIZE, &rootstring.size, 1, (uword)MaxBlock);
     env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxBlock); 
     env_int(MSTKSIZE, &mstksize, 1, (uword)MaxUnsigned);
@@ -820,6 +823,7 @@ static void initprogstate(struct progstate *p)
 
     p->stringtotal = p->blocktotal = p->stattotal = p->statcurr =
         p->colltot = p->collstat = p->collstr = p->collblk = 0;
+    p->statcount = 0;
 
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;

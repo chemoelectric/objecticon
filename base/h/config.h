@@ -74,8 +74,8 @@
    #define TRACE "TRACE"
 #endif
 
-#ifndef COEXPSIZE
-   #define COEXPSIZE "COEXPSIZE"
+#ifndef COEXPRSIZE
+   #define COEXPRSIZE "COEXPRSIZE"
 #endif
 
 #ifndef STRSIZE
@@ -88,6 +88,10 @@
 
 #ifndef MSTKSIZE
    #define MSTKSIZE "MSTKSIZE"
+#endif
+
+#ifndef COEXPRLIM
+   #define COEXPRLIM "COEXPRLIM"
 #endif
 
 #ifndef QLSIZE

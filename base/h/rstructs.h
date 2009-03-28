@@ -428,7 +428,8 @@ struct progstate {
     uword stattotal;			/* cumulative total static allocation */
 
     uword statcurr;			/* current static allocation */
-
+    word statcount;                     /* count of number of coexpr allocs - when
+                                         * it exceeds coexprlim, a gc is trigerred */
     word colltot;			/* total number of collections */
     word collstat;			/* number of static collect requests */
     word collstr;			/* number of string collect requests */

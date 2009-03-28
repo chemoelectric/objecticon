@@ -9,9 +9,6 @@
 static struct region *findgap	(struct region *curr, word nbytes);
 static struct region *newregion	(word nbytes, word stdsize);
 
-extern word alcnum;
-
-
 
 /*
  * AlcBlk - allocate a block.
@@ -121,15 +118,13 @@ long icodesize, stacksize;
     * since a collection, attempt to free some co-expression blocks and retry.
     */
 
-   if (ep == NULL || alcnum > AlcMax) {
+   if (ep == NULL || curpstate->statcount > coexprlim) {
       collect(Static);
       if (ep == NULL)
           ep = malloc(size);
    }
    if (ep == NULL)
       ReturnErrNum(305, NULL);
-
-   alcnum++;		/* increment allocation count since last g.c. */
 
    ep->title = T_Coexpr;
    ep->es_activator = NULL;
@@ -161,6 +156,9 @@ long icodesize, stacksize;
    } else {
       ep->id = coexp_ser++;
       ep->program = 0;
+      /* Only increment the gc trigger count for a non-program, since programs are
+       * never collected */
+      ep->creator->statcount++;
    }
 
    ep->nextstk = stklist;

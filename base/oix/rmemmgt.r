@@ -28,8 +28,6 @@ static void markprogram	(struct progstate *pstate);
  * Variables
  */
 
-word alcnum = 0;                /* co-expressions allocated since g.c. */
-
 dptr *quallist;                 /* string qualifier list */
 dptr *qualfree;                 /* qualifier list free pointer */
 dptr *equallist;                /* end of qualifier list */
@@ -359,18 +357,17 @@ int region;
 
    switch (region) {
       case Static:
-         coll_stat++;
+         curpstate->collstat++;
          break;
       case Strings:
-         coll_str++;
+         curpstate->collstr++;
          break;
       case Blocks:  
-         coll_blk++;
+         curpstate->collblk++;
          break;
       }
-   coll_tot++;
-
-   alcnum = 0;
+   curpstate->colltot++;
+   curpstate->statcount = 0;
 
    /*
     * Garbage collection cannot be done until initialization is complete.
@@ -950,19 +947,23 @@ static void cofree()
     */
    ep = &stklist;
    while (*ep != NULL) {
-      if (BlkType(*ep) == T_Coexpr) {
-         xep = *ep;
-         /* Deduct memory freed - the size must be stksize as we never release programs (see alccoexp) */
-         xep->creator->statcurr -= stksize;
-         *ep = (*ep)->nextstk;
-         free((pointer)xep);
-         }
-      else {
-         BlkType(*ep) = T_Coexpr;
-         ep = &(*ep)->nextstk;
-         }
-      }
+       if (BlkType(*ep) == T_Coexpr) {
+           /* Only free blocks allocated by the program doing the collecting */
+           if ((*ep)->creator == curpstate) {
+               /* Deduct memory freed - the size must be stksize as we never release programs (see alccoexp) */
+               (*ep)->creator->statcurr -= stksize;
+               xep = *ep;
+               *ep = (*ep)->nextstk;
+               free(xep);
+           } else
+               ep = &(*ep)->nextstk;
+       }
+       else {
+           BlkType(*ep) = T_Coexpr;
+           ep = &(*ep)->nextstk;
+       }
    }
+}
 
 /*
  * scollect - collect the string space.  quallist is a list of pointers to
