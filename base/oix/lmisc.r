@@ -31,7 +31,7 @@ register dptr cargp;
     * Get a new co-expression stack and initialize.
     */
 
-   MemProtect(sblkp = alccoexp(0, 0));
+   MemProtect(sblkp = alccoexp());
 
    /*
     * Get a refresh block for the new co-expression.

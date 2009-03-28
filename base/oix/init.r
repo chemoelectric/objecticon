@@ -685,7 +685,7 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     struct b_coexpr *coexp;
     struct progstate *pstate;
 
-    MemProtect(coexp = alccoexp(icodesize, stacksize));
+    MemProtect(coexp = alcprog(icodesize, stacksize));
     pstate = coexp->program;
 
     /*

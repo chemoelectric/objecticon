@@ -494,7 +494,8 @@ int	tvcmp4		(struct dpair *dp1,struct dpair *dp2);
 int	tvtbl_asgn	(dptr dest, const dptr src);
 void	varargs		(dptr argp, int nargs, dptr rslt);
 
-   struct b_coexpr *alccoexp (long icodesize, long stacksize);
+struct b_coexpr *alccoexp (void);
+struct b_coexpr *alcprog(long icodesize, long stacksize);
 
 dptr rec_structinate(dptr dp, char *name, int nfields, char *a[]);
 

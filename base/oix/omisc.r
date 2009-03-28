@@ -20,7 +20,7 @@ operator{1} ^ refresh(x)
       /*
        * Get a new co-expression stack and initialize.
        */
-      MemProtect(sblkp = alccoexp(0, 0));
+      MemProtect(sblkp = alccoexp());
       sblkp->freshblk = BlkLoc(x)->coexpr.freshblk;
 
       /*

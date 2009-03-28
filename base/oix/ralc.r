@@ -85,33 +85,16 @@ alcbignum_macro(alcbignum_1,E_Lrgint)
 
 
 /*
- * alccoexp - allocate a co-expression stack block.
+ * alccoexp - allocate a co-expression stack block; called via 
+ * create or refresh - for loading progs, see alcprog below.
  */
-
-/*
- * If this is a new program being loaded, an icodesize>0 gives the
- * hdr.hsize and a stacksize to use; allocate
- * sizeof(progstate) + icodesize + mstksize
- * Otherwise (icodesize==0), allocate a normal stksize...
- * 
- * In either case, the size of the coexpression block consumes part
- * of the stack size.
- */
-struct b_coexpr *alccoexp(icodesize, stacksize)
-long icodesize, stacksize;
-
+struct b_coexpr *alccoexp()
    {
    struct b_coexpr *ep;
-   int size;
 
-   if (icodesize > 0)
-       size = stacksize + icodesize + sizeof(struct progstate);
-   else
-       size = stksize;
+   EVVal(stksize, E_Coexpr);
 
-   EVVal(size, E_Coexpr);
-
-   ep = malloc(size);
+   ep = malloc(stksize);
 
    /*
     * If malloc failed or there have been too many co-expression allocations
@@ -120,52 +103,73 @@ long icodesize, stacksize;
 
    if (ep == NULL || curpstate->statcount > coexprlim) {
       collect(Static);
-      if (ep == NULL)
-          ep = malloc(size);
+      if (ep == NULL) {
+          ep = malloc(stksize);
+          if (ep == NULL)
+              ReturnErrNum(305, NULL);
+      }
    }
-   if (ep == NULL)
-      ReturnErrNum(305, NULL);
 
+   memset(ep, 0, sizeof(struct b_coexpr));
    ep->title = T_Coexpr;
-   ep->es_activator = NULL;
-   ep->size = 0;
-   ep->es_efp = NULL;
-   ep->es_pfp = NULL;
-   ep->es_gfp = NULL;
-   ep->es_argp = NULL;
-   ep->tvalloc = NULL;
-   ep->es_sp = NULL;
-   ep->es_tend = NULL;
-   ep->freshblk = NULL;
-   ep->es_ipc.op = NULL;
-   ep->es_ilevel = 0;
    ep->creator = curpstate;
    /* Add the allocation to the prog's stats */
-   ep->creator->stattotal += size;
-   ep->creator->statcurr += size;
-
-
-   /*
-    * Initialize id, and program state to self for &main; 0 for others, which will
-    * have that field set by co_init()
-    */
-   if (icodesize > 0) {
-      ep->id = 1;
-      ep->program = (struct progstate *)(ep + 1);
-      memset(ep->program, 0, sizeof(struct progstate));
-   } else {
-      ep->id = coexp_ser++;
-      ep->program = 0;
-      /* Only increment the gc trigger count for a non-program, since programs are
-       * never collected */
-      ep->creator->statcount++;
-   }
+   ep->creator->stattotal += stksize;
+   ep->creator->statcurr += stksize;
+   ep->id = coexp_ser++;
+   ep->creator->statcount++;
 
    ep->nextstk = stklist;
    stklist = ep;
 
    return ep;
    }
+
+
+/*
+ * Allocate a co-expression block for a loaded program.  The memory
+ * allocated consists of the co-expression, followed by a progstate
+ * struct, followed by space for the icode, and then the stack.  The
+ * size of the co-expression struct is taken to be included in the
+ * stack size (the same as in alccoexp and the allocation of the root
+ * program's &main).
+ */
+struct b_coexpr *alcprog(long icodesize, long stacksize)
+
+   {
+   struct b_coexpr *ep;
+   int size = stacksize + icodesize + sizeof(struct progstate);
+
+   EVVal(size, E_Coexpr);
+
+   ep = malloc(size);
+
+   /*
+    * If malloc failed, collect and retry.
+    */
+   if (ep == NULL) {
+      collect(Static);
+      ep = malloc(size);
+      if (ep == NULL)
+          ReturnErrNum(305, NULL);
+   }
+
+   memset(ep, 0, sizeof(struct b_coexpr));
+   ep->title = T_Coexpr;
+   ep->creator = curpstate;
+   /* Add the allocation to the prog's stats */
+   ep->creator->stattotal += size;
+   ep->creator->statcurr += size;
+   ep->id = 1;
+   ep->program = (struct progstate *)(ep + 1);
+   memset(ep->program, 0, sizeof(struct progstate));
+
+   ep->nextstk = stklist;
+   stklist = ep;
+
+   return ep;
+   }
+
 
 #begdef alccset_macro(f, e_cset)
 /*
