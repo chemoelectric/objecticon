@@ -294,7 +294,7 @@ int interp_x(int fsig,dptr cargp)
       if (!is:null(curpstate->eventmask) && (
               Testb((word)(E_Fname), BlkLoc(curpstate->eventmask)->cset.bits))) {
           if (InRange(code, ipc.opnd, ecode)) {
-              uword ipc_offset = DiffPtrs((char *)ipc.opnd, (char *)code);
+              uword ipc_offset = DiffPtrsBytes(ipc.opnd, code);
               if (!current_fname_ptr ||
                   ipc_offset < current_fname_ptr->ipc ||
                   (current_fname_ptr + 1 < efilenms && ipc_offset >= current_fname_ptr[1].ipc)) {
@@ -316,7 +316,7 @@ int interp_x(int fsig,dptr cargp)
       if (!is:null(curpstate->eventmask) && (
               Testb((word)(E_Line), BlkLoc(curpstate->eventmask)->cset.bits))) {
           if (InRange(code, ipc.opnd, ecode)) {
-              uword ipc_offset = DiffPtrs((char *)ipc.opnd, (char *)code);
+              uword ipc_offset = DiffPtrsBytes(ipc.opnd, code);
               if (!current_line_ptr ||
                   ipc_offset < current_line_ptr->ipc ||
                   (current_line_ptr + 1 < elines && ipc_offset >= current_line_ptr[1].ipc)) {

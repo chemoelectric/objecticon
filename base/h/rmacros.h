@@ -214,17 +214,19 @@
                          StrLen(*dp) = sizeof(s) - 1;       \
 			 } while (0)
 
+#define DiffPtrsBytes(p1,p2) DiffPtrs((char*)(p1), (char*)(p2))
+
 /*
  * Check for stack overflow
  */
 #define CheckStack() \
 do { \
     if (BlkLoc(k_current) == BlkLoc(rootpstate.K_main)) {  \
-        if ((char*)stackend - (char*)sp < 4096) \
+        if (DiffPtrsBytes(stackend,sp) < 4096)     \
             fatalerr(311, NULL); \
     } else { \
         int dummy = 0; \
-        if ((char*)&dummy - (char*)sp < 4096) \
+        if (DiffPtrsBytes(&dummy, sp) < 4096)        \
             fatalerr(312, NULL); \
     } \
 } while(0)

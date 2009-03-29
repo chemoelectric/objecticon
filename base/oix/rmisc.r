@@ -1003,7 +1003,7 @@ struct ipc_line *find_ipc_line(word *ipc, struct progstate *p)
    
    if (!InRange(p->Code,ipc,p->Ecode))
       return 0;
-   ipc_offset = DiffPtrs((char *)ipc,(char *)p->Code);
+   ipc_offset = DiffPtrsBytes(ipc, p->Code);
    size = p->Elines - p->Ilines;
    l = 0;
    r = size - 1;
@@ -1033,7 +1033,7 @@ struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p)
    if (!InRange(p->Code,ipc,p->Ecode))
        return 0;
 
-   ipc_offset = DiffPtrs((char *)ipc,(char *)p->Code);
+   ipc_offset = DiffPtrsBytes(ipc, p->Code);
 
    size = p->Efilenms - p->Filenms;
    l = 0;

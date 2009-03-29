@@ -564,10 +564,8 @@ dptr dp;
     int numptr, numdesc;
     register union block **ptr1, **lastptr;
 
-    if (do_checkstack) {
-        if ((char*)&type - (char*)sp < 4096)
-            fatalerr(310, NULL);
-    }
+    if (do_checkstack && DiffPtrsBytes(&type, sp) < 4096)
+        fatalerr(310, NULL);
 
     /*
      * Get the block to which ptr points.

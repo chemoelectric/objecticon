@@ -607,8 +607,8 @@ function{2} lang_Prog_get_stack(c)
                isp = ce->es_sp;
            }
        }
-       suspend C_integer WordSize * (bottom - top);
-       return C_integer WordSize * ((isp + 1) - top);
+       suspend C_integer DiffPtrsBytes(bottom, top);
+       return C_integer DiffPtrsBytes(isp + 1, top);
    }
 end
 
