@@ -258,18 +258,19 @@ alcsegment_macro(alcsegment_1,E_Slots)
 
 struct b_list *f(uword size, uword nslots)
    {
+   register word i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
    register struct b_list *blk;
    register struct b_lelem *lblk;
-   register word i;
 
-   if (!reserve(Blocks, (word)(sizeof(struct b_list) + sizeof (struct b_lelem)
-      + (nslots - 1) * sizeof(struct descrip)))) return NULL;
+   if (!reserve(Blocks, (word)(sizeof(struct b_list) + i)))
+       return NULL;
    AlcFixBlk(blk, b_list, T_List, e_list)
-   AlcVarBlk(lblk, b_lelem, T_Lelem, nslots, e_lelem)
+   AlcBlk(lblk, b_lelem, T_Lelem, i, e_lelem)
    blk->size = size;
    blk->id = list_ser++;
    blk->listhead = blk->listtail = (union block *)lblk;
 
+   lblk->blksize = i;
    lblk->nslots = nslots;
    lblk->first = 0;
    lblk->nused = size;
@@ -294,7 +295,8 @@ struct b_list *f(uword size, uword nslots)
    register struct b_list *blk;
    register struct b_lelem *lblk;
 
-   if (!reserve(Blocks, (word)(sizeof(struct b_list) + i))) return NULL;
+   if (!reserve(Blocks, (word)(sizeof(struct b_list) + i))) 
+       return NULL;
    AlcFixBlk(blk, b_list, T_List, e_list)
    AlcBlk(lblk, b_lelem, T_Lelem, i, e_lelem)
    blk->size = size;
