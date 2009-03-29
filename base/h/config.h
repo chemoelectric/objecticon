@@ -74,8 +74,8 @@
    #define TRACE "TRACE"
 #endif
 
-#ifndef COEXPRSIZE
-   #define COEXPRSIZE "COEXPRSIZE"
+#ifndef STKSIZE
+   #define STKSIZE "STKSIZE"
 #endif
 
 #ifndef STRSIZE

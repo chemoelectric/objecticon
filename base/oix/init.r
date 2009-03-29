@@ -308,7 +308,6 @@ void icon_init(char *name)
     pmem = physicalmemorysize();
     rootstring.size = Max(pmem/200, MaxStrSpace);
     rootblock.size  = Max(pmem/100, MaxAbrSize);
-    coexprlim = Max((pmem/200) / (StackSize * WordSize), CoexprLim);
 
     op_tbl = (struct b_proc*)init_op_tbl;
 
@@ -359,7 +358,20 @@ void icon_init(char *name)
     /*
      * Examine the environment and make appropriate settings.    [[I?]]
      */
-    envset();
+    if (getenv(NOERRBUF))
+        noerrbuf++;
+    env_int(TRACE, &k_trace, 0, (uword)0);
+    env_int(STKSIZE, &stksize, 1, (uword)MaxUnsigned);
+    env_int(STRSIZE, &rootstring.size, 1, (uword)MaxBlock);
+    env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxBlock); 
+    env_int(MSTKSIZE, &mstksize, 1, (uword)MaxUnsigned);
+    env_int(QLSIZE, &qualsize, 1, (uword)MaxBlock);
+    env_int(IXCUSHION, &memcushion, 1, (uword)100);	/* max 100 % */
+    env_int(IXGROWTH, &memgrowth, 1, (uword)10000);	/* max 100x growth */
+    env_int(OICORE, &dodump, 1, (uword)2);
+
+    coexprlim = Max((pmem/200) / (stksize * WordSize), CoexprLim);
+    env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxUnsigned);
 
     /*
      * Convert stack sizes from words to bytes.
@@ -442,28 +454,6 @@ void icon_init(char *name)
  * Service routines related to getting things started.
  */
 
-
-/*
- * Check for environment variables that Icon uses and set system
- *  values as is appropriate.
- */
-void envset()
-{
-    register char *p;
-
-    if ((p = getenv(NOERRBUF)) != NULL)
-        noerrbuf++;
-    env_int(TRACE, &k_trace, 0, (uword)0);
-    env_int(COEXPRSIZE, &stksize, 1, (uword)MaxUnsigned);
-    env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxUnsigned);
-    env_int(STRSIZE, &rootstring.size, 1, (uword)MaxBlock);
-    env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxBlock); 
-    env_int(MSTKSIZE, &mstksize, 1, (uword)MaxUnsigned);
-    env_int(QLSIZE, &qualsize, 1, (uword)MaxBlock);
-    env_int(IXCUSHION, &memcushion, 1, (uword)100);	/* max 100 % */
-    env_int(IXGROWTH, &memgrowth, 1, (uword)10000);	/* max 100x growth */
-    env_int(OICORE, &dodump, 1, (uword)2);
-}
 
 /*
  * env_int - get the value of an integer-valued environment variable.
