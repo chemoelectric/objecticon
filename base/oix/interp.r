@@ -171,7 +171,7 @@ Deliberate Syntax Error
 
 static struct descrip unwinder;
 
-#begdef interp_macro(interp_x,e_intcall,e_stack,e_fsusp,e_osusp,e_bsusp,e_ocall,e_ofail,e_tick,e_line,e_opcode,e_fcall,e_prem,e_erem,e_intret,e_psusp,e_ssusp,e_pret,e_efail,e_sresum,e_fresum,e_oresum,e_eresum,e_presum,e_pfail,e_ffail,e_frem,e_orem,e_fret,e_oret,e_literal,e_fname)
+#begdef interp_macro(interp_x,e_intcall,e_fsusp,e_osusp,e_bsusp,e_ocall,e_ofail,e_tick,e_line,e_opcode,e_fcall,e_prem,e_erem,e_intret,e_psusp,e_ssusp,e_pret,e_efail,e_sresum,e_fresum,e_oresum,e_eresum,e_presum,e_pfail,e_ffail,e_frem,e_orem,e_fret,e_oret,e_literal,e_fname)
 
 /*
  * The main loop of the interpreter.
@@ -194,19 +194,8 @@ int interp_x(int fsig,dptr cargp)
    struct descrip lastdesc = nulldesc;
 
    EVVal(fsig, e_intcall);
-   EVVal(DiffPtrs(sp, stack), e_stack);
 
-
-   /* RPP If we're in a coexpression we can estimate the space between the C stack pointer
-    * and the Icon stack pointer (sp).  If they get too close, we're in trouble.
-    */
-   { 
-      struct b_coexpr *curr = (struct b_coexpr *)(curpstate->K_current.vword.bptr);
-      if (curr != rootpstate.Mainhead) {
-          if ((char*)(&bproc) - (char*)sp < 5000)
-              fatalerr(308, NULL);
-      }
-   }
+   CheckStack();
 
 #ifdef Graphics
    if (!pollctr--) {
@@ -382,13 +371,6 @@ Deliberate Syntax Error
 	 EntInterp
 	 }
 #endif					/* E_Opcode */
-/*
-if (BlkLoc(k_current) != BlkLoc(k_main)) {
-printf("%d %d\n",getfree(),(int)lastop); 
-showcoexps();
-fflush(stdout);
-*/
-
 
       switch ((int)lastop) {		/*
 				 * Switch on opcode.  The cases are
@@ -924,7 +906,6 @@ Unmark_uw:
 	       --ilevel;
 	       ExInterp;
 	       EVVal(A_Unmark_uw, e_intret);
-               EVVal(DiffPtrs(sp, stack), e_stack);
 	       return A_Unmark_uw;
 	       }
 
@@ -1050,7 +1031,6 @@ Lsusp_uw:
 		  --ilevel;
 		  ExInterp;
                   EVVal(A_Lsusp_uw, e_intret);
-                  EVVal(DiffPtrs(sp, stack), e_stack);
 		  return A_Lsusp_uw;
 		  }
 	       rsp = (word *)efp - 1;
@@ -1179,7 +1159,6 @@ Eret_uw:
 	       --ilevel;
 	       ExInterp;
                EVVal(A_Eret_uw, e_intret);
-               EVVal(DiffPtrs(sp, stack), e_stack);
 	       return A_Eret_uw;
 	       }
 	    rsp = (word *)efp - 1;
@@ -1228,7 +1207,6 @@ Pret_uw:
 	       ExInterp;
 
                EVVal(A_Pret_uw, e_intret);
-               EVVal(DiffPtrs(sp, stack), e_stack);
 	       unwinder = oldargp;
 	       return A_Pret_uw;
 	       }
@@ -1338,7 +1316,6 @@ efail_noev:
                      EVVal((word)0, e_fresum);
 		     --ilevel;
                      EVVal(A_Resume, e_intret);
-                     EVVal(DiffPtrs(sp, stack), e_stack);
 		     return A_Resume;
 
 		  case G_Osusp:
@@ -1346,7 +1323,6 @@ efail_noev:
                      EVVal((word)0, e_oresum);
 		     --ilevel;
                      EVVal(A_Resume, e_intret);
-                     EVVal(DiffPtrs(sp, stack), e_stack);
 		     return A_Resume;
 
 		  case G_Csusp:
@@ -1354,7 +1330,6 @@ efail_noev:
                      EVVal((word)0, e_eresum);
 		     --ilevel;
                      EVVal(A_Resume, e_intret);
-                     EVVal(DiffPtrs(sp, stack), e_stack);
 		     return A_Resume;
 
 		  case G_Esusp:
@@ -1397,7 +1372,6 @@ Pfail_uw:
 	       --ilevel;
 	       ExInterp;
                EVVal(A_Pfail_uw, e_intret);
-               EVVal(DiffPtrs(sp, stack), e_stack);
 	       return A_Pfail_uw;
 	       }
 
@@ -1716,8 +1690,8 @@ interp_quit:
    }
 #enddef
 
-interp_macro(interp_0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-interp_macro(interp_1,E_Intcall,E_Stack,E_Fsusp,E_Osusp,E_Bsusp,E_Ocall,E_Ofail,E_Tick,E_Line,E_Opcode,E_Fcall,E_Prem,E_Erem,E_Intret,E_Psusp,E_Ssusp,E_Pret,E_Efail,E_Sresum,E_Fresum,E_Oresum,E_Eresum,E_Presum,E_Pfail,E_Ffail,E_Frem,E_Orem,E_Fret,E_Oret,E_Literal,E_Fname)
+interp_macro(interp_0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+interp_macro(interp_1,E_Intcall,E_Fsusp,E_Osusp,E_Bsusp,E_Ocall,E_Ofail,E_Tick,E_Line,E_Opcode,E_Fcall,E_Prem,E_Erem,E_Intret,E_Psusp,E_Ssusp,E_Pret,E_Efail,E_Sresum,E_Fresum,E_Oresum,E_Eresum,E_Presum,E_Pfail,E_Ffail,E_Frem,E_Orem,E_Fret,E_Oret,E_Literal,E_Fname)
 
 #if E_Prem || E_Erem
 /*

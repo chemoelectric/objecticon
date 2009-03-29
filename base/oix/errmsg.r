@@ -92,7 +92,6 @@ struct errtab errtab[] = {
    218, "external library inconsistency",
    219, "already closed",
 
-   301, "evaluation stack overflow",
    302, "memory violation",
    303, "inadequate space for evaluation stack",
    304, "inadequate space in qualifier list",
@@ -101,6 +100,9 @@ struct errtab errtab[] = {
    307, "inadequate space in block region",
    308, "system stack overflow in co-expression",
    309, "out of memory, allocation returned null",
+   310, "inadequate co-expression C stack space during garbage collection",
+   311, "main stack overflow",
+   312, "stack overflow in co-expression",
 
 #if IntBits == 16
    316, "interpreter stack too large",

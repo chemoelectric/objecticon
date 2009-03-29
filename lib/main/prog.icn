@@ -61,4 +61,12 @@ class Prog()
    public static defer get_collections(c)
    public static defer get_allocations(c)
    public static defer get_regions(c)
+
+   # Get info about the stack use of the given co-expression.  Two
+   # numbers are suspended; the first is the size of the stack (excluding
+   # any portion used as a C stack), and the second is the amount
+   # already used.  Note that the size may change over time as the size of
+   # the C stack changes.
+   #
+   public static defer get_stack(c)
 end

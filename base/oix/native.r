@@ -570,6 +570,48 @@ function{6} lang_Prog_get_regions(c)
    }
 end
 
+function{2} lang_Prog_get_stack(c)
+   if !is:coexpr(c) then
+      runerr(118,c)
+   body {
+       word *top, *bottom, *isp;
+       struct b_coexpr *ce = (struct b_coexpr *)BlkLoc(c);
+
+       if (ce == (struct b_coexpr *)BlkLoc(rootpstate.K_main)) {
+           top = stack + Wsizeof(struct b_coexpr);
+           bottom = stackend;
+           if (ce == (struct b_coexpr *)BlkLoc(k_current))
+               isp = sp;
+           else
+               isp = ce->es_sp;
+       } else if (ce->program == (struct progstate *)(ce + 1)) {
+           /* See init.r, Prog.load */
+           top = (word *)ce + Wsizeof(struct b_coexpr) + Wsizeof(struct progstate) + 
+               ce->program->hsize/WordSize;
+           if (ce->program->hsize % WordSize) 
+               top++;
+           if (ce == (struct b_coexpr *)BlkLoc(k_current)) {
+               bottom = (word *)&top;
+               isp = sp;
+           } else {
+               bottom = (word *)(ce->cstate[0]);
+               isp = ce->es_sp;
+           }
+       } else {
+           top = (word *)(ce + 1);
+           if (ce == (struct b_coexpr *)BlkLoc(k_current)) {
+               bottom = (word *)&top;
+               isp = sp;
+           } else {
+               bottom = (word *)(ce->cstate[0]);
+               isp = ce->es_sp;
+           }
+       }
+       suspend C_integer WordSize * (bottom - top);
+       return C_integer WordSize * ((isp + 1) - top);
+   }
+end
+
 function{1} lang_Class_get_name(c)
     body {
         struct b_class *class;

@@ -15,6 +15,7 @@ static void ttrace	(void);
 static void xtrace(struct b_proc *bp, word nargs, dptr arg, int pline, dptr pfile);
 
 
+#define LIMIT 100
 
 /*
  * tracebk - print a trace of procedure calls.
@@ -22,7 +23,7 @@ static void xtrace(struct b_proc *bp, word nargs, dptr arg, int pline, dptr pfil
 void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
 {
     struct b_proc *cproc;
-
+    int depth;
     struct pf_marker *origpfp = pfp;
     dptr arg;
     inst cipc;
@@ -32,36 +33,44 @@ void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
      *  first one, while building a foward chain of pointers through
      *  the expression frame pointers.
      */
-
+    depth = 0;
     for (pfp->pf_efp = NULL; pfp->pf_pfp != NULL; pfp = pfp->pf_pfp) {
+        ++depth;
         (pfp->pf_pfp)->pf_efp = (struct ef_marker *)pfp;
     }
 
     /* Now start from the base procedure frame marker, producing a listing
      *  of the procedure calls up through the last one.
      */
+    if (depth > LIMIT) {
+        if (depth == LIMIT + 1)
+            --depth;      /* Avoid printing "1 calls omitted" */
+        else
+            fprintf(stderr, "   ... %d calls omitted\n", depth-LIMIT);
+    }
 
     while (pfp) {
-        arg = &((dptr)pfp)[-(pfp->pf_nargs) - 1];
-        cproc = (struct b_proc *)BlkLoc(arg[0]);    
-        /*
-         * The ipc in the procedure frame points after the "invoke n".
-         */
-        cipc = pfp->pf_ipc;
-        --cipc.opnd;
-        --cipc.op;
+        if (depth <= LIMIT) {
+            arg = &((dptr)pfp)[-(pfp->pf_nargs) - 1];
+            cproc = (struct b_proc *)BlkLoc(arg[0]);    
+            /*
+             * The ipc in the procedure frame points after the "invoke n".
+             */
+            cipc = pfp->pf_ipc;
+            --cipc.opnd;
+            --cipc.op;
 
-        xtrace(cproc, pfp->pf_nargs, &arg[0], findline(cipc.opnd),
-               findfile(cipc.opnd));
-
-        /*
-         * On the last call, show both the call and the offending expression.
-         */
-        if (pfp == origpfp) {
-            ttrace();
-            break;
+            xtrace(cproc, pfp->pf_nargs, &arg[0], findline(cipc.opnd),
+                   findfile(cipc.opnd));
+            /*
+             * On the last call, show both the call and the offending expression.
+             */
+            if (pfp == origpfp) {
+                ttrace();
+                break;
+            }
         }
-
+        --depth;
         pfp = (struct pf_marker *)(pfp->pf_efp);
     }
 }

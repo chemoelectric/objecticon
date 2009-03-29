@@ -1299,12 +1299,38 @@ void resolve(struct progstate *p)
         StrLoc(fnptr->fname) = p->Strcons + (uword)StrLoc(fnptr->fname);
 }
 
+/*
+ * The rest of the functions here are just debugging utilities.
+ */
+
+void *get_csp()
+{
+    int dummy = 0;
+    unsigned long l;
+    l = (long)&dummy;
+    return (void*)l;
+}
+
+void checkstack()
+{
+    static int worst = MaxInt;
+    int free;
+    if (BlkLoc(curpstate->K_current) == BlkLoc(rootpstate.K_main))
+        return;
+    free = (char*)get_csp() - (char*)sp;
+    if (free < worst) {
+        fprintf(stderr, "A new low in stack space: %ld\n",free);
+        fflush(stderr);
+        worst = free;
+    }
+}
 
 void showcoexps()
 {
     struct b_coexpr *p;
     struct b_coexpr *curr = (struct b_coexpr *)(curpstate->K_current.vword.bptr);
     struct progstate *q;
+    void *csp = get_csp();
 
     printf("Coexpressions\n");
     printf("Coexp       program     size        es_sp       C sp        ipc         pfp         argp\n");
@@ -1351,7 +1377,11 @@ void showcoexps()
            &rootpstate,
            BlkLoc(curpstate->K_main),
            BlkLoc(curpstate->K_current));
-    printf("ilevel=%d ISP=%p\n", ilevel,sp);
+
+    if (BlkLoc(curpstate->K_current) != BlkLoc(rootpstate.K_main))
+        printf("ilevel=%d ISP=%p CSP=%p (clearance %d)\n", ilevel,sp, csp, (char*)csp - (char*)sp);
+    else
+        printf("ilevel=%d ISP=%p CSP=%p\n", ilevel,sp, csp);
 
     fflush(stdout);
 }

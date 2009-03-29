@@ -214,6 +214,22 @@
                          StrLen(*dp) = sizeof(s) - 1;       \
 			 } while (0)
 
+/*
+ * Check for stack overflow
+ */
+#define CheckStack() \
+do { \
+    if (BlkLoc(k_current) == BlkLoc(rootpstate.K_main)) {  \
+        if ((char*)stackend - (char*)sp < 4096) \
+            fatalerr(311, NULL); \
+    } else { \
+        int dummy = 0; \
+        if ((char*)&dummy - (char*)sp < 4096) \
+            fatalerr(312, NULL); \
+    } \
+} while(0)
+
+
 #define CallerProc (&BlkLoc(*argp)->proc)
 
 /*

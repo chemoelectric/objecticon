@@ -162,7 +162,6 @@
 
 #define E_Intcall	'\351'		/* interpreter call */
 #define E_Intret	'\352'		/* interpreter return */
-#define E_Stack		'\353'		/* stack depth */
 
    /*
     * Expression events
@@ -259,7 +258,7 @@
 270 271 272 273 274 275 276 277
 
 300 303
-345
+345 353
 365 366 367
 371 372 373 374 375 376 377
 */

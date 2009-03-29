@@ -151,7 +151,6 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
     * particular word means: "use the instrumented interp".
     */
    if (Testb((word)(E_Intcall), bits) ||
-       Testb((word)(E_Stack), bits) ||
        Testb((word)(E_Fsusp), bits) ||
        Testb((word)(E_Osusp), bits) ||
        Testb((word)(E_Bsusp), bits) ||

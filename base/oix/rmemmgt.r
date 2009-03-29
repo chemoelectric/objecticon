@@ -33,6 +33,7 @@ dptr *qualfree;                 /* qualifier list free pointer */
 dptr *equallist;                /* end of qualifier list */
 
 int qualfail;                   /* flag: qualifier list overflow */
+static int do_checkstack;
 
 
 /*
@@ -382,7 +383,6 @@ int region;
     */
    cp = (struct b_coexpr *)BlkLoc(k_current);
    cp->es_tend = tend;
-
    cp->es_pfp = pfp;
    cp->es_gfp = gfp;
    cp->es_efp = efp;
@@ -393,6 +393,11 @@ int region;
     */
    qualfree = quallist;
    qualfail = 0;
+
+   /*
+    * Check for stack overflow if we are collecting from outside the system C stack.
+    */
+   do_checkstack = (BlkLoc(k_current) != BlkLoc(rootpstate.K_main));
 
    for (prog = progs; prog; prog = prog->next)
        markprogram(prog);
@@ -546,54 +551,23 @@ dptr dp;
       }
    }
 
+
 /*
- * markblock - mark each accessible block in the block region and build
- *  back-list of descriptors pointing to that block. (Phase I of garbage
- *  collection.)
+ * Common code for markblock and markptr.  This is done as a macro to save stack space, by
+ * avoiding having markblock call markptr (these calls can be very deeply nested).
  */
-static void markblock(dp)
-    dptr dp;
-{
-    register dptr dp1, lastdesc;
-    register char *block, *endblock;
-    word type, fdesc;
-    int numptr, numdesc;
-    register union block **ptr, **lastptr;
-
-    if (Var(*dp)) {
-        if (dp->dword & F_Typecode) {
-            switch (Type(*dp)) {
-                case T_Kywdint:
-                case T_Kywdpos:
-                case T_Kywdsubj:
-                case T_Kywdstr:
-                case T_Kywdevent:
-                    /*
-                     * The descriptor points to a keyword, not a block.
-                     */
-                    return;
-            }
-        }
-        else if (Offset(*dp) == 0) {
-            /*
-             * The descriptor is a simple variable not residing in a block.
-             */
-            return;
-        }
-    }
-
-    markptr(&BlkLoc(*dp));
-}
-
-
-static void markptr(ptr)
-    union block **ptr;
+#begdef MARKPTR()
 {
     register dptr dp, lastdesc;
     register char *block, *endblock;
     word type, fdesc;
     int numptr, numdesc;
     register union block **ptr1, **lastptr;
+
+    if (do_checkstack) {
+        if ((char*)&type - (char*)sp < 4096)
+            fatalerr(310, NULL);
+    }
 
     /*
      * Get the block to which ptr points.
@@ -747,6 +721,51 @@ static void markptr(ptr)
         }
     }
 }
+#enddef
+
+
+/*
+ * markblock - mark each accessible block in the block region and build
+ *  back-list of descriptors pointing to that block. (Phase I of garbage
+ *  collection.)
+ */
+static void markblock(dptr d)
+{
+    union block **ptr;
+
+    if (Var(*d)) {
+        if (d->dword & F_Typecode) {
+            switch (Type(*d)) {
+                case T_Kywdint:
+                case T_Kywdpos:
+                case T_Kywdsubj:
+                case T_Kywdstr:
+                case T_Kywdevent:
+                    /*
+                     * The descriptor points to a keyword, not a block.
+                     */
+                    return;
+            }
+        }
+        else if (Offset(*d) == 0) {
+            /*
+             * The descriptor is a simple variable not residing in a block.
+             */
+            return;
+        }
+    }
+
+    ptr = &BlkLoc(*d);
+
+    MARKPTR();
+}
+
+
+static void markptr(union block **ptr)
+{
+    MARKPTR();
+}
+
 
 /*
  * sweep - sweep the chain of tended descriptors for a co-expression

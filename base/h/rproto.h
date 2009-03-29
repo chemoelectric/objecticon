@@ -584,3 +584,5 @@ int cset_range_of_pos(struct b_cset *b, int pos);
 char* dword2str(dptr d);
 char *binstr(unsigned int n);
 void show_regions();
+void *get_csp();
+void checkstack();

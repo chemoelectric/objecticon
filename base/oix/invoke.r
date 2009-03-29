@@ -14,6 +14,7 @@ static int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 static int construct_object(int nargs, dptr newargp);
 static int construct_record(int nargs, dptr newargp);
 
+
 
 /*
  * invoke -- Perform setup for invocation.  
@@ -30,6 +31,7 @@ int invoke(int nargs, dptr *cargp_ptr, int *nargs_ptr)
     xnargs = nargs;
     xargp = newargp;
     Deref(newargp[0]);
+    CheckStack();
 
     type_case *newargp of {
       class: {

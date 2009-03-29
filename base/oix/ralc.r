@@ -13,13 +13,15 @@ static struct region *newregion	(word nbytes, word stdsize);
 /*
  * AlcBlk - allocate a block.
  */
-#begdef AlcBlk(var, struct_nm, t_code, nbytes)
+#begdef AlcBlk(var, struct_nm, t_code, nbytes, event)
 {
    /*
     * Ensure that there is enough room in the block region.
     */
    if (DiffPtrs(blkend,blkfree) < nbytes && !reserve(Blocks, nbytes))
       return NULL;
+
+   EVVal(nbytes, event);
 
    /*
     * Decrement the free space in the block region by the number of bytes
@@ -36,13 +38,13 @@ static struct region *newregion	(word nbytes, word stdsize);
 /*
  * AlcFixBlk - allocate a fixed length block.
  */
-#define AlcFixBlk(var, struct_nm, t_code)\
-   AlcBlk(var, struct_nm, t_code, sizeof(struct struct_nm))
+#define AlcFixBlk(var, struct_nm, t_code, event)                      \
+   AlcBlk(var, struct_nm, t_code, sizeof(struct struct_nm), event)
 
 /*
  * AlcVarBlk - allocate a variable-length block.
  */
-#begdef AlcVarBlk(var, struct_nm, t_code, n_desc)
+#begdef AlcVarBlk(var, struct_nm, t_code, n_desc, event)
    {
    uword size;
 
@@ -51,7 +53,7 @@ static struct region *newregion	(word nbytes, word stdsize);
     *  we need add in only n_desc - 1 descriptors.
     */
    size = sizeof(struct struct_nm) + (n_desc - 1) * sizeof(struct descrip);
-   AlcBlk(var, struct_nm, t_code, size)
+   AlcBlk(var, struct_nm, t_code, size, event)
    var->blksize = size;
    }
 #enddef
@@ -71,9 +73,7 @@ struct b_bignum *f(word n)
    /* ensure whole number of words allocated */
    size = (size + WordSize - 1) & -WordSize;
 
-   EVVal((word)size, e_lrgint);
-
-   AlcBlk(blk, b_bignum, T_Lrgint, size);
+   AlcBlk(blk, b_bignum, T_Lrgint, size, e_lrgint);
    blk->blksize = size;
    blk->msd = blk->sign = 0;
    blk->lsd = n - 1;
@@ -182,8 +182,7 @@ struct b_cset *f(word n)
    register uword size;
 
    size = sizeof(struct b_cset) + ((n - 1) * sizeof(struct b_cset_range));
-   EVVal(size,e_cset);
-   AlcBlk(blk, b_cset, T_Cset, size);
+   AlcBlk(blk, b_cset, T_Cset, size, e_cset);
    blk->blksize = size;
 
    return blk;
@@ -205,14 +204,12 @@ union block *f(int tcode)
    register struct b_table *pt;
 
    if (tcode == T_Table) {
-      EVVal(sizeof(struct b_table), e_table);
-      AlcFixBlk(pt, b_table, T_Table);
+      AlcFixBlk(pt, b_table, T_Table, e_table);
       ps = (struct b_set *)pt;
       ps->id = table_ser++;
       }
    else {	/* tcode == T_Set */
-      EVVal(sizeof(struct b_set), e_set);
-      AlcFixBlk(ps, b_set, T_Set);
+      AlcFixBlk(ps, b_set, T_Set, e_set);
       ps->id = set_ser++;
       }
    ps->size = 0;
@@ -237,8 +234,7 @@ struct b_slots *f(word nslots)
    register struct b_slots *blk;
 
    size = sizeof(struct b_slots) + WordSize * (nslots - HSlots);
-   EVVal(size, e_slots);
-   AlcBlk(blk, b_slots, T_Slots, size);
+   AlcBlk(blk, b_slots, T_Slots, size, e_slots);
    blk->blksize = size;
    while (--nslots >= 0)
       blk->hslots[nslots] = NULL;
@@ -268,10 +264,8 @@ struct b_list *f(uword size, uword nslots)
 
    if (!reserve(Blocks, (word)(sizeof(struct b_list) + sizeof (struct b_lelem)
       + (nslots - 1) * sizeof(struct descrip)))) return NULL;
-   EVVal(sizeof (struct b_list), e_list);
-   EVVal(sizeof (struct b_lelem) + (nslots-1) * sizeof(struct descrip), e_lelem);
-   AlcFixBlk(blk, b_list, T_List)
-   AlcVarBlk(lblk, b_lelem, T_Lelem, nslots)
+   AlcFixBlk(blk, b_list, T_List, e_list)
+   AlcVarBlk(lblk, b_lelem, T_Lelem, nslots, e_lelem)
    blk->size = size;
    blk->id = list_ser++;
    blk->listhead = blk->listtail = (union block *)lblk;
@@ -301,10 +295,8 @@ struct b_list *f(uword size, uword nslots)
    register struct b_lelem *lblk;
 
    if (!reserve(Blocks, (word)(sizeof(struct b_list) + i))) return NULL;
-   EVVal(sizeof (struct b_list), e_list);
-   EVVal(i, e_lelem);
-   AlcFixBlk(blk, b_list, T_List)
-   AlcBlk(lblk, b_lelem, T_Lelem, i)
+   AlcFixBlk(blk, b_list, T_List, e_list)
+   AlcBlk(lblk, b_lelem, T_Lelem, i, e_lelem)
    blk->size = size;
    blk->id = list_ser++;
    blk->listhead = blk->listtail = (union block *)lblk;
@@ -326,7 +318,7 @@ struct b_list *f(uword size, uword nslots)
 alclist_macro(alclist_0,0,0)
 alclist_macro(alclist_1,E_List,E_Lelem)
 
-#begdef alclstb_macro(f,t_lelem)
+#begdef alclstb_macro(f,e_lelem)
 /*
  * alclstb - allocate a list element block in the block region.
  */
@@ -336,7 +328,7 @@ struct b_lelem *f(uword nslots, uword first, uword nused)
    register struct b_lelem *blk;
    register word i;
 
-   AlcVarBlk(blk, b_lelem, T_Lelem, nslots)
+   AlcVarBlk(blk, b_lelem, T_Lelem, nslots, e_lelem)
    blk->nslots = nslots;
    blk->first = first;
    blk->nused = nused;
@@ -363,8 +355,7 @@ struct b_real *f(double val)
    {
    register struct b_real *blk;
 
-   EVVal(sizeof (struct b_real), e_real);
-   AlcFixBlk(blk, b_real, T_Real)
+   AlcFixBlk(blk, b_real, T_Real, e_real)
 
 #ifdef Double
 /* access real values one word at a time */
@@ -395,8 +386,7 @@ struct b_record *f(struct b_constructor *con)
    register struct b_record *blk;
    int i, nflds = con->n_fields;
 
-   EVVal(sizeof(struct b_record) + (nflds-1)*sizeof(struct descrip),e_record);
-   AlcVarBlk(blk, b_record, T_Record, nflds)
+   AlcVarBlk(blk, b_record, T_Record, nflds, e_record)
    blk->constructor = con;
    blk->id = ++con->instance_ids;
    /*
@@ -421,8 +411,7 @@ struct b_object *f(struct b_class *class)
    {
    register struct b_object *blk;
    int i, nflds = class->n_instance_fields;
-   EVVal(sizeof(struct b_object) + (nflds-1)*sizeof(struct descrip),e_object);
-   AlcVarBlk(blk, b_object, T_Object, nflds);
+   AlcVarBlk(blk, b_object, T_Object, nflds, e_object);
    blk->class = class;
    blk->id = ++class->instance_ids;
    blk->init_state = Uninitialized;
@@ -448,8 +437,7 @@ struct b_cast *f()
    {
    register struct b_cast *blk;
 
-   EVVal(sizeof (struct b_cast), e_cast);
-   AlcFixBlk(blk, b_cast, T_Cast)
+   AlcFixBlk(blk, b_cast, T_Cast, e_cast)
    return blk;
    }
 #enddef
@@ -466,8 +454,7 @@ struct b_methp *f()
    {
    register struct b_methp *blk;
 
-   EVVal(sizeof (struct b_methp), e_methp);
-   AlcFixBlk(blk, b_methp, T_Methp)
+   AlcFixBlk(blk, b_methp, T_Methp, e_methp)
    return blk;
    }
 #enddef
@@ -487,8 +474,7 @@ struct b_ucs *f(int n)
    register struct b_ucs *blk;
    register uword size;
    size = sizeof(struct b_ucs) + ((n - 1) * sizeof(word));
-   EVVal(size,e_ucs);
-   AlcBlk(blk, b_ucs, T_Ucs, size);
+   AlcBlk(blk, b_ucs, T_Ucs, size, e_ucs);
    blk->blksize = size;
    blk->utf8 = nulldesc;
    return blk;
@@ -509,8 +495,7 @@ struct b_refresh *f(word *entryx, int na, int nl)
    {
    struct b_refresh *blk;
 
-   EVVal(sizeof(struct b_refresh) + (na+nl)*sizeof(struct descrip),e_refresh);
-   AlcVarBlk(blk, b_refresh, T_Refresh, na + nl);
+   AlcVarBlk(blk, b_refresh, T_Refresh, na + nl, e_refresh);
    blk->ep = entryx;
    blk->numlocals = nl;
    return blk;
@@ -530,8 +515,7 @@ struct b_selem *f(dptr mbr,uword hn)
    tended struct descrip tmbr = *mbr;
    register struct b_selem *blk;
 
-   EVVal(sizeof(struct b_selem), e_selem);
-   AlcFixBlk(blk, b_selem, T_Selem)
+   AlcFixBlk(blk, b_selem, T_Selem, e_selem)
    blk->clink = NULL;
    blk->setmem = tmbr;
    blk->hashnum = hn;
@@ -605,8 +589,7 @@ struct b_tvsubs *f(word len, word pos, dptr var)
    tended struct descrip tvar = *var;
    register struct b_tvsubs *blk;
 
-   EVVal(sizeof(struct b_tvsubs), e_tvsubs);
-   AlcFixBlk(blk, b_tvsubs, T_Tvsubs)
+   AlcFixBlk(blk, b_tvsubs, T_Tvsubs, e_tvsubs)
    blk->sslen = len;
    blk->sspos = pos;
    blk->ssvar = tvar;
@@ -626,8 +609,7 @@ struct b_telem *f()
    {
    register struct b_telem *blk;
 
-   EVVal(sizeof (struct b_telem), e_telem);
-   AlcFixBlk(blk, b_telem, T_Telem)
+   AlcFixBlk(blk, b_telem, T_Telem, e_telem)
    blk->hashnum = 0;
    blk->clink = NULL;
    blk->tref = nulldesc;
@@ -650,8 +632,7 @@ struct b_tvtbl *f(register dptr tbl, register dptr ref, uword hashnum)
    tended struct descrip tref = *ref;
    register struct b_tvtbl *blk;
 
-   EVVal(sizeof (struct b_tvtbl), e_tvtbl);
-   AlcFixBlk(blk, b_tvtbl, T_Tvtbl)
+   AlcFixBlk(blk, b_tvtbl, T_Tvtbl, e_tvtbl)
    blk->hashnum = hashnum;
    blk->clink = BlkLoc(ttbl);
    blk->tref = tref;
