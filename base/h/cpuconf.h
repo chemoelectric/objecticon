@@ -250,11 +250,11 @@
 #endif					/* MaxAbrSize */
 
 #ifndef MStackSize
-      #define MStackSize 30000		/* size of the main stack in words */
+      #define MStackSize 120000		/* default value of mstksize, the size of the main interpreter stack */
 #endif					/* MStackSize */
 
 #ifndef StackSize
-   #define StackSize	30000		/* words in co-expression stack */
+   #define StackSize   120000		/* default value of stksize, the co-expression stack size */
 #endif					/* StackSize */
 
 #ifndef QualLstSize

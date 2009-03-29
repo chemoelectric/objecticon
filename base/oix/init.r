@@ -370,15 +370,14 @@ void icon_init(char *name)
     env_int(IXGROWTH, &memgrowth, 1, (uword)10000);	/* max 100x growth */
     env_int(OICORE, &dodump, 1, (uword)2);
 
-    coexprlim = Max((pmem/200) / (stksize * WordSize), CoexprLim);
-    env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxUnsigned);
-
     /*
-     * Convert stack sizes from words to bytes.
+     * Ensure stack sizes are multiples of WordSize.
      */
+    stksize &= ~(WordSize - 1);
+    mstksize &= ~(WordSize - 1);
 
-    stksize *= WordSize;
-    mstksize *= WordSize;
+    coexprlim = Max((pmem/200) / stksize, CoexprLim);
+    env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxUnsigned);
 
 #if IntBits == 16
     if (mstksize > MaxBlock)
