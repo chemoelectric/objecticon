@@ -56,8 +56,6 @@ function{0,1} posix_System_trap(sig, handler)
       return proc
       }
    body { 
-       tended char *signalname;
-        
 #if MSWIN32
        fail;
 #else					/* MSWIN32 */
