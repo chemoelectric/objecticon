@@ -4299,7 +4299,8 @@ dptr call(dptr proc, ...)
     wdp saved_wdsplys = wdsplys;
     va_list ap;
     dptr res;
-    wdsplys = 0;   /* Avoid interp processing X events */
+    wdsplys = 0;   /* Avoid recursive calls into handle_misc by making 
+                    * pollevent() a temporary no-op */
     va_start(ap, proc);
     res = call_icon_va(proc, ap);
     va_end(ap);

@@ -58,15 +58,6 @@ extern word coexprlim;          /* number of coexpression allocations before a G
 
 extern struct tend_desc *tend;  /* chain of tended descriptors */
 
-/*
- * Externals that are conditional on features.
- */
-
-
-#ifdef Graphics
-   extern int pollctr;
-#endif					/* Graphics */
-
 extern char typech[];
 extern word oldsum;
 extern struct descrip csetdesc;		/* cset descriptor */

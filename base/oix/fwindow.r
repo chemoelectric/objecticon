@@ -7,11 +7,9 @@
 
 /*
  * Global variables.
- *  A poll counter for use in interp.c,
  *  the binding for the console window - FILE * for simplicity,
  *  &col, &row, &x, &y, &interval, timestamp, and modifier keys.
  */
-int pollctr;
 
 static char attr_buff[4096];     /* Buff for attribute values */
 

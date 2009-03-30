@@ -197,13 +197,6 @@ int interp_x(int fsig,dptr cargp)
 
    CheckStack();
 
-#ifdef Graphics
-   if (!pollctr--) {
-      pollctr = pollevent();
-      }
-#endif					/* Graphics */
-/*printf("INTERP csp=%x ilevel=%d local=%d\n",get_sp(),ilevel,(((char*)(&fsig)))-(char*)(&lastdesc));*/
-
    ilevel++;
    EntInterp;
    switch (fsig) {
@@ -610,17 +603,7 @@ Deliberate Syntax Error
 	    Call_Gen;
 
          case Op_Noop:		/* no-op */
-
-#ifdef Graphics
-           if (!pollctr--) { 
-	       ExInterp;
-               pollctr = pollevent();
-	       EntInterp;
-	       }	       
-#endif					/* Graphics */
-
             break;
-
 
 				/* ---String Scanning--- */
 
@@ -784,19 +767,6 @@ invokej:
 	    else {
 
                rargp = carg;		/* valid only for Vararg or Builtin */
-
-#ifdef Graphics
-	       /*
-		* Do polling here
-		*/
-	       pollctr >>= 1;
-               if (!pollctr) {
-	          ExInterp;
-                  pollctr = pollevent();
-	          EntInterp;
-	          }	       
-#endif					/* Graphics */
-
 	       lastev = E_Function;
 	       lastdesc = *rargp;
 	       InterpEVValD(rargp, e_fcall);

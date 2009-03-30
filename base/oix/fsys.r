@@ -140,10 +140,6 @@ function{0,1} delay(n)
    inline {
       if (idelay(n) == Failed)
         fail;
-#ifdef Graphics
-      pollctr >>= 1;
-      pollctr++;
-#endif					/* Graphics */
       return nulldesc;
       }
 end
@@ -170,12 +166,6 @@ function{1} system(s)
        * so the exit code must be returned via a variable.
        */
       C_integer i;
-
-#ifdef Graphics
-      pollctr >>= 1;
-      pollctr++;
-#endif                                  /* Graphics */
-
       i = (C_integer)system(s);
       return C_integer i;
       }
