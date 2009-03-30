@@ -562,13 +562,14 @@ char *f(register char *s, register word slen)
    register char *d;
    char *ofree;
 
-   StrLen(ts) = slen;
-   StrLoc(ts) = s;
 #if e_string
-   if (!noMTevents)
+   if (!noMTevents) {
+      StrLen(ts) = slen;
+      StrLoc(ts) = s;
       EVVal(slen, e_string);
+      s = StrLoc(ts);
+   }
 #endif					/* E_String */
-   s = StrLoc(ts);
 
    /*
     * Make sure there is enough room in the string space.
@@ -579,7 +580,7 @@ char *f(register char *s, register word slen)
       if (!reserve(Strings, slen))
          return NULL;
       s = StrLoc(ts);
-      }
+   }
 
    strtotal += slen;
 
