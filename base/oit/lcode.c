@@ -1876,7 +1876,7 @@ static void gentables()
                         fprintf(dbgfile, "   %s\n%ld:\t\t", t, (long)pc + i);
                         j = 0;
                     }
-                    fprintf(dbgfile, " %02x", s[i]);
+                    fprintf(dbgfile, " %02x", s[i] & 0xff);
                     t[j++] = isprint(s[i]) ? s[i] : ' ';
                 }
                 t[j] = 0;
