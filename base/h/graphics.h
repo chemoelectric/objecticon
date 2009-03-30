@@ -213,6 +213,7 @@ typedef struct _wdisplay {
   int		serial;			/* serial # */
   char		name[MAXDISPLAYNAME];
   Display *	display;
+  struct progstate *program;           /* owning program */
   GC		icongc;
   Colormap	cmap;
   double	gamma;

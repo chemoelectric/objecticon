@@ -477,7 +477,6 @@ int handle_misc(wd, w)
 /* could avoid doing this search every event by handling 1 window at a time */
         for (wb = wbndngs; wb; wb=wb->next) {
             ws = wb->window;
-
             if (ws->display == wd) {
                 if (ws->win == evwin) break;
                 if (ws->iconwin == evwin) break;
@@ -792,8 +791,10 @@ int pollevent()
     wdp wd;
     int hm;
     for (wd = wdsplys; wd; wd = wd->next) {
-        if ((hm = handle_misc(wd, NULL)) == -1)
-            fatalerr(141, NULL);
+        if (wd->program == curpstate) {
+            if ((hm = handle_misc(wd, NULL)) == -1)
+                fatalerr(141, NULL);
+        }
     }
     return 400;
 }

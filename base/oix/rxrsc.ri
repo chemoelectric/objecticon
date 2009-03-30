@@ -359,7 +359,7 @@ wdp alc_display(s)
     if (s == NULL) s = getenv("DISPLAY");
     if (s == NULL) s = "";
     for(wd = wdsplys; wd; wd = wd->next)
-        if (!strcmp(wd->name,s)) {
+        if (wd->program == curpstate && !strcmp(wd->name,s)) {
             wd->refcount++;
             return wd;
         }
@@ -367,6 +367,7 @@ wdp alc_display(s)
     GRFX_ALLOC(wd, _wdisplay);
 
     strcpy(wd->name,s);
+    wd->program = curpstate;
     wd->display = XOpenDisplay((*s=='\0') ? NULL : s);
 
     if (wd->display == NULL) {
