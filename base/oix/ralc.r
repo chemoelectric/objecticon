@@ -15,13 +15,13 @@ static struct region *newregion	(word nbytes, word stdsize);
  */
 #begdef AlcBlk(var, struct_nm, t_code, nbytes, event)
 {
+   EVVal(nbytes, event);
+
    /*
     * Ensure that there is enough room in the block region.
     */
    if (DiffPtrs(blkend,blkfree) < nbytes && !reserve(Blocks, nbytes))
       return NULL;
-
-   EVVal(nbytes, event);
 
    /*
     * Decrement the free space in the block region by the number of bytes
@@ -58,6 +58,33 @@ static struct region *newregion	(word nbytes, word stdsize);
    }
 #enddef
 
+
+/*
+ * Alc2Blks - allocate two blocks together.
+ */
+#begdef Alc2Blks(var1, struct_nm1, t_code1, nbytes1, event1, \
+                 var2, struct_nm2, t_code2, nbytes2, event2)
+{
+   word nbytes = nbytes1 + nbytes2;
+
+   EVVal(nbytes1, event1);
+   EVVal(nbytes2, event2);
+
+   /*
+    * Ensure that there is enough room in the block region.
+    */
+   if (DiffPtrs(blkend,blkfree) < nbytes && !reserve(Blocks, nbytes))
+      return NULL;
+
+   blktotal += nbytes;
+   var1 = (struct struct_nm1 *)blkfree;
+   blkfree += nbytes1;
+   var1->title = t_code1;
+   var2 = (struct struct_nm2 *)blkfree;
+   blkfree += nbytes2;
+   var2->title = t_code2;
+}
+#enddef
 
 #begdef alcbignum_macro(f,e_lrgint)
 /*
@@ -262,10 +289,8 @@ struct b_list *f(uword size, uword nslots)
    register struct b_list *blk;
    register struct b_lelem *lblk;
 
-   if (!reserve(Blocks, (word)(sizeof(struct b_list) + i)))
-       return NULL;
-   AlcFixBlk(blk, b_list, T_List, e_list)
-   AlcBlk(lblk, b_lelem, T_Lelem, i, e_lelem)
+   Alc2Blks(blk, b_list, T_List, sizeof(struct b_list), e_list,
+            lblk, b_lelem, T_Lelem, i, e_lelem)
    blk->size = size;
    blk->id = list_ser++;
    blk->listhead = blk->listtail = (union block *)lblk;
@@ -295,10 +320,8 @@ struct b_list *f(uword size, uword nslots)
    register struct b_list *blk;
    register struct b_lelem *lblk;
 
-   if (!reserve(Blocks, (word)(sizeof(struct b_list) + i))) 
-       return NULL;
-   AlcFixBlk(blk, b_list, T_List, e_list)
-   AlcBlk(lblk, b_lelem, T_Lelem, i, e_lelem)
+   Alc2Blks(blk, b_list, T_List, sizeof(struct b_list), e_list,
+            lblk, b_lelem, T_Lelem, i, e_lelem)
    blk->size = size;
    blk->id = list_ser++;
    blk->listhead = blk->listtail = (union block *)lblk;
