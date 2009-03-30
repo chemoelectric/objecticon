@@ -437,18 +437,18 @@ function{0,1} lang_Prog_get_global_location(s, c)
           runerr(0);
 
        if (prog->Glocs == prog->Eglocs) {
-           why("No global location data in icode");
+           LitWhy("No global location data in icode");
            fail;
        }
            
        p = lookup_global_loc(&s, prog);
        if (!p) {
-           why("Unknown symbol");
+           LitWhy("Unknown symbol");
            fail;
        }
 
        if (is:null(p->fname)) {
-           why("Symbol is builtin, has no location");
+           LitWhy("Symbol is builtin, has no location");
            fail;
        }
 
@@ -658,7 +658,7 @@ function{0,1} lang_Class_get_location(c)
         if (!(class = get_class_for(&c)))
             runerr(0);
         if (class->program->Glocs == class->program->Eglocs) {
-            why("No global location data in icode");
+            LitWhy("No global location data in icode");
             fail;
         }
         p = lookup_global_loc(&class->name, class->program);
@@ -809,12 +809,12 @@ function{0,1} lang_Class_get_field_location(c, field)
             runerr(0);
         CheckField(field);
         if (class->program->ClassFieldLocs == class->program->EClassFieldLocs) {
-            why("No field location data in icode");
+            LitWhy("No field location data in icode");
             fail;
         }
         i = lookup_class_field(class, &field, 0);
         if (i < 0) {
-            why("Unknown field");
+            LitWhy("Unknown field");
             fail;
         }
         loc = &class->program->ClassFieldLocs[class->fields[i] - class->program->ClassFields];
@@ -1275,7 +1275,7 @@ function{0,1} io_FileStream_in(self, i)
                errno2why();
            } else {  /* nread == 0 */
                *self_eof_flag = onedesc;
-               why("End of file");
+               LitWhy("End of file");
            }
            fail;
        }
@@ -1452,7 +1452,7 @@ function{0,1} io_SocketStream_in(self, i)
                errno2why();
            } else {  /* nread == 0 */
                *self_eof_flag = onedesc;
-               why("End of file");
+               LitWhy("End of file");
            }
            fail;
        }
@@ -1553,7 +1553,7 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
         static struct sockaddr_un us;
         char *t = s + 5;
         if (strlen(t) >= sizeof(us.sun_path)) {
-            why("Name too long");
+            LitWhy("Name too long");
             return 0;
         }
         us.sun_family = AF_UNIX;
@@ -1569,13 +1569,13 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
         struct hostent *hp;
 
         if (strlen(t) >= sizeof(host)) {
-            why("Name too long");
+            LitWhy("Name too long");
             return 0;
         }
         strcpy(host, t);
         p = strchr(host, ':');
         if (!p) {
-            why("Bad socket address format");
+            LitWhy("Bad socket address format");
             return 0;
         }
         *p++ = 0;
@@ -1587,11 +1587,11 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
         else {
             if ((hp = gethostbyname(host)) == NULL) {
                 switch (h_errno) {
-                    case HOST_NOT_FOUND: why("Name lookup failure: host not found"); break;
-                    case NO_DATA: why("Name lookup failure: no IP address for host") ; break;
-                    case NO_RECOVERY: why("Name lookup failure: name server error") ; break;
-                    case TRY_AGAIN: why("Name lookup failure: temporary name server error") ; break;
-                    default: why("Name lookup failure") ; break;
+                    case HOST_NOT_FOUND: LitWhy("Name lookup failure: host not found"); break;
+                    case NO_DATA: LitWhy("Name lookup failure: no IP address for host") ; break;
+                    case NO_RECOVERY: LitWhy("Name lookup failure: name server error") ; break;
+                    case TRY_AGAIN: LitWhy("Name lookup failure: temporary name server error") ; break;
+                    default: LitWhy("Name lookup failure") ; break;
                 }
                 return 0;
             }
@@ -1601,7 +1601,7 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
         return (struct sockaddr *)&iss;
     }
 
-    why("Bad socket address format");
+    LitWhy("Bad socket address format");
     return 0;
 }
 
@@ -1629,22 +1629,14 @@ function{0,1} io_SocketStream_connect(self, addr)
 end
 
 function{0,1} io_SocketStream_bind(self, addr)
-   if !cnv:string(addr) then
+   if !cnv:C_string(addr) then
       runerr(103, addr)
-
    body {
-       tended char *addrstr;
        struct sockaddr *sa;
        int len;
        GetSelfFd();
 
-       /*
-        * get a C string for the address.
-        */
-       if (!cnv:C_string(addr, addrstr))
-           runerr(103, addr);
-
-       sa = parse_sockaddr(addrstr, &len);
+       sa = parse_sockaddr(addr, &len);
        if (!sa) {
            /* &why already set by parse_sockaddr */
            fail;
@@ -1754,7 +1746,7 @@ function{0,1} io_DescStream_select(rl, wl, el, timeout)
        }
        /* A rc of zero means timeout */
        if (rc == 0) {
-           why("Timeout");
+           LitWhy("Timeout");
            fail;
        }
 
@@ -1764,7 +1756,7 @@ function{0,1} io_DescStream_select(rl, wl, el, timeout)
        fd_set2list(el, etmp, eset);
 
        if (count != rc) {
-           why("Unexpected mismatch between FD_SETs and list sizes");
+           LitWhy("Unexpected mismatch between FD_SETs and list sizes");
            fail;
        }
 
@@ -1803,7 +1795,7 @@ function{0,1} io_DescStream_poll(a[n])
        }
        /* A rc of zero means timeout */
        if (rc == 0) {
-           why("Timeout");
+           LitWhy("Timeout");
            fail;
        }
 
@@ -1888,7 +1880,7 @@ function{0,1} io_DirStream_read_impl(self)
                errno2why();
            } else {
                *self_eof_flag = onedesc;
-               why("End of file");
+               LitWhy("End of file");
            }
            fail;
        }
@@ -2257,7 +2249,7 @@ function{0,1} io_RamStream_in(self, i)
        if (self_rs->pos >= self_rs->size) {
            GetSelfEofFlag();
            *self_eof_flag = onedesc;
-           why("End of file");
+           LitWhy("End of file");
            fail;
        }
 
@@ -2321,7 +2313,7 @@ function{0,1} io_RamStream_seek(self, offset)
            self_rs->pos = offset - 1;
        else {
            if (self_rs->size < -offset) {
-               why("Invalid value to seek");
+               LitWhy("Invalid value to seek");
                fail;
            }
            self_rs->pos = self_rs->size + offset;
@@ -2421,11 +2413,11 @@ function{0,1} lang_Constructor_get_location(c)
         if (!(constructor = get_constructor_for(&c)))
             runerr(0);
         if (!constructor->program) {
-            why("Dynamically created constructor has no location");
+            LitWhy("Dynamically created constructor has no location");
             fail;
         }
         if (constructor->program->Glocs == constructor->program->Eglocs) {
-            why("No global location data in icode");
+            LitWhy("No global location data in icode");
             fail;
         }
         p = lookup_global_loc(&constructor->name, constructor->program);
@@ -2479,16 +2471,16 @@ function{0,1} lang_Constructor_get_field_location(c, field)
             runerr(0);
         CheckField(field);
         if (!constructor->program) {
-            why("Dynamically created constructor has no location");
+            LitWhy("Dynamically created constructor has no location");
             fail;
         }
         if (!constructor->field_locs) {
-            why("No constructor field location data in icode");
+            LitWhy("No constructor field location data in icode");
             fail;
         }
         i = lookup_record_field(constructor, &field, 0);
         if (i < 0) {
-            why("Unknown field");
+            LitWhy("Unknown field");
             fail;
         }
         suspend constructor->field_locs[i].fname;
@@ -2618,12 +2610,12 @@ function{0,1} lang_Proc_get_local_location(c, id)
             runerr(0);
         CheckField(id);
         if (!proc->llocs) {
-            why("No local location data in icode");
+            LitWhy("No local location data in icode");
             fail;
         }
         i = lookup_proc_local(proc, &id);
         if (i < 0) {
-            why("Unknown local");
+            LitWhy("Unknown local");
             fail;
         }
         suspend proc->llocs[i].fname;
@@ -2727,16 +2719,16 @@ function{0,1} lang_Proc_get_location(c, flag)
         if (proc->field && (is:null(flag) ||
                             !(proc->field->flags & M_Defer))) {
             if (proc->program->ClassFieldLocs == proc->program->EClassFieldLocs) {
-                why("No field location data in icode");
+                LitWhy("No field location data in icode");
                 fail;
             }
             p = &proc->program->ClassFieldLocs[proc->field - proc->program->ClassFields];
         } else if (!proc->program) {
-            why("Proc is builtin, has no location");
+            LitWhy("Proc is builtin, has no location");
             fail;
         } else {
             if (proc->program->Glocs == proc->program->Eglocs) {
-                why("No global location data in icode");
+                LitWhy("No global location data in icode");
                 fail;
             }
             p = lookup_global_loc(&proc->pname, proc->program);

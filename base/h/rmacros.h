@@ -214,6 +214,11 @@
                          StrLen(*dp) = sizeof(s) - 1;       \
 			 } while (0)
 
+/*
+ * Set &why to a string literal.
+ */
+#define LitWhy(s) LitStr(s,&kywd_why)
+
 #define DiffPtrsBytes(p1,p2) DiffPtrs((char*)(p1), (char*)(p2))
 
 /*
