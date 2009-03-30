@@ -1,0 +1,92 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+############################################################################
+#
+#
+#
+class CanvasMenuComponentDialog(MenuComponentEdit)
+   public 
+      paint_field,
+      paint_field_l,
+      paint_field_r,
+      shaded,                  #
+      accel_flag,              # Accel on/off
+      accel_tf
+
+   public on_accel_flag()
+      accel_tf.toggle_is_shaded()
+   end
+
+   public validate_input()
+      cast(self,MenuComponentEdit).validate_input() | fail
+      \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
+      self.paint_field.validate_input() | fail
+      self.paint_field_l.validate_input() | fail
+      self.paint_field_r.validate_input() | fail
+      return
+   end
+
+   public set_vals()
+      cast(self,MenuComponentEdit).set_vals()
+      c.is_shaded_flag := shaded.get_status()
+      c.set_paint_mid(paint_field.get_contents())
+      c.set_paint_left(paint_field_l.get_contents())
+      c.set_paint_right(paint_field_r.get_contents())
+      c.accel := if accel_flag.is_checked() then accel_tf.get_contents() else &null
+   end
+
+   public setup()
+      local main_panel
+
+      cast(self,MenuComponentEdit).setup()
+
+      main_panel := TabItem()
+      add_tab_at_front(main_panel)
+      main_panel.set_label("General")
+      main_panel.set_layout(GridLayout("extra=borders"))
+
+      paint_field := PaintField("title=",Label("label=Label"), "c:eol", "c:w=2")
+      paint_field.set_contents(c.paint_mid)
+      main_panel.add(paint_field)
+
+      paint_field_l := PaintField("title=",Label("label=Label(L)"), "c:eol", "c:w=2")
+      paint_field_l.set_contents(c.paint_left)
+      main_panel.add(paint_field_l)
+
+      paint_field_r := PaintField("title=",Label("label=Label(R)"), "c:eol", "c:w=2")
+      paint_field_r.set_contents(c.paint_right)
+      main_panel.add(paint_field_r)
+
+      shaded := CheckBox("c:eol")
+      shaded.set_label("Is shaded")
+      if \c.is_shaded_flag then
+         shaded.set_is_checked("t")
+      main_panel.add(shaded)
+
+      accel_flag := CheckBox()
+      accel_flag.connect(self.on_accel_flag, Event.ACTION)
+      accel_flag.set_label("Set Accelerator")
+      main_panel.add(accel_flag)
+
+      accel_tf := TextField("c:eol")
+      accel_tf.set_size(100)
+      main_panel.add(accel_tf)
+
+      if /c.accel then
+         accel_tf.set_is_shaded("t")
+      else  {
+         accel_flag.set_is_checked("t")
+         accel_tf.set_contents(c.accel)
+      }
+   end
+end
+
+

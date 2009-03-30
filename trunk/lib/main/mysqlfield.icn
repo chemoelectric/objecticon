@@ -1,0 +1,111 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package mysql
+
+#
+# A simple object which corresponds to the MYSQL_FIELD struct.
+#
+class MySqlField()
+   private readable 
+      name, 
+      table,
+      org_table,
+      db,
+      def,
+      length,
+      max_length,
+      flags,
+      decimals,
+      type
+
+   #
+   # Get the name
+   #
+   public get_name()
+      return name
+   end
+
+   #
+   # Get the table
+   #
+   public get_table()
+      return table
+   end
+
+   #
+   # Get the org_table
+   #
+   public get_org_table()
+      return org_table
+   end
+
+   #
+   # Get the db
+   #
+   public get_db()
+      return db
+   end
+
+   #
+   # Get the def
+   #
+   public get_def()
+      return def
+   end
+
+   #
+   # Get the length
+   #
+   public get_length()
+      return length
+   end
+
+   #
+   # Get the max_length
+   #
+   public get_max_length()
+      return max_length
+   end
+
+   #
+   # Get the flags
+   #
+   public get_flags()
+      return flags
+   end
+
+   #
+   # Get the decimals field
+   #
+   public get_decimals()
+      return decimals
+   end
+
+   #
+   # Get the type - see constants in mysql.icn for the various possible 
+   # return values.
+   #
+   public get_type()
+      return type
+   end
+
+   package new(a[])
+      self.name := pop(a)
+      self.table := pop(a)
+      self.org_table := pop(a)
+      self.db := pop(a)
+      self.def := pop(a)
+      self.length := pop(a)
+      self.max_length := pop(a)
+      self.flags := pop(a)
+      self.decimals := pop(a)
+      self.type := pop(a)
+      return
+   end
+end

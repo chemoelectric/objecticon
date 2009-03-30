@@ -1,0 +1,187 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+import util
+
+#
+# A formatter for XML documents.  The default formatter behaviour is to output the
+# string content as held in the children array (this may or may not have had whitespace
+# removed depending on whether validation against a DTD occured), and without
+# indentation.
+#
+class XmlFormatter(Formatter,SetFields)
+   public
+      indent, 
+      no_whitespace_flag, 
+      text_trim_flag, 
+      as_read_flag
+
+   #
+   # Ensure that each opening element appears with an indent of n chars.  Whitespace
+   # will be inserted as appropriate.  By default, no indentation is done.
+   #
+   public set_indent(n)
+      self.indent := n
+   end
+
+   #
+   # Configure whether whitespace-only string content will be discarded.  The default
+   # is off, ie keep whitespace.
+   #
+   public set_no_whitespace(s)
+      self.no_whitespace_flag := to_flag(s)
+   end
+
+   #
+   # Configure whether whitespace-only string content will be discarded,
+   # and in addition any other string content will be trimmed at both ends.  The
+   # default is off
+   #
+   public set_text_trim(s)
+      self.text_trim_flag := to_flag(s)
+   end
+
+   #
+   # Configure the formatter so that the string content will be output as read from
+   # the input; ie the formatter uses the whitespace_children list rather than the children
+   # list.  The default is off.
+   #
+   public set_as_read(s)
+      as_read_flag := to_flag(s)
+   end
+
+   public format_document(out, n, level)
+      local c
+      every c := !n.children do {
+         format(out, c, level + 1) | fail
+         out.write() | fail
+      }
+      return
+   end
+
+   public format_content(out, s, level)
+      return out.writes(s)
+   end
+
+   public format_doctype(out, n, level)
+      local s, x
+      s := "<!DOCTYPE "
+      s ||:= \n.name
+      x := n.external_id
+      if \x then {
+         if \x.public_id then
+            s ||:= " PUBLIC \"" || x.public_id || "\" \"" || x.system_id || "\""
+         else
+            s ||:= " SYSTEM \"" || x.system_id || "\""
+      }
+      s ||:= ">"
+      return out.writes(s)
+   end
+
+   public format_comment(out, n, level)
+      return out.writes("<!--" || n.comment || "-->")
+   end
+
+   public format_pi(out, n, level)
+      local s
+      s := "<?" || n.target
+      if \n.content then
+         s ||:= " " || n.content 
+      s ||:= "?>"
+      return out.writes(s)
+   end
+
+   public format_element(out, n, level)
+      local s, istr1, istr2, x, l, e
+
+      if \indent then {
+         istr1 := "\n" || repl(" ", indent * level)
+         istr2 := "\n" || repl(" ", indent * (level - 1))
+      }
+
+      s := "<" || n.name
+      if *n.attributes > 0 then {
+         s ||:= " "
+         every x := !sort(n.attributes) do {
+            s ||:= x[1] || "=\"" || xml_escape(x[2], '&<>\"') || "\" "
+         }
+      }
+      if *n.children = 0 then
+         s ||:= "/>"
+      else
+         s ||:= ">"
+      out.writes(s) | fail
+
+      if *n.children > 0 then {
+         l := get_children(n)
+         if *l = 1 & text(l[1]) then {
+            out.writes(xml_escape(l[1], '&<>\"')) | fail
+         } else {
+            every e := !l do {
+               if \indent then
+                  out.writes(istr1) | fail
+               if text(e) then
+                  out.writes(xml_escape(e, '&<>\"')) | fail
+               else
+                  format(out, e, level + 1) | fail
+            }
+            if \indent then
+               out.writes(istr2) | fail
+         }
+         out.writes("</" || n.name || ">") | fail
+      }
+      return
+   end
+
+   public get_children(el)
+      if \as_read_flag then
+         return \el.whitespace_children | el.children
+      if \no_whitespace_flag then
+         return el.get_children_no_whitespace()
+      if \text_trim_flag then {
+         return el.get_trimmed_children()
+      }
+      return el.children
+   end
+
+   public format_cdata(out, n, level)
+      return out.writes("<![CDATA[" || n.content || "]]>")
+   end
+
+   public format_xmldecl(out, n, level)
+      local s
+      s := "<?xml "
+      if \n.version then
+         s ||:= "version='" || n.version || "' "
+      if \n.encoding then
+         s ||:= "encoding='" || n.encoding || "' "
+      if \n.standalone then
+         s ||:= "standalone='" || n.standalone || "' "
+      s ||:= "?>"
+      return out.writes(s)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "indent" : set_indent(f.int_val())
+         "no_whitespace" : set_no_whitespace(f.flag_val())
+         "text_trim" : set_text_trim(f.flag_val())
+         "as_read" : set_as_read(f.flag_val())
+         default : fail
+      }
+      return
+   end
+
+   public new(a[])
+      set_fields(a)
+      return
+   end
+end
+

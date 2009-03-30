@@ -1,0 +1,32 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+class CanvasOverlaySetUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasOverlaySet()
+      t.set_size(200, 150)
+      t.add(CanvasOverlayItem())
+      return t
+   end
+
+   public get_category()
+      return "Containers"
+   end
+
+   public get_name()
+      return "OverlaySet"
+   end
+
+   public get_icon()
+      return (
+              $include "icon/icn15.icon"
+              )
+   end
+end
+

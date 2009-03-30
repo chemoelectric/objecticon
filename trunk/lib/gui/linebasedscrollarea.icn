@@ -1,0 +1,361 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import io
+
+class LineBasedScrollAreaRangeInfo()
+   public
+      first,
+      last,
+      first_whole,
+      last_whole,
+      offset
+end
+
+
+#
+# This is a scroll area where the objects to be displayed are lines of
+# a fixed height.
+#
+class LineBasedScrollArea(DrawScrollArea)
+   public 
+      # Cached line height and count.
+      line_height,
+      line_count
+
+   #
+   # Succeed if the line count is non-zero
+   #
+   public has_lines()
+      return get_line_count() > 0
+   end
+
+   #
+   # Get the line to go to on a page move.
+   #
+   public get_page_movement(curr, dir)
+      local s, h, r, e
+      if integer(h := get_line_height()) then
+         return curr + dir * (view.h / h)
+      else {
+         s := 0
+         r := curr
+         if dir > 0 then {
+            every e := h[curr + 1 to *h] do {
+               if s + e >= view.h then
+                  break
+               r +:= 1
+               s +:= e
+            }
+         } else {
+            every e := h[curr - 1 to 1 by -1] do {
+               if s + e >= view.h then
+                  break
+               r -:= 1
+               s +:= e
+            }
+         }
+         return r
+      }
+   end
+
+   #
+   # Get line info for the present view.  The result gives the first and last lines in
+   # the view and the first and last wholly visible lines in the view.  For the latter,
+   # if there are no such lines then the first and last lines are returned.
+   # Fails if there are no data lines, or the view is <= 0 in height.
+   #
+   public get_line_info()
+      local s, h, a, r, e, t, res, lc
+      (view.h > 0 & has_lines()) | fail
+      a := get_area_y()
+      res := LineBasedScrollAreaRangeInfo()
+      if integer(h := get_line_height()) then {
+         lc := get_line_count()
+         res.offset := a % h
+         # Imagine the view extended upwards to include the first partial bit...
+         t := view.h + res.offset
+         res.first := a / h + 1
+         res.last := res.first + t / h - 1
+         if t % h > 0 then
+            res.last +:= 1
+         res.last >:= lc
+
+         if res.offset > 0 & t / h > 1 then
+            res.first_whole := min(res.first + 1, lc)
+         else
+            res.first_whole := res.first
+
+         # The term in brackets gives the distance from the base of the partial
+         # one below up to the top of the view.
+         if t % h > 0 & (view.h + h - t % h) / h > 1 then
+            res.last_whole := min((a + view.h) / h, lc)
+         else
+            res.last_whole := res.last
+      } else {
+         s := 0
+         r := 1
+         every e := !h do {
+            if /res.first & s + e > a then {
+               res.first := r
+               res.offset := a - s
+            }
+            if s >= a & s + e <= a + view.h then {
+               /res.first_whole := r
+               res.last_whole := r
+            }
+            if s < a + view.h then
+               res.last := r
+            else
+               break
+            r +:= 1
+            s +:= e
+         }
+         /res.first_whole := res.first
+         /res.last_whole := res.last
+      }
+      return res
+   end
+
+   #
+   # Get the total line height upto and including line
+   #
+   public get_cum_line_height(line)
+      local h, s, e
+      if integer(h := get_line_height()) then
+         return h * line
+      else {
+         s := 0
+         every e := !h \ line do
+            s +:= e
+         return s
+      }
+   end
+
+   #
+   # Goto line, horiz
+   #
+   # @p
+   public goto_pos(line, horiz)
+      goto_first(\line)
+      (\self.hsb).set_value(\horiz)
+      self.refresh()
+   end
+
+   #
+   # Make the given line the first in the view.
+   #
+   public goto_first(line)
+      (\self.vsb).set_value(get_cum_line_height(line - 1))
+      self.refresh()
+   end
+
+   #
+   # Make the given line the last in the view.
+   #
+   public goto_last(line)
+      (\self.vsb).set_value(get_cum_line_height(line) - view.h)
+      self.refresh()
+   end
+
+   #
+   # Ensure the given line is visible
+   #
+   public ensure_line_visible(line) 
+      local i
+      i := get_line_info() | fail
+      # Use <= first rather than < first_whole: this is nicer if there are no
+      # whole lines and line = first (it causes a scroll to top rather than not).
+      if line <= i.first then
+         goto_first(line)
+      else if line >= i.last then
+         goto_last(line)
+   end
+
+   #
+   # Place the given line, so far as possible, in the centre of the
+   # view area.
+   #
+   public center_line(line)
+      (\self.vsb).set_value(get_cum_line_height(line) - view.h / 2)
+   end
+
+   #
+   # Convert the current y pointer offset to a line number.  The result is <=0 if the
+   # pointer is above all lines, >get_line_count() if below.  The view window is not
+   # taken into account, so the result may not actually be visible.
+   # @p
+   public pointer_to_line(e)
+      local s, h, a, r, i
+      a := e.y - self.view.y + get_area_y()
+      if integer(h := get_line_height()) then 
+         return a / h + 1
+      else {
+         if a < 0 then
+            return 0
+         s := 0
+         r := 1
+         every i := !h do {
+            if s <= a < s + i then
+               break
+            r +:= 1
+            s +:= i
+         }
+         return r
+      }
+   end
+
+   #
+   # Return the line under the current x, y cursor, or fail if not over a line.
+   #
+   public get_line_under_pointer(e)
+      local r, i
+      (view.in_region(e) & has_lines()) | fail
+      r := pointer_to_line(e)
+      i := get_line_info() | fail
+      if i.first <= r <= i.last then
+         return r
+   end
+
+   #
+   # Return the nearest line to the pointer; fails only if there are no lines.
+   #
+   public get_nearest_line_to_pointer(e)
+      local r, i
+      has_lines() | fail
+      r := pointer_to_line(e)
+      i := get_line_info() | fail
+      r <:= i.first
+      r >:= i.last
+      return r
+   end
+
+   public draw(r)
+      local xp, yp, i, info, h, lh
+
+      info := get_line_info() | fail
+      h := get_line_height()
+
+      #
+      # Where to draw them
+      #
+      yp := view.y - info.offset
+
+      #
+      # Left offset
+      #
+      xp := view.x - get_area_x()
+
+      #
+      # Write the lines
+      #
+      every i := info.first to info.last do {
+         lh := integer(h) | h[i]
+         draw_line(xp, yp, lh, i, r)
+         yp +:= lh
+      }
+   end
+
+   #
+   # This method is overridden by the subclass to draw the given 
+   # line at the given position, into the buffer window cbwin.
+   # @param xp  The x position it should be drawn at
+   # @param yp  The y position it should be drawn at
+   # @param lh  The line height allowed for this line
+   # @param i   The line number to draw
+   # @param r   The view's clipping rectangle
+   #
+   public defer draw_line(xp, yp, lh, i, r)
+
+   #
+   # Clear the cached value of line height (and subject height).
+   #
+   public invalidate_line_height()
+      self.subject_height := self.line_height := &null
+   end
+
+   #
+   # This method is overridden by the subclass to work out the
+   # line height.  Because this operation is potentially expensive, it
+   # is called as late as possible and its value cached.
+   #
+   public defer calculate_line_height()
+
+   #
+   # This method is overridden by the subclass to work out the
+   # line count. Because this operation is potentially expensive, it
+   # is called as late as possible and its value cached.
+   #
+   public defer calculate_line_count()
+
+   #
+   # Return the line height
+   #
+   public get_line_height()
+      /self.line_height := calculate_line_height()
+      return self.line_height
+   end
+
+   #
+   # Return the line count
+   #
+   public get_line_count()
+      /self.line_count := calculate_line_count()
+      return self.line_count
+   end
+
+   #
+   # Clear the cached value of line count (and subject height).
+   #
+   public invalidate_line_count()
+      self.subject_height := self.line_count := &null
+   end
+
+   public calculate_subject_height()
+      local h, s
+      if integer(h := get_line_height()) then
+         return get_line_count() * h
+      else {
+         s := 0
+         every s +:= !h
+         return s
+      }
+   end
+
+   public get_height_for_line(i)
+      local h
+      if integer(h := get_line_height()) then
+         return h
+      else
+         return h[i]
+   end
+
+   public get_default_vertical_increment()
+      local h
+      if integer(h := get_line_height()) then
+         return h
+      else
+         return 16
+   end
+
+   public get_default_horizontal_increment()
+      return self.cbwin.text_width("m")
+   end
+
+   public dump()
+      local i
+      i := get_line_info()
+      write("lines:", i.first, "-", i.last)
+      write("whole lines:", i.first_whole, "-", i.last_whole)
+      write("offset: ", i.offset)
+      write("----------")
+   end
+end
+

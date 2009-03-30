@@ -1,0 +1,52 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics
+
+class SpinLabel(Label)
+   public keeps(e)
+      return member(Key.CURSOR_V, e.code)
+   end
+
+   public on_key(e)
+      case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+   end
+
+   public new(a[])
+      cast(self,Label).new()
+      self.set_label("")
+      self.connect(self.on_key, Event.KEY_PRESS)
+      self.set_accepts_focus("t")
+      self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
+      set_fields(a)
+      return
+   end
+end
+
+
+#
+# This class is the base class for non-editable spin components which use
+# a Label to display the current value.
+#
+class StaticSpin(Spin)
+   public get_contents()
+      return view.get_label()
+   end
+
+   public create_view()
+      return SpinLabel()
+   end
+end
+
+
+

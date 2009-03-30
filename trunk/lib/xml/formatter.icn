@@ -1,0 +1,86 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+import io
+
+#
+# This is an abstract base class for Formatters, which take a Document
+# object (or a Node within a Document), and output that document to a
+# stream.
+#
+class Formatter()
+   public format_to_string(n, level)
+      local f
+      f := RamStream()
+      format(f, n, level) | {
+         f.close()
+         fail
+      }
+      return f.done()
+   end
+
+   public format(out, n, level)
+      local s
+      /level := 0
+      /out := FileStream.stdout
+
+      if s := text(n) then
+         return format_content(out, s, level)
+
+      return case n.get_type() of {
+         "doctype" : format_doctype(out, n, level)
+         "comment" : format_comment(out, n, level)
+         "pi" : format_pi(out, n, level)
+         "element" : format_element(out, n, level)
+         "cdata" : format_cdata(out, n, level)
+         "document": format_document(out, n, level)
+         "xmldecl": format_xmldecl(out, n, level)
+      }
+   end
+
+   public defer format_document(out, n, level)
+
+   public defer format_content(out, s, level)
+
+   public defer format_doctype(out, n, level)
+
+   public defer format_comment(out, n, level)
+
+   public defer format_pi(out, n, level)
+
+   public defer format_element(out, n, level)
+
+   public defer format_cdata(out, n, level)
+
+   public defer format_xmldecl(out, n, level)
+end
+
+
+procedure xml_escape(s, c)
+   local ch, r
+
+   r := ""
+   s ? repeat {
+      r ||:= tab(upto(c) | 0)
+
+      if pos(0) then
+         break
+
+      r ||:= case string(ch := move(1)) of {
+         "&" : "&amp;"
+         "<" : "&lt;"
+         ">" : "&gt;"
+         "\"" : "&quot;"
+         default : "&#" || ord(ch) || ";"
+      }
+   }
+   return r
+end
+

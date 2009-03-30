@@ -1,0 +1,74 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a ListSpin on the canvas.
+#
+class CanvasListSpin(CanvasComponent,ListSpin)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      c.line(name || ".set_selection_list([" || list2string(self.selection_list) || "])")
+      if \self.selection ~= 1 then
+         c.line(name || ".set_selection(" || self.selection || ")")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasListSpin()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.set_selection_list(copy(self.selection_list))
+      c.set_selection(self.selection)
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [
+          ["Selection", "selection"],
+          ["Selection List", "selection_list"]
+         ]
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasListSpinDialog(self)
+   end
+
+   public allows_null_height()
+      return 1
+   end
+
+   public allows_null_width()
+      return 1
+   end
+
+   public new()
+      cast(self,ListSpin).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "ListSpin"
+      self.import_name := "gui"
+      self.name := "list_spin"
+      return
+   end
+end
+

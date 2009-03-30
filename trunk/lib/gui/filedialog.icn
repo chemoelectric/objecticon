@@ -1,0 +1,569 @@
+package gui
+
+import 
+   util,
+   ipl.wildcard,
+   ipl.sort,
+   io
+
+#
+#
+# File dialog class.  This class provides a standard file dialog.
+# 
+# @example
+# @ d := FileDialog()
+# @ d.show_modal()
+# @ write(d.get_result() | "cancelled")
+#
+class FileDialog(Dialog)
+   public
+      home_button, 
+      new_button, 
+      refresh_button, 
+      up_button, 
+      dir, 
+      dlist, 
+      flist, 
+      pos_table,
+      cancel_button, 
+      file, 
+      filter, 
+      okay_button,
+      init_dirs,                # Initial directory name
+      init_files,               # Initial file name
+      init_filters,
+      res,                      # Resulting file path          
+      message_label, 
+      show_hidden_cb
+
+   public component_setup()
+      self.setup()
+
+      #
+      # Defaults and extra dirs.
+      #
+      /init_dirs := []
+      every put(init_dirs, Files.getcwd() | 
+                Files.get_home() | 
+                Files.get_temp() | 
+                Files.get_roots())
+      init_dirs := list_unique(init_dirs)
+
+      /init_files := []
+      /init_filters := ["*"]
+
+      dir.set_selection_list(init_dirs)
+      file.set_selection_list(init_files)
+      filter.set_selection_list(init_filters)
+
+      dlist.set_draggable_cursor("t")
+      dlist.set_selection_on_key_moves("f")
+      flist.set_draggable_cursor("t")
+
+      pos_table := table()
+   end
+
+   public init_dialog()
+      goto_dir(dir.get_contents())
+      # If we have a filename in the field, select it in the file list,
+      # if it's there.
+      synch_file()
+   end
+
+   public on_file_sel(ev)
+      synch_file()
+   end
+
+   public synch_file()
+      local i
+      if i := flist.find_line(file.get_contents()) then {
+         flist.set_cursor(i)
+         flist.set_selections([i])
+         flist.center_line(i)
+      }
+   end
+
+   public end_dialog()
+   end
+
+   #
+   # Get the directory part of the result
+   #
+   public get_directory()
+      return (\self.res).parent().str()
+   end
+
+   #
+   # Get the file part of the result
+   #
+   public get_file()
+      return (\self.res).get(-1)
+   end
+
+   #
+   # Get the result, (will fail if cancel was pressed).
+   #
+   public get_result()
+      return (\self.res).str()
+   end
+
+   #
+   # Set the initial directory.
+   #
+   public set_directory(s)
+      return self.init_dirs := [s]
+   end
+
+   #
+   # Set the initial directories as a list; the first is
+   # the one initially shown.
+   #
+   public set_directories(l)
+      return self.init_dirs := l
+   end
+
+   #
+   # Set the initial file
+   #
+   public set_file(s)
+      return self.init_files := [s]
+   end
+
+   #
+   # Set the initial files
+   #
+   public set_files(l)
+      return self.init_files := l
+   end
+
+   #
+   # Set the file filter pattern list.
+   #
+   public set_filters(l)
+      return self.init_filters := l
+   end
+
+   #
+   # Set the initial file/directory from a whole path.
+   # 
+   public set_path(s)
+      local l, t
+      l := Files.get_path(s)
+      if t := l.parent() then
+         self.init_dirs := [t.str()]
+      else
+         self.init_dirs := [Files.getcwd()]
+      self.init_files := [l.get(-1)]
+      return s
+   end
+
+   #
+   # Set the result
+   #
+   # @p
+   public set_result()
+      self.res := Files.get_path(file.get_contents())
+      if not self.res.is_absolute() then
+         self.res := get_dir_path().append(self.res)
+   end
+
+   public get_dir_path()
+      return Files.get_path(dir.get_contents()).canonical()
+   end
+
+   public on_okay_button()
+      self.set_result()
+      self.dispose()
+   end
+
+   public on_cancel_button()
+      self.dispose()
+   end
+
+   public on_file()
+      #
+      # If return pressed in file TextField, same as okay
+      #
+      self.set_result()
+      self.dispose()
+   end
+
+   public on_dlist()
+      goto_dir(get_dir_path().child(dlist.object_get_selections()[1]).str(), 1)
+   end
+
+   public on_flist()
+      #
+      # Clicked in file list; set TextField
+      #
+      file.set_contents(flist.object_get_selections()[1])
+   end
+
+   public on_dir(ev)
+      goto_dir(dir.get_contents(), 1)
+   end
+
+   public on_filter(ev)
+      load_dir()
+      synch_file()
+   end
+
+   public on_show_hidden_cb(ev)
+      pos_table := table()
+      load_dir()
+      synch_file()
+   end
+
+   public on_up_button(ev)
+      goto_dir(self.get_dir_path().parent().str(), 1)
+   end
+
+   public on_home_button(ev)
+      goto_dir(Files.get_home(), 1)
+   end
+
+   public on_refresh_button(ev)
+      load_dir()
+      synch_file()
+   end
+
+   public on_new_button(ev)
+      local d, s
+      d := NewDirectoryDialog()
+      d.show_modal(self)
+      if \d.okay then {
+         s := self.get_dir_path().child(d.result).str()
+         if Files.mkdir(s) then
+            goto_dir(s, 1)
+         else
+            msg("mkdir failed: " || &why)
+      }
+   end
+
+   public get_pats()
+      local pat, pats
+      pats := []
+      filter.get_contents() ? {
+         until pos(0) do {
+            pat := tab(upto(';') | 0)
+            put(pats, wild_pat(pat))
+            move(1)
+         }
+      }
+      return pats
+   end
+
+   public msg(s)
+      message_label.set_label(s)
+   end
+
+   public clear_msg()
+      msg("")
+   end
+
+   public goto_dir(d, cf)
+      dir.set_contents(Files.get_path(d).canonical().str())
+      if \cf then
+         file.set_contents("")
+      load_dir()
+   end
+
+   public on_dlist_cursor(ev)
+      pos_table[get_dir_path().str()] := [dlist.get_cursor(), 
+                                          dlist.get_line_info().first_whole]
+   end
+
+   public load_dir()
+      local l, e, s
+
+      s := get_dir_path().str()
+
+      #
+      # Update directory and file lists.
+      #
+      l := list_directory(s)
+
+      dlist.set_contents(l[1])
+      dlist.clear_selections()
+      if e := \pos_table[s] then {
+         dlist.set_cursor(e[1])
+         dlist.goto_first(e[2])
+      } else {
+         dlist.goto_first(1)
+         dlist.set_area_x(0)
+         dlist.set_cursor(1)
+      }
+
+      flist.set_contents(l[2])
+      flist.goto_first(1)
+      flist.set_area_x(0)
+      flist.clear_selections()
+      flist.set_cursor(1)
+   end
+
+   #
+   # Read a directory.
+   #
+   public list_directory(s)
+      local e, dir_list, file_list, l, pats
+      clear_msg()
+      pats := get_pats()
+
+      if not(l := Files.list(s)) then {
+         msg(&why)
+         return [[],[]]
+      }
+      dir_list := []
+      file_list := []
+      every e := !l do {
+         if show_hidden_cb.is_checked() | 
+            not(Files.is_hidden(e[1])) then 
+         {
+            if e[2].mode[1] == "d" then
+               Files.is_relative_dir(e[1]) | put(dir_list, e[1])
+            else {
+               if wild_match(!pats, e[1]) then
+                  put(file_list, e[1])
+            }
+         }
+      }
+      return [isort(dir_list, map), isort(file_list, map)]
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "directory" : set_directory(f.string_val())
+         "directories" : set_directories(f.string_list_val())
+         "file" : set_file(f.string_val())
+         "files" : set_files(f.string_list_val())
+         "filters" : set_filters(f.string_list_val())
+         "path" : set_path(f.string_val())
+         default: return cast(self,Dialog).set_one(f)
+      }
+      return
+   end
+
+   public setup()
+      local layout_3, layout_4, layout_6, layout_7, layout_8, layout_9, paint, paint_1, panel_2, panel_3, panel_4, split_1, split_content_1, split_content_2
+      self.set_wattrib("label", "Select file")
+      self.set_wattrib("resize", "on")
+      self.set_only_enlarge_width("t")
+      self.set_only_enlarge_height("t")
+      panel_4 := Panel()
+      panel_4.clear_constraints()
+      panel_4.set_constraint("eol", "y")
+      panel_4.set_constraint("x_fill", "")
+      panel_4.set_constraint("x_weight", "1")
+      layout_6 := GridLayout()
+      layout_6.set_doi(0)
+      layout_6.set_dii(2)
+      layout_6.set_extra("cells")
+      panel_4.set_layout(layout_6)
+      home_button := IconButton()
+      home_button.set_size("26", "26")
+      home_button.set_align("l", "c")
+      home_button.clear_constraints()
+      paint := TextPaint("Home")
+      home_button.set_tooltip(paint)
+      home_button.connect(self.on_home_button, Event.ACTION)
+      home_button.set_no_click_focus("t")
+      home_button.set_toggles("f")
+      paint := ImagePaint()
+      paint.set_image("16,c6,\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\xe9\x00\xff\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\xe9\xda\xda\x00\x00\x00\xd7\xff\xff\xff\xff\xff\xff\xff\x00\xe9\xda\xda\xda\xda\x00\x00\xd7\xff\xff\xff\xff\xff\xff\x00\xe9\xda\xda\xda\xda\xda\xda\x00\xd7\xff\xff\xff\xff\xff\x00\xe9\xda\xda\xda\xda\xda\xda\xda\xda\x00\xff\xff\xff\xff\x00\x00\xe9\xda\xda\xda\xda\xda\xda\xda\xda\x00\x00\xff\xff\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\xad\xad\xad\x00\xd7\x00\xff\xff\xff\x00\xd7\xad\x00\x00\x00\x00\x00\xad\xad\x00\xd7\xd7\xff\xff\xff\x00\xd7\xad\x00\xd7\xd7\xd7\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\xd7\xad\x00\xd7\xff\xff\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\xd7\xad\x00\xd7\xff\xda\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\xd7\xad\x00\xd7\xff\xff\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\xd7\xad\x00\xd7\xff\xff\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xd7\xff\xff\xff\xff\xff\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xff\xff")
+      home_button.set_paint(paint)
+      panel_4.add(home_button)
+      up_button := IconButton()
+      up_button.set_size("26", "26")
+      up_button.set_align("l", "c")
+      up_button.clear_constraints()
+      paint := TextPaint("Up")
+      up_button.set_tooltip(paint)
+      up_button.connect(self.on_up_button, Event.ACTION)
+      up_button.set_no_click_focus("t")
+      up_button.set_toggles("f")
+      paint := ImagePaint()
+      paint.set_image("16,c6,\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xffWWWWW\xff\xff\xff\xff\xff\xff\xff\xff\xff\xffWWWWWW\xd7\xff\x00\x00\x00\x00\x00\x00\x00\x00\xad\xad\xad\xad\xad\x00\xd7\x00\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\x00\x00\x00\x00\x00\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\xad\xad\xd7\xd7\xd7\xd7\xd7\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\xad\xad\xad\xad\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\x00\xad\xad\xad\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\xad\xad\x00\x00\x00\xad\xad\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\xad\x00\x00\x00\x00\x00\xad\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\x00\x00\x00\x00\x00\x00\x00\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\x00\xad\xad\xad\xad\xad\xad\x00\xd7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xd7\xff\xd7\xd7\xd7\xd7\xd7\xd7\x00\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xff\xff\xff\xff\xff\xff\xff\x00\xd7\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xd7\xd7\xff\xff\xff\xff\xff\xff\xff")
+      up_button.set_paint(paint)
+      panel_4.add(up_button)
+      new_button := IconButton()
+      new_button.set_size("26", "26")
+      new_button.set_align("l", "c")
+      new_button.clear_constraints()
+      paint := TextPaint("New dir")
+      new_button.set_tooltip(paint)
+      new_button.connect(self.on_new_button, Event.ACTION)
+      new_button.set_no_click_focus("t")
+      new_button.set_toggles("f")
+      paint := ImagePaint()
+      paint.set_image("16,c6,\xff\xff,,,,,,,,,,\xff\xff\xff\xff\xff\xff,\xd7\xd7\xd7\xd7\xd7\xd7\xd7,,\xd7\xff\xff\xff\xff\xff,\xd7\xad\xad\xad\xad\xad,\xad\xd7,\xff\xff\xff\xff\xff,\xd7\xad\xd7\xd7\xd7\xd7\xad,\xad,\xd7\xff\xff\xff\xff,\xd7\xad\xd7\xd7\xd7\xd7\xd7\xad,\xad,\xff\xff\xff\xff,\xd7\xad\xd7\xd7\xd7,\xd7\xd7\xad,,\xd7\xff\xff\xff,\xd7\xad\xd7,\xd7,\xd7,\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xd7\xd7,,,\xd7\xd7\xad,\xd7\xff\xff\xff,\xd7\xad,,,,,,,\xad,\xd7\xff\xff\xff,\xd7\xad\xd7\xd7,,,\xd7\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xd7,\xd7,\xd7,\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xd7\xd7\xd7,\xd7\xd7\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xad\xad\xad\xad\xad\xad\xad\xad,\xd7\xff\xff\xff,,,,,,,,,,,,\xd7\xff\xff\xff\xff\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xff")
+      new_button.set_paint(paint)
+      panel_4.add(new_button)
+      refresh_button := IconButton()
+      refresh_button.set_size("26", "26")
+      refresh_button.set_align("l", "c")
+      refresh_button.clear_constraints()
+      paint := TextPaint("Refresh")
+      refresh_button.set_tooltip(paint)
+      refresh_button.connect(self.on_refresh_button, Event.ACTION)
+      refresh_button.set_no_click_focus("t")
+      refresh_button.set_toggles("f")
+      paint := ImagePaint()
+      paint.set_image("16,c6,\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff22\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff2]]2\xff\xff\xff\xff2222\xff\xff\xff2\xb2]\xb2\xb22\xd7\xff\xff2]\xb22\xd7\xff\xff22]\xb222\xd7\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]]2\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2\xb2]]2222]\xb2\xb22\xd7\xff\xff\xff\xff2\xb2\xb2]]]]\xb2\xb22\xd7\xff\xff\xff\xff\xff\xff22\xb2\xb2\xb2\xb222\xd7\xff\xff\xff\xff\xff\xff\xff\xff\xff2222\xd7\xd7\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xd7\xd7\xd7\xff\xff\xff\xff\xff\xff")
+      refresh_button.set_paint(paint)
+      panel_4.add(refresh_button)
+      dir := EditList()
+      dir.set_size("150")
+      dir.set_align("l", "c")
+      dir.clear_constraints()
+      dir.set_constraint("x_align", "l")
+      dir.set_constraint("x_fill", "")
+      dir.set_constraint("x_weight", "1")
+      dir.connect(self.on_dir, Event.ACTION)
+      dir.connect(self.on_dir, Event.SELECTION_CHANGED)
+      dir.set_selection_list([""])
+      panel_4.add(dir)
+      self.add(panel_4)
+      split_1 := Split()
+      split_1.clear_constraints()
+      split_1.set_constraint("eol", "y")
+      split_1.set_constraint("x_fill", "y")
+      split_1.set_constraint("x_weight", "1")
+      split_1.set_constraint("y_fill", "y")
+      split_1.set_constraint("y_weight", "1")
+      split_content_1 := Component()
+      split_content_1.clear_constraints()
+      layout_8 := GridLayout()
+      layout_8.set_doi(0)
+      layout_8.set_extra("cells")
+      split_content_1.set_layout(layout_8)
+      dlist := TextList()
+      dlist.set_size("170", "160")
+      dlist.clear_constraints()
+      dlist.set_constraint("r_inset", "0")
+      dlist.set_constraint("x_fill", "")
+      dlist.set_constraint("x_weight", "1")
+      dlist.set_constraint("y_fill", "")
+      dlist.set_constraint("y_weight", "1")
+      dlist.connect(self.on_dlist, Event.SELECTION_CHANGED)
+      dlist.connect(self.on_dlist_cursor, Event.CURSOR_MOVED)
+      dlist.set_select_mode(Select.ONE)
+      dlist.set_contents([""])
+      split_content_1.add(dlist)
+      split_content_2 := Component()
+      split_content_2.clear_constraints()
+      layout_9 := GridLayout()
+      layout_9.set_doi(0)
+      layout_9.set_extra("cells")
+      split_content_2.set_layout(layout_9)
+      flist := TextList()
+      flist.set_size("220", "160")
+      flist.clear_constraints()
+      flist.set_constraint("l_inset", "0")
+      flist.set_constraint("x_fill", "")
+      flist.set_constraint("x_weight", "1")
+      flist.set_constraint("y_fill", "")
+      flist.set_constraint("y_weight", "1")
+      flist.connect(self.on_flist, Event.SELECTION_CHANGED)
+      flist.set_select_mode(Select.ONE)
+      flist.set_contents([""])
+      split_content_2.add(flist)
+      split_1.set_left(split_content_1)
+      split_1.set_right(split_content_2)
+      split_1.set_min(100, 100)
+      self.add(split_1)
+      panel_2 := Panel()
+      panel_2.clear_constraints()
+      panel_2.set_constraint("eol", "y")
+      panel_2.set_constraint("x_fill", "")
+      panel_2.set_constraint("x_weight", "1")
+      layout_3 := GridLayout()
+      layout_3.set_doi(0)
+      layout_3.set_extra("cells")
+      panel_2.set_layout(layout_3)
+      filter := EditList()
+      filter.set_size("150")
+      filter.set_align("l", "b")
+      filter.clear_constraints()
+      filter.set_constraint("x_align", "l")
+      filter.set_constraint("x_fill", "")
+      filter.connect(self.on_filter, Event.ACTION)
+      filter.connect(self.on_filter, Event.SELECTION_CHANGED)
+      filter.set_selection_list([""])
+      panel_2.add(filter)
+      file := EditList()
+      file.set_size("150")
+      file.set_align("l", "b")
+      file.clear_constraints()
+      file.set_constraint("x_align", "l")
+      file.set_constraint("x_fill", "")
+      file.set_constraint("x_weight", "1")
+      self.set_focus(file.find_focus())
+      file.connect(self.on_file, Event.ACTION)
+      file.connect(self.on_file_sel, Event.SELECTION_CHANGED)
+      file.set_selection_list([""])
+      panel_2.add(file)
+      self.add(panel_2)
+      show_hidden_cb := CheckBox()
+      show_hidden_cb.clear_constraints()
+      show_hidden_cb.set_constraint("eol", "")
+      show_hidden_cb.set_constraint("x_align", "l")
+      show_hidden_cb.connect(self.on_show_hidden_cb, Event.ACTION)
+      show_hidden_cb.set_toggles("t")
+      paint_1 := TextPaint("Show hidden files and directories")
+      show_hidden_cb.set_paint(paint_1)
+      self.add(show_hidden_cb)
+      panel_3 := Panel()
+      panel_3.clear_constraints()
+      panel_3.set_constraint("x_fill", "")
+      panel_3.set_constraint("x_weight", "1")
+      layout_4 := GridLayout()
+      layout_4.set_doi(0)
+      layout_4.set_extra("cells")
+      panel_3.set_layout(layout_4)
+      okay_button := TextButton()
+      okay_button.set_align("l", "b")
+      okay_button.clear_constraints()
+      okay_button.connect(self.on_okay_button, Event.ACTION)
+      okay_button.set_toggles("f")
+      paint := TextPaint("Okay")
+      okay_button.set_paint(paint)
+      panel_3.add(okay_button)
+      cancel_button := TextButton()
+      cancel_button.set_align("l", "b")
+      cancel_button.clear_constraints()
+      cancel_button.connect(self.on_cancel_button, Event.ACTION)
+      cancel_button.set_toggles("f")
+      paint := TextPaint("Cancel")
+      cancel_button.set_paint(paint)
+      panel_3.add(cancel_button)
+      message_label := Label()
+      message_label.set_size("130")
+      message_label.set_align("l", "b")
+      message_label.set_wattrib("fg", "red")
+      message_label.clear_constraints()
+      message_label.set_constraint("x_align", "l")
+      message_label.set_constraint("x_fill", "")
+      message_label.set_constraint("x_weight", "1")
+      paint := TextPaint("")
+      message_label.set_paint(paint)
+      panel_3.add(message_label)
+      self.add(panel_3)
+      layout_7 := GridLayout()
+      layout_7.set_extra("cells")
+      self.set_layout(layout_7)
+   end
+end
+
+
+#procedure main()
+#   local d
+#   d := default.FileDialog()
+#   d.set_directories(["/tmp","/home/rparlett","/","/home/rparlett/lhs"])
+#   d.set_filters(["*","*.jpg","*.icn","*.gif","round the ragged rock ran the rascal"])
+#   d.show_modal()
+#end
+
+### Ivib-v2 layout: layouts/$.layout
+
+
+

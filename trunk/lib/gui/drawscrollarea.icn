@@ -1,0 +1,36 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+
+class DrawScrollAreaView(Component)
+   public display(r)
+      parent.draw(r)
+   end
+end
+
+
+#
+# This is a scroll area where the object is displayed by overriding
+# an abstract method defined below.
+#
+class DrawScrollArea(ScrollArea)
+   #
+   # Draw the object at the offset given by {get_area_x()}, {get_area_y()}
+   # into view.cbwin at view.x, view.y, with size view.w, view.h.  The parameter r gives
+   # the clipping rectangle; view is already clipped to this rectangle.
+   #
+   public defer draw(r)
+
+   public create_view()
+      return DrawScrollAreaView()
+   end
+end
+
+

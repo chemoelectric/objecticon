@@ -1,0 +1,82 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+#
+#
+class CanvasTextMenuItem(CanvasMenuComponent,TextMenuItem)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasMenuComponent).gen_code(c)
+      self.paint_mid.gen_code(c)
+      c.line(name || ".set_paint_mid(" || self.paint_mid.name || ")")
+      if \self.paint_left then {
+         self.paint_left.gen_code(c)
+         c.line(name || ".set_paint_left(" || self.paint_left.name || ")")
+      }
+      if \self.paint_right then {
+         self.paint_right.gen_code(c)
+         c.line(name || ".set_paint_right(" || self.paint_right.name || ")")
+      }
+   end
+
+   public dup_fields(c)
+      cast(self,CanvasMenuComponent).dup_fields(c)
+      c.set_paint_mid(self.paint_mid.dup())
+      c.set_paint_left((\self.paint_left).dup())
+      c.set_paint_right((\self.paint_right).dup())
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasTextMenuItem()
+      self.dup_fields(c)
+      return c
+   end
+
+   #
+   # Get a label for the menu bar display.
+   #
+   public get_string_label()
+      if is(self.paint_mid, CanvasTextPaint) then
+         return self.paint_mid.str || "(Txt)"
+      else
+         return subtype(self.paint_mid) || "(Txt)"
+   end
+
+   public get_template()
+      return cast(self,CanvasMenuComponent).get_template() ||| [
+              ["Paint mid", "paint_mid"],
+              ["Paint left", "paint_left"],
+              ["Paint right", "paint_right"]
+              ]
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasMenuComponent).gen_cos() | self.paint_mid | \self.paint_left | \self.paint_right
+   end
+
+   public new()
+      cast(self,TextMenuItem).new()
+      cast(self,CanvasMenuComponent).new()
+      self.class_name := "TextMenuItem"
+      self.import_name := "gui"
+      self.name := "text_menu_item"
+      return
+   end
+end
+

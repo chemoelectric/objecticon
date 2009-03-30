@@ -1,0 +1,146 @@
+import io, lang
+
+procedure imagex(o)
+   local t
+   t := ""
+   image(o) ? {
+      repeat {
+         t ||:= tab(find("#") | 0)
+         if pos(0) then
+            return t
+         t ||:= move(1)
+         if tab(many(&digits)) then
+            t ||:= "*"
+      }
+   }
+end
+
+procedure to_stringx(o)
+   local t
+   t := ""
+   to_string(o) ? {
+      repeat {
+         t ||:= tab(find("#") | 0)
+         if pos(0) then
+            return t
+         t ||:= move(1)
+         if tab(many(&digits)) then
+            t ||:= "*"
+      }
+   }
+end
+
+procedure pr_seq(s, e)
+   local t
+   writes(@s, ": {")
+   t := ""
+   while writes(t, imagex(@e)) do
+      t := ", "
+   write("}")
+end
+
+procedure pr_seq2(s, e)
+   local t
+   &why := ""
+   writes(@s, ": {")
+   t := ""
+   while writes(t, imagex(@e)) do
+      t := ", "
+   if *&why > 0 then
+      write("} &why=", image(&why))
+   else
+      write("}")
+end
+
+procedure yes_no(s, e)
+   local x
+   writes(@s, ": ")
+   if x := @e then
+      write("yes")
+   else 
+      write("no")
+   return \x
+end
+
+procedure try(s, e)
+   local x
+   writes(@s, ": ")
+   &error := -1
+   errorclear()
+   if x := @e then
+      write("Succeeded with ", imagex(x))
+   else if &errornumber then
+      write("Error ", &errornumber)
+   else
+      write("Failed")
+   &error := 0
+   return \x
+end
+
+procedure print(s, e)
+   local o
+   writes(@s, ": ")
+   if o := @e then
+      write(imagex(o))
+   else
+      write("Failed")
+   return o
+end
+
+procedure pr_type(s, e)
+   local o
+   writes(@s, ": ")
+   if o := @e then
+      write(type(o))
+   else
+      write("Failed")
+   return o
+end
+
+procedure pr_seq_type(s, e)
+   local x, t
+   writes(@s, ": {")
+   x := set()
+   while insert(x, type(@e))
+   t := ""
+   every writes(t, !sort(x)) do
+      t := ", "
+   write("}")
+end
+
+procedure pr_seq_type2(s, e)
+   local x, t
+   &why := ""
+   writes(@s, ": {")
+   x := set()
+   while insert(x, type(@e))
+   t := ""
+   every writes(t, !sort(x)) do
+      t := ", "
+   if *&why > 0 then
+      write("} &why=", image(&why))
+   else
+      write("}")
+end
+
+procedure require(s, e)
+   return @e | stop(s)
+end
+
+procedure cmp_seq(s, e1, e2)
+   local x1
+   writes(@s, ": ")
+   while x1 := @e1 do {
+      (x1 === @e2) | {
+         write("different")
+         fail
+      }
+   }
+   if @e2 then {
+      write("different")
+      fail
+   } else {
+      write("same")
+      return
+   }
+end

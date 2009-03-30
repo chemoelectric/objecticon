@@ -1,0 +1,72 @@
+package lang
+
+class Prog()
+   # Load a program corresponding to string s as a co-expression.
+   public static defer load(s, arglist, blocksize, stringsize, stacksize)
+
+   public static defer get_globals(c)
+
+   public static defer get_global(s, c)
+
+   # produce the names of identifiers global to c
+   #
+   public static defer get_global_names(c)
+
+   # generate the names of the functions.
+   public static defer get_function_names()
+
+   public static defer get_global_location(s, c)
+
+   # produce a keyword in c's thread
+   public static defer get_keyword(s, c)
+
+   # Find the variable with name s and return a variable descriptor
+   # which points to its value.
+   #
+   public static defer get_variable(s, c)
+
+   # Given a coexpression, return &main for its parent
+   #
+   public static defer get_parent(c)
+
+   # get c's program's opcode mask
+   public static defer get_opmask(c)
+
+   # set c's program's opcode mask
+   public static defer set_opmask(cs, c)
+
+   public static defer get_eventmask(c)
+   public static defer set_eventmask(cs, c)
+
+   public static defer get_valuemask(c)
+   public static defer set_valuemask(t, c)
+
+   # create event (in c) with event code x and event value y,
+   # and activate c.
+   public static defer send_event(x, y, c)
+
+   public static defer get_event(cs, vmask, flag)
+
+   #
+   # Get the number of milliseconds since the startup time.
+   #
+   public static defer get_runtime_millis(c)
+
+   #
+   # Get the startup time (load time) of the given program, as the
+   # number of microseconds since the Unix base epoch (1 Jan 1970).
+   #
+   public static defer get_startup_micros(c)
+
+   public static defer get_collections(c)
+   public static defer get_allocations(c)
+   public static defer get_regions(c)
+
+   # Get info about the stack use of the given co-expression.  Two
+   # numbers are suspended; the first is the size of the stack (excluding
+   # any portion used as a C stack), and the second is the amount
+   # already used.  Note that the size may change over time as the size of
+   # the C stack changes.
+   #
+   public static defer get_stack(c)
+end

@@ -1,0 +1,228 @@
+#
+# $Id$
+
+package gui
+
+#
+# This {Component} contains two children whose sizes can be adjusted with
+# a {Sizer} component between them.
+#
+class Split(Component)
+   public 
+      first,
+      second,
+      sizer,
+      min_first,
+      min_second,
+      weight,
+      start_size_first,
+      start_size_second
+
+   #
+   # Set the left {Component}, and lay out horizontally.
+   #
+   public set_left(c)
+      remove(\self.first)
+      self.first := c
+      add(self.first, 1)
+      self.sizer.set_is_horizontal("f")
+   end
+
+   #
+   # Set the top {Component}, and lay out vertically.
+   #
+   public set_top(c)
+      remove(\self.first)
+      self.first := c
+      add(self.first, 1)
+      self.sizer.set_is_horizontal("t")
+   end
+
+   #
+   # Set the right {Component}.
+   #
+   public set_right(c)
+      remove(\self.second)
+      self.second := c
+      add(self.second)
+   end
+
+   #
+   # Set the bottom {Component}.
+   #
+   public set_bottom(c)
+      remove(\self.second)
+      self.second := c
+      add(self.second)
+   end
+
+   public initially()
+      \self.first | runerr("Left/top not set")
+      \self.second | runerr("Right/bottom not set")
+      *self.children = 3 | runerr("Should be exactly 3 children")
+      cast(self,Component).initially()
+   end
+
+   public get_default_width()
+      local t
+      if /self.sizer.is_horizontal_flag then {
+         t := 0
+         every t +:= (!self.children).get_preferred_width()
+         return t
+      } else {
+         return max(first.get_preferred_width(),
+                    second.get_preferred_width())
+      }
+   end
+
+   public get_default_height()
+      local t
+      if /self.sizer.is_horizontal_flag then {
+         return max(first.get_preferred_height(),
+                    second.get_preferred_height())
+      } else {
+         t := 0
+         every t +:= (!self.children).get_preferred_height()
+         return t
+      }
+   end
+
+   public layout()
+      local c, p1, p2, ex
+      if /self.sizer.is_horizontal_flag then {
+         first.x := self.x
+         sizer.w := sizer.get_preferred_width()
+         p1 := first.get_preferred_width()
+         p2 := second.get_preferred_width()
+         ex := self.w - (sizer.w + p1 + p2)
+         first.w := p1 + integer(ex * weight)
+         # Ensure first.w in range that tries to keep both minimum
+         # values valid.
+         first.w <:= min_first
+         first.w >:= self.w - sizer.w - min_second
+         sizer.x := first.x + first.w
+         second.x := sizer.x + sizer.w
+         # Set to ensure the total width is the sum of the parts.
+         second.w := self.w - sizer.w - first.w
+         every c := !self.children do {
+            c.y := self.y
+            c.h := self.h
+            c.layout()
+         }
+      } else {
+         first.y := self.y
+         sizer.h := sizer.get_preferred_height()
+         p1 := first.get_preferred_height()
+         p2 := second.get_preferred_height()
+         ex := self.h - (sizer.h + p1 + p2)
+         first.h := p1 + integer(ex * weight)
+         first.h <:= min_first
+         first.h >:= self.h - sizer.h - min_second
+         sizer.y := first.y + first.h
+         second.y := sizer.y + sizer.h
+         second.h := self.h - sizer.h - first.h
+         every c := !self.children do {
+            c.x := self.x
+            c.w := self.w
+            c.layout()
+         }
+      }
+   end
+
+   #
+   # Set the minimum allowed sizer resize for the left and right (or top
+   # and bottom) components respectively.  The default for both is zero.
+   #
+   public set_min(f, s)
+      self.min_first := f
+      self.min_second := s
+   end
+
+   #
+   # Set the proportion of any extra space to allocate to the left/top
+   # component.  By default zero, ie the right/bottom component gets all
+   # the extra.
+   #
+   public set_weight(w)
+      self.weight := w
+   end
+
+   #
+   # If this flag is set then whilst the sizer moves, an intermediate bar is
+   # shown and the {Component}s are not laid out, until the mouse is released.
+   # This is helpful if the inner {Component}s are expensive to lay out.
+   #
+   public set_show_inter(s)
+      sizer.set_show_inter(s)
+   end
+
+   public on_sizer_press(ev)
+      if /self.sizer.is_horizontal_flag then {
+         start_size_first := first.w
+         start_size_second := second.w
+         # These same limits are actually also imposed by layout() above, but
+         # setting here prevents the w_spec values going outside the range too, and
+         # looks better with an inter style sizer, so that the inter bar stays in range.
+         sizer.set_range(self.min_first, self.w - self.min_second - sizer.w)
+      } else {
+         start_size_first := first.h
+         start_size_second := second.h
+         sizer.set_range(self.min_first, self.h - self.min_second - sizer.h)
+      }
+   end
+
+   public on_sizer_drag(ev)
+      if /sizer.show_inter_flag then
+         update()
+   end
+
+   public on_sizer_release(ev)
+      if \sizer.show_inter_flag then
+         update()
+   end
+
+   public update()
+      if /self.sizer.is_horizontal_flag then {
+         first.w_spec := start_size_first + sizer.get_delta()
+         second.w_spec := start_size_second - sizer.get_delta()
+      } else {
+         first.h_spec := start_size_first + sizer.get_delta()
+         second.h_spec := start_size_second - sizer.get_delta()
+      }
+      layout()
+      invalidate()
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "show_inter" : set_show_inter(f.flag_val())
+         "min" : set_min!(f.int_list_val())
+         "weight" : set_weight(f.numeric_val())
+         "left" : set_left(f.object_val(gui.Component))
+         "top" : set_top(f.object_val(gui.Component))
+         "right" : set_right(f.object_val(gui.Component))
+         "bottom" : set_bottom(f.object_val(gui.Component))
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      sizer := Sizer()
+      add(sizer)
+      sizer.connect(self.on_sizer_drag, Event.SIZER_DRAG)
+      sizer.connect(self.on_sizer_press, Event.SIZER_PRESS)
+      sizer.connect(self.on_sizer_release, Event.SIZER_RELEASE)
+      weight := min_first := min_second := 0
+      self.set_constraint("x_fill", "t")
+      self.set_constraint("y_fill", "t")
+      self.set_constraint("x_weight", "1")
+      self.set_constraint("y_weight", "1")
+      set_fields(a)
+      return
+   end
+end
+
+   
+

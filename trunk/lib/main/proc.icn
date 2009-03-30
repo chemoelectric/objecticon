@@ -1,0 +1,37 @@
+package lang
+
+class Proc()
+   # Return the name of the proc
+   #
+   public static defer get_name(p, flag)
+
+   # Return the program this proc resides in.  The program's &main
+   # co-expression is returned.
+   #
+   public static defer get_program(p)
+
+   # Return the name of the package in which this proc resides; fails
+   # if the proc is not in a package.
+   #
+   public static defer get_package(p)
+
+   # Return the source location of the proc
+   #
+   public static defer get_location(p)
+
+   public static defer get_defining_class(p)
+
+   public static defer get_n_locals(p)
+   public static defer get_n_arguments(p)
+   public static defer get_n_dynamics(p)
+   public static defer get_n_statics(p)
+   public static defer get_local_names(p)
+   public static defer get_local_index(p, id)
+   public static defer get_local_location(p, id)
+   public static defer get_local_name(p, id)
+   public static defer get_local_type(p, id)
+
+   # load C function dynamically.
+   public static defer load(filename, funcname)
+
+end

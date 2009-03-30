@@ -1,0 +1,41 @@
+#
+# $Id$
+#
+
+package mail
+
+#
+# Handles the conversion from decoded content to an object
+#
+class EncodingHandler()
+   public static const 
+      ENCODING_HANDLERS
+
+   private static init()
+      ENCODING_HANDLERS := [NoOpEncodingHandler(), Base64Handler(), QuotedPrintableHandler()]
+   end
+
+   #
+   # Succeed if this object can handle the given encoding
+   #
+   # @param enc the encoding (a string, eg "7bit")
+   #
+   public defer can_handle(enc)
+
+   #
+   # Decode the given data
+   #
+   # @param m the {Message}
+   # @param data the source data (a string)
+   #
+   public defer decode_data(m, data)
+
+   #
+   # Create string data from the given object
+   #
+   # @param m the {Message}
+   # @param data the raw data (a string)
+   #
+   public defer encode_data(m, data)
+end
+

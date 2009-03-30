@@ -1,0 +1,46 @@
+#SRC: JCON
+
+#  kwds.icn -- check keywords, as best can do reproducibly
+
+procedure main()
+   &error := 747
+
+   print{"ascii", &ascii}
+   pr_type{"clock", &clock}
+   print{"cset", &cset}
+   print{"current", &current}
+   pr_type{"date", &date}
+   pr_type{"dateline", &dateline}
+   print{"digits", &digits}
+   pr_type{"dump", &dump}
+   pr_type{"e", &e}
+   print{"error", &error}
+   print{"errornumber", &errornumber}
+   print{"errortext", &errortext}
+   print{"errorvalue", &errorvalue}
+   print{"eventcode", &eventcode}
+   print{"eventsource", &eventsource}
+   print{"eventvalue", &eventvalue}
+   print{"fail", &fail}
+   pr_seq_type{"features", &features}
+   print{"file", &file[-8:0]}
+   pr_type{"host", &host}
+   print{"lcase", &lcase}
+   print{"letters", &letters}
+   print{"level", &level}
+   print{"line", &line}
+   print{"main", &main}
+   print{"null", &null}
+   pr_type{"phi", &phi}
+   pr_type{"pi", &pi}
+   print{"pos", &pos}
+   print{"progname", &progname}
+   print{"random", &random}
+   print{"source", &source}
+   print{"subject", &subject}
+   pr_type{"time", &time}
+   print{"trace", &trace}
+   print{"ucase", &ucase}
+   pr_type{"version", &version}
+   print{"why", &why}
+end
