@@ -60,6 +60,10 @@ int field_access(dptr cargp)
     Deref(Arg1);
     Deref(Arg2);
     type_case Arg1 of {
+      record: {
+            return record_access(cargp, 0);
+      }
+
       cast: {
             return cast_access(cargp, 0);
       }
@@ -73,7 +77,7 @@ int field_access(dptr cargp)
       }
 
       default: {
-          ReturnErrNum(620, Error);
+          ReturnErrNum(624, Error);
       }
    }
 }
