@@ -85,7 +85,7 @@ end
 
 
 class HtmlParser()
-   public 
+   private 
       doc,
       utf8_flag
 
@@ -314,7 +314,7 @@ class HtmlParser()
       return res
    end
 
-   public parse_system_literal()
+   private parse_system_literal()
       local c, res
       any('\'\"') | fail
       c := move(1)
@@ -323,7 +323,7 @@ class HtmlParser()
       return res
    end
 
-   public parse_pubid_literal()
+   private parse_pubid_literal()
       local c, res, t
       if any('\'') then
          t := HTML_PUBID_CHAR -- '\''
