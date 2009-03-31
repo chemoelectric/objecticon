@@ -967,7 +967,7 @@ class XmlParser(Connectable,SetFields)
       res.whitespace_children := res.children
 
       if \validate_flag then
-         validate_children(res, parent_el)
+         validate_children(res)
 
       return res
    end
@@ -1796,7 +1796,7 @@ class XmlParser(Connectable,SetFields)
    #
    # Validate the given element child content; this may fail on error or just emit a warning
    #
-   public validate_children(el, parent_el) 
+   public validate_children(el) 
       local element_decl, tl
 
       #
