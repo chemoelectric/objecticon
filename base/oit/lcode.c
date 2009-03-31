@@ -340,7 +340,7 @@ static void gencode(struct lfile *lf)
             case Op_Cset:
             case Op_Real:
                 k = uin_short();
-                lemitr(op, curr_func->constant_table[k]->c_pc, name);
+                lemitr(op, curr_func->constant_table[k]->pc, name);
                 break;
 
             case Op_Apply: {
@@ -868,7 +868,7 @@ static void lemitcon(struct centry *ce)
         /*
          * Seen before, so just copy pc from previously output one.
          */
-        ce->c_pc = p->c_pc;
+        ce->pc = p->pc;
         return;
     }
     /*
@@ -876,7 +876,7 @@ static void lemitcon(struct centry *ce)
      */
     ce->b_next = constblock_hash[i];
     constblock_hash[i] = ce;
-    ce->c_pc = pc;
+    ce->pc = pc;
     if (ce->c_flag & F_RealLit) {
         union {
             char ovly[1];  /* Array used to overlay f on a bytewise basis. */

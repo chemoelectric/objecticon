@@ -59,20 +59,12 @@ struct lfield {
     struct lfield *next;
 };
 
-/*
- * xval - holds references to literal constants
- */
-union xval {
-    long ival;          /* integer */
-    double rval;        /*  real */
-};
-
 struct centry {                 /* constant table entry */
     word c_flag;                /*   type of literal flag */
     char *data;                 /*   raw data read from ufile */
-    int length;               /*   length of raw data */
+    int length;                 /*   length of raw data */
     long ival;                  /*   value for F_IntLit; < 0 => doesn't fit in a C word */
-    word c_pc;                  /*   position in icode of object */
+    word pc;                    /*   position in icode of block, not used for string/integer */
     struct centry *next,        /* Next in lfunctions's linked list */
                   *b_next;      /* Next in hash bucket, used by code generation */
 };
