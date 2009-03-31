@@ -18,8 +18,6 @@
  */
 
 static void	reference(struct gentry *gp);
-static double   parse_real(char *data);
-static long     parse_int(char *data);
 
 struct package_id {
     char *name;
@@ -205,34 +203,9 @@ void readglob(struct lfile *lf)
             case Op_Con: {
                 int len;
                 char *data;
-                union xval gg;
                 k = uin_word();
                 data = uin_bin(&len);
-                if (k & F_IntLit) {
-                    long m = parse_int(data);
-                    if (m < 0) { 		/* negative indicates integer too big */
-                        gg.sval = data;	        /* convert to a string */
-                        if (curr_func)
-                            add_constant(curr_func, F_StrLit, len, &gg);
-                    }
-                    else {			/* integer  is small enough */
-                        gg.ival = m;
-                        if (curr_func)
-                            add_constant(curr_func, k, 0, &gg);
-                    }
-                }
-                else if (k & F_RealLit) {
-                    gg.rval = parse_real(data);
-                    if (curr_func)
-                        add_constant(curr_func, k, 0, &gg);
-                }
-                else if (k & (F_StrLit | F_CsetLit | F_UcsLit)) {
-                    gg.sval = data;
-                    if (curr_func)
-                        add_constant(curr_func, k, len, &gg);
-                }
-                else
-                    quit("illegal constant");
+                add_constant(curr_func, k, data, len);
                 break;
             }
 
@@ -606,10 +579,7 @@ void resolve_native_methods()
 }
 
 
-/*
- * getreal - get an Icon real number from infile, and return it.
- */
-static double parse_real(char *data)
+double parse_real(char *data)
 {
     double n;
     register int c, d, e;
@@ -664,7 +634,7 @@ static double parse_real(char *data)
 /*
  *  Get integer, but if it's too large for a long, return -1.
  */
-static long parse_int(char *data)
+long parse_int(char *data)
 {
     register int c;
     int over = 0;

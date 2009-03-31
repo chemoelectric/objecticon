@@ -67,34 +67,12 @@ void add_local(struct lfunction *func, char *name, int flags, struct loc *pos)
     ++func->nlocals;
 }
 
-void add_constant(struct lfunction *func, 
-                  int flags, int len, union xval *valp)
+void add_constant(struct lfunction *func, int flags, char *data, int len)
 {
     struct centry *p = Alloc(struct centry);
     p->c_flag = flags;
-    if (flags & F_IntLit) {
-        p->c_val.ival = valp->ival;
-    }
-    else if (flags & (F_StrLit | F_CsetLit | F_UcsLit)) {
-        p->c_val.sval = valp->sval;
-        p->c_length = len;
-    }
-    else if (flags & F_RealLit)
-
-#ifdef Double
-/* access real values one word at a time */
-    {  int *rp, *rq;	
-        rp = (int *) &(p->c_val.rval);
-        rq = (int *) &(valp->rval);
-        *rp++ = *rq++;
-        *rp   = *rq;
-    }
-#else					/* Double */
-    p->c_val.rval = valp->rval;
-#endif					/* Double */
-
-    else
-        quitf("putconst: bad flags: %06o %011lo\n", flags, valp->ival);
+    p->data = data;
+    p->length = len;
 
     if (func->constant_last) {
         func->constant_last->next = p;

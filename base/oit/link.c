@@ -472,17 +472,11 @@ void dumpstate()
                     fprintf(stderr, "\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
             }
             for (ce = gl->func->constants; ce; ce = ce->next) {
-                fprintf(stderr, "\tconst %s len=%d ", f_flag2str(ce->c_flag),ce->c_length);
-                if (ce->c_flag & F_IntLit)
-                    fprintf(stderr, "val=%ld\n",ce->c_val.ival);
-                if (ce->c_flag & F_RealLit)
-                    fprintf(stderr, "val=%f\n",ce->c_val.rval);
-                if (ce->c_flag & (F_CsetLit|F_StrLit)) {
-                    fprintf(stderr, "val=");
-                    for (i = 0; i < ce->c_length; ++i)
-                        putc(ce->c_val.sval[i], stderr);
-                    fprintf(stderr, "\n");
-                }
+                fprintf(stderr, "\tconst %s len=%d ", f_flag2str(ce->c_flag),ce->length);
+                fprintf(stderr, "val=");
+                for (i = 0; i < ce->length; ++i)
+                    putc(ce->data[i], stderr);
+                fprintf(stderr, "\n");
             }
         }
         if (gl->class) {
@@ -529,17 +523,11 @@ void dumpstate()
                             fprintf(stderr, "\t\t\tlocal %s %s\n", le->name, f_flag2str(le->l_flag));
                     }
                     for (ce = me->func->constants; ce; ce = ce->next) {
-                        fprintf(stderr, "\t\t\tconst %s len=%d ", f_flag2str(ce->c_flag),ce->c_length);
-                        if (ce->c_flag & F_IntLit)
-                            fprintf(stderr, "val=%ld\n",ce->c_val.ival);
-                        if (ce->c_flag & F_RealLit)
-                            fprintf(stderr, "val=%f\n",ce->c_val.rval);
-                        if (ce->c_flag & (F_CsetLit|F_StrLit)) {
-                            fprintf(stderr, "val=");
-                            for (i = 0; i < ce->c_length; ++i)
-                                putc(ce->c_val.sval[i], stderr);
-                            fprintf(stderr, "\n");
-                        }
+                        fprintf(stderr, "\t\t\tconst %s len=%d ", f_flag2str(ce->c_flag),ce->length);
+                        fprintf(stderr, "val=");
+                        for (i = 0; i < ce->length; ++i)
+                            putc(ce->data[i], stderr);
+                        fprintf(stderr, "\n");
                     }
                 }
             }

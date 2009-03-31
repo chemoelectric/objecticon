@@ -78,6 +78,7 @@ struct ipc_line {
 struct unref *first_unref, *unref_hash[128];
 struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
 int strconst_offset;
+struct centry *constblock_hash[128];
 
 struct header hdr;
 
@@ -382,22 +383,19 @@ static void gencode(struct lfile *lf)
             }
 
             case Op_Int: {
-                long i;
                 k = uin_short();
                 cp = curr_func->constant_table[k];
                 /*
-                 * Check to see if a large integers has been converted to a string.
-                 *  If so, generate the code for +s.
+                 * Check to see if a large integer is needed.
                  */
-                if (cp->c_flag & F_StrLit) {
+                if (cp->ival < 0) {
                     lemit(Op_Pnull,"pnull");
-                    sp = inst_strconst(cp->c_val.sval, cp->c_length);
+                    sp = inst_strconst(cp->data, cp->length);
                     lemitin(Op_Str, sp->offset, sp->len, "str");
                     lemit(Op_Number,"number");
-                    break;
+                } else {
+                    lemitint(op, cp->ival, name);
                 }
-                i = (long)cp->c_val.ival;
-                lemitint(op, i, name);
                 break;
             }
 
@@ -481,7 +479,7 @@ static void gencode(struct lfile *lf)
             case Op_Str:
                 k = uin_short();
                 cp = curr_func->constant_table[k];
-                sp = inst_strconst(cp->c_val.sval, cp->c_length);
+                sp = inst_strconst(cp->data, cp->length);
                 lemitin(op, sp->offset, sp->len, name);
                 break;
         
@@ -574,7 +572,6 @@ static void gencode(struct lfile *lf)
 
                     curr_func = gp->func;
                     for (cp = curr_func->constants; cp; cp = cp->next) {
-                        cp->c_pc = pc;
                         lemitcon(cp);
                     }
                     curr_func->pc = pc;
@@ -606,7 +603,6 @@ static void gencode(struct lfile *lf)
 
                     curr_func = method->func;
                     for (cp = curr_func->constants; cp; cp = cp->next) {
-                        cp->c_pc = pc;
                         lemitcon(cp);
                     }
                     curr_func->pc = pc;
@@ -846,52 +842,66 @@ static void lemitint(op, i, name)
 
 static void lemitcon(struct centry *ce)
 {
-    union {
-        char ovly[1];  /* Array used to overlay l and f on a bytewise basis. */
-        long l;
-        double f;
-    } x;
+    int i;
+    struct centry *p;
 
+    /*
+     * Integers and strings don't generate blocks, so just parse the 
+     * data and return.
+     */
+
+    if (ce->c_flag & F_IntLit) {
+        ce->ival = parse_int(ce->data);
+        return;
+    }
+    if (ce->c_flag & F_StrLit)
+        return;
+
+    /*
+     * All other types (cset, ucs, real) generate immutable blocks, so
+     * see if we've seen one with the same type and data before which
+     * we can reuse.
+     */
+
+    i = hasher(ce->data, constblock_hash);
+    p = constblock_hash[i];
+    while (p && (p->data != ce->data || p->c_flag != ce->c_flag))
+        p = p->b_next;
+    if (p) {
+        /*
+         * Seen before, so just copy pc from previously output one.
+         */
+        ce->c_pc = p->c_pc;
+        return;
+    }
+    /*
+     * Add to hash chain and output
+     */
+    ce->b_next = constblock_hash[i];
+    constblock_hash[i] = ce;
+    ce->c_pc = pc;
     if (ce->c_flag & F_RealLit) {
-
-#ifdef Double
-/* access real values one word at a time */
-        {  int *rp, *rq;
-            rp = (int *) &(x.f);
-            rq = (int *) &(ce->c_val.rval);
-            *rp++ = *rq++;
-            *rp	= *rq;
-        }
-#else					/* Double */
-        x.f = ce->c_val.rval;
-#endif					/* Double */
-
+        union {
+            char ovly[1];  /* Array used to overlay f on a bytewise basis. */
+            double f;
+        } x;
+        x.f = parse_real(ce->data);
         if (Dflag) {
-            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# real(%g)", (long)pc, T_Real, x.f);
-            dumpblock(x.ovly,sizeof(double));
+            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Real (%g)\n",(long) pc, T_Real, x.f);
+            for (i = 0; i < sizeof(double); ++i)
+                fprintf(dbgfile, "\t%d\t\t\t\t#    double data\n", x.ovly[i] & 0xff);
         }
-
         outword(T_Real);
-
-#ifdef Double
-#if WordBits != 64
-        /* fill out real block with an empty word */
-        outword(0);
-        if (Dflag)
-	    fprintf(dbgfile,"\t0\t\t\t\t\t# padding\n");
-#endif				/* WordBits != 64 */
-#endif					/* Double */
-
         outblock(x.ovly,sizeof(double));
     }
     else if (ce->c_flag & F_CsetLit) {
         int i, j, x;
         int csbuf[CsetSize];
-        int npair = ce->c_length / sizeof(struct range);
+        int npair = ce->length / sizeof(struct range);
         int size = 0;
         /* Need to alloc not cast because string data might not be aligned */
-        struct range *pair = safe_alloc(ce->c_length);
-        memcpy(pair, ce->c_val.sval, ce->c_length);
+        struct range *pair = safe_alloc(ce->length);
+        memcpy(pair, ce->data, ce->length);
         for (i = 0; i < CsetSize; i++)
             csbuf[i] = 0;
         for (i = 0; i < npair; ++i) {
@@ -940,7 +950,7 @@ static void lemitcon(struct centry *ce)
         char *p, *e;
 
         /* Install the uft8 data */
-        utf8 = inst_strconst(ce->c_val.sval, ce->c_length);
+        utf8 = inst_strconst(ce->data, ce->length);
 
         /* Calculate the length in unicode chars */
         p = utf8->s;
@@ -986,7 +996,9 @@ static void lemitcon(struct centry *ce)
                 outword(p - utf8->s);
             }
         }
-    }
+    } else
+        quit("illegal constant");
+
 }
 
 static void lemitproc(struct lfunction *func)

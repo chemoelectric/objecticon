@@ -65,15 +65,16 @@ struct lfield {
 union xval {
     long ival;          /* integer */
     double rval;        /*  real */
-    char *sval;         /*  pointer into string space of string */
 };
 
 struct centry {                 /* constant table entry */
     word c_flag;                /*   type of literal flag */
-    union xval c_val;           /*   value field */
-    int c_length;               /*   length of literal string */
+    char *data;                 /*   raw data read from ufile */
+    int length;               /*   length of raw data */
+    long ival;                  /*   value for F_IntLit; < 0 => doesn't fit in a C word */
     word c_pc;                  /*   position in icode of object */
-    struct centry *next;        /* Next in lfunctions's linked list */
+    struct centry *next,        /* Next in lfunctions's linked list */
+                  *b_next;      /* Next in hash bucket, used by code generation */
 };
 
 struct fentry {                 /* field table header entry */
