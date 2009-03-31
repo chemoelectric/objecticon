@@ -1111,7 +1111,7 @@ int indent;
    prt_str(rslt_loc, indent);
    prt_str(".vword.bptr == NULL) {", indent);
    ForceNl();
-   prt_str("err_msg(307, NULL);", indent + IndentInc);
+   prt_str("fatalerr(309, NULL);", indent + IndentInc);
    ForceNl();
    /*
     * Handle error conversion. Indicate that operation may fail because
