@@ -209,9 +209,6 @@ static void	outblock	(char *addr,int count);
 static void	wordout		(word oword);
 static void	shortout	(short o);
 
-static void	dumpblock	(char *addr,int count);
-
-
 word pc = 0;		/* simulated program counter */
 
 #define outword(n)	wordout((word)(n))
@@ -2071,23 +2068,7 @@ static void outblock(addr,count)
     while (count--)
         *codep++ = *addr++;
 }
-
-/*
- * dumpblock(a,i) dump contents of i bytes at address a, used only
- *  in conjunction with -L.
- */
-static void dumpblock(addr, count)
-    char *addr;
-    int count;
-{
-    int i;
-    for (i = 0; i < count; i++) {
-        if ((i & 7) == 0)
-            fprintf(dbgfile,"\n\t");
-        fprintf(dbgfile," %03o",(0377 & (unsigned)addr[i]));
-    }
-    putc('\n',dbgfile);
-}
+
 
 /*
  * flushcode - write buffered code to the output file.
