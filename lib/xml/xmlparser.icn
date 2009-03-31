@@ -2317,6 +2317,7 @@ class XmlParser(Connectable,SetFields)
          "validate" : set_validate(f.flag_val())
          "preserve_comments" : set_preserve_comments(f.flag_val())
          "preserve_insignificant_whitespace" : set_preserve_insignificant_whitespace(f.flag_val())
+         "resolver" : set_resolver(f.object_val(Resolver))
          default : fail
       }
       return
