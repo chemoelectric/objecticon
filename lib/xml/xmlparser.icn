@@ -69,19 +69,21 @@ class XmlParser(Connectable,SetFields)
       VALIDITY_ERROR_EVENT, 
       FATAL_ERROR_EVENT
 
-   public 
+   private
       doc,
       resolver, 
       current_divert_id,
       divert_stack,
       in_ext_subset,
-      dtd_insert_shown_error,
+      id_attribute_refs,
+      fatal_error,
+      dtd_insert_shown_error
+
+   private readable
       do_namespaces_flag,
       preserve_insignificant_whitespace_flag,
       preserve_comments_flag,
-      id_attribute_refs,
       validate_flag,
-      fatal_error,
       utf8_flag
 
    #
@@ -143,11 +145,11 @@ class XmlParser(Connectable,SetFields)
       # The predefined entities.  Note that the values are in each case valid content.
       # The chars "&" and "<" on their own would not be valid content.
       if type(s) == "ucs" then {
-         insert(doc.general_entities, ucs("lt"), EntityDef(ucs("&#60;")))
-         insert(doc.general_entities, ucs("gt"), EntityDef(ucs(">")))
-         insert(doc.general_entities, ucs("amp"), EntityDef(ucs("&#38;")))
-         insert(doc.general_entities, ucs("apos"), EntityDef(ucs("\'")))
-         insert(doc.general_entities, ucs("quot"), EntityDef(ucs("\"")))
+         insert(doc.general_entities, u"lt", EntityDef(u"&#60;"))
+         insert(doc.general_entities, u"gt", EntityDef(u">"))
+         insert(doc.general_entities, u"amp", EntityDef(u"&#38;"))
+         insert(doc.general_entities, u"apos", EntityDef(u"\'"))
+         insert(doc.general_entities, u"quot", EntityDef(u"\""))
          utf8_flag := 1
       } else {
          insert(doc.general_entities, "lt", EntityDef("&#60;"))
@@ -191,13 +193,13 @@ class XmlParser(Connectable,SetFields)
    # Remove any unwanted references to the source string from
    # self and doc.
    #
-   public cleanup_source_refs()
+   private cleanup_source_refs()
       id_attribute_refs := &null
       every (!doc.general_entities).pos := &null
       every (!(!doc.attribute_lists).attribute_defs).pos := &null
    end
 
-   public validate_ndata_decls()
+   private validate_ndata_decls()
       local x
       every x := !sort(doc.general_entities) do {
          if \x[2].notation then
@@ -208,7 +210,7 @@ class XmlParser(Connectable,SetFields)
       }
    end
 
-   public validate_attribute_definitions()
+   private validate_attribute_definitions()
       local x, y, z
       every x := !sort(doc.attribute_lists) do  {
          every y := !sort(x[2].attribute_defs) do {
@@ -254,7 +256,7 @@ class XmlParser(Connectable,SetFields)
                                                           x.pos)
    end
 
-   public validate_docname()
+   private validate_docname()
       local docname, e
 
       every e := !doc.children do {
@@ -276,7 +278,7 @@ class XmlParser(Connectable,SetFields)
       return tab(many(XML_SPACE))
    end
 
-   public dtd_spaces()
+   private dtd_spaces()
       dtd_any(XML_SPACE) | return err("space expected")
       return tab(dtd_many(XML_SPACE))
    end
@@ -453,7 +455,7 @@ class XmlParser(Connectable,SetFields)
       return res
    end
 
-   public normalize_attvalue1(s, circle)
+   private normalize_attvalue1(s, circle)
       local res, ref, c2, o
       res := ""
       s ? {
@@ -1077,7 +1079,7 @@ class XmlParser(Connectable,SetFields)
       return parent
    end
 
-   public check_is_char_data(s, msg)
+   private check_is_char_data(s, msg)
       local j
       if j := upto(XML_INVALID_CHAR, s) then
          return err("invalid char (" || image(s[j]) || ") in " || msg)
@@ -1786,7 +1788,7 @@ class XmlParser(Connectable,SetFields)
          return ""
    end
 
-   public dtd_opt_spaces()
+   private dtd_opt_spaces()
       if dtd_any(XML_SPACE) then
          return dtd_spaces()
       else
@@ -1796,7 +1798,7 @@ class XmlParser(Connectable,SetFields)
    #
    # Validate the given element child content; this may fail on error or just emit a warning
    #
-   public validate_children(el) 
+   private validate_children(el) 
       local element_decl, tl
 
       #
@@ -1845,7 +1847,7 @@ class XmlParser(Connectable,SetFields)
    #
    # Validate the attributes of an element
    #
-   public validate_attributes(el)
+   private validate_attributes(el)
       local attlist, x
 
       if not(member(doc.attribute_lists, el.name)) then {
@@ -1895,7 +1897,7 @@ class XmlParser(Connectable,SetFields)
       }
    end
 
-   public validate_attribute_value(element_name, attdef, name, val) 
+   private validate_attribute_value(element_name, attdef, name, val) 
       local l, entity_def, n
       case attdef.def_type of {
          "CDATA" : {
@@ -1963,16 +1965,16 @@ class XmlParser(Connectable,SetFields)
       }
    end
 
-   public start_divert(id) 
+   private start_divert(id) 
       push(divert_stack, Diversion(current_divert_id, &subject, &pos))
       current_divert_id := id
    end
 
-   public end_divert()
+   private end_divert()
       current_divert_id := pop(divert_stack).id
    end
 
-   public where()
+   private where()
       local stack
       stack := copy(divert_stack)
       push(stack, Diversion(current_divert_id, &subject, &pos))
@@ -1982,7 +1984,7 @@ class XmlParser(Connectable,SetFields)
    #
    # A warning
    #
-   public warn(s, loc)
+   private warn(s, loc)
       # No warnings after a fatal error.
       if \fatal_error then
          fail
@@ -1994,7 +1996,7 @@ class XmlParser(Connectable,SetFields)
    #
    # A validity error
    #
-   public invalid(s, loc)
+   private invalid(s, loc)
       # Ignore if not validating, or after a fatal error.
       if /validate_flag | \fatal_error then
          fail
@@ -2006,7 +2008,7 @@ class XmlParser(Connectable,SetFields)
    #
    # A fatal error
    #
-   public err(s, loc)
+   private err(s, loc)
       # Ensure only one fatal error is ever sent.
       if \fatal_error then
          fail
@@ -2176,7 +2178,7 @@ class XmlParser(Connectable,SetFields)
       
       t := table()
       if \utf8_flag then
-         insert(t, ucs("xml"), ucs("http://www.w3.org/XML/1998/namespace"))
+         insert(t, u"xml", u"http://www.w3.org/XML/1998/namespace")
       else
          insert(t, "xml", "http://www.w3.org/XML/1998/namespace")
 
