@@ -2311,7 +2311,7 @@ class XmlParser(Connectable,SetFields)
       return t
    end
 
-   public set_one(f)
+   protected set_one(f)
       case f.attr of {
          "do_namespaces" : set_do_namespaces(f.flag_val())
          "validate" : set_validate(f.flag_val())
