@@ -381,19 +381,7 @@ struct b_real *f(double val)
    register struct b_real *blk;
 
    AlcFixBlk(blk, b_real, T_Real, e_real)
-
-#ifdef Double
-/* access real values one word at a time */
-   { int *rp, *rq;
-     rp = (int *) &(blk->realval);
-     rq = (int *) &val;
-     *rp++ = *rq++;
-     *rp   = *rq;
-   }
-#else                                   /* Double */
    blk->realval = val;
-#endif                                  /* Double */
-
    return blk;
    }
 #enddef

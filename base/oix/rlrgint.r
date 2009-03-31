@@ -309,26 +309,14 @@ int realtobig(da, dx)
 dptr da, dx;
 {
 
-#ifdef Double
    double x;
-#else					/* Double */
-   double x = BlkLoc(*da)->realblk.realval;
-#endif					/* Double */
-
    struct b_bignum *b;
    word i, blen;
    word d;
    int sgn;
 
-#ifdef Double
-	{
-		int	*rp, *rq;
-		rp = (int *) &(BlkLoc(*da)->realblk.realval);
-		rq = (int *) &x;
-		*rq++ = *rp++;
-		*rq = *rp;
-	}
-#endif					/* Double */
+   GetReal(da, x);
+
 
    /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of
     * blen below, which causes a segfault.
