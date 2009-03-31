@@ -575,16 +575,22 @@ function{1} map(s1,s2,s3)
               maps2u = s2;
               maps3u = s3;
 
-              if (!cnv:ucs(s2,s2))
+              if (!cnv:ucs(s2,s2)) {
+                  /* In case &errno != 0, note we haven't built maptab */ 
+                  maps2u = nulldesc;
+                  maps3u = nulldesc;
                   runerr(128,s2);
-              if (!cnv:ucs(s3,s3))
+              }
+              if (!cnv:ucs(s3,s3)) {
+                  maps2u = nulldesc;
+                  maps3u = nulldesc;
                   runerr(128,s3);
+              }
               /*
                * s2 and s3 must be of the same length
                */
               maptab_len = BlkLoc(s2)->ucs.length;
               if (maptab_len != BlkLoc(s3)->ucs.length) {
-                  /* In case &errno != 0, note we haven't built maptab */ 
                   maps2u = nulldesc;
                   maps3u = nulldesc;
                   runerr(208);
@@ -666,15 +672,21 @@ function{1} map(s1,s2,s3)
               maps2 = s2;
               maps3 = s3;
 
-              if (!cnv:string(s2,s2))
+              if (!cnv:string(s2,s2)) {
+                  /* In case &errno != 0, note we haven't built maptab */ 
+                  maps2 = nulldesc;
+                  maps3 = nulldesc;
                   runerr(103,s2);
-              if (!cnv:string(s3,s3))
+              }
+              if (!cnv:string(s3,s3)) {
+                  maps2 = nulldesc;
+                  maps3 = nulldesc;
                   runerr(103,s3);
+              }
               /*
                * s2 and s3 must be of the same length
                */
               if (StrLen(s2) != StrLen(s3)) {
-                  /* In case &errno != 0, note we haven't built maptab */ 
                   maps2 = nulldesc;
                   maps3 = nulldesc;
                   runerr(208);
