@@ -51,13 +51,14 @@ class HttpRequest(SetFields, MimeHeaders)
 
    #
    # Set the data to be used in a POST request, as a stream to be read, and set
-   # the method to "POST".
+   # the method to "POST" (if post_stream is not null).
    #
    # @param post_stream A Stream instance
    #
    public set_post_stream(post_stream)
-      set_method("POST")
       self.post_stream := post_stream
+      if \self.post_stream then
+         set_method("POST")
    end
 
    #

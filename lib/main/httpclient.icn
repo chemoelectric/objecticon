@@ -236,8 +236,8 @@ class HttpClient(NetClient)
       # On a redirect, a POST becomes a GET.
       #
       if request.method == "POST" then {
-         request.method := "GET"
-         request.post_stream := &null
+         request.set_method("GET")
+         request.set_post_stream()
          request.unset_header("content-length")
          request.unset_header("content-type")
       }
@@ -574,7 +574,7 @@ class HttpClient(NetClient)
    #
    # Useful debug function
    # 
-   private dump_cookies()
+   public dump_cookies()
       local c, e, f
       every e := !sort(cookies) do {
          write("domain:", e[1])
