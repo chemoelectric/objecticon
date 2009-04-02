@@ -1,6 +1,6 @@
 package cgi
 
-import io, net, mail, util(error,SetFields)
+import io, net, mail, util(error,SetFields), posix(System)
 
 class CgiParams(SetFields)
    private readable
@@ -16,14 +16,14 @@ class CgiParams(SetFields)
          if *stdin > \stdin_limit then
             return error("Too much data read from stdin")
 
-      rm := getenv("REQUEST_METHOD")
+      rm := System.getenv("REQUEST_METHOD")
       case rm of {
          "GET": {
-            params := URL.make_cgi_table(getenv("QUERY_STRING"))
+            params := URL.make_cgi_table(System.getenv("QUERY_STRING"))
          }
          "POST": {
             p := RFC822Parser()
-            s := getenv("CONTENT_TYPE")
+            s := System.getenv("CONTENT_TYPE")
             ct := p.parse_content_type(s) | return error("Couldn't parse CONTENT_TYPE param:" || &why)
             if ct.type == "application" & ct.subtype == "x-www-form-urlencoded" then {
                params := URL.make_cgi_table(stdin)
