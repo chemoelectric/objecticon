@@ -1518,7 +1518,7 @@ extern int over_flow;
 word add(a, b)
 word a, b;
 {
-   if ((a ^ b) >= 0 && (a >= 0 ? b > MaxLong - a : b < MinLong - a)) {
+   if ((a ^ b) >= 0 && (a >= 0 ? b > MaxWord - a : b < MinWord - a)) {
       over_flow = 1;
       return 0;
       }
@@ -1531,7 +1531,7 @@ word a, b;
 word sub(a, b)
 word a, b;
 {
-   if ((a ^ b) < 0 && (a >= 0 ? b < a - MaxLong : b > a - MinLong)) {
+   if ((a ^ b) < 0 && (a >= 0 ? b < a - MaxWord : b > a - MinWord)) {
       over_flow = 1;
       return 0;
       }
@@ -1546,12 +1546,12 @@ word a, b;
 {
    if (b != 0) {
       if ((a ^ b) >= 0) {
-	 if (a >= 0 ? a > MaxLong / b : a < MaxLong / b) {
+	 if (a >= 0 ? a > MaxWord / b : a < MaxWord / b) {
             over_flow = 1;
 	    return 0;
             }
 	 }
-      else if (b != -1 && (a >= 0 ? a > MinLong / b : a < MinLong / b)) {
+      else if (b != -1 && (a >= 0 ? a > MinWord / b : a < MinWord / b)) {
          over_flow = 1;
 	 return 0;
          }
@@ -1561,7 +1561,7 @@ word a, b;
    return a * b;
 }
 
-/* MinLong / -1 overflows; need div3 too */
+/* MinWord / -1 overflows; need div3 too */
 
 word mod3(a, b)
 word a, b;
@@ -1574,9 +1574,9 @@ word a, b;
 	 over_flow = 1; /* Not really an overflow, but definitely an error */
 	 return 0;
 
-      case MinLong:
-	 /* Handle this separately, since -MinLong can overflow */
-	 retval = ( a > MinLong ) ? a : 0;
+      case MinWord:
+	 /* Handle this separately, since -MinWord can overflow */
+	 retval = ( a > MinWord ) ? a : 0;
 	 break;
 
       default:
@@ -1598,7 +1598,7 @@ word div3(a, b)
 word a, b;
 {
    if ( ( b == 0 ) ||	/* Not really an overflow, but definitely an error */
-        ( b == -1 && a == MinLong ) ) {
+        ( b == -1 && a == MinWord ) ) {
       over_flow = 1;
       return 0;
       }
@@ -1607,12 +1607,12 @@ word a, b;
    return ( a - mod3 ( a, b ) ) / b;
 }
 
-/* MinLong / -1 overflows; need div3 too */
+/* MinWord / -1 overflows; need div3 too */
 
 word neg(a)
 word a;
 {
-   if (a == MinLong) {
+   if (a == MinWord) {
       over_flow = 1;
       return 0;
       }

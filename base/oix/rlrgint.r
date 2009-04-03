@@ -324,7 +324,7 @@ dptr da, dx;
    if (x > DBL_MAX || x < -DBL_MAX)
        return CvtFail;
 
-   if (x > 0.9999 * MinLong && x < 0.9999 * MaxLong) {
+   if (x > 0.9999 * MinWord && x < 0.9999 * MaxWord) {
       MakeInt((word)x, dx);
       return Succeeded;		/* got lucky; a simple integer suffices */
       }
@@ -1636,7 +1636,7 @@ word i;
    struct b_bignum *x; 
    word alen; 
 
-   if (i < 0 && i > MinLong)
+   if (i < 0 && i > MinWord)
       return bigsubi(da, -i, dx);
    else if (i < 0 || i >= B ) {
       struct descrip td;
@@ -1680,7 +1680,7 @@ word i;
    struct b_bignum *x; 
    word alen;
 
-   if (i < 0 && i > MinLong)
+   if (i < 0 && i > MinWord)
       return bigaddi(da, -i, dx);
    else if (i < 0 || i >= B) {
       struct descrip td;

@@ -893,7 +893,7 @@ static void lemitcon(struct centry *ce)
     }
     else if (ce->c_flag & F_CsetLit) {
         int i, j, x;
-        int csbuf[CsetSize];
+        word csbuf[CsetSize];
         int npair = ce->length / sizeof(struct range);
         int size = 0;
         /* Need to alloc not cast because string data might not be aligned */

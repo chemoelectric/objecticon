@@ -405,7 +405,7 @@ dptr drslt;
       /*
        * r ^ n = ( 1/r ) * ( ( 1/r ) ^ ( -1 - n ) )
        *
-       * (-1) - n never overflows, even when n == MinLong.
+       * (-1) - n never overflows, even when n == MinWord.
        */
       n = (-1) - n;
       r = 1.0 / r;

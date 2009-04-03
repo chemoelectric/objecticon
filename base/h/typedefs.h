@@ -15,20 +15,20 @@ typedef unsigned int DIGIT;
 
 /*
  * Set up typedefs and related definitions depending on whether or not
- * ints and pointers are the same size.
+ * pointers are the same size as ints or longs (WordBits is by default
+ * the number of bits in a void*).  After this, word should be an
+ * integer type so that sizeof(word)==sizeof(void*)==8*WordBits.
  */
 
-#if IntBits != WordBits
-   typedef long int word;
-   typedef unsigned long int uword;
-#else					/* IntBits != WordBits */
+#if IntBits == WordBits
    typedef int word;
-   #ifdef CDC_VXVE
-      typedef uword;
-   #else				/* CDC_VXVE */
-      typedef unsigned int uword;
-   #endif				/* CDC_VXVE */
-#endif					/* IntBits != WordBits */
+   typedef unsigned int uword;
+#elif LongBits == WordBits
+   typedef long word;
+   typedef unsigned long uword;
+#else
+   #error "WordBits must equal either IntBits or LongBits"
+#endif
 
 #ifndef PointerDef
    typedef void *pointer;

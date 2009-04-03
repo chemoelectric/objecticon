@@ -7,14 +7,6 @@
  *  Definitions common to the compiler and interpreter.
  */
 
-/*
- * Constants that are not likely to vary between implementations.
- */
-
-#define BitOffMask (IntBits-1)
-#define CsetSize (256/IntBits)	/* number of ints to hold 256 cset
-				 *  bits. Use (256/IntBits)+1 if
-				 *  256 % IntBits != 0 */
 #define MinListSlots	    8	/* number of elements in an expansion
 				 * list element block  */
 
@@ -240,9 +232,21 @@ do { \
 #define CallerProc (&BlkLoc(*argp)->proc)
 
 /*
+ * Csets
+ */
+
+#define CsetSize (256/WordBits)	/* number of ints to hold 256 cset
+				 *  bits. Use (256/WordBits)+1 if
+				 *  256 % WordBits != 0 */
+/*
+ * Address of word containing cset bit b
+ */
+#define CsetPtr(b,c)	((c) + (((b)&0377) >> LogWordBits))
+
+/*
  * Offset in word of cset bit.
  */
-#define CsetOff(b)	((b) & BitOffMask)
+#define CsetOff(b)	((b) & (WordBits-1))
 
 /*
  * Set bit b in cset c.
@@ -720,11 +724,6 @@ do { \
    #define A_MTEvent	11	/* multithread event */
    #define A_Trapret	12	/* Return from stub  */
    #define A_Trapfail	13	/* Fail from stub  */
-
-/*
- * Address of word containing cset bit b
- */
-#define CsetPtr(b,c)	((c) + (((b)&0377) >> LogIntBits))
 
 #if MSWIN32
       #define ptr2word(x) (uword)x

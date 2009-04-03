@@ -646,7 +646,7 @@ long parse_int(char *data)
     while ((c = *p++) >= '0' && c <= '9') {
         result = result * 10 + (c - '0');
         lresult = lresult * 10 + (c - '0');
-        if (result <= MinLong || result >= MaxLong) {
+        if (result <= MinWord || result >= MaxWord) {
             over = 1;			/* flag overflow */
             result = 0;			/* reset to avoid fp exception */
         }
@@ -662,7 +662,7 @@ long parse_int(char *data)
                 break;
             result = result * radix + c;
             lresult = lresult * radix + c;
-            if (result <= MinLong || result >= MaxLong) {
+            if (result <= MinWord || result >= MaxWord) {
                 over = 1;			/* flag overflow */
                 result = 0;			/* reset to avoid fp exception */
             }

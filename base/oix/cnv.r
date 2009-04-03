@@ -124,7 +124,7 @@ C_integer *d;
       real: {
          double dbl;
          GetReal(s,dbl);
-         if (dbl > MaxLong || dbl < MinLong) {
+         if (dbl > MaxWord || dbl < MinWord) {
             return 0;
             }
          *d = dbl;
@@ -156,7 +156,7 @@ C_integer *d;
 	 }
       case T_Real: {
          double dbl = numrc.real;
-         if (dbl > MaxLong || dbl < MinLong) {
+         if (dbl > MaxWord || dbl < MinWord) {
             return 0;
             }
          *d = dbl;
@@ -460,7 +460,7 @@ dptr s, d;
       real: {
          double dbl;
          GetReal(s,dbl);
-         if (dbl > MaxLong || dbl < MinLong) {
+         if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
                EVValD(d, e_sconv);
@@ -509,7 +509,7 @@ dptr s, d;
          return 1;
       case T_Real: {
          double dbl = numrc.real;
-         if (dbl > MaxLong || dbl < MinLong) {
+         if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
                EVValD(d, e_sconv);
@@ -852,7 +852,7 @@ char *s;
    {
    register char *p;
    long ival;
-   static char *maxneg = MaxNegInt;
+   static char *maxneg = MinWordStr;
 
    p = s + MaxCvtLen - 1;
    ival = num;
@@ -1018,7 +1018,7 @@ union numeric *result;
    /*
     * Test for integer.
     */
-   if (!realflag && !scale && mantissa >= MinLong && mantissa <= MaxLong) {
+   if (!realflag && !scale && mantissa >= MinWord && mantissa <= MaxWord) {
       result->integer = (msign == '+' ? lresult : -lresult);
       return T_Integer;
       }

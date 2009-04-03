@@ -141,12 +141,16 @@
 #endif					/* StackAlign */
 
 #ifndef WordBits
-   #define WordBits 32
+   #define WordBits (8 * SIZEOF_VOIDP)
 #endif					/* WordBits */
 
 #ifndef IntBits
-   #define IntBits WordBits
+   #define IntBits (8 * SIZEOF_INT)
 #endif					/* IntBits */
+
+#ifndef LongBits
+   #define LongBits (8 * SIZEOF_LONG)
+#endif					/* LongBits */
 
 #ifndef SourceSuffix
    #define SourceSuffix ".icn"

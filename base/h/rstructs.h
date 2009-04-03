@@ -72,7 +72,7 @@ struct b_cset {			/* cset block */
     word title;			/*   T_Cset */
     word blksize;		/*   block size */
     word size;			/*   size of cset */
-    unsigned int bits[CsetSize];		/*   array of bits */
+    word bits[CsetSize];	/*   array of bits for quick lookup of first 256 chars */
     word n_ranges;
     struct b_cset_range range[1];
 };

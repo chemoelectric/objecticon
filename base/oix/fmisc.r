@@ -562,12 +562,12 @@ function{1,*} seq(from, by)
        * Produce error if by is 0, i.e., an infinite sequence of from's.
        */
       if (by > 0) {
-         seq_lb = MinLong + by;
-         seq_ub = MaxLong;
+         seq_lb = MinWord + by;
+         seq_ub = MaxWord;
          }
       else if (by < 0) {
-         seq_lb = MinLong;
-         seq_ub = MaxLong + by;
+         seq_lb = MinWord;
+         seq_ub = MaxWord + by;
          }
       else if (by == 0) {
          irunerr(211, by);

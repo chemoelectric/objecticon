@@ -65,3 +65,8 @@
 
 /* define as 1 if poll exists */
 #undef HAVE_POLL
+
+/* sizes of various fundamental types */
+#undef SIZEOF_INT
+#undef SIZEOF_LONG
+#undef SIZEOF_VOIDP
