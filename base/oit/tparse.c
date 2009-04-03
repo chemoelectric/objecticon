@@ -26,10 +26,13 @@ extern int yyparse(void);
 #define YYSTYPE nodeptr
 #define YYMAXDEPTH 5000
 
+/* Avoids some spurious compiler warnings */
+#define lint 1
+
 extern int fncargs[];
 int idflag;
 int modflag;
-#line 33 "y.tab.c"
+#line 36 "y.tab.c"
 #define IDENT 257
 #define INTLIT 258
 #define REALLIT 259
@@ -2177,794 +2180,794 @@ yyreduce:
     switch (yyn)
     {
 case 1:
-#line 185 "tgram.g"
+#line 188 "tgram.g"
 {;}
 break;
 case 4:
-#line 190 "tgram.g"
-{;}
-break;
-case 5:
-#line 191 "tgram.g"
-{;}
-break;
-case 6:
-#line 192 "tgram.g"
-{;}
-break;
-case 7:
 #line 193 "tgram.g"
 {;}
 break;
-case 8:
+case 5:
 #line 194 "tgram.g"
 {;}
 break;
-case 9:
+case 6:
 #line 195 "tgram.g"
 {;}
 break;
-case 10:
+case 7:
 #line 196 "tgram.g"
 {;}
 break;
-case 11:
+case 8:
 #line 197 "tgram.g"
 {;}
 break;
+case 9:
+#line 198 "tgram.g"
+{;}
+break;
+case 10:
+#line 199 "tgram.g"
+{;}
+break;
+case 11:
+#line 200 "tgram.g"
+{;}
+break;
 case 15:
-#line 203 "tgram.g"
+#line 206 "tgram.g"
 {yyval = tree4(N_Dottedid,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 16:
-#line 205 "tgram.g"
+#line 208 "tgram.g"
 {yyval = tree4(N_Dottedid,yyvsp[-1],IdNode(default_string),yyvsp[0]);}
 break;
 case 18:
-#line 208 "tgram.g"
+#line 211 "tgram.g"
 {set_package(dottedid2string(yyvsp[0]), yyvsp[0]);;}
 break;
 case 19:
-#line 210 "tgram.g"
-{;}
-break;
-case 21:
 #line 213 "tgram.g"
 {;}
 break;
+case 21:
+#line 216 "tgram.g"
+{;}
+break;
 case 22:
-#line 215 "tgram.g"
+#line 218 "tgram.g"
 {add_invocable(dottedid2string(yyvsp[0]),1,yyvsp[0]);}
 break;
 case 23:
-#line 216 "tgram.g"
+#line 219 "tgram.g"
 {add_invocable(Str0(yyvsp[0]),2,yyvsp[0]);}
 break;
 case 24:
-#line 217 "tgram.g"
+#line 220 "tgram.g"
 {add_invocable(Str0(yyvsp[-2]),3,yyvsp[-2]);}
 break;
 case 25:
-#line 219 "tgram.g"
-{;}
-break;
-case 27:
 #line 222 "tgram.g"
 {;}
 break;
+case 27:
+#line 225 "tgram.g"
+{;}
+break;
 case 28:
-#line 224 "tgram.g"
+#line 227 "tgram.g"
 {add_link(Str0(yyvsp[0]), yyvsp[0]);}
 break;
 case 29:
-#line 225 "tgram.g"
+#line 228 "tgram.g"
 {add_link(Str0(yyvsp[0]), yyvsp[0]);}
 break;
 case 33:
-#line 232 "tgram.g"
+#line 235 "tgram.g"
 {next_import(dottedid2string(yyvsp[0]),0,yyvsp[0]);; }
 break;
 case 34:
-#line 233 "tgram.g"
+#line 236 "tgram.g"
 {next_import(dottedid2string(yyvsp[0]),1,yyvsp[0]);idflag = F_Importsym;}
 break;
 case 36:
-#line 235 "tgram.g"
+#line 238 "tgram.g"
 {modflag = 0;}
 break;
 case 37:
-#line 235 "tgram.g"
+#line 238 "tgram.g"
 {next_class(Str0(yyvsp[0]),modflag, yyvsp[0]);;}
 break;
 case 41:
-#line 240 "tgram.g"
+#line 243 "tgram.g"
 {next_super(dottedid2string(yyvsp[0]),yyvsp[0]);; }
 break;
 case 42:
-#line 241 "tgram.g"
+#line 244 "tgram.g"
 {next_super(dottedid2string(yyvsp[0]),yyvsp[0]);; }
 break;
 case 44:
-#line 244 "tgram.g"
+#line 247 "tgram.g"
 {modflag = 0; idflag = F_Class;}
 break;
 case 46:
-#line 246 "tgram.g"
+#line 249 "tgram.g"
 {check_flags(modflag, yyvsp[0]); }
 break;
 case 49:
-#line 250 "tgram.g"
+#line 253 "tgram.g"
 {next_method(Str0(yyvsp[0]), modflag, yyvsp[0]); idflag = F_Argument;}
 break;
 case 50:
-#line 251 "tgram.g"
+#line 254 "tgram.g"
 {curr_func->code = tree6(N_Proc,yyvsp[-9],yyvsp[-9],yyvsp[-3],yyvsp[-1],yyvsp[0]); }
 break;
 case 51:
-#line 253 "tgram.g"
+#line 256 "tgram.g"
 {modflag |= M_Defer; }
 break;
 case 52:
-#line 253 "tgram.g"
+#line 256 "tgram.g"
 {next_method(Str0(yyvsp[0]), modflag, yyvsp[0]); idflag = F_Argument;}
 break;
 case 55:
-#line 256 "tgram.g"
+#line 259 "tgram.g"
 {modflag |= M_Final;}
 break;
 case 58:
-#line 261 "tgram.g"
+#line 264 "tgram.g"
 {modflag |= M_Private;}
 break;
 case 59:
-#line 262 "tgram.g"
+#line 265 "tgram.g"
 {modflag |= M_Public;}
 break;
 case 60:
-#line 263 "tgram.g"
+#line 266 "tgram.g"
 {modflag |= M_Protected;}
 break;
 case 61:
-#line 264 "tgram.g"
+#line 267 "tgram.g"
 {modflag |= M_Package;}
 break;
 case 62:
-#line 265 "tgram.g"
+#line 268 "tgram.g"
 {modflag |= M_Static;}
 break;
 case 63:
-#line 266 "tgram.g"
+#line 269 "tgram.g"
 {modflag |= M_Const;}
 break;
 case 64:
-#line 267 "tgram.g"
+#line 270 "tgram.g"
 {modflag |= M_Readable;}
 break;
 case 65:
-#line 268 "tgram.g"
+#line 271 "tgram.g"
 {modflag |= M_Final;}
 break;
 case 66:
-#line 270 "tgram.g"
+#line 273 "tgram.g"
 {idflag = F_Global;}
 break;
 case 67:
-#line 270 "tgram.g"
+#line 273 "tgram.g"
 {;}
 break;
 case 68:
-#line 272 "tgram.g"
+#line 275 "tgram.g"
 {next_function(F_Record); idflag = F_Argument;}
 break;
 case 69:
-#line 272 "tgram.g"
+#line 275 "tgram.g"
 {
   curr_func->global = next_global(Str0(yyvsp[-4]),F_Record|F_Global,yyvsp[-4]); curr_func->global->func = curr_func; yyval = yyvsp[-4];
   }
 break;
 case 72:
-#line 279 "tgram.g"
+#line 282 "tgram.g"
 {next_procedure(Str0(yyvsp[0]), yyvsp[0]); idflag = F_Argument;}
 break;
 case 73:
-#line 279 "tgram.g"
+#line 282 "tgram.g"
 {
                 curr_func->code = tree6(N_Proc,yyvsp[-9],yyvsp[-9],yyvsp[-3],yyvsp[-1],yyvsp[0]);
   }
 break;
 case 74:
-#line 283 "tgram.g"
+#line 286 "tgram.g"
 {;}
 break;
 case 75:
-#line 284 "tgram.g"
+#line 287 "tgram.g"
 {;}
 break;
 case 76:
-#line 285 "tgram.g"
+#line 288 "tgram.g"
 {curr_func->nargs = -curr_func->nargs;}
 break;
 case 77:
-#line 288 "tgram.g"
+#line 291 "tgram.g"
 {install(Str0(yyvsp[0]),idflag,yyvsp[0]);}
 break;
 case 78:
-#line 289 "tgram.g"
+#line 292 "tgram.g"
 {install(Str0(yyvsp[0]),idflag,yyvsp[0]);}
 break;
 case 79:
-#line 291 "tgram.g"
+#line 294 "tgram.g"
 {;}
 break;
 case 80:
-#line 292 "tgram.g"
+#line 295 "tgram.g"
 {;}
 break;
 case 81:
-#line 294 "tgram.g"
+#line 297 "tgram.g"
 {idflag = F_Dynamic;}
 break;
 case 82:
-#line 295 "tgram.g"
+#line 298 "tgram.g"
 {idflag = F_Static;}
 break;
 case 83:
-#line 297 "tgram.g"
-{yyval = tree1(N_Empty);}
-break;
-case 84:
-#line 298 "tgram.g"
-{yyval = yyvsp[0];}
-break;
-case 85:
 #line 300 "tgram.g"
 {yyval = tree1(N_Empty);}
 break;
-case 86:
+case 84:
 #line 301 "tgram.g"
-{yyval = tree4(N_Slist,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+{yyval = yyvsp[0];}
 break;
-case 87:
+case 85:
 #line 303 "tgram.g"
 {yyval = tree1(N_Empty);}
 break;
+case 86:
+#line 304 "tgram.g"
+{yyval = tree4(N_Slist,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 87:
+#line 306 "tgram.g"
+{yyval = tree1(N_Empty);}
+break;
 case 90:
-#line 307 "tgram.g"
+#line 310 "tgram.g"
 {yyval = tree5(N_Conj,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 92:
-#line 310 "tgram.g"
+#line 313 "tgram.g"
 {yyval = tree5(N_Scan,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 94:
-#line 313 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 95:
-#line 314 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 96:
-#line 315 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 97:
 #line 316 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 98:
+case 95:
 #line 317 "tgram.g"
-{yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 99:
+case 96:
 #line 318 "tgram.g"
-{yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 100:
+case 97:
 #line 319 "tgram.g"
-{yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 101:
+case 98:
 #line 320 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 102:
+case 99:
 #line 321 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 103:
+case 100:
 #line 322 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 104:
+case 101:
 #line 323 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 105:
+case 102:
 #line 324 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 106:
+case 103:
 #line 325 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 107:
+case 104:
 #line 326 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 108:
+case 105:
 #line 327 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 109:
+case 106:
 #line 328 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 110:
+case 107:
 #line 329 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 111:
+case 108:
 #line 330 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 112:
+case 109:
 #line 331 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 113:
+case 110:
 #line 332 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 114:
+case 111:
 #line 333 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 115:
+case 112:
 #line 334 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 116:
+case 113:
 #line 335 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 117:
+case 114:
 #line 336 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 118:
+case 115:
 #line 337 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 119:
+case 116:
 #line 338 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 120:
+case 117:
 #line 339 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 121:
+case 118:
 #line 340 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 122:
+case 119:
 #line 341 "tgram.g"
 {yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 123:
+case 120:
 #line 342 "tgram.g"
+{yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 121:
+#line 343 "tgram.g"
+{yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 122:
+#line 344 "tgram.g"
+{yyval = tree5(N_Augop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 123:
+#line 345 "tgram.g"
 {yyval = tree5(N_Scan,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 124:
-#line 343 "tgram.g"
+#line 346 "tgram.g"
 {yyval = tree5(N_Conj,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 125:
-#line 344 "tgram.g"
+#line 347 "tgram.g"
 {yyval = tree5(N_Activat,yyvsp[-1],yyvsp[-1],yyvsp[0],yyvsp[-2]);}
 break;
 case 127:
-#line 347 "tgram.g"
+#line 350 "tgram.g"
 {yyval = tree4(N_To,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 128:
-#line 348 "tgram.g"
+#line 351 "tgram.g"
 {yyval = tree5(N_ToBy,yyvsp[-3],yyvsp[-4],yyvsp[-2],yyvsp[0]);}
 break;
 case 130:
-#line 351 "tgram.g"
+#line 354 "tgram.g"
 {yyval = tree4(N_Alt,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 132:
-#line 354 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 133:
-#line 355 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 134:
-#line 356 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 135:
 #line 357 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 136:
+case 133:
 #line 358 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 137:
+case 134:
 #line 359 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 138:
+case 135:
 #line 360 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 139:
+case 136:
 #line 361 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 140:
+case 137:
 #line 362 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 141:
+case 138:
 #line 363 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 142:
+case 139:
 #line 364 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 143:
+case 140:
 #line 365 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 144:
+case 141:
 #line 366 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 145:
+case 142:
 #line 367 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 147:
+case 143:
+#line 368 "tgram.g"
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 144:
+#line 369 "tgram.g"
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 145:
 #line 370 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 148:
-#line 371 "tgram.g"
+case 147:
+#line 373 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 150:
+case 148:
 #line 374 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 151:
-#line 375 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 152:
-#line 376 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 153:
+case 150:
 #line 377 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 155:
+case 151:
+#line 378 "tgram.g"
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 152:
+#line 379 "tgram.g"
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 153:
 #line 380 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 156:
-#line 381 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 157:
-#line 382 "tgram.g"
-{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
-break;
-case 158:
+case 155:
 #line 383 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 160:
+case 156:
+#line 384 "tgram.g"
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 157:
+#line 385 "tgram.g"
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 158:
 #line 386 "tgram.g"
 {yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-case 162:
+case 160:
 #line 389 "tgram.g"
+{yyval = tree5(N_Binop,yyvsp[-1],yyvsp[-1],yyvsp[-2],yyvsp[0]);}
+break;
+case 162:
+#line 392 "tgram.g"
 {yyval = tree4(N_Limit,yyvsp[-2],yyvsp[-2],yyvsp[0]);}
 break;
 case 163:
-#line 390 "tgram.g"
+#line 393 "tgram.g"
 {yyval = tree5(N_Activat,yyvsp[-1],yyvsp[-1],yyvsp[0],yyvsp[-2]);}
 break;
 case 164:
-#line 391 "tgram.g"
+#line 394 "tgram.g"
 {yyval = tree4(N_Apply,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 166:
-#line 394 "tgram.g"
+#line 397 "tgram.g"
 {yyval = tree5(N_Activat,yyvsp[-1],yyvsp[-1],yyvsp[0],tree1(N_Empty));}
 break;
 case 167:
-#line 395 "tgram.g"
+#line 398 "tgram.g"
 {yyval = tree3(N_Not,yyvsp[0],yyvsp[0]);}
 break;
 case 168:
-#line 396 "tgram.g"
+#line 399 "tgram.g"
 {yyval = tree3(N_Bar,yyvsp[0],yyvsp[0]);}
 break;
 case 169:
-#line 397 "tgram.g"
+#line 400 "tgram.g"
 {yyval = tree3(N_Bar,yyvsp[0],yyvsp[0]);}
 break;
 case 170:
-#line 398 "tgram.g"
+#line 401 "tgram.g"
 {yyval = tree3(N_Bar,yyvsp[0],yyvsp[0]);}
 break;
 case 171:
-#line 399 "tgram.g"
-{yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
-break;
-case 172:
-#line 400 "tgram.g"
-{yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
-break;
-case 173:
-#line 401 "tgram.g"
-{yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
-break;
-case 174:
 #line 402 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 175:
+case 172:
 #line 403 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 176:
+case 173:
 #line 404 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 177:
+case 174:
 #line 405 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 178:
+case 175:
 #line 406 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 179:
+case 176:
 #line 407 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 180:
+case 177:
 #line 408 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 181:
+case 178:
 #line 409 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 182:
+case 179:
 #line 410 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 183:
+case 180:
 #line 411 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 184:
+case 181:
 #line 412 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 185:
+case 182:
 #line 413 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 186:
+case 183:
 #line 414 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 187:
+case 184:
 #line 415 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 188:
+case 185:
 #line 416 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
-case 189:
+case 186:
 #line 417 "tgram.g"
 {yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
+case 187:
+#line 418 "tgram.g"
+{yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
+break;
+case 188:
+#line 419 "tgram.g"
+{yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
+break;
+case 189:
+#line 420 "tgram.g"
+{yyval = tree4(N_Unop,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
+break;
 case 197:
-#line 426 "tgram.g"
+#line 429 "tgram.g"
 {yyval = convert_dottedidentexpr(yyvsp[0]);}
 break;
 case 200:
-#line 429 "tgram.g"
+#line 432 "tgram.g"
 {yyval = tree3(N_Create,yyvsp[-1],yyvsp[0]);}
 break;
 case 201:
-#line 430 "tgram.g"
+#line 433 "tgram.g"
 {yyval = tree2(N_Next,yyvsp[0]);}
 break;
 case 202:
-#line 431 "tgram.g"
+#line 434 "tgram.g"
 {yyval = tree3(N_Break,yyvsp[-1],yyvsp[0]);}
 break;
 case 203:
-#line 432 "tgram.g"
+#line 435 "tgram.g"
 {if ((yyvsp[-1])->n_type == N_Elist) yyval = tree4(N_Invok,yyvsp[-2],tree1(N_Empty),yyvsp[-1]); else yyval = yyvsp[-1];}
 break;
 case 204:
-#line 433 "tgram.g"
+#line 436 "tgram.g"
 {yyval = yyvsp[-1];}
 break;
 case 205:
-#line 434 "tgram.g"
+#line 437 "tgram.g"
 {yyval = tree3(N_List,yyvsp[-2],yyvsp[-1]);}
 break;
 case 206:
-#line 435 "tgram.g"
+#line 438 "tgram.g"
 {yyval = buildarray(yyvsp[-3],yyvsp[-2],yyvsp[-1],yyvsp[0]);}
 break;
 case 207:
-#line 436 "tgram.g"
+#line 439 "tgram.g"
 {yyval = tree4(N_Invok,yyvsp[-1],yyvsp[-2],tree1(N_Empty));}
 break;
 case 208:
-#line 437 "tgram.g"
+#line 440 "tgram.g"
 {yyval = tree4(N_Invok,yyvsp[-2],yyvsp[-3],yyvsp[-1]);}
 break;
 case 209:
-#line 438 "tgram.g"
+#line 441 "tgram.g"
 {yyval = tree4(N_Invok,yyvsp[-2],yyvsp[-3],yyvsp[-1]);}
 break;
 case 210:
-#line 439 "tgram.g"
+#line 442 "tgram.g"
 {yyval = tree4(N_Field,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 211:
-#line 440 "tgram.g"
+#line 443 "tgram.g"
 {yyval = c_str_leaf(N_Key,yyvsp[-1],"fail");}
 break;
 case 212:
-#line 441 "tgram.g"
+#line 444 "tgram.g"
 {if (klookup(Str0(yyvsp[0])) == 0) tfatal("invalid keyword: %s",Str0(yyvsp[0])); yyval = c_str_leaf(N_Key,yyvsp[-1],Str0(yyvsp[0]));}
 break;
 case 213:
-#line 443 "tgram.g"
-{yyval = tree5(N_Loop,yyvsp[-1],yyvsp[-1],yyvsp[0],tree1(N_Empty));}
-break;
-case 214:
-#line 444 "tgram.g"
-{yyval = tree5(N_Loop,yyvsp[-3],yyvsp[-3],yyvsp[-2],yyvsp[0]);}
-break;
-case 215:
 #line 446 "tgram.g"
 {yyval = tree5(N_Loop,yyvsp[-1],yyvsp[-1],yyvsp[0],tree1(N_Empty));}
 break;
-case 216:
+case 214:
 #line 447 "tgram.g"
 {yyval = tree5(N_Loop,yyvsp[-3],yyvsp[-3],yyvsp[-2],yyvsp[0]);}
 break;
-case 217:
+case 215:
 #line 449 "tgram.g"
 {yyval = tree5(N_Loop,yyvsp[-1],yyvsp[-1],yyvsp[0],tree1(N_Empty));}
 break;
-case 218:
+case 216:
 #line 450 "tgram.g"
 {yyval = tree5(N_Loop,yyvsp[-3],yyvsp[-3],yyvsp[-2],yyvsp[0]);}
 break;
-case 219:
+case 217:
 #line 452 "tgram.g"
 {yyval = tree5(N_Loop,yyvsp[-1],yyvsp[-1],yyvsp[0],tree1(N_Empty));}
 break;
+case 218:
+#line 453 "tgram.g"
+{yyval = tree5(N_Loop,yyvsp[-3],yyvsp[-3],yyvsp[-2],yyvsp[0]);}
+break;
+case 219:
+#line 455 "tgram.g"
+{yyval = tree5(N_Loop,yyvsp[-1],yyvsp[-1],yyvsp[0],tree1(N_Empty));}
+break;
 case 220:
-#line 454 "tgram.g"
+#line 457 "tgram.g"
 {yyval = tree4(N_Ret,yyvsp[0],yyvsp[0],tree1(N_Empty));}
 break;
 case 221:
-#line 455 "tgram.g"
+#line 458 "tgram.g"
 {yyval = tree4(N_Ret,yyvsp[-1],yyvsp[-1],yyvsp[0]);}
 break;
 case 222:
-#line 456 "tgram.g"
+#line 459 "tgram.g"
 {yyval = tree5(N_Loop,yyvsp[-1],yyvsp[-1],yyvsp[0],tree1(N_Empty));}
 break;
 case 223:
-#line 457 "tgram.g"
+#line 460 "tgram.g"
 {yyval = tree5(N_Loop,yyvsp[-3],yyvsp[-3],yyvsp[-2],yyvsp[0]);}
 break;
 case 224:
-#line 459 "tgram.g"
+#line 462 "tgram.g"
 {yyval = tree5(N_If,yyvsp[-3],yyvsp[-2],yyvsp[0],tree1(N_Empty));}
 break;
 case 225:
-#line 460 "tgram.g"
+#line 463 "tgram.g"
 {yyval = tree5(N_If,yyvsp[-5],yyvsp[-4],yyvsp[-2],yyvsp[0]);}
 break;
 case 226:
-#line 462 "tgram.g"
+#line 465 "tgram.g"
 {yyval = tree4(N_Case,yyvsp[-5],yyvsp[-4],yyvsp[-1]);}
 break;
 case 228:
-#line 465 "tgram.g"
+#line 468 "tgram.g"
 {yyval = tree4(N_Clist,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 229:
-#line 467 "tgram.g"
+#line 470 "tgram.g"
 {yyval = tree4(N_Ccls,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 230:
-#line 468 "tgram.g"
+#line 471 "tgram.g"
 {yyval = tree4(N_Ccls,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 231:
-#line 470 "tgram.g"
+#line 473 "tgram.g"
 {;}
 break;
 case 232:
-#line 471 "tgram.g"
+#line 474 "tgram.g"
 {yyval = tree4(N_Elist,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
 case 233:
-#line 473 "tgram.g"
+#line 476 "tgram.g"
 {yyval = tree3(N_Create,yyvsp[0],yyvsp[0]); }
 break;
 case 234:
-#line 474 "tgram.g"
+#line 477 "tgram.g"
 {yyval = tree4(N_Elist,yyvsp[-1],yyvsp[-2],tree3(N_Create,yyvsp[-1],yyvsp[0])); }
 break;
 case 235:
-#line 476 "tgram.g"
+#line 479 "tgram.g"
 {Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_IntLit,strlen(Str0(yyvsp[0])));}
 break;
 case 236:
-#line 477 "tgram.g"
+#line 480 "tgram.g"
 {Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_RealLit,strlen(Str0(yyvsp[0])));}
 break;
 case 237:
-#line 478 "tgram.g"
+#line 481 "tgram.g"
 {Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_StrLit,(int)Val1(yyvsp[0]));}
 break;
 case 238:
-#line 479 "tgram.g"
+#line 482 "tgram.g"
 {Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_CsetLit,(int)Val1(yyvsp[0]));}
 break;
 case 239:
-#line 480 "tgram.g"
+#line 483 "tgram.g"
 {Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_UcsLit,(int)Val1(yyvsp[0]));}
 break;
 case 240:
-#line 482 "tgram.g"
+#line 485 "tgram.g"
 {yyval = tree6(N_Sect,yyvsp[-2],yyvsp[-2],yyvsp[-5],yyvsp[-3],yyvsp[-1]);}
 break;
 case 241:
-#line 484 "tgram.g"
+#line 487 "tgram.g"
 {yyval = yyvsp[0];}
 break;
 case 242:
-#line 485 "tgram.g"
+#line 488 "tgram.g"
 {yyval = yyvsp[0];}
 break;
 case 243:
-#line 486 "tgram.g"
+#line 489 "tgram.g"
 {yyval = yyvsp[0];}
 break;
 case 245:
-#line 489 "tgram.g"
+#line 492 "tgram.g"
 {yyval = tree4(N_Slist,yyvsp[-1],yyvsp[-2],yyvsp[0]);}
 break;
-#line 2968 "y.tab.c"
+#line 2971 "y.tab.c"
     }
     yyssp -= yym;
     yystate = *yyssp;

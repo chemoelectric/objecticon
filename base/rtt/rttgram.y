@@ -6,6 +6,8 @@
 %{
 #include "rtt1.h"
 #define YYMAXDEPTH 250
+/* Avoids some spurious compiler warnings */
+#define lint 1
 %}
 
 %union {

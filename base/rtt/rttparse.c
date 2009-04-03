@@ -12,13 +12,15 @@ extern int yyparse(void);
 #line 7 "rttgram.y"
 #include "rtt1.h"
 #define YYMAXDEPTH 250
-#line 11 "rttgram.y"
+/* Avoids some spurious compiler warnings */
+#define lint 1
+#line 13 "rttgram.y"
 typedef union {
    struct token *t;
    struct node *n;
    long i;
    } YYSTYPE;
-#line 22 "y.tab.c"
+#line 24 "y.tab.c"
 #define Identifier 257
 #define StrLit 258
 #define LStrLit 259
@@ -2137,9 +2139,9 @@ YYSTYPE yylval;
 short yyss[YYSTACKSIZE];
 YYSTYPE yyvs[YYSTACKSIZE];
 #define yystacksize YYSTACKSIZE
-#line 1091 "rttgram.y"
+#line 1093 "rttgram.y"
 
-#line 2143 "y.tab.c"
+#line 2145 "y.tab.c"
 #define YYABORT goto yyabort
 #define YYREJECT goto yyabort
 #define YYACCEPT goto yyaccept
@@ -2281,507 +2283,507 @@ yyreduce:
     switch (yyn)
     {
 case 1:
-#line 81 "rttgram.y"
+#line 83 "rttgram.y"
 {yyval.n = sym_node(yyvsp[0].t);}
 break;
 case 2:
-#line 82 "rttgram.y"
-{yyval.n = node0(PrimryNd, yyvsp[0].t);}
-break;
-case 3:
-#line 83 "rttgram.y"
-{yyval.n = node0(PrimryNd, yyvsp[0].t);}
-break;
-case 4:
 #line 84 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 5:
+case 3:
 #line 85 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 6:
+case 4:
 #line 86 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 7:
+case 5:
 #line 87 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 8:
+case 6:
 #line 88 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 9:
+case 7:
 #line 89 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 10:
+case 8:
 #line 90 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 11:
+case 9:
 #line 91 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 12:
+case 10:
 #line 92 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 13:
+case 11:
 #line 93 "rttgram.y"
+{yyval.n = node0(PrimryNd, yyvsp[0].t);}
+break;
+case 12:
+#line 94 "rttgram.y"
+{yyval.n = node0(PrimryNd, yyvsp[0].t);}
+break;
+case 13:
+#line 95 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 15:
-#line 98 "rttgram.y"
+#line 100 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-2].t, yyvsp[-3].n, yyvsp[-1].n);
                                         free_t(yyvsp[0].t);}
 break;
 case 16:
-#line 100 "rttgram.y"
+#line 102 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-2].n, NULL);
                                         free_t(yyvsp[-1].t);}
 break;
 case 17:
-#line 102 "rttgram.y"
+#line 104 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-3].n, yyvsp[-1].n);
                                         free_t(yyvsp[-2].t);}
 break;
 case 18:
-#line 104 "rttgram.y"
+#line 106 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 19:
-#line 105 "rttgram.y"
+#line 107 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 20:
-#line 106 "rttgram.y"
+#line 108 "rttgram.y"
 {yyval.n = node1(PstfxNd, yyvsp[0].t, yyvsp[-1].n);}
 break;
 case 21:
-#line 107 "rttgram.y"
+#line 109 "rttgram.y"
 {yyval.n = node1(PstfxNd, yyvsp[0].t, yyvsp[-1].n);}
 break;
 case 22:
-#line 109 "rttgram.y"
+#line 111 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-5].t, yyvsp[-3].n, yyvsp[-1].n); free_t(yyvsp[-4].t); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 23:
-#line 111 "rttgram.y"
+#line 113 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-7].t, yyvsp[-5].n, yyvsp[-3].n, yyvsp[-1].n), free_t(yyvsp[-6].t); free_t(yyvsp[-4].t); free_t(yyvsp[-2].t);
        free_t(yyvsp[0].t);}
 break;
 case 24:
-#line 114 "rttgram.y"
+#line 116 "rttgram.y"
 {yyval.n = node4(QuadNd, yyvsp[-9].t, yyvsp[-7].n, yyvsp[-5].n, yyvsp[-3].n, yyvsp[-1].n), free_t(yyvsp[-8].t); free_t(yyvsp[-6].t);
        free_t(yyvsp[-4].t); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 26:
-#line 120 "rttgram.y"
+#line 122 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 28:
-#line 125 "rttgram.y"
-{yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
-break;
-case 29:
-#line 126 "rttgram.y"
-{yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
-break;
-case 30:
 #line 127 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
 break;
-case 31:
+case 29:
 #line 128 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
 break;
-case 32:
+case 30:
 #line 129 "rttgram.y"
+{yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
+break;
+case 31:
+#line 130 "rttgram.y"
+{yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
+break;
+case 32:
+#line 131 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-3].t, yyvsp[-1].n);
                                free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 40:
-#line 144 "rttgram.y"
+#line 146 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-3].t, yyvsp[-2].n, yyvsp[0].n); free_t(yyvsp[-1].t);}
 break;
 case 42:
-#line 149 "rttgram.y"
-{yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
-break;
-case 43:
-#line 150 "rttgram.y"
-{yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
-break;
-case 44:
 #line 151 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
+case 43:
+#line 152 "rttgram.y"
+{yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
+break;
+case 44:
+#line 153 "rttgram.y"
+{yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
+break;
 case 46:
-#line 156 "rttgram.y"
+#line 158 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 47:
-#line 157 "rttgram.y"
+#line 159 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 49:
-#line 162 "rttgram.y"
+#line 164 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 50:
-#line 163 "rttgram.y"
+#line 165 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 52:
-#line 168 "rttgram.y"
-{yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
-break;
-case 53:
-#line 169 "rttgram.y"
-{yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
-break;
-case 54:
 #line 170 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
-case 55:
+case 53:
 #line 171 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
+case 54:
+#line 172 "rttgram.y"
+{yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
+break;
+case 55:
+#line 173 "rttgram.y"
+{yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
+break;
 case 57:
-#line 176 "rttgram.y"
+#line 178 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 58:
-#line 177 "rttgram.y"
+#line 179 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 60:
-#line 182 "rttgram.y"
+#line 184 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 62:
-#line 187 "rttgram.y"
+#line 189 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 64:
-#line 192 "rttgram.y"
+#line 194 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 66:
-#line 197 "rttgram.y"
+#line 199 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 68:
-#line 202 "rttgram.y"
+#line 204 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 70:
-#line 208 "rttgram.y"
+#line 210 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-3].t, yyvsp[-4].n, yyvsp[-2].n, yyvsp[0].n);
                                           free_t(yyvsp[-1].t);}
 break;
 case 72:
-#line 214 "rttgram.y"
+#line 216 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 85:
-#line 233 "rttgram.y"
+#line 235 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 86:
-#line 237 "rttgram.y"
+#line 239 "rttgram.y"
 {yyval.n = NULL;}
 break;
 case 89:
-#line 246 "rttgram.y"
+#line 248 "rttgram.y"
 {yyval.n = NULL;}
 break;
 case 91:
-#line 251 "rttgram.y"
+#line 253 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-1].n, NULL);
                                              dcl_stk->kind_dcl = OtherDcl;}
 break;
 case 92:
-#line 253 "rttgram.y"
+#line 255 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-2].n, yyvsp[-1].n);
                                              dcl_stk->kind_dcl = OtherDcl;}
 break;
 case 93:
-#line 256 "rttgram.y"
+#line 258 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-2].n, yyvsp[-1].n);
                                              dcl_stk->kind_dcl = OtherDcl;}
 break;
 case 95:
-#line 262 "rttgram.y"
+#line 264 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 98:
-#line 271 "rttgram.y"
+#line 273 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 99:
-#line 273 "rttgram.y"
+#line 275 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, node0(PrimryNd, yyvsp[-1].t), yyvsp[0].n);}
 break;
 case 102:
-#line 279 "rttgram.y"
-{yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
-break;
-case 103:
-#line 280 "rttgram.y"
-{yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
-break;
-case 104:
 #line 281 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
+case 103:
+#line 282 "rttgram.y"
+{yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
+break;
+case 104:
+#line 283 "rttgram.y"
+{yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
+break;
 case 107:
-#line 287 "rttgram.y"
+#line 289 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 108:
-#line 288 "rttgram.y"
+#line 290 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 110:
-#line 293 "rttgram.y"
+#line 295 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 112:
-#line 299 "rttgram.y"
+#line 301 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 113:
-#line 303 "rttgram.y"
+#line 305 "rttgram.y"
 {yyval.n = yyvsp[0].n; id_def(yyvsp[0].n, NULL);}
 break;
 case 114:
-#line 304 "rttgram.y"
+#line 306 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n); id_def(yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 115:
-#line 308 "rttgram.y"
+#line 310 "rttgram.y"
 {yyval.n = yyvsp[0].n; id_def(yyvsp[0].n, NULL);}
 break;
 case 116:
-#line 310 "rttgram.y"
+#line 312 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n); id_def(yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 117:
-#line 314 "rttgram.y"
+#line 316 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t); dcl_stk->kind_dcl = IsTypedef;}
 break;
 case 118:
-#line 315 "rttgram.y"
-{yyval.n = node0(PrimryNd, yyvsp[0].t);}
-break;
-case 119:
-#line 316 "rttgram.y"
-{yyval.n = node0(PrimryNd, yyvsp[0].t);}
-break;
-case 120:
 #line 317 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 121:
+case 119:
 #line 318 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
+case 120:
+#line 319 "rttgram.y"
+{yyval.n = node0(PrimryNd, yyvsp[0].t);}
+break;
+case 121:
+#line 320 "rttgram.y"
+{yyval.n = node0(PrimryNd, yyvsp[0].t);}
+break;
 case 123:
-#line 323 "rttgram.y"
+#line 325 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 124:
-#line 327 "rttgram.y"
-{yyval.n = node0(PrimryNd, yyvsp[0].t);}
-break;
-case 125:
-#line 328 "rttgram.y"
-{yyval.n = node0(PrimryNd, yyvsp[0].t);}
-break;
-case 126:
 #line 329 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 127:
+case 125:
 #line 330 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 128:
+case 126:
 #line 331 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 129:
+case 127:
 #line 332 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 130:
+case 128:
 #line 333 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 131:
+case 129:
 #line 334 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 132:
+case 130:
 #line 335 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
+case 131:
+#line 336 "rttgram.y"
+{yyval.n = node0(PrimryNd, yyvsp[0].t);}
+break;
+case 132:
+#line 337 "rttgram.y"
+{yyval.n = node0(PrimryNd, yyvsp[0].t);}
+break;
 case 135:
-#line 342 "rttgram.y"
+#line 344 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-4].t, yyvsp[-3].n, yyvsp[-1].n);
                                              free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 136:
-#line 345 "rttgram.y"
+#line 347 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-3].t, NULL, yyvsp[-1].n);
                                              free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 137:
-#line 347 "rttgram.y"
+#line 349 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[0].n, NULL);}
 break;
 case 141:
-#line 357 "rttgram.y"
+#line 359 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 142:
-#line 362 "rttgram.y"
+#line 364 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-2].n, yyvsp[-1].n);}
 break;
 case 143:
-#line 363 "rttgram.y"
+#line 365 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-2].n, yyvsp[-1].n);}
 break;
 case 145:
-#line 368 "rttgram.y"
+#line 370 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 146:
-#line 372 "rttgram.y"
+#line 374 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 147:
-#line 373 "rttgram.y"
+#line 375 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, node0(PrimryNd, yyvsp[-1].t), yyvsp[0].n);}
 break;
 case 150:
-#line 379 "rttgram.y"
+#line 381 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 151:
-#line 380 "rttgram.y"
+#line 382 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 153:
-#line 384 "rttgram.y"
+#line 386 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 154:
-#line 388 "rttgram.y"
+#line 390 "rttgram.y"
 {yyval.n = node2(StrDclNd, NULL, yyvsp[0].n, NULL);
                                if (dcl_stk->parms_done) pop_cntxt();}
 break;
 case 155:
-#line 390 "rttgram.y"
+#line 392 "rttgram.y"
 {yyval.n = node2(StrDclNd, yyvsp[-1].t, NULL, yyvsp[0].n);}
 break;
 case 156:
-#line 391 "rttgram.y"
+#line 393 "rttgram.y"
 {if (dcl_stk->parms_done) pop_cntxt();}
 break;
 case 157:
-#line 392 "rttgram.y"
+#line 394 "rttgram.y"
 {yyval.n = node2(StrDclNd, yyvsp[-2].t, yyvsp[-3].n, yyvsp[0].n);}
 break;
 case 159:
-#line 398 "rttgram.y"
+#line 400 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 160:
-#line 402 "rttgram.y"
+#line 404 "rttgram.y"
 {yyval.n = node2(StrDclNd, NULL, yyvsp[0].n, NULL);
                                       if (dcl_stk->parms_done) pop_cntxt();}
 break;
 case 161:
-#line 404 "rttgram.y"
+#line 406 "rttgram.y"
 {yyval.n = node2(StrDclNd, yyvsp[-1].t, NULL, yyvsp[0].n);}
 break;
 case 162:
-#line 405 "rttgram.y"
+#line 407 "rttgram.y"
 {if (dcl_stk->parms_done) pop_cntxt();}
 break;
 case 163:
-#line 406 "rttgram.y"
+#line 408 "rttgram.y"
 {yyval.n = node2(StrDclNd, yyvsp[-2].t, yyvsp[-3].n, yyvsp[0].n);}
 break;
 case 164:
-#line 410 "rttgram.y"
-{push_cntxt(0);}
-break;
-case 165:
-#line 411 "rttgram.y"
-{yyval.n = node2(BinryNd, yyvsp[-4].t, NULL, yyvsp[-1].n); pop_cntxt(); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
-break;
-case 166:
 #line 412 "rttgram.y"
 {push_cntxt(0);}
 break;
-case 167:
+case 165:
 #line 413 "rttgram.y"
+{yyval.n = node2(BinryNd, yyvsp[-4].t, NULL, yyvsp[-1].n); pop_cntxt(); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
+break;
+case 166:
+#line 414 "rttgram.y"
+{push_cntxt(0);}
+break;
+case 167:
+#line 415 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-5].t, yyvsp[-4].n,  yyvsp[-1].n); pop_cntxt(); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 168:
-#line 414 "rttgram.y"
+#line 416 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[0].n,  NULL);}
 break;
 case 170:
-#line 419 "rttgram.y"
+#line 421 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 171:
-#line 423 "rttgram.y"
+#line 425 "rttgram.y"
 {yyval.n = yyvsp[0].n; id_def(yyvsp[0].n, NULL);}
 break;
 case 172:
-#line 425 "rttgram.y"
+#line 427 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n); id_def(yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 173:
-#line 429 "rttgram.y"
+#line 431 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 174:
-#line 430 "rttgram.y"
+#line 432 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 175:
-#line 435 "rttgram.y"
+#line 437 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 176:
-#line 439 "rttgram.y"
+#line 441 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 178:
-#line 444 "rttgram.y"
+#line 446 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n);
                                                free_t(yyvsp[0].t);}
 break;
 case 179:
-#line 446 "rttgram.y"
+#line 448 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-2].t, yyvsp[-3].n, yyvsp[-1].n);
                                                free_t(yyvsp[0].t);}
 break;
 case 180:
-#line 448 "rttgram.y"
+#line 450 "rttgram.y"
 {push_cntxt(1);}
 break;
 case 181:
-#line 449 "rttgram.y"
+#line 451 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-4].n, yyvsp[-1].n);
                                                if (dcl_stk->nest_lvl == 2)
                                                   dcl_stk->parms_done = 1;
@@ -2790,25 +2792,25 @@ case 181:
                                                free_t(yyvsp[-3].t);}
 break;
 case 182:
-#line 458 "rttgram.y"
+#line 460 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 183:
-#line 459 "rttgram.y"
+#line 461 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n);
                                                free_t(yyvsp[0].t);}
 break;
 case 184:
-#line 462 "rttgram.y"
+#line 464 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-2].t, yyvsp[-3].n, yyvsp[-1].n);
                                                free_t(yyvsp[0].t);}
 break;
 case 185:
-#line 464 "rttgram.y"
+#line 466 "rttgram.y"
 {push_cntxt(1);}
 break;
 case 186:
-#line 465 "rttgram.y"
+#line 467 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-4].n, yyvsp[-1].n);
                                                if (dcl_stk->nest_lvl == 2)
                                                   dcl_stk->parms_done = 1;
@@ -2817,716 +2819,716 @@ case 186:
                                                free_t(yyvsp[-3].t);}
 break;
 case 189:
-#line 479 "rttgram.y"
+#line 481 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 190:
-#line 480 "rttgram.y"
+#line 482 "rttgram.y"
 {yyval.n = node1(PreSpcNd, yyvsp[-1].t, yyvsp[0].n);}
 break;
 case 191:
-#line 481 "rttgram.y"
+#line 483 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
 break;
 case 192:
-#line 482 "rttgram.y"
+#line 484 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, node2(LstNd, NULL, yyvsp[-1].n,yyvsp[0].n));}
 break;
 case 193:
-#line 486 "rttgram.y"
+#line 488 "rttgram.y"
 {yyval.n = NULL;}
 break;
 case 196:
-#line 492 "rttgram.y"
+#line 494 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 198:
-#line 497 "rttgram.y"
+#line 499 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, node0(PrimryNd, yyvsp[0].t));}
 break;
 case 199:
-#line 501 "rttgram.y"
+#line 503 "rttgram.y"
 {yyval.n = NULL;}
 break;
 case 202:
-#line 507 "rttgram.y"
+#line 509 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 203:
-#line 511 "rttgram.y"
+#line 513 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);
                                     id_def(yyvsp[0].n, NULL);}
 break;
 case 205:
-#line 514 "rttgram.y"
+#line 516 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 206:
-#line 518 "rttgram.y"
+#line 520 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 207:
-#line 519 "rttgram.y"
+#line 521 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, node0(PrimryNd,yyvsp[0].t));}
 break;
 case 210:
-#line 525 "rttgram.y"
+#line 527 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 211:
-#line 526 "rttgram.y"
+#line 528 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 213:
-#line 531 "rttgram.y"
+#line 533 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 215:
-#line 536 "rttgram.y"
+#line 538 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 216:
-#line 540 "rttgram.y"
+#line 542 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n);
                                              free_t(yyvsp[0].t);}
 break;
 case 217:
-#line 543 "rttgram.y"
+#line 545 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-2].t, NULL, yyvsp[-1].n);
                                              free_t(yyvsp[0].t);}
 break;
 case 218:
-#line 546 "rttgram.y"
+#line 548 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-2].t, yyvsp[-3].n, yyvsp[-1].n);
                                              free_t(yyvsp[0].t);}
 break;
 case 219:
-#line 548 "rttgram.y"
+#line 550 "rttgram.y"
 {push_cntxt(1);}
 break;
 case 220:
-#line 549 "rttgram.y"
+#line 551 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, NULL, yyvsp[-1].n);
                                              pop_cntxt();
                                              free_t(yyvsp[-3].t);}
 break;
 case 221:
-#line 552 "rttgram.y"
+#line 554 "rttgram.y"
 {push_cntxt(1);}
 break;
 case 222:
-#line 553 "rttgram.y"
+#line 555 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[0].t, yyvsp[-4].n, yyvsp[-1].n);
                                              pop_cntxt();
                                              free_t(yyvsp[-3].t);}
 break;
 case 224:
-#line 561 "rttgram.y"
+#line 563 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 225:
-#line 563 "rttgram.y"
+#line 565 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-3].t, node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, NULL));
                           free_t(yyvsp[0].t);}
 break;
 case 227:
-#line 569 "rttgram.y"
+#line 571 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 230:
-#line 578 "rttgram.y"
+#line 580 "rttgram.y"
 {push_cntxt(1);}
 break;
 case 231:
-#line 578 "rttgram.y"
+#line 580 "rttgram.y"
 {yyval.n = yyvsp[0].n; pop_cntxt();}
 break;
 case 236:
-#line 584 "rttgram.y"
+#line 586 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-4].t, yyvsp[-2].n, NULL); free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 237:
-#line 586 "rttgram.y"
+#line 588 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-6].t, yyvsp[-4].n, yyvsp[-2].n); free_t(yyvsp[-5].t); free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 238:
-#line 590 "rttgram.y"
+#line 592 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 239:
-#line 591 "rttgram.y"
+#line 593 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-3].t, yyvsp[-2].n, yyvsp[0].n); free_t(yyvsp[-1].t);}
 break;
 case 240:
-#line 592 "rttgram.y"
+#line 594 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[0].n); free_t(yyvsp[-1].t);}
 break;
 case 241:
-#line 596 "rttgram.y"
+#line 598 "rttgram.y"
 {yyval.n = comp_nd(yyvsp[-2].t, NULL, yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 242:
-#line 597 "rttgram.y"
+#line 599 "rttgram.y"
 {yyval.n = comp_nd(yyvsp[-3].t, yyvsp[-2].n,   yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 244:
-#line 602 "rttgram.y"
+#line 604 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 245:
-#line 606 "rttgram.y"
+#line 608 "rttgram.y"
 {yyval.n = NULL;}
 break;
 case 248:
-#line 612 "rttgram.y"
+#line 614 "rttgram.y"
 {yyval.n = (yyvsp[0].n == NULL ? yyvsp[-1].n : node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n));}
 break;
 case 250:
-#line 618 "rttgram.y"
+#line 620 "rttgram.y"
 {yyval.n = NULL; free_t(yyvsp[-3].t); free_t(yyvsp[0].t); dcl_stk->kind_dcl = OtherDcl;}
 break;
 case 251:
-#line 622 "rttgram.y"
+#line 624 "rttgram.y"
 {tnd_char(); free_t(yyvsp[0].t);}
 break;
 case 252:
-#line 623 "rttgram.y"
+#line 625 "rttgram.y"
 {tnd_strct(yyvsp[0].t); free_t(yyvsp[-1].t);}
 break;
 case 253:
-#line 624 "rttgram.y"
+#line 626 "rttgram.y"
 {tnd_strct(yyvsp[0].t); free_t(yyvsp[-1].t);}
 break;
 case 254:
-#line 625 "rttgram.y"
+#line 627 "rttgram.y"
 {tnd_union(yyvsp[0].t); free_t(yyvsp[-1].t);}
 break;
 case 256:
-#line 630 "rttgram.y"
+#line 632 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 257:
-#line 634 "rttgram.y"
+#line 636 "rttgram.y"
 {yyval.n = NULL;}
 break;
 case 259:
-#line 638 "rttgram.y"
+#line 640 "rttgram.y"
 {yyval.n = node1(PstfxNd, yyvsp[0].t, yyvsp[-1].n);}
 break;
 case 260:
-#line 642 "rttgram.y"
+#line 644 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-4].t, yyvsp[-2].n, yyvsp[0].n,NULL);
                                           free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 261:
-#line 644 "rttgram.y"
+#line 646 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-6].t, yyvsp[-4].n, yyvsp[-2].n, yyvsp[0].n);
                                           free_t(yyvsp[-5].t); free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 262:
-#line 646 "rttgram.y"
+#line 648 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-4].t, yyvsp[-2].n, yyvsp[0].n);
                                           free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 263:
-#line 649 "rttgram.y"
+#line 651 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-6].t, yyvsp[-5].n, yyvsp[-2].n, yyvsp[-1].n); free_t(yyvsp[-4].t); free_t(yyvsp[-3].t); free_t(yyvsp[0].t);}
 break;
 case 264:
-#line 653 "rttgram.y"
+#line 655 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, NULL, yyvsp[0].n);}
 break;
 case 265:
-#line 654 "rttgram.y"
+#line 656 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL,   yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 266:
-#line 658 "rttgram.y"
+#line 660 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 267:
-#line 662 "rttgram.y"
+#line 664 "rttgram.y"
 {yyval.n = NULL;}
 break;
 case 268:
-#line 663 "rttgram.y"
+#line 665 "rttgram.y"
 {yyval.n = yyvsp[0].n; free_t(yyvsp[-2].t); free_t(yyvsp[-1].t);}
 break;
 case 269:
-#line 667 "rttgram.y"
+#line 669 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-4].t, yyvsp[-2].n, yyvsp[0].n);
                                         free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 270:
-#line 669 "rttgram.y"
+#line 671 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-6].t, yyvsp[-5].n, yyvsp[-2].n);
                                         free_t(yyvsp[-4].t); free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);
                                         free_t(yyvsp[0].t);}
 break;
 case 271:
-#line 673 "rttgram.y"
+#line 675 "rttgram.y"
 {yyval.n = node4(QuadNd, yyvsp[-8].t, yyvsp[-6].n, yyvsp[-4].n, yyvsp[-2].n, yyvsp[0].n);
                                         free_t(yyvsp[-7].t); free_t(yyvsp[-5].t); free_t(yyvsp[-3].t);
                                         free_t(yyvsp[-1].t);}
 break;
 case 272:
-#line 679 "rttgram.y"
+#line 681 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 273:
-#line 680 "rttgram.y"
+#line 682 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[-1].t); free_t(yyvsp[0].t);}
 break;
 case 274:
-#line 681 "rttgram.y"
+#line 683 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[-1].t); free_t(yyvsp[0].t);}
 break;
 case 275:
-#line 682 "rttgram.y"
+#line 684 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 276:
-#line 683 "rttgram.y"
+#line 685 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 277:
-#line 684 "rttgram.y"
+#line 686 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[-1].t); free_t(yyvsp[0].t);}
 break;
 case 278:
-#line 685 "rttgram.y"
+#line 687 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[-1].t); free_t(yyvsp[0].t);}
 break;
 case 284:
-#line 700 "rttgram.y"
+#line 702 "rttgram.y"
 {dclout(yyvsp[0].n);}
 break;
 case 286:
-#line 705 "rttgram.y"
+#line 707 "rttgram.y"
 {func_def(yyvsp[0].n);}
 break;
 case 287:
-#line 706 "rttgram.y"
+#line 708 "rttgram.y"
 {fncout(yyvsp[-3].n, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 288:
-#line 710 "rttgram.y"
+#line 712 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, NULL, yyvsp[0].n);}
 break;
 case 289:
-#line 711 "rttgram.y"
+#line 713 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 290:
-#line 712 "rttgram.y"
+#line 714 "rttgram.y"
 {yyval.n = node2(LstNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 291:
-#line 716 "rttgram.y"
+#line 718 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 292:
-#line 717 "rttgram.y"
+#line 719 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 293:
-#line 721 "rttgram.y"
+#line 723 "rttgram.y"
 {yyval.n = lbl(yyvsp[0].t);}
 break;
 case 294:
-#line 722 "rttgram.y"
+#line 724 "rttgram.y"
 {yyval.n = lbl(yyvsp[0].t);}
 break;
 case 299:
-#line 737 "rttgram.y"
+#line 739 "rttgram.y"
 {strt_def();}
 break;
 case 301:
-#line 741 "rttgram.y"
+#line 743 "rttgram.y"
 {defout(yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 302:
-#line 742 "rttgram.y"
+#line 744 "rttgram.y"
 {defout(yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 303:
-#line 743 "rttgram.y"
+#line 745 "rttgram.y"
 {keyconst(yyvsp[-1].t); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 304:
-#line 747 "rttgram.y"
+#line 749 "rttgram.y"
 {comment = NULL;}
 break;
 case 305:
-#line 748 "rttgram.y"
+#line 750 "rttgram.y"
 {comment = yyvsp[0].t;}
 break;
 case 306:
-#line 753 "rttgram.y"
+#line 755 "rttgram.y"
 {impl_fnc(yyvsp[-3].t); free_t(yyvsp[-7].t); free_t(yyvsp[-6].t); free_t(yyvsp[-4].t); free_t(yyvsp[-2].t);
        free_t(yyvsp[0].t);}
 break;
 case 307:
-#line 755 "rttgram.y"
+#line 757 "rttgram.y"
 {lex_state = OpHead;}
 break;
 case 308:
-#line 756 "rttgram.y"
+#line 758 "rttgram.y"
 {lex_state = DfltLex;}
 break;
 case 309:
-#line 757 "rttgram.y"
+#line 759 "rttgram.y"
 {impl_op(yyvsp[-5].t, yyvsp[-3].t); free_t(yyvsp[-10].t); free_t(yyvsp[-9].t); free_t(yyvsp[-6].t); free_t(yyvsp[-2].t);
        free_t(yyvsp[0].t);}
 break;
 case 310:
-#line 762 "rttgram.y"
+#line 764 "rttgram.y"
 {impl_key(yyvsp[0].t); free_t(yyvsp[-4].t); free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 383:
-#line 853 "rttgram.y"
+#line 855 "rttgram.y"
 {set_r_seq(NoRsltSeq, NoRsltSeq, 0);}
 break;
 case 384:
-#line 854 "rttgram.y"
+#line 856 "rttgram.y"
 {set_r_seq(yyvsp[-1].i, yyvsp[-1].i, (int)yyvsp[0].i);}
 break;
 case 385:
-#line 855 "rttgram.y"
+#line 857 "rttgram.y"
 {set_r_seq(yyvsp[-3].i, yyvsp[-1].i, (int)yyvsp[0].i); free_t(yyvsp[-2].t);}
 break;
 case 386:
-#line 859 "rttgram.y"
+#line 861 "rttgram.y"
 {yyval.i = ttol(yyvsp[0].t); free_t(yyvsp[0].t);}
 break;
 case 387:
-#line 860 "rttgram.y"
+#line 862 "rttgram.y"
 {yyval.i = UnbndSeq; free_t(yyvsp[0].t);}
 break;
 case 388:
-#line 864 "rttgram.y"
+#line 866 "rttgram.y"
 {yyval.i = 0;}
 break;
 case 389:
-#line 865 "rttgram.y"
+#line 867 "rttgram.y"
 {yyval.i = 1; free_t(yyvsp[0].t);}
 break;
 case 392:
-#line 871 "rttgram.y"
+#line 873 "rttgram.y"
 {var_args(yyvsp[-1].t); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 394:
-#line 876 "rttgram.y"
+#line 878 "rttgram.y"
 {free_t(yyvsp[-1].t);}
 break;
 case 395:
-#line 880 "rttgram.y"
+#line 882 "rttgram.y"
 {s_prm_def(NULL, yyvsp[0].t);}
 break;
 case 396:
-#line 881 "rttgram.y"
+#line 883 "rttgram.y"
 {s_prm_def(yyvsp[0].t, NULL); free_t(yyvsp[-1].t);}
 break;
 case 397:
-#line 882 "rttgram.y"
+#line 884 "rttgram.y"
 {s_prm_def(yyvsp[-2].t, yyvsp[0].t);   free_t(yyvsp[-3].t);
                                           free_t(yyvsp[-1].t);}
 break;
 case 398:
-#line 887 "rttgram.y"
+#line 889 "rttgram.y"
 {}
 break;
 case 399:
-#line 888 "rttgram.y"
+#line 890 "rttgram.y"
 {d_lst_typ(yyvsp[-1].n); free_t(yyvsp[-3].t); free_t(yyvsp[-2].t);
                                  free_t(yyvsp[0].t);}
 break;
 case 400:
-#line 893 "rttgram.y"
+#line 895 "rttgram.y"
 {yyval.n = NULL;}
 break;
 case 403:
-#line 899 "rttgram.y"
+#line 901 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 407:
-#line 906 "rttgram.y"
+#line 908 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[-1].n); free_t(yyvsp[0].t);}
 break;
 case 408:
-#line 907 "rttgram.y"
+#line 909 "rttgram.y"
 {lex_state = TypeComp;}
 break;
 case 409:
-#line 908 "rttgram.y"
+#line 910 "rttgram.y"
 {lex_state = DfltLex;}
 break;
 case 410:
-#line 909 "rttgram.y"
+#line 911 "rttgram.y"
 {yyval.n = yyvsp[-2].n; free_t(yyvsp[-5].t); free_t(yyvsp[-3].t); free_t(yyvsp[0].t);}
 break;
 case 411:
-#line 914 "rttgram.y"
+#line 916 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-3].t, yyvsp[-2].n, yyvsp[0].n, NULL); free_t(yyvsp[-1].t);}
 break;
 case 412:
-#line 916 "rttgram.y"
+#line 918 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-5].t, yyvsp[-4].n, yyvsp[-2].n, yyvsp[0].n); free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 413:
-#line 918 "rttgram.y"
+#line 920 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-6].t, yyvsp[-5].n, yyvsp[-2].n, yyvsp[-1].n); free_t(yyvsp[-4].t); free_t(yyvsp[-3].t); free_t(yyvsp[0].t);}
 break;
 case 414:
-#line 920 "rttgram.y"
+#line 922 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-8].t, sym_node(yyvsp[-7].t), yyvsp[-4].n, yyvsp[-1].n); free_t(yyvsp[-6].t), free_t(yyvsp[-5].t);
        free_t(yyvsp[-3].t); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 415:
-#line 924 "rttgram.y"
+#line 926 "rttgram.y"
 {yyval.n = arith_nd(yyvsp[-17].t, yyvsp[-15].n, yyvsp[-13].n, yyvsp[-9].n, yyvsp[-7].n, yyvsp[-6].n, yyvsp[-4].n, yyvsp[-3].n, yyvsp[-1].n); free_t(yyvsp[-16].t);
        free_t(yyvsp[-14].t), free_t(yyvsp[-12].t); free_t(yyvsp[-11].t); free_t(yyvsp[-10].t); free_t(yyvsp[-8].t);
        free_t(yyvsp[-5].t); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 416:
-#line 930 "rttgram.y"
+#line 932 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, NULL, yyvsp[0].n);}
 break;
 case 417:
-#line 931 "rttgram.y"
+#line 933 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL,   yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 418:
-#line 935 "rttgram.y"
+#line 937 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 419:
-#line 939 "rttgram.y"
+#line 941 "rttgram.y"
 {yyval.n = NULL;}
 break;
 case 420:
-#line 940 "rttgram.y"
+#line 942 "rttgram.y"
 {yyval.n = yyvsp[0].n; free_t(yyvsp[-2].t); free_t(yyvsp[-1].t);}
 break;
 case 421:
-#line 944 "rttgram.y"
+#line 946 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, NULL, yyvsp[-1].n);
                                    free_t(yyvsp[0].t);}
 break;
 case 422:
-#line 946 "rttgram.y"
+#line 948 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL,   yyvsp[-2].n, yyvsp[-1].n);
                                    free_t(yyvsp[0].t);}
 break;
 case 424:
-#line 952 "rttgram.y"
+#line 954 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 425:
-#line 956 "rttgram.y"
+#line 958 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[0].n); free_t(yyvsp[-1].t);}
 break;
 case 427:
-#line 961 "rttgram.y"
+#line 963 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
 break;
 case 429:
-#line 966 "rttgram.y"
+#line 968 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 430:
-#line 971 "rttgram.y"
+#line 973 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-5].t, yyvsp[-3].n, yyvsp[-1].n); free_t(yyvsp[-4].t); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 431:
-#line 973 "rttgram.y"
+#line 975 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-5].t, yyvsp[-3].n, yyvsp[-1].n, NULL), dst_alloc(yyvsp[-3].n, yyvsp[-1].n); free_t(yyvsp[-4].t);
        free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 432:
-#line 976 "rttgram.y"
+#line 978 "rttgram.y"
 {yyval.n = node3(TrnryNd, yyvsp[-7].t, yyvsp[-5].n, yyvsp[-3].n, yyvsp[-1].n), free_t(yyvsp[-6].t); free_t(yyvsp[-4].t); free_t(yyvsp[-2].t);
        free_t(yyvsp[0].t);}
 break;
 case 433:
-#line 979 "rttgram.y"
+#line 981 "rttgram.y"
 {yyval.n = node4(QuadNd, yyvsp[-7].t, yyvsp[-5].n, yyvsp[-3].n, yyvsp[-1].n, NULL), dst_alloc(yyvsp[-5].n, yyvsp[-3].n); free_t(yyvsp[-6].t);
        free_t(yyvsp[-4].t); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 434:
-#line 982 "rttgram.y"
+#line 984 "rttgram.y"
 {yyval.n = node4(QuadNd, yyvsp[-9].t, yyvsp[-7].n, yyvsp[-5].n, yyvsp[-3].n, yyvsp[-1].n), free_t(yyvsp[-8].t); free_t(yyvsp[-6].t);
        free_t(yyvsp[-4].t); free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 435:
-#line 987 "rttgram.y"
-{push_cntxt(1);}
-break;
-case 436:
-#line 988 "rttgram.y"
-{yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[0].n); pop_cntxt();}
-break;
-case 437:
 #line 989 "rttgram.y"
 {push_cntxt(1);}
 break;
-case 438:
+case 436:
 #line 990 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[0].n); pop_cntxt();}
 break;
+case 437:
+#line 991 "rttgram.y"
+{push_cntxt(1);}
+break;
+case 438:
+#line 992 "rttgram.y"
+{yyval.n = node1(PrefxNd, yyvsp[-2].t, yyvsp[0].n); pop_cntxt();}
+break;
 case 439:
-#line 995 "rttgram.y"
+#line 997 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-4].t, node0(PrimryNd, yyvsp[-2].t), NULL);
                      free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 440:
-#line 998 "rttgram.y"
+#line 1000 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-6].t, node0(PrimryNd, yyvsp[-4].t), yyvsp[-2].n);
                      free_t(yyvsp[-5].t); free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 442:
-#line 1004 "rttgram.y"
+#line 1006 "rttgram.y"
 {free_t(yyvsp[0].t);}
 break;
 case 443:
-#line 1008 "rttgram.y"
+#line 1010 "rttgram.y"
 {yyval.n = sym_node(yyvsp[0].t);}
 break;
 case 444:
-#line 1009 "rttgram.y"
+#line 1011 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-2].t, sym_node(yyvsp[-3].t),
                                     node0(PrimryNd, yyvsp[-1].t));
                                   free_t(yyvsp[0].t);}
 break;
 case 445:
-#line 1014 "rttgram.y"
+#line 1016 "rttgram.y"
 {yyval.n = dest_node(yyvsp[0].t);}
 break;
 case 446:
-#line 1015 "rttgram.y"
-{yyval.n = node0(PrimryNd, yyvsp[0].t);}
-break;
-case 447:
-#line 1016 "rttgram.y"
-{yyval.n = node0(PrimryNd, yyvsp[0].t);}
-break;
-case 448:
 #line 1017 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 449:
+case 447:
 #line 1018 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
-case 450:
+case 448:
 #line 1019 "rttgram.y"
+{yyval.n = node0(PrimryNd, yyvsp[0].t);}
+break;
+case 449:
+#line 1020 "rttgram.y"
+{yyval.n = node0(PrimryNd, yyvsp[0].t);}
+break;
+case 450:
+#line 1021 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t); ++n_tmp_str;}
 break;
 case 451:
-#line 1020 "rttgram.y"
+#line 1022 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t); ++n_tmp_cset;}
 break;
 case 452:
-#line 1021 "rttgram.y"
+#line 1023 "rttgram.y"
 {yyval.n = node0(ExactCnv, chk_exct(yyvsp[0].t)); free_t(yyvsp[-3].t);
                               free_t(yyvsp[-2].t); free_t(yyvsp[-1].t);}
 break;
 case 453:
-#line 1023 "rttgram.y"
+#line 1025 "rttgram.y"
 {yyval.n = node0(ExactCnv, yyvsp[0].t); free_t(yyvsp[-3].t); free_t(yyvsp[-2].t);
                               free_t(yyvsp[-1].t);}
 break;
 case 454:
-#line 1028 "rttgram.y"
+#line 1030 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
 case 455:
-#line 1029 "rttgram.y"
-{yyval.n = node0(PrimryNd, yyvsp[0].t);}
-break;
-case 456:
-#line 1030 "rttgram.y"
-{yyval.n = sym_node(yyvsp[0].t);}
-break;
-case 457:
 #line 1031 "rttgram.y"
 {yyval.n = node0(PrimryNd, yyvsp[0].t);}
 break;
+case 456:
+#line 1032 "rttgram.y"
+{yyval.n = sym_node(yyvsp[0].t);}
+break;
+case 457:
+#line 1033 "rttgram.y"
+{yyval.n = node0(PrimryNd, yyvsp[0].t);}
+break;
 case 459:
-#line 1036 "rttgram.y"
-{yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
-break;
-case 460:
-#line 1037 "rttgram.y"
-{yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
-break;
-case 461:
 #line 1038 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
 break;
+case 460:
+#line 1039 "rttgram.y"
+{yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
+break;
+case 461:
+#line 1040 "rttgram.y"
+{yyval.n = node1(PrefxNd, yyvsp[-1].t, yyvsp[0].n);}
+break;
 case 462:
-#line 1042 "rttgram.y"
+#line 1044 "rttgram.y"
 {yyval.n = node2(AbstrNd, yyvsp[-2].t,   yyvsp[-3].n,   yyvsp[-1].n);}
 break;
 case 463:
-#line 1043 "rttgram.y"
+#line 1045 "rttgram.y"
 {yyval.n = node2(AbstrNd, yyvsp[-2].t,   NULL, yyvsp[-1].n);}
 break;
 case 464:
-#line 1044 "rttgram.y"
+#line 1046 "rttgram.y"
 {yyval.n = node2(AbstrNd, NULL, yyvsp[0].n, NULL);}
 break;
 case 466:
-#line 1049 "rttgram.y"
+#line 1051 "rttgram.y"
 {yyval.n = node2(ConCatNd, NULL, yyvsp[-1].n, yyvsp[0].n);}
 break;
 case 467:
-#line 1053 "rttgram.y"
+#line 1055 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-2].t, yyvsp[-4].n, yyvsp[-1].n);
                                            free_t(yyvsp[-6].t); free_t(yyvsp[-5].t); free_t(yyvsp[-3].t);}
 break;
 case 469:
-#line 1059 "rttgram.y"
+#line 1061 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 470:
-#line 1060 "rttgram.y"
+#line 1062 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
 case 471:
-#line 1063 "rttgram.y"
+#line 1065 "rttgram.y"
 {yyval.n = node1(IcnTypNd,
                                          copy_t(yyvsp[0].n->tok), yyvsp[0].n);}
 break;
 case 472:
-#line 1065 "rttgram.y"
+#line 1067 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-3].t, yyvsp[-1].n);
                                          free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 473:
-#line 1067 "rttgram.y"
+#line 1069 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-4].t, yyvsp[-3].n, yyvsp[-1].n);
                                          free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 474:
-#line 1069 "rttgram.y"
+#line 1071 "rttgram.y"
 {yyval.n = node1(PrefxNd, yyvsp[-3].t, yyvsp[-1].n);
                                          free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 475:
-#line 1071 "rttgram.y"
+#line 1073 "rttgram.y"
 {yyval.n = node1(PstfxNd, yyvsp[0].t, yyvsp[-2].n); 
                                          free_t(yyvsp[-1].t);}
 break;
 case 476:
-#line 1073 "rttgram.y"
+#line 1075 "rttgram.y"
 {yyval.n = yyvsp[-1].n; free_t(yyvsp[-2].t); free_t(yyvsp[0].t);}
 break;
 case 479:
-#line 1082 "rttgram.y"
+#line 1084 "rttgram.y"
 {yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, yyvsp[0].n);}
 break;
-#line 3530 "y.tab.c"
+#line 3532 "y.tab.c"
     }
     yyssp -= yym;
     yystate = *yyssp;

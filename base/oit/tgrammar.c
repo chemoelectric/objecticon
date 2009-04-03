@@ -22,6 +22,9 @@
 /*#define YYSTYPE nodeptr*/
 /*#define YYMAXDEPTH 5000*/
 
+/* Avoids some spurious compiler warnings */
+/*#define lint 1*/
+
 extern int fncargs[];
 int idflag;
 int modflag;
