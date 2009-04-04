@@ -2521,7 +2521,7 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
     if (query->dword == D_Integer) {
         word i = cvpos(IntVal(*query), nf);
         if (i != CvtFail && i <= nf)
-            return (int)i - 1;
+            return i - 1;
         else
             return -1;
     }
