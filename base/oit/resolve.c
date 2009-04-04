@@ -2,7 +2,6 @@
 #include "link.h"
 #include "lsym.h"
 #include "lmem.h"
-#include "util.h"
 #include "resolve.h"
 #include "tmain.h"
 #include <stdio.h>

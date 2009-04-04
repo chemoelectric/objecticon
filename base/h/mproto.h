@@ -39,15 +39,7 @@ struct str_buf *get_sbuf();
 void    rel_sbuf(struct str_buf *sbuf);
 void    clear_local_sbufs();
 
-#ifndef SysOpt
-   int	getopt		(int argc, char * const argv[], const char *optstring);
-#endif					/* NoSysOpt */
-
-#if IntBits == 16
-   long	lstrlen		(char *s);
-   void	lqsort		(char *base, int nel, int width, int (*cmp)());
-#endif					/* IntBits == 16 */
-
+int	getopt		(int argc, char * const argv[], const char *optstring);
 
 char *findexe(char *name);
 char *relfile	(char *prog, char *mod);

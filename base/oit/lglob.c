@@ -8,7 +8,6 @@
 #include "lmem.h"
 #include "lsym.h"
 #include "resolve.h"
-#include "util.h"
 #include "tmain.h"
 
 #include "../h/opdefs.h"

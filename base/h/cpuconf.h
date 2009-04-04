@@ -64,22 +64,15 @@
  */
 
 #if IntBits == 64
-   #define MaxUnsignedInt 01777777777777777777777L /* largest unsigned integer */
    #define MaxInt	0777777777777777777777L /* largest int */
 #endif					/* IntBits == 64 */
 
 #if IntBits == 32
-   #define MaxUnsignedInt	0xffffffff	/* largest unsigned integer */
    #define MaxInt	        0x7fffffff	/* largest int */
 #endif					/* IntBits == 32 */
 
 #if IntBits == 16
-   #define MaxUnsignedInt ((unsigned int)0177777)	/* largest unsigned integer */
    #define MaxInt	077777			/* largest int */
-   
-   #ifndef MaxListSlots
-      #define MaxListSlots 8000		/* largest list-element block */
-   #endif				/* MaxListSlots */
 #endif					/* IntBits == 16 */
 
 #ifndef LogHuge
@@ -169,39 +162,20 @@
 #endif					/* CoexprLim */
 
 /*
- * Maximum sized block that can be allocated (via malloc() or such).
- */
-#ifndef MaxBlock
-   #if IntBits == 16
-      #define MaxBlock 65000		/* leaves room for malloc header */
-   #else				/* IntBits == 16 */
-      #define MaxBlock MaxUnsignedInt
-   #endif				/* IntBits == 16 */
-#endif					/* MaxBlock */
-
-/*
  * What follows is default memory sizing. Implementations with special
  *  requirements may specify these values in define.h.
  */
 
 #ifndef MaxStrSpace
-   #if IntBits == 16
-      #define MaxStrSpace 65000		/* size of the string space in bytes */
-   #else				/* IntBits == 16 */
-      #define MaxStrSpace 500000	/* size of the string space in bytes */
-   #endif				/* IntBits == 16 */
+   #define MaxStrSpace 500000	/* size of the string space in bytes */
 #endif					/* MaxStrSpace */
 
 #ifndef MaxAbrSize
-   #if IntBits == 16
-      #define MaxAbrSize 65000		/* size of the block region in bytes */
-   #else				/* IntBits == 16 */
-      #define MaxAbrSize 500000		/* size of the block region in bytes */
-   #endif				/* IntBits == 16 */
+   #define MaxAbrSize 500000		/* size of the block region in bytes */
 #endif					/* MaxAbrSize */
 
 #ifndef MStackSize
-      #define MStackSize 120000		/* default value of mstksize, the size of the main interpreter stack */
+   #define MStackSize 120000		/* default value of mstksize, the size of the main interpreter stack */
 #endif					/* MStackSize */
 
 #ifndef StackSize

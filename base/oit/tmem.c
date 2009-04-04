@@ -6,7 +6,6 @@
 #include "tmem.h"
 #include "tlex.h"
 #include "tsym.h"
-#include "util.h"
 #include "tmain.h"
 #include "trans.h"
 #include "package.h"

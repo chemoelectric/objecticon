@@ -6,7 +6,6 @@
 #include "link.h"
 #include "package.h"
 #include "lmem.h"
-#include "util.h"
 #include "tmain.h"
 #include "lglob.h"
 

@@ -23,7 +23,7 @@ struct str_buf_frag {
    };
 
 struct str_buf {
-   unsigned int size;             /* total size of current buffer */
+   size_t size;                   /* total size of current buffer */
    char *strtimage;               /* start of string currently being built */
    char *endimage;                /* next free character in buffer */
    char *end;                     /* end of current buffer */

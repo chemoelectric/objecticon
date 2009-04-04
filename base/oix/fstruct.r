@@ -605,10 +605,6 @@ dptr val;
       i = BlkLoc(*l)->list.size / two;
       if (i < MinListSlots)
          i = MinListSlots;
-#ifdef MaxListSlots
-      if (i > MaxListSlots)
-         i = MaxListSlots;
-#endif					/* MaxListSlots */
 
       /*
        * Allocate a new list element block.  If the block can't
@@ -701,10 +697,6 @@ function{1} push(x, vals[n])
 	    i = hp->size / two;
 	    if (i < MinListSlots)
 	       i = MinListSlots;
-#ifdef MaxListSlots
-	    if (i > MaxListSlots)
-	       i = MaxListSlots;
-#endif					/* MaxListSlots */
 
 	    /*
 	     * Allocate a new list element block.  If the block can't
@@ -778,10 +770,6 @@ void c_put(struct descrip *l, struct descrip *val)
       i = ((struct b_list *)BlkLoc(*l))->size / two;
       if (i < MinListSlots)
          i = MinListSlots;
-#ifdef MaxListSlots
-      if (i > MaxListSlots)
-         i = MaxListSlots;
-#endif					/* MaxListSlots */
 
       /*
        * Allocate a new list element block.  If the block can't
@@ -875,10 +863,7 @@ function{1} put(x, vals[n])
 	       i = MinListSlots;
 	    if (i < n - val)
 	       i = n - val;
-#ifdef MaxListSlots
-	    if (i > MaxListSlots)
-	       i = MaxListSlots;
-#endif					/* MaxListSlots */
+
 	    /*
 	     * Allocate a new list element block.  If the block can't
 	     *  be allocated, try smaller blocks.

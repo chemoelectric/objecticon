@@ -75,7 +75,8 @@ end
  */
 int class_is(struct b_class *class, struct b_class *target)
 {
-    int l, r, m, c;
+    int l, r, m;
+    word c;
 
     /* 
      * Different programs never share classes
@@ -87,8 +88,7 @@ int class_is(struct b_class *class, struct b_class *target)
     r = class->n_implemented_classes - 1;
     while (l <= r) {
         m = (l + r) / 2;
-        /* c = class->implemented_classes[m]->class_id - target->class_id; */
-        c = (char *)class->implemented_classes[m] - (char *)target;
+        c = DiffPtrsBytes(class->implemented_classes[m], target);
         if (c > 0)
             r = m - 1;
         else if (c < 0)

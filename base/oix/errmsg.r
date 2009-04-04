@@ -104,11 +104,6 @@ struct errtab errtab[] = {
    311, "main stack overflow",
    312, "stack overflow in co-expression",
 
-#if IntBits == 16
-   316, "interpreter stack too large",
-   318, "co-expression stack too large",
-#endif					/* IntBits == 16 */
-
    401, "co-expressions not implemented",
    402, "program not compiled with debugging option",
 

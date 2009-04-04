@@ -29,11 +29,6 @@ extern struct lrecord *lrecords, *lrecord_last;
 extern struct linvocable *linvocables,
                     *last_linvocable; /* invocables in link stage */
 
-extern int nsize;	    /* ipc/line num. assoc. table */
-extern int maxcode;    /* code space */
-extern int fnmsize;	    /* ipc/file name assoc. table */
-extern int maxlabels;	    /* maximum num of labels/proc */
-
 void linit();
 void dumplfiles();
 void paramlink(char *name);

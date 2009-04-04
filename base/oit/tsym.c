@@ -10,7 +10,6 @@
 #include "tree.h"
 #include "tmain.h"
 #include "tcode.h"
-#include "util.h"
 #include "trans.h"
 #include "../h/opdefs.h"
 

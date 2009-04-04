@@ -7,7 +7,6 @@
 #include "keyword.h"
 #include "ucode.h"
 #include "lcode.h"
-#include "util.h"
 #include "lmem.h"
 #include "lsym.h"
 #include "tsym.h"
@@ -22,11 +21,11 @@ int nstatics = 0;               /* Running count of static variables */
 /*
  * Array sizes for various linker tables that can be expanded with realloc().
  */
-int maxcode	= 15000;        /* code space */
-int maxlabels	= 500;	        /* maximum num of labels/proc */
-int maxinvokes 	= 500;	        /* maximum num of invoke/apply sequence numbers */
-int nsize       = 1000;         /* ipc/line num. assoc. table */
-int fnmsize     = 10;           /* ipc/file name assoc. table */
+size_t maxcode	= 15000;        /* code space */
+size_t maxlabels	= 500;	        /* maximum num of labels/proc */
+size_t maxinvokes 	= 500;	        /* maximum num of invoke/apply sequence numbers */
+size_t nsize       = 1000;         /* ipc/line num. assoc. table */
+size_t fnmsize     = 10;           /* ipc/file name assoc. table */
 
 struct ipc_fname *fnmtbl;	/* table associating ipc with file name */
 struct ipc_line *lntable;	/* table associating ipc with line number */
@@ -47,6 +46,12 @@ static void skip_proc();
 static void synch_file();
 static void synch_line();
 static void convert_invoke(int no, int fno);
+static void *expand_table(void * table,      /* table to be realloc()ed */
+                          void * tblfree,    /* reference to table free pointer if there is one */
+                          size_t *size, /* size of table */
+                          int unit_size,      /* number of bytes in a unit of the table */
+                          int min_units,      /* the minimum number of units that must be allocated. */
+                          char *tbl_name);     /* name of the table */
 
 struct unref {
     char *name;
@@ -2146,3 +2151,41 @@ void idump(s)		/* dump code region */
     fflush(stderr);
 }
 
+
+/*
+ * expand_table - realloc a table making it half again larger and zero the
+ *   new part of the table.
+ */
+void * expand_table(void * table,      /* table to be realloc()ed */
+                    void * tblfree,    /* reference to table free pointer if there is one */
+                    size_t *size,      /* size of table */
+                    int unit_size,      /* number of bytes in a unit of the table */
+                    int min_units,      /* the minimum number of units that must be allocated. */
+                    char *tbl_name)     /* name of the table */
+{
+    size_t new_size;
+    size_t num_bytes;
+    size_t free_offset = 0;
+    size_t i;
+    char *new_tbl;
+
+    new_size = (*size * 3) / 2;
+    if (new_size - *size < min_units)
+        new_size = *size + min_units;
+    num_bytes = new_size * unit_size;
+
+    if (tblfree != NULL)
+        free_offset = DiffPtrs(*(char **)tblfree,  (char *)table);
+
+    if ((new_tbl = (char *)realloc(table, (unsigned)num_bytes)) == 0)
+        quitf("out of memory for %s", tbl_name);
+
+    for (i = *size * unit_size; i < num_bytes; ++i)
+        new_tbl[i] = 0;
+
+    *size = new_size;
+    if (tblfree != NULL)
+        *(char **)tblfree = (char *)(new_tbl + free_offset);
+
+    return (void *)new_tbl;
+}

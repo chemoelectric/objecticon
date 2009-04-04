@@ -9,7 +9,6 @@
 #include "link.h"
 #include "tmem.h"
 #include "tlex.h"
-#include "util.h"
 #include "../h/header.h"
 
 int warnings = 0;           /* count of warnings */
@@ -89,16 +88,6 @@ static void usage(void);
 
 /*
  * End of operating-system specific code.
- */
-
-#if IntBits == 16
-   #ifdef strlen
-   #undef strlen			/* pre-defined in some contexts */
-   #endif				/* strlen */
-#endif					/* Intbits == 16 */
-
-/*
- *  Define global variables.
  */
 
 struct file_param *trans_files = 0, *last_trans_file = 0, 

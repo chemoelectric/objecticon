@@ -292,8 +292,6 @@ word codesize;
    {
    struct region *ps, *pb;
 
-   if ((uword)codesize > (unsigned)MaxBlock)
-      error("icode file too large");
    /*
     * Allocate icode region
     */

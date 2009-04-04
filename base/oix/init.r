@@ -361,11 +361,11 @@ void icon_init(char *name)
     if (getenv(NOERRBUF))
         noerrbuf++;
     env_int(TRACE, &k_trace, 0, (uword)0);
-    env_int(STKSIZE, &stksize, 1, (uword)MaxUnsignedInt);
-    env_int(STRSIZE, &rootstring.size, 1, (uword)MaxUnsignedInt);
-    env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxUnsignedInt); 
-    env_int(MSTKSIZE, &mstksize, 1, (uword)MaxUnsignedInt);
-    env_int(QLSIZE, &qualsize, 1, (uword)MaxUnsignedInt);
+    env_int(STKSIZE, &stksize, 1, (uword)MaxWord);
+    env_int(STRSIZE, &rootstring.size, 1, (uword)MaxWord);
+    env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxWord); 
+    env_int(MSTKSIZE, &mstksize, 1, (uword)MaxWord);
+    env_int(QLSIZE, &qualsize, 1, (uword)MaxWord);
     env_int(IXCUSHION, &memcushion, 1, (uword)100);	/* max 100 % */
     env_int(IXGROWTH, &memgrowth, 1, (uword)10000);	/* max 100x growth */
     env_int(OICORE, &dodump, 1, (uword)2);
@@ -377,14 +377,7 @@ void icon_init(char *name)
     mstksize &= ~(WordSize - 1);
 
     coexprlim = Max((pmem/200) / stksize, CoexprLim);
-    env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxUnsignedInt);
-
-#if IntBits == 16
-    if (mstksize > MaxBlock)
-        fatalerr(316, NULL);
-    if (stksize > MaxBlock)
-        fatalerr(318, NULL);
-#endif					/* IntBits == 16 */
+    env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxWord);
 
     /*
      * Allocate memory for various regions.

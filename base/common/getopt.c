@@ -4,7 +4,6 @@
 
 #include "../h/gsupport.h"
 
-#ifndef SysOpt
 extern char* progname;
 
 /*
@@ -55,6 +54,3 @@ int getopt(int nargc, char *const nargv[], const char *ostr)
    return(optopt);			/* dump back option letter */
    }
 
-#else					/* SysOpt */
-static char junk; 			/* prevent empty file */
-#endif					/* SysOpt */

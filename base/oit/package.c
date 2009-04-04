@@ -1,7 +1,6 @@
 #include "package.h"
 #include "tmain.h"
 #include "icont.h"
-#include "util.h"
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
