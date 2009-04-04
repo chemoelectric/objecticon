@@ -601,7 +601,7 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
    int flags = 0;
    if (msg == WM_CHAR || msg == WM_SYSCHAR) {
       StrLen(d) = 1;
-      StrLoc(d) = (char *)&allchars[wp & 0xFF];
+      StrLoc(d) = &allchars[wp & 0xFF];
       }
    else if (msg == WM_KEYUP) {
       MakeInt(-wp-128, &d); /* keyups are negative outside mouse event range */

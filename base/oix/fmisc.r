@@ -57,7 +57,7 @@ function{1} char(i)
          irunerr(205, i);
          errorfail;
          }
-      return string(1, (char *)&allchars[i & 0xFF]);
+      return string(1, &allchars[i & 0xFF]);
       }
 end
 

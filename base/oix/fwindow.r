@@ -1126,13 +1126,13 @@ function{0,1} graphics_Window_palette_chars(p)
           case  2:  return string(9, c2list);			/* c2 */
           case  3:  return string(31, c3list);			/* c3 */
           case  4:  return string(73, c4list);			/* c4 */
-          case  5:  return string(141, (char *)allchars);	/* c5 */
-          case  6:  return string(241, (char *)allchars);	/* c6 */
+          case  5:  return string(141, allchars);	/* c5 */
+          case  6:  return string(241, allchars);	/* c6 */
           default:					/* gn */
               if (n >= -64)
                   return string(-n, c4list);
               else
-                  return string(-n, (char *)allchars);
+                  return string(-n, allchars);
       }
       fail; /* NOTREACHED */ /* avoid spurious rtt warning message */
    }

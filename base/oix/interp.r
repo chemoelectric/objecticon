@@ -1804,7 +1804,7 @@ int event;
 
    curpstate->eventcount.vword.integr++;
    StrLen(parent->eventcode) = 1;
-   StrLoc(parent->eventcode) = (char *)&allchars[event & 0xFF];
+   StrLoc(parent->eventcode) = &allchars[event & 0xFF];
    mt_activate(&(parent->eventcode), NULL,
 	       (struct b_coexpr *)curpstate->parent->Mainhead);
    }

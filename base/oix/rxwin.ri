@@ -2595,7 +2595,7 @@ static void handle_keypress(w,event)
         /* Found a char string, so generate string event(s) */
         StrLen(d) = 1;
         for (j = 0; j < i; j++) {
-            StrLoc(d) = (char *)&allchars[s[j] & 0xFF];
+            StrLoc(d) = &allchars[s[j] & 0xFF];
             qevent(w->window, &d, event->x, event->y,
                    (uword)event->time, event->state,
                    (event->type == KeyRelease) );
@@ -2609,7 +2609,7 @@ static void handle_keypress(w,event)
     if (i > 0) {
         if (i < 256) {
             StrLen(d) = 1;
-            StrLoc(d) = (char *)&allchars[i];
+            StrLoc(d) = &allchars[i];
         } else {
             d.dword = D_Ucs;
             BlkLoc(d) = (union block *)make_one_char_ucs_block(i);

@@ -24,7 +24,7 @@ operator{*} ! bang(underef x -> dx)
             } else {
                 for (i = 1; i <= StrLen(dx); i++) {
                     ch = *(StrLoc(dx) + i - 1);
-                    suspend string(1, (char *)&allchars[ch & 0xFF]);
+                    suspend string(1, &allchars[ch & 0xFF]);
                 }
             }
      }
@@ -100,7 +100,7 @@ operator{*} ! bang(underef x -> dx)
                to = BlkLoc(dx)->cset.range[i].to;
                for (j = from; j <= to; ++j) {
                    if (j < 256)
-                       suspend string(1, (char *)&allchars[j]);
+                       suspend string(1, &allchars[j]);
                    else
                        suspend ucs(make_one_char_ucs_block(j));
                }
@@ -154,7 +154,7 @@ operator{*} ! bang(underef x -> dx)
                 */
                for (i = 1; i <= StrLen(dx); i++) {
                   ch = *(StrLoc(dx) + i - 1);
-                  suspend string(1, (char *)&allchars[ch & 0xFF]);
+                  suspend string(1, &allchars[ch & 0xFF]);
                   }
             }
          else
@@ -215,7 +215,7 @@ operator{0,1} ? random(underef x -> dx)
              k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
              ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
              if (ch < 256)
-                 return string(1, (char *)&allchars[ch]);
+                 return string(1, &allchars[ch]);
              else
                  return ucs(make_one_char_ucs_block(ch));
          }
@@ -703,7 +703,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
          k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
          ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
          if (ch < 256)
-             return string(1, (char *)&allchars[ch]);
+             return string(1, &allchars[ch]);
          else
              return ucs(make_one_char_ucs_block(ch));
        }
@@ -755,7 +755,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
               * character.
               */
              ch = *(StrLoc(dx)+i-1);
-             return string(1, (char *)&allchars[ch & 0xFF]);
+             return string(1, &allchars[ch & 0xFF]);
          }
       }
     }

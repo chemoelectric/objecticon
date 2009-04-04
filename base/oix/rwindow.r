@@ -2135,7 +2135,7 @@ struct palentry *palsetup(p)
         if (n <= 64)
             s = (unsigned char *)c4list;
         else
-            s = allchars;
+            s = (unsigned char *)allchars;
         m = 1.0 / (n - 1);
 
         for (i = 0; i < n; i++) {
@@ -2166,8 +2166,8 @@ struct palentry *palsetup(p)
         case  2:  s = (unsigned char *)c2list;	break;	/* c2 */
         case  3:  s = (unsigned char *)c3list;	break;	/* c3 */
         case  4:  s = (unsigned char *)c4list;	break;	/* c4 */
-        case  5:  s = allchars;			break;	/* c5 */
-        case  6:  s = allchars; 			break;	/* c6 */
+        case  5:  s = (unsigned char *)allchars;break;	/* c5 */
+        case  6:  s = (unsigned char *)allchars;break;	/* c6 */
     }
     m = 1.0 / (p - 1);
     for (r = 0; r < p; r++) {
@@ -2232,14 +2232,14 @@ char *rgbkey(p, r, g, b)
                 case  2:  return c2list + i;		/* c2 */
                 case  3:  return c3list + i;		/* c3 */
                 case  4:  return c4list + i;		/* c4 */
-                case  5:  return (char *)allchars + i;	/* c5 */
-                case  6:  return (char *)allchars + i;	/* c6 */
+                case  5:  return allchars + i;	        /* c5 */
+                case  6:  return allchars + i;	        /* c6 */
             }
         }
     }
     else {				/* grayscale */
         if (p < -64)
-            s = (char *)allchars;
+            s = allchars;
         else
             s = c4list;
         return s + (int)(0.5 + (0.299 * r + 0.587 * g + 0.114 * b) * (-p - 1));

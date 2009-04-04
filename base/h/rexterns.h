@@ -13,7 +13,7 @@ extern int line_info;		/* flag: line information is available */
 extern char *file_name;		/* source file for current execution point */
 extern int set_up;
 
-extern unsigned char allchars[];/* array for making one-character strings */
+extern char *allchars;          /* array for making one-character strings */
 extern char *blkname[];		/* print names for block types. */
 extern char *currend;		/* current end of memory region */
 extern dptr *quallist;		/* start of qualifier list */
