@@ -450,7 +450,7 @@ end
 
 function{} runerr(i, x[n])
    body {
-      int err_num;
+      word err_num;
       if (cnv:C_integer(i, err_num)) {
           char *em;
           if (err_num <= 0)
@@ -526,7 +526,7 @@ function{} syserr(msg)
       if (fn) {
           struct descrip t;
           abbr_fname(fn, &t);
-          fprintf(stderr, "File %.*s; Line %ld\n", StrLen(t), StrLoc(t), (long)findline(ipc.opnd));
+          fprintf(stderr, "File %.*s; Line %ld\n", (int)StrLen(t), StrLoc(t), (long)findline(ipc.opnd));
       } else
           fprintf(stderr, "File ?; Line %ld\n", (long)findline(ipc.opnd));
 
@@ -1676,7 +1676,8 @@ function{1} lang_Text_create_cset(x[n])
    body {
      struct rangeset *rs;
      tended struct b_cset *b;
-     int from, to, i;
+     int i;
+     word from, to;
 
      rs = init_rangeset();
      i = 0;

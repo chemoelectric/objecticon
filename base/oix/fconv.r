@@ -201,11 +201,10 @@ function{0,1} proc(x,i,c)
 	    if (!is:coexpr(c)) runerr(118,c);
 	    /*
 	     * Test to see whether a given procedure belongs to a given
-	     * program.  Currently this is a sleazy pointer arithmetic check.
+	     * program.
 	     */
 	    p = BlkLoc(c)->coexpr.program;
-	    if (! InRange(p, BlkLoc(x)->proc.entryp.icode,
-			  (char *)p + p->hsize))
+	    if (p != BlkLoc(x)->proc.program)
 	       fail;
 	    }
          return x;

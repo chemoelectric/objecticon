@@ -82,7 +82,7 @@ word qualsize = QualLstSize;		/* size of quallist for fixed regions */
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
 
-int dodump = 1;				/* if zero never core dump;
+word dodump = 1;			/* if zero never core dump;
                                          * if 1 core dump on C-level internal error (call to syserr)
                                          * if 2 core dump on all errors
                                          */
@@ -533,7 +533,7 @@ void syserr(char *fmt, ...)
         if (fn) {
             struct descrip t;
             abbr_fname(fn, &t);
-            fprintf(stderr, " at line %ld in %.*s", (long)findline(ipc.opnd), StrLen(t), StrLoc(t));
+            fprintf(stderr, " at line %ld in %.*s", (long)findline(ipc.opnd), (int)StrLen(t), StrLoc(t));
         } else
             fprintf(stderr, " at line %ld in ?", (long)findline(ipc.opnd));
     }

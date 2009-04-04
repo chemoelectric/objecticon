@@ -1779,12 +1779,12 @@ function{0,1} io_DescStream_poll(a[n])
        MemProtect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)));
 
        for (i = 0; i < nfds; ++i) {
-           int events;
+           word events;
            FdStaticParam(a[2 * i], fd);
            if (!cnv:C_integer(a[2 * i + 1], events))
                runerr(101, a[2 * i + 1]);
            ufds[i].fd = fd;
-           ufds[i].events = events;
+           ufds[i].events = (short)events;
        }
 
        rc = poll(ufds, nfds, timeout);

@@ -214,9 +214,9 @@ int first;
 void dumpcoexp(char*s, struct b_coexpr *p) {
 	int i;
 	printf("Dump of coexpression %s at %p\n",s,p);
-	printf("\ttitle=%d\n",p->title);
-	printf("\tsize=%d\n",p->size);
-	printf("\tid=%d\n",p->id);
+	printf("\ttitle=%ld\n",(long)p->title);
+	printf("\tsize=%ld\n",(long)p->size);
+	printf("\tid=%ld\n",(long)p->id);
 	printf("\tnextstk=%p\n",p->nextstk);
 	printf("\tprogram=%p\n",p->program);	
 	printf("\tcstate[%d]\n",CStateSize);

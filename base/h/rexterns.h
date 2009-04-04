@@ -8,7 +8,7 @@
 
 extern struct b_proc *op_tbl;   /* operators available for string invocation */
 extern int op_tbl_sz;           /* number of operators in op_tbl */
-extern int dodump;		/* termination dump */
+extern word dodump;		/* termination dump */
 extern int line_info;		/* flag: line information is available */
 extern char *file_name;		/* source file for current execution point */
 extern int set_up;

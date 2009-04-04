@@ -113,7 +113,7 @@ static void xtrace(bp, nargs, arg, pline, pfile)
         if (pfile) {
             struct descrip t;
             abbr_fname(pfile, &t);
-            fprintf(stderr, " from line %d in %.*s", pline, StrLen(t), StrLoc(t));
+            fprintf(stderr, " from line %d in %.*s", pline, (int)StrLen(t), StrLoc(t));
         } else
             fprintf(stderr, " from line %d in ?", pline);
     }
@@ -298,8 +298,8 @@ int get_name(dptr dp1, dptr dp0)
                      */
                     struct class_field *cf = find_class_field_for_dptr(dp, prog);
                     struct b_class *c = cf->defining_class;
-                    sprintf(sbuf,"class %.*s.%.*s", StrLen(c->name), StrLoc(c->name), 
-                            StrLen(cf->name), StrLoc(cf->name));
+                    sprintf(sbuf,"class %.*s.%.*s", (int)StrLen(c->name), StrLoc(c->name), 
+                            (int)StrLen(cf->name), StrLoc(cf->name));
                     i = strlen(sbuf);
                     MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                     StrLen(*dp0) = i;
@@ -354,9 +354,9 @@ int get_name(dptr dp1, dptr dp0)
                     case T_Record: { 		/* record */
                         struct b_constructor *c = blkptr->record.constructor;
                         i = varptr - blkptr->record.fields;
-                        sprintf(sbuf,"record %.*s#%ld.%.*s", StrLen(c->name), StrLoc(c->name),
+                        sprintf(sbuf,"record %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
                                 (long)blkptr->record.id,
-                                StrLen(c->field_names[i]), StrLoc(c->field_names[i]));
+                                (int)StrLen(c->field_names[i]), StrLoc(c->field_names[i]));
                         i = strlen(sbuf);
                         MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                         StrLen(*dp0) = i;
@@ -365,9 +365,9 @@ int get_name(dptr dp1, dptr dp0)
                     case T_Object: { 		/* object */
                         struct b_class *c = blkptr->object.class;
                         i = varptr - blkptr->object.fields;
-                        sprintf(sbuf,"object %.*s#%ld.%.*s", StrLen(c->name), StrLoc(c->name),
+                        sprintf(sbuf,"object %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
                                 (long)blkptr->object.id,
-                                StrLen(c->fields[i]->name), StrLoc(c->fields[i]->name));
+                                (int)StrLen(c->fields[i]->name), StrLoc(c->fields[i]->name));
                         i = strlen(sbuf);
                         MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                         StrLen(*dp0) = i;
@@ -545,9 +545,9 @@ static void ttrace()
             outimage(stderr, &xexpr, 0);
             fprintf(stderr, " . ");
             if (xfno < 0 && fnames-efnames < xfno)
-                fprintf(stderr, "%.*s", StrLen(efnames[xfno]), StrLoc(efnames[xfno]));
+                fprintf(stderr, "%.*s", (int)StrLen(efnames[xfno]), StrLoc(efnames[xfno]));
             else if (0 <= xfno && xfno < efnames - fnames)
-                fprintf(stderr, "%.*s", StrLen(fnames[xfno]), StrLoc(fnames[xfno]));
+                fprintf(stderr, "%.*s", (int)StrLen(fnames[xfno]), StrLoc(fnames[xfno]));
             else
                 fprintf(stderr, "field");
             putc('(', stderr);
@@ -563,9 +563,9 @@ static void ttrace()
             outimage(stderr, &xexpr, 0);
             fprintf(stderr, " . ");
             if (xfno < 0 && fnames-efnames < xfno)
-                fprintf(stderr, "%.*s", StrLen(efnames[xfno]), StrLoc(efnames[xfno]));
+                fprintf(stderr, "%.*s", (int)StrLen(efnames[xfno]), StrLoc(efnames[xfno]));
             else if (0 <= xfno && xfno < efnames - fnames)
-                fprintf(stderr, "%.*s", StrLen(fnames[xfno]), StrLoc(fnames[xfno]));
+                fprintf(stderr, "%.*s", (int)StrLen(fnames[xfno]), StrLoc(fnames[xfno]));
             else
                 fprintf(stderr, "field");
             fprintf(stderr," ! ");
@@ -653,9 +653,9 @@ static void ttrace()
             fprintf(stderr, " . ");
             ++xargp;
             if (IntVal(*xargp) < 0 && fnames-efnames < IntVal(*xargp))
-                fprintf(stderr, "%.*s", StrLen(efnames[IntVal(*xargp)]), StrLoc(efnames[IntVal(*xargp)]));
+                fprintf(stderr, "%.*s", (int)StrLen(efnames[IntVal(*xargp)]), StrLoc(efnames[IntVal(*xargp)]));
             else if (0 <= IntVal(*xargp) && IntVal(*xargp) < efnames - fnames)
-                fprintf(stderr, "%.*s", StrLen(fnames[IntVal(*xargp)]), StrLoc(fnames[IntVal(*xargp)]));
+                fprintf(stderr, "%.*s", (int)StrLen(fnames[IntVal(*xargp)]), StrLoc(fnames[IntVal(*xargp)]));
             else
                 fprintf(stderr, "field");
 
@@ -703,7 +703,7 @@ static void ttrace()
         if (fn) {
             struct descrip t;
             abbr_fname(fn, &t);
-            fprintf(stderr, " from line %d in %.*s", findline(ipc.opnd), StrLen(t), StrLoc(t));
+            fprintf(stderr, " from line %d in %.*s", findline(ipc.opnd), (int)StrLen(t), StrLoc(t));
         } else
             fprintf(stderr, " from line %d in ?", findline(ipc.opnd));
     }

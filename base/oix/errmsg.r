@@ -227,7 +227,7 @@ void err_msg(int n, dptr v)
                 if (fn) {
                     struct descrip t;
                     abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", StrLen(t), StrLoc(t), findline(ipc.opnd));
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc.opnd));
                 } else
                     fprintf(stderr, "File ?; Line %d\n", findline(ipc.opnd));
             } else {
@@ -236,7 +236,7 @@ void err_msg(int n, dptr v)
                 if (fn) {
                     struct descrip t;
                     abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", StrLen(t), StrLoc(t), findline(ipc.opnd));
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc.opnd));
                 } else
                     fprintf(stderr, "File ?; Line %d\n", findline(ipc.opnd));
                 while (i-- > 0)
