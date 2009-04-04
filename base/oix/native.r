@@ -471,7 +471,7 @@ function{0,1} lang_Prog_get_runtime_millis(c)
 	 errno2why();
 	 fail;
       }
-      if (tp.tv_sec - prog->start_time.tv_sec < 2147483) {
+      if (tp.tv_sec - prog->start_time.tv_sec < (MaxWord/1000)) {
           MakeInt((tp.tv_sec - prog->start_time.tv_sec) * 1000 + 
                   (tp.tv_usec - prog->start_time.tv_usec) / 1000, &result);
       } else {
@@ -2036,9 +2036,9 @@ static struct descrip stat2list(struct stat *st)
    struct group *gr;
 
    create_list(13, &res);
-   MakeInt((int)st->st_dev, &tmp);
+   MakeInt(st->st_dev, &tmp);
    c_put(&res, &tmp);
-   MakeInt((int)st->st_ino, &tmp);
+   MakeInt(st->st_ino, &tmp);
    c_put(&res, &tmp);
 
    strcpy(mode, "----------");
@@ -2077,7 +2077,7 @@ static struct descrip stat2list(struct stat *st)
    cstr2string(mode, &tmp);
    c_put(&res, &tmp);
 
-   MakeInt((int)st->st_nlink, &tmp);
+   MakeInt(st->st_nlink, &tmp);
    c_put(&res, &tmp);
 
 #if MSWIN32
@@ -2103,24 +2103,24 @@ static struct descrip stat2list(struct stat *st)
    c_put(&res, &tmp);
 #endif					/* MSWIN32 */
 
-   MakeInt((int)st->st_rdev, &tmp);
+   MakeInt(st->st_rdev, &tmp);
    c_put(&res, &tmp);
-   MakeInt((int)st->st_size, &tmp);
+   MakeInt(st->st_size, &tmp);
    c_put(&res, &tmp);
 #if MSWIN32
    c_put(&res, zerodesc);
    c_put(&res, zerodesc);
 #else
-   MakeInt((int)st->st_blksize, &tmp);
+   MakeInt(st->st_blksize, &tmp);
    c_put(&res, &tmp);
-   MakeInt((int)st->st_blocks, &tmp);
+   MakeInt(st->st_blocks, &tmp);
    c_put(&res, &tmp);
 #endif
-   MakeInt((int)st->st_atime, &tmp);
+   MakeInt(st->st_atime, &tmp);
    c_put(&res, &tmp);
-   MakeInt((int)st->st_mtime, &tmp);
+   MakeInt(st->st_mtime, &tmp);
    c_put(&res, &tmp);
-   MakeInt((int)st->st_ctime, &tmp);
+   MakeInt(st->st_ctime, &tmp);
    c_put(&res, &tmp);
 
    return res;
