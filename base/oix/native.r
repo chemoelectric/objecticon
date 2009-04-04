@@ -1205,7 +1205,7 @@ if (!c_is(&p, (dptr)&dsclassname, &m##_igc))
 m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);
 if (!m##_dptr)
     syserr("Missing fd field");
-(m) = IntVal(*m##_dptr);
+(m) = (int)IntVal(*m##_dptr);
 if (m < 0)
     runerr(219, p);
 #enddef
@@ -1217,7 +1217,7 @@ static struct inline_field_cache self_fd_ic;
 self_fd_dptr = c_get_instance_data(&self, (dptr)&fdf, &self_fd_ic);
 if (!self_fd_dptr)
     syserr("Missing fd field");
-self_fd = IntVal(*self_fd_dptr);
+self_fd = (int)IntVal(*self_fd_dptr);
 if (self_fd < 0)
     runerr(219, self);
 #enddef
