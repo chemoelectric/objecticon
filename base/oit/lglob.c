@@ -439,12 +439,9 @@ static struct fentry *add_fieldtable_entry(char *name)
     return fp;
 }
 
-static int fieldtable_sort_compare(const void *p1, const void *p2)
+static int fieldtable_sort_compare(struct fentry **p1, struct fentry **p2)
 {
-    struct fentry *f1, *f2;
-    f1 = *((struct fentry **)p1);
-    f2 = *((struct fentry **)p2);
-    return strcmp(f1->name, f2->name);
+    return strcmp((*p1)->name, (*p2)->name);
 }
 
 void build_fieldtable()
@@ -474,7 +471,7 @@ void build_fieldtable()
     a = safe_calloc(nfields, sizeof(struct fentry *));
     for (fp = lffirst; fp; fp = fp->next)
         a[i++] = fp;
-    qsort(a, nfields, sizeof(struct fentry *), fieldtable_sort_compare);
+    qsort(a, nfields, sizeof(struct fentry *), (QSortFncCast)fieldtable_sort_compare);
 
     /*
      * Finally set the field numbers for each fentry and rebuild the
@@ -495,12 +492,9 @@ void build_fieldtable()
     free(a);
 }
 
-static int global_sort_compare(const void *p1, const void *p2)
+static int global_sort_compare(struct gentry **p1, struct gentry **p2)
 {
-    struct gentry *f1, *f2;
-    f1 = *((struct gentry **)p1);
-    f2 = *((struct gentry **)p2);
-    return strcmp(f1->name, f2->name);
+    return strcmp((*p1)->name, (*p2)->name);
 }
 
 void sort_global_table()
@@ -512,7 +506,7 @@ void sort_global_table()
     a = safe_calloc(n, sizeof(struct gentry *));
     for (gp = lgfirst; gp; gp = gp->g_next)
         a[i++] = gp;
-    qsort(a, n, sizeof(struct gentry *), global_sort_compare);
+    qsort(a, n, sizeof(struct gentry *), (QSortFncCast)global_sort_compare);
 
     lgfirst = lglast = 0;
     ArrClear(lghash);

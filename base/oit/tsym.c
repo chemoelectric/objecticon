@@ -153,9 +153,9 @@ static struct tcentry *clookup(char *id, int flag)
     return ptr;
 }
 
-static int keytab_cmp(const void *key, const void *item)
+static int keytab_cmp(char *key, struct keyent *item)
 {
-    return strcmp((char*)key, ((struct keyent *)item)->keyname);
+    return strcmp(key, item->keyname);
 }
 
 /*
@@ -165,7 +165,8 @@ static int keytab_cmp(const void *key, const void *item)
 int klookup(char *id)
 {
     struct keyent *ke = bsearch(id, keytab, ElemCount(keytab), 
-                                ElemSize(keytab), keytab_cmp);
+                                ElemSize(keytab), 
+                                (BSearchFncCast)keytab_cmp);
     if (!ke)
         return 0;
 

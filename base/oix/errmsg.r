@@ -155,15 +155,16 @@ struct errtab errtab[] = {
    };
 
 
-static int lookup_err_msg_compare(const void *key, const void *item)
+static int lookup_err_msg_compare(int *key, struct errtab *item)
 {
-    return *((int *)key) - ((struct errtab *)item)->err_no;
+    return *key - item->err_no;
 }
 
 char *lookup_err_msg(int n)
 {
     struct errtab *p = bsearch(&n, errtab, ElemCount(errtab), 
-                               sizeof(struct errtab), lookup_err_msg_compare);
+                               sizeof(struct errtab), 
+                               (BSearchFncCast)lookup_err_msg_compare);
     if (p)
         return p->errmsg;
     else

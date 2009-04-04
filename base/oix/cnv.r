@@ -771,12 +771,12 @@ dptr dp;
  * dp_pnmcmp - do a string comparison of a descriptor to the procedure 
  *   name in a pstrnm struct; used in call to bsearch().
  */
-static int dp_pnmcmp(const void *dp, const void *pne)
+static int dp_pnmcmp(dptr dp, struct pstrnm *pne)
 {
    struct descrip d;
-   StrLen(d) = strlen(((struct pstrnm *)pne)->pstrep);
-   StrLoc(d) = ((struct pstrnm *)pne)->pstrep;
-   return lexcmp((struct descrip *)dp, &d);
+   StrLen(d) = strlen(pne->pstrep);
+   StrLoc(d) = pne->pstrep;
+   return lexcmp(dp, &d);
 }
 
 /*
@@ -808,7 +808,8 @@ C_integer arity;
     * See if the string represents a built-in function.
     */
    pp = (struct pstrnm *)bsearch(s, pntab, pnsize,
-				 sizeof(struct pstrnm), dp_pnmcmp);
+				 sizeof(struct pstrnm), 
+                                 (BSearchFncCast)dp_pnmcmp);
    if (pp)
       return (struct b_proc *)pp->pblock;
 

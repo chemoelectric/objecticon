@@ -1170,12 +1170,9 @@ struct field_sort_item {
     struct fentry *fp;
 };
 
-static int field_sort_compare(const void *p1, const void *p2)
+static int field_sort_compare(struct field_sort_item *p1, struct field_sort_item *p2)
 {
-    struct field_sort_item *f1, *f2;
-    f1 = (struct field_sort_item *)p1;
-    f2 = (struct field_sort_item *)p2;
-    return f1->fp->field_id - f2->fp->field_id;
+    return p1->fp->field_id - p2->fp->field_id;
 }
 
 static struct field_sort_item *sorted_fields(struct lclass *cl)
@@ -1192,7 +1189,7 @@ static struct field_sort_item *sorted_fields(struct lclass *cl)
         a[i].n = i;
         a[i].fp = fr->field->ftab_entry;
     }
-    qsort(a, n, sizeof(struct field_sort_item), field_sort_compare);
+    qsort(a, n, sizeof(struct field_sort_item), (QSortFncCast)field_sort_compare);
     return a;
 }
 
@@ -1205,16 +1202,13 @@ static struct field_sort_item *sorted_record_fields(struct lrecord *cl)
         a[i].n = i;
         a[i].fp = lf->ftab_entry;
     }
-    qsort(a, cl->nfields, sizeof(struct field_sort_item), field_sort_compare);
+    qsort(a, cl->nfields, sizeof(struct field_sort_item), (QSortFncCast)field_sort_compare);
     return a;
 }
 
-static int implemented_classes_sort_compare(const void *p1, const void *p2)
+static int implemented_classes_sort_compare(struct lclass **p1, struct lclass **p2)
 {
-    struct lclass *f1, *f2;
-    f1 = *((struct lclass **)p1);
-    f2 = *((struct lclass **)p2);
-    return f1->pc - f2->pc;
+    return (*p1)->pc - (*p2)->pc;
 }
 
 static struct lclass **sorted_implemented_classes(struct lclass *cl)
@@ -1224,7 +1218,8 @@ static struct lclass **sorted_implemented_classes(struct lclass *cl)
     int i = 0;
     for (cr = cl->implemented_classes; cr; cr = cr->next, ++i)
         a[i] = cr->class;
-    qsort(a, cl->n_implemented_classes, sizeof(struct lclass *), implemented_classes_sort_compare);
+    qsort(a, cl->n_implemented_classes, sizeof(struct lclass *), 
+          (QSortFncCast)implemented_classes_sort_compare);
     return a;
 }
 

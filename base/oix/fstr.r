@@ -530,17 +530,17 @@ struct mappair {
     char utf8[MAX_UTF8_SEQ_LEN];
 };
 
-static int mappair_sort_compare(const void *item1, const void *item2)
+static int mappair_sort_compare(struct mappair *item1, struct mappair *item2)
 {
-    if (((struct mappair *)item1)->from == ((struct mappair *)item2)->from)
-        return ((struct mappair *)item1)->pos - ((struct mappair *)item2)->pos;
+    if (item1->from == item2->from)
+        return item1->pos - item2->pos;
     else
-        return ((struct mappair *)item1)->from - ((struct mappair *)item2)->from;
+        return item1->from - item2->from;
 }
 
-static int mappair_search_compare(const void *key, const void *item)
+static int mappair_search_compare(int *key, struct mappair *item)
 {
-    return *((int *)key) - ((struct mappair *)item)->from;
+    return *key - item->from;
 }
 
 "map(s1,s2,s3) - map s1, using s2 and s3."
@@ -608,7 +608,7 @@ function{1} map(s1,s2,s3)
                   memcpy(maptab[i].utf8, t, p3 - t);
               }
 
-              qsort(maptab, maptab_len, sizeof(struct mappair), mappair_sort_compare);
+              qsort(maptab, maptab_len, sizeof(struct mappair), (QSortFncCast)mappair_sort_compare);
               /* Now make duplicated entries equate to the last occurence (highest pos) */
               for (i = maptab_len - 1; i > 0; --i) {
                   if (maptab[i].from == maptab[i - 1].from)
@@ -628,7 +628,8 @@ function{1} map(s1,s2,s3)
               char *t = p1;
               int ch = utf8_iter(&p1);
               struct mappair *mp = bsearch(&ch, maptab, maptab_len, 
-                                           sizeof(struct mappair), mappair_search_compare);
+                                           sizeof(struct mappair), 
+                                           (BSearchFncCast)mappair_search_compare);
               if (mp)
                   utf8_size += mp->utf8_len;
               else
@@ -649,7 +650,8 @@ function{1} map(s1,s2,s3)
               char *t = p1;
               int ch = utf8_iter(&p1);
               struct mappair *mp = bsearch(&ch, maptab, maptab_len, 
-                                           sizeof(struct mappair), mappair_search_compare);
+                                           sizeof(struct mappair), 
+                                           (BSearchFncCast)mappair_search_compare);
               if (mp)
                   alcstr(mp->utf8, mp->utf8_len);
               else

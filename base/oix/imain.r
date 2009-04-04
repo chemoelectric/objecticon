@@ -381,15 +381,11 @@ int main(int argc, char **argv)
 }
 
 
-static int lookup_global_compare(const void *p1, const void *p2)
-{
-    return lexcmp((dptr)p1, (dptr)p2);
-}
-
 dptr lookup_global(dptr name, struct progstate *prog)
 {
     dptr p = (dptr)bsearch(name, prog->Gnames, prog->NGlobals, 
-                           sizeof(struct descrip), lookup_global_compare);
+                           sizeof(struct descrip), 
+                           (BSearchFncCast)lexcmp);
     if (!p)
         return 0;
 
@@ -406,7 +402,8 @@ struct loc *lookup_global_loc(dptr name, struct progstate *prog)
         return 0;
 
     p = (dptr)bsearch(name, prog->Gnames, prog->NGlobals, 
-                           sizeof(struct descrip), lookup_global_compare);
+                      sizeof(struct descrip), 
+                      (BSearchFncCast)lexcmp);
     if (!p)
         return 0;
 

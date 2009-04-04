@@ -191,26 +191,14 @@
 #define Lit(x) #x
 #define Bell '\a'
 
-/*
- *  something to handle a cast problem for signal().
- */
-#ifndef SigFncCast
-   #define SigFncCast (void (*)(int))
-#endif					/* SigFncCast */
 
 #ifndef QSortFncCast
    #define QSortFncCast int (*)(const void *,const void *)
 #endif					/* QSortFncCast */
 
-/*
- * Customize output if not pre-defined.
- */
-
-#ifndef TraceOut
-   #define TraceOut(s) fprintf(stderr,s)
-#endif					/* TraceOut */
-
-#define BackSlash "\\"
+#ifndef BSearchFncCast
+   #define BSearchFncCast int (*)(const void *,const void *)
+#endif					/* BSearchFncCast */
 
 #ifndef WriteBinary
    #define WriteBinary "wb"

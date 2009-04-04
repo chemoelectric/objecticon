@@ -18,9 +18,9 @@ char *builtin_table[] = {
 #undef FncDef
 };
 
-static int builtin_table_cmp(const void *key, const void *item)
+static int builtin_table_cmp(char *key, char **item)
 {
-    return strcmp((char*)key, *((char **)item));
+    return strcmp(key, *item);
 }
 
 /*
@@ -30,7 +30,7 @@ static int builtin_table_cmp(const void *key, const void *item)
 static int blocate(char *s)
 {
     char **p = bsearch(s, builtin_table, ElemCount(builtin_table), 
-                       sizeof(char *), builtin_table_cmp);
+                       sizeof(char *), (BSearchFncCast)builtin_table_cmp);
     if (!p)
         return -1;
 

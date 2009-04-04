@@ -1772,9 +1772,9 @@ void cstrs2string(char **s, char *delim, dptr d)
 /*
  * string-integer comparison, for bsearch()
  */
-static int sicmp(const void *sip1, const void *sip2)
+static int sicmp(stringint *sip1, stringint *sip2)
 {
-    return strcmp(((stringint *)sip1)->s, ((stringint *)sip2)->s);
+    return strcmp(sip1->s, sip2->s);
 }
 
 /*
@@ -1785,7 +1785,7 @@ int stringint_str2int(stringint * sip, char *s)
     stringint key;
     stringint * p;
     key.s = s;
-    p = (stringint *)bsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),sicmp);
+    p = (stringint *)bsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),(BSearchFncCast)sicmp);
     if (p) return p->i;
     return -1;
 }
@@ -1804,7 +1804,7 @@ stringint *stringint_lookup(stringint *sip, char *s)
 {
     stringint key;
     key.s = s;
-    return (stringint *)bsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),sicmp);
+    return (stringint *)bsearch((char *)&key,(char *)(sip+1),sip[0].i,sizeof(key),(BSearchFncCast)sicmp);
 }
 
 /*

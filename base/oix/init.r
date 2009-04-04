@@ -2,7 +2,7 @@
  * File: init.r
  * Initialization, termination, and such.
  * Contents: readhdr, init/icon_init, envset, env_int,
- *  fpe_trap, inttrag, segvtrap, error, syserr, c_exit, err,
+ *  fpe_trap, inttrag, error, syserr, c_exit, err,
  *  fatalerr, pstrnmcmp, datainit, [loadicode]
  */
 
@@ -331,8 +331,7 @@ void icon_init(char *name)
 #endif					/* PORT */
 
 #if UNIX
-/*RPP   signal(SIGSEGV, SigFncCast segvtrap); */
-    signal(SIGFPE, SigFncCast fpetrap);
+    signal(SIGFPE, fpetrap);
 #endif					/* UNIX */
 
 /*
@@ -496,34 +495,9 @@ void env_int(name, variable, non_neg, limit)
  * Produce run-time error 204 on floating-point traps.
  */
 
-void fpetrap()
+void fpetrap(int n)
 {
     fatalerr(204, NULL);
-}
-
-/*
- * Produce run-time error 320 on ^C interrupts. Not used at present,
- *  since malfunction may occur during traceback.
- */
-void inttrap()
-{
-    fatalerr(320, NULL);
-}
-
-/*
- * Produce run-time error 302 on segmentation faults.
- */
-void segvtrap()
-{
-    static int n = 0;
-
-    if (n != 0) {			/* only try traceback once */
-        fprintf(stderr, "[Traceback failed]\n");
-        exit(1);
-    }
-    n++;
-
-    fatalerr(302, NULL);
 }
 
 /*

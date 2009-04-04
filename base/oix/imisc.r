@@ -689,7 +689,7 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
  */
 
 
-LibDcl(limit,2,BackSlash)
+LibDcl(limit,2,"\\")
 {
 
     C_integer tmp;
