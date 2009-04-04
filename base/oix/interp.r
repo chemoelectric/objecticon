@@ -1548,7 +1548,7 @@ EntInterp;
 	 default: {
 	    char buf[50];
 
-	    sprintf(buf, "unimplemented opcode: %ld (0x%08x)\n",
+	    sprintf(buf, "unimplemented opcode: %ld (0x%08lx)\n",
                     (long)lastop, (long)lastop);
 	    syserr(buf);
 	    }
