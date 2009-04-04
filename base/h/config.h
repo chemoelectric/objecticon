@@ -140,16 +140,20 @@
    #define StackAlign 2
 #endif					/* StackAlign */
 
+#ifndef ByteBits
+   #define ByteBits 8
+#endif					/* ByteBits */
+
 #ifndef WordBits
-   #define WordBits (8 * SIZEOF_VOIDP)
+   #define WordBits (ByteBits * SIZEOF_VOIDP)
 #endif					/* WordBits */
 
 #ifndef IntBits
-   #define IntBits (8 * SIZEOF_INT)
+   #define IntBits (ByteBits * SIZEOF_INT)
 #endif					/* IntBits */
 
 #ifndef LongBits
-   #define LongBits (8 * SIZEOF_LONG)
+   #define LongBits (ByteBits * SIZEOF_LONG)
 #endif					/* LongBits */
 
 #ifndef SourceSuffix
@@ -179,10 +183,6 @@
 
 #define WordSize sizeof(word)
 #define ShortSize sizeof(short)
-
-#ifndef ByteBits
-   #define ByteBits 8
-#endif					/* ByteBits */
 
 /*
  *  The following definitions assume ANSI C.
