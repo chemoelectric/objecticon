@@ -1504,7 +1504,7 @@ int in_cset(struct b_cset *b, int c)
     if (c < 256)
         return Testb(c, b->bits);
     l = 0;
-    r = (int)b->n_ranges - 1;
+    r = b->n_ranges - 1;
     while (l <= r) {
         m = (l + r) / 2;
         if (c < b->range[m].from)
@@ -1525,7 +1525,7 @@ int cset_range_of_pos(struct b_cset *b, word pos)
 {
     int l, r, m;
     l = 0;
-    r = (int)b->n_ranges - 1;
+    r = b->n_ranges - 1;
     --pos;
     /* Common case of looking up first pos */
     if (pos == 0 && b->n_ranges > 0)

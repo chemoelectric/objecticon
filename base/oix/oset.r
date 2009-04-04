@@ -18,10 +18,10 @@ operator{1} ~ compl(x)
    body {
        struct rangeset *rs = init_rangeset();
        struct b_cset *blk;
-       int i, prev = 0;
+       word i, prev = 0;
        for (i = 0; i < BlkLoc(x)->cset.n_ranges; ++i) {
-           int from = BlkLoc(x)->cset.range[i].from;
-           int to = BlkLoc(x)->cset.range[i].to;
+           word from = BlkLoc(x)->cset.range[i].from;
+           word to = BlkLoc(x)->cset.range[i].to;
            if (from > prev)
                add_range(rs, prev, from - 1);
            prev = to + 1;
@@ -103,13 +103,13 @@ operator{1} -- diff(x,y)
           struct rangeset *y_comp = init_rangeset();
           struct rangeset *rs = init_rangeset();
           struct b_cset *blk;
-          int i_x, i_y, prev = 0;
+          word i_x, i_y, prev = 0;
           /*
            * Calculate ~y
            */
           for (i_y = 0; i_y < BlkLoc(y)->cset.n_ranges; ++i_y) {
-              int from = BlkLoc(y)->cset.range[i_y].from;
-              int to = BlkLoc(y)->cset.range[i_y].to;
+              word from = BlkLoc(y)->cset.range[i_y].from;
+              word to = BlkLoc(y)->cset.range[i_y].to;
               if (from > prev)
                   add_range(y_comp, prev, from - 1);
               prev = to + 1;
@@ -123,10 +123,10 @@ operator{1} -- diff(x,y)
           i_x = i_y = 0;
           while (i_x < BlkLoc(x)->cset.n_ranges &&
                  i_y < y_comp->n_ranges) {
-              int from_x = BlkLoc(x)->cset.range[i_x].from;
-              int to_x = BlkLoc(x)->cset.range[i_x].to;
-              int from_y = y_comp->range[i_y].from;
-              int to_y = y_comp->range[i_y].to;
+              word from_x = BlkLoc(x)->cset.range[i_x].from;
+              word to_x = BlkLoc(x)->cset.range[i_x].to;
+              word from_y = y_comp->range[i_y].from;
+              word to_y = y_comp->range[i_y].to;
               if (to_x < to_y) {
                   add_range(rs, Max(from_x, from_y), to_x);
                   ++i_x;
@@ -221,14 +221,14 @@ operator{1} ** inter(x,y)
       body {
           struct rangeset *rs = init_rangeset();
           struct b_cset *blk;
-          int i_x, i_y;
+          word i_x, i_y;
           i_x = i_y = 0;
           while (i_x < BlkLoc(x)->cset.n_ranges &&
                  i_y < BlkLoc(y)->cset.n_ranges) {
-              int from_x = BlkLoc(x)->cset.range[i_x].from;
-              int to_x = BlkLoc(x)->cset.range[i_x].to;
-              int from_y = BlkLoc(y)->cset.range[i_y].from;
-              int to_y = BlkLoc(y)->cset.range[i_y].to;
+              word from_x = BlkLoc(x)->cset.range[i_x].from;
+              word to_x = BlkLoc(x)->cset.range[i_x].to;
+              word from_y = BlkLoc(y)->cset.range[i_y].from;
+              word to_y = BlkLoc(y)->cset.range[i_y].to;
               if (to_x < to_y) {
                   add_range(rs, Max(from_x, from_y), to_x);
                   ++i_x;
