@@ -85,7 +85,7 @@ int class_is(struct b_class *class, struct b_class *target)
         return 0;
 
     l = 0;
-    r = class->n_implemented_classes - 1;
+    r = (int)class->n_implemented_classes - 1;
     while (l <= r) {
         m = (l + r) / 2;
         c = DiffPtrsBytes(class->implemented_classes[m], target);
@@ -672,7 +672,7 @@ end
 function{*} lang_Class_get_supers(c)
     body {
         struct b_class *class;
-        int i;
+        word i;
         if (!(class = get_class_for(&c)))
             runerr(0);
         for (i = 0; i < class->n_supers; ++i)
@@ -684,7 +684,7 @@ end
 function{*} lang_Class_get_implemented_classes(c)
     body {
         struct b_class *class;
-        int i;
+        word i;
         if (!(class = get_class_for(&c)))
             runerr(0);
         for (i = 0; i < class->n_implemented_classes; ++i)
@@ -741,7 +741,7 @@ end
 
 #begdef CheckField(field)
 {
-    int x;
+    word x;
     if (cnv:C_integer(field, x))
         MakeInt(x, &field);
     else if (!cnv:string(field,field))
@@ -867,7 +867,7 @@ end
 function{*} lang_Class_get_field_names(c)
     body {
         struct b_class *class;
-        int i;
+        word i;
         if (!(class = get_class_for(&c)))
             runerr(0);
         for (i = 0; i < class->n_instance_fields + class->n_class_fields; ++i)
@@ -879,7 +879,7 @@ end
 function{*} lang_Class_get_instance_field_names(c)
     body {
         struct b_class *class;
-        int i;
+        word i;
         if (!(class = get_class_for(&c)))
             runerr(0);
         for (i = 0; i < class->n_instance_fields; ++i)
@@ -891,7 +891,7 @@ end
 function{*} lang_Class_get_class_field_names(c)
     body {
         struct b_class *class;
-        int i;
+        word i;
         if (!(class = get_class_for(&c)))
             runerr(0);
         for (i = class->n_instance_fields; 
@@ -992,7 +992,7 @@ end
 
 static struct b_proc *try_load(void *handle, struct b_class *class,  struct class_field *cf)
 {
-    int i;
+    word i;
     char *fq, *p, *t;
     struct b_proc *blk;
 
@@ -1029,7 +1029,7 @@ function{1} lang_Class_load_library(lib)
    body {
         struct b_proc *caller_proc;
         struct b_class *class;
-        int i;
+        word i;
         void *handle;
 
         caller_proc = CallerProc;
@@ -1767,7 +1767,8 @@ function{0,1} io_DescStream_poll(a[n])
 #ifdef HAVE_POLL
        static struct pollfd *ufds = 0;
        unsigned int nfds;
-       int timeout, i, rc;
+       word timeout;
+       int i, rc;
 
        nfds = n / 2;
        if (n % 2 == 0 || is:null(a[n - 1]))
@@ -2428,7 +2429,7 @@ end
 function{*} lang_Constructor_get_field_names(c)
     body {
         struct b_constructor *constructor;
-        int i;
+        word i;
         if (!(constructor = get_constructor_for(&c)))
             runerr(0);
         for (i = 0; i < constructor->n_fields; ++i)
@@ -2501,7 +2502,7 @@ end
 
 int lookup_proc_local(struct b_proc *proc, dptr query)
 {
-    int nf;
+    word nf;
 
     if (!proc->program)
         return -1;
@@ -2509,18 +2510,18 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
     nf = abs(proc->nparam) + proc->ndynam + proc->nstatic;
 
     if (is:string(*query)) {
-        int i;
+        word i;
         for (i = 0; i < nf; ++i) {
             if (eq(&proc->lnames[i], query))
-                return i;
+                return (int)i;
         }
         return -1;
     }
 
     if (query->dword == D_Integer) {
-        int i = cvpos(IntVal(*query), nf);
+        word i = cvpos(IntVal(*query), nf);
         if (i != CvtFail && i <= nf)
-            return i - 1;
+            return (int)i - 1;
         else
             return -1;
     }
@@ -2575,7 +2576,7 @@ end
 function{*} lang_Proc_get_local_names(c)
    body {
         struct b_proc *proc;
-        int i, nf;
+        word i, nf;
         if (!(proc = get_proc_for(&c)))
            runerr(0);
         if (!proc->program)

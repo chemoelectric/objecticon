@@ -309,7 +309,7 @@ struct dpair {
 
 struct inline_field_cache {
     union block *class;
-    int index;
+    word index;
 };
 
 struct inline_global_cache {

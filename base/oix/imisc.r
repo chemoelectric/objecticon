@@ -474,7 +474,7 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
  */
 int lookup_class_field_by_name(struct b_class *class, dptr name)
 {
-    int i, c, m, l = 0, r = class->n_instance_fields + class->n_class_fields - 1;
+    int i, c, m, l = 0, r = (int)class->n_instance_fields + (int)class->n_class_fields - 1;
     while (l <= r) {
         m = (l + r) / 2;
         i = class->sorted_fields[m];
@@ -493,9 +493,10 @@ int lookup_class_field_by_name(struct b_class *class, dptr name)
  * Do a binary search look up of a field number in the given class.
  * Returns the index into the class's field array, or -1 if not found.
  */
-int lookup_class_field_by_fnum(struct b_class *class, int fnum)
+int lookup_class_field_by_fnum(struct b_class *class, word fnum)
 {
-    int i, c, m, l = 0, r = class->n_instance_fields + class->n_class_fields - 1;
+    int i, m, l = 0, r = (int)class->n_instance_fields + (int)class->n_class_fields - 1;
+    word c;
     while (l <= r) {
         m = (l + r) / 2;
         i = class->sorted_fields[m];
@@ -525,13 +526,14 @@ int lookup_class_field_by_fnum(struct b_class *class, int fnum)
 int lookup_class_field(struct b_class *class, dptr query, struct inline_field_cache *ic)
 {
     if (ic) {
-        int fnum, index;
+        word fnum;
+        int index;
 
         /*
          * Check if we have a inline cache match.
          */
         if (ic->class == (union block *)class)
-            return ic->index;
+            return (int)ic->index;
 
         /*
          * Query is a field number (from an Op_field).
@@ -579,14 +581,14 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
             return lookup_class_field_by_name(class, query);
 
         if (query->dword == D_Integer) {
-            int nf = class->n_instance_fields + class->n_class_fields;
+            word nf = class->n_instance_fields + class->n_class_fields;
             /*
              * Simple index into fields array, using conventional icon
              * semantics.
              */
-            int i = cvpos(IntVal(*query), nf);
+            word i = cvpos(IntVal(*query), nf);
             if (i != CvtFail && i <= nf)
-                return i - 1;
+                return (int)i - 1;
             else
                 return -1;
         }
@@ -620,7 +622,7 @@ static int record_access(dptr cargp, struct inline_field_cache *ic)
 
 int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
 {
-    int i, c, m, l = 0, r = recdef->n_fields - 1;
+    int i, c, m, l = 0, r = (int)recdef->n_fields - 1;
     while (l <= r) {
         m = (l + r) / 2;
         i = recdef->sorted_fields[m];
@@ -641,13 +643,14 @@ int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
 int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_field_cache *ic)
 {
     if (ic) {
-        int fnum, index;
+        word fnum;
+        int index;
 
         /*
          * Check if we have a inline cache match.
          */
         if (ic->class == (union block *)recdef)
-            return ic->index;
+            return (int)ic->index;
 
         fnum = IntVal(*query);
 
@@ -668,14 +671,14 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
             return lookup_record_field_by_name(recdef, query);
 
         if (query->dword == D_Integer) {
-            int nf = recdef->n_fields;
+            word nf = recdef->n_fields;
             /*
              * Simple index into fields array, using conventional icon
              * semantics.
              */
-            int i = cvpos(IntVal(*query), nf);
+            word i = cvpos(IntVal(*query), nf);
             if (i != CvtFail && i <= nf)
-                return i - 1;
+                return (int)i - 1;
             else
                 return -1;
         }
