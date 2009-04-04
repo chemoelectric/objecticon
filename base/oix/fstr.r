@@ -31,7 +31,7 @@ function{1} detab(s,i[n])
 
       if (is:ucs(s)) {
           tended struct descrip utf8;
-          int utf8_size, in_count, out_count;
+          word utf8_size, in_count, out_count;
           char *in_p;
 
           /*
@@ -236,7 +236,7 @@ function{1} entab(s,i[n])
 
       if (is:ucs(s)) {
           tended struct descrip utf8;
-          int utf8_size, in_count, out_count;
+          word utf8_size, in_count, out_count;
           char *in_p;
 
           /*
@@ -564,7 +564,7 @@ function{1} map(s1,s2,s3)
           static struct mappair *maptab = 0;
           static int maptab_len = 0;
           char *p1, *p2, *p3;
-          int utf8_size, i;
+          word utf8_size, i;
 
           /*
            * If s2 and s3 are the same as for the last call of map,
@@ -763,7 +763,7 @@ function{1} repl(s,n)
 
       if (is:ucs(s)) {
           tended struct descrip utf8;
-          int utf8_size, i;
+          word utf8_size, i;
 
           slen = BlkLoc(s)->ucs.length;
           /*
@@ -868,7 +868,7 @@ function{1} reverse(x)
            if (is:ucs(x)) {
                tended struct descrip utf8;
                char *p, *q;   /* Don't need to be tended */
-               int i;
+               word i;
                MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(BlkLoc(x)->ucs.utf8)));
                StrLen(utf8) = StrLen(BlkLoc(x)->ucs.utf8);
 
@@ -940,7 +940,7 @@ function{1} left(s1,n,s2)
          }
 
       if (is:ucs(s1)) {
-          int odd_len, whole_len, utf8_size, i;
+          word odd_len, whole_len, utf8_size, i;
           tended struct descrip utf8;
           tended struct descrip odd_utf8;
 
@@ -1079,7 +1079,7 @@ function{1} right(s1,n,s2)
          }
 
       if (is:ucs(s1)) {
-          int odd_len, whole_len, utf8_size, i;
+          word odd_len, whole_len, utf8_size, i;
           tended struct descrip utf8;
           tended struct descrip odd_utf8;
 
@@ -1218,7 +1218,7 @@ function{1} center(s1,n,s2)
          }
 
       if (is:ucs(s1)) {
-          int left, right, whole_left_len, odd_left_len,
+          word left, right, whole_left_len, odd_left_len,
               whole_right_len, odd_right_len, utf8_size, i;
           tended struct descrip utf8;
           tended struct descrip odd_left_utf8;
