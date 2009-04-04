@@ -290,7 +290,7 @@ int f(dptr s, dptr d)
     if (cnv:string(*s, str)) {
         tended struct b_ucs *p;
         char *s1, *e1;
-        int n = 0;
+        word n = 0;
 
         s1 = StrLoc(str);
         e1 = s1 + StrLen(str);

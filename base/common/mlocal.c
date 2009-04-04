@@ -862,7 +862,7 @@ utf8_seq_len_arr[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,
         5,5,5,5,6,6,-1,-1};
 
-int calc_ucs_index_step(int n)
+int calc_ucs_index_step(word n)
 {
     static short cache[256];
     short s;

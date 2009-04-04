@@ -1287,9 +1287,9 @@ end
  * b->index_step = 8, then for a length of 20 there are two offset entries
  * for unicode chars 8 and 16 (zero based).
  */
-static char *get_ucs_off(struct b_ucs *b, int n)
+static char *get_ucs_off(struct b_ucs *b, word n)
 {
-    int d, i;
+    word d, i;
     char *p = StrLoc(b->utf8);
     /*printf("req: len=%d step=%d n=%d n_indexed=%d\n",b->length,b->index_step,n,b->n_off_indexed);*/
 
@@ -1325,7 +1325,7 @@ static char *get_ucs_off(struct b_ucs *b, int n)
      * move forwards.
      */
     if (d < b->n_off_indexed) {
-        int r = n % b->index_step;
+        word r = n % b->index_step;
         p += b->off[d];
         while (r-- > 0)
             p += UTF8_SEQ_LEN(*p);
@@ -1362,11 +1362,11 @@ static char *get_ucs_off(struct b_ucs *b, int n)
  * unicode length.  The utf8 string must be valid and have length
  * unicode chars in it.
  */
-struct b_ucs *make_ucs_block(dptr utf8, int length)
+struct b_ucs *make_ucs_block(dptr utf8, word length)
 {
     tended struct b_ucs *p;
     tended struct descrip t = *utf8;   /* In case *utf8 isn't tended */
-    int index_step, n_offs;
+    word index_step, n_offs;
 
     if (length == 0)
         return emptystr_ucs;
@@ -1402,7 +1402,7 @@ struct b_ucs *make_one_char_ucs_block(int i)
  * Helper function to make a new ucs block which is a substring of the
  * given ucs block.
  */
-struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len)
+struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len)
 {
     tended struct descrip utf8;
     if (len == 0)
@@ -1416,10 +1416,10 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len)
  * the slice pos:len.  No allocation is done.  pos,len must be a valid range
  * for the string.
  */
-void utf8_substr(struct b_ucs *b, int pos, int len, dptr res)
+void utf8_substr(struct b_ucs *b, word pos, word len, dptr res)
 {
     char *p, *q;
-    int first, last;
+    word first, last;
 
     if (len == 0) {
         *res = emptystr;
@@ -1448,7 +1448,7 @@ void utf8_substr(struct b_ucs *b, int pos, int len, dptr res)
  * Given a ucs block, this function returns the unicode character
  * at the requested position.  NB pos is one-based.
  */
-int ucs_char(struct b_ucs *b, int pos)
+int ucs_char(struct b_ucs *b, word pos)
 {
     char *p;
     --pos;  /* Make pos zero-based */
@@ -1464,7 +1464,7 @@ int ucs_char(struct b_ucs *b, int pos)
  * may be b->length + 1, in which case the char just after the end of
  * the utf8 string is returned (it may not be dereferenced).
  */
-char *ucs_utf8_ptr(struct b_ucs *b, int pos)
+char *ucs_utf8_ptr(struct b_ucs *b, word pos)
 {
     --pos;  /* Make pos zero-based */
     if (pos < 0 || pos > b->length)
@@ -1504,7 +1504,7 @@ int in_cset(struct b_cset *b, int c)
     if (c < 256)
         return Testb(c, b->bits);
     l = 0;
-    r = b->n_ranges - 1;
+    r = (int)b->n_ranges - 1;
     while (l <= r) {
         m = (l + r) / 2;
         if (c < b->range[m].from)
@@ -1521,11 +1521,11 @@ int in_cset(struct b_cset *b, int c)
  * Return the index of the range which contains the given index (one-based),
  * which must be valid.
  */
-int cset_range_of_pos(struct b_cset *b, int pos)
+int cset_range_of_pos(struct b_cset *b, word pos)
 {
     int l, r, m;
     l = 0;
-    r = b->n_ranges - 1;
+    r = (int)b->n_ranges - 1;
     --pos;
     /* Common case of looking up first pos */
     if (pos == 0 && b->n_ranges > 0)
@@ -1548,12 +1548,13 @@ int cset_range_of_pos(struct b_cset *b, int pos)
  * Create a ucs block consisting of the characters from the given cset,
  * in the range pos:len.
  */
-struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len)
+struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len)
 {
     char buf[MAX_UTF8_SEQ_LEN];
     tended struct b_cset *b = b0;
     tended struct descrip utf8;
-    int i, first, j, l0, p0, from, to, utf8_len;
+    int i, first;
+    word j, l0, p0, from, to, utf8_len;
 
     if (len == 0)
         return emptystr_ucs;
@@ -1605,9 +1606,10 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len)
     return make_ucs_block(&utf8, len);
 }
 
-void cset_to_str(struct b_cset *b, int pos, int len, dptr res)
+void cset_to_str(struct b_cset *b, word pos, word len, dptr res)
 {
-    int i, j, from, to, out_len = 0;
+    int i;
+    word j, from, to, out_len = 0;
     static char c[256];
 
     if (len == 0) {
