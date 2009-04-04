@@ -206,7 +206,6 @@ function{0,1} lang_Prog_get_event(cs,vmask,flag)
          runerr(124,vmask)
 
    body {
-      register int c;
       tended struct descrip dummy;
       struct progstate *p = NULL;
 
@@ -270,7 +269,6 @@ end
  * Prototypes.
  */
 
-void mmrefresh		(void);
 
 #define evforget()
 

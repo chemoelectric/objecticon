@@ -324,10 +324,8 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 
 static int construct_object(int nargs, dptr newargp)
 {
-    struct pf_marker *newpfp;
     struct class_field *new_field;
-    word *newsp = sp, i;
-    int nparam;
+    word i;
     struct b_class *class;
     struct b_object *object;
 
@@ -488,7 +486,7 @@ void ensure_initialized(struct b_class *class)
 dptr do_invoke(dptr proc)
 {
     word ibuf[9];
-    int i, off, retval;
+    int retval;
     inst saved_ipc = ipc;
     word saved_lastop = lastop;
     dptr saved_xargp = xargp;

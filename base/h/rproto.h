@@ -120,6 +120,9 @@ int		interp_1	(int fsig,dptr cargp);
 void		irunerr		(int n, C_integer v);
 int		lexcmp		(dptr dp1,dptr dp2);
 word		longread	(char *s,int width,long len,FILE *fname);
+#ifdef HAVE_LIBZ
+word gzlongread(char *s, int width, long len, FILE *fd);
+#endif
 union block	**memb		(union block *pb,dptr x,uword hn, int *res);
 void		mksubs		(dptr var,dptr val,word i,word j, dptr result);
 word		mod3		(word a,word b);
@@ -145,6 +148,7 @@ void            ensure_initialized(struct b_class *class);
 dptr            do_invoke       (dptr proc);
 dptr            call_icon       (dptr proc, ...);
 dptr            call_icon_va    (dptr proc, va_list ap);
+int invaluemask(struct progstate *p, int evcode, struct descrip *val);
 
    void	resolve			(struct progstate *pstate);
    struct b_coexpr *loadicode (char *name,  C_integer bs, C_integer ss, C_integer stk);
@@ -314,6 +318,7 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    int  ownselection    (wbp w, char *selection);
    int getselectioncontent(wbp w, char *selname, char *targetname, dptr res);
    int	setwindowlabel	(wbp w, char *val);
+   int setinputmask(wbp w, char *val);
    int	strimage	(wbp w, int x, int y, int width, int height,
 			   struct palentry *e, unsigned char *s,
 			   word len, int on_icon);
@@ -324,7 +329,7 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
 #ifndef MSWindows
    void	wflush		(wbp w);
 #endif
-   int	wgetq		(wbp w, dptr res, int t);
+   int	wgetq		(wbp w, dptr res, word t);
    wbp  wopen		(char *nm, struct b_list *hp, dptr attr, int n, int *e, int is_3d);
 #ifndef MSWindows
    void	wsync		(wbp w);
@@ -369,9 +374,14 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
       void	wflushall		(void);
       void postcursor(wbp);
       void scrubcursor(wbp);
+int wgetevent2(wbp w, dptr res, word timeout);
+int readBMP(char *filename, int p, struct imgdata *imd);
+int writeJPEG(wbp w, char *filename, int x, int y, int width, int height);
 #ifdef HAVE_LIBXFT
       void drawstrng(wbp w, int x, int y, char *str, int slen);
       void drawutf8(wbp w, int x, int y, char *str, int slen);
+      int xft_stringwidth(wbp w, char *s, int n);
+      int xft_utf8width(wbp w, char *s, int n);
 #endif
       char my_wmap(wbp w);
 
@@ -550,7 +560,7 @@ dptr u_read			(int fd, int n, dptr d);
 
 void create_list(uword nslots, dptr d);
 void cstr2string(char *s, dptr d);
-void bytes2string(char *s, int len, dptr d);
+void bytes2string(char *s, word len, dptr d);
 void cstrs2string(char **s, char *delim, dptr d);
 int eq(dptr d1, dptr d2);
 int ceq(dptr dp, char *s);
@@ -577,6 +587,8 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, int pos, int len);
 void cset_to_str(struct b_cset *b, int pos, int len, dptr res);
 struct b_ucs *make_ucs_substring(struct b_ucs *b, int pos, int len);
 int cset_range_of_pos(struct b_cset *b, int pos);
+void mmrefresh		(void);
+int iselect(int fd, word t);
 
 /* Debug func. */
 char* dword2str(dptr d);

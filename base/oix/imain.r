@@ -159,7 +159,6 @@ int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     return 0;
 }
 #define main iconx
-#define INTMAIN 1
 #else
 #if WildCards
 void ExpandArgv(int *argcp, char ***avp)
@@ -216,7 +215,7 @@ void ExpandArgv(int *argcp, char ***avp)
 
 int main(int argc, char **argv)
 {
-    int i, slen, want_arg;
+    int i, want_arg;
     struct fileparts *fp;
 #if WildCards
 #ifndef MSWindows
@@ -375,9 +374,8 @@ int main(int argc, char **argv)
     interp(0,(dptr)NULL); 
 
     c_exit(EXIT_SUCCESS);
-#ifdef INTMAIN
+
     return 0;
-#endif
 }
 
 

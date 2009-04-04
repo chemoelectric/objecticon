@@ -522,7 +522,6 @@ int noimage;
    char *s;
    union block *bp;
    char *csn;
-   FILE *fd;
    struct descrip q;
    double rresult;
    tended struct descrip tdp;
@@ -1090,7 +1089,6 @@ dptr dp1, dp2;
    register union block *bp;
    char sbuf[64];
    char cbuf[CHAR_CVT_LEN];
-   FILE *fd;
 
    type_case source of {
       string: {
@@ -1719,7 +1717,7 @@ void cstr2string(char *s, dptr d)
  * length.  The result is stored in the given dptr.  If s is null,
  * nulldesc is written to d.
  */
-void bytes2string(char *s, int len, dptr d) 
+void bytes2string(char *s, word len, dptr d) 
 {
     char *a;
 

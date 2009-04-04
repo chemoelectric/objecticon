@@ -766,7 +766,6 @@ function{1} graphics_Window_draw_string(self, argv[argc])
    body {
       int i, n, len;
       char *s;
-      int dx, dy;
 
       GetSelfW();
       CheckArgMultipleOf(3);
@@ -872,7 +871,6 @@ end
 function{0,1} graphics_Window_fg(self, colr)
    body {
       tended char *tmp;
-      char *temp;
       GetSelfW();
 
       /*
@@ -988,7 +986,7 @@ end
 
 function{1} graphics_Window_fill_polygon(self, argv[argc])
    body {
-      int i, j, n;
+      int i, n;
       XPoint *points;
       int dx, dy;
       GetSelfW();
@@ -1143,7 +1141,7 @@ end
 function{0,1} graphics_Window_palette_color(s1, s2)
    body {
       int p;
-      char tmp[32], *s;
+      char tmp[32];
       struct palentry *e;
       tended struct descrip d;
 
@@ -1689,7 +1687,7 @@ function{0,1} graphics_Window_generic_color_value(k)
       C_integer n;
       long r, g, b, a = 65535;
       tended char *s;
-      char tmp[32], *t;
+      char tmp[32];
 
       if (is:null(k))
           runerr(103);

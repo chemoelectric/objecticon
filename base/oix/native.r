@@ -1027,9 +1027,8 @@ function{1} lang_Class_load_library(lib)
    if !cnv:C_string(lib) then
       runerr(103, lib)
    body {
-        struct b_proc *caller_proc, *new_proc;
+        struct b_proc *caller_proc;
         struct b_class *class;
-        struct class_field *cf;
         int i;
         void *handle;
 
@@ -1477,7 +1476,6 @@ function{0,1} io_SocketStream_socket_impl(domain, typ)
 
    body {
        SOCKET sockfd;
-       struct descrip fname;
        sockfd = socket(domain, typ, 0);
        if (sockfd < 0) {
            errno2why();
@@ -2168,7 +2166,6 @@ end
 
 function{1} util_Timezone_get_system_timezone()
    body {
-      int tz_sec;
       time_t t;
       struct tm *ct;
       tended struct descrip tmp;
@@ -2209,7 +2206,7 @@ end
 static struct sdescrip ptrf = {3, "ptr"};
 
 struct ramstream {
-    int pos, size, avail, wiggle;
+    word pos, size, avail, wiggle;
     char *data;
 };
 
@@ -2529,6 +2526,8 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
     }
 
     syserr("Invalid query type to lookup_proc_local");
+    /* Not reached */
+    return 0;
 }
 
 function{1} lang_Proc_get_n_locals(c)

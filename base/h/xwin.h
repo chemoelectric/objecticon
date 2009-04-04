@@ -119,13 +119,17 @@
  * Macros to perform direct window system calls from graphics routines
  */
 #define STDLOCALS(w) \
+   GC      stdgc;   \
+   Display *stddpy; \
+   Window  stdwin; \
+   Pixmap  stdpix;\
    wcp wc = (w)->context; \
    wsp ws = (w)->window; \
    wdp wd = ws->display; \
-   GC      stdgc  = wc->gc; \
-   Display *stddpy = wd->display; \
-   Window  stdwin  = ws->win; \
-   Pixmap  stdpix  = ws->pix;
+   stdgc  = wc->gc; \
+   stddpy = wd->display; \
+   stdwin  = ws->win; \
+   stdpix  = ws->pix;
 
 #define drawarcs(w, arcs, narcs) \
    { STDLOCALS(w); RENDER2(XDrawArcs,arcs,narcs); }
@@ -156,7 +160,6 @@
  * "get" means remove them from the Icon list and put them on the ghost queue
  */
 #define EVQUEGET(w,d) { \
-   int i;\
    wsp ws = (w)->window; \
    if (!c_get((struct b_list *)BlkLoc(ws->listp),&d)) fatalerr(0,NULL); \
    if (Qual(d)) {\
@@ -192,13 +195,5 @@ typedef struct wcolor {
 } *wclrp;
 
 
-#define STDLOCALS(w) \
-   wcp wc = (w)->context; \
-   wsp ws = (w)->window; \
-   wdp wd = ws->display; \
-   GC      stdgc  = wc->gc; \
-   Display *stddpy = wd->display; \
-   Window  stdwin  = ws->win; \
-   Pixmap  stdpix  = ws->pix;
 
 #endif					/* XWindows */

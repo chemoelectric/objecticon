@@ -153,10 +153,10 @@ static char *atom_fmt(wsp ws,Atom a) {
 
     s = XGetAtomName(ws->display->display, a);
     if (s) {
-        sprintf(r, "%.64s(%d)", s, a);
+        sprintf(r, "%.64s(%ld)", s, (long)a);
         XFree(s);
     } else {
-        sprintf(r, "?unknown atom(%d)", a);
+        sprintf(r, "?unknown atom(%ld)", (long)a);
     }
 
     n = (n + 1) % 8;
@@ -347,7 +347,7 @@ char* PropertyToString(Display* display, Atom target, int number_items,
         string[0] = '\0';
 
         for (i = 0; i < number_items; i++) {
-            sprintf(temp, "0x%8.8d ", long_array[i]);
+            sprintf(temp, "0x%8.8lu ", long_array[i]);
             strcat(string, temp);
         }
 
@@ -464,7 +464,6 @@ int handle_misc(wd, w)
 {
     XEvent event;
     Window evwin;
-    int i;
     static int presscount = 0;
     wbp wb;
     wsp ws;
@@ -570,14 +569,13 @@ int handle_misc(wd, w)
                         }
                         if (selection_debug) {
                             int i;
-                            printf("SelectionRequest event:\n\towner=%x requestor=%x "
+                            printf("SelectionRequest event:\n\towner=%lx requestor=%lx "
                                    "property=%s target=%s selection=%s\n",
-                                   event.xselectionrequest.owner,
-                                   event.xselectionrequest.requestor,
+                                   (long)event.xselectionrequest.owner,
+                                   (long)event.xselectionrequest.requestor,
                                    atom_fmt(ws, event.xselectionrequest.property),
                                    atom_fmt(ws, event.xselectionrequest.target),
-                                   atom_fmt(ws, event.xselectionrequest.selection),
-                                   event.xselectionrequest.selection
+                                   atom_fmt(ws, event.xselectionrequest.selection)
                                 );
                             printf("\tAvailable targets:\n");
                             for (i = 0; i < target_cnt; ++i) {
@@ -650,14 +648,14 @@ int handle_misc(wd, w)
                     char *an = XGetAtomName(ws->display->display, event.xselectionclear.selection);
 
                     if (selection_debug)
-                        printf("SelectionClear event win=%x selection=%s\n",
-                               event.xselectionclear.window,
+                        printf("SelectionClear event win=%lx selection=%s\n",
+                               (long)event.xselectionclear.window,
                                atom_fmt(ws, event.xselectionclear.selection));
 
                     proc = ws->selectionproc;
                     if (is:null(proc)) {
-                        fprintf(stderr, "Got an unexpected SelectionClear: %x\n", 
-                                event.xselectionclear.selection);
+                        fprintf(stderr, "Got an unexpected SelectionClear: %lx\n", 
+                                (long)event.xselectionclear.selection);
                         fflush(stderr);
                         break;
                     }
@@ -672,8 +670,8 @@ int handle_misc(wd, w)
                     break;
                 case SelectionNotify:
                     if (selection_debug)
-                        printf("SelectionNotify: requestor=%x selection=%s target=%s property=%s\n",
-                               event.xselection.requestor,
+                        printf("SelectionNotify: requestor=%lx selection=%s target=%s property=%s\n",
+                               (long)event.xselection.requestor,
                                atom_fmt(ws, event.xselection.selection),
                                atom_fmt(ws, event.xselection.target),
                                atom_fmt(ws, event.xselection.property));
@@ -802,10 +800,7 @@ int pollevent()
 /*
  * get a single item from w's pending queue
  */
-int wgetq(w,res,t)
-    wbp w;
-    dptr res;
-    int t;
+int wgetq(wbp w, dptr res, word t)
 {
     while (1) {
         STDLOCALS(w);		/* leave inside loop; ws->pix can change! */
@@ -1275,12 +1270,12 @@ int wmap(wbp w)
         s = p + StrLen(progname);
         while (s > p && s[-1] != '/')
             s--;				/* find tail of prog_name */
+        clhints.res_name = sbuf;
+        clhints.res_class = "IconProg";
+        for (i=0; s < p+StrLen(progname); ) clhints.res_name[i++] = *s++;
+        clhints.res_name[i] = '\0';
+        XSetClassHint(stddpy, stdwin, &clhints);
     }
-    clhints.res_name = sbuf;
-    clhints.res_class = "IconProg";
-    for (i=0; s < p+StrLen(progname); ) clhints.res_name[i++] = *s++;
-    clhints.res_name[i] = '\0';
-    XSetClassHint(stddpy, stdwin, &clhints);
 
     if (wd->cmap != DefaultColormap(stddpy,wd->screen)) { /* ? */
         XSetWindowColormap(stddpy, stdwin, wd->cmap);
@@ -1444,10 +1439,10 @@ int ownselection(wbp w, char *selname)
         return Succeeded;
 
     if (selection_debug)
-        printf("Owner of selection %s set from %x -> %x\n", 
+        printf("Owner of selection %s set from %lx -> %lx\n", 
                atom_fmt(ws, selection),
-               curr,
-               ws->win);
+               (long)curr,
+               (long)ws->win);
 
     /*
      * X doesn't send a SelectionClear event to us when the selection
@@ -1459,7 +1454,7 @@ int ownselection(wbp w, char *selname)
             if (x->win == curr) {
                 struct descrip proc = x->selectionproc;
                 if (is:null(proc)) {
-                    fprintf(stderr, "No selection proc for window %x\n", x);
+                    fprintf(stderr, "No selection proc for window %lx\n", (long)x);
                     fflush(stderr);
                 } else {
                     struct descrip str0;
@@ -1490,18 +1485,18 @@ int getselectioncontent(wbp w, char *selname, char *targetname, dptr res)
     unsigned char *prop;
     char *conv_str;
     int status;
-    int bytes_read;
+    word bytes_read;
     STDLOCALS(w);
 
     selection = XInternAtom(ws->display->display, selname, False);
     property = XInternAtom(ws->display->display, "_UNICON_PROP", False);
     target = XInternAtom(ws->display->display, targetname, False);
     if (selection_debug)
-        printf("calling XConvertSelection selection=%s target=%s property=%s requestor=%x\n",
+        printf("calling XConvertSelection selection=%s target=%s property=%s requestor=%lx\n",
                atom_fmt(ws, selection),
                atom_fmt(ws, target),
                atom_fmt(ws, property),
-               ws->win);
+               (long)ws->win);
 
     XConvertSelection(ws->display->display,
                       selection, 
@@ -1552,7 +1547,7 @@ int getselectioncontent(wbp w, char *selname, char *targetname, dptr res)
     bytes_read = nitems * (actual_format/8);
 
     if (selection_debug)
-        printf("Got %d items x %d bits -> %d bytes\n",nitems,actual_format,bytes_read);
+        printf("Got %lu items x %d bits -> %ld bytes\n",nitems, actual_format, (long)bytes_read);
 
     conv_str = PropertyToString(ws->display->display,
                                 actual_type,
@@ -3266,7 +3261,7 @@ int strimage(w, x, y, width, height, e, s, len, on_icon)
     word len;
     int on_icon;
 {
-    int c, v, ret, trans = 0;
+    int c, v, ret = 0, trans = 0;
     unsigned int r, g, b, ix, iy;
     XImage *im;
     wclrp cp;
@@ -3370,10 +3365,10 @@ int strimage(w, x, y, width, height, e, s, len, on_icon)
 /*
  * Compare two unsigned long values for qsort or bsearch.
  */
-static int ulcmp(const void *p1, const void *p2)
+static int ulcmp(unsigned long *p1, unsigned long *p2)
 {
-    register unsigned long u1 = *(unsigned int *)p1;
-    register unsigned long u2 = *(unsigned int *)p2;
+    register unsigned long u1 = *p1;
+    register unsigned long u2 = *p2;
 
     if (u1 < u2)
         return -1;
@@ -3439,13 +3434,13 @@ unsigned char *data;
         for (cp = wd->colors; cp < wd->colors + wd->numColors; cp++)
             *lp++ = cp->c;
         ncolors = lp - clist;
-        qsort((char *)clist, ncolors, sizeof(*clist), ulcmp);
+        qsort((char *)clist, ncolors, sizeof(*clist), (QSortFncCast)ulcmp);
 
         for (y = 0; y < height; y++)
             for (x = 0; x < width; x++) {
                 px = XGetPixel(im, x, y);
                 lp = (unsigned long *)bsearch((char *)&px, (char *)clist,
-                                              ncolors, sizeof(*clist), ulcmp);
+                                              ncolors, sizeof(*clist), (BSearchFncCast)ulcmp);
                 if (lp)
                     i = lp - clist;
                 else

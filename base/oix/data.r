@@ -73,7 +73,7 @@ struct b_proc *opblks[] = {
 
 struct pstrnm pntab[] = {
 
-#define FncDef(p) Lit(p), Cat(&B,p),
+#define FncDef(p) {Lit(p), Cat(&B,p)},
 #include "../h/fdefs.h"
 #undef FncDef
 	};

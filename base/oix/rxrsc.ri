@@ -351,7 +351,6 @@ int go_virtual(w)
 wdp alc_display(s)
     char *s;
 {
-    int i;
     double g;
     wdp wd;
     XColor color;
@@ -1038,7 +1037,6 @@ wcp clone_context(w)
 wsp alc_winstate()
 {
     wsp ws;
-    int i;   
     GRFX_ALLOC(ws, _wstate);
     ws->serial = ++canvas_serial;
     ws->bits = 1024;				/* echo ON; others OFF */

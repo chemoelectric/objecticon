@@ -250,7 +250,6 @@ end
 operator{1} [...] llist(elems[n])
    body {
       tended struct b_list *hp;
-      register word i;
       word nslots;
 
       nslots = n;

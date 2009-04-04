@@ -100,7 +100,7 @@ end
 
 function{0,1} io_Files_getcwd()
    body {
-       int buff_size, rc;
+       int buff_size;
        char *buff;
 
        buff_size = 32;

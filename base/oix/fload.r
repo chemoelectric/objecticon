@@ -109,7 +109,7 @@ body
     }
     /* Sanity check. */
     if (blk->title != T_Proc) {
-        fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): Loaded block didn't have D_Proc in its dword%s\n",
+        fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): Loaded block didn't have D_Proc in its dword\n",
                 filename, funcname);
         fatalerr(218, NULL);
     }

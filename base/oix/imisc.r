@@ -115,7 +115,6 @@ static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_fi
 {
     struct b_object *obj = &BlkLoc(*cargp)->object;
     struct b_class *class = obj->class;
-    struct b_methp *mp;
     struct class_field *cf;
     int i, j, ac;
 
@@ -163,7 +162,6 @@ static int cast_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_
 {
     struct b_cast *cast = &BlkLoc(*cargp)->cast;
     struct b_object *obj = cast->object;
-    struct b_methp *mp;
     struct b_class *obj_class = obj->class, *cast_class = cast->class;
     struct class_field *cf;
     int i, j, ac;
@@ -594,6 +592,8 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
         }
 
         syserr("Invalid query type to lookup_class_field");
+        /* Not reached */
+        return 0;
     }
 }
 
@@ -681,6 +681,8 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
         }
 
         syserr("Invalid query type to lookup_record_field");
+        /* Not reached */
+        return 0;
     }
 }
 

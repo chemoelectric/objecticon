@@ -1009,7 +1009,6 @@ void resolve(struct progstate *p)
 {
     word i, j, n_fields;
     struct b_proc *pp;
-    struct b_class *class_blocks;
     struct class_field *cf;
     dptr dp;
     struct ipc_fname *fnptr;
@@ -1270,7 +1269,7 @@ void *get_csp()
 void checkstack()
 {
     static int worst = MaxInt;
-    int free;
+    long free;
     if (BlkLoc(curpstate->K_current) == BlkLoc(rootpstate.K_main))
         return;
     free = (char*)get_csp() - (char*)sp;
@@ -1284,7 +1283,6 @@ void checkstack()
 void showcoexps()
 {
     struct b_coexpr *p;
-    struct b_coexpr *curr = (struct b_coexpr *)(curpstate->K_current.vword.bptr);
     struct progstate *q;
     void *csp = get_csp();
 
@@ -1297,7 +1295,7 @@ void showcoexps()
            p->program,
            p->size,
            p->es_sp,
-           p->cstate[0],
+           (char*)p->cstate[0],
            p->es_ipc.op,
            p->es_pfp,
            p->es_argp);
@@ -1308,7 +1306,7 @@ void showcoexps()
                p->program,
                p->size,
                p->es_sp,
-               p->cstate[0],
+               (char*)p->cstate[0],
                p->es_ipc.op,
                p->es_pfp,
                p->es_argp);

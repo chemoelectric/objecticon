@@ -297,7 +297,6 @@ function{0,1} match(s1,s2,i,j)
            */
           return C_integer cnv_i + StrLen(s1);
       } else {
-          char *e1, *e2;
           if (!cnv:ucs(s1,s1))
               runerr(128,s1);
 

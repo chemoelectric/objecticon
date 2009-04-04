@@ -113,7 +113,7 @@ end
 
 static char ** list2stringptrs(dptr l)
 {
-    char *data, *p, **a;
+    char *data, *p = 0, **a;
     tended union block *pb;
     int i, j, k, total;
 
@@ -220,7 +220,7 @@ function{0,1} posix_System_wait(pid, options)
       }
    body {
       char retval[64];
-      int status = 0, wpid, i=0;
+      int status = 0, wpid;
 #if !MSWIN32
 #if defined(BSD) || defined(Linux) || defined(BSD_4_4_LITE)
       struct rusage rusage;

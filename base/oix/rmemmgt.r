@@ -557,7 +557,7 @@ dptr dp;
 #begdef MARKPTR()
 {
     register dptr dp, lastdesc;
-    register char *block, *endblock;
+    register char *block, *endblock = 0;
     word type, fdesc;
     int numptr, numdesc;
     register union block **ptr1, **lastptr;
@@ -946,7 +946,6 @@ static void reclaim()
 static void cofree()
    {
    register struct b_coexpr **ep, *xep;
-   register struct astkblk *abp, *xabp;
 
    /*
     * Reset the type for &main.

@@ -16,11 +16,7 @@
  * Read a long string in shorter parts. (Standard read may not handle long
  *  strings.)
  */
-word longread(s,width,len,fd)
-FILE *fd;
-int width;
-char *s;
-long len;
+word longread(char *s, int width, long len, FILE *fd)
 {
    tended char *ts = s;
    long tally = 0;
@@ -62,11 +58,7 @@ long len;
  * Read a long string in shorter parts from a comressed file. 
  * (Standard read may not handle long strings.)
  */
-word gzlongread(s,width,len,fd)
-FILE *fd;
-int width;
-char *s;
-long len;
+word gzlongread(char *s, int width, long len, FILE *fd)
 {
    tended char *ts = s;
    long tally = 0;
@@ -117,7 +109,6 @@ dptr d;
    {
    register char *s;
    register word l;
-   register int  i;
 
    l = StrLen(*d);
    if (l == 0)
@@ -133,8 +124,7 @@ dptr d;
 /*
  * Wait for input to become available on fd, with timeout of t ms
  */
-iselect(fd, t)
-int fd, t;
+int iselect(int fd, word t)
    {
 
    struct timeval tv;

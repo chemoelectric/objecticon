@@ -4,6 +4,8 @@
  *  hgrow, hshrink, memb
  */
 
+static int cphash(dptr dp1, dptr dp2, word n, int tcode);
+
 /*
  * addmem - add a new set element block in the correct spot in
  *  the bucket chain.
@@ -127,10 +129,7 @@ int f(dptr dp1, dptr dp2, word n)
 cptable_macro(cptable_0, 0)
 cptable_macro(cptable_1, E_Tcreate)
 
-int cphash(dp1, dp2, n, tcode)
-dptr dp1, dp2;
-word n;
-int tcode;
+static int cphash(dptr dp1, dptr dp2, word n, int tcode)
    {
    union block *src;
    tended union block *dst;
@@ -622,7 +621,7 @@ int invaluemask(struct progstate *p, int evcode, struct descrip *val)
 {
     int rv;
     uword hn;
-    union block **foo, **bar;
+    union block **foo;
     struct descrip d;
     MakeInt(evcode, &d);
     hn = hash(&d);

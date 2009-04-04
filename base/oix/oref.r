@@ -683,7 +683,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
       }
 
       cset: {
-         int i, j, k, ch;
+         int i, k, ch;
          /*
           * Make sure that y is a C integer.
           */

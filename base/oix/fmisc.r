@@ -227,7 +227,6 @@ function{1} display(i,c)
 
    body {
       FILE *std_f = stderr;
-      int r;
 
       /*
        * Produce error if i is negative; constrain i to be <= &level.
@@ -1541,6 +1540,8 @@ int cset_range_of_pos(struct b_cset *b, int pos)
             return m;
     }
     syserr("Invalid index to cset_range_of_pos");
+    /* Not reached */
+    return 0;
 }
 
 /*

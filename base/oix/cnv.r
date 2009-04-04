@@ -229,7 +229,7 @@ int f(dptr s, dptr d)
       }
 
    if (is:ucs(*s)) {
-       char *s1, *e1;
+       char *s1;
        struct rangeset *rs = init_rangeset();
        int l = BlkLoc(*s)->ucs.length;
        s1 = StrLoc(BlkLoc(*s)->ucs.utf8);
@@ -821,7 +821,6 @@ C_integer arity;
  */
 struct b_proc *strprc(dptr s, C_integer arity, struct progstate *p)
    {
-   C_integer i;
    dptr t;
 
    /*

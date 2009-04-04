@@ -42,10 +42,7 @@ char *evquesub(w,i)
 }
 
 
-int wgetevent2(w,res,timeout)
-    wbp w;
-    dptr res;
-    int timeout;
+int wgetevent2(wbp w, dptr res, word timeout)
 {
     struct descrip xdesc, ydesc, qval;
     int t;
@@ -139,7 +136,6 @@ wsp getactivewindow()
     static LONG next = 0;
     LONG i, j, nwindows = 0;
     wsp ptr, ws, stdws = NULL;
-    extern FILE *ConsoleBinding;
 
     if (wstates == NULL) return NULL;
     for(ws = wstates; ws; ws=ws->next) nwindows++;
@@ -318,7 +314,8 @@ int setminsize(w,s)
         while (isdigit(*++s));
         if (*s++ != ',') return Error;
         if ((height = atoi(s)) <= 0) return Error;
-    }
+    } else
+        return Error;
 
     if (setminwidth(w, width) == Failed) return Failed;
     if (setminheight(w, height) == Failed) return Failed;
@@ -415,9 +412,9 @@ int parsecolor(w, buf, r, g, b, a)
     char *buf;
     long *r, *g, *b, *a;
 {
-    int len, mul, texture;
+    int len, mul;
     char *fmt, c;
-    double dr, dg, db, da = 1.0;
+    double dr, dg, db = 1.0;
 
     *r = *g = *b = 0L;
     *a = 65535;
@@ -429,7 +426,6 @@ int parsecolor(w, buf, r, g, b, a)
 
     /* try interpreting as three comma-separated numbers */
     if (sscanf(buf, "%lf,%lf,%lf%c", &dr, &dg, &db, &c) == 3) {
-      RGBnums:
         *r = dr;
         *g = dg;
         *b = db;
@@ -541,7 +537,7 @@ static int colorphrase(buf, r, g, b, a)
 
     /* check for diaphaneity adjective */
     p = bsearch(buf, (char *)transptable,
-                ElemCount(transptable), ElemSize(transptable), (int(*)())strcmp);
+                ElemCount(transptable), ElemSize(transptable), (BSearchFncCast)strcmp);
 
     if (p) {
         /* skip past word */
@@ -565,7 +561,7 @@ static int colorphrase(buf, r, g, b, a)
 
     /* check for lightness adjective */
     p = bsearch(buf, (char *)lighttable,
-                ElemCount(lighttable), ElemSize(lighttable), (int(*)())strcmp);
+                ElemCount(lighttable), ElemSize(lighttable), (BSearchFncCast)strcmp);
     if (p) {
         /* set the "very" flag for "pale" or "deep" */
         if (strcmp(buf, "pale") == 0)
@@ -585,7 +581,7 @@ static int colorphrase(buf, r, g, b, a)
 
     /* check for saturation adjective */
     p = bsearch(buf, (char *)sattable,
-                ElemCount(sattable), ElemSize(sattable), (int(*)())strcmp);
+                ElemCount(sattable), ElemSize(sattable), (BSearchFncCast)strcmp);
     if (p) {
         sat = ((colrmod *)p) -> val / 100.0;
         buf += strlen(buf) + 1;
@@ -598,11 +594,11 @@ static int colorphrase(buf, r, g, b, a)
     else {
         /* we have two (or more) name words; get the first */
         if ((p = bsearch(buf, colortable[0].name,
-                         ElemCount(colortable), ElemSize(colortable), (int(*)())strcmp)) != NULL) {
+                         ElemCount(colortable), ElemSize(colortable), (BSearchFncCast)strcmp)) != NULL) {
             blend = 0.5;
         }
         else if ((p = bsearch(buf, colortable[0].ish,
-                              ElemCount(colortable), ElemSize(colortable), (int(*)())strcmp)) != NULL) {
+                              ElemCount(colortable), ElemSize(colortable), (BSearchFncCast)strcmp)) != NULL) {
             p -= sizeof(colortable[0].name);
             blend = 0.25;
         }
@@ -617,7 +613,7 @@ static int colorphrase(buf, r, g, b, a)
 
     /* process second (or only) name word */
     p = bsearch(buf, colortable[0].name,
-                ElemCount(colortable), ElemSize(colortable), (int(*)())strcmp);
+                ElemCount(colortable), ElemSize(colortable), (BSearchFncCast)strcmp);
     if (!p || buf + strlen(buf) < ebuf)
         return 0;
     h2 = ((colrname *)p) -> hue;
@@ -833,7 +829,7 @@ int readBMP(char *filename, int p, struct imgdata *imd)
     char headerstuff[52]; /* 54 - 2 byte magic number = 52 */
     int filesize, dataoffset, width, height, compression, imagesize,
         xpixelsperm, ypixelsperm, colorsused, colorsimportant, numcolors;
-    short planes, bitcount;
+    short bitcount;
     int *colortable = NULL;
     char *rasterdata;
     if ((f = fopen(filename, "rb")) == NULL) return Failed;
@@ -856,6 +852,10 @@ int readBMP(char *filename, int p, struct imgdata *imd)
         case 8: numcolors = 256; break;
         case 16: numcolors = 65536; break;
         case 24: numcolors = 65536 * 256;
+        default: {
+            fclose(f);
+            return Failed;
+        }
     }
     compression = *(int *)(headerstuff+28);
     if (compression != 0) {
@@ -1354,7 +1354,7 @@ static int jpegread(char *filename, int p)
     struct my_error_mgr jerr;
     JSAMPARRAY buffer;
     int row_stride;
-    int i,j,k;
+    int i,j;
     gf_f = NULL;
 
 #ifdef MSWindows
@@ -1484,14 +1484,10 @@ int writeBMP(wbp w, char *filename, int x, int y, int width, int height)
 
 static int bmpwrite(wbp w, char *filename, int x, int y, int width, int height)
 {
-    int i, a[6], c, cur;
+    int i, a[6];
     short sh[2];
     long len;
-    LinearColor *cp;
-    unsigned char *p, *q;
     struct palentry paltbl[DMAXCOLORS];
-    unsigned char obuf[GifBlockSize];
-    lzwnode tree[GifTableSize + 1];
 
     len = (long)width * (long)height;	/* total length of data */
 
@@ -1784,10 +1780,7 @@ static int jpegwrite(wbp w, char *filename, int x, int y,int width,int height);
  * Returns Succeeded, Failed, or Error.
  * We assume that the area specified is within the window.
  */
-int writeJPEG(w, filename, x, y, width, height)
-    wbp w;
-    char *filename;
-    int x, y, width, height;
+int writeJPEG(wbp w, char *filename, int x, int y, int width, int height)
 {
     int r;
 
@@ -1804,13 +1797,9 @@ int writeJPEG(w, filename, x, y, width, height)
 
 static int jpegwrite(wbp w, char *filename, int x, int y, int width,int height)
 {
-    int i, j, c, cur;
+    int i, j;
     long len;
-    LinearColor *cp;
-    unsigned char *p, *q;
     struct palentry paltbl[DMAXCOLORS];
-    unsigned char obuf[GifBlockSize];
-    lzwnode tree[GifTableSize + 1];
 
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
@@ -2445,11 +2434,12 @@ int parsepattern(s, len, width, nbits, bits)
             *bits++ = v;
             v = 0;
 
-            if (len > 0)
+            if (len > 0) {
                 if (*s == ',') { len--; s++; }
                 else {
                     ReturnErrNum(205, Error);
                 }
+            }
         }
     }
     return Succeeded;
@@ -2601,14 +2591,12 @@ int wattrib(w, s, len, answer, abuf)
                 break;
             }
             case A_RESIZE: {
-                int on_off;
                 if (strcmp(val, "on") & strcmp(val, "off"))
                     return Failed;
                 allowresize(w, ATOBOOL(val));
                 break;
             }
             case A_TITLEBAR: {
-                int on_off;
                 if (w->window->pix != 0) return Failed;
                 if (strcmp(val, "on") & strcmp(val, "off"))
                     return Failed;
@@ -2831,7 +2819,6 @@ int wattrib(w, s, len, answer, abuf)
         abuf[len] = '\0';
     }
     else {
-        char *selectiontemp;
         int a;
 
         /*
