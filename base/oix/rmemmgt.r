@@ -1052,22 +1052,19 @@ word extra;
  * qlcmp - compare the location fields of two string qualifiers for qsort.
  */
 
-static int qlcmp(q1,q2)
-dptr *q1, *q2;
+static int qlcmp(dptr *q1, dptr *q2)
    {
-
-#if IntBits == 16
-   long l;
-   l = (long)(DiffPtrs(StrLoc(**q1),StrLoc(**q2)));
+#if IntBits == WordBits
+   return (int)DiffPtrs(StrLoc(**q1),StrLoc(**q2));
+#else
+   long l = (long)DiffPtrs(StrLoc(**q1),StrLoc(**q2));
    if (l < 0)
       return -1;
    else if (l > 0)
       return 1;
    else
       return 0;
-#else                                   /* IntBits = 16 */
-   return (int)(DiffPtrs(StrLoc(**q1),StrLoc(**q2)));
-#endif                                  /* IntBits == 16 */
+#endif
 
    }
 

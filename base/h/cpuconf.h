@@ -71,10 +71,6 @@
    #define MaxInt	        0x7fffffff	/* largest int */
 #endif					/* IntBits == 32 */
 
-#if IntBits == 16
-   #define MaxInt	077777			/* largest int */
-#endif					/* IntBits == 16 */
-
 #ifndef LogHuge
    #define LogHuge 309			/* maximum base-10 exp+1 of real */
 #endif					/* LogHuge */
@@ -110,13 +106,8 @@
  */
 
 #ifndef HSlots
-   #if IntBits == 16
-      #define HSlots     4
-      #define LogHSlots  2
-   #else				/* IntBits */
-      #define HSlots     8
-      #define LogHSlots  3
-   #endif				/* IntBits */
+   #define HSlots     8
+   #define LogHSlots  3
 #endif					/* HSlots */
 
 #if ((1 << LogHSlots) != HSlots)
@@ -124,11 +115,7 @@
 #endif					/* HSlots / LogHSlots consistency */
 
 #ifndef HSegs
-   #if IntBits == 16
-      #define HSegs	  6
-   #else				/* IntBits */
-      #define HSegs	 12
-   #endif				/* IntBits */
+   #define HSegs	 12
 #endif					/* HSegs */
 
 #ifndef MinHLoad
