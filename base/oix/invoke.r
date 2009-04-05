@@ -293,7 +293,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
     /*
      * Point ipc at the icode entry point of the procedure being invoked.
      */
-    ipc.opnd = (word *)proc->entryp.icode;
+    ipc = (word *)proc->entryp.icode;
 
     /*
      * Enter the program state of the procedure being invoked
@@ -487,25 +487,25 @@ dptr do_invoke(dptr proc)
 {
     word ibuf[9];
     int retval;
-    inst saved_ipc = ipc;
+    word *saved_ipc = ipc;
     word saved_lastop = lastop;
     dptr saved_xargp = xargp;
     word saved_xnargs = xnargs;
-    inst wp;
+    word *wp;
     dptr ret;
     int ncopy = (sp + 1 - (word*)proc) / 2;
-    wp.opnd = ibuf;
-    *wp.op++ = Op_Mark;   
-    *wp.opnd++ = 3 * 2 * WordSize;
-    *wp.op++ = Op_CopyArgs;
-    *wp.opnd++ = ncopy;
-    *wp.op++ = Op_Invoke;  
-    *wp.opnd++ = ncopy - 1;
-    *wp.op++ = Op_Eret;
-    *wp.op++ = Op_Trapret;
-    *wp.op++ = Op_Trapfail;
+    wp = ibuf;
+    *wp++ = Op_Mark;   
+    *wp++ = 3 * 2 * WordSize;
+    *wp++ = Op_CopyArgs;
+    *wp++ = ncopy;
+    *wp++ = Op_Invoke;  
+    *wp++ = ncopy - 1;
+    *wp++ = Op_Eret;
+    *wp++ = Op_Trapret;
+    *wp++ = Op_Trapfail;
 
-    ipc.op = (int *)ibuf;
+    ipc = ibuf;
     retval = interp(0, NULL);
 
     if (retval == A_Trapret) {

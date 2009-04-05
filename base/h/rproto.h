@@ -154,7 +154,7 @@ int invaluemask(struct progstate *p, int evcode, struct descrip *val);
    struct b_coexpr *loadicode (char *name,  C_integer bs, C_integer ss, C_integer stk);
    void actparent (int eventcode);
    int mt_activate   (dptr tvalp, dptr rslt, struct b_coexpr *ncp);
-   struct progstate *findprogramforicode(inst x);
+   struct progstate *findprogramforicode(word *x);
    void changeprogstate(struct progstate *p);
    void showcoexps();
    void checkcoexps(char *s);

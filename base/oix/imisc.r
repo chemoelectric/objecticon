@@ -27,8 +27,8 @@ LibDcl(field,2,".")
     struct inline_field_cache *ic;
     Deref(Arg1);
     Deref(Arg2);
-    ic = (struct inline_field_cache*)ipc.opnd;
-    ipc.opnd += 2;
+    ic = (struct inline_field_cache*)ipc;
+    ipc += 2;
     type_case Arg1 of {
       record: {
             r = record_access(cargp, ic);
@@ -87,8 +87,8 @@ int invokef_access(int fno, int *nargs)
     struct inline_field_cache *ic;
     struct descrip field;
     dptr cargp;
-    ic = (struct inline_field_cache*)ipc.opnd;
-    ipc.opnd += 2;
+    ic = (struct inline_field_cache*)ipc;
+    ipc += 2;
     cargp = (dptr)(sp - 1) - *nargs;
     Deref(*cargp);
     MakeInt(fno, &field);

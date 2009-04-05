@@ -78,7 +78,7 @@ extern struct b_constructor_list **dr_arrays;
  * External declarations for the interpreter.
  */
    
-extern inst ipc;			/* interpreter program counter */
+extern word *ipc;			/* interpreter program counter */
 extern int ilevel;			/* interpreter level */
 extern int ntended;			/* number of active tended descriptors*/
 extern struct b_cset *k_ascii;	/* value of &ascii */

@@ -529,13 +529,13 @@ void syserr(char *fmt, ...)
     if (pfp == NULL)
         fprintf(stderr, " in startup code");
     else {
-        dptr fn = findfile(ipc.opnd);
+        dptr fn = findfile(ipc);
         if (fn) {
             struct descrip t;
             abbr_fname(fn, &t);
-            fprintf(stderr, " at line %ld in %.*s", (long)findline(ipc.opnd), (int)StrLen(t), StrLoc(t));
+            fprintf(stderr, " at line %ld in %.*s", (long)findline(ipc), (int)StrLen(t), StrLoc(t));
         } else
-            fprintf(stderr, " at line %ld in ?", (long)findline(ipc.opnd));
+            fprintf(stderr, " at line %ld in ?", (long)findline(ipc));
     }
     fprintf(stderr, "\n");
     vfprintf(stderr, fmt, ap);
@@ -882,20 +882,20 @@ function{1} lang_Prog_load(s,arglist,
       static word pstart[7];
       static word *lterm;
 
-      inst tipc;
+      word *tipc;
 
-      tipc.opnd = pstart;
-      *tipc.op++ = Op_Noop; /* aligns Invokes operand */  /* ?cj? */
-      *tipc.op++ = Op_Invoke;
-      *tipc.opnd++ = 1;
-      *tipc.op++ = Op_Coret;
-      *tipc.op++ = Op_Efail;
+      tipc = pstart;
+      *tipc++ = Op_Noop; /* aligns Invokes operand */  /* ?cj? */
+      *tipc++ = Op_Invoke;
+      *tipc++ = 1;
+      *tipc++ = Op_Coret;
+      *tipc++ = Op_Efail;
 
-      lterm = (word *)(tipc.op);
+      lterm = (word *)(tipc);
 
-      *tipc.op++ = Op_Cofail;
-      *tipc.op++ = Op_Agoto;
-      *tipc.opnd = (word)lterm;
+      *tipc++ = Op_Cofail;
+      *tipc++ = Op_Agoto;
+      *tipc = (word)lterm;
 
       /*
        * arglist must be a list
@@ -941,12 +941,7 @@ function{1} lang_Prog_load(s,arglist,
        *  is transferred to lterm, the address of an ...
        */
       newefp = (struct ef_marker *)sp;
-#if IntBits != WordBits
-      newefp->ef_failure.op = (int *)lterm;
-#else					/* IntBits != WordBits */
-      newefp->ef_failure.op = lterm;
-#endif					/* IntBits != WordBits */
-
+      newefp->ef_failure = lterm;
       newefp->ef_gfp = 0;
       newefp->ef_efp = 0;
       newefp->ef_ilevel = ilevel;
@@ -980,7 +975,7 @@ function{1} lang_Prog_load(s,arglist,
          }
          }
       sblkp->es_sp = (word *)sp;
-      sblkp->es_ipc.opnd = pstart;
+      sblkp->es_ipc = pstart;
 
       result.dword = D_Coexpr;
       BlkLoc(result) = (union block *)sblkp;
@@ -1296,7 +1291,7 @@ void showcoexps()
            p->size,
            p->es_sp,
            (char*)p->cstate[0],
-           p->es_ipc.op,
+           p->es_ipc,
            p->es_pfp,
            p->es_argp);
 
@@ -1307,7 +1302,7 @@ void showcoexps()
                p->size,
                p->es_sp,
                (char*)p->cstate[0],
-               p->es_ipc.op,
+               p->es_ipc,
                p->es_pfp,
                p->es_argp);
     }
@@ -1620,7 +1615,7 @@ void showstack()
     struct b_coexpr *c;
     word *p;
 
-    printf("Stack sp=%p efp=%p gfp=%p pfp=%p ipc=%p\n",sp,efp,gfp,pfp,ipc.op);
+    printf("Stack sp=%p efp=%p gfp=%p pfp=%p ipc=%p\n",sp,efp,gfp,pfp,ipc);
     c = (struct b_coexpr *)BlkLoc(k_current);
     if (!c) {
         printf("curpstate=%p k_current=%p BlkLoc(k_current) is 0\n",curpstate,&k_current);
@@ -1633,7 +1628,7 @@ void showstack()
     printf("\t\t\tes_pfp=%p\n",c->es_pfp);
     printf("\t\t\tes_efp=%p\n",c->es_efp);
     printf("\t\t\tes_gfp=%p\n",c->es_gfp);
-    printf("\t\t\tes_ipc=%p\n",c->es_ipc.op);
+    printf("\t\t\tes_ipc=%p\n",c->es_ipc);
     printf("\t\t\tes_ilevel=%d\n",c->es_ilevel);
     printf("\t\t\tprogram=%p\n",c->program);
 
@@ -1661,7 +1656,7 @@ void showstack()
             printf("%s\t%p\tgfp\tgf_gentype=%d\n",ptr(p),p,t->gf_gentype);
             printf("\t\t\tgf_efp=%p\n",t->gf_efp);
             printf("\t\t\tgf_gfp=%p\n",t->gf_gfp);
-            printf("%s\t\t\tgf_ipc=%p\n",ptr(&t->gf_ipc.op),t->gf_ipc.op);
+            printf("%s\t\t\tgf_ipc=%p\n",ptr(&t->gf_ipc),t->gf_ipc);
             /* Is it a small marker or not */
             if (t->gf_gentype == G_Psusp) {
                 printf("\t\t\tgf_pfp=%p\n",t->gf_pfp);
@@ -1672,7 +1667,7 @@ void showstack()
             }
         } else if (ft == EF) {
             struct ef_marker *t = (struct ef_marker*)p;
-            printf("%s\t%p\tefp\tef_failure=%p\n",ptr(p),p,t->ef_failure.op);
+            printf("%s\t%p\tefp\tef_failure=%p\n",ptr(p),p,t->ef_failure);
             printf("\t\t\tef_efp=%p\n",t->ef_efp);
             printf("\t\t\tef_gfp=%p\n",t->ef_gfp);
             printf("%s\t\t\tef_ilevel=%d\n",ptr(&t->ef_ilevel),t->ef_ilevel);
@@ -1684,7 +1679,7 @@ void showstack()
             printf("\t\t\tpf_efp=%p\n",t->pf_efp);
             printf("\t\t\tpf_gfp=%p\n",t->pf_gfp);
             printf("\t\t\tpf_argp=%p\n",t->pf_argp);
-            printf("\t\t\tpf_ipc=%p\n",t->pf_ipc.op);
+            printf("\t\t\tpf_ipc=%p\n",t->pf_ipc);
             printf("\t\t\tpf_ilevel=%d\n",t->pf_ilevel);
             printf("\t\t\tpf_scan=%p\n",t->pf_scan);
             printf("\t\t\tpf_from=%p\n",t->pf_from);
@@ -1708,11 +1703,11 @@ void showstack()
     fflush(stdout);
 }
 
-struct progstate *findprogramforicode(inst x)
+struct progstate *findprogramforicode(word *x)
 {
     struct progstate *p;
     for (p = progs; p; p = p->next) {
-        if (InRange(p->Code, x.op, p->Ecode))
+        if (InRange(p->Code, x, p->Ecode))
             return p;
     }
     return NULL;

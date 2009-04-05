@@ -199,17 +199,14 @@ static void	align		(void);
 static void	backpatch	(int lab);
 static void	cleartables	(void);
 static void	flushcode	(void);
-static void	intout		(int oint);
 static void	lemit		(int op,char *name);
 static void     lemitcon(struct centry *ce);
 static void	lemitin		(int op,word offset,int n,char *name);
-static void	lemitint	(int op,long i,char *name);
 static void	lemitl		(int op,int lab,char *name);
 static void	lemitn		(int op,word n,char *name);
 static void     lemitn2         (int op, word n1, word n2, char *name);
 static void	lemitproc       (struct lfunction *func);
 static void	lemitr		(int op,word loc,char *name);
-static void	misalign	(void);
 static void	outblock	(char *addr,int count);
 static void	wordout		(word oword);
 static void	shortout	(short o);
@@ -217,7 +214,6 @@ static void	shortout	(short o);
 word pc = 0;		/* simulated program counter */
 
 #define outword(n)	wordout((word)(n))
-#define outop(n)	intout((int)(n))
 #define outchar(n)	charout((unsigned char)(n))
 #define outshort(n)	shortout((short)(n))
 #define CodeCheck(n) if ((long)codep + (n) > (long)((long)codeb + maxcode)) \
@@ -396,7 +392,7 @@ static void gencode(struct lfile *lf)
                     lemitin(Op_Str, sp->offset, sp->len, "str");
                     lemit(Op_Number,"number");
                 } else {
-                    lemitint(op, cp->ival, name);
+                    lemitn(op, cp->ival, name);
                 }
                 break;
             }
@@ -713,7 +709,6 @@ void synch_line()
  *  lemitn - emit opcode with integer argument.
  *  lemitr - emit opcode with pc-relative reference.
  *  lemitin - emit opcode with reference to identifier table & integer argument.
- *  lemitint - emit word opcode with integer argument.
  *  lemitcon - emit constant table entry.
  *  lemitproc - emit procedure block.
  *
@@ -730,22 +725,20 @@ static void lemit(op, name)
     if (Dflag)
         fprintf(dbgfile, "%ld:\t%d\t\t\t\t# %s\n", (long)pc, op, name);
 
-    outop(op);
+    outword(op);
 }
 
 static void lemitl(op, lab, name)
     int op, lab;
     char *name;
 {
-    misalign();
-
     if (Dflag)
         fprintf(dbgfile, "%ld:\t%d\tL%d\t\t\t# %s\n", (long)pc, op, lab, name);
 
     if (lab >= maxlabels)
         labels  = (word *) expand_table(labels, NULL, &maxlabels, sizeof(word),
                                     lab - maxlabels + 1, "labels");
-    outop(op);
+    outword(op);
     if (labels[lab] <= 0) {		/* forward reference */
         outword(labels[lab]);
         labels[lab] = WordSize - pc;	/* add to front of reference chain */
@@ -760,25 +753,21 @@ static void lemitn(op, n, name)
     word n;
     char *name;
 {
-    misalign();
-
     if (Dflag)
         fprintf(dbgfile, "%ld:\t%d\t%ld\t\t\t# %s\n", (long)pc, op, (long)n,
                 name);
 
-    outop(op);
+    outword(op);
     outword(n);
 }
 
 static void lemitn2(int op, word n1, word n2, char *name)
 {
-    misalign();
-
     if (Dflag)
         fprintf(dbgfile, "%ld:\t%d\t%ld,%ld\t\t\t# %s\n", (long)pc, op, (long)n1, (long)n2,
                 name);
 
-    outop(op);
+    outword(op);
     outword(n1);
     outword(n2);
 }
@@ -789,9 +778,7 @@ static void lemitr(op, loc, name)
     word loc;
     char *name;
 {
-    misalign();
-
-    loc -= pc + ((IntBits/ByteBits) + WordSize);
+    loc -= pc + (2 * WordSize);
     if (Dflag) {
         if (loc >= 0)
             fprintf(dbgfile, "%ld:\t%d\t*+%ld\t\t\t# %s\n",(long) pc, op,
@@ -801,7 +788,7 @@ static void lemitr(op, loc, name)
                     (long)-loc, name);
     }
 
-    outop(op);
+    outword(op);
     outword(loc);
 }
 
@@ -810,37 +797,15 @@ static void lemitin(op, offset, n, name)
     word offset;
     char *name;
 {
-    misalign();
-
     if (Dflag)
         fprintf(dbgfile, "%ld:\t%d\t%d,S+%ld\t\t\t# %s\n", (long)pc, op, n,
                 (long)offset, name);
 
-    outop(op);
+    outword(op);
     outword(n);
     outword(offset);
 }
 
-/*
- * lemitint can have some pitfalls.  outword is used to output the
- *  integer and this is picked up in the interpreter as the second
- *  word of a short integer.  The integer value output must be
- *  the same size as what the interpreter expects.  See op_int and op_intx
- *  in interp.s
- */
-static void lemitint(op, i, name)
-    int op;
-    long i;
-    char *name;
-{
-    misalign();
-
-    if (Dflag)
-        fprintf(dbgfile,"%ld:\t%d\t%ld\t\t\t# %s\n",(long)pc,op,(long)i,name);
-
-    outop(op);
-    outword(i);
-}
 
 static void lemitcon(struct centry *ce)
 {
@@ -1980,39 +1945,6 @@ static int nalign(int n)
         return 0;
 }
 
-/*
- * misalign() outputs a Noop instruction for padding if pc + sizeof(int)
- *  is not a multiple of WordSize.  This is for operations that output
- *  an int opcode followed by an operand that needs to be word-aligned.
- */
-static void misalign()
-{
-    if ((pc + IntBits/ByteBits) % WordSize != 0)
-        lemit(Op_Noop, "noop [pad]");
-}
-
-/*
- * intout(i) outputs i as an int that is used by the runtime system
- *  IntBits/ByteBits bytes must be moved from &word[0] to &codep[0].
- */
-static void intout(oint)
-    int oint;
-{
-    int i;
-    union {
-        int i;
-        char c[IntBits/ByteBits];
-    } u;
-
-    CodeCheck(IntBits/ByteBits);
-    u.i = oint;
-
-    for (i = 0; i < IntBits/ByteBits; i++)
-        codep[i] = u.c[i];
-
-    codep += IntBits/ByteBits;
-    pc += IntBits/ByteBits;
-}
 
 /*
  * wordout(i) outputs i as a word that is used by the runtime system

@@ -67,7 +67,7 @@ struct b_coexpr *sblkp;
    sblkp->es_pfp = (struct pf_marker *)dsp;
    sblkp->es_tend = NULL;
    dsp = (dptr)((word *)dsp + Vwsizeof(*pfp));
-   sblkp->es_ipc.opnd = rblkp->ep;
+   sblkp->es_ipc = rblkp->ep;
    sblkp->es_gfp = 0;
    sblkp->es_efp = 0;
    sblkp->es_ilevel = 0;

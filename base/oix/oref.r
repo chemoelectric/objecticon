@@ -190,13 +190,13 @@ operator{0,1} ? random(underef x -> dx)
       ucs: {
             C_integer val;
             double rval;
-            int i;
+            word i;
 
             if ((val = BlkLoc(dx)->ucs.length) == 0)
                fail;
             rval = RandVal;
             rval *= val;
-            i = (int)rval + 1;
+            i = (word)rval + 1;
             if (is:variable(x))
                return tvsubs(&x, i, (word)1);
             else
@@ -206,12 +206,13 @@ operator{0,1} ? random(underef x -> dx)
       cset: {
              C_integer val;
              double rval;
-             int i, k, ch;
+             word i;
+             int k, ch;
              if ((val = BlkLoc(dx)->cset.size) == 0)
                  fail;
              rval = RandVal;
              rval *= val;
-             i = (int)rval + 1;
+             i = (word)rval + 1;
              k = cset_range_of_pos(&BlkLoc(dx)->cset, i);
              ch = BlkLoc(dx)->cset.range[k].from + i - 1 - BlkLoc(dx)->cset.range[k].index;
              if (ch < 256)
@@ -683,7 +684,8 @@ operator{0,1} [] subsc(underef x -> dx,y)
       }
 
       cset: {
-         int i, k, ch;
+         word i;
+         int k, ch;
          /*
           * Make sure that y is a C integer.
           */

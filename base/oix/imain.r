@@ -251,7 +251,7 @@ int main(int argc, char **argv)
         }
     }
 
-    ipc.opnd = NULL;
+    ipc = NULL;
 
     fp = fparse(argv[0]);
 
@@ -316,7 +316,7 @@ int main(int argc, char **argv)
      *  is transferred to mterm, the address of an Op_Quit.
      */
     efp = (struct ef_marker *)(sp);
-    efp->ef_failure.op = &mterm;
+    efp->ef_failure = &mterm;
     efp->ef_gfp = 0;
     efp->ef_efp = 0;
     efp->ef_ilevel = 1;
@@ -359,12 +359,12 @@ int main(int argc, char **argv)
 
     set_up = 1;			/* post fact that iconx is initialized */
 
-    ipc.opnd = istart;
-    *ipc.op++ = Op_Noop;  /* aligns Invoke's operand */	/*	[[I?]] */
-    *ipc.op++ = Op_Invoke;				/*	[[I?]] */
-    *ipc.opnd++ = want_arg;  /* Number of args to pass to main proc (1 or 0) */
-    *ipc.op = Op_Quit;
-    ipc.opnd = istart;
+    ipc = istart;
+    *ipc++ = Op_Noop;  /* aligns Invoke's operand */	/*	[[I?]] */
+    *ipc++ = Op_Invoke;				/*	[[I?]] */
+    *ipc++ = want_arg;  /* Number of args to pass to main proc (1 or 0) */
+    *ipc = Op_Quit;
+    ipc = istart;
 
     /*
      * Start things rolling by calling interp.  This call to interp

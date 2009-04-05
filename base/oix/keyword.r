@@ -216,7 +216,7 @@ keyword{1} file
       return string
       }
    inline {
-      dptr f = findfile(ipc.opnd);
+      dptr f = findfile(ipc);
       if (!f)
           fail;
       return *f;
@@ -267,7 +267,7 @@ keyword{1} line
       return integer;
       }
    inline {
-      int i = findline(ipc.opnd);
+      int i = findline(ipc);
       if (!i)
           fail;
       return C_integer i;

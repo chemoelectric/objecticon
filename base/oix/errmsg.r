@@ -223,22 +223,22 @@ void err_msg(int n, dptr v)
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);
-                fn = findfile(ipc.opnd);
+                fn = findfile(ipc);
                 if (fn) {
                     struct descrip t;
                     abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc.opnd));
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
                 } else
-                    fprintf(stderr, "File ?; Line %d\n", findline(ipc.opnd));
+                    fprintf(stderr, "File ?; Line %d\n", findline(ipc));
             } else {
                 fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-                fn = findfile(ipc.opnd);
+                fn = findfile(ipc);
                 if (fn) {
                     struct descrip t;
                     abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc.opnd));
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
                 } else
-                    fprintf(stderr, "File ?; Line %d\n", findline(ipc.opnd));
+                    fprintf(stderr, "File ?; Line %d\n", findline(ipc));
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);

@@ -39,7 +39,7 @@ Deliberate Syntax Error
  */
 struct ef_marker *efp;		/* Expression frame pointer */
 struct gf_marker *gfp;		/* Generator frame pointer */
-inst ipc;			/* Interpreter program counter */
+word *ipc;			/* Interpreter program counter */
 word *sp = NULL;		/* Stack pointer */
 
 
@@ -106,10 +106,10 @@ int coexp_act;			/* last co-expression action */
  * GetWord fetches the next icode word.  PutWord(x) stores x at the current
  * icode word.
  */
-#define GetWord (*ipc.opnd++)
-#define PutWord(x) ipc.opnd[-1] = (x)
-#define GetOp (word)(*ipc.op++)
-#define PutOp(x) ipc.op[-1] = (x)
+#define GetWord (*ipc++)
+#define PutWord(x) ipc[-1] = (x)
+#define GetOp (word)(*ipc++)
+#define PutOp(x) ipc[-1] = (x)
 
 /*
  * DerefArg(n) dereferences the nth argument.
@@ -286,13 +286,13 @@ int interp_x(int fsig,dptr cargp)
 #if e_fname
       if (!is:null(curpstate->eventmask) && (
               Testb((word)(E_Fname), BlkLoc(curpstate->eventmask)->cset.bits))) {
-          if (InRange(code, ipc.opnd, ecode)) {
-              uword ipc_offset = DiffPtrsBytes(ipc.opnd, code);
+          if (InRange(code, ipc, ecode)) {
+              uword ipc_offset = DiffPtrsBytes(ipc, code);
               if (!current_fname_ptr ||
                   ipc_offset < current_fname_ptr->ipc ||
                   (current_fname_ptr + 1 < efilenms && ipc_offset >= current_fname_ptr[1].ipc)) {
 
-                  current_fname_ptr = find_ipc_fname(ipc.opnd, curpstate);
+                  current_fname_ptr = find_ipc_fname(ipc, curpstate);
                   if (current_fname_ptr) {
                       InterpEVValD(&current_fname_ptr->fname, e_fname);
                       /* Ensure a fname change is always followed by a line number event (if
@@ -308,8 +308,8 @@ int interp_x(int fsig,dptr cargp)
 #if e_line
       if (!is:null(curpstate->eventmask) && (
               Testb((word)(E_Line), BlkLoc(curpstate->eventmask)->cset.bits))) {
-          if (InRange(code, ipc.opnd, ecode)) {
-              uword ipc_offset = DiffPtrsBytes(ipc.opnd, code);
+          if (InRange(code, ipc, ecode)) {
+              uword ipc_offset = DiffPtrsBytes(ipc, code);
               if (!current_line_ptr ||
                   ipc_offset < current_line_ptr->ipc ||
                   (current_line_ptr + 1 < elines && ipc_offset >= current_line_ptr[1].ipc)) {
@@ -321,7 +321,7 @@ int interp_x(int fsig,dptr cargp)
                       current_line_ptr ++;
                   } 
                   else {
-                      current_line_ptr = find_ipc_line(ipc.opnd, curpstate);
+                      current_line_ptr = find_ipc_line(ipc, curpstate);
                   }
                   if (current_line_ptr)
                       InterpEVVal(current_line_ptr->line, e_line);
@@ -380,7 +380,7 @@ Deliberate Syntax Error
 	    PutOp(Op_Acset);
 	    PushVal(D_Cset);
 	    opnd = GetWord;
-	    opnd += (word)ipc.opnd;
+	    opnd += (word)ipc;
 	    PutWord(opnd);
 	    PushAVal(opnd);
 	    InterpEVValD((dptr)(rsp-1), e_literal);
@@ -397,7 +397,7 @@ Deliberate Syntax Error
 	    PutOp(Op_Aucs);
 	    PushVal(D_Ucs);
 	    opnd = GetWord;
-	    opnd += (word)ipc.opnd;
+	    opnd += (word)ipc;
 	    PutWord(opnd);
 	    PushAVal(opnd);
             bp = (struct b_ucs *)opnd;
@@ -425,7 +425,7 @@ Deliberate Syntax Error
 	    PutOp(Op_Areal);
 	    PushVal(D_Real);
 	    opnd = GetWord;
-	    opnd += (word)ipc.opnd;
+	    opnd += (word)ipc;
 	    PushAVal(opnd);
 	    PutWord(opnd);
 	    InterpEVValD((dptr)(rsp-1), e_literal);
@@ -827,15 +827,15 @@ invokej:
 	 case Op_Mark:		/* create expression frame marker */
 	    PutOp(Op_Amark);
 	    opnd = GetWord;
-	    opnd += (word)ipc.opnd;
+	    opnd += (word)ipc;
 	    PutWord(opnd);
 	    newefp = (struct ef_marker *)(rsp + 1);
-	    newefp->ef_failure.opnd = (word *)opnd;
+	    newefp->ef_failure = (word *)opnd;
 	    goto mark;
 
 	 case Op_Amark: 	/* mark with absolute fipc */
 	    newefp = (struct ef_marker *)(rsp + 1);
-	    newefp->ef_failure.opnd = (word *)GetWord;
+	    newefp->ef_failure = (word *)GetWord;
 mark:
 	    newefp->ef_gfp = gfp;
 	    newefp->ef_efp = efp;
@@ -848,7 +848,7 @@ mark:
 	 case Op_Mark0: 	/* create expression frame with 0 ipl */
 mark0:
 	    newefp = (struct ef_marker *)(rsp + 1);
-	    newefp->ef_failure.opnd = 0;
+	    newefp->ef_failure = 0;
 	    newefp->ef_gfp = gfp;
 	    newefp->ef_efp = efp;
 	    newefp->ef_ilevel = ilevel;
@@ -1229,7 +1229,7 @@ efail_noev:
 	       rsp = (word *)efp - 1;
 	       efp = efp->ef_efp;
 
-	       if (ipc.op == 0)
+	       if (ipc == 0)
 		  goto efail;
 	       break;
 	       }
@@ -1364,8 +1364,8 @@ Pfail_uw:
 
 	 case Op_Chfail:	/* change failure ipc */
 	    opnd = GetWord;
-	    opnd += (word)ipc.opnd;
-	    efp->ef_failure.opnd = (word *)opnd;
+	    opnd += (word)ipc;
+	    efp->ef_failure = (word *)opnd;
 	    break;
 
 	 case Op_Dup:		/* duplicate descriptor */
@@ -1388,21 +1388,21 @@ EntInterp;
 	 case Op_Goto:		/* goto */
 	    PutOp(Op_Agoto);
 	    opnd = GetWord;
-	    opnd += (word)ipc.opnd;
+	    opnd += (word)ipc;
 	    PutWord(opnd);
-	    ipc.opnd = (word *)opnd;
+	    ipc = (word *)opnd;
 	    break;
 
 	 case Op_Agoto: 	/* goto absolute address */
 	    opnd = GetWord;
-	    ipc.opnd = (word *)opnd;
+	    ipc = (word *)opnd;
 	    break;
 
 	 case Op_Init:		/* initial */
-	    *--ipc.op = Op_Goto;
-	    opnd = sizeof(*ipc.op) + sizeof(*rsp);
-	    opnd += (word)ipc.opnd;
-	    ipc.opnd = (word *)opnd;
+	    *--ipc = Op_Goto;
+	    opnd = sizeof(*ipc) + sizeof(*rsp);
+	    opnd += (word)ipc;
+	    ipc = (word *)opnd;
 	    break;
 
 	 case Op_Limit: 	/* limit */
@@ -1482,7 +1482,7 @@ EntInterp;
 	    PushNull;
 	    Setup_Arg(0);
 	    opnd = GetWord;
-	    opnd += (word)ipc.opnd;
+	    opnd += (word)ipc;
 
 	    signal = Ocreate((word *)opnd, rargp);
 

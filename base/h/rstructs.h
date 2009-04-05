@@ -500,7 +500,7 @@ struct progstate {
  * Frame markers
  */
 struct ef_marker {		/* expression frame marker */
-    inst ef_failure;		/*   failure ipc */
+    word *ef_failure;		/*   failure ipc */
     struct ef_marker *ef_efp;	/*   efp */
     struct gf_marker *ef_gfp;	/*   gfp */
     word ef_ilevel;		/*   ilevel */
@@ -512,7 +512,7 @@ struct pf_marker {		/* procedure frame marker */
     struct ef_marker *pf_efp;	/*   saved efp */
     struct gf_marker *pf_gfp;	/*   saved gfp */
     dptr pf_argp;		/*   saved argp */
-    inst pf_ipc;			/*   saved ipc */
+    word *pf_ipc;			/*   saved ipc */
     word pf_ilevel;		/*   saved ilevel */
     dptr pf_scan;		/*   saved scanning environment */
     struct progstate *pf_from;
@@ -524,7 +524,7 @@ struct gf_marker {		/* generator frame marker */
     word gf_gentype;		/*   type */
     struct ef_marker *gf_efp;	/*   efp */
     struct gf_marker *gf_gfp;	/*   gfp */
-    inst gf_ipc;			/*   ipc */
+    word *gf_ipc;			/*   ipc */
     struct pf_marker *gf_pfp;	/*   pfp */
     dptr gf_argp;		/*   argp */
 };
@@ -539,7 +539,7 @@ struct gf_smallmarker {		/* generator frame marker */
     word gf_gentype;		/*   type */
     struct ef_marker *gf_efp;	/*   efp */
     struct gf_marker *gf_gfp;	/*   gfp */
-    inst gf_ipc;			/*   ipc */
+    word *gf_ipc;			/*   ipc */
 };
 
 /*
@@ -575,7 +575,7 @@ struct b_coexpr {		/* co-expression stack block */
     struct gf_marker *es_gfp;	/*   gfp */
     struct tend_desc *es_tend;	/*   current tended pointer */
     dptr es_argp;		/*   argp */
-    inst es_ipc;			/*   ipc */
+    word *es_ipc;			/*   ipc */
     word es_ilevel;		/*   interpreter level */
     word *es_sp;			/*   sp */
     dptr tvalloc;		/*   where to place transmitted value */

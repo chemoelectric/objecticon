@@ -26,7 +26,7 @@ void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
     int depth;
     struct pf_marker *origpfp = pfp;
     dptr arg;
-    inst cipc;
+    word *cipc;
 
     /*
      * Chain back through the procedure frame markers, looking for the
@@ -57,11 +57,11 @@ void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
              * The ipc in the procedure frame points after the "invoke n".
              */
             cipc = pfp->pf_ipc;
-            --cipc.opnd;
-            --cipc.op;
+            --cipc;
+            --cipc;
 
-            xtrace(cproc, pfp->pf_nargs, &arg[0], findline(cipc.opnd),
-                   findfile(cipc.opnd));
+            xtrace(cproc, pfp->pf_nargs, &arg[0], findline(cipc),
+                   findfile(cipc));
             /*
              * On the last call, show both the call and the offending expression.
              */
@@ -437,7 +437,7 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
 {
     struct b_proc *proc;
 
-    inst t_ipc;
+    word *t_ipc;
 
     --k_trace;
 
@@ -445,8 +445,8 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
     /*
      * Compute the ipc of the instruction causing the context switch.
      */
-    t_ipc.op = ipc.op - 1;
-    showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
+    t_ipc = ipc - 1;
+    showline(findfile(t_ipc), findline(t_ipc));
     /* argp can be 0 when we come back from a loaded program. */
     if (argp) {
         proc = (struct b_proc *)BlkLoc(*argp);
@@ -698,14 +698,14 @@ static void ttrace()
             putc('}', stderr);
     }
 	 
-    if (ipc.opnd != NULL) {
-        dptr fn = findfile(ipc.opnd);
+    if (ipc != NULL) {
+        dptr fn = findfile(ipc);
         if (fn) {
             struct descrip t;
             abbr_fname(fn, &t);
-            fprintf(stderr, " from line %d in %.*s", findline(ipc.opnd), (int)StrLen(t), StrLoc(t));
+            fprintf(stderr, " from line %d in %.*s", findline(ipc), (int)StrLen(t), StrLoc(t));
         } else
-            fprintf(stderr, " from line %d in ?", findline(ipc.opnd));
+            fprintf(stderr, " from line %d in ?", findline(ipc));
     }
 
     putc('\n', stderr);
@@ -724,7 +724,7 @@ void ctrace(dp, nargs, arg)
     dptr arg;
 {
 
-    showline(findfile(ipc.opnd), findline(ipc.opnd));
+    showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
     putstr(stderr, dp);
     putc('(', stderr);
@@ -746,13 +746,13 @@ void rtrace(dp, rval)
     dptr dp;
     dptr rval;
 {
-    inst t_ipc;
+    word *t_ipc;
 
     /*
      * Compute the ipc of the return instruction.
      */
-    t_ipc.op = ipc.op - 1;
-    showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
+    t_ipc = ipc - 1;
+    showline(findfile(t_ipc), findline(t_ipc));
     showlevel(k_level);
     putstr(stderr, dp);
     fprintf(stderr, " returned ");
@@ -768,13 +768,13 @@ void rtrace(dp, rval)
 void failtrace(dp)
     dptr dp;
 {
-    inst t_ipc;
+    word *t_ipc;
 
     /*
      * Compute the ipc of the fail instruction.
      */
-    t_ipc.op = ipc.op - 1;
-    showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
+    t_ipc = ipc - 1;
+    showline(findfile(t_ipc), findline(t_ipc));
     showlevel(k_level);
     putstr(stderr, dp);
     fprintf(stderr, " failed");
@@ -790,13 +790,13 @@ void strace(dp, rval)
     dptr dp;
     dptr rval;
 {
-    inst t_ipc;
+    word *t_ipc;
 
     /*
      * Compute the ipc of the suspend instruction.
      */
-    t_ipc.op = ipc.op - 1;
-    showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
+    t_ipc = ipc - 1;
+    showline(findfile(t_ipc), findline(t_ipc));
     showlevel(k_level);
     putstr(stderr, dp);
     fprintf(stderr, " suspended ");
@@ -812,13 +812,13 @@ void strace(dp, rval)
 void atrace(dp)
     dptr dp;
 {
-    inst t_ipc;
+    word *t_ipc;
 
     /*
      * Compute the ipc of the instruction causing resumption.
      */
-    t_ipc.op = ipc.op - 1;
-    showline(findfile(t_ipc.opnd), findline(t_ipc.opnd));
+    t_ipc = ipc - 1;
+    showline(findfile(t_ipc), findline(t_ipc));
     showlevel(k_level);
     putstr(stderr, dp);
     fprintf(stderr, " resumed");

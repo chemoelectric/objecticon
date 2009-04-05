@@ -262,9 +262,9 @@ function{*} lang_Prog_get_keyword(s,c)
                    * the ipc, otherwise the stored ipc in the coexpression block
                    */
                   if (BlkLoc(p->K_current) == BlkLoc(k_current))
-                      i = ipc.opnd;
+                      i = ipc;
                   else
-                      i = BlkLoc(p->K_current)->coexpr.es_ipc.opnd;
+                      i = BlkLoc(p->K_current)->coexpr.es_ipc;
                   t = find_ipc_fname(i, p);
                   if (!t)
                       fail;
@@ -276,9 +276,9 @@ function{*} lang_Prog_get_keyword(s,c)
                   if (BlkLoc(p->K_current)->coexpr.program != p)
                       fail;
                   if (BlkLoc(p->K_current) == BlkLoc(k_current))
-                      i = ipc.opnd;
+                      i = ipc;
                   else
-                      i = BlkLoc(p->K_current)->coexpr.es_ipc.opnd;
+                      i = BlkLoc(p->K_current)->coexpr.es_ipc;
                   t = find_ipc_line(i, p);
                   if (!t)
                       fail;
