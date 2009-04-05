@@ -287,7 +287,7 @@ class UReader()
                file := uin_str() | fail
 
             OpCode.Line:
-               line := uin_short() | fail
+               line := uin_16() | fail
 
             OpCode.Declend: {
                uf.set_declend_offset(&pos)
@@ -301,7 +301,7 @@ class UReader()
 
             OpCode.Import: {
                s := uin_str() | fail
-               n := uin_short() | fail
+               n := uin_16() | fail
                curr_import := if n = 0 then ImportDec(s) else ImportDec(s, 1)
                uf.add_import(curr_import)
             }
@@ -312,7 +312,7 @@ class UReader()
             }
 
             OpCode.Class: {
-               n := uin_word() | fail
+               n := uin_32() | fail
                s := uin_str() | fail
                curr_class := UClass(s, file, line, n)
                uf.add_symbol(curr_class)
@@ -324,7 +324,7 @@ class UReader()
             }
 
             OpCode.Classfield: {
-               n := uin_word() | fail
+               n := uin_32() | fail
                s := uin_str() | fail
                if iand(n, lang.Class.M_Method) ~= 0 then {
                   curr_func := UMethod(s, file, line, n)
@@ -334,7 +334,7 @@ class UReader()
             }
 
              OpCode.Nargs: {
-                n := uin_short() | fail
+                n := uin_16() | fail
                 curr_func.set_nargs(n)
              }
 
@@ -360,13 +360,13 @@ class UReader()
              }
 
              OpCode.Local: {
-                n := uin_word() | fail
+                n := uin_32() | fail
                 s := uin_str() | fail
                 curr_func.add_local(ULocal(s, n))
              }
 
              OpCode.Con: {
-                n := uin_word() | fail
+                n := uin_32() | fail
                 s := uin_bin() | fail
                 curr_func.add_const(UConst(s, n))
              }
@@ -412,7 +412,7 @@ class UReader()
       return s
    end
 
-   private uin_short()
+   private uin_16()
       local s, i
       s := move(2) | return error("Unexpected EOF")
       i := raw_convert(s)
@@ -421,7 +421,7 @@ class UReader()
       return i
    end
 
-   private uin_word()
+   private uin_32()
       local s, i
       s := move(4) | return error("Unexpected EOF")
       i := raw_convert(s)
