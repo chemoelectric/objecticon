@@ -332,7 +332,6 @@ static struct toktab *getnum(ac, cc)
         rval = wval = tonum(c);
         state = 0;
         realflag = 0;
-        over = 0;
     }
     for (;;) {
         AppChar(lex_sbuf, c);
@@ -342,7 +341,7 @@ static struct toktab *getnum(ac, cc)
                 if (isdigit(c))	    { 
                     if (!over) {
                         rval = rval * 10 + (c - '0');
-                        if (rval <= MinWord || rval >= MaxWord)
+                        if (rval >= MaxWord)
                             over = 1;			/* flag overflow */
                         else
                             wval = wval * 10 + (c - '0');
@@ -387,7 +386,7 @@ static struct toktab *getnum(ac, cc)
                     if (d < radix) {
                         if (!over) {
                             rval = rval * radix + d;
-                            if (rval <= MinWord || rval >= MaxWord)
+                            if (rval >= MaxWord)
                                 over = 1;			/* flag overflow */
                             else
                                 wval = wval * radix + d;
