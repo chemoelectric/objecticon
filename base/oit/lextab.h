@@ -582,6 +582,6 @@ int *cc;
             }
          break;
       }
-   tfatal("invalid character", (char *)NULL);
+   tfatal("invalid character");
    return -1;
    }
