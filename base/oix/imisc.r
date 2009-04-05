@@ -493,10 +493,9 @@ int lookup_class_field_by_name(struct b_class *class, dptr name)
  * Do a binary search look up of a field number in the given class.
  * Returns the index into the class's field array, or -1 if not found.
  */
-int lookup_class_field_by_fnum(struct b_class *class, word fnum)
+int lookup_class_field_by_fnum(struct b_class *class, int fnum)
 {
-    int i, m, l = 0, r = class->n_instance_fields + class->n_class_fields - 1;
-    word c;
+    int i, c, m, l = 0, r = class->n_instance_fields + class->n_class_fields - 1;
     while (l <= r) {
         m = (l + r) / 2;
         i = class->sorted_fields[m];
@@ -526,8 +525,7 @@ int lookup_class_field_by_fnum(struct b_class *class, word fnum)
 int lookup_class_field(struct b_class *class, dptr query, struct inline_field_cache *ic)
 {
     if (ic) {
-        word fnum;
-        int index;
+        int fnum, index;
 
         /*
          * Check if we have a inline cache match.
@@ -581,12 +579,12 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
             return lookup_class_field_by_name(class, query);
 
         if (query->dword == D_Integer) {
-            word nf = class->n_instance_fields + class->n_class_fields;
+            int nf = class->n_instance_fields + class->n_class_fields;
             /*
              * Simple index into fields array, using conventional icon
              * semantics.
              */
-            word i = cvpos(IntVal(*query), nf);
+            int i = cvpos(IntVal(*query), nf);
             if (i != CvtFail && i <= nf)
                 return i - 1;
             else
@@ -643,8 +641,7 @@ int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
 int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_field_cache *ic)
 {
     if (ic) {
-        word fnum;
-        int index;
+        int fnum, index;
 
         /*
          * Check if we have a inline cache match.
@@ -671,12 +668,12 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
             return lookup_record_field_by_name(recdef, query);
 
         if (query->dword == D_Integer) {
-            word nf = recdef->n_fields;
+            int nf = recdef->n_fields;
             /*
              * Simple index into fields array, using conventional icon
              * semantics.
              */
-            word i = cvpos(IntVal(*query), nf);
+            int i = cvpos(IntVal(*query), nf);
             if (i != CvtFail && i <= nf)
                 return i - 1;
             else

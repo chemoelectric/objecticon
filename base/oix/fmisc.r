@@ -1678,8 +1678,7 @@ function{1} lang_Text_create_cset(x[n])
    body {
      struct rangeset *rs;
      tended struct b_cset *b;
-     int i;
-     word from, to;
+     int from, to, i;
 
      rs = init_rangeset();
      i = 0;
@@ -1798,7 +1797,7 @@ function{*} ord(x, i, j)
    if !def:C_integer(j, 0) then
       runerr(101, j)
    body {
-       int len;
+       word len;
 
        type_case x of {
          cset: {

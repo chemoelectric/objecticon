@@ -492,7 +492,7 @@ static void ensure_rangeset_size(struct rangeset *rs, int n)
 /*
  * Does the rangeset have a range which includes the given from-to.
  */
-static int has_range(struct rangeset *rs, word from, word to)
+static int has_range(struct rangeset *rs, int from, int to)
 {
     int l, r, m;
     l = 0;
@@ -509,7 +509,7 @@ static int has_range(struct rangeset *rs, word from, word to)
     return 0;
 }
 
-void add_range(struct rangeset *rs, word from, word to)
+void add_range(struct rangeset *rs, int from, int to)
 {
     int i, n;
     struct range new;

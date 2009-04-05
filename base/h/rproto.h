@@ -451,7 +451,7 @@ int     check_access(struct class_field *cf, struct b_class *instance_class);
 int     lookup_class_field(struct b_class *class, dptr query, struct inline_field_cache *ic);
 dptr    lookup_global(dptr name, struct progstate *prog);
 int     lookup_class_field_by_name(struct b_class *class, dptr name);
-int     lookup_class_field_by_fnum(struct b_class *class, word fnum);
+int     lookup_class_field_by_fnum(struct b_class *class, int fnum);
 int     lookup_record_field_by_name(struct b_constructor *recdef, dptr name);
 int     lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_field_cache *ic);
 struct loc *lookup_global_loc(dptr name, struct progstate *prog);
