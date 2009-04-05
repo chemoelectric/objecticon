@@ -12,8 +12,6 @@
 
 /* Used by auto-generated func in ../common/lextab.h */
 static  int nextchar();
-static double parse_real(char *data);
-static long parse_int(char *data);
 
 #include "lexdef.h"
 #include "lextab.h"
@@ -317,34 +315,48 @@ static struct toktab *getnum(ac, cc)
     int ac;
     int *cc;
 {
-    register int c, r, state;
-    int i, realflag, n, dummy, len;
-    word w;
-    char *p, *s;
+    register int c, state;
+    int i, realflag, n, dummy;
+    int radix = 0;
+    word wval = 0;
+    double rval = 0;
+    int over = 0;
+    char *p;
 
     c = ac;
     if (c == '.') {
-        r = 0;
         state = 7;
         realflag = 1;
     }
     else {
-        r = tonum(c);
+        rval = wval = tonum(c);
         state = 0;
         realflag = 0;
+        over = 0;
     }
     for (;;) {
         AppChar(lex_sbuf, c);
         c = NextChar;
         switch (state) {
             case 0:		/* integer part */
-                if (isdigit(c))	    { r = r * 10 + tonum(c); continue; }
+                if (isdigit(c))	    { 
+                    if (!over) {
+                        rval = rval * 10 + (c - '0');
+                        if (rval <= MinWord || rval >= MaxWord)
+                            over = 1;			/* flag overflow */
+                        else
+                            wval = wval * 10 + (c - '0');
+                    }
+                    continue; 
+                }
                 if (c == '.')           { state = 1; realflag++; continue; }
                 if (c == 'e' || c == 'E')  { state = 2; realflag++; continue; }
                 if (c == 'r' || c == 'R')  {
                     state = 5;
-                    if (r < 2 || r > 36)
+                    if (over || (wval < 2 || wval > 36))
                         tfatal("invalid radix for integer literal");
+                    radix = wval;
+                    rval = wval = 0;
                     continue;
                 }
                 break;
@@ -362,15 +374,27 @@ static struct toktab *getnum(ac, cc)
                 if (isdigit(c))   continue;
                 break;
             case 5:		/* first digit after r */
-                if ((isdigit(c) || isletter(c)) && tonum(c) < r)
-                { state = 6; continue; }
+                if ((isdigit(c) || isletter(c)) && tonum(c) < radix) {
+                    state = 6; 
+                    rval = wval = tonum(c);
+                    continue; 
+                }
                 tfatal("invalid integer literal");
                 break;
             case 6:		/* remaining digits after r */
                 if (isdigit(c) || isletter(c)) {
-                    if (tonum(c) >= r) {	/* illegal digit for radix r */
+                    int d = tonum(c);
+                    if (d < radix) {
+                        if (!over) {
+                            rval = rval * radix + d;
+                            if (rval <= MinWord || rval >= MaxWord)
+                                over = 1;			/* flag overflow */
+                            else
+                                wval = wval * radix + d;
+                        }
+                    } else {	/* illegal digit for radix r */
                         tfatal("invalid digit in integer literal");
-                        r = tonum('z');       /* prevent more messages */
+                        radix = tonum('z');       /* prevent more messages */
                     }
                     continue;
                 }
@@ -390,26 +414,41 @@ static struct toktab *getnum(ac, cc)
         break;
     }
     *cc = c;
-    len = lex_sbuf.endimage - lex_sbuf.strtimage;
-    s = str_install(&lex_sbuf);
+
     if (realflag) {
-        double d = parse_real(s);
-        p = (char *)&d;
+        /*
+         * Double - data is a double
+         */
+        AppChar(lex_sbuf, 0);
+        errno = 0;
+        rval = strtod(lex_sbuf.strtimage,0);
+        if (errno == ERANGE)
+            tfatal("real literal out of representable range");
+        zero_sbuf(&lex_sbuf);
+        p = (char *)&rval;
         for (i = 0; i < sizeof(double); ++i)
             AppChar(lex_sbuf, *p++);
         yylval = RealNode(str_install(&lex_sbuf));
         return T_Real;
-    }
-    w = parse_int(s);
-    if (w < 0) {
-        yylval = LrgintNode(s, len);
+    } else if (over) {
+        /*
+         * Large int - data is the string of chars.  Note the token is still
+         * a T_Int - gramatically it is the same as a normal integer.
+         */
+        n = lex_sbuf.endimage - lex_sbuf.strtimage;
+        yylval = LrgintNode(str_install(&lex_sbuf), n);
         return T_Int;
-    } 
-    p = (char *)&w;
-    for (i = 0; i < sizeof(word); ++i)
-        AppChar(lex_sbuf, *p++);
-    yylval = IntNode(str_install(&lex_sbuf));
-    return T_Int;
+    } else {
+        /*
+         * Normal int - data is a word
+         */
+        zero_sbuf(&lex_sbuf);
+        p = (char *)&wval;
+        for (i = 0; i < sizeof(word); ++i)
+            AppChar(lex_sbuf, *p++);
+        yylval = IntNode(str_install(&lex_sbuf));
+        return T_Int;
+    }
 }
 
 /*
@@ -941,101 +980,3 @@ static char *mapterm(int typ, nodeptr val)
             return ot->tok.t_word;
     return "???";
 }
-
-static double parse_real(char *data)
-{
-    double n;
-    register int c, d, e;
-    int esign;
-    register char *s, *ep, *p = data;
-    char cbuf[128];
-
-    s = cbuf;
-    d = 0;
-    while ((c = *p++) == '0')
-        ;
-    while (c >= '0' && c <= '9') {
-        *s++ = c;
-        d++;
-        c = *p++;
-    }
-    if (c == '.') {
-        if (s == cbuf)
-            *s++ = '0';
-        *s++ = c;
-        while ((c = *p++) >= '0' && c <= '9')
-            *s++ = c;
-    }
-    ep = s;
-    if (c == 'e' || c == 'E') {
-        *s++ = c;
-        if ((c = *p++) == '+' || c == '-') {
-            esign = (c == '-');
-            *s++ = c;
-            c = *p++;
-        }
-        else
-            esign = 0;
-        e = 0;
-        while (c >= '0' && c <= '9') {
-            e = e * 10 + c - '0';
-            *s++ = c;
-            c = *p++;
-        }
-        if (esign) e = -e;
-        e += d - 1;
-        if (abs(e) >= LogHuge)
-            *ep = '\0';
-    }
-    *s = '\0';
-    n = atof(cbuf);
-    return n;
-}
-
-#define tonum(c)    (isdigit(c) ? (c - '0') : ((c & 037) + 9))
-
-/*
- *  Get integer, but if it's too large for a long, return -1.
- */
-static long parse_int(char *data)
-{
-    register int c;
-    int over = 0;
-    double result = 0;
-    long lresult = 0;
-    double radix;
-    char *p = data;
-
-    while ((c = *p++) >= '0' && c <= '9') {
-        result = result * 10 + (c - '0');
-        lresult = lresult * 10 + (c - '0');
-        if (result <= MinWord || result >= MaxWord) {
-            over = 1;			/* flag overflow */
-            result = 0;			/* reset to avoid fp exception */
-        }
-    }
-    if (c == 'r' || c == 'R') {
-        radix = result;
-        lresult = 0;
-        result = 0;
-        while ((c = *p++) != 0) {
-            if (isdigit(c) || isalpha(c))
-                c = tonum(c);
-            else
-                break;
-            result = result * radix + c;
-            lresult = lresult * radix + c;
-            if (result <= MinWord || result >= MaxWord) {
-                over = 1;			/* flag overflow */
-                result = 0;			/* reset to avoid fp exception */
-            }
-        }
-    }
-
-    if (!over)
-        return lresult;			/* integer is small enough */
-    else {				/* integer is too large */
-        return -1;			/* indicate integer is too big */
-    }
-}
-
