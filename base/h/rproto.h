@@ -128,7 +128,7 @@ void		mksubs		(dptr var,dptr val,word i,word j, dptr result);
 word		mod3		(word a,word b);
 word		mul		(word a,word b);
 word		neg		(word a);
-void		new_context	(int fsig, dptr cargp); /* w/o Coexpr: a stub */
+void            new_context     (int fsig, dptr cargp); 
 int		numcmp		(dptr dp1,dptr dp2,dptr dp3);
 void		outimage	(FILE *f,dptr dp,int noimage);
 long physicalmemorysize();
@@ -461,7 +461,6 @@ long	ckadd		(long i, long j);
 long	ckmul		(long i, long j);
 long	cksub		(long i, long j);
 void	cmd_line	(int argc, char **argv, dptr rslt);
-struct b_coexpr *create	(continuation fnc,struct b_proc *p,int ntmp,int wksz);
 int	collect		(int region);
 void	cotrace		(struct b_coexpr *ccp, struct b_coexpr *ncp,
 			   int swtch_typ, dptr valloc);

@@ -98,6 +98,7 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Unop		39		/* unary operator */
 #define N_Apply		40		/* procedure application */
 #define N_Dottedid      41              /* dotted identifier structure */
+#define N_Lrgint	42		/* large integer literal */
 
 /*
  * Macros for constructing basic nodes.
@@ -106,11 +107,12 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define CsetNode(a,b)		i_str_leaf(N_Cset,&tok_loc,a,b) 
 #define UcsNode(a,b)		i_str_leaf(N_Ucs,&tok_loc,a,b) 
 #define IdNode(a)		c_str_leaf(N_Id,&tok_loc,a) 
-#define IntNode(a)		c_str_leaf(N_Int,&tok_loc,a) 
+#define IntNode(a)		i_str_leaf(N_Int,&tok_loc,a,sizeof(word)) 
 #define OpNode(a)		int_leaf(N_Op,&tok_loc,optab[a].tok.t_type) 
-#define RealNode(a)		c_str_leaf(N_Real,&tok_loc,a) 
+#define RealNode(a)		i_str_leaf(N_Real,&tok_loc,a,sizeof(double)) 
 #define ResNode(a)		int_leaf(N_Res,&tok_loc,a) 
 #define StrNode(a,b)		i_str_leaf(N_Str,&tok_loc,a,b) 
+#define LrgintNode(a,b)		i_str_leaf(N_Lrgint,&tok_loc,a,b) 
 
 struct  node *tree1             (int type);
 struct  node *tree2             (int type,struct node *loc_model);

@@ -12,6 +12,8 @@
 
 /* Used by auto-generated func in ../common/lextab.h */
 static  int nextchar();
+static double parse_real(char *data);
+static long parse_int(char *data);
 
 #include "lexdef.h"
 #include "lextab.h"
@@ -316,7 +318,9 @@ static struct toktab *getnum(ac, cc)
     int *cc;
 {
     register int c, r, state;
-    int realflag, n, dummy;
+    int i, realflag, n, dummy, len;
+    word w;
+    char *p, *s;
 
     c = ac;
     if (c == '.') {
@@ -386,10 +390,24 @@ static struct toktab *getnum(ac, cc)
         break;
     }
     *cc = c;
+    len = lex_sbuf.endimage - lex_sbuf.strtimage;
+    s = str_install(&lex_sbuf);
     if (realflag) {
+        double d = parse_real(s);
+        p = (char *)&d;
+        for (i = 0; i < sizeof(double); ++i)
+            AppChar(lex_sbuf, *p++);
         yylval = RealNode(str_install(&lex_sbuf));
         return T_Real;
     }
+    w = parse_int(s);
+    if (w < 0) {
+        yylval = LrgintNode(s, len);
+        return T_Int;
+    } 
+    p = (char *)&w;
+    for (i = 0; i < sizeof(word); ++i)
+        AppChar(lex_sbuf, *p++);
     yylval = IntNode(str_install(&lex_sbuf));
     return T_Int;
 }
@@ -922,5 +940,102 @@ static char *mapterm(int typ, nodeptr val)
         if (ot->tok.t_type == i)
             return ot->tok.t_word;
     return "???";
+}
+
+static double parse_real(char *data)
+{
+    double n;
+    register int c, d, e;
+    int esign;
+    register char *s, *ep, *p = data;
+    char cbuf[128];
+
+    s = cbuf;
+    d = 0;
+    while ((c = *p++) == '0')
+        ;
+    while (c >= '0' && c <= '9') {
+        *s++ = c;
+        d++;
+        c = *p++;
+    }
+    if (c == '.') {
+        if (s == cbuf)
+            *s++ = '0';
+        *s++ = c;
+        while ((c = *p++) >= '0' && c <= '9')
+            *s++ = c;
+    }
+    ep = s;
+    if (c == 'e' || c == 'E') {
+        *s++ = c;
+        if ((c = *p++) == '+' || c == '-') {
+            esign = (c == '-');
+            *s++ = c;
+            c = *p++;
+        }
+        else
+            esign = 0;
+        e = 0;
+        while (c >= '0' && c <= '9') {
+            e = e * 10 + c - '0';
+            *s++ = c;
+            c = *p++;
+        }
+        if (esign) e = -e;
+        e += d - 1;
+        if (abs(e) >= LogHuge)
+            *ep = '\0';
+    }
+    *s = '\0';
+    n = atof(cbuf);
+    return n;
+}
+
+#define tonum(c)    (isdigit(c) ? (c - '0') : ((c & 037) + 9))
+
+/*
+ *  Get integer, but if it's too large for a long, return -1.
+ */
+static long parse_int(char *data)
+{
+    register int c;
+    int over = 0;
+    double result = 0;
+    long lresult = 0;
+    double radix;
+    char *p = data;
+
+    while ((c = *p++) >= '0' && c <= '9') {
+        result = result * 10 + (c - '0');
+        lresult = lresult * 10 + (c - '0');
+        if (result <= MinWord || result >= MaxWord) {
+            over = 1;			/* flag overflow */
+            result = 0;			/* reset to avoid fp exception */
+        }
+    }
+    if (c == 'r' || c == 'R') {
+        radix = result;
+        lresult = 0;
+        result = 0;
+        while ((c = *p++) != 0) {
+            if (isdigit(c) || isalpha(c))
+                c = tonum(c);
+            else
+                break;
+            result = result * radix + c;
+            lresult = lresult * radix + c;
+            if (result <= MinWord || result >= MaxWord) {
+                over = 1;			/* flag overflow */
+                result = 0;			/* reset to avoid fp exception */
+            }
+        }
+    }
+
+    if (!over)
+        return lresult;			/* integer is small enough */
+    else {				/* integer is too large */
+        return -1;			/* indicate integer is too big */
+    }
 }
 

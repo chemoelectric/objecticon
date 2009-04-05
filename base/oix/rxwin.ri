@@ -1187,8 +1187,8 @@ int wmap(wbp w)
     if (imd->width) {
         r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, (word)imd->width * (word)imd->height, 0);
-        free((pointer)imd->paltbl);
-        free((pointer)imd->data);
+        free(imd->paltbl);
+        free(imd->data);
         imd->width = 0;
         if (r < 0)
             return Failed;
@@ -1198,8 +1198,8 @@ int wmap(wbp w)
     if (imd->width) {
         r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
                      imd->data, (word)imd->width * (word)imd->height, 1);
-        free((pointer)imd->paltbl);
-        free((pointer)imd->data);
+        free(imd->paltbl);
+        free(imd->data);
         imd->width = 0;
         if (r < 0)
             return Failed;

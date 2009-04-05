@@ -74,7 +74,7 @@ void readglob(struct lfile *lf)
                 break;
 
             case Op_Line:
-                pos.line = uin_short();
+                pos.line = uin_16();
                 break;
 
             case Op_Declend:
@@ -89,7 +89,7 @@ void readglob(struct lfile *lf)
             case Op_Import:		/* import the named package */
                 package = uin_str();
                 alsoimport(package, lf, &pos);	/*  (maybe) import the files in the package */
-                n = uin_short();        /* qualified flag */
+                n = uin_16();        /* qualified flag */
                 add_fimport(lf, package, n, &pos);  /* Add it to the lfile structure's list of imports */
                 break;
 
@@ -99,7 +99,7 @@ void readglob(struct lfile *lf)
                 break;
 
             case Op_Class:
-                k = uin_word();	/* get flags */
+                k = uin_32();	/* get flags */
                 name = uin_fqid(lf->package);
                 gp = glocate(name);
                 if (gp) {
@@ -129,7 +129,7 @@ void readglob(struct lfile *lf)
                 break;
 
             case Op_Classfield:
-                k = uin_word();	/* get flags */
+                k = uin_32();	/* get flags */
                 name = uin_str();
                 if (curr_class) {
                     if (k & M_Method) {
@@ -141,7 +141,7 @@ void readglob(struct lfile *lf)
                 break;
 
             case Op_Nargs:
-                n = uin_short();
+                n = uin_16();
                 if (curr_func)
                     curr_func->nargs = n;
                 break;
@@ -193,7 +193,7 @@ void readglob(struct lfile *lf)
                 break;
 
             case Op_Local:
-                k = uin_word();
+                k = uin_32();
                 name = uin_str();
                 if (curr_func)
                     add_local(curr_func, name, k, &pos);
@@ -202,7 +202,7 @@ void readglob(struct lfile *lf)
             case Op_Con: {
                 int len;
                 char *data;
-                k = uin_word();
+                k = uin_32();
                 data = uin_bin(&len);
                 add_constant(curr_func, k, data, len);
                 break;
@@ -571,101 +571,4 @@ void resolve_native_methods()
     }
 }
 
-
-double parse_real(char *data)
-{
-    double n;
-    register int c, d, e;
-    int esign;
-    register char *s, *ep, *p = data;
-    char cbuf[128];
-
-    s = cbuf;
-    d = 0;
-    while ((c = *p++) == '0')
-        ;
-    while (c >= '0' && c <= '9') {
-        *s++ = c;
-        d++;
-        c = *p++;
-    }
-    if (c == '.') {
-        if (s == cbuf)
-            *s++ = '0';
-        *s++ = c;
-        while ((c = *p++) >= '0' && c <= '9')
-            *s++ = c;
-    }
-    ep = s;
-    if (c == 'e' || c == 'E') {
-        *s++ = c;
-        if ((c = *p++) == '+' || c == '-') {
-            esign = (c == '-');
-            *s++ = c;
-            c = *p++;
-        }
-        else
-            esign = 0;
-        e = 0;
-        while (c >= '0' && c <= '9') {
-            e = e * 10 + c - '0';
-            *s++ = c;
-            c = *p++;
-        }
-        if (esign) e = -e;
-        e += d - 1;
-        if (abs(e) >= LogHuge)
-            *ep = '\0';
-    }
-    *s = '\0';
-    n = atof(cbuf);
-    return n;
-}
-
-#define tonum(c)    (isdigit(c) ? (c - '0') : ((c & 037) + 9))
-
-/*
- *  Get integer, but if it's too large for a long, return -1.
- */
-long parse_int(char *data)
-{
-    register int c;
-    int over = 0;
-    double result = 0;
-    long lresult = 0;
-    double radix;
-    char *p = data;
-
-    while ((c = *p++) >= '0' && c <= '9') {
-        result = result * 10 + (c - '0');
-        lresult = lresult * 10 + (c - '0');
-        if (result <= MinWord || result >= MaxWord) {
-            over = 1;			/* flag overflow */
-            result = 0;			/* reset to avoid fp exception */
-        }
-    }
-    if (c == 'r' || c == 'R') {
-        radix = result;
-        lresult = 0;
-        result = 0;
-        while ((c = *p++) != 0) {
-            if (isdigit(c) || isalpha(c))
-                c = tonum(c);
-            else
-                break;
-            result = result * radix + c;
-            lresult = lresult * radix + c;
-            if (result <= MinWord || result >= MaxWord) {
-                over = 1;			/* flag overflow */
-                result = 0;			/* reset to avoid fp exception */
-            }
-        }
-    }
-
-    if (!over)
-        return lresult;			/* integer is small enough */
-    else {				/* integer is too large */
-        return -1;			/* indicate integer is too big */
-    }
-}
 

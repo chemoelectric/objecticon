@@ -360,7 +360,6 @@ int main(int argc, char **argv)
     set_up = 1;			/* post fact that iconx is initialized */
 
     ipc = istart;
-    *ipc++ = Op_Noop;  /* aligns Invoke's operand */	/*	[[I?]] */
     *ipc++ = Op_Invoke;				/*	[[I?]] */
     *ipc++ = want_arg;  /* Number of args to pass to main proc (1 or 0) */
     *ipc = Op_Quit;

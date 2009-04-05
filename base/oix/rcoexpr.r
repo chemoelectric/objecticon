@@ -2,11 +2,6 @@
  * File: rcoexpr.r -- co_init, co_chng
  */
 
-/*
- * Function to call after switching stacks. If NULL, call interp().
- */
-static continuation coexpr_fnc;
-
 
 /*
  * co_init - use the contents of the refresh block to initialize the
@@ -229,11 +224,6 @@ void dumpcoexp(char*s, struct b_coexpr *p) {
 	fflush(stdout);
 }
 
-
-
-
-
-
 /*
  * new_context - determine what function to call to execute the new
  *  co-expression; this completes the context switch.
@@ -242,12 +232,5 @@ void new_context(fsig,cargp)
 int fsig;
 dptr cargp;
    {
-   continuation cf;
-   if (coexpr_fnc != NULL) {
-      cf = coexpr_fnc;
-      coexpr_fnc = NULL;
-      (*cf)();
-      }
-   else
       interp(fsig, cargp);
    }

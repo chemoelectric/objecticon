@@ -5,7 +5,6 @@
 
 #include "../h/opdefs.h"
 
-extern fptr fncentry[];
 extern word istart[4]; extern int mterm;
 
 /*
@@ -108,8 +107,6 @@ int coexp_act;			/* last co-expression action */
  */
 #define GetWord (*ipc++)
 #define PutWord(x) ipc[-1] = (x)
-#define GetOp (word)(*ipc++)
-#define PutOp(x) ipc[-1] = (x)
 
 /*
  * DerefArg(n) dereferences the nth argument.
@@ -330,7 +327,7 @@ int interp_x(int fsig,dptr cargp)
       }
 #endif					/* e_line */
 
-      lastop = GetOp;		/* Instruction fetch */
+      lastop = GetWord;		/* Instruction fetch */
 
 
 /*
@@ -377,7 +374,7 @@ Deliberate Syntax Error
 				/* ---Constant construction--- */
 
 	 case Op_Cset:		/* cset */
-	    PutOp(Op_Acset);
+	    PutWord(Op_Acset);
 	    PushVal(D_Cset);
 	    opnd = GetWord;
 	    opnd += (word)ipc;
@@ -394,7 +391,7 @@ Deliberate Syntax Error
 
          case Op_Ucs: {		/* ucs */
             struct b_ucs *bp;
-	    PutOp(Op_Aucs);
+	    PutWord(Op_Aucs);
 	    PushVal(D_Ucs);
 	    opnd = GetWord;
 	    opnd += (word)ipc;
@@ -422,7 +419,7 @@ Deliberate Syntax Error
 	    break;
 
 	 case Op_Real:		/* real */
-	    PutOp(Op_Areal);
+	    PutWord(Op_Areal);
 	    PushVal(D_Real);
 	    opnd = GetWord;
 	    opnd += (word)ipc;
@@ -438,7 +435,7 @@ Deliberate Syntax Error
 	    break;
 
 	 case Op_Str:		/* string */
-	    PutOp(Op_Astr);
+	    PutWord(Op_Astr);
 	    PushVal(GetWord)
 	    opnd = (word)strcons + GetWord;
 	    PutWord(opnd);
@@ -460,7 +457,7 @@ Deliberate Syntax Error
 	    break;
 
 	 case Op_Global:	/* global */
-	    PutOp(Op_Aglobal);
+	    PutWord(Op_Aglobal);
 	    PushVal(D_Var);
 	    opnd = GetWord;
 	    PushAVal(&globals[opnd]);
@@ -478,7 +475,7 @@ Deliberate Syntax Error
 	    break;
 
 	 case Op_Static:	/* static */
-	    PutOp(Op_Astatic);
+	    PutWord(Op_Astatic);
 	    PushVal(D_Var);
 	    opnd = GetWord;
 	    PushAVal(&statics[opnd]);
@@ -825,7 +822,7 @@ invokej:
 				/* ---Marking and Unmarking--- */
 
 	 case Op_Mark:		/* create expression frame marker */
-	    PutOp(Op_Amark);
+	    PutWord(Op_Amark);
 	    opnd = GetWord;
 	    opnd += (word)ipc;
 	    PutWord(opnd);
@@ -1386,7 +1383,7 @@ EntInterp;
 	    goto C_rtn_term;
 
 	 case Op_Goto:		/* goto */
-	    PutOp(Op_Agoto);
+	    PutWord(Op_Agoto);
 	    opnd = GetWord;
 	    opnd += (word)ipc;
 	    PutWord(opnd);

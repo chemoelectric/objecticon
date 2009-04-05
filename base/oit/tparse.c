@@ -2929,11 +2929,11 @@ case 234:
 break;
 case 235:
 #line 479 "tgram.g"
-{Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_IntLit,strlen(Str0(yyvsp[0])));}
+{if (yyvsp[0]->n_type == N_Int) Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_IntLit,(int)Val1(yyvsp[0])); else Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_LrgintLit,(int)Val1(yyvsp[0]));}
 break;
 case 236:
 #line 480 "tgram.g"
-{Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_RealLit,strlen(Str0(yyvsp[0])));}
+{Val0(yyvsp[0]) = putlit(Str0(yyvsp[0]),F_RealLit,(int)Val1(yyvsp[0]));}
 break;
 case 237:
 #line 481 "tgram.g"

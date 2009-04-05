@@ -53,28 +53,28 @@ struct ucode_op ucode_op_table[] = {
     /*  43 */         { Op_Value, "value", {0,0,0}, "\t%-12s" },               
     /*  44 */         { Op_Bscan, "bscan", {0,0,0}, "\t%-12s" },               
     /*  45 */         { Op_Ccase, "ccase", {0,0,0}, "\t%-12s" },               
-    /*  46 */         { Op_Chfail, "chfail", { TYPE_SHORT,0,0 }, "\t%-12s L%d" },            
+    /*  46 */         { Op_Chfail, "chfail", { TYPE_16,0,0 }, "\t%-12s L%d" },            
     /*  47 */         { Op_Coact, "coact", {0,0,0}, "\t%-12s" },               
     /*  48 */         { Op_Cofail, "cofail", {0,0,0}, "\t%-12s" },             
     /*  49 */         { Op_Coret, "coret", {0,0,0}, "\t%-12s" },               
-    /*  50 */         { Op_Create, "create", { TYPE_SHORT,0,0 }, "\t%-12s L%d" },            
-    /*  51 */         { Op_Cset, "cset", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                
+    /*  50 */         { Op_Create, "create", { TYPE_16,0,0 }, "\t%-12s L%d" },            
+    /*  51 */         { Op_Cset, "cset", { TYPE_16,0,0 }, "\t%-12s %d" },                
     /*  52 */         { Op_Dup, "dup", {0,0,0}, "\t%-12s" },                   
     /*  53 */         { Op_Efail, "efail", {0,0,0}, "\t%-12s" },               
     /*  54 */         { Op_Eret, "eret", {0,0,0}, "\t%-12s" },                 
     /*  55 */         { Op_Escan, "escan", {0,0,0}, "\t%-12s" },               
     /*  56 */         { Op_Esusp, "esusp", {0,0,0}, "\t%-12s" },               
     /*  57 */         { Op_Field, "field", { TYPE_STR,0,0 }, "\t%-12s %s" },                
-    /*  58 */         { Op_Goto, "goto", { TYPE_SHORT,0,0 }, "\t%-12s L%d" },                
-    /*  59 */         { Op_Init, "init", { TYPE_SHORT,0,0 }, "\t%-12s L%d" },                
-    /*  60 */         { Op_Int, "int", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                  
-    /*  61 */         { Op_Invoke, "invoke", { TYPE_SHORT,TYPE_SHORT,0 }, "\t%-12s %d,%d" },            
+    /*  58 */         { Op_Goto, "goto", { TYPE_16,0,0 }, "\t%-12s L%d" },                
+    /*  59 */         { Op_Init, "init", { TYPE_16,0,0 }, "\t%-12s L%d" },                
+    /*  60 */         { Op_Int, "int", { TYPE_16,0,0 }, "\t%-12s %d" },                  
+    /*  61 */         { Op_Invoke, "invoke", { TYPE_16,TYPE_16,0 }, "\t%-12s %d,%d" },            
     /*  62 */         { Op_Keywd, "keywd", { TYPE_STR,0,0 }, "\t%-12s %s" },                
     /*  63 */         { Op_Limit, "limit", {0,0,0}, "\t%-12s" },               
-    /*  64 */         { Op_Line, "line", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                
-    /*  65 */         { Op_Llist, "llist", { TYPE_WORD,0,0 }, "\t%-12s %d" },               
+    /*  64 */         { Op_Line, "line", { TYPE_16,0,0 }, "\t%-12s %d" },                
+    /*  65 */         { Op_Llist, "llist", { TYPE_32,0,0 }, "\t%-12s %d" },               
     /*  66 */         { Op_Lsusp, "lsusp", {0,0,0}, "\t%-12s" },               
-    /*  67 */         { Op_Mark, "mark", { TYPE_SHORT,0,0 }, "\t%-12s L%d" },                
+    /*  67 */         { Op_Mark, "mark", { TYPE_16,0,0 }, "\t%-12s L%d" },                
     /*  68 */         { Op_Pfail, "pfail", {0,0,0}, "\t%-12s" },               
     /*  69 */         { Op_Pnull, "pnull", {0,0,0}, "\t%-12s" },               
     /*  70 */         { Op_Pop, "pop", {0,0,0}, "\t%-12s" },                   
@@ -82,22 +82,22 @@ struct ucode_op ucode_op_table[] = {
     /*  72 */         { Op_Psusp, "psusp", {0,0,0}, "\t%-12s" },               
     /*  73 */         { Op_Push1, "push1", {0,0,0}, "\t%-12s" },               
     /*  74 */         { Op_Pushn1, "pushn1", {0,0,0}, "\t%-12s" },             
-    /*  75 */         { Op_Real, "real", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                
+    /*  75 */         { Op_Real, "real", { TYPE_16,0,0 }, "\t%-12s %d" },                
     /*  76 */         { Op_Sdup, "sdup", {0,0,0}, "\t%-12s" },                 
-    /*  77 */         { Op_Str, "str", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                  
+    /*  77 */         { Op_Str, "str", { TYPE_16,0,0 }, "\t%-12s %d" },                  
     /*  78 */         { Op_Unmark, "unmark", {0,0,0}, "\t%-12s" },             
-    /*  79 */         { Op_Ucs, "ucs", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                
-    /*  80 */         { Op_Var, "var", { TYPE_SHORT,0,0 }, "\t%-12s %d" },                  
+    /*  79 */         { Op_Ucs, "ucs", { TYPE_16,0,0 }, "\t%-12s %d" },                
+    /*  80 */         { Op_Var, "var", { TYPE_16,0,0 }, "\t%-12s %d" },                  
     /*  81 */         { Op_Arg, "arg", {0,0,0}, "\t%-12s" },                   
     /*  82 */         { Op_Static, "static", {0,0,0}, "\t%-12s" },             
-    /*  83 */         { Op_Local, "local", { TYPE_WORD,TYPE_STR,0 }, "\t%-12s %08o %s" },
+    /*  83 */         { Op_Local, "local", { TYPE_32,TYPE_STR,0 }, "\t%-12s %08o %s" },
     /*  84 */         { Op_Global, "global", { TYPE_STR,0,0 }, "\t%-12s %s" },
     /*  85 */         { Op_Mark0, "mark0", {0,0,0}, "\t%-12s" },               
     /*  86 */         { Op_Quit, "quit", {0,0,0}, "\t%-12s" },                 
     /*  87 */         { Op_FQuit, "fquit", {0,0,0}, "\t%-12s" },               
     /*  88 */         INVALID,
-    /*  89 */         { Op_Apply, "apply", {TYPE_SHORT,0,0}, "\t%-12s %d" },               
-    /*  90 */         { Op_Invokef, "invokef", { TYPE_STR,TYPE_SHORT,0 }, "\t%-12s %s,%d" },            
+    /*  89 */         { Op_Apply, "apply", {TYPE_16,0,0}, "\t%-12s %d" },               
+    /*  90 */         { Op_Invokef, "invokef", { TYPE_STR,TYPE_16,0 }, "\t%-12s %s,%d" },            
     /*  91 */         { Op_Applyf, "applyf", { TYPE_STR,0,0 }, "\t%-12s %s" },                
     /*  92 */         INVALID,                                    
     /*  93 */         INVALID,                                    
@@ -213,25 +213,26 @@ struct ucode_op ucode_op_table[] = {
     /* 203 */         { Op_End, "end", {0,0,0}, "\t%-12s" },                   
     /* 204 */         { Op_Link, "link", { TYPE_STR,0,0 }, "\t%-12s %s" },    
     /* 205 */         { Op_Version, "version", { TYPE_STR,0,0 }, "\t%-12s %s" },            
-    /* 206 */         { Op_Con, "con", { TYPE_WORD, TYPE_BIN,0 }, "\t%-12s %08o %s" },
+    /* 206 */         { Op_Con, "con", { TYPE_32, TYPE_BIN,0 }, "\t%-12s %08o %s" },
     /* 207 */         { Op_Filen, "filen", { TYPE_STR,0,0 }, "\t%-12s %s" },                
     /* 208 */         { Op_Package, "package", { TYPE_STR,0,0 }, "\t%-12s %s" },            
-    /* 209 */         { Op_Import, "import", { TYPE_STR, TYPE_SHORT,0 }, "\t%-12s %s %d" },          
-    /* 210 */         { Op_Classfield, "classfield", { TYPE_WORD,TYPE_STR,0 }, "\t%-12s %08o %s" }, 
+    /* 209 */         { Op_Import, "import", { TYPE_STR, TYPE_16,0 }, "\t%-12s %s %d" },          
+    /* 210 */         { Op_Classfield, "classfield", { TYPE_32,TYPE_STR,0 }, "\t%-12s %08o %s" }, 
     /* 211 */         { Op_Recordfield, "recordfield", { TYPE_STR,0,0 }, "\t%-12s %s" },
     /* 212 */         { Op_Procdecl, "procdecl", { TYPE_STR,0,0 }, "\t%-12s %s" },
-    /* 213 */         { Op_Nargs, "nargs", { TYPE_SHORT,0,0 }, "\t%-12s %d" },
+    /* 213 */         { Op_Nargs, "nargs", { TYPE_16,0,0 }, "\t%-12s %d" },
     /* 214 */         { Op_Importsym, "importsym", { TYPE_STR,0,0 }, "\t%-12s %s" },
     /* 215 */         { Op_Record, "record", { TYPE_STR,0,0 }, "\t%-12s %s" },
     /* 216 */         INVALID,
     /* 217 */         { Op_Error, "error", {0,0,0}, "\t%-12s" },               
     /* 218 */         { Op_Trace, "trace", {0,0,0}, "\t%-12s" },               
-    /* 219 */         { Op_Lab, "lab", { TYPE_SHORT,0,0 }, "%s L%d" },                  
+    /* 219 */         { Op_Lab, "lab", { TYPE_16,0,0 }, "%s L%d" },                  
     /* 220 */         { Op_Invocable, "invocable", { TYPE_STR,0,0 }, "\t%-12s %s" },
-    /* 221 */         { Op_Class, "class", { TYPE_WORD,TYPE_STR,0 }, "\t%-12s %08o %s" }, 
+    /* 221 */         { Op_Class, "class", { TYPE_32,TYPE_STR,0 }, "\t%-12s %08o %s" }, 
     /* 222 */         { Op_Super, "super", { TYPE_STR,0,0 }, "\t%-12s %s" },
     /* 223 */         { Op_Method, "method", { TYPE_STR, TYPE_STR,0 }, "%s %s.%s" },         
-    /* 224 */         { Op_Ivar, "ivar", { TYPE_SHORT,TYPE_SHORT,0 }, "\t%-12s %d,%d" },                  
+    /* 224 */         { Op_Ivar, "ivar", { TYPE_16,TYPE_16,0 }, "\t%-12s %d,%d" },                  
+    /* 225 */         { Op_Lrgint, "lrgint", { TYPE_16,0,0 }, "\t%-12s %d" },                  
 };
 
 static int last_opcode = 0, n_params = 0;
@@ -256,27 +257,27 @@ void uout_op(int opcode)
     putc(opcode, ucodefile);
 }
 
-void uout_short(int n)
+void uout_16(int n)
 {
     union {
         unsigned char c[2];
         signed int s:16;
     } i;
-    check_param(TYPE_SHORT);
+    check_param(TYPE_16);
     if (n > 0x7fff || n < -0x8000)
-        quitf("Param to uout_short out of range");
+        quitf("Param to uout_16 out of range");
     i.s = n;
     putc(i.c[0], ucodefile);
     putc(i.c[1], ucodefile);
 }
 
-void uout_word(word n)
+void uout_32(word n)
 {
     union {
         unsigned char c[4];
         signed long int w:32;
     } i;
-    check_param(TYPE_WORD);
+    check_param(TYPE_32);
     i.w = n;
     putc(i.c[0], ucodefile);
     putc(i.c[1], ucodefile);
@@ -316,13 +317,13 @@ static int uin_nextch()
     return c;
 }
 
-word uin_word()
+word uin_32()
 {
     union {
         unsigned char c[4];
         signed long int w:32;
     } i;
-    check_param(TYPE_WORD);
+    check_param(TYPE_32);
     i.c[0] = uin_nextch();
     i.c[1] = uin_nextch();
     i.c[2] = uin_nextch();
@@ -330,13 +331,13 @@ word uin_word()
     return (word)i.w;
 }
 
-int uin_short()
+int uin_16()
 {
     union {
         unsigned char c[2];
         signed int s:16;
     } i;
-    check_param(TYPE_SHORT);
+    check_param(TYPE_16);
     i.c[0] = uin_nextch();
     i.c[1] = uin_nextch();
     return (int)i.s;
@@ -433,11 +434,11 @@ void uin_skip(int opcode)
         switch (ucode_op_table[opcode].param_type[i]) {
             case TYPE_NONE:
                 break;
-            case TYPE_WORD:
-                uin_word();
+            case TYPE_32:
+                uin_32();
                 break;
-            case TYPE_SHORT:
-                uin_short();
+            case TYPE_16:
+                uin_16();
                 break;
             case TYPE_STR:
                 uin_str();
@@ -506,11 +507,11 @@ static void read_params(struct ucode_op *op)
             case TYPE_NONE:
                 args[i] = 0;
                 break;
-            case TYPE_WORD:
-                args[i] = uin_word();
+            case TYPE_32:
+                args[i] = uin_32();
                 break;
-            case TYPE_SHORT:
-                args[i] = uin_short();
+            case TYPE_16:
+                args[i] = uin_16();
                 break;
             case TYPE_STR:
                 args[i] = (long)uin_str();

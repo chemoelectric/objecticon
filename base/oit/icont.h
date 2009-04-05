@@ -25,10 +25,11 @@
 #define F_StrLit	010000	/* literal is a string */
 #define F_CsetLit	020000	/* literal is a cset */
 #define F_UcsLit        040000  /* literal is a ucs */
-#define F_Class        0100000  /* class */
-#define F_Importsym    0200000  /* symbol in an import declaration */
-#define F_Field        0400000  /* local X is really self.X or Class.X */
-#define F_Method      01000000  /* function is a method */
+#define F_LrgintLit    0100000  /* literal is a large int */
+#define F_Class        0200000  /* class */
+#define F_Importsym    0400000  /* symbol in an import declaration */
+#define F_Field       01000000  /* local X is really self.X or Class.X */
+#define F_Method      02000000  /* function is a method */
 
 /*
  * Hash functions for symbol tables.

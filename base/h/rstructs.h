@@ -103,7 +103,7 @@ struct b_proc {			/* procedure block */
     union {			/*   entry points for */
         int (*ccode)();	        /*     C routines */
         uword ioff;		/*     and icode as offset */
-        pointer icode;		/*     and icode as absolute pointer */
+        void *icode;		/*     and icode as absolute pointer */
     } entryp;
 
     word nparam;		/*   number of parameters */

@@ -211,7 +211,7 @@ void ensure_pos(struct node *x)
     }
     if (Line(x) != curr_line) {
         uout_op(Op_Line);
-        uout_short(Line(x));
+        uout_16(Line(x));
         curr_line = Line(x);
     }
 }
@@ -231,18 +231,18 @@ static void fout(struct tfunction *f)
     struct tcentry *cp;
 
     uout_op(Op_Nargs);
-    uout_short(f->nargs);
+    uout_16(f->nargs);
 
     for (lp = f->lfirst; lp; lp = lp->l_next) {
         ensure_pos(lp->pos);
         uout_op(Op_Local);
-        uout_word(lp->l_flag);
+        uout_32(lp->l_flag);
         uout_str(lp->l_name);
     }
 
     for (cp = f->cfirst; cp; cp = cp->c_next) {
         uout_op(Op_Con);
-        uout_word(cp->c_flag);
+        uout_32(cp->c_flag);
         uout_bin(cp->c_length, cp->c_name);
     }
 }
@@ -254,7 +254,7 @@ static void clout(struct tclass *class)
 
     ensure_pos(class->global->pos);
     uout_op(Op_Class);
-    uout_word(class->flag);
+    uout_32(class->flag);
     uout_str(class->global->g_name);
 
     for (cs = class->supers; cs; cs = cs->next) {
@@ -266,7 +266,7 @@ static void clout(struct tclass *class)
     for (cf = class->fields; cf; cf = cf->next) {
         ensure_pos(cf->pos);
         uout_op(Op_Classfield);
-        uout_word(cf->flag);
+        uout_32(cf->flag);
         uout_str(cf->name);
         if (cf->f)
             fout(cf->f);
@@ -319,7 +319,7 @@ void output_code()
         ensure_pos(im->pos);
         uout_op(Op_Import);
         uout_str(im->name);
-        uout_short(im->qualified);
+        uout_16(im->qualified);
         if (im->qualified) {
             for (ims = im->symbols; ims; ims = ims->next) {
                 ensure_pos(ims->pos);

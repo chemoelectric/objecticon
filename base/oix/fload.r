@@ -84,7 +84,7 @@ body
      */
     if (!handle || !curfile || strcmp(filename, curfile) != 0) {
         if (curfile)
-            free((pointer)curfile);	/* free the old file name */
+            free(curfile);	/* free the old file name */
         curfile = salloc(filename);	/* save the new name */
         handle = dlopen(filename, RTLD_LAZY);	/* get the handle */
     }

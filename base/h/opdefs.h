@@ -157,5 +157,5 @@
 #define Op_Method       223
 
 #define Op_Ivar         224
-
+#define Op_Lrgint       225
 

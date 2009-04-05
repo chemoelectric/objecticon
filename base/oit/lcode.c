@@ -333,19 +333,19 @@ static void gencode(struct lfile *lf)
             case Op_Create:
             case Op_Goto:
             case Op_Init:
-                lab = uin_short();
+                lab = uin_16();
                 lemitl(op, lab, name);
                 break;
 
             case Op_Ucs:
             case Op_Cset:
             case Op_Real:
-                k = uin_short();
+                k = uin_16();
                 lemitr(op, curr_func->constant_table[k]->pc, name);
                 break;
 
             case Op_Apply: {
-                l = uin_short();
+                l = uin_16();
                 if (invokes[l] >= 0) {
                     /* Convert to an applyf with the particular field# */
                     lemitn(Op_Applyf, invokes[l], "applyf");
@@ -381,25 +381,27 @@ static void gencode(struct lfile *lf)
             }
 
             case Op_Int: {
-                k = uin_short();
+                word ival;
+                k = uin_16();
                 cp = curr_func->constant_table[k];
-                /*
-                 * Check to see if a large integer is needed.
-                 */
-                if (cp->ival < 0) {
-                    lemit(Op_Pnull,"pnull");
-                    sp = inst_strconst(cp->data, cp->length);
-                    lemitin(Op_Str, sp->offset, sp->len, "str");
-                    lemit(Op_Number,"number");
-                } else {
-                    lemitn(op, cp->ival, name);
-                }
+                memcpy(&ival, cp->data, sizeof(word));
+                lemitn(op, ival, name);
+                break;
+            }
+
+            case Op_Lrgint: {
+                k = uin_16();
+                cp = curr_func->constant_table[k];
+                lemit(Op_Pnull,"pnull");
+                sp = inst_strconst(cp->data, cp->length);
+                lemitin(Op_Str, sp->offset, sp->len, "str");
+                lemit(Op_Number,"number");
                 break;
             }
 
             case Op_Invokef: {
                 char *s = uin_str();
-                k = uin_short();
+                k = uin_16();
                 fp = flocate(s);
                 if (fp)
                     lemitn2(op, (word)(fp->field_id), k, name);
@@ -418,8 +420,8 @@ static void gencode(struct lfile *lf)
             }
 
             case Op_Invoke:
-                k = uin_short();
-                l = uin_short();
+                k = uin_16();
+                l = uin_16();
                 if (invokes[l] >= 0) {
                     /* Convert to an invokef with the particular field# */
                     lemitn2(Op_Invokef, invokes[l], (word)k, "invokef");
@@ -453,12 +455,12 @@ static void gencode(struct lfile *lf)
             }
 
             case Op_Llist:
-                k = uin_word();
+                k = uin_32();
                 lemitn(op, (word)k, name);
                 break;
 
             case Op_Lab:
-                lab = uin_short();
+                lab = uin_16();
 
                 if (Dflag)
                     fprintf(dbgfile, "L%d:\n", lab);
@@ -466,7 +468,7 @@ static void gencode(struct lfile *lf)
                 break;
 
             case Op_Mark:
-                lab = uin_short();
+                lab = uin_16();
                 lemitl(op, lab, name);
                 break;
 
@@ -475,7 +477,7 @@ static void gencode(struct lfile *lf)
                 break;
 
             case Op_Str:
-                k = uin_short();
+                k = uin_16();
                 cp = curr_func->constant_table[k];
                 sp = inst_strconst(cp->data, cp->length);
                 lemitin(op, sp->offset, sp->len, name);
@@ -486,7 +488,7 @@ static void gencode(struct lfile *lf)
                 break;
 
             case Op_Var:
-                k = uin_short();
+                k = uin_16();
                 lp = curr_func->local_table[k];
                 flags = lp->l_flag;
                 if (flags & F_Global)
@@ -525,8 +527,8 @@ static void gencode(struct lfile *lf)
              * apply->applyf).
              */
             case Op_Ivar: {
-                k = uin_short();
-                l = uin_short();
+                k = uin_16();
+                l = uin_16();
                 lp = curr_func->local_table[k];
                 flags = lp->l_flag;
                 if (flags & F_Global)
@@ -626,7 +628,7 @@ static void gencode(struct lfile *lf)
                 break;
 
             case Op_Line:
-                curr_line = uin_short();
+                curr_line = uin_16();
                 if (in_proc)
                     synch_line();
                 break;
@@ -659,7 +661,7 @@ void skip_proc()
                 curr_file = uin_str();
                 break;
             case Op_Line:
-                curr_line = uin_short();
+                curr_line = uin_16();
                 break;
             default:
                 uin_skip(op);
@@ -813,15 +815,9 @@ static void lemitcon(struct centry *ce)
     struct centry *p;
 
     /*
-     * Integers and strings don't generate blocks, so just parse the 
-     * data and return.
+     * Integers and strings don't generate blocks.
      */
-
-    if (ce->c_flag & F_IntLit) {
-        ce->ival = parse_int(ce->data);
-        return;
-    }
-    if (ce->c_flag & F_StrLit)
+    if (ce->c_flag & (F_IntLit | F_LrgintLit | F_StrLit))
         return;
 
     /*
@@ -848,18 +844,15 @@ static void lemitcon(struct centry *ce)
     constblock_hash[i] = ce;
     ce->pc = pc;
     if (ce->c_flag & F_RealLit) {
-        union {
-            char ovly[1];  /* Array used to overlay f on a bytewise basis. */
-            double f;
-        } x;
-        x.f = parse_real(ce->data);
         if (Dflag) {
-            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Real (%g)\n",(long) pc, T_Real, x.f);
+            double d;
+            memcpy(&d, ce->data, sizeof(double));
+            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Real (%g)\n",(long) pc, T_Real, d);
             for (i = 0; i < sizeof(double); ++i)
-                fprintf(dbgfile, "\t%d\t\t\t\t#    double data\n", x.ovly[i] & 0xff);
+                fprintf(dbgfile, "\t%d\t\t\t\t#    double data\n", ce->data[i] & 0xff);
         }
         outword(T_Real);
-        outblock(x.ovly,sizeof(double));
+        outblock(ce->data, sizeof(double));
     }
     else if (ce->c_flag & F_CsetLit) {
         int i, j, x;

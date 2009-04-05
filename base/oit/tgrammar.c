@@ -153,7 +153,10 @@ int modflag;
 #define Idlist(x1,x2,x3)	install(Str0(x3),idflag,x3)
 #define If0(x1,x2,x3,x4)	$$ = tree5(N_If,x1,x2,x4,EmptyNode) 
 #define If1(x1,x2,x3,x4,x5,x6)	$$ = tree5(N_If,x1,x2,x4,x6) 
-#define Iliter(x)		Val0(x) = putlit(Str0(x),F_IntLit,strlen(Str0(x)))
+#define Iliter(x)		if (x->n_type == N_Int)\
+                                   Val0(x) = putlit(Str0(x),F_IntLit,(int)Val1(x));\
+                                else \
+                                   Val0(x) = putlit(Str0(x),F_LrgintLit,(int)Val1(x))
 #define Initial1()		$$ = EmptyNode
 #define Initial2(x1,x2)    	$$ = x2
 #define Invocable(x1,x2)	/* empty */
@@ -203,7 +206,7 @@ int modflag;
                                 $$ = x2
 #define Repeat(x1,x2)		$$ = tree5(N_Loop,x1,x1,x2,EmptyNode) 
 #define Return(x1,x2)		$$ = tree4(N_Ret,x1,x1,x2) 
-#define Rliter(x)		Val0(x) = putlit(Str0(x),F_RealLit,strlen(Str0(x)))
+#define Rliter(x)		Val0(x) = putlit(Str0(x),F_RealLit,(int)Val1(x))
 #define Section(x1,x2,x3,x4,x5,x6) $$ = tree6(N_Sect,x4,x4,x1,x3,x5) 
 #define Sliter(x)		Val0(x) = putlit(Str0(x),F_StrLit,(int)Val1(x))
 #define Static(x)		idflag = F_Static

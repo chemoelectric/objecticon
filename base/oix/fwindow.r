@@ -1364,8 +1364,8 @@ function{0,1} graphics_Window_read_image(self, argv[argc])
                             imd.data, (word)imd.width * (word)imd.height, 0);
           if (status < 0)
               r = Error;
-          free((pointer)imd.paltbl);
-          free((pointer)imd.data);
+          free(imd.paltbl);
+          free(imd.data);
       }
       else if (r == Failed)
           r = readimage(self_w, filename, x, y, &status);

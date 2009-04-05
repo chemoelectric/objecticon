@@ -30,21 +30,9 @@ typedef unsigned int DIGIT;
    #error "WordBits must equal either IntBits or LongBits"
 #endif
 
-#ifndef PointerDef
-   typedef void *pointer;
-#endif					/* PointerDef */
-
 /*
  * Typedefs to make some things easier.
  */
 
-typedef int (*fptr)();
 typedef struct descrip *dptr;
-
 typedef word C_integer;
-
-/*
- * A success continuation is referenced by a pointer to an integer function
- *  that takes no arguments.
- */
-typedef int (*continuation) (void);

@@ -917,11 +917,11 @@ int readGIF(char *filename, int p, struct imgdata *imd)
     r = gfread(filename, p);			/* read image */
 
     if (gf_prefix) {
-        free((pointer)gf_prefix);
+        free(gf_prefix);
         gf_prefix = NULL;
     }
     if (gf_suffix) {
-        free((pointer)gf_suffix);
+        free(gf_suffix);
         gf_suffix = NULL;
     }
     if (gf_f) {
@@ -931,11 +931,11 @@ int readGIF(char *filename, int p, struct imgdata *imd)
 
     if (r != Succeeded) {			/* if no success, free mem */
         if (gf_paltbl) {
-            free((pointer) gf_paltbl);
+            free(gf_paltbl);
             gf_paltbl = NULL;
         }
         if (gf_string) {
-            free((pointer) gf_string);
+            free(gf_string);
             gf_string = NULL;
         }
         return r;					/* return Failed or Error */
@@ -1474,7 +1474,7 @@ int writeBMP(wbp w, char *filename, int x, int y, int width, int height)
 
     r = bmpwrite(w, filename, x, y, width, height);
     if (gf_f) { fclose(gf_f); gf_f = NULL; }
-    if (gf_string) { free((pointer)gf_string); gf_string = NULL; }
+    if (gf_string) { free(gf_string); gf_string = NULL; }
     return r;
 }
 
@@ -1548,7 +1548,7 @@ int writeGIF(w, filename, x, y, width, height)
 
     r = gfwrite(w, filename, x, y, width, height);
     if (gf_f) { fclose(gf_f); gf_f = NULL; }
-    if (gf_string) { free((pointer)gf_string); gf_string = NULL; }
+    if (gf_string) { free(gf_string); gf_string = NULL; }
     return r;
 }
 
@@ -1765,7 +1765,7 @@ static void gfdump()
 
     n = GifBlockSize - gf_rem;
     putc(n, gf_f);			/* write block size */
-    fwrite((pointer)gf_obuf, 1, n, gf_f); /*write block */
+    fwrite(gf_obuf, 1, n, gf_f); /*write block */
     gf_rem = GifBlockSize;		/* reset buffer to empty */
 }
 
@@ -1786,7 +1786,7 @@ int writeJPEG(wbp w, char *filename, int x, int y, int width, int height)
 
     r = jpegwrite(w, filename, x, y, width, height);
     if (gf_f) fclose(gf_f);
-    if (gf_string) free((pointer)gf_string);
+    if (gf_string) free(gf_string);
     return r;
 }
 

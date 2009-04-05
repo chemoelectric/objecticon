@@ -109,14 +109,14 @@ static int traverse(t)
         case N_Alt:			/* alternation */
             lab = alclab(2);
             uout_op(Op_Mark);
-            uout_short(lab);
+            uout_16(lab);
             loopsp->markcount++;
             traverse(Tree0(t));		/* evaluate first alternative */
             loopsp->markcount--;
             ensure_pos(t);
             uout_op(Op_Esusp);                 /*  and suspend with its result */
             uout_op(Op_Goto);
-            uout_short(lab+1);
+            uout_16(lab+1);
             uout_lab(lab);
             traverse(Tree1(t));		/* evaluate second alternative */
             uout_lab(lab+1);
@@ -142,7 +142,7 @@ static int traverse(t)
             traverse(Tree0(t));		/* evaluate first alternative */
             loopsp->markcount--;
             uout_op(Op_Chfail);
-            uout_short(lab);          /* change to loop on failure */
+            uout_16(lab);          /* change to loop on failure */
             uout_op(Op_Esusp);                 /* suspend result */
             break;
 
@@ -156,7 +156,7 @@ static int traverse(t)
                 traverse(Tree0(t));
                 *++loopsp = loopsave;
                 uout_op(Op_Goto);
-                uout_short(loopsp->breaklab);
+                uout_16(loopsp->breaklab);
 	    }
             break;
 
@@ -193,7 +193,7 @@ static int traverse(t)
             else {				/* case clause */
                 lab = alclab(1);
                 uout_op(Op_Mark);
-                uout_short(lab);
+                uout_16(lab);
                 loopsp->markcount++;
                 uout_op(Op_Ccase);
                 traverse(Tree0(t));		/* evaluate selector */
@@ -204,7 +204,7 @@ static int traverse(t)
                 uout_op(Op_Pop);
                 traverse(Tree1(t));		/* evaluate expression */
                 uout_op(Op_Goto);
-                uout_short(casesp->endlab); /* goto end label */
+                uout_16(casesp->endlab); /* goto end label */
                 uout_lab(lab);		/* label for next clause */
 	    }
             break;
@@ -237,11 +237,11 @@ static int traverse(t)
             loopsp->breaklab = 0;
             lab = alclab(3);
             uout_op(Op_Goto);
-            uout_short(lab+2);          /* skip over code for co-expression */
+            uout_16(lab+2);          /* skip over code for co-expression */
             uout_lab(lab);			/* entry point */
             uout_op(Op_Pop);                   /* pop the result from activation */
             uout_op(Op_Mark);
-            uout_short(lab+1);
+            uout_16(lab+1);
             loopsp->markcount++;
             traverse(Tree0(t));		/* traverse code for co-expression */
             loopsp->markcount--;
@@ -251,10 +251,10 @@ static int traverse(t)
             uout_lab(lab+1);		/* loop on exhaustion */
             uout_op(Op_Cofail);                /* and fail each time */
             uout_op(Op_Goto);
-            uout_short(lab+1);
+            uout_16(lab+1);
             uout_lab(lab+2);
             uout_op(Op_Create);
-            uout_short(lab);          /* create entry block */
+            uout_16(lab);          /* create entry block */
             loopsp->nextlab = creatsp->nextlab;   /* legalize break and next */
             loopsp->breaklab = creatsp->breaklab;
             creatsp--;
@@ -262,12 +262,12 @@ static int traverse(t)
 
         case N_Cset:			/* cset literal */
             uout_op(Op_Cset);
-            uout_short((int)Val0(t));
+            uout_16((int)Val0(t));
             break;
 
         case N_Ucs:			/* ucs literal */
             uout_op(Op_Ucs);
-            uout_short((int)Val0(t));
+            uout_16((int)Val0(t));
             break;
 
         case N_Elist:			/* expression list */
@@ -291,7 +291,7 @@ static int traverse(t)
         case N_Id:			/* identifier */
             ensure_pos(t);
             uout_op(Op_Var);
-            uout_short(Val0(t));
+            uout_16(Val0(t));
             break;
 
         case N_If:			/* if expression */
@@ -302,7 +302,7 @@ static int traverse(t)
             else {
                 lab = alclab(2);
                 uout_op(Op_Mark);
-                uout_short(lab);
+                uout_16(lab);
 	    }
             loopsp->markcount++;
             traverse(Tree0(t));
@@ -311,7 +311,7 @@ static int traverse(t)
             traverse(Tree1(t));
             if (lab > 0) {
                 uout_op(Op_Goto);
-                uout_short(lab+1);
+                uout_16(lab+1);
                 uout_lab(lab);
                 traverse(Tree2(t));
                 uout_lab(lab+1);
@@ -322,9 +322,13 @@ static int traverse(t)
 
         case N_Int:			/* integer literal */
             uout_op(Op_Int);
-            uout_short((int)Val0(t));
+            uout_16((int)Val0(t));
             break;
 
+        case N_Lrgint:			/* large integer literal */
+            uout_op(Op_Lrgint);
+            uout_16((int)Val0(t));
+            break;
 
         case N_Apply:			/* application */
             if (TType(Tree0(t)) == N_Field) {
@@ -339,13 +343,13 @@ static int traverse(t)
                 if (TType(Tree0(t)) == N_Id) {
                     ensure_pos(Tree0(t));
                     uout_op(Op_Ivar);
-                    uout_short(Val0(Tree0(t)));
-                    uout_short(tmp);
+                    uout_16(Val0(Tree0(t)));
+                    uout_16(tmp);
                 } else
                     traverse(Tree0(t));
                 traverse(Tree1(t));
                 uout_op(Op_Apply);
-                uout_short(tmp);
+                uout_16(tmp);
             }
             break;
 
@@ -363,14 +367,14 @@ static int traverse(t)
                 uout_op(Op_Invokef);
                 uout_str(Str0(Tree1(Tree0(t))));
                 free(Tree1(Tree0(t)));
-                uout_short(n);
+                uout_16(n);
             } else {
                 int tmp = ++invokeseq;
                 if (TType(Tree0(t)) == N_Id) {
                     ensure_pos(Tree0(t));
                     uout_op(Op_Ivar);
-                    uout_short(Val0(Tree0(t)));
-                    uout_short(tmp);
+                    uout_16(Val0(Tree0(t)));
+                    uout_16(tmp);
                 } else if (TType(Tree0(t)) != N_Empty) {
                     traverse(Tree0(t));
                 } else {
@@ -385,8 +389,8 @@ static int traverse(t)
                     n = traverse(Tree1(t));
                 ensure_pos(t);
                 uout_op(Op_Invoke);
-                uout_short(n);
-                uout_short(tmp);
+                uout_16(n);
+                uout_16(tmp);
             }
             n = 1;
             break;
@@ -417,7 +421,7 @@ static int traverse(t)
                 n = traverse(Tree0(t));
             ensure_pos(t);
             uout_op(Op_Llist);
-            uout_word(n);
+            uout_32(n);
             n = 1;
             break;
 
@@ -458,12 +462,12 @@ static int traverse(t)
                     loopsp->markcount = 1;
                     uout_lab(lab);
                     uout_op(Op_Mark);
-                    uout_short(lab);
+                    uout_16(lab);
                     traverse(Tree1(t));
                     uout_lab(loopsp->nextlab);
                     uout_op(Op_Unmark);
                     uout_op(Op_Goto);
-                    uout_short(lab);
+                    uout_16(lab);
                     uout_lab(loopsp->breaklab);
                     loopsp--;
                     free(Tree2(t));
@@ -512,7 +516,7 @@ static int traverse(t)
                     if (TType(Tree2(t)) != N_Empty) {
                         uout_op(Op_Unmark);
                         uout_op(Op_Mark);
-                        uout_short(lab);
+                        uout_16(lab);
                         traverse(Tree2(t));
                     }
                     else
@@ -520,7 +524,7 @@ static int traverse(t)
                     uout_lab(loopsp->nextlab);
                     uout_op(Op_Unmark);
                     uout_op(Op_Goto);
-                    uout_short(lab);
+                    uout_16(lab);
                     uout_lab(loopsp->breaklab);
                     loopsp--;
                     break;
@@ -534,18 +538,18 @@ static int traverse(t)
                     loopsp->markcount = 1;
                     uout_lab(lab);
                     uout_op(Op_Mark);
-                    uout_short(lab+1);
+                    uout_16(lab+1);
                     traverse(Tree1(t));
                     uout_op(Op_Unmark);
                     uout_op(Op_Efail);
                     uout_lab(lab+1);
                     uout_op(Op_Mark);
-                    uout_short(lab);
+                    uout_16(lab);
                     traverse(Tree2(t));
                     uout_lab(loopsp->nextlab);
                     uout_op(Op_Unmark);
                     uout_op(Op_Goto);
-                    uout_short(lab);
+                    uout_16(lab);
                     uout_lab(loopsp->breaklab);
                     loopsp--;
                     break;
@@ -561,14 +565,14 @@ static int traverse(t)
                     for (i = 0; i < loopsp->markcount - 1; i++)
                         uout_op(Op_Unmark);
                 uout_op(Op_Goto);
-                uout_short(loopsp->nextlab);
+                uout_16(loopsp->nextlab);
 	    }
             break;
 
         case N_Not:			/* not expression */
             lab = alclab(1);
             uout_op(Op_Mark);
-            uout_short(lab);
+            uout_16(lab);
             loopsp->markcount++;
             traverse(Tree0(t));
             loopsp->markcount--;
@@ -591,9 +595,9 @@ static int traverse(t)
                 lab = alclab(1);
                 ensure_pos(Tree1(t));
                 uout_op(Op_Init);
-                uout_short(lab);
+                uout_16(lab);
                 uout_op(Op_Mark);
-                uout_short(lab);
+                uout_16(lab);
                 traverse(Tree1(t));
                 uout_op(Op_Unmark);
                 uout_lab(lab);
@@ -615,7 +619,7 @@ static int traverse(t)
 
         case N_Real:			/* real literal */
             uout_op(Op_Real);
-            uout_short((int)Val0(t));
+            uout_16((int)Val0(t));
             break;
 
         case N_Ret:			/* return expression */
@@ -626,7 +630,7 @@ static int traverse(t)
             else {
                 lab = alclab(1);
                 uout_op(Op_Mark);
-                uout_short(lab);
+                uout_16(lab);
                 loopsp->markcount++;
                 traverse(Tree1(t));
                 loopsp->markcount--;
@@ -675,7 +679,7 @@ static int traverse(t)
         case N_Slist:			/* semicolon-separated expr list */
             lab = alclab(1);
             uout_op(Op_Mark);
-            uout_short(lab);
+            uout_16(lab);
             loopsp->markcount++;
             traverse(Tree0(t));
             loopsp->markcount--;
@@ -686,7 +690,7 @@ static int traverse(t)
 
         case N_Str:			/* string literal */
             uout_op(Op_Str);
-            uout_short((int)Val0(t));
+            uout_16((int)Val0(t));
             break;
 
         case N_To:			/* to expression */
@@ -1054,7 +1058,7 @@ static void unopb(int op)
 static void uout_lab(int l)
 {
     uout_op(Op_Lab);
-    uout_short(l);
+    uout_16(l);
 }
 
 /*

@@ -9,10 +9,10 @@
 void uout_op(int opcode);
 
 /* 16 bits signed */
-void uout_short(int n);
+void uout_16(int n);
 
 /* 32 bits signed */
-void uout_word(word n);
+void uout_32(word n);
 
 /* null-terminated string */
 void uout_str(char *s);
@@ -31,7 +31,7 @@ struct ucode_op *uin_op();
 struct ucode_op *uin_expectop();
 
 /* Get a word */
-word uin_word();
+word uin_32();
 
 /* Get and intern a null-terminated string */
 char *uin_str();
@@ -43,7 +43,7 @@ char *uin_fqid(char *package);
 char *uin_bin(int *n);
 
 /* Get a 16 bit signed short */
-int uin_short();
+int uin_16();
 
 /* Given the last opcode just read, skip over the instruction's parameters */
 void uin_skip(int opcode);
@@ -64,8 +64,8 @@ struct ucode_op {
  * The parameter types.
  */
 #define TYPE_NONE      0   /* no params */
-#define TYPE_WORD      1   /* signed 32 bits */
-#define TYPE_SHORT     2   /* signed 16 bits */
+#define TYPE_32        1   /* signed 32 bits */
+#define TYPE_16        2   /* signed 16 bits */
 #define TYPE_STR       3   /* null terminated string */
 #define TYPE_BIN       4   /* binary data (length + bytes) */
 

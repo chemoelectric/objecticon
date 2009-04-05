@@ -885,7 +885,6 @@ function{1} lang_Prog_load(s,arglist,
       word *tipc;
 
       tipc = pstart;
-      *tipc++ = Op_Noop; /* aligns Invokes operand */  /* ?cj? */
       *tipc++ = Op_Invoke;
       *tipc++ = 1;
       *tipc++ = Op_Coret;
