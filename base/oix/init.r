@@ -399,6 +399,7 @@ void icon_init(char *name)
     mainhead->id = 1;
     mainhead->size = 1;			/* pretend main() does an activation */
     mainhead->nextstk = NULL;
+    stklist = mainhead;
     mainhead->es_tend = NULL;
     mainhead->freshblk = NULL;	/* &main has no refresh block. */
 					/*  This really is a bug. */
@@ -1279,23 +1280,13 @@ void showcoexps()
     void *csp = get_csp();
 
     printf("Coexpressions\n");
-    printf("Coexp       program     size        es_sp       C sp        ipc         pfp         argp\n");
-    printf("----------------------------------------------------------------------------------------\n");
-    p = rootpstate.Mainhead;
-    printf("%-12p%-12p%-12d%-12p%-12p%-12p%-12p%-12p\n",
-           p,
-           p->program,
-           p->size,
-           p->es_sp,
-           (char*)p->cstate[0],
-           p->es_ipc,
-           p->es_pfp,
-           p->es_argp);
-
+    printf("Coexp       program     main_of     size        es_sp       C sp        ipc         pfp         argp\n");
+    printf("----------------------------------------------------------------------------------------------------\n");
     for (p = stklist; p; p = p->nextstk) {
-        printf("%-12p%-12p%-12d%-12p%-12p%-12p%-12p%-12p\n",
+        printf("%-12p%-12p%-12p%-12d%-12p%-12p%-12p%-12p%-12p\n",
                p,
                p->program,
+               p->main_of,
                p->size,
                p->es_sp,
                (char*)p->cstate[0],

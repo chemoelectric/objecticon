@@ -947,16 +947,12 @@ static void cofree()
    register struct b_coexpr **ep, *xep;
 
    /*
-    * Reset the type for &main.
-    */
-
-   rootpstate.Mainhead->title = T_Coexpr;
-
-   /*
     * The co-expression blocks are linked together through their
     *  nextstk fields, with stklist pointing to the head of the list.
     *  The list is traversed and each stack that was not marked
-    *  is freed.
+    *  is freed.  Note that the root progstate's main is the last
+    *  on the list, and will always be marked (as are all &main
+    *  co-expressions).
     */
    ep = &stklist;
    while (*ep != NULL) {
