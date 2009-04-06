@@ -19,7 +19,7 @@ register dptr cargp;
    struct b_proc *cproc;
 
    /* cproc is the Icon procedure that create occurs in */
-   cproc = (struct b_proc *)BlkLoc(argp[0]);
+   cproc = CallerProc;
 
    /*
     * Calculate number of arguments and number of local variables.

@@ -137,6 +137,7 @@ struct errtab errtab[] = {
     {627, "field not found"},
     {628, "attempt to access non-method via a cast"},
     {631, "procedure or methp expected"},
+    {632, "co-expression which is a program's &main expected"},
 
     {1040, "socket error"},
     {1041, "cannot initialize network library"},

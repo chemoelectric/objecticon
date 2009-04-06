@@ -471,9 +471,8 @@ struct progstate *pstate;
    {
    struct descrip *dp;
 
-   /*printf("MARK PROGRAM %x\n",pstate);*/
+   /* printf("MARK PROGRAM %p\n",pstate); */
 
-   PostDescrip(pstate->parentdesc);
    PostDescrip(pstate->eventmask);
    PostDescrip(pstate->opcodemask);
    PostDescrip(pstate->valuemask);

@@ -54,12 +54,18 @@ static struct b_proc *get_proc_for(dptr x)
 
 static struct progstate *get_program_for(dptr x)
 {
-    if (is:null(*x))
-        return curpstate;
-    else if (is:coexpr(*x))
-        return BlkLoc(*x)->coexpr.program;
-    else
-        ReturnErrVal(118, *x, 0);
+    type_case *x of {
+        null:
+             return curpstate;
+        coexpr: {
+             if (BlkLoc(*x)->coexpr.main_of)
+                return BlkLoc(*x)->coexpr.main_of;
+             else
+                ReturnErrVal(632, *x, 0);
+        }
+        default:
+             ReturnErrVal(118, *x, 0);
+    }
 }
 
 function{1} classof(o)
@@ -132,8 +138,28 @@ function{1} lang_Prog_get_parent(c)
       if (prog->parent == NULL) 
           fail;
 
-      return coexpr(prog->parent->Mainhead);
+      return prog->parent->K_main;
     }
+end
+
+function{0,1} lang_Prog_send_event(x,y,ce)
+   body {
+      struct progstate *dest;
+
+      if (is:null(x)) {
+	 x = curpstate->eventcode;
+	 if (is:null(y)) y = curpstate->eventval;
+      }
+      if (!(dest = get_program_for(&ce)))
+          runerr(0);
+      dest->eventcode = x;
+      dest->eventval = y;
+      if (mt_activate(&(dest->eventcode),&result,
+			 (struct b_coexpr *)BlkLoc(ce)) == A_Cofail) {
+         fail;
+         }
+       return result;
+      }
 end
 
 function{1} lang_Prog_get_eventmask(ce)
@@ -312,7 +338,10 @@ function{*} lang_Prog_get_keyword(s,c)
                   return kywdint(&(p->Kywd_ran));
               }
               if (strncmp(t,"source",6) == 0) {
-                  return coexpr(BlkLoc(p->K_current)->coexpr.es_activator);
+                  struct b_coexpr *a = BlkLoc(p->K_current)->coexpr.es_activator;
+                  if (!a)  /* It will be 0 for a just-loaded program */
+                     fail;
+                  return coexpr(a);
               }
               break;
           }
@@ -454,6 +483,14 @@ function{0,1} lang_Prog_get_global_location(s, c)
 
        suspend p->fname;
        return C_integer p->line;
+   }
+end
+
+function{1} lang_Prog_get_coexpression_program(c)
+   if !is:coexpr(c) then
+      runerr(118,c)
+   body {
+        return BlkLoc(c)->coexpr.program->K_main;
    }
 end
 

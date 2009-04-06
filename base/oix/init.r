@@ -402,7 +402,7 @@ void icon_init(char *name)
     mainhead->es_tend = NULL;
     mainhead->freshblk = NULL;	/* &main has no refresh block. */
 					/*  This really is a bug. */
-    mainhead->creator = mainhead->program = &rootpstate;
+    mainhead->main_of = mainhead->creator = mainhead->program = &rootpstate;
     mainhead->es_activator = mainhead;
 
     /*
@@ -744,7 +744,6 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
 
 static void initprogstate(struct progstate *p)
 {
-    p->parentdesc= nulldesc;
     p->eventmask= nulldesc;
     p->opcodemask= nulldesc;
     p->eventcount = zerodesc;
@@ -910,7 +909,6 @@ function{1} lang_Prog_load(s,arglist,
       }
       pstate = sblkp->program;
       pstate->parent = curpstate;
-      pstate->parentdesc = k_main;
 
       savedsp = sp;
       sp = stack + Wsizeof(struct b_coexpr)

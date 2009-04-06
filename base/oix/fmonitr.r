@@ -16,33 +16,6 @@
  */
 
 
-/*
- * event(x, y, C) -- generate an event at the program level.
- */
-
-"event(x, y, C) - create event with event code x and event value y."
-
-function{0,1} lang_Prog_send_event(x,y,ce)
-   body {
-      struct progstate *dest = NULL;
-
-      if (is:null(x)) {
-	 x = curpstate->eventcode;
-	 if (is:null(y)) y = curpstate->eventval;
-	 }
-      if (is:null(ce) && is:coexpr(curpstate->parentdesc))
-	 ce = curpstate->parentdesc;
-      else if (!is:coexpr(ce)) runerr(118,ce);
-      dest = BlkLoc(ce)->coexpr.program;
-      dest->eventcode = x;
-      dest->eventval = y;
-      if (mt_activate(&(dest->eventcode),&result,
-			 (struct b_coexpr *)BlkLoc(ce)) == A_Cofail) {
-         fail;
-         }
-       return result;
-      }
-end
 
 void assign_event_functions(struct progstate *p, struct descrip cs)
 {

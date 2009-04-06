@@ -372,7 +372,6 @@ struct progstate {
     long hsize;				/* size of icode, 0 = C|Python|... */
     struct progstate *parent;
     struct progstate *next;
-    struct descrip parentdesc;		/* implicit "&parent" */
     struct descrip eventmask;		/* implicit "&eventmask" */
     struct descrip opcodemask;		/* implicit "&opcodemask" */
     struct descrip eventcount;		/* implicit "&eventcount" */
@@ -582,8 +581,10 @@ struct b_coexpr {		/* co-expression stack block */
     struct b_refresh *freshblk;	/*   refresh block pointer */
     struct b_coexpr *es_activator; /*     this coexpression's activator */
     word cstate[CStateSize];	/*   C state information */
-    struct progstate *program;  /*   current program, in which ipc resides */
+    struct progstate *program;  /*   current program, in which es_ipc resides */
     struct progstate *creator;  /*   curpstate when this block was allocated */
+    struct progstate *main_of;  /*   set to the parent program for all &main co-expressions;
+                                 *   null for all others */
 };
 
 struct b_refresh {		/* co-expression block */

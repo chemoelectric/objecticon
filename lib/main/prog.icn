@@ -1,66 +1,116 @@
 package lang
 
+# In the methods below, the term "program" refers to the main
+# co-expression of either the root program, or a program loaded via
+# {Prog.load} below.   The parameters named {P} are always programs
+# and default to the currently executing program if omitted.
+#
 class Prog()
-   # Load a program corresponding to string s as a co-expression.
+   # Load and return a program from file {s}.
+   #
    public static defer load(s, arglist, blocksize, stringsize, stacksize)
 
-   public static defer get_globals(c)
-
-   public static defer get_global(s, c)
-
-   # produce the names of identifiers global to c
    #
-   public static defer get_global_names(c)
+   # Generate the globals in program P
+   #
+   public static defer get_globals(P)
 
-   # generate the names of the functions.
+   #
+   # Get the global named {s} in program P
+   #
+   public static defer get_global(s, P)
+
+   #
+   # Generate the global names in program P
+   #
+   public static defer get_global_names(P)
+
+   #
+   # Generate the names of the functions.
+   #
    public static defer get_function_names()
 
-   public static defer get_global_location(s, c)
-
-   # produce a keyword in c's thread
-   public static defer get_keyword(s, c)
-
-   # Find the variable with name s and return a variable descriptor
-   # which points to its value.
    #
-   public static defer get_variable(s, c)
-
-   # Given a coexpression, return &main for its parent
+   # Get the location of global {s} in program P, if that data is
+   # available.
    #
-   public static defer get_parent(c)
+   public static defer get_global_location(s, P)
 
-   # get c's program's opcode mask
-   public static defer get_opmask(c)
+   #
+   # Return the value of the keyword {s} in program P.
+   #
+   public static defer get_keyword(s, P)
 
-   # set c's program's opcode mask
-   public static defer set_opmask(cs, c)
+   #
+   # Find the variable with name s in program P and return a variable
+   # descriptor which points to its value.
+   #
+   public static defer get_variable(s, P)
 
-   public static defer get_eventmask(c)
-   public static defer set_eventmask(cs, c)
+   #
+   # Given a program, return its parent program
+   #
+   public static defer get_parent(P)
 
-   public static defer get_valuemask(c)
-   public static defer set_valuemask(t, c)
+   #
+   # Get the given program's opcode mask
+   #
+   public static defer get_opmask(P)
 
-   # create event (in c) with event code x and event value y,
-   # and activate c.
-   public static defer send_event(x, y, c)
+   #
+   # Set the given program's opcode mask
+   #
+   public static defer set_opmask(cs, P)
+
+   #
+   # Get the given program's event mask
+   #
+   public static defer get_eventmask(P)
+
+   #
+   # Set the given program's event mask
+   #
+   public static defer set_eventmask(cs, P)
+
+   #
+   # Get the given program's value mask
+   #
+   public static defer get_valuemask(P)
+
+   #
+   # Set the given program's value mask
+   #
+   public static defer set_valuemask(t, P)
+
+   #
+   # Create event in program P with event code x and event value y,
+   # and activate it.
+   #
+   public static defer send_event(x, y, P)
 
    public static defer get_event(cs, vmask, flag)
 
    #
-   # Get the number of milliseconds since the startup time.
+   # Return the program holding the current execution point
+   # of the given co-expression.
    #
-   public static defer get_runtime_millis(c)
+   public static defer get_coexpression_program(ce)
+
+   #
+   # Get the number of milliseconds since the startup time of the given
+   # program.
+   #
+   public static defer get_runtime_millis(P)
 
    #
    # Get the startup time (load time) of the given program, as the
    # number of microseconds since the Unix base epoch (1 Jan 1970).
    #
-   public static defer get_startup_micros(c)
+   public static defer get_startup_micros(P)
 
-   public static defer get_collections(c)
-   public static defer get_allocations(c)
-   public static defer get_regions(c)
+   public static defer get_collections(P)
+   public static defer get_allocations(P)
+   public static defer get_regions(P)
 
    # Get info about the stack use of the given co-expression.  Two
    # numbers are suspended; the first is the size of the stack (excluding

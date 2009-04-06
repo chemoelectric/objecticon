@@ -190,6 +190,7 @@ struct b_coexpr *alcprog(long icodesize, long stacksize)
    ep->id = 1;
    ep->program = (struct progstate *)(ep + 1);
    memset(ep->program, 0, sizeof(struct progstate));
+   ep->main_of = ep->program;
 
    ep->nextstk = stklist;
    stklist = ep;
