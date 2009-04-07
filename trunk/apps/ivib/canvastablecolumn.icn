@@ -1,0 +1,130 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+############################################################################
+#
+# Class for representing a TableColumn on the canvas.
+#
+class CanvasTableColumn(CanvasComponent,TableColumn)
+   public 
+      column_align
+
+   #
+   # CanvasComponent has an in_resize_region too, but we want TableColumn's (for preview).
+   #
+   public in_resize_region(e)
+      return cast(self,TableColumn).in_resize_region(e)
+   end
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      local e
+
+      c.add_var(self.name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+      c.line(name || " := " || self.class_name || "()")
+      self.paint.gen_code(c)
+      c.line(name || ".set_paint(" || self.paint.name || ")")
+      c.line(name || ".set_column_align(" || image(self.column_align) || ")")
+      if \self.column_width then
+         c.line(name || ".set_column_width(" || self.column_width || ")")
+
+      every e := !sort(self.wattribs) do
+         c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
+
+      c.add_event_handlers(self.name, \self.event_handlers)
+   end
+
+   public set_column_align(x)
+      self.column_align := x
+      cast(self,TableColumn).set_column_align(x)
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasTableColumn()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.column_width := self.column_width
+      c.set_column_align(self.column_align)
+      c.set_paint(self.paint.dup(c))
+      return c
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasTableColumnDialog(self)
+   end
+
+   public allows_selection()
+   end
+
+   public allows_positioning()
+   end
+
+   public allows_copy()
+   end
+
+   public allows_delete()
+      # Can't delete the last item
+      return *parent.children > 1
+   end
+
+   public op_delete()
+      parent_Canvas.parent_dialog.push_undo()
+      self.parent.remove(self)
+      self.parent.parent.resize()
+      self.finally()
+
+      parent_Canvas.clear_selections()
+      parent_Canvas.set_modified()
+      parent_Canvas.invalidate()
+   end
+
+   public post_decode()
+      self.set_column_align(self.column_align)
+      cast(self,CanvasComponent).post_decode()
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasObject).get_template() ||| [
+               ["Paint", "paint"],
+               ["Column Width", "column_width"],
+               ["Internal Alignment", "column_align"],
+               ["WAttribs", "wattribs"],
+               ["Event Handlers", "event_handlers"]
+              ]
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasComponent).gen_cos() | self.paint
+   end
+
+   public new()
+      cast(self,TableColumn).new()
+      cast(self,CanvasComponent).new()
+      self.column_align := Align.L
+      self.class_name := "TableColumn"
+      self.import_name := "gui"
+      self.name := "table_column"
+      return
+   end
+end
+
+

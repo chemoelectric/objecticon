@@ -1,0 +1,148 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# An instance of this class is a small button with a label
+# which is either in an on or off state.  The button is an
+# Icon image, which may be specified by the user if desired.
+#
+# The images will default to appropriate values if not specified.
+#
+# The size will also default if not specified.  The methods
+# used to control the images, label and check the status are
+# inherited from the superclasses {Button} and {Toggle}.
+# @example
+# @ c := CheckBox()
+# @ c.set_pos(200, 100)
+# @ c.set_label("Checkbox")
+# @ self.add(c)
+#
+class CheckBox(Button)
+   public
+      img_up,
+      img_down,
+      img_w,
+      img_h,
+      tx, 
+      tw, 
+      paint
+
+   #
+   # Set the up/down images (if any) to the strings provided,
+   # which should be in Icon image format.
+   # The two images must have the same dimensions.
+   # @param x   The up image
+   # @param y   The down image
+   #
+   public set_images(x, y)
+      self.img_up := x
+      self.img_down := y
+      self.img_w := image_width(x) = image_width(y) | runerr("Image widths differ")
+      self.img_h := image_height(x) = image_height(y) | runerr("Image heights differ")
+   end
+
+   #
+   # Set the label.
+   # @param x   The label.
+   #
+   public set_label(x)
+      set_paint(paint_for_string(x))
+   end
+
+   public set_paint(p)
+      (\self.paint).finally()
+      self.paint := p
+      if is_initialized() then {
+         self.paint.initially(self, self.accel)
+         self.invalidate()
+      }
+   end
+
+   public initially()
+      #
+      # Set the icons if necessary
+      #
+      if /self.img_up then {
+         if /self.parent_check_box_group then
+            self.set_images(Icon.BOX_UP, Icon.BOX_DOWN)
+         else
+            self.set_images(Icon.DIAMOND_UP, Icon.DIAMOND_DOWN)
+      }
+      \self.paint | runerr("no label specified")
+      cast(self,Component).initially()
+      self.paint.initially(self, self.accel)
+   end
+
+   public finally()
+      cast(self,Component).finally()
+      paint.finally()
+   end
+
+   public get_default_width()
+      #
+      # We give extra border space; this looks better with the focus rectangle.
+      #
+      return paint.w + self.img_w + Gui.X_INSET + Gui.TEXT_INSET
+   end
+
+   public get_default_height()
+      return max(paint.h, img_h)
+   end
+
+   public layout()
+      self.tx := self.x + self.img_w + Gui.X_INSET
+      self.tw := self.w - self.img_w - Gui.X_INSET - Gui.TEXT_INSET
+   end
+
+   public display()
+      local cw, i
+
+      if \self.is_down then
+         i := if /self.is_checked_flag then img_down else img_up
+      else
+         i := if \self.is_checked_flag then img_down else img_up
+
+      #
+      # Draw image and string centred vertically; image has img_w pixel to its right
+      #
+      draw_image_ex(self.cbwin, self.x, self.y + (self.h - img_h) / 2, i)
+      paint.draw(self.cbwin, self.tx, self.y + (self.h - paint.h) / 2)
+
+      if self.has_focus() & self.is_unshaded() then {
+         cw := Gui.style.get_focus_clone(self.cbwin)
+         rectangle(cw, self.tx - Gui.TEXT_INSET, self.y, 
+                   self.tw + 2 * Gui.TEXT_INSET, self.h)
+         cw.uncouple()
+      }
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "images" : set_images!(f.string_list_val(2))
+         "label" : set_label(f.text_val())
+         "paint" : set_paint(f.object_val(gui.Paint))
+         default: return cast(self,Button).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Button).new()
+      self.toggles_flag := 1
+      self.set_constraint("x_align", Align.L)
+      set_fields(a)
+      return
+   end
+end
+
+
+
+
+

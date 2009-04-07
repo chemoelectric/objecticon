@@ -1,0 +1,176 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui, ipl.graphics, ipl.imscolor, io, graphics
+
+#
+# Convert a list l to a string representation.
+#
+procedure list2string(l)
+   local s, x
+   s := ""
+   every x := image(!l) do
+      s ||:= ", " || x
+
+   return s[3:0] | ""
+end
+
+
+#
+# Read icon from file s.  dialog is an instance of Dialog
+#
+procedure util_read_icon(dialog, s)
+   if map(s)[-4:0] == ".gif" then
+      return read_gif_icon(dialog, s)
+   else if map(s)[-4:0] == ".xpm" then
+      return read_xpm_icon(dialog, s)
+   else
+      return read_string_icon(dialog, s)
+end
+
+
+#
+# Read a standard gif icon.
+#
+procedure read_gif_icon(dialog, s)
+   local w, raw
+
+   w := Window.open("canvas=hidden", "image=" || s) | return alert_error(dialog, "Couldn't open file " || s)
+   raw := Capture(w, "c6")
+   w.close()
+
+   return raw
+end
+
+
+#
+# Read an xpm icon.
+#
+procedure read_xpm_icon(dialog, s)
+   local f, raw
+
+   f := open(s) | return alert_error(dialog, "Couldn't open file " || s)
+   raw := XPMImage(f, "c6")
+   close(f)
+
+   return raw
+end
+
+
+#
+# Read a standard Icon string formatted icon.
+#
+procedure read_string_icon(dialog, s)
+   local res, x, f
+
+   f := open(s) | return alert_error(dialog, "Couldn't open file " || s)
+
+   res := ""
+   while x := read(f) do {
+      x ? {
+         if ="#" then
+            next
+
+         ="\""
+         res ||:= tab(0)
+      }
+
+      if res[-1] == "_" then
+         res[-1] := ""
+      else
+         break
+   }
+
+   close(f)
+
+   #
+   # Check for reasonably valid image 
+   #
+   if image_height(res) then
+      return res
+   else   
+      return alert_error(dialog, "Not a valid image")
+end
+
+
+#
+# Check that the window attributes in list l are valid.
+#
+procedure util_check_attribs(dialog, t)
+   local s
+   static test_win, attrib_table
+   initial {
+      test_win := Window.open("canvas=hidden") | stop("couldn't open window")
+      attrib_table := set()
+      every insert(attrib_table, 
+                   "label" | "posx" | "pos" | "posy" | "resize" | "size" | "height" | 
+                   "width" | "lines" | "columns" | "image" | "canvas" | "iconpos" | "iconlabel" | 
+                   "iconimage" | "echo" | "cursor" | "x" | "y" | "row" | "col" | "pointer" | 
+                   "pointerx" | "pointery" | "pointerrow" | "pointercol" | "display" | "depth" | 
+                   "displayheight" | "displaywidth" | "fg" | "bg" | "reverse" | "drawop" | "gamma" | 
+                   "font" | "fheight" | "fwidth" | "ascent" | "descent" | "leading" | "linewidth" | 
+                   "linestyle" | "fillstyle" | "pattern" | "clipx" | "clipy" | "clipw" | "cliph" | 
+                   "dx" | "dy" | "minwidth" | "minheight" | "minsize")
+   }
+
+   every s := !sort(t) do {
+      if s[1] == "pos" then
+         next
+      if not member(attrib_table, s[1]) then
+         return alert_error(dialog, "Invalid attribute " || s[1])
+      if not(test_win.attrib(s[1] || "=" || s[2])) then
+         return alert_error(dialog, "Invalid value " || s[2] || " for attrib " || s[1])
+   }
+   return
+end
+
+
+procedure resolve_layout_filename(src, layout)
+   local t, xl
+
+   t := Files.get_path(src)
+
+   # Work out the expanded layout, with $ expanded to the
+   # file name, less the .icn extension.
+   layout ? {
+      if xl := tab(upto('$')) then {
+         xl ||:= t.get(-1)
+         if xl[-4:0] == ".icn" then
+            xl[-4:0] := ""
+         move(1)
+         xl ||:= tab(0)
+      } else
+         xl := layout
+   }
+
+   # Append the expanded layout string to the directory
+   # part of the src file.
+   if t := t.parent() then
+      return t.append(Files.get_path(xl)).str()
+   else
+      return xl
+end
+
+
+procedure center_string(win, x, y, s, k)
+   draw_string_ex(win, 
+                x - win.text_width(s) / 2, 
+                y - win.attrib("fheight") / 2, 
+                s, k)
+end
+
+
+#
+# Display an error message
+#
+procedure alert_error(d, a)
+   if string(a) then
+      a := [a]
+   InfoDialog(a, "Information", "Okay").show_modal(d)
+end
+

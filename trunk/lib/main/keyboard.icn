@@ -1,0 +1,12 @@
+package io
+
+class Keyboard()
+   # return a character from console.
+   public static defer getch()
+
+   # return a character from console with echo.
+   public static defer getche()
+
+   # Check to see if there is a keyboard character waiting to be read.
+   public static defer kbhit()
+end

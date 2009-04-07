@@ -1,0 +1,65 @@
+package lang
+
+#
+# This class contains various helpful methods to get information about
+# a record constructor at runtime.
+#
+class Constructor()
+   # Return the name of the constructor
+   #
+   public static defer get_name(c)
+
+   # Return the constructor of the given record
+   #
+   public static defer get_constructor(c)
+
+   # Return the program this constructor resides in.  The program's &main
+   # co-expression is returned.
+   #
+   public static defer get_program(c)
+
+   # Return the name of the package in which this constructor resides; fails
+   # if the constructor is not in a package.
+   #
+   public static defer get_package(c)
+
+   # Return the source location of the constructor
+   #
+   public static defer get_location(c)
+
+   # Generate the field names of the constructor {c}.
+   #
+   public static defer get_field_names(c)
+
+   # Return the number of fields in the constructor {c}.
+   #
+   public static defer get_n_fields(c)
+
+   # Return the field index number of the given field in constructor{c}.
+   # @param c the constructor
+   # @param field either a field name or number
+   # @return an integer, being the index
+   # @fail if the field is unknown
+   #
+   public static defer get_field_index(c, field)
+
+   # Return the field name of the given field in constructor{c}.
+   # @param c the constructor
+   # @param field either a field name or number
+   # @return the field name
+   # @fail if the field is unknown
+   #
+   public static defer get_field_name(c, field)
+
+
+   # Return the source location of the given field in constructor{c}.
+   # @param c the constructor
+   # @param field either a field name or number
+   # @generate the file name followed by the line number
+   # @fail if the field is unknown
+   #
+   public static defer get_field_location(c, field)
+
+   public static defer create_constructor(s, a[])
+   
+end

@@ -1,0 +1,198 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util
+
+#
+# This class provides a component which can be dragged across the
+# window, allowing panes within the window to be resized.  A Event.SIZER_RELEASE is
+# generated when the {Sizer} has been dragged and released.  The new position
+# may then be obtained and the dialog adjusted accordingly.
+#
+#
+class Sizer(Component)
+   public 
+      is_horizontal_flag, 
+      show_inter_flag,
+      temp_win,  
+      temp_orig,
+      lo,
+      hi,
+      drag_offset,
+      curr_pos,
+      start_pos
+
+   #
+   # Set the minimum and maximum values for the {Sizer}.  Whether these are
+   # x or y values depends on the orientation of the {Sizer}.
+   #
+   public set_range(lo, hi)
+      self.lo := lo
+      self.hi := hi
+   end
+
+   #
+   # Return the current position of the {Sizer}.  This may be invoked to determine
+   # where the {Sizer} has been dragged to after it has generated an event.
+   #
+   public get_curr_pos()
+      return curr_pos
+   end
+
+   #
+   # Get the size of the move during the current move of the {Sizer}.
+   #
+   public get_delta()
+      return curr_pos - start_pos
+   end
+
+   #
+   # Configure the orientation of the {Sizer}; the default is vertical.
+   #
+   public set_is_horizontal(s)
+      self.is_horizontal_flag := to_flag(s)
+   end
+
+   #
+   # Set whether to show the intermediate position of the sizer,
+   # ie whilst it is being dragged.
+   #
+   public set_show_inter(s)
+      self.show_inter_flag := to_flag(s)
+   end
+
+   public display()
+      local x1, y1, i
+      i := Icon.GRID
+      x1 := self.x + (self.w - image_width(i)) / 2
+      y1 := self.y + (self.h - image_height(i)) / 2
+      if \self.is_horizontal_flag then {
+         draw_image_ex(self.cbwin, x1 - 10, y1, i)
+         draw_image_ex(self.cbwin, x1, y1, i)
+         draw_image_ex(self.cbwin, x1 + 10, y1, i)
+      } else {
+         draw_image_ex(self.cbwin, x1, y1 - 10, i)
+         draw_image_ex(self.cbwin, x1, y1, i)
+         draw_image_ex(self.cbwin, x1, y1 + 10, i)
+      }
+   end
+
+   public set_curr_pos(e)
+      if \self.is_horizontal_flag then
+         curr_pos := e.y - drag_offset - parent.y
+      else
+         curr_pos := e.x - drag_offset - parent.x
+
+      curr_pos <:= \lo
+      curr_pos >:= \hi
+      return curr_pos
+   end
+
+   public initially()
+      if \self.is_horizontal_flag then
+         set_pointer("sb v double arrow")
+      else
+         set_pointer("sb h double arrow")
+      cast(self,Component).initially()
+   end
+
+   public get_default_width()
+      if /self.is_horizontal_flag then
+         return 6
+   end
+
+   public get_default_height()
+      if \self.is_horizontal_flag then
+         return 6
+   end
+
+   public handle_lpress(e)
+      if \self.is_horizontal_flag then {
+         drag_offset := e.y - self.y
+         temp_orig := self.y
+      } else {
+         drag_offset := e.x - self.x
+         temp_orig := self.x
+      }
+      start_pos := set_curr_pos(e)
+      if \self.show_inter_flag then {
+         self.temp_win := SliderDragComponent()
+         self.temp_win.set_pos(self.x, 
+                               self.y)
+         self.temp_win.set_z(self.parent_dialog.get_top_z())
+         self.temp_win.set_size(self.w, self.h)
+         self.parent_dialog.add(self.temp_win)
+         self.temp_win.initially()
+         self.temp_win.resize()
+         self.temp_win.invalidate()
+      }
+      fire(Event.SIZER_PRESS, e)
+   end
+
+   public handle_ldrag(e)
+      set_curr_pos(e)
+      if \self.show_inter_flag then {
+         if \is_horizontal_flag then {
+            self.temp_win.y_spec := temp_orig + get_delta()
+         } else {
+            self.temp_win.x_spec := temp_orig + get_delta()
+         }
+         self.temp_win.invalidate()
+         self.temp_win.resize()
+         self.temp_win.invalidate()
+      }
+      fire(Event.SIZER_DRAG, e)
+   end
+
+   public handle_lrelease(e)
+      set_curr_pos(e)
+      if \self.show_inter_flag then {
+         self.temp_win.invalidate()
+         self.parent_dialog.remove(self.temp_win)
+         self.temp_win.finally()
+         self.temp_win := &null
+      }
+      fire(Event.SIZER_RELEASE, e)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "is_horizontal" : set_is_horizontal(f.flag_val())
+         "show_inter" : set_show_inter(f.flag_val())
+         "range" : set_range!(f.int_list_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      set_fields(a)
+      return
+   end
+end
+
+
+class SliderDragComponent(Component)
+   public display()
+      self.cbwin.fill_rectangle(self.x, self.y, self.w, self.h)
+   end
+
+   public new()
+      cast(self,Component).new("pattern=gray", "fillstyle=masked")
+      return
+   end
+end
+
+
+

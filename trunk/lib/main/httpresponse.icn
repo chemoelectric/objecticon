@@ -1,0 +1,49 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package http
+
+import util
+
+#
+# This class encapsulates an HTTP response.
+#
+class HttpResponse(MimeHeaders)
+   private readable 
+      url, 
+      status
+
+   #
+   # Set the url
+   #
+   public set_url(url)
+      self.url := url
+   end
+
+   #
+   # Return the status of the page
+   # @return  The status eg "HTTP/1.1 200 OK"
+   #
+   public get_status()
+      return status
+   end
+
+   #
+   # Set the status
+   #
+   public set_status(s)
+      self.status := s
+   end
+
+   #
+   # Succeed iff the status was an HTTP OK status.
+   #
+   public status_okay()
+      return find("200", status)
+   end
+end

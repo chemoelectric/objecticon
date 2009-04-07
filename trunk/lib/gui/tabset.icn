@@ -1,0 +1,688 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util, lang, io, graphics
+
+$define X_PADDING_INC 5
+
+#
+# This class holds the several {TabItems}, and represents a tabbed pane.
+#
+# A Event.SELECTION_CHANGED is fired whenever the tab is changed via
+# user interaction.
+#
+class TabSet(Component)
+   public 
+      which_one,                                
+      tab_h,                               
+      label_h,                               
+      line_break,
+      no_click_focus_flag,
+      prefer_one_row_flag,
+      old_which_one,
+      tabs_at_bottom_flag
+
+   # Vertical layout :-
+   #           border top margin
+   #           label_h - max tab label height ) row 1 ) tab_h
+   #           Gui.BORDER_WIDTH               )       )
+   #           label_h                        ) row 2 )
+   #           Gui.BORDER_WIDTH               )       )
+   #           tab content height
+   #           border bottom margin
+   # Thus the total height is border.get_total_height() + content height
+   #                            + num lines * (label_h + Gui.BORDER_WIDTH)
+   # Note that on display(), a further Gui.BORDER_WIDTH is drawn above the first
+   # row, inside the border top margin area.
+   #
+   # Horizontal layout, say for 3 tab labels. :-
+   #
+   #           border left margin
+   #           label 1 width
+   #           2 * Gui.BORDER_WIDTH
+   #           label 2 width
+   #           2 * Gui.BORDER_WIDTH 
+   #           label 3 width
+   #           border right margin
+   #
+   # So the width of the row is border.get_total_width() + total label width +
+   #                  (num labels in row - 1) * (2 * Gui.BORDER_WIDTH)
+   # Note again that an extra Gui.BORDER_WIDTH is painted inside the left and right
+   # margin area.
+   #
+
+   #
+   # If set, then the tabs are at the bottom, not the top.
+   #
+   public set_tabs_at_bottom(s)
+      self.tabs_at_bottom_flag := to_flag(s)
+   end
+
+   #
+   # Set the no-click-focus behaviour.  If set, the component will
+   # not get the focus on a left click.
+   #
+   public set_no_click_focus(s)
+      self.no_click_focus_flag := to_flag(s)
+   end
+
+   #
+   # If this is set, the preferred width will return a value big
+   # enough to accommodate a single row of tabs.
+   #
+   public set_prefer_one_row(s)
+      self.prefer_one_row_flag := to_flag(s)
+   end
+
+   public keeps(e)
+      return member(Key.CURSOR_H, e.code)
+   end
+
+   public display_tabs_at_top()
+      local l, c, ypos, fw, nx
+
+      ypos := self.y + border.get_t_inset()
+      
+      every l := !self.line_break do {
+         every c := !l do {
+            draw_shadow_segment("e",
+                                c.tab_x - Gui.BORDER_WIDTH + c.tab_w + 2 * Gui.BORDER_WIDTH - 1, 
+                                ypos - Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH)
+            draw_hilite_segment("w",
+                                c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
+                                self.label_h + 2 * Gui.BORDER_WIDTH)
+            draw_hilite_segment("n",
+                                c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
+                                c.tab_w + 2 * Gui.BORDER_WIDTH)
+
+            c.draw_label(self.cbwin, 
+                         c.tab_x, 
+                         ypos, 
+                         c.tab_w, 
+                         self.label_h,
+                         if self.has_focus() & self.is_unshaded() & c === self.which_one 
+                         then 1 else &null)
+
+            if c.is_shaded() then {
+               fw := Gui.style.get_filter_clone(self.cbwin)
+               fw.fill_rectangle(c.tab_x, ypos, c.tab_w, self.label_h)
+               fw.uncouple()
+            }
+            
+         }
+         ypos +:= self.label_h + Gui.BORDER_WIDTH
+      }
+
+      #
+      # Display line under tabs.
+      #
+      draw_hilite_segment("s",
+                          self.x,
+                          self.y + border.get_t_inset() + self.tab_h - 1,
+                          self.which_one.tab_x - Gui.BORDER_WIDTH - self.x)
+
+      # The x of the next one along (if any)
+      nx := self.which_one.tab_x + Gui.BORDER_WIDTH + self.which_one.tab_w - 1
+      draw_hilite_segment("s",
+                          nx, self.y + border.get_t_inset() + self.tab_h - 1,
+                          self.x + self.w - nx)
+   end
+
+   public display_tabs_at_bottom()
+      local l, c, ypos, fw, nx
+
+      ypos := self.y + self.h - border.get_b_inset() - self.label_h
+      
+      every l := !self.line_break do {
+         every c := !l do {
+            draw_shadow_segment("e",
+                                c.tab_x - Gui.BORDER_WIDTH + c.tab_w + 2 * Gui.BORDER_WIDTH - 1, 
+                                ypos - Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH)
+            draw_hilite_segment("w",
+                                c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
+                                self.label_h + 2 * Gui.BORDER_WIDTH)
+            draw_hilite_segment("s",
+                                c.tab_x - Gui.BORDER_WIDTH, ypos + label_h + Gui.BORDER_WIDTH - 1, 
+                                c.tab_w + 2 * Gui.BORDER_WIDTH)
+
+            c.draw_label(self.cbwin, 
+                         c.tab_x, 
+                         ypos, 
+                         c.tab_w, 
+                         self.label_h,
+                         if self.has_focus() & self.is_unshaded() & c === self.which_one 
+                         then 1 else &null)
+
+            if c.is_shaded() then {
+               fw := Gui.style.get_filter_clone(self.cbwin)
+               fw.fill_rectangle(c.tab_x, ypos, c.tab_w, self.label_h)
+               fw.uncouple()
+            }
+            
+         }
+         ypos -:= self.label_h + Gui.BORDER_WIDTH
+      }
+
+         ypos +:= self.label_h + Gui.BORDER_WIDTH
+
+      #
+      # Display line under tabs.
+      #
+      draw_hilite_segment("n",
+                          self.x, self.y + self.h - border.get_b_inset() - self.tab_h,
+                          self.which_one.tab_x - Gui.BORDER_WIDTH - self.x)
+
+      # The x of the next one along (if any)
+      nx := self.which_one.tab_x + Gui.BORDER_WIDTH + self.which_one.tab_w - 1
+      draw_hilite_segment("n",
+                          nx, self.y + self.h - border.get_b_inset() - self.tab_h,
+                          self.x + self.w - nx)
+   end
+
+   public display(r)
+      #
+      # Display outline of tabbed pane area.
+      #
+      border.draw_rect(self.cbwin, self)
+
+      #
+      # Display all tabs.
+      #
+      if /self.tabs_at_bottom_flag then {
+         if r.y < self.y + border.get_t_inset() + self.tab_h then
+            display_tabs_at_top()
+      } else {
+         if r.y + r.h > self.y + self.h - border.get_b_inset() - self.tab_h then
+            display_tabs_at_bottom()
+      }
+
+      #
+      # Display contents of current tab into buffer
+      #
+      display_child(r, which_one)
+   end
+
+   public draw_shadow_segment(loc, x, y, len)
+      local i
+      if len < Gui.BORDER_WIDTH then
+         fail
+      every i := 0 to Gui.BORDER_WIDTH - 1 do {
+         case loc of {
+            "e": Gui.style.draw_shadow_line(self.cbwin, 
+                                        x - i, y + i,
+                                        x - i, y + len - 1 - i)
+            "w": Gui.style.draw_shadow_line(self.cbwin, 
+                                        x + i, y + i,
+                                        x + i, y + len - 1 - i)
+            "n": Gui.style.draw_shadow_line(self.cbwin, 
+                                        x + i, y + i,
+                                        x + len - 1 - i, y + i)
+            "s": Gui.style.draw_shadow_line(self.cbwin, 
+                                        x + i, y - i,
+                                        x + len - 1 - i, y - i)
+         }
+      }
+   end
+
+   public draw_hilite_segment(loc, x, y, len)
+      local i
+      if len < Gui.BORDER_WIDTH then
+         fail
+      every i := 0 to Gui.BORDER_WIDTH - 1 do {
+         case loc of {
+            "e": Gui.style.draw_hilite_line(self.cbwin, 
+                                        x - i, y + i,
+                                        x - i, y + len - 1 - i)
+            "w": Gui.style.draw_hilite_line(self.cbwin, 
+                                        x + i, y + i,
+                                        x + i, y + len - 1 - i)
+            "n": Gui.style.draw_hilite_line(self.cbwin, 
+                                        x + i, y + i,
+                                        x + len - 1 - i, y + i)
+            "s": Gui.style.draw_hilite_line(self.cbwin, 
+                                        x + i, y - i,
+                                        x + len - 1 - i, y - i)
+         }
+      }
+   end
+
+   #
+   # Determine which tab if any mouse is over.
+   #
+   # @p
+   public which_tab(e)
+      local l, c
+      if /self.tabs_at_bottom_flag then
+         l := (e.y - (self.y + border.get_t_inset())) / (self.label_h + Gui.BORDER_WIDTH) + 1
+      else
+         l := (self.y + self.h - border.get_b_inset() - e.y) / (self.label_h + Gui.BORDER_WIDTH) + 1
+      every c := !self.line_break[l] do {
+         if c.is_unshaded() & 
+            (c.tab_x - Gui.BORDER_WIDTH <= e.x < c.tab_x + c.tab_w + Gui.BORDER_WIDTH) then
+            return c
+      }
+   end
+
+   #
+   # Ensure which_one is at front of tab lines
+   #
+   # @p
+   public adjust_lines()
+      local i
+      every i := 1 to *self.line_break - 1 do {
+         if self.which_one === !self.line_break[i] then {
+            self.line_break[i] :=: self.line_break[-1]
+            break
+         }
+      }
+   end
+
+   #
+   # Set which tab is currently on display.
+   # @param x  The {TabItem} to be displayed.
+   #
+   public set_which_one(x)
+      if is_initialized() then {
+         self.which_one := x
+         set_hidden_flags()
+         self.adjust_lines()
+         self.invalidate()
+      } else
+         self.which_one := x
+      
+      return x
+   end
+
+   public set_hidden_flags()
+      local c
+      every c := !self.children do {
+         if c === self.which_one then
+            c.set_is_hidden("f")
+         else
+            c.set_is_hidden("t")
+      }
+   end
+
+   #
+   # Return the currently selected tab
+   #
+   public get_which_one()
+      return self.which_one
+   end
+
+   public start_handle(e)
+      old_which_one := which_one
+   end
+
+   public end_handle(e)
+      if old_which_one ~=== which_one then
+         fire(Event.SELECTION_CHANGED, e)     
+   end
+
+   public handle_lpress(e)
+      in_tab_region(e) | fail
+      start_handle(e)
+      set_which_one(which_tab(e))
+      end_handle(e)
+   end
+
+   public handle_key_left(e)
+      local c, i
+      start_handle(e)
+      every i := 1 to *self.children do {
+         if self.children[i] === which_one then {
+            c := self.children[i - 1 | -1]
+            set_which_one(c)
+            break
+         }
+      }
+      end_handle(e)
+   end
+
+   public handle_key_right(e)
+      local c, i
+      start_handle(e)
+      every i := 1 to *self.children do {
+         if self.children[i] === which_one then {
+            c := self.children[i + 1 | 1]
+            set_which_one(c)
+            break
+         }
+      }
+      end_handle(e)
+   end
+
+   public handle_key(e)
+      if e.code === Key.LEFT then
+         handle_key_left(e)
+      else if e.code === Key.RIGHT then
+         handle_key_right(e)
+   end
+
+   public in_tab_region(e)
+      in_region(e) & 
+         (self.x + border.get_l_inset() <= e.x < self.x + self.w - border.get_r_inset()) | fail 
+      return if /self.tabs_at_bottom_flag then
+         self.y + border.get_t_inset() <= e.y < self.y + border.get_t_inset() + self.tab_h
+      else
+         self.y + self.h - border.get_b_inset() - self.tab_h <= e.y < self.y + self.h - border.get_b_inset()
+   end
+
+   public accepts_focus(e)
+      if e.code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
+         fail
+      # Outside of tabs never gives focus.
+      if member(Mouse.PRESS, e.code) & not self.in_tab_region(e) then
+         fail
+      return cast(self,Component).accepts_focus(e)
+   end
+
+   public handle_accel(e)
+      start_handle(e)
+      set_which_one(find_key(e))
+      cast(self,Component).handle_accel(e)
+      end_handle(e)
+   end
+ 
+   public match_accel(e)
+      return find_key(e)
+   end
+
+   #
+   # Find the TabItem with the given accelerator.
+   # @p
+   public find_key(k)
+      local m
+      every m := !self.children do {
+         if m.accel === k & m.is_unshaded() then
+            return m
+      }
+   end
+
+   #
+   # Break the set of tabs up into lines, given the padding within each tab.
+   # Returns a list each element of which is a list of those tabs on one line.
+   #
+   # @p
+   public how_many_lines(pad, width)
+      local t, l, cl, c, lw
+
+      width -:= border.get_total_width()
+
+      t := 0
+      l := []
+      cl := []
+      every c := !self.children do {
+         lw := c.get_label_width() + pad
+         if *cl = 0 then {
+            # First on a line
+            t := lw
+            put(cl, c)
+         }
+         else if t + lw + 2 * Gui.BORDER_WIDTH > width then {
+            # New line required.
+            t := lw
+            put(l, cl)
+            cl := [c]
+         } else {
+            t +:= lw + 2 * Gui.BORDER_WIDTH
+            put(cl, c)
+         }
+      }
+      #
+      # Final line, if any
+      #
+      if t > 0 then
+         put(l, cl)
+
+      return l
+   end
+
+   public initially()
+      if *self.children = 0 then
+         runerr("no TabItems in TabSet")
+      /self.which_one := self.children[1]
+      set_hidden_flags()
+      cast(self,Component).initially()
+   end
+
+   public get_default_width()
+      local c, mw, tw
+
+      # Max width of tab contents.
+      mw := 0
+      every c := !self.children do
+         mw <:= c.get_preferred_width()
+
+      if \self.prefer_one_row_flag then {
+         # Expand mw to the total tab label width if needed.
+         tw := 0
+         every c := !self.children do
+            tw +:= c.get_label_width()
+         # There is 2 * Gui.BORDER_WIDTH of decoration between each label...
+         tw +:= 2 * Gui.BORDER_WIDTH * (*self.children - 1)
+         mw <:= tw
+      } else {
+         # We should be wide enough for the widest label to be on a line on its own
+         # without clipping.
+         tw := 0
+         every c := !self.children do
+            tw <:= c.get_label_width()
+         mw <:= tw
+      }
+
+      # Our border's width
+      mw +:= border.get_total_width()
+
+      return mw
+   end
+
+   public get_default_height()
+      local c, mh
+
+      # Max height of tab contents.
+      mh := 0
+      every c := !self.children do
+         mh <:= c.get_preferred_height()
+
+      # The top and bottom borders.
+      mh +:= border.get_total_height()
+
+      # Note that we don't simply check prefer_one_row_flag here, because we may
+      # have manually set a w_spec value, meaning we might get several rows anyway.
+      # Every line occupies the label_height plus a border below.
+
+      return mh +
+         *how_many_lines(0, get_preferred_width()) * (Gui.BORDER_WIDTH + get_label_height())
+   end
+
+   public get_label_height()
+      local h, c
+      h := 0
+      every c := !self.children do
+         h <:= c.get_label_height()
+      return h
+   end
+
+   # Debug functions
+   #
+
+   public dump()
+      local curr_line, c, t
+      write("Total available width:", self.w - border.get_total_width())
+      every curr_line := !self.line_break do {
+         write("Line")
+         t := 0
+         every c := !curr_line do {
+            write("\tTab width=", c.get_label_width(),
+                  " tab_x=", c.tab_x,
+                  " tab_w=", c.tab_w)
+            t +:= c.tab_w
+         }
+         t +:= 2 * Gui.BORDER_WIDTH * (*curr_line - 1)
+         write("\tLine total allocated:", t)
+      }
+   end
+
+   public dump_split(l,s)
+      local e, f
+      write("Split of lines:",s)
+      every e := !l do {
+         writes("Line:",*e,":\t")
+         every f := !e do
+            writes(f.get_label_width(),"   ")
+         write()
+      }
+      write("----")
+   end
+
+   #
+   # Does the current line_break still suffice, or do we need
+   # to use the new_break? Keeping the current one if we can saves 
+   # unsightly flicking of the tabs on a resize.
+   #
+   public keep_current_break(new_break)
+      local e, t, s1, s2
+
+      # The old one must be at least as good as the new one, line-wise
+      *\self.line_break <= *new_break | fail
+
+      # The old and new breaks must have the same elements, ie
+      # no tabs added or deleted.
+      s1 := set()
+      s2 := set()
+      every insert(s1, !!line_break)
+      every insert(s2, !!new_break)
+      lang.equals(s1, s2) | fail
+
+      # The current line_break's lines must still fit in the
+      # new width.
+      every e := !line_break do {
+         t := 0
+         every t +:= (!e).get_label_width()
+         t +:= 2 * Gui.BORDER_WIDTH * (*e - 1)
+         if t > self.w - border.get_total_width() then
+            fail
+      }
+      return
+   end
+
+   public layout()
+      local pad, l2, n, curr_line, t, c, d
+
+      # Cache the label height.
+      self.label_h := get_label_height()
+
+      # Determine how many lines with no padding.
+      pad := 0
+      l2 := how_many_lines(pad, self.w)
+
+      # Do we need a new line break?
+      if not(keep_current_break(l2)) then {
+         # We do need a new line break.
+         self.line_break := l2
+         self.tab_h :=  (self.label_h + Gui.BORDER_WIDTH) * (*self.line_break)
+
+         #
+         # Expand padding whilst can do so and remain within the original
+         # number of lines.  This should even out the tabs.
+         #
+         if 1 < *self.line_break < *self.children then {
+            while *(l2 := how_many_lines(pad + X_PADDING_INC, self.w)) <= *self.line_break do {
+               self.line_break := l2
+               pad +:= X_PADDING_INC
+            }
+         }
+      }
+
+      #
+      # Finally, space out the tabs on each line to fill up each line.
+      #
+      n := 1
+      every curr_line := !self.line_break do {
+         #
+         # Work out total already used.
+         #
+         t := 0
+         every c := !curr_line do {
+            c.tab_w := c.get_label_width() + pad
+            t +:= c.tab_w
+         }
+         # Two Gui.BORDER_WIDTHS between each tab on the line
+         t +:= 2 * Gui.BORDER_WIDTH * (*curr_line - 1)
+
+         #
+         # Amount to add to each tab.
+         #
+         d := (self.w - border.get_total_width() - t) / *curr_line
+
+         #
+         # Add the amount, compute new total
+         #
+         t := 0
+         every c := curr_line[1 to *curr_line - 1] do {
+            c.tab_x := self.x + border.get_l_inset() + t
+            c.tab_w +:= d
+            t +:= c.tab_w + 2 * Gui.BORDER_WIDTH
+         }
+         # Rightmost tab gets the residue so that the tabs exactly
+         # fit in the line.
+         c := curr_line[-1]
+         c.tab_x := self.x + border.get_l_inset() + t
+         c.tab_w := self.w - border.get_total_width() - t
+
+         n +:= 1
+      }
+
+      self.adjust_lines()
+
+      #
+      # Layout the children
+      #
+      every c := !self.children do {
+         c.x := self.x + border.get_l_inset()
+         c.w := self.w - border.get_total_width()
+         c.y := if /self.tabs_at_bottom_flag then
+            self.y + border.get_t_inset() + self.tab_h
+         else
+            self.y + border.get_t_inset()
+         c.h := self.h - self.tab_h - border.get_total_height()
+         c.layout()
+      }
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "prefer_one_row" : set_prefer_one_row(f.flag_val())
+         "no_click_focus" : set_no_click_focus(f.flag_val())
+         "tabs_at_bottom" : set_tabs_at_bottom(f.flag_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.accepts_focus_flag := 1
+      self.set_constraint("x_fill", "")
+      self.set_constraint("y_fill", "")
+      self.set_constraint("x_weight", "1")
+      self.set_constraint("y_weight", "1")
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_key, Event.KEY_PRESS)
+      set_border(RaisedBorder())
+      set_fields(a)
+      return
+   end
+end
+
+
+
+

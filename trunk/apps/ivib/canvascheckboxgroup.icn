@@ -1,0 +1,56 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui, util
+
+
+############################################################################
+#
+# Class to represent a CheckBoxGroup on the canvas.
+#
+class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasObject).get_template() |||
+         [["Which One", "which_one"]]
+   end
+
+   # 
+   # Duplicate object
+   #
+   # Setting of which_one is duplicated in the Canvas.dup() method.
+   #
+   public dup()
+      local c
+      c := CanvasCheckBoxGroup()
+      cast(self,CanvasObject).dup_fields(c)
+      return c
+   end
+
+   public get_members()
+      local o, l
+      l := []
+      every o := coexp_seq{self.parent_Canvas.gen_cos().traverse_tree()} do {
+         if (is(o, gui.Toggle) &
+             o.parent_check_box_group === self) then
+            put(l, o)
+      }
+      return l
+   end
+
+   public new()
+      cast(self,CheckBoxGroup).new()
+      self.class_name := "CheckBoxGroup"
+      self.import_name := "gui"
+      self.name := "check_box_group"
+      return
+   end
+end
+

@@ -1,0 +1,97 @@
+import io
+
+procedure test1(p, abs)
+   local s
+   s := Files.get_path(p).absolute().str()
+   yes_no{"Test abs(" || p || ")", s == abs}
+end
+
+procedure test2(p, clean)
+   local s
+   s := Files.get_path(p).canonical().str()
+   yes_no{"Test canonical(" || p || ")", s == clean}
+end
+
+procedure test3()
+   local st1, st2, f
+   system("rm -f testfile*")
+   Files.string_to_file("testfile", repl(&ucase,20)) | stop(&why)
+   st1 := Files.stat("testfile")
+   yes_no{"1.Stat size", st1.size = 520}
+   f := FileStream.open("testfile", FileOpt.RDWR)
+   st1 := f.stat()
+   f.truncate(1000) | stop(&why)
+   st2 := f.stat()
+   f.close()
+   yes_no{"2.Stat size", st1.size = 520}
+   yes_no{"3.Stat size", st2.size = 1000}
+   yes_no{"Truncated", Files.file_to_string("testfile") == left(repl(&ucase,20), 1000, "\0")}
+   Files.string_to_file("testfile", repl(&ucase,20)) | stop(&why)
+   Files.string_to_file("testfile2", repl(&ucase,20)) | stop(&why)
+   Files.move("testfile2", "testfile2a") | stop(&why)
+   yes_no{"1.testfile -v- testfile2a", Files.equal_files("testfile", "testfile2a")}
+   Files.rename("testfile2a", "testfile2") | stop(&why)
+   yes_no{"2.testfile -v- testfile2", Files.equal_files("testfile", "testfile2")}
+   Files.hardlink("testfile2", "testfile2b") | stop(&why)
+   yes_no{"3.testfile -v- testfile2b", Files.equal_files("testfile", "testfile2b")}
+   Files.remove("testfile2b") | stop(&why)
+   yes_no{"4.testfile -v- testfile2", Files.equal_files("testfile", "testfile2")}
+   Files.symlink("testfile2", "testfile2c") | stop(&why)
+   yes_no{"5.testfile -v- testfile2c", Files.equal_files("testfile", "testfile2c")}
+   print{"readlink",Files.readlink("testfile2c")}
+   Files.remove("testfile2c") | stop(&why)
+   Files.copy("testfile", "testfile2d")
+   yes_no{"6.testfile -v- testfile2d", Files.equal_files("testfile", "testfile2d")}
+   Files.append("testfile", "testfile2") | stop(&why)
+   yes_no{"Appended", Files.file_to_string("testfile2") == repl(&ucase,40)}
+   Files.mkdir("testdir") | stop(&why)
+   yes_no{"1.Access dir", Files.access("testdir")}
+   Files.remove("testdir") | stop(&why)
+   yes_no{"2.Access dir", Files.access("testdir")}
+   Files.truncate("testfile", 1000)
+   yes_no{"Truncated", Files.file_to_string("testfile") == left(repl(&ucase,20), 1000, "\0")}
+   write("Unique name: ", Files.ensure_unique_filename("testfile"))
+   system("rm -f testfile*")
+   write("test3:ok")
+end
+
+procedure main()
+   local cd, pd
+
+   cd := Files.getcwd()
+   cd ? {
+      while tab(upto('/')) do move(1)
+      move(-1)
+      pd := tab(1)
+   }
+
+   test1("/tmp/xyz.txt", "/tmp/xyz.txt")
+   test1("/tmp//xyz.txt", "/tmp/xyz.txt")
+   test1("////tmp////xyz.txt///", "/tmp/xyz.txt")
+   test1("xyz.txt", cd||"/xyz.txt")
+   test1("abc/def/xyz.txt", cd||"/abc/def/xyz.txt")
+   test1("/","/")
+   test1("/x","/x")
+
+   test2("/tmp/../xyz.txt", "/xyz.txt")
+   test2("/tmp/./xyz.txt", "/tmp/xyz.txt")
+   test2("/..", "/")
+
+   test2("/tmp/xyz.txt","/tmp/xyz.txt")
+   test2("/tmp","/tmp")
+   test2("/..","/")
+   test2("/","/")
+   test2("hello",cd||"/hello")
+   test2("../hello",pd||"/hello")
+   test2("./hello",cd||"/hello")
+   test2(".",cd)
+   test2("..",pd)
+   test2("xyz.txt",cd||"/xyz.txt")
+   test2("abc/def/xyz.txt",cd||"/abc/def/xyz.txt")
+   test2("/x","/x")
+   test2("",cd)
+
+   test3()
+   
+   write("ok")
+end

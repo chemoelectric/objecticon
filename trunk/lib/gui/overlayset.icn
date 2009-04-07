@@ -1,0 +1,102 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# This class provides a container which contains several {OverlayItems}, only one
+# of which is visible at a time.
+#
+class OverlaySet(Component)
+   public 
+      which_one
+
+   public display(r)
+      #
+      # Display contents of current tab into buffer
+      #
+      display_child(r, which_one)
+   end
+
+   #
+   # Set which OverlayItem is currently displayed.  The default is
+   # the first which was added.
+   #
+   public set_which_one(x)
+      if is_initialized() then {
+         self.which_one := x
+         set_hidden_flags()
+         self.invalidate()
+      } else
+         self.which_one := x
+      return x
+   end
+
+   public set_hidden_flags()
+      local c
+      every c := !self.children do {
+         if c === self.which_one then
+            c.set_is_hidden("f")
+         else
+            c.set_is_hidden("t")
+      }
+   end
+
+   public initially()
+      if *self.children = 0 then
+         runerr("no OverlayItems in OverlaySet")
+      /self.which_one := self.children[1]
+      set_hidden_flags()
+      cast(self,Component).initially()
+   end
+
+   public get_default_width()
+      local c, mw
+      mw := 0
+      every c := !children do
+         mw <:= c.get_preferred_width()
+      return mw
+   end
+
+   public get_default_height()
+      local c, mh
+      mh := 0
+      every c := !children do
+         mh <:= c.get_preferred_height()
+      return mh
+   end
+
+   public layout()
+      local c
+      every c := !self.children do {
+         c.x := self.x
+         c.y := self.y
+         c.w := self.w
+         c.h := self.h
+         c.layout()
+      }
+   end
+
+   #
+   # Return the currently selected item
+   #
+   public get_which_one()
+      return self.which_one
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.set_constraint("x_fill", "")
+      self.set_constraint("y_fill", "")
+      self.set_constraint("x_weight", "1")
+      self.set_constraint("y_weight", "1")
+      set_fields(a)
+      return
+   end
+end
+

@@ -1,0 +1,29 @@
+import gui
+
+
+class OkCancel(Component)
+   public 
+      okay,
+      cancel
+
+   public listen(obj)
+      okay.connect(obj.on_okay, Event.ACTION)
+      cancel.connect(obj.on_cancel, Event.ACTION)
+   end
+
+   public new(a[])
+      cast(self,Component).new("c:x_align=l")
+      set_layout(GridLayout("flush"))
+
+      okay := TextButton("label=Okay")
+      add(okay)
+
+      cancel := TextButton("label=Cancel")
+      add(cancel)
+
+      set_fields(a)
+      return
+   end
+end
+
+

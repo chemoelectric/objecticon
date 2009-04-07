@@ -1,0 +1,26 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+class CanvasHSizerUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t
+      t := CanvasSizer()
+      t.set_size(100)
+      t.set_is_horizontal("t")
+      return t
+   end
+
+   public get_category()
+      return "Separators"
+   end
+
+   public get_name()
+      return "HSizer"
+   end
+end
+

@@ -1,0 +1,101 @@
+package gui
+
+class NewDirectoryDialog(Dialog)
+   public
+      cancel_button,
+      okay_button, 
+      okay,
+      result, 
+      file_field
+
+   public component_setup()
+      self.setup()
+   end
+
+   public end_dialog()
+   end
+
+   public init_dialog()
+   end
+
+   public on_cancel_button(ev)
+      dispose()
+   end
+
+   public on_okay_button(ev)
+      okay := 1
+      result := file_field.get_contents()
+      dispose()
+   end
+
+   public setup()
+      local label_1, layout_1, layout_2, layout_4, line_1, panel_1, panel_2
+      self.set_wattrib("label", "New directory")
+      self.set_wattrib("resize", "on")
+      panel_1 := Panel()
+      panel_1.clear_constraints()
+      panel_1.set_constraint("eol", "")
+      panel_1.set_constraint("x_fill", "")
+      panel_1.set_constraint("x_weight", "1")
+      panel_1.set_constraint("y_fill", "")
+      panel_1.set_constraint("y_weight", "1")
+      layout_1 := GridLayout()
+      layout_1.set_doi(0)
+      layout_1.set_extra("cells")
+      panel_1.set_layout(layout_1)
+      label_1 := Label()
+      label_1.set_align("l", "c")
+      label_1.clear_constraints()
+      label_1.set_constraint("x_align", "l")
+      label_1.set_label("Name")
+      panel_1.add(label_1)
+      file_field := TextField()
+      file_field.set_size("200")
+      file_field.set_align("l", "c")
+      file_field.clear_constraints()
+      file_field.set_constraint("x_align", "l")
+      file_field.set_constraint("x_fill", "")
+      file_field.set_constraint("x_weight", "1")
+      self.set_focus(file_field.find_focus())
+      file_field.connect(self.on_okay_button, Event.ACTION)
+      file_field.set_contents("")
+      panel_1.add(file_field)
+      self.add(panel_1)
+      line_1 := Line()
+      line_1.set_size("100")
+      line_1.clear_constraints()
+      line_1.set_constraint("eol", "")
+      line_1.set_constraint("x_fill", "")
+      self.add(line_1)
+      panel_2 := Panel()
+      panel_2.clear_constraints()
+      panel_2.set_constraint("x_align", "l")
+      layout_2 := GridLayout()
+      layout_2.set_doi(0)
+      layout_2.set_extra("cells")
+      panel_2.set_layout(layout_2)
+      okay_button := TextButton()
+      okay_button.set_align("l", "b")
+      okay_button.clear_constraints()
+      okay_button.connect(self.on_okay_button, Event.ACTION)
+      okay_button.set_toggles("f")
+      okay_button.set_label("Okay")
+      panel_2.add(okay_button)
+      cancel_button := TextButton()
+      cancel_button.set_align("l", "b")
+      cancel_button.clear_constraints()
+      cancel_button.connect(self.on_cancel_button, Event.ACTION)
+      cancel_button.set_toggles("f")
+      cancel_button.set_label("Cancel")
+      panel_2.add(cancel_button)
+      self.add(panel_2)
+      layout_4 := GridLayout()
+      layout_4.set_extra("cells")
+      self.set_layout(layout_4)
+   end
+end
+
+
+
+### Ivib-v2 layout: layouts/$.layout
+

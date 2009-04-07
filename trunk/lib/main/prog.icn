@@ -1,0 +1,122 @@
+package lang
+
+# In the methods below, the term "program" refers to the main
+# co-expression of either the root program, or a program loaded via
+# {Prog.load} below.   The parameters named {P} are always programs
+# and default to the currently executing program if omitted.
+#
+class Prog()
+   # Load and return a program from file {s}.
+   #
+   public static defer load(s, arglist, blocksize, stringsize, stacksize)
+
+   #
+   # Generate the globals in program P
+   #
+   public static defer get_globals(P)
+
+   #
+   # Get the global named {s} in program P
+   #
+   public static defer get_global(s, P)
+
+   #
+   # Generate the global names in program P
+   #
+   public static defer get_global_names(P)
+
+   #
+   # Generate the names of the functions.
+   #
+   public static defer get_function_names()
+
+   #
+   # Get the location of global {s} in program P, if that data is
+   # available.
+   #
+   public static defer get_global_location(s, P)
+
+   #
+   # Return the value of the keyword {s} in program P.
+   #
+   public static defer get_keyword(s, P)
+
+   #
+   # Find the variable with name s in program P and return a variable
+   # descriptor which points to its value.
+   #
+   public static defer get_variable(s, P)
+
+   #
+   # Given a program, return its parent program
+   #
+   public static defer get_parent(P)
+
+   #
+   # Get the given program's opcode mask
+   #
+   public static defer get_opmask(P)
+
+   #
+   # Set the given program's opcode mask
+   #
+   public static defer set_opmask(cs, P)
+
+   #
+   # Get the given program's event mask
+   #
+   public static defer get_eventmask(P)
+
+   #
+   # Set the given program's event mask
+   #
+   public static defer set_eventmask(cs, P)
+
+   #
+   # Get the given program's value mask
+   #
+   public static defer get_valuemask(P)
+
+   #
+   # Set the given program's value mask
+   #
+   public static defer set_valuemask(t, P)
+
+   #
+   # Create event in program P with event code x and event value y,
+   # and activate it.
+   #
+   public static defer send_event(x, y, P)
+
+   public static defer get_event(cs, vmask, flag)
+
+   #
+   # Return the program holding the current execution point
+   # of the given co-expression.
+   #
+   public static defer get_coexpression_program(ce)
+
+   #
+   # Get the number of milliseconds since the startup time of the given
+   # program.
+   #
+   public static defer get_runtime_millis(P)
+
+   #
+   # Get the startup time (load time) of the given program, as the
+   # number of microseconds since the Unix base epoch (1 Jan 1970).
+   #
+   public static defer get_startup_micros(P)
+
+   public static defer get_collections(P)
+   public static defer get_allocations(P)
+   public static defer get_regions(P)
+
+   # Get info about the stack use of the given co-expression.  Two
+   # numbers are suspended; the first is the size of the stack (excluding
+   # any portion used as a C stack), and the second is the amount
+   # already used.  Note that the size may change over time as the size of
+   # the C stack changes.
+   #
+   public static defer get_stack(c)
+end

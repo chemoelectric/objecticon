@@ -1,0 +1,399 @@
+package gui
+
+import 
+   util,
+   ipl.sort,
+   io
+
+#
+#
+# Directory dialog class.  This class provides a standard directory selection dialog.
+# 
+# @example
+# @ d := DirectoryDialog()
+# @ d.show_modal()
+# @ write(d.get_result() | "cancelled")
+#
+class DirectoryDialog(Dialog)
+   public
+      home_button, 
+      new_button, 
+      refresh_button, 
+      up_button, 
+      cancel_button, 
+      okay_button,
+      init_dirs,         # Directory choices
+      res,               # Resulting file path          
+      message_label, 
+      tree, 
+      dir, 
+      show_hidden_cb
+
+   public component_setup()
+      local root_node, d
+      self.setup()
+
+      #
+      # Defaults and extra dirs.
+      #
+      /init_dirs := []
+      every put(init_dirs, Files.getcwd() | 
+                Files.get_home() | 
+                Files.get_temp() | 
+                Files.get_roots())
+      init_dirs := list_unique(init_dirs)
+
+      dir.set_selection_list(init_dirs)
+      root_node := TreeNode()
+      every d := Files.get_roots() do
+         root_node.add(TreeNode("label=",d,
+                                "always_expandable=t"))
+      tree.set_root_node(root_node)
+   end
+
+   public init_dialog()
+      # Do this here as we need the tree to be setup so that we
+      # can scroll to the selected dir.
+      goto_dir(dir.get_contents())
+   end
+
+   public end_dialog()
+   end
+
+   #
+   # Given a TreeNode n, load its children with the sub-directories.
+   #
+   public load_subtree(n)
+      local s, name, l
+
+      s := get_full_path(n).str()
+      l := list_directory(s)
+      n.clear_children()
+      every name := !l do {
+         n.add(TreeNode("label=",name,
+                        "always_expandable=t"))
+      }
+   end
+
+   public list_directory(s)
+      local e, dir_list, l
+      if l := Files.list(s) then 
+         clear_msg()
+      else {
+         msg(&why)
+         return []
+      }
+      dir_list := []
+      every e := !l do {
+         if e[2].mode[1] == "d" &
+            not(Files.is_relative_dir(e[1])) &
+            (show_hidden_cb.is_checked() | 
+               not(Files.is_hidden(e[1]))) then
+            put(dir_list, e[1])
+      }
+      return isort(dir_list, map)
+   end
+
+   #
+   # Given a TreeNode n, return a {FilePath} path it represents by traversing
+   # up the tree structure to the root and converting to a {FilePath}.
+   #
+   public get_full_path(n)
+      local l
+      l := []
+      repeat {
+         push(l, n.get_label())
+         n := n.get_parent()
+         if n === tree.get_root_node() then
+            break
+      }
+      return Files.get_path_from_list(l)
+   end
+
+   public on_tree_expansion()
+      local n
+      n := tree.get_last_expanded()
+      #
+      # Check whether it was an expansion or a contraction.  If
+      # an expansion, load the subtree and refresh the tree.
+      #
+      if n.is_expanded() then {
+         load_subtree(n)
+         tree.tree_structure_changed()
+      }
+   end
+
+   public on_tree_selection(ev)
+      clear_msg()
+      dir.set_contents(get_full_path(tree.object_get_selections()[1]).str())
+   end
+
+   public on_dir(ev)
+      goto_dir(dir.get_contents())
+   end
+
+   #
+   # Get the result, (will fail if cancel was pressed).
+   #
+   public get_result()
+      return (\self.res).str()
+   end
+
+   #
+   # Set the initial directory.
+   #
+   public set_directory(s)
+      return self.init_dirs := [s]
+   end
+
+   #
+   # Set the initial directories as a list; the first is
+   # the one initially shown.
+   #
+   public set_directories(l)
+      return self.init_dirs := l
+   end
+
+   public get_dir_path()
+      return Files.get_path(dir.get_contents())
+   end
+
+   public goto_dir(d)
+      local n, s, p, ps
+      p := Files.get_path(d).canonical()
+      n := tree.get_root_node()
+      every s := p.gen() do {
+         n := find_child(n, s) | break
+         load_subtree(n)
+         n.set_expanded("t")
+      }
+      tree.tree_structure_changed()
+      tree.object_set_selections([n])
+      tree.object_set_cursor(n)
+      tree.center_line(tree.find_line(n))
+      ps := p.str()
+      if Files.is_directory(ps) then
+         clear_msg()
+      else
+         msg("Not a dir: " || ps)
+      dir.set_contents(ps)
+   end
+
+   public find_child(n, s)
+      local n1
+      every n1 := !n.children do {
+         if n1.label == s then
+            return n1
+      }
+   end
+
+   public on_okay_button()
+      self.res := get_dir_path()
+      self.dispose()
+   end
+
+   public on_cancel_button()
+      self.dispose()
+   end
+
+   public on_show_hidden_cb(ev)
+      local n
+      n := tree.object_get_selections()[1] | fail
+      goto_dir(get_full_path(n).str())
+   end
+
+   public on_up_button(ev)
+      goto_dir(self.get_dir_path().parent().str())
+   end
+
+   public on_home_button(ev)
+      goto_dir(Files.get_home())
+   end
+
+   public on_refresh_button(ev)
+      local n
+      n := tree.object_get_selections()[1] | fail
+      load_subtree(n)
+      tree.tree_structure_changed()
+   end
+
+   public on_new_button(ev)
+      local d, s
+      d := NewDirectoryDialog()
+      d.show_modal(self)
+      if \d.okay then {
+         s := self.get_dir_path().child(d.result).str()
+         if Files.mkdir(s) then
+            goto_dir(s)
+         else
+            msg("mkdir failed: " || &why)
+      }
+   end
+
+   public msg(s)
+      message_label.set_label(s)
+   end
+
+   public clear_msg()
+      msg("")
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "directory" : set_directory(f.string_val())
+         "directories" : set_directories(f.string_list_val())
+         default: return cast(self,Dialog).set_one(f)
+      }
+      return
+   end
+
+   public setup()
+      local layout_4, layout_6, layout_7, paint, paint_1, panel_3, panel_4
+      self.set_wattrib("label", "Select directory")
+      self.set_wattrib("resize", "on")
+      self.set_only_enlarge_width("t")
+      self.set_only_enlarge_height("t")
+      panel_4 := Panel()
+      panel_4.clear_constraints()
+      panel_4.set_constraint("eol", "y")
+      panel_4.set_constraint("x_align", "l")
+      layout_6 := GridLayout()
+      layout_6.set_doi(0)
+      layout_6.set_dii(2)
+      layout_6.set_extra("cells")
+      panel_4.set_layout(layout_6)
+      home_button := IconButton()
+      home_button.set_size("26", "26")
+      home_button.set_align("l", "c")
+      home_button.clear_constraints()
+      paint := TextPaint("Home")
+      home_button.set_tooltip(paint)
+      home_button.connect(self.on_home_button, Event.ACTION)
+      home_button.set_no_click_focus("t")
+      home_button.set_toggles("f")
+      paint := ImagePaint()
+      paint.set_image("16,c6,\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\xe9\x00\xff\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\xe9\xda\xda\x00\x00\x00\xd7\xff\xff\xff\xff\xff\xff\xff\x00\xe9\xda\xda\xda\xda\x00\x00\xd7\xff\xff\xff\xff\xff\xff\x00\xe9\xda\xda\xda\xda\xda\xda\x00\xd7\xff\xff\xff\xff\xff\x00\xe9\xda\xda\xda\xda\xda\xda\xda\xda\x00\xff\xff\xff\xff\x00\x00\xe9\xda\xda\xda\xda\xda\xda\xda\xda\x00\x00\xff\xff\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\xad\xad\xad\x00\xd7\x00\xff\xff\xff\x00\xd7\xad\x00\x00\x00\x00\x00\xad\xad\x00\xd7\xd7\xff\xff\xff\x00\xd7\xad\x00\xd7\xd7\xd7\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\xd7\xad\x00\xd7\xff\xff\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\xd7\xad\x00\xd7\xff\xda\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\xd7\xad\x00\xd7\xff\xff\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\xd7\xad\x00\xd7\xff\xff\x00\xad\xad\x00\xd7\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xd7\xff\xff\xff\xff\xff\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xff\xff")
+      home_button.set_paint(paint)
+      panel_4.add(home_button)
+      up_button := IconButton()
+      up_button.set_size("26", "26")
+      up_button.set_align("l", "c")
+      up_button.clear_constraints()
+      paint := TextPaint("Up")
+      up_button.set_tooltip(paint)
+      up_button.connect(self.on_up_button, Event.ACTION)
+      up_button.set_no_click_focus("t")
+      up_button.set_toggles("f")
+      paint := ImagePaint()
+      paint.set_image("16,c6,\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xffWWWWW\xff\xff\xff\xff\xff\xff\xff\xff\xff\xffWWWWWW\xd7\xff\x00\x00\x00\x00\x00\x00\x00\x00\xad\xad\xad\xad\xad\x00\xd7\x00\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\x00\x00\x00\x00\x00\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\xad\xad\xd7\xd7\xd7\xd7\xd7\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\xad\xad\xad\xad\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\x00\xad\xad\xad\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\xad\xad\x00\x00\x00\xad\xad\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\xad\x00\x00\x00\x00\x00\xad\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\x00\x00\x00\x00\x00\x00\x00\xad\xad\xad\x00\xd7\x00\xd7\xad\xad\xad\xad\xad\x00\xad\xad\xad\xad\xad\xad\x00\xd7\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xd7\xff\xd7\xd7\xd7\xd7\xd7\xd7\x00\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xff\xff\xff\xff\xff\xff\xff\x00\xd7\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xd7\xd7\xff\xff\xff\xff\xff\xff\xff")
+      up_button.set_paint(paint)
+      panel_4.add(up_button)
+      new_button := IconButton()
+      new_button.set_size("26", "26")
+      new_button.set_align("l", "c")
+      new_button.clear_constraints()
+      paint := TextPaint("New dir")
+      new_button.set_tooltip(paint)
+      new_button.connect(self.on_new_button, Event.ACTION)
+      new_button.set_no_click_focus("t")
+      new_button.set_toggles("f")
+      paint := ImagePaint()
+      paint.set_image("16,c6,\xff\xff,,,,,,,,,,\xff\xff\xff\xff\xff\xff,\xd7\xd7\xd7\xd7\xd7\xd7\xd7,,\xd7\xff\xff\xff\xff\xff,\xd7\xad\xad\xad\xad\xad,\xad\xd7,\xff\xff\xff\xff\xff,\xd7\xad\xd7\xd7\xd7\xd7\xad,\xad,\xd7\xff\xff\xff\xff,\xd7\xad\xd7\xd7\xd7\xd7\xd7\xad,\xad,\xff\xff\xff\xff,\xd7\xad\xd7\xd7\xd7,\xd7\xd7\xad,,\xd7\xff\xff\xff,\xd7\xad\xd7,\xd7,\xd7,\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xd7\xd7,,,\xd7\xd7\xad,\xd7\xff\xff\xff,\xd7\xad,,,,,,,\xad,\xd7\xff\xff\xff,\xd7\xad\xd7\xd7,,,\xd7\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xd7,\xd7,\xd7,\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xd7\xd7\xd7,\xd7\xd7\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xad,\xd7\xff\xff\xff,\xd7\xad\xad\xad\xad\xad\xad\xad\xad\xad,\xd7\xff\xff\xff,,,,,,,,,,,,\xd7\xff\xff\xff\xff\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xd7\xff")
+      new_button.set_paint(paint)
+      panel_4.add(new_button)
+      refresh_button := IconButton()
+      refresh_button.set_size("26", "26")
+      refresh_button.set_align("l", "c")
+      refresh_button.clear_constraints()
+      paint := TextPaint("Refresh")
+      refresh_button.set_tooltip(paint)
+      refresh_button.connect(self.on_refresh_button, Event.ACTION)
+      refresh_button.set_no_click_focus("t")
+      refresh_button.set_toggles("f")
+      paint := ImagePaint()
+      paint.set_image("16,c6,\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff22\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff2]]2\xff\xff\xff\xff2222\xff\xff\xff2\xb2]\xb2\xb22\xd7\xff\xff2]\xb22\xd7\xff\xff22]\xb222\xd7\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2]]2\xd7\xff\xff\xff2]\xb22\xd7\xff\xff\xff2\xb2]]2222]\xb2\xb22\xd7\xff\xff\xff\xff2\xb2\xb2]]]]\xb2\xb22\xd7\xff\xff\xff\xff\xff\xff22\xb2\xb2\xb2\xb222\xd7\xff\xff\xff\xff\xff\xff\xff\xff\xff2222\xd7\xd7\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xd7\xd7\xd7\xff\xff\xff\xff\xff\xff")
+      refresh_button.set_paint(paint)
+      panel_4.add(refresh_button)
+      self.add(panel_4)
+      tree := Tree()
+      tree.set_size(364, 217)
+      tree.clear_constraints()
+      tree.set_constraint("eol", "")
+      tree.set_constraint("x_fill", "")
+      tree.set_constraint("x_weight", "1")
+      tree.set_constraint("y_fill", "")
+      tree.set_constraint("y_weight", "1")
+      tree.connect(self.on_tree_expansion, Event.TREE_NODE_EXPANSION)
+      tree.connect(self.on_tree_selection, Event.SELECTION_CHANGED)
+      tree.set_select_mode(Select.ONE)
+      tree.set_show_root("f")
+      self.add(tree)
+      dir := EditList()
+      dir.set_size("150")
+      dir.set_align("l", "b")
+      dir.clear_constraints()
+      dir.set_constraint("eol", "")
+      dir.set_constraint("x_align", "l")
+      dir.set_constraint("x_fill", "")
+      dir.set_constraint("x_weight", "1")
+      self.set_focus(dir.find_focus())
+      dir.connect(self.on_dir, Event.ACTION)
+      dir.connect(self.on_dir, Event.SELECTION_CHANGED)
+      dir.set_selection_list([""])
+      self.add(dir)
+      show_hidden_cb := CheckBox()
+      show_hidden_cb.clear_constraints()
+      show_hidden_cb.set_constraint("eol", "")
+      show_hidden_cb.set_constraint("x_align", "l")
+      show_hidden_cb.connect(self.on_show_hidden_cb, Event.ACTION)
+      show_hidden_cb.set_toggles("t")
+      paint_1 := TextPaint("Show hidden directories")
+      show_hidden_cb.set_paint(paint_1)
+      self.add(show_hidden_cb)
+      panel_3 := Panel()
+      panel_3.clear_constraints()
+      panel_3.set_constraint("x_fill", "")
+      panel_3.set_constraint("x_weight", "1")
+      layout_4 := GridLayout()
+      layout_4.set_doi(0)
+      layout_4.set_extra("cells")
+      panel_3.set_layout(layout_4)
+      okay_button := TextButton()
+      okay_button.set_align("l", "b")
+      okay_button.clear_constraints()
+      okay_button.connect(self.on_okay_button, Event.ACTION)
+      okay_button.set_toggles("f")
+      paint := TextPaint("Okay")
+      okay_button.set_paint(paint)
+      panel_3.add(okay_button)
+      cancel_button := TextButton()
+      cancel_button.set_align("l", "b")
+      cancel_button.clear_constraints()
+      cancel_button.connect(self.on_cancel_button, Event.ACTION)
+      cancel_button.set_toggles("f")
+      paint := TextPaint("Cancel")
+      cancel_button.set_paint(paint)
+      panel_3.add(cancel_button)
+      message_label := Label()
+      message_label.set_size("130")
+      message_label.set_align("l", "b")
+      message_label.set_wattrib("fg", "red")
+      message_label.clear_constraints()
+      message_label.set_constraint("x_align", "l")
+      message_label.set_constraint("x_fill", "")
+      message_label.set_constraint("x_weight", "1")
+      paint := TextPaint("")
+      message_label.set_paint(paint)
+      panel_3.add(message_label)
+      self.add(panel_3)
+      layout_7 := GridLayout()
+      layout_7.set_extra("cells")
+      self.set_layout(layout_7)
+   end
+end
+
+
+### Ivib-v2 layout: layouts/$.layout
+
+
+

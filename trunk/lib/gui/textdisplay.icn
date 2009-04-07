@@ -1,0 +1,304 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util
+
+#
+# This class displays a list of strings.
+#
+class TextDisplay(LineBasedScrollArea)
+   public
+      contents, 
+      wrap_mode,
+      split_words_flag,
+      view_list, 
+      long_line,
+      line_splitter,
+      tab_width
+
+   public calculate_line_count()
+      if /view_list then
+         create_view_list()
+      return *self.view_list
+   end
+
+   #
+   # Set the data to be displayed.
+   # @param x  The list of data.
+   #
+   public set_contents(x)
+      self.contents := x
+      contents_changed()
+   end
+
+   public finally()
+      cast(self,LineBasedScrollArea).finally()
+      # In case the component changes the contents and is then re-inited.
+      clear_view_list()
+   end
+
+   #
+   # Call this method if the contents list, previously
+   # set with {set_contents()}, has changed.
+   #
+   public contents_changed()
+      clear_view_list()
+      compute_and_invalidate()
+   end
+
+   #
+   # Clear the view list, forcing it to be re-created next
+   # time it's needed.
+   # 
+   private clear_view_list()
+      view_list := long_line := &null
+      invalidate_subject_width()
+      invalidate_line_count()
+   end
+
+   #
+   # Run through the view list looking for the longest line.
+   # 
+   private find_long_line()
+      local v
+      long_line := view_list[1] | &null
+      every v := !view_list do {
+         if v.tw > long_line.tw then
+            long_line := v
+      }
+   end
+
+   #
+   # Update the view list, given that the contents have changed.
+   # This takes care to minimize the work that has to be done.  The
+   # first param is an index into the contents list.  The second param
+   # indicates some view_list lines corresponding to those beginning
+   # with index should be removed; the third param says that some should
+   # be added.
+   #
+   # Any subject_width/line_count invalidations are done by the caller (or
+   # end_handle).
+   #
+   public update_view_list(index, del, add)
+      local vi, i, pos, j, v, p, s
+
+      # We allow adding new lines past the end of the current view_list.
+      if del = 0 & ((*view_list = 0 & index = 1) | (index = view_list[-1].index + 1)) then
+         vi := *view_list + 1
+      else {
+         vi := get_view_list_index(1, index) | syserr("No such view index:" || index)
+         # Do the deletions
+         while view_list[vi].index <= index + del - 1 do {
+            if view_list[vi] === long_line then
+               long_line := &null
+            delete(view_list, vi)
+         }
+         # Did we just get rid of long_line; if so get it again.
+         if /long_line then
+            find_long_line()
+      }
+
+      # Now do the additions
+      every i := index to index + add - 1 do {
+         pos := 1
+         s := self.contents[i]
+         every j := line_splitter.split(s) do {
+            p := s[pos:j]
+            v := ViewLine(i, p, pos, j - 1, text_width_ex(view.cbwin, p,,, self.tab_width))
+            insert(view_list, vi, v)
+            if /long_line | (v.tw > long_line.tw) then
+               long_line := v
+            pos := j
+            vi +:= 1
+         }
+      }
+
+      #
+      # Adjust index values
+      #
+      if del ~= add then
+         every view_list[vi to *view_list].index +:= (add - del)
+   end
+
+   #
+   # Append a line of text and go to the bottom of the content.
+   #
+   public log(s, max)
+      local n
+      if is_live() then {
+         put(self.contents, s)
+         update_view_list(*self.contents, 0, 1)
+         if (n := *self.contents - \max) > 0 then {
+            every 1 to n do
+               pop(self.contents)
+            update_view_list(1, n, 0)
+         }
+         invalidate_line_count()
+         invalidate_subject_width()
+         compute_and_invalidate()
+         goto_last(get_line_count())
+      } else {
+         put(self.contents, s)
+         while *self.contents > \max do
+            pop(self.contents)
+      }
+   end
+
+   #
+   # Return the contents of the {ScrollArea}
+   #
+   public get_contents()
+      return self.contents
+   end
+
+   public calculate_line_height()
+      return view.cbwin.attrib("fheight")
+   end
+
+   public calculate_subject_width()
+      if /view_list then
+         create_view_list()
+      # self.long_line will be null if contents is the empty list.
+      return (\self.long_line).tw | 0
+   end
+
+   public draw_line(xp, yp, lh, i)
+      draw_string_ex(view.cbwin, xp, yp, detab(view_list[i].str, self.tab_width + 1))
+   end
+
+   #
+   # Create the view_list from the contents.
+   # 
+   private create_view_list()
+      local s, i, pos, j, p
+
+      view_list := []
+      every i := 1 to *self.contents do {
+         pos := 1
+         s := self.contents[i]
+         every j := line_splitter.split(s) do {
+            p := s[pos:j]
+            put(view_list, ViewLine(i, p, pos, j - 1, 
+                                    text_width_ex(view.cbwin, p,,, self.tab_width)))
+            pos := j
+         }
+      }
+      find_long_line()
+   end
+
+   #
+   # Return the index into view_list containing the
+   # content position x, y.  Binary search is used.
+   # 
+   private get_view_list_index(x, y)
+      local i, j, mid, v
+      i := 1
+      j := *view_list
+      while i <= j do {
+         mid := (i+j) / 2
+         v := view_list[mid]
+         if (v.index = y) & (v.first <= x <= v.last) then
+            return mid
+         if (v.index < y) | (v.index = y & v.last < x) then
+            i := mid + 1
+         else
+            j := mid - 1
+      }
+   end
+
+   public set_internal_fields()
+      local had_vsb
+      had_vsb := self.vsb
+      cast(self,LineBasedScrollArea).set_internal_fields()
+      if \wrap_mode == "width" & had_vsb ~=== self.vsb then {
+         clear_view_list()
+         set_internal_fields()
+      }
+   end
+
+   #
+   # Set the tab width to use.  Default is set from the style object.
+   #
+   public set_tab_width(n)
+      self.tab_width := n
+      if is_live() then {
+         clear_view_list()
+         compute_and_invalidate()
+      }
+   end
+
+   public layout()
+      if \wrap_mode == "width" then
+         clear_view_list()
+      cast(self,ScrollArea).layout()
+   end
+
+   #
+   # Set the word-wrap mode, which should be one of the following
+   # values :-
+   #
+   # &null, "false", "off", "no", meaning don't do word-wrap (the default).
+   #
+   # an integer (eg 20), meaning wrap at that line length.
+   #
+   # "width", meaning wrap at the width of the component.
+   #
+   public set_wrap_mode(s)
+      local wc
+      self.wrap_mode := s
+      if /s | s == ("" | "false" | "off" | "no") then
+         line_splitter := DefaultLineSplitter(self)
+      else if wc := integer(s) then
+         line_splitter := ColumnLineSplitter(self, wc)
+      else if s == "width" then
+         line_splitter := WidthLineSplitter(self)
+      else
+         runerr("Bad wrap mode", s)
+
+      if is_live() then {
+         clear_view_list()
+         compute_and_invalidate()
+      }
+   end
+
+   #
+   # Indicate, if wrapping, whether to split words or not (default no).
+   #
+   public set_split_words(s)
+      self.split_words_flag := to_flag(s)
+      if is_live() then {
+         clear_view_list()
+         compute_and_invalidate()
+      }
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "wrap_mode": set_wrap_mode(f.string_val())
+         "split_words": set_split_words(f.flag_val())
+         "tab_width": set_tab_width(f.int_val())
+         "contents" : set_contents(f.text_list_val())
+         default: return cast(self,LineBasedScrollArea).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,LineBasedScrollArea).new()
+      tab_width := Gui.TAB_WIDTH
+      set_contents([])
+      set_wrap_mode("off")
+      use_default_keys()
+      set_fields(a)
+      return
+   end
+end
+
+

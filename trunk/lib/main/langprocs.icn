@@ -1,0 +1,686 @@
+package lang
+
+import io
+
+#
+# Generate the record names for a record.  The results are undefined for a
+# non-record type of object.
+#
+procedure generate_record_names(object)
+   local i
+   every i := 1 to *object do {
+      name(object[i]) ? {
+         tab(upto('.'))
+         move(1)
+         suspend tab(0)
+      }
+   }
+end
+
+#
+# Convert the object to string, descending structures to the given depth
+#
+# @param o       The object to be converted.
+# @param indent  Output newlines and indentation to show the object structure
+# @param depth   The depth of recursion; default is all levels
+#
+procedure to_string(o, indent, depth)
+   local sb
+   sb := RamStream()
+   ObjectOutputStream(sb, indent, depth).traverse(o)
+   return sb.done()
+end
+
+#
+# Like to_string, but send the output direct to FileStream.stdout.
+#
+# @param o       The object to be output.
+# @param indent  Output newlines and indentation to show the object structure
+# @param depth   The depth of recursion; default is all levels
+#
+procedure to_stdout(o, indent, depth)
+   return ObjectOutputStream(FileStream.stdout, indent, depth).traverse(o)
+end
+
+#
+# Like to_string, but send the output direct to FileStream.stderr.
+#
+# @param o       The object to be output.
+# @param indent  Output newlines and indentation to show the object structure
+# @param depth   The depth of recursion; default is all levels
+#
+procedure to_stderr(o, indent, depth)
+   return ObjectOutputStream(FileStream.stdout, indent, depth).traverse(o)
+end
+
+class ObjectOutputStream(Stream)
+   private readable
+      depth,
+      indent,
+      level,
+      ilevel
+      
+   private
+      stuff,
+      seen, 
+      f
+
+   public out(s)
+      stuff := 1
+      return f.out(s)
+   end
+
+   public get_mode()
+      return WRITE
+   end
+
+   public nl()
+      if \stuff then {
+         write() | fail
+         writes(repl(" ", indent * ilevel)) | fail
+         stuff := &null
+      }
+      return
+   end
+
+   public iplus()
+      ilevel +:= 1
+   end
+
+   public iminus()
+      ilevel -:= 1
+   end
+
+   public traverse(o)
+      local ty, s, i, e, pairs, mp, sep, desc
+
+      if s := \seen[o] then
+         return writes("ref ", s)
+
+      ty := type(o)
+      level +:= 1
+      if /depth | (level <= depth) then
+         desc := 1
+
+      case ty of {
+         "record" : {
+            s := ty || " " || subtype(o) || "#" || serial(o)
+            seen[o] := s
+            if /desc then 
+               writes(s) | fail
+            else if simple{!o} then {
+               writes(s, "(") | fail
+               i := 1
+               every s := generate_record_names(o) do {
+                  if i > 1 then
+                     writes(";") | fail
+                  writes(s, "=") | fail
+                  traverse(o[i]) | fail
+                  i +:= 1
+               }
+               writes(")") | fail
+            } else {
+               nl() | fail
+               writes(s, "(") | fail
+               iplus()
+               i := 1
+               every s := generate_record_names(o) do {
+                  nl() | fail
+                  iplus()
+                  writes(s, "=") | fail
+                  traverse(o[i]) | fail
+                  iminus()
+                  i +:= 1
+               }
+               iminus()
+               nl() | fail
+               writes(")") | fail
+            }
+         }
+
+         "object" : {
+            s := type(o) || " " || subtype(o) || "#" || serial(o)
+            seen[o] := s
+            if /desc then
+               writes(s) | fail
+            else if mp := Class.getf(o, "object_output", 1) then
+               mp(self) | fail
+            else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
+               writes(s, "(") | fail
+               every i := 1 to Class.get_n_instance_fields(o) do {
+                  if i > 1 then
+                     writes(";") | fail
+                  writes(Class.get_field_name(o, i), "=") | fail
+                  traverse(Class.getf(o, i)) | fail
+                  i +:= 1
+               }
+               writes(")") | fail
+            } else {
+               nl() | fail
+               writes(s, "(") | fail
+               iplus()
+               every i := 1 to Class.get_n_instance_fields(o) do {
+                  nl() | fail
+                  writes(Class.get_field_name(o, i), "=") | fail
+                  iplus()
+                  traverse(Class.getf(o, i)) | fail
+                  iminus()
+                  i +:= 1
+               }
+               iminus()
+               nl() | fail
+               writes(")") | fail
+            }
+         }
+
+         "set" : {
+            s := ty || "#" || serial(o)
+            seen[o] := s
+            if /desc then
+               writes(s) | fail
+            else if simple{!o} then {
+               writes(s, "{") | fail
+               every e := !o do {
+                  if \sep then
+                     writes(",") | fail
+                  traverse(e) | fail
+                  sep := 1
+               }
+               writes("}") | fail
+            } else {
+               nl() | fail
+               writes(s, "{") | fail
+               iplus()
+               every e := !o do {
+                  if \sep then
+                     writes(",") | fail
+                  nl() | fail
+                  traverse(e) | fail
+                  sep := 1
+               }
+               iminus()
+               nl() | fail
+               writes("}") | fail
+            }
+         }
+
+         "list" : {
+            s := ty || "#" || serial(o)
+            seen[o] := s
+            if /desc then
+               writes(s) | fail
+            else if simple{!o} then {
+               writes(s, "[") | fail
+               every e := !o do {
+                  if \sep then
+                     writes(",") | fail
+                  traverse(e) | fail
+                  sep := 1
+               }
+               writes("]") | fail
+            } else {
+               nl() | fail
+               writes(s, "[") | fail
+               iplus()
+               every e := !o do {
+                  if \sep then
+                     writes(",") | fail
+                  nl() | fail
+                  traverse(e) | fail
+                  sep := 1
+               }
+               iminus()
+               nl() | fail
+               writes("]")
+            }
+         }
+
+         "table" : {
+            s := ty || "#" || serial(o)
+            seen[o] := s
+            if /desc then
+               writes(s) | fail
+            else if simple{o[[]] | key(o) | !o} then {
+               writes(s) | fail
+               if \o[[]] then {
+                  writes(";def=")
+                  traverse(o[[]]) | fail
+               }
+               pairs := sort(o)
+               writes("{") | fail
+               every e := !pairs do {
+                  if \sep then
+                     writes(";") | fail
+                  traverse(e[1]) | fail
+                  writes("->") | fail
+                  traverse(e[2]) | fail
+                  sep := 1
+               }
+               writes("}") | fail
+            } else {
+               nl() | fail
+               writes(s) | fail
+               if \o[[]] then {
+                  writes(";def=") | fail
+                  iplus()
+                  traverse(o[[]]) | fail
+                  iminus()
+               }
+               pairs := sort(o)
+               writes("{") | fail
+               iplus()
+               every e := !pairs do {
+                  nl() | fail
+                  traverse(e[1]) | fail
+                  writes("->") | fail
+                  iplus()
+                  traverse(e[2]) | fail
+                  iminus()
+               }
+               iminus()
+               nl() | fail
+               writes("}") | fail
+            }
+         }
+
+         "methp" : {
+            if /desc then 
+               writes("methp()") | fail
+            else if simple{Class.get_methp_object(o)} then {
+               writes("methp(") | fail
+               traverse(Class.get_methp_object(o)) | fail
+               writes(",", image(Class.get_methp_proc(o)), ")") | fail
+            } else {
+               nl() | fail
+               writes("methp(") | fail
+               iplus()
+               nl() | fail
+               traverse(Class.get_methp_object(o)) | fail
+               writes(",") | fail
+               nl() | fail
+               writes(image(Class.get_methp_proc(o))) | fail
+               iminus()
+               nl() | fail
+               writes(")")
+            }
+         }
+
+         "cast" : {
+            if /desc then 
+               writes("cast()") | fail
+            else if simple{Class.get_cast_object(o)} then {
+               writes("cast(") | fail
+               traverse(Class.get_cast_object(o)) | fail
+               writes(",", image(Class.get_cast_class(o)), ")") | fail
+            } else {
+               nl() | fail
+               writes("cast(") | fail
+               iplus()
+               nl() | fail
+               traverse(Class.get_cast_object(o)) | fail
+               writes(",") | fail
+               nl() | fail
+               writes(image(Class.get_cast_class(o))) | fail
+               iminus()
+               nl() | fail
+               writes(")")
+            }
+         }
+
+         default : 
+            writes(image(o)) | fail
+      }
+
+      level -:= 1
+      return
+   end
+   
+   public object_start(o)
+      return writes(type(o), " ", subtype(o), "#", serial(o), "(")
+   end
+
+   public object_end(o)
+      return writes(")")
+   end
+
+   public object_string(o, s)
+      object_start(o) | fail
+      writes(s) | fail
+      return object_end(o)
+   end
+
+   public object_selected(o, fields[])
+      local s, sep
+      if simple{Class.getf(o, !fields)} then {
+         object_start(o) | fail
+         every s := !fields do {
+            if \sep then
+               writes(";") | fail
+            writes(s, "=") | fail
+            traverse(Class.getf(o, s)) | fail
+            sep := 1
+         }
+         object_end(o) | fail
+      } else {
+         nl() | fail
+         object_start(o) | fail
+         iplus()
+         every s := !fields do {
+            nl() | fail
+            writes(s, "=") | fail
+            iplus()
+            traverse(Class.getf(o, s)) | fail
+            iminus()
+         }
+         iminus()
+         nl() | fail
+         object_end(o) | fail
+      }
+      return
+   end
+
+   public simple(x)
+      local e
+      static s
+      initial s := set("null", "string", "cset", "integer", "class",
+                       "real", "co-expression", "constructor", "procedure")
+      if /indent | (level = \depth) then
+         return
+      while e := @x do
+         member(seen, e) | member(s, type(e)) | fail
+      return 
+   end
+
+   public new(f, indent, depth)
+      self.seen := table()
+      self.level := 0
+      self.ilevel := 0
+      self.depth := depth
+      self.indent := indent
+      self.f := f
+      f.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", f)
+      return
+   end
+end
+
+#
+# Clone the given object
+#
+procedure clone(o, seen)
+   local e, ty, res, i, mp
+
+   /seen := table()
+
+   if res := \seen[o] then
+      return res
+
+   ty := type(o)
+
+   case ty of {
+      "object" : {
+         if mp := Class.getf(o, "object_clone", 1) then {
+            res := mp(seen)
+            seen[o] := res
+         } else {
+            #
+            # Create an instance
+            #
+            res := Class.create_raw(classof(o))
+            # The members of res may reference it...
+            seen[o] := res
+            every i := 1 to Class.get_n_instance_fields(res) do
+               Class.get(res, i) := clone(Class.get(o, i), seen)
+            Class.complete_raw(res)
+         }
+         return res
+      }
+
+      "record" : {
+         res := Constructor.get_constructor(o)()
+         seen[o] := res
+         every i := 1 to *o do
+            res[i] := clone(o[i], seen)
+         return res
+      }
+
+      "set" : {
+         res := set([])
+         seen[o] := res
+         every insert(res, clone(!o, seen))
+         return res
+      }
+
+      "list" : {
+         res := []
+         seen[o] := res
+         every put(res, clone(!o, seen))
+         return res
+      }
+
+      "table" : {
+         res := table(clone(o[[]], seen))
+         seen[o] := res
+         every e := !sort(o) do
+            res[clone(e[1], seen)] := clone(e[2], seen)
+         return res
+      }
+
+      default : 
+         return o
+   }
+end
+
+#
+# Compute a hash value for a string
+#
+procedure hash_string(s)
+   local n, i
+   n := *s
+   every i := ord(!s \ 10) do
+      n := 13 * n + i
+   return n
+end
+
+#
+# Return a hash code for this object.  For any two objects for which {equals} indicates
+# equality, the returned hash code should be the same.
+#
+procedure hash(x, depth)
+   local n, i, l, mp
+
+   /depth := 2
+   if depth = 0 then
+      return 0
+   
+   case type(x) of {
+      "object" : {
+         if mp := Class.getf(x, "object_hash", 1) then
+            return mp(depth)
+         l := n := Class.get_n_instance_fields(x)
+         if depth > 1 then {
+            every i := hash(Class.get(x, 1 to l) \ 10, depth - 1) do
+               n := 13 * n + i
+         }
+         return n
+      }
+
+      "record" | "list" : {
+         n := *x
+         if depth > 1 then {
+            every i := hash(!x \ 10, depth - 1) do
+               n := 13 * n + i
+         }
+         return n
+      }
+
+      "set" : {
+         n := *x
+         if depth > 1 then
+            every n +:= hash(!x, depth - 1)
+         return n
+      }
+
+      "table" : {
+         n := *x
+         if depth > 1 then {
+            n +:= hash(x[[]], depth - 1)
+            every n +:= hash(key(x), depth - 1)
+         }
+         return n
+      }
+      
+      "string" :
+         return hash_string(x)
+      
+      "ucs" :
+         return hash_string(string(x))
+
+      "cset" : {
+         n := *x
+         every i := Text.get_ord_range(x) do
+            n := 13 * n + i
+         return n
+      }
+
+      "integer" :
+         return abs(x)
+
+      "real" :
+         return hash_string(string(x))
+
+      "procedure" | "class" | "constructor" :
+         return hash_string(subtype(x))
+
+      "cast" :
+         return hash(Class.get_cast_object(x), depth - 1) +
+                      hash(Class.get_cast_class(x), depth - 1)
+
+      "methp" :
+         return hash(Class.get_methp_object(x), depth - 1) +
+                      hash(Class.get_methp_proc(x), depth - 1)
+
+      default :
+         return 0
+   }
+end
+
+#
+# Compare this object with another by recursively comparing all
+# members of the object.
+#
+procedure equals(x, y, seen)
+   if x === y then
+      return
+
+   type(x) == type(y) | fail
+
+   /seen := table()
+   if member(\seen[x], y) | member(\seen[y], x) then
+      return
+   /seen[x] := set()
+   insert(seen[x], y)
+   if equals_impl(x, y, seen) then
+      return
+   delete(seen[x], y)
+end
+
+procedure equals_impl(x, y, seen)
+   local i, mp
+   case type(x) of {
+      "object" : {
+         classof(x) === classof(y) | fail
+         if mp := Class.getf(x, "object_equals", 1) then
+            return mp(y, seen)
+         every i := 1 to Class.get_n_instance_fields(x) do 
+            equals(Class.get(x, i), Class.get(y, i), seen) | fail
+         return
+      }
+
+      "record" : {
+         *x = *y | fail
+         subtype(x) == subtype(y) | fail
+         every i := 1 to *x do
+            equals(x[i], y[i], seen) | fail
+         return
+      }
+
+      "list" : {
+         *x = *y | fail
+         every i := 1 to *x do
+            equals(x[i], y[i], seen) | fail
+         return
+      }
+
+      "set" : {
+         *x = *y | fail
+         return hash_and_check(x, y, seen)
+      }
+
+      "table" : {
+         *x = *y | fail
+         equals(x[[]], y[[]], seen) | fail
+         return hash_and_check(sort(x), sort(y), seen)
+      }
+
+      "methp": {
+         Class.get_methp_proc(x) === Class.get_methp_proc(y) | fail
+         equals(Class.get_methp_object(x),
+                Class.get_methp_object(y), seen) | fail
+         return
+      }
+
+      "cast": {
+         Class.get_cast_class(x) === Class.get_cast_class(y) | fail
+         equals(Class.get_cast_object(x),
+                Class.get_cast_object(y), seen) | fail
+         return
+      }
+
+      default : {
+         # Since x ~=== y, we just fail for all other types.
+         fail
+      }
+   }
+end
+
+#
+# Check that all elements of s2 are in s1, by using a table indexed on
+# hash-codes.
+#
+procedure hash_and_check(s1, s2, seen)
+   local t, e, i
+   t := table()
+   every e := !s1 do {
+      i := hash(e)
+      /t[i] := []
+      put(t[i], e)
+   }
+   every e := !s2 do
+      in_bucket(e, \t[hash(e)], seen) | fail
+   return
+end
+
+#
+# Search for element e in hash bucket l.  If found, the bucket element is
+# removed, so that it is matched only once.
+#
+procedure in_bucket(e, l, seen)
+   local i
+   every i := 1 to *l do {
+      if equals(e, l[i], seen) then {
+         delete(l, i)
+         return
+      }
+   }
+end
+
+class NoCopy()
+   private final object_clone()
+      return self
+   end
+
+   private final object_encode()
+      &why := "Not encodable: " || image(self)
+   end
+end
+

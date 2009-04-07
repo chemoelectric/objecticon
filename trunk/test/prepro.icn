@@ -1,0 +1,186 @@
+#SRC: V9GEN
+
+import io
+
+# test various preprocessor features
+
+# test $define and various whitespace uses
+$define abc 123
+ $  define  def   456
+$define	ghi 789
+$ define  ghi   789	# duplicate definition should be ok if same
+$undef ghi
+$define ghi 987		# different definition should be ok after $undef
+
+# test (when used later) that substituted text is rescanned
+$define yy (xx+xx)
+$define xx 1
+
+# test undefinition of something that isn't defined
+$undef notdefined
+
+# test ifdef of undefined symbol, and successful skip past bogus directive
+$ifdef notdef
+$BOGUS
+$endif
+
+# test ifdef of defined symbol, and null test body
+$ifdef abc
+$endif
+
+# test ifndef of defined symbol
+$ifndef abc
+$error -- abc not defined
+$endif#comment on if terminator
+
+
+# main test program
+
+procedure main()
+   # write values from definitions; test no substitution in string constant
+   write("abc,def,ghi,xx,yy: ", abc, " ", def, " ", ghi, " ", xx, " ", yy)
+
+   # test $include by including a code fragment from prepro.dat
+   $include "prepro.dat"
+
+   # write values defined in prepro.dat
+   write("xyzzy: ", xyzzy)
+   write("abc,def,ghi,xx,yy: ", abc, " ", def, " ", ghi, " ", xx, " ", yy)
+
+   # test that predefined symbols agree with &features
+   # (if defined, first argument is 1, else it's null)
+$ifdef _AMIGA
+   precheck(_AMIGA,		"Amiga")
+$endif
+$ifdef _ACORN
+   precheck(_ACORN,		"Acorn Archimedes")
+$endif
+$ifdef _ATARI
+   precheck(_ATARI,		"Atari ST")
+$endif
+$ifdef _CMS
+   precheck(_CMS,		"CMS")
+$endif
+$ifdef _MACINTOSH
+   precheck(_MACINTOSH,		"Macintosh")
+$endif
+$ifdef _MSDOS_386
+   precheck(_MSDOS_386,		"MS-DOS/386")
+$endif
+$ifdef _MSDOS
+   precheck(_MSDOS,		"MS-DOS")
+$endif
+$ifdef _MVS
+   precheck(_MVS,		"MVS")
+$endif
+$ifdef _OS2
+   precheck(_OS2,		"OS/2")
+$endif
+$ifdef _PORT
+   precheck(_PORT,		"PORT")
+$endif
+$ifdef _UNIX
+   precheck(_UNIX,		"UNIX")
+$endif
+$ifdef _VMS
+   precheck(_VMS,		"VMS")
+$endif
+$ifdef _COMPILED
+   precheck(_COMPILED,		"compiled")
+$endif
+$ifdef _INTERPRETED
+   precheck(_INTERPRETED,	"interpreted")
+$endif
+$ifdef _JAVA
+   precheck(_JAVA,		"Java")
+$endif
+$ifdef _ASCII
+   precheck(_ASCII,		"ASCII", 1)
+$endif
+$ifdef _EBCDIC
+   precheck(_EBCDIC,		"EBCDIC", 1)
+$endif
+$ifdef _CALLING
+   precheck(_CALLING,		"calling to Icon")
+$endif
+$ifdef _CO_EXPRESSIONS
+   precheck(_CO_EXPRESSIONS,	"co-expressions")
+$endif
+$ifdef _DIRECT_EXECUTION
+   precheck(_DIRECT_EXECUTION,	"direct execution")
+$endif
+$ifdef _EVENT_MONITOR
+   precheck(_EVENT_MONITOR,	"event monitoring")
+$endif
+$ifdef _EXECUTABLE_IMAGES
+   precheck(_EXECUTABLE_IMAGES,	"executable images")
+$endif
+$ifdef _EXTERNAL_FUNCTIONS
+   precheck(_EXTERNAL_FUNCTIONS,"external functions")
+$endif
+$ifdef _KEYBOARD_FUNCTIONS
+   precheck(_KEYBOARD_FUNCTIONS,"keyboard functions")
+$endif
+$ifdef _LARGE_INTEGERS
+   precheck(_LARGE_INTEGERS,	"large integers")
+$endif
+$ifdef _MEMORY_MONITOR
+   precheck(_MEMORY_MONITOR,	"memory monitoring")
+$endif
+$ifdef _MULTITASKING
+   precheck(_MULTITASKING,	"multiple programs")
+$endif
+$ifdef _MULTIREGION
+   precheck(_MULTIREGION,	"multiple regions")
+$endif
+$ifdef _PIPES
+   precheck(_PIPES,		"pipes")
+$endif
+$ifdef _RECORD_IO
+   precheck(_RECORD_IO,		"record I/O")
+$endif
+$ifdef _STRING_INVOKE
+   precheck(_STRING_INVOKE,	"string invocation")
+$endif
+$ifdef _SYSTEM_FUNCTION
+   precheck(_SYSTEM_FUNCTION,	"system function")
+$endif
+$ifdef _VISUALIZATION
+   precheck(_VISUALIZATION,	"visualization support")
+$endif
+$ifdef _WINDOW_FUNCTIONS
+   precheck(_WINDOW_FUNCTIONS,	"window functions")
+$endif
+$ifdef _X_WINDOW_SYSTEM
+   precheck(_X_WINDOW_SYSTEM,	"X Windows")
+$endif
+$ifdef _PRESENTATION_MGR
+   precheck(_PRESENTATION_MGR,	"Presentation Manager")
+$endif
+$ifdef _ARM_FUNCTIONS
+   precheck(_ARM_FUNCTIONS,	"Archimedes extensions")
+$endif
+$ifdef _DOS_FUNCTIONS
+   precheck(_DOS_FUNCTIONS,	"MS-DOS extensions")
+$endif
+   write("done")
+end
+
+
+#  precheck (v, s, p) -- check that s is in &features iff v is non-null;
+#			 always print presence/absence if p is non-null
+
+procedure precheck (v, s, p)
+   if s == &features then {
+      if /v then
+	 write ("error: no predefined symbol for ", s) 
+      else if \p then 
+	 write ("found feature: ", s)
+      }
+   else {
+      if \v then
+	 write ("error: unexpected predefined symbol for ", s) 
+      else if \p then 
+	 write ("no feature:    ", s)
+      }
+end
