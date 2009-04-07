@@ -15,7 +15,7 @@ static void sweep		(struct b_coexpr *ce);
 static void sweep_stk	(struct b_coexpr *ce);
 static void reclaim		(void);
 static void cofree		(void);
-static void scollect		(word extra);
+static void scollect		(void);
 static int     qlcmp		(dptr  *q1,dptr  *q2);
 static void adjust		(char *source, char *dest);
 static void compact		(char *source);
@@ -28,12 +28,11 @@ static void markprogram	(struct progstate *pstate);
  * Variables
  */
 
-dptr *quallist;                 /* string qualifier list */
-dptr *qualfree;                 /* qualifier list free pointer */
-dptr *equallist;                /* end of qualifier list */
-
-int qualfail;                   /* flag: qualifier list overflow */
+static dptr *quallist;                 /* string qualifier list */
+static dptr *qualfree;                 /* qualifier list free pointer */
+static dptr *equallist;                /* end of qualifier list */
 static int do_checkstack;
+int collecting;
 
 
 /*
@@ -283,48 +282,6 @@ uword segsize[] = {
 
 
 /*
- * initalloc - initialization routine to allocate memory regions
- */
-
-void initalloc(codesize,p)
-struct progstate *p;
-word codesize;
-   {
-   struct region *ps, *pb;
-
-   /*
-    * Allocate icode region
-    */
-   if (codesize)
-       Protect(code = malloc(codesize),
-               error("insufficient memory, corrupted icode file, or wrong platform"));
-
-   /*
-    * Set up allocated memory.	The regions are:
-    *	Static memory region (not used)
-    *	Allocated string region
-    *	Allocate block region
-    *	Qualifier list
-    */
-
-   ps = p->stringregion;
-   Protect(ps->free = ps->base = malloc(ps->size),
-           error("insufficient memory for string region"));
-   ps->end = ps->base + ps->size;
-
-   pb = p->blockregion;
-   Protect(pb->free = pb->base = malloc(pb->size),
-           error("insufficient memory for block region"));
-   pb->end = pb->base + pb->size;
-
-   if (p == &rootpstate) {
-       Protect(quallist = malloc(qualsize),
-               error("insufficient memory for qualifier list"));
-      equallist = (dptr *)((char *)quallist + qualsize);
-      }
-   }
-
-/*
  * collect - do a garbage collection of currently active regions.
  */
 
@@ -375,6 +332,9 @@ int region;
    if (sp == NULL)
       return 0;
 
+   collecting = 1;
+
+
    /*
     * Sync the values (used by sweep) in the coexpr block for &current
     *  with the current values.
@@ -387,10 +347,17 @@ int region;
    cp->es_sp = sp;
 
    /*
+    * First time through init quallist
+    */
+    if (!quallist) {
+        Protect(quallist = malloc(qualsize), fatalerr(304, NULL));
+        equallist = (dptr *)((char *)quallist + qualsize);
+    }
+
+   /*
     * Reset qualifier list.
     */
    qualfree = quallist;
-   qualfail = 0;
 
    /*
     * Check for stack overflow if we are collecting from outside the system C stack.
@@ -459,6 +426,8 @@ int region;
       }
 #endif					/* instrument allocation events */
 
+   collecting = 0;
+
    return 1;
    }
 
@@ -470,8 +439,6 @@ static void markprogram(pstate)
 struct progstate *pstate;
    {
    struct descrip *dp;
-
-   /* printf("MARK PROGRAM %p\n",pstate); */
 
    PostDescrip(pstate->eventmask);
    PostDescrip(pstate->opcodemask);
@@ -529,19 +496,12 @@ dptr dp;
        *  necessary.
        */
       if (qualfree >= equallist) {
-
 	 /* reallocate a new qualifier list that's twice as large */
-	 newqual = (char *)realloc((char *)quallist, (2 * qualsize));
-	 if (newqual) {
-	    quallist = (dptr *)newqual;
-	    qualfree = (dptr *)(newqual + qualsize);
-	    qualsize *= 2;
-	    equallist = (dptr *)(newqual + qualsize);
-	    }
-	 else {
-            qualfail = 1;
-            return;
-	    }
+         Protect(newqual = realloc(quallist, 2 * qualsize), fatalerr(304, NULL));
+         quallist = (dptr *)newqual;
+         qualfree = (dptr *)(newqual + qualsize);
+         qualsize *= 2;
+         equallist = (dptr *)(newqual + qualsize);
 
          }
       *qualfree++ = dp;
@@ -921,8 +881,7 @@ static void reclaim()
    /*
     * Collect the string space leaving it where it is.
     */
-   if (!qualfail)
-      scollect((word)0);
+   scollect();
 
    /*
     * Adjust the blocks in the block region in place.
@@ -981,8 +940,7 @@ static void cofree()
  *  descriptors rather than pointers to them.
  */
 
-static void scollect(extra)
-word extra;
+static void scollect()
    {
    register char *source, *dest;
    register dptr *qptr;
@@ -1032,7 +990,7 @@ word extra;
       /*
        * Relocate the string qualifier.
        */
-      StrLoc(**qptr) = StrLoc(**qptr) + DiffPtrs(dest,source) + (uword)extra;
+      StrLoc(**qptr) = StrLoc(**qptr) + DiffPtrs(dest,source);
       }
 
    /*

@@ -94,7 +94,7 @@ struct errtab errtab[] = {
 
     {302, "memory violation"},
     {303, "inadequate space for evaluation stack"},
-    {304, "inadequate space in qualifier list"},
+    {304, "inadequate space for qualifier list during garbage collection"},
     {305, "inadequate space for static allocation"},
     {306, "inadequate space in string region"},
     {307, "inadequate space in block region"},
@@ -103,6 +103,9 @@ struct errtab errtab[] = {
     {310, "inadequate co-expression C stack space during garbage collection"},
     {311, "main stack overflow"},
     {312, "stack overflow in co-expression"},
+    {313, "inadequate space for string region"},
+    {314, "inadequate space for block region"},
+    {315, "inadequate space for main program icode"},
 
     {401, "co-expressions not implemented"},
     {402, "program not compiled with debugging option"},
@@ -250,8 +253,14 @@ void err_msg(int n, dptr v)
             return;
         }
     }
-    else
+    else {
+        char *s = StrLoc(k_errortext);
+        int i = StrLen(k_errortext);
         fprintf(stderr, "\nRun-time error %d in startup code\n", n);
+        while (i-- > 0)
+            fputc(*s++, stderr);
+        fputc('\n', stderr);
+    }
 
     if (have_errval) {
         fprintf(stderr, "offending value: ");
@@ -264,9 +273,11 @@ void err_msg(int n, dptr v)
             abort();
         c_exit(EXIT_FAILURE);
     }
-    fprintf(stderr, "Traceback:\n");
-    tracebk(pfp, argp);
-    fflush(stderr);
+    if (!collecting) {
+        fprintf(stderr, "Traceback:\n");
+        tracebk(pfp, argp);
+        fflush(stderr);
+    }
 
     if (dodump > 1)
         abort();

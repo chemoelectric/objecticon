@@ -10,27 +10,10 @@
 #include "../h/opdefs.h"
 #include "../h/modflags.h"
 
-static	FILE	*readhdr	(char *name, struct header *hdr);
-static  void    initptrs        (struct progstate *p, struct header *h);
-static void initprogstate(struct progstate *p);
-/*
- * Prototypes.
- */
-
-
-/*
- * The following code is operating-system dependent [@init.01].  Declarations
- *   that are system-dependent.
- */
-
-#if PORT
-/* probably needs something more */
-Deliberate Syntax Error
-#endif					/* PORT */
-
-/*
- * End of operating-system specific code.
- */
+static FILE    *readhdr	(char *name, struct header *hdr);
+static void    initptrs (struct progstate *p, struct header *h);
+static void    initprogstate(struct progstate *p);
+static void    initalloc(struct progstate *p);
 
 #passthru #define OpDef(p,n,s,u) int Cat(O,p) (dptr cargp);
 #passthru #include "../h/odefs.h"
@@ -298,7 +281,6 @@ void icon_init(char *name)
      */
     curpstate = &rootpstate;
     progs = &rootpstate;
-    rootpstate.next = NULL;
     initprogstate(&rootpstate);
 
     rootpstate.Kywd_time_elsewhere = 0;
@@ -317,27 +299,12 @@ void icon_init(char *name)
         syserr("Icon configuration does not handle double alignment");
 #endif					/* Double */
 
-
     /*
-     * Catch floating-point traps and memory faults.
+     * Catch floating-point traps
      */
-
-/*
- * The following code is operating-system dependent [@init.02].  Set traps.
- */
-
-#if PORT
-    /* probably needs something */
-    Deliberate Syntax Error
-#endif					/* PORT */
-
 #if UNIX
     signal(SIGFPE, fpetrap);
 #endif					/* UNIX */
-
-/*
- * End of operating-system specific code.
- */
 
     if (!name)
         error("No interpreter file supplied");
@@ -379,15 +346,18 @@ void icon_init(char *name)
     coexprlim = Max((pmem/200) / stksize, CoexprLim);
     env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxWord);
 
-    /*
-     * Allocate memory for various regions.
-     */
-    initalloc(hdr.hsize,&rootpstate);
+    Protect(rootpstate.Code = malloc(hdr.hsize), fatalerr(315, NULL));
 
     /*
      * Establish pointers to icode data regions.		[[I?]]
      */
     initptrs(&rootpstate, &hdr);
+
+
+    /*
+     * Allocate memory for block & string regions.
+     */
+    initalloc(&rootpstate);
 
     /*
      * Allocate stack and initialize &main.
@@ -632,61 +602,6 @@ int pstrnmcmp(a,b)
     return strcmp(a->pstrep, b->pstrep);
 }
 
-/*
- * Initialize a loaded program.  Unicon programs will have an
- * interesting icodesize; non-Unicon programs will send a fake
- * icodesize (nonzero, perhaps good if longword-aligned) to alccoexp.
- */
-struct b_coexpr *initprogram(word icodesize, word stacksize,
-			     word stringsiz, word blocksiz)
-{
-    struct b_coexpr *coexp;
-    struct progstate *pstate;
-
-    MemProtect(coexp = alcprog(icodesize, stacksize));
-    pstate = coexp->program;
-
-    /*
-     * Initialize values.
-     */
-    pstate->hsize = icodesize;
-    pstate->parent= NULL;
-    pstate->next = progs;
-    progs = pstate;
-    initprogstate(pstate);
-    pstate->Kywd_time_elsewhere = millisec();
-    pstate->Kywd_time_out = 0;
-    pstate->K_current = pstate->K_main = coexp;
-
-    MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
-    MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
-    pstate->stringregion->size = stringsiz;
-    pstate->blockregion->size = blocksiz;
-
-    /*
-     * the local program region list starts out with this region only
-     */
-    pstate->stringregion->prev = NULL;
-    pstate->blockregion->prev = NULL;
-    pstate->stringregion->next = NULL;
-    pstate->blockregion->next = NULL;
-    /*
-     * the global region list links this region with curpstate's
-     */
-    pstate->stringregion->Gprev = curpstate->stringregion;
-    pstate->blockregion->Gprev = curpstate->blockregion;
-    pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
-    pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
-    if (curpstate->stringregion->Gnext)
-        curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
-    curpstate->stringregion->Gnext = pstate->stringregion;
-    if (curpstate->blockregion->Gnext)
-        curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
-    curpstate->blockregion->Gnext = pstate->blockregion;
-    initalloc(0, pstate);
-
-    return coexp;
-}
 
 /*
  * loadicode - initialize memory particular to a given icode file
@@ -710,9 +625,43 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     /*
      * Allocate memory for icode and the struct that describes it
      */
-    coexp = initprogram(hdr.hsize, stk, ss, bs);
-
+    MemProtect(coexp = alcprog(hdr.hsize, stk));
     pstate = coexp->program;
+
+    pstate->hsize = hdr.hsize;
+    pstate->parent= NULL;
+    pstate->next = progs;
+    progs = pstate;
+    initprogstate(pstate);
+    pstate->Kywd_time_elsewhere = millisec();
+    pstate->Kywd_time_out = 0;
+    pstate->K_current = pstate->K_main = coexp;
+
+    MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
+    MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
+    pstate->stringregion->size = ss;
+    pstate->blockregion->size = bs;
+
+    /*
+     * the local program region list starts out with this region only
+     */
+    pstate->stringregion->prev = NULL;
+    pstate->blockregion->prev = NULL;
+    pstate->stringregion->next = NULL;
+    pstate->blockregion->next = NULL;
+    /*
+     * the global region list links this region with curpstate's
+     */
+    pstate->stringregion->Gprev = curpstate->stringregion;
+    pstate->blockregion->Gprev = curpstate->blockregion;
+    pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
+    pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
+    if (curpstate->stringregion->Gnext)
+        curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
+    curpstate->stringregion->Gnext = pstate->stringregion;
+    if (curpstate->blockregion->Gnext)
+        curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
+    curpstate->blockregion->Gnext = pstate->blockregion;
 
     CMakeStr(name, &pstate->Kywd_prog);
     MakeInt(hdr.trace, &pstate->Kywd_trc);
@@ -726,6 +675,7 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
      */
     pstate->Code    = (char *)(pstate + 1);
     initptrs(pstate, &hdr);
+    initalloc(pstate);
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, pstate->Code);
 
@@ -740,6 +690,24 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
 
     return coexp;
 }
+
+/*
+ * initalloc - initialization routine to allocate string/block memory regions
+ */
+
+static void initalloc(struct progstate *p)
+{
+    struct region *ps, *pb;
+
+    ps = p->stringregion;
+    Protect(ps->free = ps->base = malloc(ps->size), fatalerr(313, NULL));
+    ps->end = ps->base + ps->size;
+
+    pb = p->blockregion;
+    Protect(pb->free = pb->base = malloc(pb->size), fatalerr(314, NULL));
+    pb->end = pb->base + pb->size;
+}
+
 
 static void initprogstate(struct progstate *p)
 {

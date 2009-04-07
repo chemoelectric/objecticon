@@ -732,7 +732,6 @@ char *f(int region, word nbytes)
 {
    struct region **pcurr, *curr, *rp;
    word want, newsize;
-   extern int qualfail;
 
    if (region == Strings)
       pcurr = &curstring;
@@ -828,8 +827,6 @@ char *f(int region, word nbytes)
     */
    if (region == Blocks)
       ReturnErrNum(307, 0);
-   else if (qualfail)
-      ReturnErrNum(304, 0);
    else
       ReturnErrNum(306, 0);
 }

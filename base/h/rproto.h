@@ -554,9 +554,6 @@ dptr u_read			(int fd, int n, dptr d);
    int	Ollist			(int nargs, Fargs);
    int	Omkrec			(int nargs, Fargs);
 
-      void	initalloc	(word codesize, struct progstate *p);
-
-
 void create_list(uword nslots, dptr d);
 void cstr2string(char *s, dptr d);
 void bytes2string(char *s, word len, dptr d);

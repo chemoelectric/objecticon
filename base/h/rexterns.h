@@ -12,6 +12,7 @@ extern word dodump;		/* termination dump */
 extern int line_info;		/* flag: line information is available */
 extern char *file_name;		/* source file for current execution point */
 extern int set_up;
+extern int collecting;          /* non-zero whilst a GC is taking place */
 
 extern char *allchars;          /* array for making one-character strings */
 extern char *blkname[];		/* print names for block types. */
