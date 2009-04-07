@@ -16,12 +16,10 @@ static void sweep_stk	(struct b_coexpr *ce);
 static void reclaim		(void);
 static void cofree		(void);
 static void scollect		(void);
-static int     qlcmp		(dptr  *q1,dptr  *q2);
-static void adjust		(char *source, char *dest);
-static void compact		(char *source);
+static int  qlcmp		(dptr  *q1,dptr  *q2);
+static void adjust		(void);
+static void compact		(void);
 static void mvc		(uword n, char *src, char *dest);
-
-extern struct progstate *progs;
 static void markprogram	(struct progstate *pstate);
 
 /*
@@ -32,7 +30,8 @@ static dptr *quallist;                 /* string qualifier list */
 static dptr *qualfree;                 /* qualifier list free pointer */
 static dptr *equallist;                /* end of qualifier list */
 static int do_checkstack;
-int collecting;
+
+int collecting;                        /* flag indicating whether collection in progress */
 
 
 /*
@@ -529,8 +528,6 @@ dptr dp;
      */
     block = (char *)*ptr;
 
-/*    printf("markptr %p  type=%x\n",block, BlkType(block)); */
-
     if (InRange(blkbase,block,blkfree)) {
         type = BlkType(block);
         if ((uword)type <= MaxType) {
@@ -884,14 +881,14 @@ static void reclaim()
    scollect();
 
    /*
-    * Adjust the blocks in the block region in place.
+    * Adjust the blocks
     */
-   adjust(blkbase,blkbase);
+   adjust();
 
    /*
     * Compact the block region.
     */
-   compact(blkbase);
+   compact();
    }
 
 /*
@@ -1022,15 +1019,19 @@ static int qlcmp(dptr *q1, dptr *q2)
    }
 
 /*
- * adjust - adjust pointers into the block region, beginning with block oblk
- *  and basing the "new" block region at nblk.  (Phase II of garbage
- *  collection.)
+ * adjust - adjust pointers into the block region.  (Phase II of
+ * garbage collection.)
  */
 
-static void adjust(source,dest)
-char *source, *dest;
+static void adjust()
    {
    register union block **nxtptr, **tptr;
+   register char *source = blkbase, *dest;
+
+   /*
+    * Start dest at source.
+    */
+   dest = source;
 
    /*
     * Loop through to the end of allocated block region, moving source
@@ -1062,11 +1063,10 @@ char *source, *dest;
  *  collection.)
  */
 
-static void compact(source)
-char *source;
+static void compact()
    {
-   register char *dest;
    register word size;
+   register char *source = blkbase, *dest;
 
    /*
     * Start dest at source.
