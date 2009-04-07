@@ -1910,7 +1910,8 @@ static void gentables()
         report("  Global names    %7ld", (long)(hdr.Glocs - hdr.Gnames));
         report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
         report("  Statics         %7ld", (long)(hdr.Filenms - hdr.Statics));
-        report("  Linenums        %7ld", (long)(hdr.Strcons - hdr.Filenms));
+        report("  Filenms         %7ld", (long)(hdr.linenums - hdr.Filenms));
+        report("  Linenums        %7ld", (long)(hdr.Strcons - hdr.linenums));
         report("  Strings         %7ld", (long)(hdr.icodesize - hdr.Strcons));
         report("  Total           %7ld", (long)tsize);
     }
