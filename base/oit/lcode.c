@@ -1862,14 +1862,14 @@ static void gentables()
     /*
      * Output icode file header.
      */
-    hdr.hsize = pc;
+    hdr.icodesize = pc;
     strcpy((char *)hdr.config,IVersion);
     hdr.trace = trace;
 
 
     if (Dflag) {
         fprintf(dbgfile, "\n");
-        fprintf(dbgfile, "hsize:            %ld\n", (long)hdr.hsize);
+        fprintf(dbgfile, "icodesize:        %ld\n", (long)hdr.icodesize);
         fprintf(dbgfile, "trace:            %ld\n", (long)hdr.trace);
         fprintf(dbgfile, "class statics:    %ld\n", (long)hdr.ClassStatics);
         fprintf(dbgfile, "class methods:    %ld\n", (long)hdr.ClassMethods);
@@ -1888,15 +1888,15 @@ static void gentables()
         fprintf(dbgfile, "config:           %s\n", (char*)hdr.config);
     }
 
-    fseek(outfile, hdrsize, 0);
+    fseek(outfile, scriptsize, 0);
 
     if (longwrite((char *)&hdr, (long)sizeof(hdr), outfile) < 0)
         quit("cannot write icode file");
 
     if (verbose > 1) {
-        word tsize = sizeof(hdr) + hdr.hsize;
-        report("  Bootstrap       %7ld", hdrsize);
-        tsize += hdrsize;
+        word tsize = sizeof(hdr) + hdr.icodesize;
+        report("  Script          %7ld", scriptsize);
+        tsize += scriptsize;
         report("  Header          %7ld", (long)sizeof(hdr));
         report("  Procedures      %7ld", (long)hdr.ClassStatics);
         report("  Class statics   %7ld", (long)(hdr.ClassMethods - hdr.ClassStatics));
@@ -1911,7 +1911,7 @@ static void gentables()
         report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
         report("  Statics         %7ld", (long)(hdr.Filenms - hdr.Statics));
         report("  Linenums        %7ld", (long)(hdr.Strcons - hdr.Filenms));
-        report("  Strings         %7ld", (long)(hdr.hsize - hdr.Strcons));
+        report("  Strings         %7ld", (long)(hdr.icodesize - hdr.Strcons));
         report("  Total           %7ld", (long)tsize);
     }
 }

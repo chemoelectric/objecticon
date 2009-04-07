@@ -208,8 +208,8 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
                 IcodeDelim "\n");
 #endif					/* UNIX */
 
-        hdrsize = strlen(script);
-        fwrite(script, hdrsize, 1, outfile);	/* write header */
+        scriptsize = strlen(script);
+        fwrite(script, scriptsize, 1, outfile);	/* write header */
     }
 
     for (i = sizeof(struct header); i--;)

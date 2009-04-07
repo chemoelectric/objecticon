@@ -30,7 +30,7 @@ extern char *ipath;			/* search path for linking */
 extern FILE *ucodefile;	        /* current ucode output file */
 extern char *ofile;         	/* name of linker output file */
 extern char *iconxloc;			/* path to iconx */
-extern long hdrsize;			/* size of iconx header */
+extern long scriptsize;			/* size of iconx header script */
 
 /*
  * Some convenient interned strings.

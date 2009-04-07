@@ -624,8 +624,8 @@ function{2} lang_Prog_get_stack(c)
        } else if (ce->main_of) {
            /* See init.r, Prog.load */
            top = (word *)ce + Wsizeof(struct b_coexpr) + Wsizeof(struct progstate) + 
-               ce->main_of->hsize/WordSize;
-           if (ce->main_of->hsize % WordSize) 
+               ce->main_of->icodesize/WordSize;
+           if (ce->main_of->icodesize % WordSize) 
                top++;
            if (ce == k_current) {
                bottom = (word *)&top;

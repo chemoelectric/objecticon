@@ -3,7 +3,7 @@
  *  an icode file after the start-up program.
  */
 struct header {
-    word hsize;			/* size of interpreter code */
+    word icodesize;		/* size of interpreter code */
     word trace;			/* initial value of &trace */
 
     word ClassStatics;          /* class field descriptors (statics) */

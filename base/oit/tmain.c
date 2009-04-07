@@ -52,7 +52,7 @@ char *ipath;			/* search path for linking */
 FILE *ucodefile	= 0;	        /* current ucode output file */
 char *ofile = 0;         	/* name of linker output file */
 char *iconxloc;			/* path to iconx */
-long hdrsize;			/* size of iconx header */
+long scriptsize;		/* size of iconx header script */
 
 #ifdef MSWindows
    #include "../h/filepat.h"

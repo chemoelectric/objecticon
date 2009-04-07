@@ -153,26 +153,26 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         int tmp = open(name, O_RDONLY);
         lseek(tmp,ftell(ifile),SEEK_SET);
         zfd = gzdopen(tmp, "r");
-        if ((cbread = gzlongread(codeptr, sizeof(char), (long)hdr->hsize, zfd)) !=
-            hdr->hsize) {
+        if ((cbread = gzlongread(codeptr, sizeof(char), (long)hdr->icodesize, zfd)) !=
+            hdr->icodesize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                    (long)hdr->hsize,(long)cbread);
+                    (long)hdr->icodesize,(long)cbread);
             error("bad icode file: %s", name);
         }
         gzclose(zfd);
     } else {
-        if ((cbread = longread(codeptr, sizeof(char), (long)hdr->hsize, ifile)) !=
-            hdr->hsize) {
+        if ((cbread = longread(codeptr, sizeof(char), (long)hdr->icodesize, ifile)) !=
+            hdr->icodesize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                    (long)hdr->hsize,(long)cbread);
+                    (long)hdr->icodesize,(long)cbread);
             error("bad icode file: %s", name);
         }
     }
 #else					/* HAVE_LIBZ */
-    if ((cbread = longread(codeptr, sizeof(char), (long)hdr->hsize, ifile)) !=
-        hdr->hsize) {
+    if ((cbread = longread(codeptr, sizeof(char), (long)hdr->icodesize, ifile)) !=
+        hdr->icodesize) {
         fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                (long)hdr->hsize,(long)cbread);
+                (long)hdr->icodesize,(long)cbread);
         error("bad icode file: %s", name);
     }
 #endif					/* HAVE_LIBZ */
@@ -346,7 +346,7 @@ void icon_init(char *name)
     coexprlim = Max((pmem/200) / stksize, CoexprLim);
     env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxWord);
 
-    Protect(rootpstate.Code = malloc(hdr.hsize), fatalerr(315, NULL));
+    Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
 
     /*
      * Establish pointers to icode data regions.		[[I?]]
@@ -625,11 +625,9 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     /*
      * Allocate memory for icode and the struct that describes it
      */
-    MemProtect(coexp = alcprog(hdr.hsize, stk));
+    MemProtect(coexp = alcprog(hdr.icodesize, stk));
     pstate = coexp->program;
-
-    pstate->hsize = hdr.hsize;
-    pstate->parent= NULL;
+    pstate->parent = curpstate;
     pstate->next = progs;
     progs = pstate;
     initprogstate(pstate);
@@ -784,6 +782,7 @@ static void initprogstate(struct progstate *p)
 
 static void initptrs(struct progstate *p, struct header *h)
 {
+    p->icodesize = h->icodesize;
     p->Ecode = (char *)(p->Code + h->ClassStatics);
     p->ClassStatics = (dptr)(p->Ecode);
     p->ClassMethods = p->EClassStatics = (dptr)(p->Code + h->ClassMethods);
@@ -809,7 +808,7 @@ static void initptrs(struct progstate *p, struct header *h)
     p->Ilines = (struct ipc_line *)(p->Efilenms);
     p->Elines = (struct ipc_line *)(p->Code + h->Strcons);
     p->Strcons = (char *)(p->Elines);
-    p->Estrcons = (char *)(p->Code + h->hsize);
+    p->Estrcons = (char *)(p->Code + h->icodesize);
 }
 
 
@@ -875,22 +874,21 @@ function{1} lang_Prog_load(s,arglist,
           fail;
       }
       pstate = sblkp->program;
-      pstate->parent = curpstate;
 
       savedsp = sp;
       sp = stack + Wsizeof(struct b_coexpr)
-        + Wsizeof(struct progstate) + pstate->hsize/WordSize;
+        + Wsizeof(struct progstate) + pstate->icodesize/WordSize;
 
-      if (pstate->hsize % WordSize) 
+      if (pstate->icodesize % WordSize) 
           sp++;
 
 #ifdef UpStack
       sblkp->cstate[0] =
-         ((word)((char *)sblkp + (_stk_ - (sizeof(*sblkp)+sizeof(struct progstate)+pstate->hsize))/2)
+         ((word)((char *)sblkp + (_stk_ - (sizeof(*sblkp)+sizeof(struct progstate)+pstate->icodesize))/2)
             &~((word)WordSize*StackAlign-1));
 #else					/* UpStack */
       sblkp->cstate[0] =
-	((word)((char *)sblkp + _stk_ - WordSize + sizeof(struct progstate) + pstate->hsize)
+	((word)((char *)sblkp + _stk_ - WordSize + sizeof(struct progstate) + pstate->icodesize)
            &~((word)WordSize*StackAlign-1));
 #endif					/* UpStack */
 
@@ -1594,10 +1592,10 @@ void showstack()
         printf("\t\t\tRecords=%p\n",t->Records);
         p += sizeof(struct progstate)/sizeof(word);
         if (p == (word*)t->Code) {
-            printf("\t%p\tcode\thsize=%ld\n",p,t->hsize);
-            p += t->hsize / WordSize;
+            printf("\t%p\tcode\ticodesize=%ld\n",p,(long)t->icodesize);
+            p += t->icodesize / WordSize;
             /* Pad.. see corresponding code in fmisc.r */
-            if (t->hsize % WordSize)
+            if (t->icodesize % WordSize)
                 ++p;
         }
     }
