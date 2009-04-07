@@ -427,7 +427,7 @@ struct progstate {
 
     uword statcurr;			/* current static allocation */
     word statcount;                     /* count of number of coexpr allocs - when
-                                         * it exceeds coexprlim, a gc is trigerred */
+                                         * it exceeds coexprlim, a gc is triggered */
     word colltot;			/* total number of collections */
     word collstat;			/* number of static collect requests */
     word collstr;			/* number of string collect requests */
@@ -443,7 +443,6 @@ struct progstate {
     int Xfno;
     struct descrip Value_tmp;
 
-    struct descrip K_current;
     int K_errornumber;
     struct descrip K_errortext;
     struct descrip K_errorvalue;
@@ -453,7 +452,8 @@ struct progstate {
     int T_have_val;
     struct descrip T_errorvalue;
 
-    struct descrip K_main;
+    struct b_coexpr *K_current;
+    struct b_coexpr *K_main;
 
     /*
      * Function Instrumentation Fields.

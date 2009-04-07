@@ -91,7 +91,7 @@ dptr result;
       first = 0;
    else
       first = 1;
-   ncp->es_activator = (struct b_coexpr *)BlkLoc(k_current);
+   ncp->es_activator = k_current;
 
    if (co_chng(ncp, val, result, A_Coact, first) == A_Cofail)
       return A_Resume;

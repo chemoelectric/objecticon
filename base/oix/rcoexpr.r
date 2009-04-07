@@ -100,7 +100,7 @@ int first;
    static int coexp_act;     /* used to pass signal across activations */
                              /* back to whomever activates, if they care */
 
-   register struct b_coexpr *ccp = (struct b_coexpr *)BlkLoc(k_current);
+   register struct b_coexpr *ccp = k_current;
 
 /* showcoexps();*/
 /* showstack(); */
@@ -187,7 +187,7 @@ int first;
     * Enter the program state of the co-expression being activated
     */
    curpstate = ncp->program;
-   BlkLoc(k_current) = (union block *)ncp;
+   k_current = ncp;
 
 
    /*

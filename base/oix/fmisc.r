@@ -217,7 +217,7 @@ function{1} display(i,c)
 
    if !is:null(c) then inline {
       if (!is:coexpr(c)) runerr(118,c);
-      else if (BlkLoc(c) != BlkLoc(k_current))
+      else if (BlkLoc(c) != (union block *)k_current)
          ce = (struct b_coexpr *)BlkLoc(c);
       }
 
@@ -239,8 +239,8 @@ function{1} display(i,c)
          i = k_level;
 
       fprintf(std_f,"co-expression_%ld(%ld)\n\n",
-         (long)BlkLoc(k_current)->coexpr.id,
-	 (long)BlkLoc(k_current)->coexpr.size);
+         (long)k_current->id,
+	 (long)k_current->size);
       fflush(std_f);
       if (ce) {
 	 if ((ce->es_pfp == NULL) || (ce->es_argp == NULL)) fail;
@@ -1232,7 +1232,7 @@ function{0,1} cofail(CE)
       }
    if is:null(CE) then
       body {
-	 struct b_coexpr *ce = BlkLoc(k_current)->coexpr.es_activator;
+	 struct b_coexpr *ce = k_current->es_activator;
 	 if (ce != NULL) {
 	    CE.dword = D_Coexpr;
 	    BlkLoc(CE) = (union block *)ce;

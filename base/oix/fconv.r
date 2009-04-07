@@ -166,7 +166,7 @@ function{0,1} proc(x,i,c)
 	 struct b_proc *bp = NULL;
 	 struct pf_marker *fp;
 	 dptr dp=NULL;
-	 if (BlkLoc(x) != BlkLoc(k_current)) {
+	 if (BlkLoc(x) != (union block *)k_current) {
 	    ce = (struct b_coexpr *)BlkLoc(x);
 	    dp = ce->es_argp;
 	    fp = ce->es_pfp;

@@ -1516,8 +1516,8 @@ EntInterp;
             struct b_coexpr *ncp;
 
             ExInterp;
-            ncp = BlkLoc(k_current)->coexpr.es_activator;
-            ++BlkLoc(k_current)->coexpr.size;
+            ncp = k_current->es_activator;
+            ++k_current->size;
             co_chng(ncp, (dptr)&sp[-1], NULL, A_Coret, 1);
             EntInterp;
             break;
@@ -1529,7 +1529,7 @@ EntInterp;
             struct b_coexpr *ncp;
 
             ExInterp;
-            ncp = BlkLoc(k_current)->coexpr.es_activator;
+            ncp = k_current->es_activator;
 
             co_chng(ncp, NULL, NULL, A_Cofail, 1);
             EntInterp;
@@ -1729,7 +1729,7 @@ int mt_activate(tvalp,rslt,ncp)
 dptr tvalp, rslt;
 register struct b_coexpr *ncp;
 {
-   register struct b_coexpr *ccp = (struct b_coexpr *)BlkLoc(k_current);
+   register struct b_coexpr *ccp = k_current;
    int first, rv;
    dptr savedtvalloc = NULL;
 
@@ -1802,8 +1802,7 @@ int event;
    curpstate->eventcount.vword.integr++;
    StrLen(parent->eventcode) = 1;
    StrLoc(parent->eventcode) = &allchars[event & 0xFF];
-   mt_activate(&(parent->eventcode), NULL,
-	       (struct b_coexpr *)BlkLoc(curpstate->parent->K_main));
+   mt_activate(&(parent->eventcode), NULL, curpstate->parent->K_main);
    }
 
 
@@ -1811,6 +1810,6 @@ void changeprogstate(struct progstate *p)
 {
     p->K_current = k_current;
     curpstate = p;
-    BlkLoc(k_current)->coexpr.program = curpstate;
+    k_current->program = curpstate;
 }
 

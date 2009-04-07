@@ -138,7 +138,7 @@ function{1} lang_Prog_get_parent(c)
       if (prog->parent == NULL) 
           fail;
 
-      return prog->parent->K_main;
+      return coexpr(prog->parent->K_main);
     }
 end
 
@@ -282,15 +282,15 @@ function{*} lang_Prog_get_keyword(s,c)
 
                   /* If the prog's &current isn't in this program, we can't look up
                    * the file in this program's table */
-                  if (BlkLoc(p->K_current)->coexpr.program != p)
+                  if (p->K_current->program != p)
                       fail;
                   /* If the prog's &current is the currently executing coexpression, take
                    * the ipc, otherwise the stored ipc in the coexpression block
                    */
-                  if (BlkLoc(p->K_current) == BlkLoc(k_current))
+                  if (p->K_current == k_current)
                       i = ipc;
                   else
-                      i = BlkLoc(p->K_current)->coexpr.es_ipc;
+                      i = p->K_current->es_ipc;
                   t = find_ipc_fname(i, p);
                   if (!t)
                       fail;
@@ -299,19 +299,19 @@ function{*} lang_Prog_get_keyword(s,c)
               if (strncmp(t,"line",4) == 0) {
                   word *i;
                   struct ipc_line *t;
-                  if (BlkLoc(p->K_current)->coexpr.program != p)
+                  if (p->K_current->program != p)
                       fail;
-                  if (BlkLoc(p->K_current) == BlkLoc(k_current))
+                  if (p->K_current == k_current)
                       i = ipc;
                   else
-                      i = BlkLoc(p->K_current)->coexpr.es_ipc;
+                      i = p->K_current->es_ipc;
                   t = find_ipc_line(i, p);
                   if (!t)
                       fail;
                   return C_integer t->line;
               }
               if (strncmp(t,"main",4) == 0) {
-                  return p->K_main;
+                  return coexpr(p->K_main);
               }
               if (strncmp(t,"time",4) == 0) {
                   /*
@@ -338,7 +338,7 @@ function{*} lang_Prog_get_keyword(s,c)
                   return kywdint(&(p->Kywd_ran));
               }
               if (strncmp(t,"source",6) == 0) {
-                  struct b_coexpr *a = BlkLoc(p->K_current)->coexpr.es_activator;
+                  struct b_coexpr *a = p->K_current->es_activator;
                   if (!a)  /* It will be 0 for a just-loaded program */
                      fail;
                   return coexpr(a);
@@ -350,7 +350,7 @@ function{*} lang_Prog_get_keyword(s,c)
                   return kywdsubj(&(p->Kywd_subject));
               }
               if (strncmp(t,"current",7) == 0) {
-                  return p->K_current;
+                  return coexpr(p->K_current);
               }
               break;
           }
@@ -490,7 +490,7 @@ function{1} lang_Prog_get_coexpression_program(c)
    if !is:coexpr(c) then
       runerr(118,c)
    body {
-        return BlkLoc(c)->coexpr.program->K_main;
+        return coexpr(BlkLoc(c)->coexpr.program->K_main);
    }
 end
 
@@ -614,20 +614,20 @@ function{2} lang_Prog_get_stack(c)
        word *top, *bottom, *isp;
        struct b_coexpr *ce = (struct b_coexpr *)BlkLoc(c);
 
-       if (ce == (struct b_coexpr *)BlkLoc(rootpstate.K_main)) {
+       if (ce == rootpstate.K_main) {
            top = stack + Wsizeof(struct b_coexpr);
            bottom = stackend;
-           if (ce == (struct b_coexpr *)BlkLoc(k_current))
+           if (ce == k_current)
                isp = sp;
            else
                isp = ce->es_sp;
-       } else if (ce->program == (struct progstate *)(ce + 1)) {
+       } else if (ce->main_of) {
            /* See init.r, Prog.load */
            top = (word *)ce + Wsizeof(struct b_coexpr) + Wsizeof(struct progstate) + 
-               ce->program->hsize/WordSize;
-           if (ce->program->hsize % WordSize) 
+               ce->main_of->hsize/WordSize;
+           if (ce->main_of->hsize % WordSize) 
                top++;
-           if (ce == (struct b_coexpr *)BlkLoc(k_current)) {
+           if (ce == k_current) {
                bottom = (word *)&top;
                isp = sp;
            } else {
@@ -636,7 +636,7 @@ function{2} lang_Prog_get_stack(c)
            }
        } else {
            top = (word *)(ce + 1);
-           if (ce == (struct b_coexpr *)BlkLoc(k_current)) {
+           if (ce == k_current) {
                bottom = (word *)&top;
                isp = sp;
            } else {
@@ -684,7 +684,7 @@ function{1} lang_Class_get_program(c)
         struct b_class *class;
         if (!(class = get_class_for(&c)))
             runerr(0);
-        return class->program->K_main;
+        return coexpr(class->program->K_main);
     }
 end
 
@@ -2437,7 +2437,7 @@ function{1} lang_Constructor_get_program(c)
         prog = constructor->program;
         if (!prog)
             fail;
-        return prog->K_main;
+        return coexpr(prog->K_main);
     }
 end
 
@@ -2740,7 +2740,7 @@ function{1} lang_Proc_get_program(c, flag)
             prog = proc->program;
         if (!prog)
             fail;
-        return prog->K_main;
+        return coexpr(prog->K_main);
     }
 end
 

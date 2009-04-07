@@ -411,9 +411,8 @@ void icon_init(char *name)
      * Point &main at the co-expression block for the main procedure and set
      *  k_current, the pointer to the current co-expression, to &main.
      */
-    k_main.dword = D_Coexpr;
-    BlkLoc(k_main) = (union block *) mainhead;
-    k_current = k_main;
+    k_current = k_main = mainhead;
+
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, code);
     fclose(ifile);
@@ -575,9 +574,9 @@ void c_exit(i)
 #endif					/* E_Exit */
     if (curpstate != NULL && curpstate->parent != NULL) {
         /* might want to get to the lterm somehow, instead */
-        while (0&&BlkLoc(k_current) != BlkLoc(curpstate->parent->K_main)) {
+        while (0&&k_current != curpstate->parent->K_main) {
             struct descrip dummy;
-            co_chng((struct b_coexpr *)BlkLoc(curpstate->parent->K_main), 
+            co_chng(curpstate->parent->K_main, 
                     NULL, &dummy, A_Cofail, 1);
         }
     }
@@ -586,8 +585,8 @@ void c_exit(i)
         fprintf(stderr,"\nTermination dump:\n\n");
         fflush(stderr);
         fprintf(stderr,"co-expression #%ld(%ld)\n",
-                (long)BlkLoc(k_current)->coexpr.id,
-                (long)BlkLoc(k_current)->coexpr.size);
+                (long)k_current->id,
+                (long)k_current->size);
         fflush(stderr);
         xdisp(pfp,argp,k_level,stderr, curpstate);
     }
@@ -643,7 +642,6 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
 {
     struct b_coexpr *coexp;
     struct progstate *pstate;
-    struct b_coexpr *mainhead;
 
     MemProtect(coexp = alcprog(icodesize, stacksize));
     pstate = coexp->program;
@@ -658,10 +656,7 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     initprogstate(pstate);
     pstate->Kywd_time_elsewhere = millisec();
     pstate->Kywd_time_out = 0;
-    mainhead= ((struct b_coexpr *)pstate)-1;
-    pstate->K_main.dword = D_Coexpr;
-    BlkLoc(pstate->K_main) = (union block *)mainhead;
-    pstate->K_current = pstate->K_main;
+    pstate->K_current = pstate->K_main = coexp;
 
     MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
     MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
@@ -1264,7 +1259,7 @@ void checkstack()
 {
     static int worst = MaxInt;
     long free;
-    if (BlkLoc(curpstate->K_current) == BlkLoc(rootpstate.K_main))
+    if (curpstate->K_current == rootpstate.K_main)
         return;
     free = (char*)get_csp() - (char*)sp;
     if (free < worst) {
@@ -1304,8 +1299,8 @@ void showcoexps()
                q, 
                q->Code, 
                q->Ecode,
-               BlkLoc(q->K_main),
-               BlkLoc(q->K_current),
+               q->K_main,
+               q->K_current,
                cstr(&q->Kywd_prog));
     }
 
@@ -1313,10 +1308,10 @@ void showcoexps()
     printf("curpstate=%p rootpstate=%p &main=%p &current=%p\n", 
            curpstate, 
            &rootpstate,
-           BlkLoc(curpstate->K_main),
-           BlkLoc(curpstate->K_current));
+           curpstate->K_main,
+           curpstate->K_current);
 
-    if (BlkLoc(curpstate->K_current) != BlkLoc(rootpstate.K_main))
+    if (curpstate->K_current != rootpstate.K_main)
         printf("ilevel=%d ISP=%p CSP=%p (clearance %d)\n", ilevel,sp, csp, (char*)csp - (char*)sp);
     else
         printf("ilevel=%d ISP=%p CSP=%p\n", ilevel,sp, csp);
@@ -1605,9 +1600,9 @@ void showstack()
     word *p;
 
     printf("Stack sp=%p efp=%p gfp=%p pfp=%p ipc=%p\n",sp,efp,gfp,pfp,ipc);
-    c = (struct b_coexpr *)BlkLoc(k_current);
+    c = k_current;
     if (!c) {
-        printf("curpstate=%p k_current=%p BlkLoc(k_current) is 0\n",curpstate,&k_current);
+        printf("curpstate=%p k_current is 0\n",curpstate);
         return;
     }    
     printf("kcurr->\t%p\tcoex\ttitle=%d\n", c, c->title);

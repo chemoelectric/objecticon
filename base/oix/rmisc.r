@@ -163,13 +163,13 @@ int getvar(dptr s, dptr vp, struct progstate *p)
      *  descriptor that points to the corresponding value descriptor. 
      *  If no such variable exits, it fails.
      */
-    if (BlkLoc(p->K_current) == BlkLoc(k_current)) {
+    if (p->K_current == k_current) {
         t_pfp = pfp;
         t_argp = argp;
     }
     else {
-        t_pfp = BlkLoc(p->K_current)->coexpr.es_pfp;
-        t_argp = BlkLoc(p->K_current)->coexpr.es_argp;
+        t_pfp = p->K_current->es_pfp;
+        t_argp = p->K_current->es_argp;
     }
 
     /*

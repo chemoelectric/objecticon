@@ -218,7 +218,7 @@
  */
 #define CheckStack() \
 do { \
-    if (BlkLoc(k_current) == BlkLoc(rootpstate.K_main)) {  \
+    if (k_current == rootpstate.K_main) {  \
         if (DiffPtrsBytes(stackend,sp) < 4096)     \
             fatalerr(311, NULL); \
     } else { \

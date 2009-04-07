@@ -379,7 +379,7 @@ int region;
     * Sync the values (used by sweep) in the coexpr block for &current
     *  with the current values.
     */
-   cp = (struct b_coexpr *)BlkLoc(k_current);
+   cp = k_current;
    cp->es_tend = tend;
    cp->es_pfp = pfp;
    cp->es_gfp = gfp;
@@ -395,7 +395,7 @@ int region;
    /*
     * Check for stack overflow if we are collecting from outside the system C stack.
     */
-   do_checkstack = (BlkLoc(k_current) != BlkLoc(rootpstate.K_main));
+   do_checkstack = (k_current != rootpstate.K_main);
 
    for (prog = progs; prog; prog = prog->next)
        markprogram(prog);
@@ -506,8 +506,8 @@ struct progstate *pstate;
    PostDescrip(pstate->T_errorvalue);
    PostDescrip(pstate->T_errortext);
 
-   markblock(&pstate->K_main);
-   markblock(&pstate->K_current);
+   markptr((union block **)&pstate->K_main);
+   markptr((union block **)&pstate->K_current);
 }
 
 

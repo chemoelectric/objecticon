@@ -34,7 +34,7 @@ keyword{1} current
       return coexpr
       }
    inline {
-      return k_current;
+       return coexpr(k_current);
       }
 end
 
@@ -280,7 +280,7 @@ keyword{1} main
       return coexpr
       }
    inline {
-      return k_main;
+       return coexpr(k_main);
       }
 end
 
@@ -340,7 +340,7 @@ keyword{1} source
        return coexpr
        }
    inline {
-         return coexpr(BlkLoc(k_current)->coexpr.es_activator);
+         return coexpr(k_current->es_activator);
          }
 end
 
