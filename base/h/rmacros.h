@@ -600,7 +600,6 @@ do { \
       #define k_eventvalue (curpstate->eventval)
       #define k_subject (curpstate->Kywd_subject)
       #define kywd_trc  (curpstate->Kywd_trc)
-      #define mainhead (curpstate->Mainhead)
       #define code (curpstate->Code)
       #define ecode (curpstate->Ecode)
       #define classstatics (curpstate->ClassStatics)

@@ -1803,7 +1803,7 @@ int event;
    StrLen(parent->eventcode) = 1;
    StrLoc(parent->eventcode) = &allchars[event & 0xFF];
    mt_activate(&(parent->eventcode), NULL,
-	       (struct b_coexpr *)curpstate->parent->Mainhead);
+	       (struct b_coexpr *)BlkLoc(curpstate->parent->K_main));
    }
 
 

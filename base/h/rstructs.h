@@ -390,7 +390,6 @@ struct progstate {
     struct descrip Kywd_why;
     struct descrip Kywd_ran;
     struct descrip Kywd_trc;
-    struct b_coexpr *Mainhead;
     char *Code;
     char *Ecode;
 

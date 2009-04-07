@@ -234,6 +234,7 @@ void icon_init(char *name)
     FILE *ifile = 0;
     char *t;
     long pmem;
+    struct b_coexpr *mainhead;
 
     /*
      * Initializations that cannot be performed statically (at least for
@@ -574,9 +575,10 @@ void c_exit(i)
 #endif					/* E_Exit */
     if (curpstate != NULL && curpstate->parent != NULL) {
         /* might want to get to the lterm somehow, instead */
-        while (0&&(struct b_coexpr*)BlkLoc(k_current) != curpstate->parent->Mainhead) {
+        while (0&&BlkLoc(k_current) != BlkLoc(curpstate->parent->K_main)) {
             struct descrip dummy;
-            co_chng(curpstate->parent->Mainhead, NULL, &dummy, A_Cofail, 1);
+            co_chng((struct b_coexpr *)BlkLoc(curpstate->parent->K_main), 
+                    NULL, &dummy, A_Cofail, 1);
         }
     }
 
@@ -641,6 +643,7 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
 {
     struct b_coexpr *coexp;
     struct progstate *pstate;
+    struct b_coexpr *mainhead;
 
     MemProtect(coexp = alcprog(icodesize, stacksize));
     pstate = coexp->program;
@@ -655,9 +658,9 @@ struct b_coexpr *initprogram(word icodesize, word stacksize,
     initprogstate(pstate);
     pstate->Kywd_time_elsewhere = millisec();
     pstate->Kywd_time_out = 0;
-    pstate->Mainhead= ((struct b_coexpr *)pstate)-1;
+    mainhead= ((struct b_coexpr *)pstate)-1;
     pstate->K_main.dword = D_Coexpr;
-    BlkLoc(pstate->K_main) = (union block *) pstate->Mainhead;
+    BlkLoc(pstate->K_main) = (union block *)mainhead;
     pstate->K_current = pstate->K_main;
 
     MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
@@ -930,8 +933,6 @@ function{1} lang_Prog_load(s,arglist,
 
       sblkp->es_argp = NULL;
       sblkp->es_gfp = NULL;
-      pstate->Mainhead->freshblk = NULL;/* &main has no refresh block. */
-					/*  This really is a bug. */
 
       /*
        * Set up expression frame marker to contain execution of the
