@@ -115,13 +115,13 @@ static FILE *readhdr(char *name, struct header *hdr)
 
     for (;;) {
         if (fgets(buf, sizeof buf-1, ifile) == NULL)
-            error("can't find header marker in interpreter file %s", name);
+            ffatalerr("can't find header marker in interpreter file %s", name);
         if (strncmp(buf, IcodeDelim, n) == 0)
             break;
     }
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr))
-        error("can't read interpreter file header in file %s", name);
+        ffatalerr("can't read interpreter file header in file %s", name);
 
     return ifile;
 }
@@ -140,7 +140,7 @@ void check_version(struct header *hdr, char *name,FILE *fname)
         fprintf(stderr,"\ticode version: %s\n",(char *)hdr->config);
         fprintf(stderr,"\texpected version: %s\n",IVersion);
         fclose(fname);
-        error("cannot run %s", name);
+        ffatalerr("cannot run %s", name);
     }
 }
 
@@ -157,7 +157,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
             hdr->icodesize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                     (long)hdr->icodesize,(long)cbread);
-            error("bad icode file: %s", name);
+            ffatalerr("bad icode file: %s", name);
         }
         gzclose(zfd);
     } else {
@@ -165,7 +165,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
             hdr->icodesize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                     (long)hdr->icodesize,(long)cbread);
-            error("bad icode file: %s", name);
+            ffatalerr("bad icode file: %s", name);
         }
     }
 #else					/* HAVE_LIBZ */
@@ -173,7 +173,7 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         hdr->icodesize) {
         fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                 (long)hdr->icodesize,(long)cbread);
-        error("bad icode file: %s", name);
+        ffatalerr("bad icode file: %s", name);
     }
 #endif					/* HAVE_LIBZ */
 }
@@ -187,7 +187,7 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
     va_list ap;
     va_start(ap, n_ranges);
     blksize = sizeof(struct b_cset) + ((n_ranges - 1) * sizeof(struct b_cset_range));
-    MemProtect(b = calloc(blksize, 1));
+    Protect(b = calloc(blksize, 1), startuperr("Insufficient memory"));
     b->blksize = blksize;
     b->n_ranges = n_ranges;
     b->size = 0;
@@ -261,13 +261,13 @@ void icon_init(char *name)
     rparcs = make_static_cset_block(1, ')', ')');
     blankcs = make_static_cset_block(1, ' ', ' ');
 
-    MemProtect(emptystr_ucs = calloc(sizeof(struct b_ucs), 1));
+    Protect(emptystr_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
     emptystr_ucs->utf8 = emptystr;
     emptystr_ucs->length = 0;
     emptystr_ucs->n_off_indexed = 0;
     emptystr_ucs->index_step = 0;
 
-    MemProtect(blank_ucs = calloc(sizeof(struct b_ucs), 1));
+    Protect(blank_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
     blank_ucs->utf8 = blank;
     blank_ucs->length = 1;
     blank_ucs->n_off_indexed = 0;
@@ -277,7 +277,7 @@ void icon_init(char *name)
     BlkLoc(csetdesc) = (union block *)k_cset;
 
     /*
-     * initialize root pstate
+     * Initialize root pstate.  After this, we can use ffatalerr() rather than startuperr()
      */
     curpstate = &rootpstate;
     progs = &rootpstate;
@@ -307,17 +307,17 @@ void icon_init(char *name)
 #endif					/* UNIX */
 
     if (!name)
-        error("No interpreter file supplied");
+        ffatalerr("No interpreter file supplied");
 
     t = findexe(name);
     if (!t)
-        error("Not found on PATH: %s", name);
+        ffatalerr("Not found on PATH: %s", name);
 
     name = salloc(t);
 
     ifile = readhdr(name, &hdr);
     if (ifile == NULL) 
-        error("cannot open interpreter file %s", name);
+        ffatalerr("cannot open interpreter file %s", name);
 
     CMakeStr(name, &rootpstate.Kywd_prog);
     MakeInt(hdr.trace, &rootpstate.Kywd_trc);
@@ -438,7 +438,7 @@ void env_int(name, variable, non_neg, limit)
     s = value;
     if (*s == '-') {
         if (non_neg)
-            error("environment variable out of range: %s=%s", name, value);
+            ffatalerr("environment variable out of range: %s=%s", name, value);
         sign = -1;
         ++s;
     }
@@ -450,11 +450,11 @@ void env_int(name, variable, non_neg, limit)
          * See if 10 * n + d > limit, but do it so there can be no overflow.
          */
         if ((d > (uword)(limit / 10 - n) * 10 + limit % 10) && (limit > 0))
-            error("environment variable out of range: %s=%s", name, value);
+            ffatalerr("environment variable out of range: %s=%s", name, value);
         n = n * 10 + d;
     }
     if (*s != '\0')
-        error("environment variable not numeric: %s=%s", name, value);
+        ffatalerr("environment variable not numeric: %s=%s", name, value);
     *variable = sign * n;
 }
 
@@ -474,7 +474,7 @@ void fpetrap(int n)
 /*
  * error - print error message; used only in startup code.
  */
-void error(char *fmt, ...)
+void startuperr(char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -585,12 +585,25 @@ int err()
 /*
  * fatalerr - disable error conversion and call run-time error routine.
  */
-void fatalerr(n, v)
-    int n;
-    dptr v;
+void fatalerr(int n, dptr v)
 {
     IntVal(kywd_err) = 0;
     err_msg(n, v);
+}
+
+/*
+ * ffatalerr - like fatalerr, but takes an arbitrary format string
+ * rather than an error number and value.
+ */
+void ffatalerr(char *fmt, ...)
+{
+    static char buff[128];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buff, sizeof(buff), fmt, ap);
+    CMakeStr(buff, &t_errortext);
+    IntVal(kywd_err) = 0;
+    err_msg(-1, 0);
 }
 
 /*
@@ -987,14 +1000,14 @@ void resolve(struct progstate *p)
                 } else {
                     /* Resolved to native method, do sanity checks, set pointer */
                     if (n < 0 || n >= ElemCount(native_methods))
-                        error("Native method index out of range: %d", n);
+                        ffatalerr("Native method index out of range: %d", n);
                     pp = (struct b_proc *)native_methods[n];
 
                     /* The field name should match the end of the procedure block's name */
                     if (strncmp(StrLoc(cf->name),
                                 StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(cf->name),
                                 StrLen(cf->name)))
-                        error("Native method name mismatch: %s", StrLoc(cf->name));
+                        ffatalerr("Native method name mismatch: %s", StrLoc(cf->name));
 
                     /* Pointer back to the corresponding field */
                     pp->field = cf;
@@ -1142,10 +1155,10 @@ void resolve(struct progstate *p)
                      */
                     int n = -1 - i;
                     if (n < 0 || n >= pnsize)
-                        error("Builtin function index out of range: %d", n);
+                        ffatalerr("Builtin function index out of range: %d", n);
                     BlkLoc(p->Globals[j]) = (union block *)pntab[n].pblock;
                     if (!eq(&p->Gnames[j], &pntab[n].pblock->pname))
-                        error("Builtin function index name mismatch: %s", StrLoc(p->Gnames[j]));
+                        ffatalerr("Builtin function index name mismatch: %s", StrLoc(p->Gnames[j]));
                 }
                 else {
 

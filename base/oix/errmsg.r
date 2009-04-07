@@ -256,7 +256,10 @@ void err_msg(int n, dptr v)
     else {
         char *s = StrLoc(k_errortext);
         int i = StrLen(k_errortext);
-        fprintf(stderr, "\nRun-time error %d in startup code\n", n);
+        if (k_errornumber == -1)
+            fprintf(stderr, "\nRun-time error in startup code: ");
+        else
+            fprintf(stderr, "\nRun-time error %d in startup code\n", n);
         while (i-- > 0)
             fputc(*s++, stderr);
         fputc('\n', stderr);

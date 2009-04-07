@@ -281,10 +281,10 @@ int main(int argc, char **argv)
                     argc--;
                     p = argv[1];
                     if ( !p )
-                        error("no file name given for redirection of error output");
+                        startuperr("no file name given for redirection of error output");
                 }
                 if (!redirerr(p))
-                    syserr("Unable to redirect &errout\n");
+                    syserr("Unable to redirect &errout");
                 break;
             }
         }
@@ -293,7 +293,7 @@ int main(int argc, char **argv)
     }
 
     if (argc < 2) 
-        error("no icode file specified");
+        startuperr("no icode file specified");
 
     /*
      * Call icon_init with the name of the icode file to execute.	[[I?]]
