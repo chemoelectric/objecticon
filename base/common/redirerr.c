@@ -26,6 +26,7 @@ int redirerr(char *p)
         if ((f = open(p, O_WRONLY|O_CREAT|O_TRUNC)) < 0)
             return 0;
         dup2(f,2);
+        close(f);
     }
     return 1;
 }

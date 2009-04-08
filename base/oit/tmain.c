@@ -438,13 +438,14 @@ Deliberate Syntax Error
        * First, though, must redirect stderr if requested.
        */
       if (efile != NULL) {
-         int f;
          if (strcmp(efile, "-") == 0)
              dup2(1,2);
          else {
+             int f;
              if ((f = open(efile, O_WRONLY|O_CREAT|O_TRUNC)) < 0)
                  quitf("could not redirect stderr to %s\n", efile);
              dup2(f,2);
+             close(f);
          }
       }
       execv(ofile, argv);
