@@ -438,12 +438,15 @@ Deliberate Syntax Error
        * First, though, must redirect stderr if requested.
        */
       if (efile != NULL) {
-         close(fileno(stderr));
+         int f;
          if (strcmp(efile, "-") == 0)
-            dup(fileno(stdout));
-         else if (freopen(efile, "w", stderr) == NULL)
-            quitf("could not redirect stderr to %s\n", efile);
+             dup2(1,2);
+         else {
+             if ((f = open(efile, O_WRONLY|O_CREAT|O_TRUNC)) < 0)
+                 quitf("could not redirect stderr to %s\n", efile);
+             dup2(f,2);
          }
+      }
       execv(ofile, argv);
       quitf("could not execute %s", ofile);
 #endif					/* UNIX */
