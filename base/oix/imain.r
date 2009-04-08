@@ -223,34 +223,6 @@ int main(int argc, char **argv)
 #endif
 #endif					/* WildCards */
 
-    /*
-     * Look for MultiThread programming environment in which to execute
-     * this program, specified by MTENV environment variable.
-     */
-    {
-        char *p = NULL;
-        char **new_argv = NULL;
-        int i=0, j = 1, k = 1;
-        if ((p = getenv("MTENV")) != NULL) {
-            for(i=0;p[i];i++)
-                if (p[i] == ' ')
-                    j++;
-            new_argv = (char **)malloc((argc + j) * sizeof(char *));
-            new_argv[0] = argv[0];
-            for (i=0; p[i]; ) {
-                new_argv[k++] = p+i;
-                while (p[i] && (p[i] != ' '))
-                    i++;
-                if (p[i] == ' ')
-                    p[i++] = '\0';
-            }
-            for(i=1;i<argc;i++)
-                new_argv[k++] = argv[i];
-            argc += j;
-            argv = new_argv;
-        }
-    }
-
     ipc = NULL;
 
     fp = fparse(argv[0]);
@@ -262,34 +234,6 @@ int main(int argc, char **argv)
     if (!smatch(fp->name, "oix")) {
         argv--;
         argc++;
-    }
-
-    /*
-     * Handle command line options.
-     */
-    while ( argv[1] != 0 && *argv[1] == '-' ) {
-        switch ( *(argv[1]+1) ) {
-            /*
-             * Set stderr to new file if -e option is given.
-             */
-            case 'e': {
-                char *p;
-                if ( *(argv[1]+2) != '\0' )
-                    p = argv[1]+2;
-                else {
-                    argv++;
-                    argc--;
-                    p = argv[1];
-                    if ( !p )
-                        startuperr("no file name given for redirection of error output");
-                }
-                if (!redirerr(p))
-                    startuperr("Unable to redirect stderr");
-                break;
-            }
-        }
-        argc--;
-        argv++;
     }
 
     if (argc < 2) 

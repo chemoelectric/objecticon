@@ -1665,15 +1665,3 @@ void showstack()
     printf("--------\n");
     fflush(stdout);
 }
-
-struct progstate *findprogramforicode(word *x)
-{
-    struct progstate *p;
-    for (p = progs; p; p = p->next) {
-        if (InRange(p->Code, x, p->Ecode))
-            return p;
-    }
-    return NULL;
-}
-
-

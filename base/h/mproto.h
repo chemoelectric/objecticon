@@ -27,7 +27,6 @@ void	ppdef		(char *name, char *value);
 void	ppecho		(void);
 int	ppinit		(char *fname, char *inclpath, int m4flag);
 int	prt_i_str	(FILE *f, char *s, int len);
-int	redirerr	(char *p);
 int	smatch		(char *s,char *t);
 char	*spec_str	(char *s);
 char	*str_install	(struct str_buf *sbuf);

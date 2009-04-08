@@ -43,8 +43,6 @@ Deliberate Syntax Error
 FILE *infile;                           /* input file (.u) */
 FILE *outfile;                          /* interpreter code output file */
 
-extern char *ofile;                     /* output file name */
-
 FILE *dbgfile;                          /* debug file */
 static char *dbgname;                   /* debug file name */
 
@@ -56,7 +54,7 @@ int lwarnings = 0;                      /* number of warnings encountered */
 /*
  *  ilink - link a number of files, returning error and warning counts
  */
-void ilink(struct file_param *link_files, char *outname, int *fatals, int *warnings)
+void ilink(struct file_param *link_files, int *fatals, int *warnings)
 {
     int i;
     struct lfile *lf;
@@ -131,25 +129,11 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
     /*
      * Open the output file.
      */
-    outfile = fopen(outname, WriteBinary);
-
-/*
- * The following code is operating-system dependent [@link.02].  Set
- *  untranslated mode if necessary.
- */
-
-#if PORT
-    /* probably nothing */
-    Deliberate Syntax Error
-#endif					/* PORT */
-
-/*
- * End of operating-system specific code.
- */
+    outfile = fopen(ofile, WriteBinary);
 
     if (outfile == NULL) {		/* may exist, but can't open for "w" */
         ofile = NULL;			/* so don't delete if it's there */
-        quitf("cannot create %s",outname);
+        quitf("cannot create %s",ofile);
     }
 
     /*
@@ -237,7 +221,7 @@ void ilink(struct file_param *link_files, char *outname, int *fatals, int *warni
     *warnings = lwarnings;
     *fatals = lfatals;
     if (lfatals == 0)
-        setexe(outname);
+        setexe(ofile);
 }
 
 char *function_name(struct lfunction *f)

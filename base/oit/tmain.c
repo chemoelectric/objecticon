@@ -63,10 +63,10 @@ long scriptsize;		/* size of iconx header script */
  */
 
 #ifdef HAVE_LIBZ
-static void file_comp(char *ofile);
+static void file_comp(void);
 #endif
-static void bundle_iconx(char *ofile);
-static void execute(char *ofile,char *efile,char * *args);
+static void bundle_iconx(void);
+static void execute(char **args);
 static void usage(void);
 
 /*
@@ -170,7 +170,6 @@ static void init_strings();
 int main(int argc, char **argv)
 {
     int nolink = 0;			/* suppress linking? */
-    char *efile = NULL;			/* stderr file */
     int c;
     char ch;
     struct fileparts *fp;
@@ -196,7 +195,7 @@ int main(int argc, char **argv)
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
 #define Usage "[-cBstuE] [-f s] [-o ofile] [-v i] [-l i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBe:fmno:stuv:ELZTVl:")) != EOF) {
+    while ((c = getopt(argc,argv, "cBfmno:stuv:ELZTVl:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -226,10 +225,6 @@ int main(int argc, char **argv)
 
             case 'c':			/* -c: compile only (no linking) */
                 nolink = 1;
-                break;
-
-            case 'e':			/* -e file: redirect stderr */
-                efile = optarg;
                 break;
 
             case 'f':			/* -f : full invocation */
@@ -327,7 +322,6 @@ int main(int argc, char **argv)
     }
 
 #if MSWindows
-    {
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
         ofile = intern(makename(SourceDir,link_files->name,
 						  Bflag ? ".exe" : ".bat"));
@@ -336,7 +330,6 @@ int main(int argc, char **argv)
         if (*fp->ext == '\0') /* if no ext given */
             ofile = intern(makename(0,ofile,
 						      Bflag ? ".exe" : ".bat"));
-    }
     }
 #else                                   /* MSWindows */
 
@@ -347,7 +340,7 @@ int main(int argc, char **argv)
 #endif					/* MSWindows */
 
     report("Linking:");
-    ilink(link_files, ofile, &errors, &warnings);	/* link .u files to make icode file */
+    ilink(link_files, &errors, &warnings);	/* link .u files to make icode file */
 
     if (!errors) {
 #ifdef HAVE_LIBZ
@@ -355,13 +348,13 @@ int main(int argc, char **argv)
          * Optional gz compression
          */
         if (Zflag)
-            file_comp(ofile);
+            file_comp();
 #endif					/* HAVE_LIBZ */
         /*
          * Optional bundling of iconx executable in output
          */
         if (Bflag)
-            bundle_iconx(ofile);
+            bundle_iconx();
     }
 
     /*
@@ -382,7 +375,7 @@ int main(int argc, char **argv)
 
     if (optind < argc)  {
         report("Executing:");
-        execute (ofile, efile, argv+optind+1);
+        execute(argv + optind + 1);
     }
 
     exit(EXIT_SUCCESS);
@@ -391,7 +384,7 @@ int main(int argc, char **argv)
 /*
  * execute - execute iconx to run the icon program
  */
-static void execute(char *ofile, char *efile, char **args)
+static void execute(char **args)
    {
    int n;
    char **argv, **p;
@@ -400,13 +393,9 @@ static void execute(char *ofile, char *efile, char **args)
       ;
    p = argv = safe_alloc((n + 5) * sizeof(char *));
 
-#if !UNIX	/* exec the file, not iconx; stderr already redirected  */
+#if MSWindows
    *p++ = iconxloc;			/* set iconx pathname */
-   if (efile != NULL) {			/* if -e given, copy it */
-      *p++ = "-e";
-      *p++ = efile;
-      }
-#endif					/* UNIX */
+#endif
 
    *p++ = ofile;			/* pass icode file name */
 
@@ -415,52 +404,24 @@ static void execute(char *ofile, char *efile, char **args)
 
    *p = NULL;
 
-/*
- * The following code is operating-system dependent [@tmain.03].  It calls
- *  iconx on the way out.
- */
-
-#if PORT
-   /* something is needed */
-Deliberate Syntax Error
-#endif					/* PORT */
 
 #if MSWindows
       /* No special handling is needed for an .exe files, since iconx
        * recognizes it from the extension andfrom internal .exe data.
        */
       execv(iconxloc,argv);	/* execute with path search */
+      quitf("could not execute %s",iconxloc);
 #endif					/* MSWindows */
 
 #if UNIX
-      /*
-       * Just execute the file.  It knows how to find iconx.
-       * First, though, must redirect stderr if requested.
-       */
-      if (efile != NULL) {
-         if (strcmp(efile, "-") == 0)
-             dup2(1,2);
-         else {
-             int f;
-             if ((f = open(efile, O_WRONLY|O_CREAT|O_TRUNC)) < 0)
-                 quitf("could not redirect stderr to %s\n", efile);
-             dup2(f,2);
-             close(f);
-         }
-      }
       execv(ofile, argv);
       quitf("could not execute %s", ofile);
 #endif					/* UNIX */
 
-/*
- * End of operating-system specific code.
- */
-
-   quitf("could not run %s",iconxloc);
 
    }
 
-static void bundle_iconx(char *ofile)
+static void bundle_iconx()
 {
     FILE *f, *f2;
     int c;
@@ -492,7 +453,7 @@ static void bundle_iconx(char *ofile)
 
 #ifdef HAVE_LIBZ
 
-static void file_comp(char *ofile) 
+static void file_comp() 
 {
     gzFile f; 
     FILE *finput, *foutput;

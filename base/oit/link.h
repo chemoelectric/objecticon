@@ -11,7 +11,7 @@ extern FILE *outfile;		/* linker output file */
 extern FILE *dbgfile;		/* debug file */
 extern char *inname;		/* input file name */
 
-void ilink(struct file_param *link_files, char *outname, int *fatals, int *warnings);
+void ilink(struct file_param *link_files, int *fatals, int *warnings);
 char *function_name(struct lfunction *f);
 void lfatal(struct lfile *lf, struct loc *pos, char *fmt, ...);
 void lwarn(struct lfile *lf, struct loc *pos, char *fmt, ...);
