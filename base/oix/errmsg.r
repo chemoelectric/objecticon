@@ -65,11 +65,6 @@ struct errtab errtab[] = {
     * that result from failed system calls appear below with numbers > 1000.
     */
     {170, "string or integer expected"},
-    {171, "UDP socket expected"},
-    {172, "signal handler procedure must take one argument"},
-    {173, "cannot open directory for writing"},
-    {174, "invalid file operation on directory or database"},
-    {175, "network connection expected"},
     {176, "exec requires at least one argument for the program"},
 
     {201, "division by zero"},

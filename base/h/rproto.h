@@ -528,8 +528,6 @@ dptr make_serv			(struct servent *pw, dptr result);
 
 struct sockaddr *parse_sockaddr(char *s, int *size);
 
-struct descrip register_sig	(int sig, struct descrip handler);
-void signal_dispatcher		(int sig);
 int get_fd			(struct descrip, unsigned int errmask);
 dptr u_read			(int fd, int n, dptr d);
 

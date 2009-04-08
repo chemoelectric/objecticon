@@ -47,33 +47,6 @@ function{0,1} posix_System_kill(pid, signal)
       }
 end
 
-"trap() - trap a signal."
-
-function{0,1} posix_System_trap(sig, handler)
-   if !cnv:C_integer(sig) then
-      runerr(101, sig)
-   abstract {
-      return proc
-      }
-   body { 
-#if MSWIN32
-       fail;
-#else					/* MSWIN32 */
-       if (is:null(handler))
-           signal(sig, SIG_DFL);
-       else if (is:proc(handler)) {
-           struct b_proc *pp = (struct b_proc*)BlkLoc(handler);
-           if (pp->nparam != 1 && pp->nparam != -1)
-               runerr(172, handler);
-           signal(sig, signal_dispatcher);
-       }
-       else
-           runerr(106, handler);
-       return register_sig(sig, handler);
-#endif					/* MSWIN32 */
-      }
-end
-
 "fork() - spawn a new identical process."
 
 function{0,1} posix_System_fork()
