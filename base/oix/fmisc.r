@@ -446,68 +446,86 @@ function{1} name(underef v)
 end
 
 
+/*
+ * Common code for runerr, fatalerr
+ */
+#begdef ERRFUNC()
+{
+    word err_num;
+    if (cnv:C_integer(i, err_num)) {
+        char *em;
+        if (err_num <= 0)
+            runerr(205, i);
+        k_errornumber = err_num;
+        em = lookup_err_msg(k_errornumber);
+        if (em)
+            CMakeStr(em, &k_errortext);
+        else
+            k_errortext = emptystr;
+    } else if (cnv:string(i,i)) {
+        k_errornumber = -1;
+        k_errortext = i;
+    } else
+        runerr(170, i);
+
+    if (n == 0) {
+        k_errorvalue = nulldesc;
+        have_errval = 0;
+    }
+    else {
+        k_errorvalue = x[0];
+        have_errval = 1;
+    }
+
+    if (IntVal(kywd_err) == 0) {
+        char *s = StrLoc(k_errortext);
+        int i = StrLen(k_errortext);
+        if (k_errornumber > 0)
+            fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
+        else 
+            fprintf(stderr, "\nRun-time error: ");
+        while (i-- > 0)
+            fputc(*s++, stderr);
+        fputc('\n', stderr);
+    }
+    else {
+        IntVal(kywd_err)--;
+        errorfail;
+    }
+
+    if (have_errval) {
+        fprintf(stderr, "offending value: ");
+        outimage(stderr, &k_errorvalue, 0);
+        putc('\n', stderr);
+    }
+
+    fprintf(stderr, "Traceback:\n");
+    tracebk(pfp, argp);
+    fflush(stderr);
+
+    if (dodump > 1)
+        abort();
+
+    c_exit(EXIT_FAILURE);
+
+    errorfail;
+}
+#enddef
+
 "runerr(i,x) - produce runtime error i with value x."
 
 function{} runerr(i, x[n])
    body {
-      word err_num;
-      if (cnv:C_integer(i, err_num)) {
-          char *em;
-          if (err_num <= 0)
-              runerr(205, i);
-          k_errornumber = err_num;
-          em = lookup_err_msg(k_errornumber);
-          if (em)
-              CMakeStr(em, &k_errortext);
-          else
-              k_errortext = emptystr;
-      } else if (cnv:string(i,i)) {
-          k_errornumber = -1;
-          k_errortext = i;
-      } else
-          runerr(170, i);
+      ERRFUNC();
+   }
+end
 
-      if (n == 0) {
-          k_errorvalue = nulldesc;
-          have_errval = 0;
-      }
-      else {
-          k_errorvalue = x[0];
-          have_errval = 1;
-      }
+"fatalerr(i,x) - same as runerr, but disable error conversion first."
 
-      if (IntVal(kywd_err) == 0) {
-          char *s = StrLoc(k_errortext);
-          int i = StrLen(k_errortext);
-          if (k_errornumber > 0)
-              fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-          else 
-              fprintf(stderr, "\nRun-time error: ");
-          while (i-- > 0)
-              fputc(*s++, stderr);
-          fputc('\n', stderr);
-      }
-      else {
-          IntVal(kywd_err)--;
-          errorfail;
-      }
-
-      if (have_errval) {
-          fprintf(stderr, "offending value: ");
-          outimage(stderr, &k_errorvalue, 0);
-          putc('\n', stderr);
-      }
-
-      fprintf(stderr, "Traceback:\n");
-      tracebk(pfp, argp);
-      fflush(stderr);
-
-      if (dodump > 1)
-          abort();
-
-      c_exit(EXIT_FAILURE);
-
-      errorfail;
+function{} fatalerr(i, x[n])
+   body {
+      IntVal(kywd_err) = 0;
+      ERRFUNC();
    }
 end
 
