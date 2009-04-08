@@ -284,7 +284,7 @@ int main(int argc, char **argv)
                         startuperr("no file name given for redirection of error output");
                 }
                 if (!redirerr(p))
-                    syserr("Unable to redirect &errout");
+                    startuperr("Unable to redirect stderr");
                 break;
             }
         }
