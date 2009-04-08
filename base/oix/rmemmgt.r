@@ -19,7 +19,6 @@ static void scollect		(void);
 static int  qlcmp		(dptr  *q1,dptr  *q2);
 static void adjust		(void);
 static void compact		(void);
-static void mvc		(uword n, char *src, char *dest);
 static void markprogram	(struct progstate *pstate);
 
 /*
@@ -279,7 +278,6 @@ uword segsize[] = {
    else if (Pointer(d))\
       markblock(&(d));
 
-
 /*
  * collect - do a garbage collection of currently active regions.
  */
@@ -332,7 +330,6 @@ int region;
       return 0;
 
    collecting = 1;
-
 
    /*
     * Sync the values (used by sweep) in the coexpr block for &current
@@ -1087,7 +1084,7 @@ static void compact()
       if (BlkType(source) & F_Mark) {
          BlkType(source) &= ~F_Mark;
          if (source != dest)
-            mvc((uword)size,source,dest);
+             memmove(dest, source, size);
          dest += size;
          }
       source += size;
@@ -1099,86 +1096,6 @@ static void compact()
     */
    blkfree = dest;
    }
-
-/*
- * mvc - move n bytes from src to dest
- *
- *      The algorithm is to copy the data (using memcpy) in the largest
- * chunks possible, which is the size of area of the source data not in
- * the destination area (ie non-overlapped area).  (Chunks are expected to
- * be fairly large.)
- */
-
-static void mvc(n, src, dest)
-uword n;
-register char *src, *dest;
-   {
-   register char *srcend, *destend;        /* end of data areas */
-   word copy_size;                  /* of size copy_size */
-   word left_over;         /* size of last chunk < copy_size */
-
-   if (n == 0)
-      return;
-
-   srcend  = src + n;    /* point at byte after src data */
-   destend = dest + n;   /* point at byte after dest area */
-
-   if ((destend <= src) || (srcend <= dest))  /* not overlapping */
-      memcpy(dest,src,n);
-
-   else {                     /* overlapping data areas */
-      if (dest < src) {
-         /*
-          * The move is from higher memory to lower memory.
-          */
-         copy_size = DiffPtrs(src,dest);
-
-         /* now loop round copying copy_size chunks of data */
-
-         do {
-            memcpy(dest,src,copy_size);
-            dest = src;
-            src = src + copy_size;
-            }
-         while (DiffPtrs(srcend,src) > copy_size);
-
-         left_over = DiffPtrs(srcend,src);
-
-         /* copy final fragment of data - if there is one */
-
-         if (left_over > 0)
-            memcpy(dest,src,left_over);
-         }
-
-      else if (dest > src) {
-         /*
-          * The move is from lower memory to higher memory.
-          */
-         copy_size = DiffPtrs(destend,srcend);
-
-         /* now loop round copying copy_size chunks of data */
-
-         do {
-            destend = srcend;
-            srcend  = srcend - copy_size;
-            memcpy(destend,srcend,copy_size);
-            }
-         while (DiffPtrs(srcend,src) > copy_size);
-
-         left_over = DiffPtrs(srcend,src);
-
-         /* copy intial fragment of data - if there is one */
-
-         if (left_over > 0) memcpy(dest,src,left_over);
-         }
-
-      } /* end of overlapping data area code */
-
-   /*
-    *  Note that src == dest implies no action
-    */
-   }
-
 
 
 
