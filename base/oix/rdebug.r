@@ -569,7 +569,7 @@ static void ttrace()
             else
                 fprintf(stderr, "field");
             fprintf(stderr," ! ");
-            outimage(stderr, &value_tmp, 0);
+            outimage(stderr, &xapply, 0);
             break;
 
         case Op_Invoke:
@@ -640,7 +640,7 @@ static void ttrace()
         case Op_Apply:
             outimage(stderr, xargp++, 0);
             fprintf(stderr," ! ");
-            outimage(stderr, &value_tmp, 0);
+            outimage(stderr, &xapply, 0);
             break;
 
         case Op_Create:

@@ -656,6 +656,7 @@ do { \
       #define xnargs    (curpstate->Xnargs)
       #define xfno      (curpstate->Xfno)
       #define xexpr     (curpstate->Xexpr)
+      #define xapply    (curpstate->Xapply)
       #define value_tmp (curpstate->Value_tmp)
       
       #define k_current     (curpstate->K_current)

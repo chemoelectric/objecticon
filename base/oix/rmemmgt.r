@@ -446,6 +446,7 @@ struct progstate *pstate;
    PostDescrip(pstate->eventval);
    PostDescrip(pstate->eventsource);
    PostDescrip(pstate->Xexpr);
+   PostDescrip(pstate->Xapply);
 
    /* Kywd_err, &error, always an integer */
    /* Kywd_pos, &pos, always an integer */

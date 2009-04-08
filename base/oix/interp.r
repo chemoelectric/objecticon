@@ -638,6 +638,7 @@ EntInterp;
                err_msg(0, &xexpr);
                goto efail;
             }
+            lastop = Op_Invoke;  /* Nicer error messages */
             goto invokej;
          }
 
@@ -648,28 +649,22 @@ EntInterp;
             xfno = (int)GetWord;
             xexpr = *(dptr)(rsp - 3);
             Deref(xexpr);
+            xapply = *(dptr)(rsp - 1);
+            Deref(xapply);
             args = 1;
 ExInterp; 
             r = invokef_access(xfno, &args); 
 EntInterp;
-            /* 
-             * Note that we must set this after invokef_access, which
-             * could conceivably trigger a gc (by calling
-             * ensure_initialized() on a class access); and value_tmp
-             * isn't tended.
-             */
-            value_tmp = *(dptr)(rsp - 1);
-            Deref(value_tmp);
 
             if (r == Error) {
                err_msg(0, &xexpr);
                goto efail;
             }
 
-            type_case value_tmp of {
+            type_case xapply of {
                list: {
                   rsp -= 2;				/* pop it off */
-                  bp = BlkLoc(value_tmp);
+                  bp = BlkLoc(xapply);
                   args = args - 1 + (int)bp->list.size;
                   for (bp = bp->list.listhead;
 		       BlkType(bp) == T_Lelem;
@@ -681,21 +676,23 @@ EntInterp;
                            PushDesc(bp->lelem.lslots[j])
                            }
                         }
+                  lastop = Op_Apply;   /* Nicer error messages */
 		  goto invokej;
 		  }
 
                record: {
                   rsp -= 2;		/* pop it off */
-                  bp = BlkLoc(value_tmp);
+                  bp = BlkLoc(xapply);
                   args = args - 1 + bp->record.constructor->n_fields;
                   for (i = 0; i < args; i++) {
                      PushDesc(bp->record.fields[i])
                      }
+                  lastop = Op_Apply;
                   goto invokej;
                   }
 
                default: {		/* illegal type for invocation */
-                  err_msg(126, &value_tmp);
+                  err_msg(126, &xapply);
                   goto efail;
                   }
                }
@@ -706,12 +703,12 @@ EntInterp;
             union block *bp;
             int i, j;
 
-            value_tmp = *(dptr)(rsp - 1);	/* argument */
-            Deref(value_tmp);
-            type_case value_tmp of {
+            xapply = *(dptr)(rsp - 1);	/* argument */
+            Deref(xapply);
+            type_case xapply of {
                list: {
                   rsp -= 2;				/* pop it off */
-                  bp = BlkLoc(value_tmp);
+                  bp = BlkLoc(xapply);
                   args = (int)bp->list.size;
 
 
@@ -730,7 +727,7 @@ EntInterp;
 
                record: {
                   rsp -= 2;		/* pop it off */
-                  bp = BlkLoc(value_tmp);
+                  bp = BlkLoc(xapply);
                   args = bp->record.constructor->n_fields;
                   for (i = 0; i < args; i++) {
                      PushDesc(bp->record.fields[i])
@@ -740,7 +737,7 @@ EntInterp;
 
                default: {		/* illegal type for invocation */
                   xargp = (dptr)(rsp - 3);
-                  err_msg(126, &value_tmp);
+                  err_msg(126, &xapply);
                   goto efail;
                   }
                }

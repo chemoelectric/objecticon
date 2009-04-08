@@ -491,12 +491,17 @@ dptr do_invoke(dptr proc)
     word saved_lastop = lastop;
     dptr saved_xargp = xargp;
     word saved_xnargs = xnargs;
+    tended struct descrip saved_xexpr = xexpr;
+    tended struct descrip saved_xapply = xapply;
+    word saved_xfno = xfno;
+
     word *wp;
     dptr ret;
     int ncopy = (sp + 1 - (word*)proc) / 2;
+
     wp = ibuf;
     *wp++ = Op_Mark;   
-    *wp++ = 3 * 2 * WordSize;
+    *wp++ = 6 * WordSize;
     *wp++ = Op_CopyArgs;
     *wp++ = ncopy;
     *wp++ = Op_Invoke;  
@@ -518,6 +523,9 @@ dptr do_invoke(dptr proc)
     lastop = saved_lastop;
     xargp = saved_xargp;
     xnargs = saved_xnargs;
+    xexpr = saved_xexpr;
+    xapply = saved_xapply;
+    xfno = saved_xfno;
 
     return ret;
 }
