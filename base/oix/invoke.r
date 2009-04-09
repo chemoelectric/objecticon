@@ -154,8 +154,7 @@ int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
         /*
          * Fell through - not a string or not convertible to something invocable.
          */
-        err_msg(106, newargp);
-        return I_Fail;
+        ReturnErrNum(106, Error);
     }
 }
 
@@ -344,10 +343,8 @@ static int construct_object(int nargs, dptr newargp)
         if ((new_field->flags & (M_Method | M_Static)) != M_Method)
             syserr("new field not a non-static method");
 
-        if (check_access(new_field, class) == Error) {
-            err_msg(0, newargp);
-            return I_Fail;
-        }
+        if (check_access(new_field, class) == Error)
+            return Error;
 
         MemProtect(object = alcobject(class));
 
@@ -488,9 +485,6 @@ dptr do_invoke(dptr proc)
     word saved_lastop = lastop;
     dptr saved_xargp = xargp;
     word saved_xnargs = xnargs;
-    tended struct descrip saved_xexpr = xexpr;
-    tended struct descrip saved_xapply = xapply;
-    word saved_xfno = xfno;
 
     word *wp;
     dptr ret;
@@ -520,9 +514,6 @@ dptr do_invoke(dptr proc)
     lastop = saved_lastop;
     xargp = saved_xargp;
     xnargs = saved_xnargs;
-    xexpr = saved_xexpr;
-    xapply = saved_xapply;
-    xfno = saved_xfno;
 
     return ret;
 }

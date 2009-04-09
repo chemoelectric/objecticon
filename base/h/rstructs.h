@@ -439,8 +439,6 @@ struct progstate {
 
     dptr Xargp;
     int Xnargs;
-    struct descrip Xexpr;               /* e in a e.field() operation (invokef) */
-    struct descrip Xapply;              /* l in either e.field!l or f!l (applyf/apply) */
     int Xfno;                           /* field no in e.field() */
 
     struct descrip Value_tmp;

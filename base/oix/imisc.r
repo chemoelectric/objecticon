@@ -17,6 +17,12 @@ LibDcl(field,2,".")
     Return;
 }
 
+#begdef SaveCargp(event)
+#if event
+   tended struct descrip saved_cargp = *cargp;
+#endif
+#enddef
+
 #begdef access_macro(cast_access,instance_access,class_access,record_access,instance_invokef,cast_invokef,class_invokef,record_invokef,field_access,invokef_access,e_objectref,e_objectsub,e_castref,e_castsub,e_classref,e_classsub,e_rref,e_rsub)
 
 /*
@@ -71,7 +77,6 @@ int invokef_access(int fno, int *nargs)
     ipc += 2;
     cargp = (dptr)(sp - 1) - *nargs;
     Deref(*cargp);
-    xexpr = *cargp;
     MakeInt(fno, &field);
     type_case *cargp of {
       object: {
@@ -98,6 +103,7 @@ static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_fi
     struct b_class *class = obj->class;
     struct class_field *cf;
     int i, j, ac;
+    SaveCargp(e_objectref);
 
     i = lookup_class_field(class, field, ic);
     if (i < 0)
@@ -134,7 +140,7 @@ static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_fi
             return ac;
     }
 
-    EVValD(&xexpr, e_objectref);
+    EVValD(&saved_cargp, e_objectref);
     EVVal(i + 1, e_objectsub);
     return Succeeded;
 }
@@ -146,6 +152,7 @@ static int cast_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_
     struct b_class *obj_class = obj->class, *cast_class = cast->class;
     struct class_field *cf;
     int i, j, ac;
+    SaveCargp(e_castref);
 
     /* Lookup in the cast's class */
     i = lookup_class_field(cast_class, field, ic);
@@ -180,7 +187,7 @@ static int cast_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_
     BlkLoc(cargp[1]) = (union block *)obj;
     (*nargs)++;
     sp += 2;
-    EVValD(&xexpr, e_castref);
+    EVValD(&saved_cargp, e_castref);
     EVVal(i + 1, e_castsub);
 
     return Succeeded;
@@ -191,6 +198,7 @@ static int class_invokef(int *nargs, dptr cargp, dptr field, struct inline_field
     struct b_class *class = &BlkLoc(*cargp)->class;
     struct class_field *cf;
     int i, ac;
+    SaveCargp(e_classref);
 
     ensure_initialized(class);
     i = lookup_class_field(class, field, ic);
@@ -212,7 +220,7 @@ static int class_invokef(int *nargs, dptr cargp, dptr field, struct inline_field
     else
         return ac;
 
-    EVValD(&xexpr, e_classref);
+    EVValD(&saved_cargp, e_classref);
     EVVal(i + 1, e_classsub);
     return Succeeded;
 }
@@ -221,13 +229,15 @@ static int record_invokef(int *nargs, dptr cargp, dptr field, struct inline_fiel
 {
     struct b_record *rec = &BlkLoc(*cargp)->record;
     struct b_constructor *recdef = BlkLoc(*cargp)->record.constructor;
+    int i;
+    SaveCargp(e_rref);
 
-    int i = lookup_record_field(recdef, field, ic);
+    i = lookup_record_field(recdef, field, ic);
     if (i < 0)
         ReturnErrNum(207, Error);
     *cargp = rec->fields[i];
 
-    EVValD(&xexpr, e_rref);
+    EVValD(&saved_cargp, e_rref);
     EVVal(i + 1, e_rsub);
 
     return Succeeded;

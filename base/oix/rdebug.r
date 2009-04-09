@@ -12,7 +12,7 @@ static int     keyref    (union block *bp, dptr dp);
 static void showline  (dptr f, int l);
 static void showlevel (register int n);
 static void ttrace	(void);
-static void xtrace(struct b_proc *bp, word nargs, dptr arg, int pline, dptr pfile);
+static void xtrace(word nargs, dptr arg, int pline, dptr pfile);
 
 
 #define LIMIT 100
@@ -22,7 +22,6 @@ static void xtrace(struct b_proc *bp, word nargs, dptr arg, int pline, dptr pfil
  */
 void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
 {
-    struct b_proc *cproc;
     int depth;
     struct pf_marker *origpfp = pfp;
     dptr arg;
@@ -52,7 +51,6 @@ void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
     while (pfp) {
         if (depth <= LIMIT) {
             arg = &((dptr)pfp)[-(pfp->pf_nargs) - 1];
-            cproc = (struct b_proc *)BlkLoc(arg[0]);    
             /*
              * The ipc in the procedure frame points after the "invoke n".
              */
@@ -60,7 +58,7 @@ void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
             --cipc;
             --cipc;
 
-            xtrace(cproc, pfp->pf_nargs, &arg[0], findline(cipc),
+            xtrace(pfp->pf_nargs, &arg[0], findline(cipc),
                    findfile(cipc));
             /*
              * On the last call, show both the call and the offending expression.
@@ -79,14 +77,13 @@ void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
  * xtrace - procedure *bp is being called with nargs arguments, the first
  *  of which is at arg; produce a trace message.
  */
-static void xtrace(bp, nargs, arg, pline, pfile)
-    struct b_proc *bp;
+static void xtrace(nargs, arg, pline, pfile)
     word nargs;
     dptr arg;
     int pline;
     dptr pfile;
 {
-
+    struct b_proc *bp = (struct b_proc *)BlkLoc(arg[0]);    
     fprintf(stderr, "   ");
     if (bp == NULL)
         fprintf(stderr, "????");
@@ -95,8 +92,9 @@ static void xtrace(bp, nargs, arg, pline, pfile)
             if (bp->field) {
                 putstr(stderr, &bp->field->defining_class->name);
                 putc('.', stderr);
-            }
-            putstr(stderr, &bp->pname);
+                putstr(stderr, &bp->field->name);
+            } else
+                putstr(stderr, &bp->pname);
         } else
             outimage(stderr, arg, 0);
         arg++;
@@ -542,12 +540,12 @@ static void ttrace()
 
         case Op_Invokef:
             nargs = xnargs;
-            outimage(stderr, &xexpr, 0);
+            outimage(stderr, xargp, 0);
             fprintf(stderr, " . ");
             if (xfno < 0 && fnames-efnames < xfno)
-                fprintf(stderr, "%.*s", (int)StrLen(efnames[xfno]), StrLoc(efnames[xfno]));
+                putstr(stderr, &efnames[xfno]);
             else if (0 <= xfno && xfno < efnames - fnames)
-                fprintf(stderr, "%.*s", (int)StrLen(fnames[xfno]), StrLoc(fnames[xfno]));
+                putstr(stderr, &fnames[xfno]);
             else
                 fprintf(stderr, "field");
             putc('(', stderr);
@@ -560,24 +558,29 @@ static void ttrace()
             break;
 
         case Op_Applyf:
-            outimage(stderr, &xexpr, 0);
+            outimage(stderr, xargp++, 0);
             fprintf(stderr, " . ");
             if (xfno < 0 && fnames-efnames < xfno)
-                fprintf(stderr, "%.*s", (int)StrLen(efnames[xfno]), StrLoc(efnames[xfno]));
+                putstr(stderr, &efnames[xfno]);
             else if (0 <= xfno && xfno < efnames - fnames)
-                fprintf(stderr, "%.*s", (int)StrLen(fnames[xfno]), StrLoc(fnames[xfno]));
+                putstr(stderr, &fnames[xfno]);
             else
                 fprintf(stderr, "field");
             fprintf(stderr," ! ");
-            outimage(stderr, &xapply, 0);
+            outimage(stderr, xargp, 0);
             break;
 
         case Op_Invoke:
-            bp = (struct b_proc *)BlkLoc(*xargp);
             nargs = xnargs;
-            if (xargp[0].dword == D_Proc)
-                putstr(stderr, &(bp->pname));
-            else
+            if (xargp[0].dword == D_Proc) {
+                bp = (struct b_proc *)BlkLoc(*xargp);
+                if (bp->field) {
+                    putstr(stderr, &bp->field->defining_class->name);
+                    putc('.', stderr);
+                    putstr(stderr, &bp->field->name);
+                } else
+                    putstr(stderr, &(bp->pname));
+            } else
                 outimage(stderr, xargp, 0);
             putc('(', stderr);
             while (nargs--) {
@@ -638,9 +641,18 @@ static void ttrace()
             break;
 
         case Op_Apply:
-            outimage(stderr, xargp++, 0);
+            if (xargp[0].dword == D_Proc) {
+                bp = (struct b_proc *)BlkLoc(*xargp);
+                if (bp->field) {
+                    putstr(stderr, &bp->field->defining_class->name);
+                    putc('.', stderr);
+                    putstr(stderr, &bp->field->name);
+                } else
+                    putstr(stderr, &(bp->pname));
+            } else
+                outimage(stderr, xargp, 0);
             fprintf(stderr," ! ");
-            outimage(stderr, &xapply, 0);
+            outimage(stderr, ++xargp, 0);
             break;
 
         case Op_Create:
@@ -653,9 +665,9 @@ static void ttrace()
             fprintf(stderr, " . ");
             ++xargp;
             if (IntVal(*xargp) < 0 && fnames-efnames < IntVal(*xargp))
-                fprintf(stderr, "%.*s", (int)StrLen(efnames[IntVal(*xargp)]), StrLoc(efnames[IntVal(*xargp)]));
+                putstr(stderr, &efnames[IntVal(*xargp)]);
             else if (0 <= IntVal(*xargp) && IntVal(*xargp) < efnames - fnames)
-                fprintf(stderr, "%.*s", (int)StrLen(fnames[IntVal(*xargp)]), StrLoc(fnames[IntVal(*xargp)]));
+                putstr(stderr, &fnames[IntVal(*xargp)]);
             else
                 fprintf(stderr, "field");
 

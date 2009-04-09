@@ -750,8 +750,6 @@ static void initprogstate(struct progstate *p)
     p->Lastop = 0;
     p->Xargp = NULL;
     p->Xnargs = 0;
-    p->Xexpr = nulldesc;
-    p->Xapply = nulldesc;
     p->Xfno = 0;
     p->Value_tmp = nulldesc;
 

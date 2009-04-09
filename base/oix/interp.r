@@ -186,7 +186,6 @@ int interp_x(int fsig,dptr cargp)
    int type, signal, args;
    extern int (*optab[])();
    extern int (*keytab[])();
-   struct b_proc *bproc;
    int lastev = E_Misc;
    struct descrip lastdesc = nulldesc;
 
@@ -624,162 +623,176 @@ Deliberate Syntax Error
 				/* ---Other Language Operations--- */
 
 	 case Op_Invokef: {	/* invoke */
-            int r;
-            xfno = (int)GetWord;
+            int r, fno;
+            fno = (int)GetWord;
             args = (int)GetWord;
 ExInterp; 
-            r = invokef_access(xfno, &args); 
+            r = invokef_access(fno, &args); 
 EntInterp;
             if (r == Error) {
                xargp = (dptr)(rsp - 1) - args;
                xnargs = args;
-               err_msg(0, &xexpr);
+               xfno = fno;
+               err_msg(0, xargp);
                goto efail;
             }
-            lastop = Op_Invoke;  /* Nicer error messages */
+            lastop = Op_Invoke;
             goto invokej;
          }
 
          case Op_Applyf: {
             union block *bp;
-            int i, j, r;
+            int fno, i, j, r;
+            dptr apply;
 
-            xfno = (int)GetWord;
-            xapply = *(dptr)(rsp - 1);
-            Deref(xapply);
+            fno = (int)GetWord;
+            apply = (dptr)(rsp - 1);
+            Deref(*apply);
+
+            /* Check list type first since invokef_access may overwrite the object param 
+             * and mess up the error message */
+            if (!is:list(*apply) && !is:record(*apply)) {
+                xargp = (dptr)(rsp - 3);
+                xfno = fno;
+                err_msg(126, apply);
+                goto efail;
+            }
+
             args = 1;
 ExInterp; 
-            r = invokef_access(xfno, &args); 
+            r = invokef_access(fno, &args); 
 EntInterp;
 
             if (r == Error) {
-               err_msg(0, &xexpr);
+               xargp = (dptr)(rsp - 1) - args;
+               xfno = fno;
+               err_msg(0, xargp);
                goto efail;
             }
 
-            type_case xapply of {
+            apply = (dptr)(rsp - 1);
+
+            type_case *apply of {
                list: {
-                  rsp -= 2;				/* pop it off */
-                  bp = BlkLoc(xapply);
-                  args = args - 1 + (int)bp->list.size;
-                  for (bp = bp->list.listhead;
-		       BlkType(bp) == T_Lelem;
-                     bp = bp->lelem.listnext) {
+                    rsp -= 2;				/* pop it off */
+                    bp = BlkLoc(*apply);
+                    args = args - 1 + (int)bp->list.size;
+                    for (bp = bp->list.listhead;
+                         BlkType(bp) == T_Lelem;
+                         bp = bp->lelem.listnext) {
                         for (i = 0; i < bp->lelem.nused; i++) {
-                           j = bp->lelem.first + i;
-                           if (j >= bp->lelem.nslots)
-                              j -= bp->lelem.nslots;
-                           PushDesc(bp->lelem.lslots[j])
-                           }
+                            j = bp->lelem.first + i;
+                            if (j >= bp->lelem.nslots)
+                                j -= bp->lelem.nslots;
+                            PushDesc(bp->lelem.lslots[j]);
                         }
-                  lastop = Op_Apply;   /* Nicer error messages */
-		  goto invokej;
-		  }
-
-               record: {
-                  rsp -= 2;		/* pop it off */
-                  bp = BlkLoc(xapply);
-                  args = args - 1 + bp->record.constructor->n_fields;
-                  for (i = 0; i < args; i++) {
-                     PushDesc(bp->record.fields[i])
-                     }
-                  lastop = Op_Apply;
-                  goto invokej;
-                  }
-
-               default: {		/* illegal type for invocation */
-                  err_msg(126, &xapply);
-                  goto efail;
-                  }
+                    }
                }
 
+               record: {
+                    rsp -= 2;		/* pop it off */
+                    bp = BlkLoc(*apply);
+                    args = args - 1 + bp->record.constructor->n_fields;
+                    for (i = 0; i < args; i++) {
+                        PushDesc(bp->record.fields[i]);
+                    }
+               }
+
+                default: {  
+                   /* Shouldn't happen as we checked the type above */
+                   syserr("unexpected type of *apply");
+                }
+            }
+
+            lastop = Op_Invoke;
+            goto invokej;
          }
 
          case Op_Apply: {	/* apply, a.k.a. binary bang */
             union block *bp;
             int i, j;
+            dptr apply;
 
-            xapply = *(dptr)(rsp - 1);	/* argument */
-            Deref(xapply);
-            type_case xapply of {
+            apply = (dptr)(rsp - 1);	/* argument */
+            Deref(*apply);
+            type_case *apply of {
                list: {
-                  rsp -= 2;				/* pop it off */
-                  bp = BlkLoc(xapply);
-                  args = (int)bp->list.size;
-
-
-                  for (bp = bp->list.listhead;
-		       BlkType(bp) == T_Lelem;
-                     bp = bp->lelem.listnext) {
+                    rsp -= 2;				/* pop it off */
+                    bp = BlkLoc(*apply);
+                    args = (int)bp->list.size;
+                    for (bp = bp->list.listhead;
+                         BlkType(bp) == T_Lelem;
+                         bp = bp->lelem.listnext) {
                         for (i = 0; i < bp->lelem.nused; i++) {
-                           j = bp->lelem.first + i;
-                           if (j >= bp->lelem.nslots)
-                              j -= bp->lelem.nslots;
-                           PushDesc(bp->lelem.lslots[j])
-                           }
+                            j = bp->lelem.first + i;
+                            if (j >= bp->lelem.nslots)
+                                j -= bp->lelem.nslots;
+                            PushDesc(bp->lelem.lslots[j]);
                         }
-		  goto invokej;
-		  }
+                    }
+                }
 
                record: {
-                  rsp -= 2;		/* pop it off */
-                  bp = BlkLoc(xapply);
-                  args = bp->record.constructor->n_fields;
-                  for (i = 0; i < args; i++) {
-                     PushDesc(bp->record.fields[i])
-                     }
-                  goto invokej;
-                  }
+                    rsp -= 2;		/* pop it off */
+                    bp = BlkLoc(*apply);
+                    args = bp->record.constructor->n_fields;
+                    for (i = 0; i < args; i++) {
+                        PushDesc(bp->record.fields[i]);
+                    }
+               }
 
                default: {		/* illegal type for invocation */
-                  xargp = (dptr)(rsp - 3);
-                  err_msg(126, &xapply);
-                  goto efail;
-                  }
+                   xargp = (dptr)(rsp - 3);
+                   err_msg(126, apply);
+                   goto efail;
                }
-	    }
+             }
+
+             lastop = Op_Invoke;
+             goto invokej;
+         }
 
 	 case Op_Invoke: {	/* invoke */
-            args = (int)GetWord;
-
-invokej:
-	    {
             int nargs;
 	    dptr carg;
-
+            args = (int)GetWord;
+invokej:
 	    ExInterp;
 	    type = invoke(args, &carg, &nargs);
 	    EntInterp;
-	    if (type == I_Fail)
-	       goto efail_noev;
-	    if (type == I_Continue)
-	       break;
-	    else {
-
-               rargp = carg;		/* valid only for Vararg or Builtin */
-	       lastev = E_Function;
-	       lastdesc = *rargp;
-	       InterpEVValD(rargp, e_fcall);
-
-	       bproc = (struct b_proc *)BlkLoc(*rargp);
-
-	       /* ExInterp not needed since no change since last EntInterp */
-	       if (type == I_Vararg) {
-	          int (*bfunc)();
-                  bfunc = bproc->entryp.ccode;
-		  signal = (*bfunc)(nargs,rargp);
-                  }
-	       else
-                  {
-                  int (*bfunc)();
-                  bfunc = bproc->entryp.ccode;
-		  signal = (*bfunc)(rargp);
-                  }
-	       goto C_rtn_term;
-	       }
-	    }
+            switch (type) {
+                case Error: {
+                   err_msg(0, xargp);
+                   goto efail;
+                }
+                case I_Fail:
+                    goto efail;
+                case I_Continue:
+                    continue;
+                case I_Vararg: {
+                    rargp = carg;
+                    lastev = E_Function;
+                    lastdesc = *rargp;
+                    InterpEVValD(rargp, e_fcall);
+                    /* ExInterp not needed since no change since last EntInterp */
+                    signal = BlkLoc(*rargp)->proc.entryp.ccode(nargs,rargp);
+                    goto C_rtn_term;
+                }
+                case I_Builtin: {
+                    rargp = carg;
+                    lastev = E_Function;
+                    lastdesc = *rargp;
+                    InterpEVValD(rargp, e_fcall);
+                    /* ExInterp not needed since no change since last EntInterp */
+                    signal = BlkLoc(*rargp)->proc.entryp.ccode(rargp);
+                    goto C_rtn_term;
+                }
+                default: {
+                    syserr("Unexpected return code");
+                }
+            }
 	    break;
-	    }
+         }
 
 	 case Op_Keywd: 	/* keyword */
 
