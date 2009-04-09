@@ -228,10 +228,6 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 
             llargp[0] = llargp[-1];
             llargp[-1] = arg_sv;
-            /*
-             *  Reload proc pointer in case Ollist triggered a garbage collection.
-             */
-            proc = (struct b_proc *)BlkLoc(newargp[0]);
             newsp = (word *)llargp + 1;
             nargs = absnparam;
         }
