@@ -664,7 +664,7 @@ ExInterp;
 EntInterp;
 
             if (r == Error) {
-               xargp = (dptr)(rsp - 1) - args;
+               xargp = (dptr)(rsp - 3);
                xfno = fno;
                err_msg(0, xargp);
                goto efail;
