@@ -8,6 +8,8 @@
 
 #include "../h/modflags.h"
 
+#begdef invoke_macro(invoke_methp,invoke_misc,invoke_proc,construct_object,construct_record,invoke,e_ecall,e_pcall,e_objectcreate,e_rcreate)
+
 static int invoke_methp(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
 static int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
 static int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
@@ -15,7 +17,6 @@ static int construct_object(int nargs, dptr newargp);
 static int construct_record(int nargs, dptr newargp);
 
 
-
 /*
  * invoke -- Perform setup for invocation.  
  */
@@ -251,7 +252,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
         *cargp_ptr = newargp;
         sp = newsp;
 
-        EVVal((word)Op_Invoke,E_Ecall);
+        EVVal((word)Op_Invoke,e_ecall);
 
         if (nparam < 0)
             return I_Vararg;
@@ -313,7 +314,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 
     k_level++;
 
-    EVValD(newargp, E_Pcall);
+    EVValD(newargp, e_pcall);
 
     return I_Continue;
 }
@@ -391,7 +392,7 @@ static int construct_object(int nargs, dptr newargp)
 
     sp = (word *)newargp + 1;
 
-    EVValD(newargp, E_Objectcreate);
+    EVValD(newargp, e_objectcreate);
 
     return I_Continue;
 }
@@ -414,10 +415,15 @@ static int construct_record(int nargs, dptr newargp)
 
     sp = (word *)newargp + 1;
 
-    EVValD(newargp, E_Rcreate);
+    EVValD(newargp, e_rcreate);
 
     return I_Continue;
 }
+
+#enddef
+
+invoke_macro(invoke_methp_0,invoke_misc_0,invoke_proc_0,construct_object_0,construct_record_0,invoke_0,0,0,0,0)
+invoke_macro(invoke_methp_1,invoke_misc_1,invoke_proc_1,construct_object_1,construct_record_1,invoke_1,E_Ecall,E_Pcall,E_Objectcreate,E_Rcreate)
 
 void ensure_initialized(struct b_class *class)
 {

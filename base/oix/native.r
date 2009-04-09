@@ -948,7 +948,7 @@ function{1} lang_Class_get(obj, field)
        PushNull;
        PushDesc(obj);
        PushDesc(field);
-       rc = field_access((dptr)(sp - 5));
+       rc = field_access((dptr)(sp - 5),0);
        sp -= 6;
        if (rc == Error) 
            runerr(0, obj);
@@ -965,7 +965,7 @@ function{0,1} lang_Class_getf(obj, field, quiet)
        PushNull;
        PushDesc(obj);
        PushDesc(field);
-       rc = field_access((dptr)(sp - 5));
+       rc = field_access((dptr)(sp - 5),0);
        sp -= 6;
        if (rc == Error) {
            if (is:null(quiet))

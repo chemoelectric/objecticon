@@ -5,6 +5,20 @@
  *  Contents: field, mkrec, limit, llist, bscan, escan
  */
 
+LibDcl(field,2,".")
+{
+    int r;
+    struct inline_field_cache *ic;
+    ic = (struct inline_field_cache*)ipc;
+    ipc += 2;
+    r = field_access(cargp, ic);
+    if (r == Error)
+        RunErr(0, &Arg1);
+    Return;
+}
+
+#begdef access_macro(cast_access,instance_access,class_access,record_access,instance_invokef,cast_invokef,class_invokef,record_invokef,field_access,invokef_access,e_objectref,e_objectsub,e_castref,e_castsub,e_classref,e_classsub,e_rref,e_rsub)
+
 /*
  * x.y - access field y of record x.
  */
@@ -21,59 +35,25 @@ static int cast_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_
 static int class_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic);
 static int record_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic);
 
-LibDcl(field,2,".")
-{
-    int r;
-    struct inline_field_cache *ic;
-    Deref(Arg1);
-    Deref(Arg2);
-    ic = (struct inline_field_cache*)ipc;
-    ipc += 2;
-    type_case Arg1 of {
-      record: {
-            r = record_access(cargp, ic);
-      }
-
-      cast: {
-            r = cast_access(cargp, ic);
-      }
-
-      class: {
-            r = class_access(cargp, ic);
-      }
-
-      object: {
-            r = instance_access(cargp, ic);
-      }
-
-      default: {
-          RunErr(624, &Arg1);
-      }
-    }
-    if (r == Error)
-        RunErr(0, &Arg1);
-    Return;
-}
-
-int field_access(dptr cargp)
+int field_access(dptr cargp, struct inline_field_cache *ic)
 {
     Deref(Arg1);
     Deref(Arg2);
     type_case Arg1 of {
       record: {
-            return record_access(cargp, 0);
+            return record_access(cargp, ic);
       }
 
       cast: {
-            return cast_access(cargp, 0);
+            return cast_access(cargp, ic);
       }
 
       class: {
-            return class_access(cargp, 0);
+            return class_access(cargp, ic);
       }
 
       object: {
-            return instance_access(cargp, 0);
+            return instance_access(cargp, ic);
       }
 
       default: {
@@ -91,6 +71,7 @@ int invokef_access(int fno, int *nargs)
     ipc += 2;
     cargp = (dptr)(sp - 1) - *nargs;
     Deref(*cargp);
+    xexpr = *cargp;
     MakeInt(fno, &field);
     type_case *cargp of {
       object: {
@@ -153,8 +134,8 @@ static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_fi
             return ac;
     }
 
-    EVValD(&xexpr, E_Objectref);
-    EVVal(i + 1, E_Objectsub);
+    EVValD(&xexpr, e_objectref);
+    EVVal(i + 1, e_objectsub);
     return Succeeded;
 }
 
@@ -199,8 +180,8 @@ static int cast_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_
     BlkLoc(cargp[1]) = (union block *)obj;
     (*nargs)++;
     sp += 2;
-    EVValD(&xexpr, E_Castref);
-    EVVal(i + 1, E_Castsub);
+    EVValD(&xexpr, e_castref);
+    EVVal(i + 1, e_castsub);
 
     return Succeeded;
 }
@@ -231,8 +212,8 @@ static int class_invokef(int *nargs, dptr cargp, dptr field, struct inline_field
     else
         return ac;
 
-    EVValD(&xexpr, E_Classref);
-    EVVal(i + 1, E_Classsub);
+    EVValD(&xexpr, e_classref);
+    EVVal(i + 1, e_classsub);
     return Succeeded;
 }
 
@@ -246,8 +227,8 @@ static int record_invokef(int *nargs, dptr cargp, dptr field, struct inline_fiel
         ReturnErrNum(207, Error);
     *cargp = rec->fields[i];
 
-    EVValD(&xexpr, E_Rref);
-    EVVal(i + 1, E_Rsub);
+    EVValD(&xexpr, e_rref);
+    EVVal(i + 1, e_rsub);
 
     return Succeeded;
 }
@@ -296,8 +277,8 @@ static int cast_access(dptr cargp, struct inline_field_cache *ic)
     Arg0.dword = D_Methp;
     BlkLoc(Arg0) = (union block *)mp;
 
-    EVValD(&Arg1, E_Castref);
-    EVVal(i + 1, E_Castsub);
+    EVValD(&Arg1, e_castref);
+    EVVal(i + 1, e_castsub);
 
     return Succeeded;
 }
@@ -337,8 +318,8 @@ static int class_access(dptr cargp, struct inline_field_cache *ic)
     else
         return ac;
 
-    EVValD(&Arg1, E_Classref);
-    EVVal(i + 1, E_Classsub);
+    EVValD(&Arg1, e_classref);
+    EVVal(i + 1, e_classsub);
     return Succeeded;
 }
 
@@ -395,10 +376,37 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
             return ac;
     }
 
-    EVValD(&Arg1, E_Objectref);
-    EVVal(i + 1, E_Objectsub);
+    EVValD(&Arg1, e_objectref);
+    EVVal(i + 1, e_objectsub);
     return Succeeded;
 }
+
+static int record_access(dptr cargp, struct inline_field_cache *ic)
+{
+    struct b_record *rec = &BlkLoc(Arg1)->record;
+    struct b_constructor *recdef = BlkLoc(Arg1)->record.constructor;
+    dptr dp;
+    int i = lookup_record_field(recdef, &Arg2, ic);
+    if (i < 0)
+        ReturnErrNum(207, Error);
+    /*
+     * Return a pointer to the descriptor for the appropriate field.
+     */
+    dp = &rec->fields[i];
+    Arg0.dword = D_Var + ((word *)dp - (word *)rec);
+    BlkLoc(Arg0) = (union block *)rec;
+
+    EVValD(&Arg1, e_rref);
+    EVVal(i + 1, e_rsub);
+
+    return Succeeded;
+}
+
+#enddef
+
+access_macro(cast_access_0,instance_access_0,class_access_0,record_access_0,instance_invokef_0,cast_invokef_0,class_invokef_0,record_invokef_0,field_access_0,invokef_access_0,0,0,0,0,0,0,0,0)
+
+access_macro(cast_access_1,instance_access_1,class_access_1,record_access_1,instance_invokef_1,cast_invokef_1,class_invokef_1,record_invokef_1,field_access_1,invokef_access_1,E_Objectref,E_Objectsub,E_Castref,E_Castsub,E_Classref,E_Classsub,E_Rref,E_Rsub)
 
 /*
  * Check whether the calling procedure (deduced from the stack) has
@@ -595,27 +603,6 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
         /* Not reached */
         return 0;
     }
-}
-
-static int record_access(dptr cargp, struct inline_field_cache *ic)
-{
-    struct b_record *rec = &BlkLoc(Arg1)->record;
-    struct b_constructor *recdef = BlkLoc(Arg1)->record.constructor;
-    dptr dp;
-    int i = lookup_record_field(recdef, &Arg2, ic);
-    if (i < 0)
-        ReturnErrNum(207, Error);
-    /*
-     * Return a pointer to the descriptor for the appropriate field.
-     */
-    dp = &rec->fields[i];
-    Arg0.dword = D_Var + ((word *)dp - (word *)rec);
-    BlkLoc(Arg0) = (union block *)rec;
-
-    EVValD(&Arg1, E_Rref);
-    EVVal(i + 1, E_Rsub);
-
-    return Succeeded;
 }
 
 int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)

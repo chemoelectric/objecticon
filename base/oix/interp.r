@@ -627,8 +627,6 @@ Deliberate Syntax Error
             int r;
             xfno = (int)GetWord;
             args = (int)GetWord;
-            xexpr = *((dptr)(rsp - 1) - args);
-            Deref(xexpr);
 ExInterp; 
             r = invokef_access(xfno, &args); 
 EntInterp;
@@ -647,8 +645,6 @@ EntInterp;
             int i, j, r;
 
             xfno = (int)GetWord;
-            xexpr = *(dptr)(rsp - 3);
-            Deref(xexpr);
             xapply = *(dptr)(rsp - 1);
             Deref(xapply);
             args = 1;

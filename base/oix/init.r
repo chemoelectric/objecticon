@@ -792,6 +792,9 @@ static void initprogstate(struct progstate *p)
     p->Dealcblk = dealcblk_0;
     p->Dealcstr = dealcstr_0;
     p->Reserve = reserve_0;
+    p->FieldAccess = field_access_0;
+    p->InvokefAccess = invokef_access_0;
+    p->Invoke = invoke_0;
 }
 
 static void initptrs(struct progstate *p, struct header *h)

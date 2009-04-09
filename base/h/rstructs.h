@@ -493,6 +493,10 @@ struct progstate {
     void (*Dealcblk)(union block *);
     void (*Dealcstr)(char *);
     char * (*Reserve)(int, word);
+
+    int (*FieldAccess)(dptr, struct inline_field_cache *);
+    int (*InvokefAccess)(int, int *);
+    int (*Invoke)(int, dptr *, int *);
 };
 
 

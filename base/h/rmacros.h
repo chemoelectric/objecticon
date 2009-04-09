@@ -704,6 +704,9 @@ do { \
       #define dealcblk      (curpstate->Dealcblk)
       #define dealcstr      (curpstate->Dealcstr)
       #define reserve       (curpstate->Reserve)
+      #define field_access  (curpstate->FieldAccess)
+      #define invokef_access (curpstate->InvokefAccess)
+      #define invoke        (curpstate->Invoke)
 
       #define CHANGEPROGSTATE(p) if (((p)!=curpstate)) { changeprogstate(p); }
    

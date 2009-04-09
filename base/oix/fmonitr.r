@@ -117,6 +117,32 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       p->Cnvtstr = cnv_tstr_0;
       }
 
+   if ((Testb((word)(E_Objectref), bits)) ||
+       (Testb((word)(E_Objectsub), bits)) ||
+       (Testb((word)(E_Castref), bits)) ||
+       (Testb((word)(E_Castsub), bits)) ||
+       (Testb((word)(E_Classref), bits)) ||
+       (Testb((word)(E_Classsub), bits)) ||
+       (Testb((word)(E_Rref), bits)) ||
+       (Testb((word)(E_Rsub), bits))) 
+   {
+       p->FieldAccess = field_access_1;
+       p->InvokefAccess = invokef_access_1;
+   } else {
+       p->FieldAccess = field_access_0;
+       p->InvokefAccess = invokef_access_0;
+   }
+
+   if ((Testb((word)(E_Ecall), bits)) ||
+       (Testb((word)(E_Pcall), bits)) ||
+       (Testb((word)(E_Objectcreate), bits)) ||
+       (Testb((word)(E_Rcreate), bits)))
+   {
+       p->Invoke = invoke_1;
+   } else {
+       p->Invoke = invoke_0;
+   }
+
    /*
     * interp() is the monster case:
     * We should replace 30 membership tests with a cset intersection.
