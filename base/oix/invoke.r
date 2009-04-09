@@ -323,33 +323,32 @@ static int construct_object(int nargs, dptr newargp)
     struct class_field *new_field;
     word i;
     struct b_class *class;
-    struct b_object *object;
+    struct b_object *object; /* Doesn't need to be tended */
 
     class = (struct b_class*)BlkLoc(*newargp);
     ensure_initialized(class);
-
-    MemProtect(object = alcobject(class));
 
     new_field = class->new_field;
     if (!new_field) {
         /*
          * No constructor function, so just put the object in Arg0.
          */
+        MemProtect(object = alcobject(class));
         newargp[0].dword = D_Object;
         BlkLoc(newargp[0]) = (union block *)object;
     } else {
         /*
          * Check the constructor function is a non-static method.
          */
-        if ((new_field->flags & (M_Method | M_Static)) != M_Method) {
-            err_msg(605, newargp);
-            return I_Fail;
-        }
+        if ((new_field->flags & (M_Method | M_Static)) != M_Method)
+            syserr("new field not a non-static method");
 
         if (check_access(new_field, class) == Error) {
             err_msg(0, newargp);
             return I_Fail;
         }
+
+        MemProtect(object = alcobject(class));
 
         /*
          * Shift all the parameters down one to make room for the object
@@ -445,12 +444,8 @@ void ensure_initialized(struct b_class *class)
         /*
          * Check the initial function is a static method.
          */
-        if ((init_field->flags & (M_Method | M_Static)) != (M_Method | M_Static)) {
-            struct descrip d;
-            d.dword = D_Class;
-            BlkLoc(d) = (union block *)class;
-            fatalerr(606, &d);
-        }
+        if ((init_field->flags & (M_Method | M_Static)) != (M_Method | M_Static))
+            syserr("init field not a static method");
 
         /*
          * Push the init method on the stack, call it, restore stack.
