@@ -5,9 +5,10 @@
 Although Object Icon is quite compatible with Icon source code, there are a few minor differences.
 
  * New reserved words : `class`, `const`, `defer`, `final`, `import`, `package`, `private`, `protected`, `public`, `readable`.
- * A few new builtin functions : `cast()`, `is()`, `classof()`, `keyof()`, `subtype()`, `glob()`, `progof()`
+ * A few new builtin functions : `cast()`, `is()`, `classof()`, `keyof()`, `subtype()`, `ucs()`, `uchar()`, `text()`
  * I/O has been completely rewritten in Object Icon; there are no builtin I/O functions (`write`, `read` etc), nor is there a builtin `file` type.  Rather, I/O is implemented using a new set of classes in the `io` package.
  * Icon's various graphical builtin facilities have been moved into a package `graphics`.  Most notably, the class `Window` represents an window, rather than Icon's builtin `file` type.  Most of the graphics functions are now instance methods of `Window`.  The various Icon graphics keywords don't exist in Object Icon.
+ * The maths functions are static methods in the class util.Math, rather than builtins.
  * For a record, `type()` returns the record type name in Icon, whereas in Object Icon it returns "record"; a new builtin function, `subtype()`, returns the type name.
  * The invocation of PDCO procedures passes the co-expressions as individual parameters, rather than collected as a list in one parameter.  So the syntax 
 {{{
