@@ -15,6 +15,7 @@ static int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 static int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
 static int construct_object(int nargs, dptr newargp);
 static int construct_record(int nargs, dptr newargp);
+static dptr do_new_invoke(dptr top);
 
 
 /*
@@ -321,7 +322,6 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 static int construct_object(int nargs, dptr newargp)
 {
     struct class_field *new_field;
-    word i;
     struct b_class *class;
     struct b_object *object; /* Doesn't need to be tended */
 
@@ -349,37 +349,22 @@ static int construct_object(int nargs, dptr newargp)
         MemProtect(object = alcobject(class));
 
         /*
-         * Shift all the parameters down one to make room for the object
-         * param.
+         * Copy the new object over the class parameter, and push the
+         * new() procedure.  The custom opcode Op_CopyArgs2 will copy these
+         * args into correct order for an invoke.
          */
-        for (i = nargs; i > 0; i--) {
-            newargp[i + 1] = newargp[i];
-        }
+        newargp[0].dword = D_Object;
+        BlkLoc(newargp[0]) = (union block *)object;
+        PushDesc(*new_field->field_descriptor);
 
         /*
-         * Overwrite the D_Class with the "new" method.
+         * Call the new method.
          */
-        newargp[0] = *new_field->field_descriptor;
-
-        /*
-         * Insert the object parameter (ie, the thing given to the
-         * self param in the method).
-         */
-        newargp[1].dword = D_Object;
-        BlkLoc(newargp[1]) = (union block *)object;
-
-        sp += 2;
-
         object->init_state = Initializing;
-        if (!do_invoke(newargp)) {
-            BlkLoc(newargp[1])->object.init_state = Initialized;
+        if (!do_new_invoke(newargp)) {
+            BlkLoc(newargp[0])->object.init_state = Initialized;
             return I_Fail;
         }
-
-        /*
-         * Put the object param (currently in Arg1), into Arg0.
-         */
-        newargp[0] = newargp[1];
     }
 
     /*
@@ -558,4 +543,41 @@ dptr call_icon_va(dptr proc, va_list ap)
     res = do_invoke(dp);
     sp = (word *)dp - 1;
     return res;
+}
+
+/*
+ * Custom invoke for calling new() during object construction.
+ */
+static dptr do_new_invoke(dptr top)
+{
+    word ibuf[9];
+    int retval;
+    word *saved_ipc = ipc;
+    word *wp;
+    dptr ret;
+    int ncopy = (sp + 1 - (word*)top) / 2;
+
+    wp = ibuf;
+    *wp++ = Op_Mark;   
+    *wp++ = 6 * WordSize;
+    *wp++ = Op_CopyArgs2;
+    *wp++ = ncopy;
+    *wp++ = Op_Invoke;  
+    *wp++ = ncopy - 1;
+    *wp++ = Op_Eret;
+    *wp++ = Op_Trapret;
+    *wp++ = Op_Trapfail;
+
+    ipc = ibuf;
+    retval = interp(0, NULL);
+
+    if (retval == A_Trapret) {
+        ret = (dptr)(sp - 1);
+        sp -= 2;
+    } else
+        ret = 0;
+
+    ipc = saved_ipc;
+
+    return ret;
 }

@@ -1461,8 +1461,21 @@ EntInterp;
             opnd = GetWord;
             d = ((dptr)efp) - opnd;
             for (i = 0; i < opnd; ++i) {
-                *++rsp = (d->dword);
-                *++rsp =(d->vword.integr);
+                PushDesc(*d);
+                ++d;
+            }
+            break;
+         }         
+
+         case Op_CopyArgs2: {        /* Custom op specially for calling new() */
+            int i; 
+            dptr d;
+            opnd = GetWord;
+            PushDesc(*((dptr)efp - 1));
+            d = ((dptr)efp) - opnd;
+            --opnd;
+            for (i = 0; i < opnd; ++i) {
+                PushDesc(*d);
                 ++d;
             }
             break;

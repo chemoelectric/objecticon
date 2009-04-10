@@ -103,6 +103,7 @@
 #define Op_Trapret       92
 #define Op_Trapfail      93
 #define Op_CopyArgs      94
+#define Op_CopyArgs2     95
 
 #define Op_Noop		 98
 
