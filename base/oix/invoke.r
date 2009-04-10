@@ -482,9 +482,9 @@ dptr do_invoke(dptr proc)
     word ibuf[9];
     int retval;
     word *saved_ipc = ipc;
-    word saved_lastop = lastop;
-    dptr saved_xargp = xargp;
-    word saved_xnargs = xnargs;
+    word saved_lastop = lastop;      /* We save these three in case we are in a function */
+    dptr saved_xargp = xargp;        /* (lastop==Op_Invoke) which calls runerr() after this */
+    word saved_xnargs = xnargs;      /* function returns. */
 
     word *wp;
     dptr ret;
