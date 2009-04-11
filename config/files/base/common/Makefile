@@ -2,7 +2,7 @@ include ../../Makedefs
 
 CWARN = -Wall
 
-OBJS=	getopt.o time.o identify.o strtbl.o \
+OBJS=	getopt.o identify.o strtbl.o \
 	mlocal.o literals.o rswitch.o alloc.o\
 	rswitch.o
 

@@ -586,6 +586,7 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len);
 int cset_range_of_pos(struct b_cset *b, word pos);
 void mmrefresh		(void);
 int iselect(int fd, word t);
+long	millisec	(void);
 
 /* Debug func. */
 char* dword2str(dptr d);
