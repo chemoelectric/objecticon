@@ -627,18 +627,14 @@ int noimage;
 
      class: {
            /* produce "class " + the class name */
-         i = StrLen(BlkLoc(*dp)->class.name);
-         s = StrLoc(BlkLoc(*dp)->class.name);
          fprintf(f, "class ");
-         fwrite(s, 1, i, f);
+         putstr(f, &BlkLoc(*dp)->class.name);
          }
 
      constructor: {
            /* produce "constructor " + the type name */
-         i = StrLen(BlkLoc(*dp)->constructor.name);
-         s = StrLoc(BlkLoc(*dp)->constructor.name);
          fprintf(f, "constructor ");
-         fwrite(s, 1, i, f);
+         putstr(f, &BlkLoc(*dp)->constructor.name);
          }
 
       proc: {
@@ -648,28 +644,20 @@ int noimage;
               * Produce "method classname.fieldname"
               */
              fprintf(f, "method ");
-             dp = &field->defining_class->name;
-             i = StrLen(*dp);
-             s = StrLoc(*dp);
-             fwrite(s, 1, i, f);
+             putstr(f, &field->defining_class->name);
              fprintf(f, ".");
-             dp = &field->name;
-             i = StrLen(*dp);
-             s = StrLoc(*dp);
-             fwrite(s, 1, i, f);
+             putstr(f, &field->name);
          } else {
              /*
               * Produce one of:
               *  "procedure name"
               *  "function name"
               */
-             i = StrLen(BlkLoc(*dp)->proc.pname);
-             s = StrLoc(BlkLoc(*dp)->proc.pname);
              if (BlkLoc(*dp)->proc.program)
                  fprintf(f, "procedure ");
              else
                  fprintf(f, "function ");
-             fwrite(s, 1, i, f);
+             putstr(f, &BlkLoc(*dp)->proc.pname);
          }
       }
       list: {
@@ -733,10 +721,8 @@ int noimage;
               *  the image of each field instead of the number of fields.
               */
              bp = BlkLoc(*dp);
-             i = StrLen(bp->object.class->name);
-             s = StrLoc(bp->object.class->name);
              fprintf(f, "object ");
-             fwrite(s, 1, i, f);
+             putstr(f, &bp->object.class->name);
              fprintf(f, "#%ld", (long)bp->object.id);
              j = bp->object.class->n_instance_fields;
              if (j <= 0)
@@ -763,10 +749,8 @@ int noimage;
           *  the image of each field instead of the number of fields.
           */
          bp = BlkLoc(*dp);
-         i = StrLen(bp->record.constructor->name);
-         s = StrLoc(bp->record.constructor->name);
          fprintf(f, "record ");
-         fwrite(s, 1, i, f);
+         putstr(f, &bp->record.constructor->name);
          fprintf(f, "#%ld", (long)bp->record.id);
          j = bp->record.constructor->n_fields;
          if (j <= 0)
