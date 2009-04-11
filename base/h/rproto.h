@@ -64,7 +64,7 @@ int		co_chng		(struct b_coexpr *ncp, struct descrip *valloc,
 				   struct descrip *rsltloc,
 				   int swtch_typ, int first);
 void		co_init		(struct b_coexpr *sblkp);
-int		coswitch	(word *old, word *new, int first);
+void		coswitch	(word *old, word *new, int first);
 int		cplist_0	(dptr dp1,dptr dp2,word i,word j);
 int		cplist_1	(dptr dp1,dptr dp2,word i,word j);
 int		cpset_0		(dptr dp1,dptr dp2,word size);
@@ -129,7 +129,7 @@ void		mksubs		(dptr var,dptr val,word i,word j, dptr result);
 word		mod3		(word a,word b);
 word		mul		(word a,word b);
 word		neg		(word a);
-void            new_context     (int fsig, dptr cargp); 
+void            new_context     (void);
 int		numcmp		(dptr dp1,dptr dp2,dptr dp3);
 void		outimage	(FILE *f,dptr dp,int noimage);
 long physicalmemorysize();

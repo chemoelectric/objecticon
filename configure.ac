@@ -68,7 +68,7 @@ AC_CHECK_SIZEOF(long, 4)
 AC_CHECK_SIZEOF(void*, 4)
 
 AC_CONFIG_COMMANDS(system, [
-        cp $CSWITCH base/common
+        cp $CSWITCH base/oix
 	AS_MKDIR_P(bin)
 ])
 AC_CONFIG_FILES([Makedefs:config/files/Makedefs],)

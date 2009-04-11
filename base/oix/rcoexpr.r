@@ -197,7 +197,6 @@ int first;
       swtch_typ = A_Coact;
 
    coexp_act = swtch_typ;
-/*printf("2.coswtich first=%d %x->%x %x %x\n",first,ccp,ncp,ncp->cstate[0],ncp->cstate[1]);*/
 
    coswitch(ccp->cstate, ncp->cstate,first);
 
@@ -228,9 +227,8 @@ void dumpcoexp(char*s, struct b_coexpr *p) {
  * new_context - determine what function to call to execute the new
  *  co-expression; this completes the context switch.
  */
-void new_context(fsig,cargp)
-int fsig;
-dptr cargp;
-   {
-      interp(fsig, cargp);
-   }
+void new_context(void)
+{
+       interp(0, 0);
+       syserr("interp() returned in new_context().");
+}

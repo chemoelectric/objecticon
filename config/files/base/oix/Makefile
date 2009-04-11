@@ -21,9 +21,11 @@ XOBJS=	cnv.o data.o def.o errmsg.o fconv.o fload.o fmath.o\
 	rdebug.o rlocal.o rlrgint.o rmemmgt.o rmisc.o rstruct.o rsys.o\
 	rwinrsc.o rwinsys.o rwindow.o posix.o
 
+RTTC=$(XOBJS:.o=.c)
+
 COBJS=	../common/long.o ../common/time.o \
-	../common/rswitch.o \
-	../common/mlocal.o ../common/alloc.o
+	../common/mlocal.o ../common/alloc.o \
+	rswitch.o
 
 OBJS=	$(XOBJS) $(COBJS)
 
@@ -42,7 +44,7 @@ oix:	$(OBJS)
 	$(RM) $*.c
 
 clean:		
-	rm -f *.o *.c rt.db rt.a rttcur.lst rttfull.lst oix keysymtocodepoint
+	rm -f *.o $(RTTC) rt.db rt.a rttcur.lst rttfull.lst oix keysymtocodepoint
 
 # Compile with make KEYSYMS=Y
 ifeq ($(KEYSYMS),Y)
