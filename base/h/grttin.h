@@ -71,9 +71,9 @@
 /*
  * Protection macro.
  */
-#define Protect(notnull,orelse) do {if ((notnull)==NULL) orelse;} while(0)
+#define Protect(notnull,orelse) do {if (!(notnull)) orelse;} while(0)
 
-#define MemProtect(notnull) do {if ((notnull)==NULL) fatalerr(309,NULL);} while(0)
+#define MemProtect(notnull) do {if (!(notnull)) fatalerr(309,NULL);} while(0)
 
 /*
  * perform what amounts to "function inlining" of EVVal

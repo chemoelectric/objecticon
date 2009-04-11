@@ -446,11 +446,22 @@ int smatch(char *s, char *t)
 
 struct rangeset *init_rangeset()
 {
-    struct rangeset *rs = safe_alloc(sizeof(struct rangeset));
+    struct rangeset *rs = malloc(sizeof(struct rangeset));
+    if (!rs)
+        return 0;
     rs->n_ranges = 0;
     rs->n_alloc = 8;
-    rs->range = safe_alloc(rs->n_alloc * sizeof(struct range));
-    rs->temp = safe_alloc(rs->n_alloc * sizeof(struct range));
+    rs->range = malloc(rs->n_alloc * sizeof(struct range));
+    if (!rs->range) {
+        free(rs);
+        return 0;
+    }
+    rs->temp = malloc(rs->n_alloc * sizeof(struct range));
+    if (!rs->temp) {
+        free(rs->range);
+        free(rs);
+        return 0;
+    }
     return rs;
 }
 
@@ -480,13 +491,20 @@ static int merge_range(struct range *r1, struct range *r2)
     return 0;
 }
 
-static void ensure_rangeset_size(struct rangeset *rs, int n)
+static int ensure_rangeset_size(struct rangeset *rs, int n)
 {
+    struct range *t;
     if (rs->n_alloc >= n)
-        return;
-    rs->n_alloc = n * 2;
-    rs->range = safe_realloc(rs->range, rs->n_alloc * sizeof(struct range));
-    rs->temp = safe_realloc(rs->temp, rs->n_alloc * sizeof(struct range));
+        return 1;
+    n *= 2;
+    if (!(t = realloc(rs->range, n * sizeof(struct range))))
+        return 0;
+    rs->range = t;
+    if (!(t = realloc(rs->temp, n * sizeof(struct range))))
+        return 0;
+    rs->temp = t;
+    rs->n_alloc = n;
+    return 1;
 }
 
 /*
@@ -509,7 +527,7 @@ static int has_range(struct rangeset *rs, int from, int to)
     return 0;
 }
 
-void add_range(struct rangeset *rs, int from, int to)
+int add_range(struct rangeset *rs, int from, int to)
 {
     int i, n;
     struct range new;
@@ -519,16 +537,18 @@ void add_range(struct rangeset *rs, int from, int to)
         exit(EXIT_FAILURE);
     }
     if (from > to)
-        return;
+        return 1;
 
     /*
      * Easy case if we can just add the new range to the end.
      */
     if (rs->n_ranges == 0 || from > rs->range[rs->n_ranges - 1].to + 1) {
-        ensure_rangeset_size(rs, ++rs->n_ranges);
-        rs->range[rs->n_ranges - 1].from = from;
-        rs->range[rs->n_ranges - 1].to = to;
-        return;
+        if (!ensure_rangeset_size(rs, 1 + rs->n_ranges))
+            return 0;
+        rs->range[rs->n_ranges].from = from;
+        rs->range[rs->n_ranges].to = to;
+        ++rs->n_ranges;
+        return 1;
     }
 
     /*
@@ -536,10 +556,11 @@ void add_range(struct rangeset *rs, int from, int to)
      * an existing range; if so no need to do anything.
      */
     if (has_range(rs, from, to))
-        return;
+        return 1;
 
     /* Allocates room for rs->n_ranges + 1 ranges: it can grow by at most one range */
-    ensure_rangeset_size(rs, (1 + rs->n_ranges));
+    if (!ensure_rangeset_size(rs, 1 + rs->n_ranges))
+        return 0;
 
     /* Merge the new range with existing ranges */
     n = 0;
@@ -565,6 +586,8 @@ void add_range(struct rangeset *rs, int from, int to)
     t = rs->range;
     rs->range = rs->temp;
     rs->temp = t;
+
+    return 1;
 }
 
 void print_rangeset(struct rangeset *rs)

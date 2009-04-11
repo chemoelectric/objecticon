@@ -16,18 +16,19 @@ operator{1} ~ compl(x)
       return cset
       }
    body {
-       struct rangeset *rs = init_rangeset();
+       struct rangeset *rs;
        struct b_cset *blk;
        word i, prev = 0;
+       MemProtect(rs = init_rangeset());
        for (i = 0; i < BlkLoc(x)->cset.n_ranges; ++i) {
            word from = BlkLoc(x)->cset.range[i].from;
            word to = BlkLoc(x)->cset.range[i].to;
            if (from > prev)
-               add_range(rs, prev, from - 1);
+               MemProtect(add_range(rs, prev, from - 1));
            prev = to + 1;
        }
        if (prev <= MAX_CODE_POINT)
-           add_range(rs, prev, MAX_CODE_POINT);
+           MemProtect(add_range(rs, prev, MAX_CODE_POINT));
        blk = rangeset_to_block(rs);
        free_rangeset(rs);
        return cset(blk);
@@ -100,10 +101,12 @@ operator{1} -- diff(x,y)
          return cset
          }
       body {
-          struct rangeset *y_comp = init_rangeset();
-          struct rangeset *rs = init_rangeset();
+          struct rangeset *rs, *y_comp;
           struct b_cset *blk;
           word i_x, i_y, prev = 0;
+
+          MemProtect(y_comp = init_rangeset());
+          MemProtect(rs = init_rangeset());
           /*
            * Calculate ~y
            */
@@ -111,11 +114,11 @@ operator{1} -- diff(x,y)
               word from = BlkLoc(y)->cset.range[i_y].from;
               word to = BlkLoc(y)->cset.range[i_y].to;
               if (from > prev)
-                  add_range(y_comp, prev, from - 1);
+                  MemProtect(add_range(y_comp, prev, from - 1));
               prev = to + 1;
           }
           if (prev <= MAX_CODE_POINT)
-              add_range(y_comp, prev, MAX_CODE_POINT);
+              MemProtect(add_range(y_comp, prev, MAX_CODE_POINT));
 
           /*
            * Calculate x ** ~y
@@ -128,11 +131,11 @@ operator{1} -- diff(x,y)
               word from_y = y_comp->range[i_y].from;
               word to_y = y_comp->range[i_y].to;
               if (to_x < to_y) {
-                  add_range(rs, Max(from_x, from_y), to_x);
+                  MemProtect(add_range(rs, Max(from_x, from_y), to_x));
                   ++i_x;
               }
               else {
-                  add_range(rs, Max(from_x, from_y), to_y);
+                  MemProtect(add_range(rs, Max(from_x, from_y), to_y));
                   ++i_y;
               }
           }
@@ -219,9 +222,10 @@ operator{1} ** inter(x,y)
          }
 
       body {
-          struct rangeset *rs = init_rangeset();
+          struct rangeset *rs;
           struct b_cset *blk;
           word i_x, i_y;
+          MemProtect(rs = init_rangeset());
           i_x = i_y = 0;
           while (i_x < BlkLoc(x)->cset.n_ranges &&
                  i_y < BlkLoc(y)->cset.n_ranges) {
@@ -230,11 +234,11 @@ operator{1} ** inter(x,y)
               word from_y = BlkLoc(y)->cset.range[i_y].from;
               word to_y = BlkLoc(y)->cset.range[i_y].to;
               if (to_x < to_y) {
-                  add_range(rs, Max(from_x, from_y), to_x);
+                  MemProtect(add_range(rs, Max(from_x, from_y), to_x));
                   ++i_x;
               }
               else {
-                  add_range(rs, Max(from_x, from_y), to_y);
+                  MemProtect(add_range(rs, Max(from_x, from_y), to_y));
                   ++i_y;
               }
           }
@@ -322,19 +326,16 @@ operator{1} ++ union(x,y)
          }
 
       body {
-          struct rangeset *rs = init_rangeset();
+          struct rangeset *rs;
           struct b_cset *blk;
           int i;
-          for (i = 0; i < BlkLoc(x)->cset.n_ranges; ++i) {
-              add_range(rs, 
-                        BlkLoc(x)->cset.range[i].from,
-                        BlkLoc(x)->cset.range[i].to);
-          }
-          for (i = 0; i < BlkLoc(y)->cset.n_ranges; ++i) {
-              add_range(rs, 
-                        BlkLoc(y)->cset.range[i].from,
-                        BlkLoc(y)->cset.range[i].to);
-          }
+          MemProtect(rs = init_rangeset());
+          for (i = 0; i < BlkLoc(x)->cset.n_ranges; ++i) 
+              MemProtect(add_range(rs, BlkLoc(x)->cset.range[i].from, BlkLoc(x)->cset.range[i].to));
+          
+          for (i = 0; i < BlkLoc(y)->cset.n_ranges; ++i) 
+              MemProtect(add_range(rs, BlkLoc(y)->cset.range[i].from, BlkLoc(y)->cset.range[i].to));
+          
           blk = rangeset_to_block(rs);
           free_rangeset(rs);
           return cset(blk);

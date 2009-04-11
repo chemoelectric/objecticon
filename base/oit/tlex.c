@@ -638,7 +638,8 @@ static struct toktab *getcset(ac, cc)
     int esc_flag;
     char *p;
 
-    cs = init_rangeset();
+    if (!(cs = init_rangeset()))
+        quitf("Out of memory for rangeset");
 
     c = NextChar;
     while (c != '\'' && c != '\n' && c != EOF) {
@@ -688,21 +689,24 @@ static struct toktab *getcset(ac, cc)
                 if (!esc_flag && c == '-')
                     ++state;
                 else {
-                    add_range(cs, prev, prev);
+                    if (!add_range(cs, prev, prev))
+                        quitf("Out of memory for add_range");
                     prev = c;
                 }
                 break;
             case 2:
-                add_range(cs, prev, c);
+                if (!add_range(cs, prev, c))
+                    quitf("Out of memory for add_range");
                 state = 0;
                 break;
         }
         c = NextChar;
     }
     if (c == '\'') {
-        if (state == 1)
-            add_range(cs, prev, prev);
-        else if (state == 2)
+        if (state == 1) {
+            if (!add_range(cs, prev, prev))
+                quitf("Out of memory for add_range");
+        } else if (state == 2)
             tfatal("incomplete cset range");
         *cc = ' ';
     } else {

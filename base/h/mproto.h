@@ -55,7 +55,7 @@ int utf8_seq(int c, char *s);
 
 struct rangeset *init_rangeset(void);
 void free_rangeset(struct rangeset *rs);
-void add_range(struct rangeset *cs, int from, int to);
+int add_range(struct rangeset *cs, int from, int to);
 void print_rangeset(struct rangeset *rs);
 
 int calc_ucs_index_step(word length);

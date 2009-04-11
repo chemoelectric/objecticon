@@ -1698,7 +1698,7 @@ function{1} lang_Text_create_cset(x[n])
      tended struct b_cset *b;
      int from, to, i;
 
-     rs = init_rangeset();
+     MemProtect(rs = init_rangeset());
      i = 0;
      while (i < n) {
          if (is:list(x[i])) {
@@ -1727,13 +1727,13 @@ function{1} lang_Text_create_cset(x[n])
                      if (from == -1)
                          from = to;
                      else {
-                         add_range(rs, from, to);
+                         MemProtect(add_range(rs, from, to));
                          from = -1;
                      }
                  }
              }
              if (from != -1)
-                 add_range(rs, from, from);
+                 MemProtect(add_range(rs, from, from));
              ++i;
          } else {
              if (!cnv:C_integer(x[i], from)) {
@@ -1756,10 +1756,10 @@ function{1} lang_Text_create_cset(x[n])
                      irunerr(205, to);
                      errorfail;
                  }
-                 add_range(rs, from, to);
+                 MemProtect(add_range(rs, from, to));
                  ++i;
              } else
-                 add_range(rs, from, from);
+                 MemProtect(add_range(rs, from, from));
          }
      }
      b = rangeset_to_block(rs);

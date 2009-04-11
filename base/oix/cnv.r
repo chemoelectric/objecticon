@@ -230,12 +230,13 @@ int f(dptr s, dptr d)
 
    if (is:ucs(*s)) {
        char *s1;
-       struct rangeset *rs = init_rangeset();
+       struct rangeset *rs;
        int l = BlkLoc(*s)->ucs.length;
+       MemProtect(rs = init_rangeset());
        s1 = StrLoc(BlkLoc(*s)->ucs.utf8);
        while (l-- > 0) {
            int i = utf8_iter(&s1);
-           add_range(rs, i, i);
+           MemProtect(add_range(rs, i, i));
        }
        d->dword = D_Cset;
        BlkLoc(*d) = (union block *)rangeset_to_block(rs);
@@ -246,12 +247,13 @@ int f(dptr s, dptr d)
    if (cnv:string(*s, str)) {
        C_integer l;
        char *s1;        /* does not need to be tended */
-       struct rangeset *rs = init_rangeset();
+       struct rangeset *rs;
+       MemProtect(rs = init_rangeset());
        s1 = StrLoc(str);
        l = StrLen(str);
        while(l--) {
            int i = *s1++ & 0xff;
-           add_range(rs, i, i);
+           MemProtect(add_range(rs, i, i));
        }
        d->dword = D_Cset;
        BlkLoc(*d) = (union block *)rangeset_to_block(rs);
