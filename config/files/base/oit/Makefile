@@ -7,7 +7,7 @@ TRANS=		trans.o tcode.o tlex.o tparse.o tsym.o tmem.o \
 
 LINKR=		link.o lglob.o lcode.o lmem.o lsym.o
 
-COBJS=		../common/long.o ../common/getopt.o ../common/alloc.o \
+COBJS=		../common/getopt.o ../common/alloc.o \
 		../common/strtbl.o ../common/mlocal.o
 
 OBJS=		package.o resolve.o tmain.o $(TRANS) $(LINKR) $(COBJS)

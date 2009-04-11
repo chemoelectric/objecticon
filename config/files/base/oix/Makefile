@@ -23,7 +23,7 @@ XOBJS=	cnv.o data.o def.o errmsg.o fconv.o fload.o fmath.o\
 
 RTTC=$(XOBJS:.o=.c)
 
-COBJS=	../common/long.o ../common/time.o \
+COBJS=	../common/time.o \
 	../common/mlocal.o \
 	rswitch.o
 

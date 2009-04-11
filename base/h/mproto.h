@@ -11,7 +11,6 @@ void	free_stbl	(void);
 void	id_comment	(FILE *f);
 void	init_sbuf	(struct str_buf *sbuf);
 void	init_str	(void);
-long	longwrite	(char *s,long len,FILE *file);
 char	*makename	(char *d,char *name,char *e);
 long	millisec	(void);
 struct il_code *new_il	(int il_type, int size);

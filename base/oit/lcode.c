@@ -1853,7 +1853,7 @@ static void gentables()
                 }
                 fprintf(dbgfile, "   %s\n", t);
             }
-            if (longwrite(sp->s, sp->len, outfile) < 0)
+            if (fwrite(sp->s, 1, sp->len, outfile) != sp->len)
                 quit("cannot write icode file");
             pc += sp->len;
         }
@@ -1890,7 +1890,7 @@ static void gentables()
 
     fseek(outfile, scriptsize, 0);
 
-    if (longwrite((char *)&hdr, (long)sizeof(hdr), outfile) < 0)
+    if (fwrite((char *)&hdr, 1, sizeof(hdr), outfile) != sizeof(hdr))
         quit("cannot write icode file");
 
     if (verbose > 1) {
@@ -2001,9 +2001,11 @@ static void outblock(addr,count)
  */
 static void flushcode()
 {
-    if (codep > codeb)
-        if (longwrite(codeb, DiffPtrs(codep,codeb), outfile) < 0)
+    if (codep > codeb) {
+        size_t n = DiffPtrs(codep,codeb);
+        if (fwrite(codeb, 1, n, outfile) != n)
             quit("cannot write icode file");
+    }
     codep = codeb;
 }
 

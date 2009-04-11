@@ -115,7 +115,7 @@ dptr d;
       return  Succeeded;
    s = StrLoc(*d);
 
-   if (longwrite(s,l,f) < 0)
+   if (fwrite(s,1,l,f) != l)
       return Failed;
    else
       return Succeeded;
