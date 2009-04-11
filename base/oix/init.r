@@ -153,24 +153,21 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         int tmp = open(name, O_RDONLY);
         lseek(tmp,ftell(ifile),SEEK_SET);
         zfd = gzdopen(tmp, "r");
-        if ((cbread = gzlongread(codeptr, sizeof(char), (long)hdr->icodesize, zfd)) !=
-            hdr->icodesize) {
+        if ((cbread = gzread(zfd, codeptr, hdr->icodesize)) != hdr->icodesize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                     (long)hdr->icodesize,(long)cbread);
             ffatalerr("bad icode file: %s", name);
         }
         gzclose(zfd);
     } else {
-        if ((cbread = longread(codeptr, sizeof(char), (long)hdr->icodesize, ifile)) !=
-            hdr->icodesize) {
+        if ((cbread = fread(codeptr, 1, (long)hdr->icodesize, ifile)) != hdr->icodesize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                     (long)hdr->icodesize,(long)cbread);
             ffatalerr("bad icode file: %s", name);
         }
     }
 #else					/* HAVE_LIBZ */
-    if ((cbread = longread(codeptr, sizeof(char), (long)hdr->icodesize, ifile)) !=
-        hdr->icodesize) {
+    if ((cbread = fread(codeptr, 1, (long)hdr->icodesize, ifile)) != hdr->icodesize) {
         fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                 (long)hdr->icodesize,(long)cbread);
         ffatalerr("bad icode file: %s", name);

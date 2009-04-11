@@ -3,101 +3,7 @@
  *  Contents: [flushrec], [getrec], getstrg, host, longread, [putrec], putstr
  */
 
-
 
-#if MSWIN32
-#ifndef NTGCC
-#define pclose _pclose
-#endif
-#endif
-
-
-/*
- * Read a long string in shorter parts. (Standard read may not handle long
- *  strings.)
- */
-word longread(char *s, int width, long len, FILE *fd)
-{
-   tended char *ts = s;
-   long tally = 0;
-   long n = 0;
-
-#if MSWIN32
-   /*
-    * Under NT/MSVC++, ftell() used in Icon where() returns bad answers
-    * after a wlongread().  We work around it here by fseeking after fread.
-    */
-   long pos = ftell(fd);
-#endif					/* MSWIN32 */
-
-#ifdef XWindows
-   if (isatty(fileno(fd))) wflushall();
-#endif					/* XWindows */
-
-   while (len > 0) {
-      n = fread(ts, width, (int)((len < MaxIn) ? len : MaxIn), fd);
-      if (n <= 0) {
-#if MSWIN32
-         fseek(fd, pos + tally, SEEK_SET);
-#endif					/* MSWIN32 */
-         return tally;
-	 }
-      tally += n;
-      ts += n;
-      len -= n;
-      }
-#if MSWIN32
-   fseek(fd, pos + tally, SEEK_SET);
-#endif					/* MSWIN32 */
-   return tally;
-   }
-
-
-#ifdef HAVE_LIBZ
-/*
- * Read a long string in shorter parts from a comressed file. 
- * (Standard read may not handle long strings.)
- */
-word gzlongread(char *s, int width, long len, FILE *fd)
-{
-   tended char *ts = s;
-   long tally = 0;
-   long n = 0;
-
-#if MSWIN32
-   /*
-    * Under WIN32/MSVC++, ftell() used in Icon where() returns bad answers
-    * after a wlongread().  We work around it here by fseeking after fread.
-    */
-   long pos = ftell(fd);
-#endif					/* MSWIN32 */
-
-#ifdef XWindows
-   if (isatty(fileno(fd))) wflushall();
-#endif					/* XWindows */
-
-   while (len > 0) {
-      n = gzread(fd,ts, width * ((int)((len < MaxIn) ? len : MaxIn)));
-      if (n <= 0) {
-#if MSWIN32
-         gzseek(fd, pos + tally, SEEK_SET);
-#endif					/* MSWIN32 */
-         return tally;
-	 }
-      tally += n;
-      ts += n;
-      len -= n;
-      }
-#if MSWIN32
-   gzseek(fd, pos + tally, SEEK_SET);
-#endif					/* MSWIN32 */
-   return tally;
-   }
-
-#endif					/* HAVE_LIBZ */
-
-
-
 /*
  * Print string referenced by descriptor d. Note, d must not move during
  *   a garbage collection.

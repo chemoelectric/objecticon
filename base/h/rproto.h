@@ -120,10 +120,6 @@ int		interp_0	(int fsig,dptr cargp);
 int		interp_1	(int fsig,dptr cargp);
 void		irunerr		(int n, C_integer v);
 int		lexcmp		(dptr dp1,dptr dp2);
-word		longread	(char *s,int width,long len,FILE *fname);
-#ifdef HAVE_LIBZ
-word gzlongread(char *s, int width, long len, FILE *fd);
-#endif
 union block	**memb		(union block *pb,dptr x,uword hn, int *res);
 void		mksubs		(dptr var,dptr val,word i,word j, dptr result);
 word		mod3		(word a,word b);
