@@ -160,14 +160,14 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         }
         gzclose(zfd);
     } else {
-        if ((cbread = fread(codeptr, 1, (long)hdr->icodesize, ifile)) != hdr->icodesize) {
+        if ((cbread = fread(codeptr, 1, hdr->icodesize, ifile)) != hdr->icodesize) {
             fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                     (long)hdr->icodesize,(long)cbread);
             ffatalerr("bad icode file: %s", name);
         }
     }
 #else					/* HAVE_LIBZ */
-    if ((cbread = fread(codeptr, 1, (long)hdr->icodesize, ifile)) != hdr->icodesize) {
+    if ((cbread = fread(codeptr, 1, hdr->icodesize, ifile)) != hdr->icodesize) {
         fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
                 (long)hdr->icodesize,(long)cbread);
         ffatalerr("bad icode file: %s", name);
