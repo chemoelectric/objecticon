@@ -1547,16 +1547,6 @@ static int isframe_gf(struct gf_marker *gf, word *p)
     return 0;
 }    
 
-static int is_progstate(word *x)
-{
-    struct progstate *p;
-    for (p = progs; p; p = p->next) {
-        if ((word*)p == x)
-            return 1;
-    }
-    return 0;
-}
-
 char *ptr(void *p) {
     if (p == pfp)
         return "pfp->";
@@ -1594,23 +1584,18 @@ void showstack()
     printf("\t\t\tes_ilevel=%d\n",c->es_ilevel);
     printf("\t\t\tprogram=%p\n",c->program);
 
-    p = (word*)c + Wsizeof(struct b_coexpr);
-    if (is_progstate(p)) {
-        struct progstate *t = (struct progstate*)p;
-        printf("\t%p\tprog\tparent=%p\n", t, t->parent);
-        printf("\t\t\tnext=%p\n",t->next);
-        printf("\t\t\tCode=%p\n",t->Code);
-        printf("\t\t\tEcode=%p\n",t->Ecode);
-        printf("\t\t\tRecords=%p\n",t->Records);
-        p += sizeof(struct progstate)/sizeof(word);
-        if (p == (word*)t->Code) {
-            printf("\t%p\tcode\ticodesize=%ld\n",p,(long)t->icodesize);
-            p += t->icodesize / WordSize;
-            /* Pad.. see corresponding code in fmisc.r */
-            if (t->icodesize % WordSize)
-                ++p;
-        }
+    if (c == rootpstate.K_main) {
+        p = stack + Wsizeof(struct b_coexpr);
+    } else if (c->main_of) {
+        /* See init.r, Prog.load */
+        p = (word *)c + Wsizeof(struct b_coexpr) + Wsizeof(struct progstate) + 
+               c->main_of->icodesize/WordSize;
+        if (c->main_of->icodesize % WordSize) 
+            p++;
+    } else {
+        p = (word *)(c + 1);
     }
+
     while (p <= sp) {
         int ft = isframe(p);
         if (ft == GF) {
