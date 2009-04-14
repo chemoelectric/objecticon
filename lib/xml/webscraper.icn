@@ -7,8 +7,15 @@ package xml
 import util, ipl.noncase, io
 
 class WebScraper()
-   public 
+   private
       paths
+
+   #
+   # Generate the lookup ids this webscraper can search for
+   #
+   public get_ids()
+      suspend key(paths)
+   end
 
    public load_file(fn)
       return set_page(Files.file_to_string(fn)) 
