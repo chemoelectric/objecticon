@@ -157,6 +157,8 @@
 #define Op_Super        222
 #define Op_Method       223
 
-#define Op_Ivar         224
+#define Op_Vari         224
 #define Op_Lrgint       225
+#define Op_Invokei      226
+#define Op_Applyi       227
 
