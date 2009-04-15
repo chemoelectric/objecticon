@@ -23,7 +23,7 @@ int nstatics = 0;               /* Running count of static variables */
  */
 size_t maxcode	= 15000;        /* code space */
 size_t maxlabels	= 500;	        /* maximum num of labels/proc */
-size_t maxinvokes 	= 500;	        /* maximum num of invoke/apply sequence numbers */
+size_t maxfnostack 	= 500;	        /* maximum num of invoke/apply sequence numbers */
 size_t nsize       = 1000;         /* ipc/line num. assoc. table */
 size_t fnmsize     = 10;           /* ipc/file name assoc. table */
 
@@ -32,8 +32,8 @@ struct ipc_line *lntable;	/* table associating ipc with line number */
 struct ipc_fname *fnmfree;	/* free pointer for ipc/file name table */
 struct ipc_line *lnfree;	/* free pointer for ipc/line number table */
 word *labels;			/* label table */
-word *invokes;		        /* invoke stack for ivar/applyi/invokei pairs */
-int invokes_count;
+word *fnostack;		        /* stack for ivar/applyi/invokei pairs */
+int fnostack_count;
 char *codeb;			/* generated code space */
 char *codep;			/* free pointer for code space */
 
@@ -46,8 +46,8 @@ static void gentables(void);
 static void skip_proc();
 static void synch_file();
 static void synch_line();
-static void push_invoke(int fno);
-static int pop_invoke();
+static void push_fno(int fno);
+static int pop_fno();
 static void *expand_table(void * table,      /* table to be realloc()ed */
                           void * tblfree,    /* reference to table free pointer if there is one */
                           size_t *size, /* size of table */
@@ -154,7 +154,7 @@ void generate_code()
     lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
     labels  = safe_calloc(maxlabels, sizeof(word));
-    invokes  = safe_calloc(maxinvokes, sizeof(word));
+    fnostack  = safe_calloc(maxfnostack, sizeof(word));
     codep = codeb = safe_calloc(maxcode, 1);
 
     /*
@@ -352,7 +352,7 @@ static void gencode(struct lfile *lf)
             }
 
             case Op_Applyi: {
-                l = pop_invoke();  /* Pop the field# */
+                l = pop_fno();  /* Pop the field# */
                 if (l >= 0) {
                     /* Convert to an applyf with the particular field# */
                     lemitn(Op_Applyf, l, "applyf");
@@ -363,7 +363,7 @@ static void gencode(struct lfile *lf)
                     outword(0);
                     outword(0);
                 } else
-                    lemit(Op_Apply, name);
+                    lemit(Op_Apply, "apply");
                 break;
             }
 
@@ -433,7 +433,7 @@ static void gencode(struct lfile *lf)
 
             case Op_Invokei:
                 k = uin_16();
-                l = pop_invoke();  /* Pop the field# */
+                l = pop_fno();  /* Pop the field# */
                 if (l >= 0) {
                     /* Convert to an invokef with the particular field# */
                     lemitn2(Op_Invokef, l, (word)k, "invokef");
@@ -445,7 +445,7 @@ static void gencode(struct lfile *lf)
                     outword(0);
                 } else
                     /* Just an ordinary invoke */
-                    lemitn(Op_Invoke, (word)k, name);
+                    lemitn(Op_Invoke, (word)k, "invoke");
                 break;
 
             case Op_Keywd: {
@@ -537,7 +537,7 @@ static void gencode(struct lfile *lf)
              * and these are converted to either Op_Invoke or Op_Invokef
              * for Op_Invokei, and similarly for Op_Apply<x>, depending
              * on whether ID resolves to a field.  If it does we push
-             * the field number onto the invokes stack, otherwise we
+             * the field number onto the fnostack stack, otherwise we
              * push -1.   When the invoke/apply op comes along, we pop
              * this value off to see what instruction to generate.
              */
@@ -565,7 +565,7 @@ static void gencode(struct lfile *lf)
                 } else
                     lemitn(Op_Local, lp->l_val.index, "local");
 
-                push_invoke(fno);
+                push_fno(fno);
                 break;
             }
 
@@ -651,8 +651,8 @@ static void gencode(struct lfile *lf)
             case Op_End:
                 flushcode();
                 in_proc = 0;
-                if (invokes_count != 0)
-                    quitf("Invokes stack not empty at end of proc");
+                if (fnostack_count != 0)
+                    quitf("Fnostack stack not empty at end of proc");
                 break;
 
             default:
@@ -2035,22 +2035,22 @@ static void cleartables()
 
     for (i = 0; i < maxlabels; i++)
         labels[i] = 0;
-    invokes_count = 0;
+    fnostack_count = 0;
 }
 
-static int pop_invoke()
+static int pop_fno()
 {
-    if (invokes_count == 0)
+    if (fnostack_count == 0)
         quitf("ivar/invokei/applyi mismatch (stack empty)");
-    return invokes[--invokes_count];
+    return fnostack[--fnostack_count];
 }
 
-static void push_invoke(int fno)
+static void push_fno(int fno)
 {
-    if (invokes_count >= maxinvokes)
-        invokes  = (word *) expand_table(invokes, NULL, &maxinvokes, sizeof(word),
-                                         invokes_count - maxinvokes + 1, "invokes");
-    invokes[invokes_count++] = fno;
+    if (fnostack_count >= maxfnostack)
+        fnostack  = (word *) expand_table(fnostack, NULL, &maxfnostack, sizeof(word),
+                                         fnostack_count - maxfnostack + 1, "fnostack");
+    fnostack[fnostack_count++] = fno;
 }
 
 
