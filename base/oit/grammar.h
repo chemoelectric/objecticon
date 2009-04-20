@@ -58,7 +58,7 @@ importlist : importspec;
 importspec : rdottedident {Importspec1($1); };
         |  rdottedident {Importspec2($1);} LPAREN eidlist RPAREN;
 
-class   : {Modifier0();} classaccess CLASS IDENT {Class1($3,$4);} LPAREN supers RPAREN classbody optsemi END ;
+class   : {Modifier0();} classaccess CLASS IDENT {Class1($3,$4);} LPAREN supers RPAREN classbody END ;
 
 supers  : ;
         | superlist;
@@ -73,7 +73,7 @@ fielddecl : idlist { Fielddecl1($1); } ;
         | method ;
         | deferredmethod ;
 
-method :  IDENT { Method1($1);} LPAREN arglist RPAREN locals initial optsemi procbody END
+method :  IDENT { Method1($1);} LPAREN arglist RPAREN locals initial optsemi compound END
                    { Method2($1,$7,$9,$10); } ;
 
 deferredmethod : DEFER { Modifier9(); } IDENT { Method1($3);} LPAREN arglist RPAREN ;
@@ -102,7 +102,7 @@ record	: RECORD IDENT {Record1($1,$2);} LPAREN eidlist RPAREN {
 eidlist	: ;
 	| idlist ;
 
-proc	: PROCEDURE IDENT {Proc1($1,$2);} LPAREN arglist RPAREN locals initial optsemi procbody END {
+proc	: PROCEDURE IDENT {Proc1($1,$2);} LPAREN arglist RPAREN locals initial optsemi compound END {
                 Proc2($2,$8,$10,$11);
 		} ;
 
@@ -122,9 +122,6 @@ retention: LOCAL {Local($1);} ;
 
 initial	: {Initial1();} ;
 	| INITIAL expr {Initial2($1,$2);} ;
-
-procbody: {Procbody1();} ;
-	| nexpr SEMICOL procbody {Procbody2($1,$2,$3);} ;
 
 nexpr	: {Nexpr();} ;
 	| expr ;
@@ -315,5 +312,5 @@ compound: nexpr ;
 	| nexpr SEMICOL compound {Compound($1,$2,$3);} ;
 
 program	: error decls EOFX ;
-proc	: PROCEDURE error procbody END ;
+proc	: PROCEDURE error compound END ;
 expr	: error ;

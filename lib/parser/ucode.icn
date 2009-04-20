@@ -2,7 +2,7 @@ package parser
 
 import
    util(error),
-   lang(OpCode)
+   lang(UcodeOp)
 
 class UFile()
    private readable
@@ -277,53 +277,53 @@ class UReader()
          curr_record, curr_func
       uf := UFile()
       uop := uin_expectop() | fail
-      uop == OpCode.Version | return error("Missing version identification")
+      uop == UcodeOp.Version | return error("Missing version identification")
       s := uin_str() | fail
       uf.set_version(s)
       repeat {
          uop := uin_expectop() | fail
          case uop of {
-            OpCode.Filen:
+            UcodeOp.Filen:
                file := uin_str() | fail
 
-            OpCode.Line:
+            UcodeOp.Line:
                line := uin_16() | fail
 
-            OpCode.Declend: {
+            UcodeOp.Declend: {
                uf.set_declend_offset(&pos)
                break
             }
 
-            OpCode.Package: {
+            UcodeOp.Package: {
                s := uin_str() | fail
                uf.set_package(s)
             }
 
-            OpCode.Import: {
+            UcodeOp.Import: {
                s := uin_str() | fail
                n := uin_16() | fail
                curr_import := if n = 0 then ImportDec(s) else ImportDec(s, 1)
                uf.add_import(curr_import)
             }
 
-            OpCode.Importsym: {
+            UcodeOp.Importsym: {
                s := uin_str() | fail
                curr_import.add(s)
             }
 
-            OpCode.Class: {
+            UcodeOp.Class: {
                n := uin_32() | fail
                s := uin_str() | fail
                curr_class := UClass(s, file, line, n)
                uf.add_symbol(curr_class)
             }
 
-            OpCode.Super: {
+            UcodeOp.Super: {
                s := uin_str() | fail
                curr_class.add_super(s)
             }
 
-            OpCode.Classfield: {
+            UcodeOp.Classfield: {
                n := uin_32() | fail
                s := uin_str() | fail
                if iand(n, lang.Class.M_Method) ~= 0 then {
@@ -333,50 +333,50 @@ class UReader()
                   curr_class.add_field(UVariable(s, file, line, n))
             }
 
-             OpCode.Nargs: {
+             UcodeOp.Nargs: {
                 n := uin_16() | fail
                 curr_func.set_nargs(n)
              }
 
-             OpCode.Recordfield: {
+             UcodeOp.Recordfield: {
                 s := uin_str() | fail
                 curr_record.add_field(s)
              }
 
-             OpCode.Record: {
+             UcodeOp.Record: {
                 s := uin_str() | fail
                 curr_record := URecord(s, file, line)
                 uf.add_symbol(curr_record)
              }
 
-             OpCode.Trace: {
+             UcodeOp.Trace: {
                 uf.set_trace(-1)
              }
 
-             OpCode.Procdecl: {
+             UcodeOp.Procdecl: {
                 s := uin_str() | fail
                 curr_func := UProcedure(s, file, line)
                 uf.add_symbol(curr_func)
              }
 
-             OpCode.Local: {
+             UcodeOp.Local: {
                 n := uin_32() | fail
                 s := uin_str() | fail
                 curr_func.add_local(ULocal(s, n))
              }
 
-             OpCode.Con: {
+             UcodeOp.Con: {
                 n := uin_32() | fail
                 s := uin_bin() | fail
                 curr_func.add_const(UConst(s, n))
              }
 
-             OpCode.Global: {
+             UcodeOp.Global: {
                 s := uin_str() | fail
                 uf.add_symbol(UGlobal(s, file, line))
              }
 
-             OpCode.Invocable: {
+             UcodeOp.Invocable: {
                 s := uin_str() | fail
                 if s == "0" then
                    uf.set_strinv(1)
@@ -384,7 +384,7 @@ class UReader()
                    uf.add_invocable(s)
              }
 
-             OpCode.Link: {
+             UcodeOp.Link: {
                 s := uin_str() | fail
                 uf.add_link(s)
              }

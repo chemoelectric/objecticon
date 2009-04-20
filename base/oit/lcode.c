@@ -32,8 +32,6 @@ struct ipc_line *lntable;	/* table associating ipc with line number */
 struct ipc_fname *fnmfree;	/* free pointer for ipc/file name table */
 struct ipc_line *lnfree;	/* free pointer for ipc/line number table */
 word *labels;			/* label table */
-word *fnostack;		        /* stack for ivar/applyi/invokei pairs */
-int fnostack_count;
 char *codeb;			/* generated code space */
 char *codep;			/* free pointer for code space */
 
@@ -41,19 +39,159 @@ static char *curr_file,         /* Current file name from an Op_Filen */
             *last_fnmtbl_filen; /* Last file name entered into fnmtbl above */
 static int curr_line;           /* Current line from an Op_Line */
 
-static void gencode(struct lfile *lf);
+static struct lfunction *curr_lfunc = 0;
+
+static void binop(int n);
+static int  alclab(int n);
+static void gencode();
+static void nodecode();
 static void gentables(void);
-static void skip_proc();
 static void synch_file();
 static void synch_line();
-static void push_fno(int fno);
-static int pop_fno();
 static void *expand_table(void * table,      /* table to be realloc()ed */
                           void * tblfree,    /* reference to table free pointer if there is one */
                           size_t *size, /* size of table */
                           int unit_size,      /* number of bytes in a unit of the table */
                           int min_units,      /* the minimum number of units that must be allocated. */
                           char *tbl_name);     /* name of the table */
+static void unop(int op);
+
+#define INVALID "invalid"
+char *op_names[] = {
+    /*   0 */         INVALID,                                    
+    /*   1 */         "asgn",
+    /*   2 */         "bang",
+    /*   3 */         "cat",
+    /*   4 */         "compl",
+    /*   5 */         "diff",
+    /*   6 */         "div",
+    /*   7 */         "eqv",
+    /*   8 */         "inter",
+    /*   9 */         "lconcat",
+    /*  10 */         "lexeq",
+    /*  11 */         "lexge",
+    /*  12 */         "lexgt",
+    /*  13 */         "lexle",
+    /*  14 */         "lexlt",
+    /*  15 */         "lexne",
+    /*  16 */         "minus",
+    /*  17 */         "mod",
+    /*  18 */         "mult",
+    /*  19 */         "neg",
+    /*  20 */         "neqv",
+    /*  21 */         "nonnull",
+    /*  22 */         "null",
+    /*  23 */         "number",
+    /*  24 */         "numeq",
+    /*  25 */         "numge",
+    /*  26 */         "numgt",
+    /*  27 */         "numle",
+    /*  28 */         "numlt",
+    /*  29 */         "numne",
+    /*  30 */         "plus",
+    /*  31 */         "power",
+    /*  32 */         "random",
+    /*  33 */         "rasgn",
+    /*  34 */         "refresh",
+    /*  35 */         "rswap",
+    /*  36 */         "sect",
+    /*  37 */         "size",
+    /*  38 */         "subsc",
+    /*  39 */         "swap",
+    /*  40 */         "tabmat",
+    /*  41 */         "toby",
+    /*  42 */         "unions",
+    /*  43 */         "value",
+    /*  44 */         "bscan",
+    /*  45 */         "ccase",
+    /*  46 */         "chfail",
+    /*  47 */         "coact",
+    /*  48 */         "cofail",
+    /*  49 */         "coret",
+    /*  50 */         "create",
+    /*  51 */         "cset",
+    /*  52 */         "dup",
+    /*  53 */         "efail",
+    /*  54 */         "eret",
+    /*  55 */         "escan",
+    /*  56 */         "esusp",
+    /*  57 */         "field",
+    /*  58 */         "goto",
+    /*  59 */         "init",
+    /*  60 */         "int",
+    /*  61 */         "invoke",
+    /*  62 */         "keywd",
+    /*  63 */         "limit",
+    /*  64 */         INVALID,
+    /*  65 */         "llist",
+    /*  66 */         "lsusp",
+    /*  67 */         "mark",
+    /*  68 */         "pfail",
+    /*  69 */         "pnull",
+    /*  70 */         "pop",
+    /*  71 */         "pret",
+    /*  72 */         "psusp",
+    /*  73 */         "push1",
+    /*  74 */         "pushn1",
+    /*  75 */         "real",
+    /*  76 */         "sdup",
+    /*  77 */         "str",
+    /*  78 */         "unmark",
+    /*  79 */         "ucs",
+    /*  80 */         INVALID,
+    /*  81 */         "arg",
+    /*  82 */         "static",
+    /*  83 */         "local",
+    /*  84 */         "global",
+    /*  85 */         "mark0",
+    /*  86 */         "quit",
+    /*  87 */         "fquit",
+    /*  88 */         INVALID,
+    /*  89 */         "apply",
+    /*  90 */         "invokef",
+    /*  91 */         "applyf",
+    /*  92 */         INVALID,                                    
+    /*  93 */         INVALID,                                    
+    /*  94 */         INVALID,                                    
+    /*  95 */         INVALID,                                    
+    /*  96 */         INVALID,                                    
+    /*  97 */         INVALID,                                    
+    /*  98 */         "noop",
+};
+
+/*
+ * Code generator parameters.
+ */
+
+#define LoopDepth   20		/* max. depth of nested loops */
+#define CaseDepth   10		/* max. depth of nested case statements */
+#define CreatDepth  10		/* max. depth of nested create statements */
+
+enum looptype { EVERY,LOOP };
+
+/*
+ * loopstk structures hold information about nested loops.
+ */
+struct loopstk {
+    int nextlab;			/* label for next exit */
+    int breaklab;		/* label for break exit */
+    int markcount;		/* number of marks */
+    int ltype;			/* loop type */
+};
+
+/*
+ * creatstk structures hold information about create statements.
+ */
+struct creatstk {
+    int nextlab;			/* previous value of nextlab */
+    int breaklab;		/* previous value of breaklab */
+};
+
+static int nextlab;		/* next label allocated by alclab() */
+static struct loopstk loopstk[LoopDepth];	/* loop stack */
+static struct loopstk *loopsp;
+static struct creatstk creatstk[CreatDepth]; /* create stack */
+static struct creatstk *creatsp;
 
 struct unref {
     char *name;
@@ -135,10 +273,10 @@ static struct strconst *inst_c_strconst(char *s)
     return inst_strconst(s, strlen(s));
 }
 
+static struct lfile *lf;
+
 void generate_code()
 {
-    struct lfile *lf;
-
     nstatics = 0;
     strconst_offset = 0;
     first_strconst = last_strconst = 0;
@@ -154,7 +292,6 @@ void generate_code()
     lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
     labels  = safe_calloc(maxlabels, sizeof(word));
-    fnostack  = safe_calloc(maxfnostack, sizeof(word));
     codep = codeb = safe_calloc(maxcode, 1);
 
     /*
@@ -172,7 +309,7 @@ void generate_code()
         if (!ucodefile)
             quitf("cannot open .u for %s", inname);
         fseek(ucodefile, lf->declend_offset, SEEK_SET);
-        gencode(lf);
+        gencode();
         fclose(ucodefile);
     }
 
@@ -198,17 +335,17 @@ void generate_code()
 
 static int      nalign(int n);
 static void	align		(void);
-static void	backpatch	(int lab);
+static void	labout	(int lab);
 static void	cleartables	(void);
 static void	flushcode	(void);
-static void	lemit		(int op,char *name);
+static void	lemit		(int op);
 static void     lemitcon(struct centry *ce);
-static void	lemitin		(int op,word offset,int n,char *name);
-static void	lemitl		(int op,int lab,char *name);
-static void	lemitn		(int op,word n,char *name);
-static void     lemitn2         (int op, word n1, word n2, char *name);
+static void	lemitin		(int op,word offset,int n);
+static void	lemitl		(int op,int lab);
+static void	lemitn		(int op,word n);
+static void     lemitn2         (int op, word n1, word n2);
 static void	lemitproc       (struct lfunction *func);
-static void	lemitr		(int op,word loc,char *name);
+static void	lemitr		(int op,word loc);
 static void	outblock	(char *addr,int count);
 static void	wordout		(word oword);
 static void	shortout	(short o);
@@ -221,357 +358,877 @@ word pc = 0;		/* simulated program counter */
 #define CodeCheck(n) if ((long)codep + (n) > (long)((long)codeb + maxcode)) \
 codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
                           (n), "code buffer");
-
-/*
- * gencode - read .u1 file, resolve variable references, and generate icode.
- *  Basic process is to read each line in the file and take some action
- *  as dictated by the opcode.	This action sometimes involves parsing
- *  of arguments and usually culminates in the call of the appropriate
- *  lemit* routine.
- */
-static void gencode(struct lfile *lf)
-{
-    int k, l, op, lab, in_proc;
-    int flags;
-    char *name;
-    struct centry *cp;
-    struct lentry *lp;
-    struct gentry *gp;
-    struct fentry *fp;
-    struct lfunction *curr_func = 0;
-    struct strconst *sp;
-    struct ucode_op *uop;
 
-    /*
-     * This variable notes whether we are within a wanted
-     * procedure/method; will not be for the Op_Filen/Op_Line between
-     * the Op_End of one proc and the beginning of the next.
-     */
-    in_proc = 0;
+
+static int peek_op(int opcode)
+{
+    struct ucode_op *uop;
+    while (1) {
+        if (!(uop = uin_op()))
+            quitf("nodecode: unexpected eof");
+        if (uop->opcode == opcode)
+            return 1;
+        switch (uop->opcode) {
+            case Uop_Filen:
+                curr_file = uin_str();
+                synch_file();
+                break;
+            case Uop_Line:
+                curr_line = uin_16();
+                synch_line();
+                break;
+            default:
+                ungetc(uop->opcode, ucodefile);
+                return 0;
+        }
+    }
+}
+
+
+void nodecode()
+{
+    struct ucode_op *uop;
+    char *name;
+    int op;
+
+    while (1) {
+        if (!(uop = uin_op()))
+            quitf("nodecode: unexpected eof");
+        op = uop->opcode;
+        name = uop->name;
+        if (op ==  Uop_Filen) {
+            curr_file = uin_str();
+            synch_file();
+        } else if (op == Uop_Line) {
+            curr_line = uin_16();
+            synch_line();
+        } else 
+            break;
+    }
+
+    switch (op) {
+        case Uop_Empty:
+            lemit(Op_Pnull);
+            break;
+
+        case Uop_End:
+            lemit(Op_Pfail);
+            break;
+
+        case Uop_Slist: {
+            int i = uin_16();
+            while (i > 1) {
+                int lab = alclab(1);
+                lemitl(Op_Mark,lab);
+                loopsp->markcount++;
+                nodecode();
+                loopsp->markcount--;
+                lemit(Op_Unmark);
+                labout(lab);
+                --i;
+            }
+            if (i > 0)
+                nodecode();
+            break;
+        }
+
+        case Uop_Asgn:
+        case Uop_Power:
+        case Uop_Cat:
+        case Uop_Diff:
+        case Uop_Eqv:
+        case Uop_Inter:
+        case Uop_Subsc:
+        case Uop_Lconcat:
+        case Uop_Lexeq:
+        case Uop_Lexge:
+        case Uop_Lexgt:
+        case Uop_Lexle:
+        case Uop_Lexlt:
+        case Uop_Lexne:
+        case Uop_Minus:
+        case Uop_Mod:
+        case Uop_Neqv:
+        case Uop_Numeq:
+        case Uop_Numge:
+        case Uop_Numgt:
+        case Uop_Numle:
+        case Uop_Numlt:
+        case Uop_Numne:
+        case Uop_Plus:
+        case Uop_Rasgn:
+        case Uop_Rswap:
+        case Uop_Div:
+        case Uop_Mult:
+        case Uop_Swap:
+        case Uop_Unions: {
+            lemit(Op_Pnull);
+            nodecode();
+            nodecode();
+            binop(op);
+            break;
+        }
+
+        case Uop_Augpower:
+        case Uop_Augcat:
+        case Uop_Augdiff:
+        case Uop_Augeqv:
+        case Uop_Auginter:
+        case Uop_Auglconcat:
+        case Uop_Auglexeq:
+        case Uop_Auglexge:
+        case Uop_Auglexgt:
+        case Uop_Auglexle:
+        case Uop_Auglexlt:
+        case Uop_Auglexne:
+        case Uop_Augminus:
+        case Uop_Augmod:
+        case Uop_Augneqv:
+        case Uop_Augnumeq:
+        case Uop_Augnumge:
+        case Uop_Augnumgt:
+        case Uop_Augnumle:
+        case Uop_Augnumlt:
+        case Uop_Augnumne:
+        case Uop_Augplus:
+        case Uop_Augdiv:
+        case Uop_Augmult:
+        case Uop_Augunions: {
+            lemit(Op_Pnull);
+            nodecode();
+            lemit(Op_Dup);
+            nodecode();
+            binop(op);
+            lemit(Op_Asgn);
+            break;
+        }
+
+        case Uop_Value:
+        case Uop_Nonnull:
+        case Uop_Bang:
+        case Uop_Refresh:
+        case Uop_Number:
+        case Uop_Compl:
+        case Uop_Neg:
+        case Uop_Tabmat:
+        case Uop_Size:
+        case Uop_Random:
+        case Uop_Null: {
+            lemit(Op_Pnull);
+            nodecode();
+            unop(op);
+            break;
+        }
+
+        case Uop_Alt: {
+            int lab = alclab(2);
+            lemitl(Op_Mark,lab);
+            loopsp->markcount++;
+            nodecode();         /* evaluate first alternative */
+            loopsp->markcount--;
+            lemit(Op_Esusp);                 /*  and suspend with its result */
+            lemitl(Op_Goto,lab+1);
+            labout(lab);
+            nodecode();         /* evaluate second alternative */
+            labout(lab+1);
+            break;
+        }
+
+        case Uop_Conj: {
+            nodecode();
+            lemit(Op_Pop);
+            nodecode();
+            break;
+        }
+
+        case Uop_Augconj: {
+            lemit(Op_Pnull);
+            nodecode();
+            nodecode();
+            lemit(Op_Asgn);
+            break;
+        }
+
+        case Uop_If: {
+            lemit(Op_Mark0);
+            loopsp->markcount++;
+            nodecode();
+            loopsp->markcount--;
+            lemit(Op_Unmark);
+            nodecode();
+            break;
+        }
+
+        case Uop_Ifelse: {
+            int lab = alclab(2);
+            lemitl(Op_Mark, lab);
+            loopsp->markcount++;
+            nodecode();
+            loopsp->markcount--;
+            lemit(Op_Unmark);
+            nodecode();
+            lemitl(Op_Goto, lab+1);
+            labout(lab);
+            nodecode();
+            labout(lab+1);
+            break;
+        }
+
+        case Uop_Repeat: {
+            int lab = alclab(3);
+            loopsp++;
+            loopsp->ltype = LOOP;
+            loopsp->nextlab = lab + 1;
+            loopsp->breaklab = lab + 2;
+            loopsp->markcount = 1;
+            labout(lab);
+            lemitl(Op_Mark, lab);
+            nodecode();
+            labout(loopsp->nextlab);
+            lemit(Op_Unmark);
+            lemitl(Op_Goto, lab);
+            labout(loopsp->breaklab);
+            loopsp--;
+            break;
+        }
+
+        case Uop_While:
+        case Uop_Whiledo: {
+            int lab = alclab(3);
+            loopsp++;
+            loopsp->ltype = LOOP;
+            loopsp->nextlab = lab + 1;
+            loopsp->breaklab = lab + 2;
+            loopsp->markcount = 1;
+            labout(lab);
+            lemit(Op_Mark0);
+            nodecode();
+            if (op == Uop_Whiledo) {
+                lemit(Op_Unmark);
+                lemitl(Op_Mark, lab);
+                nodecode();
+            }
+            labout(loopsp->nextlab);
+            lemit(Op_Unmark);
+            lemitl(Op_Goto, lab);
+            labout(loopsp->breaklab);
+            loopsp--;
+            break;
+        }
+
+        case Uop_Until:
+        case Uop_Untildo: {
+            int lab = alclab(4);
+            loopsp++;
+            loopsp->ltype = LOOP;
+            loopsp->nextlab = lab + 2;
+            loopsp->breaklab = lab + 3;
+            loopsp->markcount = 1;
+            labout(lab);
+            lemitl(Op_Mark, lab+1);
+            nodecode();
+            lemit(Op_Unmark);
+            lemit(Op_Efail);
+            labout(lab+1);
+            lemitl(Op_Mark, lab);
+            if (op == Uop_Untildo)
+                nodecode();
+            else
+                lemit(Op_Pnull);
+            labout(loopsp->nextlab);
+            lemit(Op_Unmark);
+            lemitl(Op_Goto, lab);
+            labout(loopsp->breaklab);
+            loopsp--;
+            break;
+        }
+
+        case Uop_Every:
+        case Uop_Everydo: {
+            int lab = alclab(2);
+            loopsp++;
+            loopsp->ltype = EVERY;
+            loopsp->nextlab = lab;
+            loopsp->breaklab = lab + 1;
+            loopsp->markcount = 1;
+            lemit(Op_Mark0);
+            nodecode();
+            lemit(Op_Pop);
+            if (op == Uop_Everydo) {                   /* every e1 do e2 */
+                lemit(Op_Mark0);
+                loopsp->ltype = LOOP;
+                loopsp->markcount++;
+                nodecode();
+                loopsp->markcount--;
+                lemit(Op_Unmark);
+            }
+            labout(loopsp->nextlab);
+            lemit(Op_Efail);
+            labout(loopsp->breaklab);
+            loopsp--;
+            break;
+        }
+
+        case Uop_Suspend:
+        case Uop_Suspenddo: {
+            int lab = alclab(2);
+            loopsp++;
+            loopsp->ltype = EVERY;		/* like every ... do for next */
+            loopsp->nextlab = lab;
+            loopsp->breaklab = lab + 1;
+            loopsp->markcount = 1;
+            lemit(Op_Mark0);
+            nodecode();
+            lemit(Op_Psusp);
+            lemit(Op_Pop);
+            if (op == Uop_Suspenddo) {              /* suspend e1 do e2 */
+                lemit(Op_Mark0);
+                loopsp->ltype = LOOP;
+                loopsp->markcount++;
+                nodecode();
+                loopsp->markcount--;
+                lemit(Op_Unmark);
+            }
+            labout(loopsp->nextlab);
+            lemit(Op_Efail);
+            labout(loopsp->breaklab);
+            loopsp--;
+            break;
+        }
+
+        case Uop_Return: {			/* return expression */
+            if (peek_op(Uop_Empty)) {
+                lemit(Op_Pnull);
+                lemit(Op_Pret);
+            } else {
+                int lab = alclab(1);
+                lemitl(Op_Mark, lab);
+                loopsp->markcount++;
+                nodecode();
+                loopsp->markcount--;
+                lemit(Op_Pret);
+                labout(lab);
+                lemit(Op_Pfail);
+            }
+            break;
+        }
+
+        case Uop_Break: {			/* break expression */
+            int i;
+            struct loopstk loopsave;
+            if (loopsp->breaklab <= 0)
+                quit("invalid context for break");
+            for (i = 0; i < loopsp->markcount; i++)
+                lemit(Op_Unmark);
+            loopsave = *loopsp--;
+            nodecode();
+            *++loopsp = loopsave;
+            lemitl(Op_Goto, loopsp->breaklab);
+            break;
+        }
+
+        case Uop_Next: {			/* next expression */
+            int i;
+            if (loopsp->nextlab <= 0)
+                quit("invalid context for next");
+            if (loopsp->ltype != EVERY && loopsp->markcount > 1)
+                for (i = 0; i < loopsp->markcount - 1; i++)
+                    lemit(Op_Unmark);
+            lemitl(Op_Goto, loopsp->nextlab);
+            break;
+        }
+
+        case Uop_Field: {			/* field reference */
+            struct fentry *fp;
+            char *s = uin_str();
+            lemit(Op_Pnull);
+            nodecode();
+            fp = flocate(s);
+            if (fp)
+                lemitn(Op_Field, (word)(fp->field_id));
+            else {
+                /* Get or create an unref record */
+                struct unref *p = get_unref(s);
+                lemitn(Op_Field, (word) p->num);
+            }
+            if (Dflag) {
+                fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+            }
+            outword(0);
+            outword(0);
+            break;
+        }
+
+        case Uop_Invoke: {                      /* e(x1, x2.., xn) */
+            int i, n = uin_16();
+            if (peek_op(Uop_Var)) {
+                int k, flags;
+                struct lentry *lp;
+                struct fentry *fp;
+                k = uin_16();
+                lp = curr_lfunc->local_table[k];
+                flags = lp->l_flag;
+                if (flags & F_Field) {
+                    fp = flocate(lp->name);
+                    if (!fp)
+                        quitf("Couldn't find class field in field table:%s", lp->name);
+
+                    if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
+                        lemitn(Op_Global, (word)(lp->l_val.field->class->global->g_index));
+                    else
+                        lemitn(Op_Arg, 0);          /* inst var, "self" is the 0th argument */
+
+                    for (i = 0; i < n; ++i)
+                        nodecode();
+
+                    lemitn2(Op_Invokef, (word)(fp->field_id), n);
+
+                    if (Dflag) {
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                    }
+                    outword(0);
+                    outword(0);
+                } else {
+                    if (flags & F_Global)
+                        lemitn(Op_Global, (word)(lp->l_val.global->g_index));
+                    else if (flags & F_Static)
+                        lemitn(Op_Static, lp->l_val.index);
+                    else if (flags & F_Argument)
+                        lemitn(Op_Arg, lp->l_val.index);
+                    else
+                        lemitn(Op_Local, lp->l_val.index);
+                    for (i = 0; i < n; ++i)
+                        nodecode();
+                    lemitn(Op_Invoke, n);
+                }
+            } else {
+                nodecode();
+                for (i = 0; i < n; ++i)
+                    nodecode();
+                lemitn(Op_Invoke, n);
+            }
+            break;
+        }
+
+        case Uop_Invokef: {                     /* e.f(x1, x2.., xn) */
+            int i, n = uin_16();
+            char *s = uin_str();
+            struct fentry *fp;
+            nodecode();
+            for (i = 0; i < n; ++i)
+                nodecode();
+            fp = flocate(s);
+            if (fp)
+                lemitn2(Op_Invokef, (word)(fp->field_id), n);
+            else {
+                /* Get or create an unref record */
+                struct unref *p = get_unref(s);
+                lemitn2(Op_Invokef, (word) p->num, n);
+            }
+            if (Dflag) {
+                fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+            }
+            outword(0);
+            outword(0);
+            break;
+        }
+
+        case Uop_Mutual: {                      /* (e1,...,en) */
+            int i, n = uin_16();
+            lemit(Op_Pushn1);             
+            for (i = 0; i < n; ++i)
+                nodecode();
+            lemitn(Op_Invoke, n);
+            break;
+        }
+
+        case Uop_Apply: {			/* application e!l */
+            /*
+             * If the first op is a var, we may be able to convert to an Applyf.
+             */
+            if (peek_op(Uop_Var)) {
+                int k, flags;
+                struct lentry *lp;
+                struct fentry *fp;
+                k = uin_16();
+                lp = curr_lfunc->local_table[k];
+                flags = lp->l_flag;
+                if (flags & F_Field) {
+                    fp = flocate(lp->name);
+                    if (!fp)
+                        quitf("Couldn't find class field in field table:%s", lp->name);
+
+                    if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
+                        lemitn(Op_Global, (word)(lp->l_val.field->class->global->g_index));
+                    else
+                        lemitn(Op_Arg, 0);          /* inst var, "self" is the 0th argument */
+
+                    nodecode();
+
+                    lemitn(Op_Applyf, (word)(fp->field_id));
+
+                    if (Dflag) {
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                    }
+                    outword(0);
+                    outword(0);
+                } else {
+                    if (flags & F_Global)
+                        lemitn(Op_Global, (word)(lp->l_val.global->g_index));
+                    else if (flags & F_Static)
+                        lemitn(Op_Static, lp->l_val.index);
+                    else if (flags & F_Argument)
+                        lemitn(Op_Arg, lp->l_val.index);
+                    else
+                        lemitn(Op_Local, lp->l_val.index);
+                    nodecode();
+                    lemit(Op_Apply);
+                }
+            } else {
+                nodecode();
+                nodecode();
+                lemit(Op_Apply);
+            }
+            break;
+        }
+
+        case Uop_Applyf: {			/* application e.f!l */
+            char *s = uin_str();
+            struct fentry *fp = flocate(s);
+            nodecode();
+            nodecode();
+            if (fp)
+                lemitn(Op_Applyf, (word)(fp->field_id));
+            else {
+                /* Get or create an unref record */
+                struct unref *p = get_unref(s);
+                lemitn(Op_Applyf, (word) p->num);
+            }
+            if (Dflag) {
+                fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+            }
+            outword(0);
+            outword(0);
+            break;
+        }
+
+        case Uop_Fail: {			/* fail expression */
+            lemit(Op_Pfail);
+            break;
+        }
+
+        case Uop_Create: {			/* create expression */
+            int lab = alclab(3);
+            creatsp++;
+            creatsp->nextlab = loopsp->nextlab;
+            creatsp->breaklab = loopsp->breaklab;
+            loopsp->nextlab = 0;		/* make break and next illegal */
+            loopsp->breaklab = 0;
+            lemitl(Op_Goto, lab+2);          /* skip over code for co-expression */
+            labout(lab);			/* entry point */
+            lemit(Op_Pop);                   /* pop the result from activation */
+            lemitl(Op_Mark, lab+1);
+            loopsp->markcount++;
+            nodecode();		/* traverse code for co-expression */
+            loopsp->markcount--;
+            lemit(Op_Coret);                 /* return to activator */
+            lemit(Op_Efail);                 /* drive co-expression */
+            labout(lab+1);		/* loop on exhaustion */
+            lemit(Op_Cofail);                /* and fail each time */
+            lemitl(Op_Goto, lab+1);
+            labout(lab+2);
+            lemitl(Op_Create, lab);          /* create entry block */
+            loopsp->nextlab = creatsp->nextlab;   /* legalize break and next */
+            loopsp->breaklab = creatsp->breaklab;
+            creatsp--;
+            break;
+        }
+
+        case Uop_Activate: {			/* co-expression activation */
+            lemit(Op_Pnull);
+            nodecode();		/* evaluate activate expression */
+            lemit(Op_Coact);
+            break;
+        }
+
+        case Uop_Bactivate: {			/* co-expression activation */
+            nodecode();		         /* evaluate result expression */
+            nodecode();       	        /* evaluate activate expression */
+            lemit(Op_Coact);
+            break;
+        }
+
+        case Uop_Augactivate: {			/* co-expression activation */
+            lemit(Op_Pnull);
+            nodecode();		         /* evaluate result expression */
+            lemit(Op_Sdup);
+            nodecode();       	        /* evaluate activate expression */
+            lemit(Op_Coact);
+            lemit(Op_Asgn);
+            break;
+        }
+
+        case Uop_Rptalt: {			/* repeated alternation */
+            int lab = alclab(1);
+            labout(lab);
+            lemit(Op_Mark0);         /* fail if expr fails first time */
+            loopsp->markcount++;
+            nodecode();		/* evaluate first alternative */
+            loopsp->markcount--;
+            lemitl(Op_Chfail, lab);   /* change to loop on failure */
+            lemit(Op_Esusp);                 /* suspend result */
+            break;
+        }
+
+        case Uop_Not: {			/* not expression */
+            int lab = alclab(1);
+            lemitl(Op_Mark, lab);
+            loopsp->markcount++;
+            nodecode();
+            loopsp->markcount--;
+            lemit(Op_Unmark);
+            lemit(Op_Efail);
+            labout(lab);
+            lemit(Op_Pnull);
+            break;
+        }
+
+        case Uop_Scan: {			/* scanning expression */
+            nodecode();
+            lemit(Op_Bscan);
+            nodecode();
+            lemit(Op_Escan);
+            break;
+        }
+
+        case Uop_Augscan: {			/* scanning expression */
+            lemit(Op_Pnull);
+            nodecode();
+            lemit(Op_Sdup);
+            lemit(Op_Bscan);
+            nodecode();
+            lemit(Op_Escan);
+            lemit(Op_Asgn);
+            break;
+        }
+
+        case Uop_Sect: {        	/* section operation x[a:b] */
+            lemit(Op_Pnull);
+            nodecode();
+            nodecode();
+            nodecode();
+            lemit(Op_Sect);
+            break;
+        }
+
+        case Uop_Sectp: {               /* section operation x[a+:b] */
+            lemit(Op_Pnull);
+            nodecode();
+            nodecode();
+            lemit(Op_Dup);
+            nodecode();
+            lemit(Op_Plus);
+            lemit(Op_Sect);
+            break;
+        }
+
+        case Uop_Sectm: {              /* section operation x[a-:b] */
+            lemit(Op_Pnull);
+            nodecode();
+            nodecode();
+            lemit(Op_Dup);
+            nodecode();
+            lemit(Op_Minus);
+            lemit(Op_Sect);
+            break;
+        }
+
+        case Uop_To: {			/* to expression */
+            lemit(Op_Pnull);
+            nodecode();
+            nodecode();
+            lemit(Op_Push1);
+            lemit(Op_Toby);
+            break;
+        }
+
+        case Uop_Toby: {			/* to-by expression */
+            lemit(Op_Pnull);
+            nodecode();
+            nodecode();
+            nodecode();
+            lemit(Op_Toby);
+            break;
+        }
+
+        case Uop_Keyword: {			/* keyword reference */
+            char *s = uin_str();
+            int k = klookup(s);
+            switch (k) {
+                case 0:
+                    quitf("invalid keyword: %s", s);	
+                    break;
+                case K_FAIL:
+                    lemit(Op_Efail);
+                    break;
+                case K_NULL:
+                    lemit(Op_Pnull);
+                    break;
+                default:
+                    lemitn(Op_Keywd, (word)k);
+            }
+            break;
+        }
+
+        case Uop_Limit: {			/* limitation */
+            nodecode();
+            lemit(Op_Limit);
+            loopsp->markcount++;
+            nodecode();
+            loopsp->markcount--;
+            lemit(Op_Lsusp);
+            break;
+        }
+
+        case Uop_List: {			/* list construction */
+            int i, n = uin_16();
+            lemit(Op_Pnull);
+            for (i = 0; i < n; ++i)
+                nodecode();
+            lemitn(Op_Llist, (word)n);
+            break;
+        }
+
+        case Uop_Case:			/* case expression */
+        case Uop_Casedef: {
+            int lab = alclab(1);
+            int n = uin_16();
+            lemit(Op_Mark0);
+            loopsp->markcount++;
+            nodecode();		         /* evaluate control expression */
+            loopsp->markcount--;
+            lemit(Op_Eret);
+            while (n--) {                /* The n non-default cases */
+                int clab = alclab(1);
+                lemitl(Op_Mark, clab);
+                loopsp->markcount++;
+                lemit(Op_Ccase);
+                nodecode();		/* evaluate selector */
+                lemit(Op_Eqv);
+                loopsp->markcount--;
+                lemit(Op_Unmark);
+                lemit(Op_Pop);
+                nodecode();		/* evaluate expression */
+                lemitl(Op_Goto, lab);   /* goto end label */
+                labout(clab);		/* label for next clause */
+            }
+            if (op == Uop_Casedef) {       /* evaluate default clause */
+                lemit(Op_Pop);
+                nodecode();
+	    } else
+                lemit(Op_Efail);
+            labout(lab);			/* end label */
+            break;
+        }
+
+        case Uop_Int: {
+            word ival;
+            int k = uin_16();
+            struct centry *cp = curr_lfunc->constant_table[k];
+            memcpy(&ival, cp->data, sizeof(word));
+            lemitn(Op_Int, ival);
+            break;
+        }
+
+        case Uop_Lrgint: {
+            int k = uin_16();
+            struct centry *cp = curr_lfunc->constant_table[k];
+            struct strconst *sp = inst_strconst(cp->data, cp->length);
+            lemit(Op_Pnull);
+            lemitin(Op_Str, sp->offset, sp->len);
+            lemit(Op_Number);
+            break;
+        }
+
+        case Uop_Ucs: {
+            lemitr(Op_Ucs, curr_lfunc->constant_table[uin_16()]->pc);
+            break;
+        }
+
+        case Uop_Cset: {
+            lemitr(Op_Cset, curr_lfunc->constant_table[uin_16()]->pc);
+            break;
+        }
+
+        case Uop_Real: {
+            lemitr(Op_Real, curr_lfunc->constant_table[uin_16()]->pc);
+            break;
+        }
+
+        case Uop_Str: {
+            int k = uin_16();
+            struct centry *cp = curr_lfunc->constant_table[k];
+            struct strconst *sp = inst_strconst(cp->data, cp->length);
+            lemitin(Op_Str, sp->offset, sp->len);
+            break;
+        }
+
+        case Uop_Var: {
+            int k, flags;
+            struct lentry *lp;
+            struct fentry *fp;
+            k = uin_16();
+            lp = curr_lfunc->local_table[k];
+            flags = lp->l_flag;
+            if (flags & F_Global)
+                lemitn(Op_Global, (word)(lp->l_val.global->g_index));
+            else if (flags & F_Static)
+                lemitn(Op_Static, lp->l_val.index);
+            else if (flags & F_Argument)
+                lemitn(Op_Arg, lp->l_val.index);
+            else if (flags & F_Field) {
+                fp = flocate(lp->name);
+                if (!fp)
+                    quitf("Couldn't find class field in field table:%s", lp->name);
+                lemit(Op_Pnull);
+                if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
+                    lemitn(Op_Global, (word)(lp->l_val.field->class->global->g_index));
+                else
+                    lemitn(Op_Arg, 0);          /* inst var, "self" is the 0th argument */
+                lemitn(Op_Field, (word)(fp->field_id));
+                if (Dflag) {
+                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
+                }
+                outword(0);
+                outword(0);
+            } else
+                lemitn(Op_Local, lp->l_val.index);
+            break;
+        }
+
+        default:
+            quitf("nodecode: illegal opcode(%d): %s in file %s\n", op, uop->name, lf->name);
+    }
+}
+
+
+static void gencode()
+{
+    struct ucode_op *uop;
+    int op;
+    struct gentry *gp;
+    struct centry *cp;
 
     while ((uop = uin_op())) {
         op = uop->opcode;
-        name = uop->name;
         switch (op) {
-
-            /* Ternary operators. */
-
-            case Op_Toby:
-            case Op_Sect:
-
-                /* Binary operators. */
-
-            case Op_Asgn:
-            case Op_Cat:
-            case Op_Diff:
-            case Op_Div:
-            case Op_Eqv:
-            case Op_Inter:
-            case Op_Lconcat:
-            case Op_Lexeq:
-            case Op_Lexge:
-            case Op_Lexgt:
-            case Op_Lexle:
-            case Op_Lexlt:
-            case Op_Lexne:
-            case Op_Minus:
-            case Op_Mod:
-            case Op_Mult:
-            case Op_Neqv:
-            case Op_Numeq:
-            case Op_Numge:
-            case Op_Numgt:
-            case Op_Numle:
-            case Op_Numlt:
-            case Op_Numne:
-            case Op_Plus:
-            case Op_Power:
-            case Op_Rasgn:
-            case Op_Rswap:
-            case Op_Subsc:
-            case Op_Swap:
-            case Op_Unions:
-
-                /* Unary operators. */
-
-            case Op_Bang:
-            case Op_Compl:
-            case Op_Neg:
-            case Op_Nonnull:
-            case Op_Null:
-            case Op_Number:
-            case Op_Random:
-            case Op_Refresh:
-            case Op_Size:
-            case Op_Tabmat:
-            case Op_Value:
-
-                /* Instructions. */
-
-            case Op_Bscan:
-            case Op_Ccase:
-            case Op_Coact:
-            case Op_Cofail:
-            case Op_Coret:
-            case Op_Dup:
-            case Op_Efail:
-            case Op_Eret:
-            case Op_Escan:
-            case Op_Esusp:
-            case Op_Limit:
-            case Op_Lsusp:
-            case Op_Pfail:
-            case Op_Pnull:
-            case Op_Pop:
-            case Op_Pret:
-            case Op_Psusp:
-            case Op_Push1:
-            case Op_Pushn1:
-            case Op_Sdup:
-                lemit(op, name);
-                break;
-
-            case Op_Chfail:
-            case Op_Create:
-            case Op_Goto:
-            case Op_Init:
-                lab = uin_16();
-                lemitl(op, lab, name);
-                break;
-
-            case Op_Ucs:
-            case Op_Cset:
-            case Op_Real:
-                k = uin_16();
-                lemitr(op, curr_func->constant_table[k]->pc, name);
-                break;
-
-            case Op_Apply: {
-                lemit(op, name);
-                break;
-            }
-
-            case Op_Applyi: {
-                l = pop_fno();  /* Pop the field# */
-                if (l >= 0) {
-                    /* Convert to an applyf with the particular field# */
-                    lemitn(Op_Applyf, l, "applyf");
-                    if (Dflag) {
-                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                    }
-                    outword(0);
-                    outword(0);
-                } else
-                    lemit(Op_Apply, "apply");
-                break;
-            }
-
-            case Op_Applyf:
-            case Op_Field: {
-                char *s = uin_str();
-                fp = flocate(s);
-                if (fp)
-                    lemitn(op, (word)(fp->field_id), name);
-                else {
-                    /* Get or create an unref record */
-                    struct unref *p = get_unref(s);
-                    lemitn(op, (word) p->num, name);
-                }
-                if (Dflag) {
-                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                }
-                outword(0);
-                outword(0);
-                break;
-            }
-
-            case Op_Int: {
-                word ival;
-                k = uin_16();
-                cp = curr_func->constant_table[k];
-                memcpy(&ival, cp->data, sizeof(word));
-                lemitn(op, ival, name);
-                break;
-            }
-
-            case Op_Lrgint: {
-                k = uin_16();
-                cp = curr_func->constant_table[k];
-                lemit(Op_Pnull,"pnull");
-                sp = inst_strconst(cp->data, cp->length);
-                lemitin(Op_Str, sp->offset, sp->len, "str");
-                lemit(Op_Number,"number");
-                break;
-            }
-
-            case Op_Invokef: {
-                char *s = uin_str();
-                k = uin_16();
-                fp = flocate(s);
-                if (fp)
-                    lemitn2(op, (word)(fp->field_id), k, name);
-                else {
-                    /* Get or create an unref record */
-                    struct unref *p = get_unref(s);
-                    lemitn2(op, (word) p->num, k, name);
-                }
-                if (Dflag) {
-                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                }
-                outword(0);
-                outword(0);
-                break;
-            }
-
-            case Op_Invoke:
-                k = uin_16();
-                lemitn(op, (word)k, name);
-                break;
-
-            case Op_Invokei:
-                k = uin_16();
-                l = pop_fno();  /* Pop the field# */
-                if (l >= 0) {
-                    /* Convert to an invokef with the particular field# */
-                    lemitn2(Op_Invokef, l, (word)k, "invokef");
-                    if (Dflag) {
-                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                    }
-                    outword(0);
-                    outword(0);
-                } else
-                    /* Just an ordinary invoke */
-                    lemitn(Op_Invoke, (word)k, "invoke");
-                break;
-
-            case Op_Keywd: {
-                char *s = uin_str();
-                k = klookup(s);
-                switch (k) {
-                    case 0:
-                        lfatal(lf, 0, "invalid keyword: %s", s);	
-                        break;
-                    case K_FAIL:
-                        lemit(Op_Efail,"efail");
-                        break;
-                    case K_NULL:
-                        lemit(Op_Pnull,"pnull");
-                        break;
-                    default:
-                        lemitn(op, (word)k, name);
-                }
-                break;
-            }
-
-            case Op_Llist:
-                k = uin_32();
-                lemitn(op, (word)k, name);
-                break;
-
-            case Op_Lab:
-                lab = uin_16();
-
-                if (Dflag)
-                    fprintf(dbgfile, "L%d:\n", lab);
-                backpatch(lab);
-                break;
-
-            case Op_Mark:
-                lab = uin_16();
-                lemitl(op, lab, name);
-                break;
-
-            case Op_Mark0:
-                lemit(op, name);
-                break;
-
-            case Op_Str:
-                k = uin_16();
-                cp = curr_func->constant_table[k];
-                sp = inst_strconst(cp->data, cp->length);
-                lemitin(op, sp->offset, sp->len, name);
-                break;
-        
-            case Op_Unmark:
-                lemit(Op_Unmark, name);
-                break;
-
-            case Op_Var:
-                k = uin_16();
-                lp = curr_func->local_table[k];
-                flags = lp->l_flag;
-                if (flags & F_Global)
-                    lemitn(Op_Global, (word)(lp->l_val.global->g_index),
-                           "global");
-                else if (flags & F_Static)
-                    lemitn(Op_Static, lp->l_val.index, "static");
-                else if (flags & F_Argument)
-                    lemitn(Op_Arg, lp->l_val.index, "arg");
-                else if (flags & F_Field) {
-                    fp = flocate(lp->name);
-                    if (!fp)
-                        quitf("Couldn't find class field in field table:%s", lp->name);
-                    lemit(Op_Pnull,"pnull");
-                    if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
-                        lemitn(Op_Global, (word)(lp->l_val.field->class->global->g_index), "global");
-                    else
-                        lemitn(Op_Arg, 0, "arg");          /* inst var, "self" is the 0th argument */
-                    lemitn(Op_Field, (word)(fp->field_id), "field");
-                    if (Dflag) {
-                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                        fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                    }
-                    outword(0);
-                    outword(0);
-                } else
-                    lemitn(Op_Local, lp->l_val.index, "local");
-                break;
-
-            /*
-             * An identifier in an invoke (or apply), ie ID(a1,a2...) 
-             * or ID!L.  It matches an Op_Invokei or Op_Applyi later on,
-             * and these are converted to either Op_Invoke or Op_Invokef
-             * for Op_Invokei, and similarly for Op_Apply<x>, depending
-             * on whether ID resolves to a field.  If it does we push
-             * the field number onto the fnostack stack, otherwise we
-             * push -1.   When the invoke/apply op comes along, we pop
-             * this value off to see what instruction to generate.
-             */
-            case Op_Vari: {
-                int fno = -1;    /* Default -1, changed only for F_Field */
-                k = uin_16();
-                lp = curr_func->local_table[k];
-                flags = lp->l_flag;
-                if (flags & F_Global)
-                    lemitn(Op_Global, (word)(lp->l_val.global->g_index),
-                           "global");
-                else if (flags & F_Static)
-                    lemitn(Op_Static, lp->l_val.index, "static");
-                else if (flags & F_Argument)
-                    lemitn(Op_Arg, lp->l_val.index, "arg");
-                else if (flags & F_Field) {
-                    fp = flocate(lp->name);
-                    if (!fp)
-                        quitf("Couldn't find class field in field table:%s", lp->name);
-                    if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
-                        lemitn(Op_Global, (word)(lp->l_val.field->class->global->g_index), "global");
-                    else
-                        lemitn(Op_Arg, 0, "arg");          /* inst var, "self" is the 0th argument */
-                    fno = fp->field_id;
-                } else
-                    lemitn(Op_Local, lp->l_val.index, "local");
-
-                push_fno(fno);
-                break;
-            }
-
-                /* Declarations. */
-
-            case Op_Proc: {
+            case Uop_Proc: {
                 char *s = uin_fqid(lf->package);
                 if ((gp = glocate(s))) {
                     /*
@@ -579,27 +1236,38 @@ static void gencode(struct lfile *lf)
                      */
                     synch_file();
                     synch_line();
-                    in_proc = 1;
                     cleartables();
                     align();
                     if (Dflag)
                         fprintf(dbgfile, "\n# procedure %s\n", s);
 
-                    curr_func = gp->func;
-                    for (cp = curr_func->constants; cp; cp = cp->next) {
+                    curr_lfunc = gp->func;
+                    for (cp = curr_lfunc->constants; cp; cp = cp->next) 
                         lemitcon(cp);
+
+                    curr_lfunc->pc = pc;
+                    lemitproc(curr_lfunc);
+                    if (!peek_op(Uop_Empty)) {
+                        int lab = alclab(1);
+                        lemitl(Op_Init, lab);
+                        lemitl(Op_Mark, lab);
+                        nodecode();
+                        lemit(Op_Unmark);
+                        labout(lab);
                     }
-                    curr_func->pc = pc;
-                    lemitproc(curr_func);
-                }
-                else {
-                    in_proc = 0;
-                    skip_proc();
+                    if (!peek_op(Uop_Empty)) {
+                        int lab = alclab(1);
+                        lemitl(Op_Mark, lab);
+                        nodecode();
+                        lemit(Op_Unmark);
+                        labout(lab);
+                    }
+                    nodecode();   /* Get the Uop_End */
                 }
                 break;
             }
 
-            case Op_Method: {
+            case Uop_Method: {
                 char *class, *meth;
                 struct lclass_field *method;
                 class = uin_fqid(lf->package);
@@ -610,78 +1278,52 @@ static void gencode(struct lfile *lf)
                      */
                     synch_file();
                     synch_line();
-                    in_proc = 1;
                     cleartables();
                     align();
                     if (Dflag)
                         fprintf(dbgfile, "\n# method %s.%s\n", class, meth);
 
-                    curr_func = method->func;
-                    for (cp = curr_func->constants; cp; cp = cp->next) {
+                    curr_lfunc = method->func;
+                    for (cp = curr_lfunc->constants; cp; cp = cp->next) 
                         lemitcon(cp);
+
+                    curr_lfunc->pc = pc;
+                    lemitproc(curr_lfunc);
+                    if (!peek_op(Uop_Empty)) {
+                        int lab = alclab(1);
+                        lemitl(Op_Init, lab);
+                        lemitl(Op_Mark, lab);
+                        nodecode();
+                        lemit(Op_Unmark);
+                        labout(lab);
                     }
-                    curr_func->pc = pc;
-                    lemitproc(curr_func);
-                }
-                else {
-                    in_proc = 0;
-                    skip_proc();
+                    if (!peek_op(Uop_Empty)) {
+                        int lab = alclab(1);
+                        lemitl(Op_Mark, lab);
+                        nodecode();
+                        lemit(Op_Unmark);
+                        labout(lab);
+                    }
+                    nodecode();   /* Get the Uop_End */
                 }
                 break;
             }
 
-            case Op_Local:
-                break;
-
-            case Op_Con:
-                break;
-
-            case Op_Filen:
+            case Uop_Filen:
                 curr_file = uin_str();
-                if (in_proc)
-                    synch_file();
                 break;
 
-            case Op_Line:
+            case Uop_Line:
                 curr_line = uin_16();
-                if (in_proc)
-                    synch_line();
                 break;
 
-            case Op_End:
+            case Uop_End:
                 flushcode();
-                in_proc = 0;
-                if (fnostack_count != 0)
-                    quitf("Fnostack stack not empty at end of proc");
                 break;
 
-            default:
-                quitf("gencode: illegal opcode(%d): %s\n", op, name);
-        }
-    }
-}
-
-/*
- * Skip unreferenced procedure.
- */
-void skip_proc()
-{
-    int op;
-    struct ucode_op *uop;
-    while (1) {
-        uop = uin_expectop();
-        op = uop->opcode;
-        switch (op) {
-            case Op_End:
-                return;
-            case Op_Filen:
-                curr_file = uin_str();
-                break;
-            case Op_Line:
-                curr_line = uin_16();
-                break;
             default:
                 uin_skip(op);
+                break;
         }
     }
 }
@@ -724,7 +1366,7 @@ void synch_line()
 /*
  *  lemit - emit opcode.
  *  lemitl - emit opcode with reference to program label.
- *	for a description of the chaining and backpatching for labels.
+ *	for a description of the chaining and labouting for labels.
  *  lemitn - emit opcode with integer argument.
  *  lemitr - emit opcode with pc-relative reference.
  *  lemitin - emit opcode with reference to identifier table & integer argument.
@@ -736,23 +1378,19 @@ void synch_line()
  *  purposes.
  */
 
-static void lemit(op, name)
-    int op;
-    char *name;
+static void lemit(int op)
 {
 
     if (Dflag)
-        fprintf(dbgfile, "%ld:\t%d\t\t\t\t# %s\n", (long)pc, op, name);
+        fprintf(dbgfile, "%ld:\t%d\t\t\t\t# %s\n", (long)pc, op, op_names[op]);
 
     outword(op);
 }
 
-static void lemitl(op, lab, name)
-    int op, lab;
-    char *name;
+static void lemitl(int op, int lab)
 {
     if (Dflag)
-        fprintf(dbgfile, "%ld:\t%d\tL%d\t\t\t# %s\n", (long)pc, op, lab, name);
+        fprintf(dbgfile, "%ld:\t%d\tL%d\t\t\t# %s\n", (long)pc, op, lab, op_names[op]);
 
     if (lab >= maxlabels)
         labels  = (word *) expand_table(labels, NULL, &maxlabels, sizeof(word),
@@ -767,58 +1405,47 @@ static void lemitl(op, lab, name)
     outword(labels[lab] - (pc + WordSize));
 }
 
-static void lemitn(op, n, name)
-    int op;
-    word n;
-    char *name;
+static void lemitn(int op, word n)
 {
     if (Dflag)
-        fprintf(dbgfile, "%ld:\t%d\t%ld\t\t\t# %s\n", (long)pc, op, (long)n,
-                name);
+        fprintf(dbgfile, "%ld:\t%d\t%ld\t\t\t# %s\n", (long)pc, op, (long)n, op_names[op]);
 
     outword(op);
     outword(n);
 }
 
-static void lemitn2(int op, word n1, word n2, char *name)
+static void lemitn2(int op, word n1, word n2)
 {
     if (Dflag)
         fprintf(dbgfile, "%ld:\t%d\t%ld,%ld\t\t\t# %s\n", (long)pc, op, (long)n1, (long)n2,
-                name);
+                op_names[op]);
 
     outword(op);
     outword(n1);
     outword(n2);
 }
 
-
-static void lemitr(op, loc, name)
-    int op;
-    word loc;
-    char *name;
+static void lemitr(int op, word loc)
 {
     loc -= pc + (2 * WordSize);
     if (Dflag) {
         if (loc >= 0)
             fprintf(dbgfile, "%ld:\t%d\t*+%ld\t\t\t# %s\n",(long) pc, op,
-                    (long)loc, name);
+                    (long)loc, op_names[op]);
         else
             fprintf(dbgfile, "%ld:\t%d\t*-%ld\t\t\t# %s\n",(long) pc, op,
-                    (long)-loc, name);
+                    (long)-loc, op_names[op]);
     }
 
     outword(op);
     outword(loc);
 }
 
-static void lemitin(op, offset, n, name)
-    int op, n;
-    word offset;
-    char *name;
+static void lemitin(int op, word offset, int n)
 {
     if (Dflag)
         fprintf(dbgfile, "%ld:\t%d\t%d,S+%ld\t\t\t# %s\n", (long)pc, op, n,
-                (long)offset, name);
+                (long)offset, op_names[op]);
 
     outword(op);
     outword(n);
@@ -2035,35 +2662,31 @@ static void cleartables()
 
     for (i = 0; i < maxlabels; i++)
         labels[i] = 0;
-    fnostack_count = 0;
+
+    loopsp = loopstk;
+    loopsp->nextlab = 0;
+    loopsp->breaklab = 0;
+    loopsp->markcount = 0;
+
+    creatsp = creatstk;
+
+    nextlab = 1;
 }
 
-static int pop_fno()
-{
-    if (fnostack_count == 0)
-        quitf("ivar/invokei/applyi mismatch (stack empty)");
-    return fnostack[--fnostack_count];
-}
-
-static void push_fno(int fno)
-{
-    if (fnostack_count >= maxfnostack)
-        fnostack  = (word *) expand_table(fnostack, NULL, &maxfnostack, sizeof(word),
-                                         fnostack_count - maxfnostack + 1, "fnostack");
-    fnostack[fnostack_count++] = fno;
-}
 
 
 /*
- * backpatch - fill in all forward references to lab.
+ * labout - fill in all forward references to lab.
  */
-static void backpatch(lab)
-    int lab;
+static void labout(int lab)
 {
     word p, r;
     char *q;
     char *cp, *cr;
     int j;
+
+    if (Dflag)
+        fprintf(dbgfile, "L%d:\n", lab);
 
     if (lab >= maxlabels)
         labels  = (word *) expand_table(labels, NULL, &maxlabels, sizeof(word),
@@ -2134,4 +2757,228 @@ void * expand_table(void * table,      /* table to be realloc()ed */
         *(char **)tblfree = (char *)(new_tbl + free_offset);
 
     return (void *)new_tbl;
+}
+
+static void binop(int n)
+{
+    int opcode = 0;
+
+    switch (n) {
+
+        case Uop_Asgn:
+            opcode = Op_Asgn;
+            break;
+
+        case Uop_Augpower:
+        case Uop_Power:
+            opcode = Op_Power;
+            break;
+
+        case Uop_Augcat:
+        case Uop_Cat:
+            opcode = Op_Cat;
+            break;
+
+        case Uop_Augdiff:
+        case Uop_Diff:
+            opcode = Op_Diff;
+            break;
+
+        case Uop_Augeqv:
+        case Uop_Eqv:
+            opcode = Op_Eqv;
+            break;
+
+        case Uop_Auginter:
+        case Uop_Inter:
+            opcode = Op_Inter;
+            break;
+
+        case Uop_Subsc:
+            opcode = Op_Subsc;
+            break;
+
+        case Uop_Auglconcat:
+        case Uop_Lconcat:
+            opcode = Op_Lconcat;
+            break;
+
+        case Uop_Auglexeq:
+        case Uop_Lexeq:
+            opcode = Op_Lexeq;
+            break;
+
+        case Uop_Auglexge:
+        case Uop_Lexge:
+            opcode = Op_Lexge;
+            break;
+
+        case Uop_Auglexgt:
+        case Uop_Lexgt:
+            opcode = Op_Lexgt;
+            break;
+
+        case Uop_Auglexle:
+        case Uop_Lexle:
+            opcode = Op_Lexle;
+            break;
+
+        case Uop_Auglexlt:
+        case Uop_Lexlt:
+            opcode = Op_Lexlt;
+            break;
+
+        case Uop_Auglexne:
+        case Uop_Lexne:
+            opcode = Op_Lexne;
+            break;
+
+        case Uop_Augminus:
+        case Uop_Minus:
+            opcode = Op_Minus;
+            break;
+
+        case Uop_Augmod:
+        case Uop_Mod:
+            opcode = Op_Mod;
+            break;
+
+        case Uop_Augneqv:
+        case Uop_Neqv:
+            opcode = Op_Neqv;
+            break;
+
+        case Uop_Augnumeq:
+        case Uop_Numeq:
+            opcode = Op_Numeq;
+            break;
+
+        case Uop_Augnumge:
+        case Uop_Numge:
+            opcode = Op_Numge;
+            break;
+
+        case Uop_Augnumgt:
+        case Uop_Numgt:
+            opcode = Op_Numgt;
+            break;
+
+        case Uop_Augnumle:
+        case Uop_Numle:
+            opcode = Op_Numle;
+            break;
+
+        case Uop_Augnumlt:
+        case Uop_Numlt:
+            opcode = Op_Numlt;
+            break;
+
+        case Uop_Augnumne:
+        case Uop_Numne:
+            opcode = Op_Numne;
+            break;
+
+        case Uop_Augplus:
+        case Uop_Plus:
+            opcode = Op_Plus;
+            break;
+
+        case Uop_Rasgn:
+            opcode = Op_Rasgn;
+            break;
+
+        case Uop_Rswap:
+            opcode = Op_Rswap;
+            break;
+
+        case Uop_Augdiv:
+        case Uop_Div:
+            opcode = Op_Div;
+            break;
+
+        case Uop_Augmult:
+        case Uop_Mult:
+            opcode = Op_Mult;
+            break;
+
+        case Uop_Swap:
+            opcode = Op_Swap;
+            break;
+
+        case Uop_Augunions:
+        case Uop_Unions:
+            opcode = Op_Unions;
+            break;
+
+        default:
+            quit("binop: undefined binary operator");
+    }
+
+    lemit(opcode);
+}
+
+/*
+ * alclab allocates n labels and returns the first.  For the interpreter,
+ *  labels are restarted at 1 for each procedure, while in the compiler,
+ *  they start at 1 and increase throughout the entire compilation.
+ */
+static int alclab(int n)
+{
+    register int lab;
+
+    lab = nextlab;
+    nextlab += n;
+    return lab;
+}
+
+static void unop(int op)
+{
+    switch (op) {
+        case Uop_Value:			/* unary . operator */
+            lemit(Op_Value);
+            break;
+
+        case Uop_Nonnull:		/* unary \ operator */
+            lemit(Op_Nonnull);
+            break;
+
+        case Uop_Bang:		/* unary ! operator */
+            lemit(Op_Bang);
+            break;
+
+        case Uop_Refresh:		/* unary ^ operator */
+            lemit(Op_Refresh);
+            break;
+
+        case Uop_Number:		/* unary + operator */
+            lemit(Op_Number);
+            break;
+
+        case Uop_Compl:		/* unary ~ operator (cset compl) */
+            lemit(Op_Compl);
+            break;
+
+        case Uop_Neg:		/* unary - operator */
+            lemit(Op_Neg);
+            break;
+
+        case Uop_Tabmat:		/* unary = operator */
+            lemit(Op_Tabmat);
+            break;
+
+        case Uop_Size:		/* unary * operator */
+            lemit(Op_Size);
+            break;
+
+        case Uop_Random:		/* unary ? operator */
+            lemit(Op_Random);
+            break;
+
+        case Uop_Null:		/* unary / operator */
+            lemit(Op_Null);
+            break;
+
+        default:
+            quit("unopb: undefined unary operator");
+    }
 }

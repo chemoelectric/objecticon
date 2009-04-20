@@ -191,8 +191,8 @@ importlist : importspec;
 importspec : rdottedident
         |  rdottedident LPAREN eidlist RPAREN {$$ := Node("importspec", $1,$2,$3,$4)} ;
 
-class   : classaccess CLASS IDENT LPAREN supers RPAREN classbody optsemi END 
-             {$$ := Node("class", $1,$2,$3,$4,$5,$6,$7,$8,$9)};
+class   : classaccess CLASS IDENT LPAREN supers RPAREN classbody END 
+             {$$ := Node("class", $1,$2,$3,$4,$5,$6,$7,$8)};
 
 supers  :  { $$ := Node.EMPTY } ;
         | superlist;
@@ -207,7 +207,7 @@ fielddecl : idlist
         | method ;
         | deferredmethod ;
 
-method : IDENT LPAREN arglist RPAREN locals initial optsemi procbody END
+method : IDENT LPAREN arglist RPAREN locals initial optsemi compound END
                    { $$ := Node("method", $1,$2,$3,$4,$5,$6,$7,$8,$9) } ;
 
 deferredmethod : DEFER IDENT LPAREN arglist RPAREN
@@ -235,7 +235,7 @@ record	: RECORD IDENT LPAREN eidlist RPAREN { $$ := Node("record", $1,$2,$3,$4,$
 eidlist	: { $$ := Node.EMPTY } ;
 	| idlist ;
 
-proc	: PROCEDURE IDENT LPAREN arglist RPAREN locals initial optsemi procbody END 
+proc	: PROCEDURE IDENT LPAREN arglist RPAREN locals initial optsemi compound END 
                         { $$ := Node("proc", $1,$2,$3,$4,$5,$6,$7,$8,$9,$10) } ;
 
 arglist	: { $$ := Node.EMPTY } ;
@@ -253,9 +253,6 @@ retention: LOCAL ;
 
 initial	: { $$ := Node.EMPTY } ;
 	| INITIAL expr { $$ := Node("initial", $1, $2) } ;
-
-procbody: { $$ := Node.EMPTY } ;
-	| nexpr SEMICOL procbody { $$ := Node("procbody", $1,$2,$3);} ;
 
 nexpr	: { $$ := Node.EMPTY } ;
 	| expr ;
@@ -446,7 +443,7 @@ compound: nexpr ;
 	| nexpr SEMICOL compound { $$ := Node("compound", $1,$2,$3);} ;
 
 program	: error decls EOFX ;
-proc	: PROCEDURE error procbody END { $$ := Node("error", $1,$3,$4); } ;
+proc	: PROCEDURE error compound END { $$ := Node("error", $1,$3,$4); } ;
 expr	: error { $$ := Node("error"); } ;
 
 %%

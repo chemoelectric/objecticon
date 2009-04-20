@@ -9,6 +9,7 @@
 #include "tmain.h"
 #include "trans.h"
 #include "package.h"
+#include "membuff.h"
 
 struct tgentry *ghash[GHASH_SIZE];	/* hash area for global table */
 struct tgentry *gfirst;		/* first global table entry */
@@ -21,140 +22,46 @@ struct timport *import_hash[64], *imports = 0, *last_import = 0, *curr_import = 
 struct link *links = 0, *last_link = 0;
 struct tinvocable *tinvocables = 0, *last_tinvocable = 0;
 
-static void free_class_hashes(struct tclass *c);
-static void free_function_hash(struct tfunction *f);
-
+struct membuff file_mb = {"Per file membuff", 64000, 0,0,0 };
 
 /*
- * meminit - clear tables for use in translating the next file
+ * called once - initialize the translation process
  */
 void tminit()
 {
-    gfirst = glast = 0;
-    ArrClear(ghash);
-    classes = curr_class = 0;
-    package_name = 0;
-    imports = last_import = curr_import = 0;
-    ArrClear(import_hash);
-    links = last_link = 0;
-    tinvocables = last_tinvocable = 0;
+    init_package_db();
 }
 
 /*
- * Clear allocations used in translating one file.
+ * called after each file has been translated - reset memory/pointers
  */
 void tmfilefree()
 {
-    struct tfunction *f, *ft;
-    struct tclass *c, *ct;
-    struct timport *im, *tim;
-    struct link *li, *tli;
-    struct tinvocable *iv, *tiv;
-
-    for (f = functions; f; f = ft) {
-        free_function_hash(f);
-        ft = f->next;
-        free(f);
-    }
     functions = curr_func = 0;
-
-    for (c = classes; c; c = ct) {
-        free_class_hashes(c);
-        ct = c->next;
-        free(c);
-    }
     classes = curr_class = 0;
-
-    for (im = imports; im; im = tim) {
-        tim = im->next;
-        free(im);
-    }
     curr_import = imports = last_import = 0;
     ArrClear(import_hash);
-
-    for (li = links; li; li = tli) {
-        tli = li->next;
-        free(li);
-    }
     links = last_link = 0;
-
-    for (iv = tinvocables; iv; iv = tiv) {
-        tiv = iv->next;
-        free(iv);
-    }
     tinvocables = last_tinvocable = 0;
-}
+    gfirst = glast = 0;
+    ArrClear(ghash);
+    package_name = 0;
 
-static void free_function_hash(struct tfunction *f)
-{
-    struct tlentry *lptr, *lptr1;
-    struct tcentry *cptr, *cptr1;
-    int i;
-
-    /*
-     * Clear local table, freeing entries.
-     */
-    for (i = 0; i < ElemCount(f->lhash); i++) {
-        for (lptr = f->lhash[i]; lptr != NULL; lptr = lptr1) {
-            lptr1 = lptr->l_blink;
-            free(lptr);
-        }
-        f->lhash[i] = NULL;
-    }
-    f->lfirst = NULL;
-    f->llast = NULL;
-
-    /*
-     * Clear constant table, freeing entries.
-     */
-    for (i = 0; i < ElemCount(f->chash); i++) {
-        for (cptr = f->chash[i]; cptr != NULL; cptr = cptr1) {
-            cptr1 = cptr->c_blink;
-            free(cptr);
-        }
-        f->chash[i] = NULL;
-    }
-    f->cfirst = NULL;
-    f->clast = NULL;
-}
-
-static void free_class_hashes(struct tclass *c)
-{
-    struct tclass_field *f1, *f2;
-    struct tclass_super *s1, *s2;
-
-    for (f1 = c->fields; f1; f1 = f2) {
-        f2 = f1->b_next;
-        free(f1);
-    }
-    for (s1 = c->supers; s1; s1 = s2) {
-        s2 = s1->b_next;
-        free(s1);
-    }
+    mb_clear(&file_mb);
 }
 
 /*
- * tmfree - free memory used by the translator
+ * called after all files translated, prior to linking.
  */
 void tmfree()
 {
-    struct tgentry *gp, *gp1;
-
-    /*
-     * Free global table entries.
-     */
-    for (gp = gfirst; gp != NULL; gp = gp1) {
-        gp1 = gp->g_next;
-        free((char *)gp);
-    }
-    gfirst = glast = 0;
-
     free_package_db();
+    mb_free(&file_mb);
 }
 
 void next_function(int flag)
 {
-    struct tfunction *f = Alloc(struct tfunction);
+    struct tfunction *f = FAlloc(struct tfunction);
     f->flag = flag;
     if (curr_func) {
         curr_func->next = f;
@@ -166,7 +73,7 @@ void next_function(int flag)
 
 void next_class(char *name, int flag, struct node *n)
 {
-    struct tclass *c = Alloc(struct tclass);
+    struct tclass *c = FAlloc(struct tclass);
     c->flag = flag;
     if (curr_class) {
         curr_class->next = c;
@@ -186,7 +93,7 @@ void next_super(char *name, struct node *n)
         cs = cs->b_next;
     if (cs)
         tfatal_at(n, "duplicate superclass: %s", name);
-    cs = Alloc(struct tclass_super);
+    cs = FAlloc(struct tclass_super);
     cs->b_next = curr_class->super_hash[i];
     curr_class->super_hash[i] = cs;
     cs->name = name;
@@ -249,7 +156,7 @@ void next_field(char *name, int flag, struct node *n)
         cv = cv->b_next;
     if (cv)
         tfatal_at(n, "duplicate class field: %s", name);
-    cv = Alloc(struct tclass_field);
+    cv = FAlloc(struct tclass_field);
     cv->b_next = curr_class->field_hash[i];
     curr_class->field_hash[i] = cv;
     cv->name = name;
@@ -331,7 +238,7 @@ void next_import(char *s, int qualified, struct node *n)
         curr_import = x;
         return;
     }
-    x = Alloc(struct timport);
+    x = FAlloc(struct timport);
     x->b_next = import_hash[i];
     import_hash[i] = x;
     x->name = s;
@@ -354,7 +261,7 @@ void add_import_symbol(char *s, struct node *n)
         x = x->b_next;
     if (x)
         tfatal_at(n, "duplicate imported symbol: %s", s);
-    x = Alloc(struct timport_symbol);
+    x = FAlloc(struct timport_symbol);
     x->b_next = curr_import->symbol_hash[i];
     curr_import->symbol_hash[i] = x;
     x->name = s;
@@ -369,7 +276,7 @@ void add_import_symbol(char *s, struct node *n)
 
 void add_link(char *s, struct node *n) 
 {
-    struct link *i = Alloc(struct link);
+    struct link *i = FAlloc(struct link);
     i->name = s;
     i->pos = n;
     if (last_link) {
@@ -395,7 +302,7 @@ void add_invocable(char *name, int x, struct node *n)
     else if (!isalpha(name[1]) && (name[1] != '_'))
         return;				/* if operator, ignore */
 
-    p = Alloc(struct tinvocable);
+    p = FAlloc(struct tinvocable);
     p->name = name;
     p->pos = n;
     if (last_tinvocable) {

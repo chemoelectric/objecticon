@@ -60,7 +60,7 @@ void readglob(struct lfile *lf)
     struct loc pos;
 
     uop = uin_expectop();
-    if (uop->opcode != Op_Version)
+    if (uop->opcode != Uop_Version)
         quitf("ucode file %s has no version identification", lf->name);
     id = uin_str();		/* get version number of ucode */
     if (strcmp(id, UVersion))
@@ -69,36 +69,36 @@ void readglob(struct lfile *lf)
     while (1) {
         uop = uin_expectop();
         switch (uop->opcode) {
-            case Op_Filen:
+            case Uop_Filen:
                 pos.file = uin_str();
                 break;
 
-            case Op_Line:
+            case Uop_Line:
                 pos.line = uin_16();
                 break;
 
-            case Op_Declend:
+            case Uop_Declend:
                 lf->declend_offset = ftell(ucodefile);
                 return;
 
-            case Op_Package:
+            case Uop_Package:
                 lf->package = uin_str();
                 lf->package_id = get_package_id(lf->package);
                 break;
 
-            case Op_Import:		/* import the named package */
+            case Uop_Import:		/* import the named package */
                 package = uin_str();
                 alsoimport(package, lf, &pos);	/*  (maybe) import the files in the package */
                 n = uin_16();        /* qualified flag */
                 add_fimport(lf, package, n, &pos);  /* Add it to the lfile structure's list of imports */
                 break;
 
-            case Op_Importsym:          /* symbol in a qualified import */
+            case Uop_Importsym:          /* symbol in a qualified import */
                 name = uin_str();
                 add_fimport_symbol(lf, name, &pos);
                 break;
 
-            case Op_Class:
+            case Uop_Class:
                 k = uin_32();	/* get flags */
                 name = uin_fqid(lf->package);
                 gp = glocate(name);
@@ -122,13 +122,13 @@ void readglob(struct lfile *lf)
                 curr_record = 0;
                 break;
 
-            case Op_Super:
+            case Uop_Super:
                 name = uin_str();
                 if (curr_class)
                     add_super(curr_class, name, &pos);
                 break;
 
-            case Op_Classfield:
+            case Uop_Classfield:
                 k = uin_32();	/* get flags */
                 name = uin_str();
                 if (curr_class) {
@@ -140,19 +140,19 @@ void readglob(struct lfile *lf)
                 }
                 break;
 
-            case Op_Nargs:
+            case Uop_Nargs:
                 n = uin_16();
                 if (curr_func)
                     curr_func->nargs = n;
                 break;
 
-            case Op_Recordfield:
+            case Uop_Recordfield:
                 name = uin_str();
                 if (curr_record)
                     add_record_field(curr_record, name, &pos);
                 break;
 
-            case Op_Record:	/* a record declaration */
+            case Uop_Record:	/* a record declaration */
                 name = uin_fqid(lf->package);	/* record name */
                 gp = glocate(name);
                 if (gp) {
@@ -174,11 +174,11 @@ void readglob(struct lfile *lf)
                 curr_class = 0;
                 break;
 
-            case Op_Trace:		/* turn on tracing */
+            case Uop_Trace:		/* turn on tracing */
                 trace = -1;
                 break;
 
-            case Op_Procdecl:
+            case Uop_Procdecl:
                 name = uin_fqid(lf->package);	/* get variable name */
                 gp = glocate(name);
                 if (gp)
@@ -192,14 +192,14 @@ void readglob(struct lfile *lf)
                 curr_func->proc = gp;
                 break;
 
-            case Op_Local:
+            case Uop_Local:
                 k = uin_32();
                 name = uin_str();
                 if (curr_func)
                     add_local(curr_func, name, k, &pos);
                 break;
 
-            case Op_Con: {
+            case Uop_Con: {
                 int len;
                 char *data;
                 k = uin_32();
@@ -208,7 +208,7 @@ void readglob(struct lfile *lf)
                 break;
             }
 
-            case Op_Global:
+            case Uop_Global:
                 name = uin_fqid(lf->package);	/* get variable name */
                 gp = glocate(name);
                 if (gp)
@@ -219,7 +219,7 @@ void readglob(struct lfile *lf)
                     putglobal(name, 0, lf, &pos);
                 break;
 
-            case Op_Invocable:	/* "invocable" declaration */
+            case Uop_Invocable:	/* "invocable" declaration */
                 name = uin_str();	/* get name */
                 if (name[0] == '0')
                     strinv = 1;	/* name of "0" means "invocable all" */
@@ -227,7 +227,7 @@ void readglob(struct lfile *lf)
                     addinvk(name, lf, &pos);
                 break;
 
-            case Op_Link:		/* link the named file */
+            case Uop_Link:		/* link the named file */
                 name = uin_str();	/* get the name and */
                 alsolink(name, lf, &pos);	/*  put it on the list of files to link */
                 break;

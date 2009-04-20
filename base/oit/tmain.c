@@ -4,6 +4,7 @@
 
 #include "icont.h"
 #include "tmain.h"
+#include "membuff.h"
 #include "trans.h"
 #include "ucode.h"
 #include "link.h"
@@ -675,3 +676,4 @@ static int ldbg(int argc, char **argv)
     }
     return 0;
 }
+

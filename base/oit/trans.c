@@ -111,7 +111,7 @@ void trans(struct file_param *trans_files, int *fatals, int *warnings)
 {
     struct file_param *p;
 
-    init_package_db();
+    tminit();
 
     awarnings = afatals = 0;
 
@@ -220,7 +220,6 @@ static void trans1(char *filename)
     tok_loc.n_file = intern(canonicalize(filename));
     in_line = 1;
 
-    tminit();				/* Initialize data structures */
     yyparse();				/* Parse the input */
 
     if (!tfatals) {
@@ -230,9 +229,7 @@ static void trans1(char *filename)
         ucodefile = fopen(outname, WriteBinary);
         if (!ucodefile)
             quitf("cannot create %s", outname);
-
         output_code();
-
         fclose(ucodefile);
 
         /*

@@ -4,6 +4,10 @@
 
 #include "icont.h"
 #include "tree.h"
+#include "tmem.h"
+#include "membuff.h"
+
+#define NewNode(size) mb_alloc(&file_mb, sizeof(struct node) + (size-1) * sizeof(union field))
 
 /*
  *  tree[1-6] construct parse tree nodes with specified values.
@@ -118,7 +122,7 @@ nodeptr a, lb, e, rb;
       t2 = int_leaf(lb->n_type, lb, (int)lb->n_field[0].n_val);
       t = tree5(N_Binop, t2, t2, buildarray(a,lb,e->n_field[0].n_ptr,rb),
 		e->n_field[1].n_ptr);
-      free(e);
+      /*free(e);*/
       }
    else
       t = tree5(N_Binop, lb, lb, a, e);

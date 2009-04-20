@@ -73,7 +73,6 @@
 #define Op_Invoke	 61
 #define Op_Keywd 	 62
 #define Op_Limit 	 63
-#define Op_Line  	 64
 #define Op_Llist 	 65
 #define Op_Lsusp 	 66
 #define Op_Mark  	 67
@@ -89,7 +88,6 @@
 #define Op_Str    	 77
 #define Op_Unmark 	 78
 #define Op_Ucs           79
-#define Op_Var    	 80
 #define Op_Arg		 81
 #define Op_Static	 82
 #define Op_Local	 83
@@ -123,42 +121,4 @@
 #define Op_Aucs 	107
 
 
-
-
-/*
- * Declarations and such -- used by the linker but not the run-time system.
- */
-
-#define Op_Proc		201
-#define Op_Declend	202
-#define Op_End		203
-#define Op_Link		204
-#define Op_Version	205
-#define Op_Con		206
-#define Op_Filen	207
-#define Op_Package      208
-#define Op_Import       209
-#define Op_Classfield   210
-#define Op_Recordfield  211
-#define Op_Procdecl	212
-#define Op_Nargs   	213
-#define Op_Importsym    214
-
-/*
- * Global symbol table declarations.
- */
-#define Op_Record	215
-#define Op_Impl		216
-#define Op_Error	217
-#define Op_Trace	218
-#define Op_Lab   	219
-#define Op_Invocable	220
-#define Op_Class        221
-#define Op_Super        222
-#define Op_Method       223
-
-#define Op_Vari         224
-#define Op_Lrgint       225
-#define Op_Invokei      226
-#define Op_Applyi       227
 

@@ -22,7 +22,6 @@ struct node {
    union field n_field[1];      /* variable-content fields */
    };
 
-#define NewNode(size) safe_alloc(sizeof(struct node) + (size-1) * sizeof(union field))
 
 /*
  * Macros to access fields of parse tree nodes.
@@ -57,7 +56,6 @@ extern struct node tok_loc;     /* "model" token holding current location */
  * Node types.
  */
 
-#define N_Activat	 1		/* activation control structure */
 #define N_Alt		 2		/* alternation operator */
 #define N_Augop		 3		/* augmented operator */
 #define N_Bar		 4		/* generator control structure */
@@ -66,7 +64,6 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Case		 7		/* case statement */
 #define N_Ccls		 8		/* case clause */
 #define N_Clist		 9		/* list of case clauses */
-#define N_Conj		10		/* conjunction operator */
 #define N_Create	11		/* create control structure */
 #define N_Cset		12		/* cset literal */
 #define N_Ucs 		13		/* ucs literal */
@@ -74,9 +71,8 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Empty		15		/* empty expression or statement */
 #define N_Field		16		/* record field reference */
 #define N_Id		17		/* identifier token */
-#define N_If		18		/* if-then-else statement */
 #define N_Int		19		/* integer literal */
-#define N_Invok		20		/* invocation */
+#define N_Invoke	20		/* invocation */
 #define N_Key		21		/* keyword */
 #define N_Limit		22		/* LIMIT control structure */
 #define N_List		23		/* [ ... ] style list */
@@ -87,8 +83,7 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Proc		28		/* procedure */
 #define N_Real		29		/* real literal */
 #define N_Res		30		/* reserved word token */
-#define N_Ret		31		/* fail, return, or succeed */
-#define N_Scan		32		/* scan-using statement */
+#define N_Ret		31		/* return */
 #define N_Sect		33		/* s[i:j] (section) */
 #define N_Slist		34		/* list of statements */
 #define N_Str		35		/* string literal */
@@ -99,6 +94,20 @@ extern struct node tok_loc;     /* "model" token holding current location */
 #define N_Apply		40		/* procedure application */
 #define N_Dottedid      41              /* dotted identifier structure */
 #define N_Lrgint	42		/* large integer literal */
+#define N_Repeat        44              /* repeat loop */
+#define N_While         45              /* while loop */
+#define N_Whiledo       46              /* while do loop */
+#define N_Suspend       47              /* suspend */
+#define N_Suspenddo     48              /* suspend do */
+#define N_Until         49              /* until loop */
+#define N_Untildo       50              /* until do loop */
+#define N_Every         51              /* every loop */
+#define N_Everydo       52              /* every do loop */
+#define N_Fail          53              /* fail */
+#define N_Cdef		54		/* case default */
+#define N_Mutual	55		/* (x, y, ...) */
+#define N_If		56		/* if-then statement */
+#define N_Ifelse	57		/* if-then-else statement */
 
 /*
  * Macros for constructing basic nodes.

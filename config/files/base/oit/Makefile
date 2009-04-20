@@ -2,8 +2,8 @@ include ../../Makedefs
 
 CWARN = -Wall
 
-TRANS=		trans.o tcode.o tlex.o tparse.o tsym.o tmem.o \
-		 tree.o ucode.o ipp.o
+TRANS=		trans.o tlex.o tparse.o tsym.o tmem.o \
+		 tree.o ucode.o ipp.o membuff.o
 
 LINKR=		link.o lglob.o lcode.o lmem.o lsym.o
 
@@ -39,7 +39,6 @@ resolve.o:	link.h
 ipp.o:		../h/features.h
 trans.o:	tsym.h ttoken.h tree.h ../h/version.h ../h/kdefs.h
 tparse.o:	lexdef.h tsym.h tree.h keyword.h
-tcode.o:	tsym.h ttoken.h tree.h
 tlex.o:		lexdef.h ttoken.h tree.h ../h/esctab.h  lextab.h
 tmem.o:		tsym.h tree.h
 tree.o:		tree.h

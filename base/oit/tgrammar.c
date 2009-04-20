@@ -36,11 +36,11 @@ int modflag;
 #define Arglist1()		/* empty */
 #define Arglist2(x)		/* empty */
 #define Arglist3(x,y,z)		curr_func->nargs = -curr_func->nargs
-#define Bact(x1,x2,x3)		$$ = tree5(N_Activat,x2,x2,x3,x1) 
-#define Bamper(x1,x2,x3)	$$ = tree5(N_Conj,x2,x2,x1,x3) 
+#define Bact(x1,x2,x3)		$$ = tree5(N_Binop,x2,x2,x1,x3) 
+#define Bamper(x1,x2,x3)	$$ = tree5(N_Binop,x2,x2,x1,x3) 
 #define Bassgn(x1,x2,x3)	$$ = tree5(N_Binop,x2,x2,x1,x3) 
-#define Baugact(x1,x2,x3)	$$ = tree5(N_Activat,x2,x2,x3,x1) 
-#define Baugamper(x1,x2,x3)	$$ = tree5(N_Conj,x2,x2,x1,x3) 
+#define Baugact(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3) 
+#define Baugamper(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3) 
 #define Baugcat(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugeq(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugeqv(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
@@ -51,7 +51,7 @@ int modflag;
 #define Bauglt(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugne(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugneqv(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
-#define Baugques(x1,x2,x3)	$$ = tree5(N_Scan,x2,x2,x1,x3) 
+#define Baugques(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3) 
 #define Baugseq(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugsge(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugsgt(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
@@ -81,7 +81,7 @@ int modflag;
 #define Bneqv(x1,x2,x3)		$$ = tree5(N_Binop,x2,x2,x1,x3)
 #define Bplus(x1,x2,x3)		$$ = tree5(N_Binop,x2,x2,x1,x3)
 #define Bplusa(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
-#define Bques(x1,x2,x3)		$$ = tree5(N_Scan,x2,x2,x1,x3) 
+#define Bques(x1,x2,x3)		$$ = tree5(N_Binop,x2,x2,x1,x3) 
 #define Brace(x1,x2,x3)		$$ = x2
 #define Brack(x1,x2,x3)		$$ = tree3(N_List,x1,x2) 
 #define Brassgn(x1,x2,x3)	$$ = tree5(N_Binop,x2,x2,x1,x3)
@@ -102,7 +102,7 @@ int modflag;
 #define Buniona(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Case(x1,x2,x3,x4,x5,x6) $$ = tree4(N_Case,x1,x2,x5) 
 #define Caselist(x1,x2,x3)	$$ = tree4(N_Clist,x2,x1,x3) 
-#define Cclause0(x1,x2,x3)	$$ = tree4(N_Ccls,x2,x1,x3) 
+#define Cclause0(x1,x2,x3)	$$ = tree4(N_Cdef,x2,x1,x3) 
 #define Cclause1(x1,x2,x3)	$$ = tree4(N_Ccls,x2,x1,x3) 
 
 #define Package(x1,x2)          set_package(dottedid2string(x2), x2);
@@ -142,17 +142,17 @@ int modflag;
 #define Create(x1,x2)		$$ = tree3(N_Create,x1,x2) 
 #define Elst0(x1)		/* empty */
 #define Elst1(x1,x2,x3)		$$ = tree4(N_Elist,x2,x1,x3)
-#define Every0(x1,x2)		$$ = tree5(N_Loop,x1,x1,x2,EmptyNode) 
-#define Every1(x1,x2,x3,x4)	$$ = tree5(N_Loop,x1,x1,x2,x4) 
-#define Fail(x)			$$ = tree4(N_Ret,x,x,EmptyNode) 
+#define Every0(x1,x2)		$$ = tree4(N_Every,x1,x1,x2) 
+#define Every1(x1,x2,x3,x4)	$$ = tree5(N_Everydo,x1,x1,x2,x4) 
+#define Fail(x)			$$ = tree2(N_Fail,x)
 #define Field(x1,x2,x3)		$$ = tree4(N_Field,x2,x1,x3)
 #define Global0(x)		idflag = F_Global
 #define Global1(x1,x2,x3)	/* empty */
 #define Globdcl(x)		/* empty */
 #define Ident(x)		install(Str0(x),idflag,x)
 #define Idlist(x1,x2,x3)	install(Str0(x3),idflag,x3)
-#define If0(x1,x2,x3,x4)	$$ = tree5(N_If,x1,x2,x4,EmptyNode) 
-#define If1(x1,x2,x3,x4,x5,x6)	$$ = tree5(N_If,x1,x2,x4,x6) 
+#define If0(x1,x2,x3,x4)	$$ = tree4(N_If,x1,x2,x4) 
+#define If1(x1,x2,x3,x4,x5,x6)	$$ = tree5(N_Ifelse,x1,x2,x4,x6) 
 #define Iliter(x)		if (x->n_type == N_Int)\
                                    Val0(x) = putlit(Str0(x),F_IntLit,(int)Val1(x));\
                                 else \
@@ -165,7 +165,7 @@ int modflag;
 #define Invocop1(x1)		add_invocable(dottedid2string(x1),1,x1)
 #define Invocop2(x1)		add_invocable(Str0(x1),2,x1)
 #define Invocop3(x1,x2,x3)	add_invocable(Str0(x1),3,x1)
-#define Invoke(x1,x2,x3,x4)	$$ = tree4(N_Invok,x2,x1,x3) 
+#define Invoke(x1,x2,x3,x4)	$$ = tree4(N_Invoke,x2,x1,x3) 
 #define Keyword(x1,x2)		if (klookup(Str0(x2)) == 0)\
 				   tfatal("invalid keyword: %s",Str0(x2));\
 				$$ = c_str_leaf(N_Key,x1,Str0(x2))
@@ -182,16 +182,14 @@ int modflag;
 #define Nexpr()			$$ = EmptyNode
 #define Next(x)			$$ = tree2(N_Next,x) 
 #define Paren(x1,x2,x3)		if ((x2)->n_type == N_Elist)\
- 				   $$ = tree4(N_Invok,x1,EmptyNode,x2);\
+ 				   $$ = tree3(N_Mutual,x1,x2);\
  				else\
  				   $$ = x2
 #define Pcolon(x)		$$ = x
-#define Pdco0(x1,x2,x3)		$$ = tree4(N_Invok,x2,x1,EmptyNode)
-#define Pdco1(x1,x2,x3,x4)	$$ = tree4(N_Invok,x2,x1,x3)
+#define Pdco0(x1,x2,x3)		$$ = tree4(N_Invoke,x2,x1,EmptyNode)
+#define Pdco1(x1,x2,x3,x4)	$$ = tree4(N_Invoke,x2,x1,x3)
 #define Pdcolist0(x)		$$ = tree3(N_Create,x,x) 
 #define Pdcolist1(x1,x2,x3)	$$ = tree4(N_Elist,x2,x1,tree3(N_Create,x2,x3))
-#define Procbody1()		$$ = EmptyNode
-#define Procbody2(x1,x2,x3)	$$ = tree4(N_Slist,x2,x1,x3) 
 
 #define Proc1(x1,x2)            next_procedure(Str0(x2), x2); \
                                 idflag = F_Argument
@@ -204,35 +202,35 @@ int modflag;
 #define Record2(x1,x2,x3,x4,x5,x6) curr_func->global = next_global(Str0(x2),F_Record|F_Global,x2); \
                                 curr_func->global->func = curr_func; \
                                 $$ = x2
-#define Repeat(x1,x2)		$$ = tree5(N_Loop,x1,x1,x2,EmptyNode) 
+#define Repeat(x1,x2)		$$ = tree4(N_Repeat,x1,x1,x2) 
 #define Return(x1,x2)		$$ = tree4(N_Ret,x1,x1,x2) 
 #define Rliter(x)		Val0(x) = putlit(Str0(x),F_RealLit,(int)Val1(x))
 #define Section(x1,x2,x3,x4,x5,x6) $$ = tree6(N_Sect,x4,x4,x1,x3,x5) 
 #define Sliter(x)		Val0(x) = putlit(Str0(x),F_StrLit,(int)Val1(x))
 #define Static(x)		idflag = F_Static
 #define Subscript(x1,x2,x3,x4)	$$ = buildarray(x1,x2,x3,x4)
-#define Suspend0(x1,x2)		$$ = tree5(N_Loop,x1,x1,x2,EmptyNode) 
-#define Suspend1(x1,x2,x3,x4)	$$ = tree5(N_Loop,x1,x1,x2,x4) 
+#define Suspend0(x1,x2)		$$ = tree4(N_Suspend,x1,x1,x2) 
+#define Suspend1(x1,x2,x3,x4)	$$ = tree5(N_Suspenddo,x1,x1,x2,x4) 
 #define To0(x1,x2,x3)		$$ = tree4(N_To,x2,x1,x3) 
 #define To1(x1,x2,x3,x4,x5)	$$ = tree5(N_ToBy,x2,x1,x3,x5) 
-#define Uat(x1,x2)		$$ = tree5(N_Activat,x1,x1,x2,EmptyNode) 
+#define Uat(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2) 
 #define Ubackslash(x1,x2)	$$ = tree4(N_Unop,x1,x1,x2)
 #define Ubang(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
-#define Ubar(x1,x2)		$$ = tree3(N_Bar,x2,x2) 
+#define Ubar(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2) 
 #define Ucaret(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
-#define Uconcat(x1,x2)		$$ = tree3(N_Bar,x2,x2) 
+#define Uconcat(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2) 
 #define Udiff(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Udot(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Uequiv(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Uinter(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
-#define Ulconcat(x1,x2)		$$ = tree3(N_Bar,x2,x2) 
+#define Ulconcat(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Ulexeq(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Ulexne(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Uminus(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Unot(x1,x2)		$$ = tree3(N_Not,x2,x2) 
 #define Unotequiv(x1,x2)	$$ = tree4(N_Unop,x1,x1,x2)
-#define Until0(x1,x2)		$$ = tree5(N_Loop,x1,x1,x2,EmptyNode) 
-#define Until1(x1,x2,x3,x4)	$$ = tree5(N_Loop,x1,x1,x2,x4) 
+#define Until0(x1,x2)		$$ = tree4(N_Until,x1,x1,x2) 
+#define Until1(x1,x2,x3,x4)	$$ = tree5(N_Untildo,x1,x1,x2,x4) 
 #define Unumeq(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Unumne(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Uplus(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
@@ -241,8 +239,8 @@ int modflag;
 #define Ustar(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Utilde(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
 #define Uunion(x1,x2)		$$ = tree4(N_Unop,x1,x1,x2)
-#define While0(x1,x2)		$$ = tree5(N_Loop,x1,x1,x2,EmptyNode)
-#define While1(x1,x2,x3,x4)	$$ = tree5(N_Loop,x1,x1,x2,x4) 
+#define While0(x1,x2)		$$ = tree4(N_While,x1,x1,x2)
+#define While1(x1,x2,x3,x4)	$$ = tree5(N_Whiledo,x1,x1,x2,x4) 
 %}
 
 %%

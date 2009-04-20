@@ -9,9 +9,8 @@
 #include "ucode.h"
 #include "tree.h"
 #include "tmain.h"
-#include "tcode.h"
 #include "trans.h"
-#include "../h/opdefs.h"
+#include "ttoken.h"
 
 /*
  * Prototypes.
@@ -19,6 +18,8 @@
 
 static struct	tcentry *alclit	(struct tcentry *blink, char *name, int len,int flag);
 static struct	tcentry *clookup	(char *id,int flag);
+static void unop(int op);
+static void augop(int op);
 
 /*
  * Keyword table.
@@ -33,6 +34,10 @@ struct keyent {
 static struct keyent keytab[] = {
 #include "../h/kdefs.h"
 };
+
+
+static void binop(int op);
+
 
 /*
  * install - put an identifier into the global or local symbol table.
@@ -76,7 +81,7 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
         x = x->g_blink;
     if (x)
         tfatal_at(n, "global redeclaration: %s previously declared at line %d", name, Line(x->pos));
-    x = Alloc(struct tgentry);
+    x = FAlloc(struct tgentry);
     x->g_blink = ghash[i];
     ghash[i] = x;
     x->g_name = name;
@@ -104,7 +109,7 @@ struct tlentry *put_local(char *name, int flag, struct node *n, int unique)
             tfatal_at(n, "local redeclaration: %s previously declared at line %d", name, Line(x->pos));
         return x;
     }
-    x = Alloc(struct tlentry);
+    x = FAlloc(struct tlentry);
     x->l_blink = curr_func->lhash[i];
     curr_func->lhash[i] = x;
     x->l_name = name;
@@ -181,7 +186,7 @@ static struct tcentry *alclit(struct tcentry *blink, char *name, int len, int fl
 {
     register struct tcentry *cp;
 
-    cp = Alloc(struct tcentry);
+    cp = FAlloc(struct tcentry);
     cp->c_blink = blink;
     cp->c_name = name;
     cp->c_length = len;
@@ -204,13 +209,13 @@ static int curr_line;
 void ensure_pos(struct node *x)
 {
     if (File(x) != curr_file) {
-        uout_op(Op_Filen);
+        uout_op(Uop_Filen);
         uout_str(File(x));
         curr_file = File(x);
         curr_line = 0;
     }
     if (Line(x) != curr_line) {
-        uout_op(Op_Line);
+        uout_op(Uop_Line);
         uout_16(Line(x));
         curr_line = Line(x);
     }
@@ -230,18 +235,18 @@ static void fout(struct tfunction *f)
     struct tlentry *lp;
     struct tcentry *cp;
 
-    uout_op(Op_Nargs);
+    uout_op(Uop_Nargs);
     uout_16(f->nargs);
 
     for (lp = f->lfirst; lp; lp = lp->l_next) {
         ensure_pos(lp->pos);
-        uout_op(Op_Local);
+        uout_op(Uop_Local);
         uout_32(lp->l_flag);
         uout_str(lp->l_name);
     }
 
     for (cp = f->cfirst; cp; cp = cp->c_next) {
-        uout_op(Op_Con);
+        uout_op(Uop_Con);
         uout_32(cp->c_flag);
         uout_bin(cp->c_length, cp->c_name);
     }
@@ -253,19 +258,19 @@ static void clout(struct tclass *class)
     struct tclass_field *cf;
 
     ensure_pos(class->global->pos);
-    uout_op(Op_Class);
+    uout_op(Uop_Class);
     uout_32(class->flag);
     uout_str(class->global->g_name);
 
     for (cs = class->supers; cs; cs = cs->next) {
         ensure_pos(cs->pos);
-        uout_op(Op_Super);
+        uout_op(Uop_Super);
         uout_str(cs->name);
     }
    
     for (cf = class->fields; cf; cf = cf->next) {
         ensure_pos(cf->pos);
-        uout_op(Op_Classfield);
+        uout_op(Uop_Classfield);
         uout_32(cf->flag);
         uout_str(cf->name);
         if (cf->f)
@@ -277,11 +282,11 @@ static void recout(struct tfunction *rec)
 {
     struct tlentry *lp;
     ensure_pos(rec->global->pos);
-    uout_op(Op_Record);
+    uout_op(Uop_Record);
     uout_str(rec->global->g_name);
     for (lp = rec->lfirst; lp; lp = lp->l_next) {
         ensure_pos(lp->pos);
-        uout_op(Op_Recordfield);
+        uout_op(Uop_Recordfield);
         uout_str(lp->l_name);
     }
 }
@@ -289,9 +294,801 @@ static void recout(struct tfunction *rec)
 static void procout(struct tfunction *proc)
 {
     ensure_pos(proc->global->pos);
-    uout_op(Op_Procdecl);
+    uout_op(Uop_Procdecl);
     uout_str(proc->global->g_name);
     fout(proc);
+}
+
+
+static int in_create, in_loop;
+
+/*
+ * This list is either empty, has one node other than
+ * an N_Elist, or has the following structure.
+ *               n
+ *             /   \
+ *          ....    tN
+ *           n
+ *         /   \
+ *        n     t3
+ *      /   \
+ *    t1     t2
+ *
+ */
+static int elist_len(nodeptr t)
+{
+    int n;
+    if (TType(t) == N_Empty)
+        return 0;
+    n = 1;
+    while (TType(t) == N_Elist) {
+        ++n;
+        t = Tree0(t);
+    }
+    return n;
+}
+
+static void nodegen(nodeptr t)
+{
+    if (TType(t) != N_Empty)
+        ensure_pos(t);
+
+    switch (TType(t)) {
+        case N_Empty: 
+            uout_op(Uop_Empty);
+            break;
+
+        case N_Int:			/* integer literal */
+            uout_op(Uop_Int);
+            uout_16((int)Val0(t));
+            break;
+
+        case N_Real:			/* real literal */
+            uout_op(Uop_Real);
+            uout_16((int)Val0(t));
+            break;
+
+        case N_Cset:			/* cset literal */
+            uout_op(Uop_Cset);
+            uout_16((int)Val0(t));
+            break;
+
+        case N_Ucs:			/* ucs literal */
+            uout_op(Uop_Ucs);
+            uout_16((int)Val0(t));
+            break;
+
+        case N_Lrgint:			/* large integer literal */
+            uout_op(Uop_Lrgint);
+            uout_16((int)Val0(t));
+            break;
+
+        case N_Id:			/* identifier */
+            ensure_pos(t);
+            uout_op(Uop_Var);
+            uout_16(Val0(t));
+            break;
+
+        case N_Str:			/* string literal */
+            uout_op(Uop_Str);
+            uout_16((int)Val0(t));
+            break;
+
+        case N_Binop:			/*  binary operator */
+            binop(Val0(Tree0(t)));
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            break;
+
+        case N_Augop:			/*  augmented assignment operator */
+            augop(Val0(Tree0(t)));
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            break;
+
+        case N_Sect: {			/* section operation */
+            switch (Val0(Tree0(t))) {
+                case COLON: uout_op(Uop_Sect); break;
+                case PCOLON: uout_op(Uop_Sectp); break;
+                case MCOLON: uout_op(Uop_Sectm); break;
+            }
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            nodegen(Tree3(t));
+            break;
+        }
+
+        case N_Clist: {
+            /* Don't traverse the default clause as this is done at the end by N_Case. */
+            if (TType(Tree1(t)) != N_Cdef)
+                nodegen(Tree1(t));
+            if (TType(Tree0(t)) != N_Cdef)
+                nodegen(Tree0(t));
+            break;
+        }
+
+        case N_Ccls: {
+            nodegen(Tree0(t));
+            nodegen(Tree1(t));
+            break;
+        }
+
+        case N_Case: {
+            nodeptr case_default = 0;
+            nodeptr u = Tree1(t);
+            int len = 0;
+            /*
+             * Search for the case_default and count the number of non-default clauses.
+             */
+            while (TType(u) == N_Clist) {
+                if (TType(Tree1(u)) == N_Cdef) {
+                    if (case_default)
+                        tfatal_at(case_default, "more than one default clause");
+                    case_default = Tree1(u);
+                } else
+                    ++len;
+                u = Tree0(u);
+            }
+            if (TType(u) == N_Cdef) {
+                if (case_default)
+                    tfatal_at(case_default, "more than one default clause");
+                case_default = u;
+            } else if (TType(u) == N_Ccls) 
+                ++len;
+
+            if (case_default)
+                uout_op(Uop_Casedef);
+            else
+                uout_op(Uop_Case);
+            uout_16(len);
+            nodegen(Tree0(t));        /* The control expression */
+            if (len > 0)
+                nodegen(Tree1(t));
+            if (case_default)
+                nodegen(Tree1(case_default));
+            break;
+        }
+
+        case N_Apply: {			/* application */
+            if (TType(Tree0(t)) == N_Field) {
+                uout_op(Uop_Applyf);
+                uout_str(Str0(Tree1(Tree0(t))));
+                nodegen(Tree0(Tree0(t)));
+            } else {
+                uout_op(Uop_Apply);
+                nodegen(Tree0(t));
+            }
+            nodegen(Tree1(t));
+
+            break;
+        }
+
+        case N_Invoke: {			/* invocation */
+            int len = elist_len(Tree1(t));
+            if (TType(Tree0(t)) == N_Field) {
+                uout_op(Uop_Invokef);
+                uout_16(len);
+                uout_str(Str0(Tree1(Tree0(t))));
+                nodegen(Tree0(Tree0(t)));
+            } else {
+                uout_op(Uop_Invoke);
+                uout_16(len);
+                nodegen(Tree0(t));
+            }
+            if (len > 0)
+                nodegen(Tree1(t));
+            break;
+        }
+
+        case N_Mutual: {			/* (...) invocation */
+            int len = elist_len(Tree0(t));
+            uout_op(Uop_Mutual);
+            uout_16(len);
+            if (len > 0)
+                nodegen(Tree0(t));
+            break;
+        }
+
+        case N_Key: {			/* keyword reference */
+            uout_op(Uop_Keyword);
+            uout_str(Str0(t));
+            break;
+        }
+
+        case N_Limit: {			/* limitation */
+            uout_op(Uop_Limit);
+            nodegen(Tree1(t));
+            nodegen(Tree0(t));
+            break;
+        }
+
+        case N_Elist: {                /* expression list, see elist_len above for format */
+            nodegen(Tree0(t));
+            nodegen(Tree1(t));
+            break;
+        }
+
+        case N_List: {			/* list construction */
+            int len = elist_len(Tree0(t));
+            uout_op(Uop_List);
+            uout_16(len);
+            if (len > 0)
+                nodegen(Tree0(t));
+            break;
+        }
+
+        case N_To: {
+            uout_op(Uop_To);
+            nodegen(Tree0(t));
+            nodegen(Tree1(t));
+            break;
+        }
+
+        case N_ToBy: {
+            uout_op(Uop_Toby);
+            nodegen(Tree0(t));
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            break;
+        }
+
+        case N_Create: {			/* create expression */
+            int x = in_loop;
+            uout_op(Uop_Create);
+            in_loop = 0;
+            ++in_create;
+            nodegen(Tree0(t));
+            --in_create;
+            in_loop = x;
+            break;
+        }
+
+        case N_Slist:	{		/* semicolon-separated expr list */
+            int len = 1;
+            nodeptr u = t;
+            while (TType(u) == N_Slist) {
+                ++len;
+                u = Tree1(u);
+            }
+
+            uout_op(Uop_Slist);
+            uout_16(len);
+
+            u = t;
+            while (TType(u) == N_Slist) {
+                nodegen(Tree0(u));
+                u = Tree1(u);
+            }
+            nodegen(u);
+
+            break;
+        }
+
+        case N_Not: {			/* not expression */
+            uout_op(Uop_Not);
+            nodegen(Tree0(t));
+            break;
+        }
+
+        case N_Fail: {
+            if (in_create)
+                tfatal_at(t, "invalid context for fail");
+            uout_op(Uop_Fail);
+            break;
+        }
+
+        case N_Next: {			/* next expression */
+            if (!in_loop)
+                tfatal_at(t, "invalid context for next");
+            uout_op(Uop_Next);
+            break;
+        }
+
+        case N_Ret: {
+            if (in_create)
+                tfatal_at(t, "invalid context for return");
+            uout_op(Uop_Return);
+            nodegen(Tree1(t));
+            break;
+        }
+
+        case N_Alt: {
+            uout_op(Uop_Alt);
+            nodegen(Tree0(t));
+            nodegen(Tree1(t));
+            break;
+        }
+
+        case N_Unop: {              /* unary operator */
+            unop(Val0(Tree0(t)));
+            nodegen(Tree1(t));
+            break;
+        }
+
+        case N_Field: {			/* field reference */
+            uout_op(Uop_Field);
+            uout_str(Str0(Tree1(t)));
+            nodegen(Tree0(t));
+            break;
+        }
+
+        case N_Break: {			/* break expression */
+            if (!in_loop)
+                tfatal_at(t, "invalid context for break");
+            uout_op(Uop_Break);
+            nodegen(Tree0(t));
+            break;
+        }
+
+        case N_If: {
+            uout_op(Uop_If);
+            nodegen(Tree0(t));
+            nodegen(Tree1(t));
+            break;
+        }
+
+        case N_Ifelse: {
+            uout_op(Uop_Ifelse);
+            nodegen(Tree0(t));
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            break;
+        }
+
+        case N_Repeat: {
+            uout_op(Uop_Repeat);
+            ++in_loop;
+            nodegen(Tree1(t));
+            --in_loop;
+            break;
+        }
+
+        case N_While: {
+            ++in_loop;
+            uout_op(Uop_While);
+            nodegen(Tree1(t));
+            --in_loop;
+            break;
+        }
+
+        case N_Whiledo: {
+            ++in_loop;
+            uout_op(Uop_Whiledo);
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            --in_loop;
+            break;
+        }
+
+        case N_Until: {
+            ++in_loop;
+            uout_op(Uop_Until);
+            nodegen(Tree1(t));
+            --in_loop;
+            break;
+        }
+
+        case N_Untildo: {
+            ++in_loop;
+            uout_op(Uop_Untildo);
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            --in_loop;
+            break;
+        }
+
+        case N_Every: {
+            ++in_loop;
+            uout_op(Uop_Every);
+            nodegen(Tree1(t));
+            --in_loop;
+            break;
+        }
+
+        case N_Everydo: {
+            ++in_loop;
+            uout_op(Uop_Everydo);
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            --in_loop;
+            break;
+        }
+
+        case N_Suspend: {
+            if (in_create)
+                tfatal_at(t, "invalid context for suspend");
+            ++in_loop;
+            uout_op(Uop_Suspend);
+            nodegen(Tree1(t));
+            --in_loop;
+            break;
+        }
+
+        case N_Suspenddo: {
+            if (in_create)
+                tfatal_at(t, "invalid context for suspend");
+            ++in_loop;
+            uout_op(Uop_Suspenddo);
+            nodegen(Tree1(t));
+            nodegen(Tree2(t));
+            --in_loop;
+            break;
+        }
+
+        default: {
+            quitf("nodegen: unknown node type:%d",TType(t));
+        }
+    }
+}
+
+static void binop(int op)
+{
+    switch (op) {
+        case ASSIGN:
+            uout_op(Uop_Asgn);
+            break;
+
+        case CARET:
+            uout_op(Uop_Power);
+            break;
+
+        case CONCAT:
+            uout_op(Uop_Cat);
+            break;
+
+        case DIFF:
+            uout_op(Uop_Diff);
+            break;
+
+        case EQUIV:
+            uout_op(Uop_Eqv);
+            break;
+
+        case INTER:
+            uout_op(Uop_Inter);
+            break;
+
+        case LBRACK:
+            uout_op(Uop_Subsc);
+            break;
+
+        case LCONCAT:
+            uout_op(Uop_Lconcat);
+            break;
+
+        case SEQ:
+            uout_op(Uop_Lexeq);
+            break;
+
+        case SGE:
+            uout_op(Uop_Lexge);
+            break;
+
+        case SGT:
+            uout_op(Uop_Lexgt);
+            break;
+
+        case SLE:
+            uout_op(Uop_Lexle);
+            break;
+
+        case SLT:
+            uout_op(Uop_Lexlt);
+            break;
+
+        case SNE:
+            uout_op(Uop_Lexne);
+            break;
+
+        case MINUS:
+            uout_op(Uop_Minus);
+            break;
+
+        case MOD:
+            uout_op(Uop_Mod);
+            break;
+
+        case NEQUIV:
+            uout_op(Uop_Neqv);
+            break;
+
+        case NMEQ:
+            uout_op(Uop_Numeq);
+            break;
+
+        case NMGE:
+            uout_op(Uop_Numge);
+            break;
+
+        case NMGT:
+            uout_op(Uop_Numgt);
+            break;
+
+        case NMLE:
+            uout_op(Uop_Numle);
+            break;
+
+        case NMLT:
+            uout_op(Uop_Numlt);
+            break;
+
+        case NMNE:
+            uout_op(Uop_Numne);
+            break;
+
+        case PLUS:
+            uout_op(Uop_Plus);
+            break;
+
+        case REVASSIGN:
+            uout_op(Uop_Rasgn);
+            break;
+
+        case REVSWAP:
+            uout_op(Uop_Rswap);
+            break;
+
+        case SLASH:
+            uout_op(Uop_Div);
+            break;
+
+        case STAR:
+            uout_op(Uop_Mult);
+            break;
+
+        case SWAP:
+            uout_op(Uop_Swap);
+            break;
+
+        case UNION:
+            uout_op(Uop_Unions);
+            break;
+
+        case AND:
+            uout_op(Uop_Conj);
+            break;
+
+        case AT:
+            uout_op(Uop_Bactivate);
+            break;
+
+        case QMARK:
+            uout_op(Uop_Scan);
+            break;
+
+        default:
+            tsyserr("binop: undefined binary operator");
+    }
+}
+
+static void augop(int op)
+{
+    switch (op) {
+        case AUGCARET:
+            uout_op(Uop_Augpower);
+            break;
+
+        case AUGCONCAT:
+            uout_op(Uop_Augcat);
+            break;
+
+        case AUGDIFF:
+            uout_op(Uop_Augdiff);
+            break;
+
+        case AUGEQUIV:
+            uout_op(Uop_Augeqv);
+            break;
+
+        case AUGINTER:
+            uout_op(Uop_Auginter);
+            break;
+
+        case AUGLCONCAT:
+            uout_op(Uop_Auglconcat);
+            break;
+
+        case AUGSEQ:
+            uout_op(Uop_Auglexeq);
+            break;
+
+        case AUGSGE:
+            uout_op(Uop_Auglexge);
+            break;
+
+        case AUGSGT:
+            uout_op(Uop_Auglexgt);
+            break;
+
+        case AUGSLE:
+            uout_op(Uop_Auglexle);
+            break;
+
+        case AUGSLT:
+            uout_op(Uop_Auglexlt);
+            break;
+
+        case AUGSNE:
+            uout_op(Uop_Auglexne);
+            break;
+
+        case AUGMINUS:
+            uout_op(Uop_Augminus);
+            break;
+
+        case AUGMOD:
+            uout_op(Uop_Augmod);
+            break;
+
+        case AUGNEQUIV:
+            uout_op(Uop_Augneqv);
+            break;
+
+        case AUGNMEQ:
+            uout_op(Uop_Augnumeq);
+            break;
+
+        case AUGNMGE:
+            uout_op(Uop_Augnumge);
+            break;
+
+        case AUGNMGT:
+            uout_op(Uop_Augnumgt);
+            break;
+
+        case AUGNMLE:
+            uout_op(Uop_Augnumle);
+            break;
+
+        case AUGNMLT:
+            uout_op(Uop_Augnumlt);
+            break;
+
+        case AUGNMNE:
+            uout_op(Uop_Augnumne);
+            break;
+
+        case AUGPLUS:
+            uout_op(Uop_Augplus);
+            break;
+
+        case AUGSLASH:
+            uout_op(Uop_Augdiv);
+            break;
+
+        case AUGSTAR:
+            uout_op(Uop_Augmult);
+            break;
+
+        case AUGUNION:
+            uout_op(Uop_Augunions);
+            break;
+
+        case AUGAND:
+            uout_op(Uop_Augconj);
+            break;
+
+        case AUGAT:
+            uout_op(Uop_Augactivate);
+            break;
+
+        case AUGQMARK:
+            uout_op(Uop_Augscan);
+            break;
+
+        default:
+            tsyserr("binop: undefined binary operator");
+    }
+}
+
+/*
+ * unop is the back-end code emitter for unary operators.  It emits
+ *  the operations represented by the token op.
+ */
+static void unop(int op)
+{
+    switch (op) {
+        case DOT:			/* unary . operator */
+            uout_op(Uop_Value);
+            break;
+
+        case BACKSLASH:		/* unary \ operator */
+            uout_op(Uop_Nonnull);
+            break;
+
+        case BANG:		/* unary ! operator */
+            uout_op(Uop_Bang);
+            break;
+
+        case CARET:		/* unary ^ operator */
+            uout_op(Uop_Refresh);
+            break;
+
+        case UNION:		/* two unary + operators */
+            uout_op(Uop_Number);
+            uout_op(Uop_Number);
+            break;
+
+        case PLUS:		/* unary + operator */
+            uout_op(Uop_Number);
+            break;
+
+        case NEQUIV:		/* unary ~ and three = operators */
+            uout_op(Uop_Compl);
+            uout_op(Uop_Tabmat);
+            uout_op(Uop_Tabmat);
+            uout_op(Uop_Tabmat);
+            break;
+
+        case SNE:		/* unary ~ and two = operators */
+            uout_op(Uop_Compl);
+            uout_op(Uop_Tabmat);
+            uout_op(Uop_Tabmat);
+            break;
+
+        case NMNE:		/* unary ~ and = operators */
+            uout_op(Uop_Compl);
+            uout_op(Uop_Tabmat);
+            break;
+
+        case TILDE:		/* unary ~ operator (cset compl) */
+            uout_op(Uop_Compl);
+            break;
+
+        case DIFF:		/* two unary - operators */
+            uout_op(Uop_Neg);
+            uout_op(Uop_Neg);
+            break;
+
+        case MINUS:		/* unary - operator */
+            uout_op(Uop_Neg);
+            break;
+
+        case EQUIV:		/* three unary = operators */
+            uout_op(Uop_Tabmat);
+            uout_op(Uop_Tabmat);
+            uout_op(Uop_Tabmat);
+            break;
+
+        case SEQ:		/* two unary = operators */
+            uout_op(Uop_Tabmat);
+            uout_op(Uop_Tabmat);
+            break;
+
+        case NMEQ:		/* unary = operator */
+            uout_op(Uop_Tabmat);
+            break;
+
+        case INTER:		/* two unary * operators */
+            uout_op(Uop_Size);
+            uout_op(Uop_Size);
+            break;
+
+        case STAR:		/* unary * operator */
+            uout_op(Uop_Size);
+            break;
+
+        case QMARK:		/* unary ? operator */
+            uout_op(Uop_Random);
+            break;
+
+        case SLASH:		/* unary / operator */
+            uout_op(Uop_Null);
+            break;
+
+        case AT:
+            uout_op(Uop_Activate);
+            break;
+
+        case BAR:
+        case CONCAT:
+        case LCONCAT:
+            uout_op(Uop_Rptalt);
+            break;
+
+        default:
+            tsyserr("unop: undefined unary operator");
+    }
 }
 
 void output_code()
@@ -302,28 +1099,28 @@ void output_code()
     struct timport *im;
     struct timport_symbol *ims;
 
-    uout_op(Op_Version);
+    uout_op(Uop_Version);
     uout_str(UVersion);
 
     reset_pos();
 
     if (trace)
-        uout_op(Op_Trace);
+        uout_op(Uop_Trace);
    
     if (package_name) {
-        uout_op(Op_Package);
+        uout_op(Uop_Package);
         uout_str(package_name);
     }
 
     for (im = imports; im; im = im->next) {
         ensure_pos(im->pos);
-        uout_op(Op_Import);
+        uout_op(Uop_Import);
         uout_str(im->name);
         uout_16(im->qualified);
         if (im->qualified) {
             for (ims = im->symbols; ims; ims = ims->next) {
                 ensure_pos(ims->pos);
-                uout_op(Op_Importsym);
+                uout_op(Uop_Importsym);
                 uout_str(ims->name);
             }
         }
@@ -331,13 +1128,13 @@ void output_code()
 
     for (li = links; li; li = li->next) {
         ensure_pos(li->pos);
-        uout_op(Op_Link);
+        uout_op(Uop_Link);
         uout_str(li->name);
     }
 
     for (iv = tinvocables; iv; iv = iv->next) {
         ensure_pos(iv->pos);
-        uout_op(Op_Invocable);
+        uout_op(Uop_Invocable);
         uout_str(iv->name);
     }
 
@@ -345,7 +1142,7 @@ void output_code()
         switch (gp->g_flag) {
             case F_Global:
                 ensure_pos(gp->pos);
-                uout_op(Op_Global);
+                uout_op(Uop_Global);
                 uout_str(gp->g_name);
                 break;
             case F_Global|F_Class:
@@ -359,27 +1156,37 @@ void output_code()
                 break;
         }
     }
-    uout_op(Op_Declend);
+    uout_op(Uop_Declend);
 
     reset_pos();
+
     for (curr_func = functions; curr_func; curr_func = curr_func->next) {
         switch (curr_func->flag) {
-            case F_Proc: 
+            case F_Proc: {
+                report("  %s", curr_func->global->g_name);
                 ensure_pos(curr_func->global->pos);
-                uout_op(Op_Proc);
+                uout_op(Uop_Proc);
                 uout_str(curr_func->global->g_name);
-                codegen(curr_func->code);
+                nodegen(Tree1(curr_func->code));
+                nodegen(Tree2(curr_func->code));
+                ensure_pos(Tree3(curr_func->code));
+                uout_op(Uop_End);
                 break;
-
-            case F_Method: 
+            }
+            case F_Method: {
                 if (!(curr_func->field->flag & M_Defer)) {
+                    report("  %s.%s", curr_func->field->class->global->g_name, curr_func->field->name);
                     ensure_pos(curr_func->field->pos);
-                    uout_op(Op_Method);
+                    uout_op(Uop_Method);
                     uout_str(curr_func->field->class->global->g_name);
                     uout_str(curr_func->field->name);
-                    codegen(curr_func->code);
+                    nodegen(Tree1(curr_func->code));
+                    nodegen(Tree2(curr_func->code));
+                    ensure_pos(Tree3(curr_func->code));
+                    uout_op(Uop_End);
                 }
                 break;
+            }
         }
     }
 }

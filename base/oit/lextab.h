@@ -32,7 +32,7 @@ struct toktab toktab[] = {
    { "defer",            DEFER,         0},                /*  14 */
    { "do",               DO,            0},                /*  15 */
    { "else",             ELSE,          0},                /*  16 */
-   { "end",              END,           Beginner},         /*  17 */
+   { "end",              END,           0},                /*  17 */
    { "every",            EVERY,         Beginner},         /*  18 */
    { "fail",             FAIL,          Beginner+Ender},   /*  19 */
    { "final",            FINAL,         0},                /*  20 */
