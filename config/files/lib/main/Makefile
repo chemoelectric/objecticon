@@ -1,7 +1,7 @@
 include ../../Makedefs
 
 LIBSRC=$(wildcard *.icn)
-AUTOSRC=posixconsts.icn ioconsts.icn evmonconsts.icn
+AUTOSRC=posixconsts.icn ioconsts.icn evmonconsts.icn ucodeconsts.icn
 
 LIBU=$(LIBSRC:.icn=.u)
 AUTOU=$(AUTOSRC:.icn=.u)
