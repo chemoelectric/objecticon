@@ -164,7 +164,6 @@ char *op_names[] = {
  */
 
 #define LoopDepth   20		/* max. depth of nested loops */
-#define CaseDepth   10		/* max. depth of nested case statements */
 #define CreatDepth  10		/* max. depth of nested create statements */
 
 enum looptype { EVERY,LOOP };
@@ -388,14 +387,12 @@ static int peek_op(int opcode)
 void nodecode()
 {
     struct ucode_op *uop;
-    char *name;
     int op;
 
     while (1) {
         if (!(uop = uin_op()))
             quitf("nodecode: unexpected eof");
         op = uop->opcode;
-        name = uop->name;
         if (op ==  Uop_Filen) {
             curr_file = uin_str();
             synch_file();
@@ -765,15 +762,10 @@ void nodecode()
             if (peek_op(Uop_Var)) {
                 int k, flags;
                 struct lentry *lp;
-                struct fentry *fp;
                 k = uin_16();
                 lp = curr_lfunc->local_table[k];
                 flags = lp->l_flag;
                 if (flags & F_Field) {
-                    fp = flocate(lp->name);
-                    if (!fp)
-                        quitf("Couldn't find class field in field table:%s", lp->name);
-
                     if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
                         lemitn(Op_Global, (word)(lp->l_val.field->class->global->g_index));
                     else
@@ -782,7 +774,7 @@ void nodecode()
                     for (i = 0; i < n; ++i)
                         nodecode();
 
-                    lemitn2(Op_Invokef, (word)(fp->field_id), n);
+                    lemitn2(Op_Invokef, (word)(lp->l_val.field->ftab_entry->field_id), n);
 
                     if (Dflag) {
                         fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
@@ -852,15 +844,10 @@ void nodecode()
             if (peek_op(Uop_Var)) {
                 int k, flags;
                 struct lentry *lp;
-                struct fentry *fp;
                 k = uin_16();
                 lp = curr_lfunc->local_table[k];
                 flags = lp->l_flag;
                 if (flags & F_Field) {
-                    fp = flocate(lp->name);
-                    if (!fp)
-                        quitf("Couldn't find class field in field table:%s", lp->name);
-
                     if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
                         lemitn(Op_Global, (word)(lp->l_val.field->class->global->g_index));
                     else
@@ -868,7 +855,7 @@ void nodecode()
 
                     nodecode();
 
-                    lemitn(Op_Applyf, (word)(fp->field_id));
+                    lemitn(Op_Applyf, (word)(lp->l_val.field->ftab_entry->field_id));
 
                     if (Dflag) {
                         fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
@@ -1181,7 +1168,6 @@ void nodecode()
         case Uop_Var: {
             int k, flags;
             struct lentry *lp;
-            struct fentry *fp;
             k = uin_16();
             lp = curr_lfunc->local_table[k];
             flags = lp->l_flag;
@@ -1192,15 +1178,12 @@ void nodecode()
             else if (flags & F_Argument)
                 lemitn(Op_Arg, lp->l_val.index);
             else if (flags & F_Field) {
-                fp = flocate(lp->name);
-                if (!fp)
-                    quitf("Couldn't find class field in field table:%s", lp->name);
                 lemit(Op_Pnull);
                 if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
                     lemitn(Op_Global, (word)(lp->l_val.field->class->global->g_index));
                 else
                     lemitn(Op_Arg, 0);          /* inst var, "self" is the 0th argument */
-                lemitn(Op_Field, (word)(fp->field_id));
+                lemitn(Op_Field, (word)(lp->l_val.field->ftab_entry->field_id));
                 if (Dflag) {
                     fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
                     fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
