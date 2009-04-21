@@ -56,7 +56,7 @@ int     udis(int argc, char **argv);
 struct ucode_op {
     int opcode;
     char *name;          /* Printable name */
-    int param_type[3];   /* The types of the parameters */
+    int param_type[2];   /* The types of the parameters */
     char *fmt;           /* Format for disassembly */
 };
 
@@ -199,7 +199,6 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Impl	216
 #define Uop_Error	217
 #define Uop_Trace	218
-#define Uop_Lab   	219
 #define Uop_Invocable	220
 #define Uop_Class       221
 #define Uop_Super       222
