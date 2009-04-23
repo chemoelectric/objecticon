@@ -63,7 +63,6 @@ void add_local(struct lfunction *func, char *name, int flags, struct loc *pos)
     lp->name = name;
     lp->pos = *pos;
     lp->l_flag = flags;
-    ++func->nlocals;
 }
 
 void add_constant(struct lfunction *func, int flags, char *data, int len)
@@ -78,8 +77,6 @@ void add_constant(struct lfunction *func, int flags, char *data, int len)
         func->constant_last = p;
     } else
         func->constants = func->constant_last = p;
-
-    ++func->nconstants;
 }
 
 struct fentry *flocate(char *name)

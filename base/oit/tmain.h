@@ -19,6 +19,7 @@ extern int Dflag;       /* -L: link debug */
 extern int Zflag;	/* -Z: icode-gz compression */
 extern int uflag;       /* -u: utf-8 source code */
 extern int loclevel;    /* -l n: location info */
+extern int Olevel;      /* -O n: optimisation */
 
 extern char *progname;
 

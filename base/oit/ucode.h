@@ -228,9 +228,7 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Rptalt      250
 
 #define Uop_Invoke      251
-#define Uop_Invokef     252
 #define Uop_Mutual      253
 #define Uop_Apply       254
-#define Uop_Applyf      255
 
 #endif

@@ -241,30 +241,12 @@ void readglob(struct lfile *lf)
 static void resolve_locals_impl(struct lfunction *f)
 {
     struct lentry *e;
-    struct centry *c;
 
     /*
      * Resolve each identifier encountered.
      */
     for (e = f->locals; e; e = e->next)
         resolve_local(f, e);
-
-    /*
-     * Turn the lists into arrays so that they may be conveniently
-     * indexed when encountered in code generation.
-     */
-    if (f->nlocals > 0) {
-        int i = 0;
-        f->local_table = safe_calloc(f->nlocals, sizeof(struct lentry *));
-        for (e = f->locals; e; e = e->next)
-            f->local_table[i++] = e;
-    }
-    if (f->nconstants > 0) {
-        int i = 0;
-        f->constant_table = safe_calloc(f->nconstants, sizeof(struct centry *));
-        for (c = f->constants; c; c = c->next)
-            f->constant_table[i++] = c;
-    }
 }
 
 /*
@@ -301,6 +283,7 @@ void scanrefs()
     struct linvocable *inv;
     struct lclass *cp, **cpp;
     struct lrecord *rp, **rpp;
+    struct lfile *lf, **lfp;
 
     /*
      * Mark every global as unreferenced; search for main.
@@ -356,6 +339,8 @@ void scanrefs()
             /*
              *  The global is used.
              */
+            if (gp->defined)
+                gp->defined->ref = 1;     /* Mark the file as used */
             gpp = &gp->g_next;
         }
     }
@@ -380,6 +365,20 @@ void scanrefs()
             *rpp = rp->next;
         else
             rpp = &rp->next;
+    }
+
+    /*
+     * Rebuild the list of files.
+     */
+    lfp = &lfiles;
+    while ((lf = *lfp)) {
+        if (lf->ref)
+            lfp = &lf->next;
+        else {
+            if (verbose > 2) 
+                report("Discarding file      %s", lf->name);
+            *lfp = lf->next;
+        }
     }
 }
 

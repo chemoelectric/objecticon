@@ -151,15 +151,6 @@ int load_package_dir(struct package_dir *dir)
 }
 
 /*
- * writecheck - check the return code from a stdio output operation
- */
-static void writecheck(int rc)
-{
-    if (rc < 0)
-        quitf("cannot write to package file: %s", strerror(errno));
-}
-
-/*
  * Save the given package_dir to its packages.txt file in its directory.
  */
 static void save_package_dir(struct package_dir *dir)
@@ -169,13 +160,15 @@ static void save_package_dir(struct package_dir *dir)
     struct package *pk;
     struct package_file *pf;
     if (!f)
-        quitf("Unable to write to %s", fn);
+        quitf("Unable to open package file %s", fn);
     for (pk = dir->packages; pk; pk = pk->next) {
-        writecheck(fprintf(f, ">package\n%s\n", pk->name));
+        fprintf(f, ">package\n%s\n", pk->name);
         for (pf = pk->files; pf; pf = pf->next)
-            writecheck(fprintf(f, "%s\n", pf->name));
+            fprintf(f, "%s\n", pf->name);
     }
     dir->modflag = 0;
+    if (ferror(f) != 0)
+        quitf("failed to write to package file %s", fn);
     fclose(f);
 }
 

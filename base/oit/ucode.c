@@ -257,10 +257,10 @@ struct ucode_op ucode_op_table[] = {
     /* 249 */         { Uop_Augactivate, "augactivate", { 0,0 }, "\t%-12s" },                  
     /* 250 */         { Uop_Rptalt, "rptalt", { 0,0 }, "\t%-12s" },                  
     /* 251 */         { Uop_Invoke, "invoke", { TYPE_16,0 }, "\t%-12s %d" },
-    /* 252 */         { Uop_Invokef, "invokef", { TYPE_16,TYPE_STR }, "\t%-12s %d %s" },
+    /* 252 */         INVALID,
     /* 253 */         { Uop_Mutual, "mutual", { TYPE_16,0 }, "\t%-12s %d" },
     /* 254 */         { Uop_Apply, "apply", { 0,0 }, "\t%-12s" },
-    /* 255 */         { Uop_Applyf, "applyf", { TYPE_STR,0 }, "\t%-12s %s" },
+    /* 255 */         INVALID,
 };
 
 static int last_opcode = 0, n_params = 0;

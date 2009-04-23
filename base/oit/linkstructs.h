@@ -134,14 +134,15 @@ struct lfunction {
     int narguments;       /* Count of arguments, always >= 0 even for varargs */
     int nstatics;         /* Count of statics */
     int nargs;            /* Read from the ufile, will be -ve for varargs */
-    int nlocals;          /* Number of local symbols - may be any sort */
-    int nconstants;       /* Number of constants */
     int native_method_id; /* For a deferred method, the native method number, or -1 */
     struct lfile *defined;            /* The file this function was defined in */
     struct lclass_field *method;      /* Pointer to method, if a method */
     struct gentry *proc;              /* Pointer to proc, if a proc */
-    struct lentry **local_table, *locals, *local_last;
-    struct centry **constant_table, *constants, *constant_last;
+    struct lnode *initial;            /* Ucode tree for initial clause */
+    struct lnode *body;               /* Ucode tree for main body */
+    struct lnode *end;                /* Ucode tree for end */
+    struct lentry *locals, *local_last;
+    struct centry *constants, *constant_last;
 };
 
 /*
@@ -153,6 +154,7 @@ struct lfile {
     int declend_offset;                      /* file offset of declend */
     char *package;                           /* package of this file, or null */
     int package_id;                          /* id number of package */
+    int ref;                                 /* flag used during scanrefs() */
     struct fimport *import_hash[64], *imports, *last_import;  /* imports in this file */
     struct lfile *next, *b_next;             /* pointer to next file */
 };

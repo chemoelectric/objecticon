@@ -450,14 +450,8 @@ static void nodegen(nodeptr t)
         }
 
         case N_Apply: {			/* application */
-            if (TType(Tree0(t)) == N_Field) {
-                uout_op(Uop_Applyf);
-                uout_str(Str0(Tree1(Tree0(t))));
-                nodegen(Tree0(Tree0(t)));
-            } else {
-                uout_op(Uop_Apply);
-                nodegen(Tree0(t));
-            }
+            uout_op(Uop_Apply);
+            nodegen(Tree0(t));
             nodegen(Tree1(t));
 
             break;
@@ -465,16 +459,9 @@ static void nodegen(nodeptr t)
 
         case N_Invoke: {			/* invocation */
             int len = elist_len(Tree1(t));
-            if (TType(Tree0(t)) == N_Field) {
-                uout_op(Uop_Invokef);
-                uout_16(len);
-                uout_str(Str0(Tree1(Tree0(t))));
-                nodegen(Tree0(Tree0(t)));
-            } else {
-                uout_op(Uop_Invoke);
-                uout_16(len);
-                nodegen(Tree0(t));
-            }
+            uout_op(Uop_Invoke);
+            uout_16(len);
+            nodegen(Tree0(t));
             if (len > 0)
                 nodegen(Tree1(t));
             break;
