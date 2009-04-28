@@ -321,7 +321,11 @@ static int compute_global_pure(struct lnode *n)
         case Uop_Global: {
             struct lnode_global *x = (struct lnode_global *)n;
             if (changes(n)) {
-                /*printf("pure cleared for %s\n",x->global->name);*/
+                if (verbose > 3) {
+                    fprintf(stderr,
+                            "Pure cleared for %s at %s:%d\n",x->global->name, 
+                            n->loc.file, n->loc.line);
+                }
                 x->global->pure = 0;
             }
             break;
@@ -334,14 +338,23 @@ static int changes(struct lnode *n)
 {
     while (n->parent) {
         switch (n->parent->op) {
+            case Uop_To: 
+            case Uop_Toby: 
+            case Uop_Neg:
+            case Uop_Tabmat:
+            case Uop_Size:
+            case Uop_Random:
+            case Uop_Bang:
+            case Uop_Number:
+            case Uop_Value:
             case Uop_Field:
             case Uop_Invoke:
+            case Uop_Apply:
             case Uop_Power:
             case Uop_Cat:
             case Uop_Diff:
             case Uop_Eqv:
             case Uop_Inter:
-            case Uop_Subsc:
             case Uop_Lconcat:
             case Uop_Lexeq:
             case Uop_Lexge:
@@ -366,6 +379,7 @@ static int changes(struct lnode *n)
             case Uop_Bactivate:
                 return 0;
 
+            case Uop_Subsc:
             case Uop_Asgn:
             case Uop_Rasgn:
             case Uop_Augpower:
@@ -405,6 +419,22 @@ static int changes(struct lnode *n)
                 struct lnode_2 *x = (struct lnode_2 *)n->parent;
                 return x->child1 == n || x->child2 == n;
             }
+
+            case Uop_Sect: 
+            case Uop_Sectm:
+            case Uop_Sectp: {
+                struct lnode_3 *x = (struct lnode_3 *)n->parent;
+                return x->child1 == n;
+            }
+
+            case Uop_Break: 
+            case Uop_Create: 
+            case Uop_Suspend: 
+            case Uop_Return: {
+                struct lnode_1 *x = (struct lnode_1 *)n->parent;
+                return x->child == n;
+            }
+
         }
         n = n->parent;
     }
@@ -484,19 +514,20 @@ static int visit_init_method(struct lnode *n)
 
 static void compute_class_consts()
 {
+    if (verbose > 3)
+        fprintf(stderr, "Public static constant analysis:\n\n");
     for (vclass = lclasses; vclass; vclass = vclass->next) {
         struct lclass_field *f = lookup_field(vclass, init_string);
         if (f) {
             visitfunc_post(f->func, fold_consts);
             visitfunc_pre(f->func, visit_init_method);
         }
-/*
-        {
+        if (verbose > 3) {
             fprintf(stderr, "Class %s pure=%d\n", vclass->global->name, vclass->global->pure);
             struct lclass_field *cf;
             for (cf = vclass->fields; cf; cf = cf->next) {
                 if (cf->flag == (M_Public | M_Static | M_Const)) {
-                    fprintf(stderr, "\tStatic constant %s:", cf->name);
+                    fprintf(stderr, "\tPublic static constant %s: ", cf->name);
                     switch (cf->const_flag) {
                         case NOT_SEEN: fprintf(stderr, "NOT_SEEN\n"); break;
                         case SET_NULL: fprintf(stderr, "SET_NULL\n"); break;
@@ -506,8 +537,6 @@ static void compute_class_consts()
                 }
             }
         }
-*/
-
     }
 }
 
