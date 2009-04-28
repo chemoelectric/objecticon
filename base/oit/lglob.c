@@ -199,7 +199,7 @@ void readglob(struct lfile *lf)
                     add_local(curr_func, name, k, &pos);
                 break;
 
-            case Uop_Con: {
+            case Uop_Data: {
                 int len;
                 char *data;
                 k = uin_32();

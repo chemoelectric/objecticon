@@ -224,6 +224,15 @@ void zero_sbuf(struct str_buf *sbuf)
 
 }
 
+/*
+ * Append n chars from s to the given buf
+ */
+void append_n(struct str_buf *sbuf, char *s, int n)
+{
+    while (n--)
+        AppChar(*sbuf, *s++);
+}
+
 static struct str_buf util;
 
 /*
@@ -233,6 +242,17 @@ char *intern(char *s)
 {
     zero_sbuf(&util);
     while (*s)
+        AppChar(util, *s++);
+    return str_install(&util);
+}
+
+/*
+ * Intern exactly n chars from s using our local sbuf
+ */
+char *intern_n(char *s, int n)
+{
+    zero_sbuf(&util);
+    while (n--)
         AppChar(util, *s++);
     return str_install(&util);
 }

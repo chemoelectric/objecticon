@@ -246,7 +246,7 @@ static void fout(struct tfunction *f)
     }
 
     for (cp = f->cfirst; cp; cp = cp->c_next) {
-        uout_op(Uop_Con);
+        uout_op(Uop_Data);
         uout_32(cp->c_flag);
         uout_bin(cp->c_length, cp->c_name);
     }
@@ -339,27 +339,12 @@ static void nodegen(nodeptr t)
             break;
 
         case N_Int:			/* integer literal */
-            uout_op(Uop_Int);
-            uout_16((int)Val0(t));
-            break;
-
         case N_Real:			/* real literal */
-            uout_op(Uop_Real);
-            uout_16((int)Val0(t));
-            break;
-
         case N_Cset:			/* cset literal */
-            uout_op(Uop_Cset);
-            uout_16((int)Val0(t));
-            break;
-
         case N_Ucs:			/* ucs literal */
-            uout_op(Uop_Ucs);
-            uout_16((int)Val0(t));
-            break;
-
         case N_Lrgint:			/* large integer literal */
-            uout_op(Uop_Lrgint);
+        case N_Str:			/* string literal */
+            uout_op(Uop_Const);
             uout_16((int)Val0(t));
             break;
 
@@ -367,11 +352,6 @@ static void nodegen(nodeptr t)
             ensure_pos(t);
             uout_op(Uop_Var);
             uout_16(Val0(t));
-            break;
-
-        case N_Str:			/* string literal */
-            uout_op(Uop_Str);
-            uout_16((int)Val0(t));
             break;
 
         case N_Binop:			/*  binary operator */

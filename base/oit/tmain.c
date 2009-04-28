@@ -27,7 +27,7 @@ int Bflag       =0;     /* -B: bundle iconx in output file */
 int uflag       =0;     /* -u: utf-8 source code */
 int loclevel	=1;	/* -l n: amount of location info in icode 0 = none, 1 = trace info (default), 
                          *       2 = trace & symbol info */
-int Olevel      =0;     /* -O n: optimisation */
+int Olevel      =1;     /* -O n: optimisation */
 
 /*
  * Some convenient interned strings.
@@ -37,6 +37,7 @@ char *default_string;
 char *self_string;
 char *new_string;
 char *init_string;
+char *empty_string;
 char *all_string;
 char *lang_string;
 char *package_marker_string;
@@ -610,6 +611,7 @@ void init_strings()
     default_string = spec_str("default");
     self_string = spec_str("self");
     new_string = spec_str("new");
+    empty_string = spec_str("");
     init_string = spec_str("init");
     all_string = spec_str("all");
     lang_string = spec_str("lang");

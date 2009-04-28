@@ -5,7 +5,7 @@ CWARN = -Wall
 TRANS=		trans.o tlex.o tparse.o tsym.o tmem.o \
 		 tree.o ucode.o ipp.o membuff.o
 
-LINKR=		link.o lglob.o lcode.o lmem.o lsym.o ltree.o
+LINKR=		link.o lglob.o lcode.o lmem.o lsym.o ltree.o optimize.o
 
 COBJS=		../common/getopt.o ../common/alloc.o \
 		../common/strtbl.o ../common/mlocal.o

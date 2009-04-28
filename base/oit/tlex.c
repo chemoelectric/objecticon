@@ -434,7 +434,7 @@ static struct toktab *getnum(ac, cc)
          * Large int - data is the string of chars.  Note the token is still
          * a T_Int - gramatically it is the same as a normal integer.
          */
-        n = lex_sbuf.endimage - lex_sbuf.strtimage;
+        n = CurrLen(lex_sbuf);
         yylval = LrgintNode(str_install(&lex_sbuf), n);
         return T_Int;
     } else {
@@ -638,8 +638,7 @@ static struct toktab *getcset(ac, cc)
     int esc_flag;
     char *p;
 
-    if (!(cs = init_rangeset()))
-        quitf("Out of memory for rangeset");
+    MemProtect(cs = init_rangeset());
 
     c = NextChar;
     while (c != '\'' && c != '\n' && c != EOF) {
@@ -689,14 +688,12 @@ static struct toktab *getcset(ac, cc)
                 if (!esc_flag && c == '-')
                     ++state;
                 else {
-                    if (!add_range(cs, prev, prev))
-                        quitf("Out of memory for add_range");
+                    MemProtect(add_range(cs, prev, prev));
                     prev = c;
                 }
                 break;
             case 2:
-                if (!add_range(cs, prev, c))
-                    quitf("Out of memory for add_range");
+                MemProtect(add_range(cs, prev, c));
                 state = 0;
                 break;
         }
@@ -704,8 +701,7 @@ static struct toktab *getcset(ac, cc)
     }
     if (c == '\'') {
         if (state == 1) {
-            if (!add_range(cs, prev, prev))
-                quitf("Out of memory for add_range");
+            MemProtect(add_range(cs, prev, prev));
         } else if (state == 2)
             tfatal("incomplete cset range");
         *cc = ' ';

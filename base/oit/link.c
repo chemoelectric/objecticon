@@ -10,6 +10,7 @@
 #include "resolve.h"
 #include "lcode.h"
 #include "ltree.h"
+#include "optimize.h"
 
 #include "../h/header.h"
 
@@ -125,10 +126,13 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
     build_fieldtable();
     resolve_native_methods();
 
+    loadtrees();
+
+    if (Olevel > 0)
+        optimize();
+
     if (verbose > 3)
         dumpstate();
-
-    loadtrees();
 
     /* Phase III: generate code. */
     generate_code();
@@ -312,6 +316,17 @@ static char *m_flag2str(int flag)
     return buff;
 }
 
+static char *const_flag2str(int flag)
+{
+    switch (flag) {
+        case NOT_SEEN: return "NOT_SEEN";
+        case SET_NULL: return "SET_NULL";
+        case SET_CONST: return "SET_CONST";
+        case OTHER: return "OTHER";
+        default: return "?";
+    }
+}
+
 void dumpstate()
 {
     struct lfile *lf;
@@ -403,6 +418,9 @@ void dumpstate()
             fprintf(stderr, "\tDefined fields:\n");
             for (me = cl->fields; me; me = me->next) {
                 fprintf(stderr, "\t\t%s %s\n", me->name, m_flag2str(me->flag));
+                if (me->flag == (M_Public | M_Static | M_Const)) {
+                    fprintf(stderr, "\t\t\tconst_flag=%s\n", const_flag2str(me->const_flag));
+                }
                 if (me->func) {
                     fprintf(stderr, "\t\t\tMethod numargs=%d nstatics=%d\n", me->func->nargs,
                         me->func->nstatics);

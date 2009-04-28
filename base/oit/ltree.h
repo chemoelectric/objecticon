@@ -73,11 +73,40 @@ struct lnode_local {
     struct lentry *local;
 };
 
-struct lnode_con {
+struct lnode_const {
     LNODE_SUB
     struct centry *con;
 };
 
 void loadtrees();
+
+/*
+ * Allocation funcs.
+ */
+struct lnode *lnode_0(int op, struct loc *pos);
+struct lnode_1 *lnode_1(int op, struct loc *pos, struct lnode *c);
+struct lnode_2 *lnode_2(int op, struct loc *pos, struct lnode *c1, struct lnode *c2);
+struct lnode_3 *lnode_3(int op, struct loc *pos, struct lnode *c1, struct lnode *c2, struct lnode *c3);
+struct lnode_n *lnode_n(int op, struct loc *pos, int x);
+struct lnode_field *lnode_field(struct loc *loc, struct lnode *c, char *fname);
+struct lnode_invoke *lnode_invoke(struct loc *loc, struct lnode *expr, int x);
+struct lnode_apply *lnode_apply(struct loc *loc, struct lnode *expr, struct lnode *args);
+struct lnode_keyword *lnode_keyword(struct loc *loc, int num);
+struct lnode_local *lnode_local(struct loc *loc, struct lentry *local);
+struct lnode_const *lnode_const(struct loc *loc, struct centry *con);
+struct lnode_global *lnode_global(struct loc *loc, struct gentry *global);
+struct lnode_case *lnode_case(int op, struct loc *loc, struct lnode *expr, int x);
+
+/*
+ * Visitor funcs.
+ */
+typedef int (*visitf)(struct lnode *n);
+extern struct lfunction *curr_vfunc;
+void visitfunc_pre(struct lfunction *f, visitf v);
+void visitfunc_post(struct lfunction *f, visitf v);
+void visit_pre(visitf v);
+void visit_post(visitf v);
+
+void replace_node(struct lnode *old, struct lnode *new);
 
 #endif

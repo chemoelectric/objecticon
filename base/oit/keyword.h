@@ -4,10 +4,6 @@
  * Created mechanically by mkkwd.icn -- DO NOT EDIT.
  */
 
-#ifdef errno
-#undef errno
-#endif
-
 #define K_ASCII        1
 #define K_CLOCK        2
 #define K_CSET         3

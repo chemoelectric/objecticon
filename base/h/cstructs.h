@@ -36,6 +36,7 @@ struct str_buf {
       new_sbuf(&(sbuf));\
    *((sbuf).endimage)++ = (c); } while (0)
 
+#define CurrLen(sbuf) ((sbuf).endimage - (sbuf).strtimage)
 
 /*
  * minimum number of unsigned ints needed to hold the bits of a cset - only

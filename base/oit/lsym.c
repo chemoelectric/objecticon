@@ -36,6 +36,7 @@ struct gentry *putglobal(char *name, int flag, struct lfile *lf, struct loc *pos
     p->name = name;
     p->pos = *pos;
     p->defined = lf;
+    p->pure = 1;
     p->g_flag = flag | F_Global;
     return p;
 }
@@ -52,7 +53,7 @@ struct gentry *glocate(char *name)
     return p;
 }
 
-void add_local(struct lfunction *func, char *name, int flags, struct loc *pos)
+struct lentry *add_local(struct lfunction *func, char *name, int flags, struct loc *pos)
 {
     struct lentry *lp = Alloc(struct lentry);
     if (func->local_last) {
@@ -63,9 +64,10 @@ void add_local(struct lfunction *func, char *name, int flags, struct loc *pos)
     lp->name = name;
     lp->pos = *pos;
     lp->l_flag = flags;
+    return lp;
 }
 
-void add_constant(struct lfunction *func, int flags, char *data, int len)
+struct centry *add_constant(struct lfunction *func, int flags, char *data, int len)
 {
     struct centry *p = Alloc(struct centry);
     p->c_flag = flags;
@@ -77,6 +79,7 @@ void add_constant(struct lfunction *func, int flags, char *data, int len)
         func->constant_last = p;
     } else
         func->constants = func->constant_last = p;
+    return p;
 }
 
 struct fentry *flocate(char *name)
@@ -88,36 +91,25 @@ struct fentry *flocate(char *name)
     return fp;
 }
 
-/*
- * blocate - search for a function. The search is linear to make
- *  it easier to add/delete functions. If found, returns index+1 for entry.
- */
-
-/*
- * Lookup a method, given in the form class:method.  Returns 0 if not
- * found.
- */
-struct lclass_field *lookup_method(char *class, char *method)
+struct lclass_field *lookup_field(struct lclass *class, char *fname)
 {
-    struct gentry *gl;
-    struct lclass *cl;
-    struct lclass_field *cf;
-    int i;
-
-    /* Lookup the class in the global table. */
-    gl = glocate(class);
-    if (!gl)
-        return 0;
-    cl = gl->class;
-    if (!cl)
-        return 0;
-    /* Lookup the method in the class's method table */
-    i = hasher(method, cl->field_hash);
-    cf = cl->field_hash[i];
-    while (cf && cf->name != method)
+    int i = hasher(fname, class->field_hash);
+    struct lclass_field *cf = class->field_hash[i];
+    while (cf && cf->name != fname)
         cf = cf->b_next;
-    /* Check it's a method and not a variable */
-    if (!cf || !cf->func)
-        return 0;
     return cf;
 }
+
+struct lclass_field *lookup_implemented_field(struct lclass *class, char *fname)
+{
+    int i = hasher(fname, class->implemented_field_hash);
+    struct lclass_field_ref *cf = class->implemented_field_hash[i];
+    while (cf && cf->field->name != fname)
+        cf = cf->b_next;
+    if (cf)
+        return cf->field;
+    else
+        return 0;
+}
+
+

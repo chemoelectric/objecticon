@@ -334,10 +334,7 @@ int cnv_str_or_ucs(dptr s, dptr d)
         return 1;
        }
      cset: {
-        if (cnv_str(s, d))
-            return 1;
-        else
-            return cnv_ucs(s, d);
+        return cnv_str(s, d) || cnv_ucs(s, d);
       }
      default: {
         return cnv_str(s, d);

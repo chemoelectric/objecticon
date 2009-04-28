@@ -353,7 +353,7 @@ void generate_code()
      * This ensures empty strings point to the start of the string region,
      * which is a bit tidier than pointing to some arbitrary offset.
      */
-    inst_c_strconst(intern(""));
+    inst_c_strconst(empty_string);
 
     gencode();
 
@@ -1134,45 +1134,43 @@ static void treecode(struct lnode *n)
             break;
         }
 
-        case Uop_Int: {
-            struct lnode_con *x = (struct lnode_con *)n;
-            word ival;
-            memcpy(&ival, x->con->data, sizeof(word));
-            lemitn(Op_Int, ival);
-            break;
-        }
-
-        case Uop_Lrgint: {
-            struct lnode_con *x = (struct lnode_con *)n;
-            struct strconst *sp = inst_strconst(x->con->data, x->con->length);
-            lemit(Op_Pnull);
-            lemitin(Op_Str, sp->offset, sp->len);
-            lemit(Op_Number);
-            break;
-        }
-
-        case Uop_Ucs: {
-            struct lnode_con *x = (struct lnode_con *)n;
-            lemitr(Op_Ucs, x->con->pc);
-            break;
-        }
-
-        case Uop_Cset: {
-            struct lnode_con *x = (struct lnode_con *)n;
-            lemitr(Op_Cset, x->con->pc);
-            break;
-        }
-
-        case Uop_Real: {
-            struct lnode_con *x = (struct lnode_con *)n;
-            lemitr(Op_Real, x->con->pc);
-            break;
-        }
-
-        case Uop_Str: {
-            struct lnode_con *x = (struct lnode_con *)n;
-            struct strconst *sp = inst_strconst(x->con->data, x->con->length);
-            lemitin(Op_Str, sp->offset, sp->len);
+        case Uop_Const: {
+            struct lnode_const *x = (struct lnode_const *)n;
+            switch (x->con->c_flag) {
+                case F_IntLit: {
+                    word ival;
+                    memcpy(&ival, x->con->data, sizeof(word));
+                    lemitn(Op_Int, ival);
+                    break;
+                }
+                case F_RealLit: {
+                    lemitr(Op_Real, x->con->pc);
+                    break;
+                }
+                case F_StrLit: {
+                    struct strconst *sp = inst_strconst(x->con->data, x->con->length);
+                    lemitin(Op_Str, sp->offset, sp->len);
+                    break;
+                }
+                case F_CsetLit: {
+                    lemitr(Op_Cset, x->con->pc);
+                    break;
+                }
+                case F_UcsLit: {
+                    lemitr(Op_Ucs, x->con->pc);
+                    break;
+                }
+                case F_LrgintLit: {
+                    struct strconst *sp = inst_strconst(x->con->data, x->con->length);
+                    lemit(Op_Pnull);
+                    lemitin(Op_Str, sp->offset, sp->len);
+                    lemit(Op_Number);
+                    break;
+                }
+                default: {
+                    quitf("Unknown constant flag %d", x->con->c_flag);
+                }
+            }
             break;
         }
 

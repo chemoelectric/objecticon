@@ -317,9 +317,13 @@ static int class_access(dptr cargp, struct inline_field_cache *ic)
     dp = cf->field_descriptor;
     ac = check_access(cf, 0);
 
-    if (ac == Succeeded && 
+    if (ac == Succeeded &&
         !(cf->flags & M_Method) &&        /* Don't return a ref to a static method */
-        (!(cf->flags & M_Const) || class->init_state == Initializing))
+        (!(cf->flags & M_Const) ||
+              (class->init_state == Initializing &&
+               ic &&                      /* No Class.get(..) := ... */
+               class->init_field &&       /* .. and must be in init() method */
+               CallerProc == &BlkLoc(*class->init_field->field_descriptor)->proc)))
     {
         Arg0.dword = D_Var;
         VarLoc(Arg0) = dp;

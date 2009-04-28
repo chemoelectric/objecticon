@@ -53,7 +53,5 @@ procedure wopen(fname,comment)
    write(f)
    write("  writing ", fname)
 
-   write(f, "#ifdef errno\n#undef errno\n#endif\n")
-
    return f
 end

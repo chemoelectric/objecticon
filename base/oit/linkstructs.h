@@ -32,6 +32,7 @@ struct gentry {                 /* global table entry */
     struct loc pos;                   /* source line number */
     word g_flag;                        /*   variable flags */
     int g_index;                /*   "index" in global table */
+    int pure;                   /* flag inidicating whether global acts as a constant */
     struct lfile *defined;      /* The file this global was defined in (except for F_Builtin) */
     struct lclass *class;       /* pointer to class object for a class */ 
     struct lfunction *func;     /* pointer to function object for a proc */
@@ -64,6 +65,7 @@ struct centry {                 /* constant table entry */
     char *data;                 /*   raw data read from ufile */
     int length;                 /*   length of raw data */
     word pc;                    /*   position in icode of block, not used for string/integer */
+    int ref;                    /*   referenced flag */
     struct centry *next,        /* Next in lfunctions's linked list */
                   *b_next;      /* Next in hash bucket, used by code generation */
 };
@@ -80,6 +82,8 @@ struct lclass_super {
     struct lclass_super *b_next, *next;
 };
 
+enum const_val_flag { NOT_SEEN = 0, SET_NULL, SET_CONST, OTHER };
+
 struct lclass_field {
     char *name;
     struct loc pos;                      /* Source line number */
@@ -87,6 +91,8 @@ struct lclass_field {
     int dpc;                             /* Address of descriptor, if a static or method */
     int ipc;                             /* Address of info block */
     struct fentry *ftab_entry;           /* Field table entry (gives field number) */
+    int const_flag;                      /* Optimisation - constant flag */
+    struct centry *const_val;            /* Optimisation - constant value */
     struct lclass *class;                /* Pointer back to owning class */
     struct lclass_field *b_next, *next;  /* Next and hash links */
     struct lfunction *func;              /* If it's a method */

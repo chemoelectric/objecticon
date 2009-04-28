@@ -418,10 +418,10 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
       list: {
          C_integer t;
 
-         i = cvpos((long)i, (long)BlkLoc(dx)->list.size);
+         i = cvpos(i, BlkLoc(dx)->list.size);
          if (i == CvtFail)
             fail;
-         j = cvpos((long)j, (long)BlkLoc(dx)->list.size);
+         j = cvpos(j, BlkLoc(dx)->list.size);
          if (j == CvtFail)
             fail;
          if (i > j) {
@@ -439,10 +439,10 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
          if (is:variable(x))
                use_trap = 1;
 
-         i = cvpos((long)i, BlkLoc(dx)->ucs.length);
+         i = cvpos(i, BlkLoc(dx)->ucs.length);
          if (i == CvtFail)
              fail;
-         j = cvpos((long)j, BlkLoc(dx)->ucs.length);
+         j = cvpos(j, BlkLoc(dx)->ucs.length);
          if (j == CvtFail)
              fail;
          if (i > j) { 			/* convert section to substring */
@@ -464,10 +464,10 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
          C_integer t;
          int k, last;
 
-         i = cvpos((long)i, BlkLoc(dx)->cset.size);
+         i = cvpos(i, BlkLoc(dx)->cset.size);
          if (i == CvtFail)
              fail;
-         j = cvpos((long)j, BlkLoc(dx)->cset.size);
+         j = cvpos(j, BlkLoc(dx)->cset.size);
          if (j == CvtFail)
              fail;
          if (i > j) { 			/* convert section to substring */
@@ -503,10 +503,10 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
          else if (!cnv:string(dx,dx))
              runerr(131, dx);
 
-         i = cvpos((long)i, (long)StrLen(dx));
+         i = cvpos(i, StrLen(dx));
          if (i == CvtFail)
             fail;
-         j = cvpos((long)j, (long)StrLen(dx));
+         j = cvpos(j, StrLen(dx));
          if (j == CvtFail)
             fail;
          if (i > j) { 			/* convert section to substring */

@@ -176,17 +176,14 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Real        192
 #define Uop_Global      193
 #define Uop_Local       194
-#define Uop_Str         195
 #define Uop_Var         196
-#define Uop_Ucs         197
-#define Uop_Cset        198
-#define Uop_Int         199
 #define Uop_Field       200
+#define Uop_Const       201
 #define Uop_Declend	202
 #define Uop_End		203
 #define Uop_Link	204
 #define Uop_Version	205
-#define Uop_Con		206
+#define Uop_Data	206
 #define Uop_Filen	207
 #define Uop_Package     208
 #define Uop_Import      209
@@ -203,7 +200,6 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Class       221
 #define Uop_Super       222
 #define Uop_Proc        223
-#define Uop_Lrgint      225
 #define Uop_Method      226
 #define Uop_Empty       228
 #define Uop_Slist       229

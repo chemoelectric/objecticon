@@ -1627,7 +1627,7 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len)
 void cset_to_str(struct b_cset *b, word pos, word len, dptr res)
 {
     int i;
-    word j, from, to, out_len = 0;
+    word j, from, to, out_len;
     static char c[256];
 
     if (len == 0) {
