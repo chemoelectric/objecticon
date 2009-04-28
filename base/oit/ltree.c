@@ -899,7 +899,12 @@ void visit_post(visitf v)
 void replace_node(struct lnode *old, struct lnode *new)
 {
     struct lnode *n = old->parent;
-    /*printf("replace %s at %s:%d\n",ucode_op_table[old->op].name,old->loc.file,old->loc.line);*/
+    if (verbose > 4) {
+        fprintf(stderr, "Replacing node %s with %s at %s:%d\n",
+                ucode_op_table[old->op].name,
+                ucode_op_table[new->op].name,
+                old->loc.file,old->loc.line);
+    }
     if (!n) {
         if (curr_vfunc->initial == old)
             curr_vfunc->initial = new;
