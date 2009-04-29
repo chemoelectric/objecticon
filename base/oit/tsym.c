@@ -380,10 +380,10 @@ static void nodegen(nodeptr t)
 
         case N_Clist: {
             /* Don't traverse the default clause as this is done at the end by N_Case. */
-            if (TType(Tree1(t)) != N_Cdef)
-                nodegen(Tree1(t));
             if (TType(Tree0(t)) != N_Cdef)
                 nodegen(Tree0(t));
+            if (TType(Tree1(t)) != N_Cdef)
+                nodegen(Tree1(t));
             break;
         }
 
