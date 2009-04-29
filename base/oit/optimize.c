@@ -31,6 +31,7 @@ struct literal {
 static word cvpos(long pos, long len);
 static int changes(struct lnode *n);
 static int lexcmp(struct literal *x, struct literal *y);
+static int equiv(struct literal *x, struct literal *y);
 
 static int cnv_ucs(struct literal *s);
 static int cnv_cset(struct literal *s);
@@ -81,9 +82,9 @@ static void fold_mod(struct lnode *n);
 static void fold_mult(struct lnode *n);
 static void fold_minus(struct lnode *n);
 static void fold_plus(struct lnode *n);
+static void fold_eqv(struct lnode *n);
+static void fold_neqv(struct lnode *n);
 
-static int get_eword(struct lnode *n, word *);
-static int get_word(struct lnode *n, word *);
 static int over_flow;
 static word add(word a, word b);
 static word sub(word a, word b);
@@ -117,6 +118,16 @@ static int fold_consts(struct lnode *n)
 
         case Uop_Nonnull: {
             fold_nonnull(n);
+            break;
+        }
+
+        case Uop_Eqv: {
+            fold_eqv(n);
+            break;
+        }
+
+        case Uop_Neqv: {
+            fold_neqv(n);
             break;
         }
 
@@ -548,31 +559,6 @@ void optimize()
     visit_post(tidy_consts);
 }
 
-static int get_eword(struct lnode *n, word *w)
-{
-    struct literal t;
-    if (!get_literal(n, &t))
-        return 0;
-    if (!cnv_eint(&t)) {
-        free_literal(&t);
-        return 0;
-    }
-    *w = t.u.i;
-    return 1;
-}
-
-static int get_word(struct lnode *n, word *w)
-{
-    struct literal t;
-    if (!get_literal(n, &t))
-        return 0;
-    if (!cnv_int(&t)) {
-        free_literal(&t);
-        return 0;
-    }
-    *w = t.u.i;
-    return 1;
-}
 
 /*
  * These are copied from rmisc.r
@@ -1016,6 +1002,11 @@ static void fold_size(struct lnode *n)
     int len = -1;
     if (!get_literal(x->child, &l))
         return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
     switch (l.type) {
         case STRING: {
             len = l.u.str.len;
@@ -1051,6 +1042,8 @@ static int get_literal_cset(struct lnode *n, struct literal *l)
 {
     if (!get_literal(n, l))
         return 0;
+    if (l->type == FAIL)
+        return 1;
     if (!cnv_cset(l)) {
         free_literal(l);
         return 0;
@@ -1062,6 +1055,8 @@ static int get_literal_string_or_ucs(struct lnode *n, struct literal *l)
 {
     if (!get_literal(n, l))
         return 0;
+    if (l->type == FAIL)
+        return 1;
     if (!cnv_string_or_ucs(l)) {
         free_literal(l);
         return 0;
@@ -1079,6 +1074,13 @@ static void fold_cat(struct lnode *n)
         return;
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
 
@@ -1117,6 +1119,12 @@ static void fold_compl(struct lnode *n)
     if (!get_literal_cset(x->child, &l))
         return;
 
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+
     rs = rangeset_compl(l.u.rs);
     len = rs->n_ranges * sizeof(struct range);
     replace_node(n, (struct lnode*)
@@ -1140,6 +1148,12 @@ static void fold_union(struct lnode *n)
         return;
     if (!get_literal_cset(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
 
@@ -1169,6 +1183,12 @@ static void fold_inter(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
 
     r3 = rangeset_inter(l1.u.rs, l2.u.rs);
     len = r3->n_ranges * sizeof(struct range);
@@ -1196,6 +1216,12 @@ static void fold_diff(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
 
     r3 = rangeset_diff(l1.u.rs, l2.u.rs);
     len = r3->n_ranges * sizeof(struct range);
@@ -1213,11 +1239,24 @@ static void fold_diff(struct lnode *n)
 static void fold_neg(struct lnode *n)
 {
     struct lnode_1 *x = (struct lnode_1 *)n;
-    word w, w2;
-    if (get_eword(x->child, &w)) {
-        w2 = neg(w);
-        if (over_flow)
-            return;
+    word w2;
+    struct literal l;
+    if (!get_literal(x->child, &l))
+        return;
+
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+
+    if (!cnv_eint(&l)) {
+        free_literal(&l);
+        return;
+    }
+
+    w2 = neg(l.u.i);
+    if (!over_flow) {
         replace_node(n, (struct lnode*)
                      lnode_const(&n->loc,
                                  add_constant(curr_vfunc, 
@@ -1337,6 +1376,12 @@ static void fold_lexeq(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
     if (l1.type == UCS || l2.type == UCS) {
         if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
@@ -1366,6 +1411,12 @@ static void fold_lexne(struct lnode *n)
         return;
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
     if (l1.type == UCS || l2.type == UCS) {
@@ -1399,6 +1450,12 @@ static void fold_lexge(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
     if (l1.type == UCS || l2.type == UCS) {
         if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
@@ -1428,6 +1485,12 @@ static void fold_lexgt(struct lnode *n)
         return;
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
     if (l1.type == UCS || l2.type == UCS) {
@@ -1461,6 +1524,12 @@ static void fold_lexle(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
     if (l1.type == UCS || l2.type == UCS) {
         if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
@@ -1492,6 +1561,12 @@ static void fold_lexlt(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
     if (l1.type == UCS || l2.type == UCS) {
         if (!cnv_ucs(&l1) || !cnv_ucs(&l2)) {
             free_literal(&l1);
@@ -1521,6 +1596,12 @@ static void fold_numeq(struct lnode *n)
         return;
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
@@ -1558,6 +1639,12 @@ static void fold_numge(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
         if (l1.u.i >= l2.u.i) {
             replace_node(n, (struct lnode*)
@@ -1591,6 +1678,12 @@ static void fold_numgt(struct lnode *n)
         return;
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
@@ -1628,6 +1721,12 @@ static void fold_numle(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
         if (l1.u.i <= l2.u.i) {
             replace_node(n, (struct lnode*)
@@ -1661,6 +1760,12 @@ static void fold_numlt(struct lnode *n)
         return;
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
@@ -1698,6 +1803,12 @@ static void fold_numne(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
         if (l1.u.i != l2.u.i) {
             replace_node(n, (struct lnode*)
@@ -1731,6 +1842,12 @@ static void fold_div(struct lnode *n)
         return;
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
@@ -1767,6 +1884,12 @@ static void fold_mult(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
         word w = mul(l1.u.i, l2.u.i);
         if (!over_flow)
@@ -1797,6 +1920,12 @@ static void fold_minus(struct lnode *n)
         return;
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
@@ -1831,6 +1960,12 @@ static void fold_plus(struct lnode *n)
         free_literal(&l1);
         return;
     }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
         word w = add(l1.u.i, l2.u.i);
         if (!over_flow)
@@ -1861,6 +1996,12 @@ static void fold_mod(struct lnode *n)
         return;
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
     if (cnv_eint(&l1) && cnv_eint(&l2)) {
@@ -1917,22 +2058,37 @@ static void fold_field(struct lnode *n)
 static void fold_subsc(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
-    struct literal l;
-    word w, i;
+    struct literal l1, l2;
+    word i;
 
-    if (!get_word(x->child2, &w))
+    if (!get_literal(x->child1, &l1))
         return;
+    if (!get_literal(x->child2, &l2)) {
+        free_literal(&l1);
+        return;
+    }
 
-    if (!get_literal(x->child1, &l))
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
-    switch (l.type) {
+    }
+
+    if (!cnv_int(&l2)) {
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
+
+    switch (l1.type) {
         case UCS: {
-            int len = ucs_length(l.u.str.s, l.u.str.len);
-            char *p = l.u.str.s, *t;
-            i = cvpos(w, len);
+            int len = ucs_length(l1.u.str.s, l1.u.str.len);
+            char *p = l1.u.str.s, *t;
+            i = cvpos(l2.u.i, len);
             if (i == CvtFail || i > len)
                 break;
-            p = l.u.str.s;
+            p = l1.u.str.s;
             while (i-- > 1) 
                 utf8_iter(&p);
             t = p;
@@ -1946,13 +2102,13 @@ static void fold_subsc(struct lnode *n)
             break;
         }
         case CSET: {
-            int k, ch, count, len = cset_size(l.u.rs);
-            i = cvpos(w, len);
+            int k, ch, count, len = cset_size(l1.u.rs);
+            i = cvpos(l2.u.i, len);
             if (i == CvtFail || i > len)
                 break;
 
-            k = cset_range_of_pos(l.u.rs, i, &count);
-            ch = l.u.rs->range[k].from + i - 1 - count;
+            k = cset_range_of_pos(l1.u.rs, i, &count);
+            ch = l1.u.rs->range[k].from + i - 1 - count;
             if (ch < 256) {
                 char t = ch;
                 replace_node(n, (struct lnode*)
@@ -1974,13 +2130,13 @@ static void fold_subsc(struct lnode *n)
             break;
         }
         default: {
-            if (!cnv_string(&l))
+            if (!cnv_string(&l1))
                 break;
             char t;
-            i = cvpos(w, l.u.str.len);
-            if (i == CvtFail || i > l.u.str.len)
+            i = cvpos(l2.u.i, l1.u.str.len);
+            if (i == CvtFail || i > l1.u.str.len)
                 break;
-            t = l.u.str.s[i - 1];
+            t = l1.u.str.s[i - 1];
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
                                      add_constant(curr_vfunc, 
@@ -1990,30 +2146,55 @@ static void fold_subsc(struct lnode *n)
             break;
         }
     }
-    free_literal(&l);
+    free_literal(&l1);
+    free_literal(&l2);
 }
 
 static void fold_sect(struct lnode *n, int op)
 {
     struct lnode_3 *x = (struct lnode_3 *)n;
     word i, j, t;
-    struct literal l;
+    struct literal l1, l2, l3;
 
-    if (!get_word(x->child2, &i))
+    if (!get_literal(x->child1, &l1))
         return;
-    if (!get_word(x->child3, &j))
+    if (!get_literal(x->child2, &l2)) {
+        free_literal(&l1);
         return;
+    }
+    if (!get_literal(x->child3, &l3)) {
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
+
+    if (l1.type == FAIL || l2.type == FAIL || l3.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        free_literal(&l3);
+        return;
+    }
+
+    if (!cnv_int(&l2) || !cnv_int(&l3)) {
+        free_literal(&l1);
+        free_literal(&l2);
+        free_literal(&l3);
+        return;
+    }
+
+    i = l2.u.i;
+    j = l3.u.i;
+
     if (op == Uop_Sectm)
         j -= i;
     else if (op == Uop_Sectp)
         j += i;
 
-    if (!get_literal(x->child1, &l))
-        return;
-    switch (l.type) {
+    switch (l1.type) {
         case UCS: {
-            int len = ucs_length(l.u.str.s, l.u.str.len);
-            char *start = l.u.str.s, *end;
+            int len = ucs_length(l1.u.str.s, l1.u.str.len);
+            char *start = l1.u.str.s, *end;
             i = cvpos(i, len);
             if (i == CvtFail)
                 break;
@@ -2043,7 +2224,7 @@ static void fold_sect(struct lnode *n, int op)
             break;
         }
         case CSET: {
-            int k, last, ch, count, len = cset_size(l.u.rs), type;
+            int k, last, ch, count, len = cset_size(l1.u.rs), type;
             word from, to, m, out_len;
             i = cvpos(i, len);
             if (i == CvtFail)
@@ -2071,18 +2252,18 @@ static void fold_sect(struct lnode *n, int op)
 
             /* Search for the last char, see if it's < 256 */
             last = i + j - 1;
-            k = cset_range_of_pos(l.u.rs, last, &count);
-            ch = l.u.rs->range[k].from + last - 1 - count;
+            k = cset_range_of_pos(l1.u.rs, last, &count);
+            ch = l1.u.rs->range[k].from + last - 1 - count;
 
-            k = cset_range_of_pos(l.u.rs, i, &count); /* The first row of interest */
+            k = cset_range_of_pos(l1.u.rs, i, &count); /* The first row of interest */
             --i;
             i -= count;       /* Offset into first range */
             zero_sbuf(&opt_sbuf);
             if (ch < 256) {
                 type = F_StrLit;
-                for (; j > 0 && k < l.u.rs->n_ranges; ++k) {
-                    from = l.u.rs->range[k].from;
-                    to = l.u.rs->range[k].to;
+                for (; j > 0 && k < l1.u.rs->n_ranges; ++k) {
+                    from = l1.u.rs->range[k].from;
+                    to = l1.u.rs->range[k].to;
                     for (m = i + from; j > 0 && m <= to; ++m) {
                         AppChar(opt_sbuf, m);
                         --j;
@@ -2091,9 +2272,9 @@ static void fold_sect(struct lnode *n, int op)
                 }
             } else {
                 type = F_UcsLit;
-                for (; j > 0 && k < l.u.rs->n_ranges; ++k) {
-                    from = l.u.rs->range[k].from;
-                    to = l.u.rs->range[k].to;
+                for (; j > 0 && k < l1.u.rs->n_ranges; ++k) {
+                    from = l1.u.rs->range[k].from;
+                    to = l1.u.rs->range[k].to;
                     for (m = i + from; j > 0 && m <= to; ++m) {
                         char buf[MAX_UTF8_SEQ_LEN];
                         int n = utf8_seq(m, buf);
@@ -2116,13 +2297,13 @@ static void fold_sect(struct lnode *n, int op)
             break;
         }
         default: {
-            if (!cnv_string(&l))
+            if (!cnv_string(&l1))
                 break;
-            i = cvpos(i, l.u.str.len);
+            i = cvpos(i, l1.u.str.len);
             if (i == CvtFail)
                 break;
 
-            j = cvpos(j, l.u.str.len);
+            j = cvpos(j, l1.u.str.len);
             if (j == CvtFail) 
                 break;
 
@@ -2138,12 +2319,67 @@ static void fold_sect(struct lnode *n, int op)
                          lnode_const(&n->loc,
                                      add_constant(curr_vfunc, 
                                                   F_StrLit, 
-                                                  intern_n(l.u.str.s + i - 1, j),
+                                                  intern_n(l1.u.str.s + i - 1, j),
                                                   j)));
             break;
         }
     }
-    free_literal(&l);
+    free_literal(&l1);
+    free_literal(&l2);
+    free_literal(&l3);
+}
+
+static void fold_eqv(struct lnode *n)
+{
+    struct lnode_2 *x = (struct lnode_2 *)n;
+    struct literal l1, l2;
+    if (!get_literal(x->child1, &l1))
+        return;
+    if (!get_literal(x->child2, &l2)) {
+        free_literal(&l1);
+        return;
+    }
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
+
+    if (equiv(&l1, &l2))
+        replace_node(n, (struct lnode*)x->child2);
+    else
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+
+    free_literal(&l1);
+    free_literal(&l2);
+}
+
+static void fold_neqv(struct lnode *n)
+{
+    struct lnode_2 *x = (struct lnode_2 *)n;
+    struct literal l1, l2;
+    if (!get_literal(x->child1, &l1))
+        return;
+    if (!get_literal(x->child2, &l2)) {
+        free_literal(&l1);
+        return;
+    }
+
+    if (l1.type == FAIL || l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
+
+    if (equiv(&l1, &l2))
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    else
+        replace_node(n, (struct lnode*)x->child2);
+
+    free_literal(&l1);
+    free_literal(&l2);
 }
 
 static word cvpos(long pos, long len)
@@ -2366,3 +2602,34 @@ static int lexcmp(struct literal *x, struct literal *y)
         return Less;
 }
 
+static int equiv(struct literal *x, struct literal *y)
+{
+    if (x->type != y->type)
+        return 0;
+    switch (x->type) {
+        case NUL:
+            return 1;
+        case CSET: {
+            int i;
+            if (x->u.rs->n_ranges != y->u.rs->n_ranges)
+                return 0;
+            for (i = 0; i < x->u.rs->n_ranges; ++i)
+                if (x->u.rs->range[i].from != y->u.rs->range[i].from ||
+                    x->u.rs->range[i].to != y->u.rs->range[i].to)
+                    return 0;
+            return 1;
+        }
+        case UCS:
+        case STRING: {
+            if (x->u.str.len != y->u.str.len)
+                return 0;
+            return memcmp(x->u.str.s, y->u.str.s, x->u.str.len) == 0;
+        }
+        case INT:
+            return x->u.i == y->u.i;
+        case REAL:
+            return x->u.d == y->u.d;
+    }
+    quit("Bad type to equiv()");
+    return 0;
+}
