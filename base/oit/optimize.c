@@ -46,6 +46,8 @@ static int cnv_real(struct literal *s);
 static int get_literal(struct lnode *n, struct literal *res);
 static void free_literal(struct literal *l);
 
+static void fold_value(struct lnode *n);
+static void fold_number(struct lnode *n);
 static void fold_field(struct lnode *n);
 static void fold_null(struct lnode *n);
 static void fold_nonnull(struct lnode *n);
@@ -108,6 +110,16 @@ static int fold_consts(struct lnode *n)
     switch (n->op) {
         case Uop_Field: {
             fold_field(n);
+            break;
+        }
+
+        case Uop_Value: {
+            fold_value(n);
+            break;
+        }
+
+        case Uop_Number: {
+            fold_number(n);
             break;
         }
 
@@ -1239,7 +1251,6 @@ static void fold_diff(struct lnode *n)
 static void fold_neg(struct lnode *n)
 {
     struct lnode_1 *x = (struct lnode_1 *)n;
-    word w2;
     struct literal l;
     if (!get_literal(x->child, &l))
         return;
@@ -1250,20 +1261,27 @@ static void fold_neg(struct lnode *n)
         return;
     }
 
-    if (!cnv_eint(&l)) {
-        free_literal(&l);
-        return;
+    if (cnv_eint(&l)) {
+        word w2 = neg(l.u.i);
+        if (!over_flow) {
+            replace_node(n, (struct lnode*)
+                         lnode_const(&x->child->loc,
+                                     add_constant(curr_vfunc, 
+                                                  F_IntLit, 
+                                                  intern_n((char *)&w2, sizeof(word)), 
+                                                  sizeof(word))));
+        }
+    } else if (cnv_real(&l)) {
+        double d2 = -l.u.d;
+        replace_node(n, (struct lnode*)
+                     lnode_const(&x->child->loc,
+                                 add_constant(curr_vfunc, 
+                                              F_RealLit, 
+                                              intern_n((char *)&d2, sizeof(double)), 
+                                              sizeof(double))));
     }
 
-    w2 = neg(l.u.i);
-    if (!over_flow) {
-        replace_node(n, (struct lnode*)
-                     lnode_const(&n->loc,
-                                 add_constant(curr_vfunc, 
-                                              F_IntLit, 
-                                              intern_n((char *)&w2, sizeof(word)), 
-                                              sizeof(word))));
-    }
+    free_literal(&l);
 }
 
 static void fold_null(struct lnode *n)
@@ -2016,6 +2034,56 @@ static void fold_mod(struct lnode *n)
     }
     free_literal(&l1);
     free_literal(&l2);
+}
+
+static void fold_value(struct lnode *n)
+{
+    struct lnode_1 *x = (struct lnode_1 *)n;
+    struct literal l;
+    if (!get_literal(x->child, &l))
+        return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+    replace_node(n, (struct lnode*)x->child);
+    free_literal(&l);
+}
+
+static void fold_number(struct lnode *n)
+{
+    struct lnode_1 *x = (struct lnode_1 *)n;
+    struct literal l;
+    if (!get_literal(x->child, &l))
+        return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+    if (l.type == INT || l.type == REAL) {
+        replace_node(n, (struct lnode*)x->child);
+        free_literal(&l);
+        return;
+    }
+    if (cnv_eint(&l)) {
+        replace_node(n, (struct lnode*)
+                     lnode_const(&x->child->loc,
+                                 add_constant(curr_vfunc, 
+                                              F_IntLit, 
+                                              intern_n((char *)&l.u.i, sizeof(word)), 
+                                              sizeof(word))));
+    } else if (cnv_real(&l)) {
+        replace_node(n, (struct lnode*)
+                     lnode_const(&x->child->loc,
+                                 add_constant(curr_vfunc, 
+                                              F_RealLit, 
+                                              intern_n((char *)&l.u.d, sizeof(double)), 
+                                              sizeof(double))));
+    }
+
+    free_literal(&l);
 }
 
 static void fold_field(struct lnode *n)
