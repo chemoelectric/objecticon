@@ -46,6 +46,9 @@ static int cnv_real(struct literal *s);
 static int get_literal(struct lnode *n, struct literal *res);
 static void free_literal(struct literal *l);
 
+static void fold_simple1(struct lnode *n);
+static void fold_simple2(struct lnode *n);
+static void fold_simplen(struct lnode *n);
 static void fold_value(struct lnode *n);
 static void fold_number(struct lnode *n);
 static void fold_field(struct lnode *n);
@@ -53,11 +56,11 @@ static void fold_null(struct lnode *n);
 static void fold_nonnull(struct lnode *n);
 static void fold_if(struct lnode *n);
 static void fold_ifelse(struct lnode *n);
-static void fold_while(struct lnode *n);
-static void fold_whiledo(struct lnode *n);
 static void fold_until(struct lnode *n);
 static void fold_untildo(struct lnode *n);
 static void fold_not(struct lnode *n);
+static void fold_alt(struct lnode *n);
+static void fold_conj(struct lnode *n);
 static void fold_lexeq(struct lnode *n);
 static void fold_lexge(struct lnode *n);
 static void fold_lexgt(struct lnode *n);
@@ -84,8 +87,14 @@ static void fold_mod(struct lnode *n);
 static void fold_mult(struct lnode *n);
 static void fold_minus(struct lnode *n);
 static void fold_plus(struct lnode *n);
+static void fold_power(struct lnode *n);
 static void fold_eqv(struct lnode *n);
 static void fold_neqv(struct lnode *n);
+static void fold_case(struct lnode *n);
+static void fold_to(struct lnode *n);
+static void fold_toby(struct lnode *n);
+static void fold_invoke(struct lnode *n);
+static void fold_apply(struct lnode *n);
 
 static int over_flow;
 static word add(word a, word b);
@@ -108,6 +117,16 @@ static struct str_buf opt_sbuf;
 static int fold_consts(struct lnode *n)
 {
     switch (n->op) {
+        case Uop_To: {
+            fold_to(n);
+            break;
+        }
+
+        case Uop_Toby: {
+            fold_toby(n);
+            break;
+        }
+
         case Uop_Field: {
             fold_field(n);
             break;
@@ -132,6 +151,42 @@ static int fold_consts(struct lnode *n)
             fold_nonnull(n);
             break;
         }
+        case Uop_Case:
+        case Uop_Casedef: {
+            fold_case(n);
+            break;
+        }
+
+        case Uop_Mutual:
+        case Uop_List: {
+            fold_simplen(n);
+            break;
+        }
+
+        case Uop_Invoke: {
+            fold_invoke(n);
+            break;
+        }
+
+        case Uop_Apply: {
+            fold_apply(n);
+            break;
+        }
+
+        case Uop_Power: {
+            fold_power(n);
+            break;
+        }
+
+        case Uop_Bactivate: 
+        case Uop_Lconcat:
+        case Uop_Everydo:
+        case Uop_Whiledo:
+        case Uop_Limit:
+        case Uop_Scan: {
+            fold_simple2(n);
+            break;
+        }
 
         case Uop_Eqv: {
             fold_eqv(n);
@@ -153,18 +208,6 @@ static int fold_consts(struct lnode *n)
             break;
         }
 
-        case Uop_Every:
-        case Uop_While: {
-            fold_while(n);
-            break;
-        }
-
-        case Uop_Everydo:
-        case Uop_Whiledo: {
-            fold_whiledo(n);
-            break;
-        }
-
         case Uop_Until: {
             fold_until(n);
             break;
@@ -177,6 +220,27 @@ static int fold_consts(struct lnode *n)
 
         case Uop_Not: {
             fold_not(n);
+            break;
+        }
+
+        case Uop_Alt: {
+            fold_alt(n);
+            break;
+        }
+
+        case Uop_Activate:
+        case Uop_Every:
+        case Uop_While:
+        case Uop_Bang:
+        case Uop_Random:
+        case Uop_Tabmat:
+        case Uop_Rptalt: {
+            fold_simple1(n);
+            break;
+        }
+
+        case Uop_Conj: {
+            fold_conj(n);
             break;
         }
 
@@ -1007,6 +1071,146 @@ static struct rangeset *rangeset_compl(struct rangeset *x)
     return rs;
 }
 
+static void fold_to(struct lnode *n)
+{
+    struct lnode_2 *x = (struct lnode_2 *)n;
+    struct literal l;
+    if (!get_literal(x->child1, &l))
+        return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+    free_literal(&l);
+    if (!get_literal(x->child2, &l))
+        return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+    free_literal(&l);
+}
+
+static void fold_toby(struct lnode *n)
+{
+    struct lnode_3 *x = (struct lnode_3 *)n;
+    struct literal l;
+    if (!get_literal(x->child1, &l))
+        return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+    free_literal(&l);
+    if (!get_literal(x->child2, &l))
+        return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+    free_literal(&l);
+    if (!get_literal(x->child3, &l))
+        return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+    free_literal(&l);
+}
+
+static void fold_case(struct lnode *n)
+{
+    struct lnode_case *x = (struct lnode_case *)n;
+    struct literal l;
+    if (!get_literal(x->expr, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
+}
+
+static void fold_simple1(struct lnode *n)
+{
+    struct lnode_1 *x = (struct lnode_1 *)n;
+    struct literal l;
+    if (!get_literal(x->child, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
+}
+
+static void fold_simple2(struct lnode *n)
+{
+    struct lnode_2 *x = (struct lnode_2 *)n;
+    struct literal l;
+    if (!get_literal(x->child1, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
+}
+
+static void fold_invoke(struct lnode *n)
+{
+    struct lnode_invoke *x = (struct lnode_invoke *)n;
+    struct literal l;
+    int i;
+    if (!get_literal(x->expr, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
+    for (i = 0; i < x->n; ++i) {
+        if (!get_literal(x->child[i], &l))
+            return;
+        if (l.type == FAIL) {
+            replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+            free_literal(&l);
+            break;
+        }
+        free_literal(&l);
+    }
+}
+
+static void fold_apply(struct lnode *n)
+{
+    struct lnode_apply *x = (struct lnode_apply *)n;
+    struct literal l;
+    if (!get_literal(x->expr, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
+    if (!get_literal(x->args, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
+}
+
+static void fold_simplen(struct lnode *n)
+{
+    struct lnode_n *x = (struct lnode_n *)n;
+    int i;
+    for (i = 0; i < x->n; ++i) {
+        struct literal l;
+        if (!get_literal(x->child[i], &l))
+            return;
+        if (l.type == FAIL) {
+            replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+            free_literal(&l);
+            break;
+        }
+        free_literal(&l);
+    }
+}
+
 static void fold_size(struct lnode *n)
 {
     struct lnode_1 *x = (struct lnode_1 *)n;
@@ -1084,12 +1288,17 @@ static void fold_cat(struct lnode *n)
 
     if (!get_literal_string_or_ucs(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
 
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1158,11 +1367,16 @@ static void fold_union(struct lnode *n)
 
     if (!get_literal_cset(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_cset(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1191,11 +1405,16 @@ static void fold_inter(struct lnode *n)
 
     if (!get_literal_cset(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_cset(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1224,11 +1443,16 @@ static void fold_diff(struct lnode *n)
 
     if (!get_literal_cset(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_cset(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1294,6 +1518,7 @@ static void fold_null(struct lnode *n)
         replace_node(n, x->child);
     else
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
 }
 
 static void fold_nonnull(struct lnode *n)
@@ -1306,6 +1531,7 @@ static void fold_nonnull(struct lnode *n)
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
     else
         replace_node(n, x->child);
+    free_literal(&l);
 }
 
 static void fold_if(struct lnode *n)
@@ -1318,6 +1544,7 @@ static void fold_if(struct lnode *n)
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
     else
         replace_node(n, x->child2);
+    free_literal(&l);
 }
 
 static void fold_ifelse(struct lnode *n)
@@ -1330,26 +1557,7 @@ static void fold_ifelse(struct lnode *n)
         replace_node(n, x->child3);
     else
         replace_node(n, x->child2);
-}
-
-static void fold_while(struct lnode *n)
-{
-    struct lnode_1 *x = (struct lnode_1 *)n;
-    struct literal l;
-    if (!get_literal(x->child, &l))
-        return;
-    if (l.type == FAIL)
-        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
-}
-
-static void fold_whiledo(struct lnode *n)
-{
-    struct lnode_2 *x = (struct lnode_2 *)n;
-    struct literal l;
-    if (!get_literal(x->child1, &l))
-        return;
-    if (l.type == FAIL)
-        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
 }
 
 static void fold_until(struct lnode *n)
@@ -1360,6 +1568,7 @@ static void fold_until(struct lnode *n)
         return;
     if (l.type != FAIL)
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
 }
 
 static void fold_untildo(struct lnode *n)
@@ -1370,6 +1579,7 @@ static void fold_untildo(struct lnode *n)
         return;
     if (l.type != FAIL)
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
 }
 
 static void fold_not(struct lnode *n)
@@ -1382,6 +1592,47 @@ static void fold_not(struct lnode *n)
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_NULL));
     else
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    free_literal(&l);
+}
+
+static void fold_alt(struct lnode *n)
+{
+    struct lnode_2 *x = (struct lnode_2 *)n;
+    struct literal l;
+    if (!get_literal(x->child1, &l))
+        return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode*)x->child2);
+        free_literal(&l);
+        return;
+    }
+    if (!get_literal(x->child2, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode*)x->child1);
+    free_literal(&l);
+}
+
+static void fold_conj(struct lnode *n)
+{
+    struct lnode_2 *x = (struct lnode_2 *)n; 
+    struct literal l;
+    if (!get_literal(x->child1, &l))
+        return;
+    if (l.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l);
+        return;
+    }
+    free_literal(&l);
+    if (!get_literal(x->child2, &l))
+        return;
+    if (l.type == FAIL)
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+    else
+        replace_node(n, (struct lnode*)x->child2);
+
+    free_literal(&l);
 }
 
 static void fold_lexeq(struct lnode *n)
@@ -1390,11 +1641,16 @@ static void fold_lexeq(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal_string_or_ucs(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1427,11 +1683,16 @@ static void fold_lexne(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal_string_or_ucs(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1464,11 +1725,16 @@ static void fold_lexge(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal_string_or_ucs(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1501,11 +1767,16 @@ static void fold_lexgt(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal_string_or_ucs(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1538,11 +1809,16 @@ static void fold_lexle(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal_string_or_ucs(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1575,11 +1851,16 @@ static void fold_lexlt(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal_string_or_ucs(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal_string_or_ucs(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1612,11 +1893,16 @@ static void fold_numeq(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1653,11 +1939,16 @@ static void fold_numge(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1694,11 +1985,16 @@ static void fold_numgt(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1735,11 +2031,16 @@ static void fold_numle(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1776,11 +2077,16 @@ static void fold_numlt(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1817,11 +2123,16 @@ static void fold_numne(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1858,11 +2169,16 @@ static void fold_div(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1898,11 +2214,16 @@ static void fold_mult(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1936,11 +2257,16 @@ static void fold_minus(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -1974,11 +2300,16 @@ static void fold_plus(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -2006,17 +2337,48 @@ static void fold_plus(struct lnode *n)
     free_literal(&l2);
 }
 
+static void fold_power(struct lnode *n)
+{
+    struct lnode_2 *x = (struct lnode_2 *)n;
+    struct literal l1, l2;
+    if (!get_literal(x->child1, &l1))
+        return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
+    if (!get_literal(x->child2, &l2)) {
+        free_literal(&l1);
+        return;
+    }
+    if (l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
+        return;
+    }
+    /* Don't do anything other than check for fail... */
+    free_literal(&l1);
+    free_literal(&l2);
+}
+
 static void fold_mod(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -2131,12 +2493,17 @@ static void fold_subsc(struct lnode *n)
 
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
 
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -2226,8 +2593,19 @@ static void fold_sect(struct lnode *n, int op)
 
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
+        return;
+    }
+    if (l2.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        free_literal(&l2);
         return;
     }
     if (!get_literal(x->child3, &l3)) {
@@ -2235,8 +2613,7 @@ static void fold_sect(struct lnode *n, int op)
         free_literal(&l2);
         return;
     }
-
-    if (l1.type == FAIL || l2.type == FAIL || l3.type == FAIL) {
+    if (l3.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -2403,11 +2780,16 @@ static void fold_eqv(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
@@ -2429,12 +2811,17 @@ static void fold_neqv(struct lnode *n)
     struct literal l1, l2;
     if (!get_literal(x->child1, &l1))
         return;
+    if (l1.type == FAIL) {
+        replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
+        free_literal(&l1);
+        return;
+    }
     if (!get_literal(x->child2, &l2)) {
         free_literal(&l1);
         return;
     }
 
-    if (l1.type == FAIL || l2.type == FAIL) {
+    if (l2.type == FAIL) {
         replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
         free_literal(&l1);
         free_literal(&l2);
