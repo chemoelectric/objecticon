@@ -491,19 +491,20 @@ void startuperr(char *fmt, ...)
  */
 void syserr(char *fmt, ...)
 {
+    word *t_ipc = ipc - 1;
     va_list ap;
     va_start(ap, fmt);
     fprintf(stderr, "System error");
     if (pfp == NULL)
         fprintf(stderr, " in startup code");
     else {
-        dptr fn = findfile(ipc);
+        dptr fn = findfile(t_ipc);
         if (fn) {
             struct descrip t;
             abbr_fname(fn, &t);
-            fprintf(stderr, " at line %ld in %.*s", (long)findline(ipc), (int)StrLen(t), StrLoc(t));
+            fprintf(stderr, " at line %ld in %.*s", (long)findline(t_ipc), (int)StrLen(t), StrLoc(t));
         } else
-            fprintf(stderr, " at line %ld in ?", (long)findline(ipc));
+            fprintf(stderr, " at line %ld in ?", (long)findline(t_ipc));
     }
     fprintf(stderr, "\n");
     vfprintf(stderr, fmt, ap);

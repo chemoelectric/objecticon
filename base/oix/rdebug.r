@@ -711,13 +711,14 @@ static void ttrace()
     }
 	 
     if (ipc != NULL) {
-        dptr fn = findfile(ipc);
+        word *t_ipc = ipc - 1;
+        dptr fn = findfile(t_ipc);
         if (fn) {
             struct descrip t;
             abbr_fname(fn, &t);
-            fprintf(stderr, " from line %d in %.*s", findline(ipc), (int)StrLen(t), StrLoc(t));
+            fprintf(stderr, " from line %d in %.*s", findline(t_ipc), (int)StrLen(t), StrLoc(t));
         } else
-            fprintf(stderr, " from line %d in ?", findline(ipc));
+            fprintf(stderr, " from line %d in ?", findline(t_ipc));
     }
 
     putc('\n', stderr);
