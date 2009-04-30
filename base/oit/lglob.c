@@ -300,6 +300,9 @@ void scanrefs()
         return;
     }
 
+    for (lf = lfiles; lf; lf = lf->next)
+        lf->ref = 0;
+
     /*
      * Set the ref flag for referenced globals, starting with main()
      * and marking references within procedures recursively.

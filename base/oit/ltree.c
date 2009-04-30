@@ -128,12 +128,13 @@ struct lnode_const *lnode_const(struct loc *loc, struct centry *con)
     return n;
 }
 
-struct lnode_global *lnode_global(struct loc *loc, struct gentry *global)
+struct lnode_global *lnode_global(struct loc *loc, struct gentry *global, struct lentry *local)
 {
     struct lnode_global *n = Alloc(struct lnode_global);
     n->op = Uop_Global;
     n->loc = *loc;
     n->global = global;
+    n->local = local;
     return n;
 }
 
@@ -358,8 +359,8 @@ static struct lnode *buildtree()
         }
 
         case Uop_Keyword: {			/* keyword reference */
-            char *s = uin_str();
-            return (struct lnode *)lnode_keyword(&curr_loc, klookup(s));
+            int n = uin_16();
+            return (struct lnode *)lnode_keyword(&curr_loc, n);
         }
 
         case Uop_Case:			/* case expression */
@@ -396,11 +397,11 @@ static struct lnode *buildtree()
                 lp = lp->next;
             flags = lp->l_flag;
             if (flags & F_Global)
-                return (struct lnode *)lnode_global(&curr_loc, lp->l_val.global);
+                return (struct lnode *)lnode_global(&curr_loc, lp->l_val.global, lp);
             else if (flags & F_Field) {
                 struct lnode *y;
                 if (lp->l_val.field->flag & M_Static)  /* Ref to class var, eg Class.CONST */
-                    y = (struct lnode *)lnode_global(&curr_loc, lp->l_val.field->class->global);
+                    y = (struct lnode *)lnode_global(&curr_loc, lp->l_val.field->class->global, 0);
                 else                                   /* inst var, "self" is the 0th argument */
                     y = (struct lnode *)lnode_local(&curr_loc, curr_lfunc->locals);
                 return (struct lnode *)lnode_field(&curr_loc, y, lp->l_val.field->name);
@@ -419,7 +420,13 @@ static struct lnode *buildtree()
 
 static void loadtree_for(struct lfunction *f)
 {
+    struct loc *l;
     curr_lfunc = f;
+    if (f->proc)
+        l = &f->proc->pos;
+    else
+        l = &f->method->pos;
+    curr_lfunc->start = lnode_0(Uop_Start, l);
     curr_lfunc->initial = buildtree();
     curr_lfunc->body = buildtree();
     curr_lfunc->end = buildtree();
@@ -489,6 +496,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
         return;
 
     switch (n->op) {
+        case Uop_Start:
         case Uop_Keyword:
         case Uop_Const: 
         case Uop_Global: 
@@ -669,6 +677,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
 static void visitnode_post(struct lnode *n, visitf v)
 {
     switch (n->op) {
+        case Uop_Start:
         case Uop_Keyword:
         case Uop_Const: 
         case Uop_Global: 
@@ -851,6 +860,7 @@ static void visitnode_post(struct lnode *n, visitf v)
 void visitfunc_pre(struct lfunction *f, visitf v)
 {
     curr_vfunc = f;
+    visitnode_pre(curr_vfunc->start, v);
     visitnode_pre(curr_vfunc->initial, v);
     visitnode_pre(curr_vfunc->body, v);
     visitnode_pre(curr_vfunc->end, v);
@@ -859,6 +869,7 @@ void visitfunc_pre(struct lfunction *f, visitf v)
 void visitfunc_post(struct lfunction *f, visitf v)
 {
     curr_vfunc = f;
+    visitnode_post(curr_vfunc->start, v);
     visitnode_post(curr_vfunc->initial, v);
     visitnode_post(curr_vfunc->body, v);
     visitnode_post(curr_vfunc->end, v);

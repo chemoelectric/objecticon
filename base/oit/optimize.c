@@ -5,6 +5,7 @@
 #include "tsym.h"
 #include "lsym.h"
 #include "lmem.h"
+#include "lglob.h"
 #include "keyword.h"
 
 enum literaltype { NUL, FAIL, CSET, STRING, UCS, INT, REAL };
@@ -379,22 +380,55 @@ static int fold_consts(struct lnode *n)
     return 1;
 }
 
-static int tidy_consts(struct lnode *n)
+/*
+ * Tidy the functions' local and constant lists by removing entries
+ * made redundant by dead code elimination and constant folding.
+ * Unreferenced constants are removed, as are unreferenced global
+ * references in the local list.  scanrefs() can then be called again
+ * to eliminate no-longer needed globals from the global list.
+ */
+static int tidy_lists(struct lnode *n)
 {
     switch (n->op) {
-        case Uop_Const: {
-            struct centry *c = ((struct lnode_const *)n)->con;
-            c->ref = 1;
+        case Uop_Start: {
+            struct centry *c;
+            struct lentry *l;
+            for (c = curr_vfunc->constants; c; c = c->next)
+                c->ref = 0;
+            for (l = curr_vfunc->locals; l; l = l->next)
+                l->ref = 0;
             break;
         }
+
+        case Uop_Global: {
+            struct lnode_global *x = (struct lnode_global *)n;
+            if (x->local)  /* The local ref will be null for a resolved class field */
+                x->local->ref = 1;
+            break;
+        }
+
+        case Uop_Const: {
+            struct lnode_const *x = (struct lnode_const *)n;
+            x->con->ref = 1;
+            break;
+        }
+
         case Uop_End: {
             struct centry **cp, *c;
+            struct lentry **lp, *l;
             cp = &curr_vfunc->constants;
             while ((c = *cp)) {
                 if (c->ref)
                     cp = &c->next;
                 else
                     *cp = c->next;
+            }
+            lp = &curr_vfunc->locals;
+            while ((l = *lp)) {
+                if (l->ref || !(l->l_flag & F_Global))
+                    lp = &l->next;
+                else
+                    *lp = l->next;
             }
             break;
         }
@@ -587,7 +621,6 @@ static int visit_init_field(struct lnode *n)
 
 static int visit_init_method(struct lnode *n)
 {
-    /*printf("visit %s\n",ucode_op_table[n->op].name);*/
     switch (n->op) {
         case Uop_Asgn: {
             return visit_init_assign(n);
@@ -632,7 +665,9 @@ void optimize()
     visit_post(compute_global_pure);
     compute_class_consts();
     visit_post(fold_consts);
-    visit_post(tidy_consts);
+    visit_post(tidy_lists);
+    if (!strinv)
+        scanrefs();
 }
 
 

@@ -122,14 +122,14 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
     if (!strinv)
         scanrefs();
 
-    sort_global_table();
-    build_fieldtable();
-    resolve_native_methods();
-
     loadtrees();
 
     if (Olevel > 0)
         optimize();
+
+    sort_global_table();
+    build_fieldtable();
+    resolve_native_methods();
 
     if (verbose > 3)
         dumpstate();

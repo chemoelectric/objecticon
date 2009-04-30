@@ -66,6 +66,8 @@ struct lnode_case {
 struct lnode_global {
     LNODE_SUB
     struct gentry *global;
+    struct lentry *local;    /* Null (for an implicit class field ref), 
+                              * or corresponding entry in func's locals list */
 };
 
 struct lnode_local {
@@ -94,7 +96,7 @@ struct lnode_apply *lnode_apply(struct loc *loc, struct lnode *expr, struct lnod
 struct lnode_keyword *lnode_keyword(struct loc *loc, int num);
 struct lnode_local *lnode_local(struct loc *loc, struct lentry *local);
 struct lnode_const *lnode_const(struct loc *loc, struct centry *con);
-struct lnode_global *lnode_global(struct loc *loc, struct gentry *global);
+struct lnode_global *lnode_global(struct loc *loc, struct gentry *global, struct lentry *local);
 struct lnode_case *lnode_case(int op, struct loc *loc, struct lnode *expr, int x);
 
 /*

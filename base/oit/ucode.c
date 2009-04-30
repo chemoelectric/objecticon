@@ -229,7 +229,7 @@ struct ucode_op ucode_op_table[] = {
     /* 221 */         { Uop_Class, "class", { TYPE_32,TYPE_STR }, "\t%-12s %08o %s" }, 
     /* 222 */         { Uop_Super, "super", { TYPE_STR,0 }, "\t%-12s %s" },
     /* 223 */         { Uop_Proc, "proc", { TYPE_STR,0 }, "\t%-12s %s" },
-    /* 224 */         INVALID,
+    /* 224 */         { Uop_Start, "start", {0,0}, "\t%-12s" }, 
     /* 225 */         INVALID,
     /* 226 */         { Uop_Method, "method", { TYPE_STR,TYPE_STR }, "\t%-12s %s.%s" },
     /* 227 */         INVALID,

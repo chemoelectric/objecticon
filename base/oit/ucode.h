@@ -200,6 +200,7 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Class       221
 #define Uop_Super       222
 #define Uop_Proc        223
+#define Uop_Start       224
 #define Uop_Method      226
 #define Uop_Empty       228
 #define Uop_Slist       229

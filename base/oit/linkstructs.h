@@ -18,6 +18,7 @@ struct lentry {                 /* local table entry */
     char *name;                 /*   name of variable, in string space */
     struct loc pos;             /*   source line number */
     word l_flag;                /*   variable flags */
+    int ref;                    /*   referenced flag */
     union {                     /*   value field */
         word index;             /*     index number for statics arguments and dynamics */
         struct gentry *global;  /*     global table entry */
@@ -145,6 +146,8 @@ struct lfunction {
     struct lfile *defined;            /* The file this function was defined in */
     struct lclass_field *method;      /* Pointer to method, if a method */
     struct gentry *proc;              /* Pointer to proc, if a proc */
+    struct lnode *start;              /* A Uop_Start node to mark the start of the function (useful
+                                       * for visitor functions). */
     struct lnode *initial;            /* Ucode tree for initial clause */
     struct lnode *body;               /* Ucode tree for main body */
     struct lnode *end;                /* Ucode tree for end */
