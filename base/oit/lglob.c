@@ -290,7 +290,7 @@ void scanrefs()
      */
     gmain = 0;
     for (gp = lgfirst; gp; gp = gp->g_next) {
-        gp->g_flag |= F_Unref;
+        gp->ref = 0;
         if (gp->name == main_string)
             gmain = gp;
     }
@@ -301,7 +301,7 @@ void scanrefs()
     }
 
     /*
-     * Clear the F_Unref flag for referenced globals, starting with main()
+     * Set the ref flag for referenced globals, starting with main()
      * and marking references within procedures recursively.
      */
     reference(gmain);
@@ -319,7 +319,15 @@ void scanrefs()
      */
     gpp = &lgfirst;
     while ((gp = *gpp)) {
-        if (gp->g_flag & F_Unref) {
+        if (gp->ref) {
+            /*
+             *  The global is used.
+             */
+            if (gp->defined)
+                gp->defined->ref = 1;     /* Mark the file as used */
+            gpp = &gp->g_next;
+        }
+        else {
             if (verbose > 2) {
                 char *t;
                 if (gp->g_flag & F_Proc)
@@ -335,14 +343,6 @@ void scanrefs()
             }
             *gpp = gp->g_next;
         }
-        else {
-            /*
-             *  The global is used.
-             */
-            if (gp->defined)
-                gp->defined->ref = 1;     /* Mark the file as used */
-            gpp = &gp->g_next;
-        }
     }
 
     /*
@@ -350,10 +350,10 @@ void scanrefs()
      */
     cpp = &lclasses;
     while ((cp = *cpp)) {
-        if (cp->global->g_flag & F_Unref)
-            *cpp = cp->next;
-        else
+        if (cp->global->ref)
             cpp = &cp->next;
+        else
+            *cpp = cp->next;
     }
 
     /*
@@ -361,10 +361,10 @@ void scanrefs()
      */
     rpp = &lrecords;
     while ((rp = *rpp)) {
-        if (rp->global->g_flag & F_Unref)
-            *rpp = rp->next;
-        else
+        if (rp->global->ref)
             rpp = &rp->next;
+        else
+            *rpp = rp->next;
     }
 
     /*
@@ -392,27 +392,28 @@ static void reference(struct gentry *gp)
     struct lclass_field *lm;
     struct lclass_ref *sup;
 
-    if (gp->g_flag & F_Unref) {
-        gp->g_flag &= ~F_Unref;
-        if (gp->func) {
-            for (le = gp->func->locals; le; le = le->next) {
-                if ((le->l_flag & (F_Global | F_Unref)) == F_Global)
-                    reference(le->l_val.global);
-            }
-        } else if (gp->class) {
-            /* Mark all vars in all the methods */
-            for (lm = gp->class->fields; lm; lm = lm->next) {
-                if (lm->func) {
-                    for (le = lm->func->locals; le; le = le->next) {
-                        if ((le->l_flag & (F_Global | F_Unref)) == F_Global)
-                            reference(le->l_val.global);
-                    }
+    if (gp->ref)
+        return;
+
+    gp->ref = 1;
+    if (gp->func) {
+        for (le = gp->func->locals; le; le = le->next) {
+            if (le->l_flag & F_Global)
+                reference(le->l_val.global);
+        }
+    } else if (gp->class) {
+        /* Mark all vars in all the methods */
+        for (lm = gp->class->fields; lm; lm = lm->next) {
+            if (lm->func) {
+                for (le = lm->func->locals; le; le = le->next) {
+                    if (le->l_flag & F_Global)
+                        reference(le->l_val.global);
                 }
             }
-            /* Mark all the superclasses */
-            for (sup = gp->class->resolved_supers; sup; sup = sup->next) 
-                reference(sup->class->global);
         }
+        /* Mark all the superclasses */
+        for (sup = gp->class->resolved_supers; sup; sup = sup->next) 
+            reference(sup->class->global);
     }
 }
 

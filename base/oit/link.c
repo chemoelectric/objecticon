@@ -281,7 +281,6 @@ static char *f_flag2str(int flag)
     static char buff[256];
     *buff = 0;
     if (flag & F_Global) strcat(buff, "F_Global ");
-    if (flag & F_Unref) strcat(buff, "F_Unref ");
     if (flag & F_Proc) strcat(buff, "F_Proc ");
     if (flag & F_Record) strcat(buff, "F_Record ");
     if (flag & F_Dynamic) strcat(buff, "F_Dynamic ");

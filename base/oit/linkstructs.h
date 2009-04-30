@@ -33,6 +33,7 @@ struct gentry {                 /* global table entry */
     word g_flag;                        /*   variable flags */
     int g_index;                /*   "index" in global table */
     int pure;                   /* flag inidicating whether global acts as a constant */
+    int ref;                    /* referenced flag */
     struct lfile *defined;      /* The file this global was defined in (except for F_Builtin) */
     struct lclass *class;       /* pointer to class object for a class */ 
     struct lfunction *func;     /* pointer to function object for a proc */

@@ -13,7 +13,6 @@
 #include "../h/modflags.h"
 
 #define F_Global	    01	/* variable declared global externally */
-#define F_Unref		    02	/* procedure is unreferenced */
 #define F_Proc		    04	/* procedure */
 #define F_Record	   010	/* record */
 #define F_Dynamic	   020	/* variable declared local dynamic */
