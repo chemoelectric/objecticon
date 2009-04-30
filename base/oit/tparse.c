@@ -2834,11 +2834,11 @@ case 208:
 break;
 case 209:
 #line 440 "tgram.g"
-{yyval = c_str_leaf(N_Key,yyvsp[-1],"fail");}
+{yyval = int_leaf(N_Key,yyvsp[-1],K_FAIL);}
 break;
 case 210:
 #line 441 "tgram.g"
-{if (klookup(Str0(yyvsp[0])) == 0) tfatal("invalid keyword: %s",Str0(yyvsp[0])); yyval = c_str_leaf(N_Key,yyvsp[-1],Str0(yyvsp[0]));}
+{int kn = klookup(Str0(yyvsp[0])); if (kn == 0) tfatal("invalid keyword: %s",Str0(yyvsp[0])); yyval = int_leaf(N_Key,yyvsp[-1],kn);;}
 break;
 case 211:
 #line 443 "tgram.g"

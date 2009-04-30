@@ -178,7 +178,7 @@ struct ucode_op ucode_op_table[] = {
     /* 170 */         { Uop_Null, "null", {0,0}, "\t%-12s" },
     /* 171 */         { Uop_Case, "case", { TYPE_16,0 }, "\t%-12s %d" },
     /* 172 */         { Uop_Casedef, "casedef", { TYPE_16,0 }, "\t%-12s %d" },
-    /* 173 */         { Uop_Keyword, "keyword", { TYPE_STR,0 }, "\t%-12s %s" },
+    /* 173 */         { Uop_Keyword, "keyword", { TYPE_16,0 }, "\t%-12s %d" },
     /* 174 */         { Uop_Limit, "limit", {0,0}, "\t%-12s" },                               
     /* 175 */         { Uop_List, "list", { TYPE_16,0 }, "\t%-12s %d" },
     /* 176 */         { Uop_Next, "next", {0,0}, "\t%-12s" },                      

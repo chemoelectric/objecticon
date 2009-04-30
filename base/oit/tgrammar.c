@@ -166,10 +166,11 @@ int modflag;
 #define Invocop2(x1)		add_invocable(Str0(x1),2,x1)
 #define Invocop3(x1,x2,x3)	add_invocable(Str0(x1),3,x1)
 #define Invoke(x1,x2,x3,x4)	$$ = tree4(N_Invoke,x2,x1,x3) 
-#define Keyword(x1,x2)		if (klookup(Str0(x2)) == 0)\
+#define Keyword(x1,x2)		int kn = klookup(Str0(x2)); \
+                                if (kn == 0) \
 				   tfatal("invalid keyword: %s",Str0(x2));\
-				$$ = c_str_leaf(N_Key,x1,Str0(x2))
-#define Kfail(x1,x2)		$$ = c_str_leaf(N_Key,x1,"fail") 
+                                $$ = int_leaf(N_Key,x1,kn);
+#define Kfail(x1,x2)		$$ = int_leaf(N_Key,x1,K_FAIL) 
 #define Link(x1,x2)		/* empty */
 #define Linkdcl(x)		/* empty */
 #define Lnkfile1(x)		add_link(Str0(x), x)

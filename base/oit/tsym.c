@@ -458,7 +458,7 @@ static void nodegen(nodeptr t)
 
         case N_Key: {			/* keyword reference */
             uout_op(Uop_Keyword);
-            uout_str(Str0(t));
+            uout_16(Val0(t));
             break;
         }
 
