@@ -381,6 +381,20 @@ static int fold_consts(struct lnode *n)
 }
 
 /*
+ * Either return a matching existing const in curr_vfunc, or add a new
+ * one.
+ */
+static struct centry *new_constant(int flags, char *data, int len)
+{
+    struct centry *c;
+    for (c = curr_vfunc->constants; c; c = c->next) {
+        if (flags == c->c_flag && data == c->data)
+            return c;
+    }
+    return add_constant(curr_vfunc, flags, data, len);
+}
+
+/*
  * Tidy the functions' local and constant lists by removing entries
  * made redundant by dead code elimination and constant folding.
  * Unreferenced constants are removed, as are unreferenced global
@@ -1281,8 +1295,7 @@ static void fold_size(struct lnode *n)
     if (len >= 0) {
         replace_node(n, (struct lnode*)
                      lnode_const(&n->loc,
-                                 add_constant(curr_vfunc, 
-                                              F_IntLit, 
+                                 new_constant(F_IntLit, 
                                               intern_n((char *)&len, sizeof(word)), 
                                               sizeof(word))));
     }
@@ -1360,8 +1373,7 @@ static void fold_cat(struct lnode *n)
         AppChar(opt_sbuf, l2.u.str.s[i]);
     replace_node(n, (struct lnode*)
                  lnode_const(&n->loc,
-                             add_constant(curr_vfunc, 
-                                          l2.type == STRING ? F_StrLit:F_UcsLit, 
+                             new_constant(l2.type == STRING ? F_StrLit:F_UcsLit, 
                                           str_install(&opt_sbuf),
                                           l1.u.str.len + l2.u.str.len)));
 }
@@ -1385,8 +1397,7 @@ static void fold_compl(struct lnode *n)
     len = rs->n_ranges * sizeof(struct range);
     replace_node(n, (struct lnode*)
                  lnode_const(&n->loc,
-                             add_constant(curr_vfunc, 
-                                          F_CsetLit, 
+                             new_constant(F_CsetLit, 
                                           intern_n((char *)rs->range, len),
                                           len)));
     free_rangeset(rs);
@@ -1422,8 +1433,7 @@ static void fold_union(struct lnode *n)
     len = r3->n_ranges * sizeof(struct range);
     replace_node(n, (struct lnode*)
                  lnode_const(&n->loc,
-                             add_constant(curr_vfunc, 
-                                          F_CsetLit, 
+                             new_constant(F_CsetLit, 
                                           intern_n((char *)r3->range, len),
                                           len)));
     free_literal(&l1);
@@ -1460,8 +1470,7 @@ static void fold_inter(struct lnode *n)
     len = r3->n_ranges * sizeof(struct range);
     replace_node(n, (struct lnode*)
                  lnode_const(&n->loc,
-                             add_constant(curr_vfunc, 
-                                          F_CsetLit, 
+                             new_constant(F_CsetLit, 
                                           intern_n((char *)r3->range, len),
                                           len)));
     free_literal(&l1);
@@ -1498,8 +1507,7 @@ static void fold_diff(struct lnode *n)
     len = r3->n_ranges * sizeof(struct range);
     replace_node(n, (struct lnode*)
                  lnode_const(&n->loc,
-                             add_constant(curr_vfunc, 
-                                          F_CsetLit, 
+                             new_constant(F_CsetLit, 
                                           intern_n((char *)r3->range, len),
                                           len)));
     free_literal(&l1);
@@ -1525,8 +1533,7 @@ static void fold_neg(struct lnode *n)
         if (!over_flow) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&w2, sizeof(word)), 
                                                   sizeof(word))));
         }
@@ -1534,8 +1541,7 @@ static void fold_neg(struct lnode *n)
         double d2 = -l.u.d;
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child->loc,
-                                 add_constant(curr_vfunc, 
-                                              F_RealLit, 
+                                 new_constant(F_RealLit, 
                                               intern_n((char *)&d2, sizeof(double)), 
                                               sizeof(double))));
     }
@@ -1701,8 +1707,7 @@ static void fold_lexeq(struct lnode *n)
     if (lexcmp(&l1, &l2) == Equal) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
-                                 add_constant(curr_vfunc, 
-                                              l2.type == STRING ? F_StrLit:F_UcsLit, 
+                                 new_constant(l2.type == STRING ? F_StrLit:F_UcsLit, 
                                               l2.u.str.s,
                                               l2.u.str.len)));
     } else 
@@ -1743,8 +1748,7 @@ static void fold_lexne(struct lnode *n)
     if (lexcmp(&l1, &l2) != Equal) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
-                                 add_constant(curr_vfunc, 
-                                              l2.type == STRING ? F_StrLit:F_UcsLit, 
+                                 new_constant(l2.type == STRING ? F_StrLit:F_UcsLit, 
                                               l2.u.str.s,
                                               l2.u.str.len)));
     } else 
@@ -1785,8 +1789,7 @@ static void fold_lexge(struct lnode *n)
     if (lexcmp(&l1, &l2) != Less) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
-                                 add_constant(curr_vfunc, 
-                                              l2.type == STRING ? F_StrLit:F_UcsLit, 
+                                 new_constant(l2.type == STRING ? F_StrLit:F_UcsLit, 
                                               l2.u.str.s,
                                               l2.u.str.len)));
     } else 
@@ -1827,8 +1830,7 @@ static void fold_lexgt(struct lnode *n)
     if (lexcmp(&l1, &l2) == Greater) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
-                                 add_constant(curr_vfunc, 
-                                              l2.type == STRING ? F_StrLit:F_UcsLit, 
+                                 new_constant(l2.type == STRING ? F_StrLit:F_UcsLit, 
                                               l2.u.str.s,
                                               l2.u.str.len)));
     } else 
@@ -1869,8 +1871,7 @@ static void fold_lexle(struct lnode *n)
     if (lexcmp(&l1, &l2) != Greater) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
-                                 add_constant(curr_vfunc, 
-                                              l2.type == STRING ? F_StrLit:F_UcsLit, 
+                                 new_constant(l2.type == STRING ? F_StrLit:F_UcsLit, 
                                               l2.u.str.s,
                                               l2.u.str.len)));
     } else 
@@ -1911,8 +1912,7 @@ static void fold_lexlt(struct lnode *n)
     if (lexcmp(&l1, &l2) == Less) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child2->loc,
-                                 add_constant(curr_vfunc, 
-                                              l2.type == STRING ? F_StrLit:F_UcsLit, 
+                                 new_constant(l2.type == STRING ? F_StrLit:F_UcsLit, 
                                               l2.u.str.s,
                                               l2.u.str.len)));
     } else 
@@ -1947,8 +1947,7 @@ static void fold_numeq(struct lnode *n)
         if (l1.u.i == l2.u.i) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&l2.u.i, sizeof(word)), 
                                                   sizeof(word))));
         } else
@@ -1957,8 +1956,7 @@ static void fold_numeq(struct lnode *n)
         if (l1.u.d == l2.u.d) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_RealLit, 
+                                     new_constant(F_RealLit, 
                                                   intern_n((char *)&l2.u.d, sizeof(double)), 
                                                   sizeof(double))));
         } else
@@ -1993,8 +1991,7 @@ static void fold_numge(struct lnode *n)
         if (l1.u.i >= l2.u.i) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&l2.u.i, sizeof(word)), 
                                                   sizeof(word))));
         } else
@@ -2003,8 +2000,7 @@ static void fold_numge(struct lnode *n)
         if (l1.u.d >= l2.u.d) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_RealLit, 
+                                     new_constant(F_RealLit, 
                                                   intern_n((char *)&l2.u.d, sizeof(double)), 
                                                   sizeof(double))));
         } else
@@ -2039,8 +2035,7 @@ static void fold_numgt(struct lnode *n)
         if (l1.u.i > l2.u.i) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&l2.u.i, sizeof(word)), 
                                                   sizeof(word))));
         } else
@@ -2049,8 +2044,7 @@ static void fold_numgt(struct lnode *n)
         if (l1.u.d > l2.u.d) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_RealLit, 
+                                     new_constant(F_RealLit, 
                                                   intern_n((char *)&l2.u.d, sizeof(double)), 
                                                   sizeof(double))));
         } else
@@ -2085,8 +2079,7 @@ static void fold_numle(struct lnode *n)
         if (l1.u.i <= l2.u.i) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&l2.u.i, sizeof(word)), 
                                                   sizeof(word))));
         } else
@@ -2095,8 +2088,7 @@ static void fold_numle(struct lnode *n)
         if (l1.u.d <= l2.u.d) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_RealLit, 
+                                     new_constant(F_RealLit, 
                                                   intern_n((char *)&l2.u.d, sizeof(double)), 
                                                   sizeof(double))));
         } else
@@ -2131,8 +2123,7 @@ static void fold_numlt(struct lnode *n)
         if (l1.u.i < l2.u.i) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&l2.u.i, sizeof(word)), 
                                                   sizeof(word))));
         } else
@@ -2141,8 +2132,7 @@ static void fold_numlt(struct lnode *n)
         if (l1.u.d < l2.u.d) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_RealLit, 
+                                     new_constant(F_RealLit, 
                                                   intern_n((char *)&l2.u.d, sizeof(double)), 
                                                   sizeof(double))));
         } else
@@ -2177,8 +2167,7 @@ static void fold_numne(struct lnode *n)
         if (l1.u.i != l2.u.i) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&l2.u.i, sizeof(word)), 
                                                   sizeof(word))));
         } else
@@ -2187,8 +2176,7 @@ static void fold_numne(struct lnode *n)
         if (l1.u.d != l2.u.d) {
             replace_node(n, (struct lnode*)
                          lnode_const(&x->child2->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_RealLit, 
+                                     new_constant(F_RealLit, 
                                                   intern_n((char *)&l2.u.d, sizeof(double)), 
                                                   sizeof(double))));
         } else
@@ -2224,8 +2212,7 @@ static void fold_div(struct lnode *n)
         if (!over_flow)
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&w, sizeof(word)), 
                                                   sizeof(word))));
     } else if (cnv_real(&l1) && cnv_real(&l2)) {
@@ -2233,8 +2220,7 @@ static void fold_div(struct lnode *n)
             double d = l1.u.d / l2.u.d;
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_RealLit, 
+                                     new_constant(F_RealLit, 
                                                   intern_n((char *)&d, sizeof(double)), 
                                                   sizeof(double))));
         }
@@ -2269,16 +2255,14 @@ static void fold_mult(struct lnode *n)
         if (!over_flow)
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&w, sizeof(word)), 
                                                   sizeof(word))));
     } else if (cnv_real(&l1) && cnv_real(&l2)) {
         double d = l1.u.d * l2.u.d;
         replace_node(n, (struct lnode*)
                      lnode_const(&n->loc,
-                                 add_constant(curr_vfunc, 
-                                              F_RealLit, 
+                                 new_constant(F_RealLit, 
                                               intern_n((char *)&d, sizeof(double)), 
                                               sizeof(double))));
     }
@@ -2312,16 +2296,14 @@ static void fold_minus(struct lnode *n)
         if (!over_flow)
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&w, sizeof(word)), 
                                                   sizeof(word))));
     } else if (cnv_real(&l1) && cnv_real(&l2)) {
         double d = l1.u.d - l2.u.d;
         replace_node(n, (struct lnode*)
                      lnode_const(&n->loc,
-                                 add_constant(curr_vfunc, 
-                                              F_RealLit, 
+                                 new_constant(F_RealLit, 
                                               intern_n((char *)&d, sizeof(double)), 
                                               sizeof(double))));
     }
@@ -2355,16 +2337,14 @@ static void fold_plus(struct lnode *n)
         if (!over_flow)
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&w, sizeof(word)), 
                                                   sizeof(word))));
     } else if (cnv_real(&l1) && cnv_real(&l2)) {
         double d = l1.u.d + l2.u.d;
         replace_node(n, (struct lnode*)
                      lnode_const(&n->loc,
-                                 add_constant(curr_vfunc, 
-                                              F_RealLit, 
+                                 new_constant(F_RealLit, 
                                               intern_n((char *)&d, sizeof(double)), 
                                               sizeof(double))));
     }
@@ -2424,8 +2404,7 @@ static void fold_mod(struct lnode *n)
         if (!over_flow)
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_IntLit, 
+                                     new_constant(F_IntLit, 
                                                   intern_n((char *)&w, sizeof(word)), 
                                                   sizeof(word))));
     }
@@ -2467,15 +2446,13 @@ static void fold_number(struct lnode *n)
     if (cnv_eint(&l)) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child->loc,
-                                 add_constant(curr_vfunc, 
-                                              F_IntLit, 
+                                 new_constant(F_IntLit, 
                                               intern_n((char *)&l.u.i, sizeof(word)), 
                                               sizeof(word))));
     } else if (cnv_real(&l)) {
         replace_node(n, (struct lnode*)
                      lnode_const(&x->child->loc,
-                                 add_constant(curr_vfunc, 
-                                              F_RealLit, 
+                                 new_constant(F_RealLit, 
                                               intern_n((char *)&l.u.d, sizeof(double)), 
                                               sizeof(double))));
     }
@@ -2511,8 +2488,7 @@ static void fold_field(struct lnode *n)
         case SET_CONST: {
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  f->const_val->c_flag,
+                                     new_constant(f->const_val->c_flag,
                                                   f->const_val->data,
                                                   f->const_val->length)));
             break;
@@ -2565,8 +2541,7 @@ static void fold_subsc(struct lnode *n)
             utf8_iter(&p);
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_UcsLit, 
+                                     new_constant(F_UcsLit, 
                                                   intern_n(t, p - t),
                                                   p - t)));
             break;
@@ -2583,8 +2558,7 @@ static void fold_subsc(struct lnode *n)
                 char t = ch;
                 replace_node(n, (struct lnode*)
                              lnode_const(&n->loc,
-                                         add_constant(curr_vfunc, 
-                                                      F_StrLit, 
+                                         new_constant(F_StrLit, 
                                                       intern_n(&t, 1),
                                                       1)));
             } else {
@@ -2592,8 +2566,7 @@ static void fold_subsc(struct lnode *n)
                 int m = utf8_seq(ch, buf);
                 replace_node(n, (struct lnode*)
                              lnode_const(&n->loc,
-                                         add_constant(curr_vfunc, 
-                                                      F_UcsLit, 
+                                         new_constant(F_UcsLit, 
                                                       intern_n(buf, m),
                                                       m)));
             }
@@ -2609,8 +2582,7 @@ static void fold_subsc(struct lnode *n)
             t = l1.u.str.s[i - 1];
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_StrLit, 
+                                     new_constant(F_StrLit, 
                                                   intern_n(&t, 1),
                                                   1)));
             break;
@@ -2697,8 +2669,7 @@ static void fold_sect(struct lnode *n, int op)
 
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_UcsLit, 
+                                     new_constant(F_UcsLit, 
                                                   intern_n(start, end - start),
                                                   end - start)));
             break;
@@ -2723,8 +2694,7 @@ static void fold_sect(struct lnode *n, int op)
             if (j == 0) {
                 replace_node(n, (struct lnode*)
                              lnode_const(&n->loc,
-                                         add_constant(curr_vfunc, 
-                                                      F_StrLit, 
+                                         new_constant(F_StrLit, 
                                                       empty_string,
                                                       0)));
                 break;
@@ -2770,8 +2740,7 @@ static void fold_sect(struct lnode *n, int op)
             out_len = CurrLen(opt_sbuf);
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  type,
+                                     new_constant(type,
                                                   str_install(&opt_sbuf),
                                                   out_len)));
             break;
@@ -2797,8 +2766,7 @@ static void fold_sect(struct lnode *n, int op)
 
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
-                                     add_constant(curr_vfunc, 
-                                                  F_StrLit, 
+                                     new_constant(F_StrLit, 
                                                   intern_n(l1.u.str.s + i - 1, j),
                                                   j)));
             break;
