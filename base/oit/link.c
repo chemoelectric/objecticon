@@ -294,6 +294,9 @@ static char *f_flag2str(int flag)
     if (flag & F_Class) strcat(buff, "F_Class ");
     if (flag & F_Importsym) strcat(buff, "F_Importsym ");
     if (flag & F_Field) strcat(buff, "F_Field ");
+    if (flag & F_LrgintLit) strcat(buff, "F_LrgintLit ");
+    if (flag & F_Method) strcat(buff, "F_Method ");
+    if (flag & F_UcsLit) strcat(buff, "F_UcsLit ");
     return buff;
 }
 
