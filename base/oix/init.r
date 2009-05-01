@@ -983,11 +983,16 @@ void resolve(struct progstate *p)
     struct loc *lp;
 
     /*
+     * Relocate the names of the fields.
+     */
+    for (dp = p->Fnames; dp < p->Efnames; dp++)
+        StrLoc(*dp) = p->Strcons + (uword)StrLoc(*dp);
+
+    /*
      * For each class field info block, relocate the pointer to the
      * defining class and the descriptor.
      */
     for (cf = p->ClassFields; cf < p->EClassFields; cf++) {
-        StrLoc(cf->name) = p->Strcons + (uword)StrLoc(cf->name);
         cf->defining_class = (struct b_class*)(p->Code + (int)cf->defining_class);
         if (cf->field_descriptor) {
             cf->field_descriptor = (dptr)(p->Code + (int)cf->field_descriptor);
@@ -998,16 +1003,17 @@ void resolve(struct progstate *p)
                     /* Unresolved, point to stub */
                     BlkLoc(*cf->field_descriptor) = (union block *)&Bdeferred_method_stub;
                 } else {
+                    dptr fname;
                     /* Resolved to native method, do sanity checks, set pointer */
                     if (n < 0 || n >= ElemCount(native_methods))
                         ffatalerr("Native method index out of range: %d", n);
                     pp = (struct b_proc *)native_methods[n];
-
+                    fname = &p->Fnames[cf->fnum];
                     /* The field name should match the end of the procedure block's name */
-                    if (strncmp(StrLoc(cf->name),
-                                StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(cf->name),
-                                StrLen(cf->name)))
-                        ffatalerr("Native method name mismatch: %s", StrLoc(cf->name));
+                    if (strncmp(StrLoc(*fname),
+                                StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(*fname),
+                                StrLen(*fname)))
+                        ffatalerr("Native method name mismatch: %s", StrLoc(*fname));
 
                     /* Pointer back to the corresponding field */
                     pp->field = cf;
@@ -1207,12 +1213,6 @@ void resolve(struct progstate *p)
             }
         }
     }
-
-    /*
-     * Relocate the names of the fields.
-     */
-    for (dp = p->Fnames; dp < p->Efnames; dp++)
-        StrLoc(*dp) = p->Strcons + (uword)StrLoc(*dp);
 
     /*
      * Relocate the names of the files in the ipc->filename table.

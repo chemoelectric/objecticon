@@ -646,7 +646,7 @@ int noimage;
              fprintf(f, "method ");
              putstr(f, &field->defining_class->name);
              fprintf(f, ".");
-             putstr(f, &field->name);
+             putstr(f, &field->defining_class->program->Fnames[field->fnum]);
          } else {
              /*
               * Produce one of:
@@ -1225,8 +1225,9 @@ dptr dp1, dp2;
              /*
               * Produce "method classname.fieldname"
               */
-             dptr field_name = &field->name;
+             dptr field_name;
              struct b_class *field_class = field->defining_class;
+             field_name = &field_class->program->Fnames[field->fnum];
              len = StrLen(field_class->name) + StrLen(*field_name) + 8;
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
@@ -1356,8 +1357,8 @@ dptr dp1, dp2;
                 * Produce:
                 *  "methp(object objectname#m(n),method classname.fieldname)"
                 */
-               field_name = &field->name;
                field_class = field->defining_class;
+               field_name = &field_class->program->Fnames[field->fnum];
                len = StrLen(obj_class->name) + StrLen(field_class->name) + StrLen(*field_name) + strlen(sbuf) + 22;
                MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;

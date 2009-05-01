@@ -500,7 +500,7 @@ int lookup_class_field_by_name(struct b_class *class, dptr name)
     while (l <= r) {
         m = (l + r) / 2;
         i = class->sorted_fields[m];
-        c = lexcmp(&class->fields[i]->name, name);
+        c = lexcmp(&class->program->Fnames[class->fields[i]->fnum], name);
         if (c == Greater)
             r = m - 1;
         else if (c == Less)

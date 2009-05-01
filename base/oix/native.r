@@ -833,7 +833,7 @@ function{0,1} lang_Class_get_field_name(c, field)
         i = lookup_class_field(class, &field, 0);
         if (i < 0)
             fail;
-        return class->fields[i]->name;
+        return class->program->Fnames[class->fields[i]->fnum];
      }
 end
 
@@ -904,11 +904,13 @@ end
 function{*} lang_Class_get_field_names(c)
     body {
         struct b_class *class;
+        dptr fn;
         word i;
         if (!(class = get_class_for(&c)))
             runerr(0);
+        fn = class->program->Fnames;
         for (i = 0; i < class->n_instance_fields + class->n_class_fields; ++i)
-            suspend class->fields[i]->name;
+            suspend fn[class->fields[i]->fnum];
         fail;
     }
 end
@@ -916,11 +918,13 @@ end
 function{*} lang_Class_get_instance_field_names(c)
     body {
         struct b_class *class;
+        dptr fn;
         word i;
         if (!(class = get_class_for(&c)))
             runerr(0);
+        fn = class->program->Fnames;
         for (i = 0; i < class->n_instance_fields; ++i)
-            suspend class->fields[i]->name;
+            suspend fn[class->fields[i]->fnum];
         fail;
     }
 end
@@ -928,12 +932,14 @@ end
 function{*} lang_Class_get_class_field_names(c)
     body {
         struct b_class *class;
+        dptr fn;
         word i;
         if (!(class = get_class_for(&c)))
             runerr(0);
+        fn = class->program->Fnames;
         for (i = class->n_instance_fields; 
              i < class->n_instance_fields + class->n_class_fields; ++i)
-            suspend class->fields[i]->name;
+            suspend fn[class->fields[i]->fnum];
         fail;
     }
 end
@@ -1032,16 +1038,18 @@ static struct b_proc *try_load(void *handle, struct b_class *class,  struct clas
     word i;
     char *fq, *p, *t;
     struct b_proc *blk;
+    dptr fname;
 
-    MemProtect(fq = malloc(StrLen(class->name) + StrLen(cf->name) + 3));
+    fname = &class->program->Fnames[cf->fnum];
+    MemProtect(fq = malloc(StrLen(class->name) + StrLen(*fname) + 3));
     p = fq;
     *p++ = 'B';
     t = StrLoc(class->name);
     for (i = 0; i < StrLen(class->name); ++i)
         *p++ = (t[i] == '.') ? '_' : t[i];
     *p++ = '_';
-    strncpy(p, StrLoc(cf->name), StrLen(cf->name));
-    p[StrLen(cf->name)] = 0;
+    strncpy(p, StrLoc(*fname), StrLen(*fname));
+    p[StrLen(*fname)] = 0;
 
     blk = (struct b_proc *)dlsym(handle, fq);
     if (!blk) {
@@ -2692,12 +2700,15 @@ function{1} lang_Proc_get_name(c, flag)
         if (!(proc = get_proc_for(&c)))
            runerr(0);
         if (proc->field && is:null(flag)) {
-            int len = StrLen(proc->field->defining_class->name) + StrLen(proc->field->name) + 1;
+            int len;
+            struct b_class *class = proc->field->defining_class;
+            dptr fname = &class->program->Fnames[proc->field->fnum];
+            len = StrLen(class->name) + StrLen(*fname) + 1;
             MemProtect (StrLoc(result) = reserve(Strings, len));
             StrLen(result) = len;
-            alcstr(StrLoc(proc->field->defining_class->name),StrLen(proc->field->defining_class->name));
+            alcstr(StrLoc(class->name),StrLen(class->name));
             alcstr(".", 1);
-            alcstr(StrLoc(proc->field->name),StrLen(proc->field->name));
+            alcstr(StrLoc(*fname),StrLen(*fname));
             return result;
         } else
             return proc->pname;

@@ -92,7 +92,7 @@ static void xtrace(nargs, arg, pline, pfile)
             if (bp->field) {
                 putstr(stderr, &bp->field->defining_class->name);
                 putc('.', stderr);
-                putstr(stderr, &bp->field->name);
+                putstr(stderr, &bp->field->defining_class->program->Fnames[bp->field->fnum]);
             } else
                 putstr(stderr, &bp->pname);
         } else
@@ -296,8 +296,9 @@ int get_name(dptr dp1, dptr dp0)
                      */
                     struct class_field *cf = find_class_field_for_dptr(dp, prog);
                     struct b_class *c = cf->defining_class;
+                    dptr fname = &c->program->Fnames[cf->fnum];
                     sprintf(sbuf,"class %.*s.%.*s", (int)StrLen(c->name), StrLoc(c->name), 
-                            (int)StrLen(cf->name), StrLoc(cf->name));
+                            (int)StrLen(*fname), StrLoc(*fname));
                     i = strlen(sbuf);
                     MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                     StrLen(*dp0) = i;
@@ -363,10 +364,12 @@ int get_name(dptr dp1, dptr dp0)
                     }
                     case T_Object: { 		/* object */
                         struct b_class *c = blkptr->object.class;
+                        dptr fname;
                         i = varptr - blkptr->object.fields;
+                        fname =  &c->program->Fnames[c->fields[i]->fnum];
                         sprintf(sbuf,"object %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
                                 (long)blkptr->object.id,
-                                (int)StrLen(c->fields[i]->name), StrLoc(c->fields[i]->name));
+                                (int)StrLen(*fname), StrLoc(*fname));
                         i = strlen(sbuf);
                         MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                         StrLen(*dp0) = i;
@@ -578,7 +581,7 @@ static void ttrace()
                 if (bp->field) {
                     putstr(stderr, &bp->field->defining_class->name);
                     putc('.', stderr);
-                    putstr(stderr, &bp->field->name);
+                    putstr(stderr, &bp->field->defining_class->program->Fnames[bp->field->fnum]);
                 } else
                     putstr(stderr, &(bp->pname));
             } else
@@ -647,7 +650,7 @@ static void ttrace()
                 if (bp->field) {
                     putstr(stderr, &bp->field->defining_class->name);
                     putc('.', stderr);
-                    putstr(stderr, &bp->field->name);
+                    putstr(stderr, &bp->field->defining_class->program->Fnames[bp->field->fnum]);
                 } else
                     putstr(stderr, &(bp->pname));
             } else

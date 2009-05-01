@@ -141,7 +141,6 @@ struct b_record {		/* record block */
  * same instance.
  */
 struct class_field {
-    struct descrip name;               /* Field name (string qualifier) */
     word fnum;                         /* Field number */
     word flags;
     struct b_class *defining_class;

@@ -1999,7 +1999,7 @@ static void genclasses()
      * Firstly work out the "address" each class will have, so we can forward
      * reference them.
      */
-    x = pc + WordSize * (1 + 6 * n_fields);  /* The size of the class
+    x = pc + WordSize * (1 + 4 * n_fields);  /* The size of the class
                                               * field table plus the
                                               * n_classes entry */
     if (loclevel > 1)
@@ -2031,14 +2031,11 @@ static void genclasses()
             if (Dflag) {
                 fprintf(dbgfile, "%ld:\t\t\t\t\t# Field info for %s.%s\n", 
                         (long)pc, cl->global->name, cf->name);
-                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   Name %s\n", sp->len, sp->offset, cf->name);
                 fprintf(dbgfile, "\t%d\t\t\t\t#   Fnum\n", cf->ftab_entry->field_id);
                 fprintf(dbgfile, "\t%08o\t\t\t#   Flags\n", cf->flag);
                 fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Defining class\n", cf->class->pc);
                 fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Pointer to descriptor\n", cf->dpc);
             }
-            outword(sp->len);		/* name of field: size and offset */
-            outword(sp->offset);
             outword(cf->ftab_entry->field_id);
             outword(cf->flag);
             outword(cf->class->pc);
