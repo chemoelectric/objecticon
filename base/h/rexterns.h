@@ -67,13 +67,6 @@ extern struct b_iproc mt_llist;
 extern struct descrip rzerodesc;	/* real descriptor */
 extern struct b_real realzero;		/* real zero block */
 
-/*
- * Externals conditional on multithreading.
- */
-
-/* dynamic record types */
-extern int longest_dr;
-extern struct b_constructor_list **dr_arrays;
 
 /*
  * External declarations for the interpreter.

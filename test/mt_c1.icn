@@ -176,8 +176,10 @@ procedure child23(t,r)
    return res
 end
 
+record othertype(a,b,c)
+
 procedure child24()
-   return Constructor.create_constructor("othertype","a","b","c")
+   return othertype
 end
 
 procedure child25(self,x,y)

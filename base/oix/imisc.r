@@ -625,10 +625,27 @@ int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
     while (l <= r) {
         m = (l + r) / 2;
         i = recdef->sorted_fields[m];
-        c = lexcmp(&recdef->field_names[i], name);
+        c = lexcmp(&recdef->program->Fnames[recdef->fnums[i]], name);
         if (c == Greater)
             r = m - 1;
         else if (c == Less)
+            l = m + 1;
+        else
+            return i;
+    }
+    return -1;
+}
+
+int lookup_record_field_by_fnum(struct b_constructor *recdef, int fnum)
+{
+    int i, c, m, l = 0, r = recdef->n_fields - 1;
+    while (l <= r) {
+        m = (l + r) / 2;
+        i = recdef->sorted_fields[m];
+        c = recdef->fnums[i] - fnum;
+        if (c > 0)
+            r = m - 1;
+        else if (c < 0)
             l = m + 1;
         else
             return i;
@@ -654,8 +671,10 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
 
         if (fnum < 0)
             index = lookup_record_field_by_name(recdef, &efnames[fnum]);
-        else
+        else if (recdef->program != curpstate)
             index = lookup_record_field_by_name(recdef, &fnames[fnum]);
+        else
+            index = lookup_record_field_by_fnum(recdef, fnum);
 
         ic->class = (union block *)recdef;
         ic->index = index;

@@ -2447,10 +2447,6 @@ function{0,1} lang_Constructor_get_location(c)
         struct loc *p;
         if (!(constructor = get_constructor_for(&c)))
             runerr(0);
-        if (!constructor->program) {
-            LitWhy("Dynamically created constructor has no location");
-            fail;
-        }
         if (constructor->program->Glocs == constructor->program->Eglocs) {
             LitWhy("No global location data in icode");
             fail;
@@ -2466,11 +2462,13 @@ end
 function{*} lang_Constructor_get_field_names(c)
     body {
         struct b_constructor *constructor;
+        dptr fn;
         word i;
         if (!(constructor = get_constructor_for(&c)))
             runerr(0);
+        fn = constructor->program->Fnames;
         for (i = 0; i < constructor->n_fields; ++i)
-            suspend constructor->field_names[i];
+            suspend fn[constructor->fnums[i]];
         fail;
     }
 end
@@ -2505,10 +2503,6 @@ function{0,1} lang_Constructor_get_field_location(c, field)
         if (!(constructor = get_constructor_for(&c)))
             runerr(0);
         CheckField(field);
-        if (!constructor->program) {
-            LitWhy("Dynamically created constructor has no location");
-            fail;
-        }
         if (!constructor->field_locs) {
             LitWhy("No constructor field location data in icode");
             fail;
@@ -2533,7 +2527,7 @@ function{0,1} lang_Constructor_get_field_name(c, field)
         i = lookup_record_field(constructor, &field, 0);
         if (i < 0)
             fail;
-        return constructor->field_names[i];
+        return constructor->program->Fnames[constructor->fnums[i]];
      }
 end
 

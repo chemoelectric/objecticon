@@ -34,14 +34,6 @@ typedef struct si_ stringint;
 
 
 /*
- * structure supporting dynamic record types
- */
-struct b_constructor_list {
-    struct b_constructor *this;
-    struct b_constructor_list *next;
-};
-
-/*
  * Location in a source file
  */
 struct loc {
@@ -130,7 +122,7 @@ struct b_constructor {		/* constructor block */
     word instance_ids;          /*   Sequence for instance ids */
     word n_fields;
     struct descrip name;	/*   record type name (string qualifier) */
-    dptr field_names;           /* Pointers to field names array */
+    word *fnums;                /* Pointer to array of field numbers array */
     struct loc *field_locs;     /* Source location of fields or null if not available */
     short *sorted_fields;       /* An array of indices giving the order sorted by name */
 };

@@ -2123,7 +2123,7 @@ static void gentables()
         s = rec->global->name;
         rec->pc = pc;
         sp = inst_c_strconst(s);
-        size = 11 * WordSize + rec->nfields * (2 * WordSize + ShortSize);
+        size = 11 * WordSize + rec->nfields * (WordSize + ShortSize);
         if (loclevel > 1)
             size += rec->nfields * 3 * WordSize;
         size += nalign(size);
@@ -2153,8 +2153,8 @@ static void gentables()
          */
         if (Dflag) {
             ap = pc + 3 * WordSize;
-            fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field_names array\n", ap);
-            ap += rec->nfields * 2 * WordSize;
+            fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to fnums array\n", ap);
+            ap += rec->nfields * WordSize;
             if (loclevel > 1) {
                 fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to field_locs array\n", ap);
                 ap += rec->nfields * 3 * WordSize;
@@ -2164,7 +2164,7 @@ static void gentables()
         }
         ap = pc + 3 * WordSize;
         outword(ap);
-        ap += rec->nfields * 2 * WordSize;
+        ap += rec->nfields * WordSize;
         if (loclevel > 1) {
             outword(ap);
             ap += rec->nfields * 3 * WordSize;
@@ -2178,13 +2178,11 @@ static void gentables()
          * Field names
          */
         if (Dflag)
-            fprintf(dbgfile, "%ld:\t\t\t\t\t# Field names array\n", (long)pc);
+            fprintf(dbgfile, "%ld:\t\t\t\t\t# Fnums array\n", (long)pc);
         for (fd = rec->fields; fd; fd = fd->next) {
-            sp = inst_c_strconst(fd->name);
             if (Dflag)
-                fprintf(dbgfile, "\t%d\tS+%d\t\t\t#   %s\n", sp->len, sp->offset, fd->name);
-            outword(sp->len);
-            outword(sp->offset);
+                fprintf(dbgfile, "\t%d\t\t\t\t#   Fnum\n", fd->ftab_entry->field_id);
+            outword(fd->ftab_entry->field_id);
         }
 
         /*

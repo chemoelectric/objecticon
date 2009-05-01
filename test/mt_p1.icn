@@ -270,10 +270,12 @@ procedure test22()
    p(&main,&current)
 end
 
+record sometype(a,b,c)
+
 procedure test23()
    local p, t, obj, res
    p := Prog.get_global("child23",c) | stop("no child23 found")
-   t := Constructor.create_constructor("sometype", "a","b","c")
+   t := sometype
    obj := t(1,2,3)
    print{"subtype(obj)", subtype(obj)}
    pr_seq{"test23.obj", !obj}

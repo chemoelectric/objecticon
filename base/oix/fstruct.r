@@ -202,9 +202,11 @@ function{*} key(t)
       record: {
 	 abstract { return string }
 	 inline {
-	    C_integer i, sz = BlkLoc(t)->record.constructor->n_fields;
-	    for(i=0; i<sz; i++)
-	       suspend BlkLoc(t)->record.constructor->field_names[i];
+            struct b_constructor *c = BlkLoc(t)->record.constructor;
+            dptr fn = c->program->Fnames;
+	    C_integer i, sz = c->n_fields;
+	    for(i = 0; i < sz; i++)
+                suspend fn[c->fnums[i]];
 	    fail;
 	    }
 	 }
@@ -1040,20 +1042,6 @@ function{1} table(x)
       }
 end
 
-
-function{1} lang_Constructor_create_constructor(s, x[n])
-   if !cnv:string(s) then 
-      runerr(103,s)
-   inline {
-      int i;
-      struct b_constructor *bp;
-      for(i = 0; i < n; i++)
-         if (!is:string(x[i])) 
-             runerr(103, x[i]);
-      bp = dynrecord(&s, x, n);
-      return constructor(bp);
-    }
-end
 
 "keyof(s, x) - given a table or list s and a value x, generate the keys k such that s[k] === x"
 

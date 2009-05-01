@@ -94,7 +94,6 @@ word		div3		(word a,word b);
 int		doasgn		(dptr dp1,dptr dp2);
 int		doimage		(int c,int q);
 void		drunerr		(int n, double v);
-struct b_constructor * dynrecord	(dptr s, dptr fields, int n);
 void		env_int	(char *name,word *variable,int non_neg, uword limit);
 int		equiv		(dptr dp1,dptr dp2);
 int		err		(void);
@@ -451,7 +450,8 @@ dptr    lookup_global(dptr name, struct progstate *prog);
 int     lookup_class_field_by_name(struct b_class *class, dptr name);
 int     lookup_class_field_by_fnum(struct b_class *class, int fnum);
 int     lookup_record_field_by_name(struct b_constructor *recdef, dptr name);
-int     lookup_record_field(struct b_constructor *recdef, dptr num, struct inline_field_cache *ic);
+int     lookup_record_field_by_fnum(struct b_constructor *recdef, int fnum);
+int     lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_field_cache *ic);
 struct loc *lookup_global_loc(dptr name, struct progstate *prog);
 
 int	bfunc		(void);

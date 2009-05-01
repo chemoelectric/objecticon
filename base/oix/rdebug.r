@@ -351,10 +351,11 @@ int get_name(dptr dp1, dptr dp0)
                         break;
                     case T_Record: { 		/* record */
                         struct b_constructor *c = blkptr->record.constructor;
+                        dptr fn = c->program->Fnames;
                         i = varptr - blkptr->record.fields;
                         sprintf(sbuf,"record %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
                                 (long)blkptr->record.id,
-                                (int)StrLen(c->field_names[i]), StrLoc(c->field_names[i]));
+                                (int)StrLen(fn[c->fnums[i]]), StrLoc(fn[c->fnums[i]]));
                         i = strlen(sbuf);
                         MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                         StrLen(*dp0) = i;

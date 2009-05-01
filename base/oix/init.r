@@ -1126,17 +1126,16 @@ void resolve(struct progstate *p)
                 c = (struct b_constructor *)(p->Code + i);
                 BlkLoc(p->Globals[j]) = (union block *)c;
                 c->program = p;
-                c->field_names = (struct descrip *)(p->Code + (int)c->field_names);
+                c->fnums = (word *)(p->Code + (int)c->fnums);
                 if (c->field_locs)
                     c->field_locs = (struct loc *)(p->Code + (int)c->field_locs);
                 c->sorted_fields = (short *)(p->Code + (int)c->sorted_fields);
                 /*
-                 * Relocate the name and fields
+                 * Relocate the name and loc'ns
                  */
                 StrLoc(c->name) = p->Strcons + (uword)StrLoc(c->name);
-                for (i = 0; i < c->n_fields; i++) {
-                    StrLoc(c->field_names[i]) = p->Strcons + (uword)StrLoc(c->field_names[i]);
-                    if (c->field_locs)
+                if (c->field_locs) {
+                    for (i = 0; i < c->n_fields; i++) 
                         StrLoc(c->field_locs[i].fname) = p->Strcons + (uword)StrLoc(c->field_locs[i].fname);
                 }
                 break;
