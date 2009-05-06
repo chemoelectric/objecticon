@@ -311,7 +311,7 @@ void EVVariable(dptr dx, int eventcode)
       return;
       }
 
-   procname = &((&BlkLoc(*argp)->proc)->pname);
+   procname = &((&BlkLoc(*argp)->proc)->name);
    /*
     * call get_name, allocating out of the monitor if necessary.
     */

@@ -109,8 +109,8 @@ dptr dp1, dp2;
          /*
           * Collate on procedure name.
           */
-         return lexcmp(&(BlkLoc(*dp1)->proc.pname),
-            &(BlkLoc(*dp2)->proc.pname));
+         return lexcmp(&(BlkLoc(*dp1)->proc.name),
+            &(BlkLoc(*dp2)->proc.name));
 
       case T_Ucs:
          /*
@@ -209,8 +209,8 @@ dptr dp1, dp2;
               else
                   iresult = Equal;
               if (iresult == Equal) {
-                  return lexcmp(&(BlkLoc(*dp1)->methp.proc->pname),
-                                &(BlkLoc(*dp2)->methp.proc->pname));
+                  return lexcmp(&(BlkLoc(*dp1)->methp.proc->name),
+                                &(BlkLoc(*dp2)->methp.proc->name));
               }
           }
           return iresult;

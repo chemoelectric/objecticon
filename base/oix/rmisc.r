@@ -356,7 +356,7 @@ dptr dp;
 	    goto hashstring;
 
 	 case T_Proc:
-	    dp = &(BlkLoc(*dp)->proc.pname);
+	    dp = &(BlkLoc(*dp)->proc.name);
 	    goto hashstring;
 
          default:
@@ -657,7 +657,7 @@ int noimage;
                  fprintf(f, "procedure ");
              else
                  fprintf(f, "function ");
-             putstr(f, &BlkLoc(*dp)->proc.pname);
+             putstr(f, &BlkLoc(*dp)->proc.name);
          }
       }
       list: {
@@ -1248,11 +1248,11 @@ dptr dp1, dp2;
              else
                  type = "function ";
 
-             len = strlen(type) + StrLen(BlkLoc(source)->proc.pname);
+             len = strlen(type) + StrLen(BlkLoc(source)->proc.name);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
              alcstr(type, strlen(type));
-             alcstr(StrLoc(BlkLoc(source)->proc.pname), StrLen(BlkLoc(source)->proc.pname));
+             alcstr(StrLoc(BlkLoc(source)->proc.name), StrLen(BlkLoc(source)->proc.name));
          }
       }
 
@@ -1381,7 +1381,7 @@ dptr dp1, dp2;
                    type = "procedure ";
                else
                    type = "function ";
-               len = StrLen(obj_class->name) + StrLen(proc->pname) + strlen(sbuf) + strlen(type) + 14;
+               len = StrLen(obj_class->name) + StrLen(proc->name) + strlen(sbuf) + strlen(type) + 14;
                MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;
                /* No need to refresh pointers, everything is static data */
@@ -1389,7 +1389,7 @@ dptr dp1, dp2;
                alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
                alcstr(sbuf, strlen(sbuf));
                alcstr(type, strlen(type));
-               alcstr(StrLoc(proc->pname),StrLen(proc->pname));
+               alcstr(StrLoc(proc->name),StrLen(proc->name));
                alcstr(")", 1);
            }
        }

@@ -1228,7 +1228,7 @@ function{0,1} subtype(x)
       }
    body {
     type_case x of {
-         proc:    return BlkLoc(x)->proc.pname;
+         proc:    return BlkLoc(x)->proc.name;
          class:   return BlkLoc(x)->class.name;
          record:  return BlkLoc(x)->record.constructor->name; 
          object:  return BlkLoc(x)->object.class->name;

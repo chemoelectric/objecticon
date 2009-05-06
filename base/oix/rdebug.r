@@ -94,7 +94,7 @@ static void xtrace(nargs, arg, pline, pfile)
                 putc('.', stderr);
                 putstr(stderr, &bp->field->defining_class->program->Fnames[bp->field->fnum]);
             } else
-                putstr(stderr, &bp->pname);
+                putstr(stderr, &bp->name);
         } else
             outimage(stderr, arg, 0);
         arg++;
@@ -453,7 +453,7 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
     if (argp) {
         proc = (struct b_proc *)BlkLoc(*argp);
         showlevel(k_level);
-        putstr(stderr, &proc->pname);
+        putstr(stderr, &proc->name);
     } else {
         showlevel(k_level);
         fprintf(stderr, "?");
@@ -583,7 +583,7 @@ static void ttrace()
                     putc('.', stderr);
                     putstr(stderr, &bp->field->defining_class->program->Fnames[bp->field->fnum]);
                 } else
-                    putstr(stderr, &(bp->pname));
+                    putstr(stderr, &(bp->name));
             } else
                 outimage(stderr, xargp, 0);
             putc('(', stderr);
@@ -652,7 +652,7 @@ static void ttrace()
                     putc('.', stderr);
                     putstr(stderr, &bp->field->defining_class->program->Fnames[bp->field->fnum]);
                 } else
-                    putstr(stderr, &(bp->pname));
+                    putstr(stderr, &(bp->name));
             } else
                 outimage(stderr, xargp, 0);
             fprintf(stderr," ! ");
@@ -704,12 +704,12 @@ static void ttrace()
             if (abs((int)bp->nparam) >= 2) {
                 outimage(stderr, ++xargp, 0);
                 putc(' ', stderr);
-                putstr(stderr, &(bp->pname));
+                putstr(stderr, &(bp->name));
                 putc(' ', stderr);
             }
             else
               oneop:
-                putstr(stderr, &(bp->pname));
+                putstr(stderr, &(bp->name));
             outimage(stderr, ++xargp, 0);
             putc('}', stderr);
     }
@@ -870,7 +870,7 @@ void xdisp(struct pf_marker *fp,
         /*
          * Print procedure name.
          */
-        putstr(f, &(bp->pname));
+        putstr(f, &(bp->name));
         fprintf(f, " local identifiers:\n");
 
         /*

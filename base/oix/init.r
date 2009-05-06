@@ -1011,7 +1011,7 @@ void resolve(struct progstate *p)
                     fname = &p->Fnames[cf->fnum];
                     /* The field name should match the end of the procedure block's name */
                     if (strncmp(StrLoc(*fname),
-                                StrLoc(pp->pname) + StrLen(pp->pname) - StrLen(*fname),
+                                StrLoc(pp->name) + StrLen(pp->name) - StrLen(*fname),
                                 StrLen(*fname)))
                         ffatalerr("Native method name mismatch: %s", StrLoc(*fname));
 
@@ -1030,7 +1030,7 @@ void resolve(struct progstate *p)
                 /* Pointer back to the corresponding field */
                 pp->field = cf;
                 /* Relocate the name */
-                StrLoc(pp->pname) = p->Strcons + (uword)StrLoc(pp->pname);
+                StrLoc(pp->name) = p->Strcons + (uword)StrLoc(pp->name);
                 /* The entry point */
                 pp->entryp.icode = p->Code + pp->entryp.ioff;
                 /* The statics */
@@ -1162,7 +1162,7 @@ void resolve(struct progstate *p)
                     if (n < 0 || n >= pnsize)
                         ffatalerr("Builtin function index out of range: %d", n);
                     BlkLoc(p->Globals[j]) = (union block *)pntab[n].pblock;
-                    if (!eq(&p->Gnames[j], &pntab[n].pblock->pname))
+                    if (!eq(&p->Gnames[j], &pntab[n].pblock->name))
                         ffatalerr("Builtin function index name mismatch: %s", StrLoc(p->Gnames[j]));
                 }
                 else {
@@ -1178,7 +1178,7 @@ void resolve(struct progstate *p)
                     /*
                      * Relocate the address of the name of the procedure.
                      */
-                    StrLoc(pp->pname) = p->Strcons + (uword)StrLoc(pp->pname);
+                    StrLoc(pp->name) = p->Strcons + (uword)StrLoc(pp->name);
 
                     /* The statics */
                     if (pp->nstatic == 0)
@@ -1203,8 +1203,8 @@ void resolve(struct progstate *p)
                     /*
                      * Is it the main procedure?
                      */
-                    if (StrLen(pp->pname) == 4 &&
-                        !strncmp(StrLoc(pp->pname), "main", 4))
+                    if (StrLen(pp->name) == 4 &&
+                        !strncmp(StrLoc(pp->name), "main", 4))
                         p->MainProc = &p->Globals[j];
 
                     pp->program = p;

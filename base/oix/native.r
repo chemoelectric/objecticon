@@ -2711,7 +2711,7 @@ function{1} lang_Proc_get_name(c, flag)
             alcstr(StrLoc(*fname),StrLen(*fname));
             return result;
         } else
-            return proc->pname;
+            return proc->name;
      }
 end
 
@@ -2727,7 +2727,7 @@ function{0,1} lang_Proc_get_package(c, flag)
         } else {
             if (proc->package_id == 0)
                 fail;
-            extract_package(&proc->pname, &result);
+            extract_package(&proc->name, &result);
         }
         return result;
     }
@@ -2773,7 +2773,7 @@ function{0,1} lang_Proc_get_location(c, flag)
                 LitWhy("No global location data in icode");
                 fail;
             }
-            p = lookup_global_loc(&proc->pname, proc->program);
+            p = lookup_global_loc(&proc->name, proc->program);
             if (!p)
                 syserr("Procedure name not found in global table");
         }

@@ -109,7 +109,7 @@ struct b_proc {			/* procedure block */
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only
                                  *     exception is the deferred method stub, which can be pointed to by
                                  *     many different fields of course. */
-    struct descrip pname;	/*   procedure name (string qualifier) */
+    struct descrip name;	/*   procedure name (string qualifier) */
     dptr lnames;                /*   list of local names (qualifiers), null for a function */
     struct loc *llocs;	        /*   locations of local names, or null if not available */
 };
@@ -538,7 +538,7 @@ struct gf_smallmarker {		/* generator frame marker */
 /*
  * b_iproc blocks are used to statically initialize information about
  *  functions.	They are identical to b_proc blocks except for
- *  the pname field which is a sdescrip (simple/string descriptor) instead
+ *  the name field which is a sdescrip (simple/string descriptor) instead
  *  of a descrip.  This is done because unions cannot be initialized.
  */
 	
@@ -553,7 +553,7 @@ struct b_iproc {		/* procedure block */
     struct progstate *ip_program;/*   not set */
     word package_id;
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field */
-    struct sdescrip ip_pname;	/*   procedure name (string qualifier) */
+    struct sdescrip ip_name;	/*   procedure name (string qualifier) */
     dptr ip_lnames;	        /*   list of local names (qualifiers) */
     struct loc *ip_llocs;	/*   locations of local names */
 };
