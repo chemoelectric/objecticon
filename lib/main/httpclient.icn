@@ -533,6 +533,15 @@ class HttpClient(NetClient)
       }
    end
 
+   private host_match(a, b)
+      if a == b then
+         return
+      if b[1] == "." then
+         return (a == b[2:0]) | (a[0-:*b] == b)
+      else
+         return (a[-*b-1] == ".") & (a[0-:*b] == b)
+   end
+
    #
    # 
    private create_cookie_header()
@@ -543,7 +552,7 @@ class HttpClient(NetClient)
       now := Time()
       s := ""
       every e := !sort(cookies) do {
-         if host[0-:*e[1]] == e[1] then {
+         if host_match(host, e[1]) then {
             every f := !reverse(sort(e[2])) do {
                if match(f[1], path) then {
                   every c := (!f[2].sort())[2] do {
