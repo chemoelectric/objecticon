@@ -196,7 +196,6 @@ struct node {
 #define DoesFThru 020	     /* only "body" functions can "fall through" */
 
 struct implement {
-   struct implement *blink;   /* link for bucket chain in hash tables */
    char oper_typ;             /* 'K'=keyword, 'F'=function, 'O'=operator */
    char prefix[2];	      /* prefix to make start of name unique */
    char *name;		      /* function/operator/keyword name */

@@ -14,7 +14,6 @@ void	init_str	(void);
 char	*makename	(char *d,char *name,char *e);
 struct il_code *new_il	(int il_type, int size);
 void	new_sbuf	(struct str_buf *sbuf);
-void	nxt_pre		(char *pre, char *nxt, int n);
 int     isabsolute      (char *s);
 char	*pathfind	(char *path, char *name, char *extn);
 char    *pathelem       (char **s);

@@ -28,10 +28,10 @@ Deliberate Syntax Error
  * End of operating-system specific code.
  */
 
-static char *ostr = "ECPD:I:U:d:cir:st:h:";
+static char *ostr = "ECPD:I:U:cir:st:h:";
 
 static char *options =
-   "[-E] [-C] [-P] [-Dname[=[text]]] [-Uname] [-Ipath] [-dfile]\n    \
+   "[-E] [-C] [-P] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
 [-rpath] [-tname] [-x] [files]";
 
 /*
@@ -49,7 +49,6 @@ int def_fnd;
 
 int enable_out = 0;
 
-static FILE *curlst;
 static char *cur_src;
 
 extern int line_cntrl;
@@ -63,7 +62,6 @@ struct tdefnm {
    struct tdefnm *next;
 };
 
-static char *dbname = "rt.db";
 static int pp_only = 0;
 static char *opt_lst;
 static char **opt_args;
@@ -85,7 +83,6 @@ int main(argc, argv)
 {
     int c;
     int nopts;
-    struct fileparts *fp;
 
     /*
      * Initialize the string table and indicate that File must be treated
@@ -126,9 +123,6 @@ int main(argc, argv)
                 break;
             case 'P': /* do not produce #line directives in output */
                 line_cntrl = 0;
-                break;
-            case 'd': /* -d name: name of data base */
-                dbname = optarg;
                 break;
             case 'r':  /* -r path: location of include files */
                 refpath = optarg;
@@ -175,18 +169,6 @@ int main(argc, argv)
     if (optind == argc)
         show_usage();
 
-    /*
-     * Unless the input is only being preprocessed, set up the in-memory data
-     *  base (possibly loading it from a file).
-     */
-    if (!pp_only) {
-        fp = fparse(dbname);
-        if (*fp->ext == '\0')
-            dbname = salloc(makename(SourceDir, dbname, DBSuffix));
-        else if (!smatch(fp->ext, DBSuffix))
-            err2("bad data base name:", dbname);
-        loaddb(dbname);
-    }
 
     /*
      * Scan file name arguments, and translate the files.
@@ -303,23 +285,6 @@ static void add_tdef(name)
     td->name = spec_str(name);
     td->next = tdefnm_lst;
     tdefnm_lst = td;
-}
-
-/*
- * Add name of file to the output list, and if it contains "interesting"
- *  code, add it to the dependency list in the data base.
- */
-void put_c_fl(fname, keep)
-    char *fname;
-    int keep;
-{
-    struct fileparts *fp;
-
-    fp = fparse(fname);
-
-    fprintf(curlst, "%s\n", fp->name);
-    if (keep)
-        add_dpnd(src_lkup(cur_src), fname);
 }
 
 /*
