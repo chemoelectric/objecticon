@@ -6,7 +6,7 @@ include ../../Makedefs
 CWARN = -Wall
 
 ROBJS = rttparse.o rttmain.o rttlex.o rttsym.o rttnode.o rttout.o rttmisc.o\
-	rtdb.o rttdb.o rttinlin.o rttilc.o yyerror.o \
+	icontype.o rttdb.o rttinlin.o rttilc.o yyerror.o \
 	pout.o pchars.o  perr.o pmem.o  bldtok.o macro.o \
 	preproc.o evaluate.o files.o gettok.o pinit.o
 
@@ -19,7 +19,7 @@ OBJS = $(ROBJS) $(COBJS)
 all:	rtt
 
 clean:		
-	rm -f *.o rtt typespec
+	rm -f *.o rtt typespec y.output
 
 rtt:	$(OBJS)
 	$(CC) $(LDFLAGS) -o rtt $(OBJS) $(LIBS)
@@ -28,8 +28,6 @@ rtt:	$(OBJS)
 $(ROBJS): rtt.h rtt1.h rttproto.h preproc.h pproto.h ltoken.h ../h/mproto.h\
 	        ../h/define.h ../h/config.h ../h/typedefs.h \
 	        ../h/cstructs.h ../h/cpuconf.h
-
-rtdb.o: ../h/version.h icontype.h
 
 rttdb.o: ../h/version.h
 rttparse.o : ../h/gsupport.h ../h/config.h ../h/cstructs.h \
@@ -50,8 +48,8 @@ rttparse.o : ../h/gsupport.h ../h/config.h ../h/cstructs.h \
 #
 #
 ifeq ($(TYPES),Y)
-icontype.h: typespec.txt typespec
-	typespec <typespec.txt >icontype.h
+icontype.c: typespec.txt typespec
+	typespec <typespec.txt >icontype.c
 
 typespec: typespec.icn
 	oit -s typespec
