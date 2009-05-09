@@ -6,202 +6,30 @@
 #include "rtt.h"
 #include "../h/version.h"
 
-#define DHSize 47
-#define MaxLine 80
-
 /*
  * prototypes for static functions.
  */
-static void max_pre   (struct implement **tbl, char *pre);
-static int     set_impl  (struct token *name, struct implement **tbl,
+static int     set_impl  (struct token *name,
                            int num_impl, char *pre);
 static void set_prms  (struct implement *ptr);
-
-static struct implement *bhash[IHSize];	/* hash area for built-in func table */
-static struct implement *ohash[IHSize]; /* hash area for operator table */
-static struct implement *khash[IHSize];	/* hash area for keyword table */
-
-static struct srcfile *dhash[DHSize];	/* hash area for file dependencies */
+static void nxt_pre(char *pre, char *nxt, int n);
 
 static int num_fnc;		/* number of function in data base */
 static int num_op = 0;		/* number of operators in data base */
 static int num_key;		/* number of keywords in data base */
-static int num_src = 0;		/* number of source files in dependencies */
 
-static char fnc_pre[2];		/* next prefix available for functions */
-static char op_pre[2];		/* next prefix available for operators */
-static char key_pre[2];		/* next prefix available for keywords */
+static char fnc_pre[] = "00";		/* next prefix available for functions */
+static char op_pre[] = "00";		/* next prefix available for operators */
+static char key_pre[] = "00";		/* next prefix available for keywords */
 
 static long min_rs;		/* min result sequence of current operation */
 static long max_rs;		/* max result sequence of current operation */
 static int rsm_rs;		/* '+' at end of result sequencce of cur. oper. */
 
-static int newdb = 0;		/* flag: this is a new data base */
 struct token *comment;		/* comment associated with current operation */
 struct implement *cur_impl;	/* data base entry for current operation */
 
-/*
- * loaddb - load data base.
- */
-void loaddb(dbname)
-char *dbname;
-   {
-   int i;
 
-   /*
-    * Initialize internal data base.
-    */
-   for (i = 0; i < IHSize; i++) {
-       bhash[i] = NULL;   /* built-in function table */
-       ohash[i] = NULL;   /* operator table */
-       khash[i] = NULL;   /* keyword table */
-       }
-   for (i = 0; i < DHSize; i++)
-       dhash[i] = NULL;   /* dependency table */
-
-   /*
-    * Determine if this is a new data base or an existing one.
-    */
-   newdb = 1;
-
-   /*
-    * Determine the next available operation prefixes by finding the
-    *  maximum prefixes currently in use.
-    */
-   max_pre(bhash, fnc_pre);
-   max_pre(ohash, op_pre);
-   max_pre(khash, key_pre);
-   }
-
-/*
- * max_pre - find the maximum prefix in an implemetation table and set the
- *  prefix array to the next value.
- */
-static void max_pre(tbl, pre)
-struct implement **tbl;
-char *pre;
-   {
-   register struct implement *ptr;
-   unsigned hashval;
-   int empty = 1;
-   char dmy_pre[2];
-
-   pre[0] = '0';
-   pre[1] = '0';
-   for (hashval = 0; hashval < IHSize; ++hashval) 
-      for (ptr = tbl[hashval]; ptr != NULL; ptr = ptr->blink) {
-         empty = 0;
-         /*
-          * Determine if this prefix is larger than any found so far.
-          */
-         if (cmp_pre(ptr->prefix, pre) > 0) {
-            pre[0] = ptr->prefix[0];
-            pre[1] = ptr->prefix[1];
-            }
-         }
-   if (!empty)
-      nxt_pre(dmy_pre, pre, 2);
-   }
-
-
-/*
- * src_lkup - return pointer to dependency information for the given
- *   source file.
- */
-struct srcfile *src_lkup(srcname)
-char *srcname;
-   {
-   unsigned hashval;
-   struct srcfile *sfile;
-
-   /*
-    * See if the source file is already in the dependancy section of
-    *  the data base.
-    */
-   hashval = (unsigned int)(unsigned long)srcname % DHSize;
-   for (sfile = dhash[hashval]; sfile != NULL && sfile->name != srcname;
-        sfile = sfile->next)
-      ;
-
-   /*
-    * If an entry for the source file was not found, create one.
-    */
-   if (sfile == NULL) {
-      sfile = Alloc(struct srcfile);
-      sfile->name = srcname;
-      sfile->dependents = NULL;
-      sfile->next = dhash[hashval];
-      dhash[hashval] = sfile;
-      ++num_src;
-      }
-   return sfile;
-   }
-
-/*
- * add_dpnd - add the given source/dependency relation to the dependency
- *   table.
- */
-void add_dpnd(sfile, c_name)
-struct srcfile *sfile;
-char *c_name;
-   {
-   struct cfile *cf;
-
-   cf = Alloc(struct cfile);
-   cf->name = c_name;
-   cf->next = sfile->dependents;
-   sfile->dependents = cf;
-   }
-
-/*
- * clr_dpnd - delete all dependencies for the given source file.
- */
-void clr_dpnd(srcname)
-char *srcname;
-   {
-   src_lkup(srcname)->dependents = NULL;
-   }
-
-/*
- * dumpdb - write the updated data base.
- */
-void dumpdb(dbname)
-char *dbname;
-   {
-   fprintf(stdout, "rtt was compiled to only support the intepreter, use -x\n");
-   exit(EXIT_FAILURE);
-   }
-
-
-/*
- * full_lst - print a full list of all files produced by translations
- *  as represented in the dependencies section of the data base.
- */
-void full_lst(fname)
-char *fname;
-   {
-   unsigned hashval;
-   struct srcfile *sfile;
-   struct cfile *clst;
-   struct fileparts *fp;
-   FILE *f;
-
-   f = fopen(fname, "w");
-   if (f == NULL)
-      err2("cannot open ", fname);
-   for (hashval = 0; hashval < DHSize; ++hashval)
-      for (sfile = dhash[hashval]; sfile != NULL; sfile = sfile->next)
-         for (clst = sfile->dependents; clst != NULL; clst = clst->next) {
-            /*
-             * Remove the suffix from the name before printing.
-             */
-            fp = fparse(clst->name);
-
-            fprintf(f, "%s\n", fp->name);
-            }
-   if (fclose(f) != 0)
-      err2("cannot close ", fname);
-   }
 
 /*
  * impl_fnc - find or create implementation struct for function currently
@@ -215,7 +43,7 @@ struct token *name;
     *  new function update the number of them.
     */
    op_type = TokFunction;
-   num_fnc = set_impl(name, bhash, num_fnc, fnc_pre);
+   num_fnc = set_impl(name, num_fnc, fnc_pre);
    }
 
 /*
@@ -230,22 +58,20 @@ struct token *name;
     *  new keyword update the number of them.
     */
    op_type = Keyword;
-   num_key = set_impl(name, khash, num_key, key_pre);
+   num_key = set_impl(name, num_key, key_pre);
    }
 
 /*
  * set_impl - lookup a function or keyword in a hash table and update the
  *  entry, creating the entry if needed.
  */
-static int set_impl(name, tbl, num_impl, pre)
+static int set_impl(name, num_impl, pre)
 struct token *name;
-struct implement **tbl;
 int num_impl;
 char *pre;
    {
    register struct implement *ptr;
    char *name_s;
-   unsigned hashval;
 
    /*
     * we only need the operation name and not the entire token.
@@ -253,20 +79,12 @@ char *pre;
    name_s = name->image;
    free_t(name);
 
-   /*
-    * If the operation is not in the hash table, put it there.
-    */
-   if ((ptr = db_ilkup(name_s, tbl)) == NULL) {
-      ptr = Alloc(struct implement);
-      hashval = IHasher(name_s);
-      ptr->blink = tbl[hashval];
-      ptr->oper_typ = ((op_type == TokFunction) ? 'F' : 'K');
-      nxt_pre(ptr->prefix, pre, 2);    /* allocate a unique prefix */
-      ptr->name = name_s;
-      ptr->op = NULL;
-      tbl[hashval] = ptr;
-      ++num_impl;
-      }
+   ptr = Alloc(struct implement);
+   ptr->oper_typ = ((op_type == TokFunction) ? 'F' : 'K');
+   nxt_pre(ptr->prefix, pre, 2);    /* allocate a unique prefix */
+   ptr->name = name_s;
+   ptr->op = NULL;
+   ++num_impl;
 
    cur_impl = ptr;   /* put entry in global variable for later access */
 
@@ -340,7 +158,6 @@ struct token *name;
    register struct implement *ptr;
    char *op;
    int nargs;
-   unsigned hashval;
 
    /*
     * The operator symbol is needed but not the entire token.
@@ -358,24 +175,11 @@ struct token *name;
    else
       nargs = params->u.param_info.param_num + 1;
 
-   /*
-    * Locate the operator in the hash table; it must match both the
-    *  operator symbol and the number of arguments. If the operator is
-    *  not there, create an entry.
-    */
-   hashval = IHasher(op);
-   ptr = ohash[hashval];
-   while (ptr != NULL && (ptr->op != op || ptr->nargs != nargs))
-      ptr = ptr->blink;
-   if (ptr == NULL) {
-      ptr = Alloc(struct implement);
-      ptr->blink = ohash[hashval];
-      ptr->oper_typ = 'O';
-      nxt_pre(ptr->prefix, op_pre, 2);   /* allocate a unique prefix */
-      ptr->op = op;
-      ohash[hashval] = ptr;
-      ++num_op;
-      }
+   ptr = Alloc(struct implement);
+   ptr->oper_typ = 'O';
+   nxt_pre(ptr->prefix, op_pre, 2);   /* allocate a unique prefix */
+   ptr->op = op;
+   ++num_op;
 
    /* 
     * Put the entry and operation type in global variables for
@@ -425,3 +229,68 @@ int resume;
    rsm_rs = resume;
    }
 
+
+/*
+ * nxt_pre - assign next prefix. A prefix consists of n characters each from
+ *   the range 0-9 and a-z, at least one of which is a digit.
+ *
+ */
+void nxt_pre(char *pre, char *nxt, int n)
+   {
+   int i, num_dig;
+
+   if (nxt[0] == '\0') {
+      fprintf(stderr, "out of unique prefixes\n");
+      exit(EXIT_FAILURE);
+      }
+
+   /*
+    * copy the next prefix into the output string.
+    */
+   for (i = 0; i < n; ++i)
+      pre[i] = nxt[i];
+
+   /*
+    * Increment next prefix. First, determine how many digits there are in
+    *  the current prefix.
+    */
+   num_dig = 0;
+   for (i = 0; i < n; ++i)
+      if (isdigit(nxt[i]))
+         ++num_dig;
+
+   for (i = n - 1; i >= 0; --i) {
+      switch (nxt[i]) {
+         case '9':
+            /*
+             * If there is at least one other digit, increment to a letter.
+             *  Otherwise, start over at zero and continue to the previous
+             *  character in the prefix.
+             */
+            if (num_dig > 1) {
+               nxt[i] = 'a';
+               return;
+               }
+            else
+               nxt[i] = '0';
+            break;
+
+         case 'z':
+            /*
+             * Start over at zero and continue to previous character in the
+             *  prefix.
+             */
+            nxt[i] = '0';
+            ++num_dig;
+            break;
+         default:
+            ++nxt[i];
+            return;
+         }
+      }
+
+   /*
+    * Indicate that there are no more prefixes.
+    */
+   nxt[0] = '\0';
+   }
