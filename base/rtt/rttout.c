@@ -62,6 +62,9 @@ static void untend        (int indent);
 extern char *progname;
  
 int op_type = OrdFunc;  /* type of operation */
+char *op_name;
+char *op_sym;
+int fnc_ret;         /* RetInt, RetDbl, RetNoVal, or RetSig for current func */
 char lc_letter;         /* f = function, o = operator, k = keyword */
 char uc_letter;         /* F = function, O = operator, K = keyword */
 char prfx1;             /* 1st char of unique prefix for operation */
@@ -505,7 +508,6 @@ int indent;
     * Handle error conversion. Indicate that operation may fail because
     *  of error conversion and produce the necessary code.
     */
-   cur_impl->ret_flag |= DoesEFail;
    failure(indent, 1);
    prt_str("}", indent);
    ForceNl();
@@ -1117,7 +1119,6 @@ int indent;
     * Handle error conversion. Indicate that operation may fail because
     *  of error conversion and produce the necessary code.
     */
-   cur_impl->ret_flag |= DoesEFail;
    failure(indent + IndentInc, 1);
    prt_str("}", indent + IndentInc);
    ForceNl();
@@ -1186,7 +1187,6 @@ int brace;
             case Fail:
                if (op_type == OrdFunc)
                   errt1(t, "'fail' may not be used in an ordinary C function");
-               cur_impl->ret_flag |= DoesFail;
                failure(indent, brace);
 	       chkabsret(t, SomeType);  /* check preceding abstract return */
 	       return 0;
@@ -1194,7 +1194,6 @@ int brace;
 	       if (op_type == OrdFunc)
 		  errt1(t,
 		      "'errorfail' may not be used in an ordinary C function");
-	       cur_impl->ret_flag |= DoesEFail;
 	       failure(indent, brace);
 	       return 0;
             case Break:
@@ -1349,7 +1348,6 @@ int brace;
                    *  untend variables if necessary, and return a signal
                    *  if the function requires one.
                    */
-                  cur_impl->ret_flag |= DoesRet;
                   ForceNl();
                   if (!brace) {
                      prt_str("{", indent);
@@ -1374,7 +1372,6 @@ int brace;
                if (op_type == OrdFunc)
                   errt1(t, "'suspend' may not be used in an ordinary C function"
                      );
-               cur_impl->ret_flag |= DoesSusp; /* note suspension */
                ForceNl();
                if (!brace) {
                   prt_str("{", indent);
@@ -2771,7 +2768,6 @@ struct sym_entry *op_params; /* operation parameters or NULL */
        *  sometimes it is necessary to malloc() a tended array at run
        *  time. Produce code to check for this.
        */
-      cur_impl->ret_flag |= DoesEFail;  /* error conversion from allocation */
       prt_str("struct tend_desc *r_tendp;", IndentInc);
       ForceNl();
       prt_str("int r_n;\n", IndentInc);
@@ -3324,7 +3320,7 @@ struct node *n;
       }
 
    fnc_ret = RetSig;  /* interpreter routine always returns a signal */
-   name = cur_impl->name;
+   name = op_name;
 
    /*
     * Determine what letter is used to prefix the operation name.
@@ -3362,12 +3358,12 @@ struct node *n;
             ++line;
             break;
          case Operator:
-            if (strcmp(cur_impl->op,"\\") == 0)
+            if (strcmp(op_sym,"\\") == 0)
                fprintf(out_file, "OpBlock(%s, %d, \"%s\", 0)\n\n", name, nparms,
                   "\\\\");
             else
                fprintf(out_file, "OpBlock(%s, %d, \"%s\", 0)\n\n", name, nparms,
-                  cur_impl->op);
+                  op_sym);
             ++line;
          }
       }
@@ -3482,7 +3478,7 @@ struct node *n;
          s = n->tok->fname;
       fprintf(stderr, "%s: file %s, warning: ", progname, s);
       fprintf(stderr, "execution may fall off end of operation \"%s\"\n",
-          cur_impl->name);
+          op_name);
       }
    ForceNl();
    prt_str("}\n", IndentInc);
@@ -3503,7 +3499,7 @@ struct token *t;
    rslt_loc = "r_args[0]";  /* result location */
 
    fprintf(out_file, "\n");
-   fprintf(out_file, "int K%s(r_args)\n", cur_impl->name);
+   fprintf(out_file, "int K%s(r_args)\n", op_name);
    fprintf(out_file, "dptr r_args;");
    line += 2;
    ForceNl();

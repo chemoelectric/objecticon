@@ -108,13 +108,14 @@ struct init_tend {
 
 
 extern int op_type;                /* Function, Keyword, Operator, or OrdFunc */
+extern char *op_name;              /* Name of curr func/keyword/op */
+extern char *op_sym;               /* For an op, its symbol (eg ">=") */
 extern char lc_letter;             /* f = function, o = operator, k = keyword */
 extern char uc_letter;             /* F = function, O = operator, K = keyword */
 extern char prfx1;                 /* 1st char of unique prefix for operation */
 extern char prfx2;                 /* 2nd char of unique prefix for operation */
 extern char *fname;                /* current source file name */
 extern int line;                   /* current source line number */
-extern struct implement *cur_impl; /* data base entry for current operator */
 extern struct token *comment;      /* descriptive comment for current oper */
 extern int n_tmp_str;              /* total number of string buffers needed */
 extern int n_tmp_cset;             /* total number of cset buffers needed */
@@ -195,27 +196,6 @@ struct node {
 #define DoesEFail 010        /* fails through error conversion */
 #define DoesFThru 020	     /* only "body" functions can "fall through" */
 
-struct implement {
-   char oper_typ;             /* 'K'=keyword, 'F'=function, 'O'=operator */
-   char prefix[2];	      /* prefix to make start of name unique */
-   char *name;		      /* function/operator/keyword name */
-   char *op;		      /* operator symbol (operators only) */
-   int nargs;		      /* number of arguments operation requires */
-   int *arg_flgs;             /* array of arg flags: deref/underef, var len*/
-   long min_result;	      /* minimum result sequence length */
-   long max_result;	      /* maiximum result sequence length */
-   int resume;		      /* flag - resumption after last result */
-   int ret_flag;	      /* DoesRet, DoesFail, DoesSusp */
-   int use_rslt;              /* flag - explicitly uses result location */
-   char *comment;	      /* description of operation */
-   int ntnds;		      /* size of tnds array */
-   struct tend_var *tnds;     /* pointer to array of info about tended vars */
-   int nvars;                 /* size of vars array */
-   struct ord_var  *vars;     /* pointer to array of info about ordinary vars */
-   struct il_code *in_line;    /* inline version of the operation */
-   int iconc_flgs;	      /* flags for internal use by the compiler */
-   };
-
 /*
  * These codes are shared between the data base and rtt. They are defined
  *  here, though not all are used by the data base.
@@ -245,73 +225,6 @@ struct implement {
 #define RetNoVal 8  /* function returns no value */
 #define RetSig  16  /* function returns a signal */
 
-/*
- * tend_var contains information about a tended variable in the "declare {...}"
- *  action of an operation.
- */
-struct tend_var {
-   int var_type;           /* TndDesc, TndStr, or TndBlk */
-   struct il_c *init;      /* initial value from declaration */
-   char *blk_name;         /* TndBlk: struct name of block */
-   };
-
-/*
- * ord_var contains information about an ordinary variable in the
- *  "declare {...}" action of an operation.
- */
-struct ord_var {
-   char *name;        /* name of variable */
-   struct il_c *dcl;  /* declaration of variable (includes name) */
-   };
-
-/*
- * il_code has information about an action in an operation.
- */
-#define IL_If1     1
-#define IL_If2     2
-#define IL_Tcase1  3
-#define IL_Tcase2  4
-#define IL_Lcase   5
-#define IL_Err1    6
-#define IL_Err2    7
-#define IL_Lst     8
-#define IL_Const   9
-#define IL_Bang   10
-#define IL_And    11
-#define IL_Cnv1   12
-#define IL_Cnv2   13
-#define IL_Def1   14
-#define IL_Def2   15
-#define IL_Is     16
-#define IL_Var    17
-#define IL_Subscr 18
-#define IL_Block  19
-#define IL_Call   20
-#define IL_Abstr  21
-#define IL_VarTyp 22
-#define IL_Store  23
-#define IL_Compnt 24
-#define IL_TpAsgn 25
-#define IL_Union  26
-#define IL_Inter  27
-#define IL_New    28
-#define IL_IcnTyp 29
-#define IL_Acase  30
-
-#define CM_Fields -1
-
-union il_fld {
-   struct il_code *fld;
-   struct il_c *c_cd;
-   int *vect;
-   char *s;
-   word n;
-   };
-
-struct il_code {
-   int il_type;
-   union il_fld u[1];   /* actual number of fields varies with type */
-   };
 
 /*
  * The following manifest constants are used to describe types, conversions,
@@ -334,35 +247,7 @@ struct il_code {
 #define RetSVar  -14
 #define RetNone  -15
 
-/*
- * il_c describes a piece of C code.
- */
-#define ILC_Ref    1   /* nonmodifying reference to var. in sym. tab. */
-#define ILC_Mod    2   /* modifying reference to var. in sym. tab */
-#define ILC_Tend   3   /* tended var. local to inline block */
-#define ILC_SBuf   4   /* string buffer */
-#define ILC_CBuf   5   /* cset buffer */
-#define ILC_Ret    6   /* return statement */
-#define ILC_Susp   7   /* suspend statement */
-#define ILC_Fail   8   /* fail statement */
-#define ILC_Goto   9   /* goto */
-#define ILC_CGto  10   /* conditional goto */
-#define ILC_Lbl   11   /* label */
-#define ILC_LBrc  12   /* '{' */
-#define ILC_RBrc  13   /* '}' */
-#define ILC_Str   14   /* arbitrary string of code */
-#define ILC_EFail 15   /* errorfail statement */
 
-#define RsltIndx -1   /* symbol table index for "result" */
-
-struct il_c {
-   int il_c_type;
-   struct il_c *code[3];
-   word n;
-   char *s;
-   struct il_c *next;
-   };
-   
 /*
  * The parameter value of a run-time operation may be in one of several
  *  different locations depending on what conversions have been done to it.

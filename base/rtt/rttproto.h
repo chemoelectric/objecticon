@@ -4,7 +4,6 @@ struct node      *arith_nd (struct token *tok, struct node *p1,
                              struct node *ci_act, struct node *intgr,
                              struct node *i_act, struct node *dbl,
                              struct node *d_act);
-struct il_c      *bdy_prm   (int addr_of, int just_desc, struct sym_entry *sym, int may_mod);
 int               c_walk    (struct node *n, int indent, int brace);
 int               call_ret  (struct node *n);
 struct token     *chk_exct  (struct token *tok);
@@ -30,14 +29,11 @@ void           func_def  (struct node *dcltor);
 void           id_def    (struct node *dcltor, struct node *x);
 void           keepdir   (struct token *s);
 int               icn_typ   (struct node *n);
-struct il_c      *ilc_dcl   (struct node *tqual, struct node *dcltor,
-                              struct node *init);
 void           impl_fnc  (struct token *name);
 void           impl_key  (struct token *name);
 void           impl_op   (struct token *op_sym, struct token *name);
 void           init_lex  (void);
 void           init_sym  (void);
-struct il_c      *inlin_c   (struct node *n, int may_mod);
 void           in_line   (struct node *n);
 void           just_type (struct node *typ, int indent, int ilc);
 void           keyconst  (struct token *t);
@@ -54,7 +50,6 @@ struct node      *node3     (int id, struct token *tok, struct node *n1,
 struct node      *node4     (int id, struct token *tok, struct node *n1,
                               struct node *n2, struct node *n3,
                               struct node *n4);
-struct il_c      *parm_dcl  (int addr_of, struct sym_entry *sym);
 void	pop_cntxt	(void);
 void           pop_lvl   (void);
 void           prologue  (void);
@@ -64,7 +59,6 @@ void	push_cntxt	(int lvl_incr);
 void           push_lvl  (void);
 void           defout    (struct node *n);
 void           set_r_seq (long min, long max, int resume);
-struct il_c      *simpl_dcl (char *tqual, int addr_of, struct sym_entry *sym);
 void           spcl_dcls (struct sym_entry *op_params);
 void           strt_def  (void);
 void           sv_prmloc (struct parminfo *parminfo);
