@@ -17,24 +17,23 @@
 #include "../h/header.h"
 #include "../h/rmacros.h"
 
-int nstatics = 0;               /* Running count of static variables */
+static int nstatics = 0;               /* Running count of static variables */
 
 /*
  * Array sizes for various linker tables that can be expanded with realloc().
  */
-size_t maxcode	= 15000;        /* code space */
-size_t maxlabels	= 500;	        /* maximum num of labels/proc */
-size_t maxfnostack 	= 500;	        /* maximum num of invoke/apply sequence numbers */
-size_t nsize       = 1000;         /* ipc/line num. assoc. table */
-size_t fnmsize     = 10;           /* ipc/file name assoc. table */
+static size_t maxcode	= 15000;        /* code space */
+static size_t maxlabels	= 500;	        /* maximum num of labels/proc */
+static size_t nsize       = 1000;         /* ipc/line num. assoc. table */
+static size_t fnmsize     = 10;           /* ipc/file name assoc. table */
 
-struct ipc_fname *fnmtbl;	/* table associating ipc with file name */
-struct ipc_line *lntable;	/* table associating ipc with line number */
-struct ipc_fname *fnmfree;	/* free pointer for ipc/file name table */
-struct ipc_line *lnfree;	/* free pointer for ipc/line number table */
-word *labels;			/* label table */
-char *codeb;			/* generated code space */
-char *codep;			/* free pointer for code space */
+static struct ipc_fname *fnmtbl;	/* table associating ipc with file name */
+static struct ipc_line *lntable;	/* table associating ipc with line number */
+static struct ipc_fname *fnmfree;	/* free pointer for ipc/file name table */
+static struct ipc_line *lnfree;	/* free pointer for ipc/line number table */
+static word *labels;			/* label table */
+static char *codeb;			/* generated code space */
+static char *codep;			/* free pointer for code space */
 
 static char *curr_file,         /* Current file name from an Op_Filen */
             *last_fnmtbl_filen; /* Last file name entered into fnmtbl above */
@@ -63,7 +62,7 @@ static void	outblock	(char *addr,int count);
 static void	wordout		(word oword);
 static void	shortout	(short o);
 
-word pc = 0;		/* simulated program counter */
+static word pc = 0;		/* simulated program counter */
 
 #define outword(n)	wordout((word)(n))
 #define outchar(n)	charout((unsigned char)(n))
@@ -88,7 +87,7 @@ static void *expand_table(void * table,      /* table to be realloc()ed */
 static void unop(int op);
 
 #define INVALID "invalid"
-char *op_names[] = {
+static char *op_names[] = {
     /*   0 */         INVALID,                                    
     /*   1 */         "asgn",
     /*   2 */         "bang",
@@ -250,12 +249,12 @@ struct ipc_line {
     int line;           /* line number */
 };
 
-struct unref *first_unref, *unref_hash[128];
-struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
-int strconst_offset;
-struct centry *constblock_hash[128];
+static struct unref *first_unref, *unref_hash[128];
+static struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
+static int strconst_offset;
+static struct centry *constblock_hash[128];
 
-struct header hdr;
+static struct header hdr;
 
 static struct unref *get_unref(char *s)
 {
@@ -1256,7 +1255,7 @@ static void gencode()
 }
 
 
-void synch_file()
+static void synch_file()
 {
     if (loclevel == 0)
         return;
@@ -1276,7 +1275,7 @@ void synch_file()
     fnmfree++;
 }
 
-void synch_line()
+static void synch_line()
 {
     if (loclevel == 0)
         return;
@@ -2648,7 +2647,7 @@ void idump(s)		/* dump code region */
  * expand_table - realloc a table making it half again larger and zero the
  *   new part of the table.
  */
-void * expand_table(void * table,      /* table to be realloc()ed */
+static void * expand_table(void * table,      /* table to be realloc()ed */
                     void * tblfree,    /* reference to table free pointer if there is one */
                     size_t *size,      /* size of table */
                     int unit_size,      /* number of bytes in a unit of the table */
