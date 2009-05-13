@@ -12,6 +12,8 @@
 
 struct token *comment;		/* comment associated with current operation */
 
+struct sym_entry *ffirst, *flast;    /* symbols declared in this function */
+int op_generator;
 
 /*
  * impl_fnc - find or create implementation struct for function currently
@@ -26,6 +28,8 @@ struct token *name;
     */
    op_type = TokFunction;
    op_name = name->image;
+   op_generator = 0;
+   ffirst = flast = 0;
    free_t(name);
    }
 
@@ -42,6 +46,8 @@ struct token *name;
     */
    op_type = Keyword;
    op_name = name->image;
+   op_generator = 0;
+   ffirst = flast = 0;
    free_t(name);
    }
 
@@ -56,6 +62,8 @@ struct token *name;
    op_type = Operator;
    op_name = name->image;
    op_sym = op_sym0->image;
+   op_generator = 0;
+   ffirst = flast = 0;
    free_t(op_sym0);
    free_t(name);
    }

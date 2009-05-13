@@ -34,7 +34,7 @@
 
 %token <t> Runerr Is Cnv Def Exact Empty_type IconType Component Variable
 %token <t> Any_value Named_var Struct_var C_Integer Arith_case Str_Or_Ucs
-%token <t> C_Double C_String Tmp_string Tmp_cset Body End TokFunction Keyword
+%token <t> C_Double C_String Tmp_string Body End TokFunction Keyword
 %token <t> Operator Underef Declare Suspend Fail Inline Abstract Store
 %token <t> TokType New All_fields Then Type_case Of Len_case Constant Errorfail
 
@@ -596,7 +596,7 @@ labeled_stmt
 
 compound_stmt
    : '{'            opt_stmt_lst '}' {$$ = comp_nd($1, NULL, $2); free_t($3);}
-   | '{' local_dcls opt_stmt_lst '}' {$$ = comp_nd($1, $2,   $3); free_t($4);}
+   | '{' local_dcls opt_stmt_lst '}' {$$ = comp_nd($1, $2,   $3); d_lst_typ($2, 0); free_t($4);}
    ;
 
 dcltion_lst
@@ -682,7 +682,7 @@ jump_stmt
    | Continue ';'        {$$ = node0(PrimryNd, $1); free_t($2);}
    | Break ';'           {$$ = node0(PrimryNd, $1); free_t($2);}
    | Return ret_val ';'  {$$ = node1(PrefxNd, $1, $2); free_t($3);}
-   | Suspend ret_val ';' {$$ = node1(PrefxNd, $1, $2); free_t($3);}
+   | Suspend ret_val ';' {$$ = node1(PrefxNd, $1, $2); op_generator = 1; free_t($3);}
    | Fail ';'            {$$ = node0(PrimryNd, $1); free_t($2);}
    | Errorfail ';'       {$$ = node0(PrimryNd, $1); free_t($2);}
    ;
@@ -766,7 +766,6 @@ keyword
 
 key_const
    : StrLit
-   | CharConst
    | DblConst
    | IntConst
    ;
@@ -793,7 +792,6 @@ identifier
    | Store
    | Struct_var
    | Then
-   | Tmp_cset
    | Tmp_string
    | TokType
    | Underef
@@ -887,7 +885,7 @@ s_parm
 
 op_declare
    : {}
-   | Declare '{' local_dcls '}' {d_lst_typ($3); free_t($1); free_t($2);
+   | Declare '{' local_dcls '}' {d_lst_typ($3, 1); free_t($1); free_t($2);
                                  free_t($4);}
    ;
 
@@ -1019,7 +1017,6 @@ dest_type
    | C_String                {$$ = node0(PrimryNd, $1);}
    | Str_Or_Ucs              {$$ = node0(PrimryNd, $1);}
    | Tmp_string              {$$ = node0(PrimryNd, $1); ++n_tmp_str;}
-   | Tmp_cset                {$$ = node0(PrimryNd, $1); ++n_tmp_cset;}
    | '(' Exact ')' IconType  {$$ = node0(ExactCnv, chk_exct($4)); free_t($1);
                               free_t($2); free_t($3);}
    | '(' Exact ')' C_Integer {$$ = node0(ExactCnv, $4); free_t($1); free_t($2);

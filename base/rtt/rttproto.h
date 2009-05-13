@@ -15,7 +15,7 @@ char             *cnv_name  (int typcd, struct node *dflt, int *dflt_to_ptr);
 struct node      *comp_nd   (struct token *tok, struct node *dcls,
                               struct node *stmts);
 int               creat_obj (void);
-void           d_lst_typ (struct node *dcls);
+void           d_lst_typ (struct node *dcls, int in_declare);
 void           dclout    (struct node *n);
 struct node      *dest_node (struct token *tok);
 void           dst_alloc (struct node *cnv_typ, struct node *var);

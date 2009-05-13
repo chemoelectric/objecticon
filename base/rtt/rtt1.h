@@ -37,8 +37,10 @@ extern int nl;  /* flag: a new-line is needed in the output */
 
 extern int lex_state;      /* state of operator recognition */
 extern FILE *out_file;     /* output file */
+extern FILE *header_file;  /* output file */
 extern int def_fnd;        /* C input defines something concrete */
 extern char *inclname;     /* include file to be included by C compiler */
+extern char *cname, *hname; /* current C, H filenames */
 extern int enable_out;     /* enable output of C code */
 
 
@@ -67,7 +69,7 @@ struct sym_entry {
          char *blk_name;	/*   TndBlk: struct name of block */
          struct sym_entry *next;
          } tnd_var;
-      struct {			/* OtherDcl from "declare {...}": */
+      struct {			/* OtherDcl from "declare {...}" or in C code: */
          struct node *tqual;	/*   storage class, type qualifier list */
          struct node *dcltor;	/*   declarator */
          struct node *init;     /*   initial value from declaration */
@@ -79,10 +81,12 @@ struct sym_entry {
       } u;
    int t_indx;		/* index into tended array */
    int il_indx;		/* index used in in-line code */
+   int f_indx;          /* index in function sym list */
    int nest_lvl;	/* 0 - reserved word, 1 - global, >= 2 - local */
    int may_mod;         /* may be modified in particular piece of code */
    int ref_cnt;
    struct sym_entry *next;
+   struct sym_entry *fnext;
    };
 
 /*
@@ -110,6 +114,7 @@ struct init_tend {
 extern int op_type;                /* Function, Keyword, Operator, or OrdFunc */
 extern char *op_name;              /* Name of curr func/keyword/op */
 extern char *op_sym;               /* For an op, its symbol (eg ">=") */
+extern int op_generator;           /* Does this op generate a sequence */
 extern char lc_letter;             /* f = function, o = operator, k = keyword */
 extern char uc_letter;             /* F = function, O = operator, K = keyword */
 extern char prfx1;                 /* 1st char of unique prefix for operation */
@@ -118,7 +123,6 @@ extern char *fname;                /* current source file name */
 extern int line;                   /* current source line number */
 extern struct token *comment;      /* descriptive comment for current oper */
 extern int n_tmp_str;              /* total number of string buffers needed */
-extern int n_tmp_cset;             /* total number of cset buffers needed */
 extern int nxt_sbuf;               /* index of next string buffer */
 extern int nxt_cbuf;               /* index of next cset buffer */
 extern struct sym_entry *params;   /* current list of parameters */
@@ -128,6 +132,9 @@ extern char *str_rslt;             /* string "result" in string table */
 extern word lbl_num;               /* next unused label number */
 extern struct sym_entry *v_len;    /* symbol entry for size of varargs */
 extern int il_indx;                /* next index into data base symbol table */
+extern struct sym_entry *ffirst,
+                        *flast;    /* symbols declared in this function */
+extern int c_flag;                  /* -C */
 
 /*
  * lvl_entry keeps track of what is happening at a level of nested declarations.
@@ -208,6 +215,7 @@ struct node {
 #define VArgLen   6  /* identifier for length of variable parm list */
 #define RsltLoc   7  /* the special result location of an operation */
 #define Label     8  /* label */
+
 #define RtParm   16  /* undereferenced parameter of run-time routine */
 #define DrfPrm   32  /* dereferenced parameter of run-time routine */
 #define VarPrm   64  /* variable part of parm list (with RtParm or DrfPrm) */
@@ -240,7 +248,6 @@ struct node {
 #define TypEInt   -7
 #define TypECInt  -8
 #define TypTStr   -9
-#define TypTCset -10
 #define TypStrOrUcs -11
 #define RetDesc  -12
 #define RetNVar  -13

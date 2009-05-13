@@ -28,10 +28,10 @@ Deliberate Syntax Error
  * End of operating-system specific code.
  */
 
-static char *ostr = "ECPD:I:U:cir:st:h:";
+static char *ostr = "ECWPD:I:U:cir:st:h:";
 
 static char *options =
-   "[-E] [-C] [-P] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
+   "[-E] [-C] [-W] [-P] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
 [-rpath] [-tname] [-x] [files]";
 
 /*
@@ -42,10 +42,11 @@ static char *options =
  */
 
 char *progname = "rtt";
-FILE *out_file;
+FILE *out_file, *header_file;
+char *cname, *hname;
 char *inclname;
 int def_fnd;
-
+int c_flag = 0;
 
 int enable_out = 0;
 
@@ -119,6 +120,9 @@ int main(argc, argv)
                     whsp_image = NoComment;
                 break;
             case 'C':  /* retain spelling of white space, only effective with -E */
+                c_flag = 1;
+                break;
+            case 'W':  /* retain spelling of white space, only effective with -E */
                 whsp_image = FullImage;
                 break;
             case 'P': /* do not produce #line directives in output */
@@ -204,7 +208,6 @@ int main(argc, argv)
 void trans(src_file)
     char *src_file;
 {
-    char *cname;
     struct fileparts *fp;
     struct tdefnm *td;
 
@@ -232,6 +235,7 @@ void trans(src_file)
     if (strcmp(cur_src, "-") == 0) {
         source("-"); /* tell preprocessor to read standard input */
         cname = salloc(makename(TargetDir, "stdin", CSuffix));
+        hname = salloc(makename(TargetDir, "stdin", HSuffix));
     }
     else {
         fp = fparse(cur_src);
@@ -243,6 +247,7 @@ void trans(src_file)
 
         source(cur_src);  /* tell preprocessor to read source file */
         cname = salloc(makename(TargetDir, cur_src, CSuffix));
+        hname = salloc(makename(TargetDir, cur_src, HSuffix));
     }
 
     if (pp_only)
@@ -258,6 +263,12 @@ void trans(src_file)
             err2("cannot open output file ", cname);
         else
             addrmlst(cname, out_file);
+        if (c_flag) {
+            if ((header_file = fopen(hname, "w")) == NULL)
+                err2("cannot open header file ", hname);
+            else
+                addrmlst(hname, header_file);
+        }
         prologue(); /* output standard comments and preprocessor directives */
 
         yyparse();  /* translate the input */
@@ -269,6 +280,12 @@ void trans(src_file)
                 err2("cannot close ", cname);
             else	/* can't close it again if we remove it to due an error */
                 markrmlst(out_file);
+            if (c_flag) {
+                if (fclose(header_file) != 0)
+                    err2("cannot close ", hname);
+                else	/* can't close it again if we remove it to due an error */
+                    markrmlst(header_file);
+            }
         }
     }
 }

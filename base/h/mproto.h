@@ -2,10 +2,8 @@
  * mproto.h -- prototypes for functions common to several modules.
  */
 
-unsigned short *bitvect	(char *image, int len);
 void	clear_sbuf	(struct str_buf *sbuf);
 int	cmp_pre		(char *pre1, char *pre2);
-void	cset_init	(FILE *f, unsigned short *bv);
 struct fileparts *fparse(char *s);
 void	free_stbl	(void);
 void	id_comment	(FILE *f);

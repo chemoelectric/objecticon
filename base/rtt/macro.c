@@ -594,6 +594,11 @@ struct token *mac_tok()
    else
       t = copy_t(t);
 
+/*
+   if (me->rest_bdy)
+       printf("ITS %p\n",me->rest_bdy->t);
+*/
+
    if (me->rest_bdy != NULL && me->rest_bdy->t->tok_id == PpPaste) {
       /*
        * We have found token pasting. If there is a series of such operators,

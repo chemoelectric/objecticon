@@ -4,16 +4,8 @@
 /*
  * Prototypes.
  */
-unsigned short	*bitvect	(char *image,int len);
 static int escape               (char **str_ptr,int *nchars_ptr);
 
-/*
- * Within translators, csets are internally implemented as a bit vector made
- *  from an array of unsigned shorts. For portability, only the lower 16
- *  bits of these shorts are used.
- */
-#define BVectIndx(c) (((unsigned char)c >> 4) & 0xf)
-#define BitInShrt(c) (1 << ((unsigned char)c & 0xf))
 
 /*
  * Macros used by escape() to advance to the next character and to
@@ -84,51 +76,6 @@ int *nchars_ptr;
    }
 
 
-/*
- * bitvect - convert cset literal into a bitvector
- */
-unsigned short *bitvect(image, len)
-char *image;
-int len;
-   {
-   register int c;
-   register unsigned short *bv;
-   register int i;
-
-   bv = safe_alloc((unsigned int)((BVectSize)*sizeof(unsigned short)));
-   for (i = 0; i < BVectSize; ++i)
-       bv[i] = 0;
-   while (len-- > 0) {
-      c = *image++;
-      if (c == '\\')
-         c = escape(&image, &len);
-      bv[BVectIndx(c)] |= BitInShrt(c);
-      }
-   return bv;
-   }
-
-/*
- * cset_init - use bitvector for a cset to write an initialization for
- *    a cset block.
- */
-void cset_init(f, bv)
-FILE *f;
-unsigned short *bv;
-   {
-   int size;
-   unsigned short n;
-   register int j;
-
-   size = 0;
-   for (j = 0; j < BVectSize; ++j)
-      for (n = bv[j]; n != 0; n >>= 1)
-         size += n & 1;
-   fprintf(f, "{T_Cset, %d,\n", size);
-   fprintf(f, "   cset_display(0x%x", bv[0]);
-   for (j = 1; j < BVectSize; ++j)
-      fprintf(f, ",0x%x", bv[j]);
-   fprintf(f, ")\n    };\n");
-   }
 
 /*
  * prtstr - print an Icon string literal as a C string literal.

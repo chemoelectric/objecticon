@@ -10,8 +10,8 @@
  */
 static void add_def    (struct node *dcltor);
 static void add_s_prm  (struct token *ident, int param_num, int flags);
-static void dcl_typ    (struct node *dcl);
-static void dcltor_typ (struct node *dcltor, struct node *tqual);
+static void dcl_typ    (struct node *dcl, int in_declare);
+static void dcltor_typ (struct node *dcltor, struct node *tqual, int in_declare);
 
 word lbl_num = 0;                   /* next unused label number */
 struct lvl_entry *dcl_stk;          /* stack of declaration contexts */
@@ -142,6 +142,14 @@ int nest_lvl;
       sym->u.lbl_num = lbl_num++;
    sym->next = *symp;
    *symp = sym;
+    if (flast) {
+        sym->f_indx = flast->f_indx + 1;
+        flast->fnext = sym;
+        flast = sym;
+    } else {
+        ffirst = flast = sym;
+        sym->f_indx = 0;
+    }
 
    return sym;     /* success */
    }
@@ -193,7 +201,6 @@ void pop_cntxt()
    int new_lvl;
    register struct sym_entry *sym;
    struct lvl_entry *entry;
-
    /*
     * Move the top entry of the stack to the free list.
     */
@@ -242,6 +249,7 @@ int lvl;
 void free_sym(sym)
 struct sym_entry *sym;
    {
+#if 0
    if (--sym->ref_cnt <= 0) {
       switch (sym->id_type) {
          case TndDesc:
@@ -251,6 +259,7 @@ struct sym_entry *sym;
          }
       free((char *)sym);
       }
+#endif
    }
 
 /*
@@ -392,19 +401,24 @@ struct node *dcltor;
          case PrimryNd:
             t = dcltor->tok;
             if (t->tok_id == Identifier || t->tok_id == TypeDefName) {
+                /*printf("add tok %s kind %d\n",t->image,dcl_stk->kind_dcl);*/
+
                /*
                 * We have found the identifier, add an entry to the
                 *  symbol table based on information in the declaration
                 *  context.
                 */
-               if (dcl_stk->kind_dcl == IsTypedef)
+                if (dcl_stk->kind_dcl == IsTypedef)
                   tok_id = TypeDefName;
-               else
+                else
                   tok_id = Identifier;
                sym = sym_add(tok_id, t->image, OtherDcl, dcl_stk->nest_lvl);
                if (sym == NULL)
                   errt2(t, "redefinition of ", t->image);
-               }
+
+               /* Make the declaring node point back to the symbol entry */
+               dcltor->u[0].sym = sym;
+            }
             return;
          default:
             return;
@@ -501,6 +515,7 @@ struct node *head;
    if (dcl_stk->next->kind_dcl == IsTypedef)
       yyerror("a typedef may not be a function definition");
    add_def(head->u[1].child);
+   ffirst = flast = 0;
    }
 
 /*
@@ -586,14 +601,13 @@ struct token *ident;
  *   and initializer information to the symbol table entry for each
  *   identifier. Add the entry onto the list associated with the "declare"
  */
-void d_lst_typ(dcls)
-struct node *dcls;
+void d_lst_typ(struct node *dcls, int in_declare)
    {
    if (dcls == NULL)
       return;
    for ( ; dcls != NULL && dcls->nd_id == LstNd; dcls = dcls->u[0].child)
-      dcl_typ(dcls->u[1].child);
-   dcl_typ(dcls);
+       dcl_typ(dcls->u[1].child, in_declare);
+   dcl_typ(dcls, in_declare);
    }
 
 /*
@@ -602,8 +616,7 @@ struct node *dcls;
  *   symbol table entry of each identifier. Add the entry onto the list
  *   associated with the current "declare {...}".
  */
-static void dcl_typ(dcl)
-struct node *dcl;
+static void dcl_typ(struct node *dcl, int in_declare)
    {
    struct node *tqual;
    struct node *dcltors;
@@ -613,8 +626,8 @@ struct node *dcl;
    tqual = dcl->u[0].child;
    for (dcltors = dcl->u[1].child; dcltors->nd_id == CommaNd;
       dcltors = dcltors->u[0].child)
-         dcltor_typ(dcltors->u[1].child, tqual);
-   dcltor_typ(dcltors, tqual);
+       dcltor_typ(dcltors->u[1].child, tqual, in_declare);
+   dcltor_typ(dcltors, tqual, in_declare);
    }
 
 /*
@@ -623,9 +636,7 @@ struct node *dcl;
  *   information to its symbol table entry. Add the entry onto the list
  *   associated with the current "declare {...}".
  */
-static void dcltor_typ(dcltor, tqual)
-struct node *dcltor;
-struct node *tqual;
+static void dcltor_typ(struct node *dcltor, struct node *tqual, int in_declare)
    {
    struct sym_entry *sym;
    struct node *part_dcltor;
@@ -663,9 +674,12 @@ struct node *tqual;
                sym->u.declare_var.dcltor = dcltor;
                sym->u.declare_var.init = init;
                ++sym->ref_cnt;
-               sym->u.declare_var.next = decl_lst;
-               decl_lst = sym;
-               }
+               if (in_declare) {
+                   sym->u.declare_var.next = decl_lst;
+                   decl_lst = sym;
+                  }
+            } else 
+                errt2(t, t->image, ": invalid name for local identifier");
             return;
          default:
             return;
@@ -691,7 +705,6 @@ void tnd_strct(t)
 struct token *t;
    {
    char *strct_nm;
-
    strct_nm = t->image;
    free_t(t);
 
