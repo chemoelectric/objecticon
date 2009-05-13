@@ -183,7 +183,7 @@ int interp_x(int fsig,dptr cargp)
    register word *wd;
    register word *firstwd, *lastwd;
    word *oldsp;
-   int type, signal, args;
+   int type0, signal, args;
    extern int (*optab[])();
    extern int (*keytab[])();
    int lastev = E_Misc;
@@ -758,9 +758,9 @@ EntInterp;
             args = (int)GetWord;
 invokej:
 	    ExInterp;
-	    type = invoke(args, &carg, &nargs);
+	    type0 = invoke(args, &carg, &nargs);
 	    EntInterp;
-            switch (type) {
+            switch (type0) {
                 case Error: {
                    err_msg(0, xargp);
                    goto efail;
@@ -1246,9 +1246,9 @@ efail_noev:
 	       struct descrip tmp;
 	       register struct gf_marker *resgfp = gfp;
 
-	       type = (int)resgfp->gf_gentype;
+	       type0 = (int)resgfp->gf_gentype;
 
-	       if (type == G_Psusp) {
+	       if (type0 == G_Psusp) {
 		  argp = resgfp->gf_argp;
 		  if (k_trace) {	/* procedure tracing */
                      k_trace--;
@@ -1261,7 +1261,7 @@ efail_noev:
 	       efp = resgfp->gf_efp;
 	       gfp = resgfp->gf_gfp;
 	       rsp = (word *)resgfp - 1;
-	       if (type == G_Psusp) {
+	       if (type0 == G_Psusp) {
 		  pfp = resgfp->gf_pfp;
                   CHANGEPROGSTATE(pfp->pf_to);
 
@@ -1283,7 +1283,7 @@ efail_noev:
 		  ++k_level;		/* adjust procedure level */
 		  }
 
-	       switch (type) {
+	       switch (type0) {
 		  case G_Fsusp:
 		     ExInterp;
                      EVVal((word)0, e_fresum);

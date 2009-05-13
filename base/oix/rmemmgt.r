@@ -512,11 +512,11 @@ dptr dp;
 {
     register dptr dp, lastdesc;
     register char *block, *endblock = 0;
-    word type, fdesc;
+    word type0, fdesc;
     int numptr, numdesc;
     register union block **ptr1, **lastptr;
 
-    if (do_checkstack && DiffPtrsBytes(&type, sp) < 4096)
+    if (do_checkstack && DiffPtrsBytes(&type0, sp) < 4096)
         fatalerr(310, NULL);
 
     /*
@@ -525,8 +525,8 @@ dptr dp;
     block = (char *)*ptr;
 
     if (InRange(blkbase,block,blkfree)) {
-        type = BlkType(block);
-        if ((uword)type <= MaxType) {
+        type0 = BlkType(block);
+        if ((uword)type0 <= MaxType) {
             /*
              * The type is valid, which indicates that this block has not
              *  been marked.  Point endblock to the byte past the end
@@ -539,20 +539,20 @@ dptr dp;
          * Add ptr to the back chain for the block and point the
          *  block (via the type field) to ptr.
          */
-        *ptr = (union block *)type;
+        *ptr = (union block *)type0;
         BlkType(block) = (uword)ptr;
 
-        if ((uword)type <= MaxType) {
+        if ((uword)type0 <= MaxType) {
             /*
              * The block was not marked; process pointers and descriptors
              *  within the block.
              */
-            if ((fdesc = firstp[type]) > 0) {
+            if ((fdesc = firstp[type0]) > 0) {
                 /*
                  * The block contains pointers; mark each pointer.
                  */
                 ptr1 = (union block **)(block + fdesc);
-                numptr = ptrno[type];
+                numptr = ptrno[type0];
                 if (numptr > 0)
                     lastptr = ptr1 + numptr;
                 else
@@ -561,12 +561,12 @@ dptr dp;
                     if (*ptr1 != NULL)
                         markptr(ptr1);
             }
-            if ((fdesc = firstd[type]) > 0) {
+            if ((fdesc = firstd[type0]) > 0) {
                 /*
                  * The block contains descriptors; mark each descriptor.
                  */
                 dp = (dptr)(block + fdesc);
-                numdesc = descno[type];
+                numdesc = descno[type0];
                 if (numdesc > 0)
                     lastdesc = dp + numdesc;
                 else
@@ -624,8 +624,8 @@ dptr dp;
         /*
          * Get this block's type field; return if it is marked
          */
-        type = BlkType(block);
-        if ((uword)type > MaxType)
+        type0 = BlkType(block);
+        if ((uword)type0 > MaxType)
             return;
 
         /*
@@ -640,12 +640,12 @@ dptr dp;
 
         BlkType(block) |= F_Mark;			/* mark the block */
 
-        if ((fdesc = firstp[type]) > 0) {
+        if ((fdesc = firstp[type0]) > 0) {
             /*
              * The block contains pointers; mark each pointer.
              */
             ptr1 = (union block **)(block + fdesc);
-            numptr = ptrno[type];
+            numptr = ptrno[type0];
             if (numptr > 0)
                 lastptr = ptr1 + numptr;
             else
@@ -654,12 +654,12 @@ dptr dp;
                 if (*ptr1 != NULL)
                     markptr(ptr1);
         }
-        if ((fdesc = firstd[type]) > 0) {
+        if ((fdesc = firstd[type0]) > 0) {
             /*
              * The block contains descriptors; mark each descriptor.
              */
             dp = (dptr)(block + fdesc);
-            numdesc = descno[type];
+            numdesc = descno[type0];
             if (numdesc > 0)
                 lastdesc = dp + numdesc;
             else
@@ -760,7 +760,7 @@ struct b_coexpr *ce;
    register struct pf_marker *fp;
    register struct gf_marker *s_gfp;
    register struct ef_marker *s_efp;
-   word nargs, type = 0, gsize = 0;
+   word nargs, type0 = 0, gsize = 0;
 
    /* The stack pointer may be null if a gc has been triggerred between allocating the
     * coexpression block and the refresh block (alcrefresh) - see Ocreate in lmisc.r
@@ -771,8 +771,8 @@ struct b_coexpr *ce;
    fp = ce->es_pfp;
    s_gfp = ce->es_gfp;
    if (s_gfp != 0) {
-      type = s_gfp->gf_gentype;
-      if (type == G_Psusp)
+      type0 = s_gfp->gf_gentype;
+      if (type0 == G_Psusp)
          gsize = Wsizeof(*s_gfp);
       else
          gsize = Wsizeof(struct gf_smallmarker);
@@ -801,8 +801,8 @@ struct b_coexpr *ce;
          s_efp = fp->pf_efp;            /* Get saved efp out of frame */
          s_gfp = fp->pf_gfp;            /* Get save gfp */
          if (s_gfp != 0) {
-            type = s_gfp->gf_gentype;
-            if (type == G_Psusp)
+            type0 = s_gfp->gf_gentype;
+            if (type0 == G_Psusp)
                gsize = Wsizeof(*s_gfp);
             else
                gsize = Wsizeof(struct gf_smallmarker);
@@ -816,14 +816,14 @@ struct b_coexpr *ce;
                                         /* The sp has reached the lower end
                                             of a generator frame, process
                                             the frame.*/
-         if (type == G_Psusp)
+         if (type0 == G_Psusp)
             fp = s_gfp->gf_pfp;
          s_sp = (word *)s_gfp - 1;
          s_efp = s_gfp->gf_efp;
          s_gfp = s_gfp->gf_gfp;
          if (s_gfp != 0) {
-            type = s_gfp->gf_gentype;
-            if (type == G_Psusp)
+            type0 = s_gfp->gf_gentype;
+            if (type0 == G_Psusp)
                gsize = Wsizeof(*s_gfp);
             else
                gsize = Wsizeof(struct gf_smallmarker);
@@ -836,8 +836,8 @@ struct b_coexpr *ce;
                                                 process the frame. */
          s_gfp = s_efp->ef_gfp;         /* Restore gfp, */
          if (s_gfp != 0) {
-            type = s_gfp->gf_gentype;
-            if (type == G_Psusp)
+            type0 = s_gfp->gf_gentype;
+            if (type0 == G_Psusp)
                gsize = Wsizeof(*s_gfp);
             else
                gsize = Wsizeof(struct gf_smallmarker);
@@ -1136,7 +1136,7 @@ dptr dp;
 void blkdump()
    {
    register char *blk;
-   register word type, size, fdesc;
+   register word type0, size, fdesc;
    register dptr ndesc;
 
    fprintf(stderr,
@@ -1145,11 +1145,11 @@ void blkdump()
    fprintf(stderr,"  loc     type              size  contents\n");
 
    for (blk = blkbase; blk < blkfree; blk += BlkSize(blk)) {
-      type = BlkType(blk);
+      type0 = BlkType(blk);
       size = BlkSize(blk);
-      fprintf(stderr," %08lx   %15s   %4ld\n",(long)blk,blkname[type],
+      fprintf(stderr," %08lx   %15s   %4ld\n",(long)blk,blkname[type0],
          (long)size);
-      if ((fdesc = firstd[type]) > 0)
+      if ((fdesc = firstd[type0]) > 0)
          for (ndesc = (dptr)(blk + fdesc);
                ndesc < (dptr)(blk + size); ndesc++) {
             fprintf(stderr,"                                 ");

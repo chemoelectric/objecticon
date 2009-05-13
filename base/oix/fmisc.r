@@ -25,8 +25,8 @@ function{0,1} args(x,i)
       }
       class: {
             /* Class - lookup the constructor - also deduct 1 for the self param */
-          struct b_class *class = (struct b_class*)BlkLoc(x);
-          struct class_field *new_field = class->new_field;
+          struct b_class *class0 = (struct b_class*)BlkLoc(x);
+          struct class_field *new_field = class0->new_field;
           if (new_field) {
               int i = ((struct b_proc *)BlkLoc(*new_field->field_descriptor))->nparam;
               return C_integer i < 0 ? i + 1 : i - 1;

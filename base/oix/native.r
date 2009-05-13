@@ -651,54 +651,54 @@ end
 
 function{1} lang_Class_get_name(c)
     body {
-        struct b_class *class;
-        if (!(class = get_class_for(&c)))
+        struct b_class *class0;
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        return class->name;
+        return class0->name;
     }
 end
 
 function{1} lang_Class_get_class(c)
     body {
-        struct b_class *class;
-        if (!(class = get_class_for(&c)))
+        struct b_class *class0;
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        return class(class);
+        return class(class0);
     }
 end
 
 function{0,1} lang_Class_get_package(c)
     body {
-        struct b_class *class;
-        if (!(class = get_class_for(&c)))
+        struct b_class *class0;
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        if (class->package_id == 0)
+        if (class0->package_id == 0)
             fail;
-        extract_package(&class->name, &result);
+        extract_package(&class0->name, &result);
         return result;
     }
 end
 
 function{1} lang_Class_get_program(c)
     body {
-        struct b_class *class;
-        if (!(class = get_class_for(&c)))
+        struct b_class *class0;
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        return coexpr(class->program->K_main);
+        return coexpr(class0->program->K_main);
     }
 end
 
 function{0,1} lang_Class_get_location(c)
     body {
-        struct b_class *class;
+        struct b_class *class0;
         struct loc *p;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        if (class->program->Glocs == class->program->Eglocs) {
+        if (class0->program->Glocs == class0->program->Eglocs) {
             LitWhy("No global location data in icode");
             fail;
         }
-        p = lookup_global_loc(&class->name, class->program);
+        p = lookup_global_loc(&class0->name, class0->program);
         if (!p)
             syserr("Class name not found in global table");
         suspend p->fname;
@@ -708,24 +708,24 @@ end
 
 function{*} lang_Class_get_supers(c)
     body {
-        struct b_class *class;
+        struct b_class *class0;
         word i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        for (i = 0; i < class->n_supers; ++i)
-            suspend class(class->supers[i]);
+        for (i = 0; i < class0->n_supers; ++i)
+            suspend class(class0->supers[i]);
         fail;
     }
 end
 
 function{*} lang_Class_get_implemented_classes(c)
     body {
-        struct b_class *class;
+        struct b_class *class0;
         word i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        for (i = 0; i < class->n_implemented_classes; ++i)
-            suspend class(class->implemented_classes[i]);
+        for (i = 0; i < class0->n_implemented_classes; ++i)
+            suspend class(class0->implemented_classes[i]);
         fail;
     }
 end
@@ -734,10 +734,10 @@ function{0,1} lang_Class_implements(c, target)
    if !is:class(target) then
        runerr(603, target)
     body {
-        struct b_class *class;
-        if (!(class = get_class_for(&c)))
+        struct b_class *class0;
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        if (class_is(class, &BlkLoc(target)->class))
+        if (class_is(class0, &BlkLoc(target)->class))
             return target;
         else
             fail;
@@ -788,35 +788,35 @@ end
 
 function{1} lang_Class_get_field_flags(c, field)
    body {
-        struct b_class *class;
+        struct b_class *class0;
         int i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
         CheckField(field);
-        i = lookup_class_field(class, &field, 0);
+        i = lookup_class_field(class0, &field, 0);
         if (i < 0)
             fail;
-        return C_integer class->fields[i]->flags;
+        return C_integer class0->fields[i]->flags;
      }
 end
 
 function{1} lang_Class_get_class_flags(c)
    body {
-        struct b_class *class;
-        if (!(class = get_class_for(&c)))
+        struct b_class *class0;
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        return C_integer class->flags;
+        return C_integer class0->flags;
      }
 end
 
 function{0,1} lang_Class_get_field_index(c, field)
    body {
-        struct b_class *class;
+        struct b_class *class0;
         int i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
         CheckField(field);
-        i = lookup_class_field(class, &field, 0);
+        i = lookup_class_field(class0, &field, 0);
         if (i < 0)
             fail;
         return C_integer i + 1;
@@ -825,36 +825,36 @@ end
 
 function{0,1} lang_Class_get_field_name(c, field)
    body {
-        struct b_class *class;
+        struct b_class *class0;
         int i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
         CheckField(field);
-        i = lookup_class_field(class, &field, 0);
+        i = lookup_class_field(class0, &field, 0);
         if (i < 0)
             fail;
-        return class->program->Fnames[class->fields[i]->fnum];
+        return class0->program->Fnames[class0->fields[i]->fnum];
      }
 end
 
 function{0,1} lang_Class_get_field_location(c, field)
    body {
-        struct b_class *class;
+        struct b_class *class0;
         struct loc *loc;
         int i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
         CheckField(field);
-        if (class->program->ClassFieldLocs == class->program->EClassFieldLocs) {
+        if (class0->program->ClassFieldLocs == class0->program->EClassFieldLocs) {
             LitWhy("No field location data in icode");
             fail;
         }
-        i = lookup_class_field(class, &field, 0);
+        i = lookup_class_field(class0, &field, 0);
         if (i < 0) {
             LitWhy("Unknown field");
             fail;
         }
-        loc = &class->program->ClassFieldLocs[class->fields[i] - class->program->ClassFields];
+        loc = &class0->program->ClassFieldLocs[class0->fields[i] - class0->program->ClassFields];
         suspend loc->fname;
         return C_integer loc->line;
      }
@@ -862,84 +862,84 @@ end
 
 function{0,1} lang_Class_get_field_defining_class(c, field)
    body {
-        struct b_class *class;
+        struct b_class *class0;
         int i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
         CheckField(field);
-        i = lookup_class_field(class, &field, 0);
+        i = lookup_class_field(class0, &field, 0);
         if (i < 0)
             fail;
-        return class(class->fields[i]->defining_class);
+        return class(class0->fields[i]->defining_class);
      }
 end
 
 function{1} lang_Class_get_n_fields(c)
    body {
-        struct b_class *class;
-        if (!(class = get_class_for(&c)))
+        struct b_class *class0;
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        return C_integer class->n_instance_fields + class->n_class_fields;
+        return C_integer class0->n_instance_fields + class0->n_class_fields;
      }
 end
 
 function{1} lang_Class_get_n_class_fields(c)
    body {
-        struct b_class *class;
-        if (!(class = get_class_for(&c)))
+        struct b_class *class0;
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        return C_integer class->n_class_fields;
+        return C_integer class0->n_class_fields;
      }
 end
 
 function{1} lang_Class_get_n_instance_fields(c)
    body {
-        struct b_class *class;
-        if (!(class = get_class_for(&c)))
+        struct b_class *class0;
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        return C_integer class->n_instance_fields;
+        return C_integer class0->n_instance_fields;
      }
 end
 
 function{*} lang_Class_get_field_names(c)
     body {
-        struct b_class *class;
+        struct b_class *class0;
         dptr fn;
         word i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        fn = class->program->Fnames;
-        for (i = 0; i < class->n_instance_fields + class->n_class_fields; ++i)
-            suspend fn[class->fields[i]->fnum];
+        fn = class0->program->Fnames;
+        for (i = 0; i < class0->n_instance_fields + class0->n_class_fields; ++i)
+            suspend fn[class0->fields[i]->fnum];
         fail;
     }
 end
 
 function{*} lang_Class_get_instance_field_names(c)
     body {
-        struct b_class *class;
+        struct b_class *class0;
         dptr fn;
         word i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        fn = class->program->Fnames;
-        for (i = 0; i < class->n_instance_fields; ++i)
-            suspend fn[class->fields[i]->fnum];
+        fn = class0->program->Fnames;
+        for (i = 0; i < class0->n_instance_fields; ++i)
+            suspend fn[class0->fields[i]->fnum];
         fail;
     }
 end
 
 function{*} lang_Class_get_class_field_names(c)
     body {
-        struct b_class *class;
+        struct b_class *class0;
         dptr fn;
         word i;
-        if (!(class = get_class_for(&c)))
+        if (!(class0 = get_class_for(&c)))
             runerr(0);
-        fn = class->program->Fnames;
-        for (i = class->n_instance_fields; 
-             i < class->n_instance_fields + class->n_class_fields; ++i)
-            suspend fn[class->fields[i]->fnum];
+        fn = class0->program->Fnames;
+        for (i = class0->n_instance_fields; 
+             i < class0->n_instance_fields + class0->n_class_fields; ++i)
+            suspend fn[class0->fields[i]->fnum];
         fail;
     }
 end
@@ -985,16 +985,16 @@ end
 
 static struct b_proc *clone_b_proc(struct b_proc *bp)
 {
-    struct b_proc *new;
-    MemProtect(new = malloc(sizeof(struct b_proc)));
-    memcpy(new, bp, sizeof(struct b_proc));
-    return new;
+    struct b_proc *new0;
+    MemProtect(new0 = malloc(sizeof(struct b_proc)));
+    memcpy(new0, bp, sizeof(struct b_proc));
+    return new0;
 }
 
 function{1} lang_Class_set_method(field, pr)
    body {
         struct b_proc *caller_proc, *new_proc;
-        struct b_class *class;
+        struct b_class *class0;
         struct class_field *cf;
         int i;
 
@@ -1005,14 +1005,14 @@ function{1} lang_Class_set_method(field, pr)
         caller_proc = CallerProc;
         if (!caller_proc->field)
             runerr(616);
-        class = caller_proc->field->defining_class;
+        class0 = caller_proc->field->defining_class;
 
-        i = lookup_class_field(class, &field, 0);
+        i = lookup_class_field(class0, &field, 0);
         if (i < 0)
             runerr(207, field);
-        cf = class->fields[i];
+        cf = class0->fields[i];
 
-        if (cf->defining_class != class)
+        if (cf->defining_class != class0)
             runerr(616);
 
         if (!(cf->flags & M_Method))
@@ -1033,19 +1033,19 @@ function{1} lang_Class_set_method(field, pr)
    }
 end
 
-static struct b_proc *try_load(void *handle, struct b_class *class,  struct class_field *cf)
+static struct b_proc *try_load(void *handle, struct b_class *class0,  struct class_field *cf)
 {
     word i;
     char *fq, *p, *t;
     struct b_proc *blk;
     dptr fname;
 
-    fname = &class->program->Fnames[cf->fnum];
-    MemProtect(fq = malloc(StrLen(class->name) + StrLen(*fname) + 3));
+    fname = &class0->program->Fnames[cf->fnum];
+    MemProtect(fq = malloc(StrLen(class0->name) + StrLen(*fname) + 3));
     p = fq;
     *p++ = 'B';
-    t = StrLoc(class->name);
-    for (i = 0; i < StrLen(class->name); ++i)
+    t = StrLoc(class0->name);
+    for (i = 0; i < StrLen(class0->name); ++i)
         *p++ = (t[i] == '.') ? '_' : t[i];
     *p++ = '_';
     strncpy(p, StrLoc(*fname), StrLen(*fname));
@@ -1073,14 +1073,14 @@ function{1} lang_Class_load_library(lib)
       runerr(103, lib)
    body {
         struct b_proc *caller_proc;
-        struct b_class *class;
+        struct b_class *class0;
         word i;
         void *handle;
 
         caller_proc = CallerProc;
         if (!caller_proc->field)
             runerr(616);
-        class = caller_proc->field->defining_class;
+        class0 = caller_proc->field->defining_class;
 
         handle = dlopen(lib, RTLD_LAZY);
         if (!handle) {
@@ -1088,12 +1088,12 @@ function{1} lang_Class_load_library(lib)
             fail;
         }
 
-        for (i = 0; i < class->n_instance_fields + class->n_class_fields; ++i) {
-            struct class_field *cf = class->fields[i];
-            if ((cf->defining_class == class) &&
+        for (i = 0; i < class0->n_instance_fields + class0->n_class_fields; ++i) {
+            struct class_field *cf = class0->fields[i];
+            if ((cf->defining_class == class0) &&
                 (cf->flags & M_Method) &&
                 BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
-                struct b_proc *bp = try_load(handle, class, cf);
+                struct b_proc *bp = try_load(handle, class0, cf);
                 if (bp) {
                     bp = clone_b_proc(bp);
                     BlkLoc(*cf->field_descriptor) = (union block *)bp;
@@ -1133,9 +1133,9 @@ function{1} lang_Class_create_raw(c)
        runerr(603, c)
     body {
         struct b_object *obj;
-        struct b_class *class = &BlkLoc(c)->class;
-        ensure_initialized(class);
-        MemProtect(obj = alcobject(class));
+        struct b_class *class0 = &BlkLoc(c)->class;
+        ensure_initialized(class0);
+        MemProtect(obj = alcobject(class0));
         obj->init_state = Initializing;
         return object(obj);
     }
@@ -1154,8 +1154,8 @@ function{1} lang_Class_ensure_initialized(c)
    if !is:class(c) then
        runerr(603, c)
     body {
-        struct b_class *class = &BlkLoc(c)->class;
-        ensure_initialized(class);
+        struct b_class *class0 = &BlkLoc(c)->class;
+        ensure_initialized(class0);
         return c;
    }
 end
@@ -2408,41 +2408,41 @@ end
 
 function{1} lang_Constructor_get_name(c)
     body {
-        struct b_constructor *constructor;
-        if (!(constructor = get_constructor_for(&c)))
+        struct b_constructor *constructor0;
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
-        return constructor->name;
+        return constructor0->name;
     }
 end
 
 function{1} lang_Constructor_get_constructor(c)
     body {
-        struct b_constructor *constructor;
-        if (!(constructor = get_constructor_for(&c)))
+        struct b_constructor *constructor0;
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
-        return constructor(constructor);
+        return constructor(constructor0);
     }
 end
 
 function{0,1} lang_Constructor_get_package(c)
     body {
-        struct b_constructor *constructor;
-        if (!(constructor = get_constructor_for(&c)))
+        struct b_constructor *constructor0;
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
-        if (constructor->package_id == 0)
+        if (constructor0->package_id == 0)
             fail;
-        extract_package(&constructor->name, &result);
+        extract_package(&constructor0->name, &result);
         return result;
     }
 end
 
 function{1} lang_Constructor_get_program(c)
     body {
-        struct b_constructor *constructor;
+        struct b_constructor *constructor0;
         struct progstate *prog;
-        if (!(constructor = get_constructor_for(&c)))
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
-        prog = constructor->program;
+        prog = constructor0->program;
         if (!prog)
             fail;
         return coexpr(prog->K_main);
@@ -2451,15 +2451,15 @@ end
 
 function{0,1} lang_Constructor_get_location(c)
     body {
-        struct b_constructor *constructor;
+        struct b_constructor *constructor0;
         struct loc *p;
-        if (!(constructor = get_constructor_for(&c)))
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
-        if (constructor->program->Glocs == constructor->program->Eglocs) {
+        if (constructor0->program->Glocs == constructor0->program->Eglocs) {
             LitWhy("No global location data in icode");
             fail;
         }
-        p = lookup_global_loc(&constructor->name, constructor->program);
+        p = lookup_global_loc(&constructor0->name, constructor0->program);
         if (!p)
             syserr("Constructor name not found in global table");
         suspend p->fname;
@@ -2469,35 +2469,35 @@ end
 
 function{*} lang_Constructor_get_field_names(c)
     body {
-        struct b_constructor *constructor;
+        struct b_constructor *constructor0;
         dptr fn;
         word i;
-        if (!(constructor = get_constructor_for(&c)))
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
-        fn = constructor->program->Fnames;
-        for (i = 0; i < constructor->n_fields; ++i)
-            suspend fn[constructor->fnums[i]];
+        fn = constructor0->program->Fnames;
+        for (i = 0; i < constructor0->n_fields; ++i)
+            suspend fn[constructor0->fnums[i]];
         fail;
     }
 end
 
 function{1} lang_Constructor_get_n_fields(c)
    body {
-        struct b_constructor *constructor;
-        if (!(constructor = get_constructor_for(&c)))
+        struct b_constructor *constructor0;
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
-        return C_integer constructor->n_fields;
+        return C_integer constructor0->n_fields;
      }
 end
 
 function{0,1} lang_Constructor_get_field_index(c, field)
    body {
-        struct b_constructor *constructor;
+        struct b_constructor *constructor0;
         int i;
-        if (!(constructor = get_constructor_for(&c)))
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
         CheckField(field);
-        i = lookup_record_field(constructor, &field, 0);
+        i = lookup_record_field(constructor0, &field, 0);
         if (i < 0)
             fail;
         return C_integer i + 1;
@@ -2506,36 +2506,36 @@ end
 
 function{0,1} lang_Constructor_get_field_location(c, field)
    body {
-        struct b_constructor *constructor;
+        struct b_constructor *constructor0;
         int i;
-        if (!(constructor = get_constructor_for(&c)))
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
         CheckField(field);
-        if (!constructor->field_locs) {
+        if (!constructor0->field_locs) {
             LitWhy("No constructor field location data in icode");
             fail;
         }
-        i = lookup_record_field(constructor, &field, 0);
+        i = lookup_record_field(constructor0, &field, 0);
         if (i < 0) {
             LitWhy("Unknown field");
             fail;
         }
-        suspend constructor->field_locs[i].fname;
-        return C_integer constructor->field_locs[i].line;
+        suspend constructor0->field_locs[i].fname;
+        return C_integer constructor0->field_locs[i].line;
      }
 end
 
 function{0,1} lang_Constructor_get_field_name(c, field)
    body {
-        struct b_constructor *constructor;
+        struct b_constructor *constructor0;
         int i;
-        if (!(constructor = get_constructor_for(&c)))
+        if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
         CheckField(field);
-        i = lookup_record_field(constructor, &field, 0);
+        i = lookup_record_field(constructor0, &field, 0);
         if (i < 0)
             fail;
-        return constructor->program->Fnames[constructor->fnums[i]];
+        return constructor0->program->Fnames[constructor0->fnums[i]];
      }
 end
 
@@ -2572,69 +2572,69 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
 
 function{1} lang_Proc_get_n_locals(c)
    body {
-        struct b_proc *proc;
-        if (!(proc = get_proc_for(&c)))
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-       if (!proc->program)
+       if (!proc0->program)
             fail;
-        return C_integer abs(proc->nparam) + proc->ndynam + proc->nstatic;
+        return C_integer abs(proc0->nparam) + proc0->ndynam + proc0->nstatic;
      }
 end
 
 function{1} lang_Proc_get_n_arguments(c)
    body {
-      struct b_proc *proc;
-      if (!(proc = get_proc_for(&c)))
+      struct b_proc *proc0;
+      if (!(proc0 = get_proc_for(&c)))
           runerr(0);
-      return C_integer proc->nparam;
+      return C_integer proc0->nparam;
    }
 end
 
 function{1} lang_Proc_get_n_dynamics(c)
    body {
-       struct b_proc *proc;
-       if (!(proc = get_proc_for(&c)))
+       struct b_proc *proc0;
+       if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-       if (!proc->program)
+       if (!proc0->program)
             fail;
-       return C_integer proc->ndynam;
+       return C_integer proc0->ndynam;
      }
 end
 
 function{1} lang_Proc_get_n_statics(c)
    body {
-       struct b_proc *proc;
-       if (!(proc = get_proc_for(&c)))
+       struct b_proc *proc0;
+       if (!(proc0 = get_proc_for(&c)))
           runerr(0);
-       if (!proc->program)
+       if (!proc0->program)
             fail;
-        return C_integer proc->nstatic;
+        return C_integer proc0->nstatic;
      }
 end
 
 function{*} lang_Proc_get_local_names(c)
    body {
-        struct b_proc *proc;
+        struct b_proc *proc0;
         word i, nf;
-        if (!(proc = get_proc_for(&c)))
+        if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-        if (!proc->program)
+        if (!proc0->program)
             fail;
-        nf = abs(proc->nparam) + proc->ndynam + proc->nstatic;
+        nf = abs(proc0->nparam) + proc0->ndynam + proc0->nstatic;
         for (i = 0; i < nf; ++i)
-            suspend proc->lnames[i];
+            suspend proc0->lnames[i];
         fail;
     }
 end
 
 function{0,1} lang_Proc_get_local_index(c, id)
    body {
-        struct b_proc *proc;
+        struct b_proc *proc0;
         int i;
-        if (!(proc = get_proc_for(&c)))
+        if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         CheckField(id);
-        i = lookup_proc_local(proc, &id);
+        i = lookup_proc_local(proc0, &id);
         if (i < 0)
             fail;
         return C_integer i + 1;
@@ -2644,51 +2644,51 @@ end
 function{0,1} lang_Proc_get_local_location(c, id)
    body {
         int i;
-        struct b_proc *proc;
-        if (!(proc = get_proc_for(&c)))
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         CheckField(id);
-        if (!proc->llocs) {
+        if (!proc0->llocs) {
             LitWhy("No local location data in icode");
             fail;
         }
-        i = lookup_proc_local(proc, &id);
+        i = lookup_proc_local(proc0, &id);
         if (i < 0) {
             LitWhy("Unknown local");
             fail;
         }
-        suspend proc->llocs[i].fname;
-        return C_integer proc->llocs[i].line;
+        suspend proc0->llocs[i].fname;
+        return C_integer proc0->llocs[i].line;
      }
 end
 
 function{0,1} lang_Proc_get_local_name(c, id)
    body {
-        struct b_proc *proc;
+        struct b_proc *proc0;
         int i;
-        if (!(proc = get_proc_for(&c)))
+        if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         CheckField(id);
-        i = lookup_proc_local(proc, &id);
+        i = lookup_proc_local(proc0, &id);
         if (i < 0)
             fail;
-        return proc->lnames[i];
+        return proc0->lnames[i];
      }
 end
 
 function{0,1} lang_Proc_get_local_type(c, id)
    body {
-        struct b_proc *proc;
+        struct b_proc *proc0;
         int i;
-        if (!(proc = get_proc_for(&c)))
+        if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         CheckField(id);
-        i = lookup_proc_local(proc, &id);
+        i = lookup_proc_local(proc0, &id);
         if (i < 0)
             fail;
-        if (i < abs(proc->nparam))
+        if (i < abs(proc0->nparam))
             return C_integer 1;
-        if (i < abs(proc->nparam) + proc->ndynam)
+        if (i < abs(proc0->nparam) + proc0->ndynam)
             return C_integer 2;
         return C_integer 3;
      }
@@ -2696,38 +2696,38 @@ end
 
 function{1} lang_Proc_get_name(c, flag)
    body {
-        struct b_proc *proc;
-        if (!(proc = get_proc_for(&c)))
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
            runerr(0);
-        if (proc->field && is:null(flag)) {
+        if (proc0->field && is:null(flag)) {
             int len;
-            struct b_class *class = proc->field->defining_class;
-            dptr fname = &class->program->Fnames[proc->field->fnum];
-            len = StrLen(class->name) + StrLen(*fname) + 1;
+            struct b_class *class0 = proc0->field->defining_class;
+            dptr fname = &class0->program->Fnames[proc0->field->fnum];
+            len = StrLen(class0->name) + StrLen(*fname) + 1;
             MemProtect (StrLoc(result) = reserve(Strings, len));
             StrLen(result) = len;
-            alcstr(StrLoc(class->name),StrLen(class->name));
+            alcstr(StrLoc(class0->name),StrLen(class0->name));
             alcstr(".", 1);
             alcstr(StrLoc(*fname),StrLen(*fname));
             return result;
         } else
-            return proc->name;
+            return proc0->name;
      }
 end
 
 function{0,1} lang_Proc_get_package(c, flag)
    body {
-        struct b_proc *proc;
-        if (!(proc = get_proc_for(&c)))
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
             runerr(0);
-        if (proc->field && is:null(flag)) {
-            if (proc->field->defining_class->package_id == 0)
+        if (proc0->field && is:null(flag)) {
+            if (proc0->field->defining_class->package_id == 0)
                 fail;
-            extract_package(&proc->field->defining_class->name, &result);
+            extract_package(&proc0->field->defining_class->name, &result);
         } else {
-            if (proc->package_id == 0)
+            if (proc0->package_id == 0)
                 fail;
-            extract_package(&proc->name, &result);
+            extract_package(&proc0->name, &result);
         }
         return result;
     }
@@ -2735,14 +2735,14 @@ end
 
 function{1} lang_Proc_get_program(c, flag)
     body {
-        struct b_proc *proc;
+        struct b_proc *proc0;
         struct progstate *prog;
-        if (!(proc = get_proc_for(&c)))
+        if (!(proc0 = get_proc_for(&c)))
             runerr(0);
-        if (proc->field && is:null(flag))
-            prog = proc->field->defining_class->program;
+        if (proc0->field && is:null(flag))
+            prog = proc0->field->defining_class->program;
         else
-            prog = proc->program;
+            prog = proc0->program;
         if (!prog)
             fail;
         return coexpr(prog->K_main);
@@ -2751,29 +2751,29 @@ end
 
 function{0,1} lang_Proc_get_location(c, flag)
    body {
-        struct b_proc *proc;
+        struct b_proc *proc0;
         struct loc *p;
-        if (!(proc = get_proc_for(&c)))
+        if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         /* The check for M_Defer here is to avoid (if flag is 1), looking up a non-deferred
          * method's name in the global name table.
          */
-        if (proc->field && (is:null(flag) ||
-                            !(proc->field->flags & M_Defer))) {
-            if (proc->program->ClassFieldLocs == proc->program->EClassFieldLocs) {
+        if (proc0->field && (is:null(flag) ||
+                            !(proc0->field->flags & M_Defer))) {
+            if (proc0->program->ClassFieldLocs == proc0->program->EClassFieldLocs) {
                 LitWhy("No field location data in icode");
                 fail;
             }
-            p = &proc->program->ClassFieldLocs[proc->field - proc->program->ClassFields];
-        } else if (!proc->program) {
+            p = &proc0->program->ClassFieldLocs[proc0->field - proc0->program->ClassFields];
+        } else if (!proc0->program) {
             LitWhy("Proc is builtin, has no location");
             fail;
         } else {
-            if (proc->program->Glocs == proc->program->Eglocs) {
+            if (proc0->program->Glocs == proc0->program->Eglocs) {
                 LitWhy("No global location data in icode");
                 fail;
             }
-            p = lookup_global_loc(&proc->name, proc->program);
+            p = lookup_global_loc(&proc0->name, proc0->program);
             if (!p)
                 syserr("Procedure name not found in global table");
         }
@@ -2784,11 +2784,11 @@ end
 
 function{0,1} lang_Proc_get_defining_class(c)
    body {
-        struct b_proc *proc;
-        if (!(proc = get_proc_for(&c)))
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
             runerr(0);
-        if (proc->field)
-            return class(proc->field->defining_class);
+        if (proc0->field)
+            return class(proc0->field->defining_class);
         else
             fail;
      }

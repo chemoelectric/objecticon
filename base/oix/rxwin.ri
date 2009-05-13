@@ -277,7 +277,7 @@ char* PropertyToString(Display* display, Atom target, int number_items,
     Atom            timestamp, span;
     unsigned long*  long_array;
     int*            int_array;
-    char*           string = NULL;
+    char*           string0 = NULL;
     int             i, length;
     char            temp[100];
     char*           atom_name;
@@ -294,8 +294,8 @@ char* PropertyToString(Display* display, Atom target, int number_items,
         long_array = (unsigned long*) data;
 
         length = number_items * 30;
-        MemProtect(string = malloc( length + 1 ));
-        string[0] = '\0';
+        MemProtect(string0 = malloc( length + 1 ));
+        string0[0] = '\0';
 
         /* Convert to atom names. */
         for (i = 0; i < number_items; i++) {
@@ -307,16 +307,16 @@ char* PropertyToString(Display* display, Atom target, int number_items,
                 length -= strlen(atom_name);
  
                 if (length > 1) {
-                    strcat(string, atom_name);
-                    strcat(string, "\n");
+                    strcat(string0, atom_name);
+                    strcat(string0, "\n");
                 }
                 XFree(atom_name);
             }
         }
     }
     else if (new_target == XA_STRING) {
-        MemProtect(string = malloc(number_items + 1));
-        strcpy(string, data);
+        MemProtect(string0 = malloc(number_items + 1));
+        strcpy(string0, data);
     }
     else if ((new_target == XA_INTEGER) ||
              (new_target == span) ||
@@ -325,8 +325,8 @@ char* PropertyToString(Display* display, Atom target, int number_items,
         int_array = (int*) data;
 
         length = number_items * 20;
-        MemProtect(string = malloc( length + 1 ));
-        string[0] = '\0';
+        MemProtect(string0 = malloc( length + 1 ));
+        string0[0] = '\0';
 
         for (i = 0; i < number_items; i++) {
             sprintf(temp, "%d ", int_array[i]);
@@ -334,7 +334,7 @@ char* PropertyToString(Display* display, Atom target, int number_items,
             /* Check that space is available. */
             length -= strlen(temp);
             if (length > 0) {
-                strcat(string, temp);
+                strcat(string0, temp);
             }
         }
     }
@@ -343,12 +343,12 @@ char* PropertyToString(Display* display, Atom target, int number_items,
         long_array = (unsigned long*) data;
 
         length = number_items * 12;
-        MemProtect(string = malloc( length + 1 ));
-        string[0] = '\0';
+        MemProtect(string0 = malloc( length + 1 ));
+        string0[0] = '\0';
 
         for (i = 0; i < number_items; i++) {
             sprintf(temp, "0x%8.8lu ", long_array[i]);
-            strcat(string, temp);
+            strcat(string0, temp);
         }
 
     }
@@ -356,7 +356,7 @@ char* PropertyToString(Display* display, Atom target, int number_items,
         /* Add extra cases as necessary... */
     }
 
-    return string;
+    return string0;
 
 }
 
@@ -416,13 +416,13 @@ char*  ErrorCodes[ NUMBER_ERRORS ] = {
 
 static void ErrorHandler(Display* display, XErrorEvent* error_event)
 {   
-    char string[BUFSIZE + 1];
+    char string0[BUFSIZE + 1];
     printf("ERROR\n");fflush(stdout);
     ErrorFlag = True;
     LastError = (int) error_event->error_code;
 
     /* Find out the error message and print it. */
-    XGetErrorText(display, error_event->error_code, string, BUFSIZE);
+    XGetErrorText(display, error_event->error_code, string0, BUFSIZE);
 
     fprintf(stderr, "X Error on display %s.i\nResource %ld:  ",
             DisplayString( display ), error_event->resourceid );
@@ -430,11 +430,11 @@ static void ErrorHandler(Display* display, XErrorEvent* error_event)
     if ((error_event->error_code > 0 ) && 
         (error_event->error_code < NUMBER_ERRORS ) ) {
 
-        fprintf( stderr, "%s (%s).\n", string,
+        fprintf( stderr, "%s (%s).\n", string0,
                  ErrorCodes[ error_event->error_code ] );
     }
     else {
-        fprintf( stderr, "%s.\n", string );
+        fprintf( stderr, "%s.\n", string0 );
     }
 
     fprintf(stderr, "Op code %d.%d, Error code %d\n", error_event->request_code,
@@ -521,11 +521,11 @@ int handle_misc(wd, w)
             switch (event.type) {
                 case SelectionRequest: {
                     XEvent theevent;
-                    struct descrip proc;
+                    struct descrip proc0;
                     char *selection_name = XGetAtomName(ws->display->display, 
                                                         event.xselectionrequest.selection);
-                    proc = ws->selectionproc;
-                    if (is:null(proc)) {
+                    proc0 = ws->selectionproc;
+                    if (is:null(proc0)) {
                         fprintf(stderr, "Got an unexpected SelectionRequest: %s\n", 
                                 atom_fmt(ws,event.xselectionrequest.selection)); 
                         fflush(stderr);
@@ -548,7 +548,7 @@ int handle_misc(wd, w)
                         target_list[0] = XA_TARGETS;
                         LitStr("targets", &str0);
                         cstr2string(selection_name, &str1);
-                        val = call(&proc, &str0, &str1, 0);
+                        val = call(&proc0, &str0, &str1, 0);
                         if (!val || !is:list(*val))
                             fatalerr(148, NULL);
                         for (ep = BlkLoc(*val)->list.listhead;
@@ -604,7 +604,7 @@ int handle_misc(wd, w)
                             LitStr("content", &str0);
                             cstr2string(selection_name, &str1);
                             cstr2string(target_name, &str2);
-                            val = call(&proc, &str0, &str1, &str2, 0);
+                            val = call(&proc0, &str0, &str1, &str2, 0);
                             if (!val || !is:string(*val))
                                 fatalerr(148, NULL);
 
@@ -644,7 +644,7 @@ int handle_misc(wd, w)
                 case SelectionClear: {
                     struct descrip str0;
                     tended struct descrip str1;
-                    struct descrip proc;
+                    struct descrip proc0;
                     char *an = XGetAtomName(ws->display->display, event.xselectionclear.selection);
 
                     if (selection_debug)
@@ -652,8 +652,8 @@ int handle_misc(wd, w)
                                (long)event.xselectionclear.window,
                                atom_fmt(ws, event.xselectionclear.selection));
 
-                    proc = ws->selectionproc;
-                    if (is:null(proc)) {
+                    proc0 = ws->selectionproc;
+                    if (is:null(proc0)) {
                         fprintf(stderr, "Got an unexpected SelectionClear: %lx\n", 
                                 (long)event.xselectionclear.selection);
                         fflush(stderr);
@@ -663,7 +663,7 @@ int handle_misc(wd, w)
                     LitStr("clear", &str0);
                     cstr2string(an, &str1);
                     XFree(an);
-                    call(&proc, &str0, &str1, 0);
+                    call(&proc0, &str0, &str1, 0);
 
                     ws->inputmask &= ~(PropertyChangeMask);
                 }
@@ -1452,8 +1452,8 @@ int ownselection(wbp w, char *selname)
     if (curr) {
         for (x = wstates; x; x = x->next) {
             if (x->win == curr) {
-                struct descrip proc = x->selectionproc;
-                if (is:null(proc)) {
+                struct descrip proc0 = x->selectionproc;
+                if (is:null(proc0)) {
                     fprintf(stderr, "No selection proc for window %lx\n", (long)x);
                     fflush(stderr);
                 } else {
@@ -1461,7 +1461,7 @@ int ownselection(wbp w, char *selname)
                     tended struct descrip str1;
                     LitStr("clear", &str0);
                     cstr2string(selname, &str1);
-                    call(&proc, &str0, &str1, 0);
+                    call(&proc0, &str0, &str1, 0);
                 }
                 break;
             }
@@ -4289,15 +4289,15 @@ int walert(w, volume)
     return Succeeded;
 }
 
-dptr call(dptr proc, ...)
+dptr call(dptr proc0, ...)
 {
     wdp saved_wdsplys = wdsplys;
     va_list ap;
     dptr res;
     wdsplys = 0;   /* Avoid recursive calls into handle_misc by making 
                     * pollevent() a temporary no-op */
-    va_start(ap, proc);
-    res = call_icon_va(proc, ap);
+    va_start(ap, proc0);
+    res = call_icon_va(proc0, ap);
     va_end(ap);
     wdsplys = saved_wdsplys;
     if (res)

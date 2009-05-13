@@ -168,20 +168,20 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
     register word *newsp = sp;
     tended struct descrip arg_sv;
     register word i;
-    struct b_proc *proc;
+    struct b_proc *proc0;
     int nparam;
 
     /* 
      * Dereference the supplied arguments.
      */
-    proc = (struct b_proc *)BlkLoc(newargp[0]);
-    if (proc->nstatic >= 0)	/* if negative, don't reference arguments */
+    proc0 = (struct b_proc *)BlkLoc(newargp[0]);
+    if (proc0->nstatic >= 0)	/* if negative, don't reference arguments */
         for (i = 1; i <= nargs; i++)
             Deref(newargp[i]);
 
     /*
      * Adjust the argument list to conform to what the routine being invoked
-     *  expects (proc->nparam).  If nparam is less than 0, the number of
+     *  expects (proc0->nparam).  If nparam is less than 0, the number of
      *  arguments is variable. For functions (program = 0) with a
      *  variable number of arguments, nothing need be done.  For Icon procedures
      *  with a variable number of arguments, arguments beyond abs(nparam) are
@@ -191,8 +191,8 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
      *  null descriptors are pushed for each missing argument.
      */
 
-    proc = (struct b_proc *)BlkLoc(newargp[0]);
-    nparam = (int)proc->nparam;
+    proc0 = (struct b_proc *)BlkLoc(newargp[0]);
+    nparam = (int)proc0->nparam;
 
     if (nparam >= 0) {
         if (nargs > nparam)
@@ -208,7 +208,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
         xnargs = nargs;
     }
     else {
-        if (proc->program) { /* this is a procedure */
+        if (proc0->program) { /* this is a procedure */
             int lelems, absnparam = abs(nparam);
             dptr llargp;
 
@@ -234,7 +234,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
         }
     }
 
-    if (!proc->program) {
+    if (!proc0->program) {
         /*
          * A function is being invoked, so nothing else here needs to be done.
          */
@@ -284,20 +284,20 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
      */   
     if (k_trace) {
         k_trace--;
-        ctrace(&(proc->name), nargs, &newargp[1]);
+        ctrace(&(proc0->name), nargs, &newargp[1]);
     }
    
     /*
      * Point ipc at the icode entry point of the procedure being invoked.
      */
-    ipc = (word *)proc->entryp.icode;
+    ipc = (word *)proc0->entryp.icode;
 
     /*
      * Enter the program state of the procedure being invoked
      * and save from/to states in the procedure frame.
      */
     newpfp->pf_from = curpstate;
-    newpfp->pf_to = proc->program;
+    newpfp->pf_to = proc0->program;
     CHANGEPROGSTATE(newpfp->pf_to);
 
     efp = 0;
@@ -306,7 +306,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
     /*
      * Push a null descriptor on the stack for each dynamic local.
      */
-    for (i = proc->ndynam; i > 0; i--) {
+    for (i = proc0->ndynam; i > 0; i--) {
         *++newsp = D_Null;
         *++newsp = 0;
     }
@@ -322,20 +322,20 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 static int construct_object(int nargs, dptr newargp)
 {
     struct class_field *new_field;
-    struct b_class *class;
-    struct b_object *object; /* Doesn't need to be tended */
+    struct b_class *class0;
+    struct b_object *object0; /* Doesn't need to be tended */
 
-    class = (struct b_class*)BlkLoc(*newargp);
-    ensure_initialized(class);
+    class0 = (struct b_class*)BlkLoc(*newargp);
+    ensure_initialized(class0);
 
-    new_field = class->new_field;
+    new_field = class0->new_field;
     if (!new_field) {
         /*
          * No constructor function, so just put the object in Arg0.
          */
-        MemProtect(object = alcobject(class));
+        MemProtect(object0 = alcobject(class0));
         newargp[0].dword = D_Object;
-        BlkLoc(newargp[0]) = (union block *)object;
+        BlkLoc(newargp[0]) = (union block *)object0;
     } else {
         /*
          * Check the constructor function is a non-static method.
@@ -343,10 +343,10 @@ static int construct_object(int nargs, dptr newargp)
         if ((new_field->flags & (M_Method | M_Static)) != M_Method)
             syserr("new field not a non-static method");
 
-        if (check_access(new_field, class) == Error)
+        if (check_access(new_field, class0) == Error)
             return Error;
 
-        MemProtect(object = alcobject(class));
+        MemProtect(object0 = alcobject(class0));
 
         /*
          * Copy the new object over the class parameter, and push the
@@ -354,13 +354,13 @@ static int construct_object(int nargs, dptr newargp)
          * args into correct order for an invoke.
          */
         newargp[0].dword = D_Object;
-        BlkLoc(newargp[0]) = (union block *)object;
+        BlkLoc(newargp[0]) = (union block *)object0;
         PushDesc(*new_field->field_descriptor);
 
         /*
          * Call the new method.
          */
-        object->init_state = Initializing;
+        object0->init_state = Initializing;
         if (!do_new_invoke(newargp)) {
             BlkLoc(newargp[0])->object.init_state = Initialized;
             return I_Fail;
@@ -407,28 +407,28 @@ static int construct_record(int nargs, dptr newargp)
 invoke_macro(invoke_methp_0,invoke_misc_0,invoke_proc_0,construct_object_0,construct_record_0,invoke_0,0,0,0,0)
 invoke_macro(invoke_methp_1,invoke_misc_1,invoke_proc_1,construct_object_1,construct_record_1,invoke_1,E_Ecall,E_Pcall,E_Objectcreate,E_Rcreate)
 
-void ensure_initialized(struct b_class *class)
+void ensure_initialized(struct b_class *class0)
 {
     struct class_field *init_field;
     dptr pp;
     int i;
 
-    if (class->init_state != Uninitialized)
+    if (class0->init_state != Uninitialized)
         return;
-    class->init_state = Initializing;
+    class0->init_state = Initializing;
 
     /*
      * Initialize any superclasses first.
      */
-    for (i = 0; i < class->n_supers; ++i)
-        ensure_initialized(class->supers[i]);
+    for (i = 0; i < class0->n_supers; ++i)
+        ensure_initialized(class0->supers[i]);
 
     /*
      * Look for an init method defined in this class; if not found,
      * then return.
      */
-    init_field = class->init_field;
-    if (init_field && init_field->defining_class == class) {
+    init_field = class0->init_field;
+    if (init_field && init_field->defining_class == class0) {
         /*
          * Check the initial function is a static method.
          */
@@ -444,7 +444,7 @@ void ensure_initialized(struct b_class *class)
         do_invoke(pp);
         sp -= 2;
     }
-    class->init_state = Initialized;
+    class0->init_state = Initialized;
 }
 
 #include "../h/opdefs.h"

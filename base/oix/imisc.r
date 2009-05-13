@@ -100,15 +100,15 @@ int invokef_access(int fno, int *nargs)
 static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic)
 {
     struct b_object *obj = &BlkLoc(*cargp)->object;
-    struct b_class *class = obj->class;
+    struct b_class *class0 = obj->class;
     struct class_field *cf;
     int i, j, ac;
     SaveCargp(e_objectref);
 
-    i = lookup_class_field(class, field, ic);
+    i = lookup_class_field(class0, field, ic);
     if (i < 0)
         ReturnErrNum(207, Error);
-    cf = class->fields[i];
+    cf = class0->fields[i];
 
     /* Can't access a static (var or meth) via an instance */
     if (cf->flags & M_Static)
@@ -119,7 +119,7 @@ static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_fi
         if ((cf->flags & M_Special) && obj->init_state != Initializing)
             ReturnErrNum(622, Error);
 
-        ac = check_access(cf, class);
+        ac = check_access(cf, class0);
         if (ac == Error)
             return ac;
 
@@ -133,7 +133,7 @@ static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_fi
         (*nargs)++;
         sp += 2;
     } else {
-        ac = check_access(cf, class);
+        ac = check_access(cf, class0);
         if (ac == Succeeded || (cf->flags & M_Readable))
             *cargp = obj->fields[i];
         else
@@ -147,9 +147,9 @@ static int instance_invokef(int *nargs, dptr cargp, dptr field, struct inline_fi
 
 static int cast_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic)
 {
-    struct b_cast *cast = &BlkLoc(*cargp)->cast;
-    struct b_object *obj = cast->object;
-    struct b_class *obj_class = obj->class, *cast_class = cast->class;
+    struct b_cast *cast0 = &BlkLoc(*cargp)->cast;
+    struct b_object *obj = cast0->object;
+    struct b_class *obj_class = obj->class, *cast_class = cast0->class;
     struct class_field *cf;
     int i, j, ac;
     SaveCargp(e_castref);
@@ -195,16 +195,16 @@ static int cast_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_
 
 static int class_invokef(int *nargs, dptr cargp, dptr field, struct inline_field_cache *ic)
 {
-    struct b_class *class = &BlkLoc(*cargp)->class;
+    struct b_class *class0 = &BlkLoc(*cargp)->class;
     struct class_field *cf;
     int i, ac;
     SaveCargp(e_classref);
 
-    ensure_initialized(class);
-    i = lookup_class_field(class, field, ic);
+    ensure_initialized(class0);
+    i = lookup_class_field(class0, field, ic);
     if (i < 0)
         ReturnErrNum(207, Error);
-    cf = class->fields[i];
+    cf = class0->fields[i];
 
     /* Can only access a static field (var or meth) via the class */
     if (!(cf->flags & M_Static))
@@ -246,10 +246,10 @@ static int record_invokef(int *nargs, dptr cargp, dptr field, struct inline_fiel
 
 static int cast_access(dptr cargp, struct inline_field_cache *ic)
 {
-    struct b_cast *cast = &BlkLoc(Arg1)->cast;
-    struct b_object *obj = cast->object;
+    struct b_cast *cast0 = &BlkLoc(Arg1)->cast;
+    struct b_object *obj = cast0->object;
     struct b_methp *mp;
-    struct b_class *obj_class = obj->class, *cast_class = cast->class;
+    struct b_class *obj_class = obj->class, *cast_class = cast0->class;
     struct class_field *cf;
     int i, ac;
 
@@ -280,8 +280,8 @@ static int cast_access(dptr cargp, struct inline_field_cache *ic)
     /*
      * Refresh pointers after allocation.
      */
-    cast = &BlkLoc(Arg1)->cast;
-    obj = cast->object;
+    cast0 = &BlkLoc(Arg1)->cast;
+    obj = cast0->object;
     mp->object = obj;
     mp->proc = &BlkLoc(*cf->field_descriptor)->proc;
     Arg0.dword = D_Methp;
@@ -295,16 +295,16 @@ static int cast_access(dptr cargp, struct inline_field_cache *ic)
 
 static int class_access(dptr cargp, struct inline_field_cache *ic)
 {
-    struct b_class *class = &BlkLoc(Arg1)->class;
+    struct b_class *class0 = &BlkLoc(Arg1)->class;
     struct class_field *cf;
     dptr dp;
     int i, ac;
 
-    ensure_initialized(class);
-    i = lookup_class_field(class, &Arg2, ic);
+    ensure_initialized(class0);
+    i = lookup_class_field(class0, &Arg2, ic);
     if (i < 0)
         ReturnErrNum(207, Error);
-    cf = class->fields[i];
+    cf = class0->fields[i];
 
     /* Can only access a static field (var or meth) via the class */
     if (!(cf->flags & M_Static))
@@ -320,10 +320,10 @@ static int class_access(dptr cargp, struct inline_field_cache *ic)
     if (ac == Succeeded &&
         !(cf->flags & M_Method) &&        /* Don't return a ref to a static method */
         (!(cf->flags & M_Const) ||
-              (class->init_state == Initializing &&
+              (class0->init_state == Initializing &&
                ic &&                      /* No Class.get(..) := ... */
-               class->init_field &&       /* .. and must be in init() method */
-               CallerProc == &BlkLoc(*class->init_field->field_descriptor)->proc)))
+               class0->init_field &&       /* .. and must be in init() method */
+               CallerProc == &BlkLoc(*class0->init_field->field_descriptor)->proc)))
     {
         Arg0.dword = D_Var;
         VarLoc(Arg0) = dp;
@@ -340,15 +340,15 @@ static int class_access(dptr cargp, struct inline_field_cache *ic)
 static int instance_access(dptr cargp, struct inline_field_cache *ic)
 {
     struct b_object *obj = &BlkLoc(Arg1)->object;
-    struct b_class *class = obj->class;
+    struct b_class *class0 = obj->class;
     struct b_methp *mp;
     struct class_field *cf;
     int i, ac;
 
-    i = lookup_class_field(class, &Arg2, ic);
+    i = lookup_class_field(class0, &Arg2, ic);
     if (i < 0)
         ReturnErrNum(207, Error);
-    cf = class->fields[i];
+    cf = class0->fields[i];
 
     /* Can't access a static (var or meth) via an instance */
     if (cf->flags & M_Static)
@@ -359,7 +359,7 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
         if ((cf->flags & M_Special) && obj->init_state != Initializing)
             ReturnErrNum(622, Error);
 
-        ac = check_access(cf, class);
+        ac = check_access(cf, class0);
         if (ac == Error)
             return ac;
 
@@ -377,7 +377,7 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
         BlkLoc(Arg0) = (union block *)mp;
     } else {
         dptr dp = &obj->fields[i];
-        ac = check_access(cf, class);
+        ac = check_access(cf, class0);
         if (ac == Succeeded &&
             (!(cf->flags & M_Const) || obj->init_state == Initializing))
         {
@@ -912,21 +912,21 @@ LibDcl(escan,1,"escan")
 dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
 {
     struct b_object *obj = &BlkLoc(*x)->object;
-    struct b_class *class = obj->class;
+    struct b_class *class0 = obj->class;
     int i;
 
     if (ic) {
-        if (ic->class == (union block *)class)
+        if (ic->class == (union block *)class0)
             i = ic->index;
         else {
-            i = lookup_class_field_by_name(class, fname);
-            ic->class = (union block *)class;
+            i = lookup_class_field_by_name(class0, fname);
+            ic->class = (union block *)class0;
             ic->index = i;
         }
     } else
-        i = lookup_class_field_by_name(class, fname);
+        i = lookup_class_field_by_name(class0, fname);
 
-    if (i < 0 || i >= class->n_instance_fields)
+    if (i < 0 || i >= class0->n_instance_fields)
         return 0;
     return &obj->fields[i];
 }
@@ -941,24 +941,24 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic)
  */
 int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
 {
-    struct b_class *class;
+    struct b_class *class0;
     dptr p;
 
     if (!is:object(*x))
         return 0;
 
-    class = BlkLoc(*x)->object.class;
+    class0 = BlkLoc(*x)->object.class;
 
     if (ic) {
-        if (class->program == ic->program)
+        if (class0->program == ic->program)
             p = ic->global;
         else {
-            p = lookup_global(cname, class->program);
-            ic->program = class->program;
+            p = lookup_global(cname, class0->program);
+            ic->program = class0->program;
             ic->global = p;
         }
     } else
-        p = lookup_global(cname, class->program);
+        p = lookup_global(cname, class0->program);
 
-    return p && is:class(*p) && class_is(class, &BlkLoc(*p)->class);
+    return p && is:class(*p) && class_is(class0, &BlkLoc(*p)->class);
 }

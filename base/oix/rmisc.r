@@ -699,10 +699,10 @@ int noimage;
 
      methp: {
              struct class_field *field;
-             struct b_proc *proc;
+             struct b_proc *proc0;
              bp = BlkLoc(*dp);
-             proc = bp->methp.proc;
-             field = proc->field;
+             proc0 = bp->methp.proc;
+             field = proc0->field;
              fprintf(f, "methp(");
              tdp.dword = D_Object;
              BlkLoc(tdp) = (union block*)bp->methp.object;
@@ -1236,7 +1236,7 @@ dptr dp1, dp2;
              alcstr(".", 1);
              alcstr(StrLoc(*field_name),StrLen(*field_name));
          } else {
-             char *type;
+             char *type0;
              /*
               * Produce one of:
               *  "procedure name"
@@ -1244,14 +1244,14 @@ dptr dp1, dp2;
               *
               */
              if (BlkLoc(source)->proc.program)
-                 type = "procedure ";
+                 type0 = "procedure ";
              else
-                 type = "function ";
+                 type0 = "function ";
 
-             len = strlen(type) + StrLen(BlkLoc(source)->proc.name);
+             len = strlen(type0) + StrLen(BlkLoc(source)->proc.name);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
-             alcstr(type, strlen(type));
+             alcstr(type0, strlen(type0));
              alcstr(StrLoc(BlkLoc(source)->proc.name), StrLen(BlkLoc(source)->proc.name));
          }
       }
@@ -1343,13 +1343,13 @@ dptr dp1, dp2;
            struct b_object *obj;
            struct class_field *field;
            struct b_class *obj_class;
-           struct b_proc *proc;
+           struct b_proc *proc0;
            bp = BlkLoc(*dp1);
            obj = bp->methp.object;
            obj_class = obj->class;
            sprintf(sbuf, "#%ld(%ld),", (long)obj->id, (long)obj_class->n_instance_fields);
-           proc = bp->methp.proc;
-           field = proc->field;
+           proc0 = bp->methp.proc;
+           field = proc0->field;
            if (field) {
                /*
                 * Produce:
@@ -1370,26 +1370,26 @@ dptr dp1, dp2;
                alcstr(StrLoc(*field_name),StrLen(*field_name));
                alcstr(")", 1);
            } else {
-               char *type;
+               char *type0;
                /*
                 * Produce:
                 *  "methp(object objectname#m(n),procedure procname)"
                 *  OR
                 *  "methp(object objectname#m(n),function procname)"
                 */
-               if (proc->program)
-                   type = "procedure ";
+               if (proc0->program)
+                   type0 = "procedure ";
                else
-                   type = "function ";
-               len = StrLen(obj_class->name) + StrLen(proc->name) + strlen(sbuf) + strlen(type) + 14;
+                   type0 = "function ";
+               len = StrLen(obj_class->name) + StrLen(proc0->name) + strlen(sbuf) + strlen(type0) + 14;
                MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;
                /* No need to refresh pointers, everything is static data */
                alcstr("methp(object ", 13);
                alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
                alcstr(sbuf, strlen(sbuf));
-               alcstr(type, strlen(type));
-               alcstr(StrLoc(proc->name),StrLen(proc->name));
+               alcstr(type0, strlen(type0));
+               alcstr(StrLoc(proc0->name),StrLen(proc0->name));
                alcstr(")", 1);
            }
        }

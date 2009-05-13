@@ -193,7 +193,7 @@ int get_name(dptr dp1, dptr dp0)
     tended union block *blkptr;
     dptr arg1;                           /* 1st parameter */
     dptr loc1;                           /* 1st local */
-    struct b_proc *proc;                 /* address of procedure block */
+    struct b_proc *proc0;                 /* address of procedure block */
     char sbuf[100];			/* buffer; might be too small */
     char *s, *s2;
     word i, j, k;
@@ -202,7 +202,7 @@ int get_name(dptr dp1, dptr dp0)
 
     arg1 = &argp[1];
     loc1 = pfp->pf_locals;
-    proc = CallerProc;
+    proc0 = CallerProc;
 
     type_case *dp1 of {
       tvsubs: {
@@ -304,20 +304,20 @@ int get_name(dptr dp1, dptr dp0)
                     StrLen(*dp0) = i;
                     return FieldName;
                 }
-                else if (InRange(proc->program->Statics, dp, proc->program->Estatics)) {
-                    i = dp - proc->fstatic;	/* static */
-                    if (i < 0 || i >= proc->nstatic)
+                else if (InRange(proc0->program->Statics, dp, proc0->program->Estatics)) {
+                    i = dp - proc0->fstatic;	/* static */
+                    if (i < 0 || i >= proc0->nstatic)
                         syserr("name: unreferencable static variable");
-                    i += abs((int)proc->nparam) + (int)proc->ndynam;
-                    *dp0 = proc->lnames[i];
+                    i += abs((int)proc0->nparam) + (int)proc0->ndynam;
+                    *dp0 = proc0->lnames[i];
                     return StaticName;
                 }
-                else if (InRange(arg1, dp, &arg1[abs((int)proc->nparam)])) {
-                    *dp0 = proc->lnames[dp - arg1];          /* argument */
+                else if (InRange(arg1, dp, &arg1[abs((int)proc0->nparam)])) {
+                    *dp0 = proc0->lnames[dp - arg1];          /* argument */
                     return ParamName;
                 }
-                else if (InRange(loc1, dp, &loc1[proc->ndynam])) {
-                    *dp0 = proc->lnames[dp - loc1 + abs((int)proc->nparam)];
+                else if (InRange(loc1, dp, &loc1[proc0->ndynam])) {
+                    *dp0 = proc0->lnames[dp - loc1 + abs((int)proc0->nparam)];
                     return LocalName;
                 }
                 else {
@@ -437,7 +437,7 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
     int swtch_typ;
     dptr valloc;
 {
-    struct b_proc *proc;
+    struct b_proc *proc0;
 
     word *t_ipc;
 
@@ -451,9 +451,9 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
     showline(findfile(t_ipc), findline(t_ipc));
     /* argp can be 0 when we come back from a loaded program. */
     if (argp) {
-        proc = (struct b_proc *)BlkLoc(*argp);
+        proc0 = (struct b_proc *)BlkLoc(*argp);
         showlevel(k_level);
-        putstr(stderr, &proc->name);
+        putstr(stderr, &proc0->name);
     } else {
         showlevel(k_level);
         fprintf(stderr, "?");
