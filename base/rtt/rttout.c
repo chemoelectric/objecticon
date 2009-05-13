@@ -1302,7 +1302,6 @@ int brace;
       return 1;
 
    t =  n->tok;
-   /*printf("c-walk %d %d\n",n->nd_id,t ? t->tok_id : -1);*/
    switch (n->nd_id) {
       case PrimryNd:
          switch (t->tok_id) {

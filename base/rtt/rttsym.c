@@ -249,7 +249,6 @@ int lvl;
 void free_sym(sym)
 struct sym_entry *sym;
    {
-#if 0
    if (--sym->ref_cnt <= 0) {
       switch (sym->id_type) {
          case TndDesc:
@@ -259,7 +258,6 @@ struct sym_entry *sym;
          }
       free((char *)sym);
       }
-#endif
    }
 
 /*
@@ -417,6 +415,7 @@ struct node *dcltor;
                   errt2(t, "redefinition of ", t->image);
 
                /* Make the declaring node point back to the symbol entry */
+               ++sym->ref_cnt;
                dcltor->u[0].sym = sym;
             }
             return;

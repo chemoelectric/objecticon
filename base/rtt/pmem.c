@@ -5,8 +5,6 @@
 #include "preproc.h"
 #include "ptoken.h"
 
-#define free(x) 
-
 struct src *src_stack = NULL;  /* stack of token sources */
 
 #include "pproto.h"
@@ -190,11 +188,8 @@ union src_ref *ref;
 void free_t(t)
 struct token *t;
    {
-
-/*
    if (t != NULL)
       free((char *)t);
-*/
    }
 
 /*
