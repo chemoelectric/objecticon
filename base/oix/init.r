@@ -15,28 +15,22 @@ static void    initptrs (struct progstate *p, struct header *h);
 static void    initprogstate(struct progstate *p);
 static void    initalloc(struct progstate *p);
 
-#passthru #define OpDef(p,n,s,u) int Cat(O,p) (dptr cargp);
-#passthru #include "../h/odefs.h"
-#passthru #undef OpDef
-
 /*
  * External declarations for operator blocks.
  */
 
-#passthru #define OpDef(f,nargs,sname,underef)  \
-    {                                           \
-    T_Proc,                                     \
-    sizeof(struct b_proc),                     \
-    Cat(O,f),                                   \
-    nargs,                                      \
-    0,                                         \
-    underef,                                    \
-    0,0,0,0,  \
-    {sizeof(sname)-1,sname},                    \
-    0,0},
-#passthru static struct b_iproc init_op_tbl[] = {
-#passthru #include "../h/odefs.h"
-#passthru   };
+#define OpDef(f)  extern struct b_proc Cat(B,f);
+#include "../h/odefs.h"
+#undef OpDef
+
+/* 
+ * operators available for string invocation 
+ */
+
+#define OpDef(f)  Cat(&B,f),
+struct b_proc *op_tbl[] = {
+#include "../h/odefs.h"
+};
 #undef OpDef
 
 /*
@@ -45,7 +39,6 @@ static void    initalloc(struct progstate *p);
 
 int line_info;				/* flag: line information is available */
 char *file_name = NULL;			/* source file for current execution point */
-struct b_proc *op_tbl;			/* operators available for string invocation */
 
 
 word mstksize = MStackSize;		/* initial size of main stack */
@@ -87,7 +80,7 @@ struct region rootstring, rootblock;
 
 
 
-int op_tbl_sz = ElemCount(init_op_tbl);
+int op_tbl_sz = ElemCount(op_tbl);
 struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
 dptr argp;			        /* global argp */
 
@@ -288,8 +281,6 @@ void icon_init(char *name)
     pmem = physicalmemorysize();
     rootstring.size = Max(pmem/200, MaxStrSpace);
     rootblock.size  = Max(pmem/100, MaxAbrSize);
-
-    op_tbl = (struct b_proc*)init_op_tbl;
 
 #ifdef Double
     if (sizeof(struct size_dbl) != sizeof(double))

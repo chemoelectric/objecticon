@@ -22,7 +22,7 @@ struct b_iproc mt_llist = {
 #include "../h/fdefs.h"
 #undef FncDef
 
-#define OpDef(p,n,s,u) extern struct b_proc Cat(B,p);
+#define OpDef(p) extern struct b_proc Cat(B,p);
 #include "../h/odefs.h"
 #undef OpDef
 
@@ -37,7 +37,7 @@ extern struct b_proc Bllist;
 
 struct b_proc *opblks[] = {
 	NULL,
-#define OpDef(p,n,s,u) Cat(&B,p),
+#define OpDef(p) Cat(&B,p),
 #include "../h/odefs.h"
 #undef OpDef
    &Bbscan,
@@ -182,7 +182,7 @@ char *allchars =
  * Note:  the following material is here to avoid a bug in the Cray C compiler.
  */
 
-#define OpDef(p,n,s,u) int Cat(O,p) (dptr cargp);
+#define OpDef(p) int Cat(O,p) (dptr cargp);
 #include "../h/odefs.h"
 #undef OpDef
 
@@ -193,7 +193,7 @@ char *allchars =
 
 int (*optab[])() = {
 	err,
-#define OpDef(p,n,s,u) Cat(O,p),
+#define OpDef(p) Cat(O,p),
 #include "../h/odefs.h"
 #undef OpDef
    Obscan,

@@ -3568,17 +3568,15 @@ struct node *n;
        */
       switch (op_type) {
          case TokFunction:
-            fprintf(out_file, "FncBlock(%s, %d, %d)\n\n", name, nparms, 
-               (has_underef ? -1 : 0));
+            fprintf(out_file, "FncBlock(%s, %d, %d)\n\n", name, nparms, (has_underef ? -1 : 0));
             ++line;
             break;
+
          case Operator:
             if (strcmp(op_sym,"\\") == 0)
-               fprintf(out_file, "OpBlock(%s, %d, \"%s\", 0)\n\n", name, nparms,
-                  "\\\\");
+                fprintf(out_file, "OpBlock(%s, %d, \"%s\", %d)\n\n", name, nparms, "\\\\", (has_underef ? -1 : 0));
             else
-               fprintf(out_file, "OpBlock(%s, %d, \"%s\", 0)\n\n", name, nparms,
-                  op_sym);
+                fprintf(out_file, "OpBlock(%s, %d, \"%s\", %d)\n\n", name, nparms, op_sym, (has_underef ? -1 : 0));
             ++line;
          }
       }
@@ -3815,7 +3813,6 @@ void prologue()
    id_comment(out_file);
    fprintf(out_file, "#include \"%s\"\n\n", inclname);
    if (c_flag) {
-       fprintf(out_file, "#include \"%s\"\n\n", "/tmp/x_c_support.h");
        fprintf(out_file, "#include \"%s\"\n\n", hname);
    }
    }

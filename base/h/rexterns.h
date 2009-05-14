@@ -6,7 +6,7 @@
  * External declarations common to the compiler and interpreter.
  */
 
-extern struct b_proc *op_tbl;   /* operators available for string invocation */
+extern struct b_proc *op_tbl[]; /* operators available for string invocation */
 extern int op_tbl_sz;           /* number of operators in op_tbl */
 extern word dodump;		/* termination dump */
 extern int line_info;		/* flag: line information is available */

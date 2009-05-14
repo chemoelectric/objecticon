@@ -526,14 +526,14 @@ do { \
    /*
     * Procedure block for an operator.
     */
-   #define OpBlock(f,nargs,sname,xtrargs)\
+   #define OpBlock(f,nargs,sname,deref)\
    	struct b_iproc Cat(B,f) = {\
    	T_Proc,\
    	sizeof(struct b_proc),\
    	Cat(O,f),\
    	nargs,\
    	0,\
-   	xtrargs,\
+   	deref,\
    	0,0,0,0,                                \
    	{sizeof(sname)-1,sname},\
         0,0};

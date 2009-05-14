@@ -62,7 +62,7 @@ int coexp_act;			/* last co-expression action */
 #begdef Setup_Op(nargs,e)
    lastev = E_Operator;
    value_tmp.dword = D_Proc;
-   value_tmp.vword.bptr = (union block *)&op_tbl[lastop - 1];
+   value_tmp.vword.bptr = (union block *)op_tbl[lastop - 1];
    lastdesc = value_tmp;
    InterpEVValD(&value_tmp, e);
    rargp = (dptr)(rsp - 1) - nargs;
