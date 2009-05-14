@@ -540,21 +540,6 @@ do { \
 
    
    /*
-    * Operator declaration.
-    */
-   #define OpDcl(nm,n,pn) OpBlock(nm,n,pn,0) Cat(O,nm)(cargp) register dptr cargp;
-   
-   /*
-    * Operator declaration with extra working argument.
-    */
-   #define OpDclE(nm,n,pn) OpBlock(nm,-n,pn,0) Cat(O,nm)(cargp) register dptr cargp;
-   
-   /*
-    * Agent routine declaration.
-    */
-   #define AgtDcl(nm) Cat(A,nm)(cargp) register dptr cargp;
-   
-   /*
     * Macros to access Icon arguments in C functions.
     */
    
