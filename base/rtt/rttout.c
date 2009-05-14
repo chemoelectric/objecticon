@@ -60,6 +60,7 @@ static int     typ_case      (struct node *var, struct node *slct_lst,
                                  int brace), int maybe_var, int indent);
 static void untend        (int indent);
 static int use_frame = 0;
+static int in_struct = 0;
 extern char *progname;
  
 int op_type = OrdFunc;  /* type of operation */
@@ -1334,7 +1335,7 @@ int brace;
                     /* Must be an identifier as a declaration which added an entry to the sym table */
                     tok_line(t, indent);
                     fprintf(out_file, "L%d_%s", n->u[0].sym->f_indx,t->image);
-                } else if (t->tok_id != TokRegister || out_file != header_file)  /* Don't print "register" in header */
+                } else if (t->tok_id != TokRegister || !in_struct)  /* Don't print "register" in header */
                     prt_tok(t, indent);
 	       if (t->tok_id == Continue)
 		  prt_str(";", indent);
@@ -3057,10 +3058,6 @@ struct sym_entry *op_params;
       fprintf(out_file, "%d][MaxCvtLen];", n_tmp_str);
       ForceNl();
       }
-   if (tend_lst == NULL)
-      ntend = 0;
-   else
-      ntend = tend_lst->t_indx + 1;
    parm_locs(op_params); /* see what parameter conversion there are */
    }
 
@@ -3337,6 +3334,11 @@ struct node *block;
    nxt_sbuf = 0;    /* clear number of string buffers */
    nxt_cbuf = 0;    /* clear number of cset buffers */
 
+   if (tend_lst == NULL)
+      ntend = 0;
+   else
+      ntend = tend_lst->t_indx + 1;
+
    /*
     * Output the function header and the parameter declarations.
     */
@@ -3391,66 +3393,7 @@ struct node *n;
    nxt_cbuf = 0;
    use_frame = c_flag;
 
-   /*
-    * Somewhat different code is produced for the interpreter and compiler.
-    */
-
    interp_def(n);
-
-   if (c_flag)
-   {
-       FILE *save = out_file;
-       struct sym_entry *t = ffirst;
-       out_file = header_file;
-
-       /*
-        * Output the header struct.
-        */
-
-       fprintf(out_file, "\nstruct %s_frame {\n   FRAME;\n", op_name);
-       while (t) {
-           /*printf("\t%s %d %d inframe=%d\n", t->image, t->id_type,t->f_indx,
-             (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual))); */
-           if (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual)) {
-               ForceNl();
-               c_walk(t->u.declare_var.tqual,3,0);
-               fprintf(out_file, " ");
-               c_walk(t->u.declare_var.dcltor,3,0);
-               prt_str(";",0);
-           }
-           t = t->fnext;
-       }
-       if (ntend > 0)
-           fprintf(out_file, "\n\n   struct descrip tend[%d];\n", ntend);
-
-       /*
-        * Temporary vars
-        */
-       t = params;
-       while (t) {
-           if (t->u.param_info.non_tend & PrmInt) {
-               fprintf(out_file, "   C_integer r_i%d;\n", t->u.param_info.param_num);
-           }
-           if (t->u.param_info.non_tend & PrmDbl) {
-               fprintf(out_file, "   double r_d%d;\n", t->u.param_info.param_num);
-           }
-           t = t->u.param_info.next;
-       }
-       if (n_tmp_str > 0)
-           fprintf(out_file, "   char r_sbuf[%d][MaxCvtLen];", n_tmp_str);
-
-       fprintf(out_file, "\n};\n");
-       out_file = save;
-
-       if (ntend > 0) {
-           int i;
-           fprintf(out_file, "void scan_%s_frame(struct frame *frame0, scanfunc f) {\n", op_name); ++line;
-           fprintf(out_file, "   struct %s_frame *frame = (struct %s_frame *)frame0;\n", op_name, op_name); ++line;
-           for (i = 0; i < ntend; ++i)
-               fprintf(out_file, "   f(&frame->tend[%d]);\n",i); ++line;
-           fprintf(out_file, "}"); ++line;
-       }
-   }
 
    free_tree(n);
    /*
@@ -3530,6 +3473,11 @@ struct node *n;
          nparms = -nparms;
       }
 
+   if (tend_lst == NULL)
+      ntend = 0;
+   else
+      ntend = tend_lst->t_indx + 1;
+
    fnc_ret = RetSig;  /* interpreter routine always returns a signal */
    name = op_name;
 
@@ -3547,21 +3495,78 @@ struct node *n;
          letter = 'O';
          }
 
-   fprintf(out_file, "\n");
+   fprintf(out_file, "\n"); ++line;
+
+   if (use_frame)
+   {
+       struct sym_entry *t = ffirst;
+
+       /*
+        * Output the header struct.
+        */
+
+       in_struct = 1;
+
+       if (nparms >= 0)
+           fprintf(out_file, "\nstruct %s_frame {\n   FRAME(%d);\n", op_name, nparms);
+       else
+           fprintf(out_file, "\nstruct %s_frame {\n   FRAME_N;\n", op_name);
+       line += 3;
+
+       while (t) {
+           /*printf("\t%s %d %d inframe=%d\n", t->image, t->id_type,t->f_indx,
+             (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual))); */
+           if (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual)) {
+               ForceNl();
+               c_walk(t->u.declare_var.tqual,3,0);
+               fprintf(out_file, " ");
+               c_walk(t->u.declare_var.dcltor,3,0);
+               prt_str(";",0);
+           }
+           t = t->fnext;
+       }
+       if (ntend > 0) {
+           fprintf(out_file, "\n\n   struct descrip tend[%d];\n", ntend);
+           line += 3;
+       }
+
+       /*
+        * Temporary vars
+        */
+       t = params;
+       while (t) {
+           if (t->u.param_info.non_tend & PrmInt) {
+               fprintf(out_file, "   C_integer r_i%d;\n", t->u.param_info.param_num); ++line;
+           }
+           if (t->u.param_info.non_tend & PrmDbl) {
+               fprintf(out_file, "   double r_d%d;\n", t->u.param_info.param_num); ++line;
+           }
+           t = t->u.param_info.next;
+       }
+       if (n_tmp_str > 0)
+           fprintf(out_file, "   char r_sbuf[%d][MaxCvtLen];", n_tmp_str);
+
+       fprintf(out_file, "\n};\n"); line += 2;
+
+       in_struct = 0;
+   }
+
+
    if (op_type != Keyword) {
       /*
        * Output prototype. Operations taking a variable number of arguments
        *   have an extra parameter: the number of arguments.
        */
        if (use_frame) {
-           fprintf(out_file, "int %c%s(struct frame *frame0);\n", letter, name);
+           fprintf(out_file, "int %c%s(struct frame *frame0);\n", letter, name); ++line;
+           fprintf(out_file, "void S%s(struct frame *frame0, void (*f)(dptr));\n", op_name); ++line;
        } else {
            fprintf(out_file, "int %c%s (", letter, name);
            if (params != NULL && (params->id_type & VarPrm))
                fprintf(out_file, "int r_nargs, ");
            fprintf(out_file, "dptr r_args);\n");
+           ++line;
        }
-      ++line;
 
       /*
        * Output procedure block.
@@ -3581,16 +3586,21 @@ struct node *n;
          }
       }
 
-   /*
-    * Output function header. Operations taking a variable number of arguments
-    *   have an extra parameter: the number of arguments.
-    */
-   if (use_frame) {
+   if (use_frame)
+   {
+       /*
+        * Output function header.
+        */
+
        fprintf(out_file, "int %c%s(struct frame *frame0)\n{\n", letter, name);
        fprintf(out_file, "   struct %s_frame *frame = (struct %s_frame *)frame0;\n", name, name);
        fprintf(out_file, "   RESTORE(frame);\n");
        line += 4;
    } else {
+       /*
+        * Output function header. Operations taking a variable number of arguments
+        *   have an extra parameter: the number of arguments.
+        */
        fprintf(out_file, "int %c%s(", letter, name);
        if (params != NULL && (params->id_type & VarPrm))
            fprintf(out_file, "r_nargs, ");
@@ -3707,6 +3717,26 @@ struct node *n;
       }
    ForceNl();
    prt_str("}\n", IndentInc);
+
+   if (use_frame)
+   {
+       int i;
+       fprintf(out_file, "\n\n"); line += 2;
+       fprintf(out_file, "void S%s(struct frame *frame0, void (*f)(dptr)) {\n", op_name); ++line;
+       fprintf(out_file, "   struct %s_frame *frame = (struct %s_frame *)frame0;\n", op_name, op_name); ++line;
+       if (nparms >= 0) {
+           for (i = 0; i < nparms; ++i)
+               fprintf(out_file, "   f(&frame->args[%d]);\n",i); ++line;
+       } else {
+           fprintf(out_file, "   int i;\n"); ++line;
+           fprintf(out_file, "   for (i = 0; i < frame->nargs; ++i)\n"); ++line;
+           fprintf(out_file, "      f(&frame->args[i]);\n"); ++line;
+       }
+       fprintf(out_file, "   f(&frame->value);\n"); ++line;
+       for (i = 0; i < ntend; ++i)
+           fprintf(out_file, "   f(&frame->tend[%d]);\n",i); ++line;
+       fprintf(out_file, "}"); ++line;
+   }
    }
 
 /*
@@ -3809,10 +3839,7 @@ struct token *t;
  *   start of an output file.
  */
 void prologue()
-   {
-   id_comment(out_file);
-   fprintf(out_file, "#include \"%s\"\n\n", inclname);
-   if (c_flag) {
-       fprintf(out_file, "#include \"%s\"\n\n", hname);
-   }
-   }
+{
+    id_comment(out_file);
+    fprintf(out_file, "#include \"%s\"\n\n", inclname);
+}

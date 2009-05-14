@@ -37,10 +37,9 @@ extern int nl;  /* flag: a new-line is needed in the output */
 
 extern int lex_state;      /* state of operator recognition */
 extern FILE *out_file;     /* output file */
-extern FILE *header_file;  /* output file */
 extern int def_fnd;        /* C input defines something concrete */
 extern char *inclname;     /* include file to be included by C compiler */
-extern char *cname, *hname; /* current C, H filenames */
+extern char *cname;        /* current C filename */
 extern int enable_out;     /* enable output of C code */
 
 

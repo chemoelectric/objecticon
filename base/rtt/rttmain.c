@@ -42,8 +42,8 @@ static char *options =
  */
 
 char *progname = "rtt";
-FILE *out_file, *header_file;
-char *cname, *hname;
+FILE *out_file;
+char *cname;
 char *inclname;
 int def_fnd;
 int c_flag = 0;
@@ -235,7 +235,6 @@ void trans(src_file)
     if (strcmp(cur_src, "-") == 0) {
         source("-"); /* tell preprocessor to read standard input */
         cname = salloc(makename(TargetDir, "stdin", CSuffix));
-        hname = salloc(makename(TargetDir, "stdin", HSuffix));
     }
     else {
         fp = fparse(cur_src);
@@ -247,7 +246,6 @@ void trans(src_file)
 
         source(cur_src);  /* tell preprocessor to read source file */
         cname = salloc(makename(TargetDir, cur_src, CSuffix));
-        hname = salloc(makename(TargetDir, cur_src, HSuffix));
     }
 
     if (pp_only)
@@ -263,12 +261,7 @@ void trans(src_file)
             err2("cannot open output file ", cname);
         else
             addrmlst(cname, out_file);
-        if (c_flag) {
-            if ((header_file = fopen(hname, "w")) == NULL)
-                err2("cannot open header file ", hname);
-            else
-                addrmlst(hname, header_file);
-        }
+
         prologue(); /* output standard comments and preprocessor directives */
 
         yyparse();  /* translate the input */
@@ -280,12 +273,6 @@ void trans(src_file)
                 err2("cannot close ", cname);
             else	/* can't close it again if we remove it to due an error */
                 markrmlst(out_file);
-            if (c_flag) {
-                if (fclose(header_file) != 0)
-                    err2("cannot close ", hname);
-                else	/* can't close it again if we remove it to due an error */
-                    markrmlst(header_file);
-            }
         }
     }
 }
