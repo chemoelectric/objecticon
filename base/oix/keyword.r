@@ -5,10 +5,6 @@
  *  After adding keywords, be sure to rerun ../icont/mkkwd.
  */
 
-#define KDef(p,n) int Cat(K,p) (dptr cargp);
-#include "../h/kdefs.h"
-#undef KDef
-
 
 "&clock - a string consisting of the current time of day"
 keyword{2} clock

@@ -538,6 +538,8 @@ do { \
    	{sizeof(sname)-1,sname},\
         0,0};
 
+
+   #define KeywordBlock(f)
    
    /*
     * Macros to access Icon arguments in C functions.
