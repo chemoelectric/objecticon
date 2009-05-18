@@ -182,6 +182,7 @@ static int fold_consts(struct lnode *n)
         case Uop_Bactivate: 
         case Uop_Lconcat:
         case Uop_Everydo:
+        case Uop_Suspenddo:
         case Uop_Whiledo:
         case Uop_Limit:
         case Uop_Scan: {
@@ -231,6 +232,7 @@ static int fold_consts(struct lnode *n)
 
         case Uop_Activate:
         case Uop_Every:
+        case Uop_Suspend:
         case Uop_While:
         case Uop_Bang:
         case Uop_Random:
