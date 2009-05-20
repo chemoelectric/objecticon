@@ -365,7 +365,7 @@ class UReader()
                 curr_func.add_local(ULocal(s, n))
              }
 
-             UcodeOp.Con: {
+             UcodeOp.Data: {
                 n := uin_32() | fail
                 s := uin_bin() | fail
                 curr_func.add_const(UConst(s, n))
