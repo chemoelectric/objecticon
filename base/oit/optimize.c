@@ -601,7 +601,7 @@ static int visit_init_assign(struct lnode *n)
         return 1;
 
     if (x->child2->op == Uop_Const) {
-        struct c_entry *ce = ((struct lnode_const *)x->child2)->con;
+        struct centry *ce = ((struct lnode_const *)x->child2)->con;
         if (f->flag == (M_Public | M_Static | M_Const)) {
             if (f->const_flag == NOT_SEEN) {
                 f->const_val = ce;
@@ -659,8 +659,8 @@ static void compute_class_consts()
             visitfunc_pre(f->func, visit_init_method);
         }
         if (verbose > 3) {
-            fprintf(stderr, "Class %s pure=%d\n", vclass->global->name, vclass->global->pure);
             struct lclass_field *cf;
+            fprintf(stderr, "Class %s pure=%d\n", vclass->global->name, vclass->global->pure);
             for (cf = vclass->fields; cf; cf = cf->next) {
                 if (cf->flag == (M_Public | M_Static | M_Const)) {
                     fprintf(stderr, "\tPublic static constant %s: ", cf->name);
@@ -2575,9 +2575,9 @@ static void fold_subsc(struct lnode *n)
             break;
         }
         default: {
+            char t;
             if (!cnv_string(&l1))
                 break;
-            char t;
             i = cvpos(l2.u.i, l1.u.str.len);
             if (i == CvtFail || i > l1.u.str.len)
                 break;
