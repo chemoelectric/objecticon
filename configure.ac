@@ -1,4 +1,4 @@
-AC_INIT([Object Icon],[1.2],[r.parlett@gmail.com],[objecticon])
+AC_INIT([Object Icon],[1.3],[r.parlett@gmail.com],[objecticon])
 
 AC_DEFUN([OI_ADD_LIB],[
  AC_CHECK_LIB($1,main)
@@ -62,6 +62,7 @@ AC_CHECK_GLOBAL(sys_nerr)
 AC_CHECK_GLOBAL(sys_errlist)
 AC_VAR_TIMEZONE_EXTERNALS()
 AC_STRUCT_TIMEZONE_GMTOFF()
+CHECK_UNSETENV()
 
 AC_CHECK_SIZEOF(int, 4)
 AC_CHECK_SIZEOF(long, 4)

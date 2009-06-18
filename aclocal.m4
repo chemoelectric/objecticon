@@ -566,3 +566,21 @@ if test "$ac_cv_flag_msg_nosignal" = yes ; then
 		[Define to 1 if you have MSG_NOSIGNAL flag for send()]) 
 fi
 ])dnl
+
+dnl ======================================================================
+dnl Check for unsetenv returning an int
+dnl ======================================================================
+AC_DEFUN([CHECK_UNSETENV], [
+AC_REQUIRE([AC_PROG_CC])
+AC_CACHE_CHECK([if unsetenv returns int], 
+  ac_cv_flag_unsetenv_int_return, [
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <stdlib.h>
+]], [[
+  int x = unsetenv("dummy");
+]])],[ac_cv_flag_unsetenv_int_return=yes],[ac_cv_flag_unsetenv_int_return=no])])
+if test "$ac_cv_flag_unsetenv_int_return" = yes ; then
+	AC_DEFINE([HAVE_UNSETENV_INT_RETURN], 1,
+		[Define to 1 if unsetenv returns an int]) 
+fi
+])dnl

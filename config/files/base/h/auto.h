@@ -66,6 +66,9 @@
 /* define as 1 if poll exists */
 #undef HAVE_POLL
 
+/* define as 1 if unsetenv exists and returns an int */
+#undef HAVE_UNSETENV_INT_RETURN
+
 /* sizes of various fundamental types */
 #undef SIZEOF_INT
 #undef SIZEOF_LONG

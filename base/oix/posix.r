@@ -309,10 +309,14 @@ function{0, 1} posix_System_unsetenv(name)
    if !cnv:C_string(name) then
       runerr(103, name)
    body {
+#ifdef HAVE_UNSETENV_INT_RETURN
        if (unsetenv(name) < 0) {
 	 errno2why();
 	 fail;
        }
+#else
+       unsetenv(name);
+#endif
        return nulldesc;
    }
 end
