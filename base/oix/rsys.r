@@ -125,7 +125,7 @@ long millisec()
    t = cptime();
    if (starttime == -2)
       starttime = t;
-   return (long) ((1000.0 / CLK_TCK) * (t - starttime));
+   return (long) ((1000.0 / sysconf(_SC_CLK_TCK)) * (t - starttime));
    }
 
 #else					/* UNIX */
