@@ -1,0 +1,39 @@
+#summary Describes the unicode support in Object Icon
+<wiki:toc max_depth="3" />
+= Introduction =
+
+This page describes the Unicode support in Object Icon.  This provides an additional string type, which behaves like a conventional string, but can contain any unicode character.  Csets have also been enhanced in Object Icon.
+
+= The `ucs` type =
+
+`ucs` (standing for Unicode character string) is a new builtin type, whose behaviour closely mirrors that of the conventional Icon string.  It operates by providing a wrapper around a conventional conventional Icon string, which must be in utf-8 format.  This has several advantages, and only one serious disadvantage, namely that a utf-8 string is not randomly accessible, in the sense that one cannot say where the representation for unicode character `i` begins.  To alleviate this disadvantage, the `ucs` type maintains an index of offsets into the utf-8 string to make random access faster.  The size of the index is only a few percent of the total allocation for the `ucs` object.
+
+== utf-8 escape sequences ==
+
+Two new escape sequences are provided to represent the utf-8 character sequences of unicode characters.  These are `\u`, which is followed by up to 4 hex digits, and `\U`, which is followed by up to six hex digits.  Each expands to between one and four characters, depending on the unicode character concerned.  So, for example, the line
+{{{
+   write(image("\u0001*\u00ff*\u1234*\U10ffff"))
+}}}
+writes
+{{{
+   "\x01*\xc3\xbf*\xe1\x88\xb4*\xf4\x8f\xbf\xbf"
+}}}
+Note that this is still just an ordinary string, rather than a `ucs` string.
+
+== Creating a `ucs` string ==
+
+A `ucs` string can be created at compile-time, as a literal, or at runtime, via the builtin `ucs` function.  To create a literal, prefix a `u` to an ordinary string literal, which must be valid utf-8; for example :-
+{{{
+   s := u"\u0001*\u00ff*\u1234*\U10ffff"
+}}}
+To use `ucs`, just call it like any other function.
+{{{
+   s := ucs(x)
+}}}
+The parameter to `ucs` must be something which can be converted to a string which must be valid utf-8 (otherwise `ucs` fails).  Note that all plain ascii strings (ie, those with only characters less than 128) are in utf-8 format.  
+
+== Operations on `ucs` strings ==
+ 
+== Csets ==
+
+== Conversions ==
