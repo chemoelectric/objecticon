@@ -93,8 +93,10 @@ function{0,1} mysql_MySql_options(self, option, arg)
            * These take a single mandatory int as an arg.
            */
           case MYSQL_OPT_CONNECT_TIMEOUT: {
-              if (!cnv:C_integer(arg, int_arg))
+              word w;
+              if (!cnv:C_integer(arg, w))
                   runerr(101, arg);
+              int_arg = (unsigned int)w;
               c_arg = (char*)&int_arg;
               break;
           }
@@ -106,8 +108,10 @@ function{0,1} mysql_MySql_options(self, option, arg)
               if (is:null(arg))
                   c_arg = NULL;
               else {
-                  if (!cnv:C_integer(arg, int_arg))
+                  word w;
+                  if (!cnv:C_integer(arg, w))
                       runerr(101, arg);
+                  int_arg = (unsigned int)w;
                   c_arg = (char*)&int_arg;
               }
               break;
@@ -185,7 +189,12 @@ end
 function{0,1} mysql_MySql_shutdown(self)
    body {
       GetSelfMySql();
+
+#if MYSQL_VERSION_ID >= 50001 || (MYSQL_VERSION_ID < 50000 && MYSQL_VERSION_ID >= 40103)
+      if (mysql_shutdown(self_mysql, SHUTDOWN_DEFAULT)) {
+#else
       if (mysql_shutdown(self_mysql)) {
+#endif
           on_mysql_error(self_mysql);
           fail;
       }
@@ -414,8 +423,12 @@ function{0,1} mysql_MySql_connect(self, host, user, passwd, db,
 
       if (is:null(port))
           c_port = 0;
-      else if (!cnv:C_integer(port, c_port))
-          runerr(101, port);
+      else {
+          word w;
+          if (!cnv:C_integer(port, w))
+              runerr(101, port);
+          c_port = (unsigned int)w;
+      }
 
       if (is:null(unix_socket))
           c_unix_socket = NULL;
@@ -424,8 +437,12 @@ function{0,1} mysql_MySql_connect(self, host, user, passwd, db,
 
       if (is:null(client_flag))
           c_client_flag = 0;
-      else if (!cnv:C_integer(client_flag, c_client_flag))
-          runerr(101, client_flag);
+      else {
+          word w;
+          if (!cnv:C_integer(client_flag, w))
+              runerr(101, client_flag);
+          c_client_flag = (unsigned int)w;
+      }
 
       if (!mysql_real_connect(self_mysql, c_host, c_user, c_passwd, 
                               c_db, c_port, c_unix_socket, c_client_flag)) {
