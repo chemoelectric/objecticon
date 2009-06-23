@@ -916,7 +916,7 @@ wfp loadfont(wd,s)
         for (i = 0; i < 256; ++i) s[i] = (char)i;
         XftTextExtents8 (wd->display,
                          rv->fsp,
-                         s,
+                         (FcChar8 *)s,
                          256,
                          &extents);
         rv->ascent = Max(rv->fsp->ascent, extents.y);

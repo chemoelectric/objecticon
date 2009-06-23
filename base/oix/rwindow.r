@@ -801,11 +801,11 @@ struct palentry *bmp_paltbl(int n, int *colortable)
  * Construct Icon-style imgdata from BMP-style rasterdata.
  * Only trick we know about so far is to reverse rows so first row is bottom
  */
-unsigned char * bmp_data(int width, int height, int bpp, char * rasterdata)
+unsigned char * bmp_data(int width, int height, int bpp, unsigned char * rasterdata)
 {
     int i;
     int rowbytes = width * bpp;
-    char *tmp = malloc(rowbytes);
+    unsigned char *tmp = malloc(rowbytes);
 
     if (tmp==NULL) return NULL;
     for(i=0;i<height/2;i++) {
@@ -815,7 +815,7 @@ unsigned char * bmp_data(int width, int height, int bpp, char * rasterdata)
         memmove(rasterdata + (height-i-1) * rowbytes, tmp, rowbytes);
     }
     free(tmp);
-    return (unsigned char *)rasterdata;
+    return rasterdata;
 }
 
 
@@ -831,7 +831,7 @@ int readBMP(char *filename, int p, struct imgdata *imd)
         xpixelsperm, ypixelsperm, colorsused, colorsimportant, numcolors;
     short bitcount;
     int *colortable = NULL;
-    char *rasterdata;
+    unsigned char *rasterdata;
     if ((f = fopen(filename, "rb")) == NULL) return Failed;
     if (((c = getc(f)) != 'B') || ((c = getc(f)) != 'M')) {
         fclose(f);

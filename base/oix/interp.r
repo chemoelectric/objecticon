@@ -166,8 +166,6 @@ Deliberate Syntax Error
  * End of operating-system specific code.
  */
 
-static struct descrip unwinder;
-
 #begdef interp_macro(interp_x,e_intcall,e_fsusp,e_osusp,e_bsusp,e_ocall,e_ofail,e_tick,e_line,e_opcode,e_fcall,e_prem,e_erem,e_intret,e_psusp,e_ssusp,e_pret,e_efail,e_sresum,e_fresum,e_oresum,e_eresum,e_presum,e_pfail,e_ffail,e_frem,e_orem,e_fret,e_oret,e_literal,e_fname)
 
 /*
@@ -1142,8 +1140,6 @@ Eret_uw:
 
 
 	 case Op_Pret: {	/* return from procedure */
-	   struct descrip oldargp;
-
 	    /*
 	     * An Icon procedure is returning a value.	Determine if the
 	     *	value being returned should be dereferenced and if so,
@@ -1154,7 +1150,7 @@ Eret_uw:
 	     */
 	    struct b_proc *rproc;
 	    rproc = (struct b_proc *)BlkLoc(*argp);
-            oldargp = *argp;
+
 #if e_prem || e_erem
 	    ExInterp;
             vanq_proc(efp, gfp);
@@ -1180,12 +1176,9 @@ Pret_uw:
 	       ExInterp;
 
                EVVal(A_Pret_uw, e_intret);
-	       unwinder = oldargp;
 	       return A_Pret_uw;
 	       }
 	   
-	   if (!is:proc(oldargp) && is:proc(unwinder))
-	      oldargp = unwinder;
 	    rsp = (word *)argp + 1;
 	    efp = pfp->pf_efp;
 	    gfp = pfp->pf_gfp;
