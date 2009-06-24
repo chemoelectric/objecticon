@@ -48,4 +48,48 @@ is invalid and will cause a runtime error because `"\xff"` is not valid utf8, an
 
 == Csets ==
 
+In Icon, csets can only represent characters in the range 0 to 255.  Object icon extends this range to cover all possible unicode characters (0 up to 0x10FFFF).
+
+The `\u` and `\U` escape sequences can be used to specify characters greater than 255.  For example
+{{{
+   '\x01\xff\u1234\U10ffff'
+}}}
+specifies a cset with four characters.  You can also specify a range of characters by using a hyphen.  Thus `'a-zA-Z'` has the lower and upper case characters, `'0-9'` has the digits, and so on.  A new keyword, `&uset`, contains all of the possible characters and is equivalent to `'\x00-\U10ffff'`.
+
+Generating the elements of a cset with `!` will produce one-character strings for those elements less than 256, and one-character `ucs` strings for those elements greater than or equal to 256.  So for example the expression
+{{{
+   !'\x01\xff\u1234\U10ffff'
+}}}
+produces the following four results
+{{{
+"\x01"
+"\xff"
+u"\u1234"
+u"\U10ffff"
+}}}
+
+Indexing a cset will produce either a normal string or a `ucs` string, depending on whether any of the elements in the range are greater than or equal to 256.  For example the expression
+{{{
+   '\x01\xff\u1234\U10ffff'[1:1 to 5]
+}}}
+produces the following results
+{{{
+""
+"\x01"
+"\x01\xff"
+u"\x01\u00ff\u1234"
+u"\x01\u00ff\u1234\U10ffff"
+}}}
+
+The builtin `ord()` function can be used to access the numerical values of some or all of the characters in a cset (see below for a full explanation of `ord`).
+
 == Conversions ==
+
+== Builtin functions ==
+
+=== ord() ===
+
+=== uchar() ===
+
+=== text() ===
+
