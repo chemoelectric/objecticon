@@ -170,17 +170,21 @@ procedure test_stream(x)
 end
 
 procedure test_dir()
-   local s, f
+   local s, f, t
    system("mkdir testdir")
    system("echo a >testdir/one")
    system("echo a >testdir/two")
    system("echo a >testdir/three")
    f := DirStream.open("testdir") | stop(&why)
    s := f.reads(1000)
-   print{"Dir", s}
+   t := set()
+   s ? while insert(t, tab(upto('\n'))) do move(1)
+   pr_seq{"Dir1", !sort(t)}
    f.close()
+   t := set()
    f := DirStream.open("testdir") | stop(&why)
-   pr_seq{"Dir", |f.read()}
+   while insert(t, f.read())
+   pr_seq{"Dir2", !sort(t)}
    print{"eof()", f.eof()}
    f.close()
    system("rm -r testdir")
