@@ -33,7 +33,19 @@ To use `ucs`, just call it like any other function.
 The parameter to `ucs` must be something which can be converted to a string which must be valid utf-8 (otherwise `ucs` fails).  Note that all plain ascii strings (ie, those with only characters less than 128) are in utf-8 format.  
 
 == Operations on `ucs` strings ==
- 
+
+The `ucs` type supports all of the familiar string operations, with the same semantics as the conventional string type.
+
+String operations which take two parameters can usually mix `string` and `ucs` types, although some care is needed.  The general rule is: if either parameter is a `ucs`, then the other parameter must be convertible to a `ucs`.  For example, consider string catenation.  The expression
+{{{
+   "abc" || u"\u1234"
+}}}
+is valid, and has the result `u"abc\u1234"`, because `"abc"` is valid utf8 and hence convertible to a `ucs`.  However, the expression
+{{{
+   "\xff" || u"\u1234"
+}}}
+is invalid and will cause a runtime error because `"\xff"` is not valid utf8, and hence cannot be converted to a `ucs`.
+
 == Csets ==
 
 == Conversions ==
