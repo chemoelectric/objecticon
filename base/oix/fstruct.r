@@ -907,42 +907,16 @@ function{1} put(x, vals[n])
       return x;
       }
 end
-
-/*
- * C language set insert.  pps must point to a tended block pointer.
- * pe can't be tended, so allocate before, and deallocate if unused.
- * returns: 0 = yes it was inserted, -1 = runtime error, 1 = already there.
- */
-int c_setinsert(union block **pps, dptr pd)
-{
-   int res;
-   register uword hn;
-   union block **pe;
-   struct b_selem *ne;			/* does not need to be tended */
-   tended struct descrip d;
-
-   d = *pd;
-   if ((ne = alcselem(&nulldesc, (uword)0))) {
-      pe = memb(*pps, &d, hn = hash(&d), &res);
-      if (res==0) {
-         ne->setmem = d;			/* add new element */
-         ne->hashnum = hn;
-         addmem((struct b_set *)*pps, ne, pe);
-         }
-      else dealcblk((union block *)ne);
-      }
-   else res = -1;
-   res = 0;
-
-   return res;
-}
 
 "set(x1,...,xN) - create a set with given members."
 
 function{1} set(x[n])
    body {
      tended union block *pb, *ps;
-     int argc;
+     struct b_selem *ne;			/* does not need to be tended */
+     union block **pe;
+     register uword hn;
+     int res, argc;
 
      /*
       * Make a set.
@@ -956,9 +930,14 @@ function{1} set(x[n])
      EVValD(&result, E_Screate);
 
      for (argc = 0; argc < n; argc++) {
-         if (c_setinsert(&ps, &x[argc]) == -1)
-             runerr(0);
-         
+         hn = hash(&x[argc]);
+         /* get this now because can't tend pe */
+         MemProtect(ne = alcselem(&x[argc], hn));
+         pe = memb(ps, &x[argc], hn, &res);
+         if (res == 0)
+             addmem((struct b_set *)ps, ne, pe);
+         else
+             dealcblk((union block *)ne);
          EVValD(&result, E_Sinsert);
          EVValD(x + argc, E_Sval);
      }
