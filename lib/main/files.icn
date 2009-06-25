@@ -218,8 +218,7 @@ class Files(NoCopy)
       if rename(s1, s2) then
          return
       copy(s1, s2) | fail
-      remove(s1)
-      return
+      return remove(s1)
    end
 
    #
