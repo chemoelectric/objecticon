@@ -913,8 +913,9 @@ end
  * pe can't be tended, so allocate before, and deallocate if unused.
  * returns: 0 = yes it was inserted, -1 = runtime error, 1 = already there.
  */
-#begdef C_SETINSERT(ps, pd, res)
+int c_setinsert(union block **pps, dptr pd)
 {
+   int res;
    register uword hn;
    union block **pe;
    struct b_selem *ne;			/* does not need to be tended */
@@ -922,124 +923,111 @@ end
 
    d = *pd;
    if ((ne = alcselem(&nulldesc, (uword)0))) {
-      pe = memb(ps, &d, hn = hash(&d), &res);
+      pe = memb(*pps, &d, hn = hash(&d), &res);
       if (res==0) {
          ne->setmem = d;			/* add new element */
          ne->hashnum = hn;
-         addmem((struct b_set *)ps, ne, pe);
+         addmem((struct b_set *)*pps, ne, pe);
          }
       else dealcblk((union block *)ne);
       }
    else res = -1;
    res = 0;
-}
-#enddef
 
-int c_setinsert(union block **pps, dptr pd)
-{
-   int rv;
-   C_SETINSERT(*pps, pd, rv);
-   return rv;
+   return res;
 }
 
 "set(x1,...,xN) - create a set with given members."
-" If any parameter is a list, its"
-" elements are added rather than the list itself."
 
 function{1} set(x[n])
+   body {
+     tended union block *pb, *ps;
+     int argc;
 
-   len_case n of {
-      0: {
-         abstract {
-            return new set(empty_type)
-            }
-         inline {
-            register union block * ps;
-            ps = hmake(T_Set, (word)0, (word)0);
-            if (ps == NULL)
-               runerr(0);
-	    Desc_EVValD(ps, E_Screate, D_Set);
-            return set(ps);
-            }
-         }
+     /*
+      * Make a set.
+      */
+     ps = hmake(T_Set, (word)0, n);
+     if (ps == NULL) 
+         runerr(0);
 
-      default: {
-         abstract {
-            return new set(type(x)) /* ?? */
-/*            return new set(store[type(x).lst_elem]) /* should be anything */
-            }
+     result.dword = D_Set;
+     result.vword.bptr = ps;
+     EVValD(&result, E_Screate);
 
-         body {
-            tended union block *pb, *ps;
-            word i, j;
-	    int arg, res;
+     for (argc = 0; argc < n; argc++) {
+         if (c_setinsert(&ps, &x[argc]) == -1)
+             runerr(0);
+         
+         EVValD(&result, E_Sinsert);
+         EVValD(x + argc, E_Sval);
+     }
 
-	    /*
-	     * Make a set.
-             */
-            if (is:list(x[0])) i = BlkLoc(x[0])->list.size;
-            else i = n;
-            ps = hmake(T_Set, (word)0, i);
-            if (ps == NULL) {
-               runerr(0);
-               }
-
-	    for (arg = 0; arg < n; arg++) {
-	      if (is:list(x[arg])) {
-		pb = BlkLoc(x[arg]);
-                if(!(reserve(Blocks,
-                     pb->list.size*(2*sizeof(struct b_selem))))){
-                   runerr(0);
-                   }
-		/*
-		 * Chain through each list block and for
-		 *  each element contained in the block
-		 *  insert the element into the set if not there.
-		 */
-		for (pb = pb->list.listhead;
-		     pb && (BlkType(pb) == T_Lelem);
-		     pb = pb->lelem.listnext) {
-		  for (i = 0; i < pb->lelem.nused; i++) {
-		    j = pb->lelem.first + i;
-		    if (j >= pb->lelem.nslots)
-		      j -= pb->lelem.nslots;
-		    C_SETINSERT(ps, &pb->lelem.lslots[j], res);
-                    if (res == -1) {
-                       runerr(0);
-                       }
-                    }
-		}
-	      }
-	      else {
-		if (c_setinsert(&ps, & (x[arg])) == -1) {
-                   runerr(0);
-                   }
-	      }
-	    }
-	    Desc_EVValD(ps, E_Screate, D_Set);
-            return set(ps);
-	    }
-         }
-      }
+     return result;
+   }
 end
 
 
-"table(x) - create a table with default value x."
-
-function{1} table(x)
-   abstract {
-      return new table(empty_type, empty_type, type(x))
-      }
-   inline {
-      union block *bp;
+"table(x) - create a table with default value x, and initial mappings"
+"v[0]->v[1], v[2]->v[3] etc."
+function{1} table(x, v[n])
+   body {
+      tended union block *bp, *bp2;
+      union block **pd;
+      struct b_telem *te;
+      register uword hn;
+      int res, argc;
    
-      bp = hmake(T_Table, (word)0, (word)0);
+      bp = hmake(T_Table, (word)0, (word)n);
       if (bp == NULL)
          runerr(0);
       bp->table.defvalue = x;
-      Desc_EVValD(bp, E_Tcreate, D_Table);
-      return table(bp);
+      result.dword = D_Table;
+      result.vword.bptr = bp;
+      EVValD(&result, E_Tcreate);
+
+      for(argc = 0; argc < n; argc += 2) {
+
+          hn = hash(v + argc);
+
+          /* get this now because can't tend pd */
+          MemProtect(te = alctelem());
+
+          pd = memb(bp, v + argc, hn, &res);	/* search table for key */
+          if (res == 0) {
+              /*
+               * The element is not in the table - insert it.
+               */
+              bp->table.size++;
+              te->clink = *pd;
+              *pd = (union block *)te;
+              te->hashnum = hn;
+              te->tref = v[argc];
+              if (argc + 1 < n)
+                  te->tval = v[argc + 1];
+              else
+                  te->tval = nulldesc;
+              if (TooCrowded(bp))
+                  hgrow(bp);
+          }
+          else {
+              /*
+               * We found an existing entry; just change its value.
+               */
+              dealcblk((union block *)te);
+              te = (struct b_telem *) *pd;
+              if (argc+1 < n)
+                  te->tval = v[argc + 1];
+              else
+                  te->tval = nulldesc;
+          }
+
+          EVValD(&result, E_Tinsert);
+          EVValD(v + argc, E_Tsub);
       }
+
+      return result;
+   }
 end
 
 

@@ -8,8 +8,8 @@ procedure p1()
       image("|"(1,2) | monitor(&line)) | "none")
    write("member(x,x) | monitor(&line) ----> ",
       image(member(x,x) | monitor(&line)) | "none")
-   write("(set([]) ++ 'a') | monitor(&line) ----> ",
-      image((set([]) ++ 'a') | monitor(&line)) | "none")
+   write("(set() ++ 'a') | monitor(&line) ----> ",
+      image((set() ++ 'a') | monitor(&line)) | "none")
    write("(every i := 1 to *a - 1 by 2 do write(image(a[i]),\" \",a[i + 1])) | monitor(&line) ----> ",
       image((every i := 1 to *a - 1 by 2 do write(image(a[i])," ",a[i + 1])) | monitor(&line)) | "none")
    write("(every i := 1 to *a - 1 by 2 do write(image(a[i]),\" \",a[i + 1])) | monitor(&line) ----> ",

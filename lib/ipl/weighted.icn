@@ -73,7 +73,7 @@ local lcv, pairs, weight, size, newlist, legal, illegal
       illegal := set ([])                  # Which indices can't be used?
       lcv := 1
       until lcv > size do {
-        illegal ++:= set([lcv])            # Compile the list of invaild
+        illegal ++:= set(lcv)            # Compile the list of invaild
                                            # indices.
         lcv +:= weight
       }

@@ -19,7 +19,7 @@ procedure main()
          if *word < 3 then next			# skip short words
          maxword <:= *word			# keep track of longest word
 						# if it's a new word, start set
-         if *words[word] = 0 then words[word] := set([lineno])
+         if *words[word] = 0 then words[word] := set(lineno)
          else insert(words[word],lineno)	# else add the line number
          }
       }

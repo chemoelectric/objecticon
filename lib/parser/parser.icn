@@ -174,7 +174,7 @@ class Parser(Connectable)
       preproc_sym_table := \predefined_syms | copy(DEFAULT_SYMBOLS)
       preproc_if_stack := []
       preproc_file_stack := []
-      preproc_include_set := set([fname])
+      preproc_include_set := set(fname)
       preproc_if_state := &null
       preproc_word_chars := &letters ++ &digits ++ '_'
       preproc_filename := preproc_include_name := fname
@@ -401,7 +401,7 @@ class Parser(Connectable)
                      if value := \preproc_sym_table[ident] then {
                         if /done_set |
                         {type(done_set) == "string" &
-                            done_set := set([done_set])
+                            done_set := set(done_set)
                          not member(done_set,ident)} then {
                             value ? value :=
                                preproc_scan_text(insert(copy(\done_set),

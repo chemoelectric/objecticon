@@ -111,14 +111,12 @@ class HtmlParser()
       HTML_VALCHARS := &ascii -- ' \t\n\r>'
       HTML_DELIM := '\"\''
       HTML_PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
-      HTML_STANDALONE := set()
-      every insert(HTML_STANDALONE, "IMG" | "BR" | "HR" | "META" | "BASE" | "INPUT" | "AREA" | 
-                   "OPTION" | "BASEFONT" | "BGSOUND" | "COL" | "COLGROUP" | "ISINDEX" | 
-                   "LINK" | "NEXTID" | "SPACER" | "TBODY" | "TFOOT" | 
-                   "THEAD" | "WBR")
+      HTML_STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
+                             "OPTION", "BASEFONT", "BGSOUND", "COL", "COLGROUP", "ISINDEX", 
+                             "LINK", "NEXTID", "SPACER", "TBODY", "TFOOT", 
+                             "THEAD", "WBR")
 
-      HTML_AUTOCLOSE := set()
-      every insert(HTML_AUTOCLOSE, "LI" | "P" | "DD" | "DT" | "FONT")
+      HTML_AUTOCLOSE := set("LI", "P", "DD", "DT", "FONT")
 
       HTML_ENTITIES := table()
       every e := ![["amp", 38], ["lt", 60], ["gt", 62], ["quot", 34],

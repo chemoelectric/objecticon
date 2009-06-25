@@ -444,7 +444,7 @@ procedure clone(o, seen)
       }
 
       "set" : {
-         res := set([])
+         res := set()
          seen[o] := res
          every insert(res, clone(!o, seen))
          return res

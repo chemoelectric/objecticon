@@ -11,12 +11,12 @@ class SmtpClient(NetClient)
       RFC822_HEADERS
 
    private static init()
-      RFC822_HEADERS := set(["date", "resent-date", "return-path", "received", "sender", 
-                             "from", "reply-to", "resent-sender", "resent-from", 
-                             "resent-reply-to", "to", "resent-to", "cc", "resent-cc", 
-                             "bcc", "resent-bcc", "message-id", "resent-message-id",
-                             "in-reply-to", "references", "keywords", "subject", 
-                             "comments", "encrypted"])
+      RFC822_HEADERS := set("date", "resent-date", "return-path", "received", "sender", 
+                            "from", "reply-to", "resent-sender", "resent-from", 
+                            "resent-reply-to", "to", "resent-to", "cc", "resent-cc", 
+                            "bcc", "resent-bcc", "message-id", "resent-message-id",
+                            "in-reply-to", "references", "keywords", "subject", 
+                            "comments", "encrypted")
    end
 
    private 

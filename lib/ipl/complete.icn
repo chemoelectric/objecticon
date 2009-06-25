@@ -135,7 +135,7 @@ procedure complete(s,st)
 	    every str := !l do {
 		str ? { chr := move(1) | next; str := tab(0) }
 		if old_chr ~==:= chr then {
-		    strset := set([str])
+		    strset := set(str)
 		    insert(newtbl, chr, strset)
 		}
 		else insert(strset, str)
@@ -163,7 +163,7 @@ procedure complete(s,st)
     # one element at a time, with s prefixed to each element.  If, for
     # instance, st had contained ["hello","help","hear"] at the outset
     # and s was equal to "hel", we would now be suspending "hel" ||
-    # !set(["lo","p"]).
+    # !set("lo","p").
     suspend s || !st
 
 end

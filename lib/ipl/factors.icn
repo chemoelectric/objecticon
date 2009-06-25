@@ -75,7 +75,7 @@ import
    io(stop),
    ipl.io(dopen),
    ipl.numbers(round),
-   util(Math)
+   util(Math,list2set)
 
 # generate the divisors of n
 procedure divisors(n)			
@@ -333,6 +333,6 @@ procedure squarefree(n)
 
    facts := factors(n)
 
-   if *facts = *set(facts) then return n else fail
+   if *facts = *list2set(facts) then return n else fail
 
 end

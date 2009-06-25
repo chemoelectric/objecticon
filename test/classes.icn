@@ -486,8 +486,8 @@ procedure test_langprocs()
    put(c, c)
    equals_check([a,a],[b,c])
 
-   s1 := set([ [], [1,2,3], [2]])
-   s2 := set([ [1,2,3], [], [2]])
+   s1 := set( [], [1,2,3], [2] )
+   s2 := set( [1,2,3], [], [2] )
    equals_check(s1,s2)
 
    s1 := set()
@@ -496,22 +496,22 @@ procedure test_langprocs()
    insert(s2,s2)
    equals_check(s1,s2)
 
-   s1 := set([ [1], [2,2], [2,2], [3] ])
-   s2 := set([ [1], [2,2], [2,2], [3] ])
+   s1 := set( [1], [2,2], [2,2], [3] )
+   s2 := set( [1], [2,2], [2,2], [3] )
    equals_check(s1,s2)
 
-   s1 := set([ [1], [1], [2,2], [3] ])
-   s2 := set([ [1], [2,2], [2,2], [3] ])
+   s1 := set( [1], [1], [2,2], [3] )
+   s2 := set( [1], [2,2], [2,2], [3] )
    equals_check(s1,s2)
 
    t1 := Time.simple_parse("2000 10 10 20:11:33 BST")
    t2 := Time.simple_parse("2000 10 10 20:11:33 BST")
    equals_check(t1,t2)
-   equals_check(set([t1]), set([t2]))
+   equals_check(set(t1), set(t2))
 
    t2.set_hour(11)
    equals_check(t1,t2)
-   equals_check(set([t1]), set([t2]))
+   equals_check(set(t1), set(t2))
 
    equals_check(t1, One(1,2))
 

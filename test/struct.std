@@ -94,9 +94,9 @@ every write((!a)[1]) ----> none
 1
 1
 every write((!a)[2]) ----> none
-set([1,0,1,0,1,0,1,0]) ----> set#*(2)
-set([]) ----> set#*(0)
-s := set([1,2,3,4,5,6,7,8,9,10]) ----> set#*(10)
+set(1,0,1,0,1,0,1,0) ----> set#*(2)
+set() ----> set#*(0)
+s := set(1,2,3,4,5,6,7,8,9,10) ----> set#*(10)
 *s ----> 10
 1
 2
@@ -114,13 +114,13 @@ image(s) ----> "set#*(10)"
 type(s) ----> "set"
 member(s,8) ----> 8
 member(s,"8") ----> none
-s := set([]) ----> set#*(0)
+s := set() ----> set#*(0)
 every insert(s,1 to 100) ----> none
 *s ----> 100
 every delete(s,15 to 30) ----> none
 *s ----> 84
-every s1 := insert(set([]),!&lcase) ----> none
-s2 := set(["a","aa","ab","b",1,2,3,4]) ----> set#*(8)
+every s1 := insert(set(),!&lcase) ----> none
+s2 := set("a","aa","ab","b",1,2,3,4) ----> set#*(8)
 s3 := s1 ++ s2 ----> set#*(32)
 s4 := s1 ** s2 ----> set#*(2)
 s5 := s1 -- s2 ----> set#*(24)

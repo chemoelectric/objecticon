@@ -203,7 +203,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    # @param l   The list of item numbers.
    #
    public set_selections(l)
-      self.selections := set(l)
+      self.selections := list2set(l)
       constrain_selections()
       refresh()
    end
@@ -253,7 +253,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    public object_set_selections(l)
       local i, t
       self.selections := set()
-      t := set(l)
+      t := list2set(l)
       every i := 1 to *self.contents do {
          if member(t, self.contents[i]) then
             insert(self.selections, i)
@@ -300,16 +300,16 @@ class SelectableScrollArea(LineBasedScrollArea)
       local i, t1, t2
 
       t1 := sort(self.selections)
-      t2 := []
+      t2 := set()
       every i := 1 to *l do {
          delete(self.contents, l[i] - i + 1)
          while t1[1] < l[i] do
-            put(t2, pop(t1)-i+1)
+            insert(t2, pop(t1)-i+1)
          if t1[1] = l[i] then
             pop(t1)
       }
-      while put(t2, pop(t1)-i)
-      self.selections := set(t2)
+      while insert(t2, pop(t1)-i)
+      self.selections := t2
 
       constrain_cursor()
 
@@ -344,13 +344,13 @@ class SelectableScrollArea(LineBasedScrollArea)
       every i := 1 to *l do
          insert(self.contents, i + n - 1, l[i])
 
-      t := []
+      t := set()
       every e := !self.selections do {
          if e >= n then
             e +:= *l
-         put(t, e)
+         insert(t, e)
       }
-      self.selections := set(t)
+      self.selections := t
 
       invalidate_subject_width()
       invalidate_line_height()

@@ -46,6 +46,8 @@
 
 package ipl.sets
 
+import util(list2set)
+
 # set of characters
 procedure cset2set(cs)			
    local result
@@ -59,7 +61,7 @@ end
 
 # set of table pairs
 procedure pairset(T)			
-    return set(sort(T))
+    return list2set(sort(T))
 end
 
 # domain of table
@@ -93,7 +95,7 @@ procedure inverse(T, Default)
         else if type(Default) == "set" then
           if member(inv, relem := T[delem]) then
             insert(inv[relem], delem)
-          else inv[relem] := set([delem])
+          else inv[relem] := set(delem)
         else inv[T[delem]] := delem
     }
     return inv

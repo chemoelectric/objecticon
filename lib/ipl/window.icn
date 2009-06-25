@@ -154,8 +154,8 @@ procedure OpenWindow(args[])
    # Open the window.  Defer "font" and "fg" until later because they can
    # cause failure.  Don't defer "bg", because it affects the initial
    # window appearance, but try again without it if the open fails.
-   omit1 := set(["fg", "font"])
-   omit2 := set(["fg", "font", "bg"])
+   omit1 := set("fg", "font")
+   omit2 := set("fg", "font", "bg")
    win := wdw_open(att, omit1 | omit2) | stop(&progname, ": can't open window")
 
    # Set foreground, background, and font, giving a nonfatal message if

@@ -18,7 +18,7 @@ procedure list_unique(L)
    local result, culls, x
 
    result := []
-   culls := set(L)
+   culls := list2set(L)
 
    every x := !L do
       if member(culls, x) then {
@@ -117,4 +117,14 @@ end
 #
 procedure coexp_seq(e)
    suspend |@e
+end
+
+#
+# Create a set containing all the elements of x
+#
+procedure list2set(x)
+   local s
+   s := set()
+   every insert(s, !x)
+   return s
 end

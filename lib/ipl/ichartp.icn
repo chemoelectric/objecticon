@@ -169,7 +169,8 @@ import
    ipl.strings(replace),
    ipl.strip(strip),
    ipl.stripcom(stripcom),
-   ipl.trees(stree)
+   ipl.trees(stree),
+   util(list2set)
 
 record stats(edge_list, lhs_table, term_set)
 record chart(inactive, active)               # inactive - set; active - list
@@ -229,7 +230,7 @@ procedure parse_sentence(s, filename, start_symbol)
         elist := list(); ltbl := table(); tset := set()
         every e := bnf_file_2_edges(file) do {
             put(elist, e)                      # main edge list (active)
-            (/ltbl[e.LHS] := set([e])) | insert(ltbl[e.LHS], e) # index LHSs
+            (/ltbl[e.LHS] := set(e)) | insert(ltbl[e.LHS], e) # index LHSs
             every i := 1 to e.LEN do           # LEN holds length of e.RHS
                 if /e.RHS[i].RHS then          # RHS for terminals is null
                     insert(tset, e.RHS[i].LHS)
@@ -254,7 +255,7 @@ procedure parse_sentence(s, filename, start_symbol)
     # in the chart as edges with no RHS (a NULL RHS is characteristic
     # of all terminals).
     #
-    token_set := set(tokens)
+    token_set := list2set(tokens)
     every i := 1 to *tokens do {
         # Flag words not in the grammar as errors.
         if not member(tset, tokens[i]) then
@@ -262,14 +263,14 @@ procedure parse_sentence(s, filename, start_symbol)
         # Now, give us an inactive edge corresponding to word i.
         insert(ch.inactive, e := edge(tokens[i], &null, 1, 1, i, i+1))
         # Insert word i into the LHS table.
-        (/ltbl[tokens[i]] := set([e])) | insert(ltbl[tokens[i]], e)
+        (/ltbl[tokens[i]] := set(e)) | insert(ltbl[tokens[i]], e)
 	# Watch out for those empty RHSs.
 	insert(ch.inactive, e := edge("", &null, 1, 1, i, i))
-        (/ltbl[""] := set([e])) | insert(ltbl[""], e)
+        (/ltbl[""] := set(e)) | insert(ltbl[""], e)
     }
     *tokens = 0 & i := 0
     insert(ch.inactive, e := edge("", &null, 1, 1, i+1, i+1))
-    (/ltbl[""] := set([e])) | insert(ltbl[""], e)
+    (/ltbl[""] := set(e)) | insert(ltbl[""], e)
 
     #
     # Until no new active edges can be built, keep ploughing through

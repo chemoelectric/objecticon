@@ -1,6 +1,6 @@
 #SRC: V9GEN
 
-import io
+import io, util
 
 procedure main ()
    local i,j,name1,name2,f,s,c,n,fset,a,b,d,e,g,h,A,t,x
@@ -263,7 +263,7 @@ procedure test (n)
     write ()
     write ("-------------------- testing n = ", \n | "&null")
     r1 := sortf (data, n)
-    r2 := sortf (set(data), n)
+    r2 := sortf (list2set(data), n)
     dump ("sortf(L,n)", r1)
     if same (r1, r2) then
 	write ("\nsortf(S,n) [same]")

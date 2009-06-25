@@ -103,7 +103,8 @@ package ipl.seqops
 import
    io(write),
    ipl.factors(divisors),
-   ipl.numbers(residue)
+   ipl.numbers(residue),
+   util(list2set)
 
 global expressions
 global node_gen
@@ -240,7 +241,7 @@ procedure get_scollate(seq)
             oseq[m] := count
       }
 
-   if *set(oseq) < 2 then fail		# not enough sequences
+   if *list2set(oseq) < 2 then fail		# not enough sequences
 
 #  oseq := srun([1, get(facts)]) | fail
 
@@ -363,7 +364,7 @@ procedure is_scompact(x)
 
    bound := sbound ! x
 
-   if bound = *set(x) then return bound
+   if bound = *list2set(x) then return bound
    else fail
 
 end
@@ -485,7 +486,7 @@ procedure scompress(xargs[])
 
    x := spromote(xargs[1])
 
-   unique := set(x)
+   unique := list2set(x)
 
    target := []
 
@@ -512,7 +513,7 @@ end
 # test for constant sequence
 procedure sconstant(seq)		
 
-   if *set(seq) = 1 then return !seq
+   if *list2set(seq) = 1 then return !seq
    else fail
 
 end
@@ -791,7 +792,7 @@ procedure slocate(xargs[])
    if \node_gen then return node("slocate", xargs)
 
    x1 := copy(spromote(xargs[1]))
-   x2 := set(spromote(xargs[2]))
+   x2 := list2set(spromote(xargs[2]))
 
    lseq := []
 
@@ -1026,7 +1027,7 @@ procedure spositions(x1, x2)
    local lseq, count, i
 
    x1 := copy(spromote(x1))
-   x2 := set(spromote(x2))
+   x2 := list2set(spromote(x2))
 
    lseq := []
 

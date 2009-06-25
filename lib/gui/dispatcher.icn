@@ -31,8 +31,8 @@ class Dispatcher()
    private static init()
       IDLE_SLEEP_MIN := 10
       IDLE_SLEEP_MAX := 50
-      dialogs := set([])
-      tickers := set([])
+      dialogs := set()
+      tickers := set()
       compute_idle_sleep()
    end
 

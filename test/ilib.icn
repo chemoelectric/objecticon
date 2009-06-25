@@ -16,7 +16,8 @@ import
    ipl.sort,
    ipl.strings,
    ipl.tables,
-   io
+   io, 
+   util
 
 $define LSIZE 16
 $define GENLIMIT 25
@@ -101,7 +102,7 @@ procedure main()
    lst(linterl, L, LR)
    lst(llayer, L, L)
    lst(llpad, L, 14, 0)
-   lst(lltrim, L, set([3]))
+   lst(lltrim, L, set(3))
    lst(lpalin, L)
    lst(lpermute, L)
    lst(lreflect, L)
@@ -111,7 +112,7 @@ procedure main()
    lst(lreverse, L)
    lst(lrotate, L, 4)
    lst(lrpad, L, 14, 0)
-   lst(lrtrim, L, set([3, 5]))
+   lst(lrtrim, L, set(3, 5))
    lst(lrundown, L, LR)
    lst(lrunup, L, LR)
    lst(lshift, L, 3)
@@ -226,9 +227,9 @@ procedure main()
    tbl(inverse, T)
    #   pairset, T    returns list of lists
    stt(range, T)
-   stt(seteq, set([4, 7, 1]), set([7, 1, 4]))
-   stt(setlt, set([4, 7, 1]), set([7, 3, 1, 4]))
-   gen(simage, set(L))
+   stt(seteq, set(4, 7, 1), set(7, 1, 4))
+   stt(setlt, set(4, 7, 1), set(7, 3, 1, 4))
+   gen(simage, list2set(L))
 
    write()
    write("sort:")			# sort
@@ -362,7 +363,7 @@ procedure tfact(n)			#: test factorization of n
    if v ~= n then
       write("   ", n, ": PRODUCT OF FACTORS = ", v)
 
-   F := set(F)
+   F := list2set(F)
    P := pfactors(n)
    if *P ~= *F then
       write("   ", n, ": PRIME FACTOR COUNT = ", *P)

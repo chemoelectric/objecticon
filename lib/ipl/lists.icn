@@ -324,7 +324,8 @@ import
    io(open, stop),
    ipl.equiv(equiv),
    ipl.indices(indices),
-   ipl.numbers(residue)
+   ipl.numbers(residue),
+   util(list2set)
 
 # create list from lines in file
 procedure file2lst(s)			
@@ -863,7 +864,7 @@ end
 procedure lcompact(seq)			
    local unique, target
 
-   unique := set(seq)
+   unique := list2set(seq)
 
    target := []
 
@@ -1061,7 +1062,7 @@ end
 # test list for all terms equal
 procedure lconstant(L)			
 
-   if *set(L) = 1 then return L[1]
+   if *list2set(L) = 1 then return L[1]
    else fail
 
 end
@@ -1338,7 +1339,7 @@ procedure lunique(L)
    local result, culls, x
 
    result := []
-   culls := set(L)
+   culls := list2set(L)
 
    every x := !L do
       if member(culls, x) then {

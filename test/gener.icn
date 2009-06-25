@@ -1,6 +1,6 @@
 #SRC: V9GEN
 
-import io
+import io, util
 
 ##    gener.icn -- test generation in parallel with inserts/deletes
 #
@@ -79,7 +79,7 @@ procedure tdel (limit, n)
 
 procedure check (s1, s2, l)
    local sg,ok,s,e
-   sg := set(l)
+   sg := list2set(l)
    if \verbose then
        writes ("  \tsizes ",right(*s1,5)," <=",right(*sg,5)," <=",right(*s2,5))
    ok := "\t[ok]"
