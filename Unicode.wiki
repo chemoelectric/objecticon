@@ -46,7 +46,9 @@ is valid, and has the result `u"abc\u1234"`, because `"abc"` is valid utf8 and h
 }}}
 is invalid and will cause a runtime error because `"\xff"` is not valid utf8, and hence cannot be converted to a `ucs`.
 
-== Csets ==
+Converting a `ucs` back to a normal string produces the utf8 representation.  This is the internal representation, so this operation is very fast.
+
+= Csets =
 
 In Icon, csets can only represent characters in the range 0 to 255.  Object icon extends this range to cover all possible unicode characters (0 up to 0x10FFFF).
 
@@ -68,6 +70,7 @@ u"\u1234"
 u"\U10ffff"
 }}}
 
+== Indexing ==
 Indexing a cset will produce either a normal string or a `ucs` string, depending on whether any of the elements in the range are greater than or equal to 256.  For example the expression
 {{{
    '\x01\xff\u1234\U10ffff'[1:1 to 5]
@@ -83,13 +86,65 @@ u"\x01\u00ff\u1234\U10ffff"
 
 The builtin `ord()` function can be used to access the numerical values of some or all of the characters in a cset (see below for a full explanation of `ord`).
 
-== Conversions ==
+== Conversion ==
+Any cset can be converted to a `ucs` string, but only one containing only characters less than 256 can be converted to a normal string.
 
-== Builtin functions ==
+= Builtin functions =
 
-=== ord() ===
+== ord(x, i, j) ==
+The `ord` function expands on its Icon predecessor.  The first parameter can be a string, a `ucs` string, or a cset.  The optional parameters `i` and `j` specify a range within `x`, and default to `1` and `0` respectively.  The result sequence is the integer character values of the specified range.  For example
+{{{
+ord(u"\x01\u00ff\u1234\U10ffff")
+}}}
+generates
+{{{
+1
+255
+4660
+1114111
+}}}
+whilst
+{{{
+ord(&ucase, 5, 10)
+}}}
+generates
+{{{
+69
+70
+71
+72
+73
+}}}
+== uchar(x) ==
+This is the `ucs` equivalent of the `char` function.  It produces a one-character `ucs` string containing character number `x`.
 
-=== uchar() ===
+== text(x) ==
+This function will try to convert `x` to either a `ucs` or a conventional string as appropriate.  If `x` is a string or `ucs`, it is just returned.  If `x` is a cset then it is converted to a string if its highest char is < 256; otherwise it is converted to a `ucs`.  For any other type, normal string conversion is attempted.
 
-=== text() ===
+= lang.Text class =
+This class has a some static methods which may prove useful.  
 
+The method `has_ord(c, x)` tests whether character number `x` is in cset `c`.  
+
+The method `utf8_seq(i)` produces the utf-8 string representation of character `i`.  This is useful for building up a utf-8 string which can then be passed to `ucs`.  For example, consider the problem of converting an iso-8859-1 format string to a `ucs`.  One way to do this would be :-
+{{{
+procedure iso8859_to_ucs(s)
+   local t
+   t := u""
+   every t ||:= uchar(ord(s))
+   return t
+end
+}}}
+The drawback with this method is that it is creating lots of temporary `ucs` values in the every loop (`uchar` produces one, and the old value of `t` is thrown away).
+
+A quicker way is to create a utf-8 string first, and then create the `ucs` result at the end :-
+{{{
+import lang(Text)
+
+procedure iso8859_to_ucs(s)
+   local t
+   t := ""
+   every t ||:= Text.utf8_seq(ord(s))
+   return ucs(t)
+end
+}}}
