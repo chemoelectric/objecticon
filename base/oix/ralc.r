@@ -524,15 +524,14 @@ alcrefresh_macro(alcrefresh_1,E_Refresh)
 /*
  * alcselem - allocate a set element block.
  */
-struct b_selem *f(dptr mbr,uword hn)
+struct b_selem *f()
    {
-   tended struct descrip tmbr = *mbr;
    register struct b_selem *blk;
 
    AlcFixBlk(blk, b_selem, T_Selem, e_selem)
    blk->clink = NULL;
-   blk->setmem = tmbr;
-   blk->hashnum = hn;
+   blk->setmem = nulldesc;
+   blk->hashnum = 0;
    return blk;
    }
 #enddef

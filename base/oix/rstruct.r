@@ -165,7 +165,9 @@ static int cphash(dptr dp1, dptr dp2, word n, int tcode)
 	      ep != NULL && BlkType(ep) != T_Table;
 	      ep = (struct b_selem *)ep->clink) {
 	    if (tcode == T_Set) {
-               MemProtect(se = alcselem(&ep->setmem, ep->hashnum));
+               MemProtect(se = alcselem());
+               se->setmem = ep->setmem;
+               se->hashnum = ep->hashnum;
                se->clink = ep->clink;
 	       }
 	    else {

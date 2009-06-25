@@ -68,7 +68,7 @@ operator{1} -- diff(x,y)
           */
          srcp = BlkLoc(x);
          tstp = BlkLoc(y);
-         MemProtect(np = alcselem(&nulldesc, (uword)0));
+         MemProtect(np = alcselem());
 
          for (i = 0; i < HSegs && (seg = srcp->set.hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
@@ -80,7 +80,7 @@ operator{1} -- diff(x,y)
 		     np->setmem = ep->setmem;
 		     np->hashnum = ep->hashnum;
                      addmem(&dstp->set, np, hook);
-                     MemProtect(np = alcselem(&nulldesc, (uword)0));
+                     MemProtect(np = alcselem());
                      }
                   ep = (struct b_selem *)ep->clink;
                   }
@@ -188,7 +188,7 @@ operator{1} ** inter(x,y)
             srcp = BlkLoc(y);
             tstp = BlkLoc(x);
             }
-         MemProtect(np = alcselem(&nulldesc, (uword)0));
+         MemProtect(np = alcselem());
          for (i = 0; i < HSegs && (seg = srcp->set.hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
                ep = (struct b_selem *)seg->hslots[slotnum];
@@ -199,7 +199,7 @@ operator{1} ** inter(x,y)
 		     np->setmem = ep->setmem;
 		     np->hashnum = ep->hashnum;
                      addmem(&dstp->set, np, hook);
-                     MemProtect(np = alcselem(&nulldesc, (uword)0));
+                     MemProtect(np = alcselem());
                      }
                   ep = (struct b_selem *)ep->clink;
                   }
@@ -294,7 +294,7 @@ operator{1} ++ union(x,y)
 	  *  advance, and stay one ahead, because hook can't be tended.
           */
          dstp = BlkLoc(result);
-         MemProtect(np = alcselem(&nulldesc, (uword)0));
+         MemProtect(np = alcselem());
          for (i = 0; i < HSegs && (seg = BlkLoc(y)->set.hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
                ep = (struct b_selem *)seg->hslots[slotnum];
@@ -304,7 +304,7 @@ operator{1} ++ union(x,y)
 		     np->setmem = ep->setmem;
 		     np->hashnum = ep->hashnum;
                      addmem(&dstp->set, np, hook);
-                     MemProtect(np = alcselem(&nulldesc, (uword)0));
+                     MemProtect(np = alcselem());
                      }
                   ep = (struct b_selem *)ep->clink;
                   }

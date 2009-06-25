@@ -252,13 +252,15 @@ function{1} insert(s, x[n])
 		*/
 
 	       /* get this now because can't tend pd */
-	       MemProtect(se = alcselem(x+argc, hn));
+	       MemProtect(se = alcselem());
 
 	       pd = memb(bp, x+argc, hn, &res);
 	       if (res == 0) {
 		  /*
 		   * The element is not in the set - insert it.
 		   */
+                  se->setmem = x[argc];
+                  se->hashnum = hn;
 		  addmem((struct b_set *)bp, se, pd);
 		  if (TooCrowded(bp))
 		     hgrow(bp);
@@ -927,20 +929,21 @@ function{1} set(x[n])
 
      result.dword = D_Set;
      result.vword.bptr = ps;
-     EVValD(&result, E_Screate);
 
      for (argc = 0; argc < n; argc++) {
          hn = hash(&x[argc]);
          /* get this now because can't tend pe */
-         MemProtect(ne = alcselem(&x[argc], hn));
+         MemProtect(ne = alcselem());
          pe = memb(ps, &x[argc], hn, &res);
-         if (res == 0)
+         if (res == 0) {
+             ne->setmem = x[argc];
+             ne->hashnum = hn;
              addmem((struct b_set *)ps, ne, pe);
-         else
+         } else
              dealcblk((union block *)ne);
-         EVValD(&result, E_Sinsert);
-         EVValD(x + argc, E_Sval);
      }
+
+     EVValD(&result, E_Screate);
 
      return result;
    }
@@ -963,7 +966,6 @@ function{1} table(x, v[n])
       bp->table.defvalue = x;
       result.dword = D_Table;
       result.vword.bptr = bp;
-      EVValD(&result, E_Tcreate);
 
       for(argc = 0; argc < n; argc += 2) {
 
@@ -1000,10 +1002,9 @@ function{1} table(x, v[n])
               else
                   te->tval = nulldesc;
           }
-
-          EVValD(&result, E_Tinsert);
-          EVValD(v + argc, E_Tsub);
       }
+
+      EVValD(&result, E_Tcreate);
 
       return result;
    }

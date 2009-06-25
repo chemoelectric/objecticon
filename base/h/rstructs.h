@@ -474,7 +474,7 @@ struct progstate {
     struct b_methp *(*Alcmethp)();
     struct b_ucs *(*Alcucs)();
     struct b_refresh *(*Alcrefresh)(word *, int, int);
-    struct b_selem *(*Alcselem)(dptr, uword);
+    struct b_selem *(*Alcselem)(void);
     char *(*Alcstr)(char *, word);
     struct b_tvsubs *(*Alcsubs)(word, word, dptr);
     struct b_telem *(*Alctelem)(void);
