@@ -6,6 +6,8 @@ Object Icon includes a small enhancement to MT Icon which allows procedures and 
 To illustrate how this works, consider the following simple source file:-
 
 {{{
+import io
+
 invocable X, p
 
 class X()
@@ -25,22 +27,24 @@ end
 If this were in the file `abc.icn`, then it could be compiled with the command `oit abc.icn`.  Then its symbols could be loaded and used dynamically as follows :-
 
 {{{
+import io, lang
+
 procedure main()
    local prog, x
-   prog := load("abc") | stop("Couldn't load")
+   prog := Prog.load("abc") | stop("Couldn't load")
 
    # Create an instance of X, call hello method
-   x := variable("X", prog)()
+   x := Prog.get_global("X", prog)()
    x.hello()
 
    # Call procedure p
-   variable("p", prog)()
+   Prog.get_global("p", prog)()
 end
 }}}
 
 == Some points to note. ==
 
  * The "library" program needs a dummy `main` procedure.  It also needs to declare the procedure and class as invocable, so that the linker doesn't discard them as unreferenced symbols.
- * The class could also be accessed via `Class.for_name("X", prog)()` (after importing `lang.Class`).
+ * The class could also be accessed via `Class.for_name("X", prog)()`.
  * The procedure could also be accessed via the call `proc("p",,prog)()`
  * The loaded program retains its own separate set of global identifiers. References to global identifiers in loaded procedures and methods always refer to the enclosing loaded program.  Hence, several global identifiers with the same name can co-exist at the same time in separate programs.
