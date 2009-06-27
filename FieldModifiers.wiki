@@ -164,3 +164,87 @@ end
 }}}
 
 A static method cannot be `final` because `static` methods cannot be overridden, and a method cannot be marked `final` in a `final` class, because such a declaration would obviously be superfluous.
+
+= Accessor methods =
+Consider the following class :-
+{{{
+class Thing()
+   private x
+
+   public get_x()
+      return x
+   end
+
+   public new()
+      x := 99
+      return
+   end
+end
+}}}
+At first glance this seems safe enough, but in fact it is possible to change the value of `x` from outside the class, as follows :-
+{{{
+import io
+
+procedure main()
+   local i
+   i := Thing()
+   i.get_x() := 100
+   write(i.get_x())   # writes 100
+end
+}}}
+This is because the `get_x()` method returns a reference to `x`, which can form the left side of an assignment.  Fortunately the problem is easily solved by explicitly dereferencing `x` using the unary `.` operator as follows :-
+{{{
+   public get_x()
+      return .x
+   end
+}}}
+The attempted assignment then generates a runtime error.  A nicer solution to this problem would be to make `x` a `private readable` variable and get rid of the `get_x()` method entirely.
+
+Another potential access problem occurs when using structures such as lists, sets and tables.  Consider the following class :-
+{{{
+class Thing()
+   private readable x
+
+   public new()
+      x := [1,2,3,4]
+      return
+   end
+end
+}}}
+Unfortunately, although `x` cannot be assigned to from outside of the class, its contents can be changed :-
+{{{
+import io, lang
+
+procedure main()
+   local i
+   i := Thing()
+   put(i.x, 5)
+   write(to_string(i.x))  # writes "list#1[1,2,3,4,5]"
+end
+}}}
+One solution to this problem is to make `x` private and provide a method to generate its elements :-
+{{{
+import io, lang
+
+class Thing()
+   private x
+
+   public gen_x()
+      suspend .!x
+   end
+
+   public new()
+      x := [1,2,3,4]
+      return
+   end
+end
+
+procedure main()
+   local i
+   i := Thing()
+   every write(i.gen_x())  # writes 1,2,3,4 in turn
+end
+}}}
+Note that we still have to dereference the generated elements before suspending them, otherwise they could be changed.
+
+Another alternative would be to provided a method which simply returned a copy of `x`.
