@@ -54,7 +54,7 @@ The output in this case is :-
 
 {{{
 type=methp
-image=methp(object X_1(0),method X.g)
+image=methp(object X#1(0),method X.g)
 }}}
 
 The value `m` can now be used just like a procedure to invoke the
@@ -111,3 +111,5 @@ The output is
 105
 110
 }}}
+== Efficiency ==
+In order to keep garbage collection operations to a minimum, `methp` objects are not created unless absolutely necessary.  For example, although the expression `obj.f(100)` could be implemented by creating a `methp` for `obj.f`, and then applying that to the parameter `100`, it is more efficient to gather both of these steps into a single operation that avoids the creation of the intermediate `methp`.  This is implemented in the interpreter with two special virtual machine instructions (`invokef` and `applyf`).
