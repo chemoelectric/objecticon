@@ -26,6 +26,8 @@ In the case of an non-static field, the caller must be a method in the implement
 }}}
 Here, `X` has two superclasses, `B` and `C`.  `B` in turn has a superclass `A`, so `X`'s [Inheritance#Implemented_classes implemented classes] are `X, B, C, A`.  This means that any protected instance field in `X` could only be accessed from a method within those four classes.  A method in `Y`, would not be able to access the field in the instance of `X`, even if the field were defined in `C`, the common superclass of `X` and `Y` (in that case a method in `Y` _could_ access that field on an instance of `Y`).  This little example program illustrates this.
 {{{
+import io
+
 class C()
    protected f
 
@@ -61,6 +63,8 @@ This declares the field as static - for more information on what this means, see
 Declaring a static field const means that it cannot be changed (ie, assigned to) after the class has been initialized, which is just after the class's static `init()` method has been called.  Therefore, static const fields can be initialized in `init()` and thereafter treated as constants, with any attempt to assign to them causing a runtime error.  For example
 
 {{{
+import io
+
 class Maths()
    public static const PI
 
@@ -78,6 +82,8 @@ end
 A `const` instance field is similar, and can be assigned to during instance initialization, but thereafter becomes fixed.  The class's `new()` method can be used to set initial values of the field.  For example
 
 {{{
+import io
+
 class Employee()
    public const name, age
 
@@ -104,6 +110,8 @@ The readable modifier must always be specified together with either the `private
 So for example, consider the following class :-
 
 {{{
+import io
+
 class X()
    private readable v
 
