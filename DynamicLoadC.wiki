@@ -58,9 +58,11 @@ Notes :-
 Here is a sample program to load the library and run the `bits()` function.
 
 {{{
+import io, lang
+
 procedure main()
    local p
-   p := loadfunc("./testlib.so", "bits")
+   p := Proc.load("./testlib.so", "bits")
    write("okay, loaded ",image(p))
    every write(p(12345))
 end
