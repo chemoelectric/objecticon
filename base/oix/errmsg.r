@@ -59,11 +59,6 @@ struct errtab errtab[] = {
     {148, "selection proc returned wrong type"},
 #endif					/* Graphics */
 
-
-   /*
-    * Posix errors related to incorrect usage are here; Posix errors
-    * that result from failed system calls appear below with numbers > 1000.
-    */
     {170, "string or integer expected"},
     {176, "exec requires at least one argument for the program"},
 
@@ -107,7 +102,7 @@ struct errtab errtab[] = {
 
     {500, "program malfunction"},		/* for use by runerr() */
     {600, "attempt to access instance field via class"},
-    {601, "attempt to access class field via instance"},
+    {601, "attempt to access static field via instance"},
     {602, "object expected"},
     {603, "class expected"},
     {604, "cannot cast to a class which is not a superclass of object"},
@@ -129,26 +124,9 @@ struct errtab errtab[] = {
     {623, "can only set a method on an unresolved field"},
     {624, "record, class, cast or object expected"},
     {625, "record or constructor expected"},
-    {626, "internal error looking up object field"},
-    {627, "field not found"},
     {628, "attempt to access non-method via a cast"},
     {631, "procedure or methp expected"},
     {632, "co-expression which is a program's &main expected"},
-
-    {1040, "socket error"},
-    {1041, "cannot initialize network library"},
-    {1042, "fdup of closed file"},
-    {1043, "invalid signal"},
-    {1044, "invalid operation to flock/fcntl"},
-    {1045, "invalid mode string"},
-    {1046, "invalid permission string for umask"},
-    {1047, "invalid protocol name"},
-    {1048, "bad seek whence value"},
-    {1049, "bad protocol domain or type"},
-    {1050, "socket file expected"},
-    {1052, "couldn't get descriptor for file"},
-    {1053, "invalid file flags"},
-    {1054, "invalid file mode"},
    };
 
 
