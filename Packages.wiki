@@ -13,6 +13,8 @@ A file is declared to be in a package by simply adding a package declaration at 
 {{{
 package my.pack
 
+import io(write)
+
 procedure one()
    write("in my.pack.one")
 end
@@ -51,7 +53,7 @@ This means the three given symbols are being used in the source file and can be 
 == Using fully-qualified symbols ==
 Sometimes it is necessary to use a fully-qualified symbol;  in particular it may be necessary if you have imported two packages which both contain the same symbol.  For example, consider the following program which imports two packages each of which contains a symbol named `Class`.
 {{{
-import lang, parser
+import lang, parser, io(write)
 
 procedure main()
    write(image(Class))
@@ -73,7 +75,7 @@ Note that we still need the `import parser`.  Otherwise `parser` is interpreted 
 
 Another way to resolve the ambiguity would be to use qualified imports.  For example, the following program compiles successfully with the use of `Class` unambiguously resolving to `parser.Class`.
 {{{
-import lang(to_string), parser(Class)
+import lang(to_string), parser(Class), io(write)
 
 procedure main()
    write(to_string(Class))
