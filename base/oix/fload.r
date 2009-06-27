@@ -2,18 +2,11 @@
  * File: fload.r
  *  Contents: loadfunc.
  *
- *  This file contains loadfunc(), the dynamic loading function for
+ *  This file contains Proc.load(), the dynamic loading function for
  *  Unix systems having the <dlfcn.h> interface.
- *
- *  from Icon:
- *     p := loadfunc(filename, funcname)
+ * 
+ *     p := Proc.load(filename, funcname)
  *     p(arg1, arg2, ...)
- *
- *  in C:
- *     int func(int argc, dptr argv)
- *        return -1 for failure, 0 for success, >0 for error
- *        argc is number of true args not including argv[0]
- *        argv[0] is for return value; others are true args
  */
 
 #ifdef HAVE_LIBDL
@@ -60,68 +53,59 @@ char *dlerror(void)
 #passthru #endif
 #endif					/* __FreeBSD__ */
 
-
-
 function{0,1} lang_Proc_load(filename,funcname)
-
     if !cnv:C_string(filename) then
         runerr(103, filename)
     if !cnv:C_string(funcname) then
         runerr(103, funcname)
-
-abstract {
-    return proc
-}
-body
-{
-    struct b_proc *blk;
-    static char *curfile;
-    static void *handle;
-    char *tname;
+    body {
+       struct b_proc *blk;
+       static char *curfile;
+       static void *handle;
+       char *tname;
    
-    /*
-     * Get a library handle, reusing it over successive calls.
-     */
-    if (!handle || !curfile || strcmp(filename, curfile) != 0) {
-        if (curfile)
-            free(curfile);	/* free the old file name */
-        curfile = salloc(filename);	/* save the new name */
-        handle = dlopen(filename, RTLD_LAZY);	/* get the handle */
-    }
-    if (!handle) {
-        why(dlerror());
-        fail;
-    }
-    /*
-     * Load the function.  Diagnose both library and function errors here.
-     */
-    MemProtect(tname = malloc(strlen(funcname) + 3));
-    sprintf(tname, "B%s", funcname);
-    blk = (struct b_proc *)dlsym(handle, tname);
-    if (!blk) {
-        sprintf(tname, "_B%s", funcname);
-        blk = (struct b_proc *)dlsym(handle, tname);
-    }
-    if (!blk) {
-        free(tname);
-        whyf("Symbol '%s' not found in library", funcname);
-        fail;
-    }
-    /* Sanity check. */
-    if (blk->title != T_Proc) {
-        fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): Loaded block didn't have D_Proc in its dword\n",
-                filename, funcname);
-        fatalerr(218, NULL);
-    }
+       /*
+        * Get a library handle, reusing it over successive calls.
+        */
+       if (!handle || !curfile || strcmp(filename, curfile) != 0) {
+           if (curfile)
+               free(curfile);	/* free the old file name */
+           curfile = salloc(filename);	/* save the new name */
+           handle = dlopen(filename, RTLD_LAZY);	/* get the handle */
+       }
+       if (!handle) {
+           why(dlerror());
+           fail;
+       }
+       /*
+        * Load the function.  Diagnose both library and function errors here.
+        */
+       MemProtect(tname = malloc(strlen(funcname) + 3));
+       sprintf(tname, "B%s", funcname);
+       blk = (struct b_proc *)dlsym(handle, tname);
+       if (!blk) {
+           sprintf(tname, "_B%s", funcname);
+           blk = (struct b_proc *)dlsym(handle, tname);
+       }
+       if (!blk) {
+           free(tname);
+           whyf("Symbol '%s' not found in library", funcname);
+           fail;
+       }
+       /* Sanity check. */
+       if (blk->title != T_Proc) {
+           fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): Loaded block didn't have D_Proc in its dword\n",
+                   filename, funcname);
+           fatalerr(218, NULL);
+       }
 
-    free(tname);
-    return proc(blk);
-}
+       free(tname);
+       return proc(blk);
+    }
 end
 
 #else						/* HAVE_LIBDL */
-"loadfunc(filename,funcname) - load C function dynamically."
-function{0,1} loadfunc(filename,funcname)
+function{0,1} lang_Proc_load(filename,funcname)
    runerr(121)
 end
 #endif						/* HAVE_LIBDL */
