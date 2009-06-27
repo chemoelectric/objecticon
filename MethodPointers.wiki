@@ -5,6 +5,8 @@
 When a static method field is accessed, the result is a procedure value.  For example :-
 
 {{{
+import io
+
 class X()
    public static f()
    end
@@ -32,6 +34,8 @@ For an instance method, the situation is a little more involved, because the ins
 To illustrate this, consider the following :-
 
 {{{
+import io
+
 class X()
    public g()
    end
@@ -68,6 +72,8 @@ One other general point to note about methods is that access permissions are che
 Method pointers also allow some closure-like behaviour which would otherwise be difficult or impossible to achieve.  For example, consider the problem of writing a function which takes a parameter `n`, and returns another function which adds `n` to its argument.  This can be done as follows :-
 
 {{{
+import io
+
 class X()
    private n
 
