@@ -104,6 +104,9 @@ end
 
 A method cannot be declared `const`.
 
+=== Substitution and constant folding ===
+Fields which are declared `public static const`, and are assigned to a literal value (string, cset or numeric) in the `init()` method, normally have this literal value substituted for any use of the field in the program.  Thus the line `write(Maths.PI)` in the example above will generate the same code as the line `write(3.14)`.  This saves a field access at runtime, and also lets the translator apply constant folding on the substituted value.  Thus the expression `2 * Maths.PI * radius` would generate the same code as `6.28 * radius`.
+
 == readable ==
 The readable modifier must always be specified together with either the `private, package`, or `protected` modifier.  It indicates that the field is accessible in a read-only fashion, where it would otherwise be inaccessible, based on that other modifier.
 
