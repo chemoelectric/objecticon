@@ -160,11 +160,17 @@ class FileDialog(Dialog)
    #
    # Set the result
    #
-   # @p
    public set_result()
-      self.res := Files.get_path(file.get_contents())
+      local s
+      s := file.get_contents()
+      if *s = 0 then {
+         msg("Please enter a filename")
+         fail
+      }
+      self.res := Files.get_path(s)
       if not self.res.is_absolute() then
          self.res := get_dir_path().append(self.res)
+      return
    end
 
    public get_dir_path()
@@ -172,7 +178,7 @@ class FileDialog(Dialog)
    end
 
    public on_okay_button()
-      self.set_result()
+      self.set_result() | fail
       self.dispose()
    end
 
@@ -184,7 +190,7 @@ class FileDialog(Dialog)
       #
       # If return pressed in file TextField, same as okay
       #
-      self.set_result()
+      self.set_result() | fail
       self.dispose()
    end
 
