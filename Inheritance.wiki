@@ -100,7 +100,7 @@ procedure main()
    z := Child()
 end
 }}}
-If this program were allowed to compile, it wouldn't work because `Child`would have a static field `x`, but the reference to `x` in `x := 99` would attempt to assign to `self.x`, ie a non-existent instance field. This would cause a runtime error.
+If this program were allowed to compile, it wouldn't work because `Child` would have a static field `x`, but the reference to `x` in `x := 99` would attempt to assign to `self.x`, ie a non-existent instance field. This would cause a runtime error.
 
 == Implemented classes ==
 
