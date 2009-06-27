@@ -17,6 +17,8 @@ Some other points to note about `init()` :-
 The `new` method is used to initialize an object, ie an instance of a particular class.  The method is not invoked explicitly however.  Rather, in order to create an instance the class name is used like a function call, and the `new()` method is invoked automatically.  So for example :-
 
 {{{
+import io
+
 class X()
    public new(a, b)
       write("in new a=", a, " b=", b)
