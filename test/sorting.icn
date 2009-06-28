@@ -1,6 +1,6 @@
 #SRC: JCON
 
-import io, util
+import io, ipl.sets
 
 # test sorting and copying
 
@@ -30,12 +30,12 @@ procedure listtest()
       every put (L1, !S)
 
       L2 := sort(L1)
-      L3 := sort(list2set(L1))
+      L3 := sort(elementset(L1))
 
       check(L2, L3)
 
       L2 := sort(copy(L1))
-      L3 := sort(copy(list2set(L1)))
+      L3 := sort(copy(elementset(L1)))
       check(L2, L3)
 
    }

@@ -1,9 +1,9 @@
 package gui
 
 import 
-   util,
    ipl.wildcard,
    ipl.sort,
+   ipl.lists,
    io
 
 #
@@ -47,7 +47,7 @@ class FileDialog(Dialog)
                 Files.get_home() | 
                 Files.get_temp() | 
                 Files.get_roots())
-      init_dirs := list_unique(init_dirs)
+      init_dirs := lunique(init_dirs)
 
       /init_files := []
       /init_filters := ["*"]

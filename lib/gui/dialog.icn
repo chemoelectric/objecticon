@@ -11,7 +11,9 @@ package gui
 import 
    graphics,
    util,
-   lang
+   lang,
+   ipl.sets,
+   ipl.lists
 
 #
 #
@@ -527,7 +529,7 @@ class Dialog(Component)
    #
    public release(c, ec)
       self.held[ec] := copy(\self.held[ec]) | fail
-      list_del(self.held[ec], c)
+      ldel(self.held[ec], c)
    end
 
    #
@@ -549,8 +551,8 @@ class Dialog(Component)
             held[ec] := copy(point_chain)
             fire_list(held[ec], ec, e)
          } else if member(Mouse.DRAG_OR_MOVEMENT, ec) then {
-            s1 := list2set(\moving) | set()
-            s2 := list2set(point_chain)
+            s1 := elementset(\moving) | set()
+            s2 := elementset(point_chain)
             fire_list(s1 -- s2, Event.MOUSE_EXIT, e)
             fire_list(s2 -- s1, Event.MOUSE_ENTER, e)
             if ec === Mouse.MOVEMENT then 

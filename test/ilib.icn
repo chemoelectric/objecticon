@@ -16,8 +16,7 @@ import
    ipl.sort,
    ipl.strings,
    ipl.tables,
-   io, 
-   util
+   io
 
 $define LSIZE 16
 $define GENLIMIT 25
@@ -122,7 +121,7 @@ procedure main()
    lst(lminlen, L, integer)
    lst(sortkeys, L)
    lst(sortvalues, L)
-   lst(str2lst, "Once upon a midnight dreary", 5)
+   lst(splitstring, "Once upon a midnight dreary", 5)
    # several others omitted
 
    write()
@@ -222,14 +221,14 @@ procedure main()
 
    write()
    write("sets:")			# sets
-   stt(cset2set, &digits)
+   stt(elementset, &digits)
    stt(domain, T)
    tbl(inverse, T)
    #   pairset, T    returns list of lists
    stt(range, T)
    stt(seteq, set(4, 7, 1), set(7, 1, 4))
    stt(setlt, set(4, 7, 1), set(7, 3, 1, 4))
-   gen(simage, list2set(L))
+   gen(simage, elementset(L))
 
    write()
    write("sort:")			# sort
@@ -363,7 +362,7 @@ procedure tfact(n)			#: test factorization of n
    if v ~= n then
       write("   ", n, ": PRODUCT OF FACTORS = ", v)
 
-   F := list2set(F)
+   F := elementset(F)
    P := pfactors(n)
    if *P ~= *F then
       write("   ", n, ": PRIME FACTOR COUNT = ", *P)

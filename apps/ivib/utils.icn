@@ -106,16 +106,14 @@ procedure util_check_attribs(dialog, t)
    static test_win, attrib_table
    initial {
       test_win := Window.open("canvas=hidden") | stop("couldn't open window")
-      attrib_table := set()
-      every insert(attrib_table, 
-                   "label" | "posx" | "pos" | "posy" | "resize" | "size" | "height" | 
-                   "width" | "lines" | "columns" | "image" | "canvas" | "iconpos" | "iconlabel" | 
-                   "iconimage" | "echo" | "cursor" | "x" | "y" | "row" | "col" | "pointer" | 
-                   "pointerx" | "pointery" | "pointerrow" | "pointercol" | "display" | "depth" | 
-                   "displayheight" | "displaywidth" | "fg" | "bg" | "reverse" | "drawop" | "gamma" | 
-                   "font" | "fheight" | "fwidth" | "ascent" | "descent" | "leading" | "linewidth" | 
-                   "linestyle" | "fillstyle" | "pattern" | "clipx" | "clipy" | "clipw" | "cliph" | 
-                   "dx" | "dy" | "minwidth" | "minheight" | "minsize")
+      attrib_table := set("label", "posx", "pos", "posy", "resize", "size", "height", 
+                          "width", "lines", "columns", "image", "canvas", "iconpos", "iconlabel", 
+                          "iconimage", "echo", "cursor", "x", "y", "row", "col", "pointer", 
+                          "pointerx", "pointery", "pointerrow", "pointercol", "display", "depth", 
+                          "displayheight", "displaywidth", "fg", "bg", "reverse", "drawop", "gamma", 
+                          "font", "fheight", "fwidth", "ascent", "descent", "leading", "linewidth", 
+                          "linestyle", "fillstyle", "pattern", "clipx", "clipy", "clipw", "cliph", 
+                          "dx", "dy", "minwidth", "minheight", "minsize")
    }
 
    every s := !sort(t) do {

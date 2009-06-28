@@ -38,8 +38,8 @@
 package ipl.filenseq
 
 import
-   util(list2set),
-   ipl.io(dosdirlist)
+   ipl.io(dosdirlist),
+   ipl.sets(elementset)
 
 procedure nextseqfilename(dir,pre,ext)
 
@@ -50,7 +50,7 @@ initial wf := 8                   # filename width
 
 dir ||:= ( dir[-1] ~== "\\" ) 
 
-s := list2set( dosdirlist( dir, pre || "*." || ext || " /a:-d" ) )
+s := elementset( dosdirlist( dir, pre || "*." || ext || " /a:-d" ) )
 
 n := integer( repl( '9', wn := wf - *pre ) )
 

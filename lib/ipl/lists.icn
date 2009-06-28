@@ -151,7 +151,7 @@
 #	sortvalues(L)	return list of values from L, where L is the
 #			result of sorting a table with option 3 or 4.
 #
-#	str2lst(s, i)	creates list with i-character lines from s.  The
+#	splitstring(s, i)	creates list with i-character lines from s.  The
 #			default for i is 1.
 #
 ############################################################################
@@ -325,7 +325,7 @@ import
    ipl.equiv(equiv),
    ipl.indices(indices),
    ipl.numbers(residue),
-   util(list2set)
+   ipl.sets(elementset)
 
 # create list from lines in file
 procedure file2lst(s)			
@@ -864,7 +864,7 @@ end
 procedure lcompact(seq)			
    local unique, target
 
-   unique := list2set(seq)
+   unique := elementset(seq)
 
    target := []
 
@@ -913,6 +913,17 @@ procedure ldecollate(indices, L)
 
    return result
 
+end
+
+#
+# Delete all instances of x from the list l.
+#
+procedure ldel(l, x)
+   local t
+   t := []
+   while put(t, pop(l))
+   every put(l, x ~=== !t)
+   return l
 end
 
 # delete specified list elements
@@ -1062,7 +1073,7 @@ end
 # test list for all terms equal
 procedure lconstant(L)			
 
-   if *list2set(L) = 1 then return L[1]
+   if *elementset(L) = 1 then return L[1]
    else fail
 
 end
@@ -1339,7 +1350,7 @@ procedure lunique(L)
    local result, culls, x
 
    result := []
-   culls := list2set(L)
+   culls := elementset(L)
 
    every x := !L do
       if member(culls, x) then {
@@ -1404,7 +1415,7 @@ procedure sortvalues(L)
 end
 
 # list from string
-procedure str2lst(s, i)			
+procedure splitstring(s, i)			
    local L
 
    /i := 1
@@ -1419,3 +1430,39 @@ procedure str2lst(s, i)
    return L
 
 end
+
+#
+# Convert a string to a list.
+#
+# @param s the string to convert
+# @param sep cset of the separator chars, default ','
+#
+procedure str2list(s, sep)
+   local l, t
+   /sep := ','
+   l := []
+   s ? repeat {
+      t := tab(upto(sep) | 0)
+      put(l, t)
+      if pos(0) then
+         break
+      move(1)
+   }
+   return l
+end
+
+#
+# Convert a list to a string
+#
+# @param l the list
+# @param sep the separator char, default ","
+#
+procedure list2str(l, sep)
+   local s
+   /sep := ","
+   s := ""
+   every s ||:= !l || sep
+   s[-1] := ""
+   return s
+end
+

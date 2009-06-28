@@ -8,7 +8,11 @@
 
 package gui
 
-import util, lang, graphics
+import 
+   util, 
+   lang, 
+   graphics,
+   ipl.sets
 
 #
 # This class extends LineBasedScrollArea to provide selection on lines,
@@ -203,7 +207,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    # @param l   The list of item numbers.
    #
    public set_selections(l)
-      self.selections := list2set(l)
+      self.selections := elementset(l)
       constrain_selections()
       refresh()
    end
@@ -253,7 +257,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    public object_set_selections(l)
       local i, t
       self.selections := set()
-      t := list2set(l)
+      t := elementset(l)
       every i := 1 to *self.contents do {
          if member(t, self.contents[i]) then
             insert(self.selections, i)

@@ -26,9 +26,9 @@
 package ipl.polynom
 
 import
+   ipl.sets(elementset),
    ipl.strings(csort),
-   ipl.tables(keylist),
-   util(list2set)
+   ipl.tables(keylist)
 
 # convert string to polynomial
 procedure str2poly(str)			
@@ -62,7 +62,7 @@ end
 procedure polyadd(poly1, poly2)		
    local poly, keys, k
 
-   keys := sort(list2set(keylist(poly1)) ++ list2set(keylist(poly2)))
+   keys := sort(elementset(keylist(poly1)) ++ elementset(keylist(poly2)))
 
    poly := table(0)
 
@@ -77,7 +77,7 @@ end
 procedure polysub(poly1, poly2)		
    local poly, keys, k
 
-   keys := sort(list2set(keylist(poly1)) ++ list2set(keylist(poly2)))
+   keys := sort(elementset(keylist(poly1)) ++ elementset(keylist(poly2)))
 
    poly := table(0)
 

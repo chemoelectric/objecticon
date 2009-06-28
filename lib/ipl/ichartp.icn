@@ -166,11 +166,11 @@ import
       stop, write),
    ipl.rewrap(rewrap),
    ipl.scan(slashbal, slshupto),
+   ipl.sets(elementset),
    ipl.strings(replace),
    ipl.strip(strip),
    ipl.stripcom(stripcom),
-   ipl.trees(stree),
-   util(list2set)
+   ipl.trees(stree)
 
 record stats(edge_list, lhs_table, term_set)
 record chart(inactive, active)               # inactive - set; active - list
@@ -255,7 +255,7 @@ procedure parse_sentence(s, filename, start_symbol)
     # in the chart as edges with no RHS (a NULL RHS is characteristic
     # of all terminals).
     #
-    token_set := list2set(tokens)
+    token_set := elementset(tokens)
     every i := 1 to *tokens do {
         # Flag words not in the grammar as errors.
         if not member(tset, tokens[i]) then

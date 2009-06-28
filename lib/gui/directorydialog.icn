@@ -1,8 +1,8 @@
 package gui
 
 import 
-   util,
    ipl.sort,
+   ipl.lists,
    io
 
 #
@@ -41,7 +41,7 @@ class DirectoryDialog(Dialog)
                 Files.get_home() | 
                 Files.get_temp() | 
                 Files.get_roots())
-      init_dirs := list_unique(init_dirs)
+      init_dirs := lunique(init_dirs)
 
       dir.set_selection_list(init_dirs)
       root_node := TreeNode()

@@ -1,6 +1,8 @@
 # $Id$
 
-import gui, util
+import 
+   gui, 
+   ipl.lists
 
 class GroupsDialog(Dialog)
    public 
@@ -33,8 +35,8 @@ class GroupsDialog(Dialog)
    public on_delete_group(ev)
       local g
       g := group_objs[groups.get_selections()[1]] | fail
-      list_del(c.checkbox_groups, g)
-      list_del(c.button_groups, g)
+      ldel(c.checkbox_groups, g)
+      ldel(c.button_groups, g)
       refresh_groups()
    end
 

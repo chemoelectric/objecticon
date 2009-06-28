@@ -104,7 +104,7 @@ import
    io(write),
    ipl.factors(divisors),
    ipl.numbers(residue),
-   util(list2set)
+   ipl.sets(elementset)
 
 global expressions
 global node_gen
@@ -241,7 +241,7 @@ procedure get_scollate(seq)
             oseq[m] := count
       }
 
-   if *list2set(oseq) < 2 then fail		# not enough sequences
+   if *elementset(oseq) < 2 then fail		# not enough sequences
 
 #  oseq := srun([1, get(facts)]) | fail
 
@@ -364,7 +364,7 @@ procedure is_scompact(x)
 
    bound := sbound ! x
 
-   if bound = *list2set(x) then return bound
+   if bound = *elementset(x) then return bound
    else fail
 
 end
@@ -486,7 +486,7 @@ procedure scompress(xargs[])
 
    x := spromote(xargs[1])
 
-   unique := list2set(x)
+   unique := elementset(x)
 
    target := []
 
@@ -513,7 +513,7 @@ end
 # test for constant sequence
 procedure sconstant(seq)		
 
-   if *list2set(seq) = 1 then return !seq
+   if *elementset(seq) = 1 then return !seq
    else fail
 
 end
@@ -792,7 +792,7 @@ procedure slocate(xargs[])
    if \node_gen then return node("slocate", xargs)
 
    x1 := copy(spromote(xargs[1]))
-   x2 := list2set(spromote(xargs[2]))
+   x2 := elementset(spromote(xargs[2]))
 
    lseq := []
 
@@ -1027,7 +1027,7 @@ procedure spositions(x1, x2)
    local lseq, count, i
 
    x1 := copy(spromote(x1))
-   x2 := list2set(spromote(x2))
+   x2 := elementset(spromote(x2))
 
    lseq := []
 
