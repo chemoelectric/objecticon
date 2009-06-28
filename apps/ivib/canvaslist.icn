@@ -20,7 +20,7 @@ class CanvasList(CanvasComponent,List)
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
       c.line(name || ".set_constant_label(" || image(\self.constant_label) || ")")
-      c.line(name || ".set_selection_list([" || list2string(self.selection_list) || "])")
+      c.line(name || ".set_selection_list(" || contents_string(self.selection_list) || ")")
       if \self.selection ~= 1 then
          c.line(name || ".set_selection(" || self.selection || ")")
    end

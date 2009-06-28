@@ -27,7 +27,7 @@ class CanvasEditList(CanvasComponent,EditList)
 
       s := self.get_contents()
       t := \self.selection | 1
-      c.line(name || ".set_selection_list([" || list2string(self.selection_list) || "])")
+      c.line(name || ".set_selection_list(" || contents_string(self.selection_list) || ")")
 
       if s ~== self.selection_list[t] then
          c.line(name || ".set_contents(" || image(s) || ")")

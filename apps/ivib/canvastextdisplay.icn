@@ -32,7 +32,7 @@ class CanvasTextDisplay(CanvasComponent,TextDisplay)
    #
    public gen_code(c)
       cast(self,CanvasComponent).gen_code(c)
-      c.line(name || ".set_contents([" || list2string(self.contents) || "])")
+      c.line(name || ".set_contents(" || contents_string(self.contents) || ")")
    end
 
    #

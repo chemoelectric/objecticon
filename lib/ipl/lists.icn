@@ -59,9 +59,11 @@
 #
 #	ldecollate(I, L)
 #			list decollation
+#       ldel(L, x)
+#                       list deletion of a all instances of x
 #
-#	ldelete(L, spec)
-#			list deletion
+#	ldelelements(L, spec)
+#			list deletion of specified indices
 #
 #	ldupl(L, i)	list term duplication
 #
@@ -153,6 +155,11 @@
 #
 #	splitstring(s, i)	creates list with i-character lines from s.  The
 #			default for i is 1.
+#
+#       str2list(s, sep)  string to list; elements separated by single chars in
+#                       cset sep.
+#
+#       list2str(l, sep) list to string; separator string sep.
 #
 ############################################################################
 #
@@ -915,9 +922,7 @@ procedure ldecollate(indices, L)
 
 end
 
-#
-# Delete all instances of x from the list l.
-#
+# delete all instances of x from the list l.
 procedure ldel(l, x)
    local t
    t := []
@@ -926,8 +931,8 @@ procedure ldel(l, x)
    return l
 end
 
-# delete specified list elements
-procedure ldelete(L, spec)		
+# delete specified list elements; returns a new list
+procedure ldelelements(L, spec)		
    local i, tmp
 
    tmp := indices(spec, *L) | fail		# bad specification
@@ -1436,14 +1441,16 @@ end
 #
 # @param s the string to convert
 # @param sep cset of the separator chars, default ','
+# @param f func to apply to each element before adding to list
 #
-procedure str2list(s, sep)
+procedure str2list(s, sep, f)
    local l, t
    /sep := ','
+   /f := string
    l := []
    s ? repeat {
       t := tab(upto(sep) | 0)
-      put(l, t)
+      put(l, f(t)) | runerr("str2list: conversion proc failed")
       if pos(0) then
          break
       move(1)
@@ -1452,17 +1459,21 @@ procedure str2list(s, sep)
 end
 
 #
-# Convert a list to a string
+# Convert a list to a string.  Note: to be compatible for re-input to str2list above,
+# the separator must be one character long.
 #
 # @param l the list
 # @param sep the separator char, default ","
+# @param f func to apply to each element before appending to result
 #
-procedure list2str(l, sep)
-   local s
+procedure list2str(l, sep, f)
+   local s, e
    /sep := ","
+   /f := string
    s := ""
-   every s ||:= !l || sep
-   s[-1] := ""
+   every e := !l do
+      s ||:= f(e) || sep | runerr("list2str: conversion proc failed")
+   s[-*sep:0] := ""
    return s
 end
 

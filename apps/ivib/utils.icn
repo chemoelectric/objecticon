@@ -6,18 +6,13 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui, ipl.graphics, ipl.imscolor, io, graphics
+import gui, ipl.graphics, ipl.imscolor, io, graphics, ipl.lists
 
 #
 # Convert a list l to a string representation.
 #
-procedure list2string(l)
-   local s, x
-   s := ""
-   every x := image(!l) do
-      s ||:= ", " || x
-
-   return s[3:0] | ""
+procedure contents_string(l)
+   return "[" || list2str(l, ", ", image) || "]"
 end
 
 
