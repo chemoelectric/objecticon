@@ -1266,7 +1266,7 @@ static void fold_size(struct lnode *n)
 {
     struct lnode_1 *x = (struct lnode_1 *)n;
     struct literal l;
-    int len = -1;
+    word len = -1;
     if (!get_literal(x->child, &l))
         return;
     if (l.type == FAIL) {

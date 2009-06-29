@@ -1697,7 +1697,8 @@ function{1} lang_Text_create_cset(x[n])
    body {
      struct rangeset *rs;
      tended struct b_cset *b;
-     int from, to, i;
+     word from, to;
+     int i;
 
      MemProtect(rs = init_rangeset());
      i = 0;

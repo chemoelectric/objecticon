@@ -984,9 +984,9 @@ void resolve(struct progstate *p)
      * defining class and the descriptor.
      */
     for (cf = p->ClassFields; cf < p->EClassFields; cf++) {
-        cf->defining_class = (struct b_class*)(p->Code + (int)cf->defining_class);
+        cf->defining_class = (struct b_class*)(p->Code + (uword)cf->defining_class);
         if (cf->field_descriptor) {
-            cf->field_descriptor = (dptr)(p->Code + (int)cf->field_descriptor);
+            cf->field_descriptor = (dptr)(p->Code + (uword)cf->field_descriptor);
             /* Follow the same logic as lcode.c */
             if (cf->flags & M_Defer) {
                 int n = IntVal(*cf->field_descriptor);
@@ -1028,11 +1028,11 @@ void resolve(struct progstate *p)
                 if (pp->nstatic == 0)
                     pp->fstatic = 0;
                 else
-                    pp->fstatic = (dptr)(p->Statics + (int)pp->fstatic);
+                    pp->fstatic = (dptr)(p->Statics + (uword)pp->fstatic);
                 /* The two tables */
-                pp->lnames = (dptr)(p->Code + (int)pp->lnames);
+                pp->lnames = (dptr)(p->Code + (uword)pp->lnames);
                 if (pp->llocs)
-                    pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
+                    pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
                 /* The variables */
                 for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
                     StrLoc(pp->lnames[i]) = p->Strcons + (uword)StrLoc(pp->lnames[i]);
@@ -1083,21 +1083,21 @@ void resolve(struct progstate *p)
                 BlkLoc(p->Globals[j]) = (union block *)cb;
                 StrLoc(cb->name) = p->Strcons + (uword)StrLoc(cb->name);
                 if (cb->init_field)
-                    cb->init_field = (struct class_field *)(p->Code + (int)cb->init_field);
+                    cb->init_field = (struct class_field *)(p->Code + (uword)cb->init_field);
                 if (cb->new_field)
-                    cb->new_field = (struct class_field *)(p->Code + (int)cb->new_field);
+                    cb->new_field = (struct class_field *)(p->Code + (uword)cb->new_field);
                 cb->program = p;
                 n_fields = cb->n_class_fields + cb->n_instance_fields;
-                cb->supers = (struct b_class **)(p->Code + (int)cb->supers);
+                cb->supers = (struct b_class **)(p->Code + (uword)cb->supers);
                 for (i = 0; i < cb->n_supers; ++i) 
-                    cb->supers[i] = (struct b_class*)(p->Code + (int)cb->supers[i]);
-                cb->implemented_classes = (struct b_class **)(p->Code + (int)cb->implemented_classes);
+                    cb->supers[i] = (struct b_class*)(p->Code + (uword)cb->supers[i]);
+                cb->implemented_classes = (struct b_class **)(p->Code + (uword)cb->implemented_classes);
                 for (i = 0; i < cb->n_implemented_classes; ++i) 
-                    cb->implemented_classes[i] = (struct b_class*)(p->Code + (int)cb->implemented_classes[i]);
-                cb->fields = (struct class_field **)(p->Code + (int)cb->fields);
+                    cb->implemented_classes[i] = (struct b_class*)(p->Code + (uword)cb->implemented_classes[i]);
+                cb->fields = (struct class_field **)(p->Code + (uword)cb->fields);
                 for (i = 0; i < n_fields; ++i) 
-                    cb->fields[i] = (struct class_field*)(p->Code + (int)cb->fields[i]);
-                cb->sorted_fields = (short *)(p->Code + (int)cb->sorted_fields);
+                    cb->fields[i] = (struct class_field*)(p->Code + (uword)cb->fields[i]);
+                cb->sorted_fields = (short *)(p->Code + (uword)cb->sorted_fields);
 #ifdef DEBUG_LOAD
                 printf("%8x\t\t\tClass\n", cb);
                 printf("\t%d\t\t\t  Title\n", cb->title);
@@ -1123,10 +1123,10 @@ void resolve(struct progstate *p)
                 c = (struct b_constructor *)(p->Code + i);
                 BlkLoc(p->Globals[j]) = (union block *)c;
                 c->program = p;
-                c->fnums = (word *)(p->Code + (int)c->fnums);
+                c->fnums = (word *)(p->Code + (uword)c->fnums);
                 if (c->field_locs)
-                    c->field_locs = (struct loc *)(p->Code + (int)c->field_locs);
-                c->sorted_fields = (short *)(p->Code + (int)c->sorted_fields);
+                    c->field_locs = (struct loc *)(p->Code + (uword)c->field_locs);
+                c->sorted_fields = (short *)(p->Code + (uword)c->sorted_fields);
                 /*
                  * Relocate the name and loc'ns
                  */
@@ -1175,16 +1175,16 @@ void resolve(struct progstate *p)
                     if (pp->nstatic == 0)
                         pp->fstatic = 0;
                     else
-                        pp->fstatic = (dptr)(p->Statics + (int)pp->fstatic);
+                        pp->fstatic = (dptr)(p->Statics + (uword)pp->fstatic);
 
                     /*
                      * This is an Icon procedure.  Relocate the entry point and
                      *	the names of the parameters, locals, and static variables.
                      */
                     pp->entryp.icode = p->Code + pp->entryp.ioff;
-                    pp->lnames = (dptr)(p->Code + (int)pp->lnames);
+                    pp->lnames = (dptr)(p->Code + (uword)pp->lnames);
                     if (pp->llocs)
-                        pp->llocs = (struct loc *)(p->Code + (int)pp->llocs);
+                        pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
                     for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
                         StrLoc(pp->lnames[i]) = p->Strcons + (uword)StrLoc(pp->lnames[i]);
                         if (pp->llocs)
@@ -1248,11 +1248,11 @@ void showcoexps()
     printf("Coexp       program     main_of     size        es_sp       C sp        ipc         pfp         argp\n");
     printf("----------------------------------------------------------------------------------------------------\n");
     for (p = stklist; p; p = p->nextstk) {
-        printf("%-12p%-12p%-12p%-12d%-12p%-12p%-12p%-12p%-12p\n",
+        printf("%-12p%-12p%-12p%-12ld%-12p%-12p%-12p%-12p%-12p\n",
                p,
                p->program,
                p->main_of,
-               p->size,
+               (long)p->size,
                p->es_sp,
                (char*)p->cstate[0],
                p->es_ipc,
@@ -1281,7 +1281,7 @@ void showcoexps()
            curpstate->K_current);
 
     if (curpstate->K_current != rootpstate.K_main)
-        printf("ilevel=%d ISP=%p CSP=%p (clearance %d)\n", ilevel,sp, csp, (char*)csp - (char*)sp);
+        printf("ilevel=%d ISP=%p CSP=%p (clearance %ld)\n", ilevel,sp, csp, (long)((char*)csp - (char*)sp));
     else
         printf("ilevel=%d ISP=%p CSP=%p\n", ilevel,sp, csp);
 
@@ -1353,14 +1353,14 @@ void print_vword(FILE *f, dptr d) {
         outimage(f, d, 1);
     } else if (DVar(*d)) {
         /* D_Var (with an offset) */
-        fprintf(f, "D_Var off:%d", Offset(*d));
-        fprintf(f, "%p+%d -> ", VarLoc(*d), Offset(*d));
+        fprintf(f, "D_Var off:%lu", (unsigned long)Offset(*d));
+        fprintf(f, "%p+%lu -> ", VarLoc(*d), (unsigned long)Offset(*d));
         print_desc(f, (dptr)((word*)VarLoc(*d) + Offset(*d)));
     } else {
         switch (d->dword) {
             case D_Tvsubs : {
                 struct b_tvsubs *p = (struct b_tvsubs *)BlkLoc(*d);
-                fprintf(f, "%p -> sub=%d+:%d ssvar=", p, p->sspos, p->sslen);
+                fprintf(f, "%p -> sub=%ld+:%ld ssvar=", p, (long)p->sspos, (long)p->sslen);
                 print_desc(f, &p->ssvar);
                 break;
             }
@@ -1388,7 +1388,7 @@ void print_vword(FILE *f, dptr d) {
             }
 
             case D_Integer : {
-                fprintf(f, "%d", d->vword.integr); 
+                fprintf(f, "%ld", (long)d->vword.integr); 
                 break;
             }
 
@@ -1444,10 +1444,10 @@ void print_vword(FILE *f, dptr d) {
 void print_dword(FILE *f, dptr d) {
     if (Qual(*d)) {
         /* String */
-        fprintf(f, "%d", d->dword);
+        fprintf(f, "%ld", (long)d->dword);
     } else if (DVar(*d)) {
         /* D_Var (with an offset) */
-        fprintf(f, "D_Var off:%d", Offset(*d));
+        fprintf(f, "D_Var off:%lu", (unsigned long)Offset(*d));
     } else {
         switch (d->dword) {
             case D_Tvsubs : fputs("D_Tvsubs", f); break;
@@ -1564,15 +1564,15 @@ void showstack()
         printf("curpstate=%p k_current is 0\n",curpstate);
         return;
     }    
-    printf("kcurr->\t%p\tcoex\ttitle=%d\n", c, c->title);
-    printf("\t\t\tsize=%d\n",c->size);
-    printf("\t\t\tid=%d\n",c->id);
+    printf("kcurr->\t%p\tcoex\ttitle=%ld\n", c, (long)c->title);
+    printf("\t\t\tsize=%ld\n",(long)c->size);
+    printf("\t\t\tid=%ld\n",(long)c->id);
     printf("\t\t\tnextstk=%p\n",c->nextstk);
     printf("\t\t\tes_pfp=%p\n",c->es_pfp);
     printf("\t\t\tes_efp=%p\n",c->es_efp);
     printf("\t\t\tes_gfp=%p\n",c->es_gfp);
     printf("\t\t\tes_ipc=%p\n",c->es_ipc);
-    printf("\t\t\tes_ilevel=%d\n",c->es_ilevel);
+    printf("\t\t\tes_ilevel=%ld\n",(long)c->es_ilevel);
     printf("\t\t\tprogram=%p\n",c->program);
 
     if (c == rootpstate.K_main) {
@@ -1591,7 +1591,7 @@ void showstack()
         int ft = isframe(p);
         if (ft == GF) {
             struct gf_marker *t = (struct gf_marker*)p;
-            printf("%s\t%p\tgfp\tgf_gentype=%d\n",ptr(p),p,t->gf_gentype);
+            printf("%s\t%p\tgfp\tgf_gentype=%ld\n",ptr(p),p,(long)t->gf_gentype);
             printf("\t\t\tgf_efp=%p\n",t->gf_efp);
             printf("\t\t\tgf_gfp=%p\n",t->gf_gfp);
             printf("%s\t\t\tgf_ipc=%p\n",ptr(&t->gf_ipc),t->gf_ipc);
@@ -1608,17 +1608,17 @@ void showstack()
             printf("%s\t%p\tefp\tef_failure=%p\n",ptr(p),p,t->ef_failure);
             printf("\t\t\tef_efp=%p\n",t->ef_efp);
             printf("\t\t\tef_gfp=%p\n",t->ef_gfp);
-            printf("%s\t\t\tef_ilevel=%d\n",ptr(&t->ef_ilevel),t->ef_ilevel);
+            printf("%s\t\t\tef_ilevel=%ld\n",ptr(&t->ef_ilevel),(long)t->ef_ilevel);
             p += sizeof(struct ef_marker)/sizeof(word);
         } else if (ft == PF) {
             struct pf_marker *t = (struct pf_marker*)p;
-            printf("%s\t%p\tpfp\tn_args=%d\n",ptr(p),p,t->pf_nargs);
+            printf("%s\t%p\tpfp\tn_args=%ld\n",ptr(p),p,(long)t->pf_nargs);
             printf("\t\t\tpf_pfp=%p\n",t->pf_pfp);
             printf("\t\t\tpf_efp=%p\n",t->pf_efp);
             printf("\t\t\tpf_gfp=%p\n",t->pf_gfp);
             printf("\t\t\tpf_argp=%p\n",t->pf_argp);
             printf("\t\t\tpf_ipc=%p\n",t->pf_ipc);
-            printf("\t\t\tpf_ilevel=%d\n",t->pf_ilevel);
+            printf("\t\t\tpf_ilevel=%ld\n",(long)t->pf_ilevel);
             printf("\t\t\tpf_scan=%p\n",t->pf_scan);
             printf("\t\t\tpf_from=%p\n",t->pf_from);
             printf("%s\t\t\tpf_to=%p\n",ptr(&t->pf_to),t->pf_to);
@@ -1633,7 +1633,7 @@ void showstack()
             putc('\n', stdout);
             p += sizeof(struct descrip)/sizeof(word);
         } else {
-            printf("%s\t%p\t?\t%x\n",ptr(p),p,*p);
+            printf("%s\t%p\t?\t%lx\n",ptr(p),p,(long)*p);
             ++p;
         }
     }

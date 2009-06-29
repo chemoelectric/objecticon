@@ -251,7 +251,7 @@ do { \
 /*
  * Set bit b in cset c.
  */
-#define Setb(b,c)	(*CsetPtr(b,c) |= (01 << CsetOff(b)))
+#define Setb(b,c)	(*CsetPtr(b,c) |= ((word)01 << CsetOff(b)))
 
 /*
  * Test bit b in cset c.

@@ -1445,16 +1445,16 @@ static void lemitcon(struct centry *ce)
         }
         if (Dflag) {
             fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Cset\n",(long) pc, T_Cset);
-            fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", (CsetSize + 4 + 3 * npair) * WordSize);
+            fprintf(dbgfile, "\t%lu\t\t\t\t# Block size\n", (unsigned long)((CsetSize + 4 + 3 * npair) * WordSize));
             fprintf(dbgfile, "\t%d\t\t\t\t# Cset size\n", size);
             for (i = 0; i < CsetSize; ++i)
-                fprintf(dbgfile, "\t%08x\t\t\t#    Binary map\n", csbuf[i]);
+                fprintf(dbgfile, "\t%08lx\t\t\t#    Binary map\n", (long)csbuf[i]);
             fprintf(dbgfile, "\t%d\t\t\t\t# Npair\n", npair);
             x = 0;
             for (i = 0; i < npair; ++i) {
                 fprintf(dbgfile, "\t%d\t\t\t\t#    Index\n", x);
-                fprintf(dbgfile, "\t%d\t\t\t\t#    From\n", pair[i].from);
-                fprintf(dbgfile, "\t%d\t\t\t\t#    To\n", pair[i].to);
+                fprintf(dbgfile, "\t%ld\t\t\t\t#    From\n", (long)pair[i].from);
+                fprintf(dbgfile, "\t%ld\t\t\t\t#    To\n", (long)pair[i].to);
                 x += pair[i].to - pair[i].from + 1;
             }
         }
@@ -1501,7 +1501,7 @@ static void lemitcon(struct centry *ce)
 
         if (Dflag) {
             fprintf(dbgfile, "%ld:\t%d\t\t\t\t# -T_Ucs\n",(long) pc, -T_Ucs);
-            fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", (7 + n_offs) * WordSize);
+            fprintf(dbgfile, "\t%lu\t\t\t\t# Block size\n", (unsigned long)((7 + n_offs) * WordSize));
             fprintf(dbgfile, "\t%d\t\t\t\t# Length\n", length);
             fprintf(dbgfile, "\t%d\tS+%d\t\t\t# UTF8 data\n", utf8->len, utf8->offset);
             fprintf(dbgfile, "\t%d\t\t\t\t# N indexed\n", n_offs);
@@ -1523,7 +1523,7 @@ static void lemitcon(struct centry *ce)
             ++i;
             if (i % index_step == 0) {
                 if (Dflag)
-                    fprintf(dbgfile, "\t%d\t\t\t\t#    Off of char %d\n", p - utf8->s, i);
+                    fprintf(dbgfile, "\t%ld\t\t\t\t#    Off of char %d\n", (long)(p - utf8->s), i);
                 outword(p - utf8->s);
             }
         }
@@ -1780,7 +1780,7 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "\t%d\t\t\t\t# Package id\n", cl->global->defined->package_id);
         fprintf(dbgfile, "\t0\t\t\t\t# Instance ids counter\n");
         fprintf(dbgfile, "\t%d\t\t\t\t# Initialization state\n", Uninitialized);
-        fprintf(dbgfile, "\t%08o\t\t\t# Flags\n", cl->flag);
+        fprintf(dbgfile, "\t%08lo\t\t\t# Flags\n", (long)cl->flag);
         fprintf(dbgfile, "\t%d\t\t\t\t# Nsupers\n", cl->n_supers);
         fprintf(dbgfile, "\t%d\t\t\t\t# Nimplemented\n", cl->n_implemented_classes);
         fprintf(dbgfile, "\t%d\t\t\t\t# Ninstancefields\n", cl->n_implemented_instance_fields);
@@ -1810,7 +1810,7 @@ static void genclass(struct lclass *cl)
     else
         p = 0;
     if (Dflag)
-        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to init field\n", p);
+        fprintf(dbgfile, "\tZ+%ld\t\t\t\t# Pointer to init field\n", (long)p);
     outword(p);
 
     i = hasher(new_string, cl->implemented_field_hash);
@@ -1822,7 +1822,7 @@ static void genclass(struct lclass *cl)
     else
         p = 0;
     if (Dflag)
-        fprintf(dbgfile, "\tZ+%d\t\t\t\t# Pointer to new field\n", p);
+        fprintf(dbgfile, "\tZ+%ld\t\t\t\t# Pointer to new field\n", (long)p);
     outword(p);
 
     /*
@@ -1946,8 +1946,8 @@ static void genclasses()
             if ((cf->flag & (M_Method | M_Static)) == M_Static) {
                 /* Null descriptor */
                 if (Dflag)
-                    fprintf(dbgfile, "%ld:\t%06o\t0\t\t# Static var %s.%s\n", 
-                            (long)pc, D_Null, cl->global->name, cf->name);
+                    fprintf(dbgfile, "%ld:\t%06lo\t0\t\t# Static var %s.%s\n", 
+                            (long)pc, (long)D_Null, cl->global->name, cf->name);
                 cf->dpc = pc;
                 outword(D_Null);
                 outword(0);
@@ -1973,16 +1973,16 @@ static void genclasses()
             if (cf->flag & M_Defer) {
                 /* Deferred method, perhaps resolved to native method */
                 if (Dflag)
-                    fprintf(dbgfile, "%ld:\t%06o\tN+%d\t\t# Deferred method %s.%s\n",
-                            (long)pc, D_Proc, cf->func->native_method_id, cl->global->name, cf->name);
+                    fprintf(dbgfile, "%ld:\t%06lo\tN+%d\t\t# Deferred method %s.%s\n",
+                            (long)pc, (long)D_Proc, cf->func->native_method_id, cl->global->name, cf->name);
                 cf->dpc = pc;
                 outword(D_Proc);
                 outword(cf->func->native_method_id);
             } else if (cf->flag & M_Method) {
                 /* Method, with definition in the icode file  */
                 if (Dflag)
-                    fprintf(dbgfile, "%ld:\t%06o\tZ+%d\t\t# Method %s.%s\n",
-                            (long)pc, D_Proc, cf->func->pc, cl->global->name, cf->name);
+                    fprintf(dbgfile, "%ld:\t%06lo\tZ+%d\t\t# Method %s.%s\n",
+                            (long)pc, (long)D_Proc, cf->func->pc, cl->global->name, cf->name);
                 cf->dpc = pc;
                 outword(D_Proc);
                 outword(cf->func->pc);
@@ -2031,7 +2031,7 @@ static void genclasses()
                 fprintf(dbgfile, "%ld:\t\t\t\t\t# Field info for %s.%s\n", 
                         (long)pc, cl->global->name, cf->name);
                 fprintf(dbgfile, "\t%d\t\t\t\t#   Fnum\n", cf->ftab_entry->field_id);
-                fprintf(dbgfile, "\t%08o\t\t\t#   Flags\n", cf->flag);
+                fprintf(dbgfile, "\t%08lo\t\t\t#   Flags\n", (long)cf->flag);
                 fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Defining class\n", cf->class->pc);
                 fprintf(dbgfile, "\tZ+%d\t\t\t\t#   Pointer to descriptor\n", cf->dpc);
             }
@@ -2373,8 +2373,8 @@ static void gentables()
     hdr.Filenms = pc;
     for (fnptr = fnmtbl; fnptr < fnmfree; fnptr++) {
         if (Dflag)
-            fprintf(dbgfile, "%ld:\t%03d\t%d\tS+%03d\t\t#  File %s\n",
-                    (long)pc, fnptr->ipc, fnptr->sc->len, fnptr->sc->offset, fnptr->sc->s);
+            fprintf(dbgfile, "%ld:\t%03ld\t%d\tS+%03d\t\t#  File %s\n",
+                    (long)pc, (long)fnptr->ipc, fnptr->sc->len, fnptr->sc->offset, fnptr->sc->s);
         outword(fnptr->ipc);
         outword(fnptr->sc->len);
         outword(fnptr->sc->offset);
@@ -2385,7 +2385,7 @@ static void gentables()
     hdr.linenums = pc;
     for (lnptr = lntable; lnptr < lnfree; lnptr++) {
         if (Dflag)
-            fprintf(dbgfile, "%ld:\t%03d\tl:%03d\n", (long)pc, lnptr->ipc, lnptr->line);
+            fprintf(dbgfile, "%ld:\t%03ld\tl:%03d\n", (long)pc, (long)lnptr->ipc, lnptr->line);
         outword(lnptr->ipc);
         outword(lnptr->line);        
     }

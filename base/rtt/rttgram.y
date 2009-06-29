@@ -81,17 +81,17 @@
 
 primary_expr
    : identifier   {$$ = sym_node($1);}
-   | StrLit       {$$ = node0(PrimryNd, $1);}
-   | LStrLit      {$$ = node0(PrimryNd, $1);}
-   | FltConst     {$$ = node0(PrimryNd, $1);}
-   | DblConst     {$$ = node0(PrimryNd, $1);}
-   | LDblConst    {$$ = node0(PrimryNd, $1);}
-   | CharConst    {$$ = node0(PrimryNd, $1);}
-   | LCharConst   {$$ = node0(PrimryNd, $1);}
-   | IntConst     {$$ = node0(PrimryNd, $1);}
-   | UIntConst    {$$ = node0(PrimryNd, $1);}
-   | LIntConst    {$$ = node0(PrimryNd, $1);}
-   | ULIntConst   {$$ = node0(PrimryNd, $1);}
+   | StrLit       {$$ = node1(PrimryNd, $1, NULL);}
+   | LStrLit      {$$ = node1(PrimryNd, $1, NULL);}
+   | FltConst     {$$ = node1(PrimryNd, $1, NULL);}
+   | DblConst     {$$ = node1(PrimryNd, $1, NULL);}
+   | LDblConst    {$$ = node1(PrimryNd, $1, NULL);}
+   | CharConst    {$$ = node1(PrimryNd, $1, NULL);}
+   | LCharConst   {$$ = node1(PrimryNd, $1, NULL);}
+   | IntConst     {$$ = node1(PrimryNd, $1, NULL);}
+   | UIntConst    {$$ = node1(PrimryNd, $1, NULL);}
+   | LIntConst    {$$ = node1(PrimryNd, $1, NULL);}
+   | ULIntConst   {$$ = node1(PrimryNd, $1, NULL);}
    | '(' expr ')' {$$ = node1(PrefxNd, $1, $2); free_t($3);}
    ;
 
@@ -270,9 +270,9 @@ dcltion_specs
    ;
 
 type_ind
-   : typedefname             {$$ = node0(PrimryNd, $1);}
+   : typedefname             {$$ = node1(PrimryNd, $1, NULL);}
    | typedefname storcl_tqual_lst
-                             {$$ = node2(LstNd, NULL, node0(PrimryNd, $1), $2);}
+                             {$$ = node2(LstNd, NULL, node1(PrimryNd, $1, NULL), $2);}
    | type_storcl_tqual_lst
    ;
 
@@ -313,28 +313,28 @@ no_tdn_init_dcltor
    ;
 
 storage_class_spec
-   : Typedef  {$$ = node0(PrimryNd, $1); dcl_stk->kind_dcl = IsTypedef;}
-   | Extern   {$$ = node0(PrimryNd, $1);}
-   | Static   {$$ = node0(PrimryNd, $1);}
-   | Auto     {$$ = node0(PrimryNd, $1);}
-   | TokRegister {$$ = node0(PrimryNd, $1);}
+   : Typedef  {$$ = node1(PrimryNd, $1, NULL); dcl_stk->kind_dcl = IsTypedef;}
+   | Extern   {$$ = node1(PrimryNd, $1, NULL);}
+   | Static   {$$ = node1(PrimryNd, $1, NULL);}
+   | Auto     {$$ = node1(PrimryNd, $1, NULL);}
+   | TokRegister {$$ = node1(PrimryNd, $1, NULL);}
    ;
 
 type_spec
    : stnd_type
-   | typedefname {$$ = node0(PrimryNd, $1);}
+   | typedefname {$$ = node1(PrimryNd, $1, NULL);}
    ;
 
 stnd_type
-   : Void                {$$ = node0(PrimryNd, $1);}
-   | TokChar                {$$ = node0(PrimryNd, $1);}
-   | TokShort               {$$ = node0(PrimryNd, $1);}
-   | Int                 {$$ = node0(PrimryNd, $1);}
-   | TokLong                {$$ = node0(PrimryNd, $1);}
-   | Float               {$$ = node0(PrimryNd, $1);}
-   | Doubl               {$$ = node0(PrimryNd, $1);}
-   | Signed              {$$ = node0(PrimryNd, $1);}
-   | Unsigned            {$$ = node0(PrimryNd, $1);}
+   : Void                {$$ = node1(PrimryNd, $1, NULL);}
+   | TokChar                {$$ = node1(PrimryNd, $1, NULL);}
+   | TokShort               {$$ = node1(PrimryNd, $1, NULL);}
+   | Int                 {$$ = node1(PrimryNd, $1, NULL);}
+   | TokLong                {$$ = node1(PrimryNd, $1, NULL);}
+   | Float               {$$ = node1(PrimryNd, $1, NULL);}
+   | Doubl               {$$ = node1(PrimryNd, $1, NULL);}
+   | Signed              {$$ = node1(PrimryNd, $1, NULL);}
+   | Unsigned            {$$ = node1(PrimryNd, $1, NULL);}
    | struct_or_union_spec
    | enum_spec
    ;
@@ -371,8 +371,8 @@ struct_dcltion_specs
    ;
 
 struct_type_ind
-   : typedefname            {$$ = node0(PrimryNd, $1);}
-   | typedefname tqual_lst  {$$ = node2(LstNd, NULL, node0(PrimryNd, $1), $2);}
+   : typedefname            {$$ = node1(PrimryNd, $1, NULL);}
+   | typedefname tqual_lst  {$$ = node2(LstNd, NULL, node1(PrimryNd, $1, NULL), $2);}
    | struct_type_lst
    ;
 
@@ -428,8 +428,8 @@ enumerator
    ;
 
 type_qual
-   : Const    {$$ = node0(PrimryNd, $1);}
-   | Volatile {$$ = node0(PrimryNd, $1);}
+   : Const    {$$ = node1(PrimryNd, $1, NULL);}
+   | Volatile {$$ = node1(PrimryNd, $1, NULL);}
    ;
 
 
@@ -457,7 +457,7 @@ direct_dcltor
    ;
 
 no_tdn_direct_dcltor
-   : identifier                               {$$ = node0(PrimryNd, $1);}
+   : identifier                               {$$ = node1(PrimryNd, $1, NULL);}
    | '(' no_tdn_dcltor ')'                    {$$ = node1(PrefxNd, $1, $2);
                                                free_t($3);}
    | no_tdn_direct_dcltor '[' opt_constant_expr  ']'
@@ -478,7 +478,7 @@ parm_dcls_or_ids
    ;
 
 pointer
-   : '*'                   {$$ = node0(PrimryNd, $1);}
+   : '*'                   {$$ = node1(PrimryNd, $1, NULL);}
    | '*' tqual_lst         {$$ = node1(PreSpcNd, $1, $2);}
    | '*' pointer           {$$ = node1(PrefxNd, $1, $2);}
    | '*' tqual_lst pointer {$$ = node1(PrefxNd, $1, node2(LstNd, NULL, $2,$3));}
@@ -517,7 +517,7 @@ param_dcltion
    ;
 
 ident_lst
-   : identifier               {$$ = node0(PrimryNd, $1);}
+   : identifier               {$$ = node1(PrimryNd, $1, NULL);}
    | ident_lst ',' identifier {$$ = node2(CommaNd, $2, $1, node0(PrimryNd,$3));}
    ;
 
@@ -679,12 +679,12 @@ iteration_stmt
 
 jump_stmt
    : Goto label';'       {$$ = node1(PrefxNd, $1, $2); free_t($3);}
-   | Continue ';'        {$$ = node0(PrimryNd, $1); free_t($2);}
-   | Break ';'           {$$ = node0(PrimryNd, $1); free_t($2);}
+   | Continue ';'        {$$ = node1(PrimryNd, $1, NULL); free_t($2);}
+   | Break ';'           {$$ = node1(PrimryNd, $1, NULL); free_t($2);}
    | Return ret_val ';'  {$$ = node1(PrefxNd, $1, $2); free_t($3);}
    | Suspend ret_val ';' {$$ = node1(PrefxNd, $1, $2); op_generator = 1; free_t($3);}
-   | Fail ';'            {$$ = node0(PrimryNd, $1); free_t($2);}
-   | Errorfail ';'       {$$ = node0(PrimryNd, $1); free_t($2);}
+   | Fail ';'            {$$ = node1(PrimryNd, $1, NULL); free_t($2);}
+   | Errorfail ';'       {$$ = node1(PrimryNd, $1, NULL); free_t($2);}
    ;
 
 translation_unit
@@ -715,8 +715,8 @@ func_head
    ;
 
 any_ident
-   : identifier  {$$ = node0(PrimryNd, $1);}
-   | typedefname {$$ = node0(PrimryNd, $1);}
+   : identifier  {$$ = node1(PrimryNd, $1, NULL);}
+   | typedefname {$$ = node1(PrimryNd, $1, NULL);}
    ;
 
 label
@@ -1012,11 +1012,11 @@ variable
 
 dest_type
    : IconType                {$$ = dest_node($1);}
-   | C_Integer               {$$ = node0(PrimryNd, $1);}
-   | C_Double                {$$ = node0(PrimryNd, $1);}
-   | C_String                {$$ = node0(PrimryNd, $1);}
-   | Str_Or_Ucs              {$$ = node0(PrimryNd, $1);}
-   | Tmp_string              {$$ = node0(PrimryNd, $1); ++n_tmp_str;}
+   | C_Integer               {$$ = node1(PrimryNd, $1, NULL);}
+   | C_Double                {$$ = node1(PrimryNd, $1, NULL);}
+   | C_String                {$$ = node1(PrimryNd, $1, NULL);}
+   | Str_Or_Ucs              {$$ = node1(PrimryNd, $1, NULL);}
+   | Tmp_string              {$$ = node1(PrimryNd, $1, NULL); ++n_tmp_str;}
    | '(' Exact ')' IconType  {$$ = node0(ExactCnv, chk_exct($4)); free_t($1);
                               free_t($2); free_t($3);}
    | '(' Exact ')' C_Integer {$$ = node0(ExactCnv, $4); free_t($1); free_t($2);
@@ -1024,10 +1024,10 @@ dest_type
    ;
 
 i_type_name
-   : Any_value  {$$ = node0(PrimryNd, $1);}
-   | Empty_type {$$ = node0(PrimryNd, $1);}
+   : Any_value  {$$ = node1(PrimryNd, $1, NULL);}
+   | Empty_type {$$ = node1(PrimryNd, $1, NULL);}
    | IconType   {$$ = sym_node($1);}
-   | Variable   {$$ = node0(PrimryNd, $1);}
+   | Variable   {$$ = node1(PrimryNd, $1, NULL);}
    ;
 
 ret_val

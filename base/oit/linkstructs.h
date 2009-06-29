@@ -20,7 +20,7 @@ struct lentry {                 /* local table entry */
     word l_flag;                /*   variable flags */
     int ref;                    /*   referenced flag */
     union {                     /*   value field */
-        word index;             /*     index number for statics arguments and dynamics */
+        int index;             /*     index number for statics arguments and dynamics */
         struct gentry *global;  /*     global table entry */
         struct lclass_field *field; /* a field in a class's method */
     } l_val;

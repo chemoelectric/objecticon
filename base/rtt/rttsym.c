@@ -142,6 +142,7 @@ int nest_lvl;
       sym->u.lbl_num = lbl_num++;
    sym->next = *symp;
    *symp = sym;
+
     if (flast) {
         sym->f_indx = flast->f_indx + 1;
         flast->fnext = sym;
@@ -219,7 +220,9 @@ void pop_cntxt()
          for (sym = sym_tbl[hash_val]; sym != NULL &&
            sym->nest_lvl > new_lvl; sym = sym_tbl[hash_val]) {
             sym_tbl[hash_val] = sym->next;
-            free_sym(sym);
+            /* Don't actually free as the symbols are still on the list of symbols in this */
+            /* function (ffirst->flast) */
+            /* free_sym(sym); */
             }
          }
       unuse(tend_lst, old_lvl);

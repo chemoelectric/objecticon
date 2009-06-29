@@ -31,7 +31,7 @@ end
  *  argument.  If main returns, the Op_Quit is executed.
  */
 word istart[4];
-int mterm = Op_Quit;
+word mterm = Op_Quit;
 
 #ifdef MSWindows
 

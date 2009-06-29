@@ -72,9 +72,9 @@ void dump_stbl()
 
 void dump_sbuf(struct str_buf *s)
 {
-    printf("size=%d\n",s->size);
-    printf("strtimage=%p endimage=%p (%d bytes)\n",s->strtimage,s->endimage,(s->endimage-s->strtimage));
-    printf("end=%p (remain=%d) \n",s->end,(s->end-s->endimage));
+    printf("size=%lu\n",(unsigned long)s->size);
+    printf("strtimage=%p endimage=%p (%ld bytes)\n",s->strtimage,s->endimage,(long)(s->endimage-s->strtimage));
+    printf("end=%p (remain=%ld) \n",s->end,(long)(s->end-s->endimage));
 }
 
 /*

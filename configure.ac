@@ -52,6 +52,7 @@ AC_CANONICAL_HOST()
 case $host in
      i?86-*-linux*) id=linux_x86 ;;
      i?86-*-cygwin*) id=cygwin_x86 ;;
+     x86_64-*-linux*) id=linux_x86_64;;
      *) id=default ;;
 esac
 export CSWITCH

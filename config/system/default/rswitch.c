@@ -4,8 +4,7 @@
  */  
 #include "../h/rt.h"
 
-int coswitch(word *old, word *new, int first)
+void coswitch(word *old, word *new, int first)
 {
     err_msg(401, NULL);
-    return 0; /* Not reached */
 }

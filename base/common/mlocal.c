@@ -594,7 +594,7 @@ void print_rangeset(struct rangeset *rs)
 {
     int i ;
     for (i = 0; i < rs->n_ranges; ++i)
-        printf("%d   %d - %d\n", i, rs->range[i].from, rs->range[i].to);
+        printf("%d   %ld - %ld\n", i, (long)rs->range[i].from, (long)rs->range[i].to);
 }
 
 /*

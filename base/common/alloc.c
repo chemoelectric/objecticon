@@ -12,7 +12,7 @@ void *safe_calloc(size_t m, size_t n)
 {
     void *a = calloc(m, n);
     if (!a && (m * n > 0)) {
-        fprintf(stderr, "safe_calloc(%d, %d): out of memory\n", m, n);
+        fprintf(stderr, "safe_calloc(%lu, %lu): out of memory\n", (unsigned long)m, (unsigned long)n);
         exit(EXIT_FAILURE);
     }
     return a;
@@ -25,7 +25,7 @@ void *safe_alloc(size_t size)
 {
     void *a = calloc(size, 1);
     if (!a && size > 0) {
-        fprintf(stderr, "safe_alloc(%d): out of memory\n", size);
+        fprintf(stderr, "safe_alloc(%lu): out of memory\n", (unsigned long)size);
         exit(EXIT_FAILURE);
     }
     return a;
@@ -38,7 +38,7 @@ void *safe_realloc(void *ptr, size_t size)
 {
     void *a = realloc(ptr, size);
     if (!a && size > 0) {
-        fprintf(stderr, "safe_realloc(%d): out of memory\n", size);
+        fprintf(stderr, "safe_realloc(%lu): out of memory\n", (unsigned long)size);
         exit(EXIT_FAILURE);
     }
     return a;
