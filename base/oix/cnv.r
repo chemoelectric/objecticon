@@ -850,29 +850,26 @@ dptr dp;
 char *s;
    {
    register char *p;
-   long ival;
-   static char *maxneg = MinWordStr;
 
    p = s + MaxCvtLen - 1;
-   ival = num;
 
    *p = '\0';
    if (num >= 0L)
       do {
-	 *--p = ival % 10L + '0';
-	 ival /= 10L;
-	 } while (ival != 0L);
+	 *--p = num % 10L + '0';
+	 num /= 10L;
+	 } while (num != 0L);
    else {
-      if (ival == -ival) {      /* max negative value */
-	 p -= strlen (maxneg);
-	 sprintf (p, "%s", maxneg);
+      if (num == MinWord) {      /* max negative value */
+	 p -= strlen (MinWordStr);
+	 strcpy (p, MinWordStr);
          }
       else {
-	ival = -ival;
+	num = -num;
 	do {
-	   *--p = '0' + (ival % 10L);
-	   ival /= 10L;
-	   } while (ival != 0L);
+	   *--p = '0' + (num % 10L);
+	   num /= 10L;
+	   } while (num != 0L);
 	*--p = '-';
 	}
       }

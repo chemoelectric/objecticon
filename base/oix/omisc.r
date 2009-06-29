@@ -187,25 +187,14 @@ operator{*} ... toby(from, to, by)
 	       errorfail;
            }
 
-           if ((by > 0 && to + by > to) || (by < 0 && to + by < to)) {
-               /*
-                * Count up or down (depending on relationship of from and to)
-                *  and suspend each value in sequence, failing
-                *  when the limit has been exceeded.
-                */
-               if (by > 0)
+           if (by > 0) {
+               if (to + by > to) {
                    while (from <= to) {
                        suspend C_integer from;
                        from += by;
                    }
-               else
-                   while (from >= to) {
-                       suspend C_integer from;
-                       from += by;
-                   }
-           } else {
-               word t;
-               if (by > 0)
+               } else {
+                   word t;
                    while (from <= to) {
                        suspend C_integer from;
                        t = from;
@@ -213,7 +202,15 @@ operator{*} ... toby(from, to, by)
                        if (from < t)
                            break;
                    }
-               else
+               }
+           } else {     /* by < 0 */
+               if (to + by < to) {
+                   while (from >= to) {
+                       suspend C_integer from;
+                       from += by;
+                   }
+               } else {
+                   word t;
                    while (from >= to) {
                        suspend C_integer from;
                        t = from;
@@ -221,6 +218,7 @@ operator{*} ... toby(from, to, by)
                        if (from > t)
                            break;
                    }
+               }
            }
            fail;
        }
