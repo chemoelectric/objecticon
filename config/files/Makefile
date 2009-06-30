@@ -116,7 +116,7 @@ tar :
 	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
-	@cp configure config.guess config.sub install-sh $(T)
+	@cp README configure config.guess config.sub install-sh $(T)
 	@rm -f $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
 		$(T)/base/common/rswitch.?
 	tar cfz $(T).tar.gz $(T)
