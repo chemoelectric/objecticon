@@ -188,7 +188,7 @@ function{1} detab(s,i[n])
                       }
                       break;
                   default:
-                      if (isprint(c) || c < 0)  /* Assume extended ascii chars are printable */
+                      if (isprint(c) || !isascii(c))  /* Assume extended ascii chars are printable */
                           col++;
               }
 
@@ -474,7 +474,7 @@ function{1} entab(s,i[n])
                       col = target;
                       break;
                   default:
-                      if (isprint(c) || c < 0)  /* Assume extended ascii chars are printable */
+                      if (isprint(c) || !isascii(c))  /* Assume extended ascii chars are printable */
                           col++;
               }
 
