@@ -6,9 +6,6 @@ CWARN = -Wall
 
 DEST	      = .
 HDRS	      = defs.h
-LDFLAGS	      =
-LIBS	      =
-LINKER	      = $(CC)
 MAKEFILE      = Makefile
 
 OBJS	      = closure.o \
@@ -43,7 +40,7 @@ SRCS	      = closure.c \
 
 all:		$(PROGRAM)
 
-$(PROGRAM):     $(OBJS) $(LIBS)
+$(PROGRAM):     $(OBJS)
 		$(CC) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 		$(CP) iyacc $(OIBIN)
 
