@@ -41,7 +41,7 @@ SRCS	      = closure.c \
 all:		$(PROGRAM)
 
 $(PROGRAM):     $(OBJS)
-		$(CC) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
+		$(CC) $(CFLAGS) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
 		$(CP) iyacc $(OIBIN)
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)

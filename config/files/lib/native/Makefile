@@ -11,7 +11,7 @@ else
 all : objecticonipclib.so objecticonmysqllib.so
 
 objecticonmysqllib.so : mysql.o
-	$(CC) $(LDFLAGS) -shared -fPIC -o objecticonmysqllib.so mysql.o @MYSQL_LDFLAGS@
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fPIC -o objecticonmysqllib.so mysql.o @MYSQL_LDFLAGS@
 
 mysql.o : mysql.r
 	$(RTT) -h gmysql.h mysql.r
@@ -20,7 +20,7 @@ mysql.o : mysql.r
 endif
 
 objecticonipclib.so : ipc.o
-	$(CC) $(LDFLAGS) -shared -fPIC -o objecticonipclib.so ipc.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -fPIC -o objecticonipclib.so ipc.o
 
 ipc.o : ipc.r
 	$(RTT) -h gipc.h ipc.r

@@ -33,7 +33,7 @@ rwinrsc.o: rxrsc.ri
 all:	oix
 
 oix:	$(OBJS)
-	$(CC) -Wl,-E $(LDFLAGS) -o oix $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) -Wl,-E $(LDFLAGS) -o oix $(OBJS) $(LIBS)
 	$(CP) oix $(OIBIN)
 
 %.o: %.r $(HDRS)

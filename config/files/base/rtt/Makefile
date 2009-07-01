@@ -22,7 +22,7 @@ clean:
 	rm -f *.o rtt typespec y.output
 
 rtt:	$(OBJS)
-	$(CC) $(LDFLAGS) -o rtt $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o rtt $(OBJS) $(LIBS)
 	cp rtt $(OIBIN)
 
 $(ROBJS): rtt.h rtt1.h rttproto.h preproc.h pproto.h ltoken.h ../h/mproto.h\

@@ -136,9 +136,9 @@
    #define MaxPath 1024
 #endif					/* MaxPath */
 
-#ifndef StackAlign
-   #define StackAlign 2
-#endif					/* StackAlign */
+#ifndef StackAlignBytes
+   #define StackAlignBytes 8
+#endif					/* StackAlignBytes */
 
 #ifndef ByteBits
    #define ByteBits 8

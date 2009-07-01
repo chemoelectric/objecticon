@@ -54,7 +54,18 @@ case $host in
      i?86-*-cygwin*) id=cygwin_x86 ;;
      x86_64-*-linux*) id=linux_x86_64;;
      powerpc-*-linux*) id=linux_powerpc;;
-     *) id=default ;;
+     *) 
+        ACX_PTHREAD()
+        if test "$acx_pthread_ok" == yes; then
+                id=pthreads
+                LIBS="$PTHREAD_LIBS $LIBS"
+                CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+                CC="$PTHREAD_CC"
+                AC_DEFINE(USE_PTHREAD_COEXPRESSIONS,1)
+        else
+                id=default
+        fi
+        ;;
 esac
 export CSWITCH
 CSWITCH=config/system/$id/rswitch.?
@@ -71,6 +82,7 @@ AC_CHECK_SIZEOF(long, 4)
 AC_CHECK_SIZEOF(void*, 4)
 
 AC_CONFIG_COMMANDS(system, [
+        rm -f base/oix/rswitch.?
         cp $CSWITCH base/oix
 	AS_MKDIR_P(bin)
 ])
