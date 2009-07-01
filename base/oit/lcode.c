@@ -1379,10 +1379,10 @@ static void lemitin(int op, word offset, int n)
     outword(offset);
 }
 
-/* Same as in rstructs.h  - just used for alignment check */
+/* Same as in rstructs.h */
 struct b_real {
-  word title;
-  double realval;
+    word title;
+    double realval;
 };
 
 static void lemitcon(struct centry *ce)
@@ -1420,19 +1420,17 @@ static void lemitcon(struct centry *ce)
     constblock_hash[i] = ce;
     ce->pc = pc;
     if (ce->c_flag & F_RealLit) {
+        static struct b_real d = {T_Real, 0.0};
+        memcpy(&d.realval, ce->data, sizeof(double));
         if (Dflag) {
-            double d;
-            memcpy(&d, ce->data, sizeof(double));
-            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Real (%g)\n",(long) pc, T_Real, d);
-	    if (offsetof(struct b_real, realval) != sizeof(word))
-                fprintf(dbgfile, "\t0\t\t\t\t#    structure padding\n");
-            for (i = 0; i < sizeof(double); ++i)
-                fprintf(dbgfile, "\t%d\t\t\t\t#    double data\n", ce->data[i] & 0xff);
+            int i;
+            word *p;
+            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Real (%g)\n",(long) pc, T_Real, d.realval);
+            p = (word *)&d + 1;
+            for (i = 1; i < sizeof(d)/sizeof(word); ++i)
+                fprintf(dbgfile, "\t%08lx\t\t\t#    double data\n", (long)(*p++));
         }
-        outword(T_Real);
-	if (offsetof(struct b_real, realval) != sizeof(word))
-            outword(0);
-        outblock(ce->data, sizeof(double));
+        outblock((char *)&d, sizeof(d));
     }
     else if (ce->c_flag & F_CsetLit) {
         int i, j, x;
