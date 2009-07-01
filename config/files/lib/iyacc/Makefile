@@ -44,9 +44,8 @@ SRCS	      = closure.c \
 all:		$(PROGRAM)
 
 $(PROGRAM):     $(OBJS) $(LIBS)
-		@echo -n "Loading $(PROGRAM) ... "
-		@$(LINKER) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
-		cp iyacc $(OIBIN)
+		$(CC) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
+		$(CP) iyacc $(OIBIN)
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)
 		$(MAKE) -C test clean

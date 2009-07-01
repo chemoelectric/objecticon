@@ -33,13 +33,16 @@ rwinrsc.o: rxrsc.ri
 all:	oix
 
 oix:	$(OBJS)
-	$(CC) $(CFLAGS) -Wl,-E $(LDFLAGS) -o oix $(OBJS) $(LIBS)
+	$(CC) -Wl,-E $(LDFLAGS) -o oix $(OBJS) $(LIBS)
 	$(CP) oix $(OIBIN)
 
 %.o: %.r $(HDRS)
 	$(RTT) $<
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
 	$(RM) $*.c
+
+%.o: %.s
+	$(CC) $(CFLAGS) -c $<
 
 clean:		
 	rm -f *.o $(RTTC) rt.db rt.a rttcur.lst rttfull.lst oix keysymtocodepoint

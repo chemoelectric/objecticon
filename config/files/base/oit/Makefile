@@ -22,7 +22,7 @@ pure:
 			lextab.h y.output oit mkkwd fixgram mktoktab
 
 oit:		$(OBJS)
-		$(CC) $(CFLAGS) $(LDFLAGS) -o oit $(OBJS) $(LIBS)
+		$(CC) $(LDFLAGS) -o oit $(OBJS) $(LIBS)
 		$(CP) oit $(OIBIN)
 		(cd $(OIBIN) && $(RM) udis && $(LN_S) oit udis)
 
