@@ -8,6 +8,7 @@
  * The entries must be grouped by class, but beyond that order is not
  * significant.
  */
+#ifdef Graphics
 NativeDef(graphics.Window,alert,graphics_Window_alert)
 NativeDef(graphics.Window,attrib,graphics_Window_attrib)
 NativeDef(graphics.Window,bg,graphics_Window_bg)
@@ -59,6 +60,9 @@ NativeDef(graphics.Window,text_width,graphics_Window_text_width)
 NativeDef(graphics.Window,uncouple,graphics_Window_uncouple)
 NativeDef(graphics.Window,wdefault,graphics_Window_wdefault)
 NativeDef(graphics.Window,write_image,graphics_Window_write_image)
+#else
+NativeDef(graphics.Window,open_impl,graphics_Window_open_impl)
+#endif
 NativeDef(io.DescStream,flag,io_DescStream_flag)
 NativeDef(io.DescStream,poll,io_DescStream_poll)
 NativeDef(io.DescStream,select,io_DescStream_select)

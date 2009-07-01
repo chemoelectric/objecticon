@@ -47,6 +47,4 @@ wbp w;
       }
    }
 
-#else					/* Graphics */
-static char x;			/* avoid empty module */
 #endif					/* Graphics */
