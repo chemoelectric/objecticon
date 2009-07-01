@@ -92,8 +92,13 @@ void coswitch(word *o, word *n, int first)
         MemProtect(newc = ncs[1] = malloc(sizeof(context)));
         create_lock(&newc->mutex);
         pthread_attr_init(&attr);
-        if (pthread_attr_setstack(&attr, (void *)n[0] - stksize/2, stksize/2) != 0)
+#ifdef UpStack
+        if (pthread_attr_setstack(&attr, (void *)n[0], PTHREAD_STACK_MIN) != 0)
             aborted("pthread_attr_setstack failed");
+#else
+        if (pthread_attr_setstack(&attr, (void *)n[0] - PTHREAD_STACK_MIN, PTHREAD_STACK_MIN) != 0)
+            aborted("pthread_attr_setstack failed");
+#endif
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
         if (pthread_create(&newc->thread, &attr, nctramp, newc) != 0) 
             aborted("cannot create thread");
