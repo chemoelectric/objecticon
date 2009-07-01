@@ -1,0 +1,72 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+#
+#
+class CanvasImageDialog(CanvasComponentDialog)
+   public image_file, scale_up, cache_image
+   public set_vals()
+      local s
+      cast(self,CanvasComponentDialog).set_vals()
+      s := image_file.get_contents()
+      
+      c.close_image()
+
+      if scale_up.is_checked() then
+         c.set_scale_up("t")
+      else
+         c.set_scale_up("f")
+
+      if cache_image.is_checked() then
+         c.set_use_cache("t")
+      else
+         c.set_use_cache("f")
+
+      if *s = 0 then
+         c.set_file()
+      else
+         c.set_file(s)
+   end
+
+   public setup() 
+      local p, l
+      cast(self,CanvasComponentDialog).setup()
+
+      p := TabItem()
+      p.set_layout(GridLayout("extra=borders"))
+      p.set_label("General")
+      add_tab_at_front(p)
+
+      l := Label()
+      l.set_label("Image file : ")
+      p.add(l)
+      
+      image_file := TextField("c:eol")
+      image_file.set_size(100)
+      image_file.set_contents(c.image_file)
+      p.add(image_file)
+
+      scale_up := CheckBox("c:eol")
+      scale_up.set_label("Scale up image")
+      if \c.scale_up_flag then
+         scale_up.set_is_checked("t")
+      p.add(scale_up)
+
+      cache_image := CheckBox("c:eol")
+      cache_image.set_label("Cache image")
+      if \c.use_cache_flag then
+         cache_image.set_is_checked("t")
+      p.add(cache_image)
+   end    
+end
+

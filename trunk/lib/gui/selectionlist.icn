@@ -1,0 +1,75 @@
+package gui
+
+
+class SelectionList()
+   public 
+      selection,
+      selection_list
+
+   #
+   # Set the list selection items to the list x.
+   # @param  The list of items
+   #
+   public set_selection_list(x)
+      self.selection_list := x
+      /self.selection := 1
+      constrain_selection()
+      apply_selection()
+   end
+
+   #
+   # Set the selected item.
+   # @param x   An index into the list of selectable items.
+   #
+   public set_selection(x)
+      self.selection := x
+      constrain_selection()
+      apply_selection()
+   end
+
+   #
+   # Keep the selection within the bounds of the contents.
+   # @p
+   public constrain_selection()
+      if *self.selection_list = 0 then
+         self.selection := &null
+      else if \self.selection then {
+         self.selection <:= 1
+         self.selection >:= *self.selection_list
+      }
+   end
+
+   #
+   # Return an integer corresponding to the item in the list
+   # presently selected.   A Event.SELECTION_CHANGED is produced when
+   # the user changes the selection.
+   #
+   public get_selection()
+      return \self.selection
+   end
+
+   #
+   # Convenient method to get the item in the selection list currently selected.
+   #
+   public object_get_selection()
+      return self.selection_list[\self.selection]
+   end
+
+   #
+   # Convenient method to set the selection to the given object.  Fails
+   # if the item is not in the list, returns the index selected otherwise.
+   #
+   public object_set_selection(o)
+      local i
+      every i := 1 to *self.selection_list do {
+         if self.selection_list[i] === o then {
+            set_selection(i)
+            return i
+         }
+      }
+   end
+
+   public defer apply_selection()
+end
+
+

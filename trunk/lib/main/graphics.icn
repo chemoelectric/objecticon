@@ -1,0 +1,625 @@
+package graphics
+
+import 
+   lang(NoCopy)
+
+class Window(NoCopy)
+   private
+      wbp
+
+   public static open(a[])
+      return Window(open_impl!a)
+   end
+
+   public clone(a[])
+      return Window(clone_impl!a)
+   end
+
+   public static couple(w1, w2)
+      return Window(couple_impl(w1, w2))
+   end
+
+   private static defer open_impl(a[])
+   private defer clone_impl(a[])
+   private static defer couple_impl(w1, w2)
+
+   #
+   # Produces a beep or other signal to attract attention.
+   #
+   public defer alert(volume)
+
+   #
+   # Returns the background color. If colr is supplied, the color is
+   # first set to that specification; failure occurs if the request
+   # cannot be satisfied. Setting the background color does not change
+   # the appearance of the window, but subsequent drawing operations
+   # that use the background color are affected.
+   #
+   public defer bg(colr)
+
+   #
+   # Sets the clipping region to the specified rectangle; subsequent
+   # output extending outside its bounds is discarded. If clip() is
+   # called with no arguments, clipping is disabled and the entire
+   # canvas is writable.
+   #
+   public defer clip(x, y, w, h)
+
+   #
+   # Returns the setting of mutable color i if k1 is omitted. If k1 is
+   # supplied, color i is changed as specified, with an immediate
+   # effect on any visible pixels of that color. Additional index and
+   # color pairs may be supplied to set multiple entries with one
+   # call. Color() fails if a color specification is invalid.
+   #
+   public defer color(a[])
+
+   #
+   #
+   #
+   public defer color_value(k)
+
+   #
+   # draw_arc(x1, y1, width1, height1, angle11, angle21,...)
+   #
+   public defer draw_arc(a[])
+
+   #
+   # event() - return an event from this window
+   #
+   public defer event(timeout)
+
+   #
+   # draw_circle(x1, y1, r1, angle11, angle21, ...)
+   #
+   public defer draw_circle(a[])
+
+   #
+   # draw_curve(x1,y1,...xN,yN)
+   # Draw a smooth curve through the given points.
+   #
+   public defer draw_curve(a[])
+
+   #
+   # draw_image(x,y,s) - draw bitmapped figure
+   #
+   public defer draw_image(x, y, s)
+
+   #
+   # Copy an area between two windows
+   #
+   public static defer copy_area(src, dest, x1, y1, w, h, x2, y2)
+
+   #
+   # draw_line(x1,y1,...xN,yN)
+   #
+   public defer draw_line(a[])
+
+   #
+   # draw_point(x1, y1, ...xN, yN)
+   #
+   public defer draw_point(a[])
+
+   #
+   # draw_polygon(x1,y1,...xN,yN)
+   #
+   public defer draw_polygon(a[])
+
+   #
+   # draw_rectangle(x1, y1, width1, height1, ..., xN, yN, widthN,heightN)
+   #
+   public defer draw_rectangle(a[])
+
+   #
+   # draw_segment(x11,y11,x12,y12,...,xN1,yN1,xN2,yN2)
+   #
+   public defer draw_segment(a[])
+
+   #
+   # draw_string(x1, y1, s1, ..., xN, yN, sN)
+   #
+   public defer draw_string(a[])
+
+   #
+   # erase_area(x,y,width,height) - clear an area of the window
+   #
+   public defer erase_area(a[])
+
+   #
+   # pending(x[]) - add to and then produce a list of events pending on window
+   #
+   public defer pending(a[])
+
+   #
+   # Set foreground color
+   #
+   public defer fg(colr)
+
+   #
+   # fill_arc(x1, y1, width1, height1, angle11, angle21,...)
+   #
+   public defer fill_arc(a[])
+
+   #
+   # fill_circle(x1, y1, r1, angle11, angle21, ...)
+   #
+   public defer fill_circle(a[])
+
+   #
+   # fill_polygon(x1, y1, ...xN, yN)
+   #
+   public defer fill_polygon(a[])
+
+   #
+   # fill_rectangle(x1, y1, width1, height1,...,xN, yN, widthN, heightN)
+   #
+   public defer fill_rectangle(a[])
+
+   #
+   # font(f) - get/set font
+   #
+   public defer font(f)
+
+   #
+   # free_color(a[]) - free colors
+   #
+   public defer free_color(a[])
+
+   #
+   # Lower this window to the bottom of the window stack
+   #
+   public defer lower()
+
+   #
+   # new_color(a[]) - allocate an entry in the color map
+   #
+   public defer new_color(a[])
+
+   #
+   # Return the characters forming keys to palette p
+   #
+   public static defer palette_chars(p)
+
+   #
+   # Return color of key s1 in palette s2
+   #
+   public static defer palette_color(s1, s2)
+
+   #
+   # Return key of closest color to s in palette p
+   #
+   public defer palette_key(s1, s2)
+
+   #
+   # Sets the context fill pattern by string name
+   #
+   public defer pattern(s)
+
+   #
+   # Produce the contents of some pixels
+   #
+   public defer pixel(x, y, width, height)
+   
+   #
+   # Return the current root x, y position as a two-element list.
+   #
+   public static defer query_root_pointer()
+
+   #
+   # Raise window to the top of the window stack
+   #
+   public defer raise()
+
+   #
+   # Load image file
+   #
+   public defer read_image(s, x, y, p)
+
+   #
+   # Synchronize with server
+   #
+   public static defer sync()
+
+   #
+   # Returns the width of string s, in pixels, as drawn using the
+   # current font.
+   #
+   public defer text_width(s)
+
+   #
+   # Frees the window. If no other bindings to the same canvas exist,
+   # the window is closed.
+   #
+   public defer uncouple()
+
+   #
+   # attrib() sets and generates window attribute values. Each string
+   # of the form name=value sets a value; a string with just a name is
+   # an inquiry. First, any requested values are set. Then attrib()
+   # generates the values of all referenced attributes. Each value has
+   # the data type appropriate to the attribute it
+   # represents. attrib() ignores unrecognized names and illegal
+   # values, producing no result; if all arguments are invalid,
+   # attrib() fails.
+   #
+   public defer attrib(a[])
+
+   #
+   # Returns the value of option s2 for the program named s1 as
+   # registered with the graphics system. If no such value is
+   # available, or if the system provides no registry, wdefault()
+   # fails.
+   #
+   public defer wdefault(s1, s2)
+
+   #
+   # Forces the execution of any window commands that have been
+   # buffered internally and not yet executed.
+   #
+   public defer flush()
+
+   #
+   # Writes an image of the rectangular area (x,y,w,h) to the file
+   # s. It fails if s cannot be written or if the specified area,
+   # after clipping by the window's edges, has a width or height of
+   # zero. The file is normally written in GIF format, but some forms
+   # of file names may select different formats on some graphics
+   # systems.
+   #
+   public defer write_image(s, x, y, w, h)
+
+   #
+   # Set the window system's selection
+   #
+   public defer own_selection(selection, callback)
+
+   #
+   # Get the window system's selection
+   #
+   public defer get_selection_content(selection,target_type)
+
+   #
+   # Close this window.
+   #
+   public defer close()
+
+   #
+   # A static version of {palette_key}, which does not query an
+   # underlying window.
+   #
+   public static defer generic_palette_key(s1, s2)
+
+   #
+   # A static version of {color_value}, which does not query an
+   # underlying window.
+   #
+   public static defer generic_color_value(k)
+
+   public enqueue(eventcode, x, y, modkeys, interval)	
+      /x := 0
+      /y := 0
+      x +:= attrib("dx")
+      y +:= attrib("dy")
+      return put(pending(),
+                 eventcode,
+                 ior(pack_modkeys(\modkeys | ""), iand(x, 16rFFFF)),
+                 ior(pack_intrvl(\interval | 0), iand(y, 16rFFFF)))
+   end
+
+   # encode modifier keys
+   private static pack_modkeys(s)			
+      local b, c
+
+      b := 0
+      s := string(s) | runerr(103, s)		# ensure string value
+      every c := !s do case c of {			# set bit for each flag
+         "c":	b := ior(b, 16r10000)
+         "m":	b := ior(b, 16r20000)
+         "s":	b := ior(b, 16r40000)
+         "r":	b := ior(b, 16r80000)
+         default:	runerr(205, s)			# diagnose bad flag
+      }
+      return b					# return result
+   end
+
+   private static pack_intrvl(n)			
+      local e
+
+      n := integer(n) | runerr(101, n)	# ensure integer
+      n <:= 0				# ensure nonnegative
+      e := 0				# assume exponent of 0
+
+      while n >= 16r1000 do {		# if too big
+         n := ishift(n, -4)		# reduce significance
+         e +:= 16r1000			# increase exponent
+      }
+      return ishift(e + n, 16)		# return shifted result
+   end
+
+   private new(wbp)
+      self.wbp := wbp
+      return
+   end
+end
+
+class Mouse()
+   public static const
+      LEFT_PRESS,
+      MIDDLE_PRESS,
+      RIGHT_PRESS,
+      PRESS,
+      LEFT_RELEASE,
+      MIDDLE_RELEASE,
+      RIGHT_RELEASE,
+      RELEASE,
+      LEFT_DRAG,
+      MIDDLE_DRAG,
+      RIGHT_DRAG,
+      DRAG,
+      MOVEMENT,
+      WHEEL_UP,
+      WHEEL_DOWN,
+      WINDOW_RESIZE,
+      WINDOW_CLOSE_BUTTON,
+      WHEEL,
+      DRAG_OR_MOVEMENT,
+      WINDOW
+
+   private static init()
+      LEFT_PRESS :=           -1
+      MIDDLE_PRESS :=         -2
+      RIGHT_PRESS :=          -3
+      PRESS := set(LEFT_PRESS, MIDDLE_PRESS, RIGHT_PRESS)
+      LEFT_RELEASE :=         -4
+      MIDDLE_RELEASE :=       -5
+      RIGHT_RELEASE :=        -6
+      RELEASE := set(LEFT_RELEASE, MIDDLE_RELEASE, RIGHT_RELEASE)
+      LEFT_DRAG :=            -7
+      MIDDLE_DRAG :=          -8
+      RIGHT_DRAG :=           -9
+      DRAG := set(LEFT_DRAG, MIDDLE_DRAG, RIGHT_DRAG)
+      MOVEMENT :=            -12
+      DRAG_OR_MOVEMENT := set(LEFT_DRAG, MIDDLE_DRAG, RIGHT_DRAG, MOVEMENT)
+      WHEEL_UP :=            -16
+      WHEEL_DOWN :=          -17
+      WHEEL := set(WHEEL_UP, WHEEL_DOWN)
+      WINDOW_RESIZE :=       -10
+      WINDOW_CLOSE_BUTTON := -11
+      WINDOW := set(WINDOW_RESIZE, WINDOW_CLOSE_BUTTON)
+   end
+end
+
+class Key()
+   public static const
+      SHIFT_TAB,
+      COMPOSE,
+      DO,
+      DOWN,
+      END,
+      F1,
+      F2,
+      F3,
+      F4,
+      F5,
+      F6,
+      F7,
+      F8,
+      F9,
+      F10,
+      F11,
+      F12,
+      F13,
+      F14,
+      F15,
+      F16,
+      F17,
+      F18,
+      F19,
+      F20,
+      FIND,
+      HELP,
+      HOME,
+      INSERT,
+      KP_DOWN,
+      KP_LEFT,
+      KP_RIGHT,
+      KP_UP,
+      L1,
+      L2,
+      L3,
+      L4,
+      L5,
+      L6,
+      L7,
+      L8,
+      L9,
+      L10,
+      LEFT,
+      PF1,
+      PF2,
+      PF3,
+      PF4,
+      PAUSE,
+      PGDN,
+      PGUP,
+      PRSC,
+      R1,
+      R2,
+      R3,
+      R4,
+      R5,
+      R6,
+      R7,
+      R8,
+      R9,
+      R10,
+      R11,
+      R12,
+      R13,
+      R14,
+      R15,
+      RIGHT,
+      SCROLL_LOCK,
+      SELECT,
+      UP,
+      CURSOR,
+      CURSOR_V,
+      CURSOR_H
+
+   private static init()
+$ifdef _X_WINDOW_SYSTEM
+      SHIFT_TAB :=           65056
+      COMPOSE :=             65312
+      DO :=                  65383
+      DOWN :=                65364
+      END :=                 65367
+      F1 :=                  65470
+      F2 :=                  65471
+      F3 :=                  65472
+      F4 :=                  65473
+      F5 :=                  65474
+      F6 :=                  65475
+      F7 :=                  65476
+      F8 :=                  65477
+      F9 :=                  65478
+      F10 :=                 65479
+      F11 :=                 65480
+      F12 :=                 65481
+      F13 :=                 65482
+      F14 :=                 65483
+      F15 :=                 65484
+      F16 :=                 65485
+      F17 :=                 65486
+      F18 :=                 65487
+      F19 :=                 65488
+      F20 :=                 65489
+      FIND :=                65384
+      HELP :=                65386
+      HOME :=                65360
+      INSERT :=              65379
+      KP_DOWN :=             65433
+      KP_LEFT :=             65430
+      KP_RIGHT :=            65432
+      KP_UP :=               65431
+      L1 :=                  65480  # clash with f11
+      L2 :=                  65481  # clash with f12
+      L3 :=                  65482
+      L4 :=                  65483
+      L5 :=                  65484
+      L6 :=                  65485
+      L7 :=                  65486
+      L8 :=                  65487
+      L9 :=                  65488
+      L10 :=                 65489
+      LEFT :=                65361
+      PF1 :=                 65425
+      PF2 :=                 65426
+      PF3 :=                 65427
+      PF4 :=                 65428
+      PAUSE :=               65299
+      PGDN :=                65366
+      PGUP :=                65365
+      PRSC :=                65377
+      R1 :=                  65490
+      R2 :=                  65491
+      R3 :=                  65492
+      R4 :=                  65493
+      R5 :=                  65494
+      R6 :=                  65495
+      R7 :=                  65496
+      R8 :=                  65497
+      R9 :=                  65498
+      R10 :=                 65499
+      R11 :=                 65500
+      R12 :=                 65501
+      R13 :=                 65502
+      R14 :=                 65503
+      R15 :=                 65504
+      RIGHT :=               65363
+      SCROLL_LOCK :=         65300
+      SELECT :=              65376
+      UP :=                  65362
+$endif
+$ifdef _MS_WINDOWS
+      DOWN :=               40
+      END :=                35
+      SCROLL_LOCK :=        145
+      F1 :=                 112
+      F2 :=                 113
+      F3 :=                 114
+      F4 :=                 115
+      F5 :=                 116
+      F6 :=                 117
+      F7 :=                 118
+      F8 :=                 119
+      F9 :=                 120
+      F10 :=                121
+      F11 :=                122
+      F12 :=                123
+      F13 :=                124
+      F14 :=                125
+      F15 :=                126
+      F16 :=                127
+      F17 :=                128
+      F18 :=                129
+      F19 :=                130
+      F20 :=                131
+      F21 :=                132
+      F22 :=                133
+      F23 :=                134
+      F24 :=                135
+      HELP :=               47
+      HOME :=               36
+      INSERT :=             45
+      LEFT :=               37
+      PAUSE :=              19
+      PGDN :=               34
+      PGUP :=               33
+      PRSC :=               44
+      RIGHT :=              39
+      SELECT :=             41
+      UP :=                 38
+      SHIFT_TAB :=          0
+      COMPOSE :=            0
+      DO :=                 0
+      FIND :=               0
+      KP_DOWN :=            0
+      KP_LEFT :=            0
+      KP_RIGHT :=           0
+      KP_UP :=              0
+      L1 :=                 0
+      L2 :=                 0
+      L3 :=                 0
+      L4 :=                 0
+      L5 :=                 0
+      L6 :=                 0
+      L7 :=                 0
+      L8 :=                 0
+      L9 :=                 0
+      L10 :=                0
+      PF1 :=                0
+      PF2 :=                0
+      PF3 :=                0
+      PF4 :=                0
+      R1 :=                 0
+      R2 :=                 0
+      R3 :=                 0
+      R4 :=                 0
+      R5 :=                 0
+      R6 :=                 0
+      R7 :=                 0
+      R8 :=                 0
+      R9 :=                 0
+      R10 :=                0
+      R11 :=                0
+      R12 :=                0
+      R13 :=                0
+      R14 :=                0
+      R15 :=                0
+$endif
+
+      CURSOR := set(UP, DOWN, LEFT, RIGHT)
+      CURSOR_V := set(UP, DOWN)
+      CURSOR_H := set(LEFT, RIGHT)
+   end
+end

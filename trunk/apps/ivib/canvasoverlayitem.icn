@@ -1,0 +1,165 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+############################################################################
+#
+# Class for representing a OverlayItem on the canvas.
+#
+class CanvasOverlayItem(CanvasComponent,OverlayItem)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      local i, e
+      c.add_var(self.name, class_variable)
+      c.add_import(self.import_name, self.class_name)
+      c.line(name || " := " || self.class_name || "()")
+      every e := !sort(self.wattribs) do
+         c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
+      if \self.layout_delegate then {
+         self.layout_delegate.gen_code(c)
+         c.line(name || ".set_layout(" || self.layout_delegate.name || ")")
+      }
+      every i := !self.children do {
+         i.gen_code(c)
+         c.line(self.name || ".add(" || i.name || ")")
+      }
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasOverlayItem()
+      cast(self,CanvasComponent).dup_fields(c)
+      every c.add((!self.children).dup())
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [["Children", "children"],
+          ["Parent OverlaySet", "parent"]
+         ]
+   end
+
+   public display(r)
+      if in_preview() then
+         cast(self,OverlayItem).display(r)
+      else {
+         # Display the OverlaySet title here rather than in CanvasOverlaySet,
+         # otherwise it would have to be on top, or be overwritten
+         # by the current OverlaySetItem.
+         center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<OverlaySet>")
+         display_children(r)
+         rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+      }
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasOverlayItemDialog(self)
+   end
+
+   #
+   # Overrides CanvasComponent.is_inside()
+   #
+   public is_inside(c)
+      local e, o
+      if c === self then
+         fail
+      every e := !self.reverse_z_children do
+         if o := e.is_inside(c) then
+            return o
+      if (self.x <= c.mx < self.x + self.w) & (self.y <= c.my < self.y + self.h) then
+         return self
+   end
+
+   #
+   # Overrides CanvasComponent.which_cursor_over() 
+   #
+   public which_cursor_over(e)
+      local t, o
+      every t := !self.reverse_z_children do
+         if o := t.which_cursor_over(e) then
+            return o
+   end
+
+   public op_which()
+      local t
+      t := parent_Canvas.dup()
+      parent.which_one := self
+      parent.reset()
+      parent_Canvas.parent_dialog.push_onto_undo(t)
+      parent_Canvas.clear_selections()
+      parent_Canvas.set_modified()
+   end
+
+   public op_delete()
+      local i, c
+      if parent.which_one === self then {
+         i := parent.get_index(self)
+         c := parent.children[i-1 | i+1]
+         parent.set_which_one(\c)
+      }
+      parent_Canvas.delete(self)
+   end
+
+   public create_menu()
+      local m, i
+      m := cast(self,CanvasComponent).create_menu()
+      if self ~=== parent.which_one then {
+         i := TextMenuItem("label=Which")
+         i.connect(self.op_which, Event.ACTION)
+         m.add(i)
+      }
+      return m
+   end
+
+   public allows_selection()
+   end
+
+   public allows_add()
+      return 1
+   end
+
+   public allows_positioning()
+   end
+
+   public allows_copy()
+   end
+
+   public allows_delete()
+      # Can't delete the last item
+      return *parent.children > 1
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasComponent).gen_cos() | !self.children
+   end
+
+   public new()
+      cast(self,OverlayItem).new()
+      cast(self,CanvasComponent).new()
+      self.set_show_layout("t")
+      self.class_name := "OverlayItem"
+      self.import_name := "gui"
+      self.name := "overlay_item"
+      return
+   end
+end
+
+

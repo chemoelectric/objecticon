@@ -1,0 +1,70 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package lang
+
+import posix
+
+#
+# This class is a convenient way of creating a sub-process in a program,
+#
+class Process()
+   private 
+      pid,
+      p
+
+   #
+   # Called by the parent process to start the child
+   #
+   public start()
+      pid := System.fork() | runerr("Couldn't fork")
+      if pid = 0 then {
+         run()
+         exit(0)
+      }
+   end
+   
+   #
+   # Called by the parent.  The method waits for the child to terminate.  The
+   # child process will no longer exist after this call, so it resets pid to
+   # &null.
+   #
+   public join()
+      System.wait(\pid)
+      pid := &null
+   end
+
+   #
+   # Called by the parent to kill the child.  Then the {join} method is invoked.
+   #
+   public stop()
+      System.kill(\pid, Signal.SIGTERM)
+      join()
+   end
+
+   #
+   # Invoke the code of the process.
+   #
+   public run()
+      p()
+   end
+
+   #
+   # Set the procedure to run as the body of the process; alternatively
+   # subclass and override the {run()} method.
+   #
+   public set_proc(p)
+      self.p := p
+   end
+
+   public new(p)
+      self.p := p
+      return
+   end
+end
+

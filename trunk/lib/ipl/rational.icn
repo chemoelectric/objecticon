@@ -1,0 +1,235 @@
+############################################################################
+#
+#	File:     rational.icn
+#
+#	Subject:  Procedures for arithmetic on rational numbers
+#
+#	Author:   Ralph E. Griswold
+#
+#	Date:     June 10, 2001
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#	Contributor:  Gregg M. Townsend
+#
+############################################################################
+#
+#     These procedures perform arithmetic on rational numbers (fractions):
+#
+#     addrat(r1,r2) Add rational numbers r1 and r2.
+#
+#     divrat(r1,r2) Divide rational numbers r1 and r2.
+#
+#     medrat(r1,r2) Form mediant of r1 and r2.
+#
+#     mpyrat(r1,r2) Multiply rational numbers r1 and r2.
+#
+#     negrat(r)     Produce negative of rational number r.
+#
+#     rat2real(r)   Produce floating-point approximation of r
+#
+#     rat2str(r)    Convert the rational number r to its string
+#                   representation.
+#
+#     real2rat(v,p) Convert real to rational with precision p.
+#                   The default precision is 1e-10.
+#                   (Too much precision gives huge, ugly factions.)
+#
+#     reciprat(r)   Produce the reciprocal of rational number r.
+#
+#     str2rat(s)    Convert the string representation of a rational number
+#                   (such as "3/2") to a rational number.
+#
+#     subrat(r1,r2) Subtract rational numbers r1 and r2.
+#    
+############################################################################
+#
+#  Links: numbers
+#
+############################################################################
+
+package ipl.rational
+
+import
+   ipl.numbers(gcd)
+
+record rational(numer, denom, sign)
+
+# sum of rationals
+procedure addrat(r1, r2)		
+   local denom, numer, div
+
+   r1 := ratred(r1)
+   r2 := ratred(r2)
+
+   denom := r1.denom * r2.denom
+   numer := r1.sign * r1.numer * r2.denom +
+      r2.sign * r2.numer * r1.denom
+
+   if numer = 0 then return rational (0, 1, 1)
+
+   div := gcd(numer, denom)
+
+   return rational(abs(numer / div), abs(denom / div), numer / abs(numer))
+
+end
+
+# divide rationals.
+procedure divrat(r1, r2)		
+
+   r1 := ratred(r1)
+   r2 := ratred(r2)
+
+   return mpyrat(r1, reciprat(r2))
+
+end
+ 
+# form rational mediant
+procedure medrat(r1, r2)		
+   local numer, denom, div
+
+   r1 := ratred(r1)
+   r2 := ratred(r2)
+
+   numer := r1.numer + r2.numer
+   denom := r1.denom + r2.denom
+
+   div := gcd(numer, denom)
+
+   return rational(numer / div, denom / div, r1.sign * r2.sign)
+
+end
+ 
+# multiply rationals
+procedure mpyrat(r1, r2)		
+   local numer, denom, div
+
+   r1 := ratred(r1)
+   r2 := ratred(r2)
+
+   numer := r1.numer * r2.numer
+   denom := r1.denom * r2.denom
+
+   div := gcd(numer, denom)
+
+   return rational(numer / div, denom / div, r1.sign * r2.sign)
+
+end
+
+# negative of rational
+procedure negrat(r)		
+
+   r := ratred(r)
+
+   return rational(r.numer, r.denom, -r.sign)
+
+end
+
+# floating-point approximation of rational
+procedure rat2real(r)		
+
+   r := ratred(r)
+
+   return (real(r.numer) * r.sign) / r.denom
+
+end
+  
+# convert rational to string
+procedure rat2str(r)		
+
+   r := ratred(r)
+
+   return "(" || (r.numer * r.sign) || "/" || r.denom || ")"
+
+end
+
+# reduce rational to lowest terms
+procedure ratred(r)		
+   local div
+
+   if r.denom = 0 then runerr(501)
+   if abs(r.sign) ~= 1 then runerr(501)
+
+   if r.numer = 0 then return rational(0, 1, 1)
+
+   if r.numer < 0 then r.sign *:= -1
+   if r.denom < 0 then r.sign *:= -1
+
+   r.numer := abs(r.numer)
+   r.denom := abs(r.denom)
+
+   div := gcd(r.numer, r.denom)
+
+   return rational(r.numer / div, r.denom / div, r.sign)
+
+end
+
+#  real2rat(v, p) -- convert real to rational with precision p
+#
+#  Originally based on a calculator algorithm posted to usenet on August 19,
+#  1987, by Joseph D. Rudmin, Duke University Physics Dept. (duke!dukempd!jdr)
+
+$define MAXITER 40		# maximum number of iterations
+$define PRECISION 1e-10		# default conversion precision
+
+# convert to rational with precision p
+procedure real2rat(r, p)	
+   local t, d, i, j
+   static x, y
+   initial { x := list(MAXITER); y := list(MAXITER + 2) }
+
+   t := abs(r)
+   /p := PRECISION
+   every i := 1 to MAXITER do {
+      x[i] := integer(t)
+      y[i + 1] := 1
+      y[i + 2] := 0
+      every j := i to 1 by -1 do
+         y[j] := x[j] * y[j + 1] + y[j + 2]
+      if abs(y[1] / real(y[2]) - r) < p then break
+      d := t - integer(t)
+      if d < p then break
+      t := 1.0 / d
+      }
+   return rational(y[1], y[2], if r >= 0 then 1 else -1)
+
+end
+
+# reciprocal of rational
+procedure reciprat(r)		
+
+   r := ratred(r)
+
+   return rational(r.denom, r.numer, r.sign)
+
+end
+
+# convert string to rational
+procedure str2rat(s)		
+   local numer, denom
+
+   s ? {
+      ="(" &
+      numer := integer(tab(upto('/'))) &
+      move(1) &
+      denom := integer(tab(upto(')'))) &
+      pos(-1)
+      } | fail
+
+   return ratred(rational(numer, denom, 1))
+
+end
+
+# difference of rationals
+procedure subrat(r1, r2)		
+
+   r1 := ratred(r1)
+   r2 := ratred(r2)
+
+   return addrat(r1, negrat(r2))
+
+end

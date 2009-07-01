@@ -1,0 +1,955 @@
+#
+# $Id$
+#
+
+package http
+
+import util
+import lang
+import net
+import mail
+import io
+
+#
+# Little helper class to store cookie details
+#
+class Cookie()
+   package readable
+      name,
+      value,
+      expires, 
+      domain, 
+      path,
+      secure,
+      comment, 
+      version
+end
+
+#
+# An http client
+#
+class HttpClient(NetClient)
+   public static const
+      TOKEN_CHAR,
+      COMPLETE_EVENT,
+      FAILED_EVENT,
+      RETRYING_EVENT,
+      HEADERS_EVENT,
+      PROGRESS_EVENT
+
+   private static init()
+      TOKEN_CHAR := &ascii[33:128] -- '()<>@,;:\\\"/[]?={} \t'
+      COMPLETE_EVENT := "Complete"
+      FAILED_EVENT := "Failed"
+      RETRYING_EVENT := "Retrying"
+      HEADERS_EVENT := "Headers"
+      PROGRESS_EVENT := "Progress"
+   end
+
+   private readable 
+      request,
+      response,
+      open_url,
+      retries,
+      retry_while_data_flag,
+      length,
+      read,
+      http_version,
+      http_error,
+      keep_alive_flag,
+      user_agent,
+      redir_set, 
+      auth_req_count,
+      auth_scheme,
+      basic_auth_header,
+      nonce,
+      nonce_count,
+      cnonce,
+      opaque,
+      ha1,
+      qop,
+      realm,
+      cookies,
+      abort_flag
+
+   #
+   # Set the http version to use; by default "1.1"
+   #
+   public set_http_version(s)
+      http_version := s
+   end
+
+   #
+   # Set the user-agent identification
+   #
+   public set_user_agent(s)
+      self.user_agent := s
+   end
+
+   #
+   # Configure whether the client uses the keep-alive feature (the
+   # default is yes).
+   #
+   public set_keep_alive(s)
+      self.keep_alive_flag := to_flag(s)
+   end
+
+   #
+   # This flag indicates that after a timeout, the retries count should
+   # be reset if any data was received.
+   #
+   public set_retry_while_data(s)
+      self.retry_while_data_flag := to_flag(s)
+   end
+
+   #
+   # Set the cookies table.
+   #
+   public set_cookies(m)
+      self.cookies := m
+   end
+
+   #
+   # Get the cookies table.
+   #
+   public get_cookies()
+      return self.cookies
+   end
+
+   #
+   # Get the current HttpRequest
+   #
+   public get_request()
+      return self.request
+   end
+
+   #
+   # Get the current HttpResponse
+   #
+   public get_response()
+      return self.response
+   end
+
+   #
+   # Abort the current request.
+   #
+   public abort()
+      self.abort_flag := 1
+   end
+
+   #
+   # 
+   private write_request_headers()
+      local e, v
+      every e := !request.headers.sort() do {
+         e[1][1] := map(e[1][1], &lcase, &ucase)
+         every v := !e[2] do
+            write_line(e[1] || ": " || v) | fail
+      }
+      return
+   end
+
+   #
+   # Set the number of retries to use.  The default is two.
+   #
+   public set_retries(retries)
+      self.retries := retries
+   end
+
+   #
+   # Retrieve the given {HttpRequest} request, or fail if that
+   # is not possible.
+   #
+   # @param request - an {HttpRequest} instance
+   # @return an {HttpResponse} object.
+   public retrieve(request)
+      # Create our own copy of the request as we may modify it during
+      # redirects
+      self.request := HttpRequest()
+      self.request.set_url(clone(request.url))
+      self.request.set_method(request.method)
+      self.request.set_headers(clone(request.headers))
+      self.request.set_username(request.username)
+      self.request.set_password(request.password)
+      self.request.set_referer(request.referer)
+      self.request.set_range(request.range_start, request.range_end)
+      self.request.set_content_type(request.content_type)
+      if /request.data_stream then
+         request.method === "HEAD" | runerr("No data stream set")
+      else {
+         request.data_stream.can(Stream.WRITE + Stream.TRUNCATE) | 
+                        runerr("Data stream not writable and truncatable", request.data_stream)
+         self.request.set_data_stream(request.data_stream)
+      }
+      if /request.post_stream then
+         request.method ~=== "POST" | runerr("No data stream set on a POST")
+      else {
+         request.post_stream.can(Stream.READ + Stream.SEEK) | 
+                        runerr("Post stream not readable and seekable", request.post_stream)
+         self.request.set_post_stream(request.post_stream)
+      }
+
+      auth_req_count := 0
+      redir_set := set()
+      abort_flag := &null
+      repeat {
+         http_error := &null
+
+         retrieve_page() | fail
+
+         if find("200"|"206", response.get_status()) then
+            return response
+
+         if find("401", response.get_status()) then
+            handle_authentication() | fail
+         else if find("301"|"302"|"303"|"307", response.get_status()) then
+            handle_redirect() | fail
+         else
+            return on_http_error(response.get_status())
+      }
+   end
+
+   #
+   # 
+   private handle_redirect()
+      local l, s, u
+      #
+      # A redirection, so extract the URL if possible.
+      #
+      l := response.get_first_header("Location") | return on_http_error("No Location in a redirect response")
+      if match("http://", l) then {
+         u := URL.parse(l) | return on_http_error("Invalid Location in a redirect response:" || l)
+         request.set_url(u)
+      } else
+         #
+         # It shouldn't be a relative URL, but that seems to be
+         # commonplace.
+         #
+         request.url.set_relative(l)
+      
+      s := to_string(request.url)
+      if member(redir_set, s) then
+         return on_http_error("Circular redirection detected:" || s)
+      insert(redir_set, s)
+
+      #
+      # On a redirect, a POST becomes a GET.
+      #
+      if request.method == "POST" then {
+         request.set_method("GET")
+         request.set_post_stream()
+         request.unset_header("content-length")
+         request.unset_header("content-type")
+      }
+      auth_req_count := 0
+      return
+   end
+
+   #
+   # 
+   private handle_authentication()
+      local s, t
+      if /(request.username | request.password) then
+         return on_http_error("Authentication requested - please set username, password")
+
+      if auth_req_count > 0 then
+         return on_http_error("Failed to authenticate - correct username, password")
+      auth_req_count +:= 1
+
+      s := response.get_first_header("www-authenticate") | 
+         return on_http_error("No WWW-Authenticate in a 401 response")
+
+      t := parse_generic_header(s)
+      if member(t, "Basic") then {
+         auth_scheme := "Basic"
+         return setup_basic_authentication()
+      }
+      if member(t, "Digest") then {
+         auth_scheme := "Digest"
+         return setup_digest_authentication()
+      }
+
+      return on_http_error("WWW-Authenticate header contained unknown authentication method.")
+   end
+
+   #
+   # 
+   private setup_basic_authentication(t)
+      local b64h, s
+      b64h := Base64Handler()
+      s := b64h.encode_data(&null, request.username || ":" || request.password, 1)
+      basic_auth_header := "Basic " || s
+      return
+   end
+
+   #
+   # 
+   private setup_digest_authentication(t)
+      local algorithm, md5, qop_options
+
+      self.realm := \t["realm"] | 
+         return on_http_error("WWW-Authenticate digest header didn't contain a realm")
+      self.nonce := \t["nonce"] | 
+         return on_http_error("WWW-Authenticate digest header didn't contain a nonce")
+      self.opaque := t["opaque"] 
+
+      algorithm := \t["algorithm"] | "MD5"
+      self.nonce_count := 0
+      self.cnonce := "0a4f113b"
+      
+      #
+      # Calculate HA1
+      #
+      md5 := MD5()
+      md5.update(request.username || ":" || realm || ":" || request.password)
+      if map(algorithm) == "md5-sess" then {
+         md5.update(":" || nonce || ":" || cnonce)
+      }
+      self.ha1 := md5.final_str()
+
+      #
+      # Get the available qop values and select a qop.
+      #
+      qop_options := set()
+      \t["qop"] ? {
+         while(tab(upto(TOKEN_CHAR))) do 
+            insert(qop_options, map(tab(many(TOKEN_CHAR))))
+      }
+      self.qop := member(qop_options, "auth-int" | "auth") | &null
+   end
+
+   #
+   # 
+   private create_digest_authorization_header()
+      local md5, nc, h, t, hentity, ha2, s
+
+      self.nonce_count +:= 1
+      nc := map(Format.int_to_string(self.nonce_count, 16, 8))
+      md5 := MD5()
+      #
+      # Calculate HA2
+      #
+      md5.update(request.method || ":" || request.url.get_file())
+      if \qop == "auth-int" then {
+         # Calculate H(entity)
+         t := MD5()
+         if \request.post_stream then {
+            # Just fail; the whole request will surely fail anyway.
+            request.post_stream.seek(1) | fail
+            while s := request.post_stream.reads(8192) do
+               t.update(s)
+            request.post_stream.eof() | fail
+         }
+         hentity := t.final_str()
+         md5.update(":" || hentity)
+      }
+
+      ha2 := md5.final_str()
+
+      md5.update(ha1 || ":" || nonce || ":")
+      if \self.qop then
+         md5.update(nc || ":" || cnonce || ":" || qop || ":")
+
+      md5.update(ha2)
+
+      h := "Digest username=\"" || request.username || "\",\r\n\t" ||
+         "realm=" || realm || ",\r\n\t" ||
+         "nonce=" || nonce || ",\r\n\t" ||
+         "uri=\"" || request.url.get_file() || "\",\r\n\t"
+      if \qop then {
+         h ||:= "qop=" || qop || ",\r\n\t" ||
+            "nc=" || nc || ",\r\n\t" ||
+            "cnonce=" || cnonce || ",\r\n\t"
+      }
+      if \opaque then
+         h ||:= "opaque=" || opaque || ",\r\n\t"
+      h ||:= "response=\"" || md5.final_str() || "\""
+
+      return h
+   end
+
+   #
+   # 
+   private unq(s)
+      if s[1] == "\"" then 
+         s[1] := ""
+      if s[-1] == "\"" then 
+         s[-1] := ""
+      return s
+   end
+
+   #
+   # 
+   private parse_generic_header(s)
+      local t, k, v
+
+      t := table()
+      s ? repeat {
+         tab(upto(TOKEN_CHAR)) | break
+         k := tab(many(TOKEN_CHAR))
+         if ="=" then {
+            if any('\"') then
+               v := parse_quoted_string(1)
+            else
+               v := tab(many(TOKEN_CHAR)) | ""
+         } else
+            v := &null
+         insert(t, k, v)
+      }
+      return t
+   end
+
+   #
+   # 
+   # @param omit - if non-null, omit the quotes from the result
+   private parse_quoted_string(omit)
+      local res
+
+      if /omit then
+         res := move(1)
+      else {
+         res := ""
+         move(1)
+      }
+
+      repeat {
+         res ||:= tab(upto('\\\"') | 0)
+         if pos(0) then
+            break
+         else if any('\"') then {
+            if /omit then 
+               res ||:= move(1)
+            else
+               move(1)
+            break
+         } else if any('\\') then {
+            res ||:= move(2)
+         }
+      }
+      return res
+   end
+
+   #
+   # 
+   private create_authorization_header()
+      case auth_scheme of {
+         "Basic":
+            return create_basic_authorization_header()
+         "Digest":
+            return create_digest_authorization_header()
+         default:
+            fail
+      }
+   end
+
+   #
+   # 
+   private create_basic_authorization_header()
+      return basic_auth_header
+   end
+
+   #
+   # 
+   private parse_cookie_string(s)
+      local c, k, v, t, d
+
+      s ? repeat {
+         tab(upto(TOKEN_CHAR)) | break
+         k := tab(many(TOKEN_CHAR))
+         if ="=" then {
+            if any('\"') then
+               # The first one (c.value) keeps its quotes, the others don't.
+               v := parse_quoted_string(c)
+            else
+               v := tab(upto(';') | 0)
+         } else
+            v := &null
+         if /c then {
+            c := Cookie()
+            c.name := k
+            c.value := v
+         } else {
+            case map(k) of {
+               "expires" : {
+                  if t := Time.parse(v, "EEE, dd-MMM-yyyy hh:mm:ss zzz") then
+                     c.expires := t
+               }
+               "path" : c.path := v
+               "domain" : c.domain := v
+               "secure" : c.secure := 1
+               "max-age" : {
+                  if d := integer(v) then {
+                     t := Time()
+                     t.set_seconds(t.seconds + d)
+                     c.expires := t
+                  }
+               }
+               "comment" : c.comment := v
+               "version" : c.version := integer(v)
+            }
+         }
+      }
+
+      return \c
+   end
+
+   #
+   # Store any cookie values in the current page's header.
+   # 
+   private store_cookies()
+      local c, domain, path, paths, vals, s
+
+      every s := !response.get_headers("set-cookie") do {
+         if c := parse_cookie_string(s) then {
+            domain := map(\c.domain | request.url.get_address())
+            if member(cookies, domain) then 
+               paths := cookies[domain]
+            else {
+               paths := table()
+               insert(cookies, domain, paths)
+            }
+
+            path := c.path
+            if /path then {
+               # Netscape cookies default to the full file path; rfc2109 ones
+               # default to the file up to, but not including, the right-most /.
+               if /c.version then
+                  path := request.url.get_file()
+               else {
+                  path := request.url.get_file_dir()
+                  if path[-1] == "/" then
+                     path[-1] := ""
+               }
+            }
+
+            if member(paths, path) then
+               vals := paths[path]
+            else {
+               vals := ClTable()
+               insert(paths, path, vals)
+            }
+            vals.insert(c.name, c)
+         }
+      }
+   end
+
+   private host_match(a, b)
+      if a == b then
+         return
+      if b[1] == "." then
+         return (a == b[2:0]) | (a[0-:*b] == b)
+      else
+         return (a[-*b-1] == ".") & (a[0-:*b] == b)
+   end
+
+   #
+   # 
+   private create_cookie_header()
+      local s, e, f, host, path, c, now, ver
+
+      host := map(request.url.get_address())
+      path := request.url.get_file()
+      now := Time()
+      s := ""
+      every e := !sort(cookies) do {
+         if host_match(host, e[1]) then {
+            every f := !reverse(sort(e[2])) do {
+               if match(f[1], path) then {
+                  every c := (!f[2].sort())[2] do {
+                     if /c.expires | c.expires.after(now) then {
+                        if *s > 0 then
+                           s ||:= "; "
+                        s ||:= c.name
+                        s ||:= "=" || \c.value
+                        if \c.version then {
+                           s ||:= "; $Path=\"" || \c.path || "\"" 
+                           s ||:= "; $Domain=\"" || \c.domain || "\"" 
+                           ver := c.version
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      if \ver then
+         s := "$Version=\"" || ver || "\"; " || s
+
+      if *s > 0 then
+         return s
+   end
+
+   #
+   # Useful debug function
+   # 
+   public dump_cookies()
+      local c, e, f
+      every e := !sort(cookies) do {
+         write("domain:", e[1])
+         every f := !reverse(sort(e[2])) do {
+            write("\tpath:", f[1])
+            every c := (!f[2].sort())[2] do {
+               write("\t\t", to_string(c))
+            }
+         }
+      }
+   end
+
+   #
+   # 
+   private on_http_error(s)
+      http_error := s
+      return error(s)
+   end
+
+   #
+   # After invoking retrieve(), this method can be used to determine
+   # whether a failure was caused by a network failure or an HTTP failure
+   # (for example 404 not found).  In the former case this method fails; in
+   # the latter case the error string is returned.
+   #
+   public get_http_error()
+      return \http_error
+   end
+
+   #
+   # 
+   private maybe_open()
+      if not(is_open()) | /open_url | open_url.get_address() ~== request.url.get_address() |
+         open_url.get_port() ~= request.url.get_port() then 
+      {
+         close()
+         set_server(request.url.get_address())
+         set_port(request.url.get_port())
+         open() | fail
+         open_url := clone(request.url)
+      }
+      return
+   end
+
+   #
+   # Retrieve the current request; doesn't handle redirects and so
+   # on - these are handled by the caller, retrieve().
+   # 
+   private retrieve_page()
+      local i, prev_read
+
+      i := retries
+
+      self.read := self.length := &null
+
+      repeat {
+         prev_read := self.read
+         if tryone() then {
+            store_cookies()
+            fire(COMPLETE_EVENT)
+            return response
+         }
+
+         close()
+         if \abort_flag then
+            fail
+
+         if prev_read ~=== self.read & \retry_while_data_flag then {
+            i := retries
+         } else if (i -:= 1) < 0 then {
+            fire(FAILED_EVENT)
+            if retries = 0 then {
+               fail
+            } else
+               return error("Gave up after " || (1+retries) || " attempts - last reason:" || &why)
+         }
+
+         fire(RETRYING_EVENT)
+      }
+   end
+
+   #
+   #
+   # Retrieve the given url.  A {HttpResponse} object is returned upon success.
+   # Failure occurs if the url could not be retrieved.
+   #
+   private tryone()
+      local s
+      #
+      # Open the connection
+      #
+      maybe_open() | fail
+
+      #
+      # Write the request
+      #
+      write_request() | fail
+
+      repeat {
+         #
+         # Create a response
+         #
+         response := HttpResponse()
+         response.set_url(request.url)
+         s := read_line() | fail
+         response.set_status(s)
+
+         #
+         # Read the response.
+         #
+         read_headers() | fail
+         fire(HEADERS_EVENT)
+         if \abort_flag then
+            fail
+
+         #
+         # A 100 ("Continue") result means go round again and get 
+         # the status/headers again - they follow immediately after
+         # the end of the first headers.
+         #
+         find("100", response.get_status()) | break
+      }
+
+      if request.method ~=== "HEAD" then
+         read_data() | fail
+      else
+         maybe_close()
+
+      return
+   end
+   
+   #
+   # 
+   private maybe_close()
+      #
+      # Close if told to do so.
+      #
+      if map(response.get_first_header("connection")) == "close" then
+         close()
+   end
+
+   #
+   # 
+   private write_request()
+      local rs, sz, s, f
+      request.set_header("user-agent", user_agent)
+      request.set_header("host", request.url.get_address())
+      request.set_header("referer", \request.referer)
+      request.unset_header("cookie")
+      request.set_header("cookie", create_cookie_header())
+
+      if \keep_alive_flag then
+         request.set_header("connection", "Keep-Alive")
+
+      f := (\request.range_start | 0) + (\self.read | 0)
+      rs := if f > 0 then
+         f || "-"
+      else
+         "-"
+      rs ||:= \request.range_end
+            
+      if rs == "-" then
+         request.unset_header("range")
+      else
+         request.set_header("range", "bytes=" || rs)
+
+      write_line(request.method || " " || request.url.get_file() || 
+                 " HTTP/" || http_version) | fail
+
+      if \request.post_stream then {
+         \request.content_type | runerr("Content-type header not set on a POST")
+         request.set_header("content-type", request.content_type)
+         sz := request.post_stream.seek(0) - 1 | fail
+         request.set_header("content-length", sz)
+         request.set_header("authorization", create_authorization_header())
+         write_request_headers() | fail
+         write_line() | fail
+         request.post_stream.seek(1) | fail
+         while s := request.post_stream.reads(8192) do {
+            if not write_str(s) then {
+               f.close()
+               fail
+            }
+         }
+         request.post_stream.eof() | fail
+      } else {
+         request.set_header("authorization", create_authorization_header())
+         write_request_headers() | fail
+         write_line() | fail
+      }
+
+      return
+   end
+
+   #
+   # 
+   private read_headers()
+      local s, key, val
+      repeat {
+         s := read_line() | fail
+         if *s = 0 then {
+            # Add last header (if any).
+            response.add_header(\key, val)
+            break
+         }
+         s ? {
+            #
+            # A continuation line starts with a space or a tab.
+            #
+            if any(' \t') then
+               val ||:= tab(0)
+            else {
+               # Add current header and start a new one.
+               response.add_header(\key, val)
+               key := tab(upto(':') | 0)
+               =": "
+               val := tab(0)
+            }
+         }
+      }
+      return
+   end
+
+   #
+   # 
+   private read_data()
+      #
+      # See whether we are continuing a partial read.  If so, the
+      # self.read and self.length values continue from the previous
+      # attempt.  Otherwise, they are reset and the output stream
+      # truncated.
+      #
+      if not(\self.read & find("206", response.get_status())) then {
+         request.data_stream.truncate(0) | fail
+         self.length := integer(response.get_first_header("content-length")) | &null
+         self.read := 0
+      }
+
+      #
+      # Read the data.
+      #
+      if trim(map(response.get_first_header("transfer-encoding"))) == "chunked" then
+         return read_chunked()
+      else if /length then
+         return read_to_eof()
+      else
+         return read_length()
+   end
+
+   #
+   # 
+   private read_chunked()
+      local l, chunk, s
+      repeat {
+         l := read_line() | fail
+         l ? {
+            chunk := integer("16r" || tab(many('0987654321abcdefABCDEF'))) |
+               return error("Expected chunk-length specifier; got " || l)
+         }
+         if chunk = 0 then
+            break
+         while chunk > 0 do {
+            s := read_str(min(1024, chunk)) | fail
+            add_some(s) | fail
+            chunk -:= *s
+         }
+         l := read_line() | fail
+         if *l > 0 then
+            return error("Expected empty line at end of chunk")
+      }
+      #
+      # Read any trailing lines, upto an empty line.
+      #
+      repeat {
+         l := read_line() | fail
+         if *l = 0 then
+            break
+      }
+
+      maybe_close()
+
+      return
+   end
+
+   #
+   # 
+   private read_to_eof()
+      local s
+      #
+      # No content length.  Read until eof, then close.
+      #
+      while s := read_str(1024) do
+         add_some(s) | fail
+      # 
+      # Make sure we actually read to the end of file
+      #
+      eof() | {
+         close()
+         fail
+      }
+
+      return
+   end
+
+   #
+   # 
+   private read_length()
+      local s
+      #
+      # Got a content length.  Read len bytes and leave the connection
+      # open - unless told to close it.
+      #
+      while self.read < length do {
+         s := read_str(min(1024, length - self.read)) | fail
+         add_some(s) | fail
+      }
+
+      maybe_close()
+
+      return
+   end
+
+   #
+   # Return the length of the current download, or &null if unknown
+   #
+   public get_length()
+      return self.length
+   end
+
+   #
+   # Return the number of bytes read so far.
+   #
+   public get_read()
+      return self.read
+   end
+
+   #
+   # 
+   private add_some(s)
+      self.read +:= *s
+      fire(PROGRESS_EVENT)
+      return request.data_stream.writes(s)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "http_version": set_http_version(f.string_val())
+         "user_agent": set_user_agent(f.string_val())
+         "retries": set_retries(f.int_val())
+         "retry_while_data": set_retry_while_data(f.flag_val())
+         "keep_alive" : set_keep_alive(f.flag_val())
+         "cookies" : set_cookies(f.table_val())
+         default: return cast(self,NetClient).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,NetClient).new()
+      cookies := table()
+      set_timeout(12000)
+      keep_alive_flag := 1
+      retries := 2
+      http_version := "1.1"
+      user_agent := "httpclient.icn [en] (" || &host || ")"
+      set_fields(a)
+      return
+   end
+end

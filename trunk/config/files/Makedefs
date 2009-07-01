@@ -1,0 +1,28 @@
+.PHONY:         all clean test
+.PRECIOUS:      %.u
+
+OIHOME=@CONFIG_DIR@
+OIBIN=$(OIHOME)/bin
+OILIB=$(OIHOME)/lib
+
+CDBG=-ggdb
+LDFLAGS=@LDFLAGS@
+LIBS=@LIBS@
+CFLAGS=$(CWARN) $(CDBG) @CFLAGS@
+CPPFLAGS=@CPPFLAGS@
+RTT=rtt
+CC=@CC@
+RM=rm -f
+RMDIR=rm -rf
+MKDIR=mkdir
+CP=cp
+INSTALL=@INSTALL@
+LN_S=@LN_S@
+@SET_MAKE@
+
+export OIPATH:=$(OILIB)/main:$(OILIB)/gui:$(OILIB)/xml:$(OILIB)/parser:$(OILIB)/ipl
+export OLPATH:=$(OILIB)/incl
+export PATH:=$(OIBIN):$(PATH)
+
+%.u: %.icn
+	oit -c -s $<

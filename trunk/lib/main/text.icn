@@ -1,0 +1,20 @@
+package lang
+
+class Text()
+   # generate the ranges in a cset, as a sequence of from-to pairs.
+   #
+   public static defer get_ord_range(c)
+
+   # produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc
+   #
+   public static defer create_cset(x[])
+
+   # succeed if the cset c contains the code point x, returning its index in the cset
+   #
+   public static defer has_ord(c, x)
+
+   #
+   # produce a string containing the utf-8 sequence of chars for character i.
+   public static defer utf8_seq(i)
+   
+end

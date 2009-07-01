@@ -1,0 +1,41 @@
+#
+# $Id$
+#
+
+package mail
+
+#
+# Handles the conversion from decoded content to an object
+#
+class TypeHandler()
+   public static const 
+      TYPE_HANDLERS
+
+   private static init()
+      TYPE_HANDLERS := [NoOpTypeHandler(), MultipartHandler(), TextHandler(), MessageHandler()]
+   end
+
+   #
+   # Succeed if this object can handle the given {ContentType}
+   #
+   # @param ct the {ContentType}
+   #
+   public defer can_handle(ct)
+
+   #
+   # Convert the given data to an object
+   #
+   # @param m the {Message}
+   # @param data the string sourcedata
+   #
+   public defer convert_to_object(m, data)
+
+   #
+   # Create string data from the given object
+   #
+   # @param m the {Message}
+   # @param obj the object to convert
+   #
+   public defer convert_from_object(m, obj)
+end
+

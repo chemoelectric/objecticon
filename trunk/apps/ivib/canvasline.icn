@@ -1,0 +1,83 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a Line on the canvas.
+#
+class CanvasLine(CanvasComponent,Line)
+   #
+   # Overrides CanvasComponent.min_height()
+   #
+   public min_height()
+      return 3
+   end
+
+   #
+   # Overrides CanvasComponent.min_width()
+   #
+   public min_width()
+      return 3
+   end
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      if /self.is_horizontal_flag then
+         c.line(name || ".set_is_horizontal(\"f\")")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasLine()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.is_horizontal_flag := self.is_horizontal_flag
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public get_template()
+      return cast(self,CanvasComponent).get_template() ||| 
+         [["Is horizontal flag", "is_horizontal_flag"]]
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasLineDialog(self)
+   end
+
+   public allows_null_width()
+      return /self.is_horizontal_flag
+   end
+
+   public allows_null_height()
+      return \self.is_horizontal_flag
+   end
+
+   public new()
+      cast(self,Line).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "Line"
+      self.import_name := "gui"
+      self.name := "line"
+      return
+   end
+end
+

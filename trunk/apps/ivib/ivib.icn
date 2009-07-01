@@ -1,0 +1,23 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import lang(Prog)
+
+#
+# Program entry point.
+#
+procedure main(args)
+   #
+   # Create the dialog window, give it the command line args, and display it.
+   #
+   Ivib.main := Main()
+   Ivib.main.custom_show(args)
+   cofail(Prog.get_parent())
+end
+
+
