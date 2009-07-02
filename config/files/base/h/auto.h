@@ -76,3 +76,6 @@
 #undef SIZEOF_INT
 #undef SIZEOF_LONG
 #undef SIZEOF_VOIDP
+
+/* stack alignment in bytes */
+#undef STACK_ALIGN_BYTES

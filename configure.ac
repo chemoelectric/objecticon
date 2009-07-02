@@ -81,6 +81,8 @@ AC_CHECK_SIZEOF(int, 4)
 AC_CHECK_SIZEOF(long, 4)
 AC_CHECK_SIZEOF(void*, 4)
 
+CHECK_STACK_ALIGN()
+
 AC_CONFIG_COMMANDS(system, [
         rm -f base/oix/rswitch.?
         cp $CSWITCH base/oix

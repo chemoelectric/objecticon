@@ -213,7 +213,7 @@
 
 #define DiffPtrsBytes(p1,p2) DiffPtrs((char*)(p1), (char*)(p2))
 
-#define StackAlign(x) ((word)(x) & ~((word)StackAlignBytes-1))
+#define StackAlign(x) ((word)(x) & ~((word)STACK_ALIGN_BYTES-1))
 
 /*
  * Check for stack overflow

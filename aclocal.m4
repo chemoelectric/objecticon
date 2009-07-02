@@ -826,3 +826,31 @@ else
 fi
 AC_LANG_RESTORE
 ])dnl ACX_PTHREAD
+
+
+AC_DEFUN([CHECK_STACK_ALIGN],
+   [ AC_MSG_CHECKING(stack alignment)
+     AC_ARG_WITH(stack-align,
+        [  --with-stack-align=N stack alignment in bytes ],
+        [
+             case "$withval" in
+                        @<:@0-9@:>@*)
+                                ac_stack_align_bytes=$withval
+                                ;;
+                        *)
+                                AC_MSG_ERROR(not an integer: $withval)
+                                ;;
+             esac
+        ])
+
+     if test -z "$ac_stack_align_bytes"; then
+         case $host in
+           sparc64-*-linux-*) ac_stack_align_bytes=64 ;;
+           *) (( ac_stack_align_bytes=2 * $ac_cv_sizeof_voidp )) ;;
+         esac
+     fi
+
+     AC_MSG_RESULT([$ac_stack_align_bytes bytes])
+     AC_DEFINE_UNQUOTED(STACK_ALIGN_BYTES, $ac_stack_align_bytes)
+   ]
+)
