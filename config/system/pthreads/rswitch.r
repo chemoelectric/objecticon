@@ -9,6 +9,7 @@
  */
 
 #passthru #include <pthread.h>
+#passthru #include <semaphore.h>
 
 static int inited = 0;		/* has first-time initialization been done? */
 
@@ -17,7 +18,7 @@ static int inited = 0;		/* has first-time initialization been done? */
  */
 typedef struct {
     pthread_t thread;	/* thread ID (thread handle) */
-    pthread_mutex_t mutex;
+    sem_t sema;          /* synchronization semaphore (if unnamed) */
     int alive;		/* set zero when thread is to die */
 } context;
 
@@ -37,25 +38,24 @@ static void aborted(char *s) {
     err_msg(1001, 0);
 }
 
-static void my_lock(pthread_mutex_t *c)
-{
-    if (pthread_mutex_lock(c) != 0)
-        aborted("my_lock failed");
+/*
+ * makesem(ctx) -- initialize semaphore in context struct.
+ */
+static void makesem(context *ctx) {
+    if (sem_init(&ctx->sema, 0, 0) == -1)
+        aborted("cannot init semaphore");
 }
 
-static void my_unlock(pthread_mutex_t *c)
+static int sem_wait_ex(sem_t *c)
 {
-    if (pthread_mutex_unlock(c) != 0)
-        aborted("my_unlock failed");
-}
+    int i;
 
-static void create_lock(pthread_mutex_t *c)
-{
-    if (pthread_mutex_init(c, NULL) != 0)
-        aborted("pthread_mutext_init failed");
-    my_lock(c);
-}
+    do {
+        i = sem_wait(c);
+    } while (i == -1 && errno == EINTR);
 
+    return i;
+}
 
 /*
  * coswitch(old, new, first) -- switch contexts.
@@ -75,7 +75,7 @@ void coswitch(word *o, word *n, int first)
          * Allocate and initialize the context struct for &main.
          */
         MemProtect(oldc = ocs[1] = malloc(sizeof(context)));
-        create_lock(&oldc->mutex);
+        makesem(oldc);
         oldc->thread = pthread_self();
         oldc->alive = 1;
         inited = 1;
@@ -90,23 +90,19 @@ void coswitch(word *o, word *n, int first)
          * Allocate and initialize a context struct.
          */
         MemProtect(newc = ncs[1] = malloc(sizeof(context)));
-        create_lock(&newc->mutex);
+        makesem(newc);
         pthread_attr_init(&attr);
-#ifdef UpStack
-        if (pthread_attr_setstack(&attr, (void *)n[0], PTHREAD_STACK_MIN) != 0)
-            aborted("pthread_attr_setstack failed");
-#else
-        if (pthread_attr_setstack(&attr, (void *)n[0] - PTHREAD_STACK_MIN, PTHREAD_STACK_MIN) != 0)
-            aborted("pthread_attr_setstack failed");
-#endif
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
         if (pthread_create(&newc->thread, &attr, nctramp, newc) != 0) 
             aborted("cannot create thread");
         newc->alive = 1;
     }
 
-    my_unlock(&newc->mutex);			/* unblock the new thread */
-    my_lock(&oldc->mutex);			/* block this thread */
+    if (sem_post(&newc->sema) == -1)                      /* unblock the new thread */
+        aborted("sem_post in coswitch failed");
+
+    if (sem_wait_ex(&oldc->sema) == -1)                    /* block this thread */
+        aborted("sem_wait_ex in coswitch failed");
     
     if (!oldc->alive)		
         pthread_exit(NULL);		/* if unblocked because unwanted */
@@ -122,9 +118,11 @@ void coclean(void *o) {
     if (oldc == NULL)			/* if never initialized, do nothing */
         return;
     oldc->alive = 0;			/* signal thread to exit */
-    my_unlock(&oldc->mutex);			/* unblock it */
+    if (sem_post(&oldc->sema) == -1)                      /* unblock it */
+        aborted("sem_post in coclean failed");
+
     pthread_join(oldc->thread, NULL);	/* wait for thread to exit */
-    pthread_mutex_destroy(&oldc->mutex);		/* destroy associated semaphore */
+    sem_destroy(&oldc->sema);           /* destroy associated semaphore */
     free(oldc);				/* free context block */
 }
 
@@ -133,7 +131,8 @@ void coclean(void *o) {
  */
 static void *nctramp(void *arg) {
     context *newc = arg;			/* new context pointer */
-    my_lock(&newc->mutex);
+    if (sem_wait_ex(&newc->sema) == -1)                    /* wait for signal */
+        aborted("sem_wait_ex in nctramp failed");
     new_context();			/* call new_context; will not return */
     syserr("new_context returned to nctramp");
     return NULL;

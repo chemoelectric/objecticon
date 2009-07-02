@@ -355,10 +355,12 @@ int region;
     */
    qualfree = quallist;
 
+#ifndef USE_PTHREAD_COEXPRESSIONS
    /*
     * Check for stack overflow if we are collecting from outside the system C stack.
     */
    do_checkstack = (k_current != rootpstate.K_main);
+#endif
 
    for (prog = progs; prog; prog = prog->next)
        markprogram(prog);
