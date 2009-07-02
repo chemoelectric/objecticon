@@ -38,7 +38,7 @@ typedef struct si_ stringint;
  */
 struct loc {
     struct descrip fname;       /* File name */
-    int line;                   /* Line number */
+    word line;                  /* Line number */
 };
 
 struct b_bignum {		/* large integer block */
