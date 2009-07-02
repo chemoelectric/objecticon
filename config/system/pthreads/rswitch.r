@@ -85,6 +85,7 @@ void coswitch(word *o, word *n, int first)
         newc = ncs[1];			/* load new context pointer */
     else {
         pthread_attr_t attr;
+        word midstack;
         /*
          * This is a newly allocated cstate array.
          * Allocate and initialize a context struct.
@@ -93,6 +94,22 @@ void coswitch(word *o, word *n, int first)
         makesem(newc);
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+        /*
+         * The newly allocated stack goes from sp (low address) to n[0] (ie cstate[0],
+         * high address).  We give the top half to the pthread, leaving the bottom
+         * half for icon.
+         */
+        midstack = StackAlign((char *)sp + DiffPtrsBytes((void *)n[0], sp) / 2);
+
+        /*
+        fprintf(stderr,"STKMIN=%ld stksize=%ld mstksize=%ld sp=%p n[0]=%p diff=%ld mid=%p\n",
+	                (long)PTHREAD_STACK_MIN,(long)stksize,(long)mstksize,sp,
+                        (void *)n[0],(long)DiffPtrsBytes((void *)n[0],sp),(void *)midstack);
+        */
+
+        if (pthread_attr_setstack(&attr, (void *)midstack, DiffPtrsBytes((void *)n[0], midstack)) != 0)
+            aborted("pthread_attr_setstack failed");
+
         if (pthread_create(&newc->thread, &attr, nctramp, newc) != 0) 
             aborted("cannot create thread");
         newc->alive = 1;
@@ -121,7 +138,9 @@ void coclean(void *o) {
     if (sem_post(&oldc->sema) == -1)                      /* unblock it */
         aborted("sem_post in coclean failed");
 
-    pthread_join(oldc->thread, NULL);	/* wait for thread to exit */
+    if (pthread_join(oldc->thread, NULL) != 0)  /* wait for thread to exit */
+        aborted("pthread_join failed");
+
     sem_destroy(&oldc->sema);           /* destroy associated semaphore */
     free(oldc);				/* free context block */
 }
