@@ -98,15 +98,15 @@ void coswitch(word *o, word *n, int first)
          * high address).  We give the top half to the pthread, leaving the bottom
          * half for icon.
          */
-        midstack = StackAlign((char *)sp + DiffPtrsBytes((void *)n[0], sp) / 2);
+        midstack = StackAlign((char *)sp + DiffPtrsBytes(n[0], sp) / 2);
 
         /*
         fprintf(stderr,"STKMIN=%ld stksize=%ld mstksize=%ld sp=%p n[0]=%p diff=%ld mid=%p\n",
 	                (long)PTHREAD_STACK_MIN,(long)stksize,(long)mstksize,sp,
-                        (void *)n[0],(long)DiffPtrsBytes((void *)n[0],sp),(void *)midstack);
+                        (void *)n[0],(long)DiffPtrsBytes(n[0],sp),(void *)midstack);
         */
 
-        if (pthread_attr_setstack(&attr, (void *)midstack, DiffPtrsBytes((void *)n[0], midstack)) != 0)
+        if (pthread_attr_setstack(&attr, (void *)midstack, DiffPtrsBytes(n[0], midstack)) != 0)
             aborted("pthread_attr_setstack failed");
 
         if (pthread_create(&newc->thread, &attr, nctramp, newc) != 0) 
@@ -140,7 +140,9 @@ void coclean(void *o) {
     if (pthread_join(oldc->thread, NULL) != 0)  /* wait for thread to exit */
         aborted("pthread_join failed");
 
-    sem_destroy(&oldc->sema);           /* destroy associated semaphore */
+    if (sem_destroy(&oldc->sema) == -1)           /* destroy associated semaphore */
+        aborted("sem_destroy in coclean failed");
+
     free(oldc);				/* free context block */
 }
 
