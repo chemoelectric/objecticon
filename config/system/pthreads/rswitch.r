@@ -33,9 +33,8 @@ static void *nctramp(void *arg);
 typedef context **cstate;
 
 static void aborted(char *s) {
-    fprintf(stderr, "pthreads coexpression switch: Unexpected problem: %s; program will abort\n", s);
-    perror("perror reports");
-    err_msg(1001, 0);
+    ffatalerr("pthreads coexpression switch: %s; program will abort\n"
+              "errnum=%d (%s)\n", s, errno, strerror(errno));
 }
 
 /*

@@ -850,9 +850,8 @@ static void remove_resource(int id, int type) {
 }
 
 static void aborted(char *s) {
-    fprintf(stderr, "ipc: Unexpected problem: %s; program will abort\n", s);
-    perror("perror reports");
-    err_msg(1001, 0);
+    ffatalerr("ipc.r: %s; program will abort\n"
+              "errnum=%d (%s)\n", s, errno, strerror(errno));
 }
 
 static void cleanup() {
