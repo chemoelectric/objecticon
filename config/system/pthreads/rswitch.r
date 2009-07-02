@@ -106,10 +106,10 @@ void coswitch(word *o, word *n, int first)
                         (void *)n[0],(long)DiffPtrsBytes(n[0],sp),(void *)midstack);
         */
 
-        if (pthread_attr_setstack(&attr, (void *)midstack, DiffPtrsBytes(n[0], midstack)) != 0)
+        if ((errno = pthread_attr_setstack(&attr, (void *)midstack, DiffPtrsBytes(n[0], midstack))) != 0)
             aborted("pthread_attr_setstack failed");
 
-        if (pthread_create(&newc->thread, &attr, nctramp, newc) != 0) 
+        if ((errno = pthread_create(&newc->thread, &attr, nctramp, newc)) != 0) 
             aborted("cannot create thread");
         newc->alive = 1;
     }
@@ -137,7 +137,7 @@ void coclean(void *o) {
     if (sem_post(&oldc->sema) == -1)                      /* unblock it */
         aborted("sem_post in coclean failed");
 
-    if (pthread_join(oldc->thread, NULL) != 0)  /* wait for thread to exit */
+    if ((errno = pthread_join(oldc->thread, NULL)) != 0)  /* wait for thread to exit */
         aborted("pthread_join failed");
 
     if (sem_destroy(&oldc->sema) == -1)           /* destroy associated semaphore */
