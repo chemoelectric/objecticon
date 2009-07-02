@@ -1005,7 +1005,7 @@ struct ipc_line *find_ipc_line(word *ipc, struct progstate *p)
 int findline(word *ipc)
 {
     struct ipc_line *p = find_ipc_line(ipc, curpstate);
-    return p ? p->line : 0;
+    return p ? (int)p->line : 0;
 }
 
 struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p)

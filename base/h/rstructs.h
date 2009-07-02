@@ -352,7 +352,7 @@ struct ipc_fname {
 
 struct ipc_line {
     word ipc;		/* offset of instruction into code region */
-    int line;		/* line number */
+    word line;		/* line number */
 };
 
 /*
