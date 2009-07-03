@@ -34,11 +34,7 @@ struct b_coexpr *sblkp;
 
    newsp = (word *)((char *)sblkp + sizeof(struct b_coexpr));
 
-#ifdef UpStack
-   sblkp->cstate[0] = StackAlign((char *)sblkp + (stksize - sizeof(*sblkp))/2);
-#else					/* UpStack */
    sblkp->cstate[0] = StackAlign((char *)sblkp + stksize - WordSize);
-#endif					/* UpStack */
 
    sblkp->es_argp = (dptr)newsp;  /* args are first thing on stack */
 

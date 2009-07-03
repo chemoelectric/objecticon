@@ -881,13 +881,8 @@ function{1} lang_Prog_load(s,arglist,
       if (pstate->icodesize % WordSize) 
           sp++;
 
-#ifdef UpStack
-      sblkp->cstate[0] = StackAlign((char *)sblkp + 
-                                          (_stk_ - (sizeof(*sblkp)+sizeof(struct progstate)+pstate->icodesize))/2);
-#else					/* UpStack */
       sblkp->cstate[0] = StackAlign((char *)sblkp + _stk_ - WordSize + 
                                           sizeof(struct progstate) + pstate->icodesize);
-#endif					/* UpStack */
 
       sblkp->es_argp = NULL;
       sblkp->es_gfp = NULL;
