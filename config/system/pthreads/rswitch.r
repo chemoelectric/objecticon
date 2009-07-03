@@ -65,6 +65,7 @@ void coswitch(word *o, word *n, int first)
     cstate ocs = (cstate)o;			/* old cstate pointer */
     cstate ncs = (cstate)n;			/* new cstate pointer */
     context *oldc, *newc;			/* old and new context pointers */
+    int dummy;
 
     if (inited)				/* if not first call */
         oldc = ocs[1];			/* load current context pointer */
@@ -79,6 +80,9 @@ void coswitch(word *o, word *n, int first)
         oldc->alive = 1;
         inited = 1;
     }
+
+    /* Keep an estimate of the C stack position in cstate[0] (see Prog.get_stack) */
+    o[0] = (word)&dummy;
 
     if (first != 0)			/* if not first call for this cstate */
         newc = ncs[1];			/* load new context pointer */
