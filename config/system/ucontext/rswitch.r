@@ -13,6 +13,7 @@ static void aborted(char *s) {
 void coswitch(word *o, word *n, int first) 
 {
     ucontext_t *oldc, *newc;			/* old and new context pointers */
+    int dummy;
 
     if (inited)				/* if not first call */
         oldc = (ucontext_t *)o[1];			/* load current context pointer */
@@ -25,6 +26,9 @@ void coswitch(word *o, word *n, int first)
         o[1] = (word)oldc;     /* Save in state */
         inited = 1;
     }
+
+    /* Keep an estimate of the C stack position in cstate[0] (see Prog.get_stack) */
+    o[0] = (word)&dummy;
 
     if (first != 0)			/* if not first call for this cstate */
         newc = (ucontext_t *)n[1];			/* load new context pointer */
