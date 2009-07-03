@@ -4035,7 +4035,7 @@ Pixmap loadimage(w, filename, height, width, atorigin, status)
     int *status;
 {
     Pixmap p1, p2 = (Pixmap) NULL;
-    int xhot, yhot, i, j;
+    int xhot, yhot;
     XGCValues gcv;
     unsigned long gcmask = GCFont | GCForeground | GCBackground;
     int isxbm;
@@ -4081,6 +4081,7 @@ Pixmap loadimage(w, filename, height, width, atorigin, status)
     }
     else {				/* isxbm == 0 => .xpm file */
 #ifdef HAVE_LIBXPM
+        int i, j;
         XpmAttributes a;
         XColor color;
         LinearColor clr;
