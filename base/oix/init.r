@@ -282,11 +282,6 @@ void icon_init(char *name)
     rootstring.size = Max(pmem/200, MaxStrSpace);
     rootblock.size  = Max(pmem/100, MaxAbrSize);
 
-#ifdef Double
-    if (sizeof(struct size_dbl) != sizeof(double))
-        syserr("Icon configuration does not handle double alignment");
-#endif					/* Double */
-
     /*
      * Catch floating-point traps
      */

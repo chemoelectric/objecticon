@@ -151,12 +151,12 @@
 /*
  * Get floating-point number from real block.
  */
-#ifdef Double
+#ifdef DOUBLE_HAS_WORD_ALIGNMENT
+   #define GetReal(dp,res)	res = BlkLoc(*dp)->realblk.realval
+#else
    #define GetReal(dp,res) *((struct size_dbl *)&(res)) =\
          *((struct size_dbl *)&(BlkLoc(*dp)->realblk.realval))
-#else					/* Double */
-   #define GetReal(dp,res)	res = BlkLoc(*dp)->realblk.realval
-#endif					/* Double */
+#endif
 
 /*
  * Absolute value, maximum, and minimum.

@@ -854,3 +854,21 @@ AC_DEFUN([CHECK_STACK_ALIGN],
      AC_DEFINE_UNQUOTED(STACK_ALIGN_BYTES, $ac_stack_align_bytes)
    ]
 )
+
+AC_DEFUN([CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
+   [ AC_MSG_CHECKING(if double has word alignment)
+     AC_RUN_IFELSE(
+                   [AC_LANG_PROGRAM([[
+                     #include <stdio.h>
+                     #include <stddef.h>]],[[
+                        struct t { void *x; double d; };
+                        return offsetof(struct t, d) == sizeof(void *) ? 0:1;
+                     ]])],
+                   [
+                   AC_MSG_RESULT(yes)
+                   AC_DEFINE(DOUBLE_HAS_WORD_ALIGNMENT)
+                   ],
+                   [
+                   AC_MSG_RESULT(no)
+                   ])
+])

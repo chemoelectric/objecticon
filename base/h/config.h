@@ -27,10 +27,6 @@
  *
  *	DeBug		debugging code
  *
- *  Other definitions perform configurations that are common to several
- *  systems. An example is:
- *
- *	Double		align reals at double-word boundaries
  *
  */
 

@@ -383,11 +383,11 @@ struct b_real *f(double val)
 
    AlcFixBlk(blk, b_real, T_Real, e_real)
 
-#ifdef Double
-   *((struct size_dbl *)&(blk->realval)) = *((struct size_dbl *)&val);
-#else                                   /* Double */
+#ifdef DOUBLE_HAS_WORD_ALIGNMENT
    blk->realval = val;
-#endif                                  /* Double */
+#else
+   *((struct size_dbl *)&(blk->realval)) = *((struct size_dbl *)&val);
+#endif
 
    return blk;
    }

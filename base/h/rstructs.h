@@ -321,14 +321,14 @@ struct region {
     struct region *Gprev, *Gnext;	/* global (all programs) lists */
 };
 
-#ifdef Double
+#ifndef DOUBLE_HAS_WORD_ALIGNMENT
 /*
  * Data type the same size as a double but without alignment requirements.
  */
 struct size_dbl {
     char s[sizeof(double)];
 };
-#endif					/* Double */
+#endif
 
 union numeric {			/* long integers or real numbers */
     long integer;

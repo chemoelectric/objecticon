@@ -79,3 +79,6 @@
 
 /* stack alignment in bytes */
 #undef STACK_ALIGN_BYTES
+
+/* double has word alignment test */
+#undef DOUBLE_HAS_WORD_ALIGNMENT
