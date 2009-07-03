@@ -382,7 +382,13 @@ struct b_real *f(double val)
    register struct b_real *blk;
 
    AlcFixBlk(blk, b_real, T_Real, e_real)
+
+#ifdef Double
+   *((struct size_dbl *)&(blk->realval)) = *((struct size_dbl *)&val);
+#else                                   /* Double */
    blk->realval = val;
+#endif                                  /* Double */
+
    return blk;
    }
 #enddef
