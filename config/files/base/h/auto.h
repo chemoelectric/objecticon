@@ -69,8 +69,8 @@
 /* define as 1 if unsetenv exists and returns an int */
 #undef HAVE_UNSETENV_INT_RETURN
 
-/* define as 1 if pthread exists and using it for coexpressions */
-#undef USE_PTHREAD_COEXPRESSIONS
+/* define as 1 if we define a coclean() function */
+#undef HAVE_COCLEAN
 
 /* sizes of various fundamental types */
 #undef SIZEOF_INT

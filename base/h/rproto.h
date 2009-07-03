@@ -65,8 +65,8 @@ int		co_chng		(struct b_coexpr *ncp, struct descrip *valloc,
 				   int swtch_typ, int first);
 void		co_init		(struct b_coexpr *sblkp);
 void		coswitch	(word *old, word *new, int first);
-#ifdef USE_PTHREAD_COEXPRESSIONS
-void coclean(void *o);
+#ifdef HAVE_COCLEAN
+void            coclean(word *o);
 #endif
 int		cplist_0	(dptr dp1,dptr dp2,word i,word j);
 int		cplist_1	(dptr dp1,dptr dp2,word i,word j);

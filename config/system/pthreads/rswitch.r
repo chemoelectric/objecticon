@@ -128,8 +128,8 @@ void coswitch(word *o, word *n, int first)
 /*
  * coclean(old) -- clean up co-expression state before freeing.
  */
-void coclean(void *o) {
-    cstate ocs = o;			/* old cstate pointer */
+void coclean(word *o) {
+    cstate ocs = (cstate)o;			/* old cstate pointer */
     context *oldc = ocs[1];		/* old context pointer */
     if (oldc == NULL)			/* if never initialized, do nothing */
         return;

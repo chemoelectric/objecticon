@@ -55,18 +55,25 @@ case $host in
      x86_64-*-linux*) id=linux_x86_64;;
      powerpc-*-linux*) id=linux_powerpc;;
      *) 
-        ACX_PTHREAD()
-        if test "$acx_pthread_ok" == yes; then
-                id=pthreads
-                LIBS="$PTHREAD_LIBS $LIBS"
-                CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-                CC="$PTHREAD_CC"
-                AC_DEFINE(USE_PTHREAD_COEXPRESSIONS,1)
+        AC_CHECK_HEADERS([ucontext.h])
+        if test "$ac_cv_header_ucontext_h" == yes; then
+                id=ucontext
+                AC_DEFINE(HAVE_COCLEAN,1)
         else
-                id=default
+                ACX_PTHREAD()
+                if test "$acx_pthread_ok" == yes; then
+                        id=pthreads
+                        LIBS="$PTHREAD_LIBS $LIBS"
+                        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+                        CC="$PTHREAD_CC"
+                        AC_DEFINE(HAVE_COCLEAN,1)
+                else
+                        id=default
+                fi
         fi
         ;;
 esac
+
 export CSWITCH
 CSWITCH=config/system/$id/rswitch.?
 

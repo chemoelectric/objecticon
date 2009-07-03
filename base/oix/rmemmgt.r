@@ -915,7 +915,7 @@ static void cofree()
                (*ep)->creator->statcurr -= stksize;
                xep = *ep;
                *ep = (*ep)->nextstk;
-         #ifdef USE_PTHREAD_COEXPRESSIONS
+         #ifdef HAVE_COCLEAN
                coclean(xep->cstate);
          #endif                         /* CoClean */
                free(xep);
