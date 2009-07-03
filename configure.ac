@@ -55,8 +55,8 @@ case $host in
      x86_64-*-linux*) id=linux_x86_64;;
      powerpc-*-linux*) id=linux_powerpc;;
      *) 
-        AC_CHECK_HEADERS([ucontext.h])
-        if test "$ac_cv_header_ucontext_h" == yes; then
+        ACX_UCONTEXT()
+        if test "$acx_ucontext_ok" == yes; then
                 id=ucontext
                 AC_DEFINE(HAVE_COCLEAN,1)
         else

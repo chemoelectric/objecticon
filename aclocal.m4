@@ -872,3 +872,13 @@ AC_DEFUN([CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
                    AC_MSG_RESULT(no)
                    ])
 ])
+
+AC_DEFUN([ACX_UCONTEXT],
+  [
+  acx_ucontext_ok=yes
+  AC_CHECK_HEADER(ucontext.h, [], [acx_ucontext_ok=no])
+  AC_CHECK_FUNC(makecontext, [], [acx_ucontext_ok=no])
+  AC_CHECK_FUNC(swapcontext, [], [acx_ucontext_ok=no])
+  AC_CHECK_FUNC(getcontext, [], [acx_ucontext_ok=no])
+  ]
+)
