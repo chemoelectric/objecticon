@@ -62,7 +62,7 @@ case $host in
         else
                 ACX_PTHREAD()
                 if test "$acx_pthread_ok" == yes; then
-                        id=pthreads
+                        id=pthread
                         LIBS="$PTHREAD_LIBS $LIBS"
                         CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
                         CC="$PTHREAD_CC"
