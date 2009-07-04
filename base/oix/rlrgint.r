@@ -146,7 +146,7 @@ struct b_bignum *x;
 dptr dx;
 {
    word xlen, cmp;
-   static DIGIT maxword[WORDLEN] = { 1 << ((WordBits - 1) % NB) };
+   static DIGIT maxword[WORDLEN] = { (DIGIT)1 << ((WordBits - 1) % NB) };
 
    /* suppress leading zero digits */
 
