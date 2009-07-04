@@ -862,7 +862,8 @@ AC_DEFUN([CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
                      #include <stdio.h>
                      #include <stddef.h>]],[[
                         struct t { char x; double d; };
-                        return offsetof(struct t, d) == sizeof(void *) ? 0:1;
+                        return (sizeof(double) % sizeof(void*) == 0 &&
+                                offsetof(struct t, d) == sizeof(void *)) ? 0:1;
                      ]])],
                    [
                    AC_MSG_RESULT(yes)
