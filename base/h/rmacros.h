@@ -241,6 +241,9 @@ do { \
 #define CsetSize (256/WordBits)	/* number of ints to hold 256 cset
 				 *  bits. Use (256/WordBits)+1 if
 				 *  256 % WordBits != 0 */
+
+#define DoubleWords ((SIZEOF_DOUBLE + SIZEOF_VOIDP - 1) / SIZEOF_VOIDP)
+
 /*
  * Address of word containing cset bit b
  */

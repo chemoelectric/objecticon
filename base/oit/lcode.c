@@ -1385,7 +1385,7 @@ struct b_real {			/* real block */
 #ifdef DOUBLE_HAS_WORD_ALIGNMENT
     double realval;		/*   value */
 #else
-    word realval[sizeof(double)/sizeof(word)];
+    word realval[DoubleWords];
 #endif
 };
 
