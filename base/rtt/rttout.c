@@ -3781,16 +3781,6 @@ struct token *t;
            prt_str(rslt_loc, IndentInc);
            fprintf(out_file, ".dword = %d;", n);
            break;
-       case DblConst:
-           prt_str("static struct b_real real_blk = {T_Real, ", IndentInc);
-           fprintf(out_file, "%s};", t->image);
-           ForceNl();
-           prt_str(rslt_loc, IndentInc);
-           prt_str(".dword = D_Real;", IndentInc);
-           ForceNl();
-           prt_str(rslt_loc, IndentInc);
-           prt_str(".vword.bptr = (union block *)&real_blk;", IndentInc);
-           break;
        case IntConst:
            prt_str(rslt_loc, IndentInc);
            prt_str(".dword = D_Integer;", IndentInc);

@@ -292,7 +292,7 @@ dptr dp;
 	  *  and was observed to work well in empirical testing.
           */
          case T_Real:
-            GetReal(dp,r);
+            GetReal(BlkLoc(*dp)->realblk,r);
             i = r * 1129.27586206896558;
             break;
 
@@ -577,7 +577,7 @@ int noimage;
          char s[30];
          struct descrip rd;
 
-         GetReal(dp,rresult);
+         GetReal(BlkLoc(*dp)->realblk,rresult);
          rtos(rresult, &rd, s);
          fprintf(f, "%s", StrLoc(rd));
          }

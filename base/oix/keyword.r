@@ -104,7 +104,9 @@ end
 
 "&e - the base of the natural logarithms"
 keyword{1} e
-   constant 2.71828182845904523536028747135266249775724709369996
+   body {
+    return real(&reale);
+   }
 end
 
 "&error - enable/disable error conversion"
@@ -293,12 +295,16 @@ end
 
 "&phi - the golden ratio"
 keyword{1} phi
-   constant 1.618033988749894848204586834365638117720309180
+   body {
+    return real(&realphi);
+   }
 end
 
 "&pi - the ratio of circumference to diameter"
 keyword{1} pi
-   constant 3.14159265358979323846264338327950288419716939937511
+   body {
+    return real(&realpi);
+   }
 end
 
 "&pos - a variable containing the current focus in string scanning."

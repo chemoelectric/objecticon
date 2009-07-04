@@ -124,6 +124,11 @@ struct descrip csetdesc;
 struct descrip eventdesc;
 struct descrip rzerodesc;
 
+struct b_real realzero;          /* real zero block */
+struct b_real realphi;	        /* real phi descriptor */
+struct b_real realpi;	        /* real pi descriptor */
+struct b_real reale;	        /* real e descriptor */
+
 struct b_cset *k_ascii;	        /* value of &ascii */
 struct b_cset *k_cset;	        /* value of &cset */
 struct b_cset *k_uset;	        /* value of &uset */
@@ -134,11 +139,6 @@ struct b_cset *k_ucase;	        /* value of &ucase */
 
 struct b_ucs *emptystr_ucs;     /* ucs empty string */
 struct b_ucs *blank_ucs;        /* ucs blank string */
-
-/*
- *  Real block needed for event monitoring.
- */
-struct b_real realzero = {T_Real, 0.0};
 
 /*
  * An array of all characters for use in making one-character strings.

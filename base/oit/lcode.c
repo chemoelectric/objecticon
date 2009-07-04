@@ -1380,9 +1380,13 @@ static void lemitin(int op, word offset, int n)
 }
 
 /* Same as in rstructs.h */
-struct b_real {
-    word title;
-    double realval;
+struct b_real {			/* real block */
+    word title;			/*   T_Real */
+#ifdef DOUBLE_HAS_WORD_ALIGNMENT
+    double realval;		/*   value */
+#else
+    word realval[sizeof(double)/sizeof(word)];
+#endif
 };
 
 static void lemitcon(struct centry *ce)
@@ -1420,12 +1424,15 @@ static void lemitcon(struct centry *ce)
     constblock_hash[i] = ce;
     ce->pc = pc;
     if (ce->c_flag & F_RealLit) {
-        static struct b_real d = {T_Real, 0.0};
+        static struct b_real d;
+        d.title = T_Real;
         memcpy(&d.realval, ce->data, sizeof(double));
         if (Dflag) {
             int i;
             word *p;
-            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Real (%g)\n",(long) pc, T_Real, d.realval);
+            double t;
+            memcpy(&t, ce->data, sizeof(double));
+            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Real (%g)\n",(long) pc, T_Real, t);
             p = (word *)&d + 1;
             for (i = 1; i < sizeof(d)/sizeof(word); ++i)
                 fprintf(dbgfile, "\t%08lx\t\t\t#    double data\n", (long)(*p++));

@@ -382,12 +382,7 @@ struct b_real *f(double val)
    register struct b_real *blk;
 
    AlcFixBlk(blk, b_real, T_Real, e_real)
-
-#ifdef DOUBLE_HAS_WORD_ALIGNMENT
-   blk->realval = val;
-#else
-   *((struct size_dbl *)&(blk->realval)) = *((struct size_dbl *)&val);
-#endif
+   SetReal(val, *blk);
 
    return blk;
    }

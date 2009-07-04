@@ -63,8 +63,14 @@ extern word oldsum;
 extern struct descrip csetdesc;		/* cset descriptor */
 extern struct descrip eventdesc;	/* event descriptor */
 extern struct b_iproc mt_llist;
-extern struct descrip rzerodesc;	/* real descriptor */
-extern struct b_real realzero;		/* real zero block */
+
+extern struct descrip rzerodesc;	/* real 0.0 descriptor */
+
+extern struct b_real realzero;          /* real zero block */
+extern struct b_real realphi;	        /* real phi descriptor */
+extern struct b_real realpi;	        /* real pi descriptor */
+extern struct b_real reale;	        /* real e descriptor */
+
 
 
 /*

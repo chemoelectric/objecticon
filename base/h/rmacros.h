@@ -152,10 +152,11 @@
  * Get floating-point number from real block.
  */
 #ifdef DOUBLE_HAS_WORD_ALIGNMENT
-   #define GetReal(dp,res)	res = BlkLoc(*dp)->realblk.realval
+   #define GetReal(b, r)      r = (b).realval
+   #define SetReal(r, b)      (b).realval = r;
 #else
-   #define GetReal(dp,res) *((struct size_dbl *)&(res)) =\
-         *((struct size_dbl *)&(BlkLoc(*dp)->realblk.realval))
+   #define GetReal(b, r)      memcpy(&r, (b).realval, sizeof(double))
+   #define SetReal(r, b)      memcpy((b).realval, &r, sizeof(double))
 #endif
 
 /*

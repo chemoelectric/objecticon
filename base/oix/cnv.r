@@ -49,7 +49,7 @@ double *d;
 
    type_case *s of {
       real: {
-         GetReal(s, *d);
+         GetReal(BlkLoc(*s)->realblk, *d);
          return 1;
          }
       integer: {
@@ -123,7 +123,7 @@ C_integer *d;
          }
       real: {
          double dbl;
-         GetReal(s,dbl);
+         GetReal(BlkLoc(*s)->realblk,dbl);
          if (dbl > MaxWord || dbl < MinWord) {
             return 0;
             }
@@ -458,7 +458,7 @@ dptr s, d;
          }
       real: {
          double dbl;
-         GetReal(s,dbl);
+         GetReal(BlkLoc(*s)->realblk,dbl);
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
@@ -596,7 +596,7 @@ int f(dptr s, dptr d)
        }
       real: {
          double res;
-         GetReal(s, res);
+         GetReal(BlkLoc(*s)->realblk, res);
          rtos(res, d, sbuf);
          }
      cset: {
@@ -643,7 +643,7 @@ int f(char *sbuf, dptr s, dptr d)
       }
       real: {
          double res;
-         GetReal(s, res);
+         GetReal(BlkLoc(*s)->realblk, res);
          rtos(res, d, sbuf);
          }
      cset: {
@@ -762,7 +762,7 @@ double getdbl(dp)
 dptr dp;
    {
    double d;
-   GetReal(dp, d);
+   GetReal(BlkLoc(*dp)->realblk, d);
    return d;
    }
 

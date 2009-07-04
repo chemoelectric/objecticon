@@ -315,7 +315,7 @@ dptr da, dx;
    word d;
    int sgn;
 
-   GetReal(da, x);
+   GetReal(BlkLoc(*da)->realblk, x);
 
 
    /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of

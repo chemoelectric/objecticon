@@ -51,7 +51,11 @@ struct b_bignum {		/* large integer block */
 
 struct b_real {			/* real block */
     word title;			/*   T_Real */
+#ifdef DOUBLE_HAS_WORD_ALIGNMENT
     double realval;		/*   value */
+#else
+    word realval[sizeof(double)/sizeof(word)];
+#endif
 };
 
 struct b_cset_range {
@@ -320,15 +324,6 @@ struct region {
     struct region *prev, *next;		/* forms a linked list of regions */
     struct region *Gprev, *Gnext;	/* global (all programs) lists */
 };
-
-#ifndef DOUBLE_HAS_WORD_ALIGNMENT
-/*
- * Data type the same size as a double but without alignment requirements.
- */
-struct size_dbl {
-    char s[sizeof(double)];
-};
-#endif
 
 union numeric {			/* long integers or real numbers */
     long integer;
