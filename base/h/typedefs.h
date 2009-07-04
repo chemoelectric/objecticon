@@ -6,7 +6,6 @@
  * typdefs for the run-time system.
  */
 
-typedef int ALIGN;		/* pick most stringent type for alignment */
 typedef unsigned int DIGIT;
 
 /*
