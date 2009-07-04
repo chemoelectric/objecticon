@@ -882,3 +882,55 @@ AC_DEFUN([ACX_UCONTEXT],
   AC_CHECK_FUNC(getcontext, [], [acx_ucontext_ok=no])
   ]
 )
+
+AC_DEFUN([ACX_CONTEXT_SWITCH],
+  [
+AC_ARG_WITH(context-switch,
+  [  --with-context-switch=ucontext/pthread use given context-switch],
+  [
+        acx_context_switch="$withval"
+        if test ! -d config/system/$withval ; then
+                AC_ERROR([Unknown context-switch type])
+        fi
+        if test "$withval" = pthread ; then
+                dnl detect and add pthread libs if they can be found
+                dnl
+                ACX_PTHREAD()
+                if test "$acx_pthread_ok" = yes; then
+                      LIBS="$PTHREAD_LIBS $LIBS"
+                      CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+                      CC="$PTHREAD_CC"
+                fi
+        fi
+  ],
+  [
+        AC_CANONICAL_HOST()
+        case $host in
+             i?86-*-linux*) acx_context_switch=linux_x86 ;;
+             i?86-*-cygwin*) acx_context_switch=cygwin_x86 ;;
+             x86_64-*-linux*) acx_context_switch=linux_x86_64;;
+             powerpc-*-linux*) acx_context_switch=linux_powerpc;;
+             *) 
+                ACX_UCONTEXT()
+                if test "$acx_ucontext_ok" = yes; then
+                        acx_context_switch=ucontext
+                else
+                        ACX_PTHREAD()
+                        if test "$acx_pthread_ok" = yes; then
+                                acx_context_switch=pthread
+                                LIBS="$PTHREAD_LIBS $LIBS"
+                                CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+                                CC="$PTHREAD_CC"
+                        else
+                                acx_context_switch=default
+                        fi
+                fi
+                ;;
+        esac
+     ])
+
+     if test "$acx_context_switch" = pthread -o "$acx_context_switch" = ucontext; then
+             AC_DEFINE(HAVE_COCLEAN,1)
+     fi
+  ]
+)

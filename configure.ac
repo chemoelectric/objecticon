@@ -25,18 +25,18 @@ CONFIG_DATE=$(date)
 AC_CONFIG_SRCDIR([base/oix/imain.r])
 
 CHECK_XLIB()
-if test "$ac_cv_lib_X11_main" == yes; then
+if test "$ac_cv_lib_X11_main" = yes; then
    CHECK_FREETYPE()
    CHECK_JPEG()
    CHECK_XFT()
    CHECK_XPM()
-   if test "$ac_cv_lib_Xft_main" == yes -a "$ac_cv_lib_freetype_main" != yes ; then
+   if test "$ac_cv_lib_Xft_main" = yes -a "$ac_cv_lib_freetype_main" != yes ; then
         AC_MSG_ERROR([*** Xft needs freetype to work])
    fi
 fi
 CHECK_ZLIB()
 OI_ADD_LIB(m)
-if ! test "$ac_cv_lib_m_main" == yes; then
+if ! test "$ac_cv_lib_m_main" = yes; then
         AC_MSG_ERROR([*** Couldn't find the math library (-lm) - can't compile without it.])
 fi
 OI_ADD_LIB(dl)
@@ -48,34 +48,9 @@ AC_PROG_INSTALL()
 AC_PROG_LN_S()
 AC_PROG_MAKE_SET()
 
-AC_CANONICAL_HOST()
-case $host in
-     i?86-*-linux*) id=linux_x86 ;;
-     i?86-*-cygwin*) id=cygwin_x86 ;;
-     x86_64-*-linux*) id=linux_x86_64;;
-     powerpc-*-linux*) id=linux_powerpc;;
-     *) 
-        ACX_UCONTEXT()
-        if test "$acx_ucontext_ok" == yes; then
-                id=ucontext
-                AC_DEFINE(HAVE_COCLEAN,1)
-        else
-                ACX_PTHREAD()
-                if test "$acx_pthread_ok" == yes; then
-                        id=pthread
-                        LIBS="$PTHREAD_LIBS $LIBS"
-                        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-                        CC="$PTHREAD_CC"
-                        AC_DEFINE(HAVE_COCLEAN,1)
-                else
-                        id=default
-                fi
-        fi
-        ;;
-esac
-
+ACX_CONTEXT_SWITCH()
 export CSWITCH
-CSWITCH=config/system/$id/rswitch.?
+CSWITCH=config/system/$acx_context_switch/rswitch.?
 
 AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll)
 AC_CHECK_GLOBAL(sys_nerr)
@@ -126,22 +101,22 @@ AC_OUTPUT
 echo "Summary:-"
 echo    "Installation prefix    :" $prefix
 echo -n "X11 graphics           : "
-if test "$ac_cv_lib_X11_main" == yes; then
+if test "$ac_cv_lib_X11_main" = yes; then
         echo yes
         echo -n "jpeg library           : "
-        if test "$ac_cv_lib_jpeg_main" == yes; then
+        if test "$ac_cv_lib_jpeg_main" = yes; then
                 echo yes
         else
                 echo no
         fi
         echo -n "Xft anti-aliased fonts : "
-        if test "$ac_cv_lib_Xft_main" == yes; then
+        if test "$ac_cv_lib_Xft_main" = yes; then
                 echo yes
         else
                 echo no
         fi
         echo -n "Xpm                    : "
-        if test "$ac_cv_lib_Xpm_main" == yes; then
+        if test "$ac_cv_lib_Xpm_main" = yes; then
                 echo yes
         else
                 echo no
@@ -150,13 +125,13 @@ else
         echo no
 fi
 echo -n "zlib compression       : "
-if test "$ac_cv_lib_z_main" == yes; then
+if test "$ac_cv_lib_z_main" = yes; then
         echo yes
 else
         echo no
 fi
 echo -n "dynamic loading        : "
-if test "$ac_cv_lib_dl_main" == yes; then
+if test "$ac_cv_lib_dl_main" = yes; then
         echo yes
 else
         echo no
