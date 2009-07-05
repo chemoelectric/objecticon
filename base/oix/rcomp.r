@@ -120,8 +120,8 @@ dptr dp1, dp2;
             &(BlkLoc(*dp2)->ucs.utf8));
 
       case T_Real:
-         GetReal(BlkLoc(*dp1)->realblk,rres1);
-         GetReal(BlkLoc(*dp2)->realblk,rres2);
+         GetReal(BlkLoc(*dp1)->real,rres1);
+         GetReal(BlkLoc(*dp2)->real,rres2);
          rresult = rres1 - rres2;
 	 if (rresult == 0.0)
 	    return Equal;
@@ -350,8 +350,8 @@ dptr dp1, dp2;
 
 
 	 case T_Real:
-            GetReal(BlkLoc(*dp1)->realblk, rres1);
-            GetReal(BlkLoc(*dp2)->realblk, rres2);
+            GetReal(BlkLoc(*dp1)->real, rres1);
+            GetReal(BlkLoc(*dp2)->real, rres2);
             result = (rres1 == rres2);
 	    break;
 

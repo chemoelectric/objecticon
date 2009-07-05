@@ -276,7 +276,7 @@ dptr dp;
           */
 	 case T_Lrgint:
 	    {
-	    struct b_bignum *b = &BlkLoc(*dp)->bignumblk;
+	    struct b_bignum *b = &BlkLoc(*dp)->bignum;
 
 	    i = ((b->lsd - b->msd) << 16) ^ 
 		(b->digits[b->msd] << 8) ^ b->digits[b->lsd];
@@ -292,7 +292,7 @@ dptr dp;
 	  *  and was observed to work well in empirical testing.
           */
          case T_Real:
-            GetReal(BlkLoc(*dp)->realblk,r);
+            GetReal(BlkLoc(*dp)->real,r);
             i = r * 1129.27586206896558;
             break;
 
@@ -577,7 +577,7 @@ int noimage;
          char s[30];
          struct descrip rd;
 
-         GetReal(BlkLoc(*dp)->realblk,rresult);
+         GetReal(BlkLoc(*dp)->real,rresult);
          rtos(rresult, &rd, s);
          fprintf(f, "%s", StrLoc(rd));
          }
@@ -1145,7 +1145,7 @@ dptr dp1, dp2;
          if (Type(source) == T_Lrgint) {
             word slen;
             word dlen;
-            struct b_bignum *blk = &BlkLoc(source)->bignumblk;
+            struct b_bignum *blk = &BlkLoc(source)->bignum;
 
             slen = blk->lsd - blk->msd;
             dlen = slen * NB * 0.3010299956639812 	/* 1 / log2(10) */

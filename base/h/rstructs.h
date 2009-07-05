@@ -587,7 +587,7 @@ struct b_refresh {		/* co-expression block */
 
 
 union block {			/* general block */
-    struct b_real realblk;
+    struct b_real real;
     struct b_cset cset;
     struct b_proc proc;
     struct b_list list;
@@ -608,7 +608,7 @@ union block {			/* general block */
     struct b_methp methp;
     struct b_constructor constructor;
     struct b_ucs ucs;
-    struct b_bignum bignumblk;
+    struct b_bignum bignum;
 };
 
 union tickerdata { 			/* clock ticker -- keep in sync w/ fmonitor.r */

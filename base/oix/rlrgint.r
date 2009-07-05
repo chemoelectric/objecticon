@@ -65,7 +65,7 @@ union word_b_bignum {
 
 /* LrgInt(dptr dp) : the struct b_bignum pointed to by dp */
 
-#define LrgInt(dp)   ((struct b_bignum *)&BlkLoc(*dp)->bignumblk)
+#define LrgInt(dp)   ((struct b_bignum *)&BlkLoc(*dp)->bignum)
 
 /* LEN(struct b_bignum *b) : number of significant digits */
 
@@ -283,7 +283,7 @@ int bigtoreal(dptr da, double *d)
 {
    word i;
    double r = 0;
-   struct b_bignum *b = &BlkLoc(*da)->bignumblk;
+   struct b_bignum *b = &BlkLoc(*da)->bignum;
 
    for (i = b->msd; i <= b->lsd; i++)
       r = r * B + b->digits[i];
@@ -312,7 +312,7 @@ dptr da, dx;
    word d;
    int sgn;
 
-   GetReal(BlkLoc(*da)->realblk, x);
+   GetReal(BlkLoc(*da)->real, x);
 
 
    /* Try to catch the case of x being +/-"inf" - these values produce a spurious value of
@@ -395,7 +395,7 @@ dptr da;
    struct b_bignum *a, *temp;
    word alen = LEN(LrgInt(da));
    word slen, dlen;
-   struct b_bignum *blk = &BlkLoc(*da)->bignumblk;
+   struct b_bignum *blk = &BlkLoc(*da)->bignum;
 
    slen = blk->lsd - blk->msd;
    dlen = slen * NB * 0.3010299956639812	/* 1 / log2(10) */

@@ -39,7 +39,7 @@ function{1} abs(n)
          return integer
          }
       inline {
-	 if (BlkLoc(n)->bignumblk.sign == 0)
+	 if (BlkLoc(n)->bignum.sign == 0)
 	    result = n;
 	 else {
 	    if (bigneg(&n, &result) == Error)  /* alcbignum failed */

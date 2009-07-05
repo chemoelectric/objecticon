@@ -49,7 +49,7 @@ double *d;
 
    type_case *s of {
       real: {
-         GetReal(BlkLoc(*s)->realblk, *d);
+         GetReal(BlkLoc(*s)->real, *d);
          return 1;
          }
       integer: {
@@ -123,7 +123,7 @@ C_integer *d;
          }
       real: {
          double dbl;
-         GetReal(BlkLoc(*s)->realblk,dbl);
+         GetReal(BlkLoc(*s)->real,dbl);
          if (dbl > MaxWord || dbl < MinWord) {
             return 0;
             }
@@ -458,7 +458,7 @@ dptr s, d;
          }
       real: {
          double dbl;
-         GetReal(BlkLoc(*s)->realblk,dbl);
+         GetReal(BlkLoc(*s)->real,dbl);
          if (dbl > MaxWord || dbl < MinWord) {
 
             if (realtobig(s, d) == Succeeded) {
@@ -586,7 +586,7 @@ int f(dptr s, dptr d)
          if (Type(*s) == T_Lrgint) {
             word slen;
             word dlen;
-            slen = (BlkLoc(*s)->bignumblk.lsd - BlkLoc(*s)->bignumblk.msd +1);
+            slen = (BlkLoc(*s)->bignum.lsd - BlkLoc(*s)->bignum.msd +1);
             dlen = slen * NB * 0.3010299956639812;	/* 1 / log2(10) */
 	    bigtos(s,d);
             return 1;
@@ -596,7 +596,7 @@ int f(dptr s, dptr d)
        }
       real: {
          double res;
-         GetReal(BlkLoc(*s)->realblk, res);
+         GetReal(BlkLoc(*s)->real, res);
          rtos(res, d, sbuf);
          }
      cset: {
@@ -634,7 +634,7 @@ int f(char *sbuf, dptr s, dptr d)
             word slen;
             word dlen;
 
-            slen = (BlkLoc(*s)->bignumblk.lsd - BlkLoc(*s)->bignumblk.msd +1);
+            slen = (BlkLoc(*s)->bignum.lsd - BlkLoc(*s)->bignum.msd +1);
             dlen = slen * NB * 0.3010299956639812;	/* 1 / log2(10) */
 	    bigtos(s,d);
            }
@@ -643,7 +643,7 @@ int f(char *sbuf, dptr s, dptr d)
       }
       real: {
          double res;
-         GetReal(BlkLoc(*s)->realblk, res);
+         GetReal(BlkLoc(*s)->real, res);
          rtos(res, d, sbuf);
          }
      cset: {
@@ -762,7 +762,7 @@ double getdbl(dp)
 dptr dp;
    {
    double d;
-   GetReal(BlkLoc(*dp)->realblk, d);
+   GetReal(BlkLoc(*dp)->real, d);
    return d;
    }
 
