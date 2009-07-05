@@ -31,12 +31,6 @@ extern int over_flow;
  *  pairs specifying unsigned base-B digit strings.  The sign handling
  *  is done in the bigxxx routines.
  */
-
-/*
- * Type for doing arithmetic on (2 * NB)-bit nonnegative numbers.
- *  Normally unsigned but may be signed (with NB reduced appropriately)
- *  if unsigned arithmetic is slow.
- */
 
 /* The bignum radix, B */
 
@@ -46,9 +40,6 @@ extern int over_flow;
 
 #define WORDLEN  (WordBits / NB + (WordBits % NB != 0))
 
-/* size of a bignum block that will hold an integer */
-
-#define INTBIGBLK  sizeof(struct b_bignum) + sizeof(DIGIT) * WORDLEN
 
 /* lo(uword d) :            the low digit of a uword
    hi(uword d) :            the rest, d is unsigned
@@ -58,6 +49,12 @@ extern int over_flow;
 #define lo(d)        ((d) & (B - 1))
 #define hi(d)        ((uword)(d) >> NB)
 #define dbl(a,b)     (((uword)(a) << NB) + (b))
+
+/* structure for a temporary bignum block that will hold an integer */
+union word_b_bignum {
+    char t[sizeof(struct b_bignum) + sizeof(DIGIT) * (WORDLEN - 1)];
+    struct b_bignum blk;
+};
 
 #if ((-1) >> 1) < 0
 #define signed_hi(d) ((word)(d) >> NB)
@@ -563,9 +560,9 @@ dptr dx;
       return bigaddi(db, IntVal(*da), dx);
    else {                             /* integer + integer */
       struct descrip td;
-      char tdigits[INTBIGBLK];
+      union word_b_bignum tdigits;
 
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       return bigaddi(&td, IntVal(*db), dx);
       }
 }
@@ -578,7 +575,7 @@ int bigsub(da, db, dx)
 dptr da, db, dx;
 {
    struct descrip td;
-   char tdigits[INTBIGBLK];
+   union word_b_bignum tdigits;
    tended struct b_bignum *a, *b;
    struct b_bignum *x;
    word alen, blen;
@@ -674,7 +671,7 @@ dptr da, db, dx;
    else if (Type(*da) == T_Lrgint)     /* bignum - integer */
       return bigsubi(da, IntVal(*db), dx);
    else if (Type(*db) == T_Lrgint) {   /* integer - bignum */
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       alen = LEN(LrgInt(&td));
       blen = LEN(LrgInt(db));
       a = LrgInt(&td);
@@ -738,7 +735,7 @@ dptr da, db, dx;
       return mkdesc(x, dx);
       }
    else {                              /* integer - integer */
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       return bigsubi(&td, IntVal(*db), dx);
       }
       
@@ -774,9 +771,9 @@ dptr da, db, dx;
       return bigmuli(db, IntVal(*da), dx);
    else {                             /* integer * integer */
       struct descrip td;
-      char tdigits[INTBIGBLK];
+      union word_b_bignum tdigits;
 
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       return bigmuli(&td, IntVal(*db), dx);
       }
 }
@@ -791,11 +788,11 @@ dptr da, db, dx;
    tended struct b_bignum *a, *b, *x, *tu, *tv;
    word alen, blen;
    struct descrip td;
-   char tdigits[INTBIGBLK];
+   union word_b_bignum tdigits;
 
    /* Put *da into large integer format. */
    if (Type(*da) != T_Lrgint) {
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       da = &td;
       }
 
@@ -840,11 +837,11 @@ dptr da, db, dx;
    tended struct b_bignum *a, *b, *x, *temp, *tu, *tv;
    word alen, blen;
    struct descrip td;
-   char tdigits[INTBIGBLK];
+   union word_b_bignum tdigits;
 
    /* Put *da into large integer format. */
    if (Type(*da) != T_Lrgint) {
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       da = &td;
       }
 
@@ -891,12 +888,12 @@ int bigneg(da, dx)
 dptr da, dx;
 {
    struct descrip td;
-   char tdigits[INTBIGBLK];
+   union word_b_bignum tdigits;
    int cpstat;
 
    /* Put *da into large integer format. */
    if (Type(*da) != T_Lrgint) {
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       da = &td;
       }
    LrgInt(da)->sign ^= 1;       /* Temporarily change the sign */
@@ -1040,7 +1037,7 @@ dptr da, db, dx;
    word i;
    DIGIT *ad, *bd;
    struct descrip td;
-   char tdigits[INTBIGBLK];
+   union word_b_bignum tdigits;
 
    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
       alen = LEN(LrgInt(da));
@@ -1086,7 +1083,7 @@ dptr da, db, dx;
          }
       }
    else if (Type(*da) == T_Lrgint) {   /* iand(bignum,integer) */
-      itobig(IntVal(*db), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*db), &tdigits.blk, &td);
       alen = LEN(LrgInt(da));
       blen = LEN(LrgInt(&td));
       xlen = alen > blen ? alen : blen;
@@ -1130,7 +1127,7 @@ dptr da, db, dx;
          }
       }
    else if (Type(*db) == T_Lrgint) {   /* iand(integer,bignum) */
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       alen = LEN(LrgInt(&td));
       blen = LEN(LrgInt(db));
       xlen = alen > blen ? alen : blen;
@@ -1190,7 +1187,7 @@ dptr da, db, dx;
    word i;
    DIGIT *ad, *bd;
    struct descrip td;
-   char tdigits[INTBIGBLK];
+   union word_b_bignum tdigits;
 
    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
       alen = LEN(LrgInt(da));
@@ -1236,7 +1233,7 @@ dptr da, db, dx;
          }
       }
    else if (Type(*da) == T_Lrgint) {   /* ior(bignum,integer) */
-      itobig(IntVal(*db), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*db), &tdigits.blk, &td);
       alen = LEN(LrgInt(da));
       blen = LEN(LrgInt(&td));
       xlen = alen > blen ? alen : blen;
@@ -1280,7 +1277,7 @@ dptr da, db, dx;
          }
       }
    else if (Type(*db) == T_Lrgint) {   /* ior(integer,bignym) */
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       alen = LEN(LrgInt(&td));
       blen = LEN(LrgInt(db));
       xlen = alen > blen ? alen : blen;
@@ -1340,7 +1337,7 @@ dptr da, db, dx;
    word i;
    DIGIT *ad, *bd;
    struct descrip td;
-   char tdigits[INTBIGBLK];
+   union word_b_bignum tdigits;
 
    if (Type(*da) == T_Lrgint && Type(*db) == T_Lrgint) {
       alen = LEN(LrgInt(da));
@@ -1386,7 +1383,7 @@ dptr da, db, dx;
          }
       }
    else if (Type(*da) == T_Lrgint) {   /* ixor(bignum,integer) */
-      itobig(IntVal(*db), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*db), &tdigits.blk, &td);
       alen = LEN(LrgInt(da));
       blen = LEN(LrgInt(&td));
       xlen = alen > blen ? alen : blen;
@@ -1430,7 +1427,7 @@ dptr da, db, dx;
          }
       }
    else if (Type(*db) == T_Lrgint) {   /* ixor(integer,bignum) */
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       alen = LEN(LrgInt(&td));
       blen = LEN(LrgInt(db));
       xlen = alen > blen ? alen : blen;
@@ -1492,10 +1489,10 @@ dptr da, db, dx;
    word xlen;
    DIGIT *ad;
    struct descrip td;
-   char tdigits[INTBIGBLK];
+   union word_b_bignum tdigits;
 
    if (Type(*da) == T_Integer) {
-      itobig(IntVal(*da), (struct b_bignum *)tdigits, &td);
+      itobig(IntVal(*da), &tdigits.blk, &td);
       da = &td;
       }
 
@@ -1640,9 +1637,9 @@ word i;
       return bigsubi(da, -i, dx);
    else if (i < 0 || i >= B ) {
       struct descrip td;
-      char tdigits[INTBIGBLK];
+      union word_b_bignum tdigits;
 
-      itobig(i, (struct b_bignum *)tdigits, &td);
+      itobig(i, &tdigits.blk, &td);
       return bigadd(da, &td, dx);
       }
    else {
@@ -1684,9 +1681,9 @@ word i;
       return bigaddi(da, -i, dx);
    else if (i < 0 || i >= B) {
       struct descrip td;
-      char tdigits[INTBIGBLK];
+      union word_b_bignum tdigits;
 
-      itobig(i, (struct b_bignum *)tdigits, &td);
+      itobig(i, &tdigits.blk, &td);
       return bigsub(da, &td, dx);
       }
    else {
@@ -1726,9 +1723,9 @@ word i;
 
    if (i <= -B || i >= B) {
       struct descrip td;
-      char tdigits[INTBIGBLK];
+      union word_b_bignum tdigits;
 
-      itobig(i, (struct b_bignum *)tdigits, &td);
+      itobig(i, &tdigits.blk, &td);
       return bigmul(da, &td, dx);
       }
    else {
@@ -1764,9 +1761,9 @@ word i;
 
    if (i <= -B || i >= B) {
       struct descrip td;
-      char tdigits[INTBIGBLK];
+      union word_b_bignum tdigits;
 
-      itobig(i, (struct b_bignum *)tdigits, &td);
+      itobig(i, &tdigits.blk, &td);
       return bigdiv(da, &td, dx);
       }
    else {
@@ -1801,9 +1798,9 @@ word i;
 
    if (i <= -B || i >= B) {
       struct descrip td;
-      char tdigits[INTBIGBLK];
+      union word_b_bignum tdigits;
 
-      itobig(i, (struct b_bignum *)tdigits, &td);
+      itobig(i, &tdigits.blk, &td);
       return bigmod(da, &td, dx);
       }
    else {
@@ -1887,7 +1884,7 @@ dptr dx;
       }
    else {
       struct descrip td;
-      char tdigits[INTBIGBLK];
+      union word_b_bignum tdigits;
 
       /* scan bits left to right.  skip leading 1. */
       while (--n >= 0)
@@ -1906,7 +1903,7 @@ dptr dx;
             if (!over_flow)
                x = y;
             else {
-               itobig(x, (struct b_bignum *)tdigits, &td);
+               itobig(x, &tdigits.blk, &td);
                if (bigmul(&td, &td, dx) == Error)
    	          return Error;
                isbig = (Type(*dx) == T_Lrgint);
@@ -1922,7 +1919,7 @@ dptr dx;
                if (!over_flow)
                   x = y;
                else {
-                  itobig(x, (struct b_bignum *)tdigits, &td);
+                  itobig(x, &tdigits.blk, &td);
                   if (bigmuli(&td, a, dx) == Error)
    		  return Error;
                   isbig = (Type(*dx) == T_Lrgint);
@@ -1966,9 +1963,9 @@ word i;
       }
    else {
       struct descrip td;
-      char tdigits[INTBIGBLK];
+      union word_b_bignum tdigits;
 
-      itobig(i, (struct b_bignum *)tdigits, &td);
+      itobig(i, &tdigits.blk, &td);
       return bigcmp(da, &td);
       }
 }
