@@ -896,7 +896,7 @@ union numeric *result;
    char msign = '+';    /* sign of mantissa */
    char esign = '+';    /* sign of exponent */
    double mantissa = 0; /* scaled mantissa with no fractional part */
-   long lresult = 0;	/* integer result */
+   word lresult = 0;	/* integer result */
    int scale = 0;	/* number of decimal places to shift mantissa */
    int digits = 0;	/* total number of digits seen */
    int sdigits = 0;	/* number of significant digits seen */

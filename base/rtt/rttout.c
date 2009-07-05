@@ -899,7 +899,7 @@ int indent;
              * return/suspend C_integer <expr>;
              */
             prt_str(rslt_loc, indent);
-            prt_str(".vword.integr = ", indent);
+            prt_str(".vword.integer = ", indent);
             c_walk(n->u[0].child, indent + IndentInc, 0);
             prt_str(";", indent);
             ForceNl();
@@ -978,7 +978,7 @@ int indent;
                      /*
                       * return/suspend <type>(<integer>);
                       */
-                     ret_1_arg(t, args, typcd, ".vword.integr = (word)",
+                     ret_1_arg(t, args, typcd, ".vword.integer = (word)",
                         "(i)", indent);
                      break;
                   case TRetSpcl:
@@ -3786,7 +3786,7 @@ struct token *t;
            prt_str(".dword = D_Integer;", IndentInc);
            ForceNl();
            prt_str(rslt_loc, IndentInc);
-           prt_str(".vword.integr = ", IndentInc);
+           prt_str(".vword.integer = ", IndentInc);
            prt_str(t->image, IndentInc);
            prt_str(";", IndentInc);
            break;

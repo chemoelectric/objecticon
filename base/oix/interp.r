@@ -137,7 +137,7 @@ int coexp_act;			/* last co-expression action */
 #undef PushNull
 #undef PushVal
 #undef PushAVal
-#define PushDesc(d)   {*++rsp=((d).dword); *++rsp=((d).vword.integr);}
+#define PushDesc(d)   {*++rsp=((d).dword); *++rsp=((d).vword.integer);}
 #define PushNull   {*++rsp = D_Null; *++rsp = 0;}
 #define PushVal(v)   {*++rsp = (word)(v);}
 
@@ -1811,7 +1811,7 @@ int event;
    {
    struct progstate *parent = curpstate->parent;
 
-   curpstate->eventcount.vword.integr++;
+   curpstate->eventcount.vword.integer++;
    StrLen(parent->eventcode) = 1;
    StrLoc(parent->eventcode) = &allchars[event & 0xFF];
    mt_activate(&(parent->eventcode), NULL, curpstate->parent->K_main);

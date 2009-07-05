@@ -1270,7 +1270,7 @@ function{3} graphics_Window_pixel(self, argv[argc])
                        * Needs implementing under the compiler.
                        */
                       r_args[0].dword = D_Integer;
-                      r_args[0].vword.integr = rv;
+                      r_args[0].vword.integer = rv;
                       if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {
                           tend = r_tend.previous;
                           getpixel_term(self_w, &imem);

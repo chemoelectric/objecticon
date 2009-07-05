@@ -86,7 +86,7 @@
 /*
  * Integer value.
  */
-#define IntVal(d)	((d).vword.integr)
+#define IntVal(d)	((d).vword.integer)
 
 /*
  * Offset from top of block to value of variable.
@@ -359,10 +359,10 @@ do { \
  * Definitions for keywords.
  */
 
-#define k_pos kywd_pos.vword.integr	/* value of &pos */
-#define k_random kywd_ran.vword.integr	/* value of &random */
-#define k_trace kywd_trc.vword.integr	/* value of &trace */
-#define k_dump kywd_dmp.vword.integr	/* value of &dump */
+#define k_pos kywd_pos.vword.integer	/* value of &pos */
+#define k_random kywd_ran.vword.integer	/* value of &random */
+#define k_trace kywd_trc.vword.integer	/* value of &trace */
+#define k_dump kywd_dmp.vword.integer	/* value of &dump */
 
 /*
  * Descriptor types and flags.
@@ -498,7 +498,7 @@ do { \
    /*
     * Push descriptor.
     */
-   #define PushDesc(d)	{*++sp = ((d).dword); sp++;*sp =((d).vword.integr);}
+   #define PushDesc(d)	{*++sp = ((d).dword); sp++;*sp =((d).vword.integer);}
    
    /*
     * Push null-valued descriptor.
@@ -564,7 +564,7 @@ do { \
    /*
     * Value field of n-th argument.
     */
-   #define ArgVal(n)	(cargp[n].vword.integr)
+   #define ArgVal(n)	(cargp[n].vword.integer)
    
    /*
     * Specific arguments.

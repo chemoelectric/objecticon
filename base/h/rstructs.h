@@ -14,7 +14,7 @@
 struct descrip {		/* descriptor */
     word dword;			/*   type field */
     union {
-        word integr;		/*   integer value */
+        word integer;		/*   integer value */
         char *sptr;		/*   pointer to character string */
         union block *bptr;	/*   pointer to a block */
         dptr descptr;		/*   pointer to a descriptor */
@@ -326,7 +326,7 @@ struct region {
 };
 
 union numeric {			/* long integers or real numbers */
-    long integer;
+    word integer;
     double real;
     struct b_bignum *big;
 };
