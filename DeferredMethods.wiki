@@ -111,11 +111,15 @@ There are some restrictions which `set_method()` imposes :-
  * The method must be unresolved, i.e. currently point to the deferred method stub function.
  * The procedure supplied may not be a method, so for example you cannot use a static method in one class to implement a method in another.
 
-Setting a normal procedure to be a deferred method's definition isn't particularly useful, because you could always implement the method and just call the procedure.  However, `set_method` does still have one important use, and that is to set method implementations to procedures loaded via the `loadfunc` function, which loads code from a dynamic native library (.so or .dll).  This enables you to implement methods in C and RTL without editing or re-compiling the runtime system itself.  In this case, the init method might look like this :-
+Setting a normal procedure to be a deferred method's definition isn't particularly useful, because you could always implement the method and just call the procedure.  However, `set_method` does still have one important use, and that is to set method implementations to procedures loaded via the `Proc.load` function, which loads code from a dynamic native library (.so or .dll).  This enables you to implement methods in C and RTL without editing or re-compiling the runtime system itself.  In this case, the init method might look like this :-
 
 {{{
+   import lang(Proc)
+
+   ...
+
    private static init()
-      Class.set_method("f", loadfunc("mylib.so", "my_method"))
+      Class.set_method("f", Proc.load("mylib.so", "my_method"))
    end
 }}}
 
