@@ -84,7 +84,7 @@ class Timezone()
                sign := 1
             move(1)
             s := tab(many(&digits)) | fail
-            return Timezone(sign * 3600 * integer(s[1:3]) + 60 * integer(s[3:5]), id) | fail
+            return Timezone(sign * (3600 * integer(s[1:3]) + 60 * integer(s[3:5])), id) | fail
          }
       }
    end
