@@ -265,7 +265,7 @@ class Main(Dialog)
       local s, c, d, src, l
 
       l := Loader(fname)
-      src := l.load() | return alert_error(self, l.get_reason())
+      src := l.load() | return alert_error(self, &why)
       s := src.migrate() | return alert_error(self, "Couldn't migrate " || fname)
       c := lang.decode(s) | return alert_error(self, "Couldn't decode " || fname)
       c.layout_filename := l.lname
