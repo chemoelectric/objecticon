@@ -77,6 +77,7 @@ install :
 	@echo -e "export OLPATH=\"\$$OILIB/incl\"" >>"$(PATHS)"
 	@if [ "$(prefix)" != /usr/local ] ; then \
 		echo -e "PATH=\"\$$PATH:\$$OIBIN\"" >>"$(PATHS)" ; \
+		echo -e "LD_LIBRARY_PATH=\"\$$LD_LIBRARY_PATH:$(SOLIB)\"" >>"$(PATHS)" ; \
 	fi
 	@echo -e "export TRACE" >>"$(PATHS)" ; \
 

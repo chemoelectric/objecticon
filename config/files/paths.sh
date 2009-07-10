@@ -5,4 +5,5 @@ export OILIB="$OIHOME/lib"
 export OIPATH="$OILIB/main:$OILIB/gui:$OILIB/xml:$OILIB/parser:$OILIB/ipl"
 export OLPATH="$OILIB/incl"
 PATH="$PATH:$OIBIN"
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$OILIB/native"
 export TRACE
