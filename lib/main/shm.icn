@@ -26,10 +26,11 @@ class Shm(NoCopy)
    #
    # Set the value to the given object.  The object may be an arbitrary
    # Icon structure, and will be encoded into a string by the {encode()}
-   # procedure.
+   # procedure.  This method will fail if the given object is not
+   # encodable, and set {&why} appropriately.
    #
    public set_value(o)
-      set_value_impl(encode(o))
+      return set_value_impl(encode(o))
    end
 
    private defer set_value_impl(s)
