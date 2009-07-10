@@ -1058,10 +1058,8 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
     }
 
     /* Sanity check. */
-    if (blk->title != T_Proc) {
-        fprintf(stderr, "\nlang.Class.load_library() - symbol %s not a procedure block\n", fq);
-        fatalerr(218, NULL);
-    }
+    if (blk->title != T_Proc)
+        ffatalerr("lang.Class.load_library() - symbol %s not a procedure block\n", fq);
 
     free(fq);
 

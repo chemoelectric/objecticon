@@ -93,11 +93,9 @@ function{0,1} lang_Proc_load(filename,funcname)
            fail;
        }
        /* Sanity check. */
-       if (blk->title != T_Proc) {
-           fprintf(stderr, "\nloadfunc(\"%s\",\"%s\"): Loaded block didn't have D_Proc in its dword\n",
+       if (blk->title != T_Proc)
+           ffatalerr("lang.Proc.load(\"%s\",\"%s\"): Loaded block didn't have D_Proc in its dword",
                    filename, funcname);
-           fatalerr(218, NULL);
-       }
 
        free(tname);
        return proc(blk);
