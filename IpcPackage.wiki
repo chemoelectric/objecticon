@@ -130,9 +130,9 @@ Finished, var=2
 
 Here, var is an instance of the `Shm` class, and is created with the "factory" procedure `create_private_shm()`.  The parameter `1` is just the initial value.  Then `get_value()` and `set_value()` are used to get/set the value of the object, and finally `remove()` cleans up the operating system resources used by the instance (if this is not done, it will be done automatically when the program ends, and a warning message output).  These various calls delegate their work to the C functions in the shared library.
 
-More or less anything can be used as the parameter to `set_value()`, but note that the value is copied into and out of the shared variable, ie reference semantics do  not apply.  So, for example :-
+More or less anything can be used as the parameter to `set_value()`, but note that the value is copied into and out of the shared variable, ie reference semantics do not apply.  So, for example :-
 {{{
-   var := create_private_shm([1,2,3])
+   var := Shm.create_private([1,2,3])
 
    put(var.get_value(), 4)  # No effect; just adds 4 to the copy returned by get_value
    every write(!var.get_value())  # 1,2,3
