@@ -71,7 +71,7 @@ procedure eh(p, s, type)
 end
 
 procedure main()
-   local p,s,d,e,f
+   local p,s,d
    p := XmlParser()
    s := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>_
          <top a1=\"val1\" a2=\"val2\">_
@@ -132,7 +132,7 @@ end
 
 ...
 
-set_resolver(MyResolver())
+p.set_resolver(MyResolver())
 }}}
 
 The parser uses a default resolver, `DefaultResolver`, which should be sufficient for normal purposes.  It resolves system ids beginning with `file://` and `http://` locally and over the network respectively.  If the system id doesn't begin with either of those strings, then it is treated as a local file path.
