@@ -6,26 +6,22 @@ This page describes the XML parser in the library.  The parser takes its source 
 The reason for using strings as input and output rather than files is for two reasons.  Firstly, it is more flexible - a file can be turned into a string easily, but not vice-versa (without using a temporary file).   Secondly, it allows the parser to use the built-in string scanning functions, which increase parse speed.  The downside of using strings is that the document has to be read into memory prior to parsing, so the parser may not be suitable for really huge documents.
  
 = The XML parser =
-Create the XML parser using the following code :-
+The parser is contained in the class `XmlParser`, which has a `parse` method for parsing a string.  It returns a `XmlDocument` object, or fails if the input was not well-formed.  Here is an example program.
 {{{
-   import xml
-   ...
-   p := XmlParser()
-}}}
-To parse a document in string form, just invoke the `parse()` method, as follows :-
-{{{
-   s := "<?xml version=\"1.0\" encoding=\"UTF-8\"?><simple></simple>"
-   d := p.parse(s) | stop("Couldn't parse")
-}}}
-Note that if the input string s is not well-formed, the parse method will fail.  Otherwise, it succeeds and returns an `XmlDocument` object, which can then be inspected as needed.
+import
+   io(stop, write),
+   lang(to_string),
+   xml(XmlParser)
 
-If you have a file you need to parse, just load it into a string with the following code first :-
-{{{
-      f := open(file_name) | stop("couldn't open")
-      s := ""
-      while s ||:= reads(f, 1000)
-      close(f)
+procedure main()
+   local p,s,d
+   p := XmlParser()
+   s := "<?xml version=\"1.0\" encoding=\"UTF-8\"?><simple></simple>"
+   d := p.parse(s) | stop("Couldn't parse:", &why)
+   write(to_string(d, 3))
+end
 }}}
+If you have a file you need to parse, just load it into a string first using the `io.Files.file_to_string()` method.
 
 = The XMLDocument and XMLElement classes =
 As noted above, the parser returns an `XMLDocument` instance.  `XMLDocument` has methods to inspect the result of the parsing.  Most notably, the method `get_root_element()` will return the `XMLElement` which is the root of the element structure :-
@@ -45,7 +41,7 @@ Then
      e.get_name()  # "top"
      e.get_attribute("a1") # "val1"
      e.get_attribute("a2") # "val2"
-     e.get_attribute("absent") # &null
+     e.get_attribute("absent") # fails
      f := e.search_children("inner")  # sets f to another XmlElement, representing
                                       # inner.  If there were several inner elements,
                                       # it would suspend them in sequence.
@@ -55,9 +51,63 @@ Then
 }}}
 Please see the API documentation for more details.
 
-= Validation =
-If the document is not well-formed then the `parse()` method will fail.  If the document is invalid then `parse()` succeeds, but the parser will have done two things.  Firstly, it will have noted a count of the validity errors in the document, which can be obtained with `d.get_validity_errors()`.  Also, during parsing the parser will have fired a `VALIDITY_ERROR_EVENT`.  This can be listened for by connecting a listener to the parser.
+= Errors and warnings =
+The parser fires three types of event during parsing :-
+ * `XmlParser.WARNING_EVENT` - a warning message
+ * `XmlParser.VALIDITY_ERROR_EVENT` - a message indicating a validity error
+ * `XmlParser.FATAL_ERROR_EVENT` - a message indicating a fatal error, ie the string being parsed is not a well-formed xml document.  Only one such message is ever fired.
 
+A fatal error will mean that the `parse` method will fail.  A validity error won't cause the `parse` method to fail because a well-formed xml document can still be constructed and used.  However, the parser will count the number of validity errors, and this count can be accessed in the `XmlDocument`'s `validity_errors` field.  Warnings can safely be ignored - they just indicate that the source document could be improved in certain respects.
+
+Here is an example that listens for and prints out events from the parser.
+{{{
+import
+   io(stop, write),
+   lang(to_string),
+   xml(XmlParser)
+
+procedure eh(p, s, type)
+   write(type,":",to_string(p, 3))
+end
+
+procedure main()
+   local p,s,d,e,f
+   p := XmlParser()
+   s := "<?xml version=\"1.0\" encoding=\"UTF-8\"?>_
+         <top a1=\"val1\" a2=\"val2\">_
+           <inner a3=\"val3\">_
+              Some text    _
+           </inner>_
+         </top"
+   p.connect(eh)
+   d := p.parse(s) | stop("Couldn't parse:", &why)
+   write("Successfully parsed")
+end
+}}}
+The output is (in part) :-
+{{{
+validity error:object xml.ProblemDetail#1(
+   stack=
+      list#12[
+         object xml.Diversion#3(id="input";subject="<?xml version ... </top";pos=63)
+      ]
+   msg="top has attributes but none were declared"
+)
+
+... more validity errors ...
+
+fatal error:object xml.ProblemDetail#4(
+   stack=
+      list#106[
+         object xml.Diversion#7(id="input";subject="<?xml version ... </top";pos=107)
+      ]
+   msg="'>' expected"
+)
+Couldn't parse:'>' expected
+}}}
+Note how each message detail is encapsulated in a `ProblemDetail` instance.
+
+= Validation =
 The parser's validation process can be turned off if desired, using the `set_validate()` method.  This will increase parser speed, but may affect the result in terms of whitespace (see below).
 
 = External entity resolution =
