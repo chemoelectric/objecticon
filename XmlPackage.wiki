@@ -23,12 +23,12 @@ end
 }}}
 If you have a file you need to parse, just load it into a string first using the `io.Files.file_to_string()` method.
 
-= The XMLDocument and XMLElement classes =
-As noted above, the parser returns an `XMLDocument` instance.  `XMLDocument` has methods to inspect the result of the parsing.  Most notably, the method `get_root_element()` will return the `XMLElement` which is the root of the element structure :-
+= The `XmlDocument` and `XmlElement` classes =
+As noted above, the parser returns an `XmlDocument` instance.  `XmlDocument` has methods to inspect the result of the parsing.  Most notably, the method `get_root_element()` will return the `XmlElement` which is the root of the element structure :-
 {{{
     e := d.get_root_element()
 }}}
-The `XMLElement` class has methods which enable you to search the children of the element, and to inspect the element attributes.  For example, say that the element e represented the following structure :-
+The `XmlElement` class has methods which enable you to search the children of the element, and to inspect the element attributes.  For example, say that the element e represented the following structure :-
 {{{
     <top a1="val1" a2="val2">
       <inner a3="val3">
@@ -145,7 +145,9 @@ s := f.format_to_string(d)
 write(s)
 }}}
 
-Note how the formatter returns a string from a document, so it is really the reverse process of a parser.  Various options can be set on the formatter; for example
+Note how the `format_to_string()` method returns a string from a document, so it is really the reverse process of a parser.  The formatter can also output directly to an `io.Stream` object - see the `format()` method.
+
+Various options can be set on the formatter; for example
 {{{
 f.set_text_trim()
 f.set_indent(3)
@@ -182,3 +184,71 @@ All these tests which cause the parser problems are commented out with an approp
 This is a small program which can be used to see what the parser does with a particular document.  Given an input filename, testxml will parse the document and output various sections showing the formatted version of the document, a complete display of the document's structure, and the document's constraints read from the DTD.
 
 Just run testxml with no arguments for a list of options.
+
+= HTML parsing =
+
+The HTML parser uses the similar document structures for input and output as the XML parser.  However, it is much simpler than the XML parser. 
+
+== The parser ==
+Code to create and use the HTML parser follows a similar form to the example for XML shown above :-
+{{{
+import
+   io(write),
+   lang(to_string),
+   xml(HtmlParser)
+
+procedure main()
+   local p, s, d
+   p := HtmlParser()
+   s := "<html lang=\"en\">_
+           Some text    _
+           <p>_
+           Some more_
+         </html>"
+   d := p.parse(s)
+   write(to_string(d, 3))
+end
+}}}
+The `parse` method returns an `HtmlDocument` object, which can then be inspected as needed.
+
+In contrast to the XML parser, the `parse` method will never fail.  In other words, even if something that isn't remotely like HTML is given as input, it will still try to make sense of it.  This is in recognition of the fact that much HTML out on the Web is malformed!  A fussy parser would be of little use.
+
+== The `HtmlDocument` and `HtmlElement` classes ==
+As noted above, the parser returns an `HtmlDocument` instance.  This works in a very similar way to the `XmlDocument` class used for XML parsing; in fact the two classes share a common base class.  The most important method is `get_root_element()`, which will return the `HtmlElement` which is the root of the element structure :-
+{{{
+    e := d.get_root_element()
+}}}
+`HtmlElement` is also related to `XmlElement` by way of a common base class, and they have the same methods for inspecting attributes and child elements.  So, for example, say that the element `e` represented the following structure :-
+{{{
+    <html lang="en">
+       Some html text
+       <p>
+       Some more
+    </html>
+}}}
+Then
+{{{
+     e.get_name() # "HTML"
+     e.get_attribute("LANG") # "en"
+     f := e.search_children("P") # sets f to another HtmlElement, representing the <p>.
+                                 # This has one child, namely the text content 
+                                 # between the <p> and the </html>
+
+     e.search_children("absent") # fails
+     f.get_string_content()      # returns "        Some more        "
+     f.get_trimmed_string_content() # returns "Some more"
+}}}
+Note that all element names and attribute names are capitalized during parsing (eg "html"->"HTML").
+
+The `search_tree` method of the Element class is very useful if you want to get at an Element deep within the document.  Please see the API documentation for more details.
+
+== Formatted output ==
+Output of an HTML document is done with the `HtmlFormatter` class, which again shares a common base class with its XML equivalent, `XmlFormatter`.  For example :-
+{{{
+f := HtmlFormatter()
+s := f.format_to_string(d)
+write(s)
+}}}
+
+== Testhtml ==
+This is a small program which can be used to see what the parser does with a particular document.  Given an input filename, testhtml will parse the document and output the formatted equivalent, and a complete display of the document's structure.
