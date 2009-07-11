@@ -905,7 +905,7 @@ class ProgStream(FileStream, NoCopy)
       if pid > 0 then {
          # Parent
          l[1].close()
-         return ProgStream(l[2].get_fd(), pid, WRITE)
+         return ProgStream(l[2].get_fd(), WRITE, pid)
       } else {
          if \stdout then
             stdout.dup2(1) | fail
@@ -938,7 +938,7 @@ class ProgStream(FileStream, NoCopy)
       if pid > 0 then {
          # Parent
          l[2].close()
-         return ProgStream(l[1].get_fd(), pid, READ)
+         return ProgStream(l[1].get_fd(), READ, pid)
       } else {
          # Child
          if \stdin then
@@ -958,7 +958,7 @@ class ProgStream(FileStream, NoCopy)
       return
    end
 
-   private new(fd, pid, mode)
+   private new(fd, mode, pid)
       cast(self,FileStream).new(fd, mode)
       self.pid := pid
       return
