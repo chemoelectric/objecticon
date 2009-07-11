@@ -54,13 +54,6 @@ class Element(Node)
    end
 
    #
-   # Returns "element"
-   #
-   public get_type()
-      return "element"
-   end
-
-   #
    # Search for all the {Elements} with the given tag name, recursively
    # traversing the entire tree based at this node.
    #
@@ -69,7 +62,7 @@ class Element(Node)
    public search_tree(s)
       local n
       every n := coexp_seq{traverse_nodes_preorder()} do
-         if n.get_type() == "element" & (/s | n.get_name() == s) then
+         if is(n, Element) & (/s | n.get_name() == s) then
             suspend n
    end
 
@@ -82,7 +75,7 @@ class Element(Node)
    public search_children(s)
       local n
       every n := !children do
-         if not(text(n)) & n.get_type() == "element" & (/s | n.get_name() == s) then
+         if not(text(n)) & is(n, Element) & (/s | n.get_name() == s) then
             suspend n
    end
 

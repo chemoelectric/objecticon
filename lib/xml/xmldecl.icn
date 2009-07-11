@@ -59,13 +59,6 @@ class XmlDecl(Node)
       self.standalone := standalone
    end
 
-   #
-   # Returns "xmldecl"
-   #
-   public get_type()
-      return "xmldecl"
-   end
-
    public new(v, e, s)
       cast(self,Node).new()
       self.version := v

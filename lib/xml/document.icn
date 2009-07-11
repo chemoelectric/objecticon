@@ -12,17 +12,10 @@ package xml
 # The base class for a document, being either an XML or HTML document.
 #
 class Document(Node)
-   #
-   # Returns "document"
-   #
-   public get_type()
-      return "document"
-   end
-
    public get_root_element()
       local n
       every n := !children do
-         if not(text(n)) & n.get_type() == "element" then
+         if not(text(n)) & is(n, Element) then
             return n
    end
 end

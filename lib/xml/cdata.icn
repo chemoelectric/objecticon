@@ -28,13 +28,6 @@ class CData(Node)
       self.content := content
    end
 
-   #
-   # Returns "cdata"
-   #
-   public get_type()
-      return "cdata"
-   end
-
    public new(s)
       cast(self,Node).new()
       content := s

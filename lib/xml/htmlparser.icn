@@ -72,10 +72,6 @@ class Tag(Node)
       attributes[map(key, &lcase, &ucase)] := value
    end
 
-   public get_type()
-      return "tag"
-   end
-
    public new()
       cast(self,Node).new()
       self.attributes := table()
@@ -182,27 +178,20 @@ class HtmlParser()
             i := &pos
             node := parse_node() | break
 
-            case node.get_type() of {
-               "doctype" : 
-                  doc.add(node)
-
-               "comment" : {
-                  doc.add(node)
-               }
-               
-               "tag" : {
-                  if not(node.is_closed()) & (node.name == "HTML") then {
-                     #
-                     # Found the html start point, so parse and return that node.
-                     #
-                     doc.add(parse_element(node))
-                     return doc
-                  } else {
-                     #
-                     # Bad structure, so put html tags around it and start again.
-                     #
-                     return parse(s[1:i] || "<html>" || s[i:0] || "</html>")
-                  }
+            if is(node, DocType | Comment) then
+               doc.add(node)
+            else if is(node, Tag) then {
+               if not(node.is_closed()) & (node.name == "HTML") then {
+                  #
+                  # Found the html start point, so parse and return that node.
+                  #
+                  doc.add(parse_element(node))
+                  return doc
+               } else {
+                  #
+                  # Bad structure, so put html tags around it and start again.
+                  #
+                  return parse(s[1:i] || "<html>" || s[i:0] || "</html>")
                }
             }
          }
@@ -244,7 +233,7 @@ class HtmlParser()
             i := &pos
             node := parse_node(res) | break
 
-            if node.get_type() == "tag" then {
+            if is(node, Tag) then {
                if start_tag.balances(node) then 
                   break
 

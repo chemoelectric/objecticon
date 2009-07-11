@@ -59,9 +59,9 @@ class ContentSpec()
          if text(x) then {
             /t[-1] | put(t)
          } else {
-            if x.get_type() == "element" then
+            if is(x, Element) then
                put(t, x.name)
-            else if x.get_type() == "cdata" then
+            else if is(x, CData) then
                /t[-1] | put(t)
          }
       }

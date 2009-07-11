@@ -20,7 +20,7 @@ class CanonicalXmlFormatter(XmlFormatter)
    public format_document(out, n, level)
       local el
       every el := !n.children do {
-         if el.get_type() == ("doctype" | "pi" | "element") then
+         if is(el, DocType | ProcessingInstruction | Element) then
             format(out, el, level + 1) | fail
       }
       return
@@ -66,7 +66,7 @@ class CanonicalXmlFormatter(XmlFormatter)
       every e := !n.children do {
          if text(e) then
             out.writes(xml_escape(e, '\n\r\t&<>\"')) | fail
-         else if e.get_type() ~== "comment" then
+         else if not is(e, Comment) then
             format(out, e, level + 1) | fail
       }
 

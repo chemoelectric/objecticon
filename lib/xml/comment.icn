@@ -29,13 +29,6 @@ class Comment(Node)
       self.comment := comment
    end
 
-   #
-   # Returns "comment"
-   #
-   public get_type()
-      return "comment"
-   end
-
    public new(s)
       cast(self,Node).new()
       comment := s

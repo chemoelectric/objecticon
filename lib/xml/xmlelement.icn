@@ -124,7 +124,7 @@ class XmlElement(Element)
    public search_tree_global_name(s)
       local n
       every n := coexp_seq{traverse_nodes_preorder()} do
-         if n.get_type() == "element" & (/s | equals(n.get_global_name(), s)) then
+         if is(n, Element) & (/s | equals(n.get_global_name(), s)) then
             suspend n
    end
 
@@ -137,7 +137,7 @@ class XmlElement(Element)
    public search_children_global_name(s)
       local n
       every n := !children do
-         if not(text(n)) & n.get_type() == "element" & (/s | equals(n.get_global_name(), s)) then
+         if not(text(n)) & is(n, Element) & (/s | equals(n.get_global_name(), s)) then
             suspend n
    end
 

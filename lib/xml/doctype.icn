@@ -44,13 +44,6 @@ class DocType(Node)
       return external_id := x
    end
 
-   #
-   # Returns "doctype"
-   #
-   public get_type()
-      return "doctype"
-   end
-
    public new(n, i)
       cast(self,Node).new()
       self.name := n

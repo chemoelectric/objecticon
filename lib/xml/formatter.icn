@@ -34,15 +34,20 @@ class Formatter()
       if s := text(n) then
          return format_content(out, s, level)
 
-      return case n.get_type() of {
-         "doctype" : format_doctype(out, n, level)
-         "comment" : format_comment(out, n, level)
-         "pi" : format_pi(out, n, level)
-         "element" : format_element(out, n, level)
-         "cdata" : format_cdata(out, n, level)
-         "document": format_document(out, n, level)
-         "xmldecl": format_xmldecl(out, n, level)
-      }
+      if is(n, Element) then
+         return format_element(out, n, level)
+      else if is(n, DocType) then
+         return format_doctype(out, n, level)
+      else if is(n, Comment) then
+         return format_comment(out, n, level)
+      else if is(n, ProcessingInstruction) then
+         return format_pi(out, n, level)
+      else if is(n, CData) then
+         return format_cdata(out, n, level)
+      else if is(n, Document) then
+         return format_document(out, n, level)
+      else if is(n, XmlDecl) then
+         return format_xmldecl(out, n, level)
    end
 
    public defer format_document(out, n, level)

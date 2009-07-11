@@ -260,7 +260,7 @@ class XmlParser(Connectable,SetFields)
       local docname, e
 
       every e := !doc.children do {
-         if not(text(e)) & (e.get_type() == "doctype") then {
+         if not(text(e)) & is(e, DocType) then {
             docname := e.get_name()
             break
          }
@@ -2196,7 +2196,7 @@ class XmlParser(Connectable,SetFields)
       #
       # Could be comment, cdata
       #
-      if el.get_type() ~== "element" then
+      if not is(el, Element) then
          return
 
       #

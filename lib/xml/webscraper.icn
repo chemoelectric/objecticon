@@ -32,7 +32,7 @@ class WebScraper()
       paths := table()
 
       every n := coexp_seq{d.traverse_nodes_preorder()} do {
-         if n.get_type() == "element" & s := n.get_attribute("scrapeId") then {
+         if is(n, Element) & s := n.get_attribute("scrapeId") then {
             do_insert(s, n, anchors) | fail
          }
          i := 0
@@ -113,7 +113,7 @@ class WebScraper()
       local i, e
       i := 0
       every e := !n.parent.children do {
-         if not(text(e)) & e.get_type() == "element" & e.name == n.name then
+         if not(text(e)) & is(e, Element) & e.name == n.name then
             i +:= 1
          if e === n then
             return i
@@ -127,7 +127,7 @@ class WebScraper()
       repeat {
          push(l, n)
          n := n.parent 
-         n.get_type() == "element" | return l
+         is(n, Element) | return l
       }
    end
 
@@ -148,7 +148,7 @@ class WebScraper()
             "U" : {
                every 1 to e[2] do {
                   n := n.parent
-                  n.get_type() == "element" | return error("Couldn't go up")
+                  is(n, Element) | return error("Couldn't go up")
                }
             }
             "T" : {

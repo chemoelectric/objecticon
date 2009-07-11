@@ -44,13 +44,6 @@ class ProcessingInstruction(Node)
       self.content := content
    end
 
-   #
-   # Returns "pi"
-   #
-   public get_type()
-      return "pi"
-   end
-
    public new(t, c)
       cast(self,Node).new()
       self.target := t
