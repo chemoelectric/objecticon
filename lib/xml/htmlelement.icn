@@ -29,5 +29,25 @@ class HtmlElement(Element)
    public set_attribute(key, value)
       return cast(self,Element).set_attribute(map(key, &lcase, &ucase), value)
    end
+
+   #
+   # Search for all the {Elements} with the given tag name, recursively
+   # traversing the entire tree based at this node.
+   #
+   # @param s the case-insensitive name of the sub-elements.
+   #
+   public search_tree(s)
+      suspend cast(self,Element).search_tree(map(s, &lcase, &ucase))
+   end
+
+   #
+   # Generate the elements under this element, with the given name.  If name
+   # is omitted, generate all the elements.
+   #
+   # @param s the case-insensitive name of the sub-elements.
+   #
+   public search_children(s)
+      suspend cast(self,Element).search_children(map(s, &lcase, &ucase))
+   end
 end
 
