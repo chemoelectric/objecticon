@@ -14,7 +14,6 @@ class HttpRequest(SetFields, MimeHeaders)
       url,
       post_stream,
       method,
-      data_file,
       data_stream,
       username,
       password,
@@ -28,16 +27,6 @@ class HttpRequest(SetFields, MimeHeaders)
    #
    public set_url(url)
       self.url := url
-   end
-
-   #
-   # Set a filename to send the data part of the response to.  If not
-   # set then the data forms part of the HttpPage object returned.
-   #
-   # @param s the name of the file.
-   #
-   public set_data_file(s)
-      data_file := s
    end
 
    #
