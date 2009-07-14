@@ -297,6 +297,7 @@ class NullStream(Stream)
    end
 
    public out(s)
+      s := string(s) | runerr(103, s)
       return *s
    end
 
