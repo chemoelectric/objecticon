@@ -274,7 +274,7 @@ class Message(SetFields, MimeHeaders)
 
    # 
    private header_error(h, s)
-      return error("Error parsing " || h || " header: " || image(s) || ":" || &why)
+      return error("Error parsing " || h || " header: " || image(s) || ": " || &why)
    end
 
    #

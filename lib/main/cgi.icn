@@ -24,14 +24,14 @@ class CgiParams(SetFields)
          "POST": {
             p := RFC822Parser()
             s := System.getenv("CONTENT_TYPE")
-            ct := p.parse_content_type(s) | return error("Couldn't parse CONTENT_TYPE param:" || &why)
+            ct := p.parse_content_type(s) | return error("Couldn't parse CONTENT_TYPE param: " || &why)
             if ct.type == "application" & ct.subtype == "x-www-form-urlencoded" then {
                params := URL.make_cgi_table(stdin)
             } else if ct.type == "multipart" & ct.subtype == "form-data" then {
                msg := Message()
                msg.set_header("Content-Type", s)
                msg.set_content(stdin)
-               multi := msg.get_content_object() | return error("Couldn't decode multipart:" || &why)
+               multi := msg.get_content_object() | return error("Couldn't decode multipart: " || &why)
                params := table()
                every p := !multi.parts do {
                   cd := p.get_content_disposition() | return error("No Content-Disposition")
@@ -43,7 +43,7 @@ class CgiParams(SetFields)
                params := table()
          }
          default:
-            return error("Unknown request method:" || image(rm))
+            return error("Unknown request method: " || image(rm))
       }
 
       return

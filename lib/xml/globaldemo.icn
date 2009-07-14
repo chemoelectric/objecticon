@@ -49,7 +49,7 @@ procedure main(a)
 
    p := XmlParser()
 
-   d := p.parse(s) | stop("Couldn't parse:",&why)
+   d := p.parse(s) | stop("Couldn't parse: ",&why)
 
    r := d.get_root_element()
    write(to_string(d,3))

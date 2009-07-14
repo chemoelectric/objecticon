@@ -46,7 +46,7 @@ class ContentDisposition()
    end
 
    private parameter_error(h, s)
-      return error("Error parsing " || h || " parameter: " || image(s) || ":" || &why)
+      return error("Error parsing " || h || " parameter: " || image(s) || ": " || &why)
    end
 
    #

@@ -1506,7 +1506,7 @@ class XmlParser(Connectable,SetFields)
             else
                char(256 > i | 63)
          }
-         return err("invalid char number :" || digs)
+         return err("invalid char number: " || digs)
       }
    end
 
@@ -2163,7 +2163,7 @@ class XmlParser(Connectable,SetFields)
    #
    private resolve(external_id)
       local t
-      t := resolver.resolve(external_id)  | return err("Couldn't resolve: " || to_string(external_id) || ":" || &why)
+      t := resolver.resolve(external_id)  | return err("Couldn't resolve: " || to_string(external_id) || ": " || &why)
       if \utf8_flag then
          t := ucs(t) | return err("Couldn't convert " || to_string(external_id) || " to utf8: " || &why)
       return normalize_eol(t)
