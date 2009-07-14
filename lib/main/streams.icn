@@ -287,6 +287,41 @@ class StringStream(Stream)
 end
 
 #
+# This is a stream that mimics /dev/null and /dev/zero.  Writes always
+# succeed with no effect, and reads return however many zero bytes
+# were requested.
+#
+class NullStream(Stream)
+   public in(n)
+      return repl("\0", n)
+   end
+
+   public out(s)
+      return *s
+   end
+
+   public seek(offset)
+      return 1
+   end
+
+   public tell()
+      return 1
+   end
+
+   public close()
+      return
+   end
+
+   public get_mode()
+      return ALL
+   end
+
+   public truncate(len)
+      return
+   end
+end
+
+#
 # This class takes another stream and provides read/write buffers so
 # that input/output to the inner stream tends to take place in larger
 # chunks.
