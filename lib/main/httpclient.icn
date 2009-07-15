@@ -23,6 +23,28 @@ class Cookie()
       secure,
       comment, 
       version
+
+   #
+   # This is a utility function to remove any expired cookies from
+   # a table of cookies.
+   #
+   public static expire_cookies(cookies)
+      local e, f, g, now
+      now := Time()
+      every e := !sort(cookies) do {
+         every f := !sort(e[2]) do {
+            every g := !f[2].sort() do {
+               if now.after(\g[2].expires) then
+                  f[2].delete(g[1])
+            }
+            if f[2].size() = 0 then
+               delete(e[2], f[1])
+         }
+         if *e[2] = 0 then
+            delete(cookies, e[1])
+      }
+      return cookies
+   end
 end
 
 #
