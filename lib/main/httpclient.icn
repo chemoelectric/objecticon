@@ -33,11 +33,11 @@ class Cookie()
       now := Time()
       every e := !sort(cookies) do {
          every f := !sort(e[2]) do {
-            every g := !f[2].sort() do {
+            every g := !sort(f[2]) do {
                if now.after(\g[2].expires) then
-                  f[2].delete(g[1])
+                  delete(f[2], g[1])
             }
-            if f[2].size() = 0 then
+            if *f[2] = 0 then
                delete(e[2], f[1])
          }
          if *e[2] = 0 then
@@ -515,6 +515,38 @@ class HttpClient(NetClient)
       return \c
    end
 
+   private valid_cookie(c)
+      local d, e
+
+      # The path must be a prefix of the request url path
+      #
+      if \c.path then
+         match(c.path, request.url.get_file()) | fail
+
+      if \c.domain then {
+         d := map(c.domain)
+         e := map(request.url.get_address())
+
+         # The domain must have an embedded dot
+         #
+         upto('.', trim(d, '.')) | fail
+
+         # The domain must match a domain key of the request address
+         #
+         d == domain_keys(e) | fail
+
+         # The prefix of the request address after discarding the
+         # domain must have no embedded dots.  Eg "www.acme.co.uk"
+         # can't specify ".co.uk" since "www.acme" has an embedded dot
+         # - but it can specify ".acme.co.uk".
+         #
+         if upto('.', trim(e[1:-*d], '.')) then
+            fail
+      }
+
+      return
+   end
+
    #
    # Store any cookie values in the current page's header.
    # 
@@ -522,7 +554,7 @@ class HttpClient(NetClient)
       local c, domain, path, paths, vals, s
 
       every s := !response.get_headers("set-cookie") do {
-         if c := parse_cookie_string(s) then {
+         if (c := parse_cookie_string(s)) & valid_cookie(c) then {
             domain := map(\c.domain | request.url.get_address())
             if member(cookies, domain) then 
                paths := cookies[domain]
@@ -547,47 +579,54 @@ class HttpClient(NetClient)
             if member(paths, path) then
                vals := paths[path]
             else {
-               vals := ClTable()
+               vals := table()
                insert(paths, path, vals)
             }
-            vals.insert(c.name, c)
+            insert(vals, map(c.name), c)
          }
       }
    end
 
-   private host_match(a, b)
-      if a == b then
-         return
-      if b[1] == "." then
-         return (a == b[2:0]) | (a[0-:*b] == b)
-      else
-         return (a[-*b-1] == ".") & (a[0-:*b] == b)
+   # 
+   # Given a domain name, generate all the valid matching cookie domain
+   # values.
+   #
+   private domain_keys(s)
+      # If a numerical address, then just return s
+      if many('0-9.', s) = *s + 1 then
+         return s
+      suspend ("." || s) | s
+      s ? {
+         while tab(upto('.')) do {
+            suspend s[&pos:0]
+            move(1)
+            suspend s[&pos:0]
+         }
+      }
    end
 
    #
    # 
    private create_cookie_header()
-      local s, e, f, host, path, c, now, ver
+      local s, e, f, domain, path, c, now, ver
 
-      host := map(request.url.get_address())
+      domain := map(request.url.get_address())
       path := request.url.get_file()
       now := Time()
       s := ""
-      every e := !sort(cookies) do {
-         if host_match(host, e[1]) then {
-            every f := !reverse(sort(e[2])) do {
-               if match(f[1], path) then {
-                  every c := (!f[2].sort())[2] do {
-                     if /c.expires | c.expires.after(now) then {
-                        if *s > 0 then
-                           s ||:= "; "
-                        s ||:= c.name
-                        s ||:= "=" || \c.value
-                        if \c.version then {
-                           s ||:= "; $Path=\"" || \c.path || "\"" 
-                           s ||:= "; $Domain=\"" || \c.domain || "\"" 
-                           ver := c.version
-                        }
+      every e := \cookies[domain_keys(domain)] do {
+         every f := !reverse(sort(e)) do {
+            if match(f[1], path) then {
+               every c := (!sort(f[2]))[2] do {
+                  if /c.expires | c.expires.after(now) then {
+                     if *s > 0 then
+                        s ||:= "; "
+                     s ||:= c.name
+                     s ||:= "=" || \c.value
+                     if \c.version then {
+                        s ||:= "; $Path=\"" || \c.path || "\"" 
+                        s ||:= "; $Domain=\"" || \c.domain || "\"" 
+                        ver := c.version
                      }
                   }
                }
@@ -611,7 +650,7 @@ class HttpClient(NetClient)
          write("domain:", e[1])
          every f := !reverse(sort(e[2])) do {
             write("\tpath:", f[1])
-            every c := (!f[2].sort())[2] do {
+            every c := (!sort(f[2]))[2] do {
                write("\t\t", to_string(c))
             }
          }
