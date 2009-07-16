@@ -1,20 +1,31 @@
 package lang
 
 class Text()
-   # generate the ranges in a cset, as a sequence of from-to pairs.
+   # Generate the ranges in a cset, as a sequence of from-to pairs.
    #
    public static defer get_ord_range(c)
 
-   # produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc
+   # Produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc
    #
    public static defer create_cset(x[])
 
-   # succeed if the cset c contains the code point x, returning its index in the cset
+   # Succeed if the cset c contains the code point x, returning its
+   # index in the cset
    #
    public static defer has_ord(c, x)
 
+   # Produce a string containing the utf-8 sequence of chars for
+   # character i.
    #
-   # produce a string containing the utf-8 sequence of chars for character i.
    public static defer utf8_seq(i)
-   
+
+   # Succeed if all the chars in x are in cset y.
+   #
+   public static subset(x, y)
+      local c
+      y := cset(y) | runerr(104, y)
+      every c := ord(x) do
+         Text.has_ord(y, c) | fail
+      return
+   end
 end
