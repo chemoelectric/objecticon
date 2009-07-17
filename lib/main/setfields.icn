@@ -198,13 +198,14 @@ class SetFields()
                val := 1
             }
          }
-         if not self.set_one(Field(attr, val, self)) then
-            runerr("setfields: Unknown attribute", attr)
+         set_one(Field(attr, val, self)) | runerr("setfields: Unknown attribute", attr)
       }
    end
 
    #
-   # This must be implemented to set a single field.
+   # This must be implemented to set a single field.  It should succeed if the given field
+   # was known, or fail if it was unknown.
+   #
    # @param f the {Field}
    #
    protected defer set_one(f)
