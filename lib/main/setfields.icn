@@ -161,13 +161,30 @@ class Field()
 end
 
 class SetFields()
+   #
+   # Set attribs in the object by calling {set_one} for each attribute
+   # argument.  Note that {set_special} is NOT called first.
+   #
    public attrib(a[])
-      set_fields(a)
+      set_fields_impl(a)
    end
 
+   #
+   # Process a list of arguments; this should be called from the
+   # constructor.  First, {set_special} is called.  Then each
+   # remaining attribute rgument is processed by calling {set_one}
+   # with an appropriate {Field} instance.
+   #
+   # @param l the arguments list
+   #
    protected set_fields(l)
-      local s, attr, val
       l := copy(l)
+      set_special(l)
+      set_fields_impl(l)
+   end
+
+   private set_fields_impl(l)
+      local s, attr, val
       while s := pop(l) do {
          s ? {
             if attr := tab(find("=")) then {
@@ -188,10 +205,17 @@ class SetFields()
 
    #
    # This must be implemented to set a single field.
-   # @param attr the field
-   # @param val the value
+   # @param f the {Field}
    #
    protected defer set_one(f)
+
+   #
+   # This empty method, which is called from {set_fields}, can be
+   # overridden to transform the arguments list before it is processed.
+   # @param l the arguments list
+   #
+   protected set_special(l)
+   end
 
    public new(a[])
       set_fields(a)

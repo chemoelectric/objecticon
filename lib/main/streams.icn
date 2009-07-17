@@ -513,13 +513,16 @@ class BufferStream(Stream, SetFields)
       return
    end
 
+   protected set_special(a)
+      if is(a[1], Stream) then
+         set_other(pop(a))
+   end
+
    public new(a[])
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0
       self.buff_size := 1024
-      if is(a[1], Stream) then
-         set_other(pop(a))
       set_fields(a)
       return
    end

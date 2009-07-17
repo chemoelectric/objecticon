@@ -59,7 +59,7 @@ class ItemPaintTableColumn(TableColumn)
       item_border.draw_rect(W, r)
    end
 
-   public set_one(f)
+   protected set_one(f)
       case f.attr of {
          "item_paint" : set_item_paint(f.object_val(ItemPaint))
          "item_border" : set_item_border(f.object_val(ABorder))
@@ -68,11 +68,14 @@ class ItemPaintTableColumn(TableColumn)
       return
    end
 
+   protected set_special(a)
+      if is(a[1], ItemPaint) then
+         set_item_paint(pop(a))
+   end
+
    public new(a[])
       cast(self,TableColumn).new()
       self.set_item_border(EmptyBorder("flush"))
-      if is(a[1], ItemPaint) then
-         set_item_paint(pop(a))
       set_fields(a)
       return
    end

@@ -218,7 +218,7 @@ class DropDown(SelectionList,Component)
       view.layout()
    end
 
-   public set_one(f)
+   protected set_one(f)
       case f.attr of {
          "selection_list" : set_selection_list(f.text_list_val())
          "selection" : set_selection(f.int_val())
@@ -226,6 +226,11 @@ class DropDown(SelectionList,Component)
          default: return cast(self,Component).set_one(f)
       }
       return
+   end
+
+   protected set_special(a)
+      if type(a[1]) == "list" then
+         set_selection_list(pop(a))
    end
 
    public new(a[])
@@ -246,8 +251,6 @@ class DropDown(SelectionList,Component)
       self.set_constraint("x_weight", "1")
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
-      if type(a[1]) == "list" then
-         set_selection_list(pop(a))
       set_fields(a)
       return
    end

@@ -135,13 +135,18 @@ class Circulate(SelectionList,Component)
       cast(self,Component).initially()
    end
 
-   public set_one(f)
+   protected set_one(f)
       case f.attr of {
          "selection" : set_selection(f.int_val())
          "selection_list" : set_selection_list(f.text_list_val())
          default: return cast(self,Component).set_one(f)
       }
       return
+   end
+
+   protected set_special(a)
+      if type(a[1]) == "list" then
+         set_selection_list(pop(a))
    end
 
    public new(a[]) 
@@ -173,8 +178,6 @@ class Circulate(SelectionList,Component)
 ~~~000000~~~~_
 ~~~~0000~~~~~_
 ")
-      if type(a[1]) == "list" then
-         set_selection_list(pop(a))
       set_fields(a)
       return
    end

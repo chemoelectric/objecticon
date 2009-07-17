@@ -59,7 +59,7 @@ class ListSpin(SelectionList,StaticSpin)
       return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
    end
 
-   public set_one(f)
+   protected set_one(f)
       case f.attr of {
          "selection" : set_selection(f.int_val())
          "selection_list" : set_selection_list(f.text_list_val())
@@ -68,12 +68,9 @@ class ListSpin(SelectionList,StaticSpin)
       return
    end
 
-   public new(a[]) 
-      cast(self,StaticSpin).new()
+   protected set_special(a)
       if type(a[1]) == "list" then
          set_selection_list(pop(a))
-      set_fields(a)
-      return
    end
 end
 

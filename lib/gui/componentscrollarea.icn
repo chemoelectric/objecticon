@@ -85,7 +85,7 @@ class ComponentScrollArea(ScrollArea)
       return ComponentScrollAreaView()
    end
 
-   public set_one(f)
+   protected set_one(f)
       case f.attr of {
          "inner" : set_inner(f.object_val(gui.Component))
          default: return cast(self,ScrollArea).set_one(f)
@@ -93,12 +93,9 @@ class ComponentScrollArea(ScrollArea)
       return
    end
 
-   public new(a[])
-      cast(self,ScrollArea).new()
+   protected set_special(a)
       if is(a[1], Component) then
          set_inner(pop(a))
-      set_fields(a)
-      return
    end
 end
 

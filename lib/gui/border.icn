@@ -130,7 +130,7 @@ class Border(Component)
       content.layout()
    end
 
-   public set_one(f)
+   protected set_one(f)
       case f.attr of {
          "title" : set_title(f.object_val(gui.Component))
          "content" : set_content(f.object_val(gui.Component))
@@ -138,6 +138,11 @@ class Border(Component)
          default: return cast(self,Component).set_one(f)
       }
       return
+   end
+
+   protected set_special(a)
+      if is(a[1], Component) then
+         set_content(pop(a))
    end
 
    public new(a[])
@@ -148,8 +153,6 @@ class Border(Component)
       self.set_constraint("y_fill", "t")
       self.set_constraint("x_weight", "1")
       self.set_constraint("y_weight", "1")
-      if is(a[1], Component) then
-         set_content(pop(a))
       set_fields(a)
       return
    end

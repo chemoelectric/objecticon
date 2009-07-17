@@ -150,11 +150,14 @@ class MenuButton(Component)
       return
    end
 
+   protected set_special(a)
+      if is(a[1], MenuComponent) then
+         set_menu(pop(a))
+   end
+
    public new(a[])
       cast(self,Component).new()
       self.set_border(RaisedBorder())
-      if is(a[1], MenuComponent) then
-         set_menu(pop(a))
       set_fields(a)
       return
    end
