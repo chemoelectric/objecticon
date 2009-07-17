@@ -144,7 +144,7 @@ class MenuButton(Component)
 
    public set_one(f)
       case f.attr of {
-         "menu" : set_menu(f.object_val(gui.MenuComponent))
+         "menu" : set_menu(f.object_val(MenuComponent))
          default: return cast(self,Component).set_one(f)
       }
       return
@@ -153,6 +153,8 @@ class MenuButton(Component)
    public new(a[])
       cast(self,Component).new()
       self.set_border(RaisedBorder())
+      if is(a[1], MenuComponent) then
+         set_menu(pop(a))
       set_fields(a)
       return
    end

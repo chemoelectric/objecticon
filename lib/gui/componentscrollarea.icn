@@ -92,5 +92,13 @@ class ComponentScrollArea(ScrollArea)
       }
       return
    end
+
+   public new(a[])
+      cast(self,ScrollArea).new()
+      if is(a[1], Component) then
+         set_inner(pop(a))
+      set_fields(a)
+      return
+   end
 end
 

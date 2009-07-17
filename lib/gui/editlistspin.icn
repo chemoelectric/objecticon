@@ -89,6 +89,14 @@ class EditListSpin(SelectionList,EditSpin)
       }
       return
    end
+
+   public new(a[]) 
+      cast(self,EditSpin).new()
+      if type(a[1]) == "list" then
+         set_selection_list(pop(a))
+      set_fields(a)
+      return
+   end
 end
 
 

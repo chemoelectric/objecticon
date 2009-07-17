@@ -85,8 +85,8 @@ class ItemPaintTree(Tree)
 
    public set_one(f)
       case f.attr of {
-         "item_paint" : set_item_paint(f.object_val(gui.ItemPaint))
-         "item_border" : set_item_border(f.object_val(gui.ABorder))
+         "item_paint" : set_item_paint(f.object_val(ItemPaint))
+         "item_border" : set_item_border(f.object_val(ABorder))
          default: return cast(self,Tree).set_one(f)
       }
       return
@@ -95,6 +95,8 @@ class ItemPaintTree(Tree)
    public new(a[])
       cast(self,Tree).new()
       self.set_item_border(EmptyBorder("flush"))
+      if is(a[1], ItemPaint) then
+         set_item_paint(pop(a))
       set_fields(a)
       return
    end

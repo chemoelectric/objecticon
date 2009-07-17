@@ -173,6 +173,8 @@ class Circulate(SelectionList,Component)
 ~~~000000~~~~_
 ~~~~0000~~~~~_
 ")
+      if type(a[1]) == "list" then
+         set_selection_list(pop(a))
       set_fields(a)
       return
    end

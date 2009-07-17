@@ -513,8 +513,9 @@ class BufferStream(Stream, SetFields)
       return
    end
 
-   public new(other, a[])
-      self.other := other
+   public new(a[])
+      if is(a[1], Stream) then
+         self.other := pop(a)
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0

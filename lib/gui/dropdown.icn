@@ -246,6 +246,8 @@ class DropDown(SelectionList,Component)
       self.set_constraint("x_weight", "1")
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
+      if type(a[1]) == "list" then
+         set_selection_list(pop(a))
       set_fields(a)
       return
    end

@@ -148,6 +148,8 @@ class Border(Component)
       self.set_constraint("y_fill", "t")
       self.set_constraint("x_weight", "1")
       self.set_constraint("y_weight", "1")
+      if is(a[1], Component) then
+         set_content(pop(a))
       set_fields(a)
       return
    end

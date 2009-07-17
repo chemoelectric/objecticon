@@ -67,6 +67,14 @@ class ListSpin(SelectionList,StaticSpin)
       }
       return
    end
+
+   public new(a[]) 
+      cast(self,StaticSpin).new()
+      if type(a[1]) == "list" then
+         set_selection_list(pop(a))
+      set_fields(a)
+      return
+   end
 end
 
 
