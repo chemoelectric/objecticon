@@ -503,7 +503,7 @@ class BufferStream(Stream, SetFields)
       return other.get_mode()
    end
 
-   public set_one(f)
+   protected set_one(f)
       case f.attr of {
          "other" : set_other(f.object_val(Stream))
          "buff_size" : set_buff_size(f.int_val())
@@ -514,12 +514,12 @@ class BufferStream(Stream, SetFields)
    end
 
    public new(a[])
-      if is(a[1], Stream) then
-         self.other := pop(a)
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0
       self.buff_size := 1024
+      if is(a[1], Stream) then
+         set_other(pop(a))
       set_fields(a)
       return
    end
