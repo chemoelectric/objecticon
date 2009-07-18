@@ -544,7 +544,7 @@ class ImagePaint(Paint,SetFields)
       case f.attr of {
          "image" : set_image(f.string_val())
          "file" : set_file(f.string_val())
-         "window" : set_window(f.val_of_type("window"))
+         "window" : set_window(f.object_val(Window))
          "scale_up" : set_scale_up(f.flag_val())
          "max_w" : set_max_w(f.int_val())
          "max_h" : set_max_h(f.int_val())

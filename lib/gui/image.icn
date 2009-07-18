@@ -209,7 +209,7 @@ class Image(Component)
       case f.attr of {
          "image" : set_image(f.string_val())
          "file" : set_file(f.string_val())
-         "window" : set_window(f.val_of_type("window"))
+         "window" : set_window(f.object_val(Window))
          "scale_up" : set_scale_up(f.flag_val())
          "use_cache" : set_use_cache(f.flag_val())
          default: return cast(self,Component).set_one(f)
