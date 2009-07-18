@@ -43,7 +43,7 @@ function{0,1} graphics_Window_open_impl(attr[n])
           else runerr(305);
       }
 
-      return C_integer((long int)f);
+      return C_integer((word)f);
    }
 end
 
@@ -172,7 +172,7 @@ function{1} graphics_Window_clone_impl(self, argv[argc])
            }
        }
 
-       return C_integer((long int)w2);
+       return C_integer((word)w2);
    }
 end
 
@@ -329,7 +329,7 @@ function{0,1} graphics_Window_couple_impl(win, win2)
       /* bump up refcount to ws */
       ws->refcount++;
 
-      return C_integer((long int)wb_new);
+      return C_integer((word)wb_new);
    }
 end
 

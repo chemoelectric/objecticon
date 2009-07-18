@@ -1905,7 +1905,7 @@ function{0,1} io_DirStream_open_impl(path)
            errno2why();
            fail;
        }
-       return C_integer((long int)dd);
+       return C_integer((word)dd);
    }
 end
 
@@ -2319,7 +2319,7 @@ function{1} io_RamStream_new_impl(s, wiggle)
        p->avail = p->size + p->wiggle;
        MemProtect(p->data = malloc(p->avail));
        memcpy(p->data, StrLoc(s), p->size);
-       return C_integer((long int)p);
+       return C_integer((word)p);
    }
 end
 
