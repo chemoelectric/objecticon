@@ -75,7 +75,7 @@ class Field()
       if /val then
          return val
       if \t then
-         is(val, t) | field_error("Need object of type:" || subtype(t))
+         is(val, t) | field_error("Need object of type: " || subtype(t))
       return val
    end
 
@@ -83,7 +83,7 @@ class Field()
       if /val then
          return val
       if \t then
-         type(val) == t | field_error("Need object of type:" || t)
+         type(val) == t | field_error("Need object of type: " || t)
       return val
    end
 
