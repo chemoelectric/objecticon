@@ -23,10 +23,11 @@ import http, net, util, io
 # Otherwise, the system id is treated as a filename.
 #
 class DefaultResolver(Resolver,SetFields)
-   public
+   private
       public_mapping,
       uri_cache,
-      cache_uris_flag
+      cache_uris_flag,
+      http_client
 
    #
    # Set a mapping from a public id to an alternative URI.  The alternative URI
@@ -49,6 +50,14 @@ class DefaultResolver(Resolver,SetFields)
    #
    public set_cache_uris(s)
       self.cache_uris_flag := to_flag(s)
+   end
+
+   #
+   # Use the given HttpClient for getting http:// URLs.  Use this to set custom timeout
+   # or retry values for example.
+   #
+   public set_http_client(hc)
+      self.http_client := hc
    end
 
    #
@@ -86,7 +95,7 @@ class DefaultResolver(Resolver,SetFields)
       return res
    end
 
-   public resolve_impl(sys_id)
+   private resolve_impl(sys_id)
       if match("http://", sys_id) then
          return get_http(sys_id)
 
@@ -96,19 +105,18 @@ class DefaultResolver(Resolver,SetFields)
       return get_local(sys_id)
    end
 
-   public get_local(sys_id)
+   private get_local(sys_id)
       return Files.file_to_string(sys_id) | error("Couldn't open:" || sys_id)
    end
 
-   public get_http(sys_id)
-      local hc, url, hp, hr, sb
+   private get_http(sys_id)
+      local url, hp, hr, sb
 
-      hc := HttpClient()
       url := URL.parse(sys_id) | fail
 
       sb := RamStream()
       hr := HttpRequest("url=",url, "data_stream=",sb)
-      hp := hc.retrieve(hr) | {
+      hp := http_client.retrieve(hr) | {
          sb.close()
          fail
       }
@@ -116,9 +124,10 @@ class DefaultResolver(Resolver,SetFields)
       return sb.done()
    end
 
-   public set_one(f)
+   protected set_one(f)
       case f.attr of {
          "cache_uris": set_cache_uris(f.flag_val())
+         "http_client": set_http_client(f.object_val(HttpClient))
          default : fail
       }
       return
@@ -128,6 +137,7 @@ class DefaultResolver(Resolver,SetFields)
       public_mapping := table()
       uri_cache := table()
       cache_uris_flag := 1
+      self.http_client := HttpClient()
       set_fields(a)
       return
    end
