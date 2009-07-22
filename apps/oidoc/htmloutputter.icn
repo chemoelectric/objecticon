@@ -334,14 +334,40 @@ class HtmlOutputter(Outputter)
    end
 
    private html_fields(f, c, key, vals)
-      local name, l
+      local name, l, type
       case key of {
+         "field" : {
+            write(f, "<dt>Constructor fields :</dt>")
+            every l := !vals do {
+               l[1] ? {
+                  if name := trim(tab(upto('=')), WHITESPACE) then {
+                     ="="
+                     type := trim(tab(upto(':') | 0), WHITESPACE)
+                     =":"
+                     tab(many(WHITESPACE))
+                     l[1] := tab(0)
+                     writes(f, "<dd>")
+                     if *type > 0 then 
+                        html_unbracket(f, name || "=" || type || " - ", c)
+                     else
+                        html_unbracket(f, name || " - ", c)
+                     every html_unbracket(f, !l, c)
+                     write(f, "</dd>")
+                  } else {
+                     writes(f, "<dd>")
+                     every html_unbracket(f, !l, c)
+                     write(f, "</dd>")
+                  }
+               }
+            }
+         }
+
          "param" : {
             write(f, "<dt>Parameters :</dt>")
             every l := !vals do {
                l[1] ? {
-                  tab(many(whitespace_cset))
-                  name := tab(many(id_cset))
+                  tab(many(WHITESPACE))
+                  name := tab(many(ID_CHAR))
                   l[1] := tab(0)
                }
                writes(f, "<dd>", name, " - ")
@@ -391,7 +417,7 @@ class HtmlOutputter(Outputter)
       local r, t, w
       r := ""
       s ? {
-         w := tab(many(whitespace_cset))
+         w := tab(many(WHITESPACE))
          while r ||:= xml_escape(tab(upto('{')), '<>&') do {
             move(1)
             t := tab(upto('}') | 0)

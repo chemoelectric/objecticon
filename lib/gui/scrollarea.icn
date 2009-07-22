@@ -15,6 +15,11 @@ import graphics
 # using a pair of scroll bars.  This specification of the object is
 # provided by implementing methods in a subclass.
 #
+# @field wheel_factor=integer : see {set_wheel_factor}
+# @field vertical_increment=integer : see {set_vertical_increment}
+# @field horizontal_increment=integer : see {set_horizontal_increment}
+# @field see also {Component}
+#
 class ScrollArea(Component)
    public 
       hsb,              

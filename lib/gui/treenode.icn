@@ -13,6 +13,11 @@ import util
 #
 # This class represents a node in a {Tree} object.
 #
+# @field images=i1,i2,i3 : see {set_images}
+# @field label=value : see {set_label}
+# @field always_expandable=flag : see {set_always_expandable}
+# @field expanded=flag : see {set_expanded}
+#
 class TreeNode(SetFields)
    public 
       label,

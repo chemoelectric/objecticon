@@ -20,6 +20,11 @@ import util
 # conventional submenu, which does contain children, is in the
 # {Menu} class.
 #
+# @field accel=string : see {set_accel}
+# @field border={ABorder} : see {set_border}
+# @field is_shaded=flag : see {set_is_shaded}
+# @field is_decorative=flag : see {set_is_decorative}
+#
 class MenuComponent(Rect,SetFields,Connectable)
    public 
       label_x,                                

@@ -5,16 +5,16 @@ import
 
 class Outputter()
    public static const
-      whitespace_cset,
-      id_cset
+      WHITESPACE,
+      ID_CHAR
 
    protected const
       symbol_table,
       opts
 
    private static init()
-      whitespace_cset := ' \t'
-      id_cset := &ucase ++ &lcase ++ '_0987654321'
+      WHITESPACE := ' \t'
+      ID_CHAR := &ucase ++ &lcase ++ '_0987654321'
    end
 
    protected static name_sort(x)

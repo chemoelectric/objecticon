@@ -12,6 +12,11 @@ package gui
 #
 # This is a Spin for numeric values, optionally within a fixed range.
 #
+# @field value=numeric : see {set_value}
+# @field increment_size=numeric : see {set_increment_size}
+# @field range=numeric1,numeric2 : see {set_range}
+# @field see also {EditSpin}
+#
 class RangeSpin(EditSpin)
    public
       lo,

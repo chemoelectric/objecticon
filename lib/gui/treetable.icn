@@ -18,6 +18,9 @@ package gui
 # @ n := TreeTableNode("label=Col A label")
 # @ n.set_contents(["Col B data", "Col C data"])
 #
+# @field contents=s1,s2,s3...: see {set_contents}
+# @field see also {TreeNode}
+#
 class TreeTableNode(TreeNode)
    public contents
 

@@ -32,6 +32,11 @@ import
 # delay between the initial repeat event and subsequent repeat
 # events is set in the {Style} object.
 #
+# @field is_checked=flag : see {set_is_checked}
+# @field toggles=flag : see {set_toggles}
+# @field no_click_focus=flag : see {set_no_click_focus}
+# @field see also {Component}
+#
 class Button(Toggle,Component)
    public 
       is_down,                 #               

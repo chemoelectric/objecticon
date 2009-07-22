@@ -86,8 +86,8 @@ class GroffOutputter(Outputter)
             write(output_file, ".LS_SET c")
             every l := !vals do {
                l[1] ? {
-                  tab(many(whitespace_cset))
-                  name := tab(many(id_cset))
+                  tab(many(WHITESPACE))
+                  name := tab(many(ID_CHAR))
                   l[1] := tab(0)
                }
                write(output_file, ".LS_ITEM \\f[HR]", name, "\\fR")
@@ -118,7 +118,7 @@ class GroffOutputter(Outputter)
       local r
       r := ""
       replace(s, "\\", "\\\\") ? {
-         tab(many(whitespace_cset))
+         tab(many(WHITESPACE))
          while r ||:= tab(upto('{')) do {
             r ||:= "\\f[HR]"
             move(1)

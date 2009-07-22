@@ -37,6 +37,9 @@ end
 # This class is the base class for editable spin components which use a
 # TextField to display/edit the current value.
 #
+# @field filter=cset : see {set_filter}
+# @field see also {Component}
+#
 class EditSpin(Spin)
    public 
       old_contents

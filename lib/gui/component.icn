@@ -17,6 +17,33 @@ import
 # This is the parent class of all the GUI components.  All of
 # its methods and variables therefore apply to its sub-classes.
 #
+# @field tooltip=val: see {set_tooltip}
+# @field tooltip_start_delay=integer: see {set_tooltip_start_delay}
+# @field tooltip_end_delay=integer: see {set_tooltip_end_delay}
+# @field tooltip_follows_mouse=flag: see {set_tooltip_follows_mouse}
+# @field pointer=string : see {set_pointer}
+# @field show_layout=flag : see {set_show_layout}
+# @field allow_drop=flag : see {set_allow_drop}
+# @field allow_drag=flag : see {set_allow_drag}
+# @field is_shaded=flag : see {set_is_shaded}
+# @field accepts_focus=flag : see {set_accepts_focus}
+# @field pos=string,string : see {set_pos}
+# @field x=string : see {set_x}
+# @field y=string : see {set_y}
+# @field width or w=string : see {set_w}
+# @field height or h=string : see {set_h}
+# @field size=string,string : see {set_size}
+# @field align=string,string : see {set_align}
+# @field x_align=string : see {set_x_align}
+# @field y_align=string : see {set_y_align}
+# @field z=integer : see {set_z}
+# @field tab_ord=integer : see {set_tab_ord}
+# @field accel=string : see {set_accel}
+# @field layout={gui.Layout}: see {set_layout}
+# @field border={gui.ABorder}: see {set_border}
+# @field c:<constraint>=value: set a constraint, see {set_constraint}
+# @field w:<attrib>=value: set a window attribute, see {set_wattrib}
+#
 class Component(Rect,Align,SetFields,Connectable)
    public 
       #

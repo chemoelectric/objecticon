@@ -24,6 +24,13 @@ import undo, util, graphics
 # a Event.CURSOR_MOVED when the cursor moves, and a
 # Event.SELECTION_CHANGED whenver the selection changes.
 #
+# @field filter=cset : see {set_filter}
+# @field displaychar=text : see {set_displaychar}
+# @field contents=text : see {set_contents}
+# @field is_editable=flag : see {set_is_editable}
+# @field move_on_rpress=flag : see {set_move_on_rpress}
+# @field see also {Component}
+#
 # @example
 # @ t := TextField()
 # @ t.set_pos(50, 250)

@@ -3,6 +3,13 @@ package gui
 import 
    util
 
+#
+# @field dii=integer : see {set_dii}
+# @field doi=integer : see {set_doi}
+# @field flush=: equivalent to {set_doi(0)}
+# @field extra=string : see {set_extra}
+# @field debug=flag : see {set_debug}
+#
 class GridLayout(Layout,SetFields)
    public 
       g,

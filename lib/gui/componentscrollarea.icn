@@ -45,6 +45,10 @@ end
 # the ScrollArea.  The component is set with the {set_inner()}
 # method.
 #
+# @field inner={Component} : see {set_inner}.
+# @ inner may also be passed as the first parameter to the constructor.
+# @field see also {ScrollArea}
+#
 class ComponentScrollArea(ScrollArea)
    public set_inner(inner)
       view.set_inner(inner)
