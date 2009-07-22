@@ -968,10 +968,10 @@ class HttpClient(NetClient)
    end
 
    #
-   # Return the length of the current download, or &null if unknown
+   # Return the length of the current download, or fail if unknown
    #
    public get_length()
-      return self.length
+      return \self.length
    end
 
    #
