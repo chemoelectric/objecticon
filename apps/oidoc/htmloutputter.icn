@@ -320,7 +320,7 @@ class HtmlOutputter(Outputter)
    private comment_and_fields(f, c)
       local k, com
       com := Comment(c)
-      every html_unbracket(f, !com.comment, c)
+      every write(f, html_unbracket(!com.comment, c))
       write(f, "<dl>")
       every k := !com.keys do
          html_fields(f, c, k, com.fields[k])
@@ -348,14 +348,14 @@ class HtmlOutputter(Outputter)
                      l[1] := tab(0)
                      writes(f, "<dd>")
                      if *type > 0 then 
-                        html_unbracket(f, name || "=" || type || " - ", c)
+                        write(f, html_unbracket(name, c), "=<i>", html_unbracket(type, c), "</i> - ")
                      else
-                        html_unbracket(f, name || " - ", c)
-                     every html_unbracket(f, !l, c)
+                        write(f, html_unbracket(name, c), " - ")
+                     every write(f, html_unbracket(!l, c))
                      write(f, "</dd>")
                   } else {
                      writes(f, "<dd>")
-                     every html_unbracket(f, !l, c)
+                     every write(f, html_unbracket(!l, c))
                      write(f, "</dd>")
                   }
                }
@@ -371,7 +371,7 @@ class HtmlOutputter(Outputter)
                   l[1] := tab(0)
                }
                writes(f, "<dd>", name, " - ")
-               every html_unbracket(f, !l, c)
+               every write(f, html_unbracket(!l, c))
                write(f, "</dd>")
             }
          }
@@ -379,28 +379,28 @@ class HtmlOutputter(Outputter)
          "return" : {
             write(f, "<dt>Returns :</dt>")
             write(f, "<dd>")
-            every html_unbracket(f, !vals[1], c)
+            every write(f, html_unbracket(!vals[1], c))
             write(f, "</dd>")
          }
 
          "generate" : {
             write(f, "<dt>Generates :</dt>")
             write(f, "<dd>")
-            every html_unbracket(f, !vals[1], c)
+            every write(f, html_unbracket(!vals[1], c))
             write(f, "</dd>")
          }
 
          "fail" : {
             write(f, "<dt>Fails :</dt>")
             write(f, "<dd>")
-            every html_unbracket(f, !vals[1], c)
+            every write(f, html_unbracket(!vals[1], c))
             write(f, "</dd>")
          }
 
          "runerr" : {
             write(f, "<dt>Runtime error :</dt>")
             write(f, "<dd>")
-            every html_unbracket(f, !vals[1], c)
+            every write(f, html_unbracket(!vals[1], c))
             write(f, "</dd>")
          }
 
@@ -413,7 +413,7 @@ class HtmlOutputter(Outputter)
       }
    end
 
-   private html_unbracket(f, s, c)
+   private html_unbracket(s, c)
       local r, t, w
       r := ""
       s ? {
@@ -431,7 +431,7 @@ class HtmlOutputter(Outputter)
       else if (*\w > 1) then
          r := "<br>" || repl("&nbsp;", *w - 1) || r
 
-      write(f, r)
+      return r
    end
 
    private resolve_link(sym, name)
