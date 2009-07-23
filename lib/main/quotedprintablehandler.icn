@@ -14,7 +14,7 @@ class QuotedPrintableHandler(EncodingHandler)
       QUOTED_PRINTABLE_CHARS
 
    private static init()
-      QUOTED_PRINTABLE_CHARS := cset(&ascii[33:62] || &ascii[63:128])
+      QUOTED_PRINTABLE_CHARS := '\x20-\x3c\x3e-\x7e'
    end
 
    private res, ll
