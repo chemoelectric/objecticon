@@ -57,6 +57,13 @@ class IdAttributeRef()
 end
 
 
+#
+# @field do_namespaces=flag : see {set_do_namespaces}
+# @field validate=flag : see {set_validate}
+# @field preserve_comments=flag : see {set_preserve_comments}
+# @field preserve_insignificant_whitespace=flag : see {set_preserve_insignificant_whitespace}
+# @field resolver={Resolver} : see {set_resolver}
+#
 class XmlParser(Connectable,SetFields)
    public static const
       XML_SPACE,

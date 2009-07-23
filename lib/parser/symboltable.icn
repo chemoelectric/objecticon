@@ -266,6 +266,9 @@ class ImportDec()
    end
 end
 
+#
+# @field file_mode=string : see {set_file_mode}
+#
 class SymbolTable(Connectable,SetFields)
    private
       package_db,

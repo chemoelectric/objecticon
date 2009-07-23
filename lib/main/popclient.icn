@@ -6,6 +6,11 @@ package mail
 
 import net, util(error)
 
+#
+# @field username=string: see {set_username}
+# @field password=string: see {set_password}
+# @field see also {NetClient}
+#
 class PopClient(NetClient)
    private
       username,

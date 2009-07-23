@@ -2,6 +2,9 @@ package cgi
 
 import io, net, mail, util(error,SetFields), posix(System)
 
+#
+# @field stdin_limit=integer: see {set_stdin_limit}
+#
 class CgiParams(SetFields)
    private readable
       stdin,

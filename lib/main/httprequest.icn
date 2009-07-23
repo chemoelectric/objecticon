@@ -9,6 +9,18 @@ import util, net, mail, io
 #
 # Encapsulate one request to {HttpClient}.
 #
+# @field url={URL}: see {set_url}
+# @field data_stream={Stream}: see {set_data_stream}
+# @field post_stream={Stream}: see {set_post_stream}
+# @field range=i1,i2: see {set_range}
+# @field method=string: see {set_method}
+# @field referer=string: see {set_referer}
+# @field username=string: see {set_username}
+# @field password=string: see {set_password}
+# @field content_type=string: see {set_content_type}
+# @field html_form_data=table: see {set_html_form_data}
+# @field multipart_form_data={Message}: see {set_multipart_form_data}
+#
 class HttpRequest(SetFields, MimeHeaders)
    private readable 
       url,
@@ -121,7 +133,7 @@ class HttpRequest(SetFields, MimeHeaders)
          "url": set_url(f.object_val(URL))
          "data_stream": set_data_stream(f.object_val(Stream))
          "post_stream": set_post_stream(f.object_val(Stream))
-         "range": set_range!(f.int_list_val())
+         "range": set_range!(f.int_list_val(2))
          "method": set_method(f.string_val())
          "referer": set_referer(f.string_val())
          "username": set_username(f.string_val())

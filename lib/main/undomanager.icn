@@ -14,6 +14,9 @@ package undo
 #
 # Once closed, it behaves just like a closed CompoundEdit.
 #
+# @field limit=integer: see {set_limit}
+# @field see also {CompoundEdit}
+#
 class UndoManager(CompoundEdit)
    private
       limit,

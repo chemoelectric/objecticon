@@ -16,6 +16,11 @@ import util
 # removed depending on whether validation against a DTD occured), and without
 # indentation.
 #
+# @field indent=integer : see {set_indent}
+# @field no_whitespace=flag : see {set_no_whitespace}
+# @field text_trim=flag : see {set_text_trim}
+# @field as_read=flag : see {set_as_read}
+#
 class XmlFormatter(Formatter,SetFields)
    public
       indent, 

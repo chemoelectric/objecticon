@@ -13,6 +13,11 @@ import
 # Common base class for a client class which holds a connection to a
 # server and communicates using CRLF-terminated lines.
 #
+# @field timeout=integer: see {set_timeout}
+# @field server=string: see {set_server}
+# @field path=string: see {set_path}
+# @field port=integer: see {set_port}
+#
 class NetClient(Connectable, SetFields)
    public static const 
       CONNECTING_EVENT,

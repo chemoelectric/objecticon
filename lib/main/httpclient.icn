@@ -50,6 +50,14 @@ end
 #
 # An http client
 #
+# @field http_version=string: see {set_http_version}
+# @field user_agent=string: see {set_user_agent}
+# @field retries=integer: see {set_retries}
+# @field retry_while_data=flag: see {set_retry_while_data}
+# @field keep_alive=flag : see {set_keep_alive}
+# @field cookies=table : see {set_cookies}
+# @field see also {NetClient}
+#
 class HttpClient(NetClient)
    public static const
       TOKEN_CHAR,

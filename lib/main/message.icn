@@ -9,6 +9,27 @@ import util, io
 #
 # This class represents an email message
 #
+# @field content=string: see {set_content}
+# @field decoded_content=string: see {set_decoded_content}
+# @field content_object=value: see {set_content_object}
+# @field date={Time}: see {set_date}
+# @field to=value: see {set_to}
+# @field reply_to=value: see {set_reply_to}
+# @field resent_to=value: see {set_resent_to}
+# @field cc=value: see {set_cc}
+# @field resent_cc=value: see {set_resent_cc}
+# @field bcc=value: see {set_bcc}
+# @field resent_bcc=value: see {set_resent_bcc}
+# @field from=value: see {set_from}
+# @field sender={Mailbox}: see {set_sender}
+# @field resent_from=value: see {set_resent_from}
+# @field resent_sender={Mailbox}: see {set_resent_sender}
+# @field resent_date={Time}: see {set_resent_date}
+# @field content_type={ContentType}: see {set_content_type}
+# @field content_disposition={ContentDisposition}: see {set_content_disposition}
+# @field content_transfer_encoding=string: see {set_content_transfer_encoding}
+# @field subject=string: see {set_subject}
+#
 class Message(SetFields, MimeHeaders)
    private readable 
       content
@@ -17,7 +38,7 @@ class Message(SetFields, MimeHeaders)
    # Set the content
    #
    public set_content(s)
-      self.content := s
+      self.content := string(s) | runerr(103, s)
    end
 
    #

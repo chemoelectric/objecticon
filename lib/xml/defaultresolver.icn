@@ -22,6 +22,9 @@ import http, net, util, io
 #
 # Otherwise, the system id is treated as a filename.
 #
+# @field cache_uris=flag: see {set_cache_uris}
+# @field http_client={HttpClient}: see {set_http_client}
+#
 class DefaultResolver(Resolver,SetFields)
    private
       public_mapping,

@@ -280,7 +280,7 @@ class StringStream(Stream)
    #
    public new(subj)
       /subj := ""
-      self.subj := subj
+      self.subj := string(subj) | runerr(103, subj)
       self.pos := 1
       return
    end
@@ -326,6 +326,11 @@ end
 # This class takes another stream and provides read/write buffers so
 # that input/output to the inner stream tends to take place in larger
 # chunks.
+#
+# @field other={Stream} : see {set_other}.  May be given as first constructor 
+# @      parameter.
+# @field buff_size=integer : see {set_buff_size}
+# @field flush_on_nl=flag : see {set_flush_on_nl}
 #
 class BufferStream(Stream, SetFields)
    private

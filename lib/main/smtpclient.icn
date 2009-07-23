@@ -6,6 +6,10 @@ package mail
 
 import net, util(error)
 
+#
+# @field hostname=string: see {set_hostname}
+# @field see also {NetClient}
+#
 class SmtpClient(NetClient)
    private static const 
       RFC822_HEADERS
@@ -23,6 +27,9 @@ class SmtpClient(NetClient)
       hostname,
       sent_helo
 
+   #
+   # Set the hostname to use with the EHLO command; by default {&host}.
+   #
    public set_hostname(s)
       hostname := s
    end
@@ -171,6 +178,7 @@ class SmtpClient(NetClient)
       cast(self,NetClient).new()
       set_port(25)
       set_server("localhost")
+      set_hostname(&host)
       set_fields(a)
       return
    end
