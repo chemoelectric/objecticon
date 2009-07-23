@@ -528,6 +528,33 @@ procedure test_message_errors()
    print{"M4.Get to",m.get_to() }
 end
 
+procedure test_1522_impl(lno, s)
+   yes_no{"1522 encoding(b) " || lno, s == Message.rfc1522_decode(Message.rfc1522_encode(s,,"b"))}
+   yes_no{"1522 encoding(q) " || lno, s == Message.rfc1522_decode(Message.rfc1522_encode(s,,"q"))}
+end
+
+procedure test_1522()
+   test_1522_impl(&line, "")
+   test_1522_impl(&line, u"")
+   test_1522_impl(&line, "1")
+   test_1522_impl(&line, "12")
+   test_1522_impl(&line, "123")
+   test_1522_impl(&line, "1234")
+   test_1522_impl(&line, &cset)
+   test_1522_impl(&line, ucs(&ascii))
+   test_1522_impl(&line, u"abcd\u1234\uabcd")
+   test_1522_impl(&line, u"abcd \u1234 quick abc\uabcd")
+   test_1522_impl(&line, "<>_?==?==???==?=?==?")
+   test_1522_impl(&line, "the quick \xff brown fox")
+   test_1522_impl(&line, "\x00\x00\x00")
+
+   print{"ex1", Message.rfc1522_decode("=?US-ASCII?Q?Keith_Moore?= <moore@cs.utk.edu>")}
+   print{"ex2", Message.rfc1522_decode("=?ISO-8859-1?Q?Keld_J=F8rn_Simonsen?= <keld@dkuug.dk>")}
+   print{"ex3", Message.rfc1522_decode("=?ISO-8859-1?Q?Andr=E9?= Pirard <PIRARD@vm1.ulg.ac.be>")}
+   print{"ex4", Message.rfc1522_decode("=?ISO-8859-1?B?SWYgeW91IGNhbiByZWFkIHRoaXMgeW8=?= =?ISO-8859-2?B?dSB1bmRlcnN0YW5kIHRoZSBleGFtcGxlLg==?=")}
+   print{"ex5", Message.rfc1522_decode("=?ISO-8859-1?Q?Patrik_F=E4ltstr=F6m?= <paf@nada.kth.se>")}
+end
+
 procedure main()
    test_message1()
    test_message2()
@@ -547,5 +574,6 @@ procedure main()
    test_canonical_handling()
    test_quoted_printable()
    test_base64()
+   test_1522()
    write("ok")
 end
