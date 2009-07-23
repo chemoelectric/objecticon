@@ -4,11 +4,11 @@
 
 package http
 
-import util
-import lang
-import net
-import mail
-import io
+import util,
+   lang,
+   net,
+   io,
+   ipl.base64
 
 #
 # Little helper class to store cookie details
@@ -305,10 +305,7 @@ class HttpClient(NetClient)
    #
    # 
    private setup_basic_authentication(t)
-      local b64h, s
-      b64h := Base64Handler()
-      s := b64h.encode_data(&null, request.username || ":" || request.password, 1)
-      basic_auth_header := "Basic " || s
+      basic_auth_header := "Basic " || base64encode(request.username || ":" || request.password)
       return
    end
 
@@ -346,6 +343,8 @@ class HttpClient(NetClient)
             insert(qop_options, map(tab(many(TOKEN_CHAR))))
       }
       self.qop := member(qop_options, "auth-int" | "auth") | &null
+
+      return
    end
 
    #

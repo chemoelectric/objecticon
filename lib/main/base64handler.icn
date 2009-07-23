@@ -58,7 +58,7 @@ class Base64Handler(EncodingHandler)
       return res
    end
 
-   public encode_data(m, data, nnl)
+   public encode_data(m, data)
       local i, j, k, pad, res, ll
 
       res := ""
@@ -75,14 +75,12 @@ class Base64Handler(EncodingHandler)
          res ||:= BASE64_STRING[ 1 + iand(k,63) ]
          ll +:= 1
          if ll = 19 then {
-            if /nnl then
-               res ||:= "\r\n"
+            res ||:= "\r\n"
             ll := 0
          }
       }
       res[ 0 -: pad ] := repl("=", pad)
-      if /nnl then
-         res ||:= "\r\n"
+      res ||:= "\r\n"
 
       return res
    end
