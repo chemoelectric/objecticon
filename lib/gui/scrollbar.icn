@@ -67,6 +67,15 @@ end
 #
 # A Event.VALUE_CHANGED, which is fired whenever the value changes.
 #
+# @field is_horizontal=flag : see {set_is_horizontal}
+# @field total_size=integer : see {set_total_size}
+# @field page_size=integer : see {set_page_size}
+# @field increment_size=numeric : see {set_increment_size}
+# @field value=numeric : see {set_value}
+# @field range=n1,n2 : see {set_range}
+# @field wheel_factor=integer: see {set_wheel_factor}
+# @field see also {Component}
+#
 class ScrollBar(Component)
    public 
       value,                   #             
@@ -520,7 +529,7 @@ class ScrollBar(Component)
          "is_horizontal" : set_is_horizontal(f.flag_val())
          "total_size" : set_total_size(f.int_val())
          "page_size" : set_page_size(f.int_val())
-         "increment_size" : set_increment_size(f.int_val())
+         "increment_size" : set_increment_size(f.numeric_val())
          "value" : set_value(f.numeric_val())
          "range" : set_range!(f.numeric_list_val(2))
          "wheel_factor": set_wheel_factor(f.int_val())

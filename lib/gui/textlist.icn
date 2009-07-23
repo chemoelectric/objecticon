@@ -12,6 +12,9 @@ package gui
 #
 # This class displays a list of strings.
 #
+# @field contents=t1,t2,t3,... : see {set_contents}
+# @field see also {SelectableScrollArea}
+#
 class TextList(SelectableScrollArea)
    public calculate_line_height()
       return view.cbwin.attrib("fheight")

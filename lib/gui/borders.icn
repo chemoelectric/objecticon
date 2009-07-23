@@ -2,6 +2,11 @@ package gui
 
 import util
 
+#
+# @field x_align=string : see {set_x_align}
+# @field y_align=string : see {set_y_align}
+# @field align=s1,s2 : see {set_align}
+#
 class ABorder(Insets,Align,SetFields)
    public defer initially(c)
    public defer draw(W, x, y, w, h)
@@ -71,7 +76,15 @@ class ABorder(Insets,Align,SetFields)
    end
 end
 
-
+#
+# @field l_inset=integer : see {set_l_inset}
+# @field r_inset=integer : see {set_r_inset}
+# @field t_inset=integer : see {set_t_inset}
+# @field b_inset=integer : see {set_b_inset}
+# @field insets=i1,i2,i3,i4 : see {set_insets}
+# @field flush=: invokes {set_insets(0,0,0,0)}
+# @field see also {ABorder}
+#
 class EmptyBorder(ABorder)
    public initially(c)
    end
@@ -128,6 +141,10 @@ class EmptyBorder(ABorder)
 end
 
 
+#
+# @field line_width=integer : see {set_line_width}
+# @field see also {ABorder}
+#
 class LineBorder(ABorder)
    public line_width
 
@@ -212,6 +229,11 @@ class PlainBorder(LineBorder)
 end
 
 
+#
+# @field inner={ABorder} : see {set_inner}
+# @field outer={ABorder} : see {set_outer}
+# @field see also {ABorder}
+#
 class CompoundBorder(ABorder)
    public
       outer,

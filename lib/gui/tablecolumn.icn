@@ -18,6 +18,10 @@ package gui
 # The label is set by calling the {set_label(x)} method of the
 # parent class, {TextButton}.
 #
+# @field column_align=string : see {set_column_align}
+# @field column_width=integer : see {set_column_width}
+# @field see also {TextButton}
+# 
 class TableColumn(TextButton)
    public 
       column_width,  
@@ -81,6 +85,9 @@ class TableColumn(TextButton)
       self.column_width := x
    end
 
+   #
+   # Set the column alignment
+   # @param x A constant from {Align}
    public set_column_align(x)
       self.border.x_align := x
    end

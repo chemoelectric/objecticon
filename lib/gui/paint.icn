@@ -371,6 +371,16 @@ class GridPaint(Paint)
    end
 end
 
+#
+# @field image=string : see {set_image}
+# @field file=string : see {set_file}
+# @field window={Window} : see {set_window}
+# @field scale_up=flag : see {set_scale_up}
+# @field max_w=integer : see {set_max_w}
+# @field max_h=integer : see {set_max_h}
+# @field max_size=i1,i2 : see {set_max_size}
+# @field use_cache=flag : see {set_use_cache}
+#
 class ImagePaint(Paint,SetFields)
    public 
       image_file, 

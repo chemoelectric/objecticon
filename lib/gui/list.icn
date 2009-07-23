@@ -43,6 +43,9 @@ end
 # A Event.SELECTION_CHANGED is generated whenever an item is selected from the
 # list.
 # 
+# @field constant_label=string : see {set_constant_label}
+# @field see also {DropDown}
+#
 # @example
 # @ l := List()
 # @ l.set_selection_list(["Red", "Green", "Yellow", "Blue", "Orange"])
@@ -87,7 +90,7 @@ class List(DropDown)
 
    public set_one(f)
       case f.attr of {
-         "constant_label" : set_constant_label(f.string_val())
+         "constant_label" : set_constant_label(f.text_val())
          default: return cast(self,DropDown).set_one(f)
       }
       return

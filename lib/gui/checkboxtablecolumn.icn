@@ -7,6 +7,10 @@ import util
 # each of its lines.   The corresponding data items are "y" or "n"
 # strings, representing on or off button states respectively.
 #
+# @field images=s1,s2 : see {set_images}
+# @field single_selection=flag : see {set_single_selection}
+# @field see also {TableColumn}
+#
 class CheckBoxTableColumn(TableColumn)
    public 
       single_selection_flag,

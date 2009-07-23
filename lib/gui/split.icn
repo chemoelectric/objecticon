@@ -7,6 +7,14 @@ package gui
 # This {Component} contains two children whose sizes can be adjusted with
 # a {Sizer} component between them.
 #
+# @field show_inter=flag : see {set_show_inter}
+# @field min=int1,int2 : see {set_min}
+# @field weight=numeric : see {set_weight}
+# @field left={Component} : see {set_left}
+# @field top={Component} : see {set_top}
+# @field right={Component} : see {set_right}
+# @field bottom={Component} : see {set_bottom}
+#
 class Split(Component)
    public 
       first,
@@ -196,7 +204,7 @@ class Split(Component)
    public set_one(f)
       case f.attr of {
          "show_inter" : set_show_inter(f.flag_val())
-         "min" : set_min!(f.int_list_val())
+         "min" : set_min!(f.int_list_val(2))
          "weight" : set_weight(f.numeric_val())
          "left" : set_left(f.object_val(gui.Component))
          "top" : set_top(f.object_val(gui.Component))

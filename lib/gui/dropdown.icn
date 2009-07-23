@@ -13,6 +13,12 @@ import graphics
 #
 # This class is just a superclass of {List} and {EditList}.
 #
+# @field selection=integer : see {set_selection}
+# @field selection_list=t1,t2,t3,... : see {set_selection_list}.  This may
+# @ also be given (as a list) as the first parameter to the constructor.
+# @field direction=string : see {set_direction}
+# @field see also {Component}
+#
 class DropDown(SelectionList,Component)
    public 
       b,                           
@@ -21,9 +27,20 @@ class DropDown(SelectionList,Component)
       old_selection,
       direction
 
+   public static const
+      UP,
+      DOWN,
+      BEST
+
+   private static init()
+      UP := "up"
+      DOWN := "down"
+      BEST := "best"
+   end
+
    #
-   # Set the direction to pop-up in.  Options are"up", "down" or
-   # "best" (the default).
+   # Set the direction to pop-up in.  Options are {UP}, {DOWN} or
+   # {BEST} (the default).
    #
    public set_direction(s)
       self.direction := s
@@ -105,9 +122,9 @@ class DropDown(SelectionList,Component)
       # Space available for downward popup
       spc_below := parent_dialog.h - (self.y + self.h)
       max_h := case self.direction of {
-         "up": self.y
-         "down": spc_below
-         "best": if spc_below >= 7 * fh then spc_below else max(self.y, spc_below)
+         UP: self.y
+         DOWN: spc_below
+         BEST: if spc_below >= 7 * fh then spc_below else max(self.y, spc_below)
          default: runerr("Unknown direction", self.direction)
       }
 
@@ -129,9 +146,9 @@ class DropDown(SelectionList,Component)
                              0, max_h)
 
       self.tl.set_pos(self.x, self.y + case self.direction of {
-         "up": -self.tl.h_spec
-         "down": self.h
-         "best": {
+         UP: -self.tl.h_spec
+         DOWN: self.h
+         BEST: {
             if self.tl.h_spec > spc_below then
                -self.tl.h_spec
             else
@@ -242,7 +259,7 @@ class DropDown(SelectionList,Component)
       self.b.connect(self.on_button_press, Event.BUTTON_PRESS)
       self.b.set_image(Icon.ARROW_DOWN)
       self.b.set_accepts_focus("f")
-      self.direction := "best"
+      self.direction := BEST
       self.add(b)
       self.preferred_focus := self.view := create_view()
       self.add(view)

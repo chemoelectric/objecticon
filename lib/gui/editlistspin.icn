@@ -11,6 +11,12 @@ package gui
 #
 # Selection from a list with edit
 #
+# @field selection=integer : see {set_selection}
+# @field selection_list=t1,t2,t3,... : see {set_selection_list}.  This may
+# @ also be given (as a list) as the first parameter to the constructor.
+# @field contents=text : see {set_contents}
+# @field see also {EditSpin}
+#
 class EditListSpin(SelectionList,EditSpin)
    public old_selection
 

@@ -15,6 +15,13 @@ import util, ipl.graphics(Zoom), graphics
 # be an image string, an external file, or another window, and
 # can be changed at any time.
 #
+# @field image=string : see {set_image}
+# @field file=string : see {set_file}
+# @field window={Window} : see {set_window}
+# @field scale_up=flag : see {set_scale_up}
+# @field use_cache=flag : see {set_use_cache}
+# @field see also {Component}
+#
 class Image(Component)
    public 
       image_file, 

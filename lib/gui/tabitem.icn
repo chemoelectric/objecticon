@@ -21,6 +21,11 @@ package gui
 # also inherit any window attributes of the {TabSet}, such as
 # font, colour and so on.
 #
+# @field label=text : see {set_label}
+# @field label_border={ABorder} : see {set_label_border}
+# @field paint={Paint} : see {set_paint}
+# @field see also {Component}
+#
 class TabItem(Component)
    public 
       paint,

@@ -18,6 +18,14 @@ import
 # This class extends LineBasedScrollArea to provide selection on lines,
 # event handling and selection handling.
 #
+# @field select_mode=string : see {set_select_mode}
+# @field draggable_cursor=flag : see {set_draggable_cursor}
+# @field motion_cursor=flag : see {set_motion_cursor}
+# @field selection_on_key_moves=flag : see {set_selection_on_key_moves}
+# @field contents=list : see {set_contents}
+# @field selections=i1,i2,i3,... : see {set_selections}
+# @field see also {ScrollArea}
+#
 class SelectableScrollArea(LineBasedScrollArea)
    public 
       contents,
@@ -116,8 +124,8 @@ class SelectableScrollArea(LineBasedScrollArea)
    end
 
    #
-   # Configure the selection mode.  Possible values are "none",
-   # "one", or "many".
+   # Configure the selection mode.
+   # @param s a constant from {Select}
    #
    public set_select_mode(s)
       self.select_mode := s

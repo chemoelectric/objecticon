@@ -132,6 +132,10 @@ end
 # This class displays a table, the columns of which are set up
 # using TableColumns.
 #
+# @field select_mode=string : see {set_select_mode}
+# @field contents=list : see {set_contents}
+# @field selections=i1,i2,i3,... : see {set_selections}
+#
 class Table(Component)
    public 
    table_header,
@@ -279,7 +283,7 @@ class Table(Component)
 
    #
    # Configure the table selection mode.
-   #
+   # @param m a constant from {Select}
    public set_select_mode(m)
       self.table_content.set_select_mode(m)
    end

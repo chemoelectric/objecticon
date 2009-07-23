@@ -44,6 +44,16 @@ end
 # @ s.set_snaps(1)
 # @ self.add(s)
 #
+# @field is_horizontal=flag : see {set_is_horizontal}
+# @field value=numeric : see {set_value}
+# @field range=n1,n2 : see {set_range}
+# @field ticks=numeric : see {set_ticks}
+# @field labels=numeric : see {set_labels}
+# @field snaps=numeric : see {set_snaps}
+# @field increment_size=numeric : see {set_increment_size}
+# @field wheel_factor=integer: see {set_wheel_factor}
+# @field see also {Component}
+#
 class Slider(Component)
    public 
       value,                   

@@ -21,6 +21,14 @@ import
 # are changed by the user, a Event.CURSOR_MOVED when the cursor moves,
 # and a Event.SELECTION_CHANGED whenver the selection changes.
 #
+# @field wrap_mode=string: see {set_wrap_mode}
+# @field split_words=flag: see {set_split_words}
+# @field tab_width=integer: see {set_tab_width}
+# @field contents=t1,t2,t3,... : see {set_contents}
+# @field is_editable=flag : see {set_is_editable}
+# @field move_on_rpress=flag : see {set_move_on_rpress}
+# @field see also {ScrollArea}
+#
 class EditableTextList(LineBasedScrollArea)
    public 
       contents,                                     
@@ -1165,7 +1173,7 @@ class EditableTextList(LineBasedScrollArea)
    public set_wrap_mode(s)
       local wc
       self.wrap_mode := s
-      if /s | s == ("" | "false" | "off" | "no") then
+      if /to_flag(s) then
          line_splitter := DefaultLineSplitter(self)
       else if wc := integer(s) then
          line_splitter := ColumnLineSplitter(self, wc)

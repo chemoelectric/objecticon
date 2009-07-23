@@ -14,6 +14,10 @@ package gui
 # Several {CheckBoxMenuItems} may be added to a {CheckBoxGroup}
 # structure to give "radio buttons" within menus.
 #
+# @field images=s1,s2 : see {set_images}
+# @field is_checked=flag : see {set_is_checked}
+# @field see also {TextMenuItem}
+#
 class CheckBoxMenuItem(Toggle,TextMenuItem)
    public 
       curr_img,                                            

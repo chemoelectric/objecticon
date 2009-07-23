@@ -18,6 +18,11 @@ $define X_PADDING_INC 5
 # A Event.SELECTION_CHANGED is fired whenever the tab is changed via
 # user interaction.
 #
+# @field prefer_one_row=flag : see {set_prefer_one_row}
+# @field no_click_focus=flag : see {set_no_click_focus}
+# @field tabs_at_bottom=flag : see {set_tabs_at_bottom}
+# @field see also {Component}
+#
 class TabSet(Component)
    public 
       which_one,                                

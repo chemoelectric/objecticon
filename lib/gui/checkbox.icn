@@ -24,6 +24,11 @@ package gui
 # @ c.set_label("Checkbox")
 # @ self.add(c)
 #
+# @field images=s1,s2 : see {set_images}
+# @field label=text : see {set_label}
+# @field paint={Paint} : see {set_paint}
+# @field see also {Button}
+#
 class CheckBox(Button)
    public
       img_up,

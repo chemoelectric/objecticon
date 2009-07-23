@@ -12,6 +12,11 @@ package gui
 # This class implements a Text label.  The default width and 
 # height are determined by dimensions of text
 #
+# @field image=string : see {set_image}
+# @field label=text : see {set_label}
+# @field paint={Paint} : see {set_paint}
+# @field see also {Component}
+#
 class Label(Component)
    public 
       linked_accel,

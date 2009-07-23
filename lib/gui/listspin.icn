@@ -11,6 +11,11 @@ package gui
 #
 # Selection from a list
 #
+# @field selection=integer : see {set_selection}
+# @field selection_list=t1,t2,t3,... : see {set_selection_list}.  This may
+# @ also be given (as a list) as the first parameter to the constructor.
+# @field see also {Component}
+#
 class ListSpin(SelectionList,StaticSpin)
    public old_selection
 

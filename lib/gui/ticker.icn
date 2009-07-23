@@ -25,6 +25,10 @@ import util
 # @ t.connect(obj.on_tick, Event.TICK)
 # @ t.start()
 #
+# @field interval=integer : see {set_interval}
+# @field delay=integer : see {set_delay}
+# @field times=integer : see {set_times}
+#
 class Ticker(SetFields,Connectable)
    private readable
       interval,

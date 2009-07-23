@@ -44,6 +44,10 @@ end
 # when the value displayed in the field changes, either by
 # selection from the list or user edit of the text.
 #
+# @field filter=cset : see {set_filter}
+# @field contents=text : see {set_contents}
+# @field see also {DropDown}
+#
 class EditList(DropDown)
    public 
       old_contents

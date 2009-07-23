@@ -14,6 +14,15 @@ package gui
 # The size of the button can either be set using {set_size()},
 # be left to default to a size based on the given label.
 #
+# @field image=string : see {set_image}
+# @field image_down=string : see {set_image_down}
+# @field images=s1,s2 : see {set_images}
+# @field label=text : see {set_label}
+# @field label_down=text : see {set_label_down}
+# @field paint={Paint} : see {set_paint}
+# @field paint_down={Paint} : see {set_paint_down}
+# @field see also {Button}
+#
 class TextButton(Button)
    public 
       paint,

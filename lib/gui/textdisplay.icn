@@ -13,6 +13,12 @@ import util
 #
 # This class displays a list of strings.
 #
+# @field wrap_mode=string: see {set_wrap_mode}
+# @field split_words=flag: see {set_split_words}
+# @field tab_width=integer: see {set_tab_width}
+# @field contents=t1,t2,t3,... : see {set_contents}
+# @field see also {ScrollArea}
+#
 class TextDisplay(LineBasedScrollArea)
    public
       contents, 
@@ -253,7 +259,7 @@ class TextDisplay(LineBasedScrollArea)
    public set_wrap_mode(s)
       local wc
       self.wrap_mode := s
-      if /s | s == ("" | "false" | "off" | "no") then
+      if /to_flag(s) then
          line_splitter := DefaultLineSplitter(self)
       else if wc := integer(s) then
          line_splitter := ColumnLineSplitter(self, wc)

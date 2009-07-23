@@ -47,7 +47,12 @@ class CellInfo(Insets,Align)
    end
 end
 
-
+#
+# @field dii=integer : see {set_dii}
+# @field doi=integer : see {set_doi}
+# @field flush=: invokes {set_doi(0)}
+# @field extra=string : see {set_extra}
+#
 class Grid(SetFields)
    public static const 
       EXTRA_CELLS,
@@ -362,14 +367,25 @@ class Grid(SetFields)
       }
    end
 
+   #
+   # Set the default inner inset
+   #
    public set_dii(n)
       self.dii := n
    end
 
+   #
+   # Set the default outer inset
+   #
    public set_doi(n)
       self.doi := n
    end
 
+   #
+   # Configure where to allocate any extra space.
+   #
+   # @param s one of {EXTRA_CELLS}, {EXTRA_BORDERS}, {EXTRA_IGNORE}
+   #
    public set_extra(s)
       self.extra := s
    end
