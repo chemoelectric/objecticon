@@ -4,6 +4,8 @@
 
 package mail
 
+import util
+
 class TextHandler(TypeHandler)
    public can_handle(ct)
       return map(ct.get_type()) == "text"
@@ -23,11 +25,17 @@ class TextHandler(TypeHandler)
          move(2)
          res ||:= "\n"
       }
+
+      if map(m.get_content_type().get_parameter("charset")) == "utf-8" then
+         res := ucs(res) | return error("TextHandler: raw data not in utf-8 format")
+
       return res
    end
 
    public convert_from_object(m, obj)
       local res
+
+      obj := string(obj) | return error("TextHandler: Couldn't convert object to string: " || image(obj))
 
       #
       # Convert from local form to canonical form (CRLF)
