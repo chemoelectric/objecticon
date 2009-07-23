@@ -31,6 +31,8 @@
 
 package ipl.base64
 
+import util(error)
+
 # encode a string into base 64 (MIME)
 procedure base64encode(s)   
    local  pad, t, i, j, k
@@ -55,7 +57,7 @@ end
 
 # decode a string from base 64 (MIME)
 procedure base64decode(s)  
-   local t, w, x, y, z
+   local t, w, x, y, z, pad
    static b64, c64, n64
    initial {
       b64 := &ucase || &lcase || &digits || "+/"
@@ -63,10 +65,16 @@ procedure base64decode(s)
       n64 := string(&cset)[1+:64]
       }
 
-   if not s ? ( tab(many(c64)), =("===" | "==" | "=" | ""), pos(0)) then fail
-   if ( *s % 4 ) ~= 0 then fail
+   s ? {
+      tab(many(c64))
+      pad := *tab(many('=')) | 0
+      pos(0) | return error("base64decode: extraneous chars in data")
+   }
 
-   s := map(s,"=","\x00")
+   if (pad > 2) | (*s % 4  ~= 0) then
+      return error("base64decode: badly formatted Base64 data")
+
+   s[0 -: pad] := repl("\x00", pad)
    s := map(s,b64,n64)
 
    t := ""
@@ -77,5 +85,6 @@ procedure base64decode(s)
       t ||:= char( ior( iand(ishift(y,6),255), z ) )
       }
 
-   return trim(t,'\x00')
+   t[0 -: pad] := ""
+   return t
 end
