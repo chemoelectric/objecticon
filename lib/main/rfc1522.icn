@@ -1,0 +1,121 @@
+package mail
+
+import util, ipl.base64
+
+class RFC1522()
+   public static const
+      Q_PRINTABLE_CHARS
+
+   private static init()
+      Q_PRINTABLE_CHARS := RFC822Parser.ATOM_CHAR -- '=?_'
+   end
+
+   #
+   # Convert the given string using rfc1522 encoding, ie to one potentially
+   # including "encoded words".
+   #
+   # @param s the source string, either string or ucs
+   # @param alphabet the cset of characters which don't need to be encoded,
+   #        by default {&ascii}, minus {'=?'} if {s} contains {"=?"}, so we
+   #        don't pass through things that look like encoded words but aren't.
+   # @param delimeter the cset of word delimeters, by default {' \t'}.
+   # @param charset the charset to use, default is utf-8 for a ucs string
+   # @      and iso-8859-1 for a string.
+   # @param encoding either "b" (the default) or "q"
+   #
+   public static encode(s, alphabet, delimeter, charset, encoding)
+      local t, pre, res, i, j, k, na
+      /alphabet := if find("=?", s) then &ascii -- '=?' else &ascii
+      /delimeter := ' \t'
+      if type(s) == "ucs" then {
+         /charset := "utf-8"
+         s := string(s)
+      } else
+         /charset := "iso-8859-1"
+      /encoding := "b"
+
+      pre := "=?" || charset || "?" || encoding || "?"
+      res := ""
+      na := ~alphabet
+      s ? repeat {
+         i := upto(na) | {
+            res ||:= tab(0)
+            break
+         }
+
+         # Go back to the beginning of the word to encode.
+         j := i
+         while j > &pos & not any(delimeter,, j - 1) do
+            j -:= 1
+         # ... and go forward to the end.
+         k := upto(delimeter,, j + 1) | 0
+
+         res ||:= tab(j)
+         t := tab(k)
+         res ||:= pre
+         case map(encoding) of {
+            "b": {
+               res ||:= base64encode(t)
+            }
+            "q": {
+               t ? until pos(0) do {
+                  res ||:= tab(many(Q_PRINTABLE_CHARS)) |
+                     (=" ", "_") |
+                     "=" || Format.int_to_string(ord(move(1)), 16, 2)
+               }
+            }
+            default:
+               runerr("Unknown content word encoding", encoding)
+         }
+         res ||:= "?="
+      }
+      return res
+   end
+
+   #
+   # This does the reverse of {encode}.  Any encoded words are expanded and
+   # the result is returned.  The result may be a ucs string if any encoded word
+   # had utf-8 encoding; otherwise the result is a normal string.
+   # @param s the source string.
+   #
+   public static decode(s)
+      local charset, encoding, data, res, t
+      res := ""
+      s ? repeat {
+         res ||:= tab(find("=?") | 0)
+         if pos(0) then
+            break
+         move(2)
+         charset := tab(upto('?')) | return error("Badly formed encoded word")
+         move(1)
+         encoding := tab(upto('?')) | return error("Badly formed encoded word")
+         move(1)
+         data := tab(upto('?')) | return error("Badly formed encoded word")
+         case map(encoding) of {
+            "b": t := base64decode(data) | fail
+            "q": {
+               t := ""
+               data ? repeat {
+                  t ||:= tab(upto('_=') | 0)
+                  if pos(0) then
+                     break
+                  if any('_') then {
+                     move(1)
+                     t ||:= " "
+                  } else {
+                     move(1)
+                     t ||:= char(Format.string_to_int(move(2))) | return error("Bad q-encoded data")
+                  }
+               }
+            }
+            default:
+               return error("Unknown content word encoding: " || encoding)
+         }
+         if map(charset) == "utf-8" then
+            t := ucs(t) | return error("Encoded word data not proper utf-8")
+         res ||:= t
+         ="?="  | return error("Encoded word did not end with ?=")
+      }
+      return res
+   end
+end

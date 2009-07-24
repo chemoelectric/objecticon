@@ -17,8 +17,8 @@ class Base64Handler(EncodingHandler)
 
    private static init()
       BASE64_STRING := &ucase || &lcase || &digits || "+/"
-      BASE64_CSET := cset(BASE64_STRING)
-      BASE64_FIRST64 := string(&cset)[1+:64]
+      BASE64_CSET := &ucase ++ &lcase ++ &digits ++ '+/'
+      BASE64_FIRST64 := &cset[1+:64]
    end
 
    public can_handle(enc)

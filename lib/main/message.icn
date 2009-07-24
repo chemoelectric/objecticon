@@ -4,7 +4,7 @@
 
 package mail
 
-import util, io, ipl.base64
+import util, io
 
 #
 # This class represents an email message
@@ -28,18 +28,11 @@ import util, io, ipl.base64
 # @field content_type={ContentType}: see {set_content_type}
 # @field content_disposition={ContentDisposition}: see {set_content_disposition}
 # @field content_transfer_encoding=string: see {set_content_transfer_encoding}
-# @field subject=text: see {set_subject}
+# @field subject=string: see {set_subject}
 #
 class Message(SetFields, MimeHeaders)
    private readable 
       content
-
-   public static const
-      RFC1522_PRINTABLE_CHARS
-
-   private static init()
-      RFC1522_PRINTABLE_CHARS := RFC822Parser.ATOM_CHAR -- '=?_'
-   end
 
    #
    # Set the content
@@ -733,113 +726,18 @@ class Message(SetFields, MimeHeaders)
    end
 
    #
-   # Set the subject to the given string.  The given string is rfc1522 encoded
-   # first (see {rfc1522_encode}).
-   #
+   # Set the subject to the given string.
    # @param s a string
-   # @param charset passed to {rfc1522_encode}.
-   # @param encoding passed to {rfc1522_encode}.
    #
-   public set_subject(s, charset, encoding)
-      set_header("Subject", rfc1522_encode(s, charset, encoding))
+   public set_subject(s)
+      set_header("Subject", s)
    end
 
    #
-   # Get the subject.  The header is decoded using {rfc1522_decode} first.
+   # Get the subject
    #
    public get_subject()
-      return rfc1522_decode(get_first_header("Subject"))
-   end
-
-   #
-   # Convert the given string using rfc1522 encoding, ie one potentially
-   # including "encoded words".
-   #
-   # @param s the source string, either string or ucs
-   # @param charset the charset to use, default is utf-8 for a ucs string
-   # @      and iso-8859-1 for a string.
-   # @param encoding either "b" (the default) or "q"
-   #
-   public static rfc1522_encode(s, charset, encoding)
-      local t, pre, res
-      /encoding := "b"
-      if type(s) == "ucs" then {
-         /charset := "utf-8"
-         s := string(s)
-      } else
-         /charset := "iso-8859-1"
-
-      pre := "=?" || charset || "?" || encoding || "?"
-      res := ""
-      s ? repeat {
-         res ||:= tab(many(RFC1522_PRINTABLE_CHARS ++ '\t '))
-         if pos(0) then
-            break
-         t := tab(upto('\t ') | 0)
-         res ||:= pre
-         case map(encoding) of {
-            "b": {
-               res ||:= base64encode(t)
-            }
-            "q": {
-               t ? until pos(0) do {
-                  res ||:= tab(many(RFC1522_PRINTABLE_CHARS)) |
-                     "=" || Format.int_to_string(ord(move(1)), 16, 2)
-               }
-            }
-            default:
-               return error("Unknown content word encoding: " || encoding)
-         }
-         res ||:= "?="
-      }
-      return res
-   end
-
-   #
-   # This does the reverse of {rfc1522_encode}.  Any encoded words are expanded and
-   # the result is returned.  The result may be a ucs string if any encoded word
-   # had utf-8 encoding; otherwise the result is a normal string.
-   # @param s the source string.
-   #
-   public static rfc1522_decode(s)
-      local charset, encoding, data, res, t
-      res := ""
-      s ? repeat {
-         res ||:= tab(find("=?") | 0)
-         if pos(0) then
-            break
-         move(2)
-         charset := tab(upto('?')) | return error("Badly formed encoded word")
-         move(1)
-         encoding := tab(upto('?')) | return error("Badly formed encoded word")
-         move(1)
-         data := tab(upto('?')) | return error("Badly formed encoded word")
-         case map(encoding) of {
-            "b": t := base64decode(data) | fail
-            "q": {
-               t := ""
-               data ? repeat {
-                  t ||:= tab(upto('_=') | 0)
-                  if pos(0) then
-                     break
-                  if any('_') then {
-                     move(1)
-                     t ||:= " "
-                  } else {
-                     move(1)
-                     t ||:= char(Format.string_to_int(move(2))) | return error("Bad q-encoded data")
-                  }
-               }
-            }
-            default:
-               return error("Unknown content word encoding: " || encoding)
-         }
-         if map(charset) == "utf-8" then
-            t := ucs(t) | return error("Encoded word data not proper utf-8")
-         res ||:= t
-         ="?="  | return error("Encoded word did not end with ?=")
-      }
-      return res
+      return get_first_header("Subject")
    end
 
    public set_one(f)
@@ -863,7 +761,7 @@ class Message(SetFields, MimeHeaders)
          "content_type": set_content_type(f.object_val(ContentType))
          "content_disposition": set_content_disposition(f.object_val(ContentDisposition))
          "content_transfer_encoding": set_content_transfer_encoding(f.string_val())
-         "subject": set_subject(f.text_val())
+         "subject": set_subject(f.string_val())
          default: fail
       }
       return

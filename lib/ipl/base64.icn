@@ -62,7 +62,7 @@ procedure base64decode(s)
    initial {
       b64 := &ucase || &lcase || &digits || "+/"
       c64 := cset(b64)
-      n64 := string(&cset)[1+:64]
+      n64 := &cset[1+:64]
       }
 
    s ? {
