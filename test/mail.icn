@@ -547,12 +547,36 @@ procedure test_1522()
    test_1522_impl(&line, "<>_?==?==???==?=?==?")
    test_1522_impl(&line, "the quick \xff brown fox")
    test_1522_impl(&line, "\x00\x00\x00")
+   test_1522_impl(&line, "ABC")
+   test_1522_impl(&line, "Hello\u1234")
+   test_1522_impl(&line, u"Hello\u1234 how")
+   test_1522_impl(&line, u"\u1234 how \u1234")
+   test_1522_impl(&line, u"\u1234\u1234\u1234\u1234 how \u1234\u1234\u1234\u1234")
+   test_1522_impl(&line, u"ABCD \u1234\u1234\u1234\u1234 how \u1234\u1234\u1234\u1234 xx")
+   test_1522_impl(&line, u"abc\u1234def <fred@smith.com>")
+   test_1522_impl(&line, "??=??=== == ?= =? ?== ==? = ? =?==?? ?== ?=?=== ==???")
+   test_1522_impl(&line, "how do you do ?==?")
+   test_1522_impl(&line, "how do you do =?iso-8859-1?b?Pz09Pw==?=")
+   test_1522_impl(&line, "=?")
+   test_1522_impl(&line, "?=")
+   test_1522_impl(&line, "how do you do?")
+   test_1522_impl(&line, "1+1=2")
+   test_1522_impl(&line, "hello (fred\u1234smith)  ( ciao\u1233) bye")
 
    print{"ex1", RFC1522.decode("=?US-ASCII?Q?Keith_Moore?= <moore@cs.utk.edu>")}
    print{"ex2", RFC1522.decode("=?ISO-8859-1?Q?Keld_J=F8rn_Simonsen?= <keld@dkuug.dk>")}
    print{"ex3", RFC1522.decode("=?ISO-8859-1?Q?Andr=E9?= Pirard <PIRARD@vm1.ulg.ac.be>")}
    print{"ex4", RFC1522.decode("=?ISO-8859-1?B?SWYgeW91IGNhbiByZWFkIHRoaXMgeW8=?= =?ISO-8859-2?B?dSB1bmRlcnN0YW5kIHRoZSBleGFtcGxlLg==?=")}
    print{"ex5", RFC1522.decode("=?ISO-8859-1?Q?Patrik_F=E4ltstr=F6m?= <paf@nada.kth.se>")}
+
+   print{"ex6", RFC1522.decode("(=?ISO-8859-1?Q?a?=)")}
+   print{"ex7", RFC1522.decode("(=?ISO-8859-1?Q?a?= b)")}
+   print{"ex8", RFC1522.decode("(=?ISO-8859-1?Q?a?= =?ISO-8859-1?Q?b?=)")}
+   print{"ex9", RFC1522.decode("(=?ISO-8859-1?Q?a?=  =?ISO-8859-1?Q?b?=)")}
+   print{"ex10", RFC1522.decode("(=?ISO-8859-1?Q?a?=         =?ISO-8859-1?Q?b?=)")}
+   print{"ex11", RFC1522.decode("(=?ISO-8859-1?Q?a_b?=)")}
+   print{"ex12", RFC1522.decode("(=?ISO-8859-1?Q?a?= =?ISO-8859-2?Q?_b?=)")}
+
 end
 
 procedure main()
