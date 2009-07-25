@@ -433,7 +433,7 @@ class ObjectOutputStream(Stream, SetFields)
    public simple(x)
       local e
       static s
-      initial s := set("null", "string", "cset", "integer", "class",
+      initial s := set("null", "string", "ucs", "cset", "integer", "class",
                        "real", "co-expression", "constructor", "procedure")
       if /indent | (level = \depth) then
          return
