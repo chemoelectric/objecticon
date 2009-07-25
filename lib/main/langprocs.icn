@@ -107,7 +107,13 @@ class ObjectOutputStream(Stream, SetFields)
       self.seen := table()
       self.level := 0
       self.ilevel := 0
-      return traverse(o)
+      if traverse(o) then {
+         self.seen := &null
+         return
+      } else {
+         self.seen := &null
+         fail
+      }
    end
 
    public out(s)
