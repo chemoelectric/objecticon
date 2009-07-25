@@ -674,7 +674,7 @@ Equals check: set#*{list#*[1],list#*[1],list#*[2,2],list#*[3]} -v- set#*{list#*[
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 20:11.33 BST
+Equals check: object util.Time#*(October 10, 2000 20:11.33 BST) -v- object util.Time#*(October 10, 2000 20:11.33 BST)
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
@@ -683,7 +683,7 @@ Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 20:11.33 BST
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Succeeded with "util.Time"
 	classof(a)===classof(b): yes
-Equals check: set#*{October 10, 2000 20:11.33 BST} -v- set#*{October 10, 2000 20:11.33 BST}
+Equals check: set#*{object util.Time#*(October 10, 2000 20:11.33 BST)} -v- set#*{object util.Time#*(October 10, 2000 20:11.33 BST)}
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
@@ -691,7 +691,7 @@ Equals check: set#*{October 10, 2000 20:11.33 BST} -v- set#*{October 10, 2000 20
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 11:11.33 BST
+Equals check: object util.Time#*(October 10, 2000 20:11.33 BST) -v- object util.Time#*(October 10, 2000 11:11.33 BST)
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): no
@@ -700,7 +700,7 @@ Equals check: October 10, 2000 20:11.33 BST -v- October 10, 2000 11:11.33 BST
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Succeeded with "util.Time"
 	classof(a)===classof(b): yes
-Equals check: set#*{October 10, 2000 20:11.33 BST} -v- set#*{October 10, 2000 11:11.33 BST}
+Equals check: set#*{object util.Time#*(October 10, 2000 20:11.33 BST)} -v- set#*{object util.Time#*(October 10, 2000 11:11.33 BST)}
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): no
@@ -708,7 +708,7 @@ Equals check: set#*{October 10, 2000 20:11.33 BST} -v- set#*{October 10, 2000 11
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: October 10, 2000 20:11.33 BST -v- object One#*(x=1;y=2)
+Equals check: object util.Time#*(October 10, 2000 20:11.33 BST) -v- object One#*(x=1;y=2)
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): no

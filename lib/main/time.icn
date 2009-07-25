@@ -72,7 +72,7 @@ class Time()
    # Output object
    #
    private object_output(oo)
-      return oo.writes(format("MMMM d, yyyy H:mm.ss z"))
+      return oo.object_string(self, format("MMMM d, yyyy H:mm.ss z"))
    end
 
    #

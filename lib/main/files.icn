@@ -513,6 +513,10 @@ class FilePath()
       return classof(self)(l[1:-1])
    end
 
+   private object_output(oo)
+      return oo.object_string(self, str())
+   end
+
    #
    # Return the child path, ie a path with the same elements plus the
    # element {s}.

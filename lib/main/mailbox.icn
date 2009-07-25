@@ -66,13 +66,6 @@ class Mailbox(Address)
          return addr
    end
 
-   #
-   # Output object
-   #
-   private object_output(oo)
-      return oo.writes(to_rfc822())
-   end
-
    public static parse(s)
       local p
       p := RFC822Parser()

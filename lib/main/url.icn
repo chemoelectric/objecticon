@@ -97,12 +97,19 @@ class URL()
    # Output object
    #
    private object_output(oo)
+      return oo.object_string(self, str())
+   end
+
+   #
+   # Convert to string representation
+   #
+   public str()
       local s
       s := self.protocol || "://" || self.address || ":" || self.port || self.file
       s ||:= "#" || \self.ref
-      return oo.writes(s)
+      return s
    end
-   
+
    #
    # Extract the cgi parameters from the {file} field.
    # @return   A table, representing the keys and values of the fields.

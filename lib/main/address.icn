@@ -13,6 +13,6 @@ class Address()
    # Output object
    #
    private object_output(oo)
-      return oo.writes(to_rfc822())
+      return oo.object_string(self, to_rfc822())
    end
 end
