@@ -23,7 +23,7 @@ procedure main(a)
       fmt.format(,d)
       #d.print_structure()
       write("--- Document structure")
-      ObjectOutputStream(FileStream.stdout,3).traverse(d)
+      ObjectOutputStream(FileStream.stdout,3).show(d)
       write("------------")
    }
 end

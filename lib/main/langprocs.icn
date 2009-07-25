@@ -1,6 +1,6 @@
 package lang
 
-import io
+import io, util
 
 #
 # Generate the record names for a record.  The results are undefined for a
@@ -18,7 +18,8 @@ procedure generate_record_names(object)
 end
 
 #
-# Convert the object to string, descending structures to the given depth
+# Convert the object to string, descending structures to the given depth.  See
+# also {ObjectOutputStream}.
 #
 # @param o       The object to be converted.
 # @param indent  Output newlines and indentation to show the object structure
@@ -27,33 +28,65 @@ end
 procedure to_string(o, indent, depth)
    local sb
    sb := RamStream()
-   ObjectOutputStream(sb, indent, depth).traverse(o)
+   ObjectOutputStream(sb, 
+                      "indent=",indent, 
+                      "depth=",depth).show(o)
    return sb.done()
 end
 
 #
-# Like to_string, but send the output direct to FileStream.stdout.
+# Like {to_string}, but send the output direct to {FileStream.stdout}.  See
+# also {ObjectOutputStream}.
 #
 # @param o       The object to be output.
 # @param indent  Output newlines and indentation to show the object structure
 # @param depth   The depth of recursion; default is all levels
 #
 procedure to_stdout(o, indent, depth)
-   return ObjectOutputStream(FileStream.stdout, indent, depth).traverse(o)
+   return ObjectOutputStream(FileStream.stdout, 
+                             "indent=",indent, 
+                             "depth=",depth).show(o)
 end
 
 #
-# Like to_string, but send the output direct to FileStream.stderr.
+# Like {to_string}, but send the output direct to {FileStream.stderr}.  See
+# also {ObjectOutputStream}.
 #
 # @param o       The object to be output.
 # @param indent  Output newlines and indentation to show the object structure
 # @param depth   The depth of recursion; default is all levels
 #
 procedure to_stderr(o, indent, depth)
-   return ObjectOutputStream(FileStream.stdout, indent, depth).traverse(o)
+   return ObjectOutputStream(FileStream.stdout, 
+                             "indent=",indent, 
+                             "depth=",depth).show(o)
 end
 
-class ObjectOutputStream(Stream)
+#
+# This class can be used to output a human-readable image of an
+# arbitrary icon object.
+#
+# @example
+# @  oo := ObjectOutputStream(FileStream.stdout, "indent=3")
+# @  oo.show(my_object)
+# @  oo.show(another_object)
+#
+# Note that most of the public methods in this class are intended for
+# use by other classes which implement custom output (by having an
+# {object_output} method).  Only the setter and {show} methods should
+# be used by a client.
+#
+# For simpler procedure interfaces to this class, see {to_string},
+# {to_stdout} and {to_stderr}.
+#
+# @field file={Stream} : see {set_file}.  May be given as first constructor 
+# @      parameter.
+# @field indent=integer : see {set_indent}
+# @field depth=integer : see {set_depth}
+# @field ignore_object_output=flag : see {set_ignore_object_output}
+# @field always_structure=flag : see {set_always_structure}
+#
+class ObjectOutputStream(Stream, SetFields)
    private readable
       depth,
       indent,
@@ -63,11 +96,23 @@ class ObjectOutputStream(Stream)
    private
       stuff,
       seen, 
-      f
+      file,
+      ignore_object_output_flag,
+      always_structure_flag
+
+   #
+   # Reset everything and output a new object.
+   #
+   public show(o)
+      self.seen := table()
+      self.level := 0
+      self.ilevel := 0
+      return traverse(o)
+   end
 
    public out(s)
       stuff := 1
-      return f.out(s)
+      return file.out(s)
    end
 
    public get_mode()
@@ -143,7 +188,7 @@ class ObjectOutputStream(Stream)
             seen[o] := s
             if /desc then
                writes(s) | fail
-            else if mp := Class.getf(o, "object_output", 1) then
+            else if /ignore_object_output_flag & (mp := Class.getf(o, "object_output", 1)) then
                mp(self) | fail
             else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
                writes(s, "(") | fail
@@ -180,7 +225,7 @@ class ObjectOutputStream(Stream)
                writes(s) | fail
             else if simple{!o} then {
                writes(s, "{") | fail
-               every e := !o do {
+               every e := !sort(o) do {
                   if \sep then
                      writes(",") | fail
                   traverse(e) | fail
@@ -191,7 +236,7 @@ class ObjectOutputStream(Stream)
                nl() | fail
                writes(s, "{") | fail
                iplus()
-               every e := !o do {
+               every e := !sort(o) do {
                   if \sep then
                      writes(",") | fail
                   nl() | fail
@@ -386,20 +431,68 @@ class ObjectOutputStream(Stream)
                        "real", "co-expression", "constructor", "procedure")
       if /indent | (level = \depth) then
          return
+      if \always_structure_flag then
+         fail
       while e := @x do
          member(seen, e) | member(s, type(e)) | fail
       return 
    end
 
-   public new(f, indent, depth)
-      self.seen := table()
-      self.level := 0
-      self.ilevel := 0
-      self.depth := depth
-      self.indent := indent
-      self.f := f
+   # Set the file to which output is sent, which must be writeable.
+   #
+   # @param f a {Stream}
+   public set_file(f)
       f.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", f)
+      self.file := f
+   end
+
+   # When set to an integer, output is structured over many lines,
+   # with the given value as an indent to show structure.  When null,
+   # all output is on one line.
+   #
+   public set_indent(i)
+      self.indent := i
+   end
+
+   # The maximum depth into which strucutures are recursed; if null
+   # then no limit.
+   #
+   public set_depth(i)
+      self.depth := i
+   end
+
+   # If set, then any custom {object_output} methods in objects are
+   # ignored, and the default object output format is used instead.
+   #
+   public set_ignore_object_output(s)
+      self.ignore_object_output_flag := to_flag(s)
+   end
+
+   # When indent is set (ie output is over many lines and indented to
+   # show structure), certain objects will still be written on one
+   # line if they just contain simple elements like integers and
+   # strings.  This flag forces even these objects to be written over
+   # many lines.
+   #
+   public set_always_structure(s)
+      self.always_structure_flag := to_flag(s)
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "file" : set_file(f.object_val(Stream))
+         "indent" : set_indent(f.int_val())
+         "depth" : set_depth(f.int_val())
+         "ignore_object_output" : set_ignore_object_output(f.flag_val())
+         "always_structure" : set_always_structure(f.flag_val())
+         default: fail
+      }
       return
+   end
+
+   protected set_special(a)
+      if is(a[1], Stream) then
+         set_file(pop(a))
    end
 end
 

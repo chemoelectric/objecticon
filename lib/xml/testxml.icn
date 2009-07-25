@@ -65,7 +65,7 @@ procedure main(a)
          write("--- Formatted input")
          fmt.format(, d)
          write("--- Document structure")
-         ObjectOutputStream(FileStream.stdout,3).traverse(d)
+         ObjectOutputStream(FileStream.stdout,3).show(d)
 #         if \t["g"] then
 #            d.print_structure(,,1)
 #         else
