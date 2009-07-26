@@ -953,10 +953,10 @@ class ProgStream(FileStream, NoCopy)
          return ProgStream(l[2].get_fd(), WRITE, pid)
       } else {
          if \stdout then
-            stdout.dup2(1) | fail
+            stdout.dup2(1) | stop(&why)
          if \stderr then
-            stderr.dup2(2) | fail
-         l[1].dup2(0) | fail
+            stderr.dup2(2) | stop(&why)
+         l[1].dup2(0) | stop(&why)
          l[1].close()
          l[2].close()
          System.exec(cmd, args, env) | stop(&why)
@@ -970,8 +970,8 @@ class ProgStream(FileStream, NoCopy)
    # standard input; by default the command inherits stdin from the
    # parent.
    # @example
-   # @   g := FileStream.open("/tmp/data",FileOpt.RDONLY)
-   # @   f := ProgStream.open_write("wc", ["-l"],,g) | stop(&why)
+   # @   g := FileStream.open("/tmp/data",FileOpt.RDONLY) | stop(&why)
+   # @   f := ProgStream.open_read("wc", ["-l"],,g) | stop(&why)
    # @   g.close()
    # @   while write(f.read())   # writes the number of lines in /tmp/data
    # @   f.close()
@@ -987,9 +987,9 @@ class ProgStream(FileStream, NoCopy)
       } else {
          # Child
          if \stdin then
-            stdin.dup2(0) | fail
-         l[2].dup2(1) | fail
-         l[2].dup2(2) | fail
+            stdin.dup2(0) | stop(&why)
+         l[2].dup2(1) | stop(&why)
+         l[2].dup2(2) | stop(&why)
          l[1].close()
          l[2].close()
          System.exec(cmd, args, env) | stop(&why)
