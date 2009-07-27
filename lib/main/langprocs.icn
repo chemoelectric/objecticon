@@ -28,9 +28,8 @@ end
 procedure to_string(o, indent, depth)
    local sb
    sb := RamStream()
-   ObjectOutputStream(sb, 
-                      "indent=",indent, 
-                      "depth=",depth).show(o)
+   ObjectOutputStream("indent=",indent, 
+                      "depth=",depth).show(o, sb)
    return sb.done()
 end
 
@@ -43,9 +42,8 @@ end
 # @param depth   The depth of recursion; default is all levels
 #
 procedure to_stdout(o, indent, depth)
-   return ObjectOutputStream(FileStream.stdout, 
-                             "indent=",indent, 
-                             "depth=",depth).show(o)
+   return ObjectOutputStream("indent=",indent, 
+                             "depth=",depth).show(o, FileStream.stdout)
 end
 
 #
@@ -57,9 +55,8 @@ end
 # @param depth   The depth of recursion; default is all levels
 #
 procedure to_stderr(o, indent, depth)
-   return ObjectOutputStream(FileStream.stdout, 
-                             "indent=",indent, 
-                             "depth=",depth).show(o)
+   return ObjectOutputStream("indent=",indent, 
+                             "depth=",depth).show(o, FileStream.stderr)
 end
 
 #
@@ -67,9 +64,9 @@ end
 # arbitrary icon object.
 #
 # @example
-# @  oo := ObjectOutputStream(FileStream.stdout, "indent=3")
-# @  oo.show(my_object)
-# @  oo.show(another_object)
+# @  oo := ObjectOutputStream("indent=3")
+# @  oo.show(my_object, FileStream.stdout)
+# @  oo.show(another_object, FileStream.stdout)
 #
 # Note that most of the public methods in this class are intended for
 # use by other classes which implement custom output (by having an
@@ -79,8 +76,6 @@ end
 # For simpler procedure interfaces to this class, see {to_string},
 # {to_stdout} and {to_stderr}.
 #
-# @field file={Stream} : see {set_file}.  May be given as first constructor 
-# @      parameter.
 # @field indent=integer : see {set_indent}
 # @field depth=integer : see {set_depth}
 # @field ignore_object_output=flag : see {set_ignore_object_output}
@@ -103,7 +98,10 @@ class ObjectOutputStream(Stream, SetFields)
    #
    # Reset everything and output a new object.
    #
-   public show(o)
+   public show(o, file)
+      /file := FileStream.stdout
+      self.file := file
+      file.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", file)
       self.seen := table()
       self.level := 0
       self.ilevel := 0
@@ -444,14 +442,6 @@ class ObjectOutputStream(Stream, SetFields)
       return 
    end
 
-   # Set the file to which output is sent, which must be writeable.
-   #
-   # @param f a {Stream}
-   public set_file(f)
-      f.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", f)
-      self.file := f
-   end
-
    # When set to an integer, output is structured over many lines,
    # with the given value as an indent to show structure.  When null,
    # all output is on one line.
@@ -486,7 +476,6 @@ class ObjectOutputStream(Stream, SetFields)
 
    protected set_one(f)
       case f.attr of {
-         "file" : set_file(f.object_val(Stream))
          "indent" : set_indent(f.int_val())
          "depth" : set_depth(f.int_val())
          "ignore_object_output" : set_ignore_object_output(f.flag_val())
@@ -494,11 +483,6 @@ class ObjectOutputStream(Stream, SetFields)
          default: fail
       }
       return
-   end
-
-   protected set_special(a)
-      if is(a[1], Stream) then
-         set_file(pop(a))
    end
 end
 
