@@ -148,3 +148,31 @@ procedure iso8859_to_ucs(s)
    return ucs(t)
 end
 }}}
+
+= Editing utf-8 source code =
+
+Source code files can be edited in utf-8 format; however on translation the `-u` flag must be given to `oit`.  To see why, consider the following program :-
+{{{
+import io
+
+procedure main()
+   local s
+   s := u"Министры иностранных дел Европейского союза утвердили"
+   s ? every write(upto('ив'))
+end
+}}}
+When translated with `oit -u ...` it works as expected, producing the output
+{{{
+2
+4
+10
+27
+47
+51
+53
+}}}
+However, if it is translated without the `-u` option, it produces no output.  This is because the cset literal
+{{{
+'ив'
+}}}
+is interpreted wrongly without the `-u` option - it is seen by `oit` as the raw utf-8 bytes saved by the editor, ie as though one had written `'\xd0\xb8\xd0\xb2'`.  With the `-u` option the utf-8 sequence is interpreted correctly as `'\u0432\u0438'`.
