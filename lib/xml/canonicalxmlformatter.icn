@@ -13,20 +13,20 @@ package xml
 # is used for testing purposes.
 #
 class CanonicalXmlFormatter(XmlFormatter)
-   public format_cdata(out, n, level)
+   public format_cdata(n)
       return out.writes(xml_escape(n.content, '\n\r\t&<>\"'))
    end
 
-   public format_document(out, n, level)
+   public format_document(n)
       local el
       every el := !n.children do {
          if is(el, DocType | ProcessingInstruction | Element) then
-            format(out, el, level + 1) | fail
+            format_node(el) | fail
       }
       return
    end
 
-   public format_doctype(out, n, level)
+   public format_doctype(n)
       local s, x
 
       if *n.parent.notation_declarations = 0 then
@@ -50,7 +50,7 @@ class CanonicalXmlFormatter(XmlFormatter)
       return out.writes(s)
    end
 
-   public format_element(out, n, level)
+   public format_element(n)
       local s, x, e
 
       s := "<" || n.name
@@ -67,7 +67,7 @@ class CanonicalXmlFormatter(XmlFormatter)
          if text(e) then
             out.writes(xml_escape(e, '\n\r\t&<>\"')) | fail
          else if not is(e, Comment) then
-            format(out, e, level + 1) | fail
+            format_node(e) | fail
       }
 
       out.writes("</" || n.name || ">") | fail
@@ -75,7 +75,7 @@ class CanonicalXmlFormatter(XmlFormatter)
       return
    end
 
-   public format_pi(out, n, level)
+   public format_pi(n)
       local s
       s := "<?" || n.target || " "
       if \n.content then

@@ -16,55 +16,65 @@ import io
 # stream.
 #
 class Formatter()
+   protected 
+      out, level
+
    public format_to_string(n, level)
       local f
       f := RamStream()
-      format(f, n, level) | {
+      format(n, f) | {
          f.close()
          fail
       }
       return f.done()
    end
 
-   public format(out, n, level)
-      local s
-      /level := 0
+   public format(n, out)
       /out := FileStream.stdout
-
-      if s := text(n) then
-         return format_content(out, s, level)
-
-      if is(n, Element) then
-         return format_element(out, n, level)
-      else if is(n, DocType) then
-         return format_doctype(out, n, level)
-      else if is(n, Comment) then
-         return format_comment(out, n, level)
-      else if is(n, ProcessingInstruction) then
-         return format_pi(out, n, level)
-      else if is(n, CData) then
-         return format_cdata(out, n, level)
-      else if is(n, Document) then
-         return format_document(out, n, level)
-      else if is(n, XmlDecl) then
-         return format_xmldecl(out, n, level)
+      self.out := out
+      out.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", out)
+      self.level := -1
+      return format_node(n)
    end
 
-   public defer format_document(out, n, level)
+   public format_node(n)
+      local s, res
+      level +:= 1
+      res := if s := text(n) then
+         format_content(s)
+      else if is(n, Element) then
+         format_element(n)
+      else if is(n, DocType) then
+         format_doctype(n)
+      else if is(n, Comment) then
+         format_comment(n)
+      else if is(n, ProcessingInstruction) then
+         format_pi(n)
+      else if is(n, CData) then
+         format_cdata(n)
+      else if is(n, Document) then
+         format_document(n)
+      else if is(n, XmlDecl) then
+         format_xmldecl(n)
+      level -:= 1
+      return res
+   end
 
-   public defer format_content(out, s, level)
+   public defer format_document(n)
 
-   public defer format_doctype(out, n, level)
+   public defer format_content(s)
 
-   public defer format_comment(out, n, level)
+   public defer format_doctype(n)
 
-   public defer format_pi(out, n, level)
+   public defer format_comment(n)
 
-   public defer format_element(out, n, level)
+   public defer format_pi(n)
 
-   public defer format_cdata(out, n, level)
+   public defer format_element(n)
 
-   public defer format_xmldecl(out, n, level)
+   public defer format_cdata(n)
+
+   public defer format_xmldecl(n)
 end
 
 

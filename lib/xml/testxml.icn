@@ -63,13 +63,9 @@ procedure main(a)
       if d := p.parse(s) then {
          write("--- Parsing complete.  Document was well-formed")
          write("--- Formatted input")
-         fmt.format(, d)
+         fmt.format(d)
          write("--- Document structure")
-         ObjectOutputStream(FileStream.stdout,3).show(d)
-#         if \t["g"] then
-#            d.print_structure(,,1)
-#         else
-#            d.print_structure()
+         ObjectOutputStream("indent=3").show(d)
          d.show_entities()
          d.show_element_declarations()
          d.show_notation_declarations()

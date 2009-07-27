@@ -62,20 +62,20 @@ class XmlFormatter(Formatter,SetFields)
       as_read_flag := to_flag(s)
    end
 
-   public format_document(out, n, level)
+   public format_document(n)
       local c
       every c := !n.children do {
-         format(out, c, level + 1) | fail
+         format_node(c) | fail
          out.write() | fail
       }
       return
    end
 
-   public format_content(out, s, level)
+   public format_content(s)
       return out.writes(s)
    end
 
-   public format_doctype(out, n, level)
+   public format_doctype(n)
       local s, x
       s := "<!DOCTYPE "
       s ||:= \n.name
@@ -90,11 +90,11 @@ class XmlFormatter(Formatter,SetFields)
       return out.writes(s)
    end
 
-   public format_comment(out, n, level)
+   public format_comment(n)
       return out.writes("<!--" || n.comment || "-->")
    end
 
-   public format_pi(out, n, level)
+   public format_pi(n)
       local s
       s := "<?" || n.target
       if \n.content then
@@ -103,7 +103,7 @@ class XmlFormatter(Formatter,SetFields)
       return out.writes(s)
    end
 
-   public format_element(out, n, level)
+   public format_element(n)
       local s, istr1, istr2, x, l, e
 
       if \indent then {
@@ -135,7 +135,7 @@ class XmlFormatter(Formatter,SetFields)
                if text(e) then
                   out.writes(xml_escape(e, '&<>\"')) | fail
                else
-                  format(out, e, level + 1) | fail
+                  format_node(e) | fail
             }
             if \indent then
                out.writes(istr2) | fail
@@ -156,11 +156,11 @@ class XmlFormatter(Formatter,SetFields)
       return el.children
    end
 
-   public format_cdata(out, n, level)
+   public format_cdata(n)
       return out.writes("<![CDATA[" || n.content || "]]>")
    end
 
-   public format_xmldecl(out, n, level)
+   public format_xmldecl(n)
       local s
       s := "<?xml "
       if \n.version then
