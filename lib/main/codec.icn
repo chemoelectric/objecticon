@@ -47,8 +47,8 @@ end
 procedure encode(o)
    local e, f
    f := RamStream()
-   e := Encode(f)
-   e.encode(o) | {
+   e := Encode()
+   e.begin(o, f) | {
       f.close()
       fail
    }
@@ -61,14 +61,32 @@ end
 procedure decode(s)
    local d
    d := Decode()
-   return s ? d.decode()
+   return d.parse(s)
 end
 
 class Encode()
    private
       tag_count,
       seen, 
-      f
+      file
+
+   #
+   # Reset everything and output a new object.
+   #
+   public begin(o, file)
+      /file := FileStream.stdout
+      self.file := file
+      file.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", file)
+      self.tag_count := 0
+      self.seen := table()
+      if encode(o) then {
+         self.seen := &null
+         return
+      } else {
+         self.seen := &null
+         fail
+      }
+   end
 
    private note_seen(o)
       seen[o] := (tag_count +:= 1)
@@ -209,22 +227,15 @@ class Encode()
    end
 
    private line_out(s)
-      return f.writes(s, Codec.CODE_SEPARATOR)
+      return file.writes(s, Codec.CODE_SEPARATOR)
    end
 
    private chars_out(s)
-      return f.writes(s)
+      return file.writes(s)
    end
 
    private int_out(i)
-      return f.writes(string(i))
-   end
-
-   public new(f)
-      tag_count := 0
-      seen := table()
-      self.f := f
-      return
+      return file.writes(string(i))
    end
 end
 
@@ -236,6 +247,22 @@ class Decode()
    private
       tag_count,
       seen
+
+   #
+   # Reset everything and parse a new object from s
+   #
+   public parse(s)
+      local res
+      self.tag_count := 0
+      self.seen := table()
+      s ? if res := decode() then {
+         self.seen := &null
+         return res
+      } else {
+         self.seen := &null
+         fail
+      }
+   end
 
    private decode_string(s)
       local r
@@ -395,11 +422,5 @@ class Decode()
          default :
             return error("Unknown type code:" || image(t))
       }            
-   end
-
-   public new()
-      tag_count := 0
-      seen := table()
-      return
    end
 end
