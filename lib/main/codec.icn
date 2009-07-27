@@ -76,7 +76,7 @@ class Encode()
    public begin(o, file)
       /file := FileStream.stdout
       self.file := file
-      file.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", file)
+      file.can(Stream.WRITE) | runerr("Encode: stream not writable: ", file)
       self.tag_count := 0
       self.seen := table()
       if encode(o) then {

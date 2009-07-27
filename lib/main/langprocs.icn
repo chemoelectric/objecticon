@@ -101,7 +101,7 @@ class ObjectOutputStream(Stream, SetFields)
    public show(o, file)
       /file := FileStream.stdout
       self.file := file
-      file.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", file)
+      file.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable: ", file)
       self.seen := table()
       self.level := 0
       self.ilevel := 0

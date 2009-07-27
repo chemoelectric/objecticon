@@ -32,7 +32,7 @@ class Formatter()
    public format(n, out)
       /out := FileStream.stdout
       self.out := out
-      out.can(Stream.WRITE) | runerr("ObjectOutputStream: stream not writable:", out)
+      out.can(Stream.WRITE) | runerr("Formatter: stream not writable: ", out)
       self.level := -1
       return format_node(n)
    end
