@@ -3,21 +3,6 @@ package lang
 import io, util
 
 #
-# Generate the record names for a record.  The results are undefined for a
-# non-record type of object.
-#
-procedure generate_record_names(object)
-   local i
-   every i := 1 to *object do {
-      name(object[i]) ? {
-         tab(upto('.'))
-         move(1)
-         suspend tab(0)
-      }
-   }
-end
-
-#
 # Convert the object to string, descending structures to the given depth.  See
 # also {ObjectOutputStream}.
 #
@@ -160,7 +145,7 @@ class ObjectOutputStream(Stream, SetFields)
             else if simple{!o} then {
                writes(s, "(") | fail
                i := 1
-               every s := generate_record_names(o) do {
+               every s := Constructor.get_field_names(o) do {
                   if i > 1 then
                      writes(";") | fail
                   writes(s, "=") | fail
@@ -173,7 +158,7 @@ class ObjectOutputStream(Stream, SetFields)
                writes(s, "(") | fail
                iplus()
                i := 1
-               every s := generate_record_names(o) do {
+               every s := Constructor.get_field_names(o) do {
                   nl() | fail
                   iplus()
                   writes(s, "=") | fail
