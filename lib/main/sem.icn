@@ -10,7 +10,7 @@ $define LIB "objecticonipclib.so"
 
 package ipc
 
-import lang, util
+import lang
 
 #
 # This class provides a semaphore facility.  The implementation requires
@@ -73,15 +73,15 @@ class Sem(NoCopy)
    # until t milliseconds or {semop_nowait()} succeeds.  Fails on a timeout; otherwise
    # succeeds.
    # @param n the parameter to semop_nowait
-   # @param t the timeout in milliseconds.
+   # @param t the timeout in milliseconds, default 0
    #
    public semop_poll(n, t)
       local c
-      c := Time.get_system_millis()
+      c := Prog.get_runtime_millis()
       repeat {
          if semop_nowait(n) then
             return 
-         if Time.get_system_millis() - c > t then
+         if Prog.get_runtime_millis() - c >= t then
             fail
          delay(50)
       }

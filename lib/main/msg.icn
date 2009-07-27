@@ -10,7 +10,7 @@ $define LIB "objecticonipclib.so"
 
 package ipc
 
-import lang, util
+import lang
 
 #
 # This class provides an inter process messaging facility.  The implementation requires
@@ -55,14 +55,15 @@ class Msg(NoCopy)
    #
    # Poll the queue for an object for t milliseconds.  If an object is
    # not received within that time, fail, otherwise return it.
+   # @param t the timeout
    #
    public poll(t)
       local c, o
-      c := Time.get_system_millis()
+      c := Prog.get_runtime_millis()
       repeat {
          if o := attempt() then
             return o
-         if Time.get_system_millis() - c > t then
+         if Prog.get_runtime_millis() - c >= t then
             fail
          delay(50)
       }
