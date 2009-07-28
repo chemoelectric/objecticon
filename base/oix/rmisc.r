@@ -977,17 +977,18 @@ int noimage;
 
 static word *resolve_ipc(word *ipc, int prior, struct progstate *p)
 {
-    if (prior) {
-        if (InRange(p->Code, ipc - 1, p->Ecode)) 
-            return ipc - 1;
-        if (*ipc == Op_IpcRef)
-            return resolve_ipc((word*)ipc[1], prior, p);
-    } else {
-        if (InRange(p->Code, ipc, p->Ecode)) 
-            return ipc;
-        if (*ipc == Op_IpcRef)
-            return resolve_ipc((word*)ipc[1], prior, p);
-    }
+    if (!ipc)
+        return 0;
+
+    if (*ipc == Op_IpcRef)
+        ipc = (word *)ipc[1];
+
+    if (prior)
+        --ipc;
+
+    if (InRange(p->Code, ipc, p->Ecode)) 
+        return ipc;
+
     return 0;
 }
 
