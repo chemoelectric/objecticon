@@ -597,7 +597,7 @@ Deliberate Syntax Error
 	    Call_Gen;
 
          case Op_IpcRef:		/* ipcref (a no-op) */
-            GetWord;
+            ipc++;
             break;
 
          case Op_Noop:		/* no-op */
