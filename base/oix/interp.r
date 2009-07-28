@@ -286,7 +286,7 @@ int interp_x(int fsig,dptr cargp)
                   ipc_offset < current_fname_ptr->ipc ||
                   (current_fname_ptr + 1 < efilenms && ipc_offset >= current_fname_ptr[1].ipc)) {
 
-                  current_fname_ptr = find_ipc_fname(ipc, curpstate);
+                  current_fname_ptr = find_ipc_fname(ipc, 0, curpstate);
                   if (current_fname_ptr) {
                       InterpEVValD(&current_fname_ptr->fname, e_fname);
                       /* Ensure a fname change is always followed by a line number event (if
@@ -315,7 +315,7 @@ int interp_x(int fsig,dptr cargp)
                       current_line_ptr ++;
                   } 
                   else {
-                      current_line_ptr = find_ipc_line(ipc, curpstate);
+                      current_line_ptr = find_ipc_line(ipc, 0, curpstate);
                   }
                   if (current_line_ptr)
                       InterpEVVal(current_line_ptr->line, e_line);
@@ -595,6 +595,10 @@ Deliberate Syntax Error
 	    DerefArg(2);
 	    DerefArg(3);
 	    Call_Gen;
+
+         case Op_IpcRef:		/* ipcref (a no-op) */
+            GetWord;
+            break;
 
          case Op_Noop:		/* no-op */
             break;

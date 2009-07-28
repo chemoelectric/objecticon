@@ -25,7 +25,6 @@ void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
     int depth;
     struct pf_marker *origpfp = pfp;
     dptr arg;
-    word *cipc;
 
     /*
      * Chain back through the procedure frame markers, looking for the
@@ -51,15 +50,7 @@ void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
     while (pfp) {
         if (depth <= LIMIT) {
             arg = &((dptr)pfp)[-(pfp->pf_nargs) - 1];
-            /*
-             * The ipc in the procedure frame points after the "invoke n".
-             */
-            cipc = pfp->pf_ipc;
-            --cipc;
-            --cipc;
-
-            xtrace(pfp->pf_nargs, &arg[0], findline(cipc),
-                   findfile(cipc));
+            xtrace(pfp->pf_nargs, &arg[0], findline(pfp->pf_ipc), findfile(pfp->pf_ipc));
             /*
              * On the last call, show both the call and the offending expression.
              */
@@ -439,16 +430,12 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
 {
     struct b_proc *proc0;
 
-    word *t_ipc;
-
     --k_trace;
-
 
     /*
      * Compute the ipc of the instruction causing the context switch.
      */
-    t_ipc = ipc - 1;
-    showline(findfile(t_ipc), findline(t_ipc));
+    showline(findfile(ipc), findline(ipc));
     /* argp can be 0 when we come back from a loaded program. */
     if (argp) {
         proc0 = (struct b_proc *)BlkLoc(*argp);
@@ -715,14 +702,13 @@ static void ttrace()
     }
 	 
     if (ipc != NULL) {
-        word *t_ipc = ipc - 1;
-        dptr fn = findfile(t_ipc);
+        dptr fn = findfile(ipc);
         if (fn) {
             struct descrip t;
             abbr_fname(fn, &t);
-            fprintf(stderr, " from line %d in %.*s", findline(t_ipc), (int)StrLen(t), StrLoc(t));
+            fprintf(stderr, " from line %d in %.*s", findline(ipc), (int)StrLen(t), StrLoc(t));
         } else
-            fprintf(stderr, " from line %d in ?", findline(t_ipc));
+            fprintf(stderr, " from line %d in ?", findline(ipc));
     }
 
     putc('\n', stderr);
@@ -740,7 +726,6 @@ void ctrace(dp, nargs, arg)
     int nargs;
     dptr arg;
 {
-
     showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
     putstr(stderr, dp);
@@ -763,13 +748,7 @@ void rtrace(dp, rval)
     dptr dp;
     dptr rval;
 {
-    word *t_ipc;
-
-    /*
-     * Compute the ipc of the return instruction.
-     */
-    t_ipc = ipc - 1;
-    showline(findfile(t_ipc), findline(t_ipc));
+    showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
     putstr(stderr, dp);
     fprintf(stderr, " returned ");
@@ -785,13 +764,7 @@ void rtrace(dp, rval)
 void failtrace(dp)
     dptr dp;
 {
-    word *t_ipc;
-
-    /*
-     * Compute the ipc of the fail instruction.
-     */
-    t_ipc = ipc - 1;
-    showline(findfile(t_ipc), findline(t_ipc));
+    showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
     putstr(stderr, dp);
     fprintf(stderr, " failed");
@@ -807,13 +780,7 @@ void strace(dp, rval)
     dptr dp;
     dptr rval;
 {
-    word *t_ipc;
-
-    /*
-     * Compute the ipc of the suspend instruction.
-     */
-    t_ipc = ipc - 1;
-    showline(findfile(t_ipc), findline(t_ipc));
+    showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
     putstr(stderr, dp);
     fprintf(stderr, " suspended ");
@@ -829,13 +796,7 @@ void strace(dp, rval)
 void atrace(dp)
     dptr dp;
 {
-    word *t_ipc;
-
-    /*
-     * Compute the ipc of the instruction causing resumption.
-     */
-    t_ipc = ipc - 1;
-    showline(findfile(t_ipc), findline(t_ipc));
+    showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
     putstr(stderr, dp);
     fprintf(stderr, " resumed");

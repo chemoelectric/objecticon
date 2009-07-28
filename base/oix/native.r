@@ -291,7 +291,7 @@ function{*} lang_Prog_get_keyword(s,c)
                       i = ipc;
                   else
                       i = p->K_current->es_ipc;
-                  t = find_ipc_fname(i, p);
+                  t = find_ipc_fname(i, 0, p);
                   if (!t)
                       fail;
                   return t->fname;
@@ -305,7 +305,7 @@ function{*} lang_Prog_get_keyword(s,c)
                       i = ipc;
                   else
                       i = p->K_current->es_ipc;
-                  t = find_ipc_line(i, p);
+                  t = find_ipc_line(i, 0, p);
                   if (!t)
                       fail;
                   return C_integer t->line;

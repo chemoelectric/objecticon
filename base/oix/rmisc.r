@@ -8,6 +8,8 @@
  *  Integer overflow checking.
  */
 
+#include "../h/opdefs.h"
+
 /*
  * Prototypes.
  */
@@ -973,19 +975,36 @@ int noimage;
 
    }
 
+static word *resolve_ipc(word *ipc, int prior, struct progstate *p)
+{
+    if (prior) {
+        if (InRange(p->Code, ipc - 1, p->Ecode)) 
+            return ipc - 1;
+        if (*ipc == Op_IpcRef)
+            return resolve_ipc((word*)ipc[1], prior, p);
+    } else {
+        if (InRange(p->Code, ipc, p->Ecode)) 
+            return ipc;
+        if (*ipc == Op_IpcRef)
+            return resolve_ipc((word*)ipc[1], prior, p);
+    }
+    return 0;
+}
 
 
 
 /*
  * findline - find the source line number associated with the ipc
  */
-struct ipc_line *find_ipc_line(word *ipc, struct progstate *p)
+struct ipc_line *find_ipc_line(word *ipc, int prior, struct progstate *p)
 {
    uword ipc_offset;
    int size, l, r, m;
-   
-   if (!InRange(p->Code,ipc,p->Ecode))
-      return 0;
+
+   ipc = resolve_ipc(ipc, prior, p);
+   if (!ipc)
+       return 0;
+
    ipc_offset = DiffPtrsBytes(ipc, p->Code);
    size = p->Elines - p->Ilines;
    l = 0;
@@ -1004,16 +1023,17 @@ struct ipc_line *find_ipc_line(word *ipc, struct progstate *p)
 
 int findline(word *ipc)
 {
-    struct ipc_line *p = find_ipc_line(ipc, curpstate);
+    struct ipc_line *p = find_ipc_line(ipc, 1, curpstate);
     return p ? (int)p->line : 0;
 }
 
-struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p)
+struct ipc_fname *find_ipc_fname(word *ipc, int prior, struct progstate *p)
 {
    uword ipc_offset;
    int size, l, r, m;
 
-   if (!InRange(p->Code,ipc,p->Ecode))
+   ipc = resolve_ipc(ipc, prior, p);
+   if (!ipc)
        return 0;
 
    ipc_offset = DiffPtrsBytes(ipc, p->Code);
@@ -1038,7 +1058,7 @@ struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p)
  */
 dptr findfile(word *ipc)
 {
-    struct ipc_fname *p = find_ipc_fname(ipc, curpstate);
+    struct ipc_fname *p = find_ipc_fname(ipc, 1, curpstate);
     return p ? &p->fname : 0;
 }
 

@@ -185,29 +185,28 @@ void err_msg(int n, dptr v)
         if (IntVal(kywd_err) == 0) {
             char *s = StrLoc(k_errortext);
             int i = StrLen(k_errortext);
-            word *t_ipc = ipc - 1;
             dptr fn;
             if (k_errornumber == -1) {
                 fprintf(stderr, "\nRun-time error: ");
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);
-                fn = findfile(t_ipc);
+                fn = findfile(ipc);
                 if (fn) {
                     struct descrip t;
                     abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(t_ipc));
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
                 } else
-                    fprintf(stderr, "File ?; Line %d\n", findline(t_ipc));
+                    fprintf(stderr, "File ?; Line %d\n", findline(ipc));
             } else {
                 fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-                fn = findfile(t_ipc);
+                fn = findfile(ipc);
                 if (fn) {
                     struct descrip t;
                     abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(t_ipc));
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
                 } else
-                    fprintf(stderr, "File ?; Line %d\n", findline(t_ipc));
+                    fprintf(stderr, "File ?; Line %d\n", findline(ipc));
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);

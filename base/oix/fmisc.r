@@ -536,8 +536,7 @@ function{} syserr(msg)
    body {
       char *s = StrLoc(msg);
       int i = StrLen(msg);
-      word *t_ipc = ipc - 1;
-      dptr fn = findfile(t_ipc);
+      dptr fn = findfile(ipc);
       fprintf(stderr, "\nIcon-level internal error: ");
       while (i-- > 0)
           fputc(*s++, stderr);
@@ -545,9 +544,9 @@ function{} syserr(msg)
       if (fn) {
           struct descrip t;
           abbr_fname(fn, &t);
-          fprintf(stderr, "File %.*s; Line %ld\n", (int)StrLen(t), StrLoc(t), (long)findline(t_ipc));
+          fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
       } else
-          fprintf(stderr, "File ?; Line %ld\n", (long)findline(t_ipc));
+          fprintf(stderr, "File ?; Line %d\n", findline(ipc));
 
       fprintf(stderr, "Traceback:\n");
       tracebk(pfp, argp);

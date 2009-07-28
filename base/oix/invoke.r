@@ -464,7 +464,7 @@ void ensure_initialized(struct b_class *class0)
  */
 dptr do_invoke(dptr proc)
 {
-    word ibuf[9];
+    word ibuf[11];
     int retval;
     word *saved_ipc = ipc;
     word saved_lastop = lastop;      /* We save these three in case we are in a function */
@@ -477,11 +477,13 @@ dptr do_invoke(dptr proc)
 
     wp = ibuf;
     *wp++ = Op_Mark;   
-    *wp++ = 6 * WordSize;
+    *wp++ = 8 * WordSize;
     *wp++ = Op_CopyArgs;
     *wp++ = ncopy;
     *wp++ = Op_Invoke;  
     *wp++ = ncopy - 1;
+    *wp++ = Op_IpcRef;
+    *wp++ = (word)ipc;
     *wp++ = Op_Eret;
     *wp++ = Op_Trapret;
     *wp++ = Op_Trapfail;
@@ -550,7 +552,7 @@ dptr call_icon_va(dptr proc, va_list ap)
  */
 static dptr do_new_invoke(dptr top)
 {
-    word ibuf[9];
+    word ibuf[11];
     int retval;
     word *saved_ipc = ipc;
     word *wp;
@@ -559,11 +561,13 @@ static dptr do_new_invoke(dptr top)
 
     wp = ibuf;
     *wp++ = Op_Mark;   
-    *wp++ = 6 * WordSize;
+    *wp++ = 8 * WordSize;
     *wp++ = Op_CopyArgs2;
     *wp++ = ncopy;
     *wp++ = Op_Invoke;  
     *wp++ = ncopy - 1;
+    *wp++ = Op_IpcRef;
+    *wp++ = (word)ipc;
     *wp++ = Op_Eret;
     *wp++ = Op_Trapret;
     *wp++ = Op_Trapfail;
