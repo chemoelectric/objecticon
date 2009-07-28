@@ -8,7 +8,7 @@
 
 package lang
 
-import posix, io
+import posix, io, util
 
 #
 # This class is a convenient way of creating a sub-process in a program,
@@ -104,14 +104,23 @@ class CommProcess()
    # Send an object to the other process.
    # 
    public send(obj)
-      return sock.write(encode(obj))
+      local s
+      # The message format is <len><nl><encoded-data>; knowing the
+      # length in advance lets us potentially get all the encoded data
+      # in one low-level socket read, which is much faster.
+      s := encode(obj)
+      sock.write(*s) | fail
+      return sock.writes(s)
    end
 
    #
    # Receive an object from the other process.
    #
    public receive()
-      return decode(sock.read())
+      local s, n
+      s := sock.read() | fail
+      n := integer(s) | return error("Expected integer size, got: " || s)
+      return decode(sock.reads(n))
    end
 
    #
