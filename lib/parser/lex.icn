@@ -84,7 +84,8 @@ procedure reswords()
 end
 
 procedure lex_error()
-   yyerror("token not recognized")
+   yynerrs +:= 1
+   (\yyerror | write)("token not recognized")
 end
 
 procedure yylex2()
