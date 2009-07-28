@@ -423,8 +423,6 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
     int swtch_typ;
     dptr valloc;
 {
-    struct b_proc *proc0;
-
     --k_trace;
 
     /*
@@ -433,9 +431,8 @@ void cotrace(ccp, ncp, swtch_typ, valloc)
     showline(findfile(ipc), findline(ipc));
     /* argp can be 0 when we come back from a loaded program. */
     if (argp) {
-        proc0 = (struct b_proc *)BlkLoc(*argp);
         showlevel(k_level);
-        putstr(stderr, &proc0->name);
+        procname(stderr, (struct b_proc *)BlkLoc(*argp));
     } else {
         showlevel(k_level);
         fprintf(stderr, "?");
@@ -804,7 +801,7 @@ void xdisp(struct pf_marker *fp,
         /*
          * Print procedure name.
          */
-        putstr(f, &(bp->name));
+        procname(f, bp);
         fprintf(f, " local identifiers:\n");
 
         /*
