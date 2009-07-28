@@ -557,7 +557,10 @@ static void ttrace()
 
         case Op_Invoke:
             nargs = xnargs;
-            outimage(stderr, xargp, 0);
+            if (is:proc(*xargp))   /* Will happen if a builtin proc calls runnerr */
+                procname(stderr, (struct b_proc *)BlkLoc(*xargp));
+            else
+                outimage(stderr, xargp, 0);
             putc('(', stderr);
             while (nargs--) {
                 outimage(stderr, ++xargp, 0);
