@@ -535,13 +535,13 @@ dptr u_read			(int fd, int n, dptr d);
 
    struct b_refresh *alcrefresh_0(word *e, int nl, int nt);
    struct b_refresh *alcrefresh_1(word *e, int nl, int nt);
-   void	atrace			(dptr dp);
-   void	ctrace			(dptr dp, int nargs, dptr arg);
-   void	failtrace		(dptr dp);
+   void	atrace			(struct b_proc *p);
+   void	ctrace			(struct b_proc *p, int nargs, dptr arg);
+   void	failtrace		(struct b_proc *p);
    int	invoke_0		(int nargs, dptr *cargs, int *n);
    int	invoke_1		(int nargs, dptr *cargs, int *n);
-   void	rtrace			(dptr dp, dptr rval);
-   void	strace			(dptr dp, dptr rval);
+   void	rtrace			(struct b_proc *p, dptr rval);
+   void	strace			(struct b_proc *p, dptr rval);
    void	tracebk			(struct pf_marker *lcl_pfp, dptr argp);
    void	xdisp			(struct pf_marker *fp, dptr dp, int n, FILE *f, struct progstate *p);
 

@@ -8,11 +8,12 @@
 /*
  * Prototypes.
  */
-static int     keyref    (union block *bp, dptr dp);
+static int  keyref    (union block *bp, dptr dp);
 static void showline  (dptr f, int l);
 static void showlevel (register int n);
 static void ttrace	(void);
 static void xtrace(word nargs, dptr arg, int pline, dptr pfile);
+static void procname(FILE *f, struct b_proc *p);
 
 
 #define LIMIT 100
@@ -74,19 +75,13 @@ static void xtrace(nargs, arg, pline, pfile)
     int pline;
     dptr pfile;
 {
-    struct b_proc *bp = (struct b_proc *)BlkLoc(arg[0]);    
     fprintf(stderr, "   ");
-    if (bp == NULL)
+    if (BlkLoc(*arg) == NULL)
         fprintf(stderr, "????");
     else {
-        if (arg[0].dword == D_Proc) {
-            if (bp->field) {
-                putstr(stderr, &bp->field->defining_class->name);
-                putc('.', stderr);
-                putstr(stderr, &bp->field->defining_class->program->Fnames[bp->field->fnum]);
-            } else
-                putstr(stderr, &bp->name);
-        } else
+        if (is:proc(*arg))
+            procname(stderr, (struct b_proc *)BlkLoc(*arg));
+        else
             outimage(stderr, arg, 0);
         arg++;
         putc('(', stderr);
@@ -518,7 +513,6 @@ static void showlevel(n)
  */
 static void ttrace()
 {
-    struct b_proc *bp;
     word nargs;
 
     fprintf(stderr, "   ");
@@ -563,16 +557,7 @@ static void ttrace()
 
         case Op_Invoke:
             nargs = xnargs;
-            if (xargp[0].dword == D_Proc) {
-                bp = (struct b_proc *)BlkLoc(*xargp);
-                if (bp->field) {
-                    putstr(stderr, &bp->field->defining_class->name);
-                    putc('.', stderr);
-                    putstr(stderr, &bp->field->defining_class->program->Fnames[bp->field->fnum]);
-                } else
-                    putstr(stderr, &(bp->name));
-            } else
-                outimage(stderr, xargp, 0);
+            outimage(stderr, xargp, 0);
             putc('(', stderr);
             while (nargs--) {
                 outimage(stderr, ++xargp, 0);
@@ -632,16 +617,7 @@ static void ttrace()
             break;
 
         case Op_Apply:
-            if (xargp[0].dword == D_Proc) {
-                bp = (struct b_proc *)BlkLoc(*xargp);
-                if (bp->field) {
-                    putstr(stderr, &bp->field->defining_class->name);
-                    putc('.', stderr);
-                    putstr(stderr, &bp->field->defining_class->program->Fnames[bp->field->fnum]);
-                } else
-                    putstr(stderr, &(bp->name));
-            } else
-                outimage(stderr, xargp, 0);
+            outimage(stderr, xargp, 0);
             fprintf(stderr," ! ");
             outimage(stderr, ++xargp, 0);
             break;
@@ -676,7 +652,8 @@ static void ttrace()
             break;
 
    
-        default:
+        default: {
+            struct b_proc *bp;
             /* 
              * opblks are only defined for the operator instructions, the last of
              * which is Op_Value (see opdefs.h and odefs.h) 
@@ -699,6 +676,7 @@ static void ttrace()
                 putstr(stderr, &(bp->name));
             outimage(stderr, ++xargp, 0);
             putc('}', stderr);
+        }
     }
 	 
     if (ipc != NULL) {
@@ -718,17 +696,15 @@ static void ttrace()
 
 
 /*
- * ctrace - procedure named s is being called with nargs arguments, the first
+ * ctrace - procedure p is being called with nargs arguments, the first
  *  of which is at arg; produce a trace message.
  */
-void ctrace(dp, nargs, arg)
-    dptr dp;
-    int nargs;
-    dptr arg;
+void ctrace(struct b_proc *p, int nargs, dptr arg)
 {
     showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
-    putstr(stderr, dp);
+
+    procname(stderr, p);
     putc('(', stderr);
     while (nargs--) {
         outimage(stderr, arg++, 0);
@@ -741,16 +717,14 @@ void ctrace(dp, nargs, arg)
 }
 
 /*
- * rtrace - procedure named s is returning *rval; produce a trace message.
+ * rtrace - procedure p is returning *rval; produce a trace message.
  */
 
-void rtrace(dp, rval)
-    dptr dp;
-    dptr rval;
+void rtrace(struct b_proc *p, dptr rval)
 {
     showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
-    putstr(stderr, dp);
+    procname(stderr, p);
     fprintf(stderr, " returned ");
     outimage(stderr, rval, 0);
     putc('\n', stderr);
@@ -758,31 +732,28 @@ void rtrace(dp, rval)
 }
 
 /*
- * failtrace - procedure named s is failing; produce a trace message.
+ * failtrace - procedure p is failing; produce a trace message.
  */
 
-void failtrace(dp)
-    dptr dp;
+void failtrace(struct b_proc *p)
 {
     showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
-    putstr(stderr, dp);
+    procname(stderr, p);
     fprintf(stderr, " failed");
     putc('\n', stderr);
     fflush(stderr);
 }
 
 /*
- * strace - procedure named s is suspending *rval; produce a trace message.
+ * strace - procedure p is suspending *rval; produce a trace message.
  */
 
-void strace(dp, rval)
-    dptr dp;
-    dptr rval;
+void strace(struct b_proc *p, dptr rval)
 {
     showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
-    putstr(stderr, dp);
+    procname(stderr, p);
     fprintf(stderr, " suspended ");
     outimage(stderr, rval, 0);
     putc('\n', stderr);
@@ -790,15 +761,14 @@ void strace(dp, rval)
 }
 
 /*
- * atrace - procedure named s is being resumed; produce a trace message.
+ * atrace - procedure p is being resumed; produce a trace message.
  */
 
-void atrace(dp)
-    dptr dp;
+void atrace(struct b_proc *p)
 {
     showline(findfile(ipc), findline(ipc));
     showlevel(k_level);
-    putstr(stderr, dp);
+    procname(stderr, p);
     fprintf(stderr, " resumed");
     putc('\n', stderr);
     fflush(stderr);
@@ -892,4 +862,14 @@ void xdisp(struct pf_marker *fp,
         putc('\n', f);
     }
     fflush(f);
+}
+
+static void procname(FILE *f, struct b_proc *p)
+{
+    if (p->field) {
+        putstr(f, &p->field->defining_class->name);
+        putc('.', f);
+        putstr(f, &p->field->defining_class->program->Fnames[p->field->fnum]);
+    } else
+        putstr(f, &p->name);
 }

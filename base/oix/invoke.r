@@ -284,7 +284,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
      */   
     if (k_trace) {
         k_trace--;
-        ctrace(&(proc0->name), nargs, &newargp[1]);
+        ctrace(proc0, nargs, &newargp[1]);
     }
    
     /*

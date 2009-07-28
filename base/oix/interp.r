@@ -1026,7 +1026,6 @@ Lsusp_uw:
 
 	    struct descrip tmp;
             dptr svalp;
-	    struct b_proc *sproc;
 
 #if e_psusp
             value_tmp = *(dptr)(rsp - 1);	/* argument */
@@ -1084,8 +1083,7 @@ Lsusp_uw:
 	    --k_level;
 	    if (k_trace) {
                k_trace--;
-	       sproc = (struct b_proc *)BlkLoc(*argp);
-	       strace(&(sproc->name), svalp);
+	       strace((struct b_proc *)BlkLoc(*argp), svalp);
 	       }
 
 	    /*
@@ -1172,7 +1170,7 @@ Eret_uw:
 	    --k_level;
 	    if (k_trace) {
                k_trace--;
-	       rtrace(&(rproc->name), argp);
+	       rtrace(rproc, argp);
                }
 Pret_uw:
 	    if (pfp->pf_ilevel < ilevel) {
@@ -1250,7 +1248,7 @@ efail_noev:
 		  if (k_trace) {	/* procedure tracing */
                      k_trace--;
 		     ExInterp;
-		     atrace(&(((struct b_proc *)BlkLoc(*argp))->name));
+		     atrace((struct b_proc *)BlkLoc(*argp));
 		     EntInterp;
 		     }
 		  }
@@ -1334,7 +1332,7 @@ efail_noev:
 	    --k_level;
 	    if (k_trace) {
                k_trace--;
-	       failtrace(&(((struct b_proc *)BlkLoc(*argp))->name));
+	       failtrace((struct b_proc *)BlkLoc(*argp));
                }
 Pfail_uw:
 
