@@ -203,7 +203,7 @@ class Code()
                im := d
             }
             Package : {
-               delete(imports, d2.get_name().str())
+               delete(imports, d.get_name().str())
             }
             Class : {
                if d.get_name().str() == self.parent_Canvas.name then
