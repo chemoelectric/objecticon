@@ -68,6 +68,7 @@ class Encode()
    private
       tag_count,
       seen, 
+      seen_class, 
       file
 
    #
@@ -79,6 +80,7 @@ class Encode()
       file.can(Stream.WRITE) | runerr("Encode: stream not writable: ", file)
       self.tag_count := 0
       self.seen := table()
+      self.seen_class := set()
       if encode(o) then {
          self.seen := &null
          return
@@ -113,7 +115,7 @@ class Encode()
    end
 
    public encode(o)
-      local ty, i, cname, p, n, e, l
+      local ty, i, cname, p, n, e, l, ff
 
       if i := \seen[o] then {
          chars_out(Codec.REF_CODE) | fail
@@ -128,8 +130,12 @@ class Encode()
             cname := subtype(o)
             line_out(cname) | fail
             note_seen(o)
+            member(seen_class, cname) | {
+               ff := 1
+               insert(seen_class, cname)
+            }
             if p := Class.getf(o, "object_encode", 1) then
-               p(self) | fail
+               p(self, ff) | fail
             else {
                n := Class.get_n_instance_fields(o)
                int_out(n) | fail
@@ -246,7 +252,8 @@ end
 class Decode()
    private
       tag_count,
-      seen
+      seen,
+      seen_class
 
    #
    # Reset everything and parse a new object from s
@@ -255,6 +262,7 @@ class Decode()
       local res
       self.tag_count := 0
       self.seen := table()
+      self.seen_class := set()
       s ? if res := decode() then {
          self.seen := &null
          return res
@@ -306,7 +314,7 @@ class Decode()
    end
 
    public decode()
-      local i, n, rname, t, res, def, con, cl, p, cname, l
+      local i, n, rname, t, res, def, con, cl, p, cname, l, ff
 
       t := char_in() | fail
 
@@ -345,8 +353,12 @@ class Decode()
             cl := Class.for_name(cname) | return error("No such class " || cname)
             res := Class.create_raw(cl)
             note_seen(res)
+            member(seen_class, cname) | {
+               ff := 1
+               insert(seen_class, cname)
+            }
             if p := Class.getf(res, "object_decode", 1) then
-               p(self) | fail
+               p(self, ff) | fail
             else {
                n := int_in() | fail
                n = Class.get_n_instance_fields(res) | 

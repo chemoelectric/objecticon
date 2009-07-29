@@ -8,6 +8,8 @@
 
 package lang
 
+record ClassInfo(template_fields, fnum_map, curr_fields)
+
 #
 # An implementation of {object_encode} and {object_decode}.  The subclass
 # may override the method {get_template()} to return a list of
@@ -43,14 +45,14 @@ class SelectiveObjectCodec()
 
    #
    # This empty method may be overridden; it is invoked just after
-   # the object is encoded.
+   # the object has been encoded.
    #
    protected post_encode()
    end
 
    #
    # This empty method may be overridden; it is invoked just before
-   # the object is been decoded.
+   # the object is decoded.
    #
    protected pre_decode()
    end
@@ -62,52 +64,48 @@ class SelectiveObjectCodec()
    protected post_decode()
    end
 
-   private object_encode(e)
+   private object_encode(e, ff)
       local p, m, x
-      pre_encode()
+
       p := self.load_structs()
-      m := p[1]
-      e.encode(*p[2]) | fail
-      every x := !p[2] do {
-         e.encode(x[1]) | fail
-         e.encode(Class.get(self, m[x[1]])) | fail
-      }
+      if \ff then
+         e.encode(p.template_fields) | fail
+
+      pre_encode()
+      m := p.fnum_map
+      every x := !p.template_fields do
+         e.encode(Class.get(self, m[x])) | fail
       post_encode()
       return
    end
 
-   private object_decode(e)
-      local n, p, m, x, v, f
+   private object_decode(e, ff)
+      local p, m, v, f
+
+      p := self.load_structs()
+      if \ff then
+         p.curr_fields := e.decode() | fail
 
       pre_decode()
-      n := integer(e.decode()) | fail
-      p := self.load_structs()
-      m := p[1]
-
-      #
-      # Set up any defaults specified
-      #
-      every x := !p[2] do 
-         Class.get(self, m[x[1]]) := x[3]
-
-      every 1 to n do {
-         (f := e.decode() &
-          v := e.decode()) | fail
+      m := p.fnum_map
+      every f := !p.curr_fields do {
+         v := e.decode() | fail
          Class.get(self, \m[f]) := v
       }
-
       post_decode()
       return
    end
 
    #
-   # Get the conversion info structures for this class, using caching for efficiency.
-   # The result is a list with two items.  The first element is a table mapping the field
-   # names to record indices.   The second element is the template, adjusted so that single
-   # elements are expanded to lists with two elements the same eg ... "x" -> ["x","x"].
+   # Get the conversion info structures for this class, using caching
+   # for efficiency.  The result is a record with two items.  The
+   # first element is the template, adjusted so that single elements
+   # are expanded to lists with two elements the same eg ... "x" ->
+   # ["x","x"].  The second element is a table mapping the field names
+   # to field numbers.
    #
    private load_structs()
-      local i, e, class_name, map, template, p
+      local e, class_name, fnum_map, template_fields, p
       static cache
       initial {
          cache := table()
@@ -118,28 +116,26 @@ class SelectiveObjectCodec()
       if member(cache, class_name) then
          return cache[class_name]
 
-      # 
-      # Get the template
+      # Create a list of field names and a table mapping field
+      # names to class field indices.  Check for duplicate names and
+      # non-existent variable names.
       #
-      template := get_template()
-      # Convert any single string elements to pairs.
-      every i := 1 to *template do {
-         if type(template[i]) == "string" then
-            template[i] := [template[i], template[i]]
+      template_fields := []
+      fnum_map := table()
+      every e := !get_template() do {
+         if type(e) == "string" then {
+            put(template_fields, e)
+            /fnum_map[e] := Class.get_field_index(self, e) | 
+               runerr("invalid template: can't map " || e)
+         } else {
+            put(template_fields, e[1])
+            /fnum_map[e[1]] := Class.get_field_index(self, e[2]) | 
+               runerr("invalid template: can't map " || e[1] || " to " || e[2])
+         }
       }
 
-      #
-      # Create a table mapping field names to record indices.  Check
-      # for duplicate names and non-existent variable names.
-      #
-      map := table()
-      every e := !template do
-         /map[e[1]] := Class.get_field_index(self, e[2]) | runerr(
-                                             "invalid template: can't map " || e[1] || " to " || e[2])
-
-      p := [map, template]
+      p := ClassInfo(template_fields, fnum_map)
       insert(cache, class_name, p)
-
       return p
    end
 

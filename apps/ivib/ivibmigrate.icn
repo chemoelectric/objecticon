@@ -112,6 +112,9 @@ class Source1(Source)
       c.add_action("Tooltip", FixTooltipAction())
       c.add_action("Var Category", VarCategoryAction())
       c.add_extra(AddAction("Import Name", "gui"))
+      c.add_extra(AddAction("Z", 0))
+      c.add_extra(AddAction("Tab ord", 0))
+      c.add_extra(AddAction("Constraints", table()))
       c.add_extra(FixDefaultDimensionsAction())
       c.add_extra(FixAttribsAction())
       return c
@@ -297,6 +300,9 @@ class Source2(Source)
       c.add_extra(FixDefaultDimensionsAction())
       c.add_extra(FixAttribsAction())
       c.add_extra(FixEventsAction())
+      c.add_extra(AddMissingKeyAction("Z", 0))
+      c.add_extra(AddMissingKeyAction("Tab ord", 0))
+      c.add_extra(AddMissingKeyAction("Constraints", table()))
       return c
    end
 
@@ -554,39 +560,29 @@ end
 # table of field names.
 #
 class ClassProxy()
-   public name, l, t
+   private name, t
 
    public add(name, val)
-      local i
       #
       # Check if we need to convert an object into its proxy (eg
       # a CanvasTextPaint).
       #
       if type(val) == "object" & not is(val, ClassProxy) then
          val := (encode(val) ? CustomDecode().decode())
-      if i := \t[name] then
-         l[i][2] := val
-      else {
-         put(l, [name, val])
-         t[name] := *l
-      }
+      t[name] := val
    end
 
    public get_name()
       return name
    end
 
-   public get_map()
-      return l
-   end
-
    public get(name)
-      return l[\t[name]][2]
+      if member(t, name) then
+         return t[name]
    end
 
    public new(s)
       name := s
-      l := []
       t := table()
       return
    end
@@ -748,6 +744,7 @@ end
 class CustomDecode()
    private cs,
       tag_count,
+      seen_class,
       seen
 
    private decode_string(s)
@@ -885,27 +882,58 @@ class CustomDecode()
    end
 
    private decode_object()
-      local cname, res, n, i, key, val, c
+      local cname, res, n, i, key, val, c, t, l
 
       cname := line_in() | fail
       if c := (\cs).get_converter(cname) then {
          res := ClassProxy(c.get_new_name())
          note_seen(res)
-         n := integer(decode()) | fail
-         every i := 1 to n do {
-            key := decode() | fail
-            val := decode() | fail
-            c.apply(self, res, key, val)
+
+         member(seen_class, cname) | {
+            t := decode() | fail
+            if type(t) == "integer" then
+               seen_class[cname] := &null
+            else
+               seen_class[cname] := t
+         }
+
+         if l := \seen_class[cname] then {
+            every key := !l do {
+               val := decode() | fail
+               c.apply(self, res, key, val)
+            }
+         } else {
+            n := \t | integer(decode()) | fail
+            every i := 1 to n do {
+               key := decode() | fail
+               val := decode() | fail
+               c.apply(self, res, key, val)
+            }
          }
          c.apply_extras(self, res)
       } else {
          res := ClassProxy(cname)
          note_seen(res)
-         n := integer(decode()) | fail
-         every i := 1 to n do {
-            key := decode() | fail
-            val := decode() | fail
-            res.add(key, val)
+
+         member(seen_class, cname) | {
+            t := decode() | fail
+            if type(t) == "integer" then
+               seen_class[cname] := &null
+            else
+               seen_class[cname] := t
+         }
+         if l := \seen_class[cname] then {
+            every key := !l do {
+               val := decode() | fail
+               res.add(key, val)
+            }
+         } else {
+            n := \t | integer(decode()) | fail
+            every i := 1 to n do {
+               key := decode() | fail
+               val := decode() | fail
+               res.add(key, val)
+            }
          }
       }
 
@@ -915,6 +943,7 @@ class CustomDecode()
    public new(cs)
       tag_count := 0
       seen := table()
+      seen_class := table()
       self.cs := cs
       return
    end
@@ -928,6 +957,7 @@ class CustomEncode()
    private readable
       tag_count,
       seen, 
+      seen_class, 
       string_buff
 
    public get_string()
@@ -1069,21 +1099,32 @@ class CustomEncode()
    end
 
    private encode_object(o)
-      local l, e
+      local e, cname, t, v
       is(o, ClassProxy) | stop("Expected ClassProxy, got:", image(o))
-      line_out(o.get_name())
+      cname := o.get_name()
+      line_out(cname)
       note_seen(o)
-      l := o.get_map()
-      encode(*l)
-      every e := !l do {
-         encode(e[1])
-         encode(e[2])
+      member(seen_class, cname) | {
+         t := []
+         every e := !Class.for_name(cname)().get_template() do {
+            if type(e) == "string" then
+               put(t, e)
+            else
+               put(t, e[1])
+         }
+         encode(t)
+         seen_class[cname] := t
+      }
+      every e := !seen_class[cname] do {
+         v := o.get(e) | &null
+         encode(v)
       }
    end
 
    public new()
       tag_count := 0
       seen := table()
+      seen_class := table()
       string_buff := RamStream()
       return
    end
