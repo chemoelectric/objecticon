@@ -28,7 +28,7 @@ class Msg(NoCopy)
    # encoded into a string by the {encode()} procedure.
    #
    public send(o)
-      return send_impl(encode(o))
+      return send_impl(encode(o, 1))
    end
 
    private defer send_impl(s)

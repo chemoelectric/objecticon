@@ -8,7 +8,10 @@
 
 package lang
 
-record ClassInfo(template_ids, fnum_map, curr_ids)
+import util(error)
+
+record ClassInfo(template_els, fnum_map)
+record TemplateElement(ident, fnum)
 
 #
 # An implementation of {object_encode} and {object_decode}.  The
@@ -68,33 +71,47 @@ class SelectiveObjectCodec()
    protected post_decode()
    end
 
-   private object_encode(e, ff)
+   private object_encode(e)
       local p, m, x
 
       p := load_structs(classof(self))
-      if \ff then
-         e.encode(p.template_ids) | fail
 
       pre_encode()
       m := p.fnum_map
-      every x := !p.template_ids do
-         e.encode(Class.get(self, m[x])) | fail
+      e.encode(*p.template_els) | fail
+      if /e.fast_flag then {
+         every x := !p.template_els do {
+            e.encode(x.ident) | fail
+            e.encode(Class.get(self, x.fnum)) | fail
+         }
+      } else {
+         every x := !p.template_els do
+            e.encode(Class.get(self, x.fnum)) | fail
+      }
       post_encode()
       return
    end
 
-   private object_decode(e, ff)
-      local p, m, v, f
+   private object_decode(e)
+      local p, m, v, f, n, x
 
       p := load_structs(classof(self))
-      if \ff then
-         p.curr_ids := e.decode() | fail
 
       pre_decode()
       m := p.fnum_map
-      every f := !p.curr_ids do {
-         v := e.decode() | fail
-         Class.get(self, \m[f]) := v
+      n := integer(e.decode()) | fail
+      if /e.fast_flag then {
+         every 1 to n do {
+            (f := e.decode() &
+             v := e.decode()) | fail
+            Class.get(self, \m[f]) := v
+         }
+      } else {
+         n = *p.template_els | return error("Mismatch length versus template_els")
+         every x := !p.template_els do {
+            v := e.decode() | fail
+            Class.get(self, x.fnum) := v
+         }
       }
       post_decode()
       return
@@ -103,14 +120,14 @@ class SelectiveObjectCodec()
    #
    # Get the conversion info structures for the given class, using
    # caching for efficiency.  The result is a record with two items.
-   # The first element is the list of field identifiers to read/write.
-   # The second element is a table mapping the field ids to field
-   # numbers.
+   # The first element is a list of pairs of field identifiers and
+   # numbers to read/write.  The second element is a table mapping the
+   # field ids to field numbers.
    #
    # @param cl the class being encoded/decoded.
    #
    private static load_structs(cl)
-      local e, fnum_map, template_ids, p
+      local e, fnum, fnum_map, template_els, p
       static cache
       initial {
          cache := table()
@@ -119,25 +136,25 @@ class SelectiveObjectCodec()
       if member(cache, cl) then
          return cache[cl]
 
-      # Create a list of field names and a table mapping field
-      # names to class field indices.  Check for duplicate names and
-      # non-existent variable names.
+      # Create a list of field ident/number pairs and a table mapping
+      # field idents to class field indices.  Check for duplicate
+      # names and non-existent variable names.
       #
-      template_ids := []
+      template_els := []
       fnum_map := table()
       every e := cl.get_template(cl) do {
          if type(e) == "string" then {
-            put(template_ids, e)
-            /fnum_map[e] := Class.get_field_index(cl, e) | 
-               runerr("invalid template: can't map " || e)
+            fnum := Class.get_field_index(cl, e) | runerr("SelectiveObjectCodec: unknown field: " || e)
+            /fnum_map[e] := fnum | runerr("SelectiveObjectCodec: duplicate field: " || e)
+            put(template_els, TemplateElement(e, fnum))
          } else {
-            put(template_ids, e[1])
-            /fnum_map[e[1]] := Class.get_field_index(cl, e[2]) | 
-               runerr("invalid template: can't map " || e[1] || " to " || e[2])
+            fnum := Class.get_field_index(cl, e[2]) | runerr("SelectiveObjectCodec: unknown field: " || e[2])
+            /fnum_map[e[1]] := fnum | runerr("SelectiveObjectCodec: duplicate field: " || e[1])
+            put(template_els, TemplateElement(e[1], fnum))
          }
       }
 
-      p := ClassInfo(template_ids, fnum_map)
+      p := ClassInfo(template_els, fnum_map)
       insert(cache, cl, p)
       return p
    end

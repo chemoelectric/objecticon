@@ -30,7 +30,7 @@ class Shm(NoCopy)
    # encodable, and set {&why} appropriately.
    #
    public set_value(o)
-      return set_value_impl(encode(o))
+      return set_value_impl(encode(o, 1))
    end
 
    private defer set_value_impl(s)
@@ -82,13 +82,13 @@ class Shm(NoCopy)
    # Create a new public shared variable with the given key and initial value
    #
    public static create_public(key, o)
-      return Shm(create_public_impl(key, encode(o)))
+      return Shm(create_public_impl(key, encode(o, 1)))
    end
 
    #
    # Create a new private shared variable with the given initial value
    #
    public static create_private(o)
-      return Shm(create_private_impl(encode(o)))
+      return Shm(create_private_impl(encode(o, 1)))
    end
 end

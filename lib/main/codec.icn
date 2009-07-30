@@ -1,6 +1,6 @@
 package lang
 
-import io, util(error)
+import io, util
 
 class Codec()
    public static const 
@@ -19,6 +19,7 @@ class Codec()
       TABLE_CODE,
       REF_CODE,
       UCS_CODE,
+      FAST_FLAG,
       CODE_SEPARATOR
 
    private static init()
@@ -38,16 +39,19 @@ class Codec()
       TABLE_CODE := "T"
       UCS_CODE := "U"
       REF_CODE := "X"
+      FAST_FLAG := "F"
    end
 end
 
 #
 # Return a string, being the encoded representation of the given object.
+# @param o the object to encode
+# @param fast a flag - see {Encode.set_fast} below.
 #
-procedure encode(o)
+procedure encode(o, fast)
    local e, f
    f := RamStream()
-   e := Encode()
+   e := Encode("fast=",fast)
    e.begin(o, f) | {
       f.close()
       fail
@@ -64,12 +68,16 @@ procedure decode(s)
    return d.parse(s)
 end
 
-class Encode()
+#
+# @field fast=flag : see {set_fast}
+#
+class Encode(SetFields)
    private
       tag_count,
       seen, 
-      seen_class, 
       file
+   private readable
+      fast_flag
 
    #
    # Reset everything and output a new object.
@@ -80,7 +88,8 @@ class Encode()
       file.can(Stream.WRITE) | runerr("Encode: stream not writable: ", file)
       self.tag_count := 0
       self.seen := table()
-      self.seen_class := set()
+      if \fast_flag then
+         chars_out(Codec.FAST_FLAG) | fail
       if encode(o) then {
          self.seen := &null
          return
@@ -115,7 +124,7 @@ class Encode()
    end
 
    public encode(o)
-      local ty, i, cname, p, n, e, l, ff
+      local ty, i, cname, p, n, e, l
 
       if i := \seen[o] then {
          chars_out(Codec.REF_CODE) | fail
@@ -130,12 +139,8 @@ class Encode()
             cname := subtype(o)
             line_out(cname) | fail
             note_seen(o)
-            member(seen_class, cname) | {
-               ff := 1
-               insert(seen_class, cname)
-            }
             if p := Class.getf(o, "object_encode", 1) then
-               p(self, ff) | fail
+               p(self) | fail
             else {
                n := Class.get_n_instance_fields(o)
                int_out(n) | fail
@@ -243,6 +248,24 @@ class Encode()
    private int_out(i)
       return file.writes(string(i))
    end
+
+   #
+   # Indicate whether the output should be in "fast" mode; that is
+   # indicate to any custom object encoders that there is no
+   # requirement to make the output robust against underlying
+   # structure changes to objects.
+   #
+   public set_fast(s)
+      self.fast_flag := to_flag(s)
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "fast" : set_fast(f.flag_val())
+         default: fail
+      }
+      return
+   end
 end
 
 #
@@ -252,8 +275,9 @@ end
 class Decode()
    private
       tag_count,
-      seen,
-      seen_class
+      seen
+   private readable
+      fast_flag
 
    #
    # Reset everything and parse a new object from s
@@ -262,13 +286,18 @@ class Decode()
       local res
       self.tag_count := 0
       self.seen := table()
-      self.seen_class := set()
-      s ? if res := decode() then {
-         self.seen := &null
-         return res
-      } else {
-         self.seen := &null
-         fail
+      s ? {
+         if =Codec.FAST_FLAG then
+            self.fast_flag := 1
+         else
+            self.fast_flag := &null
+         if res := decode() then {
+            self.seen := &null
+            return res
+         } else {
+            self.seen := &null
+            fail
+         }
       }
    end
 
@@ -314,7 +343,7 @@ class Decode()
    end
 
    public decode()
-      local i, n, rname, t, res, def, con, cl, p, cname, l, ff
+      local i, n, rname, t, res, def, con, cl, p, cname, l
 
       t := char_in() | fail
 
@@ -353,12 +382,8 @@ class Decode()
             cl := Class.for_name(cname) | return error("No such class " || cname)
             res := Class.create_raw(cl)
             note_seen(res)
-            member(seen_class, cname) | {
-               ff := 1
-               insert(seen_class, cname)
-            }
             if p := Class.getf(res, "object_decode", 1) then
-               p(self, ff) | fail
+               p(self) | fail
             else {
                n := int_in() | fail
                n = Class.get_n_instance_fields(res) | 
