@@ -2770,3 +2770,14 @@ function{0,1} lang_Proc_get_defining_class(c)
      }
 end
 
+function{0,1} lang_Proc_get_field_name(c)
+   body {
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
+            runerr(0);
+        if (proc0->field)
+            return proc0->field->defining_class->program->Fnames[proc0->field->fnum];
+        else
+            fail;
+     }
+end
