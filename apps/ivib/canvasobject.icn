@@ -122,12 +122,12 @@ class CanvasObject(SelectiveObjectCodec)
       every gen_cos().traverse_tree()
    end
 
-   public get_template()
-      return [["Parent Canvas", "parent_Canvas"],
-              ["Name", "name"],
-              ["Class Name", "class_name"],
-              ["Import Name", "import_name"],
-              ["Class Variable", "class_variable"]]
+   public static get_template()
+      suspend ["Parent Canvas", "parent_Canvas"] |
+              ["Name", "name"] |
+              ["Class Name", "class_name"] |
+              ["Import Name", "import_name"] |
+              ["Class Variable", "class_variable"]
    end
 end
 

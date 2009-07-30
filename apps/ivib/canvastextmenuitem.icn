@@ -58,12 +58,11 @@ class CanvasTextMenuItem(CanvasMenuComponent,TextMenuItem)
          return subtype(self.paint_mid) || "(Txt)"
    end
 
-   public get_template()
-      return cast(self,CanvasMenuComponent).get_template() ||| [
-              ["Paint mid", "paint_mid"],
-              ["Paint left", "paint_left"],
-              ["Paint right", "paint_right"]
-              ]
+   public static get_template()
+      suspend CanvasMenuComponent.get_template() |
+         ["Paint mid", "paint_mid"] |
+         ["Paint left", "paint_left"] |
+         ["Paint right", "paint_right"]
    end
 
    public gen_cos()

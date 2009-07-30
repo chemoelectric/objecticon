@@ -65,13 +65,12 @@ class CanvasEditList(CanvasComponent,EditList)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["Contents", "tmp"],
-          ["Selection", "selection"],
-          ["Selection List", "selection_list"],
-          ["Filter String", "filter_str"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Contents", "tmp"] |
+         ["Selection", "selection"] |
+         ["Selection List", "selection_list"] |
+         ["Filter String", "filter_str"]
    end
 
    public pre_encode()

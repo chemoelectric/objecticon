@@ -11,8 +11,8 @@ end
 class Two(SelectiveObjectCodec)
    private a,b,c
 
-   private get_template()
-      return [["Fred","a"],["Jim","b"],["Mary","c"]]
+   private static get_template()
+      suspend ["Fred","a"]|["Jim","b"]|["Mary","c"]
    end
 
    public dood()

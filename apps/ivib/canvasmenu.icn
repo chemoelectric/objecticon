@@ -54,10 +54,8 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasTextMenuItem).get_template() ||| 
-         [["Children", "children"]
-         ]
+   public static get_template()
+      suspend CanvasTextMenuItem.get_template() | ["Children", "children"]
    end
 
    #

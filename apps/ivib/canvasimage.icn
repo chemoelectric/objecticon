@@ -44,13 +44,12 @@ class CanvasImage(CanvasComponent,Image)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["File name", "image_file"],
-          ["Image Str", "image_str"],
-          ["Cache image Flag", "use_cache_flag"],
-          ["Scale Up Flag", "scale_up_flag"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["File name", "image_file"] |
+         ["Image Str", "image_str"] |
+         ["Cache image Flag", "use_cache_flag"] |
+         ["Scale Up Flag", "scale_up_flag"]
    end
 
    #

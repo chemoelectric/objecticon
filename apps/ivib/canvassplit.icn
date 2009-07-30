@@ -55,16 +55,15 @@ class CanvasSplit(CanvasComponent,Split)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["Sizer is horizontal flag", "sizer_is_horizontal_flag"],
-          ["Sizer show inter flag", "sizer_show_inter_flag"],
-          ["Min first", "min_first"],
-          ["Min second", "min_second"],
-          ["Weight", "weight"],
-          ["First", "first"],
-          ["Second", "second"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Sizer is horizontal flag", "sizer_is_horizontal_flag"] |
+         ["Sizer show inter flag", "sizer_show_inter_flag"] |
+         ["Min first", "min_first"] |
+         ["Min second", "min_second"] |
+         ["Weight", "weight"] |
+         ["First", "first"] |
+         ["Second", "second"]
    end
 
    public pre_encode()
@@ -169,10 +168,8 @@ class CanvasSplitContent(CanvasComponent,Component)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["Children", "children"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() | ["Children", "children"]
    end
 
    #

@@ -49,10 +49,8 @@ class CanvasTextDisplay(CanvasComponent,TextDisplay)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["Contents", "contents"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() | ["Contents", "contents"]
    end
 
    #

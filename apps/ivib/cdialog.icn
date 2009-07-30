@@ -19,12 +19,11 @@ class CDialog(Dialog,SelectiveObjectCodec)
       new()
    end
 
-   public get_template()
-      return [["Only Enlarge Width Flag", "only_enlarge_width_flag"], 
-              ["Only Enlarge Height Flag", "only_enlarge_height_flag"], 
-              ["Ticker Rate", "ticker_rate"],
+   public static get_template()
+      suspend ["Only Enlarge Width Flag", "only_enlarge_width_flag"] | 
+              ["Only Enlarge Height Flag", "only_enlarge_height_flag"] | 
+              ["Ticker Rate", "ticker_rate"] |
               ["WAttribs", "wattribs"]
-              ]
    end
 
    public new()

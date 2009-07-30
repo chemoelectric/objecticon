@@ -41,12 +41,11 @@ class CanvasList(CanvasComponent,List)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["Constant Label", "constant_label"],
-          ["Selection", "selection"],
-          ["Selection List", "selection_list"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Constant Label", "constant_label"] |
+         ["Selection", "selection"] |
+         ["Selection List", "selection_list"]
    end
 
    private post_decode()

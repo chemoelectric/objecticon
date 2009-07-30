@@ -95,13 +95,12 @@ class CanvasBorder(CanvasComponent,Border)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["Internal Alignment", "internal_align"],
-          ["Children", "children"],
-          ["Title Obj", "title"],
-          ["Content", "content"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Internal Alignment", "internal_align"] |
+         ["Children", "children"] |
+         ["Title Obj", "title"] |
+         ["Content", "content"]
    end
 
    #
@@ -191,10 +190,8 @@ class CanvasBorderContent(CanvasComponent,Component)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["Children", "children"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() | ["Children", "children"]
    end
 
    #

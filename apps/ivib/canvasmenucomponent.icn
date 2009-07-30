@@ -52,17 +52,15 @@ class CanvasMenuComponent(CanvasObject)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return [
-              ["Name", "name"],
-              ["Class Name", "class_name"],
-              ["Import Name", "import_name"],
-              ["Accel", "accel"],
-              ["Is shaded", "is_shaded_flag"],
-              ["Event Method", "event_method"],
-              ["Class Variable", "class_variable"],
+   public static get_template()
+      suspend ["Name", "name"] |
+              ["Class Name", "class_name"] |
+              ["Import Name", "import_name"] |
+              ["Accel", "accel"] |
+              ["Is shaded", "is_shaded_flag"] |
+              ["Event Method", "event_method"] |
+              ["Class Variable", "class_variable"] |
               ["Parent", "parent"]
-              ]
    end
 
    public gen_cos()

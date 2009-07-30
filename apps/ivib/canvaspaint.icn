@@ -26,8 +26,8 @@ class CanvasTextPaint(CanvasPaint,TextPaint)
       return c
    end
 
-   public get_template()
-      return cast(self,CanvasPaint).get_template() |||  [[ "Str", "str"]]
+   public static get_template()
+      suspend CanvasPaint.get_template() |  [ "Str", "str"]
    end
 
    public gen_code(c)
@@ -63,14 +63,14 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       return c
    end
 
-   public get_template()
-      return cast(self,CanvasPaint).get_template() |||  
-         [["Image File", "image_file"], 
-          ["Image Str", "image_str"],
-          ["Scale Up Flag", "scale_up_flag"],
-          ["Use Cache Flag", "use_cache_flag"],
-          ["Max W", "max_w"],
-          ["Max H", "max_h"]]
+   public static get_template()
+      suspend CanvasPaint.get_template() |
+         ["Image File", "image_file"] | 
+         ["Image Str", "image_str"] |
+         ["Scale Up Flag", "scale_up_flag"] |
+         ["Use Cache Flag", "use_cache_flag"] |
+         ["Max W", "max_w"] |
+         ["Max H", "max_h"]
 
    end
 
@@ -125,8 +125,8 @@ class CanvasGridPaint(CanvasPaint,GridPaint)
       return c
    end
 
-   public get_template()
-      return cast(self,CanvasPaint).get_template() |||  [[ "Fmt", "fmt"]]
+   public static get_template()
+      suspend CanvasPaint.get_template() | [ "Fmt", "fmt"]
    end
 
    public gen_code(c)

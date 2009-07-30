@@ -920,26 +920,25 @@ class Canvas(Component,SelectiveObjectCodec)
       self.parent_dialog.set_filename_label()
    end
    
-   public get_template()
-      return [["SuperClass Name", "superclass_name"],
-              ["Import Name", "import_name"],
-              ["Button Groups", "button_groups"],
-              ["Checkbox Groups", "checkbox_groups"],
-              ["Gen Indent", "gen_indent"],
-              ["Gen Main", "gen_main"],
-              ["Gen Component Setup", "gen_component_setup"],
-              ["Gen Init Dialog", "gen_init_dialog"],
-              ["Gen Initially", "gen_initially"],
-              ["Dialog Struct", "dialog_struct"],
-              ["Name", "name"],
-              ["Is Component", "is_component"],
-              ["Width", "dialog_iw"],
-              ["Height", "dialog_ih"],
-              ["Children", "children"],
-              ["Initial Focus", "initial_focus"],
-              ["Event Handlers", "event_handlers"],
+   public static get_template()
+      suspend ["SuperClass Name", "superclass_name"] |
+              ["Import Name", "import_name"] |
+              ["Button Groups", "button_groups"] |
+              ["Checkbox Groups", "checkbox_groups"] |
+              ["Gen Indent", "gen_indent"] |
+              ["Gen Main", "gen_main"] |
+              ["Gen Component Setup", "gen_component_setup"] |
+              ["Gen Init Dialog", "gen_init_dialog"] |
+              ["Gen Initially", "gen_initially"] |
+              ["Dialog Struct", "dialog_struct"] |
+              ["Name", "name"] |
+              ["Is Component", "is_component"] |
+              ["Width", "dialog_iw"] |
+              ["Height", "dialog_ih"] |
+              ["Children", "children"] |
+              ["Initial Focus", "initial_focus"] |
+              ["Event Handlers", "event_handlers"] |
               ["Layout delegate", "layout_delegate"]
-              ]
    end
 
    #

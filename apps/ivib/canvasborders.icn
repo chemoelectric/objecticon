@@ -27,15 +27,14 @@ class CanvasABorder(CanvasObject)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasObject).get_template() ||| [
-              ["Left inset", "empty_l_inset"],
-              ["Right inset", "empty_r_inset"],
-              ["Top inset", "empty_t_inset"],
-              ["Bottom inset", "empty_b_inset"],
-              ["X align", "x_align_val"],
-              ["Y align", "y_align_val"]
-              ]
+   public static get_template()
+      suspend CanvasObject.get_template() |
+         ["Left inset", "empty_l_inset"] |
+         ["Right inset", "empty_r_inset"] |
+         ["Top inset", "empty_t_inset"] |
+         ["Bottom inset", "empty_b_inset"] |
+         ["X align", "x_align_val"] |
+         ["Y align", "y_align_val"]
    end
 
    public dialog()
@@ -93,10 +92,10 @@ class CanvasLineBorder(CanvasABorder)
       line_width_val,
       has_empty
 
-   public get_template()
-      return cast(self,CanvasABorder).get_template() ||| 
-         [[ "Line width", "line_width_val"],
-          [ "Has empty", "has_empty"]]
+   public static get_template()
+      suspend CanvasABorder.get_template() |
+         [ "Line width", "line_width_val"] |
+         [ "Has empty", "has_empty"]
    end
 
    public gen_code(c)

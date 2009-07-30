@@ -47,11 +47,10 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["Children", "children"],
-          ["Parent OverlaySet", "parent"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Children", "children"] |
+         ["Parent OverlaySet", "parent"]
    end
 
    public display(r)

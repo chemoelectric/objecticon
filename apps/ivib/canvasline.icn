@@ -51,9 +51,9 @@ class CanvasLine(CanvasComponent,Line)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [["Is horizontal flag", "is_horizontal_flag"]]
+   public static get_template()
+      suspend CanvasComponent.get_template() | 
+         ["Is horizontal flag", "is_horizontal_flag"]
    end
 
    #

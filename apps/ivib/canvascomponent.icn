@@ -187,31 +187,30 @@ class CanvasComponent(CanvasObject)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasObject).get_template() ||| [
-              ["X Fix", "x_fixed"],
-              ["Y Fix", "y_fixed"],
-              ["W Fix", "w_fixed"],
-              ["H Fix", "h_fixed"],
-              ["X Spec", "x_spec"],
-              ["Y Spec", "y_spec"],
-              ["W Spec", "w_spec"],
-              ["H Spec", "h_spec"],
-              ["X Align", "x_align"],
-              ["Y Align", "y_align"],
-              ["Z", "z"],
-              ["Tab ord", "tab_ord"],
-              ["Is shaded", "is_shaded_flag"],
-              ["WAttribs", "wattribs"],
-              ["Constraints", "constraints"],
-              ["Tooltip", "tooltip"],
-              ["Accel", "accel"],
-              ["Layout delegate", "layout_delegate"],
-              ["Border opts", "border_opts"],
-              ["Event Handlers", "event_handlers"],
-              ["Class Variable", "class_variable"],
+   public static get_template()
+      suspend CanvasObject.get_template() |
+              ["X Fix", "x_fixed"] |
+              ["Y Fix", "y_fixed"] |
+              ["W Fix", "w_fixed"] |
+              ["H Fix", "h_fixed"] |
+              ["X Spec", "x_spec"] |
+              ["Y Spec", "y_spec"] |
+              ["W Spec", "w_spec"] |
+              ["H Spec", "h_spec"] |
+              ["X Align", "x_align"] |
+              ["Y Align", "y_align"] |
+              ["Z", "z"] |
+              ["Tab ord", "tab_ord"] |
+              ["Is shaded", "is_shaded_flag"] |
+              ["WAttribs", "wattribs"] |
+              ["Constraints", "constraints"] |
+              ["Tooltip", "tooltip"] |
+              ["Accel", "accel"] |
+              ["Layout delegate", "layout_delegate"] |
+              ["Border opts", "border_opts"] |
+              ["Event Handlers", "event_handlers"] |
+              ["Class Variable", "class_variable"] |
               ["Parent Component", "parent"]
-             ]
    end
 
    protected pre_decode()

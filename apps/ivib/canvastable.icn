@@ -68,12 +68,10 @@ class CanvasTable(CanvasComponent,Table)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [
-          ["Select Mode", "select_mode"],
-          ["Columns", "columns"]
-         ]
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Select Mode", "select_mode"] |
+         ["Columns", "columns"]
    end
 
    public add_column(c)

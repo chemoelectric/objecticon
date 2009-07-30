@@ -43,13 +43,13 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasButton).get_template() ||| 
-         [["Paint", "paint"],
-          ["Img Up", "img_up"],
-          ["Img Down", "img_down"],
-          ["Img Width", "img_w"],
-          ["Img Height", "img_h"]]
+   public static get_template()
+      suspend CanvasButton.get_template() |
+         ["Paint", "paint"] |
+         ["Img Up", "img_up"] |
+         ["Img Down", "img_down"] |
+         ["Img Width", "img_w"] |
+         ["Img Height", "img_h"]
    end
 
    #

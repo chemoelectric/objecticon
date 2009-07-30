@@ -44,10 +44,10 @@ class Prefs(SelectiveObjectCodec)
       plugin_directory,
       cache_path
 
-   public get_template()
-      return [["Undo Size", "undo_size"],
-              ["Plugin Directory", "plugin_directory"],
-              ["Cache Path", "cache_path"]]
+   public static get_template()
+      suspend ["Undo Size", "undo_size"] |
+              ["Plugin Directory", "plugin_directory"] |
+              ["Cache Path", "cache_path"]
    end
 
    #

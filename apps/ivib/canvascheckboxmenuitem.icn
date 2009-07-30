@@ -70,17 +70,15 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    #
    # Return the I/O template.
    #
-   public get_template()
+   public static get_template()
       # An abbreviated set... we don't want the left Paint.
-      return cast(self,CanvasMenuComponent).get_template() ||| 
-         [
-          ["Paint mid", "paint_mid"],
-          ["Paint right", "paint_right"],
-          ["Img Up", "img_up"],
-          ["Img Down", "img_down"],
-          ["Is Checked Flag", "is_checked_flag"],
+      suspend CanvasMenuComponent.get_template() |
+          ["Paint mid", "paint_mid"] |
+          ["Paint right", "paint_right"] |
+          ["Img Up", "img_up"] |
+          ["Img Down", "img_down"] |
+          ["Is Checked Flag", "is_checked_flag"] |
           ["Parent CheckBoxGroup", "parent_check_box_group"]
-         ]
    end
 
    #

@@ -53,14 +53,12 @@ class CanvasRangeSpin(CanvasComponent,RangeSpin)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [
-          ["Hi", "hi"],
-          ["Lo", "lo"],
-          ["Increment Size", "increment_size"],
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+          ["Hi", "hi"] |
+          ["Lo", "lo"] |
+          ["Increment Size", "increment_size"] |
           ["Value", "value"]
-         ]
    end
 
    #

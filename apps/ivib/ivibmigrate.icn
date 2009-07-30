@@ -1106,7 +1106,7 @@ class CustomEncode()
       note_seen(o)
       member(seen_class, cname) | {
          t := []
-         every e := !Class.for_name(cname)().get_template() do {
+         every e := Class.for_name(cname).get_template() do {
             if type(e) == "string" then
                put(t, e)
             else

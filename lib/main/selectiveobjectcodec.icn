@@ -8,32 +8,36 @@
 
 package lang
 
-record ClassInfo(template_fields, fnum_map, curr_fields)
+record ClassInfo(template_ids, fnum_map, curr_ids)
 
 #
-# An implementation of {object_encode} and {object_decode}.  The subclass
-# may override the method {get_template()} to return a list of
-# pairs.  The first element of each pair is an arbitrary string used
-# to identify the field; the second element is the name of the field.
+# An implementation of {object_encode} and {object_decode}.  The
+# subclass may override a static method {get_template()} to generate
+# a list of pairs.  The first element of each pair is an arbitrary
+# identifier used to identify the field; the second element is the
+# name of the field.
 #
 # @example
-# @   # This will save the three fields {increment_size}, {value} and {is_range_flag}.
-# @   private get_template()
-# @      return  [
-# @          ["Increment Size", "increment_size"],
-# @          ["Value", "value"],
-# @          ["Is Range Flag", "is_range_flag"]]
+# @   # This will save the three fields {increment_size}, {value} and 
+# @   # {is_range_flag}.
+# @   private static get_template()
+# @      suspend
+# @          ["Increment Size", "increment_size"] |
+# @          ["Value", "value"] |
+# @          ["Is Range Flag", "is_range_flag"]
 # @   end
 #
-# The programmer may change the name of the field afterwards; for example {value} may
-# be re-named {initial_value}, and the data would still be restored correctly.
+# The programmer may change the name of the field afterwards; for
+# example {value} may be re-named {initial_value}, and the data would
+# still be restored correctly, so long as the {get_template()} method
+# was updated appropriately.
 #
-# Alternatively, any of the pairs may be a string field name, in which the label
-# is the field name itself.  This does not permit the field name to change without
-# rendering the encoded string invalid.
+# Alternatively, any of the pairs may be a string field name, in which
+# the label is the field name itself.  This does not permit the field
+# name to change without rendering the encoded string invalid.
 #
-# If not overridden, the default {get_template()} returns a list of all of the fields
-# in the class.
+# If not implemented by a subclass, a default {get_template()}
+# suspends all of the fields in the class.
 #
 class SelectiveObjectCodec()
    #
@@ -67,13 +71,13 @@ class SelectiveObjectCodec()
    private object_encode(e, ff)
       local p, m, x
 
-      p := self.load_structs()
+      p := load_structs(classof(self))
       if \ff then
-         e.encode(p.template_fields) | fail
+         e.encode(p.template_ids) | fail
 
       pre_encode()
       m := p.fnum_map
-      every x := !p.template_fields do
+      every x := !p.template_ids do
          e.encode(Class.get(self, m[x])) | fail
       post_encode()
       return
@@ -82,13 +86,13 @@ class SelectiveObjectCodec()
    private object_decode(e, ff)
       local p, m, v, f
 
-      p := self.load_structs()
+      p := load_structs(classof(self))
       if \ff then
-         p.curr_fields := e.decode() | fail
+         p.curr_ids := e.decode() | fail
 
       pre_decode()
       m := p.fnum_map
-      every f := !p.curr_fields do {
+      every f := !p.curr_ids do {
          v := e.decode() | fail
          Class.get(self, \m[f]) := v
       }
@@ -97,57 +101,55 @@ class SelectiveObjectCodec()
    end
 
    #
-   # Get the conversion info structures for this class, using caching
-   # for efficiency.  The result is a record with two items.  The
-   # first element is the template, adjusted so that single elements
-   # are expanded to lists with two elements the same eg ... "x" ->
-   # ["x","x"].  The second element is a table mapping the field names
-   # to field numbers.
+   # Get the conversion info structures for the given class, using
+   # caching for efficiency.  The result is a record with two items.
+   # The first element is the list of field identifiers to read/write.
+   # The second element is a table mapping the field ids to field
+   # numbers.
    #
-   private load_structs()
-      local e, class_name, fnum_map, template_fields, p
+   # @param cl the class being encoded/decoded.
+   #
+   private static load_structs(cl)
+      local e, fnum_map, template_ids, p
       static cache
       initial {
          cache := table()
       }
 
-      class_name := subtype(self)
-
-      if member(cache, class_name) then
-         return cache[class_name]
+      if member(cache, cl) then
+         return cache[cl]
 
       # Create a list of field names and a table mapping field
       # names to class field indices.  Check for duplicate names and
       # non-existent variable names.
       #
-      template_fields := []
+      template_ids := []
       fnum_map := table()
-      every e := !get_template() do {
+      every e := cl.get_template(cl) do {
          if type(e) == "string" then {
-            put(template_fields, e)
-            /fnum_map[e] := Class.get_field_index(self, e) | 
+            put(template_ids, e)
+            /fnum_map[e] := Class.get_field_index(cl, e) | 
                runerr("invalid template: can't map " || e)
          } else {
-            put(template_fields, e[1])
-            /fnum_map[e[1]] := Class.get_field_index(self, e[2]) | 
+            put(template_ids, e[1])
+            /fnum_map[e[1]] := Class.get_field_index(cl, e[2]) | 
                runerr("invalid template: can't map " || e[1] || " to " || e[2])
          }
       }
 
-      p := ClassInfo(template_fields, fnum_map)
-      insert(cache, class_name, p)
+      p := ClassInfo(template_ids, fnum_map)
+      insert(cache, cl, p)
       return p
    end
 
    #
-   # This method is overridden by a subclass to return the field
-   # template (see above).  By default, the method returns a list
-   # containing all of the instance fields of the class.
+   # This method may be overridden by a subclass to return the field
+   # template (see above).  By default, the method generates all of
+   # the instance fields of the class.
    #
-   protected get_template()
-      local l
-      l := []
-      every put(l, Class.get_instance_field_names(self))
-      return l
+   # @param cl the class being encoded/decoded.
+   #
+   protected static get_template(cl)
+      suspend Class.get_instance_field_names(cl)
    end
 end

@@ -15,14 +15,12 @@ class CanvasLayout(CanvasObject)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return [
-              ["Name", "name"],
-              ["Class Name", "class_name"],
-              ["Import Name", "import_name"],
-              ["Class Variable", "class_variable"],
+   public static get_template()
+      suspend ["Name", "name"] |
+              ["Class Name", "class_name"] |
+              ["Import Name", "import_name"] |
+              ["Class Variable", "class_variable"] |
               ["Parent", "parent"]
-              ]
    end
 
    public dialog()
@@ -65,11 +63,10 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return [
-              ["DII val", "dii_val"],
-              ["DOI val", "doi_val"],
-              ["Extra", "extra"] ] ||| cast(self,CanvasLayout).get_template()
+   public static get_template()
+      suspend ["DII val", "dii_val"] |
+              ["DOI val", "doi_val"] |
+              ["Extra", "extra"] | CanvasLayout.get_template()
    end
 
    public post_decode()

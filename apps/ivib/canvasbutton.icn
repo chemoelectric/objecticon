@@ -49,16 +49,14 @@ class CanvasButton(CanvasComponent)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [
-          ["No click focus", "no_click_focus_flag"],
-          ["Accepts focus Flag", "accepts_focus_flag"],
-          ["Is Checked Flag", "is_checked_flag"],
-          ["Is Checkbox Flag", "toggles_flag"],
-          ["Parent CheckBoxGroup", "parent_check_box_group"],
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+          ["No click focus", "no_click_focus_flag"] |
+          ["Accepts focus Flag", "accepts_focus_flag"] |
+          ["Is Checked Flag", "is_checked_flag"] |
+          ["Is Checkbox Flag", "toggles_flag"] |
+          ["Parent CheckBoxGroup", "parent_check_box_group"] |
           ["Parent Button Group", "parent_button_group"]
-         ]
    end
 
    public dup_fields(c)

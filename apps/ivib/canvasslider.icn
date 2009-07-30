@@ -49,18 +49,16 @@ class CanvasSlider(CanvasComponent,Slider)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasComponent).get_template() ||| 
-         [
-          ["Hi", "hi"],
-          ["Lo", "lo"],
-          ["Value", "value"],
-          ["Ticks", "ticks"],
-          ["Labels", "labels"],
-          ["Increment Size", "increment_size"],
-          ["Snaps", "snaps"],
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+          ["Hi", "hi"] |
+          ["Lo", "lo"] |
+          ["Value", "value"] |
+          ["Ticks", "ticks"] |
+          ["Labels", "labels"] |
+          ["Increment Size", "increment_size"] |
+          ["Snaps", "snaps"] |
           ["Is Horizontal Flag", "is_horizontal_flag"]
-         ]
    end
 
    #

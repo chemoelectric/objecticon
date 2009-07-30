@@ -29,10 +29,10 @@ class CanvasIconButton(CanvasButton,IconButton)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasButton).get_template() ||| 
-         [["Paint", "paint"],
-          ["Paint down", "paint_down"]]
+   public static get_template()
+      suspend CanvasButton.get_template() |
+         ["Paint", "paint"] |
+         ["Paint down", "paint_down"]
    end
 
    # 

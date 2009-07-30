@@ -102,14 +102,13 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    #
    # Return the I/O template.
    #
-   public get_template()
-      return cast(self,CanvasObject).get_template() ||| [
-               ["Paint", "paint"],
-               ["Column Width", "column_width"],
-               ["Internal Alignment", "column_align"],
-               ["WAttribs", "wattribs"],
+   public static get_template()
+      suspend CanvasObject.get_template() |
+               ["Paint", "paint"] |
+               ["Column Width", "column_width"] |
+               ["Internal Alignment", "column_align"] |
+               ["WAttribs", "wattribs"] |
                ["Event Handlers", "event_handlers"]
-              ]
    end
 
    public gen_cos()
