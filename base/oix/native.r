@@ -1104,28 +1104,6 @@ function{1} lang_Class_load_library(lib)
    }
 end
 
-function{0,1} lang_Class_for_name(s, c)
-   if !cnv:string(s) then
-      runerr(103, s)
-   body {
-       struct progstate *prog;
-       dptr p;
-
-       if (is:null(c))
-           prog = curpstate;
-       else if (is:coexpr(c))
-           prog = BlkLoc(c)->coexpr.program;
-       else
-           runerr(118, c);
-
-       p = lookup_global(&s, prog);
-       if (p && is:class(*p))
-           return *p;
-       else
-           fail;
-   }
-end
-
 function{1} lang_Class_create_raw(c)
    if !is:class(c) then
        runerr(603, c)

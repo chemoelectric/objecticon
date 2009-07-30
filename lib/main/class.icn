@@ -234,7 +234,11 @@ class Class()
    # @return a class
    # @fail if the class is unknown
    #
-   public static defer for_name(s, ce)
+   public static for_name(s, ce)
+      local t
+      if t := Prog.get_global(s, ce) & type(t) == "class" then
+         return t
+   end
 
    # Initialize a class, by calling its static init method.  Has no
    # effect if the class has already been initialized.

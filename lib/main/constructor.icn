@@ -60,4 +60,18 @@ class Constructor()
    #
    public static defer get_field_location(c, field)
 
+   # Lookup a constructor by name
+   # 
+   # @param s a constructor name
+   # @param ce a coexpression, representing a loaded program, defaults
+   # @ to the main program
+   # @return a constructor
+   # @fail if the constructor is unknown
+   #
+   public static for_name(s, ce)
+      local t
+      if t := Prog.get_global(s, ce) & type(t) == "constructor" then
+         return t
+   end
+
 end
