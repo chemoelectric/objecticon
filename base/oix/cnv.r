@@ -797,8 +797,7 @@ C_integer arity;
     */
    if (!isalpha(*StrLoc(*s))) {
       for (i = 0; i < op_tbl_sz; ++i)
-	 if (eq(s, &op_tbl[i]->name) && (arity == op_tbl[i]->nparam ||
-					 op_tbl[i]->nparam == -1))
+          if (eq(s, &op_tbl[i]->name) && arity == op_tbl[i]->nparam)
 	    return op_tbl[i];
       return NULL;
       }
