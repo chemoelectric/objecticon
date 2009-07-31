@@ -51,7 +51,7 @@ class CanvasTextListDialog(CanvasComponentDialog)
 
       ucs_cb := CheckBox("label=Ucs content")
       if type(c.contents[1]) == "ucs" then
-         ucs_cb.set_is_checked("t")
+         ucs_cb.set_is_checked(&yes)
       ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
       p.add(ucs_cb)
 

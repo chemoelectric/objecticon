@@ -68,7 +68,7 @@ class CanvasMenuComponentDialog(MenuComponentEdit)
       shaded := CheckBox("c:eol")
       shaded.set_label("Is shaded")
       if \c.is_shaded_flag then
-         shaded.set_is_checked("t")
+         shaded.set_is_checked(&yes)
       main_panel.add(shaded)
 
       accel_flag := CheckBox()
@@ -81,9 +81,9 @@ class CanvasMenuComponentDialog(MenuComponentEdit)
       main_panel.add(accel_tf)
 
       if /c.accel then
-         accel_tf.set_is_shaded("t")
+         accel_tf.set_is_shaded(&yes)
       else  {
-         accel_flag.set_is_checked("t")
+         accel_flag.set_is_checked(&yes)
          accel_tf.set_contents(c.accel)
       }
    end

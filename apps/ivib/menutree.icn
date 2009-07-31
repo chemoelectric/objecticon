@@ -69,7 +69,7 @@ class MenuTree(SelectableScrollArea)
 
    public new()
       cast(self,SelectableScrollArea).new()
-      self.set_draggable_cursor("t")
+      self.set_draggable_cursor(&yes)
 
       return
    end

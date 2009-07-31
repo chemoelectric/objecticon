@@ -259,7 +259,7 @@ class TextDisplay(LineBasedScrollArea)
    public set_wrap_mode(s)
       local wc
       self.wrap_mode := s
-      if /to_flag(s) then
+      if /flag(s) then
          line_splitter := DefaultLineSplitter(self)
       else if wc := integer(s) then
          line_splitter := ColumnLineSplitter(self, wc)
@@ -278,7 +278,7 @@ class TextDisplay(LineBasedScrollArea)
    # Indicate, if wrapping, whether to split words or not (default no).
    #
    public set_split_words(s)
-      self.split_words_flag := to_flag(s)
+      self.split_words_flag := check_flag(s)
       if is_live() then {
          clear_view_list()
          compute_and_invalidate()

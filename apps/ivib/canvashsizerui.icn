@@ -11,7 +11,7 @@ class CanvasHSizerUI(CanvasComponentUI)
       local t
       t := CanvasSizer()
       t.set_size(100)
-      t.set_is_horizontal("t")
+      t.set_is_horizontal(&yes)
       return t
    end
 

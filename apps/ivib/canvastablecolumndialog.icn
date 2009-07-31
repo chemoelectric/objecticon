@@ -69,12 +69,12 @@ class CanvasTableColumnDialog(CanvasComponentDialog)
       p.add(auto_width_cb)
 
       if /c.column_width then {
-         size.set_is_shaded("t")
-         auto_width_cb.set_is_checked("t")
+         size.set_is_shaded(&yes)
+         auto_width_cb.set_is_checked(&yes)
       } else {
-         size.set_is_shaded("f")
+         size.set_is_shaded(&no)
          size.set_contents(c.column_width)
-         auto_width_cb.set_is_checked("f")
+         auto_width_cb.set_is_checked(&no)
       }
 
       l := Label()

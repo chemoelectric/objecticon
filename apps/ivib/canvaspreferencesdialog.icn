@@ -57,18 +57,18 @@ class CanvasPreferencesDialog(Dialog)
       c.set_layout(layout_field.get_contents())
 
       if /self.c.layout_delegate then {
-         set_w_default.set_is_shaded("t")
-         set_w_default.set_is_checked("f")
-         w_spec_tf.set_is_shaded("f")
+         set_w_default.set_is_shaded(&yes)
+         set_w_default.set_is_checked(&no)
+         w_spec_tf.set_is_shaded(&no)
       } else
-         set_w_default.set_is_shaded("f")
+         set_w_default.set_is_shaded(&no)
 
       if /self.c.layout_delegate then {
-         set_h_default.set_is_shaded("t")
-         set_h_default.set_is_checked("f")
-         h_spec_tf.set_is_shaded("f")
+         set_h_default.set_is_shaded(&yes)
+         set_h_default.set_is_checked(&no)
+         h_spec_tf.set_is_shaded(&no)
       } else
-         set_h_default.set_is_shaded("f")
+         set_h_default.set_is_shaded(&no)
    end
 
    public on_okay()
@@ -139,17 +139,17 @@ class CanvasPreferencesDialog(Dialog)
       if self.is_component_cb.is_checked() then {
          if s == "Dialog" then
             self.superclass_name.set_contents("Component")
-         self.gen_init_dialog.set_is_shaded("t")
-         self.gen_main.set_is_shaded("t")
-         only_enlarge_width.set_is_shaded("t")
-         only_enlarge_height.set_is_shaded("t")
+         self.gen_init_dialog.set_is_shaded(&yes)
+         self.gen_main.set_is_shaded(&yes)
+         only_enlarge_width.set_is_shaded(&yes)
+         only_enlarge_height.set_is_shaded(&yes)
       } else {
          if s == "Component" then
             self.superclass_name.set_contents("Dialog")
-         self.gen_init_dialog.set_is_shaded("f")
-         self.gen_main.set_is_shaded("f")
-         only_enlarge_width.set_is_shaded("f")
-         only_enlarge_height.set_is_shaded("f")
+         self.gen_init_dialog.set_is_shaded(&no)
+         self.gen_main.set_is_shaded(&no)
+         only_enlarge_width.set_is_shaded(&no)
+         only_enlarge_height.set_is_shaded(&no)
       }
    end
 
@@ -203,18 +203,18 @@ class CanvasPreferencesDialog(Dialog)
       set_w_default.connect(self.on_set_w_default, Event.ACTION)
       set_w_default.set_label("Default")
       if /c.dialog_iw then {
-         set_w_default.set_is_checked("t")
-         w_spec_tf.set_is_shaded("t")
+         set_w_default.set_is_checked(&yes)
+         w_spec_tf.set_is_shaded(&yes)
          w_spec_tf.set_contents(c.dialog_w)
       } else
          w_spec_tf.set_contents(c.dialog_iw)
       if /c.layout_delegate then
-         set_w_default.set_is_shaded("t")
+         set_w_default.set_is_shaded(&yes)
       pos_tab.add(set_w_default)
 
       only_enlarge_width := CheckBox("c:eol", "c:tab=1", "c:w=2", "label=Only allow resize above original size")
       if \c.dialog_struct.only_enlarge_width_flag then
-         only_enlarge_width.set_is_checked("t")
+         only_enlarge_width.set_is_checked(&yes)
       pos_tab.add(only_enlarge_width)
 
 
@@ -230,18 +230,18 @@ class CanvasPreferencesDialog(Dialog)
       set_h_default.connect(self.on_set_h_default, Event.ACTION)
       set_h_default.set_label("Default")
       if /c.dialog_ih then {
-         set_h_default.set_is_checked("t")
-         h_spec_tf.set_is_shaded("t")
+         set_h_default.set_is_checked(&yes)
+         h_spec_tf.set_is_shaded(&yes)
          h_spec_tf.set_contents(c.dialog_h)
       } else
          h_spec_tf.set_contents(c.dialog_ih)
       if /c.layout_delegate then
-         set_h_default.set_is_shaded("t")
+         set_h_default.set_is_shaded(&yes)
       pos_tab.add(set_h_default)
 
       only_enlarge_height := CheckBox("c:eol", "c:tab=1", "c:w=2", "label=Only allow resize above original size")
       if \c.dialog_struct.only_enlarge_height_flag then
-         only_enlarge_height.set_is_checked("t")
+         only_enlarge_height.set_is_checked(&yes)
       pos_tab.add(only_enlarge_height)
 
       pos_tab.add(Label("label=Layout"))
@@ -276,16 +276,16 @@ class CanvasPreferencesDialog(Dialog)
       methods_tab.add(gen_initially)
 
       if \c.gen_main then
-         gen_main.set_is_checked("t")
+         gen_main.set_is_checked(&yes)
 
       if \c.gen_component_setup then
-         gen_component_setup.set_is_checked("t")
+         gen_component_setup.set_is_checked(&yes)
 
       if \c.gen_init_dialog then
-         gen_init_dialog.set_is_checked("t")
+         gen_init_dialog.set_is_checked(&yes)
 
       if \c.gen_initially then
-         gen_initially.set_is_checked("t")
+         gen_initially.set_is_checked(&yes)
 
 
       l := Label()
@@ -322,10 +322,10 @@ class CanvasPreferencesDialog(Dialog)
       code_tab.add(text_ticker_rate)
 
       if \c.dialog_struct.ticker_rate then {
-         has_ticker.set_is_checked("t")
+         has_ticker.set_is_checked(&yes)
          text_ticker_rate.set_contents(string(c.dialog_struct.ticker_rate))
       } else
-         text_ticker_rate.set_is_shaded("t")
+         text_ticker_rate.set_is_shaded(&yes)
 
       l := Label()
       l.set_label("Superclass")
@@ -339,9 +339,9 @@ class CanvasPreferencesDialog(Dialog)
       self.is_component_cb := CheckBox("label=Subclass of component",
                                        "c:tab=1", "c:eol")
       if \c.is_component then {
-         self.is_component_cb.set_is_checked("t")
-         self.gen_init_dialog.set_is_shaded("t")
-         self.gen_main.set_is_shaded("t")
+         self.is_component_cb.set_is_checked(&yes)
+         self.gen_init_dialog.set_is_shaded(&yes)
+         self.gen_main.set_is_shaded(&yes)
       }
       self.is_component_cb.connect(self.on_is_component_cb, Event.ACTION)
       code_tab.add(self.is_component_cb)
@@ -356,10 +356,10 @@ class CanvasPreferencesDialog(Dialog)
       self.layout_filename := TextField("c:eol", "size=200")
       code_tab.add(self.layout_filename)
       if \c.layout_filename then {
-         self.layout_filename_cb.set_is_checked("t")
+         self.layout_filename_cb.set_is_checked(&yes)
          self.layout_filename.set_contents(c.layout_filename)
       } else {
-         self.layout_filename.set_is_shaded("t")
+         self.layout_filename.set_is_shaded(&yes)
          self.layout_filename.set_contents("$.layout")
       }
       self.layout_filename_cb.connect(self.on_layout_filename_cb, Event.ACTION)

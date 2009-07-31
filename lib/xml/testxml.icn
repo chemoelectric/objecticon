@@ -34,23 +34,23 @@ procedure main(a)
    t := options(a, "-u!-g!-nc!-nv!-fnw!-fi+-ftt!-far!")
 
    if \t["nv"] then
-      p.set_validate("f")
+      p.set_validate(&no)
 
    if \t["nc"] then
-      p.set_preserve_comments("f")
+      p.set_preserve_comments(&no)
 
    if /t["g"] then
-      p.set_do_namespaces("f")
+      p.set_do_namespaces(&no)
 
    #
    # Setup formatter options
    #
    if \t["fnw"] then
-      fmt.set_no_whitespace("t")
+      fmt.set_no_whitespace(&yes)
    if \t["ftt"] then
-      fmt.set_text_trim("t")
+      fmt.set_text_trim(&yes)
    if \t["far"] then
-      fmt.set_as_read("t")
+      fmt.set_as_read(&yes)
    fmt.set_indent(\t["fi"])
 
 

@@ -11,7 +11,7 @@ class CanvasHScrollBarUI(CanvasComponentUI)
       local t
       t := CanvasScrollBar()
       t.set_range(0, 100)
-      t.set_is_horizontal("t")
+      t.set_is_horizontal(&yes)
       t.set_increment_size(1)
       t.set_value(0)
       t.set_size(100)

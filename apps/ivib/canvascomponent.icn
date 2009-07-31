@@ -108,7 +108,7 @@ class CanvasComponent(CanvasObject)
          c.line(name || ".set_align(" || image(self.x_align) || ", " || image(self.y_align) || ")")
 
       if \self.is_shaded_flag then
-         c.line(name || ".set_is_shaded(\"t\")")
+         c.line(name || ".set_is_shaded(&yes)")
 
       every e := !sort(self.wattribs) do
          c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
@@ -502,7 +502,7 @@ class CanvasComponent(CanvasObject)
 
          csm := Menu("label=Position")
          cm.add(csm)
-         if /to_flag(c["eol"]) then
+         if /flag(c["eol"]) then
             csm.add(SetConstraintItem(self, "eol", 1))
          else
             csm.add(RemoveConstraintItem(self, "eol"))
@@ -527,7 +527,7 @@ class CanvasComponent(CanvasObject)
 
          csm := Menu("label=X layout")
          cm.add(csm)
-         if /to_flag(c["x_fill"]) then
+         if /flag(c["x_fill"]) then
             csm.add(SetConstraintItem(self, "x_fill", 1))
          else
             csm.add(RemoveConstraintItem(self, "x_fill"))
@@ -549,7 +549,7 @@ class CanvasComponent(CanvasObject)
 
          csm := Menu("label=Y layout")
          cm.add(csm)
-         if /to_flag(c["y_fill"]) then
+         if /flag(c["y_fill"]) then
             csm.add(SetConstraintItem(self, "y_fill", 1))
          else
             csm.add(RemoveConstraintItem(self, "y_fill"))

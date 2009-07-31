@@ -98,19 +98,19 @@ class CanvasComponentDialog(Dialog)
 
       if \pos_tab then {
          if c.allows_null_width() then
-            set_w_default.set_is_shaded("f")
+            set_w_default.set_is_shaded(&no)
          else {
-            set_w_default.set_is_shaded("t")
-            set_w_default.set_is_checked("f")
-            w_spec_list.set_is_shaded("f")
+            set_w_default.set_is_shaded(&yes)
+            set_w_default.set_is_checked(&no)
+            w_spec_list.set_is_shaded(&no)
          }
 
          if c.allows_null_height() then 
-            set_h_default.set_is_shaded("f")
+            set_h_default.set_is_shaded(&no)
          else {
-            set_h_default.set_is_shaded("t")
-            set_h_default.set_is_checked("f")
-            h_spec_list.set_is_shaded("f")
+            set_h_default.set_is_shaded(&yes)
+            set_h_default.set_is_checked(&no)
+            h_spec_list.set_is_shaded(&no)
          }
       }
    end
@@ -161,12 +161,12 @@ class CanvasComponentDialog(Dialog)
          set_x_fixed := CheckBox("c:eol")
          set_x_fixed.set_label("Fix")
          if \c.x_fixed then
-            set_x_fixed.set_is_checked("t")
+            set_x_fixed.set_is_checked(&yes)
          pos_tab.add(set_x_fixed)
 
          if /c.x_spec then {
-            x_spec_list.set_is_shaded("t")
-            set_x_fixed.set_is_shaded("t")
+            x_spec_list.set_is_shaded(&yes)
+            set_x_fixed.set_is_shaded(&yes)
          }
 
          l := Label()
@@ -182,12 +182,12 @@ class CanvasComponentDialog(Dialog)
          set_y_fixed := CheckBox("c:eol")
          set_y_fixed.set_label("Fix")
          if \c.y_fixed then
-            set_y_fixed.set_is_checked("t")
+            set_y_fixed.set_is_checked(&yes)
          pos_tab.add(set_y_fixed)
 
          if /c.y_spec then {
-            y_spec_list.set_is_shaded("t")
-            set_y_fixed.set_is_shaded("t")
+            y_spec_list.set_is_shaded(&yes)
+            set_y_fixed.set_is_shaded(&yes)
          }
 
          l := Label()
@@ -202,7 +202,7 @@ class CanvasComponentDialog(Dialog)
          set_w_fixed := CheckBox()
          set_w_fixed.set_label("Fix")
          if \c.w_fixed then
-            set_w_fixed.set_is_checked("t")
+            set_w_fixed.set_is_checked(&yes)
          pos_tab.add(set_w_fixed)
 
          set_w_default := CheckBox("c:eol", "c:w=2")
@@ -210,12 +210,12 @@ class CanvasComponentDialog(Dialog)
          set_w_default.set_label("Default")
 
          if /c.w_spec then {
-            set_w_default.set_is_checked("t")
-            w_spec_list.set_is_shaded("t")
+            set_w_default.set_is_checked(&yes)
+            w_spec_list.set_is_shaded(&yes)
             w_spec_list.set_contents(c.w)
          } else {
             w_spec_list.set_contents(c.w_spec)
-            c.allows_null_width() | set_w_default.set_is_shaded("t")
+            c.allows_null_width() | set_w_default.set_is_shaded(&yes)
          }
 
          pos_tab.add(set_w_default)
@@ -232,19 +232,19 @@ class CanvasComponentDialog(Dialog)
          set_h_fixed := CheckBox()
          set_h_fixed.set_label("Fix")
          if \c.h_fixed then
-            set_h_fixed.set_is_checked("t")
+            set_h_fixed.set_is_checked(&yes)
          pos_tab.add(set_h_fixed)
 
          set_h_default := CheckBox("c:eol", "c:w=2")
          set_h_default.connect(self.on_set_h_default, Event.ACTION)
          set_h_default.set_label("Default")
          if /c.h_spec then {
-            set_h_default.set_is_checked("t")
-            h_spec_list.set_is_shaded("t")
+            set_h_default.set_is_checked(&yes)
+            h_spec_list.set_is_shaded(&yes)
             h_spec_list.set_contents(c.h)
          } else {
             h_spec_list.set_contents(c.h_spec)
-            c.allows_null_height() | set_h_default.set_is_shaded("t")
+            c.allows_null_height() | set_h_default.set_is_shaded(&yes)
          }
 
          pos_tab.add(set_h_default)
@@ -282,22 +282,22 @@ class CanvasComponentDialog(Dialog)
       other_tab.add(accel_tf)
 
       if /c.accel then
-         accel_tf.set_is_shaded("t")
+         accel_tf.set_is_shaded(&yes)
       else  {
-         accel_flag.set_is_checked("t")
+         accel_flag.set_is_checked(&yes)
          accel_tf.set_contents(c.accel)
       }
 
       shaded := CheckBox("c:eol")
       shaded.set_label("Is shaded")
       if \c.is_shaded_flag then
-         shaded.set_is_checked("t")
+         shaded.set_is_checked(&yes)
       other_tab.add(shaded)
 
       has_initial_focus := CheckBox("c:eol", "c:w=2")
       has_initial_focus.set_label("Has initial focus")
       if c.parent_Canvas.initial_focus === c then
-         has_initial_focus.set_is_checked("t")
+         has_initial_focus.set_is_checked(&yes)
       other_tab.add(has_initial_focus)
 
       orig_layout := c.layout_delegate

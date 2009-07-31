@@ -446,7 +446,7 @@ class ObjectOutputStream(Stream, SetFields)
    # ignored, and the default object output format is used instead.
    #
    public set_ignore_object_output(s)
-      self.ignore_object_output_flag := to_flag(s)
+      self.ignore_object_output_flag := check_flag(s)
    end
 
    # When indent is set (ie output is over many lines and indented to
@@ -456,7 +456,7 @@ class ObjectOutputStream(Stream, SetFields)
    # many lines.
    #
    public set_always_structure(s)
-      self.always_structure_flag := to_flag(s)
+      self.always_structure_flag := check_flag(s)
    end
 
    protected set_one(f)

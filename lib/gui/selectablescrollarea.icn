@@ -105,14 +105,14 @@ class SelectableScrollArea(LineBasedScrollArea)
    # component).
    #
    public set_draggable_cursor(s)
-      self.draggable_cursor := to_flag(s)
+      self.draggable_cursor := check_flag(s)
    end
 
    #
    # Configure the object so that mouse motion moves the cursor.
    #
    public set_motion_cursor(s)
-      self.motion_cursor := to_flag(s)
+      self.motion_cursor := check_flag(s)
    end
 
    #
@@ -120,7 +120,7 @@ class SelectableScrollArea(LineBasedScrollArea)
    # selection (the default behaviour).
    #
    public set_selection_on_key_moves(s)
-      self.selection_on_key_moves := to_flag(s)
+      self.selection_on_key_moves := check_flag(s)
    end
 
    #
@@ -843,7 +843,7 @@ class SelectableScrollArea(LineBasedScrollArea)
 
    public new(a[])
       cast(self,ScrollArea).new()
-      self.set_accepts_focus("t")
+      self.set_accepts_focus(&yes)
       self.select_mode := Select.NONE
       self.contents := []
       self.selections := set()

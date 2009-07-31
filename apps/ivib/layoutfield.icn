@@ -14,9 +14,9 @@ class LayoutField(Component)
 
    public on_layout_change()
       if layouts.get_selection() = 1 then
-         edit_layout_button.set_is_shaded("t")
+         edit_layout_button.set_is_shaded(&yes)
       else
-         edit_layout_button.set_is_shaded("f")
+         edit_layout_button.set_is_shaded(&no)
       fire(Event.SELECTION_CHANGED)
    end
 
@@ -43,7 +43,7 @@ class LayoutField(Component)
    public set_contents(c)
       layout_tbl := table()
       if /c then
-         edit_layout_button.set_is_shaded("t")
+         edit_layout_button.set_is_shaded(&yes)
       else {
          layouts.set_selection(case classof(c) of {
             CanvasGridLayout : 2
@@ -66,7 +66,7 @@ class LayoutField(Component)
    public new(a[])
       cast(self,Component).new()
       setup()
-      self.set_constraint("x_fill", "y")
+      self.set_constraint("x_fill", &yes)
       self.set_constraint("x_weight", "1")
       set_fields(a)
       return

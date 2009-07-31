@@ -26,15 +26,15 @@ class CanvasButton(CanvasComponent)
       # Add the code
       #
       if /self.accepts_focus_flag then
-         c.line(name || ".set_accepts_focus(\"f\")")
+         c.line(name || ".set_accepts_focus(&no)")
 
       if \self.no_click_focus_flag then
-         c.line(name || ".set_no_click_focus(\"t\")")
+         c.line(name || ".set_no_click_focus(&yes)")
 
       if \self.toggles_flag then
-         c.line(name || ".set_toggles(\"t\")")
+         c.line(name || ".set_toggles(&yes)")
       else
-         c.line(name || ".set_toggles(\"f\")")
+         c.line(name || ".set_toggles(&no)")
          
       if \self.parent_button_group then
          c.line(self.parent_button_group.name || ".add(" || name || ")")
@@ -43,7 +43,7 @@ class CanvasButton(CanvasComponent)
          c.line(self.parent_check_box_group.name || ".add(" || name || ")")
 
       if \self.is_checked_flag then
-         c.line(name || ".set_is_checked(\"t\")")
+         c.line(name || ".set_is_checked(&yes)")
    end
 
    #

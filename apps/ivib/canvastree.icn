@@ -40,9 +40,9 @@ class CanvasTree(CanvasComponent,Tree)
       }
       c.add_import("gui", "Select")
       if /self.show_root_flag then
-         c.line(self.name || ".set_show_root(\"f\")")
+         c.line(self.name || ".set_show_root(&no)")
       if /self.show_root_handles_flag then
-         c.line(self.name || ".set_show_root_handles(\"f\")")
+         c.line(self.name || ".set_show_root_handles(&no)")
    end
 
    public post_decode()

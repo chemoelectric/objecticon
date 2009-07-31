@@ -22,9 +22,9 @@ class CanvasSplitDialog(CanvasComponentDialog)
 
    public set_vals()
       if show_inter.is_checked() then
-         c.sizer.set_show_inter("t")
+         c.sizer.set_show_inter(&yes)
       else
-         c.sizer.set_show_inter("f")
+         c.sizer.set_show_inter(&no)
       c.set_min(integer(min_first.get_contents()),
                 integer(min_second.get_contents()))
       c.set_weight(numeric(weight.get_contents()))
@@ -42,7 +42,7 @@ class CanvasSplitDialog(CanvasComponentDialog)
 
       show_inter := CheckBox("label=Show intermediate sizer bar", "c:eol", "c:w=2")
       if \c.sizer.show_inter_flag then
-         show_inter.set_is_checked("t")
+         show_inter.set_is_checked(&yes)
       p.add(show_inter)
 
       p.add(Label("label=Min left/top size:"))

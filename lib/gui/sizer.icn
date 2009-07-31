@@ -61,7 +61,7 @@ class Sizer(Component)
    # Configure the orientation of the {Sizer}; the default is vertical.
    #
    public set_is_horizontal(s)
-      self.is_horizontal_flag := to_flag(s)
+      self.is_horizontal_flag := check_flag(s)
    end
 
    #
@@ -69,7 +69,7 @@ class Sizer(Component)
    # ie whilst it is being dragged.
    #
    public set_show_inter(s)
-      self.show_inter_flag := to_flag(s)
+      self.show_inter_flag := check_flag(s)
    end
 
    public display()

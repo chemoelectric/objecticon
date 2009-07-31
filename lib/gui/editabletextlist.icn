@@ -258,14 +258,14 @@ class EditableTextList(LineBasedScrollArea)
    # Set the editable status of the component.
    #
    public set_is_editable(s)
-      self.is_editable_flag := to_flag(s)
+      self.is_editable_flag := check_flag(s)
    end
 
    #
    # Move the cursor on mouse right press?
    #
    public set_move_on_rpress(s)
-      self.move_on_rpress_flag := to_flag(s)
+      self.move_on_rpress_flag := check_flag(s)
    end
 
    #
@@ -1173,7 +1173,7 @@ class EditableTextList(LineBasedScrollArea)
    public set_wrap_mode(s)
       local wc
       self.wrap_mode := s
-      if /to_flag(s) then
+      if /flag(s) then
          line_splitter := DefaultLineSplitter(self)
       else if wc := integer(s) then
          line_splitter := ColumnLineSplitter(self, wc)
@@ -1193,7 +1193,7 @@ class EditableTextList(LineBasedScrollArea)
    # Indicate, if wrapping, whether to split words or not (default no).
    #
    public set_split_words(s)
-      self.split_words_flag := to_flag(s)
+      self.split_words_flag := check_flag(s)
       if is_live() then {
          clear_view_list()
          compute_and_invalidate()
@@ -1228,7 +1228,7 @@ class EditableTextList(LineBasedScrollArea)
 
    public new(a[])
       cast(self,LineBasedScrollArea).new()
-      self.set_accepts_focus("t")
+      self.set_accepts_focus(&yes)
       undo_manager := UndoManager()
       tab_width := Gui.TAB_WIDTH
       set_contents([])

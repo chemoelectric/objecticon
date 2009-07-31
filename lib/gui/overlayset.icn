@@ -41,9 +41,9 @@ class OverlaySet(Component)
       local c
       every c := !self.children do {
          if c === self.which_one then
-            c.set_is_hidden("f")
+            c.set_is_hidden(&no)
          else
-            c.set_is_hidden("t")
+            c.set_is_hidden(&yes)
       }
    end
 
@@ -91,8 +91,8 @@ class OverlaySet(Component)
 
    public new(a[])
       cast(self,Component).new()
-      self.set_constraint("x_fill", "")
-      self.set_constraint("y_fill", "")
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", "1")
       self.set_constraint("y_weight", "1")
       set_fields(a)

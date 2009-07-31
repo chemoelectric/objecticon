@@ -30,7 +30,7 @@ class Line(Component)
    # Configure the orientation of the {Line}; the default is horizontal.
    #
    public set_is_horizontal(s)
-      self.is_horizontal_flag := to_flag(s)
+      self.is_horizontal_flag := check_flag(s)
       self.invalidate()
    end
 

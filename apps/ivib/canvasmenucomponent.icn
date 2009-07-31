@@ -21,7 +21,7 @@ class CanvasMenuComponent(CanvasObject)
       c.line(name || " := " || self.class_name || "()")
 
       if \self.is_shaded_flag then
-         c.line(name || ".set_is_shaded(\"t\")")
+         c.line(name || ".set_is_shaded(&yes)")
 
       if \self.accel then
          c.line(name || ".set_accel(" || image(self.accel) || ")")

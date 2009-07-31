@@ -75,7 +75,7 @@ class CustomToolBar(Component)
 
    public add_button(t)
       t.set_pos(x1, y1)
-      t.set_accepts_focus("f")
+      t.set_accepts_focus(&no)
       t.set_border(EmptyBorder("flush"))
       bg.add(t)
       self.add(t)
@@ -371,36 +371,36 @@ class Main(Dialog)
          delete_button | move_selection_up_order_button | move_selection_down_order_button do 
       {
          if *self.canvas.selections > 0 then
-            o.set_is_shaded("f")
+            o.set_is_shaded(&no)
          else
-            o.set_is_shaded("t")
+            o.set_is_shaded(&yes)
       }
 
       if *undo_list > 0 then {
-         self.undo.set_is_shaded("f")
-         self.undo_button.set_is_shaded("f")
+         self.undo.set_is_shaded(&no)
+         self.undo_button.set_is_shaded(&no)
       } else {
-         self.undo.set_is_shaded("t")
-         self.undo_button.set_is_shaded("t")
+         self.undo.set_is_shaded(&yes)
+         self.undo_button.set_is_shaded(&yes)
       }
 
       if *redo_list > 0 then {
-         self.redo.set_is_shaded("f")
-         self.redo_button.set_is_shaded("f")
+         self.redo.set_is_shaded(&no)
+         self.redo_button.set_is_shaded(&no)
       } else {
-         self.redo.set_is_shaded("t")
-         self.redo_button.set_is_shaded("t")
+         self.redo.set_is_shaded(&yes)
+         self.redo_button.set_is_shaded(&yes)
       }
 
       if \self.canvas.modified & \self.canvas.filename then
-         save.set_is_shaded("f")
+         save.set_is_shaded(&no)
       else
-         save.set_is_shaded("t")
+         save.set_is_shaded(&yes)
 
       if \self.canvas.modified | /self.canvas.filename then
-         save_button.set_is_shaded("f")
+         save_button.set_is_shaded(&no)
       else
-         save_button.set_is_shaded("t")
+         save_button.set_is_shaded(&yes)
    end
 
    #
@@ -770,7 +770,7 @@ class Main(Dialog)
       local d, t, m, bg
 
       t := canvas.dup()
-      every coexp_seq{t.traverse_components_preorder()}.set_show_layout("f")
+      every coexp_seq{t.traverse_components_preorder()}.set_show_layout(&no)
       d := Dialog()
       d.set_layout(t.layout_delegate)
       every d.add(!t.children)
@@ -1369,7 +1369,7 @@ class Main(Dialog)
       self.connect(self.op_quit, Event.WINDOW_CLOSE_BUTTON)
 
       self.attrib("label=Ivib", "height=600", "minheight=400")
-      self.set_only_enlarge_width("t")
+      self.set_only_enlarge_width(&yes)
       canvas_zone := Panel("bg=blue", "size=50,50")
       self.add(canvas_zone)
 
@@ -1482,15 +1482,15 @@ class PathTab(TabItem)
 
    public update_grey()
       if *path_list.get_selections() > 0 then {
-         path.set_is_shaded("f")
-         browse.set_is_shaded("f")
-         delete.set_is_shaded("f")
-         apply.set_is_shaded("f")
+         path.set_is_shaded(&no)
+         browse.set_is_shaded(&no)
+         delete.set_is_shaded(&no)
+         apply.set_is_shaded(&no)
       } else {
-         path.set_is_shaded("t")
-         browse.set_is_shaded("t")
-         delete.set_is_shaded("t")
-         apply.set_is_shaded("t")
+         path.set_is_shaded(&yes)
+         browse.set_is_shaded(&yes)
+         delete.set_is_shaded(&yes)
+         apply.set_is_shaded(&yes)
       }
    end
 

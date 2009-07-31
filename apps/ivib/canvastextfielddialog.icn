@@ -67,17 +67,17 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
 
       is_editable_cb := CheckBox("label=Is editable", "c:eol", "c:w=2")
       if \c.is_editable_flag then
-         is_editable_cb.set_is_checked("t")
+         is_editable_cb.set_is_checked(&yes)
       p.add(is_editable_cb)
 
       move_on_rpress_cb := CheckBox("label=Move cursor on &rpress", "c:eol", "c:w=2")
       if \c.move_on_rpress_flag then
-         move_on_rpress_cb.set_is_checked("t")
+         move_on_rpress_cb.set_is_checked(&yes)
       p.add(move_on_rpress_cb)
 
       ucs_cb := CheckBox("label=Ucs content", "c:w=2")
       if type(c.contents) == "ucs" then
-         ucs_cb.set_is_checked("t")
+         ucs_cb.set_is_checked(&yes)
       ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
       p.add(ucs_cb)
    end

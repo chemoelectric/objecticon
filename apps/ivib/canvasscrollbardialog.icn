@@ -118,14 +118,14 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       if \c.is_range_flag then {
          range_from.set_contents(c.lo)
          range_to.set_contents(c.hi)
-         slider.set_is_checked("t")
-         page_size.set_is_shaded("t")
-         total_size.set_is_shaded("t")
+         slider.set_is_checked(&yes)
+         page_size.set_is_shaded(&yes)
+         total_size.set_is_shaded(&yes)
       } else {
          page_size.set_contents(c.page_size)
          total_size.set_contents(c.total_size)
-         range_from.set_is_shaded("t")
-         range_to.set_is_shaded("t")
+         range_from.set_is_shaded(&yes)
+         range_to.set_is_shaded(&yes)
       }
 
       l := Label()

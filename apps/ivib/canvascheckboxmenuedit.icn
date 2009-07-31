@@ -110,25 +110,25 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       shaded := CheckBox()
       shaded.set_label("Is shaded")
       if \c.is_shaded_flag then
-         shaded.set_is_checked("t")
+         shaded.set_is_checked(&yes)
       main_panel.add(shaded)
 
       if *c.parent_component.parent_Canvas.checkbox_groups = 0 then {
-         in_checkbox_group.set_is_shaded("t")
-         group_list.set_is_shaded("t")
+         in_checkbox_group.set_is_shaded(&yes)
+         group_list.set_is_shaded(&yes)
          if c.is_checked() then
-            initially_checked.set_is_checked("t")
+            initially_checked.set_is_checked(&yes)
       } else {
          if \c.parent_check_box_group then {
-            in_checkbox_group.set_is_checked("t")
+            in_checkbox_group.set_is_checked(&yes)
             group_list.set_selection(keyof(c.parent_component.parent_Canvas.checkbox_groups,
                                            c.parent_check_box_group))
             if c === c.parent_check_box_group.which_one then
-               initially_checked.set_is_checked("t")
+               initially_checked.set_is_checked(&yes)
          } else  {
-            group_list.set_is_shaded("t")
+            group_list.set_is_shaded(&yes)
             if c.is_checked() then
-               initially_checked.set_is_checked("t")
+               initially_checked.set_is_checked(&yes)
          }
       }
 

@@ -991,7 +991,7 @@ class Dialog(Component)
    # height.
    #
    public set_only_enlarge_height(s)
-      self.only_enlarge_height_flag := to_flag(s)
+      self.only_enlarge_height_flag := check_flag(s)
    end
 
    #
@@ -999,7 +999,7 @@ class Dialog(Component)
    # width.
    #
    public set_only_enlarge_width(s)
-      self.only_enlarge_width_flag := to_flag(s)
+      self.only_enlarge_width_flag := check_flag(s)
    end
 
    public set_one(f)

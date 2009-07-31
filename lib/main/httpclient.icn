@@ -121,7 +121,7 @@ class HttpClient(NetClient)
    # default is yes).
    #
    public set_keep_alive(s)
-      self.keep_alive_flag := to_flag(s)
+      self.keep_alive_flag := check_flag(s)
    end
 
    #
@@ -129,7 +129,7 @@ class HttpClient(NetClient)
    # be reset if any data was received.
    #
    public set_retry_while_data(s)
-      self.retry_while_data_flag := to_flag(s)
+      self.retry_while_data_flag := check_flag(s)
    end
 
    #

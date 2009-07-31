@@ -22,9 +22,9 @@ class CanvasImage(CanvasComponent,Image)
       c.line(name || ".set_file(" || image(\self.image_file) || ")")
       c.line(name || ".set_image(" || image(\self.image_str) || ")")
       if \self.scale_up_flag then
-         c.line(name || ".set_scale_up(\"t\")")
+         c.line(name || ".set_scale_up(&yes)")
       if /self.use_cache_flag then
-         c.line(name || ".set_use_cache(\"f\")")
+         c.line(name || ".set_use_cache(&no)")
    end
 
    #

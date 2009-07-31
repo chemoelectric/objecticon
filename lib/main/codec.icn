@@ -298,7 +298,7 @@ class Encode(SetFields)
    # structure changes to objects.
    #
    public set_fast(s)
-      self.fast_flag := to_flag(s)
+      self.fast_flag := check_flag(s)
    end
 
    protected set_one(f)

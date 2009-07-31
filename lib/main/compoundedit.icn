@@ -67,7 +67,7 @@ class CompoundEdit(UndoableEdit, SetFields)
    # this edit's list will not be added to.
    #
    public set_liberal(s)
-      self.liberal_flag := to_flag(s)
+      self.liberal_flag := check_flag(s)
    end
 
    #

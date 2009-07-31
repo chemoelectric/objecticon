@@ -27,21 +27,21 @@ class CanvasTableDialog(CanvasComponentDialog)
       i := struct.get_selections()[1]
       if \i <= *c.table_header.children then {
          if *c.table_header.children > 1 then
-            delete.set_is_shaded("f")
-         edit.set_is_shaded("f")
+            delete.set_is_shaded(&no)
+         edit.set_is_shaded(&no)
          if i > 1 then
-            up.set_is_shaded("f")
+            up.set_is_shaded(&no)
          else
-            up.set_is_shaded("t")
+            up.set_is_shaded(&yes)
          if i < *c.table_header.children then
-            down.set_is_shaded("f")
+            down.set_is_shaded(&no)
          else
-            down.set_is_shaded("t")
+            down.set_is_shaded(&yes)
       } else {
-         edit.set_is_shaded("t")
-         delete.set_is_shaded("t")
-         up.set_is_shaded("t")
-         down.set_is_shaded("t")
+         edit.set_is_shaded(&yes)
+         delete.set_is_shaded(&yes)
+         up.set_is_shaded(&yes)
+         down.set_is_shaded(&yes)
       }
    end
 

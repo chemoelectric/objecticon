@@ -38,12 +38,12 @@ class CanvasTreeDialog(CanvasComponentDialog)
 
       show_root := CheckBox("label=Show root", "c:eol")
       if \c.show_root_flag then
-         show_root.set_is_checked("t")
+         show_root.set_is_checked(&yes)
       p.add(show_root)
 
       show_root_handles := CheckBox("label=Show root handles", "c:eol")
       if \c.show_root_handles_flag then
-         show_root_handles.set_is_checked("t")
+         show_root_handles.set_is_checked(&yes)
       p.add(show_root_handles)
 
       select_group := SelectModeList("c:eol")

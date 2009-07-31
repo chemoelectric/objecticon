@@ -84,14 +84,14 @@ class TextField(Component)
    # Set the editable status of the component.
    #
    public set_is_editable(s)
-      self.is_editable_flag := to_flag(s)
+      self.is_editable_flag := check_flag(s)
    end
 
    #
    # Move the cursor on mouse right press?
    #
    public set_move_on_rpress(s)
-      self.move_on_rpress_flag := to_flag(s)
+      self.move_on_rpress_flag := check_flag(s)
    end
 
    #
@@ -684,7 +684,7 @@ class TextField(Component)
       self.border.inner.set_r_inset(Gui.TEXT_INSET)
       self.is_editable_flag := 1
       self.move_on_rpress_flag := 1
-      self.set_constraint("x_fill", "")
+      self.set_constraint("x_fill", &yes)
       self.set_constraint("x_align", Align.L)
       self.set_constraint("x_weight", "1")
       set_pointer("xterm")

@@ -37,15 +37,15 @@ class BorderField(Component)
 
    public on_border_change()
       if borders.get_selection() = 1 then
-         edit_border_button.set_is_shaded("t")
+         edit_border_button.set_is_shaded(&yes)
       else
-         edit_border_button.set_is_shaded("f")
+         edit_border_button.set_is_shaded(&no)
    end
 
    public set_contents(c)
       border_tbl := table()
       if /c then
-         edit_border_button.set_is_shaded("t")
+         edit_border_button.set_is_shaded(&yes)
       else {
          borders.set_selection(case classof(c) of {
             CanvasEmptyBorder : 2
@@ -78,7 +78,7 @@ class BorderField(Component)
    public new(a[])
       cast(self,Component).new()
       setup()
-      self.set_constraint("x_fill", "y")
+      self.set_constraint("x_fill", &yes)
       self.set_constraint("x_weight", "1")
       set_fields(a)
       return

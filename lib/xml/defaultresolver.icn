@@ -52,7 +52,7 @@ class DefaultResolver(Resolver,SetFields)
    # more than once.  This is on by default.
    #
    public set_cache_uris(s)
-      self.cache_uris_flag := to_flag(s)
+      self.cache_uris_flag := check_flag(s)
    end
 
    #

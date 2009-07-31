@@ -293,7 +293,7 @@ class ScrollArea(Component)
          if /self.vsb := ScrollBar() then
             new_vsb := 1
          if /self.hsb := ScrollBar() then {
-            self.hsb.set_is_horizontal("t")
+            self.hsb.set_is_horizontal(&yes)
             new_hsb := 1
          }
 
@@ -331,7 +331,7 @@ class ScrollArea(Component)
          # One horizontal scroll bar.
          #
          if /self.hsb := ScrollBar() then {
-            self.hsb.set_is_horizontal("t")
+            self.hsb.set_is_horizontal(&yes)
             new_hsb := 1
          }
          (\self.vsb).finally()
@@ -425,7 +425,7 @@ class ScrollArea(Component)
    end
 
    public use_default_keys()
-      self.set_accepts_focus("t")
+      self.set_accepts_focus(&yes)
       self.connect(self.default_on_key, Event.KEY_PRESS)
       self.use_default_keys_flag := 1
    end
@@ -508,8 +508,8 @@ class ScrollArea(Component)
       self.set_border(SunkenBorder())
       self.view := create_view()
       add(view)
-      self.set_constraint("x_fill", "")
-      self.set_constraint("y_fill", "")
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", "1")
       self.set_constraint("y_weight", "1")
       set_fields(a)

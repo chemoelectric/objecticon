@@ -82,9 +82,9 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
       c.line(name || ".set_max_w(" || \self.max_w || ")")
       c.line(name || ".set_max_h(" || \self.max_h || ")")
       if \self.scale_up_flag then
-         c.line(name || ".set_scale_up(\"t\")")
+         c.line(name || ".set_scale_up(&yes)")
       if /self.use_cache_flag then
-         c.line(name || ".set_use_cache(\"f\")")
+         c.line(name || ".set_use_cache(&no)")
       c.add_var(name, class_variable)
       c.add_import(self.import_name, self.class_name)
 

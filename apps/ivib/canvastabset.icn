@@ -25,11 +25,11 @@ class CanvasTabSet(CanvasComponent,TabSet)
          c.line(self.name || ".add(" || i.name || ")")
       }
       if \self.no_click_focus_flag then
-         c.line(name || ".set_no_click_focus(\"t\")")
+         c.line(name || ".set_no_click_focus(&yes)")
       if \self.prefer_one_row_flag then
-         c.line(name || ".set_prefer_one_row(\"t\")")
+         c.line(name || ".set_prefer_one_row(&yes)")
       if \self.tabs_at_bottom_flag then
-         c.line(name || ".set_tabs_at_bottom(\"t\")")
+         c.line(name || ".set_tabs_at_bottom(&yes)")
 
       c.line(self.name || ".set_which_one(" || self.which_one.name || ")")
    end

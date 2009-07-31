@@ -114,7 +114,7 @@ class ScrollBar(Component)
    # Configure the orientation (default is vertical).
    #
    public set_is_horizontal(s)
-      return self.is_horizontal_flag := to_flag(s)
+      return self.is_horizontal_flag := check_flag(s)
    end
 
    #
@@ -543,12 +543,12 @@ class ScrollBar(Component)
       self.b1 := IconButton("w=",DEFAULT_SIZE, "h=",DEFAULT_SIZE)
       self.b1.connect(self.handle_button_up, Event.BUTTON_PRESS)
       self.b1.connect(self.handle_button_up, Event.BUTTON_HELD)
-      self.b1.set_accepts_focus("f")
+      self.b1.set_accepts_focus(&no)
       add(self.b1)
       self.b2 := IconButton("w=",DEFAULT_SIZE, "h=",DEFAULT_SIZE)
       self.b2.connect(self.handle_button_down, Event.BUTTON_PRESS)
       self.b2.connect(self.handle_button_down, Event.BUTTON_HELD)
-      self.b2.set_accepts_focus("f")
+      self.b2.set_accepts_focus(&no)
       add(self.b2)
       self.bar_area := BarArea()
       add(self.bar_area)

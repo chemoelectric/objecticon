@@ -106,7 +106,7 @@ class GridLayout(Layout,SetFields)
    end
 
    public set_debug(s)
-      self.debug := to_flag(s)
+      self.debug := check_flag(s)
    end
 
    public set_dii(n)

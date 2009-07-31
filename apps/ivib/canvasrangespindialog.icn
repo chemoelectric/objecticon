@@ -119,16 +119,16 @@ class CanvasRangeSpinDialog(CanvasComponentDialog)
       value.set_filter(&digits ++ '.\-')
 
       if /c.hi then {
-         hi.set_is_shaded("t")
+         hi.set_is_shaded(&yes)
       } else {
-         hi_flag.set_is_checked("t")
+         hi_flag.set_is_checked(&yes)
          hi.set_contents(c.hi)
       }
 
       if /c.lo then {
-         lo.set_is_shaded("t")
+         lo.set_is_shaded(&yes)
       } else {
-         lo_flag.set_is_checked("t")
+         lo_flag.set_is_checked(&yes)
          lo.set_contents(c.lo)
       }
 

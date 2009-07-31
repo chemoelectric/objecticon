@@ -88,7 +88,7 @@ class TreeNode(SetFields)
       n := self
       repeat {
          n := n.get_parent() | break
-         n.set_expanded("t")
+         n.set_expanded(&yes)
       }
    end
 
@@ -168,7 +168,7 @@ class TreeNode(SetFields)
    # for display purposes, event though it may in fact have no children.
    #
    public set_always_expandable(s)
-      self.always_expandable_flag := to_flag(s)
+      self.always_expandable_flag := check_flag(s)
    end
 
    #
@@ -176,7 +176,7 @@ class TreeNode(SetFields)
    # call tree.tree_structure_changed() on the tree in which the node resides.
    #
    public set_expanded(s)
-      self.is_expanded_flag := to_flag(s)
+      self.is_expanded_flag := check_flag(s)
    end
       
    #
@@ -184,7 +184,7 @@ class TreeNode(SetFields)
    # call tree.tree_structure_changed() on the tree in which the node resides.
    #
    public toggle_expanded()
-      self.is_expanded_flag := if /self.is_expanded_flag then 1 else &null
+      self.is_expanded_flag := toggle_flag(self.is_expanded_flag)
    end
 
    #

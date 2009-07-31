@@ -778,7 +778,8 @@ class Class(List)
    end
 
    public set_final(pad, f)
-      if \to_flag(f) then {
+      check_flag(f)
+      if \f then {
          if not is_final() then {
             pos.set(1, Token(FINAL, "final", pad || "final"))
             pos.set(2, Token(CLASS, "class", " class"))
@@ -820,7 +821,8 @@ class Function()
    end
 
    public set_varargs(f)
-      if \to_flag(f) then {
+      check_flag(f)
+      if \f then {
          if not has_varargs() then
             fpos.set(arglist_index, Node("arglist",
                                          fpos.child(arglist_index),

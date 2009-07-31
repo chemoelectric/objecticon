@@ -26,9 +26,9 @@ class CanvasTextField(CanvasComponent,TextField)
       if *\filter_str > 0 then
          c.line(name || ".set_filter(" || image(cset(self.filter_str)) || ")")
       if /self.is_editable_flag then
-         c.line(name || ".set_is_editable(\"f\")")
+         c.line(name || ".set_is_editable(&no)")
       if /self.move_on_rpress_flag then
-         c.line(name || ".set_move_on_rpress(\"f\")")
+         c.line(name || ".set_move_on_rpress(&no)")
    end
 
    #

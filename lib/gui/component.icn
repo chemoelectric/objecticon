@@ -211,7 +211,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # which has a tip for each node.  By default off.
    #
    public set_tooltip_follows_mouse(s)
-      self.tooltip_follows_mouse_flag := to_flag(s)
+      self.tooltip_follows_mouse_flag := check_flag(s)
    end
 
    #
@@ -299,10 +299,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # Swap the hidden status of the component.
    #
    public toggle_is_hidden()
-      if /self.is_hidden_flag then
-         set_is_hidden("t")
-      else
-         set_is_hidden("f")
+      set_is_hidden(toggle_flag(self.is_hidden_flag))
    end
 
    #
@@ -312,7 +309,7 @@ class Component(Rect,Align,SetFields,Connectable)
       # NB - try invalidate before and after, since invalidating a hidden
       # component is a no-op.
       self.invalidate()
-      self.is_hidden_flag := to_flag(s)
+      self.is_hidden_flag := check_flag(s)
       self.hidden_change()
       self.invalidate()
    end
@@ -379,10 +376,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # Swap the shaded status of the component.
    #
    public toggle_is_shaded()
-      if /self.is_shaded_flag then
-         self.is_shaded_flag := 1
-      else
-         self.is_shaded_flag := &null
+      self.is_shaded_flag := toggle_flag(self.is_shaded_flag)
       self.shaded_change()
       self.invalidate()
    end
@@ -391,7 +385,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      self.is_shaded_flag := to_flag(s)
+      self.is_shaded_flag := check_flag(s)
       self.shaded_change()
       self.invalidate()
    end
@@ -400,7 +394,7 @@ class Component(Rect,Align,SetFields,Connectable)
    # Set the flag indicating that the component accepts tab focus.
    #
    public set_accepts_focus(s)
-      self.accepts_focus_flag := to_flag(s)
+      self.accepts_focus_flag := check_flag(s)
    end
 
    #
@@ -1247,21 +1241,21 @@ class Component(Rect,Align,SetFields,Connectable)
    # Configure whether the component allows drags, if it is so capable.
    #
    public set_allow_drag(s)
-      self.allow_drag_flag := to_flag(s)
+      self.allow_drag_flag := check_flag(s)
    end
 
    #
    # Configure whether the component allows drops, if it is so capable.
    #
    public set_allow_drop(s)
-      return self.allow_drop_flag := to_flag(s)
+      return self.allow_drop_flag := check_flag(s)
    end
 
    #
    # Set whether the component will show the layout grid, if any.
    #
    public set_show_layout(s)
-      return self.show_layout_flag := to_flag(s)
+      return self.show_layout_flag := check_flag(s)
    end
 
    public try_constraint(f)

@@ -98,9 +98,9 @@ class BorderEdit(Dialog)
                       "title=",use_empty_cb,
                       "content=",q))
          if /c.has_empty then
-            empty_panel.set_is_shaded("t")
+            empty_panel.set_is_shaded(&yes)
          else
-            use_empty_cb.set_is_checked("t")
+            use_empty_cb.set_is_checked(&yes)
 
          set_line_width := CheckBox("label=Border line_width : ")
          set_line_width.connect(self.on_set_line_width, Event.ACTION)
@@ -108,10 +108,10 @@ class BorderEdit(Dialog)
          line_width_field := TextField("size=70", "c:eol", "filter=",&digits)
          p.add(line_width_field)
          if \c.line_width_val then {
-            set_line_width.set_is_checked("t")
+            set_line_width.set_is_checked(&yes)
             line_width_field.set_contents(c.line_width_val)
          } else {
-            line_width_field.set_is_shaded("t")
+            line_width_field.set_is_shaded(&yes)
             line_width_field.set_contents(Gui.BORDER_WIDTH)
          }
       } else
@@ -123,10 +123,10 @@ class BorderEdit(Dialog)
       l_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
       q.add(l_inset_field)
       if \c.empty_l_inset then {
-         set_l_inset_cb.set_is_checked("t")
+         set_l_inset_cb.set_is_checked(&yes)
          l_inset_field.set_contents(c.empty_l_inset)
       } else {
-         l_inset_field.set_is_shaded("t")
+         l_inset_field.set_is_shaded(&yes)
          l_inset_field.set_contents(Gui.X_INSET)
       }
 
@@ -136,10 +136,10 @@ class BorderEdit(Dialog)
       r_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
       q.add(r_inset_field)
       if \c.empty_r_inset then {
-         set_r_inset_cb.set_is_checked("t")
+         set_r_inset_cb.set_is_checked(&yes)
          r_inset_field.set_contents(c.empty_r_inset)
       } else {
-         r_inset_field.set_is_shaded("t")
+         r_inset_field.set_is_shaded(&yes)
          r_inset_field.set_contents(Gui.X_INSET)
       }
 
@@ -149,10 +149,10 @@ class BorderEdit(Dialog)
       t_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
       q.add(t_inset_field)
       if \c.empty_t_inset then {
-         set_t_inset_cb.set_is_checked("t")
+         set_t_inset_cb.set_is_checked(&yes)
          t_inset_field.set_contents(c.empty_t_inset)
       } else {
-         t_inset_field.set_is_shaded("t")
+         t_inset_field.set_is_shaded(&yes)
          t_inset_field.set_contents(Gui.Y_INSET)
       }
 
@@ -162,10 +162,10 @@ class BorderEdit(Dialog)
       b_inset_field := TextField("size=70", "c:eol", "filter=",&digits)
       q.add(b_inset_field)
       if \c.empty_b_inset then {
-         set_b_inset_cb.set_is_checked("t")
+         set_b_inset_cb.set_is_checked(&yes)
          b_inset_field.set_contents(c.empty_b_inset)
       } else {
-         b_inset_field.set_is_shaded("t")
+         b_inset_field.set_is_shaded(&yes)
          b_inset_field.set_contents(Gui.Y_INSET)
       }
 
@@ -176,10 +176,10 @@ class BorderEdit(Dialog)
                            "selection_list=",[Align.L, Align.C, Align.R])
       p.add(x_align_list)
       if \c.x_align_val then {
-         set_x_align_cb.set_is_checked("t")
+         set_x_align_cb.set_is_checked(&yes)
          x_align_list.object_set_selection(c.x_align_val)
       } else {
-         x_align_list.set_is_shaded("t")
+         x_align_list.set_is_shaded(&yes)
          x_align_list.object_set_selection(Align.C)
       }
 
@@ -190,10 +190,10 @@ class BorderEdit(Dialog)
                            "selection_list=",[Align.T, Align.C, Align.B])
       p.add(y_align_list)
       if \c.y_align_val then {
-         set_y_align_cb.set_is_checked("t")
+         set_y_align_cb.set_is_checked(&yes)
          y_align_list.object_set_selection(c.y_align_val)
       } else {
-         y_align_list.set_is_shaded("t")
+         y_align_list.set_is_shaded(&yes)
          y_align_list.object_set_selection(Align.C)
       }
 

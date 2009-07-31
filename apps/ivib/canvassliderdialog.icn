@@ -172,23 +172,23 @@ class CanvasSliderDialog(CanvasComponentDialog)
       increment_size.set_contents(c.increment_size)
 
       if /c.ticks then {
-         ticks.set_is_shaded("t")
+         ticks.set_is_shaded(&yes)
       } else {
-         ticks_flag.set_is_checked("t")
+         ticks_flag.set_is_checked(&yes)
          ticks.set_contents(c.ticks)
       }
 
       if /c.labels then {
-         labels.set_is_shaded("t")
+         labels.set_is_shaded(&yes)
       } else {
-         labels_flag.set_is_checked("t")
+         labels_flag.set_is_checked(&yes)
          labels.set_contents(c.labels)
       }
 
       if /c.snaps then {
-         snaps.set_is_shaded("t")
+         snaps.set_is_shaded(&yes)
       } else {
-         snaps_flag.set_is_checked("t")
+         snaps_flag.set_is_checked(&yes)
          snaps.set_contents(c.snaps)
       }
    end

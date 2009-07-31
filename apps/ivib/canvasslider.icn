@@ -26,7 +26,7 @@ class CanvasSlider(CanvasComponent,Slider)
       c.line(name || ".set_labels(" || \self.labels || ")")
       c.line(name || ".set_snaps(" || \self.snaps || ")")
       if \self.is_horizontal_flag then
-         c.line(name || ".set_is_horizontal(\"t\")")
+         c.line(name || ".set_is_horizontal(&yes)")
    end
 
    #

@@ -153,7 +153,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    public new()
       cast(self,OverlayItem).new()
       cast(self,CanvasComponent).new()
-      self.set_show_layout("t")
+      self.set_show_layout(&yes)
       self.class_name := "OverlayItem"
       self.import_name := "gui"
       self.name := "overlay_item"

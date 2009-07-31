@@ -29,7 +29,7 @@ class CheckBoxTableColumn(TableColumn)
    # checkboxes.
    #
    public set_single_selection(s)
-      self.single_selection_flag := to_flag(s)
+      self.single_selection_flag := check_flag(s)
    end
 
    #

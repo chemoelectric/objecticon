@@ -65,7 +65,7 @@ class CanvasSizerDialog(CanvasComponentDialog)
 
       lo_flag := CheckBox()
       lo_flag.connect(self.on_lo_flag, Event.ACTION)
-      lo_flag.set_toggles("t")
+      lo_flag.set_toggles(&yes)
       lo_flag.set_label("Low")
       p.add(lo_flag)
       lo := TextField("c:eol")
@@ -75,7 +75,7 @@ class CanvasSizerDialog(CanvasComponentDialog)
 
       hi_flag := CheckBox()
       hi_flag.connect(self.on_hi_flag, Event.ACTION)
-      hi_flag.set_toggles("t")
+      hi_flag.set_toggles(&yes)
       hi_flag.set_label("High")
       p.add(hi_flag)
       hi := TextField("c:eol")
@@ -87,16 +87,16 @@ class CanvasSizerDialog(CanvasComponentDialog)
       hi.set_filter(&digits)
 
       if /c.lo then {
-         lo.set_is_shaded("t")
+         lo.set_is_shaded(&yes)
       } else {
-         lo_flag.set_is_checked("t")
+         lo_flag.set_is_checked(&yes)
          lo.set_contents(c.lo)
       }
 
       if /c.hi then {
-         hi.set_is_shaded("t")
+         hi.set_is_shaded(&yes)
       } else {
-         hi_flag.set_is_checked("t")
+         hi_flag.set_is_checked(&yes)
          hi.set_contents(c.hi)
       }
    end

@@ -26,7 +26,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
       every e := !sort(self.wattribs) do
          c.line(name || ".set_wattrib(" || image(e[1]) || ", " || image(e[2]) || ")")
       if \self.is_shaded_flag then
-         c.line(name || ".set_is_shaded(\"t\")")
+         c.line(name || ".set_is_shaded(&yes)")
       if \self.layout_delegate then {
          self.layout_delegate.gen_code(c)
          c.line(name || ".set_layout(" || self.layout_delegate.name || ")")
@@ -147,7 +147,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
    public new()
       cast(self,TabItem).new()
       cast(self,CanvasComponent).new()
-      self.set_show_layout("t")
+      self.set_show_layout(&yes)
       self.class_name := "TabItem"
       self.import_name := "gui"
       self.name := "tab_item"

@@ -94,7 +94,7 @@ class Grid(SetFields)
       ci.w := integer(t["w"]) | 1
       ci.h := integer(t["h"]) | 1
       add_row_h <:= ci.h
-      if /to_flag(t["eol"]) then {
+      if /flag(t["eol"]) then {
          add_x := ci.x + ci.w
          add_y := ci.y
       } else {
@@ -106,8 +106,8 @@ class Grid(SetFields)
       ci.t_inset := integer(t["t_inset"])
       ci.r_inset := integer(t["r_inset"])
       ci.b_inset := integer(t["b_inset"])
-      ci.x_fill := to_flag(t["x_fill"]) | 1
-      ci.y_fill := to_flag(t["y_fill"]) | 1
+      ci.x_fill := flag(t["x_fill"]) | &yes
+      ci.y_fill := flag(t["y_fill"]) | &yes
       ci.x_align := (\t["x_align"] === (Align.L | Align.R)) | Align.C
       ci.y_align := (\t["y_align"] === (Align.T | Align.B)) | Align.C
       ci.x_weight := real(t["x_weight"]) | 0

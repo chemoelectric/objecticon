@@ -67,7 +67,7 @@ class TabSet(Component)
    # If set, then the tabs are at the bottom, not the top.
    #
    public set_tabs_at_bottom(s)
-      self.tabs_at_bottom_flag := to_flag(s)
+      self.tabs_at_bottom_flag := check_flag(s)
    end
 
    #
@@ -75,7 +75,7 @@ class TabSet(Component)
    # not get the focus on a left click.
    #
    public set_no_click_focus(s)
-      self.no_click_focus_flag := to_flag(s)
+      self.no_click_focus_flag := check_flag(s)
    end
 
    #
@@ -83,7 +83,7 @@ class TabSet(Component)
    # enough to accommodate a single row of tabs.
    #
    public set_prefer_one_row(s)
-      self.prefer_one_row_flag := to_flag(s)
+      self.prefer_one_row_flag := check_flag(s)
    end
 
    public keeps(e)
@@ -309,9 +309,9 @@ class TabSet(Component)
       local c
       every c := !self.children do {
          if c === self.which_one then
-            c.set_is_hidden("f")
+            c.set_is_hidden(&no)
          else
-            c.set_is_hidden("t")
+            c.set_is_hidden(&yes)
       }
    end
 
@@ -676,8 +676,8 @@ class TabSet(Component)
    public new(a[])
       cast(self,Component).new()
       self.accepts_focus_flag := 1
-      self.set_constraint("x_fill", "")
-      self.set_constraint("y_fill", "")
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", "1")
       self.set_constraint("y_weight", "1")
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)

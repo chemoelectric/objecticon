@@ -186,19 +186,19 @@ class ImagePaintEdit(PaintEdit)
 
    public update_grey()
       if str_cb.is_checked() then
-         str_panel.set_is_shaded("f")
+         str_panel.set_is_shaded(&no)
       else
-         str_panel.set_is_shaded("t")
+         str_panel.set_is_shaded(&yes)
 
       if file_cb.is_checked() then
-         file_panel.set_is_shaded("f")
+         file_panel.set_is_shaded(&no)
       else
-         file_panel.set_is_shaded("t")
+         file_panel.set_is_shaded(&yes)
 
       if file_field.get_contents()[1] == "/" then
-         relativize.set_is_shaded("f")
+         relativize.set_is_shaded(&no)
       else
-         relativize.set_is_shaded("t")
+         relativize.set_is_shaded(&yes)
    end
 
    public setup()
@@ -215,10 +215,10 @@ class ImagePaintEdit(PaintEdit)
       max_w_field := TextField("size=130", "filter=",&digits, "c:eol")
       p.add(max_w_field)
       if \c.max_w then {
-         max_w.set_is_checked("t")
+         max_w.set_is_checked(&yes)
          max_w_field.set_contents(c.max_w)
       } else
-         max_w_field.set_is_shaded("t")
+         max_w_field.set_is_shaded(&yes)
 
       max_h := CheckBox("label=Max height :")
       max_h.connect(self.on_max_h, Event.ACTION)
@@ -226,14 +226,14 @@ class ImagePaintEdit(PaintEdit)
       max_h_field := TextField("size=130", "filter=",&digits, "c:eol")
       p.add(max_h_field)
       if \c.max_h then {
-         max_h.set_is_checked("t")
+         max_h.set_is_checked(&yes)
          max_h_field.set_contents(c.max_h)
       } else
-         max_h_field.set_is_shaded("t")
+         max_h_field.set_is_shaded(&yes)
 
       scale_up := CheckBox("label=Scale up", "c:eol")
       if \c.scale_up_flag then
-         scale_up.set_is_checked("t")
+         scale_up.set_is_checked(&yes)
       p.add(scale_up)
 
       p := TabItem("label=Images")
@@ -257,7 +257,7 @@ class ImagePaintEdit(PaintEdit)
       str_panel.add(browse)
       if \c.image_str then {
          str_img.set_image(c.image_str)
-         str_cb.set_is_checked("t")
+         str_cb.set_is_checked(&yes)
       }
       p.add(b)
 
@@ -285,12 +285,12 @@ class ImagePaintEdit(PaintEdit)
       file_panel.add(q)
       use_cache := CheckBox("label=Use cache", "c:w=2")
       if \c.use_cache_flag then
-         use_cache.set_is_checked("t")
+         use_cache.set_is_checked(&yes)
       file_panel.add(use_cache)
       if \c.image_file then {
          file_img.set_file(c.image_file)
          file_field.set_contents(c.image_file)
-         file_cb.set_is_checked("t")
+         file_cb.set_is_checked(&yes)
       }
       p.add(b)
 
@@ -429,7 +429,7 @@ class GridPaintEdit(PaintEdit)
 
       ucs_cb := CheckBox("label=Ucs content")
       if type(c.fmt) == "ucs" then
-         ucs_cb.set_is_checked("t")
+         ucs_cb.set_is_checked(&yes)
       ucs_cb.connect(self.on_ucs_cb, Event.ACTION)
       p.add(ucs_cb)
    end

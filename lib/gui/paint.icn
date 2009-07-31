@@ -444,7 +444,7 @@ class ImagePaint(Paint,SetFields)
    # then it will always be scaled down.
    #
    public set_scale_up(s)
-      self.scale_up_flag := to_flag(s)
+      self.scale_up_flag := check_flag(s)
    end
 
    #
@@ -452,7 +452,7 @@ class ImagePaint(Paint,SetFields)
    # default "y".
    #
    public set_use_cache(s)
-      self.use_cache_flag := to_flag(s)
+      self.use_cache_flag := check_flag(s)
    end
 
    public initially(c)

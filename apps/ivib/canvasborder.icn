@@ -257,7 +257,7 @@ class CanvasBorderContent(CanvasComponent,Component)
    public new()
       cast(self,Component).new()
       cast(self,CanvasComponent).new()
-      self.set_show_layout("t")
+      self.set_show_layout(&yes)
       self.class_name := "Component"
       self.import_name := "gui"
       self.name := "border_content"

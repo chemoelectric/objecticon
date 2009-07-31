@@ -28,7 +28,7 @@ class CanvasSplit(CanvasComponent,Split)
       if self.weight ~= 0 then
          c.line(self.name || ".set_weight(" || self.weight || ")")
       if \self.sizer.show_inter_flag then
-         c.line(self.name || ".set_show_inter(\"t\")")
+         c.line(self.name || ".set_show_inter(&yes)")
    end
 
    #
@@ -83,7 +83,7 @@ class CanvasSplit(CanvasComponent,Split)
          self.set_bottom(second)
       }
       if \self.sizer_show_inter_flag then
-         self.set_show_inter("t")
+         self.set_show_inter(&yes)
    end
 
    #
@@ -244,7 +244,7 @@ class CanvasSplitContent(CanvasComponent,Component)
    public new()
       cast(self,Component).new()
       cast(self,CanvasComponent).new()
-      self.set_show_layout("t")
+      self.set_show_layout(&yes)
       self.class_name := "Component"
       self.import_name := "gui"
       self.name := "split_content"

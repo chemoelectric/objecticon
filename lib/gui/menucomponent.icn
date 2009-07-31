@@ -128,10 +128,7 @@ class MenuComponent(Rect,SetFields,Connectable)
    # displayed in a filtered way and will not accept input.
    #
    public toggle_is_shaded()
-      if /self.is_shaded_flag then
-         self.is_shaded_flag := 1
-      else
-         self.is_shaded_flag := &null
+      self.is_shaded_flag := toggle_flag(self.is_shaded_flag)
       possibly_invalidate()
    end
 
@@ -139,7 +136,7 @@ class MenuComponent(Rect,SetFields,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      self.is_shaded_flag := to_flag(s)
+      self.is_shaded_flag := check_flag(s)
       possibly_invalidate()
    end
 
@@ -174,7 +171,7 @@ class MenuComponent(Rect,SetFields,Connectable)
    end
 
    public set_is_decorative(s)
-      self.is_decorative_flag := to_flag(s)
+      self.is_decorative_flag := check_flag(s)
    end
 
    public is_decorative()

@@ -23,14 +23,14 @@ class CanvasImageDialog(CanvasComponentDialog)
       c.close_image()
 
       if scale_up.is_checked() then
-         c.set_scale_up("t")
+         c.set_scale_up(&yes)
       else
-         c.set_scale_up("f")
+         c.set_scale_up(&no)
 
       if cache_image.is_checked() then
-         c.set_use_cache("t")
+         c.set_use_cache(&yes)
       else
-         c.set_use_cache("f")
+         c.set_use_cache(&no)
 
       if *s = 0 then
          c.set_file()
@@ -59,13 +59,13 @@ class CanvasImageDialog(CanvasComponentDialog)
       scale_up := CheckBox("c:eol")
       scale_up.set_label("Scale up image")
       if \c.scale_up_flag then
-         scale_up.set_is_checked("t")
+         scale_up.set_is_checked(&yes)
       p.add(scale_up)
 
       cache_image := CheckBox("c:eol")
       cache_image.set_label("Cache image")
       if \c.use_cache_flag then
-         cache_image.set_is_checked("t")
+         cache_image.set_is_checked(&yes)
       p.add(cache_image)
    end    
 end

@@ -85,9 +85,9 @@ class CanvasButtonDialog(CanvasComponentDialog)
       c.is_checked_flag := initially_checked.get_status()
       c.toggles_flag := toggles.get_status()
       if keyboard.is_checked() then
-         c.set_accepts_focus("f")
+         c.set_accepts_focus(&no)
       else
-         c.set_accepts_focus("t")
+         c.set_accepts_focus(&yes)
       c.no_click_focus_flag := no_click_focus.get_status()
       c.set_parent_button_group(
         if in_button_group.is_checked() then 
@@ -125,13 +125,13 @@ class CanvasButtonDialog(CanvasComponentDialog)
       keyboard := CheckBox("c:eol")
       keyboard.set_label("Don't accept focus at all")
       if /c.accepts_focus_flag then
-         keyboard.set_is_checked("t")
+         keyboard.set_is_checked(&yes)
       tab_basic.add(keyboard)
 
       no_click_focus := CheckBox("c:eol")
       no_click_focus.set_label("Don't accept focus on mouse click")
       if \c.no_click_focus_flag then
-         no_click_focus.set_is_checked("t")
+         no_click_focus.set_is_checked(&yes)
       tab_basic.add(no_click_focus)
 
       initially_checked := CheckBox("c:eol")
@@ -142,7 +142,7 @@ class CanvasButtonDialog(CanvasComponentDialog)
       toggles.set_align("l", "c")
       toggles.set_label("Toggles state")
       if \c.toggles_flag then
-         toggles.set_is_checked("t")
+         toggles.set_is_checked(&yes)
       tab_basic.add(toggles)
       add_tab_at_front(tab_basic)
 
@@ -175,34 +175,34 @@ class CanvasButtonDialog(CanvasComponentDialog)
       self.set_wattrib("label", label)
 
       if *c.parent_Canvas.checkbox_groups = 0 then {
-         in_checkbox_group.set_is_shaded("t")
-         checkbox_group_list.set_is_shaded("t")
+         in_checkbox_group.set_is_shaded(&yes)
+         checkbox_group_list.set_is_shaded(&yes)
          if c.is_checked() then
-            initially_checked.set_is_checked("t")
+            initially_checked.set_is_checked(&yes)
       } else {
          if \c.parent_check_box_group then {
-            in_checkbox_group.set_is_checked("t")
+            in_checkbox_group.set_is_checked(&yes)
             checkbox_group_list.set_selection(keyof(c.parent_Canvas.checkbox_groups,
                                                          c.parent_check_box_group))
             if c === c.parent_check_box_group.which_one then
-               initially_checked.set_is_checked("t")
+               initially_checked.set_is_checked(&yes)
          } else  {
-            checkbox_group_list.set_is_shaded("t")
+            checkbox_group_list.set_is_shaded(&yes)
             if c.is_checked() then
-               initially_checked.set_is_checked("t")
+               initially_checked.set_is_checked(&yes)
          }
       }
 
       if *c.parent_Canvas.button_groups = 0 then {
-         in_button_group.set_is_shaded("t")
-         button_group_list.set_is_shaded("t")
+         in_button_group.set_is_shaded(&yes)
+         button_group_list.set_is_shaded(&yes)
       } else {
          if \c.parent_button_group then {
-            in_button_group.set_is_checked("t")
+            in_button_group.set_is_checked(&yes)
             button_group_list.set_selection(keyof(c.parent_Canvas.button_groups,
                                                        c.parent_button_group))
          } else 
-            button_group_list.set_is_shaded("t")
+            button_group_list.set_is_shaded(&yes)
       }
    end
 end

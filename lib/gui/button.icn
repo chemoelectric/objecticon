@@ -54,7 +54,7 @@ class Button(Toggle,Component)
    # not get the focus on a left click.
    #
    public set_no_click_focus(s)
-      self.no_click_focus_flag := to_flag(s)
+      self.no_click_focus_flag := check_flag(s)
    end
 
    public tick()
@@ -117,7 +117,7 @@ class Button(Toggle,Component)
    public on_action(e)
       if \self.toggles_flag then {
          if \self.parent_check_box_group then
-            self.set_is_checked("t")
+            self.set_is_checked(&yes)
          else
             self.toggle_is_checked()
       } else
@@ -160,7 +160,7 @@ class Button(Toggle,Component)
    # showing the button as being "down".
    #
    public set_toggles(s)
-      self.toggles_flag := to_flag(s)
+      self.toggles_flag := check_flag(s)
    end
 
    public set_one(f)

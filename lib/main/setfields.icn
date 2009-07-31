@@ -15,7 +15,7 @@ class Field()
    end
 
    public flag_val()
-      return to_flag(val) | field_error("Need a boolean parameter")
+      return flag(val) | field_error("Need a boolean parameter")
    end
 
    public int_val()
@@ -195,7 +195,7 @@ class SetFields()
                   val := tab(0)
             } else {
                attr := s
-               val := 1
+               val := &yes
             }
          }
          set_one(Field(attr, val, self)) | runerr("setfields: Unknown attribute", attr)
@@ -222,18 +222,4 @@ class SetFields()
       set_fields(a)
       return
    end
-end
-
-procedure to_flag(s)
-   # Flag values just return themselves
-   if s === (1 | &null) then
-      return s
-
-   s := map(string(s)) | fail
-   if s == ("y" | "yes" | "t" | "true" | "on" | "1") then
-      return 1
-   if s == ("n" | "no" | "f" | "false" | "off" | "0") then
-      return &null
-
-   fail
 end

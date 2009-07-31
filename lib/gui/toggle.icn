@@ -55,17 +55,14 @@ class Toggle()
    # Toggle the status of the object.
    #
    public toggle_is_checked()
-      if /self.is_checked_flag then
-         self.set_is_checked("t")
-      else
-         self.set_is_checked("f")
+      self.set_is_checked(toggle_flag(self.is_checked_flag))
    end
 
    #
    # Set the status to checked.
    #
    public set_is_checked(s)
-      self.is_checked_flag := to_flag(s)
+      self.is_checked_flag := check_flag(s)
       synch_cbg()
    end
 
@@ -75,7 +72,7 @@ class Toggle()
    public synch_cbg()
       if \self.parent_check_box_group then { 
          if \self.is_checked_flag & self.parent_check_box_group.which_one ~=== self then {
-            (\self.parent_check_box_group.which_one).set_is_checked("f")
+            (\self.parent_check_box_group.which_one).set_is_checked(&no)
             self.parent_check_box_group.which_one := self
          } else if /self.is_checked_flag & self.parent_check_box_group.which_one === self then {
             self.parent_check_box_group.which_one := &null

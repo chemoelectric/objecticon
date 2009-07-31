@@ -25,7 +25,7 @@ class ListLabel(Label)
    public new(a[])
       cast(self,Label).new()
       self.set_label("")
-      self.set_accepts_focus("t")
+      self.set_accepts_focus(&yes)
       self.connect(self.on_key, Event.KEY_PRESS)
       # Align with the text in the textlist.
       self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)

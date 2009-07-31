@@ -16,15 +16,15 @@ class MapTab(TabItem)
 
    public update_grey()
       if *tbl.get_selections() > 0 then {
-         attrib_tf.set_is_shaded("f")
-         value.set_is_shaded("f")
-         delete.set_is_shaded("f")
-         apply.set_is_shaded("f")
+         attrib_tf.set_is_shaded(&no)
+         value.set_is_shaded(&no)
+         delete.set_is_shaded(&no)
+         apply.set_is_shaded(&no)
       } else {
-         attrib_tf.set_is_shaded("t")
-         value.set_is_shaded("t")
-         delete.set_is_shaded("t")
-         apply.set_is_shaded("t")
+         attrib_tf.set_is_shaded(&yes)
+         value.set_is_shaded(&yes)
+         delete.set_is_shaded(&yes)
+         apply.set_is_shaded(&yes)
       }
    end
 

@@ -13,9 +13,9 @@ class PaintField(Border)
 
    public on_sel_change()
       if paints.get_selection() = 1 then
-         edit_paint_button.set_is_shaded("t")
+         edit_paint_button.set_is_shaded(&yes)
       else
-         edit_paint_button.set_is_shaded("f")
+         edit_paint_button.set_is_shaded(&no)
       os.set_which_one(os.children[paints.get_selection()])
    end
 
@@ -63,7 +63,7 @@ class PaintField(Border)
    public set_contents(c)
       paint_tbl := table()
       if /c then
-         edit_paint_button.set_is_shaded("t")
+         edit_paint_button.set_is_shaded(&yes)
       else {
          case classof(c) of {
             CanvasTextPaint: {
@@ -153,7 +153,7 @@ class PaintField(Border)
       cast(self,Border).new()
       setup()
       self.clear_constraints()
-      self.set_constraint("x_fill", "t")
+      self.set_constraint("x_fill", &yes)
       self.set_constraint("x_weight", "1")
       set_fields(a)
       return

@@ -33,7 +33,7 @@ class Split(Component)
       remove(\self.first)
       self.first := c
       add(self.first, 1)
-      self.sizer.set_is_horizontal("f")
+      self.sizer.set_is_horizontal(&no)
    end
 
    #
@@ -43,7 +43,7 @@ class Split(Component)
       remove(\self.first)
       self.first := c
       add(self.first, 1)
-      self.sizer.set_is_horizontal("t")
+      self.sizer.set_is_horizontal(&yes)
    end
 
    #
@@ -223,8 +223,8 @@ class Split(Component)
       sizer.connect(self.on_sizer_press, Event.SIZER_PRESS)
       sizer.connect(self.on_sizer_release, Event.SIZER_RELEASE)
       weight := min_first := min_second := 0
-      self.set_constraint("x_fill", "t")
-      self.set_constraint("y_fill", "t")
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", "1")
       self.set_constraint("y_weight", "1")
       set_fields(a)

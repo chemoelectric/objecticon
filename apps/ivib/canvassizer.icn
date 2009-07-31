@@ -40,7 +40,7 @@ class CanvasSizer(CanvasComponent,Sizer)
          c.line(s)
       }
       if \self.is_horizontal_flag then
-         c.line(name || ".set_is_horizontal(\"t\")")
+         c.line(name || ".set_is_horizontal(&yes)")
    end
 
    #

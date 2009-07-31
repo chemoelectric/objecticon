@@ -95,9 +95,9 @@ class MenuComponentEdit(Dialog)
       event_tab.add(event_method)
 
       if /c.event_method then
-         event_method.set_is_shaded("t")
+         event_method.set_is_shaded(&yes)
       else  {
-         event_flag.set_is_checked("t")
+         event_flag.set_is_checked(&yes)
          event_method.set_contents(c.event_method)
       }
 

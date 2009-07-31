@@ -50,7 +50,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
          c.line(self.parent_check_box_group.name || ".add(" || name || ")")
 
       if \self.is_checked_flag then
-         c.line(name || ".set_is_checked(\"t\")")
+         c.line(name || ".set_is_checked(&yes)")
    end
 
    #

@@ -70,20 +70,20 @@ class GroupsDialog(Dialog)
 
    public update_grey()
       if *groups.get_selections() > 0 then {
-         edit_group.set_is_shaded("f")
+         edit_group.set_is_shaded(&no)
          if *member_objs > 0 then
-            delete_group.set_is_shaded("t")
+            delete_group.set_is_shaded(&yes)
          else
-            delete_group.set_is_shaded("f")
+            delete_group.set_is_shaded(&no)
       } else {
-         delete_group.set_is_shaded("t")
-         edit_group.set_is_shaded("t")
+         delete_group.set_is_shaded(&yes)
+         edit_group.set_is_shaded(&yes)
       }
 
       if *members.get_selections() > 0 then
-         delete_member.set_is_shaded("f")
+         delete_member.set_is_shaded(&no)
       else
-         delete_member.set_is_shaded("t")
+         delete_member.set_is_shaded(&yes)
    end
 
    public refresh_groups()

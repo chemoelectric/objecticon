@@ -112,10 +112,10 @@ class GridLayoutEdit(LayoutEdit)
       doi_field := TextField("size=130", "c:eol")
       p.add(doi_field)
       if \c.doi_val then {
-         set_doi.set_is_checked("t")
+         set_doi.set_is_checked(&yes)
          doi_field.set_contents(c.doi_val)
       } else
-         doi_field.set_is_shaded("t")
+         doi_field.set_is_shaded(&yes)
 
       set_dii := CheckBox("label=Default inner inset :")
       set_dii.connect(self.on_set_dii, Event.ACTION)
@@ -123,10 +123,10 @@ class GridLayoutEdit(LayoutEdit)
       dii_field := TextField("size=130", "c:eol")
       p.add(dii_field)
       if \c.dii_val then {
-         set_dii.set_is_checked("t")
+         set_dii.set_is_checked(&yes)
          dii_field.set_contents(c.dii_val)
       } else
-         dii_field.set_is_shaded("t")
+         dii_field.set_is_shaded(&yes)
 
       p.add(Label("label=Extra space"))
       extra_list := List("size=130", "selection_list=Cells,Borders,Ignore")

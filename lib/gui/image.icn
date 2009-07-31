@@ -126,7 +126,7 @@ class Image(Component)
    # then it will always be scaled down.
    #
    public set_scale_up(s)
-      self.scale_up_flag := to_flag(s)
+      self.scale_up_flag := check_flag(s)
    end
 
    public close_image()
@@ -140,10 +140,10 @@ class Image(Component)
 
    #
    # Indicate whether to use the image cache to load external files; by
-   # default "y".
+   # default &yes.
    #
    public set_use_cache(s)
-      self.use_cache_flag := to_flag(s)
+      self.use_cache_flag := check_flag(s)
    end
 
    public get_default_width()
@@ -231,8 +231,8 @@ class Image(Component)
 
    public new(a[])
       cast(self,Component).new()
-      self.set_constraint("x_fill", "y")
-      self.set_constraint("y_fill", "y")
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", "1")
       self.set_constraint("y_weight", "1")
       set_border(RaisedBorder())

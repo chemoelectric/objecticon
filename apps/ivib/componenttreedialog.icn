@@ -29,8 +29,8 @@ class ComponentTree(Tree)
 
    public new()
       cast(self,Tree).new()
-      set_allow_drag("t")
-      set_allow_drop("t")
+      set_allow_drag(&yes)
+      set_allow_drop(&yes)
       return
    end
 end
@@ -203,7 +203,7 @@ class BaseNode(TreeNode)
    public new(c)
       cast(self,TreeNode).new()
       self.component := c
-      self.set_expanded("t")
+      self.set_expanded(&yes)
       self.set_label(get_name())
       return
    end

@@ -30,31 +30,31 @@ class CanvasTabSetDialog(CanvasComponentDialog)
       i := struct.get_selections()[1]
       if \i <= *c.children then {
          if *c.children > 1 then
-            delete.set_is_shaded("f")
-         edit.set_is_shaded("f")
-         which_one.set_is_shaded("f")
+            delete.set_is_shaded(&no)
+         edit.set_is_shaded(&no)
+         which_one.set_is_shaded(&no)
          if i > 1 then
-            up.set_is_shaded("f")
+            up.set_is_shaded(&no)
          else
-            up.set_is_shaded("t")
+            up.set_is_shaded(&yes)
          if i < *c.children then
-            down.set_is_shaded("f")
+            down.set_is_shaded(&no)
          else
-            down.set_is_shaded("t")
+            down.set_is_shaded(&yes)
       } else {
-         edit.set_is_shaded("t")
-         delete.set_is_shaded("t")
-         which_one.set_is_shaded("t")
-         up.set_is_shaded("t")
-         down.set_is_shaded("t")
+         edit.set_is_shaded(&yes)
+         delete.set_is_shaded(&yes)
+         which_one.set_is_shaded(&yes)
+         up.set_is_shaded(&yes)
+         down.set_is_shaded(&yes)
       }
 
       # Enable the default width/height if applicable; our children may change this
       # during editing.
       if c.allows_null_width() then
-         set_w_default.set_is_shaded("f")
+         set_w_default.set_is_shaded(&no)
       if c.allows_null_height() then 
-         set_h_default.set_is_shaded("f")
+         set_h_default.set_is_shaded(&no)
    end
 
    public on_add_col()
@@ -222,17 +222,17 @@ class CanvasTabSetDialog(CanvasComponentDialog)
       tabs_at_bottom_cb := CheckBox("label=Tabs at bottom", "c:eol")
       p.add(tabs_at_bottom_cb)
       if \c.tabs_at_bottom_flag then
-         tabs_at_bottom_cb.set_is_checked("t")
+         tabs_at_bottom_cb.set_is_checked(&yes)
 
       prefer_one_row_cb := CheckBox("label=Prefer one row of tabs", "c:eol")
       p.add(prefer_one_row_cb)
       if \c.prefer_one_row_flag then
-         prefer_one_row_cb.set_is_checked("t")
+         prefer_one_row_cb.set_is_checked(&yes)
 
       no_click_focus_cb := CheckBox("label=No click focus")
       p.add(no_click_focus_cb)
       if \c.no_click_focus_flag then
-         no_click_focus_cb.set_is_checked("t")
+         no_click_focus_cb.set_is_checked(&yes)
 
       update_grey()
    end
