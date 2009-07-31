@@ -349,12 +349,15 @@ function{0,1} mysql_MySql_rollback(self)
    }
 end
 
-function{0,1} mysql_MySql_set_autocommit_impl(self, mode)
-   if !cnv:C_integer(mode) then
-       runerr(101, mode)
+function{0,1} mysql_MySql_set_autocommit(self, flag)
    body {
+      my_bool t;
       GetSelfMySql();
-      if (mysql_autocommit(self_mysql, (my_bool)mode)) {
+      if (is:null(flag))
+          t = 0;
+      else
+          t = 1;
+      if (mysql_autocommit(self_mysql, t)) {
           on_mysql_error(self_mysql);
           fail;
       }

@@ -10,7 +10,7 @@ $define LIB "objecticonmysqllib.so"
 
 package mysql
 
-import lang, util(check_flag)
+import lang
 
 #
 # This class provides a wrapper around the MySql C API.  Nearly all the
@@ -340,13 +340,9 @@ class MySql(NoCopy)
 
    #
    # Turn autocommit on or off
+   # @param f a flag, either &yes (for on) or &no (for off)
    # 
-   public set_autocommit(s)
-      check_flag(s)
-      return set_autocommit_impl(if \s then 1 else 0)
-   end
-
-   private defer set_autocommit_impl(s)
+   public defer set_autocommit(f)
 
    #
    # Invoke mysql_more_results() for the current connection.
