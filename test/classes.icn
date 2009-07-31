@@ -132,7 +132,7 @@ end
 procedure do_class(c)
    local f, i, o, s1, s2, s3
 
-   write("-------------\nClass ", subtype(c))
+   write("-------------\nClass ", Class.get_name(c))
    pr_seq{"Supers", Class.get_supers(c)}
    pr_seq{"Implemented classes", Class.get_implemented_classes(c)}
    write("Flags: ", Class.get_class_flags(c))
@@ -146,7 +146,7 @@ procedure do_class(c)
    yes_no{"Class.implements(c,c)", Class.implements(c,c)}
    yes_no{"is(c,Class)", is(c,Class)}
    yes_no{"Class.implements(c,Class)", Class.implements(c,Class)}
-   yes_no{"Class.for_name check", Class.for_name(subtype(c)) === c}
+   yes_no{"Class.for_name check", Class.for_name(Class.get_name(c)) === c}
    yes_no{"Field count check", Class.get_n_fields(c) = Class.get_n_class_fields(c) +
              Class.get_n_instance_fields(c)}
    s1 := eset{Class.get_field_names(c)}
@@ -216,6 +216,15 @@ procedure test_Class()
    try{ "Class.get(Eleven, \"rubbish\")", Class.get(Eleven, "rubbish") }
    try{ "Class.get(Eleven, \"a\")", Class.get(Eleven, "a") }
    try{ "Class.junk", Class.junk }
+end
+
+procedure subtype(x)
+   case type(x) of {
+      "class"|"object":return Class.get_name(x)
+      "constructor"|"record":return Constructor.get_name(x)
+      "procedure":return Proc.get_name(x)
+      default: runerr(123,x)
+   }
 end
 
 procedure clone_check(a)

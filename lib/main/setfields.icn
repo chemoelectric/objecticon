@@ -4,6 +4,8 @@
 
 package util
 
+import lang(Class)
+
 class Field()
    public const 
       attr,
@@ -75,7 +77,7 @@ class Field()
       if /val then
          return val
       if \t then
-         is(val, t) | field_error("Need object of type: " || subtype(t))
+         is(val, t) | field_error("Need object of type: " || Class.get_name(t))
       return val
    end
 

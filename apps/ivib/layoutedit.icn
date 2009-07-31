@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui, io
+import gui, io, lang
 
 ############################################################################
 #
@@ -36,7 +36,7 @@ class LayoutEdit(Dialog)
 
    public setup()
       local oc
-      subtype(c) ? {
+      Class.get_name(c) ? {
          ="Canvas"
          label := tab(0) || " Setup"
       }

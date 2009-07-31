@@ -955,7 +955,7 @@ class Main(Dialog)
       # They shouldn't be identical....
       if x === y then
          fail
-      return subtype(x) == subtype(y) &
+      return Class.get_name(x) == Class.get_name(y) &
          x.get_name() == y.get_name()
    end
 

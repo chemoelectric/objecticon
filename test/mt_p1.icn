@@ -277,11 +277,11 @@ procedure test23()
    p := Prog.get_global("child23",c) | stop("no child23 found")
    t := sometype
    obj := t(1,2,3)
-   print{"subtype(obj)", subtype(obj)}
+   print{"subtype(obj)", Constructor.get_name(obj)}
    pr_seq{"test23.obj", !obj}
    pr_seq{"test23.names", name(!obj)}
    res := p(t, obj)
-   print{"subtype(res)", subtype(res)}
+   print{"subtype(res)", Constructor.get_name(res)}
    pr_seq{"test23.res", !res}
    pr_seq{"test23.names", name(!res)}
 end
@@ -292,7 +292,7 @@ procedure test24()
    t := p()
    o := t(1,2,3)
    pr_seq{"test24.o", !o}
-   print{"subtype(o)", subtype(o)}
+   print{"subtype(o)", Constructor.get_name(o)}
    pr_seq{"test24.names", name(!o)}
 end
 

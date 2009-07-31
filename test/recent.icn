@@ -1,6 +1,6 @@
 #SRC: V9GEN
 
-import io, ipl.sets
+import io, ipl.sets, lang
 
 procedure main ()
    local i,j,name1,name2,f,s,c,n,fset,a,b,d,e,g,h,A,t,x
@@ -277,7 +277,7 @@ procedure dump (s, l)
     write (s, ":")
     every e := !l do {
        if type(e) == "record" then
-          writes ("  ", left(subtype(e), 8))
+          writes ("  ", left(Constructor.get_name(e), 8))
        else
           writes ("  ", left(type(e), 8))
        if (type(e) == ("record" | "list")) then

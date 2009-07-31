@@ -11,7 +11,7 @@ procedure itype(x)
    local s
    s := type(x)
    if s == "record" then
-      return subtype(x)
+      return Constructor.get_name(x)
    else
       return s
 end

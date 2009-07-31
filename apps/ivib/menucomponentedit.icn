@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, lang
 
 ############################################################################
 #
@@ -67,7 +67,7 @@ class MenuComponentEdit(Dialog)
 
    public setup()
       local oc
-      subtype(c) ? {
+      Class.get_name(c) ? {
          ="Canvas"
          label := tab(0) || " Setup"
       }

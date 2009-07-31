@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, lang
 
 ############################################################################
 #
@@ -126,7 +126,7 @@ class CanvasComponentDialog(Dialog)
 
       size_list := ["0", "20%", "25%", "33%", "40%", "50%", "66%", "75%", "80%", "100%"]
 
-      subtype(c) ? {
+      Class.get_name(c) ? {
          ="Canvas"
          label := tab(0) || " Setup"
       }

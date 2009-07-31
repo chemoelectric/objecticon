@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, lang
 
 
 ############################################################################
@@ -110,7 +110,7 @@ class CanvasTable(CanvasComponent,Table)
          s := if is(c.paint, CanvasTextPaint) then
             c.paint.str
          else
-            subtype(c)
+            Class.get_name(c)
          put(l, [s, 
                  if /c.column_width then "Auto" else c.column_width, 
                  c.column_align])

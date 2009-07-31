@@ -138,7 +138,7 @@ class ObjectOutputStream(Stream, SetFields)
 
       case ty of {
          "record" : {
-            s := ty || " " || subtype(o) || "#" || serial(o)
+            s := ty || " " || Constructor.get_name(o) || "#" || serial(o)
             seen[o] := s
             if /desc then 
                writes(s) | fail
@@ -173,7 +173,7 @@ class ObjectOutputStream(Stream, SetFields)
          }
 
          "object" : {
-            s := type(o) || " " || subtype(o) || "#" || serial(o)
+            s := type(o) || " " || Class.get_name(o) || "#" || serial(o)
             seen[o] := s
             if /desc then
                writes(s) | fail
@@ -370,7 +370,7 @@ class ObjectOutputStream(Stream, SetFields)
    end
    
    public object_start(o)
-      return writes(type(o), " ", subtype(o), "#", serial(o), "(")
+      return writes(type(o), " ", Class.get_name(o), "#", serial(o), "(")
    end
 
    public object_end(o)
@@ -616,8 +616,14 @@ procedure hash(x, depth)
       "real" :
          return hash_string(string(x))
 
-      "procedure" | "class" | "constructor" :
-         return hash_string(subtype(x))
+      "procedure" :
+         return hash_string(Proc.get_name(x))
+
+      "class" :
+         return hash_string(Class.get_name(x))
+
+      "constructor" :
+         return hash_string(Constructor.get_name(x))
 
       "cast" :
          return hash(Class.get_cast_object(x), depth - 1) +
@@ -666,7 +672,7 @@ procedure equals_impl(x, y, seen)
 
       "record" : {
          *x = *y | fail
-         subtype(x) == subtype(y) | fail
+         Constructor.get_constructor(x) === Constructor.get_constructor(y) | fail
          every i := 1 to *x do
             equals(x[i], y[i], seen) | fail
          return

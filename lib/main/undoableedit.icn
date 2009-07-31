@@ -8,6 +8,8 @@
 
 package undo
 
+import lang
+
 #
 # An instance of this class represents a single undoable edit.
 #
@@ -26,7 +28,7 @@ class UndoableEdit()
    # Return a description of the edit.
    #
    public get_desc()
-      return subtype(self)
+      return Class.get_name(self)
    end
 
    #

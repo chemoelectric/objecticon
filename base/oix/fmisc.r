@@ -1219,28 +1219,6 @@ function{1} type(x)
   }
 end
 
-"subtype(x) - return subtype of x as a string."
-
-function{0,1} subtype(x)
-   abstract {
-      return string
-      }
-   body {
-    type_case x of {
-         proc:    return BlkLoc(x)->proc.name;
-         class:   return BlkLoc(x)->class.name;
-         record:  return BlkLoc(x)->record.constructor->name; 
-         object:  return BlkLoc(x)->object.class->name;
-         constructor:
-                  return BlkLoc(x)->constructor.name;
-         default: runerr(123, x);
-    }
-   }
-end
-
-
-
-
 
 "cofail(CE) - transmit a co-expression failure to CE"
 

@@ -162,7 +162,7 @@ class Encode(SetFields)
       case ty of {
          "object" : {
             chars_out(Codec.OBJECT_CODE) | fail
-            cname := subtype(o)
+            cname := Class.get_name(o)
             line_out(cname) | fail
             note_seen(o)
             if p := Class.getf(o, "object_encode", 1) then
@@ -185,7 +185,7 @@ class Encode(SetFields)
 
          "class": {
             chars_out(Codec.CLASS_CODE) | fail
-            line_out(subtype(o)) | fail
+            line_out(Class.get_name(o)) | fail
          }
 
          "procedure" : {
@@ -196,7 +196,7 @@ class Encode(SetFields)
 
          "constructor" : {
             chars_out(Codec.CONSTRUCTOR_CODE) | fail
-            line_out(subtype(o)) | fail
+            line_out(Constructor.get_name(o)) | fail
          }
 
          "null" :
@@ -233,7 +233,7 @@ class Encode(SetFields)
 
          "record" : {
             chars_out(Codec.RECORD_CODE) | fail
-            line_out(subtype(o)) | fail
+            line_out(Constructor.get_name(o)) | fail
             note_seen(o)
             int_out(*o) | fail
             if \fast_flag then {

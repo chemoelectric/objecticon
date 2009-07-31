@@ -1,4 +1,4 @@
-import gui, io
+import gui, io, lang
 
 class PaintEdit(Dialog)
    public 
@@ -23,7 +23,7 @@ class PaintEdit(Dialog)
 
    public setup()
       local oc, label
-      subtype(c) ? {
+      Class.get_name(c) ? {
          ="Canvas"
          label := tab(0) || " Setup"
       }

@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, lang
 
 ############################################################################
 #
@@ -76,7 +76,7 @@ class BorderEdit(Dialog)
 
    public setup()
       local p, oc, label, q
-      subtype(c) ? {
+      Class.get_name(c) ? {
          ="Canvas"
          label := tab(0) || " Setup"
       }

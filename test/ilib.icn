@@ -16,7 +16,8 @@ import
    ipl.sort,
    ipl.strings,
    ipl.tables,
-   io
+   io,
+   lang
 
 $define LSIZE 16
 $define GENLIMIT 25
@@ -299,7 +300,7 @@ procedure main()
 end
 
 procedure pimg(p)
-   subtype(p) ? {
+   Proc.get_name(p) ? {
       while tab(upto('.')) do
          move(1)
       return tab(0)

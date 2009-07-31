@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, lang
 
 
 ############################################################################
@@ -89,7 +89,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
       s := if is(self.paint_mid, CanvasTextPaint) then
          self.paint_mid.str || "(Check)"
       else
-         subtype(self.paint_mid) || "(Check)"
+         Class.get_name(self.paint_mid) || "(Check)"
       if \self.parent_check_box_group then
          s ||:= " G"
       if self.is_checked() then

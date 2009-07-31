@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, lang
 
 
 ############################################################################
@@ -83,7 +83,7 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
       if is(self.paint_mid, CanvasTextPaint) then
          return self.paint_mid.str
       else
-         return subtype(self.paint_mid)
+         return Class.get_name(self.paint_mid)
    end
 
    public new()

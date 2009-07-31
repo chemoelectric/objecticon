@@ -2,7 +2,8 @@
 
 import 
    gui, 
-   ipl.lists
+   ipl.lists,
+   lang
 
 class GroupsDialog(Dialog)
    public 
@@ -160,7 +161,7 @@ class GroupEdit(Dialog)
 
    public setup()
       local oc, label
-      subtype(c) ? {
+      Class.get_name(c) ? {
          ="Canvas"
          label := tab(0) || " Setup"
       }

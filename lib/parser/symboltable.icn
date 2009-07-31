@@ -307,10 +307,10 @@ class SymbolTable(Connectable,SetFields)
    public dump()
       local e, f
       every e := !sort(symbol_table) do {
-         write(e[1],"->",subtype(e[2]), " in file ", (\e[2].scanned_file).filename | "-")
+         write(e[1],"->",lang.Class.get_name(e[2]), " in file ", (\e[2].scanned_file).filename | "-")
          if is(e[2], ClassSymbol) then {
             every f := !sort(\e[2].implemented_fields) do {
-               write("\t", f[1], "->", subtype(f[2]), " from ", f[2].defining_class.name)
+               write("\t", f[1], "->", lang.Class.get_name(f[2]), " from ", f[2].defining_class.name)
             }
          }
       }

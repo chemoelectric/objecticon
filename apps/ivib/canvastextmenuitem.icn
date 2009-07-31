@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, lang
 
 
 ############################################################################
@@ -55,7 +55,7 @@ class CanvasTextMenuItem(CanvasMenuComponent,TextMenuItem)
       if is(self.paint_mid, CanvasTextPaint) then
          return self.paint_mid.str || "(Txt)"
       else
-         return subtype(self.paint_mid) || "(Txt)"
+         return Class.get_name(self.paint_mid) || "(Txt)"
    end
 
    public static get_template()

@@ -982,17 +982,17 @@ class CustomEncode()
 
          "class": {
             chars_out(Codec.CLASS_CODE)
-            line_out(subtype(o))
+            line_out(Class.get_name(o))
          }
 
          "procedure" : {
             chars_out(Codec.PROCEDURE_CODE)
-            line_out(subtype(o))
+            line_out(Proc.get_name(o))
          }
 
          "constructor" : {
             chars_out(Codec.CONSTRUCTOR_CODE)
-            line_out(subtype(o))
+            line_out(Constructor.get_name(o))
          }
 
          "null" :
@@ -1028,7 +1028,7 @@ class CustomEncode()
 
          "record" : {
             chars_out(Codec.RECORD_CODE)
-            line_out(subtype(o))
+            line_out(Constructor.get_name(o))
             int_out(*o)
             note_seen(o)
             every encode(!o)
