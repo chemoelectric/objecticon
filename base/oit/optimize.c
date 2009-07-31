@@ -2987,8 +2987,14 @@ static int get_literal(struct lnode *n, struct literal *l)
                 add_range(l->u.rs, 0, MAX_CODE_POINT);
                 return 1;
             }
+            case K_NO:
             case K_NULL: {
                 l->type = NUL;
+                return 1;
+            }
+            case K_YES: {
+                l->type = INT;
+                l->u.i = 1;
                 return 1;
             }
             case K_FAIL: {

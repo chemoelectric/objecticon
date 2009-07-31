@@ -432,3 +432,23 @@ keyword{1} why
       return kywdstr(&kywd_why);
       }
 end
+
+"&yes - the standard flag value for yes."
+keyword{1} yes
+   abstract {
+      return integer;
+      }
+   inline {
+      return C_integer 1;
+      }
+end
+
+"&no - the standard flag value for no."
+keyword{1} no
+   abstract {
+      return null
+      }
+   inline {
+      return nulldesc;
+      }
+end
