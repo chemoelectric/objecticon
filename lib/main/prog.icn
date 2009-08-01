@@ -26,9 +26,14 @@ class Prog()
    public static defer get_global_names(P)
 
    #
-   # Generate the names of the functions.
+   # Generate the builtin functions.
    #
-   public static defer get_function_names()
+   public static defer get_functions()
+
+   #
+   # Generate the builtin operators.
+   #
+   public static defer get_operators()
 
    #
    # Get the location of global {s} in program P, if that data is

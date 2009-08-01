@@ -15,7 +15,9 @@ procedure main()
       yes_no{image(f), f === proc(Proc.get_name(f),0)}
    }
 
-   every s := Prog.get_function_names() do
+   every f := Prog.get_functions() do {
+      s := Proc.get_name(f)
       yes_no{s, s === Proc.get_name(proc(s,0))}
+   }
 
 end
