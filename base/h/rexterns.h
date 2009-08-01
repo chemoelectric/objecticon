@@ -8,6 +8,8 @@
 
 extern struct b_proc *op_tbl[]; /* operators available for string invocation */
 extern int op_tbl_sz;           /* number of operators in op_tbl */
+extern struct b_proc *fnc_tbl[]; /* builtin functions */
+extern int fnc_tbl_sz;           /* sizeof of fnc_tbl */
 extern word dodump;		/* termination dump */
 extern int line_info;		/* flag: line information is available */
 extern char *file_name;		/* source file for current execution point */
@@ -98,9 +100,6 @@ extern word *sp;			/* interpreter stack pointer */
 extern word *stack;			/* interpreter stack base */
 extern word *stackend;		/* end of evaluation stack */
 extern dptr argp;			/* global argp */
-   
-extern struct pstrnm pntab[];
-extern int pnsize;
    
 extern struct progstate *curpstate;
 extern struct progstate rootpstate;

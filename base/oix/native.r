@@ -441,16 +441,24 @@ function{0,1} lang_Prog_get_global_names(c)
    }
 end
 
-function{*} lang_Prog_get_function_names()
-   abstract {
-      return string
-      }
+function{*} lang_Prog_get_functions()
    body {
       register int i;
 
-      for (i = 0; i<pnsize; i++) {
-	 suspend string(strlen(pntab[i].pstrep), pntab[i].pstrep);
-         }
+      for (i = 0; i < fnc_tbl_sz; ++i)
+          suspend proc(fnc_tbl[i]);
+
+      fail;
+      }
+end
+
+function{*} lang_Prog_get_operators()
+   body {
+      register int i;
+
+      for (i = 0; i < op_tbl_sz; ++i)
+          suspend proc(op_tbl[i]);
+
       fail;
       }
 end

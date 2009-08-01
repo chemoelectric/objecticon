@@ -1,9 +1,6 @@
 /*
  * File: init.r
  * Initialization, termination, and such.
- * Contents: readhdr, init/icon_init, envset, env_int,
- *  fpe_trap, inttrag, error, syserr, c_exit, err,
- *  fatalerr, pstrnmcmp, datainit, [loadicode]
  */
 
 #include "../h/header.h"
@@ -16,22 +13,35 @@ static void    initprogstate(struct progstate *p);
 static void    initalloc(struct progstate *p);
 
 /*
- * External declarations for operator blocks.
+ * External declarations for operator and function blocks.
  */
 
 #define OpDef(f)  extern struct b_proc Cat(B,f);
 #include "../h/odefs.h"
 #undef OpDef
 
-/* 
- * operators available for string invocation 
- */
+#define FncDef(f)  extern struct b_proc Cat(B,f);
+#include "../h/fdefs.h"
+#undef FncDef
 
+/* 
+ * operators table
+ */
 #define OpDef(f)  Cat(&B,f),
 struct b_proc *op_tbl[] = {
 #include "../h/odefs.h"
 };
 #undef OpDef
+
+/*
+ * function table
+ */
+
+#define FncDef(f)  Cat(&B,f),
+struct b_proc *fnc_tbl[] = {
+#include "../h/fdefs.h"
+};
+#undef FncDef
 
 /*
  * A number of important variables follow.
@@ -81,6 +91,8 @@ struct region rootstring, rootblock;
 
 
 int op_tbl_sz = ElemCount(op_tbl);
+int fnc_tbl_sz = ElemCount(fnc_tbl);
+
 struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
 dptr argp;			        /* global argp */
 
@@ -597,16 +609,6 @@ void ffatalerr(char *fmt, ...)
     IntVal(kywd_err) = 0;
     err_msg(-1, 0);
 }
-
-/*
- * pstrnmcmp - compare names in two pstrnm structs; used for qsort.
- */
-int pstrnmcmp(a,b)
-    struct pstrnm *a, *b;
-{
-    return strcmp(a->pstrep, b->pstrep);
-}
-
 
 /*
  * loadicode - initialize memory particular to a given icode file
@@ -1146,10 +1148,10 @@ void resolve(struct progstate *p)
                      * some sanity checks on it.
                      */
                     int n = -1 - i;
-                    if (n < 0 || n >= pnsize)
+                    if (n < 0 || n >= fnc_tbl_sz)
                         ffatalerr("Builtin function index out of range: %d", n);
-                    BlkLoc(p->Globals[j]) = (union block *)pntab[n].pblock;
-                    if (!eq(&p->Gnames[j], &pntab[n].pblock->name))
+                    BlkLoc(p->Globals[j]) = (union block *)fnc_tbl[n];
+                    if (!eq(&p->Gnames[j], &fnc_tbl[n]->name))
                         ffatalerr("Builtin function index name mismatch: %s", StrLoc(p->Gnames[j]));
                 }
                 else {

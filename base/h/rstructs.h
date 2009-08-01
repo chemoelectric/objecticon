@@ -288,14 +288,6 @@ struct tend_desc {
     struct descrip d[1]; /* actual size of array indicated by num */
 };
 
-/*
- * Structure for mapping string names of functions and operators to block
- * addresses.
- */
-struct pstrnm {
-    char *pstrep;
-    struct b_proc *pblock;
-};
 
 struct dpair {
     struct descrip dr;

@@ -132,7 +132,6 @@ int		numcmp		(dptr dp1,dptr dp2,dptr dp3);
 void		outimage	(FILE *f,dptr dp,int noimage);
 long physicalmemorysize();
 word		prescan		(dptr d);
-int		pstrnmcmp	(struct pstrnm *a,struct pstrnm *b);
 int		putstr		(FILE *f,dptr d);
 int    		 radix		(int sign, register int r, register char *s,
 				   register char *end_s, union numeric *result);

@@ -66,20 +66,6 @@ struct b_proc *opblks[] = {
    NULL
    };
 
-/*
- * Array of names and corresponding functions.
- *  Operators are kept in a similar table, op_tbl.
- */
-
-struct pstrnm pntab[] = {
-
-#define FncDef(p) {Lit(p), Cat(&B,p)},
-#include "../h/fdefs.h"
-#undef FncDef
-	};
-
-int pnsize = (sizeof(pntab) / sizeof(struct pstrnm));
-
 
 /*
  * Structures for built-in values.  Parts of some of these structures are
