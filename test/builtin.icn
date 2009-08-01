@@ -7,7 +7,7 @@ procedure FncDef(s)
 end
 
 procedure main()
-   local f,s
+   local f,s,i
    l := []
    $include "../base/h/fdefs.h"
 
@@ -17,7 +17,13 @@ procedure main()
 
    every f := Prog.get_functions() do {
       s := Proc.get_name(f)
-      yes_no{s, s === Proc.get_name(proc(s,0))}
+      yes_no{s, f === proc(s,0)}
+   }
+
+   every f := Prog.get_operators() do {
+      s := Proc.get_name(f)
+      i := Proc.get_n_arguments(f)
+      yes_no{s || i, f === proc(s,i)}
    }
 
 end
