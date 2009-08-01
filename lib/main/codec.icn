@@ -133,9 +133,10 @@ class Encode(SetFields)
    private get_proc_code(f)
       local s, j
       image(f) ? {
-         if ="function " then {
-            s := if any(&letters) then "0" else string(Proc.get_n_arguments(f))
-         } 
+         if ="function " then
+            s := 0
+         else if ="operator " then 
+            s := string(Proc.get_n_arguments(f))
          else if ="procedure " then 
             s := "P"
          else if ="method " then {

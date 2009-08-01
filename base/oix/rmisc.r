@@ -657,8 +657,10 @@ int noimage;
               */
              if (BlkLoc(*dp)->proc.program)
                  fprintf(f, "procedure ");
-             else
+             else if (isalpha(*StrLoc(BlkLoc(*dp)->proc.name)))
                  fprintf(f, "function ");
+             else
+                 fprintf(f, "operator ");
              putstr(f, &BlkLoc(*dp)->proc.name);
          }
       }
@@ -1262,12 +1264,15 @@ dptr dp1, dp2;
               * Produce one of:
               *  "procedure name"
               *  "function name"
+              *  "operator name"
               *
               */
              if (BlkLoc(source)->proc.program)
                  type0 = "procedure ";
-             else
+             else if (isalpha(*StrLoc(BlkLoc(source)->proc.name)))
                  type0 = "function ";
+             else
+                 type0 = "operator ";
 
              len = strlen(type0) + StrLen(BlkLoc(source)->proc.name);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
