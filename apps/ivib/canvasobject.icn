@@ -30,9 +30,9 @@ class CanvasObject(SelectiveObjectCodec)
    end
 
    #
-   # Get the object's class name; avoid clash with lang's method name.
+   # Get the object's class name
    #
-   public get_the_class_name()
+   public get_class_name()
       return self.class_name
    end
 
