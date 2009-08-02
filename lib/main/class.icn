@@ -65,8 +65,13 @@ class Class()
    public static defer get_package(c)
 
    # Return the source location of the class
+   # @return a {Location} instance
    #
-   public static defer get_location(c)
+   public static get_location(c)
+      return Location!get_location_impl(c)
+   end
+
+   private static defer get_location_impl(c)
 
    # Generate the superclasses of the class {c}
    #
@@ -140,10 +145,14 @@ class Class()
    # Return the source location of the given field in class{c}.
    # @param c the class
    # @param field either a field name or number
-   # @generate the file name followed by the line number
+   # @return a {Location} instance
    # @fail if the field is unknown
    #
-   public static defer get_field_location(c, field)
+   public static get_field_location(c, field)
+      return Location!get_field_location_impl(c, field)
+   end
+
+   private static defer get_field_location_impl(c, field)
 
    # Return the class in which the given field is defined.
    # @param c the class

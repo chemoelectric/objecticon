@@ -16,8 +16,13 @@ class Proc()
    public static defer get_package(p)
 
    # Return the source location of the proc
+   # @return a {Location} instance
    #
-   public static defer get_location(p)
+   public static get_location(p, flag)
+      return Location!get_location_impl(p, flag)
+   end
+
+   private static defer get_location_impl(p, flag)
 
    public static defer get_defining_class(p)
    public static defer get_field_name(p)
@@ -28,7 +33,12 @@ class Proc()
    public static defer get_n_statics(p)
    public static defer get_local_names(p)
    public static defer get_local_index(p, id)
-   public static defer get_local_location(p, id)
+
+   public static get_local_location(p, id)
+      return Location!get_local_location_impl(p, id)
+   end
+
+   private static defer get_local_location_impl(p, id)
    public static defer get_local_name(p, id)
    public static defer get_local_type(p, id)
 

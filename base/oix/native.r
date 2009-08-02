@@ -68,6 +68,15 @@ static struct progstate *get_program_for(dptr x)
     }
 }
 
+static void loc_to_list(struct loc *p, dptr res)
+{
+    struct descrip t;
+    create_list(2, res);
+    c_put(res, &p->fname);
+    MakeInt(p->line, &t);
+    c_put(res, &t);
+}
+
 function{1} classof(o)
    if !is:object(o) then
        runerr(602, o)
@@ -464,7 +473,7 @@ function{*} lang_Prog_get_operators()
 end
 
 
-function{0,1} lang_Prog_get_global_location(s, c)
+function{0,1} lang_Prog_get_global_location_impl(s, c)
    if !cnv:string(s) then
       runerr(103, s)
    body {
@@ -489,8 +498,8 @@ function{0,1} lang_Prog_get_global_location(s, c)
            fail;
        }
 
-       suspend p->fname;
-       return C_integer p->line;
+       loc_to_list(p, &result);
+       return result;
    }
 end
 
@@ -696,7 +705,7 @@ function{1} lang_Class_get_program(c)
     }
 end
 
-function{0,1} lang_Class_get_location(c)
+function{0,1} lang_Class_get_location_impl(c)
     body {
         struct b_class *class0;
         struct loc *p;
@@ -709,8 +718,8 @@ function{0,1} lang_Class_get_location(c)
         p = lookup_global_loc(&class0->name, class0->program);
         if (!p)
             syserr("Class name not found in global table");
-        suspend p->fname;
-        return C_integer p->line;
+        loc_to_list(p, &result);
+        return result;
     }
 end
 
@@ -845,10 +854,9 @@ function{0,1} lang_Class_get_field_name(c, field)
      }
 end
 
-function{0,1} lang_Class_get_field_location(c, field)
+function{0,1} lang_Class_get_field_location_impl(c, field)
    body {
         struct b_class *class0;
-        struct loc *loc;
         int i;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
@@ -862,9 +870,9 @@ function{0,1} lang_Class_get_field_location(c, field)
             LitWhy("Unknown field");
             fail;
         }
-        loc = &class0->program->ClassFieldLocs[class0->fields[i] - class0->program->ClassFields];
-        suspend loc->fname;
-        return C_integer loc->line;
+        loc_to_list(&class0->program->ClassFieldLocs[class0->fields[i] - class0->program->ClassFields],
+                    &result);
+        return result;
      }
 end
 
@@ -2433,7 +2441,7 @@ function{1} lang_Constructor_get_program(c)
     }
 end
 
-function{0,1} lang_Constructor_get_location(c)
+function{0,1} lang_Constructor_get_location_impl(c)
     body {
         struct b_constructor *constructor0;
         struct loc *p;
@@ -2446,8 +2454,8 @@ function{0,1} lang_Constructor_get_location(c)
         p = lookup_global_loc(&constructor0->name, constructor0->program);
         if (!p)
             syserr("Constructor name not found in global table");
-        suspend p->fname;
-        return C_integer p->line;
+        loc_to_list(p, &result);
+        return result;
     }
 end
 
@@ -2488,7 +2496,7 @@ function{0,1} lang_Constructor_get_field_index(c, field)
      }
 end
 
-function{0,1} lang_Constructor_get_field_location(c, field)
+function{0,1} lang_Constructor_get_field_location_impl(c, field)
    body {
         struct b_constructor *constructor0;
         int i;
@@ -2504,8 +2512,8 @@ function{0,1} lang_Constructor_get_field_location(c, field)
             LitWhy("Unknown field");
             fail;
         }
-        suspend constructor0->field_locs[i].fname;
-        return C_integer constructor0->field_locs[i].line;
+        loc_to_list(&constructor0->field_locs[i], &result);
+        return result;
      }
 end
 
@@ -2625,7 +2633,7 @@ function{0,1} lang_Proc_get_local_index(c, id)
      }
 end
 
-function{0,1} lang_Proc_get_local_location(c, id)
+function{0,1} lang_Proc_get_local_location_impl(c, id)
    body {
         int i;
         struct b_proc *proc0;
@@ -2641,8 +2649,8 @@ function{0,1} lang_Proc_get_local_location(c, id)
             LitWhy("Unknown local");
             fail;
         }
-        suspend proc0->llocs[i].fname;
-        return C_integer proc0->llocs[i].line;
+        loc_to_list(&proc0->llocs[i], &result);
+        return result;
      }
 end
 
@@ -2733,7 +2741,7 @@ function{1} lang_Proc_get_program(c, flag)
     }
 end
 
-function{0,1} lang_Proc_get_location(c, flag)
+function{0,1} lang_Proc_get_location_impl(c, flag)
    body {
         struct b_proc *proc0;
         struct loc *p;
@@ -2761,8 +2769,8 @@ function{0,1} lang_Proc_get_location(c, flag)
             if (!p)
                 syserr("Procedure name not found in global table");
         }
-        suspend p->fname;
-        return C_integer p->line;
+        loc_to_list(p, &result);
+        return result;
      }
 end
 

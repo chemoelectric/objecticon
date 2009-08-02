@@ -38,8 +38,13 @@ class Prog()
    #
    # Get the location of global {s} in program P, if that data is
    # available.
+   # @return a {Location} instance
    #
-   public static defer get_global_location(s, P)
+   public static get_global_location(s, P)
+      return Location!get_global_location_impl(s, P)
+   end
+
+   private static defer get_global_location_impl(s, P)
 
    #
    # Return the value of the keyword {s} in program P.

@@ -628,8 +628,8 @@ procedure test_set_method()
    write(Proc.get_package(second.p))
    write(Proc.get_package(FirstOne.f))
    write(Proc.get_package(FirstOne.f,1))
-   e := create Proc.get_location(second.p) | Proc.get_location(FirstOne.f) | Proc.get_location(FirstOne.f,1)
-   while write((@e)[-21:0],",",@e)
+   every e := Proc.get_location(second.p) | Proc.get_location(FirstOne.f) | Proc.get_location(FirstOne.f,1) do
+      write(e.file[-21:0],",",e.line)
 end
 
 procedure main()

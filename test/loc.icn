@@ -1,4 +1,4 @@
-import lang
+import lang,io
 
 record rectype(one, two,
                three,
@@ -34,30 +34,38 @@ procedure p(a,
    a:= b:= c:= d:= e:= f:= g:= h:= i:= j:= 0
 end
 
+procedure printloc(m, l)
+   local t
+   if t := @l then
+      write(@m, ": ", t.file[-12:0], ":", t.line)
+   else
+      write(@m, ": failed, &why=", image(&why))
+end
+
 procedure main()
    local s
 
    every s := Constructor.get_field_names(rectype) do {
-      pr_seq_type2{"Field loc'n of " || s, Constructor.get_field_location(rectype,s)}
+      printloc{"Field loc'n of " || s, Constructor.get_field_location(rectype,s)}
    }
 
    every s := Class.get_field_names(One) do {
-      pr_seq_type2{"Field loc'n of " || s, Class.get_field_location(One,s)}
+      printloc{"Field loc'n of " || s, Class.get_field_location(One,s)}
    }
 
    every s := "main" | "rectype" | "One" | "upto"  do {
-      pr_seq_type2{"Glob loc'n of " || s, Prog.get_global_location(s)}
+      printloc{"Glob loc'n of " || s, Prog.get_global_location(s)}
    }
 
    every s := main | p | upto | One.four do {
-      pr_seq_type2{"Loc'n of proc " || image(s), Proc.get_location(s)}
+      printloc{"Loc'n of proc " || image(s), Proc.get_location(s)}
    }
 
-   pr_seq_type2{"Loc'n of constructor rectype", Constructor.get_location(rectype)}
-   pr_seq_type2{"Loc'n of class One", Class.get_location(One)}
+   printloc{"Loc'n of constructor rectype", Constructor.get_location(rectype)}
+   printloc{"Loc'n of class One", Class.get_location(One)}
 
    every s := Proc.get_local_names(p) do {
-      pr_seq_type2{"Loc'n of local in p " || s, Proc.get_local_location(p,s)}
+      printloc{"Loc'n of local in p " || s, Proc.get_local_location(p,s)}
    }
 
 end
