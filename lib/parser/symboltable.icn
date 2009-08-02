@@ -294,7 +294,7 @@ class SymbolTable(Connectable,SetFields)
       ALWAYS_SRC := "always_src"
       ALWAYS_U := "always_u"
       BUILTINS := set()
-      every insert(BUILTINS, lang.Prog.get_function_names())
+      every insert(BUILTINS, lang.Proc.get_name(lang.Prog.get_functions()))
    end
 
    private parse(f)
