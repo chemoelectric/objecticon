@@ -57,7 +57,7 @@ procedure set_trace(vf)
 
    initial {
       traceset := set()
-      every insert(traceset, Prog.get_function_names())
+      every insert(traceset, Proc.get_name(Prog.get_functions()))
       case1 := &lcase || &ucase
       case2 := &ucase || &lcase
       }
