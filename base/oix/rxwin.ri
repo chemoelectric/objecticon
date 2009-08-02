@@ -16,7 +16,7 @@ XSizeHints size_hints;
  */
 int                  seticonicstate   (wbp w, char *s);
 int		     seticonpos       (wbp w, char *s);
-int		     handle_misc      (wdp display, wbp w);
+static int	     handle_misc      (wdp display, wbp w);
 static int	     handle_config    (wbp w, XConfigureEvent *event);
 static int           handle_exposures (wbp w, XExposeEvent *event);
 static void       handle_mouse     (wbp w, XButtonEvent *event);
@@ -456,11 +456,9 @@ void SetErrorHandler()
 /*
  * handle_misc processes pending events on display.
  * if w is non-null, block until a returnable event arrives.
- * returns 1 on success, 0 on failure, and -1 on error.
+ * returns 1 on success, 0 on failure.
  */
-int handle_misc(wd, w)
-    wdp wd;
-    wbp w;
+static int handle_misc(wdp wd, wbp w)
 {
     XEvent event;
     Window evwin;
@@ -734,7 +732,8 @@ int handle_misc(wd, w)
                     break;
                 }
                 case DestroyNotify:
-                    if (!ISZOMBIE(wb)) return -1; /* error #141 */
+                    if (!ISZOMBIE(wb))
+                        fatalerr(141, NULL);
                     /*
                      * first of all, we are done with this window
                      */
@@ -784,17 +783,13 @@ int handle_misc(wd, w)
  * poll for available events on all opened displays.
  * this is where the interpreter calls into the X interface.
  */
-int pollevent()
+void pollevent()
 {
     wdp wd;
-    int hm;
     for (wd = wdsplys; wd; wd = wd->next) {
-        if (wd->program == curpstate) {
-            if ((hm = handle_misc(wd, NULL)) == -1)
-                fatalerr(141, NULL);
-        }
+        if (wd->program == curpstate)
+            handle_misc(wd, NULL);
     }
-    return 400;
 }
 
 /*
@@ -813,9 +808,7 @@ int wgetq(wbp w, dptr res, word t)
         if (t > 0 && iselect(XConnectionNumber(wd->display), t) == 0)
             /* timer expired */
             return -2;
-        if (handle_misc(wd, w) == -1) {
-            return -1;
-        }
+        handle_misc(wd, w);
     }
 }
 
@@ -830,7 +823,7 @@ int wclose(w)
 
     XSync(stddpy, False);
 
-    if (pollevent() == -1) return -1;
+    pollevent();
 
     /*
      * Force window to close (turn into a pixmap)
@@ -847,7 +840,7 @@ int wclose(w)
         XFlush(stddpy);
         ws->refcount--;
         while (ws->win)
-            if (pollevent() == -1) return -1;
+            pollevent();
     }
     /*
      * Entire canvas terminates
@@ -1773,7 +1766,6 @@ int setcanvas(w,s)
     wbp w;
     char *s;
 {
-    int hm;
     XTextProperty textprop;
     STDLOCALS(w);
 
@@ -1790,11 +1782,8 @@ int setcanvas(w,s)
                 XIconifyWindow(ws->display->display, ws->win, ws->display->screen);
                 XSync(stddpy, False);
                 while (ws->iconic != IconicState)
-                    if ((hm = handle_misc(wd, NULL)) < 1) {
-                        if (hm == -1) return Error;
-                        else if (hm == 0) {
-                            return Failed;
-                        }
+                    if (handle_misc(wd, NULL) < 1) {
+                        return Failed;
                     }
 	    }
         }
@@ -1853,7 +1842,7 @@ int setcanvas(w,s)
                     XFlush(wd->display);			      /* force out request */
                     XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
                     XSync(wd->display, False);		      /* NOW sync */
-                    if (pollevent() == -1) return Error;
+                    pollevent();
                     moveWindow(w, -ws->posx, -ws->posy);
                     XFlush(wd->display);			      /* force out request */
                     XGetWMName(wd->display, ws->win, &textprop);    /* force WM round trip */
@@ -1887,8 +1876,7 @@ int setcanvas(w,s)
                     XDestroyWindow(stddpy, stdwin);
                     XFlush(stddpy);
                     while (ws->win)
-                        if (pollevent() == -1)
-                            return Error;
+                        pollevent();
                 }
 	    }
         }
@@ -3859,7 +3847,7 @@ int remap(w,x,y)
     XMapWindow(stddpy, ws->win);
     if (ws->iconic == NormalState) {
         while (!ISEXPOSED(w))
-            if (pollevent() == -1) return -1;
+            pollevent();
     }
     ws->iconx = x;
     ws->icony = y;

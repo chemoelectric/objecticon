@@ -1081,7 +1081,7 @@ int free_window(ws)
             XDestroyWindow(ws->display->display, ws->win);
             XFlush(ws->display->display);
             while (ws->win != (Window) NULL)
-                if (pollevent() == -1) return -1;
+                pollevent();
         }
         else {
             /*

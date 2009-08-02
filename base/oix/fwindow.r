@@ -859,10 +859,8 @@ function{0,1} graphics_Window_pending(self, argv[argc])
        * retrieve any events that might be relevant before returning the
        * pending queue.
        */
-      switch (pollevent()) {
-          case -1: runerr(141);
-          case 0: fail;
-      }
+      pollevent();
+
       return ws->listp;
    }
 end

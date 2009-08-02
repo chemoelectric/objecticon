@@ -57,8 +57,7 @@ int wgetevent2(wbp w, dptr res, word timeout)
                 return -1;
 	    }
 #endif					/* XWindows */
-            if (pollevent() < 0)				/* poll all windows */
-                break;					/* break on error */
+            pollevent();				/* poll all windows */
 #if UNIX
             idelay(XICONSLEEP);
 #endif					/* UNIX */
@@ -127,57 +126,6 @@ int wgetevent2(wbp w, dptr res, word timeout)
 
     return 0;
 }
-
-/*
- * Get a window that has an event pending (queued)
- */
-wsp getactivewindow()
-{
-    static LONG next = 0;
-    LONG i, j, nwindows = 0;
-    wsp ptr, ws, stdws = NULL;
-
-    if (wstates == NULL) return NULL;
-    for(ws = wstates; ws; ws=ws->next) nwindows++;
-
-    /*
-     * make sure we are still in bounds
-     */
-    next %= nwindows;
-    /*
-     * position ptr on the next window to get events from
-     */
-    for (ptr = wstates, i = 0; i < next; i++, ptr = ptr->next);
-    /*
-     * Infinite loop, checking for an event somewhere, sleeping awhile
-     * each iteration.
-     */
-    for (;;) {
-        /*
-         * Check for any new pending events.
-         */
-        switch (pollevent()) {
-            case -1: ReturnErrNum(141, NULL);
-            case 0: return NULL;
-        }
-        /*
-         * go through windows, looking for one with an event pending
-         */
-        for (ws = ptr, i = 0, j = next + 1; i < nwindows;
-             (ws = (ws->next) ? ws->next : wstates), i++, j++)
-            if (ws != stdws && BlkLoc(ws->listp)->list.size > 0) {
-                next = j;
-                return ws;
-	    }
-#if UNIX
-        /*
-         * couldn't find a pending event - wait awhile
-         */
-        idelay(XICONSLEEP);
-#endif					/* UNIX */
-    }
-}
-
 
 
 /*
@@ -2515,8 +2463,7 @@ int wattrib(w, s, len, answer, abuf)
     /*
      * catch up on any events pending - mainly to update pointerx, pointery
      */
-    if (pollevent() == -1)
-        fatalerr(141,NULL);
+    pollevent();
 
     midend = s + len;
     for (mid = s; mid < midend; mid++)

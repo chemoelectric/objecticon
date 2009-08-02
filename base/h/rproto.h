@@ -205,7 +205,6 @@ void print_dword(FILE *f, dptr d);
    void	drawCurve	(wbp w, XPoint *p, int n);
    char	*evquesub	(wbp w, int i);
    void	genCurve	(wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
-   wsp	getactivewindow	(void);
    int	getpattern	(wbp w, char *answer);
    char *getselection(wbp w, char *buf);
    struct palentry *palsetup(int p);
@@ -279,7 +278,7 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    int	nativecolor	(wbp w, char *s, long *r, long *g, long *b);
 
    /* Exclude those functions defined as macros */
-   int pollevent	(void);
+   void pollevent	(void);
 #ifndef MSWindows
    void wflush	(wbp w);
 #endif
@@ -353,7 +352,6 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
       int	seticonimage		(wbp w, dptr dp);
       void	makeIcon		(wbp w, int x, int y);
       int	translate_key_event	(XKeyEvent *k1, char *s, KeySym *k2);
-      int	handle_misc		(wdp display, wbp w);
       wdp	alc_display		(char *s);
       void	free_display		(wdp wd);
       wfp	alc_font		(wbp w, char **s);
