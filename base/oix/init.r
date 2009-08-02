@@ -1002,8 +1002,8 @@ void resolve(struct progstate *p)
                     if (strncmp(StrLoc(*fname),
                                 StrLoc(pp->name) + StrLen(pp->name) - StrLen(*fname),
                                 StrLen(*fname)))
-                        ffatalerr("Native method name mismatch: %s", StrLoc(*fname));
-
+                        ffatalerr("Native method name mismatch: %.*s", 
+                                  (int)StrLen(*fname), StrLoc(*fname));
                     /* Pointer back to the corresponding field */
                     pp->field = cf;
                     BlkLoc(*cf->field_descriptor) = (union block *)pp;
@@ -1152,7 +1152,8 @@ void resolve(struct progstate *p)
                         ffatalerr("Builtin function index out of range: %d", n);
                     BlkLoc(p->Globals[j]) = (union block *)fnc_tbl[n];
                     if (!eq(&p->Gnames[j], &fnc_tbl[n]->name))
-                        ffatalerr("Builtin function index name mismatch: %s", StrLoc(p->Gnames[j]));
+                        ffatalerr("Builtin function index name mismatch: %.*s", 
+                                  (int)StrLen(p->Gnames[j]), StrLoc(p->Gnames[j]));
                 }
                 else {
 
