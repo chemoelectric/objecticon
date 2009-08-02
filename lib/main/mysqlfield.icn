@@ -12,7 +12,7 @@ package mysql
 # A simple object which corresponds to the MYSQL_FIELD struct.
 #
 class MySqlField()
-   private readable 
+   public const
       name, 
       table,
       org_table,
@@ -95,17 +95,26 @@ class MySqlField()
       return type
    end
 
-   package new(a[])
-      self.name := pop(a)
-      self.table := pop(a)
-      self.org_table := pop(a)
-      self.db := pop(a)
-      self.def := pop(a)
-      self.length := pop(a)
-      self.max_length := pop(a)
-      self.flags := pop(a)
-      self.decimals := pop(a)
-      self.type := pop(a)
+   package new(name, 
+               table,
+               org_table,
+               db,
+               def,
+               length,
+               max_length,
+               flags,
+               decimals,
+               type)
+      self.name := name
+      self.table := table
+      self.org_table := org_table
+      self.db := db
+      self.def := def
+      self.length := length
+      self.max_length := max_length
+      self.flags := flags
+      self.decimals := decimals
+      self.type := type
       return
    end
 end
