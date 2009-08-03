@@ -533,6 +533,11 @@ procedure clone(o, seen)
          return res
       }
 
+      "cast" : {
+         return cast(clone(Class.get_cast_object(o), seen),
+                     Class.get_cast_class(o))
+      }
+
       default : 
          return o
    }
