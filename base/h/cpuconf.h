@@ -158,15 +158,15 @@
 #endif					/* MaxStrSpace */
 
 #ifndef MaxAbrSize
-   #define MaxAbrSize 500000		/* size of the block region in bytes */
+   #define MaxAbrSize (125000 * WordSize) /* size of the block region in bytes */
 #endif					/* MaxAbrSize */
 
 #ifndef MStackSize
-   #define MStackSize 120000		/* default value of mstksize, the size of the main interpreter stack */
+   #define MStackSize (30000 * WordSize) /* default value of mstksize, the size of the main interpreter stack */
 #endif					/* MStackSize */
 
 #ifndef StackSize
-   #define StackSize   120000		/* default value of stksize, the co-expression stack size */
+   #define StackSize (30000 * WordSize)	/* default value of stksize, the co-expression stack size */
 #endif					/* StackSize */
 
 #ifndef QualLstSize
