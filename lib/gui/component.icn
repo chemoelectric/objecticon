@@ -319,7 +319,8 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public hidden_change()
       is_initialized() | fail
-      self.effective_is_hidden_flag := if (\parent).is_hidden() | \self.is_hidden_flag then 1 else &null
+      self.effective_is_hidden_flag := 
+         if (\parent).is_hidden() | \self.is_hidden_flag then &yes else &no
       every (!self.children).hidden_change()
    end
 
@@ -344,7 +345,8 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public shaded_change()
       is_initialized() | fail
-      self.effective_is_shaded_flag := if (\parent).is_shaded() | \self.is_shaded_flag then 1 else &null
+      self.effective_is_shaded_flag := 
+         if (\parent).is_shaded() | \self.is_shaded_flag then &yes else &no
       every (!self.children).shaded_change()
    end
 
