@@ -287,12 +287,6 @@ void collect(int region)
    struct b_coexpr *cp;
    struct progstate *prog;
 
-   /*
-    * Garbage collection cannot be done until initialization is complete.
-    */
-   if (sp == NULL)
-      return;
-
 #if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
    {
        struct rlimit rl;
