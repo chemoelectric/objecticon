@@ -6,11 +6,12 @@ Although Object Icon is quite compatible with Icon source code, there are a few 
 
  * New reserved words : `class`, `const`, `defer`, `final`, `import`, `package`, `private`, `protected`, `public`, `readable`.
  * A few new builtin functions : `cast()`, `is()`, `classof()`, `keyof()`, `ucs()`, `uchar()`, `text()`
+ * Some new keywords - `&why` is a string, giving the reason for a failure (rather like C's `errno` variable).  `&yes` and `&no` are values for an on/off flag to take, and equal `1` and `&null` respectively.
  * I/O has been completely rewritten in Object Icon; there are no builtin I/O functions (`write`, `read` etc), nor is there a builtin `file` type.  Rather, I/O is implemented using a new set of classes in the `io` package.
  * Icon's various graphical builtin facilities have been moved into a package `graphics`.  Most notably, the class `Window` represents an window, rather than Icon's builtin `file` type.  Most of the graphics functions are now instance methods of `Window`.  The various Icon graphics keywords don't exist in Object Icon.
- * The maths functions are static methods in the class util.Math, rather than builtins.
+ * The maths functions are static methods in the class `util.Math`, rather than builtins.  Object Icon doesn't have Icon's keyword constants `&pi`, `&e` and `&phi`, but equivalents can be found in `util.Math`.
  * The `set()` function creates a set and adds each parameter provided to the function to the new set.  In Icon the `set()` function takes a list and adds its members to the new set.
- * For a record, `type()` returns the record type name in Icon, whereas in Object Icon it returns "record"; a new builtin function, `subtype()`, returns the type name.
+ * For a record, `type()` returns the record type name in Icon, whereas in Object Icon it returns "record"; the static method `Constructor.get_name()` can instead be used to get the record constructor's name for a given record instance.
  * The invocation of PDCO procedures passes the co-expressions as individual parameters, rather than collected as a list in one parameter.  So the syntax 
 {{{
 proc{expr1, expr2, ...}
