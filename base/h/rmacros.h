@@ -281,6 +281,8 @@ do { \
 /*
  * Argument values for the built-in Icon user function "collect()".
  */
+#define User    0                       /* collection triggered by user 
+                                         * (calling collect function) */
 #define Static  1			/* collection is for static region */
 #define Strings	2			/* collection is for strings */
 #define Blocks	3			/* collection is for blocks */
@@ -637,7 +639,7 @@ do { \
       #define strtotal  (curpstate->stringtotal)
       #define blktotal  (curpstate->blocktotal)
       
-      #define coll_tot  (curpstate->colltot)
+      #define coll_user (curpstate->colluser)
       #define coll_stat (curpstate->collstat)
       #define coll_str  (curpstate->collstr)
       #define coll_blk  (curpstate->collblk)

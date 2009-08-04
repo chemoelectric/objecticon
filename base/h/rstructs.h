@@ -406,7 +406,7 @@ struct progstate {
     uword statcurr;			/* current static allocation */
     word statcount;                     /* count of number of coexpr allocs - when
                                          * it exceeds coexprlim, a gc is triggered */
-    word colltot;			/* total number of collections */
+    word colluser;			/* number of user triggered collections */
     word collstat;			/* number of static collect requests */
     word collstr;			/* number of string collect requests */
     word collblk;			/* number of block collect requests */

@@ -558,45 +558,60 @@ function{0,1} lang_Prog_get_startup_micros(c)
    }
 end
 
-function{4} lang_Prog_get_collections(c)
+function{1} lang_Prog_get_collection_info_impl(c)
    body {
        struct progstate *prog;
+       struct descrip tmp;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       suspend C_integer prog->colltot;
-       suspend C_integer prog->collstat;
-       suspend C_integer prog->collstr;
-       return C_integer prog->collblk;
+       create_list(4, &result);
+       MakeInt(prog->colluser, &tmp);
+       c_put(&result, &tmp);
+       MakeInt(prog->collstat, &tmp);
+       c_put(&result, &tmp);
+       MakeInt(prog->collstr, &tmp);
+       c_put(&result, &tmp);
+       MakeInt(prog->collblk, &tmp);
+       c_put(&result, &tmp);
+       return result;
    }
 end
 
-function{4} lang_Prog_get_allocations(c)
+function{1} lang_Prog_get_allocation_info_impl(c)
    body {
        struct progstate *prog;
+       struct descrip tmp;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       suspend C_integer prog->stattotal + prog->stringtotal + prog->blocktotal;
-       suspend C_integer prog->stattotal;
-       suspend C_integer prog->stringtotal;
-       return C_integer prog->blocktotal;
+       create_list(3, &result);
+       MakeInt(prog->stattotal, &tmp);
+       c_put(&result, &tmp);
+       MakeInt(prog->stringtotal, &tmp);
+       c_put(&result, &tmp);
+       MakeInt(prog->blocktotal, &tmp);
+       c_put(&result, &tmp);
+       return result;
    }
 end
 
-function{6} lang_Prog_get_regions(c)
+function{1} lang_Prog_get_region_info_impl(c)
    body {
        struct progstate *prog;
        word sum1, sum2;
        struct region *rp;
+       struct descrip tmp;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       suspend C_integer prog->statcurr;
-       suspend C_integer prog->statcurr;
+       create_list(5, &result);
+
+       MakeInt(prog->statcurr, &tmp);
+       c_put(&result, &tmp);
 
        sum1 = sum2 = 0;
        for (rp = prog->stringregion; rp; rp = rp->next) {
@@ -607,8 +622,10 @@ function{6} lang_Prog_get_regions(c)
            sum1 += DiffPtrs(rp->free,rp->base);
            sum2 += DiffPtrs(rp->end,rp->base);
        }
-       suspend C_integer sum1;
-       suspend C_integer sum2;
+       MakeInt(sum1, &tmp);
+       c_put(&result, &tmp);
+       MakeInt(sum2, &tmp);
+       c_put(&result, &tmp);
 
        sum1 = sum2 = 0;
        for (rp = prog->blockregion; rp; rp = rp->next) {
@@ -619,17 +636,27 @@ function{6} lang_Prog_get_regions(c)
            sum1 += DiffPtrs(rp->free,rp->base);
            sum2 += DiffPtrs(rp->end,rp->base);
        }
-       suspend C_integer sum1;
-       return C_integer sum2;
+       MakeInt(sum1, &tmp);
+       c_put(&result, &tmp);
+       MakeInt(sum2, &tmp);
+       c_put(&result, &tmp);
+
+       return result;
    }
 end
 
-function{2} lang_Prog_get_stack(c)
-   if !is:coexpr(c) then
-      runerr(118,c)
+function{1} lang_Prog_get_stack_info_impl(c)
    body {
        word *top, *bottom, *isp;
-       struct b_coexpr *ce = (struct b_coexpr *)BlkLoc(c);
+       struct b_coexpr *ce;
+       struct descrip tmp;
+
+       if (is:null(c))
+           ce = k_current;
+       else if (is:coexpr(c))
+           ce = (struct b_coexpr *)BlkLoc(c);
+       else
+           runerr(118,c);
 
        if (ce == rootpstate.K_main) {
            top = stack + Wsizeof(struct b_coexpr);
@@ -661,8 +688,13 @@ function{2} lang_Prog_get_stack(c)
                isp = ce->es_sp;
            }
        }
-       suspend C_integer DiffPtrsBytes(bottom, top);
-       return C_integer DiffPtrsBytes(isp + 1, top);
+       create_list(2, &result);
+       MakeInt(DiffPtrsBytes(isp + 1, top), &tmp);
+       c_put(&result, &tmp);
+       MakeInt(DiffPtrsBytes(bottom, top), &tmp);
+       c_put(&result, &tmp);
+
+       return result;
    }
 end
 

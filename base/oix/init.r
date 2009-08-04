@@ -741,7 +741,7 @@ static void initprogstate(struct progstate *p)
     p->Value_tmp = nulldesc;
 
     p->stringtotal = p->blocktotal = p->stattotal = p->statcurr =
-        p->colltot = p->collstat = p->collstr = p->collblk = 0;
+        p->colluser = p->collstat = p->collstr = p->collblk = 0;
     p->statcount = 0;
 
     p->Cplist = cplist_0;

@@ -309,6 +309,9 @@ int region;
 #endif					/* E_Collect */
 
    switch (region) {
+      case User:
+         curpstate->colluser++;
+         break;
       case Static:
          curpstate->collstat++;
          break;
@@ -318,8 +321,11 @@ int region;
       case Blocks:  
          curpstate->collblk++;
          break;
-      }
-   curpstate->colltot++;
+       default:
+         syserr("invalid argument to collect");
+         break;
+   }
+
    curpstate->statcount = 0;
 
    /*

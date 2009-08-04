@@ -62,47 +62,11 @@ function{1} char(i)
 end
 
 
-"collect(i1,i2) - call garbage collector to ensure i2 bytes in region i1."
-" no longer works."
+"collect() - call garbage collector."
 
-function{1} collect(region, bytes)
-
-   if !def:C_integer(region, (C_integer)0) then
-      runerr(101, region) 
-   if !def:C_integer(bytes, (C_integer)0) then
-      runerr(101, bytes)
-
-   abstract {
-      return null
-      }
+function{1} collect()
    body {
-      if (bytes < 0) {
-         irunerr(205, bytes);
-         errorfail;
-         }
-      switch (region) {
-	 case 0:
-	    collect(0);
-	    break;
-	 case Static:
-	    collect(Static);			 /* i2 ignored if i1==Static */
-	    break;
-	 case Strings:
-	    if (DiffPtrs(strend,strfree) >= bytes)
-	       collect(Strings);		/* force unneded collection */
-	    else if (!reserve(Strings, bytes))	/* collect & reserve bytes */
-               fail;
-	    break;
-	 case Blocks:
-	    if (DiffPtrs(blkend,blkfree) >= bytes)
-	       collect(Blocks);			/* force unneded collection */
-	    else if (!reserve(Blocks, bytes))	/* collect & reserve bytes */
-               fail;
-	    break;
-	 default:
-            irunerr(205, region);
-            errorfail;
-         }
+      collect(User);
       return nulldesc;
       }
 end

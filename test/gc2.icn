@@ -44,7 +44,7 @@ procedure main(x)
    every line := !test do {
       (!plist)(line)
       collect()
-      every write(Prog.get_collections())
+      write("User collections:", Prog.get_collection_info().user_requests)
       write("----------")
       }
 end
