@@ -282,25 +282,32 @@ uword segsize[] = {
  * collect - do a garbage collection of currently active regions.
  */
 
-int collect(region)
-int region;
+void collect(int region)
    {
    struct b_coexpr *cp;
    struct progstate *prog;
 
-#if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
-   struct rlimit rl;
-
-   getrlimit(RLIMIT_STACK , &rl);
    /*
-    * Grow the C stack, proportional to the block region. Seems crazy large,
-    * but garbage collection uses stack proportional heap size.  May want to
-    * move this whole #if block so it is only performed when the heap grows.
+    * Garbage collection cannot be done until initialization is complete.
     */
-   if (rl.rlim_cur < curblock->size) {
-      rl.rlim_cur = curblock->size;
-      setrlimit(RLIMIT_STACK , &rl);
-      }
+   if (sp == NULL)
+      return;
+
+#if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
+   {
+       struct rlimit rl;
+
+       getrlimit(RLIMIT_STACK , &rl);
+       /*
+        * Grow the C stack, proportional to the block region. Seems crazy large,
+        * but garbage collection uses stack proportional heap size.  May want to
+        * move this whole #if block so it is only performed when the heap grows.
+        */
+       if (rl.rlim_cur < curblock->size) {
+           rl.rlim_cur = curblock->size;
+           setrlimit(RLIMIT_STACK , &rl);
+       }
+   }
 #endif
 
 #if E_Collect
@@ -327,13 +334,6 @@ int region;
    }
 
    curpstate->statcount = 0;
-
-   /*
-    * Garbage collection cannot be done until initialization is complete.
-    */
-
-   if (sp == NULL)
-      return 0;
 
    collecting = 1;
 
@@ -429,8 +429,6 @@ int region;
 #endif					/* instrument allocation events */
 
    collecting = 0;
-
-   return 1;
    }
 
 /*

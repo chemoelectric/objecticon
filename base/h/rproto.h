@@ -459,7 +459,7 @@ long	ckadd		(long i, long j);
 long	ckmul		(long i, long j);
 long	cksub		(long i, long j);
 void	cmd_line	(int argc, char **argv, dptr rslt);
-int	collect		(int region);
+void	collect		(int region);
 void	cotrace		(struct b_coexpr *ccp, struct b_coexpr *ncp,
 			   int swtch_typ, dptr valloc);
 int	cvcset		(dptr dp,int * *cs,int *csbuf);
