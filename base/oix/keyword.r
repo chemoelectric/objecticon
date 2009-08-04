@@ -102,13 +102,6 @@ keyword{1} digits
    }
 end
 
-"&e - the base of the natural logarithms"
-keyword{1} e
-   body {
-    return real(&reale);
-   }
-end
-
 "&error - enable/disable error conversion"
 keyword{1} error
    abstract {
@@ -291,20 +284,6 @@ keyword{1} null
    inline {
       return nulldesc;
       }
-end
-
-"&phi - the golden ratio"
-keyword{1} phi
-   body {
-    return real(&realphi);
-   }
-end
-
-"&pi - the ratio of circumference to diameter"
-keyword{1} pi
-   body {
-    return real(&realpi);
-   }
 end
 
 "&pos - a variable containing the current focus in string scanning."

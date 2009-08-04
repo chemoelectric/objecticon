@@ -47,10 +47,10 @@ procedure rstar(x, y, n, j, scale, offset, size)
    /offset := 0.5
    /size := 200
 
-   jangle := j * 2 * &pi / n
+   jangle := j * 2 * Math.PI / n
 
    scale *:= size
-   offset *:= &pi
+   offset *:= Math.PI
 
    every i := 0 to n do {
       angle := jangle * i + offset

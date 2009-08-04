@@ -111,9 +111,6 @@ struct descrip eventdesc;
 struct descrip rzerodesc;
 
 struct b_real realzero;          /* real zero block */
-struct b_real realphi;	        /* real phi descriptor */
-struct b_real realpi;	        /* real pi descriptor */
-struct b_real reale;	        /* real e descriptor */
 
 struct b_cset *k_ascii;	        /* value of &ascii */
 struct b_cset *k_cset;	        /* value of &cset */

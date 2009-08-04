@@ -32,7 +32,7 @@ procedure spokes(x, y, radius1, radius2, n, m)
    local angle1, incr1
 
    angle1 := 0.0
-   incr1 := 2 * &pi / n
+   incr1 := 2 * Math.PI / n
 
    every 1 to n do {
       suspend rays(x + radius1 * Math.cos(angle1), y + radius1 * Math.sin(angle1),
@@ -45,7 +45,7 @@ end
 procedure rays(xc, yc, r, m, angle)
    local incr
 
-   incr := 2 * &pi / m 
+   incr := 2 * Math.PI / m 
 
    every 1 to m do {
       suspend Point(xc, yc)

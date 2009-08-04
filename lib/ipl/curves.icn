@@ -79,14 +79,14 @@ procedure bullet_nose(x, y, a, b, steps, lo, hi)
    local incr, theta
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do
       suspend Point(
          x + a * Math.cos(theta),
-         y + b * Math.tan(&pi / 2 - theta),
+         y + b * Math.tan(Math.PI / 2 - theta),
          0
          )
 
@@ -96,8 +96,8 @@ procedure cardioid(x, y, a, steps, lo, hi)
    local incr, theta, fact
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -115,8 +115,8 @@ procedure cissoid_diocles(x, y, a, steps, lo, hi)
    local incr, theta, radius
 
    /steps := 300
-   lo := Math.dtor(\lo) | (-2 * &pi)
-   hi := Math.dtor(\hi) | (2 * &pi)
+   lo := Math.dtor(\lo) | (-2 * Math.PI)
+   hi := Math.dtor(\hi) | (2 * Math.PI)
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -134,8 +134,8 @@ procedure cross_curve(x, y, a, b, steps, lo, hi)
    local incr, theta
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do
@@ -152,7 +152,7 @@ procedure cycloid(x, y, a, b, steps, lo, hi)
 
    /steps := 100
    lo := Math.dtor(\lo) | 0
-   hi := Math.dtor(\hi) | (8 * &pi)
+   hi := Math.dtor(\hi) | (8 * Math.PI)
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do
@@ -168,8 +168,8 @@ procedure deltoid(x, y, a, steps, lo, hi)
    local incr, theta
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do
@@ -185,8 +185,8 @@ procedure ellipse(x, y, a, b, steps, lo, hi)
    local incr, theta
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do
@@ -202,8 +202,8 @@ procedure ellipse_evolute(x, y, a, b, steps, lo, hi)
    local incr, theta
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do
@@ -219,8 +219,8 @@ procedure epitrochoid(x, y, a, b, h, steps, lo, hi)
    local incr, theta, sum, fact
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    sum := a + b
@@ -239,8 +239,8 @@ procedure folium(x, y, a, b, steps, lo, hi)
    local incr, theta, radius
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -259,8 +259,8 @@ procedure hippopede(x, y, a, b, steps, lo, hi)
    local incr, theta, mul
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -280,8 +280,8 @@ procedure kampyle_exodus(x, y, a, b, steps, lo, hi)
    local incr, theta, fact
 
    /steps := 300
-   lo := Math.dtor(\lo) | (-&pi / 2)
-   hi := Math.dtor(\hi) | (3 * &pi / 2)
+   lo := Math.dtor(\lo) | (-Math.PI / 2)
+   hi := Math.dtor(\hi) | (3 * Math.PI / 2)
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -300,7 +300,7 @@ procedure kappa(x, y, a, b, steps, lo, hi)
 
    /steps := 300
    lo := Math.dtor(\lo) | 0
-   hi := Math.dtor(\hi) | (2 * &pi)
+   hi := Math.dtor(\hi) | (2 * Math.PI)
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -318,8 +318,8 @@ procedure lemniscate_bernoulli(x, y, a, steps, lo, hi)
    local incr, theta, fact
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -337,8 +337,8 @@ procedure lemniscate_gerono(x, y, a, b, steps, lo, hi)
    local incr, theta, fact
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -356,8 +356,8 @@ procedure limacon_pascal(x, y, a, b, steps, lo, hi)
    local incr, theta, fact
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -392,7 +392,7 @@ procedure lissajous(x, y, a, b, r, delta, steps, lo, hi)
 
    /steps := 300
    lo := Math.dtor(\lo) | 0
-   hi := Math.dtor(\hi) | (16 * &pi)
+   hi := Math.dtor(\hi) | (16 * Math.PI)
    incr := (hi - lo) / steps
 
    r := Math.dtor(r)
@@ -410,8 +410,8 @@ procedure nephroid(x, y, a, steps, lo, hi)
    local incr, theta
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do
@@ -429,8 +429,8 @@ procedure parabola(x, y, a, steps, lo, hi)
    local incr, theta, denom, radius
 
    /steps := 300
-   lo := Math.dtor(\lo) | -&pi
-   hi := Math.dtor(\hi) | &pi
+   lo := Math.dtor(\lo) | -Math.PI
+   hi := Math.dtor(\hi) | Math.PI
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -450,8 +450,8 @@ procedure piriform(x, y, a, b, steps, lo, hi)
    local incr, theta, fact
 
    /steps := 300
-   lo := Math.dtor(\lo) | (-&pi / 2)
-   hi := Math.dtor(\hi) | (3 * &pi / 2)
+   lo := Math.dtor(\lo) | (-Math.PI / 2)
+   hi := Math.dtor(\hi) | (3 * Math.PI / 2)
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -469,8 +469,8 @@ procedure trisectrix_catalan(x, y, a, steps, lo, hi)
    local incr, theta, radius
 
    /steps := 300
-   lo := Math.dtor(\lo) | (-2 * &pi)
-   hi := Math.dtor(\hi) | (2 * &pi)
+   lo := Math.dtor(\lo) | (-2 * Math.PI)
+   hi := Math.dtor(\hi) | (2 * Math.PI)
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -488,8 +488,8 @@ procedure trisectrix_maclaurin(x, y, a, b, steps, lo, hi)
    local incr, theta, fact
 
    /steps := 300
-   lo := Math.dtor(\lo) | (-&pi / 2)
-   hi := Math.dtor(\hi) | (&pi / 2)
+   lo := Math.dtor(\lo) | (-Math.PI / 2)
+   hi := Math.dtor(\hi) | (Math.PI / 2)
    incr := (hi - lo) / steps
 
    every theta := step(lo, hi, incr) do {
@@ -507,8 +507,8 @@ procedure witch_agnesi(x, y, a, steps, lo, hi)
    local incr, theta, fact
 
    /steps := 300
-   lo := Math.dtor(\lo) | (-&pi /2)
-   hi := Math.dtor(\hi) | (&pi / 2)
+   lo := Math.dtor(\lo) | (-Math.PI /2)
+   hi := Math.dtor(\hi) | (Math.PI / 2)
    incr := (hi - lo) / steps
 
    fact := 2 * a

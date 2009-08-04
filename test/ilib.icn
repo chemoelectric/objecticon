@@ -17,7 +17,8 @@ import
    ipl.strings,
    ipl.tables,
    io,
-   lang
+   lang,
+   util(Math)
 
 $define LSIZE 16
 $define GENLIMIT 25
@@ -128,19 +129,19 @@ procedure main()
    write()
    write("math:")			# math
    gen(binocoef, 16, 5)
-   gen(cosh, &pi / 3)
-   gen(sinh, &pi / 3)
-   gen(tanh, &pi / 3)
+   gen(cosh, Math.PI / 3)
+   gen(sinh, Math.PI / 3)
+   gen(tanh, Math.PI / 3)
 
    write()
    write("numbers:")			# numbers 
    gen(adp, 2147483647)
    gen(adr, 2147483647)
    gen(amean, 1, 1, 2, 3, 5, 8, 13, 21, 42)
-   gen(ceil, &pi)
+   gen(ceil, Math.PI)
    gen(commas, 2147483647)
    every gen(decimal, 1, 1 to 20)
-   gen(decipos, &pi, 6, 10)
+   gen(decipos, Math.PI, 6, 10)
    gen(digprod, 2147483647)
    gen(digred,  2147483647)
    gen(digroot, 2147483647)
@@ -148,8 +149,8 @@ procedure main()
    gen(distseq, 1, GENLIMIT)
    gen(div, 355, 113)
    gen(fix, 355, 113, 10, 4)
-   gen(floor, &phi)
-   gen(frn, &pi, 10, 4)
+   gen(floor, Math.PHI)
+   gen(frn, Math.PI, 10, 4)
    gen(gcd, 42, 120)
    gen(gcdl, 42, 120, 81)
    gen(gmean, 1, 1, 2, 3, 5, 8, 13, 21, 42)
@@ -157,20 +158,20 @@ procedure main()
    gen(large, 214748364721474836472147483647)
    gen(lcm, 20, 24)
    gen(lcm, 20, 24, 16)
-   gen(mantissa, &e)
-   gen(max, &e, &pi, &phi)
+   gen(mantissa, Math.E)
+   gen(max, Math.E, Math.PI, Math.PHI)
    gen(mdp, 2147483647)
    gen(mdr, 2147483647)
-   gen(min, &e, &pi, &phi)
+   gen(min, Math.E, Math.PI, Math.PHI)
    gen(mod1, 21, 7)
    gen(npalins, 2)
    gen(residue, 21, 7, 14)
    gen(roman, 1989)
-   gen(round, &e)
+   gen(round, Math.E)
    gen(sign, -47)
    gen(spell, 47193)				# result is not strictly correct
    gen(sum, 1, 1, 2, 3, 5, 8, 13, 21, 42)
-   gen(trunc, &phi)
+   gen(trunc, Math.PHI)
    gen(unroman, "MCMLXXIV")
 
    write()

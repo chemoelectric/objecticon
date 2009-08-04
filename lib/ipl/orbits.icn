@@ -44,8 +44,8 @@ procedure orbit1(x, y, extent, n, t1, t2, k1, k2, radius1, sscale,
    sscale *:= extent
 
    real_n := real(n)
-   incr1 := 2 * &pi * t1 / n
-   incr2 := 2 * &pi * t2 / n
+   incr1 := 2 * Math.PI * t1 / n
+   incr2 := 2 * Math.PI * t2 / n
    angle1 := angle2 := 0
 
    every i := 1 to n do {
@@ -64,13 +64,13 @@ procedure orbit2(x, y, extent, n, t1, t2, k1, k2, radius1, sscale,
    xfact, yfact, roff, rfact, rratio, div)
    local incr1, incr2, rangle, angle1, angle2, i, radius2, loff
 
-   rangle := 2 * &pi / div * rratio
+   rangle := 2 * Math.PI / div * rratio
    radius1 *:= extent			#scaling
    loff  := 0.5 * extent
    sscale *:= extent
 
-   incr1 := 2 * &pi * t1 / n
-   incr2 := 2 * &pi * t2 / n
+   incr1 := 2 * Math.PI * t1 / n
+   incr2 := 2 * Math.PI * t2 / n
    angle1 := angle2 := 0
 
    every i := 1 to n do {

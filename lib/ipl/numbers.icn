@@ -322,7 +322,7 @@ procedure distseq(low, high)
 
    suspend low + n
 
-   incr := integer(range / &phi ^ 2 + 0.5)
+   incr := integer(range / Math.PHI ^ 2 + 0.5)
    if incr <= 1 then 
       incr := 1
    else while gcd(incr, range) > 1 do

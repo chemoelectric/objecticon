@@ -220,10 +220,10 @@ procedure BevelCircle(win, x, y, r, bw)
       bw := -bw
    }
 
-   a := -&pi / 8
+   a := -Math.PI / 8
    while (bw -:= 1) >= 0 do {
-      lower.draw_circle(x, y, r, a, &pi)
-      upper.draw_circle(x, y, r, a + &pi, &pi)
+      lower.draw_circle(x, y, r, a, Math.PI)
+      upper.draw_circle(x, y, r, a + Math.PI, Math.PI)
       r -:= 1
    }
    return win
@@ -441,8 +441,8 @@ procedure DrawGroove(win, x1, y1, x2, y2, w)
 
    a := Math.atan(y2 - y1, x2 - x1)
    if a < 0 then
-      a +:= &pi
-   n := integer(8 * a / &pi)
+      a +:= Math.PI
+   n := integer(8 * a / Math.PI)
 
    if w < 0 then			# if groove/ridge swap
       upper :=: lower

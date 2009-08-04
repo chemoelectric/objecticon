@@ -1,4 +1,4 @@
-import io
+import io, util(Math)
 
 record array(a,b,c,d,e,f,g)
 
@@ -170,12 +170,12 @@ end
 procedure p9()
    write(image(&ascii) | "failed")
    write(image(&cset) | "failed")
-   write(image(&e) | "failed")
+   write(image(Math.E) | "failed")
    write(image(&fail) | "failed")
    write(image(&lcase) | "failed")
    write(image(&null) | "failed")
-   write(image(&phi) | "failed")
-   write(image(&pi) | "failed")
+   write(image(Math.PHI) | "failed")
+   write(image(Math.PI) | "failed")
    write(image(&pos) | "failed")
    write(image(&random) | "failed")
    write(image(&subject) | "failed")

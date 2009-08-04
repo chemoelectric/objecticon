@@ -21,9 +21,9 @@
 #  
 #  arithseq(i, j)	arithmetic sequence starting at i with increment j
 #
-#  beatty1seq()		Beatty's first sequence i * &phi
+#  beatty1seq()		Beatty's first sequence i * Math.PHI
 #
-#  beatty2seq()		Beatty's second sequence i * &phi ^ 2
+#  beatty2seq()		Beatty's second sequence i * Math.PHI ^ 2
 #
 #  catlnseq(i)		sequence of generalized Catalan numbers
 #
@@ -175,7 +175,7 @@ end
 # Beatty sequence 1
 procedure beatty1seq(r)		
 
-   /r := &phi
+   /r := Math.PHI
 
    suspend integer(seq() * r)
 
@@ -184,7 +184,7 @@ end
 # Beatty sequence 2
 procedure beatty2seq(r)		
 
-   /r := &phi
+   /r := Math.PHI
 
    suspend integer(seq() * (r / (r - 1)))
 

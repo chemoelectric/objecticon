@@ -37,13 +37,14 @@ package ipl.fastfncs
 
 import
    ipl.factors(factorial),
-   ipl.numbers(floor)
+   ipl.numbers(floor),
+   util(Math)
 
 procedure g(k, n)
    local value
    static psi
 
-   initial psi := 1.0 / &phi
+   initial psi := 1.0 / Math.PHI
 
    if n = 0 then return 0
 

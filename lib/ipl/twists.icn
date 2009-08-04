@@ -43,11 +43,11 @@ sfact, sscale, soff, yfact)
    radius1 := rscale1 * extent				# scaling
    radius2 := rscale2 * extent
 
-   jangle1 := 2 * &pi / n * j1 * t1
-   jangle2 := 2 * &pi / n * j2 * t1
-   kangle1 := 2 * &pi / n * k1 * t2
-   kangle2 := 2 * &pi / n * k2 * t2
-   sangle := sfact * &pi / n
+   jangle1 := 2 * Math.PI / n * j1 * t1
+   jangle2 := 2 * Math.PI / n * j2 * t1
+   kangle1 := 2 * Math.PI / n * k1 * t2
+   kangle2 := 2 * Math.PI / n * k2 * t2
+   sangle := sfact * Math.PI / n
 
    every i := 0 to n do {
       s := sscale * Math.cos(sangle * i) + soff
@@ -69,11 +69,11 @@ sfact, yfact)
    radius1 := rscale1 * extent				# scaling
    radius2 := rscale2 * extent
 
-   jangle1 := 2 * &pi / n * j1 * t1
-   jangle2 := 2 * &pi / n * j2 * t1
-   kangle1 := 2 * &pi / n * k1 * t2
-   kangle2 := 2 * &pi / n * k2 * t2
-   sangle := sfact * &pi / n
+   jangle1 := 2 * Math.PI / n * j1 * t1
+   jangle2 := 2 * Math.PI / n * j2 * t1
+   kangle1 := 2 * Math.PI / n * k1 * t2
+   kangle2 := 2 * Math.PI / n * k2 * t2
+   sangle := sfact * Math.PI / n
 
    every i := 0 to n do {
       c1 := Math.cos(jangle1 * i)

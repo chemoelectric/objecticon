@@ -3001,21 +3001,6 @@ static int get_literal(struct lnode *n, struct literal *l)
                 l->type = FAIL;
                 return 1;
             }
-            case K_PI: {
-                l->type = REAL;
-                l->u.d = 3.14159265358979323846264338327950288419716939937511;
-                return 1;
-            }
-            case K_PHI: {
-                l->type = REAL;
-                l->u.d = 1.618033988749894848204586834365638117720309180;
-                return 1;
-            }
-            case K_E: {
-                l->type = REAL;
-                l->u.d = 2.71828182845904523536028747135266249775724709369996;
-                return 1;
-            }
         }
     }
     return 0;

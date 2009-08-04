@@ -34,7 +34,7 @@ import
 procedure rpoly(cx, cy, radius, vertices, theta)	
    local incr, i
 
-   incr := 2 * &pi / vertices
+   incr := 2 * Math.PI / vertices
    /theta := 0			# starting angle
 
    every i := 1 to vertices do {

@@ -69,9 +69,6 @@ extern struct b_iproc mt_llist;
 extern struct descrip rzerodesc;	/* real 0.0 descriptor */
 
 extern struct b_real realzero;          /* real zero block */
-extern struct b_real realphi;	        /* real phi descriptor */
-extern struct b_real realpi;	        /* real pi descriptor */
-extern struct b_real reale;	        /* real e descriptor */
 
 
 

@@ -129,7 +129,7 @@ procedure main(args)
 
    latmin := hdr1[16+:7]
    latmax := hdr2[16+:7]
-   latsin := Math.sin(((latmax + latmin) / 2.0) * (&pi / 9999999))
+   latsin := Math.sin(((latmax + latmin) / 2.0) * (Math.PI / 9999999))
 
    loadfile()				# load table keys
 
@@ -323,8 +323,8 @@ procedure collapse()
       return
    maxsq := maxerr * maxerr		# square of error (avoid sqrt later)
 
-   maxa := maxangle * &pi / 180
-   maxa >:= &pi				# max angle in radians
+   maxa := maxangle * Math.PI / 180
+   maxa >:= Math.PI				# max angle in radians
 
    x2 := latsin * xoff[1]
    y2 := yoff[1]
@@ -411,7 +411,7 @@ procedure crack(line)
       o.x2 := x2
       o.y2 := y2
       a := Math.atan(y2 - y1, latsin * (x2 - x1))
-      o.aindex := 1 + integer(SECTORS * ((a / &pi) + 2.25)) % SECTORS
+      o.aindex := 1 + integer(SECTORS * ((a / Math.PI) + 2.25)) % SECTORS
       }
 
    return o

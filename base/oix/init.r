@@ -247,13 +247,6 @@ void icon_init(char *name)
 
     d = 0.0;
     SetReal(d, realzero);
-    d = 1.618033988749894848204586834365638117720309180;
-    SetReal(d, realphi);	        /* real phi descriptor */
-    d = 3.14159265358979323846264338327950288419716939937511;
-    SetReal(d, realpi);	        /* real pi descriptor */
-    d = 2.71828182845904523536028747135266249775724709369996;
-    SetReal(d, reale);	        /* real e descriptor */
-
     BlkLoc(rzerodesc) = (union block *)&realzero;
 
     maps2 = nulldesc;

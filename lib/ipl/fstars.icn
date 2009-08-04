@@ -70,7 +70,7 @@ procedure fstar(x, y, n, p, r, incr, extent, xinit, yinit)
    /xinit := 0
    /yinit := 0.5
 
-   incr *:= &pi			# scaling
+   incr *:= Math.PI			# scaling
    extent *:= size
    xloc := xinit * size
    yloc := yinit * size

@@ -1,6 +1,6 @@
 #SRC: V9GEN
 
-import io, lang
+import io, lang, util(Math)
 
 procedure main(a)
    local x, l0, l1, l2, l3, l4, l5, l6, l7, l8, l9
@@ -24,7 +24,7 @@ procedure main(a)
    l0 := []
    l1 := [&letters -- 'jJ']
    l2 := ["supercalifragilistic", "expialidocious"]
-   l3 := [&phi, &e, &pi]
+   l3 := [Math.PHI, Math.E, Math.PI]
    l4 := [1,2,3,4]
    l5 := [1,2,3,4,5]
    l6 := [1,2,3,4,5,6]
