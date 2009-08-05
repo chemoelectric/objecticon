@@ -941,7 +941,7 @@ end
 # This stream represents a pipe to a command running in a forked child
 # process.  The pipe is either readable or writable, but not both.
 #
-class ProgStream(FileStream, NoCopy)
+class ProgStream(FileStream)
    private
       pid
 
