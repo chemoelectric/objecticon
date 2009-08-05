@@ -2,10 +2,7 @@
  * invoke.r - contains invoke, apply
  */
 
-#if E_Ecall
-#include "../h/opdefs.h"		/* for Op_Invoke eventvalue */
-#endif					/* E_Ecall */
-
+#include "../h/opdefs.h"
 #include "../h/modflags.h"
 
 #begdef invoke_macro(invoke_methp,invoke_misc,invoke_proc,construct_object,construct_record,invoke,e_ecall,e_pcall,e_objectcreate,e_rcreate)
@@ -446,8 +443,6 @@ void ensure_initialized(struct b_class *class0)
     }
     class0->init_state = Initialized;
 }
-
-#include "../h/opdefs.h"
 
 /*
  * Invoke the given Icon procedure, which must be a pointer into the
