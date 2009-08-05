@@ -2125,7 +2125,7 @@ static struct descrip stat2list(struct stat *st)
    else if (S_ISDIR(st->st_mode)) mode[0] = 'd';
    else if (S_ISCHR(st->st_mode)) mode[0] = 'c';
    else if (S_ISBLK(st->st_mode)) mode[0] = 'b';
-   else if (S_ISFIFO(st->st_mode)) mode[0] = '|';
+   else if (S_ISFIFO(st->st_mode)) mode[0] = 'p';
    else if (S_ISSOCK(st->st_mode)) mode[0] = 's';
 
    if (S_IRUSR & st->st_mode) mode[1] = 'r';

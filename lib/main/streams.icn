@@ -620,7 +620,6 @@ class DescStream(Stream, NoCopy)
 
    private defer stat_impl()
 
-
    protected new(fd, mode)
       self.fd := fd
       self.mode := mode
