@@ -1402,18 +1402,6 @@ function{0,1} io_FileStream_truncate(self, len)
    }
 end
 
-function{0,1} io_FileStream_stat_impl(self)
-   body {
-       struct stat st;
-       GetSelfFd();
-       if (fstat(self_fd, &st) < 0) {
-           errno2why();
-           fail;
-       }
-       return stat2list(&st);
-   }
-end
-
 function{0,1} io_FileStream_chdir(self)
    body {
        GetSelfFd();
@@ -1422,19 +1410,6 @@ function{0,1} io_FileStream_chdir(self)
            fail;
        }
        return nulldesc;
-   }
-end
-
-function{0,1} io_FileStream_dup2_impl(self, n)
-   if !cnv:C_integer(n) then
-      runerr(101, n)
-   body {
-       GetSelfFd();
-       if (dup2(self_fd, n) < 0) {
-           errno2why();
-           fail;
-       }
-       return C_integer n;
    }
 end
 
@@ -1783,6 +1758,31 @@ end
     }
 }
 #enddef
+
+function{0,1} io_DescStream_dup2_impl(self, n)
+   if !cnv:C_integer(n) then
+      runerr(101, n)
+   body {
+       GetSelfFd();
+       if (dup2(self_fd, n) < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer n;
+   }
+end
+
+function{0,1} io_DescStream_stat_impl(self)
+   body {
+       struct stat st;
+       GetSelfFd();
+       if (fstat(self_fd, &st) < 0) {
+           errno2why();
+           fail;
+       }
+       return stat2list(&st);
+   }
+end
 
 function{0,1} io_DescStream_select(rl, wl, el, timeout)
     body {

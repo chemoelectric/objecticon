@@ -590,6 +590,37 @@ class DescStream(Stream, NoCopy)
    #
    public defer flag(on, off)
 
+   #
+   # Invokes the system function dup2(oldfd, newfd), with oldfd set to
+   # this instance's {fd}, and newfd set to the given parameter's {fd}.
+   #
+   # On error this method fails and sets {&why}.
+   #
+   # @param other - a {DescStream}
+   # @return the fd of other
+   # @example
+   # @ f := FileStream.open("/tmp/xyz", 
+   # @     ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   # @ f.dup2(FileStream.stdout) | stop(&why)
+   # @ f.close()
+   # @ write("hello world")  # writes to /tmp/xyz
+   #
+   public dup2(other)
+      return dup2_impl(other.fd)
+   end
+
+   private defer dup2_impl()
+
+   #
+   # Return a {Stat} object with info about this file.
+   #
+   public stat()
+      return Stat!stat_impl()
+   end
+
+   private defer stat_impl()
+
+
    protected new(fd, mode)
       self.fd := fd
       self.mode := mode
@@ -782,22 +813,7 @@ class FileStream(DescStream)
 
    public defer truncate(len)
 
-   public dup2(n)
-      return FileStream(dup2_impl(n), mode)
-   end
-
-   private defer dup2_impl()
-
    public defer chdir()
-
-   #
-   # Return a {Stat} object with info about this file.
-   #
-   public stat()
-      return Stat!stat_impl()
-   end
-
-   private defer stat_impl()
 
    public defer close()
 end
@@ -953,10 +969,10 @@ class ProgStream(FileStream, NoCopy)
          return ProgStream(l[2].get_fd(), WRITE, pid)
       } else {
          if \stdout then
-            stdout.dup2(1) | stop(&why)
+            stdout.dup2(FileStream.stdout) | stop(&why)
          if \stderr then
-            stderr.dup2(2) | stop(&why)
-         l[1].dup2(0) | stop(&why)
+            stderr.dup2(FileStream.stderr) | stop(&why)
+         l[1].dup2(FileStream.stdin) | stop(&why)
          l[1].close()
          l[2].close()
          System.exec(cmd, args, env) | stop(&why)
@@ -987,9 +1003,9 @@ class ProgStream(FileStream, NoCopy)
       } else {
          # Child
          if \stdin then
-            stdin.dup2(0) | stop(&why)
-         l[2].dup2(1) | stop(&why)
-         l[2].dup2(2) | stop(&why)
+            stdin.dup2(FileStream.stdin) | stop(&why)
+         l[2].dup2(FileStream.stdout) | stop(&why)
+         l[2].dup2(FileStream.stderr) | stop(&why)
          l[1].close()
          l[2].close()
          System.exec(cmd, args, env) | stop(&why)
