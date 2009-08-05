@@ -52,16 +52,16 @@
 package ipl.zipread
 
 import
-   io(close, open, reads)
+   io(FileOpt, FileStream, ProgStream)
 
 # check for ZIP archive
 procedure iszip(fname)		
    local f, s
 
-   f := open(fname, "ru") | fail
-   s := reads(f, 4)
-   close(f)
-   return s === "PK\03\04"
+   f := FileStream.open(fname, FileOpt.RDONLY) | fail
+   s := f.reads(4)
+   f.close()
+   return s == "PK\03\04"
 end
 
 
@@ -70,7 +70,11 @@ end
 
 # open ZIP directory
 procedure zipdir(zname)			
-   return open("unzip -l " || zname || " | sed -n 's/.*:..   //p'", "rp")
+   local f, g
+   f := ProgStream.open_read("unzip", ["-l", zname]) | fail
+   g := ProgStream.open_read("sed", ["-n", "s/.*:..   //p"],, f)
+   f.close()
+   return \g
 end
 
 
@@ -79,5 +83,5 @@ end
 
 # open member of ZIP archive
 procedure zipfile(zname, fname)		
-   return open("unzip -p " || zname || " " || fname, "rp")
+   return ProgStream.open_read("unzip", ["-p", zname, fname])
 end
