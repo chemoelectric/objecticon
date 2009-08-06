@@ -1185,33 +1185,34 @@ void show_regions()
 }
 
 
-long physicalmemorysize()
+longlong physicalmemorysize()
 {
-   char buf[80], *p;
-   long i;
 #if UNIX
-   FILE *f = fopen("/proc/meminfo", "r");
-   if (f) {
-      while (fgets(buf, 80, f)) {
-	 if (!strncmp("MemTotal: ", buf, strlen("MemTotal: "))) {
-	    p = buf+strlen("MemTotal: ");
-	    while (isspace(*p)) p++;
-	    i = atol(p);
-	    while (isdigit(*p)) p++;
-	    while (isspace(*p)) p++;
-	    if (!strncmp(p, "kB",2)) i *= 1024;
-	    else if (!strncmp(p, "MB", 2)) i *= 1024 * 1024;
-	    return i;
+#define TAG "MemTotal: "
+    FILE *f = fopen("/proc/meminfo", "r");
+    longlong i = 0;
+    if (f) {
+        char buf[80], *p;
+        while (fgets(buf, 80, f)) {
+            if (!strncmp(TAG, buf, strlen(TAG))) {
+                p = buf+strlen(TAG);
+                while (isspace(*p)) p++;
+                i = atol(p);
+                while (isdigit(*p)) p++;
+                while (isspace(*p)) p++;
+                if (!strncmp(p, "kB",2)) i *= 1024;
+                else if (!strncmp(p, "MB", 2)) i *= 1024 * 1024;
+                break;
 	    }
-	 }
-      fclose(f);
-      }
-#endif					/* UNIX */
-#if MSWIN32
-   MEMORYSTATUS ms;
-   GlobalMemoryStatus(&ms);
-   return ms.dwTotalPhys;
+        }
+        fclose(f);
+    }
+    return i;
+#elif MSWIN32
+    MEMORYSTATUS ms;
+    GlobalMemoryStatus(&ms);
+    return ms.dwTotalPhys;
 #else					/* MSWIN32 */
-   return 0;
+    return 0;
 #endif					/* MSWIN32 */
 }

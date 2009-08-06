@@ -130,7 +130,7 @@ word		neg		(word a);
 void            new_context     (void);
 int		numcmp		(dptr dp1,dptr dp2,dptr dp3);
 void		outimage	(FILE *f,dptr dp,int noimage);
-long physicalmemorysize();
+longlong        physicalmemorysize();
 word		prescan		(dptr d);
 int		putstr		(FILE *f,dptr d);
 int    		 radix		(int sign, register int r, register char *s,

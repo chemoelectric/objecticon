@@ -218,7 +218,7 @@ void icon_init(char *name)
     struct header hdr;
     FILE *ifile = 0;
     char *t;
-    long pmem;
+    longlong pmem;
     struct b_coexpr *mainhead;
     double d;
 
