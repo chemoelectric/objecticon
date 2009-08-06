@@ -77,6 +77,7 @@
 #undef SIZEOF_LONG
 #undef SIZEOF_VOIDP
 #undef SIZEOF_DOUBLE
+#undef SIZEOF_LONG_LONG
 
 /* stack alignment in bytes */
 #undef STACK_ALIGN_BYTES
