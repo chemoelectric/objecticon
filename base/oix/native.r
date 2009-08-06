@@ -126,6 +126,11 @@ static void extract_package(dptr s, dptr d)
     syserr("In a package, but no dots");  
 }
 
+/*
+ * These macros are used to convert to/from various integer types
+ * which may be bigger than a word and may or may not be signed.
+ */
+
 #begdef convert_to_macro(TYPE)
 static int convert_to_##TYPE(dptr src, TYPE *dest)
 {
@@ -176,6 +181,10 @@ static int convert_to_##TYPE(dptr src, TYPE *dest)
             ReturnErrVal(101, *src, 0);
     }
 
+    /*
+     * Copy the bits in the converted source (it is now in two's
+     * complement form) into the target.
+     */
     for (k = 0; k < sizeof(TYPE) / 2; ++k) {
         bigand(&i, &int65535, &bits);
         bigshift(&i, &intneg16, &j);
@@ -202,6 +211,10 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
         return;
     }
 
+    /* Copy the raw bits of src, to dest in 16 bit chunks.  For a -ve
+     * src, the two's complement representation is copied, and then
+     * converted below
+     */
     res = zerodesc;
     for (k = 0; k < sizeof(TYPE) / 2; ++k) {
         int bits = j & 0xffff;
@@ -216,6 +229,7 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
         /* pwr = 2 ^ "n bits in TYPE" */
         MakeInt(sizeof(TYPE) * 8, &digs);
         bigshift(&onedesc, &digs, &pwr);
+        /* Convert from two's complement to true value - res := res - pwr */
         bigsub(&res, &pwr, &t);
         res = t;
     }
@@ -226,6 +240,7 @@ convert_to_macro(off_t)
 convert_from_macro(off_t)
 convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
+convert_from_macro(ulonglong)
 
 
 function{0,1} is(o, target)
@@ -681,17 +696,17 @@ end
 function{1} lang_Prog_get_allocation_info_impl(c)
    body {
        struct progstate *prog;
-       struct descrip tmp;
+       tended struct descrip tmp;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
        create_list(3, &result);
-       MakeInt(prog->stattotal, &tmp);
+       convert_from_ulonglong(prog->stattotal, &tmp);
        c_put(&result, &tmp);
-       MakeInt(prog->stringtotal, &tmp);
+       convert_from_ulonglong(prog->stringtotal, &tmp);
        c_put(&result, &tmp);
-       MakeInt(prog->blocktotal, &tmp);
+       convert_from_ulonglong(prog->blocktotal, &tmp);
        c_put(&result, &tmp);
        return result;
    }

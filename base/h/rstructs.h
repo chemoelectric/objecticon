@@ -399,9 +399,9 @@ struct progstate {
     word Kywd_time_out;			/* &time at last program switch out */
     struct timeval start_time;          /* time program started */
 
-    uword stringtotal;			/* cumulative total allocation */
-    uword blocktotal;			/* cumulative total allocation */
-    uword stattotal;			/* cumulative total static allocation */
+    ulonglong stringtotal;		/* cumulative total allocation */
+    ulonglong blocktotal;		/* cumulative total allocation */
+    ulonglong stattotal;		/* cumulative total static allocation */
 
     uword statcurr;			/* current static allocation */
     word statcount;                     /* count of number of coexpr allocs - when

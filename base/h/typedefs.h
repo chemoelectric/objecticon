@@ -35,3 +35,5 @@ typedef unsigned int DIGIT;
 
 typedef struct descrip *dptr;
 typedef word C_integer;
+typedef long long longlong;
+typedef unsigned long long ulonglong;
