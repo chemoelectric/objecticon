@@ -173,23 +173,23 @@ void print_dword(FILE *f, dptr d);
 						   union numeric *result);
    int   	bigtoreal	(dptr da, double *d);
    int		realtobig	(dptr da, dptr dx);
-   int		bigtos		(dptr da, dptr dx);
+   void		bigtos		(dptr da, dptr dx);
    void		bigprint	(FILE *f, dptr da);
-   int		cpbignum	(dptr da, dptr db);
-   int		bigadd		(dptr da, dptr db, dptr dx);
-   int		bigsub		(dptr da, dptr db, dptr dx);
-   int		bigmul		(dptr da, dptr db, dptr dx);
-   int		bigdiv		(dptr da, dptr db, dptr dx);
-   int		bigmod		(dptr da, dptr db, dptr dx);
-   int		bigneg		(dptr da, dptr dx);
+   void		cpbignum	(dptr da, dptr db);
+   void		bigadd		(dptr da, dptr db, dptr dx);
+   void		bigsub		(dptr da, dptr db, dptr dx);
+   void		bigmul		(dptr da, dptr db, dptr dx);
+   void		bigdiv		(dptr da, dptr db, dptr dx);
+   void		bigmod		(dptr da, dptr db, dptr dx);
+   void		bigneg		(dptr da, dptr dx);
    int		bigpow		(dptr da, dptr db, dptr dx);
    int		bigpowri        (double a, dptr db, dptr drslt);
-   int		bigand		(dptr da, dptr db, dptr dx);
-   int		bigor		(dptr da, dptr db, dptr dx);
-   int		bigxor		(dptr da, dptr db, dptr dx);
-   int		bigshift	(dptr da, dptr db, dptr dx);
+   void		bigand		(dptr da, dptr db, dptr dx);
+   void		bigor		(dptr da, dptr db, dptr dx);
+   void		bigxor		(dptr da, dptr db, dptr dx);
+   void		bigshift	(dptr da, dptr db, dptr dx);
    word		bigcmp		(dptr da, dptr db);
-   int		bigrand		(dptr da, dptr dx);
+   void		bigrand		(dptr da, dptr dx);
 
 
 #ifdef Graphics

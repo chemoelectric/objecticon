@@ -102,6 +102,7 @@ extern struct progstate *curpstate;
 extern struct progstate rootpstate;
 extern int noMTevents;		/* no MT events during GC */
    
+extern int over_flow;
 
 extern stringint attribs[], drawops[];
 

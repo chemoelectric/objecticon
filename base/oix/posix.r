@@ -278,10 +278,9 @@ function{0,1} util_Time_get_system_millis()
       }
       MakeInt(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec, &lm);
-      if (bigmul(&ls, &thousanddesc, &lt1) == Error ||
-          bigdiv(&lm, &thousanddesc ,&lt2) == Error ||
-          bigadd(&lt1, &lt2, &result) == Error)
-          runerr(0);
+      bigmul(&ls, &thousanddesc, &lt1);
+      bigdiv(&lm, &thousanddesc ,&lt2);
+      bigadd(&lt1, &lt2, &result);
       return result;
    }
 end
@@ -298,9 +297,8 @@ function{0,1} util_Time_get_system_micros()
       }
       MakeInt(tp.tv_sec, &ls);
       MakeInt(tp.tv_usec, &lm);
-      if (bigmul(&ls, &milliondesc, &lt1) == Error ||
-          bigadd(&lt1, &lm, &result) == Error)
-          runerr(0);
+      bigmul(&ls, &milliondesc, &lt1);
+      bigadd(&lt1, &lm, &result);
       return result;
    }
 end

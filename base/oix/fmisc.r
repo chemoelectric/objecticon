@@ -283,20 +283,17 @@ end
 #define bitxor ^
 #begdef big_bitand(x,y)
 {
-   if (bigand(&x, &y, &result) == Error)  /* alcbignum failed */
-      runerr(0);
+    bigand(&x, &y, &result);
 }
 #enddef
 #begdef big_bitor(x,y)
 {
-   if (bigor(&x, &y, &result) == Error)  /* alcbignum failed */
-      runerr(0);
+    bigor(&x, &y, &result);
 }
 #enddef
 #begdef big_bitxor(x,y)
 {
-   if (bigxor(&x, &y, &result) == Error)  /* alcbignum failed */
-      runerr(0);
+    bigxor(&x, &y, &result);
 }
 #enddef
 
@@ -319,12 +316,7 @@ function{1} icom(i)
       }
    inline {
       if (Type(i) == T_Lrgint) {
-         struct descrip td;
-
-         td.dword = D_Integer;
-         IntVal(td) = -1;
-         if (bigsub(&td, &i, &result) == Error)  /* alcbignum failed */
-            runerr(0);
+         bigsub(&minusonedesc, &i, &result);
          return result;
          }
       else
@@ -369,8 +361,7 @@ function{1} ishift(i,j)
       cj = IntVal(j);
       if (Type(i) == T_Lrgint || cj >= WordBits
       || ((ci=(uword)IntVal(i))!=0 && cj>0 && (ci >= (1<<(WordBits-cj-1))))) {
-         if (bigshift(&i, &j, &result) == Error)  /* alcbignum failed */
-            runerr(0);
+         bigshift(&i, &j, &result);
          return result;
          }
       /*

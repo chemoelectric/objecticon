@@ -364,8 +364,7 @@ operator{0,1} ? random(underef x -> dx)
               runerr(113, dx);
 
           if (Type(dx) == T_Lrgint) {
-              if (bigrand(&dx, &result) == Error)  /* alcbignum failed */
-	          runerr(0);
+              bigrand(&dx, &result);
               return result;
           }
 

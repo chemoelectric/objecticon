@@ -22,7 +22,6 @@ int over_flow = 0;
                return integer
                }
             inline {
-               extern int over_flow;
                c_int_op(x,y);
                }
             }
@@ -56,8 +55,7 @@ end
    if ( ( Type ( y ) == T_Integer ) && ( IntVal ( y ) == 0 ) )
       runerr(201);  /* Divide fix */
 
-   if (bigdiv(&x,&y,&result) == Error) /* alcbignum failed */
-      runerr(0);
+   bigdiv(&x,&y,&result);
    return result;
 }
 #enddef
@@ -70,8 +68,7 @@ end
    if (over_flow) {
       MakeInt(x,&lx);
       MakeInt(y,&ly);
-      if (bigdiv(&lx,&ly,&result) == Error) /* alcbignum failed */
-	 runerr(0);
+      bigdiv(&lx,&ly,&result);
       return result;
       }
    else return C_integer irslt;
@@ -103,8 +100,7 @@ ArithOp( / , divide , Divide , RealDivide, list_add /* bogus */)
 
 #begdef big_Sub(x,y)
 {
-   if (bigsub(&x,&y,&result) == Error) /* alcbignum failed */
-      runerr(0);
+   bigsub(&x,&y,&result);
    return result;
 }
 #enddef
@@ -114,8 +110,7 @@ ArithOp( / , divide , Divide , RealDivide, list_add /* bogus */)
    if (over_flow) {
       MakeInt(x,&lx);
       MakeInt(y,&ly);
-      if (bigsub(&lx,&ly,&result) == Error) /* alcbignum failed */
-         runerr(0);
+      bigsub(&lx,&ly,&result);
       return result;
       }
    else return C_integer irslt;
@@ -138,8 +133,7 @@ ArithOp( - , minus , Sub , RealSub, list_add /* bogus */)
       irunerr(202,0);
       errorfail;
       }
-   if (bigmod(&x,&y,&result) == Error)
-      runerr(0);
+   bigmod(&x,&y,&result);
    return result;
 }
 #enddef
@@ -184,8 +178,7 @@ ArithOp( % , mod , IntMod , RealMod, list_add /* bogus */ )
 
 #begdef big_Mpy(x,y)
 {
-   if (bigmul(&x,&y,&result) == Error)
-      runerr(0);
+   bigmul(&x,&y,&result);
    return result;
 }
 #enddef
@@ -195,8 +188,7 @@ ArithOp( % , mod , IntMod , RealMod, list_add /* bogus */ )
    if (over_flow) {
       MakeInt(x,&lx);
       MakeInt(y,&ly);
-      if (bigmul(&lx,&ly,&result) == Error) /* alcbignum failed */
-         runerr(0);
+      bigmul(&lx,&ly,&result);
       return result;
       }
    else return C_integer irslt;
@@ -217,14 +209,12 @@ operator{1} - neg(x)
          }
       inline {
 	    C_integer i;
-	    extern int over_flow;
 
 	    i = neg(x);
 	    if (over_flow) {
 	       struct descrip tmp;
 	       MakeInt(x,&tmp);
-	       if (bigneg(&tmp, &result) == Error)  /* alcbignum failed */
-	          runerr(0);
+	       bigneg(&tmp, &result);
                return result;
                }
          return C_integer i;
@@ -235,8 +225,7 @@ operator{1} - neg(x)
          return integer
          }
       inline {
-	 if (bigneg(&x, &result) == Error)  /* alcbignum failed */
-	    runerr(0);
+         bigneg(&x, &result);
 	 return result;
          }
       }
@@ -294,8 +283,7 @@ end
 
 #begdef big_Add(x,y)
 {
-   if (bigadd(&x,&y,&result) == Error)
-      runerr(0);
+   bigadd(&x,&y,&result);
    return result;
 }
 #enddef
@@ -305,8 +293,7 @@ end
    if (over_flow) {
       MakeInt(x,&lx);
       MakeInt(y,&ly);
-      if (bigadd(&lx, &ly, &result) == Error)  /* alcbignum failed */
-	 runerr(0);
+      bigadd(&lx, &ly, &result);
       return result;
       }
    else return C_integer irslt;
@@ -329,7 +316,7 @@ operator{1} ^ powr(x, y)
 	 inline {
 	    tended struct descrip ly;
 	    MakeInt ( y, &ly );
-	    if (bigpow(&x, &ly, &result) == Error)  /* alcbignum failed */
+	    if (bigpow(&x, &ly, &result) == Error)
 	       runerr(0);
 	    return result;
 	   }
@@ -353,7 +340,7 @@ operator{1} ^ powr(x, y)
 	    return integer
 	    }
 	 inline {
-	    if (bigpow(&x, &y, &result) == Error)  /* alcbignum failed */
+	    if (bigpow(&x, &y, &result) == Error)
 	       runerr(0);
 	    return result;
 	    }

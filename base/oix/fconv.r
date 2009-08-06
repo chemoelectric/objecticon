@@ -15,7 +15,6 @@ function{1} abs(n)
          }
       inline {
 	 C_integer i;
-	 extern int over_flow;
 
 	 if (n >= 0)
 	    i = n;
@@ -24,8 +23,7 @@ function{1} abs(n)
 	    if (over_flow) {
 	       struct descrip tmp;
 	       MakeInt(n,&tmp);
-	       if (bigneg(&tmp, &result) == Error)  /* alcbignum failed */
-	          runerr(0);
+	       bigneg(&tmp, &result);
                return result;
 	       }
 	    }
@@ -42,8 +40,7 @@ function{1} abs(n)
 	 if (BlkLoc(n)->bignum.sign == 0)
 	    result = n;
 	 else {
-	    if (bigneg(&n, &result) == Error)  /* alcbignum failed */
-	       runerr(0);
+             bigneg(&n, &result);
 	    }
          return result;
          }

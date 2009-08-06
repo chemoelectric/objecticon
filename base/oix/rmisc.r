@@ -1520,8 +1520,6 @@ dptr dp;
  *  file.
  */
 
-extern int over_flow;
-
 word add(a, b)
 word a, b;
 {
