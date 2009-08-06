@@ -126,6 +126,107 @@ static void extract_package(dptr s, dptr d)
     syserr("In a package, but no dots");  
 }
 
+#begdef convert_to_macro(TYPE)
+static int convert_to_##TYPE(dptr src, TYPE *dest)
+{
+    struct descrip bits;
+    struct descrip intneg16;
+    struct descrip int65535;
+    tended struct descrip i, j, t, u, digs, pwr;
+    TYPE res = 0;
+    int pos = 0, k;
+
+    /*
+     * If we have a normal integer, try a conversion to the target type.
+     */
+    if (Type(*src) == T_Integer &&
+        sizeof(TYPE) >= sizeof(word) &&
+        (((TYPE)-1 < 0) || IntVal(*src) >= 0))   /* TYPE signed, or src +ve */
+    {
+        *dest = IntVal(*src);
+        return 1;
+    }
+
+    MakeInt(-16, &intneg16);
+    MakeInt(65535, &int65535);
+    /* pwr = 2 ^ "n bits in TYPE" */
+    MakeInt(sizeof(TYPE) * 8, &digs);
+    bigshift(&onedesc, &digs, &pwr);
+    i = *src;
+    if (bigcmp(&i, &zerodesc) < 0) {
+        /* Check TYPE is signed */
+        if ((TYPE)-1 > 0)
+            ReturnErrVal(101, *src, 0);
+        bigshift(&pwr, &minusonedesc, &t);
+        /* src must be >= -ve pwr/2 */
+        bigneg(&t, &u);
+        if (bigcmp(&i, &u) < 0)
+            ReturnErrVal(101, *src, 0);
+        /* Convert to the two's complement representation of i (i := pwr + i) */
+        bigadd(&i, &pwr, &t);
+        i = t;
+    } else if ((TYPE)-1 > 0) {
+        /* TYPE unsigned, i must be < pwr */
+        if (bigcmp(&i, &pwr) >= 0)
+            ReturnErrVal(101, *src, 0);
+    } else {
+        /* TYPE signed - src must be < pwr/2 */
+        bigshift(&pwr, &minusonedesc, &t);
+        if (bigcmp(&i, &t) >= 0)
+            ReturnErrVal(101, *src, 0);
+    }
+
+    for (k = 0; k < sizeof(TYPE) / 2; ++k) {
+        bigand(&i, &int65535, &bits);
+        bigshift(&i, &intneg16, &j);
+        i = j;
+        res |= ((unsigned long long)IntVal(bits) << pos);
+        pos += 16;
+    }
+    *dest = res;
+    return 1;
+}
+#enddef
+
+#begdef convert_from_macro(TYPE)
+static void convert_from_##TYPE(TYPE src, dptr dest)
+{
+    TYPE j = src;
+    int k;
+    struct descrip pos = zerodesc;
+    tended struct descrip res, t, digs, chunk, pwr;
+
+    /* See if it fits in a word */
+    if (src <= MaxWord && src >= MinWord) {
+        MakeInt(src, dest);
+        return;
+    }
+
+    res = zerodesc;
+    for (k = 0; k < sizeof(TYPE) / 2; ++k) {
+        int bits = j & 0xffff;
+        j = j >> 16;
+        MakeInt(bits, &t);
+        bigshift(&t, &pos, &chunk);
+        bigadd(&res, &chunk, &t);
+        res = t;
+        IntVal(pos) += 16;
+    }
+    if (src < 0) {
+        /* pwr = 2 ^ "n bits in TYPE" */
+        MakeInt(sizeof(TYPE) * 8, &digs);
+        bigshift(&onedesc, &digs, &pwr);
+        bigsub(&res, &pwr, &t);
+        res = t;
+    }
+    *dest = res;
+}
+#enddef
+convert_to_macro(off_t)
+convert_from_macro(off_t)
+convert_from_macro(ino_t)
+convert_from_macro(blkcnt_t)
+
 
 function{0,1} is(o, target)
    if !is:class(target) then
@@ -1385,16 +1486,21 @@ function{0,1} io_FileStream_close(self)
 end
 
 function{0,1} io_FileStream_truncate(self, len)
-   if !cnv:C_integer(len) then
+   if !cnv:integer(len) then
       runerr(101, len)
    body {
+       off_t c_len;
        GetSelfFd();
-       if (lseek(self_fd, len, SEEK_SET) < 0) {
+
+       if (!convert_to_off_t(&len, &c_len))
+           runerr(0);
+
+       if (lseek(self_fd, c_len, SEEK_SET) < 0) {
            errno2why();
            fail;
        }
 
-       if (ftruncate(self_fd, len) < 0) {
+       if (ftruncate(self_fd, c_len) < 0) {
            errno2why();
            fail;
        }
@@ -1414,33 +1520,47 @@ function{0,1} io_FileStream_chdir(self)
 end
 
 function{0,1} io_FileStream_seek(self, offset)
-   if !cnv:C_integer(offset) then
+   if !cnv:integer(offset) then
       runerr(101, offset)
    body {
-       int whence, rc;
+       int whence;
+       off_t c_offset, rc;
+       tended struct descrip t;
        GetSelfFd();
-       if (offset > 0) {
-           --offset;
+
+       if (bigcmp(&offset, &zerodesc) > 0) {
+           bigsub(&offset, &onedesc, &t);
+           offset = t;
            whence = SEEK_SET;
        } else
            whence = SEEK_END;
-       if ((rc = lseek(self_fd, offset, whence)) < 0) {
+
+       if (!convert_to_off_t(&offset, &c_offset))
+           runerr(0);
+ 
+       if ((rc = lseek(self_fd, c_offset, whence)) < 0) {
            errno2why();
            fail;
        }
-       return C_integer(rc + 1);
+       convert_from_off_t(rc, &t);      
+       bigadd(&t, &onedesc, &result);
+       return result;
    }
 end
 
 function{0,1} io_FileStream_tell(self)
    body {
-       int rc;
+       off_t rc;
+       tended struct descrip t;
+
        GetSelfFd();
        if ((rc = lseek(self_fd, 0, SEEK_CUR)) < 0) {
            errno2why();
            fail;
        }
-       return C_integer(rc + 1);
+       convert_from_off_t(rc, &t);       
+       bigadd(&t, &onedesc, &result);
+       return result;
    }
 end
 
@@ -2106,7 +2226,7 @@ static struct descrip stat2list(struct stat *st)
    create_list(13, &res);
    MakeInt(st->st_dev, &tmp);
    c_put(&res, &tmp);
-   MakeInt(st->st_ino, &tmp);
+   convert_from_ino_t(st->st_ino, &tmp);
    c_put(&res, &tmp);
 
    strcpy(mode, "----------");
@@ -2173,7 +2293,7 @@ static struct descrip stat2list(struct stat *st)
 
    MakeInt(st->st_rdev, &tmp);
    c_put(&res, &tmp);
-   MakeInt(st->st_size, &tmp);
+   convert_from_off_t(st->st_size, &tmp);
    c_put(&res, &tmp);
 #if MSWIN32
    c_put(&res, zerodesc);
@@ -2181,7 +2301,7 @@ static struct descrip stat2list(struct stat *st)
 #else
    MakeInt(st->st_blksize, &tmp);
    c_put(&res, &tmp);
-   MakeInt(st->st_blocks, &tmp);
+   convert_from_blkcnt_t(st->st_blocks, &tmp);
    c_put(&res, &tmp);
 #endif
    MakeInt(st->st_atime, &tmp);

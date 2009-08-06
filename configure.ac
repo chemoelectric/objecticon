@@ -47,7 +47,10 @@ AC_FLAG_MSG_NOSIGNAL()
 AC_PROG_INSTALL()
 AC_PROG_LN_S()
 AC_PROG_MAKE_SET()
-
+AC_SYS_LARGEFILE()
+if ! test "$ac_cv_sys_file_offset_bits" = no; then
+        CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=${ac_cv_sys_file_offset_bits}"
+fi
 ACX_CONTEXT_SWITCH()
 export CSWITCH
 CSWITCH=config/system/$acx_context_switch/rswitch.?

@@ -166,7 +166,8 @@
 /*
  * dummy typedefs for things defined in #include files
  */
-typedef int clock_t, time_t, fd_set, va_list;
+typedef int clock_t, time_t, fd_set, va_list, off_t,
+    ino_t, blkcnt_t;
 
 #if WildCards
    typedef int FINDDATA_T;

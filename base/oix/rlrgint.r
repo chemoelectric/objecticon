@@ -1170,7 +1170,10 @@ dptr da, db, dx;
                 xlen);
          }
       }
-   /* not called for iand(integer,integer) */
+   else {   /* iand(integer,integer) */
+       MakeInt(IntVal(*da) & IntVal(*db), dx);
+       return Succeeded;
+   }
 
    return mkdesc(x, dx);
 }
@@ -1320,7 +1323,10 @@ dptr da, db, dx;
                 xlen);
          }
       }
-   /* not called for ior(integer,integer) */
+   else {   /* ior(integer,integer) */
+       MakeInt(IntVal(*da) | IntVal(*db), dx);
+       return Succeeded;
+   }
 
    return mkdesc(x, dx);
 }
@@ -1470,7 +1476,10 @@ dptr da, db, dx;
                 xlen);
          }
       }
-   /* not called for ixor(integer,integer) */
+   else {   /* ixor(integer,integer) */
+       MakeInt(IntVal(*da) ^ IntVal(*db), dx);
+       return Succeeded;
+   }
 
    return mkdesc(x, dx);
 }
