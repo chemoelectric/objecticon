@@ -293,8 +293,8 @@ void icon_init(char *name)
     rootpstate.blockregion = &rootblock;
 
     pmem = physicalmemorysize();
-    rootstring.size = Max(pmem/200, MaxStrSpace);
-    rootblock.size  = Max(pmem/100, MaxAbrSize);
+    rootstring.size = Max(pmem/200, MinDefStrSpace);
+    rootblock.size  = Max(pmem/100, MinDefAbrSize);
 
     /*
      * Catch floating-point traps

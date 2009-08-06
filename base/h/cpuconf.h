@@ -153,13 +153,13 @@
  *  requirements may specify these values in define.h.
  */
 
-#ifndef MaxStrSpace
-   #define MaxStrSpace 500000	/* size of the string space in bytes */
-#endif					/* MaxStrSpace */
+#ifndef MinDefStrSpace
+   #define MinDefStrSpace 500000	/* minimum default size of the string space in bytes */
+#endif					/* (default size may be larger if memory is ample) */
 
-#ifndef MaxAbrSize
-   #define MaxAbrSize (125000 * WordSize) /* size of the block region in bytes */
-#endif					/* MaxAbrSize */
+#ifndef MinDefAbrSize
+   #define MinDefAbrSize (125000 * WordSize) /* minimum default size of the block region in bytes */
+#endif					/* (default size may be larger if memory is ample) */
 
 #ifndef MStackSize
    #define MStackSize (30000 * WordSize) /* default value of mstksize, the size of the main interpreter stack */
@@ -170,7 +170,7 @@
 #endif					/* StackSize */
 
 #ifndef QualLstSize
-   #define QualLstSize	5000		/* size of qualifier pointer region */
+   #define QualLstSize	(1250 * WordSize) /* size of qualifier pointer region */
 #endif					/* QualLstSize */
 
 #ifndef RegionCushion
@@ -182,5 +182,5 @@
 #endif					/* RegionGrowth */
 
 #ifndef MinAbrSize
-   #define MinAbrSize		 5000	/* min size of a block region in bytes */
+   #define MinAbrSize  (1250 * WordSize) /* min size of a block region in bytes */
 #endif					/* MinAbrSize */
