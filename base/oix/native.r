@@ -779,19 +779,6 @@ function{1} lang_Prog_get_stack_info_impl(c)
                isp = sp;
            else
                isp = ce->es_sp;
-       } else if (ce->main_of) {
-           /* See init.r, Prog.load */
-           top = (word *)ce + Wsizeof(struct b_coexpr) + Wsizeof(struct progstate) + 
-               ce->main_of->icodesize/WordSize;
-           if (ce->main_of->icodesize % WordSize) 
-               top++;
-           if (ce == k_current) {
-               bottom = (word *)&top;
-               isp = sp;
-           } else {
-               bottom = (word *)(ce->cstate[0]);
-               isp = ce->es_sp;
-           }
        } else {
            top = (word *)(ce + 1);
            if (ce == k_current) {

@@ -154,43 +154,66 @@ struct b_coexpr *alccoexp()
 
 
 /*
- * Allocate a co-expression block for a loaded program.  The memory
- * allocated consists of the co-expression, followed by a progstate
- * struct, followed by space for the icode, and then the stack.  The
- * size of the co-expression struct is taken to be included in the
- * stack size (the same as in alccoexp and the allocation of the root
- * program's &main).
+ * Allocate memory for a loaded program.  The memory allocated
+ * consists of three parts.  Firstly the co-expression, followed by
+ * the stack.  The size of the co-expression struct is taken to be
+ * included in the stack size (the same as in alccoexp and the
+ * allocation of the root program's &main).  Secondly, the progstate
+ * is allocated, and finally the space for the icode.
+ * 
+ * Note that this memory is never freed.
  */
 struct b_coexpr *alcprog(long icodesize, long stacksize)
 
    {
    struct b_coexpr *ep;
+   struct progstate *prog;
+   char *icode;
    int size = stacksize + icodesize + sizeof(struct progstate);
 
    EVVal(size, E_Coexpr);
 
-   ep = malloc(size);
-
    /*
-    * If malloc failed, collect and retry.
+    * Allocate the three parts.  If any fails, collect and retry before
+    * giving up.
     */
+   ep = malloc(stacksize);
    if (ep == NULL) {
       collect(Static);
-      ep = malloc(size);
+      ep = malloc(stacksize);
       if (ep == NULL)
           ReturnErrNum(305, NULL);
    }
+   prog = malloc(sizeof(struct progstate));
+   if (prog == NULL) {
+       collect(Static);
+       prog = malloc(sizeof(struct progstate));
+       if (prog == NULL) {
+           free(ep);
+           ReturnErrNum(305, NULL);
+       }
+   }
+   icode = malloc(icodesize);
+   if (icode == NULL) {
+       collect(Static);
+       icode = malloc(icodesize);
+       if (icode == NULL) {
+           free(ep);
+           free(prog);
+           ReturnErrNum(305, NULL);
+       }
+   }
 
    memset(ep, 0, sizeof(struct b_coexpr));
+   memset(prog, 0, sizeof(struct progstate));
    ep->title = T_Coexpr;
    ep->creator = curpstate;
    /* Add the allocation to the prog's stats */
    ep->creator->stattotal += size;
    ep->creator->statcurr += size;
    ep->id = 1;
-   ep->program = (struct progstate *)(ep + 1);
-   memset(ep->program, 0, sizeof(struct progstate));
-   ep->main_of = ep->program;
+   ep->main_of = ep->program = prog;
+   prog->Code = icode;
 
    ep->nextstk = stklist;
    stklist = ep;
@@ -233,6 +256,7 @@ union block *f(int tcode)
 
    if (tcode == T_Table) {
       AlcFixBlk(pt, b_table, T_Table, e_table);
+      pt->defvalue = nulldesc;
       ps = (struct b_set *)pt;
       ps->id = table_ser++;
       }

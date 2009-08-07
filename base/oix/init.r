@@ -671,7 +671,6 @@ struct b_coexpr * loadicode(name, bs, ss, stk)
     /*
      * Establish pointers to icode data regions.		[[I?]]
      */
-    pstate->Code    = (char *)(pstate + 1);
     initptrs(pstate, &hdr);
     initalloc(pstate);
     check_version(&hdr, name, ifile);
@@ -836,7 +835,6 @@ function{1} lang_Prog_load(s,arglist,
       return coexpr
       }
    body {
-      word *stack;
       struct progstate *pstate;
       register struct b_coexpr *sblkp;
       struct ef_marker *newefp;
@@ -869,8 +867,8 @@ function{1} lang_Prog_load(s,arglist,
       if (!is:null(arglist) && !is:list(arglist))
          runerr(108,arglist);
 
-      stack = (word *)(sblkp = loadicode(loadstring, _bs_,_ss_,_stk_));
-      if (!stack) {
+      sblkp = loadicode(loadstring, _bs_,_ss_,_stk_);
+      if (!sblkp) {
           /* The file couldn't be opened (any format error causes termination) */
           errno2why();
           fail;
@@ -878,15 +876,9 @@ function{1} lang_Prog_load(s,arglist,
       pstate = sblkp->program;
 
       savedsp = sp;
-      sp = stack + Wsizeof(struct b_coexpr)
-        + Wsizeof(struct progstate) + pstate->icodesize/WordSize;
+      sp = (word *)(sblkp + 1);
 
-      if (pstate->icodesize % WordSize) 
-          sp++;
-
-      sblkp->cstate[0] = StackAlign((char *)sblkp + _stk_ - WordSize + 
-                                          sizeof(struct progstate) + pstate->icodesize);
-
+      sblkp->cstate[0] = StackAlign((char *)sblkp + _stk_ - WordSize);
       sblkp->es_argp = NULL;
       sblkp->es_gfp = NULL;
 
@@ -1569,12 +1561,6 @@ void showstack()
 
     if (c == rootpstate.K_main) {
         p = stack + Wsizeof(struct b_coexpr);
-    } else if (c->main_of) {
-        /* See init.r, Prog.load */
-        p = (word *)c + Wsizeof(struct b_coexpr) + Wsizeof(struct progstate) + 
-               c->main_of->icodesize/WordSize;
-        if (c->main_of->icodesize % WordSize) 
-            p++;
     } else {
         p = (word *)(c + 1);
     }
