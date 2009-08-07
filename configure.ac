@@ -51,7 +51,7 @@ AC_PROG_MAKE_SET()
 AC_SYS_LARGEFILE()
 if test "$enable_largefile" != no; then
         if test "$ac_cv_sys_file_offset_bits" = "64"; then
-                CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64"
+                CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1"
         fi
         if test "$ac_cv_sys_large_files" = "1"; then
                 CFLAGS="$CFLAGS -D_LARGE_FILES=1"
