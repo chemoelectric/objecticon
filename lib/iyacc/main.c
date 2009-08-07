@@ -64,9 +64,6 @@ char  *rassoc;
 short **derives;
 char *nullable;
 
-extern char *mktemp();
-extern char *getenv();
-
 
 void done(int k)
 {
@@ -328,9 +325,9 @@ void create_file_names(void)
     text_file_name[len + 5] = 't';
     union_file_name[len + 5] = 'u';
 
-    mktemp(action_file_name);
-    mktemp(text_file_name);
-    mktemp(union_file_name);
+    mkstemp(action_file_name);
+    mkstemp(text_file_name);
+    mkstemp(union_file_name);
 
     if (jflag)/*rwj*/
       {
