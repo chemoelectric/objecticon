@@ -47,10 +47,17 @@ AC_FLAG_MSG_NOSIGNAL()
 AC_PROG_INSTALL()
 AC_PROG_LN_S()
 AC_PROG_MAKE_SET()
+
 AC_SYS_LARGEFILE()
-if ! test "$ac_cv_sys_file_offset_bits" = no; then
-        CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=${ac_cv_sys_file_offset_bits}"
+if test "$enable_largefile" != no; then
+        if test "$ac_cv_sys_file_offset_bits" = "64"; then
+                CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64"
+        fi
+        if test "$ac_cv_sys_large_files" = "1"; then
+                CFLAGS="$CFLAGS -D_LARGE_FILES=1"
+        fi
 fi
+
 ACX_CONTEXT_SWITCH()
 export CSWITCH
 CSWITCH=config/system/$acx_context_switch/rswitch.?
@@ -76,6 +83,7 @@ AC_CONFIG_COMMANDS(system, [
         cp $CSWITCH base/oix
 	AS_MKDIR_P(bin)
 ])
+
 AC_CONFIG_FILES([Makedefs:config/files/Makedefs],)
 AC_CONFIG_FILES([test/Makefile:config/files/test/Makefile],)
 AC_CONFIG_FILES([apps/ivib/plugins/Makefile:config/files/apps/ivib/plugins/Makefile])

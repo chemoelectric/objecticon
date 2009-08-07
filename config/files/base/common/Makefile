@@ -1,7 +1,5 @@
 include ../../Makedefs
 
-CWARN = -Wall
-
 OBJS=	getopt.o identify.o strtbl.o \
 	mlocal.o literals.o alloc.o
 

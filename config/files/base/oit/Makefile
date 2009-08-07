@@ -1,7 +1,5 @@
 include ../../Makedefs
 
-CWARN = -Wall
-
 TRANS=		trans.o tlex.o tparse.o tsym.o tmem.o \
 		 tree.o ucode.o ipp.o membuff.o
 

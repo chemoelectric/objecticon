@@ -2,8 +2,6 @@
 
 include ../../Makedefs
 
-CWARN = -Wall
-
 DEST	      = .
 HDRS	      = defs.h
 MAKEFILE      = Makefile
