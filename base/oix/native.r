@@ -715,45 +715,58 @@ end
 function{1} lang_Prog_get_region_info_impl(c)
    body {
        struct progstate *prog;
-       word sum1, sum2;
        struct region *rp;
        struct descrip tmp;
+       tended struct descrip l;
+       int n;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       create_list(5, &result);
+       create_list(3, &result);
 
        MakeInt(prog->statcurr, &tmp);
        c_put(&result, &tmp);
 
-       sum1 = sum2 = 0;
+       n = 0;
+       for (rp = prog->stringregion; rp; rp = rp->next)
+           ++n;
+       for (rp = prog->stringregion->prev; rp; rp = rp->prev)
+           ++n;
+       create_list(2 * (n + 1), &l);
+       c_put(&result, &l);
        for (rp = prog->stringregion; rp; rp = rp->next) {
-           sum1 += DiffPtrs(rp->free,rp->base);
-           sum2 += DiffPtrs(rp->end,rp->base);
+           MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
+           c_put(&l, &tmp);
+           MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
+           c_put(&l, &tmp);
        }
        for (rp = prog->stringregion->prev; rp; rp = rp->prev) {
-           sum1 += DiffPtrs(rp->free,rp->base);
-           sum2 += DiffPtrs(rp->end,rp->base);
+           MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
+           c_put(&l, &tmp);
+           MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
+           c_put(&l, &tmp);
        }
-       MakeInt(sum1, &tmp);
-       c_put(&result, &tmp);
-       MakeInt(sum2, &tmp);
-       c_put(&result, &tmp);
 
-       sum1 = sum2 = 0;
+       n = 0;
+       for (rp = prog->blockregion; rp; rp = rp->next)
+           ++n;
+       for (rp = prog->blockregion->prev; rp; rp = rp->prev)
+           ++n;
+       create_list(2 * (n + 1), &l);
+       c_put(&result, &l);
        for (rp = prog->blockregion; rp; rp = rp->next) {
-           sum1 += DiffPtrs(rp->free,rp->base);
-           sum2 += DiffPtrs(rp->end,rp->base);
+           MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
+           c_put(&l, &tmp);
+           MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
+           c_put(&l, &tmp);
        }
        for (rp = prog->blockregion->prev; rp; rp = rp->prev) {
-           sum1 += DiffPtrs(rp->free,rp->base);
-           sum2 += DiffPtrs(rp->end,rp->base);
+           MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
+           c_put(&l, &tmp);
+           MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
+           c_put(&l, &tmp);
        }
-       MakeInt(sum1, &tmp);
-       c_put(&result, &tmp);
-       MakeInt(sum2, &tmp);
-       c_put(&result, &tmp);
 
        return result;
    }

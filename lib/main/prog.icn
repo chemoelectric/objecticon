@@ -143,19 +143,26 @@ class Prog()
    # @return a {RegionInfo} object
    #
    public static get_region_info(P)
-      return RegionInfo!get_region_info_impl(P)
+      local t, l, m
+      t := get_region_info_impl(P)
+      l := []
+      while put(l, Region(pop(t[2]), pop(t[2])))
+      m := []
+      while put(m, Region(pop(t[3]), pop(t[3])))
+      return RegionInfo(t[1], l, m)
    end
 
    private static defer get_region_info_impl(P)
 
-   #
-   # Get info about the stack use of the given co-expression.
+   # Get info about the stack use of the given co-expression,
+   # excluding any portion used as a C stack. Note that the size may
+   # change over time as the size of the C stack changes.
    #
    # @param e a co-expression, by default {&current}.
-   # @return a {StackInfo} object
+   # @return a {Region} object
    #
    public static get_stack_info(c)
-      return StackInfo!get_stack_info_impl(c)
+      return Region!get_stack_info_impl(c)
    end
 
    private static defer get_stack_info_impl(c)
@@ -228,58 +235,60 @@ class RegionInfo()
    public const
       # The amount of static allocations currently used
       static_used, 
-      # The amount currently used in the string region
-      string_used, 
-      # The size of the string region
-      string_size,
-      # The amount currently used in the block region
-      block_used, 
-      # The size of the block region
-      block_size
+      # A list of {Region} instances, one for each string region
+      # allocated.
+      string_regions, 
+      # A list of {Region} instances, one for each block region
+      # allocated.
+      block_regions
 
+   # Return a {Region} instance representing the sum of all the string
+   # regions.
    #
-   # Return the amount remaining free in the string space.
-   #
-   public get_string_free()
-      return self.string_size - self.string_used
+   public get_string_total()
+      return Region.sum_list(string_regions)
    end
 
+   # Return a {Region} instance representing the sum of all the block
+   # regions.
    #
-   # Return the amount remaining free in the block space.
-   #
-   public get_block_free()
-      return self.block_size - self.block_used
+   public get_block_total()
+      return Region.sum_list(block_regions)
    end
 
    package new(static_used,
-               string_used,
-               string_size,
-               block_used,
-               block_size)
+               string_regions,
+               block_regions)
       self.static_used := static_used
-      self.string_used := string_used
-      self.string_size := string_size
-      self.block_used := block_used
-      self.block_size := block_size
+      self.string_regions := string_regions
+      self.block_regions := block_regions
       return
    end
 end
 
 #
-# This class contains info about a coexpression's stack size and
-# usage.
+# This class contains info about an allocated memory region.
 #
-class StackInfo()
+class Region()
    public const 
-      # The size of the stack (excluding any portion used as a C
-      # stack) Note that the size may change over time as the size of
-      # the C stack changes.
-      size, 
-      # The amount of stack already used
-      used
+      # The amount used
+      used,
+      # The size of the space
+      size 
 
    #
-   # Return the amount of stack free.
+   # Add up the elements in a list of {Region}s.
+   #
+   public static sum_list(l)
+      local x, y
+      x := y := 0
+      every x +:= (!l).used
+      every y +:= (!l).size
+      return Region(x, y)
+   end
+
+   #
+   # Return the amount free.
    #
    public get_free()
       return size - used
