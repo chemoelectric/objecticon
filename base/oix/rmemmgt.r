@@ -380,9 +380,8 @@ void collect(int region)
      wsp ws;
 
      for (ws = wstates; ws ; ws = ws->next) {
-	    if (is:list(ws->listp))
-	      markblock(&(ws->listp));
-        }
+         PostDescrip(ws->listp);
+     }
    }
 #endif					/* Graphics */
 
@@ -780,15 +779,11 @@ struct b_coexpr *ce;
    nargs = 0;                           /* Nargs counter is 0 initially. */
 
    if (fp == 0) {
-      if (is:list(* (dptr) (s_sp - 1))) {
-	 /*
-	  * this is the argument list of an un-started task
-	  */
-         if (Pointer(*((dptr)(&s_sp[-1])))) {
-            markblock((dptr)&s_sp[-1]);
-	    }
-	 }
-      }
+       /*
+        * The argument list of an un-started program
+        */
+       PostDescrip(*(dptr)(s_sp - 1));
+   }
 
    while ((fp != 0 || nargs)) {         /* Keep going until current fp is
                                             0 and no arguments are left. */
@@ -845,11 +840,7 @@ struct b_coexpr *ce;
          }
       else {                            /* Assume the sp is pointing at a
                                             descriptor. */
-         if (Qual(*((dptr)(&s_sp[-1]))))
-            postqual((dptr)&s_sp[-1]);
-         else if (Pointer(*((dptr)(&s_sp[-1])))) {
-            markblock((dptr)&s_sp[-1]);
-	    }
+         PostDescrip(*(dptr)(s_sp - 1));
          s_sp -= 2;                     /* Move past descriptor. */
          if (nargs)                     /* Decrement argument count if in an*/
             nargs--;                    /*  argument list. */
