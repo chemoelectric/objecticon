@@ -576,7 +576,7 @@ int indent;
        */
       prt_str("(((", indent);
       c_walk(desc, indent, 0);
-      prt_str(").dword & D_Var) == D_Var)", indent);
+      prt_str(").dword & F_Var))", indent);
       }
    else if (typcd == int_typ) {
       /*

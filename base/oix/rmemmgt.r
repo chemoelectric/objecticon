@@ -678,27 +678,17 @@ static void markblock(dptr d)
 {
     union block **ptr;
 
-    if (Var(*d)) {
-        if (d->dword & F_Typecode) {
-            switch (Type(*d)) {
-                case T_Kywdint:
-                case T_Kywdpos:
-                case T_Kywdsubj:
-                case T_Kywdstr:
-                case T_Kywdevent:
-                    /*
-                     * The descriptor points to a keyword, not a block.
-                     */
-                    return;
-            }
-        }
-        else if (Offset(*d) == 0) {
-            /*
-             * The descriptor is a simple variable not residing in a block.
-             */
-            return;
-        }
-    }
+
+    if (d->dword==D_Kywdint||d->dword==D_Kywdpos||
+        d->dword==D_Kywdsubj||d->dword==D_Kywdstr||d->dword==D_Kywdevent)
+        syserr("Unexpected keyword in markblock");
+
+    /*
+     * Check if it's a D_Var with an offset of zero; if so the pointer
+     * is a pointer to another descriptor, rather than to a block.
+     */
+    if (DVar(*d) && Offset(*d) == 0)
+        return;
 
     ptr = &BlkLoc(*d);
 
