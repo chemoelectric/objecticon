@@ -131,7 +131,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             }
             case 10 : {
                 if (strncmp(t,"eventcode",9) == 0) {
-                    vp->dword = D_Var;
+                    vp->dword = D_Kywdevent;
                     VarLoc(*vp) = &p->eventcode;
                     return Succeeded;
                 }
@@ -139,7 +139,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             }
             case 11 : {
                 if (strncmp(t,"eventvalue",10) == 0) {
-                    vp->dword = D_Var;
+                    vp->dword = D_Kywdevent;
                     VarLoc(*vp) = &p->eventval;
                     return Succeeded;
                 }
@@ -147,7 +147,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             }
             case 12 : {
                 if (strncmp(t,"eventsource",11) == 0) {
-                    vp->dword = D_Var;
+                    vp->dword = D_Kywdevent;
                     VarLoc(*vp) = &p->eventsource;
                     return Succeeded;
                 }
@@ -793,8 +793,12 @@ int noimage;
             fprintf(f, "&subject");
             fflush(f);
             }
-         else if (is:variable(bp->tvsubs.ssvar)) {
-            dp = (dptr)((word *)VarLoc(bp->tvsubs.ssvar) + Offset(bp->tvsubs.ssvar));
+         else if (DOffsetVar(bp->tvsubs.ssvar)) {
+            dp = OffsetVarLoc(bp->tvsubs.ssvar);
+            outimage(f, dp, noimage);
+            }
+         else if (DVar(bp->tvsubs.ssvar)) {
+            dp = VarLoc(bp->tvsubs.ssvar);
             outimage(f, dp, noimage);
             }
          else {
@@ -905,7 +909,12 @@ int noimage;
              *  call outimage to handle the value.
              */
             fprintf(f, "(variable = ");
-            dp = (dptr)((word *)VarLoc(*dp) + Offset(*dp));
+            if (DOffsetVar(*dp))
+                dp = OffsetVarLoc(*dp);
+            else if (DVar(*dp))
+                dp = VarLoc(*dp);
+            else
+                syserr("outimage: unknown variable type");
             outimage(f, dp, noimage);
             putc(')', f);
             }
@@ -1642,16 +1651,20 @@ word *high;
 
    if (is:tvsubs(*valp)) {
       tvb = (struct b_tvsubs *)BlkLoc(*valp);
-      /* Check if the tvsubs actually contains a variable - it may contain
-       * a ucs descriptor as a result of, eg, return (ucs("abc") ? move(2))
+      /* 
+       * Check to see what the ssvar holds - it may contain a ucs
+       * descriptor (not a variable at all) as a result of, eg, return
+       * (ucs("abc") ? move(2)).  It may also contain a var which
+       * isn't a D_Var, eg return &why[2].  In such cases it
+       * cannot be a local var.
        */
-      if (!is:variable(tvb->ssvar))
-          return;
-      loc = (word *)VarLoc(tvb->ssvar);
-      if (InRange(low, loc, high))
-          deref(valp, valp);
+      if (DVar(tvb->ssvar)) {
+          loc = (word *)VarLoc(tvb->ssvar);
+          if (InRange(low, loc, high))
+              deref(valp, valp);
+      }
    } else if (DVar(*valp)) {
-       loc = (word *)VarLoc(*valp) + Offset(*valp);
+       loc = (word *)VarLoc(*valp);
        if (InRange(low, loc, high))
            deref(valp, valp);
    }

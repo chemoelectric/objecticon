@@ -2,11 +2,6 @@
  * File: oasgn.r
  */
 
-/*
- * Asgn - perform an assignment when the destination descriptor might
- *  be within a block.
- */
-#define Asgn(dest, src) *(dptr)((word *)VarLoc(dest) + Offset(dest)) = src;
 
 /*
  * GeneralAsgn - perform the assignment x := y, where x is known to be
@@ -81,7 +76,12 @@
             runerr(129, y);
       }
       default: {
-         Asgn(x, y)
+          if (DVar(x))
+              *VarLoc(x) = y;
+          else if (DOffsetVar(x))
+              *OffsetVarLoc(x) = y;
+          else
+              syserr("Unknown variable type");
       }
    }
 
@@ -147,9 +147,7 @@ operator{0,1+} <-> rswap(underef x -> dx, underef y -> dy)
       if (is:tvsubs(x) && is:tvsubs(y)) {
          bp_x = BlkLoc(x);
          bp_y = BlkLoc(y);
-         if (Var(bp_x->tvsubs.ssvar) && Var(bp_y->tvsubs.ssvar) &&
-             VarLoc(bp_x->tvsubs.ssvar) == VarLoc(bp_y->tvsubs.ssvar) &&
-     	     Offset(bp_x->tvsubs.ssvar) == Offset(bp_y->tvsubs.ssvar)) {
+         if (EqlDesc(bp_x->tvsubs.ssvar, bp_y->tvsubs.ssvar)) {
             /*
              * x and y are both substrings of the same string, set
              *  adj1 and adj2 for use in locating the substrings after
@@ -238,9 +236,7 @@ operator{0,1} :=: swap(underef x -> dx, underef y -> dy)
       if (is:tvsubs(x) && is:tvsubs(y)) {
          bp_x = BlkLoc(x);
          bp_y = BlkLoc(y);
-         if (Var(bp_x->tvsubs.ssvar) && Var(bp_y->tvsubs.ssvar) &&
-             VarLoc(bp_x->tvsubs.ssvar) == VarLoc(bp_y->tvsubs.ssvar) &&
-   	     Offset(bp_x->tvsubs.ssvar) == Offset(bp_y->tvsubs.ssvar)) {
+         if (EqlDesc(bp_x->tvsubs.ssvar, bp_y->tvsubs.ssvar)) {
             /*
              * x and y are both substrings of the same string, set
              *  adj1 and adj2 for use in locating the substrings after
@@ -441,7 +437,12 @@ const dptr src;
             return Error;
          }
       default: {
-         Asgn(tvsub->ssvar, rsltstr);
+          if (DVar(tvsub->ssvar))
+              *VarLoc(tvsub->ssvar) = rsltstr;
+          else if (DOffsetVar(tvsub->ssvar))
+              *OffsetVarLoc(tvsub->ssvar) = rsltstr;
+          else
+              syserr("Unknown variable type");
          }
       }
 

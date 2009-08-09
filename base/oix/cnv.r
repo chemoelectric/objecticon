@@ -747,7 +747,12 @@ void f(dptr s, dptr d)
          /*
           * An ordinary variable is being dereferenced.
           */
-         *d = *(dptr)((word *)VarLoc(*s) + Offset(*s));
+          if (DVar(*s))
+              *d = *VarLoc(*s);
+          else if (DOffsetVar(*s))
+              *d = *OffsetVarLoc(*s);
+          else
+              syserr("Unknown variable type");
       }
    }
 #enddef

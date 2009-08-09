@@ -265,7 +265,7 @@ int get_name(dptr dp1, dptr dp0)
         }
 
         default:
-            if (Offset(*dp1) == 0) {
+            if (DVar(*dp1)) {
                 /*
                  * Must(?) be a named variable.
                  * (When used internally, could be reference to nameless
@@ -311,16 +311,12 @@ int get_name(dptr dp1, dptr dp0)
                     return Failed;
                 }
             }
-            else {
-                if (is:string(*dp1) || (!is:variable(*dp1))) {  /* non-variable! */
-                    LitStr("(non-variable)", dp0);
-                    return Failed;
-                }
+            else if (DOffsetVar(*dp1)) {
                 /*
                  * Must be an element of a structure.
                  */
-                blkptr = (union block *)VarLoc(*dp1);
-                varptr = (dptr)((word *)VarLoc(*dp1) + Offset(*dp1));
+                blkptr = (union block *)BlkLoc(*dp1);
+                varptr = OffsetVarLoc(*dp1);
                 switch ((int)BlkType(blkptr)) {
                     case T_Lelem: 		/* list */
                         i = varptr - &blkptr->lelem.lslots[blkptr->lelem.first] + 1;
@@ -371,6 +367,9 @@ int get_name(dptr dp1, dptr dp0)
                         return Failed;
 
                 }
+            } else {
+                LitStr("(non-variable)", dp0);
+                return Failed;
             }
     }
     return Succeeded;

@@ -683,12 +683,15 @@ static void markblock(dptr d)
         d->dword==D_Kywdsubj||d->dword==D_Kywdstr||d->dword==D_Kywdevent)
         syserr("Unexpected keyword in markblock");
 
+    if (d->dword==D_Var)
+        syserr("Unexpected D_Var");
+
     /*
      * Check if it's a D_Var with an offset of zero; if so the pointer
      * is a pointer to another descriptor, rather than to a block.
      */
-    if (DVar(*d) && Offset(*d) == 0)
-        return;
+    if (DOffsetVar(*d) && Offset(*d) == 0)
+        syserr("Unexpected zero offset");
 
     ptr = &BlkLoc(*d);
 

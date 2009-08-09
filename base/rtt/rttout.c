@@ -1059,7 +1059,7 @@ int indent;
                prt_str(";", indent);
                ForceNl();
                prt_str(rslt_loc, indent);
-               prt_str(".dword = D_Var + ((word *)", indent);
+               prt_str(".dword = D_OffsetVar + ((word *)", indent);
                c_walk(args->u[0].child, indent + IndentInc, 0);
                prt_str(" - (word *)", indent+IndentInc);
                prt_str(rslt_loc, indent);

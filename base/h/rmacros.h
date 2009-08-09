@@ -124,14 +124,24 @@
 #define Var(d)		((d).dword & F_Var)
 
 /*
- * Check for D_Var + Offset in a dword.
+ * Check for D_OffsetVar
  */
-#define DVar(d)		(((d).dword & (F_Var | F_Nqual | F_Ptr | F_Typecode)) == D_Var)
+#define DOffsetVar(d)    (((d).dword & (F_Var | F_Nqual | F_Ptr | F_Typecode)) == D_OffsetVar)
 
 /*
- * Location of the value of a variable.
+ * Check for D_Var
+ */
+#define DVar(d)    ((d).dword == D_Var)
+
+/*
+ * Location of the value of a variable (given a D_Var in the dword)
  */
 #define VarLoc(d)	((d).vword.descptr)
+
+/*
+ * Location of the value of a variable (given a D_OffsetVar in the dword)
+ */
+#define OffsetVarLoc(d)	((dptr)((word *)BlkLoc(d) + Offset(d)))
 
 /*
  *  Important note:  The code that follows is not strictly legal C.
@@ -400,11 +410,12 @@ do { \
 #define D_Kywdevent	(T_Kywdevent| D_Typecode | F_Var)
 #define D_Ucs   	(T_Ucs      | D_Typecode | F_Ptr)
 
-#define D_Var		(F_Var | F_Nqual | F_Ptr)
+#define D_OffsetVar	(F_Var | F_Nqual | F_Ptr)
+#define D_Var     	(F_Var | F_Nqual)
 #define D_Typecode	(F_Nqual | F_Typecode)
 
 #define TypeMask	63	/* type mask */
-#define OffsetMask	(~(D_Var)) /* offset mask for variables */
+#define OffsetMask	(~(F_Var | F_Nqual | F_Ptr | F_Typecode)) /* offset mask for variables */
 
 /*
  * "In place" dereferencing.
