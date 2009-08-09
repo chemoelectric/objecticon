@@ -1640,7 +1640,7 @@ word *high;
    struct b_tvsubs *tvb;
    word *loc;
 
-   if (Type(*valp) == T_Tvsubs) {
+   if (is:tvsubs(*valp)) {
       tvb = (struct b_tvsubs *)BlkLoc(*valp);
       /* Check if the tvsubs actually contains a variable - it may contain
        * a ucs descriptor as a result of, eg, return (ucs("abc") ? move(2))
@@ -1648,16 +1648,13 @@ word *high;
       if (!is:variable(tvb->ssvar))
           return;
       loc = (word *)VarLoc(tvb->ssvar);
-   }
-   else if (valp->dword & F_Typecode) {
-       return;   /* tvtbl, or one of the keyword variable types */
-   } else {
-       /* Must be D_Var */
+      if (InRange(low, loc, high))
+          deref(valp, valp);
+   } else if (DVar(*valp)) {
        loc = (word *)VarLoc(*valp) + Offset(*valp);
+       if (InRange(low, loc, high))
+           deref(valp, valp);
    }
-
-   if (InRange(low, loc, high))
-      deref(valp, valp);
 }
 
 #if MSWIN32
