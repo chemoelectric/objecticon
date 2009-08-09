@@ -360,7 +360,7 @@ do { \
 #define T_Kywdpos	21	/* keyword &pos */
 #define T_Kywdsubj	22	/* keyword &subject */
 #define T_Kywdstr	23	/* string keyword */
-#define T_Kywdevent	24	/* keyword &eventsource, etc. */
+#define T_Kywdany	24	/* keyword &eventsource, etc. */
 #define T_Class         25      /* class */
 #define T_Object        26      /* object */
 #define T_Cast          27      /* cast */
@@ -407,7 +407,7 @@ do { \
 #define D_Coexpr	(T_Coexpr   | D_Typecode | F_Ptr)
 #define D_Slots		(T_Slots    | D_Typecode | F_Ptr)
 #define D_Kywdstr	(T_Kywdstr  | D_Typecode | F_Var)
-#define D_Kywdevent	(T_Kywdevent| D_Typecode | F_Var)
+#define D_Kywdany	(T_Kywdany  | D_Typecode | F_Var)
 #define D_Ucs   	(T_Ucs      | D_Typecode | F_Ptr)
 
 #define D_OffsetVar	(F_Var | F_Nqual | F_Ptr)

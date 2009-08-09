@@ -42,7 +42,7 @@ struct icon_type icontypes[24] = {
   {"kywdint", 0, DrfCnst, TRetDescP, ".i......................", 0, 0, "kywdint", "Kywdint"},
   {"kywdsubj", 0, DrfCnst, TRetDescP, "s.......................", 0, 0, "kywdsubj", "Kywdsubj"},
   {"kywdpos", 0, DrfCnst, TRetDescP, ".i......................", 0, 0, "kywdpos", "Kywdpos"},
-  {"kywdevent", 0, DrfCnst, TRetDescP, "siRcocmcupC..ncrLTS.....", 0, 0, "kywdevent", "Kywdevent"},
+  {"kywdany", 0, DrfCnst, TRetDescP, "siRcocmcupC..ncrLTS.....", 0, 0, "kywdany", "Kywdany"},
   {"kywdstr", 0, DrfCnst, TRetDescP, "s.......................", 0, 0, "kywdstr", "Kywdstr"}};
 
 int str_var = 0;

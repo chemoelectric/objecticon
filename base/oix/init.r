@@ -1293,7 +1293,7 @@ static int isdescrip(word *p){
             i==D_Lelem || i==D_Set || i==D_Selem || i==D_Table || i==D_Telem ||
             i==D_Tvtbl || i==D_Slots || i==D_Tvsubs || i==D_Refresh || i==D_Coexpr ||
             i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj ||
-            i==D_Kywdstr || i==D_Kywdevent || i==D_Class || i==D_Object || i==D_Cast ||
+            i==D_Kywdstr || i==D_Kywdany || i==D_Class || i==D_Object || i==D_Cast ||
             i==D_Constructor || i==D_Methp || i==D_Ucs)
         return valid_addr(BlkLoc(*d));
 
@@ -1365,7 +1365,7 @@ void print_vword(FILE *f, dptr d) {
             case D_Kywdpos :
             case D_Kywdsubj :
             case D_Kywdstr :
-            case D_Kywdevent : {
+            case D_Kywdany : {
                 fprintf(f, "%p -> ", VarLoc(*d));
                 print_desc(f, VarLoc(*d));
                 break;
@@ -1446,7 +1446,7 @@ void print_dword(FILE *f, dptr d) {
             case D_Kywdpos : fputs("D_Kywdpos", f); break;
             case D_Kywdsubj : fputs("D_Kywdsubj", f); break;
             case D_Kywdstr : fputs("D_Kywdstr", f); break;
-            case D_Kywdevent : fputs("D_Kywdevent", f); break;
+            case D_Kywdany : fputs("D_Kywdany", f); break;
             case D_Null : fputs("D_Null", f); break;
             case D_Integer : fputs("D_Integer", f); break;
             case D_Lrgint : fputs("D_Lrgint", f); break;

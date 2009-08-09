@@ -20,7 +20,7 @@
            if (tvtbl_asgn(&x, (const dptr)&y) == Error)
               runerr(0);
          }
-      kywdevent:
+      kywdany:
 	 {
 	    *VarLoc(x) = y;
 	    }
@@ -422,7 +422,7 @@ const dptr src;
       ucs: {
           ReturnErrVal(205, tvsub->ssvar, Error);
       }
-      kywdevent: {
+      kywdany: {
          *VarLoc(tvsub->ssvar) = rsltstr;
          }
       kywdstr: {

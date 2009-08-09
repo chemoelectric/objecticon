@@ -131,7 +131,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             }
             case 10 : {
                 if (strncmp(t,"eventcode",9) == 0) {
-                    vp->dword = D_Kywdevent;
+                    vp->dword = D_Kywdany;
                     VarLoc(*vp) = &p->eventcode;
                     return Succeeded;
                 }
@@ -139,7 +139,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             }
             case 11 : {
                 if (strncmp(t,"eventvalue",10) == 0) {
-                    vp->dword = D_Kywdevent;
+                    vp->dword = D_Kywdany;
                     VarLoc(*vp) = &p->eventval;
                     return Succeeded;
                 }
@@ -147,7 +147,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             }
             case 12 : {
                 if (strncmp(t,"eventsource",11) == 0) {
-                    vp->dword = D_Kywdevent;
+                    vp->dword = D_Kywdany;
                     VarLoc(*vp) = &p->eventsource;
                     return Succeeded;
                 }
@@ -874,7 +874,7 @@ int noimage;
          outimage(f, VarLoc(*dp), noimage);
          }
 
-      kywdevent: {
+      kywdany: {
          if (VarLoc(*dp) == &curpstate->eventsource)
             fprintf(f, "&eventsource = ");
          else if (VarLoc(*dp) == &curpstate->eventcode)

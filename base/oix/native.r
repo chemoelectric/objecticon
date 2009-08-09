@@ -490,7 +490,7 @@ function{*} lang_Prog_get_keyword(s,c)
                   return p->K_errortext;
               }
               if (strncmp(t,"eventcode",9) == 0) {
-                  return kywdevent(&(p->eventcode));
+                  return kywdany(&(p->eventcode));
               }
               break;
           }
@@ -500,7 +500,7 @@ function{*} lang_Prog_get_keyword(s,c)
                   return p->K_errorvalue;
               }
               if (strncmp(t,"eventvalue",10) == 0) {
-                  return kywdevent(&(p->eventval));
+                  return kywdany(&(p->eventval));
               }
               break;
           }
@@ -509,7 +509,7 @@ function{*} lang_Prog_get_keyword(s,c)
                   return C_integer p->K_errornumber;
               }
               if (strncmp(t,"eventsource",11) == 0) {
-                  return kywdevent(&(p->eventsource));
+                  return kywdany(&(p->eventsource));
               }
               break;
           }

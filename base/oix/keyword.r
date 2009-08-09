@@ -162,30 +162,30 @@ end
 "&eventcode - event in monitored program"
 keyword{0,1} eventcode
    abstract {
-      return kywdevent
+      return kywdany
       }
    inline {
-      return kywdevent(&k_eventcode);
+      return kywdany(&k_eventcode);
       }
 end
 
 "&eventsource - source of events in monitoring program"
 keyword{0,1} eventsource
    abstract {
-      return kywdevent
+      return kywdany
       }
    inline {
-      return kywdevent(&k_eventsource);
+      return kywdany(&k_eventsource);
       }
 end
 
 "&eventvalue - value from event in monitored program"
 keyword{0,1} eventvalue
    abstract {
-      return kywdevent
+      return kywdany
       }
    inline {
-      return kywdevent(&k_eventvalue);
+      return kywdany(&k_eventvalue);
       }
 end
 

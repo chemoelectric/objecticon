@@ -65,7 +65,7 @@ int bsizes[] = {
      -1,                      /* T_Kywdpos (21), keyword &pos */
      -1,                      /* T_Kywdsubj (22), keyword &subject */
      -1,                      /* T_Kywdstr (23), string keyword variable */
-     -1,                      /* T_Kywdevent (24), event keyword variable */
+     -1,                      /* T_Kywdany (24), event keyword variable */
      0,                       /* T_Class (25), class */
      0,                       /* T_Object (26), object */
      sizeof(struct b_cast),   /* T_Cast (27), cast */
@@ -103,7 +103,7 @@ int firstd[] = {
      -1,                      /* T_Kywdpos (21), keyword &pos */
      -1,                      /* T_Kywdsubj (22), keyword &subject */
      -1,                      /* T_Kywdstr (23), string keyword variable */
-     -1,                      /* T_Kywdevent (24), event keyword variable */
+     -1,                      /* T_Kywdany (24), event keyword variable */
      -1,                      /* T_Class (25), class, just contains static data in icode */
      5*WordSize,              /* T_Object (26), object */
      0,                       /* T_Cast (27), cast */
@@ -139,7 +139,7 @@ int firstp[] = {
      -1,                      /* T_Kywdpos (21), keyword &pos */
      -1,                      /* T_Kywdsubj (22), keyword &subject */
      -1,                      /* T_Kywdstr (23), string keyword variable */
-     -1,                      /* T_Kywdevent (24), event keyword variable */
+     -1,                      /* T_Kywdany (24), event keyword variable */
      -1,                      /* T_Class (25), class, just contains static data in icode */
      0,                       /* T_Object (26), object, just a pointer to the class, which is static */
      1*WordSize,              /* T_Cast (27), cast */
@@ -175,7 +175,7 @@ int ptrno[] = {
     -1,                       /* T_Kywdpos (21), keyword &pos */
     -1,                       /* T_Kywdsubj (22), keyword &subject */
     -1,                       /* T_Kywdstr (23), string keyword variable */
-    -1,                       /* T_Kywdevent (24), event keyword variable */
+    -1,                       /* T_Kywdany (24), event keyword variable */
     -1,                       /* T_Class (25), class */
     -1,                       /* T_Object (26), object */
      1,                       /* T_Cast (27), cast */
@@ -211,7 +211,7 @@ int descno[] = {
     -1,                       /* T_Kywdpos (21), keyword &pos */
     -1,                       /* T_Kywdsubj (22), keyword &subject */
     -1,                       /* T_Kywdstr (23), string keyword variable */
-    -1,                       /* T_Kywdevent (24), event keyword variable */
+    -1,                       /* T_Kywdany (24), event keyword variable */
     -1,                       /* T_Class (25), class, just contains static data in icode */
      0,                       /* T_Object (26), object */
     -1,                       /* T_Cast (27), cast */
@@ -246,7 +246,7 @@ char *blkname[] = {
    "&pos",                              /* T_Kywdpos (21) */
    "&subject",                          /* T_Kywdsubj (22) */
    "illegal object",                    /* T_Kywdstr (23) */
-   "illegal object",                    /* T_Kywdevent (24) */
+   "illegal object",                    /* T_Kywdany (24) */
    "class",                             /* T_Class (25) */
    "object",                            /* T_Object (26) */
    "cast",                              /* T_Cast (27) */
@@ -670,31 +670,13 @@ dptr dp;
 
 
 /*
- * markblock - mark each accessible block in the block region and build
- *  back-list of descriptors pointing to that block. (Phase I of garbage
- *  collection.)
+ * markblock - given a descriptor pointer (whose dword must have the
+ * F_Ptr bit set), process the block its vword points to.
  */
 static void markblock(dptr d)
 {
     union block **ptr;
-
-
-    if (d->dword==D_Kywdint||d->dword==D_Kywdpos||
-        d->dword==D_Kywdsubj||d->dword==D_Kywdstr||d->dword==D_Kywdevent)
-        syserr("Unexpected keyword in markblock");
-
-    if (d->dword==D_Var)
-        syserr("Unexpected D_Var");
-
-    /*
-     * Check if it's a D_Var with an offset of zero; if so the pointer
-     * is a pointer to another descriptor, rather than to a block.
-     */
-    if (DOffsetVar(*d) && Offset(*d) == 0)
-        syserr("Unexpected zero offset");
-
     ptr = &BlkLoc(*d);
-
     MARKPTR();
 }
 

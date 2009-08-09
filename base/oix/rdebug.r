@@ -236,7 +236,7 @@ int get_name(dptr dp1, dptr dp0)
         else
             syserr("name: unknown integer keyword variable");
             
-      kywdevent:
+      kywdany:
         if (VarLoc(*dp1) == &curpstate->eventsource) {
             LitStr("&eventsource", dp0);
         }
