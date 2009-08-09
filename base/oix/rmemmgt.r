@@ -9,7 +9,6 @@
  * Prototypes
  */
 static void postqual		(dptr dp);
-static void markblock	(dptr dp);
 static void markptr		(union block **ptr);
 static void sweep		(struct b_coexpr *ce);
 static void sweep_stk	(struct b_coexpr *ce);
@@ -276,7 +275,7 @@ uword segsize[] = {
    if (Qual(d)) \
       postqual(&(d)); \
    else if (Pointer(d))\
-      markblock(&(d));
+      markptr(&BlkLoc(d));
 
 /*
  * collect - do a garbage collection of currently active regions.
@@ -501,11 +500,7 @@ dptr dp;
    }
 
 
-/*
- * Common code for markblock and markptr.  This is done as a macro to save stack space, by
- * avoiding having markblock call markptr (these calls can be very deeply nested).
- */
-#begdef MARKPTR()
+static void markptr(union block **ptr)
 {
     register dptr dp, lastdesc;
     register char *block, *endblock = 0;
@@ -666,25 +661,6 @@ dptr dp;
         }
     }
 }
-#enddef
-
-
-/*
- * markblock - given a descriptor pointer (whose dword must have the
- * F_Ptr bit set), process the block its vword points to.
- */
-static void markblock(dptr d)
-{
-    union block **ptr;
-    ptr = &BlkLoc(*d);
-    MARKPTR();
-}
-
-
-static void markptr(union block **ptr)
-{
-    MARKPTR();
-}
 
 
 /*
@@ -694,22 +670,23 @@ static void markptr(union block **ptr)
 
 static void sweep(ce)
 struct b_coexpr *ce;
-   {
-   register struct tend_desc *tp;
-   register int i;
+{
+    register struct tend_desc *tp;
+    register int i;
 
-   for (tp = ce->es_tend; tp != NULL; tp = tp->previous) {
-      for (i = 0; i < tp->num; ++i) {
-         if (Qual(tp->d[i]))
-            postqual(&tp->d[i]);
-         else if (Pointer(tp->d[i])) {
-            if(BlkLoc(tp->d[i]) != NULL)
-               markblock(&tp->d[i]);
-	    }
-         }
-      }
-   sweep_stk(ce);
-   }
+    for (tp = ce->es_tend; tp != NULL; tp = tp->previous) {
+        for (i = 0; i < tp->num; ++i) {
+            /* We need an extra test for a null BlkLoc, since we may have an
+             * uninitialized tended block pointer (set to nullptr)
+             */
+            if (Qual(tp->d[i]))
+                postqual(&tp->d[i]);
+            else if (Pointer(tp->d[i]) && BlkLoc(tp->d[i]))
+                markptr(&BlkLoc(tp->d[i]));
+        }
+    }
+    sweep_stk(ce);
+}
 
 /*
  * sweep_stk - sweep the stack, marking all descriptors there.  Method
