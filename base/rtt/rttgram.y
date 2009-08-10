@@ -1027,6 +1027,8 @@ i_type_name
    : Any_value  {$$ = node1(PrimryNd, $1, NULL);}
    | Empty_type {$$ = node1(PrimryNd, $1, NULL);}
    | IconType   {$$ = sym_node($1);}
+   | Named_var  {$$ = node1(PrimryNd, $1, NULL);}
+   | Struct_var {$$ = node1(PrimryNd, $1, NULL);}
    | Variable   {$$ = node1(PrimryNd, $1, NULL);}
    ;
 

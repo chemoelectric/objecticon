@@ -12,6 +12,12 @@
    EVVar(&x, E_Assign);
 
    type_case x of {
+      named_var: {
+           *VarLoc(x) = y;
+       }
+      struct_var: {
+           *OffsetVarLoc(x) = y;
+       }
       tvsubs: {
            if (subs_asgn(&x, (const dptr)&y) == Error)
               runerr(0);
@@ -20,13 +26,11 @@
            if (tvtbl_asgn(&x, (const dptr)&y) == Error)
               runerr(0);
          }
-      kywdany:
-	 {
+      kywdany: {
 	    *VarLoc(x) = y;
-	    }
+         }
 
-      kywdint: 
-	 {
+      kywdint:  {
          /*
           * No side effect in the type realm - keyword x is still an int.
           */
@@ -76,12 +80,7 @@
             runerr(129, y);
       }
       default: {
-          if (DVar(x))
-              *VarLoc(x) = y;
-          else if (DOffsetVar(x))
-              *OffsetVarLoc(x) = y;
-          else
-              syserr("Unknown variable type");
+         syserr("Unknown variable type");
       }
    }
 
@@ -416,6 +415,12 @@ const dptr src;
     * case is just for completeness' sake.
     */
    type_case tvsub->ssvar of {
+      named_var: {
+          *VarLoc(tvsub->ssvar) = rsltstr;
+      }
+      struct_var: {
+          *OffsetVarLoc(tvsub->ssvar) = rsltstr;
+      }
       string: {
           ReturnErrVal(205, tvsub->ssvar, Error);
       }
@@ -437,14 +442,9 @@ const dptr src;
             return Error;
          }
       default: {
-          if (DVar(tvsub->ssvar))
-              *VarLoc(tvsub->ssvar) = rsltstr;
-          else if (DOffsetVar(tvsub->ssvar))
-              *OffsetVarLoc(tvsub->ssvar) = rsltstr;
-          else
-              syserr("Unknown variable type");
+         syserr("Unknown variable type");
          }
-      }
+   }
 
    tvsub->sslen = newsslen;
 

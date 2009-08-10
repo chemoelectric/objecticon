@@ -248,10 +248,12 @@ struct node {
 #define TypECInt  -8
 #define TypTStr   -9
 #define TypStrOrUcs -11
-#define RetDesc  -12
-#define RetNVar  -13
-#define RetSVar  -14
-#define RetNone  -15
+#define TypNamedVar -12
+#define TypStructVar -13
+#define RetDesc  -14
+#define RetNVar  -15
+#define RetSVar  -16
+#define RetNone  -17
 
 
 /*

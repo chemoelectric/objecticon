@@ -449,38 +449,38 @@ Deliberate Syntax Error
 				/* ---Variable construction--- */
 
 	 case Op_Arg:		/* argument */
-	    PushVal(D_Var);
+	    PushVal(D_NamedVar);
 	    PushAVal(&argp[GetWord + 1]);
 	    break;
 
 	 case Op_Global:	/* global */
 	    PutWord(Op_Aglobal);
-	    PushVal(D_Var);
+	    PushVal(D_NamedVar);
 	    opnd = GetWord;
 	    PushAVal(&globals[opnd]);
 	    PutWord((word)&globals[opnd]);
 	    break;
 
 	 case Op_Aglobal:	/* global, absolute address */
-	    PushVal(D_Var);
+	    PushVal(D_NamedVar);
 	    PushAVal(GetWord);
 	    break;
 
 	 case Op_Local: 	/* local */
-	    PushVal(D_Var);
+	    PushVal(D_NamedVar);
 	    PushAVal(&pfp->pf_locals[GetWord]);
 	    break;
 
 	 case Op_Static:	/* static */
 	    PutWord(Op_Astatic);
-	    PushVal(D_Var);
+	    PushVal(D_NamedVar);
 	    opnd = GetWord;
 	    PushAVal(&statics[opnd]);
 	    PutWord((word)&statics[opnd]);
 	    break;
 
 	 case Op_Astatic:	/* static, absolute address */
-	    PushVal(D_Var);
+	    PushVal(D_NamedVar);
 	    PushAVal(GetWord);
 	    break;
 

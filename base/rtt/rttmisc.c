@@ -97,6 +97,10 @@ struct node *typ;
                return TypTStr;
             case Str_Or_Ucs:
                return TypStrOrUcs;
+            case Named_var:
+               return TypNamedVar;
+            case Struct_var:
+               return TypStructVar;
             }
 
       case SymNd:

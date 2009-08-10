@@ -264,113 +264,114 @@ int get_name(dptr dp1, dptr dp0)
             LitStr("&subject", dp0);
         }
 
-        default:
-            if (DVar(*dp1)) {
+      named_var: {
+            /*
+             * Must(?) be a named variable.
+             * (When used internally, could be reference to nameless
+             * temporary stack variables as occurs for string scanning).
+             */
+            dp = VarLoc(*dp1);		 /* get address of variable */
+            if ((prog = find_global(dp))) {
+                *dp0 = prog->Gnames[dp - prog->Globals]; 		/* global */
+                return GlobalName;
+            }
+            else if ((prog = find_class_static(dp))) {
                 /*
-                 * Must(?) be a named variable.
-                 * (When used internally, could be reference to nameless
-                 * temporary stack variables as occurs for string scanning).
+                 * Class static field
                  */
-                dp = VarLoc(*dp1);		 /* get address of variable */
-                if ((prog = find_global(dp))) {
-                    *dp0 = prog->Gnames[dp - prog->Globals]; 		/* global */
-                    return GlobalName;
+                struct class_field *cf = find_class_field_for_dptr(dp, prog);
+                struct b_class *c = cf->defining_class;
+                dptr fname = &c->program->Fnames[cf->fnum];
+                sprintf(sbuf,"class %.*s.%.*s", (int)StrLen(c->name), StrLoc(c->name), 
+                        (int)StrLen(*fname), StrLoc(*fname));
+                i = strlen(sbuf);
+                MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
+                StrLen(*dp0) = i;
+                return FieldName;
+            }
+            else if (InRange(proc0->program->Statics, dp, proc0->program->Estatics)) {
+                i = dp - proc0->fstatic;	/* static */
+                if (i < 0 || i >= proc0->nstatic)
+                    syserr("name: unreferencable static variable");
+                i += abs((int)proc0->nparam) + (int)proc0->ndynam;
+                *dp0 = proc0->lnames[i];
+                return StaticName;
+            }
+            else if (InRange(arg1, dp, &arg1[abs((int)proc0->nparam)])) {
+                *dp0 = proc0->lnames[dp - arg1];          /* argument */
+                return ParamName;
+            }
+            else if (InRange(loc1, dp, &loc1[proc0->ndynam])) {
+                *dp0 = proc0->lnames[dp - loc1 + abs((int)proc0->nparam)];
+                return LocalName;
+            }
+            else {
+                LitStr("(temp)", dp0);
+                return Failed;
+            }
+        }
+
+      struct_var: {
+            /*
+             * Must be an element of a structure.
+             */
+            blkptr = (union block *)BlkLoc(*dp1);
+            varptr = OffsetVarLoc(*dp1);
+            switch ((int)BlkType(blkptr)) {
+                case T_Lelem: 		/* list */
+                    i = varptr - &blkptr->lelem.lslots[blkptr->lelem.first] + 1;
+                    if (i < 1)
+                        i += blkptr->lelem.nslots;
+                    while (BlkType(blkptr->lelem.listprev) == T_Lelem) {
+                        blkptr = blkptr->lelem.listprev;
+                        i += blkptr->lelem.nused;
+                    }
+                    sprintf(sbuf,"list#%ld[%ld]",
+                            (long)blkptr->lelem.listprev->list.id, (long)i);
+                    i = strlen(sbuf);
+                    MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
+                    StrLen(*dp0) = i;
+                    break;
+                case T_Record: { 		/* record */
+                    struct b_constructor *c = blkptr->record.constructor;
+                    dptr fn = c->program->Fnames;
+                    i = varptr - blkptr->record.fields;
+                    sprintf(sbuf,"record %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
+                            (long)blkptr->record.id,
+                            (int)StrLen(fn[c->fnums[i]]), StrLoc(fn[c->fnums[i]]));
+                    i = strlen(sbuf);
+                    MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
+                    StrLen(*dp0) = i;
+                    break;
                 }
-                else if ((prog = find_class_static(dp))) {
-                    /*
-                     * Class static field
-                     */
-                    struct class_field *cf = find_class_field_for_dptr(dp, prog);
-                    struct b_class *c = cf->defining_class;
-                    dptr fname = &c->program->Fnames[cf->fnum];
-                    sprintf(sbuf,"class %.*s.%.*s", (int)StrLen(c->name), StrLoc(c->name), 
+                case T_Object: { 		/* object */
+                    struct b_class *c = blkptr->object.class;
+                    dptr fname;
+                    i = varptr - blkptr->object.fields;
+                    fname =  &c->program->Fnames[c->fields[i]->fnum];
+                    sprintf(sbuf,"object %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
+                            (long)blkptr->object.id,
                             (int)StrLen(*fname), StrLoc(*fname));
                     i = strlen(sbuf);
                     MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
                     StrLen(*dp0) = i;
-                    return FieldName;
+                    break;
                 }
-                else if (InRange(proc0->program->Statics, dp, proc0->program->Estatics)) {
-                    i = dp - proc0->fstatic;	/* static */
-                    if (i < 0 || i >= proc0->nstatic)
-                        syserr("name: unreferencable static variable");
-                    i += abs((int)proc0->nparam) + (int)proc0->ndynam;
-                    *dp0 = proc0->lnames[i];
-                    return StaticName;
-                }
-                else if (InRange(arg1, dp, &arg1[abs((int)proc0->nparam)])) {
-                    *dp0 = proc0->lnames[dp - arg1];          /* argument */
-                    return ParamName;
-                }
-                else if (InRange(loc1, dp, &loc1[proc0->ndynam])) {
-                    *dp0 = proc0->lnames[dp - loc1 + abs((int)proc0->nparam)];
-                    return LocalName;
-                }
-                else {
-                    LitStr("(temp)", dp0);
+                case T_Telem: 		/* table */
+                    t = keyref(blkptr,dp0);
+                    if (t == Error)
+                        return Error;
+                    break;
+                default:		/* none of the above */
+                    LitStr("(struct)", dp0);
                     return Failed;
-                }
             }
-            else if (DOffsetVar(*dp1)) {
-                /*
-                 * Must be an element of a structure.
-                 */
-                blkptr = (union block *)BlkLoc(*dp1);
-                varptr = OffsetVarLoc(*dp1);
-                switch ((int)BlkType(blkptr)) {
-                    case T_Lelem: 		/* list */
-                        i = varptr - &blkptr->lelem.lslots[blkptr->lelem.first] + 1;
-                        if (i < 1)
-                            i += blkptr->lelem.nslots;
-                        while (BlkType(blkptr->lelem.listprev) == T_Lelem) {
-                            blkptr = blkptr->lelem.listprev;
-                            i += blkptr->lelem.nused;
-                        }
-                        sprintf(sbuf,"list#%ld[%ld]",
-                                (long)blkptr->lelem.listprev->list.id, (long)i);
-                        i = strlen(sbuf);
-                        MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
-                        StrLen(*dp0) = i;
-                        break;
-                    case T_Record: { 		/* record */
-                        struct b_constructor *c = blkptr->record.constructor;
-                        dptr fn = c->program->Fnames;
-                        i = varptr - blkptr->record.fields;
-                        sprintf(sbuf,"record %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
-                                (long)blkptr->record.id,
-                                (int)StrLen(fn[c->fnums[i]]), StrLoc(fn[c->fnums[i]]));
-                        i = strlen(sbuf);
-                        MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
-                        StrLen(*dp0) = i;
-                        break;
-                    }
-                    case T_Object: { 		/* object */
-                        struct b_class *c = blkptr->object.class;
-                        dptr fname;
-                        i = varptr - blkptr->object.fields;
-                        fname =  &c->program->Fnames[c->fields[i]->fnum];
-                        sprintf(sbuf,"object %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
-                                (long)blkptr->object.id,
-                                (int)StrLen(*fname), StrLoc(*fname));
-                        i = strlen(sbuf);
-                        MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
-                        StrLen(*dp0) = i;
-                        break;
-                    }
-                    case T_Telem: 		/* table */
-                        t = keyref(blkptr,dp0);
-                        if (t == Error)
-                            return Error;
-                        break;
-                    default:		/* none of the above */
-                        LitStr("(struct)", dp0);
-                        return Failed;
+        }
 
-                }
-            } else {
-                LitStr("(non-variable)", dp0);
-                return Failed;
-            }
+        default: {
+            LitStr("(non-variable)", dp0);
+            return Failed;
+        }
     }
     return Succeeded;
 }

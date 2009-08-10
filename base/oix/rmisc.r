@@ -189,7 +189,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             dp++;
 
             if (eq(s,np)) {
-                vp->dword = D_Var;
+                vp->dword = D_NamedVar;
                 VarLoc(*vp) = (dptr)dp;
                 return ParamName;
             }
@@ -200,7 +200,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
         for (i = (int)bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
             if (eq(s,np)) {
-                vp->dword = D_Var;
+                vp->dword = D_NamedVar;
                 VarLoc(*vp) = (dptr)dp;
                 return LocalName;
             }
@@ -211,7 +211,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
         dp = bp->fstatic; /* Check the local static names. */
         for (i = (int)bp->nstatic; i > 0; i--) {
             if (eq(s,np)) {
-                vp->dword = D_Var;
+                vp->dword = D_NamedVar;
                 VarLoc(*vp) = (dptr)dp;
                 return StaticName;
             }
@@ -222,7 +222,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
     /* Check the global variable names. */
     if ((dp = lookup_global(s, p))) {
-        vp->dword    =  D_Var;
+        vp->dword    =  D_NamedVar;
         VarLoc(*vp) =  dp;
         return GlobalName;
     }
@@ -793,11 +793,11 @@ int noimage;
             fprintf(f, "&subject");
             fflush(f);
             }
-         else if (DOffsetVar(bp->tvsubs.ssvar)) {
+         else if (is:struct_var(bp->tvsubs.ssvar)) {
             dp = OffsetVarLoc(bp->tvsubs.ssvar);
             outimage(f, dp, noimage);
             }
-         else if (DVar(bp->tvsubs.ssvar)) {
+         else if (is:named_var(bp->tvsubs.ssvar)) {
             dp = VarLoc(bp->tvsubs.ssvar);
             outimage(f, dp, noimage);
             }
@@ -902,23 +902,22 @@ int noimage;
          outimage(f, VarLoc(*dp), noimage);
          }
 
+     struct_var: {
+         fprintf(f, "(variable = ");
+         dp = OffsetVarLoc(*dp);
+         outimage(f, dp, noimage);
+         putc(')', f);
+         }
+
+     named_var: {
+         fprintf(f, "(variable = ");
+         dp = VarLoc(*dp);
+         outimage(f, dp, noimage);
+         putc(')', f);
+         }
+
       default: { 
-         if (is:variable(*dp)) {
-            /*
-             * *d is a variable.  Print "variable =", dereference it, and 
-             *  call outimage to handle the value.
-             */
-            fprintf(f, "(variable = ");
-            if (DOffsetVar(*dp))
-                dp = OffsetVarLoc(*dp);
-            else if (DVar(*dp))
-                dp = VarLoc(*dp);
-            else
-                syserr("outimage: unknown variable type");
-            outimage(f, dp, noimage);
-            putc(')', f);
-            }
-         else if (Type(*dp) <= MaxType)
+         if (Type(*dp) <= MaxType)
             fprintf(f, "%s", blkname[Type(*dp)]);
          else
             syserr("outimage: unknown type");
@@ -1655,15 +1654,15 @@ word *high;
        * Check to see what the ssvar holds - it may contain a ucs
        * descriptor (not a variable at all) as a result of, eg, return
        * (ucs("abc") ? move(2)).  It may also contain a var which
-       * isn't a D_Var, eg return &why[2].  In such cases it
+       * isn't a D_NamedVar, eg return &why[2].  In such cases it
        * cannot be a local var.
        */
-      if (DVar(tvb->ssvar)) {
+      if (is:named_var(tvb->ssvar)) {
           loc = (word *)VarLoc(tvb->ssvar);
           if (InRange(low, loc, high))
               deref(valp, valp);
       }
-   } else if (DVar(*valp)) {
+   } else if (is:named_var(*valp)) {
        loc = (word *)VarLoc(*valp);
        if (InRange(low, loc, high))
            deref(valp, valp);

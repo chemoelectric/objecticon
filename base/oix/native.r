@@ -529,11 +529,9 @@ function{0,1} lang_Prog_get_global(s, c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
        p = lookup_global(&s, prog);
-       if (p) {
-           result.dword = D_Var;
-           VarLoc(result) = p;
-           return result;
-       } else
+       if (p)
+           return named_var(p);
+       else
            fail;
    }
 end
@@ -544,11 +542,8 @@ function{0,1} lang_Prog_get_globals(c)
        dptr dp;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       for (dp = prog->Globals; dp != prog->Eglobals; dp++) {
-          result.dword = D_Var;
-          VarLoc(result) = dp;
-          suspend result;
-       }
+       for (dp = prog->Globals; dp != prog->Eglobals; dp++)
+           suspend named_var(dp);
 
       fail;
    }

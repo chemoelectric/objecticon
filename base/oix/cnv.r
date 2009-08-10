@@ -726,10 +726,15 @@ void f(dptr s, dptr d)
 
    EVVar(s, e_deref);
 
-   if (!is:variable(*s)) {
+   if (!is:variable(*s))
       *d = *s;
-      }
    else type_case *s of {
+      named_var:
+         *d = *VarLoc(*s);
+
+      struct_var:
+         *d = *OffsetVarLoc(*s);
+
       tvsubs:
          deref_tvsubs(s, d);
 
@@ -744,15 +749,7 @@ void f(dptr s, dptr d)
          *d = *VarLoc(*s);
 
       default:
-         /*
-          * An ordinary variable is being dereferenced.
-          */
-          if (DVar(*s))
-              *d = *VarLoc(*s);
-          else if (DOffsetVar(*s))
-              *d = *OffsetVarLoc(*s);
-          else
-              syserr("Unknown variable type");
+         syserr("Unknown variable type");
       }
    }
 #enddef

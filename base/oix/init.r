@@ -1288,7 +1288,7 @@ static int isdescrip(word *p){
     if (i==D_Null || i==D_Integer)
         return 1;
 
-    if (DOffsetVar(*d) || i==D_Var || i==D_Lrgint || i==D_Real ||
+    if (is:struct_var(*d) || i==D_NamedVar || i==D_Lrgint || i==D_Real ||
             i==D_Cset || i==D_Proc || i==D_Record || i==D_List ||
             i==D_Lelem || i==D_Set || i==D_Selem || i==D_Table || i==D_Telem ||
             i==D_Tvtbl || i==D_Slots || i==D_Tvsubs || i==D_Refresh || i==D_Coexpr ||
@@ -1335,14 +1335,14 @@ void print_vword(FILE *f, dptr d) {
     if (Qual(*d)) {
         fprintf(f, "%p -> ", StrLoc(*d));
         outimage(f, d, 1);
-    } else if (DOffsetVar(*d)) {
-        /* D_OffsetVar (with an offset) */
+    } else if (is:struct_var(*d)) {
+        /* D_StructVar (with an offset) */
         fprintf(f, "%p+%lu -> ", BlkLoc(*d), (unsigned long)(WordSize*Offset(*d)));
         print_desc(f, OffsetVarLoc(*d));
     } else {
         switch (d->dword) {
-            case D_Var : {
-                /* D_Var (pointer to another descriptor) */
+            case D_NamedVar : {
+                /* D_NamedVar (pointer to another descriptor) */
                 fprintf(f, "%p -> ", VarLoc(*d));
                 print_desc(f, VarLoc(*d));
                 break;
@@ -1434,12 +1434,12 @@ void print_dword(FILE *f, dptr d) {
     if (Qual(*d)) {
         /* String */
         fprintf(f, "%ld", (long)d->dword);
-    } else if (DOffsetVar(*d)) {
-        /* D_OffsetVar (with an offset) */
-        fprintf(f, "D_OffsetVar off:%lu", (unsigned long)Offset(*d));
+    } else if (is:struct_var(*d)) {
+        /* D_StructVar (with an offset) */
+        fprintf(f, "D_StructVar off:%lu", (unsigned long)Offset(*d));
     } else {
         switch (d->dword) {
-            case D_Var : fputs("D_Var", f); break;
+            case D_NamedVar : fputs("D_NamedVar", f); break;
             case D_Tvsubs : fputs("D_Tvsubs", f); break;
             case D_Tvtbl : fputs("D_Tvtbl", f); break;
             case D_Kywdint : fputs("D_Kywdint", f); break;

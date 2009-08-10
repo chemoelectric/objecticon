@@ -325,7 +325,7 @@ static int class_access(dptr cargp, struct inline_field_cache *ic)
                class0->init_field &&       /* .. and must be in init() method */
                CallerProc == &BlkLoc(*class0->init_field->field_descriptor)->proc)))
     {
-        Arg0.dword = D_Var;
+        Arg0.dword = D_NamedVar;
         VarLoc(Arg0) = dp;
     } else if (ac == Succeeded || (cf->flags & M_Readable))
         Arg0 = *dp;
@@ -382,7 +382,7 @@ static int instance_access(dptr cargp, struct inline_field_cache *ic)
             (!(cf->flags & M_Const) || obj->init_state == Initializing))
         {
             /* Return a pointer to the field */
-            Arg0.dword = D_OffsetVar + ((word *)dp - (word *)obj);
+            Arg0.dword = D_StructVar + ((word *)dp - (word *)obj);
             BlkLoc(Arg0) = (union block *)obj;
         } else if (ac == Succeeded || (cf->flags & M_Readable))
             Arg0 = *dp;
@@ -407,7 +407,7 @@ static int record_access(dptr cargp, struct inline_field_cache *ic)
      * Return a pointer to the descriptor for the appropriate field.
      */
     dp = &rec->fields[i];
-    Arg0.dword = D_OffsetVar + ((word *)dp - (word *)rec);
+    Arg0.dword = D_StructVar + ((word *)dp - (word *)rec);
     BlkLoc(Arg0) = (union block *)rec;
 
     EVValD(&Arg1, e_rref);
@@ -779,7 +779,7 @@ LibDcl(bscan,2,"?")
     /*
      * Suspend with a variable pointing to the saved &subject and &pos.
      */
-    ArgType(0) = D_Var;
+    ArgType(0) = D_NamedVar;
     VarLoc(Arg0) = &Arg1;
 
     rc = interp(G_Csusp,cargp);

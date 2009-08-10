@@ -595,6 +595,16 @@ int indent;
 
       ForceNl();
       }
+   else if (typcd == TypNamedVar) {
+      prt_str("(((", indent);
+      c_walk(desc, indent, 0);
+      prt_str(").dword == D_NamedVar))", indent);
+   }
+   else if (typcd == TypStructVar) {
+      prt_str("((((", indent);
+      c_walk(desc, indent, 0);
+      prt_str(").dword & (F_Var | F_Nqual | F_Ptr | F_Typecode)) == D_StructVar))", indent);
+   }
    else {
       /*
        * Check dword for a specific type code.
@@ -1043,7 +1053,7 @@ int indent;
                prt_str(";", indent);
                ForceNl();
                prt_str(rslt_loc, indent);
-               prt_str(".dword = D_Var;", indent);
+               prt_str(".dword = D_NamedVar;", indent);
                chkabsret(t, TypVar); /* compare return with abstract return */
                return;
             case Struct_var:
@@ -1059,7 +1069,7 @@ int indent;
                prt_str(";", indent);
                ForceNl();
                prt_str(rslt_loc, indent);
-               prt_str(".dword = D_OffsetVar + ((word *)", indent);
+               prt_str(".dword = D_StructVar + ((word *)", indent);
                c_walk(args->u[0].child, indent + IndentInc, 0);
                prt_str(" - (word *)", indent+IndentInc);
                prt_str(rslt_loc, indent);
@@ -2094,6 +2104,26 @@ void clr_prmloc()
    }
 
 /*
+ * Reverse the type_select_lst and the selector_lst within it so that
+ * the elements come out in the same order as the source file.
+ */
+static struct node *reverse_list(struct node *in)
+{
+    struct node *n = 0, *x;
+    struct node *n2 = 0, *y, *z, *n3;
+    for (x = in; x != NULL; x = x->u[0].child) {
+        y = x->u[1].child;
+        n2 = 0;
+        for (z = y->u[0].child; z; z = z->u[0].child) {
+            n2 = node2(z->nd_id, z->tok, n2, z->u[1].child);
+        }
+        n3 = node2(y->nd_id, y->tok, n2, y->u[1].child);
+        n = node2(x->nd_id, x->tok, n, n3);
+    }
+    return n;
+}
+
+/*
  * typ_case - translate a type_case statement into C. This is called
  *  while walking a syntax tree of either RTL code or C code; the parameter
  *  "walk" is a function used to process the subtrees within the type_case
@@ -2129,6 +2159,12 @@ int indent;
    strt_prms = new_prmloc();
    sv_prmloc(strt_prms);
    end_prms = new_prmloc();
+
+   /*
+    * Create a copy of the list with the elements in the order they appear
+    * in the source file.
+    */
+   slct_lst = reverse_list(slct_lst);
 
    /*
     * First look for cases that must be checked with "if" statements.
