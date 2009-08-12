@@ -81,6 +81,15 @@ procedure main()
    limage("y", y)
    limage("z", z)
 
+   x := []
+   every insert(x, 1, 1 to 20)
+   every delete(x, 1 to 20 by 2)
+   every insert(x, 1 to 20 by 2, "*")
+   every insert(x, 10 to 20, "#")
+   every delete(x, 1 to 20 by 2)
+   every 1 to 20 do
+      insert(x, 1, pull(x))
+   limage("insert/delete", x)
 end
 
 procedure limage(label, lst)
