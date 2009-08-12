@@ -48,6 +48,11 @@ void            list_push       (dptr l, dptr val);
 void            list_insert     (dptr l, word pos, dptr val);
 void            list_del        (dptr l, word pos);
 
+int             set_del(dptr s, dptr key);
+int             table_del(dptr t, dptr key);
+void            table_insert(dptr t, dptr key, dptr val);
+void            set_insert(dptr s, dptr entry);
+
 int		cnv_c_dbl	(dptr s, double *d);
 int		cnv_c_int	(dptr s, C_integer *d);
 int		cnv_c_str	(dptr s, dptr d);

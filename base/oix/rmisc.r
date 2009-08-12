@@ -1695,21 +1695,6 @@ int strncasecmp(char *s1, char *s2, int n)
 #endif					/* MSWIN32 */
 
 /*
- * Create a descriptor for an empty list, with initial number of slots.
- */
-void create_list(uword nslots, dptr d) 
-{
-   struct b_list *hp;
- 
-   if (nslots == 0)
-      nslots = MinListSlots;
-   MemProtect(hp = alclist(0, nslots));
- 
-   d->dword = D_List;
-   d->vword.bptr = (union  block *)hp;
-}
-
-/*
  * Allocate a string and initialize it based on the given
  * null-terminated C string.  The result is stored in the
  * given dptr.  If s is null, nulldesc is written to d.
