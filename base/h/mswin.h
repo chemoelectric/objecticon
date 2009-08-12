@@ -126,7 +126,7 @@
  */
 #define EVQUEGET(ws,d) { \
   int i;\
-  if (!c_get((struct b_list *)BlkLoc((ws)->listp),&d)) fatalerr(0,NULL); \
+  if (!list_get((struct b_list *)BlkLoc((ws)->listp),&d)) fatalerr(0,NULL); \
   if (Qual(d)) {\
       (ws)->eventQueue[(ws)->eQfront++] = *StrLoc(d); \
       if ((ws)->eQfront >= EQUEUELEN) (ws)->eQfront = 0; \

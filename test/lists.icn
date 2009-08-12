@@ -1,6 +1,6 @@
 #SRC: JCON
 
-import io
+import io, ipl.lists(push_n,put_n)
 
 procedure main()
    local i, x, y, z
@@ -26,12 +26,12 @@ procedure main()
    write("\t", image(get(x)));	limage("D", x)
    write("\t", image(pull(x)));	limage("E", x)
    push(x,4);			limage("F", x)
-   push(x,5,6,7);		limage("G", x)
-   push(push(x,8,9),10,11);	limage("H", x)
+   push_n(x,5,6,7);		limage("G", x)
+   push_n(push_n(x,8,9),10,11);	limage("H", x)
    put(x,12);			limage("I", x)
-   put(x,13,14,15);		limage("J", x)
-   put(put(x,16,17),18,19);	limage("K", x)
-   put(push(x,20,21),22,23);	limage("L", x)
+   put_n(x,13,14,15);		limage("J", x)
+   put_n(put_n(x,16,17),18,19);	limage("K", x)
+   put_n(push_n(x,20,21),22,23);	limage("L", x)
    every !x := 7;		limage("M", x)
 
    x := [1,2,3,4,5]

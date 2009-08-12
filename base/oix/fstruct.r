@@ -70,7 +70,7 @@ function{1} delete(s,x)
             if (i == CvtFail || i > size)
                 fail;
 
-            c_list_delete(&s, i);
+            list_del(&s, i);
             EVValD(&s, E_Ldelete);
             EVVal(cnv_x, E_Lsub);
 	    return s;
@@ -87,7 +87,7 @@ end
  * c_get - convenient C-level access to the get function
  *  returns 0 on failure, otherwise fills in res
  */
-int c_get(dptr l, dptr res)
+int list_get(dptr l, dptr res)
 {
    word i;
    struct b_list *hp = (struct b_list *)BlkLoc(*l);
@@ -141,7 +141,7 @@ function{0,1} get_or_pop(x)
       runerr(108, x)
    body {
      EVValD(&x, E_Lget);
-     if (!c_get(&x, &result)) 
+     if (!list_get(&x, &result)) 
          fail;
      return result;
    }
@@ -245,9 +245,9 @@ function{1} insert(s, x, y)
                     /*
                      * Put the element to insert on the back
                      */
-                    c_put(&s, &y);
+                    list_put(&s, &y);
                 } else  /* i <= size */
-                    c_list_insert(&s, i, &y);
+                    list_insert(&s, i, &y);
                 EVValD(&s, E_Linsert);
                 EVVal(cnv_x, E_Lsub);
                 return s;
@@ -389,6 +389,44 @@ function{0,1} member(s, x)
 end
 
 
+int list_pull(dptr l, dptr res)
+{
+    word i;
+    struct b_list *hp = (struct b_list *) BlkLoc(*l);
+    struct b_lelem *bp;
+
+    /*
+     * Point at list header block and fail if the list is empty.
+     */
+    if (hp->size <= 0)
+        return 0;
+
+    /*
+     * Point bp at the last list element block.  If the last block has no
+     *  elements in use, point bp at the previous list element block.
+     */
+    bp = (struct b_lelem *) hp->listtail;
+    if (bp->nused <= 0) {
+        bp = (struct b_lelem *) bp->listprev;
+        hp->listtail = (union block *) bp;
+        bp->listnext = (union block *) hp;
+    }
+
+    /*
+     * Set i to position of last element and assign the element to
+     *  result for return.  Decrement the usage count for the block
+     *  and the size of the list.
+     */
+    i = bp->first + bp->nused - 1;
+    if (i >= bp->nslots)
+        i -= bp->nslots;
+    *res = bp->lslots[i];
+    bp->nused--;
+    hp->size--;
+
+    return 1;
+}
+
 
 "pull(L) - pull an element from end of list L."
 
@@ -400,42 +438,10 @@ function{0,1} pull(x)
       runerr(108, x)
 
    body {
-      register word i;
-      register struct b_list *hp;
-      register struct b_lelem *bp;
-
       EVValD(&x, E_Lpull);
-
-      /*
-       * Point at list header block and fail if the list is empty.
-       */
-      hp = (struct b_list *) BlkLoc(x);
-      if (hp->size <= 0)
-          fail;
-
-      /*
-       * Point bp at the last list element block.  If the last block has no
-       *  elements in use, point bp at the previous list element block.
-       */
-      bp = (struct b_lelem *) hp->listtail;
-      if (bp->nused <= 0) {
-          bp = (struct b_lelem *) bp->listprev;
-          hp->listtail = (union block *) bp;
-          bp->listnext = (union block *) hp;
-      }
-
-      /*
-       * Set i to position of last element and assign the element to
-       *  result for return.  Decrement the usage count for the block
-       *  and the size of the list.
-       */
-      i = bp->first + bp->nused - 1;
-      if (i >= bp->nslots)
-          i -= bp->nslots;
-      result = bp->lslots[i];
-      bp->nused--;
-      hp->size--;
-      return result;
+     if (!list_pull(&x, &result)) 
+         fail;
+     return result;
    }
 end
 
@@ -443,7 +449,7 @@ end
 /*
  * c_push - C-level, nontending push operation
  */
-void c_push(l, val)
+void list_push(l, val)
 dptr l;
 dptr val;
 {
@@ -504,9 +510,9 @@ dptr val;
 
 
 
-"push(L, x1, ..., xN) - push values onto beginning of list L."
+"push(L, val) - push value onto beginning of list L."
 
-function{1} push(x, vals[n])
+function{1} push(x, val)
    /*
     * x must be a list.
     */
@@ -514,90 +520,19 @@ function{1} push(x, vals[n])
       runerr(108, x)
 
    body {
-      tended struct b_list *hp;
-      dptr dp;
-      register word i, val, num;
-      register struct b_lelem *bp; /* does not need to be tended */
-
-      if (n == 0) {
-	 dp = &nulldesc;
-	 num = 1;
-	 }
-      else {
-	 dp = vals;
-	 num = n;
-	 }
-
-      for (val = 0; val < num; val++) {
-	 /*
-	  * Point hp at the list-header block and bp at the first
-	  *  list-element block.
-	  */
-	 hp = (struct b_list *) BlkLoc(x);
-	 bp = (struct b_lelem *) hp->listhead;
-
-	 /*
-	  * Initialize i so it's 0 if first list-element.
-	  */
-	 i = 0;			/* block isn't full */
-
-	 /*
-	  * If the first list-element block is full, allocate a new
-	  *  list-element block, make it the first list-element block,
-	  *  and make it the previous block of the former first list-element
-	  *  block.
-	  */
-	 if (bp->nused >= bp->nslots) {
-	    /*
-	     * Set i to the size of block to allocate.
-	     */
-	    i = hp->size / 2;
-	    if (i < MinListSlots)
-	       i = MinListSlots;
-
-	    /*
-	     * Allocate a new list element block.  If the block can't
-	     *  be allocated, try smaller blocks.
-	     */
-	    while ((bp = alclstb(i)) == NULL) {
-	       i /= 4;
-	       if (i < MinListSlots)
-                   fatalerr(0, NULL);
-	       }
-
-	    hp->listhead->lelem.listprev = (union block *) bp;
-	    bp->listprev = (union block *) hp;
-	    bp->listnext = hp->listhead;
-	    hp->listhead = (union block *) bp;
-	    }
-
-	 /*
-	  * Set i to position of new first element and assign val to
-	  *  that element.
-	  */
-	 i = bp->first - 1;
-	 if (i < 0)
-	    i = bp->nslots - 1;
-	 bp->lslots[i] = dp[val];
-	 /*
-	  * Adjust value of location of first element, block usage count,
-	  *  and current list size.
-	  */
-	 bp->first = i;
-	 bp->nused++;
-	 hp->size++;
-	 }
-
+      list_push(&x, &val);
       EVValD(&x, E_Lpush);
-
       /*
        * Return the list.
        */
       return x;
-      }
+   }
 end
 
 
+/*
+ * Debug func
+ */
 static void listdump(dptr d)
 {
     union block *b;
@@ -624,7 +559,7 @@ static void listdump(dptr d)
     fflush(stderr);
 }
 
-void c_list_insert(dptr l, word pos, dptr val)
+void list_insert(dptr l, word pos, dptr val)
 {
     word i, j, k;
     tended struct b_list *lb;
@@ -635,7 +570,7 @@ void c_list_insert(dptr l, word pos, dptr val)
     lb = (struct b_list *)BlkLoc(*l);
 
     if (pos < 1 || pos > lb->size)
-        syserr("Invalid pos to c_list_insert");
+        syserr("Invalid pos to list_insert");
     --pos;
 
     le = (struct b_lelem *)lb->listhead;
@@ -692,10 +627,9 @@ void c_list_insert(dptr l, word pos, dptr val)
     }
 
     ++lb->size;
-    listdump(l);
 }
 
-void c_list_delete(dptr l, word pos)
+void list_del(dptr l, word pos)
 {
     word i, j, k, n;
     struct b_list *lb;
@@ -704,7 +638,7 @@ void c_list_delete(dptr l, word pos)
     lb = (struct b_list *)BlkLoc(*l);
 
     if (pos < 1 || pos > lb->size)
-        syserr("Invalid pos to c_list_delete");
+        syserr("Invalid pos to list_del");
     --pos;
 
     le = (struct b_lelem *)lb->listhead;
@@ -742,15 +676,13 @@ void c_list_delete(dptr l, word pos)
     }
 
     --lb->size;    
-    listdump(l);
-
 }
 
 
 /*
  * c_put - C-level, nontending list put function
  */
-void c_put(dptr l, dptr val)
+void list_put(dptr l, dptr val)
 {
    register word i = 0;
    register struct b_lelem *bp;  /* does not need to be tended */
@@ -809,9 +741,9 @@ void c_put(dptr l, dptr val)
 }
 
 
-"put(L, x1, ..., xN) - put elements onto end of list L."
+"put(L, val) - put element onto end of list L."
 
-function{1} put(x, vals[n])
+function{1} put(x, val)
    /*
     * x must be a list.
     */
@@ -819,90 +751,14 @@ function{1} put(x, vals[n])
       runerr(108, x)
 
    body {
-      tended struct b_list *hp;
-      dptr dp;
-      register word i, val, num;
-      register struct b_lelem *bp;  /* does not need to be tended */
-
-      if (n == 0) {
-	 dp = &nulldesc;
-	 num = 1;
-	 }
-      else {
-	 dp = vals;
-	 num = n;
-	 }
-
-      /*
-       * Point hp at the list-header block and bp at the last
-       *  list-element block.
-       */
-      for(val = 0; val < num; val++) {
-
-	 hp = (struct b_list *)BlkLoc(x);
-	 bp = (struct b_lelem *) hp->listtail;
-   
-	 i = 0;			/* block isn't full */
-
-	 /*
-	  * If the last list-element block is full, allocate a new
-	  *  list-element block, make it the last list-element block,
-	  *  and make it the next block of the former last list-element
-	  *  block.
-	  */
-	 if (bp->nused >= bp->nslots) {
-	    /*
-	     * Set i to the size of block to allocate.
-	     *  Add half the size of the present list, subject to
-	     *  minimum and maximum and including enough space for
-	     *  the rest of this call to put() if called with varargs.
-	     */
-	    i = hp->size / 2;
-	    if (i < MinListSlots)
-	       i = MinListSlots;
-	    if (i < n - val)
-	       i = n - val;
-
-	    /*
-	     * Allocate a new list element block.  If the block can't
-	     *  be allocated, try smaller blocks.
-	     */
-	    while ((bp = alclstb(i)) == NULL) {
-	       i /= 4;
-	       if (i < MinListSlots)
-                   fatalerr(0, NULL);
-	       }
-
-	    hp->listtail->lelem.listnext = (union block *) bp;
-	    bp->listprev = hp->listtail;
-	    bp->listnext = (union block *) hp;
-	    hp->listtail = (union block *) bp;
-	    }
-
-	 /*
-	  * Set i to position of new last element and assign val to
-	  *  that element.
-	  */
-	 i = bp->first + bp->nused;
-	 if (i >= bp->nslots)
-	    i -= bp->nslots;
-	 bp->lslots[i] = dp[val];
-
-	 /*
-	  * Adjust block usage count and current list size.
-	  */
-	 bp->nused++;
-	 hp->size++;
-
-	 }
-
+      list_put(&x, &val);
       EVValD(&x, E_Lput);
 
       /*
        * Return the list.
        */
       return x;
-      }
+   }
 end
 
 "set(x1,...,xN) - create a set with given members."
@@ -918,7 +774,7 @@ function{1} set(x[n])
      /*
       * Make a set.
       */
-     MemProtect(ps = hmake(T_Set, (word)0, n));
+     MemProtect(ps = hmake(T_Set, 0, n));
      result.dword = D_Set;
      result.vword.bptr = ps;
 
@@ -952,7 +808,7 @@ function{1} table(x, v[n])
       register uword hn;
       int res, argc;
    
-      MemProtect(bp = hmake(T_Table, (word)0, (word)n));
+      MemProtect(bp = hmake(T_Table, 0, n/2));
       bp->table.defvalue = x;
       result.dword = D_Table;
       result.vword.bptr = bp;

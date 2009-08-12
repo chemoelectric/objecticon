@@ -250,7 +250,7 @@ procedure ddf_rdata(f, h)
       len := move(h.lsize)			| fail
       posn := move(h.psize)			| fail
       data := d[posn + 1 +: len]		| fail
-      put(a, tag, data)
+      every put(a, tag | data)
       }
    return a
 end

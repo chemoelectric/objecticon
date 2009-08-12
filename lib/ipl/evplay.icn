@@ -44,7 +44,7 @@ procedure evplay(win)
    event2 := ivalue(read(EventFile)) | stop("*** short event history")
    event3 := ivalue(read(EventFile)) | stop("*** short event history")
 
-   put(win.pending(), event1, event2, event3)
+   every put(win.pending(), event1 | event2 | event3)
 
    return
 

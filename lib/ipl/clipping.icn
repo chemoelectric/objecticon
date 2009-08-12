@@ -105,7 +105,7 @@ procedure ClipLine(win, L, x, y, w, h)
          y <= y0 <= ymax | next
       if tout < tin then next
 
-      put(ret, x0 + tin*delx, y0 + tin*dely, x0 + tout*delx, y0 + tout*dely)
+      every put(ret, x0 + tin*delx | y0 + tin*dely | x0 + tout*delx | y0 + tout*dely)
       }
 
    if *ret > 0 then
@@ -127,7 +127,7 @@ procedure Coalesce(L)
       y1 := L[i + 1]
       if x1 ~=== x2 | y1 ~=== y2 then
          put(all, seg := [x1, y1])
-      put(seg, x2 := L[i + 2], y2 := L[i + 3])
+      every put(seg, x2 := L[i + 2] | y2 := L[i + 3])
       }
 
    return all

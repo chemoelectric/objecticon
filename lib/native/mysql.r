@@ -701,25 +701,25 @@ static struct descrip field_to_list(MYSQL_FIELD *field) {
 
    create_list(10, &res);
    cstr2string(field->name, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    cstr2string(field->table, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    cstr2string(field->org_table, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    cstr2string(field->db, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    cstr2string(field->_DEF, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    MakeInt(field->length, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    MakeInt(field->max_length, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    MakeInt(field->flags, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    MakeInt(field->decimals, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    MakeInt(field->type, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
 
    return res;
 }
@@ -755,7 +755,7 @@ function{0,1} mysql_MySqlRes_fetch_fields_impl(self)
        create_list(n, &result);
        for (i = 0; i < n; ++i) {
            tended struct descrip tmp = field_to_list(&fields[i]);
-           c_put(&result, &tmp);
+           list_put(&result, &tmp);
        }
        return result;
    }
@@ -792,7 +792,7 @@ function{0,1} mysql_MySqlRes_fetch_lengths(self)
        for (i = 0; i < n; ++i) {
            struct descrip tmp;
            MakeInt(lengths[i], &tmp);
-           c_put(&result, &tmp);
+           list_put(&result, &tmp);
        }
        return result;
    }
@@ -820,7 +820,7 @@ function{0,1} mysql_MySqlRes_fetch_row(self)
        for (i = 0; i < n; ++i) {
            tended struct descrip tmp;
            bytes2string(row[i], lengths[i], &tmp);
-           c_put(&result, &tmp);
+           list_put(&result, &tmp);
        }
        return result;
    }

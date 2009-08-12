@@ -76,7 +76,7 @@ int wgetevent2(wbp w, dptr res, word timeout)
     if (BlkLoc(w->window->listp)->list.size < 2)
         return -2;					/* malformed queue */
 
-    c_put(res, &qval);
+    list_put(res, &qval);
 
     wgetq(w,&xdesc,-1);
     wgetq(w,&ydesc,-1);
@@ -90,39 +90,39 @@ int wgetevent2(wbp w, dptr res, word timeout)
         t -= 0x10000;
     t -= w->context->dx;
     MakeInt(t, &qval);
-    c_put(res, &qval);
+    list_put(res, &qval);
 
     t = IntVal(ydesc) & 0xFFFF;		/* &y */
     if (t >= 0x8000)
         t -= 0x10000;
     t -= w->context->dy;
     MakeInt(t, &qval);
-    c_put(res, &qval);
+    list_put(res, &qval);
 
     t = IntVal(xdesc);
     if (t & EQ_MOD_CONTROL)
-        c_put(res, &onedesc);
+        list_put(res, &onedesc);
     else
-        c_put(res, &nulldesc);
+        list_put(res, &nulldesc);
     if (t & EQ_MOD_META)
-        c_put(res, &onedesc);
+        list_put(res, &onedesc);
     else
-        c_put(res, &nulldesc);
+        list_put(res, &nulldesc);
     if (t & EQ_MOD_SHIFT)
-        c_put(res, &onedesc);
+        list_put(res, &onedesc);
     else
-        c_put(res, &nulldesc);
+        list_put(res, &nulldesc);
     if (t & EQ_MOD_RELEASE)
-        c_put(res, &onedesc);
+        list_put(res, &onedesc);
     else
-        c_put(res, &nulldesc);
+        list_put(res, &nulldesc);
 
     /* Interval */
     i = (((uword) IntVal(ydesc)) >> 16) & 0xFFF;		/* mantissa */
     i <<= 4 * ((((uword) IntVal(ydesc)) >> 28) & 0x7);	/* scale it */
 
     MakeInt(i, &qval);
-    c_put(res, &qval);
+    list_put(res, &qval);
 
     return 0;
 }
@@ -167,12 +167,12 @@ void qevent(wsp ws,             /* canvas */
     else
         ivl = 0;				/* report 0 if interval unknown */
 
-    c_put(q, e);
+    list_put(q, e);
     d.dword = D_Integer;
     IntVal(d) = mod | (x & 0xFFFF);
-    c_put(q, &d);
+    list_put(q, &d);
     IntVal(d) = (ivl << 16) | (y & 0xFFFF);
-    c_put(q, &d);
+    list_put(q, &d);
 }
 
 /*

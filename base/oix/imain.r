@@ -292,7 +292,7 @@ int main(int argc, char **argv)
         for (i = 2; i < argc; i++) {
             struct descrip t;
             CMakeStr(argv[i], &t);
-            c_put(&args, &t);
+            list_put(&args, &t);
         }
         PushDesc(args);
         want_arg = 1;

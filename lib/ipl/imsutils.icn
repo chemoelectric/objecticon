@@ -96,7 +96,7 @@ procedure XDrawTile(win, xoff, yoff, pattern, magnif, mode)
          x := xoff
          arglist := []
          every pixel := !row do {
-            if pixel = "1" then put(arglist, x, y, magnif, magnif)
+            if pixel = "1" then every put(arglist, x | y | magnif | magnif)
             x +:= magnif
             }
          y +:= magnif
@@ -128,14 +128,14 @@ procedure XDrawRows(win, xoff, yoff, imx, magnif, mode)
 
       if magnif = 1 then {
          every pixel := !row do {
-            if pixel == "1" then put(arglist, x, y)
+            if pixel == "1" then every put(arglist, x | y)
             x +:= 1
             }
          y +:= 1
          }
       else {
          every pixel := !row do {
-            if pixel = "1" then put(arglist, x, y, magnif, magnif)
+            if pixel = "1" then every put(arglist, x | y | magnif | magnif)
             x +:= magnif
             }
          y +:= magnif

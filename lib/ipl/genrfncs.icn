@@ -707,7 +707,7 @@ procedure rabbitseq()
       i := get(seq)
       suspend i
       if i = 0 then put(seq, 1)
-      else put(seq, 1, 0)
+      else every put(seq, 1 | 0)
       }
 
 end

@@ -41,11 +41,12 @@ int		bfunc		(void);
 struct b_proc	*bi_strprc	(dptr s, C_integer arity);
 void		c_exit		(int i);
 
-int		c_get		(dptr l, dptr res);
-void		c_put		(dptr l, dptr val);
-void            c_push          (dptr l, dptr val);
-void            c_list_insert   (dptr l, word pos, dptr val);
-void            c_list_delete   (dptr l, word pos);
+int		list_get	(dptr l, dptr res);
+int             list_pull       (dptr l, dptr res);
+void		list_put	(dptr l, dptr val);
+void            list_push       (dptr l, dptr val);
+void            list_insert     (dptr l, word pos, dptr val);
+void            list_del        (dptr l, word pos);
 
 int		cnv_c_dbl	(dptr s, double *d);
 int		cnv_c_int	(dptr s, C_integer *d);

@@ -214,7 +214,7 @@ procedure pdouble(rows, dir)
    case dir of {
       "v":  {
          every row := !rows do
-            put(newrows, row, row)
+            every put(newrows, row | row)
          }
       "h":  {
          every row := !rows do

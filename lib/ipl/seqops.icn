@@ -962,7 +962,7 @@ procedure sparity(xargs[])
       j := x1[i]
       k := x2[i]
       if (j % 2) = (k % 2) then put(lseq, j)
-      else put(lseq, j + 1, j)
+      else every put(lseq, j + 1 | j)
       }
 
    return lseq

@@ -852,7 +852,7 @@ function{0,1} graphics_Window_pending(self, argv[argc])
        * guaranteed consecutive order.
        */
       for (i = 0; i < argc; i++) {
-          c_put(&(ws->listp), &argv[i]);
+          list_put(&(ws->listp), &argv[i]);
       }
 
       /*
@@ -1291,9 +1291,9 @@ function{1} graphics_Window_query_root_pointer()
       query_rootpointer(&xp);
       create_list(2, &result);
       MakeInt(xp.x, &t);
-      c_put(&result, &t);
+      list_put(&result, &t);
       MakeInt(xp.y, &t);
-      c_put(&result, &t);
+      list_put(&result, &t);
       return result;
    }
 end

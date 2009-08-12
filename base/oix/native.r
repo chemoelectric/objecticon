@@ -72,9 +72,9 @@ static void loc_to_list(struct loc *p, dptr res)
 {
     struct descrip t;
     create_list(2, res);
-    c_put(res, &p->fname);
+    list_put(res, &p->fname);
     MakeInt(p->line, &t);
-    c_put(res, &t);
+    list_put(res, &t);
 }
 
 function{1} classof(o)
@@ -677,13 +677,13 @@ function{1} lang_Prog_get_collection_info_impl(c)
 
        create_list(4, &result);
        MakeInt(prog->colluser, &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
        MakeInt(prog->collstat, &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
        MakeInt(prog->collstr, &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
        MakeInt(prog->collblk, &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
        return result;
    }
 end
@@ -698,11 +698,11 @@ function{1} lang_Prog_get_allocation_info_impl(c)
 
        create_list(3, &result);
        convert_from_ulonglong(prog->stattotal, &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
        convert_from_ulonglong(prog->stringtotal, &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
        convert_from_ulonglong(prog->blocktotal, &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
        return result;
    }
 end
@@ -721,7 +721,7 @@ function{1} lang_Prog_get_region_info_impl(c)
        create_list(3, &result);
 
        MakeInt(prog->statcurr, &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
 
        n = 0;
        for (rp = prog->stringregion; rp; rp = rp->next)
@@ -729,18 +729,18 @@ function{1} lang_Prog_get_region_info_impl(c)
        for (rp = prog->stringregion->prev; rp; rp = rp->prev)
            ++n;
        create_list(2 * (n + 1), &l);
-       c_put(&result, &l);
+       list_put(&result, &l);
        for (rp = prog->stringregion; rp; rp = rp->next) {
            MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
-           c_put(&l, &tmp);
+           list_put(&l, &tmp);
            MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
-           c_put(&l, &tmp);
+           list_put(&l, &tmp);
        }
        for (rp = prog->stringregion->prev; rp; rp = rp->prev) {
            MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
-           c_put(&l, &tmp);
+           list_put(&l, &tmp);
            MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
-           c_put(&l, &tmp);
+           list_put(&l, &tmp);
        }
 
        n = 0;
@@ -749,18 +749,18 @@ function{1} lang_Prog_get_region_info_impl(c)
        for (rp = prog->blockregion->prev; rp; rp = rp->prev)
            ++n;
        create_list(2 * (n + 1), &l);
-       c_put(&result, &l);
+       list_put(&result, &l);
        for (rp = prog->blockregion; rp; rp = rp->next) {
            MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
-           c_put(&l, &tmp);
+           list_put(&l, &tmp);
            MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
-           c_put(&l, &tmp);
+           list_put(&l, &tmp);
        }
        for (rp = prog->blockregion->prev; rp; rp = rp->prev) {
            MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
-           c_put(&l, &tmp);
+           list_put(&l, &tmp);
            MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
-           c_put(&l, &tmp);
+           list_put(&l, &tmp);
        }
 
        return result;
@@ -799,9 +799,9 @@ function{1} lang_Prog_get_stack_info_impl(c)
        }
        create_list(2, &result);
        MakeInt(DiffPtrsBytes(isp + 1, top), &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
        MakeInt(DiffPtrsBytes(bottom, top), &tmp);
-       c_put(&result, &tmp);
+       list_put(&result, &tmp);
 
        return result;
    }
@@ -1585,10 +1585,10 @@ function{0,1} io_FileStream_pipe_impl()
        create_list(2, &result);
 
       MakeInt(fds[0], &t);
-      c_put(&result, &t);
+      list_put(&result, &t);
 
       MakeInt(fds[1], &t);
-      c_put(&result, &t);
+      list_put(&result, &t);
 
       return result;
    }
@@ -1708,10 +1708,10 @@ function{0,1} io_SocketStream_socketpair_impl(typ)
        create_list(2, &result);
 
       MakeInt(fds[0], &t);
-      c_put(&result, &t);
+      list_put(&result, &t);
 
       MakeInt(fds[1], &t);
-      c_put(&result, &t);
+      list_put(&result, &t);
 
       return result;
    }
@@ -1862,9 +1862,9 @@ end
         if (!is:list(l))
             runerr(108, l);
         create_list(BlkLoc(l)->list.size, &tmpl);
-        while (c_get(&l, &e)) {
+        while (list_get(&l, &e)) {
             FdStaticParam(e, fd);
-            c_put(&tmpl, &e);
+            list_put(&tmpl, &e);
             FD_SET(fd, &s);
         }
     }
@@ -1876,10 +1876,10 @@ end
     tended struct descrip e;
 
     if (!is:null(l)) {
-        while (c_get(&tmpl, &e)) {
+        while (list_get(&tmpl, &e)) {
             FdStaticParam(e, fd);
             if (FD_ISSET(fd, &s)) {
-                c_put(&l, &e);
+                list_put(&l, &e);
                 ++count;
             }
         }
@@ -1999,7 +1999,7 @@ function{0,1} io_DescStream_poll(a[n])
        for (i = 0; i < nfds; ++i) {
            struct descrip tmp;
            MakeInt(ufds[i].revents, &tmp);
-           c_put(&result, &tmp);
+           list_put(&result, &tmp);
        }
 
        return result;
@@ -2233,9 +2233,9 @@ static struct descrip stat2list(struct stat *st)
 
    create_list(13, &res);
    MakeInt(st->st_dev, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    convert_from_ino_t(st->st_ino, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
 
    strcpy(mode, "----------");
 #if MSWIN32
@@ -2271,14 +2271,14 @@ static struct descrip stat2list(struct stat *st)
    if (S_ISVTX & st->st_mode) mode[9] = (mode[9] == 'x') ? 't' : 'T';
 #endif					/* MSWIN32 */
    cstr2string(mode, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
 
    MakeInt(st->st_nlink, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
 
 #if MSWIN32
-   c_put(&res, emptystr);
-   c_put(&res, emptystr);
+   list_put(&res, emptystr);
+   list_put(&res, emptystr);
 #else					/* MSWIN32 */
    pw = getpwuid(st->st_uid);
    if (!pw) {
@@ -2287,7 +2287,7 @@ static struct descrip stat2list(struct stat *st)
    } else
       user = pw->pw_name;
    cstr2string(user, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    
    gr = getgrgid(st->st_gid);
    if (!gr) {
@@ -2296,28 +2296,28 @@ static struct descrip stat2list(struct stat *st)
    } else
       group = gr->gr_name;
    cstr2string(group, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
 #endif					/* MSWIN32 */
 
    MakeInt(st->st_rdev, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    convert_from_off_t(st->st_size, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
 #if MSWIN32
-   c_put(&res, zerodesc);
-   c_put(&res, zerodesc);
+   list_put(&res, zerodesc);
+   list_put(&res, zerodesc);
 #else
    MakeInt(st->st_blksize, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    convert_from_blkcnt_t(st->st_blocks, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
 #endif
    MakeInt(st->st_atime, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    MakeInt(st->st_mtime, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
    MakeInt(st->st_ctime, &tmp);
-   c_put(&res, &tmp);
+   list_put(&res, &tmp);
 
    return res;
 }
@@ -2375,24 +2375,24 @@ function{1} util_Timezone_get_system_timezone()
       create_list(2, &result);
       #if HAVE_STRUCT_TM_TM_GMTOFF
          MakeInt(ct->tm_gmtoff, &tmp);
-         c_put(&result, &tmp);
+         list_put(&result, &tmp);
          #if HAVE_TZNAME
          if (ct->tm_isdst >= 0) {
              cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
-             c_put(&result, &tmp);
+             list_put(&result, &tmp);
          }
          #endif
       #elif HAVE_TIMEZONE      
          MakeInt(timezone, &tmp);
-         c_put(&result, &tmp);
+         list_put(&result, &tmp);
          #if HAVE_TZNAME
          if (ct->tm_isdst >= 0) {
              cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
-             c_put(&result, &tmp);
+             list_put(&result, &tmp);
          }
          #endif
       #else
-         c_put(&result, &zerodesc);
+         list_put(&result, &zerodesc);
       #endif
 
       return result;

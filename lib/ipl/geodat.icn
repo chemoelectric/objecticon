@@ -345,7 +345,7 @@ procedure gdt_nadcon_fwdPoint(p, a, xpt, ypt)
    close(latf)
 
    # Why is the range specified in +east and the correction in +west?
-   put(a, xpt - dlos / 3600.0, ypt + dlas / 3600.0)
+   every put(a, xpt - dlos / 3600.0 | ypt + dlas / 3600.0)
    return
 end
 
@@ -364,7 +364,7 @@ procedure gdt_nadcon_bckPoint(p, a, xpt, ypt)
       if abs(dx) > CTG_NADCON_SMALL then xguess +:= dx
       if abs(dy) > CTG_NADCON_SMALL then yguess +:= dy
       if abs(dx) <= CTG_NADCON_SMALL & abs(dy) <= CTG_NADCON_SMALL then {
-         put(a, xguess, yguess)
+         every put(a, xguess | yguess)
          return
          }
       }
@@ -409,8 +409,8 @@ procedure molodensky(dx,dy,dz,ain,fin,aout,fout)
       dout := gdt_datum_params(dy) | fail
       eout := ellipsoid(dout.eps) | fail
       a := []
-      put(a, din.dx - dout.dx, din.dy - dout.dy, din.dz - dout.dz)
-      put(a, ein[1], ein[2], eout[1], eout[2])
+      every put(a, din.dx - dout.dx | din.dy - dout.dy | din.dz - dout.dz)
+      every put(a, ein[1] | ein[2] | eout[1] | eout[2])
       return molodensky ! a
       }
    p := gdt_molo()
@@ -448,7 +448,7 @@ procedure gdt_molo_proj(p, L)
       dphi := (-p.dx * sphi * clam - p.dy * sphi * slam + p.dz * cphi +
                da * (Rn * e2 * sphi * cphi) / p.ain +
                df * (Rm / bbya + Rn * bbya) * sphi * cphi) / Rm
-      put(lllist, Math.rtod(lam + dlam), Math.rtod(phi + dphi))
+      every put(lllist, Math.rtod(lam + dlam) | Math.rtod(phi + dphi))
       }
    return lllist
 end

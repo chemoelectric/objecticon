@@ -4239,7 +4239,7 @@ int nativemenubar(wbp w, int total, int argc, dptr argv, int warg, dptr d)
        */
       tempMenu = CreateMenu();
       for(i=0; i < r; i++) {
-         c_get(hp, d);
+         list_get(hp, d);
          if (!is:string(*d)) return Error;
          if (!cnv:C_string(*d, s)) return Error;
          s = strdup(s);
@@ -4247,7 +4247,7 @@ int nativemenubar(wbp w, int total, int argc, dptr argv, int warg, dptr d)
          else
             AppendMenu(tempMenu, MF_STRING, total, s);
          ws->menuMap[total++] = s;
-         c_put(&(argv[warg]), d);
+         list_put(&(argv[warg]), d);
          }
       AppendMenu(ws->menuBar, MF_POPUP, (unsigned int)tempMenu, s2);
       warg++;
@@ -4491,7 +4491,7 @@ char *nativeselectdialog(wbp w, struct b_list *L, char *s)
       lsize  = hp->size;
 
       for(i=0; i < lsize; i++) {
-         c_get(hp, &d);
+         list_get(hp, &d);
          if (!cnv:C_string(d, s1)) return NULL;
          for(j=0; j<8; j++) {
             s3[j] = tolower(s1[j]);
@@ -4504,7 +4504,7 @@ char *nativeselectdialog(wbp w, struct b_list *L, char *s)
          else if (!strcmp(s3, "cancel")) cancelflag++;
          else if (!strcmp(s3, "retry")) retryflag = MB_RETRYCANCEL;
          else { otherflag++; return NULL; }
-         c_put(&d2, &d);
+         list_put(&d2, &d);
          }
       }
    /*

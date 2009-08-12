@@ -281,7 +281,7 @@ procedure ctg_ppt_proj(p, L)
       x := L[i]
       y := L[i+1]
       d := h31 * x + h32 * y + h33
-      put(a, (h11 * x + h12 * y + h13) / d, (h21 * x + h22 * y + h23) / d)
+      every put(a, (h11 * x + h12 * y + h13) / d | (h21 * x + h22 * y + h23) / d)
       }
 
    return a
@@ -376,7 +376,7 @@ procedure ctg_utm_proj(p, L)
       u := A^2 / 2 + (5 - T + 9 * C + 4 * C^2) * A^4 / 24 +
          (61. - 58. * T + T^2 + 600. * C - 330. * epsq) * A^6 / 720.
       y := k0 * (M - M0 + N * Math.tan(phi) * u)
-      put(ulist, zone, x, y)
+      every put(ulist, zone | x | y)
       }
    return ulist
 end
@@ -440,7 +440,7 @@ procedure ctg_iutm_proj(p, L)
       lam := lam0 + (D - (1 + 2 * T1 + C1) * D^3 / 6. +
          (5. - 2. * C1 + 28. * T1 - 3. * C1 * C1 + 
          8. * epsq + 24. * T1 * T1) * D^5 / 120.) / cos1
-      put(lllist, Math.rtod(lam), Math.rtod(phi))
+      every put(lllist, Math.rtod(lam) | Math.rtod(phi))
       }
    
    return lllist
