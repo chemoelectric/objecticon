@@ -338,14 +338,13 @@ function{1} table(x, v[n])
       result.dword = D_Table;
       result.vword.bptr = bp;
 
-      for(argc = 0; argc < n; argc += 2) {
-          if (argc + 1 < n)
-              table_insert(&result, &v[argc], &v[argc + 1]);
-          else
-              table_insert(&result, &v[argc], &nulldesc);
-      }
-      EVValD(&result, E_Tcreate);
+      if (n % 2 != 0)
+          runerr(134);
 
+      for(argc = 0; argc < n; argc += 2)
+          table_insert(&result, &v[argc], &v[argc + 1]);
+
+      EVValD(&result, E_Tcreate);
       return result;
    }
 end
