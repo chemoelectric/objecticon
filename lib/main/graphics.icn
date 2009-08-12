@@ -300,10 +300,9 @@ class Window(NoCopy)
       /y := 0
       x +:= attrib("dx")
       y +:= attrib("dy")
-      return put(pending(),
-                 eventcode,
-                 ior(pack_modkeys(\modkeys | ""), iand(x, 16rFFFF)),
-                 ior(pack_intrvl(\interval | 0), iand(y, 16rFFFF)))
+      return pending(eventcode,
+                     ior(pack_modkeys(\modkeys | ""), iand(x, 16rFFFF)),
+                     ior(pack_intrvl(\interval | 0), iand(y, 16rFFFF)))
    end
 
    # encode modifier keys
