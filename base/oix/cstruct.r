@@ -7,6 +7,60 @@
  */
 
 
+#if 0
+/*
+ * Debug funcs
+ */
+static void listdump(dptr d)
+{
+    union block *b;
+    struct b_list *l = (struct b_list *)BlkLoc(*d);
+    word i;
+
+    fprintf(stderr, "list at %p size=%ld head=%p tail=%p\n", l, (long)l->size, l->listhead, l->listtail);
+    for (b = l->listhead; 
+         BlkType(b) == T_Lelem;
+         b = b->lelem.listnext) {
+        struct b_lelem *e = (struct b_lelem *)b;
+        fprintf(stderr, "\telement block at %p nslots=%ld first=%ld used=%ld prev=%p next=%p\n",
+                e, (long)e->nslots, (long)e->first, (long)e->nused, e->listprev, e->listnext);
+
+        for (i = 0; i < e->nused; i++) {
+            word j = e->first + i;
+            if (j >= e->nslots)
+                j -= e->nslots;
+            fprintf(stderr, "\t\tSlot %ld = ", (long)j);
+            print_desc(stderr, &e->lslots[j]);
+            fprintf(stderr, "\n");
+        }
+    }
+    fflush(stderr);
+}
+
+static void setdump(dptr d)
+{
+    struct b_set *x = (struct b_set *)BlkLoc(*d);
+    int i, j;
+    fprintf(stderr, "set at %p size=%ld mask=%lx\n", x, (long)x->size, (long)x->mask);
+    for (i = 0; i < HSegs; ++i) {
+        struct b_slots *slot = x->hdir[i];
+        fprintf(stderr, "\tslot %d at %p\n", i, slot);
+        if (slot) {
+            for (j = 0; j < HSlots; ++j) {
+                struct b_selem *elem = (struct b_selem *)slot->hslots[j];
+                fprintf(stderr, "\t\tbucket chain %d at %p\n", j, elem);
+                while (elem) {
+                    fprintf(stderr, "\t\t\telem %p hash=%lu mem=", elem, (long unsigned)elem->hashnum);
+                    print_desc(stderr, &elem->setmem);
+                    fprintf(stderr, "\n");
+                    elem = (struct b_selem *)elem->clink;
+                }
+            }
+        }
+    }
+    fflush(stderr);
+}
+#endif
 
 /*
  * Create a descriptor for an empty list, with initial number of slots.
@@ -276,44 +330,12 @@ void list_push(dptr l, dptr val)
    BlkLoc(*l)->list.size++;
    }
 
-
-
-/*
- * Debug func
- */
-static void listdump(dptr d)
-{
-    union block *b;
-    struct b_list *l = (struct b_list *)BlkLoc(*d);
-    word i;
-    return;
-    fprintf(stderr, "list at %p size=%ld head=%p tail=%p\n", l, (long)l->size, l->listhead, l->listtail);
-    for (b = l->listhead; 
-         BlkType(b) == T_Lelem;
-         b = b->lelem.listnext) {
-        struct b_lelem *e = (struct b_lelem *)b;
-        fprintf(stderr, "\telement block at %p nslots=%ld first=%ld used=%ld prev=%p next=%p\n",
-                e, (long)e->nslots, (long)e->first, (long)e->nused, e->listprev, e->listnext);
-
-        for (i = 0; i < e->nused; i++) {
-            word j = e->first + i;
-            if (j >= e->nslots)
-                j -= e->nslots;
-            fprintf(stderr, "\t\tSlot %ld = ", (long)j);
-            print_desc(stderr, &e->lslots[j]);
-            fprintf(stderr, "\n");
-        }
-    }
-    fflush(stderr);
-}
 
 void list_insert(dptr l, word pos, dptr val)
 {
     word i, j, k;
     tended struct b_list *lb;
     tended struct b_lelem *le, *le2;
-
-    listdump(l);
 
     lb = (struct b_list *)BlkLoc(*l);
 
