@@ -436,9 +436,9 @@ struct progstate {
     /*
      * Function Instrumentation Fields.
      */
-    int (*Cplist)(dptr, dptr, word, word);
-    int (*Cpset)(dptr, dptr, word);
-    int (*Cptable)(dptr, dptr, word);
+    void (*Cplist)(dptr, dptr, word, word);
+    void (*Cpset)(dptr, dptr, word);
+    void (*Cptable)(dptr, dptr, word);
     int (*Interp)(int,dptr);
     int (*Cnvcset)(dptr,dptr);
     int (*Cnvucs)(dptr,dptr);
@@ -453,7 +453,7 @@ struct progstate {
     struct b_slots * (*Alcsegment)(word);
     struct b_list *(*Alclist_raw)(uword,uword);
     struct b_list *(*Alclist)(uword,uword);
-    struct b_lelem *(*Alclstb)(uword,uword,uword);
+    struct b_lelem *(*Alclstb)(uword);
     struct b_real *(*Alcreal)(double);
     struct b_record *(*Alcrecd)(struct b_constructor *);
     struct b_object *(*Alcobject)(struct b_class *);

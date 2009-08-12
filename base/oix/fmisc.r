@@ -108,15 +108,12 @@ function{1} copy(x)
             /*
              * Pass the buck to cplist to copy a list.
              */
-            if (cplist(&x, &result, (word)1, BlkLoc(x)->list.size + 1) ==Error)
-	       runerr(0);
+            cplist(&x, &result, (word)1, BlkLoc(x)->list.size + 1);
             return result;
             }
       table: {
          body {
-	    if (cptable(&x, &result, BlkLoc(x)->table.size) == Error) {
-	       runerr(0);
-	       }
+            cptable(&x, &result, BlkLoc(x)->table.size);
 	    return result;
             }
          }
@@ -126,8 +123,7 @@ function{1} copy(x)
             /*
              * Pass the buck to cpset to copy a set.
              */
-            if (cpset(&x, &result, BlkLoc(x)->set.size) == Error)
-               runerr(0);
+            cpset(&x, &result, BlkLoc(x)->set.size);
 	    return result;
             }
          }
@@ -621,8 +617,7 @@ function{1} sort(t, i)
              *  qsort to sort the descriptors.  (That was easy!)
              */
             size = BlkLoc(t)->list.size;
-            if (cplist(&t, &result, (word)1, size + 1) == Error)
-	       runerr(0);
+            cplist(&t, &result, (word)1, size + 1);
             qsort((char *)BlkLoc(result)->list.listhead->lelem.lslots,
                (int)size, sizeof(struct descrip),(QSortFncCast) anycmp);
 
@@ -952,8 +947,7 @@ function{1} sortf(t, i)
              *  qsort to sort the descriptors.  (That was easy!)
              */
             size = BlkLoc(t)->list.size;
-            if (cplist(&t, &result, (word)1, size + 1) == Error)
-               runerr(0);
+            cplist(&t, &result, (word)1, size + 1);
             sort_field = i;
             qsort((char *)BlkLoc(result)->list.listhead->lelem.lslots,
                (int)size, sizeof(struct descrip),(QSortFncCast) nthcmp);

@@ -4,7 +4,7 @@
  *  hgrow, hshrink, memb
  */
 
-static int cphash(dptr dp1, dptr dp2, word n, int tcode);
+static void cphash(dptr dp1, dptr dp2, word n, int tcode);
 
 /*
  * addmem - add a new set element block in the correct spot in
@@ -72,7 +72,7 @@ word i, j;
 /*
  * cplist(dp1,dp2,i,j) - copy sublist dp1[i:j] into dp2.
  */
-int f(dptr dp1, dptr dp2, word i, word j)
+void f(dptr dp1, dptr dp2, word i, word j)
    {
    word size, nslots;
    tended struct b_list *lp2;
@@ -93,7 +93,6 @@ int f(dptr dp1, dptr dp2, word i, word j)
    dp2->dword = D_List;
    BlkLoc(*dp2) = (union block *) lp2;
    EVValD(dp2, e);
-   return Succeeded;
    }
 #enddef
 
@@ -105,11 +104,10 @@ cplist_macro(cplist_1, E_Lcreate)
 /*
  * cpset(dp1,dp2,n) - copy set dp1 to dp2, reserving memory for n entries.
  */
-int f(dptr dp1, dptr dp2, word n)
+void f(dptr dp1, dptr dp2, word n)
    {
-   int i = cphash(dp1, dp2, n, T_Set);
+   cphash(dp1, dp2, n, T_Set);
    EVValD(dp2, e);
-   return i;
    }
 #enddef
 
@@ -117,19 +115,18 @@ cpset_macro(cpset_0, 0)
 cpset_macro(cpset_1, E_Screate)
 
 #begdef cptable_macro(f, e)
-int f(dptr dp1, dptr dp2, word n)
+void f(dptr dp1, dptr dp2, word n)
    {
-   int i = cphash(dp1, dp2, n, T_Table);
+   cphash(dp1, dp2, n, T_Table);
    BlkLoc(*dp2)->table.defvalue = BlkLoc(*dp1)->table.defvalue;
    EVValD(dp2, e);
-   return i;
    }
 #enddef
 
 cptable_macro(cptable_0, 0)
 cptable_macro(cptable_1, E_Tcreate)
 
-static int cphash(dptr dp1, dptr dp2, word n, int tcode)
+static void cphash(dptr dp1, dptr dp2, word n, int tcode)
    {
    union block *src;
    tended union block *dst;
@@ -142,9 +139,8 @@ static int cphash(dptr dp1, dptr dp2, word n, int tcode)
    /*
     * Make a new set organized like dp1, with room for n elements.
     */
-   dst = hmake(tcode, BlkLoc(*dp1)->set.mask + 1, n);
-   if (dst == NULL)
-      return Error;
+   MemProtect(dst = hmake(tcode, BlkLoc(*dp1)->set.mask + 1, n));
+
    /*
     * Copy the header and slot blocks.
     */
@@ -187,7 +183,6 @@ static int cphash(dptr dp1, dptr dp2, word n, int tcode)
    BlkLoc(*dp2) = dst;
    if (TooSparse(dst))
       hshrink(dst);
-   return Succeeded;
    }
 
 /*

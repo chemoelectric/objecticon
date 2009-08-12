@@ -428,8 +428,7 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
             i = j;
             j = t;
             }
-         if (cplist(&dx, &result, i, j) == Error)
-	    runerr(0);
+         cplist(&dx, &result, i, j);
          return result;
       }
 

@@ -373,15 +373,15 @@ alclist_macro(alclist_1,E_List,E_Lelem)
  * alclstb - allocate a list element block in the block region.
  */
 
-struct b_lelem *f(uword nslots, uword first, uword nused)
+struct b_lelem *f(uword nslots)
    {
    register struct b_lelem *blk;
    register word i;
 
    AlcVarBlk(blk, b_lelem, T_Lelem, nslots, e_lelem)
    blk->nslots = nslots;
-   blk->first = first;
-   blk->nused = nused;
+   blk->first = 0;
+   blk->nused = 0;
    blk->listprev = NULL;
    blk->listnext = NULL;
    /*

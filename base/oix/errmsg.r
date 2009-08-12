@@ -46,6 +46,7 @@ struct errtab errtab[] = {
     {130, "even number of parameters expected"},
     {131, "invalid type to section operation"},
     {132, "cset, string or ucs expected"},
+    {133, "set or table expected"},
 
 #ifdef Graphics
     {140, "window expected"},

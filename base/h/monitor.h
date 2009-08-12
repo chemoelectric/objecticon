@@ -97,6 +97,7 @@
 #define	E_Lref		'\310'		/* List reference */
 #define E_Lsub		'\311'		/* List subscript */
 #define E_Ldelete	'\357'		/* List delete */
+#define	E_Linsert	'\367'		/* List insertion */
 #define	E_Rbang		'\312'		/* Record generation */
 #define	E_Rcreate	'\313'		/* Record creation */
 #define	E_Rrand		'\314'		/* Record random reference */
@@ -259,6 +260,6 @@
 
 300 303
 345 353
-365 366 367
+365 366
 371 372 373 374 375 376 377
 */

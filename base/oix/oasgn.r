@@ -2,6 +2,9 @@
  * File: oasgn.r
  */
 
+static void tvtbl_asgn	(dptr dest, const dptr src);
+static int subs_asgn	(dptr dest, const dptr src);
+
 
 /*
  * GeneralAsgn - perform the assignment x := y, where x is known to be
@@ -23,8 +26,7 @@
               runerr(0);
         }
       tvtbl: {
-           if (tvtbl_asgn(&x, (const dptr)&y) == Error)
-              runerr(0);
+           tvtbl_asgn(&x, (const dptr)&y);
          }
       kywdany: {
 	    *VarLoc(x) = y;
@@ -438,8 +440,7 @@ const dptr src;
          k_pos = 1;
          }
       tvtbl: {
-         if (tvtbl_asgn(&tvsub->ssvar, (const dptr)&rsltstr) == Error)
-            return Error;
+         tvtbl_asgn(&tvsub->ssvar, (const dptr)&rsltstr);
          }
       default: {
          syserr("Unknown variable type");
@@ -456,7 +457,7 @@ const dptr src;
  * tvtbl_asgn - perform an assignment to a table element trapped variable,
  *  inserting the element in the table if needed.
  */
-int tvtbl_asgn(dest, src)
+void tvtbl_asgn(dest, src)
 dptr dest;
 const dptr src;
    {
@@ -505,5 +506,4 @@ const dptr src;
       if (TooCrowded(tp))		/* grow hash table if now too full */
          hgrow((union block *)tp);
       }
-   return Succeeded;
    }

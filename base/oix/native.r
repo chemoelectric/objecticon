@@ -1862,7 +1862,7 @@ end
         if (!is:list(l))
             runerr(108, l);
         create_list(BlkLoc(l)->list.size, &tmpl);
-        while (c_get(&BlkLoc(l)->list, &e)) {
+        while (c_get(&l, &e)) {
             FdStaticParam(e, fd);
             c_put(&tmpl, &e);
             FD_SET(fd, &s);
@@ -1876,7 +1876,7 @@ end
     tended struct descrip e;
 
     if (!is:null(l)) {
-        while (c_get(&BlkLoc(tmpl)->list, &e)) {
+        while (c_get(&tmpl, &e)) {
             FdStaticParam(e, fd);
             if (FD_ISSET(fd, &s)) {
                 c_put(&l, &e);

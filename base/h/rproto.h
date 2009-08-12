@@ -23,8 +23,8 @@ struct b_list	*alclist_raw_0	(uword size, uword nslots);
 struct b_list	*alclist_raw_1	(uword size, uword nslots);
 struct b_list	*alclist_0	(uword size, uword nslots);
 struct b_list	*alclist_1	(uword size, uword nslots);
-struct b_lelem	*alclstb_0	(uword nslots,uword first,uword nused);
-struct b_lelem	*alclstb_1	(uword nslots,uword first,uword nused);
+struct b_lelem	*alclstb_0	(uword nslots);
+struct b_lelem	*alclstb_1	(uword nslots);
 struct b_real	*alcreal_0	(double val);
 struct b_real	*alcreal_1	(double val);
 struct b_selem	*alcselem_0	(void);
@@ -40,8 +40,13 @@ int		anycmp		(dptr dp1,dptr dp2);
 int		bfunc		(void);
 struct b_proc	*bi_strprc	(dptr s, C_integer arity);
 void		c_exit		(int i);
-int		c_get		(struct b_list *hp, struct descrip *res);
-void		c_put		(struct descrip *l, struct descrip *val);
+
+int		c_get		(dptr l, dptr res);
+void		c_put		(dptr l, dptr val);
+void            c_push          (dptr l, dptr val);
+void            c_list_insert   (dptr l, word pos, dptr val);
+void            c_list_delete   (dptr l, word pos);
+
 int		cnv_c_dbl	(dptr s, double *d);
 int		cnv_c_int	(dptr s, C_integer *d);
 int		cnv_c_str	(dptr s, dptr d);
@@ -68,12 +73,12 @@ void		coswitch	(word *old, word *new, int first);
 #ifdef HAVE_COCLEAN
 void            coclean(word *o);
 #endif
-int		cplist_0	(dptr dp1,dptr dp2,word i,word j);
-int		cplist_1	(dptr dp1,dptr dp2,word i,word j);
-int		cpset_0		(dptr dp1,dptr dp2,word size);
-int		cpset_1		(dptr dp1,dptr dp2,word size);
-int		cptable_0	(dptr dp1,dptr dp2,word size);
-int		cptable_1	(dptr dp1,dptr dp2,word size);
+void		cplist_0	(dptr dp1,dptr dp2,word i,word j);
+void		cplist_1	(dptr dp1,dptr dp2,word i,word j);
+void		cpset_0		(dptr dp1,dptr dp2,word size);
+void		cpset_1		(dptr dp1,dptr dp2,word size);
+void		cptable_0	(dptr dp1,dptr dp2,word size);
+void		cptable_1	(dptr dp1,dptr dp2,word size);
 void		cpslots		(dptr dp1,dptr slotptr,word i, word j);
 int		csetcmp		(unsigned int *cs1,unsigned int *cs2);
 word		cvpos		(long pos,long len);
@@ -200,7 +205,6 @@ void print_dword(FILE *f, dptr d);
    wbp	alc_wbinding	(void);
    wsp	alc_winstate	(void);
    int	atobool		(char *s);
-   void	c_push		(dptr l,dptr val);  /* in fstruct.r */
    int	docircles	(wbp w, int argc, dptr argv, int fill);
    void	drawCurve	(wbp w, XPoint *p, int n);
    char	*evquesub	(wbp w, int i);
@@ -491,12 +495,10 @@ int	ripow		(double r, C_integer n, dptr rslt);
 void	rtos		(double n,dptr dp,char *s);
 int	sig_rsm		(void);
 struct b_proc *strprc	(dptr s, C_integer arity, struct progstate *p);
-int	subs_asgn	(dptr dest, const dptr src);
 int	trcmp3		(struct dpair *dp1,struct dpair *dp2);
 int	trefcmp		(dptr d1,dptr d2);
 int	tvalcmp		(dptr d1,dptr d2);
 int	tvcmp4		(struct dpair *dp1,struct dpair *dp2);
-int	tvtbl_asgn	(dptr dest, const dptr src);
 void	varargs		(dptr argp, int nargs, dptr rslt);
 
 struct b_coexpr *alccoexp (void);

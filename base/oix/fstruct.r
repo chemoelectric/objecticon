@@ -4,87 +4,82 @@
  *  set, table
  */
 
-"delete(s, x1,..., xN) - delete elements x1..N from set, table, or list s if it is there"
-" (always succeeds and returns s)."
+"delete(x1,x2) - delete element x2 from set or table or list x1 if it is there"
+" (always succeeds and returns x1)."
 
-function{1} delete(s, x[n])
-   abstract {
-      return type(s) ** (set ++ table ++ list)
-      }
+function{1} delete(s,x)
+   body {
 
    /*
     * The technique and philosophy here are the same
     *  as used in insert - see comment there.
     */
    type_case s of {
-      set:
-         body {
+     set: {
             register uword hn;
             register union block **pd;
-            int res, argc;
+            int res;
 
-	    for (argc = 0; argc < n; argc++) {
-	       hn = hash(x+argc);
-	       pd = memb(BlkLoc(s), x + argc, hn, &res);
-	       if (res == 1) {
+            hn = hash(&x);
+            pd = memb(BlkLoc(s), &x, hn, &res);
+            if (res == 1) {
 		  /*
 		   * The element is there so delete it.
 		   */
 		  *pd = (*pd)->selem.clink;
 		  (BlkLoc(s)->set.size)--;
-		  }
-	       EVValD(&s, E_Sdelete);
-	       EVValD(x+argc, E_Sval);
-	       }
+            }
+            EVValD(&s, E_Sdelete);
+            EVValD(&x, E_Sval);
             return s;
-	    }
-      table:
-         body {
+         }
+
+     table: {
+
             register union block **pd;
             register uword hn;
-            int res, argc;
+            int res;
 
-	    for (argc = 0; argc < n; argc++) {
-	       hn = hash(x+argc);
-	       pd = memb(BlkLoc(s), x+argc, hn, &res);
-	       if (res == 1) {
+            hn = hash(&x);
+            pd = memb(BlkLoc(s), &x, hn, &res);
+            if (res == 1) {
 		  /*
 		   * The element is there so delete it.
 		   */
 		  *pd = (*pd)->telem.clink;
 		  (BlkLoc(s)->table.size)--;
-		  }
-	       EVValD(&s, E_Tdelete);
-	       EVValD(x+argc, E_Tsub);
-	       }
-            return s;
             }
-      list:
-         body {
-	    tended struct b_list *hp; /* work in progress */
-	    tended struct descrip d;
+            EVValD(&s, E_Tdelete);
+            EVValD(&x, E_Tsub);
+            return s;
+         }
+     list: {
             C_integer cnv_x;
-	    int i, size, argc;
+	    word i, size;
 
-	    for (argc = 0; argc < n; argc++) {
+            /*
+             * Make sure that subscript x is in range.
+             */
+            if (!cnv:C_integer(x, cnv_x)) {
+                if (cnv:integer(x, x)) 
+                    fail;
+                runerr(101, x);
+            }
+            size = BlkLoc(s)->list.size;
+            i = cvpos((long)cnv_x, size);
+            if (i == CvtFail || i > size)
+                fail;
 
-	       if (!cnv:C_integer(x[argc], cnv_x)) runerr(101, x[argc]);
-
-	       hp = (struct b_list *)BlkLoc(s);
-	       size = hp->size;
-	       for (i = 1; i <= size; i++) {
-		  c_get(hp, &d);
-		  if (i != cnv_x)
-		     c_put(&s, &d);
-		  }
-	       EVValD(&s, E_Ldelete);
-	       EVVal(cnv_x, E_Lsub);
-	       }
+            c_list_delete(&s, i);
+            EVValD(&s, E_Ldelete);
+            EVVal(cnv_x, E_Lsub);
 	    return s;
-	    }
+         }
+
       default:
-         runerr(122, s)
-      }
+          runerr(122, s);
+     }
+   }
 end
 
 
@@ -92,12 +87,11 @@ end
  * c_get - convenient C-level access to the get function
  *  returns 0 on failure, otherwise fills in res
  */
-int c_get(hp, res)
-struct b_list *hp;
-struct descrip *res;
+int c_get(dptr l, dptr res)
 {
-   register word i;
-   register struct b_lelem *bp;
+   word i;
+   struct b_list *hp = (struct b_list *)BlkLoc(*l);
+   struct b_lelem *bp;
 
    /*
     * Fail if the list is empty.
@@ -140,29 +134,17 @@ struct descrip *res;
 #get_or_pop "(x) - " #get_or_pop " an element from the left end of list x."
 /*
  * get(L) - get an element from end of list L.
- *  Identical to pop(L).
+ *  Identical to pop(L,i).
  */
-function{0,1} get_or_pop(x,i)
-   if !def:C_integer(i, 1L) then
-      runerr(101, i)
-
-   type_case x of {
-      list: {
-	 abstract {
-	    return store[type(x).lst_elem]
-	    }
-
-	 body {
-	    int j;
-	    EVValD(&x, E_Lget);
-	    for(j=0;j<i;j++)
-	       if (!c_get((struct b_list *)BlkLoc(x), &result)) fail;
-	    return result;
-	    }
-	 }
-      default:
-	 runerr(108, x)
-      }
+function{0,1} get_or_pop(x)
+   if !is:list(x) then
+      runerr(108, x)
+   body {
+     EVValD(&x, E_Lget);
+     if (!c_get(&x, &result)) 
+         fail;
+     return result;
+   }
 end
 #enddef
 
@@ -173,232 +155,147 @@ GetOrPop(pop) /* pop(x) - pop an element from the left end of list x. */
 "key(T) - generate successive keys (entry values) from table T."
 
 function{*} key(t)
-   type_case t of {
-      table: {
-	 abstract {
-	    return store[type(t).tbl_key]
-	 }
-	 inline {
-	    tended union block *ep;
-	    struct hgstate state;
-
-	    EVValD(&t, E_Tkey);
-	    for (ep = hgfirst(BlkLoc(t), &state); ep != 0;
-		 ep = hgnext(BlkLoc(t), &state, ep)) {
-	       EVValD(&ep->telem.tref, E_Tsub);
-	       suspend ep->telem.tref;
-            }
-	    fail;
-	    }
-      }
-      list: {
-	 abstract { return integer }
-	 inline {
-	    C_integer i, sz = ((struct b_list *)BlkLoc(t))->size;
-	    for(i=1; i<=sz; i++) suspend C_integer i;
-	    fail;
-	    }
-	 }
-      record: {
-	 abstract { return string }
-	 inline {
-            struct b_constructor *c = BlkLoc(t)->record.constructor;
-            dptr fn = c->program->Fnames;
-	    C_integer i, sz = c->n_fields;
-	    for(i = 0; i < sz; i++)
-                suspend fn[c->fnums[i]];
-	    fail;
-	    }
-	 }
-      default: {
+   if !is:table(t) then
          runerr(124, t)
-      }
+   body {
+       tended union block *ep;
+       struct hgstate state;
+
+       EVValD(&t, E_Tkey);
+       for (ep = hgfirst(BlkLoc(t), &state); ep != 0;
+            ep = hgnext(BlkLoc(t), &state, ep)) {
+           EVValD(&ep->telem.tref, E_Tsub);
+           suspend ep->telem.tref;
+       }
+       fail;
    }
 end
 
 
-"insert(s, x1, ..., xN) - insert elements x1..N into set or table s if not already there."
-" If s is a table, the assigned value for element xi is x(i+1)."
-" (always succeeds and returns s)."
+"insert(x1, x2, x3) - insert element x2 into set or table or list x1 if not already there"
+" if x1 is a table or list, the assigned value for element x2 is x3."
+" (always succeeds and returns x1)."
 
-function{1} insert(s, x[n])
-   type_case s of {
+function{1} insert(s, x, y)
+    body {
+      type_case s of {
 
       set: {
-         abstract {
-            store[type(s).set_elem] = type(x).lst_elem
-            return type(s)
-            }
-
-         body {
             tended union block *bp, *bp2;
             register uword hn;
-            int res, argc;
+            int res;
             struct b_selem *se;
             register union block **pd;
 
-	    for(argc=0;argc<n;argc++) {
-	       bp = BlkLoc(s);
-	       hn = hash(x+argc);
-	       /*
-		* If x is a member of set s then res will have the value 1,
-		*  and pd will have a pointer to the pointer
-		*  that points to that member.
-		*  If x is not a member of the set then res will have
-		*  the value 0 and pd will point to the pointer
-		*  which should point to the member - thus we know where
-		*  to link in the new element without having to do any
-		*  repetitive looking.
-		*/
+            bp = BlkLoc(s);
+            hn = hash(&x);
+            /*
+             * If x is a member of set s then res will have the value 1,
+             *  and pd will have a pointer to the pointer
+             *  that points to that member.
+             *  If x is not a member of the set then res will have
+             *  the value 0 and pd will point to the pointer
+             *  which should point to the member - thus we know where
+             *  to link in the new element without having to do any
+             *  repetitive looking.
+             */
 
-	       /* get this now because can't tend pd */
-	       MemProtect(se = alcselem());
+            /* get this now because can't tend pd */
+            MemProtect(se = alcselem());
 
-	       pd = memb(bp, x+argc, hn, &res);
-	       if (res == 0) {
-		  /*
-		   * The element is not in the set - insert it.
-		   */
-                  se->setmem = x[argc];
-                  se->hashnum = hn;
-		  addmem((struct b_set *)bp, se, pd);
-		  if (TooCrowded(bp))
-		     hgrow(bp);
-		  }
-	       else
-		  dealcblk((union block *)se);
-
-	       EVValD(&s, E_Sinsert);
-	       EVValD(x+argc, E_Sval);
-	       }
-            return s;
+            pd = memb(bp, &x, hn, &res);
+            if (res == 0) {
+                /*
+                 * The element is not in the set - insert it.
+                 */
+                se->setmem = x;
+                se->hashnum = hn;
+                addmem((struct b_set *)bp, se, pd);
+                if (TooCrowded(bp))
+                    hgrow(bp);
             }
+            else
+                dealcblk((union block *)se);
+
+            EVValD(&s, E_Sinsert);
+            EVValD(&x, E_Sval);
+            return s;
          }
 
          list: {
-            abstract {
-                store[type(s).lst_elem] = type(x).lst_elem
-                    return type(s)
-                    }
-            body {
                 tended struct b_list *hp; /* work in progress */
                 tended struct descrip d;
                 C_integer cnv_x;
-                word i, j, size, argc;
+                word i, size;
 
-                for(argc=0;argc<n;argc+=2) {
-                    hp = (struct b_list *)BlkLoc(s);
-                    /*
-                     * Make sure that subscript x is in range.
-                     */
-                    if (!cnv:C_integer(x[argc], cnv_x)) {
-                        if (cnv:integer(x[argc],x[argc])) fail;
-                        runerr(101, x[argc]);
-                    }
-                    size = hp->size;
-                    i = cvpos((long)cnv_x, size);
-                    if (i == CvtFail || i > size + 1)
+                hp = (struct b_list *)BlkLoc(s);
+                /*
+                 * Make sure that subscript x is in range.
+                 */
+                if (!cnv:C_integer(x, cnv_x)) {
+                    if (cnv:integer(x, x)) 
                         fail;
-                    if (i == size + 1) {
-                        /*
-                         * Put the element to insert on the back
-                         */
-                        if (argc+1 < n)
-                            c_put(&s, x+argc+1);
-                        else
-                            c_put(&s, &nulldesc);
-                    } else { /* i <= size */
-                        /*
-                         * Perform i-1 rotations so that the position to be inserted
-                         * is at the front/back
-                         */
-                        for (j = 1; j < i; j++) {
-                            c_get(hp, &d);
-                            c_put(&s, &d);
-                        }
-
-                        /*
-                         * Put the element to insert on the back
-                         */
-                        if (argc+1 < n)
-                            c_put(&s, x+argc+1);
-                        else
-                            c_put(&s, &nulldesc);
-
-                        /*
-                         * Perform size - (i-1) more rotations to slide everything back
-                         * where it was originally
-                         */
-                        for (j = i; j <= size; j++) {
-                            c_get(hp, &d);
-                            c_put(&s, &d);
-                        }
-                    }
+                    runerr(101, x);
                 }
+                size = hp->size;
+                i = cvpos((long)cnv_x, size);
+                if (i == CvtFail || i > size + 1)
+                    fail;
+                if (i == size + 1) {
+                    /*
+                     * Put the element to insert on the back
+                     */
+                    c_put(&s, &y);
+                } else  /* i <= size */
+                    c_list_insert(&s, i, &y);
+                EVValD(&s, E_Linsert);
+                EVVal(cnv_x, E_Lsub);
                 return s;
-            }
         }
       table: {
-         abstract {
-            store[type(s).tbl_key] = type(x).lst_elem
-            store[type(s).tbl_val] = type(x).lst_elem
-            return type(s)
-            }
-
-         body {
             tended union block *bp, *bp2;
             union block **pd;
             struct b_telem *te;
             register uword hn;
-            int res, argc;
+            int res;
 
             bp = BlkLoc(s);
+            hn = hash(&x);
 
-	    for(argc=0; argc<n; argc+=2) {
+            /* get this now because can't tend pd */
+            MemProtect(te = alctelem());
 
-	       hn = hash(x+argc);
-
-	       /* get this now because can't tend pd */
-	       MemProtect(te = alctelem());
-
-	       pd = memb(bp, x+argc, hn, &res);	/* search table for key */
-	       if (res == 0) {
-		  /*
-		   * The element is not in the table - insert it.
-		   */
-		  bp->table.size++;
-		  te->clink = *pd;
-		  *pd = (union block *)te;
-		  te->hashnum = hn;
-		  te->tref = x[argc];
-		  if (argc+1 < n)
-		     te->tval = x[argc+1];
-		  else
-		     te->tval = nulldesc;
-		  if (TooCrowded(bp))
-		     hgrow(bp);
-		  }
-	       else {
-		  /*
-		   * We found an existing entry; just change its value.
-		   */
-		  dealcblk((union block *)te);
-		  te = (struct b_telem *) *pd;
-		  if (argc+1 < n)
-		     te->tval = x[argc+1];
-		  else
-		     te->tval = nulldesc;
-		  }
-
-	       EVValD(&s, E_Tinsert);
-	       EVValD(x+argc, E_Tsub);
-	       }
-            return s;
+            pd = memb(bp, &x, hn, &res);	/* search table for key */
+            if (res == 0) {
+                /*
+                 * The element is not in the table - insert it.
+                 */
+                bp->table.size++;
+                te->clink = *pd;
+                *pd = (union block *)te;
+                te->hashnum = hn;
+                te->tref = x;
+                te->tval = y;
+                if (TooCrowded(bp))
+                    hgrow(bp);
             }
+            else {
+                /*
+                 * We found an existing entry; just change its value.
+                 */
+                dealcblk((union block *)te);
+                te = (struct b_telem *) *pd;
+                te->tval = y;
+            }
+            EVValD(&s, E_Tinsert);
+            EVValD(&x, E_Tsub);
+            return s;
          }
+
       default:
          runerr(122, s);
-      }
+    }
+  }
 end
 
 
@@ -407,10 +304,6 @@ end
 function{1} list(n, x)
    if !def:C_integer(n, 0L) then
       runerr(101, n)
-
-   abstract {
-      return new list(type(x))
-      }
 
    body {
       tended struct b_list *hp;
@@ -458,13 +351,9 @@ end
 " otherwise."
 
 function{0,1} member(s, x)
-   type_case s of {
-
-      set: {
-         abstract {
-            return type(x) ** store[type(s).set_elem]
-            }
-         inline {
+   body {
+     type_case s of {
+        set: {
             int res;
             register uword hn;
 
@@ -477,13 +366,8 @@ function{0,1} member(s, x)
                return x;
             else
                fail;
-            }
          }
       table: {
-         abstract {
-            return type(x) ** store[type(s).tbl_key]
-            }
-         inline {
             int res;
             register uword hn;
 
@@ -496,87 +380,63 @@ function{0,1} member(s, x)
                return x;
             else
                fail;
-            }
-         }
-      list: {
-	 abstract {
-	    return store[type(x).lst_elem]
-	    }
-	 inline {
-            int size, i;
-	    C_integer cnv_x;
-	    size = ((struct b_list *)BlkLoc(s))->size;
-            if (!(cnv:C_integer(x, cnv_x))) 
-                fail;
-            i = cvpos(cnv_x, size);
-            if (i == CvtFail || i > size)
-                fail;
-            else
-                return x;
-	    }
-	 }
+      }
 
       default:
-         runerr(122, s)
-      }
+          runerr(133, s);
+    }
+  }
 end
 
 
 
-"pull(L,n) - pull an element from end of list L."
+"pull(L) - pull an element from end of list L."
 
-function{0,1} pull(x,n)
-   if !def:C_integer(n, 1L) then
-      runerr(101, n)
+function{0,1} pull(x)
    /*
     * x must be a list.
     */
    if !is:list(x) then
       runerr(108, x)
-   abstract {
-      return store[type(x).lst_elem]
-      }
 
    body {
-      register word i, j;
+      register word i;
       register struct b_list *hp;
       register struct b_lelem *bp;
 
-      for(j=0;j<n;j++) {
-	 EVValD(&x, E_Lpull);
+      EVValD(&x, E_Lpull);
 
-	 /*
-	  * Point at list header block and fail if the list is empty.
-	  */
-	 hp = (struct b_list *) BlkLoc(x);
-	 if (hp->size <= 0)
-	    fail;
+      /*
+       * Point at list header block and fail if the list is empty.
+       */
+      hp = (struct b_list *) BlkLoc(x);
+      if (hp->size <= 0)
+          fail;
 
-	 /*
-	  * Point bp at the last list element block.  If the last block has no
-	  *  elements in use, point bp at the previous list element block.
-	  */
-	 bp = (struct b_lelem *) hp->listtail;
-	 if (bp->nused <= 0) {
-	    bp = (struct b_lelem *) bp->listprev;
-	    hp->listtail = (union block *) bp;
-	    bp->listnext = (union block *) hp;
-	    }
-
-	 /*
-	  * Set i to position of last element and assign the element to
-	  *  result for return.  Decrement the usage count for the block
-	  *  and the size of the list.
-	  */
-	 i = bp->first + bp->nused - 1;
-	 if (i >= bp->nslots)
-	    i -= bp->nslots;
-	 result = bp->lslots[i];
-	 bp->nused--;
-	 hp->size--;
-	 }
-      return result;
+      /*
+       * Point bp at the last list element block.  If the last block has no
+       *  elements in use, point bp at the previous list element block.
+       */
+      bp = (struct b_lelem *) hp->listtail;
+      if (bp->nused <= 0) {
+          bp = (struct b_lelem *) bp->listprev;
+          hp->listtail = (union block *) bp;
+          bp->listnext = (union block *) hp;
       }
+
+      /*
+       * Set i to position of last element and assign the element to
+       *  result for return.  Decrement the usage count for the block
+       *  and the size of the list.
+       */
+      i = bp->first + bp->nused - 1;
+      if (i >= bp->nslots)
+          i -= bp->nslots;
+      result = bp->lslots[i];
+      bp->nused--;
+      hp->size--;
+      return result;
+   }
 end
 
 
@@ -589,8 +449,7 @@ dptr val;
 {
    register word i = 0;
    register struct b_lelem *bp; /* does not need to be tended */
-   static int two = 2;		/* some compilers generate bad code for
-				   division by a constant that's a power of 2*/
+
    /*
     * Point bp at the first list-element block.
     */
@@ -606,7 +465,7 @@ dptr val;
       /*
        * Set i to the size of block to allocate.
        */
-      i = BlkLoc(*l)->list.size / two;
+      i = BlkLoc(*l)->list.size / 2;
       if (i < MinListSlots)
          i = MinListSlots;
 
@@ -614,7 +473,7 @@ dptr val;
        * Allocate a new list element block.  If the block can't
        *  be allocated, try smaller blocks.
        */
-      while ((bp = alclstb(i, (word)0, (word)0)) == NULL) {
+      while ((bp = alclstb(i)) == NULL) {
          i /= 4;
          if (i < MinListSlots)
             fatalerr(0, NULL);
@@ -645,7 +504,7 @@ dptr val;
 
 
 
-"push(L, x1, ..., xN) - push x onto beginning of list L."
+"push(L, x1, ..., xN) - push values onto beginning of list L."
 
 function{1} push(x, vals[n])
    /*
@@ -653,18 +512,12 @@ function{1} push(x, vals[n])
     */
    if !is:list(x) then
       runerr(108, x)
-   abstract {
-      store[type(x).lst_elem] = type(vals)
-      return type(x)
-      }
 
    body {
       tended struct b_list *hp;
       dptr dp;
       register word i, val, num;
       register struct b_lelem *bp; /* does not need to be tended */
-      static int two = 2;	/* some compilers generate bad code for
-				   division by a constant that's a power of 2*/
 
       if (n == 0) {
 	 dp = &nulldesc;
@@ -698,7 +551,7 @@ function{1} push(x, vals[n])
 	    /*
 	     * Set i to the size of block to allocate.
 	     */
-	    i = hp->size / two;
+	    i = hp->size / 2;
 	    if (i < MinListSlots)
 	       i = MinListSlots;
 
@@ -706,10 +559,10 @@ function{1} push(x, vals[n])
 	     * Allocate a new list element block.  If the block can't
 	     *  be allocated, try smaller blocks.
 	     */
-	    while ((bp = alclstb(i, (word)0, (word)0)) == NULL) {
+	    while ((bp = alclstb(i)) == NULL) {
 	       i /= 4;
 	       if (i < MinListSlots)
-		  runerr(0);
+                   fatalerr(0, NULL);
 	       }
 
 	    hp->listhead->lelem.listprev = (union block *) bp;
@@ -745,15 +598,162 @@ function{1} push(x, vals[n])
 end
 
 
+static void listdump(dptr d)
+{
+    union block *b;
+    struct b_list *l = (struct b_list *)BlkLoc(*d);
+    word i;
+    return;
+    fprintf(stderr, "list at %p size=%ld head=%p tail=%p\n", l, (long)l->size, l->listhead, l->listtail);
+    for (b = l->listhead; 
+         BlkType(b) == T_Lelem;
+         b = b->lelem.listnext) {
+        struct b_lelem *e = (struct b_lelem *)b;
+        fprintf(stderr, "\telement block at %p nslots=%ld first=%ld used=%ld prev=%p next=%p\n",
+                e, (long)e->nslots, (long)e->first, (long)e->nused, e->listprev, e->listnext);
+
+        for (i = 0; i < e->nused; i++) {
+            word j = e->first + i;
+            if (j >= e->nslots)
+                j -= e->nslots;
+            fprintf(stderr, "\t\tSlot %ld = ", (long)j);
+            print_desc(stderr, &e->lslots[j]);
+            fprintf(stderr, "\n");
+        }
+    }
+    fflush(stderr);
+}
+
+void c_list_insert(dptr l, word pos, dptr val)
+{
+    word i, j, k;
+    tended struct b_list *lb;
+    tended struct b_lelem *le, *le2;
+
+    listdump(l);
+
+    lb = (struct b_list *)BlkLoc(*l);
+
+    if (pos < 1 || pos > lb->size)
+        syserr("Invalid pos to c_list_insert");
+    --pos;
+
+    le = (struct b_lelem *)lb->listhead;
+
+    while (pos >= le->nused) {
+        pos -= le->nused;
+        le = (struct b_lelem *)le->listnext;
+    }
+    if (le->nused < le->nslots) {
+        /*fprintf(stderr, "Insert at block %p pos=%d\n",le,pos);fflush(stderr);*/
+        /* Decrement first */
+        --le->first;
+        if (le->first < 0)
+            le->first = le->nslots - 1;
+        j = le->first;
+        for (i = 0; i < pos; ++i) {
+            k = j + 1;
+            if (k >= le->nslots)
+                k = 0;
+            le->lslots[j] = le->lslots[k];
+            j = k;
+        }
+        le->lslots[j] = *val;
+        ++le->nused;
+    } else {
+        /*
+         * Allocate a new list element block.
+         */
+        i = Min(le->nslots + MinListSlots, 2 * le->nslots);
+        MemProtect(le2 = alclstb(i));
+
+        /* Copy elements to the new one, inserting the new one in the right place. */
+        j = le->first;
+        k = 0;
+        for (i = 0; i < le->nused; ++i) {
+            if (i == pos)
+                le2->lslots[k++] = *val;
+            le2->lslots[k++] = le->lslots[j++];
+            if (j >= le->nslots)
+                j = 0;
+        }
+        le2->listprev = le->listprev;
+        le2->listnext = le->listnext;
+        le2->first = 0;
+        le2->nused = le->nused + 1;
+        if (lb->listhead == (union block *)le)
+            lb->listhead = (union block *)le2;
+        else
+            le->listprev->lelem.listnext = (union block *)le2;
+        if (lb->listtail == (union block *)le)
+            lb->listtail = (union block *)le2;
+        else
+            le->listnext->lelem.listprev = (union block *)le2;
+    }
+
+    ++lb->size;
+    listdump(l);
+}
+
+void c_list_delete(dptr l, word pos)
+{
+    word i, j, k, n;
+    struct b_list *lb;
+    struct b_lelem *le;
+
+    lb = (struct b_list *)BlkLoc(*l);
+
+    if (pos < 1 || pos > lb->size)
+        syserr("Invalid pos to c_list_delete");
+    --pos;
+
+    le = (struct b_lelem *)lb->listhead;
+
+    while (pos >= le->nused) {
+        pos -= le->nused;
+        le = (struct b_lelem *)le->listnext;
+    }
+    j = le->first + pos;
+    if (j >= le->nslots)
+        j -= le->nslots;
+    n = le->nused - pos - 1;
+    for (i = 0; i < n; ++i) {
+        k = j + 1;
+        if (k >= le->nslots)
+            k = 0;
+        le->lslots[j] = le->lslots[k];
+        j = k;
+    }
+    --le->nused;
+
+    /* Unlink this block if empty and not the only block */
+    if (le->nused == 0 && 
+        !(lb->listhead == (union block *)le &&
+          lb->listtail == (union block *)le)) {
+        if (lb->listhead == (union block *)le)
+            lb->listhead = le->listnext;
+        else
+            le->listprev->lelem.listnext = le->listnext;
+
+        if (lb->listtail == (union block *)le)
+            lb->listtail = le->listprev;
+        else
+            le->listnext->lelem.listprev = le->listprev;
+    }
+
+    --lb->size;    
+    listdump(l);
+
+}
+
+
 /*
  * c_put - C-level, nontending list put function
  */
-void c_put(struct descrip *l, struct descrip *val)
+void c_put(dptr l, dptr val)
 {
    register word i = 0;
    register struct b_lelem *bp;  /* does not need to be tended */
-   static int two = 2;		/* some compilers generate bad code for
-				   division by a constant that's a power of 2*/
 
    /*
     * Point hp at the list-header block and bp at the last
@@ -771,7 +771,7 @@ void c_put(struct descrip *l, struct descrip *val)
       /*
        * Set i to the size of block to allocate.
        */
-      i = ((struct b_list *)BlkLoc(*l))->size / two;
+      i = ((struct b_list *)BlkLoc(*l))->size / 2;
       if (i < MinListSlots)
          i = MinListSlots;
 
@@ -779,7 +779,7 @@ void c_put(struct descrip *l, struct descrip *val)
        * Allocate a new list element block.  If the block can't
        *  be allocated, try smaller blocks.
        */
-      while ((bp = alclstb(i, (word)0, (word)0)) == NULL) {
+      while ((bp = alclstb(i)) == NULL) {
          i /= 4;
          if (i < MinListSlots)
             fatalerr(0, NULL);
@@ -817,18 +817,13 @@ function{1} put(x, vals[n])
     */
    if !is:list(x) then
       runerr(108, x)
-   abstract {
-      store[type(x).lst_elem] = type(vals)
-      return type(x)
-      }
 
    body {
       tended struct b_list *hp;
       dptr dp;
       register word i, val, num;
       register struct b_lelem *bp;  /* does not need to be tended */
-      static int two = 2;	/* some compilers generate bad code for
-				   division by a constant that's a power of 2*/
+
       if (n == 0) {
 	 dp = &nulldesc;
 	 num = 1;
@@ -862,7 +857,7 @@ function{1} put(x, vals[n])
 	     *  minimum and maximum and including enough space for
 	     *  the rest of this call to put() if called with varargs.
 	     */
-	    i = hp->size / two;
+	    i = hp->size / 2;
 	    if (i < MinListSlots)
 	       i = MinListSlots;
 	    if (i < n - val)
@@ -872,10 +867,10 @@ function{1} put(x, vals[n])
 	     * Allocate a new list element block.  If the block can't
 	     *  be allocated, try smaller blocks.
 	     */
-	    while ((bp = alclstb(i, (word)0, (word)0)) == NULL) {
+	    while ((bp = alclstb(i)) == NULL) {
 	       i /= 4;
 	       if (i < MinListSlots)
-		  runerr(0);
+                   fatalerr(0, NULL);
 	       }
 
 	    hp->listtail->lelem.listnext = (union block *) bp;
@@ -923,10 +918,7 @@ function{1} set(x[n])
      /*
       * Make a set.
       */
-     ps = hmake(T_Set, (word)0, n);
-     if (ps == NULL) 
-         runerr(0);
-
+     MemProtect(ps = hmake(T_Set, (word)0, n));
      result.dword = D_Set;
      result.vword.bptr = ps;
 
@@ -950,7 +942,7 @@ function{1} set(x[n])
 end
 
 
-"table(x) - create a table with default value x, and initial mappings"
+"table(x,k1,v1,k2,v2...) - create a table with default value x, and initial mappings"
 "v[0]->v[1], v[2]->v[3] etc."
 function{1} table(x, v[n])
    body {
@@ -960,9 +952,7 @@ function{1} table(x, v[n])
       register uword hn;
       int res, argc;
    
-      bp = hmake(T_Table, (word)0, (word)n);
-      if (bp == NULL)
-         runerr(0);
+      MemProtect(bp = hmake(T_Table, (word)0, (word)n));
       bp->table.defvalue = x;
       result.dword = D_Table;
       result.vword.bptr = bp;
@@ -1014,12 +1004,10 @@ end
 "keyof(s, x) - given a table or list s and a value x, generate the keys k such that s[k] === x"
 
 function{*} keyof(s,x)
-   declare {
+   body {
       tended union block *ep;
-   }
-   type_case s of {
-      list: {
-	 body {
+      type_case s of {
+        list: {
             C_integer index = 1, i, j;
             for (ep = BlkLoc(s)->list.listhead;
 		 BlkType(ep) == T_Lelem;
@@ -1035,9 +1023,8 @@ function{*} keyof(s,x)
             }
             fail;
          }
-      }
-      table: {
-         body {
+
+        table: {
 	    struct hgstate state;
 	    for (ep = hgfirst(BlkLoc(s), &state); ep != 0;
 		 ep = hgnext(BlkLoc(s), &state, ep)) {
@@ -1046,8 +1033,9 @@ function{*} keyof(s,x)
             }
 	    fail;
          }
+
+          default:
+              runerr(127, s);
       }
-      default:
-         runerr(127, s)
    }
 end

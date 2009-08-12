@@ -56,9 +56,8 @@ operator{1} -- diff(x,y)
          /*
           * Make a new set based on the size of x.
           */
-         dstp = hmake(T_Set, (word)0, BlkLoc(x)->set.size);
-         if (dstp == NULL)
-            runerr(0);
+         MemProtect(dstp = hmake(T_Set, (word)0, BlkLoc(x)->set.size));
+
          /*
           * For each element in set x if it is not in set y
           *  copy it directly into the result set.
@@ -168,10 +167,8 @@ operator{1} ** inter(x,y)
          /*
           * Make a new set the size of the smaller argument set.
           */
-         dstp = hmake(T_Set, (word)0,
-            Min(BlkLoc(x)->set.size, BlkLoc(y)->set.size));
-         if (dstp == NULL)
-            runerr(0);
+         MemProtect(dstp = hmake(T_Set, (word)0,
+                                 Min(BlkLoc(x)->set.size, BlkLoc(y)->set.size)));
          /*
           * Using the smaller of the two sets as the source
           *  copy directly into the result each of its elements
@@ -279,14 +276,10 @@ operator{1} ++ union(x,y)
          /*
           * Copy x and ensure there's room for *x + *y elements.
           */
-         if (cpset(&x, &result, BlkLoc(x)->set.size + BlkLoc(y)->set.size)
-            == Error) {
-            runerr(0);
-            }
+         cpset(&x, &result, BlkLoc(x)->set.size + BlkLoc(y)->set.size);
 
-         if(!(reserve(Blocks,BlkLoc(y)->set.size*(2*sizeof(struct b_selem))))){
-            runerr(0);
-            }
+         MemProtect(reserve(Blocks,BlkLoc(y)->set.size*(2*sizeof(struct b_selem))));
+
          /*
           * Copy each element from y into the result, if not already there.
 	  *
