@@ -43,7 +43,6 @@ operator{*} ! bang(underef x -> dx)
          }
 
       table: {
-            struct b_tvtbl *tp;
             struct hgstate state;
 
             EVValD(&dx, E_Tbang);
@@ -54,11 +53,8 @@ operator{*} ! bang(underef x -> dx)
              */
 	    for (ep = hgfirst(BlkLoc(dx), &state); ep != 0;
 	       ep = hgnext(BlkLoc(dx), &state, ep)) {
-
                   EVValD(&ep->telem.tval, E_Tval);
-
-		  MemProtect(tp = alctvtbl(&dx, &ep->telem.tref, ep->telem.hashnum));
-		  suspend tvtbl(tp);
+                  suspend struct_var(&ep->telem.tval, &ep->telem);
                   }
             }
 
@@ -255,7 +251,6 @@ operator{0,1} ? random(underef x -> dx)
             register C_integer i, j, n;
             union block *ep, *bp;   /* doesn't need to be tended */
 	    struct b_slots *seg;
-	    struct b_tvtbl *tp;
 
             bp = BlkLoc(dx);
             if ((val = bp->table.size) == 0)
@@ -277,8 +272,7 @@ operator{0,1} ? random(underef x -> dx)
 		       BlkType(ep) == T_Telem;
 		       ep = ep->telem.clink)
                      if (--n <= 0) {
-			MemProtect(tp = alctvtbl(&dx, &ep->telem.tref, ep->telem.hashnum));
-			return tvtbl(tp);
+                        return struct_var(&ep->telem.tval, &ep->telem);
 			}
             syserr("table reference out of bounds in random");
          }
