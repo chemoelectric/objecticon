@@ -157,6 +157,7 @@ int list_get(dptr l, dptr res)
    bp->first = i;
    bp->nused--;
    hp->size--;
+   hp->changecount++;
 
    return 1;
 }
@@ -268,6 +269,7 @@ int list_pull(dptr l, dptr res)
     *res = bp->lslots[i];
     bp->nused--;
     hp->size--;
+    hp->changecount++;
 
     return 1;
 }
@@ -328,29 +330,23 @@ void list_push(dptr l, dptr val)
    bp->first = i;
    bp->nused++;
    BlkLoc(*l)->list.size++;
+   BlkLoc(*l)->list.changecount++;
    }
 
 
-void list_insert(dptr l, word pos, dptr val)
+void list_insert(dptr l, word index, dptr val)
 {
-    word i, j, k;
+    word i, j, k, pos;
     tended struct b_list *lb;
     tended struct b_lelem *le, *le2;
 
     lb = (struct b_list *)BlkLoc(*l);
 
-    if (pos < 1 || pos > lb->size)
-        syserr("Invalid pos to list_insert");
-    --pos;
+    le = get_lelem_for_index(lb, index, &pos);
+    if (!le)
+        syserr("Invalid index to list_insert");
 
-    le = (struct b_lelem *)lb->listhead;
-
-    while (pos >= le->nused) {
-        pos -= le->nused;
-        le = (struct b_lelem *)le->listnext;
-    }
     if (le->nused < le->nslots) {
-        /*fprintf(stderr, "Insert at block %p pos=%d\n",le,pos);fflush(stderr);*/
         /* Decrement first */
         --le->first;
         if (le->first < 0)
@@ -397,26 +393,20 @@ void list_insert(dptr l, word pos, dptr val)
     }
 
     ++lb->size;
+    ++lb->changecount;
 }
 
-void list_del(dptr l, word pos)
+void list_del(dptr l, word index)
 {
-    word i, j, k, n;
+    word pos, i, j, k, n;
     struct b_list *lb;
     struct b_lelem *le;
 
     lb = (struct b_list *)BlkLoc(*l);
+    le = get_lelem_for_index(lb, index, &pos);
+    if (!le)
+        syserr("Invalid index to list_del");
 
-    if (pos < 1 || pos > lb->size)
-        syserr("Invalid pos to list_del");
-    --pos;
-
-    le = (struct b_lelem *)lb->listhead;
-
-    while (pos >= le->nused) {
-        pos -= le->nused;
-        le = (struct b_lelem *)le->listnext;
-    }
     j = le->first + pos;
     if (j >= le->nslots)
         j -= le->nslots;
@@ -445,6 +435,7 @@ void list_del(dptr l, word pos)
             le->listnext->lelem.listprev = le->listprev;
     }
 
+    ++lb->changecount;
     --lb->size;    
 }
 
@@ -505,4 +496,5 @@ void list_put(dptr l, dptr val)
     */
    bp->nused++;
    ((struct b_list *)BlkLoc(*l))->size++;
+   ((struct b_list *)BlkLoc(*l))->changecount++;
 }

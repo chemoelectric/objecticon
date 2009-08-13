@@ -554,3 +554,89 @@ int invaluemask(struct progstate *p, int evcode, struct descrip *val)
         return 1;
     }
 }
+
+/*
+ * Get the b_lelem in which index (one-based) resides.  Returns null
+ * if not found, otherwise returns the element and sets *pos to the
+ * notional index (zero-based) in that element (the actual position of
+ * the element is (e->first+pos) % e->nslots.
+ */
+struct b_lelem *get_lelem_for_index(struct b_list *lb, word index, word *pos)
+{
+    struct b_lelem *le = (struct b_lelem *)lb->listhead;
+    --index;  /* Make zero-based */
+    if (index < 0)
+        syserr("Invalid index to get_lelem_for_index");
+    if (index >= lb->size)
+        return 0;
+    while (index >= le->nused) {
+        index -= le->nused;
+        le = (struct b_lelem *)le->listnext;
+        /* Wrapped around, shouldn't ever happen since we checked size above... */
+        if (BlkType(le) != T_Lelem)
+            return 0;
+    }
+    *pos = index;
+    return le;
+}
+
+
+struct b_lelem *lgfirst(struct b_list *lb, struct lgstate *state)
+{
+    struct b_lelem *le;
+    word pos;
+    le = get_lelem_for_index(lb, 1, &pos);
+    if (!le)
+        return 0;
+    state->listindex = 1;
+    state->changecount = lb->changecount;
+    state->blockpos = 0;
+    state->result = le->first;
+    return le;
+}
+
+struct b_lelem *lgnext(struct b_list *lb, struct lgstate *state, struct b_lelem *le)
+{
+    ++state->listindex;
+    if (state->changecount == lb->changecount) {
+        /*
+         * List structure unchanged, so just move to next element.
+         */
+        ++state->blockpos;
+        if (state->blockpos < le->nused) {
+            state->result = le->first + state->blockpos;
+            if (state->result >= le->nslots)
+                state->result -= le->nslots;
+            return le;
+        } else {
+            /* End of current block; find the next non-empty one and return
+             * the first element.
+             */
+            for (;;) {
+                le = (struct b_lelem *)le->listnext;
+                if (BlkType(le) != T_Lelem)  /* End of list */
+                    return 0;
+                if (le->nused > 0) {
+                    state->blockpos = 0;
+                    state->result = le->first;
+                    return le;
+                }
+            }
+        }
+    } else {
+        /*
+         * List structure changed - refresh the state values based on
+         * the current list index.
+         */
+        word pos;
+        le = get_lelem_for_index(lb, state->listindex, &pos);
+        if (!le)
+            return 0;
+        state->changecount = lb->changecount;
+        state->blockpos = pos;
+        state->result = le->first + pos;
+        if (state->result >= le->nslots)
+            state->result -= le->nslots;
+        return le;
+    }
+}

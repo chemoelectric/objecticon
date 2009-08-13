@@ -30,32 +30,16 @@ operator{*} ! bang(underef x -> dx)
      }
 
       list: {
-#if E_Lsub
-            word xi = 0;
-#endif					/* E_Lsub */
+            struct lgstate state;
+            tended struct b_lelem *le;
+
             EVValD(&dx, E_Lbang);
 
-            /*
-             * x is a list.  Chain through each list element block and for
-             * each one, suspend with a variable pointing to each
-             * element contained in the block.
-             */
-            for (ep = BlkLoc(dx)->list.listhead;
-		 BlkType(ep) == T_Lelem;
-                 ep = ep->lelem.listnext){
-               for (i = 0; i < ep->lelem.nused; i++) {
-                  j = ep->lelem.first + i;
-                  if (j >= ep->lelem.nslots)
-                     j -= ep->lelem.nslots;
-
-#if E_Lsub
-		  ++xi;
-		  EVVal(xi, E_Lsub);
-#endif					/* E_Lsub */
-
-                  suspend struct_var(&ep->lelem.lslots[j], ep);
-                  }
-               }
+            for (le = lgfirst(&BlkLoc(dx)->list, &state); le;
+                 le = lgnext(&BlkLoc(dx)->list, &state, le)) {
+                EVVal(state.listindex, E_Lsub);
+                suspend struct_var(&le->lslots[state.result], le);
+            }
          }
 
       table: {
@@ -534,7 +518,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
    type_case dx of {
       list: {
          word i, j;
-         register union block *bp; /* doesn't need to be tended */
+         struct b_lelem *le;        /* doesn't need to be tended */
          struct b_list *lp;        /* doesn't need to be tended */
          /*
           * Make sure that y is a C integer.
@@ -561,28 +545,17 @@ operator{0,1} [] subsc(underef x -> dx,y)
           EVVal(i, E_Lsub);
 
           /*
-           * Locate the list-element block containing the desired
-           *  element.
-           */
-          bp = lp->listhead;
-          j = 1;
-          /*
-           * y is in range, so bp can never be null here. if it was, a memory
-           * violation would occur in the code that follows, anyhow, so
-           * exiting the loop on a NULL bp makes no sense.
-           */
-          while (i >= j + bp->lelem.nused) {
-              j += bp->lelem.nused;
-              bp = bp->lelem.listnext;
-          }
-
-          /*
            * Locate the desired element and return a pointer to it.
            */
-          i += bp->lelem.first - j;
-          if (i >= bp->lelem.nslots)
-              i -= bp->lelem.nslots;
-          return struct_var(&bp->lelem.lslots[i], bp);
+          le = get_lelem_for_index(lp, i, &j);
+          if (!le)
+              syserr("Couldn't find element for valid index in list");
+          /* j is the logical index in the element block; convert to
+           * the actual position. */
+          j += le->first;
+          if (j >= le->nslots)
+              j -= le->nslots;
+          return struct_var(&le->lslots[j], le);
        }
 
 

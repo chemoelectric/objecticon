@@ -88,6 +88,7 @@ struct b_list {			/* list-header block */
     word title;			/*   T_List */
     word size;			/*   current list size */
     word id;			/*   identification number */
+    word changecount;           /*   count of structure changes (see lgstate) */
     union block *listhead;	/*   pointer to first list-element block */
     union block *listtail;	/*   pointer to last list-element block */
 };
@@ -276,6 +277,16 @@ struct hgstate {		/* hashed-structure generator state */
     word tmask;			/* structure mask before suspension */
     word sgmask[HSegs];		/* mask in use when the segment was created */
     uword sghash[HSegs];		/* hashnum in process when seg was created */
+};
+
+/*
+ * Structure for keeping list generator state across a suspension.
+ */
+struct lgstate {		/* list generator state */
+    word listindex;		/* notional list index */
+    word changecount;		/* last changecount of subject list */
+    word blockpos;  		/* index in current element block */
+    word result;		/* computed position of current element in element block */
 };
 
 

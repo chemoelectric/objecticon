@@ -319,6 +319,7 @@ struct b_list *f(uword size, uword nslots)
    blk->size = size;
    blk->id = list_ser++;
    blk->listhead = blk->listtail = (union block *)lblk;
+   blk->changecount = 0;
 
    lblk->blksize = i;
    lblk->nslots = nslots;
@@ -350,6 +351,7 @@ struct b_list *f(uword size, uword nslots)
    blk->size = size;
    blk->id = list_ser++;
    blk->listhead = blk->listtail = (union block *)lblk;
+   blk->changecount = 0;
 
    lblk->blksize = i;
    lblk->nslots = nslots;

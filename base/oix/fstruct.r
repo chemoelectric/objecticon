@@ -354,27 +354,21 @@ end
 
 function{*} keyof(s,x)
    body {
-      tended union block *ep;
       type_case s of {
         list: {
-            C_integer index = 1, i, j;
-            for (ep = BlkLoc(s)->list.listhead;
-		 BlkType(ep) == T_Lelem;
-                 ep = ep->lelem.listnext){
-               for (i = 0; i < ep->lelem.nused; i++) {
-                  j = ep->lelem.first + i;
-                  if (j >= ep->lelem.nslots)
-                     j -= ep->lelem.nslots;
-                  if (equiv(&ep->lelem.lslots[j], &x))
-                     suspend C_integer index;
-                  index++;
-               }
+            struct lgstate state;
+            tended struct b_lelem *le;
+            for (le = lgfirst(&BlkLoc(s)->list, &state); le;
+                 le = lgnext(&BlkLoc(s)->list, &state, le)) {
+                if (equiv(&le->lslots[state.result], &x))
+                  suspend C_integer state.listindex;
             }
             fail;
          }
 
         table: {
 	    struct hgstate state;
+            tended union block *ep;
 	    for (ep = hgfirst(BlkLoc(s), &state); ep != 0;
 		 ep = hgnext(BlkLoc(s), &state, ep)) {
                if (equiv(&ep->telem.tval, &x))
