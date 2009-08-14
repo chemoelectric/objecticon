@@ -1,6 +1,6 @@
 package lang
 
-import io, util
+import io, util, ipl.tables
 
 #
 # Convert the object to string, descending structures to the given depth.  See
@@ -274,7 +274,7 @@ class ObjectOutputStream(Stream, SetFields)
             seen[o] := s
             if /desc then
                writes(s) | fail
-            else if simple{o[[]] | key(o) | !o} then {
+            else if simple{o[[]] | key(o, 1)} then {
                writes(s) | fail
                if \o[[]] then {
                   writes(";def=")
@@ -528,8 +528,8 @@ procedure clone(o, seen)
       "table" : {
          res := table(clone(o[[]], seen))
          seen[o] := res
-         every e := !sort(o) do
-            res[clone(e[1], seen)] := clone(e[2], seen)
+         every e := entries(o) do
+            insert(res, clone(e[1], seen), clone(e[2], seen))
          return res
       }
 
@@ -698,7 +698,7 @@ procedure equals_impl(x, y, seen)
       "table" : {
          *x = *y | fail
          equals(x[[]], y[[]], seen) | fail
-         return hash_and_check(sort(x), sort(y), seen)
+         return hash_and_check(entrylist(x), entrylist(y), seen)
       }
 
       "methp": {

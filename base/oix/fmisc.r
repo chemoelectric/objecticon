@@ -732,11 +732,11 @@ function{1} sort(t, i)
 		* Make sure, now, that there's enough room for all the
 		*  allocations we're going to need.
 		*/
-	       if (!reserve(Blocks, (word)(sizeof(struct b_list)
+	       MemProtect(reserve(Blocks, (word)(sizeof(struct b_list)
 		  + sizeof(struct b_lelem) + (size - 1) * sizeof(struct descrip)
 		  + size * sizeof(struct b_list)
-		  + size * (sizeof(struct b_lelem) + sizeof(struct descrip)))))
-		  runerr(0);
+		  + size * (sizeof(struct b_lelem) + sizeof(struct descrip)))));
+
                /*
                 * Point bp at the table header block of the table to be sorted
                 *  and point lp at a newly allocated list

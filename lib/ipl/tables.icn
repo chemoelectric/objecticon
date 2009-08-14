@@ -188,3 +188,41 @@ procedure valset(tbl)
    return set1
 
 end
+
+# Generate key-value pairs as a sequence of 2-element lists.  NB - for each
+# invocation, the same list is returned every time, with the values replaced.
+#
+procedure entries(t)
+   local l, e
+   l := []
+   every e := key(t, 1) do {
+      put(l, e)
+      if *l = 2 then {
+         suspend l
+         while pop(l)
+      }
+   }
+end
+
+# Return a flat list, with alternating key-value entries.
+procedure flatten(t)
+   local l
+   l := []
+   every put(l, key(t, 1))
+   return l
+end
+
+# Return an (unsorted) list of pairs of key-values.
+procedure entrylist(t)
+   local l, e, r
+   r := []
+   l := []
+   every e := key(t, 1) do {
+      put(l, e)
+      if *l = 2 then {
+         put(r, l)
+         l := []
+      }
+   }
+   return r
+end
