@@ -1229,3 +1229,10 @@ procedure safe(e)
       }
    }
 end
+
+#
+# Generate the results of a co-expression as a sequence.
+#
+procedure coexp_seq(e)
+   suspend |@e
+end

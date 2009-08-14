@@ -14,42 +14,9 @@ procedure has_feature(x)
 end
 
 #
-# What is just ahead in the current scan?
-#
-procedure coming_up(i, j)
-   /j := 0
-   return &subject[&pos+j +: i]
-end
-
-#
-# Like many, but succeeds with empty result if zero matching char. Many needs
-# one or more.
-#
-procedure many_star(c)
-   if any(c) then
-      return many(c)
-   else
-      return &pos
-end
-
-#
-# Search for a string using find and suspend the position after the string,
-# if found.
-#
-procedure past(s)
-   suspend find(s) + *s
-end
-
-#
 # Convenient procedure to set {&why} to the given string and fail.
 #
 procedure error(s)
    &why := s
 end
 
-#
-# Generate the results of a co-expression as a sequence.
-#
-procedure coexp_seq(e)
-   suspend |@e
-end

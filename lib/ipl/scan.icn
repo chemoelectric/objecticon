@@ -520,3 +520,31 @@ every ( s := !l ) | ( return p ) do
    p := &pos                           #  remember last position
 }
 end
+
+#
+# What is just ahead in the current scan?
+#
+procedure coming_up(i, j)
+   /j := 0
+   return &subject[&pos+j +: i]
+end
+
+#
+# Like many, but succeeds with empty result if zero matching char. Many needs
+# one or more.
+#
+procedure many_star(c)
+   if any(c) then
+      return many(c)
+   else
+      return &pos
+end
+
+#
+# Search for a string using find and suspend the position after the string,
+# if found.
+#
+procedure past(s)
+   suspend find(s) + *s
+end
+
