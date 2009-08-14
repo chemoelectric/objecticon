@@ -54,7 +54,7 @@ operator{*} ! bang(underef x -> dx)
 	    for (ep = hgfirst(BlkLoc(dx), &state); ep != 0;
 	       ep = hgnext(BlkLoc(dx), &state, ep)) {
                   EVValD(&ep->telem.tval, E_Tval);
-                  suspend struct_var(&ep->telem.tval, &ep->telem);
+                  suspend struct_var(&ep->telem.tval, ep);
                   }
             }
 
@@ -272,7 +272,7 @@ operator{0,1} ? random(underef x -> dx)
 		       BlkType(ep) == T_Telem;
 		       ep = ep->telem.clink)
                      if (--n <= 0) {
-                        return struct_var(&ep->telem.tval, &ep->telem);
+                        return struct_var(&ep->telem.tval, ep);
 			}
             syserr("table reference out of bounds in random");
          }
@@ -552,22 +552,34 @@ operator{0,1} [] subsc(underef x -> dx,y)
           return struct_var(&le->lslots[j], le);
        }
 
-
       table: {
-         /*
-          * x is a table.  Return a table element trapped variable
-	  *  representing the result; defer actual lookup until later.
-          */
             uword hn;
-	    struct b_tvtbl *tp;
+            int res;
+            register union block *bp; /* doesn't need to be tended */
+            union block **dp1;
+            struct b_tvtbl *tp;
 
             EVValD(&dx, E_Tref);
             EVValD(&y, E_Tsub);
 
-	    hn = hash(&y);
-            MemProtect(tp = alctvtbl(&dx, &y, hn));
-            return tvtbl(tp);
-         }
+            hn = hash(&y);
+            dp1 = memb(BlkLoc(dx), &y, hn, &res);
+            if (res == 1) {
+               bp = *dp1;
+               return struct_var(&bp->telem.tval, bp);
+            }
+            else {
+               /*
+                * dx[y] is not in the table, make a table element trapped
+                *  variable and return it as the result.
+                */
+               MemProtect(tp = alctvtbl(&dx, &y, hn));
+               return tvtbl(tp);
+           }
+      }
+
+      
+
 
       record: {
          /*
