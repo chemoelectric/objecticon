@@ -277,7 +277,7 @@ class ObjectOutputStream(Stream, SetFields)
             else if simple{o[[]] | key(o, 1)} then {
                writes(s) | fail
                if \o[[]] then {
-                  writes(";def=")
+                  writes(";def=") | fail
                   traverse(o[[]]) | fail
                }
                pairs := sort(o)
