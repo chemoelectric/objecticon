@@ -11,11 +11,11 @@
 /*
  * Debug funcs
  */
-static void listdump(dptr d)
+static void listdump(dptr d, int all)
 {
     union block *b;
     struct b_list *l = (struct b_list *)BlkLoc(*d);
-    word i;
+    word i, j;
 
     fprintf(stderr, "list at %p size=%ld head=%p tail=%p\n", l, (long)l->size, l->listhead, l->listtail);
     for (b = l->listhead; 
@@ -24,14 +24,27 @@ static void listdump(dptr d)
         struct b_lelem *e = (struct b_lelem *)b;
         fprintf(stderr, "\telement block at %p nslots=%ld first=%ld used=%ld prev=%p next=%p\n",
                 e, (long)e->nslots, (long)e->first, (long)e->nused, e->listprev, e->listnext);
-
-        for (i = 0; i < e->nused; i++) {
-            word j = e->first + i;
-            if (j >= e->nslots)
-                j -= e->nslots;
-            fprintf(stderr, "\t\tSlot %ld = ", (long)j);
-            print_desc(stderr, &e->lslots[j]);
-            fprintf(stderr, "\n");
+        if (all) {
+            for (i = 0; i < e->nslots; i++) {
+                j = i - e->first;
+                if (j < 0)
+                    j += e->nslots;
+                fprintf(stderr, "\t\tSlot %ld = ", (long)i);
+                print_desc(stderr, &e->lslots[i]);
+                if (j < e->nused)
+                    fprintf(stderr, " (used)\n");
+                else
+                    fprintf(stderr, " (free)\n");
+            }
+        } else {
+            for (i = 0; i < e->nused; i++) {
+                j = e->first + i;
+                if (j >= e->nslots)
+                    j -= e->nslots;
+                fprintf(stderr, "\t\tSlot %ld = ", (long)j);
+                print_desc(stderr, &e->lslots[j]);
+                fprintf(stderr, "\n");
+            }
         }
     }
     fflush(stderr);
@@ -146,6 +159,7 @@ int list_get(dptr l, dptr res)
     */
    i = bp->first;
    *res = bp->lslots[i];
+   bp->lslots[i] = nulldesc;
 
    /*
     * Set bp->first to new first element, or 0 if the block is now
@@ -267,6 +281,7 @@ int list_pull(dptr l, dptr res)
     if (i >= bp->nslots)
         i -= bp->nslots;
     *res = bp->lslots[i];
+    bp->lslots[i] = nulldesc;
     bp->nused--;
     hp->size--;
     hp->changecount++;
@@ -418,6 +433,7 @@ void list_del(dptr l, word index)
         le->lslots[j] = le->lslots[k];
         j = k;
     }
+    le->lslots[j] = nulldesc;
     --le->nused;
 
     /* Unlink this block if empty and not the only block */

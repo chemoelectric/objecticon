@@ -563,7 +563,7 @@ class HttpClient(NetClient)
       every s := !response.get_headers("set-cookie") do {
          if (c := parse_cookie_string(s)) & valid_cookie(c) then {
             domain := map(\c.domain | request.url.get_address())
-            paths := member(cookies, domain) | (cookies[domain] := table())
+            (paths := member(cookies, domain)) | insert(cookies, domain, paths := table())
             path := c.path
             if /path then {
                # Netscape cookies default to the full file path; rfc2109 ones
@@ -576,7 +576,7 @@ class HttpClient(NetClient)
                      path[-1] := ""
                }
             }
-            vals := member(paths, path) | (paths[path] := table())
+            (vals := member(paths, path)) | insert(paths, path, vals := table())
             insert(vals, map(c.name), c)
          }
       }
