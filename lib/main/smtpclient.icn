@@ -160,7 +160,7 @@ class SmtpClient(NetClient)
       send_first_header(m, "Comments")
       send_first_header(m, "Encrypted")
 
-      every k := m.headers.keys() do
+      every k := (!m.headers.sort())[1] do
          member(RFC822_HEADERS, map(k)) | send_headers_list(m, k)
 
       return

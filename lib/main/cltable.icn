@@ -38,11 +38,8 @@ class ClTable()
       return l
    end
 
-   public keys()
-      local e
-      every e := !default.sort(names) do {
-         suspend e[2]
-      }
+   public key()
+      suspend .!names
    end
 
    public size()
