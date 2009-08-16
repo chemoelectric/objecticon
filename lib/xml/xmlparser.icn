@@ -1266,10 +1266,9 @@ class XmlParser(Connectable,SetFields)
       # new AttDefs are merged into it.  In any case, multiple defs generate
       # a warning.
       #
-      if member(doc.attribute_lists, element_name) then {
+      if t := member(doc.attribute_lists, element_name) then
          warn("multiple ATTLIST definitions for element " || element_name)
-         t := doc.attribute_lists[element_name]
-      } else {
+      else {
          t := AttList()
          insert(doc.attribute_lists, element_name, t)
       }
@@ -2275,8 +2274,7 @@ class XmlParser(Connectable,SetFields)
             return GlobalName(local_name, uri)
          }
 
-         if member(resolve_table, "") then {
-            uri := resolve_table[""]
+         if uri := member(resolve_table, "") then {
             if *uri > 0 then
                return GlobalName(name, uri)
          }

@@ -127,14 +127,14 @@ class SelectiveObjectCodec()
    # @param cl the class being encoded/decoded.
    #
    private static load_structs(cl)
-      local e, fnum, fnum_map, template_els, p
+      local e, fnum, fnum_map, template_els, p, x
       static cache
       initial {
          cache := table()
       }
 
-      if member(cache, cl) then
-         return cache[cl]
+      if x := member(cache, cl) then
+         return x
 
       # Create a list of field ident/number pairs and a table mapping
       # field idents to class field indices.  Check for duplicate

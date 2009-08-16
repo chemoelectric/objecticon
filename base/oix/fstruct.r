@@ -5,8 +5,8 @@
  */
 
 
-"delete(x1,x2) - delete element x2 from set or table or list x1 if it is there"
-" (always succeeds and returns x1)."
+"delete(s,x) - delete element x from set or table or list s if it is there"
+" (always succeeds and returns s)."
 
 function{1} delete(s,x)
    body {
@@ -101,9 +101,9 @@ function{*} key(t, vals)
 end
 
 
-"insert(x1, x2, x3) - insert element x2 into set or table or list x1 if not already there"
-" if x1 is a table or list, the assigned value for element x2 is x3."
-" (always succeeds and returns x1)."
+"insert(s, x, y) - insert element x into set or table or list s if not already there"
+" if s is a table or list, the assigned value for element x is y."
+" (always succeeds and returns s)."
 
 function{1} insert(s, x, y)
     body {
@@ -206,8 +206,8 @@ function{1} list(n, x)
 end
 
 
-"member(x1, x2) - returns x1 if x2 is a member of set or table x2 but fails"
-" otherwise."
+"member(s, x) - if x is a set, return x if it is a member of s; if x is a table
+" return s[x] (a variable) if x is a key of s.  Fails otherwise."
 
 function{0,1} member(s, x)
    body {
@@ -221,7 +221,7 @@ function{0,1} member(s, x)
 
             hn = hash(&x);
             memb(BlkLoc(s), &x, hn, &res);
-            if (res==1)
+            if (res == 1)
                return x;
             else
                fail;
@@ -229,15 +229,18 @@ function{0,1} member(s, x)
       table: {
             int res;
             register uword hn;
+            union block **p;
+            register union block *bp; /* doesn't need to be tended */
 
             EVValD(&s, E_Tmember);
             EVValD(&x, E_Tsub);
 
             hn = hash(&x);
-            memb(BlkLoc(s), &x, hn, &res);
-            if (res == 1)
-               return x;
-            else
+            p = memb(BlkLoc(s), &x, hn, &res);
+            if (res == 1) {
+               bp = *p;
+               return struct_var(&bp->telem.tval, bp);
+            } else
                fail;
       }
 

@@ -389,7 +389,7 @@ insert(t, "xyz", "abc") --> table#*(2)
 insert(t, &digits) --> table#*(3)
    *t --> 3
    t["xyz"] --> "abc"
-   member(t, "xyz") --> "xyz"
+   member(t, "xyz") --> "abc"
    contents of t:
 	3 : 4
 	"xyz" : "abc"
@@ -398,7 +398,7 @@ insert(t, &digits) --> table#*(3)
 t["xyz"] := "new value" --> "new value"
    *t --> 3
    t["xyz"] --> "new value"
-   member(t, "xyz") --> "xyz"
+   member(t, "xyz") --> "new value"
    contents of t:
 	3 : 4
 	"xyz" : "new value"
@@ -407,7 +407,7 @@ t["xyz"] := "new value" --> "new value"
 insert(t, "xyz", "def") --> table#*(3)
    *t --> 3
    t["xyz"] --> "def"
-   member(t, "xyz") --> "xyz"
+   member(t, "xyz") --> "def"
    contents of t:
 	3 : 4
 	"xyz" : "def"

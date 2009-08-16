@@ -71,12 +71,12 @@ class Timezone()
    # Convert a zone id into a Timezone
    #
    public static get_known_timezone(id)
-      local s, sign
+      local s, sign, x
 
       id := string(id) | runerr(103, id)
 
-      if member(KNOWN_TIMEZONES, id) then
-         return KNOWN_TIMEZONES[id]
+      if x := member(KNOWN_TIMEZONES, id) then
+         return x
 
       id ? {
          if any('+\-') then {

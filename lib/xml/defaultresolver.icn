@@ -76,10 +76,8 @@ class DefaultResolver(Resolver,SetFields)
       #
       # Try to map from the public id (if any) to an alternative URI
       #
-      if member(public_mapping, external_id.get_public_id()) then
-         sys_id := public_mapping[external_id.get_public_id()]
-      else
-         sys_id := external_id.get_system_id()
+      sys_id := member(public_mapping, 
+                       external_id.get_public_id()) | external_id.get_system_id()
 
       #
       # Try the cache.
