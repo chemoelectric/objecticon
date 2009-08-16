@@ -226,3 +226,13 @@ procedure entrylist(t)
    }
    return r
 end
+
+# Return a random key from table t
+procedure randomkey(t)
+   local i, k
+   i := ?*t
+   every k := key(t) do
+      if (i -:= 1) = 0 then
+         return k
+   syserr("randkomkey unreachable")
+end
