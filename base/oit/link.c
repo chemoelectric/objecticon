@@ -195,7 +195,7 @@ void lwarn(struct lfile *lf, struct loc *pos, char *fmt, ...)
         if (pos->line)
             fprintf(stderr, "Line %d # ", pos->line);
     }
-    fprintf(stderr, "Warning :");
+    fprintf(stderr, "Warning: ");
     vfprintf(stderr, fmt, argp);
     putc('\n', stderr);
     fflush(stderr);

@@ -82,7 +82,7 @@ void twarn_at(struct node *n, char *fmt, ...)
             fprintf(stderr, "File %s; ", abbreviate(File(n)));
         fprintf(stderr, "Line %d # ", Line(n));
     }
-    fprintf(stderr, "Warning :");
+    fprintf(stderr, "Warning: ");
     va_start(argp, fmt);
     vfprintf(stderr, fmt, argp);
     fprintf(stderr, "\n");
