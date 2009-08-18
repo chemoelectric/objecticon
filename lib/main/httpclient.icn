@@ -610,7 +610,7 @@ class HttpClient(NetClient)
       now := Time()
       s := ""
       every e := \cookies[domain_keys(domain)] do {
-         every f := rbang(sort(e)) do {
+         every f := back(sort(e)) do {
             if match(f[1], path) then {
                every c := (!sort(f[2]))[2] do {
                   if /c.expires | c.expires.after(now) then {
@@ -643,7 +643,7 @@ class HttpClient(NetClient)
       local c, e, f
       every e := !sort(cookies) do {
          write("domain:", e[1])
-         every f := rbang(sort(e[2])) do {
+         every f := back(sort(e[2])) do {
             write("\tpath:", f[1])
             every c := (!sort(f[2]))[2] do {
                write("\t\t", to_string(c))

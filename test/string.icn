@@ -119,6 +119,18 @@ procedure p9()
    write("bal(&cset,,,\"()+()\") ----> ",image(bal(&cset,,,"()+()")) | "none")
 end
 
+procedure p10()
+   local s
+   s := "the quick brown fox"
+   pr_seq{"back(&lcase)", back(&lcase)}
+   cmp_seq{"ord(back(&cset)) -v- ord(reverse(&cset))", ord(back(&cset)), ord(reverse(&cset))}
+   pr_seq{"back(s)", back(s)}
+   pr_seq{"back(literal)", back("the dog and pot")}
+   pr_seq{"back(ucs literal)", back(u"abc*\u1234*\uffff*\uabcd")}
+   pr_seq{"back(ucs empty)", back(u"")}
+   pr_seq{"back(empty)", back("")}
+end
+
 procedure main()
    p1()
    p2()
@@ -129,6 +141,7 @@ procedure main()
    p7()
    p8()
    p9()
+   p10()
 end
 
 global s

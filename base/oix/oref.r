@@ -739,7 +739,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
 end
 
 
-function{*} rbang(underef x -> dx)
+function{*} back(underef x -> dx)
  body {
    register word i, j;
    tended union block *ep;

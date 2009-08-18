@@ -229,3 +229,10 @@ bal('+','[','[',"[[2*x[+3[+[5*y[") ----> none
 bal('+','([','])',"([2*x)+3]+(5*y]") ----> 10
 bal(,,,"()+()") ----> 1
 bal(&cset,,,"()+()") ----> 1
+back(&lcase): {"z", "y", "x", "w", "v", "u", "t", "s", "r", "q", "p", "o", "n", "m", "l", "k", "j", "i", "h", "g", "f", "e", "d", "c", "b", "a"}
+ord(back(&cset)) -v- ord(reverse(&cset)): same
+back(s): {"x", "o", "f", " ", "n", "w", "o", "r", "b", " ", "k", "c", "i", "u", "q", " ", "e", "h", "t"}
+back(literal): {"t", "o", "p", " ", "d", "n", "a", " ", "g", "o", "d", " ", "e", "h", "t"}
+back(ucs literal): {u"\uabcd", u"*", u"\uffff", u"*", u"\u1234", u"*", u"c", u"b", u"a"}
+back(ucs empty): {}
+back(empty): {}

@@ -36,6 +36,7 @@ end
 procedure check_iter(s, l)
    cmp_seq{"ord(s) -vs ord(!s)", ord(s), ord(!s)}
    cmp_seq{"Iterator ord sequence", ord(s), !l}
+   cmp_seq{"Back sequence", ord(back(s)), back(l)}
 end
 
 procedure check_substr(s, l)

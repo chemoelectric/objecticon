@@ -57,6 +57,7 @@ end
 procedure check_ranges(c)
    local c1
    c1 := list_equiv(c)
+   cmp_seq{"Back sequence", ord(back(c)), back(c1)}
    check_range(c,c1,1,0)
    if *c = 0 then
       return

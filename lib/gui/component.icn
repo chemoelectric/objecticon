@@ -532,7 +532,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public whose_point(ex, ey)
       local c
-      every c := rbang(z_children) do {
+      every c := back(z_children) do {
          if c.is_unhidden() & c.inside(ex, ey) then
             return c
       }
