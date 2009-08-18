@@ -578,9 +578,6 @@ operator{0,1} [] subsc(underef x -> dx,y)
            }
       }
 
-      
-
-
       record: {
          /*
           * x is a record.  Convert y to an integer and be sure that it
@@ -740,3 +737,118 @@ operator{0,1} [] subsc(underef x -> dx,y)
     }
   }
 end
+
+
+function{*} rbang(underef x -> dx)
+ body {
+   register word i, j;
+   tended union block *ep;
+
+   type_case dx of {
+     string : {
+            char ch;
+            EVValD(&dx, E_Stringbang);
+            if (is:variable(x)) {
+                for (i = StrLen(dx); i > 0; i--) {
+                    if (i > StrLen(dx))
+                        i = StrLen(dx);
+                    suspend tvsubs(&x, i, (word)1);
+                    deref(&x, &dx);
+                    if (!is:string(dx)) 
+                        runerr(103, dx);
+                }
+            } else {
+                for (i = StrLen(dx); i > 0; i--) {
+                    ch = *(StrLoc(dx) + i - 1);
+                    suspend string(1, &allchars[ch & 0xFF]);
+                }
+           }
+      }
+
+      list: {
+            struct lgstate state;
+            tended struct b_lelem *le;
+
+            EVValD(&dx, E_Lbang);
+
+            for (le = lglast(&BlkLoc(dx)->list, &state); le;
+                 le = lgprev(&BlkLoc(dx)->list, &state, le)) {
+                EVVal(state.listindex, E_Lsub);
+                suspend struct_var(&le->lslots[state.result], le);
+            }
+         }
+
+      cset: {
+            EVValD(&dx, E_Csetbang);
+            for (i = BlkLoc(dx)->cset.n_ranges - 1; i >= 0; i--) {
+               int from, to;
+               from = BlkLoc(dx)->cset.range[i].from;
+               to = BlkLoc(dx)->cset.range[i].to;
+               for (j = to; j >= from; --j) {
+                   if (j < 256)
+                       suspend string(1, &allchars[j]);
+                   else
+                       suspend ucs(make_one_char_ucs_block(j));
+               }
+            }
+         }
+
+     ucs: {
+          EVValD(&dx, E_Ucsbang);
+          if (is:variable(x)) {
+              for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
+                  if (i > BlkLoc(dx)->ucs.length)
+                      i = BlkLoc(dx)->ucs.length;
+                  suspend tvsubs(&x, i, (word)1);
+                  deref(&x, &dx);
+                  if (!is:ucs(dx)) 
+                      runerr(128, dx);
+              }
+          } else {
+              tended char *p = StrLoc(BlkLoc(dx)->ucs.utf8) +
+                  StrLen(BlkLoc(dx)->ucs.utf8);
+              for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
+                  tended struct descrip utf8;
+                  utf8_rev_iter(&p);
+                  StrLoc(utf8) = p;
+                  StrLen(utf8) = UTF8_SEQ_LEN(*p);
+                  suspend ucs(make_ucs_block(&utf8, 1));
+              }
+          }
+       }
+
+     record: {
+            /*
+             * x is a record.  Loop through the fields and suspend
+             * a variable pointing to each one.
+             */
+
+            EVValD(&dx, E_Rbang);
+
+            for (i = BlkLoc(dx)->record.constructor->n_fields - 1; i >= 0; i--) {
+	       EVVal(i+1, E_Rsub);
+               suspend struct_var(&BlkLoc(dx)->record.fields[i], 
+                  (struct b_record *)BlkLoc(dx));
+               }
+            }
+
+       default: {
+           if (cnv:tmp_string(dx,dx)) {
+               char ch;
+               /*
+                * A (converted or non-variable) string is being banged.
+                * Loop through the string suspending simple one character
+                *  substrings.
+                */
+               for (i = StrLen(dx); i > 0; i--) {
+                  ch = *(StrLoc(dx) + i - 1);
+                  suspend string(1, &allchars[ch & 0xFF]);
+                  }
+            }
+         else
+            runerr(116, dx);
+      }
+   }
+   fail;
+   }
+end      

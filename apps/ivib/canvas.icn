@@ -1576,7 +1576,7 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    public is_inside(c)
       local e, o
-      every e := !self.reverse_z_children do
+      every e := rbang(self.z_children) do
          if o := e.is_inside(c) then
             return o
       #
@@ -1657,7 +1657,7 @@ class Canvas(Component,SelectiveObjectCodec)
          # Search in reverse order so that the item displayed on top
          # will be found first.
          #
-         every i := !self.reverse_z_children do
+         every i := rbang(self.z_children) do
             if o := i.which_cursor_over(e) then
                return o
       }

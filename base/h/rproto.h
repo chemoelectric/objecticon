@@ -563,6 +563,8 @@ void create_list(uword nslots, dptr d);
 struct b_lelem *get_lelem_for_index(struct b_list *bp, word i, word *pos);
 struct b_lelem *lgfirst(struct b_list *lb, struct lgstate *state);
 struct b_lelem *lgnext(struct b_list *lb, struct lgstate *state, struct b_lelem *le);
+struct b_lelem *lglast(struct b_list *lb, struct lgstate *state);
+struct b_lelem *lgprev(struct b_list *lb, struct lgstate *state, struct b_lelem *le);
 void cstr2string(char *s, dptr d);
 void bytes2string(char *s, word len, dptr d);
 void cstrs2string(char **s, char *delim, dptr d);

@@ -28,7 +28,7 @@ void cpslots(dp1, slotptr, i, j)
 dptr dp1, slotptr;
 word i, j;
    {
-   word size;
+   word size, pos;
    tended struct b_list *lp1;
    tended struct b_lelem *bp1;
    /*
@@ -36,18 +36,11 @@ word i, j;
     *  (bp1, lp1).
     */
    lp1 = (struct b_list *) BlkLoc(*dp1);
-   bp1 = (struct b_lelem *) lp1->listhead;
    size = j - i;
 
-   /*
-    * Locate the block containing element i in the source list.
-    */
-   if (size > 0) {
-      while (i > bp1->nused) {
-         i -= bp1->nused;
-         bp1 = (struct b_lelem *) bp1->listnext;
-         }
-      }
+   bp1 = get_lelem_for_index(lp1, i, &pos);
+   if (!bp1)
+       return;
 
    /*
     * Copy elements from the source list into the sublist, moving to
@@ -55,12 +48,12 @@ word i, j;
     *  block have been copied.
     */
    while (size > 0) {
-      j = bp1->first + i - 1;
+      j = bp1->first + pos;
       if (j >= bp1->nslots)
          j -= bp1->nslots;
       *slotptr++ = bp1->lslots[j];
-      if (++i > bp1->nused) {
-         i = 1;
+      if (++pos >= bp1->nused) {
+         pos = 0;
          bp1 = (struct b_lelem *) bp1->listnext;
          }
       size--;
@@ -563,20 +556,34 @@ int invaluemask(struct progstate *p, int evcode, struct descrip *val)
  */
 struct b_lelem *get_lelem_for_index(struct b_list *lb, word index, word *pos)
 {
-    struct b_lelem *le = (struct b_lelem *)lb->listhead;
+    struct b_lelem *le;
     --index;  /* Make zero-based */
-    if (index < 0)
-        syserr("Invalid index to get_lelem_for_index");
-    if (index >= lb->size)
+    if (index < 0 || index >= lb->size)
         return 0;
-    while (index >= le->nused) {
-        index -= le->nused;
-        le = (struct b_lelem *)le->listnext;
-        /* Wrapped around, shouldn't ever happen since we checked size above... */
-        if (BlkType(le) != T_Lelem)
-            return 0;
+    if (index < lb->size / 2) {
+        /* Search forwards from beginning of list */
+        le = (struct b_lelem *)lb->listhead;
+        while (index >= le->nused) {
+            index -= le->nused;
+            le = (struct b_lelem *)le->listnext;
+            /* Wrapped around, shouldn't ever happen since we checked size above... */
+            if (BlkType(le) != T_Lelem)
+                return 0;
+        }
+        *pos = index;
+    } else {
+        word n = lb->size;
+        /* Search backwards from end of list */
+        le = (struct b_lelem *)lb->listtail;
+        while (index < n - le->nused) {
+            n -= le->nused;
+            le = (struct b_lelem *)le->listprev;
+            /* Wrapped around, shouldn't ever happen since we checked size above... */
+            if (BlkType(le) != T_Lelem)
+                return 0;
+        }
+        *pos = le->nused - n + index;
     }
-    *pos = index;
     return le;
 }
 
@@ -629,6 +636,73 @@ struct b_lelem *lgnext(struct b_list *lb, struct lgstate *state, struct b_lelem 
          * the current list index.
          */
         word pos;
+        le = get_lelem_for_index(lb, state->listindex, &pos);
+        if (!le)
+            return 0;
+        state->changecount = lb->changecount;
+        state->blockpos = pos;
+        state->result = le->first + pos;
+        if (state->result >= le->nslots)
+            state->result -= le->nslots;
+        return le;
+    }
+}
+
+struct b_lelem *lglast(struct b_list *lb, struct lgstate *state)
+{
+    struct b_lelem *le;
+    word pos;
+    le = get_lelem_for_index(lb, lb->size, &pos);
+    if (!le)
+        return 0;
+    state->listindex = lb->size;
+    state->changecount = lb->changecount;
+    state->blockpos = le->nused - 1;
+    state->result = le->first + state->blockpos;
+    if (state->result >= le->nslots)
+        state->result -= le->nslots;
+    return le;
+}
+
+struct b_lelem *lgprev(struct b_list *lb, struct lgstate *state, struct b_lelem *le)
+{
+    --state->listindex;
+    if (state->changecount == lb->changecount) {
+        /*
+         * List structure unchanged, so just move to next element.
+         */
+        --state->blockpos;
+        if (state->blockpos >= 0) {
+            state->result = le->first + state->blockpos;
+            if (state->result >= le->nslots)
+                state->result -= le->nslots;
+            return le;
+        } else {
+            /* End of current block; find the previous non-empty one and return
+             * the last element.
+             */
+            for (;;) {
+                le = (struct b_lelem *)le->listprev;
+                if (BlkType(le) != T_Lelem)  /* End of list */
+                    return 0;
+                if (le->nused > 0) {
+                    state->blockpos = le->nused - 1;
+                    state->result = le->first + state->blockpos;
+                    if (state->result >= le->nslots)
+                        state->result -= le->nslots;
+                    return le;
+                }
+            }
+        }
+    } else {
+        /*
+         * List structure changed - refresh the state values based on
+         * the current list index.
+         */
+        word pos;
+        /* If the list shrunk, keep our index in range */
+        if (state->listindex > lb->size)
+            state->listindex = lb->size;
         le = get_lelem_for_index(lb, state->listindex, &pos);
         if (!le)
             return 0;

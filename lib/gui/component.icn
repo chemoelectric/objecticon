@@ -115,10 +115,9 @@ class Component(Rect,Align,SetFields,Connectable)
       #
       children,
       #
-      # The same children, but sorted in z order; held in both orders.
+      # The same children, but sorted in z order.
       #
       z_children,
-      reverse_z_children,
       #
       # The same children, but sorted in tab order.
       #
@@ -533,7 +532,7 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public whose_point(ex, ey)
       local c
-      every c := !reverse_z_children do {
+      every c := rbang(z_children) do {
          if c.is_unhidden() & c.inside(ex, ey) then
             return c
       }
@@ -1028,7 +1027,6 @@ class Component(Rect,Align,SetFields,Connectable)
    #
    public compute_z_order()
       self.z_children := isort(self.children, component_zsort)
-      self.reverse_z_children := reverse(self.z_children)
    end
 
    #
