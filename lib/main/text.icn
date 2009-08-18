@@ -28,4 +28,9 @@ class Text()
          Text.has_ord(y, c) | fail
       return
    end
+
+   # Given a cset {c}, produce another cset containing those characters in 
+   # positions {i}:{j}.
+   #
+   public static defer slice(c, i, j)
 end

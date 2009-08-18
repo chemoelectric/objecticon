@@ -1710,6 +1710,59 @@ function{*} lang_Text_get_ord_range(c)
 end
 
 
+function{*} lang_Text_slice(c, i, j)
+   if !cnv:cset(c) then
+      runerr(120, c)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !cnv:C_integer(j) then
+      runerr(101, j)
+   body {
+       struct rangeset *rs;
+       tended struct b_cset *blk;
+       word len;
+
+       i = cvpos(i, BlkLoc(c)->cset.size);
+       if (i == CvtFail)
+           fail;
+       j = cvpos(j, BlkLoc(c)->cset.size);
+       if (j == CvtFail)
+           fail;
+       if (i > j) {
+           word t = i;
+           i = j;
+           len = t - j;
+       }
+       else
+           len = j - i;
+
+       MemProtect(rs = init_rangeset());
+       if (len > 0) {
+           int a, pos, from, to, l0;
+           a = cset_range_of_pos(&BlkLoc(c)->cset, i);    /* First range of interest */
+           pos = i - 1 - BlkLoc(c)->cset.range[a].index;  /* Offset into that range */
+           for (; len > 0 && a < BlkLoc(c)->cset.n_ranges; ++a) {
+               from = BlkLoc(c)->cset.range[a].from;
+               to = BlkLoc(c)->cset.range[a].to;
+               l0 = to - from - pos + 1;
+               if (l0 <= len) {
+                   MemProtect(add_range(rs, from + pos, to));
+                   len -= l0;
+               } else {
+                   MemProtect(add_range(rs, from + pos, len + from + pos - 1));
+                   len = 0;
+               }
+               pos = 0;
+           }
+           if (len)
+               syserr("slice_cset inconsistent parameters");
+       }
+       
+       blk = rangeset_to_block(rs);
+       free_rangeset(rs);
+       return cset(blk);
+   }
+end
 
 function{0,1} lang_Text_has_ord(c, x)
    if !cnv:cset(c) then
@@ -1756,7 +1809,7 @@ function{*} ord(x, i, j)
             if (j == CvtFail)
                 fail;
             if (i > j) {
-                C_integer t = i;
+                word t = i;
                 i = j;
                 len = t - j;
             } else

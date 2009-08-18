@@ -52,6 +52,8 @@ procedure check_range(c,c1,i,j)
    d := c[i:j] | stop("Couldn't extract range")
    cmp_seq{"ord(!d) -v- !d1", ord(!d),!d1}
    cmp_seq{"ord(!d) -v- ord(c,i,j)", ord(!d),ord(c,i,j)}
+   cmp_seq{"ord(Text.slice(c,i,j)) -v- ord(c,i,j)", 
+              ord(Text.slice(c,i,j)),ord(c,i,j)}
 end
 
 procedure check_ranges(c)
