@@ -47,4 +47,8 @@ The runtime system is contained in the program `oix`.  It is not normally necess
 {{{
 oit myprog.icn -x
 }}}
-translates, links and runs `myprog.icn`.   The executable file `myprog` is not deleted after completion (unlike the intermediate `.u` file).
+translates, links and runs `myprog.icn`.   The executable file `myprog` is not deleted after completion (unlike the intermediate `.u` file).  Note that if the current directory (".") is not on your `PATH` variable, you need to enter
+{{{
+oit ./myprog.icn -x
+}}}
+instead.
