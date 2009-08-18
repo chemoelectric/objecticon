@@ -54,6 +54,7 @@ procedure check_range(c,c1,i,j)
    cmp_seq{"ord(!d) -v- ord(c,i,j)", ord(!d),ord(c,i,j)}
    cmp_seq{"ord(Text.slice(c,i,j)) -v- ord(c,i,j)", 
               ord(Text.slice(c,i,j)),ord(c,i,j)}
+   yes_no{"Text.slice(c,i,j) = d", text(Text.slice(c,i,j)) === d}
 end
 
 procedure check_ranges(c)
