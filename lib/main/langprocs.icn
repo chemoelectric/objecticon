@@ -274,7 +274,7 @@ class ObjectOutputStream(Stream, SetFields)
             seen[o] := s
             if /desc then
                writes(s) | fail
-            else if simple{o[[]] | key(o, 1)} then {
+            else if simple{o[[]] | keyval(o)} then {
                writes(s) | fail
                if \o[[]] then {
                   writes(";def=") | fail

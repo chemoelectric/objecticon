@@ -279,7 +279,7 @@ class Encode(SetFields)
             int_out(*o) | fail
             encode(o[[]]) | fail
             note_seen(o)
-            every e := key(o, 1) do
+            every e := keyval(o) do
                encode(e) | fail
          }
 

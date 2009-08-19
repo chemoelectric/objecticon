@@ -195,7 +195,7 @@ end
 procedure entries(t)
    local l, e
    l := []
-   every e := key(t, 1) do {
+   every e := keyval(t) do {
       put(l, e)
       if *l = 2 then {
          suspend l
@@ -208,7 +208,7 @@ end
 procedure flatten(t)
    local l
    l := []
-   every put(l, key(t, 1))
+   every put(l, keyval(t))
    return l
 end
 
@@ -217,7 +217,7 @@ procedure entrylist(t)
    local l, e, r
    r := []
    l := []
-   every e := key(t, 1) do {
+   every e := keyval(t) do {
       put(l, e)
       if *l = 2 then {
          put(r, l)

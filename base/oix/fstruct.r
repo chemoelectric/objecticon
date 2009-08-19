@@ -77,24 +77,41 @@ GetOrPop(get) /* get(x) - get an element from the left end of list x. */
 GetOrPop(pop) /* pop(x) - pop an element from the left end of list x. */
 
 
-"key(T,vals) - generate successive keys (entry values) from table T.  If vals is non-null"
-"   then the values (as variables) are generated too."
+"key(T) - generate successive keys (entry values) from table T."
 
-function{*} key(t, vals)
+function{*} key(t)
    if !is:table(t) then
          runerr(124, t)
    body {
        tended union block *ep;
        struct hgstate state;
-       int flag = !is:null(vals);
 
        EVValD(&t, E_Tkey);
        for (ep = hgfirst(BlkLoc(t), &state); ep != 0;
             ep = hgnext(BlkLoc(t), &state, ep)) {
            EVValD(&ep->telem.tref, E_Tsub);
            suspend ep->telem.tref;
-           if (flag)
-               suspend struct_var(&ep->telem.tval, ep);
+       }
+       fail;
+   }
+end
+
+"keyval(T) - generate alternate keys and their corresponding values (as variables)"
+"      from table T."
+
+function{*} keyval(t)
+   if !is:table(t) then
+         runerr(124, t)
+   body {
+       tended union block *ep;
+       struct hgstate state;
+
+       EVValD(&t, E_Tkey);
+       for (ep = hgfirst(BlkLoc(t), &state); ep != 0;
+            ep = hgnext(BlkLoc(t), &state, ep)) {
+           EVValD(&ep->telem.tref, E_Tsub);
+           suspend ep->telem.tref;
+           suspend struct_var(&ep->telem.tval, ep);
        }
        fail;
    }
