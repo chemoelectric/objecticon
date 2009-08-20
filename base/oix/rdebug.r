@@ -8,7 +8,7 @@
 /*
  * Prototypes.
  */
-static int  keyref    (union block *bp, dptr dp);
+static void keyref    (union block *bp, dptr dp);
 static void showline  (dptr f, int l);
 static void showlevel (register int n);
 static void ttrace	(void);
@@ -183,7 +183,6 @@ int get_name(dptr dp1, dptr dp0)
     char sbuf[100];			/* buffer; might be too small */
     char *s, *s2;
     word i, j, k;
-    int t;
     struct progstate *prog;
 
     arg1 = &argp[1];
@@ -215,9 +214,7 @@ int get_name(dptr dp1, dptr dp0)
         }
 
       tvtbl: {
-            t = keyref(BlkLoc(*dp1) ,dp0);
-            if (t == Error)
-                return Error;
+            keyref(BlkLoc(*dp1) ,dp0);
         }
 
       kywdint:
@@ -358,9 +355,7 @@ int get_name(dptr dp1, dptr dp0)
                     break;
                 }
                 case T_Telem: 		/* table */
-                    t = keyref(blkptr,dp0);
-                    if (t == Error)
-                        return Error;
+                    keyref(blkptr,dp0);
                     break;
                 default:		/* none of the above */
                     LitStr("(struct)", dp0);
@@ -380,40 +375,30 @@ int get_name(dptr dp1, dptr dp0)
 /*
  * keyref(bp,dp) -- print name of subscripted table
  */
-static int keyref(bp, dp)
+static void keyref(bp, dp)
     union block *bp;
     dptr dp;
 {
-    char *s, *s2;
-    char sbuf[256];			/* buffer; might be too small */
+    tended struct descrip td;
+    char sbuf[64];
     int len;
 
-    if (getimage(&(bp->telem.tref),dp) == Error)
-        return Error;	
+    getimage(&(bp->telem.tref), &td);
 
-    /*
-     * Allocate space, and copy the image surrounded by "table_n[" and "]"
-     */
-    s2 = StrLoc(*dp);
-    len = StrLen(*dp);
     if (BlkType(bp) == T_Tvtbl)
         bp = bp->tvtbl.clink;
     else
         while(BlkType(bp) == T_Telem)
             bp = bp->telem.clink;
     sprintf(sbuf, "table#%ld[", (long)bp->table.id);
-    { char * dest = sbuf + strlen(sbuf);
-        strncpy(dest, s2, len);
-        dest[len] = '\0';
-    }
-    strcat(sbuf, "]");
-    len = strlen(sbuf);
-    MemProtect(s = alcstr(sbuf, len));
-    StrLoc(*dp) = s;
+    len = strlen(sbuf) + StrLen(td) + 1;
+    MemProtect (StrLoc(*dp) = reserve(Strings, len));
     StrLen(*dp) = len;
-    return Succeeded;
+    alcstr(sbuf, strlen(sbuf));
+    alcstr(StrLoc(td), StrLen(td));
+    alcstr("]", 1);
 }
-
+
 /*
  * cotrace -- a co-expression context switch; produce a trace message.
  */
