@@ -312,9 +312,9 @@ int get_name(dptr dp1, dptr dp0)
             /*
              * Must be an element of a structure.
              */
-            blkptr = (union block *)BlkLoc(*dp1);
+            blkptr = BlkLoc(*dp1);
             varptr = OffsetVarLoc(*dp1);
-            switch ((int)BlkType(blkptr)) {
+            switch (BlkType(blkptr)) {
                 case T_Lelem: 		/* list */
                     i = varptr - &blkptr->lelem.lslots[blkptr->lelem.first] + 1;
                     if (i < 1)

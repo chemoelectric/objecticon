@@ -851,7 +851,7 @@ int noimage;
           *  the element and s is the image of the subscript.
           */
          bp = BlkLoc(*dp);
-	    tdp.dword = D_Table;
+         tdp.dword = D_Table;
 	 BlkLoc(tdp) = bp->tvtbl.clink;
 	 outimage(f, &tdp, noimage);
 
@@ -903,12 +903,69 @@ int noimage;
          }
 
      struct_var: {
+         dptr varptr;
          fprintf(f, "(variable = ");
+         bp = BlkLoc(*dp);
+         varptr = OffsetVarLoc(*dp);
+         switch (BlkType(bp)) {
+             case T_Telem: { 		/* table */
+                 /* Find and print the element's table block */
+                 while(BlkType(bp) == T_Telem)
+                     bp = bp->telem.clink;
+                 tdp.dword = D_Table;
+                 BlkLoc(tdp) = bp;
+                 outimage(f, &tdp, noimage + 1);
+                 /* Print the element key */
+                 putc('[', f);
+                 outimage(f, &BlkLoc(*dp)->tvtbl.tref, noimage);
+                 putc(']', f);
+                 break;
+             }
+             case T_Lelem: { 		/* list */
+                 /* Find and print the list block and the index */
+                 word i = varptr - &bp->lelem.lslots[bp->lelem.first] + 1;
+                 if (i < 1)
+                     i += bp->lelem.nslots;
+                 while (BlkType(bp->lelem.listprev) == T_Lelem) {
+                     bp = bp->lelem.listprev;
+                     i += bp->lelem.nused;
+                 }
+                 tdp.dword = D_List;
+                 BlkLoc(tdp) = bp->lelem.listprev;
+                 outimage(f, &tdp, noimage + 1);
+                 fprintf(f,"[%ld]", (long)i);
+                 break;
+             }
+             case T_Object: { 		/* object */
+                 struct b_class *c = bp->object.class;
+                 dptr fname;
+                 word i = varptr - bp->object.fields;
+                 fname =  &c->program->Fnames[c->fields[i]->fnum];
+                 tdp.dword = D_Object;
+                 BlkLoc(tdp) = bp;
+                 outimage(f, &tdp, noimage + 1);
+                 fprintf(f," . %.*s", (int)StrLen(*fname), StrLoc(*fname));
+                 break;
+             }
+             case T_Record: { 		/* record */
+                 struct b_constructor *c = bp->record.constructor;
+                 dptr fn = c->program->Fnames;
+                 i = varptr - bp->record.fields;
+                 tdp.dword = D_Record;
+                 BlkLoc(tdp) = bp;
+                 outimage(f, &tdp, noimage + 1);
+                 fprintf(f," . %.*s", (int)StrLen(fn[c->fnums[i]]), StrLoc(fn[c->fnums[i]]));
+                 break;
+             }
+             default: {		/* none of the above */
+                 fprintf(f, "(struct_var)");
+             }
+         }
+         fprintf(f, " = ");
          dp = OffsetVarLoc(*dp);
          outimage(f, dp, noimage);
          putc(')', f);
-         }
-
+      }
      named_var: {
          fprintf(f, "(variable = ");
          dp = VarLoc(*dp);
