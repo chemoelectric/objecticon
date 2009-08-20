@@ -854,11 +854,8 @@ int noimage;
          tdp.dword = D_Table;
 	 BlkLoc(tdp) = bp->tvtbl.clink;
 	 outimage(f, &tdp, noimage);
-
          putc('[', f);
-
          outimage(f, &bp->tvtbl.tref, noimage);
-
          putc(']', f);
          }
 
@@ -880,7 +877,7 @@ int noimage;
          else if (VarLoc(*dp) == &curpstate->eventcode)
             fprintf(f, "&eventcode = ");
          else if (VarLoc(*dp) == &curpstate->eventval)
-            fprintf(f, "&eventval = ");
+            fprintf(f, "&eventvalue = ");
          outimage(f, VarLoc(*dp), noimage);
          }
 
