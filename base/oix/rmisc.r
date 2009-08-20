@@ -1094,7 +1094,7 @@ void abbr_fname(dptr s, dptr d)
  * getimage(dp1,dp2) - return string image of object dp1 in dp2.
  */
 
-int getimage(dp1,dp2)
+void getimage(dp1,dp2)
 dptr dp1, dp2;
    {
    register word len;
@@ -1209,7 +1209,7 @@ dptr dp1, dp2;
 	 if ((csn = csname(dp1)) != NULL) {
 	    StrLoc(*dp2) = csn;
 	    StrLen(*dp2) = strlen(csn);
-	    return Succeeded;
+	    return;
 	    }
 	 /*
 	  * Otherwise, describe it in terms of the character membership.
@@ -1465,10 +1465,9 @@ dptr dp1, dp2;
          }
 
       default:
-         ReturnErrVal(123, source, Error);
+         syserr("Invalid type to getimage");
 
       }
-   return Succeeded;
    }
 
 /*

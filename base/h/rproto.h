@@ -484,7 +484,7 @@ int	get_name	(dptr dp1, dptr dp2);
 int	getch		(void);
 int	getche		(void);
 double	getdbl		(dptr dp);
-int	getimage	(dptr dp1, dptr dp2);
+void	getimage	(dptr dp1, dptr dp2);
 
 void	hgrow		(union block *bp);
 void	hshrink		(union block *bp);
