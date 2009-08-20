@@ -57,9 +57,9 @@ static void setdump(dptr d)
     fprintf(stderr, "set at %p size=%ld mask=%lx\n", x, (long)x->size, (long)x->mask);
     for (i = 0; i < HSegs; ++i) {
         struct b_slots *slot = x->hdir[i];
-        fprintf(stderr, "\tslot %d at %p\n", i, slot);
+        fprintf(stderr, "\tslot %d at %p segsize=%d\n", i, slot, segsize[i]);
         if (slot) {
-            for (j = 0; j < HSlots; ++j) {
+            for (j = 0; j < segsize[i]; ++j) {
                 struct b_selem *elem = (struct b_selem *)slot->hslots[j];
                 fprintf(stderr, "\t\tbucket chain %d at %p\n", j, elem);
                 while (elem) {
