@@ -165,9 +165,9 @@
    #define MStackSize (30000 * WordSize) /* default value of mstksize, the size of the main interpreter stack */
 #endif					/* MStackSize */
 
-#ifndef StackSize
-   #define StackSize (30000 * WordSize)	/* default value of stksize, the co-expression stack size */
-#endif					/* StackSize */
+#ifndef XStackSize
+   #define XStackSize (30000 * WordSize)	/* default value of xstksize, the co-expression stack size */
+#endif					/* XStackSize */
 
 #ifndef QualLstSize
    #define QualLstSize	(1250 * WordSize) /* size of qualifier pointer region */

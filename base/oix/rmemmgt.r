@@ -852,8 +852,8 @@ static void cofree()
        if (BlkType(*ep) == T_Coexpr) {
            /* Only free blocks allocated by the program doing the collecting */
            if ((*ep)->creator == curpstate) {
-               /* Deduct memory freed - the size must be stksize as we never release programs (see alccoexp) */
-               (*ep)->creator->statcurr -= stksize;
+               /* Deduct memory freed - the size must be xstksize as we never release programs (see alccoexp) */
+               (*ep)->creator->statcurr -= xstksize;
                xep = *ep;
                *ep = (*ep)->nextstk;
          #ifdef HAVE_COCLEAN

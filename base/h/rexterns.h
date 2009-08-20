@@ -52,7 +52,7 @@ extern struct descrip milliondesc;	/* 1000000 */
 extern struct b_iproc Bdeferred_method_stub;  /* Deferred method block */
 
 extern word mstksize;		/* size of main stack in words */
-extern word stksize;		/* size of co-expression stacks in words */
+extern word xstksize;		/* size of co-expression stacks in words */
 extern word qualsize;		/* size of string qualifier list */
 extern word memcushion;		/* memory region cushion factor */
 extern word memgrowth;		/* memory region growth factor */

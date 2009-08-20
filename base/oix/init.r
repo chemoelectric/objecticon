@@ -52,7 +52,7 @@ char *file_name = NULL;			/* source file for current execution point */
 
 
 word mstksize = MStackSize;		/* initial size of main stack */
-word stksize = StackSize;		/* co-expression stack size */
+word xstksize = XStackSize;		/* co-expression stack size */
 word coexprlim;                          /* number of coexpression allocations before a GC is triggered */
 
 int k_level = 0;			/* &level */
@@ -320,12 +320,21 @@ void icon_init(char *name)
     MakeInt(hdr.trace, &rootpstate.Kywd_trc);
 
     /*
+     * If STKSIZE is set, then it sets both MSTKSIZE and XSTKSIZE to
+     * the same value.
+     */
+    if ((t = getenv(STKSIZE))) {
+        setenv(MSTKSIZE, t, 1);
+        setenv(XSTKSIZE, t, 1);
+    }
+
+    /*
      * Examine the environment and make appropriate settings.    [[I?]]
      */
     if (getenv(NOERRBUF))
         noerrbuf++;
     env_int(TRACE, &k_trace, 0, (uword)0);
-    env_int(STKSIZE, &stksize, 1, (uword)MaxWord);
+    env_int(XSTKSIZE, &xstksize, 1, (uword)MaxWord);
     env_int(STRSIZE, &rootstring.size, 1, (uword)MaxWord);
     env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxWord); 
     env_int(MSTKSIZE, &mstksize, 1, (uword)MaxWord);
@@ -337,10 +346,10 @@ void icon_init(char *name)
     /*
      * Ensure stack sizes are multiples of WordSize.
      */
-    stksize &= ~(WordSize - 1);
+    xstksize &= ~(WordSize - 1);
     mstksize &= ~(WordSize - 1);
 
-    coexprlim = Max((pmem/200) / stksize, CoexprLim);
+    coexprlim = Max((pmem/200) / xstksize, CoexprLim);
     env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxWord);
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));

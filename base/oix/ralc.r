@@ -119,9 +119,9 @@ struct b_coexpr *alccoexp()
    {
    struct b_coexpr *ep;
 
-   EVVal(stksize, E_Coexpr);
+   EVVal(xstksize, E_Coexpr);
 
-   ep = malloc(stksize);
+   ep = malloc(xstksize);
 
    /*
     * If malloc failed or there have been too many co-expression allocations
@@ -131,7 +131,7 @@ struct b_coexpr *alccoexp()
    if (ep == NULL || curpstate->statcount > coexprlim) {
       collect(Static);
       if (ep == NULL) {
-          ep = malloc(stksize);
+          ep = malloc(xstksize);
           if (ep == NULL)
               ReturnErrNum(305, NULL);
       }
@@ -141,8 +141,8 @@ struct b_coexpr *alccoexp()
    ep->title = T_Coexpr;
    ep->creator = curpstate;
    /* Add the allocation to the prog's stats */
-   ep->creator->stattotal += stksize;
-   ep->creator->statcurr += stksize;
+   ep->creator->stattotal += xstksize;
+   ep->creator->statcurr += xstksize;
    ep->id = coexp_ser++;
    ep->creator->statcount++;
 
