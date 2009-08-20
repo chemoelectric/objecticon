@@ -279,11 +279,13 @@ int get_name(dptr dp1, dptr dp0)
                 struct class_field *cf = find_class_field_for_dptr(dp, prog);
                 struct b_class *c = cf->defining_class;
                 dptr fname = &c->program->Fnames[cf->fnum];
-                sprintf(sbuf,"class %.*s.%.*s", (int)StrLen(c->name), StrLoc(c->name), 
-                        (int)StrLen(*fname), StrLoc(*fname));
-                i = strlen(sbuf);
-                MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
-                StrLen(*dp0) = i;
+                int len = 6 + StrLen(c->name) + 1 + StrLen(*fname);
+                MemProtect(StrLoc(*dp0) = reserve(Strings, len));
+                StrLen(*dp0) = len;
+                alcstr("class ", 6);
+                alcstr(StrLoc(c->name), StrLen(c->name));
+                alcstr(".", 1);
+                alcstr(StrLoc(*fname), StrLen(*fname));
                 return FieldName;
             }
             else if (InRange(proc0->program->Statics, dp, proc0->program->Estatics)) {
@@ -331,27 +333,36 @@ int get_name(dptr dp1, dptr dp0)
                     break;
                 case T_Record: { 		/* record */
                     struct b_constructor *c = blkptr->record.constructor;
-                    dptr fn = c->program->Fnames;
+                    dptr fname;
+                    int len;
                     i = varptr - blkptr->record.fields;
-                    sprintf(sbuf,"record %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
-                            (long)blkptr->record.id,
-                            (int)StrLen(fn[c->fnums[i]]), StrLoc(fn[c->fnums[i]]));
-                    i = strlen(sbuf);
-                    MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
-                    StrLen(*dp0) = i;
+                    fname = &c->program->Fnames[c->fnums[i]];
+                    sprintf(sbuf,"#%ld", (long)blkptr->record.id);
+                    len = 7 + StrLen(c->name) + strlen(sbuf) + 1 + StrLen(*fname);
+                    MemProtect(StrLoc(*dp0) = reserve(Strings, len));
+                    StrLen(*dp0) = len;
+                    alcstr("record ", 7);
+                    alcstr(StrLoc(c->name), StrLen(c->name));
+                    alcstr(sbuf, strlen(sbuf));
+                    alcstr(".", 1);
+                    alcstr(StrLoc(*fname), StrLen(*fname));
                     break;
                 }
                 case T_Object: { 		/* object */
                     struct b_class *c = blkptr->object.class;
                     dptr fname;
+                    int len;
                     i = varptr - blkptr->object.fields;
                     fname =  &c->program->Fnames[c->fields[i]->fnum];
-                    sprintf(sbuf,"object %.*s#%ld.%.*s", (int)StrLen(c->name), StrLoc(c->name),
-                            (long)blkptr->object.id,
-                            (int)StrLen(*fname), StrLoc(*fname));
-                    i = strlen(sbuf);
-                    MemProtect(StrLoc(*dp0) = alcstr(sbuf,i));
-                    StrLen(*dp0) = i;
+                    sprintf(sbuf,"#%ld", (long)blkptr->object.id);
+                    len = 7 + StrLen(c->name) + strlen(sbuf) + 1 + StrLen(*fname);
+                    MemProtect(StrLoc(*dp0) = reserve(Strings, len));
+                    StrLen(*dp0) = len;
+                    alcstr("object ", 7);
+                    alcstr(StrLoc(c->name), StrLen(c->name));
+                    alcstr(sbuf, strlen(sbuf));
+                    alcstr(".", 1);
+                    alcstr(StrLoc(*fname), StrLen(*fname));
                     break;
                 }
                 case T_Telem: 		/* table */
