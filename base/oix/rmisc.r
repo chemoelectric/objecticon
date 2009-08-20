@@ -904,7 +904,6 @@ int noimage;
 
      struct_var: {
          dptr varptr;
-         fprintf(f, "(variable = ");
          bp = BlkLoc(*dp);
          varptr = OffsetVarLoc(*dp);
          switch (BlkType(bp)) {
@@ -959,13 +958,12 @@ int noimage;
                  break;
              }
              default: {		/* none of the above */
-                 fprintf(f, "(struct_var)");
+                 fprintf(f, "struct_var");
              }
          }
          fprintf(f, " = ");
          dp = OffsetVarLoc(*dp);
          outimage(f, dp, noimage);
-         putc(')', f);
       }
      named_var: {
          fprintf(f, "(variable = ");
