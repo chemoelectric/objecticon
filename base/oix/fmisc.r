@@ -330,8 +330,7 @@ function{1} image(x)
       return string
       }
    inline {
-      if (getimage(&x,&result) == Error)
-          runerr(0);
+      getimage(&x,&result);
       return result;
       }
 end
@@ -1094,50 +1093,43 @@ dptr d1, d2;
  * nth(d) - return the nth field of d, if any.  (sort_field is "n".)
  */
 static dptr nth(d)
-dptr d;
-   {
-   union block *bp;
-   struct b_list *lp;
-   word i, j;
-   dptr rv;
+    dptr d;
+{
+    word i;
+    dptr rv;
 
-   rv = NULL;
-   if (d->dword == D_Record) {
-      /*
-       * Find the nth field of a record.
-       */
-      bp = BlkLoc(*d);
-      i = cvpos((long)sort_field, (long)(bp->record.constructor->n_fields));
-      if (i != CvtFail && i <= bp->record.constructor->n_fields)
-         rv = &bp->record.fields[i-1];
-      }
-   else if (d->dword == D_List) {
-      /*
-       * Find the nth element of a list.
-       */
-      lp = (struct b_list *)BlkLoc(*d);
-      i = cvpos ((long)sort_field, (long)lp->size);
-      if (i != CvtFail && i <= lp->size) {
-         /*
-          * Locate the correct list-element block.
-          */
-         bp = lp->listhead;
-         j = 1;
-         while (i >= j + bp->lelem.nused) {
-            j += bp->lelem.nused;
-            bp = bp->lelem.listnext;
-            }
-         /*
-          * Locate the desired element.
-          */
-         i += bp->lelem.first - j;
-         if (i >= bp->lelem.nslots)
-            i -= bp->lelem.nslots;
-         rv = &bp->lelem.lslots[i];
-         }
-      }
-   return rv;
-   }
+    rv = NULL;
+    if (d->dword == D_Record) {
+        union block *bp;
+        /*
+         * Find the nth field of a record.
+         */
+        bp = BlkLoc(*d);
+        i = cvpos((long)sort_field, (long)(bp->record.constructor->n_fields));
+        if (i != CvtFail && i <= bp->record.constructor->n_fields)
+            rv = &bp->record.fields[i-1];
+    }
+    else if (d->dword == D_List) {
+        struct b_list *lp;
+        /*
+         * Find the nth element of a list.
+         */
+        lp = (struct b_list *)BlkLoc(*d);
+        i = cvpos ((long)sort_field, (long)lp->size);
+        if (i != CvtFail && i <= lp->size) {
+            struct b_lelem *le;
+            word pos;
+            le = get_lelem_for_index(lp, i, &pos);
+            if (!le)
+                syserr("Failed to find lelem for valid index");
+            pos += le->first;
+            if (pos >= le->nslots)
+                pos -= le->nslots;
+            rv = &le->lslots[pos];
+        }
+    }
+    return rv;
+}
 
 
 "type(x) - return type of x as a string."

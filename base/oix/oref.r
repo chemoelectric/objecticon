@@ -208,8 +208,8 @@ operator{0,1} ? random(underef x -> dx)
           */
             C_integer val;
             double rval;
-            register C_integer i, j;
-            union block *bp;     /* doesn't need to be tended */
+            word i, j;
+            struct b_lelem *le;     /* doesn't need to be tended */
             if ((val = BlkLoc(dx)->list.size) == 0)
                fail;
             rval = RandVal;
@@ -219,26 +219,15 @@ operator{0,1} ? random(underef x -> dx)
             EVValD(&dx, E_Lrand);
             EVVal(i, E_Lsub);
 
-            j = 1;
-            /*
-             * Work down chain list of list blocks and find the block that
-             *  contains the selected element.
-             */
-            bp = BlkLoc(dx)->list.listhead;
-            while (i >= j + bp->lelem.nused) {
-               j += bp->lelem.nused;
-               bp = bp->lelem.listnext;
-               if (BlkType(bp) == T_List)
-                  syserr("list reference out of bounds in random");
-               }
-            /*
-             * Locate the appropriate element and return a variable
-             * that points to it.
-             */
-            i += bp->lelem.first - j;
-            if (i >= bp->lelem.nslots)
-               i -= bp->lelem.nslots;
-            return struct_var(&bp->lelem.lslots[i], bp);
+            le = get_lelem_for_index(&BlkLoc(dx)->list, i, &j);
+            if (!le)
+                syserr("list reference out of bounds in random");
+            /* j is the logical index in the element block; convert to
+             * the actual position. */
+            j += le->first;
+            if (j >= le->nslots)
+                j -= le->nslots;
+            return struct_var(&le->lslots[j], le);
          }
 
       table: {
