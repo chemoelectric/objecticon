@@ -939,7 +939,7 @@ int noimage;
              case T_Object: { 		/* object */
                  struct b_class *c = bp->object.class;
                  dptr fname;
-                 word i = varptr - bp->object.fields;
+                 i = varptr - bp->object.fields;
                  fname =  &c->program->Fnames[c->fields[i]->fnum];
                  tdp.dword = D_Object;
                  BlkLoc(tdp) = bp;
@@ -949,12 +949,13 @@ int noimage;
              }
              case T_Record: { 		/* record */
                  struct b_constructor *c = bp->record.constructor;
-                 dptr fn = c->program->Fnames;
+                 dptr fname;
                  i = varptr - bp->record.fields;
+                 fname = &c->program->Fnames[c->fnums[i]];
                  tdp.dword = D_Record;
                  BlkLoc(tdp) = bp;
                  outimage(f, &tdp, noimage + 1);
-                 fprintf(f," . %.*s", (int)StrLen(fn[c->fnums[i]]), StrLoc(fn[c->fnums[i]]));
+                 fprintf(f," . %.*s", (int)StrLen(*fname), StrLoc(*fname));
                  break;
              }
              default: {		/* none of the above */

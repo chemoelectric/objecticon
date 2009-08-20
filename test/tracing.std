@@ -86,39 +86,39 @@ tracing.icn  :   72  | | vproc returned &null
 tracing.icn  :   61  | | vproc(1,list#2 = [])
 tracing.icn  :   72  | | vproc returned 1
 tracing.icn  :   62  | | vproc(1,list#3 = [2])
-tracing.icn  :   73  | | vproc suspended (variable = 2)
+tracing.icn  :   73  | | vproc suspended (variable = list#3(1)[1] = 2)
 tracing.icn  :   62  | | vproc resumed
 tracing.icn  :   74  | | vproc failed
 tracing.icn  :   63  | | vproc(1,list#4 = [2,3])
-tracing.icn  :   73  | | vproc suspended (variable = 2)
+tracing.icn  :   73  | | vproc suspended (variable = list#4(2)[1] = 2)
 tracing.icn  :   63  | | vproc resumed
-tracing.icn  :   73  | | vproc suspended (variable = 3)
+tracing.icn  :   73  | | vproc suspended (variable = list#4(2)[2] = 3)
 tracing.icn  :   63  | | vproc resumed
 tracing.icn  :   74  | | vproc failed
 tracing.icn  :   64  | | vproc(1,list#5 = [2,3,4])
-tracing.icn  :   73  | | vproc suspended (variable = 2)
+tracing.icn  :   73  | | vproc suspended (variable = list#5(3)[1] = 2)
 tracing.icn  :   64  | | vproc resumed
-tracing.icn  :   73  | | vproc suspended (variable = 3)
+tracing.icn  :   73  | | vproc suspended (variable = list#5(3)[2] = 3)
 tracing.icn  :   64  | | vproc resumed
-tracing.icn  :   73  | | vproc suspended (variable = 4)
+tracing.icn  :   73  | | vproc suspended (variable = list#5(3)[3] = 4)
 tracing.icn  :   64  | | vproc resumed
 tracing.icn  :   74  | | vproc failed
 tracing.icn  :   67  | | vproc(1,list#7 = [2,3,4])
-tracing.icn  :   73  | | vproc suspended (variable = 2)
+tracing.icn  :   73  | | vproc suspended (variable = list#7(3)[1] = 2)
 tracing.icn  :   67  | | vproc resumed
-tracing.icn  :   73  | | vproc suspended (variable = 3)
+tracing.icn  :   73  | | vproc suspended (variable = list#7(3)[2] = 3)
 tracing.icn  :   67  | | vproc resumed
-tracing.icn  :   73  | | vproc suspended (variable = 4)
+tracing.icn  :   73  | | vproc suspended (variable = list#7(3)[3] = 4)
 tracing.icn  :   67  | | vproc resumed
 tracing.icn  :   74  | | vproc failed
 tracing.icn  :   67  | | vproc(1,list#8 = [2,3])
-tracing.icn  :   73  | | vproc suspended (variable = 2)
+tracing.icn  :   73  | | vproc suspended (variable = list#8(2)[1] = 2)
 tracing.icn  :   67  | | vproc resumed
-tracing.icn  :   73  | | vproc suspended (variable = 3)
+tracing.icn  :   73  | | vproc suspended (variable = list#8(2)[2] = 3)
 tracing.icn  :   67  | | vproc resumed
 tracing.icn  :   74  | | vproc failed
 tracing.icn  :   67  | | vproc(1,list#9 = [2])
-tracing.icn  :   73  | | vproc suspended (variable = 2)
+tracing.icn  :   73  | | vproc suspended (variable = list#9(1)[1] = 2)
 tracing.icn  :   67  | | vproc resumed
 tracing.icn  :   74  | | vproc failed
 tracing.icn  :   67  | | vproc(1,list#10 = [])
