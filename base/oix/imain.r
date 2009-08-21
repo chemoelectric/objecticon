@@ -19,7 +19,7 @@
  * A number of important variables follow.
  */
 
-function{0} deferred_method_stub()
+function{0} deferred_method_stub(a[n])
    body {
       runerr(612);       
    }
