@@ -791,7 +791,6 @@ int noimage;
          if (is:kywdsubj(bp->tvsubs.ssvar)) {
             dp = VarLoc(bp->tvsubs.ssvar);
             fprintf(f, "&subject");
-            fflush(f);
             }
          else if (is:struct_var(bp->tvsubs.ssvar)) {
             dp = OffsetVarLoc(bp->tvsubs.ssvar);
