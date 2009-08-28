@@ -450,7 +450,7 @@ void env_int(name, variable, non_neg, limit)
     }
     else if (*s == '+')
         ++s;
-    while (isdigit(*s)) {
+    while (isdigit((unsigned char)*s)) {
         d = *s++ - '0';
         /*
          * See if 10 * n + d > limit, but do it so there can be no overflow.

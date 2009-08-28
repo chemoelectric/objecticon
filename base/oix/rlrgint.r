@@ -88,10 +88,6 @@ union word_b_bignum {
 #define LrgNeed(n)   ( ((sizeof(struct b_bignum) + ((n) - 1) * sizeof(DIGIT)) \
                         + WordSize - 1) & -WordSize )
 
-/* copied from rconv.c */
-
-#define tonum(c)     (isdigit(c) ? (c)-'0' : 10+(((c)|(040))-'a'))
-
 
 /* copied from oref.c */
 
@@ -239,9 +235,9 @@ word bigradix(sign, r, s, end_s, result)
     if (r < 2 || r > 36)
         return CvtFail;
 
-    for (c = ((s < end_s) ? *s++ : ' '); isalnum(c);
+    for (c = ((s < end_s) ? *s++ : ' '); isalnum((unsigned char)c);
          c = ((s < end_s) ? *s++ : ' ')) {
-        c = tonum(c);
+        c = isdigit((unsigned char)c) ? (c)-'0' : 10+(((c)|(040))-'a');
         if (c >= r)
             return CvtFail;
         muli1(bd, (word)r, c, bd, len);
@@ -252,9 +248,9 @@ word bigradix(sign, r, s, end_s, result)
      *  in the string. Note, if we have already reached end-of-string,
      *  c has been set to a space.
      */
-    while (isspace(c) && s < end_s)
+    while (isspace((unsigned char)c) && s < end_s)
         c = *s++;
-    if (!isspace(c))
+    if (!isspace((unsigned char)c))
         return CvtFail;
 
     if (sign == '-')

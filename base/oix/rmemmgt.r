@@ -1139,10 +1139,10 @@ longlong physicalmemorysize()
         while (fgets(buf, 80, f)) {
             if (!strncmp(TAG, buf, strlen(TAG))) {
                 p = buf+strlen(TAG);
-                while (isspace(*p)) p++;
+                while (isspace((unsigned char)*p)) p++;
                 i = atol(p);
-                while (isdigit(*p)) p++;
-                while (isspace(*p)) p++;
+                while (isdigit((unsigned char)*p)) p++;
+                while (isspace((unsigned char)*p)) p++;
                 if (!strncmp(p, "kB",2)) i *= 1024;
                 else if (!strncmp(p, "MB", 2)) i *= 1024 * 1024;
                 break;

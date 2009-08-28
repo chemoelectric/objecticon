@@ -1349,7 +1349,7 @@ function{0,1} io_WindowsFilePath_getdcwd(d)
       int dir;
       if (StrLen(d) != 1)
 	 fail;
-      dir = toupper(*StrLoc(d)) - 'A' + 1;
+      dir = toupper((unsigned char)*StrLoc(d)) - 'A' + 1;
       p = _getdcwd(dir, 0, 32);
       if (!p)
 	 fail;

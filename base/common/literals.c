@@ -49,13 +49,13 @@ int *nchars_ptr;
        *  two hexadecimal digits.
        */
       c = 0;
-      for (i = 1; *nchars_ptr > 0 && isxdigit(**str_ptr) && i <= 2; ++i) {
+      for (i = 1; *nchars_ptr > 0 && isxdigit((unsigned char)**str_ptr) && i <= 2; ++i) {
          NextChar(nc);
          if (nc >= 'a' && nc <= 'f')
              nc -= 'a' - 10;
          else if (nc >= 'A' && nc <= 'F')
             nc -= 'A' - 10;
-         else if (isdigit(nc))
+         else if (isdigit((unsigned char)nc))
              nc -= '0';
          c = (c << 4) | nc;
          }
@@ -120,8 +120,7 @@ int len;
             fprintf(f, "\\\"");
             break;
          default:
-
-            if (isprint(c))
+            if (isprint((unsigned char)c))
                fprintf(f, "%c", c);
             else
                fprintf(f, "\\%03o", (int)c);

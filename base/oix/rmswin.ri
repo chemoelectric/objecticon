@@ -827,7 +827,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
        * Alt-A .. Alt-Z, and Alt-0 .. Alt-9 are eaten by Icon;
        * others are passed on to Windows for things like Alt-Esc.
        */
-      if (isalnum(wp) && !(ws->menuMap)) return 0;
+      if (isalnum((unsigned char)wp) && !(ws->menuMap)) return 0;
       break;
    case WM_HSCROLL:
    case WM_VSCROLL:
@@ -1224,7 +1224,7 @@ int wputc(int ci, wbp w)
       /*
        * Go back through any number of control-H's from prior lifetimes.
        */
-      while((i > -EQUEUELEN) && !isprint(EVQUESUB(w,i))) {
+      while((i > -EQUEUELEN) && !isprint((unsigned char)EVQUESUB(w,i))) {
 	 i--;
 	 }
       if (i == -EQUEUELEN) break;
@@ -2302,8 +2302,8 @@ word len;
    iy = 0;
    m = msk1;
    while (len--) {
-      if (isxdigit(c = *s++)) {         /* if hexadecimal character */
-	 if (!isdigit(c))               /* fix bottom 4 bits if necessary */
+     if (isxdigit((unsigned char)(c = *s++))) {         /* if hexadecimal character */
+         if (!isdigit((unsigned char)c))               /* fix bottom 4 bits if necessary */
 	    c += 9;
 	 while (m > 0) {                /* set (usually) 4 pixel values */
 	    --ix;
@@ -3658,7 +3658,7 @@ int len;
    /*
     * If the pattern starts with a number it is a width , bits encoding
     */
-   if ((len > 0) && isdigit(name[0])) {
+   if ((len > 0) && isdigit((unsigned char)name[0])) {
       nbits = MAXXOBJS;
       switch (parsepattern(name, len, &width, &nbits, bits)) {
       case Failed:
@@ -4494,7 +4494,7 @@ char *nativeselectdialog(wbp w, struct b_list *L, char *s)
          list_get(hp, &d);
          if (!cnv:C_string(d, s1)) return NULL;
          for(j=0; j<8; j++) {
-            s3[j] = tolower(s1[j]);
+            s3[j] = tolower((unsigned char)s1[j]);
             if (s3[j] == '\0') break;
             }
          if (!strcmp(s3, "ok")) okflag = 1;

@@ -17,9 +17,6 @@
  */
 
 
-#define tonum(c)	(isdigit(c) ? (c)-'0' : 10+(((c)|(040))-'a'))
-
-
 /*
  * Prototypes for static functions.
  */
@@ -794,7 +791,7 @@ C_integer arity;
     * See if the string represents an operator. In this case the arity
     *  of the operator must match the one given.
     */
-   if (!isalpha(*StrLoc(*s))) {
+   if (!isalpha((unsigned char)*StrLoc(*s))) {
       for (i = 0; i < op_tbl_sz; ++i)
           if (eq(s, &op_tbl[i]->name) && arity == op_tbl[i]->nparam)
 	    return op_tbl[i];
@@ -912,7 +909,7 @@ union numeric *result;
    /*
     * Skip leading white space.
     */
-   while (isspace(c))
+   while (isspace((unsigned char)c))
       if (s < end_s)
          c = *s++;
       else
@@ -931,7 +928,7 @@ union numeric *result;
    /*
     * Get integer part of mantissa.
     */
-   while (isdigit(c)) {
+   while (isdigit((unsigned char)c)) {
       digits++;
       if (mantissa < Big) {
 	 mantissa = mantissa * 10 + (c - '0');
@@ -961,7 +958,7 @@ union numeric *result;
    if (c == '.') {
       realflag++;
       c = (s < end_s) ? *s++ : ' ';
-      while (isdigit(c)) {
+      while (isdigit((unsigned char)c)) {
 	 digits++;
 	 if (mantissa < Big) {
 	    mantissa = mantissa * 10 + (c - '0');
@@ -990,9 +987,9 @@ union numeric *result;
 	 esign = c;
          c = (s < end_s) ? *s++ : ' ';
 	 }
-      if (!isdigit(c))
+      if (!isdigit((unsigned char)c))
 	 return CvtFail;
-      while (isdigit(c)) {
+      while (isdigit((unsigned char)c)) {
 	 exponent = exponent * 10 + (c - '0');
          c = (s < end_s) ? *s++ : ' ';
 	 }
@@ -1004,9 +1001,9 @@ union numeric *result;
     *  in the string. Note, if we have already reached end-of-string,
     *  c has been set to a space.
     */
-   while (isspace(c) && s < end_s)
+   while (isspace((unsigned char)c) && s < end_s)
       c = *s++;
-   if (!isspace(c))
+   if (!isspace((unsigned char)c))
       return CvtFail;
 
    /*

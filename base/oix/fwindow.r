@@ -515,7 +515,7 @@ function{0,1} graphics_Window_draw_image(self, argv[argc])
       width = 0;
       while (s < z && *s == ' ')	/* skip blanks */
           s++;
-      while (s < z && isdigit(*s))	/* scan number */
+      while (s < z && isdigit((unsigned char)*s))	/* scan number */
           width = 10 * width + *s++ - '0';
       while (s < z && *s == ' ')	/* skip blanks */
           s++;
@@ -533,7 +533,7 @@ function{0,1} graphics_Window_draw_image(self, argv[argc])
           s++;
           nchars = 0;
           for (t = s; t < z; t++)
-              if (isxdigit(*t))
+              if (isxdigit((unsigned char)*t))
                   nchars++;			/* count hex digits */
               else if (*t != PCH1 && *t != PCH2)
                   fail;				/* illegal punctuation */
@@ -554,7 +554,7 @@ function{0,1} graphics_Window_draw_image(self, argv[argc])
        */
       c = *s++;					/* save initial character */
       p = 0;
-      while (s < z && isdigit(*s))		/* scan digits */
+      while (s < z && isdigit((unsigned char)*s))		/* scan digits */
           p = 10 * p + *s++ - '0';
       while (s < z && *s == ' ')		/* skip blanks */
           s++;

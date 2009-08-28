@@ -34,9 +34,8 @@ static	int	ctlesc		(void);
 static	int	hexesc		(int digs);
 static	int	octesc		(int ac);
 static  int     read_utf_char(int c);
-#define isletter(s)	(isupper(c) | islower(c))
 
-
+#define isletter(c)	(isupper(c) | islower(c))
 #define tonum(c)        (isdigit(c) ? (c - '0') : ((c & 037) + 9))
 
 struct node tok_loc =

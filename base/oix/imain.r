@@ -54,7 +54,7 @@ int CmdParamToArgv(char *s, char ***avp, int dequote)
 
 
     while (*t2) {
-        while (*t2 && isspace(*t2)) t2++;
+        while (*t2 && isspace((unsigned char)*t2)) t2++;
         switch (*t2) {
             case '\0': break;
             case '"': {
@@ -77,7 +77,7 @@ int CmdParamToArgv(char *s, char ***avp, int dequote)
             default: {
                 FINDDATA_T fd;
                 char *t3 = t2;
-                while (*t2 && !isspace(*t2)) t2++;
+                while (*t2 && !isspace((unsigned char)*t2)) t2++;
                 if (*t2)
                     *t2++ = '\0';
                 strcpy(tmp, t3);

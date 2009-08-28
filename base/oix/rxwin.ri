@@ -1930,8 +1930,8 @@ int seticonpos(w,s)
     ws->wmhintflags |= IconPositionHint;
     s2 = s;
     ws->iconx = atol(s2);
-    while (isspace(*s2)) s2++;
-    while (isdigit(*s2)) s2++;
+    while (isspace((unsigned char)*s2)) s2++;
+    while (isdigit((unsigned char)*s2)) s2++;
     if (*s2++ != ',') return Error;
     ws->icony = atol(s2);
 
@@ -3206,8 +3206,8 @@ int blimage(w, x, y, width, height, ch, s, len)
     iy = 0;
     m = msk1;
     while (len--) {
-        if (isxdigit(c = *s++)) {		/* if hexadecimal character */
-            if (!isdigit(c))		/* fix bottom 4 bits if necessary */
+        if (isxdigit((unsigned char)(c = *s++))) {		/* if hexadecimal character */
+            if (!isdigit((unsigned char)c))		/* fix bottom 4 bits if necessary */
                 c += 9;
             while (m > 0) {		/* set (usually) 4 pixel values */
                 --ix;
@@ -3737,7 +3737,7 @@ int SetPattern(w, name, len)
     /*
      * If the pattern starts with a number it is a width , bits encoding
      */
-    if ((len > 0) && isdigit(name[0])) {
+    if ((len > 0) && isdigit((unsigned char)name[0])) {
         nbits = MAXXOBJS;
         switch (parsepattern(name, len, &width, &nbits, bits)) {
             case Failed:

@@ -550,7 +550,7 @@ static void read_params(struct ucode_op *op)
                 t = l;
                 zero_sbuf(&ucode_sbuf);
                 while (l-- > 0) {
-                    if (isprint(*s1))
+                    if (isprint((unsigned char)*s1))
                         AppChar(ucode_sbuf, *s1);
                     else
                         AppChar(ucode_sbuf, '?');

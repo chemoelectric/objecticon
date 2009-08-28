@@ -299,7 +299,7 @@ void add_invocable(char *name, int x, struct node *n)
         if (name == all_string)
             name = "0";			/* "0" represents "all" */
     }
-    else if (!isalpha(name[1]) && (name[1] != '_'))
+    else if (!isalpha((unsigned char)name[1]) && (name[1] != '_'))
         return;				/* if operator, ignore */
 
     p = FAlloc(struct tinvocable);

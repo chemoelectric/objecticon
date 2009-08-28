@@ -2424,7 +2424,7 @@ static void gentables()
                         j = 0;
                     }
                     fprintf(dbgfile, " %02x", s[i] & 0xff);
-                    t[j++] = isprint(s[i]) ? s[i] : ' ';
+                    t[j++] = isprint((unsigned char)s[i]) ? s[i] : ' ';
                 }
                 t[j] = 0;
                 while (i % 8 != 0) {

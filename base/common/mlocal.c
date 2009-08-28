@@ -147,9 +147,9 @@ void normalize(char *file)
         if (*p == '/')
             *p = '\\';
         else 
-            *p = tolower(*p);
+            *p = tolower((unsigned char)*p);
     }
-    if (isalpha(file[0]) && file[1]==':') 
+    if (isalpha((unsigned char)file[0]) && file[1]==':') 
         file += 2;
     p = q = file;
     while (*p) {
@@ -177,7 +177,7 @@ void normalize(char *file)
  */
 int isabsolute(char *s)
 {
-    return isalpha(*s) && s[1] == ':' && (s[2] == '\\' || s[2] == '/');
+    return isalpha((unsigned char)*s) && s[1] == ':' && (s[2] == '\\' || s[2] == '/');
 }
 
 /*
@@ -436,8 +436,8 @@ int smatch(char *s, char *t)
                 t++;
         a = *s++;
         b = *t++;
-        if (isupper(a))  a = tolower(a);
-        if (isupper(b))  b = tolower(b);
+        if (isupper((unsigned char)a))  a = tolower((unsigned char)a);
+        if (isupper((unsigned char)b))  b = tolower((unsigned char)b);
         if (a != b)
             return 0;
     }

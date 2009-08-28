@@ -186,23 +186,23 @@ static int setpos(w,s)
     int posx, posy;
 
     s2 = s;
-    while (isspace(*s2)) s2++;
-    if (!isdigit(*s2) && (*s2 != '-')) return Error;
+    while (isspace((unsigned char)*s2)) s2++;
+    if (!isdigit((unsigned char)*s2) && (*s2 != '-')) return Error;
     posx = atol(s2);
     if (*s2 == '-') s2++;
-    while (isdigit(*s2)) s2++;
+    while (isdigit((unsigned char)*s2)) s2++;
     if (*s2 == '.') {
         s2++;
-        while (isdigit(*s2)) s2++;
+        while (isdigit((unsigned char)*s2)) s2++;
     }
     if (*s2++ != ',') return Error;
-    if (!isdigit(*s2) && (*s2 != '-')) return Error;
+    if (!isdigit((unsigned char)*s2) && (*s2 != '-')) return Error;
     posy = atol(s2);
     if (*s2 == '-') s2++;
-    while (isdigit(*s2)) s2++;
+    while (isdigit((unsigned char)*s2)) s2++;
     if (*s2 == '.') {
         s2++;
-        while (isdigit(*s2)) s2++;
+        while (isdigit((unsigned char)*s2)) s2++;
     }
     if (*s2) return Error;
     if (posx < 0) {
@@ -227,22 +227,22 @@ int setsize(w,s)
     int width, height;
 
     s2 = s;
-    while (isspace(*s2)) s2++;
-    if (!isdigit(*s2) && (*s2 != '-')) return Error;
+    while (isspace((unsigned char)*s2)) s2++;
+    if (!isdigit((unsigned char)*s2) && (*s2 != '-')) return Error;
     width = atol(s2);
     if (*s2 == '-') s2++;
-    while (isdigit(*s2)) s2++;
+    while (isdigit((unsigned char)*s2)) s2++;
     if (*s2 == '.') {
         s2++;
-        while (isdigit(*s2)) s2++;
+        while (isdigit((unsigned char)*s2)) s2++;
     }
     if (*s2++ != ',') return Error;
     height = atol(s2);
     if (*s2 == '-') s2++;
-    while (isdigit(*s2)) s2++;
+    while (isdigit((unsigned char)*s2)) s2++;
     if (*s2 == '.') {
         s2++;
-        while (isdigit(*s2)) s2++;
+        while (isdigit((unsigned char)*s2)) s2++;
     }
     if (*s2) return Error;
     sprintf(tmp,"%dx%d",width,height);
@@ -257,9 +257,9 @@ int setminsize(w,s)
     char *s;
 {
     SHORT width, height;
-    if (isdigit(*s)) {
+    if (isdigit((unsigned char)*s)) {
         if ((width = atoi(s)) <= 0) return Error;
-        while (isdigit(*++s));
+        while (isdigit((unsigned char)*++s));
         if (*s++ != ',') return Error;
         if ((height = atoi(s)) <= 0) return Error;
     } else
@@ -368,7 +368,7 @@ int parsecolor(w, buf, r, g, b, a)
     *a = 65535;
 
     /* trim leading spaces */
-    while (isspace(*buf))
+    while (isspace((unsigned char)*buf))
         buf++;
 
 
@@ -388,7 +388,7 @@ int parsecolor(w, buf, r, g, b, a)
     /* try interpreting as a hexadecimal value */
     if (*buf == '#') {
         buf++;
-        for (len = 0; isalnum(buf[len]); len++);
+        for (len = 0; isalnum((unsigned char)buf[len]); len++);
         switch (len) {
             case  3:  fmt = "%1x%1x%1x%c";  mul = 0x1111;  break;
             case  4:  fmt = "%1x%1x%1x%1x%c";  mul = 0x1111;  break;
@@ -464,7 +464,7 @@ static int colorphrase(buf, r, g, b, a)
     lgt = -1.0;				/* default no lightness mod */
     sat =  1.0;				/* default vivid saturation */
     len = strlen(buf);
-    while (isspace(buf[len-1]))
+    while (isspace((unsigned char)buf[len-1]))
         len--;				/* trim trailing spaces */
 
     if (len >= sizeof(cbuffer))
@@ -474,7 +474,7 @@ static int colorphrase(buf, r, g, b, a)
      * copy spec, lowering case and replacing spaces and hyphens with NULs
      */
     for(p = cbuffer; (c = *buf) != 0; p++, buf++) {
-        if (isupper(c)) *p = tolower(c);
+        if ((unsigned char)isupper(c)) *p = tolower((unsigned char)c);
         else if (c == ' ' || c == '-') *p = '\0';
         else *p = c;
     }
@@ -958,7 +958,7 @@ static int gfheader(f)
     if (fread((char *)hdr, sizeof(char), sizeof(hdr), f) != sizeof(hdr))
         return 0;				/* header short or missing */
     if (strncmp((char *)hdr, "GIF", 3) != 0 ||
-        !isdigit(hdr[3]) || !isdigit(hdr[4]))
+        !isdigit((unsigned char)hdr[3]) || !isdigit((unsigned char)hdr[4]))
         return 0;				/* not GIFnn */
 
     b = hdr[10];				/* flag byte */
@@ -2261,7 +2261,7 @@ int *size;
         /*
          * find start of next comma-separated attribute word
          */
-        while (isspace(*s) || *s == ',')	/* trim leading spaces & empty words */
+        while (isspace((unsigned char)*s) || *s == ',')	/* trim leading spaces & empty words */
             s++;
         if (*s == '\0')			/* stop at end of string */
             break;
@@ -2270,8 +2270,8 @@ int *size;
          * copy word, converting to lower case to implement case insensitivity
          */
         for (a = attr; (c = *s) != '\0' && c != ','; s++) {
-            if (isupper(c))
-                c = tolower(c);
+            if (isupper((unsigned char)c))
+                c = tolower((unsigned char)c);
             *a++ = c;
             if (a - attr >= MAXFONTWORD)
                 return 0;			/* too long */
@@ -2280,7 +2280,7 @@ int *size;
         /*
          * trim trailing spaces and terminate word
          */
-        while (isspace(a[-1]))
+        while (isspace((unsigned char)a[-1]))
             a--;
         *a = '\0';
 
@@ -2331,7 +2331,7 @@ int parsepattern(s, len, width, nbits, bits)
     /*
      * skip over width
      */
-    while ((len > 0) && isdigit(*s)) {
+    while ((len > 0) && isdigit((unsigned char)*s)) {
         len--; s++;
     }
     if ((len <= 1) || (*s != ',')) return Error;
@@ -2353,7 +2353,7 @@ int parsepattern(s, len, width, nbits, bits)
             for (j = 0; j < hexdigits_per_row; j++, len--, s++) {
                 if (len == 0) break;
                 v <<= 4;
-                if (isdigit(*s)) v += *s - '0';
+                if (isdigit((unsigned char)*s)) v += *s - '0';
                 else switch (*s) {
                     case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
                         v += *s - 'a' + 10; break;
@@ -2373,7 +2373,7 @@ int parsepattern(s, len, width, nbits, bits)
         v = 0;
         *nbits = 0;
         while (len > 0) {
-            while ((len > 0) && isdigit(*s)) {
+            while ((len > 0) && isdigit((unsigned char)*s)) {
                 v = v * 10 + *s - '0';
                 len--; s++;
 	    }
@@ -2403,25 +2403,25 @@ int parsegeometry(buf, x, y, width, height)
     SHORT *x, *y, *width, *height;
 {
     int retval = 0;
-    if (isdigit(*buf)) {
+    if (isdigit((unsigned char)*buf)) {
         retval++;
         if ((*width = atoi(buf)) <= 0) return 0;
-        while (isdigit(*++buf));
+        while (isdigit((unsigned char)*++buf));
         if (*buf++ != 'x') return 0;
         if ((*height = atoi(buf)) <= 0) return 0;
-        while (isdigit(*++buf));
+        while (isdigit((unsigned char)*++buf));
     }
 
     if (*buf == '+' || *buf == '-') {
         retval += 2;
         *x = atoi(buf);
         buf++; /* skip over +/- */
-        while (isdigit(*buf)) buf++;
+        while (isdigit((unsigned char)*buf)) buf++;
 
         if (*buf != '+' && *buf != '-') return 0;
         *y = atoi(buf);
         buf++; /* skip over +/- */
-        while (isdigit(*buf)) buf++;
+        while (isdigit((unsigned char)*buf)) buf++;
         if (*buf) return 0;
     }
     return retval;

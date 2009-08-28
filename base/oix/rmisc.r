@@ -380,7 +380,7 @@ dptr dp;
 static int charstr(int c, char *b)
 {
     static char cbuf[12];
-    if (c < 128 && isprint(c)) {
+    if (c < 128 && isprint((unsigned char)c)) {
         /*
          * c is printable, but special case ", ', - and \.
          */
@@ -657,7 +657,7 @@ int noimage;
               */
              if (BlkLoc(*dp)->proc.program)
                  fprintf(f, "procedure ");
-             else if (isalpha(*StrLoc(BlkLoc(*dp)->proc.name)))
+             else if (isalpha((unsigned char)*StrLoc(BlkLoc(*dp)->proc.name)))
                  fprintf(f, "function ");
              else
                  fprintf(f, "operator ");
@@ -1329,7 +1329,7 @@ dptr dp1, dp2;
               */
              if (BlkLoc(source)->proc.program)
                  type0 = "procedure ";
-             else if (isalpha(*StrLoc(BlkLoc(source)->proc.name)))
+             else if (isalpha((unsigned char)*StrLoc(BlkLoc(source)->proc.name)))
                  type0 = "function ";
              else
                  type0 = "operator ";
@@ -1725,18 +1725,18 @@ word *high;
 int strcasecmp(char *s1, char *s2)
 {
    while (*s1 && *s2) {
-      if (tolower(*s1) != tolower(*s2))
-         return tolower(*s1) - tolower(*s2);
+       if (tolower((unsigned char)*s1) != tolower((unsigned char)*s2))
+           return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
       s1++; s2++;
       }
-   return tolower(*s1) - tolower(*s2);
+   return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
 }
 
 int strncasecmp(char *s1, char *s2, int n)
 {
    int i, j;
    for(i=0;i<n;i++) {
-      j = tolower(s1[i]) - tolower(s2[i]);
+      j = tolower((unsigned char)s1[i]) - tolower((unsigned char)s2[i]);
       if (j) return j;
       if (s1[i] == '\0') return 0; /* terminate if both at end-of-string */
       }
