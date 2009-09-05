@@ -66,6 +66,9 @@
 /* define as 1 if poll exists */
 #undef HAVE_POLL
 
+/* define as 1 if _etext exists */
+#undef HAVE__ETEXT
+
 /* define as 1 if unsetenv exists and returns an int */
 #undef HAVE_UNSETENV_INT_RETURN
 

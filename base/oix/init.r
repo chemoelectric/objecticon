@@ -1283,8 +1283,12 @@ void showcoexps()
 
 int valid_addr(void *p) 
 {
+#ifdef HAVE__ETEXT
   extern char _etext;
   return (p != NULL) && ((char*) p > &_etext);
+#else
+  return 1;
+#endif
 }
 
 static int isdescrip(word *p){
