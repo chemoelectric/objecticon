@@ -2282,7 +2282,7 @@ static struct descrip stat2list(struct stat *st)
 #else					/* MSWIN32 */
    pw = getpwuid(st->st_uid);
    if (!pw) {
-      sprintf(mode, "%d", st->st_uid);
+      sprintf(mode, "%d", (int)st->st_uid);
       user = mode;
    } else
       user = pw->pw_name;
@@ -2291,7 +2291,7 @@ static struct descrip stat2list(struct stat *st)
    
    gr = getgrgid(st->st_gid);
    if (!gr) {
-      sprintf(mode, "%d", st->st_gid);
+      sprintf(mode, "%d", (int)st->st_gid);
       group = mode;
    } else
       group = gr->gr_name;
