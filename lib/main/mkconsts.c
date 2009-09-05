@@ -63,14 +63,16 @@ void start_class(char *s, char *a, int t1, int t2)
 void end_class()
 {
     int i;
-    fprintf(out, "   public static const\n");
-    for (i = 0; i < n_entries; ++i) {
-        if (strcmp(buff[i].name, buff[i].origname) != 0)
-            fprintf(out, "      # %s\n", buff[i].origname);
-        if (i == n_entries - 1)
-            fprintf(out, "      %s\n\n", buff[i].name);
-        else
-            fprintf(out, "      %s,\n", buff[i].name);
+    if (n_entries > 0) {
+        fprintf(out, "   public static const\n");
+        for (i = 0; i < n_entries; ++i) {
+            if (strcmp(buff[i].name, buff[i].origname) != 0)
+                fprintf(out, "      # %s\n", buff[i].origname);
+            if (i == n_entries - 1)
+                fprintf(out, "      %s\n\n", buff[i].name);
+            else
+                fprintf(out, "      %s,\n", buff[i].name);
+        }
     }
     if (tab_flag) {
         fprintf(out, "   private static const\n      map\n\n");
