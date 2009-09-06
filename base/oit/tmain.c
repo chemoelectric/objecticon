@@ -57,10 +57,6 @@ char *ofile = 0;         	/* name of linker output file */
 char *iconxloc;			/* path to iconx */
 long scriptsize;		/* size of iconx header script */
 
-#ifdef MSWindows
-   #include "../h/filepat.h"
-#endif					/* MSWindows */
-
 /*
  * Prototypes.
  */

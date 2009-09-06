@@ -1420,7 +1420,7 @@ function{0,1} io_FileStream_open_impl(path, flags, mode)
    if !def:C_integer(mode, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) then
       runerr(101, mode)
 #else
-   if !def:C_integer(mode, 0) then
+   if !def:C_integer(mode, 0664) then
       runerr(101, mode)
 #endif
 
@@ -2159,24 +2159,108 @@ function{0,1} io_DirStream_close(self)
 end
 
 #elif MSWIN32
+enum DirDataStatus { EMPTY, FIRST, MORE };
+
+struct DirData {
+   WIN32_FIND_DATA fileData;
+   int status;
+   HANDLE handle;
+};
+
+static struct sdescrip ddf = {2, "dd"};
+
+#begdef GetSelfDir()
+struct DirData *self_dir;
+dptr self_dir_dptr;
+static struct inline_field_cache self_dir_ic;
+self_dir_dptr = c_get_instance_data(&self, (dptr)&ddf, &self_dir_ic);
+if (!self_dir_dptr)
+    syserr("Missing dd field");
+self_dir = (struct DirData*)IntVal(*self_dir_dptr);
+if (!self_dir)
+    runerr(219, self);
+#enddef
 
 function{0,1} io_DirStream_open_impl(path)
-   if !cnv:C_string(path) then
+   if !cnv:string(path) then
       runerr(103, path)
    body {
-       LitWhy("Function not available on win32");
-       fail;
+       struct DirData *fd;
+       tended char *cpath;
+       if (StrLen(path) == 0) {
+	  cpath = "*";
+       } else {
+	  char last = StrLoc(path)[StrLen(path) - 1];
+	  if (last == '\\' || last == '/' || last == ':') {
+	     MemProtect(cpath = reserve(Strings, StrLen(path) + 2));
+	     alcstr(StrLoc(path), StrLen(path));
+	     alcstr("*\0", 2);
+	  } else {
+	     int i;
+	     for (i = 0; i < StrLen(path); ++i) {
+		char ch = StrLoc(path)[i];
+		if (ch == '*' || ch == '?')
+		   break;
+	     }
+	     if (i == StrLen(path)) {
+		MemProtect(cpath = reserve(Strings, StrLen(path) + 3));
+		alcstr(StrLoc(path), StrLen(path));
+		alcstr("\\*\0", 3);
+	     } else {
+		MemProtect(cpath = reserve(Strings, StrLen(path) + 1));
+		alcstr(StrLoc(path), StrLen(path));
+		alcstr("\0", 1);
+	     }
+	  }
+       }
+       printf("cpath=%s\n",cpath);fflush(stdout);
+       MemProtect(fd = malloc(sizeof(struct DirData)));
+       fd->handle = FindFirstFile(cpath, &fd->fileData);
+       if (fd->handle == INVALID_HANDLE_VALUE) {
+	  if (GetLastError() == ERROR_FILE_NOT_FOUND) {
+	     fd->status = EMPTY;
+	     return C_integer((word)fd);
+	  }
+	  LitWhy("Couldn't open directory");
+	  free(fd);
+	  fail;
+       }
+       fd->status = FIRST;
+       return C_integer((word)fd);
    }
 end
 
 function{0,1} io_DirStream_read_impl(self)
    body {
+       GetSelfDir();
+       if (self_dir->status == EMPTY) {
+           GetSelfEofFlag();
+	   *self_eof_flag = onedesc;
+	   LitWhy("End of file");
+           fail;
+       }
+       if (self_dir->status == FIRST) {
+	  cstr2string(self_dir->fileData.cFileName, &result);
+	  self_dir->status = MORE;
+	  return result;
+       }
+       if (!FindNextFile(self_dir->handle, &self_dir->fileData)) {
+           GetSelfEofFlag();
+	   *self_eof_flag = onedesc;
+	   LitWhy("End of file");
+           fail;
+       }
+       cstr2string(self_dir->fileData.cFileName, &result);
        return result;
    }
 end
 
 function{0,1} io_DirStream_close(self)
    body {
+       GetSelfDir();
+       FindClose(self_dir->handle);
+       free(self_dir);
+       *self_dir_dptr = zerodesc;
        return nulldesc;
    }
 end

@@ -169,10 +169,6 @@
 typedef int clock_t, time_t, fd_set, va_list, off_t,
     ino_t, blkcnt_t;
 
-#if WildCards
-   typedef int FINDDATA_T;
-#endif					/* WildCards */
-
 typedef int DIR;
 
 typedef int size_t;
@@ -186,7 +182,7 @@ typedef int gzFile;
 typedef int jmp_buf;
 
 #if MSWIN32
-typedef int HMODULE, WSADATA, WORD, HANDLE, MEMORYSTATUS;
+typedef int HMODULE, WSADATA, WORD, HANDLE, MEMORYSTATUS, WIN32_FIND_DATA;
 #ifdef NTGCC
 typedef int STARTUPINFO, PROCESS_INFORMATION, SECURITY_ATTRIBUTES;
 #endif

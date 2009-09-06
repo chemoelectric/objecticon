@@ -238,15 +238,6 @@
 Deliberate Syntax Error
 #endif					/* PORT */
 
-#ifndef NoWildCards
-   #if MSWIN32
-      #define WildCards 1
-   #else				/* MSWIN32 || ... */
-      #define WildCards 0
-   #endif				/* MSWIN32 || ... */
-#else					/* NoWildCards */
-   #define WildCards 0
-#endif					/* NoWildCards */
 
 /*
  * End of operating-system specific code.

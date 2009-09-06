@@ -152,10 +152,6 @@
 #endif					/* MSWIN32 */
 #endif					/* HAVE_LIBDL */
 
-#if WildCards
-   #include "../h/filepat.h"
-#endif					/* WildCards */
-
 
 #ifdef HAVE_LIBZ
 			

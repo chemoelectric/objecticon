@@ -75,34 +75,14 @@ int CmdParamToArgv(char *s, char ***avp, int dequote)
                 break;
 	    }
             default: {
-                FINDDATA_T fd;
                 char *t3 = t2;
                 while (*t2 && !isspace((unsigned char)*t2)) t2++;
                 if (*t2)
                     *t2++ = '\0';
                 strcpy(tmp, t3);
-                if (!FINDFIRST(tmp, &fd)) {
-                    *avp = realloc(*avp, (rv + 2) * sizeof (char *));
-                    (*avp)[rv++] = salloc(t3);
-                    (*avp)[rv] = NULL;
-                }
-                else {
-                    int e;
-                    strcpy(dir, t3);
-                    do {
-                        e = strlen(dir)-1;
-                        while (e >= 0 && dir[e] != '\\' && dir[e] != '/' &&
-                               dir[e] != ':') {
-                            dir[e] = '\0';
-                            e--;
-                        }
-                        strcat(dir, FILENAME(&fd));
-                        *avp = realloc(*avp, (rv + 2) * sizeof (char *));
-                        (*avp)[rv++] = salloc(dir);
-                        (*avp)[rv] = NULL;
-                    } while (FINDNEXT(&fd));
-                    FINDCLOSE(&fd);
-                }
+		*avp = realloc(*avp, (rv + 2) * sizeof (char *));
+		(*avp)[rv++] = salloc(t3);
+		(*avp)[rv] = NULL;
                 break;
 	    }
         }
@@ -159,69 +139,12 @@ int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     return 0;
 }
 #define main iconx
-#else
-#if WildCards
-void ExpandArgv(int *argcp, char ***avp)
-{
-    int argc = *argcp;
-    char **argv = *avp;
-    char **newargv;
-    FINDDATA_T fd;
-    int j,newargc=0;
-    for(j=0; j < argc; j++) {
-        newargc++;
-        if (strchr(argv[j], '*') || strchr(argv[j], '?')) {
-            if (FINDFIRST(argv[j], &fd)) {
-                while (FINDNEXT(&fd)) newargc++;
-                FINDCLOSE(&fd);
-            }
-        }
-    }
-    if (newargc == argc) return;
-
-    newargv = malloc((newargc+1) * sizeof (char *));
-    newargc = 0;
-    for(j=0; j < argc; j++) {
-        if (strchr(argv[j], '*') || strchr(argv[j], '?')) {
-            if (FINDFIRST(argv[j], &fd)) {
-                char dir[MaxPath];
-                int end;
-                strcpy(dir, argv[j]);
-                do {
-                    end = strlen(dir)-1;
-                    while(end >= 0 && !strchr("\\/:", dir[end])) {
-                        dir[end] = '\0';
-                        end--;
-                    }
-                    strcat(dir, FILENAME(&fd));
-                    newargv[newargc++] = strdup(dir);
-                    newargv[newargc] = NULL;
-                } while (FINDNEXT(&fd));
-                FINDCLOSE(&fd);
-            }
-            else {
-                newargv[newargc++] = strdup(argv[j]);
-            }
-        }
-        else {
-            newargv[newargc++] = strdup(argv[j]);
-        }
-    }
-    *avp = newargv;
-    *argcp = newargc;
-}
-#endif					/* WildCards */
 #endif					/* MSWindows */
 
 int main(int argc, char **argv)
 {
     int i, want_arg;
     struct fileparts *fp;
-#if WildCards
-#ifndef MSWindows
-    ExpandArgv(&argc, &argv);
-#endif
-#endif					/* WildCards */
 
     ipc = NULL;
 
