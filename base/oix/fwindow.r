@@ -35,7 +35,7 @@ function{0,1} graphics_Window_open_impl(attr[n])
               runerr(109, attr[j]);
       }
 
-      f = wopen("Object Icon", hp, attr, n, &err_index,0);
+      f = wopen("Object Icon", hp, attr, n, &err_index);
 
       if (f == NULL) {
           if (err_index >= 0) runerr(145, attr[err_index]);

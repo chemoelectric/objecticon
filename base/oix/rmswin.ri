@@ -260,7 +260,7 @@ int mswinsystem(char *s)
 /*
  * wopen
  */
-FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx, int is_3d)
+wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx)
    {
    wbp w;
    wsp ws;
@@ -325,8 +325,6 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx, int i
    if (ws->posx < 0) ws->posx = 0;
    if (ws->posy < 0) ws->posy = 0;
    ws->no = 0;
-   ws->children = NULL;
-   ws->parent = NULL;
 
    /*
     * create the window
@@ -376,10 +374,6 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx, int i
    /*   wc->font->charwidth = metrics.tmMaxCharWidth; buggy */
    wc->font->height = metrics.tmHeight;
    wc->leading = metrics.tmHeight;
-   ws->x = 0;
-   ws->y = ASCENT(w);
-   ws->y += w->context->dy;
-   ws->x += w->context->dx;
    /*
     * set the generic window's true default sizes
     */
@@ -462,8 +456,8 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx, int i
 	 r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
 		      imd->data, (word)imd->width * (word)imd->height, 0);
 	 if (imd->paltbl)
-	    free((pointer)imd->paltbl);
-	 free((pointer)imd->data);
+	    free(imd->paltbl);
+	 free(imd->data);
 	 imd->width = 0;
 	 if (r < 0) {
 	    return 0;
@@ -473,7 +467,7 @@ FILE *wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_idx, int i
    if (ws->win)
       UpdateWindow(ws->win);
 
-   return (FILE *)w;
+   return w;
    }
 
 int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
@@ -494,12 +488,6 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
       SetWindowText(ws->win, ws->windowlabel);
    ws->win = ws->iconwin;
 
-   /*
-    * make sure text cursor stays on-screen
-    */
-   ws->x = min(ws->x, LOWORD(lp) - FWIDTH(w));
-   ws->y = min(ws->y, HIWORD(lp));
-
    neww = LOWORD(lp);
    newh = HIWORD(lp);
 
@@ -518,7 +506,7 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
       return 1;
       }
    MakeInt(RESIZED, &d);
-   qevent(w->window, &d, ws->width, ws->height, ~(uword)0, 0);
+   qevent(w->window, &d, ws->width, ws->height, ~(uword)0, 0, 0);
    return 1;
    }
 
@@ -560,7 +548,7 @@ void handle_child(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
       }
    }
    t = GetMessageTime();
-   qevent(ws, &d, x, y, t, flags);
+   qevent(ws, &d, x, y, t, flags, 0);
 
    if (ws->focusChild)
       SetFocus(ws->focusChild);
@@ -588,7 +576,7 @@ void handle_menu(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    x = LOWORD(dw);
    y = HIWORD(dw);
    t = GetMessageTime();
-   qevent(ws, &d, x, y, t, flags);
+   qevent(ws, &d, x, y, t, flags, 0);
    }
 
 void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
@@ -618,7 +606,7 @@ void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
    if (GetKeyState(VK_SHIFT) < 0) flags |= ShiftMask;
 
    if (meta) flags |= Mod1Mask;
-   qevent(ws, &d, x, y, t, flags);
+   qevent(ws, &d, x, y, t, flags, 0);
    }
 
 void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
@@ -648,14 +636,14 @@ void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
     */
    if ((long)wp > 0) {
       MakeInt(MOUSE4, &d);
-      qevent(ws, &d, x, y, t, flags);
+      qevent(ws, &d, x, y, t, flags, 0);
       MakeInt(MOUSE4UP, &d);
-      qevent(ws, &d, x, y, t, flags);
+      qevent(ws, &d, x, y, t, flags, 0);
    } else {
       MakeInt(MOUSE5, &d);
-      qevent(ws, &d, x, y, t, flags);
+      qevent(ws, &d, x, y, t, flags, 0);
       MakeInt(MOUSE5UP, &d);
-      qevent(ws, &d, x, y, t, flags);
+      qevent(ws, &d, x, y, t, flags, 0);
    }
 }
 
@@ -706,7 +694,7 @@ void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
    if (MK_CONTROL & wp) flags |= ControlMask;
    if (MK_SHIFT & wp) flags |= ShiftMask;
 
-   qevent(ws, &d, x, y, t, flags);
+   qevent(ws, &d, x, y, t, flags, 0);
    }
 
 LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -889,26 +877,6 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       ws->posy = HIWORD(lp) - CLIENT_YOFF; 
       break;
    case WM_ACTIVATE:
-      if (wp == WA_INACTIVE) {
-         if (ws->savedcursor) SetCursor(ws->savedcursor);
-         if (ws->hasCaret) {
-            HideCaret(ws->iconwin);
-            DestroyCaret();
-            ws->hasCaret = 0;
-            }
-         }
-      else { /* ... */
-         if (ws->savedcursor == NULL)
-            ws->savedcursor = SetCursor(ws->curcursor);
-         else (void) SetCursor(ws->curcursor);
-         if (ISCURSORON(wb)) {
-	    CreateCaret(ws->iconwin, NULL, FWIDTH(wb), FHEIGHT(wb));
-	    SetCaretPos(ws->x, ws->y - ASCENT(wb));
-	    SetCaretBlinkTime(500);
-	    ShowCaret(ws->iconwin);
-	    ws->hasCaret = 1;
-            }
-	 }
       break;
    case WM_GETMINMAXINFO: {
       MINMAXINFO *mmi = (MINMAXINFO *)lp;
@@ -930,25 +898,17 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    case WM_SETFOCUS:
       if (ws->focusChild)
          SetFocus(ws->focusChild);
-      else if (ISCURSORON(wb)) {
-	 CreateCaret(ws->iconwin, NULL, FWIDTH(wb), FHEIGHT(wb));
-	 SetCaretPos(ws->x, ws->y - ASCENT(wb));
-	 SetCaretBlinkTime(500);
-	 ShowCaret(ws->iconwin);
-	 ws->hasCaret = 1;
-         }
       break;
    case WM_CLOSE: {
       struct descrip d;
       MakeInt(WINDOWCLOSED, &d);
-      qevent(ws, &d, 0, 0, 0, 0);
+      qevent(ws, &d, 0, 0, 0, 0, 0);
       return 0;
    }
 
    /* case WM_QUIT is handled prior to the switch*/
    case WM_DESTROY: {
       wbp tmp_wb, w = wb;
-      wbp p;
       struct wbind_list *wbl, *t, *b;
 
       if (ws->win == hwnd)
@@ -957,51 +917,14 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	 ws->iconwin = NULL;
       SETCLOSED((wbp)wb);
 
-      while (w->window->children) {
-	 tmp_wb = w->window->children->child;
-	 wbl = w->window->children;
-	 w->window->children = w->window->children->next;
-	 tmp_wb->refcount--;
-	 tmp_wb->window->parent=NULL;
-	 w->refcount--;
-	 tmp_wb->window->win = (HWND) 0;
-	 /* added next line */
-	 SETCLOSED(tmp_wb);
-	 wbl->next=NULL;
-	 free(wbl);
-	 }
-      p = w->window->parent;
-      if (p) {
-        t = p->window->children;
-        b = NULL;
-        while (t) {
-	  if (t->child->window==w->window) {
-            if (b==NULL)
-               p->window->children = t->next;
-            else b->next = t->next;
-            t->next = NULL;
-            t->child = NULL;
-            free(t);
-            w->refcount--;
-            break;
-          }
-          b=t;
-          t = t->next;
-        }
-        w->window->parent=NULL;
-        p->refcount--;
-      }
       if (ws->refcount > 0) {
           struct descrip d;
           MakeInt(WINDOWCLOSED, &d);
-          qevent(ws ,&d, 0, 0, 0, 0);
+          qevent(ws ,&d, 0, 0, 0, 0, 0);
          }
       else if (ws->refcount < 0) { /* window was closed by program */
          ws->refcount = -ws->refcount;
 	 }
-      if (BlkLoc(lastEventWin))
-         BlkLoc(lastEventWin)->file.status &= ~(Fs_Write);
-
       }
       break;
    case MM_MCINOTIFY:
@@ -1019,44 +942,9 @@ int wclose(wbp w)
    {
    wsp ws = w->window;
    wbp tmp_wb;
-   wbp p;
    struct wbind_list *wbl, *t, *b;
    
-   if (pollevent() == -1) return -1;
-   while (w->window->children) {
-      tmp_wb = w->window->children->child;
-      wbl = w->window->children;
-      w->window->children = w->window->children->next;
-      tmp_wb->refcount--;
-      tmp_wb->window->parent=NULL;
-      w->refcount--;
-      tmp_wb->window->win = (HWND) 0;
-      /* added next line */
-      SETCLOSED(tmp_wb);
-      wbl->next=NULL;
-      free(wbl);
-      }
-   p = w->window->parent;
-   if (p) {
-      t = p->window->children;
-      b = NULL;
-      while (t) {
-	 if (t->child->window==w->window) {
-           if (b==NULL)
-               p->window->children = t->next;
-           else b->next = t->next;
-           t->next = NULL;
-           t->child = NULL;
-           free(t);
-           w->refcount--;
-           break;
-       }
-       b=t;
-       t = t->next;
-     }   
-     w->window->parent=NULL;
-     p->refcount--;
-   }
+   pollevent();
 
    if (ws->win && ws->refcount > 1) {
       /*
@@ -1067,7 +955,7 @@ int wclose(wbp w)
       ws->refcount = -ws->refcount;
       DestroyWindow(ws->win);
       while (ws->win)
-	 if (pollevent() == -1) return -1;
+	 pollevent();
       }
    else {
       free_binding(w);
@@ -1075,7 +963,7 @@ int wclose(wbp w)
    return 1;
    }
 
-int pollevent()
+void pollevent()
    {
    wbp w;
    MSG m;
@@ -1087,7 +975,6 @@ int pollevent()
       TranslateMessage(&m);
       DispatchMessage(&m);
       }
-   return 400;
    }
 
 int ownselection(wbp w, char *selname)
@@ -1095,9 +982,10 @@ int ownselection(wbp w, char *selname)
     return Succeeded;
 }
 
-struct descrip getselectioncontent(wbp w, char *selname, char *targetname)
+int getselectioncontent(wbp w, char *selname, char *targetname, dptr res)
 {
-    return nulldesc;
+    *res = nulldesc;
+    return Succeeded;
 }
 
 int setminheight(wbp w, SHORT new_height)
@@ -1112,168 +1000,12 @@ int setminwidth(wbp w, SHORT new_width)
 
 
 /*
- * write some text to both the window and the pixmap
- */
-void xdis(w,s,n)
-register wbp w;
-char *s;
-int n;
-   {
-   XPoint pt;
-   HFONT oldfont, oldfont2;
-   HBRUSH hb, oldbrush, oldbrush2;
-   XRectangle rect;
-   STDLOCALS(w);
-
-   if(stdwin)oldfont=SelectObject(stddc, wc->font->font);
-   oldfont2=SelectObject(pixdc,wc->font->font);
-   rect.left = ws->x; rect.right = ws->x + dc_textwidth(pixdc, s, n);
-   rect.top = ws->y - ASCENT(w); rect.bottom = ws->y + DESCENT(w);
-
-   /* skip resource allocation if we are offscreen */
-   if (!(rect.left > ws->width || rect.right < 0 ||
-       rect.top < 0 || rect.bottom > ws->height)) {
-
-      hb = CreateBrushIndirect(&(wc->bgbrush));
-      if (stdwin) {
-         /*
-          *  SetBkColor() does not dither consistently with bgbrush;
-          *  erase the background beforehand and use transparent drawing
-          */
-         FillRect(stddc, &rect, hb);
-         SetBkMode(stddc, TRANSPARENT);
-         SetTextColor(stddc, PALCLR(wc->fg));
-         TextOut(stddc, ws->x, ws->y - ASCENT(w), s, n);
-         }
-      FillRect(pixdc, &rect, hb);
-      DeleteObject(hb);
-      SetBkMode(pixdc, TRANSPARENT);
-      SetTextColor(pixdc, PALCLR(wc->fg));
-      TextOut(pixdc, ws->x, ws->y - ASCENT(w), s, n);
-      }
-   ws->x += dc_textwidth(pixdc, s, n);
-
-   if (stdwin) SelectObject(stddc, oldfont);
-   SelectObject(pixdc, oldfont2);
-   FREE_STDLOCALS(w);
-   }
-/*
- * wputc
- */
-int wputc(int ci, wbp w)
-   {
-   char c = (char)ci;
-   wsp ws = w->window;
-   wcp wc = w->context;
-   int y_plus_descent;
-   HBRUSH hb;
-
-   switch (c) {
-   case '\n':
-      ws->y += LEADING(w);
-      if (ws->y + DESCENT(w) > ws->height) {
-	 RECT r;
-	 STDLOCALS(w);
-	 ws->y -= LEADING(w);
-	 y_plus_descent = ws->y + DESCENT(w);
-	 BitBlt(pixdc, 0, 0, ws->width, y_plus_descent,
-		pixdc, 0, LEADING(w), SRCCOPY);
-	 r.left = 0;
-	 r.top = y_plus_descent - FHEIGHT(w);
-	 r.right = ws->width;
-	 r.bottom = ws->height;
-         hb = CreateBrushIndirect(&(wc->bgbrush));
-	 FillRect(pixdc, &r, hb);
-	 DeleteObject(hb);
-	 if (stdwin)
-	    BitBlt(stddc, 0, 0, ws->width, ws->height, pixdc, 0, 0, SRCCOPY);
-	 FREE_STDLOCALS(w);
-	 }
-      /* intended fall-through */
-    case '\r':
-      /*
-       * set the new x position
-       */
-      ws->x = wc->dx;
-      break;
-   case '\t':
-      xdis(w, "        ", 8 - (XTOCOL(w,ws->x) & 7));
-      break;
-      /*
-       * Handle backspaces.  This implements cooked mode echo handling.
-       */
-   case '\177':
-   case '\010': {
-      int i = 0, pre_x;
- 
-      /*
-       * Start with the last character queued up.
-       */
-      i--;
-      /*
-       * Trot back to the control-H itself.
-       */
-      while ((i>-EQUEUELEN) && (EVQUESUB(w,i) != c)) {
-	 i--;
-	 }
-      if (i == -EQUEUELEN) break;
-      /*
-       * Go past the control-H.
-       */
-      i--;
-      /*
-       * Go back through any number of control-H's from prior lifetimes.
-       */
-      while((i > -EQUEUELEN) && !isprint((unsigned char)EVQUESUB(w,i))) {
-	 i--;
-	 }
-      if (i == -EQUEUELEN) break;
-
-      /*
-       * OK, here's the character we're actually rubbing out.  Back up.
-       */
-      c = EVQUESUB(w,i);
-      pre_x = ws->x;
-      ws->x -= TEXTWIDTH(w, &c, 1);
-      /*
-       * Physically erase the character from the queue.  This results in
-       * two control-H's present in the queue.
-       */
-      *evquesub(w,i) = '\010';
-      /*
-       * Save the backed-up position, and draw spaces through the erased.
-       */
-      i = ws->x;
-      while(ws->x < pre_x) {
-	 xdis(w, " ",1);
-	 }
-      ws->x = i;
-      break;
-      }
-    /*
-     * bell (control-G)
-     */
-    case '\007':
-      break;
-   default:
-      xdis(w, &c, 1);
-      }
-   /*
-    * turn the cursor back on
-    */
-   UpdateCursorPos(ws,wc);
-   return 0;
-   }
-
-/*
  * wgetq - get event from pending queue
  */
 int wgetq(wbp w, dptr res, int t)
    {
    MSG m;
    wsp ws;
-   int first = 0, i = 0, j;
-   int hascaret = 0;
    extern jmp_buf mark_sj;
    FILE *f;
 
@@ -1283,26 +1015,13 @@ int wgetq(wbp w, dptr res, int t)
       /*
        * grab the built up queue
        */
-      if (!EVQUEEMPTY(ws)) {
-	 EVQUEGET(ws, *res);
-	 if (ws->hasCaret && ws->iconwin) {
-            HideCaret(ws->iconwin);
-            DestroyCaret();
-            ws->hasCaret = 0;
-            }
+      if (!EVQUEEMPTY(w)) {
+	 EVQUEGET(w, *res);
 	 return 1;
 	 }
       if (!(ws->iconwin)) {
          return -1;
          }
-      if (ISCURSORON(w) && ws->hasCaret == 0) {
-	 CreateCaret(ws->iconwin, NULL, FWIDTH(w), FHEIGHT(w));
-	 SetCaretPos(ws->x, ws->y - ASCENT(w));
-	 SetCaretBlinkTime(500);
-         ShowCaret(ws->iconwin);
-	 ws->hasCaret = 1;
-         }
-      i++;
       if (GetMessage(&m, NULL, 0, 0) == 0) longjmp(mark_sj, -1);
       TranslateMessage(&m);
       DispatchMessage(&m);
@@ -1436,19 +1155,6 @@ char *val;
    return Succeeded;
    }
 
-int setcursor(w, on)
-wbp w;
-int on;
-   {
-   wsp ws = w->window;
-   if (on) {
-      SETCURSORON(w);
-      }
-   else {
-      CLRCURSORON(w);
-      }
-   return Succeeded;
-   }
 
 HFONT findfont(char *family, int size, int flags, int ansi)
 {
@@ -3410,7 +3116,7 @@ wbp w;
    wc->bgbrush.lbColor = PALCLR(wc->bg);
    wc->gamma = GammaCorrection;
    wc->drawop = R2_COPYPEN;
-   wc->font = (wfp)alloc(sizeof (struct _wfont));
+   MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
    wc->font->name = salloc("fixed");
    wc->font->font = CreateFont(16,0,0,0,FW_NORMAL,0,0,0,
 	 ((MAXBYTESPERCHAR==1)?ANSI_CHARSET:DEFAULT_CHARSET),
@@ -3483,7 +3189,7 @@ wbp w;
    wc->bgbrush.lbColor = PALCLR(wc->bg);
    wc->gamma = wc2->gamma;
    wc->drawop = wc2->drawop;
-   wc->font = (wfp)alloc(sizeof (struct _wfont));
+   MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
    wc->font->name = salloc("fixed");
    wc->font->font = CreateFont(13,0,0,0,FW_NORMAL,0,0,0,
 	 ((MAXBYTESPERCHAR==1)?ANSI_CHARSET:DEFAULT_CHARSET),
@@ -3509,7 +3215,6 @@ wsp alc_winstate()
    GRFX_ALLOC(ws, _wstate);
    ws->serial = ++canvas_serial;
    ws->bits = 1024;                             /* echo ON; others OFF */
-   ws->filep = nulldesc;
    ws->listp = nulldesc;
    ws->cursorname = salloc("arrow");
    ws->curcursor = LoadCursor(NULL, IDC_ARROW);
@@ -3698,10 +3403,11 @@ int len;
  */
 HBITMAP CreateBitmapFromData(char *data)
 {
-   WORD *wBits = alloc(8 * sizeof(WORD));
+   WORD *wBits;
    HBITMAP rv;
    int i;
    static BITMAP bitmap = { 0, 8, 8, 2, 1, 1};
+   MemProtect(wBits = malloc(8 * sizeof(WORD)));
    for (i = 0; i < 8; i++)
       wBits[i] = data[i];
    bitmap.bmBits = (LPSTR) wBits;
@@ -3803,28 +3509,16 @@ int status;
    if (ws->win) {
       pollevent();
       if (status == 3) {
-	 if (ws->parent)
-	   SetWindowPos(ws->win, ws->win, posx, posy, wid, ht, 
-			SWP_NOZORDER|SWP_NOACTIVATE);
-         else 
 	   SetWindowPos(ws->win, ws->win, posx, posy,
 		      wid + BORDWIDTH, ht + BORDHEIGHT,
 			SWP_NOZORDER|SWP_NOACTIVATE);
 	 }
       else if (status == 2) {
-	 if (ws->parent)
-	    SetWindowPos(ws->win, ws->win, 0, 0, wid, ht, 
-			 SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-         else 
 	   SetWindowPos(ws->win, ws->win, 0, 0,
 		      wid + BORDWIDTH, ht + BORDHEIGHT,
 		      SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
          }
       else if (status == 1)
-	 if (ws->parent)
-	    SetWindowPos(ws->win, ws->win, posx, posy, 0, 0,
-			 SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
-         else
 	   SetWindowPos(ws->win, ws->win,
 		      posx,
 		      posy,
@@ -3832,28 +3526,16 @@ int status;
       }
    else if (ws->iconwin) {
       if (status == 3) {
-	 if (ws->parent)
-	    SetWindowPos(ws->iconwin, ws->iconwin, posx, posy, wid, ht,
-			 SWP_NOZORDER|SWP_NOACTIVATE);
-         else 
 	   SetWindowPos(ws->iconwin, ws->iconwin,
 		      posx,
 		      posy,
 		      wid, ht, SWP_NOZORDER|SWP_NOACTIVATE);
 	 }
       else if (status == 2) {
-	 if (ws->parent)
-	    SetWindowPos(ws->iconwin, ws->iconwin, 0, 0, wid, ht, 
-			 SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-         else 
 	   SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
 		      wid, ht, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
          }
       else if (status == 1)
-	 if (ws->parent)
-	    SetWindowPos(ws->iconwin, ws->iconwin, posx, posy, 0, 0,
-			 SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
-         else 
 	    SetWindowPos(ws->iconwin, ws->iconwin,
 		      posx,
 		      posy,
@@ -3919,21 +3601,6 @@ int playmedia(wbp w, char *s)
    return Failed;
 }
 
-/*
- * UpdateCursorPos
- */
-void UpdateCursorPos(wsp ws, wcp wc)
-{
-   if (ISCURSORONW(ws)) {
-      if (ws->hasCaret) {
-         }
-      CreateCaret(ws->iconwin, NULL, FWIDTHC(wc), FHEIGHTC(wc));
-      SetCaretBlinkTime(500);
-      SetCaretPos(ws->x, ws->y - ASCENTC(wc));
-      ShowCaret(ws->iconwin);
-      ws->hasCaret = 1;
-      }
-}
 
 int resizePixmap(wbp w, int width, int height)
    {
@@ -3947,11 +3614,9 @@ int resizePixmap(wbp w, int width, int height)
    int x = ws->pixwidth, y = ws->pixheight;
 
    if (ISEXPOSED(w)) {
-      if (!ws->parent) {
         if (ws->pixwidth >= width && ws->pixheight >= height) {
            return 1;
         }
-      }
       ws->pixheight = max(ws->pixheight, height);
       ws->pixwidth = max(ws->pixwidth, width);
       }
@@ -3989,9 +3654,6 @@ int resizePixmap(wbp w, int width, int height)
    }
 
    if (ws->pix) 
-      if (ws->parent)
-	 BitBlt(hdc3, 0, 0, x, y, hdc2, 0, 0, SRCCOPY);
-      else 
 	 BitBlt(hdc3, 0, 0, x - 2, y - 1, hdc2, 0, 0, SRCCOPY);
    if (ws->win)
       BitBlt(hdc, 0, 0, ws->pixwidth, ws->pixheight, hdc3, 0, 0, SRCCOPY);
@@ -4239,7 +3901,7 @@ int nativemenubar(wbp w, int total, int argc, dptr argv, int warg, dptr d)
        */
       tempMenu = CreateMenu();
       for(i=0; i < r; i++) {
-         list_get(hp, d);
+         list_get(&argv[warg], d);
          if (!is:string(*d)) return Error;
          if (!cnv:C_string(*d, s)) return Error;
          s = strdup(s);
@@ -4491,7 +4153,7 @@ char *nativeselectdialog(wbp w, struct b_list *L, char *s)
       lsize  = hp->size;
 
       for(i=0; i < lsize; i++) {
-         list_get(hp, &d);
+         list_get(&d2, &d);
          if (!cnv:C_string(d, s1)) return NULL;
          for(j=0; j<8; j++) {
             s3[j] = tolower((unsigned char)s1[j]);
@@ -4589,239 +4251,5 @@ char *nativefiledialog(wbp w, char *s1, char *s2, char *s3,
    strcpy(stmp, ofn.lpstrFile);
    strcat(stmp, s3);
    return stmp;
-}
-
-char child_window_stuff(wbp w, wbp wp, char child_window)
-{
-   wsp ws;
-   wcp wc;
-   struct imgdata *imd;
-   char answer[256];
-   int i, r;
-   tended struct b_list *tlp;
-   tended struct descrip attrrslt;
-   HDC hdc, hdc2, hdc3;
-   DWORD winstyles = 0;
-   TEXTMETRIC	metrics;
-   LOGPALETTE logpal[4]; /* really 1 + space for an extra palette entry */
-   HBRUSH brush;
-   HBITMAP oldpix, oldpix2;
-   HFONT oldfont;
-   struct wbind_list *curr;
-   int is_3d=0;
-   
-   if (child_window==2) {
-       is_3d = 1;
-   }
-      /*
-    * allocate a window state, and a context
-    */
-   Protect(w->window = alc_winstate(), { free_binding(w); return 0; });
-   Protect(w->context = alc_context(w), { free_binding(w); return 0; });
-   ws = w->window;
-   CLRTITLEBAR(ws);
-   ws->listp.dword = D_List;
-   BlkLoc(ws->listp) = (union block *) alclist(0, MinListSlots);
-   ws->width = ws->height = 0;
-   wc = w->context;
-
-
-  ws->children=NULL;
-  ws->parent = wp;
-  wp->refcount++;
-
-  curr = (struct wbind_list *) malloc(sizeof(struct wbind_list));
-  curr->child = w;
-  curr->next = wp->window->children;
-  wp->window->children = curr;
-  w->refcount++;
-  wp->window->no++;
-  ws->no = wp->window->no;
-  return 1;
-}
-
-char my_wmap(wbp w)
-{
-   wsp ws = w->window;
-   wcp wc = w->context;
-   struct imgdata *imd;
-   int i, r;
-#ifdef MSWindows
-   HDC hdc, hdc2, hdc3;
-   DWORD winstyles = 0;
-   TEXTMETRIC	metrics;
-   LOGPALETTE logpal[4]; /* really 1 + space for an extra palette entry */
-   HBRUSH brush;
-   HBITMAP oldpix, oldpix2;
-   HFONT oldfont;
-   int MAXBYTESPERCHAR;
-   WNDCLASS wcls;
-   WNDCLASS *lpwcls;
-   wbp wpp = ws->parent;
-
-   ws->windowlabel = NULL;
-   ws->iconlabel = NULL;
-
-   if (ws->posx < 0) ws->posx = 0;
-   if (ws->posy < 0) ws->posy = 0;
-
-   lpwcls = (WNDCLASS *) malloc(sizeof(WNDCLASS));
-   if (!GetClassInfo(mswinInstance, "ChildWClass", lpwcls)) {
-     wcls.style = CS_HREDRAW | CS_VREDRAW;
-     wcls.lpfnWndProc = WndProc;
-     wcls.cbClsExtra = 0;
-     wcls.cbWndExtra = 0;
-     wcls.hInstance  = mswinInstance;
-     wcls.hIcon      = NULL;
-     wcls.hCursor    = NULL;
-     wcls.hbrBackground = GetStockObject(WHITE_BRUSH);
-     wcls.lpszMenuName = NULL;
-     wcls.lpszClassName = "ChildWClass";
-     RegisterClass(&wcls);
-   }
-
-   /*
-    * create the window
-    */
-   winstyles=WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-
-   ws->iconwin = CreateWindow( "ChildWClass", NULL,
-		   winstyles,
-		   ws->posx, ws->posy,
-		   ws->width == 0 ? 400 : ws->width,
-		   ws->height == 0 ? 400: ws->height,
-			       /*		   NULL, NULL, mswinInstance, NULL); */
-		   ws->parent->window->win,
-			      (HMENU) (int) ws->no,
-			      mswinInstance, NULL);
-   hdc = GetDC(ws->iconwin);
-   if ((GetDeviceCaps(hdc, RASTERCAPS) & RC_PALETTE) && (numColors == 0)){
-      /* This window is on a device that supports palettes */
-      numColors = 2;
-      logpal[0].palNumEntries = 2;
-      logpal[0].palVersion = 0x300;
-      logpal[0].palPalEntry[0].peFlags = 0;
-      logpal[0].palPalEntry[0].peRed = 0;
-      logpal[0].palPalEntry[0].peGreen = 0;
-      logpal[0].palPalEntry[0].peBlue = 0;
-      logpal[0].palPalEntry[1].peFlags = 0;
-      logpal[0].palPalEntry[1].peRed = 255;
-      logpal[0].palPalEntry[1].peGreen = 255;
-      logpal[0].palPalEntry[1].peBlue = 255;
-      palette = CreatePalette(logpal);
-      if ((scp = malloc(2 * sizeof (struct wcolor))) == NULL) return 0;
-      scp[0].c = RGB(0,0,0);
-      scp[0].type = SHARED;
-      strcpy(scp[0].name, "black");
-      scp[1].c = RGB(255,255,255);
-      scp[1].type = SHARED;
-      strcpy(scp[1].name, "white");
-      }
-   oldfont = SelectObject(hdc, wc->font->font);
-   GetTextMetrics(hdc, &metrics);
-   wc->font->charwidth = dc_maxcharwidth(hdc);
-   SelectObject(hdc, oldfont);
-   ReleaseDC(ws->iconwin, hdc);
-   wc->font->ascent = metrics.tmAscent;
-   wc->font->descent = metrics.tmDescent;
-   /*   wc->font->charwidth = metrics.tmMaxCharWidth; buggy */
-   wc->font->height = metrics.tmHeight;
-   wc->leading = metrics.tmHeight;
-   ws->x = 0;
-   ws->y = ASCENT(w);
-   ws->y += w->context->dy;
-   ws->x += w->context->dx;
-   /*
-    * set the generic window's true default sizes
-    */
-   if (!ws->width || !ws->height) {
-      if (!ws->width) ws->width = FWIDTH(w) * 80;
-      if (!ws->height) ws->height = FHEIGHT(w) * 12;
-      SetWindowPos(ws->iconwin, ws->iconwin,
-		   ws->posx,
-		   ws->posy,
-		   ws->width, ws->height,
-		   SWP_NOZORDER);
-      }
-   if (!ws->pix) {
-      hdc = GetDC(ws->iconwin);
-      ws->pix = CreateCompatibleBitmap(hdc, ws->width, ws->height);
-      ReleaseDC(ws->iconwin, hdc);
-      }
-   if (alc_rgb(w, wc->fg) == Failed) {
-      return 0;
-      }
-   if (alc_rgb(w, wc->bg) == Failed) {
-      return 0;
-      }
-   ws->pixwidth = ws->width;
-   ws->pixheight = ws->height;
-
-
-   if (!ISTOBEHIDDEN(ws)) {
-      ws->win = ws->iconwin;
-      ShowWindow(ws->win, ncmdShow);
-      }
-   else ws->win = 0;
-   BringWindowToTop(ws->win);
-   if (ws->initialPix) {
-      hdc = GetDC(ws->iconwin);
-      hdc2 = CreateCompatibleDC(hdc);
-      oldpix = SelectObject(hdc2, ws->pix);
-      hdc3 = CreateCompatibleDC(hdc);
-      oldpix2 = SelectObject(hdc3, ws->initialPix);
-      BitBlt(hdc2, 0, 0, ws->width, ws->height, hdc3, 0, 0, SRCCOPY);
-      if (ws->win)
-         BitBlt(hdc, 0, 0, ws->width, ws->height, hdc3, 0, 0, SRCCOPY);
-      SelectObject(hdc2, oldpix);
-      SelectObject(hdc3, oldpix2);
-      DeleteDC(hdc2);
-      DeleteDC(hdc3);
-      DeleteObject(ws->initialPix);
-      ws->initialPix = (HBITMAP) NULL;
-      }
-   else {
-      /*
-       * initialize the image with the background color
-       */
-      RECT rec;
-      hdc = GetDC(ws->iconwin);
-      hdc2 = CreateCompatibleDC(hdc);
-      oldpix = SelectObject(hdc2, ws->pix);
-      rec.left = rec.top = 0;
-      rec.right = ws->width;
-      rec.bottom = ws->height;
-      if (palette) {
-         SelectPalette(hdc, palette, FALSE);
-         SelectPalette(hdc2, palette, FALSE);
-	 RealizePalette(hdc);
-	 RealizePalette(hdc2);
-	 }
-      brush = CreateBrushIndirect(&(wc->bgbrush));
-      if (ws->win)
-         FillRect(hdc, &rec, brush);
-      FillRect(hdc2, &rec, brush);
-      DeleteObject(brush);
-      SelectObject(hdc2, oldpix);
-      ReleaseDC(ws->iconwin, hdc);
-      DeleteDC(hdc2);
-
-      imd = &ws->initimage;
-      if (imd->width) {
-	 r = strimage(w, 0, 0, imd->width, imd->height, imd->paltbl,
-		      imd->data, (word)imd->width * (word)imd->height, 0);
-	 if (imd->paltbl)
-	    free((pointer)imd->paltbl);
-	 free((pointer)imd->data);
-	 imd->width = 0;
-	 if (r < 0) {
-	    return 0;
-	    }
-	 }
-      }
-   if (ws->win)
-      UpdateWindow(ws->win);
-#endif
-   return 1;
 }
 

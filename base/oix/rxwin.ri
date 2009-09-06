@@ -899,7 +899,7 @@ void wsync(w)
  *  -1  : ordinary failure
  *  -2  : out of memory
  */
-wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index, int is_3d)
+wbp wopen(char *name, struct b_list *lp, dptr attr, int n, int *err_index)
 {
     wbp w;
     wsp ws;

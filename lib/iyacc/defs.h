@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #ifdef _WIN32
 #include <io.h>
+#ifndef mkstemp
+  #define mkstemp mktemp
+#endif
 #else
 #include <unistd.h>
 #endif

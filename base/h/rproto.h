@@ -336,7 +336,7 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void	wflush		(wbp w);
 #endif
    int	wgetq		(wbp w, dptr res, word t);
-   wbp  wopen		(char *nm, struct b_list *hp, dptr attr, int n, int *e, int is_3d);
+   wbp  wopen		(char *nm, struct b_list *hp, dptr attr, int n, int *e);
 #ifndef MSWindows
    void	wsync		(wbp w);
 #endif					/* MSWindows */

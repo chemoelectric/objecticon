@@ -49,6 +49,19 @@
    #define Type(d) (int)((d).dword & TypeMask)
    #undef lst1
    #undef lst2
+   #ifndef F_OK
+     #define F_OK 0
+   #endif
+   #ifndef R_OK
+     #define R_OK 0
+   #endif
+   #define setenv(a,b,c) SetEnvironmentVariable(a,b)
+   #define unsetenv(a) SetEnvironmentVariable(a,"")
+   #ifndef vsnprintf
+      #define vsnprintf(a,b,c,d) vsprintf(a,c,d)
+   #endif
+   #define ftruncate _chsize
+   #define lstat stat
 #endif					/* MSWIN32 */
 
 

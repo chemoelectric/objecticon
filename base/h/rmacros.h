@@ -481,7 +481,7 @@ do { \
    
    #if MSWIN32
          static union {
-                pointer stkadr;
+                char *stkadr;
                 word stkint;
             } stkword;
          

@@ -11,15 +11,17 @@
  * other) copyright notices are kept intact.
  */
 
-
-
 #if MSWIN32
-#define ftruncate _chsize
-#define pclose _pclose
-#define dup2 _dup2
-#define execvp _execvp
-#define fstat _fstat
-#endif					/* MSWIN32 */
+int gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+    struct _timeb wtp;
+    _ftime( &wtp );
+    tv->tv_sec = wtp.time;
+    tv->tv_usec = wtp.millitm * 1000;
+    return 0;
+}
+#endif
+
 
 "kill() - send a signal to a process."
 
@@ -327,15 +329,10 @@ function{0, 1} posix_System_setenv(name, value)
    if !cnv:C_string(value) then
       runerr(103, value)
    body {
-#if MSWIN32
-      if (!SetEnvironmentVariable(name, value))
-         fail;
-#else
       if (setenv(name, value, 1) < 0) {
 	 errno2why();
          fail;
       }
-#endif
       return nulldesc;
    }
 end

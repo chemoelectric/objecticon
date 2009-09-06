@@ -50,9 +50,6 @@
 	DisplayWidth(w->window->display->display, w->window->display->screen)
 #define FS_SOLID FillSolid
 #define FS_STIPPLE FillStippled
-#define hidecrsr(x) /* noop */
-#define UpdateCursorPos(x, y) /* noop */
-#define showcrsr(x) /* noop */
 #define SysColor XColor
 /* 8-bit primary components of a current fg or bg index, used in 3D code */
 #define RED(colrindex) ((w->context->display->colors[colrindex].r)>>8)

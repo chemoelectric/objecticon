@@ -189,7 +189,7 @@ static int convert_to_##TYPE(dptr src, TYPE *dest)
         bigand(&i, &int65535, &bits);
         bigshift(&i, &intneg16, &j);
         i = j;
-        res |= ((unsigned long long)IntVal(bits) << pos);
+        res |= ((ulonglong)IntVal(bits) << pos);
         pos += 16;
     }
     *dest = res;
@@ -238,10 +238,11 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
 #enddef
 convert_to_macro(off_t)
 convert_from_macro(off_t)
+#if UNIX
 convert_from_macro(ino_t)
 convert_from_macro(blkcnt_t)
+#endif
 convert_from_macro(ulonglong)
-
 
 function{0,1} is(o, target)
    if !is:class(target) then
@@ -1190,6 +1191,8 @@ function{1} lang_Class_set_method(field, pr)
    }
 end
 
+#ifdef HAVE_LIBDL
+
 static struct b_proc *try_load(void *handle, struct b_class *class0,  struct class_field *cf)
 {
     word i;
@@ -1260,6 +1263,12 @@ function{1} lang_Class_load_library(lib)
         return nulldesc;
    }
 end
+
+#else						/* HAVE_LIBDL */
+function{1} lang_Class_load_library(lib)
+   runerr(121)
+end
+#endif						/* HAVE_LIBDL */
 
 function{1} lang_Class_create_raw(c)
    if !is:class(c) then
@@ -1407,8 +1416,13 @@ function{0,1} io_FileStream_open_impl(path, flags, mode)
    if !cnv:C_integer(flags) then
       runerr(101, flags)
 
+#if UNIX
    if !def:C_integer(mode, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) then
       runerr(101, mode)
+#else
+   if !def:C_integer(mode, 0) then
+      runerr(101, mode)
+#endif
 
    body {
        int fd;
@@ -1516,6 +1530,7 @@ function{0,1} io_FileStream_truncate(self, len)
    }
 end
 
+#if UNIX
 function{0,1} io_FileStream_chdir(self)
    body {
        GetSelfFd();
@@ -1526,6 +1541,14 @@ function{0,1} io_FileStream_chdir(self)
        return nulldesc;
    }
 end
+#elif MSWIN32
+function{0,1} io_FileStream_chdir(self)
+   body {
+       LitWhy("Function not available on win32");
+       fail;
+   }
+end
+#endif
 
 function{0,1} io_FileStream_seek(self, offset)
    if !cnv:integer(offset) then
@@ -1572,6 +1595,7 @@ function{0,1} io_FileStream_tell(self)
    }
 end
 
+#if UNIX
 function{0,1} io_FileStream_pipe_impl()
    body {
        int fds[2];
@@ -1593,6 +1617,14 @@ function{0,1} io_FileStream_pipe_impl()
       return result;
    }
 end
+#elif MSWIN32
+function{0,1} io_FileStream_pipe_impl()
+   body {
+       LitWhy("Function not available on win32");
+       fail;
+   }
+end
+#endif
 
 function{0,1} io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
@@ -1692,6 +1724,7 @@ function{0,1} io_SocketStream_close(self)
    }
 end
 
+#if UNIX
 function{0,1} io_SocketStream_socketpair_impl(typ)
    if !def:C_integer(typ, SOCK_STREAM) then
       runerr(101, typ)
@@ -1716,9 +1749,21 @@ function{0,1} io_SocketStream_socketpair_impl(typ)
       return result;
    }
 end
+#elif MSWIN32
+function{0,1} io_SocketStream_socketpair_impl(typ)
+   if !def:C_integer(typ, SOCK_STREAM) then
+      runerr(101, typ)
+
+   body {
+       LitWhy("Function not available on win32");
+       fail;
+   }
+end
+#endif
 
 struct sockaddr *parse_sockaddr(char *s, int *len)
 {
+#if UNIX
     if (strncmp(s, "unix:", 5) == 0) {
         static struct sockaddr_un us;
         char *t = s + 5;
@@ -1731,7 +1776,7 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
         *len = sizeof(us.sun_family) + strlen(us.sun_path);
         return (struct sockaddr *)&us;
     } 
-
+#endif
     if (strncmp(s, "inet:", 5) == 0) {
         static struct sockaddr_in iss;
         char *t = s + 5, host[128], *p;
@@ -2009,6 +2054,7 @@ function{0,1} io_DescStream_poll(a[n])
    }
 end
 
+#if UNIX
 function{0,1} io_DescStream_flag(self, on, off)
     if !def:C_integer(on, 0) then
       runerr(101, on)
@@ -2035,7 +2081,22 @@ function{0,1} io_DescStream_flag(self, on, off)
         return C_integer i;
     }
 end
+#elif MSWIN32
+function{0,1} io_DescStream_flag(self, on, off)
+    if !def:C_integer(on, 0) then
+      runerr(101, on)
 
+    if !def:C_integer(off, 0) then
+      runerr(101, off)
+
+    body {
+        LitWhy("Function not available on win32");
+	fail;
+    }
+end
+#endif
+
+#if UNIX
 static struct sdescrip ddf = {2, "dd"};
 
 #begdef GetSelfDir()
@@ -2096,6 +2157,31 @@ function{0,1} io_DirStream_close(self)
        return nulldesc;
    }
 end
+
+#elif MSWIN32
+
+function{0,1} io_DirStream_open_impl(path)
+   if !cnv:C_string(path) then
+      runerr(103, path)
+   body {
+       LitWhy("Function not available on win32");
+       fail;
+   }
+end
+
+function{0,1} io_DirStream_read_impl(self)
+   body {
+       return result;
+   }
+end
+
+function{0,1} io_DirStream_close(self)
+   body {
+       return nulldesc;
+   }
+end
+
+#endif
 
 
 function{0,1} io_Files_rename(s1,s2)
@@ -2184,11 +2270,14 @@ function{0,1} io_Files_readlink(s)
       }
 end
 
+#if UNIX
 function{0,1} io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
       runerr(103, s)
+
    if !def:C_integer(mode, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) then
       runerr(101, mode)
+
    body {
       if (mkdir(s, mode) < 0) {
 	 errno2why();
@@ -2197,6 +2286,23 @@ function{0,1} io_Files_mkdir(s, mode)
       return nulldesc;
    }
 end
+#else
+function{0,1} io_Files_mkdir(s, mode)
+   if !cnv:C_string(s) then
+      runerr(103, s)
+
+   if !cnv:C_integer(mode) then
+      runerr(101, mode)
+
+   body {
+      if (mkdir(s) < 0) {
+	 errno2why();
+	 fail;
+      }
+      return nulldesc;
+   }
+end
+#endif
 
 function{0,1} io_Files_remove(s)
    if !cnv:C_string(s) then
@@ -2210,6 +2316,7 @@ function{0,1} io_Files_remove(s)
    }
 end
 
+#if UNIX
 function{0,1} io_Files_truncate(s, len)
    if !cnv:C_string(s) then
       runerr(103,s)
@@ -2223,6 +2330,19 @@ function{0,1} io_Files_truncate(s, len)
       return nulldesc;
    }
 end
+#elif MSWIN32
+function{0,1} io_Files_truncate(s, len)
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   if !cnv:C_integer(len) then
+      runerr(101, len)
+   body {
+       LitWhy("Function not available on win32");
+       fail;
+   }
+end
+#endif
+
 
 static struct descrip stat2list(struct stat *st)
 {
@@ -2234,20 +2354,14 @@ static struct descrip stat2list(struct stat *st)
    create_list(13, &res);
    MakeInt(st->st_dev, &tmp);
    list_put(&res, &tmp);
+#if UNIX
    convert_from_ino_t(st->st_ino, &tmp);
    list_put(&res, &tmp);
-
+#else
+   list_put(&res, &zerodesc);
+#endif
    strcpy(mode, "----------");
-#if MSWIN32
-   if (st->st_mode & _S_IFREG) mode[0] = '-';
-   else if (st->st_mode & _S_IFDIR) mode[0] = 'd';
-   else if (st->st_mode & _S_IFCHR) mode[0] = 'c';
-   else if (st->st_mode & _S_IFMT) mode[0] = 'm';
-
-   if (st->st_mode & S_IREAD) mode[1] = mode[4] = mode[7] = 'r';
-   if (st->st_mode & S_IWRITE) mode[2] = mode[5] = mode[8] = 'w';
-   if (st->st_mode & S_IEXEC) mode[3] = mode[6] = mode[9] = 'x';
-#else					/* MSWIN32 */
+#if UNIX
    if (S_ISLNK(st->st_mode)) mode[0] = 'l';
    else if (S_ISREG(st->st_mode)) mode[0] = '-';
    else if (S_ISDIR(st->st_mode)) mode[0] = 'd';
@@ -2269,17 +2383,23 @@ static struct descrip stat2list(struct stat *st)
    if (S_ISUID & st->st_mode) mode[3] = (mode[3] == 'x') ? 's' : 'S';
    if (S_ISGID & st->st_mode) mode[6] = (mode[6] == 'x') ? 's' : 'S';
    if (S_ISVTX & st->st_mode) mode[9] = (mode[9] == 'x') ? 't' : 'T';
-#endif					/* MSWIN32 */
+#elif MSWIN32
+   if (st->st_mode & _S_IFREG) mode[0] = '-';
+   else if (st->st_mode & _S_IFDIR) mode[0] = 'd';
+   else if (st->st_mode & _S_IFCHR) mode[0] = 'c';
+   else if (st->st_mode & _S_IFMT) mode[0] = 'm';
+
+   if (st->st_mode & S_IREAD) mode[1] = mode[4] = mode[7] = 'r';
+   if (st->st_mode & S_IWRITE) mode[2] = mode[5] = mode[8] = 'w';
+   if (st->st_mode & S_IEXEC) mode[3] = mode[6] = mode[9] = 'x';
+#endif
    cstr2string(mode, &tmp);
    list_put(&res, &tmp);
 
    MakeInt(st->st_nlink, &tmp);
    list_put(&res, &tmp);
 
-#if MSWIN32
-   list_put(&res, emptystr);
-   list_put(&res, emptystr);
-#else					/* MSWIN32 */
+#if UNIX
    pw = getpwuid(st->st_uid);
    if (!pw) {
       sprintf(mode, "%d", (int)st->st_uid);
@@ -2297,20 +2417,23 @@ static struct descrip stat2list(struct stat *st)
       group = gr->gr_name;
    cstr2string(group, &tmp);
    list_put(&res, &tmp);
-#endif					/* MSWIN32 */
+#else
+   list_put(&res, &emptystr);
+   list_put(&res, &emptystr);
+#endif
 
    MakeInt(st->st_rdev, &tmp);
    list_put(&res, &tmp);
    convert_from_off_t(st->st_size, &tmp);
    list_put(&res, &tmp);
-#if MSWIN32
-   list_put(&res, zerodesc);
-   list_put(&res, zerodesc);
-#else
+#if UNIX
    MakeInt(st->st_blksize, &tmp);
    list_put(&res, &tmp);
    convert_from_blkcnt_t(st->st_blocks, &tmp);
    list_put(&res, &tmp);
+#else
+   list_put(&res, &zerodesc);
+   list_put(&res, &zerodesc);
 #endif
    MakeInt(st->st_atime, &tmp);
    list_put(&res, &tmp);

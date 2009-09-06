@@ -17,9 +17,9 @@ void *mb_alloc(struct membuff *mb, size_t n)
 
     while (mb->curr) {
         struct membuff_block *b = mb->curr;
-        if (n <= b->size - (b->free - b->mem)) {
+        if (n <= b->size - ((char *)b->free - (char *)b->mem)) {
             t = b->free;
-            b->free += n;
+            (char *)b->free += n;
             return t;
         }
         mb->curr = b->next;
@@ -36,7 +36,7 @@ void *mb_alloc(struct membuff *mb, size_t n)
     nb = Alloc(struct membuff_block);
     nb->size = new_size;
     t = nb->mem = safe_alloc(new_size);
-    nb->free = t + n;
+    nb->free = (char *)t + n;
     if (mb->last)
         mb->last->next = nb;
     else

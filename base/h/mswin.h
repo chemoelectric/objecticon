@@ -124,16 +124,19 @@
 /*
  * "get" means remove them from the Icon list and put them on the ghost que
  */
-#define EVQUEGET(ws,d) { \
-  int i;\
-  if (!list_get((struct b_list *)BlkLoc((ws)->listp),&d)) fatalerr(0,NULL); \
+#define EVQUEGET(w,d) { \
+  wsp ws = (w)->window; \
+  if (!list_get(&ws->listp,&d)) fatalerr(0,NULL); \
   if (Qual(d)) {\
       (ws)->eventQueue[(ws)->eQfront++] = *StrLoc(d); \
       if ((ws)->eQfront >= EQUEUELEN) (ws)->eQfront = 0; \
       (ws)->eQback = (ws)->eQfront; \
       } \
   }
-#define EVQUEEMPTY(ws) (BlkLoc((ws)->listp)->list.size == 0)
+#define EVQUEEMPTY(w) (BlkLoc((w)->window->listp)->list.size == 0)
+
+#define drawutf8 drawstrng
+#define UTF8WIDTH TEXTWIDTH
 
 #define SHARED          0
 #define MUTABLE         1

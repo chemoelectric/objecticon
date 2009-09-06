@@ -2661,14 +2661,12 @@ int wattrib(w, s, len, answer, abuf)
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
                 wc->dx = tmp;
-                UpdateCursorPos(ws, wc);	/* tell system where to blink it */
                 break;
             }
             case A_DY: {
                 if (!cnv:C_integer(d, tmp))
                     return Failed;
                 wc->dy = tmp;
-                UpdateCursorPos(ws, wc);	/* tell system where to blink it */
                 break;
             }
             case A_IMAGE: {

@@ -87,14 +87,14 @@ int CmdParamToArgv(char *s, char ***avp, int dequote)
                     (*avp)[rv] = NULL;
                 }
                 else {
-                    int end;
+                    int e;
                     strcpy(dir, t3);
                     do {
-                        end = strlen(dir)-1;
-                        while (end >= 0 && dir[end] != '\\' && dir[end] != '/' &&
-                               dir[end] != ':') {
-                            dir[end] = '\0';
-                            end--;
+                        e = strlen(dir)-1;
+                        while (e >= 0 && dir[e] != '\\' && dir[e] != '/' &&
+                               dir[e] != ':') {
+                            dir[e] = '\0';
+                            e--;
                         }
                         strcat(dir, FILENAME(&fd));
                         *avp = realloc(*avp, (rv + 2) * sizeof (char *));

@@ -8,7 +8,7 @@
 #include "lglob.h"
 #include "keyword.h"
 
-enum literaltype { NUL, FAIL, CSET, STRING, UCS, INT, REAL };
+enum literaltype { NUL, FAIL, CSET, STRING, UCS, INTEGER, REAL };
 
 struct literal {
     int type;
@@ -791,7 +791,7 @@ static word neg(word a)
 static int cnv_eint(struct literal *s)
 {
     switch (s->type) {
-        case INT: {
+        case INTEGER: {
             return 1;
         }
         default: {
@@ -806,7 +806,7 @@ static int cnv_eint(struct literal *s)
                 return 0;
             if (t < MinWord || t > MaxWord)
                 return 0;
-            s->type = INT;
+            s->type = INTEGER;
             s->u.i = (word)t;
             return 1;
         }
@@ -818,13 +818,13 @@ static int cnv_eint(struct literal *s)
 static int cnv_int(struct literal *s)
 {
     switch (s->type) {
-        case INT: {
+        case INTEGER: {
             return 1;
         }
         case REAL: {
             if (s->u.d <= MinWord || s->u.d <= MaxWord)
                 return 0;
-            s->type = INT;
+            s->type = INTEGER;
             s->u.i = (word)s->u.d;
             return 1;
         }
@@ -840,7 +840,7 @@ static int cnv_int(struct literal *s)
                 return 0;
             if (t < MinWord || t > MaxWord)
                 return 0;
-            s->type = INT;
+            s->type = INTEGER;
             s->u.i = (word)t;
             return 1;
         }
@@ -907,7 +907,7 @@ static int cnv_string(struct literal *s)
             }
             break;
         }
-        case INT: {
+        case INTEGER: {
             char buf[32];
             sprintf(buf, "%ld", (long)s->u.i);
             s->type = STRING;
@@ -2440,7 +2440,7 @@ static void fold_number(struct lnode *n)
         free_literal(&l);
         return;
     }
-    if (l.type == INT || l.type == REAL) {
+    if (l.type == INTEGER || l.type == REAL) {
         replace_node(n, (struct lnode*)x->child);
         free_literal(&l);
         return;
@@ -2931,7 +2931,7 @@ static int get_literal(struct lnode *n, struct literal *l)
             return 1;
         }
         if (ce->c_flag == F_IntLit) {
-            l->type = INT;
+            l->type = INTEGER;
             memcpy(&l->u.i, ce->data, sizeof(word));
             return 1;
         }
@@ -2993,7 +2993,7 @@ static int get_literal(struct lnode *n, struct literal *l)
                 return 1;
             }
             case K_YES: {
-                l->type = INT;
+                l->type = INTEGER;
                 l->u.i = 1;
                 return 1;
             }
@@ -3076,7 +3076,7 @@ static int equiv(struct literal *x, struct literal *y)
                 return 0;
             return memcmp(x->u.str.s, y->u.str.s, x->u.str.len) == 0;
         }
-        case INT:
+        case INTEGER:
             return x->u.i == y->u.i;
         case REAL:
             return x->u.d == y->u.d;
