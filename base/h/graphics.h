@@ -356,7 +356,6 @@ typedef struct _wstate {
   HBITMAP	iconpix;		/* backing bitmap */
   HBITMAP	initialPix;		/* backing bitmap */
   HBITMAP	theOldPix;
-  int		hasCaret;
   HCURSOR	curcursor;
   HCURSOR	savedcursor;
   HMENU		menuBar;

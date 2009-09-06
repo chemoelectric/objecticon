@@ -114,8 +114,6 @@
 
 #define MAKERGB(r,g,b) RGB(r,g,b)
 #define RGB16TO8(x) if ((x) > 0xff) (x) = (((x) >> 8) & 0xff)
-#define hidecrsr(ws) if (ws->hasCaret) HideCaret(ws->iconwin)
-#define showcrsr(ws) if (ws->hasCaret) ShowCaret(ws->iconwin)
 #define FNTWIDTH(size) ((size) & 0xFFFF)
 #define FNTHEIGHT(size) ((size) >> 16)
 #define MAKEFNTSIZE(height, width) (((height) << 16) | (width))
