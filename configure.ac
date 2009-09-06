@@ -62,7 +62,7 @@ ACX_CONTEXT_SWITCH()
 export CSWITCH
 CSWITCH=config/system/$acx_context_switch/rswitch.?
 
-AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll)
+AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll uname)
 AC_CHECK_GLOBAL(sys_nerr)
 AC_CHECK_GLOBAL(sys_errlist)
 AC_VAR_TIMEZONE_EXTERNALS()

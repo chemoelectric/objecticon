@@ -220,9 +220,13 @@ keyword{1} host
      return string
      }
    inline {
+#ifdef HAVE_UNAME
        struct utsname utsn;
        uname(&utsn);
        cstr2string(utsn.nodename, &result);
+#else
+       LitStr("Unknown", &result);
+#endif
        return result;
       }
 end

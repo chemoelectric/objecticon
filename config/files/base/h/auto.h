@@ -66,6 +66,9 @@
 /* define as 1 if poll exists */
 #undef HAVE_POLL
 
+/* define as 1 if uname exists */
+#undef HAVE_UNAME
+
 /* define as 1 if _etext exists */
 #undef HAVE__ETEXT
 
