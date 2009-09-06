@@ -146,6 +146,11 @@ int main(int argc, char **argv)
     int i, want_arg;
     struct fileparts *fp;
 
+#if MSWIN32
+    WSADATA cData;
+    WSAStartup(MAKEWORD(2, 0), &cData);
+#endif
+
     ipc = NULL;
 
     fp = fparse(argv[0]);

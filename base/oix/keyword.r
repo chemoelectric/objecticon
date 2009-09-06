@@ -222,10 +222,18 @@ keyword{1} host
    inline {
 #ifdef HAVE_UNAME
        struct utsname utsn;
-       uname(&utsn);
+       if (uname(&utsn) < 0) {
+           errno2why();
+           fail;
+       }
        cstr2string(utsn.nodename, &result);
 #else
-       LitStr("Unknown", &result);
+       char buff[256];
+       if (gethostname(buff, sizeof(buff)) < 0) {
+           errno2why();
+           fail;
+       }
+       cstr2string(buff, &result);
 #endif
        return result;
       }
