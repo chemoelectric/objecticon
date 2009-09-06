@@ -19,7 +19,7 @@ void *mb_alloc(struct membuff *mb, size_t n)
         struct membuff_block *b = mb->curr;
         if (n <= b->size - ((char *)b->free - (char *)b->mem)) {
             t = b->free;
-            (char *)b->free += n;
+            b->free = (char *)b->free + n;
             return t;
         }
         mb->curr = b->next;
