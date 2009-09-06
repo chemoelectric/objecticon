@@ -2213,7 +2213,6 @@ function{0,1} io_DirStream_open_impl(path)
 	     }
 	  }
        }
-       printf("cpath=%s\n",cpath);fflush(stdout);
        MemProtect(fd = malloc(sizeof(struct DirData)));
        fd->handle = FindFirstFile(cpath, &fd->fileData);
        if (fd->handle == INVALID_HANDLE_VALUE) {
