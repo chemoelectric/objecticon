@@ -1542,7 +1542,7 @@ function{0,1} io_FileStream_chdir(self)
        }
        return nulldesc;
    }
-#elif MSWIN32
+#else
      Unsupported;
 #endif
 end
@@ -1612,7 +1612,7 @@ function{0,1} io_FileStream_pipe_impl()
       list_put(&result, &t);
 
       return result;
-#elif MSWIN32
+#else
       Unsupported;
 #endif
    }
@@ -1739,7 +1739,7 @@ function{0,1} io_SocketStream_socketpair_impl(typ)
       list_put(&result, &t);
 
       return result;
-#elif MSWIN32
+#else
        Unsupported;
 #endif
    }
@@ -2063,7 +2063,7 @@ function{0,1} io_DescStream_flag(self, on, off)
         }
 
         return C_integer i;
-#elif MSWIN32
+#else
         Unsupported;
 #endif
     }
@@ -2265,15 +2265,15 @@ function{0,1} io_Files_hardlink(s1, s2)
    if !cnv:C_string(s2) then
       runerr(103, s2)
    body {
-#if MSWIN32
-     Unsupported;
-#else					/* MSWIN32 */
+#if UNIX
       if (link(s1, s2) < 0) {
 	 errno2why();
 	 fail;
       }
       return nulldesc;
-#endif					/* MSWIN32 */
+#else
+     Unsupported;
+#endif
    }
 end
 
@@ -2283,15 +2283,15 @@ function{0,1} io_Files_symlink(s1, s2)
    if !cnv:C_string(s2) then
       runerr(103, s2)
    body {
-#if MSWIN32
-     Unsupported;
-#else					/* MSWIN32 */
+#if UNIX
       if (symlink(s1, s2) < 0) {
 	 errno2why();
 	 fail;
       }
       return nulldesc;
-#endif					/* MSWIN32 */
+#else
+     Unsupported;
+#endif
    }
 end
 
@@ -2299,9 +2299,7 @@ function{0,1} io_Files_readlink(s)
    if !cnv:C_string(s) then
       runerr(103, s)
    body {
-#if MSWIN32
-     Unsupported;
-#else					/* MSWIN32 */
+#if UNIX
        int buff_size, rc;
        char *buff;
        buff_size = 32;
@@ -2323,7 +2321,9 @@ function{0,1} io_Files_readlink(s)
            dealcstr(buff);
            buff_size *= 2;
        }
-#endif					/* MSWIN32 */
+#else
+     Unsupported;
+#endif
       }
 end
 
@@ -2385,7 +2385,7 @@ function{0,1} io_Files_truncate(s, len)
           fail;
       }
       return nulldesc;
-#elif MSWIN32
+#else
        Unsupported;
 #endif
    }

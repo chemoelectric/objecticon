@@ -32,20 +32,16 @@ function{0,1} posix_System_kill(pid, signal)
    if !cnv:C_integer(signal) then
       runerr(101, signal)
 
-   abstract {
-      return null
-      }
    body {
-      
-#if MSWIN32
-      fail;
-#else					/* MSWIN32 */
+#if UNIX
       if (kill(pid, signal) != 0) {
 	 errno2why();
 	 fail;
 	 }
       return nulldesc;
-#endif					/* MSWIN32 */
+#else
+     Unsupported;
+#endif
       }
 end
 
@@ -55,9 +51,7 @@ function{0,1} posix_System_fork()
    inline {
       int pid;
       
-#if MSWIN32
-     Unsupported;
-#else					/* MSWIN32 */
+#if UNIX
       if ((pid = fork()) < 0) {
 	 errno2why();
 	 fail;
@@ -68,7 +62,9 @@ function{0,1} posix_System_fork()
         wdsplys = 0;
 #endif
       return C_integer pid;
-#endif					/* MSWIN32 */
+#else
+     Unsupported;
+#endif
       }
 end
 
