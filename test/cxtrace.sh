@@ -5,4 +5,4 @@
 set -e 
 oit -s cxtrace.icn 
 ./cxtrace 2>cxtrace.out
-cmp cxtrace.std cxtrace.out
+cmp cxtrace.out cxtrace.std
