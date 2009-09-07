@@ -231,12 +231,6 @@ do { \
     } \
 } while(0)
 
-#define Unsupported \
-do { \
-       LitWhy("Function not supported"); \
-       fail; \
-} while(0)
-
 #define CallerProc (&BlkLoc(*argp)->proc)
 
 /*

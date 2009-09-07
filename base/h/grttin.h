@@ -75,6 +75,11 @@
 
 #define MemProtect(notnull) do {if (!(notnull)) fatalerr(309,NULL);} while(0)
 
+#define Unsupported {\
+       LitWhy("Function not supported"); \
+       fail; \
+       }
+
 /*
  * perform what amounts to "function inlining" of EVVal
  */

@@ -1541,10 +1541,10 @@ function{0,1} io_FileStream_chdir(self)
            fail;
        }
        return nulldesc;
-   }
 #else
      Unsupported;
 #endif
+   }
 end
 
 function{0,1} io_FileStream_seek(self, offset)
