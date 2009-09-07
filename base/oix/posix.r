@@ -56,7 +56,7 @@ function{0,1} posix_System_fork()
       int pid;
       
 #if MSWIN32
-      runerr(121);
+     Unsupported;
 #else					/* MSWIN32 */
       if ((pid = fork()) < 0) {
 	 errno2why();

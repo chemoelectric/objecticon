@@ -104,6 +104,8 @@ end
 
 #else						/* HAVE_LIBDL */
 function{0,1} lang_Proc_load(filename,funcname)
-   runerr(121)
+   body {
+     Unsupported;
+   }
 end
 #endif						/* HAVE_LIBDL */

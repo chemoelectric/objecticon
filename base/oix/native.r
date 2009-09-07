@@ -1266,7 +1266,9 @@ end
 
 #else						/* HAVE_LIBDL */
 function{1} lang_Class_load_library(lib)
-   runerr(121)
+   body {
+     Unsupported;
+   }
 end
 #endif						/* HAVE_LIBDL */
 
@@ -1530,9 +1532,9 @@ function{0,1} io_FileStream_truncate(self, len)
    }
 end
 
-#if UNIX
 function{0,1} io_FileStream_chdir(self)
    body {
+#if UNIX
        GetSelfFd();
        if (fchdir(self_fd) < 0) {
            errno2why();
@@ -1540,15 +1542,10 @@ function{0,1} io_FileStream_chdir(self)
        }
        return nulldesc;
    }
-end
 #elif MSWIN32
-function{0,1} io_FileStream_chdir(self)
-   body {
-       LitWhy("Function not available on win32");
-       fail;
-   }
-end
+     Unsupported;
 #endif
+end
 
 function{0,1} io_FileStream_seek(self, offset)
    if !cnv:integer(offset) then
@@ -1595,9 +1592,9 @@ function{0,1} io_FileStream_tell(self)
    }
 end
 
-#if UNIX
 function{0,1} io_FileStream_pipe_impl()
    body {
+#if UNIX
        int fds[2];
        struct descrip t;
 
@@ -1615,16 +1612,11 @@ function{0,1} io_FileStream_pipe_impl()
       list_put(&result, &t);
 
       return result;
-   }
-end
 #elif MSWIN32
-function{0,1} io_FileStream_pipe_impl()
-   body {
-       LitWhy("Function not available on win32");
-       fail;
+      Unsupported;
+#endif
    }
 end
-#endif
 
 function{0,1} io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
@@ -1724,12 +1716,12 @@ function{0,1} io_SocketStream_close(self)
    }
 end
 
-#if UNIX
 function{0,1} io_SocketStream_socketpair_impl(typ)
    if !def:C_integer(typ, SOCK_STREAM) then
       runerr(101, typ)
 
    body {
+#if UNIX
        int fds[2];
        struct descrip t;
 
@@ -1747,19 +1739,11 @@ function{0,1} io_SocketStream_socketpair_impl(typ)
       list_put(&result, &t);
 
       return result;
-   }
-end
 #elif MSWIN32
-function{0,1} io_SocketStream_socketpair_impl(typ)
-   if !def:C_integer(typ, SOCK_STREAM) then
-      runerr(101, typ)
-
-   body {
-       LitWhy("Function not available on win32");
-       fail;
+       Unsupported;
+#endif
    }
 end
-#endif
 
 struct sockaddr *parse_sockaddr(char *s, int *len)
 {
@@ -2049,12 +2033,11 @@ function{0,1} io_DescStream_poll(a[n])
 
        return result;
 #else
-       runerr(121);
+       Unsupported;
 #endif  /* HAVE_POLL */
    }
 end
 
-#if UNIX
 function{0,1} io_DescStream_flag(self, on, off)
     if !def:C_integer(on, 0) then
       runerr(101, on)
@@ -2063,6 +2046,7 @@ function{0,1} io_DescStream_flag(self, on, off)
       runerr(101, off)
 
     body {
+#if UNIX
         int i;
         GetSelfFd();
 
@@ -2079,22 +2063,12 @@ function{0,1} io_DescStream_flag(self, on, off)
         }
 
         return C_integer i;
-    }
-end
 #elif MSWIN32
-function{0,1} io_DescStream_flag(self, on, off)
-    if !def:C_integer(on, 0) then
-      runerr(101, on)
-
-    if !def:C_integer(off, 0) then
-      runerr(101, off)
-
-    body {
-        LitWhy("Function not available on win32");
-	fail;
+        Unsupported;
+#endif
     }
 end
-#endif
+
 
 #if UNIX
 static struct sdescrip ddf = {2, "dd"};
@@ -2292,7 +2266,7 @@ function{0,1} io_Files_hardlink(s1, s2)
       runerr(103, s2)
    body {
 #if MSWIN32
-      runerr(121);
+     Unsupported;
 #else					/* MSWIN32 */
       if (link(s1, s2) < 0) {
 	 errno2why();
@@ -2310,7 +2284,7 @@ function{0,1} io_Files_symlink(s1, s2)
       runerr(103, s2)
    body {
 #if MSWIN32
-      runerr(121);
+     Unsupported;
 #else					/* MSWIN32 */
       if (symlink(s1, s2) < 0) {
 	 errno2why();
@@ -2326,7 +2300,7 @@ function{0,1} io_Files_readlink(s)
       runerr(103, s)
    body {
 #if MSWIN32
-       runerr(121);
+     Unsupported;
 #else					/* MSWIN32 */
        int buff_size, rc;
        char *buff;
@@ -2399,33 +2373,23 @@ function{0,1} io_Files_remove(s)
    }
 end
 
-#if UNIX
 function{0,1} io_Files_truncate(s, len)
    if !cnv:C_string(s) then
       runerr(103,s)
    if !cnv:C_integer(len) then
       runerr(101, len)
    body {
+#if UNIX
       if (truncate(s, len) < 0) {
           errno2why();
           fail;
       }
       return nulldesc;
-   }
-end
 #elif MSWIN32
-function{0,1} io_Files_truncate(s, len)
-   if !cnv:C_string(s) then
-      runerr(103,s)
-   if !cnv:C_integer(len) then
-      runerr(101, len)
-   body {
-       LitWhy("Function not available on win32");
-       fail;
+       Unsupported;
+#endif
    }
 end
-#endif
-
 
 static struct descrip stat2list(struct stat *st)
 {

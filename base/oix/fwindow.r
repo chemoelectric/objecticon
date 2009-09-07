@@ -1710,7 +1710,9 @@ end
 #else  /* Graphics */
 
 function{0,1} graphics_Window_open_impl(attr[n])
-   runerr(121)
+   body {
+     Unsupported;
+   }
 end
 
 #endif   /* Graphics */
