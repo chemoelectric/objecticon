@@ -781,17 +781,20 @@ function{1} lang_Prog_get_stack_info_impl(c)
        else
            runerr(118,c);
 
+       top = (word *)(ce + 1);
        if (ce == rootpstate.K_main) {
-           top = stack + Wsizeof(struct b_coexpr);
            bottom = stackend;
            if (ce == k_current)
                isp = sp;
            else
                isp = ce->es_sp;
        } else {
-           top = (word *)(ce + 1);
            if (ce == k_current) {
+#if HAVE_CUSTOM_C_STACKS
+               bottom = (word *)(ce->cstate[0]);
+#else
                bottom = (word *)&top;
+#endif
                isp = sp;
            } else {
                bottom = (word *)(ce->cstate[0]);

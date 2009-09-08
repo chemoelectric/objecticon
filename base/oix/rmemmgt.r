@@ -357,7 +357,9 @@ void collect(int region)
    /*
     * Check for stack overflow if we are collecting from outside the system C stack.
     */
+#if !HAVE_CUSTOM_C_STACKS
    do_checkstack = (k_current != rootpstate.K_main);
+#endif
 
    for (prog = progs; prog; prog = prog->next)
        markprogram(prog);

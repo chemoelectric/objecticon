@@ -189,7 +189,7 @@ int interp_x(int fsig,dptr cargp)
 
    EVVal(fsig, e_intcall);
 
-   CheckStack();
+   CheckStack;
 
    ilevel++;
    EntInterp;

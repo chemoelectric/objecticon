@@ -78,6 +78,9 @@
 /* define as 1 if we define a coclean() function */
 #undef HAVE_COCLEAN
 
+/* define as 1 if co-expressions use custom C stacks */
+#undef HAVE_CUSTOM_C_STACKS
+
 /* sizes of various fundamental types */
 #undef SIZEOF_INT
 #undef SIZEOF_LONG

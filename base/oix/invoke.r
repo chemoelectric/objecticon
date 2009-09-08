@@ -30,7 +30,7 @@ int invoke(int nargs, dptr *cargp_ptr, int *nargs_ptr)
     xnargs = nargs;
     xargp = newargp;
     Deref(newargp[0]);
-    CheckStack();
+    CheckStack;
 
     type_case *newargp of {
       class: {

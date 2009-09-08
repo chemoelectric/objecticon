@@ -219,7 +219,19 @@
 /*
  * Check for stack overflow
  */
-#define CheckStack() \
+#if HAVE_CUSTOM_C_STACKS
+#define CheckStack \
+do { \
+    if (k_current == rootpstate.K_main) {  \
+        if (DiffPtrsBytes(stackend,sp) < 4096)     \
+            fatalerr(311, NULL); \
+    } else { \
+        if (DiffPtrsBytes(k_current.cstate[0], sp) < 4096)        \
+            fatalerr(312, NULL); \
+    } \
+} while(0)
+#else
+#define CheckStack \
 do { \
     if (k_current == rootpstate.K_main) {  \
         if (DiffPtrsBytes(stackend,sp) < 4096)     \
@@ -230,6 +242,7 @@ do { \
             fatalerr(312, NULL); \
     } \
 } while(0)
+#endif
 
 #define CallerProc (&BlkLoc(*argp)->proc)
 
