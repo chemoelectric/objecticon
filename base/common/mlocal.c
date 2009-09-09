@@ -221,6 +221,8 @@ static char *tryexe(char *dir, char *name)
 static char *tryfile(char *dir, char *name, char *extn)
 {
     char *s = makename(dir, name, extn);
+    if (strcmpi(s, "nul") == 0)
+       return s;
     if (!access(s, 0))
         return s;
     else
