@@ -11,8 +11,6 @@
 #passthru #include <pthread.h>
 #passthru #include <semaphore.h>
 
-static int inited = 0;		/* has first-time initialization been done? */
-
 /*
  * Define a "context" struct to hold the thread information we need.
  */
@@ -61,7 +59,7 @@ static int sem_wait_ex(sem_t *c)
  */
 void coswitch(word *o, word *n, int first) 
 {
-
+    static int inited = 0;		/* has first-time initialization been done? */
     cstate ocs = (cstate)o;			/* old cstate pointer */
     cstate ncs = (cstate)n;			/* new cstate pointer */
     context *oldc, *newc;			/* old and new context pointers */

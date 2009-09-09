@@ -1,7 +1,5 @@
 #passthru #include <ucontext.h>
 
-static int inited = 0;		/* has first-time initialization been done? */
-
 static void aborted(char *s) {
     ffatalerr("ucontext coexpression switch: %s; program will abort\n"
               "errnum=%d (%s)\n", s, errno, strerror(errno));
@@ -12,6 +10,7 @@ static void aborted(char *s) {
  */
 void coswitch(word *o, word *n, int first) 
 {
+    static int inited = 0;		/* has first-time initialization been done? */
     ucontext_t *oldc, *newc;			/* old and new context pointers */
     int dummy;
 

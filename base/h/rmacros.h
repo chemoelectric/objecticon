@@ -226,7 +226,7 @@ do { \
         if (DiffPtrsBytes(stackend,sp) < 4096)     \
             fatalerr(311, NULL); \
     } else { \
-        if (DiffPtrsBytes(k_current.cstate[0], sp) < 4096)        \
+        if (DiffPtrsBytes(k_current->cstate[0], sp) < 4096)        \
             fatalerr(312, NULL); \
     } \
 } while(0)
