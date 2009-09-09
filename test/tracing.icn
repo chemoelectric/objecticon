@@ -96,7 +96,7 @@ procedure p()
    v := SomeRec(1,2,3)
    s1 := "the quick brown fox jumps"
    s2 := u"over the lazy dog"
-
+   &progname := "something"
    suspend &random|&trace|&dump|&error|&eventsource|&eventcode|&eventvalue|
       &progname|&why|&pos|&subject|t[1]|t[100]|SomeClass.a_static|u.x|u.y|u.z|
       v.one|v.two|v.three|l[2]|l[10]|s1[2:5]|s2[2:6]
