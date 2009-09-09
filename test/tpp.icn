@@ -57,17 +57,9 @@ $unknown/preprocessing/directive
 
 $line 0 "include.tests"
 =a=
-$ifdef _MS_WIN32
-$include "nul"
-$else
-$include "/dev/null"
-$endif
+$include "empty"
 =b=
-$ifdef _MS_WIN32
-    $ 	 include    "nul"    		# comment
-$else
-    $ 	 include    "/dev/null"    		# comment
-$endif
+    $ 	 include    "empty"    		# comment
 =c=
 $include"abc\def\"ghi#jkl\#mno\\pqr stu"	# lots of escapes
 =d=
