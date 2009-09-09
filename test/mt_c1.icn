@@ -7,7 +7,11 @@ global what, c
 procedure main(a)
    local p
    what := 100
+$ifdef _MS_WIN32
+   c := Prog.load("mt_c2.exe") | stop("Couldn't load mt_c2")
+$else
    c := Prog.load("mt_c2") | stop("Couldn't load mt_c2")
+$endif
    @c
    p := Prog.get_global("subchild0",c) | stop("no subchild0 found")
    p()
@@ -222,7 +226,7 @@ procedure child32()
    print{"&source",&source}
    print{"&subject",&subject}
    print{"&current",&current}
-   print{"&progname",&progname}
+   pr_type{"&progname",&progname}
    print{"&errortext",&errortext}
    print{"&eventcode",&eventcode}
    print{"&errorvalue",&errorvalue}

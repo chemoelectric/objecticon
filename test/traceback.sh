@@ -5,4 +5,4 @@ rm -f traceback.out
 oit -s traceback.icn 
 ./traceback >/dev/null 2>traceback.out
 set -e 
-cmp traceback.std traceback.out
+cmp traceback.out traceback.std

@@ -1,4 +1,4 @@
-import lang,io
+import lang,io,ipl.strings(replace)
 
 record rectype(one, two,
                three,
@@ -37,7 +37,7 @@ end
 procedure printloc(m, l)
    local t
    if t := @l then
-      write(@m, ": ", t.file[-12:0], ":", t.line)
+      write(@m, ": ", replace(t.file[-12:0],"\\","/"), ":", t.line)
    else
       write(@m, ": failed, &why=", image(&why))
 end
