@@ -2354,10 +2354,6 @@ end
 function{0,1} io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
       runerr(103, s)
-
-   if !cnv:C_integer(mode) then
-      runerr(101, mode)
-
    body {
       if (mkdir(s) < 0) {
 	 errno2why();
