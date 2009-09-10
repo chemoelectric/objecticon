@@ -2401,7 +2401,19 @@ function{0,1} io_Files_truncate(s, len)
       }
       return nulldesc;
 #else
-       Unsupported;
+      int fd;
+      fd = open(s, O_WRONLY, 0);
+      if (fd < 0) {
+           errno2why();
+           fail;
+      }
+      if (ftruncate(fd, len) < 0) {
+           errno2why();
+           close(fd);
+           fail;
+      }
+      close(fd);
+      return nulldesc;
 #endif
    }
 end
