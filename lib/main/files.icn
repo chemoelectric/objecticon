@@ -15,15 +15,29 @@ class Files(NoCopy)
       FS
 
    public static const 
-      EOL
+      # The end-of-line sequence
+      EOL,
+      # The separator for elements of a path
+      PATH_SEPARATOR,
+      # A cset, being the non-filename characters which may appear in a path
+      PATH_SPECIALS,
+      # The separator for individual paths in a list of paths (such as the PATH
+      # environment variable).
+      PATHS_SEPARATOR
 
    private static init()
 $ifdef _UNIX
       EOL := "\n"
+      PATH_SEPARATOR := "/"
+      PATH_SPECIALS := '/'
+      PATHS_SEPARATOR := ":"
       FS := UnixFileSystem()
 $else
 $ifdef _MS_WIN32
       EOL := "\r\n"
+      PATH_SEPARATOR := "\\"
+      PATH_SPECIALS := ':\\/'
+      PATHS_SEPARATOR := ";"
       FS := WindowsFileSystem()
 $else
       runerr("Can't init_file_system: unknown o/s type")
