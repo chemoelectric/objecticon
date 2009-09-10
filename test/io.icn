@@ -1,7 +1,10 @@
 #SRC: JCON
 #  I/O test -- writes ./tmp1 and ./tmp2 as well as stdout
 
-import io, ipl.strings(replace)
+import io
+$ifdef _MS_WIN32
+import ipl.strings(replace)
+$endif
 
 class DevNull(Stream)
    public in(n)
@@ -30,9 +33,10 @@ class DevNull(Stream)
 end
 
 procedure main()
-   local L, f, m, n, t1, t2, s
+   local L, f, m, n, t1, t2
 
 $ifdef _MS_WIN32
+   local s
    Files.string_to_file("motd", "message of the day")
    L := [FileStream.stdin, FileStream.stdout, FileStream.stderr,
    	m := open("motd"), n := open("nul", "w")]
@@ -122,12 +126,12 @@ $ifdef _UNIX
    tsys("ls io.[ids][tca][dnt]")		# check wildcarding
    tpipe()
 $else
-$endif
    # No pipes etc, so just copy the expected result
    Files.file_to_string("io.std") ? {
       tab(find("$ echo hello world"))
       writes(tab(0))
    }
+$endif
 end
 
 
