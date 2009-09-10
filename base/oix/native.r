@@ -2553,16 +2553,20 @@ function{1} util_Timezone_get_system_timezone()
       #if HAVE_STRUCT_TM_TM_GMTOFF
          MakeInt(ct->tm_gmtoff, &tmp);
          list_put(&result, &tmp);
-         #if HAVE_TZNAME
+         #if HAVE_TZNAME && HAVE_STRUCT_TM_TM_ISDST
          if (ct->tm_isdst >= 0) {
              cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
              list_put(&result, &tmp);
          }
          #endif
       #elif HAVE_TIMEZONE      
+         #if MSWIN32
+         MakeInt(timezone - _dstbias, &tmp);
+         #else
          MakeInt(timezone, &tmp);
+         #endif
          list_put(&result, &tmp);
-         #if HAVE_TZNAME
+         #if HAVE_TZNAME && HAVE_STRUCT_TM_TM_ISDST
          if (ct->tm_isdst >= 0) {
              cstr2string(tzname[ct->tm_isdst ? 1 : 0], &tmp);
              list_put(&result, &tmp);
