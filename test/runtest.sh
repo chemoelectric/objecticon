@@ -3,6 +3,8 @@
 . ../paths.sh
 PATH="$OIBIN:$PATH"
 
+[ -f custom.sh ] && . custom.sh
+
 # if no files specifies, use all
 if [ $# = 0 ]; then
    set *.std
@@ -18,7 +20,7 @@ for FNAME; do
 
     # if $BASE.sh exists, run that instead of preprogrammed script
     if [ -r $BASE.sh ]; then
-	if sh $BASE.sh ; then
+	if ./$BASE.sh ; then
             rm -f $BASE $BASE.out
         else
             FAILED="$FAILED $BASE"
