@@ -6,8 +6,14 @@ import io
 procedure main()
    local L, f, m, n, t1, t2
 
+$ifdef _MS_WIN32
+   Files.string_to_file("motd", "message of the day")
+   L := [FileStream.stdin, FileStream.stdout, FileStream.stderr,
+   	m := open("motd"), n := open("nul", "w")]
+$else
    L := [FileStream.stdin, FileStream.stdout, FileStream.stderr,
    	m := open("/etc/motd"), n := open("/dev/null", "w")]
+$endif
    L := sort(L)
    every f := !L do
       write(type(f), ": ", imagex(f))
@@ -23,14 +29,12 @@ procedure main()
    write()
    write("flush /etc/motd: ", imagex(m.flush()) | "FAILED")
    write("close /etc/motd: ", imagex(m.close()) | "FAILED")
-   #write("close /etc/motd: ", image(m.close()) | "FAILED")
-   #write("flush /etc/motd: ", image(m.flush()) | "FAILED")
-
+$ifdef _MS_WIN32
+   Files.remove("motd")
+$endif
    write()
    write("flush /dev/null: ", imagex(n.flush()) | "FAILED")
    write("close /dev/null: ", imagex(n.close()) | "FAILED")
-   #write("close /dev/null: ", image(n.close()) | "FAILED")
-   #write("flush /dev/null: ", image(n.flush()) | "FAILED")
 
    every Files.remove("tmp1" | "tmp2")
    every Files.remove("tmp1" | "tmp2")
@@ -60,11 +64,11 @@ procedure main()
    writes(">stdout", t2, ">2b", t1, ">1b", FileStream.stdout)
    write(">stdout", t1, ">1c", t2, t2, ">2c", FileStream.stdout)
    write(">stdout", t2, ">2d", t1, t1, ">1d", FileStream.stdout)
-   every write(t1 | t2)
+   every writes(t1 | t2, "\n")
    writes(t1, ">1e")
    writes(t2, ">2e")
-   write(t1, ">1f")
-   write(t2, ">2f")
+   writes(t1, ">1f\n")
+   writes(t2, ">2f\n")
    every (t1 | t2).close()
    rfile("tmp1")
    rfile("tmp2")
@@ -103,7 +107,7 @@ procedure wfile(name, mode, s)
       writes(s)
       tab(many(' '))
       while not pos(0) do {
-	 write(f, tab(upto(' ') | 0))
+	 writes(f, tab(upto(' ') | 0), "\n")
 	 tab(many(' '))
          }
       write(" : ", f.tell())
@@ -124,6 +128,9 @@ procedure rfile(name)
    local f, i
 
    writes("read  ", name, ":\t")
+$ifdef _MS_WIN32
+   if name == "/dev/null" then name := "nul"
+$endif
    if not (f := open(name, "r")) then {
       write(" can't open")
       fail
