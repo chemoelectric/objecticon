@@ -2376,6 +2376,18 @@ function{0,1} io_Files_remove(s)
    }
 end
 
+function{0,1} io_Files_rmdir(s)
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   body {
+      if (rmdir(s) < 0) {
+          errno2why();
+          fail;
+      }
+      return nulldesc;
+   }
+end
+
 function{0,1} io_Files_truncate(s, len)
    if !cnv:C_string(s) then
       runerr(103,s)

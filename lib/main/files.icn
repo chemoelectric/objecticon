@@ -286,11 +286,18 @@ $endif
    public static defer getcwd()
 
    #
-   # Remove a file, or an empty directory
+   # Remove a regular file
    #
-   # @param s the file or empty directory
+   # @param s the file
    #
    public static defer remove(s)
+
+   #
+   # Remove an empty directory
+   #
+   # @param s the empty directory
+   #
+   public static defer rmdir(s)
 
    #
    # Make a new directory
