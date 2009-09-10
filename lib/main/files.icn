@@ -754,9 +754,11 @@ class WindowsFilePath(FilePath)
       every e := !absolute().l do {
          if e == "." then
             next
-         else if e == ".." then
-            pull(r)
-         else
+         else if e == ".." then {
+            # Avoid, eg, c:\.. -> empty; c:\.. is in fact invalid.
+            if *r > 1 then
+               pull(r)
+         } else
             put(r, map(e))
       }
       return WindowsFilePath(r)
