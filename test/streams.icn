@@ -79,6 +79,7 @@ procedure test_modes()
    do_mode(f)
    f.close()
 
+$ifdef _UNIX
    write("Prog Read")
    f := ProgStream.open_read("echo", ["hello"]) | stop(&why)
    do_mode(f)
@@ -89,6 +90,24 @@ procedure test_modes()
    f := ProgStream.open_write("sh", ["-c", "cat >/dev/null"]) | stop(&why)
    do_mode(f)
    f.close()
+$else
+   write("Prog Read")
+   write("Mode: 1")
+   write("Can read: yes")
+   write("Can write: no")
+   write("Can readwrite: no")
+   write("Can seek: no")
+   write("Can truncate: no")
+   write("Can all: no")
+   write("Prog write")
+   write("Mode: 2")
+   write("Can read: no")
+   write("Can write: yes")
+   write("Can readwrite: no")
+   write("Can seek: no")
+   write("Can truncate: no")
+   write("Can all: no")
+$endif
 
    write("Socket")
    f := SocketStream.socket()
@@ -102,7 +121,7 @@ procedure test_modes()
 end
 
 procedure check_file(f, data)
-   local i, s
+   local i, s, s1
    f.writes(data) | stop(&why)
    comp_with(f,data)
    # Add to the end
@@ -129,15 +148,15 @@ procedure check_file(f, data)
       data[i:min(i+3,*data+1)] := "ABC"
    }
    comp_with(f,data)
-
    # Write some lines and read them back
    every i := 1 to *data by 200 do {
       f.seek(i)
-      s := "The quick brown fox" || repl("*",i/50) || "\n"
-      f.writes(s)
-      data[i:min(i+*s,*data+1)] := s
+      s := "The quick brown fox" || repl("*",i/50)
+      s1 := s || Files.EOL
+      f.write(s)
+      data[i:min(i+*s1,*data+1)] := s1
       f.seek(i)
-      yes_no{"Line read", f.read() == s[1:-1]}
+      yes_no{"Line read", f.read() == s}
    }
    comp_with(f,data)
 
