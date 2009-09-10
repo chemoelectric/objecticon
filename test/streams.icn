@@ -190,10 +190,6 @@ end
 
 procedure test_dir()
    local s, f, t
-   system("mkdir testdir")
-   system("echo a >testdir/one")
-   system("echo a >testdir/two")
-   system("echo a >testdir/three")
    f := DirStream.open("testdir") | stop(&why)
    s := f.reads(1000)
    t := set()
