@@ -1432,7 +1432,11 @@ function{0,1} io_FileStream_open_impl(path, flags, mode)
    body {
        int fd;
 
+#if MSWIN32
+       fd = open(path, flags | O_BINARY, mode);
+#else
        fd = open(path, flags, mode);
+#endif
        if (fd < 0) {
            errno2why();
            fail;
