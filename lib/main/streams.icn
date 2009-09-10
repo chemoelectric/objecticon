@@ -5,14 +5,6 @@ import
    lang(NoCopy),
    posix(System)
 
-
-$ifdef _UNIX
-$define EOL "\n"
-$endif
-$ifdef _MS_WIN32
-$define EOL "\r\n"
-$endif
-
 #
 # This is the top-level stream class.  It is not instantiated
 # directly.
@@ -190,7 +182,7 @@ class Stream()
    #
    public write(a[])
       local e, n
-      every e := !a | EOL do {
+      every e := !a | Files.EOL do {
          e := string(e) | runerr(103, e)
          while *e > 0 do {
             n := out(e) | fail
@@ -680,9 +672,9 @@ procedure write(a[])
       f := pop(a)
    else
       f := FileStream.stdout
-   every e := \!a | EOL do {
+   every e := \!a | Files.EOL do {
       if is(e, Stream) then {
-         f.out(EOL) | fail
+         f.out(Files.EOL) | fail
          f := e
       } else {
          e := string(e) | runerr(103, e)
@@ -912,7 +904,7 @@ class DirStream(Stream, NoCopy)
 
    public in(n)
       local t
-      if (*\line > 0) | (line := read_impl() || EOL) then {
+      if (*\line > 0) | (line := read_impl() || Files.EOL) then {
          line ? {
             t := move(n) | tab(0)
             line := tab(0)

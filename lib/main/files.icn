@@ -14,14 +14,21 @@ class Files(NoCopy)
    private static const 
       FS
 
+   public static const 
+      EOL
+
    private static init()
-      FS := 
-         if has_feature("MS Win32") then 
-            WindowsFileSystem()
-         else if has_feature("UNIX") then
-            UnixFileSystem()
-         else
-            runerr("Can't init_file_system: unknown o/s type")
+$ifdef _UNIX
+      EOL := "\n"
+      FS := UnixFileSystem()
+$else
+$ifdef _MS_WIN32
+      EOL := "\r\n"
+      FS := WindowsFileSystem()
+$else
+      runerr("Can't init_file_system: unknown o/s type")
+$endif
+$endif
    end
 
    #
