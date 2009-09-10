@@ -69,6 +69,9 @@
 /* define as 1 if uname exists */
 #undef HAVE_UNAME
 
+/* define as 1 if truncate exists */
+#undef HAVE_TRUNCATE
+
 /* define as 1 if _etext exists */
 #undef HAVE__ETEXT
 

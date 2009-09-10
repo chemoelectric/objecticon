@@ -2394,7 +2394,7 @@ function{0,1} io_Files_truncate(s, len)
    if !cnv:C_integer(len) then
       runerr(101, len)
    body {
-#if UNIX
+#if HAVE_TRUNCATE
       if (truncate(s, len) < 0) {
           errno2why();
           fail;
