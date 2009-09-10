@@ -279,11 +279,46 @@ class StringStream(Stream)
 end
 
 #
-# This is a stream that mimics /dev/null and /dev/zero.  Writes always
-# succeed with no effect, and reads return however many zero bytes
-# were requested.
+# This is a stream that mimics /dev/null.  Writes always succeed with
+# no effect, and reads always fail with end of file.
 #
 class NullStream(Stream)
+   public in(n)
+      eof_flag := 1
+      return error("End of file")
+   end
+
+   public out(s)
+      s := string(s) | runerr(103, s)
+      return *s
+   end
+
+   public seek(offset)
+      return 1
+   end
+
+   public tell()
+      return 1
+   end
+
+   public close()
+      return
+   end
+
+   public get_mode()
+      return ALL
+   end
+
+   public truncate(len)
+      return
+   end
+end
+
+#
+# This is a stream that mimics /dev/zero.  Writes always succeed with
+# no effect, and reads return however many zero bytes were requested.
+#
+class ZeroStream(Stream)
    public in(n)
       return repl("\0", n)
    end
