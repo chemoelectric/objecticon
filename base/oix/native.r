@@ -134,10 +134,8 @@ static void extract_package(dptr s, dptr d)
 #begdef convert_to_macro(TYPE)
 static int convert_to_##TYPE(dptr src, TYPE *dest)
 {
-    struct descrip bits;
-    struct descrip intneg16;
-    struct descrip int65535;
-    tended struct descrip i, j, t, u, digs, pwr;
+    struct descrip bits, intneg16, int65535, digs;
+    tended struct descrip i, j, t, u, pwr;
     TYPE res = 0;
     int pos = 0, k;
 
@@ -202,8 +200,8 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
 {
     TYPE j = src;
     int k;
-    struct descrip pos = zerodesc;
-    tended struct descrip res, t, digs, chunk, pwr;
+    struct descrip pos = zerodesc, digs;
+    tended struct descrip res, t, chunk, pwr;
 
     /* See if it fits in a word */
     if (src <= MaxWord && src >= MinWord) {
@@ -1422,7 +1420,7 @@ function{0,1} io_FileStream_open_impl(path, flags, mode)
       runerr(101, flags)
 
 #if UNIX
-   if !def:C_integer(mode, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) then
+   if !def:C_integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) then
       runerr(101, mode)
 #else
    if !def:C_integer(mode, 0664) then
