@@ -9,15 +9,6 @@
 #include "../h/opdefs.h"
 
 
-/* #define DEBUG_LOAD 1  */
-
-/*
- * End of operating-system specific code.
- */
-
-/*
- * A number of important variables follow.
- */
 
 function{0} deferred_method_stub(a[n])
    body {
@@ -242,7 +233,7 @@ int main(int argc, char **argv)
      *  returns only if an Op_Quit is executed.	If this happens,
      *  c_exit() is called to wrap things up.
      */
-    interp(0,(dptr)NULL); 
+    interp(0, 0); 
 
     c_exit(EXIT_SUCCESS);
 
