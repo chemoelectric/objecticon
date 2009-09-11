@@ -6,32 +6,6 @@ $ifdef _MS_WIN32
 import ipl.strings(replace)
 $endif
 
-class DevNull(Stream)
-   public in(n)
-      eof_flag := 1
-   end
-
-   public seek(offset)
-      return 1
-   end
-
-   public tell()
-      return 1
-   end
-
-   public close()
-      return
-   end
-
-   public get_mode()
-      return READ
-   end
-
-   public truncate(len)
-      return
-   end
-end
-
 procedure main()
    local L, f, m, n, t1, t2
 
@@ -170,7 +144,7 @@ procedure rfile(name)
    writes("read  ", name, ":\t")
 
    if (name == "/dev/null") & (&features == "MS Win32") then
-      f := DevNull()
+      f := NullStream()
    else {
       if not (f := open(name, "r")) then {
          write(" can't open")

@@ -54,7 +54,7 @@ char *lpath;			/* search path for $include */
 char *ipath;			/* search path for linking */
 FILE *ucodefile	= 0;	        /* current ucode output file */
 char *ofile = 0;         	/* name of linker output file */
-char *iconxloc;			/* path to iconx */
+char *oixloc;			/* path to iconx */
 long scriptsize;		/* size of iconx header script */
 
 /*
@@ -68,26 +68,6 @@ static void bundle_iconx(void);
 static void execute(char **args);
 static void usage(void);
 
-/*
- * The following code is operating-system dependent [@tmain.01].  Include
- *  files and such.
- */
-
-#if PORT
-   Deliberate syntax error
-#endif					/* PORT */
-
-#if UNIX
-   /* nothing is needed */
-#endif					
-
-#if MSWindows
-   char pathToIconDOS[129];
-#endif					/* MSWindows */
-
-/*
- * End of operating-system specific code.
- */
 
 struct file_param *trans_files = 0, *last_trans_file = 0, 
                   *link_files = 0, *last_link_file = 0,
@@ -185,10 +165,10 @@ int main(int argc, char **argv)
     if (smatch(fp->name, "ldbg"))
         return ldbg(argc, argv);
 
-    iconxloc = findexe("oix");
-    if (!iconxloc)
+    oixloc = findexe("oix");
+    if (!oixloc)
         quitf("Couldn't find oix on PATH");
-    iconxloc = intern(canonicalize(iconxloc));
+    oixloc = intern(canonicalize(oixloc));
 
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
@@ -325,23 +305,21 @@ int main(int argc, char **argv)
         exit(EXIT_SUCCESS);
     }
 
-#if MSWindows
+#if MSWIN32
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
-        ofile = intern(makename(SourceDir,link_files->name,
-						  Bflag ? ".exe" : ".bat"));
+       ofile = intern(makename(SourceDir,link_files->name, ".exe"));
     } else {				/* add extension in necessary */
         fp = fparse(ofile);
         if (*fp->ext == '\0') /* if no ext given */
-            ofile = intern(makename(0,ofile,
-						      Bflag ? ".exe" : ".bat"));
+	   ofile = intern(makename(0,ofile, ".exe"));
     }
-#else                                   /* MSWindows */
+#else                                   /* MSWIN32 */
 
     if (ofile == NULL)  {		/* if no -o file, synthesize a name */
         ofile = intern(makename(SourceDir,link_files->name,""));
     }
 
-#endif					/* MSWindows */
+#endif					/* MSWIN32 */
 
     report("Linking:");
     ilink(link_files, &errors, &warnings);	/* link .u files to make icode file */
@@ -389,41 +367,52 @@ int main(int argc, char **argv)
  * execute - execute iconx to run the icon program
  */
 static void execute(char **args)
-   {
+{
+#if MSWIN32
+   int n, len;
+   char *cmd, **p, *cp;
+   STARTUPINFOA siStartupInfo; 
+   PROCESS_INFORMATION piProcessInfo; 
+
+   memset(&siStartupInfo, 0, sizeof(siStartupInfo)); 
+   memset(&piProcessInfo, 0, sizeof(piProcessInfo)); 
+   siStartupInfo.cb = sizeof(siStartupInfo); 
+
+   len = strlen(ofile) + 4;
+   for (p = args; *p; p++)
+      len += strlen(*p) + 4;
+
+   cp = cmd = safe_alloc(len + 1);
+
+   cp += sprintf(cmd, "\"%s\" ", ofile);
+   for (p = args; *p; p++)
+      cp += sprintf(cp, "\"%s\" ", *p);
+
+   /*printf("cmd=%s\n",cmd);fflush(stdout);*/
+   if (!CreateProcess(oixloc, cmd, NULL, NULL, FALSE, 0, NULL, NULL, 
+		      &siStartupInfo, &piProcessInfo)) {
+      quitf("CreateProcess failed GetLastError=%d\n",GetLastError());
+   }
+   WaitForSingleObject(piProcessInfo.hProcess, INFINITE);
+   CloseHandle( piProcessInfo.hProcess );
+   CloseHandle( piProcessInfo.hThread );
+#else
    int n;
    char **argv, **p;
 
    for (n = 0; args[n] != NULL; n++)	/* count arguments */
       ;
    p = argv = safe_alloc((n + 5) * sizeof(char *));
-
-#if MSWindows
-   *p++ = iconxloc;			/* set iconx pathname */
-#endif
-
    *p++ = ofile;			/* pass icode file name */
 
    while ((*p++ = *args++) != 0)      /* copy args into argument vector */
       ;
 
    *p = NULL;
-
-
-#if MSWindows
-      /* No special handling is needed for an .exe files, since iconx
-       * recognizes it from the extension andfrom internal .exe data.
-       */
-      execv(iconxloc,argv);	/* execute with path search */
-      quitf("could not execute %s",iconxloc);
-#endif					/* MSWindows */
-
-#if UNIX
-      execv(ofile, argv);
-      quitf("could not execute %s", ofile);
-#endif					/* UNIX */
-
-
-   }
+   execv(ofile, argv);
+   quitf("could not execute %s", ofile);
+#endif
+}
 
 static void bundle_iconx()
 {
@@ -432,7 +421,7 @@ static void bundle_iconx()
     char *tmp = intern(makename(0, ofile, ".tmp"));
     rename(ofile, tmp);
 
-    if (!(f = fopen(iconxloc, ReadBinary)))
+    if (!(f = fopen(oixloc, ReadBinary)))
         quitf("Tried to open oix to build .exe, but couldn't");
 
     if (!(f2 = fopen(ofile, WriteBinary)))

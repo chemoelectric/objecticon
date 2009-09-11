@@ -221,12 +221,6 @@ void setexe(char *fname)
     Deliberate Syntax Error
 #endif					/* PORT */
 
-#if MSWindows
-    /*
-     * can't be made executable
-     */
-#endif
-
 #if UNIX
     {
         struct stat stbuf;

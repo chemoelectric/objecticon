@@ -2919,32 +2919,27 @@ static void unop(int op)
     }
 }
 
-/*
- * Write a short shell header terminated by \n\f\n\0.
- * Use magic "#!/bin/sh" to ensure that $0 is set when run via $PATH.
- * Pad header to a multiple of 8 characters.
- */
 static void writescript()
 {
-    char script[2048];
-
-#if MSWindows
-    /*
-     * The NT and Win95 direct execution batch file turns echoing off,
-     * launches wiconx, attempts to terminate softly via noop.bat,
-     * and terminates the hard way (by exiting the DOS shell) if that
-     * fails, rather than fall through and start executing machine code
-     * as if it were batch commands.
-     */
-    snprintf(script, sizeof(script),
-             "@echo off\r\n%s %%0 %%1 %%2 %%3 %%4 %%5 %%6 %%7 %%8 %%9\r\n%s%s%s",
-             iconxloc,
-             "noop.bat\r\n@echo on\r\n",
-             "pause missing noop.bat - press ^c or shell will exit\r\n",
-             "exit\r\n" IcodeDelim "\r\n");
-
-#endif					/* MSWindows */
+#if MSWIN32
+   char *hdr = findexe("win32header");
+   FILE *f;
+   int c;
+   if (!hdr)
+      quitf("Couldn't find win32header header file on PATH");
+   if (!(f = fopen(hdr, ReadBinary)))
+      quitf("Tried to open win32header to build .exe, but couldn't");
+   scriptsize = 0;
+   while ((c = fgetc(f)) != EOF) {
+      fputc(c, outfile);
+      ++scriptsize;
+   }
+   fputs("\n" IcodeDelim "\n", outfile);
+   scriptsize += strlen("\n" IcodeDelim "\n");
+   fclose(f);
+#endif					/* MSWIN32 */
 #if UNIX
+    char script[2048];
     /*
      *  Generate a shell header that searches for iconx in this order:
      *     a.  location specified by ICONX environment variable
@@ -2961,7 +2956,7 @@ static void writescript()
     snprintf(script, sizeof(script),
              "%s\n%s%-72s\n%s\n\n%s\n%s\n%s\n%s%s%s\n\n%s",
              "#!/bin/sh",
-             "OIXBIN=", iconxloc,
+             "OIXBIN=", oixloc,
              "OIXLCL=`echo $0 | sed 's=[^/]*$=oix='`",
              "[ -n \"$OIX\" ] && exec \"$OIX\" $0 ${1+\"$@\"}",
              "[ -x $OIXLCL ] && exec $OIXLCL $0 ${1+\"$@\"}",
@@ -2970,10 +2965,9 @@ static void writescript()
              "oix",
              " $0 ${1+\"$@\"}",
              IcodeDelim "\n");
-#endif					/* UNIX */
-
     scriptsize = strlen(script);
     fwrite(script, scriptsize, 1, outfile);	/* write header */
+#endif					/* UNIX */
 }
 
 
