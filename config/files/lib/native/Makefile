@@ -4,6 +4,9 @@ CWARN=-Wall -fno-strict-aliasing
 CFLAGS:=-fPIC $(CFLAGS)
 CPPFLAGS:=$(CPPFLAGS) @MYSQL_CFLAGS@
 
+ifeq (@CYGWIN@, yes)
+all :
+else
 ifeq (@MYSQL_VERSION@,)
 all : objecticonipclib.so
 
@@ -17,6 +20,7 @@ mysql.o : mysql.r
 	$(RTT) -h gmysql.h mysql.r
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c mysql.c -o mysql.o
 	$(RM) mysql.c
+endif
 endif
 
 objecticonipclib.so : ipc.o
