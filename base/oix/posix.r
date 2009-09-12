@@ -353,3 +353,29 @@ function{0,1} posix_System_getenv(s)
    }
 end
 
+function{0, 1} posix_System_uname_impl()
+    body {
+#ifdef HAVE_UNAME
+       tended struct descrip tmp;
+       struct utsname utsn;
+       if (uname(&utsn) < 0) {
+           errno2why();
+           fail;
+       }
+       create_list(5, &result);
+       cstr2string(utsn.sysname, &tmp);
+       list_put(&result, &tmp);
+       cstr2string(utsn.nodename, &tmp);
+       list_put(&result, &tmp);
+       cstr2string(utsn.release, &tmp);
+       list_put(&result, &tmp);
+       cstr2string(utsn.version, &tmp);
+       list_put(&result, &tmp);
+       cstr2string(utsn.machine, &tmp);
+       list_put(&result, &tmp);
+       return result;
+#else
+     Unsupported;
+#endif
+    }
+end

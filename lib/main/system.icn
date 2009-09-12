@@ -54,4 +54,33 @@ class System()
 
    # unset an environment variable.
    public static defer unsetenv(name)
+
+   # Get name and information about current kernel.  A UtsName object is returned, with
+   # fields corresponding to the posix utsname structure.
+   public static uname()
+      return UtsName!uname_impl()
+   end
+
+   private static defer uname_impl()
 end
+
+# A structure returned by the {System.uname} method.
+class UtsName()
+   public const
+      sysname,
+      nodename,
+      release,
+      version,
+      machine
+
+   package new(sysname, nodename, release, version, machine)
+      self.sysname := sysname
+      self.nodename := nodename
+      self.release := release
+      self.version := version
+      self.machine := machine
+      return
+   end
+end
+
+
