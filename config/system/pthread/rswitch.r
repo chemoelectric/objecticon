@@ -63,7 +63,6 @@ void coswitch(word *o, word *n, int first)
     cstate ocs = (cstate)o;			/* old cstate pointer */
     cstate ncs = (cstate)n;			/* new cstate pointer */
     context *oldc, *newc;			/* old and new context pointers */
-    int dummy;
 
     if (inited)				/* if not first call */
         oldc = ocs[1];			/* load current context pointer */
@@ -79,14 +78,18 @@ void coswitch(word *o, word *n, int first)
         inited = 1;
     }
 
+#if !HAVE_CUSTOM_C_STACKS
+    {
+    int dummy;
     /* Keep an estimate of the C stack position in cstate[0] (see Prog.get_stack) */
     o[0] = (word)&dummy;
+    }
+#endif
 
     if (first != 0)			/* if not first call for this cstate */
         newc = ncs[1];			/* load new context pointer */
     else {
         pthread_attr_t attr;
-        word midstack;
         /*
          * This is a newly allocated cstate array.
          * Allocate and initialize a context struct.
@@ -95,22 +98,19 @@ void coswitch(word *o, word *n, int first)
         makesem(newc);
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+#if !HAVE_CUSTOM_C_STACKS
+        {
+        word midstack;
         /*
          * The newly allocated stack goes from sp (low address) to n[0] (ie cstate[0],
          * high address).  We give the top half to the pthread, leaving the bottom
          * half for icon.
          */
         midstack = StackAlign((char *)sp + DiffPtrsBytes(n[0], sp) / 2);
-
-        /*
-        fprintf(stderr,"STKMIN=%ld stksize=%ld mstksize=%ld sp=%p n[0]=%p diff=%ld mid=%p\n",
-	                (long)PTHREAD_STACK_MIN,(long)stksize,(long)mstksize,sp,
-                        (void *)n[0],(long)DiffPtrsBytes(n[0],sp),(void *)midstack);
-        */
-
         if ((errno = pthread_attr_setstack(&attr, (void *)midstack, DiffPtrsBytes(n[0], midstack))) != 0)
             aborted("pthread_attr_setstack failed");
-
+        }
+#endif
         if ((errno = pthread_create(&newc->thread, &attr, nctramp, newc)) != 0) 
             aborted("cannot create thread");
         newc->alive = 1;

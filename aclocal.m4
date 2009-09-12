@@ -901,6 +901,7 @@ AC_ARG_WITH(context-switch,
                       LIBS="$PTHREAD_LIBS $LIBS"
                       CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
                       CC="$PTHREAD_CC"
+                      AC_DEFINE(HAVE_CUSTOM_C_STACKS,1)
                 fi
         fi
   ],
@@ -908,7 +909,6 @@ AC_ARG_WITH(context-switch,
         AC_CANONICAL_HOST()
         case $host in
              i?86-*-linux*) acx_context_switch=linux_x86 ;;
-             i?86-*-cygwin*) acx_context_switch=cygwin_x86 ;;
              x86_64-*-linux*) acx_context_switch=linux_x86_64;;
              powerpc-*-linux*) acx_context_switch=linux_powerpc;;
              *) 
@@ -922,6 +922,7 @@ AC_ARG_WITH(context-switch,
                                 LIBS="$PTHREAD_LIBS $LIBS"
                                 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
                                 CC="$PTHREAD_CC"
+                                AC_DEFINE(HAVE_CUSTOM_C_STACKS,1)
                         else
                                 acx_context_switch=default
                         fi
