@@ -1,7 +1,8 @@
 #passthru #include <pth.h>
 
 static void aborted(char *s) {
-    ffatalerr("GNU pth coexpression switch: %s; program will abort\n", s);
+    ffatalerr("GNU pth coexpression switch: %s; program will abort\n"
+              "errnum=%d (%s)\n", s, errno, strerror(errno));
 }
 
 static void nctramp(void *arg);
