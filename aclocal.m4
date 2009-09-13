@@ -887,11 +887,18 @@ AC_DEFUN([ACX_UCONTEXT],
 AC_DEFUN([ACX_CONTEXT_SWITCH],
   [
 AC_ARG_WITH(context-switch,
-  [  --with-context-switch=ucontext/pthread use given context-switch],
+  [  --with-context-switch=ucontext/pthread/pth use given context-switch],
   [
         acx_context_switch="$withval"
         if test ! -d config/system/$withval ; then
                 AC_ERROR([Unknown context-switch type])
+        fi
+        if test "$withval" = pth ; then
+                dnl Find libpth - very basic check at present.
+                OI_ADD_LIB(pth)
+                if ! test "$ac_cv_lib_pth_main" = yes; then
+                        AC_MSG_ERROR([*** Couldn't find libpth library (-lpth) - can't use pth context-switch.])
+                fi
         fi
         if test "$withval" = pthread ; then
                 dnl detect and add pthread libs if they can be found
@@ -902,6 +909,8 @@ AC_ARG_WITH(context-switch,
                       CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
                       CC="$PTHREAD_CC"
                       AC_DEFINE(HAVE_CUSTOM_C_STACKS,1)
+                else
+                      AC_MSG_ERROR([*** Couldn't find pthreads - can't use pthread context-switch.])
                 fi
         fi
   ],
@@ -931,7 +940,8 @@ AC_ARG_WITH(context-switch,
         esac
      ])
 
-     if test "$acx_context_switch" = pthread -o "$acx_context_switch" = ucontext; then
+     if test "$acx_context_switch" = pthread -o "$acx_context_switch" = ucontext \
+             -o "$acx_context_switch" = pth; then
              AC_DEFINE(HAVE_COCLEAN,1)
      fi
   ]

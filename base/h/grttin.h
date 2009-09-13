@@ -209,7 +209,8 @@ struct timeval {
 typedef int time_t;
 typedef int DIR;
 
-typedef int pthread_t, sem_t, pthread_attr_t, pthread_mutex_t, ucontext_t, stack_t;
+typedef int pthread_t, sem_t, pthread_attr_t, pthread_mutex_t, ucontext_t, stack_t,
+    pth_uctx_t;
 
 typedef int siptr, stringint, inst;
 
