@@ -884,6 +884,13 @@ AC_DEFUN([ACX_UCONTEXT],
   ]
 )
 
+AC_DEFUN([ACX_PTH],
+  [
+  AC_CHECK_LIB(pth, main, [acx_pth_ok=yes], [acx_pth_ok=no])
+  AC_CHECK_HEADER(pth.h, [], [acx_pth_ok=no])
+  ]
+)
+
 AC_DEFUN([ACX_CONTEXT_SWITCH],
   [
 AC_ARG_WITH(context-switch,
@@ -892,15 +899,21 @@ AC_ARG_WITH(context-switch,
         acx_context_switch="$withval"
         if test ! -d config/system/$withval ; then
                 AC_ERROR([Unknown context-switch type])
-        fi
-        if test "$withval" = pth ; then
-                dnl Find libpth - very basic check at present.
-                OI_ADD_LIB(pth)
-                if ! test "$ac_cv_lib_pth_main" = yes; then
+        elif test "$withval" = ucontext ; then
+                dnl check ucontext is okay
+                ACX_UCONTEXT()
+                if test "$acx_ucontext_ok" = no; then
+                        AC_MSG_ERROR([*** Couldn't detect working ucontext - can't use ucontext context-switch.])
+                fi
+        elif test "$withval" = pth ; then
+                dnl Check libpth and the header are present (very basic check at present).
+                ACX_PTH()
+                if test "$acx_pth_ok" = yes; then
+                        OI_ADD_LIB(pth)
+                else
                         AC_MSG_ERROR([*** Couldn't find libpth library (-lpth) - can't use pth context-switch.])
                 fi
-        fi
-        if test "$withval" = pthread ; then
+        elif test "$withval" = pthread ; then
                 dnl detect and add pthread libs if they can be found
                 dnl
                 ACX_PTHREAD()
@@ -925,15 +938,21 @@ AC_ARG_WITH(context-switch,
                 if test "$acx_ucontext_ok" = yes; then
                         acx_context_switch=ucontext
                 else
-                        ACX_PTHREAD()
-                        if test "$acx_pthread_ok" = yes; then
-                                acx_context_switch=pthread
-                                LIBS="$PTHREAD_LIBS $LIBS"
-                                CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-                                CC="$PTHREAD_CC"
-                                AC_DEFINE(HAVE_CUSTOM_C_STACKS,1)
+                        ACX_PTH()
+                        if test "$acx_pth_ok" = yes; then
+                                acx_context_switch=pth
+                                OI_ADD_LIB(pth)
                         else
-                                acx_context_switch=default
+                                ACX_PTHREAD()
+                                if test "$acx_pthread_ok" = yes; then
+                                        acx_context_switch=pthread
+                                        LIBS="$PTHREAD_LIBS $LIBS"
+                                        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+                                        CC="$PTHREAD_CC"
+                                        AC_DEFINE(HAVE_CUSTOM_C_STACKS,1)
+                                else
+                                        acx_context_switch=default
+                                fi
                         fi
                 fi
                 ;;
