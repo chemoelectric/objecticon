@@ -11,6 +11,7 @@
 #include "lcode.h"
 #include "ltree.h"
 #include "optimize.h"
+#include "ir.h"
 
 #include "../h/header.h"
 
@@ -133,6 +134,8 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
 
     if (verbose > 3)
         dumpstate();
+
+    generate_ir();
 
     /* Phase III: generate code. */
     generate_code();
@@ -270,7 +273,7 @@ static void check_unused_imports()
     }
 }
 
-static char *f_flag2str(int flag)
+char *f_flag2str(int flag)
 {
     static char buff[256];
     *buff = 0;
