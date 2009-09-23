@@ -109,6 +109,12 @@ struct b_proc {			/* procedure block */
     dptr fstatic;		/*   pointer to first static, or null if there are none */
     struct progstate *program;  /*   program in which this procedure resides; 
                                  *     null => builtin function */
+
+    word nclo;                  /*   count of various elements that make up a frame for this */
+    word ntmp;                  /*     procedure */
+    word nlab;
+    word nmark;
+
     word package_id;            /*   package id of package in which this proc resides; 0=not in 
                                  *     a package; 1=lang; >1=other package */
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only

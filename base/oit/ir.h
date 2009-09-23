@@ -16,6 +16,8 @@
 #define Ir_Invoke    13
 #define Ir_KeyOp     14
 #define Ir_KeyClo    15
+#define Ir_IGoto     16
+#define Ir_MoveLabel 17
 
 struct ir_info {
     char *desc;
@@ -29,13 +31,14 @@ struct ir_stack {
 };
 
 
-enum ir_vartype { CONST, LOCAL, TMP, TMPMARK, CLOSURE, KEYWORD };
+enum ir_vartype { CONST, LOCAL, GLOBAL, TMP, CLOSURE, KEYWORD };
 
 struct ir_var {
     int type;
     int index;
     struct centry *con;
     struct lentry *local;
+    struct gentry *global;
 };
 
 
@@ -54,6 +57,17 @@ struct ir_enterinit {
 struct ir_goto {
     IR_SUB
     int dest;
+};
+
+struct ir_igoto {
+    IR_SUB
+    int no;
+};
+
+struct ir_movelabel {
+    IR_SUB
+    int lab;
+    int destno;
 };
 
 struct ir_binop {
@@ -121,12 +135,12 @@ struct ir_unclo {
 
 struct ir_mark {
     IR_SUB
-    struct ir_var *v;
+    int no;
 };
 
 struct ir_unmark {
     IR_SUB
-    struct ir_var *v;
+    int no;
 };
 
 struct ir_move {
@@ -151,16 +165,20 @@ struct ir_resumevalue {
 };
 
 struct chunk {
-    int index;     /* index in chunks array */
     int id;
     int n_inst;
+    int circle;
+    int seen;
+    word pc;     /* pc of chunk */
+    word refs;   /* Chain of usage (gotos etc) in code */
     struct ir *inst[1];
 };
 
 extern struct chunk **chunks;
-extern int n_chunks;
+extern int hi_chunk;
 extern int ir_start;
 extern struct lfunction *curr_ir_func;
+extern int n_clo, n_tmp, n_lab, n_mark;
 
 void generate_ir();
 void dump_ir();

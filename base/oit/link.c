@@ -54,6 +54,8 @@ char *inname;                           /* input file name */
 int lfatals = 0;                                /* number of errors encountered */
 int lwarnings = 0;                      /* number of warnings encountered */
 
+struct lfunction *curr_lfunc;
+
 /*
  *  ilink - link a number of files, returning error and warning counts
  */
@@ -134,8 +136,6 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
 
     if (verbose > 3)
         dumpstate();
-
-    generate_ir();
 
     /* Phase III: generate code. */
     generate_code();
@@ -294,6 +294,8 @@ char *f_flag2str(int flag)
     if (flag & F_LrgintLit) strcat(buff, "F_LrgintLit ");
     if (flag & F_Method) strcat(buff, "F_Method ");
     if (flag & F_UcsLit) strcat(buff, "F_UcsLit ");
+    if (*buff)
+        buff[strlen(buff) - 1] = 0;
     return buff;
 }
 
@@ -312,6 +314,8 @@ static char *m_flag2str(int flag)
     if (flag & M_Final) strcat(buff, "M_Final ");
     if (flag & M_Defer) strcat(buff, "M_Defer ");
     if (flag & M_Special) strcat(buff, "M_Special ");
+    if (*buff)
+        buff[strlen(buff) - 1] = 0;
     return buff;
 }
 

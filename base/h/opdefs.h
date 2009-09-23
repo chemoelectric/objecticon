@@ -123,3 +123,6 @@
 
 
 
+#define Op_IGoto        201
+#define Op_EnterInit    202
+#define Op_Fail         203

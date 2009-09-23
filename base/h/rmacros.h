@@ -744,3 +744,22 @@ do { \
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
 #endif					/* MSWIN32 */
+
+
+#define V_Shift      (WordBits - 4)
+#define V_Type(x)    ((x) >> V_Shift)
+#define V_Op(x)      ((x) & (15 << V_Shift)
+#define MakeV(a,b)   (((a)<<V_Shift) | (b))
+#define V_MinIval    ((word)((31 << (V_Shift-1))))
+#define V_MaxIval    ((word)(~V_MinIval))
+#define V_Arg        1
+#define V_Const      2
+#define V_Dynamic    3
+#define V_Static     4
+#define V_Global     5
+#define V_Tmp        6
+#define V_Closure    7
+#define V_Null       8
+#define V_Integer    9
+#define V_LargeInt  10
+

@@ -66,10 +66,12 @@ struct centry {                 /* constant table entry */
     word c_flag;                /*   type of literal flag */
     char *data;                 /*   raw data read from ufile */
     int length;                 /*   length of raw data */
-    word pc;                    /*   position in icode of block, not used for string/integer */
     int ref;                    /*   referenced flag */
+    int pc;                     /* Address of block for cset, ucs, real */
+    word varword;               /* Varword value for code generation */
     struct centry *next,        /* Next in lfunctions's linked list */
-                  *b_next;      /* Next in hash bucket, used by code generation */
+                  *b_next,      /* Next in hash bucket, used by code generation */
+                  *d_next;      /* Next in constant descriptor table */
 };
 
 struct fentry {                 /* field table header entry */
