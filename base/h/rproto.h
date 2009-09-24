@@ -129,6 +129,7 @@ union block	*hgnext		(union block*b,struct hgstate*s,union block *e);
 union block	*hmake		(int tcode,word nslots,word nelem);
 void		icon_init	(char *name);
 int		idelay		(int n);
+void            interp2();
 int		interp_0	(int fsig,dptr cargp);
 int		interp_1	(int fsig,dptr cargp);
 void		irunerr		(int n, C_integer v);
@@ -551,13 +552,12 @@ dptr u_read			(int fd, int n, dptr d);
    void	xdisp			(struct pf_marker *fp, dptr dp, int n, FILE *f, struct progstate *p);
 
    #define Fargs dptr cargp
-   int	Obscan			(int nargs, Fargs);
+   int	Obscan			(struct frame *);
    int	Ocreate			(word *entryp, Fargs);
-   int	Oescan			(int nargs, Fargs);
-   int	Ofield      		(int nargs, Fargs);
-   int	Olimit			(int nargs, Fargs);
-   int	Ollist			(int nargs, Fargs);
-   int	Omkrec			(int nargs, Fargs);
+   int	Oescan			(struct frame *);
+   int	Ofield      		(struct frame *);
+   int	Olimit			(struct frame *);
+   int	Ollist			(struct frame *);
 
 void create_list(uword nslots, dptr d);
 struct b_lelem *get_lelem_for_index(struct b_list *bp, word i, word *pos);

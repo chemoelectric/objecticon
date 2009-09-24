@@ -67,8 +67,8 @@ struct centry {                 /* constant table entry */
     char *data;                 /*   raw data read from ufile */
     int length;                 /*   length of raw data */
     int ref;                    /*   referenced flag */
-    int pc;                     /* Address of block for cset, ucs, real */
-    word varword;               /* Varword value for code generation */
+    int pc;                     /* Address of block for lrgint, cset, ucs, real */
+    word desc_no;               /* Index in constant descriptor table for non-integer types */
     struct centry *next,        /* Next in lfunctions's linked list */
                   *b_next,      /* Next in hash bucket, used by code generation */
                   *d_next;      /* Next in constant descriptor table */

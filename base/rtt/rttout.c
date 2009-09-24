@@ -3542,11 +3542,7 @@ struct node *n;
         */
 
        in_struct = 1;
-
-       if (nparms >= 0)
-           fprintf(out_file, "\nstruct %s_frame {\n   FRAME(%d);\n", op_name, nparms);
-       else
-           fprintf(out_file, "\nstruct %s_frame {\n   FRAME_N;\n", op_name);
+       fprintf(out_file, "\nstruct %s_frame {\n   C_FRAME;\n", op_name);
        line += 3;
 
        while (t) {
@@ -3560,10 +3556,6 @@ struct node *n;
                prt_str(";",0);
            }
            t = t->fnext;
-       }
-       if (ntend > 0) {
-           fprintf(out_file, "\n\n   struct descrip tend[%d];\n", ntend);
-           line += 3;
        }
 
        /*
@@ -3594,7 +3586,6 @@ struct node *n;
     */
    if (use_frame) {
        fprintf(out_file, "int %c%s(struct frame *frame0);\n", letter, name); ++line;
-       fprintf(out_file, "void S%s(struct frame *frame0, void (*f)(dptr));\n", op_name); ++line;
    } else {
        fprintf(out_file, "int %c%s (", letter, name);
        if (params != NULL && (params->id_type & VarPrm))
@@ -3608,20 +3599,22 @@ struct node *n;
     */
    switch (op_type) {
       case Keyword:
-           fprintf(out_file, "KeywordBlock(%s)\n\n", name);
+           fprintf(out_file, "KeywordBlock(%s, %d)\n\n", name, ntend);
            line += 2;
            break;
 
        case TokFunction:
-           fprintf(out_file, "FncBlock(%s, %d, %d)\n\n", name, nparms, (has_underef ? -1 : 0));
+           fprintf(out_file, "FncBlock(%s, %d, %d, %d)\n\n", name, nparms, ntend, (has_underef ? -1 : 0));
            line += 2;
            break;
 
        case Operator:
            if (strcmp(op_sym,"\\") == 0)
-               fprintf(out_file, "OpBlock(%s, %d, \"%s\", %d)\n\n", name, nparms, "\\\\", (has_underef ? -1 : 0));
+               fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
+                       ntend, "\\\\", (has_underef ? -1 : 0));
            else
-               fprintf(out_file, "OpBlock(%s, %d, \"%s\", %d)\n\n", name, nparms, op_sym, (has_underef ? -1 : 0));
+               fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
+                       ntend, op_sym, (has_underef ? -1 : 0));
            line += 2;
    }
 
@@ -3758,25 +3751,6 @@ struct node *n;
    ForceNl();
    prt_str("}\n", IndentInc);
 
-   if (use_frame)
-   {
-       int i;
-       fprintf(out_file, "\n\n"); line += 2;
-       fprintf(out_file, "void S%s(struct frame *frame0, void (*f)(dptr)) {\n", op_name); ++line;
-       fprintf(out_file, "   struct %s_frame *frame = (struct %s_frame *)frame0;\n", op_name, op_name); ++line;
-       if (nparms >= 0) {
-           for (i = 0; i < nparms; ++i)
-               fprintf(out_file, "   f(&frame->args[%d]);\n",i); ++line;
-       } else {
-           fprintf(out_file, "   int i;\n"); ++line;
-           fprintf(out_file, "   for (i = 0; i < frame->nargs; ++i)\n"); ++line;
-           fprintf(out_file, "      f(&frame->args[i]);\n"); ++line;
-       }
-       fprintf(out_file, "   f(&frame->value);\n"); ++line;
-       for (i = 0; i < ntend; ++i)
-           fprintf(out_file, "   f(&frame->tend[%d]);\n",i); ++line;
-       fprintf(out_file, "}"); ++line;
-   }
    }
 
 /*

@@ -4,8 +4,27 @@
  * File: imisc.r
  *  Contents: field, mkrec, limit, llist, bscan, escan
  */
+operator{*} . field(o, f)
+    body { fail; }
+end
 
-LibDcl(field,2,".")
+operator{*} \ limit(e, i)
+    body { fail; }
+end
+
+operator{*} ? bscan(s, e)
+    body { fail; }
+end
+
+operator{*} ? escan()
+    body { fail; }
+end
+
+
+
+#ifdef CHECK
+
+LibDcl(field,2,0,".")
 {
     int r;
     struct inline_field_cache *ic;
@@ -16,6 +35,7 @@ LibDcl(field,2,".")
         RunErr(0, &Arg1);
     Return;
 }
+#endif
 
 #begdef SaveCargp(event)
 #if event
@@ -706,12 +726,13 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
     }
 }
 
+#ifdef CHECK
 /*
  * limit - explicit limitation initialization.
  */
 
 
-LibDcl(limit,2,"\\")
+LibDcl(limit,2,0,"\\")
 {
 
     C_integer tmp;
@@ -748,7 +769,7 @@ LibDcl(limit,2,"\\")
  *  used by escan.
  */
 
-LibDcl(bscan,2,"?")
+LibDcl(bscan,2,0,"?")
 {
     int rc;
     struct pf_marker *cur_pfp;
@@ -824,7 +845,7 @@ LibDcl(bscan,2,"?")
  *  propagated into the using clause.
  */
 
-LibDcl(escan,1,"escan")
+LibDcl(escan,1,0,"escan")
 {
     struct descrip tmp;
     int rc;
@@ -900,6 +921,8 @@ LibDcl(escan,1,"escan")
 
     return rc;
 }
+
+#endif
 
 /*
  * Little c-level utility for accessing an instance field by name in

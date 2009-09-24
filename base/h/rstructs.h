@@ -115,6 +115,9 @@ struct b_proc {			/* procedure block */
     word nlab;
     word nmark;
 
+    word framesize;             /*   frame struct size (for builtin functions/operators only). */
+    word ntend;                 /*   num tended needed (for builtin functions/operators only). */
+
     word package_id;            /*   package id of package in which this proc resides; 0=not in 
                                  *     a package; 1=lang; >1=other package */
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only
@@ -399,7 +402,8 @@ struct progstate {
     dptr Gnames, Egnames;
     struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
-    int NGlobals, NStatics;
+    dptr Constants, Econstants;
+    int NGlobals, NStatics, NConstants;
     char *Strcons, *Estrcons;
     struct ipc_fname *Filenms, *Efilenms;
     struct ipc_line *Ilines, *Elines;
@@ -555,6 +559,12 @@ struct b_iproc {		/* procedure block */
     word ip_nstatic;		/*   number of static locals */
     dptr ip_fstatic;		/*   pointer to first static */
     struct progstate *ip_program;/*   not set */
+    word nclo;                  /*   count of various elements that make up a frame for this */
+    word ntmp;                  /*     procedure */
+    word nlab;
+    word nmark;
+    word framesize;             /*   frame size (for builtin functions/operators only). */
+    word ntend;
     word package_id;
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field */
     struct sdescrip ip_name;	/*   procedure name (string qualifier) */
@@ -623,4 +633,44 @@ union block {			/* general block */
 union tickerdata { 			/* clock ticker -- keep in sync w/ fmonitor.r */
    unsigned short s[16];	/* 16 counters */
    unsigned long l[8];		/* 8 longs are easier to check */
+};
+
+
+#define FRAME_BASE \
+     struct descrip value;        \
+     word failure_label;
+     struct b_proc *proc;  \
+     int nargs;       \
+     dptr args;       \
+     struct frame *parent_sp; \
+     int seen;
+
+#define C_FRAME \
+     FRAME_BASE   \
+     void *pc;    \
+     dptr tend;
+
+struct frame {
+    FRAME_BASE;
+};
+
+struct c_frame {
+    C_FRAME;
+};
+
+struct p_frame {
+    FRAME_BASE   \
+    word *ipc;
+    struct frame *parent_cc;
+    struct frame **clo;
+    dptr tmp;
+    word *lab;
+    struct frame **mark;
+};
+    
+     
+struct diversion {
+    word *code;
+    struct diversion *parent;
+
 };

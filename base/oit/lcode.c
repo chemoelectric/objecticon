@@ -17,6 +17,7 @@
 #include "../h/opdefs.h"
 #include "../h/header.h"
 #include "../h/rmacros.h"
+#undef constants
 
 static int nstatics = 0;               /* Running count of static variables */
 
@@ -79,7 +80,7 @@ codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
 
 
 static void writescript();
-static void binop(int n);
+static word binop(int n);
 static int  alclab(int n);
 static void gentables(void);
 static void synch_file();
@@ -90,7 +91,8 @@ static void *expand_table(void * table,      /* table to be realloc()ed */
                           int unit_size,      /* number of bytes in a unit of the table */
                           int min_units,      /* the minimum number of units that must be allocated. */
                           char *tbl_name);     /* name of the table */
-static void unop(int op);
+static word unop(int op);
+
 
 #define INVALID "invalid"
 static char *op_names[] = {
@@ -262,37 +264,84 @@ static struct centry *constblock_hash[128];
 
 static struct header hdr;
 
-static word make_varword(struct ir_var *v)
+static void word_field(word w, char *desc)
 {
-    if (!v) 
-        return 0;
+    if (Dflag)
+        fprintf(dbgfile, "%ld:\t  %s\t%d\n", (long)pc, desc, w);
+    outword(w);
+}
+
+static void emit_ir_var(struct ir_var *v, char *desc)
+{
+    if (!v) {
+        if (Dflag)
+            fprintf(dbgfile, "%ld:\t  %s\tnil\n", (long)pc, desc);
+        outword(Op_Nil);
+        return;
+    }
 
     switch (v->type) {
         case CONST: {
             struct centry *ce = v->con;
-            return MakeV(V_Const, ce->varword);
+            if (ce->c_flag & F_IntLit) {
+                word ival;
+                memcpy(&ival, ce->data, sizeof(word));
+                if (Dflag)
+                    fprintf(dbgfile, "%ld:\t  %s\tint\t\t%d\n", (long)pc, desc, ival);
+                outword(Op_Int);
+                outword(ival);
+            } else {
+                if (Dflag)
+                    fprintf(dbgfile, "%ld:\t  %s\tconst\t\tC[%d]\n", (long)pc, desc, ce->desc_no);
+                outword(Op_Const);
+                outword(ce->desc_no);
+            }
+            break;
         }
         case LOCAL: {
             struct lentry *le = v->local;
-            fprintf(stderr, "{local %s %s}", le->name, f_flag2str(le->l_flag));
+            if (le->l_flag & F_Static) {
+                if (Dflag)
+                    fprintf(dbgfile, "%ld:\t  %s\tstatic\t\t%d\n", (long)pc, desc, le->l_val.index);
+                outword(Op_Static);
+                outword(le->l_val.index);
+            } else if (le->l_flag & F_Argument) {
+                if (Dflag)
+                    fprintf(dbgfile, "%ld:\t  %s\targ\t\t%d\n", (long)pc, desc, le->l_val.index);
+                outword(Op_Arg);
+                outword(le->l_val.index);
+            } else {
+                if (Dflag)
+                    fprintf(dbgfile, "%ld:\t  %s\tdynamic\t%d\n", (long)pc, desc, le->l_val.index);
+                outword(Op_Dynamic);
+                outword(le->l_val.index);
+            }
             break;
         }
         case GLOBAL: {
             struct gentry *ge = v->global;
-            fprintf(stderr, "{global %s %s}", ge->name, f_flag2str(ge->g_flag));
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\t  %s\tglobal\t%d\n", (long)pc, desc, ge->g_index);
+            outword(Op_Global);
+            outword(ge->g_index);
             break;
         }
         case TMP: {
-            fprintf(stderr, "{tmp %d}", v->index);
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\t  %s\ttmp\t\t%d\n", (long)pc, desc, v->index);
+            outword(Op_Tmp);
+            outword(v->index);
             break;
         }
         case CLOSURE: {
-            fprintf(stderr, "{closure %d}", v->index);
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\t  %s\tclosure\t%d\n", (long)pc, desc, v->index);
+            outword(Op_Closure);
+            outword(v->index);
             break;
         }
         default: {
-            fprintf(stderr, "{???}");
-            break;
+            quit("make_varword:Unknown type");
         }
     }
 }
@@ -1256,6 +1305,7 @@ static void gencode_func(struct lfunction *f)
         else
             fprintf(dbgfile, "\n# procedure %s\n", curr_lfunc->proc->name);
     }
+
     for (cp = curr_lfunc->constants; cp; cp = cp->next) 
         lemitcon(cp);
 
@@ -1325,7 +1375,6 @@ static void synch_line()
  *  lemitn - emit opcode with integer argument.
  *  lemitr - emit opcode with pc-relative reference.
  *  lemitin - emit opcode with reference to identifier table & integer argument.
- *  lemitcon - emit constant table entry.
  *  lemitproc - emit procedure block.
  *
  * The lemit* routines call out* routines to effect the "outputting" of icode.
@@ -1423,16 +1472,10 @@ static void lemitcon(struct centry *ce)
     struct centry *p;
 
     /*
-     * If it's an int, see if it is small enough to fit in a varword
+     * If it's an int don't do anything
      */
-    if (ce->c_flag & (F_IntLit)) {
-        word ival;
-        memcpy(&ival, ce->data, sizeof(word));
-        if (ival <= V_MaxIval && ival >= V_MinIval) {
-            ce->varword = MakeV(V_Integer, ival);
-            return;
-        }
-    }
+    if (ce->c_flag & F_IntLit)
+        return;
 
     /*
      * See if we've seen one with the same type and data before which
@@ -1445,9 +1488,9 @@ static void lemitcon(struct centry *ce)
         p = p->b_next;
     if (p) {
         /*
-         * Seen before, so just copy varword from previously output one.
+         * Seen before, so just copy desc_no from previously output one.
          */
-        ce->varword = p->varword;
+        ce->desc_no = p->desc_no;
         return;
     }
     /*
@@ -1457,26 +1500,29 @@ static void lemitcon(struct centry *ce)
     constblock_hash[i] = ce;
 
     /*
-     * Add to constant descriptor table list and set varword
+     * Add to constant descriptor table list and set desc_no
      */
-
     if (const_desc_last) {
         const_desc_last->d_next = ce;
         const_desc_last = ce;
     } else
         const_desc_first = const_desc_last = ce;
-
-    if (ce->c_flag & F_LrgintLit)
-        ce->varword = MakeV(V_LargeInt, const_desc_count);
-    else
-        ce->varword = MakeV(V_Const, const_desc_count);
-    ++const_desc_count;
+    ce->desc_no = const_desc_count++;
 
     /*
-     * Output blocks for real, cset and ucs types, saving the address in ce->pc.
+     * Output blocks for large int, real, cset and ucs types, saving the address in ce->pc.
      */
 
-    if (ce->c_flag & F_RealLit) {
+    if (ce->c_flag & F_LrgintLit) {
+        struct strconst *str = inst_strconst(ce->data, ce->length);;
+        if (Dflag) {
+            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Lrgint\n",(long) pc, T_Lrgint);
+            fprintf(dbgfile, "\t%d\tS+%d\t\t\t#  data\n", str->len, str->offset);
+        }
+        outword(T_Lrgint);
+        outword(str->len);
+        outword(str->offset);       
+    } else if (ce->c_flag & F_RealLit) {
         static struct b_real d;
         ce->pc = pc;
         d.title = T_Real;
@@ -1570,14 +1616,14 @@ static void lemitcon(struct centry *ce)
         }
 
         if (Dflag) {
-            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# -T_Ucs\n",(long) pc, -T_Ucs);
+            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Ucs\n",(long) pc, T_Ucs);
             fprintf(dbgfile, "\t%lu\t\t\t\t# Block size\n", (unsigned long)((7 + n_offs) * WordSize));
             fprintf(dbgfile, "\t%d\t\t\t\t# Length\n", length);
             fprintf(dbgfile, "\t%d\tS+%d\t\t\t# UTF8 data\n", utf8->len, utf8->offset);
             fprintf(dbgfile, "\t%d\t\t\t\t# N indexed\n", n_offs);
             fprintf(dbgfile, "\t%d\t\t\t\t# Index step\n", index_step);
         }
-        outword(-T_Ucs);             /* -ve title indicates to Op_Ucs in interp.r to resolve offset */
+        outword(T_Ucs);
         outword((7 + n_offs) * WordSize);
         outword(length);
         outword(utf8->len);          /* utf8: length & offset */
@@ -1681,50 +1727,120 @@ static void lemitcode()
                 }
                 case Ir_Move: {
                     struct ir_move *x = (struct ir_move *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tmove\n", (long)pc);
+                    outword(Op_Move);
+                    emit_ir_var(x->lhs, "lhs");
+                    emit_ir_var(x->rhs, "rhs");
                     break;
                 }
                 case Ir_MoveLabel: {
                     struct ir_movelabel *x = (struct ir_movelabel *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tmovelabel\t%d %d\n", (long)pc, x->lab, x->destno);
+                    outword(Op_MoveLabel);
+                    outword(x->lab);
+                    outword(x->destno);
                     break;
                 }
                 case Ir_Deref: {
                     struct ir_deref *x = (struct ir_deref *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tderef\n", (long)pc);
+                    outword(Op_Deref);
+                    emit_ir_var(x->src, "src");
+                    emit_ir_var(x->dest, "dest");
                     break;
                 }
                 case Ir_BinOp: {
                     struct ir_binop *x = (struct ir_binop *)ir;
+                    word op = binop(x->operation);
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tbinary %s\n", (long)pc, op_names[op]);
+                    outword(op);
+                    emit_ir_var(x->lhs, "lhs");
+                    emit_ir_var(x->arg1, "arg1");
+                    emit_ir_var(x->arg2, "arg2");
+                    word_field(x->fail_label, "fail");
                     break;
                 }
                 case Ir_BinClo: {
                     struct ir_binclo *x = (struct ir_binclo *)ir;
+                    word op = binop(x->operation);
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tbinary closure %s\n", (long)pc, op_names[op]);
+                    outword(op);
+                    word_field(x->clo, "clo");
+                    emit_ir_var(x->arg1, "arg1");
+                    emit_ir_var(x->arg2, "arg2");
+                    word_field(x->fail_label, "fail");
                     break;
                 }
                 case Ir_UnOp: {
                     struct ir_unop *x = (struct ir_unop *)ir;
+                    word op = unop(x->operation);
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tunary %s\n", (long)pc, op_names[op]);
+                    outword(op);
+                    emit_ir_var(x->lhs, "lhs");
+                    emit_ir_var(x->arg, "arg");
+                    word_field(x->fail_label, "fail");
                     break;
                 }
                 case Ir_UnClo: {
                     struct ir_unclo *x = (struct ir_unclo *)ir;
+                    word op = unop(x->operation);
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tunary closure %s\n", (long)pc, op_names[op]);
+                    outword(op);
+                    word_field(x->clo, "clo");
+                    emit_ir_var(x->arg, "arg");
+                    word_field(x->fail_label, "fail");
                     break;
                 }
                 case Ir_KeyOp: {
                     struct ir_keyop *x = (struct ir_keyop *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tkeyop\n", (long)pc);
+                    outword(Op_Keyop);
+                    word_field(x->keyword, "keyword");
+                    emit_ir_var(x->lhs, "lhs");
+                    word_field(x->fail_label, "fail");
                     break;
                 }
                 case Ir_KeyClo: {
                     struct ir_keyclo *x = (struct ir_keyclo *)ir;
-
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tkeyclo\n", (long)pc);
+                    outword(Op_Keyclo);
+                    word_field(x->keyword, "keyword");
+                    word_field(x->clo, "clo");
+                    word_field(x->fail_label, "fail");
                     break;
                 }
                 case Ir_Invoke: {
                     struct ir_invoke *x = (struct ir_invoke *)ir;
                     int i;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tinvoke\n", (long)pc);
+                    outword(Op_Invoke);
+                    word_field(x->clo, "clo");
+                    emit_ir_var(x->expr, "expr");
+                    word_field(x->argc, "argc");
                     for (i = 0; i < x->argc; ++i) {
+                        emit_ir_var(x->args[i], "arg");
                     }
+                    word_field(x->fail_label, "fail");
                     break;
                 }
                 case Ir_ResumeValue: {
                     struct ir_resumevalue *x = (struct ir_resumevalue *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tresume\n", (long)pc);
+                    outword(Op_Resume);
+                    emit_ir_var(x->lhs, "lhs");
+                    word_field(x->clo, "clo");
+                    word_field(x->fail_label, "fail");
                     break;
                 }
                 default: {
@@ -1751,7 +1867,7 @@ static void lemitproc()
     if (abs(curr_lfunc->nargs) != curr_lfunc->narguments)
         quitf("Mismatch between ufile's nargs and narguments");
 
-    size = (18*WordSize) + 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+    size = (20*WordSize) + 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
     if (loclevel > 1)
         size += 3*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
 
@@ -1775,6 +1891,8 @@ static void lemitproc()
         fprintf(dbgfile, "\t%d\t\t\t\t# Num temporaries\n", n_tmp);
         fprintf(dbgfile, "\t%d\t\t\t\t# Num labels\n", n_lab);
         fprintf(dbgfile, "\t%d\t\t\t\t# Num marks\n", n_mark);
+        fprintf(dbgfile, "\t0\n");		        /* framesize */
+        fprintf(dbgfile, "\t0\n");		        /* ntend */
         fprintf(dbgfile, "\t%d\t\t\t\t# Package id\n", curr_lfunc->defined->package_id);       /* package id */
         fprintf(dbgfile, "\t0\n");		        /* field */
         fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n",	/* name of procedure */
@@ -1793,6 +1911,8 @@ static void lemitproc()
     outword(n_tmp);
     outword(n_lab);
     outword(n_mark);
+    outword(0);
+    outword(0);
     outword(curr_lfunc->defined->package_id);
     outword(0);
     outword(sp->len);          /* procedure name: length & offset */
@@ -2303,6 +2423,7 @@ static void gentables()
     struct strconst *sp;
     struct ipc_fname *fnptr;
     struct ipc_line *lnptr;
+    struct centry *ce;
 
     if (Dflag) {
         fprintf(dbgfile,"\n\n# global tables\n");
@@ -2575,6 +2696,42 @@ static void gentables()
         outword(0);
     }
 
+    if (Dflag)
+        fprintf(dbgfile, "\n%ld:\t\t\t\t\t# Constant descriptors\n", (long)pc);
+    hdr.Constants = pc;
+    for (ce = const_desc_first; ce; ce = ce->d_next) {
+        if (ce->c_flag & F_IntLit) {
+            word ival;
+            memcpy(&ival, ce->data, sizeof(word));
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\tD_Integer\t%ld\n", (long)pc, (long)ival);
+            outword(D_Integer);
+            outword(ival);
+        } else if (ce->c_flag & (F_StrLit | F_LrgintLit)) {
+            struct strconst *sp = inst_strconst(ce->data, ce->length);
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\t%d\tS+%d\n", (long)pc, sp->len, sp->offset);
+            outword(sp->len);
+            outword(sp->offset);
+        } else if (ce->c_flag & F_RealLit) {
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\tD_Real\tZ+%ld\n", (long)pc, (long)ce->pc);
+            outword(D_Real);
+            outword(ce->pc);
+        } else if (ce->c_flag & F_CsetLit) {
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\tD_Cset\tZ+%ld\n", (long)pc, (long)ce->pc);
+            outword(D_Cset);
+            outword(ce->pc);
+        } else if (ce->c_flag & F_UcsLit) {
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\tD_Ucs\tZ+%ld\n", (long)pc, (long)ce->pc);
+            outword(D_Ucs);
+            outword(ce->pc);
+        } else
+            quit("unknown constant type");
+    }
+
     /*
      * Output the string constant table and the two tables associating icode
      *  locations with source program locations.  Note that the calls to write
@@ -2661,6 +2818,7 @@ static void gentables()
         fprintf(dbgfile, "gnames:           %ld\n", (long)hdr.Gnames);
         fprintf(dbgfile, "glocs:            %ld\n", (long)hdr.Glocs);
         fprintf(dbgfile, "statics:          %ld\n", (long)hdr.Statics);
+        fprintf(dbgfile, "constants:        %ld\n", (long)hdr.Constants);
         fprintf(dbgfile, "filenms:          %ld\n", (long)hdr.Filenms);
         fprintf(dbgfile, "linenums:         %ld\n", (long)hdr.linenums);
         fprintf(dbgfile, "strcons:          %ld\n", (long)hdr.Strcons);
@@ -2688,7 +2846,8 @@ static void gentables()
         report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));
         report("  Global names    %7ld", (long)(hdr.Glocs - hdr.Gnames));
         report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
-        report("  Statics         %7ld", (long)(hdr.Filenms - hdr.Statics));
+        report("  Statics         %7ld", (long)(hdr.Constants - hdr.Statics));
+        report("  Constants       %7ld", (long)(hdr.Filenms - hdr.Constants));
         report("  Filenms         %7ld", (long)(hdr.linenums - hdr.Filenms));
         report("  Linenums        %7ld", (long)(hdr.Strcons - hdr.linenums));
         report("  Strings         %7ld", (long)(hdr.icodesize - hdr.Strcons));
@@ -2882,9 +3041,9 @@ static void * expand_table(void * table,      /* table to be realloc()ed */
     return (void *)new_tbl;
 }
 
-static void binop(int n)
+static word binop(int n)
 {
-    int opcode = 0;
+    word opcode = 0;
 
     switch (n) {
 
@@ -2892,27 +3051,22 @@ static void binop(int n)
             opcode = Op_Asgn;
             break;
 
-        case Uop_Augpower:
         case Uop_Power:
             opcode = Op_Power;
             break;
 
-        case Uop_Augcat:
         case Uop_Cat:
             opcode = Op_Cat;
             break;
 
-        case Uop_Augdiff:
         case Uop_Diff:
             opcode = Op_Diff;
             break;
 
-        case Uop_Augeqv:
         case Uop_Eqv:
             opcode = Op_Eqv;
             break;
 
-        case Uop_Auginter:
         case Uop_Inter:
             opcode = Op_Inter;
             break;
@@ -2921,87 +3075,70 @@ static void binop(int n)
             opcode = Op_Subsc;
             break;
 
-        case Uop_Auglconcat:
         case Uop_Lconcat:
             opcode = Op_Lconcat;
             break;
 
-        case Uop_Auglexeq:
         case Uop_Lexeq:
             opcode = Op_Lexeq;
             break;
 
-        case Uop_Auglexge:
         case Uop_Lexge:
             opcode = Op_Lexge;
             break;
 
-        case Uop_Auglexgt:
         case Uop_Lexgt:
             opcode = Op_Lexgt;
             break;
 
-        case Uop_Auglexle:
         case Uop_Lexle:
             opcode = Op_Lexle;
             break;
 
-        case Uop_Auglexlt:
         case Uop_Lexlt:
             opcode = Op_Lexlt;
             break;
 
-        case Uop_Auglexne:
         case Uop_Lexne:
             opcode = Op_Lexne;
             break;
 
-        case Uop_Augminus:
         case Uop_Minus:
             opcode = Op_Minus;
             break;
 
-        case Uop_Augmod:
         case Uop_Mod:
             opcode = Op_Mod;
             break;
 
-        case Uop_Augneqv:
         case Uop_Neqv:
             opcode = Op_Neqv;
             break;
 
-        case Uop_Augnumeq:
         case Uop_Numeq:
             opcode = Op_Numeq;
             break;
 
-        case Uop_Augnumge:
         case Uop_Numge:
             opcode = Op_Numge;
             break;
 
-        case Uop_Augnumgt:
         case Uop_Numgt:
             opcode = Op_Numgt;
             break;
 
-        case Uop_Augnumle:
         case Uop_Numle:
             opcode = Op_Numle;
             break;
 
-        case Uop_Augnumlt:
         case Uop_Numlt:
             opcode = Op_Numlt;
             break;
 
-        case Uop_Augnumne:
         case Uop_Numne:
             opcode = Op_Numne;
             break;
 
-        case Uop_Augplus:
         case Uop_Plus:
             opcode = Op_Plus;
             break;
@@ -3014,12 +3151,10 @@ static void binop(int n)
             opcode = Op_Rswap;
             break;
 
-        case Uop_Augdiv:
         case Uop_Div:
             opcode = Op_Div;
             break;
 
-        case Uop_Augmult:
         case Uop_Mult:
             opcode = Op_Mult;
             break;
@@ -3028,7 +3163,6 @@ static void binop(int n)
             opcode = Op_Swap;
             break;
 
-        case Uop_Augunions:
         case Uop_Unions:
             opcode = Op_Unions;
             break;
@@ -3037,7 +3171,7 @@ static void binop(int n)
             quit("binop: undefined binary operator");
     }
 
-    lemit(opcode);
+    return opcode;
 }
 
 /*
@@ -3054,56 +3188,60 @@ static int alclab(int n)
     return lab;
 }
 
-static void unop(int op)
+static word unop(int op)
 {
+    word opcode = 0;
+
     switch (op) {
         case Uop_Value:			/* unary . operator */
-            lemit(Op_Value);
+            opcode = Op_Value;
             break;
 
         case Uop_Nonnull:		/* unary \ operator */
-            lemit(Op_Nonnull);
+            opcode = Op_Nonnull;
             break;
 
         case Uop_Bang:		/* unary ! operator */
-            lemit(Op_Bang);
+            opcode = Op_Bang;
             break;
 
         case Uop_Refresh:		/* unary ^ operator */
-            lemit(Op_Refresh);
+            opcode = Op_Refresh;
             break;
 
         case Uop_Number:		/* unary + operator */
-            lemit(Op_Number);
+            opcode = Op_Number;
             break;
 
         case Uop_Compl:		/* unary ~ operator (cset compl) */
-            lemit(Op_Compl);
+            opcode = Op_Compl;
             break;
 
         case Uop_Neg:		/* unary - operator */
-            lemit(Op_Neg);
+            opcode = Op_Neg;
             break;
 
         case Uop_Tabmat:		/* unary = operator */
-            lemit(Op_Tabmat);
+            opcode = Op_Tabmat;
             break;
 
         case Uop_Size:		/* unary * operator */
-            lemit(Op_Size);
+            opcode = Op_Size;
             break;
 
         case Uop_Random:		/* unary ? operator */
-            lemit(Op_Random);
+            opcode = Op_Random;
             break;
 
         case Uop_Null:		/* unary / operator */
-            lemit(Op_Null);
+            opcode = Op_Null;
             break;
 
         default:
-            quit("unopb: undefined unary operator");
+            quit("unop: undefined unary operator");
     }
+
+    return opcode;
 }
 
 static void writescript()

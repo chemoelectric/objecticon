@@ -532,7 +532,7 @@ do { \
    /*
     * Procedure block for a function.
     */
-   #define FncBlock(f,nargs,deref) \
+   #define FncBlock(f,nargs,ntend,deref)           \
       	struct b_iproc Cat(B,f) = {\
       	T_Proc,\
       	sizeof(struct b_proc),\
@@ -540,14 +540,17 @@ do { \
       	nargs,\
       	0,\
       	deref,\
-        0,0,0,0,  \
+        0,0,0,0,0,0,\
+        sizeof(struct Cat(f,_frame)),\
+        ntend,\
+        0,0,\
       	{sizeof(Lit(f))-1,Lit(f)},\
         0,0};
 
    /*
     * Procedure block for an operator.
     */
-   #define OpBlock(f,nargs,sname,deref)\
+   #define OpBlock(f,nargs,ntend,sname,deref)\
    	struct b_iproc Cat(B,f) = {\
    	T_Proc,\
    	sizeof(struct b_proc),\
@@ -555,12 +558,28 @@ do { \
    	nargs,\
    	0,\
    	deref,\
-   	0,0,0,0,                                \
+   	0,0,0,0,0,0,\
+        sizeof(struct Cat(f,_frame)),\
+        ntend,\
+        0,0,  \
    	{sizeof(sname)-1,sname},\
         0,0};
 
 
-   #define KeywordBlock(f)
+   #define KeywordBlock(f,ntend) \
+   	struct b_iproc Cat(L,f) = {\
+   	T_Proc,\
+   	sizeof(struct b_proc),\
+   	Cat(K,f),\
+   	0,\
+   	0,\
+   	0,\
+   	0,0,0,0,0,0,\
+        sizeof(struct Cat(f,_frame)),\
+        ntend,\
+        0,0,  \
+      	{sizeof(Lit(f))-1,Lit(f)},\
+        0,0};
    
    /*
     * Macros to access Icon arguments in C functions.
@@ -630,8 +649,11 @@ do { \
       #define eglocs (curpstate->Eglocs)
       #define statics (curpstate->Statics)
       #define estatics (curpstate->Estatics)
+      #define constants (curpstate->Constants)
+      #define econstants (curpstate->Econstants)
       #define n_globals (curpstate->NGlobals)
       #define n_statics (curpstate->NStatics)
+      #define n_constants (curpstate->NConstants)
       #define strcons (curpstate->Strcons)
       #define estrcons (curpstate->Estrcons)
       #define filenms (curpstate->Filenms)
@@ -745,21 +767,34 @@ do { \
 #endif					/* no S_ISDIR */
 #endif					/* MSWIN32 */
 
+#define FAIL(G)  \
+do {\
+    __label__ lab;                              \
+    ((struct c_frame *)(G))->pc = &&lab;          \
+  lab: \
+    return 0;                                   \
+} while(0)
 
-#define V_Shift      (WordBits - 4)
-#define V_Type(x)    ((x) >> V_Shift)
-#define V_Op(x)      ((x) & (15 << V_Shift)
-#define MakeV(a,b)   (((a)<<V_Shift) | (b))
-#define V_MinIval    ((word)((31 << (V_Shift-1))))
-#define V_MaxIval    ((word)(~V_MinIval))
-#define V_Arg        1
-#define V_Const      2
-#define V_Dynamic    3
-#define V_Static     4
-#define V_Global     5
-#define V_Tmp        6
-#define V_Closure    7
-#define V_Null       8
-#define V_Integer    9
-#define V_LargeInt  10
+#define SUSPEND(G) \
+do {\
+    __label__ lab;                              \
+    ((struct c_frame *)(G))->pc = &&lab;                          \
+    return 1;                                   \
+  lab:; \
+} while(0)
 
+#define RETURN(G)  \
+do {\
+    __label__ lab;                              \
+    ((struct c_frame *)(G))->pc = &&lab;          \
+    return 1;                                   \
+  lab: \
+    return 0;                                   \
+} while(0)
+
+#define RESTORE(G) \
+do {                   \
+    if (((struct c_frame *)(G))->pc) {            \
+        goto *(((struct c_frame *)(G))->pc);      \
+    }\
+} while(0)

@@ -221,9 +221,9 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
             lelems = nargs - (absnparam - 1);
             llargp = &newargp[absnparam];
             arg_sv = llargp[-1];
-
+#ifdef CHECK
             Ollist(lelems, &llargp[-1]);
-
+#endif
             llargp[0] = llargp[-1];
             llargp[-1] = arg_sv;
             newsp = (word *)llargp + 1;

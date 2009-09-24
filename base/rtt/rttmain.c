@@ -46,7 +46,7 @@ FILE *out_file;
 char *cname;
 char *inclname;
 int def_fnd;
-int c_flag = 0;
+int c_flag = 1;
 
 int enable_out = 0;
 

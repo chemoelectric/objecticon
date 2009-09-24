@@ -1238,10 +1238,10 @@ function{3} graphics_Window_pixel(self, argv[argc])
 
           lastval = emptystr;
 
+#ifdef CHECK
           for (j=y; j < y + height; j++) {
               for (i=x; i < x + width; i++) {
                   getpixel(self_w, i, j, &rv, strout, &imem);
-	
                   slen = strlen(strout);
                   if (rv >= 0) {
                       int signal;
@@ -1277,6 +1277,7 @@ function{3} graphics_Window_pixel(self, argv[argc])
                   }
               }
           }
+#endif
           getpixel_term(self_w, &imem);
           fail;
       }

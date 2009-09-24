@@ -811,9 +811,12 @@ static void initptrs(struct progstate *p, struct header *h)
     p->Eglocs = (struct loc *)(p->Code + h->Statics);
     p->NGlobals = p->Eglobals - p->Globals;
     p->Statics = (dptr)(p->Eglocs);
-    p->Estatics = (dptr)(p->Code + h->Filenms);
+    p->Estatics = (dptr)(p->Code + h->Constants);
     p->NStatics = p->Estatics - p->Statics;
-    p->Filenms = (struct ipc_fname *)(p->Estatics);
+    p->Constants = (dptr)(p->Estatics);
+    p->Econstants = (dptr)(p->Code + h->Filenms);
+    p->NConstants = p->Econstants - p->Constants;
+    p->Filenms = (struct ipc_fname *)(p->Econstants);
     p->Efilenms = (struct ipc_fname *)(p->Code + h->linenums);
     p->Ilines = (struct ipc_line *)(p->Efilenms);
     p->Elines = (struct ipc_line *)(p->Code + h->Strcons);
@@ -926,7 +929,9 @@ function{1} lang_Prog_load(s,arglist,
          PushNull;
          {
          dptr tmpargp = (dptr) (sp - 1);
+#ifdef CHECK
          Ollist(0, tmpargp);
+#endif
          sp = (word *)tmpargp + 1;
          }
          }
@@ -1197,6 +1202,26 @@ void resolve(struct progstate *p)
             }
         }
     }
+
+    /*
+     * Relocate descriptors in the constants table, and their blocks for non-strings.
+     */
+    for (j = 0; j < p->NConstants; j++) {
+        if (Qual(p->Constants[j]))
+            StrLoc(p->Constants[j]) = p->Strcons + (uword)StrLoc(p->Constants[j]);
+        else {
+            union block *b;
+            i = IntVal(p->Constants[j]);
+            b = (union block *)(p->Code + i);
+            BlkLoc(p->Constants[j]) = (union block *)b;
+            if (p->Constants[j].dword == D_Ucs) {
+                struct b_ucs *ub = (struct b_ucs *)b;
+                /* Relocate the utf8 string */
+                StrLoc(ub->utf8) = p->Strcons + (uword)StrLoc(ub->utf8);
+            }
+        }
+    }
+
 
     /*
      * Relocate the names of the files in the ipc->filename table.

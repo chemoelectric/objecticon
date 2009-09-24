@@ -644,7 +644,6 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                       ir_goto(n, res->success));
 
             } else {
-                printf("***** ITS %d\n",res->success);
                 chunk(right->success, 2, 
                       ir_binop(n, target, n->op, lv, rv, rval, right->resume),
                       ir_goto(n, res->success));
@@ -814,19 +813,21 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             }
             chunk(res->start, 1, 
                   ir_goto(n, expr->start));
-            chunk(res->resume, 2,
-                  ir_resumevalue(n, target, clo->index, info[x->n - 1]->resume),
-                  ir_goto(n, res->success));
-
             chunk(expr->failure, 1, ir_goto(n, res->failure));
 
             if (x->n == 0) {
+                chunk(res->resume, 2,
+                      ir_resumevalue(n, target, clo->index, expr->resume),
+                      ir_goto(n, res->success));
                 chunk(expr->success, 4,
                       ir_deref(n, fn, fn),
-                      ir_invoke(n, clo->index, fn, x->n, args, info[x->n - 1]->resume),
+                      ir_invoke(n, clo->index, fn, x->n, args, expr->resume),
                       ir_move(n, target, clo, 0),
                       ir_goto(n, res->success));
-            } if (x->n == 1) {
+            } else if (x->n == 1) {
+                chunk(res->resume, 2,
+                      ir_resumevalue(n, target, clo->index, info[0]->resume),
+                      ir_goto(n, res->success));
                 chunk(expr->success, 2,
                       cond_ir_mark(info[0]->uses_stack, n, mks[0]),
                       ir_goto(n, info[0]->start));
@@ -839,6 +840,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                       cond_ir_unmark(info[0]->uses_stack, n, mks[0]),
                       ir_goto(n, expr->resume));
             } else { /* x->n > 1 */
+                chunk(res->resume, 2,
+                      ir_resumevalue(n, target, clo->index, info[x->n - 1]->resume),
+                      ir_goto(n, res->success));
                 chunk(expr->success, 2,
                       cond_ir_mark(info[0]->uses_stack, n, mks[0]),
                       ir_goto(n, info[0]->start));
@@ -1063,7 +1067,7 @@ void dump_ir()
         chunk = chunks[i];
         if (!chunk)
             continue;
-        fprintf(stderr, "Chunk %d seen=%d\n", chunk->id, chunk->seen);
+        fprintf(stderr, "Chunk %d\n", chunk->id);
         for (j = 0; j < chunk->n_inst; ++j) {
             struct ir *ir = chunk->inst[j];
             switch (ir->op) {
@@ -1450,6 +1454,12 @@ static void optimize_goto1(int i)
             }
             case Ir_KeyClo: {
                 struct ir_keyclo *x = (struct ir_keyclo *)ir;
+                optimize_goto_chain(&x->fail_label);
+                optimize_goto1(x->fail_label);
+                break;
+            }
+            case Ir_Invoke: {
+                struct ir_invoke *x = (struct ir_invoke *)ir;
                 optimize_goto_chain(&x->fail_label);
                 optimize_goto1(x->fail_label);
                 break;

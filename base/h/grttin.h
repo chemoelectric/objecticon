@@ -20,8 +20,8 @@
 /*
  * Declaration for library routine.
  */
-#begdef LibDcl(nm,n,pn)
-   #passthru OpBlock(nm,n,pn,0)
+#begdef LibDcl(nm,n,nt,pn)
+   #passthru OpBlock(nm,n,nt,pn,0)
 
    int O##nm(nargs,cargp)
    int nargs;

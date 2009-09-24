@@ -173,6 +173,10 @@ Deliberate Syntax Error
  */
 int interp_x(int fsig,dptr cargp)
    {
+   fprintf(stderr, "Reached interpeter loop - exiting\n");
+   exit(0);
+
+#ifdef JUNK
    register word opnd;
    register word *rsp;
    register dptr rargp;
@@ -186,6 +190,7 @@ int interp_x(int fsig,dptr cargp)
    extern int (*keytab[])();
    int lastev = E_Misc;
    struct descrip lastdesc = nulldesc;
+
 
    EVVal(fsig, e_intcall);
 
@@ -1665,7 +1670,7 @@ interp_quit:
    --ilevel;
    if (ilevel != 0)
       syserr("interp: termination with inactive generators.");
-
+#endif
    /*NOTREACHED*/
    return 0;	/* avoid gcc warning */
    }

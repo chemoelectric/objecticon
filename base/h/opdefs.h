@@ -126,3 +126,22 @@
 #define Op_IGoto        201
 #define Op_EnterInit    202
 #define Op_Fail         203
+#define Op_Nil          204
+#define Op_Const        205
+#define Op_Dynamic	206
+#define Op_Tmp     	207
+#define Op_Closure 	208
+#define Op_Move		209
+#define Op_MoveLabel    210
+#define Op_Deref        211
+#define Op_Keyop 	212
+#define Op_Keyclo 	213
+#define Op_Resume 	214
+
+
+
+
+
+
+
+
