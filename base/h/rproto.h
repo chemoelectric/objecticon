@@ -603,3 +603,12 @@ char *binstr(unsigned int n);
 void show_regions();
 void *get_csp();
 void checkstack();
+
+struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals);
+struct c_frame *alc_c_frame(struct b_proc *pb, int nargs);
+void dyn_free(void *p);
+void free_frame(struct frame *f);
+
+void push_frame(struct frame *f);
+void push_p_frame(struct p_frame *f);
+void interp2();

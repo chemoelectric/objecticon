@@ -15,6 +15,7 @@
 #include "ir.h"
 
 #include "../h/opdefs.h"
+#include "../h/opnames.h"
 #include "../h/header.h"
 #include "../h/rmacros.h"
 #undef constants
@@ -51,20 +52,13 @@ int const_desc_count;
 
 static int      nalign(int n);
 static void	align		(void);
-static void	labout	(int i);
-static void	labout0	(int lab);
+static void labout(int i, char *desc);
 static void	cleartables	(void);
 static void	flushcode	(void);
 static void	lemitproc       ();
 static void	lemitcode       ();
 static void	patchrefs       ();
-static void	lemit		(int op);
 static void     lemitcon(struct centry *ce);
-static void	lemitin		(int op,word offset,int n);
-static void	lemitl		(int op,int lab);
-static void	lemitn		(int op,word n);
-static void     lemitn2         (int op, word n1, word n2);
-static void	lemitr		(int op,word loc);
 static void	outblock	(char *addr,int count);
 static void	wordout		(word oword);
 static void	shortout	(short o);
@@ -81,7 +75,6 @@ codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
 
 static void writescript();
 static word binop(int n);
-static int  alclab(int n);
 static void gentables(void);
 static void synch_file();
 static void synch_line();
@@ -94,108 +87,6 @@ static void *expand_table(void * table,      /* table to be realloc()ed */
 static word unop(int op);
 
 
-#define INVALID "invalid"
-static char *op_names[] = {
-    /*   0 */         INVALID,                                    
-    /*   1 */         "asgn",
-    /*   2 */         "bang",
-    /*   3 */         "cat",
-    /*   4 */         "compl",
-    /*   5 */         "diff",
-    /*   6 */         "div",
-    /*   7 */         "eqv",
-    /*   8 */         "inter",
-    /*   9 */         "lconcat",
-    /*  10 */         "lexeq",
-    /*  11 */         "lexge",
-    /*  12 */         "lexgt",
-    /*  13 */         "lexle",
-    /*  14 */         "lexlt",
-    /*  15 */         "lexne",
-    /*  16 */         "minus",
-    /*  17 */         "mod",
-    /*  18 */         "mult",
-    /*  19 */         "neg",
-    /*  20 */         "neqv",
-    /*  21 */         "nonnull",
-    /*  22 */         "null",
-    /*  23 */         "number",
-    /*  24 */         "numeq",
-    /*  25 */         "numge",
-    /*  26 */         "numgt",
-    /*  27 */         "numle",
-    /*  28 */         "numlt",
-    /*  29 */         "numne",
-    /*  30 */         "plus",
-    /*  31 */         "power",
-    /*  32 */         "random",
-    /*  33 */         "rasgn",
-    /*  34 */         "refresh",
-    /*  35 */         "rswap",
-    /*  36 */         "sect",
-    /*  37 */         "size",
-    /*  38 */         "subsc",
-    /*  39 */         "swap",
-    /*  40 */         "tabmat",
-    /*  41 */         "toby",
-    /*  42 */         "unions",
-    /*  43 */         "value",
-    /*  44 */         "bscan",
-    /*  45 */         "ccase",
-    /*  46 */         "chfail",
-    /*  47 */         "coact",
-    /*  48 */         "cofail",
-    /*  49 */         "coret",
-    /*  50 */         "create",
-    /*  51 */         "cset",
-    /*  52 */         "dup",
-    /*  53 */         "efail",
-    /*  54 */         "eret",
-    /*  55 */         "escan",
-    /*  56 */         "esusp",
-    /*  57 */         "field",
-    /*  58 */         "goto",
-    /*  59 */         "init",
-    /*  60 */         "int",
-    /*  61 */         "invoke",
-    /*  62 */         "keywd",
-    /*  63 */         "limit",
-    /*  64 */         INVALID,
-    /*  65 */         "llist",
-    /*  66 */         "lsusp",
-    /*  67 */         "mark",
-    /*  68 */         "pfail",
-    /*  69 */         "pnull",
-    /*  70 */         "pop",
-    /*  71 */         "pret",
-    /*  72 */         "psusp",
-    /*  73 */         "push1",
-    /*  74 */         "pushn1",
-    /*  75 */         "real",
-    /*  76 */         "sdup",
-    /*  77 */         "str",
-    /*  78 */         "unmark",
-    /*  79 */         "ucs",
-    /*  80 */         INVALID,
-    /*  81 */         "arg",
-    /*  82 */         "static",
-    /*  83 */         "local",
-    /*  84 */         "global",
-    /*  85 */         "mark0",
-    /*  86 */         "quit",
-    /*  87 */         "fquit",
-    /*  88 */         INVALID,
-    /*  89 */         "apply",
-    /*  90 */         "invokef",
-    /*  91 */         "applyf",
-    /*  92 */         INVALID,                                    
-    /*  93 */         INVALID,                                    
-    /*  94 */         INVALID,                                    
-    /*  95 */         INVALID,                                    
-    /*  96 */         INVALID,                                    
-    /*  97 */         INVALID,                                    
-    /*  98 */         "noop",
-};
 
 /*
  * Code generator parameters.
@@ -392,7 +283,6 @@ static struct strconst *inst_c_strconst(char *s)
     return inst_strconst(s, strlen(s));
 }
 
-static void treecode(struct lnode *n);
 static void gencode_func(struct lfunction *f);
 static void gencode();
 
@@ -471,820 +361,6 @@ void generate_code()
     fclose(outfile);
 }
 
-
-static void treecode(struct lnode *n)
-{
-    int op;
-
-    curr_file = n->loc.file;
-    curr_line = n->loc.line;
-    synch_file();
-    synch_line();
-    op = n->op;
-
-    switch (op) {
-        case Uop_Empty:
-            lemit(Op_Pnull);
-            break;
-
-        case Uop_End:
-            lemit(Op_Pfail);
-            break;
-
-        case Uop_Slist: {
-            struct lnode_n *x = (struct lnode_n *)n;
-            int i;
-            for (i = 0; i < x->n - 1; ++i) {
-                int lab = alclab(1);
-                lemitl(Op_Mark,lab);
-                loopsp->markcount++;
-                treecode(x->child[i]);
-                loopsp->markcount--;
-                lemit(Op_Unmark);
-                labout0(lab);
-            }
-            if (x->n > 0)
-                treecode(x->child[x->n - 1]);
-            break;
-        }
-
-        case Uop_Asgn:
-        case Uop_Power:
-        case Uop_Cat:
-        case Uop_Diff:
-        case Uop_Eqv:
-        case Uop_Inter:
-        case Uop_Subsc:
-        case Uop_Lconcat:
-        case Uop_Lexeq:
-        case Uop_Lexge:
-        case Uop_Lexgt:
-        case Uop_Lexle:
-        case Uop_Lexlt:
-        case Uop_Lexne:
-        case Uop_Minus:
-        case Uop_Mod:
-        case Uop_Neqv:
-        case Uop_Numeq:
-        case Uop_Numge:
-        case Uop_Numgt:
-        case Uop_Numle:
-        case Uop_Numlt:
-        case Uop_Numne:
-        case Uop_Plus:
-        case Uop_Rasgn:
-        case Uop_Rswap:
-        case Uop_Div:
-        case Uop_Mult:
-        case Uop_Swap:
-        case Uop_Unions: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);
-            treecode(x->child2);
-            binop(op);
-            break;
-        }
-
-        case Uop_Augpower:
-        case Uop_Augcat:
-        case Uop_Augdiff:
-        case Uop_Augeqv:
-        case Uop_Auginter:
-        case Uop_Auglconcat:
-        case Uop_Auglexeq:
-        case Uop_Auglexge:
-        case Uop_Auglexgt:
-        case Uop_Auglexle:
-        case Uop_Auglexlt:
-        case Uop_Auglexne:
-        case Uop_Augminus:
-        case Uop_Augmod:
-        case Uop_Augneqv:
-        case Uop_Augnumeq:
-        case Uop_Augnumge:
-        case Uop_Augnumgt:
-        case Uop_Augnumle:
-        case Uop_Augnumlt:
-        case Uop_Augnumne:
-        case Uop_Augplus:
-        case Uop_Augdiv:
-        case Uop_Augmult:
-        case Uop_Augunions: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);
-            lemit(Op_Dup);
-            treecode(x->child2);
-            binop(op);
-            lemit(Op_Asgn);
-            break;
-        }
-
-        case Uop_Value:
-        case Uop_Nonnull:
-        case Uop_Bang:
-        case Uop_Refresh:
-        case Uop_Number:
-        case Uop_Compl:
-        case Uop_Neg:
-        case Uop_Tabmat:
-        case Uop_Size:
-        case Uop_Random:
-        case Uop_Null: {
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child);
-            unop(op);
-            break;
-        }
-
-        case Uop_Alt: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            int lab = alclab(2);
-            lemitl(Op_Mark,lab);
-            loopsp->markcount++;
-            treecode(x->child1);         /* evaluate first alternative */
-            loopsp->markcount--;
-            lemit(Op_Esusp);                 /*  and suspend with its result */
-            lemitl(Op_Goto,lab+1);
-            labout0(lab);
-            treecode(x->child2);         /* evaluate second alternative */
-            labout0(lab+1);
-            break;
-        }
-
-        case Uop_Conj: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            treecode(x->child1);
-            lemit(Op_Pop);
-            treecode(x->child2);
-            break;
-        }
-
-        case Uop_Augconj: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);
-            treecode(x->child2);
-            lemit(Op_Asgn);
-            break;
-        }
-
-        case Uop_If: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            lemit(Op_Mark0);
-            loopsp->markcount++;
-            treecode(x->child1);
-            loopsp->markcount--;
-            lemit(Op_Unmark);
-            treecode(x->child2);
-            break;
-        }
-
-        case Uop_Ifelse: {
-            struct lnode_3 *x = (struct lnode_3 *)n;
-            int lab = alclab(2);
-            lemitl(Op_Mark, lab);
-            loopsp->markcount++;
-            treecode(x->child1);
-            loopsp->markcount--;
-            lemit(Op_Unmark);
-            treecode(x->child2);
-            lemitl(Op_Goto, lab+1);
-            labout0(lab);
-            treecode(x->child3);
-            labout0(lab+1);
-            break;
-        }
-
-        case Uop_Repeat: {
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            int lab = alclab(3);
-            loopsp++;
-            loopsp->ltype = LOOP;
-            loopsp->nextlab = lab + 1;
-            loopsp->breaklab = lab + 2;
-            loopsp->markcount = 1;
-            labout0(lab);
-            lemitl(Op_Mark, lab);
-            treecode(x->child);
-            labout0(loopsp->nextlab);
-            lemit(Op_Unmark);
-            lemitl(Op_Goto, lab);
-            labout0(loopsp->breaklab);
-            loopsp--;
-            break;
-        }
-
-        case Uop_While: {
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            int lab = alclab(3);
-            loopsp++;
-            loopsp->ltype = LOOP;
-            loopsp->nextlab = lab + 1;
-            loopsp->breaklab = lab + 2;
-            loopsp->markcount = 1;
-            labout0(lab);
-            lemit(Op_Mark0);
-            treecode(x->child);
-            labout0(loopsp->nextlab);
-            lemit(Op_Unmark);
-            lemitl(Op_Goto, lab);
-            labout0(loopsp->breaklab);
-            loopsp--;
-            break;
-        }
-
-        case Uop_Whiledo: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            int lab = alclab(3);
-            loopsp++;
-            loopsp->ltype = LOOP;
-            loopsp->nextlab = lab + 1;
-            loopsp->breaklab = lab + 2;
-            loopsp->markcount = 1;
-            labout0(lab);
-            lemit(Op_Mark0);
-            treecode(x->child1);
-            lemit(Op_Unmark);
-            lemitl(Op_Mark, lab);
-            treecode(x->child2);
-            labout0(loopsp->nextlab);
-            lemit(Op_Unmark);
-            lemitl(Op_Goto, lab);
-            labout0(loopsp->breaklab);
-            loopsp--;
-            break;
-        }
-
-        case Uop_Until: {
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            int lab = alclab(4);
-            loopsp++;
-            loopsp->ltype = LOOP;
-            loopsp->nextlab = lab + 2;
-            loopsp->breaklab = lab + 3;
-            loopsp->markcount = 1;
-            labout0(lab);
-            lemitl(Op_Mark, lab+1);
-            treecode(x->child);
-            lemit(Op_Unmark);
-            lemit(Op_Efail);
-            labout0(lab+1);
-            lemitl(Op_Mark, lab);
-            lemit(Op_Pnull);
-            labout0(loopsp->nextlab);
-            lemit(Op_Unmark);
-            lemitl(Op_Goto, lab);
-            labout0(loopsp->breaklab);
-            loopsp--;
-            break;
-        }
-
-        case Uop_Untildo: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            int lab = alclab(4);
-            loopsp++;
-            loopsp->ltype = LOOP;
-            loopsp->nextlab = lab + 2;
-            loopsp->breaklab = lab + 3;
-            loopsp->markcount = 1;
-            labout0(lab);
-            lemitl(Op_Mark, lab+1);
-            treecode(x->child1);
-            lemit(Op_Unmark);
-            lemit(Op_Efail);
-            labout0(lab+1);
-            lemitl(Op_Mark, lab);
-            treecode(x->child2);
-            labout0(loopsp->nextlab);
-            lemit(Op_Unmark);
-            lemitl(Op_Goto, lab);
-            labout0(loopsp->breaklab);
-            loopsp--;
-            break;
-        }
-
-        case Uop_Every: {
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            int lab = alclab(2);
-            loopsp++;
-            loopsp->ltype = EVERY;
-            loopsp->nextlab = lab;
-            loopsp->breaklab = lab + 1;
-            loopsp->markcount = 1;
-            lemit(Op_Mark0);
-            treecode(x->child);
-            lemit(Op_Pop);
-            labout0(loopsp->nextlab);
-            lemit(Op_Efail);
-            labout0(loopsp->breaklab);
-            loopsp--;
-            break;
-        }
-
-        case Uop_Everydo: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            int lab = alclab(2);
-            loopsp++;
-            loopsp->ltype = EVERY;
-            loopsp->nextlab = lab;
-            loopsp->breaklab = lab + 1;
-            loopsp->markcount = 1;
-            lemit(Op_Mark0);
-            treecode(x->child1);
-            lemit(Op_Pop);
-            lemit(Op_Mark0);
-            loopsp->ltype = LOOP;
-            loopsp->markcount++;
-            treecode(x->child2);
-            loopsp->markcount--;
-            lemit(Op_Unmark);
-            labout0(loopsp->nextlab);
-            lemit(Op_Efail);
-            labout0(loopsp->breaklab);
-            loopsp--;
-            break;
-        }
-
-        case Uop_Suspend: {
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            int lab = alclab(2);
-            loopsp++;
-            loopsp->ltype = EVERY;		/* like every ... do for next */
-            loopsp->nextlab = lab;
-            loopsp->breaklab = lab + 1;
-            loopsp->markcount = 1;
-            lemit(Op_Mark0);
-            treecode(x->child);
-            lemit(Op_Psusp);
-            lemit(Op_Pop);
-            labout0(loopsp->nextlab);
-            lemit(Op_Efail);
-            labout0(loopsp->breaklab);
-            loopsp--;
-            break;
-        }
-
-        case Uop_Suspenddo: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            int lab = alclab(2);
-            loopsp++;
-            loopsp->ltype = EVERY;		/* like every ... do for next */
-            loopsp->nextlab = lab;
-            loopsp->breaklab = lab + 1;
-            loopsp->markcount = 1;
-            lemit(Op_Mark0);
-            treecode(x->child1);
-            lemit(Op_Psusp);
-            lemit(Op_Pop);
-            lemit(Op_Mark0);
-            loopsp->ltype = LOOP;
-            loopsp->markcount++;
-            treecode(x->child2);
-            loopsp->markcount--;
-            lemit(Op_Unmark);
-            labout0(loopsp->nextlab);
-            lemit(Op_Efail);
-            labout0(loopsp->breaklab);
-            loopsp--;
-            break;
-        }
-
-        case Uop_Return: {			/* return expression */
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            if (x->child->op == Uop_Empty) {
-                lemit(Op_Pnull);
-                lemit(Op_Pret);
-            } else {
-                int lab = alclab(1);
-                lemitl(Op_Mark, lab);
-                loopsp->markcount++;
-                treecode(x->child);
-                loopsp->markcount--;
-                lemit(Op_Pret);
-                labout0(lab);
-                lemit(Op_Pfail);
-            }
-            break;
-        }
-
-        case Uop_Break: {			/* break expression */
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            int i;
-            struct loopstk loopsave;
-            if (loopsp->breaklab <= 0)
-                quit("invalid context for break");
-            for (i = 0; i < loopsp->markcount; i++)
-                lemit(Op_Unmark);
-            loopsave = *loopsp--;
-            treecode(x->child);
-            *++loopsp = loopsave;
-            lemitl(Op_Goto, loopsp->breaklab);
-            break;
-        }
-
-        case Uop_Next: {			/* next expression */
-            int i;
-            if (loopsp->nextlab <= 0)
-                quit("invalid context for next");
-            if (loopsp->ltype != EVERY && loopsp->markcount > 1)
-                for (i = 0; i < loopsp->markcount - 1; i++)
-                    lemit(Op_Unmark);
-            lemitl(Op_Goto, loopsp->nextlab);
-            break;
-        }
-
-        case Uop_Field: {			/* field reference */
-            struct lnode_field *x = (struct lnode_field *)n;
-            struct fentry *fp;
-            lemit(Op_Pnull);
-            treecode(x->child);
-            fp = flocate(x->fname);
-            if (fp)
-                lemitn(Op_Field, (word)(fp->field_id));
-            else {
-                /* Get or create an unref record */
-                struct unref *p = get_unref(x->fname);
-                lemitn(Op_Field, (word) p->num);
-            }
-            if (Dflag) {
-                fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-            }
-            outword(0);
-            outword(0);
-            break;
-        }
-
-        case Uop_Invoke: {                      /* e(x1, x2.., xn) */
-            struct lnode_invoke *x = (struct lnode_invoke *)n;
-            int i;
-            if (x->expr->op == Uop_Field) {
-                struct lnode_field *y = (struct lnode_field *)x->expr;
-                struct fentry *fp;
-                treecode(y->child);
-                for (i = 0; i < x->n; ++i)
-                    treecode(x->child[i]);
-                fp = flocate(y->fname);
-                if (fp)
-                    lemitn2(Op_Invokef, (word)fp->field_id, x->n);
-                else {
-                    /* Get or create an unref record */
-                    struct unref *p = get_unref(y->fname);
-                    lemitn2(Op_Invokef, (word)p->num, x->n);
-                }
-                if (Dflag) {
-                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                }
-                outword(0);
-                outword(0);
-            } else {
-                treecode(x->expr);
-                for (i = 0; i < x->n; ++i)
-                    treecode(x->child[i]);
-                lemitn(Op_Invoke, x->n);
-            }
-            break;
-        }
-
-        case Uop_Mutual: {                      /* (e1,...,en) */
-            struct lnode_n *x = (struct lnode_n *)n;
-            int i;
-            lemit(Op_Pushn1);             
-            for (i = 0; i < x->n; ++i)
-                treecode(x->child[i]);
-            lemitn(Op_Invoke, x->n);
-            break;
-        }
-
-        case Uop_Apply: {			/* application e!l */
-            struct lnode_apply *x = (struct lnode_apply *)n;
-            /* Check for possible Applyf */
-            if (x->expr->op == Uop_Field) {
-                struct lnode_field *y = (struct lnode_field *)x->expr;
-                struct fentry *fp;
-                treecode(y->child);
-                treecode(x->args);
-                fp = flocate(y->fname);
-                if (fp)
-                    lemitn(Op_Applyf, (word)fp->field_id);
-                else {
-                    /* Get or create an unref record */
-                    struct unref *p = get_unref(y->fname);
-                    lemitn(Op_Applyf, (word)p->num);
-                }
-                if (Dflag) {
-                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                    fprintf(dbgfile, "\t0\t\t\t\t# Inline cache\n");
-                }
-                outword(0);
-                outword(0);
-            } else {
-                treecode(x->expr);
-                treecode(x->args);
-                lemit(Op_Apply);
-            }
-            break;
-        }
-
-        case Uop_Fail: {			/* fail expression */
-            lemit(Op_Pfail);
-            break;
-        }
-
-        case Uop_Create: {			/* create expression */
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            int lab = alclab(3);
-            creatsp++;
-            creatsp->nextlab = loopsp->nextlab;
-            creatsp->breaklab = loopsp->breaklab;
-            loopsp->nextlab = 0;		/* make break and next illegal */
-            loopsp->breaklab = 0;
-            lemitl(Op_Goto, lab+2);          /* skip over code for co-expression */
-            labout0(lab);			/* entry point */
-            lemit(Op_Pop);                   /* pop the result from activation */
-            lemitl(Op_Mark, lab+1);
-            loopsp->markcount++;
-            treecode(x->child);		/* traverse code for co-expression */
-            loopsp->markcount--;
-            lemit(Op_Coret);                 /* return to activator */
-            lemit(Op_Efail);                 /* drive co-expression */
-            labout0(lab+1);		/* loop on exhaustion */
-            lemit(Op_Cofail);                /* and fail each time */
-            lemitl(Op_Goto, lab+1);
-            labout0(lab+2);
-            lemitl(Op_Create, lab);          /* create entry block */
-            loopsp->nextlab = creatsp->nextlab;   /* legalize break and next */
-            loopsp->breaklab = creatsp->breaklab;
-            creatsp--;
-            break;
-        }
-
-        case Uop_Activate: {			/* co-expression activation */
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child);		/* evaluate activate expression */
-            lemit(Op_Coact);
-            break;
-        }
-
-        case Uop_Bactivate: {			/* co-expression activation */
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            treecode(x->child1);		         /* evaluate result expression */
-            treecode(x->child2);       	        /* evaluate activate expression */
-            lemit(Op_Coact);
-            break;
-        }
-
-        case Uop_Augactivate: {			/* co-expression activation */
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);		         /* evaluate result expression */
-            lemit(Op_Sdup);
-            treecode(x->child2);       	        /* evaluate activate expression */
-            lemit(Op_Coact);
-            lemit(Op_Asgn);
-            break;
-        }
-
-        case Uop_Rptalt: {			/* repeated alternation */
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            int lab = alclab(1);
-            labout0(lab);
-            lemit(Op_Mark0);         /* fail if expr fails first time */
-            loopsp->markcount++;
-            treecode(x->child);		/* evaluate first alternative */
-            loopsp->markcount--;
-            lemitl(Op_Chfail, lab);   /* change to loop on failure */
-            lemit(Op_Esusp);                 /* suspend result */
-            break;
-        }
-
-        case Uop_Not: {			/* not expression */
-            struct lnode_1 *x = (struct lnode_1 *)n;
-            int lab = alclab(1);
-            lemitl(Op_Mark, lab);
-            loopsp->markcount++;
-            treecode(x->child);
-            loopsp->markcount--;
-            lemit(Op_Unmark);
-            lemit(Op_Efail);
-            labout0(lab);
-            lemit(Op_Pnull);
-            break;
-        }
-
-        case Uop_Scan: {			/* scanning expression */
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            treecode(x->child1);
-            lemit(Op_Bscan);
-            treecode(x->child2);
-            lemit(Op_Escan);
-            break;
-        }
-
-        case Uop_Augscan: {			/* scanning expression */
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);
-            lemit(Op_Sdup);
-            lemit(Op_Bscan);
-            treecode(x->child2);
-            lemit(Op_Escan);
-            lemit(Op_Asgn);
-            break;
-        }
-
-        case Uop_Sect: {        	/* section operation x[a:b] */
-            struct lnode_3 *x = (struct lnode_3 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);
-            treecode(x->child2);
-            treecode(x->child3);
-            lemit(Op_Sect);
-            break;
-        }
-
-        case Uop_Sectp: {               /* section operation x[a+:b] */
-            struct lnode_3 *x = (struct lnode_3 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);
-            treecode(x->child2);
-            lemit(Op_Dup);
-            treecode(x->child3);
-            lemit(Op_Plus);
-            lemit(Op_Sect);
-            break;
-        }
-
-        case Uop_Sectm: {              /* section operation x[a-:b] */
-            struct lnode_3 *x = (struct lnode_3 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);
-            treecode(x->child2);
-            lemit(Op_Dup);
-            treecode(x->child3);
-            lemit(Op_Minus);
-            lemit(Op_Sect);
-            break;
-        }
-
-        case Uop_To: {			/* to expression */
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);
-            treecode(x->child2);
-            lemit(Op_Push1);
-            lemit(Op_Toby);
-            break;
-        }
-
-        case Uop_Toby: {			/* to-by expression */
-            struct lnode_3 *x = (struct lnode_3 *)n;
-            lemit(Op_Pnull);
-            treecode(x->child1);
-            treecode(x->child2);
-            treecode(x->child3);
-            lemit(Op_Toby);
-            break;
-        }
-
-        case Uop_Keyword: {			/* keyword reference */
-            struct lnode_keyword *x = (struct lnode_keyword *)n;
-            switch (x->num) {
-                case 0:
-                    quitf("invalid keyword");	
-                    break;
-                case K_FAIL:
-                    lemit(Op_Efail);
-                    break;
-                case K_NULL:
-                    lemit(Op_Pnull);
-                    break;
-                default:
-                    lemitn(Op_Keywd, (word)x->num);
-            }
-            break;
-        }
-
-        case Uop_Limit: {			/* limitation */
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            treecode(x->child1);
-            lemit(Op_Limit);
-            loopsp->markcount++;
-            treecode(x->child2);
-            loopsp->markcount--;
-            lemit(Op_Lsusp);
-            break;
-        }
-
-        case Uop_List: {			/* list construction */
-            struct lnode_n *x = (struct lnode_n *)n;
-            int i;
-            lemit(Op_Pnull);
-            for (i = 0; i < x->n; ++i)
-                treecode(x->child[i]);
-            lemitn(Op_Llist, (word)x->n);
-            break;
-        }
-
-        case Uop_Case:			/* case expression */
-        case Uop_Casedef: {
-            struct lnode_case *x = (struct lnode_case *)n;
-            int i, lab = alclab(1);
-            lemit(Op_Mark0);
-            loopsp->markcount++;
-            treecode(x->expr);		         /* evaluate control expression */
-            loopsp->markcount--;
-            lemit(Op_Eret);
-            for (i = 0; i < x->n; ++i) {                /* The n non-default cases */
-                int clab = alclab(1);
-                lemitl(Op_Mark, clab);
-                loopsp->markcount++;
-                lemit(Op_Ccase);
-                treecode(x->selector[i]);		/* evaluate selector */
-                lemit(Op_Eqv);
-                loopsp->markcount--;
-                lemit(Op_Unmark);
-                lemit(Op_Pop);
-                treecode(x->clause[i]);		/* evaluate expression */
-                lemitl(Op_Goto, lab);   /* goto end label */
-                labout0(clab);		/* label for next clause */
-            }
-            if (op == Uop_Casedef) {       /* evaluate default clause */
-                lemit(Op_Pop);
-                treecode(x->def);
-	    } else
-                lemit(Op_Efail);
-            labout0(lab);			/* end label */
-            break;
-        }
-
-        case Uop_Const: {
-            struct lnode_const *x = (struct lnode_const *)n;
-            switch (x->con->c_flag) {
-                case F_IntLit: {
-                    word ival;
-                    memcpy(&ival, x->con->data, sizeof(word));
-                    lemitn(Op_Int, ival);
-                    break;
-                }
-                case F_RealLit: {
-                    lemitr(Op_Real, x->con->pc);
-                    break;
-                }
-                case F_StrLit: {
-                    struct strconst *sp = inst_strconst(x->con->data, x->con->length);
-                    lemitin(Op_Str, sp->offset, sp->len);
-                    break;
-                }
-                case F_CsetLit: {
-                    lemitr(Op_Cset, x->con->pc);
-                    break;
-                }
-                case F_UcsLit: {
-                    lemitr(Op_Ucs, x->con->pc);
-                    break;
-                }
-                case F_LrgintLit: {
-                    struct strconst *sp = inst_strconst(x->con->data, x->con->length);
-                    lemit(Op_Pnull);
-                    lemitin(Op_Str, sp->offset, sp->len);
-                    lemit(Op_Number);
-                    break;
-                }
-                default: {
-                    quitf("Unknown constant flag %d", x->con->c_flag);
-                }
-            }
-            break;
-        }
-
-        case Uop_Global: {
-            struct lnode_global *x = (struct lnode_global *)n;
-            lemitn(Op_Global, (word)x->global->g_index);
-            break;
-        }
-
-        case Uop_Local: {
-            struct lnode_local *x = (struct lnode_local *)n;
-            int flags = x->local->l_flag;
-            if (flags & F_Static)
-                lemitn(Op_Static, x->local->l_val.index);
-            else if (flags & F_Argument)
-                lemitn(Op_Arg, x->local->l_val.index);
-            else
-                lemitn(Op_Local, x->local->l_val.index);
-            break;
-        }
-
-        default:
-            quitf("treecode: illegal opcode(%d)", op);
-    }
-}
 
 static void gencode_func(struct lfunction *f)
 {
@@ -1366,95 +442,6 @@ static void synch_line()
     lnfree++;
 }
 
-
-
-/*
- *  lemit - emit opcode.
- *  lemitl - emit opcode with reference to program label.
- *	for a description of the chaining and labout0ing for labels.
- *  lemitn - emit opcode with integer argument.
- *  lemitr - emit opcode with pc-relative reference.
- *  lemitin - emit opcode with reference to identifier table & integer argument.
- *  lemitproc - emit procedure block.
- *
- * The lemit* routines call out* routines to effect the "outputting" of icode.
- *  Note that the majority of the code for the lemit* routines is for debugging
- *  purposes.
- */
-
-static void lemit(int op)
-{
-
-    if (Dflag)
-        fprintf(dbgfile, "%ld:\t%d\t\t\t\t# %s\n", (long)pc, op, op_names[op]);
-
-    outword(op);
-}
-
-static void lemitl(int op, int lab)
-{
-    if (Dflag)
-        fprintf(dbgfile, "%ld:\t%d\tL%d\t\t\t# %s\n", (long)pc, op, lab, op_names[op]);
-
-    if (lab >= maxlabels)
-        labels  = (word *) expand_table(labels, NULL, &maxlabels, sizeof(word),
-                                    lab - maxlabels + 1, "labels");
-    outword(op);
-    if (labels[lab] <= 0) {		/* forward reference */
-        outword(labels[lab]);
-        labels[lab] = WordSize - pc;	/* add to front of reference chain */
-    }
-    else					/* output relative offset */
-
-    outword(labels[lab] - (pc + WordSize));
-}
-
-static void lemitn(int op, word n)
-{
-    if (Dflag)
-        fprintf(dbgfile, "%ld:\t%d\t%ld\t\t\t# %s\n", (long)pc, op, (long)n, op_names[op]);
-
-    outword(op);
-    outword(n);
-}
-
-static void lemitn2(int op, word n1, word n2)
-{
-    if (Dflag)
-        fprintf(dbgfile, "%ld:\t%d\t%ld,%ld\t\t\t# %s\n", (long)pc, op, (long)n1, (long)n2,
-                op_names[op]);
-
-    outword(op);
-    outword(n1);
-    outword(n2);
-}
-
-static void lemitr(int op, word loc)
-{
-    loc -= pc + (2 * WordSize);
-    if (Dflag) {
-        if (loc >= 0)
-            fprintf(dbgfile, "%ld:\t%d\t*+%ld\t\t\t# %s\n",(long) pc, op,
-                    (long)loc, op_names[op]);
-        else
-            fprintf(dbgfile, "%ld:\t%d\t*-%ld\t\t\t# %s\n",(long) pc, op,
-                    (long)-loc, op_names[op]);
-    }
-
-    outword(op);
-    outword(loc);
-}
-
-static void lemitin(int op, word offset, int n)
-{
-    if (Dflag)
-        fprintf(dbgfile, "%ld:\t%d\t%d,S+%ld\t\t\t# %s\n", (long)pc, op, n,
-                (long)offset, op_names[op]);
-
-    outword(op);
-    outword(n);
-    outword(offset);
-}
 
 /* Same as in rstructs.h */
 struct b_real {			/* real block */
@@ -1648,7 +635,10 @@ static void lemitcon(struct centry *ce)
 
 static void patchrefs()
 {
+    word basepc;
     int i;
+    /* Compute the pc corresponding to &codeb[0] */
+    basepc = pc - (codep - codeb);
     for (i = 0; i <= hi_chunk; ++i) {
         struct chunk *chunk;
         word p;
@@ -1658,8 +648,8 @@ static void patchrefs()
         p = chunk->refs;
         while (p) {
             word t;
-            memcpy(&t, &codeb[p], WordSize);
-            memcpy(&codeb[p], &chunk->pc, WordSize);
+            memcpy(&t, &codeb[p - basepc], WordSize);
+            memcpy(&codeb[p - basepc], &chunk->pc, WordSize);
             p = t;
         }
     }
@@ -1684,7 +674,7 @@ static void lemitcode()
                     if (Dflag)
                         fprintf(dbgfile, "%ld:\tgoto\t\t%d\n", (long)pc, x->dest);
                     outword(Op_Goto);
-                    labout(x->dest);
+                    labout(x->dest, "dest");
                     break;
                 }
                 case Ir_IGoto: {
@@ -1700,7 +690,7 @@ static void lemitcode()
                     if (Dflag)
                         fprintf(dbgfile, "%ld:\tenterinit\t%d\n", (long)pc, x->dest);
                     outword(Op_EnterInit);
-                    labout(x->dest);
+                    labout(x->dest, "dest");
                     break;
                 }
                 case Ir_Fail: {
@@ -1761,7 +751,7 @@ static void lemitcode()
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg1, "arg1");
                     emit_ir_var(x->arg2, "arg2");
-                    word_field(x->fail_label, "fail");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_BinClo: {
@@ -1773,7 +763,7 @@ static void lemitcode()
                     word_field(x->clo, "clo");
                     emit_ir_var(x->arg1, "arg1");
                     emit_ir_var(x->arg2, "arg2");
-                    word_field(x->fail_label, "fail");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_UnOp: {
@@ -1784,7 +774,7 @@ static void lemitcode()
                     outword(op);
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg, "arg");
-                    word_field(x->fail_label, "fail");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_UnClo: {
@@ -1795,7 +785,7 @@ static void lemitcode()
                     outword(op);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->arg, "arg");
-                    word_field(x->fail_label, "fail");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_KeyOp: {
@@ -1805,7 +795,7 @@ static void lemitcode()
                     outword(Op_Keyop);
                     word_field(x->keyword, "keyword");
                     emit_ir_var(x->lhs, "lhs");
-                    word_field(x->fail_label, "fail");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_KeyClo: {
@@ -1815,7 +805,7 @@ static void lemitcode()
                     outword(Op_Keyclo);
                     word_field(x->keyword, "keyword");
                     word_field(x->clo, "clo");
-                    word_field(x->fail_label, "fail");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_Invoke: {
@@ -1830,7 +820,7 @@ static void lemitcode()
                     for (i = 0; i < x->argc; ++i) {
                         emit_ir_var(x->args[i], "arg");
                     }
-                    word_field(x->fail_label, "fail");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_ResumeValue: {
@@ -1840,7 +830,7 @@ static void lemitcode()
                     outword(Op_Resume);
                     emit_ir_var(x->lhs, "lhs");
                     word_field(x->clo, "clo");
-                    word_field(x->fail_label, "fail");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 default: {
@@ -1867,7 +857,7 @@ static void lemitproc()
     if (abs(curr_lfunc->nargs) != curr_lfunc->narguments)
         quitf("Mismatch between ufile's nargs and narguments");
 
-    size = (20*WordSize) + 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+    size = (21*WordSize) + 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
     if (loclevel > 1)
         size += 3*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
 
@@ -1893,6 +883,7 @@ static void lemitproc()
         fprintf(dbgfile, "\t%d\t\t\t\t# Num marks\n", n_mark);
         fprintf(dbgfile, "\t0\n");		        /* framesize */
         fprintf(dbgfile, "\t0\n");		        /* ntend */
+        fprintf(dbgfile, "\t0\n");		        /* deref */
         fprintf(dbgfile, "\t%d\t\t\t\t# Package id\n", curr_lfunc->defined->package_id);       /* package id */
         fprintf(dbgfile, "\t0\n");		        /* field */
         fprintf(dbgfile, "\t%d\tS+%d\t\t\t# %s\n",	/* name of procedure */
@@ -1911,6 +902,7 @@ static void lemitproc()
     outword(n_tmp);
     outword(n_lab);
     outword(n_mark);
+    outword(0);
     outword(0);
     outword(0);
     outword(curr_lfunc->defined->package_id);
@@ -2947,50 +1939,18 @@ static void cleartables()
     nextlab = 1;
 }
 
-static void labout(int i)
+static void labout(int i, char *desc)
 {
     struct chunk *chunk = chunks[i];
     word t = pc;
+    if (Dflag)
+        fprintf(dbgfile, "%ld:\t  %s\tChunk %d\n", (long)pc, desc, i);
     outword(chunk->refs);
     chunk->refs = t;
 }
 
 
-
-/*
- * labout0 - fill in all forward references to lab.
- */
-static void labout0(int lab)
-{
-    word p, r;
-    char *q;
-    char *cp, *cr;
-    int j;
 
-    if (Dflag)
-        fprintf(dbgfile, "L%d:\n", lab);
-
-    if (lab >= maxlabels)
-        labels  = (word *) expand_table(labels, NULL, &maxlabels, sizeof(word),
-                                    lab - maxlabels + 1, "labels");
-
-    p = labels[lab];
-    if (p > 0)
-        quit("multiply defined label in ucode");
-    while (p < 0) {		/* follow reference chain */
-
-        r = pc - (WordSize - p);	/* compute relative offset */
-        q = codep - (pc + p);	/* point to word with address */
-        cp = (char *) &p;		/* address of integer p       */
-        cr = (char *) &r;		/* address of integer r       */
-        for (j = 0; j < WordSize; j++) {	  /* move bytes from word pointed to */
-            *cp++ = *q;			  /* by q to p, and move bytes from */
-            *q++ = *cr++;			  /* r to word pointed to by q */
-        }			/* moves integers at arbitrary addresses */
-    }
-    labels[lab] = pc;
-}
-
 void idump(s)		/* dump code region */
     char *s;
 {
@@ -3172,20 +2132,6 @@ static word binop(int n)
     }
 
     return opcode;
-}
-
-/*
- * alclab allocates n labels and returns the first.  For the interpreter,
- *  labels are restarted at 1 for each procedure, while in the compiler,
- *  they start at 1 and increase throughout the entire compilation.
- */
-static int alclab(int n)
-{
-    register int lab;
-
-    lab = nextlab;
-    nextlab += n;
-    return lab;
 }
 
 static word unop(int op)

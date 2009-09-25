@@ -172,7 +172,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
      * Dereference the supplied arguments.
      */
     proc0 = (struct b_proc *)BlkLoc(newargp[0]);
-    if (proc0->nstatic >= 0)	/* if negative, don't reference arguments */
+    if (!proc0->underef)	/* if set, don't reference arguments */
         for (i = 1; i <= nargs; i++)
             Deref(newargp[i]);
 

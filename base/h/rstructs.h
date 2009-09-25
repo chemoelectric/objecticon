@@ -117,6 +117,7 @@ struct b_proc {			/* procedure block */
 
     word framesize;             /*   frame struct size (for builtin functions/operators only). */
     word ntend;                 /*   num tended needed (for builtin functions/operators only). */
+    word underef;               /*   underef flag (for builtin functions/operators only). */
 
     word package_id;            /*   package id of package in which this proc resides; 0=not in 
                                  *     a package; 1=lang; >1=other package */
@@ -565,6 +566,7 @@ struct b_iproc {		/* procedure block */
     word nmark;
     word framesize;             /*   frame size (for builtin functions/operators only). */
     word ntend;
+    word underef;
     word package_id;
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field */
     struct sdescrip ip_name;	/*   procedure name (string qualifier) */
@@ -593,6 +595,8 @@ struct b_coexpr {		/* co-expression stack block */
     struct progstate *creator;  /*   curpstate when this block was allocated */
     struct progstate *main_of;  /*   set to the parent program for all &main co-expressions;
                                  *   null for all others */
+    struct p_frame *curr_pf;    /*   current procedure frame */
+    struct frame *sp;           /*   end of stack */
 };
 
 struct b_refresh {		/* co-expression block */
@@ -636,18 +640,27 @@ union tickerdata { 			/* clock ticker -- keep in sync w/ fmonitor.r */
 };
 
 
+struct locals {
+    dptr dynamic;
+    dptr args;
+    int refcnt;
+    int seen;
+};
+
+enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
+
 #define FRAME_BASE \
-     struct descrip value;        \
-     word failure_label;
-     struct b_proc *proc;  \
-     int nargs;       \
-     dptr args;       \
-     struct frame *parent_sp; \
-     int seen;
+     int type; \
+     struct descrip value;    \
+     word *failure_label;      \
+     struct b_proc *proc;     \
+     struct frame *parent_sp;
 
 #define C_FRAME \
      FRAME_BASE   \
      void *pc;    \
+     int nargs;       \
+     dptr args;       \
      dptr tend;
 
 struct frame {
@@ -659,18 +672,12 @@ struct c_frame {
 };
 
 struct p_frame {
-    FRAME_BASE   \
+    FRAME_BASE;
     word *ipc;
-    struct frame *parent_cc;
+    struct p_frame *caller;
     struct frame **clo;
     dptr tmp;
     word *lab;
     struct frame **mark;
-};
-    
-     
-struct diversion {
-    word *code;
-    struct diversion *parent;
-
+    struct locals *locals;
 };

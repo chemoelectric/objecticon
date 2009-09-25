@@ -93,6 +93,11 @@ static struct ir_info *ir_info(struct lnode *node)
     return res;
 }
 
+static int get_extra_chunk()
+{
+    return chunk_id_seq++;
+}
+
 static struct ir_goto *ir_goto(struct lnode *n, int dest)
 {
     struct ir_goto *res = IRAlloc(struct ir_goto);
@@ -552,6 +557,51 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                   ir_goto(n, res->success));
             if (!bounded)
                 chunk(res->resume, 1, ir_goto(n, res->failure));
+            break;
+        }
+
+        case Uop_Toby: {
+            struct lnode_3 *x = (struct lnode_3 *)n;
+            int to_mk, by_mk, clo_mk, clo, clo_fail;
+            struct ir_var *fv, *tv, *bv;
+            struct ir_info *from, *to, *by;
+
+            to_mk = make_mark(st);
+            by_mk = make_mark(st);
+            clo_mk = make_mark(st);
+
+            clo_fail = get_extra_chunk();
+            fv = get_var(x->child1, st, 0);
+            tv = get_var(x->child2, st, 0);
+            bv = get_var(x->child3, st, target);
+
+            from = ir_traverse(x->child1, st, fv, 0, 1);
+            to = ir_traverse(x->child2, st, tv, 0, 1);
+            by = ir_traverse(x->child3, st, bv, 0, 1);
+
+            clo = make_closure(st);
+
+            chunk(res->start, 1, ir_goto(n, from->start));
+            chunk(res->resume, 2, 
+                  ir_resumevalue(n, target, clo->index, clo_fail),
+                  ir_goto(n, res->success));
+
+            chunk(from->success, 2, 
+                  cond_ir_mark(to->uses_stack, n, to_mk), 
+                  ir_goto(n, to->start));
+            chunk(from->failure, 1, ir_goto(n, res->failure));
+
+            chunk(to->success, 2, 
+                  cond_ir_mark(by->uses_stack, n, by_mk), 
+                  ir_goto(n, by->start));
+            chunk(to->failure, 2, 
+                  cond_ir_unmark(to->uses_stack, n, to_mk),
+                  ir_goto(n, from->resume));
+
+            chunk(to->success, 2, 
+                  cond_ir_mark(by->uses_stack, n, by_mk), 
+                  ir_goto(n, by->start));
+
             break;
         }
 

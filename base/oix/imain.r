@@ -134,15 +134,15 @@ int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 int main(int argc, char **argv)
 {
-    int i, want_arg;
+    int i;
     struct fileparts *fp;
+    struct b_proc *main_bp;
+    struct p_frame *frame;
 
 #if MSWIN32
     WSADATA cData;
     WSAStartup(MAKEWORD(2, 0), &cData);
 #endif
-
-    ipc = NULL;
 
     fp = fparse(argv[0]);
 
@@ -164,48 +164,20 @@ int main(int argc, char **argv)
     icon_init(argv[1]);
 
     /*
-     *  Point sp at word after b_coexpr block for &main, point ipc at initial
-     *	icode segment, and clear the gfp.
-     */
-
-    stackend = stack + mstksize/WordSize;
-    sp = stack + Wsizeof(struct b_coexpr);
-
-    gfp = 0;
-
-    /*
-     * Set up expression frame marker to contain execution of the
-     *  main procedure.  If failure occurs in this context, control
-     *  is transferred to mterm, the address of an Op_Quit.
-     */
-    efp = (struct ef_marker *)(sp);
-    efp->ef_failure = &mterm;
-    efp->ef_gfp = 0;
-    efp->ef_efp = 0;
-    efp->ef_ilevel = 1;
-    sp += Wsizeof(*efp) - 1;
-
-    pfp = 0;
-    ilevel = 0;
-
-    /*
      * Check whether resolve() found the main procedure.  If not, exit.
      */
     if (!main_proc)
         fatalerr(117, NULL);
 
-    /*
-     * We have already loaded the icode and initialized things, so
-     * it's time to just push main(), and the arguments in a list if
-     * they're wanted, and call interp on a invoke bytecode.
-     */
-    PushDesc(*main_proc);
+    main_bp = (struct b_proc *)BlkLoc(*main_proc);
+
+    MemProtect(frame = alc_p_frame(main_bp, 0));
 
     /*
      * We avoid passing an arg to main if possible, so that we don't create
      * a list unnecessarily.
      */
-    if (((struct b_proc *)BlkLoc(*main_proc))->nparam) {
+    if (main_bp->nparam) {
         tended struct descrip args;
         create_list(argc - 2, &args);
         for (i = 2; i < argc; i++) {
@@ -213,28 +185,12 @@ int main(int argc, char **argv)
             CMakeStr(argv[i], &t);
             list_put(&args, &t);
         }
-        PushDesc(args);
-        want_arg = 1;
-    } else
-        want_arg = 0;
-
-    argp = 0;
-
+        frame->locals->args[0] = args;
+    } 
+    frame->ipc = main_bp->entryp.icode;
+    push_p_frame(frame);
     set_up = 1;			/* post fact that iconx is initialized */
-
-    ipc = istart;
-    *ipc++ = Op_Invoke;				/*	[[I?]] */
-    *ipc++ = want_arg;  /* Number of args to pass to main proc (1 or 0) */
-    *ipc = Op_Quit;
-    ipc = istart;
-
-    /*
-     * Start things rolling by calling interp.  This call to interp
-     *  returns only if an Op_Quit is executed.	If this happens,
-     *  c_exit() is called to wrap things up.
-     */
-    interp(0, 0); 
-
+    interp2();
     c_exit(EXIT_SUCCESS);
 
     return 0;

@@ -182,6 +182,11 @@
                          IntVal(*dp) = (word)(i); \
 			 } while (0)
 
+#define MakeNamedVar(x,dp)		do { \
+                 	 (dp)->dword = D_NamedVar; \
+                         VarLoc(*dp) = (x); \
+			 } while (0)
+
 /*
  * Construct a string descriptor.
  */
@@ -532,17 +537,16 @@ do { \
    /*
     * Procedure block for a function.
     */
-   #define FncBlock(f,nargs,ntend,deref)           \
+   #define FncBlock(f,nargs,ntend,underef)           \
       	struct b_iproc Cat(B,f) = {\
       	T_Proc,\
       	sizeof(struct b_proc),\
       	Cat(Z,f),\
       	nargs,\
-      	0,\
-      	deref,\
-        0,0,0,0,0,0,\
+   	0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
+        underef,\
         0,0,\
       	{sizeof(Lit(f))-1,Lit(f)},\
         0,0};
@@ -550,17 +554,16 @@ do { \
    /*
     * Procedure block for an operator.
     */
-   #define OpBlock(f,nargs,ntend,sname,deref)\
+   #define OpBlock(f,nargs,ntend,sname,underef)\
    	struct b_iproc Cat(B,f) = {\
    	T_Proc,\
    	sizeof(struct b_proc),\
    	Cat(O,f),\
    	nargs,\
-   	0,\
-   	deref,\
-   	0,0,0,0,0,0,\
+   	0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
+        underef,\
         0,0,  \
    	{sizeof(sname)-1,sname},\
         0,0};
@@ -571,13 +574,10 @@ do { \
    	T_Proc,\
    	sizeof(struct b_proc),\
    	Cat(K,f),\
-   	0,\
-   	0,\
-   	0,\
-   	0,0,0,0,0,0,\
+   	0,0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
-        0,0,  \
+        0,0,0,  \
       	{sizeof(Lit(f))-1,Lit(f)},\
         0,0};
    
