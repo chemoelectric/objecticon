@@ -137,3 +137,4 @@
 #define Op_Keyop 	212
 #define Op_Keyclo 	213
 #define Op_Resume 	214
+#define Op_Knull 	215

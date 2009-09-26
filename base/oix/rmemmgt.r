@@ -1247,13 +1247,12 @@ struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
     char *t;
     int i;
     p = malloc(pb->framesize +
-               nargs * sizeof(struct descrip));
+               (nargs + pb->ntend) * sizeof(struct descrip));
     if (!p)
         return 0;
 
     p->type = C_FRAME_TYPE;
     p->value = nulldesc;
-    p->failure_label = 0;
     p->proc = pb;
     p->parent_sp = 0;
     p->pc = 0;

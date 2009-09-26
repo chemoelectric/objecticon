@@ -7,11 +7,9 @@
 #define Ir_Mark      4
 #define Ir_Unmark    5
 #define Ir_Move      6
-#define Ir_BinOp     7
-#define Ir_BinClo    8
-#define Ir_UnOp      9
-#define Ir_UnClo     10
-#define Ir_ResumeValue  11
+#define Ir_Op        7
+#define Ir_OpClo     8
+#define Ir_Resume    11
 #define Ir_Deref     12
 #define Ir_Invoke    13
 #define Ir_KeyOp     14
@@ -19,11 +17,28 @@
 #define Ir_IGoto     16
 #define Ir_MoveLabel 17
 
+struct scan_info {
+    struct ir_var *old_subject, *old_pos;
+    struct ir_info *next;
+};
+
+struct loop_info {
+    int scan_level;
+    int next_chunk;
+    int continue_tmploc;
+    struct ir_stack *in_st, *out_st;
+    struct ir_var *target;
+    int bounded, rval;
+    struct ir_info *next;
+};
+
 struct ir_info {
     char *desc;
     int start, success, resume, failure;
     struct lnode *node;
     int uses_stack;
+    struct scan_info *scan;
+    struct loop_info *loop;
 };
 
 struct ir_stack {
@@ -31,11 +46,12 @@ struct ir_stack {
 };
 
 
-enum ir_vartype { CONST, LOCAL, GLOBAL, TMP, CLOSURE, KEYWORD };
+enum ir_vartype { CONST, LOCAL, GLOBAL, TMP, CLOSURE, WORD, KNULL };
 
 struct ir_var {
     int type;
     int index;
+    word w;
     struct centry *con;
     struct lentry *local;
     struct gentry *global;
@@ -70,12 +86,24 @@ struct ir_movelabel {
     int destno;
 };
 
-struct ir_binop {
+struct ir_op {
     IR_SUB
     struct ir_var *lhs;
     int operation;
     struct ir_var *arg1;
     struct ir_var *arg2;
+    struct ir_var *arg3;
+    int rval;
+    int fail_label;
+};
+
+struct ir_opclo {
+    IR_SUB
+    int clo;
+    int operation;
+    struct ir_var *arg1;
+    struct ir_var *arg2;
+    struct ir_var *arg3;
     int rval;
     int fail_label;
 };
@@ -84,16 +112,6 @@ struct ir_keyop {
     IR_SUB
     struct ir_var *lhs;
     int keyword;
-    int rval;
-    int fail_label;
-};
-
-struct ir_binclo {
-    IR_SUB
-    int clo;
-    int operation;
-    struct ir_var *arg1;
-    struct ir_var *arg2;
     int rval;
     int fail_label;
 };
@@ -157,11 +175,9 @@ struct ir_deref {
     int rval;
 };
 
-struct ir_resumevalue {
+struct ir_resume {
     IR_SUB
-    struct ir_var *lhs;
     int clo;
-    int fail_label;
 };
 
 struct chunk {

@@ -74,7 +74,7 @@ codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
 
 
 static void writescript();
-static word binop(int n);
+static word cnv_op(int n);
 static void gentables(void);
 static void synch_file();
 static void synch_line();
@@ -84,9 +84,6 @@ static void *expand_table(void * table,      /* table to be realloc()ed */
                           int unit_size,      /* number of bytes in a unit of the table */
                           int min_units,      /* the minimum number of units that must be allocated. */
                           char *tbl_name);     /* name of the table */
-static word unop(int op);
-
-
 
 /*
  * Code generator parameters.
@@ -187,6 +184,19 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 outword(Op_Const);
                 outword(ce->desc_no);
             }
+            break;
+        }
+        case WORD: {
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\t  %s\tint\t\t%d\n", (long)pc, desc, v->w);
+            outword(Op_Int);
+            outword(v->w);
+            break;
+        }
+        case KNULL: {
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\t  %s\t&null\n", (long)pc, desc);
+            outword(Op_Knull);
             break;
         }
         case LOCAL: {
@@ -742,49 +752,33 @@ static void lemitcode()
                     emit_ir_var(x->dest, "dest");
                     break;
                 }
-                case Ir_BinOp: {
-                    struct ir_binop *x = (struct ir_binop *)ir;
-                    word op = binop(x->operation);
+                case Ir_Op: {
+                    struct ir_op *x = (struct ir_op *)ir;
+                    word op = cnv_op(x->operation);
                     if (Dflag)
-                        fprintf(dbgfile, "%ld:\tbinary %s\n", (long)pc, op_names[op]);
+                        fprintf(dbgfile, "%ld:\top %s\n", (long)pc, op_names[op]);
                     outword(op);
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg1, "arg1");
-                    emit_ir_var(x->arg2, "arg2");
+                    if (x->arg2)
+                        emit_ir_var(x->arg2, "arg2");
+                    if (x->arg3)
+                        emit_ir_var(x->arg3, "arg3");
                     labout(x->fail_label, "fail");
                     break;
                 }
-                case Ir_BinClo: {
-                    struct ir_binclo *x = (struct ir_binclo *)ir;
-                    word op = binop(x->operation);
+                case Ir_OpClo: {
+                    struct ir_opclo *x = (struct ir_opclo *)ir;
+                    word op = cnv_op(x->operation);
                     if (Dflag)
-                        fprintf(dbgfile, "%ld:\tbinary closure %s\n", (long)pc, op_names[op]);
+                        fprintf(dbgfile, "%ld:\top closure %s\n", (long)pc, op_names[op]);
                     outword(op);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->arg1, "arg1");
-                    emit_ir_var(x->arg2, "arg2");
-                    labout(x->fail_label, "fail");
-                    break;
-                }
-                case Ir_UnOp: {
-                    struct ir_unop *x = (struct ir_unop *)ir;
-                    word op = unop(x->operation);
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tunary %s\n", (long)pc, op_names[op]);
-                    outword(op);
-                    emit_ir_var(x->lhs, "lhs");
-                    emit_ir_var(x->arg, "arg");
-                    labout(x->fail_label, "fail");
-                    break;
-                }
-                case Ir_UnClo: {
-                    struct ir_unclo *x = (struct ir_unclo *)ir;
-                    word op = unop(x->operation);
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tunary closure %s\n", (long)pc, op_names[op]);
-                    outword(op);
-                    word_field(x->clo, "clo");
-                    emit_ir_var(x->arg, "arg");
+                    if (x->arg2)
+                        emit_ir_var(x->arg2, "arg2");
+                    if (x->arg3)
+                        emit_ir_var(x->arg3, "arg3");
                     labout(x->fail_label, "fail");
                     break;
                 }
@@ -823,14 +817,12 @@ static void lemitcode()
                     labout(x->fail_label, "fail");
                     break;
                 }
-                case Ir_ResumeValue: {
-                    struct ir_resumevalue *x = (struct ir_resumevalue *)ir;
+                case Ir_Resume: {
+                    struct ir_resume *x = (struct ir_resume *)ir;
                     if (Dflag)
                         fprintf(dbgfile, "%ld:\tresume\n", (long)pc);
                     outword(Op_Resume);
-                    emit_ir_var(x->lhs, "lhs");
                     word_field(x->clo, "clo");
-                    labout(x->fail_label, "fail");
                     break;
                 }
                 default: {
@@ -2001,7 +1993,7 @@ static void * expand_table(void * table,      /* table to be realloc()ed */
     return (void *)new_tbl;
 }
 
-static word binop(int n)
+static word cnv_op(int n)
 {
     word opcode = 0;
 
@@ -2127,18 +2119,6 @@ static word binop(int n)
             opcode = Op_Unions;
             break;
 
-        default:
-            quit("binop: undefined binary operator");
-    }
-
-    return opcode;
-}
-
-static word unop(int op)
-{
-    word opcode = 0;
-
-    switch (op) {
         case Uop_Value:			/* unary . operator */
             opcode = Op_Value;
             break;
@@ -2183,8 +2163,12 @@ static word unop(int op)
             opcode = Op_Null;
             break;
 
+        case Uop_Toby:
+            opcode = Op_Toby;
+            break;
+
         default:
-            quit("unop: undefined unary operator");
+            quit("cnv_op: undefined operator");
     }
 
     return opcode;
