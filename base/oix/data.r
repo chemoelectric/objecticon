@@ -32,9 +32,6 @@ extern struct b_proc Bfield;
 extern struct b_proc Blimit;
 extern struct b_proc Bllist;
 
- 
-
-
 struct b_proc *opblks[] = {
 	NULL,
 #define OpDef(p) Cat(&B,p),
@@ -65,6 +62,19 @@ struct b_proc *opblks[] = {
    NULL,
    NULL
    };
+
+
+#define KDef(p,n) extern struct b_proc Cat(L,p);
+#include "../h/kdefs.h"
+#undef KDef
+
+struct b_proc *keyblks[] = {
+    NULL,
+#define KDef(p,n) Cat(&L,p),
+#include "../h/kdefs.h"
+#undef KDef
+};
+
 
 
 /*

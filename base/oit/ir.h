@@ -16,6 +16,9 @@
 #define Ir_KeyClo    15
 #define Ir_IGoto     16
 #define Ir_MoveLabel 17
+#define Ir_ScanSwap  18
+#define Ir_ScanSave  19
+#define Ir_ScanRestore 20
 
 struct scan_info {
     struct ir_var *old_subject, *old_pos;
@@ -23,10 +26,11 @@ struct scan_info {
 };
 
 struct loop_info {
-    int scan_level;
+    struct ir_info *scan_stack;   /* Top of scan stack at loop's location */
     int next_chunk;
     int continue_tmploc;
-    struct ir_stack *in_st, *out_st;
+    struct ir_stack *st, *loop_st;
+    int loop_mk;
     struct ir_var *target;
     int bounded, rval;
     struct ir_info *next;
@@ -52,6 +56,7 @@ struct ir_var {
     int type;
     int index;
     word w;
+    int renumbered;
     struct centry *con;
     struct lentry *local;
     struct gentry *global;
@@ -84,6 +89,25 @@ struct ir_movelabel {
     IR_SUB
     int lab;
     int destno;
+};
+
+struct ir_scanswap {
+    IR_SUB
+    struct ir_var *tmp_subject;
+    struct ir_var *tmp_pos;
+};
+
+struct ir_scansave {
+    IR_SUB
+    struct ir_var *new_subject;
+    struct ir_var *tmp_subject;
+    struct ir_var *tmp_pos;
+};
+
+struct ir_scanrestore {
+    IR_SUB
+    struct ir_var *tmp_subject;
+    struct ir_var *tmp_pos;
 };
 
 struct ir_op {
@@ -182,6 +206,7 @@ struct ir_resume {
 
 struct chunk {
     int id;
+    int line;    /* source line, for debugging */
     int n_inst;
     int circle;
     int seen;

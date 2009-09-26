@@ -737,10 +737,10 @@ static void lemitcode()
                 case Ir_MoveLabel: {
                     struct ir_movelabel *x = (struct ir_movelabel *)ir;
                     if (Dflag)
-                        fprintf(dbgfile, "%ld:\tmovelabel\t%d %d\n", (long)pc, x->lab, x->destno);
+                        fprintf(dbgfile, "%ld:\tmovelabel\t%d %d\n", (long)pc, x->destno, x->lab);
                     outword(Op_MoveLabel);
-                    outword(x->lab);
                     outword(x->destno);
+                    labout(x->lab, "lab");
                     break;
                 }
                 case Ir_Deref: {
@@ -825,6 +825,35 @@ static void lemitcode()
                     word_field(x->clo, "clo");
                     break;
                 }
+                case Ir_ScanSwap: {
+                    struct ir_scanswap *x = (struct ir_scanswap *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tscanswap\n", (long)pc);
+                    outword(Op_ScanSwap);
+                    word_field(x->tmp_subject->index, "tmp_subject");
+                    word_field(x->tmp_pos->index, "tmp_pos");
+                    break;
+                }
+                case Ir_ScanSave: {
+                    struct ir_scansave *x = (struct ir_scansave *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tscansave\n", (long)pc);
+                    outword(Op_ScanSave);
+                    emit_ir_var(x->new_subject, "new_subject");
+                    word_field(x->tmp_subject->index, "tmp_subject");
+                    word_field(x->tmp_pos->index, "tmp_pos");
+                    break;
+                }
+                case Ir_ScanRestore: {
+                    struct ir_scanrestore *x = (struct ir_scanrestore *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tscanrestore\n", (long)pc);
+                    outword(Op_ScanRestore);
+                    word_field(x->tmp_subject->index, "tmp_subject");
+                    word_field(x->tmp_pos->index, "tmp_pos");
+                    break;
+                }
+
                 default: {
                     quitf("lemitcode: illegal ir opcode(%d)\n", ir->op);
                     break;

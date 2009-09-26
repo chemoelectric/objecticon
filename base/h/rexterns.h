@@ -10,6 +10,7 @@ extern struct b_proc *op_tbl[]; /* operators available for string invocation */
 extern int op_tbl_sz;           /* number of operators in op_tbl */
 extern struct b_proc *fnc_tbl[]; /* builtin functions */
 extern struct b_proc *opblks[];  /* maps opcode to corresponding operator blocks */
+extern struct b_proc *keyblks[];  /* maps keyword number to corresponding function blocks */
 extern int fnc_tbl_sz;           /* sizeof of fnc_tbl */
 extern word dodump;		/* termination dump */
 extern int line_info;		/* flag: line information is available */

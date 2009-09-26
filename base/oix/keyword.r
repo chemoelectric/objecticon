@@ -390,7 +390,10 @@ end
 
 "&version - a string indentifying this version of Icon."
 keyword{1} version
-   constant Version
+   body {
+    LitStr(Version, &result);
+    return result;
+   }
 end
 
 "&ascii - a cset consisting of the 128 ascii characters"

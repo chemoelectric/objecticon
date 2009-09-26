@@ -138,3 +138,6 @@
 #define Op_Keyclo 	213
 #define Op_Resume 	214
 #define Op_Knull 	215
+#define Op_ScanSwap     218
+#define Op_ScanSave     219
+#define Op_ScanRestore  220

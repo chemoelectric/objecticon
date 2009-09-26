@@ -1170,7 +1170,7 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
     p = malloc(sizeof(struct p_frame) +
                pb->nclo * sizeof(struct frame *) +
                pb->ntmp * sizeof(struct descrip) +
-               pb->nlab * sizeof(word) + 
+               pb->nlab * sizeof(word *) + 
                pb->nmark * sizeof(struct frame *));
     if (!p)
         return 0;
@@ -1191,10 +1191,10 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
     } else
         p->tmp = 0;
     if (pb->nlab) {
-        p->lab = (word *)t;
+        p->lab = (word **)t;
         for (i = 0; i < pb->nlab; ++i)
-            p->lab[i] = -1;
-        t += pb->nlab * sizeof(word);
+            p->lab[i] = 0;
+        t += pb->nlab * sizeof(word *);
     } else
         p->lab = 0;
     if (pb->nmark) {

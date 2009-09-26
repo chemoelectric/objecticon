@@ -677,7 +677,7 @@ struct p_frame {
     struct p_frame *caller;
     struct frame **clo;
     dptr tmp;
-    word *lab;
+    word **lab;
     struct frame **mark;
     struct locals *locals;
 };
