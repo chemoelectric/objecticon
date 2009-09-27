@@ -141,3 +141,4 @@
 #define Op_ScanSwap     218
 #define Op_ScanSave     219
 #define Op_ScanRestore  220
+#define Op_Succeed      221

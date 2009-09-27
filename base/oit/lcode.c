@@ -709,6 +709,14 @@ static void lemitcode()
                     outword(Op_Fail);
                     break;
                 }
+                case Ir_Succeed: {
+                    struct ir_succeed *x = (struct ir_succeed *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tsucceed\n", (long)pc);
+                    outword(Op_Succeed);
+                    emit_ir_var(x->val, "val");
+                    break;
+                }
                 case Ir_Mark: {
                     struct ir_mark *x = (struct ir_mark *)ir;
                     if (Dflag)
@@ -1966,6 +1974,8 @@ static void labout(int i, char *desc)
     word t = pc;
     if (Dflag)
         fprintf(dbgfile, "%ld:\t  %s\tChunk %d\n", (long)pc, desc, i);
+    if (!chunk)
+        quitf("Missing chunk: %d\n", i);
     outword(chunk->refs);
     chunk->refs = t;
 }

@@ -3231,6 +3231,7 @@ struct sym_entry *op_params;
       op_params->t_indx = -1;
    else
       op_params->t_indx = ntend++;
+
    if (!use_frame) {
        if (op_params->u.param_info.non_tend & PrmInt) {
            prt_str("C_integer r_i", IndentInc);
@@ -3579,46 +3580,6 @@ struct node *n;
        in_struct = 0;
    }
 
-
-   /*
-    * Output prototype. Operations taking a variable number of arguments
-    *   have an extra parameter: the number of arguments.
-    */
-   if (use_frame) {
-       fprintf(out_file, "int %c%s(struct frame *frame0);\n", letter, name); ++line;
-   } else {
-       fprintf(out_file, "int %c%s (", letter, name);
-       if (params != NULL && (params->id_type & VarPrm))
-           fprintf(out_file, "int r_nargs, ");
-       fprintf(out_file, "dptr r_args);\n");
-       ++line;
-   }
-
-   /*
-    * Output procedure block.
-    */
-   switch (op_type) {
-      case Keyword:
-           fprintf(out_file, "KeywordBlock(%s, %d)\n\n", name, ntend);
-           line += 2;
-           break;
-
-       case TokFunction:
-           fprintf(out_file, "FncBlock(%s, %d, %d, %d)\n\n", name, nparms, ntend, (has_underef ? -1 : 0));
-           line += 2;
-           break;
-
-       case Operator:
-           if (strcmp(op_sym,"\\") == 0)
-               fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
-                       ntend, "\\\\", (has_underef ? -1 : 0));
-           else
-               fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
-                       ntend, op_sym, (has_underef ? -1 : 0));
-           line += 2;
-   }
-
-
    if (use_frame)
    {
        /*
@@ -3672,6 +3633,7 @@ struct node *n;
     * Output special declarations and initial processing.
     */
    spcl_start(params);
+
    if (!use_frame)
        tend_ary(ntend);
    if (has_underef && params != NULL && params->id_type == (VarPrm | DrfPrm))
@@ -3750,6 +3712,31 @@ struct node *n;
       }
    ForceNl();
    prt_str("}\n", IndentInc);
+
+   /*
+    * Output procedure block.
+    */
+   switch (op_type) {
+      case Keyword:
+           fprintf(out_file, "KeywordBlock(%s, %d)\n\n", name, ntend);
+           line += 2;
+           break;
+
+       case TokFunction:
+           fprintf(out_file, "FncBlock(%s, %d, %d, %d)\n\n", name, nparms, ntend, (has_underef ? -1 : 0));
+           line += 2;
+           break;
+
+       case Operator:
+           if (strcmp(op_sym,"\\") == 0)
+               fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
+                       ntend, "\\\\", (has_underef ? -1 : 0));
+           else
+               fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
+                       ntend, op_sym, (has_underef ? -1 : 0));
+           line += 2;
+   }
+
 
    }
 

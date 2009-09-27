@@ -19,6 +19,7 @@
 #define Ir_ScanSwap  18
 #define Ir_ScanSave  19
 #define Ir_ScanRestore 20
+#define Ir_Succeed   21
 
 struct scan_info {
     struct ir_var *old_subject, *old_pos;
@@ -34,6 +35,7 @@ struct loop_info {
     struct ir_var *target;
     int bounded, rval;
     struct ir_info *next;
+    int has_break;
 };
 
 struct ir_info {
@@ -185,6 +187,11 @@ struct ir_unmark {
     int no;
 };
 
+struct ir_succeed {
+    IR_SUB
+    struct ir_var *val;
+};
+
 struct ir_move {
     IR_SUB
     struct ir_var *lhs;
@@ -206,6 +213,7 @@ struct ir_resume {
 
 struct chunk {
     int id;
+    char *desc;  /* description, for debugging */
     int line;    /* source line, for debugging */
     int n_inst;
     int circle;
