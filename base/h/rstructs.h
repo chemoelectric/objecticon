@@ -97,11 +97,8 @@ struct b_proc {			/* procedure block */
     word title;			/*   T_Proc */
     word blksize;		/*   size of block */
 
-    union {			/*   entry points for */
-        int (*ccode)();	        /*     C routines */
-        uword ioff;		/*     and icode as offset */
-        void *icode;		/*     and icode as absolute pointer */
-    } entryp;
+    int (*ccode)();	        /*   C routines */
+    word *icode;		/*   OR pointer to icode */
 
     word nparam;		/*   number of parameters */
     word ndynam;		/*   number of dynamic locals */
@@ -555,6 +552,7 @@ struct b_iproc {		/* procedure block */
     word ip_title;		/*   T_Proc */
     word ip_blksize;		/*   size of block */
     int (*ip_entryp)();		/*   entry point (code) */
+    word *icode;		/*   icode as absolute pointer */
     word ip_nparam;		/*   number of parameters */
     word ip_ndynam;		/*   number of dynamic locals */
     word ip_nstatic;		/*   number of static locals */
@@ -674,6 +672,7 @@ struct c_frame {
 struct p_frame {
     FRAME_BASE;
     word *ipc;
+    word *code_start;
     struct p_frame *caller;
     struct frame **clo;
     dptr tmp;

@@ -143,3 +143,11 @@
 #define Op_ScanRestore  220
 #define Op_Succeed      221
 #define Op_SysErr       222
+#define Op_ClassInit    223
+#define Op_CreateObject 224
+#define Op_EnsureClassInit 225
+#define Op_CheckClassState 226
+#define Op_ForClassSupers 227
+#define Op_InvokeClassInit 228
+#define Op_SetClassState   229
+#define Op_Custom      230

@@ -187,7 +187,7 @@ int main(int argc, char **argv)
         }
         frame->locals->args[0] = args;
     } 
-    frame->ipc = main_bp->entryp.icode;
+    frame->ipc = main_bp->icode;
     push_p_frame(frame);
     set_up = 1;			/* post fact that iconx is initialized */
     interp2();

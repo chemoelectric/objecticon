@@ -892,7 +892,7 @@ static void lemitproc()
     if (abs(curr_lfunc->nargs) != curr_lfunc->narguments)
         quitf("Mismatch between ufile's nargs and narguments");
 
-    size = (21*WordSize) + 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+    size = (22*WordSize) + 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
     if (loclevel > 1)
         size += 3*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
 
@@ -906,6 +906,7 @@ static void lemitproc()
     if (Dflag) {
         fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Proc\n", (long)pc, T_Proc); /* type code */
         fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", size);			/* size of block */
+        fprintf(dbgfile, "\t0\n");		        /* C func ptr */
         fprintf(dbgfile, "\tZ+%ld\t\t\t\t# Entry point\n",(long)(curr_lfunc->pc + size));	/* entry point */
         fprintf(dbgfile, "\t%d\t\t\t\t# Num args\n", curr_lfunc->nargs);	/* # arguments */
         fprintf(dbgfile, "\t%d\t\t\t\t# Num dynamic\n", curr_lfunc->ndynamic);	/* # dynamic locals */
@@ -927,6 +928,7 @@ static void lemitproc()
 
     outword(T_Proc);
     outword(size);
+    outword(0);
     outword(curr_lfunc->pc + size);
     outword(curr_lfunc->nargs);
     outword(curr_lfunc->ndynamic);

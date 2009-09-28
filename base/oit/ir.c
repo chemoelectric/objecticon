@@ -1287,17 +1287,19 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 /* Get bottom of scan stack */
                 while (t->scan->next)
                     t = t->scan->next;
-                chunk3(expr->success, 
+                chunk4(expr->success, 
                        cond_ir_unmark(expr->uses_stack, n, mk), 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
-                       ir_succeed(n, v));
+                       ir_succeed(n, v),
+                       ir_fail(n));
                 chunk2(expr->failure, 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
                        ir_fail(n));
             } else {
-                chunk2(expr->success, 
+                chunk3(expr->success, 
                        cond_ir_unmark(expr->uses_stack, n, mk), 
-                       ir_succeed(n, v));
+                       ir_succeed(n, v),
+                       ir_fail(n));
                 chunk1(expr->failure, 
                        ir_fail(n));
             }
@@ -1495,8 +1497,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                       ir_resume(n, clo->index),
                       ir_move(n, target, clo, 0),
                       ir_goto(n, res->success));
-                chunk4(expr->success,
-                      ir_deref(n, fn, fn),
+                chunk3(expr->success,
                       ir_invoke(n, clo->index, fn, x->n, args, expr->resume),
                       ir_move(n, target, clo, 0),
                       ir_goto(n, res->success));
@@ -1507,8 +1508,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                       ir_goto(n, res->success));
                 chunk1(expr->success,
                       ir_goto(n, info[0]->start));
-                chunk4(info[0]->success,
-                      ir_deref(n, fn, fn),
+                chunk3(info[0]->success,
                       ir_invoke(n, clo->index, fn, x->n, args, info[0]->resume),
                       ir_move(n, target, clo, 0),
                       ir_goto(n, res->success));
@@ -1538,8 +1538,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
                 /* Last one */
                 i = x->n - 1;
-                chunk4(info[i]->success,
-                      ir_deref(n, fn, fn),
+                chunk3(info[i]->success,
                       ir_invoke(n, clo->index, fn, x->n, args, info[x->n - 1]->resume),
                       ir_move(n, target, clo, 0),
                       ir_goto(n, res->success));

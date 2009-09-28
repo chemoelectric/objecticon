@@ -96,6 +96,7 @@ extern struct descrip tended[];	/* tended descriptors */
 extern struct ef_marker *efp;	/* expression frame pointer */
 extern struct gf_marker *gfp;	/* generator frame pointer */
 extern struct pf_marker *pfp;	/* procedure frame pointer */
+extern word *curr_op_addr;          /* address of current opcode */
 extern word *sp;			/* interpreter stack pointer */
 extern word *stack;			/* interpreter stack base */
 extern word *stackend;		/* end of evaluation stack */

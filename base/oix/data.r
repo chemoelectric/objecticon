@@ -10,7 +10,7 @@ struct b_proc Bnoproc;
  */
 struct b_iproc mt_llist = {
    T_Proc, sizeof(struct b_proc), Ollist,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {sizeof( "[...]")-1, "[...]"}, 0, 0};
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {sizeof( "[...]")-1, "[...]"}, 0, 0};
 
 /*
  * External declarations for function blocks.

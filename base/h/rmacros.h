@@ -284,11 +284,11 @@ do { \
 /*
  * Check whether a set or table needs resizing.
  */
-#define SP(p) ((struct b_set *)p)
+#define SETP(p) ((struct b_set *)p)
 #define TooCrowded(p) \
-   ((SP(p)->size > MaxHLoad*(SP(p)->mask+1)) && (SP(p)->hdir[HSegs-1] == NULL))
+   ((SETP(p)->size > MaxHLoad*(SETP(p)->mask+1)) && (SETP(p)->hdir[HSegs-1] == NULL))
 #define TooSparse(p) \
-   ((SP(p)->hdir[1] != NULL) && (SP(p)->size < MinHLoad*(SP(p)->mask+1)))
+   ((SETP(p)->hdir[1] != NULL) && (SETP(p)->size < MinHLoad*(SETP(p)->mask+1)))
 
 /*
  * Definitions and declarations used for storage management.
@@ -542,6 +542,7 @@ do { \
       	T_Proc,\
       	sizeof(struct b_proc),\
       	Cat(Z,f),\
+        0,\
       	nargs,\
    	0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
@@ -559,6 +560,7 @@ do { \
    	T_Proc,\
    	sizeof(struct b_proc),\
    	Cat(O,f),\
+        0,\
    	nargs,\
    	0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
@@ -574,7 +576,7 @@ do { \
    	T_Proc,\
    	sizeof(struct b_proc),\
    	Cat(K,f),\
-   	0,0,0,0,0,0,0,0,0,\
+   	0,0,0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         0,0,0,  \
@@ -798,3 +800,10 @@ do {                   \
         goto *(((struct c_frame *)(G))->pc);      \
     }\
 } while(0)
+
+#define PF (k_current->curr_pf)
+#define SP (k_current->sp)
+#define CurrProc (PF->proc)
+#define Ipc (PF->ipc)
+#define GetWord (*Ipc++)
+

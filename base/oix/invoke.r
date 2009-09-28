@@ -5,7 +5,291 @@
 #include "../h/opdefs.h"
 #include "../h/modflags.h"
 
+static struct frame *construct_record2(dptr expr, int argc);
+static struct frame *construct_object2(dptr expr, int argc);
+static struct frame *invoke_proc2(dptr expr, int argc);
+
+void do_invoke2()
+{
+    word clo, argc;
+    dptr expr;
+    struct frame *f;
+    clo = GetWord;
+    expr = get_dptr();
+    argc = GetWord;
+
+    type_case *expr of {
+      class: {
+            f = construct_object2(expr, argc);
+        }
+
+      constructor: {
+            f =  construct_record2(expr, argc);
+        }
+
+      methp: {
+            /*return invoke_methp(nargs, newargp, cargp_ptr, nargs_ptr);*/
+        }
+
+      proc: {
+            f = invoke_proc2(expr, argc);
+        }
+
+     default: {
+         /*return invoke_misc(nargs, newargp, cargp_ptr, nargs_ptr);*/
+        }
+    }
+
+    f->failure_label = get_addr();
+    PF->clo[clo] = f;
+    push_frame(f);
+
+    switch (f->type) {
+        case C_FRAME_TYPE: {
+            if (!f->proc->ccode(f)) {
+                pop_to(f->parent_sp);
+                Ipc = f->failure_label;
+            }
+            break;
+        }
+        case P_FRAME_TYPE: {
+            struct p_frame *pf = (struct p_frame *)f;
+            pf->caller = PF;
+            PF = pf;
+            Ipc = pf->proc->icode;
+            break;
+        }
+        default:
+            syserr("Unknown frame type");
+    }
+
+
+}
+
+#define CustomProc(f,nparam,ndynam,nclo,ntmp,nlab,nmark,sname)\
+struct b_iproc Cat(B,f) = {\
+   	T_Proc,\
+   	sizeof(struct b_proc),\
+   	0,\
+        Cat(f,_code),\
+   	nparam,\
+   	ndynam,\
+        0,0,0,\
+        nclo,ntmp,nlab,nmark,\
+        0,0,0,0,0,\
+   	{sizeof(sname) - 1, sname},\
+        0,0};
+
+static word echo_code[] = {
+    Op_Move,
+       Op_Tmp, 0,
+       Op_Arg, 0,
+    Op_Succeed,
+       Op_Tmp, 0,
+    Op_Fail
+};
+CustomProc(echo,1,0,0,1,0,0,"internal:echo")
+
+static void ensure_class_initialized();
+
+static void check_if_uninitialized()
+{
+    dptr class0 = get_dptr();  /* Class */
+    word *a = get_addr();
+    if (BlkLoc(*class0)->class.init_state != Uninitialized)
+        Ipc = a;
+    printf("check_if_uninitialized\n");
+}
+
+static void set_class_state()
+{
+    dptr class0 = get_dptr();  /* Class */
+    struct descrip val;
+    get_deref(&val);      /* Value */
+    BlkLoc(*class0)->class.init_state = IntVal(val);
+    printf("set_class_state to %d\n", IntVal(val));
+}
+
+void dump_code(int n)
+{
+    int i;
+    for (i = 0; i < n; ++i) {
+        printf("%d (%p) = %d\n", i, &PF->code_start[i], PF->code_start[i]);
+    }
+}
+
+static void for_class_supers()
+{
+    dptr class0 = get_dptr();  /* Class */
+    dptr i = get_dptr();       /* Index */
+    dptr res = get_dptr();     /* Result */
+    word *a = get_addr();      /* Branch when done */
+    printf("for_class_supers (i=%d of %d)\n", IntVal(*i), BlkLoc(*class0)->class.n_supers);
+    /*showstack();*/
+    if (IntVal(*i) < BlkLoc(*class0)->class.n_supers) {
+        res->dword = D_Class;
+        BlkLoc(*res) = (union block *)BlkLoc(*class0)->class.supers[IntVal(*i)];
+        IntVal(*i) += 1;
+    } else
+        Ipc = a;
+}
+
+static void invoke_class_init()
+{
+    dptr d = get_dptr();  /* Class */
+    struct b_class *class0 = (struct b_class *)BlkLoc(*d);
+    struct class_field *init_field;
+    printf("invoke_class_init %p\n", class0);
+    init_field = class0->init_field;
+    if (init_field && init_field->defining_class == class0) {
+        struct b_proc *bp;
+        struct p_frame *pf;
+        /*
+         * Check the initial function is a static method.
+         */
+        if ((init_field->flags & (M_Method | M_Static)) != (M_Method | M_Static))
+            syserr("init field not a static method");
+        bp = (struct b_proc *)BlkLoc(*init_field->field_descriptor);
+        MemProtect(pf = alc_p_frame(bp, 0));
+        push_frame((struct frame *)pf);
+        pf->failure_label = Ipc;
+        pf->caller = PF;
+        PF = pf;
+        Ipc = pf->proc->icode;
+    }
+}
+
+static word ensure_class_initialized_code[] = {
+/*  0 */      Op_Custom, (word)check_if_uninitialized,
+/*  2 */         Op_Arg, 0,
+/*  4 */         41*WordSize,
+/*  5 */      Op_Custom, (word)set_class_state,
+/*  7 */         Op_Arg, 0,
+/*  9 */         Op_Int, Initializing,
+/* 11 */      Op_Move,
+/* 12 */         Op_Tmp, 0,
+/* 14 */         Op_Int, 0,
+/* 16 */      Op_Custom, (word)for_class_supers,
+/* 18 */         Op_Arg, 0,
+/* 20 */         Op_Tmp, 0,
+/* 22 */         Op_Tmp, 1,
+/* 24 */         31*WordSize,
+/* 25 */      Op_Custom, (word)ensure_class_initialized,
+/* 27 */         Op_Tmp, 1,
+/* 29 */      Op_Goto, 
+/* 30 */         16*WordSize,
+/* 31 */      Op_Custom, (word)invoke_class_init,
+/* 33 */         Op_Arg, 0,
+/* 35 */      Op_Custom, (word)set_class_state,
+/* 37 */         Op_Arg, 0,
+/* 39 */         Op_Int, Initialized,
+/* 41 */      Op_Fail
+};
+
+CustomProc(ensure_class_initialized,1,0,0,2,0,0,"internal:ensure_class_initialized")
+
+static void ensure_class_initialized()
+{
+    struct p_frame *pf;
+    dptr d = get_dptr();
+    printf("ensure_class_initialized ");print_desc(stdout,d);printf("\n");
+    MemProtect(pf = alc_p_frame((struct b_proc *)&Bensure_class_initialized, 0));
+    push_frame((struct frame *)pf);
+    pf->failure_label = Ipc;
+    pf->locals->args[0] = *d;
+    pf->caller = PF;
+    PF = pf;
+    Ipc = pf->proc->icode;
+}
+
+static word construct_object_code[] = {
+    Op_Custom, (word)ensure_class_initialized,
+       Op_Arg, 0,
+    Op_CreateObject,
+       Op_Tmp, 0,
+       Op_Arg, 0,
+    Op_Succeed,
+       Op_Tmp, 0,
+    Op_Fail
+};
+CustomProc(construct_object,1,0,0,1,0,0,"internal:construct_object")
+
+static struct frame *construct_object2(dptr expr, int argc)
+{
+    struct p_frame *pf;
+    MemProtect(pf = alc_p_frame((struct b_proc *)&Bconstruct_object, 0));
+    pf->locals->args[0] = *expr;
+    return (struct frame *)pf;
+}
+
+static struct frame *construct_record2(dptr expr, int argc)
+{
+    struct p_frame *pf;
+    struct b_constructor *con;
+    struct b_record *rec;
+    int i, n;
+
+    MemProtect(pf = alc_p_frame((struct b_proc *)&Becho, 0));
+    con = (struct b_constructor*)BlkLoc(*expr);
+    MemProtect(rec = alcrecd(con));
+
+    pf->locals->args[0].dword = D_Record;
+    BlkLoc(pf->locals->args[0]) = (union block *)rec;
+    n = Min(argc, con->n_fields);
+    for (i = 0; i < n; ++i) 
+        get_deref(&rec->fields[i]);
+
+    return (struct frame *)pf;
+}
+
+static struct frame *invoke_proc2(dptr expr, int argc)
+{
+    struct b_proc *bp = (struct b_proc *)BlkLoc(*expr);
+    int i;
+    if (bp->icode) {
+        /* Icon procedure */
+        struct p_frame *pf;
+        MemProtect(pf = alc_p_frame(bp, 0));
+        for (i = 0; i < argc; ++i) {
+            if (i < bp->nparam)
+                get_deref(&pf->locals->args[i]);
+            else
+                get_deref(&trashcan);
+        }
+        while (i < bp->nparam)
+            pf->locals->args[i++] = nulldesc;
+
+        return (struct frame *)pf;
+    } else {
+        /* Builtin */
+        struct c_frame *cf;
+        MemProtect(cf = alc_c_frame(bp, Max(argc, bp->nparam)));
+        if (bp->underef) {
+            for (i = 0; i < argc; ++i)
+                get_variable(&cf->args[i]);
+        } else {
+            for (i = 0; i < argc; ++i)
+                get_deref(&cf->args[i]);
+        }
+        while (i < bp->nparam)
+            cf->args[i++] = nulldesc;
+        return (struct frame *)cf;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 #begdef invoke_macro(invoke_methp,invoke_misc,invoke_proc,construct_object,construct_record,invoke,e_ecall,e_pcall,e_objectcreate,e_rcreate)
+
 
 static int invoke_methp(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
 static int invoke_misc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr);
@@ -13,6 +297,12 @@ static int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
 static int construct_object(int nargs, dptr newargp);
 static int construct_record(int nargs, dptr newargp);
 static dptr do_new_invoke(dptr top);
+
+
+
+
+
+
 
 
 /*
@@ -287,7 +577,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
     /*
      * Point ipc at the icode entry point of the procedure being invoked.
      */
-    ipc = (word *)proc0->entryp.icode;
+    ipc = proc0->icode;
 
     /*
      * Enter the program state of the procedure being invoked
@@ -399,10 +689,12 @@ static int construct_record(int nargs, dptr newargp)
     return I_Continue;
 }
 
+
 #enddef
 
 invoke_macro(invoke_methp_0,invoke_misc_0,invoke_proc_0,construct_object_0,construct_record_0,invoke_0,0,0,0,0)
 invoke_macro(invoke_methp_1,invoke_misc_1,invoke_proc_1,construct_object_1,construct_record_1,invoke_1,E_Ecall,E_Pcall,E_Objectcreate,E_Rcreate)
+
 
 void ensure_initialized(struct b_class *class0)
 {

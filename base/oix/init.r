@@ -1020,7 +1020,7 @@ void resolve(struct progstate *p)
                 /* Relocate the name */
                 StrLoc(pp->name) = p->Strcons + (uword)StrLoc(pp->name);
                 /* The entry point */
-                pp->entryp.icode = p->Code + pp->entryp.ioff;
+                pp->icode = (word *)(p->Code + (uword)pp->icode);
                 /* The statics */
                 if (pp->nstatic == 0)
                     pp->fstatic = 0;
@@ -1179,7 +1179,7 @@ void resolve(struct progstate *p)
                      * This is an Icon procedure.  Relocate the entry point and
                      *	the names of the parameters, locals, and static variables.
                      */
-                    pp->entryp.icode = p->Code + pp->entryp.ioff;
+                    pp->icode = (word *)(p->Code + (uword)pp->icode);
                     pp->lnames = (dptr)(p->Code + (uword)pp->lnames);
                     if (pp->llocs)
                         pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
@@ -1316,6 +1316,7 @@ int valid_addr(void *p)
 #endif
 }
 
+/***
 static int isdescrip(word *p){
     struct descrip *d = (struct descrip *)p;
     word i = d->dword;
@@ -1337,6 +1338,7 @@ static int isdescrip(word *p){
 
     return 0;
 }
+***/
 
 char *binstr(unsigned int n)
 {
@@ -1512,153 +1514,74 @@ void print_dword(FILE *f, dptr d) {
     }
 }
 
-static int isframe_pf(struct pf_marker *pf, word *p);
-static int isframe_ef(struct ef_marker *ef, word *p);
-static int isframe_gf(struct gf_marker *gf, word *p);
-
-enum frames { not=0, PF, EF, GF };
-
-static int isframe(word *p) {
-    int i;
-    if ((i = isframe_pf(pfp,p)) ||
-        (i = isframe_ef(efp,p)) ||
-        (i = isframe_gf(gfp,p)))
-        return i;
-    return 0;
-}
-
-static int isframe_pf(struct pf_marker *pf, word *p) {
-    int i;
-    if (!pf)
-        return 0;
-    if (p == (word*)pf)
-        return PF;
-    if ((i = isframe_pf(pf->pf_pfp,p)) ||
-        (i = isframe_ef(pf->pf_efp,p)) ||
-        (i = isframe_gf(pf->pf_gfp,p)))
-        return i;
-    return 0;
-}
-
-static int isframe_ef(struct ef_marker *ef, word *p) {
-    int i;
-    if (!ef)
-        return 0;
-    if (p == (word*)ef)
-        return EF;
-    if ((i = isframe_ef(ef->ef_efp,p)) ||
-        (i = isframe_gf(ef->ef_gfp,p)))
-        return i;
-    return 0;
-}    
-
-static int isframe_gf(struct gf_marker *gf, word *p) 
-{
-    int i;
-    if (!gf)
-        return 0;
-    if (p == (word*)gf)
-        return GF;
-    if ((i = isframe_ef(gf->gf_efp,p)) ||
-        (i = isframe_gf(gf->gf_gfp,p)))
-/*        (i = isframe_pf(gf->gf_pfp,p))) */
-        return i;
-    return 0;
-}    
-
-char *ptr(void *p) {
-    if (p == pfp)
-        return "pfp->";
-    else if (p == efp)
-        return "efp->";
-    else if (p == gfp)
-        return "gfp->";
-    else if (p == sp)
-        return "sp->";
-    else if (p == argp)
-        return "argp->";
-    else
-        return "";
-}
-
 void showstack()
 {
+    struct frame *f;
     struct b_coexpr *c;
-    word *p;
-
-    printf("Stack sp=%p efp=%p gfp=%p pfp=%p ipc=%p\n",sp,efp,gfp,pfp,ipc);
+    f = k_current->sp;
+    printf("Stack k_current->sp=%p k_current->curr_pf=%p\n",f, k_current->curr_pf);
     c = k_current;
     if (!c) {
         printf("curpstate=%p k_current is 0\n",curpstate);
         return;
     }    
-    printf("kcurr->\t%p\tcoex\ttitle=%ld\n", c, (long)c->title);
-    printf("\t\t\tsize=%ld\n",(long)c->size);
-    printf("\t\t\tid=%ld\n",(long)c->id);
-    printf("\t\t\tnextstk=%p\n",c->nextstk);
-    printf("\t\t\tes_pfp=%p\n",c->es_pfp);
-    printf("\t\t\tes_efp=%p\n",c->es_efp);
-    printf("\t\t\tes_gfp=%p\n",c->es_gfp);
-    printf("\t\t\tes_ipc=%p\n",c->es_ipc);
-    printf("\t\t\tes_ilevel=%ld\n",(long)c->es_ilevel);
-    printf("\t\t\tprogram=%p\n",c->program);
-
-    if (c == rootpstate.K_main) {
-        p = stack + Wsizeof(struct b_coexpr);
-    } else {
-        p = (word *)(c + 1);
-    }
-
-    while (p <= sp) {
-        int ft = isframe(p);
-        if (ft == GF) {
-            struct gf_marker *t = (struct gf_marker*)p;
-            printf("%s\t%p\tgfp\tgf_gentype=%ld\n",ptr(p),p,(long)t->gf_gentype);
-            printf("\t\t\tgf_efp=%p\n",t->gf_efp);
-            printf("\t\t\tgf_gfp=%p\n",t->gf_gfp);
-            printf("%s\t\t\tgf_ipc=%p\n",ptr(&t->gf_ipc),t->gf_ipc);
-            /* Is it a small marker or not */
-            if (t->gf_gentype == G_Psusp) {
-                printf("\t\t\tgf_pfp=%p\n",t->gf_pfp);
-                printf("%s\t\t\tgf_argp=%p\n",ptr(&t->gf_argp),t->gf_argp);
-                p += sizeof(struct gf_marker)/sizeof(word);
-            } else {
-                p += sizeof(struct gf_smallmarker)/sizeof(word);
+    while (f) {
+        struct descrip tmp;
+        int i;
+        printf("Frame %p type=%d\n", f, f->type);
+        printf("\tvalue="); print_desc(stdout, &f->value); printf("\n");
+        printf("\tfailure_label=%p\n", f->failure_label);
+        tmp.dword = D_Proc;
+        BlkLoc(tmp) = (union block *)f->proc;
+        printf("\tproc="); print_vword(stdout, &tmp); printf("\n");
+        printf("\tparent_sp=%p\n", f->parent_sp);
+        switch (f->type) {
+            case C_FRAME_TYPE: {
+                struct c_frame *cf = (struct c_frame *)f;
+                printf("\tpc=%p\n", cf->pc);
+                printf("\tnargs=%d\n", cf->nargs);
+                for (i = 0; i < cf->nargs; ++i) {
+                    printf("\targs[%d]=", i); print_desc(stdout, &cf->args[i]); printf("\n");
+                }
+                for (i = 0; i < f->proc->ntend; ++i) {
+                    printf("\ttend[%d]=", i); print_desc(stdout, &cf->tend[i]); printf("\n");
+                }
+                break;
             }
-        } else if (ft == EF) {
-            struct ef_marker *t = (struct ef_marker*)p;
-            printf("%s\t%p\tefp\tef_failure=%p\n",ptr(p),p,t->ef_failure);
-            printf("\t\t\tef_efp=%p\n",t->ef_efp);
-            printf("\t\t\tef_gfp=%p\n",t->ef_gfp);
-            printf("%s\t\t\tef_ilevel=%ld\n",ptr(&t->ef_ilevel),(long)t->ef_ilevel);
-            p += sizeof(struct ef_marker)/sizeof(word);
-        } else if (ft == PF) {
-            struct pf_marker *t = (struct pf_marker*)p;
-            printf("%s\t%p\tpfp\tn_args=%ld\n",ptr(p),p,(long)t->pf_nargs);
-            printf("\t\t\tpf_pfp=%p\n",t->pf_pfp);
-            printf("\t\t\tpf_efp=%p\n",t->pf_efp);
-            printf("\t\t\tpf_gfp=%p\n",t->pf_gfp);
-            printf("\t\t\tpf_argp=%p\n",t->pf_argp);
-            printf("\t\t\tpf_ipc=%p\n",t->pf_ipc);
-            printf("\t\t\tpf_ilevel=%ld\n",(long)t->pf_ilevel);
-            printf("\t\t\tpf_scan=%p\n",t->pf_scan);
-            printf("\t\t\tpf_from=%p\n",t->pf_from);
-            printf("%s\t\t\tpf_to=%p\n",ptr(&t->pf_to),t->pf_to);
-            p += (sizeof(struct pf_marker)-sizeof(struct descrip))/sizeof(word);
-        } else if (isdescrip(p)) {
-            dptr d = (dptr)p;
-            printf("%s\t%p\tdescrip\t", ptr(p), p);
-            print_dword(stdout, d);
-            putc('\n', stdout);
-            printf("%s\t\t\t", ptr(&d->vword));
-            print_vword(stdout, d);
-            putc('\n', stdout);
-            p += sizeof(struct descrip)/sizeof(word);
-        } else {
-            printf("%s\t%p\t?\t%lx\n",ptr(p),p,(long)*p);
-            ++p;
+            case P_FRAME_TYPE: {
+                struct p_frame *pf = (struct p_frame *)f;
+                printf("\tipc=%p\n", pf->ipc);
+                printf("\tcode_start=%p\n", pf->code_start);
+                printf("\tcaller=%p\n", pf->caller);
+                for (i = 0; i < f->proc->nclo; ++i) {
+                    printf("\tclo[%d]=%p\n", i, pf->clo[i]);
+                }
+                for (i = 0; i < f->proc->ntmp; ++i) {
+                    printf("\ttmp[%d]=", i); print_desc(stdout, &pf->tmp[i]); printf("\n");
+                }
+                for (i = 0; i < f->proc->nlab; ++i) {
+                    printf("\tlab[%d]=%p\n", i, pf->lab[i]);
+                }
+                for (i = 0; i < f->proc->nmark; ++i) {
+                    printf("\tmark[%d]=%p\n", i, pf->mark[i]);
+                }
+                printf("\tlocals=%p\n", pf->locals);
+                for (i = 0; i < f->proc->ndynam; ++i) {
+                    printf("\tlocals.dynamic[%d]=", i); print_desc(stdout, &pf->locals->dynamic[i]); printf("\n");
+                }
+                for (i = 0; i < f->proc->nparam; ++i) {
+                    printf("\tlocals.args[%d]=", i); print_desc(stdout, &pf->locals->args[i]); printf("\n");
+                }
+                printf("\tlocals.refcnt=%d\n", pf->locals->refcnt);
+                printf("\tlocals.seen=%d\n", pf->locals->seen);
+                break;
+            }
+            default:
+                syserr("Unknown frame type");
         }
+        f = f->parent_sp;
+
     }
-    printf("--------\n");
+
     fflush(stdout);
 }

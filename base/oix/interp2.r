@@ -1,13 +1,9 @@
 #include "../h/opdefs.h"
 #include "../h/opnames.h"
 
-#define PF (k_current->curr_pf)
-#define SP (k_current->sp)
-#define CurrProc (PF->proc)
-#define Ipc (PF->ipc)
-#define GetWord (*Ipc++)
-
 #define OPCODES 0
+
+word *curr_op_addr;
 
 void push_frame(struct frame *f)
 {
@@ -28,7 +24,7 @@ void push_c_frame(struct c_frame *f)
     SP = (struct frame *)f;
 }
 
-static void pop_to(struct frame *f)
+void pop_to(struct frame *f)
 {
     while (SP != f) {
         struct frame *t = SP;
@@ -39,18 +35,18 @@ static void pop_to(struct frame *f)
     }
 }
 
-static word *get_addr()
+word *get_addr()
 {
     word w = GetWord;
-    return (word *)(curpstate->Code + w);
+    return (word *)((char *)PF->code_start + w);
 }
 
-static word get_offset(word *w)
+word get_offset(word *w)
 {
-    return DiffPtrsBytes(w, curpstate->Code);
+    return DiffPtrsBytes(w, PF->code_start);
 }
 
-static dptr get_dptr()
+dptr get_dptr()
 {
     word op = GetWord;
 #if OPCODES
@@ -86,7 +82,7 @@ static dptr get_dptr()
     }
 }
 
-static void move_descrip(dptr dest)
+void move_descrip(dptr dest)
 {
     word op = GetWord;
 #if OPCODES
@@ -137,7 +133,7 @@ static void move_descrip(dptr dest)
     }
 }
 
-static void get_deref(dptr dest)
+void get_deref(dptr dest)
 {
     word op = GetWord;
 #if OPCODES
@@ -188,7 +184,7 @@ static void get_deref(dptr dest)
     }
 }
 
-static void get_variable(dptr dest)
+void get_variable(dptr dest)
 {
     word op = GetWord;
 #if OPCODES
@@ -256,7 +252,7 @@ static void do_op(int op, int nargs)
             get_deref(&cf->args[i]);
     }
     cf->failure_label = get_addr();
-    if (bp->entryp.ccode(cf)) {
+    if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
@@ -282,7 +278,7 @@ static void do_opclo(int op, int nargs)
     }
     cf->failure_label = get_addr();
     PF->clo[clo] = (struct frame *)cf;
-    if (!bp->entryp.ccode(cf)) {
+    if (!bp->ccode(cf)) {
         pop_to(cf->parent_sp);
         Ipc = cf->failure_label;
     }
@@ -300,7 +296,7 @@ static void do_keyop()
     MemProtect(cf = alc_c_frame(bp, 0));
     push_c_frame(cf);
     cf->failure_label = get_addr();
-    if (bp->entryp.ccode(cf)) {
+    if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
@@ -313,10 +309,11 @@ void interp2()
 {
     word op;
     for (;;) {
+        curr_op_addr = Ipc;
         op = GetWord;
 #if OPCODES
         fprintf(stderr, "ipc:%p(%d)  ", Ipc, (char*)Ipc - curpstate->Code - WordSize);
-        fprintf(stderr, "op=%d(%s)\n", op, op_names[op]);
+        fprintf(stderr, "op=%d(%s)\n", op, op_names[op]);fflush(stderr);
 #endif
         switch (op) {
             case Op_Goto: {
@@ -417,7 +414,7 @@ void interp2()
                 f = PF->clo[clo];
                 switch (f->type) {
                     case C_FRAME_TYPE: {
-                        if (!f->proc->entryp.ccode(f)) {
+                        if (!f->proc->ccode(f)) {
                             pop_to(f->parent_sp);
                             Ipc = f->failure_label;
                         }
@@ -495,58 +492,32 @@ void interp2()
             }
 
             case Op_Invoke: {
-                word clo, argc;
-                dptr expr;
-                struct b_proc *bp;
-                int i;
-                clo = GetWord;
-                expr = get_dptr();
-                argc = GetWord;
-                if (!is:proc(*expr)) {
-                    err_msg(106, expr);
-                    exit(1);
-                }
-                bp = (struct b_proc *)BlkLoc(*expr);
-                if (bp->program) {
-                    /* Icon procedure */
-                    struct p_frame *pf;
-                    MemProtect(pf = alc_p_frame(bp, 0));
-                    for (i = 0; i < argc; ++i) {
-                        if (i < bp->nparam)
-                            get_deref(&pf->locals->args[i]);
-                        else
-                            get_deref(&trashcan);
-                    }
-                    while (i < bp->nparam)
-                        pf->locals->args[i++] = nulldesc;
-                    PF->clo[clo] = (struct frame *)pf;
-                    pf->failure_label = get_addr();
-                    push_frame((struct frame *)pf);
-                    pf->caller = PF;
-                    PF = pf;
-                    Ipc = bp->entryp.icode;
-                } else {
-                    /* Builtin */
-                    struct c_frame *cf;
-                    MemProtect(cf = alc_c_frame(bp, Max(argc, bp->nparam)));
-                    if (bp->underef) {
-                        for (i = 0; i < argc; ++i)
-                            get_variable(&cf->args[i]);
-                    } else {
-                        for (i = 0; i < argc; ++i)
-                            get_deref(&cf->args[i]);
-                    }
-                    cf->failure_label = get_addr();
-                    while (i < bp->nparam)
-                        cf->args[i++] = nulldesc;
-                    PF->clo[clo] = (struct frame *)cf;
-                    push_frame((struct frame *)cf);
-                    if (!bp->entryp.ccode(cf)) {
-                        pop_to(cf->parent_sp);
-                        Ipc = cf->failure_label;
-                    }
-                }
+                do_invoke2();
+                break;
+            }
 
+            case Op_EnterInit: {
+                get_addr();
+                /* Change Op_EnterInit to an Op_Goto */
+                Ipc[-2] = Op_Goto;
+                break;
+            }
+
+            case Op_Custom: {
+                word w = GetWord;
+                int (*ccode)() = (int (*)())w;
+	        ccode();
+                break;
+            }
+
+            case Op_CreateObject: {
+                dptr t = get_dptr();
+                dptr d = get_dptr();
+                struct b_class *class0 = (struct b_class*)BlkLoc(*d);
+                struct b_object *object0; /* Doesn't need to be tended */
+                MemProtect(object0 = alcobject(class0));
+                t->dword = D_Object;
+                BlkLoc(*t) = (union block *)object0;
                 break;
             }
 
