@@ -142,3 +142,4 @@
 #define Op_ScanSave     219
 #define Op_ScanRestore  220
 #define Op_Succeed      221
+#define Op_SysErr       222

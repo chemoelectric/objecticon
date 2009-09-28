@@ -709,6 +709,12 @@ static void lemitcode()
                     outword(Op_Fail);
                     break;
                 }
+                case Ir_SysErr: {
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tsysErr\n", (long)pc);
+                    outword(Op_SysErr);
+                    break;
+                }
                 case Ir_Succeed: {
                     struct ir_succeed *x = (struct ir_succeed *)ir;
                     if (Dflag)

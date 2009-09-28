@@ -20,6 +20,7 @@
 #define Ir_ScanSave  19
 #define Ir_ScanRestore 20
 #define Ir_Succeed   21
+#define Ir_SysErr   22
 
 struct scan_info {
     struct ir_var *old_subject, *old_pos;
