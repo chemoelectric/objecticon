@@ -3,8 +3,6 @@
 
 #define OPCODES 0
 
-word *curr_op_addr;
-
 void tail_invoke_frame(struct frame *f, word *failure_label)
 {
     switch (f->type) {
@@ -52,7 +50,7 @@ void pop_to(struct frame *f)
         struct frame *t = SP;
         SP = SP->parent_sp;
         if (!SP)
-            syserr("Op_Unmark target not found on stack");
+            syserr("pop_to: target not found on stack");
         free_frame(t);
     }
 }
@@ -66,6 +64,13 @@ word *get_addr()
 word get_offset(word *w)
 {
     return DiffPtrsBytes(w, PF->code_start);
+}
+
+struct inline_field_cache *get_inline_field_cache()
+{
+    struct inline_field_cache *t = (struct inline_field_cache *)Ipc;
+    Ipc += 2;
+    return t;
 }
 
 dptr get_dptr()
@@ -98,8 +103,8 @@ dptr get_dptr()
         }
 
         default: {
-            fprintf(stderr, "Invalid opcode in get_dptr: %d (%s)\n", op, op_names[op]);
-            exit(1);
+            syserr("Invalid opcode in get_dptr: %d (%s)\n", op, op_names[op]);
+            return 0;
         }
     }
 }
@@ -149,8 +154,7 @@ void move_descrip(dptr dest)
         }
 
         default: {
-            fprintf(stderr, "Invalid opcode in move_descrip: %d (%s)\n", op, op_names[op]);
-            exit(1);
+            syserr("Invalid opcode in move_descrip: %d (%s)\n", op, op_names[op]);
         }
     }
 }
@@ -200,8 +204,7 @@ void get_deref(dptr dest)
         }
 
         default: {
-            fprintf(stderr, "Invalid opcode in get_descrip: %d (%s)\n", op, op_names[op]);
-            exit(1);
+            syserr("Invalid opcode in get_descrip: %d (%s)\n", op, op_names[op]);
         }
     }
 }
@@ -251,8 +254,7 @@ void get_variable(dptr dest)
         }
 
         default: {
-            fprintf(stderr, "Invalid opcode in get_variable: %d (%s)\n", op, op_names[op]);
-            exit(1);
+            syserr("Invalid opcode in get_variable: %d (%s)\n", op, op_names[op]);
         }
     }
 }
@@ -346,7 +348,7 @@ void interp2()
 {
     word op;
     for (;;) {
-        curr_op_addr = Ipc;
+        PF->curr_inst = Ipc;
         op = GetWord;
 #if OPCODES
         fprintf(stderr, "ipc:%p(%d)  ", Ipc, (char*)Ipc - curpstate->Code - WordSize);
@@ -464,6 +466,21 @@ void interp2()
                 break;
             }
 
+            case Op_Pop: {
+                struct p_frame *t = PF;
+                PF = PF->caller;
+                pop_to(t->parent_sp);
+                break;
+            }
+
+            case Op_PopRepeat: {
+                struct p_frame *t = PF;
+                PF = PF->caller;
+                pop_to(t->parent_sp);
+                Ipc = PF->curr_inst;
+                break;
+            }
+
             case Op_Succeed: {
                 move_descrip(&PF->value);
                 PF = PF->caller;
@@ -525,6 +542,16 @@ void interp2()
                 break;
             }
 
+            case Op_Invokef: {
+                do_invokef();
+                break;
+            }
+
+            case Op_Applyf: {
+                do_applyf();
+                break;
+            }
+
             case Op_EnterInit: {
                 get_addr();
                 /* Change Op_EnterInit to an Op_Goto */
@@ -547,6 +574,11 @@ void interp2()
 
             case Op_MakeList: {
                 do_makelist();
+                break;
+            }
+
+            case Op_Field: {
+                do_field();
                 break;
             }
 

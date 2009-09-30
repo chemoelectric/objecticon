@@ -59,8 +59,24 @@ $start construct_object0
     Op_Fail
 $end
 
-$start construct_record
+$start generate_arg
     Op_Succeed
        Op_Arg arg:0
     Op_Fail
+$end
+
+#
+# This frame simply initializes the given class, then pops itself and repeats
+# the last instruction in the calling frame.
+#
+$start initialize_class_and_repeat
+    Op_Custom c:ensure_class_initialized
+       Op_Arg arg:0
+    Op_PopRepeat
+$end
+
+$start get_impl
+    Op_Halt
+         Op_Arg arg:0
+         Op_Arg arg:1
 $end

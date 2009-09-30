@@ -830,6 +830,31 @@ static void lemitcode()
                         emit_ir_var(x->args[i], "arg");
                     break;
                 }
+                case Ir_Invokef: {
+                    struct ir_invokef *x = (struct ir_invokef *)ir;
+                    struct fentry *fp;
+                    int i;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tinvokef\n", (long)pc);
+                    outword(Op_Invokef);
+                    word_field(x->clo, "clo");
+                    emit_ir_var(x->expr, "expr");
+                    fp = flocate(x->fname);
+                    if (fp)
+                        word_field(fp->field_id, "field number");
+                    else {
+                        /* Get or create an unref record */
+                        struct unref *p = get_unref(x->fname);
+                        word_field(p->num, "field number");
+                    }
+                    word_field(0, "inline cache");
+                    word_field(0, "inline cache");
+                    word_field(x->argc, "argc");
+                    labout(x->fail_label, "fail");
+                    for (i = 0; i < x->argc; ++i) 
+                        emit_ir_var(x->args[i], "arg");
+                    break;
+                }
                 case Ir_Apply: {
                     struct ir_apply *x = (struct ir_apply *)ir;
                     if (Dflag)
@@ -838,6 +863,49 @@ static void lemitcode()
                     word_field(x->clo, "clo");
                     emit_ir_var(x->arg1, "arg1");
                     emit_ir_var(x->arg2, "arg2");
+                    labout(x->fail_label, "fail");
+                    break;
+                }
+                case Ir_Applyf: {
+                    struct ir_applyf *x = (struct ir_applyf *)ir;
+                    struct fentry *fp;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tapplyf\n", (long)pc);
+                    outword(Op_Applyf);
+                    word_field(x->clo, "clo");
+                    emit_ir_var(x->arg1, "arg1");
+                    fp = flocate(x->fname);
+                    if (fp)
+                        word_field(fp->field_id, "field number");
+                    else {
+                        /* Get or create an unref record */
+                        struct unref *p = get_unref(x->fname);
+                        word_field(p->num, "field number");
+                    }
+                    word_field(0, "inline cache");
+                    word_field(0, "inline cache");
+                    emit_ir_var(x->arg2, "arg2");
+                    labout(x->fail_label, "fail");
+                    break;
+                }
+                case Ir_Field: {
+                    struct ir_field *x = (struct ir_field *)ir;
+                    struct fentry *fp;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tfield\n", (long)pc);
+                    outword(Op_Field);
+                    emit_ir_var(x->lhs, "lhs");
+                    emit_ir_var(x->expr, "expr");
+                    fp = flocate(x->fname);
+                    if (fp)
+                        word_field(fp->field_id, "field number");
+                    else {
+                        /* Get or create an unref record */
+                        struct unref *p = get_unref(x->fname);
+                        word_field(p->num, "field number");
+                    }
+                    word_field(0, "inline cache");
+                    word_field(0, "inline cache");
                     labout(x->fail_label, "fail");
                     break;
                 }

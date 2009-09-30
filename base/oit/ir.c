@@ -457,6 +457,60 @@ static struct ir_apply *ir_apply(struct lnode *n,
     return res;
 }
 
+static struct ir_invokef *ir_invokef(struct lnode *n,
+                                     int clo,
+                                     struct ir_var *expr,
+                                     char *fname,
+                                     int argc,
+                                     struct ir_var **args,
+                                     int fail_label) 
+{
+    struct ir_invokef *res = IRAlloc(struct ir_invokef);
+    res->node = n;
+    res->op = Ir_Invokef;
+    res->clo = clo;
+    res->expr = expr;
+    res->fname = fname;
+    res->argc = argc;
+    res->args = args;
+    res->fail_label = fail_label;
+    return res;
+}
+
+static struct ir_applyf *ir_applyf(struct lnode *n,
+                                   int clo,
+                                   struct ir_var *arg1,
+                                   char *fname,
+                                   struct ir_var *arg2,
+                                   int fail_label) 
+{
+    struct ir_applyf *res = IRAlloc(struct ir_applyf);
+    res->node = n;
+    res->op = Ir_Applyf;
+    res->clo = clo;
+    res->arg1 = arg1;
+    res->fname = fname;
+    res->arg2 = arg2;
+    res->fail_label = fail_label;
+    return res;
+}
+
+static struct ir_field *ir_field(struct lnode *n,
+                                 struct ir_var *lhs,
+                                 struct ir_var *expr,
+                                 char *fname,
+                                 int fail_label) 
+{
+    struct ir_field *res = IRAlloc(struct ir_field);
+    res->node = n;
+    res->op = Ir_Field;
+    res->lhs = lhs;
+    res->expr = expr;
+    res->fname = fname;
+    res->fail_label = fail_label;
+    return res;
+}
+
 static struct ir_resume *ir_resume(struct lnode *n,
                                    int clo,
                                    int fail_label) 
@@ -921,13 +975,22 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_var *lv, *rv, *clo;
             struct ir_info *left, *right;
+            char *fname = 0;
 
             clo = make_closure(st);
-            lv = get_var(x->child1, st, 0);
-            rv = get_var(x->child2, st, target);
-
-            left = ir_traverse(x->child1, st, lv, 0, 1);
+            if (x->child1->op == Uop_Field) {
+                struct lnode_field *y = (struct lnode_field *)x->child1;
+                lv = get_var(y->child, st, 0);
+                rv = get_var(x->child2, st, target);
+                left = ir_traverse(y->child, st, lv, 0, 1);
+                fname = y->fname;
+            } else {
+                lv = get_var(x->child1, st, 0);
+                rv = get_var(x->child2, st, target);
+                left = ir_traverse(x->child1, st, lv, 0, 1);
+            }
             right = ir_traverse(x->child2, st, rv, 0, 1);
+
 
             chunk1(res->start, ir_goto(n, left->start));
             chunk1(left->success, ir_goto(n, right->start));
@@ -939,10 +1002,16 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                   ir_move(n, target, clo, 0),
                   ir_goto(n, res->success));
 
-            chunk3(right->success, 
-                  ir_apply(n, clo->index, lv, rv, right->resume),
-                  ir_move(n, target, clo, 0),
-                  ir_goto(n, res->success));
+            if (fname)
+                chunk3(right->success, 
+                       ir_applyf(n, clo->index, lv, fname, rv, right->resume),
+                       ir_move(n, target, clo, 0),
+                       ir_goto(n, res->success));
+            else
+                chunk3(right->success, 
+                       ir_apply(n, clo->index, lv, rv, right->resume),
+                       ir_move(n, target, clo, 0),
+                       ir_goto(n, res->success));
 
             res->uses_stack = 1;
 
@@ -1439,6 +1508,27 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
+        case Uop_Field: {                       /* field reference */
+            struct lnode_field *x = (struct lnode_field *)n;
+            struct ir_info *e;
+            struct ir_var *t;
+
+            t = get_var(x->child, st, target);
+            e = ir_traverse(x->child, st, t, 0, 1);
+
+            chunk1(res->start, ir_goto(n, e->start));
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, e->resume));
+            chunk2(e->success, 
+                   ir_field(n, target, t, x->fname, e->resume),
+                   ir_goto(n, res->success));
+            chunk1(e->failure, ir_goto(n, res->failure));
+
+            res->uses_stack = e->uses_stack;
+
+            break;
+        }
+
         case Uop_Slist: {
             struct lnode_n *x = (struct lnode_n *)n;
             int i;
@@ -1535,13 +1625,19 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_var *clo, *fn, **args;
             struct ir_info *expr, **info;
             int i;
+            char *fname = 0;
             clo = make_closure(st);
             fn = make_tmp(st);
             args = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
             info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             for (i = 0; i < x->n; ++i)
                 args[i] = get_var(x->child[i], st, 0);
-            expr = ir_traverse(x->expr, st, fn, 0, 1);
+            if (x->expr->op == Uop_Field) {
+                struct lnode_field *y = (struct lnode_field *)x->expr;
+                expr = ir_traverse(y->child, st, fn, 0, 1);
+                fname = y->fname;
+            } else
+                expr = ir_traverse(x->expr, st, fn, 0, 1);
             for (i = 0; i < x->n; ++i) 
                 info[i] = ir_traverse(x->child[i], st, args[i], 0, 0);
 
@@ -1550,56 +1646,75 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
             if (x->n == 0) {
                 chunk3(res->resume,
-                      ir_resume(n, clo->index, expr->resume),
-                      ir_move(n, target, clo, 0),
-                      ir_goto(n, res->success));
-                chunk3(expr->success,
-                      ir_invoke(n, clo->index, fn, x->n, args, expr->resume),
-                      ir_move(n, target, clo, 0),
-                      ir_goto(n, res->success));
+                       ir_resume(n, clo->index, expr->resume),
+                       ir_move(n, target, clo, 0),
+                       ir_goto(n, res->success));
+                if (fname)
+                    chunk3(expr->success,
+                           ir_invokef(n, clo->index, fn, fname, x->n, args, expr->resume),
+                           ir_move(n, target, clo, 0),
+                           ir_goto(n, res->success));
+                else
+                    chunk3(expr->success,
+                           ir_invoke(n, clo->index, fn, x->n, args, expr->resume),
+                           ir_move(n, target, clo, 0),
+                           ir_goto(n, res->success));
+
             } else if (x->n == 1) {
                 chunk3(res->resume,
-                      ir_resume(n, clo->index, info[0]->resume),
-                      ir_move(n, target, clo, 0),
-                      ir_goto(n, res->success));
+                       ir_resume(n, clo->index, info[0]->resume),
+                       ir_move(n, target, clo, 0),
+                       ir_goto(n, res->success));
                 chunk1(expr->success,
-                      ir_goto(n, info[0]->start));
-                chunk3(info[0]->success,
-                      ir_invoke(n, clo->index, fn, x->n, args, info[0]->resume),
-                      ir_move(n, target, clo, 0),
-                      ir_goto(n, res->success));
+                       ir_goto(n, info[0]->start));
+                if (fname)
+                    chunk3(info[0]->success,
+                           ir_invokef(n, clo->index, fn, fname, x->n, args, info[0]->resume),
+                           ir_move(n, target, clo, 0),
+                           ir_goto(n, res->success));
+                else
+                    chunk3(info[0]->success,
+                           ir_invoke(n, clo->index, fn, x->n, args, info[0]->resume),
+                           ir_move(n, target, clo, 0),
+                           ir_goto(n, res->success));
                 chunk1(info[0]->failure,
-                      ir_goto(n, expr->resume));
+                       ir_goto(n, expr->resume));
             } else { /* x->n > 1 */
                 chunk3(res->resume,
-                      ir_resume(n, clo->index, info[x->n - 1]->resume),
-                      ir_move(n, target, clo, 0),
-                      ir_goto(n, res->success));
+                       ir_resume(n, clo->index, info[x->n - 1]->resume),
+                       ir_move(n, target, clo, 0),
+                       ir_goto(n, res->success));
                 chunk1(expr->success,
-                      ir_goto(n, info[0]->start));
+                       ir_goto(n, info[0]->start));
 
                 /* First one */
                 chunk1(info[0]->success,
-                      ir_goto(n, info[1]->start));
+                       ir_goto(n, info[1]->start));
                 chunk1(info[0]->failure,
-                      ir_goto(n, expr->resume));
+                       ir_goto(n, expr->resume));
 
                 /* Middle ones */
                 for (i = 1; i < x->n - 1; ++i) {
                     chunk1(info[i]->success,
-                          ir_goto(n, info[i + 1]->start));
+                           ir_goto(n, info[i + 1]->start));
                     chunk1(info[i]->failure,
-                          ir_goto(n, info[i - 1]->resume));
+                           ir_goto(n, info[i - 1]->resume));
                 }
 
                 /* Last one */
                 i = x->n - 1;
-                chunk3(info[i]->success,
-                      ir_invoke(n, clo->index, fn, x->n, args, info[x->n - 1]->resume),
-                      ir_move(n, target, clo, 0),
-                      ir_goto(n, res->success));
+                if (fname)
+                    chunk3(info[i]->success,
+                           ir_invokef(n, clo->index, fn, fname, x->n, args, info[x->n - 1]->resume),
+                           ir_move(n, target, clo, 0),
+                           ir_goto(n, res->success));
+                else
+                    chunk3(info[i]->success,
+                           ir_invoke(n, clo->index, fn, x->n, args, info[x->n - 1]->resume),
+                           ir_move(n, target, clo, 0),
+                           ir_goto(n, res->success));
                 chunk1(info[i]->failure,
-                      ir_goto(n, info[i - 1]->resume));
+                       ir_goto(n, info[i - 1]->resume));
             }
 
             res->uses_stack = 1;
@@ -2024,6 +2139,40 @@ static void print_chunk(struct chunk *chunk)
                 fprintf(stderr, ", fail_label=%d\n", x->fail_label);
                 break;
             }
+            case Ir_Invokef: {
+                struct ir_invokef *x = (struct ir_invokef *)ir;
+                int i;
+                indentf("\tIr_Invokef");
+                fprintf(stderr, " clo=%d, ", x->clo);
+                print_ir_var(x->expr);
+                fprintf(stderr, " . %s(", x->fname);
+                for (i = 0; i < x->argc; ++i) {
+                    print_ir_var(x->args[i]);
+                    if (i < x->argc - 1)
+                        fprintf(stderr, ",");
+                }
+                fprintf(stderr, ")");
+                fprintf(stderr, ", fail_label=%d\n", x->fail_label);
+                break;
+            }
+            case Ir_Applyf: {
+                struct ir_applyf *x = (struct ir_applyf *)ir;
+                indentf("\tIr_Applyf clo=%d, ", x->clo);
+                print_ir_var(x->arg1);
+                fprintf(stderr, " . %s ! ", x->fname);
+                print_ir_var(x->arg2);
+                fprintf(stderr, ", fail_label=%d\n", x->fail_label);
+                break;
+            }
+            case Ir_Field: {
+                struct ir_field *x = (struct ir_field *)ir;
+                indentf("\tIr_Field %p ",x);
+                print_ir_var(x->lhs);
+                fprintf(stderr, " <- ");
+                print_ir_var(x->expr);
+                fprintf(stderr, " . %s fail_label=%d\n", x->fname, x->fail_label);
+                break;
+            }
             case Ir_Resume: {
                 struct ir_resume *x = (struct ir_resume *)ir;
                 indentf("\tIr_Resume");
@@ -2275,6 +2424,24 @@ static void optimize_goto1(int i)
                 optimize_goto1(x->fail_label);
                 break;
             }
+            case Ir_Invokef: {
+                struct ir_invokef *x = (struct ir_invokef *)ir;
+                optimize_goto_chain(&x->fail_label);
+                optimize_goto1(x->fail_label);
+                break;
+            }
+            case Ir_Applyf: {
+                struct ir_applyf *x = (struct ir_applyf *)ir;
+                optimize_goto_chain(&x->fail_label);
+                optimize_goto1(x->fail_label);
+                break;
+            }
+            case Ir_Field: {
+                struct ir_field *x = (struct ir_field *)ir;
+                optimize_goto_chain(&x->fail_label);
+                optimize_goto1(x->fail_label);
+                break;
+            }
             case Ir_Resume: {
                 struct ir_resume *x = (struct ir_resume *)ir;
                 optimize_goto_chain(&x->fail_label);
@@ -2462,6 +2629,30 @@ static void renumber_ir()
                     renumber_var(x->arg1);
                     renumber_var(x->arg2);
                     renumber_clo(&x->clo);
+                    break;
+                }
+                case Ir_Invokef: {
+                    struct ir_invokef *x = (struct ir_invokef *)ir;
+                    int i;
+                    renumber_clo(&x->clo);
+                    renumber_var(x->expr);
+                    for (i = 0; i < x->argc; ++i)
+                        renumber_var(x->args[i]);
+                    break;
+                }
+                case Ir_Applyf: {
+                    struct ir_applyf *x = (struct ir_applyf *)ir;
+                    renumber_var(x->arg1);
+                    renumber_var(x->arg2);
+                    renumber_clo(&x->clo);
+                    break;
+                }
+                case Ir_Field: {
+                    struct ir_field *x = (struct ir_field *)ir;
+                    fprintf(stderr,"before:%d\n", x->lhs->index);
+                    renumber_var(x->lhs);
+                    fprintf(stderr,"after:%d\n", x->lhs->index);
+                    renumber_var(x->expr);
                     break;
                 }
                 case Ir_Resume: {

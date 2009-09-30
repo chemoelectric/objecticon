@@ -671,6 +671,7 @@ struct c_frame {
 struct p_frame {
     FRAME_BASE;
     word *ipc;
+    word *curr_inst;
     word *code_start;
     word *failure_label;     
     struct p_frame *caller;

@@ -146,5 +146,6 @@
 #define Op_Custom       223
 #define Op_Halt         224
 #define Op_MakeList     225
+#define Op_PopRepeat    226
 
 
