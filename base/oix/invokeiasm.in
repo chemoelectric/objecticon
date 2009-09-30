@@ -1,0 +1,66 @@
+$start ensure_class_initialized
+      Op_Custom c:check_if_uninitialized
+         Op_Arg arg:0
+         Exit
+      Op_Custom c:set_class_state
+         Op_Arg arg:0
+         Op_Int Initializing
+      Op_Move
+         Op_Tmp tmp:0
+         Op_Int 0
+Loop: 
+      Op_Custom c:for_class_supers
+         Op_Arg arg:0
+         Op_Tmp tmp:0
+         Op_Tmp tmp:1
+         Brk
+      Op_Custom c:ensure_class_initialized
+         Op_Tmp tmp:1
+      Op_Goto 
+         Loop
+Brk:  
+      Op_Mark
+         mark:0
+      Op_Custom c:invoke_class_init
+         Op_Arg arg:0
+         InitFail
+      Op_Unmark
+         mark:0
+InitFail:
+      Op_Custom c:set_class_state
+         Op_Arg arg:0
+         Op_Int Initialized
+Exit: 
+      Op_Fail
+$end
+
+$start construct_object
+    Op_Custom c:ensure_class_initialized
+       Op_Arg arg:0
+    Op_Resume
+       clo:0
+       NewFail
+    Op_Unmark
+       mark:0
+    Op_Succeed
+       Op_Arg arg:1
+NewFail:
+    Op_Fail
+$end
+
+#
+# Construct object closure for class with no "new" function
+#
+$start construct_object0
+    Op_Custom c:ensure_class_initialized
+       Op_Arg arg:0
+    Op_Succeed
+       Op_Arg arg:1
+    Op_Fail
+$end
+
+$start construct_record
+    Op_Succeed
+       Op_Arg arg:0
+    Op_Fail
+$end
