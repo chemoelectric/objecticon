@@ -457,7 +457,7 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     if (cf->flags & M_Public)
         return Succeeded;
 
-    caller_proc = CallerProc;
+    caller_proc = CurrProc;
 
     if (caller_proc->package_id == 1)  /* Is the caller in lang? */
         return Succeeded;

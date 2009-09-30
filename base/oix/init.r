@@ -1528,9 +1528,12 @@ void showstack()
     while (f) {
         struct descrip tmp;
         int i;
+        if (f == k_current->sp)
+            printf("SP-> ");
+        if (f == (struct frame *)k_current->curr_pf)
+            printf("PF-> ");
         printf("Frame %p type=%d\n", f, f->type);
         printf("\tvalue="); print_desc(stdout, &f->value); printf("\n");
-        printf("\tfailure_label=%p\n", f->failure_label);
         tmp.dword = D_Proc;
         BlkLoc(tmp) = (union block *)f->proc;
         printf("\tproc="); print_vword(stdout, &tmp); printf("\n");
@@ -1552,6 +1555,7 @@ void showstack()
                 struct p_frame *pf = (struct p_frame *)f;
                 printf("\tipc=%p\n", pf->ipc);
                 printf("\tcode_start=%p\n", pf->code_start);
+                printf("\tfailure_label=%p\n", pf->failure_label);
                 printf("\tcaller=%p\n", pf->caller);
                 for (i = 0; i < f->proc->nclo; ++i) {
                     printf("\tclo[%d]=%p\n", i, pf->clo[i]);

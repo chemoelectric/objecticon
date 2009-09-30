@@ -825,9 +825,19 @@ static void lemitcode()
                     word_field(x->clo, "clo");
                     emit_ir_var(x->expr, "expr");
                     word_field(x->argc, "argc");
-                    for (i = 0; i < x->argc; ++i) {
+                    labout(x->fail_label, "fail");
+                    for (i = 0; i < x->argc; ++i) 
                         emit_ir_var(x->args[i], "arg");
-                    }
+                    break;
+                }
+                case Ir_Apply: {
+                    struct ir_apply *x = (struct ir_apply *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tapply\n", (long)pc);
+                    outword(Op_Apply);
+                    word_field(x->clo, "clo");
+                    emit_ir_var(x->arg1, "arg1");
+                    emit_ir_var(x->arg2, "arg2");
                     labout(x->fail_label, "fail");
                     break;
                 }
@@ -837,6 +847,7 @@ static void lemitcode()
                         fprintf(dbgfile, "%ld:\tresume\n", (long)pc);
                     outword(Op_Resume);
                     word_field(x->clo, "clo");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_ScanSwap: {
@@ -865,6 +876,18 @@ static void lemitcode()
                     outword(Op_ScanRestore);
                     word_field(x->tmp_subject->index, "tmp_subject");
                     word_field(x->tmp_pos->index, "tmp_pos");
+                    break;
+                }
+                case Ir_MakeList: {
+                    struct ir_makelist *x = (struct ir_makelist *)ir;
+                    int i;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tmakelist\n", (long)pc);
+                    outword(Op_MakeList);
+                    emit_ir_var(x->lhs, "lhs");
+                    word_field(x->argc, "argc");
+                    for (i = 0; i < x->argc; ++i) 
+                        emit_ir_var(x->args[i], "arg");
                     break;
                 }
 

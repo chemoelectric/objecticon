@@ -618,6 +618,10 @@ void get_deref(dptr dest);
 void get_variable(dptr dest);
 word *get_addr();
 void pop_to(struct frame *f);
+void do_apply();
 void do_invoke2();
 word get_offset(word *w);
 void do_ensure_class_init();
+void tail_invoke_frame(struct frame *f, word *failure_label);
+dptr get_element(dptr d, word i);
+

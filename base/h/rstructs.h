@@ -650,7 +650,6 @@ enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
 #define FRAME_BASE \
      int type; \
      struct descrip value;    \
-     word *failure_label;      \
      struct b_proc *proc;     \
      struct frame *parent_sp;
 
@@ -673,6 +672,7 @@ struct p_frame {
     FRAME_BASE;
     word *ipc;
     word *code_start;
+    word *failure_label;     
     struct p_frame *caller;
     struct frame **clo;
     dptr tmp;

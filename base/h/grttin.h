@@ -357,3 +357,18 @@ typedef int siptr, stringint, inst;
       free(var);
    } while(0)
 #enddef				/* GRFX_UNLINK */
+
+#define CustomProc(f,code,nparam,ndynam,nclo,ntmp,nlab,nmark,sname)\
+    struct b_iproc Cat(B,f) = {\
+   	T_Proc,\
+   	sizeof(struct b_proc),\
+   	0,\
+        code,\
+   	nparam,\
+   	ndynam,\
+        0,0,0,\
+        nclo,ntmp,nlab,nmark,\
+        0,0,0,0,0,\
+   	{sizeof(sname) - 1, sname},\
+        0,0};
+   

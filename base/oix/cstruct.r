@@ -514,3 +514,49 @@ void list_put(dptr l, dptr val)
    ((struct b_list *)BlkLoc(*l))->size++;
    ((struct b_list *)BlkLoc(*l))->changecount++;
 }
+
+/*
+ * Get the given element of the given structure.  i is one-based.
+ * Returns a null pointer if i is out of range, or a pointer to the
+ * given element otherwise.
+ */
+dptr get_element(dptr d, word i)
+{
+    type_case *d of {
+      list: {
+         struct b_lelem *le;        /* doesn't need to be tended */
+         struct b_list *lp;        /* doesn't need to be tended */
+         word j;
+         lp = (struct b_list *)BlkLoc(*d);
+         i = cvpos(i, (long)lp->size);
+         if (i == CvtFail || i > lp->size)
+             return 0;
+         /*
+          * Locate the desired element and return a pointer to it.
+          */
+         le = get_lelem_for_index(lp, i, &j);
+         if (!le)
+             syserr("Couldn't find element for valid index in list");
+         /* j is the logical index in the element block; convert to
+          * the actual position. */
+         j += le->first;
+         if (j >= le->nslots)
+             j -= le->nslots;
+         return &le->lslots[j];
+      }
+
+      record: {
+         struct b_record *bp;        /* doesn't need to be tended */
+         bp = (struct b_record *)BlkLoc(*d);
+         i = cvpos(i, (word)(bp->constructor->n_fields));
+         if (i == CvtFail || i > bp->constructor->n_fields)
+             return 0;
+         return &bp->fields[i - 1];
+        }
+     default: {
+         syserr("Bad type to get_element");
+         /* not reached */
+         return 0;
+     }
+   }
+}

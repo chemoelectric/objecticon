@@ -5,6 +5,28 @@
 
 word *curr_op_addr;
 
+void tail_invoke_frame(struct frame *f, word *failure_label)
+{
+    switch (f->type) {
+        case C_FRAME_TYPE: {
+            if (!f->proc->ccode(f)) {
+                pop_to(f->parent_sp);
+                Ipc = failure_label;
+            }
+            break;
+        }
+        case P_FRAME_TYPE: {
+            struct p_frame *pf = (struct p_frame *)f;
+            pf->caller = PF;
+            pf->failure_label = failure_label;
+            PF = pf;
+            break;
+        }
+        default:
+            syserr("Unknown frame type");
+    }
+}
+
 void push_frame(struct frame *f)
 {
     f->parent_sp = k_current->sp;
@@ -240,6 +262,7 @@ static void do_op(int op, int nargs)
     dptr lhs;
     struct c_frame *cf;
     struct b_proc *bp = opblks[op];
+    word *failure_label;
     int i;
     lhs = get_dptr();
     MemProtect(cf = alc_c_frame(bp, nargs));
@@ -251,12 +274,12 @@ static void do_op(int op, int nargs)
         for (i = 0; i < nargs; ++i)
             get_deref(&cf->args[i]);
     }
-    cf->failure_label = get_addr();
+    failure_label = get_addr();
     if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
-        Ipc = cf->failure_label;
+        Ipc = failure_label;
     pop_to(cf->parent_sp);
 }
 
@@ -266,6 +289,7 @@ static void do_opclo(int op, int nargs)
     struct b_proc *bp = opblks[op];
     int i;
     word clo;
+    word *failure_label;
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, nargs));
     push_c_frame(cf);
@@ -276,11 +300,11 @@ static void do_opclo(int op, int nargs)
         for (i = 0; i < nargs; ++i)
             get_deref(&cf->args[i]);
     }
-    cf->failure_label = get_addr();
+    failure_label = get_addr();
     PF->clo[clo] = (struct frame *)cf;
     if (!bp->ccode(cf)) {
         pop_to(cf->parent_sp);
-        Ipc = cf->failure_label;
+        Ipc = failure_label;
     }
 }
 
@@ -289,21 +313,34 @@ static void do_keyop()
     dptr lhs;
     struct c_frame *cf;
     struct b_proc *bp;
+    word *failure_label;
 
     bp = keyblks[GetWord];
     lhs = get_dptr();
 
     MemProtect(cf = alc_c_frame(bp, 0));
     push_c_frame(cf);
-    cf->failure_label = get_addr();
+    failure_label = get_addr();
     if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
-        Ipc = cf->failure_label;
+        Ipc = failure_label;
     pop_to(cf->parent_sp);
 }
 
+static void do_makelist()
+{
+    dptr dest = get_dptr();
+    word argc = GetWord;
+    int i;
+    create_list(argc, dest);
+    for (i = 0; i < argc; ++i) {
+        tended struct descrip tmp;
+        get_deref(&tmp);
+        list_put(dest, &tmp);
+    }
+}
 
 void interp2()
 {
@@ -409,24 +446,11 @@ void interp2()
             case Op_Resume: {
                 word clo;
                 struct frame *f;
-
+                word *failure_label;
                 clo = GetWord;
                 f = PF->clo[clo];
-                switch (f->type) {
-                    case C_FRAME_TYPE: {
-                        if (!f->proc->ccode(f)) {
-                            pop_to(f->parent_sp);
-                            Ipc = f->failure_label;
-                        }
-                        break;
-                    }
-                    case P_FRAME_TYPE: {
-                        PF = (struct p_frame *)f;
-                        break;
-                    }
-                    default:
-                        syserr("Unknown frame type");
-                }
+                failure_label = get_addr();
+                tail_invoke_frame(f, failure_label);
                 break;
             }
 
@@ -496,6 +520,11 @@ void interp2()
                 break;
             }
 
+            case Op_Apply: {
+                do_apply();
+                break;
+            }
+
             case Op_EnterInit: {
                 get_addr();
                 /* Change Op_EnterInit to an Op_Goto */
@@ -510,14 +539,14 @@ void interp2()
                 break;
             }
 
-            case Op_CreateObject: {
-                dptr t = get_dptr();
-                dptr d = get_dptr();
-                struct b_class *class0 = (struct b_class*)BlkLoc(*d);
-                struct b_object *object0; /* Doesn't need to be tended */
-                MemProtect(object0 = alcobject(class0));
-                t->dword = D_Object;
-                BlkLoc(*t) = (union block *)object0;
+            case Op_Halt: {
+                showstack();
+                fprintf(stderr, "Halt instruction reached\n");
+                exit(1);
+            }
+
+            case Op_MakeList: {
+                do_makelist();
                 break;
             }
 

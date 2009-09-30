@@ -582,7 +582,7 @@ do { \
         0,0,0,  \
       	{sizeof(Lit(f))-1,Lit(f)},\
         0,0};
-   
+
    /*
     * Macros to access Icon arguments in C functions.
     */

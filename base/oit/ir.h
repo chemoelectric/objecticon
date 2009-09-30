@@ -20,7 +20,9 @@
 #define Ir_ScanSave  19
 #define Ir_ScanRestore 20
 #define Ir_Succeed   21
-#define Ir_SysErr   22
+#define Ir_SysErr    22
+#define Ir_MakeList  23
+#define Ir_Apply     24
 
 struct scan_info {
     struct ir_var *old_subject, *old_pos;
@@ -160,6 +162,21 @@ struct ir_invoke {
     int fail_label;
 };
 
+struct ir_apply {
+    IR_SUB
+    int clo;
+    struct ir_var *arg1;
+    struct ir_var *arg2;
+    int fail_label;
+};
+
+struct ir_makelist {
+    IR_SUB
+    struct ir_var *lhs;
+    int argc;
+    struct ir_var **args;
+};
+
 struct ir_unop {
     IR_SUB
     struct ir_var *lhs;
@@ -210,6 +227,7 @@ struct ir_deref {
 struct ir_resume {
     IR_SUB
     int clo;
+    int fail_label;
 };
 
 struct chunk {

@@ -1208,7 +1208,7 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
     p->failure_label = 0;
     p->proc = pb;
     p->parent_sp = 0;
-    p->ipc = 0;
+    p->ipc = pb->icode;
     p->caller = 0;
     if (pb->program)
         p->code_start = (word *)pb->program->Code;
