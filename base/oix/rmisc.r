@@ -1691,10 +1691,7 @@ word a;
  *  string-valued variables. This is used for return, suspend, and
  *  transmitting values across co-expression context switches.
  */
-void retderef(valp, low, high)
-dptr valp;
-word *low;
-word *high;
+void retderef(dptr valp, struct locals *locals)
    {
    struct b_tvsubs *tvb;
    word *loc;
@@ -1710,12 +1707,12 @@ word *high;
        */
       if (is:named_var(tvb->ssvar)) {
           loc = (word *)VarLoc(tvb->ssvar);
-          if (InRange(low, loc, high))
+          if (InRange(locals->low, loc, locals->high))
               deref(valp, valp);
       }
    } else if (is:named_var(*valp)) {
        loc = (word *)VarLoc(*valp);
-       if (InRange(low, loc, high))
+       if (InRange(locals->low, loc, locals->high))
            deref(valp, valp);
    }
 }

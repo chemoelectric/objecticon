@@ -76,7 +76,33 @@ $start initialize_class_and_repeat
 $end
 
 $start get_impl
-    Op_Halt
+    Op_Custom c:simple_access
+         Op_Tmp tmp:0
          Op_Arg arg:0
          Op_Arg arg:1
+         Op_Int 0
+         FailAccess
+    Op_Custom c:set_c_frame_value
+         Op_Tmp tmp:0
+
+FailAccess:
+    # Will only get here if &error != 0.  Call handle_access_failure
+    # with quiet = 1.
+    Op_Custom c:handle_access_failure
+         Op_Int 1
+$end
+
+$start getf_impl
+    Op_Custom c:simple_access
+         Op_Tmp tmp:0
+         Op_Arg arg:0
+         Op_Arg arg:1
+         Op_Int 1
+         FailAccess
+    Op_Custom c:set_c_frame_value
+         Op_Tmp tmp:0
+
+FailAccess:
+    Op_Custom c:handle_access_failure
+         Op_Arg arg:2
 $end

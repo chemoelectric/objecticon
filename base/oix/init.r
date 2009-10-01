@@ -1571,13 +1571,14 @@ void showstack()
                 }
                 printf("\tlocals=%p\n", pf->locals);
                 for (i = 0; i < f->proc->ndynam; ++i) {
-                    printf("\tlocals.dynamic[%d]=", i); print_desc(stdout, &pf->locals->dynamic[i]); printf("\n");
+                    printf("\t   locals.dynamic[%d]=", i); print_desc(stdout, &pf->locals->dynamic[i]); printf("\n");
                 }
                 for (i = 0; i < f->proc->nparam; ++i) {
-                    printf("\tlocals.args[%d]=", i); print_desc(stdout, &pf->locals->args[i]); printf("\n");
+                    printf("\t   locals.args[%d]=", i); print_desc(stdout, &pf->locals->args[i]); printf("\n");
                 }
-                printf("\tlocals.refcnt=%d\n", pf->locals->refcnt);
-                printf("\tlocals.seen=%d\n", pf->locals->seen);
+                printf("\t   locals.low - high=%p-%p\n", pf->locals->low, pf->locals->high);
+                printf("\t   locals.refcnt=%d\n", pf->locals->refcnt);
+                printf("\t   locals.seen=%d\n", pf->locals->seen);
                 break;
             }
             default:

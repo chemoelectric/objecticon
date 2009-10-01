@@ -1225,18 +1225,24 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
             free(p);
             return 0;
         }
+        locals->low = locals->high = 0;
         t = (char *)(locals + 1);
         if (pb->ndynam) {
-            locals->dynamic = (dptr)t;
+            locals->low = locals->dynamic = (dptr)t;
             for (i = 0; i < pb->ndynam; ++i)
                 locals->dynamic[i] = nulldesc;
             t += pb->ndynam * sizeof(struct descrip);
+            locals->high = (dptr)t;
         } else
             locals->dynamic = 0;
         if (nparam) {
             locals->args = (dptr)t;
+            if (!locals->low)
+                locals->low = (dptr)t;
             for (i = 0; i < nparam; ++i)
                 locals->args[i] = nulldesc;
+            t += nparam * sizeof(struct descrip);
+            locals->high = (dptr)t;
         } else
             locals->args = 0;
         locals->refcnt = 1;

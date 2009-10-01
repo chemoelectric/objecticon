@@ -149,7 +149,7 @@ int    		 radix		(int sign, register int r, register char *s,
 				   register char *end_s, union numeric *result);
 char		*reserve_0	(int region, word nbytes);
 char		*reserve_1	(int region, word nbytes);
-void		retderef		(dptr valp, word *low, word *high);
+void		retderef	(dptr valp, struct locals *locals);
 void		stkdump		(int);
 word		sub		(word a,word b);
 void		syserr		(char *fmt, ...);
@@ -624,7 +624,7 @@ void do_applyf();
 void do_invokef();
 word get_offset(word *w);
 void do_ensure_class_init();
-void tail_invoke_frame(struct frame *f, word *failure_label);
+void tail_invoke_frame(struct frame *f);
 dptr get_element(dptr d, word i);
 void do_field();
 struct inline_field_cache *get_inline_field_cache();

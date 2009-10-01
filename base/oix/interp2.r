@@ -3,20 +3,19 @@
 
 #define OPCODES 0
 
-void tail_invoke_frame(struct frame *f, word *failure_label)
+void tail_invoke_frame(struct frame *f)
 {
     switch (f->type) {
         case C_FRAME_TYPE: {
             if (!f->proc->ccode(f)) {
+                Ipc = f->failure_label;
                 pop_to(f->parent_sp);
-                Ipc = failure_label;
             }
             break;
         }
         case P_FRAME_TYPE: {
             struct p_frame *pf = (struct p_frame *)f;
             pf->caller = PF;
-            pf->failure_label = failure_label;
             PF = pf;
             break;
         }
@@ -155,6 +154,56 @@ void move_descrip(dptr dest)
 
         default: {
             syserr("Invalid opcode in move_descrip: %d (%s)\n", op, op_names[op]);
+        }
+    }
+}
+
+void move_variable(dptr dest)
+{
+    word op = GetWord;
+#if OPCODES
+    fprintf(stderr, "\top=%d(%s)\n", op, op_names[op]);
+#endif
+    switch (op) {
+        case Op_Int: {
+            MakeInt(GetWord, dest);
+            break;
+        }
+        case Op_Knull: {
+            *dest = nulldesc;
+            break;
+        }
+        case Op_Const: {
+            *dest = curpstate->Constants[GetWord];
+            break;
+        }
+        case Op_Static: {
+            MakeNamedVar(&CurrProc->fstatic[GetWord], dest);
+            break;
+        }
+        case Op_Arg: {
+            MakeNamedVar(&PF->locals->args[GetWord], dest);
+            break;
+        }
+        case Op_Dynamic: {
+            MakeNamedVar(&PF->locals->dynamic[GetWord], dest);
+            break;
+        }
+        case Op_Global: {
+            MakeNamedVar(&curpstate->Globals[GetWord], dest);
+            break;
+        }
+        case Op_Tmp: {
+            *dest = PF->tmp[GetWord];
+            break;
+        }
+        case Op_Closure: {
+            *dest = PF->clo[GetWord]->value;
+            break;
+        }
+
+        default: {
+            syserr("Invalid opcode in move_variable: %d (%s)\n", op, op_names[op]);
         }
     }
 }
@@ -375,6 +424,10 @@ void interp2()
                 move_descrip(get_dptr());
                 break;
             }
+            case Op_MoveVar: {
+                move_variable(get_dptr());
+                break;
+            }
             case Op_MoveLabel: {
                 word i = GetWord;
                 PF->lab[i] = get_addr();
@@ -440,6 +493,11 @@ void interp2()
                 break;
             }
 
+            case Op_Sect: {
+                do_op(op, 3);
+                break;
+            }
+
             case Op_Keyop: {
                 do_keyop();
                 break;
@@ -448,11 +506,10 @@ void interp2()
             case Op_Resume: {
                 word clo;
                 struct frame *f;
-                word *failure_label;
                 clo = GetWord;
                 f = PF->clo[clo];
-                failure_label = get_addr();
-                tail_invoke_frame(f, failure_label);
+                f->failure_label = get_addr();
+                tail_invoke_frame(f);
                 break;
             }
 
@@ -483,6 +540,7 @@ void interp2()
 
             case Op_Succeed: {
                 move_descrip(&PF->value);
+                retderef(&PF->value, PF->locals);
                 PF = PF->caller;
                 if (!PF)
                     return;

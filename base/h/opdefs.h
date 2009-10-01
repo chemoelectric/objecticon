@@ -147,5 +147,6 @@
 #define Op_Halt         224
 #define Op_MakeList     225
 #define Op_PopRepeat    226
+#define Op_MoveVar      227
 
 

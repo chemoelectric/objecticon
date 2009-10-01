@@ -135,9 +135,10 @@ int first;
       /*
        * Determine if we need to dereference the transmitted value. 
        */
+#ifdef CHECK
       if (Var(*valloc))
          retderef(valloc, (word *)argp, sp);
-
+#endif
       if (ncp->tvalloc != NULL)
          *ncp->tvalloc = *valloc;
       }

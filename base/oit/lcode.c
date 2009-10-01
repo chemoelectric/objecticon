@@ -741,11 +741,19 @@ static void lemitcode()
                 }
                 case Ir_Move: {
                     struct ir_move *x = (struct ir_move *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tmove\n", (long)pc);
-                    outword(Op_Move);
-                    emit_ir_var(x->lhs, "lhs");
-                    emit_ir_var(x->rhs, "rhs");
+                    if (x->rval) {
+                        if (Dflag)
+                            fprintf(dbgfile, "%ld:\tmove\n", (long)pc);
+                        outword(Op_Move);
+                        emit_ir_var(x->lhs, "lhs");
+                        emit_ir_var(x->rhs, "rhs");
+                    } else {
+                        if (Dflag)
+                            fprintf(dbgfile, "%ld:\tmovevar\n", (long)pc);
+                        outword(Op_MoveVar);
+                        emit_ir_var(x->lhs, "lhs");
+                        emit_ir_var(x->rhs, "rhs");
+                    }
                     break;
                 }
                 case Ir_MoveLabel: {
@@ -2303,6 +2311,10 @@ static word cnv_op(int n)
 
         case Uop_Toby:
             opcode = Op_Toby;
+            break;
+
+        case Uop_Sect:                  /* section operation x[a:b] */
+            opcode = Op_Sect;
             break;
 
         default:

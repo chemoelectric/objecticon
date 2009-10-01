@@ -91,10 +91,46 @@ static word initialize_class_and_repeat_code[] = {
 };
 CustomProc(initialize_class_and_repeat,initialize_class_and_repeat_code,1,0,0,0,0,0,"internal:initialize_class_and_repeat")
 static word get_impl_code[] = {
-   Op_Halt,
+   Op_Custom,
+   (word)simple_access,
+   Op_Tmp,
+   0,
    Op_Arg,
    0,
    Op_Arg,
    1,
+   Op_Int,
+   0,
+   15*WordSize,
+   Op_Custom,
+   (word)set_c_frame_value,
+   Op_Tmp,
+   0,
+   Op_Custom,
+   (word)handle_access_failure,
+   Op_Int,
+   1,
 };
-CustomProc(get_impl,get_impl_code,2,0,0,0,0,0,"internal:get_impl")
+CustomProc(get_impl,get_impl_code,2,0,0,1,0,0,"internal:get_impl")
+static word getf_impl_code[] = {
+   Op_Custom,
+   (word)simple_access,
+   Op_Tmp,
+   0,
+   Op_Arg,
+   0,
+   Op_Arg,
+   1,
+   Op_Int,
+   1,
+   15*WordSize,
+   Op_Custom,
+   (word)set_c_frame_value,
+   Op_Tmp,
+   0,
+   Op_Custom,
+   (word)handle_access_failure,
+   Op_Arg,
+   2,
+};
+CustomProc(getf_impl,getf_impl_code,3,0,0,1,0,0,"internal:getf_impl")
