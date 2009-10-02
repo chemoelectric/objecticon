@@ -434,6 +434,8 @@ struct progstate {
 
     word Lastop;
 
+    dptr Xexpr;
+    dptr Xfield;
     dptr Xargp;
     int Xnargs;
     int Xfno;                           /* field no in e.field() */

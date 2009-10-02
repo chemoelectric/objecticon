@@ -630,4 +630,6 @@ void tail_invoke_frame(struct frame *f);
 dptr get_element(dptr d, word i);
 void do_field();
 struct inline_field_cache *get_inline_field_cache();
-
+void traceback();
+struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior);
+struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior);

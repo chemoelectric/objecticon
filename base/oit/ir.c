@@ -210,7 +210,8 @@ static struct ir_scanswap *ir_scanswap(struct lnode *n, struct ir_var *tmp_subje
 }
 
 static struct ir_scansave *ir_scansave(struct lnode *n, struct ir_var *new_subject,
-                                       struct ir_var *tmp_subject, struct ir_var *tmp_pos)
+                                       struct ir_var *tmp_subject, struct ir_var *tmp_pos,
+                                       int fail_label)
 {
     struct ir_scansave *res = IRAlloc(struct ir_scansave);
     res->node = n;
@@ -218,6 +219,7 @@ static struct ir_scansave *ir_scansave(struct lnode *n, struct ir_var *new_subje
     res->new_subject = new_subject;
     res->tmp_subject = tmp_subject;
     res->tmp_pos = tmp_pos;
+    res->fail_label = fail_label;
     return res;
 }
 
@@ -569,6 +571,15 @@ static struct ir_resume *ir_resume(struct lnode *n,
     return res;
 }
 
+static struct ir_limit *ir_limit(struct lnode *n, struct ir_var *limit, int fail_label)
+{
+    struct ir_limit *res = IRAlloc(struct ir_limit);
+    res->node = n;
+    res->op = Ir_Limit;
+    res->limit = limit;
+    res->fail_label = fail_label;
+    return res;
+}
 
 static struct ir_var *make_tmp(struct ir_stack *st)
 {
@@ -844,8 +855,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                       ir_goto(n, body->resume));
             }
             chunk2(expr->success,
-                  ir_scansave(n, lv, res->scan->old_subject, res->scan->old_pos),
-                  ir_goto(n, body->start));
+                   ir_scansave(n, lv, res->scan->old_subject, res->scan->old_pos, expr->resume),
+                   ir_goto(n, body->start));
             chunk1(expr->failure, ir_goto(n, res->failure));
 
             chunk2(body->failure,
@@ -879,13 +890,13 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                       ir_goto(n, body->resume));
             }
             chunk2(expr->success,
-                  ir_scansave(n, lv, res->scan->old_subject, res->scan->old_pos),
-                  ir_goto(n, body->start));
+                   ir_scansave(n, lv, res->scan->old_subject, res->scan->old_pos, expr->resume),
+                   ir_goto(n, body->start));
             chunk1(expr->failure, ir_goto(n, res->failure));
 
             chunk2(body->failure,
-                  ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos),
-                  ir_goto(n, expr->resume));
+                   ir_scanrestore(n, res->scan->old_subject, res->scan->old_pos),
+                   ir_goto(n, expr->resume));
             chunk3(body->success,
                    ir_op(n, target, Uop_Asgn, lv, rv, 0, rval, body->resume),
                    ir_scanswap(n, res->scan->old_subject, res->scan->old_pos),
@@ -2299,7 +2310,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk1(limit->failure, ir_goto(n, res->failure));
             chunk1(expr->success, ir_goto(n, res->success));
             chunk3(limit->success, 
-                   ir_op(n, t, Uop_Number, t, 0, 0, 1, limit->resume),
+                   ir_limit(n, t, limit->resume),
                    ir_move(n, c, make_word(1), 1),
                    ir_goto(n, expr->start));
 
@@ -2588,7 +2599,7 @@ static void print_chunk(struct chunk *chunk)
                 print_ir_var(x->tmp_subject);
                 fprintf(stderr, ", tmp_pos=");
                 print_ir_var(x->tmp_pos);
-                fprintf(stderr, "\n");
+                fprintf(stderr, ", fail_label=%d\n", x->fail_label);
                 break;
             }
             case Ir_Op: {
@@ -2743,6 +2754,13 @@ static void print_chunk(struct chunk *chunk)
             }
             case Ir_Cofail: {
                 indentf("\tIr_Cofail\n");
+                break;
+            }
+            case Ir_Limit: {
+                struct ir_limit *x = (struct ir_limit *)ir;
+                indentf("\tIr_Limit ");
+                print_ir_var(x->limit);
+                fprintf(stderr, "  fail_label=%d\n", x->fail_label);
                 break;
             }
             default: {
@@ -3018,6 +3036,18 @@ static void optimize_goto1(int i)
                 optimize_goto1(x->fail_label);
                 break;
             }
+            case Ir_ScanSave: {
+                struct ir_scansave *x = (struct ir_scansave *)ir;
+                optimize_goto_chain(&x->fail_label);
+                optimize_goto1(x->fail_label);
+                break;
+            }
+            case Ir_Limit: {
+                struct ir_limit *x = (struct ir_limit *)ir;
+                optimize_goto_chain(&x->fail_label);
+                optimize_goto1(x->fail_label);
+                break;
+            }
         }
     }
 }
@@ -3220,9 +3250,7 @@ static void renumber_ir()
                 }
                 case Ir_Field: {
                     struct ir_field *x = (struct ir_field *)ir;
-                    fprintf(stderr,"before:%d\n", x->lhs->index);
                     renumber_var(x->lhs);
-                    fprintf(stderr,"after:%d\n", x->lhs->index);
                     renumber_var(x->expr);
                     break;
                 }
@@ -3254,6 +3282,11 @@ static void renumber_ir()
                     renumber_var(x->lhs);
                     renumber_var(x->arg1);
                     renumber_var(x->arg2);
+                    break;
+                }
+                case Ir_Limit: {
+                    struct ir_limit *x = (struct ir_limit *)ir;
+                    renumber_var(x->limit);
                     break;
                 }
                 default: {

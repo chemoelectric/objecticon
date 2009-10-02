@@ -318,6 +318,8 @@ static void do_op(int op, int nargs)
     lhs = get_dptr();
     MemProtect(cf = alc_c_frame(bp, nargs));
     push_c_frame(cf);
+    xnargs = nargs;
+    xargp =cf->args;
     if (bp->underef) {
         for (i = 0; i < nargs; ++i)
             get_variable(&cf->args[i]);
@@ -455,12 +457,56 @@ static void do_cofail()
     PF->ipc = k_current->failure_label;
 }
 
+static void do_limit()
+{
+    dptr limit;
+    word *failure_label;
+    word tmp;
+
+    limit = get_dptr();
+    Deref(*limit);
+    failure_label = get_addr();
+    if (!cnv:C_integer(*limit, tmp)) {
+        xargp = limit;
+        err_msg(101, limit);
+        Ipc = failure_label;
+        return;
+    }
+    MakeInt(tmp, limit);
+    if (tmp < 0) {
+        err_msg(205, limit);
+        Ipc = failure_label;
+        return;
+    }
+}
+
+static void do_scansave()
+{
+    word s, p;
+    tended struct descrip new_subject;
+    word *failure_label;
+    get_deref(&new_subject);
+    s = GetWord;
+    p = GetWord;
+    failure_label = get_addr();
+    if (!cnv:string_or_ucs(new_subject, new_subject)) {
+        xargp = &new_subject;
+        err_msg(129, &new_subject);
+        Ipc = failure_label;
+        return;
+    }
+    PF->tmp[s] = curpstate->Kywd_subject;
+    PF->tmp[p] = curpstate->Kywd_pos;
+    curpstate->Kywd_subject = new_subject;
+    MakeInt(1, &curpstate->Kywd_pos);
+}
+
 void interp2()
 {
     word op;
     for (;;) {
         PF->curr_inst = Ipc;
-        op = GetWord;
+        lastop = op = GetWord;
 #if OPCODES
         fprintf(stderr, "ipc:%p(%d)  ", Ipc, (char*)Ipc - curpstate->Code - WordSize);
         fprintf(stderr, "op=%d(%s)\n", op, op_names[op]);fflush(stderr);
@@ -640,15 +686,12 @@ void interp2()
             }
 
             case Op_ScanSave: {
-                word s, p;
-                dptr new_subject;
-                new_subject = get_dptr();
-                s = GetWord;
-                p = GetWord;
-                PF->tmp[s] = curpstate->Kywd_subject;
-                PF->tmp[p] = curpstate->Kywd_pos;
-                curpstate->Kywd_subject = *new_subject;
-                MakeInt(1, &curpstate->Kywd_pos);
+                do_scansave();
+                break;
+            }
+
+            case Op_Limit: {
+                do_limit();
                 break;
             }
 

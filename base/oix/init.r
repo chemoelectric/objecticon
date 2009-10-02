@@ -743,7 +743,7 @@ static void initprogstate(struct progstate *p)
     p->Table_ser = 1;
     gettimeofday(&p->start_time, 0);
     p->Lastop = 0;
-    p->Xargp = NULL;
+    p->Xfield = p->Xexpr = p->Xargp = 0;
     p->Xnargs = 0;
     p->Xfno = 0;
     p->Value_tmp = nulldesc;
@@ -1577,7 +1577,7 @@ void showstack(struct b_coexpr *c)
                 for (i = 0; i < f->proc->ndynam; ++i) {
                     printf("\t   locals.dynamic[%d]=", i); print_desc(stdout, &pf->locals->dynamic[i]); printf("\n");
                 }
-                for (i = 0; i < f->proc->nparam; ++i) {
+                for (i = 0; i < abs(f->proc->nparam); ++i) {
                     printf("\t   locals.args[%d]=", i); print_desc(stdout, &pf->locals->args[i]); printf("\n");
                 }
                 printf("\t   locals.low - high=%p-%p\n", pf->locals->low, pf->locals->high);

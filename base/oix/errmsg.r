@@ -183,32 +183,35 @@ void err_msg(int n, dptr v)
 
     EVVal((word)k_errornumber,E_Error);
 
-    if (pfp != NULL) {
+    if (set_up) {
         if (IntVal(kywd_err) == 0) {
             char *s = StrLoc(k_errortext);
             int i = StrLen(k_errortext);
-            dptr fn;
+            struct ipc_line *pline;
+            struct ipc_fname *pfile;
             if (k_errornumber == -1) {
                 fprintf(stderr, "\nRun-time error: ");
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);
-                fn = findfile(ipc);
-                if (fn) {
+                pline = frame_ipc_line(PF, 1);
+                pfile = frame_ipc_fname(PF, 1);
+                if (pline && pfile) {
                     struct descrip t;
-                    abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
+                    abbr_fname(&pfile->fname, &t);
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), pline->line);
                 } else
-                    fprintf(stderr, "File ?; Line %d\n", findline(ipc));
+                    fprintf(stderr, "File ?; Line ?\n");
             } else {
                 fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-                fn = findfile(ipc);
-                if (fn) {
+                pline = frame_ipc_line(PF, 1);
+                pfile = frame_ipc_fname(PF, 1);
+                if (pline && pfile) {
                     struct descrip t;
-                    abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
+                    abbr_fname(&pfile->fname, &t);
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), pline->line);
                 } else
-                    fprintf(stderr, "File ?; Line %d\n", findline(ipc));
+                    fprintf(stderr, "File ?; Line ?\n");
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);
@@ -237,14 +240,14 @@ void err_msg(int n, dptr v)
         putc('\n', stderr);
     }
 
-    if (pfp == NULL) {		/* skip if start-up problem */
+    if (!set_up) {		/* skip if start-up problem */
         if (dodump > 1)
             abort();
         c_exit(EXIT_FAILURE);
     }
     if (!collecting) {
         fprintf(stderr, "Traceback:\n");
-        tracebk(pfp, argp);
+        traceback();
         fflush(stderr);
     }
 

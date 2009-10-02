@@ -30,6 +30,7 @@
 #define Ir_Coret       29
 #define Ir_Coact       30
 #define Ir_Cofail      31
+#define Ir_Limit       32
 
 struct scan_info {
     struct ir_var *old_subject, *old_pos;
@@ -114,6 +115,7 @@ struct ir_scansave {
     struct ir_var *new_subject;
     struct ir_var *tmp_subject;
     struct ir_var *tmp_pos;
+    int fail_label;
 };
 
 struct ir_scanrestore {
@@ -282,6 +284,12 @@ struct ir_coact {
     struct ir_var *arg1;
     struct ir_var *arg2;
     int rval;
+    int fail_label;
+};
+
+struct ir_limit {
+    IR_SUB
+    struct ir_var *limit;
     int fail_label;
 };
 

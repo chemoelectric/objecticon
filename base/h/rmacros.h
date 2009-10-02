@@ -684,6 +684,8 @@ do { \
       #define lastop    (curpstate->Lastop)
       #define lastopnd  (curpstate->Lastopnd)
 
+      #define xexpr     (curpstate->Xexpr)
+      #define xfield    (curpstate->Xfield)
       #define xargp     (curpstate->Xargp)
       #define xnargs    (curpstate->Xnargs)
       #define xfno      (curpstate->Xfno)

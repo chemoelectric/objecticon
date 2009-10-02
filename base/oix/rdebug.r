@@ -15,8 +15,110 @@ static void ttrace	(void);
 static void xtrace(word nargs, dptr arg, int pline, dptr pfile);
 static void procname(FILE *f, struct b_proc *p);
 
+static void trace_frame(struct p_frame *pf);
 
 #define LIMIT 100
+
+
+struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior)
+{
+    while (pf && !pf->proc->program)
+        pf = pf->caller;
+    if (!pf)
+        return 0;
+    return find_ipc_line(pf->ipc, prior, pf->proc->program);
+}
+
+struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior)
+{
+    while (pf && !pf->proc->program)
+        pf = pf->caller;
+    if (!pf)
+        return 0;
+    return find_ipc_fname(pf->ipc, prior, pf->proc->program);
+}
+
+
+
+/*
+ * traceback - print a trace of procedure calls.
+ */
+void traceback()
+{
+    int i, depth;
+    struct frame *f;
+    struct p_frame **fa;
+
+    depth = 0;
+    for (f = SP; f; f = f->parent_sp) {
+        if (f->proc->program)
+            ++depth;
+    }
+
+    printf("depth=%d\n",depth);
+    if (depth == 0)
+        return;
+
+    /* 
+     * We test for LIMIT + 1 calls to avoid printing "1 calls omitted".
+     */
+    if (depth > LIMIT + 1) {
+        fprintf(stderr, "   ... %d calls omitted\n", depth-LIMIT);
+        depth = LIMIT;
+    }
+
+    MemProtect(fa = malloc(depth * sizeof(struct p_frame *)));
+
+    i = depth - 1;
+    for (f = SP; f; f = f->parent_sp) {
+        if (f->proc->program) {
+            fa[i--] = (struct p_frame *)f;
+            if (i < 0)
+                break;
+        }
+    }
+
+    for (i = 0; i < depth; ++i) {
+        struct descrip tmp;
+        tmp.dword = D_Proc;
+        BlkLoc(tmp) = (union block *)fa[i]->proc;
+        /*fprintf(stderr,"frame proc="); print_vword(stderr, &tmp); fprintf(stderr,"\n");*/
+        trace_frame(fa[i]);
+    }
+
+    ttrace();
+}
+
+static void trace_frame(struct p_frame *pf)
+{
+    dptr arg;
+    word nargs = abs(pf->proc->nparam);
+    struct ipc_line *pline;
+    struct ipc_fname *pfile;
+
+    arg = pf->locals->args;
+    fprintf(stderr, "   ");
+    procname(stderr, pf->proc);
+    putc('(', stderr);
+    while (nargs--) {
+        outimage(stderr, arg++, 0);
+        if (nargs)
+            putc(',', stderr);
+    }
+    putc(')', stderr);
+    
+    pline = frame_ipc_line(pf->caller, 1);
+    pfile = frame_ipc_fname(pf->caller, 1);
+    if (pline && pfile) {
+        struct descrip t;
+        abbr_fname(&pfile->fname, &t);
+        fprintf(stderr, " from line %d in %.*s", pline->line, (int)StrLen(t), StrLoc(t));
+    }
+    putc('\n', stderr);
+    fflush(stderr);
+}
+
+
 
 /*
  * tracebk - print a trace of procedure calls.
@@ -33,6 +135,9 @@ void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
      *  the expression frame pointers.
      */
     depth = 0;
+
+
+
     for (pfp->pf_efp = NULL; pfp->pf_pfp != NULL; pfp = pfp->pf_pfp) {
         ++depth;
         (pfp->pf_pfp)->pf_efp = (struct ef_marker *)pfp;
@@ -497,16 +602,24 @@ static void showlevel(n)
 
 #include "../h/opdefs.h"
 
+static void outfield()
+{
+    if (IntVal(*xfield) < 0 && fnames-efnames < IntVal(*xfield))
+        putstr(stderr, &efnames[IntVal(*xfield)]);
+    else if (0 <= IntVal(*xfield) && IntVal(*xfield) < efnames - fnames)
+        putstr(stderr, &fnames[IntVal(*xfield)]);
+    else
+        fprintf(stderr, "field");
+}
 
-    extern struct b_proc *opblks[];
-
-    
 /*
  * ttrace - show offending expression.
  */
 static void ttrace()
 {
     word nargs;
+    struct ipc_line *pline;
+    struct ipc_fname *pfile;
 
     fprintf(stderr, "   ");
 
@@ -517,50 +630,91 @@ static void ttrace()
             break;
 
         case Op_Invokef:
-            nargs = xnargs;
-            outimage(stderr, xargp, 0);
-            fprintf(stderr, " . ");
-            if (xfno < 0 && fnames-efnames < xfno)
-                putstr(stderr, &efnames[xfno]);
-            else if (0 <= xfno && xfno < efnames - fnames)
-                putstr(stderr, &fnames[xfno]);
-            else
-                fprintf(stderr, "field");
-            putc('(', stderr);
-            while (nargs--) {
-                outimage(stderr, ++xargp, 0);
-                if (nargs)
-                    putc(',', stderr);
+            if (SP->type == C_FRAME_TYPE) {
+                /* Will happen if a builtin proc calls runnerr */
+                struct c_frame *cf = (struct c_frame *)SP;
+                procname(stderr, cf->proc);
+                nargs = cf->nargs;
+                xargp = cf->args;
+                putc('(', stderr);
+                while (nargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (nargs)
+                        putc(',', stderr);
+                }
+                putc(')', stderr);
+            } else {
+                /* Error to do with the type of expr */
+                outimage(stderr, xexpr, 0);
+                fprintf(stderr, " . ");
+                outfield();
+                fprintf(stderr," ( .. )");
             }
-            putc(')', stderr);
             break;
 
         case Op_Applyf:
-            outimage(stderr, xargp++, 0);
-            fprintf(stderr, " . ");
-            if (xfno < 0 && fnames-efnames < xfno)
-                putstr(stderr, &efnames[xfno]);
-            else if (0 <= xfno && xfno < efnames - fnames)
-                putstr(stderr, &fnames[xfno]);
-            else
-                fprintf(stderr, "field");
-            fprintf(stderr," ! ");
-            outimage(stderr, xargp, 0);
+            if (SP->type == C_FRAME_TYPE) {
+                /* Will happen if a builtin proc calls runnerr */
+                struct c_frame *cf = (struct c_frame *)SP;
+                procname(stderr, cf->proc);
+                nargs = cf->nargs;
+                xargp = cf->args;
+                fprintf(stderr," ! [ ");
+                while (nargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (nargs)
+                        putc(',', stderr);
+                }
+                fprintf(stderr," ]");
+            } else {
+                /* Error to do with the type of expr */
+                outimage(stderr, xexpr, 0);
+                fprintf(stderr, " . ");
+                outfield();
+                fprintf(stderr," ! [ .. ]");
+            }
+            break;
+
+        case Op_Apply:
+            if (SP->type == C_FRAME_TYPE) {
+                /* Will happen if a builtin proc calls runnerr */
+                struct c_frame *cf = (struct c_frame *)SP;
+                procname(stderr, cf->proc);
+                nargs = cf->nargs;
+                xargp = cf->args;
+                fprintf(stderr," ! [ ");
+                while (nargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (nargs)
+                        putc(',', stderr);
+                }
+                fprintf(stderr," ]");
+            } else {
+                /* Error to do with the type of expr */
+                outimage(stderr, xexpr, 0);
+                fprintf(stderr," ! [ .. ]");
+            }
             break;
 
         case Op_Invoke:
-            nargs = xnargs;
-            if (is:proc(*xargp))   /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, (struct b_proc *)BlkLoc(*xargp));
-            else
-                outimage(stderr, xargp, 0);
-            putc('(', stderr);
-            while (nargs--) {
-                outimage(stderr, ++xargp, 0);
-                if (nargs)
-                    putc(',', stderr);
+            if (SP->type == C_FRAME_TYPE) {
+                /* Will happen if a builtin proc calls runnerr */
+                struct c_frame *cf = (struct c_frame *)SP;
+                procname(stderr, cf->proc);
+                nargs = cf->nargs;
+                xargp = cf->args;
+                putc('(', stderr);
+                while (nargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (nargs)
+                        putc(',', stderr);
+                }
+                putc(')', stderr);
+            } else {
+                /* Error to do with the type of expr */
+                outimage(stderr, xexpr, 0);
+                fprintf(stderr," ( .. )");
             }
-            putc(')', stderr);
             break;
 
         case Op_Toby:
@@ -598,7 +752,7 @@ static void ttrace()
             putc('}', stderr);
             break;
 
-        case Op_Bscan:
+        case Op_ScanSave:
             putc('{', stderr);
             outimage(stderr, xargp, 0);
             fputs(" ? ..}", stderr);
@@ -612,28 +766,15 @@ static void ttrace()
             putc('}', stderr);
             break;
 
-        case Op_Apply:
-            outimage(stderr, xargp, 0);
-            fprintf(stderr," ! ");
-            outimage(stderr, ++xargp, 0);
-            break;
-
         case Op_Create:
             fprintf(stderr,"{create ..}");
             break;
 
         case Op_Field:
             putc('{', stderr);
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xexpr, 0);
             fprintf(stderr, " . ");
-            ++xargp;
-            if (IntVal(*xargp) < 0 && fnames-efnames < IntVal(*xargp))
-                putstr(stderr, &efnames[IntVal(*xargp)]);
-            else if (0 <= IntVal(*xargp) && IntVal(*xargp) < efnames - fnames)
-                putstr(stderr, &fnames[IntVal(*xargp)]);
-            else
-                fprintf(stderr, "field");
-
+            outfield();
             putc('}', stderr);
             break;
 
@@ -675,15 +816,14 @@ static void ttrace()
         }
     }
 	 
-    if (ipc != NULL) {
-        dptr fn = findfile(ipc);
-        if (fn) {
-            struct descrip t;
-            abbr_fname(fn, &t);
-            fprintf(stderr, " from line %d in %.*s", findline(ipc), (int)StrLen(t), StrLoc(t));
-        } else
-            fprintf(stderr, " from line %d in ?", findline(ipc));
-    }
+    pline = frame_ipc_line(PF, 1);
+    pfile = frame_ipc_fname(PF, 1);
+    if (pfile && pline) {
+        struct descrip t;
+        abbr_fname(&pfile->fname, &t);
+        fprintf(stderr, " from line %d in %.*s", pline->line, (int)StrLen(t), StrLoc(t));
+    } else
+        fprintf(stderr, " from ?");
 
     putc('\n', stderr);
 

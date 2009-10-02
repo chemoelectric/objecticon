@@ -41,6 +41,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
 static void simple_access();
 static void set_c_frame_value();
 static void handle_access_failure();
+static void skip_args(int argc, dptr args);
 
 void do_applyf()
 {
@@ -50,7 +51,7 @@ void do_applyf()
     struct inline_field_cache *ic;
     word *failure_label;
     struct descrip query;
-    printf("here\n");
+
     clo = GetWord;
     get_deref(&expr);
     fno = GetWord;
@@ -58,7 +59,6 @@ void do_applyf()
     get_deref(&args);
     failure_label = get_addr();
     MakeInt(fno, &query);
-    printf("here2\n");
 
     type_case args of {
       list: {
@@ -68,6 +68,8 @@ void do_applyf()
             argc = BlkLoc(args)->record.constructor->n_fields;
         }
       default: {
+            xexpr = &expr;
+            xfield = &query;
             err_msg(126, &args);
             Ipc = failure_label;
             return;
@@ -114,13 +116,15 @@ static void general_invokef(word clo, dptr expr, dptr query, struct inline_field
             do_record_invokef(clo, expr, query, ic, argc, args, failure_label);
         }
       default: {
-        err_msg(624, expr);
-        Ipc = failure_label;
-        return;
+          skip_args(argc, args);
+          xexpr = expr;
+          xfield = query;
+          err_msg(624, expr);
+          Ipc = failure_label;
+          return;
       }
     }
 }
-
 
 void do_invoke2()
 {
@@ -154,6 +158,7 @@ void do_apply()
             argc = BlkLoc(args)->record.constructor->n_fields;
         }
       default: {
+            xexpr = &expr;
             err_msg(126, &args);
             Ipc = failure_label;
             return;
@@ -188,6 +193,15 @@ static void general_call(word clo, dptr expr, int argc, dptr args, word *failure
     }
 }
 
+/* Skip unwanted params */
+static void skip_args(int argc, dptr args)
+{
+    int i; 
+    if (!args) {
+        for (i = 0; i < argc; ++i)
+            get_deref(&trashcan);
+    }
+}
 
 static void check_if_uninitialized()
 {
@@ -280,7 +294,6 @@ void construct_object2(word clo, dptr expr, int argc, dptr args, word *failure_l
     struct class_field *new_field;
     struct b_class *class0 = (struct b_class*)BlkLoc(*expr);
     struct p_frame *pf;
-    int i;
 
     new_field = class0->new_field;
     if (new_field) {
@@ -294,6 +307,8 @@ void construct_object2(word clo, dptr expr, int argc, dptr args, word *failure_l
             syserr("new field not a non-static method");
 
         if (check_access(new_field, class0) == Error) {
+            xexpr = expr;
+            skip_args(argc, args);
             err_msg(0, NULL);
             Ipc = failure_label;
             return;
@@ -317,11 +332,7 @@ void construct_object2(word clo, dptr expr, int argc, dptr args, word *failure_l
         pf->mark[0] = (struct frame *)pf;
         pf->clo[0] = new_f;
     } else {
-        if (!args) {
-            /* Skip unwanted params */
-            for (i = 0; i < argc; ++i)
-                get_deref(&trashcan);
-        }
+        skip_args(argc, args);
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bconstruct_object0, 0));
         push_frame((struct frame *)pf);
         /* Arg0 is the class */
@@ -562,6 +573,8 @@ static void invoke_misc2(word clo, dptr expr, int argc, dptr args, word *failure
     /*
      * Fell through - not a string or not convertible to something invocable.
      */
+    skip_args(argc, args);
+    xexpr = expr;
     err_msg(106, expr);
     Ipc = failure_label;
 }
@@ -607,6 +620,8 @@ static void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_
             instance_access(lhs, expr, query, ic, just_fail, failure_label);
       }
       default: {
+          xexpr = expr;
+          xfield = query;
           err_msg(624, expr);
           Ipc = failure_label;
           return;
@@ -620,8 +635,11 @@ static void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_
            t_errornumber = err_num;
            t_errorvalue = nulldesc;
            t_have_val = 0;
-       } else
+       } else {
+           xexpr = expr;
+           xfield = query;
            err_msg(err_num, NULL);
+       }
        Ipc = failure_label;
        return;
    } while (0)
@@ -810,6 +828,17 @@ static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_c
     EVVal(i + 1, e_rsub);
 }
 
+#begdef InvokefErr(err_num)
+   do {
+       skip_args(argc, args);
+       xexpr = expr;
+       xfield = query;
+       err_msg(err_num, NULL);
+       Ipc = failure_label;
+       return;
+   } while (0)
+#enddef
+
 static void do_class_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
                              int argc, dptr args, word *failure_label)
 {
@@ -828,33 +857,22 @@ static void do_class_invokef(word clo, dptr expr, dptr query, struct inline_fiel
     }
 
     i = lookup_class_field(class0, query, ic);
-    if (i < 0) {
-        err_msg(207, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (i < 0) 
+        InvokefErr(207);
+
     cf = class0->fields[i];
 
     /* Can only access a static field (var or meth) via the class */
-    if (!(cf->flags & M_Static)) {
-        err_msg(600, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (!(cf->flags & M_Static)) 
+        InvokefErr(600);
 
     /* Can't access static init method via a field */
-    if (cf->flags & M_Special) {
-        err_msg(621, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (cf->flags & M_Special) 
+        InvokefErr(621);
 
     ac = check_access(cf, 0);
-    if (!(ac == Succeeded || (cf->flags & M_Readable))) {
-        err_msg(0, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (!(ac == Succeeded || (cf->flags & M_Readable))) 
+        InvokefErr(0);
 
     general_call(clo, cf->field_descriptor, argc, args, failure_label);
 }
@@ -867,11 +885,9 @@ static void do_record_invokef(word clo, dptr expr, dptr query, struct inline_fie
     int i;
 
     i = lookup_record_field(recdef, query, ic);
-    if (i < 0) {
-        err_msg(207, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (i < 0) 
+        InvokefErr(207);
+
     general_call(clo, &rec->fields[i], argc, args, failure_label);
 }
 
@@ -889,39 +905,24 @@ static void do_cast_invokef(word clo, dptr expr, dptr query, struct inline_field
 
     /* Lookup in the cast's class */
     i = lookup_class_field(cast_class, query, ic);
-    if (i < 0) {
-        err_msg(207, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (i < 0) 
+        InvokefErr(207);
 
     cf = cast_class->fields[i];
 
-    if (cf->flags & M_Static) {
-        err_msg(601, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (cf->flags & M_Static) 
+        InvokefErr(601);
 
-    if (!(cf->flags & M_Method)) {
-        err_msg(628, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (!(cf->flags & M_Method)) 
+        InvokefErr(628);
 
     /* Can't access new except whilst initializing */
-    if ((cf->flags & M_Special) && obj->init_state != Initializing) {
-        err_msg(622, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if ((cf->flags & M_Special) && obj->init_state != Initializing) 
+        InvokefErr(622);
 
     ac = check_access(cf, obj_class);
-    if (ac == Error) {
-        err_msg(0, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (ac == Error) 
+        InvokefErr(0);
 
     tmp.dword = D_Object;
     BlkLoc(tmp) = (union block *)obj;
@@ -943,37 +944,26 @@ static void do_instance_invokef(word clo, dptr expr, dptr query, struct inline_f
     int i, ac;
 
     i = lookup_class_field(class0, query, ic);
-    if (i < 0) {
-        err_msg(207, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (i < 0) 
+        InvokefErr(207);
+
     cf = class0->fields[i];
 
     /* Can't access a static (var or meth) via an instance */
-    if (cf->flags & M_Static) {
-        err_msg(601, NULL);
-        Ipc = failure_label;
-        return;
-    }
+    if (cf->flags & M_Static) 
+        InvokefErr(601);
 
     if (cf->flags & M_Method) {
         tended struct descrip tmp;
         struct frame *f;
 
         /* Can't access new except whilst initializing */
-        if ((cf->flags & M_Special) && obj->init_state != Initializing) {
-            err_msg(622, NULL);
-            Ipc = failure_label;
-            return;
-        }
+        if ((cf->flags & M_Special) && obj->init_state != Initializing) 
+            InvokefErr(622);
 
         ac = check_access(cf, class0);
-        if (ac == Error) {
-            err_msg(0, NULL);
-            Ipc = failure_label;
-            return;
-        }
+        if (ac == Error) 
+            InvokefErr(0);
 
         tmp.dword = D_Object;
         BlkLoc(tmp) = (union block *)obj;
@@ -986,11 +976,9 @@ static void do_instance_invokef(word clo, dptr expr, dptr query, struct inline_f
         tail_invoke_frame(f);
     } else {
         ac = check_access(cf, class0);
-        if (!(ac == Succeeded || (cf->flags & M_Readable))) {
-            err_msg(0, NULL);
-            Ipc = failure_label;
-            return;
-        }
+        if (!(ac == Succeeded || (cf->flags & M_Readable))) 
+            InvokefErr(0);
+
         general_call(clo, &obj->fields[i], argc, args, failure_label);
     }
 }

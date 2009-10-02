@@ -678,6 +678,14 @@ static void lemitcode()
             fprintf(dbgfile, "%ld:chunk %d\n", (long)pc, i);
         for (j = 0; j < chunk->n_inst; ++j) {
             struct ir *ir = chunk->inst[j];
+            struct lnode *n = ir->node;
+            if (n) {
+                curr_file = n->loc.file;
+                curr_line = n->loc.line;
+                synch_file();
+                synch_line();
+            }
+
             switch (ir->op) {
                 case Ir_Goto: {
                     struct ir_goto *x = (struct ir_goto *)ir;
@@ -943,6 +951,7 @@ static void lemitcode()
                     emit_ir_var(x->new_subject, "new_subject");
                     word_field(x->tmp_subject->index, "tmp_subject");
                     word_field(x->tmp_pos->index, "tmp_pos");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_ScanRestore: {
@@ -999,6 +1008,15 @@ static void lemitcode()
                     if (Dflag)
                         fprintf(dbgfile, "%ld:\tcofail\n", (long)pc);
                     outword(Op_Cofail);
+                    break;
+                }
+                case Ir_Limit: {
+                    struct ir_limit *x = (struct ir_limit *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tlimit\n", (long)pc);
+                    outword(Op_Limit);
+                    emit_ir_var(x->limit, "limit");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 default: {
