@@ -393,6 +393,68 @@ static void do_makelist()
     }
 }
 
+static void do_create()
+{
+    dptr lhs;
+    word *start_label;
+    struct p_frame *pf;
+    tended struct b_coexpr *coex;
+    lhs = get_dptr();
+    start_label = get_addr();
+    MemProtect(coex = alccoexp());
+    coex->program = coex->creator = curpstate;
+    coex->main_of = 0;
+    MemProtect(pf = alc_p_frame(PF->proc, PF->locals));
+    pf->ipc = start_label;
+    coex->curr_pf = pf;
+    coex->sp = (struct frame *)pf;
+    lhs->dword = D_Coexpr;
+    BlkLoc(*lhs) = (union block *)coex;
+}
+
+static void do_coact()
+{
+    dptr lhs;
+    tended struct descrip arg1, arg2;
+    word *failure_label;
+
+    lhs = get_dptr();
+    get_deref(&arg1);
+    get_deref(&arg2);
+    failure_label = get_addr();
+    if (arg2.dword != D_Coexpr) {
+        err_msg(118, &arg2);
+        Ipc = failure_label;
+        return;
+    }
+    
+    printf("activating coexp=");print_desc(stdout, &arg2);printf("\n");
+    k_current->tvalloc = lhs;
+    k_current->failure_label = failure_label;
+    BlkLoc(arg2)->coexpr.es_activator = k_current;
+    k_current = &BlkLoc(arg2)->coexpr;
+}
+
+static void do_coret()
+{
+    dptr val;
+    word *resume_label;
+
+    val = get_dptr();
+    resume_label = get_addr();
+    printf("coret FROM %p to %p VAL=",k_current, k_current->es_activator);print_desc(stdout, val);printf("\n");
+    PF->ipc = resume_label;
+    k_current = k_current->es_activator;
+    *k_current->tvalloc = *val;
+}
+
+static void do_cofail()
+{
+    printf("cofail FROM %p to %p",k_current, k_current->es_activator);printf("\n");
+    k_current = k_current->es_activator;
+    PF->ipc = k_current->failure_label;
+}
+
 void interp2()
 {
     word op;
@@ -625,7 +687,7 @@ void interp2()
             }
 
             case Op_Halt: {
-                showstack();
+                showcurrstack();
                 fprintf(stderr, "Halt instruction reached\n");
                 exit(1);
             }
@@ -637,6 +699,26 @@ void interp2()
 
             case Op_Field: {
                 do_field();
+                break;
+            }
+
+            case Op_Create: {
+                do_create();
+                break;
+            }
+
+            case Op_Coact: {
+                do_coact();
+                break;
+            }
+
+            case Op_Coret: {
+                do_coret();
+                break;
+            }
+
+            case Op_Cofail: {
+                do_cofail();
                 break;
             }
 

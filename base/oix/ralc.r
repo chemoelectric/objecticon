@@ -116,41 +116,13 @@ alcbignum_macro(alcbignum_1,E_Lrgint)
  * create or refresh - for loading progs, see alcprog below.
  */
 struct b_coexpr *alccoexp()
-   {
-   struct b_coexpr *ep;
+{
+   struct b_coexpr *blk;
 
-   EVVal(xstksize, E_Coexpr);
-
-   ep = malloc(xstksize);
-
-   /*
-    * If malloc failed or there have been too many co-expression allocations
-    * since a collection, attempt to free some co-expression blocks and retry.
-    */
-
-   if (ep == NULL || curpstate->statcount > coexprlim) {
-      collect(Static);
-      if (ep == NULL) {
-          ep = malloc(xstksize);
-          if (ep == NULL)
-              ReturnErrNum(305, NULL);
-      }
-   }
-
-   memset(ep, 0, sizeof(struct b_coexpr));
-   ep->title = T_Coexpr;
-   ep->creator = curpstate;
-   /* Add the allocation to the prog's stats */
-   ep->creator->stattotal += xstksize;
-   ep->creator->statcurr += xstksize;
-   ep->id = coexp_ser++;
-   ep->creator->statcount++;
-
-   ep->nextstk = stklist;
-   stklist = ep;
-
-   return ep;
-   }
+   AlcFixBlk(blk, b_coexpr, T_Coexpr, e_coexpr)
+   blk->id = coexp_ser++;
+   return blk;
+}
 
 
 /*

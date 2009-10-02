@@ -966,7 +966,41 @@ static void lemitcode()
                         emit_ir_var(x->args[i], "arg");
                     break;
                 }
-
+                case Ir_Create: {
+                    struct ir_create *x = (struct ir_create *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tcreate\n", (long)pc);
+                    outword(Op_Create);
+                    emit_ir_var(x->lhs, "lhs");
+                    labout(x->start_label, "start");
+                    break;
+                }
+                case Ir_Coret: {
+                    struct ir_coret *x = (struct ir_coret *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tcoret\n", (long)pc);
+                    outword(Op_Coret);
+                    emit_ir_var(x->value, "value");
+                    labout(x->resume_label, "resume");
+                    break;
+                }
+                case Ir_Coact: {
+                    struct ir_coact *x = (struct ir_coact *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tcoact\n", (long)pc);
+                    outword(Op_Coact);
+                    emit_ir_var(x->lhs, "lhs");
+                    emit_ir_var(x->arg1, "arg1");
+                    emit_ir_var(x->arg2, "arg2");
+                    labout(x->fail_label, "fail");
+                    break;
+                }
+                case Ir_Cofail: {
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\tcofail\n", (long)pc);
+                    outword(Op_Cofail);
+                    break;
+                }
                 default: {
                     quitf("lemitcode: illegal ir opcode(%d)\n", ir->op);
                     break;

@@ -279,6 +279,52 @@ static struct ir_deref *ir_deref(struct lnode *n, struct ir_var *src, struct ir_
     return res;
 }
 
+static struct ir_create *ir_create(struct lnode *n, struct ir_var *lhs, int start_label)
+{
+    struct ir_create *res = IRAlloc(struct ir_create);
+    res->node = n;
+    res->op = Ir_Create;
+    res->lhs = lhs;
+    res->start_label = start_label;
+    return res;
+}
+
+static struct ir_coret *ir_coret(struct lnode *n, struct ir_var *value, int resume_label)
+{
+    struct ir_coret *res = IRAlloc(struct ir_coret);
+    res->node = n;
+    res->op = Ir_Coret;
+    res->value = value;
+    res->resume_label = resume_label;
+    return res;
+}
+
+static struct ir_coact *ir_coact(struct lnode *n,
+                                 struct ir_var *lhs,
+                                 struct ir_var *arg1,
+                                 struct ir_var *arg2,
+                                 int rval,
+                                 int fail_label) 
+{
+    struct ir_coact *res = IRAlloc(struct ir_coact);
+    res->node = n;
+    res->op = Ir_Coact;
+    res->lhs = lhs;
+    res->arg1 = arg1;
+    res->arg2 = arg2;
+    res->rval = rval;
+    res->fail_label = fail_label;
+    return res;
+}
+
+static struct ir *ir_cofail(struct lnode *n)
+{
+    struct ir *res = IRAlloc(struct ir);
+    res->node = n;
+    res->op = Ir_Cofail;
+    return res;
+}
+
 static struct ir_mark *ir_mark(struct lnode *n, int no)
 {
     struct ir_mark *res = IRAlloc(struct ir_mark);
@@ -676,7 +722,9 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
     struct ir_info *res = ir_info(n);
     res->node = n;
     if (dump) {
-        indentf("uop = %s (bounded=%d rval=%d) {\n", ucode_op_table[n->op].name, bounded, rval);
+        indentf("uop = %s (bounded=%d rval=%d, target=", ucode_op_table[n->op].name, bounded, rval);
+        print_ir_var(target);
+        fprintf(stderr, ") {\n");
     }
     ++traverse_level;
     switch (n->op) {
@@ -2110,9 +2158,14 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 tst = branch_stack(st);
                 clause[i] = ir_traverse(x->clause[i], tst, target, bounded, rval);
                 union_stack(clause_st, tst);
+                if (clause[i]->uses_stack)
+                    res->uses_stack = 1;
             }
-            if (n->op == Uop_Casedef)        /* evaluate default clause */
+            if (n->op == Uop_Casedef) {        /* evaluate default clause */
                 def = ir_traverse(x->def, st, target, bounded, rval);
+                if (def->uses_stack)
+                    res->uses_stack = 1;
+            }
 
             union_stack(st, clause_st);
 
@@ -2174,14 +2227,175 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
+        case Uop_Rptalt: {                      /* repeated alternation */
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            struct ir_info *expr;
+            int tl;
+            if (!bounded)
+                tl = make_tmploc(st);
+
+            expr = ir_traverse(x->child, st, target, bounded, rval);
+
+            if (bounded) {
+                chunk1(res->start, ir_goto(n, expr->start));
+                chunk1(expr->success, ir_goto(n, res->success));
+                chunk1(expr->failure, ir_goto(n, res->failure));
+            } else {
+                chunk1(res->resume, ir_goto(n, expr->resume));
+                chunk2(res->start, 
+                       ir_movelabel(n, tl, res->failure),
+                       ir_goto(n, expr->start));
+                chunk2(expr->success, 
+                       ir_movelabel(n, tl, res->start),
+                       ir_goto(n, res->success));
+                chunk1(expr->failure, ir_igoto(n, tl));
+            }
+
+            res->uses_stack = expr->uses_stack;
+            break;
+        }
+
+        case Uop_Not: {                 /* not expression */
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            struct ir_info *expr;
+            int mk;
+
+            mk = make_mark(st);
+            expr = ir_traverse(x->child, branch_stack(st), target, 1, 1);
+
+            chunk2(res->start, 
+                   cond_ir_mark(expr->uses_stack, n, mk),
+                   ir_goto(n, expr->start));
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, res->failure));
+            chunk2(expr->success, 
+                   cond_ir_unmark(expr->uses_stack, n, mk),
+                   ir_goto(n, res->failure));
+            chunk3(expr->failure, 
+                   cond_ir_unmark(expr->uses_stack, n, mk),
+                   ir_move(n, target, make_knull(), 0),
+                   ir_goto(n, res->success));
+            break;
+        }
+
+        case Uop_Limit: {                       /* limitation */
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            struct ir_info *expr, *limit;
+            struct ir_var *c, *t;
+            c = make_tmp(st);
+            t = make_tmp(st);
+
+            limit = ir_traverse(x->child1, st, t, 0, 1);
+            expr = ir_traverse(x->child2, st, target, bounded, rval);
+
+            chunk1(res->start, ir_goto(n, limit->start));
+            if (!bounded)
+                chunk3(res->resume, 
+                       ir_op(n, 0, Uop_Numgt, t, c, 0,            1, limit->resume),
+                       ir_op(n, c, Uop_Plus,  c, make_word(1), 0, 1, expr->resume),
+                       ir_goto(n, expr->resume));
+
+            chunk1(expr->failure, ir_goto(n, limit->resume));
+            chunk1(limit->failure, ir_goto(n, res->failure));
+            chunk1(expr->success, ir_goto(n, res->success));
+            chunk3(limit->success, 
+                   ir_op(n, t, Uop_Number, t, 0, 0, 1, limit->resume),
+                   ir_move(n, c, make_word(1), 1),
+                   ir_goto(n, expr->start));
+
+            res->uses_stack = (limit->uses_stack || expr->uses_stack);
+            break;
+        }
+
+        case Uop_Create: {                      /* create expression */
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            struct ir_info *expr;
+            if (!target) {
+                chunk1(res->start, ir_goto(n, res->success));
+                if (!bounded)
+                    chunk1(res->resume, ir_goto(n, res->failure));
+                break;
+            }
+            expr = ir_traverse(x->child, st, target, 0, 0);
+
+            chunk2(res->start, 
+                   ir_create(n, target, expr->start),
+                   ir_goto(n, res->success));
+
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, res->failure));
+
+            chunk1(expr->success, ir_coret(n, target, expr->resume));
+            chunk1(expr->failure, ir_cofail(n));
+
+            break;
+        }
+
+        case Uop_Activate: {                    /* co-expression activation */
+            struct lnode_1 *x = (struct lnode_1 *)n;
+            struct ir_info *expr;
+            struct ir_var *e;
+
+            e = get_var(x->child, st, target);
+            expr = ir_traverse(x->child, st, e, 0, 1);
+            chunk1(res->start, ir_goto(n, expr->start));
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, expr->resume));
+            chunk1(expr->failure, ir_goto(n, res->failure));
+            chunk2(expr->success, 
+                   ir_coact(n, target, make_knull(), e, rval, expr->resume),
+                   ir_goto(n, res->success));
+            res->uses_stack = expr->uses_stack;
+            break;
+        }
+
+        case Uop_Augactivate:                   /* co-expression activation */
+        case Uop_Bactivate: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            struct ir_var *lv, *rv, *tmp;
+            struct ir_info *left, *right;
+
+            lv = get_var(x->child1, st, 0);
+            rv = get_var(x->child2, st, target);
+            if (n->op == Uop_Augactivate)
+                tmp = target ? target : make_tmp(st);
+
+            left = ir_traverse(x->child1, st, lv, 0, n->op == Uop_Bactivate);
+            right = ir_traverse(x->child2, st, rv, 0, 1);
+            chunk1(res->start, ir_goto(n, left->start));
+            chunk1(left->success, ir_goto(n, right->start));
+            chunk1(left->failure, ir_goto(n, res->failure));
+            chunk1(right->failure, ir_goto(n, left->resume));
+
+            if (!bounded)
+                chunk1(res->resume, ir_goto(n, right->resume));
+
+            if (n->op == Uop_Augactivate) {
+                chunk3(right->success, 
+                      ir_coact(n, tmp, lv, rv, 1, right->resume),
+                      ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, right->resume),
+                      ir_goto(n, res->success));
+
+            } else {
+                chunk2(right->success, 
+                      ir_coact(n, target, lv, rv, rval, right->resume),
+                      ir_goto(n, res->success));
+            }
+
+            res->uses_stack = (left->uses_stack || right->uses_stack);
+
+            break;
+        }
+
         default:
             quitf("ir_traverse: illegal opcode(%d): %s in file %s\n", n->op, 
                   ucode_op_table[n->op].name, n->loc.file);
     }
+    if (dump)
+        indentf("uses_stack=%d\n", res->uses_stack);
     --traverse_level;
-    if (dump) {
-        indentf("}\n", ucode_op_table[n->op].name);
-    }
+    if (dump)
+        indentf("}\n");
     return res;
 }
 
@@ -2475,7 +2689,7 @@ static void print_chunk(struct chunk *chunk)
             }
             case Ir_Field: {
                 struct ir_field *x = (struct ir_field *)ir;
-                indentf("\tIr_Field %p ",x);
+                indentf("\tIr_Field ");
                 print_ir_var(x->lhs);
                 fprintf(stderr, " <- ");
                 print_ir_var(x->expr);
@@ -2500,6 +2714,35 @@ static void print_chunk(struct chunk *chunk)
                         fprintf(stderr, ",");
                 }
                 fprintf(stderr, "]\n");
+                break;
+            }
+            case Ir_Create: {
+                struct ir_create *x = (struct ir_create *)ir;
+                indentf("\tIr_Create ");
+                print_ir_var(x->lhs);
+                fprintf(stderr, " <- create start_label=%d\n", x->start_label);
+                break;
+            }
+            case Ir_Coret: {
+                struct ir_coret *x = (struct ir_coret *)ir;
+                indentf("\tIr_Coret ");
+                print_ir_var(x->value);
+                fprintf(stderr, "  resume_label=%d\n", x->resume_label);
+                break;
+            }
+            case Ir_Coact: {
+                struct ir_coact *x = (struct ir_coact *)ir;
+                indentf("\tIr_Coact ");
+                print_ir_var(x->lhs);
+                fprintf(stderr, " <- ");
+                print_ir_var(x->arg1);
+                fprintf(stderr, " @ ");
+                print_ir_var(x->arg2);
+                fprintf(stderr, ", rval=%d fail_label=%d\n", x->rval, x->fail_label);
+                break;
+            }
+            case Ir_Cofail: {
+                indentf("\tIr_Cofail\n");
                 break;
             }
             default: {
@@ -2757,6 +3000,24 @@ static void optimize_goto1(int i)
                 optimize_goto1(x->fail_label);
                 break;
             }
+            case Ir_Create: {
+                struct ir_create *x = (struct ir_create *)ir;
+                optimize_goto_chain(&x->start_label);
+                optimize_goto1(x->start_label);
+                break;
+            }
+            case Ir_Coret: {
+                struct ir_coret *x = (struct ir_coret *)ir;
+                optimize_goto_chain(&x->resume_label);
+                optimize_goto1(x->resume_label);
+                break;
+            }
+            case Ir_Coact: {
+                struct ir_coact *x = (struct ir_coact *)ir;
+                optimize_goto_chain(&x->fail_label);
+                optimize_goto1(x->fail_label);
+                break;
+            }
         }
     }
 }
@@ -2845,6 +3106,7 @@ static void renumber_ir()
 
                 case Ir_EnterInit:
                 case Ir_Fail:
+                case Ir_Cofail:
                     break;
 
                 case Ir_Mark: {
@@ -2975,6 +3237,23 @@ static void renumber_ir()
                     renumber_var(x->lhs);
                     for (i = 0; i < x->argc; ++i)
                         renumber_var(x->args[i]);
+                    break;
+                }
+                case Ir_Create: {
+                    struct ir_create *x = (struct ir_create *)ir;
+                    renumber_var(x->lhs);
+                    break;
+                }
+                case Ir_Coret: {
+                    struct ir_coret *x = (struct ir_coret *)ir;
+                    renumber_var(x->value);
+                    break;
+                }
+                case Ir_Coact: {
+                    struct ir_coact *x = (struct ir_coact *)ir;
+                    renumber_var(x->lhs);
+                    renumber_var(x->arg1);
+                    renumber_var(x->arg2);
                     break;
                 }
                 default: {

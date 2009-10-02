@@ -1,31 +1,35 @@
 #ifndef _IR_H
 #define _IR_H 1
 
-#define Ir_Goto      1
-#define Ir_Fail      2
-#define Ir_EnterInit 3
-#define Ir_Mark      4
-#define Ir_Unmark    5
-#define Ir_Move      6
-#define Ir_Op        7
-#define Ir_OpClo     8
-#define Ir_Resume    11
-#define Ir_Deref     12
-#define Ir_Invoke    13
-#define Ir_KeyOp     14
-#define Ir_KeyClo    15
-#define Ir_IGoto     16
-#define Ir_MoveLabel 17
-#define Ir_ScanSwap  18
-#define Ir_ScanSave  19
+#define Ir_Goto         1
+#define Ir_Fail         2
+#define Ir_EnterInit    3
+#define Ir_Mark         4
+#define Ir_Unmark       5
+#define Ir_Move         6
+#define Ir_Op           7
+#define Ir_OpClo        8
+#define Ir_Resume      11
+#define Ir_Deref       12
+#define Ir_Invoke      13
+#define Ir_KeyOp       14
+#define Ir_KeyClo      15
+#define Ir_IGoto       16
+#define Ir_MoveLabel   17
+#define Ir_ScanSwap    18
+#define Ir_ScanSave    19
 #define Ir_ScanRestore 20
-#define Ir_Succeed   21
-#define Ir_SysErr    22
-#define Ir_MakeList  23
-#define Ir_Apply     24
-#define Ir_Field     25
-#define Ir_Invokef   26
-#define Ir_Applyf    27
+#define Ir_Succeed     21
+#define Ir_SysErr      22
+#define Ir_MakeList    23
+#define Ir_Apply       24
+#define Ir_Field       25
+#define Ir_Invokef     26
+#define Ir_Applyf      27
+#define Ir_Create      28
+#define Ir_Coret       29
+#define Ir_Coact       30
+#define Ir_Cofail      31
 
 struct scan_info {
     struct ir_var *old_subject, *old_pos;
@@ -257,6 +261,27 @@ struct ir_deref {
 struct ir_resume {
     IR_SUB
     int clo;
+    int fail_label;
+};
+
+struct ir_create {
+    IR_SUB
+    struct ir_var *lhs;
+    int start_label;
+};
+
+struct ir_coret {
+    IR_SUB
+    struct ir_var *value;
+    int resume_label;
+};
+
+struct ir_coact {
+    IR_SUB
+    struct ir_var *lhs;
+    struct ir_var *arg1;
+    struct ir_var *arg2;
+    int rval;
     int fail_label;
 };
 

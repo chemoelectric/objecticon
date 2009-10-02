@@ -1514,23 +1514,27 @@ void print_dword(FILE *f, dptr d) {
     }
 }
 
-void showstack()
+void showcurrstack()
 {
-    struct frame *f;
-    struct b_coexpr *c;
-    f = k_current->sp;
-    printf("Stack k_current->sp=%p k_current->curr_pf=%p\n",f, k_current->curr_pf);
-    c = k_current;
-    if (!c) {
+    if (!k_current) {
         printf("curpstate=%p k_current is 0\n",curpstate);
         return;
     }    
+    printf("k_current= %p k_current->sp=%p k_current->curr_pf=%p\n",
+           k_current, k_current->sp, k_current->curr_pf);
+    showstack(k_current);
+}
+
+void showstack(struct b_coexpr *c)
+{
+    struct frame *f;
+    f = c->sp;
     while (f) {
         struct descrip tmp;
         int i;
-        if (f == k_current->sp)
+        if (f == c->sp)
             printf("SP-> ");
-        if (f == (struct frame *)k_current->curr_pf)
+        if (f == (struct frame *)c->curr_pf)
             printf("PF-> ");
         printf("Frame %p type=%d\n", f, f->type);
         printf("\tvalue="); print_desc(stdout, &f->value); printf("\n");

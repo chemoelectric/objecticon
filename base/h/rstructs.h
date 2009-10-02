@@ -593,6 +593,7 @@ struct b_coexpr {		/* co-expression stack block */
     struct progstate *creator;  /*   curpstate when this block was allocated */
     struct progstate *main_of;  /*   set to the parent program for all &main co-expressions;
                                  *   null for all others */
+    word *failure_label;        /*   where to go on a cofail */
     struct p_frame *curr_pf;    /*   current procedure frame */
     struct frame *sp;           /*   end of stack */
 };

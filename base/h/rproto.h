@@ -168,7 +168,9 @@ int invaluemask(struct progstate *p, int evcode, struct descrip *val);
    void showcoexps();
    void checkcoexps(char *s);
    void dumpcoexp(char *s, struct b_coexpr *p);
-   void showstack();
+   void showcurrstack();
+void showstack(struct b_coexpr *c);
+
 char *cstr(struct descrip *sd);
 void print_desc(FILE *f, dptr d);
 void print_vword(FILE *f, dptr d);
