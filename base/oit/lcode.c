@@ -512,6 +512,7 @@ static void lemitcon(struct centry *ce)
 
     if (ce->c_flag & F_LrgintLit) {
         struct strconst *str = inst_strconst(ce->data, ce->length);;
+        ce->pc = pc;
         if (Dflag) {
             fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Lrgint\n",(long) pc, T_Lrgint);
             fprintf(dbgfile, "\t%d\tS+%d\t\t\t#  data\n", str->len, str->offset);
@@ -1895,12 +1896,17 @@ static void gentables()
                 fprintf(dbgfile, "%ld:\tD_Integer\t%ld\n", (long)pc, (long)ival);
             outword(D_Integer);
             outword(ival);
-        } else if (ce->c_flag & (F_StrLit | F_LrgintLit)) {
+        } else if (ce->c_flag & (F_StrLit)) {
             struct strconst *sp = inst_strconst(ce->data, ce->length);
             if (Dflag)
                 fprintf(dbgfile, "%ld:\t%d\tS+%d\n", (long)pc, sp->len, sp->offset);
             outword(sp->len);
             outword(sp->offset);
+        } else if (ce->c_flag & F_LrgintLit) {
+            if (Dflag)
+                fprintf(dbgfile, "%ld:\tD_Lrgint\tZ+%ld\n", (long)pc, (long)ce->pc);
+            outword(D_Lrgint);
+            outword(ce->pc);
         } else if (ce->c_flag & F_RealLit) {
             if (Dflag)
                 fprintf(dbgfile, "%ld:\tD_Real\tZ+%ld\n", (long)pc, (long)ce->pc);

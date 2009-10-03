@@ -1219,10 +1219,28 @@ void resolve(struct progstate *p)
                 struct b_ucs *ub = (struct b_ucs *)b;
                 /* Relocate the utf8 string */
                 StrLoc(ub->utf8) = p->Strcons + (uword)StrLoc(ub->utf8);
+            } else if (p->Constants[j].dword == D_Lrgint) {
+                struct descrip id;
+                dptr sd = (dptr)((word *)b + 1);
+                StrLoc(*sd) = p->Strcons + (uword)StrLoc(*sd);
+                /* Convert the string data to an integer */
+                if (!cnv:integer(*sd, id)) {
+                    ffatalerr("Couldn't convert large integer constant: %.*s", 
+                        (int)StrLen(*sd), StrLoc(*sd));
+                }
+                /* It could be either a simple integer or a large int. */
+                if (id.dword == D_Integer)
+                    p->Constants[j] = id;
+                else {
+                    /* It must be a large int; copy the block from the block region to the heap
+                     * since constants are not swept during collection.
+                     */
+                    MemProtect(BlkLoc(p->Constants[j]) = malloc(BlkLoc(id)->bignum.blksize));
+                    memcpy(BlkLoc(p->Constants[j]), BlkLoc(id), BlkLoc(id)->bignum.blksize);
+                }
             }
         }
     }
-
 
     /*
      * Relocate the names of the files in the ipc->filename table.
@@ -1592,6 +1610,6 @@ void showstack(struct b_coexpr *c)
         f = f->parent_sp;
 
     }
-
+    printf("------bottom of stack--------\n");
     fflush(stdout);
 }

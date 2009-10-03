@@ -753,7 +753,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
               (class0->init_state == Initializing &&
                ic &&                      /* No Class.get(..) := ... */
                class0->init_field &&       /* .. and must be in init() method */
-               CurrProc == &BlkLoc(*class0->init_field->field_descriptor)->proc)))
+               get_current_user_proc() == &BlkLoc(*class0->init_field->field_descriptor)->proc)))
     {
         lhs->dword = D_NamedVar;
         VarLoc(*lhs) = dp;
@@ -808,8 +808,6 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
         BlkLoc(*lhs) = (union block *)mp;
     } else {
         dptr dp = &obj->fields[i];
-        fprintf(stderr,"hello %d\n",obj->init_state);fflush(stderr);
-
         ac = check_access(cf, class0);
         if (ac == Succeeded &&
             (!(cf->flags & M_Const) || obj->init_state == Initializing))
@@ -1015,7 +1013,6 @@ static void simple_access()
     query = get_dptr();
     get_deref(&just_fail);
     a = get_addr();
-    printf("justfail=%d\n",IntVal(just_fail));
     general_access(lhs, expr, query, 0, IntVal(just_fail), a);
 }
 
@@ -1066,40 +1063,6 @@ function{0,1} lang_Class_getf(obj, field, quiet)
       fail;
   }
 end
-
-
-function{1} xget(obj, field)
-   body {
-      struct p_frame *pf;
-      MemProtect(pf = alc_p_frame((struct b_proc *)&Bget_impl, 0));
-      push_frame((struct frame *)pf);
-      pf->locals->args[0] = obj;
-      pf->locals->args[1] = field;
-      tail_invoke_frame((struct frame *)pf);
-      return nulldesc;
-   }
-end
-
-function{0,1} xgetf(obj, field, quiet)
-   body {
-      struct p_frame *pf;
-      MemProtect(pf = alc_p_frame((struct b_proc *)&Bgetf_impl, 0));
-      push_frame((struct frame *)pf);
-      pf->locals->args[0] = obj;
-      pf->locals->args[1] = field;
-      pf->locals->args[2] = quiet;
-      tail_invoke_frame((struct frame *)pf);
-      return nulldesc;
-      fail;
-  }
-end
-
-
-
-
-
-
-
 
 
 

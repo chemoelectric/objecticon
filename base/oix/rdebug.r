@@ -55,6 +55,8 @@ void traceback()
     struct frame *f;
     struct p_frame **fa;
 
+    showcurrstack();
+
     depth = 0;
     for (f = SP; f; f = f->parent_sp) {
         if (f->proc->program)

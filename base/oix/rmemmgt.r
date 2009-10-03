@@ -284,7 +284,7 @@ void collect(int region)
    {
    struct progstate *prog;
    struct region *br;
-   showcurrstack();
+/*   showcurrstack();*/
 #if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
    {
        struct rlimit rl;
@@ -396,7 +396,7 @@ void collect(int region)
    }
 
    collecting = 0;
-   showcurrstack();
+   /*showcurrstack();*/
 
 #ifdef EventMon
    if (!noMTevents) {
@@ -486,7 +486,14 @@ dptr dp;
 
 static void print_block(FILE *f, union block *b)
 {
-    word t = *((word *)b);
+    word t;
+    if (b == 0) {
+        fprintf(f, "Block %p\n", b);
+        return;
+    }
+
+    t = *((word *)b);
+
     if (t >= 0 && t < ElemCount(blkname))
         fprintf(f, "Block %p title=%d(%s)\n", b, t, blkname[t]);
     else
@@ -508,7 +515,7 @@ static void markptr(union block **ptr)
      */
     block = (char *)*ptr;
 
-    print_block(stderr,*ptr);
+/*    print_block(stderr,*ptr);*/
 
     if (InRange(blkbase,block,blkfree)) {
         type0 = BlkType(block);
@@ -535,7 +542,7 @@ static void markptr(union block **ptr)
              */
             if (type0 == T_Coexpr) {
                 struct b_coexpr *cp;
-                fprintf(stderr,"Yes, coexpr\n");fflush(stderr);
+                /*fprintf(stderr,"Yes, coexpr\n");fflush(stderr);*/
                 cp = (struct b_coexpr *)block;
                 /*
                  * Mark the activator of this co-expression.
@@ -618,7 +625,7 @@ static void markptr(union block **ptr)
 
         if (type0 == T_Coexpr) {
             struct b_coexpr *cp;
-            fprintf(stderr,"Yes, coexpr\n");fflush(stderr);
+            /*fprintf(stderr,"Yes, coexpr\n");fflush(stderr);*/
             cp = (struct b_coexpr *)block;
             /*
              * Mark the activator of this co-expression.
@@ -665,7 +672,7 @@ static void sweep_stack(struct frame *f)
 {
     int i;
     while (f) {
-        printf("sweep stack frame %p\n",f);
+        /*printf("sweep stack frame %p\n",f);*/
         PostDescrip(f->value);
         switch (f->type) {
             case C_FRAME_TYPE: {
@@ -709,13 +716,7 @@ static void sweep_tended()
 
     for (tp = tend; tp != NULL; tp = tp->previous) {
         for (i = 0; i < tp->num; ++i) {
-            /* We need an extra test for a null BlkLoc, since we may have an
-             * uninitialized tended block pointer (set to nullptr)
-             */
-            if (Qual(tp->d[i]))
-                postqual(&tp->d[i]);
-            else if (Pointer(tp->d[i]) && BlkLoc(tp->d[i]))
-                markptr(&BlkLoc(tp->d[i]));
+            PostDescrip(tp->d[i]);
         }
     }
 }
@@ -903,7 +904,7 @@ static void compact()
                memmove(dest, source, size);
            dest += size;
        } else {
-           fprintf(stderr, "Release block at %p type %d(%s)\n", source, BlkType(source), blkname[BlkType(source)]);
+           /*fprintf(stderr, "Release block at %p type %d(%s)\n", source, BlkType(source), blkname[BlkType(source)]);*/
            if (BlkType(source) == T_Coexpr) {
                /* Free the coexpression's stack */
                struct b_coexpr *c = (struct b_coexpr *)source;
@@ -911,7 +912,7 @@ static void compact()
                while (f) {
                    struct frame *t = f;
                    f = f->parent_sp;
-                   fprintf(stderr, "Releasing frame %p\n", t);
+                   /*fprintf(stderr, "Releasing frame %p\n", t);*/
                    free_frame(t);
                }
            }

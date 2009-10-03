@@ -442,6 +442,15 @@ access_macro(cast_access_0,instance_access_0,class_access_0,record_access_0,inst
 
 access_macro(cast_access_1,instance_access_1,class_access_1,record_access_1,instance_invokef_1,cast_invokef_1,class_invokef_1,record_invokef_1,field_access_1,invokef_access_1,E_Objectref,E_Objectsub,E_Castref,E_Castsub,E_Classref,E_Classsub,E_Rref,E_Rsub)
 
+    
+struct b_proc *get_current_user_proc()
+{
+    struct p_frame *pf = PF;
+    while (pf->proc->program == 0)
+        pf = pf->caller;
+    return pf->proc;
+}
+
 /*
  * Check whether the calling procedure (deduced from the stack) has
  * access to the given field of the given instance class (which is
@@ -457,7 +466,7 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
     if (cf->flags & M_Public)
         return Succeeded;
 
-    caller_proc = CurrProc;
+    caller_proc = get_current_user_proc();
 
     if (caller_proc->package_id == 1)  /* Is the caller in lang? */
         return Succeeded;

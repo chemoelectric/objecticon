@@ -1110,7 +1110,7 @@ function{1} lang_Class_set_method(field, pr)
         if (!is:proc(pr))
             runerr(615, pr);
 
-        caller_proc = CallerProc;
+        caller_proc = get_current_user_proc();
         if (!caller_proc->field)
             runerr(616);
         class0 = caller_proc->field->defining_class;
@@ -3110,6 +3110,7 @@ end
 function {1} stdout(a[n])
     body {
        int i;
+       tended struct b_object *dumper;
        for (i = 0; i < n; ++i) {
            if (!cnv:string(a[i],a[i]))
                runerr(103, a[i]);

@@ -634,3 +634,4 @@ struct inline_field_cache *get_inline_field_cache();
 void traceback();
 struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior);
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior);
+struct b_proc *get_current_user_proc();
