@@ -366,14 +366,10 @@ void icon_init(char *name)
     initalloc(&rootpstate);
 
     /*
-     * Allocate stack and initialize &main.
+     * Allocate and initialize &main.
      */
 
-    Protect(stack = malloc(mstksize), fatalerr(303, NULL));
-    mainhead = (struct b_coexpr *)stack;
-
-    mainhead->title = T_Coexpr;
-    mainhead->id = 1;
+    Protect(mainhead = alccoexp(), fatalerr(303, NULL));
     mainhead->size = 1;			/* pretend main() does an activation */
     mainhead->nextstk = NULL;
     stklist = mainhead;
@@ -506,13 +502,18 @@ void syserr(char *fmt, ...)
     if (pfp == NULL)
         fprintf(stderr, " in startup code");
     else {
-        dptr fn = findfile(ipc);
-        if (fn) {
+        struct ipc_line *pline;
+        struct ipc_fname *pfile;
+
+        pline = frame_ipc_line(PF, 1);
+        pfile = frame_ipc_fname(PF, 1);
+
+        if (pline && pfile) {
             struct descrip t;
-            abbr_fname(fn, &t);
-            fprintf(stderr, " at line %d in %.*s", findline(ipc), (int)StrLen(t), StrLoc(t));
+            abbr_fname(&pfile->fname, &t);
+            fprintf(stderr, " at line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
         } else
-            fprintf(stderr, " at line %d in ?", findline(ipc));
+            fprintf(stderr, " at line ? in ?");
     }
     fprintf(stderr, "\n");
     vfprintf(stderr, fmt, ap);
@@ -526,7 +527,7 @@ void syserr(char *fmt, ...)
         c_exit(EXIT_FAILURE);
     }
     fprintf(stderr, "Traceback:\n");
-    tracebk(pfp, argp);
+    traceback();
     fflush(stderr);
 
     if (dodump)
@@ -737,7 +738,7 @@ static void initprogstate(struct progstate *p)
     p->K_errorvalue = nulldesc;
     p->T_errorvalue = nulldesc;
     p->T_errortext = emptystr;
-    p->Coexp_ser = 2;
+    p->Coexp_ser = 1;
     p->List_ser = 1;
     p->Set_ser = 1;
     p->Table_ser = 1;

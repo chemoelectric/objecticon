@@ -882,3 +882,155 @@ word nbytes,stdsize;
       }
    return NULL;
 }
+
+
+
+
+
+struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
+{
+    struct p_frame *p;
+    char *t;
+    int i;
+    p = malloc(sizeof(struct p_frame) +
+               pb->nclo * sizeof(struct frame *) +
+               pb->ntmp * sizeof(struct descrip) +
+               pb->nlab * sizeof(word *) + 
+               pb->nmark * sizeof(struct frame *));
+    if (!p)
+        return 0;
+    
+    t = (char *)(p + 1);
+    if (pb->nclo) {
+        p->clo = (struct frame **)t;
+        for (i = 0; i < pb->nclo; ++i)
+            p->clo[i] = 0;
+        t += pb->nclo * sizeof(struct frame *);
+    } else
+        p->clo = 0;
+    if (pb->ntmp) {
+        p->tmp = (dptr)t;
+        for (i = 0; i < pb->ntmp; ++i)
+            p->tmp[i] = nulldesc;
+        t += pb->ntmp * sizeof(struct descrip);
+    } else
+        p->tmp = 0;
+    if (pb->nlab) {
+        p->lab = (word **)t;
+        for (i = 0; i < pb->nlab; ++i)
+            p->lab[i] = 0;
+        t += pb->nlab * sizeof(word *);
+    } else
+        p->lab = 0;
+    if (pb->nmark) {
+        p->mark = (struct frame **)t;
+        for (i = 0; i < pb->nmark; ++i)
+            p->mark[i] = 0;
+    } else
+        p->mark = 0;
+    p->type = P_FRAME_TYPE;
+    p->value = nulldesc;
+    p->failure_label = 0;
+    p->proc = pb;
+    p->parent_sp = 0;
+    p->ipc = pb->icode;
+    p->curr_inst = 0;
+    p->caller = 0;
+    if (pb->program)
+        p->code_start = (word *)pb->program->Code;
+    else
+        p->code_start = pb->icode;
+    if (locals) {
+        ++locals->refcnt;
+    } else {
+        int nparam = abs(pb->nparam);
+        locals = malloc(sizeof(struct locals) +
+                        (pb->ndynam + nparam) * sizeof(struct descrip));
+        if (!locals) {
+            free(p);
+            return 0;
+        }
+        locals->low = locals->high = 0;
+        t = (char *)(locals + 1);
+        if (pb->ndynam) {
+            locals->low = locals->dynamic = (dptr)t;
+            for (i = 0; i < pb->ndynam; ++i)
+                locals->dynamic[i] = nulldesc;
+            t += pb->ndynam * sizeof(struct descrip);
+            locals->high = (dptr)t;
+        } else
+            locals->dynamic = 0;
+        if (nparam) {
+            locals->args = (dptr)t;
+            if (!locals->low)
+                locals->low = (dptr)t;
+            for (i = 0; i < nparam; ++i)
+                locals->args[i] = nulldesc;
+            t += nparam * sizeof(struct descrip);
+            locals->high = (dptr)t;
+        } else
+            locals->args = 0;
+        locals->refcnt = 1;
+        locals->seen = 0;
+    }
+    p->locals = locals;
+    return p;
+}
+
+struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
+{
+    struct c_frame *p;
+    char *t;
+    int i;
+    p = malloc(pb->framesize +
+               (nargs + pb->ntend) * sizeof(struct descrip));
+    if (!p)
+        return 0;
+
+    p->type = C_FRAME_TYPE;
+    p->value = nulldesc;
+    p->proc = pb;
+    p->parent_sp = 0;
+    p->pc = 0;
+    p->nargs = nargs;
+    t = (char *)p + pb->framesize;
+    if (nargs) {
+        p->args = (dptr)t;
+        for (i = 0; i < nargs; ++i)
+            p->args[i] = nulldesc;
+        t += nargs * sizeof(struct descrip);
+    } else
+        p->args = 0;
+    if (pb->ntend) {
+        p->tend = (dptr)t;
+        for (i = 0; i < pb->ntend; ++i)
+            p->tend[i] = nulldesc;
+    } else
+        p->tend = 0;
+    return p;
+}
+
+void dyn_free(void *p)
+{
+    free(p);
+}
+
+void free_frame(struct frame *f)
+{
+    switch (f->type) {
+        case C_FRAME_TYPE: {
+            dyn_free(f);
+            break;
+        }
+        case P_FRAME_TYPE: {
+            struct locals *l = ((struct p_frame *)f)->locals;
+            dyn_free(f);
+            --l->refcnt;
+            if (l->refcnt == 0)
+                dyn_free(l);
+            break;
+        }
+        default:
+            syserr("Unknown frame type");
+    }
+}

@@ -70,6 +70,7 @@ void do_applyf()
       default: {
             xexpr = &expr;
             xfield = &query;
+            xargp = &args;
             err_msg(126, &args);
             Ipc = failure_label;
             return;
@@ -119,6 +120,7 @@ static void general_invokef(word clo, dptr expr, dptr query, struct inline_field
           skip_args(argc, args);
           xexpr = expr;
           xfield = query;
+          xargp = 0;
           err_msg(624, expr);
           Ipc = failure_label;
           return;
@@ -159,6 +161,7 @@ void do_apply()
         }
       default: {
             xexpr = &expr;
+            xargp = &args;
             err_msg(126, &args);
             Ipc = failure_label;
             return;
@@ -209,7 +212,7 @@ static void check_if_uninitialized()
     word *a = get_addr();
     if (BlkLoc(*class0)->class.init_state != Uninitialized)
         Ipc = a;
-    printf("check_if_uninitialized\n");
+    /*printf("check_if_uninitialized\n");*/
 }
 
 static void set_class_state()
@@ -218,7 +221,16 @@ static void set_class_state()
     struct descrip val;
     get_deref(&val);      /* Value */
     BlkLoc(*class0)->class.init_state = IntVal(val);
-    printf("set_class_state to %d\n", IntVal(val));
+    /*printf("set_class_state to %d\n", IntVal(val));*/
+}
+
+static void set_object_state()
+{
+    dptr obj = get_dptr();  /* Object */
+    struct descrip val;
+    get_deref(&val);      /* Value */
+    BlkLoc(*obj)->object.init_state = IntVal(val);
+    /*printf("set_class_state to %d\n", IntVal(val));*/
 }
 
 void dump_code(int n)
@@ -235,8 +247,8 @@ static void for_class_supers()
     dptr i = get_dptr();       /* Index */
     dptr res = get_dptr();     /* Result */
     word *a = get_addr();      /* Branch when done */
-    printf("for_class_supers (i=%d of %d)\n", IntVal(*i), BlkLoc(*class0)->class.n_supers);
-    /*showstack();*/
+    /*printf("for_class_supers (i=%d of %d)\n", IntVal(*i), BlkLoc(*class0)->class.n_supers);*/
+
     if (IntVal(*i) < BlkLoc(*class0)->class.n_supers) {
         res->dword = D_Class;
         BlkLoc(*res) = (union block *)BlkLoc(*class0)->class.supers[IntVal(*i)];
@@ -252,7 +264,7 @@ static void invoke_class_init()
     struct b_class *class0 = (struct b_class *)BlkLoc(*d);
     struct class_field *init_field;
 
-    printf("invoke_class_init %p\n", class0);
+    /*printf("invoke_class_init %p\n", class0);*/
     init_field = class0->init_field;
     if (init_field && init_field->defining_class == class0) {
         struct b_proc *bp;
@@ -280,7 +292,7 @@ static void ensure_class_initialized()
     /* Avoid creating a frame if we don't need to */
     if (BlkLoc(*d)->class.init_state != Uninitialized)
         return;
-    printf("ensure_class_initialized ");print_desc(stdout,d);printf("\n");
+/*    printf("ensure_class_initialized ");print_desc(stdout,d);printf("\n");*/
     MemProtect(pf = alc_p_frame((struct b_proc *)&Bensure_class_initialized, 0));
     push_frame((struct frame *)pf);
     pf->locals->args[0] = *d;
@@ -308,6 +320,7 @@ void construct_object2(word clo, dptr expr, int argc, dptr args, word *failure_l
 
         if (check_access(new_field, class0) == Error) {
             xexpr = expr;
+            xargp = 0;
             skip_args(argc, args);
             err_msg(0, NULL);
             Ipc = failure_label;
@@ -321,10 +334,12 @@ void construct_object2(word clo, dptr expr, int argc, dptr args, word *failure_l
         /* Arg1 is the allocated new object object */
         MemProtect(BlkLoc(pf->locals->args[1]) = (union block *)alcobject(class0));
         pf->locals->args[1].dword = D_Object; 
+        BlkLoc(pf->locals->args[1])->object.init_state = Initializing;
 
         /* Allocate a frame for the "new" method.  It is invoked from
          * within construct_object */
         new_f = get_frame_for_proc(bp, argc, args, &pf->locals->args[1]);
+        push_frame((struct frame *)new_f);
 
         /* Set up a mark and closure for the new method.  They are used with Op_Resume and Op_Unmark
          * in construct_object's code to invoke the new method.
@@ -523,7 +538,7 @@ static void invoke_misc2(word clo, dptr expr, int argc, dptr args, word *failure
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bgenerate_arg, 0));
         push_frame((struct frame *)pf);
         if (args)
-            pf->locals->args[0] = args[i - 1];
+            pf->locals->args[0] = *get_element(args, i);
         else {
             int j;
             for (j = 1; j <= argc; ++j) {
@@ -575,6 +590,7 @@ static void invoke_misc2(word clo, dptr expr, int argc, dptr args, word *failure
      */
     skip_args(argc, args);
     xexpr = expr;
+    xargp = 0;
     err_msg(106, expr);
     Ipc = failure_label;
 }
@@ -621,6 +637,7 @@ static void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_
       }
       default: {
           xexpr = expr;
+          xargp = 0;
           xfield = query;
           err_msg(624, expr);
           Ipc = failure_label;
@@ -637,6 +654,7 @@ static void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_
            t_have_val = 0;
        } else {
            xexpr = expr;
+           xargp = 0;
            xfield = query;
            err_msg(err_num, NULL);
        }
@@ -735,7 +753,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
               (class0->init_state == Initializing &&
                ic &&                      /* No Class.get(..) := ... */
                class0->init_field &&       /* .. and must be in init() method */
-               CallerProc == &BlkLoc(*class0->init_field->field_descriptor)->proc)))
+               CurrProc == &BlkLoc(*class0->init_field->field_descriptor)->proc)))
     {
         lhs->dword = D_NamedVar;
         VarLoc(*lhs) = dp;
@@ -790,6 +808,8 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
         BlkLoc(*lhs) = (union block *)mp;
     } else {
         dptr dp = &obj->fields[i];
+        fprintf(stderr,"hello %d\n",obj->init_state);fflush(stderr);
+
         ac = check_access(cf, class0);
         if (ac == Succeeded &&
             (!(cf->flags & M_Const) || obj->init_state == Initializing))
@@ -832,6 +852,7 @@ static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_c
    do {
        skip_args(argc, args);
        xexpr = expr;
+       xargp = 0;
        xfield = query;
        err_msg(err_num, NULL);
        Ipc = failure_label;
@@ -1020,6 +1041,31 @@ static void handle_access_failure()
     pop_to(t->parent_sp->parent_sp);
 }
 
+function{1} lang_Class_get(obj, field)
+   body {
+      struct p_frame *pf;
+      MemProtect(pf = alc_p_frame((struct b_proc *)&Bget_impl, 0));
+      push_frame((struct frame *)pf);
+      pf->locals->args[0] = obj;
+      pf->locals->args[1] = field;
+      tail_invoke_frame((struct frame *)pf);
+      return nulldesc;
+   }
+end
+
+function{0,1} lang_Class_getf(obj, field, quiet)
+   body {
+      struct p_frame *pf;
+      MemProtect(pf = alc_p_frame((struct b_proc *)&Bgetf_impl, 0));
+      push_frame((struct frame *)pf);
+      pf->locals->args[0] = obj;
+      pf->locals->args[1] = field;
+      pf->locals->args[2] = quiet;
+      tail_invoke_frame((struct frame *)pf);
+      return nulldesc;
+      fail;
+  }
+end
 
 
 function{1} xget(obj, field)
@@ -1360,7 +1406,7 @@ int invoke_proc(int nargs, dptr newargp, dptr *cargp_ptr, int *nargs_ptr)
      */   
     if (k_trace) {
         k_trace--;
-        ctrace(proc0, nargs, &newargp[1]);
+/*        ctrace(proc0, nargs, &newargp[1]);*/
     }
    
     /*

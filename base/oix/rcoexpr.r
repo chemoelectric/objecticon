@@ -161,7 +161,7 @@ int first;
 
       if (k_trace)
 	 if (swtch_typ != A_MTEvent)
-         cotrace(ccp, ncp, swtch_typ, valloc);
+/*         cotrace(ccp, ncp, swtch_typ, valloc);*/
 
    /*
     * Establish state for new co-expression.

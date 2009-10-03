@@ -450,7 +450,7 @@ end
     }
 
     fprintf(stderr, "Traceback:\n");
-    tracebk(pfp, argp);
+    traceback();
     fflush(stderr);
 
     if (dodump > 1)
@@ -486,20 +486,25 @@ function{} syserr(msg)
    body {
       char *s = StrLoc(msg);
       int i = StrLen(msg);
-      dptr fn = findfile(ipc);
+      struct ipc_line *pline;
+      struct ipc_fname *pfile;
+
+      pline = frame_ipc_line(PF, 1);
+      pfile = frame_ipc_fname(PF, 1);
+
       fprintf(stderr, "\nIcon-level internal error: ");
       while (i-- > 0)
           fputc(*s++, stderr);
       fputc('\n', stderr);
-      if (fn) {
+      if (pline && pfile) {
           struct descrip t;
-          abbr_fname(fn, &t);
-          fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
+          abbr_fname(&pfile->fname, &t);
+          fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
       } else
-          fprintf(stderr, "File ?; Line %d\n", findline(ipc));
+          fprintf(stderr, "File ?; Line ?\n");
 
       fprintf(stderr, "Traceback:\n");
-      tracebk(pfp, argp);
+      traceback();
       fflush(stderr);
 
       if (dodump > 1)

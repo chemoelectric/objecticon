@@ -10,15 +10,14 @@
  */
 static void postqual		(dptr dp);
 static void markptr		(union block **ptr);
-static void sweep		(struct b_coexpr *ce);
-static void sweep_stk	(struct b_coexpr *ce);
+static void sweep_tended	();
 static void reclaim		(void);
-static void cofree		(void);
 static void scollect		(void);
 static int  qlcmp		(dptr  *q1,dptr  *q2);
 static void adjust		(void);
 static void compact		(void);
 static void markprogram	(struct progstate *pstate);
+static void sweep_stack(struct frame *f);
 
 /*
  * Variables
@@ -27,9 +26,9 @@ static void markprogram	(struct progstate *pstate);
 static dptr *quallist;                 /* string qualifier list */
 static dptr *qualfree;                 /* qualifier list free pointer */
 static dptr *equallist;                /* end of qualifier list */
-static int do_checkstack;
 
 int collecting;                        /* flag indicating whether collection in progress */
+static int current_collection;         /* collection id for checking whether local blocks marked yet */
 
 
 /*
@@ -58,7 +57,7 @@ int bsizes[] = {
      0,                       /* T_Slots (15), set/table hash block */
      sizeof(struct b_tvsubs), /* T_Tvsubs (16), substring trapped variable */
      0,                       /* T_Refresh (17), refresh block */
-    -1,                       /* T_Coexpr (18), co-expression block */
+     sizeof(struct b_coexpr), /* T_Coexpr (18), co-expression block */
      0,                       /* T_Ucs (19), unicode string */
      -1,                      /* T_Kywdint (20), integer keyword variable */
      -1,                      /* T_Kywdpos (21), keyword &pos */
@@ -283,9 +282,9 @@ uword segsize[] = {
 
 void collect(int region)
    {
-   struct b_coexpr *cp;
    struct progstate *prog;
-
+   struct region *br;
+   showcurrstack();
 #if defined(HAVE_GETRLIMIT) && defined(HAVE_SETRLIMIT)
    {
        struct rlimit rl;
@@ -312,9 +311,6 @@ void collect(int region)
       case User:
          curpstate->colluser++;
          break;
-      case Static:
-         curpstate->collstat++;
-         break;
       case Strings:
          curpstate->collstr++;
          break;
@@ -326,20 +322,8 @@ void collect(int region)
          break;
    }
 
-   curpstate->statcount = 0;
-
    collecting = 1;
-
-   /*
-    * Sync the values (used by sweep) in the coexpr block for &current
-    *  with the current values.
-    */
-   cp = k_current;
-   cp->es_tend = tend;
-   cp->es_pfp = pfp;
-   cp->es_gfp = gfp;
-   cp->es_efp = efp;
-   cp->es_sp = sp;
+   ++current_collection;
 
    /*
     * First time through init quallist
@@ -354,15 +338,13 @@ void collect(int region)
     */
    qualfree = quallist;
 
-   /*
-    * Check for stack overflow if we are collecting from outside the system C stack.
-    */
-#if !HAVE_CUSTOM_C_STACKS
-   do_checkstack = (k_current != rootpstate.K_main);
-#endif
-
    for (prog = progs; prog; prog = prog->next)
        markprogram(prog);
+
+   /*
+    * Sweep the tended list on the C stack.
+    */
+   sweep_tended();
 
    /*
     * Mark the cached s2 and s3 strings for map.
@@ -396,24 +378,25 @@ void collect(int region)
    /*
     * Turn off all the marks in all the block regions everywhere
     */
-   { struct region *br;
    for (br = curblock->Gnext; br; br = br->Gnext) {
-      char *source = br->base, *free = br->free;
-      uword NoMark = (uword) ~F_Mark;
-      while (source < free) {
-	 BlkType(source) &= NoMark;
-         source += BlkSize(source);
-         }
-      }
-   for (br = curblock->Gprev; br; br = br->Gprev) {
-      char *source = br->base, *free = br->free;
-      uword NoMark = (uword) ~F_Mark;
-      while (source < free) {
-	 BlkType(source) &= NoMark;
-         source += BlkSize(source);
-         }
-      }
+       char *source = br->base, *free = br->free;
+       uword NoMark = (uword) ~F_Mark;
+       while (source < free) {
+           BlkType(source) &= NoMark;
+           source += BlkSize(source);
+       }
    }
+   for (br = curblock->Gprev; br; br = br->Gprev) {
+       char *source = br->base, *free = br->free;
+       uword NoMark = (uword) ~F_Mark;
+       while (source < free) {
+           BlkType(source) &= NoMark;
+           source += BlkSize(source);
+       }
+   }
+
+   collecting = 0;
+   showcurrstack();
 
 #ifdef EventMon
    if (!noMTevents) {
@@ -422,7 +405,6 @@ void collect(int region)
       }
 #endif					/* instrument allocation events */
 
-   collecting = 0;
    }
 
 /*
@@ -502,6 +484,17 @@ dptr dp;
    }
 
 
+static void print_block(FILE *f, union block *b)
+{
+    word t = *((word *)b);
+    if (t >= 0 && t < ElemCount(blkname))
+        fprintf(f, "Block %p title=%d(%s)\n", b, t, blkname[t]);
+    else
+        fprintf(f, "Block %p title=%d\n", b, t);
+    
+    fflush(f);
+}
+
 static void markptr(union block **ptr)
 {
     register dptr dp, lastdesc;
@@ -510,13 +503,12 @@ static void markptr(union block **ptr)
     int numptr, numdesc;
     register union block **ptr1, **lastptr;
 
-    if (do_checkstack && DiffPtrsBytes(&type0, sp) < 4096)
-        fatalerr(310, NULL);
-
     /*
      * Get the block to which ptr points.
      */
     block = (char *)*ptr;
+
+    print_block(stderr,*ptr);
 
     if (InRange(blkbase,block,blkfree)) {
         type0 = BlkType(block);
@@ -541,60 +533,50 @@ static void markptr(union block **ptr)
              * The block was not marked; process pointers and descriptors
              *  within the block.
              */
-            if ((fdesc = firstp[type0]) > 0) {
+            if (type0 == T_Coexpr) {
+                struct b_coexpr *cp;
+                fprintf(stderr,"Yes, coexpr\n");fflush(stderr);
+                cp = (struct b_coexpr *)block;
                 /*
-                 * The block contains pointers; mark each pointer.
+                 * Mark the activator of this co-expression.
                  */
-                ptr1 = (union block **)(block + fdesc);
-                numptr = ptrno[type0];
-                if (numptr > 0)
-                    lastptr = ptr1 + numptr;
-                else
-                    lastptr = (union block **)endblock;
-                for (; ptr1 < lastptr; ptr1++)
-                    if (*ptr1 != NULL)
-                        markptr(ptr1);
-            }
-            if ((fdesc = firstd[type0]) > 0) {
+                if (cp->es_activator)
+                    markptr((union block **)&cp->es_activator);
                 /*
-                 * The block contains descriptors; mark each descriptor.
+                 * Mark its stack
                  */
-                dp = (dptr)(block + fdesc);
-                numdesc = descno[type0];
-                if (numdesc > 0)
-                    lastdesc = dp + numdesc;
-                else
-                    lastdesc = (dptr)endblock;
-                for (; dp < lastdesc; dp++)
-                    PostDescrip(*dp);
+                sweep_stack(cp->sp);
+            } else {
+                if ((fdesc = firstp[type0]) > 0) {
+                    /*
+                     * The block contains pointers; mark each pointer.
+                     */
+                    ptr1 = (union block **)(block + fdesc);
+                    numptr = ptrno[type0];
+                    if (numptr > 0)
+                        lastptr = ptr1 + numptr;
+                    else
+                        lastptr = (union block **)endblock;
+                    for (; ptr1 < lastptr; ptr1++)
+                        if (*ptr1 != NULL)
+                            markptr(ptr1);
+                }
+                if ((fdesc = firstd[type0]) > 0) {
+                    /*
+                     * The block contains descriptors; mark each descriptor.
+                     */
+                    dp = (dptr)(block + fdesc);
+                    numdesc = descno[type0];
+                    if (numdesc > 0)
+                        lastdesc = dp + numdesc;
+                    else
+                        lastdesc = (dptr)endblock;
+                    for (; dp < lastdesc; dp++)
+                        PostDescrip(*dp);
+                }
             }
         }
     }
-
-    else if ((unsigned int)BlkType(block) == T_Coexpr) {
-        struct b_coexpr *cp;
-
-        /*
-         * dp points to a co-expression block that has not been
-         *  marked.  Point the block to dp.  Sweep the interpreter
-         *  stack in the block.  Then mark the block for the
-         *  activating co-expression and the refresh block.
-         */
-        BlkType(block) = (uword)ptr;
-        cp = (struct b_coexpr *)block;
-
-        sweep(cp);
-
-        /*
-         * Mark the activator of this co-expression.
-         */
-        if (cp->es_activator)
-            markptr((union block **)&cp->es_activator);
-
-        if (cp->freshblk)
-            markptr((union block **)&cp->freshblk);
-    }
-
     else {
         struct region *rp;
 
@@ -634,49 +616,98 @@ static void markptr(union block **ptr)
 
         BlkType(block) |= F_Mark;			/* mark the block */
 
-        if ((fdesc = firstp[type0]) > 0) {
+        if (type0 == T_Coexpr) {
+            struct b_coexpr *cp;
+            fprintf(stderr,"Yes, coexpr\n");fflush(stderr);
+            cp = (struct b_coexpr *)block;
             /*
-             * The block contains pointers; mark each pointer.
+             * Mark the activator of this co-expression.
              */
-            ptr1 = (union block **)(block + fdesc);
-            numptr = ptrno[type0];
-            if (numptr > 0)
-                lastptr = ptr1 + numptr;
-            else
-                lastptr = (union block **)endblock;
-            for (; ptr1 < lastptr; ptr1++)
-                if (*ptr1 != NULL)
-                    markptr(ptr1);
-        }
-        if ((fdesc = firstd[type0]) > 0) {
+            if (cp->es_activator)
+                markptr((union block **)&cp->es_activator);
             /*
-             * The block contains descriptors; mark each descriptor.
+             * Mark its stack
              */
-            dp = (dptr)(block + fdesc);
-            numdesc = descno[type0];
-            if (numdesc > 0)
-                lastdesc = dp + numdesc;
-            else
-                lastdesc = (dptr)endblock;
-            for (; dp < lastdesc; dp++)
-                PostDescrip(*dp);
+            sweep_stack(cp->sp);
+        } else {
+            if ((fdesc = firstp[type0]) > 0) {
+                /*
+                 * The block contains pointers; mark each pointer.
+                 */
+                ptr1 = (union block **)(block + fdesc);
+                numptr = ptrno[type0];
+                if (numptr > 0)
+                    lastptr = ptr1 + numptr;
+                else
+                    lastptr = (union block **)endblock;
+                for (; ptr1 < lastptr; ptr1++)
+                    if (*ptr1 != NULL)
+                        markptr(ptr1);
+            }
+            if ((fdesc = firstd[type0]) > 0) {
+                /*
+                 * The block contains descriptors; mark each descriptor.
+                 */
+                dp = (dptr)(block + fdesc);
+                numdesc = descno[type0];
+                if (numdesc > 0)
+                    lastdesc = dp + numdesc;
+                else
+                    lastdesc = (dptr)endblock;
+                for (; dp < lastdesc; dp++)
+                    PostDescrip(*dp);
+            }
         }
+    }
+}
+
+static void sweep_stack(struct frame *f)
+{
+    int i;
+    while (f) {
+        printf("sweep stack frame %p\n",f);
+        PostDescrip(f->value);
+        switch (f->type) {
+            case C_FRAME_TYPE: {
+                struct c_frame *cf = (struct c_frame *)f;
+                for (i = 0; i < cf->nargs; ++i)
+                    PostDescrip(cf->args[i]);
+                for (i = 0; i < f->proc->ntend; ++i)
+                    PostDescrip(cf->tend[i]);
+                break;
+            }
+            case P_FRAME_TYPE: {
+                struct p_frame *pf = (struct p_frame *)f;
+                struct locals *l = pf->locals;
+                for (i = 0; i < f->proc->ntmp; ++i)
+                    PostDescrip(pf->tmp[i]);
+                if (l->seen != current_collection) {
+                    dptr d;
+                    l->seen = current_collection;
+                    for (d = l->low; d < l->high; ++d)
+                        PostDescrip(*d);
+                }
+                break;
+            }
+            default:
+                syserr("Unknown frame type");
+        }
+
+        f = f->parent_sp;
     }
 }
 
 
 /*
- * sweep - sweep the chain of tended descriptors for a co-expression
- *  marking the descriptors.
+ * sweep - sweep the chain of tended descriptors
  */
 
-static void sweep(ce)
-struct b_coexpr *ce;
+static void sweep_tended()
 {
     register struct tend_desc *tp;
     register int i;
 
-    for (tp = ce->es_tend; tp != NULL; tp = tp->previous) {
+    for (tp = tend; tp != NULL; tp = tp->previous) {
         for (i = 0; i < tp->num; ++i) {
             /* We need an extra test for a null BlkLoc, since we may have an
              * uninitialized tended block pointer (set to nullptr)
@@ -687,121 +718,8 @@ struct b_coexpr *ce;
                 markptr(&BlkLoc(tp->d[i]));
         }
     }
-    sweep_stk(ce);
 }
-
-/*
- * sweep_stk - sweep the stack, marking all descriptors there.  Method
- *  is to start at a known point, specifically, the frame that the
- *  fp points to, and then trace back along the stack looking for
- *  descriptors and local variables, marking them when they are found.
- *  The sp starts at the first frame, and then is moved down through
- *  the stack.  Procedure, generator, and expression frames are
- *  recognized when the sp is a certain distance from the fp, gfp,
- *  and efp respectively.
- *
- * Sweeping problems can be manifested in a variety of ways due to
- *  the "if it can't be identified it's a descriptor" methodology.
- */
 
-static void sweep_stk(ce)
-struct b_coexpr *ce;
-   {
-   register word *s_sp;
-   register struct pf_marker *fp;
-   register struct gf_marker *s_gfp;
-   register struct ef_marker *s_efp;
-   word nargs, type0 = 0, gsize = 0;
-
-   /* The stack pointer may be null if a gc has been triggerred between allocating the
-    * coexpression block and the refresh block (alcrefresh) - see Ocreate in lmisc.r
-    */
-   if (ce->es_sp == 0)
-       return;
-
-   fp = ce->es_pfp;
-   s_gfp = ce->es_gfp;
-   if (s_gfp != 0) {
-      type0 = s_gfp->gf_gentype;
-      if (type0 == G_Psusp)
-         gsize = Wsizeof(*s_gfp);
-      else
-         gsize = Wsizeof(struct gf_smallmarker);
-      }
-   s_efp = ce->es_efp;
-   s_sp =  ce->es_sp;
-   nargs = 0;                           /* Nargs counter is 0 initially. */
-
-   if (fp == 0) {
-       /*
-        * The argument list of an un-started program
-        */
-       PostDescrip(*(dptr)(s_sp - 1));
-   }
-
-   while ((fp != 0 || nargs)) {         /* Keep going until current fp is
-                                            0 and no arguments are left. */
-      if (s_sp == (word *)fp + Vwsizeof(*pfp) - 1) {
-                                        /* sp has reached the upper
-                                            boundary of a procedure frame,
-                                            process the frame. */
-         s_efp = fp->pf_efp;            /* Get saved efp out of frame */
-         s_gfp = fp->pf_gfp;            /* Get save gfp */
-         if (s_gfp != 0) {
-            type0 = s_gfp->gf_gentype;
-            if (type0 == G_Psusp)
-               gsize = Wsizeof(*s_gfp);
-            else
-               gsize = Wsizeof(struct gf_smallmarker);
-            }
-         s_sp = (word *)fp - 1;         /* First argument descriptor is
-                                            first word above proc frame */
-         nargs = fp->pf_nargs;
-         fp = fp->pf_pfp;
-         }
-      else if (s_gfp != NULL && s_sp == (word *)s_gfp + gsize - 1) {
-                                        /* The sp has reached the lower end
-                                            of a generator frame, process
-                                            the frame.*/
-         if (type0 == G_Psusp)
-            fp = s_gfp->gf_pfp;
-         s_sp = (word *)s_gfp - 1;
-         s_efp = s_gfp->gf_efp;
-         s_gfp = s_gfp->gf_gfp;
-         if (s_gfp != 0) {
-            type0 = s_gfp->gf_gentype;
-            if (type0 == G_Psusp)
-               gsize = Wsizeof(*s_gfp);
-            else
-               gsize = Wsizeof(struct gf_smallmarker);
-            }
-         nargs = 1;
-         }
-      else if (s_sp == (word *)s_efp + Wsizeof(*s_efp) - 1) {
-                                            /* The sp has reached the upper
-                                                end of an expression frame,
-                                                process the frame. */
-         s_gfp = s_efp->ef_gfp;         /* Restore gfp, */
-         if (s_gfp != 0) {
-            type0 = s_gfp->gf_gentype;
-            if (type0 == G_Psusp)
-               gsize = Wsizeof(*s_gfp);
-            else
-               gsize = Wsizeof(struct gf_smallmarker);
-            }
-         s_efp = s_efp->ef_efp;         /*  and efp from frame. */
-         s_sp -= Wsizeof(*s_efp);       /* Move past expression frame marker. */
-         }
-      else {                            /* Assume the sp is pointing at a
-                                            descriptor. */
-         PostDescrip(*(dptr)(s_sp - 1));
-         s_sp -= 2;                     /* Move past descriptor. */
-         if (nargs)                     /* Decrement argument count if in an*/
-            nargs--;                    /*  argument list. */
-         }
-      }
-   }
-
 /*
  * reclaim - reclaim space in the allocated memory regions. The marking
  *   phase has already been completed.
@@ -809,11 +727,6 @@ struct b_coexpr *ce;
 
 static void reclaim()
    {
-   /*
-    * Collect available co-expression blocks.
-    */
-   cofree();
-
    /*
     * Collect the string space leaving it where it is.
     */
@@ -829,48 +742,7 @@ static void reclaim()
     */
    compact();
    }
-
-/*
- * cofree - collect co-expression blocks.  This is done after
- *  the marking phase of garbage collection and the stacks that are
- *  reachable have pointers to data blocks, rather than T_Coexpr,
- *  in their type field.
- */
 
-static void cofree()
-   {
-   register struct b_coexpr **ep, *xep;
-
-   /*
-    * The co-expression blocks are linked together through their
-    *  nextstk fields, with stklist pointing to the head of the list.
-    *  The list is traversed and each stack that was not marked
-    *  is freed.  Note that the root progstate's main is the last
-    *  on the list, and will always be marked (as are all &main
-    *  co-expressions).
-    */
-   ep = &stklist;
-   while (*ep != NULL) {
-       if (BlkType(*ep) == T_Coexpr) {
-           /* Only free blocks allocated by the program doing the collecting */
-           if ((*ep)->creator == curpstate) {
-               /* Deduct memory freed - the size must be xstksize as we never release programs (see alccoexp) */
-               (*ep)->creator->statcurr -= xstksize;
-               xep = *ep;
-               *ep = (*ep)->nextstk;
-         #ifdef HAVE_COCLEAN
-               coclean(xep->cstate);
-         #endif                         /* CoClean */
-               free(xep);
-           } else
-               ep = &(*ep)->nextstk;
-       }
-       else {
-           BlkType(*ep) = T_Coexpr;
-           ep = &(*ep)->nextstk;
-       }
-   }
-}
 
 /*
  * scollect - collect the string space.  quallist is a list of pointers to
@@ -1024,15 +896,28 @@ static void compact()
     *  block.  Marks are removed from the saved blocks.
     */
    while (source < blkfree) {
-      size = BlkSize(source);
-      if (BlkType(source) & F_Mark) {
-         BlkType(source) &= ~F_Mark;
-         if (source != dest)
-             memmove(dest, source, size);
-         dest += size;
-         }
-      source += size;
-      }
+       size = BlkSize(source);
+       if (BlkType(source) & F_Mark) {
+           BlkType(source) &= ~F_Mark;
+           if (source != dest)
+               memmove(dest, source, size);
+           dest += size;
+       } else {
+           fprintf(stderr, "Release block at %p type %d(%s)\n", source, BlkType(source), blkname[BlkType(source)]);
+           if (BlkType(source) == T_Coexpr) {
+               /* Free the coexpression's stack */
+               struct b_coexpr *c = (struct b_coexpr *)source;
+               struct frame *f = c->sp;
+               while (f) {
+                   struct frame *t = f;
+                   f = f->parent_sp;
+                   fprintf(stderr, "Releasing frame %p\n", t);
+                   free_frame(t);
+               }
+           }
+       }
+       source += size;
+   }
 
    /*
     * dest is the location of the next free block.  Now that compaction
@@ -1160,152 +1045,4 @@ longlong physicalmemorysize()
 #else					/* MSWIN32 */
     return 0;
 #endif					/* MSWIN32 */
-}
-
-struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
-{
-    struct p_frame *p;
-    char *t;
-    int i;
-    p = malloc(sizeof(struct p_frame) +
-               pb->nclo * sizeof(struct frame *) +
-               pb->ntmp * sizeof(struct descrip) +
-               pb->nlab * sizeof(word *) + 
-               pb->nmark * sizeof(struct frame *));
-    if (!p)
-        return 0;
-    
-    t = (char *)(p + 1);
-    if (pb->nclo) {
-        p->clo = (struct frame **)t;
-        for (i = 0; i < pb->nclo; ++i)
-            p->clo[i] = 0;
-        t += pb->nclo * sizeof(struct frame *);
-    } else
-        p->clo = 0;
-    if (pb->ntmp) {
-        p->tmp = (dptr)t;
-        for (i = 0; i < pb->ntmp; ++i)
-            p->tmp[i] = nulldesc;
-        t += pb->ntmp * sizeof(struct descrip);
-    } else
-        p->tmp = 0;
-    if (pb->nlab) {
-        p->lab = (word **)t;
-        for (i = 0; i < pb->nlab; ++i)
-            p->lab[i] = 0;
-        t += pb->nlab * sizeof(word *);
-    } else
-        p->lab = 0;
-    if (pb->nmark) {
-        p->mark = (struct frame **)t;
-        for (i = 0; i < pb->nmark; ++i)
-            p->mark[i] = 0;
-    } else
-        p->mark = 0;
-    p->type = P_FRAME_TYPE;
-    p->value = nulldesc;
-    p->failure_label = 0;
-    p->proc = pb;
-    p->parent_sp = 0;
-    p->ipc = pb->icode;
-    p->curr_inst = 0;
-    p->caller = 0;
-    if (pb->program)
-        p->code_start = (word *)pb->program->Code;
-    else
-        p->code_start = pb->icode;
-    if (locals) {
-        ++locals->refcnt;
-    } else {
-        int nparam = abs(pb->nparam);
-        locals = malloc(sizeof(struct locals) +
-                        (pb->ndynam + nparam) * sizeof(struct descrip));
-        if (!locals) {
-            free(p);
-            return 0;
-        }
-        locals->low = locals->high = 0;
-        t = (char *)(locals + 1);
-        if (pb->ndynam) {
-            locals->low = locals->dynamic = (dptr)t;
-            for (i = 0; i < pb->ndynam; ++i)
-                locals->dynamic[i] = nulldesc;
-            t += pb->ndynam * sizeof(struct descrip);
-            locals->high = (dptr)t;
-        } else
-            locals->dynamic = 0;
-        if (nparam) {
-            locals->args = (dptr)t;
-            if (!locals->low)
-                locals->low = (dptr)t;
-            for (i = 0; i < nparam; ++i)
-                locals->args[i] = nulldesc;
-            t += nparam * sizeof(struct descrip);
-            locals->high = (dptr)t;
-        } else
-            locals->args = 0;
-        locals->refcnt = 1;
-        locals->seen = 0;
-    }
-    p->locals = locals;
-    return p;
-}
-
-struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
-{
-    struct c_frame *p;
-    char *t;
-    int i;
-    p = malloc(pb->framesize +
-               (nargs + pb->ntend) * sizeof(struct descrip));
-    if (!p)
-        return 0;
-
-    p->type = C_FRAME_TYPE;
-    p->value = nulldesc;
-    p->proc = pb;
-    p->parent_sp = 0;
-    p->pc = 0;
-    p->nargs = nargs;
-    t = (char *)p + pb->framesize;
-    if (nargs) {
-        p->args = (dptr)t;
-        for (i = 0; i < nargs; ++i)
-            p->args[i] = nulldesc;
-        t += nargs * sizeof(struct descrip);
-    } else
-        p->args = 0;
-    if (pb->ntend) {
-        p->tend = (dptr)t;
-        for (i = 0; i < pb->ntend; ++i)
-            p->tend[i] = nulldesc;
-    } else
-        p->tend = 0;
-    return p;
-}
-
-void dyn_free(void *p)
-{
-    free(p);
-}
-
-void free_frame(struct frame *f)
-{
-    switch (f->type) {
-        case C_FRAME_TYPE: {
-            dyn_free(f);
-            break;
-        }
-        case P_FRAME_TYPE: {
-            struct locals *l = ((struct p_frame *)f)->locals;
-            dyn_free(f);
-            --l->refcnt;
-            if (l->refcnt == 0)
-                dyn_free(l);
-            break;
-        }
-        default:
-            syserr("Unknown frame type");
-    }
 }

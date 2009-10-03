@@ -141,12 +141,11 @@
 #define Op_ScanSwap     218
 #define Op_ScanSave     219
 #define Op_ScanRestore  220
-#define Op_Succeed      221
 #define Op_SysErr       222
 #define Op_Custom       223
 #define Op_Halt         224
 #define Op_MakeList     225
 #define Op_PopRepeat    226
 #define Op_MoveVar      227
-
-
+#define Op_Suspend      228
+#define Op_Return       229

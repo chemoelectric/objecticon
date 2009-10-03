@@ -723,11 +723,19 @@ static void lemitcode()
                     outword(Op_SysErr);
                     break;
                 }
-                case Ir_Succeed: {
-                    struct ir_succeed *x = (struct ir_succeed *)ir;
+                case Ir_Suspend: {
+                    struct ir_suspend *x = (struct ir_suspend *)ir;
                     if (Dflag)
-                        fprintf(dbgfile, "%ld:\tsucceed\n", (long)pc);
-                    outword(Op_Succeed);
+                        fprintf(dbgfile, "%ld:\tsuspend\n", (long)pc);
+                    outword(Op_Suspend);
+                    emit_ir_var(x->val, "val");
+                    break;
+                }
+                case Ir_Return: {
+                    struct ir_return *x = (struct ir_return *)ir;
+                    if (Dflag)
+                        fprintf(dbgfile, "%ld:\treturn\n", (long)pc);
+                    outword(Op_Return);
                     emit_ir_var(x->val, "val");
                     break;
                 }

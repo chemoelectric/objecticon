@@ -42,9 +42,17 @@ $start construct_object
        NewFail
     Op_Unmark
        mark:0
-    Op_Succeed
+    Op_Custom c:set_object_state
+       Op_Arg arg:1
+       Op_Int Initialized
+    Op_Return
        Op_Arg arg:1
 NewFail:
+    # In case a reference to the object escaped from the constructor, set
+    # its state to Initialized.
+    Op_Custom c:set_object_state
+       Op_Arg arg:1
+       Op_Int Initialized
     Op_Fail
 $end
 
@@ -54,13 +62,16 @@ $end
 $start construct_object0
     Op_Custom c:ensure_class_initialized
        Op_Arg arg:0
-    Op_Succeed
+    Op_Custom c:set_object_state
+       Op_Arg arg:1
+       Op_Int Initialized
+    Op_Return
        Op_Arg arg:1
     Op_Fail
 $end
 
 $start generate_arg
-    Op_Succeed
+    Op_Return
        Op_Arg arg:0
     Op_Fail
 $end

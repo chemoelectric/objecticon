@@ -34,7 +34,7 @@ static void init_scan(struct ir_info *info, struct ir_stack *st);
 static void print_chunk(struct chunk *chunk);
 
 static int traverse_level;
-static int dump = 1;
+static int dump = 0;
 
 struct membuff ir_func_mb = {"Per func IR membuff", 64000, 0,0,0 };
 #define IRAlloc(type)   mb_alloc(&ir_func_mb, sizeof(type))
@@ -386,12 +386,21 @@ static struct ir *ir_syserr(struct lnode *n)
     return res;
 }
 
-static struct ir_succeed *ir_succeed(struct lnode *n, struct ir_var *val)
+static struct ir_suspend *ir_suspend(struct lnode *n, struct ir_var *val)
 {
-    struct ir_succeed *res = IRAlloc(struct ir_succeed);
+    struct ir_suspend *res = IRAlloc(struct ir_suspend);
     res->node = n;
     res->val = val;
-    res->op = Ir_Succeed;
+    res->op = Ir_Suspend;
+    return res;
+}
+
+static struct ir_return *ir_return(struct lnode *n, struct ir_var *val)
+{
+    struct ir_return *res = IRAlloc(struct ir_return);
+    res->node = n;
+    res->val = val;
+    res->op = Ir_Return;
     return res;
 }
 
@@ -1452,13 +1461,13 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                     t = t->scan->next;
                 chunk5(expr->success, 
                        ir_scanswap(n, t->scan->old_subject, t->scan->old_pos),
-                       ir_succeed(n, v),
+                       ir_suspend(n, v),
                        ir_scanswap(n, t->scan->old_subject, t->scan->old_pos),
                        cond_ir_mark(body->uses_stack, n, body_mk),
                        ir_goto(n, body->start));
             } else {
                 chunk3(expr->success, 
-                       ir_succeed(n, v),
+                       ir_suspend(n, v),
                        cond_ir_mark(body->uses_stack, n, body_mk),
                        ir_goto(n, body->start));
             }
@@ -1504,12 +1513,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                     t = t->scan->next;
                 chunk4(expr->success, 
                        ir_scanswap(n, t->scan->old_subject, t->scan->old_pos),
-                       ir_succeed(n, v),
+                       ir_suspend(n, v),
                        ir_scanswap(n, t->scan->old_subject, t->scan->old_pos),
                        ir_goto(n, expr->resume));
             } else {
                 chunk2(expr->success, 
-                       ir_succeed(n, v),
+                       ir_suspend(n, v),
                        ir_goto(n, expr->resume));
             }
             chunk1(expr->failure, 
@@ -1556,7 +1565,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
             expr_st = branch_stack(cur_loop->loop->loop_st);
             expr = ir_traverse(x->child, expr_st, 
-                               cur_loop->loop->target, cur_loop->loop->bounded, cur_loop->loop->rval);
+                               cur_loop->loop->target, 
+                               bounded && cur_loop->loop->bounded, cur_loop->loop->rval);
             union_stack(cur_loop->loop->st, expr_st);
 
             /* Don't use push_loop here since x->child may have pushed something on the stack */
@@ -1597,7 +1607,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                           ir_goto(n, expr->start));
                 }
             }
-            if (!cur_loop->loop->bounded)
+            if (!cur_loop->loop->bounded || !bounded)
                 chunk1(res->resume, ir_goto(n, expr->resume));
 
             chunk1(expr->success, ir_goto(n, cur_loop->success));
@@ -1651,7 +1661,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk4(expr->success, 
                        cond_ir_unmark(expr->uses_stack, n, mk), 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
-                       ir_succeed(n, v),
+                       ir_return(n, v),
                        ir_fail(n));
                 chunk2(expr->failure, 
                        ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
@@ -1659,7 +1669,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             } else {
                 chunk3(expr->success, 
                        cond_ir_unmark(expr->uses_stack, n, mk), 
-                       ir_succeed(n, v),
+                       ir_return(n, v),
                        ir_fail(n));
                 chunk1(expr->failure, 
                        ir_fail(n));
@@ -2398,6 +2408,27 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             break;
         }
 
+        case Uop_Fail: {
+            if (scan_stack) {
+                struct ir_info *t = scan_stack;
+                /* Get bottom of scan stack */
+                while (t->scan->next)
+                    t = t->scan->next;
+                chunk2(res->start, 
+                       ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
+                       ir_fail(n));
+                if (!bounded)
+                    chunk2(res->resume, 
+                           ir_scanrestore(n, t->scan->old_subject, t->scan->old_pos),
+                           ir_fail(n));
+            } else {
+                chunk1(res->start, ir_fail(n));
+                if (!bounded)
+                    chunk1(res->resume, ir_fail(n));
+            }
+            break;
+        }
+
         default:
             quitf("ir_traverse: illegal opcode(%d): %s in file %s\n", n->op, 
                   ucode_op_table[n->op].name, n->loc.file);
@@ -2419,6 +2450,14 @@ void generate_ir()
     memset(chunks, 0, n_chunks_alloc * sizeof(struct chunk *));
     mb_clear(&ir_func_mb);
     hi_clo = hi_tmp = hi_lab = hi_mark = -1;
+
+    if (dump) {
+        if (curr_lfunc->method)
+            fprintf(stderr, "\nGenerating ir tree for method %s.%s\n", 
+                    curr_lfunc->method->class->global->name, curr_lfunc->method->name);
+        else
+            fprintf(stderr, "\nGenerating ir tree for procedure %s\n",  curr_lfunc->proc->name);
+    }
 
     if (curr_lfunc->initial->op != Uop_Empty)
         init = ir_traverse(curr_lfunc->initial, new_stack(), 0, 1, 1);
@@ -2533,9 +2572,16 @@ static void print_chunk(struct chunk *chunk)
                 indentf("\tIr_Fail\n");
                 break;
             }
-            case Ir_Succeed: {
-                struct ir_succeed *x = (struct ir_succeed *)ir;
-                indentf("\tIr_Succeed ");
+            case Ir_Suspend: {
+                struct ir_suspend *x = (struct ir_suspend *)ir;
+                indentf("\tIr_Suspend ");
+                print_ir_var(x->val);
+                fprintf(stderr, "\n");
+                break;
+            }
+            case Ir_Return: {
+                struct ir_return *x = (struct ir_return *)ir;
+                indentf("\tIr_Return ");
                 print_ir_var(x->val);
                 fprintf(stderr, "\n");
                 break;
@@ -2921,7 +2967,8 @@ static void optimize_goto()
         struct chunk *chunk;
         chunk = chunks[i];
         if (chunk && !chunk->seen) {
-            fprintf(stderr, "Elminating untraversed chunk %d (line %d)\n", i, chunk->line);
+            if (dump)
+                fprintf(stderr, "Elminating untraversed chunk %d (line %d)\n", i, chunk->line);
             chunks[i] = 0;
         }
     }
@@ -3134,6 +3181,7 @@ static void renumber_ir()
                     break;
                 }
 
+                case Ir_SysErr:
                 case Ir_EnterInit:
                 case Ir_Fail:
                 case Ir_Cofail:
@@ -3149,8 +3197,13 @@ static void renumber_ir()
                     renumber_mark(&x->no);
                     break;
                 }
-                case Ir_Succeed: {
-                    struct ir_succeed *x = (struct ir_succeed *)ir;
+                case Ir_Suspend: {
+                    struct ir_suspend *x = (struct ir_suspend *)ir;
+                    renumber_var(x->val);
+                    break;
+                }
+                case Ir_Return: {
+                    struct ir_return *x = (struct ir_return *)ir;
                     renumber_var(x->val);
                     break;
                 }

@@ -12,23 +12,33 @@ operator{1} ^ refresh(x)
        runerr(118, x)
 
    body {
-      register struct b_coexpr *sblkp;
+       tended struct b_coexpr *curr, *coex;
+       struct p_frame *pf, *new_pf;
 
-      if (BlkLoc(x)->coexpr.freshblk == NULL)	/* &main cannot be refreshed */
-         runerr(215, x);
+       curr = (struct b_coexpr *)BlkLoc(x);
 
-      /*
-       * Get a new co-expression stack and initialize.
-       */
-      MemProtect(sblkp = alccoexp());
-      sblkp->freshblk = BlkLoc(x)->coexpr.freshblk;
+       if (curr->main_of)	/* &main cannot be refreshed */
+           runerr(215, x);
 
-      /*
-       * Use refresh block to finish initializing the new co-expression.
-       */
-      co_init(sblkp);
+       /*
+        * Find the bottom of the procedure frame stack, ie the procedure in which
+        * the coexpression was created.
+        */
+       pf = curr->curr_pf;
+       if (!pf)
+           syserr("Couldn't find top curr_pf whilst refreshing coexpression");
+       while (pf->caller)
+           pf = pf->caller;
 
-      return coexpr(sblkp);
+       MemProtect(coex = alccoexp());
+       coex->program = coex->creator = curr->creator;
+       coex->main_of = 0;
+       MemProtect(new_pf = alc_p_frame(pf->proc, pf->locals));
+       coex->start_label = new_pf->ipc = curr->start_label;
+       coex->failure_label = 0;
+       coex->curr_pf = new_pf;
+       coex->sp = (struct frame *)new_pf;
+       return coexpr(coex);
       }
 
 end

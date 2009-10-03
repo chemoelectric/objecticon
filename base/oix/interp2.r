@@ -3,6 +3,13 @@
 
 #define OPCODES 0
 
+void revert_PF()
+{
+    if (PF->proc->program)
+        --k_level;
+    PF = PF->caller;
+}
+
 void tail_invoke_frame(struct frame *f)
 {
     switch (f->type) {
@@ -16,6 +23,15 @@ void tail_invoke_frame(struct frame *f)
         case P_FRAME_TYPE: {
             struct p_frame *pf = (struct p_frame *)f;
             pf->caller = PF;
+            /*
+             * If tracing is on, use ctrace to generate a message.
+             */   
+            if (k_trace) {
+                k_trace--;
+                ctrace(pf);
+            }
+            if (pf->proc->program)
+                ++k_level;
             PF = pf;
             break;
         }
@@ -346,6 +362,8 @@ static void do_opclo(int op, int nargs)
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, nargs));
     push_c_frame(cf);
+    xnargs = nargs;
+    xargp = cf->args;
     if (bp->underef) {
         for (i = 0; i < nargs; ++i)
             get_variable(&cf->args[i]);
@@ -373,6 +391,8 @@ static void do_keyop()
 
     MemProtect(cf = alc_c_frame(bp, 0));
     push_c_frame(cf);
+    xnargs = 0;
+    xargp = 0;
     failure_label = get_addr();
     if (bp->ccode(cf)) {
         if (lhs)
@@ -407,7 +427,8 @@ static void do_create()
     coex->program = coex->creator = curpstate;
     coex->main_of = 0;
     MemProtect(pf = alc_p_frame(PF->proc, PF->locals));
-    pf->ipc = start_label;
+    coex->start_label = pf->ipc = start_label;
+    coex->failure_label = 0;
     coex->curr_pf = pf;
     coex->sp = (struct frame *)pf;
     lhs->dword = D_Coexpr;
@@ -425,12 +446,18 @@ static void do_coact()
     get_deref(&arg2);
     failure_label = get_addr();
     if (arg2.dword != D_Coexpr) {
+        xargp = &arg1;
+        xexpr = &arg2;
         err_msg(118, &arg2);
         Ipc = failure_label;
         return;
     }
-    
-    printf("activating coexp=");print_desc(stdout, &arg2);printf("\n");
+
+    if (k_trace) {
+        --k_trace;
+        trace_coact(k_current, &BlkLoc(arg2)->coexpr, &arg1);
+    }
+    /*printf("activating coexp=");print_desc(stdout, &arg2);printf("\n");*/
     k_current->tvalloc = lhs;
     k_current->failure_label = failure_label;
     BlkLoc(arg2)->coexpr.es_activator = k_current;
@@ -444,15 +471,25 @@ static void do_coret()
 
     val = get_dptr();
     resume_label = get_addr();
-    printf("coret FROM %p to %p VAL=",k_current, k_current->es_activator);print_desc(stdout, val);printf("\n");
+    /*printf("coret FROM %p to %p VAL=",k_current, k_current->es_activator);print_desc(stdout, val);printf("\n");*/
+    if (k_trace) {
+        --k_trace;
+        trace_coret(k_current, k_current->es_activator, val);
+    }
+
     PF->ipc = resume_label;
     k_current = k_current->es_activator;
-    *k_current->tvalloc = *val;
+    if (k_current->tvalloc)
+        *k_current->tvalloc = *val;
 }
 
 static void do_cofail()
 {
-    printf("cofail FROM %p to %p",k_current, k_current->es_activator);printf("\n");
+    /*printf("cofail FROM %p to %p",k_current, k_current->es_activator);printf("\n");*/
+    if (k_trace) {
+        --k_trace;
+        trace_cofail(k_current, k_current->es_activator);
+    }
     k_current = k_current->es_activator;
     PF->ipc = k_current->failure_label;
 }
@@ -623,7 +660,11 @@ void interp2()
 
             case Op_Fail: {
                 struct p_frame *t = PF;
-                PF = PF->caller;
+                revert_PF();
+                if (k_trace) {
+                    k_trace--;
+                    failtrace(t);
+                }
                 if (!PF)
                     return;
                 Ipc = t->failure_label;
@@ -646,10 +687,16 @@ void interp2()
                 break;
             }
 
-            case Op_Succeed: {
+            case Op_Suspend:
+            case Op_Return: {
+                struct p_frame *t = PF;
                 move_descrip(&PF->value);
                 retderef(&PF->value, PF->locals);
-                PF = PF->caller;
+                revert_PF();
+                if (k_trace) {
+                    k_trace--;
+                    strace(t, op);
+                }
                 if (!PF)
                     return;
                 break;
@@ -733,6 +780,12 @@ void interp2()
                 showcurrstack();
                 fprintf(stderr, "Halt instruction reached\n");
                 exit(1);
+            }
+
+            case Op_SysErr: {
+                showcurrstack();
+                syserr("Op_SysErr instruction reached");
+                break; /* Not reached */
             }
 
             case Op_MakeList: {

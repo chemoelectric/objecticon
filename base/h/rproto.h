@@ -115,9 +115,9 @@ void		err_msg		(int n, dptr v);
 void		startuperr  	(char *fmt, ...);
 void		fatalerr	(int n,dptr v);
 void            ffatalerr       (char *fmt, ...);
-struct ipc_fname *find_ipc_fname(word *ipc, int prior, struct progstate *p);
+struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p);
 void abbr_fname(dptr s, dptr d);
-struct ipc_line *find_ipc_line(word *ipc, int prior, struct progstate *p);
+struct ipc_line *find_ipc_line(word *ipc, struct progstate *p);
 dptr     	findfile	(word *ipc);
 int		findline	(word *ipc);
 void		fpetrap		(int);
@@ -473,8 +473,6 @@ long	ckmul		(long i, long j);
 long	cksub		(long i, long j);
 void	cmd_line	(int argc, char **argv, dptr rslt);
 void	collect		(int region);
-void	cotrace		(struct b_coexpr *ccp, struct b_coexpr *ncp,
-			   int swtch_typ, dptr valloc);
 int	cvcset		(dptr dp,int * *cs,int *csbuf);
 int	cvnum		(dptr dp,union numeric *result);
 int	cvreal		(dptr dp,double *r);
@@ -543,14 +541,17 @@ dptr u_read			(int fd, int n, dptr d);
 
    struct b_refresh *alcrefresh_0(word *e, int nl, int nt);
    struct b_refresh *alcrefresh_1(word *e, int nl, int nt);
-   void	atrace			(struct b_proc *p);
-   void	ctrace			(struct b_proc *p, int nargs, dptr arg);
-   void	failtrace		(struct b_proc *p);
+
+void ctrace(struct p_frame *pf);
+void failtrace(struct p_frame *pf);
+void strace(struct p_frame *pf, int op);
+void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val);
+void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val);
+void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
+
    int	invoke_0		(int nargs, dptr *cargs, int *n);
    int	invoke_1		(int nargs, dptr *cargs, int *n);
-   void	rtrace			(struct b_proc *p, dptr rval);
-   void	strace			(struct b_proc *p, dptr rval);
-   void	tracebk			(struct pf_marker *lcl_pfp, dptr argp);
+
    void	xdisp			(struct pf_marker *fp, dptr dp, int n, FILE *f, struct progstate *p);
 
    #define Fargs dptr cargp

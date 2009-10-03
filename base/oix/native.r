@@ -401,35 +401,21 @@ function{*} lang_Prog_get_keyword(s,c)
           }
           case 5 : {
               if (strncmp(t,"file",4) == 0) {
-                  word *i;
                   struct ipc_fname *t;
-
                   /* If the prog's &current isn't in this program, we can't look up
                    * the file in this program's table */
                   if (p->K_current->program != p)
                       fail;
-                  /* If the prog's &current is the currently executing coexpression, take
-                   * the ipc, otherwise the stored ipc in the coexpression block
-                   */
-                  if (p->K_current == k_current)
-                      i = ipc;
-                  else
-                      i = p->K_current->es_ipc;
-                  t = find_ipc_fname(i, 0, p);
+                  t = frame_ipc_fname(p->K_current->curr_pf, 0);
                   if (!t)
                       fail;
                   return t->fname;
               }
               if (strncmp(t,"line",4) == 0) {
-                  word *i;
                   struct ipc_line *t;
                   if (p->K_current->program != p)
                       fail;
-                  if (p->K_current == k_current)
-                      i = ipc;
-                  else
-                      i = p->K_current->es_ipc;
-                  t = find_ipc_line(i, 0, p);
+                  t = frame_ipc_line(p->K_current->curr_pf, 0);
                   if (!t)
                       fail;
                   return C_integer t->line;
@@ -1104,43 +1090,6 @@ function{*} lang_Class_get_class_field_names(c)
 end
 
 #include "../h/opdefs.h"
-
-function{1} lang_Class_get(obj, field)
-   body {
-       struct descrip res;
-       int rc;
-       CheckField(field);
-       PushNull;
-       PushDesc(obj);
-       PushDesc(field);
-       rc = field_access((dptr)(sp - 5),0);
-       sp -= 6;
-       if (rc == Error) 
-           runerr(0, obj);
-       res = *((dptr)(sp + 1));
-       return res;
-   }
-end
-
-function{0,1} lang_Class_getf(obj, field, quiet)
-   body {
-       struct descrip res;
-       int rc;
-       CheckField(field);
-       PushNull;
-       PushDesc(obj);
-       PushDesc(field);
-       rc = field_access((dptr)(sp - 5),0);
-       sp -= 6;
-       if (rc == Error) {
-           if (is:null(quiet))
-               whyf("%s (error %d)", lookup_err_msg(t_errornumber), t_errornumber);
-           fail;
-       }
-       res = *((dptr)(sp + 1));
-       return res;
-   }
-end
 
 static struct b_proc *clone_b_proc(struct b_proc *bp)
 {

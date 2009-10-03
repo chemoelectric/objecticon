@@ -207,10 +207,11 @@ keyword{1} file
       return string
       }
    inline {
-      dptr f = findfile(ipc);
-      if (!f)
+      struct ipc_fname *pfile;
+      pfile = frame_ipc_fname(PF, 1);
+      if (!pfile)
           fail;
-      return *f;
+      return pfile->fname;
       }
 end
 
@@ -270,11 +271,13 @@ keyword{1} line
       return integer;
       }
    inline {
-      int i = findline(ipc);
-      if (!i)
+      struct ipc_line *pline;
+
+      pline = frame_ipc_line(PF, 1);
+      if (!pline)
           fail;
 
-      return C_integer i;
+      return C_integer pline->line;
       }
 end
 

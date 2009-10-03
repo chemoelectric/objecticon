@@ -19,7 +19,7 @@
 #define Ir_ScanSwap    18
 #define Ir_ScanSave    19
 #define Ir_ScanRestore 20
-#define Ir_Succeed     21
+#define Ir_Suspend     21
 #define Ir_SysErr      22
 #define Ir_MakeList    23
 #define Ir_Apply       24
@@ -31,6 +31,7 @@
 #define Ir_Coact       30
 #define Ir_Cofail      31
 #define Ir_Limit       32
+#define Ir_Return      33
 
 struct scan_info {
     struct ir_var *old_subject, *old_pos;
@@ -241,7 +242,12 @@ struct ir_unmark {
     int no;
 };
 
-struct ir_succeed {
+struct ir_suspend {
+    IR_SUB
+    struct ir_var *val;
+};
+
+struct ir_return {
     IR_SUB
     struct ir_var *val;
 };
