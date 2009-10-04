@@ -1168,30 +1168,6 @@ function{1} type(x)
 end
 
 
-"cofail(CE) - transmit a co-expression failure to CE"
-
-function{0,1} cofail(CE)
-   abstract {
-      return any_value
-      }
-   if is:null(CE) then
-      body {
-	 struct b_coexpr *ce = k_current->es_activator;
-	 if (ce != NULL) {
-	    CE.dword = D_Coexpr;
-	    BlkLoc(CE) = (union block *)ce;
-	    }
-	 else runerr(118,CE);
-	 }
-   else if !is:coexpr(CE) then
-      runerr(118,CE)
-   body {
-      struct b_coexpr *ncp = (struct b_coexpr *)BlkLoc(CE);
-      if (co_chng(ncp, NULL, &result, A_Cofail, 1) == A_Cofail) fail;
-      return result;
-      }
-end
-
 
 
 

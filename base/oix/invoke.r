@@ -39,9 +39,9 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
                          int just_fail, word *failure_label);
 
 static void simple_access();
-static void set_c_frame_value();
 static void handle_access_failure();
 static void skip_args(int argc, dptr args);
+
 
 void do_applyf()
 {
@@ -656,7 +656,7 @@ static void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_
            xexpr = expr;
            xargp = 0;
            xfield = query;
-           err_msg(err_num, NULL);
+           err_msg(err_num, expr);
        }
        Ipc = failure_label;
        return;
@@ -852,7 +852,7 @@ static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_c
        xexpr = expr;
        xargp = 0;
        xfield = query;
-       err_msg(err_num, NULL);
+       err_msg(err_num, expr);
        Ipc = failure_label;
        return;
    } while (0)
@@ -1016,15 +1016,6 @@ static void simple_access()
     general_access(lhs, expr, query, 0, IntVal(just_fail), a);
 }
 
-static void set_c_frame_value()
-{
-    struct p_frame *t = PF;
-    dptr res = get_dptr();
-    SP->parent_sp->value = *res;
-    PF = PF->caller;
-    pop_to(t->parent_sp);
-}
-
 static void handle_access_failure()
 {
     struct p_frame *t = PF;
@@ -1060,7 +1051,6 @@ function{0,1} lang_Class_getf(obj, field, quiet)
       pf->locals->args[2] = quiet;
       tail_invoke_frame((struct frame *)pf);
       return nulldesc;
-      fail;
   }
 end
 

@@ -48,6 +48,7 @@ struct errtab errtab[] = {
     {132, "cset, string or ucs expected"},
     {133, "set or table expected"},
     {134, "odd number of parameters expected"},
+    {135, "cannot transmit failure to this co-expression"},
 
 #ifdef Graphics
     {140, "window expected"},

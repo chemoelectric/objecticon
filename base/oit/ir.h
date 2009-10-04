@@ -281,7 +281,6 @@ struct ir_create {
 struct ir_coret {
     IR_SUB
     struct ir_var *value;
-    int resume_label;
 };
 
 struct ir_coact {

@@ -1,0 +1,13 @@
+$start load_wrapper
+    Op_Invoke
+        clo:0
+        Op_Arg arg:0
+        1
+        MainExit
+        Op_Arg arg:1
+      
+MainExit:
+    Op_Cofail
+    Op_Goto 
+        MainExit
+$end

@@ -106,7 +106,6 @@ word *stackend; 			/* End of interpreter stack */
 
 /*
  * Open the icode file and read the header.
- * Used by icon_init() as well as MultiThread's loadicode()
  */
 static FILE *readhdr(char *name, struct header *hdr)
 {
@@ -371,11 +370,6 @@ void icon_init(char *name)
 
     Protect(mainhead = alccoexp(), fatalerr(303, NULL));
     mainhead->size = 1;			/* pretend main() does an activation */
-    mainhead->nextstk = NULL;
-    stklist = mainhead;
-    mainhead->es_tend = NULL;
-    mainhead->freshblk = NULL;	/* &main has no refresh block. */
-					/*  This really is a bug. */
     mainhead->main_of = mainhead->creator = mainhead->program = &rootpstate;
     mainhead->es_activator = mainhead;
 
@@ -614,91 +608,6 @@ void ffatalerr(char *fmt, ...)
 }
 
 /*
- * loadicode - initialize memory particular to a given icode file
- */
-struct b_coexpr * loadicode(name, bs, ss, stk)
-    char *name;
-    C_integer bs, ss, stk;
-{
-    struct b_coexpr *coexp;
-    struct progstate *pstate;
-    struct header hdr;
-    FILE *ifile = NULL;
-
-    /*
-     * open the icode file and read the header
-     */
-    ifile = readhdr(name,&hdr);
-    if (ifile == NULL)
-        return NULL;
-
-    /*
-     * Allocate memory for icode and the struct that describes it
-     */
-    MemProtect(coexp = alcprog(hdr.icodesize, stk));
-    pstate = coexp->program;
-    pstate->parent = curpstate;
-    pstate->next = progs;
-    progs = pstate;
-    initprogstate(pstate);
-    pstate->Kywd_time_elsewhere = millisec();
-    pstate->Kywd_time_out = 0;
-    pstate->K_current = pstate->K_main = coexp;
-
-    MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
-    MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
-    pstate->stringregion->size = ss;
-    pstate->blockregion->size = bs;
-
-    /*
-     * the local program region list starts out with this region only
-     */
-    pstate->stringregion->prev = NULL;
-    pstate->blockregion->prev = NULL;
-    pstate->stringregion->next = NULL;
-    pstate->blockregion->next = NULL;
-    /*
-     * the global region list links this region with curpstate's
-     */
-    pstate->stringregion->Gprev = curpstate->stringregion;
-    pstate->blockregion->Gprev = curpstate->blockregion;
-    pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
-    pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
-    if (curpstate->stringregion->Gnext)
-        curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
-    curpstate->stringregion->Gnext = pstate->stringregion;
-    if (curpstate->blockregion->Gnext)
-        curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
-    curpstate->blockregion->Gnext = pstate->blockregion;
-
-    CMakeStr(name, &pstate->Kywd_prog);
-    MakeInt(hdr.trace, &pstate->Kywd_trc);
-
-    /*
-     * might want to override from TRACE environment variable here.
-     */
-
-    /*
-     * Establish pointers to icode data regions.		[[I?]]
-     */
-    initptrs(pstate, &hdr);
-    initalloc(pstate);
-    check_version(&hdr, name, ifile);
-    read_icode(&hdr, name, ifile, pstate->Code);
-
-    fclose(ifile);
-
-    /*
-     * Resolve references from icode to run-time system.
-     * The first program has this done in icon_init after
-     * initializing the event monitoring system.
-     */
-    resolve(pstate);
-
-    return coexp;
-}
-
-/*
  * initalloc - initialization routine to allocate string/block memory regions
  */
 
@@ -826,123 +735,127 @@ static void initptrs(struct progstate *p, struct header *h)
 }
 
 
-
+#include "initiasm.ri"
 
 " load a program corresponding to string s as a co-expression."
 
-function{1} lang_Prog_load(s,arglist,
-                           blocksize, stringsize, stacksize)
+function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
    declare {
       tended char *loadstring;
-      C_integer _bs_, _ss_, _stk_;
+      C_integer bs, ss;
       }
    if !cnv:C_string(s,loadstring) then
       runerr(103,s)
-   if !def:C_integer(blocksize, rootblock.size,_bs_) then
+   if !def:C_integer(blocksize, rootblock.size,bs) then
       runerr(101,blocksize)
-   if !def:C_integer(stringsize, rootstring.size,_ss_) then
+   if !def:C_integer(stringsize, rootstring.size,ss) then
       runerr(101,stringsize)
-   if !def:C_integer(stacksize,mstksize,_stk_) then
-      runerr(101,stacksize)
-   abstract {
-      return coexpr
-      }
-   body {
-      struct progstate *pstate;
-      register struct b_coexpr *sblkp;
-      struct ef_marker *newefp;
-      register word *savedsp;
+    body {
+       struct progstate *pstate;
+       tended struct b_coexpr *coex;
+       struct header hdr;
+       FILE *ifile;
+       struct b_proc *main_bp;
+       struct p_frame *new_pf;
+
+       /*
+        * arglist must be a list
+        */
+       if (!is:null(arglist) && !is:list(arglist))
+           runerr(108,arglist);
+
+       /*
+        * open the icode file and read the header
+        */
+       ifile = readhdr(loadstring, &hdr);
+       if (ifile == NULL) {
+           /* The file couldn't be opened (any format error causes termination) */
+           errno2why();
+           fail;
+       }
+
+       /*
+        * Allocate memory for icode and the struct that describes it
+        */
+       MemProtect(pstate = alcprog(hdr.icodesize));
+       MemProtect(coex = alccoexp());
+       coex->creator = curpstate;
+       coex->main_of = coex->program = pstate;
+       coex->es_activator = coex;
+
+       initprogstate(pstate);
+       pstate->Kywd_time_elsewhere = millisec();
+       pstate->Kywd_time_out = 0;
+       pstate->K_current = pstate->K_main = coex;
+
+       MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
+       MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
+       pstate->stringregion->size = ss;
+       pstate->blockregion->size = bs;
+
+       /*
+        * the local program region list starts out with this region only
+        */
+       pstate->stringregion->prev = NULL;
+       pstate->blockregion->prev = NULL;
+       pstate->stringregion->next = NULL;
+       pstate->blockregion->next = NULL;
+       /*
+        * the global region list links this region with curpstate's
+        */
+       pstate->stringregion->Gprev = curpstate->stringregion;
+       pstate->blockregion->Gprev = curpstate->blockregion;
+       pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
+       pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
+       if (curpstate->stringregion->Gnext)
+           curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
+       curpstate->stringregion->Gnext = pstate->stringregion;
+       if (curpstate->blockregion->Gnext)
+           curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
+       curpstate->blockregion->Gnext = pstate->blockregion;
+
+       CMakeStr(loadstring, &pstate->Kywd_prog);
+       MakeInt(hdr.trace, &pstate->Kywd_trc);
+
+       /*
+        * Establish pointers to icode data regions.		[[I?]]
+        */
+       initptrs(pstate, &hdr);
+       initalloc(pstate);
+       check_version(&hdr, loadstring, ifile);
+       read_icode(&hdr, loadstring, ifile, pstate->Code);
+
+       fclose(ifile);
+
+       resolve(pstate);
+
+       pstate->parent = curpstate;
+       pstate->next = progs;
+       progs = pstate;
 
       /*
-       * Fragments of pseudo-icode to get loaded programs started,
-       * and to handle termination.
-       */
-      static word pstart[7];
-      static word *lterm;
-
-      word *tipc;
-
-      tipc = pstart;
-      *tipc++ = Op_Invoke;
-      *tipc++ = 1;
-      *tipc++ = Op_Coret;
-      *tipc++ = Op_Efail;
-
-      lterm = (word *)(tipc);
-
-      *tipc++ = Op_Cofail;
-      *tipc++ = Op_Agoto;
-      *tipc = (word)lterm;
-
-      /*
-       * arglist must be a list
-       */
-      if (!is:null(arglist) && !is:list(arglist))
-         runerr(108,arglist);
-
-      sblkp = loadicode(loadstring, _bs_,_ss_,_stk_);
-      if (!sblkp) {
-          /* The file couldn't be opened (any format error causes termination) */
-          errno2why();
-          fail;
-      }
-      pstate = sblkp->program;
-
-      savedsp = sp;
-      sp = (word *)(sblkp + 1);
-
-      sblkp->cstate[0] = StackAlign((char *)sblkp + _stk_ - WordSize);
-      sblkp->es_argp = NULL;
-      sblkp->es_gfp = NULL;
-
-      /*
-       * Set up expression frame marker to contain execution of the
-       *  main procedure.  If failure occurs in this context, control
-       *  is transferred to lterm, the address of an ...
-       */
-      newefp = (struct ef_marker *)sp;
-      newefp->ef_failure = lterm;
-      newefp->ef_gfp = 0;
-      newefp->ef_efp = 0;
-      newefp->ef_ilevel = ilevel;
-      sp += Wsizeof(*newefp) - 1;   /* SP now points to last word of efp */
-      sblkp->es_efp = newefp;
-
-      /*
-       * Check whether resolve() found the main procedure.  If not, this
-       * is noted as run-time error 117.  Otherwise, this value is
-       * pushed on the stack.
+       * Check whether resolve() found the main procedure.
        */
       if (!pstate->MainProc)
          fatalerr(117, NULL);
 
-      PushDesc(*pstate->MainProc);
+       main_bp = (struct b_proc *)BlkLoc(*pstate->MainProc);
+       MemProtect(new_pf = alc_p_frame((struct b_proc *)&Bload_wrapper, 0));
+       new_pf->locals->args[0] = *pstate->MainProc;
+       coex->sp = (struct frame *)new_pf;
+       coex->curr_pf = new_pf;
+       coex->start_label = new_pf->ipc = Bload_wrapper.icode;
+       coex->failure_label = 0;
 
-      /*
-       * Create a list from arguments using Ollist and push a descriptor
-       * onto new stack.  Then create procedure frame on new stack.  Push
-       * two new null descriptors, and set sblkp->es_sp when all finished.
-       */
-      if (!is:null(arglist)) {
-         PushDesc(arglist);
-         }
-      else {
-         PushNull;
-         {
-         dptr tmpargp = (dptr) (sp - 1);
-#ifdef CHECK
-         Ollist(0, tmpargp);
-#endif
-         sp = (word *)tmpargp + 1;
-         }
-         }
-      sblkp->es_sp = (word *)sp;
-      sblkp->es_ipc = pstart;
+       if (main_bp->nparam) {
+           if (is:null(arglist))
+               create_list(0, &new_pf->locals->args[1]);
+           else
+               new_pf->locals->args[1] = arglist;
+       }
 
       result.dword = D_Coexpr;
-      BlkLoc(result) = (union block *)sblkp;
-
-      sp = savedsp;
+      BlkLoc(result) = (union block *)coex;
 
       return result;
       }
@@ -1557,6 +1470,7 @@ void showstack(struct b_coexpr *c)
             printf("PF-> ");
         printf("Frame %p type=%d\n", f, f->type);
         printf("\tvalue="); print_desc(stdout, &f->value); printf("\n");
+        printf("\tfailure_label=%p\n", f->failure_label);
         tmp.dword = D_Proc;
         BlkLoc(tmp) = (union block *)f->proc;
         printf("\tproc="); print_vword(stdout, &tmp); printf("\n");
@@ -1576,9 +1490,8 @@ void showstack(struct b_coexpr *c)
             }
             case P_FRAME_TYPE: {
                 struct p_frame *pf = (struct p_frame *)f;
-                printf("\tipc=%p\n", pf->ipc);
+                printf("\tipc=%p (offset %d)\n", pf->ipc, DiffPtrsBytes(pf->ipc, pf->code_start));
                 printf("\tcode_start=%p\n", pf->code_start);
-                printf("\tfailure_label=%p\n", pf->failure_label);
                 printf("\tcaller=%p\n", pf->caller);
                 for (i = 0; i < f->proc->nclo; ++i) {
                     printf("\tclo[%d]=%p\n", i, pf->clo[i]);

@@ -3,10 +3,51 @@
 
 #define OPCODES 0
 
+static void transmit_failure();
+
+#include "interpiasm.ri"
+
+
+/*
+ * Invoked from a custom fragment.  Act as though the
+ * parent C frame had returned the given value.
+ */
+void set_c_frame_value()
+{
+    struct p_frame *t = PF;
+    dptr res = get_dptr();
+    /* Set the value in the C frame */
+    SP->parent_sp->value = *res;
+    PF = PF->caller;
+    /* Pop of this frame, leaving the C frame */
+    pop_to(t->parent_sp);
+}
+
+/*
+ * Invoked from a custom fragment.  Act as though the
+ * parent C frame had failed.
+ */
+void set_c_frame_failure()
+{
+    struct p_frame *t = PF;
+    PF = PF->caller;
+    /* Goto the failure_label stored in the C frame */
+    Ipc = t->parent_sp->failure_label;
+    /* Pop of this frame, leaving the C frame */
+    pop_to(t->parent_sp);
+}
+
 void revert_PF()
 {
     if (PF->proc->program)
         --k_level;
+
+    if (PF->caller && PF->caller->proc->program) {
+        /*fprintf(stderr, "Revert:from curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
+        CHANGEPROGSTATE(PF->caller->proc->program);
+        /*fprintf(stderr, "       to   curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
+    }
+
     PF = PF->caller;
 }
 
@@ -30,8 +71,12 @@ void tail_invoke_frame(struct frame *f)
                 k_trace--;
                 ctrace(pf);
             }
-            if (pf->proc->program)
+            if (pf->proc->program) {
+                /*fprintf(stderr, "Invoke:from curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
+                CHANGEPROGSTATE(pf->proc->program);
+                /*fprintf(stderr, "       to   curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
                 ++k_level;
+            }
             PF = pf;
             break;
         }
@@ -402,6 +447,26 @@ static void do_keyop()
     pop_to(cf->parent_sp);
 }
 
+static void do_keyclo()
+{
+    struct c_frame *cf;
+    struct b_proc *bp;
+    word clo;
+    word *failure_label;
+    bp = keyblks[GetWord];
+    clo = GetWord;
+    MemProtect(cf = alc_c_frame(bp, 0));
+    push_c_frame(cf);
+    xnargs = 0;
+    xargp = 0;
+    failure_label = get_addr();
+    PF->clo[clo] = (struct frame *)cf;
+    if (!bp->ccode(cf)) {
+        pop_to(cf->parent_sp);
+        Ipc = failure_label;
+    }
+}
+
 static void do_makelist()
 {
     dptr dest = get_dptr();
@@ -427,12 +492,17 @@ static void do_create()
     coex->program = coex->creator = curpstate;
     coex->main_of = 0;
     MemProtect(pf = alc_p_frame(PF->proc, PF->locals));
-    coex->start_label = pf->ipc = start_label;
-    coex->failure_label = 0;
+    coex->failure_label = coex->start_label = pf->ipc = start_label;
     coex->curr_pf = pf;
     coex->sp = (struct frame *)pf;
     lhs->dword = D_Coexpr;
     BlkLoc(*lhs) = (union block *)coex;
+}
+
+void switch_to(struct b_coexpr *ce)
+{
+    curpstate = ce->program;
+    k_current = ce;
 }
 
 static void do_coact()
@@ -457,28 +527,35 @@ static void do_coact()
         --k_trace;
         trace_coact(k_current, &BlkLoc(arg2)->coexpr, &arg1);
     }
-    /*printf("activating coexp=");print_desc(stdout, &arg2);printf("\n");*/
+    /*printf("activating from k_current=%p to coexp=",k_current);print_desc(stdout, &arg2);printf("\n");*/
     k_current->tvalloc = lhs;
     k_current->failure_label = failure_label;
+
+    /* Set the target's activator, switch to the target and set its transmitted value */
     BlkLoc(arg2)->coexpr.es_activator = k_current;
-    k_current = &BlkLoc(arg2)->coexpr;
+    switch_to(&BlkLoc(arg2)->coexpr);
+    if (k_current->tvalloc)
+        *k_current->tvalloc = arg1;
 }
 
 static void do_coret()
 {
     dptr val;
-    word *resume_label;
-
     val = get_dptr();
-    resume_label = get_addr();
     /*printf("coret FROM %p to %p VAL=",k_current, k_current->es_activator);print_desc(stdout, val);printf("\n");*/
     if (k_trace) {
         --k_trace;
         trace_coret(k_current, k_current->es_activator, val);
     }
 
-    PF->ipc = resume_label;
-    k_current = k_current->es_activator;
+    /* If someone transmits failure to this coexpression, just act as though resumed */
+    k_current->failure_label = Ipc;
+
+    /* Increment the results counter */
+    ++k_current->size;
+
+    /* Switch to the target and set the transmitted value */
+    switch_to(k_current->es_activator);
     if (k_current->tvalloc)
         *k_current->tvalloc = *val;
 }
@@ -490,9 +567,60 @@ static void do_cofail()
         --k_trace;
         trace_cofail(k_current, k_current->es_activator);
     }
-    k_current = k_current->es_activator;
+
+    /* If someone transmits failure to this coexpression, just act as though resumed */
+    k_current->failure_label = Ipc;
+
+    /* Switch to the target and jump to its failure label */
+    switch_to(k_current->es_activator);
     PF->ipc = k_current->failure_label;
 }
+
+static void transmit_failure()
+{
+    tended struct descrip t;
+    dptr lhs;
+    word *failure_label;
+    get_deref(&t);
+    lhs = get_dptr();
+    failure_label = get_addr();
+
+    if (k_trace) {
+        --k_trace;
+        trace_cofail(k_current, &BlkLoc(t)->coexpr);
+    }
+    /*printf("transmitting failure from k_current=%p to coexp=",k_current);print_desc(stdout, &t);printf("\n");*/
+    k_current->tvalloc = lhs;
+    k_current->failure_label = failure_label;
+
+    /* Switch to the target and go to its failure label */
+    BlkLoc(t)->coexpr.es_activator = k_current;
+    switch_to(&BlkLoc(t)->coexpr);
+    PF->ipc = k_current->failure_label;
+}
+
+"cofail(ce) - transmit a co-expression failure to ce"
+
+function{0,1} cofail(ce)
+    body {
+      struct p_frame *pf;
+      if (is:null(ce)) {
+          ce.dword = D_Coexpr;
+          BlkLoc(ce) = (union block *)k_current->es_activator;
+      } else if (!is:coexpr(ce))
+         runerr(118, ce);
+
+      if (!BlkLoc(ce)->coexpr.failure_label)
+         runerr(135, ce);
+
+      MemProtect(pf = alc_p_frame((struct b_proc *)&Bcofail_impl, 0));
+      push_frame((struct frame *)pf);
+      pf->locals->args[0] = ce;
+      tail_invoke_frame((struct frame *)pf);
+      return nulldesc;
+   }
+end
+
 
 static void do_limit()
 {
@@ -511,6 +639,7 @@ static void do_limit()
     }
     MakeInt(tmp, limit);
     if (tmp < 0) {
+        xargp = limit;
         err_msg(205, limit);
         Ipc = failure_label;
         return;
@@ -645,6 +774,11 @@ void interp2()
 
             case Op_Keyop: {
                 do_keyop();
+                break;
+            }
+
+            case Op_Keyclo: {
+                do_keyclo();
                 break;
             }
 

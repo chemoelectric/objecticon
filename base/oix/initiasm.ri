@@ -1,0 +1,14 @@
+static word load_wrapper_code[] = {
+   Op_Invoke,
+   0,
+   Op_Arg,
+   0,
+   1,
+   8*WordSize,
+   Op_Arg,
+   1,
+   Op_Cofail,
+   Op_Goto,
+   8*WordSize,
+};
+CustomProc(load_wrapper,load_wrapper_code,2,0,1,0,0,0,"internal:load_wrapper")

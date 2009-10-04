@@ -451,6 +451,14 @@ struct b_proc *get_current_user_proc()
     return pf->proc;
 }
 
+struct p_frame *get_current_user_frame()
+{
+    struct p_frame *pf = PF;
+    while (pf->proc->program == 0)
+        pf = pf->caller;
+    return pf;
+}
+
 /*
  * Check whether the calling procedure (deduced from the stack) has
  * access to the given field of the given instance class (which is

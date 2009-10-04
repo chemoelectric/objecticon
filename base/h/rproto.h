@@ -509,7 +509,7 @@ int	tvcmp4		(struct dpair *dp1,struct dpair *dp2);
 void	varargs		(dptr argp, int nargs, dptr rslt);
 
 struct b_coexpr *alccoexp (void);
-struct b_coexpr *alcprog(long icodesize, long stacksize);
+struct progstate *alcprog(long icodesize);
 
 dptr rec_structinate(dptr dp, char *name, int nfields, char *a[]);
 
@@ -635,3 +635,7 @@ void traceback();
 struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior);
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior);
 struct b_proc *get_current_user_proc();
+struct p_frame *get_current_user_frame();
+void switch_to(struct b_coexpr *ce);
+void set_c_frame_value();
+void set_c_frame_failure();

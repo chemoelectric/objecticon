@@ -34,8 +34,7 @@ operator{1} ^ refresh(x)
        coex->program = coex->creator = curr->creator;
        coex->main_of = 0;
        MemProtect(new_pf = alc_p_frame(pf->proc, pf->locals));
-       coex->start_label = new_pf->ipc = curr->start_label;
-       coex->failure_label = 0;
+       coex->failure_label = coex->start_label = new_pf->ipc = curr->start_label;
        coex->curr_pf = new_pf;
        coex->sp = (struct frame *)new_pf;
        return coexpr(coex);

@@ -121,77 +121,54 @@ struct b_coexpr *alccoexp()
 
    AlcFixBlk(blk, b_coexpr, T_Coexpr, e_coexpr)
    blk->id = coexp_ser++;
+   blk->sp = 0;
+   blk->es_activator = 0;
+   blk->failure_label = 0;
+   blk->tvalloc = 0;
    return blk;
 }
 
 
 /*
  * Allocate memory for a loaded program.  The memory allocated
- * consists of three parts.  Firstly the co-expression, followed by
- * the stack.  The size of the co-expression struct is taken to be
- * included in the stack size (the same as in alccoexp and the
- * allocation of the root program's &main).  Secondly, the progstate
- * is allocated, and finally the space for the icode.
+ * consists of two parts, namely the progstate struct and the icode.
  * 
  * Note that this memory is never freed.
  */
-struct b_coexpr *alcprog(long icodesize, long stacksize)
-
-   {
-   struct b_coexpr *ep;
+struct progstate *alcprog(long icodesize)
+{
    struct progstate *prog;
    char *icode;
-   int size = stacksize + icodesize + sizeof(struct progstate);
+   int size = icodesize + sizeof(struct progstate);
 
+   /* TODO new event */
    EVVal(size, E_Coexpr);
 
    /*
-    * Allocate the three parts.  If any fails, collect and retry before
-    * giving up.
+    * Allocate the two parts.
     */
-   ep = malloc(stacksize);
-   if (ep == NULL) {
-      collect(Static);
-      ep = malloc(stacksize);
-      if (ep == NULL)
-          ReturnErrNum(305, NULL);
-   }
    prog = malloc(sizeof(struct progstate));
    if (prog == NULL) {
-       collect(Static);
+       collect(Blocks);
        prog = malloc(sizeof(struct progstate));
        if (prog == NULL) {
-           free(ep);
            ReturnErrNum(305, NULL);
        }
    }
    icode = malloc(icodesize);
    if (icode == NULL) {
-       collect(Static);
+       collect(Blocks);
        icode = malloc(icodesize);
        if (icode == NULL) {
-           free(ep);
            free(prog);
            ReturnErrNum(305, NULL);
        }
    }
-
-   memset(ep, 0, sizeof(struct b_coexpr));
    memset(prog, 0, sizeof(struct progstate));
-   ep->title = T_Coexpr;
-   ep->creator = curpstate;
-   /* Add the allocation to the prog's stats */
-   ep->creator->stattotal += size;
-   ep->creator->statcurr += size;
-   ep->id = 1;
-   ep->main_of = ep->program = prog;
    prog->Code = icode;
 
-   ep->nextstk = stklist;
-   stklist = ep;
-
-   return ep;
-   }
+   return prog;
+}
 
 
 #begdef alccset_macro(f, e_cset)

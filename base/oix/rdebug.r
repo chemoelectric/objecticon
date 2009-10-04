@@ -55,7 +55,7 @@ void traceback()
     struct frame *f;
     struct p_frame **fa;
 
-    showcurrstack();
+/*    showcurrstack(); */
 
     depth = 0;
     for (f = SP; f; f = f->parent_sp) {
@@ -204,10 +204,12 @@ int get_name(dptr dp1, dptr dp0)
     char *s, *s2;
     word i, j, k;
     struct progstate *prog;
+    struct p_frame *uf;
 
-    arg1 = &argp[1];
-    loc1 = pfp->pf_locals;
-    proc0 = CallerProc;
+    uf = get_current_user_frame();
+    arg1 = uf->locals->args;
+    proc0 = uf->proc;
+    loc1 = uf->locals->dynamic;
 
     type_case *dp1 of {
       tvsubs: {
@@ -312,16 +314,16 @@ int get_name(dptr dp1, dptr dp0)
                 i = dp - proc0->fstatic;	/* static */
                 if (i < 0 || i >= proc0->nstatic)
                     syserr("name: unreferencable static variable");
-                i += abs((int)proc0->nparam) + (int)proc0->ndynam;
+                i += abs(proc0->nparam) + proc0->ndynam;
                 *dp0 = proc0->lnames[i];
                 return StaticName;
             }
-            else if (InRange(arg1, dp, &arg1[abs((int)proc0->nparam)])) {
+            else if (InRange(arg1, dp, &arg1[abs(proc0->nparam)])) {
                 *dp0 = proc0->lnames[dp - arg1];          /* argument */
                 return ParamName;
             }
             else if (InRange(loc1, dp, &loc1[proc0->ndynam])) {
-                *dp0 = proc0->lnames[dp - loc1 + abs((int)proc0->nparam)];
+                *dp0 = proc0->lnames[dp - loc1 + abs(proc0->nparam)];
                 return LocalName;
             }
             else {

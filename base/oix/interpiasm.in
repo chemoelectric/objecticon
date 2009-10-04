@@ -1,0 +1,12 @@
+$start cofail_impl
+    Op_Custom c:transmit_failure
+         Op_Arg arg:0
+         Op_Tmp tmp:0
+         FailureTransmitted
+    Op_Custom c:set_c_frame_value
+         Op_Tmp tmp:0
+
+FailureTransmitted:
+    Op_Custom c:set_c_frame_failure
+    Op_Halt
+$end

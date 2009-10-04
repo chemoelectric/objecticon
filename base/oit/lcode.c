@@ -999,7 +999,6 @@ static void lemitcode()
                         fprintf(dbgfile, "%ld:\tcoret\n", (long)pc);
                     outword(Op_Coret);
                     emit_ir_var(x->value, "value");
-                    labout(x->resume_label, "resume");
                     break;
                 }
                 case Ir_Coact: {

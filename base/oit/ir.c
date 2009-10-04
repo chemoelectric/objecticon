@@ -291,13 +291,12 @@ static struct ir_create *ir_create(struct lnode *n, struct ir_var *lhs, int star
     return res;
 }
 
-static struct ir_coret *ir_coret(struct lnode *n, struct ir_var *value, int resume_label)
+static struct ir_coret *ir_coret(struct lnode *n, struct ir_var *value)
 {
     struct ir_coret *res = IRAlloc(struct ir_coret);
     res->node = n;
     res->op = Ir_Coret;
     res->value = value;
-    res->resume_label = resume_label;
     return res;
 }
 
@@ -2346,9 +2345,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, res->failure));
 
-            chunk1(expr->success, ir_coret(n, target, expr->resume));
-            chunk1(expr->failure, ir_cofail(n));
-
+            chunk2(expr->success, 
+                   ir_coret(n, target),
+                   ir_goto(n, expr->resume));
+            chunk2(expr->failure, 
+                   ir_cofail(n),
+                   ir_goto(n, expr->failure));
             break;
         }
 
@@ -2784,7 +2786,7 @@ static void print_chunk(struct chunk *chunk)
                 struct ir_coret *x = (struct ir_coret *)ir;
                 indentf("\tIr_Coret ");
                 print_ir_var(x->value);
-                fprintf(stderr, "  resume_label=%d\n", x->resume_label);
+                fprintf(stderr, "\n");
                 break;
             }
             case Ir_Coact: {
@@ -3069,12 +3071,6 @@ static void optimize_goto1(int i)
                 struct ir_create *x = (struct ir_create *)ir;
                 optimize_goto_chain(&x->start_label);
                 optimize_goto1(x->start_label);
-                break;
-            }
-            case Ir_Coret: {
-                struct ir_coret *x = (struct ir_coret *)ir;
-                optimize_goto_chain(&x->resume_label);
-                optimize_goto1(x->resume_label);
                 break;
             }
             case Ir_Coact: {

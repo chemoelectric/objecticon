@@ -1,0 +1,17 @@
+static word cofail_impl_code[] = {
+   Op_Custom,
+   (word)transmit_failure,
+   Op_Arg,
+   0,
+   Op_Tmp,
+   0,
+   11*WordSize,
+   Op_Custom,
+   (word)set_c_frame_value,
+   Op_Tmp,
+   0,
+   Op_Custom,
+   (word)set_c_frame_failure,
+   Op_Halt,
+};
+CustomProc(cofail_impl,cofail_impl_code,1,0,0,1,0,0,"internal:cofail_impl")
