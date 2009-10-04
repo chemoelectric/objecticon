@@ -75,6 +75,11 @@ struct b_proc *keyblks[] = {
 #undef KDef
 };
 
+function{0} deferred_method_stub(a[n])
+   body {
+      runerr(612);       
+   }
+end
 
 
 /*

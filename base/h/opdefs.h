@@ -149,3 +149,4 @@
 #define Op_MoveVar      227
 #define Op_Suspend      228
 #define Op_Return       229
+#define Op_Exit         230

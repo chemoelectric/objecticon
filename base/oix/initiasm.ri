@@ -12,3 +12,25 @@ static word load_wrapper_code[] = {
    8*WordSize,
 };
 CustomProc(load_wrapper,load_wrapper_code,2,0,1,0,0,0,"internal:load_wrapper")
+static word main_wrapper_code[] = {
+   Op_Invoke,
+   0,
+   Op_Arg,
+   0,
+   1,
+   8*WordSize,
+   Op_Arg,
+   1,
+   Op_Exit,
+};
+CustomProc(main_wrapper,main_wrapper_code,2,0,1,0,0,0,"internal:main_wrapper")
+static word main_wrapper0_code[] = {
+   Op_Invoke,
+   0,
+   Op_Arg,
+   0,
+   0,
+   6*WordSize,
+   Op_Exit,
+};
+CustomProc(main_wrapper0,main_wrapper0_code,1,0,1,0,0,0,"internal:main_wrapper0")

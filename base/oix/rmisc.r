@@ -1881,3 +1881,35 @@ char *salloc(char *s)
     return strcpy(s1, s);
 }
 
+
+dptr lookup_global(dptr name, struct progstate *prog)
+{
+    dptr p = (dptr)bsearch(name, prog->Gnames, prog->NGlobals, 
+                           sizeof(struct descrip), 
+                           (BSearchFncCast)lexcmp);
+    if (!p)
+        return 0;
+
+    /* Convert from pointer into names array to pointer into descriptor array */
+    return prog->Globals + (p - prog->Gnames);
+}
+
+
+struct loc *lookup_global_loc(dptr name, struct progstate *prog)
+{
+    dptr p;
+
+    /* Check if the table was compiled into the icode */
+    if (prog->Glocs == prog->Eglocs)
+        return 0;
+
+    p = (dptr)bsearch(name, prog->Gnames, prog->NGlobals, 
+                      sizeof(struct descrip), 
+                      (BSearchFncCast)lexcmp);
+    if (!p)
+        return 0;
+
+    /* Convert from pointer into names array to pointer into location array */
+    return prog->Glocs + (p - prog->Gnames);
+}
+

@@ -1162,81 +1162,196 @@ void resolve(struct progstate *p)
         StrLoc(fnptr->fname) = p->Strcons + (uword)StrLoc(fnptr->fname);
 }
 
+
+
+
+
+#ifdef MSWindows
+
+/*
+ * CmdParamToArgv() - convert a command line to an argv array.  Return argc.
+ * Called for both input processing (e.g. in WinMain()) and in output
+ * (e.g. in mswinsystem()).  Behavior differs in that output does not
+ * remove double quotes from quoted arguments, otherwise receiving process
+ * (if a win32 process) would lose quotedness.
+ */
+int CmdParamToArgv(char *s, char ***avp, int dequote)
+{
+    char tmp[MaxPath], dir[MaxPath];
+    char *t=salloc(s), *t2=t;
+    int rv=0, i=0;
+    FILE *f=NULL;
+
+    *avp = malloc(2 * sizeof(char *));
+    (*avp)[rv] = NULL;
+
+
+    while (*t2) {
+        while (*t2 && isspace((unsigned char)*t2)) t2++;
+        switch (*t2) {
+            case '\0': break;
+            case '"': {
+                char *t3, c = '\0';
+                if (dequote) t3 = ++t2;			/* skip " */
+                else t3 = t2++;
+
+                while (*t2 && (*t2 != '"')) t2++;
+                if (*t2 && !dequote) t2++;
+                if (c = *t2) {
+                    *t2++ = '\0';
+                }
+                *avp = realloc(*avp, (rv + 2) * sizeof (char *));
+                (*avp)[rv++] = salloc(t3);
+                (*avp)[rv] = NULL;
+                if(!dequote && c) *--t2 = c;
+
+                break;
+	    }
+            default: {
+                char *t3 = t2;
+                while (*t2 && !isspace((unsigned char)*t2)) t2++;
+                if (*t2)
+                    *t2++ = '\0';
+                strcpy(tmp, t3);
+		*avp = realloc(*avp, (rv + 2) * sizeof (char *));
+		(*avp)[rv++] = salloc(t3);
+		(*avp)[rv] = NULL;
+                break;
+	    }
+        }
+    }
+    free(t);
+    return rv;
+}
+
+char *lognam;
+char tmplognam[128];
+
+void MSStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance)
+{
+    WNDCLASS wc;
+    if (!hPrevInstance) {
+        wc.style = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc = WndProc;
+        wc.cbClsExtra = 0;
+        wc.cbWndExtra = 0;
+        wc.hInstance  = hInstance;
+        wc.hIcon      = NULL;
+        wc.hCursor    = NULL;
+        wc.hbrBackground = GetStockObject(WHITE_BRUSH);
+        wc.lpszMenuName = NULL;
+        wc.lpszClassName = "oix";
+        RegisterClass(&wc);
+    }
+}
+
+int iconx(int argc, char **argv);
+
+jmp_buf mark_sj;
+
+int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpszCmdLine, int nCmdShow)
+{
+    int argc;
+    char **argv;
+
+    mswinInstance = hInstance;
+    ncmdShow = nCmdShow;
+
+    argc = CmdParamToArgv(GetCommandLine(), &argv, 1);
+    MSStartup(hInstance, hPrevInstance);
+    if (setjmp(mark_sj) == 0)
+        iconx(argc,argv);
+    while (--argc>=0)
+        free(argv[argc]);
+    free(argv);
+    wfreersc();
+#ifdef NTGCC
+    _exit(0);
+#endif					/* NTGCC */
+    return 0;
+}
+#define main iconx
+#endif					/* MSWindows */
+
+int main(int argc, char **argv)
+{
+    int i;
+    struct fileparts *fp;
+    struct b_proc *main_bp;
+    struct p_frame *frame;
+
+#if MSWIN32
+    WSADATA cData;
+    WSAStartup(MAKEWORD(2, 0), &cData);
+#endif
+
+    fp = fparse(argv[0]);
+
+    /*
+     * if argv[0] is not a reference to our interpreter, take it as the
+     * name of the icode file, and back up for it.
+     */
+    if (!smatch(fp->name, "oix")) {
+        argv--;
+        argc++;
+    }
+
+    if (argc < 2) 
+        startuperr("no icode file specified");
+
+    /*
+     * Call icon_init with the name of the icode file to execute.	[[I?]]
+     */
+    icon_init(argv[1]);
+
+    /*
+     * Check whether resolve() found the main procedure.  If not, exit.
+     */
+    if (!main_proc)
+        fatalerr(117, NULL);
+
+    main_bp = (struct b_proc *)BlkLoc(*main_proc);
+
+    /*
+     * We avoid passing an arg to main if possible, so that we don't create
+     * a list unnecessarily.
+     */
+    if (main_bp->nparam) {
+        tended struct descrip args;
+        MemProtect(frame = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
+        create_list(argc - 2, &args);
+        for (i = 2; i < argc; i++) {
+            struct descrip t;
+            CMakeStr(argv[i], &t);
+            list_put(&args, &t);
+        }
+        frame->locals->args[0] = *main_proc;
+        frame->locals->args[1] = args;
+    } else {
+        MemProtect(frame = alc_p_frame((struct b_proc *)&Bmain_wrapper0, 0));
+        frame->locals->args[0] = *main_proc;
+    }
+    k_current->sp = (struct frame *)frame;
+    k_current->curr_pf = frame;
+    k_current->start_label = frame->ipc = frame->proc->icode;
+    k_current->failure_label = 0;
+    set_up = 1;			/* post fact that iconx is initialized */
+    interp2();
+    c_exit(EXIT_SUCCESS);
+
+    return 0;
+}
+
+
+
+
+
 /*
  * The rest of the functions here are just debugging utilities.
  */
 
-void *get_csp()
-{
-    int dummy = 0;
-    unsigned long l;
-    l = (long)&dummy;
-    return (void*)l;
-}
 
-void checkstack()
-{
-    static int worst = MaxInt;
-    long free;
-    if (curpstate->K_current == rootpstate.K_main)
-        return;
-    free = (char*)get_csp() - (char*)sp;
-    if (free < worst) {
-        fprintf(stderr, "A new low in stack space: %ld\n",free);
-        fflush(stderr);
-        worst = free;
-    }
-}
-
-void showcoexps()
-{
-    struct b_coexpr *p;
-    struct progstate *q;
-    void *csp = get_csp();
-
-    printf("Coexpressions\n");
-    printf("Coexp       program     main_of     size        es_sp       C sp        ipc         pfp         argp\n");
-    printf("----------------------------------------------------------------------------------------------------\n");
-    for (p = stklist; p; p = p->nextstk) {
-        printf("%-12p%-12p%-12p%-12ld%-12p%-12p%-12p%-12p%-12p\n",
-               p,
-               p->program,
-               p->main_of,
-               (long)p->size,
-               p->es_sp,
-               (char*)p->cstate[0],
-               p->es_ipc,
-               p->es_pfp,
-               p->es_argp);
-    }
-
-    printf("\nProgstates\n");
-    printf("Addr        Code        Ecode       &main       &current    Name\n");
-    printf("----------------------------------------------------------------------------\n");
-    for (q = progs; q; q = q->next) {
-        printf("%-12p%-12p%-12p%-12p%-12p%s\n", 
-               q, 
-               q->Code, 
-               q->Ecode,
-               q->K_main,
-               q->K_current,
-               cstr(&q->Kywd_prog));
-    }
-
-    printf("\nVariables\n");
-    printf("curpstate=%p rootpstate=%p &main=%p &current=%p\n", 
-           curpstate, 
-           &rootpstate,
-           curpstate->K_main,
-           curpstate->K_current);
-
-    if (curpstate->K_current != rootpstate.K_main)
-        printf("ilevel=%d ISP=%p CSP=%p (clearance %ld)\n", ilevel,sp, csp, (long)((char*)csp - (char*)sp));
-    else
-        printf("ilevel=%d ISP=%p CSP=%p\n", ilevel,sp, csp);
-
-    fflush(stdout);
-}
 
 int valid_addr(void *p) 
 {
@@ -1248,29 +1363,6 @@ int valid_addr(void *p)
 #endif
 }
 
-/***
-static int isdescrip(word *p){
-    struct descrip *d = (struct descrip *)p;
-    word i = d->dword;
-
-    if (Qual(*d))
-        return StrLen(*d) == 0 || valid_addr(StrLoc(*d));
-
-    if (i==D_Null || i==D_Integer)
-        return 1;
-
-    if (is:struct_var(*d) || i==D_NamedVar || i==D_Lrgint || i==D_Real ||
-            i==D_Cset || i==D_Proc || i==D_Record || i==D_List ||
-            i==D_Lelem || i==D_Set || i==D_Selem || i==D_Table || i==D_Telem ||
-            i==D_Tvtbl || i==D_Slots || i==D_Tvsubs || i==D_Refresh || i==D_Coexpr ||
-            i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj ||
-            i==D_Kywdstr || i==D_Kywdany || i==D_Class || i==D_Object || i==D_Cast ||
-            i==D_Constructor || i==D_Methp || i==D_Ucs)
-        return valid_addr(BlkLoc(*d));
-
-    return 0;
-}
-***/
 
 char *binstr(unsigned int n)
 {

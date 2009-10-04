@@ -1,3 +1,5 @@
+# Wrapper for loaded program.  This function is the body of the returned
+# co-expression.
 $start load_wrapper
     Op_Invoke
         clo:0
@@ -6,8 +8,34 @@ $start load_wrapper
         MainExit
         Op_Arg arg:1
       
+# main() has exited; repeatedly fail to the enclosing coexpression.
 MainExit:
     Op_Cofail
     Op_Goto 
         MainExit
+$end
+
+# Wrapper for main with single list argument.
+$start main_wrapper
+    Op_Invoke
+        clo:0
+        Op_Arg arg:0
+        1
+        MainExit
+        Op_Arg arg:1
+      
+MainExit:
+    Op_Exit
+$end
+
+# Wrapper for main with no arguments.
+$start main_wrapper0
+    Op_Invoke
+        clo:0
+        Op_Arg arg:0
+        0
+        MainExit
+      
+MainExit:
+    Op_Exit
 $end

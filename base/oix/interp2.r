@@ -42,7 +42,7 @@ void revert_PF()
     if (PF->proc->program)
         --k_level;
 
-    if (PF->caller && PF->caller->proc->program) {
+    if (PF->caller->proc->program) {
         /*fprintf(stderr, "Revert:from curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
         CHANGEPROGSTATE(PF->caller->proc->program);
         /*fprintf(stderr, "       to   curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
@@ -64,14 +64,14 @@ void tail_invoke_frame(struct frame *f)
         case P_FRAME_TYPE: {
             struct p_frame *pf = (struct p_frame *)f;
             pf->caller = PF;
-            /*
-             * If tracing is on, use ctrace to generate a message.
-             */   
-            if (k_trace) {
-                k_trace--;
-                ctrace(pf);
-            }
             if (pf->proc->program) {
+                /*
+                 * If tracing is on, use ctrace to generate a message.
+                 */   
+                if (k_trace) {
+                    k_trace--;
+                    ctrace(pf);
+                }
                 /*fprintf(stderr, "Invoke:from curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
                 CHANGEPROGSTATE(pf->proc->program);
                 /*fprintf(stderr, "       to   curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
@@ -133,12 +133,12 @@ struct inline_field_cache *get_inline_field_cache()
     return t;
 }
 
+/*
+ * Return a pointer to the read descriptor.
+ */
 dptr get_dptr()
 {
     word op = GetWord;
-#if OPCODES
-    fprintf(stderr, "\top=%d(%s)\n", op, op_names[op]);
-#endif
     switch (op) {
         case Op_Nil: {
             return 0;
@@ -169,12 +169,13 @@ dptr get_dptr()
     }
 }
 
-void move_descrip(dptr dest)
+/*
+ * Get a copy of a descriptor without any alteration to it (no dereferencing or
+ * making of variables).
+ */
+void get_descrip(dptr dest)
 {
     word op = GetWord;
-#if OPCODES
-    fprintf(stderr, "\top=%d(%s)\n", op, op_names[op]);
-#endif
     switch (op) {
         case Op_Int: {
             MakeInt(GetWord, dest);
@@ -214,67 +215,18 @@ void move_descrip(dptr dest)
         }
 
         default: {
-            syserr("Invalid opcode in move_descrip: %d (%s)\n", op, op_names[op]);
+            syserr("Invalid opcode in get_descrip: %d (%s)\n", op, op_names[op]);
         }
     }
 }
 
-void move_variable(dptr dest)
-{
-    word op = GetWord;
-#if OPCODES
-    fprintf(stderr, "\top=%d(%s)\n", op, op_names[op]);
-#endif
-    switch (op) {
-        case Op_Int: {
-            MakeInt(GetWord, dest);
-            break;
-        }
-        case Op_Knull: {
-            *dest = nulldesc;
-            break;
-        }
-        case Op_Const: {
-            *dest = curpstate->Constants[GetWord];
-            break;
-        }
-        case Op_Static: {
-            MakeNamedVar(&CurrProc->fstatic[GetWord], dest);
-            break;
-        }
-        case Op_Arg: {
-            MakeNamedVar(&PF->locals->args[GetWord], dest);
-            break;
-        }
-        case Op_Dynamic: {
-            MakeNamedVar(&PF->locals->dynamic[GetWord], dest);
-            break;
-        }
-        case Op_Global: {
-            MakeNamedVar(&curpstate->Globals[GetWord], dest);
-            break;
-        }
-        case Op_Tmp: {
-            *dest = PF->tmp[GetWord];
-            break;
-        }
-        case Op_Closure: {
-            *dest = PF->clo[GetWord]->value;
-            break;
-        }
-
-        default: {
-            syserr("Invalid opcode in move_variable: %d (%s)\n", op, op_names[op]);
-        }
-    }
-}
-
+/*
+ * Like get_descrip, but dereference temporary and closure descriptors
+ * (locals/globals should already be dereferenced).
+ */
 void get_deref(dptr dest)
 {
     word op = GetWord;
-#if OPCODES
-    fprintf(stderr, "\top=%d(%s)\n", op, op_names[op]);
-#endif
     switch (op) {
         case Op_Int: {
             MakeInt(GetWord, dest);
@@ -319,12 +271,13 @@ void get_deref(dptr dest)
     }
 }
 
+/*
+ * Like get_descrip, but for statics, locals and globals, rather than
+ * copy the descriptor, make a named variable pointer to it instead.
+ */
 void get_variable(dptr dest)
 {
     word op = GetWord;
-#if OPCODES
-    fprintf(stderr, "\top=%d(%s)\n", op, op_names[op]);
-#endif
     switch (op) {
         case Op_Int: {
             MakeInt(GetWord, dest);
@@ -513,7 +466,8 @@ static void do_coact()
 
     lhs = get_dptr();
     get_deref(&arg1);
-    get_deref(&arg2);
+    get_descrip(&arg2);
+    retderef(&arg2, PF->locals);
     failure_label = get_addr();
     if (arg2.dword != D_Coexpr) {
         xargp = &arg1;
@@ -540,12 +494,14 @@ static void do_coact()
 
 static void do_coret()
 {
-    dptr val;
-    val = get_dptr();
+    tended struct descrip val;
+    get_descrip(&val);
+    retderef(&val, PF->locals);
+
     /*printf("coret FROM %p to %p VAL=",k_current, k_current->es_activator);print_desc(stdout, val);printf("\n");*/
     if (k_trace) {
         --k_trace;
-        trace_coret(k_current, k_current->es_activator, val);
+        trace_coret(k_current, k_current->es_activator, &val);
     }
 
     /* If someone transmits failure to this coexpression, just act as though resumed */
@@ -557,7 +513,7 @@ static void do_coret()
     /* Switch to the target and set the transmitted value */
     switch_to(k_current->es_activator);
     if (k_current->tvalloc)
-        *k_current->tvalloc = *val;
+        *k_current->tvalloc = val;
 }
 
 static void do_cofail()
@@ -695,11 +651,11 @@ void interp2()
                 break;
             }
             case Op_Move: {
-                move_descrip(get_dptr());
+                get_descrip(get_dptr());
                 break;
             }
             case Op_MoveVar: {
-                move_variable(get_dptr());
+                get_variable(get_dptr());
                 break;
             }
             case Op_MoveLabel: {
@@ -795,12 +751,10 @@ void interp2()
             case Op_Fail: {
                 struct p_frame *t = PF;
                 revert_PF();
-                if (k_trace) {
+                if (k_trace && t->proc->program) {
                     k_trace--;
                     failtrace(t);
                 }
-                if (!PF)
-                    return;
                 Ipc = t->failure_label;
                 pop_to(t->parent_sp);
                 break;
@@ -824,15 +778,13 @@ void interp2()
             case Op_Suspend:
             case Op_Return: {
                 struct p_frame *t = PF;
-                move_descrip(&PF->value);
+                get_descrip(&PF->value);
                 retderef(&PF->value, PF->locals);
                 revert_PF();
-                if (k_trace) {
+                if (k_trace && t->proc->program) {
                     k_trace--;
                     strace(t, op);
                 }
-                if (!PF)
-                    return;
                 break;
             }
 
@@ -950,6 +902,11 @@ void interp2()
             case Op_Cofail: {
                 do_cofail();
                 break;
+            }
+
+            case Op_Exit: {
+                /* The main procedure has returned/failed */
+                return;
             }
 
             default: {
