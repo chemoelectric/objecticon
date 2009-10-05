@@ -12,6 +12,5 @@ static word cofail_impl_code[] = {
    0,
    Op_Custom,
    (word)set_c_frame_failure,
-   Op_Halt,
 };
 CustomProc(cofail_impl,cofail_impl_code,1,0,0,1,0,0,"internal:cofail_impl")

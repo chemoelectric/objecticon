@@ -43,8 +43,6 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       ((Testb((word)(E_Real), bits)) ? alcreal_1 : alcreal_0);
    p->Alcrecd =
       ((Testb((word)(E_Record), bits)) ? alcrecd_1 : alcrecd_0);
-   p->Alcrefresh =
-      ((Testb((word)(E_Refresh), bits)) ? alcrefresh_1 : alcrefresh_0);
    p->Alcselem =
       ((Testb((word)(E_Selem), bits)) ? alcselem_1 : alcselem_0);
    p->Alcstr =
@@ -117,6 +115,7 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       p->Cnvtstr = cnv_tstr_0;
       }
 
+/** TODO
    if ((Testb((word)(E_Objectref), bits)) ||
        (Testb((word)(E_Objectsub), bits)) ||
        (Testb((word)(E_Castref), bits)) ||
@@ -142,6 +141,7 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
    } else {
        p->Invoke = invoke_0;
    }
+**/
 
    /*
     * interp() is the monster case:
@@ -149,6 +149,7 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
     * Heck, we should redo the event codes so any bit in one
     * particular word means: "use the instrumented interp".
     */
+/**
    if (Testb((word)(E_Intcall), bits) ||
        Testb((word)(E_Fsusp), bits) ||
        Testb((word)(E_Osusp), bits) ||
@@ -182,6 +183,7 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       p->Interp = interp_1;
    else
       p->Interp = interp_0;
+**/
 #endif
 }
 
@@ -234,9 +236,11 @@ function{0,1} lang_Prog_get_event(cs,vmask,flag)
           * Activate the event source to produce the next event.
           */
 	 dummy = cs;
+#ifdef CHECK
 	 if (mt_activate(&dummy, &curpstate->eventcode,
 			 (struct b_coexpr *)BlkLoc(curpstate->eventsource)) ==
 	     A_Cofail) fail;
+#endif
 	 deref(&curpstate->eventcode, &curpstate->eventcode);
 	 if (!is:string(curpstate->eventcode) ||
 	     StrLen(curpstate->eventcode) != 1) {
@@ -289,7 +293,6 @@ word oldsum = 0;
 #endif					/* UNIX */
 
 
-static char scopechars[] = "+:^-";
 
 /*
  * Special event function for E_Assign & E_Deref;
@@ -297,64 +300,8 @@ static char scopechars[] = "+:^-";
  */
 void EVVariable(dptr dx, int eventcode)
 {
-   int i;
-   dptr procname = NULL;
-   struct progstate *parent = curpstate->parent;
-   struct region *rp = curpstate->stringregion;
-
-   if (dx == argp) {
-      /*
-       * we are dereferencing a result, argp is not the procedure.
-       * is this a stable state to leave the TP in?
-       */
       actparent(eventcode);
       return;
-      }
-
-   procname = &((&BlkLoc(*argp)->proc)->name);
-   /*
-    * call get_name, allocating out of the monitor if necessary.
-    */
-   curpstate->stringregion = parent->stringregion;
-   parent->stringregion = rp;
-   noMTevents++;
-   i = get_name(dx,&(parent->eventval));
-
-   if (i == GlobalName) {
-      if (reserve(Strings, StrLen(parent->eventval) + 1) == NULL) {
-	 fprintf(stderr, "failed to reserve %ld bytes for global\n",
-		 (long)StrLen(parent->eventval)+1);
-	 syserr("monitoring out-of-memory error");
-	 }
-      StrLoc(parent->eventval) =
-	 alcstr(StrLoc(parent->eventval), StrLen(parent->eventval));
-      alcstr("+",1);
-      StrLen(parent->eventval)++;
-      }
-   else if ((i == StaticName) || (i == LocalName) || (i == ParamName)) {
-      if (!reserve(Strings, StrLen(parent->eventval) + StrLen(*procname) + 1)) {
-	 fprintf(stderr,"failed to reserve %ld bytes for %d, %ld+%ld\n",
-                 (long)StrLen(parent->eventval)+(long)StrLen(*procname)+1, i,
-		 (long)StrLen(parent->eventval), (long)StrLen(*procname));
-	 syserr("monitoring out-of-memory error");
-	 }
-      StrLoc(parent->eventval) =
-	 alcstr(StrLoc(parent->eventval), StrLen(parent->eventval));
-      alcstr(scopechars+i,1);
-      alcstr(StrLoc(*procname), StrLen(*procname));
-      StrLen(parent->eventval) += StrLen(*procname) + 1;
-      }
-   else if (i == Failed) {
-      /* parent->eventval = *dx; */
-      }
-   else if (i == Error) {
-      syserr("get_name error in EVVariable");
-      }
-
-   parent->stringregion = curpstate->stringregion;
-   curpstate->stringregion = rp;
-   noMTevents--;
-   actparent(eventcode);
 }
 
 

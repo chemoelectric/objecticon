@@ -26,7 +26,6 @@ extern int firstd[];		/* offset (words) of first descrip. */
 extern uword segsize[];		/* size of hash bucket segment */
 extern int k_level;		/* value of &level */
 
-extern struct b_coexpr *stklist;/* base of co-expression stack list */
 extern struct progstate *progs; /* list of progstates */
 extern struct b_cset *blankcs;   /* ' ' */
 extern struct b_cset *lparcs;    /* '(' */
@@ -54,12 +53,9 @@ extern struct descrip milliondesc;	/* 1000000 */
 
 extern struct b_iproc Bdeferred_method_stub;  /* Deferred method block */
 
-extern word mstksize;		/* size of main stack in words */
-extern word xstksize;		/* size of co-expression stacks in words */
 extern word qualsize;		/* size of string qualifier list */
 extern word memcushion;		/* memory region cushion factor */
 extern word memgrowth;		/* memory region growth factor */
-extern word coexprlim;          /* number of coexpression allocations before a GC is triggered */
 
 extern struct tend_desc *tend;  /* chain of tended descriptors */
 
@@ -92,16 +88,6 @@ extern struct b_cset *k_ucase;	/* value of &ucase */
 extern struct b_ucs *emptystr_ucs;     /* ucs empty string */
 extern struct b_ucs *blank_ucs;        /* ucs blank string */
 
-extern struct descrip tended[];	/* tended descriptors */
-extern struct ef_marker *efp;	/* expression frame pointer */
-extern struct gf_marker *gfp;	/* generator frame pointer */
-extern struct pf_marker *pfp;	/* procedure frame pointer */
-extern word *curr_op_addr;          /* address of current opcode */
-extern word *sp;			/* interpreter stack pointer */
-extern word *stack;			/* interpreter stack base */
-extern word *stackend;		/* end of evaluation stack */
-extern dptr argp;			/* global argp */
-   
 extern struct progstate *curpstate;
 extern struct progstate rootpstate;
 extern int noMTevents;		/* no MT events during GC */

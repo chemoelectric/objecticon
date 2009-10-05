@@ -278,10 +278,12 @@ function{0,1} lang_Prog_send_event(x,y,ce)
           runerr(0);
       dest->eventcode = x;
       dest->eventval = y;
+#ifdef CHECK
       if (mt_activate(&(dest->eventcode),&result,
 			 (struct b_coexpr *)BlkLoc(ce)) == A_Cofail) {
          fail;
          }
+#endif
        return result;
       }
 end
@@ -448,7 +450,7 @@ function{*} lang_Prog_get_keyword(s,c)
                   return kywdint(&(p->Kywd_ran));
               }
               if (strncmp(t,"source",6) == 0) {
-                  struct b_coexpr *a = p->K_current->es_activator;
+                  struct b_coexpr *a = p->K_current->activator;
                   if (!a)  /* It will be 0 for a just-loaded program */
                      fail;
                   return coexpr(a);
@@ -754,42 +756,6 @@ end
 
 function{1} lang_Prog_get_stack_info_impl(c)
    body {
-       word *top, *bottom, *isp;
-       struct b_coexpr *ce;
-       struct descrip tmp;
-
-       if (is:null(c))
-           ce = k_current;
-       else if (is:coexpr(c))
-           ce = (struct b_coexpr *)BlkLoc(c);
-       else
-           runerr(118,c);
-
-       top = (word *)(ce + 1);
-       if (ce == rootpstate.K_main) {
-           bottom = stackend;
-           if (ce == k_current)
-               isp = sp;
-           else
-               isp = ce->es_sp;
-       } else {
-           if (ce == k_current) {
-#if HAVE_CUSTOM_C_STACKS
-               bottom = (word *)(ce->cstate[0]);
-#else
-               bottom = (word *)&top;
-#endif
-               isp = sp;
-           } else {
-               bottom = (word *)(ce->cstate[0]);
-               isp = ce->es_sp;
-           }
-       }
-       create_list(2, &result);
-       MakeInt(DiffPtrsBytes(isp + 1, top), &tmp);
-       list_put(&result, &tmp);
-       MakeInt(DiffPtrsBytes(bottom, top), &tmp);
-       list_put(&result, &tmp);
 
        return result;
    }
@@ -1185,7 +1151,7 @@ function{1} lang_Class_load_library(lib)
         word i;
         void *handle;
 
-        caller_proc = CallerProc;
+        caller_proc = get_current_user_proc();
         if (!caller_proc->field)
             runerr(616);
         class0 = caller_proc->field->defining_class;
@@ -1221,38 +1187,6 @@ function{1} lang_Class_load_library(lib)
    }
 end
 #endif						/* HAVE_LIBDL */
-
-function{1} lang_Class_create_raw(c)
-   if !is:class(c) then
-       runerr(603, c)
-    body {
-        struct b_object *obj;
-        struct b_class *class0 = &BlkLoc(c)->class;
-        ensure_initialized(class0);
-        MemProtect(obj = alcobject(class0));
-        obj->init_state = Initializing;
-        return object(obj);
-    }
-end
-
-function{0} lang_Class_complete_raw(o)
-   if !is:object(o) then
-       runerr(602, o)
-    body {
-       BlkLoc(o)->object.init_state = Initialized;
-       fail;
-    }
-end
-
-function{1} lang_Class_ensure_initialized(c)
-   if !is:class(c) then
-       runerr(603, c)
-    body {
-        struct b_class *class0 = &BlkLoc(c)->class;
-        ensure_initialized(class0);
-        return c;
-   }
-end
 
 function{1} parser_UReader_raw_convert(s)
    if !is:string(s) then

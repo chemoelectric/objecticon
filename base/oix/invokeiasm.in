@@ -117,3 +117,20 @@ FailAccess:
     Op_Custom c:handle_access_failure
          Op_Arg arg:2
 $end
+
+$start lang_Class_ensure_initialized_impl
+    Op_Custom c:ensure_class_initialized
+         Op_Arg arg:0
+    Op_Custom c:set_c_frame_value
+         Op_Arg arg:0
+$end
+
+$start lang_Class_create_raw_impl
+    Op_Custom c:ensure_class_initialized
+         Op_Arg arg:0
+    Op_Custom c:create_raw_object
+         Op_Tmp tmp:0
+         Op_Arg arg:0
+    Op_Custom c:set_c_frame_value
+         Op_Tmp tmp:0
+$end

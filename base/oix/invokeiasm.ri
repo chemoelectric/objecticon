@@ -152,3 +152,31 @@ static word getf_impl_code[] = {
    2,
 };
 CustomProc(getf_impl,getf_impl_code,3,0,0,1,0,0,"internal:getf_impl")
+static word lang_Class_ensure_initialized_impl_code[] = {
+   Op_Custom,
+   (word)ensure_class_initialized,
+   Op_Arg,
+   0,
+   Op_Custom,
+   (word)set_c_frame_value,
+   Op_Arg,
+   0,
+};
+CustomProc(lang_Class_ensure_initialized_impl,lang_Class_ensure_initialized_impl_code,1,0,0,0,0,0,"internal:lang_Class_ensure_initialized_impl")
+static word lang_Class_create_raw_impl_code[] = {
+   Op_Custom,
+   (word)ensure_class_initialized,
+   Op_Arg,
+   0,
+   Op_Custom,
+   (word)create_raw_object,
+   Op_Tmp,
+   0,
+   Op_Arg,
+   0,
+   Op_Custom,
+   (word)set_c_frame_value,
+   Op_Tmp,
+   0,
+};
+CustomProc(lang_Class_create_raw_impl,lang_Class_create_raw_impl_code,1,0,0,1,0,0,"internal:lang_Class_create_raw_impl")

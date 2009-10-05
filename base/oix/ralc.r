@@ -122,7 +122,7 @@ struct b_coexpr *alccoexp()
    AlcFixBlk(blk, b_coexpr, T_Coexpr, e_coexpr)
    blk->id = coexp_ser++;
    blk->sp = 0;
-   blk->es_activator = 0;
+   blk->activator = 0;
    blk->failure_label = 0;
    blk->tvalloc = 0;
    return blk;
@@ -475,26 +475,6 @@ alcucs_macro(alcucs_0,0)
 alcucs_macro(alcucs_1,E_Ucs)
 
 
-/*
- * alcrefresh - allocate a co-expression refresh block.
- */
-
-#begdef alcrefresh_macro(f,e_refresh)
-
-struct b_refresh *f(word *entryx, int na, int nl)
-   {
-   struct b_refresh *blk;
-
-   AlcVarBlk(blk, b_refresh, T_Refresh, na + nl, e_refresh);
-   blk->ep = entryx;
-   blk->numlocals = nl;
-   return blk;
-   }
-
-#enddef
-
-alcrefresh_macro(alcrefresh_0,0)
-alcrefresh_macro(alcrefresh_1,E_Refresh)
 
 #begdef alcselem_macro(f,e_selem)
 /*

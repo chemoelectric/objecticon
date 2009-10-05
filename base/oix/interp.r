@@ -1,1744 +1,941 @@
-/*
- * File: interp.r
- *  The interpreter proper.
- */
-
 #include "../h/opdefs.h"
+#include "../h/opnames.h"
 
-extern word istart[4]; extern int mterm;
+static void transmit_failure();
 
-/*
- * Prototypes for static functions.
- */
-#if E_Prem || E_Erem
-static struct ef_marker *vanq_bound (struct ef_marker *efp_v,
-                                      struct gf_marker *gfp_v);
-static void vanq_proc (struct ef_marker *efp_v, struct gf_marker *gfp_v);
-#endif
-
-/*
- * The following code is operating-system dependent [@interp.01]. Declarations.
- */
-
-#if PORT
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if MSWIN32 || UNIX
-   /* nothing needed */
-#endif					
-
-/*
- * End of operating-system specific code.
- */
+#include "interpiasm.ri"
 
 
 /*
- * Istate variables.
+ * Invoked from a custom fragment.  Act as though the
+ * parent C frame had returned the given value.
  */
-struct ef_marker *efp;		/* Expression frame pointer */
-struct gf_marker *gfp;		/* Generator frame pointer */
-word *ipc;			/* Interpreter program counter */
-word *sp = NULL;		/* Stack pointer */
-
-
-int ilevel;			/* Depth of recursion in interp() */
-struct descrip eret_tmp;	/* eret value during unwinding */
-
-int coexp_act;			/* last co-expression action */
-
+void set_c_frame_value()
+{
+    struct p_frame *t = PF;
+    dptr res = get_dptr();
+    /* Set the value in the C frame */
+    SP->parent_sp->value = *res;
+    PF = PF->caller;
+    /* Pop of this frame, leaving the C frame */
+    pop_to(t->parent_sp);
+}
 
 /*
- * Macros for use inside the main loop of the interpreter.
+ * Invoked from a custom fragment.  Act as though the
+ * parent C frame had failed.
  */
+void set_c_frame_failure()
+{
+    struct p_frame *t = PF;
+    PF = PF->caller;
+    /* Goto the failure_label stored in the C frame */
+    Ipc = t->parent_sp->failure_label;
+    /* Pop of this frame AND the parent C frame */
+    pop_to(t->parent_sp->parent_sp);
+}
 
-#define E_Misc    -1
-#define E_Operator 0
-#define E_Function 1
+void revert_PF()
+{
+    if (PF->proc->program)
+        --k_level;
+
+    if (PF->caller->proc->program) {
+        /*fprintf(stderr, "Revert:from curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
+        CHANGEPROGSTATE(PF->caller->proc->program);
+        /*fprintf(stderr, "       to   curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
+    }
+
+    PF = PF->caller;
+}
+
+void tail_invoke_frame(struct frame *f)
+{
+/*    showcurrstack();*/
+    switch (f->type) {
+        case C_FRAME_TYPE: {
+            if (!f->proc->ccode(f)) {
+                Ipc = f->failure_label;
+                pop_to(f->parent_sp);
+            }
+            break;
+        }
+        case P_FRAME_TYPE: {
+            struct p_frame *pf = (struct p_frame *)f;
+            pf->caller = PF;
+            if (pf->proc->program) {
+                /*
+                 * If tracing is on, use ctrace to generate a message.
+                 */   
+                if (k_trace) {
+                    k_trace--;
+                    call_trace(pf);
+                }
+                /*fprintf(stderr, "Invoke:from curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
+                CHANGEPROGSTATE(pf->proc->program);
+                /*fprintf(stderr, "       to   curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
+                ++k_level;
+                /* Todo*/
+                if (k_level > 500) {
+                    lastop = Op_Exit;
+                    fatalerr(311, NULL);
+                }
+            }
+            PF = pf;
+            break;
+        }
+        default:
+            syserr("Unknown frame type");
+    }
+}
+
+void push_frame(struct frame *f)
+{
+    f->parent_sp = k_current->sp;
+    k_current->sp = f;
+}
+
+void pop_to(struct frame *f)
+{
+    while (SP != f) {
+        struct frame *t = SP;
+        SP = SP->parent_sp;
+        if (!SP)
+            syserr("pop_to: target not found on stack");
+        free_frame(t);
+    }
+}
+
+word *get_addr()
+{
+    word w = GetWord;
+    return (word *)((char *)PF->code_start + w);
+}
+
+word get_offset(word *w)
+{
+    return DiffPtrsBytes(w, PF->code_start);
+}
+
+struct inline_field_cache *get_inline_field_cache()
+{
+    struct inline_field_cache *t = (struct inline_field_cache *)Ipc;
+    Ipc += 2;
+    return t;
+}
 
 /*
- * Setup_Op sets things up for a call to the C function for an operator.
+ * Return a pointer to the read descriptor.
  */
-#begdef Setup_Op(nargs,e)
-   lastev = E_Operator;
-   value_tmp.dword = D_Proc;
-   value_tmp.vword.bptr = (union block *)op_tbl[lastop - 1];
-   lastdesc = value_tmp;
-   InterpEVValD(&value_tmp, e);
-   rargp = (dptr)(rsp - 1) - nargs;
-   xargp = rargp;
-   ExInterp;
-#enddef					/* Setup_Op */
+dptr get_dptr()
+{
+    word op = GetWord;
+    switch (op) {
+        case Op_Nil: {
+            return 0;
+        }
+        case Op_Static: {
+            return &curpstate->Statics[GetWord];
+        }
+        case Op_Arg: {
+            return &PF->locals->args[GetWord];
+        }
+        case Op_Dynamic: {
+            return &PF->locals->dynamic[GetWord];
+        }
+        case Op_Global: {
+            return &curpstate->Globals[GetWord];
+        }
+        case Op_Tmp: {
+            return &PF->tmp[GetWord];
+        }
+        case Op_Closure: {
+            return &PF->clo[GetWord]->value;
+        }
+
+        default: {
+            syserr("Invalid opcode in get_dptr: %d (%s)\n", op, op_names[op]);
+            return 0;
+        }
+    }
+}
 
 /*
- * Setup_Arg sets things up for a call to the C function.
- *  It is the same as Setup_Op, except the latter is used only
- *  operators.
+ * Get a copy of a descriptor without any alteration to it (no dereferencing or
+ * making of variables).
  */
-#begdef Setup_Arg(nargs)
-   lastev = E_Misc;
-   rargp = (dptr)(rsp - 1) - nargs;
-   xargp = rargp;
-   ExInterp;
-#enddef					/* Setup_Arg */
+void get_descrip(dptr dest)
+{
+    word op = GetWord;
+    switch (op) {
+        case Op_Int: {
+            MakeInt(GetWord, dest);
+            break;
+        }
+        case Op_Knull: {
+            *dest = nulldesc;
+            break;
+        }
+        case Op_Const: {
+            *dest = curpstate->Constants[GetWord];
+            break;
+        }
+        case Op_Static: {
+            *dest = curpstate->Statics[GetWord];
+            break;
+        }
+        case Op_Arg: {
+            *dest = PF->locals->args[GetWord];
+            break;
+        }
+        case Op_Dynamic: {
+            *dest = PF->locals->dynamic[GetWord];
+            break;
+        }
+        case Op_Global: {
+            *dest = curpstate->Globals[GetWord];
+            break;
+        }
+        case Op_Tmp: {
+            *dest = PF->tmp[GetWord];
+            break;
+        }
+        case Op_Closure: {
+            *dest = PF->clo[GetWord]->value;
+            break;
+        }
 
-#begdef Call_Cond
-   if ((*(optab[lastop]))(rargp) == A_Resume) {
-     InterpEVValD(&lastdesc, e_ofail);
-     goto efail_noev;
+        default: {
+            syserr("Invalid opcode in get_descrip: %d (%s)\n", op, op_names[op]);
+        }
+    }
+}
+
+/*
+ * Like get_descrip, but dereference temporary and closure descriptors
+ * (locals/globals should already be dereferenced).
+ */
+void get_deref(dptr dest)
+{
+    word op = GetWord;
+    switch (op) {
+        case Op_Int: {
+            MakeInt(GetWord, dest);
+            break;
+        }
+        case Op_Knull: {
+            *dest = nulldesc;
+            break;
+        }
+        case Op_Const: {
+            *dest = curpstate->Constants[GetWord];
+            break;
+        }
+        case Op_Static: {
+            *dest = curpstate->Statics[GetWord];
+            break;
+        }
+        case Op_Arg: {
+            *dest = PF->locals->args[GetWord];
+            break;
+        }
+        case Op_Dynamic: {
+            *dest = PF->locals->dynamic[GetWord];
+            break;
+        }
+        case Op_Global: {
+            *dest = curpstate->Globals[GetWord];
+            break;
+        }
+        case Op_Tmp: {
+            deref(&PF->tmp[GetWord], dest);
+            break;
+        }
+        case Op_Closure: {
+            deref(&PF->clo[GetWord]->value, dest);
+            break;
+        }
+
+        default: {
+            syserr("Invalid opcode in get_descrip: %d (%s)\n", op, op_names[op]);
+        }
+    }
+}
+
+/*
+ * Like get_descrip, but for statics, locals and globals, rather than
+ * copy the descriptor, make a named variable pointer to it instead.
+ */
+void get_variable(dptr dest)
+{
+    word op = GetWord;
+    switch (op) {
+        case Op_Int: {
+            MakeInt(GetWord, dest);
+            break;
+        }
+        case Op_Knull: {
+            *dest = nulldesc;
+            break;
+        }
+        case Op_Const: {
+            *dest = curpstate->Constants[GetWord];
+            break;
+        }
+        case Op_Static: {
+            MakeNamedVar(&curpstate->Statics[GetWord], dest);
+            break;
+        }
+        case Op_Arg: {
+            MakeNamedVar(&PF->locals->args[GetWord], dest);
+            break;
+        }
+        case Op_Dynamic: {
+            MakeNamedVar(&PF->locals->dynamic[GetWord], dest);
+            break;
+        }
+        case Op_Global: {
+            MakeNamedVar(&curpstate->Globals[GetWord], dest);
+            break;
+        }
+        case Op_Tmp: {
+            *dest = PF->tmp[GetWord];
+            break;
+        }
+        case Op_Closure: {
+            *dest = PF->clo[GetWord]->value;
+            break;
+        }
+
+        default: {
+            syserr("Invalid opcode in get_variable: %d (%s)\n", op, op_names[op]);
+        }
+    }
+}
+
+static void do_op(int op, int nargs)
+{
+    dptr lhs;
+    struct c_frame *cf;
+    struct b_proc *bp = opblks[op];
+    word *failure_label;
+    int i;
+    lhs = get_dptr();
+    MemProtect(cf = alc_c_frame(bp, nargs));
+    push_frame((struct frame *)cf);
+    xnargs = nargs;
+    xargp =cf->args;
+    if (bp->underef) {
+        for (i = 0; i < nargs; ++i)
+            get_variable(&cf->args[i]);
+    } else {
+        for (i = 0; i < nargs; ++i)
+            get_deref(&cf->args[i]);
+    }
+    failure_label = get_addr();
+    if (bp->ccode(cf)) {
+        if (lhs)
+            *lhs = cf->value;
+    } else
+        Ipc = failure_label;
+    pop_to(cf->parent_sp);
+}
+
+static void do_opclo(int op, int nargs)
+{
+    struct c_frame *cf;
+    struct b_proc *bp = opblks[op];
+    int i;
+    word clo;
+    word *failure_label;
+    clo = GetWord;
+    MemProtect(cf = alc_c_frame(bp, nargs));
+    push_frame((struct frame *)cf);
+    xnargs = nargs;
+    xargp = cf->args;
+    if (bp->underef) {
+        for (i = 0; i < nargs; ++i)
+            get_variable(&cf->args[i]);
+    } else {
+        for (i = 0; i < nargs; ++i)
+            get_deref(&cf->args[i]);
+    }
+    failure_label = get_addr();
+    PF->clo[clo] = (struct frame *)cf;
+    if (!bp->ccode(cf)) {
+        pop_to(cf->parent_sp);
+        Ipc = failure_label;
+    }
+}
+
+static void do_keyop()
+{
+    dptr lhs;
+    struct c_frame *cf;
+    struct b_proc *bp;
+    word *failure_label;
+
+    bp = keyblks[GetWord];
+    lhs = get_dptr();
+
+    MemProtect(cf = alc_c_frame(bp, 0));
+    push_frame((struct frame *)cf);
+    xnargs = 0;
+    xargp = 0;
+    failure_label = get_addr();
+    if (bp->ccode(cf)) {
+        if (lhs)
+            *lhs = cf->value;
+    } else
+        Ipc = failure_label;
+    pop_to(cf->parent_sp);
+}
+
+static void do_keyclo()
+{
+    struct c_frame *cf;
+    struct b_proc *bp;
+    word clo;
+    word *failure_label;
+    bp = keyblks[GetWord];
+    clo = GetWord;
+    MemProtect(cf = alc_c_frame(bp, 0));
+    push_frame((struct frame *)cf);
+    xnargs = 0;
+    xargp = 0;
+    failure_label = get_addr();
+    PF->clo[clo] = (struct frame *)cf;
+    if (!bp->ccode(cf)) {
+        pop_to(cf->parent_sp);
+        Ipc = failure_label;
+    }
+}
+
+static void do_makelist()
+{
+    dptr dest = get_dptr();
+    word argc = GetWord;
+    int i;
+    create_list(argc, dest);
+    for (i = 0; i < argc; ++i) {
+        tended struct descrip tmp;
+        get_deref(&tmp);
+        list_put(dest, &tmp);
+    }
+}
+
+static void do_create()
+{
+    dptr lhs;
+    word *start_label;
+    struct p_frame *pf;
+    tended struct b_coexpr *coex;
+    lhs = get_dptr();
+    start_label = get_addr();
+    MemProtect(coex = alccoexp());
+    coex->program = coex->creator = curpstate;
+    coex->main_of = 0;
+    MemProtect(pf = alc_p_frame(PF->proc, PF->locals));
+    coex->failure_label = coex->start_label = pf->ipc = start_label;
+    coex->curr_pf = pf;
+    coex->sp = (struct frame *)pf;
+    lhs->dword = D_Coexpr;
+    BlkLoc(*lhs) = (union block *)coex;
+}
+
+void switch_to(struct b_coexpr *ce)
+{
+    curpstate = ce->program;
+    k_current = ce;
+}
+
+static void do_coact()
+{
+    dptr lhs;
+    tended struct descrip arg1, arg2;
+    word *failure_label;
+
+    lhs = get_dptr();
+
+    get_descrip(&arg1);   /* Value */
+    get_deref(&arg2);     /* Coexp */
+    retderef(&arg1, PF->locals);
+    failure_label = get_addr();
+    if (arg2.dword != D_Coexpr) {
+        xargp = &arg1;
+        xexpr = &arg2;
+        err_msg(118, &arg2);
+        Ipc = failure_label;
+        return;
+    }
+
+    if (k_trace) {
+        --k_trace;
+        trace_coact(k_current, &BlkLoc(arg2)->coexpr, &arg1);
+    }
+    /*printf("activating from k_current=%p to coexp=",k_current);print_desc(stdout, &arg2);printf("\n");*/
+    k_current->tvalloc = lhs;
+    k_current->failure_label = failure_label;
+
+    /* Set the target's activator, switch to the target and set its transmitted value */
+    BlkLoc(arg2)->coexpr.activator = k_current;
+    switch_to(&BlkLoc(arg2)->coexpr);
+    if (k_current->tvalloc)
+        *k_current->tvalloc = arg1;
+}
+
+static void do_coret()
+{
+    tended struct descrip val;
+    get_descrip(&val);
+    retderef(&val, PF->locals);
+
+    /*printf("coret FROM %p to %p VAL=",k_current, k_current->activator);print_desc(stdout, val);printf("\n");*/
+    if (k_trace) {
+        --k_trace;
+        trace_coret(k_current, k_current->activator, &val);
+    }
+
+    /* If someone transmits failure to this coexpression, just act as though resumed */
+    k_current->failure_label = Ipc;
+
+    /* Increment the results counter */
+    ++k_current->size;
+
+    /* Switch to the target and set the transmitted value */
+    switch_to(k_current->activator);
+    if (k_current->tvalloc)
+        *k_current->tvalloc = val;
+}
+
+static void do_cofail()
+{
+    /*printf("cofail FROM %p to %p",k_current, k_current->activator);printf("\n");*/
+    if (k_trace) {
+        --k_trace;
+        trace_cofail(k_current, k_current->activator);
+    }
+
+    /* If someone transmits failure to this coexpression, just act as though resumed */
+    k_current->failure_label = Ipc;
+
+    /* Switch to the target and jump to its failure label */
+    switch_to(k_current->activator);
+    PF->ipc = k_current->failure_label;
+}
+
+static void transmit_failure()
+{
+    tended struct descrip t;
+    dptr lhs;
+    word *failure_label;
+    get_deref(&t);
+    lhs = get_dptr();
+    failure_label = get_addr();
+
+    if (k_trace) {
+        --k_trace;
+        trace_cofail(k_current, &BlkLoc(t)->coexpr);
+    }
+    /*printf("transmitting failure from k_current=%p to coexp=",k_current);print_desc(stdout, &t);printf("\n");*/
+    k_current->tvalloc = lhs;
+    k_current->failure_label = failure_label;
+
+    /* Switch to the target and go to its failure label */
+    BlkLoc(t)->coexpr.activator = k_current;
+    switch_to(&BlkLoc(t)->coexpr);
+    PF->ipc = k_current->failure_label;
+}
+
+"cofail(ce) - transmit a co-expression failure to ce"
+
+function{0,1} cofail(ce)
+    body {
+      struct p_frame *pf;
+      if (is:null(ce)) {
+          ce.dword = D_Coexpr;
+          BlkLoc(ce) = (union block *)k_current->activator;
+      } else if (!is:coexpr(ce))
+         runerr(118, ce);
+
+      if (!BlkLoc(ce)->coexpr.failure_label)
+         runerr(135, ce);
+
+      MemProtect(pf = alc_p_frame((struct b_proc *)&Bcofail_impl, 0));
+      push_frame((struct frame *)pf);
+      pf->locals->args[0] = ce;
+      tail_invoke_frame((struct frame *)pf);
+      return nulldesc;
    }
-   rsp = (word *) rargp + 1;
-   goto return_term;
-#enddef					/* Call_Cond */
-
-/*
- * Call_Gen - Call a generator. A C routine associated with the
- *  current opcode is called. When it terminates, control is
- *  passed to C_rtn_term to deal with the termination condition appropriately.
- */
-#begdef Call_Gen
-   signal = (*(optab[lastop]))(rargp);
-   goto C_rtn_term;
-#enddef					/* Call_Gen */
-
-/*
- * GetWord fetches the next icode word.  PutWord(x) stores x at the current
- * icode word.
- */
-#define GetWord (*ipc++)
-#define PutWord(x) ipc[-1] = (x)
-
-/*
- * DerefArg(n) dereferences the nth argument.
- */
-#define DerefArg(n)   Deref(rargp[n])
-
-/*
- * For the sake of efficiency, the stack pointer is kept in a register
- *  variable, rsp, in the interpreter loop.  Since this variable is
- *  only accessible inside the loop, and the global variable sp is used
- *  for the stack pointer elsewhere, rsp must be stored into sp when
- *  the context of the loop is left and conversely, rsp must be loaded
- *  from sp when the loop is reentered.  The macros ExInterp and EntInterp,
- *  respectively, handle these operations.  Currently, this register/global
- *  scheme is only used for the stack pointer, but it can be easily extended
- *  to other variables.
- */
-
-#define ExInterp	sp = rsp;
-#define EntInterp	rsp = sp;
-
-/*
- * Inside the interpreter loop, PushDesc, PushNull, PushAVal, and
- *  PushVal use rsp instead of sp for efficiency.
- */
-
-#undef PushDesc
-#undef PushNull
-#undef PushVal
-#undef PushAVal
-#define PushDesc(d)   {*++rsp=((d).dword); *++rsp=((d).vword.integer);}
-#define PushNull   {*++rsp = D_Null; *++rsp = 0;}
-#define PushVal(v)   {*++rsp = (word)(v);}
-
-/*
- * The following code is operating-system dependent [@interp.02].  Define
- *  PushAVal for computers that store longs and pointers differently.
- */
-
-#if PORT
-#define PushAVal(x) PushVal(x)
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if UNIX
-#define PushAVal(x) PushVal(x)
-#endif
-
-#if MSWIN32
-#define PushAVal(x) {rsp++; \
-		       stkword.stkadr = (char *)(x); \
-		       *rsp = stkword.stkint; \
-		       }
-#endif					/* MSWIN32 */
-
-/*
- * End of operating-system specific code.
- */
-
-#begdef interp_macro(interp_x,e_intcall,e_fsusp,e_osusp,e_bsusp,e_ocall,e_ofail,e_tick,e_line,e_opcode,e_fcall,e_prem,e_erem,e_intret,e_psusp,e_ssusp,e_pret,e_efail,e_sresum,e_fresum,e_oresum,e_eresum,e_presum,e_pfail,e_ffail,e_frem,e_orem,e_fret,e_oret,e_literal,e_fname)
-
-/*
- * The main loop of the interpreter.
- */
-int interp_x(int fsig,dptr cargp)
-   {
-   fprintf(stderr, "Reached interpeter loop - exiting\n");
-   exit(0);
-
-#ifdef JUNK
-   register word opnd;
-   register word *rsp;
-   register dptr rargp;
-   register struct ef_marker *newefp;
-   register struct gf_marker *newgfp;
-   register word *wd;
-   register word *firstwd, *lastwd;
-   word *oldsp;
-   int type0, signal, args;
-   extern int (*optab[])();
-   extern int (*keytab[])();
-   int lastev = E_Misc;
-   struct descrip lastdesc = nulldesc;
+end
 
 
-   EVVal(fsig, e_intcall);
+static void do_limit()
+{
+    dptr limit;
+    word *failure_label;
+    word tmp;
 
-   CheckStack;
+    limit = get_dptr();
+    Deref(*limit);
+    failure_label = get_addr();
+    if (!cnv:C_integer(*limit, tmp)) {
+        xargp = limit;
+        err_msg(101, limit);
+        Ipc = failure_label;
+        return;
+    }
+    MakeInt(tmp, limit);
+    if (tmp < 0) {
+        xargp = limit;
+        err_msg(205, limit);
+        Ipc = failure_label;
+        return;
+    }
+}
 
-   ilevel++;
-   EntInterp;
-   switch (fsig) {
-   case G_Csusp: case G_Fsusp: case G_Osusp:
-#if 0
-      value_tmp = *(dptr)(rsp - 1);	/* argument? */
-#else
-      value_tmp = cargp[0];
-#endif
-      Deref(value_tmp);
-      if (fsig == G_Fsusp) {
-	 InterpEVValD(&value_tmp, e_fsusp);
-	 }
-      else if (fsig == G_Osusp) {
-	 InterpEVValD(&value_tmp, e_osusp);
-	 }
-      else {
-	 InterpEVValD(&value_tmp, e_bsusp);
-	 }
+static void do_scansave()
+{
+    word s, p;
+    tended struct descrip new_subject;
+    word *failure_label;
+    get_deref(&new_subject);
+    s = GetWord;
+    p = GetWord;
+    failure_label = get_addr();
+    if (!cnv:string_or_ucs(new_subject, new_subject)) {
+        xargp = &new_subject;
+        err_msg(129, &new_subject);
+        Ipc = failure_label;
+        return;
+    }
+    PF->tmp[s] = curpstate->Kywd_subject;
+    PF->tmp[p] = curpstate->Kywd_pos;
+    curpstate->Kywd_subject = new_subject;
+    MakeInt(1, &curpstate->Kywd_pos);
+}
 
-      oldsp = rsp;
-
-      /*
-       * Create the generator frame.
-       */
-      newgfp = (struct gf_marker *)(rsp + 1);
-      newgfp->gf_gentype = fsig;
-      newgfp->gf_gfp = gfp;
-      newgfp->gf_efp = efp;
-      newgfp->gf_ipc = ipc;
-      rsp += Wsizeof(struct gf_smallmarker);
-
-      /*
-       * Region extends from first word after the marker for the generator
-       *  or expression frame enclosing the call to the now-suspending
-       *  routine to the first argument of the routine.
-       */
-      if (gfp != 0) {
-	 if (gfp->gf_gentype == G_Psusp)
-	    firstwd = (word *)gfp + Wsizeof(*gfp);
-	 else
-	    firstwd = (word *)gfp + Wsizeof(struct gf_smallmarker);
-	 }
-      else
-	 firstwd = (word *)efp + Wsizeof(*efp);
-      lastwd = (word *)cargp + 1;
-
-      /*
-       * Copy the portion of the stack with endpoints firstwd and lastwd
-       *  (inclusive) to the top of the stack.
-       */
-      for (wd = firstwd; wd <= lastwd; wd++)
-	 *++rsp = *wd;
-      gfp = newgfp;
-      }
-/*
- * Top of the interpreter loop.
- */
-
-   for (;;) {
-
-#if UNIX && e_tick
-      if (ticker.l[0] + ticker.l[1] + ticker.l[2] + ticker.l[3] +
-	  ticker.l[4] + ticker.l[5] + ticker.l[6] + ticker.l[7] != oldtick) {
-	 /*
-	  * Record a Tick event reflecting a clock advance.
-	  *
-	  *  The interpreter main loop has detected a change in the
-	  *  profile counters. This means that the system clock has
-	  *  ticked.  Record an event and update the records.
-	  */
-	 word sum, nticks;
-	 ExInterp;
-	 oldtick = ticker.l[0] + ticker.l[1];
-	 sum = ticker.s[0] + ticker.s[1] + ticker.s[2] + ticker.s[3];
-	 nticks = sum - oldsum;
-	 EVVal(nticks, e_tick);
-	 oldsum = sum;
-	 EntInterp;
-	 }
-#endif					/* UNIX && e_tick */
-
-      /*
-       * File and linenumber change events
-       */
-
-#if e_fname
-      if (!is:null(curpstate->eventmask) && (
-              Testb((word)(E_Fname), BlkLoc(curpstate->eventmask)->cset.bits))) {
-          if (InRange(code, ipc, ecode)) {
-              uword ipc_offset = DiffPtrsBytes(ipc, code);
-              if (!current_fname_ptr ||
-                  ipc_offset < current_fname_ptr->ipc ||
-                  (current_fname_ptr + 1 < efilenms && ipc_offset >= current_fname_ptr[1].ipc)) {
-
-                  current_fname_ptr = find_ipc_fname(ipc, 0, curpstate);
-                  if (current_fname_ptr) {
-                      InterpEVValD(&current_fname_ptr->fname, e_fname);
-                      /* Ensure a fname change is always followed by a line number event (if
-                       * requested)
-                       */
-                      current_line_ptr = 0;
-                  }
-              }
-          }
-      }
-#endif
-
-#if e_line
-      if (!is:null(curpstate->eventmask) && (
-              Testb((word)(E_Line), BlkLoc(curpstate->eventmask)->cset.bits))) {
-          if (InRange(code, ipc, ecode)) {
-              uword ipc_offset = DiffPtrsBytes(ipc, code);
-              if (!current_line_ptr ||
-                  ipc_offset < current_line_ptr->ipc ||
-                  (current_line_ptr + 1 < elines && ipc_offset >= current_line_ptr[1].ipc)) {
-
-                  if(current_line_ptr &&
-                     current_line_ptr + 2 < elines &&
-                     current_line_ptr[1].ipc < ipc_offset &&
-                     ipc_offset < current_line_ptr[2].ipc) {
-                      current_line_ptr ++;
-                  } 
-                  else {
-                      current_line_ptr = find_ipc_line(ipc, 0, curpstate);
-                  }
-                  if (current_line_ptr)
-                      InterpEVVal(current_line_ptr->line, e_line);
-              }
-          }
-      }
-#endif					/* e_line */
-
-      lastop = GetWord;		/* Instruction fetch */
-
-
-/*
- * The following code is operating-system dependent [@interp.03].  Check
- *  for external event.
- */
-#if PORT
-Deliberate Syntax Error
-#endif					/* PORT */
-
-#if MSWIN32 || UNIX
-   /* nothing to do */
-#endif					
-
-/*
- * End of operating-system specific code.
- */
-
-#if e_opcode
-      /*
-       * If we've asked for ALL opcode events, or specifically for this one
-       * generate an MT-style event.
-       */
-      if ((!is:null(curpstate->eventmask) &&
-	   Testb((word)(E_Opcode), BlkLoc(curpstate->eventmask)->cset.bits)) &&
-	  (is:null(curpstate->opcodemask) ||
-	   Testb((word)(lastop), BlkLoc(curpstate->opcodemask)->cset.bits))) {
-	 ExInterp;
-	 MakeInt(lastop, &(curpstate->parent->eventval));
-	 actparent(E_Opcode);
-	 EntInterp
-	 }
-#endif					/* E_Opcode */
-
-      switch ((int)lastop) {		/*
-				 * Switch on opcode.  The cases are
-				 * organized roughly by functionality
-				 * to make it easier to find things.
-				 * For some C compilers, there may be
-				 * an advantage to arranging them by
-				 * likelihood of selection.
-				 */
-
-				/* ---Constant construction--- */
-
-	 case Op_Cset:		/* cset */
-	    PutWord(Op_Acset);
-	    PushVal(D_Cset);
-	    opnd = GetWord;
-	    opnd += (word)ipc;
-	    PutWord(opnd);
-	    PushAVal(opnd);
-	    InterpEVValD((dptr)(rsp-1), e_literal);
-	    break;
-
-	 case Op_Acset: 	/* cset, absolute address */
-	    PushVal(D_Cset);
-	    PushAVal(GetWord);
-	    InterpEVValD((dptr)(rsp-1), e_literal);
-	    break;
-
-         case Op_Ucs: {		/* ucs */
-            struct b_ucs *bp;
-	    PutWord(Op_Aucs);
-	    PushVal(D_Ucs);
-	    opnd = GetWord;
-	    opnd += (word)ipc;
-	    PutWord(opnd);
-	    PushAVal(opnd);
-            bp = (struct b_ucs *)opnd;
-            if (bp->title < 0) {  /* -ve title means we must resolve the utf8 pointer */
-                bp->title = -bp->title;
-                StrLoc(bp->utf8) = strcons + (uword)StrLoc(bp->utf8);
+void interp()
+{
+    word op;
+    for (;;) {
+        PF->curr_inst = Ipc;
+        lastop = op = GetWord;
+        switch (op) {
+            case Op_Goto: {
+                Ipc = get_addr();
+                break;
             }
-	    InterpEVValD((dptr)(rsp-1), e_literal);
-	    break;
-         }
-
-	 case Op_Aucs: 	/* ucs, absolute address */
-	    PushVal(D_Ucs);
-	    PushAVal(GetWord);
-	    InterpEVValD((dptr)(rsp-1), e_literal);
-	    break;
-
-	 case Op_Int:		/* integer */
-	    PushVal(D_Integer);
-	    PushVal(GetWord);
-	    InterpEVValD((dptr)(rsp-1), e_literal);
-	    break;
-
-	 case Op_Real:		/* real */
-	    PutWord(Op_Areal);
-	    PushVal(D_Real);
-	    opnd = GetWord;
-	    opnd += (word)ipc;
-	    PushAVal(opnd);
-	    PutWord(opnd);
-	    InterpEVValD((dptr)(rsp-1), e_literal);
-	    break;
-
-	 case Op_Areal: 	/* real, absolute address */
-	    PushVal(D_Real);
-	    PushAVal(GetWord);
-	    InterpEVValD((dptr)(rsp-1), e_literal);
-	    break;
-
-	 case Op_Str:		/* string */
-	    PutWord(Op_Astr);
-	    PushVal(GetWord)
-	    opnd = (word)strcons + GetWord;
-	    PutWord(opnd);
-	    PushAVal(opnd);
-	    InterpEVValD((dptr)(rsp-1), e_literal);
-	    break;
-
-	 case Op_Astr:		/* string, absolute address */
-	    PushVal(GetWord);
-	    PushAVal(GetWord);
-	    InterpEVValD((dptr)(rsp-1), e_literal);
-	    break;
-
-				/* ---Variable construction--- */
-
-	 case Op_Arg:		/* argument */
-	    PushVal(D_NamedVar);
-	    PushAVal(&argp[GetWord + 1]);
-	    break;
-
-	 case Op_Global:	/* global */
-	    PutWord(Op_Aglobal);
-	    PushVal(D_NamedVar);
-	    opnd = GetWord;
-	    PushAVal(&globals[opnd]);
-	    PutWord((word)&globals[opnd]);
-	    break;
-
-	 case Op_Aglobal:	/* global, absolute address */
-	    PushVal(D_NamedVar);
-	    PushAVal(GetWord);
-	    break;
-
-	 case Op_Local: 	/* local */
-	    PushVal(D_NamedVar);
-	    PushAVal(&pfp->pf_locals[GetWord]);
-	    break;
-
-	 case Op_Static:	/* static */
-	    PutWord(Op_Astatic);
-	    PushVal(D_NamedVar);
-	    opnd = GetWord;
-	    PushAVal(&statics[opnd]);
-	    PutWord((word)&statics[opnd]);
-	    break;
-
-	 case Op_Astatic:	/* static, absolute address */
-	    PushVal(D_NamedVar);
-	    PushAVal(GetWord);
-	    break;
-
-
-				/* ---Operators--- */
-
-				/* Unary operators */
-
-	 case Op_Compl: 	/* ~e */
-	 case Op_Neg:		/* -e */
-	 case Op_Number:	/* +e */
-	 case Op_Refresh:	/* ^e */
-	 case Op_Size:		/* *e */
-	    Setup_Op(1, e_ocall);
-	    DerefArg(1);
-	    Call_Cond;
-
-	 case Op_Value: 	/* .e */
-            Setup_Op(1, e_ocall);
-            DerefArg(1);
-            Call_Cond;
-
-	 case Op_Nonnull:	/* \e */
-	 case Op_Null:		/* /e */
-	    Setup_Op(1, e_ocall);
-	    Call_Cond;
-
-	 case Op_Random:	/* ?e */
-	    PushNull;
-	    Setup_Op(2, e_ocall)
-	    Call_Cond
-
-				/* Generative unary operators */
-
-	 case Op_Tabmat:	/* =e */
-	    Setup_Op(1, e_ocall);
-	    DerefArg(1);
-	    Call_Gen;
-
-	 case Op_Bang:		/* !e */
-	    PushNull;
-	    Setup_Op(2, e_ocall);
-	    Call_Gen;
-
-				/* Binary operators */
-
-	 case Op_Cat:		/* e1 || e2 */
-	 case Op_Diff:		/* e1 -- e2 */
-	 case Op_Div:		/* e1 / e2 */
-	 case Op_Inter: 	/* e1 ** e2 */
-	 case Op_Lconcat:	/* e1 ||| e2 */
-	 case Op_Minus: 	/* e1 - e2 */
-	 case Op_Mod:		/* e1 % e2 */
-	 case Op_Mult:		/* e1 * e2 */
-	 case Op_Power: 	/* e1 ^ e2 */
-	 case Op_Unions:	/* e1 ++ e2 */
-	 case Op_Plus:		/* e1 + e2 */
-	 case Op_Eqv:		/* e1 === e2 */
-	 case Op_Lexeq: 	/* e1 == e2 */
-	 case Op_Lexge: 	/* e1 >>= e2 */
-	 case Op_Lexgt: 	/* e1 >> e2 */
-	 case Op_Lexle: 	/* e1 <<= e2 */
-	 case Op_Lexlt: 	/* e1 << e2 */
-	 case Op_Lexne: 	/* e1 ~== e2 */
-	 case Op_Neqv:		/* e1 ~=== e2 */
-	 case Op_Numeq: 	/* e1 = e2 */
-	 case Op_Numge: 	/* e1 >= e2 */
-	 case Op_Numgt: 	/* e1 > e2 */
-	 case Op_Numle: 	/* e1 <= e2 */
-	 case Op_Numne: 	/* e1 ~= e2 */
-	 case Op_Numlt: 	/* e1 < e2 */
-	    Setup_Op(2, e_ocall);
-	    DerefArg(1);
-	    DerefArg(2);
-	    Call_Cond;
-
-	 case Op_Asgn:		/* e1 := e2 */
-	    Setup_Op(2, e_ocall);
-	    Call_Cond;
-
-	 case Op_Swap:		/* e1 :=: e2 */
-	    PushNull;
-	    Setup_Op(3, e_ocall);
-	    Call_Cond;
-
-	 case Op_Subsc: 	/* e1[e2] */
-	    PushNull;
-	    Setup_Op(3, e_ocall);
-	    Call_Cond;
-				/* Generative binary operators */
-
-	 case Op_Rasgn: 	/* e1 <- e2 */
-	    Setup_Op(2, e_ocall);
-	    Call_Gen;
-
-	 case Op_Rswap: 	/* e1 <-> e2 */
-	    PushNull;
-	    Setup_Op(3, e_ocall);
-	    Call_Gen;
-
-				/* Conditional ternary operators */
-
-	 case Op_Sect:		/* e1[e2:e3] */
-	    PushNull;
-	    Setup_Op(4, e_ocall);
-	    Call_Cond;
-				/* Generative ternary operators */
-
-	 case Op_Toby:		/* e1 to e2 by e3 */
-	    Setup_Op(3, e_ocall);
-	    DerefArg(1);
-	    DerefArg(2);
-	    DerefArg(3);
-	    Call_Gen;
-
-         case Op_IpcRef:		/* ipcref (a no-op) */
-            ipc++;
-            break;
-
-         case Op_Noop:		/* no-op */
-            break;
-
-				/* ---String Scanning--- */
-
-	 case Op_Bscan: 	/* prepare for scanning */
-	    PushDesc(k_subject);
-	    PushVal(D_Integer);
-	    PushVal(k_pos);
-	    Setup_Arg(2);
-
-	    signal = Obscan(2,rargp);
-
-	    goto C_rtn_term;
-
-	 case Op_Escan: 	/* exit from scanning */
-	    Setup_Arg(1);
-
-	    signal = Oescan(1,rargp);
-
-	    goto C_rtn_term;
-
-				/* ---Other Language Operations--- */
-
-	 case Op_Invokef: {	/* invoke */
-            int r, fno;
-            fno = (int)GetWord;
-            args = (int)GetWord;
-ExInterp; 
-            r = invokef_access(fno, &args); 
-EntInterp;
-            if (r == Error) {
-               xargp = (dptr)(rsp - 1) - args;
-               xnargs = args;
-               xfno = fno;
-               err_msg(0, xargp);
-               goto efail;
+            case Op_IGoto: {
+                Ipc = PF->lab[*Ipc]; 
+                break;
             }
-            lastop = Op_Invoke;
-            goto invokej;
-         }
-
-         case Op_Applyf: {
-            union block *bp;
-            int fno, i, j, r;
-            dptr apply;
-
-            fno = (int)GetWord;
-            apply = (dptr)(rsp - 1);
-            Deref(*apply);
-
-            /* Check list type first since invokef_access may overwrite the object param 
-             * and mess up the error message */
-            if (!is:list(*apply) && !is:record(*apply)) {
-                xargp = (dptr)(rsp - 3);
-                xfno = fno;
-                err_msg(126, apply);
-                goto efail;
+            case Op_Mark: {
+                PF->mark[GetWord] = SP;
+                break;
+            }
+            case Op_Unmark: {
+                pop_to(PF->mark[GetWord]);
+                break;
+            }
+            case Op_Move: {
+                get_descrip(get_dptr());
+                break;
+            }
+            case Op_MoveVar: {
+                get_variable(get_dptr());
+                break;
+            }
+            case Op_MoveLabel: {
+                word i = GetWord;
+                PF->lab[i] = get_addr();
+                break;
             }
 
-            args = 1;
-ExInterp; 
-            r = invokef_access(fno, &args); 
-EntInterp;
-
-            if (r == Error) {
-               xargp = (dptr)(rsp - 3);
-               xfno = fno;
-               err_msg(0, xargp);
-               goto efail;
+            /* Binary ops */
+            case Op_Asgn:
+            case Op_Power:
+            case Op_Cat:
+            case Op_Diff:
+            case Op_Eqv:
+            case Op_Inter:
+            case Op_Subsc:
+            case Op_Lconcat:
+            case Op_Lexeq:
+            case Op_Lexge:
+            case Op_Lexgt:
+            case Op_Lexle:
+            case Op_Lexlt:
+            case Op_Lexne:
+            case Op_Minus:
+            case Op_Mod:
+            case Op_Neqv:
+            case Op_Numeq:
+            case Op_Numge:
+            case Op_Numgt:
+            case Op_Numle:
+            case Op_Numlt:
+            case Op_Numne:
+            case Op_Plus:
+            case Op_Div:
+            case Op_Mult:
+            case Op_Swap:
+            case Op_Unions: {
+                do_op(op, 2);
+                break;
             }
 
-            apply = (dptr)(rsp - 1);
+            /* Unary ops */
+            case Op_Value:
+            case Op_Nonnull:
+            case Op_Refresh:
+            case Op_Number:
+            case Op_Compl:
+            case Op_Neg:
+            case Op_Size:
+            case Op_Random:
+            case Op_Null: {
+                do_op(op, 1);
+                break;
+            }
 
-            type_case *apply of {
-               list: {
-                    rsp -= 2;				/* pop it off */
-                    bp = BlkLoc(*apply);
-                    args = args - 1 + (int)bp->list.size;
-                    for (bp = bp->list.listhead;
-                         BlkType(bp) == T_Lelem;
-                         bp = bp->lelem.listnext) {
-                        for (i = 0; i < bp->lelem.nused; i++) {
-                            j = bp->lelem.first + i;
-                            if (j >= bp->lelem.nslots)
-                                j -= bp->lelem.nslots;
-                            PushDesc(bp->lelem.lslots[j]);
-                        }
-                    }
-               }
+            /* Unary closures */
+            case Op_Tabmat:
+            case Op_Bang: {
+                do_opclo(op, 1);
+                break;
+            }
 
-               record: {
-                    rsp -= 2;		/* pop it off */
-                    bp = BlkLoc(*apply);
-                    args = args - 1 + bp->record.constructor->n_fields;
-                    for (i = 0; i < args; i++) {
-                        PushDesc(bp->record.fields[i]);
-                    }
-               }
+            /* Binary closures */
+            case Op_Rasgn:
+            case Op_Rswap:{
+                do_opclo(op, 2);
+                break;
+            }
 
-                default: {  
-                   /* Shouldn't happen as we checked the type above */
-                   syserr("unexpected type of *apply");
+            case Op_Toby: {
+                do_opclo(op, 3);
+                break;
+            }
+
+            case Op_Sect: {
+                do_op(op, 3);
+                break;
+            }
+
+            case Op_Keyop: {
+                do_keyop();
+                break;
+            }
+
+            case Op_Keyclo: {
+                do_keyclo();
+                break;
+            }
+
+            case Op_Resume: {
+                word clo;
+                struct frame *f;
+                clo = GetWord;
+                f = PF->clo[clo];
+                f->failure_label = get_addr();
+                if (f->exhausted) {
+                    /* Just go to failure label and dispose of the frame */
+                    Ipc = f->failure_label;
+                    pop_to(f->parent_sp);
+                } else
+                    tail_invoke_frame(f);
+                break;
+            }
+
+            case Op_Fail: {
+                struct p_frame *t = PF;
+                revert_PF();
+                if (k_trace && t->proc->program) {
+                    k_trace--;
+                    fail_trace(t);
                 }
+                Ipc = t->failure_label;
+                pop_to(t->parent_sp);
+                break;
             }
 
-            lastop = Op_Invoke;
-            goto invokej;
-         }
-
-         case Op_Apply: {	/* apply, a.k.a. binary bang */
-            union block *bp;
-            int i, j;
-            dptr apply;
-
-            apply = (dptr)(rsp - 1);	/* argument */
-            Deref(*apply);
-            type_case *apply of {
-               list: {
-                    rsp -= 2;				/* pop it off */
-                    bp = BlkLoc(*apply);
-                    args = (int)bp->list.size;
-                    for (bp = bp->list.listhead;
-                         BlkType(bp) == T_Lelem;
-                         bp = bp->lelem.listnext) {
-                        for (i = 0; i < bp->lelem.nused; i++) {
-                            j = bp->lelem.first + i;
-                            if (j >= bp->lelem.nslots)
-                                j -= bp->lelem.nslots;
-                            PushDesc(bp->lelem.lslots[j]);
-                        }
-                    }
-                }
-
-               record: {
-                    rsp -= 2;		/* pop it off */
-                    bp = BlkLoc(*apply);
-                    args = bp->record.constructor->n_fields;
-                    for (i = 0; i < args; i++) {
-                        PushDesc(bp->record.fields[i]);
-                    }
-               }
-
-               default: {		/* illegal type for invocation */
-                   xargp = (dptr)(rsp - 3);
-                   err_msg(126, apply);
-                   goto efail;
-               }
-             }
-
-             lastop = Op_Invoke;
-             goto invokej;
-         }
-
-	 case Op_Invoke: {	/* invoke */
-            int nargs;
-	    dptr carg;
-            args = (int)GetWord;
-invokej:
-	    ExInterp;
-	    type0 = invoke(args, &carg, &nargs);
-	    EntInterp;
-            switch (type0) {
-                case Error: {
-                   err_msg(0, xargp);
-                   goto efail;
-                }
-                case I_Fail:
-                    goto efail;
-                case I_Continue:
-                    continue;
-                case I_Vararg: {
-                    rargp = carg;
-                    lastev = E_Function;
-                    lastdesc = *rargp;
-                    InterpEVValD(rargp, e_fcall);
-                    /* ExInterp not needed since no change since last EntInterp */
-                    signal = BlkLoc(*rargp)->proc.entryp.ccode(nargs,rargp);
-                    goto C_rtn_term;
-                }
-                case I_Builtin: {
-                    rargp = carg;
-                    lastev = E_Function;
-                    lastdesc = *rargp;
-                    InterpEVValD(rargp, e_fcall);
-                    /* ExInterp not needed since no change since last EntInterp */
-                    signal = BlkLoc(*rargp)->proc.entryp.ccode(rargp);
-                    goto C_rtn_term;
-                }
-                default: {
-                    syserr("Unexpected return code");
-                }
+            case Op_Pop: {
+                struct p_frame *t = PF;
+                PF = PF->caller;
+                pop_to(t->parent_sp);
+                break;
             }
-	    break;
-         }
 
-	 case Op_Keywd: 	/* keyword */
-
-            PushNull;
-            opnd = GetWord;
-            Setup_Arg(0);
-
-	    signal = (*(keytab[(int)opnd]))(rargp);
-	    goto C_rtn_term;
-
-	 case Op_Llist: 	/* construct list */
-	    opnd = GetWord;
-
-            value_tmp.dword = D_Proc;
-            value_tmp.vword.bptr = (union block *)&mt_llist;
-            lastev = E_Operator;
-	    lastdesc = value_tmp;
-            InterpEVValD(&value_tmp, e_ocall);
-            rargp = (dptr)(rsp - 1) - opnd;
-            xargp = rargp;
-            ExInterp;
-
-	    {
-	    int i;
-	    for (i=1;i<=opnd;i++)
-               DerefArg(i);
-	    }
-
-	    signal = Ollist((int)opnd,rargp);
-
-	    goto C_rtn_term;
-
-				/* ---Marking and Unmarking--- */
-
-	 case Op_Mark:		/* create expression frame marker */
-	    PutWord(Op_Amark);
-	    opnd = GetWord;
-	    opnd += (word)ipc;
-	    PutWord(opnd);
-	    newefp = (struct ef_marker *)(rsp + 1);
-	    newefp->ef_failure = (word *)opnd;
-	    goto mark;
-
-	 case Op_Amark: 	/* mark with absolute fipc */
-	    newefp = (struct ef_marker *)(rsp + 1);
-	    newefp->ef_failure = (word *)GetWord;
-mark:
-	    newefp->ef_gfp = gfp;
-	    newefp->ef_efp = efp;
-	    newefp->ef_ilevel = ilevel;
-	    rsp += Wsizeof(*efp);
-	    efp = newefp;
-	    gfp = 0;
-	    break;
-
-	 case Op_Mark0: 	/* create expression frame with 0 ipl */
-mark0:
-	    newefp = (struct ef_marker *)(rsp + 1);
-	    newefp->ef_failure = 0;
-	    newefp->ef_gfp = gfp;
-	    newefp->ef_efp = efp;
-	    newefp->ef_ilevel = ilevel;
-	    rsp += Wsizeof(*efp);
-	    efp = newefp;
-	    gfp = 0;
-	    break;
-
-	 case Op_Unmark:	/* remove expression frame */
-
-#if e_prem || e_erem
-	    ExInterp;
-            vanq_bound(efp, gfp);
-	    EntInterp;
-#endif					/* E_Prem || E_Erem */
-
-	    gfp = efp->ef_gfp;
-	    rsp = (word *)efp - 1;
-
-	    /*
-	     * Remove any suspended C generators.
-	     */
-Unmark_uw:
-	    if (efp->ef_ilevel < ilevel) {
-	       --ilevel;
-	       ExInterp;
-	       EVVal(A_Unmark_uw, e_intret);
-	       return A_Unmark_uw;
-	       }
-
-	    efp = efp->ef_efp;
-	    break;
-
-				/* ---Suspensions--- */
-
-	 case Op_Esusp: {	/* suspend from expression */
-
-	    /*
-	     * Create the generator frame.
-	     */
-	    oldsp = rsp;
-	    newgfp = (struct gf_marker *)(rsp + 1);
-	    newgfp->gf_gentype = G_Esusp;
-	    newgfp->gf_gfp = gfp;
-	    newgfp->gf_efp = efp;
-	    newgfp->gf_ipc = ipc;
-	    gfp = newgfp;
-	    rsp += Wsizeof(struct gf_smallmarker);
-
-	    /*
-	     * Region extends from first word after enclosing generator or
-	     *	expression frame marker to marker for current expression frame.
-	     */
-	    if (efp->ef_gfp != 0) {
-	       newgfp = (struct gf_marker *)(efp->ef_gfp);
-	       if (newgfp->gf_gentype == G_Psusp)
-		  firstwd = (word *)efp->ef_gfp + Wsizeof(*gfp);
-	       else
-		  firstwd = (word *)efp->ef_gfp +
-		     Wsizeof(struct gf_smallmarker);
-		}
-	    else
-	       firstwd = (word *)efp->ef_efp + Wsizeof(*efp);
-	    lastwd = (word *)efp - 1;
-	    efp = efp->ef_efp;
-
-	    /*
-	     * Copy the portion of the stack with endpoints firstwd and lastwd
-	     *	(inclusive) to the top of the stack.
-	     */
-	    for (wd = firstwd; wd <= lastwd; wd++)
-	       *++rsp = *wd;
-	    PushVal(oldsp[-1]);
-	    PushVal(oldsp[0]);
-	    break;
-	    }
-
-	 case Op_Lsusp: {	/* suspend from limitation */
-	    struct descrip sval;
-
-	    /*
-	     * The limit counter is contained in the descriptor immediately
-	     *	prior to the current expression frame.	lval is established
-	     *	as a pointer to this descriptor.
-	     */
-	    dptr lval = (dptr)((word *)efp - 2);
-
-	    /*
-	     * Decrement the limit counter and check it.
-	     */
-	    if (--IntVal(*lval) > 0) {
-	       /*
-		* The limit has not been reached, set up stack.
-		*/
-	       sval = *(dptr)(rsp - 1);	/* save result */
-
-	       /*
-		* Region extends from first word after enclosing generator or
-		*  expression frame marker to the limit counter just prior to
-		*  to the current expression frame marker.
-		*/
-	       if (efp->ef_gfp != 0) {
-		  newgfp = (struct gf_marker *)(efp->ef_gfp);
-		  if (newgfp->gf_gentype == G_Psusp)
-		     firstwd = (word *)efp->ef_gfp + Wsizeof(*gfp);
-		  else
-		     firstwd = (word *)efp->ef_gfp +
-			Wsizeof(struct gf_smallmarker);
-		  }
-	       else
-		  firstwd = (word *)efp->ef_efp + Wsizeof(*efp);
-	       lastwd = (word *)efp - 3;
-	       if (gfp == 0)
-		  gfp = efp->ef_gfp;
-	       efp = efp->ef_efp;
-
-	       /*
-		* Copy the portion of the stack with endpoints firstwd and lastwd
-		*  (inclusive) to the top of the stack.
-		*/
-	       rsp -= 2;		/* overwrite result */
-	       for (wd = firstwd; wd <= lastwd; wd++)
-		  *++rsp = *wd;
-	       PushDesc(sval);		/* push saved result */
-	       }
-	    else {
-	       /*
-		* Otherwise, the limit has been reached.  Instead of
-		*  suspending, remove the current expression frame and
-		*  replace the limit counter with the value on top of
-		*  the stack (which would have been suspended had the
-		*  limit not been reached).
-		*/
-	       *lval = *(dptr)(rsp - 1);
-
-#if e_prem || e_erem
-	       ExInterp;
-               vanq_bound(efp, gfp);
-	       EntInterp;
-#endif					/* E_Prem || E_Erem */
-
-	       gfp = efp->ef_gfp;
-
-	       /*
-		* Since an expression frame is being removed, inactive
-		*  C generators contained therein are deactivated.
-		*/
-Lsusp_uw:
-	       if (efp->ef_ilevel < ilevel) {
-		  --ilevel;
-		  ExInterp;
-                  EVVal(A_Lsusp_uw, e_intret);
-		  return A_Lsusp_uw;
-		  }
-	       rsp = (word *)efp - 1;
-	       efp = efp->ef_efp;
-	       }
-	    break;
-	    }
-
-	 case Op_Psusp: {	/* suspend from procedure */
-
-	    /*
-	     * An Icon procedure is suspending a value.  Determine if the
-	     *	value being suspended should be dereferenced and if so,
-	     *	dereference it. If tracing is on, strace is called
-	     *  to generate a message.  Appropriate values are
-	     *	restored from the procedure frame of the suspending procedure.
-	     */
-
-	    struct descrip tmp;
-            dptr svalp;
-
-#if e_psusp
-            value_tmp = *(dptr)(rsp - 1);	/* argument */
-            Deref(value_tmp);
-            InterpEVValD(&value_tmp, E_Psusp);
-#endif					/* E_Psusp */
-
-	    svalp = (dptr)(rsp - 1);
-	    if (Var(*svalp)) {
-               ExInterp;
-               retderef(svalp, (word *)argp, sp);
-               EntInterp;
-               }
-
-	    /*
-	     * Create the generator frame.
-	     */
-	    oldsp = rsp;
-	    newgfp = (struct gf_marker *)(rsp + 1);
-	    newgfp->gf_gentype = G_Psusp;
-	    newgfp->gf_gfp = gfp;
-	    newgfp->gf_efp = efp;
-	    newgfp->gf_ipc = ipc;
-	    newgfp->gf_argp = argp;
-	    newgfp->gf_pfp = pfp;
-	    gfp = newgfp;
-	    rsp += Wsizeof(*gfp);
-
-	    /*
-	     * Region extends from first word after the marker for the
-	     *	generator or expression frame enclosing the call to the
-	     *	now-suspending procedure to Arg0 of the procedure.
-	     */
-	    if (pfp->pf_gfp != 0) {
-	       newgfp = (struct gf_marker *)(pfp->pf_gfp);
-	       if (newgfp->gf_gentype == G_Psusp)
-		  firstwd = (word *)pfp->pf_gfp + Wsizeof(*gfp);
-	       else
-		  firstwd = (word *)pfp->pf_gfp +
-		     Wsizeof(struct gf_smallmarker);
-	       }
-	    else
-	       firstwd = (word *)pfp->pf_efp + Wsizeof(*efp);
-	    lastwd = (word *)argp - 1;
-	       efp = efp->ef_efp;
-
-	    /*
-	     * Copy the portion of the stack with endpoints firstwd and lastwd
-	     *	(inclusive) to the top of the stack.
-	     */
-	    for (wd = firstwd; wd <= lastwd; wd++)
-	       *++rsp = *wd;
-	    PushVal(oldsp[-1]);
-	    PushVal(oldsp[0]);
-	    --k_level;
-	    if (k_trace) {
-               k_trace--;
-	       strace((struct b_proc *)BlkLoc(*argp), svalp);
-	       }
-
-	    /*
-	     * If the scanning environment for this procedure call is in
-	     *	a saved state, switch environments.
-	     */
-	    if (pfp->pf_scan != NULL) {
-	       InterpEVValD(&k_subject, e_ssusp);
-	       tmp = k_subject;
-	       k_subject = *pfp->pf_scan;
-	       *pfp->pf_scan = tmp;
-
-	       tmp = *(pfp->pf_scan + 1);
-	       IntVal(*(pfp->pf_scan + 1)) = k_pos;
-	       k_pos = IntVal(tmp);
-	       }
-
-	    efp = pfp->pf_efp;
-	    ipc = pfp->pf_ipc;
-	    argp = pfp->pf_argp;
-            CHANGEPROGSTATE(pfp->pf_from);
-	    pfp = pfp->pf_pfp;
-
-	    break;
-	    }
-
-				/* ---Returns--- */
-
-	 case Op_Eret: {	/* return from expression */
-	    /*
-	     * Op_Eret removes the current expression frame, leaving the
-	     *	original top of stack value on top.
-	     */
-	    /*
-	     * Save current top of stack value in global temporary (no
-	     *	danger of reentry).
-	     */
-	    eret_tmp = *(dptr)&rsp[-1];
-	    gfp = efp->ef_gfp;
-Eret_uw:
-	    /*
-	     * Since an expression frame is being removed, inactive
-	     *	C generators contained therein are deactivated.
-	     */
-	    if (efp->ef_ilevel < ilevel) {
-	       --ilevel;
-	       ExInterp;
-               EVVal(A_Eret_uw, e_intret);
-	       return A_Eret_uw;
-	       }
-	    rsp = (word *)efp - 1;
-	    efp = efp->ef_efp;
-	    PushDesc(eret_tmp);
-	    break;
-	    }
-
-
-	 case Op_Pret: {	/* return from procedure */
-	    /*
-	     * An Icon procedure is returning a value.	Determine if the
-	     *	value being returned should be dereferenced and if so,
-	     *	dereference it.  If tracing is on, rtrace is called to
-	     *	generate a message.  Inactive generators created after
-	     *	the activation of the procedure are deactivated.  Appropriate
-	     *	values are restored from the procedure frame.
-	     */
-	    struct b_proc *rproc;
-	    rproc = (struct b_proc *)BlkLoc(*argp);
-
-#if e_prem || e_erem
-	    ExInterp;
-            vanq_proc(efp, gfp);
-	    EntInterp;
-	    /* used to InterpEVValD(argp,E_Pret); here */
-#endif					/* E_Prem || E_Erem */
-
-	    *argp = *(dptr)(rsp - 1);
-	    if (Var(*argp)) {
-               ExInterp;
-               retderef(argp, (word *)argp, sp);
-               EntInterp;
-               }
-
-	    --k_level;
-	    if (k_trace) {
-               k_trace--;
-	       rtrace(rproc, argp);
-               }
-Pret_uw:
-	    if (pfp->pf_ilevel < ilevel) {
-	       --ilevel;
-	       ExInterp;
-
-               EVVal(A_Pret_uw, e_intret);
-	       return A_Pret_uw;
-	       }
-	   
-	    rsp = (word *)argp + 1;
-	    efp = pfp->pf_efp;
-	    gfp = pfp->pf_gfp;
-	    ipc = pfp->pf_ipc;
-	    argp = pfp->pf_argp;
-            CHANGEPROGSTATE(pfp->pf_from);
-	    pfp = pfp->pf_pfp;
-#if e_pret
-            value_tmp = *(dptr)(rsp - 1);	/* argument */
-            Deref(value_tmp);
-            InterpEVValD(&value_tmp, E_Pret);
-#endif					/* E_Pret */
-
-	    break;
-	    }
-
-				/* ---Failures--- */
-
-	 case Op_Efail:
-efail:
-            InterpEVVal((word)-1, e_efail);
-efail_noev:
-	    /*
-	     * Failure has occurred in the current expression frame.
-	     */
-	    if (gfp == 0) {
-	       /*
-		* There are no suspended generators to resume.
-		*  Remove the current expression frame, restoring
-		*  values.
-		*
-		* If the failure ipc is 0, propagate failure to the
-		*  enclosing frame by branching back to efail.
-		*  This happens, for example, in looping control
-		*  structures that fail when complete.
-		*/
-
-	      if (efp == 0) {
-		 break;
-	         }
-
-	       ipc = efp->ef_failure;
-	       gfp = efp->ef_gfp;
-	       rsp = (word *)efp - 1;
-	       efp = efp->ef_efp;
-
-	       if (ipc == 0)
-		  goto efail;
-	       break;
-	       }
-
-	    else {
-	       /*
-		* There is a generator that can be resumed.  Make
-		*  the stack adjustments and then switch on the
-		*  type of the generator frame marker.
-		*/
-	       struct descrip tmp;
-	       register struct gf_marker *resgfp = gfp;
-
-	       type0 = (int)resgfp->gf_gentype;
-
-	       if (type0 == G_Psusp) {
-		  argp = resgfp->gf_argp;
-		  if (k_trace) {	/* procedure tracing */
-                     k_trace--;
-		     ExInterp;
-		     atrace((struct b_proc *)BlkLoc(*argp));
-		     EntInterp;
-		     }
-		  }
-	       ipc = resgfp->gf_ipc;
-	       efp = resgfp->gf_efp;
-	       gfp = resgfp->gf_gfp;
-	       rsp = (word *)resgfp - 1;
-	       if (type0 == G_Psusp) {
-		  pfp = resgfp->gf_pfp;
-                  CHANGEPROGSTATE(pfp->pf_to);
-
-		  /*
-		   * If the scanning environment for this procedure call is
-		   *  supposed to be in a saved state, switch environments.
-		   */
-		  if (pfp->pf_scan != NULL) {
-		     tmp = k_subject;
-		     k_subject = *pfp->pf_scan;
-		     *pfp->pf_scan = tmp;
-
-		     tmp = *(pfp->pf_scan + 1);
-		     IntVal(*(pfp->pf_scan + 1)) = k_pos;
-		     k_pos = IntVal(tmp);
-		     InterpEVValD(&k_subject, e_sresum);
-		     }
-
-		  ++k_level;		/* adjust procedure level */
-		  }
-
-	       switch (type0) {
-		  case G_Fsusp:
-		     ExInterp;
-                     EVVal((word)0, e_fresum);
-		     --ilevel;
-                     EVVal(A_Resume, e_intret);
-		     return A_Resume;
-
-		  case G_Osusp:
-		     ExInterp;
-                     EVVal((word)0, e_oresum);
-		     --ilevel;
-                     EVVal(A_Resume, e_intret);
-		     return A_Resume;
-
-		  case G_Csusp:
-		     ExInterp;
-                     EVVal((word)0, e_eresum);
-		     --ilevel;
-                     EVVal(A_Resume, e_intret);
-		     return A_Resume;
-
-		  case G_Esusp:
-                     InterpEVVal((word)0, e_eresum);
-		     goto efail_noev;
-
-		  case G_Psusp:		/* resuming a procedure */
-                     InterpEVValD(argp, e_presum);
-		     break;
-		  }
-
-	       break;
-	       }
-
-	 case Op_Pfail: {	/* fail from procedure */
-#if e_pfail || e_prem || e_erem
-	    ExInterp;
-#if e_prem || e_erem
-            vanq_proc(efp, gfp);
-#endif					/* E_Prem || E_Erem */
-            EVValD(argp, e_pfail);
-	    EntInterp;
-#endif					/* E_Pfail || E_Prem || E_Erem */
-
-	    /*
-	     * An Icon procedure is failing.  Generate tracing message if
-	     *	tracing is on.	Deactivate inactive C generators created
-	     *	after activation of the procedure.  Appropriate values
-	     *	are restored from the procedure frame.
-	     */
-
-	    --k_level;
-	    if (k_trace) {
-               k_trace--;
-	       failtrace((struct b_proc *)BlkLoc(*argp));
-               }
-Pfail_uw:
-
-	    if (pfp->pf_ilevel < ilevel) {
-	       --ilevel;
-	       ExInterp;
-               EVVal(A_Pfail_uw, e_intret);
-	       return A_Pfail_uw;
-	       }
-
-	    efp = pfp->pf_efp;
-	    gfp = pfp->pf_gfp;
-	    ipc = pfp->pf_ipc;
-	    argp = pfp->pf_argp;
-            CHANGEPROGSTATE(pfp->pf_from);
-	    pfp = pfp->pf_pfp;
-
-	    goto efail_noev;
-	    }
-				/* ---Odds and Ends--- */
-
-	 case Op_Ccase: 	/* case clause */
-	    PushNull;
-	    PushVal(((word *)efp)[-2]);
-	    PushVal(((word *)efp)[-1]);
-	    break;
-
-	 case Op_Chfail:	/* change failure ipc */
-	    opnd = GetWord;
-	    opnd += (word)ipc;
-	    efp->ef_failure = (word *)opnd;
-	    break;
-
-	 case Op_Dup:		/* duplicate descriptor */
-	    PushNull;
-	    rsp[1] = rsp[-3];
-	    rsp[2] = rsp[-2];
-	    rsp += 2;
-	    break;
-
-	 case Op_Field: 	/* e1.e2 */
-	    PushVal(D_Integer);
-	    PushVal(GetWord);
-	    Setup_Arg(2);
-ExInterp;
-	    signal = Ofield(2,rargp);
-EntInterp;
-
-	    goto C_rtn_term;
-
-	 case Op_Goto:		/* goto */
-	    PutWord(Op_Agoto);
-	    opnd = GetWord;
-	    opnd += (word)ipc;
-	    PutWord(opnd);
-	    ipc = (word *)opnd;
-	    break;
-
-	 case Op_Agoto: 	/* goto absolute address */
-	    opnd = GetWord;
-	    ipc = (word *)opnd;
-	    break;
-
-	 case Op_Init:		/* initial */
-	    *--ipc = Op_Goto;
-	    opnd = sizeof(*ipc) + sizeof(*rsp);
-	    opnd += (word)ipc;
-	    ipc = (word *)opnd;
-	    break;
-
-	 case Op_Limit: 	/* limit */
-	    Setup_Arg(0);
-
-	    if (Olimit(0,rargp) == A_Resume) {
-
-	       /*
-		* limit has failed here; could generate an event for it,
-		*  but not an Ofail since limit is not an operator and
-		*  no Ocall was ever generated for it.
-		*/
-	       goto efail_noev;
-	       }
-	    else {
-	       /*
-		* limit has returned here; could generate an event for it,
-		*  but not an Oret since limit is not an operator and
-		*  no Ocall was ever generated for it.
-		*/
-	       rsp = (word *) rargp + 1;
-	       }
-	    goto mark0;
-
-	 case Op_Pnull: 	/* push null descriptor */
-	    PushNull;
-	    break;
-
-	 case Op_Pop:		/* pop descriptor */
-	    rsp -= 2;
-	    break;
-
-	 case Op_Push1: 	/* push integer 1 */
-	    PushVal(D_Integer);
-	    PushVal(1);
-	    break;
-
-	 case Op_Pushn1:	/* push integer -1 */
-	    PushVal(D_Integer);
-	    PushVal(-1);
-	    break;
-
-	 case Op_Sdup:		/* duplicate descriptor */
-	    rsp += 2;
-	    rsp[-1] = rsp[-3];
-	    rsp[0] = rsp[-2];
-	    break;
-
-					/* --- calling Icon from C --- */
-         case Op_CopyArgs: {
-            int i; 
-            dptr d;
-            opnd = GetWord;
-            d = ((dptr)efp) - opnd;
-            for (i = 0; i < opnd; ++i) {
-                PushDesc(*d);
-                ++d;
+            case Op_PopRepeat: {
+                struct p_frame *t = PF;
+                PF = PF->caller;
+                pop_to(t->parent_sp);
+                Ipc = PF->curr_inst;
+                break;
             }
-            break;
-         }         
 
-         case Op_CopyArgs2: {        /* Custom op specially for calling new() */
-            int i; 
-            dptr d;
-            opnd = GetWord;
-            PushDesc(*((dptr)efp - 1));
-            d = ((dptr)efp) - opnd;
-            --opnd;
-            for (i = 0; i < opnd; ++i) {
-                PushDesc(*d);
-                ++d;
+            case Op_Suspend: {
+                struct p_frame *t = PF;
+                get_descrip(&PF->value);
+                retderef(&PF->value, PF->locals);
+                revert_PF();
+                if (k_trace && t->proc->program) {
+                    k_trace--;
+                    suspend_trace(t);
+                }
+                break;
             }
-            break;
-         }         
 
-         case Op_Trapret:
-            ilevel--;
-            ExInterp;
-            return A_Trapret;
-         
-         case Op_Trapfail:
-            ilevel--;
-            ExInterp;
-            return A_Trapfail;
+            case Op_Return: {
+                struct p_frame *t = PF;
+                get_descrip(&PF->value);
+                retderef(&PF->value, PF->locals);
+                t->exhausted = 1;
+                revert_PF();
+                if (k_trace && t->proc->program) {
+                    k_trace--;
+                    return_trace(t);
+                }
+                break;
+            }
 
-					/* ---Co-expressions--- */
+            case Op_Deref: {
+                dptr src = get_dptr();
+                dptr dest = get_dptr();
+                deref(src, dest);
+                break;
+            }
 
-	 case Op_Create:	/* create */
+            case Op_ScanSwap: {
+                word s, p;
+                struct descrip tmp;
+                s = GetWord;
+                p = GetWord;
+                tmp = curpstate->Kywd_subject;
+                curpstate->Kywd_subject = PF->tmp[s];
+                PF->tmp[s] = tmp;
+                tmp = curpstate->Kywd_pos;
+                curpstate->Kywd_pos = PF->tmp[p];
+                PF->tmp[p] = tmp;
+                break;
+            }
 
-	    PushNull;
-	    Setup_Arg(0);
-	    opnd = GetWord;
-	    opnd += (word)ipc;
+            case Op_ScanRestore: {
+                word s, p;
+                s = GetWord;
+                p = GetWord;
+                curpstate->Kywd_subject = PF->tmp[s];
+                curpstate->Kywd_pos = PF->tmp[p];
+                break;
+            }
 
-	    signal = Ocreate((word *)opnd, rargp);
+            case Op_ScanSave: {
+                do_scansave();
+                break;
+            }
 
-	    goto C_rtn_term;
+            case Op_Limit: {
+                do_limit();
+                break;
+            }
 
-	 case Op_Coact: {	/* @e */
+            case Op_Invoke: {
+                do_invoke();
+                break;
+            }
 
-            struct b_coexpr *ncp;
-            dptr dp;
+            case Op_Apply: {
+                do_apply();
+                break;
+            }
 
-            ExInterp;
-            dp = (dptr)(sp - 1);
-            xargp = dp - 2;
+            case Op_Invokef: {
+                do_invokef();
+                break;
+            }
 
-            Deref(*dp);
-            if (dp->dword != D_Coexpr) {
-               err_msg(118, dp);
-               goto efail;
-               }
+            case Op_Applyf: {
+                do_applyf();
+                break;
+            }
 
-            ncp = (struct b_coexpr *)BlkLoc(*dp);
+            case Op_EnterInit: {
+                get_addr();
+                /* Change Op_EnterInit to an Op_Goto */
+                Ipc[-2] = Op_Goto;
+                break;
+            }
 
-            signal = activate((dptr)(sp - 3), ncp, (dptr)(sp - 3));
-            EntInterp;
-            if (signal == A_Resume)
-               goto efail_noev;
-            else
-               rsp -= 2;
-            break;
-	    }
+            case Op_Custom: {
+                word w = GetWord;
+                int (*ccode)() = (int (*)())w;
+	        ccode();
+                break;
+            }
 
-	 case Op_Coret: {	/* return from co-expression */
+            case Op_Halt: {
+                showcurrstack();
+                fprintf(stderr, "Halt instruction reached\n");
+                exit(1);
+            }
 
-            struct b_coexpr *ncp;
+            case Op_SysErr: {
+                showcurrstack();
+                syserr("Op_SysErr instruction reached");
+                break; /* Not reached */
+            }
 
-            ExInterp;
-            ncp = k_current->es_activator;
-            ++k_current->size;
-            co_chng(ncp, (dptr)&sp[-1], NULL, A_Coret, 1);
-            EntInterp;
-            break;
+            case Op_MakeList: {
+                do_makelist();
+                break;
+            }
 
-	    }
+            case Op_Field: {
+                do_field();
+                break;
+            }
 
-	 case Op_Cofail: {	/* fail from co-expression */
+            case Op_Create: {
+                do_create();
+                break;
+            }
 
-            struct b_coexpr *ncp;
+            case Op_Coact: {
+                do_coact();
+                break;
+            }
 
-            ExInterp;
-            ncp = k_current->es_activator;
+            case Op_Coret: {
+                do_coret();
+                break;
+            }
 
-            co_chng(ncp, NULL, NULL, A_Cofail, 1);
-            EntInterp;
-            break;
+            case Op_Cofail: {
+                do_cofail();
+                break;
+            }
 
-	    }
-         case Op_Quit:		/* quit */
+            case Op_Exit: {
+                /* The main procedure has returned/failed */
+                return;
+            }
+
+            default: {
+                fprintf(stderr, "Unimplemented opcode %d (%s)\n", op, op_names[op]);
+                exit(1);
+            }
+        }
+    }
+}
 
 
-	    goto interp_quit;
 
 
-	 default: {
-	    char buf[50];
 
-	    sprintf(buf, "unimplemented opcode: %ld (0x%08lx)\n",
-                    (long)lastop, (long)lastop);
-	    syserr(buf);
-	    }
-	 }
-	 continue;
 
-C_rtn_term:
-	 EntInterp;
 
-	 switch (signal) {
 
-	    case A_Resume:
-	    if (lastev == E_Function) {
-	       InterpEVValD(&lastdesc, e_ffail);
-	       lastev = E_Misc;
-	       }
-	    else if (lastev == E_Operator) {
-	       InterpEVValD(&lastdesc, e_ofail);
-	       lastev = E_Misc;
-	       }
-	       goto efail_noev;
-
-	    case A_Unmark_uw:		/* unwind for unmark */
-	       if (lastev == E_Function) {
-		  InterpEVValD(&lastdesc, e_frem);
-		  lastev = E_Misc;
-		  }
-	       else if (lastev == E_Operator) {
-		  InterpEVValD(&lastdesc, e_orem);
-		  lastev = E_Misc;
-		  }
-	       goto Unmark_uw;
-
-	    case A_Lsusp_uw:		/* unwind for lsusp */
-	       if (lastev == E_Function) {
-		  InterpEVValD(&lastdesc, e_frem);
-		  lastev = E_Misc;
-		  }
-	       else if (lastev == E_Operator) {
-		  InterpEVValD(&lastdesc, e_orem);
-		  lastev = E_Misc;
-		  }
-	       goto Lsusp_uw;
-
-	    case A_Eret_uw:		/* unwind for eret */
-	       if (lastev == E_Function) {
-		  InterpEVValD(&lastdesc, e_frem);
-		  lastev = E_Misc;
-		  }
-	       else if (lastev == E_Operator) {
-		  InterpEVValD(&lastdesc, e_orem);
-		  lastev = E_Misc;
-		  }
-	       goto Eret_uw;
-
-	    case A_Pret_uw:		/* unwind for pret */
-	       if (lastev == E_Function) {
-		  InterpEVVal(&lastdesc, e_frem);
-		  lastev = E_Misc;
-		  }
-	       else if (lastev == E_Operator) {
-		  InterpEVVal(&lastdesc, e_orem);
-		  lastev = E_Misc;
-		  }
-	       goto Pret_uw;
-
-	    case A_Pfail_uw:		/* unwind for pfail */
-	       if (lastev == E_Function) {
-		  InterpEVValD(&lastdesc, e_frem);
-		  lastev = E_Misc;
-		  }
-	       else if (lastev == E_Operator) {
-		  InterpEVValD(&lastdesc, e_orem);
-		  lastev = E_Misc;
-		  }
-	       goto Pfail_uw;
-	    }
-
-	 rsp = (word *)rargp + 1;	/* set rsp to result */
-
-return_term:
-         if (lastev == E_Function) {
-#if e_fret
-	    value_tmp = *(dptr)(rsp - 1);	/* argument */
-	    Deref(value_tmp);
-	    InterpEVValD(&value_tmp, e_fret);
-#endif					/* E_Fret */
-	    lastev = E_Misc;
-	    }
-         else if (lastev == E_Operator) {
-#if e_oret
-	    value_tmp = *(dptr)(rsp - 1);	/* argument */
-	    Deref(value_tmp);
-	    InterpEVValD(&value_tmp, e_oret);
-#endif					/* E_Oret */
-	    lastev = E_Misc;
-	    }
-
-	 continue;
-	 }
-
-interp_quit:
-   --ilevel;
-   if (ilevel != 0)
-      syserr("interp: termination with inactive generators.");
-#endif
-   /*NOTREACHED*/
-   return 0;	/* avoid gcc warning */
-   }
-#enddef
-
-interp_macro(interp_0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-interp_macro(interp_1,E_Intcall,E_Fsusp,E_Osusp,E_Bsusp,E_Ocall,E_Ofail,E_Tick,E_Line,E_Opcode,E_Fcall,E_Prem,E_Erem,E_Intret,E_Psusp,E_Ssusp,E_Pret,E_Efail,E_Sresum,E_Fresum,E_Oresum,E_Eresum,E_Presum,E_Pfail,E_Ffail,E_Frem,E_Orem,E_Fret,E_Oret,E_Literal,E_Fname)
-
-#if E_Prem || E_Erem
-/*
- * vanq_proc - monitor the removal of suspended operations from within
- *   a procedure.
- */
-static void vanq_proc(efp_v, gfp_v)
-struct ef_marker *efp_v;
-struct gf_marker *gfp_v;
-   {
-
-   if (is:null(curpstate->eventmask))
-      return;
-
-   /*
-    * Go through all the bounded expression of the procedure.
-    */
-   while ((efp_v = vanq_bound(efp_v, gfp_v)) != NULL) {
-      gfp_v = efp_v->ef_gfp;
-      efp_v = efp_v->ef_efp;
-      }
-   }
-
-/*
- * vanq_bound - monitor the removal of suspended operations from
- *   the current bounded expression and return the expression frame
- *   pointer for the bounded expression.
- */
-static struct ef_marker *vanq_bound(efp_v, gfp_v)
-struct ef_marker *efp_v;
-struct gf_marker *gfp_v;
-   {
-
-   if (is:null(curpstate->eventmask))
-      return efp_v;
-
-   while (gfp_v != 0) {		/* note removal of suspended operations */
-      switch ((int)gfp_v->gf_gentype) {
-         case G_Psusp:
-            EVValD(gfp_v->gf_argp, E_Prem);
-            break;
-	 /* G_Fsusp and G_Osusp handled in-line during unwinding */
-         case G_Esusp:
-            EVVal((word)0, E_Erem);
-            break;
-         }
-
-      if (((int)gfp_v->gf_gentype) == G_Psusp) {
-         vanq_proc(gfp_v->gf_efp, gfp_v->gf_gfp);
-         efp_v = gfp_v->gf_pfp->pf_efp;           /* efp before the call */
-         gfp_v = gfp_v->gf_pfp->pf_gfp;           /* gfp before the call */
-         }
-      else {
-         efp_v = gfp_v->gf_efp;
-         gfp_v = gfp_v->gf_gfp;
-         }
-      }
-
-   return efp_v;
-   }
-#endif					/* E_Prem || E_Erem */
 
 /*
  * activate some other co-expression from an arbitrary point in
@@ -1755,12 +952,12 @@ register struct b_coexpr *ncp;
    /*
     * Set activator in new co-expression.
     */
-   if (ncp->es_activator == NULL) {
+   if (ncp->activator == NULL) {
       /*
        * If no one ever explicitly activates this co-expression, fail to
        * the implicit activator.
        */
-      ncp->es_activator = ccp;
+      ncp->activator = ccp;
       first = 0;
       }
    else
@@ -1775,8 +972,8 @@ register struct b_coexpr *ncp;
 
    ccp->program->Kywd_time_out = millisec();
 
-   rv = co_chng(ncp, tvalp, rslt, A_MTEvent, first);
-
+/*   rv = co_chng(ncp, tvalp, rslt, A_MTEvent, first); */
+   rv = 0;
    ccp->program->Kywd_time_elsewhere +=
       millisec() - ccp->program->Kywd_time_out;
 

@@ -93,7 +93,7 @@ int firstd[] = {
      0,                       /* T_Slots (15), set/table hash block */
      3*WordSize,              /* T_Tvsubs (16), substring trapped variable */
 
-     (4+Wsizeof(struct pf_marker))*WordSize, /* T_Refresh (17), refresh block */
+     0,                       /* T_Refresh (17), refresh block */
 
     -1,                       /* T_Coexpr (18), co-expression block */
      3*WordSize,              /* T_Ucs (19), unicode string */
@@ -549,8 +549,8 @@ static void markptr(union block **ptr)
                 /*
                  * Mark the activator of this co-expression.
                  */
-                if (cp->es_activator)
-                    markptr((union block **)&cp->es_activator);
+                if (cp->activator)
+                    markptr((union block **)&cp->activator);
                 /*
                  * Mark its stack
                  */
@@ -632,8 +632,8 @@ static void markptr(union block **ptr)
             /*
              * Mark the activator of this co-expression.
              */
-            if (cp->es_activator)
-                markptr((union block **)&cp->es_activator);
+            if (cp->activator)
+                markptr((union block **)&cp->activator);
             /*
              * Mark its stack
              */

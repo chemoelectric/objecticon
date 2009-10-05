@@ -337,7 +337,7 @@ keyword{1} source
        return coexpr
        }
    inline {
-         return coexpr(k_current->es_activator);
+         return coexpr(k_current->activator);
          }
 end
 

@@ -460,7 +460,6 @@ struct progstate {
     void (*Cplist)(dptr, dptr, word, word);
     void (*Cpset)(dptr, dptr, word);
     void (*Cptable)(dptr, dptr, word);
-    int (*Interp)(int,dptr);
     int (*Cnvcset)(dptr,dptr);
     int (*Cnvucs)(dptr,dptr);
     int (*Cnvint)(dptr,dptr);
@@ -481,7 +480,6 @@ struct progstate {
     struct b_cast *(*Alccast)();
     struct b_methp *(*Alcmethp)();
     struct b_ucs *(*Alcucs)();
-    struct b_refresh *(*Alcrefresh)(word *, int, int);
     struct b_selem *(*Alcselem)(void);
     char *(*Alcstr)(char *, word);
     struct b_tvsubs *(*Alcsubs)(word, word, dptr);
@@ -494,53 +492,6 @@ struct progstate {
     int (*FieldAccess)(dptr, struct inline_field_cache *);
     int (*InvokefAccess)(int, int *);
     int (*Invoke)(int, dptr *, int *);
-};
-
-
-/*
- * Frame markers
- */
-struct ef_marker {		/* expression frame marker */
-    word *ef_failure;		/*   failure ipc */
-    struct ef_marker *ef_efp;	/*   efp */
-    struct gf_marker *ef_gfp;	/*   gfp */
-    word ef_ilevel;		/*   ilevel */
-};
-
-struct pf_marker {		/* procedure frame marker */
-    word pf_nargs;		/*   number of arguments */
-    struct pf_marker *pf_pfp;	/*   saved pfp */
-    struct ef_marker *pf_efp;	/*   saved efp */
-    struct gf_marker *pf_gfp;	/*   saved gfp */
-    dptr pf_argp;		/*   saved argp */
-    word *pf_ipc;			/*   saved ipc */
-    word pf_ilevel;		/*   saved ilevel */
-    dptr pf_scan;		/*   saved scanning environment */
-    struct progstate *pf_from;
-    struct progstate *pf_to;
-    struct descrip pf_locals[1];	/*   descriptors for locals */
-};
-
-struct gf_marker {		/* generator frame marker */
-    word gf_gentype;		/*   type */
-    struct ef_marker *gf_efp;	/*   efp */
-    struct gf_marker *gf_gfp;	/*   gfp */
-    word *gf_ipc;			/*   ipc */
-    struct pf_marker *gf_pfp;	/*   pfp */
-    dptr gf_argp;		/*   argp */
-};
-
-/*
- * Generator frame marker dummy -- used only for sizing "small"
- *  generator frames where procedure information need not be saved.
- *  The first five members here *must* be identical to those for
- *  gf_marker.
- */
-struct gf_smallmarker {		/* generator frame marker */
-    word gf_gentype;		/*   type */
-    struct ef_marker *gf_efp;	/*   efp */
-    struct gf_marker *gf_gfp;	/*   gfp */
-    word *gf_ipc;			/*   ipc */
 };
 
 /*
@@ -578,20 +529,9 @@ struct b_coexpr {		/* co-expression stack block */
     word title;			/*   T_Coexpr */
     word size;			/*   number of results produced */
     word id;			/*   identification number */
-    struct b_coexpr *nextstk;	/*   pointer to next allocated stack */
-    struct pf_marker *es_pfp;	/*   current pfp */
-    struct ef_marker *es_efp;	/*   efp */
-    struct gf_marker *es_gfp;	/*   gfp */
-    struct tend_desc *es_tend;	/*   current tended pointer */
-    dptr es_argp;		/*   argp */
-    word *es_ipc;			/*   ipc */
-    word es_ilevel;		/*   interpreter level */
-    word *es_sp;			/*   sp */
     dptr tvalloc;		/*   where to place transmitted value */
-    struct b_refresh *freshblk;	/*   refresh block pointer */
-    struct b_coexpr *es_activator; /*     this coexpression's activator */
-    word cstate[CStateSize];	/*   C state information */
-    struct progstate *program;  /*   current program, in which es_ipc resides */
+    struct b_coexpr *activator; /*     this coexpression's activator */
+    struct progstate *program;  /*   current program, in which this coexpression is running */
     struct progstate *creator;  /*   curpstate when this block was allocated */
     struct progstate *main_of;  /*   set to the parent program for all &main co-expressions;
                                  *   null for all others */
@@ -599,15 +539,6 @@ struct b_coexpr {		/* co-expression stack block */
     word *failure_label;        /*   where to go on a cofail */
     struct p_frame *curr_pf;    /*   current procedure frame */
     struct frame *sp;           /*   end of stack */
-};
-
-struct b_refresh {		/* co-expression block */
-    word title;			/*   T_Refresh */
-    word blksize;		/*   size of block */
-    word *ep;			/*   entry point */
-    word numlocals;		/*   number of locals */
-    struct pf_marker pfmkr;	/*   marker for enclosing procedure */
-    struct descrip elems[1];	/*   arguments and locals, including Arg0 */
 };
 
 
@@ -624,7 +555,6 @@ union block {			/* general block */
     struct b_record record;
     struct b_tvsubs tvsubs;
     struct b_tvtbl tvtbl;
-    struct b_refresh refresh;
     struct b_coexpr coexpr;
     struct b_slots slots;
     struct b_class class;

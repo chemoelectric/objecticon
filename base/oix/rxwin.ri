@@ -4291,7 +4291,9 @@ dptr call(dptr proc0, ...)
     wdsplys = 0;   /* Avoid recursive calls into handle_misc by making 
                     * pollevent() a temporary no-op */
     va_start(ap, proc0);
-    res = call_icon_va(proc0, ap);
+/* todo */
+/*    res = call_icon_va(proc0, ap); */
+    res = 0;
     va_end(ap);
     wdsplys = saved_wdsplys;
     if (res)

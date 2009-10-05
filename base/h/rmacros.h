@@ -219,38 +219,6 @@
 
 #define DiffPtrsBytes(p1,p2) DiffPtrs((char*)(p1), (char*)(p2))
 
-#define StackAlign(x) ((word)(x) & ~((word)STACK_ALIGN_BYTES-1))
-
-/*
- * Check for stack overflow
- */
-#if HAVE_CUSTOM_C_STACKS
-#define CheckStack \
-do { \
-    if (k_current == rootpstate.K_main) {  \
-        if (DiffPtrsBytes(stackend,sp) < 4096)     \
-            fatalerr(311, NULL); \
-    } else { \
-        if (DiffPtrsBytes(k_current->cstate[0], sp) < 4096)        \
-            fatalerr(312, NULL); \
-    } \
-} while(0)
-#else
-#define CheckStack \
-do { \
-    if (k_current == rootpstate.K_main) {  \
-        if (DiffPtrsBytes(stackend,sp) < 4096)     \
-            fatalerr(311, NULL); \
-    } else { \
-        int dummy = 0; \
-        if (DiffPtrsBytes(&dummy, sp) < 4096)        \
-            fatalerr(312, NULL); \
-    } \
-} while(0)
-#endif
-
-#define CallerProc (&BlkLoc(*argp)->proc)
-
 /*
  * Csets
  */
@@ -584,38 +552,6 @@ do { \
         0,0};
 
    /*
-    * Macros to access Icon arguments in C functions.
-    */
-   
-   /*
-    * n-th argument.
-    */
-   #define Arg(n)	 	(cargp[n])
-   
-   /*
-    * Type field of n-th argument.
-    */
-   #define ArgType(n)	(cargp[n].dword)
-
-   /*
-    * Value field of n-th argument.
-    */
-   #define ArgVal(n)	(cargp[n].vword.integer)
-   
-   /*
-    * Specific arguments.
-    */
-   #define Arg0	(cargp[0])
-   #define Arg1	(cargp[1])
-   #define Arg2	(cargp[2])
-   #define Arg3	(cargp[3])
-   #define Arg4	(cargp[4])
-   #define Arg5	(cargp[5])
-   #define Arg6	(cargp[6])
-   #define Arg7	(cargp[7])
-   #define Arg8	(cargp[8])
-   
-   /*
     * Miscellaneous macro definitions.
     */
    
@@ -706,7 +642,6 @@ do { \
       #define cplist	    (curpstate->Cplist)
       #define cpset	    (curpstate->Cpset)
       #define cptable	    (curpstate->Cptable)
-      #define interp	    (curpstate->Interp)
       #define cnv_cset	    (curpstate->Cnvcset)
       #define cnv_ucs	    (curpstate->Cnvucs)
       #define cnv_int	    (curpstate->Cnvint)
@@ -741,24 +676,6 @@ do { \
       #define invoke        (curpstate->Invoke)
 
       #define CHANGEPROGSTATE(p) if (((p)!=curpstate)) { changeprogstate(p); }
-   
-
-/*
- * Constants controlling expression evaluation.
- */
-   #define A_Resume	1	/* routine failed */
-   #define A_Pret_uw	2	/* interp unwind for Op_Pret */
-   #define A_Unmark_uw	3	/* interp unwind for Op_Unmark */
-   #define A_Pfail_uw	4	/* interp unwind for Op_Pfail */
-   #define A_Lsusp_uw	5	/* interp unwind for Op_Lsusp */
-   #define A_Eret_uw	6	/* interp unwind for Op_Eret */
-   #define A_Continue	7	/* routine returned */
-   #define A_Coact	8	/* co-expression activated */
-   #define A_Coret	9	/* co-expression returned */
-   #define A_Cofail	10	/* co-expression failed */
-   #define A_MTEvent	11	/* multithread event */
-   #define A_Trapret	12	/* Return from stub  */
-   #define A_Trapfail	13	/* Fail from stub  */
 
 #if MSWIN32
       #define ptr2word(x) (uword)x

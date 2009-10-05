@@ -71,9 +71,6 @@ int		cnv_str_0	(dptr s, dptr d);
 int		cnv_str_1	(dptr s, dptr d);
 int		cnv_tstr_0	(char *sbuf, dptr s, dptr d);
 int		cnv_tstr_1	(char *sbuf, dptr s, dptr d);
-int		co_chng		(struct b_coexpr *ncp, struct descrip *valloc,
-				   struct descrip *rsltloc,
-				   int swtch_typ, int first);
 void		co_init		(struct b_coexpr *sblkp);
 void		coswitch	(word *old, word *new, int first);
 #ifdef HAVE_COCLEAN
@@ -129,9 +126,6 @@ union block	*hgnext		(union block*b,struct hgstate*s,union block *e);
 union block	*hmake		(int tcode,word nslots,word nelem);
 void		icon_init	(char *name);
 int		idelay		(int n);
-void            interp2();
-int		interp_0	(int fsig,dptr cargp);
-int		interp_1	(int fsig,dptr cargp);
 void		irunerr		(int n, C_integer v);
 int		lexcmp		(dptr dp1,dptr dp2);
 union block	**memb		(union block *pb,dptr x,uword hn, int *res);
@@ -139,7 +133,6 @@ void		mksubs		(dptr var,dptr val,word i,word j, dptr result);
 word		mod3		(word a,word b);
 word		mul		(word a,word b);
 word		neg		(word a);
-void            new_context     (void);
 int		numcmp		(dptr dp1,dptr dp2,dptr dp3);
 void		outimage	(FILE *f,dptr dp,int noimage);
 longlong        physicalmemorysize();
@@ -155,9 +148,7 @@ word		sub		(word a,word b);
 void		syserr		(char *fmt, ...);
 void		xmfree		(void);
 void            ensure_initialized(struct b_class *class);
-dptr            do_invoke       (dptr proc);
-dptr            call_icon       (dptr proc, ...);
-dptr            call_icon_va    (dptr proc, va_list ap);
+
 int invaluemask(struct progstate *p, int evcode, struct descrip *val);
 
    void	resolve			(struct progstate *pstate);
@@ -556,11 +547,6 @@ void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
 void xdisp(struct p_frame *pf, int count, FILE *f, struct progstate *p);
 
    #define Fargs dptr cargp
-   int	Obscan			(struct frame *);
-   int	Ocreate			(word *entryp, Fargs);
-   int	Oescan			(struct frame *);
-   int	Ofield      		(struct frame *);
-   int	Olimit			(struct frame *);
    int	Ollist			(struct frame *);
 
 void create_list(uword nslots, dptr d);
@@ -615,7 +601,7 @@ void free_frame(struct frame *f);
 
 void push_frame(struct frame *f);
 void push_p_frame(struct p_frame *f);
-void interp2();
+void interp();
 dptr get_dptr();
 void get_descrip(dptr dest);
 void get_deref(dptr dest);
@@ -623,7 +609,7 @@ void get_variable(dptr dest);
 word *get_addr();
 void pop_to(struct frame *f);
 void do_apply();
-void do_invoke2();
+void do_invoke();
 void do_applyf();
 void do_invokef();
 word get_offset(word *w);

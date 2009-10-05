@@ -196,7 +196,7 @@ int (*optab[])() = {
    err,
    err,
    err,
-   Ocreate,
+   err,
    err,
    err,
    err,

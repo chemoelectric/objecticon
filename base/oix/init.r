@@ -49,22 +49,10 @@ struct b_proc *fnc_tbl[] = {
 
 int line_info;				/* flag: line information is available */
 char *file_name = NULL;			/* source file for current execution point */
-
-
-word mstksize = MStackSize;		/* initial size of main stack */
-word xstksize = XStackSize;		/* co-expression stack size */
-word coexprlim;                          /* number of coexpression allocations before a GC is triggered */
-
 int k_level = 0;			/* &level */
-
-
 int set_up = 0;				/* set-up switch */
-
 char *currend = NULL;			/* current end of memory region */
-
-
 word qualsize = QualLstSize;		/* size of quallist for fixed regions */
-
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
 
@@ -81,7 +69,6 @@ struct descrip maps2u;			/* second cached argument of map */
 struct descrip maps3u;			/* third cached argument of map */
 
 
-struct b_coexpr *stklist;	/* base of co-expression block list */
 struct progstate *progs;        /* list of progstates */
 
 struct tend_desc *tend = NULL;  /* chain of tended descriptors */
@@ -93,15 +80,9 @@ struct region rootstring, rootblock;
 int op_tbl_sz = ElemCount(op_tbl);
 int fnc_tbl_sz = ElemCount(fnc_tbl);
 
-struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
-dptr argp;			        /* global argp */
 
-
-struct progstate *curpstate;		/* lastop accessed in program state */
+struct progstate *curpstate;
 struct progstate rootpstate;
-
-word *stack;				/* Interpreter stack */
-word *stackend; 			/* End of interpreter stack */
 
 
 /*
@@ -319,37 +300,18 @@ void icon_init(char *name)
     MakeInt(hdr.trace, &rootpstate.Kywd_trc);
 
     /*
-     * If STKSIZE is set, then it sets both MSTKSIZE and XSTKSIZE to
-     * the same value.
-     */
-    if ((t = getenv(STKSIZE))) {
-        setenv(MSTKSIZE, t, 1);
-        setenv(XSTKSIZE, t, 1);
-    }
-
-    /*
      * Examine the environment and make appropriate settings.    [[I?]]
      */
     if (getenv(NOERRBUF))
         noerrbuf++;
     env_int(TRACE, &k_trace, 0, (uword)0);
-    env_int(XSTKSIZE, &xstksize, 1, (uword)MaxWord);
     env_int(STRSIZE, &rootstring.size, 1, (uword)MaxWord);
     env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxWord); 
-    env_int(MSTKSIZE, &mstksize, 1, (uword)MaxWord);
     env_int(QLSIZE, &qualsize, 1, (uword)MaxWord);
     env_int(IXCUSHION, &memcushion, 1, (uword)100);	/* max 100 % */
     env_int(IXGROWTH, &memgrowth, 1, (uword)10000);	/* max 100x growth */
     env_int(OICORE, &dodump, 1, (uword)2);
 
-    /*
-     * Ensure stack sizes are multiples of WordSize.
-     */
-    xstksize &= ~(WordSize - 1);
-    mstksize &= ~(WordSize - 1);
-
-    coexprlim = Max((pmem/200) / xstksize, CoexprLim);
-    env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxWord);
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
 
@@ -371,7 +333,7 @@ void icon_init(char *name)
     Protect(mainhead = alccoexp(), fatalerr(303, NULL));
     mainhead->size = 1;			/* pretend main() does an activation */
     mainhead->main_of = mainhead->creator = mainhead->program = &rootpstate;
-    mainhead->es_activator = mainhead;
+    mainhead->activator = mainhead;
 
     /*
      * Point &main at the co-expression block for the main procedure and set
@@ -493,9 +455,7 @@ void syserr(char *fmt, ...)
     va_list ap;
     va_start(ap, fmt);
     fprintf(stderr, "System error");
-    if (pfp == NULL)
-        fprintf(stderr, " in startup code");
-    else {
+    if (set_up) {
         struct ipc_line *pline;
         struct ipc_fname *pfile;
 
@@ -509,13 +469,16 @@ void syserr(char *fmt, ...)
         } else
             fprintf(stderr, " at line ? in ?");
     }
+    else
+        fprintf(stderr, " in startup code");
+
     fprintf(stderr, "\n");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr,"\n");
     fflush(stderr);
     va_end(ap);
 
-    if (pfp == NULL) {		/* skip if start-up problem */
+    if (!set_up) {		/* skip if start-up problem */
         if (dodump)
             abort();
         c_exit(EXIT_FAILURE);
@@ -543,14 +506,6 @@ void c_exit(i)
     if (curpstate != NULL)
         EVVal((word)i, E_Exit);
 #endif					/* E_Exit */
-    if (curpstate != NULL && curpstate->parent != NULL) {
-        /* might want to get to the lterm somehow, instead */
-        while (0&&k_current != curpstate->parent->K_main) {
-            struct descrip dummy;
-            co_chng(curpstate->parent->K_main, 
-                    NULL, &dummy, A_Cofail, 1);
-        }
-    }
 
     if (k_dump && set_up) {
         fprintf(stderr,"\nTermination dump:\n\n");
@@ -665,7 +620,9 @@ static void initprogstate(struct progstate *p)
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;
     p->Cptable = cptable_0;
+/*
     p->Interp = interp_0;
+*/
     p->Cnvcset = cnv_cset_0;
     p->Cnvucs = cnv_ucs_0;
     p->Cnvint = cnv_int_0;
@@ -686,7 +643,6 @@ static void initprogstate(struct progstate *p)
     p->Alccast = alccast_0;
     p->Alcmethp = alcmethp_0;
     p->Alcucs = alcucs_0;
-    p->Alcrefresh = alcrefresh_0;
     p->Alcselem = alcselem_0;
     p->Alcstr = alcstr_0;
     p->Alcsubs = alcsubs_0;
@@ -695,9 +651,11 @@ static void initprogstate(struct progstate *p)
     p->Dealcblk = dealcblk_0;
     p->Dealcstr = dealcstr_0;
     p->Reserve = reserve_0;
+/**TODO
     p->FieldAccess = field_access_0;
     p->InvokefAccess = invokef_access_0;
     p->Invoke = invoke_0;
+***/
 }
 
 static void initptrs(struct progstate *p, struct header *h)
@@ -781,7 +739,7 @@ function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
        MemProtect(coex = alccoexp());
        coex->creator = curpstate;
        coex->main_of = coex->program = pstate;
-       coex->es_activator = coex;
+       coex->activator = coex;
 
        initprogstate(pstate);
        pstate->Kywd_time_elsewhere = millisec();
@@ -1337,7 +1295,7 @@ int main(int argc, char **argv)
     k_current->start_label = frame->ipc = frame->proc->icode;
     k_current->failure_label = 0;
     set_up = 1;			/* post fact that iconx is initialized */
-    interp2();
+    interp();
     c_exit(EXIT_SUCCESS);
 
     return 0;
