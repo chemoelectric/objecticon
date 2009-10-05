@@ -542,9 +542,10 @@ dptr u_read			(int fd, int n, dptr d);
    struct b_refresh *alcrefresh_0(word *e, int nl, int nt);
    struct b_refresh *alcrefresh_1(word *e, int nl, int nt);
 
-void ctrace(struct p_frame *pf);
-void failtrace(struct p_frame *pf);
-void strace(struct p_frame *pf, int op);
+void call_trace(struct p_frame *pf);
+void fail_trace(struct p_frame *pf);
+void suspend_trace(struct p_frame *pf);
+void return_trace(struct p_frame *pf);
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val);
 void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val);
 void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
@@ -552,7 +553,7 @@ void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
    int	invoke_0		(int nargs, dptr *cargs, int *n);
    int	invoke_1		(int nargs, dptr *cargs, int *n);
 
-   void	xdisp			(struct pf_marker *fp, dptr dp, int n, FILE *f, struct progstate *p);
+void xdisp(struct p_frame *pf, int count, FILE *f, struct progstate *p);
 
    #define Fargs dptr cargp
    int	Obscan			(struct frame *);

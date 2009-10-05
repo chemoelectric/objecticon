@@ -26,10 +26,6 @@ struct b_iproc mt_llist = {
 #include "../h/odefs.h"
 #undef OpDef
 
-extern struct b_proc Bbscan;
-extern struct b_proc Bescan;
-extern struct b_proc Bfield;
-extern struct b_proc Blimit;
 extern struct b_proc Bllist;
 
 struct b_proc *opblks[] = {
@@ -37,7 +33,6 @@ struct b_proc *opblks[] = {
 #define OpDef(p) Cat(&B,p),
 #include "../h/odefs.h"
 #undef OpDef
-   &Bbscan,
    NULL,
    NULL,
    NULL,
@@ -48,15 +43,16 @@ struct b_proc *opblks[] = {
    NULL,
    NULL,
    NULL,
-   &Bescan,
-   NULL,
-   &Bfield,
    NULL,
    NULL,
    NULL,
    NULL,
    NULL,
-   &Blimit,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
    &Bllist,
    NULL,
    NULL,
@@ -194,7 +190,7 @@ int (*optab[])() = {
 #define OpDef(p) Cat(O,p),
 #include "../h/odefs.h"
 #undef OpDef
-   Obscan,
+   err,
    err,
    err,
    err,
@@ -205,9 +201,9 @@ int (*optab[])() = {
    err,
    err,
    err,
-   Oescan,
    err,
-   Ofield
+   err,
+   err
    };
 
 /*

@@ -1,8 +1,6 @@
 #include "../h/opdefs.h"
 #include "../h/opnames.h"
 
-#define OPCODES 0
-
 static void transmit_failure();
 
 #include "interpiasm.ri"
@@ -53,6 +51,7 @@ void revert_PF()
 
 void tail_invoke_frame(struct frame *f)
 {
+/*    showcurrstack();*/
     switch (f->type) {
         case C_FRAME_TYPE: {
             if (!f->proc->ccode(f)) {
@@ -70,12 +69,17 @@ void tail_invoke_frame(struct frame *f)
                  */   
                 if (k_trace) {
                     k_trace--;
-                    ctrace(pf);
+                    call_trace(pf);
                 }
                 /*fprintf(stderr, "Invoke:from curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
                 CHANGEPROGSTATE(pf->proc->program);
                 /*fprintf(stderr, "       to   curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
                 ++k_level;
+                /* Todo*/
+                if (k_level > 500) {
+                    lastop = Op_Exit;
+                    fatalerr(311, NULL);
+                }
             }
             PF = pf;
             break;
@@ -89,19 +93,6 @@ void push_frame(struct frame *f)
 {
     f->parent_sp = k_current->sp;
     k_current->sp = f;
-}
-
-void push_p_frame(struct p_frame *f)
-{
-    f->parent_sp = k_current->sp;
-    SP = (struct frame *)f;
-    PF = f;
-}
-
-void push_c_frame(struct c_frame *f)
-{
-    f->parent_sp = k_current->sp;
-    SP = (struct frame *)f;
 }
 
 void pop_to(struct frame *f)
@@ -144,7 +135,7 @@ dptr get_dptr()
             return 0;
         }
         case Op_Static: {
-            return &CurrProc->fstatic[GetWord];
+            return &curpstate->Statics[GetWord];
         }
         case Op_Arg: {
             return &PF->locals->args[GetWord];
@@ -190,7 +181,7 @@ void get_descrip(dptr dest)
             break;
         }
         case Op_Static: {
-            *dest = CurrProc->fstatic[GetWord];
+            *dest = curpstate->Statics[GetWord];
             break;
         }
         case Op_Arg: {
@@ -241,7 +232,7 @@ void get_deref(dptr dest)
             break;
         }
         case Op_Static: {
-            *dest = CurrProc->fstatic[GetWord];
+            *dest = curpstate->Statics[GetWord];
             break;
         }
         case Op_Arg: {
@@ -292,7 +283,7 @@ void get_variable(dptr dest)
             break;
         }
         case Op_Static: {
-            MakeNamedVar(&CurrProc->fstatic[GetWord], dest);
+            MakeNamedVar(&curpstate->Statics[GetWord], dest);
             break;
         }
         case Op_Arg: {
@@ -331,7 +322,7 @@ static void do_op(int op, int nargs)
     int i;
     lhs = get_dptr();
     MemProtect(cf = alc_c_frame(bp, nargs));
-    push_c_frame(cf);
+    push_frame((struct frame *)cf);
     xnargs = nargs;
     xargp =cf->args;
     if (bp->underef) {
@@ -359,7 +350,7 @@ static void do_opclo(int op, int nargs)
     word *failure_label;
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, nargs));
-    push_c_frame(cf);
+    push_frame((struct frame *)cf);
     xnargs = nargs;
     xargp = cf->args;
     if (bp->underef) {
@@ -388,7 +379,7 @@ static void do_keyop()
     lhs = get_dptr();
 
     MemProtect(cf = alc_c_frame(bp, 0));
-    push_c_frame(cf);
+    push_frame((struct frame *)cf);
     xnargs = 0;
     xargp = 0;
     failure_label = get_addr();
@@ -409,7 +400,7 @@ static void do_keyclo()
     bp = keyblks[GetWord];
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, 0));
-    push_c_frame(cf);
+    push_frame((struct frame *)cf);
     xnargs = 0;
     xargp = 0;
     failure_label = get_addr();
@@ -465,9 +456,10 @@ static void do_coact()
     word *failure_label;
 
     lhs = get_dptr();
-    get_deref(&arg1);
-    get_descrip(&arg2);
-    retderef(&arg2, PF->locals);
+
+    get_descrip(&arg1);   /* Value */
+    get_deref(&arg2);     /* Coexp */
+    retderef(&arg1, PF->locals);
     failure_label = get_addr();
     if (arg2.dword != D_Coexpr) {
         xargp = &arg1;
@@ -629,10 +621,6 @@ void interp2()
     for (;;) {
         PF->curr_inst = Ipc;
         lastop = op = GetWord;
-#if OPCODES
-        fprintf(stderr, "ipc:%p(%d)  ", Ipc, (char*)Ipc - curpstate->Code - WordSize);
-        fprintf(stderr, "op=%d(%s)\n", op, op_names[op]);fflush(stderr);
-#endif
         switch (op) {
             case Op_Goto: {
                 Ipc = get_addr();
@@ -718,6 +706,13 @@ void interp2()
                 break;
             }
 
+            /* Binary closures */
+            case Op_Rasgn:
+            case Op_Rswap:{
+                do_opclo(op, 2);
+                break;
+            }
+
             case Op_Toby: {
                 do_opclo(op, 3);
                 break;
@@ -744,7 +739,12 @@ void interp2()
                 clo = GetWord;
                 f = PF->clo[clo];
                 f->failure_label = get_addr();
-                tail_invoke_frame(f);
+                if (f->exhausted) {
+                    /* Just go to failure label and dispose of the frame */
+                    Ipc = f->failure_label;
+                    pop_to(f->parent_sp);
+                } else
+                    tail_invoke_frame(f);
                 break;
             }
 
@@ -753,7 +753,7 @@ void interp2()
                 revert_PF();
                 if (k_trace && t->proc->program) {
                     k_trace--;
-                    failtrace(t);
+                    fail_trace(t);
                 }
                 Ipc = t->failure_label;
                 pop_to(t->parent_sp);
@@ -775,15 +775,27 @@ void interp2()
                 break;
             }
 
-            case Op_Suspend:
-            case Op_Return: {
+            case Op_Suspend: {
                 struct p_frame *t = PF;
                 get_descrip(&PF->value);
                 retderef(&PF->value, PF->locals);
                 revert_PF();
                 if (k_trace && t->proc->program) {
                     k_trace--;
-                    strace(t, op);
+                    suspend_trace(t);
+                }
+                break;
+            }
+
+            case Op_Return: {
+                struct p_frame *t = PF;
+                get_descrip(&PF->value);
+                retderef(&PF->value, PF->locals);
+                t->exhausted = 1;
+                revert_PF();
+                if (k_trace && t->proc->program) {
+                    k_trace--;
+                    return_trace(t);
                 }
                 break;
             }

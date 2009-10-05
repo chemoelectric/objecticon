@@ -4,38 +4,7 @@
  * File: imisc.r
  *  Contents: field, mkrec, limit, llist, bscan, escan
  */
-operator{*} . field(o, f)
-    body { fail; }
-end
 
-operator{*} \ limit(e, i)
-    body { fail; }
-end
-
-operator{*} ? bscan(s, e)
-    body { fail; }
-end
-
-operator{*} ? escan()
-    body { fail; }
-end
-
-
-
-#ifdef CHECK
-
-LibDcl(field,2,0,".")
-{
-    int r;
-    struct inline_field_cache *ic;
-    ic = (struct inline_field_cache*)ipc;
-    ipc += 2;
-    r = field_access(cargp, ic);
-    if (r == Error)
-        RunErr(0, &Arg1);
-    Return;
-}
-#endif
 
 #begdef SaveCargp(event)
 #if event

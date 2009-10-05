@@ -559,7 +559,7 @@ void c_exit(i)
                 (long)k_current->id,
                 (long)k_current->size);
         fflush(stderr);
-        xdisp(pfp,argp,k_level,stderr, curpstate);
+        xdisp(k_current->curr_pf,k_level,stderr, curpstate);
     }
 
 #ifdef MSWindows
@@ -1393,6 +1393,7 @@ void print_desc(FILE *f, dptr d) {
     fputs(", ", f); 
     print_vword(f, d);
     putc('}', f);
+    fflush(f);
 }
 
 void print_vword(FILE *f, dptr d) {
@@ -1567,6 +1568,7 @@ void showstack(struct b_coexpr *c)
         BlkLoc(tmp) = (union block *)f->proc;
         printf("\tproc="); print_vword(stdout, &tmp); printf("\n");
         printf("\tparent_sp=%p\n", f->parent_sp);
+        printf("\texhausted=%d\n", f->exhausted);
         switch (f->type) {
             case C_FRAME_TYPE: {
                 struct c_frame *cf = (struct c_frame *)f;

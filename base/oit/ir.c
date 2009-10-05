@@ -1440,7 +1440,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             v = make_tmp(body_expr_st);
             body_mk = make_mark(body_expr_st);
 
-            expr = ir_traverse(x->child1, body_expr_st, v, 0, 1);
+            expr = ir_traverse(x->child1, body_expr_st, v, 0, 0);
             body = ir_traverse(x->child2, body_expr_st, 0, 1, 1);
             pop_loop();
 
@@ -1494,7 +1494,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             expr_st = branch_stack(res->loop->loop_st);
             v = make_tmp(expr_st);
 
-            expr = ir_traverse(x->child, expr_st, v, 0, 1);
+            expr = ir_traverse(x->child, expr_st, v, 0, 0);
             pop_loop();
 
             chunk2(res->start, 
@@ -1618,13 +1618,17 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         }
 
         case Uop_Next: {                        /* next expression */
-            if (loop_stack->loop->scan_stack)
+            if (scan_stack != loop_stack->loop->scan_stack) {
+                /* A scan is within the loop, and the next is within the scan.  Find the
+                 * first scan within the loop, ie the one above loop_stack->loop->scan_stack in the stack */
+                struct ir_info *t = scan_stack;
+                while (t->scan->next != loop_stack->loop->scan_stack)
+                    t = t->scan->next;
                 chunk2(res->start, 
-                       ir_scanrestore(n, 
-                                      loop_stack->loop->scan_stack->scan->old_subject, 
-                                      loop_stack->loop->scan_stack->scan->old_pos),
+                       ir_scanrestore(n, t->scan->old_subject, 
+                                      t->scan->old_pos),
                        ir_goto(n, loop_stack->loop->next_chunk));
-            else
+            } else
                 chunk1(res->start, 
                        ir_goto(n, loop_stack->loop->next_chunk));
             if (!bounded)
@@ -1984,7 +1988,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
             chunk1(res->start, ir_goto(n, info[0]->start));
             if (!bounded)
-                chunk1(res->resume, ir_goto(n, info[x->n - 1]->start));
+                chunk1(res->resume, ir_goto(n, info[x->n - 1]->resume));
 
             /* First one */
             chunk1(info[0]->success,
@@ -2084,7 +2088,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                   cond_ir_mark(expr->uses_stack, n, if_mk),
                   ir_goto(n, expr->start));
             if (!bounded)
-                chunk1(res->resume, ir_goto(n, expr->resume));
+                chunk1(res->resume, ir_goto(n, then->resume));
             chunk2(expr->success,
                   cond_ir_unmark(expr->uses_stack, n, if_mk),
                   ir_goto(n, then->start));

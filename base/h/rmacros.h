@@ -774,7 +774,8 @@ do { \
 #define FAIL(G)  \
 do {\
     __label__ lab;                              \
-    ((struct c_frame *)(G))->pc = &&lab;          \
+    ((struct c_frame *)(G))->pc = &&lab;        \
+    (G)->exhausted = 1;                         \
   lab: \
     return 0;                                   \
 } while(0)
@@ -790,7 +791,8 @@ do {\
 #define RETURN(G)  \
 do {\
     __label__ lab;                              \
-    ((struct c_frame *)(G))->pc = &&lab;          \
+    ((struct c_frame *)(G))->pc = &&lab;        \
+    (G)->exhausted = 1;                         \
     return 1;                                   \
   lab: \
     return 0;                                   \

@@ -432,9 +432,16 @@ static void keyref(bp, dp)
     alcstr("]", 1);
 }
 
-void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
+static void cotrace_line(struct b_coexpr *from)
 {
     showline(from->curr_pf);
+    showlevel(k_level);
+    procname(stderr, from->curr_pf->proc);
+}
+
+void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
+{
+    cotrace_line(from);
     fprintf(stderr,"; co-expression#%ld : ", (long)from->id);
     outimage(stderr, val, 0);
     fprintf(stderr, " @ co-expression#%ld\n", (long)to->id);
@@ -443,7 +450,7 @@ void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 
 void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 {
-    showline(from->curr_pf);
+    cotrace_line(from);
     fprintf(stderr,"; co-expression#%ld returned ", (long)from->id);
     outimage(stderr, val, 0);
     fprintf(stderr, " to co-expression#%ld\n", (long)to->id);
@@ -452,7 +459,7 @@ void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 
 void trace_cofail(struct b_coexpr *from, struct b_coexpr *to)
 {
-    showline(from->curr_pf);
+    cotrace_line(from);
     fprintf(stderr,"; co-expression#%ld failed to co-expression#%ld\n", (long)from->id, (long)to->id);
     fflush(stderr);
 }
@@ -740,7 +747,7 @@ static void ttrace()
 /*
  * ctrace - a procedure p being called; produce a trace message.
  */
-void ctrace(struct p_frame *pf)
+void call_trace(struct p_frame *pf)
 {
     int nargs;
     dptr args;
@@ -766,10 +773,10 @@ void ctrace(struct p_frame *pf)
 }
 
 /*
- * failtrace - procedure p is failing; produce a trace message.
+ * procedure frame pf is failing; produce a trace message.
  */
 
-void failtrace(struct p_frame *pf)
+void fail_trace(struct p_frame *pf)
 {
     showline(pf);
     showlevel(k_level);
@@ -780,18 +787,31 @@ void failtrace(struct p_frame *pf)
 }
 
 /*
- * strace - procedure p is suspending *rval; produce a trace message.
+ * procedure frame pf is suspending; produce a trace message.
  */
 
-void strace(struct p_frame *pf, int op)
+void suspend_trace(struct p_frame *pf)
 {
     showline(pf);
     showlevel(k_level);
     procname(stderr, pf->proc);
-    if (op == Op_Return)
-        fprintf(stderr, " returned ");
-    else
-        fprintf(stderr, " suspended ");
+    fprintf(stderr, " suspended ");
+    outimage(stderr, &pf->value, 0);
+    putc('\n', stderr);
+    fflush(stderr);
+}
+
+
+/*
+ * procedure frame pf is returning; produce a trace message.
+ */
+
+void return_trace(struct p_frame *pf)
+{
+    showline(pf);
+    showlevel(k_level);
+    procname(stderr, pf->proc);
+    fprintf(stderr, " returned ");
     outimage(stderr, &pf->value, 0);
     putc('\n', stderr);
     fflush(stderr);
@@ -803,23 +823,22 @@ void strace(struct p_frame *pf, int op)
  *  procedure calls to file f.
  */
 
-void xdisp(struct pf_marker *fp,
-          dptr dp,
-          int count,
-          FILE *f,
-          struct progstate *p)
+void xdisp(struct p_frame *pf,
+           int count,
+           FILE *f,
+           struct progstate *p)
 {
     register dptr np;
     register int n;
     struct b_proc *bp;
     word nglobals;
+    dptr dp;
 
     while (count--) {		/* go back through 'count' frames */
-        if (fp == NULL)
+        if (pf == NULL)
             break;       /* needed because &level is wrong in co-expressions */
 
-        bp = (struct b_proc *)BlkLoc(*dp++); /* get addr of procedure block */
-        /* #%#% was: no post-increment there, but *pre*increment dp below */
+        bp = pf->proc;   /* get addr of procedure block */
 
         /*
          * Print procedure name.
@@ -831,6 +850,7 @@ void xdisp(struct pf_marker *fp,
          * Print arguments.
          */
         np = bp->lnames;
+        dp = pf->locals->args;
         for (n = abs((int)bp->nparam); n > 0; n--) {
             fprintf(f, "   ");
             putstr(f, np);
@@ -843,7 +863,7 @@ void xdisp(struct pf_marker *fp,
         /*
          * Print locals.
          */
-        dp = &fp->pf_locals[0];
+        dp = pf->locals->dynamic;
         for (n = bp->ndynam; n > 0; n--) {
             fprintf(f, "   ");
             putstr(f, np);
@@ -866,8 +886,7 @@ void xdisp(struct pf_marker *fp,
             np++;
         }
 
-        dp = fp->pf_argp;
-        fp = fp->pf_pfp;
+        pf = pf->caller;
     }
 
     /*

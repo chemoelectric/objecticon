@@ -186,29 +186,25 @@ function{1} display(i,c)
       }
 
    body {
-      FILE *std_f = stderr;
-
-      /*
-       * Produce error if i is negative; constrain i to be <= &level.
-       */
-      if (i < 0) {
-         irunerr(205, i);
-         errorfail;
-         }
-      else if (i > k_level)
-         i = k_level;
-
-      fprintf(std_f,"co-expression_%ld(%ld)\n\n",
-         (long)k_current->id,
-	 (long)k_current->size);
-      fflush(std_f);
-      if (ce) {
-	 if ((ce->es_pfp == NULL) || (ce->es_argp == NULL)) fail;
-         xdisp(ce->es_pfp, ce->es_argp, (int)i, std_f, ce->program);
+       /*
+        * Produce error if i is negative; constrain i to be <= &level.
+        */
+       if (i < 0) {
+           irunerr(205, i);
+           errorfail;
        }
-      else
-         xdisp(pfp, argp, (int)i, std_f, curpstate);
-      return nulldesc;
+       else if (i > k_level)
+           i = k_level;
+
+       fprintf(stderr,"co-expression_%ld(%ld)\n\n",
+               (long)k_current->id,
+               (long)k_current->size);
+       fflush(stderr);
+       if (ce)
+           xdisp(ce->curr_pf, i, stderr, ce->program);
+       else
+           xdisp(k_current->curr_pf, i, stderr, curpstate);
+       return nulldesc;
       }
 end
 

@@ -484,6 +484,7 @@ dptr dp;
    }
 
 
+/**
 static void print_block(FILE *f, union block *b)
 {
     word t;
@@ -501,6 +502,7 @@ static void print_block(FILE *f, union block *b)
     
     fflush(f);
 }
+**/
 
 static void markptr(union block **ptr)
 {

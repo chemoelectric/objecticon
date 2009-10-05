@@ -87,7 +87,7 @@ struct errtab errtab[] = {
     {308, "system stack overflow in co-expression"},
     {309, "out of memory, allocation returned null"},
     {310, "inadequate co-expression C stack space during garbage collection"},
-    {311, "main stack overflow"},
+    {311, "recursion too deep"},
     {312, "stack overflow in co-expression"},
     {313, "inadequate space for string region"},
     {314, "inadequate space for block region"},

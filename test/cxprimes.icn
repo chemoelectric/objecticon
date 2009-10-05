@@ -5,12 +5,13 @@ import io
 #  prime number generation using co-expressions
 
 procedure main()
-   local s, x
+   local s, x, t
 
    s := create (2 to 100)
    while (x := @s) do {
       write(x)
-      s := create sieve(x, s)
+      t := s
+      s := create sieve(x, t)
    }
 end
 
