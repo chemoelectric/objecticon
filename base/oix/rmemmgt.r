@@ -415,13 +415,15 @@ static void markprogram(pstate)
 struct progstate *pstate;
    {
    struct descrip *dp;
+   int i;
 
    PostDescrip(pstate->eventmask);
-   PostDescrip(pstate->opcodemask);
-   PostDescrip(pstate->valuemask);
-   PostDescrip(pstate->eventcode);
-   PostDescrip(pstate->eventval);
-   PostDescrip(pstate->eventsource);
+   for (i = 0; i < pstate->n_prog_events; ++i) {
+       struct prog_event *ev =
+           &pstate->prog_event_buff[(pstate->first_prog_event + i) % ElemCount(pstate->prog_event_buff)];
+       PostDescrip(ev->eventcode);
+       PostDescrip(ev->eventval);
+   }
 
    /* Kywd_err, &error, always an integer */
    /* Kywd_pos, &pos, always an integer */

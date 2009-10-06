@@ -8,9 +8,10 @@ $start load_wrapper
         MainExit
         Op_Arg arg:1
       
-# main() has exited; repeatedly fail to the enclosing coexpression.
+# main() has exited; either fail to the enclosing coexpression or
+# transfer to the parent progstate.
 MainExit:
-    Op_Cofail
+    Op_Custom c:handle_loaded_prog_exit
     Op_Goto 
         MainExit
 $end

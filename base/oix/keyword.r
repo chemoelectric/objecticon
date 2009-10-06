@@ -165,7 +165,7 @@ keyword{0,1} eventcode
       return kywdany
       }
    inline {
-      return kywdany(&k_eventcode);
+       return nulldesc;
       }
 end
 
@@ -175,7 +175,7 @@ keyword{0,1} eventsource
       return kywdany
       }
    inline {
-      return kywdany(&k_eventsource);
+       return nulldesc;
       }
 end
 
@@ -185,7 +185,7 @@ keyword{0,1} eventvalue
       return kywdany
       }
    inline {
-      return kywdany(&k_eventvalue);
+       return nulldesc;
       }
 end
 

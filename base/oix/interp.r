@@ -2,9 +2,19 @@
 #include "../h/opnames.h"
 
 static void transmit_failure();
+static void get_child_prog_result();
+static void activate_child_prog();
 
 #include "interpiasm.ri"
 
+#define CHANGEPROGSTATE(p) if (((p)!=curpstate)) { changeprogstate(p); }
+
+static void changeprogstate(struct progstate *p)
+{
+    p->K_current = k_current;
+    curpstate = p;
+    k_current->program = curpstate;
+}
 
 /*
  * Invoked from a custom fragment.  Act as though the
@@ -459,15 +469,17 @@ static void do_coact()
 
     get_descrip(&arg1);   /* Value */
     get_deref(&arg2);     /* Coexp */
-    retderef(&arg1, PF->locals);
     failure_label = get_addr();
-    if (arg2.dword != D_Coexpr) {
+    if (!is:coexpr(arg2)) {
         xargp = &arg1;
         xexpr = &arg2;
         err_msg(118, &arg2);
         Ipc = failure_label;
         return;
     }
+
+    if (BlkLoc(arg2)->coexpr.curr_pf->locals != PF->locals)
+        retderef(&arg1, PF->locals);
 
     if (k_trace) {
         --k_trace;
@@ -488,7 +500,9 @@ static void do_coret()
 {
     tended struct descrip val;
     get_descrip(&val);
-    retderef(&val, PF->locals);
+
+    if (k_current->activator->curr_pf->locals != PF->locals)
+        retderef(&val, PF->locals);
 
     /*printf("coret FROM %p to %p VAL=",k_current, k_current->activator);print_desc(stdout, val);printf("\n");*/
     if (k_trace) {
@@ -508,7 +522,7 @@ static void do_coret()
         *k_current->tvalloc = val;
 }
 
-static void do_cofail()
+void do_cofail()
 {
     /*printf("cofail FROM %p to %p",k_current, k_current->activator);printf("\n");*/
     if (k_trace) {
@@ -619,6 +633,10 @@ void interp()
 {
     word op;
     for (;;) {
+        if (curpstate->n_prog_events) {
+            /* Switch to parent program */
+            curpstate = curpstate->parent;
+        }
         PF->curr_inst = Ipc;
         lastop = op = GetWord;
         switch (op) {
@@ -929,103 +947,71 @@ void interp()
     }
 }
 
-
-
-
-
-
-
-
-
-/*
- * activate some other co-expression from an arbitrary point in
- * the interpreter.
- */
-int mt_activate(tvalp,rslt,ncp)
-dptr tvalp, rslt;
-register struct b_coexpr *ncp;
+static void activate_child_prog()
 {
-   register struct b_coexpr *ccp = k_current;
-   int first, rv;
-   dptr savedtvalloc = NULL;
-
-   /*
-    * Set activator in new co-expression.
-    */
-   if (ncp->activator == NULL) {
-      /*
-       * If no one ever explicitly activates this co-expression, fail to
-       * the implicit activator.
-       */
-      ncp->activator = ccp;
-      first = 0;
-      }
-   else
-      first = 1;
-
-   if(ccp->tvalloc) {
-     if (InRange(blkbase,ccp->tvalloc,blkfree)) {
-        syserr("Multiprogram garbage collection disaster in mt_activate()!");
-     }
-     savedtvalloc = ccp->tvalloc;
-   }
-
-   ccp->program->Kywd_time_out = millisec();
-
-/*   rv = co_chng(ncp, tvalp, rslt, A_MTEvent, first); */
-   rv = 0;
-   ccp->program->Kywd_time_elsewhere +=
-      millisec() - ccp->program->Kywd_time_out;
-
-   if ((savedtvalloc != NULL) && (savedtvalloc != ccp->tvalloc)) {
-#if 0
-      fprintf(stderr,"averted co-expression disaster in activate\n");
-#endif
-      ccp->tvalloc = savedtvalloc;
-      }
-
-   /*
-    * flush any accumulated ticks
-    */
-#if UNIX && E_Tick
-   if (ticker.l[0] + ticker.l[1] + ticker.l[2] + ticker.l[3] +
-       ticker.l[4] + ticker.l[5] + ticker.l[6] + ticker.l[7] != oldtick) {
-      word sum, nticks;
-
-      oldtick = ticker.l[0] + ticker.l[1] + ticker.l[2] + ticker.l[3] +
-       ticker.l[4] + ticker.l[5] + ticker.l[6] + ticker.l[7];
-      sum = ticker.s[0] + ticker.s[1] + ticker.s[2] + ticker.s[3] +
-	 ticker.s[4] + ticker.s[5] + ticker.s[6] + ticker.s[7] +
-	    ticker.s[8] + ticker.s[9] + ticker.s[10] + ticker.s[11] +
-	       ticker.s[12] + ticker.s[13] + ticker.s[14] + ticker.s[15];
-      nticks = sum - oldsum;
-      oldsum = sum;
-      }
-#endif					/* UNIX && E_Tick */
-
-   return rv;
+    dptr ce = get_dptr();
+    curpstate = BlkLoc(*ce)->coexpr.main_of;
 }
 
-
-/*
- * activate the "&parent" co-expression from anywhere, if there is one
- */
-void actparent(event)
-int event;
-   {
-   struct progstate *parent = curpstate->parent;
-
-   curpstate->eventcount.vword.integer++;
-   StrLen(parent->eventcode) = 1;
-   StrLoc(parent->eventcode) = &allchars[event & 0xFF];
-   mt_activate(&(parent->eventcode), NULL, curpstate->parent->K_main);
-   }
-
-
-void changeprogstate(struct progstate *p)
+static void get_child_prog_result()
 {
-    p->K_current = k_current;
-    curpstate = p;
-    k_current->program = curpstate;
+    struct progstate *prog;
+    dptr ce = get_dptr();
+    dptr res = get_dptr();
+    word *failure_label = get_addr();
+
+    prog = BlkLoc(*ce)->coexpr.main_of;
+    if (prog->exited) {
+       Ipc = failure_label;
+       return;
+    }
+
+    if (!prog->n_prog_events)
+        syserr("Expected a prog event in the queue");
+    BlkLoc(*res)->object.fields[0] = prog->prog_event_buff[prog->first_prog_event].eventcode;
+    BlkLoc(*res)->object.fields[1] = prog->prog_event_buff[prog->first_prog_event].eventval;
+    prog->first_prog_event = (prog->first_prog_event + 1) % ElemCount(curpstate->prog_event_buff);
+    --prog->n_prog_events;
 }
+
+function{0,1} lang_Prog_get_event_impl(c, res)
+   if !is:coexpr(c) then
+      runerr(118,c)
+   body {
+       struct progstate *prog = BlkLoc(c)->coexpr.main_of;
+       struct p_frame *pf;
+       if (!prog)
+           runerr(632, c);
+       if (prog->parent != curpstate)
+           runerr(633, c);
+       if (prog->n_prog_events) {
+           BlkLoc(res)->object.fields[0] = prog->prog_event_buff[prog->first_prog_event].eventcode;
+           BlkLoc(res)->object.fields[1] = prog->prog_event_buff[prog->first_prog_event].eventval;
+           prog->first_prog_event = (prog->first_prog_event + 1) % ElemCount(curpstate->prog_event_buff);
+           --prog->n_prog_events;
+           return res;
+       }
+       if (prog->exited)
+           fail;
+       MemProtect(pf = alc_p_frame((struct b_proc *)&Blang_Prog_get_event_impl_impl, 0));
+       push_frame((struct frame *)pf);
+       pf->locals->args[0] = c;
+       pf->locals->args[1] = res;
+       tail_invoke_frame((struct frame *)pf);
+       return nulldesc;
+   }
+end
+
+void add_to_prog_event_buff(dptr value, int event)
+{
+    int i;
+    if (curpstate->n_prog_events >= ElemCount(curpstate->prog_event_buff))
+        ffatalerr("Prog event buffer overflowed");
+    i = (curpstate->first_prog_event + curpstate->n_prog_events) % ElemCount(curpstate->prog_event_buff);
+    StrLen(curpstate->prog_event_buff[i].eventcode) = 1;
+    StrLoc(curpstate->prog_event_buff[i].eventcode) = &allchars[event & 0xFF];
+    curpstate->prog_event_buff[i].eventval = *value;
+    ++curpstate->n_prog_events;
+}
+
 

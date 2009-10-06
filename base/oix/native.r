@@ -266,29 +266,7 @@ function{1} lang_Prog_get_parent(c)
     }
 end
 
-function{0,1} lang_Prog_send_event(x,y,ce)
-   body {
-      struct progstate *dest;
-
-      if (is:null(x)) {
-	 x = curpstate->eventcode;
-	 if (is:null(y)) y = curpstate->eventval;
-      }
-      if (!(dest = get_program_for(&ce)))
-          runerr(0);
-      dest->eventcode = x;
-      dest->eventval = y;
-#ifdef CHECK
-      if (mt_activate(&(dest->eventcode),&result,
-			 (struct b_coexpr *)BlkLoc(ce)) == A_Cofail) {
-         fail;
-         }
-#endif
-       return result;
-      }
-end
-
-function{1} lang_Prog_get_eventmask(ce)
+function{1} lang_Prog_get_event_mask(ce)
    body {
        struct progstate *prog;
        if (!(prog = get_program_for(&ce)))
@@ -297,7 +275,7 @@ function{1} lang_Prog_get_eventmask(ce)
    }
 end
 
-function{1} lang_Prog_set_eventmask(cs, ce)
+function{1} lang_Prog_set_event_mask(cs, ce)
    if !cnv:cset(cs) then 
       runerr(104,cs)
    body {
@@ -309,49 +287,6 @@ function{1} lang_Prog_set_eventmask(cs, ce)
            assign_event_functions(prog, cs);
        }
        return cs;
-   }
-end
-
-function{1} lang_Prog_get_valuemask(ce)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&ce)))
-          runerr(0);
-       return prog->valuemask;
-   }
-end
-
-function{1} lang_Prog_set_valuemask(vmask, ce)
-   if !is:table(vmask) then
-      runerr(124,vmask)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&ce)))
-          runerr(0);
-       prog->valuemask = vmask;
-       return vmask;
-   }
-end
-
-
-function{1} lang_Prog_set_opmask(cs, ce)
-   if !cnv:cset(cs) then 
-      runerr(104,cs)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&ce)))
-          runerr(0);
-       prog->opcodemask = cs;
-       return cs;
-   }
-end
-
-function{1} lang_Prog_get_opmask(ce)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&ce)))
-          runerr(0);
-       return prog->opcodemask;
    }
 end
 
@@ -476,9 +411,6 @@ function{*} lang_Prog_get_keyword(s,c)
               if (strncmp(t,"errortext",9) == 0) {
                   return p->K_errortext;
               }
-              if (strncmp(t,"eventcode",9) == 0) {
-                  return kywdany(&(p->eventcode));
-              }
               break;
           }
 
@@ -486,17 +418,11 @@ function{*} lang_Prog_get_keyword(s,c)
               if (strncmp(t,"errorvalue",10) == 0) {
                   return p->K_errorvalue;
               }
-              if (strncmp(t,"eventvalue",10) == 0) {
-                  return kywdany(&(p->eventval));
-              }
               break;
           }
           case 12 : {
               if (strncmp(t,"errornumber",11) == 0) {
                   return C_integer p->K_errornumber;
-              }
-              if (strncmp(t,"eventsource",11) == 0) {
-                  return kywdany(&(p->eventsource));
               }
               break;
           }

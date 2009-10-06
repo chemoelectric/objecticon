@@ -63,42 +63,27 @@ class Prog()
    public static defer get_parent(P)
 
    #
-   # Get the given program's opcode mask
-   #
-   public static defer get_opmask(P)
-
-   #
-   # Set the given program's opcode mask
-   #
-   public static defer set_opmask(cs, P)
-
-   #
    # Get the given program's event mask
    #
-   public static defer get_eventmask(P)
+   public static defer get_event_mask(P)
 
    #
    # Set the given program's event mask
    #
-   public static defer set_eventmask(cs, P)
+   public static defer set_event_mask(cs, P)
 
    #
-   # Get the given program's value mask
+   # Get the next event from program P.
    #
-   public static defer get_valuemask(P)
+   public static get_event(P)
+      static res
+      initial
+         res := ProgEvent()
+      if get_event_impl(P, res) then
+         return res
+   end
 
-   #
-   # Set the given program's value mask
-   #
-   public static defer set_valuemask(t, P)
-
-   #
-   # Create event in program P with event code x and event value y,
-   # and activate it.
-   #
-   public static defer send_event(x, y, P)
-
-   public static defer get_event(cs, vmask, flag)
+   private static defer get_event_impl(P, res)
 
    #
    # Return the program holding the current execution point
@@ -299,4 +284,9 @@ class Region()
       self.size := size
       return
    end
+end
+
+class ProgEvent()
+   private readable
+      code, value
 end

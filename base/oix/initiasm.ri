@@ -7,7 +7,8 @@ static word load_wrapper_code[] = {
    8*WordSize,
    Op_Arg,
    1,
-   Op_Cofail,
+   Op_Custom,
+   (word)handle_loaded_prog_exit,
    Op_Goto,
    8*WordSize,
 };

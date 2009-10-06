@@ -12,7 +12,7 @@ static int subs_asgn	(dptr dest, const dptr src);
  */
 #begdef GeneralAsgn(x, y)
 {
-   EVVar(&x, E_Assign);
+   EVValD(&x, E_Assign);
 
    type_case x of {
       named_var: {

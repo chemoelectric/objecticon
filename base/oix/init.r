@@ -11,6 +11,7 @@ static FILE    *readhdr	(char *name, struct header *hdr);
 static void    initptrs (struct progstate *p, struct header *h);
 static void    initprogstate(struct progstate *p);
 static void    initalloc(struct progstate *p);
+static void    handle_loaded_prog_exit();
 
 /*
  * External declarations for operator and function blocks.
@@ -583,12 +584,7 @@ static void initalloc(struct progstate *p)
 static void initprogstate(struct progstate *p)
 {
     p->eventmask= nulldesc;
-    p->opcodemask= nulldesc;
-    p->eventcount = zerodesc;
-    p->valuemask= nulldesc;
-    p->eventcode= nulldesc;
-    p->eventval = nulldesc;
-    p->eventsource = nulldesc;
+    p->n_prog_events = p->first_prog_event = 0;
     p->Kywd_err = zerodesc;
     p->Kywd_pos = onedesc;
     p->Kywd_why = emptystr;
@@ -694,6 +690,15 @@ static void initptrs(struct progstate *p, struct header *h)
 
 
 #include "initiasm.ri"
+
+static void handle_loaded_prog_exit()
+{
+    curpstate->exited = 1;
+    if (k_current != k_current->activator)
+        do_cofail();
+    else
+        curpstate = curpstate->parent;
+}
 
 " load a program corresponding to string s as a co-expression."
 

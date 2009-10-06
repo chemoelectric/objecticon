@@ -360,6 +360,11 @@ struct ipc_line {
     word line;		/* line number */
 };
 
+struct prog_event {
+    struct descrip eventcode;
+    struct descrip eventval;
+};
+
 /*
  * Program state encapsulation.  This consists of the VARIABLE parts of
  * many global structures.
@@ -368,13 +373,11 @@ struct progstate {
     word icodesize;			/* size of icode */
     struct progstate *parent;
     struct progstate *next;
-    struct descrip eventmask;		/* implicit "&eventmask" */
-    struct descrip opcodemask;		/* implicit "&opcodemask" */
-    struct descrip eventcount;		/* implicit "&eventcount" */
-    struct descrip valuemask;
-    struct descrip eventcode;		/* &eventcode */
-    struct descrip eventval;		/* &eventval */
-    struct descrip eventsource;		/* &eventsource */
+
+    struct descrip eventmask;
+    word n_prog_events;                 /* buffer for program events. */
+    word first_prog_event;
+    struct prog_event prog_event_buff[16];
 
     /*
      * trapped variable keywords' values
@@ -433,6 +436,7 @@ struct progstate {
     struct region *blockregion;
 
     word Lastop;
+    word exited;                        /* set to 1 when the main procedure exits */
 
     dptr Xexpr;
     dptr Xfield;

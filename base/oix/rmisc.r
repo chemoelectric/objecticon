@@ -128,30 +128,6 @@ int getvar(dptr s, dptr vp, struct progstate *p)
                 }
                 break;
             }
-            case 10 : {
-                if (strncmp(t,"eventcode",9) == 0) {
-                    vp->dword = D_Kywdany;
-                    VarLoc(*vp) = &p->eventcode;
-                    return Succeeded;
-                }
-                break;
-            }
-            case 11 : {
-                if (strncmp(t,"eventvalue",10) == 0) {
-                    vp->dword = D_Kywdany;
-                    VarLoc(*vp) = &p->eventval;
-                    return Succeeded;
-                }
-                break;
-            }
-            case 12 : {
-                if (strncmp(t,"eventsource",11) == 0) {
-                    vp->dword = D_Kywdany;
-                    VarLoc(*vp) = &p->eventsource;
-                    return Succeeded;
-                }
-                break;
-            }
         }
         return Failed;
     }
@@ -849,16 +825,6 @@ int noimage;
             fprintf(f, "&dump = ");
          else if (VarLoc(*dp) == &kywd_err)
             fprintf(f, "&error = ");
-         outimage(f, VarLoc(*dp), noimage);
-         }
-
-      kywdany: {
-         if (VarLoc(*dp) == &curpstate->eventsource)
-            fprintf(f, "&eventsource = ");
-         else if (VarLoc(*dp) == &curpstate->eventcode)
-            fprintf(f, "&eventcode = ");
-         else if (VarLoc(*dp) == &curpstate->eventval)
-            fprintf(f, "&eventvalue = ");
          outimage(f, VarLoc(*dp), noimage);
          }
 

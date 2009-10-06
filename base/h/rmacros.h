@@ -675,8 +675,6 @@
       #define invokef_access (curpstate->InvokefAccess)
       #define invoke        (curpstate->Invoke)
 
-      #define CHANGEPROGSTATE(p) if (((p)!=curpstate)) { changeprogstate(p); }
-
 #if MSWIN32
       #define ptr2word(x) (uword)x
       #define word2ptr(x) ((char *)x)

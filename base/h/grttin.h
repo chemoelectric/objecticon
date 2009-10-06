@@ -85,13 +85,11 @@
  */
 #begdef RealEVVal(value,event)
    do {
+      struct descrip value_desc;
       if (is:null(curpstate->eventmask)) break;
       else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
-      MakeInt(value, &(curpstate->parent->eventval));
-      if (!is:null(curpstate->valuemask) &&
-	  !invaluemask(curpstate, event, &(curpstate->parent->eventval)))
-	 break;
-      actparent(event);
+      MakeInt(value, &value_desc);
+      add_to_prog_event_buff(&value_desc, event);
    } while (0)
 #enddef					/* RealEVVal */
 
@@ -106,53 +104,10 @@
    do {
       if (is:null(curpstate->eventmask)) break;
       else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
-      curpstate->parent->eventval = *(dp);
-      if (!is:null(curpstate->valuemask) &&
-	  !invaluemask(curpstate, event, &(curpstate->parent->eventval)))
-	 break;
-      actparent(event);
+      add_to_prog_event_buff(dp, event);
    } while (0)
 #endif
 #enddef					/* EVValD */
-
-#begdef EVValX(bp,event)
-#if event
-   do {
-      struct progstate *parent = curpstate->parent;
-      if (is:null(curpstate->eventmask)) break;
-      else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
-      parent->eventval.dword = D_Coexpr;
-      BlkLoc(parent->eventval) = (union block *)(bp);
-      if (!is:null(curpstate->valuemask) &&
-	  !invaluemask(curpstate, event, &(curpstate->parent->eventval)))
-	 break;
-      actparent(event);
-   } while (0)
-#endif
-#enddef					/* EVValX */
-
-#begdef EVVar(dp, e)
-#if e
-   do {
-      if (!is:null(curpstate->eventmask) &&
-          Testb((word)e, BlkLoc(curpstate->eventmask)->cset.bits)) {
-            EVVariable(dp, e);
-	    }
-   } while(0)
-#endif
-#enddef
-
-#begdef InterpEVVal(value,event)
-#if event
-  { ExInterp; RealEVVal(value,event); EntInterp; }
-#endif
-#enddef
-
-#begdef InterpEVValD(dp,event)
-#if event
- { ExInterp; EVValD(dp,event); EntInterp; }
-#endif
-#enddef
 
 /*
  * Macro with construction of event descriptor.

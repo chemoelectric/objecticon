@@ -256,17 +256,7 @@ int get_name(dptr dp1, dptr dp0)
             syserr("name: unknown integer keyword variable");
             
       kywdany:
-        if (VarLoc(*dp1) == &curpstate->eventsource) {
-            LitStr("&eventsource", dp0);
-        }
-        else if (VarLoc(*dp1) == &curpstate->eventval) {
-            LitStr("&eventvalue", dp0);
-        }
-        else if (VarLoc(*dp1) == &curpstate->eventcode) {
-            LitStr("&eventcode", dp0);
-        }
-        else
-            syserr("name: unknown event keyword variable");
+            syserr("name: unknown keyword variable");
             
       kywdstr: {
           if (VarLoc(*dp1) == &kywd_prog) {

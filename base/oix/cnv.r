@@ -721,7 +721,7 @@ cnv_tstr_macro(cnv_tstr_1,E_Aconv,E_Tconv,E_Nconv,E_Sconv,E_Fconv)
 void f(dptr s, dptr d)
    {
 
-   EVVar(s, e_deref);
+   EVValD(s, e_deref);
 
    if (!is:variable(*s))
       *d = *s;

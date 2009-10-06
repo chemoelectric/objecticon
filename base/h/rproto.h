@@ -147,27 +147,15 @@ void		stkdump		(int);
 word		sub		(word a,word b);
 void		syserr		(char *fmt, ...);
 void		xmfree		(void);
-void            ensure_initialized(struct b_class *class);
 
-int invaluemask(struct progstate *p, int evcode, struct descrip *val);
-
-   void	resolve			(struct progstate *pstate);
-   struct b_coexpr *loadicode (char *name,  C_integer bs, C_integer ss, C_integer stk);
-   void actparent (int eventcode);
-   int mt_activate   (dptr tvalp, dptr rslt, struct b_coexpr *ncp);
-   void changeprogstate(struct progstate *p);
-   void showcoexps();
-   void checkcoexps(char *s);
-   void dumpcoexp(char *s, struct b_coexpr *p);
-   void showcurrstack();
+void	resolve			(struct progstate *pstate);
+void showcurrstack();
 void showstack(struct b_coexpr *c);
 
 char *cstr(struct descrip *sd);
 void print_desc(FILE *f, dptr d);
 void print_vword(FILE *f, dptr d);
 void print_dword(FILE *f, dptr d);
-
-   void EVVariable(dptr dx, int eventcode);
 
    dptr	extcall			(dptr x, int nargs, int *signal);
 
@@ -626,3 +614,5 @@ struct p_frame *get_current_user_frame();
 void switch_to(struct b_coexpr *ce);
 void set_c_frame_value();
 void set_c_frame_failure();
+void add_to_prog_event_buff(dptr value, int event);
+void do_cofail();
