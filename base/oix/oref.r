@@ -759,13 +759,31 @@ function{*} back(underef x -> dx)
             char ch;
             EVValD(&dx, E_Stringbang);
             if (is:variable(x)) {
-                for (i = StrLen(dx); i > 0; i--) {
-                    if (i > StrLen(dx))
-                        i = StrLen(dx);
-                    suspend tvsubs(&x, i, (word)1);
-                    deref(&x, &dx);
-                    if (!is:string(dx)) 
-                        runerr(103, dx);
+                if (frame->rval) {
+                    for (i = StrLen(dx); i > 0; i--) {
+                        if (i > StrLen(dx)) {
+                            i = StrLen(dx);
+                            if (i == 0)
+                                break;
+                        }
+                        ch = *(StrLoc(dx) + i - 1);
+                        suspend string(1, &allchars[ch & 0xFF]);
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
+                } else {
+                    for (i = StrLen(dx); i > 0; i--) {
+                        if (i > StrLen(dx)) {
+                            i = StrLen(dx);
+                            if (i == 0)
+                                break;
+                        }
+                        suspend tvsubs(&x, i, (word)1);
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
                 }
             } else {
                 for (i = StrLen(dx); i > 0; i--) {
@@ -806,13 +824,30 @@ function{*} back(underef x -> dx)
      ucs: {
           EVValD(&dx, E_Ucsbang);
           if (is:variable(x)) {
-              for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
-                  if (i > BlkLoc(dx)->ucs.length)
-                      i = BlkLoc(dx)->ucs.length;
-                  suspend tvsubs(&x, i, (word)1);
-                  deref(&x, &dx);
-                  if (!is:ucs(dx)) 
-                      runerr(128, dx);
+              if (frame->rval) {
+                  for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
+                      if (i > BlkLoc(dx)->ucs.length) {
+                          i = BlkLoc(dx)->ucs.length;
+                          if (i == 0)
+                              break;
+                      }
+                      suspend ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+                      deref(&x, &dx);
+                      if (!is:ucs(dx)) 
+                          runerr(128, dx);
+                  }
+              } else {
+                  for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
+                      if (i > BlkLoc(dx)->ucs.length) {
+                          i = BlkLoc(dx)->ucs.length;
+                          if (i == 0)
+                              break;
+                      }
+                      suspend tvsubs(&x, i, (word)1);
+                      deref(&x, &dx);
+                      if (!is:ucs(dx)) 
+                          runerr(128, dx);
+                  }
               }
           } else {
               tended char *p = StrLoc(BlkLoc(dx)->ucs.utf8) +

@@ -803,8 +803,8 @@ static void lemitcode()
                         emit_ir_var(x->arg2, "arg2");
                     if (x->arg3)
                         emit_ir_var(x->arg3, "arg3");
-                    labout(x->fail_label, "fail");
                     word_field(x->rval, "rval");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_OpClo: {
@@ -819,8 +819,8 @@ static void lemitcode()
                         emit_ir_var(x->arg2, "arg2");
                     if (x->arg3)
                         emit_ir_var(x->arg3, "arg3");
-                    labout(x->fail_label, "fail");
                     word_field(x->rval, "rval");
+                    labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_KeyOp: {
@@ -852,6 +852,7 @@ static void lemitcode()
                     word_field(x->clo, "clo");
                     emit_ir_var(x->expr, "expr");
                     word_field(x->argc, "argc");
+                    word_field(x->rval, "rval");
                     labout(x->fail_label, "fail");
                     for (i = 0; i < x->argc; ++i) 
                         emit_ir_var(x->args[i], "arg");
@@ -877,6 +878,7 @@ static void lemitcode()
                     word_field(0, "inline cache");
                     word_field(0, "inline cache");
                     word_field(x->argc, "argc");
+                    word_field(x->rval, "rval");
                     labout(x->fail_label, "fail");
                     for (i = 0; i < x->argc; ++i) 
                         emit_ir_var(x->args[i], "arg");
@@ -890,6 +892,7 @@ static void lemitcode()
                     word_field(x->clo, "clo");
                     emit_ir_var(x->arg1, "arg1");
                     emit_ir_var(x->arg2, "arg2");
+                    word_field(x->rval, "rval");
                     labout(x->fail_label, "fail");
                     break;
                 }
@@ -912,6 +915,7 @@ static void lemitcode()
                     word_field(0, "inline cache");
                     word_field(0, "inline cache");
                     emit_ir_var(x->arg2, "arg2");
+                    word_field(x->rval, "rval");
                     labout(x->fail_label, "fail");
                     break;
                 }

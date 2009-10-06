@@ -338,8 +338,8 @@ static void do_op(int op, int nargs)
         for (i = 0; i < nargs; ++i)
             get_deref(&cf->args[i]);
     }
-    cf->failure_label = get_addr();
     cf->rval = GetWord;
+    cf->failure_label = get_addr();
     if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
@@ -366,8 +366,8 @@ static void do_opclo(int op, int nargs)
         for (i = 0; i < nargs; ++i)
             get_deref(&cf->args[i]);
     }
-    cf->failure_label = get_addr();
     cf->rval = GetWord;
+    cf->failure_label = get_addr();
     PF->clo[clo] = (struct frame *)cf;
     if (!bp->ccode(cf)) {
         Ipc = cf->failure_label;
