@@ -52,11 +52,11 @@ struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior)
 void traceback()
 {
     int i, depth;
-    struct frame *f;
+    struct p_frame *f;
     struct p_frame **fa;
 
     depth = 0;
-    for (f = SP; f; f = f->parent_sp) {
+    for (f = PF; f; f = f->caller) {
         if (f->proc->program)
             ++depth;
     }
@@ -75,9 +75,9 @@ void traceback()
     MemProtect(fa = malloc(depth * sizeof(struct p_frame *)));
 
     i = depth - 1;
-    for (f = SP; f; f = f->parent_sp) {
+    for (f = PF; f; f = f->caller) {
         if (f->proc->program) {
-            fa[i--] = (struct p_frame *)f;
+            fa[i--] = f;
             if (i < 0)
                 break;
         }
