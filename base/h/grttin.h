@@ -89,7 +89,7 @@
       if (is:null(curpstate->eventmask)) break;
       else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
       MakeInt(value, &value_desc);
-      add_to_prog_event_buff(&value_desc, event);
+      add_to_prog_event_queue(&value_desc, event);
    } while (0)
 #enddef					/* RealEVVal */
 
@@ -104,7 +104,7 @@
    do {
       if (is:null(curpstate->eventmask)) break;
       else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
-      add_to_prog_event_buff(dp, event);
+      add_to_prog_event_queue(dp, event);
    } while (0)
 #endif
 #enddef					/* EVValD */

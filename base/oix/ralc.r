@@ -888,6 +888,7 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
     p->type = P_FRAME_TYPE;
     p->value = nulldesc;
     p->failure_label = 0;
+    p->rval = 0;
     p->proc = pb;
     p->parent_sp = 0;
     p->exhausted = 0;
@@ -949,6 +950,8 @@ struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
     p->value = nulldesc;
     p->proc = pb;
     p->parent_sp = 0;
+    p->failure_label = 0;
+    p->rval = 0;
     p->exhausted = 0;
     p->pc = 0;
     p->nargs = nargs;

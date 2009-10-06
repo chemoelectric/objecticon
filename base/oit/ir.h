@@ -169,6 +169,7 @@ struct ir_invoke {
     struct ir_var *expr;
     int argc;
     struct ir_var **args;
+    int rval;
     int fail_label;
 };
 
@@ -177,6 +178,7 @@ struct ir_apply {
     int clo;
     struct ir_var *arg1;
     struct ir_var *arg2;
+    int rval;
     int fail_label;
 };
 
@@ -187,6 +189,7 @@ struct ir_invokef {
     char *fname;
     int argc;
     struct ir_var **args;
+    int rval;
     int fail_label;
 };
 
@@ -196,6 +199,7 @@ struct ir_applyf {
     struct ir_var *arg1;
     char *fname;
     struct ir_var *arg2;
+    int rval;
     int fail_label;
 };
 

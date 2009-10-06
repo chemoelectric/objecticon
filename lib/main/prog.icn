@@ -58,11 +58,6 @@ class Prog()
    public static defer get_variable(s, P)
 
    #
-   # Given a program, return its parent program
-   #
-   public static defer get_parent(P)
-
-   #
    # Get the given program's event mask
    #
    public static defer get_event_mask(P)
@@ -80,7 +75,7 @@ class Prog()
       initial
          res := ProgEvent()
       if get_event_impl(P, res) then
-         return res
+         return .res
    end
 
    private static defer get_event_impl(P, res)

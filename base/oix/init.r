@@ -583,8 +583,9 @@ static void initalloc(struct progstate *p)
 
 static void initprogstate(struct progstate *p)
 {
+    p->monitor = 0;
     p->eventmask= nulldesc;
-    p->n_prog_events = p->first_prog_event = 0;
+    p->event_queue_head = p->event_queue_tail = 0;
     p->Kywd_err = zerodesc;
     p->Kywd_pos = onedesc;
     p->Kywd_why = emptystr;
@@ -694,10 +695,14 @@ static void initptrs(struct progstate *p, struct header *h)
 static void handle_loaded_prog_exit()
 {
     curpstate->exited = 1;
-    if (k_current != k_current->activator)
-        do_cofail();
+    /* 
+     * Decide whether the prog was run via activating its main coexpression,
+     * or via the get_event function.
+     */
+    if (curpstate->monitor)
+        curpstate = curpstate->monitor;
     else
-        curpstate = curpstate->parent;
+        do_cofail();
 }
 
 " load a program corresponding to string s as a co-expression."
@@ -792,7 +797,6 @@ function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
 
        resolve(pstate);
 
-       pstate->parent = curpstate;
        pstate->next = progs;
        progs = pstate;
 

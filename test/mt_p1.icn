@@ -429,11 +429,8 @@ procedure test32()
    print{"c: &current",Prog.get_keyword("&current",c)}
    pr_type{"c: &progname",Prog.get_keyword("&progname",c)}
    print{"c: &errortext",Prog.get_keyword("&errortext",c)}
-   print{"c: &eventcode",Prog.get_keyword("&eventcode",c)}
    print{"c: &errorvalue",Prog.get_keyword("&errorvalue",c)}
-   print{"c: &eventvalue",Prog.get_keyword("&eventvalue",c)}
    print{"c: &errornumber",Prog.get_keyword("&errornumber",c)}
-   print{"c: &eventsource",Prog.get_keyword("&eventsource",c)}
 
    @e
    print{"e: &pos",Prog.get_keyword("&pos",c)}
@@ -450,9 +447,6 @@ procedure test32()
    print{"e: &current",Prog.get_keyword("&current",c)}
    pr_type{"e: &progname",Prog.get_keyword("&progname",c)}
    print{"e: &errortext",Prog.get_keyword("&errortext",c)}
-   print{"e: &eventcode",Prog.get_keyword("&eventcode",c)}
    print{"e: &errorvalue",Prog.get_keyword("&errorvalue",c)}
-   print{"e: &eventvalue",Prog.get_keyword("&eventvalue",c)}
    print{"e: &errornumber",Prog.get_keyword("&errornumber",c)}
-   print{"e: &eventsource",Prog.get_keyword("&eventsource",c)}
 end

@@ -614,5 +614,5 @@ struct p_frame *get_current_user_frame();
 void switch_to(struct b_coexpr *ce);
 void set_c_frame_value();
 void set_c_frame_failure();
-void add_to_prog_event_buff(dptr value, int event);
+void add_to_prog_event_queue(dptr value, int event);
 void do_cofail();

@@ -484,6 +484,7 @@ static struct ir_invoke *ir_invoke(struct lnode *n,
                                    struct ir_var *expr,
                                    int argc,
                                    struct ir_var **args,
+                                   int rval,
                                    int fail_label) 
 {
     struct ir_invoke *res = IRAlloc(struct ir_invoke);
@@ -493,6 +494,7 @@ static struct ir_invoke *ir_invoke(struct lnode *n,
     res->expr = expr;
     res->argc = argc;
     res->args = args;
+    res->rval = rval;
     res->fail_label = fail_label;
     return res;
 }
@@ -501,6 +503,7 @@ static struct ir_apply *ir_apply(struct lnode *n,
                                  int clo,
                                  struct ir_var *arg1,
                                  struct ir_var *arg2,
+                                 int rval,
                                  int fail_label) 
 {
     struct ir_apply *res = IRAlloc(struct ir_apply);
@@ -509,6 +512,7 @@ static struct ir_apply *ir_apply(struct lnode *n,
     res->clo = clo;
     res->arg1 = arg1;
     res->arg2 = arg2;
+    res->rval = rval;
     res->fail_label = fail_label;
     return res;
 }
@@ -519,6 +523,7 @@ static struct ir_invokef *ir_invokef(struct lnode *n,
                                      char *fname,
                                      int argc,
                                      struct ir_var **args,
+                                     int rval,
                                      int fail_label) 
 {
     struct ir_invokef *res = IRAlloc(struct ir_invokef);
@@ -529,6 +534,7 @@ static struct ir_invokef *ir_invokef(struct lnode *n,
     res->fname = fname;
     res->argc = argc;
     res->args = args;
+    res->rval = rval;
     res->fail_label = fail_label;
     return res;
 }
@@ -538,6 +544,7 @@ static struct ir_applyf *ir_applyf(struct lnode *n,
                                    struct ir_var *arg1,
                                    char *fname,
                                    struct ir_var *arg2,
+                                   int rval,
                                    int fail_label) 
 {
     struct ir_applyf *res = IRAlloc(struct ir_applyf);
@@ -547,6 +554,7 @@ static struct ir_applyf *ir_applyf(struct lnode *n,
     res->arg1 = arg1;
     res->fname = fname;
     res->arg2 = arg2;
+    res->rval = rval;
     res->fail_label = fail_label;
     return res;
 }
@@ -1109,12 +1117,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
             if (fname)
                 chunk3(right->success, 
-                       ir_applyf(n, clo->index, lv, fname, rv, right->resume),
+                       ir_applyf(n, clo->index, lv, fname, rv, rval, right->resume),
                        ir_move(n, target, clo, 0),
                        ir_goto(n, res->success));
             else
                 chunk3(right->success, 
-                       ir_apply(n, clo->index, lv, rv, right->resume),
+                       ir_apply(n, clo->index, lv, rv, rval, right->resume),
                        ir_move(n, target, clo, 0),
                        ir_goto(n, res->success));
 
@@ -1897,12 +1905,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                        ir_goto(n, res->success));
                 if (fname)
                     chunk3(expr->success,
-                           ir_invokef(n, clo->index, fn, fname, x->n, args, expr->resume),
+                           ir_invokef(n, clo->index, fn, fname, x->n, args, rval, expr->resume),
                            ir_move(n, target, clo, 0),
                            ir_goto(n, res->success));
                 else
                     chunk3(expr->success,
-                           ir_invoke(n, clo->index, fn, x->n, args, expr->resume),
+                           ir_invoke(n, clo->index, fn, x->n, args, rval, expr->resume),
                            ir_move(n, target, clo, 0),
                            ir_goto(n, res->success));
 
@@ -1915,12 +1923,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                        ir_goto(n, info[0]->start));
                 if (fname)
                     chunk3(info[0]->success,
-                           ir_invokef(n, clo->index, fn, fname, x->n, args, info[0]->resume),
+                           ir_invokef(n, clo->index, fn, fname, x->n, args, rval, info[0]->resume),
                            ir_move(n, target, clo, 0),
                            ir_goto(n, res->success));
                 else
                     chunk3(info[0]->success,
-                           ir_invoke(n, clo->index, fn, x->n, args, info[0]->resume),
+                           ir_invoke(n, clo->index, fn, x->n, args, rval, info[0]->resume),
                            ir_move(n, target, clo, 0),
                            ir_goto(n, res->success));
                 chunk1(info[0]->failure,
@@ -1951,12 +1959,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 i = x->n - 1;
                 if (fname)
                     chunk3(info[i]->success,
-                           ir_invokef(n, clo->index, fn, fname, x->n, args, info[x->n - 1]->resume),
+                           ir_invokef(n, clo->index, fn, fname, x->n, args, rval, info[x->n - 1]->resume),
                            ir_move(n, target, clo, 0),
                            ir_goto(n, res->success));
                 else
                     chunk3(info[i]->success,
-                           ir_invoke(n, clo->index, fn, x->n, args, info[x->n - 1]->resume),
+                           ir_invoke(n, clo->index, fn, x->n, args, rval, info[x->n - 1]->resume),
                            ir_move(n, target, clo, 0),
                            ir_goto(n, res->success));
                 chunk1(info[i]->failure,

@@ -804,6 +804,7 @@ static void lemitcode()
                     if (x->arg3)
                         emit_ir_var(x->arg3, "arg3");
                     labout(x->fail_label, "fail");
+                    word_field(x->rval, "rval");
                     break;
                 }
                 case Ir_OpClo: {
@@ -819,6 +820,7 @@ static void lemitcode()
                     if (x->arg3)
                         emit_ir_var(x->arg3, "arg3");
                     labout(x->fail_label, "fail");
+                    word_field(x->rval, "rval");
                     break;
                 }
                 case Ir_KeyOp: {

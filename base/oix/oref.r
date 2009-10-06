@@ -15,11 +15,21 @@ operator{*} ! bang(underef x -> dx)
             char ch;
             EVValD(&dx, E_Stringbang);
             if (is:variable(x)) {
-                for (i = 1; i <= StrLen(dx); i++) {
-                    suspend tvsubs(&x, i, (word)1);
-                    deref(&x, &dx);
-                    if (!is:string(dx)) 
-                        runerr(103, dx);
+                if (frame->rval) {
+                    for (i = 1; i <= StrLen(dx); i++) {
+                        ch = *(StrLoc(dx) + i - 1);
+                        suspend string(1, &allchars[ch & 0xFF]);
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
+                } else {
+                    for (i = 1; i <= StrLen(dx); i++) {
+                        suspend tvsubs(&x, i, (word)1);
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
                 }
             } else {
                 for (i = 1; i <= StrLen(dx); i++) {

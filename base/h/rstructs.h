@@ -363,6 +363,7 @@ struct ipc_line {
 struct prog_event {
     struct descrip eventcode;
     struct descrip eventval;
+    struct prog_event *next;
 };
 
 /*
@@ -371,13 +372,11 @@ struct prog_event {
  */
 struct progstate {
     word icodesize;			/* size of icode */
-    struct progstate *parent;
     struct progstate *next;
 
+    struct progstate *monitor;
     struct descrip eventmask;
-    word n_prog_events;                 /* buffer for program events. */
-    word first_prog_event;
-    struct prog_event prog_event_buff[16];
+    struct prog_event *event_queue_head, *event_queue_tail;
 
     /*
      * trapped variable keywords' values
@@ -592,6 +591,7 @@ enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
      word *failure_label;     \
      struct b_proc *proc;     \
      struct frame *parent_sp; \
+     int rval;                \
      int exhausted;
 
 #define C_FRAME \

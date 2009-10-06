@@ -328,7 +328,6 @@ static void do_op(int op, int nargs)
     dptr lhs;
     struct c_frame *cf;
     struct b_proc *bp = opblks[op];
-    word *failure_label;
     int i;
     lhs = get_dptr();
     MemProtect(cf = alc_c_frame(bp, nargs));
@@ -342,12 +341,13 @@ static void do_op(int op, int nargs)
         for (i = 0; i < nargs; ++i)
             get_deref(&cf->args[i]);
     }
-    failure_label = get_addr();
+    cf->failure_label = get_addr();
+    cf->rval = GetWord;
     if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
-        Ipc = failure_label;
+        Ipc = cf->failure_label;
     pop_to(cf->parent_sp);
 }
 
@@ -357,7 +357,6 @@ static void do_opclo(int op, int nargs)
     struct b_proc *bp = opblks[op];
     int i;
     word clo;
-    word *failure_label;
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, nargs));
     push_frame((struct frame *)cf);
@@ -370,11 +369,12 @@ static void do_opclo(int op, int nargs)
         for (i = 0; i < nargs; ++i)
             get_deref(&cf->args[i]);
     }
-    failure_label = get_addr();
+    cf->failure_label = get_addr();
+    cf->rval = GetWord;
     PF->clo[clo] = (struct frame *)cf;
     if (!bp->ccode(cf)) {
+        Ipc = cf->failure_label;
         pop_to(cf->parent_sp);
-        Ipc = failure_label;
     }
 }
 
@@ -383,7 +383,6 @@ static void do_keyop()
     dptr lhs;
     struct c_frame *cf;
     struct b_proc *bp;
-    word *failure_label;
 
     bp = keyblks[GetWord];
     lhs = get_dptr();
@@ -392,12 +391,12 @@ static void do_keyop()
     push_frame((struct frame *)cf);
     xnargs = 0;
     xargp = 0;
-    failure_label = get_addr();
+    cf->failure_label = get_addr();
     if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
-        Ipc = failure_label;
+        Ipc = cf->failure_label;
     pop_to(cf->parent_sp);
 }
 
@@ -406,18 +405,18 @@ static void do_keyclo()
     struct c_frame *cf;
     struct b_proc *bp;
     word clo;
-    word *failure_label;
+
     bp = keyblks[GetWord];
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, 0));
     push_frame((struct frame *)cf);
     xnargs = 0;
     xargp = 0;
-    failure_label = get_addr();
+    cf->failure_label = get_addr();
     PF->clo[clo] = (struct frame *)cf;
     if (!bp->ccode(cf)) {
+        Ipc = cf->failure_label;
         pop_to(cf->parent_sp);
-        Ipc = failure_label;
     }
 }
 
@@ -633,9 +632,9 @@ void interp()
 {
     word op;
     for (;;) {
-        if (curpstate->n_prog_events) {
+        if (curpstate->event_queue_head) {
             /* Switch to parent program */
-            curpstate = curpstate->parent;
+            curpstate = curpstate->monitor;
         }
         PF->curr_inst = Ipc;
         lastop = op = GetWord;
@@ -950,7 +949,23 @@ void interp()
 static void activate_child_prog()
 {
     dptr ce = get_dptr();
-    curpstate = BlkLoc(*ce)->coexpr.main_of;
+    struct progstate *prog = BlkLoc(*ce)->coexpr.main_of;
+    prog->monitor = curpstate;
+    curpstate = prog;
+}
+
+static void pop_from_prog_event_queue(struct progstate *prog, dptr res)
+{
+    BlkLoc(*res)->object.fields[0] = prog->event_queue_head->eventcode;
+    BlkLoc(*res)->object.fields[1] = prog->event_queue_head->eventval;
+    if (prog->event_queue_head == prog->event_queue_tail) {
+        free(prog->event_queue_head);
+        prog->event_queue_head = prog->event_queue_tail = 0;
+    } else {
+        struct prog_event *t = prog->event_queue_head;
+        prog->event_queue_head = prog->event_queue_head->next;
+        free(t);
+    }
 }
 
 static void get_child_prog_result()
@@ -961,17 +976,15 @@ static void get_child_prog_result()
     word *failure_label = get_addr();
 
     prog = BlkLoc(*ce)->coexpr.main_of;
+    prog->monitor = 0;
     if (prog->exited) {
        Ipc = failure_label;
        return;
     }
-
-    if (!prog->n_prog_events)
+    if (!prog->event_queue_head)
         syserr("Expected a prog event in the queue");
-    BlkLoc(*res)->object.fields[0] = prog->prog_event_buff[prog->first_prog_event].eventcode;
-    BlkLoc(*res)->object.fields[1] = prog->prog_event_buff[prog->first_prog_event].eventval;
-    prog->first_prog_event = (prog->first_prog_event + 1) % ElemCount(curpstate->prog_event_buff);
-    --prog->n_prog_events;
+
+    pop_from_prog_event_queue(prog, res);
 }
 
 function{0,1} lang_Prog_get_event_impl(c, res)
@@ -982,13 +995,10 @@ function{0,1} lang_Prog_get_event_impl(c, res)
        struct p_frame *pf;
        if (!prog)
            runerr(632, c);
-       if (prog->parent != curpstate)
+       if (prog == curpstate || prog->monitor)
            runerr(633, c);
-       if (prog->n_prog_events) {
-           BlkLoc(res)->object.fields[0] = prog->prog_event_buff[prog->first_prog_event].eventcode;
-           BlkLoc(res)->object.fields[1] = prog->prog_event_buff[prog->first_prog_event].eventval;
-           prog->first_prog_event = (prog->first_prog_event + 1) % ElemCount(curpstate->prog_event_buff);
-           --prog->n_prog_events;
+       if (prog->event_queue_head) {
+           pop_from_prog_event_queue(prog, &res);
            return res;
        }
        if (prog->exited)
@@ -1002,16 +1012,20 @@ function{0,1} lang_Prog_get_event_impl(c, res)
    }
 end
 
-void add_to_prog_event_buff(dptr value, int event)
+void add_to_prog_event_queue(dptr value, int event)
 {
-    int i;
-    if (curpstate->n_prog_events >= ElemCount(curpstate->prog_event_buff))
-        ffatalerr("Prog event buffer overflowed");
-    i = (curpstate->first_prog_event + curpstate->n_prog_events) % ElemCount(curpstate->prog_event_buff);
-    StrLen(curpstate->prog_event_buff[i].eventcode) = 1;
-    StrLoc(curpstate->prog_event_buff[i].eventcode) = &allchars[event & 0xFF];
-    curpstate->prog_event_buff[i].eventval = *value;
-    ++curpstate->n_prog_events;
+    struct prog_event *e;
+    /* Do nothing if no-one is monitoring this program */
+    if (!curpstate->monitor)
+        return;
+    MemProtect(e = malloc(sizeof(struct prog_event)));
+    if (curpstate->event_queue_tail) {
+        curpstate->event_queue_tail->next = e;
+        curpstate->event_queue_tail = e;
+    } else
+        curpstate->event_queue_head = curpstate->event_queue_tail = e;
+    StrLen(e->eventcode) = 1;
+    StrLoc(e->eventcode) = &allchars[event & 0xFF];
+    e->eventval = *value;
+    e->next = 0;
 }
-
-

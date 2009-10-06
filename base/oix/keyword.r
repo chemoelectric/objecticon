@@ -159,36 +159,6 @@ keyword{0} fail
       }
 end
 
-"&eventcode - event in monitored program"
-keyword{0,1} eventcode
-   abstract {
-      return kywdany
-      }
-   inline {
-       return nulldesc;
-      }
-end
-
-"&eventsource - source of events in monitoring program"
-keyword{0,1} eventsource
-   abstract {
-      return kywdany
-      }
-   inline {
-       return nulldesc;
-      }
-end
-
-"&eventvalue - value from event in monitored program"
-keyword{0,1} eventvalue
-   abstract {
-      return kywdany
-      }
-   inline {
-       return nulldesc;
-      }
-end
-
 "&features - generate strings identifying features in this version of Icon"
 keyword{1,*} features
    abstract {

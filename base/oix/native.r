@@ -253,19 +253,6 @@ function{0,1} is(o, target)
     }
 end
 
-function{1} lang_Prog_get_parent(c)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&c)))
-          runerr(0);
-
-      if (prog->parent == NULL) 
-          fail;
-
-      return coexpr(prog->parent->K_main);
-    }
-end
-
 function{1} lang_Prog_get_event_mask(ce)
    body {
        struct progstate *prog;
