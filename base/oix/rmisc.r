@@ -121,6 +121,11 @@ int getvar(dptr s, dptr vp, struct progstate *p)
                 break;
             }
             case 9 : {
+                if (strncmp(t,"maxlevel",8) == 0) {
+                    vp->dword = D_Kywdint;
+                    VarLoc(*vp) = &p->Kywd_maxlevel;
+                    return Succeeded;
+                }
                 if (strncmp(t,"progname",8) == 0) {
                     vp->dword = D_Kywdstr;
                     VarLoc(*vp) = &p->Kywd_prog;
@@ -825,6 +830,8 @@ int noimage;
             fprintf(f, "&dump = ");
          else if (VarLoc(*dp) == &kywd_err)
             fprintf(f, "&error = ");
+         else if (VarLoc(*dp) == &kywd_maxlevel)
+            fprintf(f, "&maxlevel = ");
          outimage(f, VarLoc(*dp), noimage);
          }
 

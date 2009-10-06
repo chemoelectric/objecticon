@@ -389,6 +389,9 @@ function{*} lang_Prog_get_keyword(s,c)
               break;
           }
           case 9 : {
+              if (strncmp(t,"maxlevel",8) == 0) {
+                  return kywdint(&(p->Kywd_maxlevel));
+              }
               if (strncmp(t,"progname",8) == 0) {
                   return kywdstr(&(p->Kywd_prog));
               }

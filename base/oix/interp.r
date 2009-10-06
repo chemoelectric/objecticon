@@ -61,7 +61,6 @@ void revert_PF()
 
 void tail_invoke_frame(struct frame *f)
 {
-/*    showcurrstack();*/
     switch (f->type) {
         case C_FRAME_TYPE: {
             if (!f->proc->ccode(f)) {
@@ -81,13 +80,11 @@ void tail_invoke_frame(struct frame *f)
                     k_trace--;
                     call_trace(pf);
                 }
-                /*fprintf(stderr, "Invoke:from curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
                 CHANGEPROGSTATE(pf->proc->program);
-                /*fprintf(stderr, "       to   curpstate=%p kcurrent=%p\n",curpstate, curpstate->K_current);fflush(stderr);*/
                 ++k_level;
-                /* Todo*/
-                if (k_level > 500) {
-                    lastop = Op_Exit;
+                if (k_level > k_maxlevel) {
+                    lastop = 0;    /* Prevent ttrace doing anything, as this frame is already 
+                                    * on the stack */
                     fatalerr(311, NULL);
                 }
             }

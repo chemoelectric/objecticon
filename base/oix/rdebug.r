@@ -55,8 +55,6 @@ void traceback()
     struct frame *f;
     struct p_frame **fa;
 
-/*    showcurrstack(); */
-
     depth = 0;
     for (f = SP; f; f = f->parent_sp) {
         if (f->proc->program)
@@ -251,6 +249,9 @@ int get_name(dptr dp1, dptr dp0)
         }
         else if (VarLoc(*dp1) == &kywd_err) {
             LitStr("&error", dp0);
+        }
+        else if (VarLoc(*dp1) == &kywd_maxlevel) {
+            LitStr("&maxlevel", dp0);
         }
         else
             syserr("name: unknown integer keyword variable");
@@ -521,6 +522,9 @@ static void ttrace()
 {
     struct ipc_line *pline;
     struct ipc_fname *pfile;
+
+    if (lastop == 0)
+        return;
 
     fprintf(stderr, "   ");
 

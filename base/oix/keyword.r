@@ -344,6 +344,16 @@ keyword{1} trace
       }
 end
 
+"&maxlevel - variable that controls procedure tracing."
+keyword{1} maxlevel
+   abstract {
+      return kywdint
+      }
+   inline {
+      return kywdint(&kywd_maxlevel);
+      }
+end
+
 "&dump - variable that controls termination dump."
 keyword{1} dump
    abstract {

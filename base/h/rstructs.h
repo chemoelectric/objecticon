@@ -388,6 +388,7 @@ struct progstate {
     struct descrip Kywd_why;
     struct descrip Kywd_ran;
     struct descrip Kywd_trc;
+    struct descrip Kywd_maxlevel;
     char *Code;
     char *Ecode;
 

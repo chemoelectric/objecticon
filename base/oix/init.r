@@ -591,6 +591,7 @@ static void initprogstate(struct progstate *p)
     p->Kywd_why = emptystr;
     p->Kywd_subject = emptystr;
     p->Kywd_ran = zerodesc;
+    MakeInt(500, &p->Kywd_maxlevel);
     p->K_errornumber = 0;
     p->T_errornumber = 0;
     p->Have_errval = 0;
@@ -617,9 +618,6 @@ static void initprogstate(struct progstate *p)
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;
     p->Cptable = cptable_0;
-/*
-    p->Interp = interp_0;
-*/
     p->Cnvcset = cnv_cset_0;
     p->Cnvucs = cnv_ucs_0;
     p->Cnvint = cnv_int_0;
@@ -649,6 +647,7 @@ static void initprogstate(struct progstate *p)
     p->Dealcstr = dealcstr_0;
     p->Reserve = reserve_0;
 /**TODO
+    p->Interp = interp_0;
     p->FieldAccess = field_access_0;
     p->InvokefAccess = invokef_access_0;
     p->Invoke = invoke_0;
