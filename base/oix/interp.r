@@ -814,13 +814,6 @@ void interp()
                 break;
             }
 
-            case Op_Deref: {
-                dptr src = get_dptr();
-                dptr dest = get_dptr();
-                deref(src, dest);
-                break;
-            }
-
             case Op_ScanSwap: {
                 word s, p;
                 struct descrip tmp;

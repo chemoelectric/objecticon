@@ -13,7 +13,7 @@ static void invoke_methp(word clo, dptr expr, int argc, dptr args, word rval, wo
 static void invoke_proc(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
 static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
 
-static struct frame *get_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self);
+static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self);
 static void ensure_class_initialized();
 
 static void general_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
@@ -280,8 +280,7 @@ static void invoke_class_init()
         if ((init_field->flags & (M_Method | M_Static)) != (M_Method | M_Static))
             syserr("init field not a static method");
         bp = (struct b_proc *)BlkLoc(*init_field->field_descriptor);
-        f = get_frame_for_proc(bp, 0, 0, 0);
-        push_frame(f);
+        f = push_frame_for_proc(bp, 0, 0, 0);
         f->failure_label = failure_label;
         tail_invoke_frame(f);
     }
@@ -342,8 +341,7 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
 
         /* Allocate a frame for the "new" method.  It is invoked from
          * within construct_object */
-        new_f = get_frame_for_proc(bp, argc, args, &pf->locals->args[1]);
-        push_frame((struct frame *)new_f);
+        new_f = push_frame_for_proc(bp, argc, args, &pf->locals->args[1]);
 
         /* Set up a mark and closure for the new method.  They are used with Op_Resume and Op_Unmark
          * in construct_object's code to invoke the new method.
@@ -399,7 +397,7 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
     tail_invoke_frame((struct frame *)pf);
 }
 
-static struct frame *get_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self)
+static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self)
 {
     int i, j;
     
@@ -407,6 +405,7 @@ static struct frame *get_frame_for_proc(struct b_proc *bp, int argc, dptr args, 
         /* Icon procedure */
         struct p_frame *pf;
         MemProtect(pf = alc_p_frame(bp, 0));
+        push_frame((struct frame *)pf);
         if (self) {
             pf->locals->args[0] = *self;
             i = 1;
@@ -473,6 +472,7 @@ static struct frame *get_frame_for_proc(struct b_proc *bp, int argc, dptr args, 
             want = Max(argc + i, bp->nparam);
 
         MemProtect(cf = alc_c_frame(bp, want));
+        push_frame((struct frame *)cf);
 
         if (self)
             cf->args[0] = *self;
@@ -502,8 +502,7 @@ static void invoke_proc(word clo, dptr expr, int argc, dptr args, word rval, wor
 {
     struct b_proc *bp = (struct b_proc *)BlkLoc(*expr);
     struct frame *f;
-    f = get_frame_for_proc(bp, argc, args, 0);
-    push_frame(f);
+    f = push_frame_for_proc(bp, argc, args, 0);
     PF->clo[clo] = f;
     f->failure_label = failure_label;
     f->rval = rval;
@@ -518,8 +517,7 @@ static void invoke_methp(word clo, dptr expr, int argc, dptr args, word rval, wo
     struct frame *f;
     tmp.dword = D_Object;
     BlkLoc(tmp) = (union block *)BlkLoc(*expr)->methp.object;
-    f = get_frame_for_proc(bp, argc, args, &tmp);
-    push_frame(f);
+    f = push_frame_for_proc(bp, argc, args, &tmp);
     PF->clo[clo] = f;
     f->failure_label = failure_label;
     f->rval = rval;
@@ -581,8 +579,7 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
              */
             if ((bp = bi_strprc(&sexpr, argc))) {
                 struct frame *f;
-                f = get_frame_for_proc(bp, argc, args, 0);
-                push_frame(f);
+                f = push_frame_for_proc(bp, argc, args, 0);
                 PF->clo[clo] = f;
                 f->failure_label = failure_label;
                 tail_invoke_frame(f);
@@ -949,10 +946,8 @@ static void do_cast_invokef(word clo, dptr expr, dptr query, struct inline_field
 
     tmp.dword = D_Object;
     BlkLoc(tmp) = (union block *)obj;
-    f = get_frame_for_proc(&BlkLoc(*cf->field_descriptor)->proc, 
-                           argc, args, &tmp);
-
-    push_frame(f);
+    f = push_frame_for_proc(&BlkLoc(*cf->field_descriptor)->proc, 
+                            argc, args, &tmp);
     PF->clo[clo] = f;
     f->failure_label = failure_label;
     f->rval = rval;
@@ -991,10 +986,8 @@ static void do_instance_invokef(word clo, dptr expr, dptr query, struct inline_f
 
         tmp.dword = D_Object;
         BlkLoc(tmp) = (union block *)obj;
-        f = get_frame_for_proc(&BlkLoc(*cf->field_descriptor)->proc, 
-                               argc, args, &tmp);
-
-        push_frame(f);
+        f = push_frame_for_proc(&BlkLoc(*cf->field_descriptor)->proc, 
+                                argc, args, &tmp);
         PF->clo[clo] = f;
         f->failure_label = failure_label;
         f->rval = rval;

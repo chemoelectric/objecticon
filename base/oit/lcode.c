@@ -152,6 +152,13 @@ static struct centry *constblock_hash[128];
 
 static struct header hdr;
 
+static void out_op(word op)
+{
+    if (Dflag)
+        fprintf(dbgfile, "%ld:\t%s\n", (long)pc, op_names[op]);
+    outword(op);
+}
+
 static void word_field(word w, char *desc)
 {
     if (Dflag)
@@ -690,84 +697,62 @@ static void lemitcode()
             switch (ir->op) {
                 case Ir_Goto: {
                     struct ir_goto *x = (struct ir_goto *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tgoto\t\t%d\n", (long)pc, x->dest);
-                    outword(Op_Goto);
+                    out_op(Op_Goto);
                     labout(x->dest, "dest");
                     break;
                 }
                 case Ir_IGoto: {
                     struct ir_igoto *x = (struct ir_igoto *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tigoto\t\t%d\n", (long)pc, x->no);
-                    outword(Op_IGoto);
-                    outword(x->no);
+                    out_op(Op_IGoto);
+                    word_field(x->no, "labno");
                     break;
                 }
                 case Ir_EnterInit: {
                     struct ir_enterinit *x = (struct ir_enterinit *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tenterinit\t%d\n", (long)pc, x->dest);
-                    outword(Op_EnterInit);
+                    out_op(Op_EnterInit);
                     labout(x->dest, "dest");
                     break;
                 }
                 case Ir_Fail: {
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tfail\n", (long)pc);
-                    outword(Op_Fail);
+                    out_op(Op_Fail);
                     break;
                 }
                 case Ir_SysErr: {
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tsysErr\n", (long)pc);
-                    outword(Op_SysErr);
+                    out_op(Op_SysErr);
                     break;
                 }
                 case Ir_Suspend: {
                     struct ir_suspend *x = (struct ir_suspend *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tsuspend\n", (long)pc);
-                    outword(Op_Suspend);
+                    out_op(Op_Suspend);
                     emit_ir_var(x->val, "val");
                     break;
                 }
                 case Ir_Return: {
                     struct ir_return *x = (struct ir_return *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\treturn\n", (long)pc);
-                    outword(Op_Return);
+                    out_op(Op_Return);
                     emit_ir_var(x->val, "val");
                     break;
                 }
                 case Ir_Mark: {
                     struct ir_mark *x = (struct ir_mark *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tmark\t\t%d\n", (long)pc, x->no);
-                    outword(Op_Mark);
-                    outword(x->no);
+                    out_op(Op_Mark);
+                    word_field(x->no, "no");
                     break;
                 }
                 case Ir_Unmark: {
                     struct ir_unmark *x = (struct ir_unmark *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tunmark\t\t%d\n", (long)pc, x->no);
-                    outword(Op_Unmark);
-                    outword(x->no);
+                    out_op(Op_Unmark);
+                    word_field(x->no, "no");
                     break;
                 }
                 case Ir_Move: {
                     struct ir_move *x = (struct ir_move *)ir;
                     if (x->rval) {
-                        if (Dflag)
-                            fprintf(dbgfile, "%ld:\tmove\n", (long)pc);
-                        outword(Op_Move);
+                        out_op(Op_Move);
                         emit_ir_var(x->lhs, "lhs");
                         emit_ir_var(x->rhs, "rhs");
                     } else {
-                        if (Dflag)
-                            fprintf(dbgfile, "%ld:\tmovevar\n", (long)pc);
-                        outword(Op_MoveVar);
+                        out_op(Op_MoveVar);
                         emit_ir_var(x->lhs, "lhs");
                         emit_ir_var(x->rhs, "rhs");
                     }
@@ -775,28 +760,15 @@ static void lemitcode()
                 }
                 case Ir_MoveLabel: {
                     struct ir_movelabel *x = (struct ir_movelabel *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tmovelabel\t%d %d\n", (long)pc, x->destno, x->lab);
-                    outword(Op_MoveLabel);
-                    outword(x->destno);
+                    out_op(Op_MoveLabel);
+                    word_field(x->destno, "destno");
                     labout(x->lab, "lab");
-                    break;
-                }
-                case Ir_Deref: {
-                    struct ir_deref *x = (struct ir_deref *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tderef\n", (long)pc);
-                    outword(Op_Deref);
-                    emit_ir_var(x->src, "src");
-                    emit_ir_var(x->dest, "dest");
                     break;
                 }
                 case Ir_Op: {
                     struct ir_op *x = (struct ir_op *)ir;
                     word op = cnv_op(x->operation);
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\top %s\n", (long)pc, op_names[op]);
-                    outword(op);
+                    out_op(op);
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg1, "arg1");
                     if (x->arg2)
@@ -810,9 +782,7 @@ static void lemitcode()
                 case Ir_OpClo: {
                     struct ir_opclo *x = (struct ir_opclo *)ir;
                     word op = cnv_op(x->operation);
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\top closure %s\n", (long)pc, op_names[op]);
-                    outword(op);
+                    out_op(op);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->arg1, "arg1");
                     if (x->arg2)
@@ -825,9 +795,7 @@ static void lemitcode()
                 }
                 case Ir_KeyOp: {
                     struct ir_keyop *x = (struct ir_keyop *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tkeyop\n", (long)pc);
-                    outword(Op_Keyop);
+                    out_op(Op_Keyop);
                     word_field(x->keyword, "keyword");
                     emit_ir_var(x->lhs, "lhs");
                     labout(x->fail_label, "fail");
@@ -835,9 +803,7 @@ static void lemitcode()
                 }
                 case Ir_KeyClo: {
                     struct ir_keyclo *x = (struct ir_keyclo *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tkeyclo\n", (long)pc);
-                    outword(Op_Keyclo);
+                    out_op(Op_Keyclo);
                     word_field(x->keyword, "keyword");
                     word_field(x->clo, "clo");
                     labout(x->fail_label, "fail");
@@ -846,9 +812,7 @@ static void lemitcode()
                 case Ir_Invoke: {
                     struct ir_invoke *x = (struct ir_invoke *)ir;
                     int i;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tinvoke\n", (long)pc);
-                    outword(Op_Invoke);
+                    out_op(Op_Invoke);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->expr, "expr");
                     word_field(x->argc, "argc");
@@ -862,9 +826,7 @@ static void lemitcode()
                     struct ir_invokef *x = (struct ir_invokef *)ir;
                     struct fentry *fp;
                     int i;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tinvokef\n", (long)pc);
-                    outword(Op_Invokef);
+                    out_op(Op_Invokef);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->expr, "expr");
                     fp = flocate(x->fname);
@@ -886,9 +848,7 @@ static void lemitcode()
                 }
                 case Ir_Apply: {
                     struct ir_apply *x = (struct ir_apply *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tapply\n", (long)pc);
-                    outword(Op_Apply);
+                    out_op(Op_Apply);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->arg1, "arg1");
                     emit_ir_var(x->arg2, "arg2");
@@ -899,9 +859,7 @@ static void lemitcode()
                 case Ir_Applyf: {
                     struct ir_applyf *x = (struct ir_applyf *)ir;
                     struct fentry *fp;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tapplyf\n", (long)pc);
-                    outword(Op_Applyf);
+                    out_op(Op_Applyf);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->arg1, "arg1");
                     fp = flocate(x->fname);
@@ -922,9 +880,7 @@ static void lemitcode()
                 case Ir_Field: {
                     struct ir_field *x = (struct ir_field *)ir;
                     struct fentry *fp;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tfield\n", (long)pc);
-                    outword(Op_Field);
+                    out_op(Op_Field);
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->expr, "expr");
                     fp = flocate(x->fname);
@@ -942,27 +898,21 @@ static void lemitcode()
                 }
                 case Ir_Resume: {
                     struct ir_resume *x = (struct ir_resume *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tresume\n", (long)pc);
-                    outword(Op_Resume);
+                    out_op(Op_Resume);
                     word_field(x->clo, "clo");
                     labout(x->fail_label, "fail");
                     break;
                 }
                 case Ir_ScanSwap: {
                     struct ir_scanswap *x = (struct ir_scanswap *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tscanswap\n", (long)pc);
-                    outword(Op_ScanSwap);
+                    out_op(Op_ScanSwap);
                     word_field(x->tmp_subject->index, "tmp_subject");
                     word_field(x->tmp_pos->index, "tmp_pos");
                     break;
                 }
                 case Ir_ScanSave: {
                     struct ir_scansave *x = (struct ir_scansave *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tscansave\n", (long)pc);
-                    outword(Op_ScanSave);
+                    out_op(Op_ScanSave);
                     emit_ir_var(x->new_subject, "new_subject");
                     word_field(x->tmp_subject->index, "tmp_subject");
                     word_field(x->tmp_pos->index, "tmp_pos");
@@ -971,9 +921,7 @@ static void lemitcode()
                 }
                 case Ir_ScanRestore: {
                     struct ir_scanrestore *x = (struct ir_scanrestore *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tscanrestore\n", (long)pc);
-                    outword(Op_ScanRestore);
+                    out_op(Op_ScanRestore);
                     word_field(x->tmp_subject->index, "tmp_subject");
                     word_field(x->tmp_pos->index, "tmp_pos");
                     break;
@@ -981,9 +929,7 @@ static void lemitcode()
                 case Ir_MakeList: {
                     struct ir_makelist *x = (struct ir_makelist *)ir;
                     int i;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tmakelist\n", (long)pc);
-                    outword(Op_MakeList);
+                    out_op(Op_MakeList);
                     emit_ir_var(x->lhs, "lhs");
                     word_field(x->argc, "argc");
                     for (i = 0; i < x->argc; ++i) 
@@ -992,26 +938,20 @@ static void lemitcode()
                 }
                 case Ir_Create: {
                     struct ir_create *x = (struct ir_create *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tcreate\n", (long)pc);
-                    outword(Op_Create);
+                    out_op(Op_Create);
                     emit_ir_var(x->lhs, "lhs");
                     labout(x->start_label, "start");
                     break;
                 }
                 case Ir_Coret: {
                     struct ir_coret *x = (struct ir_coret *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tcoret\n", (long)pc);
-                    outword(Op_Coret);
+                    out_op(Op_Coret);
                     emit_ir_var(x->value, "value");
                     break;
                 }
                 case Ir_Coact: {
                     struct ir_coact *x = (struct ir_coact *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tcoact\n", (long)pc);
-                    outword(Op_Coact);
+                    out_op(Op_Coact);
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg1, "arg1");
                     emit_ir_var(x->arg2, "arg2");
@@ -1019,16 +959,12 @@ static void lemitcode()
                     break;
                 }
                 case Ir_Cofail: {
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tcofail\n", (long)pc);
-                    outword(Op_Cofail);
+                    out_op(Op_Cofail);
                     break;
                 }
                 case Ir_Limit: {
                     struct ir_limit *x = (struct ir_limit *)ir;
-                    if (Dflag)
-                        fprintf(dbgfile, "%ld:\tlimit\n", (long)pc);
-                    outword(Op_Limit);
+                    out_op(Op_Limit);
                     emit_ir_var(x->limit, "limit");
                     labout(x->fail_label, "fail");
                     break;

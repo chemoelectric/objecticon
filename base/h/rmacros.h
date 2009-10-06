@@ -268,7 +268,7 @@
  */
 #define User    0                       /* collection triggered by user 
                                          * (calling collect function) */
-#define Static  1			/* collection is for static region */
+#define Stack   1			/* collection triggered by stack allocation */
 #define Strings	2			/* collection is for strings */
 #define Blocks	3			/* collection is for blocks */
 

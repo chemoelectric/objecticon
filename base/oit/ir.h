@@ -10,7 +10,6 @@
 #define Ir_Op           7
 #define Ir_OpClo        8
 #define Ir_Resume      11
-#define Ir_Deref       12
 #define Ir_Invoke      13
 #define Ir_KeyOp       14
 #define Ir_KeyClo      15
@@ -260,13 +259,6 @@ struct ir_move {
     IR_SUB
     struct ir_var *lhs;
     struct ir_var *rhs;
-    int rval;
-};
-
-struct ir_deref {
-    IR_SUB
-    struct ir_var *src;
-    struct ir_var *dest;
     int rval;
 };
 

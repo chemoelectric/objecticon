@@ -271,16 +271,6 @@ static struct ir_makelist *ir_makelist(struct lnode *n, struct ir_var *lhs, int 
     return res;
 }
 
-static struct ir_deref *ir_deref(struct lnode *n, struct ir_var *src, struct ir_var *dest)
-{
-    struct ir_deref *res = IRAlloc(struct ir_deref);
-    res->node = n;
-    res->op = Ir_Deref;
-    res->src = src;
-    res->dest = dest;
-    return res;
-}
-
 static struct ir_create *ir_create(struct lnode *n, struct ir_var *lhs, int start_label)
 {
     struct ir_create *res = IRAlloc(struct ir_create);
@@ -2624,15 +2614,6 @@ static void print_chunk(struct chunk *chunk)
                 indentf("\tIr_MoveLabel %d <- %d\n", x->destno, x->lab);
                 break;
             }
-            case Ir_Deref: {
-                struct ir_deref *x = (struct ir_deref *)ir;
-                indentf("\tIr_Deref");
-                print_ir_var(x->src);
-                fprintf(stderr, " -> ");
-                print_ir_var(x->dest);
-                fprintf(stderr, "\n");
-                break;
-            }
             case Ir_ScanSwap: {
                 struct ir_scanswap *x = (struct ir_scanswap *)ir;
                 indentf("\tIr_ScanSwap tmp_subject=");
@@ -3224,12 +3205,6 @@ static void renumber_ir()
                 case Ir_MoveLabel: {
                     struct ir_movelabel *x = (struct ir_movelabel *)ir;
                     renumber_lab(&x->destno);
-                    break;
-                }
-                case Ir_Deref: {
-                    struct ir_deref *x = (struct ir_deref *)ir;
-                    renumber_var(x->src);
-                    renumber_var(x->dest);
                     break;
                 }
                 case Ir_Op: {

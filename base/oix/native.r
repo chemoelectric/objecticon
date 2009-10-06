@@ -581,7 +581,7 @@ function{1} lang_Prog_get_collection_info_impl(c)
        create_list(4, &result);
        MakeInt(prog->colluser, &tmp);
        list_put(&result, &tmp);
-       MakeInt(prog->collstat, &tmp);
+       MakeInt(prog->collstack, &tmp);
        list_put(&result, &tmp);
        MakeInt(prog->collstr, &tmp);
        list_put(&result, &tmp);
@@ -599,9 +599,7 @@ function{1} lang_Prog_get_allocation_info_impl(c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       create_list(3, &result);
-       convert_from_ulonglong(prog->stattotal, &tmp);
-       list_put(&result, &tmp);
+       create_list(2, &result);
        convert_from_ulonglong(prog->stringtotal, &tmp);
        list_put(&result, &tmp);
        convert_from_ulonglong(prog->blocktotal, &tmp);
@@ -621,10 +619,7 @@ function{1} lang_Prog_get_region_info_impl(c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       create_list(3, &result);
-
-       MakeInt(prog->statcurr, &tmp);
-       list_put(&result, &tmp);
+       create_list(2, &result);
 
        n = 0;
        for (rp = prog->stringregion; rp; rp = rp->next)
@@ -670,10 +665,12 @@ function{1} lang_Prog_get_region_info_impl(c)
    }
 end
 
-function{1} lang_Prog_get_stack_info_impl(c)
+function{1} lang_Prog_get_stack_used(c)
    body {
-
-       return result;
+       struct progstate *prog;
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+       return C_integer prog->stackcurr;
    }
 end
 

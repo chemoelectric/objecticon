@@ -8,7 +8,7 @@ package lang
 class Prog()
    # Load and return a program from file {s}.
    #
-   public static defer load(s, arglist, blocksize, stringsize, stacksize)
+   public static defer load(s, arglist, blocksize, stringsize)
 
    #
    # Generate the globals in program P
@@ -126,26 +126,21 @@ class Prog()
       local t, l, m
       t := get_region_info_impl(P)
       l := []
-      while put(l, Region(pop(t[2]), pop(t[2])))
+      while put(l, Region(pop(t[1]), pop(t[1])))
       m := []
-      while put(m, Region(pop(t[3]), pop(t[3])))
-      return RegionInfo(t[1], l, m)
+      while put(m, Region(pop(t[2]), pop(t[2])))
+      return RegionInfo(l, m)
    end
 
    private static defer get_region_info_impl(P)
 
-   # Get info about the stack use of the given co-expression,
-   # excluding any portion used as a C stack. Note that the size may
-   # change over time as the size of the C stack changes.
    #
-   # @param e a co-expression, by default {&current}.
-   # @return a {Region} object
+   # Return the amount of stack (stack frames and local variables)
+   # currently allocated by the given program.
    #
-   public static get_stack_info(c)
-      return Region!get_stack_info_impl(c)
-   end
-
-   private static defer get_stack_info_impl(c)
+   # @return an integer
+   #
+   public static defer get_stack_used(P)
 end
 
 #
@@ -156,8 +151,8 @@ class CollectionInfo()
    public const
       # The number of collections requested by the {collect()} function.
       user_requests, 
-      # The number of collections requested during static allocations.
-      static_requests, 
+      # The number of collections requested during stack allocations.
+      stack_requests, 
       # The number of collections requested during string allocations.
       string_requests, 
       # The number of collections requested during block allocations.
@@ -167,12 +162,12 @@ class CollectionInfo()
    # Return the total of all four types.
    #
    public get_total()
-      return user_requests + static_requests + string_requests + block_requests
+      return user_requests + stack_requests + string_requests + block_requests
    end
 
-   package new(user_requests, static_requests, string_requests, block_requests)
+   package new(user_requests, stack_requests, string_requests, block_requests)
       self.user_requests := user_requests
-      self.static_requests := static_requests
+      self.stack_requests := stack_requests
       self.string_requests := string_requests
       self.block_requests := block_requests
       return
@@ -185,8 +180,6 @@ end
 #
 class AllocationInfo()
    public const
-      # The total allocated in the static region.
-      static_total,
       # The total allocated in the string region.
       string_total,
       # The total allocated in the block region.
@@ -196,11 +189,10 @@ class AllocationInfo()
    # The total in all regions.
    #
    public get_total()
-      return static_total + string_total + block_total
+      return string_total + block_total
    end
 
-   package new(static_total, string_total, block_total)
-      self.static_total := static_total
+   package new(string_total, block_total)
       self.string_total := string_total
       self.block_total := block_total
       return
@@ -213,8 +205,6 @@ end
 #
 class RegionInfo()
    public const
-      # The amount of static allocations currently used
-      static_used, 
       # A list of {Region} instances, one for each string region
       # allocated.
       string_regions, 
@@ -236,10 +226,8 @@ class RegionInfo()
       return Region.sum_list(block_regions)
    end
 
-   package new(static_used,
-               string_regions,
+   package new(string_regions,
                block_regions)
-      self.static_used := static_used
       self.string_regions := string_regions
       self.block_regions := block_regions
       return
@@ -281,6 +269,9 @@ class Region()
    end
 end
 
+#
+# An event from a program's event queue.
+#
 class ProgEvent()
    private readable
       code, value

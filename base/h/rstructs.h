@@ -423,15 +423,14 @@ struct progstate {
 
     ulonglong stringtotal;		/* cumulative total allocation */
     ulonglong blocktotal;		/* cumulative total allocation */
-    ulonglong stattotal;		/* cumulative total static allocation */
 
-    uword statcurr;			/* current static allocation */
-    word statcount;                     /* count of number of coexpr allocs - when
-                                         * it exceeds coexprlim, a gc is triggered */
+    uword stackcurr;			/* current stack allocation in use (frame
+                                         * and local structs) */
+
     word colluser;			/* number of user triggered collections */
-    word collstat;			/* number of static collect requests */
     word collstr;			/* number of string collect requests */
     word collblk;			/* number of block collect requests */
+    word collstack;			/* number of stack collect requests */
     struct region *stringregion;
     struct region *blockregion;
 
@@ -442,7 +441,6 @@ struct progstate {
     dptr Xfield;
     dptr Xargp;
     int Xnargs;
-    int Xfno;                           /* field no in e.field() */
 
     struct descrip Value_tmp;
 
@@ -577,6 +575,8 @@ union tickerdata { 			/* clock ticker -- keep in sync w/ fmonitor.r */
 
 
 struct locals {
+    int size;
+    struct progstate *creator;
     dptr dynamic;
     dptr args;
     dptr low, high;
@@ -588,6 +588,8 @@ enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
 
 #define FRAME_BASE \
      int type; \
+     int size; \
+     struct progstate *creator; \
      struct descrip value;    \
      word *failure_label;     \
      struct b_proc *proc;     \

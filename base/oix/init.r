@@ -608,12 +608,10 @@ static void initprogstate(struct progstate *p)
     p->Lastop = 0;
     p->Xfield = p->Xexpr = p->Xargp = 0;
     p->Xnargs = 0;
-    p->Xfno = 0;
     p->Value_tmp = nulldesc;
 
-    p->stringtotal = p->blocktotal = p->stattotal = p->statcurr =
-        p->colluser = p->collstat = p->collstr = p->collblk = 0;
-    p->statcount = 0;
+    p->stringtotal = p->blocktotal = p->stackcurr = p->colluser = 
+        p->collstack = p->collstr = p->collblk = 0;
 
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;

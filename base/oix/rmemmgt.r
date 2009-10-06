@@ -317,6 +317,9 @@ void collect(int region)
       case Blocks:  
          curpstate->collblk++;
          break;
+      case Stack:  
+         curpstate->collstack++;
+         break;
        default:
          syserr("invalid argument to collect");
          break;
@@ -396,7 +399,8 @@ void collect(int region)
    }
 
    collecting = 0;
-   /*showcurrstack();*/
+
+/*   showcurrstack();*/
 
 #ifdef EventMon
    if (!noMTevents) {

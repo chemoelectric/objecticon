@@ -848,15 +848,17 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
 {
     struct p_frame *p;
     char *t;
-    int i;
-    p = malloc(sizeof(struct p_frame) +
-               pb->nclo * sizeof(struct frame *) +
-               pb->ntmp * sizeof(struct descrip) +
-               pb->nlab * sizeof(word *) + 
-               pb->nmark * sizeof(struct frame *));
+    int i, size;
+    size = sizeof(struct p_frame) +
+        pb->nclo * sizeof(struct frame *) +
+        pb->ntmp * sizeof(struct descrip) +
+        pb->nlab * sizeof(word *) + 
+        pb->nmark * sizeof(struct frame *);
+    p = malloc(size);
     if (!p)
         return 0;
-    
+    p->size = size;
+
     t = (char *)(p + 1);
     if (pb->nclo) {
         p->clo = (struct frame **)t;
@@ -902,13 +904,16 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
     if (locals) {
         ++locals->refcnt;
     } else {
-        int nparam = abs(pb->nparam);
-        locals = malloc(sizeof(struct locals) +
-                        (pb->ndynam + nparam) * sizeof(struct descrip));
+        int lsize, nparam = abs(pb->nparam);
+        lsize = sizeof(struct locals) + (pb->ndynam + nparam) * sizeof(struct descrip);
+        locals = malloc(lsize);
         if (!locals) {
             free(p);
             return 0;
         }
+        curpstate->stackcurr += lsize;
+        locals->size = lsize;
+        locals->creator = curpstate;
         locals->low = locals->high = 0;
         t = (char *)(locals + 1);
         if (pb->ndynam) {
@@ -932,6 +937,8 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
         locals->refcnt = 1;
         locals->seen = 0;
     }
+    curpstate->stackcurr += size;
+    p->creator = curpstate;
     p->locals = locals;
     return p;
 }
@@ -940,12 +947,14 @@ struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
 {
     struct c_frame *p;
     char *t;
-    int i;
-    p = malloc(pb->framesize +
-               (nargs + pb->ntend) * sizeof(struct descrip));
+    int size, i;
+    size = pb->framesize + (nargs + pb->ntend) * sizeof(struct descrip);
+    p = malloc(size);
     if (!p)
         return 0;
-
+    curpstate->stackcurr += size;
+    p->size = size;
+    p->creator = curpstate;
     p->type = C_FRAME_TYPE;
     p->value = nulldesc;
     p->proc = pb;
@@ -972,24 +981,23 @@ struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
     return p;
 }
 
-void dyn_free(void *p)
-{
-    free(p);
-}
-
 void free_frame(struct frame *f)
 {
     switch (f->type) {
         case C_FRAME_TYPE: {
-            dyn_free(f);
+            f->creator->stackcurr -= f->size;
+            free(f);
             break;
         }
         case P_FRAME_TYPE: {
             struct locals *l = ((struct p_frame *)f)->locals;
-            dyn_free(f);
+            f->creator->stackcurr -= f->size;
+            free(f);
             --l->refcnt;
-            if (l->refcnt == 0)
-                dyn_free(l);
+            if (l->refcnt == 0) {
+                l->creator->stackcurr -= l->size;
+                free(l);
+            }
             break;
         }
         default:
