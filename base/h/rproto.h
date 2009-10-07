@@ -487,7 +487,6 @@ int	tvalcmp		(dptr d1,dptr d2);
 int	tvcmp4		(struct dpair *dp1,struct dpair *dp2);
 void	varargs		(dptr argp, int nargs, dptr rslt);
 
-struct b_coexpr *alccoexp (void);
 struct progstate *alcprog(long icodesize);
 
 dptr rec_structinate(dptr dp, char *name, int nfields, char *a[]);
@@ -616,3 +615,17 @@ void set_c_frame_value();
 void set_c_frame_failure();
 void add_to_prog_event_queue(dptr value, int event);
 void do_cofail();
+void general_call_0(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
+void general_call_1(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
+void general_access_0(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
+                      int just_fail, word *failure_label);
+void general_access_1(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
+                      int just_fail, word *failure_label);
+
+void general_invokef_0(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+                       int argc, dptr args, word rval, word *failure_label);
+void general_invokef_1(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+                       int argc, dptr args, word rval, word *failure_label);
+void test_collect(int time_interval, long call_interval);
+struct b_coexpr *alccoexp_0 (void);
+struct b_coexpr *alccoexp_1 (void);

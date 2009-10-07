@@ -302,10 +302,7 @@ void collect(int region)
    }
 #endif
 
-#if E_Collect
-   if (!noMTevents)
-      EVVal((word)region,E_Collect);
-#endif					/* E_Collect */
+   EVVal((word)region,E_Collect);
 
    switch (region) {
       case User:
@@ -402,12 +399,7 @@ void collect(int region)
 
 /*   showcurrstack();*/
 
-#ifdef EventMon
-   if (!noMTevents) {
-      mmrefresh();
-      EVValD(&nulldesc, E_EndCollect);
-      }
-#endif					/* instrument allocation events */
+   EVValD(&nulldesc, E_EndCollect);
 
    }
 
@@ -1052,4 +1044,38 @@ longlong physicalmemorysize()
 #else					/* MSWIN32 */
     return 0;
 #endif					/* MSWIN32 */
+}
+
+void test_collect(int time_interval, long call_interval)
+{
+    static long secs;
+    static long call_count, sampled_interval;
+    struct timeval tp;
+
+    ++call_count;
+
+    if (sampled_interval)
+        call_interval = sampled_interval;
+
+    if (call_interval > 0) {
+        if (call_count == call_interval) {
+            fprintf(stderr, "test_collect: collection start at call_count=%ld\n", call_count);fflush(stderr);
+            collect(User);
+            fprintf(stderr, "test_collect: collection end\n");fflush(stderr);
+            call_count = 0;
+        }
+        return;
+    }
+
+    if (gettimeofday(&tp, 0) < 0) {
+        fprintf(stderr, "test_collect: gettimeofday failed\n");fflush(stderr);
+        return;
+    }
+    if (secs == 0) {
+        secs = tp.tv_sec + time_interval;
+        return;
+    }
+    if (tp.tv_sec > secs) {
+        sampled_interval = call_count + 1;
+    }
 }

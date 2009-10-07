@@ -516,6 +516,19 @@ static void outfield()
 }
 
 /*
+ * Is a given b_proc an operator or not?
+ */
+static int is_op(struct b_proc *bp)
+{
+    int i;
+    for (i = 0; i < op_tbl_sz; ++i) {
+        if (op_tbl[i] == bp)
+            return 1;
+    }
+    return 0;
+}
+
+/*
  * ttrace - show offending expression.
  */
 static void ttrace()
@@ -535,12 +548,11 @@ static void ttrace()
             break;
 
         case Op_Invokef:
-            if (SP->type == C_FRAME_TYPE) {
+            if (xc_frame) {
                 /* Will happen if a builtin proc calls runnerr */
-                struct c_frame *cf = (struct c_frame *)SP;
-                procname(stderr, cf->proc);
-                xnargs = cf->nargs;
-                xargp = cf->args;
+                procname(stderr, xc_frame->proc);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
                 putc('(', stderr);
                 while (xnargs--) {
                     outimage(stderr, xargp++, 0);
@@ -558,12 +570,11 @@ static void ttrace()
             break;
 
         case Op_Applyf:
-            if (SP->type == C_FRAME_TYPE) {
+            if (xc_frame) {
                 /* Will happen if a builtin proc calls runnerr */
-                struct c_frame *cf = (struct c_frame *)SP;
-                procname(stderr, cf->proc);
-                xnargs = cf->nargs;
-                xargp = cf->args;
+                procname(stderr, xc_frame->proc);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
                 fprintf(stderr," ! [ ");
                 while (xnargs--) {
                     outimage(stderr, xargp++, 0);
@@ -585,12 +596,11 @@ static void ttrace()
             break;
 
         case Op_Apply:
-            if (SP->type == C_FRAME_TYPE) {
+            if (xc_frame) {
                 /* Will happen if a builtin proc calls runnerr */
-                struct c_frame *cf = (struct c_frame *)SP;
-                procname(stderr, cf->proc);
-                xnargs = cf->nargs;
-                xargp = cf->args;
+                procname(stderr, xc_frame->proc);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
                 fprintf(stderr," ! [ ");
                 while (xnargs--) {
                     outimage(stderr, xargp++, 0);
@@ -610,12 +620,11 @@ static void ttrace()
             break;
 
         case Op_Invoke:
-            if (SP->type == C_FRAME_TYPE) {
+            if (xc_frame) {
                 /* Will happen if a builtin proc calls runnerr */
-                struct c_frame *cf = (struct c_frame *)SP;
-                procname(stderr, cf->proc);
-                xnargs = cf->nargs;
-                xargp = cf->args;
+                procname(stderr, xc_frame->proc);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
                 putc('(', stderr);
                 while (xnargs--) {
                     outimage(stderr, xargp++, 0);
@@ -631,6 +640,7 @@ static void ttrace()
             break;
 
         case Op_Toby:
+            xargp = xc_frame->args;
             putc('{', stderr);
             outimage(stderr, xargp++, 0);
             fprintf(stderr, " to ");
@@ -641,6 +651,7 @@ static void ttrace()
             break;
 
         case Op_Subsc:
+            xargp = xc_frame->args;
             putc('{', stderr);
             outimage(stderr, xargp++, 0);
             putc('[', stderr);
@@ -651,6 +662,7 @@ static void ttrace()
             break;
 
         case Op_Sect:
+            xargp = xc_frame->args;
             putc('{', stderr);
             outimage(stderr, xargp++, 0);
 
@@ -695,31 +707,52 @@ static void ttrace()
             fprintf(stderr, "limit counter: ");
             outimage(stderr, xargp, 0);
             break;
-   
+
         default: {
             struct b_proc *bp;
-            /* 
-             * opblks are only defined for the operator instructions, the last of
-             * which is Op_Value (see opdefs.h and odefs.h) 
+
+            /*
+             * Have we come here from a C operator/function?
              */
-            if (lastop > Op_Value)
+            if (!xc_frame)
                 break;
-            bp = opblks[lastop];
-            if (!bp)
-                break;
-            putc('{', stderr);
-            if (xnargs == 1) {
-                putstr(stderr, &bp->name);
-                putc(' ', stderr);
-                outimage(stderr, xargp, 0);
+
+            bp = xc_frame->proc;
+
+            /* 
+             * It may be an operator (1-3) args or a function.
+             */
+            if (is_op(bp)) {
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
+                putc('{', stderr);
+                if (xnargs == 0)
+                    putstr(stderr, &bp->name);
+                else if (xnargs == 1) {
+                    putstr(stderr, &bp->name);
+                    putc(' ', stderr);
+                    outimage(stderr, xargp, 0);
+                } else {
+                    outimage(stderr, xargp++, 0);
+                    putc(' ', stderr);
+                    putstr(stderr, &bp->name);
+                    putc(' ', stderr);
+                    outimage(stderr, xargp, 0);
+                }
+                putc('}', stderr);
             } else {
-                outimage(stderr, xargp++, 0);
-                putc(' ', stderr);
-                putstr(stderr, &bp->name);
-                putc(' ', stderr);
-                outimage(stderr, xargp, 0);
+                /* Not an operator, perhaps a function being resumed. */
+                procname(stderr, bp);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
+                putc('(', stderr);
+                while (xnargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (xnargs)
+                        putc(',', stderr);
+                }
+                putc(')', stderr);
             }
-            putc('}', stderr);
         }
     }
 	 

@@ -608,7 +608,7 @@ static void initprogstate(struct progstate *p)
     p->Lastop = 0;
     p->Xfield = p->Xexpr = p->Xargp = 0;
     p->Xnargs = 0;
-    p->Value_tmp = nulldesc;
+    p->Xc_frame = 0;
 
     p->stringtotal = p->blocktotal = p->stackcurr = p->colluser = 
         p->collstack = p->collstr = p->collblk = 0;
@@ -623,6 +623,7 @@ static void initprogstate(struct progstate *p)
     p->Cnvstr = cnv_str_0;
     p->Cnvtstr = cnv_tstr_0;
     p->Deref = deref_0;
+    p->Alccoexp = alccoexp_0;
     p->Alcbignum = alcbignum_0;
     p->Alccset = alccset_0;
     p->Alchash = alchash_0;
@@ -644,12 +645,9 @@ static void initprogstate(struct progstate *p)
     p->Dealcblk = dealcblk_0;
     p->Dealcstr = dealcstr_0;
     p->Reserve = reserve_0;
-/**TODO
-    p->Interp = interp_0;
-    p->FieldAccess = field_access_0;
-    p->InvokefAccess = invokef_access_0;
-    p->Invoke = invoke_0;
-***/
+    p->GeneralCall = general_call_0;
+    p->GeneralAccess = general_access_0;
+    p->GeneralInvokef = general_invokef_0;
 }
 
 static void initptrs(struct progstate *p, struct header *h)

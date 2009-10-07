@@ -110,12 +110,12 @@ struct b_bignum *f(word n)
 alcbignum_macro(alcbignum_0,0)
 alcbignum_macro(alcbignum_1,E_Lrgint)
 
-
+#begdef alccoexp_macro(f,e_coexpr)
 /*
  * alccoexp - allocate a co-expression stack block; called via 
  * create or refresh - for loading progs, see alcprog below.
  */
-struct b_coexpr *alccoexp()
+struct b_coexpr *f()
 {
    struct b_coexpr *blk;
 
@@ -127,6 +127,9 @@ struct b_coexpr *alccoexp()
    blk->tvalloc = 0;
    return blk;
 }
+#enddef
+alccoexp_macro(alccoexp_0,0)
+alccoexp_macro(alccoexp_1,E_Coexpr)
 
 
 /*

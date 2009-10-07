@@ -8,25 +8,11 @@
 #include "../h/config.h"
 #include "../h/version.h"
 #include "../h/monitor.h"
-
-#ifndef NoTypeDefs
-   #include "../h/typedefs.h"
-#endif					/* NoTypeDefs */
+#include "../h/typedefs.h"
 
 /*
  * Macros that must be expanded by rtt.
  */
-
-/*
- * Declaration for library routine.
- */
-#begdef LibDcl(nm,n,nt,pn)
-   #passthru OpBlock(nm,n,nt,pn,0)
-
-   int O##nm(nargs,cargp)
-   int nargs;
-   register dptr cargp;
-#enddef					/* LibDcl */
 
 /*
  * Error exit from non top-level routines. Set tentative values for
@@ -51,22 +37,6 @@
    } while (0)
 #enddef					/* ReturnErrNum */
 
-/*
- * Code expansions for exits from C code for top-level routines.
- */
-#define Fail		return A_Resume
-#define Return		return A_Continue
-
-/*
- * RunErr encapsulates a call to the function err_msg, followed
- *  by Fail.  The idea is to avoid the problem of calling
- *  runerr directly and forgetting that it may actually return.
- */
-
-#define RunErr(n,dp) do {\
-   err_msg((int)n,dp);\
-   Fail;\
-   } while (0)
 
 /*
  * Protection macro.
@@ -80,10 +50,8 @@
        fail; \
        }
 
-/*
- * perform what amounts to "function inlining" of EVVal
- */
-#begdef RealEVVal(value,event)
+#begdef EVVal(value,event)
+#if event
    do {
       struct descrip value_desc;
       if (is:null(curpstate->eventmask)) break;
@@ -91,11 +59,6 @@
       MakeInt(value, &value_desc);
       add_to_prog_event_queue(&value_desc, event);
    } while (0)
-#enddef					/* RealEVVal */
-
-#begdef EVVal(value,event)
-#if event
-   RealEVVal(value,event)
 #endif
 #enddef					/* EVVal */
 

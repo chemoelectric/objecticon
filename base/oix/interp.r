@@ -63,10 +63,12 @@ void tail_invoke_frame(struct frame *f)
 {
     switch (f->type) {
         case C_FRAME_TYPE: {
+            xc_frame = (struct c_frame *)f;
             if (!f->proc->ccode(f)) {
                 Ipc = f->failure_label;
                 pop_to(f->parent_sp);
             }
+            xc_frame = 0;
             break;
         }
         case P_FRAME_TYPE: {
@@ -329,8 +331,6 @@ static void do_op(int op, int nargs)
     lhs = get_dptr();
     MemProtect(cf = alc_c_frame(bp, nargs));
     push_frame((struct frame *)cf);
-    xnargs = nargs;
-    xargp =cf->args;
     if (bp->underef) {
         for (i = 0; i < nargs; ++i)
             get_variable(&cf->args[i]);
@@ -340,11 +340,13 @@ static void do_op(int op, int nargs)
     }
     cf->rval = GetWord;
     cf->failure_label = get_addr();
+    xc_frame = cf;
     if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
         Ipc = cf->failure_label;
+    xc_frame = 0;
     pop_to(cf->parent_sp);
 }
 
@@ -357,8 +359,6 @@ static void do_opclo(int op, int nargs)
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, nargs));
     push_frame((struct frame *)cf);
-    xnargs = nargs;
-    xargp = cf->args;
     if (bp->underef) {
         for (i = 0; i < nargs; ++i)
             get_variable(&cf->args[i]);
@@ -369,10 +369,12 @@ static void do_opclo(int op, int nargs)
     cf->rval = GetWord;
     cf->failure_label = get_addr();
     PF->clo[clo] = (struct frame *)cf;
+    xc_frame = cf;
     if (!bp->ccode(cf)) {
         Ipc = cf->failure_label;
         pop_to(cf->parent_sp);
     }
+    xc_frame = 0;
 }
 
 static void do_keyop()
@@ -386,15 +388,15 @@ static void do_keyop()
 
     MemProtect(cf = alc_c_frame(bp, 0));
     push_frame((struct frame *)cf);
-    xnargs = 0;
-    xargp = 0;
     cf->failure_label = get_addr();
+    xc_frame = cf;
     if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
         Ipc = cf->failure_label;
     pop_to(cf->parent_sp);
+    xc_frame = 0;
 }
 
 static void do_keyclo()
@@ -407,14 +409,14 @@ static void do_keyclo()
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, 0));
     push_frame((struct frame *)cf);
-    xnargs = 0;
-    xargp = 0;
     cf->failure_label = get_addr();
     PF->clo[clo] = (struct frame *)cf;
+    xc_frame = cf;
     if (!bp->ccode(cf)) {
         Ipc = cf->failure_label;
         pop_to(cf->parent_sp);
     }
+    xc_frame = 0;
 }
 
 static void do_makelist()
@@ -948,6 +950,7 @@ static void pop_from_prog_event_queue(struct progstate *prog, dptr res)
 {
     BlkLoc(*res)->object.fields[0] = prog->event_queue_head->eventcode;
     BlkLoc(*res)->object.fields[1] = prog->event_queue_head->eventval;
+    Deref(BlkLoc(*res)->object.fields[1]);
     if (prog->event_queue_head == prog->event_queue_tail) {
         free(prog->event_queue_head);
         prog->event_queue_head = prog->event_queue_tail = 0;

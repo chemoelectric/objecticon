@@ -626,8 +626,7 @@
       #define xfield    (curpstate->Xfield)
       #define xargp     (curpstate->Xargp)
       #define xnargs    (curpstate->Xnargs)
-      #define xfno      (curpstate->Xfno)
-      #define value_tmp (curpstate->Value_tmp)
+      #define xc_frame  (curpstate->Xc_frame)
       
       #define k_current     (curpstate->K_current)
       #define k_errornumber (curpstate->K_errornumber)
@@ -652,6 +651,7 @@
       #define cnv_tstr	    (curpstate->Cnvtstr)
       #define deref	    (curpstate->Deref)
       #define alcbignum	    (curpstate->Alcbignum)
+      #define alccoexp	    (curpstate->Alccoexp)
       #define alccset	    (curpstate->Alccset)
       #define alchash	    (curpstate->Alchash)
       #define alcsegment    (curpstate->Alcsegment)
@@ -673,9 +673,9 @@
       #define dealcblk      (curpstate->Dealcblk)
       #define dealcstr      (curpstate->Dealcstr)
       #define reserve       (curpstate->Reserve)
-      #define field_access  (curpstate->FieldAccess)
-      #define invokef_access (curpstate->InvokefAccess)
-      #define invoke        (curpstate->Invoke)
+      #define general_call  (curpstate->GeneralCall)
+      #define general_access (curpstate->GeneralAccess)
+      #define general_invokef (curpstate->GeneralInvokef)
 
 #if MSWIN32
       #define ptr2word(x) (uword)x

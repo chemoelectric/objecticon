@@ -441,8 +441,7 @@ struct progstate {
     dptr Xfield;
     dptr Xargp;
     int Xnargs;
-
-    struct descrip Value_tmp;
+    struct c_frame *Xc_frame;           /* currently executing c frame */
 
     int K_errornumber;
     struct descrip K_errortext;
@@ -481,6 +480,7 @@ struct progstate {
     struct b_object *(*Alcobject)(struct b_class *);
     struct b_cast *(*Alccast)();
     struct b_methp *(*Alcmethp)();
+    struct b_coexpr *(*Alccoexp)();
     struct b_ucs *(*Alcucs)();
     struct b_selem *(*Alcselem)(void);
     char *(*Alcstr)(char *, word);
@@ -491,9 +491,12 @@ struct progstate {
     void (*Dealcstr)(char *);
     char * (*Reserve)(int, word);
 
-    int (*FieldAccess)(dptr, struct inline_field_cache *);
-    int (*InvokefAccess)(int, int *);
-    int (*Invoke)(int, dptr *, int *);
+    void (*GeneralCall)(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
+
+    void (*GeneralAccess)(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
+                          int just_fail, word *failure_label);
+    void (*GeneralInvokef)(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+                           int argc, dptr args, word rval, word *failure_label);
 };
 
 /*

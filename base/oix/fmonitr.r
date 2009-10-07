@@ -35,6 +35,8 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       ((Testb((word)(E_Deref), bits)) ? deref_1 : deref_0);
    p->Alcbignum =
       ((Testb((word)(E_Lrgint),bits)) ? alcbignum_1:alcbignum_0);
+   p->Alccoexp =
+      ((Testb((word)(E_Coexpr),bits)) ? alccoexp_1:alccoexp_0);
    p->Alccset =
       ((Testb((word)(E_Cset), bits)) ? alccset_1 : alccset_0);
    p->Alcsegment =
@@ -115,7 +117,6 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       p->Cnvtstr = cnv_tstr_0;
       }
 
-/** TODO
    if ((Testb((word)(E_Objectref), bits)) ||
        (Testb((word)(E_Objectsub), bits)) ||
        (Testb((word)(E_Castref), bits)) ||
@@ -125,23 +126,34 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
        (Testb((word)(E_Rref), bits)) ||
        (Testb((word)(E_Rsub), bits))) 
    {
-       p->FieldAccess = field_access_1;
-       p->InvokefAccess = invokef_access_1;
+       p->GeneralAccess = general_access_1;
    } else {
-       p->FieldAccess = field_access_0;
-       p->InvokefAccess = invokef_access_0;
+       p->GeneralAccess = general_access_1;
    }
 
-   if ((Testb((word)(E_Ecall), bits)) ||
-       (Testb((word)(E_Pcall), bits)) ||
+   if ((Testb((word)(E_Objectref), bits)) ||
+       (Testb((word)(E_Objectsub), bits)) ||
+       (Testb((word)(E_Castref), bits)) ||
+       (Testb((word)(E_Castsub), bits)) ||
+       (Testb((word)(E_Classref), bits)) ||
+       (Testb((word)(E_Classsub), bits)) ||
+       (Testb((word)(E_Rref), bits)) ||
+       (Testb((word)(E_Rsub), bits)) ||
+       (Testb((word)(E_Pcall), bits))) 
+   {
+       p->GeneralInvokef = general_invokef_1;
+   } else {
+       p->GeneralInvokef = general_invokef_0;
+   }
+
+   if ((Testb((word)(E_Pcall), bits)) ||
        (Testb((word)(E_Objectcreate), bits)) ||
        (Testb((word)(E_Rcreate), bits)))
    {
-       p->Invoke = invoke_1;
+       p->GeneralCall = general_call_1;
    } else {
-       p->Invoke = invoke_0;
+       p->GeneralCall = general_call_0;
    }
-**/
 
    /*
     * interp() is the monster case:
@@ -285,30 +297,3 @@ void EVInit()
 
    }
 
-
-#ifdef EventMon
-
-/*
- * mmrefresh() - redraw screen, initially or after garbage collection.
- */
-
-void mmrefresh()
-{
-    char *p = NULL;
-    word n;
-
-    /*
-     * If the monitor is asking for E_EndCollect events, then it
-     * can handle these memory allocation "redraw" events.
-     */
-    if (!is:null(curpstate->eventmask) &&
-        Testb((word)(E_EndCollect), BlkLoc(curpstate->eventmask)->cset.bits)) {
-        for (p = blkbase; p < blkfree; p += n) {
-            n = BlkSize(p);
-            RealEVVal(n, typech[(int)BlkType(p)]);	/* block region */
-        }
-        EVVal(DiffPtrs(strfree, strbase), E_String);	/* string region */
-    }
-}
-
-#endif
