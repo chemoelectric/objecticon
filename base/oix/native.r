@@ -970,7 +970,7 @@ end
 
 #include "../h/opdefs.h"
 
-static struct b_proc *clone_b_proc(struct b_proc *bp)
+struct b_proc *clone_b_proc(struct b_proc *bp)
 {
     struct b_proc *new0;
     MemProtect(new0 = malloc(sizeof(struct b_proc)));

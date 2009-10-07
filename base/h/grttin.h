@@ -54,8 +54,9 @@
 #if event
    do {
       struct descrip value_desc;
+      if (!curpstate->monitor) break;
       if (is:null(curpstate->eventmask)) break;
-      else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
+      if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
       MakeInt(value, &value_desc);
       add_to_prog_event_queue(&value_desc, event);
    } while (0)
@@ -65,8 +66,9 @@
 #begdef EVValD(dp,event)
 #if event
    do {
+      if (!curpstate->monitor) break;
       if (is:null(curpstate->eventmask)) break;
-      else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
+      if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
       add_to_prog_event_queue(dp, event);
    } while (0)
 #endif
@@ -79,6 +81,7 @@
 #begdef Desc_EVValD(bp, code, type)
 #if code
    do {
+   if (!curpstate->monitor) break;
    eventdesc.dword = type;
    eventdesc.vword.bptr = (union block *)(bp);
    EVValD(&eventdesc, code);

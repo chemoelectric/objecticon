@@ -138,16 +138,14 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
        (Testb((word)(E_Classref), bits)) ||
        (Testb((word)(E_Classsub), bits)) ||
        (Testb((word)(E_Rref), bits)) ||
-       (Testb((word)(E_Rsub), bits)) ||
-       (Testb((word)(E_Pcall), bits))) 
+       (Testb((word)(E_Rsub), bits)))
    {
        p->GeneralInvokef = general_invokef_1;
    } else {
        p->GeneralInvokef = general_invokef_0;
    }
 
-   if ((Testb((word)(E_Pcall), bits)) ||
-       (Testb((word)(E_Objectcreate), bits)) ||
+   if ((Testb((word)(E_Objectcreate), bits)) ||
        (Testb((word)(E_Rcreate), bits)))
    {
        p->GeneralCall = general_call_1;
@@ -155,47 +153,6 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
        p->GeneralCall = general_call_0;
    }
 
-   /*
-    * interp() is the monster case:
-    * We should replace 30 membership tests with a cset intersection.
-    * Heck, we should redo the event codes so any bit in one
-    * particular word means: "use the instrumented interp".
-    */
-/**
-   if (Testb((word)(E_Intcall), bits) ||
-       Testb((word)(E_Fsusp), bits) ||
-       Testb((word)(E_Osusp), bits) ||
-       Testb((word)(E_Bsusp), bits) ||
-       Testb((word)(E_Ocall), bits) ||
-       Testb((word)(E_Ofail), bits) ||
-       Testb((word)(E_Tick), bits) ||
-       Testb((word)(E_Line), bits) ||
-       Testb((word)(E_Fname), bits) ||
-       Testb((word)(E_Opcode), bits) ||
-       Testb((word)(E_Fcall), bits) ||
-       Testb((word)(E_Prem), bits) ||
-       Testb((word)(E_Erem), bits) ||
-       Testb((word)(E_Intret), bits) ||
-       Testb((word)(E_Psusp), bits) ||
-       Testb((word)(E_Ssusp), bits) ||
-       Testb((word)(E_Pret), bits) ||
-       Testb((word)(E_Efail), bits) ||
-       Testb((word)(E_Sresum), bits) ||
-       Testb((word)(E_Fresum), bits) ||
-       Testb((word)(E_Oresum), bits) ||
-       Testb((word)(E_Eresum), bits) ||
-       Testb((word)(E_Presum), bits) ||
-       Testb((word)(E_Pfail), bits) ||
-       Testb((word)(E_Ffail), bits) ||
-       Testb((word)(E_Frem), bits) ||
-       Testb((word)(E_Orem), bits) ||
-       Testb((word)(E_Fret), bits) ||
-       Testb((word)(E_Oret), bits)
-       )
-      p->Interp = interp_1;
-   else
-      p->Interp = interp_0;
-**/
 #endif
 }
 

@@ -61,6 +61,7 @@ void revert_PF()
 
 void tail_invoke_frame(struct frame *f)
 {
+    Desc_EVValD(f->proc, E_Pcall, D_Proc);
     switch (f->type) {
         case C_FRAME_TYPE: {
             xc_frame = (struct c_frame *)f;
@@ -340,6 +341,7 @@ static void do_op(int op, int nargs)
     }
     cf->rval = GetWord;
     cf->failure_label = get_addr();
+    Desc_EVValD(bp, E_Pcall, D_Proc);
     xc_frame = cf;
     if (bp->ccode(cf)) {
         if (lhs)
@@ -369,12 +371,7 @@ static void do_opclo(int op, int nargs)
     cf->rval = GetWord;
     cf->failure_label = get_addr();
     PF->clo[clo] = (struct frame *)cf;
-    xc_frame = cf;
-    if (!bp->ccode(cf)) {
-        Ipc = cf->failure_label;
-        pop_to(cf->parent_sp);
-    }
-    xc_frame = 0;
+    tail_invoke_frame((struct frame *)cf);
 }
 
 static void do_keyop()
@@ -384,11 +381,12 @@ static void do_keyop()
     struct b_proc *bp;
 
     bp = keyblks[GetWord];
-    lhs = get_dptr();
 
+    lhs = get_dptr();
     MemProtect(cf = alc_c_frame(bp, 0));
     push_frame((struct frame *)cf);
     cf->failure_label = get_addr();
+    Desc_EVValD(bp, E_Pcall, D_Proc);
     xc_frame = cf;
     if (bp->ccode(cf)) {
         if (lhs)
@@ -411,12 +409,7 @@ static void do_keyclo()
     push_frame((struct frame *)cf);
     cf->failure_label = get_addr();
     PF->clo[clo] = (struct frame *)cf;
-    xc_frame = cf;
-    if (!bp->ccode(cf)) {
-        Ipc = cf->failure_label;
-        pop_to(cf->parent_sp);
-    }
-    xc_frame = 0;
+    tail_invoke_frame((struct frame *)cf);
 }
 
 static void do_makelist()
@@ -766,6 +759,7 @@ void interp()
 
             case Op_Fail: {
                 struct p_frame *t = PF;
+                Desc_EVValD(t->proc, E_Pfail, D_Proc);
                 revert_PF();
                 if (k_trace && t->proc->program) {
                     k_trace--;
@@ -793,6 +787,7 @@ void interp()
 
             case Op_Suspend: {
                 struct p_frame *t = PF;
+                Desc_EVValD(t->proc, E_Psusp, D_Proc);
                 get_descrip(&PF->value);
                 retderef(&PF->value, PF->locals);
                 revert_PF();
@@ -805,6 +800,7 @@ void interp()
 
             case Op_Return: {
                 struct p_frame *t = PF;
+                Desc_EVValD(t->proc, E_Pret, D_Proc);
                 get_descrip(&PF->value);
                 retderef(&PF->value, PF->locals);
                 t->exhausted = 1;

@@ -299,7 +299,6 @@ static void invoke_class_init()
         bp = (struct b_proc *)BlkLoc(*init_field->field_descriptor);
         f = push_frame_for_proc(bp, 0, 0, 0);
         f->failure_label = failure_label;
-        EVValD(init_field->field_descriptor, E_Pcall);
         tail_invoke_frame(f);
     }
 }
@@ -319,7 +318,7 @@ static void ensure_class_initialized()
     tail_invoke_frame((struct frame *)pf);
 }
 
-#begdef invoke_macro(general_call,invoke_methp,invoke_misc,invoke_proc,construct_object,construct_record,e_pcall,e_objectcreate,e_rcreate)
+#begdef invoke_macro(general_call,invoke_methp,invoke_misc,invoke_proc,construct_object,construct_record,e_objectcreate,e_rcreate)
 
 static void construct_record(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
 static void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
@@ -456,7 +455,6 @@ static void invoke_proc(word clo, dptr expr, int argc, dptr args, word rval, wor
     PF->clo[clo] = f;
     f->failure_label = failure_label;
     f->rval = rval;
-    EVValD(expr, e_pcall);
     tail_invoke_frame(f);
 }
 
@@ -472,7 +470,6 @@ static void invoke_methp(word clo, dptr expr, int argc, dptr args, word rval, wo
     PF->clo[clo] = f;
     f->failure_label = failure_label;
     f->rval = rval;
-    EVValD(expr, e_pcall);
     tail_invoke_frame(f);
 }
 
@@ -535,7 +532,6 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
                 PF->clo[clo] = f;
                 f->failure_label = failure_label;
                 f->rval = rval;
-                EVValD(expr, e_pcall);
                 tail_invoke_frame(f);
                 return;
             }
@@ -554,8 +550,8 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
 
 #enddef
 
-invoke_macro(general_call_0, invoke_methp_0,invoke_misc_0,invoke_proc_0,construct_object_0,construct_record_0,0,0,0)
-invoke_macro(general_call_1, invoke_methp_1,invoke_misc_1,invoke_proc_1,construct_object_1,construct_record_1,E_Pcall,E_Objectcreate,E_Rcreate)
+invoke_macro(general_call_0, invoke_methp_0,invoke_misc_0,invoke_proc_0,construct_object_0,construct_record_0,0,0)
+invoke_macro(general_call_1, invoke_methp_1,invoke_misc_1,invoke_proc_1,construct_object_1,construct_record_1,E_Objectcreate,E_Rcreate)
 
 
 
@@ -832,7 +828,7 @@ access_macro(general_access_1, cast_access_1,instance_access_1,class_access_1,re
    } while (0)
 #enddef
 
-#begdef invokef_macro(general_invokef, cast_invokef,instance_invokef,class_invokef,record_invokef,e_objectref,e_objectsub,e_castref,e_castsub,e_classref,e_classsub,e_rref,e_rsub,e_pcall)
+#begdef invokef_macro(general_invokef, cast_invokef,instance_invokef,class_invokef,record_invokef,e_objectref,e_objectsub,e_castref,e_castsub,e_classref,e_classsub,e_rref,e_rsub)
 
 static void class_invokef(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
                              int argc, dptr args, word rval, word *failure_label);
@@ -979,7 +975,6 @@ static void cast_invokef(word clo, dptr expr, dptr query, struct inline_field_ca
     PF->clo[clo] = f;
     f->failure_label = failure_label;
     f->rval = rval;
-    EVValD(cf->field_descriptor, e_pcall);
     tail_invoke_frame(f);
 }
 
@@ -1025,7 +1020,6 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
         PF->clo[clo] = f;
         f->failure_label = failure_label;
         f->rval = rval;
-        EVValD(cf->field_descriptor, e_pcall);
         tail_invoke_frame(f);
     } else {
         ac = check_access(cf, class0);
@@ -1043,9 +1037,9 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
 }
 #enddef
 
-invokef_macro(general_invokef_0, cast_invokef_0,instance_invokef_0,class_invokef_0,record_invokef_0,0,0,0,0,0,0,0,0,0)
+invokef_macro(general_invokef_0, cast_invokef_0,instance_invokef_0,class_invokef_0,record_invokef_0,0,0,0,0,0,0,0,0)
 
-invokef_macro(general_invokef_1, cast_invokef_1,instance_invokef_1,class_invokef_1,record_invokef_1,E_Objectref,E_Objectsub,E_Castref,E_Castsub,E_Classref,E_Classsub,E_Rref,E_Rsub,E_Pcall)
+invokef_macro(general_invokef_1, cast_invokef_1,instance_invokef_1,class_invokef_1,record_invokef_1,E_Objectref,E_Objectsub,E_Castref,E_Castsub,E_Classref,E_Classsub,E_Rref,E_Rsub)
 
 
 static void simple_access()

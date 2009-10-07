@@ -549,7 +549,7 @@
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         0,0,0,  \
-      	{sizeof(Lit(f))-1,Lit(f)},\
+      	{sizeof("keyword:" Lit(f))-1, "keyword:" Lit(f)},\
         0,0};
 
    /*
