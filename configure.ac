@@ -22,7 +22,7 @@ CONFIG_DIR=$(pwd -P)
 AC_SUBST([CONFIG_DATE])
 CONFIG_DATE=$(date)
 
-AC_CONFIG_SRCDIR([base/oix/imain.r])
+AC_CONFIG_SRCDIR([base/oix/init.r])
 
 CHECK_XLIB()
 if test "$ac_cv_lib_X11_main" = yes; then
@@ -58,10 +58,6 @@ if test "$enable_largefile" != no; then
         fi
 fi
 
-ACX_CONTEXT_SWITCH()
-export CSWITCH
-CSWITCH=config/system/$acx_context_switch/rswitch.?
-
 AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll uname truncate)
 AC_CHECK_GLOBAL(sys_nerr)
 AC_CHECK_GLOBAL(sys_errlist)
@@ -77,12 +73,9 @@ AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long long)
 
-CHECK_STACK_ALIGN()
 CHECK_DOUBLE_HAS_WORD_ALIGNMENT()
 
 AC_CONFIG_COMMANDS(system, [
-        rm -f base/oix/rswitch.?
-        cp $CSWITCH base/oix
 	AS_MKDIR_P(bin)
 ])
 
@@ -157,4 +150,3 @@ if test -z "$MYSQL_VERSION"; then
 else
         echo yes
 fi
-echo "context switch         :" $CSWITCH
