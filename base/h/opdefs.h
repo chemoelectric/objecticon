@@ -53,100 +53,49 @@
 /*
  * Other instructions.
  */
-#define Op_Bscan	 44
-#define Op_Ccase	 45
-#define Op_Chfail	 46
-#define Op_Coact 	 47
-#define Op_Cofail	 48
-#define Op_Coret 	 49
-#define Op_Create	 50
-#define Op_Cset  	 51
-#define Op_Dup   	 52
-#define Op_Efail 	 53
-#define Op_Eret  	 54
-#define Op_Escan 	 55
-#define Op_Esusp 	 56
-#define Op_Field 	 57
-#define Op_Goto  	 58
-#define Op_Init  	 59
-#define Op_Int   	 60
-#define Op_Invoke	 61
-#define Op_Keywd 	 62
-#define Op_Limit 	 63
-#define Op_Llist 	 65
-#define Op_Lsusp 	 66
-#define Op_Mark  	 67
-#define Op_Pfail 	 68
-#define Op_Pnull 	 69
-#define Op_Pop   	 70
-#define Op_Pret  	 71
-#define Op_Psusp 	 72
-#define Op_Push1 	 73
-#define Op_Pushn1 	 74
-#define Op_Real   	 75
-#define Op_Sdup   	 76
-#define Op_Str    	 77
-#define Op_Unmark 	 78
-#define Op_Ucs           79
-#define Op_Arg		 81
-#define Op_Static	 82
-#define Op_Local	 83
-#define Op_Global	 84
-#define Op_Mark0	 85
-#define Op_Quit		 86
-#define Op_FQuit	 87
-#define Op_Apply	 89
-#define Op_Invokef       90
-#define Op_Applyf        91
-#define Op_Trapret       92
-#define Op_Trapfail      93
-#define Op_CopyArgs      94
-#define Op_CopyArgs2     95
-#define Op_IpcRef        96
-
-#define Op_Noop		 98
-
-/*
- * "Absolute" address operations.  These codes are inserted in the
- * icode at run-time by the interpreter to overwrite operations
- * that initially compute a location relative to locations not known until
- * the icode file is loaded.
- */
-#define Op_Acset	100
-#define Op_Areal	101
-#define Op_Astr		102
-#define Op_Aglobal	103
-#define Op_Astatic	104
-#define Op_Agoto	105
-#define Op_Amark	106
-#define Op_Aucs 	107
-
-
-
-#define Op_IGoto        201
-#define Op_EnterInit    202
-#define Op_Fail         203
-#define Op_Nil          204
-#define Op_Const        205
-#define Op_Dynamic	206
-#define Op_Tmp     	207
-#define Op_Closure 	208
-#define Op_Move		209
-#define Op_MoveLabel    210
-#define Op_Deref        211
-#define Op_Keyop 	212
-#define Op_Keyclo 	213
-#define Op_Resume 	214
-#define Op_Knull 	215
-#define Op_ScanSwap     218
-#define Op_ScanSave     219
-#define Op_ScanRestore  220
-#define Op_SysErr       222
-#define Op_Custom       223
-#define Op_Halt         224
-#define Op_MakeList     225
-#define Op_PopRepeat    226
-#define Op_MoveVar      227
-#define Op_Suspend      228
-#define Op_Return       229
-#define Op_Exit         230
+#define Op_Coact         44
+#define Op_Cofail        45
+#define Op_Coret         46
+#define Op_Create        47
+#define Op_Field         48
+#define Op_Goto          49
+#define Op_Int           50
+#define Op_Keywd         51
+#define Op_Limit         52
+#define Op_Mark          53
+#define Op_Unmark        54
+#define Op_Arg           55
+#define Op_Static        56
+#define Op_Global        57
+#define Op_Apply         58
+#define Op_Applyf        59
+#define Op_Invoke        60
+#define Op_Invokef       61
+#define Op_IGoto         62
+#define Op_EnterInit     63
+#define Op_Fail          64
+#define Op_Nil           65
+#define Op_Const         66
+#define Op_Dynamic       67
+#define Op_Tmp           68
+#define Op_Closure       69
+#define Op_Move          70
+#define Op_MoveLabel     71
+#define Op_Deref         72
+#define Op_Keyop         73
+#define Op_Keyclo        74
+#define Op_Resume        75
+#define Op_Knull         76
+#define Op_ScanSwap      77
+#define Op_ScanSave      78
+#define Op_ScanRestore   79
+#define Op_SysErr        80
+#define Op_Custom        81
+#define Op_Halt          82
+#define Op_MakeList      83
+#define Op_Pop           84
+#define Op_PopRepeat     85
+#define Op_MoveVar       86
+#define Op_Suspend       87
+#define Op_Return        88
+#define Op_Exit          89
