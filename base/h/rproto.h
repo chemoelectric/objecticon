@@ -195,7 +195,6 @@ void print_dword(FILE *f, dptr d);
    int	atobool		(char *s);
    int	docircles	(wbp w, int argc, dptr argv, int fill);
    void	drawCurve	(wbp w, XPoint *p, int n);
-   char	*evquesub	(wbp w, int i);
    void	genCurve	(wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
    int	getpattern	(wbp w, char *answer);
    char *getselection(wbp w, char *buf);
@@ -614,7 +613,6 @@ void switch_to(struct b_coexpr *ce);
 void set_c_frame_value();
 void set_c_frame_failure();
 void add_to_prog_event_queue(dptr value, int event);
-void do_cofail();
 void general_call_0(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
 void general_call_1(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
 void general_access_0(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 

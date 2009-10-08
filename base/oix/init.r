@@ -696,8 +696,6 @@ static void handle_loaded_prog_exit()
      */
     if (curpstate->monitor)
         curpstate = curpstate->monitor;
-    else
-        do_cofail();
 }
 
 " load a program corresponding to string s as a co-expression."
@@ -1281,24 +1279,21 @@ int main(int argc, char **argv)
 
     main_bp = (struct b_proc *)BlkLoc(*main_proc);
 
+    MemProtect(frame = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
+    frame->locals->args[0] = *main_proc;
     /*
-     * We avoid passing an arg to main if possible, so that we don't create
-     * a list unnecessarily.
+     * Only create an args list if main has a parameter; otherwise args[1]
+     * is just left as &null.
      */
     if (main_bp->nparam) {
         tended struct descrip args;
-        MemProtect(frame = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
         create_list(argc - 2, &args);
         for (i = 2; i < argc; i++) {
             struct descrip t;
             CMakeStr(argv[i], &t);
             list_put(&args, &t);
         }
-        frame->locals->args[0] = *main_proc;
         frame->locals->args[1] = args;
-    } else {
-        MemProtect(frame = alc_p_frame((struct b_proc *)&Bmain_wrapper0, 0));
-        frame->locals->args[0] = *main_proc;
     }
     k_current->sp = (struct frame *)frame;
     k_current->curr_pf = frame;

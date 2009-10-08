@@ -15,7 +15,7 @@ $ifdef _MS_WIN32
 $else
    c := Prog.load("mt_c1") | stop("Couldn't load mt_c1")
 $endif
-   @c
+   Prog.get_global("main",c)()
    i := 1
    repeat {
       s := "test"||i
@@ -339,15 +339,15 @@ end
 procedure test27()
    local c,p
 $ifdef _MS_WIN32
-   c := Prog.load("mt_c3.exe",[1,2,3]) | stop("Couldn't load mt_c3")
-   @c
+   c := Prog.load("mt_c3.exe") | stop("Couldn't load mt_c3")
+   Prog.get_global("main",c)([1,2,3])
    c := Prog.load("mt_c3.exe")  | stop("Couldn't load mt_c3")
-   @c
+   Prog.get_global("main",c)([])
 $else
-   c := Prog.load("mt_c3",[1,2,3]) | stop("Couldn't load mt_c3")
-   @c
+   c := Prog.load("mt_c3") | stop("Couldn't load mt_c3")
+   Prog.get_global("main",c)([1,2,3])
    c := Prog.load("mt_c3")  | stop("Couldn't load mt_c3")
-   @c
+   Prog.get_global("main",c)([])
 $endif
    p := Prog.get_global("main",c) | stop("Couldn't access main")
    p([4,5,6])
@@ -361,7 +361,7 @@ $ifdef _MS_WIN32
 $else
    c := Prog.load("kwds") | stop("Couldn't load kwds.icn")
 $endif
-   @c
+   Prog.get_global("main",c)()
 end
 
 procedure test29()

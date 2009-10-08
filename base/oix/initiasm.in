@@ -9,12 +9,11 @@ $start load_wrapper
         MainExit
         Op_Arg arg:1
       
-# main() has exited; either fail to the enclosing coexpression or
-# transfer to the parent progstate.
+# main() has exited; either transfer to the parent progstate, setting
+# the exited flag, or fail through and exit.
 MainExit:
     Op_Custom c:handle_loaded_prog_exit
-    Op_Goto 
-        MainExit
+    Op_Exit
 $end
 
 # Wrapper for main with single list argument.
@@ -26,19 +25,6 @@ $start main_wrapper
         0
         MainExit
         Op_Arg arg:1
-      
-MainExit:
-    Op_Exit
-$end
-
-# Wrapper for main with no arguments.
-$start main_wrapper0
-    Op_Invoke
-        clo:0
-        Op_Arg arg:0
-        0
-        0
-        MainExit
       
 MainExit:
     Op_Exit

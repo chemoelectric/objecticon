@@ -10,8 +10,7 @@ static word load_wrapper_code[] = {
    1,
    Op_Custom,
    (word)handle_loaded_prog_exit,
-   Op_Goto,
-   9*WordSize,
+   Op_Exit,
 };
 CustomProc(load_wrapper,load_wrapper_code,2,0,1,0,0,0,"internal:load_wrapper")
 static word main_wrapper_code[] = {
@@ -27,14 +26,3 @@ static word main_wrapper_code[] = {
    Op_Exit,
 };
 CustomProc(main_wrapper,main_wrapper_code,2,0,1,0,0,0,"internal:main_wrapper")
-static word main_wrapper0_code[] = {
-   Op_Invoke,
-   0,
-   Op_Arg,
-   0,
-   0,
-   0,
-   7*WordSize,
-   Op_Exit,
-};
-CustomProc(main_wrapper0,main_wrapper0_code,1,0,1,0,0,0,"internal:main_wrapper0")

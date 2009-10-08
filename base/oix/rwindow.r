@@ -18,29 +18,6 @@ extern HPALETTE palette;
 extern int numColors;
 #endif					/* MSWindows */
 
-
-/*
- * subscript the already-processed-events "queue" to index i.
- * used in "cooked mode" I/O to determine, e.g. how far to backspace.
- */
-char *evquesub(w,i)
-    wbp w;
-    int i;
-{
-    wsp ws = w->window;
-    int j = ws->eQback+i;
-
-    if (i < 0) {
-        if (j < 0) j+= EQUEUELEN;
-        else if (j > EQUEUELEN) j -= EQUEUELEN;
-        return &(ws->eventQueue[j]);
-    }
-    else {
-        /* "this isn't getting called in the forwards direction!\n" */
-        return NULL;
-    }
-}
-
 
 int wgetevent2(wbp w, dptr res, word timeout)
 {

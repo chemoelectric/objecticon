@@ -80,8 +80,6 @@
 #define EQ_MOD_SHIFT   (1L<<18L)
 #define EQ_MOD_RELEASE (1L<<19L)
 
-#define EVQUESUB(w,i) *evquesub(w,i)
-#define EQUEUELEN 256
 
 /*
  * mode bits for the Icon window context (as opposed to X context)
@@ -320,8 +318,6 @@ typedef struct _wstate {
   int		bits;			/* window bits */
   int		theCursor;		/* index into cursor table */
   word		timestamp;		/* last event time stamp */
-  char		eventQueue[EQUEUELEN];  /* queue of cooked-mode keystrokes */
-  int		eQfront, eQback;
   char		*cursorname;
   struct descrip listp;		/* icon values for this window */
 #ifdef XWindows

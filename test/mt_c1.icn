@@ -12,7 +12,7 @@ $ifdef _MS_WIN32
 $else
    c := Prog.load("mt_c2") | stop("Couldn't load mt_c2")
 $endif
-   @c
+   Prog.get_global("main",c)()
    p := Prog.get_global("subchild0",c) | stop("no subchild0 found")
    p()
 end

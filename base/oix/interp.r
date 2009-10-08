@@ -4,6 +4,7 @@
 static void transmit_failure();
 static void get_child_prog_result();
 static void activate_child_prog();
+static void do_cofail();
 
 #include "interpiasm.ri"
 
@@ -25,7 +26,7 @@ void set_c_frame_value()
     struct p_frame *t = PF;
     dptr res = get_dptr();
     /* Set the value in the C frame */
-    SP->parent_sp->value = *res;
+    t->parent_sp->value = *res;
     PF = PF->caller;
     /* Pop of this frame, leaving the C frame */
     pop_to(t->parent_sp);
@@ -513,7 +514,7 @@ static void do_coret()
         *k_current->tvalloc = val;
 }
 
-void do_cofail()
+static void do_cofail()
 {
     /*printf("cofail FROM %p to %p",k_current, k_current->activator);printf("\n");*/
     if (k_trace) {
