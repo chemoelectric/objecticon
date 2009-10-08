@@ -220,7 +220,7 @@ void icon_init(char *name)
     MakeInt(1000, &thousanddesc);
     MakeInt(0, &kywd_dmp);
 
-    nullptr.dword = D_NullPtr;
+    nullptr.dword = D_TendPtr;
     BlkLoc(nullptr) = 0;
 
     nulldesc.dword = D_Null;
@@ -1404,7 +1404,11 @@ void print_vword(FILE *f, dptr d) {
                 break;
             }
 
-            case D_NullPtr :
+            case D_TendPtr : {
+                fprintf(f, "%p", BlkLoc(*d));
+                break;
+            }
+
             case D_Null : {
                 fputs("0", f); 
                 break;
@@ -1471,7 +1475,7 @@ void print_dword(FILE *f, dptr d) {
         fprintf(f, "D_StructVar off:%lu", (unsigned long)Offset(*d));
     } else {
         switch (d->dword) {
-            case D_NullPtr : fputs("D_NullPtr", f); break;
+            case D_TendPtr : fputs("D_TendPtr", f); break;
             case D_NamedVar : fputs("D_NamedVar", f); break;
             case D_Tvsubs : fputs("D_Tvsubs", f); break;
             case D_Tvtbl : fputs("D_Tvtbl", f); break;
@@ -1528,7 +1532,9 @@ void showstack(struct b_coexpr *c)
             printf("SP-> ");
         if (f == (struct frame *)c->curr_pf)
             printf("PF-> ");
-        printf("Frame %p type=%d\n", f, f->type);
+        printf("Frame %p type=%c, size=%d\n", f, 
+               f->type == C_FRAME_TYPE ? 'C':'P', 
+               f->size);
         printf("\tvalue="); print_desc(stdout, &f->value); printf("\n");
         printf("\tfailure_label=%p\n", f->failure_label);
         tmp.dword = D_Proc;
@@ -1566,7 +1572,7 @@ void showstack(struct b_coexpr *c)
                 for (i = 0; i < f->proc->nmark; ++i) {
                     printf("\tmark[%d]=%p\n", i, pf->mark[i]);
                 }
-                printf("\tlocals=%p\n", pf->locals);
+                printf("\tlocals=%p, size=%d\n", pf->locals, pf->locals->size);
                 for (i = 0; i < f->proc->ndynam; ++i) {
                     printf("\t   locals.dynamic[%d]=", i); print_desc(stdout, &pf->locals->dynamic[i]); printf("\n");
                 }

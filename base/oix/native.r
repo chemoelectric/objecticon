@@ -2952,20 +2952,3 @@ function{0,1} lang_Proc_get_field_name(c)
             fail;
      }
 end
-
-
-function {1} stdout(a[n])
-    body {
-       int i;
-       tended struct b_object *dumper;
-       for (i = 0; i < n; ++i) {
-           if (!cnv:string(a[i],a[i]))
-               runerr(103, a[i]);
-           printf("%.*s",StrLen(a[i]),StrLoc(a[i]));
-       }
-       printf("\n");
-       fflush(stdout);
-       return C_integer n;
-    }
-end
-

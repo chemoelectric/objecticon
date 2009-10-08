@@ -387,7 +387,7 @@
 #define D_StructVar	(F_Var | F_Nqual | F_Ptr)
 #define D_NamedVar     	(F_Var | F_Nqual)
 #define D_Typecode	(F_Nqual | F_Typecode)
-#define D_NullPtr       (F_Ptr | F_Nqual)
+#define D_TendPtr       (F_Ptr | F_Nqual)
 #define TypeMask	63	/* type mask */
 #define OffsetMask	(~(F_Var | F_Nqual | F_Ptr | F_Typecode)) /* offset mask for variables */
 
