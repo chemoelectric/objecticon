@@ -1,22 +1,6 @@
-# Wrapper for loaded program.  This function is the body of the returned
-# co-expression.
-$start load_wrapper
-    Op_Invoke
-        clo:0
-        Op_Arg arg:0
-        1
-        0
-        MainExit
-        Op_Arg arg:1
-      
-# main() has exited; either transfer to the parent progstate, setting
-# the exited flag, or fail through and exit.
-MainExit:
-    Op_Custom c:handle_loaded_prog_exit
-    Op_Exit
-$end
-
-# Wrapper for main with single list argument.
+#
+# Wrapper for main procedure.
+#
 $start main_wrapper
     Op_Invoke
         clo:0
@@ -25,7 +9,12 @@ $start main_wrapper
         0
         MainExit
         Op_Arg arg:1
-      
+
+#      
+# main() has exited; either transfer to the monitoring progstate, setting
+# the exited flag, or fall through and exit.
+#
 MainExit:
+    Op_Custom c:handle_monitored_prog_exit
     Op_Exit
 $end

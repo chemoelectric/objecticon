@@ -11,7 +11,7 @@ static FILE    *readhdr	(char *name, struct header *hdr);
 static void    initptrs (struct progstate *p, struct header *h);
 static void    initprogstate(struct progstate *p);
 static void    initalloc(struct progstate *p);
-static void    handle_loaded_prog_exit();
+static void    handle_monitored_prog_exit();
 
 /*
  * External declarations for operator and function blocks.
@@ -687,7 +687,7 @@ static void initptrs(struct progstate *p, struct header *h)
 
 #include "initiasm.ri"
 
-static void handle_loaded_prog_exit()
+static void handle_monitored_prog_exit()
 {
     curpstate->exited = 1;
     /* 
@@ -800,11 +800,11 @@ function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
          fatalerr(117, NULL);
 
        main_bp = (struct b_proc *)BlkLoc(*pstate->MainProc);
-       MemProtect(new_pf = alc_p_frame((struct b_proc *)&Bload_wrapper, 0));
+       MemProtect(new_pf = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
        new_pf->locals->args[0] = *pstate->MainProc;
        coex->sp = (struct frame *)new_pf;
        coex->curr_pf = new_pf;
-       coex->start_label = new_pf->ipc = Bload_wrapper.icode;
+       coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
        coex->failure_label = 0;
 
        if (main_bp->nparam) {
