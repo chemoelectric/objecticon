@@ -20,6 +20,7 @@ int trace	=0;	/* -t: initial &trace value */
 int pponly	=0;	/* -E: preprocess only */
 int strinv	=0;	/* -f s: allow full string invocation */
 int verbose	=1;	/* -v n: verbosity of commentary, 0 = silent */
+int Iflag       =0;     /* -I: produce listing of raw and optimized intermediate code */
 int neweronly	=0;	/* -n: only translate .icn if newer than .u */
 int Dflag       =0;     /* -L: link debug */
 int Zflag	=0;	/* -Z: icode-gz compression */
@@ -173,8 +174,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBstuE] [-f s] [-o ofile] [-v i] [-l i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBfmno:stuv:ELZTVl:O:")) != EOF) {
+#define Usage "[-cBstuELI] [-f s] [-o ofile] [-v i] [-l i]"	/* omit -e from doc */
+    while ((c = getopt(argc,argv, "cBfmno:stuv:ELIZTVl:O:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -191,6 +192,10 @@ int main(int argc, char **argv)
 
             case 'L':			/* -L: enable linker debugging */
                 Dflag = 1;
+                break;
+
+            case 'I':			/* -I: dump intermediate code */
+                Iflag = 1;
                 break;
 
             case 'u':			/* -u: source code is in utf8 format */

@@ -16,6 +16,7 @@ extern int strinv;	/* -f s: allow full string invocation */
 extern int verbose;	/* -v n: verbosity of commentary */
 extern int neweronly;	/* -n: only translate .icn if newer than .u */
 extern int Dflag;       /* -L: link debug */
+extern int Iflag;       /* -I: ir code dump */
 extern int Zflag;	/* -Z: icode-gz compression */
 extern int uflag;       /* -u: utf-8 source code */
 extern int loclevel;    /* -l n: location info */

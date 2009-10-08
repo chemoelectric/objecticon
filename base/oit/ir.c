@@ -34,7 +34,6 @@ static void init_scan(struct ir_info *info, struct ir_stack *st);
 static void print_chunk(struct chunk *chunk);
 
 static int traverse_level;
-static int dump = 0;
 
 struct membuff ir_func_mb = {"Per func IR membuff", 64000, 0,0,0 };
 #define IRAlloc(type)   mb_alloc(&ir_func_mb, sizeof(type))
@@ -160,7 +159,7 @@ static struct chunk *chunk(int line, char *desc, int id, int n, ...)
             chunk->inst[chunk->n_inst++] = inst;
     }
     va_end(argp);
-    if (dump)
+    if (Iflag)
         print_chunk(chunk);
     return chunk;
 }
@@ -738,7 +737,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 {
     struct ir_info *res = ir_info(n);
     res->node = n;
-    if (dump) {
+    if (Iflag) {
         indentf("uop = %s (bounded=%d rval=%d, target=", ucode_op_table[n->op].name, bounded, rval);
         print_ir_var(target);
         fprintf(stderr, ") {\n");
@@ -2437,10 +2436,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             quitf("ir_traverse: illegal opcode(%d): %s in file %s\n", n->op, 
                   ucode_op_table[n->op].name, n->loc.file);
     }
-    if (dump)
+    if (Iflag)
         indentf("uses_stack=%d\n", res->uses_stack);
     --traverse_level;
-    if (dump)
+    if (Iflag)
         indentf("}\n");
     return res;
 }
@@ -2455,7 +2454,7 @@ void generate_ir()
     mb_clear(&ir_func_mb);
     hi_clo = hi_tmp = hi_lab = hi_mark = -1;
 
-    if (dump) {
+    if (Iflag) {
         if (curr_lfunc->method)
             fprintf(stderr, "\nGenerating ir tree for method %s.%s\n", 
                     curr_lfunc->method->class->global->name, curr_lfunc->method->name);
@@ -2497,7 +2496,7 @@ void generate_ir()
 
     optimize_goto();
     renumber_ir();
-    if (dump) {
+    if (Iflag) {
         fprintf(stderr, "** Optimized code\n");
         dump_ir();
         fprintf(stderr, "** End of optimized code\n");
@@ -2962,7 +2961,7 @@ static void optimize_goto()
         struct chunk *chunk;
         chunk = chunks[i];
         if (chunk && !chunk->seen) {
-            if (dump)
+            if (Iflag)
                 fprintf(stderr, "Elminating untraversed chunk %d (line %d)\n", i, chunk->line);
             chunks[i] = 0;
         }
