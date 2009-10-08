@@ -215,7 +215,6 @@ void EVInit()
    typech[T_Selem]   = E_Selem;		/* set element block */
    typech[T_Slots]   = E_Slots;		/* set/table hash slots */
    typech[T_Coexpr]  = E_Coexpr;	/* co-expression block (static) */
-   typech[T_Refresh] = E_Refresh;	/* co-expression refresh block */
    typech[T_Object]  = E_Object;        /* object */
    typech[T_Cast ]   = E_Cast;          /* cast */
    typech[T_Methp]   = E_Methp;         /* method pointer */

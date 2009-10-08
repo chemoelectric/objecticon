@@ -56,7 +56,7 @@ int bsizes[] = {
      sizeof(struct b_tvtbl),  /* T_Tvtbl (14), table element trapped variable */
      0,                       /* T_Slots (15), set/table hash block */
      sizeof(struct b_tvsubs), /* T_Tvsubs (16), substring trapped variable */
-     0,                       /* T_Refresh (17), refresh block */
+     sizeof(struct b_methp),  /* T_Methp (17), method pointer */
      sizeof(struct b_coexpr), /* T_Coexpr (18), co-expression block */
      0,                       /* T_Ucs (19), unicode string */
      -1,                      /* T_Kywdint (20), integer keyword variable */
@@ -67,7 +67,6 @@ int bsizes[] = {
      0,                       /* T_Class (25), class */
      0,                       /* T_Object (26), object */
      sizeof(struct b_cast),   /* T_Cast (27), cast */
-     sizeof(struct b_methp),  /* T_Methp (28), method pointer */
     };
 
 /*
@@ -92,9 +91,7 @@ int firstd[] = {
      3*WordSize,              /* T_Tvtbl (14), table element trapped variable */
      0,                       /* T_Slots (15), set/table hash block */
      3*WordSize,              /* T_Tvsubs (16), substring trapped variable */
-
-     0,                       /* T_Refresh (17), refresh block */
-
+     0,                       /* T_Methp (17), methp */
     -1,                       /* T_Coexpr (18), co-expression block */
      3*WordSize,              /* T_Ucs (19), unicode string */
      -1,                      /* T_Kywdint (20), integer keyword variable */
@@ -105,7 +102,6 @@ int firstd[] = {
      -1,                      /* T_Class (25), class, just contains static data in icode */
      5*WordSize,              /* T_Object (26), object */
      0,                       /* T_Cast (27), cast */
-     0,                       /* T_Methp (28), methp */
     };
 
 /*
@@ -130,7 +126,7 @@ int firstp[] = {
      1*WordSize,              /* T_Tvtbl (14), table element trapped variable */
      2*WordSize,              /* T_Slots (15), set/table hash block */
      0,                       /* T_Tvsubs (16), substring trapped variable */
-     0,                       /* T_Refresh (17), refresh block */
+     1*WordSize,              /* T_Methp (17), methp */
     -1,                       /* T_Coexpr (18), co-expression block */
      0,                       /* T_Ucs (19), unicode string */
      -1,                      /* T_Kywdint (20), integer keyword variable */
@@ -141,7 +137,6 @@ int firstp[] = {
      -1,                      /* T_Class (25), class, just contains static data in icode */
      0,                       /* T_Object (26), object, just a pointer to the class, which is static */
      1*WordSize,              /* T_Cast (27), cast */
-     1*WordSize,              /* T_Methp (28), methp */
     };
 
 /*
@@ -166,7 +161,7 @@ int ptrno[] = {
      1,                       /* T_Tvtbl (14), table element trapped variable */
      0,                       /* T_Slots (15), set/table hash block */
     -1,                       /* T_Tvsubs (16), substring trapped variable */
-    -1,                       /* T_Refresh (17), refresh block */
+     1,                       /* T_Methp (17), method pointer */
     -1,                       /* T_Coexpr (18), co-expression block */
     -1,                       /* T_Ucs (19), unicode string */
     -1,                       /* T_Kywdint (20), integer keyword variable */
@@ -177,7 +172,6 @@ int ptrno[] = {
     -1,                       /* T_Class (25), class */
     -1,                       /* T_Object (26), object */
      1,                       /* T_Cast (27), cast */
-     1,                       /* T_Methp (28), method pointer */
     };
 
 /*
@@ -202,7 +196,7 @@ int descno[] = {
      0,                       /* T_Tvtbl (14), table element trapped variable */
     -1,                       /* T_Slots (15), set/table hash block */
      0,                       /* T_Tvsubs (16), substring trapped variable */
-     0,                       /* T_Refresh (17), refresh block */
+    -1,                       /* T_Methp (17), methp */
     -1,                       /* T_Coexpr (18), co-expression block */
      1,                       /* T_Ucs (19), unicode string */
     -1,                       /* T_Kywdint (20), integer keyword variable */
@@ -213,7 +207,6 @@ int descno[] = {
     -1,                       /* T_Class (25), class, just contains static data in icode */
      0,                       /* T_Object (26), object */
     -1,                       /* T_Cast (27), cast */
-    -1,                       /* T_Methp (28), methp */
 };
 
 /*
@@ -237,7 +230,7 @@ char *blkname[] = {
    "table element trapped variable",    /* T_Tvtbl (14) */
    "hash block",                        /* T_Slots (15) */
    "substring trapped variable",        /* T_Tvsubs (16) */
-   "refresh block",                     /* T_Refresh (17) */
+   "methp",                             /* T_Methp (17) */
    "co-expression",                     /* T_Coexpr (18) */
    "ucs",                               /* T_Ucs (19), unicode string */
    "integer keyword variable",          /* T_Kywdint (20) */
@@ -248,7 +241,6 @@ char *blkname[] = {
    "class",                             /* T_Class (25) */
    "object",                            /* T_Object (26) */
    "cast",                              /* T_Cast (27) */
-   "methp",                             /* T_Methp (28) */
    };
 
 /*

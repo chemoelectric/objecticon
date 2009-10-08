@@ -328,19 +328,18 @@
 #define T_Tvtbl		14	/* table element trapped variable */
 #define T_Slots		15	/* set/table hash slots */
 #define T_Tvsubs	16	/* substring trapped variable */
-#define T_Refresh	17	/* refresh block */
+#define T_Methp         17      /* method pointer */
 #define T_Coexpr	18	/* co-expression */
 #define T_Ucs           19      /* unicode character string */
 #define T_Kywdint	20	/* integer keyword */
 #define T_Kywdpos	21	/* keyword &pos */
 #define T_Kywdsubj	22	/* keyword &subject */
 #define T_Kywdstr	23	/* string keyword */
-#define T_Kywdany	24	/* keyword &eventsource, etc. */
+#define T_Kywdany	24	/* keyword of any type */
 #define T_Class         25      /* class */
 #define T_Object        26      /* object */
 #define T_Cast          27      /* cast */
-#define T_Methp         28      /* method pointer */
-#define MaxType		28	/* maximum type number */
+#define MaxType		27	/* maximum type number */
 
 /*
  * Definitions for keywords.
@@ -379,7 +378,6 @@
 #define D_Kywdint	(T_Kywdint  | D_Typecode | F_Var)
 #define D_Kywdpos	(T_Kywdpos  | D_Typecode | F_Var)
 #define D_Kywdsubj	(T_Kywdsubj | D_Typecode | F_Var)
-#define D_Refresh	(T_Refresh  | D_Typecode | F_Ptr)
 #define D_Coexpr	(T_Coexpr   | D_Typecode | F_Ptr)
 #define D_Slots		(T_Slots    | D_Typecode | F_Ptr)
 #define D_Kywdstr	(T_Kywdstr  | D_Typecode | F_Var)
@@ -389,7 +387,7 @@
 #define D_StructVar	(F_Var | F_Nqual | F_Ptr)
 #define D_NamedVar     	(F_Var | F_Nqual)
 #define D_Typecode	(F_Nqual | F_Typecode)
-
+#define D_NullPtr       (F_Ptr | F_Nqual)
 #define TypeMask	63	/* type mask */
 #define OffsetMask	(~(F_Var | F_Nqual | F_Ptr | F_Typecode)) /* offset mask for variables */
 
@@ -420,84 +418,6 @@
 #define blkend   (curblock->end)
 #define blkfree  (curblock->free)
 
-   
-   /*
-    * Definitions for the interpreter.
-    */
-   
-   /*
-    * Codes returned by invoke to indicate action.
-    */
-   #define I_Builtin	201	/* A built-in routine is to be invoked */
-   #define I_Fail	202	/* goal-directed evaluation failed */
-   #define I_Continue	203	/* Continue execution in the interp loop */
-   #define I_Vararg	204	/* A function with a variable number of args */
-   
-   /*
-    * Generator types.
-    */
-   #define G_Csusp		1
-   #define G_Esusp		2
-   #define G_Psusp		3
-   #define G_Fsusp		4
-   #define G_Osusp		5
-   
-   /*
-    * Evaluation stack overflow margin
-    */
-   #define PerilDelta 100
-   
-   /*
-    * Macro definitions related to descriptors.
-    */
-   
-   /*
-    * The following code is operating-system dependent [@rt.01].  Define
-    *  PushAval for computers that store longs and pointers differently.
-    */
-   
-   #if PORT
-      #define PushAVal(x) PushVal(x)
-      Deliberate Syntax Error
-   #endif				/* PORT */
-   
-   #if UNIX
-      #define PushAVal(x) PushVal(x)
-   #endif		
-   
-   #if MSWIN32
-         static union {
-                char *stkadr;
-                word stkint;
-            } stkword;
-         
-         #define PushAVal(x)  {sp++; \
-         			stkword.stkadr = (char *)(x); \
-         			*sp = stkword.stkint;}
-   #endif				/* MSWIN32 */
-   
-   /*
-    * End of operating-system specific code.
-    */
-   
-   /*
-    * Macros for pushing values on the interpreter stack.
-    */
-   
-   /*
-    * Push descriptor.
-    */
-   #define PushDesc(d)	{*++sp = ((d).dword); sp++;*sp =((d).vword.integer);}
-   
-   /*
-    * Push null-valued descriptor.
-    */
-   #define PushNull	{*++sp = D_Null; sp++; *sp = 0;}
-   
-   /*
-    * Push word.
-    */
-   #define PushVal(v)	{*++sp = (word)(v);}
    
    /*
     * Macros related to function and operator definition.
@@ -615,7 +535,7 @@
       #define blktotal  (curpstate->blocktotal)
       
       #define coll_user (curpstate->colluser)
-      #define coll_stat (curpstate->collstat)
+      #define coll_stack (curpstate->collstack)
       #define coll_str  (curpstate->collstr)
       #define coll_blk  (curpstate->collblk)
       
@@ -664,7 +584,6 @@
       #define alccast  	    (curpstate->Alccast)
       #define alcmethp      (curpstate->Alcmethp)
       #define alcucs        (curpstate->Alcucs)
-      #define alcrefresh    (curpstate->Alcrefresh)
       #define alcselem      (curpstate->Alcselem)
       #define alcstr        (curpstate->Alcstr)
       #define alcsubs       (curpstate->Alcsubs)

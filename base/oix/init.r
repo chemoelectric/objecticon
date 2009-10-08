@@ -220,7 +220,7 @@ void icon_init(char *name)
     MakeInt(1000, &thousanddesc);
     MakeInt(0, &kywd_dmp);
 
-    nullptr.dword = F_Ptr | F_Nqual;
+    nullptr.dword = D_NullPtr;
     BlkLoc(nullptr) = 0;
 
     nulldesc.dword = D_Null;
@@ -1404,6 +1404,7 @@ void print_vword(FILE *f, dptr d) {
                 break;
             }
 
+            case D_NullPtr :
             case D_Null : {
                 fputs("0", f); 
                 break;
@@ -1418,8 +1419,6 @@ void print_vword(FILE *f, dptr d) {
             case D_Selem :
             case D_Telem :
             case D_Slots :
-            case D_Refresh :
-
             case D_Proc : {
                 struct b_proc *p = (struct b_proc*)BlkLoc(*d);
                 fprintf(f, "%p -> prog:%p=", p, p->program);
@@ -1472,6 +1471,7 @@ void print_dword(FILE *f, dptr d) {
         fprintf(f, "D_StructVar off:%lu", (unsigned long)Offset(*d));
     } else {
         switch (d->dword) {
+            case D_NullPtr : fputs("D_NullPtr", f); break;
             case D_NamedVar : fputs("D_NamedVar", f); break;
             case D_Tvsubs : fputs("D_Tvsubs", f); break;
             case D_Tvtbl : fputs("D_Tvtbl", f); break;
@@ -1494,7 +1494,6 @@ void print_dword(FILE *f, dptr d) {
             case D_Table : fputs("D_Table", f); break;
             case D_Telem : fputs("D_Telem", f); break;
             case D_Slots : fputs("D_Slots", f); break;
-            case D_Refresh : fputs("D_Refresh", f); break;
             case D_Coexpr : fputs("D_Coexpr", f); break;
             case D_Class : fputs("D_Class", f); break;
             case D_Object : fputs("D_Object", f); break;
