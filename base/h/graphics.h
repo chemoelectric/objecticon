@@ -314,7 +314,6 @@ typedef struct _wstate {
   unsigned int	width;			/* window width, in pixels */
   unsigned int	minheight;		/* minimum window height, in pixels */
   unsigned int	minwidth;		/* minimum window width, in pixels */
-  struct descrip selectionproc;         /* callback procedure for getting/clearing selection */
   int		bits;			/* window bits */
   int		theCursor;		/* index into cursor table */
   word		timestamp;		/* last event time stamp */

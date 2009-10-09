@@ -305,7 +305,9 @@
 #define MOUSE5          (-14)
 #define MOUSE4UP        (-16)
 #define MOUSE5UP        (-17)
-#define LASTEVENTCODE	MOUSE5UP
+#define SELECTIONREQUEST   (-30)
+#define SELECTIONCLEAR     (-31)
+
 
 /*
  * Type codes (descriptors and blocks).

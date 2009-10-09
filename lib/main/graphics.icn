@@ -271,12 +271,17 @@ class Window(NoCopy)
    #
    # Set the window system's selection
    #
-   public defer own_selection(selection, callback)
+   public defer own_selection(selection)
+
+   #
+   # Send a response to a selection request event.
+   #
+   public defer send_selection_response(requestor, property, target, selection, data)
 
    #
    # Get the window system's selection
    #
-   public defer get_selection_content(selection,target_type)
+   public defer get_selection_content(selection, target_type)
 
    #
    # Close this window.
@@ -341,6 +346,23 @@ class Window(NoCopy)
    end
 end
 
+#
+# Event codes for selection events.
+#
+class SelectionEvent()
+   public static const
+      REQUEST,
+      CLEAR
+
+   private static init()
+      REQUEST := -30
+      CLEAR := -31
+   end
+end
+
+#
+# Event codes for mouse events.
+#
 class Mouse()
    public static const
       LEFT_PRESS,
@@ -388,6 +410,9 @@ class Mouse()
    end
 end
 
+#
+# Event codes for key events.
+#
 class Key()
    public static const
       SHIFT_TAB,

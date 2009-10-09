@@ -628,3 +628,4 @@ void test_collect(int time_interval, long call_interval);
 struct b_coexpr *alccoexp_0 (void);
 struct b_coexpr *alccoexp_1 (void);
 struct b_proc *clone_b_proc(struct b_proc *bp);
+int sendselectionresponse(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data);

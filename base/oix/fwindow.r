@@ -1618,16 +1618,33 @@ function{0,1} graphics_Window_write_image(self, s, argv[argc])
    }
 end
 
-function{1} graphics_Window_own_selection(self, selection, callback)
+function{1} graphics_Window_own_selection(self, selection)
    if !cnv:C_string(selection) then
       runerr(103,selection)
-   if !is:proc(callback) then
-      runerr(106,callback);
    body {
        GetSelfW();
-       self_w->window->selectionproc = callback;
        ownselection(self_w, selection);
        return self;
+   }
+end
+
+function{1} graphics_Window_send_selection_response(self, requestor, property, target, selection, time, data)
+   if !cnv:C_integer(requestor) then
+      runerr(101, requestor)
+   if !cnv:C_string(property) then
+      runerr(103, property)
+   if !cnv:C_string(target) then
+      runerr(103, target)
+   if !cnv:C_string(selection) then
+      runerr(103, selection)
+   if !cnv:C_integer(time) then
+      runerr(101, time)
+   body {
+       GetSelfW();
+       if (sendselectionresponse(self_w, requestor, property, target, selection, time, &data) == Succeeded)
+           return self;
+       else
+           runerr(0);
    }
 end
 

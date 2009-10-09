@@ -9,6 +9,7 @@
 package gui
 
 import 
+   io,
    graphics,
    util,
    lang,
@@ -428,8 +429,39 @@ class Dialog(Component)
          put(self.point_chain, self)
    end
 
+   private process_selection_request(l)
+      local owner, data, target
+      target := l[4]
+      write("process_selection-request:",to_string(l))
+      owner := Selection.get_owner(l[5])
+      write("\towner=", image(owner))
+      if target == Selection.TARGETS_TARGET then {
+         data := []
+         every put(data, owner.get_targets())
+      } else {
+         if owner.get_targets() == target then {
+            data := owner.get_content(target)
+         }
+      }
+      write("\tvalue=", image(data))
+      win.send_selection_response(l[2], l[3], l[4], l[5], l[6], data)
+   end
+
+   private process_selection_clear(l)
+      write("process_selection-clear:",to_string(l))
+      Selection.clear(win, l[2])
+   end
+
    public process_event(l)
       local e
+      if l[1] === SelectionEvent.REQUEST then {
+         process_selection_request(l)
+         return
+      }
+      if l[1] === SelectionEvent.CLEAR then {
+         process_selection_clear(l)
+         return
+      }
 
       if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then
          consume_same(l[1])

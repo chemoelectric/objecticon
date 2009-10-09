@@ -50,57 +50,80 @@ int wgetevent2(wbp w, dptr res, word timeout)
     if (retval == -2)
         return -3;					/* timeout expired */
 
-    if (BlkLoc(w->window->listp)->list.size < 2)
-        return -2;					/* malformed queue */
-
     list_put(res, &qval);
+    switch (IntVal(qval)) {
+        case SELECTIONREQUEST: {
+            int i;
+            /* Five integers follow; copy them to the result */
+            if (BlkLoc(w->window->listp)->list.size < 5)
+                return -2;					/* malformed queue */
 
-    wgetq(w,&xdesc,-1);
-    wgetq(w,&ydesc,-1);
+            for (i = 0; i < 5; ++i) {
+                wgetq(w, &qval, -1);
+                list_put(res, &qval);
+            }
+            break;
+        }
+        case SELECTIONCLEAR: {
+            if (BlkLoc(w->window->listp)->list.size < 1)
+                return -2;					/* malformed queue */
 
-    if (xdesc.dword != D_Integer || ydesc.dword != D_Integer)
-        return -2;			/* bad values on queue */
+            /* One int follows */
+            wgetq(w, &qval, -1);
+            list_put(res, &qval);
+            break;
+        }
+        default: {
+            if (BlkLoc(w->window->listp)->list.size < 2)
+                return -2;					/* malformed queue */
 
-    /* x location */
-    t = IntVal(xdesc) & 0xFFFF;		
-    if (t >= 0x8000)
-        t -= 0x10000;
-    t -= w->context->dx;
-    MakeInt(t, &qval);
-    list_put(res, &qval);
+            wgetq(w,&xdesc,-1);
+            wgetq(w,&ydesc,-1);
 
-    t = IntVal(ydesc) & 0xFFFF;		/* &y */
-    if (t >= 0x8000)
-        t -= 0x10000;
-    t -= w->context->dy;
-    MakeInt(t, &qval);
-    list_put(res, &qval);
+            if (xdesc.dword != D_Integer || ydesc.dword != D_Integer)
+                return -2;			/* bad values on queue */
 
-    t = IntVal(xdesc);
-    if (t & EQ_MOD_CONTROL)
-        list_put(res, &onedesc);
-    else
-        list_put(res, &nulldesc);
-    if (t & EQ_MOD_META)
-        list_put(res, &onedesc);
-    else
-        list_put(res, &nulldesc);
-    if (t & EQ_MOD_SHIFT)
-        list_put(res, &onedesc);
-    else
-        list_put(res, &nulldesc);
-    if (t & EQ_MOD_RELEASE)
-        list_put(res, &onedesc);
-    else
-        list_put(res, &nulldesc);
+            /* x location */
+            t = IntVal(xdesc) & 0xFFFF;		
+            if (t >= 0x8000)
+                t -= 0x10000;
+            t -= w->context->dx;
+            MakeInt(t, &qval);
+            list_put(res, &qval);
 
-    /* Interval */
-    i = (((uword) IntVal(ydesc)) >> 16) & 0xFFF;		/* mantissa */
-    i <<= 4 * ((((uword) IntVal(ydesc)) >> 28) & 0x7);	/* scale it */
+            t = IntVal(ydesc) & 0xFFFF;		/* &y */
+            if (t >= 0x8000)
+                t -= 0x10000;
+            t -= w->context->dy;
+            MakeInt(t, &qval);
+            list_put(res, &qval);
 
-    MakeInt(i, &qval);
-    list_put(res, &qval);
+            t = IntVal(xdesc);
+            if (t & EQ_MOD_CONTROL)
+                list_put(res, &onedesc);
+            else
+                list_put(res, &nulldesc);
+            if (t & EQ_MOD_META)
+                list_put(res, &onedesc);
+            else
+                list_put(res, &nulldesc);
+            if (t & EQ_MOD_SHIFT)
+                list_put(res, &onedesc);
+            else
+                list_put(res, &nulldesc);
+            if (t & EQ_MOD_RELEASE)
+                list_put(res, &onedesc);
+            else
+                list_put(res, &nulldesc);
 
+            /* Interval */
+            i = (((uword) IntVal(ydesc)) >> 16) & 0xFFF;		/* mantissa */
+            i <<= 4 * ((((uword) IntVal(ydesc)) >> 28) & 0x7);	/* scale it */
+
+            MakeInt(i, &qval);
+            list_put(res, &qval);
+        }
+    }
     return 0;
 }
 

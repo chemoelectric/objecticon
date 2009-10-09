@@ -68,7 +68,7 @@ class Selection()
             return
          }
       }
-      obj.get_win().own_selection(selection, selection_callback)
+      obj.get_win().own_selection(selection)
       owners[selection] := obj
    end
 
@@ -125,31 +125,11 @@ class Selection()
       return \owners[selection]
    end
 
-   public static clear(selection)
+   public static clear(win, selection)
       local c
-      if c := \owners[selection] then {
+      if (c := \owners[selection]) & (c.get_win() === win) then {
          c.lost_ownership()
          delete(owners, selection)
-      }
-   end
-
-   private static selection_callback(q, selection, target)
-      local l
-      case q of {
-         "content": {
-            # The C code ensures target is one of our supported targets, so no need to check
-            # target again.
-            return get_owner(selection).get_content(target) | ""
-         }
-         "targets" : {
-            l := []
-            every put(l, get_owner(selection).get_targets())
-            return l
-         }
-         "clear": {
-            clear(selection)
-         }
-         default: syserr("Unknown query to selection callback" || q)
       }
    end
 end

@@ -29,7 +29,6 @@ void              makeIcon         (wbp w, int x, int y);
 int		     wmap	      (wbp w);
 Pixmap		     loadimage	      (wbp w, char *filename, unsigned int *height, unsigned int *width, int atorigin, int *status);
 void unsetclip (wbp w);
-static dptr call(dptr proc, ...);
 static void await_selectionnotify(wsp ws);
 static int convert_KeySym_to_code_point(KeySym k);
 
@@ -142,7 +141,7 @@ stringint cursorsyms[] = {
 };
 
 
-static int selection_debug = 0;
+static int selection_debug = 1;
 static char *atom_fmt(wsp ws,Atom a) {
     static int n = 0;
     static char buff[8][96];
@@ -163,6 +162,11 @@ static char *atom_fmt(wsp ws,Atom a) {
     return r;
 }
 
+void get_atom_descriptor(wsp ws, Atom a, dptr dest)
+{
+    char *s = XGetAtomName(ws->display->display, a);
+    CMakeStr(s, dest);
+}
 
 
 /*
@@ -518,154 +522,43 @@ static int handle_misc(wdp wd, wbp w)
         else {
             switch (event.type) {
                 case SelectionRequest: {
-                    XEvent theevent;
-                    struct descrip proc0;
-                    char *selection_name = XGetAtomName(ws->display->display, 
-                                                        event.xselectionrequest.selection);
-                    proc0 = ws->selectionproc;
-                    if (is:null(proc0)) {
-                        fprintf(stderr, "Got an unexpected SelectionRequest: %s\n", 
-                                atom_fmt(ws,event.xselectionrequest.selection)); 
-                        fflush(stderr);
-                        /* Send back a reply anyway, saying we can't handle what it requested */
-                        theevent.xselection.property = None;
-                    } else {
-                        Atom XA_TARGETS = XInternAtom(ws->display->display, "TARGETS", False);
-                        dptr val, at;
-                        union block *ep;
-                        int i, j;
-                        Atom target_list[32];
-                        int target_cnt = 1;
-                        int have_target = 0;
-                        struct descrip str0;
-                        tended struct descrip str1, str2;
+                    struct descrip tmp;
+                    printf("SelectionRequest event:\n\towner=%lx requestor=%lx "
+                           "property=%s target=%s selection=%s\n",
+                           (long)event.xselectionrequest.owner,
+                           (long)event.xselectionrequest.requestor,
+                           atom_fmt(ws, event.xselectionrequest.property),
+                           atom_fmt(ws, event.xselectionrequest.target),
+                           atom_fmt(ws, event.xselectionrequest.selection)
+                        );
 
-                        /*
-                         * Get the types we are handling
-                         */
-                        target_list[0] = XA_TARGETS;
-                        LitStr("targets", &str0);
-                        cstr2string(selection_name, &str1);
-                        val = call(&proc0, &str0, &str1, 0);
-                        if (!val || !is:list(*val))
-                            fatalerr(148, NULL);
-                        for (ep = BlkLoc(*val)->list.listhead;
-                             BlkType(ep) == T_Lelem;
-                             ep = ep->lelem.listnext) {
-                            for (i = 0; i < ep->lelem.nused; i++) {
-                                j = ep->lelem.first + i;
-                                if (j >= ep->lelem.nslots)
-                                    j -= ep->lelem.nslots;
-                                at = &ep->lelem.lslots[j];
-                                if (!is:string(*at))
-                                    fatalerr(148, NULL);
-                                target_list[target_cnt] = XInternAtom(ws->display->display, cstr(at), False);
-                                if (target_list[target_cnt] == event.xselectionrequest.target)
-                                    have_target = 1;
-                                target_cnt++;
-                            }
-                        }
-                        if (selection_debug) {
-                            int i;
-                            printf("SelectionRequest event:\n\towner=%lx requestor=%lx "
-                                   "property=%s target=%s selection=%s\n",
-                                   (long)event.xselectionrequest.owner,
-                                   (long)event.xselectionrequest.requestor,
-                                   atom_fmt(ws, event.xselectionrequest.property),
-                                   atom_fmt(ws, event.xselectionrequest.target),
-                                   atom_fmt(ws, event.xselectionrequest.selection)
-                                );
-                            printf("\tAvailable targets:\n");
-                            for (i = 0; i < target_cnt; ++i) {
-                                printf("\t\t%s\n", 
-                                       atom_fmt(ws, target_list[i]));
-                            }
-                        }
-
-                        if (event.xselectionrequest.target == XA_TARGETS) {
-                            XChangeProperty(ws->display->display,
-                                            event.xselectionrequest.requestor,
-                                            event.xselectionrequest.property,
-                                            event.xselectionrequest.target,
-                                            32,
-                                            PropModeReplace,
-                                            (unsigned char *)target_list,
-                                            target_cnt);
-                            theevent.xselection.property = event.xselectionrequest.property;
-                        } else if (have_target) {
-                            dptr val;
-                            char *target_name = XGetAtomName(ws->display->display, 
-                                                             event.xselectionrequest.target);
-                            /*
-                             * Get the value
-                             */
-                            LitStr("content", &str0);
-                            cstr2string(selection_name, &str1);
-                            cstr2string(target_name, &str2);
-                            val = call(&proc0, &str0, &str1, &str2, 0);
-                            if (!val || !is:string(*val))
-                                fatalerr(148, NULL);
-
-                            XFree(target_name);
-
-                            XChangeProperty(ws->display->display,
-                                            event.xselectionrequest.requestor,
-                                            event.xselectionrequest.property,
-                                            event.xselectionrequest.target,
-                                            8,
-                                            PropModeReplace,
-                                            (unsigned char *)StrLoc(*val),
-                                            StrLen(*val));
-                            theevent.xselection.property = event.xselectionrequest.property;
-                        } else {
-                            /* Can't handle this target type */
-                            theevent.xselection.property = None;
-                        }
-                    }
-
-                    XFree(selection_name);
-
-                    theevent.type = SelectionNotify;
-                    theevent.xselection.serial = 0; /*event.xselectionrequest.serial;*/
-                    theevent.xselection.send_event = True;
-                    theevent.xselection.requestor = event.xselectionrequest.requestor;
-                    theevent.xselection.selection = event.xselectionrequest.selection;
-                    theevent.xselection.target = event.xselectionrequest.target;
-                    theevent.xselection.time = event.xselectionrequest.time;
-
-                    XSendEvent(ws->display->display,
-                               event.xselectionrequest.requestor,
-                               False, NoEventMask, &theevent);
-
-                }
+                    MakeInt(SELECTIONREQUEST, &tmp);
+                    list_put(&ws->listp, &tmp);
+                    MakeInt((word)event.xselectionrequest.requestor, &tmp);
+                    list_put(&ws->listp, &tmp);
+                    get_atom_descriptor(ws, event.xselectionrequest.property, &tmp);
+                    list_put(&ws->listp, &tmp);
+                    get_atom_descriptor(ws, event.xselectionrequest.target, &tmp);
+                    list_put(&ws->listp, &tmp);
+                    get_atom_descriptor(ws, event.xselectionrequest.selection, &tmp);
+                    list_put(&ws->listp, &tmp);
+                    MakeInt(event.xselectionrequest.time, &tmp);
+                    list_put(&ws->listp, &tmp);
                     break;
+                }
+
                 case SelectionClear: {
-                    struct descrip str0;
-                    tended struct descrip str1;
-                    struct descrip proc0;
-                    char *an = XGetAtomName(ws->display->display, event.xselectionclear.selection);
-
-                    if (selection_debug)
-                        printf("SelectionClear event win=%lx selection=%s\n",
-                               (long)event.xselectionclear.window,
-                               atom_fmt(ws, event.xselectionclear.selection));
-
-                    proc0 = ws->selectionproc;
-                    if (is:null(proc0)) {
-                        fprintf(stderr, "Got an unexpected SelectionClear: %lx\n", 
-                                (long)event.xselectionclear.selection);
-                        fflush(stderr);
-                        break;
-                    }
-
-                    LitStr("clear", &str0);
-                    cstr2string(an, &str1);
-                    XFree(an);
-                    call(&proc0, &str0, &str1, 0);
-
-                    ws->inputmask &= ~(PropertyChangeMask);
-                }
+                    struct descrip tmp;
+                    printf("SelectionClear event win=%lx selection=%s\n",
+                           (long)event.xselectionclear.window,
+                           atom_fmt(ws, event.xselectionclear.selection));
+                    MakeInt(SELECTIONCLEAR, &tmp);
+                    list_put(&ws->listp, &tmp);
+                    get_atom_descriptor(ws, event.xselectionclear.selection, &tmp);
+                    list_put(&ws->listp, &tmp);
                     break;
+                }
+
                 case SelectionNotify:
                     if (selection_debug)
                         printf("SelectionNotify: requestor=%lx selection=%s target=%s property=%s\n",
@@ -1417,10 +1310,87 @@ int setminwidth(wbp w, SHORT new_width)
     return Succeeded;
 }
 
+int sendselectionresponse(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
+{
+    Atom property_atom, target_atom, selection_atom, XA_TARGETS, target_list[32];
+    XEvent theevent;
+    struct lgstate state;
+    tended struct b_lelem *le;
+    tended char *cstr_target;
+    tended struct descrip tdata = *data;
+    int target_cnt = 1;
+    STDLOCALS(w);
+
+    if (selection_debug)
+        printf("sendselectionresponse:\n\trequestor=%lx "
+               "property=%s target=%s selection=%s time=%ld\n",
+               (long)requestor, property, target, selection, (long)time);
+
+    property_atom = XInternAtom(ws->display->display, property, False);
+    target_atom = XInternAtom(ws->display->display, target, False);
+    selection_atom = XInternAtom(ws->display->display, selection, False);
+    XA_TARGETS = XInternAtom(ws->display->display, "TARGETS", False);
+
+    if (target_atom == XA_TARGETS) {
+        if (!is:list(tdata))
+            ReturnErrVal(108, tdata, Error);
+        target_list[0] = XA_TARGETS;
+        for (le = lgfirst(&BlkLoc(tdata)->list, &state); le;
+             le = lgnext(&BlkLoc(tdata)->list, &state, le)) {
+            if (!cnv:C_string(le->lslots[state.result], cstr_target))
+                ReturnErrVal(148, le->lslots[state.result], Error);
+            target_list[target_cnt++] = XInternAtom(ws->display->display, cstr_target, False);
+            if (selection_debug)
+                printf("\tAdding target:%s\n", cstr_target);
+        }
+        XChangeProperty(ws->display->display,
+                        requestor,
+                        property_atom,
+                        target_atom,
+                        32,
+                        PropModeReplace,
+                        (unsigned char *)target_list,
+                        target_cnt);
+        theevent.xselection.property = property_atom;
+    } else if (is:null(tdata)) {
+        /* Can't handle this target type */
+        if (selection_debug)
+            printf("\tSetting property to None\n");
+        theevent.xselection.property = None;
+    } else {
+        if (!cnv:string(tdata, tdata))
+            ReturnErrVal(103, le->lslots[state.result], Error);
+        if (selection_debug)
+            printf("\tSetting property to %d bytes of data\n", StrLen(tdata));
+        XChangeProperty(ws->display->display,
+                        requestor,
+                        property_atom,
+                        target_atom,
+                        8,
+                        PropModeReplace,
+                        (unsigned char *)StrLoc(tdata),
+                        StrLen(tdata));
+        theevent.xselection.property = property_atom;
+    }
+
+    theevent.type = SelectionNotify;
+    theevent.xselection.serial = 0; /*event.xselectionrequest.serial;*/
+    theevent.xselection.send_event = True;
+    theevent.xselection.requestor = requestor;
+    theevent.xselection.selection = selection_atom;
+    theevent.xselection.target = target_atom;
+    theevent.xselection.time = time;
+
+    XSendEvent(ws->display->display,
+               requestor,
+               False, NoEventMask, &theevent);
+
+    return Succeeded;
+}
+
 int ownselection(wbp w, char *selname)
 {
     Atom selection;
-    wsp x;
     Window curr;
     {
     STDLOCALS(w);
@@ -1441,22 +1411,19 @@ int ownselection(wbp w, char *selname)
     /*
      * X doesn't send a SelectionClear event to us when the selection
      * changes between our own windows, so if the current owner is one
-     * our windows, call its callback proc with a  "clear" message.
+     * our windows, send it a "clear" message.
      */
     if (curr) {
+        wsp x;
         for (x = wstates; x; x = x->next) {
             if (x->win == curr) {
-                struct descrip proc0 = x->selectionproc;
-                if (is:null(proc0)) {
-                    fprintf(stderr, "No selection proc for window %lx\n", (long)x);
-                    fflush(stderr);
-                } else {
-                    struct descrip str0;
-                    tended struct descrip str1;
-                    LitStr("clear", &str0);
-                    cstr2string(selname, &str1);
-                    call(&proc0, &str0, &str1, 0);
-                }
+                struct descrip tmp;
+                if (selection_debug)
+                    printf("Enqueueing artificial SELECTIONCLEAR to current owner %lx\n",(long)curr);
+                MakeInt(SELECTIONCLEAR, &tmp);
+                list_put(&x->listp, &tmp);
+                get_atom_descriptor(x, selection, &tmp);
+                list_put(&x->listp, &tmp);
                 break;
             }
         }
@@ -4281,24 +4248,6 @@ int walert(w, volume)
     XBell(stddpy, volume);    
     XFlush(stddpy);
     return Succeeded;
-}
-
-dptr call(dptr proc0, ...)
-{
-    wdp saved_wdsplys = wdsplys;
-    va_list ap;
-    dptr res;
-    wdsplys = 0;   /* Avoid recursive calls into handle_misc by making 
-                    * pollevent() a temporary no-op */
-    va_start(ap, proc0);
-/* todo */
-/*    res = call_icon_va(proc0, ap); */
-    res = 0;
-    va_end(ap);
-    wdsplys = saved_wdsplys;
-    if (res)
-        Deref(*res);
-    return res;
 }
 
 #ifdef HAVE_LIBXFT

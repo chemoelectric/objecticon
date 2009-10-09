@@ -1049,7 +1049,6 @@ wsp alc_winstate()
     ws->iconic = NormalState;
     ws->posx = ws->posy = -(MaxInt);
     ws->minwidth = ws->minheight = 0;
-    ws->selectionproc = nulldesc;
 #ifdef HAVE_LIBXFT
     ws->pixDraw = ws->winDraw = NULL;
 #endif
