@@ -421,6 +421,7 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
     struct p_frame *pf;
     struct b_constructor *con = (struct b_constructor *)BlkLoc(*expr);
     int i;
+    tended struct descrip tmp;
 
     MemProtect(pf = alc_p_frame((struct b_proc *)&Bgenerate_arg, 0));
     push_frame((struct frame *)pf);
@@ -437,9 +438,11 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
         }
     } else {
         for (i = 0; i < argc; ++i) {
-            if (i < con->n_fields)
-                get_deref(&BlkLoc(pf->locals->args[0])->record.fields[i]);
-            else
+            if (i < con->n_fields) {
+                /* Must be in two steps since get_deref can trigger a gc */
+                get_deref(&tmp);
+                BlkLoc(pf->locals->args[0])->record.fields[i] = tmp;
+            } else
                 get_deref(&trashcan);
         }
     }
