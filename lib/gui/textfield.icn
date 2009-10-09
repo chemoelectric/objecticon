@@ -143,7 +143,7 @@ class TextField(Component)
       local r
 
       if r := get_region() then {
-         Selection.own(Selection.PRIMARY, self.primary_selection_owner)
+         parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
          self.remembered_region := r
       }
       if \changed then {
@@ -219,19 +219,27 @@ class TextField(Component)
       end_handle(e)
    end
 
-   public handle_mpress(e)
+   private handle_mpress_response(target_type, data, e)
       local s, ed
+      \data | fail
       \self.is_editable_flag | fail
       start_handle(e)
       self.cursor := whereis_x(e)
       clear_mark()
-      if s := apply_filter(text_convert(get_text_selection(Selection.PRIMARY),
+      if s := apply_filter(text_convert(selection_convert(target_type, data), 
                                         type(self.contents))) then {
          ed := TextFieldPasteEdit(self, s)
          ed.doit()
          undo_manager.add_edit(ed)
       }
       end_handle(e)
+   end
+
+   public handle_mpress(e)
+      parent_dialog.request_selection(Selection.PRIMARY, 
+                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_mpress_response, 
+                                      e)
    end
 
    public whereis_x(e)
@@ -442,7 +450,7 @@ class TextField(Component)
       start_handle(e)
       if has_region() then {
          self.clipboard := get_region()
-         Selection.own(Selection.CLIPBOARD, self.clipboard_selection_owner)
+         parent_dialog.own_selection(Selection.CLIPBOARD, self.clipboard_selection_owner)
          delete_region(e)
       }
       end_handle(e)
@@ -452,7 +460,7 @@ class TextField(Component)
       start_handle(e)
       if has_region() then {
          self.clipboard := get_region()
-         Selection.own(Selection.CLIPBOARD, self.clipboard_selection_owner)
+         parent_dialog.own_selection(Selection.CLIPBOARD, self.clipboard_selection_owner)
       }
       end_handle(e)
    end
@@ -473,8 +481,15 @@ class TextField(Component)
          return s
    end
 
+   private handle_paste_response(target_type, data, e)
+      insert_string(selection_convert(target_type, \data), e)
+   end
+
    public handle_paste(e)
-      insert_string(get_text_selection(Selection.CLIPBOARD), e)
+      parent_dialog.request_selection(Selection.CLIPBOARD, 
+                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_paste_response, 
+                                      e)
    end
 
    #
@@ -717,10 +732,6 @@ class TextFieldPrimarySelectionOwner(TextSelectionOwner)
       parent.end_handle()
    end
 
-   public get_win()
-      return parent.get_parent_win()
-   end
-
    public new(parent)
       self.parent := parent
       return
@@ -736,10 +747,6 @@ class TextFieldClipboardSelectionOwner(TextSelectionOwner)
    end
 
    public lost_ownership()
-   end
-
-   public get_win()
-      return parent.get_parent_win()
    end
 
    public new(parent)

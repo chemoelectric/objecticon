@@ -44,8 +44,11 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
                 for (j = 1; j <= argc; ++j) {
                     if (i < abs_nparam - 1)
                         pf->locals->args[i++] = *get_element(args, j);
-                    else
-                        list_put(&l, get_element(args, j));
+                    else {
+                        /* This must be done via a tended temporary */
+                        tmp = *get_element(args, j);
+                        list_put(&l, &tmp);
+                    }
                 }
             } else {
                 for (j = 0; j < argc; ++j) {

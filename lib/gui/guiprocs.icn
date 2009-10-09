@@ -353,7 +353,14 @@ procedure text_convert(s, target)
    }
 end
 
-procedure get_text_selection(sel)
-   return ucs(Selection.get_content(sel, Selection.UTF8_STRING_TARGET)) |
-      Selection.get_content(sel, Selection.STRING_TARGET)
+#
+# Given a result from a selection request ({target_type} and {data}), produce
+# a corresponding string or a ucs as appropriate.
+#
+procedure selection_convert(target_type, data)
+   case target_type of {
+      Selection.UTF8_STRING_TARGET : return ucs(data)
+      Selection.STRING_TARGET : return string(data)
+      default: fail
+   }
 end

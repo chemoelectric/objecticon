@@ -362,7 +362,7 @@ class Main(Dialog)
       c := cc.dup()
       c.change_canvas(&null)
       self.clipboard := lang.encode(c)
-      Selection.own(Selection.CLIPBOARD, self.clipboard_selection_owner)
+      parent_dialog.own_selection(Selection.CLIPBOARD, self.clipboard_selection_owner)
    end
 
    public update_grey()
@@ -1607,10 +1607,6 @@ class IvibClipboardSelectionOwner(SelectionOwner)
 
    public get_targets()
       return Ivib.IVIB_COMPONENT_TARGET
-   end
-
-   public get_win()
-      return parent.get_win()
    end
 
    public new(parent)

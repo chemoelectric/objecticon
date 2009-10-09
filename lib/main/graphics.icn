@@ -349,14 +349,34 @@ end
 #
 # Event codes for selection events.
 #
-class SelectionEvent()
+class Selection()
    public static const
-      REQUEST,
-      CLEAR
+      # Selection request event
+      REQUEST,     
+      # Selection response event
+      RESPONSE,
+      # Selection clear event
+      CLEAR,
+      # Set of any of the three event types
+      EVENTS,
+      PRIMARY,
+      SECONDARY,
+      CLIPBOARD,
+      UTF8_STRING_TARGET,
+      STRING_TARGET,
+      TARGETS_TARGET
 
    private static init()
       REQUEST := -30
       CLEAR := -31
+      RESPONSE := -32
+      EVENTS := set(REQUEST, CLEAR, RESPONSE)
+      PRIMARY := "PRIMARY"      # These 3 must correspond to X Atom names.
+      SECONDARY := "SECONDARY"
+      CLIPBOARD := "CLIPBOARD"
+      STRING_TARGET := "STRING"
+      UTF8_STRING_TARGET := "UTF8_STRING"
+      TARGETS_TARGET := "TARGETS"
    end
 end
 

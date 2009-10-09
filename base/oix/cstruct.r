@@ -2,8 +2,17 @@
  * A collection of functions for handling lists/sets/tables, most of
  * which are used directly by the icon-level functions (put, insert
  * etc).
+ * 
  * Note that all dptr's passed to these functions must point to tended
- * descriptors (eg on the stack).
+ * descriptors (eg in stack frames).  In particular, they must not
+ * point to members of structures, since those structures may move on
+ * garbage collection.  So, don't use for example
+ * 
+ *   list_put(&l, get_element(&x, i)).   Rather, one should use
+ * 
+ *   tended struct descrip tmp;
+ *   tmp = get_element(&x, i);
+ *   list_put(&l, &tmp);
  */
 
 

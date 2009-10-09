@@ -307,6 +307,7 @@
 #define MOUSE5UP        (-17)
 #define SELECTIONREQUEST   (-30)
 #define SELECTIONCLEAR     (-31)
+#define SELECTIONRESPONSE  (-32)
 
 
 /*

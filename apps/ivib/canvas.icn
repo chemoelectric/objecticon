@@ -356,15 +356,11 @@ class Canvas(Component,SelectiveObjectCodec)
       self.update_pos_label()
    end
 
-   #
-   # Paste the clipboard contents into cc
-   #
-   public component_paste(cc)
-      local s, c
+   public component_paste_response(target_type, s, cc)
+      local c
 
-      s := Selection.get_content(Selection.CLIPBOARD, 
-                                 Ivib.IVIB_COMPONENT_TARGET) | return alert_error(parent_dialog, 
-                                                                             "Nothing in clipboard")
+      if /s then
+         return alert_error(parent_dialog, "Nothing in clipboard")
 
       c := lang.decode(s) | return alert_error(parent_dialog, "Invalid file format")
 
@@ -380,6 +376,16 @@ class Canvas(Component,SelectiveObjectCodec)
       c.unique_name()
       self.set_modified()
       self.reset_layout()
+   end
+
+   #
+   # Paste the clipboard contents into cc
+   #
+   public component_paste(cc)
+      parent_dialog.request_selection(Selection.CLIPBOARD, 
+                                      [Ivib.IVIB_COMPONENT_TARGET], 
+                                      component_paste_response, 
+                                      cc)
    end
 
    #
@@ -1848,12 +1854,9 @@ class Canvas(Component,SelectiveObjectCodec)
          m.add(i)
       }
 
-      if Selection.has_target(Selection.CLIPBOARD,
-                              Ivib.IVIB_COMPONENT_TARGET) then {
-         i := TextMenuItem("label=Paste")
-         i.connect(self.op_paste, Event.ACTION)
-         m.add(i)
-      }
+      i := TextMenuItem("label=Paste")
+      i.connect(self.op_paste, Event.ACTION)
+      m.add(i)
 
       if \self.modified | /self.filename then {
          i := TextMenuItem("label=Save")

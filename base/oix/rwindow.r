@@ -21,7 +21,8 @@ extern int numColors;
 
 int wgetevent2(wbp w, dptr res, word timeout)
 {
-    struct descrip xdesc, ydesc, qval;
+    struct descrip xdesc, ydesc;
+    tended struct descrip qval;
     int t;
     uword i;
     int retval;
@@ -54,7 +55,7 @@ int wgetevent2(wbp w, dptr res, word timeout)
     switch (IntVal(qval)) {
         case SELECTIONREQUEST: {
             int i;
-            /* Five integers follow; copy them to the result */
+            /* Five items follow; copy them to the result */
             if (BlkLoc(w->window->listp)->list.size < 5)
                 return -2;					/* malformed queue */
 
@@ -68,17 +69,28 @@ int wgetevent2(wbp w, dptr res, word timeout)
             if (BlkLoc(w->window->listp)->list.size < 1)
                 return -2;					/* malformed queue */
 
-            /* One int follows */
+            /* One item follows */
             wgetq(w, &qval, -1);
             list_put(res, &qval);
+            break;
+        }
+        case SELECTIONRESPONSE: {
+            if (BlkLoc(w->window->listp)->list.size < 2)
+                return -2;					/* malformed queue */
+
+            /* Three items follow */
+            for (i = 0; i < 3; ++i) {
+                wgetq(w, &qval, -1);
+                list_put(res, &qval);
+            }
             break;
         }
         default: {
             if (BlkLoc(w->window->listp)->list.size < 2)
                 return -2;					/* malformed queue */
 
-            wgetq(w,&xdesc,-1);
-            wgetq(w,&ydesc,-1);
+            wgetq(w, &xdesc, -1);
+            wgetq(w, &ydesc, -1);
 
             if (xdesc.dword != D_Integer || ydesc.dword != D_Integer)
                 return -2;			/* bad values on queue */
