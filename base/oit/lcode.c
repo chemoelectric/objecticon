@@ -162,7 +162,7 @@ static void out_op(word op)
 static void word_field(word w, char *desc)
 {
     if (Dflag)
-        fprintf(dbgfile, "%ld:\t  %s\t%d\n", (long)pc, desc, w);
+        fprintf(dbgfile, "%ld:\t  %s\t%ld\n", (long)pc, desc, (word)w);
     outword(w);
 }
 
@@ -182,12 +182,12 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 word ival;
                 memcpy(&ival, ce->data, sizeof(word));
                 if (Dflag)
-                    fprintf(dbgfile, "%ld:\t  %s\tint\t\t%d\n", (long)pc, desc, ival);
+                    fprintf(dbgfile, "%ld:\t  %s\tint\t\t%ld\n", (long)pc, desc, (long)ival);
                 outword(Op_Int);
                 outword(ival);
             } else {
                 if (Dflag)
-                    fprintf(dbgfile, "%ld:\t  %s\tconst\t\tC[%d]\n", (long)pc, desc, ce->desc_no);
+                    fprintf(dbgfile, "%ld:\t  %s\tconst\t\tC[%d]\n", (long)pc, desc, (int)ce->desc_no);
                 outword(Op_Const);
                 outword(ce->desc_no);
             }
@@ -195,7 +195,7 @@ static void emit_ir_var(struct ir_var *v, char *desc)
         }
         case WORD: {
             if (Dflag)
-                fprintf(dbgfile, "%ld:\t  %s\tint\t\t%d\n", (long)pc, desc, v->w);
+                fprintf(dbgfile, "%ld:\t  %s\tint\t\t%ld\n", (long)pc, desc, (long)v->w);
             outword(Op_Int);
             outword(v->w);
             break;

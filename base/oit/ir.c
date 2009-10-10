@@ -1037,7 +1037,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Swap:
         case Uop_Unions: {
             struct lnode_2 *x = (struct lnode_2 *)n;
-            struct ir_var *lv, *rv, *tmp;
+            struct ir_var *lv, *rv, *tmp = 0;
             struct ir_info *left, *right;
             int aaop;
 
@@ -2102,7 +2102,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             int if_mk;
             struct ir_stack *then_st, *else_st;
             struct ir_info *expr, *then, *els;
-            int tl;
+            int tl = -1;
             if (!bounded)
                 tl = make_tmploc(st);
             if_mk = make_mark(st);
@@ -2154,13 +2154,13 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct ir_info *expr, *def = 0, **selector, **clause;
             struct ir_stack *clause_st;
             int i, need_mark, mk;
+            int tl = -1;
 
             mk = make_mark(st);
             selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             need_mark = 0;  /* Set to 1 if the expression or any selector uses stack */
 
-            int tl;
             if (!bounded)
                 tl = make_tmploc(st);
 
@@ -2376,7 +2376,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Augactivate:                   /* co-expression activation */
         case Uop_Bactivate: {
             struct lnode_2 *x = (struct lnode_2 *)n;
-            struct ir_var *lv, *rv, *tmp;
+            struct ir_var *lv, *rv, *tmp = 0;
             struct ir_info *left, *right;
 
             lv = get_var(x->child1, st, 0);
