@@ -928,7 +928,7 @@ void interp()
             }
 
             default: {
-                fprintf(stderr, "Unimplemented opcode %d (%s)\n", op, op_names[op]);
+                fprintf(stderr, "Unimplemented opcode %d (%s)\n", (int)op, op_names[op]);
                 exit(1);
             }
         }
