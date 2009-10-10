@@ -28,10 +28,10 @@ Deliberate Syntax Error
  * End of operating-system specific code.
  */
 
-static char *ostr = "ECWPD:I:U:cir:st:h:";
+static char *ostr = "EWPD:I:U:cir:st:h:";
 
 static char *options =
-   "[-E] [-C] [-W] [-P] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
+   "[-E] [-W] [-P] [-Dname[=[text]]] [-Uname] [-Ipath]\n    \
 [-rpath] [-tname] [-x] [files]";
 
 /*
@@ -46,7 +46,6 @@ FILE *out_file;
 char *cname;
 char *inclname;
 int def_fnd;
-int c_flag = 1;
 
 int enable_out = 0;
 
@@ -118,9 +117,6 @@ int main(argc, argv)
                 pp_only = 1;
                 if (whsp_image == NoSpelling)
                     whsp_image = NoComment;
-                break;
-            case 'C':  /* retain spelling of white space, only effective with -E */
-                c_flag = 1;
                 break;
             case 'W':  /* retain spelling of white space, only effective with -E */
                 whsp_image = FullImage;

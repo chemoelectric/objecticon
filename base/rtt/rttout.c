@@ -379,20 +379,14 @@ int indent;
                 * Parameter converted to a C integer.
                 */
                chk_nl(indent);
-               if (use_frame)
-                   fprintf(out_file, "frame->r_i%d", sym->u.param_info.param_num);
-               else
-                   fprintf(out_file, "r_i%d", sym->u.param_info.param_num);
+               fprintf(out_file, "frame->r_i%d", sym->u.param_info.param_num);
                break;
             case PrmDbl:
                /*
                 * Parameter converted to a C double.
                 */
                chk_nl(indent);
-               if (use_frame)
-                   fprintf(out_file, "frame->r_d%d", sym->u.param_info.param_num);
-               else
-                   fprintf(out_file, "r_d%d", sym->u.param_info.param_num);
+               fprintf(out_file, "frame->r_d%d", sym->u.param_info.param_num);
                break;
             default:
                errt2(t, "Conflicting conversions for: ", t->image);
@@ -1162,30 +1156,19 @@ int brace;
    if (ntend != 0) {
       if (!brace)
          prt_str("{", indent);
-      if (use_frame) {
-          ForceNl();
-          prt_str("FAIL(frame);", indent);
-      } else {
-          untend(indent);
-          ForceNl();
-          if (fnc_ret == RetSig)
-              prt_str("return A_Resume;", indent);
-          else
-              prt_str("return;", indent);
-      }
+      ForceNl();
+      prt_str("FAIL(frame);", indent);
       if (!brace) {
          ForceNl();
          prt_str("}", indent);
          }
       }
-   else
-       if (fnc_ret == RetSig) {
-           if (use_frame)
-               prt_str("FAIL(frame);", indent);
-           else
-               prt_str("return A_Resume;", indent);
-       } else
+   else {
+       if (fnc_ret == RetSig)
+           prt_str("FAIL(frame);", indent);
+       else
          prt_str("return;", indent);
+   }
    ForceNl();
    }
 
@@ -1498,10 +1481,7 @@ int brace;
                      untend(indent);
                   ForceNl();
                   if (fnc_ret == RetSig) {
-                      if (use_frame)
-                          prt_str("RETURN(frame);", indent);
-                      else
-                          prt_str("return A_Continue;", indent);
+                      prt_str("RETURN(frame);", indent);
                   } else if (fnc_ret == RetNoVal)
                      prt_str("return;", indent);
                   ForceNl();
@@ -1520,8 +1500,6 @@ int brace;
                   prt_str("{", indent);
                   ForceNl();
                   }
-               if (!use_frame)
-                   prt_str("register int signal;", indent + IndentInc);
                ForceNl();
                ret_value(t, n->u[0].child, indent);
                ForceNl();
@@ -1534,35 +1512,8 @@ int brace;
                 *  they must be removed from the tended list before a signal
                 *  is returned.
                 */
-               if (use_frame) {
-                   prt_str("SUSPEND(frame);", indent);
-                   ForceNl();
-               } else {
-                   switch (op_type) {
-                       case TokFunction:
-                           prt_str(
-                               "if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {",
-                               indent);
-                           break;
-                       case Operator:
-                       case Keyword:
-                           prt_str(
-                               "if ((signal = interp(G_Osusp, r_args)) != A_Resume) {",
-                               indent);
-                           break;
-                       default:
-                           prt_str(
-                               "if ((signal = interp(G_Csusp, r_args)) != A_Resume) {",
-                               indent);
-                   }
-                   ForceNl();
-                   if (ntend != 0)
-                       untend(indent + IndentInc);
-                   ForceNl();
-                   prt_str("return signal;", indent + IndentInc);
-                   ForceNl();
-                   prt_str("}", indent + IndentInc);
-               }
+               prt_str("SUSPEND(frame);", indent);
+               ForceNl();
                if (!brace) {
                   prt_str("}", indent);
                   ForceNl();
@@ -3232,18 +3183,6 @@ struct sym_entry *op_params;
    else
       op_params->t_indx = ntend++;
 
-   if (!use_frame) {
-       if (op_params->u.param_info.non_tend & PrmInt) {
-           prt_str("C_integer r_i", IndentInc);
-           fprintf(out_file, "%d;", op_params->u.param_info.param_num);
-           ForceNl();
-       }
-       if (op_params->u.param_info.non_tend & PrmDbl) {
-           prt_str("double r_d", IndentInc);
-           fprintf(out_file, "%d;", op_params->u.param_info.param_num);
-           ForceNl();
-       }
-   }
    }
 
 /*
@@ -3428,7 +3367,7 @@ struct node *n;
 
    nxt_sbuf = 0;
    nxt_cbuf = 0;
-   use_frame = c_flag;
+   use_frame = 1;
 
    interp_def(n);
 
@@ -3461,31 +3400,22 @@ static void interp_def(n)
 struct node *n;
    {
    struct sym_entry *sym;
-   struct node *n1;
    int nparms;
    int has_underef;
    char letter = 0;
    char *name;
    char *s;
+   struct sym_entry *t;
 
    /*
     * Note how result location is accessed in generated code.
     */
-   if (use_frame) {
-       rslt_loc = "frame->value";
-       tend_struct_loc = "???";
-       tend_loc = "frame->tend";
-       args_loc = "frame->args";
-       n_args = "frame->nargs";
-       args_off = 0;
-   } else {
-       rslt_loc = "r_args[0]";
-       tend_struct_loc = "r_tend";
-       tend_loc = "r_tend.d";
-       args_loc = "r_args";
-       n_args = "r_nargs";
-       args_off = 1;
-   }
+   rslt_loc = "frame->value";
+   tend_struct_loc = "???";
+   tend_loc = "frame->tend";
+   args_loc = "frame->args";
+   n_args = "frame->nargs";
+   args_off = 0;
 
    /*
     * Determine if the operation has any undereferenced parameters.
@@ -3534,99 +3464,63 @@ struct node *n;
 
    fprintf(out_file, "\n"); ++line;
 
-   if (use_frame)
-   {
-       struct sym_entry *t = ffirst;
+   t = ffirst;
+   /*
+    * Output the header struct.
+    */
 
-       /*
-        * Output the header struct.
-        */
+   in_struct = 1;
+   fprintf(out_file, "\nstruct %s_frame {\n   C_FRAME;\n", op_name);
+   line += 3;
 
-       in_struct = 1;
-       fprintf(out_file, "\nstruct %s_frame {\n   C_FRAME;\n", op_name);
-       line += 3;
-
-       while (t) {
-           /*printf("\t%s %d %d inframe=%d\n", t->image, t->id_type,t->f_indx,
-             (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual))); */
-           if (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual)) {
-               ForceNl();
-               c_walk(t->u.declare_var.tqual,3,0);
-               fprintf(out_file, " ");
-               c_walk(t->u.declare_var.dcltor,3,0);
-               prt_str(";",0);
-           }
-           t = t->fnext;
+   while (t) {
+       /*printf("\t%s %d %d inframe=%d\n", t->image, t->id_type,t->f_indx,
+         (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual))); */
+       if (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual)) {
+           ForceNl();
+           c_walk(t->u.declare_var.tqual,3,0);
+           fprintf(out_file, " ");
+           c_walk(t->u.declare_var.dcltor,3,0);
+           prt_str(";",0);
        }
-
-       /*
-        * Temporary vars
-        */
-       t = params;
-       while (t) {
-           if (t->u.param_info.non_tend & PrmInt) {
-               fprintf(out_file, "   C_integer r_i%d;\n", t->u.param_info.param_num); ++line;
-           }
-           if (t->u.param_info.non_tend & PrmDbl) {
-               fprintf(out_file, "   double r_d%d;\n", t->u.param_info.param_num); ++line;
-           }
-           t = t->u.param_info.next;
-       }
-       if (n_tmp_str > 0)
-           fprintf(out_file, "   char r_sbuf[%d][MaxCvtLen];", n_tmp_str);
-
-       fprintf(out_file, "\n};\n"); line += 2;
-
-       in_struct = 0;
+       t = t->fnext;
    }
 
-   if (use_frame)
-   {
-       /*
-        * Output function header.
-        */
-
-       fprintf(out_file, "int %c%s(struct frame *frame0)\n{\n", letter, name);
-       fprintf(out_file, "   struct %s_frame *frame = (struct %s_frame *)frame0;\n", name, name);
-       fprintf(out_file, "   RESTORE(frame);\n");
-       line += 4;
-   } else {
-       /*
-        * Output function header. Operations taking a variable number of arguments
-        *   have an extra parameter: the number of arguments.
-        */
-       fprintf(out_file, "int %c%s(", letter, name);
-       if (params != NULL && (params->id_type & VarPrm))
-           fprintf(out_file, "r_nargs, ");
-       fprintf(out_file, "r_args)\n");
-       ++line;
-       if (params != NULL && (params->id_type & VarPrm)) {
-           fprintf(out_file, "int r_nargs;\n");
-           ++line;
+   /*
+    * Temporary vars
+    */
+   t = params;
+   while (t) {
+       if (t->u.param_info.non_tend & PrmInt) {
+           fprintf(out_file, "   C_integer r_i%d;\n", t->u.param_info.param_num); ++line;
        }
-       fprintf(out_file, "dptr r_args;");
-       ++line;
-       ForceNl();
-       prt_str("{", IndentInc);
+       if (t->u.param_info.non_tend & PrmDbl) {
+           fprintf(out_file, "   double r_d%d;\n", t->u.param_info.param_num); ++line;
+       }
+       t = t->u.param_info.next;
    }
+   if (n_tmp_str > 0)
+       fprintf(out_file, "   char r_sbuf[%d][MaxCvtLen];", n_tmp_str);
+
+   fprintf(out_file, "\n};\n"); line += 2;
+
+   in_struct = 0;
+
+   /*
+    * Output function header.
+    */
+   
+   fprintf(out_file, "int %c%s(struct frame *frame0)\n{\n", letter, name);
+   fprintf(out_file, "   struct %s_frame *frame = (struct %s_frame *)frame0;\n", name, name);
+   fprintf(out_file, "   RESTORE(frame);\n");
+   line += 4;
       
    /*
     * Output ordinary declarations from the declare clause.
     */
    ForceNl();
    for (sym = decl_lst; sym != NULL; sym = sym->u.declare_var.next) {
-       if (use_frame) {
-           decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
-       } else {
-           c_walk(sym->u.declare_var.tqual, IndentInc, 0);
-           prt_str(" ", IndentInc);
-           c_walk(sym->u.declare_var.dcltor, IndentInc, 0);
-           if ((n1 = sym->u.declare_var.init) != NULL) {
-               prt_str(" = ", IndentInc);
-               c_walk(n1, IndentInc, 0);
-           }
-           prt_str(";", IndentInc);
-       }
+       decl_walk3(sym->u.declare_var.tqual, sym->u.declare_var.dcltor, IndentInc);
    }
 
    /*
@@ -3634,8 +3528,6 @@ struct node *n;
     */
    spcl_start(params);
 
-   if (!use_frame)
-       tend_ary(ntend);
    if (has_underef && params != NULL && params->id_type == (VarPrm | DrfPrm))
       prt_str("int r_n;\n", IndentInc);
    tend_init();
@@ -3691,15 +3583,6 @@ struct node *n;
     * Finish setting up the tended array structure and link it into the tended
     *  list.
     */
-   if (!use_frame && ntend != 0) {
-      prt_str("r_tend.num = ", IndentInc);
-      fprintf(out_file, "%d;", ntend);
-      ForceNl();
-      prt_str("r_tend.previous = tend;", IndentInc);
-      ForceNl();
-      prt_str("tend = (struct tend_desc *)&r_tend;", IndentInc);
-      ForceNl();
-      }
 
    if (rt_walk(n, IndentInc, 0)) { /* body of operation */
       if (n->nd_id == ConCatNd)
@@ -3755,16 +3638,9 @@ struct token *t;
 
    fprintf(out_file, "\n");
    ++line;
-   if (c_flag) {
-       fprintf(out_file, "int K%s(struct frame *frame)\n", op_name);
-       ++line;
-       rslt_loc = "frame->value";
-   } else {
-       fprintf(out_file, "int K%s(r_args)\n", op_name);
-       fprintf(out_file, "dptr r_args;");
-       ++line;
-       rslt_loc = "r_args[0]";  /* result location */
-   }
+   fprintf(out_file, "int K%s(struct frame *frame)\n", op_name);
+   ++line;
+   rslt_loc = "frame->value";
    ForceNl();
    prt_str("{", IndentInc);
    ForceNl();
@@ -3789,10 +3665,8 @@ struct token *t;
            break;
    }
    ForceNl();
-   if (c_flag)
-       prt_str("RETURN(frame);", IndentInc);
-   else
-       prt_str("return A_Continue;", IndentInc);
+   prt_str("RETURN(frame);", IndentInc);
+
    ForceNl();
    prt_str("}\n", IndentInc);
    ++line;

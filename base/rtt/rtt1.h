@@ -133,7 +133,6 @@ extern struct sym_entry *v_len;    /* symbol entry for size of varargs */
 extern int il_indx;                /* next index into data base symbol table */
 extern struct sym_entry *ffirst,
                         *flast;    /* symbols declared in this function */
-extern int c_flag;                  /* -C */
 
 /*
  * lvl_entry keeps track of what is happening at a level of nested declarations.
