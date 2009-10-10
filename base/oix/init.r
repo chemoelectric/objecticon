@@ -1552,7 +1552,7 @@ void showstack(struct b_coexpr *c)
             }
             case P_FRAME_TYPE: {
                 struct p_frame *pf = (struct p_frame *)f;
-                printf("\tipc=%p (offset %ld)\n", pf->ipc, DiffPtrsBytes(pf->ipc, pf->code_start));
+                printf("\tipc=%p (offset %ld)\n", pf->ipc, (long)DiffPtrsBytes(pf->ipc, pf->code_start));
                 printf("\tcode_start=%p\n", pf->code_start);
                 printf("\tcaller=%p\n", pf->caller);
                 for (i = 0; i < f->proc->nclo; ++i) {

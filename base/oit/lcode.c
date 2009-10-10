@@ -162,7 +162,7 @@ static void out_op(word op)
 static void word_field(word w, char *desc)
 {
     if (Dflag)
-        fprintf(dbgfile, "%ld:\t  %s\t%ld\n", (long)pc, desc, (word)w);
+        fprintf(dbgfile, "%ld:\t  %s\t%ld\n", (long)pc, desc, (long)w);
     outword(w);
 }
 
