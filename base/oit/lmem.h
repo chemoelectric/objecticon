@@ -4,13 +4,13 @@
 /*
  * Symbol table region pointers.
  */
-#define LGHASH_SIZE     128
-#define LFHASH_SIZE     32
+#define LGHASH_SIZE     1024
+#define LFHASH_SIZE     1024
 extern struct gentry *lghash[LGHASH_SIZE];	/* hash area for global table */
 extern struct fentry *lfhash[LFHASH_SIZE];	/* hash area for field table */
 
-#define LFILE_HASH_SIZE  256
-#define LPACKAGE_HASH_SIZE  32
+#define LFILE_HASH_SIZE  1024
+#define LPACKAGE_HASH_SIZE  128
 
 /* files to link */
 extern struct lfile *lfile_hash[LFILE_HASH_SIZE], *lfiles, *lfiles_last;   

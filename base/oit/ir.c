@@ -2447,6 +2447,8 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 void generate_ir()
 {
     struct ir_info *init = 0, *body = 0, *end;
+    struct lnode *n;
+
     hi_chunk = -1;
     ir_start = 0;
     chunk_id_seq = 1;
@@ -2469,29 +2471,29 @@ void generate_ir()
         body = ir_traverse(curr_lfunc->body, new_stack(), 0, 1, 1);
 
     end = ir_traverse(curr_lfunc->end, 0, 0, 1, 1);   /* Get the Uop_End */
-
+    n = curr_lfunc->start;
     if (init) {
         if (body) {
-            chunk2(ir_start, ir_enterinit(0, body->start), 
-                                  ir_goto(0, init->start));
-            chunk1(init->success, ir_goto(0, body->start));
-            chunk1(init->failure, ir_goto(0, body->start));
-            chunk1(body->success, ir_goto(0, end->start));
-            chunk1(body->failure, ir_goto(0, end->start));
+            chunk2(ir_start, ir_enterinit(n, body->start), 
+                                  ir_goto(n, init->start));
+            chunk1(init->success, ir_goto(n, body->start));
+            chunk1(init->failure, ir_goto(n, body->start));
+            chunk1(body->success, ir_goto(n, end->start));
+            chunk1(body->failure, ir_goto(n, end->start));
         }
         else {
-            chunk2(ir_start, ir_enterinit(0, end->start), 
-                                  ir_goto(0, init->start));
-            chunk1(init->success, ir_goto(0, end->start));
-            chunk1(init->failure, ir_goto(0, end->start));
+            chunk2(ir_start, ir_enterinit(n, end->start), 
+                                  ir_goto(n, init->start));
+            chunk1(init->success, ir_goto(n, end->start));
+            chunk1(init->failure, ir_goto(n, end->start));
         }
     } else {
         if (body) {
-            chunk1(ir_start, ir_goto(0, body->start));
-            chunk1(body->success, ir_goto(0, end->start));
-            chunk1(body->failure, ir_goto(0, end->start));
+            chunk1(ir_start, ir_goto(n, body->start));
+            chunk1(body->success, ir_goto(n, end->start));
+            chunk1(body->failure, ir_goto(n, end->start));
         } else
-            chunk1(ir_start, ir_goto(0, end->start));
+            chunk1(ir_start, ir_goto(n, end->start));
     }
 
     optimize_goto();

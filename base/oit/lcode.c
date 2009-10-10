@@ -25,10 +25,10 @@ static int nstatics = 0;               /* Running count of static variables */
 /*
  * Array sizes for various linker tables that can be expanded with realloc().
  */
-static size_t maxcode	= 15000;        /* code space */
+static size_t maxcode	= 100000;        /* code space */
 static size_t maxlabels	= 500;	        /* maximum num of labels/proc */
-static size_t nsize       = 1000;         /* ipc/line num. assoc. table */
-static size_t fnmsize     = 10;           /* ipc/file name assoc. table */
+static size_t nsize       = 10000;         /* ipc/line num. assoc. table */
+static size_t fnmsize     = 100;           /* ipc/file name assoc. table */
 
 static struct ipc_fname *fnmtbl;	/* table associating ipc with file name */
 static struct ipc_line *lntable;	/* table associating ipc with line number */
@@ -38,9 +38,10 @@ static word *labels;			/* label table */
 static char *codeb;			/* generated code space */
 static char *codep;			/* free pointer for code space */
 
-static char *curr_file,         /* Current file name from an Op_Filen */
+static char *curr_file,         /* Current file name */
             *last_fnmtbl_filen; /* Last file name entered into fnmtbl above */
-static int curr_line;           /* Current line from an Op_Line */
+static int curr_line,
+           last_lntable_line;
 
 /* Linked list of constants in the constant descriptors table */
 static struct centry *const_desc_first, *const_desc_last;
@@ -335,7 +336,7 @@ void generate_code()
     first_unref = 0;
     ArrClear(unref_hash);
     curr_file = last_fnmtbl_filen = 0;
-    curr_line = 0;
+    curr_line = last_lntable_line = 0;
 
     /*
      * Initialize some dynamically-sized tables.
@@ -388,8 +389,6 @@ static void gencode_func(struct lfunction *f)
      */
     curr_lfunc = f;
     generate_ir();
-    synch_file();
-    synch_line();
     cleartables();
     align();
     if (Dflag) {
@@ -451,9 +450,16 @@ static void synch_line()
     if (loclevel == 0)
         return;
 
+    /*
+     * Avoid adjacent entries with the same name.
+     */
+    if (curr_line == last_lntable_line)
+        return;
+
     if (lnfree >= &lntable[nsize])
         lntable  = (struct ipc_line *)expand_table(lntable, &lnfree, &nsize,
                                                sizeof(struct ipc_line), 1, "line number table");
+    last_lntable_line = curr_line;
     lnfree->ipc = pc;
     lnfree->line = curr_line;
     lnfree++;
@@ -1381,6 +1387,8 @@ static void genclass(struct lclass *cl)
         quitf("I got my sums wrong(b): %d != %d", ap, pc);
     if (cl->pc + cl->size != pc)
         quitf("I got my sums wrong(c): %d != %d", cl->pc + cl->size, pc);
+
+    flushcode();
 }
 
 static void genclasses()
@@ -1689,6 +1697,8 @@ static void gentables()
             quitf("I got my sums wrong(d): %d != %d", ap, pc);
         if (rec->pc + size != pc)
             quitf("I got my sums wrong(e): %d != %d", rec->pc + size, pc);
+
+        flushcode();
     }
 
     /*
@@ -1713,6 +1723,7 @@ static void gentables()
         outword(sp->len);
         outword(sp->offset);
     }
+    flushcode();
 
     /*
      * Output global variable descriptors.
@@ -1765,6 +1776,7 @@ static void gentables()
             outword(0);
         }
     }
+    flushcode();
 
     /*
      * Output descriptors for global variable names.
@@ -1781,6 +1793,7 @@ static void gentables()
         outword(sp->len);
         outword(sp->offset);
     }
+    flushcode();
 
     /*
      * Output locations for global variables.
@@ -1812,6 +1825,7 @@ static void gentables()
             }
         }
     }
+    flushcode();
 
     /*
      * Output a null descriptor for each static variable.
@@ -1825,6 +1839,7 @@ static void gentables()
         outword(D_Null);
         outword(0);
     }
+    flushcode();
 
     if (Dflag)
         fprintf(dbgfile, "\n%ld:\t\t\t\t\t# Constant descriptors\n", (long)pc);
@@ -1866,6 +1881,7 @@ static void gentables()
         } else
             quit("unknown constant type");
     }
+    flushcode();
 
     /*
      * Output the string constant table and the two tables associating icode
@@ -1884,6 +1900,7 @@ static void gentables()
         outword(fnptr->sc->len);
         outword(fnptr->sc->offset);
     }
+    flushcode();
 
     if (Dflag)
         fprintf(dbgfile, "\n%ld:\t\t\t\t\t# Line number table\n", (long)pc);
@@ -1929,6 +1946,7 @@ static void gentables()
             pc += sp->len;
         }
     }
+    flushcode();
 
     /*
      * Output icode file header.
@@ -2124,8 +2142,7 @@ static void * expand_table(void * table,      /* table to be realloc()ed */
     size_t free_offset = 0;
     size_t i;
     char *new_tbl;
-
-    new_size = (*size * 3) / 2;
+    new_size = *size * 2;
     if (new_size - *size < min_units)
         new_size = *size + min_units;
     num_bytes = new_size * unit_size;
