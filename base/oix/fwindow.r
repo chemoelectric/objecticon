@@ -1623,7 +1623,8 @@ function{1} graphics_Window_own_selection(self, selection)
       runerr(103,selection)
    body {
        GetSelfW();
-       ownselection(self_w, selection);
+       if (own_selection(self_w, selection) == Failed)
+           fail;
        return self;
    }
 end
@@ -1641,23 +1642,23 @@ function{1} graphics_Window_send_selection_response(self, requestor, property, t
       runerr(101, time)
    body {
        GetSelfW();
-       if (sendselectionresponse(self_w, requestor, property, target, selection, time, &data) == Succeeded)
-           return self;
-       else
+       if (send_selection_response(self_w, requestor, property, target, selection, time, &data) == Failed)
            runerr(0);
+       else
+           return self;
    }
 end
 
-function{0,1} graphics_Window_get_selection_content(self, selection,target_type)
+function{0,1} graphics_Window_request_selection(self, selection, target_type)
    if !cnv:C_string(selection) then
       runerr(103,selection)
    if !def:C_string(target_type, "STRING") then
       runerr(103,target_type)
    body {
        GetSelfW();
-       if (getselectioncontent(self_w, selection,target_type, &result) == Failed)
+       if (request_selection(self_w, selection, target_type) == Failed)
            fail;
-       return result;
+       return self;
    }
 end
 

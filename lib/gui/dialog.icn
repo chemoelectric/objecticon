@@ -474,7 +474,7 @@ class Dialog(Component)
             pop(req.target_types)
             if *req.target_types > 0 then
                # Try next type
-               win.get_selection_content(l[2], req.target_types[1])
+               win.request_selection(l[2], req.target_types[1])
             else {
                # Notify of failure by invoking callback with null data
                delete(selection_requests, l[2])
@@ -503,7 +503,7 @@ class Dialog(Component)
 
    public request_selection(selection, target_types, proc, user_data)
       selection_requests[selection] := SelectionRequest(target_types, proc, user_data)
-      win.get_selection_content(selection, target_types[1])
+      win.request_selection(selection, target_types[1])
    end
 
    public process_event(l)

@@ -281,7 +281,7 @@ class Window(NoCopy)
    #
    # Get the window system's selection
    #
-   public defer get_selection_content(selection, target_type)
+   public defer request_selection(selection, target_type)
 
    #
    # Close this window.

@@ -1374,14 +1374,17 @@ int setminwidth(wbp w, SHORT new_width)
     return Succeeded;
 }
 
-int sendselectionresponse(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
+/*
+ * Note that the three strings are pointers into the string space;
+ * data is a safe pointer into a frame.
+ */
+int send_selection_response(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
 {
     Atom property_atom, target_atom, selection_atom, XA_TARGETS, target_list[32];
     XEvent theevent;
     struct lgstate state;
     tended struct b_lelem *le;
     tended char *cstr_target;
-    tended struct descrip tdata = *data;
     int target_cnt = 1;
     STDLOCALS(w);
 
@@ -1396,11 +1399,11 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *target, c
     XA_TARGETS = XInternAtom(ws->display->display, "TARGETS", False);
 
     if (target_atom == XA_TARGETS) {
-        if (!is:list(tdata))
-            ReturnErrVal(108, tdata, Error);
+        if (!is:list(*data))
+            ReturnErrVal(108, *data, Error);
         target_list[0] = XA_TARGETS;
-        for (le = lgfirst(&BlkLoc(tdata)->list, &state); le;
-             le = lgnext(&BlkLoc(tdata)->list, &state, le)) {
+        for (le = lgfirst(&BlkLoc(*data)->list, &state); le;
+             le = lgnext(&BlkLoc(*data)->list, &state, le)) {
             if (!cnv:C_string(le->lslots[state.result], cstr_target))
                 ReturnErrVal(148, le->lslots[state.result], Error);
             target_list[target_cnt++] = XInternAtom(ws->display->display, cstr_target, False);
@@ -1416,24 +1419,24 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *target, c
                         (unsigned char *)target_list,
                         target_cnt);
         theevent.xselection.property = property_atom;
-    } else if (is:null(tdata)) {
+    } else if (is:null(*data)) {
         /* Can't handle this target type */
         if (selection_debug)
             printf("\tSetting property to None\n");
         theevent.xselection.property = None;
     } else {
-        if (!cnv:string(tdata, tdata))
+        if (!cnv:string(*data, *data))
             ReturnErrVal(103, le->lslots[state.result], Error);
         if (selection_debug)
-            printf("\tSetting property to %d bytes of data\n", (int)StrLen(tdata));
+            printf("\tSetting property to %d bytes of data\n", (int)StrLen(*data));
         XChangeProperty(ws->display->display,
                         requestor,
                         property_atom,
                         target_atom,
                         8,
                         PropModeReplace,
-                        (unsigned char *)StrLoc(tdata),
-                        StrLen(tdata));
+                        (unsigned char *)StrLoc(*data),
+                        StrLen(*data));
         theevent.xselection.property = property_atom;
     }
 
@@ -1452,7 +1455,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *target, c
     return Succeeded;
 }
 
-int ownselection(wbp w, char *selname)
+int own_selection(wbp w, char *selname)
 {
     Atom selection;
     Window curr;
@@ -1502,7 +1505,7 @@ int ownselection(wbp w, char *selname)
     }
 }
 
-int getselectioncontent(wbp w, char *selname, char *targetname, dptr res)
+int request_selection(wbp w, char *selname, char *targetname)
 {
     Atom selection, property, target;
     STDLOCALS(w);
