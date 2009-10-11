@@ -532,8 +532,6 @@ void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
 
 void xdisp(struct p_frame *pf, int count, FILE *f, struct progstate *p);
 
-   #define Fargs dptr cargp
-   int	Ollist			(struct frame *);
 
 void create_list(uword nslots, dptr d);
 struct b_lelem *get_lelem_for_index(struct b_list *bp, word i, word *pos);

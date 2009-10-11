@@ -48,8 +48,6 @@ struct b_proc *fnc_tbl[] = {
  * A number of important variables follow.
  */
 
-int line_info;				/* flag: line information is available */
-char *file_name = NULL;			/* source file for current execution point */
 int k_level = 0;			/* &level */
 int set_up = 0;				/* set-up switch */
 char *currend = NULL;			/* current end of memory region */

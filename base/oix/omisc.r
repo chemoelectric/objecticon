@@ -1,6 +1,5 @@
 /*
  * File: omisc.r
- *  Contents: refresh, size, tabmat, toby, to, llist
  */
 
 "^x - create a refreshed copy of a co-expression."
@@ -276,30 +275,3 @@ end
 
 
 
-" [x1, x2, ... ] - create an explicitly specified list."
-
-operator{1} [...] llist(elems[n])
-   body {
-      tended struct b_list *hp;
-      word nslots;
-
-      nslots = n;
-      if (nslots == 0)
-         nslots = MinListSlots;
-   
-      /*
-       * Allocate the list and a list block.
-       */
-      MemProtect(hp = alclist_raw(n, nslots));
-   
-      /*
-       * Assign each argument to a list element.
-       */
-      memmove(hp->listhead->lelem.lslots, elems, n * sizeof(struct descrip));
-
-/*  Not quite right -- should be after list() returns in case it fails */
-      Desc_EVValD(hp, E_Lcreate, D_List);
-
-      return list(hp);
-      }
-end

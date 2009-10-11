@@ -5,12 +5,6 @@
 
 struct b_proc Bnoproc;
 
-/*
- * A procedure block for list construction, used by event monitoring.
- */
-struct b_iproc mt_llist = {
-   T_Proc, sizeof(struct b_proc), Ollist,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {sizeof( "[...]")-1, "[...]"}, 0, 0};
 
 /*
  * External declarations for function blocks.
@@ -26,37 +20,11 @@ struct b_iproc mt_llist = {
 #include "../h/odefs.h"
 #undef OpDef
 
-extern struct b_proc Bllist;
-
 struct b_proc *opblks[] = {
 	NULL,
 #define OpDef(p) Cat(&B,p),
 #include "../h/odefs.h"
 #undef OpDef
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   &Bllist,
-   NULL,
-   NULL,
-   NULL
    };
 
 
@@ -171,50 +139,3 @@ char *allchars =
     "\360\361\362\363\364\365\366\367"
     "\370\371\372\373\374\375\376\377";
 
-
-/*
- * Note:  the following material is here to avoid a bug in the Cray C compiler.
- */
-
-#define OpDef(p) int Cat(O,p) (dptr cargp);
-#include "../h/odefs.h"
-#undef OpDef
-
-/*
- * When an opcode n has a subroutine call associated with it, the
- *  nth word here is the routine to call.
- */
-
-int (*optab[])() = {
-	err,
-#define OpDef(p) Cat(O,p),
-#include "../h/odefs.h"
-#undef OpDef
-   err,
-   err,
-   err,
-   err,
-   err,
-   err,
-   err,
-   err,
-   err,
-   err,
-   err,
-   err,
-   err,
-   err
-   };
-
-/*
- *  Keyword function look-up table.
- */
-#define KDef(p,n) int Cat(K,p) (dptr cargp);
-#include "../h/kdefs.h"
-#undef KDef
-
-int (*keytab[])() = {
-   err,
-#define KDef(p,n) Cat(K,p),
-#include "../h/kdefs.h"
-   };
