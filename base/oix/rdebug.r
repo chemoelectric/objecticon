@@ -23,7 +23,6 @@ static void trace_frame(struct p_frame *pf);
  * These are set at various strategic points to help give better error
  * messages.
  */
-word xlastop;
 dptr xexpr;
 dptr xfield;
 dptr xargp;
@@ -546,12 +545,12 @@ static void ttrace()
     struct ipc_line *pline;
     struct ipc_fname *pfile;
 
-    if (xlastop == 0)
+    if (curr_op == 0)
         return;
 
     fprintf(stderr, "   ");
 
-    switch ((int)xlastop) {
+    switch ((int)curr_op) {
 
         case Op_Keywd:
             fprintf(stderr,"bad keyword reference");

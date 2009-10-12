@@ -8,6 +8,8 @@ static void do_cofail();
 
 #include "interpiasm.ri"
 
+word curr_op;  /* Last op read in interpreter loop */
+
 struct progstate *curpstate;
 struct b_coexpr *k_current;        /* Always == curpstate->K_current */
 struct p_frame *curr_pf;           /* Always == curpstate->K_current->curr_pf */
@@ -117,7 +119,7 @@ void tail_invoke_frame(struct frame *f)
 
                 ++k_level;
                 if (k_level > k_maxlevel) {
-                    xlastop = 0;    /* Prevent ttrace doing anything, as this frame is already 
+                    curr_op = 0;    /* Prevent ttrace doing anything, as this frame is already 
                                     * on the stack */
                     fatalerr(311, NULL);
                 }
@@ -396,11 +398,11 @@ void get_variable(dptr dest)
 #enddef
 
 
-static void do_op(int op, int nargs)
+static void do_op(int nargs)
 {
     dptr lhs;
     struct c_frame *cf;
-    struct b_proc *bp = opblks[op];
+    struct b_proc *bp = opblks[curr_op];
     int i;
     lhs = get_dptr();
     quick_alc_c_frame(cf, bp, nargs);
@@ -426,10 +428,10 @@ static void do_op(int op, int nargs)
     k_current->sp = cf->parent_sp;
 }
 
-static void do_opclo(int op, int nargs)
+static void do_opclo(int nargs)
 {
     struct c_frame *cf;
-    struct b_proc *bp = opblks[op];
+    struct b_proc *bp = opblks[curr_op];
     int i;
     word clo;
     clo = GetWord;
@@ -685,15 +687,14 @@ static void do_scansave()
 
 void interp()
 {
-    word op;
     for (;;) {
         if (curpstate->event_queue_head) {
             /* Switch to parent program */
             set_curpstate(curpstate->monitor);
         }
         curr_pf->curr_inst = Ipc;
-        xlastop = op = GetWord;
-        switch (op) {
+        curr_op = GetWord;
+        switch (curr_op) {
             case Op_Goto: {
                 Ipc = get_addr();
                 break;
@@ -753,7 +754,7 @@ void interp()
             case Op_Mult:
             case Op_Swap:
             case Op_Unions: {
-                do_op(op, 2);
+                do_op(2);
                 break;
             }
 
@@ -767,31 +768,31 @@ void interp()
             case Op_Size:
             case Op_Random:
             case Op_Null: {
-                do_op(op, 1);
+                do_op(1);
                 break;
             }
 
             /* Unary closures */
             case Op_Tabmat:
             case Op_Bang: {
-                do_opclo(op, 1);
+                do_opclo(1);
                 break;
             }
 
             /* Binary closures */
             case Op_Rasgn:
             case Op_Rswap:{
-                do_opclo(op, 2);
+                do_opclo(2);
                 break;
             }
 
             case Op_Toby: {
-                do_opclo(op, 3);
+                do_opclo(3);
                 break;
             }
 
             case Op_Sect: {
-                do_op(op, 3);
+                do_op(3);
                 break;
             }
 
@@ -990,7 +991,7 @@ void interp()
             }
 
             default: {
-                syserr("Unimplemented opcode %d (%s)\n", (int)op, op_names[op]);
+                syserr("Unimplemented opcode %d (%s)\n", (int)curr_op, op_names[curr_op]);
                 break; /* Not reached */
             }
         }

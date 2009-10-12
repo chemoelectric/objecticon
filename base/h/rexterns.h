@@ -94,7 +94,7 @@ extern int over_flow;
 
 extern stringint attribs[], drawops[];
 
-extern word xlastop;
+extern word curr_op;
 extern dptr xexpr;
 extern dptr xfield;
 extern dptr xargp;
