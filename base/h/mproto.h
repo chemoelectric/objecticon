@@ -44,6 +44,7 @@ char *canonicalize(char *path);
 void *safe_calloc(size_t m, size_t n);
 void *safe_alloc(size_t size);
 void *safe_realloc(void *ptr, size_t size);
+void *safe_malloc(size_t size);
 
 int utf8_check(char **p, char *end);
 int utf8_iter(char **p);
