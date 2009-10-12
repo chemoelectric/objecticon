@@ -1682,7 +1682,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_2 *x = (struct lnode_2 *)n;
             struct ir_info *e1, *e2;
             struct ir_stack *st1, *st2;
-            int tl;
+            int tl = -1;
             if (!bounded)
                 tl = make_tmploc(st);
 
