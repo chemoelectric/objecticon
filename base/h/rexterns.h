@@ -94,6 +94,13 @@ extern int over_flow;
 
 extern stringint attribs[], drawops[];
 
+extern word xlastop;
+extern dptr xexpr;
+extern dptr xfield;
+extern dptr xargp;
+extern int xnargs;
+extern struct c_frame *xc_frame;           /* currently executing c frame */
+
 /*
  * graphics
  */

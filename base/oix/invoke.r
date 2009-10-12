@@ -912,7 +912,7 @@ static void class_invokef(word clo, dptr expr, dptr query, struct inline_field_c
     EVValD(expr, e_classref);
     EVVal(i + 1, e_classsub);
 
-    lastop = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
+    xlastop = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
     general_call(clo, cf->field_descriptor, argc, args, rval, failure_label);
 }
 
@@ -932,7 +932,7 @@ static void record_invokef(word clo, dptr expr, dptr query, struct inline_field_
 
     /* Copy field to a tended descriptor */
     tmp = BlkLoc(*expr)->record.fields[i];
-    lastop = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
+    xlastop = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
     general_call(clo, &tmp, argc, args, rval, failure_label);
 }
 
@@ -1037,7 +1037,7 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
 
         /* Copy field to a tended descriptor */
         tmp = BlkLoc(*expr)->object.fields[i];
-        lastop = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
+        xlastop = Op_Invoke; /* In case of error, ttrace acts like Op_Invoke */
         general_call(clo, &tmp, argc, args, rval, failure_label);
     }
 }

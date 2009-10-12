@@ -602,10 +602,6 @@ static void initprogstate(struct progstate *p)
     p->Set_ser = 1;
     p->Table_ser = 1;
     gettimeofday(&p->start_time, 0);
-    p->Lastop = 0;
-    p->Xfield = p->Xexpr = p->Xargp = 0;
-    p->Xnargs = 0;
-    p->Xc_frame = 0;
 
     p->stringtotal = p->blocktotal = p->stackcurr = p->colluser = 
         p->collstack = p->collstr = p->collblk = 0;

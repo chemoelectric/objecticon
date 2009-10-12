@@ -19,6 +19,16 @@ static void trace_frame(struct p_frame *pf);
 
 #define LIMIT 100
 
+/*
+ * These are set at various strategic points to help give better error
+ * messages.
+ */
+word xlastop;
+dptr xexpr;
+dptr xfield;
+dptr xargp;
+int xnargs;
+struct c_frame *xc_frame;           /* currently executing c frame */
 
 struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior)
 {
@@ -536,12 +546,12 @@ static void ttrace()
     struct ipc_line *pline;
     struct ipc_fname *pfile;
 
-    if (lastop == 0)
+    if (xlastop == 0)
         return;
 
     fprintf(stderr, "   ");
 
-    switch ((int)lastop) {
+    switch ((int)xlastop) {
 
         case Op_Keywd:
             fprintf(stderr,"bad keyword reference");

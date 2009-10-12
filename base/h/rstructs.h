@@ -434,14 +434,7 @@ struct progstate {
     struct region *stringregion;
     struct region *blockregion;
 
-    word Lastop;
     word exited;                        /* set to 1 when the main procedure exits */
-
-    dptr Xexpr;
-    dptr Xfield;
-    dptr Xargp;
-    int Xnargs;
-    struct c_frame *Xc_frame;           /* currently executing c frame */
 
     int K_errornumber;
     struct descrip K_errortext;

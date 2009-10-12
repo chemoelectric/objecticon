@@ -117,7 +117,7 @@ void tail_invoke_frame(struct frame *f)
 
                 ++k_level;
                 if (k_level > k_maxlevel) {
-                    lastop = 0;    /* Prevent ttrace doing anything, as this frame is already 
+                    xlastop = 0;    /* Prevent ttrace doing anything, as this frame is already 
                                     * on the stack */
                     fatalerr(311, NULL);
                 }
@@ -692,7 +692,7 @@ void interp()
             set_curpstate(curpstate->monitor);
         }
         curr_pf->curr_inst = Ipc;
-        lastop = op = GetWord;
+        xlastop = op = GetWord;
         switch (op) {
             case Op_Goto: {
                 Ipc = get_addr();

@@ -542,15 +542,6 @@
       #define coll_str  (curpstate->collstr)
       #define coll_blk  (curpstate->collblk)
       
-      #define lastop    (curpstate->Lastop)
-      #define lastopnd  (curpstate->Lastopnd)
-
-      #define xexpr     (curpstate->Xexpr)
-      #define xfield    (curpstate->Xfield)
-      #define xargp     (curpstate->Xargp)
-      #define xnargs    (curpstate->Xnargs)
-      #define xc_frame  (curpstate->Xc_frame)
-      
       #define k_errornumber (curpstate->K_errornumber)
       #define k_errortext   (curpstate->K_errortext)
       #define k_errorvalue  (curpstate->K_errorvalue)
