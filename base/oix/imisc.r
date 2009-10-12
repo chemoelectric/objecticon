@@ -3,7 +3,7 @@
     
 struct b_proc *get_current_user_proc()
 {
-    struct p_frame *pf = PF;
+    struct p_frame *pf = curr_pf;
     while (pf->proc->program == 0)
         pf = pf->caller;
     return pf->proc;
@@ -11,7 +11,7 @@ struct b_proc *get_current_user_proc()
 
 struct p_frame *get_current_user_frame()
 {
-    struct p_frame *pf = PF;
+    struct p_frame *pf = curr_pf;
     while (pf->proc->program == 0)
         pf = pf->caller;
     return pf;

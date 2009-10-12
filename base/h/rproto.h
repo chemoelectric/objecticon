@@ -626,3 +626,11 @@ void test_collect(int time_interval, long call_interval);
 struct b_coexpr *alccoexp_0 (void);
 struct b_coexpr *alccoexp_1 (void);
 struct b_proc *clone_b_proc(struct b_proc *bp);
+
+void set_curpstate(struct progstate *p);
+void set_curr_pf(struct p_frame *x);
+
+
+
+
+

@@ -178,7 +178,7 @@ keyword{1} file
       }
    inline {
       struct ipc_fname *pfile;
-      pfile = frame_ipc_fname(PF, 1);
+      pfile = frame_ipc_fname(curr_pf, 1);
       if (!pfile)
           fail;
       return pfile->fname;
@@ -243,7 +243,7 @@ keyword{1} line
    inline {
       struct ipc_line *pline;
 
-      pline = frame_ipc_line(PF, 1);
+      pline = frame_ipc_line(curr_pf, 1);
       if (!pline)
           fail;
 

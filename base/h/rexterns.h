@@ -84,6 +84,9 @@ extern struct b_ucs *emptystr_ucs;     /* ucs empty string */
 extern struct b_ucs *blank_ucs;        /* ucs blank string */
 
 extern struct progstate *curpstate;
+extern struct b_coexpr *k_current;
+extern struct p_frame *curr_pf;
+
 extern struct progstate rootpstate;
 extern int noMTevents;		/* no MT events during GC */
    
@@ -121,3 +124,4 @@ extern clock_t starttime;		/* start time in milliseconds */
 extern union tickerdata ticker;
 extern unsigned long oldtick;
 #endif					/* UNIX && E_Tick */
+

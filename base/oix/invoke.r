@@ -410,7 +410,7 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
         pf->locals->args[1].dword = D_Object; 
     }
 
-    PF->clo[clo] = (struct frame *)pf;
+    curr_pf->clo[clo] = (struct frame *)pf;
     pf->failure_label = failure_label;
     EVValD(expr, e_objectcreate);
     tail_invoke_frame((struct frame *)pf);
@@ -447,7 +447,7 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
         }
     }
 
-    PF->clo[clo] = (struct frame *)pf;
+    curr_pf->clo[clo] = (struct frame *)pf;
     pf->failure_label = failure_label;
     EVValD(expr, e_rcreate);
     tail_invoke_frame((struct frame *)pf);
@@ -458,7 +458,7 @@ static void invoke_proc(word clo, dptr expr, int argc, dptr args, word rval, wor
     struct b_proc *bp = (struct b_proc *)BlkLoc(*expr);
     struct frame *f;
     f = push_frame_for_proc(bp, argc, args, 0);
-    PF->clo[clo] = f;
+    curr_pf->clo[clo] = f;
     f->failure_label = failure_label;
     f->rval = rval;
     tail_invoke_frame(f);
@@ -473,7 +473,7 @@ static void invoke_methp(word clo, dptr expr, int argc, dptr args, word rval, wo
     tmp.dword = D_Object;
     BlkLoc(tmp) = (union block *)BlkLoc(*expr)->methp.object;
     f = push_frame_for_proc(bp, argc, args, &tmp);
-    PF->clo[clo] = f;
+    curr_pf->clo[clo] = f;
     f->failure_label = failure_label;
     f->rval = rval;
     tail_invoke_frame(f);
@@ -507,7 +507,7 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
                     get_deref(&trashcan);
             }
         }
-        PF->clo[clo] = (struct frame *)pf;
+        curr_pf->clo[clo] = (struct frame *)pf;
         pf->failure_label = failure_label;
         tail_invoke_frame((struct frame *)pf);
         return;
@@ -535,7 +535,7 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
             if ((bp = bi_strprc(&sexpr, argc))) {
                 struct frame *f;
                 f = push_frame_for_proc(bp, argc, args, 0);
-                PF->clo[clo] = f;
+                curr_pf->clo[clo] = f;
                 f->failure_label = failure_label;
                 f->rval = rval;
                 tail_invoke_frame(f);
@@ -978,7 +978,7 @@ static void cast_invokef(word clo, dptr expr, dptr query, struct inline_field_ca
     BlkLoc(tmp) = (union block *)BlkLoc(*expr)->cast.object;
     f = push_frame_for_proc(&BlkLoc(*cf->field_descriptor)->proc, 
                             argc, args, &tmp);
-    PF->clo[clo] = f;
+    curr_pf->clo[clo] = f;
     f->failure_label = failure_label;
     f->rval = rval;
     tail_invoke_frame(f);
@@ -1023,7 +1023,7 @@ static void instance_invokef(word clo, dptr expr, dptr query, struct inline_fiel
         BlkLoc(tmp) = (union block *)&BlkLoc(*expr)->object;
         f = push_frame_for_proc(&BlkLoc(*cf->field_descriptor)->proc, 
                                 argc, args, &tmp);
-        PF->clo[clo] = f;
+        curr_pf->clo[clo] = f;
         f->failure_label = failure_label;
         f->rval = rval;
         tail_invoke_frame(f);
@@ -1063,13 +1063,13 @@ static void simple_access()
 
 static void handle_access_failure()
 {
-    struct p_frame *t = PF;
+    struct p_frame *t = curr_pf;
     struct descrip quiet;
     get_deref(&quiet);
     if (is:null(quiet))
         whyf("%s (error %d)", lookup_err_msg(t_errornumber), t_errornumber);
     /* Act as though this frame AND the parent c_frame (ie the getf call) have failed */
-    PF = PF->caller;
+    set_curr_pf(curr_pf->caller);
     Ipc = t->parent_sp->failure_label;
     pop_to(t->parent_sp->parent_sp);
 }

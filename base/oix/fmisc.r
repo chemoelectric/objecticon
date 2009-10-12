@@ -485,8 +485,8 @@ function{} syserr(msg)
       struct ipc_line *pline;
       struct ipc_fname *pfile;
 
-      pline = frame_ipc_line(PF, 1);
-      pfile = frame_ipc_fname(PF, 1);
+      pline = frame_ipc_line(curr_pf, 1);
+      pfile = frame_ipc_fname(curr_pf, 1);
 
       fprintf(stderr, "\nIcon-level internal error: ");
       while (i-- > 0)

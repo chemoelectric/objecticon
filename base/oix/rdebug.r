@@ -56,7 +56,7 @@ void traceback()
     struct p_frame **fa;
 
     depth = 0;
-    for (f = PF; f; f = f->caller) {
+    for (f = curr_pf; f; f = f->caller) {
         if (f->proc->program)
             ++depth;
     }
@@ -75,7 +75,7 @@ void traceback()
     MemProtect(fa = malloc(depth * sizeof(struct p_frame *)));
 
     i = depth - 1;
-    for (f = PF; f; f = f->caller) {
+    for (f = curr_pf; f; f = f->caller) {
         if (f->proc->program) {
             fa[i--] = f;
             if (i < 0)
@@ -756,8 +756,8 @@ static void ttrace()
         }
     }
 	 
-    pline = frame_ipc_line(PF, 1);
-    pfile = frame_ipc_fname(PF, 1);
+    pline = frame_ipc_line(curr_pf, 1);
+    pfile = frame_ipc_fname(curr_pf, 1);
     if (pfile && pline) {
         struct descrip t;
         abbr_fname(&pfile->fname, &t);

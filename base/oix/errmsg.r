@@ -196,8 +196,8 @@ void err_msg(int n, dptr v)
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);
-                pline = frame_ipc_line(PF, 1);
-                pfile = frame_ipc_fname(PF, 1);
+                pline = frame_ipc_line(curr_pf, 1);
+                pfile = frame_ipc_fname(curr_pf, 1);
                 if (pline && pfile) {
                     struct descrip t;
                     abbr_fname(&pfile->fname, &t);
@@ -206,8 +206,8 @@ void err_msg(int n, dptr v)
                     fprintf(stderr, "File ?; Line ?\n");
             } else {
                 fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-                pline = frame_ipc_line(PF, 1);
-                pfile = frame_ipc_fname(PF, 1);
+                pline = frame_ipc_line(curr_pf, 1);
+                pfile = frame_ipc_fname(curr_pf, 1);
                 if (pline && pfile) {
                     struct descrip t;
                     abbr_fname(&pfile->fname, &t);

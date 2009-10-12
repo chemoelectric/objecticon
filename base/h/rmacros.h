@@ -551,7 +551,6 @@
       #define xnargs    (curpstate->Xnargs)
       #define xc_frame  (curpstate->Xc_frame)
       
-      #define k_current     (curpstate->K_current)
       #define k_errornumber (curpstate->K_errornumber)
       #define k_errortext   (curpstate->K_errortext)
       #define k_errorvalue  (curpstate->K_errorvalue)
@@ -644,9 +643,6 @@ do {                   \
     }\
 } while(0)
 
-#define PF (k_current->curr_pf)
-#define SP (k_current->sp)
-#define CurrProc (PF->proc)
-#define Ipc (PF->ipc)
+#define Ipc (curr_pf->ipc)
 #define GetWord (*Ipc++)
 

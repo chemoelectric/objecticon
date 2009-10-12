@@ -333,12 +333,11 @@ void icon_init(char *name)
     mainhead->size = 1;			/* pretend main() does an activation */
     mainhead->main_of = mainhead->creator = mainhead->program = &rootpstate;
     mainhead->activator = mainhead;
-
     /*
      * Point &main at the co-expression block for the main procedure and set
      *  k_current, the pointer to the current co-expression, to &main.
      */
-    k_current = k_main = mainhead;
+    k_current = rootpstate.K_current = rootpstate.K_main = mainhead;
 
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, code);
@@ -458,8 +457,8 @@ void syserr(char *fmt, ...)
         struct ipc_line *pline;
         struct ipc_fname *pfile;
 
-        pline = frame_ipc_line(PF, 1);
-        pfile = frame_ipc_fname(PF, 1);
+        pline = frame_ipc_line(curr_pf, 1);
+        pfile = frame_ipc_fname(curr_pf, 1);
 
         if (pline && pfile) {
             struct descrip t;
@@ -693,7 +692,7 @@ static void handle_monitored_prog_exit()
      * or via the get_event function.
      */
     if (curpstate->monitor)
-        curpstate = curpstate->monitor;
+        set_curpstate(curpstate->monitor);
 }
 
 " load a program corresponding to string s as a co-expression."
@@ -1293,10 +1292,11 @@ int main(int argc, char **argv)
         }
         frame->locals->args[1] = args;
     }
-    k_current->sp = (struct frame *)frame;
-    k_current->curr_pf = frame;
-    k_current->start_label = frame->ipc = frame->proc->icode;
-    k_current->failure_label = 0;
+    rootpstate.K_current->sp = (struct frame *)frame;
+    curr_pf = rootpstate.K_current->curr_pf = frame;
+    rootpstate.K_current->start_label = frame->ipc = frame->proc->icode;
+    rootpstate.K_current->failure_label = 0;
+
     set_up = 1;			/* post fact that iconx is initialized */
     interp();
     c_exit(EXIT_SUCCESS);
@@ -1535,6 +1535,7 @@ void showstack(struct b_coexpr *c)
         printf("\tproc="); print_vword(stdout, &tmp); printf("\n");
         printf("\tparent_sp=%p\n", f->parent_sp);
         printf("\texhausted=%d\n", f->exhausted);
+        printf("\trval=%d\n", f->rval);
         switch (f->type) {
             case C_FRAME_TYPE: {
                 struct c_frame *cf = (struct c_frame *)f;

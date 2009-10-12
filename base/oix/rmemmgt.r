@@ -333,6 +333,8 @@ void collect(int region)
    for (prog = progs; prog; prog = prog->next)
        markprogram(prog);
 
+   markptr((union block **)&k_current);
+
    /*
     * Sweep the tended list on the C stack.
     */
