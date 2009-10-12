@@ -354,6 +354,48 @@ void get_variable(dptr dest)
     }
 }
 
+/*
+ * A quick version of alc_c_frame which allocates on the C stack using
+ * alloca, instead of malloc.  It is used for operators whose frames
+ * are allocated and then immediately deallocated after the operator
+ * is called (do_op and do_keyop).
+ */
+
+#begdef quick_alc_c_frame(p, pb, argc)
+{
+    char *t;
+    int size, i;
+    size = pb->framesize + (argc + pb->ntend) * sizeof(struct descrip);
+    p = alloca(size);
+    p->size = size;
+    p->creator = 0;
+    p->type = C_FRAME_TYPE;
+    p->value = nulldesc;
+    p->proc = pb;
+    p->parent_sp = 0;
+    p->failure_label = 0;
+    p->rval = 0;
+    p->exhausted = 0;
+    p->pc = 0;
+    p->nargs = argc;
+    t = (char *)p + pb->framesize;
+    if (argc) {
+        p->args = (dptr)t;
+        for (i = 0; i < argc; ++i)
+            p->args[i] = nulldesc;
+        t += argc * sizeof(struct descrip);
+    } else
+        p->args = 0;
+    if (pb->ntend) {
+        p->tend = (dptr)t;
+        for (i = 0; i < pb->ntend; ++i)
+            p->tend[i] = nulldesc;
+    } else
+        p->tend = 0;
+}
+#enddef
+
+
 static void do_op(int op, int nargs)
 {
     dptr lhs;
@@ -361,7 +403,7 @@ static void do_op(int op, int nargs)
     struct b_proc *bp = opblks[op];
     int i;
     lhs = get_dptr();
-    MemProtect(cf = alc_c_frame(bp, nargs));
+    quick_alc_c_frame(cf, bp, nargs);
     push_frame((struct frame *)cf);
     if (bp->underef) {
         for (i = 0; i < nargs; ++i)
@@ -380,7 +422,8 @@ static void do_op(int op, int nargs)
     } else
         Ipc = cf->failure_label;
     xc_frame = 0;
-    pop_to(cf->parent_sp);
+    /* Pop the C frame */
+    k_current->sp = cf->parent_sp;
 }
 
 static void do_opclo(int op, int nargs)
@@ -409,12 +452,9 @@ static void do_keyop()
 {
     dptr lhs;
     struct c_frame *cf;
-    struct b_proc *bp;
-
-    bp = keyblks[GetWord];
-
+    struct b_proc *bp = keyblks[GetWord];
     lhs = get_dptr();
-    MemProtect(cf = alc_c_frame(bp, 0));
+    quick_alc_c_frame(cf, bp, 0);
     push_frame((struct frame *)cf);
     cf->failure_label = get_addr();
     Desc_EVValD(bp, E_Pcall, D_Proc);
@@ -424,8 +464,9 @@ static void do_keyop()
             *lhs = cf->value;
     } else
         Ipc = cf->failure_label;
-    pop_to(cf->parent_sp);
     xc_frame = 0;
+    /* Pop the C frame */
+    k_current->sp = cf->parent_sp;
 }
 
 static void do_keyclo()
@@ -433,7 +474,6 @@ static void do_keyclo()
     struct c_frame *cf;
     struct b_proc *bp;
     word clo;
-
     bp = keyblks[GetWord];
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, 0));
