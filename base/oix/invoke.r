@@ -60,8 +60,7 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
                     }
                 }
             }
-            while (i < abs_nparam - 1)
-                pf->locals->args[i++] = nulldesc;
+            /* Params i ... abs_nparam - 2 are already initialized to nulldesc by alc_p_frame */
             pf->locals->args[abs_nparam - 1] = l;
         } else {
             if (args) {
@@ -79,8 +78,7 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
                         get_deref(&trashcan);
                 }
             }
-            while (i < bp->nparam)
-                pf->locals->args[i++] = nulldesc;
+            /* Remaining args (i ... bp->nparam-1) are already set to nulldesc */
         }
         return (struct frame *)pf;
     } else {
@@ -117,8 +115,7 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
                     get_deref(&cf->args[i++]);
             }
         }
-        while (i < want)
-            cf->args[i++] = nulldesc;
+        /* Remaining args (i ... want-1) are already set to nulldesc */
 
         return (struct frame *)cf;
     }
