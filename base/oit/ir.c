@@ -2947,7 +2947,7 @@ static void optimize_goto_chain(int *lab)
         chunk = chunks[*lab];
         if (!chunk || chunk->n_inst == 0)
             quitf("Optimize goto chain dead end at chunk %d, start was %d", *lab, start);
-        if (!chunk || chunk->n_inst == 0 || chunk->inst[0]->op != Ir_Goto || chunk->circle == marker)
+        if (chunk->inst[0]->op != Ir_Goto || chunk->circle == marker)
             break;
         *lab = ((struct ir_goto *)chunk->inst[0])->dest;
         chunk->circle = marker;        
@@ -2957,7 +2957,9 @@ static void optimize_goto_chain(int *lab)
 static void optimize_goto()
 {
     int i;
+    struct chunk *last;
     optimize_goto1(ir_start);
+
     /* Eliminate unseen ones */
     for (i = 0; i <= hi_chunk; ++i) {
         struct chunk *chunk;
@@ -2968,6 +2970,24 @@ static void optimize_goto()
             chunks[i] = 0;
         }
     }
+
+    /* Eliminate redundant trailing gotos */
+    last = 0;
+    for (i = 0; i <= hi_chunk; ++i) {
+        struct chunk *chunk;
+        chunk = chunks[i];
+        if (chunk) {
+            if (last && last->n_inst > 0 && 
+                last->inst[last->n_inst - 1]->op == Ir_Goto &&
+                ((struct ir_goto *)(last->inst[last->n_inst - 1]))->dest == i) 
+            {
+                --last->n_inst;
+            }
+
+            last = chunk;
+        }
+    }
+    
 }
 
 static void optimize_goto1(int i)

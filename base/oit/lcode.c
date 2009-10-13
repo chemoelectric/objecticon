@@ -674,7 +674,6 @@ static void patchrefs()
             word t, off;
             memcpy(&t, &codeb[p - basepc], WordSize);
             off = chunk->pc - p;
-            /*printf("At %d ref to %d off=%d\n",p,chunk->pc,off);fflush(stdout);*/
             memcpy(&codeb[p - basepc], &off, WordSize);
             p = t;
         }
