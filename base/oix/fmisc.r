@@ -551,21 +551,6 @@ function{1,*} seq(from, by)
          from += by;
          }
       while (from >= seq_lb && from <= seq_ub);
-
-#ifdef CHECK
-      {
-      /*
-       * Suspending wipes out some things needed by the trace back code to
-       *  render the offending expression. Restore them.
-       */
-      lastop = Op_Invoke;
-      xnargs = 2;
-      xargp = r_args;
-      r_args[0].dword = D_Proc;
-      r_args[0].vword.bptr = (union block *)&Bseq;
-      }
-#endif
-
       runerr(203);
       }
 end
