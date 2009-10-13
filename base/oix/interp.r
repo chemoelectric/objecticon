@@ -15,8 +15,6 @@ struct b_coexpr *k_current;        /* Always == curpstate->K_current */
 struct p_frame *curr_pf;           /* Always == curpstate->K_current->curr_pf */
 word *ipc;                         /* Notionally curpstate->K_current->curr_pf->ipc, synchronized whenever
                                     * curr_pf is changed */
-word *code_start;
-
 void synch_ipc()
 {
     curr_pf->ipc = ipc;
@@ -31,7 +29,6 @@ void set_curpstate(struct progstate *p)
     curpstate = p;
     k_current = p->K_current;
     curr_pf = k_current->curr_pf;
-    code_start = curr_pf->proc->program ? (word *)curr_pf->proc->program->Code : curr_pf->proc->icode;
     ipc = curr_pf->ipc;
 }
 
@@ -44,7 +41,6 @@ void switch_to(struct b_coexpr *ce)
     curpstate = ce->program;
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
-    code_start = curr_pf->proc->program ? (word *)curr_pf->proc->program->Code : curr_pf->proc->icode;
     ipc = curr_pf->ipc;
 }
 
@@ -56,15 +52,11 @@ void set_curr_pf(struct p_frame *pf)
     struct progstate *p = pf->proc->program;
     curr_pf->ipc = ipc;
     /* Check whether we are changing to a different program. */
-    if (p) {
-        code_start = (word *)p->Code;
-        if (p != curpstate) {
-            p->K_current = k_current;
-            curpstate = p;
-            k_current->program = curpstate;
-        }
-    } else
-        code_start = pf->proc->icode;
+    if (p && p != curpstate) {
+        p->K_current = k_current;
+        curpstate = p;
+        k_current->program = curpstate;
+    }
     curr_pf = k_current->curr_pf = pf;
     ipc = curr_pf->ipc;
 }
@@ -155,11 +147,14 @@ void pop_to(struct frame *f)
 
 word *get_addr()
 {
-    return (word *)((char *)code_start + GetWord);
+    char *w = (char *)ipc;
+    return (word *)(w + GetWord);
 }
 
 word get_offset(word *w)
 {
+    word *code_start = curr_pf->proc->program ? 
+        (word *)curr_pf->proc->program->Code : curr_pf->proc->icode;
     return DiffPtrsBytes(w, code_start);
 }
 

@@ -58,7 +58,7 @@ procedure main(a)
             }
             # Resolve labels and output
             every i := 1 to *l do
-               l[i] := \t[l[i]] || "*WordSize"
+               l[i] := (\t[l[i]] - i + 1) || "*WordSize"
             write("static word ", title, "_code[] = {")
             every write("   ", !l, ",")
             write("};")
