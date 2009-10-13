@@ -31,6 +31,7 @@ struct c_frame *xc_frame;           /* currently executing c frame */
 
 struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior)
 {
+    synch_ipc();
     while (pf && !pf->proc->program)
         pf = pf->caller;
     if (!pf)
@@ -43,6 +44,7 @@ struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior)
 
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior)
 {
+    synch_ipc();
     while (pf && !pf->proc->program)
         pf = pf->caller;
     if (!pf)
@@ -852,7 +854,6 @@ void return_trace(struct p_frame *pf)
     putc('\n', stderr);
     fflush(stderr);
 }
-
 
 /*
  * Service routine to display variables in given number of

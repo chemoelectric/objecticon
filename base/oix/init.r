@@ -1290,7 +1290,7 @@ int main(int argc, char **argv)
     }
     rootpstate.K_current->sp = (struct frame *)frame;
     curr_pf = rootpstate.K_current->curr_pf = frame;
-    rootpstate.K_current->start_label = frame->ipc = frame->proc->icode;
+    code_start = ipc = rootpstate.K_current->start_label = frame->ipc = frame->proc->icode;
     rootpstate.K_current->failure_label = 0;
 
     set_up = 1;			/* post fact that iconx is initialized */
@@ -1505,8 +1505,8 @@ void showcurrstack()
         printf("curpstate=%p k_current is 0\n",curpstate);
         return;
     }    
-    printf("k_current= %p k_current->sp=%p k_current->curr_pf=%p\n",
-           k_current, k_current->sp, k_current->curr_pf);
+    printf("ipc=%p code_start=%p k_current= %p k_current->sp=%p k_current->curr_pf=%p\n",
+           ipc, code_start, k_current, k_current->sp, k_current->curr_pf);
     showstack(k_current);
 }
 
@@ -1547,8 +1547,7 @@ void showstack(struct b_coexpr *c)
             }
             case P_FRAME_TYPE: {
                 struct p_frame *pf = (struct p_frame *)f;
-                printf("\tipc=%p (offset %ld)\n", pf->ipc, (long)DiffPtrsBytes(pf->ipc, pf->code_start));
-                printf("\tcode_start=%p\n", pf->code_start);
+                printf("\tipc=%p\n", pf->ipc);
                 printf("\tcaller=%p\n", pf->caller);
                 for (i = 0; i < f->proc->nclo; ++i) {
                     printf("\tclo[%d]=%p\n", i, pf->clo[i]);

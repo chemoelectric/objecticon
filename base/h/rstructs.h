@@ -612,7 +612,6 @@ struct p_frame {
     FRAME_BASE;
     word *ipc;
     word *curr_inst;
-    word *code_start;
     struct p_frame *caller;
     struct frame **clo;
     dptr tmp;

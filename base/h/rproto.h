@@ -520,9 +520,11 @@ dptr u_read			(int fd, int n, dptr d);
    struct b_refresh *alcrefresh_1(word *e, int nl, int nt);
 
 void call_trace(struct p_frame *pf);
+
 void fail_trace(struct p_frame *pf);
 void suspend_trace(struct p_frame *pf);
 void return_trace(struct p_frame *pf);
+
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val);
 void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val);
 void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
@@ -629,6 +631,7 @@ struct b_proc *clone_b_proc(struct b_proc *bp);
 
 void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
+void synch_ipc();
 
 
 

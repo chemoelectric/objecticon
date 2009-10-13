@@ -152,7 +152,7 @@ void do_applyf()
             xfield = &query;
             xargp = &args;
             err_msg(126, &args);
-            Ipc = failure_label;
+            ipc = failure_label;
             return;
       }
     }
@@ -218,7 +218,7 @@ void do_apply()
             xexpr = &expr;
             xargp = &args;
             err_msg(126, &args);
-            Ipc = failure_label;
+            ipc = failure_label;
             return;
       }
     }
@@ -241,7 +241,7 @@ static void check_if_uninitialized()
     dptr class0 = get_dptr();  /* Class */
     word *a = get_addr();
     if (BlkLoc(*class0)->class.init_state != Uninitialized)
-        Ipc = a;
+        ipc = a;
     /*printf("check_if_uninitialized\n");*/
 }
 
@@ -276,7 +276,7 @@ static void for_class_supers()
         BlkLoc(*res) = (union block *)BlkLoc(*class0)->class.supers[IntVal(*i)];
         IntVal(*i)++;
     } else
-        Ipc = a;
+        ipc = a;
 }
 
 static void invoke_class_init()
@@ -314,7 +314,7 @@ static void ensure_class_initialized()
     MemProtect(pf = alc_p_frame((struct b_proc *)&Bensure_class_initialized, 0));
     push_frame((struct frame *)pf);
     pf->locals->args[0] = *d;
-    pf->failure_label = Ipc;
+    pf->failure_label = ipc;
     tail_invoke_frame((struct frame *)pf);
 }
 
@@ -373,7 +373,7 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
             xargp = 0;
             skip_args(argc, args);
             err_msg(0, NULL);
-            Ipc = failure_label;
+            ipc = failure_label;
             return;
         }
 
@@ -488,7 +488,7 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
 
         int i = cvpos(iexpr, argc);
         if (i == CvtFail || i > argc) {
-            Ipc = failure_label;
+            ipc = failure_label;
             return;
         }
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bgenerate_arg, 0));
@@ -548,7 +548,7 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
     xexpr = expr;
     xargp = 0;
     err_msg(106, expr);
-    Ipc = failure_label;
+    ipc = failure_label;
 }
 
 #enddef
@@ -590,7 +590,7 @@ void do_field()
            xfield = query;
            err_msg(err_num, expr);
        }
-       Ipc = failure_label;
+       ipc = failure_label;
        return;
    } while (0)
 #enddef
@@ -632,7 +632,7 @@ void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *
           xargp = 0;
           xfield = query;
           err_msg(624, expr);
-          Ipc = failure_label;
+          ipc = failure_label;
           return;
       }
    }
@@ -826,7 +826,7 @@ access_macro(general_access_1, cast_access_1,instance_access_1,class_access_1,re
        xargp = 0;
        xfield = query;
        err_msg(err_num, expr);
-       Ipc = failure_label;
+       ipc = failure_label;
        return;
    } while (0)
 #enddef
@@ -865,7 +865,7 @@ void general_invokef(word clo, dptr expr, dptr query, struct inline_field_cache 
           xfield = query;
           xargp = 0;
           err_msg(624, expr);
-          Ipc = failure_label;
+          ipc = failure_label;
           return;
       }
     }
@@ -1067,7 +1067,7 @@ static void handle_access_failure()
         whyf("%s (error %d)", lookup_err_msg(t_errornumber), t_errornumber);
     /* Act as though this frame AND the parent c_frame (ie the getf call) have failed */
     set_curr_pf(curr_pf->caller);
-    Ipc = t->parent_sp->failure_label;
+    ipc = t->parent_sp->failure_label;
     pop_to(t->parent_sp->parent_sp);
 }
 

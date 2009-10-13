@@ -86,6 +86,7 @@ extern struct b_ucs *blank_ucs;        /* ucs blank string */
 extern struct progstate *curpstate;
 extern struct b_coexpr *k_current;
 extern struct p_frame *curr_pf;
+extern word *ipc, *code_start;
 
 extern struct progstate rootpstate;
 extern int noMTevents;		/* no MT events during GC */

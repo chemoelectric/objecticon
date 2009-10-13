@@ -634,6 +634,5 @@ do {                   \
     }\
 } while(0)
 
-#define Ipc (curr_pf->ipc)
-#define GetWord (*Ipc++)
+#define GetWord (*ipc++)
 

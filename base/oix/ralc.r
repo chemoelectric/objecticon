@@ -900,10 +900,6 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
     p->ipc = pb->icode;
     p->curr_inst = 0;
     p->caller = 0;
-    if (pb->program)
-        p->code_start = (word *)pb->program->Code;
-    else
-        p->code_start = pb->icode;
     if (locals) {
         ++locals->refcnt;
     } else {
