@@ -99,3 +99,4 @@
 #define Op_Suspend       87
 #define Op_Return        88
 #define Op_Exit          89
+#define Op_EndProc       90

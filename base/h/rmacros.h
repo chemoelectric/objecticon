@@ -635,4 +635,5 @@ do {                   \
 } while(0)
 
 #define GetWord (*ipc++)
+#define GetAddr ((word *)GetWord)
 

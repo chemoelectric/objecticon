@@ -983,6 +983,7 @@ static void lemitcode()
             }
         }
     }
+    out_op(Op_EndProc);
 }
 
 

@@ -90,7 +90,7 @@ static char *op_names[] = {
     /*  87 */         "suspend",
     /*  88 */         "return",
     /*  89 */         "exit",
-    /*  90 */         INVALID,
+    /*  90 */         "endproc",
     /*  91 */         INVALID,
     /*  92 */         INVALID,                                    
     /*  93 */         INVALID,                                    

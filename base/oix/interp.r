@@ -145,12 +145,6 @@ void pop_to(struct frame *f)
     }
 }
 
-word *get_addr()
-{
-    char *w = (char *)ipc;
-    return (word *)(w + GetWord);
-}
-
 word get_offset(word *w)
 {
     word *code_start = curr_pf->proc->program ? 
@@ -175,17 +169,15 @@ dptr get_dptr()
         case Op_Nil: {
             return 0;
         }
-        case Op_Static: {
-            return &curpstate->Statics[GetWord];
+        case Op_Static:
+        case Op_Global: {
+            return (dptr)GetAddr;
         }
         case Op_Arg: {
             return &curr_pf->locals->args[GetWord];
         }
         case Op_Dynamic: {
             return &curr_pf->locals->dynamic[GetWord];
-        }
-        case Op_Global: {
-            return &curpstate->Globals[GetWord];
         }
         case Op_Tmp: {
             return &curr_pf->tmp[GetWord];
@@ -217,12 +209,10 @@ void get_descrip(dptr dest)
             *dest = nulldesc;
             break;
         }
-        case Op_Const: {
-            *dest = curpstate->Constants[GetWord];
-            break;
-        }
-        case Op_Static: {
-            *dest = curpstate->Statics[GetWord];
+        case Op_Const:
+        case Op_Static:
+        case Op_Global: {
+            *dest = *(dptr)GetAddr;
             break;
         }
         case Op_Arg: {
@@ -231,10 +221,6 @@ void get_descrip(dptr dest)
         }
         case Op_Dynamic: {
             *dest = curr_pf->locals->dynamic[GetWord];
-            break;
-        }
-        case Op_Global: {
-            *dest = curpstate->Globals[GetWord];
             break;
         }
         case Op_Tmp: {
@@ -268,12 +254,10 @@ void get_deref(dptr dest)
             *dest = nulldesc;
             break;
         }
-        case Op_Const: {
-            *dest = curpstate->Constants[GetWord];
-            break;
-        }
-        case Op_Static: {
-            *dest = curpstate->Statics[GetWord];
+        case Op_Const:
+        case Op_Static:
+        case Op_Global: {
+            *dest = *(dptr)GetAddr;
             break;
         }
         case Op_Arg: {
@@ -282,10 +266,6 @@ void get_deref(dptr dest)
         }
         case Op_Dynamic: {
             *dest = curr_pf->locals->dynamic[GetWord];
-            break;
-        }
-        case Op_Global: {
-            *dest = curpstate->Globals[GetWord];
             break;
         }
         case Op_Tmp: {
@@ -320,11 +300,12 @@ void get_variable(dptr dest)
             break;
         }
         case Op_Const: {
-            *dest = curpstate->Constants[GetWord];
+            *dest = *(dptr)GetAddr;
             break;
         }
-        case Op_Static: {
-            MakeNamedVar(&curpstate->Statics[GetWord], dest);
+        case Op_Static:
+        case Op_Global: {
+            MakeNamedVar((dptr)GetAddr, dest);
             break;
         }
         case Op_Arg: {
@@ -333,10 +314,6 @@ void get_variable(dptr dest)
         }
         case Op_Dynamic: {
             MakeNamedVar(&curr_pf->locals->dynamic[GetWord], dest);
-            break;
-        }
-        case Op_Global: {
-            MakeNamedVar(&curpstate->Globals[GetWord], dest);
             break;
         }
         case Op_Tmp: {
@@ -413,7 +390,7 @@ static void do_op(int nargs)
             get_deref(&cf->args[i]);
     }
     cf->rval = GetWord;
-    cf->failure_label = get_addr();
+    cf->failure_label = GetAddr;
     Desc_EVValD(bp, E_Pcall, D_Proc);
     xc_frame = cf;
     if (bp->ccode(cf)) {
@@ -443,7 +420,7 @@ static void do_opclo(int nargs)
             get_deref(&cf->args[i]);
     }
     cf->rval = GetWord;
-    cf->failure_label = get_addr();
+    cf->failure_label = GetAddr;
     curr_pf->clo[clo] = (struct frame *)cf;
     tail_invoke_frame((struct frame *)cf);
 }
@@ -456,7 +433,7 @@ static void do_keyop()
     lhs = get_dptr();
     quick_alc_c_frame(cf, bp, 0);
     push_frame((struct frame *)cf);
-    cf->failure_label = get_addr();
+    cf->failure_label = GetAddr;
     Desc_EVValD(bp, E_Pcall, D_Proc);
     xc_frame = cf;
     if (bp->ccode(cf)) {
@@ -478,7 +455,7 @@ static void do_keyclo()
     clo = GetWord;
     MemProtect(cf = alc_c_frame(bp, 0));
     push_frame((struct frame *)cf);
-    cf->failure_label = get_addr();
+    cf->failure_label = GetAddr;
     curr_pf->clo[clo] = (struct frame *)cf;
     tail_invoke_frame((struct frame *)cf);
 }
@@ -503,7 +480,7 @@ static void do_create()
     struct p_frame *pf;
     tended struct b_coexpr *coex;
     lhs = get_dptr();
-    start_label = get_addr();
+    start_label = GetAddr;
     MemProtect(coex = alccoexp());
     coex->program = coex->creator = curpstate;
     coex->main_of = 0;
@@ -525,7 +502,7 @@ static void do_coact()
 
     get_descrip(&arg1);   /* Value */
     get_deref(&arg2);     /* Coexp */
-    failure_label = get_addr();
+    failure_label = GetAddr;
     if (!is:coexpr(arg2)) {
         xargp = &arg1;
         xexpr = &arg2;
@@ -599,7 +576,7 @@ static void transmit_failure()
     word *failure_label;
     get_deref(&t);
     lhs = get_dptr();
-    failure_label = get_addr();
+    failure_label = GetAddr;
 
     if (k_trace) {
         --k_trace;
@@ -646,7 +623,7 @@ static void do_limit()
 
     limit = get_dptr();
     Deref(*limit);
-    failure_label = get_addr();
+    failure_label = GetAddr;
     if (!cnv:C_integer(*limit, tmp)) {
         xargp = limit;
         err_msg(101, limit);
@@ -670,7 +647,7 @@ static void do_scansave()
     get_deref(&new_subject);
     s = GetWord;
     p = GetWord;
-    failure_label = get_addr();
+    failure_label = GetAddr;
     if (!cnv:string_or_ucs(new_subject, new_subject)) {
         xargp = &new_subject;
         err_msg(129, &new_subject);
@@ -692,9 +669,11 @@ void interp()
         }
         curr_pf->curr_inst = ipc;
         curr_op = GetWord;
+        /*printf("ipc=%p(%d) curr_op=%d (%s)\n", ipc,get_offset(ipc),(int)curr_op, op_names[curr_op]);fflush(stdout);*/
         switch (curr_op) {
             case Op_Goto: {
-                ipc = get_addr();
+                word *w = GetAddr;
+                ipc = w;
                 break;
             }
             case Op_IGoto: {
@@ -719,7 +698,7 @@ void interp()
             }
             case Op_MoveLabel: {
                 word i = GetWord;
-                curr_pf->lab[i] = get_addr();
+                curr_pf->lab[i] = GetAddr;
                 break;
             }
 
@@ -809,7 +788,7 @@ void interp()
                 struct frame *f;
                 clo = GetWord;
                 f = curr_pf->clo[clo];
-                f->failure_label = get_addr();
+                f->failure_label = GetAddr;
                 if (f->exhausted) {
                     /* Just go to failure label and dispose of the frame */
                     ipc = f->failure_label;
@@ -935,7 +914,7 @@ void interp()
             }
 
             case Op_EnterInit: {
-                get_addr();
+                ++ipc;
                 /* Change Op_EnterInit to an Op_Goto */
                 ipc[-2] = Op_Goto;
                 break;
@@ -1031,7 +1010,7 @@ static void get_child_prog_result()
     struct progstate *prog;
     dptr ce = get_dptr();
     dptr res = get_dptr();
-    word *failure_label = get_addr();
+    word *failure_label = GetAddr;
 
     prog = BlkLoc(*ce)->coexpr.main_of;
     prog->monitor = 0;

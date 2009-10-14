@@ -5,6 +5,7 @@
 
 #include "../h/header.h"
 #include "../h/opdefs.h"
+#include "../h/opnames.h"
 #include "../h/modflags.h"
 
 static FILE    *readhdr	(char *name, struct header *hdr);
@@ -12,6 +13,7 @@ static void    initptrs (struct progstate *p, struct header *h);
 static void    initprogstate(struct progstate *p);
 static void    initalloc(struct progstate *p);
 static void    handle_monitored_prog_exit();
+static void    relocate_code(struct progstate *ps, word *c);
 
 /*
  * External declarations for operator and function blocks.
@@ -894,6 +896,7 @@ void resolve(struct progstate *p)
                 StrLoc(pp->name) = p->Strcons + (uword)StrLoc(pp->name);
                 /* The entry point */
                 pp->icode = (word *)(p->Code + (uword)pp->icode);
+                relocate_code(p, pp->icode);
                 /* The statics */
                 if (pp->nstatic == 0)
                     pp->fstatic = 0;
@@ -1053,6 +1056,7 @@ void resolve(struct progstate *p)
                      *	the names of the parameters, locals, and static variables.
                      */
                     pp->icode = (word *)(p->Code + (uword)pp->icode);
+                    relocate_code(p, pp->icode);
                     pp->lnames = (dptr)(p->Code + (uword)pp->lnames);
                     if (pp->llocs)
                         pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
@@ -1581,4 +1585,357 @@ void showstack(struct b_coexpr *c)
     }
     printf("------bottom of stack--------\n");
     fflush(stdout);
+}
+
+static word *pc;
+static struct progstate *prog;
+
+static void conv_addr()
+{
+    /*printf("conv_addr: pc=%p(%d)\n", pc, (char *)pc - prog->Code);*/
+    *pc = (word)((char *)pc + *pc);
+    ++pc;
+}
+
+static void conv_var()
+{
+    /*printf("conv_var: pc=%p(%d) ->op %d (%s)\n", pc, (char *)pc - prog->Code, (int)*pc, op_names[*pc]);*/
+    switch (*pc++) {
+        case Op_Knull:
+        case Op_Nil: {
+            break;
+        }
+        case Op_Static: {
+            *pc = (word)&prog->Statics[*pc]; 
+            ++pc;
+            break;
+        }
+        case Op_Global: {
+            *pc = (word)&prog->Globals[*pc];
+            ++pc;
+            break;
+        }
+        case Op_Const: {
+            *pc = (word)&prog->Constants[*pc];
+            ++pc;
+            break;
+        }
+
+        case Op_Int:
+        case Op_Dynamic:
+        case Op_Arg:
+        case Op_Closure:
+        case Op_Tmp: {
+            ++pc;
+            break;
+        }
+
+        default: {
+            syserr("Invalid opcode in conv_var: %d\n", (int)pc[-1]);
+            break;
+        }
+    }
+}
+
+static void relocate_code(struct progstate *ps, word *c)
+{
+    prog = ps;
+    pc = c;
+    for (;;) {
+        /*printf("relocate_code: pc=%p(%d) ->op %d (%s)\n", pc, (char *)pc - prog->Code, (int)*pc, op_names[*pc]);*/
+        switch (*pc++) {
+            case Op_Goto: {
+                conv_addr();
+                break;
+            }
+            case Op_IGoto:
+            case Op_Mark:
+            case Op_Unmark: {
+                ++pc;
+                break;
+            }
+            case Op_MoveVar:
+            case Op_Move: {
+                conv_var();
+                conv_var();
+                break;
+            }
+
+            case Op_MoveLabel: {
+                ++pc;
+                conv_addr();
+                break;
+            }
+
+            /* Binary ops */
+            case Op_Asgn:
+            case Op_Power:
+            case Op_Cat:
+            case Op_Diff:
+            case Op_Eqv:
+            case Op_Inter:
+            case Op_Subsc:
+            case Op_Lconcat:
+            case Op_Lexeq:
+            case Op_Lexge:
+            case Op_Lexgt:
+            case Op_Lexle:
+            case Op_Lexlt:
+            case Op_Lexne:
+            case Op_Minus:
+            case Op_Mod:
+            case Op_Neqv:
+            case Op_Numeq:
+            case Op_Numge:
+            case Op_Numgt:
+            case Op_Numle:
+            case Op_Numlt:
+            case Op_Numne:
+            case Op_Plus:
+            case Op_Div:
+            case Op_Mult:
+            case Op_Swap:
+            case Op_Unions: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            /* Unary ops */
+            case Op_Value:
+            case Op_Nonnull:
+            case Op_Refresh:
+            case Op_Number:
+            case Op_Compl:
+            case Op_Neg:
+            case Op_Size:
+            case Op_Random:
+            case Op_Null: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            /* Unary closures */
+            case Op_Tabmat:
+            case Op_Bang: {
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            /* Binary closures */
+            case Op_Rasgn:
+            case Op_Rswap:{
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Toby: {
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                conv_var();  /* arg3 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Sect: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                conv_var();  /* arg3 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Keyop: {
+                ++pc;            /* keyword */
+                conv_var();  /* lhs */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Keyclo: {
+                pc += 2;         /* keyword, clo */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Resume: {
+                ++pc;            /* clo */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Pop: {
+                break;
+            }
+
+            case Op_PopRepeat: {
+                break;
+            }
+
+            case Op_Fail: {
+                break;
+            }
+
+            case Op_Return:
+            case Op_Suspend: {
+                conv_var();  /* val */
+                break;
+            }
+
+            case Op_ScanSwap: {
+                pc += 2;
+                break;
+            }
+
+            case Op_ScanRestore: {
+                pc += 2;
+                break;
+            }
+
+            case Op_ScanSave: {
+                conv_var();  /* val */
+                pc += 2;     /* tmp indices */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Limit: {
+                conv_var();  /* limit */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Invoke: {
+                word n;
+                ++pc;            /* clo */
+                conv_var();  /* expr */
+                n = *pc++;       /* argc */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                while (n--)
+                    conv_var();  /* arg */
+                break;
+            }
+
+            case Op_Apply: {
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Invokef: {
+                word n;
+                ++pc;            /* clo */
+                conv_var();  /* expr */
+                pc += 3;         /* fnum, inline cache */
+                n = *pc++;       /* argc */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                while (n--)
+                    conv_var();  /* arg */
+                break;
+            }
+
+            case Op_Applyf: {
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                pc += 3;         /* fnum, inline cache */
+                conv_var();  /* arg2 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_EnterInit: {
+                conv_addr();
+                break;
+            }
+
+            case Op_Custom: {
+                ++pc;
+                break;
+            }
+
+            case Op_Halt: {
+                break;
+            }
+
+            case Op_SysErr: {
+                break;
+            }
+
+            case Op_MakeList: {
+                int n;
+                conv_var();  /* lhs */
+                n = *pc++;       /* argc */
+                while (n--)
+                    conv_var();  /* arg */
+                break;
+            }
+
+            case Op_Field: {
+                conv_var();  /* lhs */
+                conv_var();  /* expr */
+                pc += 3;         /* fnum, inline cache */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Create: {
+                conv_var();  /* lhs */
+                conv_addr(); /* start label */
+                break;
+            }
+
+            case Op_Coact: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Coret: {
+                conv_var();  /* value */
+                break;
+            }
+
+            case Op_Cofail: {
+                break;
+            }
+
+            case Op_Exit: {
+                break;
+            }
+
+            case Op_EndProc: {
+                return;
+            }
+
+            default: {
+                syserr("relocate_code: Unimplemented opcode %d (%s)\n", (int)pc[-1], op_names[pc[-1]]);
+                break; /* Not reached */
+            }
+        }
+    }
 }

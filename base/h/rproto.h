@@ -592,7 +592,6 @@ dptr get_dptr();
 void get_descrip(dptr dest);
 void get_deref(dptr dest);
 void get_variable(dptr dest);
-word *get_addr();
 void pop_to(struct frame *f);
 void do_apply();
 void do_invoke();

@@ -5,7 +5,7 @@ static word main_wrapper_code[] = {
    0,
    1,
    0,
-   3*WordSize,
+   (word)&main_wrapper_code[9],
    Op_Arg,
    1,
    Op_Custom,

@@ -137,7 +137,7 @@ void do_applyf()
     ic = get_inline_field_cache();
     get_deref(&args);
     rval = GetWord;
-    failure_label = get_addr();
+    failure_label = GetAddr;
     MakeInt(fno, &query);
 
     type_case args of {
@@ -175,7 +175,7 @@ void do_invokef()
     ic = get_inline_field_cache();
     argc = GetWord;
     rval = GetWord;
-    failure_label = get_addr();
+    failure_label = GetAddr;
     MakeInt(fno, &query);
 
     general_invokef(clo, &expr, &query, ic, argc, 0, rval, failure_label);
@@ -190,7 +190,7 @@ void do_invoke()
     get_deref(&expr);
     argc = GetWord;
     rval = GetWord;
-    failure_label = get_addr();
+    failure_label = GetAddr;
 
     general_call(clo, &expr, argc, 0, rval, failure_label);
 }
@@ -205,7 +205,7 @@ void do_apply()
     get_deref(&expr);
     get_deref(&args);
     rval = GetWord;
-    failure_label = get_addr();
+    failure_label = GetAddr;
 
     type_case args of {
       list: {
@@ -239,7 +239,7 @@ static void skip_args(int argc, dptr args)
 static void check_if_uninitialized()
 {
     dptr class0 = get_dptr();  /* Class */
-    word *a = get_addr();
+    word *a = GetAddr;
     if (BlkLoc(*class0)->class.init_state != Uninitialized)
         ipc = a;
     /*printf("check_if_uninitialized\n");*/
@@ -268,7 +268,7 @@ static void for_class_supers()
     dptr class0 = get_dptr();  /* Class */
     dptr i = get_dptr();       /* Index */
     dptr res = get_dptr();     /* Result */
-    word *a = get_addr();      /* Branch when done */
+    word *a = GetAddr;      /* Branch when done */
     /*printf("for_class_supers (i=%d of %d)\n", IntVal(*i), BlkLoc(*class0)->class.n_supers);*/
 
     if (IntVal(*i) < BlkLoc(*class0)->class.n_supers) {
@@ -282,7 +282,7 @@ static void for_class_supers()
 static void invoke_class_init()
 {
     dptr d = get_dptr();  /* Class */
-    word *failure_label = get_addr(); /* Failure label */
+    word *failure_label = GetAddr; /* Failure label */
     struct b_class *class0 = (struct b_class *)BlkLoc(*d);
     struct class_field *init_field;
 
@@ -572,7 +572,7 @@ void do_field()
     get_deref(&expr);
     fno = GetWord;
     ic = get_inline_field_cache();
-    failure_label = get_addr();
+    failure_label = GetAddr;
     MakeInt(fno, &query);
 
     general_access(lhs, &expr, &query, ic, 0, failure_label);
@@ -1054,7 +1054,7 @@ static void simple_access()
     expr = get_dptr();
     query = get_dptr();
     get_deref(&just_fail);
-    a = get_addr();
+    a = GetAddr;
     general_access(lhs, expr, query, 0, IntVal(just_fail), a);
 }
 
