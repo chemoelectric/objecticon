@@ -4,11 +4,11 @@
 $start main_wrapper
     Op_Invoke
         clo:0
-        Op_Arg arg:0
+        Op_FrameVar arg:0
         1
         0
         MainExit
-        Op_Arg arg:1
+        Op_FrameVar arg:1
 
 #      
 # main() has exited; either transfer to the monitoring progstate, setting

@@ -169,9 +169,9 @@ void resolve_local(struct lfunction *func, struct lentry *lp)
     if (lp->l_flag) {
         if (lp->l_flag & F_Argument)			/* procedure argument */
             lp->l_val.index = func->narguments++;
-        else if (lp->l_flag & F_Dynamic)			/* local dynamic */
+        else if (lp->l_flag & F_Dynamic)			/* local */
             lp->l_val.index = func->ndynamic++;
-        else if (lp->l_flag & F_Static) {			/* local static */
+        else if (lp->l_flag & F_Static) {		/* static */
             /* Note that the static's index number is set later, during code generation */
             ++func->nstatics;
         } else

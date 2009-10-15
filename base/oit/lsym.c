@@ -64,6 +64,8 @@ struct lentry *add_local(struct lfunction *func, char *name, int flags, struct l
     lp->name = name;
     lp->pos = *pos;
     lp->l_flag = flags;
+    if (flags & F_Vararg)
+        func->vararg = 1;
     return lp;
 }
 

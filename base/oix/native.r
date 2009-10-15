@@ -2693,7 +2693,7 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
     if (!proc->program)
         return -1;
 
-    nf = abs(proc->nparam) + proc->ndynam + proc->nstatic;
+    nf = proc->nparam + proc->ndynam + proc->nstatic;
 
     if (is:string(*query)) {
         word i;
@@ -2724,7 +2724,7 @@ function{1} lang_Proc_get_n_locals(c)
            runerr(0);
        if (!proc0->program)
             fail;
-        return C_integer abs(proc0->nparam) + proc0->ndynam + proc0->nstatic;
+        return C_integer proc0->nparam + proc0->ndynam + proc0->nstatic;
      }
 end
 
@@ -2734,6 +2734,18 @@ function{1} lang_Proc_get_n_arguments(c)
       if (!(proc0 = get_proc_for(&c)))
           runerr(0);
       return C_integer proc0->nparam;
+   }
+end
+
+function{1} lang_Proc_has_varargs(c)
+   body {
+      struct b_proc *proc0;
+      if (!(proc0 = get_proc_for(&c)))
+          runerr(0);
+      if (proc0->vararg)
+          return nulldesc;
+      else
+          fail;
    }
 end
 
@@ -2767,7 +2779,7 @@ function{*} lang_Proc_get_local_names(c)
            runerr(0);
         if (!proc0->program)
             fail;
-        nf = abs(proc0->nparam) + proc0->ndynam + proc0->nstatic;
+        nf = proc0->nparam + proc0->ndynam + proc0->nstatic;
         for (i = 0; i < nf; ++i)
             suspend proc0->lnames[i];
         fail;
@@ -2833,9 +2845,9 @@ function{0,1} lang_Proc_get_local_type(c, id)
         i = lookup_proc_local(proc0, &id);
         if (i < 0)
             fail;
-        if (i < abs(proc0->nparam))
+        if (i < proc0->nparam)
             return C_integer 1;
-        if (i < abs(proc0->nparam) + proc0->ndynam)
+        if (i < proc0->nparam + proc0->ndynam)
             return C_integer 2;
         return C_integer 3;
      }

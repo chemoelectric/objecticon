@@ -31,19 +31,18 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
         MemProtect(pf = alc_p_frame(bp, 0));
         push_frame((struct frame *)pf);
         if (self) {
-            pf->locals->args[0] = *self;
+            pf->fvars->desc[0] = *self;
             i = 1;
         } else
             i = 0;
-        if (bp->nparam < 0) {
+        if (bp->vararg) {
             /* Varargs, last param is a list */
             tended struct descrip tmp, l;
-            int abs_nparam = -bp->nparam;
-            create_list(Max(0, argc - abs_nparam + 1 + i), &l);
+            create_list(Max(0, argc - bp->nparam + 1 + i), &l);
             if (args) {
                 for (j = 1; j <= argc; ++j) {
-                    if (i < abs_nparam - 1)
-                        pf->locals->args[i++] = *get_element(args, j);
+                    if (i < bp->nparam - 1)
+                        pf->fvars->desc[i++] = *get_element(args, j);
                     else {
                         /* This must be done via a tended temporary */
                         tmp = *get_element(args, j);
@@ -52,28 +51,28 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
                 }
             } else {
                 for (j = 0; j < argc; ++j) {
-                    if (i < abs_nparam - 1)
-                        get_deref(&pf->locals->args[i++]);
+                    if (i < bp->nparam - 1)
+                        get_deref(&pf->fvars->desc[i++]);
                     else {
                         get_deref(&tmp);
                         list_put(&l, &tmp);
                     }
                 }
             }
-            /* Params i ... abs_nparam - 2 are already initialized to nulldesc by alc_p_frame */
-            pf->locals->args[abs_nparam - 1] = l;
+            /* Params i ... bp->nparam - 2 are already initialized to nulldesc by alc_p_frame */
+            pf->fvars->desc[bp->nparam - 1] = l;
         } else {
             if (args) {
                 for (j = 1; j <= argc; ++j) {
                     if (i < bp->nparam)
-                        pf->locals->args[i++] = *get_element(args, j);
+                        pf->fvars->desc[i++] = *get_element(args, j);
                     else
                         break;
                 }
             } else {
                 for (j = 0; j < argc; ++j) {
                     if (i < bp->nparam)
-                        get_deref(&pf->locals->args[i++]);
+                        get_deref(&pf->fvars->desc[i++]);
                     else
                         get_deref(&trashcan);
                 }
@@ -91,8 +90,8 @@ static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args,
         else
             i = 0;
 
-        if (bp->nparam < 0)
-            want = Max(argc + i, -bp->nparam - 1);
+        if (bp->vararg)
+            want = Max(argc + i, bp->nparam - 1);
         else
             want = Max(argc + i, bp->nparam);
 
@@ -313,7 +312,7 @@ static void ensure_class_initialized()
         return;
     MemProtect(pf = alc_p_frame((struct b_proc *)&Bensure_class_initialized, 0));
     push_frame((struct frame *)pf);
-    pf->locals->args[0] = *d;
+    pf->fvars->desc[0] = *d;
     pf->failure_label = ipc;
     tail_invoke_frame((struct frame *)pf);
 }
@@ -380,16 +379,16 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bconstruct_object, 0));
         push_frame((struct frame *)pf);
         /* Arg0 is the class */
-        pf->locals->args[0] = *expr;
+        pf->fvars->desc[0] = *expr;
         /* Arg1 is the allocated new object object */
         /*test_collect(15,0);*/
-        MemProtect(BlkLoc(pf->locals->args[1]) = (union block *)alcobject(class0));
-        pf->locals->args[1].dword = D_Object; 
-        BlkLoc(pf->locals->args[1])->object.init_state = Initializing;
+        MemProtect(BlkLoc(pf->fvars->desc[1]) = (union block *)alcobject(class0));
+        pf->fvars->desc[1].dword = D_Object; 
+        BlkLoc(pf->fvars->desc[1])->object.init_state = Initializing;
 
         /* Allocate a frame for the "new" method.  It is invoked from
          * within construct_object */
-        new_f = push_frame_for_proc(bp, argc, args, &pf->locals->args[1]);
+        new_f = push_frame_for_proc(bp, argc, args, &pf->fvars->desc[1]);
 
         /* Set up a mark and closure for the new method.  They are used with Op_Resume and Op_Unmark
          * in construct_object's code to invoke the new method.
@@ -401,10 +400,10 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bconstruct_object0, 0));
         push_frame((struct frame *)pf);
         /* Arg0 is the class */
-        pf->locals->args[0] = *expr;
+        pf->fvars->desc[0] = *expr;
         /* Arg 1 is a new object */
-        MemProtect(BlkLoc(pf->locals->args[1]) = (union block *)alcobject(class0));
-        pf->locals->args[1].dword = D_Object; 
+        MemProtect(BlkLoc(pf->fvars->desc[1]) = (union block *)alcobject(class0));
+        pf->fvars->desc[1].dword = D_Object; 
     }
 
     curr_pf->clo[clo] = (struct frame *)pf;
@@ -423,13 +422,13 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
     MemProtect(pf = alc_p_frame((struct b_proc *)&Bgenerate_arg, 0));
     push_frame((struct frame *)pf);
 
-    MemProtect(BlkLoc(pf->locals->args[0]) = (union block *)alcrecd(con));
-    pf->locals->args[0].dword = D_Record;
+    MemProtect(BlkLoc(pf->fvars->desc[0]) = (union block *)alcrecd(con));
+    pf->fvars->desc[0].dword = D_Record;
 
     if (args) {
         for (i = 0; i < argc; ++i) {
             if (i < con->n_fields)
-                BlkLoc(pf->locals->args[0])->record.fields[i] = *get_element(args, i + 1);
+                BlkLoc(pf->fvars->desc[0])->record.fields[i] = *get_element(args, i + 1);
             else
                 break;
         }
@@ -438,7 +437,7 @@ static void construct_record(word clo, dptr expr, int argc, dptr args, word rval
             if (i < con->n_fields) {
                 /* Must be in two steps since get_deref can trigger a gc */
                 get_deref(&tmp);
-                BlkLoc(pf->locals->args[0])->record.fields[i] = tmp;
+                BlkLoc(pf->fvars->desc[0])->record.fields[i] = tmp;
             } else
                 get_deref(&trashcan);
         }
@@ -494,12 +493,12 @@ static void invoke_misc(word clo, dptr expr, int argc, dptr args, word rval, wor
         MemProtect(pf = alc_p_frame((struct b_proc *)&Bgenerate_arg, 0));
         push_frame((struct frame *)pf);
         if (args)
-            pf->locals->args[0] = *get_element(args, i);
+            pf->fvars->desc[0] = *get_element(args, i);
         else {
             int j;
             for (j = 1; j <= argc; ++j) {
                 if (i == j)
-                    get_deref(&pf->locals->args[0]);
+                    get_deref(&pf->fvars->desc[0]);
                 else
                     get_deref(&trashcan);
             }
@@ -695,7 +694,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         struct p_frame *pf;
         MemProtect(pf = alc_p_frame((struct b_proc *)&Binitialize_class_and_repeat, 0));
         push_frame((struct frame *)pf);
-        pf->locals->args[0] = *expr;
+        pf->fvars->desc[0] = *expr;
         pf->failure_label = failure_label;
         tail_invoke_frame((struct frame *)pf);
         return;
@@ -882,7 +881,7 @@ static void class_invokef(word clo, dptr expr, dptr query, struct inline_field_c
         struct p_frame *pf;
         MemProtect(pf = alc_p_frame((struct b_proc *)&Binitialize_class_and_repeat, 0));
         push_frame((struct frame *)pf);
-        pf->locals->args[0] = *expr;
+        pf->fvars->desc[0] = *expr;
         pf->failure_label = failure_label;
         tail_invoke_frame((struct frame *)pf);
         return;
@@ -1076,8 +1075,8 @@ function{1} lang_Class_get(obj, field)
       struct p_frame *pf;
       MemProtect(pf = alc_p_frame((struct b_proc *)&Bget_impl, 0));
       push_frame((struct frame *)pf);
-      pf->locals->args[0] = obj;
-      pf->locals->args[1] = field;
+      pf->fvars->desc[0] = obj;
+      pf->fvars->desc[1] = field;
       tail_invoke_frame((struct frame *)pf);
       return nulldesc;
    }
@@ -1088,9 +1087,9 @@ function{0,1} lang_Class_getf(obj, field, quiet)
       struct p_frame *pf;
       MemProtect(pf = alc_p_frame((struct b_proc *)&Bgetf_impl, 0));
       push_frame((struct frame *)pf);
-      pf->locals->args[0] = obj;
-      pf->locals->args[1] = field;
-      pf->locals->args[2] = quiet;
+      pf->fvars->desc[0] = obj;
+      pf->fvars->desc[1] = field;
+      pf->fvars->desc[2] = quiet;
       tail_invoke_frame((struct frame *)pf);
       return nulldesc;
   }
@@ -1115,7 +1114,7 @@ function{1} lang_Class_create_raw(c)
       struct p_frame *pf;
       MemProtect(pf = alc_p_frame((struct b_proc *)&Blang_Class_create_raw_impl, 0));
       push_frame((struct frame *)pf);
-      pf->locals->args[0] = c;
+      pf->fvars->desc[0] = c;
       tail_invoke_frame((struct frame *)pf);
       return nulldesc;
     }
@@ -1140,7 +1139,7 @@ function{1} lang_Class_ensure_initialized(c)
           return c;
       MemProtect(pf = alc_p_frame((struct b_proc *)&Blang_Class_ensure_initialized_impl, 0));
       push_frame((struct frame *)pf);
-      pf->locals->args[0] = c;
+      pf->fvars->desc[0] = c;
       tail_invoke_frame((struct frame *)pf);
       return nulldesc;
    }

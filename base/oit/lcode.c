@@ -216,14 +216,16 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 outword(le->l_val.index);
             } else if (le->l_flag & F_Argument) {
                 if (Dflag)
-                    fprintf(dbgfile, "%ld:\t  %s\targ\t\t%d\n", (long)pc, desc, le->l_val.index);
-                outword(Op_Arg);
+                    fprintf(dbgfile, "%ld:\t  %s\tdynamic\t\t%d (arg %s)\n", (long)pc, desc, 
+                            le->l_val.index, le->name);
+                outword(Op_FrameVar);
                 outword(le->l_val.index);
             } else {
                 if (Dflag)
-                    fprintf(dbgfile, "%ld:\t  %s\tdynamic\t%d\n", (long)pc, desc, le->l_val.index);
-                outword(Op_Dynamic);
-                outword(le->l_val.index);
+                    fprintf(dbgfile, "%ld:\t  %s\tdynamic\t%d (local %s)\n", (long)pc, desc, 
+                            curr_lfunc->narguments + le->l_val.index, le->name);
+                outword(Op_FrameVar);
+                outword(curr_lfunc->narguments + le->l_val.index);
             }
             break;
         }
@@ -998,10 +1000,7 @@ static void lemitproc()
      * FncBlockSize = sizeof(BasicFncBlock) +
      *  sizeof(descrip)*(# of args + # of dynamics + # of statics).
      */
-    if (abs(curr_lfunc->nargs) != curr_lfunc->narguments)
-        quitf("Mismatch between ufile's nargs and narguments");
-
-    size = (22*WordSize) + 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+    size = (23*WordSize) + 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
     if (loclevel > 1)
         size += 3*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
 
@@ -1017,7 +1016,8 @@ static void lemitproc()
         fprintf(dbgfile, "\t%d\t\t\t\t# Block size\n", size);			/* size of block */
         fprintf(dbgfile, "\t0\n");		        /* C func ptr */
         fprintf(dbgfile, "\tZ+%ld\t\t\t\t# Entry point\n",(long)(curr_lfunc->pc + size));	/* entry point */
-        fprintf(dbgfile, "\t%d\t\t\t\t# Num args\n", curr_lfunc->nargs);	/* # arguments */
+        fprintf(dbgfile, "\t%d\t\t\t\t# Num args\n", curr_lfunc->narguments);	/* # arguments */
+        fprintf(dbgfile, "\t%d\t\t\t\t# Vararg flag\n", curr_lfunc->vararg);	/* # vararg flag */
         fprintf(dbgfile, "\t%d\t\t\t\t# Num dynamic\n", curr_lfunc->ndynamic);	/* # dynamic locals */
         fprintf(dbgfile, "\t%d\t\t\t\t# Num static\n", curr_lfunc->nstatics);	/* # static locals */
         fprintf(dbgfile, "\t%d\t\t\t\t# First static\n", nstatics);		/* first static */
@@ -1039,7 +1039,8 @@ static void lemitproc()
     outword(size);
     outword(0);
     outword(curr_lfunc->pc + size);
-    outword(curr_lfunc->nargs);
+    outword(curr_lfunc->narguments);
+    outword(curr_lfunc->vararg);
     outword(curr_lfunc->ndynamic);
     outword(curr_lfunc->nstatics);
     outword(nstatics);

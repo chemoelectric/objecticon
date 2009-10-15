@@ -677,13 +677,13 @@ static void sweep_stack(struct frame *f)
             }
             case P_FRAME_TYPE: {
                 struct p_frame *pf = (struct p_frame *)f;
-                struct locals *l = pf->locals;
+                struct frame_vars *l = pf->fvars;
                 for (i = 0; i < f->proc->ntmp; ++i)
                     PostDescrip(pf->tmp[i]);
                 if (l->seen != current_collection) {
                     dptr d;
                     l->seen = current_collection;
-                    for (d = l->low; d < l->high; ++d)
+                    for (d = l->desc; d < l->desc_end; ++d)
                         PostDescrip(*d);
                 }
                 break;

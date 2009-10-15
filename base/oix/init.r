@@ -796,7 +796,7 @@ function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
 
        main_bp = (struct b_proc *)BlkLoc(*pstate->MainProc);
        MemProtect(new_pf = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
-       new_pf->locals->args[0] = *pstate->MainProc;
+       new_pf->fvars->desc[0] = *pstate->MainProc;
        coex->sp = (struct frame *)new_pf;
        coex->curr_pf = new_pf;
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
@@ -804,9 +804,9 @@ function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
 
        if (main_bp->nparam) {
            if (is:null(arglist))
-               create_list(0, &new_pf->locals->args[1]);
+               create_list(0, &new_pf->fvars->desc[1]);
            else
-               new_pf->locals->args[1] = arglist;
+               new_pf->fvars->desc[1] = arglist;
        }
 
       result.dword = D_Coexpr;
@@ -907,7 +907,7 @@ void resolve(struct progstate *p)
                 if (pp->llocs)
                     pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
                 /* The variables */
-                for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
+                for (i = 0; i < pp->nparam + pp->ndynam + pp->nstatic; i++) {
                     StrLoc(pp->lnames[i]) = p->Strcons + (uword)StrLoc(pp->lnames[i]);
                     if (pp->llocs)
                         StrLoc(pp->llocs[i].fname) = p->Strcons + (uword)StrLoc(pp->llocs[i].fname);
@@ -1060,7 +1060,7 @@ void resolve(struct progstate *p)
                     pp->lnames = (dptr)(p->Code + (uword)pp->lnames);
                     if (pp->llocs)
                         pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
-                    for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
+                    for (i = 0; i < pp->nparam + pp->ndynam + pp->nstatic; i++) {
                         StrLoc(pp->lnames[i]) = p->Strcons + (uword)StrLoc(pp->lnames[i]);
                         if (pp->llocs)
                             StrLoc(pp->llocs[i].fname) = p->Strcons + (uword)StrLoc(pp->llocs[i].fname);
@@ -1277,7 +1277,7 @@ int main(int argc, char **argv)
     main_bp = (struct b_proc *)BlkLoc(*main_proc);
 
     MemProtect(frame = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
-    frame->locals->args[0] = *main_proc;
+    frame->fvars->desc[0] = *main_proc;
     /*
      * Only create an args list if main has a parameter; otherwise args[1]
      * is just left as &null.
@@ -1290,7 +1290,7 @@ int main(int argc, char **argv)
             CMakeStr(argv[i], &t);
             list_put(&args, &t);
         }
-        frame->locals->args[1] = args;
+        frame->fvars->desc[1] = args;
     }
     rootpstate.K_current->sp = (struct frame *)frame;
     curr_pf = rootpstate.K_current->curr_pf = frame;
@@ -1551,6 +1551,8 @@ void showstack(struct b_coexpr *c)
             }
             case P_FRAME_TYPE: {
                 struct p_frame *pf = (struct p_frame *)f;
+                dptr np, dp;
+                int j;
                 printf("\tipc=%p\n", pf->ipc);
                 printf("\tcaller=%p\n", pf->caller);
                 for (i = 0; i < f->proc->nclo; ++i) {
@@ -1565,16 +1567,31 @@ void showstack(struct b_coexpr *c)
                 for (i = 0; i < f->proc->nmark; ++i) {
                     printf("\tmark[%d]=%p\n", i, pf->mark[i]);
                 }
-                printf("\tlocals=%p, size=%d\n", pf->locals, pf->locals->size);
-                for (i = 0; i < f->proc->ndynam; ++i) {
-                    printf("\t   locals.dynamic[%d]=", i); print_desc(stdout, &pf->locals->dynamic[i]); printf("\n");
+                printf("\tfvars=%p, size=%d\n", pf->fvars, pf->fvars->size);
+                i = 0;
+                np = f->proc->lnames;
+                dp = pf->fvars->desc;
+                for (j = 0; j < f->proc->nparam; ++j) {
+                    if (np) {
+                        printf("\t   fvars.desc[%d] (arg %.*s)=", i, (int)StrLen(*np), StrLoc(*np)); 
+                        ++np;
+                    } else
+                        printf("\t   fvars.desc[%d] (arg %d)=", i, j);
+                    print_desc(stdout, dp++); printf("\n");
+                    ++i;
                 }
-                for (i = 0; i < abs(f->proc->nparam); ++i) {
-                    printf("\t   locals.args[%d]=", i); print_desc(stdout, &pf->locals->args[i]); printf("\n");
+                for (j = 0; j < f->proc->ndynam; ++j) {
+                    if (np) {
+                        printf("\t   fvars.desc[%d] (local %.*s)=", i, (int)StrLen(*np), StrLoc(*np)); 
+                        ++np;
+                    } else
+                        printf("\t   fvars.desc[%d] (local %d)=", i, j);
+                    print_desc(stdout, dp++); printf("\n");
+                    ++i;
                 }
-                printf("\t   locals.low - high=%p-%p\n", pf->locals->low, pf->locals->high);
-                printf("\t   locals.refcnt=%d\n", pf->locals->refcnt);
-                printf("\t   locals.seen=%d\n", pf->locals->seen);
+                printf("\t   fvars.desc-desc_end=%p-%p\n", pf->fvars->desc, pf->fvars->desc_end);
+                printf("\t   fvars.refcnt=%d\n", pf->fvars->refcnt);
+                printf("\t   fvars.seen=%d\n", pf->fvars->seen);
                 break;
             }
             default:
@@ -1622,8 +1639,7 @@ static void conv_var()
         }
 
         case Op_Int:
-        case Op_Dynamic:
-        case Op_Arg:
+        case Op_FrameVar:
         case Op_Closure:
         case Op_Tmp: {
             ++pc;

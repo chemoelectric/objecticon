@@ -35,7 +35,7 @@ int modflag;
 #define Apply(x1,x2,x3)		$$ = tree4(N_Apply,x2,x1,x3) 
 #define Arglist1()		/* empty */
 #define Arglist2(x)		/* empty */
-#define Arglist3(x,y,z)		curr_func->nargs = -curr_func->nargs
+#define Arglist3(x,y,z)		curr_func->llast->l_flag |= F_Vararg
 #define Bact(x1,x2,x3)		$$ = tree5(N_Binop,x2,x2,x1,x3) 
 #define Bamper(x1,x2,x3)	$$ = tree5(N_Binop,x2,x2,x1,x3) 
 #define Bassgn(x1,x2,x3)	$$ = tree5(N_Binop,x2,x2,x1,x3) 

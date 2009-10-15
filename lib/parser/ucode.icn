@@ -142,7 +142,9 @@ class ULocal()
       # variable declared local static 
       F_Static,
       # variable is a formal parameter 
-      F_Argument
+      F_Argument,
+      # argument is a vararg
+      F_Vararg
 
    public const
       flags,
@@ -152,6 +154,7 @@ class ULocal()
       F_Dynamic := 8r020
       F_Static := 8r040
       F_Argument := 8r01000
+      F_Vararg := 8r0200
    end
 
    package new(id, flags)
@@ -198,13 +201,8 @@ end
 
 class UFunction()
    private readable
-      nargs,
       locals,
       consts
-
-   package set_nargs(n)
-      self.nargs := n
-   end
 
    package add_local(l)
       put(locals, l)
@@ -333,12 +331,7 @@ class UReader()
                   curr_class.add_field(UVariable(s, file, line, n))
             }
 
-             UcodeOp.Nargs: {
-                n := uin_16() | fail
-                curr_func.set_nargs(n)
-             }
-
-             UcodeOp.Recordfield: {
+            UcodeOp.Recordfield: {
                 s := uin_str() | fail
                 curr_record.add_field(s)
              }

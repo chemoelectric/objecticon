@@ -173,11 +173,8 @@ dptr get_dptr()
         case Op_Global: {
             return (dptr)GetAddr;
         }
-        case Op_Arg: {
-            return &curr_pf->locals->args[GetWord];
-        }
-        case Op_Dynamic: {
-            return &curr_pf->locals->dynamic[GetWord];
+        case Op_FrameVar: {
+            return &curr_pf->fvars->desc[GetWord];
         }
         case Op_Tmp: {
             return &curr_pf->tmp[GetWord];
@@ -215,12 +212,8 @@ void get_descrip(dptr dest)
             *dest = *(dptr)GetAddr;
             break;
         }
-        case Op_Arg: {
-            *dest = curr_pf->locals->args[GetWord];
-            break;
-        }
-        case Op_Dynamic: {
-            *dest = curr_pf->locals->dynamic[GetWord];
+        case Op_FrameVar: {
+            *dest = curr_pf->fvars->desc[GetWord];
             break;
         }
         case Op_Tmp: {
@@ -240,7 +233,7 @@ void get_descrip(dptr dest)
 
 /*
  * Like get_descrip, but dereference temporary and closure descriptors
- * (locals/globals should already be dereferenced).
+ * (dynamics/args/statics/globals should already be dereferenced).
  */
 void get_deref(dptr dest)
 {
@@ -260,12 +253,8 @@ void get_deref(dptr dest)
             *dest = *(dptr)GetAddr;
             break;
         }
-        case Op_Arg: {
-            *dest = curr_pf->locals->args[GetWord];
-            break;
-        }
-        case Op_Dynamic: {
-            *dest = curr_pf->locals->dynamic[GetWord];
+        case Op_FrameVar: {
+            *dest = curr_pf->fvars->desc[GetWord];
             break;
         }
         case Op_Tmp: {
@@ -284,7 +273,7 @@ void get_deref(dptr dest)
 }
 
 /*
- * Like get_descrip, but for statics, locals and globals, rather than
+ * Like get_descrip, but for statics, args, dynamics and globals, rather than
  * copy the descriptor, make a named variable pointer to it instead.
  */
 void get_variable(dptr dest)
@@ -308,12 +297,8 @@ void get_variable(dptr dest)
             MakeNamedVar((dptr)GetAddr, dest);
             break;
         }
-        case Op_Arg: {
-            MakeNamedVar(&curr_pf->locals->args[GetWord], dest);
-            break;
-        }
-        case Op_Dynamic: {
-            MakeNamedVar(&curr_pf->locals->dynamic[GetWord], dest);
+        case Op_FrameVar: {
+            MakeNamedVar(&curr_pf->fvars->desc[GetWord], dest);
             break;
         }
         case Op_Tmp: {
@@ -484,7 +469,7 @@ static void do_create()
     MemProtect(coex = alccoexp());
     coex->program = coex->creator = curpstate;
     coex->main_of = 0;
-    MemProtect(pf = alc_p_frame(curr_pf->proc, curr_pf->locals));
+    MemProtect(pf = alc_p_frame(curr_pf->proc, curr_pf->fvars));
     coex->failure_label = coex->start_label = pf->ipc = start_label;
     coex->curr_pf = pf;
     coex->sp = (struct frame *)pf;
@@ -511,8 +496,8 @@ static void do_coact()
         return;
     }
 
-    if (BlkLoc(arg2)->coexpr.curr_pf->locals != curr_pf->locals)
-        retderef(&arg1, curr_pf->locals);
+    if (BlkLoc(arg2)->coexpr.curr_pf->fvars != curr_pf->fvars)
+        retderef(&arg1, curr_pf->fvars);
 
     if (k_trace) {
         --k_trace;
@@ -534,8 +519,8 @@ static void do_coret()
     tended struct descrip val;
     get_descrip(&val);
 
-    if (k_current->activator->curr_pf->locals != curr_pf->locals)
-        retderef(&val, curr_pf->locals);
+    if (k_current->activator->curr_pf->fvars != curr_pf->fvars)
+        retderef(&val, curr_pf->fvars);
 
     if (k_trace) {
         --k_trace;
@@ -608,7 +593,7 @@ function{0,1} cofail(ce)
 
       MemProtect(pf = alc_p_frame((struct b_proc *)&Bcofail_impl, 0));
       push_frame((struct frame *)pf);
-      pf->locals->args[0] = ce;
+      pf->fvars->desc[0] = ce;
       tail_invoke_frame((struct frame *)pf);
       return nulldesc;
    }
@@ -832,7 +817,7 @@ void interp()
             case Op_Suspend: {
                 Desc_EVValD(curr_pf->proc, E_Psusp, D_Proc);
                 get_descrip(&curr_pf->value);
-                retderef(&curr_pf->value, curr_pf->locals);
+                retderef(&curr_pf->value, curr_pf->fvars);
                 if (curr_pf->proc->program) {
                     --k_level;
                     if (k_trace) {
@@ -847,7 +832,7 @@ void interp()
             case Op_Return: {
                 Desc_EVValD(curr_pf->proc, E_Pret, D_Proc);
                 get_descrip(&curr_pf->value);
-                retderef(&curr_pf->value, curr_pf->locals);
+                retderef(&curr_pf->value, curr_pf->fvars);
                 curr_pf->exhausted = 1;
                 if (curr_pf->proc->program) {
                     --k_level;
@@ -1042,8 +1027,8 @@ function{0,1} lang_Prog_get_event_impl(c, res)
            fail;
        MemProtect(pf = alc_p_frame((struct b_proc *)&Blang_Prog_get_event_impl_impl, 0));
        push_frame((struct frame *)pf);
-       pf->locals->args[0] = c;
-       pf->locals->args[1] = res;
+       pf->fvars->desc[0] = c;
+       pf->fvars->desc[1] = res;
        tail_invoke_frame((struct frame *)pf);
        return nulldesc;
    }

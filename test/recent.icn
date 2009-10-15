@@ -6,8 +6,8 @@ procedure main ()
    local i,j,name1,name2,f,s,c,n,fset,a,b,d,e,g,h,A,t,x
    sf([])
 
-   write(args(main))
-   write(args(write))
+   pr_seq{"main args", Proc.get_n_arguments(main) | Proc.has_varargs(main) }
+   pr_seq{"write args", Proc.get_n_arguments(write) | Proc.has_varargs(write) }
 
 # show results of bitwise operations on various operand combinations
 

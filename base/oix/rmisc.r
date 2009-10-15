@@ -150,8 +150,8 @@ int getvar(dptr s, dptr vp, struct progstate *p)
    
     np = bp->lnames;		/* Check the formal parameter names. */
 
-    dp = pf->locals->args;
-    for (i = abs(bp->nparam); i > 0; i--) {
+    dp = pf->fvars->desc;
+    for (i = bp->nparam; i > 0; i--) {
         if (eq(s,np)) {
             vp->dword = D_NamedVar;
             VarLoc(*vp) = (dptr)dp;
@@ -161,7 +161,6 @@ int getvar(dptr s, dptr vp, struct progstate *p)
         np++;
     }
 
-    dp = pf->locals->dynamic;
     for (i = bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
         if (eq(s,np)) {
             vp->dword = D_NamedVar;
@@ -1613,7 +1612,7 @@ word a;
  *  string-valued variables. This is used for return, suspend, and
  *  transmitting values across co-expression context switches.
  */
-void retderef(dptr valp, struct locals *locals)
+void retderef(dptr valp, struct frame_vars *fvars)
    {
    struct b_tvsubs *tvb;
    word *loc;
@@ -1629,12 +1628,12 @@ void retderef(dptr valp, struct locals *locals)
        */
       if (is:named_var(tvb->ssvar)) {
           loc = (word *)VarLoc(tvb->ssvar);
-          if (InRange(locals->low, loc, locals->high))
+          if (InRange(fvars->desc, loc, fvars->desc_end))
               deref(valp, valp);
       }
    } else if (is:named_var(*valp)) {
        loc = (word *)VarLoc(*valp);
-       if (InRange(locals->low, loc, locals->high))
+       if (InRange(fvars->desc, loc, fvars->desc_end))
            deref(valp, valp);
    }
 }

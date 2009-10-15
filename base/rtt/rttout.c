@@ -3402,6 +3402,7 @@ struct node *n;
    struct sym_entry *sym;
    int nparms;
    int has_underef;
+   int vararg = 0;
    char letter = 0;
    char *name;
    char *s;
@@ -3428,17 +3429,15 @@ struct node *n;
          }
 
    /*
-    * Determine the nuber of parameters. A negative value is used
-    *  to indicate an operation that takes a variable number of
-    *  arguments.
+    * Determine the nuber of parameters, and whether they are varags
     */
    if (params == NULL)
       nparms = 0;
    else {
-      nparms = params->u.param_info.param_num + 1;
-      if (params->id_type & VarPrm)
-         nparms = -nparms;
-      }
+       nparms = params->u.param_info.param_num + 1;
+       if (params->id_type & VarPrm) 
+           vararg = 1;
+   }
 
    if (tend_lst == NULL)
       ntend = 0;
@@ -3606,17 +3605,17 @@ struct node *n;
            break;
 
        case TokFunction:
-           fprintf(out_file, "FncBlock(%s, %d, %d, %d)\n\n", name, nparms, ntend, (has_underef ? -1 : 0));
+           fprintf(out_file, "FncBlock(%s, %d, %d, %d, %d)\n\n", name, nparms, vararg, ntend, has_underef);
            line += 2;
            break;
 
        case Operator:
            if (strcmp(op_sym,"\\") == 0)
                fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
-                       ntend, "\\\\", (has_underef ? -1 : 0));
+                       ntend, "\\\\", has_underef);
            else
                fprintf(out_file, "OpBlock(%s, %d, %d, \"%s\", %d)\n\n", name, nparms, 
-                       ntend, op_sym, (has_underef ? -1 : 0));
+                       ntend, op_sym, has_underef);
            line += 2;
    }
 

@@ -142,7 +142,7 @@ int    		 radix		(int sign, register int r, register char *s,
 				   register char *end_s, union numeric *result);
 char		*reserve_0	(int region, word nbytes);
 char		*reserve_1	(int region, word nbytes);
-void		retderef	(dptr valp, struct locals *locals);
+void		retderef	(dptr valp, struct frame_vars *dynamics);
 void		stkdump		(int);
 word		sub		(word a,word b);
 void		syserr		(char *fmt, ...);
@@ -580,7 +580,7 @@ void show_regions();
 void *get_csp();
 void checkstack();
 
-struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals);
+struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *dynamics);
 struct c_frame *alc_c_frame(struct b_proc *pb, int nargs);
 void dyn_free(void *p);
 void free_frame(struct frame *f);

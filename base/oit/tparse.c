@@ -2390,7 +2390,7 @@ case 75:
 break;
 case 76:
 #line 288 "tgram.g"
-{curr_func->nargs = -curr_func->nargs;}
+{curr_func->llast->l_flag |= F_Vararg;}
 break;
 case 77:
 #line 291 "tgram.g"

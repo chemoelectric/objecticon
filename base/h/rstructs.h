@@ -101,6 +101,7 @@ struct b_proc {			/* procedure block */
     word *icode;		/*   OR pointer to icode */
 
     word nparam;		/*   number of parameters */
+    word vararg;                /*      vararg flag */
     word ndynam;		/*   number of dynamic locals */
     word nstatic;		/*   number of static locals */
     dptr fstatic;		/*   pointer to first static, or null if there are none */
@@ -505,6 +506,7 @@ struct b_iproc {		/* procedure block */
     int (*ip_entryp)();		/*   entry point (code) */
     word *icode;		/*   icode as absolute pointer */
     word ip_nparam;		/*   number of parameters */
+    word ip_vararg;             /*      vararg flag */
     word ip_ndynam;		/*   number of dynamic locals */
     word ip_nstatic;		/*   number of static locals */
     dptr ip_fstatic;		/*   pointer to first static */
@@ -570,12 +572,10 @@ union tickerdata { 			/* clock ticker -- keep in sync w/ fmonitor.r */
 };
 
 
-struct locals {
+struct frame_vars {
     int size;
     struct progstate *creator;
-    dptr dynamic;
-    dptr args;
-    dptr low, high;
+    dptr desc, desc_end;
     int refcnt;
     int seen;
 };
@@ -617,5 +617,5 @@ struct p_frame {
     dptr tmp;
     word **lab;
     struct frame **mark;
-    struct locals *locals;
+    struct frame_vars *fvars;
 };

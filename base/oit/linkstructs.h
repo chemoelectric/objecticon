@@ -141,9 +141,9 @@ struct lclass_field_ref {
 struct lfunction {
     int pc;
     int ndynamic;         /* Count of dynamics */
-    int narguments;       /* Count of arguments, always >= 0 even for varargs */
+    int narguments;       /* Count of arguments */
+    int vararg;           /* Flag set to 1 for vararg function */
     int nstatics;         /* Count of statics */
-    int nargs;            /* Read from the ufile, will be -ve for varargs */
     int native_method_id; /* For a deferred method, the native method number, or -1 */
     struct lfile *defined;            /* The file this function was defined in */
     struct lclass_field *method;      /* Pointer to method, if a method */

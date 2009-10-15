@@ -374,7 +374,7 @@ void dumpstate()
     for (gl = lgfirst; gl; gl = gl->g_next) {
         fprintf(stderr, "name %s id=%d flag=%s\n", gl->name, gl->g_index, f_flag2str(gl->g_flag));
         if (gl->func) {
-            fprintf(stderr, "\tnargs=%d nstatics=%d\n", gl->func->nargs,
+            fprintf(stderr, "\tnargs=%d nstatics=%d\n", gl->func->narguments,
                 gl->func->nstatics);
             for (le = gl->func->locals; le; le = le->next) {
                 if (le->l_flag & F_Global)
@@ -425,7 +425,7 @@ void dumpstate()
                     fprintf(stderr, "\t\t\tconst_flag=%s\n", const_flag2str(me->const_flag));
                 }
                 if (me->func) {
-                    fprintf(stderr, "\t\t\tMethod numargs=%d nstatics=%d\n", me->func->nargs,
+                    fprintf(stderr, "\t\t\tMethod numargs=%d nstatics=%d\n", me->func->narguments,
                         me->func->nstatics);
                     for (le = me->func->locals; le; le = le->next) {
                         if (le->l_flag & F_Global)

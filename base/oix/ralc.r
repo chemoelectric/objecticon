@@ -847,7 +847,7 @@ word nbytes,stdsize;
 
 
 
-struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
+struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
 {
     struct p_frame *p;
     char *t;
@@ -900,45 +900,33 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct locals *locals)
     p->ipc = pb->icode;
     p->curr_inst = 0;
     p->caller = 0;
-    if (locals) {
-        ++locals->refcnt;
+    if (fvars) {
+        ++fvars->refcnt;
     } else {
-        int lsize, nparam = abs(pb->nparam);
-        lsize = sizeof(struct locals) + (pb->ndynam + nparam) * sizeof(struct descrip);
-        locals = malloc(lsize);
-        if (!locals) {
+        int lsize, ndesc;
+        ndesc = pb->ndynam + pb->nparam;
+        lsize = sizeof(struct frame_vars) + ndesc * sizeof(struct descrip);
+        fvars = malloc(lsize);
+        if (!fvars) {
             free(p);
             return 0;
         }
         curpstate->stackcurr += lsize;
-        locals->size = lsize;
-        locals->creator = curpstate;
-        locals->low = locals->high = 0;
-        t = (char *)(locals + 1);
-        if (pb->ndynam) {
-            locals->low = locals->dynamic = (dptr)t;
-            for (i = 0; i < pb->ndynam; ++i)
-                locals->dynamic[i] = nulldesc;
-            t += pb->ndynam * sizeof(struct descrip);
-            locals->high = (dptr)t;
+        fvars->size = lsize;
+        fvars->creator = curpstate;
+        if (ndesc) {
+            fvars->desc = (dptr)(fvars + 1);
+            for (i = 0; i < ndesc; ++i)
+                fvars->desc[i] = nulldesc;
+            fvars->desc_end = fvars->desc + ndesc;
         } else
-            locals->dynamic = 0;
-        if (nparam) {
-            locals->args = (dptr)t;
-            if (!locals->low)
-                locals->low = (dptr)t;
-            for (i = 0; i < nparam; ++i)
-                locals->args[i] = nulldesc;
-            t += nparam * sizeof(struct descrip);
-            locals->high = (dptr)t;
-        } else
-            locals->args = 0;
-        locals->refcnt = 1;
-        locals->seen = 0;
+            fvars->desc = fvars->desc_end = 0;
+        fvars->refcnt = 1;
+        fvars->seen = 0;
     }
     curpstate->stackcurr += size;
     p->creator = curpstate;
-    p->locals = locals;
+    p->fvars = fvars;
     return p;
 }
 
@@ -989,7 +977,7 @@ void free_frame(struct frame *f)
             break;
         }
         case P_FRAME_TYPE: {
-            struct locals *l = ((struct p_frame *)f)->locals;
+            struct frame_vars *l = ((struct p_frame *)f)->fvars;
             f->creator->stackcurr -= f->size;
             free(f);
             --l->refcnt;

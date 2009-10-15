@@ -286,6 +286,7 @@ typedef int siptr, stringint, inst;
    	0,\
         code,\
    	nparam,\
+        0,\
    	ndynam,\
         0,0,0,\
         nclo,ntmp,nlab,nmark,\

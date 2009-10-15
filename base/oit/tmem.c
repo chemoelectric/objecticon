@@ -192,7 +192,6 @@ void next_method(char *name, int flag, struct node *n)
     curr_func->field = curr_class->curr_field;
     if (!(flag & M_Static)) {
         put_local(self_string, F_Argument, n, 1);
-        curr_func->nargs = 1;
     }
 }
 

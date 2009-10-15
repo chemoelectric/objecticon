@@ -64,7 +64,6 @@
 #define Op_Limit         52
 #define Op_Mark          53
 #define Op_Unmark        54
-#define Op_Arg           55
 #define Op_Static        56
 #define Op_Global        57
 #define Op_Apply         58
@@ -76,7 +75,7 @@
 #define Op_Fail          64
 #define Op_Nil           65
 #define Op_Const         66
-#define Op_Dynamic       67
+#define Op_FrameVar      67
 #define Op_Tmp           68
 #define Op_Closure       69
 #define Op_Move          70

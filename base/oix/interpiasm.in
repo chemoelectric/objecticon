@@ -1,6 +1,6 @@
 $start cofail_impl
     Op_Custom c:transmit_failure
-         Op_Arg arg:0
+         Op_FrameVar arg:0
          Op_Tmp tmp:0
          FailureTransmitted
     Op_Custom c:set_c_frame_value
@@ -12,13 +12,13 @@ $end
 
 $start lang_Prog_get_event_impl_impl
    Op_Custom c:activate_child_prog
-         Op_Arg arg:0
+         Op_FrameVar arg:0
    Op_Custom c:get_child_prog_result
-         Op_Arg arg:0
-         Op_Arg arg:1
+         Op_FrameVar arg:0
+         Op_FrameVar arg:1
          ChildExited
     Op_Custom c:set_c_frame_value
-         Op_Arg arg:1
+         Op_FrameVar arg:1
 
 ChildExited:
     Op_Custom c:set_c_frame_failure

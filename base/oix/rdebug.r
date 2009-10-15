@@ -108,11 +108,11 @@ void traceback()
 static void trace_frame(struct p_frame *pf)
 {
     dptr arg;
-    word nargs = abs(pf->proc->nparam);
+    word nargs = pf->proc->nparam;
     struct ipc_line *pline;
     struct ipc_fname *pfile;
 
-    arg = pf->locals->args;
+    arg = pf->fvars->desc;
     fprintf(stderr, "   ");
     procname(stderr, pf->proc);
     putc('(', stderr);
@@ -216,9 +216,10 @@ int get_name(dptr dp1, dptr dp0)
     struct p_frame *uf;
 
     uf = get_current_user_frame();
-    arg1 = uf->locals->args;
+    arg1 = uf->fvars->desc;
     proc0 = uf->proc;
-    loc1 = uf->locals->dynamic;
+    /* The locals follow the args in the locals block */
+    loc1 = uf->fvars->desc + proc0->nparam;
 
     type_case *dp1 of {
       tvsubs: {
@@ -316,16 +317,16 @@ int get_name(dptr dp1, dptr dp0)
                 i = dp - proc0->fstatic;	/* static */
                 if (i < 0 || i >= proc0->nstatic)
                     syserr("name: unreferencable static variable");
-                i += abs(proc0->nparam) + proc0->ndynam;
+                i += proc0->nparam + proc0->ndynam;
                 *dp0 = proc0->lnames[i];
                 return StaticName;
             }
-            else if (InRange(arg1, dp, &arg1[abs(proc0->nparam)])) {
+            else if (InRange(arg1, dp, &arg1[proc0->nparam])) {
                 *dp0 = proc0->lnames[dp - arg1];          /* argument */
                 return ParamName;
             }
             else if (InRange(loc1, dp, &loc1[proc0->ndynam])) {
-                *dp0 = proc0->lnames[dp - loc1 + abs(proc0->nparam)];
+                *dp0 = proc0->lnames[dp - loc1 + proc0->nparam];
                 return LocalName;
             }
             else {
@@ -798,8 +799,8 @@ void call_trace(struct p_frame *pf)
         fprintf(stderr, " resumed\n");
     } else {
         putc('(', stderr);
-        nargs = abs(pf->proc->nparam);
-        args = pf->locals->args;
+        nargs = pf->proc->nparam;
+        args = pf->fvars->desc;
         while (nargs--) {
             outimage(stderr, args++, 0);
             if (nargs)
@@ -887,8 +888,8 @@ void xdisp(struct p_frame *pf,
          * Print arguments.
          */
         np = bp->lnames;
-        dp = pf->locals->args;
-        for (n = abs((int)bp->nparam); n > 0; n--) {
+        dp = pf->fvars->desc;
+        for (n = bp->nparam; n > 0; n--) {
             fprintf(f, "   ");
             putstr(f, np);
             fprintf(f, " = ");
@@ -898,9 +899,8 @@ void xdisp(struct p_frame *pf,
         }
 
         /*
-         * Print locals.
+         * Print locals; they follow the arguments in the frame_vars block
          */
-        dp = pf->locals->dynamic;
         for (n = bp->ndynam; n > 0; n--) {
             fprintf(f, "   ");
             putstr(f, np);

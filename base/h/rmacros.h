@@ -429,13 +429,14 @@
    /*
     * Procedure block for a function.
     */
-   #define FncBlock(f,nargs,ntend,underef)           \
+   #define FncBlock(f,nargs,vararg,ntend,underef)           \
       	struct b_iproc Cat(B,f) = {\
       	T_Proc,\
       	sizeof(struct b_proc),\
       	Cat(Z,f),\
         0,\
       	nargs,\
+        vararg,\
    	0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
@@ -454,7 +455,7 @@
    	Cat(O,f),\
         0,\
    	nargs,\
-   	0,0,0,0,0,0,0,0,\
+   	0,0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         underef,\
@@ -468,7 +469,7 @@
    	T_Proc,\
    	sizeof(struct b_proc),\
    	Cat(K,f),\
-   	0,0,0,0,0,0,0,0,0,0,\
+   	0,0,0,0,0,0,0,0,0,0,0,\
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         0,0,0,  \
