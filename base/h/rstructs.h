@@ -566,39 +566,43 @@ union block {			/* general block */
     struct b_bignum bignum;
 };
 
-union tickerdata { 			/* clock ticker -- keep in sync w/ fmonitor.r */
-   unsigned short s[16];	/* 16 counters */
-   unsigned long l[8];		/* 8 longs are easier to check */
-};
-
-
+/*
+ * This structure holds the argument and dynamic local variables for a
+ * particular p_frame.  It may be referenced by several p_frames if
+ * co-expressions are created by the original.
+ */
 struct frame_vars {
-    int size;
+    int size;         /* Size and creator of this allocation */
     struct progstate *creator;
-    dptr desc, desc_end;
-    int refcnt;
-    int seen;
+    dptr desc_end;    /* One past the end of the descriptor array */
+    int refcnt;       /* How many p_frames reference this block */
+    int seen;         /* Seen marker for garbage collection */
+    struct descrip desc[1];
 };
 
 enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
 
+/*
+ * Common elements for both frame types
+ */
 #define FRAME_BASE \
      int type; \
-     int size; \
+     int size;          /* Size and creator of this allocation */ \
      struct progstate *creator; \
-     struct descrip value;    \
-     word *failure_label;     \
-     struct b_proc *proc;     \
-     struct frame *parent_sp; \
-     int rval;                \
-     int exhausted;
+     struct descrip value;   /* Return/suspend value */ \
+     word *failure_label;    /* Caller's failure label */  \
+     struct b_proc *proc;    /* Corresponding procedure block */  \
+     struct frame *parent_sp;  /* Parent in the stack chain */ \
+     int rval;               /* Set if source location is an rval (ie cannot be assigned to) */  \
+     int exhausted;          /* Set after a return, indicating thatf a further request for a result */ \
+                             /*    would be bound to fail */
 
 #define C_FRAME \
      FRAME_BASE   \
-     void *pc;    \
-     int nargs;       \
-     dptr args;       \
-     dptr tend;
+     void *pc;       /* C program counter */    \
+     int nargs;      /* Number of args; may exceed declared number for a vararg func */ \
+     dptr args;      /* Arg array - nargs descriptors */ \
+     dptr tend;      /* Tended descriptor array */
 
 struct frame {
     FRAME_BASE;
@@ -610,12 +614,14 @@ struct c_frame {
 
 struct p_frame {
     FRAME_BASE;
-    word *ipc;
-    word *curr_inst;
-    struct p_frame *caller;
-    struct frame **clo;
-    dptr tmp;
-    word **lab;
-    struct frame **mark;
-    struct frame_vars *fvars;
+    word *ipc;                /* Program counter; note this is only up-to-date when
+                               * frames change (see interp.r and the use of the ipc global var.) */
+    word *curr_inst;          /* Location of start of current instruction */
+    struct p_frame *caller;   /* Parent caller frame */
+    struct frame **clo;       /* Closures, ie other frames in the process of producing results */
+    dptr tmp;                 /* Temporary descriptor array */
+    word **lab;               /* Labels array */
+    struct frame **mark;      /* Stack mark array */
+    struct frame_vars *fvars; /* Argument and dynamic local descriptor structure - may be shared between
+                               * several p_frames. */
 };

@@ -905,7 +905,7 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
     } else {
         int lsize, ndesc;
         ndesc = pb->ndynam + pb->nparam;
-        lsize = sizeof(struct frame_vars) + ndesc * sizeof(struct descrip);
+        lsize = sizeof(struct frame_vars) + (ndesc - 1) * sizeof(struct descrip);
         fvars = malloc(lsize);
         if (!fvars) {
             free(p);
@@ -915,12 +915,11 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
         fvars->size = lsize;
         fvars->creator = curpstate;
         if (ndesc) {
-            fvars->desc = (dptr)(fvars + 1);
             for (i = 0; i < ndesc; ++i)
                 fvars->desc[i] = nulldesc;
             fvars->desc_end = fvars->desc + ndesc;
         } else
-            fvars->desc = fvars->desc_end = 0;
+            fvars->desc_end = 0;
         fvars->refcnt = 1;
         fvars->seen = 0;
     }
