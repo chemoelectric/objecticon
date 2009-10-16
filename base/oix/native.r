@@ -2956,10 +2956,6 @@ end
 function{0,1} lang_Proc_get_field_name(c)
    body {
         struct b_proc *proc0;
-        tended char *fred;
-        tended struct descrip job;
-        tended struct b_object *gob;
-
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         if (proc0->field)

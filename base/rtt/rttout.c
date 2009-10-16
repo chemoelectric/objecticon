@@ -32,7 +32,6 @@ static int     len_sel       (struct node *sel,
 static void line_dir      (int nxt_line, char *new_fname);
 static int     only_proto    (struct node *n);
 static void parm_locs     (struct sym_entry *op_params);
-static void parm_tnd      (struct sym_entry *sym);
 static void prt_runerr    (struct token *t, struct node *num,
                                struct node *val, int indent);
 static void prt_tok       (struct token *t, int indent);
@@ -2866,170 +2865,42 @@ int brace;
  * spcl_dcls - print special declarations for tended variables, parameter
  *  conversions, and buffers.
  */
-void spcl_dcls(op_params)
-struct sym_entry *op_params; /* operation parameters or NULL */
-   {
-   register struct sym_entry *sym;
-   struct sym_entry *sym1;
+void spcl_dcls()
+{
+    /*
+     * Output declarations for buffers and locations to hold conversions
+     *  to C values.
+     */
+    spcl_start(NULL);
 
-   /*
-    * Output declarations for buffers and locations to hold conversions
-    *  to C values.
-    */
-   spcl_start(op_params);
+    varargs = 0;
+    tend_ary(ntend);
 
-   /*
-    * Determine if this operation takes a variable number of arguments.
-    *  Use that information in deciding how large a tended array to
-    *  declare.
-    */
-   varargs = (op_params != NULL && op_params->id_type & VarPrm);
-   if (varargs)
-      tend_ary(ntend + VArgAlwnc - 1);
-   else
-      tend_ary(ntend);
+    tend_struct_loc = "r_tend";
+    tend_loc = "r_tend.d";
 
-   if (varargs) {
-      /*
-       * This operation takes a variable number of arguments. A declaration
-       *  for a tended array has been made that will usually hold them, but
-       *  sometimes it is necessary to malloc() a tended array at run
-       *  time. Produce code to check for this.
-       */
-      prt_str("struct tend_desc *r_tendp;", IndentInc);
-      ForceNl();
-      prt_str("int r_n;\n", IndentInc);
-      ++line;
-      ForceNl();
-      prt_str("if (r_nargs <= ", IndentInc);
-      fprintf(out_file, "%d)", op_params->u.param_info.param_num + VArgAlwnc);
-      ForceNl();
-      prt_str("r_tendp = (struct tend_desc *)&r_tend;", 2 * IndentInc);
-      ForceNl();
-      prt_str("else {", IndentInc);
-      ForceNl();
-      prt_str(
-       "r_tendp = (struct tend_desc *)malloc((sizeof(struct tend_desc)",
-         2 * IndentInc);
-      ForceNl();
-      prt_str("", 3 * IndentInc);
-      fprintf(out_file, "+ (r_nargs + %d) * sizeof(struct descrip)));", 
-         ntend - 2 - op_params->u.param_info.param_num);
-      ForceNl();
-      prt_str("if (r_tendp == NULL) {", 2 * IndentInc);
-      ForceNl();
-      prt_str("err_msg(305, NULL);", 3 * IndentInc);
-      ForceNl();
-      prt_str("return A_Resume;", 3 * IndentInc);
-      ForceNl();
-      prt_str("}", 3 * IndentInc);
-      ForceNl();
-      prt_str("}", 2 * IndentInc);
-      ForceNl();
-      tend_struct_loc = "(*r_tendp)";
-      }
-   else {
-      tend_struct_loc = "r_tend";
-      tend_loc = "r_tend.d";
-   }
+    /*
+     * Produce code to initialize the tended array. These are for tended
+     *  declarations and parameters.
+     */
+    tend_init();  /* initializations for tended declarations. */
 
-   /*
-    * Produce code to initialize the tended array. These are for tended
-    *  declarations and parameters.
-    */
-   tend_init();  /* initializations for tended declarations. */
-   if (varargs) {
-      /*
-       * This operation takes a variable number of arguments. Produce code
-       *  to dereference or copy this into its portion of the tended
-       *  array.
-       */
-      prt_str("for (r_n = ", IndentInc);
-      fprintf(out_file, "%d; r_n < r_nargs; ++r_n)",
-          op_params->u.param_info.param_num);
-      ForceNl();
-      if (op_params->id_type & DrfPrm) {
-         prt_str("deref(&r_args[r_n], &", IndentInc * 2);
-         fprintf(out_file, "%s[r_n + %d]);", tend_loc, ntend - 1 -
-            op_params->u.param_info.param_num);
-         }
-      else {
-         prt_str(tend_loc, IndentInc * 2);
-         fprintf(out_file, "[r_n + %d] = r_args[r_n];", ntend - 1 -
-            op_params->u.param_info.param_num);
-         }
-      ForceNl();
-      sym = op_params->u.param_info.next;
-      }
-   else
-      sym = op_params; /* no variable part of arg list */
-
-   /*
-    * Go through the fixed part of the parameter list, producing code
-    *  to copy/dereference parameters into the tended array.
-    */
-   while (sym != NULL) {
-      /*
-       * A there may be identifiers for dereferenced and/or undereferenced
-       *  versions of a paramater. If there are both, sym1 references the
-       *  second identifier.
-       */
-      sym1 = sym->u.param_info.next;
-      if (sym1 != NULL && sym->u.param_info.param_num !=
-         sym1->u.param_info.param_num)
-            sym1 = NULL;    /* the next entry is not for the same parameter */
-
-      /*
-       * If there are not enough arguments to supply a value for this
-       *  parameter, set it to the null value.
-       */
-      prt_str("if (", IndentInc);
-      fprintf(out_file, "r_nargs > %d) {", sym->u.param_info.param_num);
-      ForceNl();
-      parm_tnd(sym);
-      if (sym1 != NULL) {
-         ForceNl();
-         parm_tnd(sym1);
-         }
-      ForceNl();
-      prt_str("} else {", IndentInc);
-      ForceNl();
-      prt_str(tend_loc, IndentInc * 2);
-      fprintf(out_file, "[%d].dword = D_Null;", sym->t_indx);
-      if (sym1 != NULL) {
-         ForceNl();
-         prt_str(tend_loc, IndentInc * 2);
-         fprintf(out_file, "[%d].dword = D_Null;", sym1->t_indx);
-         }
-      ForceNl();
-      prt_str("}", 2 * IndentInc);
-      ForceNl();
-      if (sym1 == NULL)
-         sym = sym->u.param_info.next;
-      else
-         sym = sym1->u.param_info.next;
-      }
-
-   /*
-    * Finish setting up the tended array structure and link it into the tended
-    *  list.
-    */
-   if (ntend != 0) {
-      prt_str(tend_struct_loc, IndentInc);
-      if (varargs)
-         fprintf(out_file, ".num = %d + Max(r_nargs - %d, 0);", ntend - 1,
-            op_params->u.param_info.param_num);
-      else
-         fprintf(out_file, ".num = %d;", ntend);
-      ForceNl();
-      prt_str(tend_struct_loc, IndentInc);
-      prt_str(".previous = tend;", IndentInc);
-      ForceNl();
-      prt_str("tend = (struct tend_desc *)&", IndentInc);
-      fprintf(out_file, "%s;", tend_struct_loc);
-      ForceNl();
-      }
-   }
+    /*
+     * Finish setting up the tended array structure and link it into the tended
+     *  list.
+     */
+    if (ntend != 0) {
+        prt_str(tend_struct_loc, IndentInc);
+        fprintf(out_file, ".num = %d;", ntend);
+        ForceNl();
+        prt_str(tend_struct_loc, IndentInc);
+        prt_str(".previous = tend;", IndentInc);
+        ForceNl();
+        prt_str("tend = (struct tend_desc *)&", IndentInc);
+        fprintf(out_file, "%s;", tend_struct_loc);
+        ForceNl();
+    }
+}
 
 /*
  * spcl_start - do initial work for outputing special declarations. Output
@@ -3076,83 +2947,65 @@ int n;
  *  supplied when there is none in the declaration.
  */
 static void tend_init()
-   {
-   register struct init_tend *tnd;
+{
+    register struct init_tend *tnd;
 
-   for (tnd = tend_lst; tnd != NULL; tnd = tnd->next) {
-      switch (tnd->init_typ) {
-         case TndDesc:
-            /*
-             * Simple tended declaration.
-             */
-            prt_str(tend_loc, IndentInc);
-            if (tnd->init == NULL)
-               fprintf(out_file, "[%d].dword = D_Null;", tnd->t_indx);
-            else {
-               fprintf(out_file, "[%d] = ", tnd->t_indx);
-               c_walk(tnd->init, 2 * IndentInc, 0);
-               prt_str(";", 2 * IndentInc);
-               }
-            break;
-         case TndStr:
-            /*
-             * Tended character pointer.
-             */
-            prt_str(tend_loc, IndentInc);
-            if (tnd->init == NULL)
-               fprintf(out_file, "[%d] = emptystr;", tnd->t_indx);
-            else {
-               fprintf(out_file, "[%d].dword = 0;", tnd->t_indx);
-               ForceNl();
-               prt_str(tend_loc, IndentInc);
-               fprintf(out_file, "[%d].vword.sptr = ", tnd->t_indx);
-               c_walk(tnd->init, 2 * IndentInc, 0);
-               prt_str(";", 2 * IndentInc);
-               }
-            break;
-         case TndBlk:
-            /*
-             * A tended block pointer of some kind.
-             */
-            prt_str(tend_loc, IndentInc);
-            if (tnd->init == NULL)
-               fprintf(out_file, "[%d] = nullptr;", tnd->t_indx);
-            else {
-               fprintf(out_file, "[%d].dword = F_Ptr | F_Nqual;",tnd->t_indx);
-               ForceNl();
-               prt_str(tend_loc, IndentInc);
-               fprintf(out_file, "[%d].vword.bptr = (union block *)",
-                   tnd->t_indx);
-               c_walk(tnd->init, 2 * IndentInc, 0);
-               prt_str(";", 2 * IndentInc);
-               }
-            break;
-         }
-      ForceNl();
-      }
-   }
-
-/*
- * parm_tnd - produce code to put a parameter in its tended location.
- */
-static void parm_tnd(sym)
-struct sym_entry *sym;
-   {
-   /*
-    * A parameter may either be dereferenced into its tended location
-    *  or copied.
-    */
-   if (sym->id_type & DrfPrm) {
-      prt_str("deref(&r_args[", IndentInc * 2);
-      fprintf(out_file, "%d], &%s[%d]);", sym->u.param_info.param_num,
-         tend_loc, sym->t_indx);
-      }
-   else {
-      prt_str(tend_loc, IndentInc * 2);
-      fprintf(out_file, "[%d] = r_args[%d];", sym->t_indx,
-         sym->u.param_info.param_num);
-      }
-   }
+    for (tnd = tend_lst; tnd != NULL; tnd = tnd->next) {
+        switch (tnd->init_typ) {
+            case TndDesc:
+                /*
+                 * Simple tended declaration.
+                 */
+                if (tnd->init == NULL) {
+                    /* For a frame, the tended descriptors are initialized to nulldesc by alc_c_frame */
+                    if (!use_frame) {
+                        prt_str(tend_loc, IndentInc);
+                        fprintf(out_file, "[%d] = nulldesc;", tnd->t_indx);
+                    }
+                } else {
+                    prt_str(tend_loc, IndentInc);
+                    fprintf(out_file, "[%d] = ", tnd->t_indx);
+                    c_walk(tnd->init, 2 * IndentInc, 0);
+                    prt_str(";", 2 * IndentInc);
+                }
+                break;
+            case TndStr:
+                /*
+                 * Tended character pointer.
+                 */
+                prt_str(tend_loc, IndentInc);
+                if (tnd->init == NULL)
+                    fprintf(out_file, "[%d] = emptystr;", tnd->t_indx);
+                else {
+                    fprintf(out_file, "[%d].dword = 0;", tnd->t_indx);
+                    ForceNl();
+                    prt_str(tend_loc, IndentInc);
+                    fprintf(out_file, "[%d].vword.sptr = ", tnd->t_indx);
+                    c_walk(tnd->init, 2 * IndentInc, 0);
+                    prt_str(";", 2 * IndentInc);
+                }
+                break;
+            case TndBlk:
+                /*
+                 * A tended block pointer of some kind.
+                 */
+                prt_str(tend_loc, IndentInc);
+                if (tnd->init == NULL)
+                    fprintf(out_file, "[%d] = nullptr;", tnd->t_indx);
+                else {
+                    fprintf(out_file, "[%d].dword = D_TendPtr;",tnd->t_indx);
+                    ForceNl();
+                    prt_str(tend_loc, IndentInc);
+                    fprintf(out_file, "[%d].vword.bptr = (union block *)",
+                            tnd->t_indx);
+                    c_walk(tnd->init, 2 * IndentInc, 0);
+                    prt_str(";", 2 * IndentInc);
+                }
+                break;
+        }
+        ForceNl();
+    }
+}
 
 /*
  * parm_locs - determine what locations are needed to hold parameters and

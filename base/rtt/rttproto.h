@@ -59,7 +59,7 @@ void	push_cntxt	(int lvl_incr);
 void           push_lvl  (void);
 void           defout    (struct node *n);
 void           set_r_seq (long min, long max, int resume);
-void           spcl_dcls (struct sym_entry *op_params);
+void           spcl_dcls ();
 void           strt_def  (void);
 void           sv_prmloc (struct parminfo *parminfo);
 struct sym_entry *sym_add  (int tok_id, char *image, int id_type, int nest_lvl);
