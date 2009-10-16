@@ -106,7 +106,6 @@ void tail_invoke_frame(struct frame *f)
         case P_FRAME_TYPE: {
             struct p_frame *pf = (struct p_frame *)f;
             pf->caller = curr_pf;
-            set_curr_pf(pf);
             if (pf->proc->program) {
                 /*
                  * If tracing is on, use ctrace to generate a message.
@@ -116,11 +115,11 @@ void tail_invoke_frame(struct frame *f)
                     call_trace(pf);
                 }
                 if (++k_level > k_maxlevel) {
-                    curr_op = 0;    /* Prevent ttrace doing anything, as this frame is already 
-                                    * on the stack */
+                    curr_op = 0;    /* Disable ttrace */
                     fatalerr(311, NULL);
                 }
             }
+            set_curr_pf(pf);
             break;
         }
         default:

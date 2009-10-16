@@ -1554,6 +1554,7 @@ void showstack(struct b_coexpr *c)
                 dptr np, dp;
                 int j;
                 printf("\tipc=%p\n", pf->ipc);
+                printf("\tcurr_inst=%p\n", pf->curr_inst);
                 printf("\tcaller=%p\n", pf->caller);
                 for (i = 0; i < f->proc->nclo; ++i) {
                     printf("\tclo[%d]=%p\n", i, pf->clo[i]);
