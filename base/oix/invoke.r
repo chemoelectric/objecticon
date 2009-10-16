@@ -759,7 +759,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
     if (cf->flags & M_Method) {
         /* Can't access new except whilst initializing */
         if ((cf->flags & M_Special) && BlkLoc(*expr)->object.init_state != Initializing) 
-            AccessErr(601);
+            AccessErr(622);
 
         ac = check_access(cf, class0);
         if (ac == Error) 
