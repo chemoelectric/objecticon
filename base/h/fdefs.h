@@ -1,6 +1,5 @@
 FncDef(abs)
 FncDef(any)
-FncDef(args)
 FncDef(back)
 FncDef(bal)
 FncDef(cast)

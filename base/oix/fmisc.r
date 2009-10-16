@@ -7,42 +7,6 @@
  */
 #include "../h/opdefs.h"
 
-"args(x,i) - produce number of arguments for procedure x."
-
-function{0,1} args(x,i)
- body {
-    type_case x of {
-      proc: {
-            return C_integer ((struct b_proc *)BlkLoc(x))->nparam;
-        }
-      constructor: {
-            return C_integer ((struct b_constructor *)BlkLoc(x))->n_fields; 
-        }
-      methp: {
-            /* Method pointer - deduct 1 for the automatic self param */
-            int i = ((struct b_methp *)BlkLoc(x))->proc->nparam;
-            return C_integer i < 0 ? i + 1 : i - 1;
-      }
-      class: {
-            /* Class - lookup the constructor - also deduct 1 for the self param */
-          struct b_class *class0 = (struct b_class*)BlkLoc(x);
-          struct class_field *new_field = class0->new_field;
-          if (new_field) {
-              int i = ((struct b_proc *)BlkLoc(*new_field->field_descriptor))->nparam;
-              return C_integer i < 0 ? i + 1 : i - 1;
-          } else
-              return zerodesc;
-      }
-      default: {
-          runerr(106, x);
-      }
-   }
- }
-end
-
-
-
-
 "char(i) - produce a string consisting of character i."
 
 function{1} char(i)

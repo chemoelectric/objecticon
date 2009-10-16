@@ -31,15 +31,18 @@
 
 package ipl.procname
 
+import
+   lang(Proc)
+
 procedure procname(p, x)
    local result
 
    image(p) ? {
-      =("function " | "procedure " | "record constructor ")
-      if /x then return if any(&letters) then tab(0) else tab(0) || args(p)
+      =("function " | "procedure " | "constructor ")
+      if /x then return if any(&letters) then tab(0) else tab(0) || Proc.get_n_arguments(p)
       else result := tab(0)
       if any(&letters, result) then return result || "()"
-      else return case args(p) of {
+      else return case Proc.get_n_arguments(p) of {
          0:  result
          1:  result || "e"
          2:  if result == "[]" then "e1[e2]" else "e1 " || result || " e2"

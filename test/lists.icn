@@ -1,12 +1,12 @@
 #SRC: JCON
 
-import io, ipl.lists(push_n,put_n)
+import io, ipl.lists(push_n,put_n), lang(Proc)
 
 procedure main()
    local i, x, y, z
 
-   write(args(push))
-   write(args(put))
+   write(Proc.get_n_arguments(push))
+   write(Proc.get_n_arguments(put))
 
    limage("a", list())
    limage("b", list(2))

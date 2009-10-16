@@ -1,6 +1,6 @@
 #SRC: JCON
 
-import io
+import io, lang
 
 record message(who,gap,what)
 
@@ -48,12 +48,12 @@ procedure main()
 
    write("proc: ")
    write("   ", image(proc("args")))
-   write("   ", image(proc("args",0)))
+   write("   ", image(Proc.get_n_arguments))
    write("  >", args(main))
-   args := proc("args", 0)
+   args := Proc.get_n_arguments
    write("  >", args(main))
    write("   ", image(proc("args")))
-   write("   ", image(proc("args",0)))
+   write("   ", image(Proc.get_n_arguments))
 
    # the following should all be harmless, at least
    every collect(&null | (0 to 3), &null | 0 | 1 | 100 | 1000)
