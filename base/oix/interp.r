@@ -115,7 +115,12 @@ void tail_invoke_frame(struct frame *f)
                     call_trace(pf);
                 }
                 if (++k_level > k_maxlevel) {
-                    curr_op = 0;    /* Disable ttrace */
+                    struct descrip t;
+                    /* Some info for ttrace... */
+                    curr_op = Op_Invoke;
+                    t.dword = D_Proc;
+                    BlkLoc(t) = (union block *)pf->proc;
+                    xexpr = &t;
                     fatalerr(311, NULL);
                 }
             }

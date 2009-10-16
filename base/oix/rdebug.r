@@ -732,7 +732,7 @@ static void ttrace()
             bp = xc_frame->proc;
 
             /* 
-             * It may be an operator (1-3) args or a function.
+             * It may be an operator (0-2 args) or a function.
              */
             if (is_op(bp)) {
                 xnargs = xc_frame->nargs;
