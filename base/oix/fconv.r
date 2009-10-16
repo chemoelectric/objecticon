@@ -152,58 +152,11 @@ end
 
 function{0,1} proc(x,i,c)
 
-   if is:coexpr(x) then {
-      if !def:C_integer(i, 1) then
-         runerr(101, i)
-      abstract {
-         return proc
-         }
-      body {
-	 struct b_coexpr *ce = NULL;
-	 struct b_proc *bp = NULL;
-	 struct pf_marker *fp;
-	 dptr dp=NULL;
-	 if (BlkLoc(x) != (union block *)k_current) {
-	    ce = (struct b_coexpr *)BlkLoc(x);
-	    dp = ce->es_argp;
-	    fp = ce->es_pfp;
-	    if (dp == NULL) fail;
-	    }
-	 else {
-	    fp = pfp;
-	    dp = argp;
-	    }
-	 /* follow upwards, i levels */
-	 while (i--) {
-	    if (fp == NULL) fail;
-	    dp = fp->pf_argp;
-	    fp = fp->pf_pfp;
-	    }
-	 if (fp == NULL) fail;
-	 if (dp)
-	    bp = (struct b_proc *)BlkLoc(*(dp));
-	 else fail;
-	 return proc(bp);
-	 }
-      }
-
    if is:proc(x) then {
       abstract {
          return proc
          }
       inline {
-
-	 if (!is:null(c)) {
-	    struct progstate *p;
-	    if (!is:coexpr(c)) runerr(118,c);
-	    /*
-	     * Test to see whether a given procedure belongs to a given
-	     * program.
-	     */
-	    p = BlkLoc(c)->coexpr.program;
-	    if (p != BlkLoc(x)->proc.program)
-	       fail;
-	    }
          return x;
          }
       }

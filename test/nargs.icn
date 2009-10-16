@@ -1,6 +1,6 @@
 #SRC: JCON
 
-import io
+import io, lang
 
 #  check return values from args()
 
@@ -70,5 +70,9 @@ procedure main()
 end
 
 procedure nargs(p, s)
-   write(right(args(p),3), " ", s)
+   if Proc.has_varargs(p) then
+      write(right(Proc.get_n_arguments(p),3), "[] ", s)
+   else
+      write(right(Proc.get_n_arguments(p),3), " ", s)
+
 end

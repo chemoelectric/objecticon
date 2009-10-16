@@ -59,6 +59,19 @@ class Connectable()
    end
 
    #
+   # Remove all {Listener}s created with the given co-expression
+   #
+   public disconnect_coexpression(coex)
+      local t, l
+      t := []
+      every l := !listeners do {
+         if l.coex ~=== coex then
+            put(t, l)
+      }
+      listeners := t
+   end
+
+   #
    # Remove all {Listener}s with the given type field.
    #
    public disconnect_type(type)

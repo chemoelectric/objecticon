@@ -611,12 +611,10 @@ class CanvasComponent(CanvasObject)
          i.connect(self.op_copy, Event.ACTION)
          fm.add(i)
       }
-      if self.allows_add() & Selection.has_target(Selection.CLIPBOARD,
-                                                  Ivib.IVIB_COMPONENT_TARGET) then {
-         i := TextMenuItem("label=Paste")
-         i.connect(self.op_paste, Event.ACTION)
-         fm.add(i)
-      }
+      i := TextMenuItem("label=Paste")
+      i.connect(self.op_paste, Event.ACTION)
+      fm.add(i)
+
       if allows_delete() then {
          i := TextMenuItem("label=Delete")
          i.connect(self.op_delete, Event.ACTION)

@@ -5,12 +5,15 @@
 
 #include "../h/header.h"
 #include "../h/opdefs.h"
+#include "../h/opnames.h"
 #include "../h/modflags.h"
 
 static FILE    *readhdr	(char *name, struct header *hdr);
 static void    initptrs (struct progstate *p, struct header *h);
 static void    initprogstate(struct progstate *p);
 static void    initalloc(struct progstate *p);
+static void    handle_monitored_prog_exit();
+static void    relocate_code(struct progstate *ps, word *c);
 
 /*
  * External declarations for operator and function blocks.
@@ -47,24 +50,10 @@ struct b_proc *fnc_tbl[] = {
  * A number of important variables follow.
  */
 
-int line_info;				/* flag: line information is available */
-char *file_name = NULL;			/* source file for current execution point */
-
-
-word mstksize = MStackSize;		/* initial size of main stack */
-word xstksize = XStackSize;		/* co-expression stack size */
-word coexprlim;                          /* number of coexpression allocations before a GC is triggered */
-
 int k_level = 0;			/* &level */
-
-
 int set_up = 0;				/* set-up switch */
-
 char *currend = NULL;			/* current end of memory region */
-
-
 word qualsize = QualLstSize;		/* size of quallist for fixed regions */
-
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
 
@@ -81,7 +70,6 @@ struct descrip maps2u;			/* second cached argument of map */
 struct descrip maps3u;			/* third cached argument of map */
 
 
-struct b_coexpr *stklist;	/* base of co-expression block list */
 struct progstate *progs;        /* list of progstates */
 
 struct tend_desc *tend = NULL;  /* chain of tended descriptors */
@@ -93,20 +81,13 @@ struct region rootstring, rootblock;
 int op_tbl_sz = ElemCount(op_tbl);
 int fnc_tbl_sz = ElemCount(fnc_tbl);
 
-struct pf_marker *pfp = NULL;		/* Procedure frame pointer */
-dptr argp;			        /* global argp */
 
-
-struct progstate *curpstate;		/* lastop accessed in program state */
+struct progstate *curpstate;
 struct progstate rootpstate;
-
-word *stack;				/* Interpreter stack */
-word *stackend; 			/* End of interpreter stack */
 
 
 /*
  * Open the icode file and read the header.
- * Used by icon_init() as well as MultiThread's loadicode()
  */
 static FILE *readhdr(char *name, struct header *hdr)
 {
@@ -239,7 +220,7 @@ void icon_init(char *name)
     MakeInt(1000, &thousanddesc);
     MakeInt(0, &kywd_dmp);
 
-    nullptr.dword = F_Ptr | F_Nqual;
+    nullptr.dword = D_TendPtr;
     BlkLoc(nullptr) = 0;
 
     nulldesc.dword = D_Null;
@@ -320,37 +301,18 @@ void icon_init(char *name)
     MakeInt(hdr.trace, &rootpstate.Kywd_trc);
 
     /*
-     * If STKSIZE is set, then it sets both MSTKSIZE and XSTKSIZE to
-     * the same value.
-     */
-    if ((t = getenv(STKSIZE))) {
-        setenv(MSTKSIZE, t, 1);
-        setenv(XSTKSIZE, t, 1);
-    }
-
-    /*
      * Examine the environment and make appropriate settings.    [[I?]]
      */
     if (getenv(NOERRBUF))
         noerrbuf++;
     env_int(TRACE, &k_trace, 0, (uword)0);
-    env_int(XSTKSIZE, &xstksize, 1, (uword)MaxWord);
     env_int(STRSIZE, &rootstring.size, 1, (uword)MaxWord);
     env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxWord); 
-    env_int(MSTKSIZE, &mstksize, 1, (uword)MaxWord);
     env_int(QLSIZE, &qualsize, 1, (uword)MaxWord);
     env_int(IXCUSHION, &memcushion, 1, (uword)100);	/* max 100 % */
     env_int(IXGROWTH, &memgrowth, 1, (uword)10000);	/* max 100x growth */
     env_int(OICORE, &dodump, 1, (uword)2);
 
-    /*
-     * Ensure stack sizes are multiples of WordSize.
-     */
-    xstksize &= ~(WordSize - 1);
-    mstksize &= ~(WordSize - 1);
-
-    coexprlim = Max((pmem/200) / xstksize, CoexprLim);
-    env_int(COEXPRLIM, &coexprlim, 1, (uword)MaxWord);
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
 
@@ -366,28 +328,18 @@ void icon_init(char *name)
     initalloc(&rootpstate);
 
     /*
-     * Allocate stack and initialize &main.
+     * Allocate and initialize &main.
      */
 
-    Protect(stack = malloc(mstksize), fatalerr(303, NULL));
-    mainhead = (struct b_coexpr *)stack;
-
-    mainhead->title = T_Coexpr;
-    mainhead->id = 1;
+    Protect(mainhead = alccoexp(), fatalerr(303, NULL));
     mainhead->size = 1;			/* pretend main() does an activation */
-    mainhead->nextstk = NULL;
-    stklist = mainhead;
-    mainhead->es_tend = NULL;
-    mainhead->freshblk = NULL;	/* &main has no refresh block. */
-					/*  This really is a bug. */
     mainhead->main_of = mainhead->creator = mainhead->program = &rootpstate;
-    mainhead->es_activator = mainhead;
-
+    mainhead->activator = mainhead;
     /*
      * Point &main at the co-expression block for the main procedure and set
      *  k_current, the pointer to the current co-expression, to &main.
      */
-    k_current = k_main = mainhead;
+    k_current = rootpstate.K_current = rootpstate.K_main = mainhead;
 
     check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, code);
@@ -503,30 +455,36 @@ void syserr(char *fmt, ...)
     va_list ap;
     va_start(ap, fmt);
     fprintf(stderr, "System error");
-    if (pfp == NULL)
-        fprintf(stderr, " in startup code");
-    else {
-        dptr fn = findfile(ipc);
-        if (fn) {
+    if (set_up) {
+        struct ipc_line *pline;
+        struct ipc_fname *pfile;
+
+        pline = frame_ipc_line(curr_pf, 1);
+        pfile = frame_ipc_fname(curr_pf, 1);
+
+        if (pline && pfile) {
             struct descrip t;
-            abbr_fname(fn, &t);
-            fprintf(stderr, " at line %d in %.*s", findline(ipc), (int)StrLen(t), StrLoc(t));
+            abbr_fname(&pfile->fname, &t);
+            fprintf(stderr, " at line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
         } else
-            fprintf(stderr, " at line %d in ?", findline(ipc));
+            fprintf(stderr, " at line ? in ?");
     }
+    else
+        fprintf(stderr, " in startup code");
+
     fprintf(stderr, "\n");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr,"\n");
     fflush(stderr);
     va_end(ap);
 
-    if (pfp == NULL) {		/* skip if start-up problem */
+    if (!set_up) {		/* skip if start-up problem */
         if (dodump)
             abort();
         c_exit(EXIT_FAILURE);
     }
     fprintf(stderr, "Traceback:\n");
-    tracebk(pfp, argp);
+    traceback();
     fflush(stderr);
 
     if (dodump)
@@ -548,14 +506,6 @@ void c_exit(i)
     if (curpstate != NULL)
         EVVal((word)i, E_Exit);
 #endif					/* E_Exit */
-    if (curpstate != NULL && curpstate->parent != NULL) {
-        /* might want to get to the lterm somehow, instead */
-        while (0&&k_current != curpstate->parent->K_main) {
-            struct descrip dummy;
-            co_chng(curpstate->parent->K_main, 
-                    NULL, &dummy, A_Cofail, 1);
-        }
-    }
 
     if (k_dump && set_up) {
         fprintf(stderr,"\nTermination dump:\n\n");
@@ -564,7 +514,7 @@ void c_exit(i)
                 (long)k_current->id,
                 (long)k_current->size);
         fflush(stderr);
-        xdisp(pfp,argp,k_level,stderr, curpstate);
+        xdisp(k_current->curr_pf,k_level,stderr, curpstate);
     }
 
 #ifdef MSWindows
@@ -613,91 +563,6 @@ void ffatalerr(char *fmt, ...)
 }
 
 /*
- * loadicode - initialize memory particular to a given icode file
- */
-struct b_coexpr * loadicode(name, bs, ss, stk)
-    char *name;
-    C_integer bs, ss, stk;
-{
-    struct b_coexpr *coexp;
-    struct progstate *pstate;
-    struct header hdr;
-    FILE *ifile = NULL;
-
-    /*
-     * open the icode file and read the header
-     */
-    ifile = readhdr(name,&hdr);
-    if (ifile == NULL)
-        return NULL;
-
-    /*
-     * Allocate memory for icode and the struct that describes it
-     */
-    MemProtect(coexp = alcprog(hdr.icodesize, stk));
-    pstate = coexp->program;
-    pstate->parent = curpstate;
-    pstate->next = progs;
-    progs = pstate;
-    initprogstate(pstate);
-    pstate->Kywd_time_elsewhere = millisec();
-    pstate->Kywd_time_out = 0;
-    pstate->K_current = pstate->K_main = coexp;
-
-    MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
-    MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
-    pstate->stringregion->size = ss;
-    pstate->blockregion->size = bs;
-
-    /*
-     * the local program region list starts out with this region only
-     */
-    pstate->stringregion->prev = NULL;
-    pstate->blockregion->prev = NULL;
-    pstate->stringregion->next = NULL;
-    pstate->blockregion->next = NULL;
-    /*
-     * the global region list links this region with curpstate's
-     */
-    pstate->stringregion->Gprev = curpstate->stringregion;
-    pstate->blockregion->Gprev = curpstate->blockregion;
-    pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
-    pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
-    if (curpstate->stringregion->Gnext)
-        curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
-    curpstate->stringregion->Gnext = pstate->stringregion;
-    if (curpstate->blockregion->Gnext)
-        curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
-    curpstate->blockregion->Gnext = pstate->blockregion;
-
-    CMakeStr(name, &pstate->Kywd_prog);
-    MakeInt(hdr.trace, &pstate->Kywd_trc);
-
-    /*
-     * might want to override from TRACE environment variable here.
-     */
-
-    /*
-     * Establish pointers to icode data regions.		[[I?]]
-     */
-    initptrs(pstate, &hdr);
-    initalloc(pstate);
-    check_version(&hdr, name, ifile);
-    read_icode(&hdr, name, ifile, pstate->Code);
-
-    fclose(ifile);
-
-    /*
-     * Resolve references from icode to run-time system.
-     * The first program has this done in icon_init after
-     * initializing the event monitoring system.
-     */
-    resolve(pstate);
-
-    return coexp;
-}
-
-/*
  * initalloc - initialization routine to allocate string/block memory regions
  */
 
@@ -717,18 +582,15 @@ static void initalloc(struct progstate *p)
 
 static void initprogstate(struct progstate *p)
 {
+    p->monitor = 0;
     p->eventmask= nulldesc;
-    p->opcodemask= nulldesc;
-    p->eventcount = zerodesc;
-    p->valuemask= nulldesc;
-    p->eventcode= nulldesc;
-    p->eventval = nulldesc;
-    p->eventsource = nulldesc;
+    p->event_queue_head = p->event_queue_tail = 0;
     p->Kywd_err = zerodesc;
     p->Kywd_pos = onedesc;
     p->Kywd_why = emptystr;
     p->Kywd_subject = emptystr;
     p->Kywd_ran = zerodesc;
+    MakeInt(500, &p->Kywd_maxlevel);
     p->K_errornumber = 0;
     p->T_errornumber = 0;
     p->Have_errval = 0;
@@ -737,25 +599,18 @@ static void initprogstate(struct progstate *p)
     p->K_errorvalue = nulldesc;
     p->T_errorvalue = nulldesc;
     p->T_errortext = emptystr;
-    p->Coexp_ser = 2;
+    p->Coexp_ser = 1;
     p->List_ser = 1;
     p->Set_ser = 1;
     p->Table_ser = 1;
     gettimeofday(&p->start_time, 0);
-    p->Lastop = 0;
-    p->Xargp = NULL;
-    p->Xnargs = 0;
-    p->Xfno = 0;
-    p->Value_tmp = nulldesc;
 
-    p->stringtotal = p->blocktotal = p->stattotal = p->statcurr =
-        p->colluser = p->collstat = p->collstr = p->collblk = 0;
-    p->statcount = 0;
+    p->stringtotal = p->blocktotal = p->stackcurr = p->colluser = 
+        p->collstack = p->collstr = p->collblk = 0;
 
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;
     p->Cptable = cptable_0;
-    p->Interp = interp_0;
     p->Cnvcset = cnv_cset_0;
     p->Cnvucs = cnv_ucs_0;
     p->Cnvint = cnv_int_0;
@@ -763,6 +618,7 @@ static void initprogstate(struct progstate *p)
     p->Cnvstr = cnv_str_0;
     p->Cnvtstr = cnv_tstr_0;
     p->Deref = deref_0;
+    p->Alccoexp = alccoexp_0;
     p->Alcbignum = alcbignum_0;
     p->Alccset = alccset_0;
     p->Alchash = alchash_0;
@@ -776,7 +632,6 @@ static void initprogstate(struct progstate *p)
     p->Alccast = alccast_0;
     p->Alcmethp = alcmethp_0;
     p->Alcucs = alcucs_0;
-    p->Alcrefresh = alcrefresh_0;
     p->Alcselem = alcselem_0;
     p->Alcstr = alcstr_0;
     p->Alcsubs = alcsubs_0;
@@ -785,9 +640,9 @@ static void initprogstate(struct progstate *p)
     p->Dealcblk = dealcblk_0;
     p->Dealcstr = dealcstr_0;
     p->Reserve = reserve_0;
-    p->FieldAccess = field_access_0;
-    p->InvokefAccess = invokef_access_0;
-    p->Invoke = invoke_0;
+    p->GeneralCall = general_call_0;
+    p->GeneralAccess = general_access_0;
+    p->GeneralInvokef = general_invokef_0;
 }
 
 static void initptrs(struct progstate *p, struct header *h)
@@ -811,9 +666,12 @@ static void initptrs(struct progstate *p, struct header *h)
     p->Eglocs = (struct loc *)(p->Code + h->Statics);
     p->NGlobals = p->Eglobals - p->Globals;
     p->Statics = (dptr)(p->Eglocs);
-    p->Estatics = (dptr)(p->Code + h->Filenms);
+    p->Estatics = (dptr)(p->Code + h->Constants);
     p->NStatics = p->Estatics - p->Statics;
-    p->Filenms = (struct ipc_fname *)(p->Estatics);
+    p->Constants = (dptr)(p->Estatics);
+    p->Econstants = (dptr)(p->Code + h->Filenms);
+    p->NConstants = p->Econstants - p->Constants;
+    p->Filenms = (struct ipc_fname *)(p->Econstants);
     p->Efilenms = (struct ipc_fname *)(p->Code + h->linenums);
     p->Ilines = (struct ipc_line *)(p->Efilenms);
     p->Elines = (struct ipc_line *)(p->Code + h->Strcons);
@@ -822,121 +680,137 @@ static void initptrs(struct progstate *p, struct header *h)
 }
 
 
+#include "initiasm.ri"
 
+static void handle_monitored_prog_exit()
+{
+    curpstate->exited = 1;
+    /* 
+     * Decide whether the prog was run via activating its main coexpression,
+     * or via the get_event function.
+     */
+    if (curpstate->monitor)
+        set_curpstate(curpstate->monitor);
+}
 
 " load a program corresponding to string s as a co-expression."
 
-function{1} lang_Prog_load(s,arglist,
-                           blocksize, stringsize, stacksize)
+function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
    declare {
       tended char *loadstring;
-      C_integer _bs_, _ss_, _stk_;
+      C_integer bs, ss;
       }
    if !cnv:C_string(s,loadstring) then
       runerr(103,s)
-   if !def:C_integer(blocksize, rootblock.size,_bs_) then
+   if !def:C_integer(blocksize, rootblock.size,bs) then
       runerr(101,blocksize)
-   if !def:C_integer(stringsize, rootstring.size,_ss_) then
+   if !def:C_integer(stringsize, rootstring.size,ss) then
       runerr(101,stringsize)
-   if !def:C_integer(stacksize,mstksize,_stk_) then
-      runerr(101,stacksize)
-   abstract {
-      return coexpr
-      }
-   body {
-      struct progstate *pstate;
-      register struct b_coexpr *sblkp;
-      struct ef_marker *newefp;
-      register word *savedsp;
+    body {
+       struct progstate *pstate;
+       tended struct b_coexpr *coex;
+       struct header hdr;
+       FILE *ifile;
+       struct b_proc *main_bp;
+       struct p_frame *new_pf;
+
+       /*
+        * arglist must be a list
+        */
+       if (!is:null(arglist) && !is:list(arglist))
+           runerr(108,arglist);
+
+       /*
+        * open the icode file and read the header
+        */
+       ifile = readhdr(loadstring, &hdr);
+       if (ifile == NULL) {
+           /* The file couldn't be opened (any format error causes termination) */
+           errno2why();
+           fail;
+       }
+
+       /*
+        * Allocate memory for icode and the struct that describes it
+        */
+       MemProtect(pstate = alcprog(hdr.icodesize));
+       MemProtect(coex = alccoexp());
+       coex->creator = curpstate;
+       coex->main_of = coex->program = pstate;
+       coex->activator = coex;
+
+       initprogstate(pstate);
+       pstate->Kywd_time_elsewhere = millisec();
+       pstate->Kywd_time_out = 0;
+       pstate->K_current = pstate->K_main = coex;
+
+       MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
+       MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
+       pstate->stringregion->size = ss;
+       pstate->blockregion->size = bs;
+
+       /*
+        * the local program region list starts out with this region only
+        */
+       pstate->stringregion->prev = NULL;
+       pstate->blockregion->prev = NULL;
+       pstate->stringregion->next = NULL;
+       pstate->blockregion->next = NULL;
+       /*
+        * the global region list links this region with curpstate's
+        */
+       pstate->stringregion->Gprev = curpstate->stringregion;
+       pstate->blockregion->Gprev = curpstate->blockregion;
+       pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
+       pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
+       if (curpstate->stringregion->Gnext)
+           curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
+       curpstate->stringregion->Gnext = pstate->stringregion;
+       if (curpstate->blockregion->Gnext)
+           curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
+       curpstate->blockregion->Gnext = pstate->blockregion;
+
+       CMakeStr(loadstring, &pstate->Kywd_prog);
+       MakeInt(hdr.trace, &pstate->Kywd_trc);
+
+       /*
+        * Establish pointers to icode data regions.		[[I?]]
+        */
+       initptrs(pstate, &hdr);
+       initalloc(pstate);
+       check_version(&hdr, loadstring, ifile);
+       read_icode(&hdr, loadstring, ifile, pstate->Code);
+
+       fclose(ifile);
+
+       resolve(pstate);
+
+       pstate->next = progs;
+       progs = pstate;
 
       /*
-       * Fragments of pseudo-icode to get loaded programs started,
-       * and to handle termination.
-       */
-      static word pstart[7];
-      static word *lterm;
-
-      word *tipc;
-
-      tipc = pstart;
-      *tipc++ = Op_Invoke;
-      *tipc++ = 1;
-      *tipc++ = Op_Coret;
-      *tipc++ = Op_Efail;
-
-      lterm = (word *)(tipc);
-
-      *tipc++ = Op_Cofail;
-      *tipc++ = Op_Agoto;
-      *tipc = (word)lterm;
-
-      /*
-       * arglist must be a list
-       */
-      if (!is:null(arglist) && !is:list(arglist))
-         runerr(108,arglist);
-
-      sblkp = loadicode(loadstring, _bs_,_ss_,_stk_);
-      if (!sblkp) {
-          /* The file couldn't be opened (any format error causes termination) */
-          errno2why();
-          fail;
-      }
-      pstate = sblkp->program;
-
-      savedsp = sp;
-      sp = (word *)(sblkp + 1);
-
-      sblkp->cstate[0] = StackAlign((char *)sblkp + _stk_ - WordSize);
-      sblkp->es_argp = NULL;
-      sblkp->es_gfp = NULL;
-
-      /*
-       * Set up expression frame marker to contain execution of the
-       *  main procedure.  If failure occurs in this context, control
-       *  is transferred to lterm, the address of an ...
-       */
-      newefp = (struct ef_marker *)sp;
-      newefp->ef_failure = lterm;
-      newefp->ef_gfp = 0;
-      newefp->ef_efp = 0;
-      newefp->ef_ilevel = ilevel;
-      sp += Wsizeof(*newefp) - 1;   /* SP now points to last word of efp */
-      sblkp->es_efp = newefp;
-
-      /*
-       * Check whether resolve() found the main procedure.  If not, this
-       * is noted as run-time error 117.  Otherwise, this value is
-       * pushed on the stack.
+       * Check whether resolve() found the main procedure.
        */
       if (!pstate->MainProc)
          fatalerr(117, NULL);
 
-      PushDesc(*pstate->MainProc);
+       main_bp = (struct b_proc *)BlkLoc(*pstate->MainProc);
+       MemProtect(new_pf = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
+       new_pf->fvars->desc[0] = *pstate->MainProc;
+       coex->sp = (struct frame *)new_pf;
+       coex->curr_pf = new_pf;
+       coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
+       coex->failure_label = 0;
 
-      /*
-       * Create a list from arguments using Ollist and push a descriptor
-       * onto new stack.  Then create procedure frame on new stack.  Push
-       * two new null descriptors, and set sblkp->es_sp when all finished.
-       */
-      if (!is:null(arglist)) {
-         PushDesc(arglist);
-         }
-      else {
-         PushNull;
-         {
-         dptr tmpargp = (dptr) (sp - 1);
-         Ollist(0, tmpargp);
-         sp = (word *)tmpargp + 1;
-         }
-         }
-      sblkp->es_sp = (word *)sp;
-      sblkp->es_ipc = pstart;
+       if (main_bp->nparam) {
+           if (is:null(arglist))
+               create_list(0, &new_pf->fvars->desc[1]);
+           else
+               new_pf->fvars->desc[1] = arglist;
+       }
 
       result.dword = D_Coexpr;
-      BlkLoc(result) = (union block *)sblkp;
-
-      sp = savedsp;
+      BlkLoc(result) = (union block *)coex;
 
       return result;
       }
@@ -991,6 +865,12 @@ void resolve(struct progstate *p)
                     if (n < 0 || n >= ElemCount(native_methods))
                         ffatalerr("Native method index out of range: %d", n);
                     pp = (struct b_proc *)native_methods[n];
+                    /* Clone the b_proc for a loaded program; we don't
+                     * want to change the original's reference to the
+                     * corresponding field (pp->field)
+                     */
+                    if (p != &rootpstate) 
+                        pp = clone_b_proc(pp);
                     fname = &p->Fnames[cf->fnum];
                     /* The field name should match the end of the procedure block's name */
                     if (strncmp(StrLoc(*fname),
@@ -1015,7 +895,8 @@ void resolve(struct progstate *p)
                 /* Relocate the name */
                 StrLoc(pp->name) = p->Strcons + (uword)StrLoc(pp->name);
                 /* The entry point */
-                pp->entryp.icode = p->Code + pp->entryp.ioff;
+                pp->icode = (word *)(p->Code + (uword)pp->icode);
+                relocate_code(p, pp->icode);
                 /* The statics */
                 if (pp->nstatic == 0)
                     pp->fstatic = 0;
@@ -1026,7 +907,7 @@ void resolve(struct progstate *p)
                 if (pp->llocs)
                     pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
                 /* The variables */
-                for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
+                for (i = 0; i < pp->nparam + pp->ndynam + pp->nstatic; i++) {
                     StrLoc(pp->lnames[i]) = p->Strcons + (uword)StrLoc(pp->lnames[i]);
                     if (pp->llocs)
                         StrLoc(pp->llocs[i].fname) = p->Strcons + (uword)StrLoc(pp->llocs[i].fname);
@@ -1174,11 +1055,12 @@ void resolve(struct progstate *p)
                      * This is an Icon procedure.  Relocate the entry point and
                      *	the names of the parameters, locals, and static variables.
                      */
-                    pp->entryp.icode = p->Code + pp->entryp.ioff;
+                    pp->icode = (word *)(p->Code + (uword)pp->icode);
+                    relocate_code(p, pp->icode);
                     pp->lnames = (dptr)(p->Code + (uword)pp->lnames);
                     if (pp->llocs)
                         pp->llocs = (struct loc *)(p->Code + (uword)pp->llocs);
-                    for (i = 0; i < abs((int)pp->nparam) + pp->ndynam + pp->nstatic; i++) {
+                    for (i = 0; i < pp->nparam + pp->ndynam + pp->nstatic; i++) {
                         StrLoc(pp->lnames[i]) = p->Strcons + (uword)StrLoc(pp->lnames[i]);
                         if (pp->llocs)
                             StrLoc(pp->llocs[i].fname) = p->Strcons + (uword)StrLoc(pp->llocs[i].fname);
@@ -1199,87 +1081,238 @@ void resolve(struct progstate *p)
     }
 
     /*
+     * Relocate descriptors in the constants table, and their blocks for non-strings.
+     */
+    for (j = 0; j < p->NConstants; j++) {
+        if (Qual(p->Constants[j]))
+            StrLoc(p->Constants[j]) = p->Strcons + (uword)StrLoc(p->Constants[j]);
+        else {
+            union block *b;
+            i = IntVal(p->Constants[j]);
+            b = (union block *)(p->Code + i);
+            BlkLoc(p->Constants[j]) = (union block *)b;
+            if (p->Constants[j].dword == D_Ucs) {
+                struct b_ucs *ub = (struct b_ucs *)b;
+                /* Relocate the utf8 string */
+                StrLoc(ub->utf8) = p->Strcons + (uword)StrLoc(ub->utf8);
+            } else if (p->Constants[j].dword == D_Lrgint) {
+                struct descrip id;
+                dptr sd = (dptr)((word *)b + 1);
+                StrLoc(*sd) = p->Strcons + (uword)StrLoc(*sd);
+                /* Convert the string data to an integer */
+                if (!cnv:integer(*sd, id)) {
+                    ffatalerr("Couldn't convert large integer constant: %.*s", 
+                        (int)StrLen(*sd), StrLoc(*sd));
+                }
+                /* It could be either a simple integer or a large int. */
+                if (id.dword == D_Integer)
+                    p->Constants[j] = id;
+                else {
+                    /* It must be a large int; copy the block from the block region to the heap
+                     * since constants are not swept during collection.
+                     */
+                    MemProtect(BlkLoc(p->Constants[j]) = malloc(BlkLoc(id)->bignum.blksize));
+                    memcpy(BlkLoc(p->Constants[j]), BlkLoc(id), BlkLoc(id)->bignum.blksize);
+                }
+            }
+        }
+    }
+
+    /*
      * Relocate the names of the files in the ipc->filename table.
      */
     for (fnptr = p->Filenms; fnptr < p->Efilenms; ++fnptr)
         StrLoc(fnptr->fname) = p->Strcons + (uword)StrLoc(fnptr->fname);
 }
 
+
+
+
+
+#ifdef MSWindows
+
+/*
+ * CmdParamToArgv() - convert a command line to an argv array.  Return argc.
+ * Called for both input processing (e.g. in WinMain()) and in output
+ * (e.g. in mswinsystem()).  Behavior differs in that output does not
+ * remove double quotes from quoted arguments, otherwise receiving process
+ * (if a win32 process) would lose quotedness.
+ */
+int CmdParamToArgv(char *s, char ***avp, int dequote)
+{
+    char tmp[MaxPath], dir[MaxPath];
+    char *t=salloc(s), *t2=t;
+    int rv=0, i=0;
+    FILE *f=NULL;
+
+    *avp = malloc(2 * sizeof(char *));
+    (*avp)[rv] = NULL;
+
+
+    while (*t2) {
+        while (*t2 && isspace((unsigned char)*t2)) t2++;
+        switch (*t2) {
+            case '\0': break;
+            case '"': {
+                char *t3, c = '\0';
+                if (dequote) t3 = ++t2;			/* skip " */
+                else t3 = t2++;
+
+                while (*t2 && (*t2 != '"')) t2++;
+                if (*t2 && !dequote) t2++;
+                if (c = *t2) {
+                    *t2++ = '\0';
+                }
+                *avp = realloc(*avp, (rv + 2) * sizeof (char *));
+                (*avp)[rv++] = salloc(t3);
+                (*avp)[rv] = NULL;
+                if(!dequote && c) *--t2 = c;
+
+                break;
+	    }
+            default: {
+                char *t3 = t2;
+                while (*t2 && !isspace((unsigned char)*t2)) t2++;
+                if (*t2)
+                    *t2++ = '\0';
+                strcpy(tmp, t3);
+		*avp = realloc(*avp, (rv + 2) * sizeof (char *));
+		(*avp)[rv++] = salloc(t3);
+		(*avp)[rv] = NULL;
+                break;
+	    }
+        }
+    }
+    free(t);
+    return rv;
+}
+
+char *lognam;
+char tmplognam[128];
+
+void MSStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance)
+{
+    WNDCLASS wc;
+    if (!hPrevInstance) {
+        wc.style = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc = WndProc;
+        wc.cbClsExtra = 0;
+        wc.cbWndExtra = 0;
+        wc.hInstance  = hInstance;
+        wc.hIcon      = NULL;
+        wc.hCursor    = NULL;
+        wc.hbrBackground = GetStockObject(WHITE_BRUSH);
+        wc.lpszMenuName = NULL;
+        wc.lpszClassName = "oix";
+        RegisterClass(&wc);
+    }
+}
+
+int iconx(int argc, char **argv);
+
+jmp_buf mark_sj;
+
+int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpszCmdLine, int nCmdShow)
+{
+    int argc;
+    char **argv;
+
+    mswinInstance = hInstance;
+    ncmdShow = nCmdShow;
+
+    argc = CmdParamToArgv(GetCommandLine(), &argv, 1);
+    MSStartup(hInstance, hPrevInstance);
+    if (setjmp(mark_sj) == 0)
+        iconx(argc,argv);
+    while (--argc>=0)
+        free(argv[argc]);
+    free(argv);
+    wfreersc();
+#ifdef NTGCC
+    _exit(0);
+#endif					/* NTGCC */
+    return 0;
+}
+#define main iconx
+#endif					/* MSWindows */
+
+int main(int argc, char **argv)
+{
+    int i;
+    struct fileparts *fp;
+    struct b_proc *main_bp;
+    struct p_frame *frame;
+
+#if MSWIN32
+    WSADATA cData;
+    WSAStartup(MAKEWORD(2, 0), &cData);
+#endif
+
+    fp = fparse(argv[0]);
+
+    /*
+     * if argv[0] is not a reference to our interpreter, take it as the
+     * name of the icode file, and back up for it.
+     */
+    if (!smatch(fp->name, "oix")) {
+        argv--;
+        argc++;
+    }
+
+    if (argc < 2) 
+        startuperr("no icode file specified");
+
+    /*
+     * Call icon_init with the name of the icode file to execute.	[[I?]]
+     */
+    icon_init(argv[1]);
+
+    /*
+     * Check whether resolve() found the main procedure.  If not, exit.
+     */
+    if (!main_proc)
+        fatalerr(117, NULL);
+
+    main_bp = (struct b_proc *)BlkLoc(*main_proc);
+
+    MemProtect(frame = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
+    frame->fvars->desc[0] = *main_proc;
+    /*
+     * Only create an args list if main has a parameter; otherwise args[1]
+     * is just left as &null.
+     */
+    if (main_bp->nparam) {
+        tended struct descrip args;
+        create_list(argc - 2, &args);
+        for (i = 2; i < argc; i++) {
+            struct descrip t;
+            CMakeStr(argv[i], &t);
+            list_put(&args, &t);
+        }
+        frame->fvars->desc[1] = args;
+    }
+    rootpstate.K_current->sp = (struct frame *)frame;
+    curr_pf = rootpstate.K_current->curr_pf = frame;
+    ipc = rootpstate.K_current->start_label = frame->ipc = frame->proc->icode;
+    rootpstate.K_current->failure_label = 0;
+
+    set_up = 1;			/* post fact that iconx is initialized */
+    interp();
+    c_exit(EXIT_SUCCESS);
+
+    return 0;
+}
+
+
+
+
+
 /*
  * The rest of the functions here are just debugging utilities.
  */
 
-void *get_csp()
-{
-    int dummy = 0;
-    unsigned long l;
-    l = (long)&dummy;
-    return (void*)l;
-}
 
-void checkstack()
-{
-    static int worst = MaxInt;
-    long free;
-    if (curpstate->K_current == rootpstate.K_main)
-        return;
-    free = (char*)get_csp() - (char*)sp;
-    if (free < worst) {
-        fprintf(stderr, "A new low in stack space: %ld\n",free);
-        fflush(stderr);
-        worst = free;
-    }
-}
-
-void showcoexps()
-{
-    struct b_coexpr *p;
-    struct progstate *q;
-    void *csp = get_csp();
-
-    printf("Coexpressions\n");
-    printf("Coexp       program     main_of     size        es_sp       C sp        ipc         pfp         argp\n");
-    printf("----------------------------------------------------------------------------------------------------\n");
-    for (p = stklist; p; p = p->nextstk) {
-        printf("%-12p%-12p%-12p%-12ld%-12p%-12p%-12p%-12p%-12p\n",
-               p,
-               p->program,
-               p->main_of,
-               (long)p->size,
-               p->es_sp,
-               (char*)p->cstate[0],
-               p->es_ipc,
-               p->es_pfp,
-               p->es_argp);
-    }
-
-    printf("\nProgstates\n");
-    printf("Addr        Code        Ecode       &main       &current    Name\n");
-    printf("----------------------------------------------------------------------------\n");
-    for (q = progs; q; q = q->next) {
-        printf("%-12p%-12p%-12p%-12p%-12p%s\n", 
-               q, 
-               q->Code, 
-               q->Ecode,
-               q->K_main,
-               q->K_current,
-               cstr(&q->Kywd_prog));
-    }
-
-    printf("\nVariables\n");
-    printf("curpstate=%p rootpstate=%p &main=%p &current=%p\n", 
-           curpstate, 
-           &rootpstate,
-           curpstate->K_main,
-           curpstate->K_current);
-
-    if (curpstate->K_current != rootpstate.K_main)
-        printf("ilevel=%d ISP=%p CSP=%p (clearance %ld)\n", ilevel,sp, csp, (long)((char*)csp - (char*)sp));
-    else
-        printf("ilevel=%d ISP=%p CSP=%p\n", ilevel,sp, csp);
-
-    fflush(stdout);
-}
 
 int valid_addr(void *p) 
 {
@@ -1291,27 +1324,6 @@ int valid_addr(void *p)
 #endif
 }
 
-static int isdescrip(word *p){
-    struct descrip *d = (struct descrip *)p;
-    word i = d->dword;
-
-    if (Qual(*d))
-        return StrLen(*d) == 0 || valid_addr(StrLoc(*d));
-
-    if (i==D_Null || i==D_Integer)
-        return 1;
-
-    if (is:struct_var(*d) || i==D_NamedVar || i==D_Lrgint || i==D_Real ||
-            i==D_Cset || i==D_Proc || i==D_Record || i==D_List ||
-            i==D_Lelem || i==D_Set || i==D_Selem || i==D_Table || i==D_Telem ||
-            i==D_Tvtbl || i==D_Slots || i==D_Tvsubs || i==D_Refresh || i==D_Coexpr ||
-            i==D_Kywdint || i==D_Kywdpos || i==D_Kywdsubj ||
-            i==D_Kywdstr || i==D_Kywdany || i==D_Class || i==D_Object || i==D_Cast ||
-            i==D_Constructor || i==D_Methp || i==D_Ucs)
-        return valid_addr(BlkLoc(*d));
-
-    return 0;
-}
 
 char *binstr(unsigned int n)
 {
@@ -1342,6 +1354,7 @@ void print_desc(FILE *f, dptr d) {
     fputs(", ", f); 
     print_vword(f, d);
     putc('}', f);
+    fflush(f);
 }
 
 void print_vword(FILE *f, dptr d) {
@@ -1384,6 +1397,11 @@ void print_vword(FILE *f, dptr d) {
                 break;
             }
 
+            case D_TendPtr : {
+                fprintf(f, "%p", BlkLoc(*d));
+                break;
+            }
+
             case D_Null : {
                 fputs("0", f); 
                 break;
@@ -1398,8 +1416,6 @@ void print_vword(FILE *f, dptr d) {
             case D_Selem :
             case D_Telem :
             case D_Slots :
-            case D_Refresh :
-
             case D_Proc : {
                 struct b_proc *p = (struct b_proc*)BlkLoc(*d);
                 fprintf(f, "%p -> prog:%p=", p, p->program);
@@ -1452,6 +1468,7 @@ void print_dword(FILE *f, dptr d) {
         fprintf(f, "D_StructVar off:%lu", (unsigned long)Offset(*d));
     } else {
         switch (d->dword) {
+            case D_TendPtr : fputs("D_TendPtr", f); break;
             case D_NamedVar : fputs("D_NamedVar", f); break;
             case D_Tvsubs : fputs("D_Tvsubs", f); break;
             case D_Tvtbl : fputs("D_Tvtbl", f); break;
@@ -1474,7 +1491,6 @@ void print_dword(FILE *f, dptr d) {
             case D_Table : fputs("D_Table", f); break;
             case D_Telem : fputs("D_Telem", f); break;
             case D_Slots : fputs("D_Slots", f); break;
-            case D_Refresh : fputs("D_Refresh", f); break;
             case D_Coexpr : fputs("D_Coexpr", f); break;
             case D_Class : fputs("D_Class", f); break;
             case D_Object : fputs("D_Object", f); break;
@@ -1487,153 +1503,455 @@ void print_dword(FILE *f, dptr d) {
     }
 }
 
-static int isframe_pf(struct pf_marker *pf, word *p);
-static int isframe_ef(struct ef_marker *ef, word *p);
-static int isframe_gf(struct gf_marker *gf, word *p);
-
-enum frames { not=0, PF, EF, GF };
-
-static int isframe(word *p) {
-    int i;
-    if ((i = isframe_pf(pfp,p)) ||
-        (i = isframe_ef(efp,p)) ||
-        (i = isframe_gf(gfp,p)))
-        return i;
-    return 0;
-}
-
-static int isframe_pf(struct pf_marker *pf, word *p) {
-    int i;
-    if (!pf)
-        return 0;
-    if (p == (word*)pf)
-        return PF;
-    if ((i = isframe_pf(pf->pf_pfp,p)) ||
-        (i = isframe_ef(pf->pf_efp,p)) ||
-        (i = isframe_gf(pf->pf_gfp,p)))
-        return i;
-    return 0;
-}
-
-static int isframe_ef(struct ef_marker *ef, word *p) {
-    int i;
-    if (!ef)
-        return 0;
-    if (p == (word*)ef)
-        return EF;
-    if ((i = isframe_ef(ef->ef_efp,p)) ||
-        (i = isframe_gf(ef->ef_gfp,p)))
-        return i;
-    return 0;
-}    
-
-static int isframe_gf(struct gf_marker *gf, word *p) 
+void showcurrstack()
 {
-    int i;
-    if (!gf)
-        return 0;
-    if (p == (word*)gf)
-        return GF;
-    if ((i = isframe_ef(gf->gf_efp,p)) ||
-        (i = isframe_gf(gf->gf_gfp,p)))
-/*        (i = isframe_pf(gf->gf_pfp,p))) */
-        return i;
-    return 0;
-}    
-
-char *ptr(void *p) {
-    if (p == pfp)
-        return "pfp->";
-    else if (p == efp)
-        return "efp->";
-    else if (p == gfp)
-        return "gfp->";
-    else if (p == sp)
-        return "sp->";
-    else if (p == argp)
-        return "argp->";
-    else
-        return "";
-}
-
-void showstack()
-{
-    struct b_coexpr *c;
-    word *p;
-
-    printf("Stack sp=%p efp=%p gfp=%p pfp=%p ipc=%p\n",sp,efp,gfp,pfp,ipc);
-    c = k_current;
-    if (!c) {
+    if (!k_current) {
         printf("curpstate=%p k_current is 0\n",curpstate);
         return;
     }    
-    printf("kcurr->\t%p\tcoex\ttitle=%ld\n", c, (long)c->title);
-    printf("\t\t\tsize=%ld\n",(long)c->size);
-    printf("\t\t\tid=%ld\n",(long)c->id);
-    printf("\t\t\tnextstk=%p\n",c->nextstk);
-    printf("\t\t\tes_pfp=%p\n",c->es_pfp);
-    printf("\t\t\tes_efp=%p\n",c->es_efp);
-    printf("\t\t\tes_gfp=%p\n",c->es_gfp);
-    printf("\t\t\tes_ipc=%p\n",c->es_ipc);
-    printf("\t\t\tes_ilevel=%ld\n",(long)c->es_ilevel);
-    printf("\t\t\tprogram=%p\n",c->program);
+    printf("ipc=%p k_current= %p k_current->sp=%p k_current->curr_pf=%p\n",
+           ipc, k_current, k_current->sp, k_current->curr_pf);
+    showstack(k_current);
+}
 
-    if (c == rootpstate.K_main) {
-        p = stack + Wsizeof(struct b_coexpr);
-    } else {
-        p = (word *)(c + 1);
-    }
-
-    while (p <= sp) {
-        int ft = isframe(p);
-        if (ft == GF) {
-            struct gf_marker *t = (struct gf_marker*)p;
-            printf("%s\t%p\tgfp\tgf_gentype=%ld\n",ptr(p),p,(long)t->gf_gentype);
-            printf("\t\t\tgf_efp=%p\n",t->gf_efp);
-            printf("\t\t\tgf_gfp=%p\n",t->gf_gfp);
-            printf("%s\t\t\tgf_ipc=%p\n",ptr(&t->gf_ipc),t->gf_ipc);
-            /* Is it a small marker or not */
-            if (t->gf_gentype == G_Psusp) {
-                printf("\t\t\tgf_pfp=%p\n",t->gf_pfp);
-                printf("%s\t\t\tgf_argp=%p\n",ptr(&t->gf_argp),t->gf_argp);
-                p += sizeof(struct gf_marker)/sizeof(word);
-            } else {
-                p += sizeof(struct gf_smallmarker)/sizeof(word);
+void showstack(struct b_coexpr *c)
+{
+    struct frame *f;
+    f = c->sp;
+    while (f) {
+        struct descrip tmp;
+        int i;
+        if (f == c->sp)
+            printf("SP-> ");
+        if (f == (struct frame *)c->curr_pf)
+            printf("PF-> ");
+        printf("Frame %p type=%c, size=%d\n", f, 
+               f->type == C_FRAME_TYPE ? 'C':'P', 
+               f->size);
+        printf("\tvalue="); print_desc(stdout, &f->value); printf("\n");
+        printf("\tfailure_label=%p\n", f->failure_label);
+        tmp.dword = D_Proc;
+        BlkLoc(tmp) = (union block *)f->proc;
+        printf("\tproc="); print_vword(stdout, &tmp); printf("\n");
+        printf("\tparent_sp=%p\n", f->parent_sp);
+        printf("\texhausted=%d\n", f->exhausted);
+        printf("\trval=%d\n", f->rval);
+        switch (f->type) {
+            case C_FRAME_TYPE: {
+                struct c_frame *cf = (struct c_frame *)f;
+                printf("\tpc=%p\n", cf->pc);
+                printf("\tnargs=%d\n", cf->nargs);
+                for (i = 0; i < cf->nargs; ++i) {
+                    printf("\targs[%d]=", i); print_desc(stdout, &cf->args[i]); printf("\n");
+                }
+                for (i = 0; i < f->proc->ntend; ++i) {
+                    printf("\ttend[%d]=", i); print_desc(stdout, &cf->tend[i]); printf("\n");
+                }
+                break;
             }
-        } else if (ft == EF) {
-            struct ef_marker *t = (struct ef_marker*)p;
-            printf("%s\t%p\tefp\tef_failure=%p\n",ptr(p),p,t->ef_failure);
-            printf("\t\t\tef_efp=%p\n",t->ef_efp);
-            printf("\t\t\tef_gfp=%p\n",t->ef_gfp);
-            printf("%s\t\t\tef_ilevel=%ld\n",ptr(&t->ef_ilevel),(long)t->ef_ilevel);
-            p += sizeof(struct ef_marker)/sizeof(word);
-        } else if (ft == PF) {
-            struct pf_marker *t = (struct pf_marker*)p;
-            printf("%s\t%p\tpfp\tn_args=%ld\n",ptr(p),p,(long)t->pf_nargs);
-            printf("\t\t\tpf_pfp=%p\n",t->pf_pfp);
-            printf("\t\t\tpf_efp=%p\n",t->pf_efp);
-            printf("\t\t\tpf_gfp=%p\n",t->pf_gfp);
-            printf("\t\t\tpf_argp=%p\n",t->pf_argp);
-            printf("\t\t\tpf_ipc=%p\n",t->pf_ipc);
-            printf("\t\t\tpf_ilevel=%ld\n",(long)t->pf_ilevel);
-            printf("\t\t\tpf_scan=%p\n",t->pf_scan);
-            printf("\t\t\tpf_from=%p\n",t->pf_from);
-            printf("%s\t\t\tpf_to=%p\n",ptr(&t->pf_to),t->pf_to);
-            p += (sizeof(struct pf_marker)-sizeof(struct descrip))/sizeof(word);
-        } else if (isdescrip(p)) {
-            dptr d = (dptr)p;
-            printf("%s\t%p\tdescrip\t", ptr(p), p);
-            print_dword(stdout, d);
-            putc('\n', stdout);
-            printf("%s\t\t\t", ptr(&d->vword));
-            print_vword(stdout, d);
-            putc('\n', stdout);
-            p += sizeof(struct descrip)/sizeof(word);
-        } else {
-            printf("%s\t%p\t?\t%lx\n",ptr(p),p,(long)*p);
-            ++p;
+            case P_FRAME_TYPE: {
+                struct p_frame *pf = (struct p_frame *)f;
+                dptr np, dp;
+                int j;
+                printf("\tipc=%p\n", pf->ipc);
+                printf("\tcaller=%p\n", pf->caller);
+                for (i = 0; i < f->proc->nclo; ++i) {
+                    printf("\tclo[%d]=%p\n", i, pf->clo[i]);
+                }
+                for (i = 0; i < f->proc->ntmp; ++i) {
+                    printf("\ttmp[%d]=", i); print_desc(stdout, &pf->tmp[i]); printf("\n");
+                }
+                for (i = 0; i < f->proc->nlab; ++i) {
+                    printf("\tlab[%d]=%p\n", i, pf->lab[i]);
+                }
+                for (i = 0; i < f->proc->nmark; ++i) {
+                    printf("\tmark[%d]=%p\n", i, pf->mark[i]);
+                }
+                printf("\tfvars=%p, size=%d\n", pf->fvars, pf->fvars->size);
+                i = 0;
+                np = f->proc->lnames;
+                dp = pf->fvars->desc;
+                for (j = 0; j < f->proc->nparam; ++j) {
+                    if (np) {
+                        printf("\t   fvars.desc[%d] (arg %.*s)=", i, (int)StrLen(*np), StrLoc(*np)); 
+                        ++np;
+                    } else
+                        printf("\t   fvars.desc[%d] (arg %d)=", i, j);
+                    print_desc(stdout, dp++); printf("\n");
+                    ++i;
+                }
+                for (j = 0; j < f->proc->ndynam; ++j) {
+                    if (np) {
+                        printf("\t   fvars.desc[%d] (local %.*s)=", i, (int)StrLen(*np), StrLoc(*np)); 
+                        ++np;
+                    } else
+                        printf("\t   fvars.desc[%d] (local %d)=", i, j);
+                    print_desc(stdout, dp++); printf("\n");
+                    ++i;
+                }
+                printf("\t   fvars.desc-desc_end=%p-%p\n", pf->fvars->desc, pf->fvars->desc_end);
+                printf("\t   fvars.refcnt=%d\n", pf->fvars->refcnt);
+                printf("\t   fvars.seen=%d\n", pf->fvars->seen);
+                break;
+            }
+            default:
+                syserr("Unknown frame type");
+        }
+        f = f->parent_sp;
+
+    }
+    printf("------bottom of stack--------\n");
+    fflush(stdout);
+}
+
+static word *pc;
+static struct progstate *prog;
+
+static void conv_addr()
+{
+    /*printf("conv_addr: pc=%p(%d)\n", pc, (char *)pc - prog->Code);*/
+    *pc = (word)((char *)pc + *pc);
+    ++pc;
+}
+
+static void conv_var()
+{
+    /*printf("conv_var: pc=%p(%d) ->op %d (%s)\n", pc, (char *)pc - prog->Code, (int)*pc, op_names[*pc]);*/
+    switch (*pc++) {
+        case Op_Knull:
+        case Op_Nil: {
+            break;
+        }
+        case Op_Static: {
+            *pc = (word)&prog->Statics[*pc]; 
+            ++pc;
+            break;
+        }
+        case Op_Global: {
+            *pc = (word)&prog->Globals[*pc];
+            ++pc;
+            break;
+        }
+        case Op_Const: {
+            *pc = (word)&prog->Constants[*pc];
+            ++pc;
+            break;
+        }
+
+        case Op_Int:
+        case Op_FrameVar:
+        case Op_Closure:
+        case Op_Tmp: {
+            ++pc;
+            break;
+        }
+
+        default: {
+            syserr("Invalid opcode in conv_var: %d\n", (int)pc[-1]);
+            break;
         }
     }
-    printf("--------\n");
-    fflush(stdout);
+}
+
+static void relocate_code(struct progstate *ps, word *c)
+{
+    prog = ps;
+    pc = c;
+    for (;;) {
+        /*printf("relocate_code: pc=%p(%d) ->op %d (%s)\n", pc, (char *)pc - prog->Code, (int)*pc, op_names[*pc]);*/
+        switch (*pc++) {
+            case Op_Goto: {
+                conv_addr();
+                break;
+            }
+            case Op_IGoto:
+            case Op_Mark:
+            case Op_Unmark: {
+                ++pc;
+                break;
+            }
+            case Op_MoveVar:
+            case Op_Move: {
+                conv_var();
+                conv_var();
+                break;
+            }
+
+            case Op_MoveLabel: {
+                ++pc;
+                conv_addr();
+                break;
+            }
+
+            /* Binary ops */
+            case Op_Asgn:
+            case Op_Power:
+            case Op_Cat:
+            case Op_Diff:
+            case Op_Eqv:
+            case Op_Inter:
+            case Op_Subsc:
+            case Op_Lconcat:
+            case Op_Lexeq:
+            case Op_Lexge:
+            case Op_Lexgt:
+            case Op_Lexle:
+            case Op_Lexlt:
+            case Op_Lexne:
+            case Op_Minus:
+            case Op_Mod:
+            case Op_Neqv:
+            case Op_Numeq:
+            case Op_Numge:
+            case Op_Numgt:
+            case Op_Numle:
+            case Op_Numlt:
+            case Op_Numne:
+            case Op_Plus:
+            case Op_Div:
+            case Op_Mult:
+            case Op_Swap:
+            case Op_Unions: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            /* Unary ops */
+            case Op_Value:
+            case Op_Nonnull:
+            case Op_Refresh:
+            case Op_Number:
+            case Op_Compl:
+            case Op_Neg:
+            case Op_Size:
+            case Op_Random:
+            case Op_Null: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            /* Unary closures */
+            case Op_Tabmat:
+            case Op_Bang: {
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            /* Binary closures */
+            case Op_Rasgn:
+            case Op_Rswap:{
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Toby: {
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                conv_var();  /* arg3 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Sect: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                conv_var();  /* arg3 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Keyop: {
+                ++pc;            /* keyword */
+                conv_var();  /* lhs */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Keyclo: {
+                pc += 2;         /* keyword, clo */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Resume: {
+                ++pc;            /* clo */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Pop: {
+                break;
+            }
+
+            case Op_PopRepeat: {
+                break;
+            }
+
+            case Op_Fail: {
+                break;
+            }
+
+            case Op_Return:
+            case Op_Suspend: {
+                conv_var();  /* val */
+                break;
+            }
+
+            case Op_ScanSwap: {
+                pc += 2;
+                break;
+            }
+
+            case Op_ScanRestore: {
+                pc += 2;
+                break;
+            }
+
+            case Op_ScanSave: {
+                conv_var();  /* val */
+                pc += 2;     /* tmp indices */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Limit: {
+                conv_var();  /* limit */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Invoke: {
+                word n;
+                ++pc;            /* clo */
+                conv_var();  /* expr */
+                n = *pc++;       /* argc */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                while (n--)
+                    conv_var();  /* arg */
+                break;
+            }
+
+            case Op_Apply: {
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Invokef: {
+                word n;
+                ++pc;            /* clo */
+                conv_var();  /* expr */
+                pc += 3;         /* fnum, inline cache */
+                n = *pc++;       /* argc */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                while (n--)
+                    conv_var();  /* arg */
+                break;
+            }
+
+            case Op_Applyf: {
+                ++pc;            /* clo */
+                conv_var();  /* arg1 */
+                pc += 3;         /* fnum, inline cache */
+                conv_var();  /* arg2 */
+                ++pc;            /* rval */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_EnterInit: {
+                conv_addr();
+                break;
+            }
+
+            case Op_Custom: {
+                ++pc;
+                break;
+            }
+
+            case Op_Halt: {
+                break;
+            }
+
+            case Op_SysErr: {
+                break;
+            }
+
+            case Op_MakeList: {
+                int n;
+                conv_var();  /* lhs */
+                n = *pc++;       /* argc */
+                while (n--)
+                    conv_var();  /* arg */
+                break;
+            }
+
+            case Op_Field: {
+                conv_var();  /* lhs */
+                conv_var();  /* expr */
+                pc += 3;         /* fnum, inline cache */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Create: {
+                conv_var();  /* lhs */
+                conv_addr(); /* start label */
+                break;
+            }
+
+            case Op_Coact: {
+                conv_var();  /* lhs */
+                conv_var();  /* arg1 */
+                conv_var();  /* arg2 */
+                conv_addr(); /* failure label */
+                break;
+            }
+
+            case Op_Coret: {
+                conv_var();  /* value */
+                break;
+            }
+
+            case Op_Cofail: {
+                break;
+            }
+
+            case Op_Exit: {
+                break;
+            }
+
+            case Op_EndProc: {
+                return;
+            }
+
+            default: {
+                syserr("relocate_code: Unimplemented opcode %d (%s)\n", (int)pc[-1], op_names[pc[-1]]);
+                break; /* Not reached */
+            }
+        }
+    }
 }

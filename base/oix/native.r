@@ -253,40 +253,7 @@ function{0,1} is(o, target)
     }
 end
 
-function{1} lang_Prog_get_parent(c)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&c)))
-          runerr(0);
-
-      if (prog->parent == NULL) 
-          fail;
-
-      return coexpr(prog->parent->K_main);
-    }
-end
-
-function{0,1} lang_Prog_send_event(x,y,ce)
-   body {
-      struct progstate *dest;
-
-      if (is:null(x)) {
-	 x = curpstate->eventcode;
-	 if (is:null(y)) y = curpstate->eventval;
-      }
-      if (!(dest = get_program_for(&ce)))
-          runerr(0);
-      dest->eventcode = x;
-      dest->eventval = y;
-      if (mt_activate(&(dest->eventcode),&result,
-			 (struct b_coexpr *)BlkLoc(ce)) == A_Cofail) {
-         fail;
-         }
-       return result;
-      }
-end
-
-function{1} lang_Prog_get_eventmask(ce)
+function{1} lang_Prog_get_event_mask(ce)
    body {
        struct progstate *prog;
        if (!(prog = get_program_for(&ce)))
@@ -295,7 +262,7 @@ function{1} lang_Prog_get_eventmask(ce)
    }
 end
 
-function{1} lang_Prog_set_eventmask(cs, ce)
+function{1} lang_Prog_set_event_mask(cs, ce)
    if !cnv:cset(cs) then 
       runerr(104,cs)
    body {
@@ -307,49 +274,6 @@ function{1} lang_Prog_set_eventmask(cs, ce)
            assign_event_functions(prog, cs);
        }
        return cs;
-   }
-end
-
-function{1} lang_Prog_get_valuemask(ce)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&ce)))
-          runerr(0);
-       return prog->valuemask;
-   }
-end
-
-function{1} lang_Prog_set_valuemask(vmask, ce)
-   if !is:table(vmask) then
-      runerr(124,vmask)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&ce)))
-          runerr(0);
-       prog->valuemask = vmask;
-       return vmask;
-   }
-end
-
-
-function{1} lang_Prog_set_opmask(cs, ce)
-   if !cnv:cset(cs) then 
-      runerr(104,cs)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&ce)))
-          runerr(0);
-       prog->opcodemask = cs;
-       return cs;
-   }
-end
-
-function{1} lang_Prog_get_opmask(ce)
-   body {
-       struct progstate *prog;
-       if (!(prog = get_program_for(&ce)))
-          runerr(0);
-       return prog->opcodemask;
    }
 end
 
@@ -401,35 +325,21 @@ function{*} lang_Prog_get_keyword(s,c)
           }
           case 5 : {
               if (strncmp(t,"file",4) == 0) {
-                  word *i;
                   struct ipc_fname *t;
-
                   /* If the prog's &current isn't in this program, we can't look up
                    * the file in this program's table */
                   if (p->K_current->program != p)
                       fail;
-                  /* If the prog's &current is the currently executing coexpression, take
-                   * the ipc, otherwise the stored ipc in the coexpression block
-                   */
-                  if (p->K_current == k_current)
-                      i = ipc;
-                  else
-                      i = p->K_current->es_ipc;
-                  t = find_ipc_fname(i, 0, p);
+                  t = frame_ipc_fname(p->K_current->curr_pf, 0);
                   if (!t)
                       fail;
                   return t->fname;
               }
               if (strncmp(t,"line",4) == 0) {
-                  word *i;
                   struct ipc_line *t;
                   if (p->K_current->program != p)
                       fail;
-                  if (p->K_current == k_current)
-                      i = ipc;
-                  else
-                      i = p->K_current->es_ipc;
-                  t = find_ipc_line(i, 0, p);
+                  t = frame_ipc_line(p->K_current->curr_pf, 0);
                   if (!t)
                       fail;
                   return C_integer t->line;
@@ -462,7 +372,7 @@ function{*} lang_Prog_get_keyword(s,c)
                   return kywdint(&(p->Kywd_ran));
               }
               if (strncmp(t,"source",6) == 0) {
-                  struct b_coexpr *a = p->K_current->es_activator;
+                  struct b_coexpr *a = p->K_current->activator;
                   if (!a)  /* It will be 0 for a just-loaded program */
                      fail;
                   return coexpr(a);
@@ -479,6 +389,9 @@ function{*} lang_Prog_get_keyword(s,c)
               break;
           }
           case 9 : {
+              if (strncmp(t,"maxlevel",8) == 0) {
+                  return kywdint(&(p->Kywd_maxlevel));
+              }
               if (strncmp(t,"progname",8) == 0) {
                   return kywdstr(&(p->Kywd_prog));
               }
@@ -488,9 +401,6 @@ function{*} lang_Prog_get_keyword(s,c)
               if (strncmp(t,"errortext",9) == 0) {
                   return p->K_errortext;
               }
-              if (strncmp(t,"eventcode",9) == 0) {
-                  return kywdany(&(p->eventcode));
-              }
               break;
           }
 
@@ -498,17 +408,11 @@ function{*} lang_Prog_get_keyword(s,c)
               if (strncmp(t,"errorvalue",10) == 0) {
                   return p->K_errorvalue;
               }
-              if (strncmp(t,"eventvalue",10) == 0) {
-                  return kywdany(&(p->eventval));
-              }
               break;
           }
           case 12 : {
               if (strncmp(t,"errornumber",11) == 0) {
                   return C_integer p->K_errornumber;
-              }
-              if (strncmp(t,"eventsource",11) == 0) {
-                  return kywdany(&(p->eventsource));
               }
               break;
           }
@@ -677,7 +581,7 @@ function{1} lang_Prog_get_collection_info_impl(c)
        create_list(4, &result);
        MakeInt(prog->colluser, &tmp);
        list_put(&result, &tmp);
-       MakeInt(prog->collstat, &tmp);
+       MakeInt(prog->collstack, &tmp);
        list_put(&result, &tmp);
        MakeInt(prog->collstr, &tmp);
        list_put(&result, &tmp);
@@ -695,9 +599,7 @@ function{1} lang_Prog_get_allocation_info_impl(c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       create_list(3, &result);
-       convert_from_ulonglong(prog->stattotal, &tmp);
-       list_put(&result, &tmp);
+       create_list(2, &result);
        convert_from_ulonglong(prog->stringtotal, &tmp);
        list_put(&result, &tmp);
        convert_from_ulonglong(prog->blocktotal, &tmp);
@@ -717,10 +619,7 @@ function{1} lang_Prog_get_region_info_impl(c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
-       create_list(3, &result);
-
-       MakeInt(prog->statcurr, &tmp);
-       list_put(&result, &tmp);
+       create_list(2, &result);
 
        n = 0;
        for (rp = prog->stringregion; rp; rp = rp->next)
@@ -766,46 +665,12 @@ function{1} lang_Prog_get_region_info_impl(c)
    }
 end
 
-function{1} lang_Prog_get_stack_info_impl(c)
+function{1} lang_Prog_get_stack_used(c)
    body {
-       word *top, *bottom, *isp;
-       struct b_coexpr *ce;
-       struct descrip tmp;
-
-       if (is:null(c))
-           ce = k_current;
-       else if (is:coexpr(c))
-           ce = (struct b_coexpr *)BlkLoc(c);
-       else
-           runerr(118,c);
-
-       top = (word *)(ce + 1);
-       if (ce == rootpstate.K_main) {
-           bottom = stackend;
-           if (ce == k_current)
-               isp = sp;
-           else
-               isp = ce->es_sp;
-       } else {
-           if (ce == k_current) {
-#if HAVE_CUSTOM_C_STACKS
-               bottom = (word *)(ce->cstate[0]);
-#else
-               bottom = (word *)&top;
-#endif
-               isp = sp;
-           } else {
-               bottom = (word *)(ce->cstate[0]);
-               isp = ce->es_sp;
-           }
-       }
-       create_list(2, &result);
-       MakeInt(DiffPtrsBytes(isp + 1, top), &tmp);
-       list_put(&result, &tmp);
-       MakeInt(DiffPtrsBytes(bottom, top), &tmp);
-       list_put(&result, &tmp);
-
-       return result;
+       struct progstate *prog;
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+       return C_integer prog->stackcurr;
    }
 end
 
@@ -1105,44 +970,7 @@ end
 
 #include "../h/opdefs.h"
 
-function{1} lang_Class_get(obj, field)
-   body {
-       struct descrip res;
-       int rc;
-       CheckField(field);
-       PushNull;
-       PushDesc(obj);
-       PushDesc(field);
-       rc = field_access((dptr)(sp - 5),0);
-       sp -= 6;
-       if (rc == Error) 
-           runerr(0, obj);
-       res = *((dptr)(sp + 1));
-       return res;
-   }
-end
-
-function{0,1} lang_Class_getf(obj, field, quiet)
-   body {
-       struct descrip res;
-       int rc;
-       CheckField(field);
-       PushNull;
-       PushDesc(obj);
-       PushDesc(field);
-       rc = field_access((dptr)(sp - 5),0);
-       sp -= 6;
-       if (rc == Error) {
-           if (is:null(quiet))
-               whyf("%s (error %d)", lookup_err_msg(t_errornumber), t_errornumber);
-           fail;
-       }
-       res = *((dptr)(sp + 1));
-       return res;
-   }
-end
-
-static struct b_proc *clone_b_proc(struct b_proc *bp)
+struct b_proc *clone_b_proc(struct b_proc *bp)
 {
     struct b_proc *new0;
     MemProtect(new0 = malloc(sizeof(struct b_proc)));
@@ -1161,7 +989,7 @@ function{1} lang_Class_set_method(field, pr)
         if (!is:proc(pr))
             runerr(615, pr);
 
-        caller_proc = CallerProc;
+        caller_proc = get_current_user_proc();
         if (!caller_proc->field)
             runerr(616);
         class0 = caller_proc->field->defining_class;
@@ -1236,7 +1064,7 @@ function{1} lang_Class_load_library(lib)
         word i;
         void *handle;
 
-        caller_proc = CallerProc;
+        caller_proc = get_current_user_proc();
         if (!caller_proc->field)
             runerr(616);
         class0 = caller_proc->field->defining_class;
@@ -1272,38 +1100,6 @@ function{1} lang_Class_load_library(lib)
    }
 end
 #endif						/* HAVE_LIBDL */
-
-function{1} lang_Class_create_raw(c)
-   if !is:class(c) then
-       runerr(603, c)
-    body {
-        struct b_object *obj;
-        struct b_class *class0 = &BlkLoc(c)->class;
-        ensure_initialized(class0);
-        MemProtect(obj = alcobject(class0));
-        obj->init_state = Initializing;
-        return object(obj);
-    }
-end
-
-function{0} lang_Class_complete_raw(o)
-   if !is:object(o) then
-       runerr(602, o)
-    body {
-       BlkLoc(o)->object.init_state = Initialized;
-       fail;
-    }
-end
-
-function{1} lang_Class_ensure_initialized(c)
-   if !is:class(c) then
-       runerr(603, c)
-    body {
-        struct b_class *class0 = &BlkLoc(c)->class;
-        ensure_initialized(class0);
-        return c;
-   }
-end
 
 function{1} parser_UReader_raw_convert(s)
    if !is:string(s) then
@@ -2897,7 +2693,7 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
     if (!proc->program)
         return -1;
 
-    nf = abs(proc->nparam) + proc->ndynam + proc->nstatic;
+    nf = proc->nparam + proc->ndynam + proc->nstatic;
 
     if (is:string(*query)) {
         word i;
@@ -2928,7 +2724,7 @@ function{1} lang_Proc_get_n_locals(c)
            runerr(0);
        if (!proc0->program)
             fail;
-        return C_integer abs(proc0->nparam) + proc0->ndynam + proc0->nstatic;
+        return C_integer proc0->nparam + proc0->ndynam + proc0->nstatic;
      }
 end
 
@@ -2938,6 +2734,18 @@ function{1} lang_Proc_get_n_arguments(c)
       if (!(proc0 = get_proc_for(&c)))
           runerr(0);
       return C_integer proc0->nparam;
+   }
+end
+
+function{1} lang_Proc_has_varargs(c)
+   body {
+      struct b_proc *proc0;
+      if (!(proc0 = get_proc_for(&c)))
+          runerr(0);
+      if (proc0->vararg)
+          return nulldesc;
+      else
+          fail;
    }
 end
 
@@ -2971,7 +2779,7 @@ function{*} lang_Proc_get_local_names(c)
            runerr(0);
         if (!proc0->program)
             fail;
-        nf = abs(proc0->nparam) + proc0->ndynam + proc0->nstatic;
+        nf = proc0->nparam + proc0->ndynam + proc0->nstatic;
         for (i = 0; i < nf; ++i)
             suspend proc0->lnames[i];
         fail;
@@ -3037,9 +2845,9 @@ function{0,1} lang_Proc_get_local_type(c, id)
         i = lookup_proc_local(proc0, &id);
         if (i < 0)
             fail;
-        if (i < abs(proc0->nparam))
+        if (i < proc0->nparam)
             return C_integer 1;
-        if (i < abs(proc0->nparam) + proc0->ndynam)
+        if (i < proc0->nparam + proc0->ndynam)
             return C_integer 2;
         return C_integer 3;
      }
@@ -3148,6 +2956,10 @@ end
 function{0,1} lang_Proc_get_field_name(c)
    body {
         struct b_proc *proc0;
+        tended char *fred;
+        tended struct descrip job;
+        tended struct b_object *gob;
+
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         if (proc0->field)

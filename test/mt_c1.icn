@@ -12,7 +12,7 @@ $ifdef _MS_WIN32
 $else
    c := Prog.load("mt_c2") | stop("Couldn't load mt_c2")
 $endif
-   @c
+   Prog.get_global("main",c)()
    p := Prog.get_global("subchild0",c) | stop("no subchild0 found")
    p()
 end
@@ -228,11 +228,8 @@ procedure child32()
    print{"&current",&current}
    pr_type{"&progname",&progname}
    print{"&errortext",&errortext}
-   print{"&eventcode",&eventcode}
    print{"&errorvalue",&errorvalue}
-   print{"&eventvalue",&eventvalue}
    print{"&errornumber",&errornumber}
-   print{"&eventsource",&eventsource}
 
    return create 1 to 3
 end

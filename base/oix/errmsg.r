@@ -48,6 +48,7 @@ struct errtab errtab[] = {
     {132, "cset, string or ucs expected"},
     {133, "set or table expected"},
     {134, "odd number of parameters expected"},
+    {135, "cannot transmit failure to this co-expression"},
 
 #ifdef Graphics
     {140, "window expected"},
@@ -86,7 +87,7 @@ struct errtab errtab[] = {
     {308, "system stack overflow in co-expression"},
     {309, "out of memory, allocation returned null"},
     {310, "inadequate co-expression C stack space during garbage collection"},
-    {311, "main stack overflow"},
+    {311, "recursion too deep"},
     {312, "stack overflow in co-expression"},
     {313, "inadequate space for string region"},
     {314, "inadequate space for block region"},
@@ -122,6 +123,7 @@ struct errtab errtab[] = {
     {628, "attempt to access non-method via a cast"},
     {631, "procedure or methp expected"},
     {632, "co-expression which is a program's &main expected"},
+    {633, "given program not a child of this program"},
    };
 
 
@@ -183,32 +185,35 @@ void err_msg(int n, dptr v)
 
     EVVal((word)k_errornumber,E_Error);
 
-    if (pfp != NULL) {
+    if (set_up) {
         if (IntVal(kywd_err) == 0) {
             char *s = StrLoc(k_errortext);
             int i = StrLen(k_errortext);
-            dptr fn;
+            struct ipc_line *pline;
+            struct ipc_fname *pfile;
             if (k_errornumber == -1) {
                 fprintf(stderr, "\nRun-time error: ");
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);
-                fn = findfile(ipc);
-                if (fn) {
+                pline = frame_ipc_line(curr_pf, 1);
+                pfile = frame_ipc_fname(curr_pf, 1);
+                if (pline && pfile) {
                     struct descrip t;
-                    abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
+                    abbr_fname(&pfile->fname, &t);
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
                 } else
-                    fprintf(stderr, "File ?; Line %d\n", findline(ipc));
+                    fprintf(stderr, "File ?; Line ?\n");
             } else {
                 fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-                fn = findfile(ipc);
-                if (fn) {
+                pline = frame_ipc_line(curr_pf, 1);
+                pfile = frame_ipc_fname(curr_pf, 1);
+                if (pline && pfile) {
                     struct descrip t;
-                    abbr_fname(fn, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
+                    abbr_fname(&pfile->fname, &t);
+                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
                 } else
-                    fprintf(stderr, "File ?; Line %d\n", findline(ipc));
+                    fprintf(stderr, "File ?; Line ?\n");
                 while (i-- > 0)
                     fputc(*s++, stderr);
                 fputc('\n', stderr);
@@ -237,14 +242,14 @@ void err_msg(int n, dptr v)
         putc('\n', stderr);
     }
 
-    if (pfp == NULL) {		/* skip if start-up problem */
+    if (!set_up) {		/* skip if start-up problem */
         if (dodump > 1)
             abort();
         c_exit(EXIT_FAILURE);
     }
     if (!collecting) {
         fprintf(stderr, "Traceback:\n");
-        tracebk(pfp, argp);
+        traceback();
         fflush(stderr);
     }
 

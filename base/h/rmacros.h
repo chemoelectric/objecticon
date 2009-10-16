@@ -182,6 +182,11 @@
                          IntVal(*dp) = (word)(i); \
 			 } while (0)
 
+#define MakeNamedVar(x,dp)		do { \
+                 	 (dp)->dword = D_NamedVar; \
+                         VarLoc(*dp) = (x); \
+			 } while (0)
+
 /*
  * Construct a string descriptor.
  */
@@ -213,38 +218,6 @@
 #define LitWhy(s) LitStr(s,&kywd_why)
 
 #define DiffPtrsBytes(p1,p2) DiffPtrs((char*)(p1), (char*)(p2))
-
-#define StackAlign(x) ((word)(x) & ~((word)STACK_ALIGN_BYTES-1))
-
-/*
- * Check for stack overflow
- */
-#if HAVE_CUSTOM_C_STACKS
-#define CheckStack \
-do { \
-    if (k_current == rootpstate.K_main) {  \
-        if (DiffPtrsBytes(stackend,sp) < 4096)     \
-            fatalerr(311, NULL); \
-    } else { \
-        if (DiffPtrsBytes(k_current->cstate[0], sp) < 4096)        \
-            fatalerr(312, NULL); \
-    } \
-} while(0)
-#else
-#define CheckStack \
-do { \
-    if (k_current == rootpstate.K_main) {  \
-        if (DiffPtrsBytes(stackend,sp) < 4096)     \
-            fatalerr(311, NULL); \
-    } else { \
-        int dummy = 0; \
-        if (DiffPtrsBytes(&dummy, sp) < 4096)        \
-            fatalerr(312, NULL); \
-    } \
-} while(0)
-#endif
-
-#define CallerProc (&BlkLoc(*argp)->proc)
 
 /*
  * Csets
@@ -279,11 +252,11 @@ do { \
 /*
  * Check whether a set or table needs resizing.
  */
-#define SP(p) ((struct b_set *)p)
+#define SETP(p) ((struct b_set *)p)
 #define TooCrowded(p) \
-   ((SP(p)->size > MaxHLoad*(SP(p)->mask+1)) && (SP(p)->hdir[HSegs-1] == NULL))
+   ((SETP(p)->size > MaxHLoad*(SETP(p)->mask+1)) && (SETP(p)->hdir[HSegs-1] == NULL))
 #define TooSparse(p) \
-   ((SP(p)->hdir[1] != NULL) && (SP(p)->size < MinHLoad*(SP(p)->mask+1)))
+   ((SETP(p)->hdir[1] != NULL) && (SETP(p)->size < MinHLoad*(SETP(p)->mask+1)))
 
 /*
  * Definitions and declarations used for storage management.
@@ -295,7 +268,7 @@ do { \
  */
 #define User    0                       /* collection triggered by user 
                                          * (calling collect function) */
-#define Static  1			/* collection is for static region */
+#define Stack   1			/* collection triggered by stack allocation */
 #define Strings	2			/* collection is for strings */
 #define Blocks	3			/* collection is for blocks */
 
@@ -332,7 +305,10 @@ do { \
 #define MOUSE5          (-14)
 #define MOUSE4UP        (-16)
 #define MOUSE5UP        (-17)
-#define LASTEVENTCODE	MOUSE5UP
+#define SELECTIONREQUEST   (-30)
+#define SELECTIONCLEAR     (-31)
+#define SELECTIONRESPONSE  (-32)
+
 
 /*
  * Type codes (descriptors and blocks).
@@ -355,19 +331,18 @@ do { \
 #define T_Tvtbl		14	/* table element trapped variable */
 #define T_Slots		15	/* set/table hash slots */
 #define T_Tvsubs	16	/* substring trapped variable */
-#define T_Refresh	17	/* refresh block */
+#define T_Methp         17      /* method pointer */
 #define T_Coexpr	18	/* co-expression */
 #define T_Ucs           19      /* unicode character string */
 #define T_Kywdint	20	/* integer keyword */
 #define T_Kywdpos	21	/* keyword &pos */
 #define T_Kywdsubj	22	/* keyword &subject */
 #define T_Kywdstr	23	/* string keyword */
-#define T_Kywdany	24	/* keyword &eventsource, etc. */
+#define T_Kywdany	24	/* keyword of any type */
 #define T_Class         25      /* class */
 #define T_Object        26      /* object */
 #define T_Cast          27      /* cast */
-#define T_Methp         28      /* method pointer */
-#define MaxType		28	/* maximum type number */
+#define MaxType		27	/* maximum type number */
 
 /*
  * Definitions for keywords.
@@ -377,6 +352,7 @@ do { \
 #define k_random kywd_ran.vword.integer	/* value of &random */
 #define k_trace kywd_trc.vword.integer	/* value of &trace */
 #define k_dump kywd_dmp.vword.integer	/* value of &dump */
+#define k_maxlevel kywd_maxlevel.vword.integer	/* value of &trace */
 
 /*
  * Descriptor types and flags.
@@ -405,7 +381,6 @@ do { \
 #define D_Kywdint	(T_Kywdint  | D_Typecode | F_Var)
 #define D_Kywdpos	(T_Kywdpos  | D_Typecode | F_Var)
 #define D_Kywdsubj	(T_Kywdsubj | D_Typecode | F_Var)
-#define D_Refresh	(T_Refresh  | D_Typecode | F_Ptr)
 #define D_Coexpr	(T_Coexpr   | D_Typecode | F_Ptr)
 #define D_Slots		(T_Slots    | D_Typecode | F_Ptr)
 #define D_Kywdstr	(T_Kywdstr  | D_Typecode | F_Var)
@@ -415,7 +390,7 @@ do { \
 #define D_StructVar	(F_Var | F_Nqual | F_Ptr)
 #define D_NamedVar     	(F_Var | F_Nqual)
 #define D_Typecode	(F_Nqual | F_Typecode)
-
+#define D_TendPtr       (F_Ptr | F_Nqual)
 #define TypeMask	63	/* type mask */
 #define OffsetMask	(~(F_Var | F_Nqual | F_Ptr | F_Typecode)) /* offset mask for variables */
 
@@ -448,152 +423,59 @@ do { \
 
    
    /*
-    * Definitions for the interpreter.
-    */
-   
-   /*
-    * Codes returned by invoke to indicate action.
-    */
-   #define I_Builtin	201	/* A built-in routine is to be invoked */
-   #define I_Fail	202	/* goal-directed evaluation failed */
-   #define I_Continue	203	/* Continue execution in the interp loop */
-   #define I_Vararg	204	/* A function with a variable number of args */
-   
-   /*
-    * Generator types.
-    */
-   #define G_Csusp		1
-   #define G_Esusp		2
-   #define G_Psusp		3
-   #define G_Fsusp		4
-   #define G_Osusp		5
-   
-   /*
-    * Evaluation stack overflow margin
-    */
-   #define PerilDelta 100
-   
-   /*
-    * Macro definitions related to descriptors.
-    */
-   
-   /*
-    * The following code is operating-system dependent [@rt.01].  Define
-    *  PushAval for computers that store longs and pointers differently.
-    */
-   
-   #if PORT
-      #define PushAVal(x) PushVal(x)
-      Deliberate Syntax Error
-   #endif				/* PORT */
-   
-   #if UNIX
-      #define PushAVal(x) PushVal(x)
-   #endif		
-   
-   #if MSWIN32
-         static union {
-                char *stkadr;
-                word stkint;
-            } stkword;
-         
-         #define PushAVal(x)  {sp++; \
-         			stkword.stkadr = (char *)(x); \
-         			*sp = stkword.stkint;}
-   #endif				/* MSWIN32 */
-   
-   /*
-    * End of operating-system specific code.
-    */
-   
-   /*
-    * Macros for pushing values on the interpreter stack.
-    */
-   
-   /*
-    * Push descriptor.
-    */
-   #define PushDesc(d)	{*++sp = ((d).dword); sp++;*sp =((d).vword.integer);}
-   
-   /*
-    * Push null-valued descriptor.
-    */
-   #define PushNull	{*++sp = D_Null; sp++; *sp = 0;}
-   
-   /*
-    * Push word.
-    */
-   #define PushVal(v)	{*++sp = (word)(v);}
-   
-   /*
     * Macros related to function and operator definition.
     */
    
    /*
     * Procedure block for a function.
     */
-   #define FncBlock(f,nargs,deref) \
+   #define FncBlock(f,nargs,vararg,ntend,underef)           \
       	struct b_iproc Cat(B,f) = {\
       	T_Proc,\
       	sizeof(struct b_proc),\
       	Cat(Z,f),\
+        0,\
       	nargs,\
-      	0,\
-      	deref,\
-        0,0,0,0,  \
+        vararg,\
+   	0,0,0,0,0,0,0,0,\
+        sizeof(struct Cat(f,_frame)),\
+        ntend,\
+        underef,\
+        0,0,\
       	{sizeof(Lit(f))-1,Lit(f)},\
         0,0};
 
    /*
     * Procedure block for an operator.
     */
-   #define OpBlock(f,nargs,sname,deref)\
+   #define OpBlock(f,nargs,ntend,sname,underef)\
    	struct b_iproc Cat(B,f) = {\
    	T_Proc,\
    	sizeof(struct b_proc),\
    	Cat(O,f),\
+        0,\
    	nargs,\
-   	0,\
-   	deref,\
-   	0,0,0,0,                                \
+   	0,0,0,0,0,0,0,0,0,\
+        sizeof(struct Cat(f,_frame)),\
+        ntend,\
+        underef,\
+        0,0,  \
    	{sizeof(sname)-1,sname},\
         0,0};
 
 
-   #define KeywordBlock(f)
-   
-   /*
-    * Macros to access Icon arguments in C functions.
-    */
-   
-   /*
-    * n-th argument.
-    */
-   #define Arg(n)	 	(cargp[n])
-   
-   /*
-    * Type field of n-th argument.
-    */
-   #define ArgType(n)	(cargp[n].dword)
+   #define KeywordBlock(f,ntend) \
+   	struct b_iproc Cat(L,f) = {\
+   	T_Proc,\
+   	sizeof(struct b_proc),\
+   	Cat(K,f),\
+   	0,0,0,0,0,0,0,0,0,0,0,\
+        sizeof(struct Cat(f,_frame)),\
+        ntend,\
+        0,0,0,  \
+      	{sizeof("keyword:" Lit(f))-1, "keyword:" Lit(f)},\
+        0,0};
 
-   /*
-    * Value field of n-th argument.
-    */
-   #define ArgVal(n)	(cargp[n].vword.integer)
-   
-   /*
-    * Specific arguments.
-    */
-   #define Arg0	(cargp[0])
-   #define Arg1	(cargp[1])
-   #define Arg2	(cargp[2])
-   #define Arg3	(cargp[3])
-   #define Arg4	(cargp[4])
-   #define Arg5	(cargp[5])
-   #define Arg6	(cargp[6])
-   #define Arg7	(cargp[7])
-   #define Arg8	(cargp[8])
-   
    /*
     * Miscellaneous macro definitions.
     */
@@ -608,6 +490,7 @@ do { \
       #define k_eventvalue (curpstate->eventval)
       #define k_subject (curpstate->Kywd_subject)
       #define kywd_trc  (curpstate->Kywd_trc)
+      #define kywd_maxlevel  (curpstate->Kywd_maxlevel)
       #define code (curpstate->Code)
       #define ecode (curpstate->Ecode)
       #define classstatics (curpstate->ClassStatics)
@@ -630,8 +513,11 @@ do { \
       #define eglocs (curpstate->Eglocs)
       #define statics (curpstate->Statics)
       #define estatics (curpstate->Estatics)
+      #define constants (curpstate->Constants)
+      #define econstants (curpstate->Econstants)
       #define n_globals (curpstate->NGlobals)
       #define n_statics (curpstate->NStatics)
+      #define n_constants (curpstate->NConstants)
       #define strcons (curpstate->Strcons)
       #define estrcons (curpstate->Estrcons)
       #define filenms (curpstate->Filenms)
@@ -653,19 +539,10 @@ do { \
       #define blktotal  (curpstate->blocktotal)
       
       #define coll_user (curpstate->colluser)
-      #define coll_stat (curpstate->collstat)
+      #define coll_stack (curpstate->collstack)
       #define coll_str  (curpstate->collstr)
       #define coll_blk  (curpstate->collblk)
       
-      #define lastop    (curpstate->Lastop)
-      #define lastopnd  (curpstate->Lastopnd)
-
-      #define xargp     (curpstate->Xargp)
-      #define xnargs    (curpstate->Xnargs)
-      #define xfno      (curpstate->Xfno)
-      #define value_tmp (curpstate->Value_tmp)
-      
-      #define k_current     (curpstate->K_current)
       #define k_errornumber (curpstate->K_errornumber)
       #define k_errortext   (curpstate->K_errortext)
       #define k_errorvalue  (curpstate->K_errorvalue)
@@ -680,7 +557,6 @@ do { \
       #define cplist	    (curpstate->Cplist)
       #define cpset	    (curpstate->Cpset)
       #define cptable	    (curpstate->Cptable)
-      #define interp	    (curpstate->Interp)
       #define cnv_cset	    (curpstate->Cnvcset)
       #define cnv_ucs	    (curpstate->Cnvucs)
       #define cnv_int	    (curpstate->Cnvint)
@@ -689,6 +565,7 @@ do { \
       #define cnv_tstr	    (curpstate->Cnvtstr)
       #define deref	    (curpstate->Deref)
       #define alcbignum	    (curpstate->Alcbignum)
+      #define alccoexp	    (curpstate->Alccoexp)
       #define alccset	    (curpstate->Alccset)
       #define alchash	    (curpstate->Alchash)
       #define alcsegment    (curpstate->Alcsegment)
@@ -701,7 +578,6 @@ do { \
       #define alccast  	    (curpstate->Alccast)
       #define alcmethp      (curpstate->Alcmethp)
       #define alcucs        (curpstate->Alcucs)
-      #define alcrefresh    (curpstate->Alcrefresh)
       #define alcselem      (curpstate->Alcselem)
       #define alcstr        (curpstate->Alcstr)
       #define alcsubs       (curpstate->Alcsubs)
@@ -710,29 +586,9 @@ do { \
       #define dealcblk      (curpstate->Dealcblk)
       #define dealcstr      (curpstate->Dealcstr)
       #define reserve       (curpstate->Reserve)
-      #define field_access  (curpstate->FieldAccess)
-      #define invokef_access (curpstate->InvokefAccess)
-      #define invoke        (curpstate->Invoke)
-
-      #define CHANGEPROGSTATE(p) if (((p)!=curpstate)) { changeprogstate(p); }
-   
-
-/*
- * Constants controlling expression evaluation.
- */
-   #define A_Resume	1	/* routine failed */
-   #define A_Pret_uw	2	/* interp unwind for Op_Pret */
-   #define A_Unmark_uw	3	/* interp unwind for Op_Unmark */
-   #define A_Pfail_uw	4	/* interp unwind for Op_Pfail */
-   #define A_Lsusp_uw	5	/* interp unwind for Op_Lsusp */
-   #define A_Eret_uw	6	/* interp unwind for Op_Eret */
-   #define A_Continue	7	/* routine returned */
-   #define A_Coact	8	/* co-expression activated */
-   #define A_Coret	9	/* co-expression returned */
-   #define A_Cofail	10	/* co-expression failed */
-   #define A_MTEvent	11	/* multithread event */
-   #define A_Trapret	12	/* Return from stub  */
-   #define A_Trapfail	13	/* Fail from stub  */
+      #define general_call  (curpstate->GeneralCall)
+      #define general_access (curpstate->GeneralAccess)
+      #define general_invokef (curpstate->GeneralInvokef)
 
 #if MSWIN32
       #define ptr2word(x) (uword)x
@@ -744,3 +600,41 @@ do { \
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
 #endif					/* MSWIN32 */
+
+#define FAIL(G)  \
+do {\
+    __label__ lab;                              \
+    ((struct c_frame *)(G))->pc = &&lab;        \
+    (G)->exhausted = 1;                         \
+  lab: \
+    return 0;                                   \
+} while(0)
+
+#define SUSPEND(G) \
+do {\
+    __label__ lab;                              \
+    ((struct c_frame *)(G))->pc = &&lab;                          \
+    return 1;                                   \
+  lab:; \
+} while(0)
+
+#define RETURN(G)  \
+do {\
+    __label__ lab;                              \
+    ((struct c_frame *)(G))->pc = &&lab;        \
+    (G)->exhausted = 1;                         \
+    return 1;                                   \
+  lab: \
+    return 0;                                   \
+} while(0)
+
+#define RESTORE(G) \
+do {                   \
+    if (((struct c_frame *)(G))->pc) {            \
+        goto *(((struct c_frame *)(G))->pc);      \
+    }\
+} while(0)
+
+#define GetWord (*ipc++)
+#define GetAddr ((word *)GetWord)
+

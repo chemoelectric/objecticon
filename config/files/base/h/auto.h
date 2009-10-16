@@ -78,21 +78,12 @@
 /* define as 1 if unsetenv exists and returns an int */
 #undef HAVE_UNSETENV_INT_RETURN
 
-/* define as 1 if we define a coclean() function */
-#undef HAVE_COCLEAN
-
-/* define as 1 if co-expressions use custom C stacks */
-#undef HAVE_CUSTOM_C_STACKS
-
 /* sizes of various fundamental types */
 #undef SIZEOF_INT
 #undef SIZEOF_LONG
 #undef SIZEOF_VOIDP
 #undef SIZEOF_DOUBLE
 #undef SIZEOF_LONG_LONG
-
-/* stack alignment in bytes */
-#undef STACK_ALIGN_BYTES
 
 /* double has word alignment test */
 #undef DOUBLE_HAS_WORD_ALIGNMENT

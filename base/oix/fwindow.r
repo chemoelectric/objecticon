@@ -1238,10 +1238,10 @@ function{3} graphics_Window_pixel(self, argv[argc])
 
           lastval = emptystr;
 
+#ifdef CHECK
           for (j=y; j < y + height; j++) {
               for (i=x; i < x + width; i++) {
                   getpixel(self_w, i, j, &rv, strout, &imem);
-	
                   slen = strlen(strout);
                   if (rv >= 0) {
                       int signal;
@@ -1277,6 +1277,7 @@ function{3} graphics_Window_pixel(self, argv[argc])
                   }
               }
           }
+#endif
           getpixel_term(self_w, &imem);
           fail;
       }
@@ -1617,29 +1618,47 @@ function{0,1} graphics_Window_write_image(self, s, argv[argc])
    }
 end
 
-function{1} graphics_Window_own_selection(self, selection, callback)
+function{1} graphics_Window_own_selection(self, selection)
    if !cnv:C_string(selection) then
       runerr(103,selection)
-   if !is:proc(callback) then
-      runerr(106,callback);
    body {
        GetSelfW();
-       self_w->window->selectionproc = callback;
-       ownselection(self_w, selection);
+       if (own_selection(self_w, selection) == Failed)
+           fail;
        return self;
    }
 end
 
-function{0,1} graphics_Window_get_selection_content(self, selection,target_type)
+function{1} graphics_Window_send_selection_response(self, requestor, property, target, selection, time, data)
+   if !cnv:C_integer(requestor) then
+      runerr(101, requestor)
+   if !cnv:C_string(property) then
+      runerr(103, property)
+   if !cnv:C_string(target) then
+      runerr(103, target)
+   if !cnv:C_string(selection) then
+      runerr(103, selection)
+   if !cnv:C_integer(time) then
+      runerr(101, time)
+   body {
+       GetSelfW();
+       if (send_selection_response(self_w, requestor, property, target, selection, time, &data) == Failed)
+           runerr(0);
+       else
+           return self;
+   }
+end
+
+function{0,1} graphics_Window_request_selection(self, selection, target_type)
    if !cnv:C_string(selection) then
       runerr(103,selection)
    if !def:C_string(target_type, "STRING") then
       runerr(103,target_type)
    body {
        GetSelfW();
-       if (getselectioncontent(self_w, selection,target_type, &result) == Failed)
+       if (request_selection(self_w, selection, target_type) == Failed)
            fail;
-       return result;
+       return self;
    }
 end
 

@@ -155,10 +155,13 @@ class Dispatcher()
             else {
                while *d.win.pending() > 0 do {
                   #
-                  # Discard the event and beep in the window.
+                  # Process selection events; discard others and beep in the window.
                   # 
                   e := d.win.event()
-                  member(Mouse.DRAG_OR_MOVEMENT | Mouse.RELEASE, e[1]) | d.win.alert()
+                  if member(Selection.EVENTS, e[1]) then
+                     d.process_event(e)
+                  else
+                     member(Mouse.DRAG_OR_MOVEMENT | Mouse.RELEASE, e[1]) | d.win.alert()
                }
             }
          }

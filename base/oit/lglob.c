@@ -140,12 +140,6 @@ void readglob(struct lfile *lf)
                 }
                 break;
 
-            case Uop_Nargs:
-                n = uin_16();
-                if (curr_func)
-                    curr_func->nargs = n;
-                break;
-
             case Uop_Recordfield:
                 name = uin_str();
                 if (curr_record)

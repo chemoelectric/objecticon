@@ -526,28 +526,6 @@ union block **memb(union block *pb, dptr x, uword hn, int *res)
 
 
 
-int invaluemask(struct progstate *p, int evcode, struct descrip *val)
-{
-    int rv;
-    uword hn;
-    union block **foo;
-    struct descrip d;
-    MakeInt(evcode, &d);
-    hn = hash(&d);
-    foo = memb(BlkLoc(p->valuemask), &d, hn, &rv);
-    if (rv == 1) {
-        /* found a value mask for this event code; use it */
-        d = (*foo)->telem.tval;
-        hn = hash(val);
-        foo = memb(BlkLoc(d), val, hn, &rv);
-        if (rv == 1) return 1;
-        return 0;
-    }
-    else { /* no value mask for this code, let anything through */
-        return 1;
-    }
-}
-
 /*
  * Get the b_lelem in which index (one-based) resides.  Returns null
  * if not found, otherwise returns the element and sets *pos to the

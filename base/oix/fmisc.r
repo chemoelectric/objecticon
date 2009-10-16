@@ -186,29 +186,25 @@ function{1} display(i,c)
       }
 
    body {
-      FILE *std_f = stderr;
-
-      /*
-       * Produce error if i is negative; constrain i to be <= &level.
-       */
-      if (i < 0) {
-         irunerr(205, i);
-         errorfail;
-         }
-      else if (i > k_level)
-         i = k_level;
-
-      fprintf(std_f,"co-expression_%ld(%ld)\n\n",
-         (long)k_current->id,
-	 (long)k_current->size);
-      fflush(std_f);
-      if (ce) {
-	 if ((ce->es_pfp == NULL) || (ce->es_argp == NULL)) fail;
-         xdisp(ce->es_pfp, ce->es_argp, (int)i, std_f, ce->program);
+       /*
+        * Produce error if i is negative; constrain i to be <= &level.
+        */
+       if (i < 0) {
+           irunerr(205, i);
+           errorfail;
        }
-      else
-         xdisp(pfp, argp, (int)i, std_f, curpstate);
-      return nulldesc;
+       else if (i > k_level)
+           i = k_level;
+
+       fprintf(stderr,"co-expression_%ld(%ld)\n\n",
+               (long)k_current->id,
+               (long)k_current->size);
+       fflush(stderr);
+       if (ce)
+           xdisp(ce->curr_pf, i, stderr, ce->program);
+       else
+           xdisp(k_current->curr_pf, i, stderr, curpstate);
+       return nulldesc;
       }
 end
 
@@ -450,7 +446,7 @@ end
     }
 
     fprintf(stderr, "Traceback:\n");
-    tracebk(pfp, argp);
+    traceback();
     fflush(stderr);
 
     if (dodump > 1)
@@ -486,20 +482,25 @@ function{} syserr(msg)
    body {
       char *s = StrLoc(msg);
       int i = StrLen(msg);
-      dptr fn = findfile(ipc);
+      struct ipc_line *pline;
+      struct ipc_fname *pfile;
+
+      pline = frame_ipc_line(curr_pf, 1);
+      pfile = frame_ipc_fname(curr_pf, 1);
+
       fprintf(stderr, "\nIcon-level internal error: ");
       while (i-- > 0)
           fputc(*s++, stderr);
       fputc('\n', stderr);
-      if (fn) {
+      if (pline && pfile) {
           struct descrip t;
-          abbr_fname(fn, &t);
-          fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), findline(ipc));
+          abbr_fname(&pfile->fname, &t);
+          fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
       } else
-          fprintf(stderr, "File ?; Line %d\n", findline(ipc));
+          fprintf(stderr, "File ?; Line ?\n");
 
       fprintf(stderr, "Traceback:\n");
-      tracebk(pfp, argp);
+      traceback();
       fflush(stderr);
 
       if (dodump > 1)
@@ -550,19 +551,6 @@ function{1,*} seq(from, by)
          from += by;
          }
       while (from >= seq_lb && from <= seq_ub);
-
-      {
-      /*
-       * Suspending wipes out some things needed by the trace back code to
-       *  render the offending expression. Restore them.
-       */
-      lastop = Op_Invoke;
-      xnargs = 2;
-      xargp = r_args;
-      r_args[0].dword = D_Proc;
-      r_args[0].vword.bptr = (union block *)&Bseq;
-      }
-
       runerr(203);
       }
 end
@@ -1160,30 +1148,6 @@ function{1} type(x)
   }
 end
 
-
-"cofail(CE) - transmit a co-expression failure to CE"
-
-function{0,1} cofail(CE)
-   abstract {
-      return any_value
-      }
-   if is:null(CE) then
-      body {
-	 struct b_coexpr *ce = k_current->es_activator;
-	 if (ce != NULL) {
-	    CE.dword = D_Coexpr;
-	    BlkLoc(CE) = (union block *)ce;
-	    }
-	 else runerr(118,CE);
-	 }
-   else if !is:coexpr(CE) then
-      runerr(118,CE)
-   body {
-      struct b_coexpr *ncp = (struct b_coexpr *)BlkLoc(CE);
-      if (co_chng(ncp, NULL, &result, A_Cofail, 1) == A_Cofail) fail;
-      return result;
-      }
-end
 
 
 

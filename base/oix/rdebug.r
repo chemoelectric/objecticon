@@ -4,107 +4,136 @@
  */
 
 #include "../h/modflags.h"
+#include "../h/opdefs.h"
 
 /*
  * Prototypes.
  */
 static void keyref    (union block *bp, dptr dp);
-static void showline  (dptr f, int l);
+static void showline(struct p_frame *pf);
 static void showlevel (register int n);
 static void ttrace	(void);
-static void xtrace(word nargs, dptr arg, int pline, dptr pfile);
 static void procname(FILE *f, struct b_proc *p);
 
+static void trace_frame(struct p_frame *pf);
 
 #define LIMIT 100
 
 /*
- * tracebk - print a trace of procedure calls.
+ * These are set at various strategic points to help give better error
+ * messages.
  */
-void tracebk(struct pf_marker *lcl_pfp,  dptr argp)
+dptr xexpr;
+dptr xfield;
+dptr xargp;
+int xnargs;
+struct c_frame *xc_frame;           /* currently executing c frame */
+
+struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior)
 {
-    int depth;
-    struct pf_marker *origpfp = pfp;
-    dptr arg;
-
-    /*
-     * Chain back through the procedure frame markers, looking for the
-     *  first one, while building a foward chain of pointers through
-     *  the expression frame pointers.
-     */
-    depth = 0;
-    for (pfp->pf_efp = NULL; pfp->pf_pfp != NULL; pfp = pfp->pf_pfp) {
-        ++depth;
-        (pfp->pf_pfp)->pf_efp = (struct ef_marker *)pfp;
-    }
-
-    /* Now start from the base procedure frame marker, producing a listing
-     *  of the procedure calls up through the last one.
-     */
-    if (depth > LIMIT) {
-        if (depth == LIMIT + 1)
-            --depth;      /* Avoid printing "1 calls omitted" */
-        else
-            fprintf(stderr, "   ... %d calls omitted\n", depth-LIMIT);
-    }
-
-    while (pfp) {
-        if (depth <= LIMIT) {
-            arg = &((dptr)pfp)[-(pfp->pf_nargs) - 1];
-            xtrace(pfp->pf_nargs, &arg[0], findline(pfp->pf_ipc), findfile(pfp->pf_ipc));
-            /*
-             * On the last call, show both the call and the offending expression.
-             */
-            if (pfp == origpfp) {
-                ttrace();
-                break;
-            }
-        }
-        --depth;
-        pfp = (struct pf_marker *)(pfp->pf_efp);
-    }
+    synch_ipc();
+    while (pf && !pf->proc->program)
+        pf = pf->caller;
+    if (!pf)
+        return 0;
+    if (prior)
+        return find_ipc_line(pf->curr_inst, pf->proc->program);
+    else
+        return find_ipc_line(pf->ipc, pf->proc->program);
 }
-
-/*
- * xtrace - procedure *bp is being called with nargs arguments, the first
- *  of which is at arg; produce a trace message.
- */
-static void xtrace(nargs, arg, pline, pfile)
-    word nargs;
-    dptr arg;
-    int pline;
-    dptr pfile;
+
+struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior)
 {
-    fprintf(stderr, "   ");
-    if (BlkLoc(*arg) == NULL)
-        fprintf(stderr, "????");
-    else {
-        if (is:proc(*arg))
-            procname(stderr, (struct b_proc *)BlkLoc(*arg));
-        else
-            outimage(stderr, arg, 0);
-        arg++;
-        putc('(', stderr);
-        while (nargs--) {
-            outimage(stderr, arg++, 0);
-            if (nargs)
-                putc(',', stderr);
-        }
-        putc(')', stderr);
+    synch_ipc();
+    while (pf && !pf->proc->program)
+        pf = pf->caller;
+    if (!pf)
+        return 0;
+    if (prior)
+        return find_ipc_fname(pf->curr_inst, pf->proc->program);
+    else
+        return find_ipc_fname(pf->ipc, pf->proc->program);
+}
+
+
+
+/*
+ * traceback - print a trace of procedure calls.
+ */
+void traceback()
+{
+    int i, depth;
+    struct p_frame *f;
+    struct p_frame **fa;
+
+    depth = 0;
+    for (f = curr_pf; f; f = f->caller) {
+        if (f->proc->program)
+            ++depth;
     }
-	 
-    if (pline != 0) {
-        if (pfile) {
-            struct descrip t;
-            abbr_fname(pfile, &t);
-            fprintf(stderr, " from line %d in %.*s", pline, (int)StrLen(t), StrLoc(t));
-        } else
-            fprintf(stderr, " from line %d in ?", pline);
+
+    if (depth == 0)
+        return;
+
+    /* 
+     * We test for LIMIT + 1 calls to avoid printing "1 calls omitted".
+     */
+    if (depth > LIMIT + 1) {
+        fprintf(stderr, "   ... %d calls omitted\n", depth-LIMIT);
+        depth = LIMIT;
+    }
+
+    MemProtect(fa = malloc(depth * sizeof(struct p_frame *)));
+
+    i = depth - 1;
+    for (f = curr_pf; f; f = f->caller) {
+        if (f->proc->program) {
+            fa[i--] = f;
+            if (i < 0)
+                break;
+        }
+    }
+
+    for (i = 0; i < depth; ++i) {
+        struct descrip tmp;
+        tmp.dword = D_Proc;
+        BlkLoc(tmp) = (union block *)fa[i]->proc;
+        /*fprintf(stderr,"frame proc="); print_vword(stderr, &tmp); fprintf(stderr,"\n");*/
+        trace_frame(fa[i]);
+    }
+
+    ttrace();
+}
+
+static void trace_frame(struct p_frame *pf)
+{
+    dptr arg;
+    word nargs = pf->proc->nparam;
+    struct ipc_line *pline;
+    struct ipc_fname *pfile;
+
+    arg = pf->fvars->desc;
+    fprintf(stderr, "   ");
+    procname(stderr, pf->proc);
+    putc('(', stderr);
+    while (nargs--) {
+        outimage(stderr, arg++, 0);
+        if (nargs)
+            putc(',', stderr);
+    }
+    putc(')', stderr);
+    
+    pline = frame_ipc_line(pf->caller, 1);
+    pfile = frame_ipc_fname(pf->caller, 1);
+    if (pline && pfile) {
+        struct descrip t;
+        abbr_fname(&pfile->fname, &t);
+        fprintf(stderr, " from line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
     }
     putc('\n', stderr);
     fflush(stderr);
 }
-
+
 
 /*
  * Given a descriptor pointer d from the classstatics area, hunt for
@@ -184,10 +213,13 @@ int get_name(dptr dp1, dptr dp0)
     char *s, *s2;
     word i, j, k;
     struct progstate *prog;
+    struct p_frame *uf;
 
-    arg1 = &argp[1];
-    loc1 = pfp->pf_locals;
-    proc0 = CallerProc;
+    uf = get_current_user_frame();
+    arg1 = uf->fvars->desc;
+    proc0 = uf->proc;
+    /* The locals follow the args in the locals block */
+    loc1 = uf->fvars->desc + proc0->nparam;
 
     type_case *dp1 of {
       tvsubs: {
@@ -230,21 +262,14 @@ int get_name(dptr dp1, dptr dp0)
         else if (VarLoc(*dp1) == &kywd_err) {
             LitStr("&error", dp0);
         }
+        else if (VarLoc(*dp1) == &kywd_maxlevel) {
+            LitStr("&maxlevel", dp0);
+        }
         else
             syserr("name: unknown integer keyword variable");
             
       kywdany:
-        if (VarLoc(*dp1) == &curpstate->eventsource) {
-            LitStr("&eventsource", dp0);
-        }
-        else if (VarLoc(*dp1) == &curpstate->eventval) {
-            LitStr("&eventvalue", dp0);
-        }
-        else if (VarLoc(*dp1) == &curpstate->eventcode) {
-            LitStr("&eventcode", dp0);
-        }
-        else
-            syserr("name: unknown event keyword variable");
+            syserr("name: unknown keyword variable");
             
       kywdstr: {
           if (VarLoc(*dp1) == &kywd_prog) {
@@ -292,16 +317,16 @@ int get_name(dptr dp1, dptr dp0)
                 i = dp - proc0->fstatic;	/* static */
                 if (i < 0 || i >= proc0->nstatic)
                     syserr("name: unreferencable static variable");
-                i += abs((int)proc0->nparam) + (int)proc0->ndynam;
+                i += proc0->nparam + proc0->ndynam;
                 *dp0 = proc0->lnames[i];
                 return StaticName;
             }
-            else if (InRange(arg1, dp, &arg1[abs((int)proc0->nparam)])) {
+            else if (InRange(arg1, dp, &arg1[proc0->nparam])) {
                 *dp0 = proc0->lnames[dp - arg1];          /* argument */
                 return ParamName;
             }
             else if (InRange(loc1, dp, &loc1[proc0->ndynam])) {
-                *dp0 = proc0->lnames[dp - loc1 + abs((int)proc0->nparam)];
+                *dp0 = proc0->lnames[dp - loc1 + proc0->nparam];
                 return LocalName;
             }
             else {
@@ -410,61 +435,55 @@ static void keyref(bp, dp)
     alcstr("]", 1);
 }
 
-/*
- * cotrace -- a co-expression context switch; produce a trace message.
- */
-void cotrace(ccp, ncp, swtch_typ, valloc)
-    struct b_coexpr *ccp;
-    struct b_coexpr *ncp;
-    int swtch_typ;
-    dptr valloc;
+static void cotrace_line(struct b_coexpr *from)
 {
-    --k_trace;
+    showline(from->curr_pf);
+    showlevel(k_level);
+    procname(stderr, from->curr_pf->proc);
+}
 
-    /*
-     * Compute the ipc of the instruction causing the context switch.
-     */
-    showline(findfile(ipc), findline(ipc));
-    /* argp can be 0 when we come back from a loaded program. */
-    if (argp) {
-        showlevel(k_level);
-        procname(stderr, (struct b_proc *)BlkLoc(*argp));
-    } else {
-        showlevel(k_level);
-        fprintf(stderr, "?");
-    }
-
-    fprintf(stderr,"; co-expression#%ld ", (long)ccp->id);
-    switch (swtch_typ) {
-        case A_Coact:
-            fprintf(stderr,": ");
-            outimage(stderr, valloc, 0);
-            fprintf(stderr," @ ");
-            break;
-        case A_Coret:
-            fprintf(stderr,"returned ");
-            outimage(stderr, valloc, 0);
-            fprintf(stderr," to ");
-            break;
-        case A_Cofail:
-            fprintf(stderr,"failed to ");
-            break;
-    }
-    fprintf(stderr,"co-expression#%ld\n", (long)ncp->id);
+void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
+{
+    cotrace_line(from);
+    fprintf(stderr,"; co-expression#%ld : ", (long)from->id);
+    outimage(stderr, val, 0);
+    fprintf(stderr, " @ co-expression#%ld\n", (long)to->id);
     fflush(stderr);
 }
-
+
+void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val)
+{
+    cotrace_line(from);
+    fprintf(stderr,"; co-expression#%ld returned ", (long)from->id);
+    outimage(stderr, val, 0);
+    fprintf(stderr, " to co-expression#%ld\n", (long)to->id);
+    fflush(stderr);
+}
+
+void trace_cofail(struct b_coexpr *from, struct b_coexpr *to)
+{
+    cotrace_line(from);
+    fprintf(stderr,"; co-expression#%ld failed to co-expression#%ld\n", (long)from->id, (long)to->id);
+    fflush(stderr);
+}
+
 /*
  * showline - print file and line number information.
  */
-static void showline(dptr f, int l)
+static void showline(struct p_frame *pf)
 {
-    if (l > 0) {
-        if (f) {
+    struct ipc_line *pline;
+    struct ipc_fname *pfile;
+
+    pline = frame_ipc_line(pf, 1);
+    pfile = frame_ipc_fname(pf, 1);
+
+    if (pline) {
+        if (pfile) {
             struct descrip t;
             char *p;
             int i;
-            abbr_fname(f, &t);
+            abbr_fname(&pfile->fname, &t);
             i = StrLen(t);
             p = StrLoc(t);
             while (i > 13) {
@@ -472,15 +491,16 @@ static void showline(dptr f, int l)
                 i--;
             }
 
-            fprintf(stderr, "%-13.*s: %4d  ",i,p, l);
+            fprintf(stderr, "%-13.*s: %4d  ",i,p, (int)pline->line);
         } else {
-            fprintf(stderr, "%-13s: %4d  ","?", l);
+            fprintf(stderr, "%-13s: %4d  ","?", (int)pline->line);
         }
 
     } else
         fprintf(stderr, "             :       ");
     
 }
+
     
 /*
  * showlevel - print "| " n times.
@@ -497,108 +517,179 @@ static void showlevel(n)
 
 #include "../h/opdefs.h"
 
+static void outfield()
+{
+    if (IntVal(*xfield) < 0 && fnames-efnames < IntVal(*xfield))
+        putstr(stderr, &efnames[IntVal(*xfield)]);
+    else if (0 <= IntVal(*xfield) && IntVal(*xfield) < efnames - fnames)
+        putstr(stderr, &fnames[IntVal(*xfield)]);
+    else
+        fprintf(stderr, "field");
+}
 
-    extern struct b_proc *opblks[];
+/*
+ * Is a given b_proc an operator or not?
+ */
+static int is_op(struct b_proc *bp)
+{
+    int i;
+    for (i = 0; i < op_tbl_sz; ++i) {
+        if (op_tbl[i] == bp)
+            return 1;
+    }
+    return 0;
+}
 
-    
 /*
  * ttrace - show offending expression.
  */
 static void ttrace()
 {
-    word nargs;
+    struct ipc_line *pline;
+    struct ipc_fname *pfile;
+
+    if (curr_op == 0)
+        return;
 
     fprintf(stderr, "   ");
 
-    switch ((int)lastop) {
+    switch ((int)curr_op) {
 
         case Op_Keywd:
             fprintf(stderr,"bad keyword reference");
             break;
 
         case Op_Invokef:
-            nargs = xnargs;
-            outimage(stderr, xargp, 0);
-            fprintf(stderr, " . ");
-            if (xfno < 0 && fnames-efnames < xfno)
-                putstr(stderr, &efnames[xfno]);
-            else if (0 <= xfno && xfno < efnames - fnames)
-                putstr(stderr, &fnames[xfno]);
-            else
-                fprintf(stderr, "field");
-            putc('(', stderr);
-            while (nargs--) {
-                outimage(stderr, ++xargp, 0);
-                if (nargs)
-                    putc(',', stderr);
+            if (xc_frame) {
+                /* Will happen if a builtin proc calls runnerr */
+                procname(stderr, xc_frame->proc);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
+                putc('(', stderr);
+                while (xnargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (xnargs)
+                        putc(',', stderr);
+                }
+                putc(')', stderr);
+            } else {
+                /* Error to do with the type of expr */
+                outimage(stderr, xexpr, 0);
+                fprintf(stderr, " . ");
+                outfield();
+                fprintf(stderr," ( .. )");
             }
-            putc(')', stderr);
             break;
 
         case Op_Applyf:
-            outimage(stderr, xargp++, 0);
-            fprintf(stderr, " . ");
-            if (xfno < 0 && fnames-efnames < xfno)
-                putstr(stderr, &efnames[xfno]);
-            else if (0 <= xfno && xfno < efnames - fnames)
-                putstr(stderr, &fnames[xfno]);
-            else
-                fprintf(stderr, "field");
-            fprintf(stderr," ! ");
-            outimage(stderr, xargp, 0);
+            if (xc_frame) {
+                /* Will happen if a builtin proc calls runnerr */
+                procname(stderr, xc_frame->proc);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
+                fprintf(stderr," ! [ ");
+                while (xnargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (xnargs)
+                        putc(',', stderr);
+                }
+                fprintf(stderr," ]");
+            } else {
+                /* Error to do with the type of expr */
+                outimage(stderr, xexpr, 0);
+                fprintf(stderr, " . ");
+                outfield();
+                fprintf(stderr, " ! ");
+                if (xargp)
+                    outimage(stderr, xargp, 0);
+                else
+                    fprintf(stderr, " [ .. ]");
+            }
+            break;
+
+        case Op_Apply:
+            if (xc_frame) {
+                /* Will happen if a builtin proc calls runnerr */
+                procname(stderr, xc_frame->proc);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
+                fprintf(stderr," ! [ ");
+                while (xnargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (xnargs)
+                        putc(',', stderr);
+                }
+                fprintf(stderr," ]");
+            } else {
+                /* Error to do with the type of expr */
+                outimage(stderr, xexpr, 0);
+                fprintf(stderr, " ! ");
+                if (xargp)
+                    outimage(stderr, xargp, 0);
+                else
+                    fprintf(stderr, " [ .. ]");
+            }
             break;
 
         case Op_Invoke:
-            nargs = xnargs;
-            if (is:proc(*xargp))   /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, (struct b_proc *)BlkLoc(*xargp));
-            else
-                outimage(stderr, xargp, 0);
-            putc('(', stderr);
-            while (nargs--) {
-                outimage(stderr, ++xargp, 0);
-                if (nargs)
-                    putc(',', stderr);
+            if (xc_frame) {
+                /* Will happen if a builtin proc calls runnerr */
+                procname(stderr, xc_frame->proc);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
+                putc('(', stderr);
+                while (xnargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (xnargs)
+                        putc(',', stderr);
+                }
+                putc(')', stderr);
+            } else {
+                /* Error to do with the type of expr */
+                outimage(stderr, xexpr, 0);
+                fprintf(stderr," ( .. )");
             }
-            putc(')', stderr);
             break;
 
         case Op_Toby:
+            xargp = xc_frame->args;
             putc('{', stderr);
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xargp++, 0);
             fprintf(stderr, " to ");
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xargp++, 0);
             fprintf(stderr, " by ");
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xargp, 0);
             putc('}', stderr);
             break;
 
         case Op_Subsc:
+            xargp = xc_frame->args;
             putc('{', stderr);
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xargp++, 0);
             putc('[', stderr);
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xargp, 0);
             putc(']', stderr);
 
             putc('}', stderr);
             break;
 
         case Op_Sect:
+            xargp = xc_frame->args;
             putc('{', stderr);
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xargp++, 0);
 
             putc('[', stderr);
 
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xargp++, 0);
             putc(':', stderr);
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xargp, 0);
 
             putc(']', stderr);
 
             putc('}', stderr);
             break;
 
-        case Op_Bscan:
+        case Op_ScanSave:
             putc('{', stderr);
             outimage(stderr, xargp, 0);
             fputs(" ? ..}", stderr);
@@ -606,16 +697,10 @@ static void ttrace()
 
         case Op_Coact:
             putc('{', stderr);
-            outimage(stderr, ++xargp, 0);
-            fprintf(stderr, " @ ");
-            outimage(stderr, ++xargp, 0);
-            putc('}', stderr);
-            break;
-
-        case Op_Apply:
             outimage(stderr, xargp, 0);
-            fprintf(stderr," ! ");
-            outimage(stderr, ++xargp, 0);
+            fprintf(stderr, " @ ");
+            outimage(stderr, xexpr, 0);
+            putc('}', stderr);
             break;
 
         case Op_Create:
@@ -624,16 +709,9 @@ static void ttrace()
 
         case Op_Field:
             putc('{', stderr);
-            outimage(stderr, ++xargp, 0);
+            outimage(stderr, xexpr, 0);
             fprintf(stderr, " . ");
-            ++xargp;
-            if (IntVal(*xargp) < 0 && fnames-efnames < IntVal(*xargp))
-                putstr(stderr, &efnames[IntVal(*xargp)]);
-            else if (0 <= IntVal(*xargp) && IntVal(*xargp) < efnames - fnames)
-                putstr(stderr, &fnames[IntVal(*xargp)]);
-            else
-                fprintf(stderr, "field");
-
+            outfield();
             putc('}', stderr);
             break;
 
@@ -642,157 +720,163 @@ static void ttrace()
             outimage(stderr, xargp, 0);
             break;
 
-        case Op_Llist:
-
-            fprintf(stderr,"[ ... ]");
-            break;
-
-   
         default: {
             struct b_proc *bp;
-            /* 
-             * opblks are only defined for the operator instructions, the last of
-             * which is Op_Value (see opdefs.h and odefs.h) 
+
+            /*
+             * Have we come here from a C operator/function?
              */
-            if (lastop > Op_Value)
+            if (!xc_frame)
                 break;
-            bp = opblks[lastop];
-            nargs = abs((int)bp->nparam);
-            putc('{', stderr);
-            if (lastop == Op_Bang || lastop == Op_Random)
-                goto oneop;
-            if (abs((int)bp->nparam) >= 2) {
-                outimage(stderr, ++xargp, 0);
-                putc(' ', stderr);
-                putstr(stderr, &(bp->name));
-                putc(' ', stderr);
+
+            bp = xc_frame->proc;
+
+            /* 
+             * It may be an operator (1-3) args or a function.
+             */
+            if (is_op(bp)) {
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
+                putc('{', stderr);
+                if (xnargs == 0)
+                    putstr(stderr, &bp->name);
+                else if (xnargs == 1) {
+                    putstr(stderr, &bp->name);
+                    putc(' ', stderr);
+                    outimage(stderr, xargp, 0);
+                } else {
+                    outimage(stderr, xargp++, 0);
+                    putc(' ', stderr);
+                    putstr(stderr, &bp->name);
+                    putc(' ', stderr);
+                    outimage(stderr, xargp, 0);
+                }
+                putc('}', stderr);
+            } else {
+                /* Not an operator, perhaps a function being resumed. */
+                procname(stderr, bp);
+                xnargs = xc_frame->nargs;
+                xargp = xc_frame->args;
+                putc('(', stderr);
+                while (xnargs--) {
+                    outimage(stderr, xargp++, 0);
+                    if (xnargs)
+                        putc(',', stderr);
+                }
+                putc(')', stderr);
             }
-            else
-              oneop:
-                putstr(stderr, &(bp->name));
-            outimage(stderr, ++xargp, 0);
-            putc('}', stderr);
         }
     }
 	 
-    if (ipc != NULL) {
-        dptr fn = findfile(ipc);
-        if (fn) {
-            struct descrip t;
-            abbr_fname(fn, &t);
-            fprintf(stderr, " from line %d in %.*s", findline(ipc), (int)StrLen(t), StrLoc(t));
-        } else
-            fprintf(stderr, " from line %d in ?", findline(ipc));
+    pline = frame_ipc_line(curr_pf, 1);
+    pfile = frame_ipc_fname(curr_pf, 1);
+    if (pfile && pline) {
+        struct descrip t;
+        abbr_fname(&pfile->fname, &t);
+        fprintf(stderr, " from line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+    } else
+        fprintf(stderr, " from ?");
+
+    putc('\n', stderr);
+
+    fflush(stderr);
+}
+
+
+/*
+ * ctrace - a procedure p being called; produce a trace message.
+ */
+void call_trace(struct p_frame *pf)
+{
+    int nargs;
+    dptr args;
+
+    showline(pf->caller);
+    showlevel(k_level);
+
+    procname(stderr, pf->proc);
+    if (pf->curr_inst) {
+        fprintf(stderr, " resumed\n");
+    } else {
+        putc('(', stderr);
+        nargs = pf->proc->nparam;
+        args = pf->fvars->desc;
+        while (nargs--) {
+            outimage(stderr, args++, 0);
+            if (nargs)
+                putc(',', stderr);
+        }
+        fprintf(stderr, ")\n");
     }
-
-    putc('\n', stderr);
-
     fflush(stderr);
 }
-
 
 /*
- * ctrace - procedure p is being called with nargs arguments, the first
- *  of which is at arg; produce a trace message.
- */
-void ctrace(struct b_proc *p, int nargs, dptr arg)
-{
-    showline(findfile(ipc), findline(ipc));
-    showlevel(k_level);
-
-    procname(stderr, p);
-    putc('(', stderr);
-    while (nargs--) {
-        outimage(stderr, arg++, 0);
-        if (nargs)
-            putc(',', stderr);
-    }
-    putc(')', stderr);
-    putc('\n', stderr);
-    fflush(stderr);
-}
-
-/*
- * rtrace - procedure p is returning *rval; produce a trace message.
+ * procedure frame pf is failing; produce a trace message.
  */
 
-void rtrace(struct b_proc *p, dptr rval)
+void fail_trace(struct p_frame *pf)
 {
-    showline(findfile(ipc), findline(ipc));
+    showline(pf);
     showlevel(k_level);
-    procname(stderr, p);
-    fprintf(stderr, " returned ");
-    outimage(stderr, rval, 0);
-    putc('\n', stderr);
-    fflush(stderr);
-}
-
-/*
- * failtrace - procedure p is failing; produce a trace message.
- */
-
-void failtrace(struct b_proc *p)
-{
-    showline(findfile(ipc), findline(ipc));
-    showlevel(k_level);
-    procname(stderr, p);
+    procname(stderr, pf->proc);
     fprintf(stderr, " failed");
     putc('\n', stderr);
     fflush(stderr);
 }
 
 /*
- * strace - procedure p is suspending *rval; produce a trace message.
+ * procedure frame pf is suspending; produce a trace message.
  */
 
-void strace(struct b_proc *p, dptr rval)
+void suspend_trace(struct p_frame *pf)
 {
-    showline(findfile(ipc), findline(ipc));
+    showline(pf);
     showlevel(k_level);
-    procname(stderr, p);
+    procname(stderr, pf->proc);
     fprintf(stderr, " suspended ");
-    outimage(stderr, rval, 0);
+    outimage(stderr, &pf->value, 0);
     putc('\n', stderr);
     fflush(stderr);
 }
-
+
+
 /*
- * atrace - procedure p is being resumed; produce a trace message.
+ * procedure frame pf is returning; produce a trace message.
  */
 
-void atrace(struct b_proc *p)
+void return_trace(struct p_frame *pf)
 {
-    showline(findfile(ipc), findline(ipc));
+    showline(pf);
     showlevel(k_level);
-    procname(stderr, p);
-    fprintf(stderr, " resumed");
+    procname(stderr, pf->proc);
+    fprintf(stderr, " returned ");
+    outimage(stderr, &pf->value, 0);
     putc('\n', stderr);
     fflush(stderr);
 }
-
 
 /*
  * Service routine to display variables in given number of
  *  procedure calls to file f.
  */
 
-void xdisp(struct pf_marker *fp,
-          dptr dp,
-          int count,
-          FILE *f,
-          struct progstate *p)
+void xdisp(struct p_frame *pf,
+           int count,
+           FILE *f,
+           struct progstate *p)
 {
     register dptr np;
     register int n;
     struct b_proc *bp;
     word nglobals;
+    dptr dp;
 
     while (count--) {		/* go back through 'count' frames */
-        if (fp == NULL)
+        if (pf == NULL)
             break;       /* needed because &level is wrong in co-expressions */
 
-        bp = (struct b_proc *)BlkLoc(*dp++); /* get addr of procedure block */
-        /* #%#% was: no post-increment there, but *pre*increment dp below */
+        bp = pf->proc;   /* get addr of procedure block */
 
         /*
          * Print procedure name.
@@ -804,7 +888,8 @@ void xdisp(struct pf_marker *fp,
          * Print arguments.
          */
         np = bp->lnames;
-        for (n = abs((int)bp->nparam); n > 0; n--) {
+        dp = pf->fvars->desc;
+        for (n = bp->nparam; n > 0; n--) {
             fprintf(f, "   ");
             putstr(f, np);
             fprintf(f, " = ");
@@ -814,9 +899,8 @@ void xdisp(struct pf_marker *fp,
         }
 
         /*
-         * Print locals.
+         * Print locals; they follow the arguments in the frame_vars block
          */
-        dp = &fp->pf_locals[0];
         for (n = bp->ndynam; n > 0; n--) {
             fprintf(f, "   ");
             putstr(f, np);
@@ -839,8 +923,7 @@ void xdisp(struct pf_marker *fp,
             np++;
         }
 
-        dp = fp->pf_argp;
-        fp = fp->pf_pfp;
+        pf = pf->caller;
     }
 
     /*

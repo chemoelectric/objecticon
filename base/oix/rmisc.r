@@ -59,8 +59,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     register dptr np;
     register int i;
     struct b_proc *bp;
-    struct pf_marker *t_pfp;
-    dptr t_argp;
+    struct p_frame *pf;
 
     if (StrLen(*s) == 0)
         return Failed;
@@ -122,33 +121,14 @@ int getvar(dptr s, dptr vp, struct progstate *p)
                 break;
             }
             case 9 : {
+                if (strncmp(t,"maxlevel",8) == 0) {
+                    vp->dword = D_Kywdint;
+                    VarLoc(*vp) = &p->Kywd_maxlevel;
+                    return Succeeded;
+                }
                 if (strncmp(t,"progname",8) == 0) {
                     vp->dword = D_Kywdstr;
                     VarLoc(*vp) = &p->Kywd_prog;
-                    return Succeeded;
-                }
-                break;
-            }
-            case 10 : {
-                if (strncmp(t,"eventcode",9) == 0) {
-                    vp->dword = D_Kywdany;
-                    VarLoc(*vp) = &p->eventcode;
-                    return Succeeded;
-                }
-                break;
-            }
-            case 11 : {
-                if (strncmp(t,"eventvalue",10) == 0) {
-                    vp->dword = D_Kywdany;
-                    VarLoc(*vp) = &p->eventval;
-                    return Succeeded;
-                }
-                break;
-            }
-            case 12 : {
-                if (strncmp(t,"eventsource",11) == 0) {
-                    vp->dword = D_Kywdany;
-                    VarLoc(*vp) = &p->eventsource;
                     return Succeeded;
                 }
                 break;
@@ -165,59 +145,41 @@ int getvar(dptr s, dptr vp, struct progstate *p)
      *  descriptor that points to the corresponding value descriptor. 
      *  If no such variable exits, it fails.
      */
-    if (p->K_current == k_current) {
-        t_pfp = pfp;
-        t_argp = argp;
-    }
-    else {
-        t_pfp = p->K_current->es_pfp;
-        t_argp = p->K_current->es_argp;
-    }
-
-    /*
-     *  If no procedure has been called (as can happen with icon_call(),
-     *  dont' try to find local identifier.
-     */
-    if (t_pfp && t_argp) {
-        dp = t_argp;
-        bp = (struct b_proc *)BlkLoc(*dp);	/* get address of procedure block */
+    pf = p->K_current->curr_pf;
+    bp = pf->proc;
    
-        np = bp->lnames;		/* Check the formal parameter names. */
+    np = bp->lnames;		/* Check the formal parameter names. */
 
-
-        for (i = abs((int)bp->nparam); i > 0; i--) {
-            dp++;
-
-            if (eq(s,np)) {
-                vp->dword = D_NamedVar;
-                VarLoc(*vp) = (dptr)dp;
-                return ParamName;
-            }
-            np++;
+    dp = pf->fvars->desc;
+    for (i = bp->nparam; i > 0; i--) {
+        if (eq(s,np)) {
+            vp->dword = D_NamedVar;
+            VarLoc(*vp) = (dptr)dp;
+            return ParamName;
         }
+        dp++;
+        np++;
+    }
 
-        dp = &t_pfp->pf_locals[0];
-
-        for (i = (int)bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
-            if (eq(s,np)) {
-                vp->dword = D_NamedVar;
-                VarLoc(*vp) = (dptr)dp;
-                return LocalName;
-            }
-            np++;
-            dp++;
+    for (i = bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
+        if (eq(s,np)) {
+            vp->dword = D_NamedVar;
+            VarLoc(*vp) = (dptr)dp;
+            return LocalName;
         }
+        np++;
+        dp++;
+    }
 
-        dp = bp->fstatic; /* Check the local static names. */
-        for (i = (int)bp->nstatic; i > 0; i--) {
-            if (eq(s,np)) {
-                vp->dword = D_NamedVar;
-                VarLoc(*vp) = (dptr)dp;
-                return StaticName;
-            }
-            np++;
-            dp++;
+    dp = bp->fstatic; /* Check the local static names. */
+    for (i = bp->nstatic; i > 0; i--) {
+        if (eq(s,np)) {
+            vp->dword = D_NamedVar;
+            VarLoc(*vp) = (dptr)dp;
+            return StaticName;
         }
+        np++;
+        dp++;
     }
 
     /* Check the global variable names. */
@@ -867,16 +829,8 @@ int noimage;
             fprintf(f, "&dump = ");
          else if (VarLoc(*dp) == &kywd_err)
             fprintf(f, "&error = ");
-         outimage(f, VarLoc(*dp), noimage);
-         }
-
-      kywdany: {
-         if (VarLoc(*dp) == &curpstate->eventsource)
-            fprintf(f, "&eventsource = ");
-         else if (VarLoc(*dp) == &curpstate->eventcode)
-            fprintf(f, "&eventcode = ");
-         else if (VarLoc(*dp) == &curpstate->eventval)
-            fprintf(f, "&eventvalue = ");
+         else if (VarLoc(*dp) == &kywd_maxlevel)
+            fprintf(f, "&maxlevel = ");
          outimage(f, VarLoc(*dp), noimage);
          }
 
@@ -1037,35 +991,17 @@ int noimage;
 
    }
 
-static word *resolve_ipc(word *ipc, int prior, struct progstate *p)
-{
-    if (!ipc)
-        return 0;
-
-    if (*ipc == Op_IpcRef)
-        ipc = (word *)ipc[1];
-
-    if (prior)
-        --ipc;
-
-    if (InRange(p->Code, ipc, p->Ecode)) 
-        return ipc;
-
-    return 0;
-}
-
 
 
 /*
  * findline - find the source line number associated with the ipc
  */
-struct ipc_line *find_ipc_line(word *ipc, int prior, struct progstate *p)
+struct ipc_line *find_ipc_line(word *ipc, struct progstate *p)
 {
    uword ipc_offset;
    int size, l, r, m;
 
-   ipc = resolve_ipc(ipc, prior, p);
-   if (!ipc)
+   if (!InRange(p->Code, ipc, p->Ecode))
        return 0;
 
    ipc_offset = DiffPtrsBytes(ipc, p->Code);
@@ -1084,19 +1020,12 @@ struct ipc_line *find_ipc_line(word *ipc, int prior, struct progstate *p)
    return 0;
 }
 
-int findline(word *ipc)
-{
-    struct ipc_line *p = find_ipc_line(ipc, 1, curpstate);
-    return p ? (int)p->line : 0;
-}
-
-struct ipc_fname *find_ipc_fname(word *ipc, int prior, struct progstate *p)
+struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p)
 {
    uword ipc_offset;
    int size, l, r, m;
 
-   ipc = resolve_ipc(ipc, prior, p);
-   if (!ipc)
+   if (!InRange(p->Code, ipc, p->Ecode))
        return 0;
 
    ipc_offset = DiffPtrsBytes(ipc, p->Code);
@@ -1116,14 +1045,6 @@ struct ipc_fname *find_ipc_fname(word *ipc, int prior, struct progstate *p)
    return 0;
 }
 
-/*
- * findfile - find source file name associated with the ipc
- */
-dptr findfile(word *ipc)
-{
-    struct ipc_fname *p = find_ipc_fname(ipc, 1, curpstate);
-    return p ? &p->fname : 0;
-}
 
 /*
  * Get the last path element of the given filename and put the result
@@ -1691,10 +1612,7 @@ word a;
  *  string-valued variables. This is used for return, suspend, and
  *  transmitting values across co-expression context switches.
  */
-void retderef(valp, low, high)
-dptr valp;
-word *low;
-word *high;
+void retderef(dptr valp, struct frame_vars *fvars)
    {
    struct b_tvsubs *tvb;
    word *loc;
@@ -1710,12 +1628,12 @@ word *high;
        */
       if (is:named_var(tvb->ssvar)) {
           loc = (word *)VarLoc(tvb->ssvar);
-          if (InRange(low, loc, high))
+          if (InRange(fvars->desc, loc, fvars->desc_end))
               deref(valp, valp);
       }
    } else if (is:named_var(*valp)) {
        loc = (word *)VarLoc(*valp);
-       if (InRange(low, loc, high))
+       if (InRange(fvars->desc, loc, fvars->desc_end))
            deref(valp, valp);
    }
 }
@@ -1915,5 +1833,37 @@ char *salloc(char *s)
     register char *s1;
     MemProtect(s1 = malloc(strlen(s) + 1));
     return strcpy(s1, s);
+}
+
+
+dptr lookup_global(dptr name, struct progstate *prog)
+{
+    dptr p = (dptr)bsearch(name, prog->Gnames, prog->NGlobals, 
+                           sizeof(struct descrip), 
+                           (BSearchFncCast)lexcmp);
+    if (!p)
+        return 0;
+
+    /* Convert from pointer into names array to pointer into descriptor array */
+    return prog->Globals + (p - prog->Gnames);
+}
+
+
+struct loc *lookup_global_loc(dptr name, struct progstate *prog)
+{
+    dptr p;
+
+    /* Check if the table was compiled into the icode */
+    if (prog->Glocs == prog->Eglocs)
+        return 0;
+
+    p = (dptr)bsearch(name, prog->Gnames, prog->NGlobals, 
+                      sizeof(struct descrip), 
+                      (BSearchFncCast)lexcmp);
+    if (!p)
+        return 0;
+
+    /* Convert from pointer into names array to pointer into location array */
+    return prog->Glocs + (p - prog->Gnames);
 }
 

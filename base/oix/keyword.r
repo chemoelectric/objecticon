@@ -159,36 +159,6 @@ keyword{0} fail
       }
 end
 
-"&eventcode - event in monitored program"
-keyword{0,1} eventcode
-   abstract {
-      return kywdany
-      }
-   inline {
-      return kywdany(&k_eventcode);
-      }
-end
-
-"&eventsource - source of events in monitoring program"
-keyword{0,1} eventsource
-   abstract {
-      return kywdany
-      }
-   inline {
-      return kywdany(&k_eventsource);
-      }
-end
-
-"&eventvalue - value from event in monitored program"
-keyword{0,1} eventvalue
-   abstract {
-      return kywdany
-      }
-   inline {
-      return kywdany(&k_eventvalue);
-      }
-end
-
 "&features - generate strings identifying features in this version of Icon"
 keyword{1,*} features
    abstract {
@@ -207,10 +177,11 @@ keyword{1} file
       return string
       }
    inline {
-      dptr f = findfile(ipc);
-      if (!f)
+      struct ipc_fname *pfile;
+      pfile = frame_ipc_fname(curr_pf, 1);
+      if (!pfile)
           fail;
-      return *f;
+      return pfile->fname;
       }
 end
 
@@ -270,11 +241,13 @@ keyword{1} line
       return integer;
       }
    inline {
-      int i = findline(ipc);
-      if (!i)
+      struct ipc_line *pline;
+
+      pline = frame_ipc_line(curr_pf, 1);
+      if (!pline)
           fail;
 
-      return C_integer i;
+      return C_integer pline->line;
       }
 end
 
@@ -334,7 +307,7 @@ keyword{1} source
        return coexpr
        }
    inline {
-         return coexpr(k_current->es_activator);
+         return coexpr(k_current->activator);
          }
 end
 
@@ -371,6 +344,16 @@ keyword{1} trace
       }
 end
 
+"&maxlevel - variable that controls procedure tracing."
+keyword{1} maxlevel
+   abstract {
+      return kywdint
+      }
+   inline {
+      return kywdint(&kywd_maxlevel);
+      }
+end
+
 "&dump - variable that controls termination dump."
 keyword{1} dump
    abstract {
@@ -390,7 +373,10 @@ end
 
 "&version - a string indentifying this version of Icon."
 keyword{1} version
-   constant Version
+   body {
+    LitStr(Version, &result);
+    return result;
+   }
 end
 
 "&ascii - a cset consisting of the 128 ascii characters"

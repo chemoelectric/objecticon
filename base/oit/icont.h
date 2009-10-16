@@ -15,9 +15,10 @@
 #define F_Global	    01	/* variable declared global externally */
 #define F_Proc		    04	/* procedure */
 #define F_Record	   010	/* record */
-#define F_Dynamic	   020	/* variable declared local dynamic */
-#define F_Static	   040	/* variable declared local static */
+#define F_Dynamic     	   020	/* variable declared local */
+#define F_Static	   040	/* variable declared static */
 #define F_Builtin	  0100	/* identifier refers to built-in procedure */
+#define F_Vararg	  0200	/* identifier is a vararg */
 #define F_Argument	 01000	/* variable is a formal parameter */
 #define F_IntLit	 02000	/* literal is an integer */
 #define F_RealLit	 04000	/* literal is a real */

@@ -97,18 +97,26 @@ struct b_proc {			/* procedure block */
     word title;			/*   T_Proc */
     word blksize;		/*   size of block */
 
-    union {			/*   entry points for */
-        int (*ccode)();	        /*     C routines */
-        uword ioff;		/*     and icode as offset */
-        void *icode;		/*     and icode as absolute pointer */
-    } entryp;
+    int (*ccode)();	        /*   C routines */
+    word *icode;		/*   OR pointer to icode */
 
     word nparam;		/*   number of parameters */
+    word vararg;                /*      vararg flag */
     word ndynam;		/*   number of dynamic locals */
     word nstatic;		/*   number of static locals */
     dptr fstatic;		/*   pointer to first static, or null if there are none */
     struct progstate *program;  /*   program in which this procedure resides; 
                                  *     null => builtin function */
+
+    word nclo;                  /*   count of various elements that make up a frame for this */
+    word ntmp;                  /*     procedure */
+    word nlab;
+    word nmark;
+
+    word framesize;             /*   frame struct size (for builtin functions/operators only). */
+    word ntend;                 /*   num tended needed (for builtin functions/operators only). */
+    word underef;               /*   underef flag (for builtin functions/operators only). */
+
     word package_id;            /*   package id of package in which this proc resides; 0=not in 
                                  *     a package; 1=lang; >1=other package */
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only
@@ -353,21 +361,23 @@ struct ipc_line {
     word line;		/* line number */
 };
 
+struct prog_event {
+    struct descrip eventcode;
+    struct descrip eventval;
+    struct prog_event *next;
+};
+
 /*
  * Program state encapsulation.  This consists of the VARIABLE parts of
  * many global structures.
  */
 struct progstate {
     word icodesize;			/* size of icode */
-    struct progstate *parent;
     struct progstate *next;
-    struct descrip eventmask;		/* implicit "&eventmask" */
-    struct descrip opcodemask;		/* implicit "&opcodemask" */
-    struct descrip eventcount;		/* implicit "&eventcount" */
-    struct descrip valuemask;
-    struct descrip eventcode;		/* &eventcode */
-    struct descrip eventval;		/* &eventval */
-    struct descrip eventsource;		/* &eventsource */
+
+    struct progstate *monitor;
+    struct descrip eventmask;
+    struct prog_event *event_queue_head, *event_queue_tail;
 
     /*
      * trapped variable keywords' values
@@ -379,6 +389,7 @@ struct progstate {
     struct descrip Kywd_why;
     struct descrip Kywd_ran;
     struct descrip Kywd_trc;
+    struct descrip Kywd_maxlevel;
     char *Code;
     char *Ecode;
 
@@ -393,7 +404,8 @@ struct progstate {
     dptr Gnames, Egnames;
     struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
-    int NGlobals, NStatics;
+    dptr Constants, Econstants;
+    int NGlobals, NStatics, NConstants;
     char *Strcons, *Estrcons;
     struct ipc_fname *Filenms, *Efilenms;
     struct ipc_line *Ilines, *Elines;
@@ -412,25 +424,18 @@ struct progstate {
 
     ulonglong stringtotal;		/* cumulative total allocation */
     ulonglong blocktotal;		/* cumulative total allocation */
-    ulonglong stattotal;		/* cumulative total static allocation */
 
-    uword statcurr;			/* current static allocation */
-    word statcount;                     /* count of number of coexpr allocs - when
-                                         * it exceeds coexprlim, a gc is triggered */
+    uword stackcurr;			/* current stack allocation in use (frame
+                                         * and local structs) */
+
     word colluser;			/* number of user triggered collections */
-    word collstat;			/* number of static collect requests */
     word collstr;			/* number of string collect requests */
     word collblk;			/* number of block collect requests */
+    word collstack;			/* number of stack collect requests */
     struct region *stringregion;
     struct region *blockregion;
 
-    word Lastop;
-
-    dptr Xargp;
-    int Xnargs;
-    int Xfno;                           /* field no in e.field() */
-
-    struct descrip Value_tmp;
+    word exited;                        /* set to 1 when the main procedure exits */
 
     int K_errornumber;
     struct descrip K_errortext;
@@ -450,7 +455,6 @@ struct progstate {
     void (*Cplist)(dptr, dptr, word, word);
     void (*Cpset)(dptr, dptr, word);
     void (*Cptable)(dptr, dptr, word);
-    int (*Interp)(int,dptr);
     int (*Cnvcset)(dptr,dptr);
     int (*Cnvucs)(dptr,dptr);
     int (*Cnvint)(dptr,dptr);
@@ -470,8 +474,8 @@ struct progstate {
     struct b_object *(*Alcobject)(struct b_class *);
     struct b_cast *(*Alccast)();
     struct b_methp *(*Alcmethp)();
+    struct b_coexpr *(*Alccoexp)();
     struct b_ucs *(*Alcucs)();
-    struct b_refresh *(*Alcrefresh)(word *, int, int);
     struct b_selem *(*Alcselem)(void);
     char *(*Alcstr)(char *, word);
     struct b_tvsubs *(*Alcsubs)(word, word, dptr);
@@ -481,56 +485,12 @@ struct progstate {
     void (*Dealcstr)(char *);
     char * (*Reserve)(int, word);
 
-    int (*FieldAccess)(dptr, struct inline_field_cache *);
-    int (*InvokefAccess)(int, int *);
-    int (*Invoke)(int, dptr *, int *);
-};
+    void (*GeneralCall)(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
 
-
-/*
- * Frame markers
- */
-struct ef_marker {		/* expression frame marker */
-    word *ef_failure;		/*   failure ipc */
-    struct ef_marker *ef_efp;	/*   efp */
-    struct gf_marker *ef_gfp;	/*   gfp */
-    word ef_ilevel;		/*   ilevel */
-};
-
-struct pf_marker {		/* procedure frame marker */
-    word pf_nargs;		/*   number of arguments */
-    struct pf_marker *pf_pfp;	/*   saved pfp */
-    struct ef_marker *pf_efp;	/*   saved efp */
-    struct gf_marker *pf_gfp;	/*   saved gfp */
-    dptr pf_argp;		/*   saved argp */
-    word *pf_ipc;			/*   saved ipc */
-    word pf_ilevel;		/*   saved ilevel */
-    dptr pf_scan;		/*   saved scanning environment */
-    struct progstate *pf_from;
-    struct progstate *pf_to;
-    struct descrip pf_locals[1];	/*   descriptors for locals */
-};
-
-struct gf_marker {		/* generator frame marker */
-    word gf_gentype;		/*   type */
-    struct ef_marker *gf_efp;	/*   efp */
-    struct gf_marker *gf_gfp;	/*   gfp */
-    word *gf_ipc;			/*   ipc */
-    struct pf_marker *gf_pfp;	/*   pfp */
-    dptr gf_argp;		/*   argp */
-};
-
-/*
- * Generator frame marker dummy -- used only for sizing "small"
- *  generator frames where procedure information need not be saved.
- *  The first five members here *must* be identical to those for
- *  gf_marker.
- */
-struct gf_smallmarker {		/* generator frame marker */
-    word gf_gentype;		/*   type */
-    struct ef_marker *gf_efp;	/*   efp */
-    struct gf_marker *gf_gfp;	/*   gfp */
-    word *gf_ipc;			/*   ipc */
+    void (*GeneralAccess)(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
+                          int just_fail, word *failure_label);
+    void (*GeneralInvokef)(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+                           int argc, dptr args, word rval, word *failure_label);
 };
 
 /*
@@ -544,11 +504,20 @@ struct b_iproc {		/* procedure block */
     word ip_title;		/*   T_Proc */
     word ip_blksize;		/*   size of block */
     int (*ip_entryp)();		/*   entry point (code) */
+    word *icode;		/*   icode as absolute pointer */
     word ip_nparam;		/*   number of parameters */
+    word ip_vararg;             /*      vararg flag */
     word ip_ndynam;		/*   number of dynamic locals */
     word ip_nstatic;		/*   number of static locals */
     dptr ip_fstatic;		/*   pointer to first static */
     struct progstate *ip_program;/*   not set */
+    word nclo;                  /*   count of various elements that make up a frame for this */
+    word ntmp;                  /*     procedure */
+    word nlab;
+    word nmark;
+    word framesize;             /*   frame size (for builtin functions/operators only). */
+    word ntend;
+    word underef;
     word package_id;
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field */
     struct sdescrip ip_name;	/*   procedure name (string qualifier) */
@@ -560,32 +529,16 @@ struct b_coexpr {		/* co-expression stack block */
     word title;			/*   T_Coexpr */
     word size;			/*   number of results produced */
     word id;			/*   identification number */
-    struct b_coexpr *nextstk;	/*   pointer to next allocated stack */
-    struct pf_marker *es_pfp;	/*   current pfp */
-    struct ef_marker *es_efp;	/*   efp */
-    struct gf_marker *es_gfp;	/*   gfp */
-    struct tend_desc *es_tend;	/*   current tended pointer */
-    dptr es_argp;		/*   argp */
-    word *es_ipc;			/*   ipc */
-    word es_ilevel;		/*   interpreter level */
-    word *es_sp;			/*   sp */
     dptr tvalloc;		/*   where to place transmitted value */
-    struct b_refresh *freshblk;	/*   refresh block pointer */
-    struct b_coexpr *es_activator; /*     this coexpression's activator */
-    word cstate[CStateSize];	/*   C state information */
-    struct progstate *program;  /*   current program, in which es_ipc resides */
+    struct b_coexpr *activator; /*     this coexpression's activator */
+    struct progstate *program;  /*   current program, in which this coexpression is running */
     struct progstate *creator;  /*   curpstate when this block was allocated */
     struct progstate *main_of;  /*   set to the parent program for all &main co-expressions;
                                  *   null for all others */
-};
-
-struct b_refresh {		/* co-expression block */
-    word title;			/*   T_Refresh */
-    word blksize;		/*   size of block */
-    word *ep;			/*   entry point */
-    word numlocals;		/*   number of locals */
-    struct pf_marker pfmkr;	/*   marker for enclosing procedure */
-    struct descrip elems[1];	/*   arguments and locals, including Arg0 */
+    word *start_label;          /*   where to start this coexpression */
+    word *failure_label;        /*   where to go on a cofail */
+    struct p_frame *curr_pf;    /*   current procedure frame */
+    struct frame *sp;           /*   end of stack */
 };
 
 
@@ -602,7 +555,6 @@ union block {			/* general block */
     struct b_record record;
     struct b_tvsubs tvsubs;
     struct b_tvtbl tvtbl;
-    struct b_refresh refresh;
     struct b_coexpr coexpr;
     struct b_slots slots;
     struct b_class class;
@@ -614,7 +566,62 @@ union block {			/* general block */
     struct b_bignum bignum;
 };
 
-union tickerdata { 			/* clock ticker -- keep in sync w/ fmonitor.r */
-   unsigned short s[16];	/* 16 counters */
-   unsigned long l[8];		/* 8 longs are easier to check */
+/*
+ * This structure holds the argument and dynamic local variables for a
+ * particular p_frame.  It may be referenced by several p_frames if
+ * co-expressions are created by the original.
+ */
+struct frame_vars {
+    int size;         /* Size and creator of this allocation */
+    struct progstate *creator;
+    dptr desc_end;    /* One past the end of the descriptor array */
+    int refcnt;       /* How many p_frames reference this block */
+    int seen;         /* Seen marker for garbage collection */
+    struct descrip desc[1];
+};
+
+enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
+
+/*
+ * Common elements for both frame types
+ */
+#define FRAME_BASE \
+     int type; \
+     int size;          /* Size and creator of this allocation */ \
+     struct progstate *creator; \
+     struct descrip value;   /* Return/suspend value */ \
+     word *failure_label;    /* Caller's failure label */  \
+     struct b_proc *proc;    /* Corresponding procedure block */  \
+     struct frame *parent_sp;  /* Parent in the stack chain */ \
+     int rval;               /* Set if source location is an rval (ie cannot be assigned to) */  \
+     int exhausted;          /* Set after a return, indicating thatf a further request for a result */ \
+                             /*    would be bound to fail */
+
+#define C_FRAME \
+     FRAME_BASE   \
+     void *pc;       /* C program counter */    \
+     int nargs;      /* Number of args; may exceed declared number for a vararg func */ \
+     dptr args;      /* Arg array - nargs descriptors */ \
+     dptr tend;      /* Tended descriptor array */
+
+struct frame {
+    FRAME_BASE;
+};
+
+struct c_frame {
+    C_FRAME;
+};
+
+struct p_frame {
+    FRAME_BASE;
+    word *ipc;                /* Program counter; note this is only up-to-date when
+                               * frames change (see interp.r and the use of the ipc global var.) */
+    word *curr_inst;          /* Location of start of current instruction */
+    struct p_frame *caller;   /* Parent caller frame */
+    struct frame **clo;       /* Closures, ie other frames in the process of producing results */
+    dptr tmp;                 /* Temporary descriptor array */
+    word **lab;               /* Labels array */
+    struct frame **mark;      /* Stack mark array */
+    struct frame_vars *fvars; /* Argument and dynamic local descriptor structure - may be shared between
+                               * several p_frames. */
 };

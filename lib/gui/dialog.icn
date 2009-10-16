@@ -69,7 +69,9 @@ class Dialog(Component)
       only_enlarge_width_flag,
       only_enlarge_height_flag,
       held,
-      moving
+      moving,
+      selection_requests,
+      selections
 
    public needs_validate()
       return \copy_rect
@@ -400,7 +402,7 @@ class Dialog(Component)
    public dispose()
       self.end_dialog()
       every (!child_dialogs).dispose()
-      Selection.dispose_owners(self)
+      self.dispose_selections()
       self.tooltip_dispose()
       self.finally()
       Gui.style.dispose_all()
@@ -428,23 +430,105 @@ class Dialog(Component)
          put(self.point_chain, self)
    end
 
+   public dispose_selections()
+      local e
+      every e := !selections do
+         e.lost_ownership()
+      selections := table()
+   end
+
+   private process_selection_request(l)
+      local c, data, target
+      #write("process_selection-request:",to_string(l))
+      target := l[4]
+      if c := \selections[l[5]] then {
+         #write("\towner=", image(c))
+         if target == Selection.TARGETS_TARGET then {
+            data := []
+            every put(data, c.get_targets())
+         } else {
+            if c.get_targets() == target then 
+               data := c.get_content(target)
+         }
+      }
+      #write("\tdata=", image(data))
+      win.send_selection_response(l[2], l[3], l[4], l[5], l[6], data)
+   end
+
+   private process_selection_clear(l)
+      local c
+      #write("process_selection-clear:",to_string(l))
+      if c := \selections[l[2]] then {
+         c.lost_ownership()
+         delete(selections, l[2])
+      }
+   end
+
+   private process_selection_response(l)
+      local req
+      #write("process_selection-response:",to_string(l))
+      if req := \selection_requests[l[2]] then {
+         if /l[4] | (l[3] ~== req.target_types[1]) then {
+            # Null data (indicating failure), or mismatch in type.  Pop off
+            # the last requested type.
+            pop(req.target_types)
+            if *req.target_types > 0 then
+               # Try next type
+               win.request_selection(l[2], req.target_types[1])
+            else {
+               # Notify of failure by invoking callback with null data
+               delete(selection_requests, l[2])
+               req.proc(l[3], &null, req.user_data)
+            }
+         } else {
+            # Success; invoke callback procedure
+            delete(selection_requests, l[2])
+            req.proc(l[3], l[4], req.user_data)
+         }
+      }
+   end
+
+   public own_selection(selection, obj)
+      local curr
+      if curr := \selections[selection] then {
+         # Check if current owner is asserting selection.
+         if curr === obj then
+            return
+
+         curr.lost_ownership()
+      } else
+         win.own_selection(selection)
+      selections[selection] := obj
+   end
+
+   public request_selection(selection, target_types, proc, user_data)
+      selection_requests[selection] := SelectionRequest(target_types, proc, user_data)
+      win.request_selection(selection, target_types[1])
+   end
+
    public process_event(l)
       local e
+      case l[1] of {
+         Selection.REQUEST: process_selection_request(l)
+         Selection.CLEAR: process_selection_clear(l)
+         Selection.RESPONSE: process_selection_response(l)
+         default: {
+            if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then
+               consume_same(l[1])
 
-      if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then
-         consume_same(l[1])
+            e := WinEvent!l
 
-      e := WinEvent!l
+            create_point_chain(e)
 
-      create_point_chain(e)
+            if /self.curr_drag then 
+               check_dnd(e)
 
-      if /self.curr_drag then 
-         check_dnd(e)
-
-      if \self.curr_drag then
-         process_dnd(e)
-      else
-         process_normal(e)
+            if \self.curr_drag then
+               process_dnd(e)
+            else
+               process_normal(e)
+         }
+      }
    end
 
    #
@@ -1029,6 +1113,8 @@ class Dialog(Component)
       self.child_dialogs := set()
       self.invokes := []
       self.held := table()
+      self.selections := table()
+      self.selection_requests := table()
       self.tooltip_ticker := Ticker("interval=200")
       self.tooltip_ticker.connect(self.process_tooltip_tick, Event.TICK)
       set_fields(a)
@@ -1055,5 +1141,40 @@ class WinEvent(Point)
       self.release := release
       self.interval := interval
       return
+   end
+end
+
+class SelectionRequest()
+   public const
+      proc,
+      user_data,
+      target_types
+
+   public new(target_types, proc, user_data)
+      self.proc := proc
+      self.user_data := user_data
+      self.target_types := target_types
+      return
+   end
+end
+
+class SelectionOwner()
+   public defer get_content(target)
+   public defer lost_ownership()
+   public defer get_targets()
+end
+
+class TextSelectionOwner(SelectionOwner)
+   protected defer get_text()
+
+   public get_targets()
+      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET
+   end
+
+   public get_content(target)
+      case target of {
+         Selection.STRING_TARGET: return string(text_convert(get_text(), "string"))
+         Selection.UTF8_STRING_TARGET: return string(text_convert(get_text(), "ucs"))
+      }
    end
 end

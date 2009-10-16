@@ -110,116 +110,68 @@ struct b_bignum *f(word n)
 alcbignum_macro(alcbignum_0,0)
 alcbignum_macro(alcbignum_1,E_Lrgint)
 
-
+#begdef alccoexp_macro(f,e_coexpr)
 /*
  * alccoexp - allocate a co-expression stack block; called via 
  * create or refresh - for loading progs, see alcprog below.
  */
-struct b_coexpr *alccoexp()
-   {
-   struct b_coexpr *ep;
+struct b_coexpr *f()
+{
+   struct b_coexpr *blk;
 
-   EVVal(xstksize, E_Coexpr);
-
-   ep = malloc(xstksize);
-
-   /*
-    * If malloc failed or there have been too many co-expression allocations
-    * since a collection, attempt to free some co-expression blocks and retry.
-    */
-
-   if (ep == NULL || curpstate->statcount > coexprlim) {
-      collect(Static);
-      if (ep == NULL) {
-          ep = malloc(xstksize);
-          if (ep == NULL)
-              ReturnErrNum(305, NULL);
-      }
-   }
-
-   memset(ep, 0, sizeof(struct b_coexpr));
-   ep->title = T_Coexpr;
-   ep->creator = curpstate;
-   /* Add the allocation to the prog's stats */
-   ep->creator->stattotal += xstksize;
-   ep->creator->statcurr += xstksize;
-   ep->id = coexp_ser++;
-   ep->creator->statcount++;
-
-   ep->nextstk = stklist;
-   stklist = ep;
-
-   return ep;
-   }
+   AlcFixBlk(blk, b_coexpr, T_Coexpr, e_coexpr)
+   blk->id = coexp_ser++;
+   blk->sp = 0;
+   blk->activator = 0;
+   blk->failure_label = 0;
+   blk->tvalloc = 0;
+   return blk;
+}
+#enddef
+alccoexp_macro(alccoexp_0,0)
+alccoexp_macro(alccoexp_1,E_Coexpr)
 
 
 /*
  * Allocate memory for a loaded program.  The memory allocated
- * consists of three parts.  Firstly the co-expression, followed by
- * the stack.  The size of the co-expression struct is taken to be
- * included in the stack size (the same as in alccoexp and the
- * allocation of the root program's &main).  Secondly, the progstate
- * is allocated, and finally the space for the icode.
+ * consists of two parts, namely the progstate struct and the icode.
  * 
  * Note that this memory is never freed.
  */
-struct b_coexpr *alcprog(long icodesize, long stacksize)
-
-   {
-   struct b_coexpr *ep;
+struct progstate *alcprog(long icodesize)
+{
    struct progstate *prog;
    char *icode;
-   int size = stacksize + icodesize + sizeof(struct progstate);
+   int size = icodesize + sizeof(struct progstate);
 
+   /* TODO new event */
    EVVal(size, E_Coexpr);
 
    /*
-    * Allocate the three parts.  If any fails, collect and retry before
-    * giving up.
+    * Allocate the two parts.
     */
-   ep = malloc(stacksize);
-   if (ep == NULL) {
-      collect(Static);
-      ep = malloc(stacksize);
-      if (ep == NULL)
-          ReturnErrNum(305, NULL);
-   }
    prog = malloc(sizeof(struct progstate));
    if (prog == NULL) {
-       collect(Static);
+       collect(Blocks);
        prog = malloc(sizeof(struct progstate));
        if (prog == NULL) {
-           free(ep);
            ReturnErrNum(305, NULL);
        }
    }
    icode = malloc(icodesize);
    if (icode == NULL) {
-       collect(Static);
+       collect(Blocks);
        icode = malloc(icodesize);
        if (icode == NULL) {
-           free(ep);
            free(prog);
            ReturnErrNum(305, NULL);
        }
    }
-
-   memset(ep, 0, sizeof(struct b_coexpr));
    memset(prog, 0, sizeof(struct progstate));
-   ep->title = T_Coexpr;
-   ep->creator = curpstate;
-   /* Add the allocation to the prog's stats */
-   ep->creator->stattotal += size;
-   ep->creator->statcurr += size;
-   ep->id = 1;
-   ep->main_of = ep->program = prog;
    prog->Code = icode;
 
-   ep->nextstk = stklist;
-   stklist = ep;
-
-   return ep;
-   }
+   return prog;
+}
 
 
 #begdef alccset_macro(f, e_cset)
@@ -526,26 +478,6 @@ alcucs_macro(alcucs_0,0)
 alcucs_macro(alcucs_1,E_Ucs)
 
 
-/*
- * alcrefresh - allocate a co-expression refresh block.
- */
-
-#begdef alcrefresh_macro(f,e_refresh)
-
-struct b_refresh *f(word *entryx, int na, int nl)
-   {
-   struct b_refresh *blk;
-
-   AlcVarBlk(blk, b_refresh, T_Refresh, na + nl, e_refresh);
-   blk->ep = entryx;
-   blk->numlocals = nl;
-   return blk;
-   }
-
-#enddef
-
-alcrefresh_macro(alcrefresh_0,0)
-alcrefresh_macro(alcrefresh_1,E_Refresh)
 
 #begdef alcselem_macro(f,e_selem)
 /*
@@ -909,4 +841,152 @@ word nbytes,stdsize;
       free((char *)rp);
       }
    return NULL;
+}
+
+
+
+
+
+struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
+{
+    struct p_frame *p;
+    char *t;
+    int i, size;
+    size = sizeof(struct p_frame) +
+        pb->nclo * sizeof(struct frame *) +
+        pb->ntmp * sizeof(struct descrip) +
+        pb->nlab * sizeof(word *) + 
+        pb->nmark * sizeof(struct frame *);
+    p = malloc(size);
+    if (!p)
+        return 0;
+    p->size = size;
+
+    t = (char *)(p + 1);
+    if (pb->nclo) {
+        p->clo = (struct frame **)t;
+        for (i = 0; i < pb->nclo; ++i)
+            p->clo[i] = 0;
+        t += pb->nclo * sizeof(struct frame *);
+    } else
+        p->clo = 0;
+    if (pb->ntmp) {
+        p->tmp = (dptr)t;
+        for (i = 0; i < pb->ntmp; ++i)
+            p->tmp[i] = nulldesc;
+        t += pb->ntmp * sizeof(struct descrip);
+    } else
+        p->tmp = 0;
+    if (pb->nlab) {
+        p->lab = (word **)t;
+        for (i = 0; i < pb->nlab; ++i)
+            p->lab[i] = 0;
+        t += pb->nlab * sizeof(word *);
+    } else
+        p->lab = 0;
+    if (pb->nmark) {
+        p->mark = (struct frame **)t;
+        for (i = 0; i < pb->nmark; ++i)
+            p->mark[i] = 0;
+    } else
+        p->mark = 0;
+    p->type = P_FRAME_TYPE;
+    p->value = nulldesc;
+    p->failure_label = 0;
+    p->rval = 0;
+    p->proc = pb;
+    p->parent_sp = 0;
+    p->exhausted = 0;
+    p->ipc = pb->icode;
+    p->curr_inst = 0;
+    p->caller = 0;
+    if (fvars) {
+        ++fvars->refcnt;
+    } else {
+        int lsize, ndesc;
+        ndesc = pb->ndynam + pb->nparam;
+        lsize = sizeof(struct frame_vars) + (ndesc - 1) * sizeof(struct descrip);
+        fvars = malloc(lsize);
+        if (!fvars) {
+            free(p);
+            return 0;
+        }
+        curpstate->stackcurr += lsize;
+        fvars->size = lsize;
+        fvars->creator = curpstate;
+        if (ndesc) {
+            for (i = 0; i < ndesc; ++i)
+                fvars->desc[i] = nulldesc;
+            fvars->desc_end = fvars->desc + ndesc;
+        } else
+            fvars->desc_end = 0;
+        fvars->refcnt = 1;
+        fvars->seen = 0;
+    }
+    curpstate->stackcurr += size;
+    p->creator = curpstate;
+    p->fvars = fvars;
+    return p;
+}
+
+struct c_frame *alc_c_frame(struct b_proc *pb, int nargs)
+{
+    struct c_frame *p;
+    char *t;
+    int size, i;
+    size = pb->framesize + (nargs + pb->ntend) * sizeof(struct descrip);
+    p = malloc(size);
+    if (!p)
+        return 0;
+    curpstate->stackcurr += size;
+    p->size = size;
+    p->creator = curpstate;
+    p->type = C_FRAME_TYPE;
+    p->value = nulldesc;
+    p->proc = pb;
+    p->parent_sp = 0;
+    p->failure_label = 0;
+    p->rval = 0;
+    p->exhausted = 0;
+    p->pc = 0;
+    p->nargs = nargs;
+    t = (char *)p + pb->framesize;
+    if (nargs) {
+        p->args = (dptr)t;
+        for (i = 0; i < nargs; ++i)
+            p->args[i] = nulldesc;
+        t += nargs * sizeof(struct descrip);
+    } else
+        p->args = 0;
+    if (pb->ntend) {
+        p->tend = (dptr)t;
+        for (i = 0; i < pb->ntend; ++i)
+            p->tend[i] = nulldesc;
+    } else
+        p->tend = 0;
+    return p;
+}
+
+void free_frame(struct frame *f)
+{
+    switch (f->type) {
+        case C_FRAME_TYPE: {
+            f->creator->stackcurr -= f->size;
+            free(f);
+            break;
+        }
+        case P_FRAME_TYPE: {
+            struct frame_vars *l = ((struct p_frame *)f)->fvars;
+            f->creator->stackcurr -= f->size;
+            free(f);
+            --l->refcnt;
+            if (l->refcnt == 0) {
+                l->creator->stackcurr -= l->size;
+                free(l);
+            }
+            break;
+        }
+        default:
+            syserr("Unknown frame type");
+    }
 }

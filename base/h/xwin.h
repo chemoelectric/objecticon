@@ -135,6 +135,7 @@
 #define drawpoints(w, points, npoints) \
    { STDLOCALS(w); RENDER3(XDrawPoints,points,npoints,CoordModeOrigin); }
 #define drawrectangles(w, recs, nrecs) { \
+   int i; \
    STDLOCALS(w); \
    for(i=0; i<nrecs; i++) { \
      RENDER4(XDrawRectangle,recs[i].x,recs[i].y,recs[i].width,recs[i].height);\
@@ -159,11 +160,6 @@
 #define EVQUEGET(w,d) { \
    wsp ws = (w)->window; \
    if (!list_get(&ws->listp,&d)) fatalerr(0,NULL); \
-   if (Qual(d)) {\
-      ws->eventQueue[ws->eQfront++] = *StrLoc(d); \
-      if (ws->eQfront >= EQUEUELEN) ws->eQfront = 0; \
-      ws->eQback = ws->eQfront; \
-      } \
    }
 #define EVQUEEMPTY(w) (BlkLoc((w)->window->listp)->list.size == 0)
 

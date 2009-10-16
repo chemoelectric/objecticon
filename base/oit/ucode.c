@@ -218,7 +218,7 @@ struct ucode_op ucode_op_table[] = {
     /* 210 */         { Uop_Classfield, "classfield", { TYPE_32,TYPE_STR }, "\t%-12s %08o %s" }, 
     /* 211 */         { Uop_Recordfield, "recordfield", { TYPE_STR,0 }, "\t%-12s %s" },
     /* 212 */         { Uop_Procdecl, "procdecl", { TYPE_STR,0 }, "\t%-12s %s" },
-    /* 213 */         { Uop_Nargs, "nargs", { TYPE_16,0 }, "\t%-12s %d" },
+    /* 213 */         INVALID,
     /* 214 */         { Uop_Importsym, "importsym", { TYPE_STR,0 }, "\t%-12s %s" },
     /* 215 */         { Uop_Record, "record", { TYPE_STR,0 }, "\t%-12s %s" },
     /* 216 */         INVALID,

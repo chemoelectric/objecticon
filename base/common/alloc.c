@@ -32,6 +32,19 @@ void *safe_alloc(size_t size)
 }
 
 /*
+ * safe_malloc - malloc n bytes
+ */
+void *safe_malloc(size_t size)
+{
+    void *a = malloc(size);
+    if (!a && size > 0) {
+        fprintf(stderr, "safe_malloc(%lu): out of memory\n", (unsigned long)size);
+        exit(EXIT_FAILURE);
+    }
+    return a;
+}
+
+/*
  * safe_realloc - reallocate ptr to size bytes.
  */
 void *safe_realloc(void *ptr, size_t size)

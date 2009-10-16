@@ -56,8 +56,6 @@ void install(char *name, int flag, struct node *n)
         case F_Dynamic:	/* local declaration (possibly implicit?) */
         case F_Argument:	/* formal parameter */
             put_local(name, flag, n, 1);
-            if (flag & F_Argument)
-                ++curr_func->nargs;
             break;
 
         case F_Class:
@@ -234,9 +232,6 @@ static void fout(struct tfunction *f)
 {
     struct tlentry *lp;
     struct tcentry *cp;
-
-    uout_op(Uop_Nargs);
-    uout_16(f->nargs);
 
     for (lp = f->lfirst; lp; lp = lp->l_next) {
         ensure_pos(lp->pos);

@@ -190,7 +190,6 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Classfield  210
 #define Uop_Recordfield 211
 #define Uop_Procdecl	212
-#define Uop_Nargs   	213
 #define Uop_Importsym   214
 #define Uop_Record	215
 #define Uop_Impl	216

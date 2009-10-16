@@ -7,7 +7,6 @@
 #include "lmem.h"
 
 static struct loc curr_loc;
-static struct lfunction *curr_lfunc;
 static struct lfile *lf;
 
 struct lfunction *curr_vfunc;

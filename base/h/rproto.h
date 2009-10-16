@@ -71,9 +71,6 @@ int		cnv_str_0	(dptr s, dptr d);
 int		cnv_str_1	(dptr s, dptr d);
 int		cnv_tstr_0	(char *sbuf, dptr s, dptr d);
 int		cnv_tstr_1	(char *sbuf, dptr s, dptr d);
-int		co_chng		(struct b_coexpr *ncp, struct descrip *valloc,
-				   struct descrip *rsltloc,
-				   int swtch_typ, int first);
 void		co_init		(struct b_coexpr *sblkp);
 void		coswitch	(word *old, word *new, int first);
 #ifdef HAVE_COCLEAN
@@ -115,9 +112,9 @@ void		err_msg		(int n, dptr v);
 void		startuperr  	(char *fmt, ...);
 void		fatalerr	(int n,dptr v);
 void            ffatalerr       (char *fmt, ...);
-struct ipc_fname *find_ipc_fname(word *ipc, int prior, struct progstate *p);
+struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p);
 void abbr_fname(dptr s, dptr d);
-struct ipc_line *find_ipc_line(word *ipc, int prior, struct progstate *p);
+struct ipc_line *find_ipc_line(word *ipc, struct progstate *p);
 dptr     	findfile	(word *ipc);
 int		findline	(word *ipc);
 void		fpetrap		(int);
@@ -129,8 +126,6 @@ union block	*hgnext		(union block*b,struct hgstate*s,union block *e);
 union block	*hmake		(int tcode,word nslots,word nelem);
 void		icon_init	(char *name);
 int		idelay		(int n);
-int		interp_0	(int fsig,dptr cargp);
-int		interp_1	(int fsig,dptr cargp);
 void		irunerr		(int n, C_integer v);
 int		lexcmp		(dptr dp1,dptr dp2);
 union block	**memb		(union block *pb,dptr x,uword hn, int *res);
@@ -138,7 +133,6 @@ void		mksubs		(dptr var,dptr val,word i,word j, dptr result);
 word		mod3		(word a,word b);
 word		mul		(word a,word b);
 word		neg		(word a);
-void            new_context     (void);
 int		numcmp		(dptr dp1,dptr dp2,dptr dp3);
 void		outimage	(FILE *f,dptr dp,int noimage);
 longlong        physicalmemorysize();
@@ -148,32 +142,20 @@ int    		 radix		(int sign, register int r, register char *s,
 				   register char *end_s, union numeric *result);
 char		*reserve_0	(int region, word nbytes);
 char		*reserve_1	(int region, word nbytes);
-void		retderef		(dptr valp, word *low, word *high);
+void		retderef	(dptr valp, struct frame_vars *dynamics);
 void		stkdump		(int);
 word		sub		(word a,word b);
 void		syserr		(char *fmt, ...);
 void		xmfree		(void);
-void            ensure_initialized(struct b_class *class);
-dptr            do_invoke       (dptr proc);
-dptr            call_icon       (dptr proc, ...);
-dptr            call_icon_va    (dptr proc, va_list ap);
-int invaluemask(struct progstate *p, int evcode, struct descrip *val);
 
-   void	resolve			(struct progstate *pstate);
-   struct b_coexpr *loadicode (char *name,  C_integer bs, C_integer ss, C_integer stk);
-   void actparent (int eventcode);
-   int mt_activate   (dptr tvalp, dptr rslt, struct b_coexpr *ncp);
-   void changeprogstate(struct progstate *p);
-   void showcoexps();
-   void checkcoexps(char *s);
-   void dumpcoexp(char *s, struct b_coexpr *p);
-   void showstack();
+void	resolve			(struct progstate *pstate);
+void showcurrstack();
+void showstack(struct b_coexpr *c);
+
 char *cstr(struct descrip *sd);
 void print_desc(FILE *f, dptr d);
 void print_vword(FILE *f, dptr d);
 void print_dword(FILE *f, dptr d);
-
-   void EVVariable(dptr dx, int eventcode);
 
    dptr	extcall			(dptr x, int nargs, int *signal);
 
@@ -213,10 +195,8 @@ void print_dword(FILE *f, dptr d);
    int	atobool		(char *s);
    int	docircles	(wbp w, int argc, dptr argv, int fill);
    void	drawCurve	(wbp w, XPoint *p, int n);
-   char	*evquesub	(wbp w, int i);
    void	genCurve	(wbp w, XPoint *p, int n, void (*h)(wbp, XPoint [], int));
    int	getpattern	(wbp w, char *answer);
-   char *getselection(wbp w, char *buf);
    struct palentry *palsetup(int p);
    int	palnum		(dptr d);
    int	parsecolor	(wbp w, char *s, long *r, long *g, long *b, long *a);
@@ -321,8 +301,9 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    int	setpointer	(wbp w, char *val);
    int	setwidth	(wbp w, SHORT new_width);
    int	setminwidth	(wbp w, SHORT new_width);
-   int  ownselection    (wbp w, char *selection);
-   int getselectioncontent(wbp w, char *selname, char *targetname, dptr res);
+   int  own_selection    (wbp w, char *selection);
+   int  request_selection(wbp w, char *selname, char *targetname);
+   int  send_selection_response(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data);
    int	setwindowlabel	(wbp w, char *val);
    int setinputmask(wbp w, char *val);
    int	strimage	(wbp w, int x, int y, int width, int height,
@@ -470,8 +451,6 @@ long	ckmul		(long i, long j);
 long	cksub		(long i, long j);
 void	cmd_line	(int argc, char **argv, dptr rslt);
 void	collect		(int region);
-void	cotrace		(struct b_coexpr *ccp, struct b_coexpr *ncp,
-			   int swtch_typ, dptr valloc);
 int	cvcset		(dptr dp,int * *cs,int *csbuf);
 int	cvnum		(dptr dp,union numeric *result);
 int	cvreal		(dptr dp,double *r);
@@ -507,8 +486,7 @@ int	tvalcmp		(dptr d1,dptr d2);
 int	tvcmp4		(struct dpair *dp1,struct dpair *dp2);
 void	varargs		(dptr argp, int nargs, dptr rslt);
 
-struct b_coexpr *alccoexp (void);
-struct b_coexpr *alcprog(long icodesize, long stacksize);
+struct progstate *alcprog(long icodesize);
 
 dptr rec_structinate(dptr dp, char *name, int nfields, char *a[]);
 
@@ -540,24 +518,22 @@ dptr u_read			(int fd, int n, dptr d);
 
    struct b_refresh *alcrefresh_0(word *e, int nl, int nt);
    struct b_refresh *alcrefresh_1(word *e, int nl, int nt);
-   void	atrace			(struct b_proc *p);
-   void	ctrace			(struct b_proc *p, int nargs, dptr arg);
-   void	failtrace		(struct b_proc *p);
+
+void call_trace(struct p_frame *pf);
+
+void fail_trace(struct p_frame *pf);
+void suspend_trace(struct p_frame *pf);
+void return_trace(struct p_frame *pf);
+
+void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val);
+void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val);
+void trace_cofail(struct b_coexpr *from, struct b_coexpr *to);
+
    int	invoke_0		(int nargs, dptr *cargs, int *n);
    int	invoke_1		(int nargs, dptr *cargs, int *n);
-   void	rtrace			(struct b_proc *p, dptr rval);
-   void	strace			(struct b_proc *p, dptr rval);
-   void	tracebk			(struct pf_marker *lcl_pfp, dptr argp);
-   void	xdisp			(struct pf_marker *fp, dptr dp, int n, FILE *f, struct progstate *p);
 
-   #define Fargs dptr cargp
-   int	Obscan			(int nargs, Fargs);
-   int	Ocreate			(word *entryp, Fargs);
-   int	Oescan			(int nargs, Fargs);
-   int	Ofield      		(int nargs, Fargs);
-   int	Olimit			(int nargs, Fargs);
-   int	Ollist			(int nargs, Fargs);
-   int	Omkrec			(int nargs, Fargs);
+void xdisp(struct p_frame *pf, int count, FILE *f, struct progstate *p);
+
 
 void create_list(uword nslots, dptr d);
 struct b_lelem *get_lelem_for_index(struct b_list *bp, word i, word *pos);
@@ -603,3 +579,60 @@ char *binstr(unsigned int n);
 void show_regions();
 void *get_csp();
 void checkstack();
+
+struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *dynamics);
+struct c_frame *alc_c_frame(struct b_proc *pb, int nargs);
+void dyn_free(void *p);
+void free_frame(struct frame *f);
+
+void push_frame(struct frame *f);
+void push_p_frame(struct p_frame *f);
+void interp();
+dptr get_dptr();
+void get_descrip(dptr dest);
+void get_deref(dptr dest);
+void get_variable(dptr dest);
+void pop_to(struct frame *f);
+void do_apply();
+void do_invoke();
+void do_applyf();
+void do_invokef();
+word get_offset(word *w);
+void do_ensure_class_init();
+void tail_invoke_frame(struct frame *f);
+dptr get_element(dptr d, word i);
+void do_field();
+struct inline_field_cache *get_inline_field_cache();
+void traceback();
+struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior);
+struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior);
+struct b_proc *get_current_user_proc();
+struct p_frame *get_current_user_frame();
+void switch_to(struct b_coexpr *ce);
+void set_c_frame_value();
+void set_c_frame_failure();
+void add_to_prog_event_queue(dptr value, int event);
+void general_call_0(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
+void general_call_1(word clo, dptr expr, int argc, dptr args, word rval, word *failure_label);
+void general_access_0(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
+                      int just_fail, word *failure_label);
+void general_access_1(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
+                      int just_fail, word *failure_label);
+
+void general_invokef_0(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+                       int argc, dptr args, word rval, word *failure_label);
+void general_invokef_1(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
+                       int argc, dptr args, word rval, word *failure_label);
+void test_collect(int time_interval, long call_interval);
+struct b_coexpr *alccoexp_0 (void);
+struct b_coexpr *alccoexp_1 (void);
+struct b_proc *clone_b_proc(struct b_proc *bp);
+
+void set_curpstate(struct progstate *p);
+void set_curr_pf(struct p_frame *x);
+void synch_ipc();
+
+
+
+
+

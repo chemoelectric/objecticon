@@ -1,7 +1,7 @@
 include ../../Makedefs
 
 TRANS=		trans.o tlex.o tparse.o tsym.o tmem.o \
-		 tree.o ucode.o ipp.o membuff.o
+		 tree.o ucode.o ipp.o membuff.o ir.o
 
 LINKR=		link.o lglob.o lcode.o lmem.o lsym.o ltree.o optimize.o
 

@@ -35,6 +35,8 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       ((Testb((word)(E_Deref), bits)) ? deref_1 : deref_0);
    p->Alcbignum =
       ((Testb((word)(E_Lrgint),bits)) ? alcbignum_1:alcbignum_0);
+   p->Alccoexp =
+      ((Testb((word)(E_Coexpr),bits)) ? alccoexp_1:alccoexp_0);
    p->Alccset =
       ((Testb((word)(E_Cset), bits)) ? alccset_1 : alccset_0);
    p->Alcsegment =
@@ -43,8 +45,6 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
       ((Testb((word)(E_Real), bits)) ? alcreal_1 : alcreal_0);
    p->Alcrecd =
       ((Testb((word)(E_Record), bits)) ? alcrecd_1 : alcrecd_0);
-   p->Alcrefresh =
-      ((Testb((word)(E_Refresh), bits)) ? alcrefresh_1 : alcrefresh_0);
    p->Alcselem =
       ((Testb((word)(E_Selem), bits)) ? alcselem_1 : alcselem_0);
    p->Alcstr =
@@ -126,143 +126,36 @@ void assign_event_functions(struct progstate *p, struct descrip cs)
        (Testb((word)(E_Rref), bits)) ||
        (Testb((word)(E_Rsub), bits))) 
    {
-       p->FieldAccess = field_access_1;
-       p->InvokefAccess = invokef_access_1;
+       p->GeneralAccess = general_access_1;
    } else {
-       p->FieldAccess = field_access_0;
-       p->InvokefAccess = invokef_access_0;
+       p->GeneralAccess = general_access_1;
    }
 
-   if ((Testb((word)(E_Ecall), bits)) ||
-       (Testb((word)(E_Pcall), bits)) ||
-       (Testb((word)(E_Objectcreate), bits)) ||
+   if ((Testb((word)(E_Objectref), bits)) ||
+       (Testb((word)(E_Objectsub), bits)) ||
+       (Testb((word)(E_Castref), bits)) ||
+       (Testb((word)(E_Castsub), bits)) ||
+       (Testb((word)(E_Classref), bits)) ||
+       (Testb((word)(E_Classsub), bits)) ||
+       (Testb((word)(E_Rref), bits)) ||
+       (Testb((word)(E_Rsub), bits)))
+   {
+       p->GeneralInvokef = general_invokef_1;
+   } else {
+       p->GeneralInvokef = general_invokef_0;
+   }
+
+   if ((Testb((word)(E_Objectcreate), bits)) ||
        (Testb((word)(E_Rcreate), bits)))
    {
-       p->Invoke = invoke_1;
+       p->GeneralCall = general_call_1;
    } else {
-       p->Invoke = invoke_0;
+       p->GeneralCall = general_call_0;
    }
 
-   /*
-    * interp() is the monster case:
-    * We should replace 30 membership tests with a cset intersection.
-    * Heck, we should redo the event codes so any bit in one
-    * particular word means: "use the instrumented interp".
-    */
-   if (Testb((word)(E_Intcall), bits) ||
-       Testb((word)(E_Fsusp), bits) ||
-       Testb((word)(E_Osusp), bits) ||
-       Testb((word)(E_Bsusp), bits) ||
-       Testb((word)(E_Ocall), bits) ||
-       Testb((word)(E_Ofail), bits) ||
-       Testb((word)(E_Tick), bits) ||
-       Testb((word)(E_Line), bits) ||
-       Testb((word)(E_Fname), bits) ||
-       Testb((word)(E_Opcode), bits) ||
-       Testb((word)(E_Fcall), bits) ||
-       Testb((word)(E_Prem), bits) ||
-       Testb((word)(E_Erem), bits) ||
-       Testb((word)(E_Intret), bits) ||
-       Testb((word)(E_Psusp), bits) ||
-       Testb((word)(E_Ssusp), bits) ||
-       Testb((word)(E_Pret), bits) ||
-       Testb((word)(E_Efail), bits) ||
-       Testb((word)(E_Sresum), bits) ||
-       Testb((word)(E_Fresum), bits) ||
-       Testb((word)(E_Oresum), bits) ||
-       Testb((word)(E_Eresum), bits) ||
-       Testb((word)(E_Presum), bits) ||
-       Testb((word)(E_Pfail), bits) ||
-       Testb((word)(E_Ffail), bits) ||
-       Testb((word)(E_Frem), bits) ||
-       Testb((word)(E_Orem), bits) ||
-       Testb((word)(E_Fret), bits) ||
-       Testb((word)(E_Oret), bits)
-       )
-      p->Interp = interp_1;
-   else
-      p->Interp = interp_0;
 #endif
 }
 
-/*
- * EvGet(eventmask, valuemask, flag) - user function for reading event streams.
- * Installs cset eventmask (and optional table valuemask) in the event source,
- * then activates it.
- * EvGet returns the code of the matched token.  These keywords are also set:
- *    &eventcode     token code
- *    &eventvalue    token value
- */
-
-"evget(c,flag) - read through the next event token having a code matched "
-" by cset c."
-
-function{0,1} lang_Prog_get_event(cs,vmask,flag)
-   if !def:cset(cs,*k_cset) then
-      runerr(104,cs)
-   if !is:null(vmask) then
-      if !is:table(vmask) then
-         runerr(124,vmask)
-
-   body {
-      tended struct descrip dummy;
-      struct progstate *p = NULL;
-
-      /*
-       * Be sure an eventsource is available
-       */
-      if (!is:coexpr(curpstate->eventsource))
-         runerr(118,curpstate->eventsource);
-      if (!is:null(vmask))
-         BlkLoc(curpstate->eventsource)->coexpr.program->valuemask = vmask;
-
-      /*
-       * If our event source is a child of ours, assign its event mask.
-       */
-      p = BlkLoc(curpstate->eventsource)->coexpr.program;
-      if (p->parent == curpstate) {
-	 if (BlkLoc(p->eventmask) != BlkLoc(cs)) {
-	    assign_event_functions(p, cs);
-	    }
-	 }
-
-      /*
-       * Loop until we read an event allowed.
-       */
-      while (1) {
-         /*
-          * Activate the event source to produce the next event.
-          */
-	 dummy = cs;
-	 if (mt_activate(&dummy, &curpstate->eventcode,
-			 (struct b_coexpr *)BlkLoc(curpstate->eventsource)) ==
-	     A_Cofail) fail;
-	 deref(&curpstate->eventcode, &curpstate->eventcode);
-	 if (!is:string(curpstate->eventcode) ||
-	     StrLen(curpstate->eventcode) != 1) {
-	    /*
-	     * this event is out-of-band data; return or reject it
-	     * depending on whether flag is null.
-	     */
-	    if (!is:null(flag))
-	       return curpstate->eventcode;
-	    else continue;
-	    }
-
-#if E_Cofail || E_Coret
-	 switch(*StrLoc(curpstate->eventcode)) {
-	 case E_Cofail: case E_Coret: {
-	    if (BlkLoc(curpstate->eventsource)->coexpr.id == 1) {
-	       fail;
-	       }
-	    }
-	    }
-#endif					/* E_Cofail || E_Coret */
-
-	 return curpstate->eventcode;
-	 }
-      }
-end
 
 /*
  * Prototypes.
@@ -276,10 +169,6 @@ char typech[MaxType+1];	/* output character for each type */
 
 int noMTevents;			/* don't produce events in EVAsgn */
 
-#if UNIX && E_Tick
-union tickerdata ticker;
-unsigned long oldtick;
-#endif					/* UNIX && E_Tick */
 
 #if UNIX
 /*
@@ -289,73 +178,6 @@ word oldsum = 0;
 #endif					/* UNIX */
 
 
-static char scopechars[] = "+:^-";
-
-/*
- * Special event function for E_Assign & E_Deref;
- * allocates out of monitor's heap.
- */
-void EVVariable(dptr dx, int eventcode)
-{
-   int i;
-   dptr procname = NULL;
-   struct progstate *parent = curpstate->parent;
-   struct region *rp = curpstate->stringregion;
-
-   if (dx == argp) {
-      /*
-       * we are dereferencing a result, argp is not the procedure.
-       * is this a stable state to leave the TP in?
-       */
-      actparent(eventcode);
-      return;
-      }
-
-   procname = &((&BlkLoc(*argp)->proc)->name);
-   /*
-    * call get_name, allocating out of the monitor if necessary.
-    */
-   curpstate->stringregion = parent->stringregion;
-   parent->stringregion = rp;
-   noMTevents++;
-   i = get_name(dx,&(parent->eventval));
-
-   if (i == GlobalName) {
-      if (reserve(Strings, StrLen(parent->eventval) + 1) == NULL) {
-	 fprintf(stderr, "failed to reserve %ld bytes for global\n",
-		 (long)StrLen(parent->eventval)+1);
-	 syserr("monitoring out-of-memory error");
-	 }
-      StrLoc(parent->eventval) =
-	 alcstr(StrLoc(parent->eventval), StrLen(parent->eventval));
-      alcstr("+",1);
-      StrLen(parent->eventval)++;
-      }
-   else if ((i == StaticName) || (i == LocalName) || (i == ParamName)) {
-      if (!reserve(Strings, StrLen(parent->eventval) + StrLen(*procname) + 1)) {
-	 fprintf(stderr,"failed to reserve %ld bytes for %d, %ld+%ld\n",
-                 (long)StrLen(parent->eventval)+(long)StrLen(*procname)+1, i,
-		 (long)StrLen(parent->eventval), (long)StrLen(*procname));
-	 syserr("monitoring out-of-memory error");
-	 }
-      StrLoc(parent->eventval) =
-	 alcstr(StrLoc(parent->eventval), StrLen(parent->eventval));
-      alcstr(scopechars+i,1);
-      alcstr(StrLoc(*procname), StrLen(*procname));
-      StrLen(parent->eventval) += StrLen(*procname) + 1;
-      }
-   else if (i == Failed) {
-      /* parent->eventval = *dx; */
-      }
-   else if (i == Error) {
-      syserr("get_name error in EVVariable");
-      }
-
-   parent->stringregion = curpstate->stringregion;
-   curpstate->stringregion = rp;
-   noMTevents--;
-   actparent(eventcode);
-}
 
 
 /*
@@ -389,7 +211,6 @@ void EVInit()
    typech[T_Selem]   = E_Selem;		/* set element block */
    typech[T_Slots]   = E_Slots;		/* set/table hash slots */
    typech[T_Coexpr]  = E_Coexpr;	/* co-expression block (static) */
-   typech[T_Refresh] = E_Refresh;	/* co-expression refresh block */
    typech[T_Object]  = E_Object;        /* object */
    typech[T_Cast ]   = E_Cast;          /* cast */
    typech[T_Methp]   = E_Methp;         /* method pointer */
@@ -402,56 +223,5 @@ void EVInit()
     *    in the static region: E_Free = free
     *    in the string region: E_String = string
     */
-
-#if UNIX
-   /*
-    * Call profil(2) to enable program counter profiling.  We use the smallest
-    *  allowable scale factor in order to minimize the number of counters;
-    *  we assume that the text of iconx does not exceed 256K and so we use
-    *  four bins.  One of these four bins will be incremented every system
-    *  clock tick (typically 4 to 20 ms).
-    *
-    *  Take your local profil(2) man page with a grain of salt.  All the
-    *  systems we tested really maintain 16-bit counters despite what the
-    *  man pages say.
-    *  Some also say that a scale factor of two maps everything to one counter;
-    *  that is believed to be a no-longer-correct statement dating from the
-    *  days when the maximum program size was 64K.
-    *
-    *  The reference to EVInit below just obtains an arbitrary address within
-    *  the text segment.
-    */
-#ifdef HaveProfil
-   profil(ticker.s, sizeof(ticker.s), (int) EVInit & ~0x3FFFF, 2);
-#endif					/* HaveProfil*/
-#endif					/* UNIX */
-
    }
 
-
-#ifdef EventMon
-
-/*
- * mmrefresh() - redraw screen, initially or after garbage collection.
- */
-
-void mmrefresh()
-{
-    char *p = NULL;
-    word n;
-
-    /*
-     * If the monitor is asking for E_EndCollect events, then it
-     * can handle these memory allocation "redraw" events.
-     */
-    if (!is:null(curpstate->eventmask) &&
-        Testb((word)(E_EndCollect), BlkLoc(curpstate->eventmask)->cset.bits)) {
-        for (p = blkbase; p < blkfree; p += n) {
-            n = BlkSize(p);
-            RealEVVal(n, typech[(int)BlkType(p)]);	/* block region */
-        }
-        EVVal(DiffPtrs(strfree, strbase), E_String);	/* string region */
-    }
-}
-
-#endif

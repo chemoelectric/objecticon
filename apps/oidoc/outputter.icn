@@ -96,7 +96,7 @@ class Outputter()
             }
          }
          s[-2:0] := ""
-         if obj.nargs < 0 then
+         if iand(obj.locals[-1].flags, ULocal.F_Vararg) ~= 0 then
             s ||:= "[]"
       }
       return s

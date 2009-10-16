@@ -66,10 +66,12 @@ struct centry {                 /* constant table entry */
     word c_flag;                /*   type of literal flag */
     char *data;                 /*   raw data read from ufile */
     int length;                 /*   length of raw data */
-    word pc;                    /*   position in icode of block, not used for string/integer */
     int ref;                    /*   referenced flag */
+    int pc;                     /* Address of block for lrgint, cset, ucs, real */
+    word desc_no;               /* Index in constant descriptor table for non-integer types */
     struct centry *next,        /* Next in lfunctions's linked list */
-                  *b_next;      /* Next in hash bucket, used by code generation */
+                  *b_next,      /* Next in hash bucket, used by code generation */
+                  *d_next;      /* Next in constant descriptor table */
 };
 
 struct fentry {                 /* field table header entry */
@@ -139,9 +141,9 @@ struct lclass_field_ref {
 struct lfunction {
     int pc;
     int ndynamic;         /* Count of dynamics */
-    int narguments;       /* Count of arguments, always >= 0 even for varargs */
+    int narguments;       /* Count of arguments */
+    int vararg;           /* Flag set to 1 for vararg function */
     int nstatics;         /* Count of statics */
-    int nargs;            /* Read from the ufile, will be -ve for varargs */
     int native_method_id; /* For a deferred method, the native method number, or -1 */
     struct lfile *defined;            /* The file this function was defined in */
     struct lclass_field *method;      /* Pointer to method, if a method */

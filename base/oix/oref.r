@@ -15,11 +15,21 @@ operator{*} ! bang(underef x -> dx)
             char ch;
             EVValD(&dx, E_Stringbang);
             if (is:variable(x)) {
-                for (i = 1; i <= StrLen(dx); i++) {
-                    suspend tvsubs(&x, i, (word)1);
-                    deref(&x, &dx);
-                    if (!is:string(dx)) 
-                        runerr(103, dx);
+                if (frame->rval) {
+                    for (i = 1; i <= StrLen(dx); i++) {
+                        ch = *(StrLoc(dx) + i - 1);
+                        suspend string(1, &allchars[ch & 0xFF]);
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
+                } else {
+                    for (i = 1; i <= StrLen(dx); i++) {
+                        suspend tvsubs(&x, i, (word)1);
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
                 }
             } else {
                 for (i = 1; i <= StrLen(dx); i++) {
@@ -90,11 +100,20 @@ operator{*} ! bang(underef x -> dx)
      ucs: {
           EVValD(&dx, E_Ucsbang);
           if (is:variable(x)) {
-              for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
-                  suspend tvsubs(&x, i, (word)1);
-                  deref(&x, &dx);
-                  if (!is:ucs(dx)) 
-                      runerr(128, dx);
+              if (frame->rval) {
+                  for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
+                      suspend ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+                      deref(&x, &dx);
+                      if (!is:ucs(dx)) 
+                          runerr(128, dx);
+                  }
+              } else {
+                  for (i = 1; i <= BlkLoc(dx)->ucs.length; i++) {
+                      suspend tvsubs(&x, i, (word)1);
+                      deref(&x, &dx);
+                      if (!is:ucs(dx)) 
+                          runerr(128, dx);
+                  }
               }
           } else {
               tended char *p = StrLoc(BlkLoc(dx)->ucs.utf8);
@@ -161,7 +180,7 @@ operator{0,1} ? random(underef x -> dx)
                fail;
             rval = RandVal;
             rval *= val;
-            if (is:variable(x))
+            if (is:variable(x) && !frame->rval)
                 return tvsubs(&x, (word)rval + 1, (word)1);
             else
                 return string(1, StrLoc(dx)+(word)rval);
@@ -177,7 +196,7 @@ operator{0,1} ? random(underef x -> dx)
             rval = RandVal;
             rval *= val;
             i = (word)rval + 1;
-            if (is:variable(x))
+            if (is:variable(x) && !frame->rval)
                return tvsubs(&x, i, (word)1);
             else
                 return ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
@@ -401,7 +420,7 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
 
      ucs: {
          C_integer t;
-         if (is:variable(x))
+         if (is:variable(x) && !frame->rval)
                use_trap = 1;
 
          i = cvpos(i, BlkLoc(dx)->ucs.length);
@@ -463,7 +482,7 @@ operator{0,1} [:] sect(underef x -> dx, i, j)
          * x should be a string. If x is a variable, we must create a
          *  substring trapped variable.
          */
-         if (is:variable(x) && is:string(dx))
+         if (is:variable(x) && is:string(dx) && !frame->rval)
              use_trap = 1;
          else if (!cnv:string(dx,dx))
              runerr(131, dx);
@@ -557,6 +576,8 @@ operator{0,1} [] subsc(underef x -> dx,y)
                bp = *dp1;
                return struct_var(&bp->telem.tval, bp);
             }
+            if (frame->rval)
+                return BlkLoc(dx)->table.defvalue;
             else {
                /*
                 * dx[y] is not in the table, make a table element trapped
@@ -614,7 +635,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
 
      ucs: {
         word i;
-        if (is:variable(x))
+        if (is:variable(x) && !frame->rval)
             use_trap = 1;
          /*
           * Make sure that y is a C integer.
@@ -681,7 +702,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
           * dx must either be a string or be convertible to one. Decide
           *  whether a substring trapped variable can be created.
           */
-         if (is:variable(x) && is:string(dx))
+         if (is:variable(x) && is:string(dx) && !frame->rval)
             use_trap = 1;
          else if (!cnv:tmp_string(dx,dx))
             runerr(114, dx);
@@ -738,13 +759,31 @@ function{*} back(underef x -> dx)
             char ch;
             EVValD(&dx, E_Stringbang);
             if (is:variable(x)) {
-                for (i = StrLen(dx); i > 0; i--) {
-                    if (i > StrLen(dx))
-                        i = StrLen(dx);
-                    suspend tvsubs(&x, i, (word)1);
-                    deref(&x, &dx);
-                    if (!is:string(dx)) 
-                        runerr(103, dx);
+                if (frame->rval) {
+                    for (i = StrLen(dx); i > 0; i--) {
+                        if (i > StrLen(dx)) {
+                            i = StrLen(dx);
+                            if (i == 0)
+                                break;
+                        }
+                        ch = *(StrLoc(dx) + i - 1);
+                        suspend string(1, &allchars[ch & 0xFF]);
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
+                } else {
+                    for (i = StrLen(dx); i > 0; i--) {
+                        if (i > StrLen(dx)) {
+                            i = StrLen(dx);
+                            if (i == 0)
+                                break;
+                        }
+                        suspend tvsubs(&x, i, (word)1);
+                        deref(&x, &dx);
+                        if (!is:string(dx)) 
+                            runerr(103, dx);
+                    }
                 }
             } else {
                 for (i = StrLen(dx); i > 0; i--) {
@@ -785,13 +824,30 @@ function{*} back(underef x -> dx)
      ucs: {
           EVValD(&dx, E_Ucsbang);
           if (is:variable(x)) {
-              for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
-                  if (i > BlkLoc(dx)->ucs.length)
-                      i = BlkLoc(dx)->ucs.length;
-                  suspend tvsubs(&x, i, (word)1);
-                  deref(&x, &dx);
-                  if (!is:ucs(dx)) 
-                      runerr(128, dx);
+              if (frame->rval) {
+                  for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
+                      if (i > BlkLoc(dx)->ucs.length) {
+                          i = BlkLoc(dx)->ucs.length;
+                          if (i == 0)
+                              break;
+                      }
+                      suspend ucs(make_ucs_substring(&BlkLoc(dx)->ucs, i, 1));
+                      deref(&x, &dx);
+                      if (!is:ucs(dx)) 
+                          runerr(128, dx);
+                  }
+              } else {
+                  for (i = BlkLoc(dx)->ucs.length; i > 0; i--) {
+                      if (i > BlkLoc(dx)->ucs.length) {
+                          i = BlkLoc(dx)->ucs.length;
+                          if (i == 0)
+                              break;
+                      }
+                      suspend tvsubs(&x, i, (word)1);
+                      deref(&x, &dx);
+                      if (!is:ucs(dx)) 
+                          runerr(128, dx);
+                  }
               }
           } else {
               tended char *p = StrLoc(BlkLoc(dx)->ucs.utf8) +

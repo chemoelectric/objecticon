@@ -8,25 +8,11 @@
 #include "../h/config.h"
 #include "../h/version.h"
 #include "../h/monitor.h"
-
-#ifndef NoTypeDefs
-   #include "../h/typedefs.h"
-#endif					/* NoTypeDefs */
+#include "../h/typedefs.h"
 
 /*
  * Macros that must be expanded by rtt.
  */
-
-/*
- * Declaration for library routine.
- */
-#begdef LibDcl(nm,n,pn)
-   #passthru OpBlock(nm,n,pn,0)
-
-   int O##nm(nargs,cargp)
-   int nargs;
-   register dptr cargp;
-#enddef					/* LibDcl */
 
 /*
  * Error exit from non top-level routines. Set tentative values for
@@ -51,22 +37,6 @@
    } while (0)
 #enddef					/* ReturnErrNum */
 
-/*
- * Code expansions for exits from C code for top-level routines.
- */
-#define Fail		return A_Resume
-#define Return		return A_Continue
-
-/*
- * RunErr encapsulates a call to the function err_msg, followed
- *  by Fail.  The idea is to avoid the problem of calling
- *  runerr directly and forgetting that it may actually return.
- */
-
-#define RunErr(n,dp) do {\
-   err_msg((int)n,dp);\
-   Fail;\
-   } while (0)
 
 /*
  * Protection macro.
@@ -80,79 +50,29 @@
        fail; \
        }
 
-/*
- * perform what amounts to "function inlining" of EVVal
- */
-#begdef RealEVVal(value,event)
-   do {
-      if (is:null(curpstate->eventmask)) break;
-      else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
-      MakeInt(value, &(curpstate->parent->eventval));
-      if (!is:null(curpstate->valuemask) &&
-	  !invaluemask(curpstate, event, &(curpstate->parent->eventval)))
-	 break;
-      actparent(event);
-   } while (0)
-#enddef					/* RealEVVal */
-
 #begdef EVVal(value,event)
 #if event
-   RealEVVal(value,event)
+   do {
+      struct descrip value_desc;
+      if (!curpstate->monitor) break;
+      if (is:null(curpstate->eventmask)) break;
+      if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
+      MakeInt(value, &value_desc);
+      add_to_prog_event_queue(&value_desc, event);
+   } while (0)
 #endif
 #enddef					/* EVVal */
 
 #begdef EVValD(dp,event)
 #if event
    do {
+      if (!curpstate->monitor) break;
       if (is:null(curpstate->eventmask)) break;
-      else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
-      curpstate->parent->eventval = *(dp);
-      if (!is:null(curpstate->valuemask) &&
-	  !invaluemask(curpstate, event, &(curpstate->parent->eventval)))
-	 break;
-      actparent(event);
+      if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
+      add_to_prog_event_queue(dp, event);
    } while (0)
 #endif
 #enddef					/* EVValD */
-
-#begdef EVValX(bp,event)
-#if event
-   do {
-      struct progstate *parent = curpstate->parent;
-      if (is:null(curpstate->eventmask)) break;
-      else if (!Testb((word)event, BlkLoc(curpstate->eventmask)->cset.bits)) break;
-      parent->eventval.dword = D_Coexpr;
-      BlkLoc(parent->eventval) = (union block *)(bp);
-      if (!is:null(curpstate->valuemask) &&
-	  !invaluemask(curpstate, event, &(curpstate->parent->eventval)))
-	 break;
-      actparent(event);
-   } while (0)
-#endif
-#enddef					/* EVValX */
-
-#begdef EVVar(dp, e)
-#if e
-   do {
-      if (!is:null(curpstate->eventmask) &&
-          Testb((word)e, BlkLoc(curpstate->eventmask)->cset.bits)) {
-            EVVariable(dp, e);
-	    }
-   } while(0)
-#endif
-#enddef
-
-#begdef InterpEVVal(value,event)
-#if event
-  { ExInterp; RealEVVal(value,event); EntInterp; }
-#endif
-#enddef
-
-#begdef InterpEVValD(dp,event)
-#if event
- { ExInterp; EVValD(dp,event); EntInterp; }
-#endif
-#enddef
 
 /*
  * Macro with construction of event descriptor.
@@ -161,6 +81,7 @@
 #begdef Desc_EVValD(bp, code, type)
 #if code
    do {
+   if (!curpstate->monitor) break;
    eventdesc.dword = type;
    eventdesc.vword.bptr = (union block *)(bp);
    EVValD(&eventdesc, code);
@@ -357,3 +278,19 @@ typedef int siptr, stringint, inst;
       free(var);
    } while(0)
 #enddef				/* GRFX_UNLINK */
+
+#define CustomProc(f,code,nparam,ndynam,nclo,ntmp,nlab,nmark,sname)\
+    struct b_iproc Cat(B,f) = {\
+   	T_Proc,\
+   	sizeof(struct b_proc),\
+   	0,\
+        code,\
+   	nparam,\
+        0,\
+   	ndynam,\
+        0,0,0,\
+        nclo,ntmp,nlab,nmark,\
+        0,0,0,0,0,\
+   	{sizeof(sname) - 1, sname},\
+        0,0};
+   

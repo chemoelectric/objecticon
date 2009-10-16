@@ -45,7 +45,6 @@ struct tfunction {
     struct tcentry *chash[128], *cfirst, *clast;                /* hash area for constant table */
     struct node *code;
     word flag;
-    int nargs;
     struct tfunction *next;
     struct tclass_field *field;             /* For a method, a pointer to the class's field */
     struct tgentry *global;                 /* For a proc/record, a pointer to the global entry */

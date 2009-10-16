@@ -70,28 +70,12 @@
    #define TRACE "TRACE"
 #endif
 
-#ifndef XSTKSIZE
-   #define XSTKSIZE "XSTKSIZE"
-#endif
-
 #ifndef STRSIZE
    #define STRSIZE "STRSIZE"
 #endif
 
 #ifndef BLKSIZE
    #define BLKSIZE "BLKSIZE"
-#endif
-
-#ifndef MSTKSIZE
-   #define MSTKSIZE "MSTKSIZE"
-#endif
-
-#ifndef STKSIZE
-   #define STKSIZE "STKSIZE"
-#endif
-
-#ifndef COEXPRLIM
-   #define COEXPRLIM "COEXPRLIM"
 #endif
 
 #ifndef QLSIZE

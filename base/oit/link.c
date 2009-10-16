@@ -11,6 +11,7 @@
 #include "lcode.h"
 #include "ltree.h"
 #include "optimize.h"
+#include "ir.h"
 
 #include "../h/header.h"
 
@@ -52,6 +53,8 @@ char *inname;                           /* input file name */
 
 int lfatals = 0;                                /* number of errors encountered */
 int lwarnings = 0;                      /* number of warnings encountered */
+
+struct lfunction *curr_lfunc;
 
 /*
  *  ilink - link a number of files, returning error and warning counts
@@ -270,7 +273,7 @@ static void check_unused_imports()
     }
 }
 
-static char *f_flag2str(int flag)
+char *f_flag2str(int flag)
 {
     static char buff[256];
     *buff = 0;
@@ -291,6 +294,8 @@ static char *f_flag2str(int flag)
     if (flag & F_LrgintLit) strcat(buff, "F_LrgintLit ");
     if (flag & F_Method) strcat(buff, "F_Method ");
     if (flag & F_UcsLit) strcat(buff, "F_UcsLit ");
+    if (*buff)
+        buff[strlen(buff) - 1] = 0;
     return buff;
 }
 
@@ -309,6 +314,8 @@ static char *m_flag2str(int flag)
     if (flag & M_Final) strcat(buff, "M_Final ");
     if (flag & M_Defer) strcat(buff, "M_Defer ");
     if (flag & M_Special) strcat(buff, "M_Special ");
+    if (*buff)
+        buff[strlen(buff) - 1] = 0;
     return buff;
 }
 
@@ -367,7 +374,7 @@ void dumpstate()
     for (gl = lgfirst; gl; gl = gl->g_next) {
         fprintf(stderr, "name %s id=%d flag=%s\n", gl->name, gl->g_index, f_flag2str(gl->g_flag));
         if (gl->func) {
-            fprintf(stderr, "\tnargs=%d nstatics=%d\n", gl->func->nargs,
+            fprintf(stderr, "\tnargs=%d nstatics=%d\n", gl->func->narguments,
                 gl->func->nstatics);
             for (le = gl->func->locals; le; le = le->next) {
                 if (le->l_flag & F_Global)
@@ -418,7 +425,7 @@ void dumpstate()
                     fprintf(stderr, "\t\t\tconst_flag=%s\n", const_flag2str(me->const_flag));
                 }
                 if (me->func) {
-                    fprintf(stderr, "\t\t\tMethod numargs=%d nstatics=%d\n", me->func->nargs,
+                    fprintf(stderr, "\t\t\tMethod numargs=%d nstatics=%d\n", me->func->narguments,
                         me->func->nstatics);
                     for (le = me->func->locals; le; le = le->next) {
                         if (le->l_flag & F_Global)

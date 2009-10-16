@@ -10,9 +10,9 @@ extern struct b_proc *op_tbl[]; /* operators available for string invocation */
 extern int op_tbl_sz;           /* number of operators in op_tbl */
 extern struct b_proc *fnc_tbl[]; /* builtin functions */
 extern int fnc_tbl_sz;           /* sizeof of fnc_tbl */
+extern struct b_proc *opblks[];  /* maps opcode to corresponding operator blocks */
+extern struct b_proc *keyblks[];  /* maps keyword number to corresponding function blocks */
 extern word dodump;		/* termination dump */
-extern int line_info;		/* flag: line information is available */
-extern char *file_name;		/* source file for current execution point */
 extern int set_up;
 extern int collecting;          /* non-zero whilst a GC is taking place */
 
@@ -24,7 +24,6 @@ extern int firstd[];		/* offset (words) of first descrip. */
 extern uword segsize[];		/* size of hash bucket segment */
 extern int k_level;		/* value of &level */
 
-extern struct b_coexpr *stklist;/* base of co-expression stack list */
 extern struct progstate *progs; /* list of progstates */
 extern struct b_cset *blankcs;   /* ' ' */
 extern struct b_cset *lparcs;    /* '(' */
@@ -32,6 +31,7 @@ extern struct b_cset *rparcs;    /* ')' */
 
 extern struct descrip blank;	/* blank */
 extern struct descrip emptystr;	/* empty string */
+extern struct descrip trashcan; /* for any unwanted value */
 
 extern struct descrip kywd_dmp; /* descriptor for &dump */
 extern struct descrip nullptr;	/* descriptor with null block pointer */
@@ -51,12 +51,9 @@ extern struct descrip milliondesc;	/* 1000000 */
 
 extern struct b_iproc Bdeferred_method_stub;  /* Deferred method block */
 
-extern word mstksize;		/* size of main stack in words */
-extern word xstksize;		/* size of co-expression stacks in words */
 extern word qualsize;		/* size of string qualifier list */
 extern word memcushion;		/* memory region cushion factor */
 extern word memgrowth;		/* memory region growth factor */
-extern word coexprlim;          /* number of coexpression allocations before a GC is triggered */
 
 extern struct tend_desc *tend;  /* chain of tended descriptors */
 
@@ -64,10 +61,7 @@ extern char typech[];
 extern word oldsum;
 extern struct descrip csetdesc;		/* cset descriptor */
 extern struct descrip eventdesc;	/* event descriptor */
-extern struct b_iproc mt_llist;
-
 extern struct descrip rzerodesc;	/* real 0.0 descriptor */
-
 extern struct b_real realzero;          /* real zero block */
 
 
@@ -89,22 +83,24 @@ extern struct b_cset *k_ucase;	/* value of &ucase */
 extern struct b_ucs *emptystr_ucs;     /* ucs empty string */
 extern struct b_ucs *blank_ucs;        /* ucs blank string */
 
-extern struct descrip tended[];	/* tended descriptors */
-extern struct ef_marker *efp;	/* expression frame pointer */
-extern struct gf_marker *gfp;	/* generator frame pointer */
-extern struct pf_marker *pfp;	/* procedure frame pointer */
-extern word *sp;			/* interpreter stack pointer */
-extern word *stack;			/* interpreter stack base */
-extern word *stackend;		/* end of evaluation stack */
-extern dptr argp;			/* global argp */
-   
 extern struct progstate *curpstate;
+extern struct b_coexpr *k_current;
+extern struct p_frame *curr_pf;
+extern word *ipc;
+
 extern struct progstate rootpstate;
 extern int noMTevents;		/* no MT events during GC */
    
 extern int over_flow;
 
 extern stringint attribs[], drawops[];
+
+extern word curr_op;
+extern dptr xexpr;
+extern dptr xfield;
+extern dptr xargp;
+extern int xnargs;
+extern struct c_frame *xc_frame;           /* currently executing c frame */
 
 /*
  * graphics
@@ -136,3 +132,4 @@ extern clock_t starttime;		/* start time in milliseconds */
 extern union tickerdata ticker;
 extern unsigned long oldtick;
 #endif					/* UNIX && E_Tick */
+
