@@ -53,13 +53,13 @@ clean:
 # Compile with make IASM=Y
 ifeq ($(IASM),Y)
 iasm: iasm.icn
-	/opt/objecticon/bin/oit -s iasm.icn
+	oit -s iasm.icn
 invokeiasm.ri:	invokeiasm.in iasm
-	/opt/objecticon/bin/oix ./iasm <invokeiasm.in >invokeiasm.ri
+	./iasm <invokeiasm.in >invokeiasm.ri
 interpiasm.ri:	interpiasm.in iasm
-	/opt/objecticon/bin/oix ./iasm <interpiasm.in >interpiasm.ri
+	./iasm <interpiasm.in >interpiasm.ri
 initiasm.ri:	initiasm.in iasm
-	/opt/objecticon/bin/oix ./iasm <initiasm.in >initiasm.ri
+	./iasm <initiasm.in >initiasm.ri
 endif
 
 # Compile with make KEYSYMS=Y
@@ -69,6 +69,6 @@ keysymtocodepoint: keysymtocodepoint.icn
 	oit -s keysymtocodepoint.icn
 
 rxkeysyms.ri:	keysyms.txt keysymtocodepoint
-	keysymtocodepoint <keysyms.txt >rxkeysyms.ri
+	./keysymtocodepoint <keysyms.txt >rxkeysyms.ri
 
 endif
