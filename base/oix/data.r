@@ -69,7 +69,6 @@ struct descrip trashcan;		/* descriptor that is never read */
 struct descrip blank; 			/* one-character blank string */
 struct descrip emptystr; 		/* zero-length empty string */
 struct descrip lcase;			/* string of lowercase letters */
-struct descrip letr;			/* "r" */
 struct descrip nulldesc;           	/* null value */
 struct descrip onedesc;              	/* integer 1 */
 struct descrip ucase;			/* string of uppercase letters */

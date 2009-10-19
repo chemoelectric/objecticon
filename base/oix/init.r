@@ -212,7 +212,6 @@ void icon_init(char *name)
     LitStr("", &emptystr);
     LitStr("abcdefghijklmnopqrstuvwxyz", &lcase);
     LitStr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", &ucase);
-    LitStr("r", &letr);
     MakeInt(0, &zerodesc);
     MakeInt(1, &onedesc);
     MakeInt(-1, &minusonedesc);

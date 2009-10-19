@@ -36,7 +36,6 @@ extern struct descrip trashcan; /* for any unwanted value */
 extern struct descrip kywd_dmp; /* descriptor for &dump */
 extern struct descrip nullptr;	/* descriptor with null block pointer */
 extern struct descrip lcase;	/* lowercase string */
-extern struct descrip letr;	/* letter "r" */
 extern struct descrip maps2;	/* second argument to map() */
 extern struct descrip maps3;	/* third argument to map() */
 extern struct descrip maps2u;	/* second argument to map(), ucs case */
