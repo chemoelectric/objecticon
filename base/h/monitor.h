@@ -36,6 +36,8 @@
 #define E_Free		'\132'		/* Free region */
 #define E_String	'\163'		/* String allocation */
 
+#define E_Prog          '\177'          /* Loaded program allocation */
+
 /*
  * Some other monitoring codes.
  */
@@ -194,19 +196,6 @@
 #define E_Presum	'\125'		/* Procedure resumption */
 #define E_Prem		'\126'		/* Suspended procedure removal */
 
-#define E_Fcall		'\072'		/* Function call */
-#define E_Ffail		'\115'		/* Function failure */
-#define E_Fret		'\120'		/* Function return */
-#define E_Fsusp		'\127'		/* Function suspension */
-#define E_Fresum	'\131'		/* Function resumption */
-#define E_Frem		'\133'		/* Function suspension removal */
-
-#define E_Ocall		'\134'		/* Operator call */
-#define E_Ofail		'\135'		/* Operator failure */
-#define E_Oret		'\140'		/* Operator return */
-#define E_Osusp		'\173'		/* Operator suspension */
-#define E_Oresum	'\175'		/* Operator resumption */
-#define E_Orem		'\177'		/* Operator suspension removal */
 
    /*
     * Garbage collections
@@ -242,14 +231,14 @@
 040 041 042 043 047
 050 051 053 054 057
 060 061 062 063 064 065 066 067
-070 071 073 074 075 076 077
+070 071 072 073 074 075 076 077
 
-110
-124
-137
+110 115 120
+124 127 131 133 134 135
+137 140
 152
 162
-174
+173 174 175 
 204 205 206 207
 222 223 224 225 226 227
 230 231 232 233 234 235 236 237
@@ -262,4 +251,6 @@
 345 353
 365 366
 371 372 373 374 375 376 377
+
+ 
 */

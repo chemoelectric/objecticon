@@ -144,8 +144,7 @@ struct progstate *alcprog(long icodesize)
    char *icode;
    int size = icodesize + sizeof(struct progstate);
 
-   /* TODO new event */
-   EVVal(size, E_Coexpr);
+   EVVal(size, E_Prog);
 
    /*
     * Allocate the two parts.
