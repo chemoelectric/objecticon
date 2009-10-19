@@ -3537,7 +3537,7 @@ int getpixel_term(w, imem)
 int getpixel(w, x, y, rv, s, imem)
     wbp w;
     int x, y;
-    long *rv;
+    word *rv;
     char *s;
     struct imgmem *imem;
 {

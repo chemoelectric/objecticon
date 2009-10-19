@@ -1218,69 +1218,50 @@ function{3} graphics_Window_pixel(self, argv[argc])
       int slen, r;
       tended struct descrip lastval;
       char strout[50];
+      int i, j;
+      word rv;
+      wsp ws;
       GetSelfW();
 
       r = rectargs(self_w, argc, argv, 0, &x, &y, &width, &height);
       if (r >= 0)
           runerr(101, argv[r]);
 
-      {
-          int i, j;
-          long rv;
-          wsp ws = self_w->window;
+      ws = self_w->window;
 
-          imem.x = Max(x,0);
-          imem.y = Max(y,0);
-          imem.width = Min(width, (int)ws->width - imem.x);
-          imem.height = Min(height, (int)ws->height - imem.y);
+      imem.x = Max(x,0);
+      imem.y = Max(y,0);
+      imem.width = Min(width, (int)ws->width - imem.x);
+      imem.height = Min(height, (int)ws->height - imem.y);
 
-          if (getpixel_init(self_w, &imem) == Failed) fail;
+      if (getpixel_init(self_w, &imem) == Failed) fail;
 
-          lastval = emptystr;
+      lastval = emptystr;
 
-#ifdef CHECK
-          for (j=y; j < y + height; j++) {
-              for (i=x; i < x + width; i++) {
-                  getpixel(self_w, i, j, &rv, strout, &imem);
-                  slen = strlen(strout);
-                  if (rv >= 0) {
-                      int signal;
-                      if (slen != StrLen(lastval) ||
-                          strncmp(strout, StrLoc(lastval), slen)) {
-                          MemProtect((StrLoc(lastval) = alcstr(strout, slen)));
-                          StrLen(lastval) = slen;
-                      }
-                      /*
-                       * suspend, but free up imem if vanquished; RTL workaround.
-                       * Needs implementing under the compiler iconc.
-                       */
-                      r_args[0] = lastval;
-                      if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {
-                          tend = r_tend.previous;
-                          getpixel_term(self_w, &imem);
-                          VanquishReturn(signal);
-                      }
+      create_list(width * height, &result);
+
+      for (j=y; j < y + height; j++) {
+          for (i=x; i < x + width; i++) {
+              getpixel(self_w, i, j, &rv, strout, &imem);
+              slen = strlen(strout);
+              if (rv >= 0) {
+                  if (slen != StrLen(lastval) ||
+                      strncmp(strout, StrLoc(lastval), slen)) {
+                      MemProtect((StrLoc(lastval) = alcstr(strout, slen)));
+                      StrLen(lastval) = slen;
                   }
-                  else {
-                      int signal;
-                      /*
-                       * suspend, but free up imem if vanquished; RTL workaround
-                       * Needs implementing under the compiler.
-                       */
-                      r_args[0].dword = D_Integer;
-                      r_args[0].vword.integer = rv;
-                      if ((signal = interp(G_Fsusp, r_args)) != A_Resume) {
-                          tend = r_tend.previous;
-                          getpixel_term(self_w, &imem);
-                          VanquishReturn(signal);
-                      }
-                  }
+                  list_put(&result, &lastval);
+              }
+              else {
+                  struct descrip tmp;
+                  MakeInt(rv, &tmp);
+                  list_put(&result, &tmp);
               }
           }
-#endif
-          getpixel_term(self_w, &imem);
-          fail;
       }
+
+      getpixel_term(self_w, &imem);
+      return result;
    }
 end
 

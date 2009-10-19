@@ -257,7 +257,7 @@ void	qevent		(wsp ws, dptr e, int x, int y, uword t, long f, int krel);
    void	getlinestyle	(wbp w, char *answer);
    int	getpixel_init	(wbp w, struct imgmem *imem);
    int	getpixel_term	(wbp w, struct imgmem *imem);
-   int	getpixel	(wbp w,int x,int y,long *rv,char *s,struct imgmem *im);
+   int	getpixel	(wbp w,int x,int y,word *rv,char *s,struct imgmem *im);
    void	getpointername	(wbp w, char *answer);
    int	getpos		(wbp w);
    int	getvisual	(wbp w, char *answer);
