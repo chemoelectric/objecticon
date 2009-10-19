@@ -770,7 +770,7 @@ class Main(Dialog)
       local d, t, m, bg
 
       t := canvas.dup()
-      every coexp_seq{t.traverse_components_preorder()}.set_show_layout(&no)
+      every Seq{t.traverse_components_preorder()}.set_show_layout(&no)
       d := Dialog()
       d.set_layout(t.layout_delegate)
       every d.add(!t.children)
@@ -867,7 +867,7 @@ class Main(Dialog)
 
       write("---------------")
       write("traverse")
-      every write(image(coexp_seq{canvas.gen_cos().traverse_tree()}))
+      every write(image(Seq{canvas.gen_cos().traverse_tree()}))
    end
 
    public test_cbgs()
@@ -878,7 +878,7 @@ class Main(Dialog)
                " which_one=", image(b.which_one))
       }
       write("..")
-      every o := coexp_seq{canvas.gen_cos().traverse_tree()} do {
+      every o := Seq{canvas.gen_cos().traverse_tree()} do {
          if is(o, gui.Toggle) then
             write(o.get_name(), ":", image(o), " ---> ", image(o.parent_check_box_group))
       }
@@ -889,7 +889,7 @@ class Main(Dialog)
                " which_one=", image(b.which_one))
       }
       write("..")
-      every o := coexp_seq{d.gen_cos().traverse_tree()} do {
+      every o := Seq{d.gen_cos().traverse_tree()} do {
          if is(o, gui.Toggle) then
             write(o.get_name(), ":", image(o), " ---> ", image(o.parent_check_box_group))
       }

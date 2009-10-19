@@ -73,7 +73,7 @@ class TreeNode(SetFields)
    #
    public expand(force)
       local n
-      every n := coexp_seq{traverse_all_postorder()} do
+      every n := Seq{traverse_all_postorder()} do
          if \force | *n.children > 0 then
             n.is_expanded_flag := 1
    end

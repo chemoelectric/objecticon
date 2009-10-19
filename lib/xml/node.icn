@@ -176,7 +176,7 @@ class Node()
    #
    public find_string(s)
       local n
-      every n := coexp_seq{traverse_nodes_preorder()} do
+      every n := Seq{traverse_nodes_preorder()} do
          if n.has_string(s) then
             suspend n
    end
@@ -186,7 +186,7 @@ class Node()
    #
    public find_trimmed_string(s)
       local n
-      every n := coexp_seq{traverse_nodes_preorder()} do
+      every n := Seq{traverse_nodes_preorder()} do
          if n.has_trimmed_string(s) then
             suspend n
    end

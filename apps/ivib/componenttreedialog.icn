@@ -48,7 +48,7 @@ class ComponentTreeDialog(Dialog)
 
    public find_node_for(c)
       local n
-      every n := coexp_seq{tree.get_root_node().traverse_all_preorder()} do {
+      every n := Seq{tree.get_root_node().traverse_all_preorder()} do {
          if n.component === c then
             return n
       }

@@ -123,7 +123,7 @@ class XmlElement(Element)
    #
    public search_tree_global_name(s)
       local n
-      every n := coexp_seq{traverse_nodes_preorder()} do
+      every n := Seq{traverse_nodes_preorder()} do
          if is(n, Element) & (/s | equals(n.get_global_name(), s)) then
             suspend n
    end

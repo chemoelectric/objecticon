@@ -1015,7 +1015,7 @@ class Dialog(Component)
    public get_focus_list(e)
       local l, c
       l := []
-      every c := coexp_seq{traverse_tab_order()} do {
+      every c := Seq{traverse_tab_order()} do {
          if c === self.focus | (c.accepts_focus(e) & c.is_unhidden() & c.is_unshaded()) then {
             put(l, c)
          }

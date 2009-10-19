@@ -61,7 +61,7 @@ class Element(Node)
    #
    public search_tree(s)
       local n
-      every n := coexp_seq{traverse_nodes_preorder()} do
+      every n := Seq{traverse_nodes_preorder()} do
          if is(n, Element) & (/s | n.get_name() == s) then
             suspend n
    end

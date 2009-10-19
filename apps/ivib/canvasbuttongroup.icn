@@ -24,7 +24,7 @@ class CanvasButtonGroup(CanvasObject,ButtonGroup)
    public get_members()
       local o, l
       l := []
-      every o := coexp_seq{self.parent_Canvas.gen_cos().traverse_tree()} do {
+      every o := Seq{self.parent_Canvas.gen_cos().traverse_tree()} do {
          if (is(o, gui.Button) &
              o.parent_button_group === self) then
             put(l, o)

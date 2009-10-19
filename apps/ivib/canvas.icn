@@ -829,7 +829,7 @@ class Canvas(Component,SelectiveObjectCodec)
       cn ||:= "_"
 
       i := 0
-      every s := coexp_seq{gen_cos().traverse_tree()}.get_name() do {
+      every s := Seq{gen_cos().traverse_tree()}.get_name() do {
          s ? {
             if =cn then
                i <:= integer(tab(0))
@@ -840,7 +840,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public find_name(name)
       local o
-      every o := coexp_seq{gen_cos().traverse_tree()} do {
+      every o := Seq{gen_cos().traverse_tree()} do {
          if o.get_name() == name then
             suspend o
       }
@@ -994,9 +994,9 @@ class Canvas(Component,SelectiveObjectCodec)
       # Create a table mapping current objects to duplicated ones.
       t := table()
       e1 := []
-      every put(e1, coexp_seq{gen_cos().traverse_tree()})
+      every put(e1, Seq{gen_cos().traverse_tree()})
       e2 := []
-      every put(e2, coexp_seq{c.gen_cos().traverse_tree()})
+      every put(e2, Seq{c.gen_cos().traverse_tree()})
       while insert(t, pop(e1), pop(e2))
       *e1 = *e2 = 0 | stop("internal duplication error.")
 
@@ -1269,7 +1269,7 @@ class Canvas(Component,SelectiveObjectCodec)
       push_undo()
       every cc := !l do {
          # Can't move onto a child or current parent.
-         if new_parent === (cc.parent | coexp_seq{cc.traverse_tree()}) then
+         if new_parent === (cc.parent | Seq{cc.traverse_tree()}) then
             next
          if /new_parent.layout_delegate then
             cc.set_pos(10, 10)
