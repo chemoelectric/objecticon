@@ -19,7 +19,7 @@
 #
 #   AddTabby{e, i}	adds tabby to treadling sequence
 #  
-#   AllparAER{e1,e2, ...}
+#   Allpar{e1,e2, ...}
 #			parallel evaluation with last result
 #			used for short sequences
 #
@@ -39,7 +39,7 @@
 #
 #   Cumsum{e}	generates the cumulative sum of the terms of e
 #  
-#   CycleparAER{e1,e2, ...}
+#   Cyclepar{e1,e2, ...}
 #			parallel evaluation with shorter sequences
 #			re-evaluated
 #
@@ -62,11 +62,11 @@
 #
 #   ExtendSeq{e1,i}	extends e1 to i results
 #  
-#   ExtractAER{e1,e2, ...}
+#   Extract{e1,e2, ...}
 #			extract results of even-numbered arguments
 #			according to odd-numbered values
 #
-#   FifoAER{e1,e2, ...}	reversal of lifo evaluation
+#   Fifo{e1,e2, ...}	reversal of lifo evaluation
 #
 #   Friendly{m, k, e3}
 #			friendly sequence starting at k shaft mod m
@@ -98,7 +98,7 @@
 #
 #   Length{e}	returns the length of e
 #  
-#   LifoAER{e1,e2, ...}	models standard Icon "lifo" evaluation
+#   Lifo{e1,e2, ...}	models standard Icon "lifo" evaluation
 #
 #   Limit{e1,e2}	models e1 \ e2
 #
@@ -115,7 +115,7 @@
 #			sequences for e and then its reverse.
 #
 #  
-#   ParallelAER{e1,e2, ...}
+#   Parallel{e1,e2, ...}
 #			parallel evaluation terminating on
 #			shortest sequence
 #
@@ -169,7 +169,7 @@
 #   Seqlist{e1, i}	produce list with first i values of e1; i
 #			defaults to all values
 #  
-#   SimpleAER{e1,e2, ...}
+#   Simple{e1,e2, ...}
 #			simple evaluation with only success or
 #			failure
 #
@@ -218,7 +218,6 @@
 package ipl.pdco
 
 import
-   io(stop),
    ipl.lists(lmap, lrotate),
    ipl.numbers(residue),
    ipl.periodic(repeater),
@@ -233,7 +232,7 @@ procedure AddTabby(e, i)
 end
 
 # PDAE for parallel evuation with repeats
-procedure AllparAER(L[])	
+procedure Allpar(L[])	
    local i, L1, done
 
    L1 := list(*L)
@@ -312,7 +311,7 @@ procedure Complint(e)
    j := 0
 
    while i := @e do {
-      i := integer(i) | stop("*** invalid value in sequence to Compl{}")
+      i := integer(i) | runerr("*** invalid value in sequence to Compl{}")
       suspend j to i - 1
       j := i + 1
       }
@@ -346,7 +345,7 @@ procedure Cumsum(e)
 end
 
 # PDAE for parallel evaluation with cycling
-procedure CycleparAER(L[])	
+procedure Cyclepar(L[])	
    local i, L1, done
 
    L1 := list(*L)
@@ -477,7 +476,7 @@ procedure ExtendSeq(e1, e2)
 end
 
 # PDAE to extract values
-procedure ExtractAER(L[])	
+procedure Extract(L[])	
    local i, n, L1
 
    L1 := list(*L/2)
@@ -497,7 +496,7 @@ procedure ExtractAER(L[])
 end
 
 # PDAE for reversal of lifo evaluation
-procedure FifoAER(L[])	
+procedure Fifo(L[])	
    local L1, j
 
    L1 := list(*L)
@@ -652,7 +651,7 @@ procedure Length(e)
 end
 
 # PDAE for standard lifo evaluation
-procedure LifoAER(L[])	
+procedure Lifo(L[])	
    local L1, j
 
    L1 := list(*L)
@@ -755,7 +754,7 @@ end
 
 
 # PDAE for parallel evaluation
-procedure ParallelAER(L[])	
+procedure Parallel(L[])	
    local i, L1
 
    L1 := list(*L)
@@ -1048,7 +1047,7 @@ procedure Seqlist(e1, e2)
 end
 
 # PDAE for simple evaluation
-procedure SimpleAER(L[])	
+procedure Simple(L[])	
    local i, L1
 
    L1 := list(*L)
