@@ -26,7 +26,6 @@ static int nstatics = 0;               /* Running count of static variables */
  * Array sizes for various linker tables that can be expanded with realloc().
  */
 static size_t maxcode	= 100000;        /* code space */
-static size_t maxlabels	= 500;	        /* maximum num of labels/proc */
 static size_t nsize       = 10000;         /* ipc/line num. assoc. table */
 static size_t fnmsize     = 100;           /* ipc/file name assoc. table */
 
@@ -34,7 +33,6 @@ static struct ipc_fname *fnmtbl;	/* table associating ipc with file name */
 static struct ipc_line *lntable;	/* table associating ipc with line number */
 static struct ipc_fname *fnmfree;	/* free pointer for ipc/file name table */
 static struct ipc_line *lnfree;	/* free pointer for ipc/line number table */
-static word *labels;			/* label table */
 static char *codeb;			/* generated code space */
 static char *codep;			/* free pointer for code space */
 
@@ -54,7 +52,6 @@ int const_desc_count;
 static int      nalign(int n);
 static void	align		(void);
 static void labout(int i, char *desc);
-static void	cleartables	(void);
 static void	flushcode	(void);
 static void	lemitproc       ();
 static void	lemitcode       ();
@@ -85,39 +82,6 @@ static void *expand_table(void * table,      /* table to be realloc()ed */
                           int unit_size,      /* number of bytes in a unit of the table */
                           int min_units,      /* the minimum number of units that must be allocated. */
                           char *tbl_name);     /* name of the table */
-
-/*
- * Code generator parameters.
- */
-
-#define LoopDepth   20		/* max. depth of nested loops */
-#define CreatDepth  10		/* max. depth of nested create statements */
-
-enum looptype { EVERY,LOOP };
-
-/*
- * loopstk structures hold information about nested loops.
- */
-struct loopstk {
-    int nextlab;			/* label for next exit */
-    int breaklab;		/* label for break exit */
-    int markcount;		/* number of marks */
-    int ltype;			/* loop type */
-};
-
-/*
- * creatstk structures hold information about create statements.
- */
-struct creatstk {
-    int nextlab;			/* previous value of nextlab */
-    int breaklab;		/* previous value of breaklab */
-};
-
-static int nextlab;		/* next label allocated by alclab() */
-static struct loopstk loopstk[LoopDepth];	/* loop stack */
-static struct loopstk *loopsp;
-static struct creatstk creatstk[CreatDepth]; /* create stack */
-static struct creatstk *creatsp;
 
 struct unref {
     char *name;
@@ -345,7 +309,6 @@ void generate_code()
      */
     lnfree = lntable = safe_calloc(nsize, sizeof(struct ipc_line));
     fnmfree = fnmtbl = safe_calloc(fnmsize, sizeof(struct ipc_fname));
-    labels  = safe_calloc(maxlabels, sizeof(word));
     codep = codeb = safe_calloc(maxcode, 1);
 
     /*
@@ -366,8 +329,6 @@ void generate_code()
     lntable = 0;
     free(fnmtbl);   
     fnmtbl = 0;
-    free(labels);
-    labels = 0;
     free(codep);
     codep = 0;
 
@@ -391,7 +352,6 @@ static void gencode_func(struct lfunction *f)
      */
     curr_lfunc = f;
     generate_ir();
-    cleartables();
     align();
     if (Dflag) {
         if (curr_lfunc->method)
@@ -2081,26 +2041,6 @@ static void flushcode()
             quit("cannot write icode file");
     }
     codep = codeb;
-}
-
-/*
- * cleartables - clear some tables to all zeroes.
- */
-static void cleartables()
-{
-    int i;
-
-    for (i = 0; i < maxlabels; i++)
-        labels[i] = 0;
-
-    loopsp = loopstk;
-    loopsp->nextlab = 0;
-    loopsp->breaklab = 0;
-    loopsp->markcount = 0;
-
-    creatsp = creatstk;
-
-    nextlab = 1;
 }
 
 static void labout(int i, char *desc)
