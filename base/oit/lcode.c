@@ -1338,6 +1338,9 @@ static void genclasses()
     align();
     hdr.Classes = pc;
 
+    if (Dflag)
+        fprintf(dbgfile, "\n");
+
     outwordx(n_classes, "Num class blocks");
 
     for (cl = lclasses; cl; cl = cl->next)
@@ -1379,7 +1382,11 @@ static void gentables()
     align();
     hdr.Records = pc;
 
-    outwordx(nrecords, "num record blocks");
+    if (Dflag)
+        fprintf(dbgfile, "\n");
+
+    outwordx(nrecords, "Num constructor blocks");
+
     for (rec = lrecords; rec; rec = rec->next) {
         struct field_sort_item *sortf;
         int ap, size;
@@ -1390,6 +1397,9 @@ static void gentables()
         if (loclevel > 1)
             size += rec->nfields * 2 * WordSize;
         size += nalign(size);
+
+        if (Dflag)
+            fprintf(dbgfile, "\n# constructor %s\n", s);
 
         outwordx(T_Constructor, "T_Constructor");		/* type code */
         outwordx(size, "   Block size");
@@ -1570,7 +1580,10 @@ static void gentables()
     if (Dflag)
         fprintf(dbgfile, "\n# Constant descriptors\n");
     hdr.Constants = pc;
+    i = 0;
     for (ce = const_desc_first; ce; ce = ce->d_next) {
+        if (Dflag)
+            fprintf(dbgfile, "# Entry %04x\n", i++);
         if (ce->c_flag & F_IntLit) {
             word ival;
             memcpy(&ival, ce->data, sizeof(word));
@@ -1605,12 +1618,13 @@ static void gentables()
             if (Dflag) {
                 char *s = sp->s, t[9];
                 int i, j = 0;
+                fprintf(dbgfile, "# Offset %04x\n", sp->offset);
                 for (i = 0; i < sp->len; ++i) {
                     if (i == 0)
-                        fprintf(dbgfile, WordFmt ":(+%x)\t", (long)pc, sp->offset);
+                        fprintf(dbgfile, WordFmt ":    ", (long)pc);
                     else if (i % 8 == 0) {
                         t[j] = 0;
-                        fprintf(dbgfile, "   %s\n" WordFmt ":\t", t, (long)pc + i);
+                        fprintf(dbgfile, "   %s\n" WordFmt ":    ", t, (long)pc + i);
                         j = 0;
                     }
                     fprintf(dbgfile, " %02x", s[i] & 0xff);
@@ -1801,7 +1815,7 @@ static void outsdescrip(struct centry *ce, char *fmt, ...)
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, WordFmt ": C+" WordFmt "    # ", (long)pc, (long)ce->desc_no);
+        fprintf(dbgfile, WordFmt ": C[" WordFmt "]   # ", (long)pc, (long)ce->desc_no);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
