@@ -55,8 +55,8 @@ int ceq(dptr dp, char *s)
  */
 int getvar(dptr s, dptr vp, struct progstate *p)
 {
-    register dptr dp;
-    register dptr np;
+    dptr dp;
+    dptr *np;
     register int i;
     struct b_proc *bp;
     struct p_frame *pf;
@@ -152,7 +152,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
     dp = pf->fvars->desc;
     for (i = bp->nparam; i > 0; i--) {
-        if (eq(s,np)) {
+        if (eq(s, *np)) {
             vp->dword = D_NamedVar;
             VarLoc(*vp) = (dptr)dp;
             return ParamName;
@@ -162,7 +162,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     }
 
     for (i = bp->ndynam; i > 0; i--) { /* Check the local dynamic names. */
-        if (eq(s,np)) {
+        if (eq(s, *np)) {
             vp->dword = D_NamedVar;
             VarLoc(*vp) = (dptr)dp;
             return LocalName;
@@ -173,7 +173,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
 
     dp = bp->fstatic; /* Check the local static names. */
     for (i = bp->nstatic; i > 0; i--) {
-        if (eq(s,np)) {
+        if (eq(s, *np)) {
             vp->dword = D_NamedVar;
             VarLoc(*vp) = (dptr)dp;
             return StaticName;
@@ -300,11 +300,11 @@ dptr dp;
             break;
 
          case T_Class:
-	    dp = &(BlkLoc(*dp)->class.name);
+	    dp = BlkLoc(*dp)->class.name;
 	    goto hashstring;
 
          case T_Constructor:
-	    dp = &(BlkLoc(*dp)->constructor.name);
+	    dp = BlkLoc(*dp)->constructor.name;
 	    goto hashstring;
 
          case T_Cast:
@@ -320,7 +320,7 @@ dptr dp;
 	    goto hashstring;
 
 	 case T_Proc:
-	    dp = &(BlkLoc(*dp)->proc.name);
+	    dp = BlkLoc(*dp)->proc.name;
 	    goto hashstring;
 
          default:
@@ -592,13 +592,13 @@ int noimage;
      class: {
            /* produce "class " + the class name */
          fprintf(f, "class ");
-         putstr(f, &BlkLoc(*dp)->class.name);
+         putstr(f, BlkLoc(*dp)->class.name);
          }
 
      constructor: {
            /* produce "constructor " + the type name */
          fprintf(f, "constructor ");
-         putstr(f, &BlkLoc(*dp)->constructor.name);
+         putstr(f, BlkLoc(*dp)->constructor.name);
          }
 
       proc: {
@@ -608,9 +608,9 @@ int noimage;
               * Produce "method classname.fieldname"
               */
              fprintf(f, "method ");
-             putstr(f, &field->defining_class->name);
+             putstr(f, field->defining_class->name);
              fprintf(f, ".");
-             putstr(f, &field->defining_class->program->Fnames[field->fnum]);
+             putstr(f, field->defining_class->program->Fnames[field->fnum]);
          } else {
              /*
               * Produce one of:
@@ -619,11 +619,11 @@ int noimage;
               */
              if (BlkLoc(*dp)->proc.program)
                  fprintf(f, "procedure ");
-             else if (isalpha((unsigned char)*StrLoc(BlkLoc(*dp)->proc.name)))
+             else if (isalpha((unsigned char)*StrLoc(*BlkLoc(*dp)->proc.name)))
                  fprintf(f, "function ");
              else
                  fprintf(f, "operator ");
-             putstr(f, &BlkLoc(*dp)->proc.name);
+             putstr(f, BlkLoc(*dp)->proc.name);
          }
       }
       list: {
@@ -688,7 +688,7 @@ int noimage;
               */
              bp = BlkLoc(*dp);
              fprintf(f, "object ");
-             putstr(f, &bp->object.class->name);
+             putstr(f, bp->object.class->name);
              fprintf(f, "#%ld", (long)bp->object.id);
              j = bp->object.class->n_instance_fields;
              if (j <= 0)
@@ -716,7 +716,7 @@ int noimage;
           */
          bp = BlkLoc(*dp);
          fprintf(f, "record ");
-         putstr(f, &bp->record.constructor->name);
+         putstr(f, bp->record.constructor->name);
          fprintf(f, "#%ld", (long)bp->record.id);
          j = bp->record.constructor->n_fields;
          if (j <= 0)
@@ -889,7 +889,7 @@ int noimage;
                  struct b_class *c = bp->object.class;
                  dptr fname;
                  i = varptr - bp->object.fields;
-                 fname =  &c->program->Fnames[c->fields[i]->fnum];
+                 fname =  c->program->Fnames[c->fields[i]->fnum];
                  tdp.dword = D_Object;
                  BlkLoc(tdp) = bp;
                  outimage(f, &tdp, noimage + 1);
@@ -900,7 +900,7 @@ int noimage;
                  struct b_constructor *c = bp->record.constructor;
                  dptr fname;
                  i = varptr - bp->record.fields;
-                 fname = &c->program->Fnames[c->fnums[i]];
+                 fname = c->program->Fnames[c->fnums[i]];
                  tdp.dword = D_Record;
                  BlkLoc(tdp) = bp;
                  outimage(f, &tdp, noimage + 1);
@@ -1129,20 +1129,20 @@ dptr dp1, dp2;
 
      class: {
            /* produce "class " + the class name */
-         len = 6 + StrLen(BlkLoc(source)->class.name);
+         len = 6 + StrLen(*BlkLoc(source)->class.name);
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("class ", 6);
-         alcstr(StrLoc(BlkLoc(source)->class.name), StrLen(BlkLoc(source)->class.name));
+         alcstr(StrLoc(*BlkLoc(source)->class.name), StrLen(*BlkLoc(source)->class.name));
        }
 
      constructor: {
           /* produce "constructor " + the type name */
-         len = 12 + StrLen(BlkLoc(source)->constructor.name);
+         len = 12 + StrLen(*BlkLoc(source)->constructor.name);
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("constructor ", 12);
-         alcstr(StrLoc(BlkLoc(source)->constructor.name), StrLen(BlkLoc(source)->constructor.name));
+         alcstr(StrLoc(*BlkLoc(source)->constructor.name), StrLen(*BlkLoc(source)->constructor.name));
        }
 
       integer: {
@@ -1230,13 +1230,13 @@ dptr dp1, dp2;
               * Produce "method classname.fieldname"
               */
              struct b_class *field_class = field->defining_class;
-             dptr field_name = &field_class->program->Fnames[field->fnum];
-             len = StrLen(field_class->name) + StrLen(*field_name) + 8;
+             dptr field_name = field_class->program->Fnames[field->fnum];
+             len = StrLen(*field_class->name) + StrLen(*field_name) + 8;
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
              /* No need to refresh pointers, everything is static data */
              alcstr("method ", 7);
-             alcstr(StrLoc(field_class->name),StrLen(field_class->name));
+             alcstr(StrLoc(*field_class->name),StrLen(*field_class->name));
              alcstr(".", 1);
              alcstr(StrLoc(*field_name),StrLen(*field_name));
          } else {
@@ -1250,16 +1250,16 @@ dptr dp1, dp2;
               */
              if (BlkLoc(source)->proc.program)
                  type0 = "procedure ";
-             else if (isalpha((unsigned char)*StrLoc(BlkLoc(source)->proc.name)))
+             else if (isalpha((unsigned char)*StrLoc(*BlkLoc(source)->proc.name)))
                  type0 = "function ";
              else
                  type0 = "operator ";
 
-             len = strlen(type0) + StrLen(BlkLoc(source)->proc.name);
+             len = strlen(type0) + StrLen(*BlkLoc(source)->proc.name);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
              alcstr(type0, strlen(type0));
-             alcstr(StrLoc(BlkLoc(source)->proc.name), StrLen(BlkLoc(source)->proc.name));
+             alcstr(StrLoc(*BlkLoc(source)->proc.name), StrLen(*BlkLoc(source)->proc.name));
          }
       }
 
@@ -1311,12 +1311,12 @@ dptr dp1, dp2;
          bp = BlkLoc(*dp1);
          rec_const = bp->record.constructor;
          sprintf(sbuf, "#%ld(%ld)", (long)bp->record.id, (long)rec_const->n_fields);
-         len = 7 + strlen(sbuf) + StrLen(rec_const->name);
+         len = 7 + strlen(sbuf) + StrLen(*rec_const->name);
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          /* No need to refresh pointer, rec_const is static */
          alcstr("record ", 7);
-         alcstr(StrLoc(rec_const->name),StrLen(rec_const->name));
+         alcstr(StrLoc(*rec_const->name),StrLen(*rec_const->name));
          alcstr(sbuf, strlen(sbuf));
          }
 
@@ -1334,15 +1334,15 @@ dptr dp1, dp2;
            cast_class = bp->cast.class;
 
            sprintf(sbuf, "#%ld(%ld),class ", (long)obj->id, (long)obj_class->n_instance_fields);
-           len = StrLen(obj_class->name) + StrLen(cast_class->name) + strlen(sbuf) + 13;
+           len = StrLen(*obj_class->name) + StrLen(*cast_class->name) + strlen(sbuf) + 13;
 
            MemProtect (StrLoc(*dp2) = reserve(Strings, len));
            StrLen(*dp2) = len;
            /* No need to refresh pointers, everything is static data */
            alcstr("cast(object ", 12);
-           alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
+           alcstr(StrLoc(*obj_class->name),StrLen(*obj_class->name));
            alcstr(sbuf, strlen(sbuf));
-           alcstr(StrLoc(cast_class->name),StrLen(cast_class->name));
+           alcstr(StrLoc(*cast_class->name),StrLen(*cast_class->name));
            alcstr(")", 1);
        }
 
@@ -1363,16 +1363,16 @@ dptr dp1, dp2;
                 *  "methp(object objectname#m(n),method classname.fieldname)"
                 */
                struct b_class * field_class = field->defining_class;
-               dptr field_name = &field_class->program->Fnames[field->fnum];
-               len = StrLen(obj_class->name) + StrLen(field_class->name) + StrLen(*field_name) + strlen(sbuf) + 22;
+               dptr field_name = field_class->program->Fnames[field->fnum];
+               len = StrLen(*obj_class->name) + StrLen(*field_class->name) + StrLen(*field_name) + strlen(sbuf) + 22;
                MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;
                /* No need to refresh pointers, everything is static data */
                alcstr("methp(object ", 13);
-               alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
+               alcstr(StrLoc(*obj_class->name),StrLen(*obj_class->name));
                alcstr(sbuf, strlen(sbuf));
                alcstr("method ", 7);
-               alcstr(StrLoc(field_class->name),StrLen(field_class->name));
+               alcstr(StrLoc(*field_class->name),StrLen(*field_class->name));
                alcstr(".", 1);
                alcstr(StrLoc(*field_name),StrLen(*field_name));
                alcstr(")", 1);
@@ -1388,15 +1388,15 @@ dptr dp1, dp2;
                    type0 = "procedure ";
                else
                    type0 = "function ";
-               len = StrLen(obj_class->name) + StrLen(proc0->name) + strlen(sbuf) + strlen(type0) + 14;
+               len = StrLen(*obj_class->name) + StrLen(*proc0->name) + strlen(sbuf) + strlen(type0) + 14;
                MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;
                /* No need to refresh pointers, everything is static data */
                alcstr("methp(object ", 13);
-               alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
+               alcstr(StrLoc(*obj_class->name),StrLen(*obj_class->name));
                alcstr(sbuf, strlen(sbuf));
                alcstr(type0, strlen(type0));
-               alcstr(StrLoc(proc0->name),StrLen(proc0->name));
+               alcstr(StrLoc(*proc0->name),StrLen(*proc0->name));
                alcstr(")", 1);
            }
        }
@@ -1411,12 +1411,12 @@ dptr dp1, dp2;
            bp = BlkLoc(*dp1);
            obj_class = bp->object.class;   
            sprintf(sbuf, "#%ld(%ld)", (long)bp->object.id, (long)obj_class->n_instance_fields);
-           len = 7 + strlen(sbuf) + StrLen(obj_class->name);
+           len = 7 + strlen(sbuf) + StrLen(*obj_class->name);
            MemProtect (StrLoc(*dp2) = reserve(Strings, len));
            StrLen(*dp2) = len;
            /* No need to refresh pointer, obj_class is static */
            alcstr("object ", 7);
-           alcstr(StrLoc(obj_class->name),StrLen(obj_class->name));
+           alcstr(StrLoc(*obj_class->name),StrLen(*obj_class->name));
            alcstr(sbuf, strlen(sbuf));
        }
 
@@ -1835,12 +1835,17 @@ char *salloc(char *s)
     return strcpy(s1, s);
 }
 
+static int pdptr_cmp(dptr p1, dptr *p2)
+{
+    return lexcmp(p1, *p2);
+}
+
 
 dptr lookup_global(dptr name, struct progstate *prog)
 {
-    dptr p = (dptr)bsearch(name, prog->Gnames, prog->NGlobals, 
-                           sizeof(struct descrip), 
-                           (BSearchFncCast)lexcmp);
+    dptr *p = (dptr *)bsearch(name, prog->Gnames, prog->NGlobals, 
+                              sizeof(dptr), 
+                              (BSearchFncCast)pdptr_cmp);
     if (!p)
         return 0;
 
@@ -1851,15 +1856,15 @@ dptr lookup_global(dptr name, struct progstate *prog)
 
 struct loc *lookup_global_loc(dptr name, struct progstate *prog)
 {
-    dptr p;
+    dptr *p;
 
     /* Check if the table was compiled into the icode */
     if (prog->Glocs == prog->Eglocs)
         return 0;
 
-    p = (dptr)bsearch(name, prog->Gnames, prog->NGlobals, 
-                      sizeof(struct descrip), 
-                      (BSearchFncCast)lexcmp);
+    p = (dptr *)bsearch(name, prog->Gnames, prog->NGlobals, 
+                        sizeof(dptr), 
+                        (BSearchFncCast)pdptr_cmp);
     if (!p)
         return 0;
 

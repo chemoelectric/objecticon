@@ -72,7 +72,7 @@ static void loc_to_list(struct loc *p, dptr res)
 {
     struct descrip t;
     create_list(2, res);
-    list_put(res, &p->fname);
+    list_put(res, p->fname);
     MakeInt(p->line, &t);
     list_put(res, &t);
 }
@@ -333,7 +333,7 @@ function{*} lang_Prog_get_keyword(s,c)
                   t = frame_ipc_fname(p->K_current->curr_pf, 0);
                   if (!t)
                       fail;
-                  return t->fname;
+                  return *t->fname;
               }
               if (strncmp(t,"line",4) == 0) {
                   struct ipc_line *t;
@@ -455,11 +455,11 @@ end
 function{0,1} lang_Prog_get_global_names(c)
    body {
        struct progstate *prog;
-       dptr dp;
+       dptr *dp;
        if (!(prog = get_program_for(&c)))
           runerr(0);
       for (dp = prog->Gnames; dp != prog->Egnames; dp++)
-         suspend *dp;
+         suspend **dp;
       fail;
    }
 end
@@ -507,7 +507,7 @@ function{0,1} lang_Prog_get_global_location_impl(s, c)
            fail;
        }
 
-       if (is:null(p->fname)) {
+       if (!p->fname) {
            LitWhy("Symbol is builtin, has no location");
            fail;
        }
@@ -679,7 +679,7 @@ function{1} lang_Class_get_name(c)
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
-        return class0->name;
+        return *class0->name;
     }
 end
 
@@ -699,7 +699,7 @@ function{0,1} lang_Class_get_package(c)
             runerr(0);
         if (class0->package_id == 0)
             fail;
-        extract_package(&class0->name, &result);
+        extract_package(class0->name, &result);
         return result;
     }
 end
@@ -723,7 +723,7 @@ function{0,1} lang_Class_get_location_impl(c)
             LitWhy("No global location data in icode");
             fail;
         }
-        p = lookup_global_loc(&class0->name, class0->program);
+        p = lookup_global_loc(class0->name, class0->program);
         if (!p)
             syserr("Class name not found in global table");
         loc_to_list(p, &result);
@@ -858,7 +858,7 @@ function{0,1} lang_Class_get_field_name(c, field)
         i = lookup_class_field(class0, &field, 0);
         if (i < 0)
             fail;
-        return class0->program->Fnames[class0->fields[i]->fnum];
+        return *class0->program->Fnames[class0->fields[i]->fnum];
      }
 end
 
@@ -928,13 +928,13 @@ end
 function{*} lang_Class_get_field_names(c)
     body {
         struct b_class *class0;
-        dptr fn;
+        dptr *fn;
         word i;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         fn = class0->program->Fnames;
         for (i = 0; i < class0->n_instance_fields + class0->n_class_fields; ++i)
-            suspend fn[class0->fields[i]->fnum];
+            suspend *fn[class0->fields[i]->fnum];
         fail;
     }
 end
@@ -942,13 +942,13 @@ end
 function{*} lang_Class_get_instance_field_names(c)
     body {
         struct b_class *class0;
-        dptr fn;
+        dptr *fn;
         word i;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         fn = class0->program->Fnames;
         for (i = 0; i < class0->n_instance_fields; ++i)
-            suspend fn[class0->fields[i]->fnum];
+            suspend *fn[class0->fields[i]->fnum];
         fail;
     }
 end
@@ -956,14 +956,14 @@ end
 function{*} lang_Class_get_class_field_names(c)
     body {
         struct b_class *class0;
-        dptr fn;
+        dptr *fn;
         word i;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         fn = class0->program->Fnames;
         for (i = class0->n_instance_fields; 
              i < class0->n_instance_fields + class0->n_class_fields; ++i)
-            suspend fn[class0->fields[i]->fnum];
+            suspend *fn[class0->fields[i]->fnum];
         fail;
     }
 end
@@ -1029,12 +1029,12 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
     struct b_proc *blk;
     dptr fname;
 
-    fname = &class0->program->Fnames[cf->fnum];
-    MemProtect(fq = malloc(StrLen(class0->name) + StrLen(*fname) + 3));
+    fname = class0->program->Fnames[cf->fnum];
+    MemProtect(fq = malloc(StrLen(*class0->name) + StrLen(*fname) + 3));
     p = fq;
     *p++ = 'B';
-    t = StrLoc(class0->name);
-    for (i = 0; i < StrLen(class0->name); ++i)
+    t = StrLoc(*class0->name);
+    for (i = 0; i < StrLen(*class0->name); ++i)
         *p++ = (t[i] == '.') ? '_' : t[i];
     *p++ = '_';
     strncpy(p, StrLoc(*fname), StrLen(*fname));
@@ -2558,7 +2558,7 @@ function{1} lang_Constructor_get_name(c)
         struct b_constructor *constructor0;
         if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
-        return constructor0->name;
+        return *constructor0->name;
     }
 end
 
@@ -2578,7 +2578,7 @@ function{0,1} lang_Constructor_get_package(c)
             runerr(0);
         if (constructor0->package_id == 0)
             fail;
-        extract_package(&constructor0->name, &result);
+        extract_package(constructor0->name, &result);
         return result;
     }
 end
@@ -2606,7 +2606,7 @@ function{0,1} lang_Constructor_get_location_impl(c)
             LitWhy("No global location data in icode");
             fail;
         }
-        p = lookup_global_loc(&constructor0->name, constructor0->program);
+        p = lookup_global_loc(constructor0->name, constructor0->program);
         if (!p)
             syserr("Constructor name not found in global table");
         loc_to_list(p, &result);
@@ -2617,13 +2617,13 @@ end
 function{*} lang_Constructor_get_field_names(c)
     body {
         struct b_constructor *constructor0;
-        dptr fn;
+        dptr *fn;
         word i;
         if (!(constructor0 = get_constructor_for(&c)))
             runerr(0);
         fn = constructor0->program->Fnames;
         for (i = 0; i < constructor0->n_fields; ++i)
-            suspend fn[constructor0->fnums[i]];
+            suspend *fn[constructor0->fnums[i]];
         fail;
     }
 end
@@ -2682,7 +2682,7 @@ function{0,1} lang_Constructor_get_field_name(c, field)
         i = lookup_record_field(constructor0, &field, 0);
         if (i < 0)
             fail;
-        return constructor0->program->Fnames[constructor0->fnums[i]];
+        return *constructor0->program->Fnames[constructor0->fnums[i]];
      }
 end
 
@@ -2698,7 +2698,7 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
     if (is:string(*query)) {
         word i;
         for (i = 0; i < nf; ++i) {
-            if (eq(&proc->lnames[i], query))
+            if (eq(proc->lnames[i], query))
                 return (int)i;
         }
         return -1;
@@ -2781,7 +2781,7 @@ function{*} lang_Proc_get_local_names(c)
             fail;
         nf = proc0->nparam + proc0->ndynam + proc0->nstatic;
         for (i = 0; i < nf; ++i)
-            suspend proc0->lnames[i];
+            suspend *proc0->lnames[i];
         fail;
     }
 end
@@ -2831,7 +2831,7 @@ function{0,1} lang_Proc_get_local_name(c, id)
         i = lookup_proc_local(proc0, &id);
         if (i < 0)
             fail;
-        return proc0->lnames[i];
+        return *proc0->lnames[i];
      }
 end
 
@@ -2861,16 +2861,16 @@ function{1} lang_Proc_get_name(c, flag)
         if (proc0->field && is:null(flag)) {
             int len;
             struct b_class *class0 = proc0->field->defining_class;
-            dptr fname = &class0->program->Fnames[proc0->field->fnum];
-            len = StrLen(class0->name) + StrLen(*fname) + 1;
+            dptr fname = class0->program->Fnames[proc0->field->fnum];
+            len = StrLen(*class0->name) + StrLen(*fname) + 1;
             MemProtect (StrLoc(result) = reserve(Strings, len));
             StrLen(result) = len;
-            alcstr(StrLoc(class0->name),StrLen(class0->name));
+            alcstr(StrLoc(*class0->name), StrLen(*class0->name));
             alcstr(".", 1);
             alcstr(StrLoc(*fname),StrLen(*fname));
             return result;
         } else
-            return proc0->name;
+            return *proc0->name;
      }
 end
 
@@ -2882,11 +2882,11 @@ function{0,1} lang_Proc_get_package(c, flag)
         if (proc0->field && is:null(flag)) {
             if (proc0->field->defining_class->package_id == 0)
                 fail;
-            extract_package(&proc0->field->defining_class->name, &result);
+            extract_package(proc0->field->defining_class->name, &result);
         } else {
             if (proc0->package_id == 0)
                 fail;
-            extract_package(&proc0->name, &result);
+            extract_package(proc0->name, &result);
         }
         return result;
     }
@@ -2932,7 +2932,7 @@ function{0,1} lang_Proc_get_location_impl(c, flag)
                 LitWhy("No global location data in icode");
                 fail;
             }
-            p = lookup_global_loc(&proc0->name, proc0->program);
+            p = lookup_global_loc(proc0->name, proc0->program);
             if (!p)
                 syserr("Procedure name not found in global table");
         }
@@ -2959,7 +2959,7 @@ function{0,1} lang_Proc_get_field_name(c)
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         if (proc0->field)
-            return proc0->field->defining_class->program->Fnames[proc0->field->fnum];
+            return *proc0->field->defining_class->program->Fnames[proc0->field->fnum];
         else
             fail;
      }

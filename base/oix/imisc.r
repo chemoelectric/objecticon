@@ -95,7 +95,7 @@ int lookup_class_field_by_name(struct b_class *class, dptr name)
     while (l <= r) {
         m = (l + r) / 2;
         i = class->sorted_fields[m];
-        c = lexcmp(&class->program->Fnames[class->fields[i]->fnum], name);
+        c = lexcmp(class->program->Fnames[class->fields[i]->fnum], name);
         if (c == Greater)
             r = m - 1;
         else if (c == Less)
@@ -164,7 +164,7 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
              * the offset from the end is the given number, so we look
              * up by string comparison.
              */
-            index = lookup_class_field_by_name(class, &efnames[fnum]);
+            index = lookup_class_field_by_name(class, efnames[fnum]);
         } else if (class->program != curpstate) {
             /*
              * The class was defined in another program, but the field
@@ -173,7 +173,7 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
              * have a different set of field numbers.  So we do string
              * lookup here too.
              */
-            index = lookup_class_field_by_name(class, &fnames[fnum]);
+            index = lookup_class_field_by_name(class, fnames[fnum]);
         } else {
             /*
              * Lookup by fnum in the sorted field table.
@@ -220,7 +220,7 @@ int lookup_record_field_by_name(struct b_constructor *recdef, dptr name)
     while (l <= r) {
         m = (l + r) / 2;
         i = recdef->sorted_fields[m];
-        c = lexcmp(&recdef->program->Fnames[recdef->fnums[i]], name);
+        c = lexcmp(recdef->program->Fnames[recdef->fnums[i]], name);
         if (c == Greater)
             r = m - 1;
         else if (c == Less)
@@ -265,9 +265,9 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
         fnum = IntVal(*query);
 
         if (fnum < 0)
-            index = lookup_record_field_by_name(recdef, &efnames[fnum]);
+            index = lookup_record_field_by_name(recdef, efnames[fnum]);
         else if (recdef->program != curpstate)
-            index = lookup_record_field_by_name(recdef, &fnames[fnum]);
+            index = lookup_record_field_by_name(recdef, fnames[fnum]);
         else
             index = lookup_record_field_by_fnum(recdef, fnum);
 

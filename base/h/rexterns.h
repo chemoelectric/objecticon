@@ -48,7 +48,7 @@ extern struct descrip minusonedesc;	/* -ve one */
 extern struct descrip thousanddesc;	/* 1000 */
 extern struct descrip milliondesc;	/* 1000000 */
 
-extern struct b_iproc Bdeferred_method_stub;  /* Deferred method block */
+extern struct b_proc Bdeferred_method_stub;  /* Deferred method block */
 
 extern word qualsize;		/* size of string qualifier list */
 extern word memcushion;		/* memory region cushion factor */

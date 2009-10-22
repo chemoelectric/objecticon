@@ -200,7 +200,7 @@ void err_msg(int n, dptr v)
                 pfile = frame_ipc_fname(curr_pf, 1);
                 if (pline && pfile) {
                     struct descrip t;
-                    abbr_fname(&pfile->fname, &t);
+                    abbr_fname(pfile->fname, &t);
                     fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
                 } else
                     fprintf(stderr, "File ?; Line ?\n");
@@ -210,7 +210,7 @@ void err_msg(int n, dptr v)
                 pfile = frame_ipc_fname(curr_pf, 1);
                 if (pline && pfile) {
                     struct descrip t;
-                    abbr_fname(&pfile->fname, &t);
+                    abbr_fname(pfile->fname, &t);
                     fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
                 } else
                     fprintf(stderr, "File ?; Line ?\n");

@@ -458,7 +458,7 @@ function{} syserr(msg)
       fputc('\n', stderr);
       if (pline && pfile) {
           struct descrip t;
-          abbr_fname(&pfile->fname, &t);
+          abbr_fname(pfile->fname, &t);
           fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
       } else
           fprintf(stderr, "File ?; Line ?\n");

@@ -430,7 +430,8 @@
     * Procedure block for a function.
     */
    #define FncBlock(f,nargs,vararg,ntend,underef)           \
-      	struct b_iproc Cat(B,f) = {\
+        static struct sdescrip Cat(f,_name_desc) = {sizeof(Lit(f))-1,Lit(f)}; \
+      	struct b_proc Cat(B,f) = {\
       	T_Proc,\
       	sizeof(struct b_proc),\
       	Cat(Z,f),\
@@ -442,14 +443,15 @@
         ntend,\
         underef,\
         0,0,\
-      	{sizeof(Lit(f))-1,Lit(f)},\
+      	(dptr)&Cat(f,_name_desc), \
         0,0};
 
    /*
     * Procedure block for an operator.
     */
    #define OpBlock(f,nargs,ntend,sname,underef)\
-   	struct b_iproc Cat(B,f) = {\
+        static struct sdescrip Cat(f,_name_desc) = {sizeof(sname)-1,sname}; \
+   	struct b_proc Cat(B,f) = {\
    	T_Proc,\
    	sizeof(struct b_proc),\
    	Cat(O,f),\
@@ -460,12 +462,13 @@
         ntend,\
         underef,\
         0,0,  \
-   	{sizeof(sname)-1,sname},\
+      	(dptr)&Cat(f,_name_desc), \
         0,0};
 
 
    #define KeywordBlock(f,ntend) \
-   	struct b_iproc Cat(L,f) = {\
+        static struct sdescrip Cat(f,_name_desc) = {sizeof("keyword:" Lit(f))-1, "keyword:" Lit(f)}; \
+   	struct b_proc Cat(L,f) = {\
    	T_Proc,\
    	sizeof(struct b_proc),\
    	Cat(K,f),\
@@ -473,7 +476,7 @@
         sizeof(struct Cat(f,_frame)),\
         ntend,\
         0,0,0,  \
-      	{sizeof("keyword:" Lit(f))-1, "keyword:" Lit(f)},\
+      	(dptr)&Cat(f,_name_desc), \
         0,0};
 
    /*

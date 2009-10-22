@@ -127,7 +127,7 @@ static void trace_frame(struct p_frame *pf)
     pfile = frame_ipc_fname(pf->caller, 1);
     if (pline && pfile) {
         struct descrip t;
-        abbr_fname(&pfile->fname, &t);
+        abbr_fname(pfile->fname, &t);
         fprintf(stderr, " from line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
     }
     putc('\n', stderr);
@@ -294,7 +294,7 @@ int get_name(dptr dp1, dptr dp0)
              */
             dp = VarLoc(*dp1);		 /* get address of variable */
             if ((prog = find_global(dp))) {
-                *dp0 = prog->Gnames[dp - prog->Globals]; 		/* global */
+                *dp0 = *prog->Gnames[dp - prog->Globals]; 		/* global */
                 return GlobalName;
             }
             else if ((prog = find_class_static(dp))) {
@@ -303,12 +303,12 @@ int get_name(dptr dp1, dptr dp0)
                  */
                 struct class_field *cf = find_class_field_for_dptr(dp, prog);
                 struct b_class *c = cf->defining_class;
-                dptr fname = &c->program->Fnames[cf->fnum];
-                int len = 6 + StrLen(c->name) + 1 + StrLen(*fname);
+                dptr fname = c->program->Fnames[cf->fnum];
+                int len = 6 + StrLen(*c->name) + 1 + StrLen(*fname);
                 MemProtect(StrLoc(*dp0) = reserve(Strings, len));
                 StrLen(*dp0) = len;
                 alcstr("class ", 6);
-                alcstr(StrLoc(c->name), StrLen(c->name));
+                alcstr(StrLoc(*c->name), StrLen(*c->name));
                 alcstr(".", 1);
                 alcstr(StrLoc(*fname), StrLen(*fname));
                 return FieldName;
@@ -318,15 +318,15 @@ int get_name(dptr dp1, dptr dp0)
                 if (i < 0 || i >= proc0->nstatic)
                     syserr("name: unreferencable static variable");
                 i += proc0->nparam + proc0->ndynam;
-                *dp0 = proc0->lnames[i];
+                *dp0 = *proc0->lnames[i];
                 return StaticName;
             }
             else if (InRange(arg1, dp, &arg1[proc0->nparam])) {
-                *dp0 = proc0->lnames[dp - arg1];          /* argument */
+                *dp0 = *proc0->lnames[dp - arg1];          /* argument */
                 return ParamName;
             }
             else if (InRange(loc1, dp, &loc1[proc0->ndynam])) {
-                *dp0 = proc0->lnames[dp - loc1 + proc0->nparam];
+                *dp0 = *proc0->lnames[dp - loc1 + proc0->nparam];
                 return LocalName;
             }
             else {
@@ -361,13 +361,13 @@ int get_name(dptr dp1, dptr dp0)
                     dptr fname;
                     int len;
                     i = varptr - blkptr->record.fields;
-                    fname = &c->program->Fnames[c->fnums[i]];
+                    fname = c->program->Fnames[c->fnums[i]];
                     sprintf(sbuf,"#%ld", (long)blkptr->record.id);
-                    len = 7 + StrLen(c->name) + strlen(sbuf) + 1 + StrLen(*fname);
+                    len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
                     MemProtect(StrLoc(*dp0) = reserve(Strings, len));
                     StrLen(*dp0) = len;
                     alcstr("record ", 7);
-                    alcstr(StrLoc(c->name), StrLen(c->name));
+                    alcstr(StrLoc(*c->name), StrLen(*c->name));
                     alcstr(sbuf, strlen(sbuf));
                     alcstr(".", 1);
                     alcstr(StrLoc(*fname), StrLen(*fname));
@@ -378,13 +378,13 @@ int get_name(dptr dp1, dptr dp0)
                     dptr fname;
                     int len;
                     i = varptr - blkptr->object.fields;
-                    fname =  &c->program->Fnames[c->fields[i]->fnum];
+                    fname =  c->program->Fnames[c->fields[i]->fnum];
                     sprintf(sbuf,"#%ld", (long)blkptr->object.id);
-                    len = 7 + StrLen(c->name) + strlen(sbuf) + 1 + StrLen(*fname);
+                    len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
                     MemProtect(StrLoc(*dp0) = reserve(Strings, len));
                     StrLen(*dp0) = len;
                     alcstr("object ", 7);
-                    alcstr(StrLoc(c->name), StrLen(c->name));
+                    alcstr(StrLoc(*c->name), StrLen(*c->name));
                     alcstr(sbuf, strlen(sbuf));
                     alcstr(".", 1);
                     alcstr(StrLoc(*fname), StrLen(*fname));
@@ -483,7 +483,7 @@ static void showline(struct p_frame *pf)
             struct descrip t;
             char *p;
             int i;
-            abbr_fname(&pfile->fname, &t);
+            abbr_fname(pfile->fname, &t);
             i = StrLen(t);
             p = StrLoc(t);
             while (i > 13) {
@@ -520,9 +520,9 @@ static void showlevel(n)
 static void outfield()
 {
     if (IntVal(*xfield) < 0 && fnames-efnames < IntVal(*xfield))
-        putstr(stderr, &efnames[IntVal(*xfield)]);
+        putstr(stderr, efnames[IntVal(*xfield)]);
     else if (0 <= IntVal(*xfield) && IntVal(*xfield) < efnames - fnames)
-        putstr(stderr, &fnames[IntVal(*xfield)]);
+        putstr(stderr, fnames[IntVal(*xfield)]);
     else
         fprintf(stderr, "field");
 }
@@ -739,15 +739,15 @@ static void ttrace()
                 xargp = xc_frame->args;
                 putc('{', stderr);
                 if (xnargs == 0)
-                    putstr(stderr, &bp->name);
+                    putstr(stderr, bp->name);
                 else if (xnargs == 1) {
-                    putstr(stderr, &bp->name);
+                    putstr(stderr, bp->name);
                     putc(' ', stderr);
                     outimage(stderr, xargp, 0);
                 } else {
                     outimage(stderr, xargp++, 0);
                     putc(' ', stderr);
-                    putstr(stderr, &bp->name);
+                    putstr(stderr, bp->name);
                     putc(' ', stderr);
                     outimage(stderr, xargp, 0);
                 }
@@ -772,7 +772,7 @@ static void ttrace()
     pfile = frame_ipc_fname(curr_pf, 1);
     if (pfile && pline) {
         struct descrip t;
-        abbr_fname(&pfile->fname, &t);
+        abbr_fname(pfile->fname, &t);
         fprintf(stderr, " from line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
     } else
         fprintf(stderr, " from ?");
@@ -866,8 +866,8 @@ void xdisp(struct p_frame *pf,
            FILE *f,
            struct progstate *p)
 {
-    register dptr np;
-    register int n;
+    dptr *np;
+    int n;
     struct b_proc *bp;
     word nglobals;
     dptr dp;
@@ -891,7 +891,7 @@ void xdisp(struct p_frame *pf,
         dp = pf->fvars->desc;
         for (n = bp->nparam; n > 0; n--) {
             fprintf(f, "   ");
-            putstr(f, np);
+            putstr(f, *np);
             fprintf(f, " = ");
             outimage(f, dp++, 0);
             putc('\n', f);
@@ -903,7 +903,7 @@ void xdisp(struct p_frame *pf,
          */
         for (n = bp->ndynam; n > 0; n--) {
             fprintf(f, "   ");
-            putstr(f, np);
+            putstr(f, *np);
             fprintf(f, " = ");
             outimage(f, dp++, 0);
             putc('\n', f);
@@ -916,7 +916,7 @@ void xdisp(struct p_frame *pf,
         dp = bp->fstatic;
         for (n = bp->nstatic; n > 0; n--) {
             fprintf(f, "   ");
-            putstr(f, np);
+            putstr(f, *np);
             fprintf(f, " = ");
             outimage(f, dp++, 0);
             putc('\n', f);
@@ -935,7 +935,7 @@ void xdisp(struct p_frame *pf,
     fprintf(f, "\nglobal identifiers:\n");
     for (n = 0; n < nglobals; n++) {
         fprintf(f, "   ");
-        putstr(f, &p->Gnames[n]);
+        putstr(f, p->Gnames[n]);
         fprintf(f, " = ");
         outimage(f, &p->Globals[n], 0);
         putc('\n', f);
@@ -946,9 +946,9 @@ void xdisp(struct p_frame *pf,
 static void procname(FILE *f, struct b_proc *p)
 {
     if (p->field) {
-        putstr(f, &p->field->defining_class->name);
+        putstr(f, p->field->defining_class->name);
         putc('.', f);
-        putstr(f, &p->field->defining_class->program->Fnames[p->field->fnum]);
+        putstr(f, p->field->defining_class->program->Fnames[p->field->fnum]);
     } else
-        putstr(f, &p->name);
+        putstr(f, p->name);
 }

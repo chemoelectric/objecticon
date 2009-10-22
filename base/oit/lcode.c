@@ -58,6 +58,7 @@ static void	lemitcode       ();
 static void	patchrefs       ();
 static void     lemitcon(struct centry *ce);
 static void outword(word oword);
+static struct centry *inst_sdescrip(char *s);
 
 
 static word pc = 0;		/* simulated program counter */
@@ -99,7 +100,7 @@ struct strconst {
  */
 struct ipc_fname {
     word ipc;             /* offset of instruction into code region */
-    struct strconst *sc;  /* installed string */
+    char *fname;          /* file name */
 };
 
 struct ipc_line {
@@ -115,6 +116,7 @@ static void outshortx(short s, char *fmt, ...);
 static void outwordx(word oword, char *fmt, ...);
 static void outwordz(word oword, char *fmt, ...);
 static void outstr(struct strconst *sp, char *fmt, ...);
+static void outsdescrip(struct centry *ce, char *fmt, ...);
 
 #define WordFmt "%08lx"
 #define ShortFmt "%04lx"
@@ -218,6 +220,41 @@ static struct unref *get_unref(char *s)
     return p;
 }
 
+static struct centry *inst_sdescrip(char *s)
+{
+    int i;
+    struct centry *p;
+
+    /*
+     * Search for an existing entry with the same string data
+     */
+    i = hasher(s, constblock_hash);
+    p = constblock_hash[i];
+    while (p && (p->data != s || p->c_flag != F_StrLit))
+        p = p->b_next;
+    if (!p) {
+        /*
+         * Create a new centry and add it
+         */
+        p = Alloc(struct centry);
+        p->c_flag = F_StrLit;
+        p->data = s;
+        p->length = strlen(s);
+        p->b_next = constblock_hash[i];
+        constblock_hash[i] = p;
+        /*
+         * Add to constant descriptor table list and set desc_no
+         */
+        if (const_desc_last) {
+            const_desc_last->d_next = p;
+            const_desc_last = p;
+        } else
+            const_desc_first = const_desc_last = p;
+        p->desc_no = const_desc_count++;
+    }
+    return p;
+}
+
 static struct strconst *inst_strconst(char *s, int len)
 {
     int i = hasher(s, strconst_hash);
@@ -239,11 +276,6 @@ static struct strconst *inst_strconst(char *s, int len)
             first_strconst = last_strconst = p;
     }
     return p;
-}
-
-static struct strconst *inst_c_strconst(char *s)
-{
-    return inst_strconst(s, strlen(s));
 }
 
 static void gencode_func(struct lfunction *f);
@@ -294,7 +326,7 @@ void generate_code()
      * This ensures empty strings point to the start of the string region,
      * which is a bit tidier than pointing to some arbitrary offset.
      */
-    inst_c_strconst(empty_string);
+    inst_strconst(empty_string, 0);
 
     gencode();
 
@@ -382,7 +414,7 @@ static void synch_file()
                                                &fnmsize, sizeof(struct ipc_fname), 1, "file name table");
     last_fnmtbl_filen = curr_file;
     fnmfree->ipc = pc;
-    fnmfree->sc = inst_c_strconst(curr_file);
+    fnmfree->fname = curr_file;
     fnmfree++;
 }
 
@@ -542,14 +574,6 @@ static void lemitcon(struct centry *ce)
             n_offs = (length - 1) / index_step;
         }
 
-        if (Dflag) {
-            fprintf(dbgfile, "%ld:\t%d\t\t\t\t# T_Ucs\n",(long) pc, T_Ucs);
-            fprintf(dbgfile, "\t%lu\t\t\t\t# Block size\n", (unsigned long)((7 + n_offs) * WordSize));
-            fprintf(dbgfile, "\t%d\t\t\t\t# Length\n", length);
-            fprintf(dbgfile, "\t%d\tS+%d\t\t\t# UTF8 data\n", utf8->len, utf8->offset);
-            fprintf(dbgfile, "\t%d\t\t\t\t# N indexed\n", n_offs);
-            fprintf(dbgfile, "\t%d\t\t\t\t# Index step\n", index_step);
-        }
         outwordx(T_Ucs, "T_Ucs");
         outwordx((7 + n_offs) * WordSize, "   Block size");
         outwordx(length, "   Length");
@@ -905,22 +929,18 @@ static void lemitproc()
     char *p;
     int size, ap;
     struct lentry *le;
-    struct strconst *sp;
+    struct centry *ce;
 
-    /*
-     * FncBlockSize = sizeof(BasicFncBlock) +
-     *  sizeof(descrip)*(# of args + # of dynamics + # of statics).
-     */
-    size = (23*WordSize) + 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+    size = (22*WordSize) + WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
     if (loclevel > 1)
-        size += 3*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+        size += 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
 
     if (curr_lfunc->proc)
         p = curr_lfunc->proc->name;
     else
         p = curr_lfunc->method->name;
 
-    sp = inst_c_strconst(p);
+    ce = inst_sdescrip(p);
 
     outwordx(T_Proc, "T_Proc");
     outwordx(size, "   Block size");
@@ -941,17 +961,17 @@ static void lemitproc()
     outwordx(0, "   Deref flag");
     outwordx(curr_lfunc->defined->package_id, "   Package id");
     outwordx(0, "   Field");
-    outstr(sp, "   Procedure name");          /* procedure name: length & offset */
+    outsdescrip(ce, "   Procedure name (%s)", p);
 
     /*
      * Pointers to the tables that follow.
      */
     ap = pc + 2 * WordSize;
     outwordz(ap, "Pointer to local names array");
-    ap += (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics) * 2 * WordSize;
+    ap += (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics) * WordSize;
     if (loclevel > 1) {
         outwordz(ap, "Pointer to llocs array");
-        ap += (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics) * 3 * WordSize;
+        ap += (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics) * 2 * WordSize;
     } else
         outwordz(0, "Pointer to llocs array");
 
@@ -963,21 +983,21 @@ static void lemitproc()
         fprintf(dbgfile, "# Local names array\n");
     for (le = curr_lfunc->locals; le; le = le->next) {
         if (le->l_flag & F_Argument) {
-            sp = inst_c_strconst(le->name);
-            outstr(sp, "Local name (arg)");
+            ce = inst_sdescrip(le->name);
+            outsdescrip(ce, "Local name (arg %s)", le->name);
         }
     }
     for (le = curr_lfunc->locals; le; le = le->next) {
         if (le->l_flag & F_Dynamic) {
-            sp = inst_c_strconst(le->name);
-            outstr(sp, "Local name (dynamic)");
+            ce = inst_sdescrip(le->name);
+            outsdescrip(ce, "Local name (dynamic %s)", le->name);
         }
     }
     for (le = curr_lfunc->locals; le; le = le->next) {
         if (le->l_flag & F_Static) {
-            sp = inst_c_strconst(le->name);
+            ce = inst_sdescrip(le->name);
             le->l_val.index = nstatics++;
-            outstr(sp, "Local name (static)");
+            outsdescrip(ce, "Local name (static %s)", le->name);
         }
     }
 
@@ -989,22 +1009,22 @@ static void lemitproc()
             fprintf(dbgfile, "# Local locations array\n");
         for (le = curr_lfunc->locals; le; le = le->next) {
             if (le->l_flag & F_Argument) {
-                sp = inst_c_strconst(le->pos.file);
-                outstr(sp, "File");
+                ce = inst_sdescrip(le->pos.file);
+                outsdescrip(ce, "File %s", le->pos.file);
                 outwordx(le->pos.line, "Line %d", le->pos.line);
             }
         }
         for (le = curr_lfunc->locals; le; le = le->next) {
             if (le->l_flag & F_Dynamic) {
-                sp = inst_c_strconst(le->pos.file);
-                outstr(sp, "File");
+                ce = inst_sdescrip(le->pos.file);
+                outsdescrip(ce, "File %s", le->pos.file);
                 outwordx(le->pos.line, "Line %d", le->pos.line);
             }
         }
         for (le = curr_lfunc->locals; le; le = le->next) {
             if (le->l_flag & F_Static) {
-                sp = inst_c_strconst(le->pos.file);
-                outstr(sp, "File");
+                ce = inst_sdescrip(le->pos.file);
+                outsdescrip(ce, "File %s", le->pos.file);
                 outwordx(le->pos.line, "Line %d", le->pos.line);
             }
         }
@@ -1084,14 +1104,14 @@ static void genclass(struct lclass *cl)
     struct lclass **ic_sort;
     char *name;
     int i, ap, n_fields;
-    struct strconst *sp;
+    struct centry *ce;
     word p;
 
     if (cl->pc != pc)
         quitf("I got my sums wrong(a): %d != %d", pc, cl->pc);
     
     name = cl->global->name;
-    sp = inst_c_strconst(name);
+    ce = inst_sdescrip(name);
 
     n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
 
@@ -1109,7 +1129,7 @@ static void genclass(struct lclass *cl)
     outwordx(cl->n_implemented_classes, "   Nimplemented");
     outwordx(cl->n_implemented_instance_fields, "   Ninstancefields");
     outwordx(cl->n_implemented_class_fields, "   Nclassfields");
-    outstr(sp, "   Name of class");		/* name of class: size and offset */
+    outsdescrip(ce, "   Class name");
 
     i = hasher(init_string, cl->implemented_field_hash);
     fr = cl->implemented_field_hash[i];
@@ -1200,7 +1220,7 @@ static void genclasses()
     struct lclass *cl;
     struct lclass_field *cf;
     int x, n_classes = 0, n_fields = 0;
-    struct strconst *sp;
+    struct centry *ce;
 
     align();
     hdr.ClassStatics = pc;
@@ -1268,12 +1288,12 @@ static void genclasses()
                                               * field table plus the
                                               * n_classes entry */
     if (loclevel > 1)
-        x += WordSize * 3 * n_fields;        /* The optional classfieldlocs table */
+        x += WordSize * 2 * n_fields;        /* The optional classfieldlocs table */
 
     for (cl = lclasses; cl; cl = cl->next) {
         int n_fields = cl->n_implemented_class_fields + cl->n_implemented_instance_fields;
         cl->pc = x;
-        cl->size = WordSize * (18 +
+        cl->size = WordSize * (17 +
                                1 + 
                                cl->n_supers +
                                cl->n_implemented_classes +
@@ -1292,7 +1312,6 @@ static void genclasses()
     for (cl = lclasses; cl; cl = cl->next) {
         for (cf = cl->fields; cf; cf = cf->next) {
             cf->ipc = pc;
-            sp = inst_c_strconst(cf->name);
             if (Dflag)
                 fprintf(dbgfile, "# Field info for %s.%s\n", cl->global->name, cf->name);
             outwordx(cf->ftab_entry->field_id, "Fnum");
@@ -1309,8 +1328,8 @@ static void genclasses()
     if (loclevel > 1) {
         for (cl = lclasses; cl; cl = cl->next) {
             for (cf = cl->fields; cf; cf = cf->next) {
-                sp = inst_c_strconst(cf->pos.file);
-                outstr(sp, "File");
+                ce = inst_sdescrip(cf->pos.file);
+                outsdescrip(ce, "File %s", cf->pos.file);
                 outwordx(cf->pos.line, "Line %d", cf->pos.line);
             }
         }
@@ -1366,10 +1385,10 @@ static void gentables()
         int ap, size;
         s = rec->global->name;
         rec->pc = pc;
-        sp = inst_c_strconst(s);
-        size = 11 * WordSize + rec->nfields * (WordSize + ShortSize);
+        ce = inst_sdescrip(s);
+        size = 10 * WordSize + rec->nfields * (WordSize + ShortSize);
         if (loclevel > 1)
-            size += rec->nfields * 3 * WordSize;
+            size += rec->nfields * 2 * WordSize;
         size += nalign(size);
 
         outwordx(T_Constructor, "T_Constructor");		/* type code */
@@ -1378,17 +1397,17 @@ static void gentables()
         outwordx(rec->global->defined->package_id, "   Package id");
         outwordx(0, "   Instance id counter");
         outwordx(rec->nfields, "   Num fields");
-        outstr(sp, "   Name of record");
+        outsdescrip(ce, "   Name of record");
 
         /*
          * Pointers to the three tables that follow.
          */
         ap = pc + 3 * WordSize;
-        outwordz(ap, "    Pointer to fnums array");
+        outwordz(ap, "   Pointer to fnums array");
         ap += rec->nfields * WordSize;
         if (loclevel > 1) {
             outwordz(ap, "   Pointer to field_locs array");
-            ap += rec->nfields * 3 * WordSize;
+            ap += rec->nfields * 2 * WordSize;
         } else
             outwordz(0, "   Pointer to field_locs array");
         outwordz(ap, "   Pointer to field sort array");
@@ -1401,7 +1420,7 @@ static void gentables()
         if (Dflag)
             fprintf(dbgfile, "# Fnums array\n");
         for (fd = rec->fields; fd; fd = fd->next) 
-            outwordx(fd->ftab_entry->field_id, "   Fnum");
+            outwordx(fd->ftab_entry->field_id, "   Fnum %d", fd->ftab_entry->field_id);
 
         /*
          * Field locations, if selected
@@ -1410,8 +1429,8 @@ static void gentables()
             if (Dflag)
                 fprintf(dbgfile, "# Field locations array\n");
             for (fd = rec->fields; fd; fd = fd->next) {
-                sp = inst_c_strconst(fd->pos.file);
-                outstr(sp, "File");
+                ce = inst_sdescrip(fd->pos.file);
+                outsdescrip(ce, "File %s", fd->pos.file);
                 outwordx(fd->pos.line, "Line %d", fd->pos.line);
             }
         }
@@ -1424,7 +1443,7 @@ static void gentables()
             fprintf(dbgfile, "# Sorted fields array\n");
 
         for (i = 0; i < rec->nfields; ++i)
-            outshortx(sortf[i].n, "   Field %s (fnum=%d)\n", sortf[i].fp->name, sortf[i].fp->field_id);
+            outshortx(sortf[i].n, "   Field %s (fnum=%d)", sortf[i].fp->name, sortf[i].fp->field_id);
         free(sortf);
 
         align();
@@ -1446,12 +1465,12 @@ static void gentables()
         fprintf(dbgfile, "\n# Field names table\n");
     hdr.Fnames = pc;
     for (fp = lffirst; fp; fp = fp->next) {
-        sp = inst_c_strconst(fp->name);
-        outstr(sp, "Field");
+        ce = inst_sdescrip(fp->name);
+        outsdescrip(ce, "Field %s", fp->name);
     }
     for(up = first_unref; up; up = up->next) {
-        sp = inst_c_strconst(up->name);
-        outstr(sp, "Unref field");
+        ce = inst_sdescrip(up->name);
+        outsdescrip(ce, "Unref field %s", up->name);
     }
     flushcode();
 
@@ -1489,11 +1508,11 @@ static void gentables()
      * Output descriptors for global variable names.
      */
     if (Dflag)
-        fprintf(dbgfile, "\n# Global variable name descriptors\n");
+        fprintf(dbgfile, "\n# Global variable names\n");
     hdr.Gnames = pc;
     for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
-        sp = inst_c_strconst(gp->name);
-        outstr(sp, "");
+        ce = inst_sdescrip(gp->name);
+        outsdescrip(ce, "%s", gp->name);
     }
     flushcode();
 
@@ -1506,12 +1525,11 @@ static void gentables()
     if (loclevel > 1) {
         for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
             if (gp->g_flag & F_Builtin) {
-                outwordx(D_Null, "D_Null %s: Builtin", gp->name);
-                outwordx(0, "");
+                outwordx(0, "%s: Builtin", gp->name);
                 outwordx(0, "");
             } else {
-                sp = inst_c_strconst(gp->pos.file);
-                outstr(sp, "%s File", gp->name);
+                ce = inst_sdescrip(gp->pos.file);
+                outsdescrip(ce, "%s File %s", gp->name, gp->pos.file);
                 outwordx(gp->pos.line, "Line %d", gp->pos.line);
             }
         }
@@ -1531,6 +1549,25 @@ static void gentables()
     flushcode();
 
     if (Dflag)
+        fprintf(dbgfile, "\n# File names table\n");
+    hdr.Filenms = pc;
+    for (fnptr = fnmtbl; fnptr < fnmfree; fnptr++) {
+        ce = inst_sdescrip(fnptr->fname);
+        outwordx(fnptr->ipc, "IPC");
+        outsdescrip(ce, "   File %s", fnptr->fname);
+    }
+    flushcode();
+
+    if (Dflag)
+        fprintf(dbgfile, "\n# Line number table\n");
+    hdr.linenums = pc;
+    for (lnptr = lntable; lnptr < lnfree; lnptr++) {
+        outwordx(lnptr->ipc, "IPC");
+        outwordx(lnptr->line, "   Line %d", lnptr->line);        
+    }
+    flushcode();
+
+    if (Dflag)
         fprintf(dbgfile, "\n# Constant descriptors\n");
     hdr.Constants = pc;
     for (ce = const_desc_first; ce; ce = ce->d_next) {
@@ -1539,7 +1576,7 @@ static void gentables()
             memcpy(&ival, ce->data, sizeof(word));
             outwordx(D_Integer, "D_Integer");
             outwordx(ival, "   %ld", (long)ival);
-        } else if (ce->c_flag & (F_StrLit)) {
+        } else if (ce->c_flag & F_StrLit) {
             struct strconst *sp = inst_strconst(ce->data, ce->length);
             outstr(sp, "String");
         } else if (ce->c_flag & F_LrgintLit) {
@@ -1557,31 +1594,6 @@ static void gentables()
         } else
             quit("unknown constant type");
     }
-    flushcode();
-
-    /*
-     * Output the string constant table and the two tables associating icode
-     *  locations with source program locations.  Note that the calls to write
-     *  really do all the work.
-     */
-
-    if (Dflag)
-        fprintf(dbgfile, "\n# File names table\n");
-    hdr.Filenms = pc;
-    for (fnptr = fnmtbl; fnptr < fnmfree; fnptr++) {
-        outwordx(fnptr->ipc, "IPC");
-        outstr(fnptr->sc, "   File");
-    }
-    flushcode();
-
-    if (Dflag)
-        fprintf(dbgfile, "\n# Line number table\n");
-    hdr.linenums = pc;
-    for (lnptr = lntable; lnptr < lnfree; lnptr++) {
-        outwordx(lnptr->ipc, "IPC");
-        outwordx(lnptr->line, "   Line");        
-    }
-
     flushcode();
     
     if (Dflag)
@@ -1641,9 +1653,9 @@ static void gentables()
         fprintf(dbgfile, "gnames:           " WordFmt "\n", (long)hdr.Gnames);
         fprintf(dbgfile, "glocs:            " WordFmt "\n", (long)hdr.Glocs);
         fprintf(dbgfile, "statics:          " WordFmt "\n", (long)hdr.Statics);
-        fprintf(dbgfile, "constants:        " WordFmt "\n", (long)hdr.Constants);
         fprintf(dbgfile, "filenms:          " WordFmt "\n", (long)hdr.Filenms);
         fprintf(dbgfile, "linenums:         " WordFmt "\n", (long)hdr.linenums);
+        fprintf(dbgfile, "constants:        " WordFmt "\n", (long)hdr.Constants);
         fprintf(dbgfile, "strcons:          " WordFmt "\n", (long)hdr.Strcons);
         fprintf(dbgfile, "config:           %s\n", (char*)hdr.config);
     }
@@ -1669,10 +1681,10 @@ static void gentables()
         report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));
         report("  Global names    %7ld", (long)(hdr.Glocs - hdr.Gnames));
         report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
-        report("  Statics         %7ld", (long)(hdr.Constants - hdr.Statics));
-        report("  Constants       %7ld", (long)(hdr.Filenms - hdr.Constants));
+        report("  Statics         %7ld", (long)(hdr.Filenms - hdr.Statics));
         report("  Filenms         %7ld", (long)(hdr.linenums - hdr.Filenms));
-        report("  Linenums        %7ld", (long)(hdr.Strcons - hdr.linenums));
+        report("  Linenums        %7ld", (long)(hdr.Constants - hdr.linenums));
+        report("  Constants       %7ld", (long)(hdr.Strcons - hdr.Constants));
         report("  Strings         %7ld", (long)(hdr.icodesize - hdr.Strcons));
         report("  Total           %7ld", (long)tsize);
     }
@@ -1780,6 +1792,23 @@ static void outwordz(word oword, char *fmt, ...)
 
     CodeCheck(WordSize);
     memcpy(codep, &oword, WordSize);
+    codep += WordSize;
+    pc += WordSize;
+}
+
+static void outsdescrip(struct centry *ce, char *fmt, ...)
+{
+    if (Dflag) {
+        va_list ap;
+        va_start(ap, fmt);
+        fprintf(dbgfile, WordFmt ": C+" WordFmt "    # ", (long)pc, (long)ce->desc_no);
+        vfprintf(dbgfile, fmt, ap);
+        putc('\n', dbgfile);
+        va_end(ap);
+    }
+
+    CodeCheck(WordSize);
+    memcpy(codep, &ce->desc_no, WordSize);
     codep += WordSize;
     pc += WordSize;
 }

@@ -37,7 +37,7 @@ typedef struct si_ stringint;
  * Location in a source file
  */
 struct loc {
-    struct descrip fname;       /* File name */
+    dptr fname;                 /* File name */
     word line;                  /* Line number */
 };
 
@@ -122,8 +122,8 @@ struct b_proc {			/* procedure block */
     struct class_field *field;  /*   For a method, a pointer to the corresponding class_field.  The only
                                  *     exception is the deferred method stub, which can be pointed to by
                                  *     many different fields of course. */
-    struct descrip name;	/*   procedure name (string qualifier) */
-    dptr lnames;                /*   list of local names (qualifiers), null for a function */
+    dptr name;              	/*   procedure name (pointer to string qualifier) */
+    dptr *lnames;               /*   list of local names (qualifiers), null for a function */
     struct loc *llocs;	        /*   locations of local names, or null if not available */
 };
 
@@ -134,7 +134,7 @@ struct b_constructor {		/* constructor block */
     word package_id;            /*   Package id of this constructor's package - see b_proc above */
     word instance_ids;          /*   Sequence for instance ids */
     word n_fields;
-    struct descrip name;	/*   record type name (string qualifier) */
+    dptr name;           	/*   record type name (pointer to string qualifier) */
     word *fnums;                /* Pointer to array of field numbers array */
     struct loc *field_locs;     /* Source location of fields or null if not available */
     short *sorted_fields;       /* An array of indices giving the order sorted by name */
@@ -172,7 +172,7 @@ struct b_class {                 /* block representing a class - always static, 
     word n_implemented_classes;  /* Number of implemented classes */
     word n_instance_fields;      /* Number of instance fields */
     word n_class_fields;         /* Number of class fields (statics & methods) */
-    struct descrip name;	 /*  Class name (string qualifier) */
+    dptr name;             	 /* Class name (pointer to string qualifier) */
     struct class_field *init_field; /* Pointer to "init" field, or null if absent */
     struct class_field *new_field;  /* Pointer to "new" field, or null if absent */
     struct b_class **supers;     /* Array of pointers to supers */
@@ -353,7 +353,7 @@ union numeric {			/* long integers or real numbers */
  */
 struct ipc_fname {
     word ipc;		  /* offset of instruction into code region */
-    struct descrip fname; /* file name string descriptor */
+    dptr fname;           /* file name string descriptor */
 };
 
 struct ipc_line {
@@ -399,9 +399,9 @@ struct progstate {
     struct loc *ClassFieldLocs, *EClassFieldLocs;
     word *Classes;
     word *Records;
-    dptr Fnames, Efnames;
+    dptr *Fnames, *Efnames;
     dptr Globals, Eglobals;
-    dptr Gnames, Egnames;
+    dptr *Gnames, *Egnames;
     struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
     dptr Constants, Econstants;
@@ -491,38 +491,6 @@ struct progstate {
                           int just_fail, word *failure_label);
     void (*GeneralInvokef)(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
                            int argc, dptr args, word rval, word *failure_label);
-};
-
-/*
- * b_iproc blocks are used to statically initialize information about
- *  functions.	They are identical to b_proc blocks except for
- *  the name field which is a sdescrip (simple/string descriptor) instead
- *  of a descrip.  This is done because unions cannot be initialized.
- */
-	
-struct b_iproc {		/* procedure block */
-    word ip_title;		/*   T_Proc */
-    word ip_blksize;		/*   size of block */
-    int (*ip_entryp)();		/*   entry point (code) */
-    word *icode;		/*   icode as absolute pointer */
-    word ip_nparam;		/*   number of parameters */
-    word ip_vararg;             /*      vararg flag */
-    word ip_ndynam;		/*   number of dynamic locals */
-    word ip_nstatic;		/*   number of static locals */
-    dptr ip_fstatic;		/*   pointer to first static */
-    struct progstate *ip_program;/*   not set */
-    word nclo;                  /*   count of various elements that make up a frame for this */
-    word ntmp;                  /*     procedure */
-    word nlab;
-    word nmark;
-    word framesize;             /*   frame size (for builtin functions/operators only). */
-    word ntend;
-    word underef;
-    word package_id;
-    struct class_field *field;  /*   For a method, a pointer to the corresponding class_field */
-    struct sdescrip ip_name;	/*   procedure name (string qualifier) */
-    dptr ip_lnames;	        /*   list of local names (qualifiers) */
-    struct loc *ip_llocs;	/*   locations of local names */
 };
 
 struct b_coexpr {		/* co-expression stack block */

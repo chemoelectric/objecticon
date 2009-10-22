@@ -771,7 +771,7 @@ dptr dp;
  */
 static int dp_pnmcmp(dptr dp, struct b_proc **e)
 {
-    return lexcmp(dp, &((*e)->name));
+    return lexcmp(dp, (*e)->name);
 }
 
 /*
@@ -793,7 +793,7 @@ C_integer arity;
     */
    if (!isalpha((unsigned char)*StrLoc(*s))) {
       for (i = 0; i < op_tbl_sz; ++i)
-          if (eq(s, &op_tbl[i]->name) && arity == op_tbl[i]->nparam)
+          if (eq(s, op_tbl[i]->name) && arity == op_tbl[i]->nparam)
 	    return op_tbl[i];
       return NULL;
       }

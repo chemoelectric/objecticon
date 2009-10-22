@@ -280,7 +280,8 @@ typedef int siptr, stringint, inst;
 #enddef				/* GRFX_UNLINK */
 
 #define CustomProc(f,code,nparam,ndynam,nclo,ntmp,nlab,nmark,sname)\
-    struct b_iproc Cat(B,f) = {\
+    static struct sdescrip Cat(f,_name_desc) = {sizeof(sname) - 1, sname};\
+    struct b_proc Cat(B,f) = {\
    	T_Proc,\
    	sizeof(struct b_proc),\
    	0,\
@@ -291,6 +292,6 @@ typedef int siptr, stringint, inst;
         0,0,0,\
         nclo,ntmp,nlab,nmark,\
         0,0,0,0,0,\
-   	{sizeof(sname) - 1, sname},\
+      	(dptr)&Cat(f,_name_desc), \
         0,0};
    

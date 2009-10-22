@@ -181,7 +181,7 @@ keyword{1} file
       pfile = frame_ipc_fname(curr_pf, 1);
       if (!pfile)
           fail;
-      return pfile->fname;
+      return *pfile->fname;
       }
 end
 

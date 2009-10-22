@@ -109,8 +109,8 @@ dptr dp1, dp2;
          /*
           * Collate on procedure name.
           */
-         return lexcmp(&(BlkLoc(*dp1)->proc.name),
-            &(BlkLoc(*dp2)->proc.name));
+         return lexcmp(BlkLoc(*dp1)->proc.name,
+                       BlkLoc(*dp2)->proc.name);
 
       case T_Ucs:
          /*
@@ -131,20 +131,20 @@ dptr dp1, dp2;
           /*
            * Collate on class name.
            */
-         return lexcmp(&(BlkLoc(*dp1)->class.name), &(BlkLoc(*dp2)->class.name));
+         return lexcmp(BlkLoc(*dp1)->class.name, BlkLoc(*dp2)->class.name);
 
       case T_Constructor:
           /*
            * Collate on type name.
            */
-         return lexcmp(&(BlkLoc(*dp1)->constructor.name), &(BlkLoc(*dp2)->constructor.name));
+         return lexcmp(BlkLoc(*dp1)->constructor.name, BlkLoc(*dp2)->constructor.name);
 
       case T_Record:
          /*
           * Collate on record id within record name.
           */
-         iresult = lexcmp(&(BlkLoc(*dp1)->record.constructor->name),
-            &(BlkLoc(*dp2)->record.constructor->name));
+         iresult = lexcmp(BlkLoc(*dp1)->record.constructor->name,
+                          BlkLoc(*dp2)->record.constructor->name);
          if (iresult == Equal) {
             lresult = (BlkLoc(*dp1)->record.id - BlkLoc(*dp2)->record.id);
             if (lresult > 0)	/* coded this way because of code-generation */
@@ -160,8 +160,8 @@ dptr dp1, dp2;
          /*
           * Collate on object id within class name.
           */
-         iresult = lexcmp(&(BlkLoc(*dp1)->object.class->name),
-                          &(BlkLoc(*dp2)->object.class->name));
+         iresult = lexcmp(BlkLoc(*dp1)->object.class->name,
+                          BlkLoc(*dp2)->object.class->name);
          if (iresult == Equal) {
             lresult = (BlkLoc(*dp1)->object.id - BlkLoc(*dp2)->object.id);
             if (lresult > 0)	/* coded this way because of code-generation */
@@ -177,8 +177,8 @@ dptr dp1, dp2;
          /*
           * Collate on cast class name within cast object id within cast object class name.
           */
-          iresult = lexcmp(&(BlkLoc(*dp1)->cast.object->class->name),
-                           &(BlkLoc(*dp2)->cast.object->class->name));
+          iresult = lexcmp(BlkLoc(*dp1)->cast.object->class->name,
+                           BlkLoc(*dp2)->cast.object->class->name);
           if (iresult == Equal) {
               lresult = (BlkLoc(*dp1)->cast.object->id - BlkLoc(*dp2)->cast.object->id);
               if (lresult > 0)	/* coded this way because of code-generation */
@@ -188,8 +188,8 @@ dptr dp1, dp2;
               else
                   iresult = Equal;
               if (iresult == Equal) {
-                  return lexcmp(&(BlkLoc(*dp1)->cast.class->name),
-                                &(BlkLoc(*dp2)->cast.class->name));
+                  return lexcmp(BlkLoc(*dp1)->cast.class->name,
+                                BlkLoc(*dp2)->cast.class->name);
               }
           }
           return iresult;
@@ -198,8 +198,8 @@ dptr dp1, dp2;
          /*
           * Collate on methp proc name within methp object id within methp object class name.
           */
-          iresult = lexcmp(&(BlkLoc(*dp1)->methp.object->class->name),
-                           &(BlkLoc(*dp2)->methp.object->class->name));
+          iresult = lexcmp(BlkLoc(*dp1)->methp.object->class->name,
+                           BlkLoc(*dp2)->methp.object->class->name);
           if (iresult == Equal) {
               lresult = (BlkLoc(*dp1)->methp.object->id - BlkLoc(*dp2)->methp.object->id);
               if (lresult > 0)	/* coded this way because of code-generation */
@@ -209,8 +209,8 @@ dptr dp1, dp2;
               else
                   iresult = Equal;
               if (iresult == Equal) {
-                  return lexcmp(&(BlkLoc(*dp1)->methp.proc->name),
-                                &(BlkLoc(*dp2)->methp.proc->name));
+                  return lexcmp(BlkLoc(*dp1)->methp.proc->name,
+                                BlkLoc(*dp2)->methp.proc->name);
               }
           }
           return iresult;
