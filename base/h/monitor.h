@@ -160,24 +160,6 @@
 #define E_Ssasgn	'\354'		/* Sub-string assignment */
 
    /*
-    * Interpreter stack events
-    */
-
-#define E_Intcall	'\351'		/* interpreter call */
-#define E_Intret	'\352'		/* interpreter return */
-
-   /*
-    * Expression events
-    */
-#define E_Ecall		'\143'		/* Call of operation */
-#define E_Efail		'\146'		/* Failure from expression */
-#define E_Bsusp		'\142'		/* Suspension from operation */
-#define E_Esusp		'\141'		/* Suspension from alternation */
-#define E_Lsusp		'\154'		/* Suspension from limitation */
-#define E_Eresum	'\165'		/* Resumption of expression */
-#define E_Erem		'\166'		/* Removal of a suspended generator */
-
-   /*
     * Co-expression events
     */
 
@@ -235,9 +217,9 @@
 
 110 115 120
 124 127 131 133 134 135
-137 140
-152
-162
+137 140 141 142 143 146
+152 154
+162 165 166
 173 174 175 
 204 205 206 207
 222 223 224 225 226 227
@@ -248,7 +230,7 @@
 270 271 272 273 274 275 276 277
 
 300 303
-345 353
+345 351 352 353
 365 366
 371 372 373 374 375 376 377
 
