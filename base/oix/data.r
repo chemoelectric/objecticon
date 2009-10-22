@@ -2,10 +2,6 @@
  * data.r -- Various interpreter data tables.
  */
 
-
-struct b_proc Bnoproc;
-
-
 /*
  * External declarations for function blocks.
  */
