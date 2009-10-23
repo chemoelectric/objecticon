@@ -118,7 +118,12 @@ static void outwordz(word oword, char *fmt, ...);
 static void outstr(struct strconst *sp, char *fmt, ...);
 static void outsdescrip(struct centry *ce, char *fmt, ...);
 
+#if WordBits == 32
 #define WordFmt "%08lx"
+#else
+#define WordFmt "%016lx"
+#endif
+
 #define ShortFmt "%04lx"
 
 static struct header hdr;
@@ -171,10 +176,10 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 outwordx(Op_Static, "   %s=static (%s)", desc, le->name);
                 outwordx(le->l_val.index, "      %d", le->l_val.index);
             } else if (le->l_flag & F_Argument) {
-                outwordx(Op_FrameVar, "   %s=dynamic (arg %s)", desc, le->name);
+                outwordx(Op_FrameVar, "   %s=framevar (%s)", desc, le->name);
                 outwordx(le->l_val.index, "      %d", le->l_val.index);
             } else {
-                outwordx(Op_FrameVar, "   %s=dynamic (local %s)", desc, le->name);
+                outwordx(Op_FrameVar, "   %s=framevar (%s)", desc, le->name);
                 outwordx(curr_lfunc->narguments + le->l_val.index, "      %d", 
                          curr_lfunc->narguments + le->l_val.index);
             }
@@ -182,7 +187,7 @@ static void emit_ir_var(struct ir_var *v, char *desc)
         }
         case GLOBAL: {
             struct gentry *ge = v->global;
-            outwordx(Op_Global, "   %s=global", desc);
+            outwordx(Op_Global, "   %s=global (%s)", desc, ge->name);
             outwordx(ge->g_index, "      %d", ge->g_index);
             break;
         }
