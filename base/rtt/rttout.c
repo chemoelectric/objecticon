@@ -60,6 +60,7 @@ static int     typ_case      (struct node *var, struct node *slct_lst,
 static void untend        (int indent);
 static int use_frame = 0;
 static int in_struct = 0;
+static int lab_seq = 0;
 extern char *progname;
  
 int op_type = OrdFunc;  /* type of operation */
@@ -1156,16 +1157,18 @@ int brace;
       if (!brace)
          prt_str("{", indent);
       ForceNl();
-      prt_str("FAIL(frame);", indent);
+      prt_str("FAIL(frame", indent);
+      fprintf(out_file, ", %d);", ++lab_seq);
       if (!brace) {
          ForceNl();
          prt_str("}", indent);
          }
       }
    else {
-       if (fnc_ret == RetSig)
-           prt_str("FAIL(frame);", indent);
-       else
+       if (fnc_ret == RetSig) {
+           prt_str("FAIL(frame", indent);
+           fprintf(out_file, ", %d);", ++lab_seq);
+       } else
          prt_str("return;", indent);
    }
    ForceNl();
@@ -1480,7 +1483,8 @@ int brace;
                      untend(indent);
                   ForceNl();
                   if (fnc_ret == RetSig) {
-                      prt_str("RETURN(frame);", indent);
+                      prt_str("RETURN(frame", indent);
+                      fprintf(out_file, ", %d);", ++lab_seq);
                   } else if (fnc_ret == RetNoVal)
                      prt_str("return;", indent);
                   ForceNl();
@@ -1502,7 +1506,8 @@ int brace;
                ForceNl();
                ret_value(t, n->u[0].child, indent);
                ForceNl();
-               prt_str("SUSPEND(frame);", indent);
+               prt_str("SUSPEND(frame", indent);
+               fprintf(out_file, ", %d);", ++lab_seq);
                ForceNl();
                if (!brace) {
                   prt_str("}", indent);

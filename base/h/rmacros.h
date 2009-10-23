@@ -598,22 +598,22 @@
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
 
-#define FAIL(G)  \
+#define FAIL(G,N)                                \
 do {\
     return 0;                                   \
 } while(0)
 
-#define SUSPEND(G) \
+#define SUSPEND(G,N)                             \
 do {\
     return 0;                                   \
 } while(0)
 
-#define RETURN(G)  \
+#define RETURN(G,N)                              \
 do {\
     return 0;                                   \
 } while(0)
 
-#define RESTORE(G) \
+#define RESTORE(G)    \
 do {                   \
 } while(0)
 
@@ -621,7 +621,7 @@ do {                   \
 
 #ifdef __GNUC__
 
-#define FAIL(G)  \
+#define FAIL(G,N)                                \
 do {\
     __label__ lab;                              \
     ((struct c_frame *)(G))->pc = &&lab;        \
@@ -630,7 +630,7 @@ do {\
     return 0;                                   \
 } while(0)
 
-#define SUSPEND(G) \
+#define SUSPEND(G,N)                             \
 do {\
     __label__ lab;                              \
     ((struct c_frame *)(G))->pc = &&lab;                          \
@@ -638,7 +638,7 @@ do {\
   lab:; \
 } while(0)
 
-#define RETURN(G)  \
+#define RETURN(G,N)                              \
 do {\
     __label__ lab;                              \
     ((struct c_frame *)(G))->pc = &&lab;        \
@@ -648,7 +648,7 @@ do {\
     return 0;                                   \
 } while(0)
 
-#define RESTORE(G) \
+#define RESTORE(G)    \
 do {                   \
     if (((struct c_frame *)(G))->pc) {            \
         goto *(((struct c_frame *)(G))->pc);      \
