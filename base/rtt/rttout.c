@@ -1132,11 +1132,6 @@ int indent;
    ForceNl();
    prt_str("fatalerr(309, NULL);", indent + IndentInc);
    ForceNl();
-   /*
-    * Handle error conversion. Indicate that operation may fail because
-    *  of error conversion and produce the necessary code.
-    */
-   failure(indent + IndentInc, 1);
    prt_str("}", indent + IndentInc);
    ForceNl();
    }
@@ -1157,18 +1152,16 @@ int brace;
       if (!brace)
          prt_str("{", indent);
       ForceNl();
-      prt_str("FAIL(frame", indent);
-      fprintf(out_file, ", %d);", ++lab_seq);
+      prt_str("FAIL(frame);", indent);
       if (!brace) {
          ForceNl();
          prt_str("}", indent);
          }
       }
    else {
-       if (fnc_ret == RetSig) {
-           prt_str("FAIL(frame", indent);
-           fprintf(out_file, ", %d);", ++lab_seq);
-       } else
+       if (fnc_ret == RetSig)
+         prt_str("FAIL(frame);", indent);
+       else
          prt_str("return;", indent);
    }
    ForceNl();
@@ -1482,10 +1475,9 @@ int brace;
                   if (ntend != 0)
                      untend(indent);
                   ForceNl();
-                  if (fnc_ret == RetSig) {
-                      prt_str("RETURN(frame", indent);
-                      fprintf(out_file, ", %d);", ++lab_seq);
-                  } else if (fnc_ret == RetNoVal)
+                  if (fnc_ret == RetSig)
+                     prt_str("RETURN(frame);", indent);
+                  else if (fnc_ret == RetNoVal)
                      prt_str("return;", indent);
                   ForceNl();
                   if (!brace) {

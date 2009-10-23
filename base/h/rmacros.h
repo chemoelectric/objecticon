@@ -593,17 +593,6 @@
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
 
-#define FAIL(G,N) \
-do {\
-    void *p; \
-    __asm { lea eax,Lab##N } \
-    __asm { mov [p],eax } \
-    ((struct c_frame *)(G))->pc = p; \
-    (G)->exhausted = 1;                         \
-Lab##N:; \
-    return 0;       \
-} while(0)
-
 #define SUSPEND(G,N) \
 do {\
     void *p; \
@@ -612,18 +601,6 @@ do {\
     ((struct c_frame *)(G))->pc = p; \
     return 1;       \
 Lab##N:; \
-} while(0)
-
-#define RETURN(G,N) \
-do {\
-    void *p; \
-    __asm { lea eax,Lab##N } \
-    __asm { mov [p],eax } \
-    ((struct c_frame *)(G))->pc = p; \
-    (G)->exhausted = 1;                         \
-    return 1;       \
-Lab##N:; \
-    return 0;                                   \
 } while(0)
 
 #define RESTORE(G) \
@@ -638,31 +615,11 @@ do {                   \
 
 #ifdef __GNUC__
 
-#define FAIL(G,N)                                \
-do {\
-    __label__ lab;                              \
-    ((struct c_frame *)(G))->pc = &&lab;        \
-    (G)->exhausted = 1;                         \
-  lab: \
-    return 0;                                   \
-} while(0)
-
 #define SUSPEND(G,N)                             \
 do {\
-    __label__ lab;                              \
-    ((struct c_frame *)(G))->pc = &&lab;                          \
+    ((struct c_frame *)(G))->pc = &&Lab##N;      \
     return 1;                                   \
-  lab:; \
-} while(0)
-
-#define RETURN(G,N)                              \
-do {\
-    __label__ lab;                              \
-    ((struct c_frame *)(G))->pc = &&lab;        \
-    (G)->exhausted = 1;                         \
-    return 1;                                   \
-  lab: \
-    return 0;                                   \
+ Lab##N:; \
 } while(0)
 
 #define RESTORE(G)    \
@@ -673,6 +630,18 @@ do {                   \
 } while(0)
 
 #endif   /* __GNUC__ */
+
+#define FAIL(G)                                \
+do {\
+  return 0;                                   \
+} while(0)
+
+#define RETURN(G)                              \
+do {\
+  (G)->exhausted = 1;                         \
+  return 1;                                   \
+} while(0)
+
 
 #define GetWord (*ipc++)
 #define GetAddr ((word *)GetWord)
