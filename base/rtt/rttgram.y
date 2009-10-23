@@ -496,7 +496,7 @@ tqual_lst
 
 param_type_lst
    : param_lst 
-   | param_lst ',' Ellipsis {$$ = node2(CommaNd, $2, $1, node0(PrimryNd, $3));}
+   | param_lst ',' Ellipsis {$$ = node2(CommaNd, $2, $1, node1(PrimryNd, $3, NULL));}
    ;
 
 opt_param_type_lst
@@ -518,7 +518,7 @@ param_dcltion
 
 ident_lst
    : identifier               {$$ = node1(PrimryNd, $1, NULL);}
-   | ident_lst ',' identifier {$$ = node2(CommaNd, $2, $1, node0(PrimryNd,$3));}
+   | ident_lst ',' identifier {$$ = node2(CommaNd, $2, $1, node1(PrimryNd,$3,NULL));}
    ;
 
 type_tqual_lst
@@ -985,10 +985,10 @@ detail_code
 
 runerr
    : Runerr '(' IntConst ')' opt_semi
-                    {$$ = node2(BinryNd, $1, node0(PrimryNd, $3), NULL);
+                    {$$ = node2(BinryNd, $1, node1(PrimryNd, $3, NULL), NULL);
                      free_t($2); free_t($4);}
    | Runerr '(' IntConst ',' variable ')' opt_semi
-                    {$$ = node2(BinryNd, $1, node0(PrimryNd, $3), $5);
+                    {$$ = node2(BinryNd, $1, node1(PrimryNd, $3, NULL), $5);
                      free_t($2); free_t($4); free_t($6);}
    ;
 
@@ -1000,7 +1000,7 @@ opt_semi
 variable
    : identifier                  {$$ = sym_node($1);}
    | identifier '[' IntConst ']' {$$ = node2(BinryNd, $2, sym_node($1),
-                                    node0(PrimryNd, $3));
+                                    node1(PrimryNd, $3, NULL));
                                   free_t($4);}
 
 dest_type

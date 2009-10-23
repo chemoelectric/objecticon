@@ -2758,7 +2758,7 @@ int brace;
                t1 = copy_t(t);
                t1->tok_id = IntConst;
                t1->image = "102";
-               errnum = node0(PrimryNd, t1);
+               errnum = node1(PrimryNd, t1, NULL);
 
                /*
                 * Try converting both arguments to a C_integer.

@@ -122,7 +122,7 @@ struct token *tok;
       return n;
       }
    else
-      return node0(PrimryNd, tok);
+       return node1(PrimryNd, tok, NULL);
    }
 
 /*

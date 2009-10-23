@@ -2847,7 +2847,7 @@ case 196:
 break;
 case 198:
 #line 499 "rttgram.y"
-{yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, node0(PrimryNd, yyvsp[0].t));}
+{yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, node1(PrimryNd, yyvsp[0].t, NULL));}
 break;
 case 199:
 #line 503 "rttgram.y"
@@ -2872,7 +2872,7 @@ case 206:
 break;
 case 207:
 #line 521 "rttgram.y"
-{yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, node0(PrimryNd,yyvsp[0].t));}
+{yyval.n = node2(CommaNd, yyvsp[-1].t, yyvsp[-2].n, node1(PrimryNd,yyvsp[0].t,NULL));}
 break;
 case 210:
 #line 527 "rttgram.y"
@@ -3377,12 +3377,12 @@ case 432:
 break;
 case 433:
 #line 988 "rttgram.y"
-{yyval.n = node2(BinryNd, yyvsp[-4].t, node0(PrimryNd, yyvsp[-2].t), NULL);
+{yyval.n = node2(BinryNd, yyvsp[-4].t, node1(PrimryNd, yyvsp[-2].t, NULL), NULL);
                      free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 434:
 #line 991 "rttgram.y"
-{yyval.n = node2(BinryNd, yyvsp[-6].t, node0(PrimryNd, yyvsp[-4].t), yyvsp[-2].n);
+{yyval.n = node2(BinryNd, yyvsp[-6].t, node1(PrimryNd, yyvsp[-4].t, NULL), yyvsp[-2].n);
                      free_t(yyvsp[-5].t); free_t(yyvsp[-3].t); free_t(yyvsp[-1].t);}
 break;
 case 436:
@@ -3396,7 +3396,7 @@ break;
 case 438:
 #line 1002 "rttgram.y"
 {yyval.n = node2(BinryNd, yyvsp[-2].t, sym_node(yyvsp[-3].t),
-                                    node0(PrimryNd, yyvsp[-1].t));
+                                    node1(PrimryNd, yyvsp[-1].t, NULL));
                                   free_t(yyvsp[0].t);}
 break;
 case 439:
