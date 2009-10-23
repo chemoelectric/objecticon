@@ -594,15 +594,32 @@
       #define general_invokef (curpstate->GeneralInvokef)
 
 #if MSWIN32
-      #define ptr2word(x) (uword)x
-      #define word2ptr(x) ((char *)x)
-#endif					/* MSWIN32 */
-
-#if MSWIN32
 #ifndef S_ISDIR
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
+
+#define FAIL(G)  \
+do {\
+    return 0;                                   \
+} while(0)
+
+#define SUSPEND(G) \
+do {\
+    return 0;                                   \
+} while(0)
+
+#define RETURN(G)  \
+do {\
+    return 0;                                   \
+} while(0)
+
+#define RESTORE(G) \
+do {                   \
+} while(0)
+
 #endif					/* MSWIN32 */
+
+#ifdef __GNUC__
 
 #define FAIL(G)  \
 do {\
@@ -637,6 +654,8 @@ do {                   \
         goto *(((struct c_frame *)(G))->pc);      \
     }\
 } while(0)
+
+#endif   /* __GNUC__ */
 
 #define GetWord (*ipc++)
 #define GetAddr ((word *)GetWord)

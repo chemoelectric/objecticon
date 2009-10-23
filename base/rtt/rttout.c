@@ -3313,7 +3313,7 @@ struct node *n;
     */
 
    in_struct = 1;
-   fprintf(out_file, "\nstruct %s_frame {\n   C_FRAME;\n", op_name);
+   fprintf(out_file, "\nstruct %s_frame {\n   C_FRAME\n", op_name);
    line += 3;
 
    while (t) {

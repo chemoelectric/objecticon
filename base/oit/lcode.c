@@ -1206,7 +1206,7 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "# Sorted fields array\n");
 
     for (i = 0; i < n_fields; ++i)
-        outshortx(sortf[i].n, "   Field %s (fnum=%d)", sortf[i].fp->name, sortf[i].fp->field_id);
+        outshortx((short)sortf[i].n, "   Field %s (fnum=%d)", sortf[i].fp->name, sortf[i].fp->field_id);
     free(sortf);
 
     align();
@@ -1458,7 +1458,7 @@ static void gentables()
             fprintf(dbgfile, "# Sorted fields array\n");
 
         for (i = 0; i < rec->nfields; ++i)
-            outshortx(sortf[i].n, "   Field %s (fnum=%d)", sortf[i].fp->name, sortf[i].fp->field_id);
+            outshortx((short)sortf[i].n, "   Field %s (fnum=%d)", sortf[i].fp->name, sortf[i].fp->field_id);
         free(sortf);
 
         align();

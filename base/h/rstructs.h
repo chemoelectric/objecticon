@@ -573,15 +573,15 @@ enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
      dptr tend;      /* Tended descriptor array */
 
 struct frame {
-    FRAME_BASE;
+    FRAME_BASE
 };
 
 struct c_frame {
-    C_FRAME;
+    C_FRAME
 };
 
 struct p_frame {
-    FRAME_BASE;
+    FRAME_BASE
     word *ipc;                /* Program counter; note this is only up-to-date when
                                * frames change (see interp.r and the use of the ipc global var.) */
     word *curr_inst;          /* Location of start of current instruction */

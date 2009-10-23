@@ -8,6 +8,9 @@
 #include "../h/gsupport.h"
 #undef OF
 #undef CONST
+#if MSWIN32
+#define WORD _WORD
+#endif
 #include "../h/version.h"
 #include "../h/mproto.h"
 #include "../h/modflags.h"
