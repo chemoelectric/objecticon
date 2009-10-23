@@ -3217,6 +3217,7 @@ struct node *n;
    nxt_sbuf = 0;
    nxt_cbuf = 0;
    use_frame = 1;
+   lab_seq = 0;
 
    interp_def(n);
 
