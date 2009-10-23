@@ -598,23 +598,45 @@
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
 
-#define FAIL(G,N)                                \
+#define FAIL(G,N) \
 do {\
+    void *p; \
+    __asm { lea eax,Lab##N } \
+    __asm { mov [p],eax } \
+    ((struct c_frame *)(G))->pc = p; \
+    (G)->exhausted = 1;                         \
+Lab##N:; \
+    return 0;       \
+} while(0)
+
+#define SUSPEND(G,N) \
+do {\
+    void *p; \
+    __asm { lea eax,Lab##N } \
+    __asm { mov [p],eax } \
+    ((struct c_frame *)(G))->pc = p; \
+    return 1;       \
+Lab##N:; \
+} while(0)
+
+#define RETURN(G,N) \
+do {\
+    void *p; \
+    __asm { lea eax,Lab##N } \
+    __asm { mov [p],eax } \
+    ((struct c_frame *)(G))->pc = p; \
+    (G)->exhausted = 1;                         \
+    return 1;       \
+Lab##N:; \
     return 0;                                   \
 } while(0)
 
-#define SUSPEND(G,N)                             \
-do {\
-    return 0;                                   \
-} while(0)
-
-#define RETURN(G,N)                              \
-do {\
-    return 0;                                   \
-} while(0)
-
-#define RESTORE(G)    \
+#define RESTORE(G) \
 do {                   \
+    if (((struct c_frame *)(G))->pc) {            \
+        void *p = ((struct c_frame *)(G))->pc; \
+        __asm { jmp [p] } \
+    }\
 } while(0)
 
 #endif					/* MSWIN32 */
