@@ -36,11 +36,6 @@
    #ifndef LONG
       #define LONG int
    #endif				/* LONG */
-   
-   /*
-    * Perform a "C" return, not processed by RTT
-    */
-   #define VanquishReturn(s) return s;
 #endif					/* Graphics */
 
 /*

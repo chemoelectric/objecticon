@@ -72,26 +72,11 @@
    #include <sys/types.h>
    #include <termios.h>
    #include <sys/utsname.h>
-   #ifdef SysSelectH
-      #include <sys/select.h>
-   #endif
+   #include <sys/select.h>
    #define SOCKET int
 #endif					/* UNIX */
 
 #ifdef XWindows
-
-#ifdef Redhat71
-/* due to a header bug, we must commit a preemptive first strike of Xosdefs */
-#include <X11/Xosdefs.h>
-
-#ifdef X_WCHAR
-#undef X_WCHAR
-#endif
-#ifdef X_NOT_STDC_ENV
-#undef X_NOT_STDC_ENV
-#endif
-#endif					/* Redhat71 */
-
       #ifdef HAVE_LIBXPM
          #include <X11/xpm.h>
       #else				/* HAVE_LIBXPM */
@@ -134,10 +119,6 @@
 #undef LOCAL
 #undef OF
 #endif					/* HAVE_LIBJPEG */
-
-#ifdef Graphics
-   #define VanquishReturn(s) return s;
-#endif					/* Graphics */
 
 #ifdef HAVE_LIBDL
 #if MSWIN32
