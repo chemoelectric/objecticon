@@ -975,14 +975,18 @@ void pollevent()
       }
    }
 
-int ownselection(wbp w, char *selname)
+int own_selection(wbp w, char *selname)
 {
     return Succeeded;
 }
 
-int getselectioncontent(wbp w, char *selname, char *targetname, dptr res)
+int request_selection(wbp w, char *selname, char *targetname)
 {
-    *res = nulldesc;
+    return Succeeded;
+}
+
+int send_selection_response(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
+{
     return Succeeded;
 }
 
