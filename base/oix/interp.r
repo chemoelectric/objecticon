@@ -332,7 +332,11 @@ void get_variable(dptr dest)
     char *t;
     int size, i;
     size = pb->framesize + (argc + pb->ntend) * sizeof(struct descrip);
+#ifdef HAVE_ALLOCA
     p = alloca(size);
+#else
+    MemProtect(p = malloc(size));
+#endif
     p->size = size;
     p->creator = 0;
     p->type = C_FRAME_TYPE;
@@ -361,6 +365,11 @@ void get_variable(dptr dest)
 }
 #enddef
 
+#begdef quick_free_frame(p)
+#ifndef HAVE_ALLOCA
+    free(p);
+#endif
+#enddef
 
 static void do_op(int nargs)
 {
@@ -390,6 +399,7 @@ static void do_op(int nargs)
     xc_frame = 0;
     /* Pop the C frame */
     k_current->sp = cf->parent_sp;
+    quick_free_frame(cf);
 }
 
 static void do_opclo(int nargs)
@@ -433,6 +443,7 @@ static void do_keyop()
     xc_frame = 0;
     /* Pop the C frame */
     k_current->sp = cf->parent_sp;
+    quick_free_frame(cf);
 }
 
 static void do_keyclo()

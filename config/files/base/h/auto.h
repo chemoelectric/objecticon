@@ -72,6 +72,9 @@
 /* define as 1 if truncate exists */
 #undef HAVE_TRUNCATE
 
+/* define as 1 if alloca exists */
+#undef HAVE_ALLOCA
+
 /* define as 1 if _etext exists */
 #undef HAVE__ETEXT
 
