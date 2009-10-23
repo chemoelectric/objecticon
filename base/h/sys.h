@@ -58,6 +58,7 @@
    #endif
    #define ftruncate _chsize
    #define lstat stat
+   #define alloca _alloca
 #endif					/* MSWIN32 */
 
 
