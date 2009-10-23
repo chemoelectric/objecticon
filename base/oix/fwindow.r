@@ -227,11 +227,12 @@ end
 function{0,1} graphics_Window_color_value(self, k)
    body {
       C_integer n;
-      long r, g, b, a = 65535;
+      long r, g, b, a;
       tended char *s;
       char tmp[32], *t;
       GetSelfW();
 
+      a = 65535;
       if (is:null(k))
           runerr(103);
 
@@ -425,11 +426,12 @@ end
 
 function{1} graphics_Window_draw_curve(self, argv[argc])
    body {
-      int i, n, closed = 0;
+      int i, n, closed;
       C_integer dx, dy, x0, y0, xN, yN;
       XPoint *points;
       GetSelfW();
 
+      closed = 0;
       CheckArgMultipleOf(2);
 
       dx = self_w->context->dx;
@@ -1397,10 +1399,12 @@ function{*} graphics_Window_attrib(self, argv[argc])
    body {
       wbp wsave;
       word n;
-      tended struct descrip sbuf, sbuf2 = nulldesc;
-      int  pass, config = 0;
-
+      tended struct descrip sbuf, sbuf2;
+      int pass, config;
       GetSelfW();
+
+      config = 0;
+      sbuf2 = nulldesc;
 
       wsave = self_w;
       /*
