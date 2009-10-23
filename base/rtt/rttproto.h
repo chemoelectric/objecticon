@@ -36,7 +36,6 @@ void           init_lex  (void);
 void           init_sym  (void);
 void           in_line   (struct node *n);
 void           just_type (struct node *typ, int indent, int ilc);
-void           keyconst  (struct token *t);
 struct node      *lbl       (struct token *t);
 void           ld_prmloc (struct parminfo *parminfo);
 void           mrg_prmloc (struct parminfo *parminfo);

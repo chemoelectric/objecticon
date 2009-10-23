@@ -119,7 +119,6 @@ void init_lex()
       sym_add(C_String,      spec_str("C_string"),      OtherDcl, 0);
       sym_add(Str_Or_Ucs,    spec_str("string_or_ucs"), OtherDcl, 0);
       sym_add(Cnv,           spec_str("cnv"),           OtherDcl, 0);
-      sym_add(Constant,      spec_str("constant"),      OtherDcl, 0);
       sym_add(Declare,       spec_str("declare"),       OtherDcl, 0);
       sym_add(Def,           spec_str("def"),           OtherDcl, 0);
       sym_add(Empty_type,    spec_str("empty_type"),    OtherDcl, 0);

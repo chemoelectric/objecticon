@@ -105,9 +105,8 @@
 #define Type_case 361
 #define Of 362
 #define Len_case 363
-#define Constant 364
-#define Errorfail 365
-#define IfStmt 366
+#define Errorfail 364
+#define IfStmt 365
 typedef union {
    struct token *t;
    struct node *n;

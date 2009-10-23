@@ -36,10 +36,10 @@
 %token <t> Any_value Named_var Struct_var C_Integer Arith_case Str_Or_Ucs
 %token <t> C_Double C_String Tmp_string Body End TokFunction Keyword
 %token <t> Operator Underef Declare Suspend Fail Inline Abstract Store
-%token <t> TokType New All_fields Then Type_case Of Len_case Constant Errorfail
+%token <t> TokType New All_fields Then Type_case Of Len_case Errorfail
 
 %type <t> unary_op assign_op struct_or_union typedefname
-%type <t> identifier op_name key_const union attrb_name
+%type <t> identifier op_name union attrb_name
 
 %type <n> any_ident storage_class_spec type_qual 
 %type <n> primary_expr postfix_expr arg_expr_lst unary_expr cast_expr
@@ -742,7 +742,6 @@ definition
 operation
    : fnc_oper op_declare actions End {defout($3); free_t($4);}
    | keyword             actions End {defout($2); free_t($3);}
-   | keyword Constant key_const  End {keyconst($3); free_t($2); free_t($4);}
    ;
 
 description
@@ -762,12 +761,6 @@ fnc_oper
 keyword
    : Keyword  '{' result_seq '}' op_name
        {impl_key($5); free_t($1); free_t($2); free_t($4);}
-   ;
-
-key_const
-   : StrLit
-   | DblConst
-   | IntConst
    ;
 
 /*

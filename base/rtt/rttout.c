@@ -1502,15 +1502,6 @@ int brace;
                ForceNl();
                ret_value(t, n->u[0].child, indent);
                ForceNl();
-               /*
-                * The operator suspends by calling the success continuation
-                *  if there is one or just returns if there is none. For
-                *  the interpreter, interp() is the success continuation.
-                *  A non-A_Resume signal from the success continuation must
-                *  returned to the caller. If there are tended variables
-                *  they must be removed from the tended list before a signal
-                *  is returned.
-                */
                prt_str("SUSPEND(frame);", indent);
                ForceNl();
                if (!brace) {
@@ -3475,63 +3466,6 @@ struct node *n;
 
    }
 
-/*
- * keyconst - produce code for a constant keyword.
- */
-void keyconst(t)
-struct token *t;
-   {
-   int n;
-
-
-   /*
-    * For the interpreter, output a C function implementing the keyword.
-    */
-
-   fprintf(out_file, "\n");
-   ++line;
-   fprintf(out_file, "int K%s(struct frame *frame)\n", op_name);
-   ++line;
-   rslt_loc = "frame->value";
-   ForceNl();
-   prt_str("{", IndentInc);
-   ForceNl();
-   switch (t->tok_id) {
-       case StrLit:
-           prt_str(rslt_loc, IndentInc);
-           prt_str(".vword.sptr = \"", IndentInc);
-           n = prt_i_str(out_file, t->image, (int)strlen(t->image));
-           prt_str("\";", IndentInc);
-           ForceNl();
-           prt_str(rslt_loc, IndentInc);
-           fprintf(out_file, ".dword = %d;", n);
-           break;
-       case IntConst:
-           prt_str(rslt_loc, IndentInc);
-           prt_str(".dword = D_Integer;", IndentInc);
-           ForceNl();
-           prt_str(rslt_loc, IndentInc);
-           prt_str(".vword.integer = ", IndentInc);
-           prt_str(t->image, IndentInc);
-           prt_str(";", IndentInc);
-           break;
-   }
-   ForceNl();
-   prt_str("RETURN(frame);", IndentInc);
-
-   ForceNl();
-   prt_str("}\n", IndentInc);
-   ++line;
-   ForceNl();
-
-   /*
-    * Reset the translator and free storage.
-    */
-   op_type = OrdFunc;
-   free_t(t);
-   pop_cntxt();
-   clr_def();
-   }
 
 /*
  * keepdir - A preprocessor directive to be kept has been encountered.
