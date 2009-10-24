@@ -35,13 +35,23 @@ void set_curpstate(struct progstate *p)
 /*
  * Switch co-expressions.
  */
-void switch_to(struct b_coexpr *ce)
+void switch_to(struct b_coexpr *ce, dptr val)
 {
     curr_pf->ipc = ipc;
     curpstate = ce->program;
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
-    ipc = curr_pf->ipc;
+    if (val) {
+        /* Success - set transmitted value */
+        if (k_current->tvalloc)
+            *k_current->tvalloc = *val;
+        ipc = curr_pf->ipc;
+    } else {
+        /* Failure - goto failure label */
+        ipc = k_current->failure_label;
+    }
+    /* Clear the tvalloc pointer in any case */
+    k_current->tvalloc = 0;
 }
 
 /*
@@ -524,9 +534,7 @@ static void do_coact()
 
     /* Set the target's activator, switch to the target and set its transmitted value */
     BlkLoc(arg2)->coexpr.activator = k_current;
-    switch_to(&BlkLoc(arg2)->coexpr);
-    if (k_current->tvalloc)
-        *k_current->tvalloc = arg1;
+    switch_to(&BlkLoc(arg2)->coexpr, &arg1);
 }
 
 static void do_coret()
@@ -549,9 +557,7 @@ static void do_coret()
     ++k_current->size;
 
     /* Switch to the target and set the transmitted value */
-    switch_to(k_current->activator);
-    if (k_current->tvalloc)
-        *k_current->tvalloc = val;
+    switch_to(k_current->activator, &val);
 }
 
 static void do_cofail()
@@ -565,8 +571,7 @@ static void do_cofail()
     k_current->failure_label = ipc;
 
     /* Switch to the target and jump to its failure label */
-    switch_to(k_current->activator);
-    ipc = k_current->failure_label;
+    switch_to(k_current->activator, 0);
 }
 
 static void transmit_failure()
@@ -588,8 +593,7 @@ static void transmit_failure()
 
     /* Switch to the target and go to its failure label */
     BlkLoc(t)->coexpr.activator = k_current;
-    switch_to(&BlkLoc(t)->coexpr);
-    ipc = k_current->failure_label;
+    switch_to(&BlkLoc(t)->coexpr, 0);
 }
 
 "cofail(ce) - transmit a co-expression failure to ce"

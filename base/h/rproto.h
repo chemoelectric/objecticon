@@ -71,11 +71,6 @@ int		cnv_str_0	(dptr s, dptr d);
 int		cnv_str_1	(dptr s, dptr d);
 int		cnv_tstr_0	(char *sbuf, dptr s, dptr d);
 int		cnv_tstr_1	(char *sbuf, dptr s, dptr d);
-void		co_init		(struct b_coexpr *sblkp);
-void		coswitch	(word *old, word *new, int first);
-#ifdef HAVE_COCLEAN
-void            coclean(word *o);
-#endif
 void		cplist_0	(dptr dp1,dptr dp2,word i,word j);
 void		cplist_1	(dptr dp1,dptr dp2,word i,word j);
 void		cpset_0		(dptr dp1,dptr dp2,word size);
@@ -608,7 +603,7 @@ struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior);
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior);
 struct b_proc *get_current_user_proc();
 struct p_frame *get_current_user_frame();
-void switch_to(struct b_coexpr *ce);
+void switch_to(struct b_coexpr *ce, dptr val);
 void set_c_frame_value();
 void set_c_frame_failure();
 void add_to_prog_event_queue(dptr value, int event);

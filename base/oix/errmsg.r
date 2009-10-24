@@ -76,6 +76,7 @@ struct errtab errtab[] = {
     {210, "non-ascending arguments to detab/entab"},
     {211, "by value equal to zero"},
     {215, "attempt to refresh &main"},
+    {216, "attempt to cocopy &main"},
     {219, "already closed"},
 
     {302, "memory violation"},

@@ -1496,6 +1496,7 @@ void showcurrstack()
 void showstack(struct b_coexpr *c)
 {
     struct frame *f;
+    printf("Stack trace for coexpression %p\n", c);
     f = c->sp;
     while (f) {
         struct descrip tmp;

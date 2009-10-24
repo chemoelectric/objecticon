@@ -913,12 +913,9 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
         curpstate->stackcurr += lsize;
         fvars->size = lsize;
         fvars->creator = curpstate;
-        if (ndesc) {
-            for (i = 0; i < ndesc; ++i)
-                fvars->desc[i] = nulldesc;
-            fvars->desc_end = fvars->desc + ndesc;
-        } else
-            fvars->desc_end = 0;
+        for (i = 0; i < ndesc; ++i)
+            fvars->desc[i] = nulldesc;
+        fvars->desc_end = fvars->desc + ndesc;
         fvars->refcnt = 1;
         fvars->seen = 0;
     }
