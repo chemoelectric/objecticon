@@ -40,6 +40,49 @@ operator{1} ^ refresh(x)
       }
 
 end
+
+
+function{0,1} cocopy(x)
+   if !is:coexpr(x) then
+       runerr(118, x)
+
+   body {
+       tended struct b_coexpr *curr, *coex;
+       struct p_frame *pf, *new_pf;
+       dptr dp1, dp2;
+
+       curr = (struct b_coexpr *)BlkLoc(x);
+
+       if (curr->main_of)	/* &main cannot be copied */
+           runerr(216, x);
+
+       /*
+        * Find the bottom of the procedure frame stack, ie the procedure in which
+        * the coexpression was created.
+        */
+       pf = curr->curr_pf;
+       if (!pf)
+           syserr("Couldn't find top curr_pf whilst cocopy coexpression");
+       while (pf->caller)
+           pf = pf->caller;
+
+       MemProtect(coex = alccoexp());
+       coex->program = coex->creator = curr->creator;
+       coex->main_of = 0;
+       MemProtect(new_pf = alc_p_frame(pf->proc, 0));
+       coex->failure_label = coex->start_label = new_pf->ipc = curr->start_label;
+       coex->curr_pf = new_pf;
+       coex->sp = (struct frame *)new_pf;
+       dp1 = pf->fvars->desc;
+       dp2 = new_pf->fvars->desc;
+       while (dp1 < pf->fvars->desc_end)
+           *dp2++ = *dp1++;
+
+       return coexpr(coex);
+      }
+
+end
+
 
 
 "*x - return size of string or object x."
