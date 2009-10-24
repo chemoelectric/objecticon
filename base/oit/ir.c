@@ -2448,6 +2448,8 @@ void generate_ir()
 {
     struct ir_info *init = 0, *body = 0, *end;
     struct lnode *n;
+    int init_mk;
+    struct ir_stack *st;
 
     hi_chunk = -1;
     ir_start = 0;
@@ -2464,19 +2466,30 @@ void generate_ir()
             fprintf(stderr, "\nGenerating ir tree for procedure %s\n",  curr_lfunc->proc->name);
     }
 
-    if (curr_lfunc->initial->op != Uop_Empty)
-        init = ir_traverse(curr_lfunc->initial, new_stack(), 0, 1, 1);
+    st = new_stack();
+
+    if (curr_lfunc->initial->op != Uop_Empty) {
+        init_mk = make_mark(st);
+        init = ir_traverse(curr_lfunc->initial, branch_stack(st), 0, 1, 1);
+    }
 
     if (curr_lfunc->body->op != Uop_Empty)
-        body = ir_traverse(curr_lfunc->body, new_stack(), 0, 1, 1);
+        body = ir_traverse(curr_lfunc->body, branch_stack(st), 0, 1, 1);
 
     end = ir_traverse(curr_lfunc->end, 0, 0, 1, 1);   /* Get the Uop_End */
     n = curr_lfunc->start;
+    /* Note there is no point marking the body or a lone init block, since the end
+     * block will simply cause failure, popping the whole procedure frame.
+     */
     if (init) {
         if (body) {
-            chunk2(ir_start, ir_enterinit(n, body->start), 
-                                  ir_goto(n, init->start));
-            chunk1(init->success, ir_goto(n, body->start));
+            chunk3(ir_start, 
+                   ir_enterinit(n, body->start), 
+                   cond_ir_mark(init->uses_stack, n, init_mk),
+                   ir_goto(n, init->start));
+            chunk2(init->success, 
+                   cond_ir_unmark(init->uses_stack, n, init_mk),
+                   ir_goto(n, body->start));
             chunk1(init->failure, ir_goto(n, body->start));
             chunk1(body->success, ir_goto(n, end->start));
             chunk1(body->failure, ir_goto(n, end->start));
