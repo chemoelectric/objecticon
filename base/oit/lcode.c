@@ -1623,7 +1623,7 @@ static void gentables()
             if (Dflag) {
                 char *s = sp->s, t[9];
                 int i, j = 0;
-                fprintf(dbgfile, "# Offset %04x\n", sp->offset);
+                fprintf(dbgfile, "# Offset %04lx\n", (long)sp->offset);
                 for (i = 0; i < sp->len; ++i) {
                     if (i == 0)
                         fprintf(dbgfile, WordFmt ":    ", (long)pc);

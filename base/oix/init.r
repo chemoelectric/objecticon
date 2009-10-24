@@ -1519,7 +1519,7 @@ void showstack(struct b_coexpr *c)
         switch (f->type) {
             case C_FRAME_TYPE: {
                 struct c_frame *cf = (struct c_frame *)f;
-                printf("\tpc=0x%x\n", cf->pc);
+                printf("\tpc=0x%lx\n", (long)cf->pc);
                 printf("\tnargs=%d\n", cf->nargs);
                 for (i = 0; i < cf->nargs; ++i) {
                     printf("\targs[%d]=", i); print_desc(stdout, &cf->args[i]); printf("\n");

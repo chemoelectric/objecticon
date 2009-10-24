@@ -2448,7 +2448,7 @@ void generate_ir()
 {
     struct ir_info *init = 0, *body = 0, *end;
     struct lnode *n;
-    int init_mk;
+    int init_mk = -1;
     struct ir_stack *st;
 
     hi_chunk = -1;
