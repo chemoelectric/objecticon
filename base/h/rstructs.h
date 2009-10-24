@@ -567,7 +567,7 @@ enum FRAME_TYPE { C_FRAME_TYPE, P_FRAME_TYPE };
 
 #define C_FRAME \
      FRAME_BASE   \
-     void *pc;       /* C program counter */    \
+     word pc;        /* C program counter */    \
      int nargs;      /* Number of args; may exceed declared number for a vararg func */ \
      dptr args;      /* Arg array - nargs descriptors */ \
      dptr tend;      /* Tended descriptor array */

@@ -604,3 +604,22 @@ AC_DEFUN([CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
                    ])
 ])
 
+AC_DEFUN([CHECK_COMPUTED_GOTO],
+   [ AC_MSG_CHECKING(for computed goto support)
+     AC_COMPILE_IFELSE(
+         [AC_LANG_PROGRAM([[]], [[
+             static void *labels[] = {&&label0, &&label1, &&label2};
+             unsigned char *pc = 0;
+             goto *labels[*pc];
+             label0: ;
+             label1: ;
+             label2: ;
+             ]])], 
+        [
+          AC_MSG_RESULT(yes)
+          AC_DEFINE(HAVE_COMPUTED_GOTO)
+                   ],
+                   [
+                   AC_MSG_RESULT(no)
+                   ])
+])

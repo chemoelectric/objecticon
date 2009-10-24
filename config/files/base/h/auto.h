@@ -81,6 +81,9 @@
 /* define as 1 if unsetenv exists and returns an int */
 #undef HAVE_UNSETENV_INT_RETURN
 
+/* define as 1 if we have computed gotos */
+#undef HAVE_COMPUTED_GOTO
+
 /* sizes of various fundamental types */
 #undef SIZEOF_INT
 #undef SIZEOF_LONG

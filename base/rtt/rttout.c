@@ -3235,6 +3235,26 @@ struct node *n;
    use_frame = 0;
    }
 
+static void swap_files()
+{
+    FILE *t = out_file;
+    out_file = tmp_file;
+    tmp_file = t;
+}
+
+static void copy_tmp()
+{
+    long p;
+    fflush(tmp_file);
+    p = ftell(tmp_file);
+    rewind(tmp_file);
+    while (p--) {
+        int c = getc(tmp_file);
+        putc(c, out_file);
+    }
+    rewind(tmp_file);
+}
+
 /*
  * interp_def - output code for the interpreter for operation definitions.
  */
@@ -3315,8 +3335,6 @@ struct node *n;
    line += 3;
 
    while (t) {
-       /*printf("\t%s %d %d inframe=%d\n", t->image, t->id_type,t->f_indx,
-         (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual))); */
        if (t->id_type == OtherDcl && in_frame(t->u.declare_var.tqual)) {
            ForceNl();
            c_walk(t->u.declare_var.tqual,3,0);
@@ -3347,15 +3365,12 @@ struct node *n;
 
    in_struct = 0;
 
-   /*
-    * Output function header.
-    */
-   
-   fprintf(out_file, "int %c%s(struct frame *frame0)\n{\n", letter, name);
-   fprintf(out_file, "   struct %s_frame *frame = (struct %s_frame *)frame0;\n", name, name);
-   fprintf(out_file, "   RESTORE(frame);\n");
-   line += 4;
-      
+
+   /* Divert output to temporary file */
+   swap_files();
+   /* Force a line directive at next token */
+   line = 0;
+
    /*
     * Output ordinary declarations from the declare clause.
     */
@@ -3424,7 +3439,6 @@ struct node *n;
     * Finish setting up the tended array structure and link it into the tended
     *  list.
     */
-
    if (rt_walk(n, IndentInc, 0)) { /* body of operation */
       if (n->nd_id == ConCatNd)
          s = n->u[1].child->tok->fname;
@@ -3435,6 +3449,31 @@ struct node *n;
           op_name);
       }
    ForceNl();
+   swap_files();
+
+   /*
+    * Output function header.
+    */
+   fprintf(out_file, "int %c%s(struct %s_frame *frame)\n{\n", letter, name, name);
+
+   if (lab_seq > 0) {
+#ifdef HAVE_COMPUTED_GOTO
+       fprintf(out_file, "   RESTORE(frame);\n");
+#else
+       int i;
+       fprintf(out_file, "   switch (frame->pc) {\n");
+       fprintf(out_file, "      case 0: break;\n");
+       for (i = 1; i <= lab_seq; ++i)
+           fprintf(out_file, "      case %d: goto Lab%d;\n", i, i);
+       fprintf(out_file, "      default: syserr(\"Invalid pc in %s\");\n", name);
+       fprintf(out_file, "   }\n");
+#endif
+   }
+
+   /* Copy function body from temp diversion */
+   copy_tmp();
+   /* Force a line directive at next token */
+   line = 0;
    prt_str("}\n", IndentInc);
 
    /*

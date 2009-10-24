@@ -42,8 +42,8 @@ static char *options =
  */
 
 char *progname = "rtt";
-FILE *out_file;
-char *cname;
+FILE *out_file, *tmp_file;
+char *cname, *tname;
 char *inclname;
 int def_fnd;
 
@@ -231,6 +231,7 @@ void trans(src_file)
     if (strcmp(cur_src, "-") == 0) {
         source("-"); /* tell preprocessor to read standard input */
         cname = salloc(makename(TargetDir, "stdin", CSuffix));
+        tname = salloc(makename(TargetDir, "stdin", TmpSuffix));
     }
     else {
         fp = fparse(cur_src);
@@ -242,6 +243,7 @@ void trans(src_file)
 
         source(cur_src);  /* tell preprocessor to read source file */
         cname = salloc(makename(TargetDir, cur_src, CSuffix));
+        tname = salloc(makename(TargetDir, cur_src, TmpSuffix));
     }
 
     if (pp_only)
@@ -258,6 +260,11 @@ void trans(src_file)
         else
             addrmlst(cname, out_file);
 
+        if ((tmp_file = fopen(tname, "w+b")) == NULL)
+            err2("cannot open tmp file ", tname);
+        else
+            addrmlst(tname, tmp_file);
+
         prologue(); /* output standard comments and preprocessor directives */
 
         yyparse();  /* translate the input */
@@ -270,6 +277,10 @@ void trans(src_file)
             else	/* can't close it again if we remove it to due an error */
                 markrmlst(out_file);
         }
+
+        fclose(tmp_file);
+        markrmlst(tmp_file);
+        remove(tname);
     }
 }
 

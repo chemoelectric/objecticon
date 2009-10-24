@@ -592,32 +592,13 @@
 #ifndef S_ISDIR
 #define S_ISDIR(mod) ((mod) & _S_IFDIR)
 #endif					/* no S_ISDIR */
-
-#define SUSPEND(G,N) \
-do {\
-    void *p; \
-    __asm { lea eax,Lab##N } \
-    __asm { mov [p],eax } \
-    ((struct c_frame *)(G))->pc = p; \
-    return 1;       \
-Lab##N:; \
-} while(0)
-
-#define RESTORE(G) \
-do {                   \
-    if (((struct c_frame *)(G))->pc) {            \
-        void *p = ((struct c_frame *)(G))->pc; \
-        __asm { jmp [p] } \
-    }\
-} while(0)
-
 #endif					/* MSWIN32 */
 
-#ifdef __GNUC__
+#ifdef HAVE_COMPUTED_GOTO
 
 #define SUSPEND(G,N)                             \
 do {\
-    ((struct c_frame *)(G))->pc = &&Lab##N;      \
+    ((struct c_frame *)(G))->pc = (word)&&Lab##N;       \
     return 1;                                   \
  Lab##N:; \
 } while(0)
@@ -625,11 +606,20 @@ do {\
 #define RESTORE(G)    \
 do {                   \
     if (((struct c_frame *)(G))->pc) {            \
-        goto *(((struct c_frame *)(G))->pc);      \
+        goto *((void *)(((struct c_frame *)(G))->pc));  \
     }\
 } while(0)
 
-#endif   /* __GNUC__ */
+#else
+
+#define SUSPEND(G,N)                             \
+do {\
+    ((struct c_frame *)(G))->pc = N;       \
+    return 1;                                   \
+ Lab##N:; \
+} while(0)
+
+#endif   /* HAVE_COMPUTED_GOTO */
 
 #define FAIL(G)                                \
 do {\

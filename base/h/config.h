@@ -235,10 +235,6 @@ Deliberate Syntax Error
    #define RttSuffix ".r"
 #endif					/* RttSuffix */
 
-#ifndef DBSuffix
-   #define DBSuffix ".db"
-#endif					/* DBSuffix */
-
 #ifndef PPInit
    #define PPInit ""
 #endif					/* PPInit */
@@ -255,17 +251,13 @@ Deliberate Syntax Error
    #define CSuffix ".c"
 #endif					/* CSuffix */
 
-#ifndef HSuffix
-   #define HSuffix ".h"
-#endif					/* HSuffix */
+#ifndef TmpSuffix
+   #define TmpSuffix ".tmp"
+#endif					/* TmpSuffix */
 
 #ifndef ObjSuffix
    #define ObjSuffix ".o"
 #endif					/* ObjSuffix */
-
-#ifndef LibSuffix
-   #define LibSuffix ".a"
-#endif					/* LibSuffix */
 
 /*
  * Note, size of the hash table is a power of 2:
