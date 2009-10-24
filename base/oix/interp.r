@@ -35,23 +35,13 @@ void set_curpstate(struct progstate *p)
 /*
  * Switch co-expressions.
  */
-void switch_to(struct b_coexpr *ce, dptr val)
+void switch_to(struct b_coexpr *ce)
 {
     curr_pf->ipc = ipc;
     curpstate = ce->program;
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
-    if (val) {
-        /* Success - set transmitted value */
-        if (k_current->tvalloc)
-            *k_current->tvalloc = *val;
-        ipc = curr_pf->ipc;
-    } else {
-        /* Failure - goto failure label */
-        ipc = k_current->failure_label;
-    }
-    /* Clear the tvalloc pointer in any case */
-    k_current->tvalloc = 0;
+    ipc = curr_pf->ipc;
 }
 
 /*
@@ -534,7 +524,9 @@ static void do_coact()
 
     /* Set the target's activator, switch to the target and set its transmitted value */
     BlkLoc(arg2)->coexpr.activator = k_current;
-    switch_to(&BlkLoc(arg2)->coexpr, &arg1);
+    switch_to(&BlkLoc(arg2)->coexpr);
+    if (k_current->tvalloc)
+        *k_current->tvalloc = arg1;
 }
 
 static void do_coret()
@@ -553,11 +545,16 @@ static void do_coret()
     /* If someone transmits failure to this coexpression, just act as though resumed */
     k_current->failure_label = ipc;
 
+    /* Any transmitted value is discarded */
+    k_current->tvalloc = 0;
+
     /* Increment the results counter */
     ++k_current->size;
 
     /* Switch to the target and set the transmitted value */
-    switch_to(k_current->activator, &val);
+    switch_to(k_current->activator);
+    if (k_current->tvalloc)
+        *k_current->tvalloc = val;
 }
 
 static void do_cofail()
@@ -570,8 +567,12 @@ static void do_cofail()
     /* If someone transmits failure to this coexpression, just act as though resumed */
     k_current->failure_label = ipc;
 
+    /* Any transmitted value is discarded */
+    k_current->tvalloc = 0;
+
     /* Switch to the target and jump to its failure label */
-    switch_to(k_current->activator, 0);
+    switch_to(k_current->activator);
+    ipc = k_current->failure_label;
 }
 
 static void transmit_failure()
@@ -593,7 +594,8 @@ static void transmit_failure()
 
     /* Switch to the target and go to its failure label */
     BlkLoc(t)->coexpr.activator = k_current;
-    switch_to(&BlkLoc(t)->coexpr, 0);
+    switch_to(&BlkLoc(t)->coexpr);
+    ipc = k_current->failure_label;
 }
 
 "cofail(ce) - transmit a co-expression failure to ce"

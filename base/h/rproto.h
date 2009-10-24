@@ -603,7 +603,7 @@ struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior);
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior);
 struct b_proc *get_current_user_proc();
 struct p_frame *get_current_user_frame();
-void switch_to(struct b_coexpr *ce, dptr val);
+void switch_to(struct b_coexpr *ce);
 void set_c_frame_value();
 void set_c_frame_failure();
 void add_to_prog_event_queue(dptr value, int event);
