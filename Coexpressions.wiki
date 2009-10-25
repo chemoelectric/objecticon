@@ -5,7 +5,7 @@ The implementation and semantics of co-expressions is rather different in V2 of 
 
 The first and most significant difference to mention is that co-expressions in V2 are cheap.  Each co-expression has an interpreter stack, but it grows and shrinks dynamically in chunks called "frames", with one frame corresponding to each procedure call.  Each frame is quite small, typically about 100 bytes.  This is in sharp contrast to the traditional Icon interpreter's allocation for a co-expression - a fixed size region sufficient for both C and interpreter stack.
 
-The implementation of co-expressions in V2 of Object Icon also highly portable.  The conventional Icon implementation requires a low-level context switch to swap between C stacks.  This is inherently non-portable, and raises a number of other issues.  The new non-recursive design of the interpreter loop in V2 of Object Icon means that no context-switch is required to implement co-expressions, and the new implementation is written entirely in standard C.
+The implementation of co-expressions in V2 of Object Icon is also highly portable.  The conventional Icon implementation requires a low-level context switch to swap between C stacks.  This is inherently non-portable, and raises a number of other issues.  The new non-recursive design of the interpreter loop in V2 of Object Icon means that no context-switch is required to implement co-expressions, and the new implementation is written entirely in standard C.
 
 == Co-expressions and local variables ==
 In contrast to conventional Icon, V2 of Object Icon implements co-expressions in such a way that they share the local variables of the procedure in which they were created (in Icon each co-expression gets a copy of the local variables).
