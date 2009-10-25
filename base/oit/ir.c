@@ -1779,16 +1779,18 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_n *x = (struct lnode_n *)n;
             int i;
             struct ir_info **info;
+            struct ir_stack *list_st;
             int need_mark, mk;
 
             if (x->n < 2)
                 quitf("got slist with < 2 elements");
 
-            mk = make_mark(st);
+            list_st = branch_stack(st);
+            mk = make_mark(list_st);
             info = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             need_mark = 0;  /* Set to 1 if any of child[0]...[n-2] uses stack */
             for (i = 0; i < x->n - 1; ++i) {
-                info[i] = ir_traverse(x->child[i], branch_stack(st), 0, 1, 1);
+                info[i] = ir_traverse(x->child[i], branch_stack(list_st), 0, 1, 1);
                 if (info[i]->uses_stack)
                     need_mark = 1;
             }
@@ -2068,13 +2070,14 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
         case Uop_If: {
             struct lnode_2 *x = (struct lnode_2 *)n;
-            int if_mk;
-            struct ir_stack *then_st;
+            int expr_mk;
+            struct ir_stack *expr_st, *then_st;
             struct ir_info *expr, *then;
 
-            if_mk = make_mark(st);
+            expr_st = branch_stack(st);
+            expr_mk = make_mark(expr_st);
 
-            expr = ir_traverse(x->child1, branch_stack(st), 0, 1, 1);
+            expr = ir_traverse(x->child1, expr_st, 0, 1, 1);
 
             then_st = branch_stack(st);
             then = ir_traverse(x->child2, then_st, target, bounded, rval);
@@ -2082,12 +2085,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             union_stack(st, then_st);
 
             chunk2(res->start,
-                  cond_ir_mark(expr->uses_stack, n, if_mk),
+                  cond_ir_mark(expr->uses_stack, n, expr_mk),
                   ir_goto(n, expr->start));
             if (!bounded)
                 chunk1(res->resume, ir_goto(n, then->resume));
             chunk2(expr->success,
-                  cond_ir_unmark(expr->uses_stack, n, if_mk),
+                  cond_ir_unmark(expr->uses_stack, n, expr_mk),
                   ir_goto(n, then->start));
             chunk1(expr->failure,
                   ir_goto(n, res->failure));
@@ -2099,15 +2102,16 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
         case Uop_Ifelse: {
             struct lnode_3 *x = (struct lnode_3 *)n;
-            int if_mk;
-            struct ir_stack *then_st, *else_st;
+            int expr_mk;
+            struct ir_stack *expr_st, *then_st, *else_st;
             struct ir_info *expr, *then, *els;
             int tl = -1;
             if (!bounded)
                 tl = make_tmploc(st);
-            if_mk = make_mark(st);
 
-            expr = ir_traverse(x->child1, branch_stack(st), 0, 1, 1);
+            expr_st = branch_stack(st);
+            expr_mk = make_mark(expr_st);
+            expr = ir_traverse(x->child1, expr_st, 0, 1, 1);
 
             then_st = branch_stack(st);
             then = ir_traverse(x->child2, then_st, target, bounded, rval);
@@ -2119,17 +2123,17 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             union_stack(st, else_st);
 
             chunk2(res->start,
-                  cond_ir_mark(expr->uses_stack, n, if_mk),
+                  cond_ir_mark(expr->uses_stack, n, expr_mk),
                   ir_goto(n, expr->start));
             if (bounded) {
                 chunk2(expr->success,
-                      cond_ir_unmark(expr->uses_stack, n, if_mk),
+                      cond_ir_unmark(expr->uses_stack, n, expr_mk),
                       ir_goto(n, then->start));
                 chunk1(expr->failure,
                       ir_goto(n, els->start));
             } else {
                 chunk3(expr->success,
-                      cond_ir_unmark(expr->uses_stack, n, if_mk),
+                      cond_ir_unmark(expr->uses_stack, n, expr_mk),
                        ir_movelabel(n, tl, then->resume),
                        ir_goto(n, then->start));
                 chunk2(expr->failure,
@@ -2152,28 +2156,32 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             struct lnode_case *x = (struct lnode_case *)n;
             struct ir_var *e, *v;
             struct ir_info *expr, *def = 0, **selector, **clause;
-            struct ir_stack *clause_st;
+            struct ir_stack *case_st, *clause_st;
             int i, need_mark, mk;
             int tl = -1;
 
-            mk = make_mark(st);
             selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
-            need_mark = 0;  /* Set to 1 if the expression or any selector uses stack */
 
             if (!bounded)
                 tl = make_tmploc(st);
 
-            e = make_tmp(st);
-            v = target ? target : make_tmp(st);
+            /* Stack for the expression and selectors */
+            case_st = branch_stack(st);
 
-            expr = ir_traverse(x->expr, branch_stack(st), e, 1, 1);
+            mk = make_mark(case_st);
+            e = make_tmp(case_st);
+            v = target ? target : make_tmp(case_st);
+
+            expr = ir_traverse(x->expr, branch_stack(case_st), e, 1, 1);
+
+            /* Set to 1 if the expression or any selector uses stack */
             need_mark = expr->uses_stack;
 
             clause_st = branch_stack(st);
             for (i = 0; i < x->n; ++i) {                /* The n non-default cases */
                 struct ir_stack *tst;
-                selector[i] = ir_traverse(x->selector[i], branch_stack(st), v, 0, 1);
+                selector[i] = ir_traverse(x->selector[i], branch_stack(case_st), v, 0, 1);
                 if (selector[i]->uses_stack)
                     need_mark = 1;
                 tst = branch_stack(st);
@@ -2279,10 +2287,12 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Not: {                 /* not expression */
             struct lnode_1 *x = (struct lnode_1 *)n;
             struct ir_info *expr;
+            struct ir_stack *not_st;
             int mk;
 
-            mk = make_mark(st);
-            expr = ir_traverse(x->child, branch_stack(st), target, 1, 1);
+            not_st = branch_stack(st);
+            mk = make_mark(not_st);
+            expr = ir_traverse(x->child, not_st, target, 1, 1);
 
             chunk2(res->start, 
                    cond_ir_mark(expr->uses_stack, n, mk),
@@ -2292,8 +2302,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             chunk2(expr->success, 
                    cond_ir_unmark(expr->uses_stack, n, mk),
                    ir_goto(n, res->failure));
-            chunk3(expr->failure, 
-                   cond_ir_unmark(expr->uses_stack, n, mk),
+            chunk2(expr->failure, 
                    ir_move(n, target, make_knull(), 0),
                    ir_goto(n, res->success));
             break;
@@ -2449,7 +2458,6 @@ void generate_ir()
     struct ir_info *init = 0, *body = 0, *end;
     struct lnode *n;
     int init_mk = -1;
-    struct ir_stack *st;
 
     hi_chunk = -1;
     ir_start = 0;
@@ -2466,15 +2474,15 @@ void generate_ir()
             fprintf(stderr, "\nGenerating ir tree for procedure %s\n",  curr_lfunc->proc->name);
     }
 
-    st = new_stack();
 
     if (curr_lfunc->initial->op != Uop_Empty) {
-        init_mk = make_mark(st);
-        init = ir_traverse(curr_lfunc->initial, branch_stack(st), 0, 1, 1);
+        struct ir_stack *init_st = new_stack();
+        init_mk = make_mark(init_st);
+        init = ir_traverse(curr_lfunc->initial, init_st, 0, 1, 1);
     }
 
     if (curr_lfunc->body->op != Uop_Empty)
-        body = ir_traverse(curr_lfunc->body, branch_stack(st), 0, 1, 1);
+        body = ir_traverse(curr_lfunc->body, new_stack(), 0, 1, 1);
 
     end = ir_traverse(curr_lfunc->end, 0, 0, 1, 1);   /* Get the Uop_End */
     n = curr_lfunc->start;
