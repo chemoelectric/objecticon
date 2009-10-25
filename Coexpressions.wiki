@@ -1,0 +1,47 @@
+#summary Co-expressions
+<wiki:toc max_depth="3" />
+= Introduction =
+The implementation and semantics of co-expressions is rather different in V2 of Object Icon, compared to V1, and indeed to traditional Icon.
+
+The first and most significant difference to mention is that co-expressions in V2 are cheap.  Each co-expression has an interpreter stack, but it grows and shrinks dynamically in chunks called "frames", with one frame corresponding to each procedure call.  Each frame is quite small, typically about 100 bytes.  This is in sharp contrast to the traditional Icon interpreter's allocation for a co-expression - a fixed size region sufficient for both C and interpreter stack.
+
+== Co-expressions and local variables ==
+In contrast to conventional Icon, V2 of Object Icon implements co-expressions in such a way that they share the local variables of the procedure in which they were created (in Icon each co-expression gets a copy of the local variables).
+
+For example, the following program
+{{{
+import io, lang, ipl.pdco
+
+procedure main()
+   local i, e
+   i := 1
+   e := create i := 2
+   write(i)
+   @e
+   write(i)
+end
+}}}
+outputs
+{{{
+1
+2
+}}}
+whereas in Icon result would be
+{{{
+1
+1
+}}}
+
+
+
+From a semantic standpoin
+
+ use is dynamic
+
+
+The conventional Icon interpreter's implementation of co-expressions involved allocating a rather large stack area
+
+{{{
+
+
+}}}
