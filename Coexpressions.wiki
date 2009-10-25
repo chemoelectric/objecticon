@@ -53,7 +53,7 @@ outputs
 2
 3
 }}}
-=== The cocopy() function ===
+== The cocopy() function ==
 Sometimes the way co-expressions share local variables is prohibitive.
 
 Consider for example the problem of creating a list of co-expressions, each of which will generate a single number; 1 for the first, 2 for the second and so on.  The following obvious attempt (which would work in Icon), unfortunately doesn't work in Object Icon :-
@@ -90,5 +90,5 @@ end
 }}}
 Note we have used `cocopy{i}`, which is just syntactic shorthand for `cocopy(create i)`.
 
-=== Refreshing ===
+== Refreshing ==
 In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created.   This doesn't happen in V2 Object Icon implementation of co-expressions.  Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed.  `cocopy` does the same, but creates copies of the local variables instead.
