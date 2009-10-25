@@ -93,4 +93,4 @@ end
 Note we have used `cocopy{i}`, which is just syntactic shorthand for `cocopy(create i)`.
 
 == Refreshing ==
-In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created.   This doesn't happen in V2 Object Icon implementation of co-expressions.  Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed.  `cocopy` does the same, but creates copies of the local variables instead.
+In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created.   This doesn't happen in the V2 Object Icon implementation of co-expressions.  Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed.  `cocopy` does the same, but creates copies of the local variables instead.
