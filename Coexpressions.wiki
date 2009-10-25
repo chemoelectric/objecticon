@@ -10,7 +10,7 @@ In contrast to conventional Icon, V2 of Object Icon implements co-expressions in
 
 For example, the following program
 {{{
-import io, lang, ipl.pdco
+import io
 
 procedure main()
    local i, e
@@ -26,22 +26,69 @@ outputs
 1
 2
 }}}
-whereas in Icon result would be
+whereas in Icon the result would be
 {{{
 1
 1
 }}}
-
-
-
-From a semantic standpoin
-
- use is dynamic
-
-
-The conventional Icon interpreter's implementation of co-expressions involved allocating a rather large stack area
-
+Refreshing a co-expression creates a new co-expression, which also shares the same local variables.  Thus the program
 {{{
+import io
 
-
+procedure main()
+   local i, e
+   i := 1
+   e := create i +:= 1
+   write(i)
+   @e
+   write(i)
+   e := ^e
+   @e
+   write(i)
+end
 }}}
+outputs
+{{{
+1
+2
+3
+}}}
+=== The cocopy() function ===
+Sometimes the way co-expressions share local variables is prohibitive.
+
+Consider for example the problem of creating a list of co-expressions, each of which will generate a single number; 1 for the first, 2 for the second and so on.  The following obvious attempt (which would work in Icon), unfortunately doesn't work in Object Icon :-
+{{{
+import io
+
+procedure main()
+   local x, i, e
+
+   x := []
+   every i := 1 to 10 do
+      put(x, create i)
+
+   every e := !x do
+      write(@e)
+end
+}}}
+The problem with this is that each `create i` references the same `i`, which eventually reaches the value `10`.  So the output is ten `10`s.
+
+To solve this problem, a builtin function `cocopy` is provided.  This does exactly the same as the refresh operator `^`, but instead of returning a new co-expression which also shares the local variables, a new set of local variables is allocated with values copied from the original.  Here is a working version of the above program :-
+{{{
+import io
+
+procedure main()
+   local x, i, e
+
+   x := []
+   every i := 1 to 10 do
+      put(x, cocopy{i})
+
+   every e := !x do
+      write(@e)
+end
+}}}
+Note we have used `cocopy{i}`, which is just syntactic shorthand for `cocopy(create i)`.
+
+=== Refreshing ===
+In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created.   This doesn't happen in V2 Object Icon implementation of co-expressions.  Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed.  `cocopy` does the same, but creates copies of the local variables instead.
