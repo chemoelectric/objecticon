@@ -24,6 +24,7 @@ proc(create expr1, create expr2, ...)
 {{{
 proc([create expr1, create expr2, ...])
 }}}
+ * Co-expressions have slightly different semantics - see [Coexpressions].
  * In Icon, an undeclared identifier produces a compiler warning; in Object Icon it is an error.
  * Given a list `x`, the builtin function `insert(x, i, o)` will accept the parameter `i` if it is zero, or `*x+1`, and this is equivalent to `put(x, o)`.  In Icon, this would simply fail.
  * A different ucode format - you can't link Icon and Object Icon ucode files.
