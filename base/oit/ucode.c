@@ -223,7 +223,7 @@ struct ucode_op ucode_op_table[] = {
     /* 215 */         { Uop_Record, "record", { TYPE_STR,0 }, "\t%-12s %s" },
     /* 216 */         INVALID,
     /* 217 */         { Uop_Error, "error", {0,0}, "\t%-12s" },               
-    /* 218 */         { Uop_Trace, "trace", {0,0}, "\t%-12s" },               
+    /* 218 */         INVALID,
     /* 219 */         INVALID,
     /* 220 */         { Uop_Invocable, "invocable", { TYPE_STR,0 }, "\t%-12s %s" },
     /* 221 */         { Uop_Class, "class", { TYPE_32,TYPE_STR }, "\t%-12s %08o %s" }, 

@@ -340,7 +340,7 @@ keyword{1} trace
       return kywdint
       }
    inline {
-      return kywdint(&kywd_trc);
+      return kywdint(&kywd_trace);
       }
 end
 
@@ -360,7 +360,7 @@ keyword{1} dump
       return kywdint
       }
    inline {
-      return kywdint(&kywd_dmp);
+      return kywdint(&kywd_dump);
       }
 end
 

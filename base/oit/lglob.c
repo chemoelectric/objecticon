@@ -168,10 +168,6 @@ void readglob(struct lfile *lf)
                 curr_class = 0;
                 break;
 
-            case Uop_Trace:		/* turn on tracing */
-                trace = -1;
-                break;
-
             case Uop_Procdecl:
                 name = uin_fqid(lf->package);	/* get variable name */
                 gp = glocate(name);

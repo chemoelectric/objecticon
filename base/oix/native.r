@@ -360,7 +360,7 @@ function{*} lang_Prog_get_keyword(s,c)
           }
           case 6 : {
               if (strncmp(t,"trace",5) == 0) {
-                  return kywdint(&(p->Kywd_trc));
+                  return kywdint(&(p->Kywd_trace));
               }
               if (strncmp(t,"error",5) == 0) {
                   return kywdint(&(p->Kywd_err));

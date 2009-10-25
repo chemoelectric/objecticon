@@ -54,7 +54,7 @@ end
  */
 
 
-struct descrip kywd_dmp;               	/* &dump */
+struct descrip kywd_dump;               	/* &dump */
 
 /*
  * Various constant descriptors, initialised in init.r

@@ -194,7 +194,6 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Record	215
 #define Uop_Impl	216
 #define Uop_Error	217
-#define Uop_Trace	218
 #define Uop_Invocable	220
 #define Uop_Class       221
 #define Uop_Super       222

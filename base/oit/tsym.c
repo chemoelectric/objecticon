@@ -1066,9 +1066,6 @@ void output_code()
 
     reset_pos();
 
-    if (trace)
-        uout_op(Uop_Trace);
-   
     if (package_name) {
         uout_op(Uop_Package);
         uout_str(package_name);

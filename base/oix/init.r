@@ -217,7 +217,7 @@ void icon_init(char *name)
     MakeInt(-1, &minusonedesc);
     MakeInt(1000000, &milliondesc);
     MakeInt(1000, &thousanddesc);
-    MakeInt(0, &kywd_dmp);
+    MakeInt(0, &kywd_dump);
 
     nullptr.dword = D_TendPtr;
     BlkLoc(nullptr) = 0;
@@ -297,20 +297,20 @@ void icon_init(char *name)
         ffatalerr("cannot open interpreter file %s", name);
 
     CMakeStr(name, &rootpstate.Kywd_prog);
-    MakeInt(hdr.trace, &rootpstate.Kywd_trc);
 
     /*
      * Examine the environment and make appropriate settings.    [[I?]]
      */
     if (getenv(NOERRBUF))
         noerrbuf++;
-    env_int(TRACE, &k_trace, 0, (uword)0);
-    env_int(STRSIZE, &rootstring.size, 1, (uword)MaxWord);
-    env_int(BLKSIZE, &rootblock.size, 1, (uword)MaxWord); 
-    env_int(QLSIZE, &qualsize, 1, (uword)MaxWord);
-    env_int(IXCUSHION, &memcushion, 1, (uword)100);	/* max 100 % */
-    env_int(IXGROWTH, &memgrowth, 1, (uword)10000);	/* max 100x growth */
-    env_int(OICORE, &dodump, 1, (uword)2);
+    env_int(TRACE, &k_trace, 0, MaxWord);
+    env_int(MAXLEVEL, &k_maxlevel, 1, MaxWord);
+    env_int(STRSIZE, &rootstring.size, 1, MaxWord);
+    env_int(BLKSIZE, &rootblock.size, 1, MaxWord); 
+    env_int(QLSIZE, &qualsize, 1, MaxWord);
+    env_int(IXCUSHION, &memcushion, 1, 100);	/* max 100 % */
+    env_int(IXGROWTH, &memgrowth, 1, 10000);	/* max 100x growth */
+    env_int(OICORE, &dodump, 1, 2);
 
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
@@ -406,7 +406,7 @@ void env_int(name, variable, non_neg, limit)
         /*
          * See if 10 * n + d > limit, but do it so there can be no overflow.
          */
-        if ((d > (uword)(limit / 10 - n) * 10 + limit % 10) && (limit > 0))
+        if (limit && (d > (uword)(limit / 10 - n) * 10 + limit % 10))
             ffatalerr("environment variable out of range: %s=%s", name, value);
         n = n * 10 + d;
     }
@@ -589,6 +589,7 @@ static void initprogstate(struct progstate *p)
     p->Kywd_why = emptystr;
     p->Kywd_subject = emptystr;
     p->Kywd_ran = zerodesc;
+    p->Kywd_trace = zerodesc;
     MakeInt(500, &p->Kywd_maxlevel);
     p->K_errornumber = 0;
     p->T_errornumber = 0;
@@ -772,7 +773,6 @@ function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
        curpstate->blockregion->Gnext = pstate->blockregion;
 
        CMakeStr(loadstring, &pstate->Kywd_prog);
-       MakeInt(hdr.trace, &pstate->Kywd_trc);
 
        /*
         * Establish pointers to icode data regions.		[[I?]]

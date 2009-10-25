@@ -4,8 +4,6 @@
  */
 struct header {
     word icodesize;		/* size of interpreter code */
-    word trace;			/* initial value of &trace */
-
     word ClassStatics;          /* class field descriptors (statics) */
     word ClassMethods;          /* class field descriptors (methods) */
     word ClassFields;           /* class field info */
@@ -20,7 +18,6 @@ struct header {
     word Constants;             /* location of constant descriptors */
     word Strcons;		/* location of identifier table */
     word Filenms;		/* location of ipc/file name table */
-
     word linenums;		/* location of ipc/line number table */
     word config[16];		/* icode version */
 };

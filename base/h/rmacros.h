@@ -345,8 +345,8 @@
 
 #define k_pos kywd_pos.vword.integer	/* value of &pos */
 #define k_random kywd_ran.vword.integer	/* value of &random */
-#define k_trace kywd_trc.vword.integer	/* value of &trace */
-#define k_dump kywd_dmp.vword.integer	/* value of &dump */
+#define k_trace kywd_trace.vword.integer	/* value of &trace */
+#define k_dump kywd_dump.vword.integer	/* value of &dump */
 #define k_maxlevel kywd_maxlevel.vword.integer	/* value of &trace */
 
 /*
@@ -487,7 +487,7 @@
       #define k_eventsource (curpstate->eventsource)
       #define k_eventvalue (curpstate->eventval)
       #define k_subject (curpstate->Kywd_subject)
-      #define kywd_trc  (curpstate->Kywd_trc)
+      #define kywd_trace  (curpstate->Kywd_trace)
       #define kywd_maxlevel  (curpstate->Kywd_maxlevel)
       #define code (curpstate->Code)
       #define ecode (curpstate->Ecode)

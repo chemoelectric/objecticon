@@ -86,7 +86,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
             case 5 : {
                 if (strncmp(t,"dump",4) == 0) {
                     vp->dword = D_Kywdint;
-                    VarLoc(*vp) = &kywd_dmp;
+                    VarLoc(*vp) = &kywd_dump;
                     return Succeeded;
                 }
                 break;
@@ -99,7 +99,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
                 }
                 if (strncmp(t,"trace",5) == 0) {
                     vp->dword = D_Kywdint;
-                    VarLoc(*vp) = &p->Kywd_trc;
+                    VarLoc(*vp) = &p->Kywd_trace;
                     return Succeeded;
                 }
                 break;
@@ -823,9 +823,9 @@ int noimage;
       kywdint: {
          if (VarLoc(*dp) == &kywd_ran)
             fprintf(f, "&random = ");
-         else if (VarLoc(*dp) == &kywd_trc)
+         else if (VarLoc(*dp) == &kywd_trace)
             fprintf(f, "&trace = ");
-         else if (VarLoc(*dp) == &kywd_dmp)
+         else if (VarLoc(*dp) == &kywd_dump)
             fprintf(f, "&dump = ");
          else if (VarLoc(*dp) == &kywd_err)
             fprintf(f, "&error = ");

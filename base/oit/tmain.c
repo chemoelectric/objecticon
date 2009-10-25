@@ -16,7 +16,6 @@ int warnings = 0;           /* count of warnings */
 int errors = 0;		    /* translator and linker errors */
 
 int m4pre	=0;	/* -m: use m4 preprocessor? [UNIX] */
-int trace	=0;	/* -t: initial &trace value */
 int pponly	=0;	/* -E: preprocess only */
 int strinv	=0;	/* -f s: allow full string invocation */
 int verbose	=1;	/* -v n: verbosity of commentary, 0 = silent */
@@ -174,8 +173,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBstuELI] [-f s] [-o ofile] [-v i] [-l i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBfmno:stuv:ELIZTVl:O:")) != EOF) {
+#define Usage "[-cBsuELI] [-f s] [-o ofile] [-v i] [-l i]"	/* omit -e from doc */
+    while ((c = getopt(argc,argv, "cBfmno:suv:ELIZTVl:O:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -225,10 +224,6 @@ int main(int argc, char **argv)
 
             case 's':			/* -s: suppress informative messages */
                 verbose = 0;
-                break;
-
-            case 't':			/* -t: turn on procedure tracing */
-                trace = -1;
                 break;
 
             case 'v':			/* -v n: set verbosity level */

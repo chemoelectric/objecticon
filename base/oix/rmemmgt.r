@@ -419,7 +419,7 @@ struct progstate *pstate;
    PostDescrip(pstate->Kywd_prog);
    PostDescrip(pstate->Kywd_why);
    /* Kywd_ran, &random, always an integer */
-   /* Kywd_trc, &trace, always an integer */
+   /* Kywd_trace, &trace, always an integer */
 
    /*
     * Mark the globals and the statics.

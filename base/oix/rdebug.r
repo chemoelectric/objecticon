@@ -253,10 +253,10 @@ int get_name(dptr dp1, dptr dp0)
         if (VarLoc(*dp1) == &kywd_ran) {
             LitStr("&random", dp0);
         }
-        else if (VarLoc(*dp1) == &kywd_trc) {
+        else if (VarLoc(*dp1) == &kywd_trace) {
             LitStr("&trace", dp0);
         }
-        else if (VarLoc(*dp1) == &kywd_dmp) {
+        else if (VarLoc(*dp1) == &kywd_dump) {
             LitStr("&dump", dp0);
         }
         else if (VarLoc(*dp1) == &kywd_err) {

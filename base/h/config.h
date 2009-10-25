@@ -70,6 +70,10 @@
    #define TRACE "TRACE"
 #endif
 
+#ifndef MAXLEVEL
+   #define MAXLEVEL "MAXLEVEL"
+#endif
+
 #ifndef STRSIZE
    #define STRSIZE "STRSIZE"
 #endif

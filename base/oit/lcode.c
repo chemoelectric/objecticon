@@ -1654,13 +1654,10 @@ static void gentables()
      */
     hdr.icodesize = pc;
     strcpy((char *)hdr.config,IVersion);
-    hdr.trace = trace;
-
 
     if (Dflag) {
         fprintf(dbgfile, "\n");
         fprintf(dbgfile, "icodesize:        " WordFmt "\n", (long)hdr.icodesize);
-        fprintf(dbgfile, "trace:            " WordFmt "\n", (long)hdr.trace);
         fprintf(dbgfile, "class statics:    " WordFmt "\n", (long)hdr.ClassStatics);
         fprintf(dbgfile, "class methods:    " WordFmt "\n", (long)hdr.ClassMethods);
         fprintf(dbgfile, "class fields:     " WordFmt "\n", (long)hdr.ClassFields);
