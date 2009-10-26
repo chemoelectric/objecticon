@@ -3,6 +3,9 @@
  *  Contents: bang, random, sect, subsc
  */
 
+#include "../h/opdefs.h"
+#include "orefiasm.ri"
+
 "!x - generate successive values from object x."
 
 operator{*} ! bang(underef x -> dx)
@@ -142,6 +145,17 @@ operator{*} ! bang(underef x -> dx)
                   (struct b_record *)BlkLoc(dx));
                }
             }
+
+     coexpr: {
+           struct p_frame *pf;
+           MemProtect(pf = alc_p_frame((struct b_proc *)&Bcoexp_bang_impl, 0));
+           push_frame((struct frame *)pf);
+           pf->fvars->desc[0] = dx;
+           for (;;) {
+               tail_invoke_frame((struct frame *)pf);
+               suspend nulldesc;
+           }
+       }
 
        default: {
            if (cnv:tmp_string(dx,dx)) {

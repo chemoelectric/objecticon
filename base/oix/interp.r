@@ -65,15 +65,29 @@ void set_curr_pf(struct p_frame *pf)
  * Invoked from a custom fragment.  Act as though the
  * parent C frame had returned the given value.
  */
-void set_c_frame_value()
+void set_c_frame_return()
 {
     struct p_frame *t = curr_pf;
     dptr res = get_dptr();
     /* Set the value in the C frame */
     t->parent_sp->value = *res;
     set_curr_pf(curr_pf->caller);
-    /* Pop of this frame, leaving the C frame */
+    /* Pop off this frame, leaving the C frame */
     pop_to(t->parent_sp);
+}
+
+/*
+ * Invoked from a custom fragment.  Act as though the
+ * parent C frame had suspended the given value.  This is
+ * just like returning, except we don't pop off the frame.
+ */
+void set_c_frame_suspend()
+{
+    struct p_frame *t = curr_pf;
+    dptr res = get_dptr();
+    /* Set the value in the C frame */
+    t->parent_sp->value = *res;
+    set_curr_pf(curr_pf->caller);
 }
 
 /*
@@ -86,7 +100,7 @@ void set_c_frame_failure()
     set_curr_pf(curr_pf->caller);
     /* Goto the failure_label stored in the C frame */
     ipc = t->parent_sp->failure_label;
-    /* Pop of this frame AND the parent C frame */
+    /* Pop off this frame AND the parent C frame */
     pop_to(t->parent_sp->parent_sp);
 }
 

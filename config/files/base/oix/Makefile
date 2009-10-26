@@ -33,6 +33,7 @@ rwinrsc.o: rxrsc.ri
 invoke.o: invokeiasm.ri
 interp.o: interpiasm.ri
 init.o: initiasm.ri
+oref.o: orefiasm.ri
 
 all:	oix
 
@@ -61,6 +62,8 @@ interpiasm.ri:	interpiasm.in iasm
 	./iasm <interpiasm.in >interpiasm.ri
 initiasm.ri:	initiasm.in iasm
 	./iasm <initiasm.in >initiasm.ri
+orefiasm.ri:	orefiasm.in iasm
+	./iasm <orefiasm.in >orefiasm.ri
 endif
 
 # Compile with make KEYSYMS=Y
