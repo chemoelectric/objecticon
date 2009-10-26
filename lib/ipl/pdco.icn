@@ -1242,10 +1242,3 @@ end
 procedure Seq(e)
    suspend |@e
 end
-
-# Generate all results of ^e
-procedure Req(e)
-   e := ^e
-   suspend |@e
-end
-
