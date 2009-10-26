@@ -899,11 +899,10 @@ struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
     p->ipc = pb->icode;
     p->curr_inst = 0;
     p->caller = 0;
-    if (fvars) {
+    if (fvars)
         ++fvars->refcnt;
-    } else {
-        int ndesc;
-        ndesc = pb->ndynam + pb->nparam;
+    else {
+        int ndesc = pb->ndynam + pb->nparam;
         if (ndesc) {
             int lsize = sizeof(struct frame_vars) + (ndesc - 1) * sizeof(struct descrip);
             fvars = malloc(lsize);
