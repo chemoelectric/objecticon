@@ -680,7 +680,7 @@ static void sweep_stack(struct frame *f)
                 struct frame_vars *l = pf->fvars;
                 for (i = 0; i < f->proc->ntmp; ++i)
                     PostDescrip(pf->tmp[i]);
-                if (l->seen != current_collection) {
+                if (l && l->seen != current_collection) {
                     dptr d;
                     l->seen = current_collection;
                     for (d = l->desc; d < l->desc_end; ++d)

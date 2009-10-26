@@ -1628,12 +1628,12 @@ void retderef(dptr valp, struct frame_vars *fvars)
        */
       if (is:named_var(tvb->ssvar)) {
           loc = (word *)VarLoc(tvb->ssvar);
-          if (InRange(fvars->desc, loc, fvars->desc_end))
+          if (fvars && InRange(fvars->desc, loc, fvars->desc_end))
               deref(valp, valp);
       }
    } else if (is:named_var(*valp)) {
        loc = (word *)VarLoc(*valp);
-       if (InRange(fvars->desc, loc, fvars->desc_end))
+       if (fvars && InRange(fvars->desc, loc, fvars->desc_end))
            deref(valp, valp);
    }
 }

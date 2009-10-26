@@ -1548,31 +1548,34 @@ void showstack(struct b_coexpr *c)
                 for (i = 0; i < f->proc->nmark; ++i) {
                     printf("\tmark[%d]=%p\n", i, pf->mark[i]);
                 }
-                printf("\tfvars=%p, size=%d\n", pf->fvars, pf->fvars->size);
-                i = 0;
-                np = f->proc->lnames;
-                dp = pf->fvars->desc;
-                for (j = 0; j < f->proc->nparam; ++j) {
-                    if (np) {
-                        printf("\t   fvars.desc[%d] (arg %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
-                        ++np;
-                    } else
-                        printf("\t   fvars.desc[%d] (arg %d)=", i, j);
-                    print_desc(stdout, dp++); printf("\n");
-                    ++i;
-                }
-                for (j = 0; j < f->proc->ndynam; ++j) {
-                    if (np) {
-                        printf("\t   fvars.desc[%d] (local %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
-                        ++np;
-                    } else
-                        printf("\t   fvars.desc[%d] (local %d)=", i, j);
-                    print_desc(stdout, dp++); printf("\n");
-                    ++i;
-                }
-                printf("\t   fvars.desc-desc_end=%p-%p\n", pf->fvars->desc, pf->fvars->desc_end);
-                printf("\t   fvars.refcnt=%d\n", pf->fvars->refcnt);
-                printf("\t   fvars.seen=%d\n", pf->fvars->seen);
+                if (pf->fvars) {
+                    printf("\tfvars=%p, size=%d\n", pf->fvars, pf->fvars->size);
+                    i = 0;
+                    np = f->proc->lnames;
+                    dp = pf->fvars->desc;
+                    for (j = 0; j < f->proc->nparam; ++j) {
+                        if (np) {
+                            printf("\t   fvars.desc[%d] (arg %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
+                            ++np;
+                        } else
+                            printf("\t   fvars.desc[%d] (arg %d)=", i, j);
+                        print_desc(stdout, dp++); printf("\n");
+                        ++i;
+                    }
+                    for (j = 0; j < f->proc->ndynam; ++j) {
+                        if (np) {
+                            printf("\t   fvars.desc[%d] (local %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
+                            ++np;
+                        } else
+                            printf("\t   fvars.desc[%d] (local %d)=", i, j);
+                        print_desc(stdout, dp++); printf("\n");
+                        ++i;
+                    }
+                    printf("\t   fvars.desc-desc_end=%p-%p\n", pf->fvars->desc, pf->fvars->desc_end);
+                    printf("\t   fvars.refcnt=%d\n", pf->fvars->refcnt);
+                    printf("\t   fvars.seen=%d\n", pf->fvars->seen);
+                } else
+                    printf("\tfvars=%p\n", pf->fvars);
                 break;
             }
             default:

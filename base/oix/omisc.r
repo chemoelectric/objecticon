@@ -73,11 +73,12 @@ function{0,1} cocopy(x)
        coex->failure_label = coex->start_label = new_pf->ipc = curr->start_label;
        coex->curr_pf = new_pf;
        coex->sp = (struct frame *)new_pf;
-       dp1 = pf->fvars->desc;
-       dp2 = new_pf->fvars->desc;
-       while (dp1 < pf->fvars->desc_end)
-           *dp2++ = *dp1++;
-
+       if (pf->fvars) {
+           dp1 = pf->fvars->desc;
+           dp2 = new_pf->fvars->desc;
+           while (dp1 < pf->fvars->desc_end)
+               *dp2++ = *dp1++;
+       }
        return coexpr(coex);
       }
 
