@@ -8,6 +8,7 @@
  */
 static struct region *findgap	(struct region *curr, word nbytes);
 static struct region *newregion	(word nbytes, word stdsize);
+static void check_stack_usage();
 
 
 /*
@@ -118,6 +119,9 @@ alcbignum_macro(alcbignum_1,E_Lrgint)
 struct b_coexpr *f()
 {
    struct b_coexpr *blk;
+
+   if (coexp_ser % 1024 == 0)
+       check_stack_usage();
 
    AlcFixBlk(blk, b_coexpr, T_Coexpr, e_coexpr)
    blk->id = coexp_ser++;
@@ -842,9 +846,53 @@ word nbytes,stdsize;
    return NULL;
 }
 
+/*
+ * This function is called regularly during co-expression allocation
+ * to ensure that too much unreferenced stack is collected.  This
+ * would only be needed for programs that create a very large number
+ * of co-expressions compared to other block types.
+ */
+static void check_stack_usage()
+{
+    uword total_block;
+    struct region *rp;
+    struct region *curr = curblock;
 
+    /* Check if level exceeded */
+    if (curpstate->stackcurr <= curpstate->stacklim)
+        return;
 
+    /* Calculate total block region size */
+    total_block = 0;
+    for (rp = curr; rp; rp = rp->next)
+        total_block += DiffPtrs(rp->end,rp->base);
+    for (rp = curr->prev; rp; rp = rp->prev) 
+        total_block += DiffPtrs(rp->end,rp->base);
 
+    /* Allow at least 33% of the total block usage to be stack */
+    curpstate->stacklim = Max(curpstate->stacklim, total_block / 3);
+
+    /* Check again if level exceeded */
+    if (curpstate->stackcurr <= curpstate->stacklim)
+        return;
+
+    /* Collect all block regions, and hence all unreferenced stack */
+    for (rp = curr; rp; rp = rp->next) {
+        curblock = rp;
+        collect(Stack);
+    }
+    for (rp = curr->prev; rp; rp = rp->prev) {
+        curblock = rp;
+        collect(Stack);
+    }
+    curblock = curr;
+
+    /* Now curpstate->stackcurr shows how much referenced stack use
+     * remains.  To prevent thrashing, don't collect again until at
+     * least 33% more that that amount is in use.
+     */
+    curpstate->stacklim = Max(curpstate->stacklim, 4 * (curpstate->stackcurr / 3));
+}
 
 struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
 {
