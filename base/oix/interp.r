@@ -37,12 +37,8 @@ void set_curpstate(struct progstate *p)
  */
 void switch_to(struct b_coexpr *ce)
 {
-    struct p_frame *pf;
     curr_pf->ipc = ipc;
-    pf = ce->curr_pf;
-    while (pf->proc->program == 0)
-        pf = pf->caller;
-    curpstate = pf->proc->program;
+    curpstate = get_current_program(ce);
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
     ipc = curr_pf->ipc;
