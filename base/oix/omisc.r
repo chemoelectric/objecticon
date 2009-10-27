@@ -12,30 +12,18 @@ operator{1} ^ refresh(x)
 
    body {
        tended struct b_coexpr *curr, *coex;
-       struct p_frame *pf, *new_pf;
 
        curr = (struct b_coexpr *)BlkLoc(x);
 
        if (curr->main_of)	/* &main cannot be refreshed */
            runerr(215, x);
 
-       /*
-        * Find the bottom of the procedure frame stack, ie the procedure in which
-        * the coexpression was created.
-        */
-       pf = curr->curr_pf;
-       if (!pf)
-           syserr("Couldn't find top curr_pf whilst refreshing coexpression");
-       while (pf->caller)
-           pf = pf->caller;
-
        MemProtect(coex = alccoexp());
-       coex->program = coex->creator = curr->creator;
+       MemProtect(coex->base_pf = alc_p_frame(curr->base_pf->proc, curr->base_pf->fvars));
        coex->main_of = 0;
-       MemProtect(new_pf = alc_p_frame(pf->proc, pf->fvars));
-       coex->failure_label = coex->start_label = new_pf->ipc = curr->start_label;
-       coex->curr_pf = new_pf;
-       coex->sp = (struct frame *)new_pf;
+       coex->failure_label = coex->start_label = coex->base_pf->ipc = curr->start_label;
+       coex->curr_pf = coex->base_pf;
+       coex->sp = (struct frame *)coex->base_pf;
        return coexpr(coex);
       }
 
@@ -48,7 +36,6 @@ function{0,1} cocopy(x)
 
    body {
        tended struct b_coexpr *curr, *coex;
-       struct p_frame *pf, *new_pf;
        dptr dp1, dp2;
 
        curr = (struct b_coexpr *)BlkLoc(x);
@@ -56,27 +43,16 @@ function{0,1} cocopy(x)
        if (curr->main_of)	/* &main cannot be copied */
            runerr(216, x);
 
-       /*
-        * Find the bottom of the procedure frame stack, ie the procedure in which
-        * the coexpression was created.
-        */
-       pf = curr->curr_pf;
-       if (!pf)
-           syserr("Couldn't find top curr_pf whilst cocopy coexpression");
-       while (pf->caller)
-           pf = pf->caller;
-
        MemProtect(coex = alccoexp());
-       coex->program = coex->creator = curr->creator;
+       MemProtect(coex->base_pf = alc_p_frame(curr->base_pf->proc, 0));
        coex->main_of = 0;
-       MemProtect(new_pf = alc_p_frame(pf->proc, 0));
-       coex->failure_label = coex->start_label = new_pf->ipc = curr->start_label;
-       coex->curr_pf = new_pf;
-       coex->sp = (struct frame *)new_pf;
-       if (pf->fvars) {
-           dp1 = pf->fvars->desc;
-           dp2 = new_pf->fvars->desc;
-           while (dp1 < pf->fvars->desc_end)
+       coex->failure_label = coex->start_label = coex->base_pf->ipc = curr->start_label;
+       coex->curr_pf = coex->base_pf;
+       coex->sp = (struct frame *)coex->base_pf;
+       if (curr->base_pf->fvars) {
+           dp1 = curr->base_pf->fvars->desc;
+           dp2 = coex->base_pf->fvars->desc;
+           while (dp1 < curr->base_pf->fvars->desc_end)
                *dp2++ = *dp1++;
        }
        return coexpr(coex);

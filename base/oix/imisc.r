@@ -17,6 +17,14 @@ struct p_frame *get_current_user_frame()
     return pf;
 }
 
+struct progstate *get_current_program(struct b_coexpr *ce)
+{
+    struct p_frame *pf = ce->curr_pf;
+    while (pf->proc->program == 0)
+        pf = pf->caller;
+    return pf->proc->program;
+}
+
 /*
  * Check whether the calling procedure (deduced from the stack) has
  * access to the given field of the given instance class (which is

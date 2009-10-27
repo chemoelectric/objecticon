@@ -332,7 +332,7 @@ void icon_init(char *name)
 
     Protect(mainhead = alccoexp(), fatalerr(303, NULL));
     mainhead->size = 1;			/* pretend main() does an activation */
-    mainhead->main_of = mainhead->creator = mainhead->program = &rootpstate;
+    mainhead->main_of = &rootpstate;
     mainhead->activator = mainhead;
     /*
      * Point &main at the co-expression block for the main procedure and set
@@ -737,8 +737,7 @@ function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
         */
        MemProtect(pstate = alcprog(hdr.icodesize));
        MemProtect(coex = alccoexp());
-       coex->creator = curpstate;
-       coex->main_of = coex->program = pstate;
+       coex->main_of = pstate;
        coex->activator = coex;
 
        initprogstate(pstate);
@@ -799,7 +798,7 @@ function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
        MemProtect(new_pf = alc_p_frame((struct b_proc *)&Bmain_wrapper, 0));
        new_pf->fvars->desc[0] = *pstate->MainProc;
        coex->sp = (struct frame *)new_pf;
-       coex->curr_pf = new_pf;
+       coex->base_pf = coex->curr_pf = new_pf;
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
        coex->failure_label = 0;
 
@@ -1272,7 +1271,7 @@ int main(int argc, char **argv)
         frame->fvars->desc[1] = args;
     }
     rootpstate.K_current->sp = (struct frame *)frame;
-    curr_pf = rootpstate.K_current->curr_pf = frame;
+    curr_pf = rootpstate.K_current->curr_pf = rootpstate.K_current->base_pf = frame;
     ipc = rootpstate.K_current->start_label = frame->ipc = frame->proc->icode;
     rootpstate.K_current->failure_label = 0;
 

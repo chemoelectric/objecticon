@@ -37,8 +37,12 @@ void set_curpstate(struct progstate *p)
  */
 void switch_to(struct b_coexpr *ce)
 {
+    struct p_frame *pf;
     curr_pf->ipc = ipc;
-    curpstate = ce->program;
+    pf = ce->curr_pf;
+    while (pf->proc->program == 0)
+        pf = pf->caller;
+    curpstate = pf->proc->program;
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
     ipc = curr_pf->ipc;
@@ -55,7 +59,6 @@ void set_curr_pf(struct p_frame *pf)
     if (p && p != curpstate) {
         p->K_current = k_current;
         curpstate = p;
-        k_current->program = curpstate;
     }
     curr_pf = k_current->curr_pf = pf;
     ipc = curr_pf->ipc;
@@ -448,17 +451,15 @@ static void do_create()
 {
     dptr lhs;
     word *start_label;
-    struct p_frame *pf;
     tended struct b_coexpr *coex;
     lhs = get_dptr();
     start_label = GetAddr;
     MemProtect(coex = alccoexp());
-    coex->program = coex->creator = curpstate;
+    MemProtect(coex->base_pf = alc_p_frame(curr_pf->proc, curr_pf->fvars));
     coex->main_of = 0;
-    MemProtect(pf = alc_p_frame(curr_pf->proc, curr_pf->fvars));
-    coex->failure_label = coex->start_label = pf->ipc = start_label;
-    coex->curr_pf = pf;
-    coex->sp = (struct frame *)pf;
+    coex->failure_label = coex->start_label = coex->base_pf->ipc = start_label;
+    coex->curr_pf = coex->base_pf;
+    coex->sp = (struct frame *)coex->base_pf;
     lhs->dword = D_Coexpr;
     BlkLoc(*lhs) = (union block *)coex;
 }

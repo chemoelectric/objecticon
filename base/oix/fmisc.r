@@ -165,7 +165,7 @@ function{1} display(i,c)
                (long)k_current->size);
        fflush(stderr);
        if (ce)
-           xdisp(ce->curr_pf, i, stderr, ce->program);
+           xdisp(ce->curr_pf, i, stderr, get_current_user_frame(ce)->proc->program);
        else
            xdisp(k_current->curr_pf, i, stderr, curpstate);
        return nulldesc;

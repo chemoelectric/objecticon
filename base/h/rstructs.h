@@ -494,20 +494,19 @@ struct progstate {
                            int argc, dptr args, word rval, word *failure_label);
 };
 
-struct b_coexpr {		/* co-expression stack block */
+struct b_coexpr {		/* co-expression block */
     word title;			/*   T_Coexpr */
     word size;			/*   number of results produced */
     word id;			/*   identification number */
     dptr tvalloc;		/*   where to place transmitted value */
-    struct b_coexpr *activator; /*     this coexpression's activator */
-    struct progstate *program;  /*   current program, in which this coexpression is running */
-    struct progstate *creator;  /*   curpstate when this block was allocated */
+    struct b_coexpr *activator; /*   this coexpression's activator */
     struct progstate *main_of;  /*   set to the parent program for all &main co-expressions;
                                  *   null for all others */
     word *start_label;          /*   where to start this coexpression */
     word *failure_label;        /*   where to go on a cofail */
     struct p_frame *curr_pf;    /*   current procedure frame */
-    struct frame *sp;           /*   end of stack */
+    struct frame *sp;           /*   top of stack */
+    struct p_frame *base_pf;    /*   base of stack */
 };
 
 

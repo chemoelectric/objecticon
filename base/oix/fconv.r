@@ -185,7 +185,7 @@ function{0,1} proc(x,i,c)
          if (is:null(c))
              prog = curpstate;
          else if (is:coexpr(c))
-             prog = BlkLoc(c)->coexpr.program;
+             prog = get_current_program(&BlkLoc(c)->coexpr);
          else
              runerr(118, c);
 

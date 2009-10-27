@@ -328,7 +328,7 @@ function{*} lang_Prog_get_keyword(s,c)
                   struct ipc_fname *t;
                   /* If the prog's &current isn't in this program, we can't look up
                    * the file in this program's table */
-                  if (p->K_current->program != p)
+                  if (get_current_program(p->K_current) != p)
                       fail;
                   t = frame_ipc_fname(p->K_current->curr_pf, 0);
                   if (!t)
@@ -337,7 +337,7 @@ function{*} lang_Prog_get_keyword(s,c)
               }
               if (strncmp(t,"line",4) == 0) {
                   struct ipc_line *t;
-                  if (p->K_current->program != p)
+                  if (get_current_program(p->K_current) != p)
                       fail;
                   t = frame_ipc_line(p->K_current->curr_pf, 0);
                   if (!t)
@@ -521,7 +521,7 @@ function{1} lang_Prog_get_coexpression_program(c)
    if !is:coexpr(c) then
       runerr(118,c)
    body {
-        return coexpr(BlkLoc(c)->coexpr.program->K_main);
+       return coexpr(get_current_program(&BlkLoc(c)->coexpr)->K_main);
    }
 end
 
