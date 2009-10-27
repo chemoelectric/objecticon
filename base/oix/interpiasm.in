@@ -3,11 +3,11 @@ $start cofail_impl
          Op_FrameVar arg:0
          Op_Tmp tmp:0
          FailureTransmitted
-    Op_Custom c:set_c_frame_return
+    Op_CReturn
          Op_Tmp tmp:0
 
 FailureTransmitted:
-    Op_Custom c:set_c_frame_failure
+    Op_CFail
 $end
 
 $start lang_Prog_get_event_impl_impl
@@ -17,9 +17,9 @@ $start lang_Prog_get_event_impl_impl
          Op_FrameVar arg:0
          Op_FrameVar arg:1
          ChildExited
-    Op_Custom c:set_c_frame_return
+    Op_CReturn
          Op_FrameVar arg:1
 
 ChildExited:
-    Op_Custom c:set_c_frame_failure
+    Op_CFail
 $end

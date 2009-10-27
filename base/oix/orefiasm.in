@@ -12,13 +12,13 @@ Loop:
         Op_FrameVar arg:0
         Coactfail
 
-   Op_Custom c:set_c_frame_suspend
+   Op_CSuspend
         Op_Tmp tmp:0
 
    Op_Goto
         Loop
 
 Coactfail:
-   Op_Custom c:set_c_frame_failure
+   Op_CFail
 
 $end

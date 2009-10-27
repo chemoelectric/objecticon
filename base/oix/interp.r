@@ -61,49 +61,6 @@ void set_curr_pf(struct p_frame *pf)
     ipc = curr_pf->ipc;
 }
 
-/*
- * Invoked from a custom fragment.  Act as though the
- * parent C frame had returned the given value.
- */
-void set_c_frame_return()
-{
-    struct p_frame *t = curr_pf;
-    dptr res = get_dptr();
-    /* Set the value in the C frame */
-    t->parent_sp->value = *res;
-    set_curr_pf(curr_pf->caller);
-    /* Pop off this frame, leaving the C frame */
-    pop_to(t->parent_sp);
-}
-
-/*
- * Invoked from a custom fragment.  Act as though the
- * parent C frame had suspended the given value.  This is
- * just like returning, except we don't pop off the frame.
- */
-void set_c_frame_suspend()
-{
-    struct p_frame *t = curr_pf;
-    dptr res = get_dptr();
-    /* Set the value in the C frame */
-    t->parent_sp->value = *res;
-    set_curr_pf(curr_pf->caller);
-}
-
-/*
- * Invoked from a custom fragment.  Act as though the
- * parent C frame had failed.
- */
-void set_c_frame_failure()
-{
-    struct p_frame *t = curr_pf;
-    set_curr_pf(curr_pf->caller);
-    /* Goto the failure_label stored in the C frame */
-    ipc = t->parent_sp->failure_label;
-    /* Pop off this frame AND the parent C frame */
-    pop_to(t->parent_sp->parent_sp);
-}
-
 void tail_invoke_frame(struct frame *f)
 {
     Desc_EVValD(f->proc, E_Pcall, D_Proc);
@@ -830,6 +787,44 @@ void interp()
                 set_curr_pf(curr_pf->caller);
                 pop_to(t->parent_sp);
                 ipc = curr_pf->curr_inst;
+                break;
+            }
+
+            /*
+             * Act as though the parent C frame had returned the given value.
+             */
+            case Op_CReturn: {
+                struct p_frame *t = curr_pf;
+                /* Set the value in the C frame */
+                get_descrip(&t->parent_sp->value);
+                set_curr_pf(curr_pf->caller);
+                /* Pop off this frame, leaving the C frame */
+                pop_to(t->parent_sp);
+                break;
+            }
+
+            /*
+             * Act as though the parent C frame had suspended the given value.
+             * This is just like returning, except we don't pop off the frame.
+             */
+            case Op_CSuspend: {
+                struct p_frame *t = curr_pf;
+                /* Set the value in the C frame */
+                get_descrip(&t->parent_sp->value);
+                set_curr_pf(curr_pf->caller);
+                break;
+            }
+
+            /*
+             * Act as though the parent C frame had failed.
+             */
+            case Op_CFail: {
+                struct p_frame *t = curr_pf;
+                set_curr_pf(curr_pf->caller);
+                /* Goto the failure_label stored in the C frame */
+                ipc = t->parent_sp->failure_label;
+                /* Pop off this frame AND the parent C frame */
+                pop_to(t->parent_sp->parent_sp);
                 break;
             }
 

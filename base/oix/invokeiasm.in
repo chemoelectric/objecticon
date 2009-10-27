@@ -93,7 +93,7 @@ $start get_impl
          Op_FrameVar arg:1
          Op_Int 0
          FailAccess
-    Op_Custom c:set_c_frame_return
+    Op_CReturn
          Op_Tmp tmp:0
 
 FailAccess:
@@ -110,7 +110,7 @@ $start getf_impl
          Op_FrameVar arg:1
          Op_Int 1
          FailAccess
-    Op_Custom c:set_c_frame_return
+    Op_CReturn
          Op_Tmp tmp:0
 
 FailAccess:
@@ -121,7 +121,7 @@ $end
 $start lang_Class_ensure_initialized_impl
     Op_Custom c:ensure_class_initialized
          Op_FrameVar arg:0
-    Op_Custom c:set_c_frame_return
+    Op_CReturn
          Op_FrameVar arg:0
 $end
 
@@ -131,6 +131,6 @@ $start lang_Class_create_raw_impl
     Op_Custom c:create_raw_object
          Op_Tmp tmp:0
          Op_FrameVar arg:0
-    Op_Custom c:set_c_frame_return
+    Op_CReturn
          Op_Tmp tmp:0
 $end
