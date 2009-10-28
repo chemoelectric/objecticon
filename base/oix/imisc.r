@@ -1,14 +1,6 @@
 #include "../h/modflags.h"
 
     
-struct b_proc *get_current_user_proc()
-{
-    struct p_frame *pf = curr_pf;
-    while (pf->proc->program == 0)
-        pf = pf->caller;
-    return pf->proc;
-}
-
 struct p_frame *get_current_user_frame()
 {
     struct p_frame *pf = curr_pf;
@@ -17,12 +9,22 @@ struct p_frame *get_current_user_frame()
     return pf;
 }
 
-struct progstate *get_current_program(struct b_coexpr *ce)
+struct p_frame *get_current_user_frame_of(struct b_coexpr *ce)
 {
     struct p_frame *pf = ce->curr_pf;
     while (pf->proc->program == 0)
         pf = pf->caller;
-    return pf->proc->program;
+    return pf;
+}
+
+struct b_proc *get_current_user_proc()
+{
+    return get_current_user_frame()->proc;
+}
+
+struct progstate *get_current_program_of(struct b_coexpr *ce)
+{
+    return get_current_user_frame_of(ce)->proc->program;
 }
 
 /*

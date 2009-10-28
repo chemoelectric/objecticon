@@ -38,7 +38,7 @@ void set_curpstate(struct progstate *p)
 void switch_to(struct b_coexpr *ce)
 {
     curr_pf->ipc = ipc;
-    curpstate = get_current_program(ce);
+    curpstate = get_current_program_of(ce);
     k_current = curpstate->K_current = ce;
     curr_pf = k_current->curr_pf;
     ipc = curr_pf->ipc;
@@ -453,6 +453,7 @@ static void do_create()
     MemProtect(coex = alccoexp());
     MemProtect(coex->base_pf = alc_p_frame(curr_pf->proc, curr_pf->fvars));
     coex->main_of = 0;
+    coex->tvalloc = 0;
     coex->failure_label = coex->start_label = coex->base_pf->ipc = start_label;
     coex->curr_pf = coex->base_pf;
     coex->sp = (struct frame *)coex->base_pf;
@@ -479,7 +480,7 @@ static void do_coact()
         return;
     }
 
-    if (BlkLoc(arg2)->coexpr.curr_pf->fvars != curr_pf->fvars)
+    if (get_current_user_frame_of(&BlkLoc(arg2)->coexpr)->fvars != curr_pf->fvars)
         retderef(&arg1, curr_pf->fvars);
 
     if (k_trace) {
@@ -502,7 +503,7 @@ static void do_coret()
     tended struct descrip val;
     get_descrip(&val);
 
-    if (k_current->activator->curr_pf->fvars != curr_pf->fvars)
+    if (get_current_user_frame_of(k_current->activator)->fvars != curr_pf->fvars)
         retderef(&val, curr_pf->fvars);
 
     if (k_trace) {

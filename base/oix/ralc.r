@@ -113,22 +113,21 @@ alcbignum_macro(alcbignum_1,E_Lrgint)
 
 #begdef alccoexp_macro(f,e_coexpr)
 /*
- * alccoexp - allocate a co-expression stack block; called via 
+ * alccoexp - allocate a co-expression block; called via 
  * create or refresh - for loading progs, see alcprog below.
  */
 struct b_coexpr *f()
 {
    struct b_coexpr *blk;
+   static int check_count;
 
-   if (coexp_ser % 1024 == 0)
+   if (++check_count % 1024 == 0)
        check_stack_usage();
 
    AlcFixBlk(blk, b_coexpr, T_Coexpr, e_coexpr)
    blk->id = coexp_ser++;
    blk->sp = 0;
    blk->activator = 0;
-   blk->failure_label = 0;
-   blk->tvalloc = 0;
    return blk;
 }
 #enddef
@@ -852,46 +851,37 @@ word nbytes,stdsize;
  * would only be needed for programs that create a very large number
  * of co-expressions compared to other block types.
  */
+
+uword stacklim;
+
 static void check_stack_usage()
 {
-    uword total_block;
-    struct region *rp;
-    struct region *curr = curblock;
+    uword total_stackcurr;
+    struct progstate *prog;
+
+    /* Calculate total stack allocated in all progs */
+    total_stackcurr = 0;
+    for (prog = progs; prog; prog = prog->next)
+        total_stackcurr += prog->stackcurr;
 
     /* Check if level exceeded */
-    if (curpstate->stackcurr <= curpstate->stacklim)
+    if (total_stackcurr <= stacklim)
         return;
 
-    /* Calculate total block region size */
-    total_block = 0;
-    for (rp = curr; rp; rp = rp->next)
-        total_block += DiffPtrs(rp->end,rp->base);
-    for (rp = curr->prev; rp; rp = rp->prev) 
-        total_block += DiffPtrs(rp->end,rp->base);
+    /* Do a collection - this will release all unreferenced stack
+     * frames in all regions */
+    collect(Stack);
 
-    /* Allow at least 33% of the total block usage to be stack */
-    curpstate->stacklim = Max(curpstate->stacklim, total_block / 3);
+    /* Recalculate total stack now allocated */
+    total_stackcurr = 0;
+    for (prog = progs; prog; prog = prog->next)
+        total_stackcurr += prog->stackcurr;
 
-    /* Check again if level exceeded */
-    if (curpstate->stackcurr <= curpstate->stacklim)
-        return;
-
-    /* Collect all block regions, and hence all unreferenced stack */
-    for (rp = curr; rp; rp = rp->next) {
-        curblock = rp;
-        collect(Stack);
-    }
-    for (rp = curr->prev; rp; rp = rp->prev) {
-        curblock = rp;
-        collect(Stack);
-    }
-    curblock = curr;
-
-    /* Now curpstate->stackcurr shows how much referenced stack use
+    /* Now total_stackcurr shows how much referenced stack use
      * remains.  To prevent thrashing, don't collect again until at
      * least 33% more that that amount is in use.
      */
-    curpstate->stacklim = Max(curpstate->stacklim, 4 * (curpstate->stackcurr / 3));
+    stacklim = Max(stacklim, 4 * (total_stackcurr / 3));
 }
 
 struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)

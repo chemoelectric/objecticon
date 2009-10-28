@@ -18,6 +18,8 @@ static void adjust		(void);
 static void compact		(void);
 static void markprogram	(struct progstate *pstate);
 static void sweep_stack(struct frame *f);
+static void unmark_region(struct region *br);
+static void free_stack(struct b_coexpr *c);
 
 /*
  * Variables
@@ -370,33 +372,50 @@ void collect(int region)
    reclaim();
 
    /*
-    * Turn off all the marks in all the block regions everywhere
+    * Turn off all the marks in all the block regions everywhere.  We
+    * also release any stack frames of unmarked coexpression blocks we
+    * encounter.
     */
-   for (br = curblock->Gnext; br; br = br->Gnext) {
-       char *source = br->base, *free = br->free;
-       uword NoMark = (uword) ~F_Mark;
-       while (source < free) {
-           BlkType(source) &= NoMark;
-           source += BlkSize(source);
-       }
-   }
-   for (br = curblock->Gprev; br; br = br->Gprev) {
-       char *source = br->base, *free = br->free;
-       uword NoMark = (uword) ~F_Mark;
-       while (source < free) {
-           BlkType(source) &= NoMark;
-           source += BlkSize(source);
-       }
-   }
+   for (br = curblock->Gnext; br; br = br->Gnext)
+       unmark_region(br);
+   for (br = curblock->Gprev; br; br = br->Gprev)
+       unmark_region(br);
 
    collecting = 0;
-
-/*   showcurrstack();*/
 
    EVValD(&nulldesc, E_EndCollect);
 
    }
-
+
+static void free_stack(struct b_coexpr *c)
+{
+    struct frame *f = c->sp;
+    while (f) {
+        struct frame *t = f;
+        f = f->parent_sp;
+        free_frame(t);
+    }
+}
+
+static void unmark_region(struct region *br)
+{
+    char *source = br->base, *free = br->free;
+    while (source < free) {
+        if (BlkType(source) == T_Coexpr) {
+            /* Free the unreferenced coexpression's stack */
+            struct b_coexpr *c = (struct b_coexpr *)source;
+            if (c->sp) {
+                free_stack(c);
+                c->sp = 0;
+                c->curr_pf = c->base_pf = 0;
+            }
+        } else
+            BlkType(source) &= ~F_Mark;
+        source += BlkSize(source);
+    }
+}
+
+
 /*
  * markprogram - traverse pointers out of a program state structure
  */
@@ -896,17 +915,9 @@ static void compact()
                memmove(dest, source, size);
            dest += size;
        } else {
-           /*fprintf(stderr, "Release block at %p type %d(%s)\n", source, BlkType(source), blkname[BlkType(source)]);*/
            if (BlkType(source) == T_Coexpr) {
                /* Free the coexpression's stack */
-               struct b_coexpr *c = (struct b_coexpr *)source;
-               struct frame *f = c->sp;
-               while (f) {
-                   struct frame *t = f;
-                   f = f->parent_sp;
-                   /*fprintf(stderr, "Releasing frame %p\n", t);*/
-                   free_frame(t);
-               }
+               free_stack((struct b_coexpr *)source);
            }
        }
        source += size;

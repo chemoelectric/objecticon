@@ -15,6 +15,7 @@ extern struct b_proc *keyblks[];  /* maps keyword number to corresponding functi
 extern word dodump;		/* termination dump */
 extern int set_up;
 extern int collecting;          /* non-zero whilst a GC is taking place */
+extern uword stacklim;          /* limit of stack use which may trigger a GC */
 
 extern char *allchars;          /* array for making one-character strings */
 extern char *blkname[];		/* print names for block types. */

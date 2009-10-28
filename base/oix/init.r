@@ -275,6 +275,7 @@ void icon_init(char *name)
     pmem = physicalmemorysize();
     rootstring.size = Max(pmem/200, MinDefStrSpace);
     rootblock.size  = Max(pmem/100, MinDefAbrSize);
+    stacklim = rootblock.size / 2;
 
     /*
      * Catch floating-point traps
@@ -605,7 +606,7 @@ static void initprogstate(struct progstate *p)
     p->Table_ser = 1;
     gettimeofday(&p->start_time, 0);
 
-    p->stringtotal = p->blocktotal = p->stackcurr = p->stacklim = p->colluser = 
+    p->stringtotal = p->blocktotal = p->stackcurr = p->colluser = 
         p->collstack = p->collstr = p->collblk = 0;
 
     p->Cplist = cplist_0;
@@ -801,6 +802,7 @@ function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
        coex->base_pf = coex->curr_pf = new_pf;
        coex->start_label = new_pf->ipc = Bmain_wrapper.icode;
        coex->failure_label = 0;
+       coex->tvalloc = 0;
 
        if (main_bp->nparam) {
            if (is:null(arglist))
@@ -1274,6 +1276,7 @@ int main(int argc, char **argv)
     curr_pf = rootpstate.K_current->curr_pf = rootpstate.K_current->base_pf = frame;
     ipc = rootpstate.K_current->start_label = frame->ipc = frame->proc->icode;
     rootpstate.K_current->failure_label = 0;
+    rootpstate.K_current->tvalloc = 0;
 
     set_up = 1;			/* post fact that iconx is initialized */
     interp();

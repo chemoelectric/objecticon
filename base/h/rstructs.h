@@ -427,7 +427,6 @@ struct progstate {
 
     uword stackcurr;			/* current stack allocation in use (frame
                                          * and local structs) */
-    uword stacklim;                     /* limit for stack use before attempting a gc */
 
     word colluser;			/* number of user triggered collections */
     word collstr;			/* number of string collect requests */
