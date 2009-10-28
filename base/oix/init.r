@@ -27,6 +27,10 @@ static void    relocate_code(struct progstate *ps, word *c);
 #include "../h/fdefs.h"
 #undef FncDef
 
+#define KDef(p,n) extern struct b_proc Cat(L,p);
+#include "../h/kdefs.h"
+#undef KDef
+
 /* 
  * operators table
  */
@@ -45,6 +49,113 @@ struct b_proc *fnc_tbl[] = {
 #include "../h/fdefs.h"
 };
 #undef FncDef
+
+/*
+ * Map from opcode to procedure block
+ */
+struct b_proc *opblks[] = {
+	NULL,
+#define OpDef(p) Cat(&B,p),
+#include "../h/odefs.h"
+#undef OpDef
+   };
+
+/*
+ * Map from keyword number to procedure block
+ */
+struct b_proc *keyblks[] = {
+    NULL,
+#define KDef(p,n) Cat(&L,p),
+#include "../h/kdefs.h"
+#undef KDef
+};
+
+function{0} deferred_method_stub(a[n])
+   body {
+      runerr(612);       
+   }
+end
+
+struct descrip kywd_dump;               	/* &dump */
+
+/*
+ * Various constant descriptors, initialised in init.r
+ */
+
+struct descrip nullptr;                 /* descriptor with null block pointer */
+struct descrip trashcan;		/* descriptor that is never read */
+struct descrip blank; 			/* one-character blank string */
+struct descrip emptystr; 		/* zero-length empty string */
+struct descrip lcase;			/* string of lowercase letters */
+struct descrip nulldesc;           	/* null value */
+struct descrip onedesc;              	/* integer 1 */
+struct descrip ucase;			/* string of uppercase letters */
+struct descrip zerodesc;              	/* integer 0 */
+struct descrip minusonedesc;           	/* integer -1 */
+struct descrip thousanddesc;	        /* 1000 */
+struct descrip milliondesc;	        /* 1000000 */
+
+struct b_cset *blankcs;   /* ' ' */
+struct b_cset *lparcs;    /* '(' */
+struct b_cset *rparcs;    /* ')' */
+
+/*
+ * Descriptors used by event monitoring.
+ */
+struct descrip csetdesc;
+struct descrip eventdesc;
+struct descrip rzerodesc;
+
+struct b_real realzero;          /* real zero block */
+
+struct b_cset *k_ascii;	        /* value of &ascii */
+struct b_cset *k_cset;	        /* value of &cset */
+struct b_cset *k_uset;	        /* value of &uset */
+struct b_cset *k_digits;	/* value of &lcase */
+struct b_cset *k_lcase;	        /* value of &lcase */
+struct b_cset *k_letters;	/* value of &letters */
+struct b_cset *k_ucase;	        /* value of &ucase */
+
+struct b_ucs *emptystr_ucs;     /* ucs empty string */
+struct b_ucs *blank_ucs;        /* ucs blank string */
+
+/*
+ * An array of all characters for use in making one-character strings.
+ */
+char *allchars = 
+    "\000\001\002\003\004\005\006\007"
+    "\010\011\012\013\014\015\016\017"
+    "\020\021\022\023\024\025\026\027"
+    "\030\031\032\033\034\035\036\037"
+    "\040\041\042\043\044\045\046\047"
+    "\050\051\052\053\054\055\056\057"
+    "\060\061\062\063\064\065\066\067"
+    "\070\071\072\073\074\075\076\077"
+    "\100\101\102\103\104\105\106\107"
+    "\110\111\112\113\114\115\116\117"
+    "\120\121\122\123\124\125\126\127"
+    "\130\131\132\133\134\135\136\137"
+    "\140\141\142\143\144\145\146\147"
+    "\150\151\152\153\154\155\156\157"
+    "\160\161\162\163\164\165\166\167"
+    "\170\171\172\173\174\175\176\177"
+    "\200\201\202\203\204\205\206\207"
+    "\210\211\212\213\214\215\216\217"
+    "\220\221\222\223\224\225\226\227"
+    "\230\231\232\233\234\235\236\237"
+    "\240\241\242\243\244\245\246\247"
+    "\250\251\252\253\254\255\256\257"
+    "\260\261\262\263\264\265\266\267"
+    "\270\271\272\273\274\275\276\277"
+    "\300\301\302\303\304\305\306\307"
+    "\310\311\312\313\314\315\316\317"
+    "\320\321\322\323\324\325\326\327"
+    "\330\331\332\333\334\335\336\337"
+    "\340\341\342\343\344\345\346\347"
+    "\350\351\352\353\354\355\356\357"
+    "\360\361\362\363\364\365\366\367"
+    "\370\371\372\373\374\375\376\377";
+
 
 /*
  * A number of important variables follow.
@@ -188,191 +299,6 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
     va_end(ap);
     return b;
 }
-
-
-/*
- * init/icon_init - initialize memory and prepare for Icon execution.
- */
-
-void icon_init(char *name)
-{
-    struct header hdr;
-    FILE *ifile = 0;
-    char *t;
-    longlong pmem;
-    struct b_coexpr *mainhead;
-    double d;
-
-    /*
-     * Initializations that cannot be performed statically (at least for
-     * some compilers).					[[I?]]
-     */
-
-    LitStr(" ", &blank);
-    LitStr("", &emptystr);
-    LitStr("abcdefghijklmnopqrstuvwxyz", &lcase);
-    LitStr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", &ucase);
-    MakeInt(0, &zerodesc);
-    MakeInt(1, &onedesc);
-    MakeInt(-1, &minusonedesc);
-    MakeInt(1000000, &milliondesc);
-    MakeInt(1000, &thousanddesc);
-    MakeInt(0, &kywd_dump);
-
-    nullptr.dword = D_TendPtr;
-    BlkLoc(nullptr) = 0;
-
-    nulldesc.dword = D_Null;
-    IntVal(nulldesc) = 0;
-
-    d = 0.0;
-    SetReal(d, realzero);
-    BlkLoc(rzerodesc) = (union block *)&realzero;
-
-    maps2 = nulldesc;
-    maps3 = nulldesc;
-    maps2u = nulldesc;
-    maps3u = nulldesc;
-
-    k_cset = make_static_cset_block(1, 0, 255);
-    k_uset = make_static_cset_block(1, 0, MAX_CODE_POINT);
-    k_ascii = make_static_cset_block(1, 0, 127);
-    k_digits = make_static_cset_block(1, '0', '9');
-    k_lcase = make_static_cset_block(1, 'a', 'z');
-    k_ucase = make_static_cset_block(1, 'A', 'Z');
-    k_letters = make_static_cset_block(2, 'A', 'Z', 'a', 'z');
-    lparcs = make_static_cset_block(1, '(', '(');
-    rparcs = make_static_cset_block(1, ')', ')');
-    blankcs = make_static_cset_block(1, ' ', ' ');
-
-    Protect(emptystr_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
-    emptystr_ucs->utf8 = emptystr;
-    emptystr_ucs->length = 0;
-    emptystr_ucs->n_off_indexed = 0;
-    emptystr_ucs->index_step = 0;
-
-    Protect(blank_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
-    blank_ucs->utf8 = blank;
-    blank_ucs->length = 1;
-    blank_ucs->n_off_indexed = 0;
-    blank_ucs->index_step = 4;
-
-    csetdesc.dword = D_Cset;
-    BlkLoc(csetdesc) = (union block *)k_cset;
-
-    /*
-     * Initialize root pstate.  After this, we can use ffatalerr() rather than startuperr()
-     */
-    curpstate = &rootpstate;
-    progs = &rootpstate;
-    initprogstate(&rootpstate);
-
-    rootpstate.Kywd_time_elsewhere = 0;
-    rootpstate.Kywd_time_out = 0;
-    rootpstate.stringregion = &rootstring;
-    rootpstate.blockregion = &rootblock;
-
-    pmem = physicalmemorysize();
-    rootstring.size = Max(pmem/200, MinDefStrSpace);
-    rootblock.size  = Max(pmem/100, MinDefAbrSize);
-    stacklim = rootblock.size / 2;
-
-    /*
-     * Catch floating-point traps
-     */
-#if UNIX
-    signal(SIGFPE, fpetrap);
-#endif					/* UNIX */
-
-    if (!name)
-        ffatalerr("No interpreter file supplied");
-
-    t = findexe(name);
-    if (!t)
-        ffatalerr("Not found on PATH: %s", name);
-
-    name = salloc(t);
-
-    ifile = readhdr(name, &hdr);
-    if (ifile == NULL) 
-        ffatalerr("cannot open interpreter file %s", name);
-
-    CMakeStr(name, &rootpstate.Kywd_prog);
-
-    /*
-     * Examine the environment and make appropriate settings.    [[I?]]
-     */
-    if (getenv(NOERRBUF))
-        noerrbuf++;
-    env_int(TRACE, &k_trace, 0, MaxWord);
-    env_int(MAXLEVEL, &k_maxlevel, 1, MaxWord);
-    env_int(STRSIZE, &rootstring.size, 1, MaxWord);
-    env_int(BLKSIZE, &rootblock.size, 1, MaxWord); 
-    env_int(QLSIZE, &qualsize, 1, MaxWord);
-    env_int(IXCUSHION, &memcushion, 1, 100);	/* max 100 % */
-    env_int(IXGROWTH, &memgrowth, 1, 10000);	/* max 100x growth */
-    env_int(OICORE, &dodump, 1, 2);
-
-
-    Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
-
-    /*
-     * Establish pointers to icode data regions.		[[I?]]
-     */
-    initptrs(&rootpstate, &hdr);
-
-
-    /*
-     * Allocate memory for block & string regions.
-     */
-    initalloc(&rootpstate);
-
-    /*
-     * Allocate and initialize &main.
-     */
-
-    Protect(mainhead = alccoexp(), fatalerr(303, NULL));
-    mainhead->size = 1;			/* pretend main() does an activation */
-    mainhead->main_of = &rootpstate;
-    mainhead->activator = mainhead;
-    /*
-     * Point &main at the co-expression block for the main procedure and set
-     *  k_current, the pointer to the current co-expression, to &main.
-     */
-    k_current = rootpstate.K_current = rootpstate.K_main = mainhead;
-
-    check_version(&hdr, name, ifile);
-    read_icode(&hdr, name, ifile, code);
-    fclose(ifile);
-
-    /*
-     * Initialize the event monitoring system, if configured.
-     */
-
-    EVInit();
-
-    /*
-     * Resolve references from icode to run-time system.
-     */
-    resolve(&rootpstate);
-
-    if (noerrbuf)
-        setbuf(stderr, NULL);
-    else {
-        char *buf;
-        MemProtect(buf = malloc(BUFSIZ));
-        setbuf(stderr, buf);
-    }
-
-    /*
-     * Start timing execution.
-     */
-    millisec();
-}
-
-/*
- * Service routines related to getting things started.
- */
 
 
 /*
@@ -1223,6 +1149,11 @@ int main(int argc, char **argv)
     struct fileparts *fp;
     struct b_proc *main_bp;
     struct p_frame *frame;
+    struct header hdr;
+    FILE *ifile = 0;
+    char *t, *name;
+    longlong pmem;
+    double d;
 
 #if MSWIN32
     WSADATA cData;
@@ -1243,10 +1174,171 @@ int main(int argc, char **argv)
     if (argc < 2) 
         startuperr("no icode file specified");
 
+    name = argv[1];
+
     /*
-     * Call icon_init with the name of the icode file to execute.	[[I?]]
+     * Initializations that cannot be performed statically (at least for
+     * some compilers).					[[I?]]
      */
-    icon_init(argv[1]);
+
+    LitStr(" ", &blank);
+    LitStr("", &emptystr);
+    LitStr("abcdefghijklmnopqrstuvwxyz", &lcase);
+    LitStr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", &ucase);
+    MakeInt(0, &zerodesc);
+    MakeInt(1, &onedesc);
+    MakeInt(-1, &minusonedesc);
+    MakeInt(1000000, &milliondesc);
+    MakeInt(1000, &thousanddesc);
+    MakeInt(0, &kywd_dump);
+
+    nullptr.dword = D_TendPtr;
+    BlkLoc(nullptr) = 0;
+
+    nulldesc.dword = D_Null;
+    IntVal(nulldesc) = 0;
+
+    d = 0.0;
+    SetReal(d, realzero);
+    BlkLoc(rzerodesc) = (union block *)&realzero;
+
+    maps2 = nulldesc;
+    maps3 = nulldesc;
+    maps2u = nulldesc;
+    maps3u = nulldesc;
+
+    k_cset = make_static_cset_block(1, 0, 255);
+    k_uset = make_static_cset_block(1, 0, MAX_CODE_POINT);
+    k_ascii = make_static_cset_block(1, 0, 127);
+    k_digits = make_static_cset_block(1, '0', '9');
+    k_lcase = make_static_cset_block(1, 'a', 'z');
+    k_ucase = make_static_cset_block(1, 'A', 'Z');
+    k_letters = make_static_cset_block(2, 'A', 'Z', 'a', 'z');
+    lparcs = make_static_cset_block(1, '(', '(');
+    rparcs = make_static_cset_block(1, ')', ')');
+    blankcs = make_static_cset_block(1, ' ', ' ');
+
+    Protect(emptystr_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
+    emptystr_ucs->utf8 = emptystr;
+    emptystr_ucs->length = 0;
+    emptystr_ucs->n_off_indexed = 0;
+    emptystr_ucs->index_step = 0;
+
+    Protect(blank_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
+    blank_ucs->utf8 = blank;
+    blank_ucs->length = 1;
+    blank_ucs->n_off_indexed = 0;
+    blank_ucs->index_step = 4;
+
+    csetdesc.dword = D_Cset;
+    BlkLoc(csetdesc) = (union block *)k_cset;
+
+    /*
+     * Initialize root pstate.  After this, we can use ffatalerr() rather than startuperr()
+     */
+    curpstate = &rootpstate;
+    progs = &rootpstate;
+    initprogstate(&rootpstate);
+
+    rootpstate.Kywd_time_elsewhere = 0;
+    rootpstate.Kywd_time_out = 0;
+    rootpstate.stringregion = &rootstring;
+    rootpstate.blockregion = &rootblock;
+
+    pmem = physicalmemorysize();
+    rootstring.size = Max(pmem/200, MinDefStrSpace);
+    rootblock.size  = Max(pmem/100, MinDefAbrSize);
+
+    /*
+     * Catch floating-point traps
+     */
+#if UNIX
+    signal(SIGFPE, fpetrap);
+#endif					/* UNIX */
+
+    if (!name)
+        ffatalerr("No interpreter file supplied");
+
+    t = findexe(name);
+    if (!t)
+        ffatalerr("Not found on PATH: %s", name);
+
+    name = salloc(t);
+
+    ifile = readhdr(name, &hdr);
+    if (ifile == NULL) 
+        ffatalerr("cannot open interpreter file %s", name);
+
+    CMakeStr(name, &rootpstate.Kywd_prog);
+
+    /*
+     * Examine the environment and make appropriate settings.    [[I?]]
+     */
+    if (getenv(NOERRBUF))
+        noerrbuf++;
+    env_int(TRACE, &k_trace, 0, MaxWord);
+    env_int(MAXLEVEL, &k_maxlevel, 1, MaxWord);
+    env_int(STRSIZE, &rootstring.size, 1, MaxWord);
+    env_int(BLKSIZE, &rootblock.size, 1, MaxWord); 
+    env_int(QLSIZE, &qualsize, 1, MaxWord);
+    env_int(IXCUSHION, &memcushion, 1, 100);	/* max 100 % */
+    env_int(IXGROWTH, &memgrowth, 1, 10000);	/* max 100x growth */
+    env_int(OICORE, &dodump, 1, 2);
+
+    stacklim = rootblock.size / 2;
+
+    Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
+
+    /*
+     * Establish pointers to icode data regions.		[[I?]]
+     */
+    initptrs(&rootpstate, &hdr);
+
+
+    /*
+     * Allocate memory for block & string regions.
+     */
+    initalloc(&rootpstate);
+
+    /*
+     * Allocate and initialize &main.
+     */
+
+    Protect(k_current = alccoexp(), fatalerr(303, NULL));
+    rootpstate.K_current = rootpstate.K_main = k_current;
+    k_current->size = 1;			/* pretend main() does an activation */
+    k_current->main_of = &rootpstate;
+    k_current->activator = k_current;
+    k_current->failure_label = 0;
+    k_current->tvalloc = 0;
+
+    check_version(&hdr, name, ifile);
+    read_icode(&hdr, name, ifile, code);
+    fclose(ifile);
+
+    /*
+     * Initialize the event monitoring system, if configured.
+     */
+
+    EVInit();
+
+    /*
+     * Resolve references from icode to run-time system.
+     */
+    resolve(&rootpstate);
+
+    if (noerrbuf)
+        setbuf(stderr, NULL);
+    else {
+        char *buf;
+        MemProtect(buf = malloc(BUFSIZ));
+        setbuf(stderr, buf);
+    }
+
+    /*
+     * Start timing execution.
+     */
+    millisec();
 
     /*
      * Check whether resolve() found the main procedure.  If not, exit.
@@ -1272,11 +1364,9 @@ int main(int argc, char **argv)
         }
         frame->fvars->desc[1] = args;
     }
-    rootpstate.K_current->sp = (struct frame *)frame;
-    curr_pf = rootpstate.K_current->curr_pf = rootpstate.K_current->base_pf = frame;
-    ipc = rootpstate.K_current->start_label = frame->ipc = frame->proc->icode;
-    rootpstate.K_current->failure_label = 0;
-    rootpstate.K_current->tvalloc = 0;
+    k_current->sp = (struct frame *)frame;
+    curr_pf = k_current->curr_pf = k_current->base_pf = frame;
+    ipc = k_current->start_label = frame->ipc = frame->proc->icode;
 
     set_up = 1;			/* post fact that iconx is initialized */
     interp();

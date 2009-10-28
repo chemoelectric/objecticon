@@ -119,7 +119,6 @@ union block	**hchain	(union block *pb,uword hn);
 union block	*hgfirst	(union block *bp, struct hgstate *state);
 union block	*hgnext		(union block*b,struct hgstate*s,union block *e);
 union block	*hmake		(int tcode,word nslots,word nelem);
-void		icon_init	(char *name);
 int		idelay		(int n);
 void		irunerr		(int n, C_integer v);
 int		lexcmp		(dptr dp1,dptr dp2);

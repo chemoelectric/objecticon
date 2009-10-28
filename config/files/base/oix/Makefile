@@ -13,7 +13,7 @@ GRAPHICSHDRS = ../h/graphics.h ../h/xwin.h
 
 default: oix
 
-XOBJS=	cnv.o data.o def.o errmsg.o fconv.o fload.o fmath.o\
+XOBJS=	cnv.o def.o errmsg.o fconv.o fload.o fmath.o\
 	fmisc.o fmonitr.o fscan.o fstr.o fstranl.o fstruct.o fsys.o\
 	fwindow.o imisc.o init.o interp.o invoke.o \
 	keyword.o oarith.o oasgn.o ocat.o ocomp.o native.o \

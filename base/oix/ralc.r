@@ -879,9 +879,9 @@ static void check_stack_usage()
 
     /* Now total_stackcurr shows how much referenced stack use
      * remains.  To prevent thrashing, don't collect again until at
-     * least 33% more that that amount is in use.
+     * least 50% more that that amount is in use.
      */
-    stacklim = Max(stacklim, 4 * (total_stackcurr / 3));
+    stacklim = Max(stacklim, 3 * (total_stackcurr / 2));
 }
 
 struct p_frame *alc_p_frame(struct b_proc *pb, struct frame_vars *fvars)
