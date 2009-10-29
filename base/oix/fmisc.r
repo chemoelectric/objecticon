@@ -362,6 +362,9 @@ end
 #begdef ERRFUNC()
 {
     word err_num;
+    char *s;
+    int j;
+
     if (cnv:C_integer(i, err_num)) {
         char *em;
         if (err_num <= 0)
@@ -387,21 +390,20 @@ end
         have_errval = 1;
     }
 
-    if (IntVal(kywd_err) == 0) {
-        char *s = StrLoc(k_errortext);
-        int i = StrLen(k_errortext);
-        if (k_errornumber > 0)
-            fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-        else 
-            fprintf(stderr, "\nRun-time error: ");
-        while (i-- > 0)
-            fputc(*s++, stderr);
-        fputc('\n', stderr);
-    }
-    else {
+    if (IntVal(kywd_err) != 0) {
         IntVal(kywd_err)--;
         errorfail;
     }
+
+    s = StrLoc(k_errortext);
+    j = StrLen(k_errortext);
+    if (k_errornumber > 0)
+        fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
+    else 
+        fprintf(stderr, "\nRun-time error: ");
+    while (j-- > 0)
+        fputc(*s++, stderr);
+    fputc('\n', stderr);
 
     if (have_errval) {
         fprintf(stderr, "offending value: ");
