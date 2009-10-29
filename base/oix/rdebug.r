@@ -56,7 +56,6 @@ struct ipc_fname *frame_ipc_fname(struct p_frame *pf, int prior)
 }
 
 
-
 /*
  * traceback - print a trace of procedure calls.
  */
@@ -98,7 +97,6 @@ void traceback()
         struct descrip tmp;
         tmp.dword = D_Proc;
         BlkLoc(tmp) = (union block *)fa[i]->proc;
-        /*fprintf(stderr,"frame proc="); print_vword(stderr, &tmp); fprintf(stderr,"\n");*/
         trace_frame(fa[i]);
     }
 
@@ -437,9 +435,10 @@ static void keyref(bp, dp)
 
 static void cotrace_line(struct b_coexpr *from)
 {
-    showline(from->curr_pf);
+    struct p_frame *pf = get_current_user_frame_of(from);
+    showline(pf);
     showlevel(k_level);
-    procname(stderr, from->curr_pf->proc);
+    procname(stderr, pf->proc);
 }
 
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
