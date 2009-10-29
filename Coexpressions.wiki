@@ -94,3 +94,16 @@ Note we have used `cocopy{i}`, which is just syntactic shorthand for `cocopy(cre
 
 == Refreshing ==
 In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created.   This doesn't happen in the V2 Object Icon implementation of co-expressions.  Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed.  `cocopy` does the same, but creates copies of the local variables instead.
+
+== The ! operator ==
+V2 of Object Icon lets the unary ! operator be applied to co-expressions.  The effect is to generate the sequence of results from a refreshed copy of the given co-expression.  In other words, the result sequence of `!e` is the same as for `p(e)`, if `p` were defined as the following procedure :-
+{{{
+procedure p(e)
+   local t
+   e := ^e
+   while t := @e do
+      suspend t
+end
+}}}
+
+
