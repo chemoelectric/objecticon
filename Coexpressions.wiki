@@ -143,3 +143,62 @@ Given a populated tree `root`, the `traverse` method can be used to generate all
 }}}
 
 === PDCOs ===
+These are control structures whose elements are expressed as co-expressions.  For example, here is Dijkstra's non-deterministic "do..od" loop structure, which can be found in the `ipl.pdco` package.
+{{{
+procedure Do(a[])
+   local x, i
+   repeat {
+      x := []
+      every i := 1 to *a by 2 do
+         if @^a[i] then 
+            put(x, i)
+
+      if *x = 0 then
+         break
+
+      @^a[?x + 1]
+   }
+end
+}}}
+Here is a program to multiply using two number using the above.
+{{{
+import io, ipl.pdco
+
+procedure main(a)
+   local e, p, q, r
+
+   e := create integer(pop(a)) | stop("Integer expected")
+   p := !e
+   q := !e
+
+   writes(p, " * ", q, " = ")
+   r := 0
+   Do {
+      q < 0, {
+         q := -q
+         p := -p
+      },
+
+      q > 0 & q % 2 = 0, {
+         q /:= 2
+         p *:= 2
+      },
+
+      q > 0 & q % 2 = 1, {
+         q -:= 1
+         r +:= p
+      }
+   }
+   write(r)
+end
+}}}
+Note that the `Do { ... }` construct above is actually just an ordinary procedure call with six parameters, since
+{{{
+P{ e1, e2, ..., en }
+}}}
+is just syntactic shorthand for
+{{{
+P(create e1, create e2, ... create en)
+}}}
+The ability of V2 co-expressions to refer to local variables (rather than copies of them) is a big advantage here.  In conventional Icon, the above code would require that `p`, `q` and `r` be global or static variables in order that their values could be changed by the co-expressions.
+ 
