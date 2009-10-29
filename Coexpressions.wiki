@@ -109,6 +109,25 @@ end
 == Uses of co-expressions ==
 
 === As an expression type ===
+The `!` operator, together with co-expressions ability to alter local variables lets us conveniently use co-expressions as a way of replaying an arbitrary expression almost as though it were a macro.  For example :-
+{{{
+import io
+
+procedure main()
+   local e, i
+   e := create i +:= 1
+   i := 1
+   !e
+   !e
+   !e
+   write(i)
+end
+}}}
+Outputs `4`.
+
+This use of co-expressions is inspired by the following paper.
+
+[http://www.cs.arizona.edu/icon/ftp/doc/tr86_20.pdf]
 
 === Co-routines ===
 Co-expressions provide a complete co-routine capability.  One particularly useful feature of co-routines is to generate the elements of a deeply nested structure.  For example, consider the following binary tree class :-
@@ -136,12 +155,30 @@ class Node()
    end
 end
 }}}
-Given a populated tree `root`, the `traverse` method can be used to generate all the elements as follows :-
+The following `main` procedure populates a tree with random data and then uses `the traverse` method to generate all the elements:-
 {{{
+import io
+
+procedure main()
+   local root, e, r
+   r := create |?1000
+   root := Node(@r)
+   every 1 to 15 do
+      root.insert(@r)
    e := create root.traverse()
    while write((@e).data)
+end
 }}}
-
+To generate the elements of the tree as a sequence we could use :-
+{{{
+   e := create root.traverse()
+   every write((!e).data)
+}}}
+or, even more concisely
+{{{
+   every write(Seq{root.traverse()}.data)
+}}}
+`Seq` is a procedure which can be found in the `ipl.pdco` package.  It simply takes a co-expression as a parameter and suspends each of its results.
 === PDCOs ===
 These are control structures whose elements are expressed as co-expressions.  For example, here is Dijkstra's non-deterministic "do..od" loop structure, which can be found in the `ipl.pdco` package.
 {{{
