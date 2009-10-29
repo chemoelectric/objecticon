@@ -106,4 +106,40 @@ procedure p(e)
 end
 }}}
 
+== Uses of co-expressions ==
 
+=== As an expression type ===
+
+=== Co-routines ===
+Co-expressions provide a complete co-routine capability.  One particularly useful feature of co-routines is to generate the elements of a deeply nested structure.  For example, consider the following binary tree class :-
+{{{
+class Node()
+   public const data
+   private l, r
+
+   public insert(val)
+      if val < data then
+         (/l := Node(val)) | l.insert(val)
+      else
+         (/r := Node(val)) | r.insert(val)
+   end
+
+   public traverse()
+      (\l).traverse()
+      self@&source
+      (\r).traverse()
+   end
+
+   public new(i)
+      self.data := i
+      return
+   end
+end
+}}}
+Given a populated tree `root`, the `traverse` method can be used to generate all the elements as follows :-
+{{{
+   e := create root.traverse()
+   while write((@e).data)
+}}}
+
+=== PDCOs ===
