@@ -3,7 +3,7 @@
 = Introduction =
 The implementation and semantics of co-expressions is rather different in V2 of Object Icon, compared to V1, and indeed to traditional Icon.
 
-The first and most significant difference to mention is that co-expressions in V2 are cheap.  Each co-expression has an interpreter stack, but it grows and shrinks dynamically in chunks called "frames", with one frame corresponding to each procedure call.  Each frame is quite small, typically about 100 bytes.  This is in sharp contrast to the traditional Icon interpreter's allocation for a co-expression - a fixed size region sufficient for both C and interpreter stack.
+The first and most significant difference to mention is that co-expressions in V2 are cheap.  Each co-expression has an interpreter stack, but it grows and shrinks dynamically in chunks called "frames", with one frame corresponding to each procedure call.  Each frame is quite small, typically about 100 bytes.  This is in sharp contrast to the traditional Icon interpreter's allocation for a co-expression - a fixed size region sufficient for the predicted maximum required for both C and interpreter stack.
 
 The implementation of co-expressions in V2 of Object Icon is also highly portable.  The conventional Icon implementation requires a low-level context switch to swap between C stacks.  This is inherently non-portable, and raises a number of other issues.  The new non-recursive design of the interpreter loop in V2 of Object Icon means that no context-switch is required to implement co-expressions, and the new implementation is written entirely in standard C.
 
@@ -155,7 +155,7 @@ class Node()
    end
 end
 }}}
-The following `main` procedure populates a tree with random data and then uses `the traverse` method to generate all the elements:-
+The following `main` procedure populates a tree with random data and then uses `the traverse` method to print all the elements:-
 {{{
 import io
 
@@ -169,7 +169,7 @@ procedure main()
    while write((@e).data)
 end
 }}}
-To generate the elements of the tree as a sequence we could use :-
+Instead of using a `while` loop to print the elements we could also use an every loop as follows :-
 {{{
    e := create root.traverse()
    every write((!e).data)
@@ -178,7 +178,7 @@ or, even more concisely
 {{{
    every write(Seq{root.traverse()}.data)
 }}}
-`Seq` is a procedure which can be found in the `ipl.pdco` package.  It simply takes a co-expression as a parameter and suspends each of its results.
+`Seq` is a procedure which can be found in the `ipl.pdco` package.  It simply takes a co-expression as a parameter and suspends each of its results.  Note that `Seq{root.traverse()}` is just syntactic shorthand for `Seq(create root.traverse())`.
 === PDCOs ===
 These are control structures whose elements are expressed as co-expressions.  For example, here is Dijkstra's non-deterministic "do..od" loop structure, which can be found in the `ipl.pdco` package.
 {{{
