@@ -75,7 +75,28 @@ end
 }}}
 The problem with this is that each `create i` references the same `i`, which eventually reaches the value `10`.  So the output is ten `10`s.
 
-To solve this problem, a builtin function `cocopy` is provided.  This does exactly the same as the refresh operator `^`, but instead of returning a new co-expression which also shares the local variables, a new set of local variables is allocated with values copied from the original.  Here is a working version of the above program :-
+One way to solve this problem is to use a procedure to create the co-expressions :-
+{{{
+import io
+
+procedure p(i)
+   return create i
+end
+
+procedure main()
+   local x, i, e
+
+   x := []
+   every i := 1 to 10 do
+      put(x, p(i))
+
+   every e := !x do
+      write(@e)
+end
+}}}
+Now each co-expression has its own copy of `i`, since each of the 10 calls to `p` creates its own set of local variables for that procedure.
+
+This is rather awkward however, and to provide a tidier solution, a builtin function `cocopy` is provided.  This does exactly the same as the refresh operator `^`, but instead of returning a new co-expression which also shares the local variables, a new set of local variables is allocated with values copied from the original.  Here is another version of the above program :-
 {{{
 import io
 
