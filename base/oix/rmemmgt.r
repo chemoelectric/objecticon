@@ -1051,7 +1051,7 @@ longlong physicalmemorysize()
 #endif					/* MSWIN32 */
 }
 
-void test_collect(int time_interval, long call_interval)
+void test_collect(int time_interval, long call_interval, int quiet)
 {
     static long secs;
     static long call_count, sampled_interval;
@@ -1064,9 +1064,11 @@ void test_collect(int time_interval, long call_interval)
 
     if (call_interval > 0) {
         if (call_count == call_interval) {
-            fprintf(stderr, "test_collect: collection start at call_count=%ld\n", call_count);fflush(stderr);
+            if (!quiet)
+                fprintf(stderr, "test_collect: collection start at call_count=%ld\n", call_count);fflush(stderr);
             collect(User);
-            fprintf(stderr, "test_collect: collection end\n");fflush(stderr);
+            if (!quiet)
+                fprintf(stderr, "test_collect: collection end\n");fflush(stderr);
             call_count = 0;
         }
         return;

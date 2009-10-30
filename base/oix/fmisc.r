@@ -1227,22 +1227,22 @@ static char *get_ucs_off(struct b_ucs *b, word n)
 /*
  * Allocate and initialize a ucs block given a utf8 string and a
  * unicode length.  The utf8 string must be valid and have length
- * unicode chars in it.
+ * unicode chars in it; utf8 must also point to a tended or stack
+ * descriptor.
  */
 struct b_ucs *make_ucs_block(dptr utf8, word length)
 {
-    tended struct b_ucs *p;
-    tended struct descrip t = *utf8;   /* In case *utf8 isn't tended */
+    struct b_ucs *p;                   /* Doesn't need to be tended */
     word index_step, n_offs;
 
     if (length == 0)
         return emptystr_ucs;
-
+    test_collect(0,20,1);
     index_step = calc_ucs_index_step(length);
     n_offs = (length - 1) / index_step;
     MemProtect(p = alcucs(n_offs));
     p->index_step = index_step;
-    p->utf8 = t;
+    p->utf8 = *utf8;
     p->length = length;
     p->n_off_indexed = 0;
     return p;

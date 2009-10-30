@@ -617,7 +617,7 @@ void general_invokef_0(word clo, dptr expr, dptr query, struct inline_field_cach
                        int argc, dptr args, word rval, word *failure_label);
 void general_invokef_1(word clo, dptr expr, dptr query, struct inline_field_cache *ic, 
                        int argc, dptr args, word rval, word *failure_label);
-void test_collect(int time_interval, long call_interval);
+void test_collect(int time_interval, long call_interval, int quiet);
 struct b_coexpr *alccoexp_0 (void);
 struct b_coexpr *alccoexp_1 (void);
 struct b_proc *clone_b_proc(struct b_proc *bp);
