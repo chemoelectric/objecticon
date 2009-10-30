@@ -126,7 +126,7 @@ procedure p(e)
       suspend t
 end
 }}}
-
+Note that evaluating `!e` does not affect `e`, nor generate any results from it.
 == Uses of co-expressions ==
 
 === As an expression type ===
@@ -145,6 +145,17 @@ procedure main()
 end
 }}}
 Outputs `4`.
+
+As another example, consider the problem of printing the hexadecimal numbers in the range `0000` to `FFFF`.  The following program does this concisely :-
+{{{
+import io
+
+procedure main()
+   local e
+   e := create !"0123456789ABCDEF"
+   every write(!e || !e || !e || !e)
+end
+}}}
 
 This use of co-expressions is inspired by the following paper.
 
