@@ -73,7 +73,7 @@ procedure main()
       write(@e)
 end
 }}}
-The problem with this is that each `create i` references the same `i`, which eventually reaches the value `10`.  So the output is ten `100`s.
+The problem with this is that each `create i * i` references the same `i`, which eventually reaches the value `10`.  So the output is ten `100`s.
 
 One way to solve this problem is to use a procedure to create the co-expressions :-
 {{{
