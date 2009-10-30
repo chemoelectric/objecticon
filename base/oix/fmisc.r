@@ -160,7 +160,7 @@ function{1} display(i,c)
        else if (i > k_level)
            i = k_level;
 
-       fprintf(stderr,"co-expression_%ld(%ld)\n\n",
+       fprintf(stderr,"co-expression#%ld(%ld)\n\n",
                (long)k_current->id,
                (long)k_current->size);
        fflush(stderr);
