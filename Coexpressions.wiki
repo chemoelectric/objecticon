@@ -146,13 +146,13 @@ end
 }}}
 Outputs `4`.
 
-As another example, consider the problem of printing the hexadecimal numbers in the range `0000` to `FFFF`.  The following program does this concisely :-
+As another example, the following program prints the hexadecimal numbers in the range `0000` to `FFFF`:-
 {{{
 import io
 
 procedure main()
    local e
-   e := create !"0123456789ABCDEF"
+   e := create !&digits | !"ABCDEF"
    every write(!e || !e || !e || !e)
 end
 }}}
