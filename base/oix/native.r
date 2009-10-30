@@ -277,6 +277,21 @@ function{1} lang_Prog_set_event_mask(cs, ce)
    }
 end
 
+function{1} lang_Prog_get_variable_name(underef v)
+   /*
+    * v must be a variable
+    */
+   if !is:variable(v) then
+      runerr(111, v);
+
+   body {
+      C_integer i = get_name(&v, &result);
+      if (i == Error)
+         runerr(0);
+      return result;
+   }
+end
+
 function{0,1} lang_Prog_get_variable(s,c)
    if !cnv:string(s) then
       runerr(103, s)
@@ -343,6 +358,9 @@ function{*} lang_Prog_get_keyword(s,c)
                   if (!t)
                       fail;
                   return C_integer t->line;
+              }
+              if (strncmp(t,"dump",4) == 0) {
+                  return kywdint(&(p->Kywd_dump));
               }
               if (strncmp(t,"main",4) == 0) {
                   return coexpr(p->K_main);

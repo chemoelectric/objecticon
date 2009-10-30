@@ -59,7 +59,7 @@ procedure define(line)
 end
 
 procedure defnon(sym)
-   local chars
+   local chars, name
    if sym ? {
       ="'" &
       chars := cset(tab(-1)) &
@@ -138,7 +138,7 @@ procedure getrhs(a)
 end
 
 procedure grammar(line)
-   local file, out
+   local file, out,name
    if line ? {
       name := tab(find("->")) &
       move(2) &

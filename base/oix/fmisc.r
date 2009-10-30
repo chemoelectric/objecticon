@@ -337,25 +337,6 @@ function{1} ishift(i,j)
 end
 
 
-"name(v) - return the name of a variable."
-
-function{1} name(underef v)
-   /*
-    * v must be a variable
-    */
-   if !is:variable(v) then
-      runerr(111, v);
-
-   body {
-      C_integer i;
-      i = get_name(&v, &result);
-      if (i == Error)
-         runerr(0);
-      return result;
-   }
-end
-
-
 /*
  * Common code for runerr, fatalerr
  */

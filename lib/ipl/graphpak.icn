@@ -48,7 +48,7 @@ record graph(nodes, lookup)
 
 # read graph
 procedure read_graph(f)		
-   local node, nodes, node_list, lookup, arc, from_name, to_name
+   local node, nodes, node_list, lookup, arc, from_name, to_name, name
 
    nodes := []				# list of the graph nodes
    lookup := table()			# two-way table of names and nodes

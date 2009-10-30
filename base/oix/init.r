@@ -76,8 +76,6 @@ function{0} deferred_method_stub(a[n])
    }
 end
 
-struct descrip kywd_dump;               	/* &dump */
-
 /*
  * Various constant descriptors, initialised in init.r
  */
@@ -517,6 +515,7 @@ static void initprogstate(struct progstate *p)
     p->Kywd_subject = emptystr;
     p->Kywd_ran = zerodesc;
     p->Kywd_trace = zerodesc;
+    p->Kywd_dump = zerodesc;
     MakeInt(500, &p->Kywd_maxlevel);
     p->K_errornumber = 0;
     p->T_errornumber = 0;
@@ -1190,7 +1189,6 @@ int main(int argc, char **argv)
     MakeInt(-1, &minusonedesc);
     MakeInt(1000000, &milliondesc);
     MakeInt(1000, &thousanddesc);
-    MakeInt(0, &kywd_dump);
 
     nullptr.dword = D_TendPtr;
     BlkLoc(nullptr) = 0;

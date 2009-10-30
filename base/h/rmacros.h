@@ -488,6 +488,7 @@
       #define k_eventvalue (curpstate->eventval)
       #define k_subject (curpstate->Kywd_subject)
       #define kywd_trace  (curpstate->Kywd_trace)
+      #define kywd_dump  (curpstate->Kywd_dump)
       #define kywd_maxlevel  (curpstate->Kywd_maxlevel)
       #define code (curpstate->Code)
       #define ecode (curpstate->Ecode)

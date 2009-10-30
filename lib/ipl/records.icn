@@ -25,10 +25,12 @@
 
 package ipl.records
 
+import lang(Prog)
+
 # return name of field R[i]
 procedure field(R, i)			
 
-   name(R[i]) ? {
+   Prog.get_variable_name(R[i]) ? {
       while tab(upto('.')) do
          move(1)
       return tab(0)
@@ -49,10 +51,8 @@ end
 # move corresponding record fields
 procedure movecorr(R1, R2)
    local s
-   static name
-   initial name := proc("name", 0)	# protect attractive name
 
-   every s := name(!R1) do {
+   every s := Prog.get_variable_name(!R1) do {
       s ? {
          while tab(upto('.')) do
             move(1)

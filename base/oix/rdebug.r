@@ -247,41 +247,68 @@ int get_name(dptr dp1, dptr dp0)
             keyref(BlkLoc(*dp1) ,dp0);
         }
 
-      kywdint:
-        if (VarLoc(*dp1) == &kywd_ran) {
-            LitStr("&random", dp0);
-        }
-        else if (VarLoc(*dp1) == &kywd_trace) {
-            LitStr("&trace", dp0);
-        }
-        else if (VarLoc(*dp1) == &kywd_dump) {
-            LitStr("&dump", dp0);
-        }
-        else if (VarLoc(*dp1) == &kywd_err) {
-            LitStr("&error", dp0);
-        }
-        else if (VarLoc(*dp1) == &kywd_maxlevel) {
-            LitStr("&maxlevel", dp0);
-        }
-        else
+      kywdint: {
+          for (prog = progs; prog; prog = prog->next) {
+              if (VarLoc(*dp1) == &prog->Kywd_ran) {
+                  LitStr("&random", dp0);
+                  break;
+              }
+              else if (VarLoc(*dp1) == &prog->Kywd_trace) {
+                  LitStr("&trace", dp0);
+                  break;
+              }
+              else if (VarLoc(*dp1) == &prog->Kywd_dump) {
+                  LitStr("&dump", dp0);
+                  break;
+              }
+              else if (VarLoc(*dp1) == &prog->Kywd_err) {
+                  LitStr("&error", dp0);
+                  break;
+              }
+              else if (VarLoc(*dp1) == &prog->Kywd_maxlevel) {
+                  LitStr("&maxlevel", dp0);
+                  break;
+              }
+          }
+          if (!prog)
             syserr("name: unknown integer keyword variable");
-            
+        }            
       kywdany:
             syserr("name: unknown keyword variable");
             
       kywdstr: {
-          if (VarLoc(*dp1) == &kywd_prog) {
-              LitStr("&progname", dp0);
-          } else if (VarLoc(*dp1) == &kywd_why) {
-              LitStr("&why", dp0);
+          for (prog = progs; prog; prog = prog->next) {
+              if (VarLoc(*dp1) == &prog->Kywd_prog) {
+                  LitStr("&progname", dp0);
+                  break;
+              } else if (VarLoc(*dp1) == &prog->Kywd_why) {
+                  LitStr("&why", dp0);
+                  break;
+              }
           }
+          if (!prog)
+              syserr("name: unknown string keyword variable");
         }
       kywdpos: {
-            LitStr("&pos", dp0);
-        }
+          for (prog = progs; prog; prog = prog->next) {
+              if (VarLoc(*dp1) == &prog->Kywd_pos) {
+                  LitStr("&pos", dp0);
+                  break;
+              }
+          }
+          if (!prog)
+              syserr("name: unknown pos keyword variable");
+      }
 
       kywdsubj: {
-            LitStr("&subject", dp0);
+          for (prog = progs; prog; prog = prog->next) {
+              if (VarLoc(*dp1) == &prog->Kywd_subject) {
+                  LitStr("&subject", dp0);
+                  break;
+              }
+          }
+          if (!prog)
+              syserr("name: unknown subject keyword variable");
         }
 
       named_var: {
