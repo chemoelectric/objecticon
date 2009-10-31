@@ -149,11 +149,26 @@ procedure iso8859_to_ucs(s)
 end
 }}}
 
-= Editing utf-8 source code =
+= Editing non-ASCII source code =
 
-Source code files can be edited in utf-8 format; however on translation the `-u` flag must be given to `oit`.  To see why, consider the following program :-
+Source code files can be edited in non-ASCII format.
+
+To specify a file's encoding, a preprocessor directive, `$encoding` is used.  The directive is followed by the encoding name, which at present can take one of three possible values :-
+
+ * `ASCII` (the default)
+ * `ISO-8859-1`
+ * `UTF-8`
+
+Each source file is processed as a sequence of codepoints, which are converted from the input bytes, based on the encoding.  For ASCII encoding and ISO-8859-1 encoding, each codepoint is the same as each input byte.  The only difference is that ASCII restricts the range of codepoints to 0-127, as opposed to 0-255 for ISO-8859-1.  For UTF-8 encoding each codepoint may correspond to several input bytes, and may be any valid Unicode codepoint.
+
+== Literals ==
+Other than escape sequences, each codepoint within a string, ucs or cset literal will correspond to exactly one character in that literal.  For a string, the codepoint must be in the range 0-255; otherwise a compile-time error is signalled.
+
+== Example ==
 {{{
 import io
+
+$encoding UTF-8
 
 procedure main()
    local s
@@ -161,7 +176,7 @@ procedure main()
    s ? every write(upto('ив'))
 end
 }}}
-When translated with `oit -u ...` it works as expected, producing the output
+This program produces the output
 {{{
 2
 4
@@ -171,8 +186,3 @@ When translated with `oit -u ...` it works as expected, producing the output
 51
 53
 }}}
-However, if it is translated without the `-u` option, it produces no output.  This is because the cset literal
-{{{
-'ив'
-}}}
-is interpreted wrongly without the `-u` option - it is seen by `oit` as the raw utf-8 bytes saved by the editor, ie as though one had written `'\xd0\xb8\xd0\xb2'`.  With the `-u` option the utf-8 sequence is interpreted correctly as `'\u0432\u0438'`.
