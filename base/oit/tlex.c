@@ -967,8 +967,7 @@ static char *mapterm(int typ, nodeptr val)
     register int i;
 
     i = typ;
-    if (i == IDENT || i == INTLIT || i == REALLIT || i == STRINGLIT ||
-        i == CSETLIT)
+    if (i == IDENT || i == STRINGLIT)
         return Str0(val);
     for (t = toktab; t->t_type != 0; t++)
         if (t->t_type == i)
