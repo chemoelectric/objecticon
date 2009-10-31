@@ -1,0 +1,529 @@
+#summary List of builtin functions
+<wiki:toc max_depth="3" />
+= Introduction =
+
+This page lists Object Icon's builtin functions.
+
+
+== abs ==
+`abs (N) : N` -- compute absolute value
+
+Produces the absolute value of `N`.
+
+== any ==
+`any (c,s,i1,i2) : i3` -- locate initial character
+
+Succeeds and produces `i1 + 1` if `s[i1]` is in `c` and `i2 > i1`, but fails otherwise.
+
+Defaults:
+ * `s`       `&subject`
+ * `i1`      `&pos` if `s` defaulted, otherwise `1`
+ * `i2`      `0`
+
+See also: `many()` and `match()`
+
+== back ==
+`back (x1) : x2` -- reverse order generation
+
+Generate the elements of `x1` in reverse order.
+
+== bal ==
+`bal (c1,c2,c3,s,i1,i2) : i3,i4,...,in` -- locate balanced characters
+
+Generates the sequence of integer positions in `s` preceding a character of `c1` in `s[i1:i2]` that is balanced with respect to the characters of `c2` and `c3`, but fails if there is no such position.
+
+Defaults:
+ * `c1`      `&cset`
+ * `c2`      `'('`
+ * `c3`      `')'`
+ * `s`       `&subject`
+ * `i1`      `&pos` if `s` defaulted, otherwise `1`
+ * `i2`      `0`
+
+See also: `find()` and `upto()`
+
+== cast ==
+`cast (o, cl) : ca` -- create cast
+
+Create a cast from object `o` and class `cl`
+
+== center ==
+`center (s1,i,s2) : s3` -- position string at center
+
+Produces a string of size `i` in which `s1` is centered, with `s2` used for padding at left and right as necessary.
+
+Defaults:
+ * `i`       `1`
+ * `s2`      `" "` (blank)
+
+See also: `left()` and `right()`
+
+== char ==
+`char (i) : s` -- produce character
+
+Produces a string of length `1` consisting of the character whose internal representation is `i`.
+
+See also: `ord()`
+
+== classof ==
+`classof (o) : cl` -- return the class of object `o`
+
+== cocopy ==
+`cocopy (ce) : ce` -- refresh with copy
+
+Return a refreshed copy of `ce`, but with a copied set of local variables.
+
+== cofail ==
+`cofail (ce) : x` -- transmit failure
+
+Transmit failure to the given co-expression.
+
+== collect ==
+`collect () : n` -- perform garbage collection
+
+== copy ==
+`copy (x1) : x2` -- copy value
+
+Produces a copy of `x1` if `x1` is a structure; otherwise it produces `x1`.
+
+== cset ==
+`cset (x)` -- convert to cset
+
+Produces a cset resulting from converting `x`, but fails if the conversion is not possible.
+
+== delay ==
+`delay (i) : n` -- delay execution
+
+Delays execution `i` milliseconds.
+
+== delete ==
+`delete (X,x) : X` -- delete element
+
+If `X` is a set, deletes `x` from `X`. If `X` is a table, deletes the element for key `x` from `X`. Produces `X`.
+
+See also: `insert()` and `member()`
+
+== detab ==
+`detab (s1,i1,i2,...,in) : s2` -- remove tabs
+
+Produces a string based on `s1` in which each tab character is replaced by one or more blanks. Tab stops are at `i1, i2, ..., in`, with additional stops obtained by repeating the last interval.
+
+Default:
+ * `i1`      `9`
+
+See also: `entab()`
+
+== display ==
+`display (i,c) : n` -- display variables
+
+Writes the image of the given co-expression and the values of the local variables in the current procedure call. If `i > 0`, the local variables in the `i` preceding procedure calls are displayed as well. After all local variables are displayed, the values of global variables are displayed. Output is written to standard error.
+
+Defaults:
+ * `i`       `&level`
+ * `c`       `&current`
+
+== entab ==
+`entab (s1,i1,i2,...,in) : s2` -- insert tabs
+
+Produces a string based on `s1` in which runs of blanks are replaced by tabs. Tab stops are at `i1, i2, ..., in`, with additional stops obtained by repeating the last interval.
+
+Default:
+ * `i1`      `9`
+
+See also: `detab()`
+
+== errorclear ==
+`errorclear () : n` -- clear error indication
+
+Clears the indications of the last error.
+
+See also: `&error`
+
+== exit ==
+`exit (i)` -- exit program
+
+Terminates the program with exit status i.
+
+Default:
+ * `i`       normal exit (system dependent)
+
+See also: `stop()`
+
+== fatalerr ==
+`fatalerr (x1,x2)` -- stop with fatal error
+
+This is the same as `runerr`, but disables error conversion first.
+
+See also: `runerr()`
+
+== find ==
+`find (s1,s2,i1,i2) : i3,i4,...,in` -- find string
+
+Generates the sequence of integer positions in `s2` at which `s1` occurs as a substring in `s2[i1:i2]`, but fails if there is no such position.
+
+Defaults:
+ * `s2`      `&subject`
+ * `i1`      `&pos` if `s2` defaulted, otherwise `1`
+ * `i2`      `0`
+
+See also: `bal(), match(), and upto()`
+
+== get ==
+`get (L) : x` -- get value from list
+
+Produces the leftmost element of `L` and removes it from `L`, but fails if `L` is empty; synonym for `pop(L)`.
+
+See also: `pop(), pull(), push(), and put()`
+
+== iand ==
+`iand (i1,i2,...,in) : i3` -- compute bit-wise and
+
+Produces the bitwise and of the given parameters.
+
+See also: `icom(), ior(), ishift(), and ixor()`
+
+== icom ==
+`icom (i1) : i2` -- compute bit-wise complement
+
+Produces the bitwise complement (1's complement) of `i1`.
+
+See also: `iand(), ior(), ishift(), and ixor()`
+
+== image ==
+`image (x) : s` -- produce string image
+
+Produces a string image of `x`.
+
+== insert ==
+`insert (X,x1,x2) : X` -- insert element
+
+If `X` is a table, inserts the key `x1` with value `x2` into `X`. If `X` is a set, inserts `x1` into `X`. Produces `X`.
+
+Default:
+ * `x2`      `&null`
+
+See also: `delete() and member()`
+
+== integer ==
+`integer (x) : i` -- convert to integer
+
+Produces the integer resulting from converting `x`, but fails if the conversion is not possible.
+
+See also: `numeric() and real()`
+
+== ior ==
+`ior (i1,i2,...,in) : i3` -- compute bit-wise inclusive or
+
+Produces the bitwise inclusive or of the given parameters.
+
+See also: `iand(), icom(), ishift(), and ixor()`
+
+== is ==
+`is (o, cl) : cl` -- test class of object
+
+Succeed if and only if o is an instance of class cl
+
+== ishift ==
+`ishift (i1,i2) : i3` -- shift bits
+
+Produces the result of shifting the bits in `i1` by `i2` positions. Positive values of `i2` shift to the left, negative to the right. Vacated bit positions are zero-filled.
+
+See also: `iand(), ior(), ior(), and ixor()`
+
+
+== ixor ==
+`ixor (i1,i2,...,in) : i3` -- compute bit-wise exclusive or
+
+Produces the bitwise exclusive or of given parameters.
+
+See also: `iand(), icom(), ior(), and ixor()`
+
+== key ==
+`key (T) : x1,x2,...,xn` -- generate keys from table
+
+Generates the keys in table `T`.
+
+== keyof ==
+`keyof (x1,x2) : x3` -- generate keys for a given value
+
+Given a table or list `x1` and a value `x2`, generate the keys `x3` such that `x1[x3] === x2`
+
+== keyval ==
+`keyval (T) : x` -- generate keys and values.
+
+Generate alternate keys and their corresponding values (as variables) from table `T`
+
+== left ==
+`left (s1,i,s2) : s3` -- position string at left
+
+Produces a string of size `i` in which `s1` is positioned at the left, with `s2` used for padding on the right as necessary.
+
+Defaults:
+ * `i`       `1`
+ * `s2`      `" "` (blank)
+
+See also: `center() and right()`
+
+
+== list ==
+`list (i,x) : L` -- create list
+
+Produces a list of size `i` in which each value is `x`.
+
+Defaults:
+ * `i`       `0`
+ * `x`       `&null`
+
+== many ==
+`many (c,s,i1,i2) : i3` -- locate many characters
+
+Succeeds and produces the position in `s` after the longest initial sequence of characters in `c` in `s[i1:i2]`. It fails if `s[i1]` is not in `c`.
+
+Defaults:
+ * `s`       `&subject`
+ * `i1`      `&pos` if `s` defaulted, otherwise `1`
+ * `i2`      `0`
+
+See also: `any() and match()`
+
+== map ==
+`map (s1,s2,s3) : s4` -- map characters
+
+Produces a string of size `*s1` obtained by mapping characters of `s1` that occur in `s2` into corresponding characters in s3.
+
+Defaults:
+ * `s2`      `string(&ucase)`
+ * `s3`      `string(&lcase)`
+
+== match ==
+`match (s1,s2,i1,i2) : i3` -- match initial string
+
+Produces `i1 + *s1` if `s1 == s2[i1+:*s1]`, but fails otherwise.
+
+Defaults:
+ * `s2`      `&subject`
+ * `i1`      `&pos` if `s2` defaulted, otherwise `1`
+ * `i2`      `0`
+
+See also: `=s, any(), and many()`
+
+== max ==
+`max (N1, N2) : N3` -- maximum
+
+Return the maximum of `N1`, `N2`
+
+== member ==
+`member (X,x) : x` -- test for membership
+If X is a set, succeeds if x is a member of X, but fails otherwise. If X is a table, succeeds if x is a key of an element in X, but fails otherwise. Produces x if it succeeds.
+
+See also: delete() and insert()
+
+== min ==
+`min (N1, N2) : N3` -- minimum
+
+Return the minimum of `N1`, `N2`
+
+
+== move ==
+`move (i) : s` -- move scanning position
+
+Produces `&subject[&pos:&pos + i]` and assigns `i + &pos` to `&pos`, but fails if i is out of range; reverses assignment to `&pos` if resumed.
+
+See also: `tab()`
+
+
+== numeric ==
+`numeric (x) : N` -- convert to numeric
+
+Produces an integer or real number resulting from converting `x`, but fails if the conversion is not possible.
+
+See also: `integer() and real()`
+
+
+== ord ==
+`ord (x,i1,i2) : i3` -- generate code points
+
+Generate the code points in a cset, ucs or string for the range of entries `i1:i2`
+
+== pop ==
+`pop (L) : x` -- pop from list
+Produces the leftmost element of `L` and removes it from `L`, but fails if `L` is empty; synonym for `get(L)`.
+
+See also: `get(), pull(), push(), and put()`
+
+== pos ==
+`pos (i1) : i2` -- test scanning position
+
+Produces `&pos` if `&pos` = `i1`, but fails otherwise.
+
+See also: `&pos` and `&subject`
+
+== proc ==
+`proc (x,i) : p` -- convert to procedure
+
+Produces a procedure corresponding to the value of `x`, but fails if `x` does not correspond to a procedure. If `x` is the string name of an operator, i specifies the number of arguments: 1 for unary (prefix), 2 for binary (infix), and 3 for ternary. `proc(x,0)` produces the built-in function named `x` even if the global identifier having that name has been assigned another value. `proc(x,0)` fails if `x` is not the name of a function.
+
+Default:
+ * `i`       `1`
+
+== pull ==
+`pull (L) : x` -- pull from list
+
+Produces the rightmost element of `L` and removes it from `L`, but fails if `L` is empty.
+
+See also: `get(), pop(), push(), and put()`
+
+== push ==
+`push (L,x) : L` -- push onto list
+
+Pushes `x` onto the left end of `L`.
+
+See also: `get(), pop(), pull(), and put()`
+
+== put ==
+`put (L,x) : L` -- put onto list
+
+Put `x` onto the right end of `L`.
+
+See also: `get(), pop(), pull(), and push()`
+
+== real ==
+`real (x) : r` -- convert to real
+
+Produces a real number resulting from type conversion of `x`, but fails if the conversion is not possible.
+
+See also: `integer() and numeric()`
+
+== repl ==
+`repl (s1,i) : s2` -- replicate string
+
+Produces a string consisting of `i` concatenations of `s1`.
+
+== reverse ==
+`reverse (s1) : s2` -- reverse string
+
+Produces a string consisting of the reversal of `s`.
+
+== right ==
+`right (s1,i,s2) : s3` -- position string at right
+
+Produces a string of size `i` in which `s1` is positioned at the right, with `s2` used for padding on the left as necessary.
+
+Defaults:
+ * `i`       `1`
+ * `s2`      `" "` (blank)
+
+See also: `center() and left()`
+
+
+== runerr ==
+`runerr (x1,x2)` -- terminate with run-time error
+
+Terminates program execution with error `x1` and offending value `x2`.  `x1` may be an integer, being a standard error number, or a string, being a custom error message.
+
+== seq ==
+`seq (i1,i2) : i3,i4,...` -- generate sequence of integers
+
+Generates an endless sequence of integers starting at `i1` with increments of `i2`.
+
+Defaults:
+ * `i1`      `1`
+ * `i2`      `1`
+
+See also: `i1 to i2 by i3`
+
+== serial ==
+`serial (x) : i` -- produce serial number
+Produces the serial number of `x` if it is a type that has one but fails otherwise.
+
+== set ==
+`set (x1,x2,...,xn) : S` -- create set
+
+Produces a set whose members are the values `x1`,`x2`,...,`xn`
+
+== sort ==
+`sort (X,i) : L` -- sort structure
+
+Produces a list containing values from `X`. If `X` is a list, record, or set, `sort(X,i)` produces the values of `X` in sorted order. If `X` is a table, `sort(X,i)` produces a list obtained by sorting the elements of `X`, depending on the value of `i`. For `i` = `1` or `2`, the list elements are two-element lists of key/value pairs. For `i` = `3` or `4`, the list elements are alternating keys and values. Sorting is by keys for `i` odd, by value for `i` even.
+
+Default:
+ * `i`       `1`
+
+See also: `sortf()`
+
+
+== sortf ==
+`sortf (X,i) : L` -- sort list or set by field
+
+Produces a sorted list of the values in `X`. Sorting is primarily by type and in most respects is the same as with `sort(X,i)`. However, among lists and among records, two structures are ordered by comparing their ith fields. `i` can be negative but not zero. Two structures having the equal `i`th fields are ordered as they would be in regular sorting, but structures lacking an ith field appear before structures having them.
+
+Default:
+ * `i`       `1`
+
+See also: `sort()`
+
+
+== string ==
+`string (x) : s` -- convert to string
+Produces a string resulting from converting x, but fails if the conversion is not possible.
+
+== syserr ==
+`syserr (s)` -- stop execution, indicating an internal error
+
+== system ==
+`system (s) : i` -- call system function
+
+Calls the C library function `system()` to execute `s` and produces the resulting integer exit status.
+
+== tab ==
+`tab (i) : s` -- set scanning position
+Produces `&subject[&pos:i]` and assigns i to `&pos`, but fails if i is out of range. It reverses assignment to `&pos` if resumed.
+
+See also: move()
+
+== table ==
+`table (x,k1,v1,k2,v2,...,kn,vn) : T` -- create table
+
+Produces a table with a default value `x`, and initial mappings `k1->v1`, `k2->v2`, etc.
+
+Default:
+ * x       `&null`
+
+== text ==
+`text (x1) : x2` -- convert to string or ucs type
+
+If `x1` is a string or ucs, it is just returned.  If `x1` is a cset then it is converted to a string if its highest char is < 256; otherwise it is converted to a ucs.  For any other type, normal string conversion is attempted.
+
+== trim ==
+`trim (s1,c) : s2` -- trim string
+Produces a string consisting of the characters of s1 up to the trailing characters contained in c.
+
+Default:
+ * c       ' ' (blank)
+
+== type ==
+`type (x) : s` -- produce type name
+
+Produces a string corresponding to the type of `x`.
+
+== uchar ==
+`uchar (i) : u` -- ucs char
+
+Produce a ucs consisting of character `i`
+
+== ucs ==
+`ucs (x) : u` -- convert to ucs
+
+Convert `x` to a ucs (unicode character string)
+
+== upto ==
+`upto (c,s,i1,i2) : i3,i4,...,in` -- locate characters
+
+Generates the sequence of integer positions in `s` preceding a character of `c` in `s[i1:i2]`. It fails if there is no such position.
+
+Defaults:
+ * `s`       `&subject`
+ * `i1`      `&pos` if `s` defaulted, otherwise `1`
+ * `i2`      `0`
+
+See also: `bal() and find()`
