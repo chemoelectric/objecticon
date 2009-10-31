@@ -18,7 +18,6 @@ extern int neweronly;	/* -n: only translate .icn if newer than .u */
 extern int Dflag;       /* -L: link debug */
 extern int Iflag;       /* -I: ir code dump */
 extern int Zflag;	/* -Z: icode-gz compression */
-extern int uflag;       /* -u: utf-8 source code */
 extern int loclevel;    /* -l n: location info */
 extern int Olevel;      /* -O n: optimisation */
 
@@ -46,6 +45,9 @@ extern char *empty_string;
 extern char *all_string;
 extern char *lang_string;
 extern char *package_marker_string;
+extern char *ascii_string;
+extern char *utf8_string;
+extern char *iso_8859_1_string;
 
 int main(int argc, char **argv);
 void report(char *fmt, ...);

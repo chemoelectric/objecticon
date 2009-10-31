@@ -257,7 +257,7 @@ repeat {
    wrt(toktab, 1, "register char c;\n")
    wrt(toktab, 1, "*cc = ' ';")
    bld_slct(op_trie, "", "ac", toktab, 1)
-   wrt(toktab, 1, "tfatal(\"invalid character\");")
+   wrt(toktab, 1, "lexfatal(\"invalid character\");")
    wrt(toktab, 1, "return -1;")
    wrt(toktab, 1, "}")
 

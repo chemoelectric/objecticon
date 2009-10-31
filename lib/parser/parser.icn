@@ -30,8 +30,8 @@ class Parser(Connectable)
       preproc_sym_table,preproc_if_stack,preproc_file_stack,preproc_if_state,
       preproc_file,preproc_filename,preproc_line,preproc_print_line,
       preproc_word_chars,preproc_nest_level,preproc_include_name,
-      preproc_include_set,preproc_print_filename,preproc_command,
-      preproc_err_count
+      preproc_include_set,preproc_print_filename,
+      preproc_err_count,preproc_encoding,preproc_print_encoding
 
    private
       first_err
@@ -145,20 +145,22 @@ class Parser(Connectable)
       }
 
       preproc_new(fname, predefined_syms)
-      
+      suspend preproc_sync_lines()      
       while line := preproc_read() do line ? {
          if match("#line") then {
+            suspend line
             next
          }
          preproc_space()
          if ="$" & any(nonpunctuation) then {
-            suspend preproc_scan_directive()
+            preproc_scan_directive()
          } else {
             &pos := 1
-            suspend preproc_scan_text()
+            suspend preproc_scan_text() do
+               preproc_print_line +:= 1
          }
+         suspend preproc_sync_lines()
       }
-      preproc_line +:= 1
       suspend preproc_sync_lines()
       close(\preproc_file)
       preproc_done()
@@ -180,8 +182,10 @@ class Parser(Connectable)
       preproc_filename := preproc_include_name := fname
       preproc_line := preproc_print_line := 0
       preproc_print_filename := &null
+      preproc_print_encoding := &null
       preproc_nest_level := 0
       preproc_err_count := 0
+      preproc_encoding := "ASCII"
       return
    end
 
@@ -190,8 +194,8 @@ class Parser(Connectable)
    #
    private preproc_done()
       preproc_sym_table := preproc_if_stack := preproc_file_stack :=
-         preproc_filename := preproc_print_filename :=
-         preproc_file := preproc_include_set := &null
+         preproc_filename := preproc_print_filename := preproc_print_encoding :=
+         preproc_encoding := preproc_file := preproc_include_set := &null
       return
    end
 
@@ -199,7 +203,7 @@ class Parser(Connectable)
    # a_Scans a preprocessor directive.
    #
    private preproc_scan_directive()
-      local sym,value,new_file,new_filename,new_line,old
+      local sym,value,new_file,new_filename,new_line,old,preproc_command
       preproc_space()
       preproc_command := preproc_word()
       if \preproc_if_state then {
@@ -295,13 +299,14 @@ class Parser(Connectable)
                      if new_file := open(new_filename := Files.path_find(sym, "OLPATH"))
                      then {
                         every push(preproc_file_stack,
-                             preproc_file|preproc_filename|
+                             preproc_encoding|preproc_file|preproc_filename|
                              preproc_include_name|preproc_line|
                              preproc_nest_level)
                         preproc_filename := new_filename
                         preproc_include_name := sym
                         preproc_file := new_file
                         preproc_line := 0
+                        preproc_encoding := "ASCII"
                         preproc_nest_level := *preproc_if_stack
                         insert(preproc_include_set,sym)
                      } else {
@@ -333,9 +338,14 @@ class Parser(Connectable)
             preproc_error(trim(tab(find("#") | 0),' \t\f\r'))
          }
       }
+      "encoding": {
+         if /preproc_if_state then {
+            preproc_encoding := tab(many(&letters ++ &digits ++ '-'))
+         }
+      }
       "ITRACE": {
          if /preproc_if_state then {
-            if value := integer(tab(many(&digits ++ "-"))) &
+            if value := integer(tab(many(&digits ++ '-'))) &
                preproc_at_end() then {
                   &trace := value
                } else {
@@ -382,15 +392,11 @@ class Parser(Connectable)
                               }
                            }
                         }
-                        suspend preproc_sync_lines()
-                        suspend if q = 1 then .&subject else
-                           result || &subject[q:0]
+                        suspend if q = 1 then .&subject else result || &subject[q:0]
                         if not match("_",,-1) then {
                            break
                         }
                         &subject := preproc_read() | fail
-                        preproc_print_line := preproc_line
-                        preproc_line +:= 1
                         result := ""
                      }
                   }
@@ -413,18 +419,11 @@ class Parser(Connectable)
                   }
                }
             }
-            if /done_set then {
-               suspend preproc_sync_lines()
-            }
             suspend if q = 1 then .&subject else result || &subject[q:0]
          }
          else {
-            suspend preproc_sync_lines()
             suspend .&subject
-            #suspend image(preproc_filename) || ":" ||
-            #       preproc_line || " " || &subject
          }
-         preproc_print_line := preproc_line
       }
    end
 
@@ -448,11 +447,11 @@ class Parser(Connectable)
           preproc_line := pop(preproc_file_stack) &
           preproc_include_name := pop(preproc_file_stack) &
           preproc_filename := pop(preproc_file_stack) &
-          preproc_file := pop(preproc_file_stack)) | fail
+          preproc_file := pop(preproc_file_stack) &
+          preproc_encoding := pop(preproc_file_stack)) | fail
+         suspend preproc_sync_lines()
       }
       preproc_line +:= 1
-      #write(&errout,"+++ ",image(preproc_filename),":",
-      #             preproc_line," (",preproc_if_state,"): ",result)
       return result
    end
 
@@ -544,26 +543,15 @@ class Parser(Connectable)
    # Determines if a "#lines" is called for and generates one if so.
    #
    private preproc_sync_lines()
-      local delta
-      if preproc_filename ~=== preproc_print_filename then {
-         suspend "#line " || preproc_line - 1 || " " || image(preproc_filename)
+      if (preproc_line ~=== preproc_print_line) |
+         (preproc_encoding ~=== preproc_print_encoding) |
+         (preproc_filename ~=== preproc_print_filename) then 
+      {
+         preproc_print_encoding := preproc_encoding
          preproc_print_filename := preproc_filename
+         preproc_print_line := preproc_line
+         return "#line " || preproc_line || " " || image(preproc_filename) || " " || preproc_encoding
       }
-      else {
-         delta := preproc_line - preproc_print_line
-         #write(&errout,"+++++ preproc_line = ",image(preproc_line),
-         #  "; preproc_print_line = ",image(preproc_print_line),
-         #  "; delta = ",image(delta))
-         if delta ~= 1 then {
-            if delta < 20 then {
-               suspend 2 to delta & ""
-            } else {
-               suspend "#line " || preproc_line - 1 || " " ||
-                  image(preproc_filename)
-            }
-         }
-      }
-      preproc_print_line := preproc_line
    end
 
    #

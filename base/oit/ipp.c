@@ -12,6 +12,7 @@
  *	$ifndef identifier
  *	$else
  *	$endif
+ *      $encoding name
  *	$error [text]
  *
  *  Entry points are
@@ -23,13 +24,15 @@
  *  See ../h/features.h for the set of predefined symbols.
  */
  
-#include "../h/gsupport.h"
+#include "icont.h"
+#include "tmain.h"
 
 #define HTBINS 256			/* number of hash bins */
 
 typedef struct fstruct {		/* input file structure */
    struct fstruct *prev;		/* previous file */
    char *fname;				/* file name */
+   char *encoding;                      /* encoding */
    long lno;				/* line number */
    FILE *fp;				/* stdio file pointer */
    int m4flag;				/* nz if preprocessed by m4 */
@@ -61,7 +64,7 @@ static	int	ppopen	(char *fname, int m4);
 static	FILE *	m4pipe	(char *fname);
 static	char *	rline	(FILE *fp);
 static	void	pushdef	(cdefn *d);
-static	void	pushline (char *fname, long lno);
+static	void	pushline (void);
 static	void	ppdir	(char *line);
 static	void	pfatal	(char *s1, char *s2);
 static	void	skipcode (int doelse, int report);
@@ -72,6 +75,7 @@ static	char *	ifndef	(char *s);
 static	char *	ifxdef	(char *s, int f);
 static	char *	elsedir	(char *s);
 static	char *	endif	(char *s);
+static	char *	encoding(char *s);
 static	char *	errdir	(char *s);
 static	char *	include	(char *s);
 static	char *	setline	(char *s);
@@ -79,6 +83,7 @@ static	char *	wskip	(char *s);
 static	char *	nskip	(char *s);
 static	char *	matchq	(char *s);
 static	char *	getidt	(char *dst, char *src);
+static	char *	getencoding(char *dst, char *src);
 static	char *	getfnm	(char *dst, char *src);
 static	cdefn *	dlookup	(char *name, int len, char *val);
 
@@ -96,6 +101,7 @@ pplist[] = {
    { "include", include },
    { "line",    setline },
    { "error",   errdir  },
+   { "encoding",encoding  },
    { 0,         0       }};
 
 static infile nofile;			/* ancestor of all files; all zero */
@@ -108,7 +114,6 @@ static char *buf;			/* input line buffer */
 static char *bnxt;			/* next character */
 static char *bstop;			/* limit of preprocessed chars */
 static char *blim;			/* limit of all chars */
-
 static cdefn *cbin[HTBINS];		/* hash bins for defn table */
 
 char *lpath;				/* LPATH for finding source files */
@@ -186,11 +191,12 @@ int m4;
    fs->prev = curfile;
    fs->fp = f;
    fs->fname = intern(fname);
+   fs->encoding = ascii_string;
    fs->lno = 0;
    fs->m4flag = m4;
    fs->ifdepth = ifdepth;
-   pushline(fs->fname, 0L);
    curfile = fs;
+   pushline();
    return 1;
    }
 
@@ -387,7 +393,7 @@ int ppch()
          if (curfile == &nofile)	/* if at outer level, return EOF */
             return EOF;
          else				/* else generate #line comment */
-            pushline(curfile->fname, curfile->lno);
+             pushline();
          }
       }
    }
@@ -471,15 +477,13 @@ cdefn *d;
    }
 
 /*
- * pushline(fname,lno) -- push #line directive into input stream.
+ * pushline() -- push #line directive into input stream.
  */
-static void pushline(fname, lno)
-char *fname;
-long lno;
+static void pushline()
    {
-   static char tbuf[200];
+   static char tbuf[256];
 
-   sprintf(tbuf, "#line %ld \"%s\"\n", lno, fname);
+   snprintf(tbuf, sizeof(tbuf), "#line %ld \"%s\" %s\n", curfile->lno, curfile->fname, curfile->encoding);
    bnxt = tbuf;
    bstop = blim = tbuf + strlen(tbuf);
    }
@@ -653,7 +657,7 @@ char *s;
       curfile->fname = intern(fname);
       }
 
-   pushline(curfile->fname, curfile->lno);
+   pushline();
    return NULL;
    }
 
@@ -720,6 +724,20 @@ char *s;
    ifdepth--;
    return NULL;
    }
+
+/*
+ * encoding(s) -- handle $encoding.
+ */
+static char *encoding(s)
+char *s;
+   {
+   char *code;
+   s = wskip(s);			/* skip whitespace */
+   s = getencoding(code = s - 1, s);		/* get encoding name */
+   curfile->encoding = intern(code);
+   pushline();
+   return NULL;
+   }
 
 /*
  * skipcode(doelse,report) -- skip code to $else (doelse=1) or $endif (=0).
@@ -776,7 +794,7 @@ int doelse, report;
          if (cmd[1] == 'n')		/* if $endif */
             ifdepth--;
          if (report)
-            pushline(curfile->fname, curfile->lno);
+             pushline();
          return;
          }
       }
@@ -877,6 +895,22 @@ char *dst, *src;
    char c;
 
    while (isalnum((unsigned char)(c = *src)) || (c == '_')) {
+      *dst++ = c;
+      src++;
+      }
+   *dst = '\0';
+   return src;
+   }
+
+/*
+ * As above, but slightly different permissible chars.
+ */
+static char *getencoding(dst, src)
+char *dst, *src;
+   {
+   char c;
+
+   while (isalnum((unsigned char)(c = *src)) || (c == '-')) {
       *dst++ = c;
       src++;
       }

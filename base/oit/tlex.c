@@ -12,6 +12,7 @@
 
 /* Used by auto-generated func in ../common/lextab.h */
 static  int nextchar();
+static void lexfatal(char *fmt, ...);
 
 #include "lexdef.h"
 #include "lextab.h"
@@ -29,11 +30,13 @@ static	struct toktab   *getstring	(int ac,int *cc);
 static	struct toktab   *getucs     	(int ac,int *cc);
 static	struct toktab   *getcset	(int ac,int *cc);
 static	int		setfilenm	(int c);
+static	int		setencoding	(int c);
 static	int		setlineno	(void);
 static	int	ctlesc		(void);
 static	int	hexesc		(int digs);
 static	int	octesc		(int ac);
 static  int     read_utf_char(int c);
+static  char    *encoding;
 
 #define isletter(c)	(isupper(c) | islower(c))
 #define tonum(c)        (isdigit(c) ? (c - '0') : ((c & 037) + 9))
@@ -62,6 +65,25 @@ static int lastend = 0;
 static int eofflag = 0;
 static int cc = '\n';
 int nlflag;
+
+/*
+ * Identical to tfatal, except for the handling of the line number.
+ */
+static void lexfatal(char *fmt, ...)
+{
+    va_list argp;
+    if (File(&tok_loc))
+        fprintf(stderr, "File %s; ", abbreviate(File(&tok_loc)));
+    if (in_line)
+        fprintf(stderr, "Line %d # ", in_line);
+    va_start(argp, fmt);
+    vfprintf(stderr, fmt, argp);
+    putc('\n', stderr);
+    fflush(stderr);
+    va_end(argp);
+    tfatals++;
+    nocode++;
+}
 
 int yylex()
 {
@@ -115,6 +137,8 @@ int yylex()
                         c = NextChar;
                     if (c != EOF && c != '\n')
                         c = setfilenm(c);
+                    if (c != EOF && c != '\n')
+                        c = setencoding(c);
                 }
                 while (c != EOF && c != '\n')
                     c = NextChar;
@@ -352,7 +376,7 @@ static struct toktab *getnum(ac, cc)
                 if (c == 'r' || c == 'R')  {
                     state = 5;
                     if (over || (wval < 2 || wval > 36))
-                        tfatal("invalid radix for integer literal");
+                        lexfatal("invalid radix for integer literal");
                     radix = wval;
                     rval = wval = 0;
                     continue;
@@ -366,7 +390,7 @@ static struct toktab *getnum(ac, cc)
                 if (c == '+' || c == '-') { state = 3; continue; }
             case 3:		/* first digit after e, e+, or e- */
                 if (isdigit(c)) { state = 4; continue; }
-                tfatal("invalid real literal");
+                lexfatal("invalid real literal");
                 break;
             case 4:		/* remaining digits after e */
                 if (isdigit(c))   continue;
@@ -377,7 +401,7 @@ static struct toktab *getnum(ac, cc)
                     rval = wval = tonum(c);
                     continue; 
                 }
-                tfatal("invalid integer literal");
+                lexfatal("invalid integer literal");
                 break;
             case 6:		/* remaining digits after r */
                 if (isdigit(c) || isletter(c)) {
@@ -391,7 +415,7 @@ static struct toktab *getnum(ac, cc)
                                 wval = wval * radix + d;
                         }
                     } else {	/* illegal digit for radix r */
-                        tfatal("invalid digit in integer literal");
+                        lexfatal("invalid digit in integer literal");
                         radix = tonum('z');       /* prevent more messages */
                     }
                     continue;
@@ -421,7 +445,7 @@ static struct toktab *getnum(ac, cc)
         errno = 0;
         rval = strtod(lex_sbuf.strtimage,0);
         if (errno == ERANGE)
-            tfatal("real literal out of representable range");
+            lexfatal("real literal out of representable range");
         zero_sbuf(&lex_sbuf);
         p = (char *)&rval;
         for (i = 0; i < sizeof(double); ++i)
@@ -493,7 +517,7 @@ static struct toktab *getstring(ac, cc)
             else if (c == 'U') {
                 c = hexesc(6);
                 if (c > MAX_CODE_POINT) {
-                    tfatal("code point out of range");
+                    lexfatal("code point out of range");
                     c = 0;
                 }
                 n = utf8_seq(c, utf8);
@@ -505,12 +529,10 @@ static struct toktab *getstring(ac, cc)
             else
                 AppChar(lex_sbuf, esctab[c]);
         } else {
-            if (uflag && c > 127) {
-                n = utf8_seq(c, utf8);
-                for (i = 0; i < n; ++i)
-                    AppChar(lex_sbuf, utf8[i]);
-            } else
+            if (c < 256) 
                 AppChar(lex_sbuf, c);
+            else
+                lexfatal("string literal character out of range (codepoint %d)", c);
         }
 
         c = NextChar;
@@ -518,7 +540,7 @@ static struct toktab *getstring(ac, cc)
     if (c == '"')
         *cc = ' ';
     else {
-        tfatal("unclosed quote");
+        lexfatal("unclosed quote");
         *cc = c;
     }
     len = lex_sbuf.endimage - lex_sbuf.strtimage;
@@ -571,7 +593,7 @@ static struct toktab *getucs(ac, cc)
             else if (c == 'U') {
                 c = hexesc(6);
                 if (c > MAX_CODE_POINT) {
-                    tfatal("code point out of range");
+                    lexfatal("code point out of range");
                     c = 0;
                 }
                 n = utf8_seq(c, utf8);
@@ -583,7 +605,7 @@ static struct toktab *getucs(ac, cc)
             else
                 AppChar(lex_sbuf, esctab[c]);
         } else {
-            if (uflag && c > 127) {
+            if (c > 127) {
                 n = utf8_seq(c, utf8);
                 for (i = 0; i < n; ++i)
                     AppChar(lex_sbuf, utf8[i]);
@@ -596,7 +618,7 @@ static struct toktab *getucs(ac, cc)
     if (c == '"')
         *cc = ' ';
     else {
-        tfatal("unclosed quote");
+        lexfatal("unclosed quote");
         *cc = c;
     }
 
@@ -608,11 +630,11 @@ static struct toktab *getucs(ac, cc)
         char *t = p;
         int i = utf8_check(&p, lex_sbuf.endimage);
         if (i == -1) {
-            tfatal("Invalid utf-8 sequence beginning at char %d", 1 + (t - lex_sbuf.strtimage));
+            lexfatal("Invalid utf-8 sequence beginning at char %d", 1 + (t - lex_sbuf.strtimage));
             break;
         }
         if (i < 0 || i > MAX_CODE_POINT) {
-            tfatal("utf-8 code point out of range beginning at char %d", 1 + (t - lex_sbuf.strtimage));
+            lexfatal("utf-8 code point out of range beginning at char %d", 1 + (t - lex_sbuf.strtimage));
             break;
         }
     }
@@ -668,7 +690,7 @@ static struct toktab *getcset(ac, cc)
             else if (c == 'U') {
                 c = hexesc(6);
                 if (c > MAX_CODE_POINT) {
-                    tfatal("code point out of range");
+                    lexfatal("code point out of range");
                     c = 0;
                 }
             }
@@ -702,10 +724,10 @@ static struct toktab *getcset(ac, cc)
         if (state == 1) {
             MemProtect(add_range(cs, prev, prev));
         } else if (state == 2)
-            tfatal("incomplete cset range");
+            lexfatal("incomplete cset range");
         *cc = ' ';
     } else {
-        tfatal("unclosed quote");
+        lexfatal("unclosed quote");
         *cc = c;
     }
 
@@ -803,7 +825,7 @@ static int setlineno()
     while ((c = NextChar) == ' ' || c == '\t')
         ;
     if (c < '0' || c > '9') {
-        tfatal("no line number in #line directive");
+        lexfatal("no line number in #line directive");
         while (c != EOF && c != '\n')
             c = NextChar;
         return c;
@@ -821,17 +843,17 @@ static int setlineno()
  * setfilenm -	set file name from #line comment, return following char.
  */
 
-static int setfilenm(c)
-    register int c;
+static int setfilenm(int c)
 {
     while (c == ' ' || c == '\t')
         c = NextChar;
     if (c != '"') {
-        tfatal("'\"' missing from file name in #line directive");
+        lexfatal("'\"' missing from file name in #line directive");
         while (c != EOF && c != '\n')
             c = NextChar;
         return c;
     }
+    zero_sbuf(&lex_sbuf);
     while ((c = NextChar) != '"' && c != EOF && c != '\n')
         AppChar(lex_sbuf, c);
     if (c == '"') {
@@ -840,9 +862,38 @@ static int setfilenm(c)
         return NextChar;
     }
     else {
-        tfatal("'\"' missing from file name in #line directive");
+        lexfatal("'\"' missing from file name in #line directive");
         return c;
     }
+}
+
+/*
+ * setencoding -	set encoding from #line comment, return following char.
+ */
+
+static int setencoding(int c)
+{
+    char *s;
+    while (c == ' ' || c == '\t')
+        c = NextChar;
+
+    zero_sbuf(&lex_sbuf);
+    while (isalnum((unsigned char)c) || (c == '-')) {
+        AppChar(lex_sbuf, c);
+        c = NextChar;
+    }
+
+    s = str_install(&lex_sbuf);
+    if (s == empty_string)
+        lexfatal("no encoding in #line directive");
+    else if (s == ascii_string || s == utf8_string || s == iso_8859_1_string)
+        encoding = s;
+    else {
+        lexfatal("invalid encoding:%s", s);
+        encoding = ascii_string;
+    }
+
+    return c;
 }
 
 /*
@@ -886,8 +937,13 @@ static int nextchar()
                 incol--;
             break;
         default: {
-            if (c > 127 && uflag)
-                c = read_utf_char(c);
+            if (c > 127) {
+                if (encoding == utf8_string)
+                    c = read_utf_char(c);
+                else if (encoding == ascii_string)
+                    lexfatal("non-ascii character (codepoint %d)", c);
+                /* else encoding == iso_8859_1_string in which case the codepoint is c */
+            }
             incol++;
         }
     }
@@ -899,7 +955,7 @@ static int read_utf_char(int c)
     char utf8[MAX_UTF8_SEQ_LEN], *p = utf8;
     int i, n = UTF8_SEQ_LEN(c);
     if (n < 1) {
-        tfatal("invalid utf-8 start char");
+        lexfatal("invalid utf-8 start char");
         return ' ';  /* Returning space keeps down follow-through error messages */
     }
     utf8[0] = c;
@@ -911,11 +967,11 @@ static int read_utf_char(int c)
     }
     c = utf8_check(&p, utf8 + n);
     if (c == -1) {
-        tfatal("invalid utf-8 sequence");
+        lexfatal("invalid utf-8 sequence");
         return ' ';
     }
     if (c < 0 || c > MAX_CODE_POINT) {
-        tfatal("utf-8 code point out of range");
+        lexfatal("utf-8 code point out of range");
         return ' ';
     }
 

@@ -24,7 +24,6 @@ int neweronly	=0;	/* -n: only translate .icn if newer than .u */
 int Dflag       =0;     /* -L: link debug */
 int Zflag	=0;	/* -Z: icode-gz compression */
 int Bflag       =0;     /* -B: bundle iconx in output file */
-int uflag       =0;     /* -u: utf-8 source code */
 int loclevel	=1;	/* -l n: amount of location info in icode 0 = none, 1 = trace info (default), 
                          *       2 = trace & symbol info */
 int Olevel      =1;     /* -O n: optimisation */
@@ -41,6 +40,9 @@ char *empty_string;
 char *all_string;
 char *lang_string;
 char *package_marker_string;
+char *ascii_string;
+char *utf8_string;
+char *iso_8859_1_string;
 
 /*
  * Variables related to command processing.
@@ -173,8 +175,8 @@ int main(int argc, char **argv)
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBsuELI] [-f s] [-o ofile] [-v i] [-l i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBfmno:suv:ELIZTVl:O:")) != EOF) {
+#define Usage "[-cBsELI] [-f s] [-o ofile] [-v i] [-l i]"	/* omit -e from doc */
+    while ((c = getopt(argc,argv, "cBfmno:sv:ELIZTVl:O:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -195,10 +197,6 @@ int main(int argc, char **argv)
 
             case 'I':			/* -I: dump intermediate code */
                 Iflag = 1;
-                break;
-
-            case 'u':			/* -u: source code is in utf8 format */
-                uflag = 1;
                 break;
 
             case 'V':
@@ -601,6 +599,9 @@ void init_strings()
     all_string = spec_str("all");
     lang_string = spec_str("lang");
     package_marker_string = spec_str(">package");
+    ascii_string = spec_str("ASCII");
+    utf8_string = spec_str("UTF-8");
+    iso_8859_1_string = spec_str("ISO-8859-1");
 }
 
 #include "tree.h"

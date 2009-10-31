@@ -582,6 +582,6 @@ int *cc;
             }
          break;
       }
-   tfatal("invalid character");
+   lexfatal("invalid character");
    return -1;
    }
