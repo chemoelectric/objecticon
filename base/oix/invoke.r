@@ -241,7 +241,6 @@ static void check_if_uninitialized()
     word *a = GetAddr;
     if (BlkLoc(*class0)->class.init_state != Uninitialized)
         ipc = a;
-    /*printf("check_if_uninitialized\n");*/
 }
 
 static void set_class_state()
@@ -250,7 +249,6 @@ static void set_class_state()
     struct descrip val;
     get_deref(&val);      /* Value */
     BlkLoc(*class0)->class.init_state = IntVal(val);
-    /*printf("set_class_state to %d\n", IntVal(val));*/
 }
 
 static void set_object_state()
@@ -259,7 +257,6 @@ static void set_object_state()
     struct descrip val;
     get_deref(&val);      /* Value */
     BlkLoc(*obj)->object.init_state = IntVal(val);
-    /*printf("set_class_state to %d\n", IntVal(val));*/
 }
 
 static void for_class_supers()
@@ -268,7 +265,6 @@ static void for_class_supers()
     dptr i = get_dptr();       /* Index */
     dptr res = get_dptr();     /* Result */
     word *a = GetAddr;      /* Branch when done */
-    /*printf("for_class_supers (i=%d of %d)\n", IntVal(*i), BlkLoc(*class0)->class.n_supers);*/
 
     if (IntVal(*i) < BlkLoc(*class0)->class.n_supers) {
         res->dword = D_Class;
@@ -285,7 +281,6 @@ static void invoke_class_init()
     struct b_class *class0 = (struct b_class *)BlkLoc(*d);
     struct class_field *init_field;
 
-    /*printf("invoke_class_init %p\n", class0);*/
     init_field = class0->init_field;
     if (init_field && init_field->defining_class == class0) {
         struct b_proc *bp;
@@ -381,7 +376,6 @@ void construct_object(word clo, dptr expr, int argc, dptr args, word rval, word 
         /* Arg0 is the class */
         pf->fvars->desc[0] = *expr;
         /* Arg1 is the allocated new object object */
-        /*test_collect(15,0);*/
         MemProtect(BlkLoc(pf->fvars->desc[1]) = (union block *)alcobject(class0));
         pf->fvars->desc[1].dword = D_Object; 
         BlkLoc(pf->fvars->desc[1])->object.init_state = Initializing;

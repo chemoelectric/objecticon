@@ -1139,7 +1139,6 @@ static char *get_ucs_off(struct b_ucs *b, word n)
 {
     word d, i;
     char *p = StrLoc(b->utf8);
-    /*printf("req: len=%d step=%d n=%d n_indexed=%d\n",b->length,b->index_step,n,b->n_off_indexed);*/
 
     /*
      * Special case of looking up just past the end of the last char.
@@ -1218,7 +1217,6 @@ struct b_ucs *make_ucs_block(dptr utf8, word length)
 
     if (length == 0)
         return emptystr_ucs;
-    test_collect(0,20,1);
     index_step = calc_ucs_index_step(length);
     n_offs = (length - 1) / index_step;
     MemProtect(p = alcucs(n_offs));
