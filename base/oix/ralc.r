@@ -622,24 +622,16 @@ alctvtbl_macro(alctvtbl_1,E_Tvtbl)
 /*
  * dealcblk - return a block to the heap.
  *
- *  The block must be the one that is at the very end of a block region.
+ * The block must be the one that is at the very end of the current
+ * block region, ie it must just have been allocated, without any
+ * intervening allocation before this call.
  */
 void f (union block *bp)
 {
-   word nbytes;
-   struct region *rp;
-
-   nbytes = BlkSize(bp);
-   for (rp = curblock; rp; rp = rp->next)
-      if ((char *)bp + nbytes == rp->free)
-         break;
-   if (!rp)
-      for (rp = curblock->prev; rp; rp = rp->prev)
-	 if ((char *)bp + nbytes == rp->free)
-            break;
-   if (!rp)
-      syserr ("deallocation botch");
-   rp->free = (char *)bp;
+   word nbytes = BlkSize(bp);
+   if ((char *)bp + nbytes != blkfree)
+       syserr("Attempt to dealcblk, but block not at end of current block region");
+   blkfree = (char *)bp;
    blktotal -= nbytes;
    EVVal(-nbytes, e_blkdealc);
 }
