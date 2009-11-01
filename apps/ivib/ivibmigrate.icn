@@ -47,11 +47,13 @@ class Loader()
    end
 
    public load_layout(f)
-      local s, t
+      local s, t, hash
       t := ""
-      while s := read(f) do {
-         if s[1] == "#" then
-            t ||:= s[2:0]
+      while s := read(f) do s ? {
+         if /hash := tab(many('#')) then
+            tab(1)
+         if =hash then
+            t ||:= tab(0)
          else
             break
       }

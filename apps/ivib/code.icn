@@ -124,7 +124,7 @@ class Code()
    # Output the code to file called s.
    #
    public output_code(s)
-      local prog, im, cl, f, t, g, e, fl
+      local prog, im, cl, e, fl
 
       prog := Factory.new_prog()
       im := Factory.new_import("", [])
@@ -139,20 +139,28 @@ class Code()
          every fl.put(Factory.new_id("\n      ", !class_vars))
          cl.put(fl)
       }
-
       generate_methods(prog, cl)
+      return write_file(s, prog)
+   end
 
-      f := open(s, "w") | return alert_error("Couldn't open " || s)
+   private write_file(dest_name, prog)
+      local f, g, temp_name, l_name, l_temp_name, hash
+
+      temp_name := dest_name || ".temp"
+      f := open(temp_name, "w") | return alert_error("Couldn't open " || temp_name)
+
       prog.pos.output(f)
       writes(f, "\n\n")
 
-      if t := resolve_layout_filename(s, \parent_Canvas.layout_filename) then {
+      if l_name := resolve_layout_filename(dest_name,
+                                           \parent_Canvas.layout_filename) then {
          #
          # Output the encoded canvas to the layout file.
          #
-         if not(g := open(t, "w")) then {
+         l_temp_name :=  l_name || ".temp"
+         if not(g := open(l_temp_name, "w")) then {
             close(f)
-            return alert_error("Couldn't open " || t)
+            return alert_error("Couldn't open " || l_temp_name)
          }
          write(f, Ivib.V2i_MARKER, parent_Canvas.layout_filename)
          write(g, encode(parent_Canvas))
@@ -164,11 +172,27 @@ class Code()
          #
          write(f, Ivib.V2_MARKER)
          encode(parent_Canvas) ? {
+            # Check if we need to use two #'s to avoid mistaken #line directives
+            hash := if find("line") % 70 = 1 then "##" else "#"
             until pos(0) do
-               write(f, "#", move(70) | tab(0))
+               write(f, hash, move(70) | tab(0))
          }
       }
+
       close(f)
+
+      #
+      # Everything okay, so rename
+      #
+      if \l_name then {
+         Files.remove(l_name)
+         Files.move(l_temp_name, l_name) | stop("Couldn't rename new layout file ", 
+                                                l_temp_name, " to ", l_name)
+      }
+      Files.remove(dest_name)
+      Files.move(temp_name, dest_name) | stop("Couldn't rename new source file ", 
+                                              temp_name, " to ", dest_name)
+
       return
    end
 
@@ -177,8 +201,7 @@ class Code()
    # in dest_name.
    #
    public interpose_code(src_name, dest_name)
-      local prog, d, d2, p, f, g, temp_name, l_name, 
-            l_temp_name, cl, fl, s, t, seen_importspec, e, im, ispec
+      local prog, d, d2, p, cl, fl, s, t, seen_importspec, e, im, ispec
 
       /dest_name := src_name
 
@@ -261,51 +284,7 @@ class Code()
       #
       # Re-create file
       #
-      temp_name := dest_name || ".temp"
-      f := open(temp_name, "w") | return alert_error("Couldn't open " || temp_name)
-
-      prog.pos.output(f)
-      writes(f, "\n\n")
-
-      if l_name := resolve_layout_filename(dest_name,
-                                           \parent_Canvas.layout_filename) then {
-         #
-         # Output the encoded canvas to the layout file.
-         #
-         l_temp_name :=  l_name || ".temp"
-         if not(g := open(l_temp_name, "w")) then {
-            close(f)
-            return alert_error("Couldn't open " || l_temp_name)
-         }
-         write(f, Ivib.V2i_MARKER, parent_Canvas.layout_filename)
-         write(g, encode(parent_Canvas))
-         close(g)
-      } else {
-         #
-         # Output the encoded canvas to the source file, splitting the output over several
-         # comment lines.
-         #
-         write(f, Ivib.V2_MARKER)
-         encode(parent_Canvas) ? {
-            until pos(0) do
-               write(f, "#", move(70) | tab(0))
-         }
-      }
-
-      close(f)
-
-      #
-      # Everything okay, so rename
-      #
-      if \l_name then {
-         Files.remove(l_name)
-         Files.move(l_temp_name, l_name) | stop("Couldn't rename new layout file ", 
-                                                l_temp_name, " to ", l_name)
-      }
-      Files.remove(dest_name)
-      Files.move(temp_name, dest_name) | stop("Couldn't rename new source file ", 
-                                              temp_name, " to ", dest_name)
-      return
+      return write_file(dest_name, prog)
    end
 
    private generate_methods(prog, cl)
