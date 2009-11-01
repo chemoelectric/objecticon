@@ -640,12 +640,12 @@ static char *setline(char *s)
 
     s = wskip(s);			/* skip whitespace */
 
-    if (isalpha (c = *s) || c == '_' || c == '"') {	/* if filename */
+    if (isalpha((unsigned char)(c = *s)) || c == '_' || c == '"') {	/* if filename */
         s = getfnm(fname = s - 1, s);			/* extract it */
         if (*fname == '\0')
             return "$line: invalid file name";
         s = wskip(s);			/* skip whitespace */
-        if (isalpha (c = *s)) {	/* if encoding */
+        if (isalpha((unsigned char)(c = *s))) {	/* if encoding */
             s = getencoding(code = s - 1, s);		/* get encoding name */
         }
     }
@@ -735,8 +735,12 @@ static char *encoding(s)
 char *s;
    {
    char *code;
-   s = wskip(s);			/* skip whitespace */
-   s = getencoding(code = s - 1, s);		/* get encoding name */
+   if (isalpha((unsigned char)*s))
+       s = getencoding(code = s - 1, s);		/* get encoding name */
+   else
+      return "$encoding: missing name";
+   if (*wskip(s) != '\0')
+      return "$encoding: too many arguments";
    curfile->encoding = intern(code);
    pushline();
    return NULL;
@@ -845,13 +849,13 @@ char *s;
          return s;
          }
       if (c == '.')
-         while (isdigit ((unsigned char)(c = *++s)))
+         while (isdigit((unsigned char)(c = *++s)))
             ;
       if (c == 'e' || c == 'E') {
          c = s[1];
          if (c == '+' || c == '-')
             s++;
-         while (isdigit (c = *++s))
+         while (isdigit((unsigned char)(c = *++s)))
             ;
          }
       return s;

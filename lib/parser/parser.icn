@@ -200,7 +200,7 @@ class Parser(Connectable)
    # a_Scans an encoding identifier.
    #
    private preproc_get_encoding()
-      suspend tab(many(preproc_encoding_chars))
+      suspend any(&letters) & tab(many(preproc_encoding_chars))
    end
 
    #
@@ -347,7 +347,11 @@ class Parser(Connectable)
       }
       "encoding": {
          if /preproc_if_state then {
-            preproc_encoding := preproc_get_encoding()
+            if sym := preproc_get_encoding() &
+               preproc_at_end() then
+                  preproc_encoding := sym
+            else
+                  preproc_error()
          }
       }
       "ITRACE": {
