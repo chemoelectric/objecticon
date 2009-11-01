@@ -1,4 +1,4 @@
-#line 0 "tpp.icn" ASCII
+#line 1 "tpp.icn" ASCII
 #SRC: IPROJ
 
 # tpp.icn -- test file for Icon preprocessor
@@ -13,7 +13,7 @@ abc 11
 defgh 22
 #line 33 "ijklm" ASCII
 ijklm 33
-#line 44 "ijklm" ASCII
+#line 44
 same 44
 #line 55 "xyzzy" ASCII
 xyzzy 55
@@ -37,14 +37,14 @@ abc 11
 defgh 22
 #line 33 "ijklm" ASCII
 ijklm 33
-#line 44 "ijklm" ASCII
+#line 44
 <same> 44
 #line 55 "xyzzy" ASCII
 xyzzy 55
 $( digraphs for EBCDIC $)
 (that was EBCDIC)
 
-#line 0 "bad.ppdirs" ASCII
+#line 1 "bad.ppdirs" ASCII
 # following should be illegal and diagnosed
 
 
@@ -56,13 +56,13 @@ $( digraphs for EBCDIC $)
 
 
 
-#line 0 "include.tests" ASCII
+#line 1 "include.tests" ASCII
 =a=
-#line 0 "empty" ASCII
-#line 2 "include.tests" ASCII
+#line 1 "empty" ASCII
+#line 3 "include.tests" ASCII
 =b=
-#line 0 "empty" ASCII
-#line 4 "include.tests" ASCII
+#line 1 "empty" ASCII
+#line 5 "include.tests" ASCII
 =c=
 
 =d=
@@ -80,42 +80,42 @@ $( digraphs for EBCDIC $)
 =j=
 
 =k=
-#line 0 "tpp1.icn" ASCII
+#line 1 "tpp1.icn" ASCII
 #  tpp1.icn: part 1 of circular include test
    =1=
-#line 0 "tpp2.icn" ASCII
+#line 1 "tpp2.icn" ASCII
 #  tpp2.icn: part 1 of circular include test
       =2=
-#line 0 "tpp3.icn" ASCII
+#line 1 "tpp3.icn" ASCII
 #  tpp3.icn: part 1 of circular include test
          =3=
 
          =3=
-#line 3 "tpp2.icn" ASCII
+#line 4 "tpp2.icn" ASCII
       =2=
-#line 3 "tpp1.icn" ASCII
+#line 4 "tpp1.icn" ASCII
    =1=
-#line 22 "include.tests" ASCII
+#line 23 "include.tests" ASCII
 =l=
-#line 0 "tpp3.icn" ASCII
+#line 1 "tpp3.icn" ASCII
 #  tpp3.icn: part 1 of circular include test
          =3=
-#line 0 "tpp1.icn" ASCII
+#line 1 "tpp1.icn" ASCII
 #  tpp1.icn: part 1 of circular include test
    =1=
-#line 0 "tpp2.icn" ASCII
+#line 1 "tpp2.icn" ASCII
 #  tpp2.icn: part 1 of circular include test
       =2=
 
       =2=
-#line 3 "tpp1.icn" ASCII
+#line 4 "tpp1.icn" ASCII
    =1=
-#line 3 "tpp3.icn" ASCII
+#line 4 "tpp3.icn" ASCII
          =3=
-#line 24 "include.tests" ASCII
+#line 25 "include.tests" ASCII
 =m=
 
-#line 0 "predef.tst" ASCII
+#line 1 "predef.tst" ASCII
 #== predef test ==
 should be defined as 1:  1
 should not be defined:  _EBCDIC
@@ -125,7 +125,7 @@ should not be defined:  _EBCDIC
 
 redefined:  ascii:ascii ebcdic:ebcdic
 
-#line 0 "define.tst" ASCII
+#line 1 "define.tst" ASCII
 #== define test ==
 
 #= illegal =
@@ -193,14 +193,14 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 
 123_abc+<%>+123<%>+abc_+<%>"_"<%>+36rX<%>+123e10<%>+12.e+5<%>+e7_+<%>#_
 
-#line 0 "error.tst" ASCII
+#line 1 "error.tst" ASCII
 #= $error =
 
 
 
 
 
-#line 0 "if.tst" ASCII
+#line 1 "if.tst" ASCII
 #= conditional compilation =
 
 
@@ -211,9 +211,9 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
    "isdef is defined"
 
 
-#line 13 "if.tst" ASCII
+#line 14
 
-#line 17 "if.tst" ASCII
+#line 18
 
 
    "notdef is not defined"
@@ -221,9 +221,9 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 
 
    "isdef is defined"
-#line 27 "if.tst" ASCII
+#line 28
 
-#line 31 "if.tst" ASCII
+#line 32
    "notdef is not defined"
 
 
@@ -231,7 +231,7 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 
 
    (true...)
-#line 45 "if.tst" ASCII
+#line 46
    (...true)
 
 
@@ -241,223 +241,223 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
    (begin true branch)
 
       "isdef is defined"
-#line 57 "if.tst" ASCII
+#line 58
    (end true branch)
-#line 67 "if.tst" ASCII
+#line 68
 
 # test all paths through four nested ifs
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
-#line 32 "tpp4.icn" ASCII
-#line 47 "tpp4.icn" ASCII
-#line 54 "tpp4.icn" ASCII
-#line 57 "tpp4.icn" ASCII
+#line 33
+#line 48
+#line 55
+#line 58
 	    - - - - : id1 id2 id3 id4
 
 
 
 
-#line 70 "if.tst" ASCII
+#line 71 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
-#line 32 "tpp4.icn" ASCII
-#line 47 "tpp4.icn" ASCII
-#line 54 "tpp4.icn" ASCII
+#line 33
+#line 48
+#line 55
 
 	    - - - + : id1 id2 id3 *4*
-#line 59 "tpp4.icn" ASCII
+#line 60
 
 
 
-#line 72 "if.tst" ASCII
+#line 73 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
-#line 32 "tpp4.icn" ASCII
-#line 47 "tpp4.icn" ASCII
+#line 33
+#line 48
 
 
 	    - - + + : id1 id2 *3* *4*
-#line 53 "tpp4.icn" ASCII
-#line 60 "tpp4.icn" ASCII
+#line 54
+#line 61
 
 
-#line 74 "if.tst" ASCII
+#line 75 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
-#line 32 "tpp4.icn" ASCII
-#line 47 "tpp4.icn" ASCII
+#line 33
+#line 48
 
-#line 51 "tpp4.icn" ASCII
+#line 52
 	    - - + - : id1 id2 *3* id4
 
-#line 60 "tpp4.icn" ASCII
+#line 61
 
 
-#line 76 "if.tst" ASCII
+#line 77 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
-#line 32 "tpp4.icn" ASCII
+#line 33
 
 
-#line 37 "tpp4.icn" ASCII
+#line 38
 	    - + + - : id1 *2* *3* id4
 
-#line 46 "tpp4.icn" ASCII
-#line 61 "tpp4.icn" ASCII
+#line 47
+#line 62
 
-#line 78 "if.tst" ASCII
+#line 79 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
-#line 32 "tpp4.icn" ASCII
+#line 33
 
 
 
 	    - + + + : id1 *2* *3* *4*
-#line 39 "tpp4.icn" ASCII
-#line 46 "tpp4.icn" ASCII
-#line 61 "tpp4.icn" ASCII
+#line 40
+#line 47
+#line 62
 
-#line 80 "if.tst" ASCII
+#line 81 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
-#line 32 "tpp4.icn" ASCII
+#line 33
 
-#line 40 "tpp4.icn" ASCII
+#line 41
 
 	    - + - + : id1 *2* id3 *4*
-#line 45 "tpp4.icn" ASCII
+#line 46
 
-#line 61 "tpp4.icn" ASCII
+#line 62
 
-#line 82 "if.tst" ASCII
+#line 83 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
-#line 32 "tpp4.icn" ASCII
+#line 33
 
-#line 40 "tpp4.icn" ASCII
-#line 43 "tpp4.icn" ASCII
+#line 41
+#line 44
 	    - + - - : id1 *2* id3 id4
 
 
-#line 61 "tpp4.icn" ASCII
+#line 62
 
-#line 84 "if.tst" ASCII
+#line 85 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
 
 
-#line 10 "tpp4.icn" ASCII
-#line 13 "tpp4.icn" ASCII
+#line 11
+#line 14
 	    + + - - : *1* *2* id3 id4
 
 
-#line 31 "tpp4.icn" ASCII
-#line 62 "tpp4.icn" ASCII
-#line 86 "if.tst" ASCII
+#line 32
+#line 63
+#line 87 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
 
 
-#line 10 "tpp4.icn" ASCII
+#line 11
 
 	    + + - + : *1* *2* id3 *4*
-#line 15 "tpp4.icn" ASCII
+#line 16
 
-#line 31 "tpp4.icn" ASCII
-#line 62 "tpp4.icn" ASCII
-#line 88 "if.tst" ASCII
+#line 32
+#line 63
+#line 89 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
 
 
 
 
 	    + + + + : *1* *2* *3* *4*
-#line 9 "tpp4.icn" ASCII
-#line 16 "tpp4.icn" ASCII
-#line 31 "tpp4.icn" ASCII
-#line 62 "tpp4.icn" ASCII
-#line 90 "if.tst" ASCII
+#line 10
+#line 17
+#line 32
+#line 63
+#line 91 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
 
 
 
-#line 7 "tpp4.icn" ASCII
+#line 8
 	    + + + - : *1* *2* *3* id4
 
-#line 16 "tpp4.icn" ASCII
-#line 31 "tpp4.icn" ASCII
-#line 62 "tpp4.icn" ASCII
-#line 92 "if.tst" ASCII
+#line 17
+#line 32
+#line 63
+#line 93 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
 
-#line 17 "tpp4.icn" ASCII
+#line 18
 
-#line 21 "tpp4.icn" ASCII
+#line 22
 	    + - + - : *1* id2 *3* id4
 
-#line 30 "tpp4.icn" ASCII
+#line 31
 
-#line 62 "tpp4.icn" ASCII
-#line 94 "if.tst" ASCII
+#line 63
+#line 95 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
 
-#line 17 "tpp4.icn" ASCII
+#line 18
 
 
 	    + - + + : *1* id2 *3* *4*
-#line 23 "tpp4.icn" ASCII
-#line 30 "tpp4.icn" ASCII
+#line 24
+#line 31
 
-#line 62 "tpp4.icn" ASCII
-#line 96 "if.tst" ASCII
+#line 63
+#line 97 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
 
-#line 17 "tpp4.icn" ASCII
-#line 24 "tpp4.icn" ASCII
+#line 18
+#line 25
 
 	    + - - + : *1* id2 id3 *4*
-#line 29 "tpp4.icn" ASCII
+#line 30
 
 
-#line 62 "tpp4.icn" ASCII
-#line 98 "if.tst" ASCII
+#line 63
+#line 99 "if.tst" ASCII
 
-#line 0 "tpp4.icn" ASCII
+#line 1 "tpp4.icn" ASCII
 #  tpp4.icn: nested $if test
 
-#line 17 "tpp4.icn" ASCII
-#line 24 "tpp4.icn" ASCII
-#line 27 "tpp4.icn" ASCII
+#line 18
+#line 25
+#line 28
 	    + - - - : *1* id2 id3 id4
 
 
 
-#line 62 "tpp4.icn" ASCII
-#line 100 "if.tst" ASCII
+#line 63
+#line 101 "if.tst" ASCII
 
 
 # make sure it accepts anything resembling an $if when skipping
 
-#line 113 "if.tst" ASCII
+#line 114
 <should pass this line>
 
 # test diagnostics for missing args
@@ -467,15 +467,15 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 
 
 # test diagnostics for extraneous args
-#line 124 "if.tst" ASCII
+#line 125
 
 
-#line 128 "if.tst" ASCII
+#line 129
 
 # test else/endif out of place
 
 
-#line 0 "tpp5.icn" ASCII
+#line 1 "tpp5.icn" ASCII
 #  tpp5.icn: test for unterminated $if
 
 
@@ -483,12 +483,12 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 
 
 
-#line 133 "if.tst" ASCII
+#line 134 "if.tst" ASCII
 
 
 # now try again when unterminated $if succeeds
 
-#line 0 "tpp5.icn" ASCII
+#line 1 "tpp5.icn" ASCII
 #  tpp5.icn: test for unterminated $if
 
 
@@ -496,16 +496,16 @@ c c c c c c c c c c c c c c c c c c c c c c c c c c c
 
 
 
-#line 9 "tpp5.icn" ASCII
+#line 10
 
 
 #outer unterminated $ifdef should get error
-#line 138 "if.tst" ASCII
+#line 139 "if.tst" ASCII
 
 
 
 # test line directives encountered while skipping
 
-#line 113 "invented" ASCII
+#line 114
 
-#line 224 "invented" ASCII
+#line 225

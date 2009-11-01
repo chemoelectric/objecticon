@@ -137,6 +137,8 @@ int yylex()
                         c = NextChar;
                     if (c != EOF && c != '\n')
                         c = setfilenm(c);
+                    while ((c == ' ') || (c == '\t'))
+                        c = NextChar;
                     if (c != EOF && c != '\n')
                         c = setencoding(c);
                 }
@@ -835,6 +837,7 @@ static int setlineno()
         in_line = in_line * 10 + (c - '0');
         c = NextChar;
     }
+    --in_line;
     return c;
 }
 

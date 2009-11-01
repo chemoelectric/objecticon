@@ -43,7 +43,7 @@ xyzzy 55
 $( digraphs for EBCDIC $)
 (that was EBCDIC)
 
-$line 0 "bad.ppdirs"
+$line 1 "bad.ppdirs"
 # following should be illegal and diagnosed
 $line
 $line 91 not.quoted ASCII
@@ -55,7 +55,7 @@ $line 97 "unterminated\
 $line 98""
 $unknown/preprocessing/directive
 
-$line 0 "include.tests"
+$line 1 "include.tests"
 =a=
 $include "empty"
 =b=
@@ -82,7 +82,7 @@ $include "tpp1.icn"	# should get circularity error
 $include"tpp3.icn"#likewise
 =m=
 
-$line 0 "predef.tst"
+$line 1 "predef.tst"
 #== predef test ==
 should be defined as 1:  _ASCII
 should not be defined:  _EBCDIC
@@ -92,7 +92,7 @@ $define _ASCII ascii
 $define _EBCDIC ebcdic
 redefined:  ascii:_ASCII ebcdic:_EBCDIC
 
-$line 0 "define.tst"
+$line 1 "define.tst"
 #== define test ==
 
 #= illegal =
@@ -160,14 +160,14 @@ c
 $define _ <%>
 123_abc+_+123_+abc_+_"_"_+36rX_+123e10_+12.e+5_+e7_+_#_
 
-$line 0 "error.tst"
+$line 1 "error.tst"
 #= $error =
 $error
    $error		
 $error	# no text, just comment
    $    error     this program does not work
 
-$line 0 "if.tst"
+$line 1 "if.tst"
 #= conditional compilation =
 
 $define isdef
@@ -313,12 +313,12 @@ $endif			# should <not> match $if in tpp5.icn
 
 $ifdef notdef
 ...
-$line 111 "invented"
+$line 112 "invented"
 ...
 $endif (& show line)
 
 $ifdef notdef
 ...
-  $   line    222    "invented"
+  $   line    223    "invented"
 ...
 $endif (& show line)

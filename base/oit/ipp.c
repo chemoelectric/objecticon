@@ -119,6 +119,8 @@ static cdefn *cbin[HTBINS];		/* hash bins for defn table */
 char *lpath;				/* LPATH for finding source files */
 
 static int ifdepth;			/* depth of $if nesting */
+static char *last_line_file, 
+            *last_line_encoding;        /* last file/encoding on a #line directive */
 
 extern int tfatals, nocode;		/* provided by icont, iconc */
 
@@ -154,6 +156,7 @@ int ppinit(char *fname, char *inclpath, int m4)
     */
    lpath = inclpath;
    curfile = &nofile;			/* init file struct pointer */
+   last_line_file = last_line_encoding = 0;
    return ppopen(fname, m4);		/* open main source file */
    }
 
@@ -209,8 +212,8 @@ char *filename;
 #if UNIX
       {
       FILE *f;
-      char *s = safe_alloc(4 + strlen(filename));
-      sprintf(s, "m4 %s", filename);
+      char *s = safe_alloc(7 + strlen(filename));
+      sprintf(s, "m4 -s %s", filename);
       f = popen(s, ReadText);
       free(s);
       return f;
@@ -482,8 +485,15 @@ cdefn *d;
 static void pushline()
    {
    static char tbuf[256];
-
-   snprintf(tbuf, sizeof(tbuf), "#line %ld \"%s\" %s\n", curfile->lno, curfile->fname, curfile->encoding);
+  
+   if (curfile->encoding != last_line_encoding ||
+       curfile->fname != last_line_file) 
+   {
+       snprintf(tbuf, sizeof(tbuf), "#line %ld \"%s\" %s\n", curfile->lno + 1, curfile->fname, curfile->encoding);
+       last_line_file = curfile->fname;
+       last_line_encoding = curfile->encoding;
+   } else
+       snprintf(tbuf, sizeof(tbuf), "#line %ld\n", curfile->lno + 1);
    bnxt = tbuf;
    bstop = blim = tbuf + strlen(tbuf);
    }
@@ -654,7 +664,7 @@ static char *setline(char *s)
         return "$line: too many arguments";
 
     /* Set the changed fields */
-    curfile->lno = n;			
+    curfile->lno = n - 1;			
     if (fname)
         curfile->fname = intern(fname);
     if (code)

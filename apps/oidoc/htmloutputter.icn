@@ -483,20 +483,22 @@ class HtmlOutputter(Outputter)
 
       fname := output_dir || "/" || get_serial_no(filename) || ".html"
       f := open(fname, "w") | stop("couldn't open " || fname)
-      g := open(filename) | stop("couldn't open " || filename)
 
       write(f, "<html><head><title>", Files.get_path(filename).get(-1), "</title></head><body><pre>")
 
-      line_no := 0
-      while s := read(g) do {
-         line_no +:= 1
-         writes(f, "<a name=\"", line_no, "\"/>")
-         write(f, xml_escape(s, '<>&'))
+      # filename may be unavailable if a #line directive gave a path which was inaccessible
+      if g := open(filename) then {
+         line_no := 0
+         while s := read(g) do {
+            line_no +:= 1
+            writes(f, "<a name=\"", line_no, "\"/>")
+            write(f, xml_escape(s, '<>&'))
+         }
+         close(g)
       }
 
       write(f, "</pre></body></html>")
       close(f)
-      close(g)
    end
 
    private output_other(c)

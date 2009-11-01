@@ -20,7 +20,7 @@ $define Newline 4
 #$define debuglex 1
 
 global yyin, yytoken, errors, debuglex, O, D, L, H, R, FS, IS, W, idchars,
-       yylineno, yycolno, yyfilename, lastid, buffer, lastchar,
+       yylineno, yycolno, yyfilename, yyencoding, lastid, buffer, lastchar,
        yyerror, yylexdebug
 
 procedure init_csets()
@@ -133,9 +133,15 @@ procedure yylex2()
       if pos(0) then fail
       if ="#" then {
          if ="line " then {
-            if yylineno := integer(tab(many(&digits))) then {
-               =" \""
-               yyfilename := Files.get_path(tab(find("\"")|0)).canonical().str()
+            if yylineno := integer(tab(many(&digits))) - 1 then {
+               tab(many(' \t'))
+               if ="\"" then {
+                  yyfilename := Files.get_path(tab(find("\"" | "\n") | 0)).canonical().str()
+                  tab(many(' \t'))
+                  if any(&letters) then {
+                     yyencoding := tab(many(&letters ++ &digits ++ '-'))
+                  }
+               }
             }
          }
          tab(find("\n") | 0)
@@ -468,6 +474,7 @@ end
 
 procedure yylex_reinit()
    yytext := ""
+   yyencoding := &null
    yyfilename := &null
    yylineno := 0
    yycolno := 1
