@@ -30,7 +30,7 @@ class Parser(Connectable)
       preproc_sym_table,preproc_if_stack,preproc_file_stack,preproc_if_state,
       preproc_file,preproc_filename,preproc_line,preproc_print_line,
       preproc_word_chars,preproc_nest_level,preproc_include_name,
-      preproc_include_set,preproc_print_filename,
+      preproc_include_set,preproc_print_filename,preproc_encoding_chars,
       preproc_err_count,preproc_encoding,preproc_print_encoding
 
    private
@@ -110,6 +110,7 @@ class Parser(Connectable)
    #
    private preproc_error(msg)
       local ed
+      /msg := "Invalid preprocessor line"
       ed := ErrorDetail(preproc_filename, preproc_line, msg)
       fire(PREPROCESSOR_ERROR_EVENT, ed)
       /first_err := ed.str()
@@ -139,11 +140,6 @@ class Parser(Connectable)
    #
    private preprocess_gen(fname, predefined_syms)
       local line
-      static nonpunctuation
-      initial {
-         nonpunctuation := &letters ++ &digits ++ ' \t\f\r'
-      }
-
       preproc_new(fname, predefined_syms)
       suspend preproc_sync_lines()      
       while line := preproc_read() do line ? {
@@ -152,7 +148,7 @@ class Parser(Connectable)
             next
          }
          preproc_space()
-         if ="$" & any(nonpunctuation) then {
+         if ="$" & any(&letters ++ &digits ++ ' \t\f\r') then {
             preproc_scan_directive()
          } else {
             &pos := 1
@@ -179,6 +175,7 @@ class Parser(Connectable)
       preproc_include_set := set(fname)
       preproc_if_state := &null
       preproc_word_chars := &letters ++ &digits ++ '_'
+      preproc_encoding_chars := &letters ++ &digits ++ '-'
       preproc_filename := preproc_include_name := fname
       preproc_line := preproc_print_line := 0
       preproc_print_filename := &null
@@ -200,10 +197,17 @@ class Parser(Connectable)
    end
 
    #
+   # a_Scans an encoding identifier.
+   #
+   private preproc_get_encoding()
+      suspend tab(many(preproc_encoding_chars))
+   end
+
+   #
    # a_Scans a preprocessor directive.
    #
    private preproc_scan_directive()
-      local sym,value,new_file,new_filename,new_line,old,preproc_command
+      local sym,value,new_file,new_filename,new_line,new_encoding,old,preproc_command
       preproc_space()
       preproc_command := preproc_word()
       if \preproc_if_state then {
@@ -324,8 +328,11 @@ class Parser(Connectable)
             preproc_opt_space() &
             (new_filename := preproc_qword() | &null) \ 1 &
             (/new_filename | *new_filename > 0) \ 1 &
+            preproc_opt_space() &
+            (new_encoding := preproc_get_encoding() | &null) \ 1 &
             preproc_at_end() then {
                preproc_filename := \new_filename
+               preproc_encoding := \new_encoding
                preproc_line := new_line
             } else {
                preproc_error()
@@ -340,7 +347,7 @@ class Parser(Connectable)
       }
       "encoding": {
          if /preproc_if_state then {
-            preproc_encoding := tab(many(&letters ++ &digits ++ '-'))
+            preproc_encoding := preproc_get_encoding()
          }
       }
       "ITRACE": {
@@ -367,15 +374,11 @@ class Parser(Connectable)
    #
    private preproc_scan_text(done_set)
       local q,result,p,interesting_in_quotes,ident,value
-      static interesting_chars
-      initial {
-         interesting_chars := '#"\'_' ++ &letters
-      }
       if /preproc_if_state then {
          if *preproc_sym_table > 0 then {
             &pos := q := 1
             result := ""
-            while tab(upto(interesting_chars)) do {
+            while tab(upto('#"\'_' ++ &letters)) do {
                case move(1) of {
                   "#": {
                      move(-1)
@@ -459,11 +462,7 @@ class Parser(Connectable)
    # a_Scans an identifier.
    #
    private preproc_word()
-      static word_starters
-      initial {
-         word_starters := &letters ++ '_'
-      }
-      suspend any(word_starters) & tab(many(preproc_word_chars))
+      suspend any(&letters ++ '_') & tab(many(preproc_word_chars))
    end
 
    #
@@ -483,15 +482,13 @@ class Parser(Connectable)
    #
    private preproc_scan_define_value()
       local q,interesting_in_quotes
-      static interesting_chars
-      initial interesting_chars := '#"\''
 
       if ="(" then {
          fail      # "$define name(" is specifically prohibited; needs whitespace
       }
       preproc_space()
       q := &pos
-      (while tab(upto(interesting_chars)) do {
+      (while tab(upto('#"\'')) do {
          case move(1) of {
             "#": {
                move(-1)

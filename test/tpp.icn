@@ -21,8 +21,8 @@ xyzzy 55
 # following should be illegal but ignored
 #line 
 #line 91 not.quoted
-#line 92 extra stuff
-#line 93 "extra" stuff
+#line 92 extra ASCII stuff
+#line 93 "extra" ASCII stuff
 #line 94 extra+
 # line 95 "passed through unrecognized"
 #line 96 "unterminated
@@ -46,9 +46,9 @@ $( digraphs for EBCDIC $)
 $line 0 "bad.ppdirs"
 # following should be illegal and diagnosed
 $line
-$line 91 not.quoted
-$line 92 extra stuff
-$line 93 "extra" stuff
+$line 91 not.quoted ASCII
+$line 92 extra ASCII stuff
+$line 93 "extra" ASCII stuff
 $line 94 extra+
 $line 96 "unterminated
 $line 97 "unterminated\

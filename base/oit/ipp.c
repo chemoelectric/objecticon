@@ -626,41 +626,44 @@ char *s;
 /*
  * setline(s) -- handle $line (or #line) directive.
  */
-static char *setline(s)
-char *s;
-   {
-   long n;
-   char c;
-   char *fname;
+static char *setline(char *s)
+{
+    long n;
+    char c, *fname = 0, *code = 0;
 
-   if (!isdigit((unsigned char)(c = *s)))
-      return "$line: no line number";
-   n = c - '0';
+    if (!isdigit((unsigned char)(c = *s)))
+        return "$line: no line number";
+    n = c - '0';
 
-   while (isdigit((unsigned char)(c = *++s)))		/* extract line number */
-      n = 10 * n + c - '0';
-   s = wskip(s);			/* skip whitespace */
+    while (isdigit((unsigned char)(c = *++s)))		/* extract line number */
+        n = 10 * n + c - '0';
 
-   if (isalpha (c = *s) || c == '_' || c == '"') {	/* if filename */
-      s = getfnm(fname = s - 1, s);			/* extract it */
-      if (*fname == '\0')
-         return "$line: invalid file name";
-      }
-   else
-      fname = NULL;
+    s = wskip(s);			/* skip whitespace */
 
-   if (*wskip(s) != '\0')
-      return "$line: too many arguments";
+    if (isalpha (c = *s) || c == '_' || c == '"') {	/* if filename */
+        s = getfnm(fname = s - 1, s);			/* extract it */
+        if (*fname == '\0')
+            return "$line: invalid file name";
+        s = wskip(s);			/* skip whitespace */
+        if (isalpha (c = *s)) {	/* if encoding */
+            s = getencoding(code = s - 1, s);		/* get encoding name */
+        }
+    }
 
-   curfile->lno = n;			/* set line number */
-   if (fname != NULL) {			/* also set filename if given */
-      curfile->fname = intern(fname);
-      }
+    if (*wskip(s) != '\0')
+        return "$line: too many arguments";
 
-   pushline();
-   return NULL;
-   }
-
+    /* Set the changed fields */
+    curfile->lno = n;			
+    if (fname)
+        curfile->fname = intern(fname);
+    if (code)
+        curfile->encoding = intern(code);
+
+    pushline();
+    return NULL;
+}
+
 /*
  * ifdef(s), ifndef(s) -- conditional processing if s is/isn't defined.
  */
