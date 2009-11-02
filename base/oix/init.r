@@ -1092,9 +1092,6 @@ int CmdParamToArgv(char *s, char ***avp, int dequote)
     return rv;
 }
 
-char *lognam;
-char tmplognam[128];
-
 void MSStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance)
 {
     WNDCLASS wc;
