@@ -73,7 +73,6 @@
    #include <termios.h>
    #include <sys/utsname.h>
    #include <sys/select.h>
-   #define SOCKET int
 #endif					/* UNIX */
 
 #ifdef XWindows

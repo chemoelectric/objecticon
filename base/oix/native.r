@@ -1490,7 +1490,7 @@ function{0,1} io_SocketStream_socket_impl(domain, typ)
       runerr(101, typ)
 
    body {
-       SOCKET sockfd;
+       int sockfd;
        sockfd = socket(domain, typ, 0);
        if (sockfd < 0) {
            errno2why();
@@ -1685,7 +1685,7 @@ end
 
 function{0,1} io_SocketStream_accept_impl(self)
    body {
-       SOCKET sockfd;
+       int sockfd;
        GetSelfFd();
 
        if ((sockfd = accept(self_fd, 0, 0)) < 0) {
