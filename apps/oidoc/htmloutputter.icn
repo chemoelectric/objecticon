@@ -10,7 +10,8 @@ import
    xml(xml_escape),
    parser, 
    ipl.sort,
-   io
+   io,
+   lang
 
 class HtmlOutputter(Outputter)
    private
@@ -177,7 +178,7 @@ class HtmlOutputter(Outputter)
       write(f, "</dl><p>")
 
       if is(c.obj, Tree) then {
-         output_file(c.obj.get_first_token().filename)
+         output_file(c)
          comment_and_fields(f, c)
          write(f, "<p>")
       }
@@ -474,8 +475,15 @@ class HtmlOutputter(Outputter)
       }
    end
 
-   private output_file(filename)
-      local f, fname, line_no, g, s
+   private output_file(c)
+      local f, fname, line_no, g, s, filename
+
+      filename := c.obj.get_first_token().filename
+      if not Files.access(filename, Access.R_OK) then {
+         filename := Files.get_path(c.scanned_file.filename).parent(-1).
+            child(Files.get_path(filename).get(-1)).str()
+         write("changed it to:",filename)
+      }
 
       if member(done_files, filename) then
          return
@@ -495,7 +503,9 @@ class HtmlOutputter(Outputter)
             write(f, xml_escape(s, '<>&'))
          }
          close(g)
-      }
+      } else
+         write("diddlik:",filename,"\n",to_string(c,3,3))
+
 
       write(f, "</pre></body></html>")
       close(f)
@@ -524,7 +534,7 @@ class HtmlOutputter(Outputter)
       write(f, "<dt>Type :</dt><dd>", type, "</dd>")
       write(f, "</dl><p>")
       if is(c.obj, Tree) then {
-         output_file(c.obj.get_first_token().filename)
+         output_file(c)
          comment_and_fields(f, c)
          write(f, "<p>")
       }

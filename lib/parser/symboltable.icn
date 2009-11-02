@@ -362,24 +362,19 @@ class SymbolTable(Connectable,SetFields)
       }
    end
 
-   private path_find(f)
-      local p, s, t
-
-      f := get_stem(f)
-
-      # First of all see if it exists without any search
-      if t := match_stem(f) then
-         return t
-
-      p := Files.get_path(f)
-      # We never append absolute paths to the search path
-      if p.is_absolute() then
-         fail
-
-      # Search all the elements in the path
-      every s := Files.get_path(Files.split_paths(System.getenv("OIPATH"))).append(p).str() do {
-         if t := match_stem(s) then
-            return t
+   private path_find(f, cd)
+      local fu, fi
+      fu := f || ".u"
+      fi := f || ".icn"
+      case file_mode of {
+         PREFER_SRC :
+            return Files.path_find(fi | fu, "OIPATH", cd, Access.R_OK)
+         PREFER_U :
+            return Files.path_find(fu | fi, "OIPATH", cd, Access.R_OK)
+         ALWAYS_SRC :
+            return Files.path_find(fi, "OIPATH", cd, Access.R_OK)
+         ALWAYS_U :
+            return Files.path_find(fu, "OIPATH", cd, Access.R_OK)
       }
    end
 
@@ -402,7 +397,7 @@ class SymbolTable(Connectable,SetFields)
       every i := sf.get_imports() do
          scan_package(i.name) | fail
       every s := sf.get_links() do
-         scan_file_on_path(s) | fail
+         scan_file_on_path(s, Files.get_path(sf.filename).parent().str()) | fail
 
       return
    end
@@ -517,7 +512,7 @@ class SymbolTable(Connectable,SetFields)
       return
    end
 
-   public scan_file_on_path(f)
+   public scan_file_on_path(f, cd)
       local s
       s := path_find(f) | return error("Couldn't find " || f || " on path")
       return scan_file(s)

@@ -112,7 +112,7 @@ static void ensure_lfile(char *ifile)
  */
 void paramlink(char *name)
 {
-    char *file = pathfind(0, name, USuffix);
+    char *file = pathfind(0, 0, name, USuffix);
 
     if (!file)
         quitf("cannot open %s", name);
@@ -126,7 +126,7 @@ void paramlink(char *name)
  */
 void alsolink(char *name, struct lfile *lf, struct loc *pos)
 {
-    char *file = pathfind(ipath, name, USuffix);
+    char *file = pathfind(getdir(lf->name), ipath, name, USuffix);
 
     if (!file) {
         lfatal(lf, pos, "cannot resolve link reference: %s", name);

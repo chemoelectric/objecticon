@@ -627,7 +627,7 @@ char *s;
       return "$include: invalid file name";
    if (*wskip(s) != '\0')
       return "$include: too many arguments";
-   fullpath = pathfind(lpath, fname, 0);
+   fullpath = pathfind(getdir(curfile->fname), lpath, fname, 0);
    if (!fullpath || !ppopen(fullpath, 0))
       pfatal("cannot open", fname);
    return NULL;

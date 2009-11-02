@@ -4,6 +4,7 @@
 
 void	clear_sbuf	(struct str_buf *sbuf);
 int	cmp_pre		(char *pre1, char *pre2);
+char *getdir(char *s);
 struct fileparts *fparse(char *s);
 void	free_stbl	(void);
 void	id_comment	(FILE *f);
@@ -13,7 +14,7 @@ char	*makename	(char *d,char *name,char *e);
 struct il_code *new_il	(int il_type, int size);
 void	new_sbuf	(struct str_buf *sbuf);
 int     isabsolute      (char *s);
-char	*pathfind	(char *path, char *name, char *extn);
+char	*pathfind	(char *cd, char *path, char *name, char *extn);
 char    *pathelem       (char **s);
 int     newer_than(char *f1, char *f2);
 char    *last_pathelem(char *s);

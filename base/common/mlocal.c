@@ -267,7 +267,7 @@ char *canonicalize(char *path)
 
 
 /*
- * pathfind(buf,path,name,extn) -- find file in path and return name.
+ * pathfind(cd,path,name,extn) -- find file in path and return name.
  *
  *  pathfind looks for a file on a path, begining with the current
  *  directory.  Details vary by platform, but the general idea is
@@ -275,21 +275,36 @@ char *canonicalize(char *path)
  *
  *  A pointer to makename's static buffer is returned, or NULL if
  *  not found.
- * 
+ *
+ *  cd is the current directory; may be NULL, meaning the "real" cd
  *  path is the IPATH or LPATH value, or NULL if unset.
  *  name is the file name.
  *  extn is the file extension (.icn or .u) to be appended, or NULL if none.
  */
-char *pathfind(char *path, char *name, char *extn)
+char *pathfind(char *cd, char *path, char *name, char *extn)
 {
     char *p;
 
-    if ((p = tryfile(0, name, extn)))     /* try curr directory first */
+    /* Don't search the path if we have an absolute file */
+    if (isabsolute(name))
+        return tryfile(0, name, extn);
+
+    /* Also don't search if we have a relative name; it is relative to
+     * the cd */
+    if (strchr(name, FILESEP)) {
+        static char buf[MaxPath];
+        if (!cd)
+            return tryfile(0, name, extn);
+        strcpy(buf, cd);
+        strcat(buf, getdir(name));
+        return tryfile(buf, name, extn);
+    }
+
+    /* Neither absolute nor relative.  Try current directory first */
+    if ((p = tryfile(cd, name, extn)))
         return p;
 
-    /* Don't search the path if we have an absolute file, or the path
-     * given was null. */
-    if (isabsolute(name) || !path)
+    if (!path)
         return 0;
 
     for (;;) {
@@ -373,6 +388,17 @@ int newer_than(char *f1, char *f2)
     if (stat(f2, &buf) < 0)
         return 1;
     return t1 > buf.st_mtime;
+}
+
+/*
+ * Utility function to get the directory of file s.  fparse is used,
+ * but its result is copied to an independent static buffer.
+ */
+char *getdir(char *s)
+{
+    static char buf[MaxPath];
+    strcpy(buf, fparse(s)->dir);
+    return buf;
 }
 
 /*
