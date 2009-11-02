@@ -8,7 +8,6 @@ class UFile()
    private readable
       pack,
       declend_offset,
-      trace,
       strinv,
       version
 
@@ -56,10 +55,6 @@ class UFile()
 
    package set_declend_offset(p)
       self.declend_offset := p
-   end
-
-   package set_trace(t)
-      self.trace := t
    end
 
    package set_strinv(v)
@@ -340,10 +335,6 @@ class UReader()
                 s := uin_str() | fail
                 curr_record := URecord(s, file, line)
                 uf.add_symbol(curr_record)
-             }
-
-             UcodeOp.Trace: {
-                uf.set_trace(-1)
              }
 
              UcodeOp.Procdecl: {
