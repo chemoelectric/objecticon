@@ -26,8 +26,6 @@ extern char *progname;
 /*
  * Files and related globals.
  */
-extern char *lpath;			/* search path for $include */
-extern char *ipath;			/* search path for linking */
 extern FILE *ucodefile;	        /* current ucode output file */
 extern char *ofile;         	/* name of linker output file */
 extern char *oixloc;			/* path to iconx */

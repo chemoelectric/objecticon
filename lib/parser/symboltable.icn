@@ -153,7 +153,6 @@ class ScannedFile()
 
    private const
       imports,
-      links,
       invocables,
       resolved_invocables,
       symbols
@@ -213,14 +212,6 @@ class ScannedFile()
       self.strinv := v
    end
 
-   public get_links()
-      suspend .!links
-   end
-
-   package add_link(sym)
-      put(links, sym)
-   end
-
    public convert_dottedidentexpr(n)
       local ls
       if is(n, Token) then
@@ -235,7 +226,6 @@ class ScannedFile()
       self.filename := filename
       self.imports := table()
       self.symbols := table()
-      self.links := []
       self.invocables := []
       self.resolved_invocables := []
       return
@@ -362,24 +352,8 @@ class SymbolTable(Connectable,SetFields)
       }
    end
 
-   private path_find(f, cd)
-      local fu, fi
-      fu := f || ".u"
-      fi := f || ".icn"
-      case file_mode of {
-         PREFER_SRC :
-            return Files.path_find(fi | fu, "OIPATH", cd, Access.R_OK)
-         PREFER_U :
-            return Files.path_find(fu | fi, "OIPATH", cd, Access.R_OK)
-         ALWAYS_SRC :
-            return Files.path_find(fi, "OIPATH", cd, Access.R_OK)
-         ALWAYS_U :
-            return Files.path_find(fu, "OIPATH", cd, Access.R_OK)
-      }
-   end
-
    private scan(f)
-      local sf, i, s, g
+      local sf, i, g
       # Standardize by getting rid of the extension
       f := get_stem(f)
       if member(scanned_files, f) then
@@ -396,8 +370,6 @@ class SymbolTable(Connectable,SetFields)
          scan_package(sf.pack) | fail
       every i := sf.get_imports() do
          scan_package(i.name) | fail
-      every s := sf.get_links() do
-         scan_file_on_path(s, Files.get_path(sf.filename).parent().str()) | fail
 
       return
    end
@@ -450,14 +422,6 @@ class SymbolTable(Connectable,SetFields)
             }
 
             Record : add_symbol(RecordSymbol(sf, d, d.get_name().str())) | fail
-            Link : {
-               every s := d.gen().str() do {
-                  # Strip quotes
-                  if s[1] == "\"" then
-                     s := s[2:-1]
-                  sf.add_link(s)
-               }
-            }
             Invocable : {
                every e := d.gen() do {
                   if is(e, Id) then {
@@ -488,7 +452,6 @@ class SymbolTable(Connectable,SetFields)
       every sf.add_import(uf.get_imports())
       sf.set_strinv(uf.strinv)
       every sf.add_invocable(uf.get_invocables())
-      every sf.add_link(uf.get_links())
       every d := uf.get_symbols() do {
          case classof(d) of {
             UGlobal : add_symbol(GlobalSymbol(sf, d, d.name, d)) | fail
@@ -513,12 +476,6 @@ class SymbolTable(Connectable,SetFields)
          }
       }
       return
-   end
-
-   public scan_file_on_path(f, cd)
-      local s
-      s := path_find(f) | return error("Couldn't find " || f || " on path")
-      return scan_file(s)
    end
 
    public scan_file(f)

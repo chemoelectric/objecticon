@@ -41,26 +41,25 @@ struct toktab toktab[] = {
    { "import",           IMPORT,        0},                /*  23 */
    { "initial",          INITIAL,       0},                /*  24 */
    { "invocable",        INVOCABLE,     0},                /*  25 */
-   { "link",             LINK,          0},                /*  26 */
-   { "local",            LOCAL,         0},                /*  27 */
-   { "next",             NEXT,          Beginner+Ender},   /*  28 */
-   { "not",              NOT,           Beginner},         /*  29 */
-   { "of",               OF,            0},                /*  30 */
-   { "package",          PACKAGE,       0},                /*  31 */
-   { "private",          PRIVATE,       0},                /*  32 */
-   { "procedure",        PROCEDURE,     0},                /*  33 */
-   { "protected",        PROTECTED,     0},                /*  34 */
-   { "public",           PUBLIC,        0},                /*  35 */
-   { "readable",         READABLE,      0},                /*  36 */
-   { "record",           RECORD,        0},                /*  37 */
-   { "repeat",           REPEAT,        Beginner},         /*  38 */
-   { "return",           RETURN,        Beginner+Ender},   /*  39 */
-   { "static",           STATIC,        0},                /*  40 */
-   { "suspend",          SUSPEND,       Beginner+Ender},   /*  41 */
-   { "then",             THEN,          0},                /*  42 */
-   { "to",               TO,            0},                /*  43 */
-   { "until",            UNTIL,         Beginner},         /*  44 */
-   { "while",            WHILE,         Beginner},         /*  45 */
+   { "local",            LOCAL,         0},                /*  26 */
+   { "next",             NEXT,          Beginner+Ender},   /*  27 */
+   { "not",              NOT,           Beginner},         /*  28 */
+   { "of",               OF,            0},                /*  29 */
+   { "package",          PACKAGE,       0},                /*  30 */
+   { "private",          PRIVATE,       0},                /*  31 */
+   { "procedure",        PROCEDURE,     0},                /*  32 */
+   { "protected",        PROTECTED,     0},                /*  33 */
+   { "public",           PUBLIC,        0},                /*  34 */
+   { "readable",         READABLE,      0},                /*  35 */
+   { "record",           RECORD,        0},                /*  36 */
+   { "repeat",           REPEAT,        Beginner},         /*  37 */
+   { "return",           RETURN,        Beginner+Ender},   /*  38 */
+   { "static",           STATIC,        0},                /*  39 */
+   { "suspend",          SUSPEND,       Beginner+Ender},   /*  40 */
+   { "then",             THEN,          0},                /*  41 */
+   { "to",               TO,            0},                /*  42 */
+   { "until",            UNTIL,         Beginner},         /*  43 */
+   { "while",            WHILE,         Beginner},         /*  44 */
    { "end-of-file",      0,             0},
    };
 
@@ -73,9 +72,9 @@ struct toktab *restab[] = {
    NULL,        &toktab[ 7], &toktab[ 9], &toktab[13], /* 61-64 abcd */
    &toktab[16], &toktab[19], &toktab[21], NULL,        /* 65-68 efgh */
    &toktab[22], NULL,        NULL,        &toktab[26], /* 69-6C ijkl */
-   NULL,        &toktab[28], &toktab[30], &toktab[31], /* 6D-70 mnop */
-   NULL,        &toktab[36], &toktab[40], &toktab[42], /* 71-74 qrst */
-   &toktab[44], NULL,        &toktab[45], NULL,        /* 75-78 uvwx */
+   NULL,        &toktab[27], &toktab[29], &toktab[30], /* 6D-70 mnop */
+   NULL,        &toktab[35], &toktab[39], &toktab[41], /* 71-74 qrst */
+   &toktab[43], NULL,        &toktab[44], NULL,        /* 75-78 uvwx */
    NULL,        NULL,                                  /* 79-7A yz */
    };
 

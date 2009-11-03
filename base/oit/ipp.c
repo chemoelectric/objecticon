@@ -26,6 +26,7 @@
  
 #include "icont.h"
 #include "tmain.h"
+#include "ipp.h"
 
 #define HTBINS 256			/* number of hash bins */
 
@@ -116,7 +117,7 @@ static char *bstop;			/* limit of preprocessed chars */
 static char *blim;			/* limit of all chars */
 static cdefn *cbin[HTBINS];		/* hash bins for defn table */
 
-char *lpath;				/* LPATH for finding source files */
+static char *lpath;				/* LPATH for finding source files */
 
 static int ifdepth;			/* depth of $if nesting */
 static char *last_line_file, 
@@ -125,11 +126,11 @@ static char *last_line_file,
 extern int tfatals, nocode;		/* provided by icont, iconc */
 
 /*
- * ppinit(fname, inclpath, m4) -- initialize preprocessor to read from fname.
+ * ppinit(fname, m4) -- initialize preprocessor to read from fname.
  *
  *  Returns 1 if successful, 0 if open failed.
  */
-int ppinit(char *fname, char *inclpath, int m4)
+int ppinit(char *fname, int m4)
    {
    int i;
    cdefn *d, *n;
@@ -154,7 +155,7 @@ int ppinit(char *fname, char *inclpath, int m4)
    /*
     * initialize variables and open source file 
     */
-   lpath = inclpath;
+   lpath = getenv(OLPATH);
    curfile = &nofile;			/* init file struct pointer */
    last_line_file = last_line_encoding = 0;
    return ppopen(fname, m4);		/* open main source file */

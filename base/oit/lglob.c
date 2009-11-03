@@ -217,11 +217,6 @@ void readglob(struct lfile *lf)
                     addinvk(name, lf, &pos);
                 break;
 
-            case Uop_Link:		/* link the named file */
-                name = uin_str();	/* get the name and */
-                alsolink(name, lf, &pos);	/*  put it on the list of files to link */
-                break;
-
             default:
                 quitf("ill-formed global file %s",lf->name);
         }

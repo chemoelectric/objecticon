@@ -106,9 +106,7 @@ static void ensure_lfile(char *ifile)
 
 /*
  * Link a ufile given on the command line (or implied from a .icn
- * file).  This differs from alsolink in that we don't search ipath
- * for the file, and quit immediately with a fatal error if the file
- * is not found.
+ * file).
  */
 void paramlink(char *name)
 {
@@ -116,22 +114,6 @@ void paramlink(char *name)
 
     if (!file)
         quitf("cannot open %s", name);
-
-    ensure_lfile(intern(canonicalize(file)));
-}
-
-/*
- * alsolink - create an lfile structure for the named file and add it to the
- *  end of the list of files (lfiles) to generate link instructions for.
- */
-void alsolink(char *name, struct lfile *lf, struct loc *pos)
-{
-    char *file = pathfind(getdir(lf->name), ipath, name, USuffix);
-
-    if (!file) {
-        lfatal(lf, pos, "cannot resolve link reference: %s", name);
-        return;
-    }
 
     ensure_lfile(intern(canonicalize(file)));
 }

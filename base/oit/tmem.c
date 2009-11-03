@@ -19,7 +19,6 @@ char *package_name = 0;
 struct tfunction *functions = 0, *curr_func = 0;
 struct tclass *classes = 0, *curr_class = 0;
 struct timport *import_hash[64], *imports = 0, *last_import = 0, *curr_import = 0;
-struct link *links = 0, *last_link = 0;
 struct tinvocable *tinvocables = 0, *last_tinvocable = 0;
 
 struct membuff file_mb = {"Per file membuff", 64000, 0,0,0 };
@@ -41,7 +40,6 @@ void tmfilefree()
     classes = curr_class = 0;
     curr_import = imports = last_import = 0;
     ArrClear(import_hash);
-    links = last_link = 0;
     tinvocables = last_tinvocable = 0;
     gfirst = glast = 0;
     ArrClear(ghash);
@@ -264,19 +262,6 @@ void add_import_symbol(char *s, struct node *n)
         curr_import->last_symbol = x;
     } else {
         curr_import->symbols = curr_import->last_symbol = x;
-    }
-}
-
-void add_link(char *s, struct node *n) 
-{
-    struct link *i = FAlloc(struct link);
-    i->name = s;
-    i->pos = n;
-    if (last_link) {
-        last_link->next = i;
-        last_link = i;
-    } else {
-        links = last_link = i;
     }
 }
 

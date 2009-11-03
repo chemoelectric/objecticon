@@ -1056,7 +1056,6 @@ static void unop(int op)
 void output_code()
 {
     struct tgentry *gp;
-    struct link *li;
     struct tinvocable *iv;
     struct timport *im;
     struct timport_symbol *ims;
@@ -1083,12 +1082,6 @@ void output_code()
                 uout_str(ims->name);
             }
         }
-    }
-
-    for (li = links; li; li = li->next) {
-        ensure_pos(li->pos);
-        uout_op(Uop_Link);
-        uout_str(li->name);
     }
 
     for (iv = tinvocables; iv; iv = iv->next) {

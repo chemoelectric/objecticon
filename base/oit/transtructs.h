@@ -72,15 +72,6 @@ struct timport_symbol {
 };
 
 /*
- * A "link" declaration
- */
-struct link {
-    char *name;
-    struct node *pos;
-    struct link *next;
-};
-
-/*
  * "Invocable" declarations are recorded in a list
  */
 struct tinvocable {

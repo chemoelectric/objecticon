@@ -297,17 +297,6 @@ class LocalsList(List)
    end
 end
 
-class Link(IdList)
-   public get_first_token()
-      return pos.child(1)
-   end
-
-   package new(pos)
-      cast(self,IdList).new(pos, 2, "lnklist")
-      return
-   end
-end
-
 class Invocable(List)
    public get_first_token()
       return pos.child(1)
@@ -427,7 +416,6 @@ class Others(List)
             "class" :  Class(t)
             "proc" :  Procedure(t)
             "global": Global(t)
-            "link": Link(t)
             "invocable": Invocable(t)
             default: syserr("Unknown declaration node:" || t.label)
          })
@@ -744,15 +732,6 @@ class Factory()
                         Token(IMPORT, "import", pad || "import"),
                         Node.EMPTY))
       every t.put(new_id(" ", !packs))
-      return t
-   end
-
-   public static new_link(pad, ids)
-      local t
-      t := Link(Node("link",
-                     Token(LINK, "link", pad || "link"),
-                     Node.EMPTY))
-      every t.put(new_id(" ", !ids))
       return t
    end
 

@@ -30,7 +30,6 @@
 %token  IMPORT      /* import    */
 %token	INITIAL     /* initial   */
 %token	INVOCABLE   /* invocable */
-%token	LINK        /* link      */
 %token	LOCAL       /* local     */
 %token	NEXT        /* next      */
 %token	NOT         /* not       */
@@ -157,7 +156,6 @@ other   : record ;
         | class ;
 	| proc ;
 	| global ;
-	| link ;
         | invocable ;
 
 optsemi : { $$ := Node.EMPTY } ; 
@@ -179,14 +177,6 @@ invoclist : invocop;
 invocop  : dottedident ;
 	 | STRINGLIT ;
 	 | STRINGLIT COLON INTLIT {$$ := Node("invocop", $1,$2,$3);} ;
-
-link	: LINK lnklist { $$ := Node("link", $1,$2) } ;
-
-lnklist	: lnkfile ;
-	| lnklist COMMA lnkfile { $$ := Node("lnklist", $1,$2,$3); } ;
-
-lnkfile	: IDENT ;
-	| STRINGLIT ;
 
 import  : IMPORT importlist {$$ := Node("import",$1,$2) } ;
 

@@ -10,6 +10,7 @@
 #include "tmem.h"
 #include "package.h"
 #include "tlex.h"
+#include "ipp.h"
 #include <string.h>
 
 /*
@@ -196,7 +197,7 @@ static void trans1(char *filename)
     incol = 0;
     peekc = 0;                  /* clear character lookahead */
 
-    if (!ppinit(filename,lpath,m4pre))
+    if (!ppinit(filename, m4pre))
         quitf("cannot open %s",filename);
 
     if (strcmp(filename,"-") == 0) {

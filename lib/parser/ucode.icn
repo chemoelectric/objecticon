@@ -14,19 +14,10 @@ class UFile()
    private const
       imports,
       invocables,
-      symbols, 
-      links
+      symbols
 
    package set_package(pack)
       self.pack := pack
-   end
-
-   package add_link(s)
-      put(links, s)
-   end
-
-   public get_links()
-      suspend .!links
    end
 
    package add_symbol(obj)
@@ -69,7 +60,6 @@ class UFile()
       self.symbols := []
       self.invocables := []
       self.imports := []
-      self.links := []
       return
    end
 end
@@ -368,11 +358,6 @@ class UReader()
                    uf.add_invocable(s)
              }
 
-             UcodeOp.Link: {
-                s := uin_str() | fail
-                uf.add_link(s)
-             }
-            
             default:
                return error("ill-formed ufile")
          }

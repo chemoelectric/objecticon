@@ -18,7 +18,6 @@ extern struct tclass *classes, *curr_class;
 extern char *package_name;
 extern int modflag;
 extern struct timport *imports, *last_import, *curr_import;
-extern struct link *links, *last_link;
 extern struct tinvocable *tinvocables, *last_tinvocable;
 
 void install(char *name, int flag, struct node *n);

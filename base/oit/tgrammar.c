@@ -166,10 +166,6 @@ int modflag;
 				   tfatal("invalid keyword: %s",Str0(x2));\
                                 $$ = int_leaf(N_Key,x1,kn);
 #define Kfail(x1,x2)		$$ = int_leaf(N_Key,x1,K_FAIL) 
-#define Link(x1,x2)		/* empty */
-#define Lnkfile1(x)		add_link(Str0(x), x)
-#define Lnkfile2(x)		add_link(Str0(x), x)
-#define Lnklist(x1,x2,x3)	/* empty */
 #define Local(x)		idflag = F_Dynamic
 #define Locals1()		/* empty */
 #define Locals2(x1,x2,x3)	/* empty */

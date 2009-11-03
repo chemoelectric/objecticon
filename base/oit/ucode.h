@@ -181,7 +181,6 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Const       201
 #define Uop_Declend	202
 #define Uop_End		203
-#define Uop_Link	204
 #define Uop_Version	205
 #define Uop_Data	206
 #define Uop_Filen	207

@@ -209,7 +209,7 @@ struct ucode_op ucode_op_table[] = {
     /* 201 */         { Uop_Const, "const", { TYPE_16,0 }, "\t%-12s %d" },
     /* 202 */         { Uop_Declend, "declend", {0,0}, "\t%-12s" },           
     /* 203 */         { Uop_End, "end", {0,0}, "\t%-12s" },                   
-    /* 204 */         { Uop_Link, "link", { TYPE_STR,0 }, "\t%-12s %s" },    
+    /* 204 */         INVALID,
     /* 205 */         { Uop_Version, "version", { TYPE_STR,0 }, "\t%-12s %s" },            
     /* 206 */         { Uop_Data, "data", { TYPE_32, TYPE_BIN }, "\t%-12s %08o %s" },
     /* 207 */         { Uop_Filen, "filen", { TYPE_STR,0 }, "\t%-12s %s" },                

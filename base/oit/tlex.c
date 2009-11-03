@@ -9,6 +9,7 @@
 #include "tree.h"
 #include "tmain.h"
 #include "trans.h"
+#include "ipp.h"
 
 /* Used by auto-generated func in ../common/lextab.h */
 static  int nextchar();

@@ -32,7 +32,6 @@ extern struct linvocable *linvocables,
 void linit();
 void dumplfiles();
 void paramlink(char *name);
-void alsolink(char *name, struct lfile *lf, struct loc *pos);
 void alsoimport(char *package, struct lfile *lf, struct loc *pos);
 void addinvk(char *name, struct lfile *lf, struct loc *pos);
 void lmfree();

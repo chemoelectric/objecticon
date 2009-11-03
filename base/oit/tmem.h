@@ -22,7 +22,6 @@ struct timport *lookup_import(char *s);
 void set_package(char *s, struct node *n);
 void next_import(char *s, int qualified, struct node *n);
 void add_import_symbol(char *s, struct node *n); 
-void add_link(char *s, struct node *n); 
 void add_invocable(char *name, int x, struct node *n);
 char *dottedid2string(struct node *n);
 struct node *convert_dottedidentexpr(struct node *n);

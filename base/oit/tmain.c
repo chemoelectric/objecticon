@@ -10,6 +10,7 @@
 #include "link.h"
 #include "tmem.h"
 #include "tlex.h"
+#include "ipp.h"
 #include "../h/header.h"
 
 int warnings = 0;           /* count of warnings */
@@ -53,8 +54,6 @@ char *progname	="oit";	/* program name for diagnostics */
 /*
  * Files and related globals.
  */
-char *lpath;			/* search path for $include */
-char *ipath;			/* search path for linking */
 FILE *ucodefile	= 0;	        /* current ucode output file */
 char *ofile = 0;         	/* name of linker output file */
 char *oixloc;			/* path to iconx */
@@ -281,9 +280,6 @@ int main(int argc, char **argv)
 
     if (!link_files)
         usage();				/* error -- no files named */
-
-    ipath = getenv(OIPATH);	/* set library search paths */
-    lpath = getenv(OLPATH);
 
     /*
      * Translate .icn files to make .u files.
@@ -619,9 +615,7 @@ static int ldbg(int argc, char **argv)
         exit(1);
     }
 
-    lpath = getenv(OLPATH);
-
-    if (!ppinit(argv[1],lpath,0))
+    if (!ppinit(argv[1],0))
         quitf("cannot open %s", argv[1]);
 
     while (1) {
