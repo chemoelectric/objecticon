@@ -408,7 +408,25 @@ class SymbolTable(Connectable,SetFields)
       prog := parse(sf.filename) | fail
       sf.set_obj(prog)
 
-      every d := prog.gen() do {
+      # Optional package
+      sf.set_package(prog.get_package().get_name().str())
+
+      # Any imports
+      every e := prog.get_imports().gen().gen() do {
+         if is(e, Id) then
+            sf.add_import(ImportDec(e.str()))
+         else {
+            s := e.get_package().str()
+            if not(i := sf.get_import(s)) then {
+               i := ImportDec(s, 1)
+               sf.add_import(i)
+            }
+            every i.add(e.gen().str())
+         }
+      }
+
+      # All other decs.
+      every d := prog.get_others().gen() do {
          case classof(d) of {
             Global : {
                every s := d.gen() do
@@ -432,21 +450,6 @@ class SymbolTable(Connectable,SetFields)
             }
 
             Record : add_symbol(RecordSymbol(sf, d, d.get_name().str())) | fail
-            Package : sf.set_package(d.get_name().str())
-            Import : {
-               every e := d.gen() do {
-                  if is(e, Id) then
-                     sf.add_import(ImportDec(e.str()))
-                  else {
-                     s := e.get_package().str()
-                     if not(i := sf.get_import(s)) then {
-                        i := ImportDec(s, 1)
-                        sf.add_import(i)
-                     }
-                     every i.add(e.gen().str())
-                  }
-               }
-            }
             Link : {
                every s := d.gen().str() do {
                   # Strip quotes

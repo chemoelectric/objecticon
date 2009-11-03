@@ -396,7 +396,26 @@ class Import(List)
    end
 end
 
-class Prog(List)
+class Imports(List)
+   package flatten()
+      local l, n
+      l := []
+      n := pos.child(index)
+      while n ~=== Node.EMPTY do {
+         push(l, Import(n.child(2)))
+         n := n.child(1)
+      }
+      return l
+   end
+
+   public put(x)
+      pos.set(index, Node("importdecls", 
+                          pos.child(index),
+                          x.pos))
+   end
+end
+
+class Others(List)
    package flatten()
       local l, n, t
       l := []
@@ -407,8 +426,6 @@ class Prog(List)
             "record" : Record(t)
             "class" :  Class(t)
             "proc" :  Procedure(t)
-            "package" : Package(t)
-            "import": Import(t)
             "global": Global(t)
             "link": Link(t)
             "invocable": Invocable(t)
@@ -420,13 +437,38 @@ class Prog(List)
    end
 
    public put(x)
-      pos.set(index, Node("decls", 
+      pos.set(index, Node("otherdecls", 
                           pos.child(index),
                           x.pos))
    end
+end
+
+class Prog(Tree)
+   private decls
+
+   public get_package()
+      return Package(Node.EMPTY ~=== decls.child(1))
+   end
+
+   public set_package(x)
+      decls.set(1, x.pos)
+   end
+
+   public clear_package(x)
+      decls.set(1, Node.EMPTY)
+   end
+
+   public get_imports()
+      return Imports(decls, 2)
+   end
+
+   public get_others()
+      return Others(decls, 3)
+   end
 
    package new(pos)
-      cast(self,List).new(pos, 1)
+      cast(self,Tree).new(pos)
+      decls := pos.child(1)
       return
    end
 end
@@ -519,7 +561,9 @@ class Factory()
    end
 
    public static new_prog()
-      return Prog(Node("prog", Node.EMPTY, Token(EOFX, "", "")))
+      return Prog(Node("prog", 
+                       Node("decls", Node.EMPTY, Node.EMPTY, Node.EMPTY), 
+                       Token(EOFX, "", "")))
    end
 
    public static new_access(pad, s)

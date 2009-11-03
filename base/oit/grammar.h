@@ -1,26 +1,27 @@
 /*
- * grammar.h -- Yacc grammar for Icon
+ * grammar.h -- Yacc grammar for Object Icon
  *
- * This file is combined with other files to make the Yacc input for
- * building icont, iconc, and variant translators.
- *
- * Any modifications to this grammar will require corresponding changes to
- * parserr.h, icont/tgrammar.c, iconc/cgrammar.c, and vtran/vtfiles/ident.c.
  */
 
 program	: decls EOFX {Progend($1,$2);} ;
 
-decls	: ;	
-	| decls decl ;
+decls   : packagedecl importdecls otherdecls ;
 
-decl	: record {Recdcl($1);} ;
-        | class {Classdcl($1);} ;
-	| proc {Procdcl($1);} ;
-        | package {Packagedcl($1);} ;
-        | import {Importdcl($1);} ;
-	| global {Globdcl($1);} ;
-	| link {Linkdcl($1);} ;
-        | invocable {Invocdcl($1);} ;
+packagedecl : ;
+        | package ;
+
+importdecls : ;
+        | importdecls import ;
+
+otherdecls : ;	
+	| otherdecls other ;
+
+other   : record ;
+        | class ;
+	| proc ;
+	| global ;
+	| link ;
+        | invocable ;
 
 optsemi : ;
         | SEMICOL ;

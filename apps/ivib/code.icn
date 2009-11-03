@@ -128,12 +128,12 @@ class Code()
 
       prog := Factory.new_prog()
       im := Factory.new_import("", [])
-      prog.put(im)
+      prog.get_imports().put(im)
       every e := !sort(imports) do
          add_nice_import(im, e[1], e[2])
 
       cl := Factory.new_class("\n\n", self.parent_Canvas.name, [self.parent_Canvas.superclass_name], "\n")
-      prog.put(cl)
+      prog.get_others().put(cl)
       if *class_vars > 0 then {
          fl := Factory.new_fields(indent1, ["private"], [])
          every fl.put(Factory.new_id("\n      ", !class_vars))
@@ -201,7 +201,7 @@ class Code()
    # in dest_name.
    #
    public interpose_code(src_name, dest_name)
-      local prog, d, d2, p, cl, fl, s, t, seen_importspec, e, im, ispec
+      local prog, d, p, cl, fl, s, t, seen_importspec, e, im, ispec
 
       /dest_name := src_name
 
@@ -209,25 +209,26 @@ class Code()
       s := Files.file_to_string(src_name) | return alert_error("Couldn't load " || src_name)
       prog := p.parse(s) | return alert_error(["Couldn't parse ", &why])
       seen_importspec := table()
-      every d := prog.gen() do {
+
+      # Delete package from imports
+      delete(imports, prog.get_package().get_name().str())
+
+      # Process imports; im will hold the last import, which we use below.
+      every im := prog.get_imports().gen() do {
+         every d := im.gen() do {
+            if is(d, Id) then
+               # Unqualified import - delete all symbols
+               delete(imports, d.str())
+            else {
+               # Qualified import, delete just those symbols
+               every delete(\imports[d.get_package().str()], d.gen().str())
+               seen_importspec[d.get_package().str()] := d
+            }
+         }
+      }
+
+      every d := prog.get_others().gen() do {
          case classof(d) of {
-            Import : {
-               every d2 := d.gen() do {
-                  if is(d2, Id) then
-                     # Unqualified import - delete all symbols
-                     delete(imports, d2.str())
-                  else {
-                     # Qualified import, delete just those symbols
-                     every delete(\imports[d2.get_package().str()], d2.gen().str())
-                     seen_importspec[d2.get_package().str()] := d2
-                  }
-               }
-               # Keep note of last import
-               im := d
-            }
-            Package : {
-               delete(imports, d.get_name().str())
-            }
             Class : {
                if d.get_name().str() == self.parent_Canvas.name then
                   cl := d
@@ -248,9 +249,9 @@ class Code()
                # Create a new import
                im := Factory.new_import("", [])
                # Prepend a \n to the chunk of the current first token in the prog.
-               t := prog.get(1).get_first_token()
+               t := prog.get_others().get(1).get_first_token()
                t.set_chunk("\n" || t.chunk)
-               prog.insert(1, im)
+               prog.get_imports().put(im)
             }
             add_nice_import(im, e[1], e[2])
          }
@@ -332,7 +333,7 @@ class Code()
 
    private find_procedure(prog, n)
       local d
-      every d := prog.gen() do {
+      every d := prog.get_others().gen() do {
          if is(d, Procedure) & d.get_name().str() == n then
             return d
       }
@@ -448,7 +449,7 @@ class Code()
          return
 
       x := Factory.new_procedure("\n\n", "main", [], "\n")
-      pr.put(x)
+      pr.get_others().put(x)
 
       x.get_locals_list().put(Factory.new_local(indent1, "local", ["d"]))
 

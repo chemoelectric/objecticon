@@ -213,10 +213,6 @@ struct timport *lookup_import(char *s)
 
 void set_package(char *s, struct node *n)
 {
-    if (package_name)
-        tfatal_at(n, "duplicate package declaration: %s", s);
-    if (gfirst)
-        tfatal_at(n, "package declaration must precede global declarations");
     package_name = s;
 }
 
@@ -224,8 +220,6 @@ void next_import(char *s, int qualified, struct node *n)
 {
     int i = hasher(s, import_hash);
     struct timport *x = import_hash[i];
-    if (gfirst)
-        tfatal_at(n, "import declaration must precede global declarations");
     while (x && x->name != s)
         x = x->b_next;
     if (x) {

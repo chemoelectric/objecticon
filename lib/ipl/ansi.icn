@@ -64,13 +64,13 @@
 # desired) iscreen as well.  Some of these may be in the IPL.  You can
 # get any that aren't from Richard Goerwitz (goer@sophist.uchicago.edu).
 
-invocable all
-
 package ipl.ansi
 
 import
    io(stop, writes),
    ipl.iolib(getname, getval, igoto, iputs)
+
+invocable all
 
 procedure _isANSI()
     static isANSI

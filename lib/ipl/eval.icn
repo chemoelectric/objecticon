@@ -33,13 +33,13 @@
 #
 ############################################################################
 
-invocable all
-
 package ipl.eval
 
 import
    io(ewrite),
    ipl.ivalue(ivalue)
+
+invocable all
 
 procedure eval(expr)
    local p, args, tok

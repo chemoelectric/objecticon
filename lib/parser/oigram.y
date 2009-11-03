@@ -142,18 +142,23 @@
 
 program	: decls EOFX {$$ := Node("prog", $1,$2);} ;
 
-decls	: { $$ := Node.EMPTY } ;
-	| decls decl { $$ := Node("decls", $1, $2) } ;
+decls   : packagedecl importdecls otherdecls { $$ := Node("decls", $1, $2, $3); } ;
 
-decl	: record
-        | class
-	| proc
-        | package
-        | import
-	| global
-	| link
-        | invocable
-	;
+packagedecl : { $$ := Node.EMPTY } ;
+        | package ;
+
+importdecls : { $$ := Node.EMPTY } ;
+        | importdecls import { $$ := Node("importdecls", $1, $2); } ;
+
+otherdecls : { $$ := Node.EMPTY } ;
+	| otherdecls other { $$ := Node("otherdecls", $1, $2); } ;
+
+other   : record ;
+        | class ;
+	| proc ;
+	| global ;
+	| link ;
+        | invocable ;
 
 optsemi : { $$ := Node.EMPTY } ; 
         | SEMICOL;

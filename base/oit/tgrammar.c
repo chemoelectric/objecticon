@@ -106,13 +106,10 @@ int modflag;
 #define Cclause1(x1,x2,x3)	$$ = tree4(N_Ccls,x2,x1,x3) 
 
 #define Package(x1,x2)          set_package(dottedid2string(x2), x2);
-#define Classdcl(x)		
 #define Class1(x1,x2)           next_class(Str0(x2),modflag, x2);
 #define Super(x)                next_super(dottedid2string(x),x);
 #define Importspec1(x)          next_import(dottedid2string(x),0,x);
 #define Importspec2(x)          next_import(dottedid2string(x),1,x);idflag = F_Importsym
-#define Packagedcl(x)		
-#define Importdcl(x)		
 #define Dottedident(x1,x2,x3)   $$ = tree4(N_Dottedid,x2,x1,x3)
 #define Toplevelident(x1,x2,x3) $$ = tree4(N_Dottedid,x2,IdNode(default_string),x3)
 #define Dottedidentexpr(x)      $$ = convert_dottedidentexpr(x)
@@ -148,7 +145,6 @@ int modflag;
 #define Field(x1,x2,x3)		$$ = tree4(N_Field,x2,x1,x3)
 #define Global0(x)		idflag = F_Global
 #define Global1(x1,x2,x3)	/* empty */
-#define Globdcl(x)		/* empty */
 #define Ident(x)		install(Str0(x),idflag,x)
 #define Idlist(x1,x2,x3)	install(Str0(x3),idflag,x3)
 #define If0(x1,x2,x3,x4)	$$ = tree4(N_If,x1,x2,x4) 
@@ -160,7 +156,6 @@ int modflag;
 #define Initial1()		$$ = EmptyNode
 #define Initial2(x1,x2)    	$$ = x2
 #define Invocable(x1,x2)	/* empty */
-#define Invocdcl(x1)		/* empty */
 #define Invoclist(x1,x2,x3)	/* empty */
 #define Invocop1(x1)		add_invocable(dottedid2string(x1),1,x1)
 #define Invocop2(x1)		add_invocable(Str0(x1),2,x1)
@@ -172,7 +167,6 @@ int modflag;
                                 $$ = int_leaf(N_Key,x1,kn);
 #define Kfail(x1,x2)		$$ = int_leaf(N_Key,x1,K_FAIL) 
 #define Link(x1,x2)		/* empty */
-#define Linkdcl(x)		/* empty */
 #define Lnkfile1(x)		add_link(Str0(x), x)
 #define Lnkfile2(x)		add_link(Str0(x), x)
 #define Lnklist(x1,x2,x3)	/* empty */
@@ -196,9 +190,7 @@ int modflag;
                                 idflag = F_Argument
 #define Proc2(x1,x2,x3,x4)      curr_func->code = tree6(N_Proc,x1,x1,x2,x3,x4)
 
-#define Procdcl(x)		/* Empty */
 #define Progend(x1,x2)		/* Empty */
-#define Recdcl(x)		/* Empty */
 #define Record1(x1,x2)		next_function(F_Record); idflag = F_Argument
 #define Record2(x1,x2,x3,x4,x5,x6) curr_func->global = next_global(Str0(x2),F_Record|F_Global,x2); \
                                 curr_func->global->func = curr_func; \
