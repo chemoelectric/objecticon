@@ -574,6 +574,17 @@ class FilePath()
    end
 
    #
+   # Return the sibling path, ie a path with the same elements, except the
+   # last one, which is replaced by {s}.  Fails if the path has no elements.
+   #
+   public sibling(s)
+      local t
+      t := copy(l)
+      t[-1] := s | fail
+      return classof(self)(t)
+   end
+
+   #
    # Return a path which represents the absolute path of this
    # path.
    #
