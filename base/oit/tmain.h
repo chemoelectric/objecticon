@@ -44,6 +44,7 @@ extern char *init_string;
 extern char *empty_string;
 extern char *all_string;
 extern char *lang_string;
+extern char *stdin_string;
 extern char *package_marker_string;
 extern char *ascii_string;
 extern char *utf8_string;

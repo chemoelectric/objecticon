@@ -861,7 +861,10 @@ static int setfilenm(int c)
         AppChar(lex_sbuf, c);
     if (c == '"') {
         char *s = str_install(&lex_sbuf);
-        tok_loc.n_file = intern(canonicalize(s));
+        if (s == stdin_string)
+            tok_loc.n_file = s;
+        else
+            tok_loc.n_file = intern(canonicalize(s));
         return NextChar;
     }
     else {

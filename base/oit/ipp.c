@@ -174,8 +174,9 @@ int m4;
    FILE *f;
    infile *fs;
 
+   fname = intern(fname);
    for (fs = curfile; fs->fname != NULL; fs = fs->prev)
-      if (strcmp(fname, fs->fname) == 0) {
+      if (fname == fs->fname) {
          pfatal("circular include", fname);	/* issue error message */
          return 1;				/* treat as success */
          }
@@ -183,7 +184,7 @@ int m4;
       f = m4pipe(fname);
    else if (curfile == &nofile && strcmp(fname, "-") == 0) { /* 1st file only */
       f = stdin;
-      fname = "stdin";
+      fname = stdin_string;
       }
    else
       f = fopen(fname, ReadText);
@@ -193,7 +194,7 @@ int m4;
    fs = safe_alloc(sizeof(infile));
    fs->prev = curfile;
    fs->fp = f;
-   fs->fname = intern(fname);
+   fs->fname = fname;
    fs->encoding = ascii_string;
    fs->lno = 0;
    fs->m4flag = m4;

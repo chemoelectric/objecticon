@@ -39,6 +39,7 @@ char *init_string;
 char *empty_string;
 char *all_string;
 char *lang_string;
+char *stdin_string;
 char *package_marker_string;
 char *ascii_string;
 char *utf8_string;
@@ -598,6 +599,7 @@ void init_strings()
     init_string = spec_str("init");
     all_string = spec_str("all");
     lang_string = spec_str("lang");
+    stdin_string = spec_str("stdin");
     package_marker_string = spec_str(">package");
     ascii_string = spec_str("ASCII");
     utf8_string = spec_str("UTF-8");

@@ -200,7 +200,7 @@ static void trans1(char *filename)
         quitf("cannot open %s",filename);
 
     if (strcmp(filename,"-") == 0) {
-        filename = "stdin";
+        filename = stdin_string;
     }
 
     outname = intern(makename(SourceDir, filename, USuffix));
@@ -217,7 +217,11 @@ static void trans1(char *filename)
         return;
     }
 
-    tok_loc.n_file = intern(canonicalize(filename));
+    if (filename == stdin_string)
+        tok_loc.n_file = filename;
+    else
+        tok_loc.n_file = intern(canonicalize(filename));
+
     in_line = 1;
 
     yyparse();				/* Parse the input */
