@@ -122,8 +122,15 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
     check_unused_imports();
 
     /* Phase II:  suppress unreferenced procs, unless "invocable all". */
-    if (!strinv)
+    if (!strinv) {
         scanrefs();
+        if (lfatals > 0) {
+            *warnings = lwarnings;
+            *fatals = lfatals;
+            return;
+        }
+    }
+
 
     loadtrees();
 
