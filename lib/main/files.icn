@@ -455,7 +455,7 @@ $endif
          return s
 
       # Search all the elements in the path
-      every s := get_path(split_paths(System.getenv(n))).append(p).str() do {
+      every s := get_path(split_paths(System.getenv(\n))).append(p).str() do {
          if access(s, mode) then
             return s
       }

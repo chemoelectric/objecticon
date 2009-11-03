@@ -665,8 +665,16 @@ static char *setline(char *s)
 
     /* Set the changed fields */
     curfile->lno = n - 1;			
-    if (fname)
+    if (fname) {
+        char *t;
+        /* If fname="/tmp/abc.icn" and we have "#line 100 "xyz.icn" then we set the new fname
+         * to /tmp/xyz.icn, if it exists.
+         */
+        t = pathfind(getdir(curfile->fname), 0, fname, 0);
+        if (t)
+            fname = t;
         curfile->fname = intern(fname);
+    }
     if (code)
         curfile->encoding = intern(code);
 

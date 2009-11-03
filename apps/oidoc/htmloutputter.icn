@@ -10,8 +10,7 @@ import
    xml(xml_escape),
    parser, 
    ipl.sort,
-   io,
-   lang
+   io
 
 class HtmlOutputter(Outputter)
    private
@@ -479,12 +478,6 @@ class HtmlOutputter(Outputter)
       local f, fname, line_no, g, s, filename
 
       filename := c.obj.get_first_token().filename
-      if not Files.access(filename, Access.R_OK) then {
-         filename := Files.get_path(c.scanned_file.filename).parent(-1).
-            child(Files.get_path(filename).get(-1)).str()
-         write("changed it to:",filename)
-      }
-
       if member(done_files, filename) then
          return
       insert(done_files, filename)
@@ -503,9 +496,7 @@ class HtmlOutputter(Outputter)
             write(f, xml_escape(s, '<>&'))
          }
          close(g)
-      } else
-         write("diddlik:",filename,"\n",to_string(c,3,3))
-
+      }
 
       write(f, "</pre></body></html>")
       close(f)

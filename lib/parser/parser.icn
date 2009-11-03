@@ -358,7 +358,9 @@ class Parser(Connectable)
                (new_encoding := preproc_get_encoding() | &null) \ 1 &
                preproc_at_end() then 
             {
-               preproc_filename := \new_filename
+               preproc_filename := Files.path_find(\new_filename, 
+                                                   &null,
+                                                   Files.get_path(preproc_filename).parent().str()) | \new_filename
                preproc_encoding := \new_encoding
                preproc_line := new_line - 1
             } else {
