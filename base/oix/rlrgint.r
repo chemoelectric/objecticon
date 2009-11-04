@@ -911,7 +911,7 @@ int bigpow(da, db, dx)
 	    }
             else
                 /* bignum ^ +bignum = guaranteed overflow */
-                ReturnErrNum(307, Error);
+                ReturnErrNum(204, Error);
         }
         else if ( b->sign )
             /* integer ^ -bignum */
