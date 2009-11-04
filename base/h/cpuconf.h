@@ -4,9 +4,6 @@
  *  included before this file.
  */
 
-#ifndef CStateSize
-   #define CStateSize 15		/* size of C state for co-expressions */
-#endif					/* CStateSize */
 
 /*
  * The following definitions depend on the sizes of ints and pointers.
@@ -141,12 +138,6 @@
  */
 #define MaxDigits	30
 
-/*
- * Lower-bound default for coexprlim; more are allowed if memory size permits.
- */
-#ifndef CoexprLim
-   #define CoexprLim 15
-#endif					/* CoexprLim */
 
 /*
  * What follows is default memory sizing. Implementations with special
@@ -160,14 +151,6 @@
 #ifndef MinDefAbrSize
    #define MinDefAbrSize (125000 * WordSize) /* minimum default size of the block region in bytes */
 #endif					/* (default size may be larger if memory is ample) */
-
-#ifndef MStackSize
-   #define MStackSize (30000 * WordSize) /* default value of mstksize, the size of the main interpreter stack */
-#endif					/* MStackSize */
-
-#ifndef XStackSize
-   #define XStackSize (30000 * WordSize)	/* default value of xstksize, the co-expression stack size */
-#endif					/* XStackSize */
 
 #ifndef QualLstSize
    #define QualLstSize	(1250 * WordSize) /* size of qualifier pointer region */
