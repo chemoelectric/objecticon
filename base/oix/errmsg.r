@@ -80,22 +80,14 @@ struct errtab errtab[] = {
     {219, "already closed"},
 
     {302, "memory violation"},
-    {303, "inadequate space for evaluation stack"},
+    {303, "inadequate space for main co-expression"},
     {304, "inadequate space for qualifier list during garbage collection"},
     {305, "inadequate space for static allocation"},
-    {306, "inadequate space in string region"},
-    {307, "inadequate space in block region"},
-    {308, "system stack overflow in co-expression"},
     {309, "out of memory, allocation returned null"},
-    {310, "inadequate co-expression C stack space during garbage collection"},
     {311, "recursion too deep"},
-    {312, "stack overflow in co-expression"},
     {313, "inadequate space for string region"},
     {314, "inadequate space for block region"},
     {315, "inadequate space for main program icode"},
-
-    {401, "co-expressions not implemented"},
-    {402, "program not compiled with debugging option"},
 
     {500, "program malfunction"},		/* for use by runerr() */
     {600, "attempt to access instance field via class"},
