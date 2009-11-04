@@ -911,7 +911,7 @@ int bigpow(da, db, dx)
 	    }
             else
                 /* bignum ^ +bignum = guaranteed overflow */
-                ReturnErrNum(204, Error);
+                ReturnErrNum(203, Error);
         }
         else if ( b->sign )
             /* integer ^ -bignum */
@@ -922,7 +922,7 @@ int bigpow(da, db, dx)
                 case -1:
                     /* Result is +1 / -1, depending on whether *b is even or odd. */
                     if ( ( b->digits[ b->lsd ] ) & 01 )
-                        MakeInt ( -1, dx );
+                        *dx = minusonedesc;
                     else
                         *dx = onedesc;
                     return Succeeded;
