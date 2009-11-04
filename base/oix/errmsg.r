@@ -214,6 +214,8 @@ void err_msg(int n, dptr v)
         }
         else {
             IntVal(kywd_err)--;
+            /* Clear the x* variables for the next error */
+            xexpr = xargp = xfield = 0;
             return;
         }
     }

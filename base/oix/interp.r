@@ -15,6 +15,8 @@ struct b_coexpr *k_current;        /* Always == curpstate->K_current */
 struct p_frame *curr_pf;           /* Always == curpstate->K_current->curr_pf */
 word *ipc;                         /* Notionally curpstate->K_current->curr_pf->ipc, synchronized whenever
                                     * curr_pf is changed */
+struct c_frame *curr_cf;           /* currently executing c frame */
+
 void synch_ipc()
 {
     curr_pf->ipc = ipc;
@@ -65,12 +67,12 @@ void tail_invoke_frame(struct frame *f)
     Desc_EVValD(f->proc, E_Pcall, D_Proc);
     switch (f->type) {
         case C_FRAME_TYPE: {
-            xc_frame = (struct c_frame *)f;
+            curr_cf = (struct c_frame *)f;
             if (!f->proc->ccode(f)) {
                 ipc = f->failure_label;
                 pop_to(f->parent_sp);
             }
-            xc_frame = 0;
+            curr_cf = 0;
             break;
         }
         case P_FRAME_TYPE: {
@@ -360,13 +362,13 @@ static void do_op(int nargs)
     cf->rval = GetWord;
     cf->failure_label = GetAddr;
     Desc_EVValD(bp, E_Pcall, D_Proc);
-    xc_frame = cf;
+    curr_cf = cf;
     if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
         ipc = cf->failure_label;
-    xc_frame = 0;
+    curr_cf = 0;
     /* Pop the C frame */
     k_current->sp = cf->parent_sp;
     quick_free_frame(cf);
@@ -404,13 +406,13 @@ static void do_keyop()
     push_frame((struct frame *)cf);
     cf->failure_label = GetAddr;
     Desc_EVValD(bp, E_Pcall, D_Proc);
-    xc_frame = cf;
+    curr_cf = cf;
     if (bp->ccode(cf)) {
         if (lhs)
             *lhs = cf->value;
     } else
         ipc = cf->failure_label;
-    xc_frame = 0;
+    curr_cf = 0;
     /* Pop the C frame */
     k_current->sp = cf->parent_sp;
     quick_free_frame(cf);

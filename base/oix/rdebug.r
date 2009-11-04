@@ -27,7 +27,6 @@ dptr xexpr;
 dptr xfield;
 dptr xargp;
 int xnargs;
-struct c_frame *xc_frame;           /* currently executing c frame */
 
 struct ipc_line *frame_ipc_line(struct p_frame *pf, int prior)
 {
@@ -586,11 +585,11 @@ static void ttrace()
             break;
 
         case Op_Invokef:
-            if (xc_frame) {
+            if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, xc_frame->proc);
-                xnargs = xc_frame->nargs;
-                xargp = xc_frame->args;
+                procname(stderr, curr_cf->proc);
+                xnargs = curr_cf->nargs;
+                xargp = curr_cf->args;
                 putc('(', stderr);
                 while (xnargs--) {
                     outimage(stderr, xargp++, 0);
@@ -598,7 +597,7 @@ static void ttrace()
                         putc(',', stderr);
                 }
                 putc(')', stderr);
-            } else {
+            } else if (xexpr) {
                 /* Error to do with the type of expr */
                 outimage(stderr, xexpr, 0);
                 fprintf(stderr, " . ");
@@ -608,11 +607,11 @@ static void ttrace()
             break;
 
         case Op_Applyf:
-            if (xc_frame) {
+            if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, xc_frame->proc);
-                xnargs = xc_frame->nargs;
-                xargp = xc_frame->args;
+                procname(stderr, curr_cf->proc);
+                xnargs = curr_cf->nargs;
+                xargp = curr_cf->args;
                 fprintf(stderr," ! [ ");
                 while (xnargs--) {
                     outimage(stderr, xargp++, 0);
@@ -620,7 +619,7 @@ static void ttrace()
                         putc(',', stderr);
                 }
                 fprintf(stderr," ]");
-            } else {
+            } else if (xexpr) {
                 /* Error to do with the type of expr */
                 outimage(stderr, xexpr, 0);
                 fprintf(stderr, " . ");
@@ -634,11 +633,11 @@ static void ttrace()
             break;
 
         case Op_Apply:
-            if (xc_frame) {
+            if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, xc_frame->proc);
-                xnargs = xc_frame->nargs;
-                xargp = xc_frame->args;
+                procname(stderr, curr_cf->proc);
+                xnargs = curr_cf->nargs;
+                xargp = curr_cf->args;
                 fprintf(stderr," ! [ ");
                 while (xnargs--) {
                     outimage(stderr, xargp++, 0);
@@ -646,7 +645,7 @@ static void ttrace()
                         putc(',', stderr);
                 }
                 fprintf(stderr," ]");
-            } else {
+            } else if (xexpr) {
                 /* Error to do with the type of expr */
                 outimage(stderr, xexpr, 0);
                 fprintf(stderr, " ! ");
@@ -658,11 +657,11 @@ static void ttrace()
             break;
 
         case Op_Invoke:
-            if (xc_frame) {
+            if (curr_cf) {
                 /* Will happen if a builtin proc calls runnerr */
-                procname(stderr, xc_frame->proc);
-                xnargs = xc_frame->nargs;
-                xargp = xc_frame->args;
+                procname(stderr, curr_cf->proc);
+                xnargs = curr_cf->nargs;
+                xargp = curr_cf->args;
                 putc('(', stderr);
                 while (xnargs--) {
                     outimage(stderr, xargp++, 0);
@@ -670,7 +669,7 @@ static void ttrace()
                         putc(',', stderr);
                 }
                 putc(')', stderr);
-            } else {
+            } else if (xexpr) {
                 /* Error to do with the type of expr */
                 outimage(stderr, xexpr, 0);
                 fprintf(stderr," ( .. )");
@@ -678,7 +677,7 @@ static void ttrace()
             break;
 
         case Op_Toby:
-            xargp = xc_frame->args;
+            xargp = curr_cf->args;
             putc('{', stderr);
             outimage(stderr, xargp++, 0);
             fprintf(stderr, " to ");
@@ -689,7 +688,7 @@ static void ttrace()
             break;
 
         case Op_Subsc:
-            xargp = xc_frame->args;
+            xargp = curr_cf->args;
             putc('{', stderr);
             outimage(stderr, xargp++, 0);
             putc('[', stderr);
@@ -700,7 +699,7 @@ static void ttrace()
             break;
 
         case Op_Sect:
-            xargp = xc_frame->args;
+            xargp = curr_cf->args;
             putc('{', stderr);
             outimage(stderr, xargp++, 0);
 
@@ -752,17 +751,17 @@ static void ttrace()
             /*
              * Have we come here from a C operator/function?
              */
-            if (!xc_frame)
+            if (!curr_cf)
                 break;
 
-            bp = xc_frame->proc;
+            bp = curr_cf->proc;
 
             /* 
              * It may be an operator (0-2 args) or a function.
              */
             if (is_op(bp)) {
-                xnargs = xc_frame->nargs;
-                xargp = xc_frame->args;
+                xnargs = curr_cf->nargs;
+                xargp = curr_cf->args;
                 putc('{', stderr);
                 if (xnargs == 0)
                     putstr(stderr, bp->name);
@@ -781,8 +780,8 @@ static void ttrace()
             } else {
                 /* Not an operator, perhaps a function being resumed. */
                 procname(stderr, bp);
-                xnargs = xc_frame->nargs;
-                xargp = xc_frame->args;
+                xnargs = curr_cf->nargs;
+                xargp = curr_cf->args;
                 putc('(', stderr);
                 while (xnargs--) {
                     outimage(stderr, xargp++, 0);

@@ -86,6 +86,7 @@ extern struct progstate *curpstate;
 extern struct b_coexpr *k_current;
 extern struct p_frame *curr_pf;
 extern word *ipc;
+extern struct c_frame *curr_cf;           /* currently executing c frame */
 
 extern struct progstate rootpstate;
 extern int noMTevents;		/* no MT events during GC */
@@ -99,7 +100,6 @@ extern dptr xexpr;
 extern dptr xfield;
 extern dptr xargp;
 extern int xnargs;
-extern struct c_frame *xc_frame;           /* currently executing c frame */
 
 /*
  * graphics
