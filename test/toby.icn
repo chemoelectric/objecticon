@@ -2,9 +2,17 @@
 
 import io
 
-#  only for Jcon; does not work under Icon v9
+procedure seq2(i,j)
+   /i := 1
+   /j := 1
+   repeat {
+      suspend i
+      i +:= j
+   }
+end
 
 procedure main()
+   local e,i,j
 
    every write ("a. ", 16r7ffffffffffffffd to 16r7fffffffffffffff)
 
@@ -35,4 +43,10 @@ procedure main()
 
    every write ("m. ", -16r7ffffffd to -16r80000000 by -1)
 
+   e := create 100|16r800000ff|16r7fffff00|16r2555555555555555
+   e := cocopy{ !e | -(!e) }
+   every i := !e do {
+      every j := !e do
+         cmp_seq{"seq test(" || i || "," || j || ")", seq(i,j)\20, seq2(i,j)\20}
+   }
 end
