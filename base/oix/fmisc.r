@@ -458,50 +458,83 @@ function{} syserr(msg)
    }
 end
 
-
+
 "seq(i, j) - generate i, i+j, i+2*j, ... ."
 
 function{1,*} seq(from, by)
-
-   if !def:C_integer(from, 1) then
-      runerr(101, from)
-   if !def:C_integer(by, 1) then
-      runerr(101, by)
-   abstract {
-      return integer
-      }
    body {
-      word seq_lb = 0, seq_ub = 0;
+    word by0, from0;
+    tended struct descrip by1, from1;
+    double by2, from2;
+    if (is:null(from))
+        from = onedesc;
+    if (is:null(by))
+        by = onedesc;
 
-      /*
-       * Produce error if by is 0, i.e., an infinite sequence of from's.
-       */
-      if (by > 0) {
-         seq_lb = MinWord + by;
-         seq_ub = MaxWord;
-         }
-      else if (by < 0) {
-         seq_lb = MinWord;
-         seq_ub = MaxWord + by;
-         }
-      else if (by == 0) {
-         irunerr(211, by);
-         errorfail;
-         }
+    if (cnv:(exact)C_integer(by, by0) && cnv:(exact)C_integer(from, from0)) {
+        /*
+         * by must not be zero.
+         */
+        if (by0 == 0) {
+            irunerr(211, by0);
+            errorfail;
+        }
 
-      /*
-       * Suspend sequence, stopping when largest or smallest integer
-       *  is reached.
-       */
-      do {
-         suspend C_integer from;
-         from += by;
-         }
-      while (from >= seq_lb && from <= seq_ub);
-      runerr(203);
-      }
+        if (by0 > 0) {
+            for (;;) {
+                word t;
+                suspend C_integer from0;
+                t = from0 + by0;
+                if (t <= from0)
+                    break;
+                from0 = t;
+            }
+        } else {
+            for (;;) {
+                word t;
+                suspend C_integer from0;
+                t = from0 + by0;
+                if (t >= from0)
+                    break;
+                from0 = t;
+            }
+        }
+        MakeInt(from0, &from1);
+        MakeInt(by0, &by1);
+        for (;;) {
+            bigadd(&from1, &by1, &from1);
+            suspend from1;
+        }
+        fail;
+   }
+   else if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)) {
+       word sn = bigcmp(&by1, &zerodesc);
+       if (sn == 0) {
+           runerr(211, by1);
+           errorfail;
+       }
+       for (;;) {
+           suspend from1;
+           bigadd(&from1, &by1, &from1);
+       }
+       fail;
+   }
+   else if (cnv:C_double(from,from2) && cnv:C_double(by,by2)) {
+       if (by2 == 0) {
+           irunerr(211, (int)by2);
+           errorfail;
+       }
+       for (;;) {
+           suspend C_double from2;
+           from2 += by2;
+       }
+       fail;
+   }
+   else runerr(102);
+  }
 end
-
+
+
 "serial(x) - return serial number of structure."
 
 function {0,1} serial(x)

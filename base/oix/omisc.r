@@ -204,95 +204,90 @@ end
 "i to j by k - generate successive values."
 
 operator{*} ... toby(from, to, by)
-   declare {
+   body {
+    word by0, from0, to0;
     tended struct descrip by1, from1, to1;
-   }
-   if cnv:(exact)C_integer(by) && cnv:(exact)C_integer(from) && cnv:C_integer(to) then {
-       inline {
-           /*
-            * by must not be zero.
-            */
-           if (by == 0) {
-	       irunerr(211, by);
-	       errorfail;
-           }
+    double by2, from2, to2;
+    if (cnv:(exact)C_integer(by,by0) && cnv:(exact)C_integer(from,from0) && cnv:C_integer(to,to0)) {
+        /*
+         * by must not be zero.
+         */
+        if (by0 == 0) {
+            irunerr(211, by0);
+            errorfail;
+        }
 
-           if (by > 0) {
-               if (to + by > to) {
-                   while (from <= to) {
-                       suspend C_integer from;
-                       from += by;
-                   }
-               } else {
-                   word t;
-                   while (from <= to) {
-                       suspend C_integer from;
-                       t = from;
-                       from += by;
-                       if (from < t)
-                           break;
-                   }
-               }
-           } else {     /* by < 0 */
-               if (to + by < to) {
-                   while (from >= to) {
-                       suspend C_integer from;
-                       from += by;
-                   }
-               } else {
-                   word t;
-                   while (from >= to) {
-                       suspend C_integer from;
-                       t = from;
-                       from += by;
-                       if (from > t)
-                           break;
-                   }
-               }
-           }
-           fail;
-       }
+        if (by0 > 0) {
+            if (to0 + by0 > to0) {
+                while (from0 <= to0) {
+                    suspend C_integer from0;
+                    from0 += by0;
+                }
+            } else {
+                word t;
+                while (from0 <= to0) {
+                    suspend C_integer from0;
+                    t = from0;
+                    from0 += by0;
+                    if (from0 < t)
+                        break;
+                }
+            }
+        } else {     /* by < 0 */
+            if (to0 + by0 < to0) {
+                while (from0 >= to0) {
+                    suspend C_integer from0;
+                    from0 += by0;
+                }
+            } else {
+                word t;
+                while (from0 >= to0) {
+                    suspend C_integer from0;
+                    t = from0;
+                    from0 += by0;
+                    if (from0 > t)
+                        break;
+                }
+            }
+        }
+        fail;
    }
-   else if cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1)  && cnv:integer(to,to1) then {
-       inline {
-           tended struct descrip t;
-           word sn = bigcmp(&by1, &zerodesc);
-           if (sn == 0) {
-	       runerr(211, by1);
-	       errorfail;
-           }
-           if (sn > 0) {
-               for ( ; bigcmp(&from1, &to1) <= 0; from1 = t) {
-                   suspend from1;
-                   bigadd(&from1, &by1, &t);
-               }
-           } else {
-               for ( ; bigcmp(&from1, &to1) >= 0; from1 = t) {
-                   suspend from1;
-                   bigadd(&from1, &by1, &t);
-               }
-           }
-           fail;
+   else if (cnv:(exact)integer(by,by1) && cnv:(exact)integer(from,from1) && cnv:integer(to,to1)) {
+       word sn = bigcmp(&by1, &zerodesc);
+       if (sn == 0) {
+           runerr(211, by1);
+           errorfail;
        }
-   }
-   else if cnv:C_double(from) && cnv:C_double(to) && cnv:C_double(by) then {
-       inline {
-           if (by == 0) {
-               irunerr(211, (int)by);
-               errorfail;
+       if (sn > 0) {
+           for ( ; bigcmp(&from1, &to1) <= 0;) {
+               suspend from1;
+               bigadd(&from1, &by1, &from1);
            }
-           if (by > 0)
-               for ( ; from <= to; from += by) {
-                   suspend C_double from;
-               }
-           else
-               for ( ; from >= to; from += by) {
-                   suspend C_double from;
-               }
-           fail;
+       } else {
+           for ( ; bigcmp(&from1, &to1) >= 0;) {
+               suspend from1;
+               bigadd(&from1, &by1, &from1);
+           }
        }
+       fail;
    }
-   else runerr(102)
+   else if (cnv:C_double(from,from2) && cnv:C_double(to,to2) && cnv:C_double(by,by2)) {
+       if (by2 == 0) {
+           irunerr(211, (int)by2);
+           errorfail;
+       }
+       if (by2 > 0)
+           for ( ; from2 <= to2; from2 += by2) {
+               suspend C_double from2;
+           }
+       else
+           for ( ; from2 >= to2; from2 += by2) {
+               suspend C_double from2;
+           }
+       fail;
+   }
+   else runerr(102);
+  }
 end
 
 

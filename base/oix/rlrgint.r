@@ -1821,18 +1821,20 @@ static int bigpowi(da, i, dx)
     int n = WordBits;
    
     if (i > 0) {
+        tended struct descrip tmp;
         /* scan bits left to right.  skip leading 1. */
         while (--n >= 0)
             if (i & ((word)1 << n))
                 break;
         /* then, for each zero, square the partial result;
            for each one, square it and multiply it by a */
-        *dx = *da;
+        tmp = *da;
         while (--n >= 0) {
-            bigmul(dx, dx, dx);
+            bigmul(&tmp, &tmp, &tmp);
             if (i & ((word)1 << n))
-                bigmul(dx, da, dx);
+                bigmul(&tmp, da, &tmp);
         }
+        *dx = tmp;
     }
     else if (i == 0) {
         *dx = onedesc;
