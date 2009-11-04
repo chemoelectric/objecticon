@@ -156,9 +156,8 @@ struct progstate *alcprog(long icodesize)
    if (prog == NULL) {
        collect(Blocks);
        prog = malloc(sizeof(struct progstate));
-       if (prog == NULL) {
-           ReturnErrNum(305, NULL);
-       }
+       if (prog == NULL)
+           return 0;
    }
    icode = malloc(icodesize);
    if (icode == NULL) {
@@ -166,7 +165,7 @@ struct progstate *alcprog(long icodesize)
        icode = malloc(icodesize);
        if (icode == NULL) {
            free(prog);
-           ReturnErrNum(305, NULL);
+           return 0;
        }
    }
    memset(prog, 0, sizeof(struct progstate));
@@ -777,10 +776,7 @@ char *f(int region, word nbytes)
    /*
     * All attempts failed.
     */
-   if (region == Blocks)
-      ReturnErrNum(307, 0);
-   else
-      ReturnErrNum(306, 0);
+   return 0;
 }
 #enddef
 
