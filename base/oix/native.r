@@ -135,7 +135,7 @@ static void extract_package(dptr s, dptr d)
 static int convert_to_##TYPE(dptr src, TYPE *dest)
 {
     struct descrip bits, intneg16, int65535, digs;
-    tended struct descrip i, j, t, u, pwr;
+    tended struct descrip i, t, u, pwr;
     TYPE res = 0;
     int pos = 0, k;
 
@@ -166,8 +166,7 @@ static int convert_to_##TYPE(dptr src, TYPE *dest)
         if (bigcmp(&i, &u) < 0)
             ReturnErrVal(101, *src, 0);
         /* Convert to the two's complement representation of i (i := pwr + i) */
-        bigadd(&i, &pwr, &t);
-        i = t;
+        bigadd(&i, &pwr, &i);
     } else if ((TYPE)-1 > 0) {
         /* TYPE unsigned, i must be < pwr */
         if (bigcmp(&i, &pwr) >= 0)
@@ -185,8 +184,7 @@ static int convert_to_##TYPE(dptr src, TYPE *dest)
      */
     for (k = 0; k < sizeof(TYPE) / 2; ++k) {
         bigand(&i, &int65535, &bits);
-        bigshift(&i, &intneg16, &j);
-        i = j;
+        bigshift(&i, &intneg16, &i);
         res |= ((ulonglong)IntVal(bits) << pos);
         pos += 16;
     }
@@ -219,8 +217,7 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
         j = j >> 16;
         MakeInt(bits, &t);
         bigshift(&t, &pos, &chunk);
-        bigadd(&res, &chunk, &t);
-        res = t;
+        bigadd(&res, &chunk, &res);
         IntVal(pos) += 16;
     }
     if (src < 0) {
@@ -228,8 +225,7 @@ static void convert_from_##TYPE(TYPE src, dptr dest)
         MakeInt(sizeof(TYPE) * 8, &digs);
         bigshift(&onedesc, &digs, &pwr);
         /* Convert from two's complement to true value - res := res - pwr */
-        bigsub(&res, &pwr, &t);
-        res = t;
+        bigsub(&res, &pwr, &res);
     }
     *dest = res;
 }
