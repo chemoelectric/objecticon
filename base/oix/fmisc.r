@@ -1,30 +1,30 @@
 /*
  * File: fmisc.r
- * Contents:
- *  args, char, collect, copy, display, function, iand, icom, image, ior,
- *  ishift, ixor, [keyword], [load], ord, name, runerr, seq, sort, sortf,
- *  type, variable
  */
-#include "../h/opdefs.h"
+
+static word sort_field;		/* field number, set by sort function */
+static dptr nth (dptr d);
+static int tvcmp4  (struct dpair *dp1,struct dpair *dp2);
+static int trcmp3  (struct dpair *dp1,struct dpair *dp2);
+static int trefcmp (dptr d1,dptr d2);
+static int tvalcmp (dptr d1,dptr d2);
+static int nthcmp  (dptr d1,dptr d2);
+
 
 "char(i) - produce a string consisting of character i."
 
 function{1} char(i)
-
    if !cnv:C_integer(i) then
       runerr(101,i)
-   abstract {
-      return string
-      }
    body {
       if (i < 0 || i > 255) {
          irunerr(205, i);
          errorfail;
          }
       return string(1, &allchars[i & 0xFF]);
-      }
+   }
 end
-
+
 
 "collect() - call garbage collector."
 
@@ -34,14 +34,12 @@ function{1} collect()
       return nulldesc;
       }
 end
-
+
 
 "copy(x) - make a copy of object x."
 
 function{1} copy(x)
-   abstract {
-      return type(x)
-      }
+ body {
    type_case x of {
       null:
       string:
@@ -55,8 +53,7 @@ function{1} copy(x)
       object:
       class:
       constructor:
-      coexpr:
-         inline {
+      coexpr: {
             /*
              * Copy the null value, integers, long integers, reals, files,
              *	csets, procedures, and such by copying the descriptor.
@@ -67,8 +64,7 @@ function{1} copy(x)
             return x;
             }
 
-      list:
-         inline {
+      list: {
             /*
              * Pass the buck to cplist to copy a list.
              */
@@ -76,24 +72,19 @@ function{1} copy(x)
             return result;
             }
       table: {
-         body {
             cptable(&x, &result, BlkLoc(x)->table.size);
 	    return result;
-            }
          }
 
       set: {
-         body {
             /*
              * Pass the buck to cpset to copy a set.
              */
             cpset(&x, &result, BlkLoc(x)->set.size);
 	    return result;
-            }
          }
 
       record: {
-         body {
             /*
              * Note, these pointers don't need to be tended, because they are
              *  not used until after allocation is complete.
@@ -118,38 +109,33 @@ function{1} copy(x)
                *d1++ = *d2++;
 	    Desc_EVValD(new_rec, E_Rcreate, D_Record);
             return record(new_rec);
-            }
          }
 
-      default: body {
+      default:  {
             runerr(123,x);
          }
       }
+   }
 end
-
+
 
 "display(i) - display local variables of i most recent"
 " procedure activations, plus global variables."
 
 function{1} display(i,c)
-   declare {
-      struct b_coexpr *ce = NULL;
-      }
 
    if !def:C_integer(i,(C_integer)k_level) then
       runerr(101, i)
 
-   if !is:null(c) then inline {
-      if (!is:coexpr(c)) runerr(118,c);
-      else if (BlkLoc(c) != (union block *)k_current)
-         ce = (struct b_coexpr *)BlkLoc(c);
-      }
-
-   abstract {
-      return null
-      }
-
    body {
+      struct b_coexpr *ce = NULL;
+
+      if (!is:null(c)) {
+         if (!is:coexpr(c)) runerr(118,c);
+         else if (BlkLoc(c) != (union block *)k_current)
+            ce = (struct b_coexpr *)BlkLoc(c);
+      }
+
        /*
         * Produce error if i is negative; constrain i to be <= &level.
         */
@@ -169,16 +155,13 @@ function{1} display(i,c)
        else
            xdisp(k_current->curr_pf, i, stderr, curpstate);
        return nulldesc;
-      }
+   }
 end
-
+
 
 "errorclear() - clear error condition."
 
 function{1} errorclear()
-   abstract {
-      return null
-      }
    body {
       k_errornumber = 0;
       k_errortext = emptystr;
@@ -187,9 +170,6 @@ function{1} errorclear()
       return nulldesc;
       }
 end
-
-
-
 
 
 /*
@@ -256,7 +236,7 @@ end
 bitop(iand, bitand, "AND")          /* iand(i,j) bitwise "and" of i and j */
 bitop(ior,  bitor, "inclusive OR")  /* ior(i,j) bitwise "or" of i and j */
 bitop(ixor, bitxor, "exclusive OR") /* ixor(i,j) bitwise "xor" of i and j */
-
+
 
 "icom(i) - produce bitwise complement (one's complement) of i."
 
@@ -267,9 +247,6 @@ function{1} icom(i)
    if !cnv:integer(i) then
       runerr(101, i)
 
-   abstract {
-      return integer
-      }
    inline {
       if (Type(i) == T_Lrgint) {
          bigsub(&minusonedesc, &i, &result);
@@ -279,22 +256,19 @@ function{1} icom(i)
       return C_integer ~IntVal(i);
       }
 end
-
+
 
 "image(x) - return string image of object x."
 /*
  *  All the interesting work happens in getimage()
  */
 function{1} image(x)
-   abstract {
-      return string
-      }
    inline {
       getimage(&x,&result);
       return result;
       }
 end
-
+
 
 "ishift(i,j) - produce i shifted j bit positions (left if j<0, right if j>0)."
 
@@ -305,9 +279,6 @@ function{1} ishift(i,j)
    if !cnv:integer(j) then
       runerr(101, j)
 
-   abstract {
-      return integer
-      }
    body {
       uword ci;			 /* shift in 0s, even if negative */
       C_integer cj;
@@ -538,36 +509,19 @@ end
 "serial(x) - return serial number of structure."
 
 function {0,1} serial(x)
-   abstract {
-      return integer
-      }
-
+ body {
    type_case x of {
-      list:   inline {
-         return C_integer BlkLoc(x)->list.id;
-         }
-      set:   inline {
-         return C_integer BlkLoc(x)->set.id;
-         }
-      table:   inline {
-         return C_integer BlkLoc(x)->table.id;
-         }
-      record:   inline {
-         return C_integer BlkLoc(x)->record.id;
-         }
-      object:   inline {
-         return C_integer BlkLoc(x)->object.id;
-         }
-      coexpr:   inline {
-         return C_integer BlkLoc(x)->coexpr.id;
-         }
-      default:
-         inline { 
-            runerr(123,x);
-         }
-      }
+      list:     return C_integer BlkLoc(x)->list.id;
+      set:      return C_integer BlkLoc(x)->set.id;
+      table:    return C_integer BlkLoc(x)->table.id;
+      record:   return C_integer BlkLoc(x)->record.id;
+      object:   return C_integer BlkLoc(x)->object.id;
+      coexpr:   return C_integer BlkLoc(x)->coexpr.id;
+      default:  runerr(123,x);
+    }
+  }
 end
-
+
 "sort(x,i) - sort structure x by method i (for tables)"
 
 function{1} sort(t, i)
@@ -832,13 +786,12 @@ function{1} sort(t, i)
          runerr(115, t);		/* structure expected */
       }
 end
-
+
 /*
  * trefcmp(d1,d2) - compare two-element lists on first field.
  */
 
-int trefcmp(d1,d2)
-dptr d1, d2;
+static int trefcmp(dptr d1, dptr d2)
    {
 
 #ifdef DeBug
@@ -854,8 +807,7 @@ dptr d1, d2;
  * tvalcmp(d1,d2) - compare two-element lists on second field.
  */
 
-int tvalcmp(d1,d2)
-dptr d1, d2;
+static int tvalcmp(dptr d1, dptr d2)
    {
 
 #ifdef DeBug
@@ -873,159 +825,126 @@ dptr d1, d2;
  *
  * trcmp3(dp1,dp2)
  */
-
-int trcmp3(dp1,dp2)
-struct dpair *dp1,*dp2;
+static int trcmp3(struct dpair *dp1, struct dpair *dp2)
 {
    return (anycmp(&((*dp1).dr),&((*dp2).dr)));
 }
+
 /*
  * tvcmp4(dp1,dp2)
  */
+static int tvcmp4(struct dpair *dp1, struct dpair *dp2)
+{
+    return (anycmp(&((*dp1).dv),&((*dp2).dv)));
+}
 
-int tvcmp4(dp1,dp2)
-struct dpair *dp1,*dp2;
-
-   {
-   return (anycmp(&((*dp1).dv),&((*dp2).dv)));
-   }
-
 
 "sortf(x,i) - sort list or set x on field i of each member"
 
 function{1} sortf(t, i)
+  if !def:C_integer(i, 1) then
+     runerr (101, i)
+
+  body {
+   if (i == 0) {
+       irunerr(205, i);
+       errorfail;
+   }
+
    type_case t of {
       list: {
-         abstract {
-            return type(t)
-            }
-         if !def:C_integer(i, 1) then
-            runerr (101, i)
-         body {
-            register word size;
-            extern word sort_field;
+         word size;
 
-            if (i == 0) {
-               irunerr(205, i);
-               errorfail;
-               }
-            /*
-             * Sort the list by copying it into a new list and then using
-             *  qsort to sort the descriptors.  (That was easy!)
-             */
-            size = BlkLoc(t)->list.size;
-            cplist(&t, &result, (word)1, size + 1);
-            sort_field = i;
-            qsort((char *)BlkLoc(result)->list.listhead->lelem.lslots,
+         /*
+          * Sort the list by copying it into a new list and then using
+          *  qsort to sort the descriptors.  (That was easy!)
+          */
+         size = BlkLoc(t)->list.size;
+         cplist(&t, &result, (word)1, size + 1);
+         sort_field = i;
+         qsort((char *)BlkLoc(result)->list.listhead->lelem.lslots,
                (int)size, sizeof(struct descrip),(QSortFncCast) nthcmp);
 
-            Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
-            return result;
-            }
-         }
+         Desc_EVValD(BlkLoc(result), E_Lcreate, D_List);
+         return result;
+      }
 
       record: {
-         abstract {
-            return new list(any_value)
-            }
-         if !def:C_integer(i, 1) then
-            runerr(101, i)
-         body {
-            register dptr d1;
-            register word size;
-            tended struct b_list *lp;
-            union block *bp;
-            register int j;
-            extern word sort_field;
+         dptr d1;
+         word size;
+         tended struct b_list *lp;
+         union block *bp;
+         int j;
 
-            if (i == 0) {
-               irunerr(205, i);
-               errorfail;
-               }
-            /*
-             * Create a list the size of the record, copy each element into
-             * the list, and then sort the list using qsort as in list
-             * sorting and return the sorted list.
-             */
-            size = BlkLoc(t)->record.constructor->n_fields;
+         /*
+          * Create a list the size of the record, copy each element into
+          * the list, and then sort the list using qsort as in list
+          * sorting and return the sorted list.
+          */
+         size = BlkLoc(t)->record.constructor->n_fields;
 
-            MemProtect(lp = alclist_raw(size, size));
+         MemProtect(lp = alclist_raw(size, size));
 
-            bp = BlkLoc(t);  /* need not be tended if not set until now */
+         bp = BlkLoc(t);  /* need not be tended if not set until now */
 
-            if (size > 0) {  /* only need to sort non-empty records */
-               d1 = lp->listhead->lelem.lslots;
-               for (j = 0; j < size; j++)
-                  *d1++ = bp->record.fields[j];
-               sort_field = i;
-               qsort((char *)lp->listhead->lelem.lslots,(int)size,
-                  sizeof(struct descrip),(QSortFncCast)nthcmp);
-               }
-
-            Desc_EVValD(lp, E_Lcreate, D_List);
-            return list(lp);
-            }
+         if (size > 0) {  /* only need to sort non-empty records */
+             d1 = lp->listhead->lelem.lslots;
+             for (j = 0; j < size; j++)
+                 *d1++ = bp->record.fields[j];
+             sort_field = i;
+             qsort((char *)lp->listhead->lelem.lslots,(int)size,
+                   sizeof(struct descrip),(QSortFncCast)nthcmp);
          }
+
+         Desc_EVValD(lp, E_Lcreate, D_List);
+         return list(lp);
+       }
 
       set: {
-         abstract {
-            return new list(store[type(t).set_elem])
-            }
-         if !def:C_integer(i, 1) then
-            runerr (101, i)
-         body {
-            register dptr d1;
-            register word size;
-            register int j, k;
-            tended struct b_list *lp;
-            union block *ep, *bp;
-            register struct b_slots *seg;
-            extern word sort_field;
+         dptr d1;
+         word size;
+         int j, k;
+         tended struct b_list *lp;
+         union block *ep, *bp;
+         struct b_slots *seg;
 
-            if (i == 0) {
-               irunerr(205, i);
-               errorfail;
-               }
-            /*
-             * Create a list the size of the set, copy each element into
-             * the list, and then sort the list using qsort as in list
-             * sorting and return the sorted list.
-             */
-            size = BlkLoc(t)->set.size;
+         /*
+          * Create a list the size of the set, copy each element into
+          * the list, and then sort the list using qsort as in list
+          * sorting and return the sorted list.
+          */
+         size = BlkLoc(t)->set.size;
 
-            MemProtect(lp = alclist(size, size));
+         MemProtect(lp = alclist(size, size));
 
-            bp = BlkLoc(t);  /* need not be tended if not set until now */
+         bp = BlkLoc(t);  /* need not be tended if not set until now */
 
-            if (size > 0) {  /* only need to sort non-empty sets */
-               d1 = lp->listhead->lelem.lslots;
-               for (j = 0; j < HSegs && (seg = bp->table.hdir[j]) != NULL; j++)
-                  for (k = segsize[j] - 1; k >= 0; k--)
+         if (size > 0) {  /* only need to sort non-empty sets */
+             d1 = lp->listhead->lelem.lslots;
+             for (j = 0; j < HSegs && (seg = bp->table.hdir[j]) != NULL; j++)
+                 for (k = segsize[j] - 1; k >= 0; k--)
                      for (ep = seg->hslots[k]; ep != NULL; ep= ep->telem.clink)
-                        *d1++ = ep->selem.setmem;
-               sort_field = i;
-               qsort((char *)lp->listhead->lelem.lslots,(int)size,
-                     sizeof(struct descrip),(QSortFncCast)nthcmp);
-               }
-
-            Desc_EVValD(lp, E_Lcreate, D_List);
-            return list(lp);
-            }
+                         *d1++ = ep->selem.setmem;
+             sort_field = i;
+             qsort((char *)lp->listhead->lelem.lslots,(int)size,
+                   sizeof(struct descrip),(QSortFncCast)nthcmp);
          }
+
+         Desc_EVValD(lp, E_Lcreate, D_List);
+         return list(lp);
+       }
 
       default:
          runerr(125, t);	/* list, record, or set expected */
       }
+  }
 end
-
+
+
 /*
  * nthcmp(d1,d2) - compare two descriptors on their nth fields.
  */
-word sort_field;		/* field number, set by sort function */
-static dptr nth (dptr d);
-
-int nthcmp(d1,d2)
-dptr d1, d2;
+static int nthcmp(dptr d1, dptr d2)
    {
    int t1, t2, rv;
    dptr e1, e2;
@@ -1060,8 +979,7 @@ dptr d1, d2;
 /*
  * nth(d) - return the nth field of d, if any.  (sort_field is "n".)
  */
-static dptr nth(d)
-    dptr d;
+static dptr nth(dptr d)
 {
     word i;
     dptr rv;
@@ -1098,7 +1016,7 @@ static dptr nth(d)
     }
     return rv;
 }
-
+
 
 "type(x) - return type of x as a string."
 
@@ -1127,13 +1045,6 @@ function{1} type(x)
    return result;
   }
 end
-
-
-
-
-
-
-
 
 
 "cast(o,c) - cast object o to class c."
@@ -1642,7 +1553,7 @@ function{*} lang_Text_get_ord_range(c)
        fail;
    }
 end
-
+
 
 function{*} lang_Text_slice(c, i, j)
    if !cnv:cset(c) then
@@ -1825,4 +1736,4 @@ function{*} ord(x, i, j)
       }
    }
 end
-
+

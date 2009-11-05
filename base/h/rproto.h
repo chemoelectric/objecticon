@@ -465,7 +465,6 @@ C_integer iipow		(C_integer n1, C_integer n2);
 void	init		(char *name, int *argcp, char *argv[], int trc_init);
 int	kbhit		(void);
 int	mkreal		(double r,dptr dp);
-int	nthcmp		(dptr d1,dptr d2);
 void	nxttab		(C_integer *col, dptr *tablst, dptr endlst,
 			   C_integer *last, C_integer *interval);
 int	order		(dptr dp);
@@ -474,10 +473,6 @@ int	ripow		(double r, C_integer n, dptr rslt);
 void	rtos		(double n,dptr dp,char *s);
 int	sig_rsm		(void);
 struct b_proc *strprc	(dptr s, C_integer arity, struct progstate *p);
-int	trcmp3		(struct dpair *dp1,struct dpair *dp2);
-int	trefcmp		(dptr d1,dptr d2);
-int	tvalcmp		(dptr d1,dptr d2);
-int	tvcmp4		(struct dpair *dp1,struct dpair *dp2);
 void	varargs		(dptr argp, int nargs, dptr rslt);
 
 struct progstate *alcprog(long icodesize);
