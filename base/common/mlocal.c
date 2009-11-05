@@ -296,7 +296,7 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
         if (!cd)
             return tryfile(0, name, extn);
         strcpy(buf, cd);
-        strcat(buf, getdir(name));
+        strncat(buf, getdir(name), sizeof(buf) - strlen(cd) - 1);
         return tryfile(buf, name, extn);
     }
 
