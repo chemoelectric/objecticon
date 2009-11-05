@@ -10,14 +10,11 @@
  */
 extern int yychar;		/* parser's current input token type */
 extern int yynerrs;		/* number of errors in parse */
-extern int nocode;		/* true to suppress code generation */
 
 extern int in_line;		/* current line number in input */
 extern int incol;		/* current column number in input */
 extern int peekc;		/* one character look-ahead */
 extern FILE *srcfile;		/* current input file */
-
-extern int tfatals;		/* total fatal errors */
 
 /*
  * Token table structure.

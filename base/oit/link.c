@@ -51,8 +51,8 @@ static char *dbgname;                   /* debug file name */
 
 char *inname;                           /* input file name */
 
-int lfatals = 0;                                /* number of errors encountered */
-int lwarnings = 0;                      /* number of warnings encountered */
+static int lfatals = 0;                                /* number of errors encountered */
+static int lwarnings = 0;                      /* number of warnings encountered */
 
 struct lfunction *curr_lfunc;
 

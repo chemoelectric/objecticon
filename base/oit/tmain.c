@@ -13,8 +13,8 @@
 #include "ipp.h"
 #include "../h/header.h"
 
-int warnings = 0;           /* count of warnings */
-int errors = 0;		    /* translator and linker errors */
+static int warnings = 0;           /* count of warnings */
+static int errors = 0;		    /* translator and linker errors */
 
 int m4pre	=0;	/* -m: use m4 preprocessor? [UNIX] */
 int pponly	=0;	/* -E: preprocess only */

@@ -26,6 +26,7 @@
  
 #include "icont.h"
 #include "tmain.h"
+#include "trans.h"
 #include "ipp.h"
 
 #define HTBINS 256			/* number of hash bins */
@@ -123,7 +124,6 @@ static int ifdepth;			/* depth of $if nesting */
 static char *last_line_file, 
             *last_line_encoding;        /* last file/encoding on a #line directive */
 
-extern int tfatals, nocode;		/* provided by icont, iconc */
 
 /*
  * ppinit(fname, m4) -- initialize preprocessor to read from fname.

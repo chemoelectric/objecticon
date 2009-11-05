@@ -20,13 +20,14 @@
 static	void	trans1		(char *filename);
 
 int tfatals;			/* number of fatal errors in file */
-int afatals;			/* total number of fatal errors */
 int twarnings;			/* number of warning errors in file */
-int awarnings;			/* total number of warning errors */
 int nocode;			/* non-zero to suppress code generation */
 int in_line;			/* current input line number */
 int incol;			/* current input column number */
 int peekc;			/* one-character look ahead */
+
+static int afatals;		/* total number of fatal errors */
+static int awarnings;		/* total number of warning errors */
 
 int yyparse();
 
