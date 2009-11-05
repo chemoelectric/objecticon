@@ -629,7 +629,7 @@ char *s;
       return "$include: invalid file name";
    if (*wskip(s) != '\0')
       return "$include: too many arguments";
-   fullpath = pathfind(getdir(curfile->fname), lpath, fname, 0);
+   fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
    if (!fullpath || !ppopen(fullpath, 0))
       pfatal("cannot open", fname);
    return NULL;
@@ -672,7 +672,7 @@ static char *setline(char *s)
         /* If fname="/tmp/abc.icn" and we have "#line 100 "xyz.icn" then we set the new fname
          * to /tmp/xyz.icn, if it exists.
          */
-        t = pathfind(getdir(curfile->fname), 0, fname, 0);
+        t = pathfind(intern(getdir(curfile->fname)), 0, fname, 0);
         if (t)
             fname = t;
         curfile->fname = intern(fname);

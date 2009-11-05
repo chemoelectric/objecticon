@@ -295,8 +295,7 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
         static char buf[MaxPath];
         if (!cd)
             return tryfile(0, name, extn);
-        strcpy(buf, cd);
-        strncat(buf, getdir(name), sizeof(buf) - strlen(cd) - 1);
+        snprintf(buf, sizeof(buf), "%s%s", cd, getdir(name));
         return tryfile(buf, name, extn);
     }
 
