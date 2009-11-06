@@ -345,6 +345,10 @@ See also: `integer() and real()`
 
 Generate the code points in a cset, ucs or string for the range of entries `i1:i2`
 
+Defaults:
+ * `i1`      `1`
+ * `i2`      `0`
+
 == pop ==
 `pop (L) : x` -- pop from list
 Produces the leftmost element of `L` and removes it from `L`, but fails if `L` is empty; synonym for `get(L)`.
