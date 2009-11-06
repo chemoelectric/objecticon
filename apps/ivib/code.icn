@@ -133,7 +133,7 @@ class Code()
          add_nice_import(im, e[1], e[2])
 
       cl := Factory.new_class("\n\n", self.parent_Canvas.name, [self.parent_Canvas.superclass_name], "\n")
-      prog.get_others().put(cl)
+      prog.get_body().put(cl)
       if *class_vars > 0 then {
          fl := Factory.new_fields(indent1, ["private"], [])
          every fl.put(Factory.new_id("\n      ", !class_vars))
@@ -227,7 +227,7 @@ class Code()
          }
       }
 
-      every d := prog.get_others().gen() do {
+      every d := prog.get_body().gen() do {
          case classof(d) of {
             Class : {
                if d.get_name().str() == self.parent_Canvas.name then
@@ -249,7 +249,7 @@ class Code()
                # Create a new import
                im := Factory.new_import("", [])
                # Prepend a \n to the chunk of the current first token in the prog.
-               t := prog.get_others().get(1).get_first_token()
+               t := prog.get_body().get(1).get_first_token()
                t.set_chunk("\n" || t.chunk)
                prog.get_imports().put(im)
             }
@@ -333,7 +333,7 @@ class Code()
 
    private find_procedure(prog, n)
       local d
-      every d := prog.get_others().gen() do {
+      every d := prog.get_body().gen() do {
          if is(d, Procedure) & d.get_name().str() == n then
             return d
       }
@@ -449,7 +449,7 @@ class Code()
          return
 
       x := Factory.new_procedure("\n\n", "main", [], "\n")
-      pr.get_others().put(x)
+      pr.get_body().put(x)
 
       x.get_locals_list().put(Factory.new_local(indent1, "local", ["d"]))
 

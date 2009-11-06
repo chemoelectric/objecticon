@@ -5,7 +5,7 @@
 
 program	: decls EOFX {Progend($1,$2);} ;
 
-decls   : packagedecl importdecls otherdecls ;
+decls   : packagedecl importdecls bodydecls ;
 
 packagedecl : ;
         | package ;
@@ -13,10 +13,10 @@ packagedecl : ;
 importdecls : ;
         | importdecls import ;
 
-otherdecls : ;	
-	| otherdecls other ;
+bodydecls : ;	
+	| bodydecls body ;
 
-other   : record ;
+body    : record ;
         | class ;
 	| proc ;
 	| global ;
@@ -40,7 +40,6 @@ invoclist : invocop;
 
 invocop  : dottedident {Invocop1($1);} ;
 	 | STRINGLIT {Invocop2($1);} ;
-	 | STRINGLIT COLON INTLIT {Invocop3($1,$2,$3);} ;
 
 import  : IMPORT importlist ;
 

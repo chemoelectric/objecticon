@@ -303,22 +303,15 @@ class Invocable(List)
    end
 
    package flatten()
-      local l, n, t
+      local l, n
       l := []
       n := pos.child(index)
       while n ~=== Node.EMPTY do {
          if is(n, Node) & n.label == "invoclist" then {
-            t := n.child(3)
-            if is(t, Node) & t.label == "invocop" then
-               push(l, InvocableOp(t, n.child(2)))
-            else
-               push(l, Id(t, n.child(2)))
+            push(l, Id(n.child(3), n.child(2)))
             n := n.child(1)
          } else {
-            if is(n, Node) & n.label == "invocop" then
-               push(l, InvocableOp(n))
-            else
-               push(l, Id(n))
+            push(l, Id(n))
             break
          }
       }
@@ -404,7 +397,7 @@ class Imports(List)
    end
 end
 
-class Others(List)
+class Body(List)
    package flatten()
       local l, n, t
       l := []
@@ -425,7 +418,7 @@ class Others(List)
    end
 
    public put(x)
-      pos.set(index, Node("otherdecls", 
+      pos.set(index, Node("bodydecls", 
                           pos.child(index),
                           x.pos))
    end
@@ -450,8 +443,8 @@ class Prog(Tree)
       return Imports(decls, 2)
    end
 
-   public get_others()
-      return Others(decls, 3)
+   public get_body()
+      return Body(decls, 3)
    end
 
    package new(pos)
@@ -733,13 +726,6 @@ class Factory()
                         Node.EMPTY))
       every t.put(new_id(" ", !packs))
       return t
-   end
-
-   public static new_invocable_op(pad, op, num)
-      return InvocableOp(Node("invocop",
-                              Token(STRINGLIT, op, pad || op),
-                              Token(COLON, ":", ":"),
-                              Token(INTLIT, num, num)))
    end
 
    public static new_invocable(pad, ids)

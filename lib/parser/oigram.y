@@ -141,7 +141,7 @@
 
 program	: decls EOFX {$$ := Node("prog", $1,$2);} ;
 
-decls   : packagedecl importdecls otherdecls { $$ := Node("decls", $1, $2, $3); } ;
+decls   : packagedecl importdecls bodydecls { $$ := Node("decls", $1, $2, $3); } ;
 
 packagedecl : { $$ := Node.EMPTY } ;
         | package ;
@@ -149,10 +149,10 @@ packagedecl : { $$ := Node.EMPTY } ;
 importdecls : { $$ := Node.EMPTY } ;
         | importdecls import { $$ := Node("importdecls", $1, $2); } ;
 
-otherdecls : { $$ := Node.EMPTY } ;
-	| otherdecls other { $$ := Node("otherdecls", $1, $2); } ;
+bodydecls : { $$ := Node.EMPTY } ;
+	| bodydecls body { $$ := Node("bodydecls", $1, $2); } ;
 
-other   : record ;
+body    : record ;
         | class ;
 	| proc ;
 	| global ;
@@ -176,7 +176,6 @@ invoclist : invocop;
 
 invocop  : dottedident ;
 	 | STRINGLIT ;
-	 | STRINGLIT COLON INTLIT {$$ := Node("invocop", $1,$2,$3);} ;
 
 import  : IMPORT importlist {$$ := Node("import",$1,$2) } ;
 
