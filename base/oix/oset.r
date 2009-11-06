@@ -5,16 +5,13 @@
 
 "~x - complement cset x."
 
-operator{1} ~ compl(x)
+operator ~ compl(x)
    /*
     * x must be a cset.
     */
    if !cnv:cset(x) then
       runerr(104, x)
 
-   abstract {
-      return cset
-      }
    body {
        struct rangeset *rs;
        struct b_cset *blk;
@@ -38,11 +35,8 @@ end
 
 "x -- y - difference of csets x and y or of sets x and y."
 
-operator{1} -- diff(x,y)
+operator -- diff(x,y)
    if is:set(x) && is:set(y) then {
-      abstract {
-         return type(x)
-         }
       body {
 	 int res;
          register int i;
@@ -96,9 +90,6 @@ operator{1} -- diff(x,y)
          runerr(120, x)
       if !cnv:cset(y) then
          runerr(120, y)
-      abstract {
-         return cset
-         }
       body {
           struct rangeset *rs, *y_comp;
           struct b_cset *blk;
@@ -149,11 +140,8 @@ end
 
 "x ** y - intersection of csets x and y or of sets x and y."
 
-operator{1} ** inter(x,y)
+operator ** inter(x,y)
    if is:set(x) && is:set(y) then {
-      abstract {
-         return new set(store[type(x).set_elem] ** store[type(y).set_elem])
-         }
       body {
 	 int res;
          register int i;
@@ -214,9 +202,6 @@ operator{1} ** inter(x,y)
          runerr(120, x)
       if !cnv:cset(y) then
          runerr(120, y)
-      abstract {
-         return cset
-         }
 
       body {
           struct rangeset *rs;
@@ -249,11 +234,8 @@ end
 
 "x ++ y - union of csets x and y or of sets x and y."
 
-operator{1} ++ union(x,y)
+operator ++ union(x,y)
    if is:set(x) && is:set(y) then {
-      abstract {
-         return new set(store[type(x).set_elem] ++ store[type(y).set_elem])
-         }
       body {
 	 int res;
 	 register int i;
@@ -314,9 +296,6 @@ operator{1} ++ union(x,y)
          runerr(120, x)
       if !cnv:cset(y) then
          runerr(120, y)
-      abstract {
-         return cset
-         }
 
       body {
           struct rangeset *rs;

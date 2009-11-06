@@ -28,10 +28,10 @@ Deliberate Syntax Error
 
 "exit(i) - exit process with status i, which defaults to 0."
 
-function{} exit(status)
+function exit(status)
    if !def:C_integer(status, EXIT_SUCCESS) then
       runerr(101, status)
-   inline {
+   body {
       c_exit((int)status);
       fail;
       }
@@ -41,10 +41,7 @@ end
 
 "getch() - return a character from console."
 
-function{0,1} io_Keyboard_getch()
-   abstract {
-      return string;
-      }
+function io_Keyboard_getch()
    body {
       int i;
       i = getch();
@@ -56,10 +53,7 @@ end
 
 "getche() -- return a character from console with echo."
 
-function{0,1} io_Keyboard_getche()
-   abstract {
-      return string;
-      }
+function io_Keyboard_getche()
    body {
       int i;
       i = getche();
@@ -72,11 +66,8 @@ end
 
 "kbhit() -- Check to see if there is a keyboard character waiting to be read."
 
-function{0,1} io_Keyboard_kbhit()
-   abstract {
-      return null
-      }
-   inline {
+function io_Keyboard_kbhit()
+   body {
       if (kbhit())
 	 return nulldesc;
       else fail;
@@ -85,7 +76,7 @@ end
 
 
 "chdir(s) - change working directory to s."
-function{0,1} io_Files_chdir(s)
+function io_Files_chdir(s)
    if !cnv:C_string(s) then
       runerr(103, s)
 
@@ -98,7 +89,7 @@ function{0,1} io_Files_chdir(s)
    }
 end
 
-function{0,1} io_Files_getcwd()
+function io_Files_getcwd()
    body {
        int buff_size;
        char *buff;
@@ -129,15 +120,12 @@ end
 
 "delay(i) - delay for i milliseconds."
 
-function{0,1} delay(n)
+function delay(n)
 
    if !cnv:C_integer(n) then
       runerr(101,n)
-   abstract {
-      return null
-      }
 
-   inline {
+   body {
       if (idelay(n) == Failed)
         fail;
       return nulldesc;
@@ -147,18 +135,15 @@ end
 
 "system(s) - execute string s as a system command."
 
-function{1} system(s)
+function system(s)
    /*
     * Make a C-style string out of s
     */
    if !cnv:C_string(s) then
       runerr(103,s)
 
-   abstract {
-      return integer
-      }
 
-   inline {
+   body {
       /*
        * Pass the C string to the system() function and return
        * the exit code of the command as the result of system().

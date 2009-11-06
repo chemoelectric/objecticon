@@ -2467,10 +2467,8 @@ int brace;
                rt_walk(n->u[0].child, indent, 0);
                return 1;
             case Body:
-            case Inline:
                /*
                 * RTL code: body { <c-code> }
-                *           inline { <c-code> }
                 */
                fall_thru = c_walk(n->u[0].child, indent, brace);
                if (!fall_thru)

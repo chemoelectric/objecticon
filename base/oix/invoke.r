@@ -1064,7 +1064,7 @@ static void handle_access_failure()
     pop_to(t->parent_sp->parent_sp);
 }
 
-function{1} lang_Class_get(obj, field)
+function lang_Class_get(obj, field)
    body {
       struct p_frame *pf;
       MemProtect(pf = alc_p_frame((struct b_proc *)&Bget_impl, 0));
@@ -1076,7 +1076,7 @@ function{1} lang_Class_get(obj, field)
    }
 end
 
-function{0,1} lang_Class_getf(obj, field, quiet)
+function lang_Class_getf(obj, field, quiet)
    body {
       struct p_frame *pf;
       MemProtect(pf = alc_p_frame((struct b_proc *)&Bgetf_impl, 0));
@@ -1101,7 +1101,7 @@ static void create_raw_object()
     BlkLoc(*lhs) = (union block *)obj;
 }
 
-function{1} lang_Class_create_raw(c)
+function lang_Class_create_raw(c)
    if !is:class(c) then
        runerr(603, c)
     body {
@@ -1114,7 +1114,7 @@ function{1} lang_Class_create_raw(c)
     }
 end
 
-function{0} lang_Class_complete_raw(o)
+function lang_Class_complete_raw(o)
    if !is:object(o) then
        runerr(602, o)
     body {
@@ -1123,7 +1123,7 @@ function{0} lang_Class_complete_raw(o)
     }
 end
 
-function{1} lang_Class_ensure_initialized(c)
+function lang_Class_ensure_initialized(c)
    if !is:class(c) then
        runerr(603, c)
     body {

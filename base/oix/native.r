@@ -77,7 +77,7 @@ static void loc_to_list(struct loc *p, dptr res)
     list_put(res, &t);
 }
 
-function{1} classof(o)
+function classof(o)
    if !is:object(o) then
        runerr(602, o)
     body {
@@ -238,7 +238,7 @@ convert_from_macro(blkcnt_t)
 #endif
 convert_from_macro(ulonglong)
 
-function{0,1} is(o, target)
+function is(o, target)
    if !is:class(target) then
        runerr(603, target)
     body {
@@ -249,7 +249,7 @@ function{0,1} is(o, target)
     }
 end
 
-function{1} lang_Prog_get_event_mask(ce)
+function lang_Prog_get_event_mask(ce)
    body {
        struct progstate *prog;
        if (!(prog = get_program_for(&ce)))
@@ -258,7 +258,7 @@ function{1} lang_Prog_get_event_mask(ce)
    }
 end
 
-function{1} lang_Prog_set_event_mask(cs, ce)
+function lang_Prog_set_event_mask(cs, ce)
    if !cnv:cset(cs) then 
       runerr(104,cs)
    body {
@@ -273,7 +273,7 @@ function{1} lang_Prog_set_event_mask(cs, ce)
    }
 end
 
-function{1} lang_Prog_get_variable_name(underef v)
+function lang_Prog_get_variable_name(underef v)
    /*
     * v must be a variable
     */
@@ -288,7 +288,7 @@ function{1} lang_Prog_get_variable_name(underef v)
    }
 end
 
-function{0,1} lang_Prog_get_variable(s,c)
+function lang_Prog_get_variable(s,c)
    if !cnv:string(s) then
       runerr(103, s)
 
@@ -309,7 +309,7 @@ function{0,1} lang_Prog_get_variable(s,c)
 end
 
 
-function{*} lang_Prog_get_keyword(s,c)
+function lang_Prog_get_keyword(s,c)
    if !cnv:string(s) then 
       runerr(103, s)
 
@@ -437,7 +437,7 @@ function{*} lang_Prog_get_keyword(s,c)
 end
 
 
-function{0,1} lang_Prog_get_global(s, c)
+function lang_Prog_get_global(s, c)
    if !cnv:string(s) then
       runerr(103, s)
    body {
@@ -453,7 +453,7 @@ function{0,1} lang_Prog_get_global(s, c)
    }
 end
 
-function{0,1} lang_Prog_get_globals(c)
+function lang_Prog_get_globals(c)
    body {
        struct progstate *prog;
        dptr dp;
@@ -466,7 +466,7 @@ function{0,1} lang_Prog_get_globals(c)
    }
 end
 
-function{0,1} lang_Prog_get_global_names(c)
+function lang_Prog_get_global_names(c)
    body {
        struct progstate *prog;
        dptr *dp;
@@ -478,7 +478,7 @@ function{0,1} lang_Prog_get_global_names(c)
    }
 end
 
-function{*} lang_Prog_get_functions()
+function lang_Prog_get_functions()
    body {
       register int i;
 
@@ -489,7 +489,7 @@ function{*} lang_Prog_get_functions()
       }
 end
 
-function{*} lang_Prog_get_operators()
+function lang_Prog_get_operators()
    body {
       register int i;
 
@@ -501,7 +501,7 @@ function{*} lang_Prog_get_operators()
 end
 
 
-function{0,1} lang_Prog_get_global_location_impl(s, c)
+function lang_Prog_get_global_location_impl(s, c)
    if !cnv:string(s) then
       runerr(103, s)
    body {
@@ -531,7 +531,7 @@ function{0,1} lang_Prog_get_global_location_impl(s, c)
    }
 end
 
-function{1} lang_Prog_get_coexpression_program(c)
+function lang_Prog_get_coexpression_program(c)
    if !is:coexpr(c) then
       runerr(118,c)
    body {
@@ -539,7 +539,7 @@ function{1} lang_Prog_get_coexpression_program(c)
    }
 end
 
-function{0,1} lang_Prog_get_runtime_millis(c)
+function lang_Prog_get_runtime_millis(c)
    body {
        struct progstate *prog;
        struct timeval tp;
@@ -567,7 +567,7 @@ function{0,1} lang_Prog_get_runtime_millis(c)
    }
 end
 
-function{0,1} lang_Prog_get_startup_micros(c)
+function lang_Prog_get_startup_micros(c)
    body {
        struct progstate *prog;
        struct descrip ls, lm;
@@ -584,7 +584,7 @@ function{0,1} lang_Prog_get_startup_micros(c)
    }
 end
 
-function{1} lang_Prog_get_collection_info_impl(c)
+function lang_Prog_get_collection_info_impl(c)
    body {
        struct progstate *prog;
        struct descrip tmp;
@@ -605,7 +605,7 @@ function{1} lang_Prog_get_collection_info_impl(c)
    }
 end
 
-function{1} lang_Prog_get_allocation_info_impl(c)
+function lang_Prog_get_allocation_info_impl(c)
    body {
        struct progstate *prog;
        tended struct descrip tmp;
@@ -622,7 +622,7 @@ function{1} lang_Prog_get_allocation_info_impl(c)
    }
 end
 
-function{1} lang_Prog_get_region_info_impl(c)
+function lang_Prog_get_region_info_impl(c)
    body {
        struct progstate *prog;
        struct region *rp;
@@ -679,7 +679,7 @@ function{1} lang_Prog_get_region_info_impl(c)
    }
 end
 
-function{1} lang_Prog_get_stack_used(c)
+function lang_Prog_get_stack_used(c)
    body {
        struct progstate *prog;
        if (!(prog = get_program_for(&c)))
@@ -688,7 +688,7 @@ function{1} lang_Prog_get_stack_used(c)
    }
 end
 
-function{1} lang_Class_get_name(c)
+function lang_Class_get_name(c)
     body {
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
@@ -697,7 +697,7 @@ function{1} lang_Class_get_name(c)
     }
 end
 
-function{1} lang_Class_get_class(c)
+function lang_Class_get_class(c)
     body {
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
@@ -706,7 +706,7 @@ function{1} lang_Class_get_class(c)
     }
 end
 
-function{0,1} lang_Class_get_package(c)
+function lang_Class_get_package(c)
     body {
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
@@ -718,7 +718,7 @@ function{0,1} lang_Class_get_package(c)
     }
 end
 
-function{1} lang_Class_get_program(c)
+function lang_Class_get_program(c)
     body {
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
@@ -727,7 +727,7 @@ function{1} lang_Class_get_program(c)
     }
 end
 
-function{0,1} lang_Class_get_location_impl(c)
+function lang_Class_get_location_impl(c)
     body {
         struct b_class *class0;
         struct loc *p;
@@ -745,7 +745,7 @@ function{0,1} lang_Class_get_location_impl(c)
     }
 end
 
-function{*} lang_Class_get_supers(c)
+function lang_Class_get_supers(c)
     body {
         struct b_class *class0;
         word i;
@@ -757,7 +757,7 @@ function{*} lang_Class_get_supers(c)
     }
 end
 
-function{*} lang_Class_get_implemented_classes(c)
+function lang_Class_get_implemented_classes(c)
     body {
         struct b_class *class0;
         word i;
@@ -769,7 +769,7 @@ function{*} lang_Class_get_implemented_classes(c)
     }
 end
 
-function{0,1} lang_Class_implements(c, target)
+function lang_Class_implements(c, target)
    if !is:class(target) then
        runerr(603, target)
     body {
@@ -783,7 +783,7 @@ function{0,1} lang_Class_implements(c, target)
     }
 end
 
-function{1} lang_Class_get_methp_object(mp)
+function lang_Class_get_methp_object(mp)
    if !is:methp(mp) then
        runerr(613, mp)
     body {
@@ -791,7 +791,7 @@ function{1} lang_Class_get_methp_object(mp)
     }
 end
 
-function{1} lang_Class_get_methp_proc(mp)
+function lang_Class_get_methp_proc(mp)
    if !is:methp(mp) then
        runerr(613, mp)
     body {
@@ -799,7 +799,7 @@ function{1} lang_Class_get_methp_proc(mp)
     }
 end
 
-function{1} lang_Class_get_cast_object(c)
+function lang_Class_get_cast_object(c)
    if !is:cast(c) then
        runerr(614, c)
     body {
@@ -807,7 +807,7 @@ function{1} lang_Class_get_cast_object(c)
     }
 end
 
-function{1} lang_Class_get_cast_class(c)
+function lang_Class_get_cast_class(c)
    if !is:cast(c) then
        runerr(614, c)
     body {
@@ -825,7 +825,7 @@ end
 }
 #enddef
 
-function{1} lang_Class_get_field_flags(c, field)
+function lang_Class_get_field_flags(c, field)
    body {
         struct b_class *class0;
         int i;
@@ -839,7 +839,7 @@ function{1} lang_Class_get_field_flags(c, field)
      }
 end
 
-function{1} lang_Class_get_class_flags(c)
+function lang_Class_get_class_flags(c)
    body {
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
@@ -848,7 +848,7 @@ function{1} lang_Class_get_class_flags(c)
      }
 end
 
-function{0,1} lang_Class_get_field_index(c, field)
+function lang_Class_get_field_index(c, field)
    body {
         struct b_class *class0;
         int i;
@@ -862,7 +862,7 @@ function{0,1} lang_Class_get_field_index(c, field)
      }
 end
 
-function{0,1} lang_Class_get_field_name(c, field)
+function lang_Class_get_field_name(c, field)
    body {
         struct b_class *class0;
         int i;
@@ -876,7 +876,7 @@ function{0,1} lang_Class_get_field_name(c, field)
      }
 end
 
-function{0,1} lang_Class_get_field_location_impl(c, field)
+function lang_Class_get_field_location_impl(c, field)
    body {
         struct b_class *class0;
         int i;
@@ -898,7 +898,7 @@ function{0,1} lang_Class_get_field_location_impl(c, field)
      }
 end
 
-function{0,1} lang_Class_get_field_defining_class(c, field)
+function lang_Class_get_field_defining_class(c, field)
    body {
         struct b_class *class0;
         int i;
@@ -912,7 +912,7 @@ function{0,1} lang_Class_get_field_defining_class(c, field)
      }
 end
 
-function{1} lang_Class_get_n_fields(c)
+function lang_Class_get_n_fields(c)
    body {
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
@@ -921,7 +921,7 @@ function{1} lang_Class_get_n_fields(c)
      }
 end
 
-function{1} lang_Class_get_n_class_fields(c)
+function lang_Class_get_n_class_fields(c)
    body {
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
@@ -930,7 +930,7 @@ function{1} lang_Class_get_n_class_fields(c)
      }
 end
 
-function{1} lang_Class_get_n_instance_fields(c)
+function lang_Class_get_n_instance_fields(c)
    body {
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
@@ -939,7 +939,7 @@ function{1} lang_Class_get_n_instance_fields(c)
      }
 end
 
-function{*} lang_Class_get_field_names(c)
+function lang_Class_get_field_names(c)
     body {
         struct b_class *class0;
         dptr *fn;
@@ -953,7 +953,7 @@ function{*} lang_Class_get_field_names(c)
     }
 end
 
-function{*} lang_Class_get_instance_field_names(c)
+function lang_Class_get_instance_field_names(c)
     body {
         struct b_class *class0;
         dptr *fn;
@@ -967,7 +967,7 @@ function{*} lang_Class_get_instance_field_names(c)
     }
 end
 
-function{*} lang_Class_get_class_field_names(c)
+function lang_Class_get_class_field_names(c)
     body {
         struct b_class *class0;
         dptr *fn;
@@ -992,7 +992,7 @@ struct b_proc *clone_b_proc(struct b_proc *bp)
     return new0;
 }
 
-function{1} lang_Class_set_method(field, pr)
+function lang_Class_set_method(field, pr)
    body {
         struct b_proc *caller_proc, *new_proc;
         struct b_class *class0;
@@ -1069,7 +1069,7 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
     return blk;
 }
 
-function{1} lang_Class_load_library(lib)
+function lang_Class_load_library(lib)
    if !cnv:C_string(lib) then
       runerr(103, lib)
    body {
@@ -1108,14 +1108,14 @@ function{1} lang_Class_load_library(lib)
 end
 
 #else						/* HAVE_LIBDL */
-function{1} lang_Class_load_library(lib)
+function lang_Class_load_library(lib)
    body {
      Unsupported;
    }
 end
 #endif						/* HAVE_LIBDL */
 
-function{1} parser_UReader_raw_convert(s)
+function parser_UReader_raw_convert(s)
    if !is:string(s) then
       runerr(103, s)
    body {
@@ -1145,7 +1145,7 @@ function{1} parser_UReader_raw_convert(s)
 end
 
 #if MSWIN32
-function{*} io_WindowsFileSystem_get_roots()
+function io_WindowsFileSystem_get_roots()
     body {
         DWORD n = GetLogicalDrives();
         char t[4], c = 'A';
@@ -1163,7 +1163,7 @@ function{*} io_WindowsFileSystem_get_roots()
     }
 end
 
-function{0,1} io_WindowsFilePath_getdcwd(d)
+function io_WindowsFilePath_getdcwd(d)
    if !cnv:string(d) then
       runerr(103, d)
    body {
@@ -1222,7 +1222,7 @@ if (self_fd < 0)
     runerr(219, self);
 #enddef
 
-function{0,1} io_FileStream_open_impl(path, flags, mode)
+function io_FileStream_open_impl(path, flags, mode)
    if !cnv:C_string(path) then
       runerr(103, path)
 
@@ -1254,7 +1254,7 @@ function{0,1} io_FileStream_open_impl(path, flags, mode)
    }
 end
 
-function{0,1} io_FileStream_in(self, i)
+function io_FileStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
@@ -1298,7 +1298,7 @@ function{0,1} io_FileStream_in(self, i)
    }
 end
 
-function{0,1} io_FileStream_out(self, s)
+function io_FileStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
@@ -1312,7 +1312,7 @@ function{0,1} io_FileStream_out(self, s)
    }
 end
 
-function{0,1} io_FileStream_close(self)
+function io_FileStream_close(self)
    body {
        GetSelfFd();
        if (close(self_fd) < 0) {
@@ -1324,7 +1324,7 @@ function{0,1} io_FileStream_close(self)
    }
 end
 
-function{0,1} io_FileStream_truncate(self, len)
+function io_FileStream_truncate(self, len)
    if !cnv:integer(len) then
       runerr(101, len)
    body {
@@ -1347,7 +1347,7 @@ function{0,1} io_FileStream_truncate(self, len)
    }
 end
 
-function{0,1} io_FileStream_chdir(self)
+function io_FileStream_chdir(self)
    body {
 #if UNIX
        GetSelfFd();
@@ -1362,7 +1362,7 @@ function{0,1} io_FileStream_chdir(self)
    }
 end
 
-function{0,1} io_FileStream_seek(self, offset)
+function io_FileStream_seek(self, offset)
    if !cnv:integer(offset) then
       runerr(101, offset)
    body {
@@ -1391,7 +1391,7 @@ function{0,1} io_FileStream_seek(self, offset)
    }
 end
 
-function{0,1} io_FileStream_tell(self)
+function io_FileStream_tell(self)
    body {
        off_t rc;
        tended struct descrip t;
@@ -1407,7 +1407,7 @@ function{0,1} io_FileStream_tell(self)
    }
 end
 
-function{0,1} io_FileStream_pipe_impl()
+function io_FileStream_pipe_impl()
    body {
 #if UNIX
        int fds[2];
@@ -1433,7 +1433,7 @@ function{0,1} io_FileStream_pipe_impl()
    }
 end
 
-function{0,1} io_SocketStream_in(self, i)
+function io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
@@ -1478,7 +1478,7 @@ function{0,1} io_SocketStream_in(self, i)
    }
 end
 
-function{0,1} io_SocketStream_socket_impl(domain, typ)
+function io_SocketStream_socket_impl(domain, typ)
    if !def:C_integer(domain, PF_INET) then
       runerr(101, domain)
 
@@ -1496,7 +1496,7 @@ function{0,1} io_SocketStream_socket_impl(domain, typ)
    }
 end
 
-function{0,1} io_SocketStream_out(self, s)
+function io_SocketStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
@@ -1519,7 +1519,7 @@ function{0,1} io_SocketStream_out(self, s)
    }
 end
 
-function{0,1} io_SocketStream_close(self)
+function io_SocketStream_close(self)
    body {
        GetSelfFd();
        if (close(self_fd) < 0) {
@@ -1531,7 +1531,7 @@ function{0,1} io_SocketStream_close(self)
    }
 end
 
-function{0,1} io_SocketStream_socketpair_impl(typ)
+function io_SocketStream_socketpair_impl(typ)
    if !def:C_integer(typ, SOCK_STREAM) then
       runerr(101, typ)
 
@@ -1619,7 +1619,7 @@ struct sockaddr *parse_sockaddr(char *s, int *len)
     return 0;
 }
 
-function{0,1} io_SocketStream_connect(self, addr)
+function io_SocketStream_connect(self, addr)
    if !cnv:C_string(addr) then
       runerr(103, addr)
    body {
@@ -1642,7 +1642,7 @@ function{0,1} io_SocketStream_connect(self, addr)
    }
 end
 
-function{0,1} io_SocketStream_bind(self, addr)
+function io_SocketStream_bind(self, addr)
    if !cnv:C_string(addr) then
       runerr(103, addr)
    body {
@@ -1665,7 +1665,7 @@ function{0,1} io_SocketStream_bind(self, addr)
    }
 end
 
-function{0,1} io_SocketStream_listen(self, backlog)
+function io_SocketStream_listen(self, backlog)
    if !cnv:C_integer(backlog) then
       runerr(101, backlog)
 
@@ -1679,7 +1679,7 @@ function{0,1} io_SocketStream_listen(self, backlog)
    }
 end
 
-function{0,1} io_SocketStream_accept_impl(self)
+function io_SocketStream_accept_impl(self)
    body {
        int sockfd;
        GetSelfFd();
@@ -1731,7 +1731,7 @@ end
 }
 #enddef
 
-function{0,1} io_DescStream_dup2_impl(self, n)
+function io_DescStream_dup2_impl(self, n)
    if !cnv:C_integer(n) then
       runerr(101, n)
    body {
@@ -1744,7 +1744,7 @@ function{0,1} io_DescStream_dup2_impl(self, n)
    }
 end
 
-function{0,1} io_DescStream_stat_impl(self)
+function io_DescStream_stat_impl(self)
    body {
        struct stat st;
        GetSelfFd();
@@ -1756,7 +1756,7 @@ function{0,1} io_DescStream_stat_impl(self)
    }
 end
 
-function{0,1} io_DescStream_select(rl, wl, el, timeout)
+function io_DescStream_select(rl, wl, el, timeout)
     body {
        fd_set rset, wset, eset;
        struct timeval tv, *ptv;
@@ -1803,7 +1803,7 @@ function{0,1} io_DescStream_select(rl, wl, el, timeout)
     }
 end
 
-function{0,1} io_DescStream_poll(a[n])
+function io_DescStream_poll(a[n])
    body {
 #ifdef HAVE_POLL
        static struct pollfd *ufds = 0;
@@ -1853,7 +1853,7 @@ function{0,1} io_DescStream_poll(a[n])
    }
 end
 
-function{0,1} io_DescStream_flag(self, on, off)
+function io_DescStream_flag(self, on, off)
     if !def:C_integer(on, 0) then
       runerr(101, on)
 
@@ -1900,7 +1900,7 @@ if (!self_dir)
     runerr(219, self);
 #enddef
 
-function{0,1} io_DirStream_open_impl(path)
+function io_DirStream_open_impl(path)
    if !cnv:C_string(path) then
       runerr(103, path)
    body {
@@ -1913,7 +1913,7 @@ function{0,1} io_DirStream_open_impl(path)
    }
 end
 
-function{0,1} io_DirStream_read_impl(self)
+function io_DirStream_read_impl(self)
    body {
        struct dirent *de;
        GetSelfDir();
@@ -1935,7 +1935,7 @@ function{0,1} io_DirStream_read_impl(self)
    }
 end
 
-function{0,1} io_DirStream_close(self)
+function io_DirStream_close(self)
    body {
        GetSelfDir();
        if ((closedir(self_dir)) < 0) {
@@ -1970,7 +1970,7 @@ if (!self_dir)
     runerr(219, self);
 #enddef
 
-function{0,1} io_DirStream_open_impl(path)
+function io_DirStream_open_impl(path)
    if !cnv:string(path) then
       runerr(103, path)
    body {
@@ -2018,7 +2018,7 @@ function{0,1} io_DirStream_open_impl(path)
    }
 end
 
-function{0,1} io_DirStream_read_impl(self)
+function io_DirStream_read_impl(self)
    body {
        GetSelfDir();
        if (self_dir->status == EMPTY) {
@@ -2043,7 +2043,7 @@ function{0,1} io_DirStream_read_impl(self)
    }
 end
 
-function{0,1} io_DirStream_close(self)
+function io_DirStream_close(self)
    body {
        GetSelfDir();
        FindClose(self_dir->handle);
@@ -2056,7 +2056,7 @@ end
 #endif
 
 
-function{0,1} io_Files_rename(s1,s2)
+function io_Files_rename(s1,s2)
    /*
     * Make C-style strings out of s1 and s2
     */
@@ -2074,7 +2074,7 @@ function{0,1} io_Files_rename(s1,s2)
    }
 end
 
-function{0,1} io_Files_hardlink(s1, s2)
+function io_Files_hardlink(s1, s2)
    if !cnv:C_string(s1) then
       runerr(103, s1)
    if !cnv:C_string(s2) then
@@ -2092,7 +2092,7 @@ function{0,1} io_Files_hardlink(s1, s2)
    }
 end
 
-function{0,1} io_Files_symlink(s1, s2)
+function io_Files_symlink(s1, s2)
    if !cnv:C_string(s1) then
       runerr(103, s1)
    if !cnv:C_string(s2) then
@@ -2110,7 +2110,7 @@ function{0,1} io_Files_symlink(s1, s2)
    }
 end
 
-function{0,1} io_Files_readlink(s)
+function io_Files_readlink(s)
    if !cnv:C_string(s) then
       runerr(103, s)
    body {
@@ -2143,7 +2143,7 @@ function{0,1} io_Files_readlink(s)
 end
 
 #if UNIX
-function{0,1} io_Files_mkdir(s, mode)
+function io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
       runerr(103, s)
 
@@ -2159,7 +2159,7 @@ function{0,1} io_Files_mkdir(s, mode)
    }
 end
 #else
-function{0,1} io_Files_mkdir(s, mode)
+function io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
       runerr(103, s)
    body {
@@ -2172,7 +2172,7 @@ function{0,1} io_Files_mkdir(s, mode)
 end
 #endif
 
-function{0,1} io_Files_remove(s)
+function io_Files_remove(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
@@ -2184,7 +2184,7 @@ function{0,1} io_Files_remove(s)
    }
 end
 
-function{0,1} io_Files_rmdir(s)
+function io_Files_rmdir(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
@@ -2196,7 +2196,7 @@ function{0,1} io_Files_rmdir(s)
    }
 end
 
-function{0,1} io_Files_truncate(s, len)
+function io_Files_truncate(s, len)
    if !cnv:C_string(s) then
       runerr(103,s)
    if !cnv:C_integer(len) then
@@ -2327,7 +2327,7 @@ static struct descrip stat2list(struct stat *st)
    return res;
 }
 
-function{0,1} io_Files_stat_impl(s)
+function io_Files_stat_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
@@ -2340,7 +2340,7 @@ function{0,1} io_Files_stat_impl(s)
    }
 end
 
-function{0,1} io_Files_lstat_impl(s)
+function io_Files_lstat_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
@@ -2353,7 +2353,7 @@ function{0,1} io_Files_lstat_impl(s)
    }
 end
 
-function{0,1} io_Files_access(s, mode)
+function io_Files_access(s, mode)
    if !cnv:C_string(s) then
       runerr(103,s)
    if !def:C_integer(mode, F_OK) then
@@ -2367,7 +2367,7 @@ function{0,1} io_Files_access(s, mode)
    }
 end
 
-function{1} util_Timezone_get_system_timezone()
+function util_Timezone_get_system_timezone()
    body {
       time_t t;
       struct tm *ct;
@@ -2429,7 +2429,7 @@ if (!self_rs)
     runerr(219, self);
 #enddef
 
-function{1} io_RamStream_close(self)
+function io_RamStream_close(self)
    body {
        GetSelfRs();
        free(self_rs->data);
@@ -2439,7 +2439,7 @@ function{1} io_RamStream_close(self)
    }
 end
 
-function{0,1} io_RamStream_in(self, i)
+function io_RamStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
@@ -2465,7 +2465,7 @@ function{0,1} io_RamStream_in(self, i)
    }
 end
 
-function{1} io_RamStream_new_impl(s, wiggle)
+function io_RamStream_new_impl(s, wiggle)
    if !def:string(s, emptystr) then
       runerr(103, s)
    if !def:C_integer(wiggle, 512) then
@@ -2486,7 +2486,7 @@ function{1} io_RamStream_new_impl(s, wiggle)
    }
 end
 
-function{1} io_RamStream_out(self, s)
+function io_RamStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
@@ -2508,7 +2508,7 @@ function{1} io_RamStream_out(self, s)
    }
 end
 
-function{0,1} io_RamStream_seek(self, offset)
+function io_RamStream_seek(self, offset)
    if !cnv:C_integer(offset) then
       runerr(101, offset)
    body {
@@ -2526,14 +2526,14 @@ function{0,1} io_RamStream_seek(self, offset)
    }
 end
 
-function{1} io_RamStream_tell(self)
+function io_RamStream_tell(self)
    body {
        GetSelfRs();
        return C_integer(self_rs->pos + 1);
    }
 end
 
-function{1} io_RamStream_truncate(self, len)
+function io_RamStream_truncate(self, len)
    if !cnv:C_integer(len) then
       runerr(101, len)
    body {
@@ -2548,7 +2548,7 @@ function{1} io_RamStream_truncate(self, len)
    }
 end
 
-function{1} io_RamStream_str(self)
+function io_RamStream_str(self)
    body {
        GetSelfRs();
        bytes2string(self_rs->data, self_rs->size, &result);
@@ -2556,7 +2556,7 @@ function{1} io_RamStream_str(self)
    }
 end
 
-function{1} util_Connectable_is_methp_with_object(mp, o)
+function util_Connectable_is_methp_with_object(mp, o)
    if !is:object(o) then
        runerr(602, o)
     body {
@@ -2567,7 +2567,7 @@ function{1} util_Connectable_is_methp_with_object(mp, o)
     }
 end
 
-function{1} lang_Constructor_get_name(c)
+function lang_Constructor_get_name(c)
     body {
         struct b_constructor *constructor0;
         if (!(constructor0 = get_constructor_for(&c)))
@@ -2576,7 +2576,7 @@ function{1} lang_Constructor_get_name(c)
     }
 end
 
-function{1} lang_Constructor_get_constructor(c)
+function lang_Constructor_get_constructor(c)
     body {
         struct b_constructor *constructor0;
         if (!(constructor0 = get_constructor_for(&c)))
@@ -2585,7 +2585,7 @@ function{1} lang_Constructor_get_constructor(c)
     }
 end
 
-function{0,1} lang_Constructor_get_package(c)
+function lang_Constructor_get_package(c)
     body {
         struct b_constructor *constructor0;
         if (!(constructor0 = get_constructor_for(&c)))
@@ -2597,7 +2597,7 @@ function{0,1} lang_Constructor_get_package(c)
     }
 end
 
-function{1} lang_Constructor_get_program(c)
+function lang_Constructor_get_program(c)
     body {
         struct b_constructor *constructor0;
         struct progstate *prog;
@@ -2610,7 +2610,7 @@ function{1} lang_Constructor_get_program(c)
     }
 end
 
-function{0,1} lang_Constructor_get_location_impl(c)
+function lang_Constructor_get_location_impl(c)
     body {
         struct b_constructor *constructor0;
         struct loc *p;
@@ -2628,7 +2628,7 @@ function{0,1} lang_Constructor_get_location_impl(c)
     }
 end
 
-function{*} lang_Constructor_get_field_names(c)
+function lang_Constructor_get_field_names(c)
     body {
         struct b_constructor *constructor0;
         dptr *fn;
@@ -2642,7 +2642,7 @@ function{*} lang_Constructor_get_field_names(c)
     }
 end
 
-function{1} lang_Constructor_get_n_fields(c)
+function lang_Constructor_get_n_fields(c)
    body {
         struct b_constructor *constructor0;
         if (!(constructor0 = get_constructor_for(&c)))
@@ -2651,7 +2651,7 @@ function{1} lang_Constructor_get_n_fields(c)
      }
 end
 
-function{0,1} lang_Constructor_get_field_index(c, field)
+function lang_Constructor_get_field_index(c, field)
    body {
         struct b_constructor *constructor0;
         int i;
@@ -2665,7 +2665,7 @@ function{0,1} lang_Constructor_get_field_index(c, field)
      }
 end
 
-function{0,1} lang_Constructor_get_field_location_impl(c, field)
+function lang_Constructor_get_field_location_impl(c, field)
    body {
         struct b_constructor *constructor0;
         int i;
@@ -2686,7 +2686,7 @@ function{0,1} lang_Constructor_get_field_location_impl(c, field)
      }
 end
 
-function{0,1} lang_Constructor_get_field_name(c, field)
+function lang_Constructor_get_field_name(c, field)
    body {
         struct b_constructor *constructor0;
         int i;
@@ -2731,7 +2731,7 @@ int lookup_proc_local(struct b_proc *proc, dptr query)
     return 0;
 }
 
-function{1} lang_Proc_get_n_locals(c)
+function lang_Proc_get_n_locals(c)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
@@ -2742,7 +2742,7 @@ function{1} lang_Proc_get_n_locals(c)
      }
 end
 
-function{1} lang_Proc_get_n_arguments(c)
+function lang_Proc_get_n_arguments(c)
    body {
       struct b_proc *proc0;
       if (!(proc0 = get_proc_for(&c)))
@@ -2751,7 +2751,7 @@ function{1} lang_Proc_get_n_arguments(c)
    }
 end
 
-function{1} lang_Proc_has_varargs(c)
+function lang_Proc_has_varargs(c)
    body {
       struct b_proc *proc0;
       if (!(proc0 = get_proc_for(&c)))
@@ -2763,7 +2763,7 @@ function{1} lang_Proc_has_varargs(c)
    }
 end
 
-function{1} lang_Proc_get_n_dynamics(c)
+function lang_Proc_get_n_dynamics(c)
    body {
        struct b_proc *proc0;
        if (!(proc0 = get_proc_for(&c)))
@@ -2774,7 +2774,7 @@ function{1} lang_Proc_get_n_dynamics(c)
      }
 end
 
-function{1} lang_Proc_get_n_statics(c)
+function lang_Proc_get_n_statics(c)
    body {
        struct b_proc *proc0;
        if (!(proc0 = get_proc_for(&c)))
@@ -2785,7 +2785,7 @@ function{1} lang_Proc_get_n_statics(c)
      }
 end
 
-function{*} lang_Proc_get_local_names(c)
+function lang_Proc_get_local_names(c)
    body {
         struct b_proc *proc0;
         word i, nf;
@@ -2800,7 +2800,7 @@ function{*} lang_Proc_get_local_names(c)
     }
 end
 
-function{0,1} lang_Proc_get_local_index(c, id)
+function lang_Proc_get_local_index(c, id)
    body {
         struct b_proc *proc0;
         int i;
@@ -2814,7 +2814,7 @@ function{0,1} lang_Proc_get_local_index(c, id)
      }
 end
 
-function{0,1} lang_Proc_get_local_location_impl(c, id)
+function lang_Proc_get_local_location_impl(c, id)
    body {
         int i;
         struct b_proc *proc0;
@@ -2835,7 +2835,7 @@ function{0,1} lang_Proc_get_local_location_impl(c, id)
      }
 end
 
-function{0,1} lang_Proc_get_local_name(c, id)
+function lang_Proc_get_local_name(c, id)
    body {
         struct b_proc *proc0;
         int i;
@@ -2849,7 +2849,7 @@ function{0,1} lang_Proc_get_local_name(c, id)
      }
 end
 
-function{0,1} lang_Proc_get_local_type(c, id)
+function lang_Proc_get_local_type(c, id)
    body {
         struct b_proc *proc0;
         int i;
@@ -2867,7 +2867,7 @@ function{0,1} lang_Proc_get_local_type(c, id)
      }
 end
 
-function{1} lang_Proc_get_name(c, flag)
+function lang_Proc_get_name(c, flag)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
@@ -2888,7 +2888,7 @@ function{1} lang_Proc_get_name(c, flag)
      }
 end
 
-function{0,1} lang_Proc_get_package(c, flag)
+function lang_Proc_get_package(c, flag)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
@@ -2906,7 +2906,7 @@ function{0,1} lang_Proc_get_package(c, flag)
     }
 end
 
-function{1} lang_Proc_get_program(c, flag)
+function lang_Proc_get_program(c, flag)
     body {
         struct b_proc *proc0;
         struct progstate *prog;
@@ -2922,7 +2922,7 @@ function{1} lang_Proc_get_program(c, flag)
     }
 end
 
-function{0,1} lang_Proc_get_location_impl(c, flag)
+function lang_Proc_get_location_impl(c, flag)
    body {
         struct b_proc *proc0;
         struct loc *p;
@@ -2955,7 +2955,7 @@ function{0,1} lang_Proc_get_location_impl(c, flag)
      }
 end
 
-function{0,1} lang_Proc_get_defining_class(c)
+function lang_Proc_get_defining_class(c)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))
@@ -2967,7 +2967,7 @@ function{0,1} lang_Proc_get_defining_class(c)
      }
 end
 
-function{0,1} lang_Proc_get_field_name(c)
+function lang_Proc_get_field_name(c)
    body {
         struct b_proc *proc0;
         if (!(proc0 = get_proc_for(&c)))

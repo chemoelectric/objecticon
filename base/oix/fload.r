@@ -53,7 +53,7 @@ char *dlerror(void)
 #passthru #endif
 #endif					/* __FreeBSD__ */
 
-function{0,1} lang_Proc_load(filename,funcname)
+function lang_Proc_load(filename,funcname)
     if !cnv:C_string(filename) then
         runerr(103, filename)
     if !cnv:C_string(funcname) then
@@ -103,7 +103,7 @@ function{0,1} lang_Proc_load(filename,funcname)
 end
 
 #else						/* HAVE_LIBDL */
-function{0,1} lang_Proc_load(filename,funcname)
+function lang_Proc_load(filename,funcname)
    body {
      Unsupported;
    }

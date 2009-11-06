@@ -6,14 +6,10 @@
 "move(i) - move &pos by i, return substring of &subject spanned."
 " Reverses effects if resumed."
 
-function{0,1+} move(i)
+function move(i)
 
    if !def:C_integer(i, 1) then
       runerr(101,i)
-
-   abstract {
-      return string
-      }
 
    body {
       register C_integer j;
@@ -114,14 +110,11 @@ end
 
 "pos(i) - test if &pos is at position i in &subject."
 
-function{0,1} pos(i)
+function pos(i)
 
    if !cnv:C_integer(i) then
       runerr(101, i)
 
-   abstract {
-      return integer
-      }
    body {
       if (is:string(k_subject)) {
           /*
@@ -145,14 +138,10 @@ end
 "tab(i) - set &pos to i, return substring of &subject spanned."
 "Reverses effects if resumed."
 
-function{0,1+} tab(i)
+function tab(i)
 
    if !def:C_integer(i, 0) then
       runerr(101, i);
-
-   abstract {
-      return string
-      }
 
    body {
       C_integer j, t, oldpos;

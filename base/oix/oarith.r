@@ -11,33 +11,24 @@ int over_flow = 0;
 
 #begdef ArithOp(icon_op, func_name, c_int_op, c_real_op, c_list_op)
 
-   operator{1} icon_op func_name(x, y)
+   operator icon_op func_name(x, y)
       declare {
          tended struct descrip lx, ly;
 	 C_integer irslt;
          }
       arith_case (x, y) of {
          C_integer: {
-            abstract {
-               return integer
-               }
-            inline {
+            body {
                c_int_op(x,y);
                }
             }
          integer: { /* large integers only */
-            abstract {
-               return integer
-               }
-            inline {
+            body {
                big_ ## c_int_op(x,y);
                }
             }
          C_double: {
-            abstract {
-               return real
-               }
-            inline {
+            body {
                c_real_op(x, y);
                }
             }
@@ -202,12 +193,9 @@ ArithOp( * , mult , Mpy , RealMpy, list_add /* bogus */ )
 
 "-x - negate x."
 
-operator{1} - neg(x)
+operator - neg(x)
    if cnv:(exact)C_integer(x) then {
-      abstract {
-         return integer
-         }
-      inline {
+      body {
 	    C_integer i;
 
 	    i = neg(x);
@@ -221,10 +209,7 @@ operator{1} - neg(x)
          }
       }
    else if cnv:(exact) integer(x) then {
-      abstract {
-         return integer
-         }
-      inline {
+      body {
          bigneg(&x, &result);
 	 return result;
          }
@@ -232,10 +217,7 @@ operator{1} - neg(x)
    else {
       if !cnv:C_double(x) then
          runerr(102, x)
-      abstract {
-         return real
-         }
-      inline {
+      body {
          double drslt;
 	 drslt = -x;
          return C_double drslt;
@@ -248,28 +230,19 @@ end
 /*
  *  Operational definition: generate runerr if x is not numeric.
  */
-operator{1} + number(x)
+operator + number(x)
    if cnv:(exact)C_integer(x) then {
-       abstract {
-          return integer
-          }
-       inline {
+       body {
           return C_integer x;
           }
       }
    else if cnv:(exact) integer(x) then {
-       abstract {
-          return integer
-          }
-       inline {
+       body {
           return x;
           }
       }
    else if cnv:C_double(x) then {
-       abstract {
-          return real
-          }
-       inline {
+       body {
           return C_double x;
           }
       }
@@ -307,13 +280,10 @@ ArithOp( + , plus , Add , RealAdd, list_add )
 
 "x ^ y - raise x to the y power."
 
-operator{1} ^ powr(x, y)
+operator ^ powr(x, y)
    if cnv:(exact)C_integer(y) then {
       if cnv:(exact)integer(x) then {
-	 abstract {
-	    return integer
-	    }
-	 inline {
+	 body {
 	    tended struct descrip ly;
 	    MakeInt ( y, &ly );
 	    if (bigpow(&x, &ly, &result) == Error)
@@ -324,10 +294,7 @@ operator{1} ^ powr(x, y)
       else {
 	 if !cnv:C_double(x) then
 	    runerr(102, x)
-	 abstract {
-	    return real
-	    }
-	 inline {
+	 body {
 	    if (ripow( x, y, &result) ==  Error)
 	       runerr(0);
 	    return result;
@@ -336,10 +303,7 @@ operator{1} ^ powr(x, y)
       }
    else if cnv:(exact)integer(y) then {
       if cnv:(exact)integer(x) then {
-	 abstract {
-	    return integer
-	    }
-	 inline {
+	 body {
 	    if (bigpow(&x, &y, &result) == Error)
 	       runerr(0);
 	    return result;
@@ -348,10 +312,7 @@ operator{1} ^ powr(x, y)
       else {
 	 if !cnv:C_double(x) then
 	    runerr(102, x)
-	 abstract {
-	    return real
-	    }
-	 inline {
+	 body {
 	    if ( bigpowri ( x, &y, &result ) == Error )
 	       runerr(0);
 	    return result;
@@ -363,10 +324,7 @@ operator{1} ^ powr(x, y)
 	 runerr(102, x)
       if !cnv:C_double(y) then
 	 runerr(102, y)
-      abstract {
-	 return real
-	 }
-      inline {
+      body {
 	 if (x == 0.0 && y < 0.0)
 	     runerr(204);
 	 if (x < 0.0)

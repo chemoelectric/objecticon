@@ -14,7 +14,7 @@
 static char attr_buff[4096];     /* Buff for attribute values */
 
 
-function{0,1} graphics_Window_open_impl(attr[n])
+function graphics_Window_open_impl(attr[n])
    body {
       int j, err_index = -1;
       tended struct b_list *hp;
@@ -79,7 +79,7 @@ if (!self_w || ISCLOSED(self_w))
 #enddef
 
 
-function{1} graphics_Window_alert(self, volume)
+function graphics_Window_alert(self, volume)
    if !def:C_integer(volume, 0) then
       runerr(101, volume)
    body {
@@ -89,7 +89,7 @@ function{1} graphics_Window_alert(self, volume)
    }
 end
 
-function{0,1} graphics_Window_bg(self, colr)
+function graphics_Window_bg(self, colr)
    body {
       tended char *tmp;
       GetSelfW();
@@ -120,7 +120,7 @@ function{0,1} graphics_Window_bg(self, colr)
    }
 end
 
-function{1} graphics_Window_clip(self, argv[argc])
+function graphics_Window_clip(self, argv[argc])
    body {
       int r;
       C_integer x, y, width, height;
@@ -149,7 +149,7 @@ function{1} graphics_Window_clip(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_clone_impl(self, argv[argc])
+function graphics_Window_clone_impl(self, argv[argc])
    body {
        wbp w2;
        int n;
@@ -176,7 +176,7 @@ function{1} graphics_Window_clone_impl(self, argv[argc])
    }
 end
 
-function{0,1} graphics_Window_color(self, argv[argc])
+function graphics_Window_color(self, argv[argc])
    body {
       int i;
       C_integer n;
@@ -224,7 +224,7 @@ function{0,1} graphics_Window_color(self, argv[argc])
    }
 end
 
-function{0,1} graphics_Window_color_value(self, k)
+function graphics_Window_color_value(self, k)
    body {
       C_integer n;
       long r, g, b, a;
@@ -257,7 +257,7 @@ function{0,1} graphics_Window_color_value(self, k)
    }
 end
 
-function{0,1} graphics_Window_copy_area(src, dest, argv[argc])
+function graphics_Window_copy_area(src, dest, argv[argc])
    body {
       int n, r;
       C_integer x, y, width, height, x2, y2, width2, height2;
@@ -298,7 +298,7 @@ function{0,1} graphics_Window_copy_area(src, dest, argv[argc])
    }
 end
 
-function{0,1} graphics_Window_couple_impl(win, win2)
+function graphics_Window_couple_impl(win, win2)
    body {
       tended struct descrip sbuf, sbuf2;
       wbp wb, wb2, wb_new;
@@ -335,7 +335,7 @@ function{0,1} graphics_Window_couple_impl(win, win2)
 end
 
 
-function{1} graphics_Window_draw_arc(self, argv[argc])
+function graphics_Window_draw_arc(self, argv[argc])
    body {
       int i, j, r;
       XArc arcs[MAXXOBJS];
@@ -409,7 +409,7 @@ function{1} graphics_Window_draw_arc(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_draw_circle(self, argv[argc])
+function graphics_Window_draw_circle(self, argv[argc])
    body {
       int r;
       GetSelfW();
@@ -424,7 +424,7 @@ function{1} graphics_Window_draw_circle(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_draw_curve(self, argv[argc])
+function graphics_Window_draw_curve(self, argv[argc])
    body {
       int i, n, closed;
       C_integer dx, dy, x0, y0, xN, yN;
@@ -484,7 +484,7 @@ function{1} graphics_Window_draw_curve(self, argv[argc])
 end
 
 
-function{0,1} graphics_Window_draw_image(self, argv[argc])
+function graphics_Window_draw_image(self, argv[argc])
    body {
       int c, i, width, height, row, p;
       C_integer x, y;
@@ -604,7 +604,7 @@ function{0,1} graphics_Window_draw_image(self, argv[argc])
 end
 
 
-function{1} graphics_Window_draw_line(self, argv[argc])
+function graphics_Window_draw_line(self, argv[argc])
    body {
       int i, j, n;
       XPoint points[MAXXOBJS];
@@ -634,7 +634,7 @@ function{1} graphics_Window_draw_line(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_draw_point(self, argv[argc])
+function graphics_Window_draw_point(self, argv[argc])
    body {
       int i, j, n;
       XPoint points[MAXXOBJS];
@@ -662,7 +662,7 @@ function{1} graphics_Window_draw_point(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_draw_polygon(self, argv[argc])
+function graphics_Window_draw_polygon(self, argv[argc])
    body {
       int i, j, n, base, dx, dy;
       XPoint points[MAXXOBJS];
@@ -702,7 +702,7 @@ function{1} graphics_Window_draw_polygon(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_draw_rectangle(self, argv[argc])
+function graphics_Window_draw_rectangle(self, argv[argc])
    body {
       int i, j, r;
       XRectangle recs[MAXXOBJS];
@@ -733,7 +733,7 @@ function{1} graphics_Window_draw_rectangle(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_draw_segment(self, argv[argc])
+function graphics_Window_draw_segment(self, argv[argc])
    body {
       int i, j, n, dx, dy;
       XSegment segs[MAXXOBJS];
@@ -764,7 +764,7 @@ function{1} graphics_Window_draw_segment(self, argv[argc])
     }
 end
 
-function{1} graphics_Window_draw_string(self, argv[argc])
+function graphics_Window_draw_string(self, argv[argc])
    body {
       int i, n, len;
       char *s;
@@ -796,7 +796,7 @@ function{1} graphics_Window_draw_string(self, argv[argc])
 end
 
 
-function{1} graphics_Window_erase_area(self, argv[argc])
+function graphics_Window_erase_area(self, argv[argc])
    body {
       int i, r;
       C_integer x, y, width, height;
@@ -814,7 +814,7 @@ end
 
 
 
-function{1} graphics_Window_event(self, timeout)
+function graphics_Window_event(self, timeout)
    if !def:C_integer(timeout, -1) then
       runerr(101, timeout)
    body {
@@ -840,7 +840,7 @@ function{1} graphics_Window_event(self, timeout)
    }
 end
 
-function{0,1} graphics_Window_pending(self, argv[argc])
+function graphics_Window_pending(self, argv[argc])
    body {
       wsp ws;
       int i;
@@ -868,7 +868,7 @@ function{0,1} graphics_Window_pending(self, argv[argc])
 end
 
 
-function{0,1} graphics_Window_fg(self, colr)
+function graphics_Window_fg(self, colr)
    body {
       tended char *tmp;
       GetSelfW();
@@ -901,7 +901,7 @@ function{0,1} graphics_Window_fg(self, colr)
    }
 end
 
-function{1} graphics_Window_fill_arc(self, argv[argc])
+function graphics_Window_fill_arc(self, argv[argc])
    body {
       int i, j, r;
       XArc arcs[MAXXOBJS];
@@ -969,7 +969,7 @@ function{1} graphics_Window_fill_arc(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_fill_circle(self, argv[argc])
+function graphics_Window_fill_circle(self, argv[argc])
    body {
       int r;
       GetSelfW();
@@ -984,7 +984,7 @@ function{1} graphics_Window_fill_circle(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_fill_polygon(self, argv[argc])
+function graphics_Window_fill_polygon(self, argv[argc])
    body {
       int i, n;
       XPoint *points;
@@ -1015,7 +1015,7 @@ function{1} graphics_Window_fill_polygon(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_fill_rectangle(self, argv[argc])
+function graphics_Window_fill_rectangle(self, argv[argc])
    body {
       int i, j, r;
       XRectangle recs[MAXXOBJS];
@@ -1046,7 +1046,7 @@ function{1} graphics_Window_fill_rectangle(self, argv[argc])
    }
 end
 
-function{0,1} graphics_Window_font(self, f)
+function graphics_Window_font(self, f)
    body {
       tended char *tmp;
       GetSelfW();
@@ -1063,7 +1063,7 @@ function{0,1} graphics_Window_font(self, f)
    }
 end
 
-function{1} graphics_Window_free_color(self, argv[argc])
+function graphics_Window_free_color(self, argv[argc])
    body {
       int i;
       C_integer n;
@@ -1090,7 +1090,7 @@ function{1} graphics_Window_free_color(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_lower(self)
+function graphics_Window_lower(self)
    body {
       GetSelfW();
       lowerWindow(self_w);
@@ -1099,7 +1099,7 @@ function{1} graphics_Window_lower(self)
 end
 
 
-function{0,1} graphics_Window_new_color(self, argv[argc])
+function graphics_Window_new_color(self, argv[argc])
    body {
       int rv;
       GetSelfW();
@@ -1110,7 +1110,7 @@ function{0,1} graphics_Window_new_color(self, argv[argc])
    }
 end
 
-function{0,1} graphics_Window_palette_chars(p)
+function graphics_Window_palette_chars(p)
    body {
       int n;
       extern char c1list[], c2list[], c3list[], c4list[];
@@ -1138,7 +1138,7 @@ function{0,1} graphics_Window_palette_chars(p)
    }
 end
 
-function{0,1} graphics_Window_palette_color(s1, s2)
+function graphics_Window_palette_color(s1, s2)
    body {
       int p;
       char tmp[32];
@@ -1167,7 +1167,7 @@ function{0,1} graphics_Window_palette_color(s1, s2)
    }
 end
 
-function{0,1} graphics_Window_palette_key(self, s1, s2)
+function graphics_Window_palette_key(self, s1, s2)
    body {
       int p;
       C_integer n;
@@ -1196,7 +1196,7 @@ function{0,1} graphics_Window_palette_key(self, s1, s2)
    }
 end
 
-function{1} graphics_Window_pattern(self, s)
+function graphics_Window_pattern(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
@@ -1213,7 +1213,7 @@ function{1} graphics_Window_pattern(self, s)
    }
 end
 
-function{3} graphics_Window_pixel(self, argv[argc])
+function graphics_Window_pixel(self, argv[argc])
    body {
       struct imgmem imem;
       C_integer x, y, width, height;
@@ -1267,7 +1267,7 @@ function{3} graphics_Window_pixel(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_query_root_pointer()
+function graphics_Window_query_root_pointer()
    body {
       XPoint xp;
       struct descrip t;
@@ -1282,7 +1282,7 @@ function{1} graphics_Window_query_root_pointer()
    }
 end
 
-function{1} graphics_Window_raise(self)
+function graphics_Window_raise(self)
    body {
       GetSelfW();
       raiseWindow(self_w);
@@ -1290,7 +1290,7 @@ function{1} graphics_Window_raise(self)
    }
 end
 
-function{0,1} graphics_Window_read_image(self, argv[argc])
+function graphics_Window_read_image(self, argv[argc])
    body {
       char filename[MaxPath + 1];
       tended char *tmp;
@@ -1362,7 +1362,7 @@ function{0,1} graphics_Window_read_image(self, argv[argc])
    }
 end
 
-function{1} graphics_Window_sync()
+function graphics_Window_sync()
    body {
       wsync(0);
       pollevent();
@@ -1370,7 +1370,7 @@ function{1} graphics_Window_sync()
    }
 end
 
-function{1} graphics_Window_text_width(self, s)
+function graphics_Window_text_width(self, s)
    if !cnv:string_or_ucs(s) then
       runerr(129, s)
    body {
@@ -1386,7 +1386,7 @@ end
 
 "Uncouple(w) - uncouple window"
 
-function{1} graphics_Window_uncouple(self)
+function graphics_Window_uncouple(self)
    body {
       GetSelfW();
       *self_w_dptr = zerodesc;
@@ -1395,7 +1395,7 @@ function{1} graphics_Window_uncouple(self)
    }
 end
 
-function{*} graphics_Window_attrib(self, argv[argc])
+function graphics_Window_attrib(self, argv[argc])
    body {
       wbp wsave;
       word n;
@@ -1526,7 +1526,7 @@ function{*} graphics_Window_attrib(self, argv[argc])
    }
 end
 
-function{0,1} graphics_Window_wdefault(self, prog, opt)
+function graphics_Window_wdefault(self, prog, opt)
    if !cnv:C_string(prog) then
        runerr(103, prog)
    if !cnv:C_string(opt) then
@@ -1541,7 +1541,7 @@ function{0,1} graphics_Window_wdefault(self, prog, opt)
    }
 end
 
-function{1} graphics_Window_flush(self)
+function graphics_Window_flush(self)
    body {
       GetSelfW();
       wflush(self_w);
@@ -1549,7 +1549,7 @@ function{1} graphics_Window_flush(self)
    }
 end
 
-function{0,1} graphics_Window_write_image(self, s, argv[argc])
+function graphics_Window_write_image(self, s, argv[argc])
    if !cnv:C_string(s) then
        runerr(103, s)
    body {
@@ -1603,7 +1603,7 @@ function{0,1} graphics_Window_write_image(self, s, argv[argc])
    }
 end
 
-function{1} graphics_Window_own_selection(self, selection)
+function graphics_Window_own_selection(self, selection)
    if !cnv:C_string(selection) then
       runerr(103,selection)
    body {
@@ -1614,7 +1614,7 @@ function{1} graphics_Window_own_selection(self, selection)
    }
 end
 
-function{1} graphics_Window_send_selection_response(self, requestor, property, target, selection, time, data)
+function graphics_Window_send_selection_response(self, requestor, property, target, selection, time, data)
    if !cnv:C_integer(requestor) then
       runerr(101, requestor)
    if !cnv:C_string(property) then
@@ -1634,7 +1634,7 @@ function{1} graphics_Window_send_selection_response(self, requestor, property, t
    }
 end
 
-function{0,1} graphics_Window_request_selection(self, selection, target_type)
+function graphics_Window_request_selection(self, selection, target_type)
    if !cnv:C_string(selection) then
       runerr(103,selection)
    if !def:C_string(target_type, "STRING") then
@@ -1647,7 +1647,7 @@ function{0,1} graphics_Window_request_selection(self, selection, target_type)
    }
 end
 
-function{1} graphics_Window_close(self)
+function graphics_Window_close(self)
    body {
      GetSelfW();
 
@@ -1659,7 +1659,7 @@ function{1} graphics_Window_close(self)
    }
 end
 
-function{0,1} graphics_Window_generic_palette_key(s1, s2)
+function graphics_Window_generic_palette_key(s1, s2)
    body {
       int p;
       C_integer n;
@@ -1684,7 +1684,7 @@ function{0,1} graphics_Window_generic_palette_key(s1, s2)
    }
 end
 
-function{0,1} graphics_Window_generic_color_value(k)
+function graphics_Window_generic_color_value(k)
    body {
       C_integer n;
       long r, g, b, a = 65535;
@@ -1713,7 +1713,7 @@ end
 
 #else  /* Graphics */
 
-function{0,1} graphics_Window_open_impl(attr[n])
+function graphics_Window_open_impl(attr[n])
    body {
      Unsupported;
    }

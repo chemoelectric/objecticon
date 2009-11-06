@@ -15,7 +15,7 @@
       int slen;
       }
 
-   inline {   
+   body {   
 
    if (is:null(s)) {
       s = k_subject;
@@ -66,7 +66,7 @@
 "any(c,s,i1,i2) - produces min(i1,i2)+1 if s[min(i1,i2)] is contained "
 "in c and i1 ~= i2, but fails otherwise."
 
-function{0,1} any(c,s,i,j)
+function any(c,s,i,j)
    str_anal( s, i, j )
    if !cnv:cset(c) then
       runerr(104,c)
@@ -89,7 +89,7 @@ end
 " a character of c1 in s[i1:i2] that is balanced with respect to characters in"
 " c2 and c3, but fails if there is no such position."
 
-function{*} bal(c1,c2,c3,s,i,j)
+function bal(c1,c2,c3,s,i,j)
    str_anal( s, i, j )
    if !def:cset(c1, *k_cset) then
       runerr(104,c1)
@@ -153,7 +153,7 @@ end
 "find(s1,s2,i1,i2) - generates the sequence of positions in s2 at which "
 "s1 occurs as a substring in s2[i1:i2], but fails if there is no such position."
 
-function{*} find(s1,s2,i,j)
+function find(s1,s2,i,j)
    str_anal( s2, i, j )
 
    body {
@@ -228,7 +228,7 @@ end
 "many(c,s,i1,i2) - produces the position in s after the longest initial "
 "sequence of characters in c in s[i1:i2] but fails if there is none."
 
-function{0,1} many(c,s,i,j)
+function many(c,s,i,j)
    str_anal( s, i, j )
    if !cnv:cset(c) then
       runerr(104,c)
@@ -267,7 +267,7 @@ end
 
 "match(s1,s2,i1,i2) - produces i1+*s1 if s1==s2[i1+:*s1], but fails otherwise."
 
-function{0,1} match(s1,s2,i,j)
+function match(s1,s2,i,j)
    str_anal( s2, i, j )
    body {
       char *str1, *str2;
@@ -328,7 +328,7 @@ end
 "upto(c,s,i1,i2) - generates the sequence of integer positions in s up to a "
 "character in c in s[i2:i2], but fails if there is no such position."
 
-function{*} upto(c,s,i,j)
+function upto(c,s,i,j)
    str_anal( s, i, j )
    if !cnv:cset(c) then
       runerr(104,c)

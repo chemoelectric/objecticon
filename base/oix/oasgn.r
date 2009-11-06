@@ -95,7 +95,7 @@ static int subs_asgn	(dptr dest, const dptr src);
 
 "x := y - assign y to x."
 
-operator{0,1} := asgn(underef x, y)
+operator := asgn(underef x, y)
 
    if !is:variable(x) then
       runerr(111, x)
@@ -116,7 +116,7 @@ end
 "x <- y - assign y to x."
 " Reverses assignment if resumed."
 
-operator{0,1+} <- rasgn(underef x -> saved_x, y)
+operator <- rasgn(underef x -> saved_x, y)
 
    if !is:variable(x) then
       runerr(111, x)
@@ -133,7 +133,7 @@ end
 "x <-> y - swap values of x and y."
 " Reverses swap if resumed."
 
-operator{0,1+} <-> rswap(underef x -> dx, underef y -> dy)
+operator <-> rswap(underef x -> dx, underef y -> dy)
 
    if !is:variable(x) then
       runerr(111, x)
@@ -220,7 +220,7 @@ end
 
 "x :=: y - swap values of x and y."
 
-operator{0,1} :=: swap(underef x -> dx, underef y -> dy)
+operator :=: swap(underef x -> dx, underef y -> dy)
    /*
     * x and y must be variables.
     */

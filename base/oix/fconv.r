@@ -4,16 +4,13 @@
 
 "abs(N) - produces the absolute value of N."
 
-function{1} abs(n)
+function abs(n)
    /*
     * If n is convertible to a (large or small) integer or real,
     * this code returns -n if n is negative
     */
    if cnv:(exact)C_integer(n) then {
-      abstract {
-         return integer
-         }
-      inline {
+      body {
 	 C_integer i;
 
 	 if (n >= 0)
@@ -33,10 +30,7 @@ function{1} abs(n)
 
 
    else if cnv:(exact)integer(n) then {
-      abstract {
-         return integer
-         }
-      inline {
+      body {
 	 if (BlkLoc(n)->bignum.sign == 0)
 	    result = n;
 	 else {
@@ -47,10 +41,7 @@ function{1} abs(n)
       }
 
    else if cnv:C_double(n) then {
-      abstract {
-         return real
-         }
-      inline {
+      body {
 
 #if SASC
          return C_double __builtin_fabs(n);
@@ -72,21 +63,15 @@ end
 #begdef ReturnYourselfAs(t)
 #t "(x) - produces a value of type " #t " resulting from the conversion of x, "
    "but fails if the conversion is not possible."
-function{0,1} t(x)
+function t(x)
 
    if cnv:t(x) then {
-      abstract {
-         return t
-         }
-      inline {
+      body {
          return x;
          }
       }
    else {
-      abstract {
-         return empty_type
-         }
-      inline {
+      body {
          fail;
          }
       }
@@ -105,7 +90,7 @@ ReturnYourselfAs(string)   /* string(x) - convert to string or fail */
 "converted to a string if its highest char is < 256; otherwise it is converted"
 "to a ucs.  For any other type, normal string conversion is attempted."
 
-function{0,1} text(x)
+function text(x)
   body {
     if (cnv:string_or_ucs(x,x))
         return x;
@@ -118,29 +103,20 @@ end
 "numeric(x) - produces an integer or real number resulting from the "
 "type conversion of x, but fails if the conversion is not possible."
 
-function{0,1} numeric(n)
+function numeric(n)
 
    if cnv:(exact)integer(n) then {
-      abstract {
-         return integer
-         }
-      inline {
+      body {
          return n;
          }
       }
    else if cnv:real(n) then {
-      abstract {
-         return real
-         }
-      inline {
+      body {
          return n;
          }
       }
    else {
-      abstract {
-         return empty_type
-         }
-      inline {
+      body {
          fail;
          }
       }
@@ -150,13 +126,10 @@ end
 "proc(x,i) - convert x to a procedure if possible; use i to resolve "
 "ambiguous string names."
 
-function{0,1} proc(x,i,c)
+function proc(x,i,c)
 
    if is:proc(x) then {
-      abstract {
-         return proc
-         }
-      inline {
+      body {
          return x;
          }
       }
@@ -167,17 +140,14 @@ function{0,1} proc(x,i,c)
        */
       if !def:C_integer(i, 1) then
          runerr(101, i)
-      inline {
+      body {
          if (i < 0 || i > 3) {
             irunerr(205, i);
             errorfail;
             }
          }   
 
-      abstract {
-         return proc
-         }
-      inline {
+      body {
          struct b_proc *prc;
 
 	 struct progstate *prog;
@@ -207,10 +177,7 @@ function{0,1} proc(x,i,c)
          }
       }
    else {
-      abstract {
-         return empty_type
-         }
-      inline {
+      body {
          fail;
          }
       }

@@ -43,7 +43,7 @@ static void on_mysql_res_error(MYSQL_RES *p)
         on_mysql_error(p->handle);
 }
 
-function{0,1} mysql_MySql_new_impl()
+function mysql_MySql_new_impl()
     body {
        MYSQL *res;
        res = mysql_init(NULL);
@@ -55,7 +55,7 @@ function{0,1} mysql_MySql_new_impl()
    }
 end
 
-function{1} mysql_MySql_close(self)
+function mysql_MySql_close(self)
    body {
       GetSelfMySql();
       mysql_close(self_mysql);
@@ -64,7 +64,7 @@ function{1} mysql_MySql_close(self)
    } 
 end
 
-function{0,1} mysql_MySql_set_server_option(self, opt) 
+function mysql_MySql_set_server_option(self, opt) 
    if !cnv:C_integer(opt) then
        runerr(101, opt)
    body {
@@ -79,7 +79,7 @@ function{0,1} mysql_MySql_set_server_option(self, opt)
    }
 end
 
-function{0,1} mysql_MySql_options(self, option, arg)
+function mysql_MySql_options(self, option, arg)
    if !cnv:C_integer(option) then
       runerr(101, option)
 
@@ -147,7 +147,7 @@ function{0,1} mysql_MySql_options(self, option, arg)
    }
 end
 
-function{0,1} mysql_MySql_ping(self)
+function mysql_MySql_ping(self)
    body {
       GetSelfMySql();
       if (mysql_ping(self_mysql)) {
@@ -158,7 +158,7 @@ function{0,1} mysql_MySql_ping(self)
    }
 end
 
-function{1} mysql_MySql_esc(self, str)
+function mysql_MySql_esc(self, str)
    if !cnv:string(str) then
        runerr(103, str)
    body {
@@ -173,7 +173,7 @@ function{1} mysql_MySql_esc(self, str)
    }
 end
 
-function{0,1} mysql_MySql_select_db(self, db)
+function mysql_MySql_select_db(self, db)
    if !cnv:C_string(db) then
        runerr(103, db)
    body {
@@ -192,7 +192,7 @@ end
 #passthru   #define SHUTDOWN_CMD(X)   mysql_shutdown(X)
 #passthru #endif
 
-function{0,1} mysql_MySql_shutdown(self)
+function mysql_MySql_shutdown(self)
    body {
       GetSelfMySql();
 
@@ -205,7 +205,7 @@ function{0,1} mysql_MySql_shutdown(self)
    }
 end
 
-function{0,1} mysql_MySql_change_user(self, user, passwd, db)
+function mysql_MySql_change_user(self, user, passwd, db)
    body {
       tended char *c_user;
       tended char *c_passwd;
@@ -235,7 +235,7 @@ function{0,1} mysql_MySql_change_user(self, user, passwd, db)
    }
 end
 
-function{1} mysql_MySql_get_character_set_name(self)
+function mysql_MySql_get_character_set_name(self)
    body {
       GetSelfMySql();
       cstr2string((char*)mysql_character_set_name(self_mysql), &result);
@@ -243,7 +243,7 @@ function{1} mysql_MySql_get_character_set_name(self)
    }
 end
 
-function{0,1} mysql_MySql_dump_debug_info(self)
+function mysql_MySql_dump_debug_info(self)
    body {
       GetSelfMySql();
       if (mysql_dump_debug_info(self_mysql)) {
@@ -254,20 +254,20 @@ function{0,1} mysql_MySql_dump_debug_info(self)
    }
 end
 
-function{1} mysql_MySql_get_client_info()
+function mysql_MySql_get_client_info()
    body {
     cstr2string((char*)mysql_get_client_info(), &result);
     return result;
    }
 end
 
-function{1} mysql_MySql_get_client_version()
+function mysql_MySql_get_client_version()
    body {
       return C_integer mysql_get_client_version();
    }
 end
 
-function{1} mysql_MySql_get_host_info(self)
+function mysql_MySql_get_host_info(self)
    body {
       GetSelfMySql();
       cstr2string((char*)mysql_get_host_info(self_mysql), &result);
@@ -275,7 +275,7 @@ function{1} mysql_MySql_get_host_info(self)
    }
 end
 
-function{1} mysql_MySql_get_sqlstate(self)
+function mysql_MySql_get_sqlstate(self)
    body {
       GetSelfMySql();
       cstr2string((char*)mysql_sqlstate(self_mysql), &result);
@@ -283,14 +283,14 @@ function{1} mysql_MySql_get_sqlstate(self)
    }
 end
 
-function{1} mysql_MySql_get_proto_info(self)
+function mysql_MySql_get_proto_info(self)
    body {
       GetSelfMySql();
       return C_integer mysql_get_proto_info(self_mysql);
    }
 end
 
-function{1} mysql_MySql_get_server_info(self)
+function mysql_MySql_get_server_info(self)
    body {
       GetSelfMySql();
       cstr2string((char*)mysql_get_server_info(self_mysql), &result);
@@ -298,14 +298,14 @@ function{1} mysql_MySql_get_server_info(self)
    }
 end
 
-function{1} mysql_MySql_get_server_version(self)
+function mysql_MySql_get_server_version(self)
    body {
       GetSelfMySql();
       return C_integer mysql_get_server_version(self_mysql);
    }
 end
 
-function{1} mysql_MySql_get_info(self)
+function mysql_MySql_get_info(self)
    body {
       GetSelfMySql();
       cstr2string((char*)mysql_info(self_mysql), &result);
@@ -313,7 +313,7 @@ function{1} mysql_MySql_get_info(self)
    }
 end
 
-function{0,1} mysql_MySql_get_stat(self)
+function mysql_MySql_get_stat(self)
    body {
       char *s;
       GetSelfMySql();
@@ -327,7 +327,7 @@ function{0,1} mysql_MySql_get_stat(self)
    }
 end
 
-function{0,1} mysql_MySql_commit(self)
+function mysql_MySql_commit(self)
    body {
       GetSelfMySql();
       if (mysql_commit(self_mysql)) {
@@ -338,7 +338,7 @@ function{0,1} mysql_MySql_commit(self)
    }
 end
 
-function{0,1} mysql_MySql_rollback(self)
+function mysql_MySql_rollback(self)
    body {
       GetSelfMySql();
       if (mysql_rollback(self_mysql)) {
@@ -349,7 +349,7 @@ function{0,1} mysql_MySql_rollback(self)
    }
 end
 
-function{0,1} mysql_MySql_set_autocommit(self, flag)
+function mysql_MySql_set_autocommit(self, flag)
    body {
       my_bool t;
       GetSelfMySql();
@@ -365,7 +365,7 @@ function{0,1} mysql_MySql_set_autocommit(self, flag)
     }
 end
 
-function{0,1} mysql_MySql_more_results(self)
+function mysql_MySql_more_results(self)
    body {
       GetSelfMySql();
       if (mysql_more_results(self_mysql))
@@ -377,7 +377,7 @@ function{0,1} mysql_MySql_more_results(self)
    }
 end
 
-function{0,1} mysql_MySql_next_result(self)
+function mysql_MySql_next_result(self)
    body {
       GetSelfMySql();
       if (mysql_next_result(self_mysql)) {
@@ -388,14 +388,14 @@ function{0,1} mysql_MySql_next_result(self)
     }
 end
 
-function{1} mysql_MySql_get_affected_rows(self)
+function mysql_MySql_get_affected_rows(self)
    body {
       GetSelfMySql();
       return C_integer mysql_affected_rows(self_mysql);
    }
 end
 
-function{0,1} mysql_MySql_connect(self, host, user, passwd, db, 
+function mysql_MySql_connect(self, host, user, passwd, db, 
                                   port, unix_socket, client_flag)
    body {
       tended char *c_host;
@@ -460,7 +460,7 @@ function{0,1} mysql_MySql_connect(self, host, user, passwd, db,
    }
 end
 
-function{0,1} mysql_MySql_ssl_set(self, key, cert, ca, capath, cipher)
+function mysql_MySql_ssl_set(self, key, cert, ca, capath, cipher)
    body {
       tended char *c_key;
       tended char *c_cert;
@@ -499,7 +499,7 @@ function{0,1} mysql_MySql_ssl_set(self, key, cert, ca, capath, cipher)
    }
 end
 
-function{1} mysql_MySql_get_error(self)
+function mysql_MySql_get_error(self)
    body {
       GetSelfMySql();
       cstr2string((char*)mysql_error(self_mysql), &result);
@@ -507,28 +507,28 @@ function{1} mysql_MySql_get_error(self)
    }
 end
 
-function{1} mysql_MySql_get_errno(self)
+function mysql_MySql_get_errno(self)
    body {
       GetSelfMySql();
       return C_integer mysql_errno(self_mysql);
    }
 end
 
-function{1} mysql_MySql_get_thread_id(self)
+function mysql_MySql_get_thread_id(self)
    body {
       GetSelfMySql();
       return C_integer mysql_thread_id(self_mysql);
    }
 end
 
-function{1} mysql_MySql_get_warning_count(self)
+function mysql_MySql_get_warning_count(self)
    body {
       GetSelfMySql();
       return C_integer mysql_warning_count(self_mysql);
    }
 end
 
-function{0,1} mysql_MySql_query(self, q)
+function mysql_MySql_query(self, q)
    if !cnv:string(q) then
        runerr(103, q)
    body {
@@ -541,21 +541,21 @@ function{0,1} mysql_MySql_query(self, q)
    }
 end
 
-function{1} mysql_MySql_get_field_count(self)
+function mysql_MySql_get_field_count(self)
    body {
       GetSelfMySql();
       return C_integer mysql_field_count(self_mysql);
    }
 end
 
-function{1} mysql_MySql_get_insert_id(self)
+function mysql_MySql_get_insert_id(self)
    body {
       GetSelfMySql();
       return C_integer mysql_insert_id(self_mysql);
    }
 end
 
-function{0,1} mysql_MySql_kill(self, pid)
+function mysql_MySql_kill(self, pid)
    if !cnv:C_integer(pid) then
        runerr(101, pid)
    body {
@@ -568,7 +568,7 @@ function{0,1} mysql_MySql_kill(self, pid)
    }
 end
 
-function{0,1} mysql_MySql_list_dbs_impl(self, wild)
+function mysql_MySql_list_dbs_impl(self, wild)
    body {
       MYSQL_RES *res;
       tended char *c_wild;
@@ -588,7 +588,7 @@ function{0,1} mysql_MySql_list_dbs_impl(self, wild)
    }
 end
 
-function{0,1} mysql_MySql_list_fields_impl(self, table, wild)
+function mysql_MySql_list_fields_impl(self, table, wild)
    body {
       MYSQL_RES *res;
       tended char *c_table;
@@ -612,7 +612,7 @@ function{0,1} mysql_MySql_list_fields_impl(self, table, wild)
    }
 end
 
-function{0,1} mysql_MySql_list_processes_impl(self)
+function mysql_MySql_list_processes_impl(self)
    body {
       MYSQL_RES *res;
       GetSelfMySql();
@@ -625,7 +625,7 @@ function{0,1} mysql_MySql_list_processes_impl(self)
    }
 end
 
-function{0,1} mysql_MySql_list_tables_impl(self, wild)
+function mysql_MySql_list_tables_impl(self, wild)
    body {
       MYSQL_RES *res;
       tended char *c_wild;
@@ -645,7 +645,7 @@ function{0,1} mysql_MySql_list_tables_impl(self, wild)
    }
 end
 
-function{0,1} mysql_MySql_use_result_impl(self)
+function mysql_MySql_use_result_impl(self)
    body {
       MYSQL_RES *res;
       GetSelfMySql();
@@ -659,7 +659,7 @@ function{0,1} mysql_MySql_use_result_impl(self)
    }
 end
 
-function{0,1} mysql_MySql_store_result_impl(self)
+function mysql_MySql_store_result_impl(self)
    body {
       MYSQL_RES *res;
       GetSelfMySql();
@@ -673,14 +673,14 @@ function{0,1} mysql_MySql_store_result_impl(self)
    }
 end
 
-function{1} mysql_MySqlRes_get_num_fields(self)
+function mysql_MySqlRes_get_num_fields(self)
    body {
        GetSelfMySqlRes();
        return C_integer mysql_num_fields(self_mysql_res);
    }
 end
 
-function{0,1} mysql_MySqlRes_fetch_field_impl(self)
+function mysql_MySqlRes_fetch_field_impl(self)
    body {
        MYSQL_FIELD *field;
        GetSelfMySqlRes();
@@ -724,7 +724,7 @@ static struct descrip field_to_list(MYSQL_FIELD *field) {
    return res;
 }
 
-function{0,1} mysql_MySqlRes_fetch_field_direct_impl(self, fieldnr)
+function mysql_MySqlRes_fetch_field_direct_impl(self, fieldnr)
    if !cnv:C_integer(fieldnr) then
        runerr(101, fieldnr)
    body {
@@ -739,7 +739,7 @@ function{0,1} mysql_MySqlRes_fetch_field_direct_impl(self, fieldnr)
    }
 end
 
-function{0,1} mysql_MySqlRes_fetch_fields_impl(self)
+function mysql_MySqlRes_fetch_fields_impl(self)
    body {
        MYSQL_FIELD *fields;
        int i, n;
@@ -761,7 +761,7 @@ function{0,1} mysql_MySqlRes_fetch_fields_impl(self)
    }
 end
 
-function{1} mysql_MySqlRes_field_seek(self, offset)
+function mysql_MySqlRes_field_seek(self, offset)
    if !cnv:C_integer(offset) then
        runerr(101, offset)
    body {
@@ -770,14 +770,14 @@ function{1} mysql_MySqlRes_field_seek(self, offset)
    }
 end
 
-function{1} mysql_MySqlRes_field_tell(self)
+function mysql_MySqlRes_field_tell(self)
    body {
        GetSelfMySqlRes();
        return C_integer mysql_field_tell(self_mysql_res);
    }
 end
 
-function{0,1} mysql_MySqlRes_fetch_lengths(self)
+function mysql_MySqlRes_fetch_lengths(self)
    body {
        int i, n;
        unsigned long *lengths;
@@ -798,7 +798,7 @@ function{0,1} mysql_MySqlRes_fetch_lengths(self)
    }
 end
 
-function{0,1} mysql_MySqlRes_fetch_row(self)
+function mysql_MySqlRes_fetch_row(self)
    body {
        int i, n;
        unsigned long *lengths;
@@ -826,7 +826,7 @@ function{0,1} mysql_MySqlRes_fetch_row(self)
    }
 end
 
-function{1} mysql_MySqlRes_row_seek(self, offset)
+function mysql_MySqlRes_row_seek(self, offset)
    if !cnv:C_integer(offset) then
        runerr(101, offset)
    body {
@@ -835,14 +835,14 @@ function{1} mysql_MySqlRes_row_seek(self, offset)
    }
 end
 
-function{1} mysql_MySqlRes_row_tell(self)
+function mysql_MySqlRes_row_tell(self)
    body {
        GetSelfMySqlRes();
        return C_integer((long int)mysql_row_tell(self_mysql_res));
    }
 end
 
-function{1} mysql_MySqlRes_data_seek(self, offset)
+function mysql_MySqlRes_data_seek(self, offset)
    if !cnv:C_integer(offset) then
        runerr(101, offset)
    body {
@@ -852,14 +852,14 @@ function{1} mysql_MySqlRes_data_seek(self, offset)
    }
 end
 
-function{1} mysql_MySqlRes_get_num_rows(self)
+function mysql_MySqlRes_get_num_rows(self)
    body {
        GetSelfMySqlRes();
        return C_integer mysql_num_rows(self_mysql_res);
    }
 end
 
-function{1} mysql_MySqlRes_free(self)
+function mysql_MySqlRes_free(self)
    body {
        GetSelfMySqlRes();
        mysql_free_result(self_mysql_res);

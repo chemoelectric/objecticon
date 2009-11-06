@@ -9,24 +9,18 @@
  */
 #begdef NumComp(icon_op, func_name, c_op, descript)
 "x " #icon_op " y - test if x is numerically " #descript " y."
-   operator{0,1} icon_op func_name(x,y)
+   operator icon_op func_name(x,y)
 
    arith_case (x, y) of {
       C_integer: {
-         abstract {
-            return integer
-            }
-         inline {
+         body {
             if c_op(x, y)
                return C_integer y;
             fail;
             }
          }
       integer: { /* large integers only */
-         abstract {
-            return integer
-            }
-         inline {
+         body {
             if (big_ ## c_op (x,y)) {
                return y;
    	    }
@@ -34,10 +28,7 @@
             }
          }
       C_double: {
-         abstract {
-            return real
-            }
-         inline {
+         body {
             if c_op (x, y)
                return C_double y;
             fail;
@@ -95,7 +86,7 @@ NumComp( ~=, numne, NumNe, not equal to)
  */
 #begdef StrComp(icon_op, func_name, special_test_str, special_test_ucs, c_comp, comp_value, descript)
 "x " #icon_op " y - test if x is lexically " #descript " y."
-operator{0,1} icon_op func_name(x,y)
+operator icon_op func_name(x,y)
    if !cnv:string_or_ucs(x) then
       runerr(129,x)
    if !cnv:string_or_ucs(y) then
@@ -143,11 +134,8 @@ StrComp(<<,  lexlt, , , ==, Less,    less than)
 
 "x === y - test equivalence of x and y."
 
-operator{0,1} === eqv(x,y)
-   abstract {
-      return type(y)
-      }
-   inline {
+operator === eqv(x,y)
+   body {
       /*
        * Let equiv do all the work, failing if equiv indicates non-equivalence.
        */
@@ -161,11 +149,8 @@ end
 
 "x ~=== y - test inequivalence of x and y."
 
-operator{0,1} ~=== neqv(x,y)
-   abstract {
-      return type(y)
-      }
-   inline {
+operator ~=== neqv(x,y)
+   body {
       /*
        * equiv does all the work.
        */

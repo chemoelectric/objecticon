@@ -571,7 +571,7 @@ static void transmit_failure()
 
 "cofail(ce) - transmit a co-expression failure to ce"
 
-function{0,1} cofail(ce)
+function cofail(ce)
     body {
       struct p_frame *pf;
       if (is:null(ce)) {
@@ -1039,7 +1039,7 @@ static void get_child_prog_result()
     pop_from_prog_event_queue(prog, res);
 }
 
-function{0,1} lang_Prog_get_event_impl(c, res)
+function lang_Prog_get_event_impl(c, res)
    if !is:coexpr(c) then
       runerr(118,c)
    body {

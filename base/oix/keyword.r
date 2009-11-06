@@ -7,11 +7,8 @@
 
 
 "&clock - a string consisting of the current time of day"
-keyword{2} clock
-   abstract {
-      return string
-      }
-   inline {
+keyword clock
+   body {
       time_t t;
       struct tm *ct;
       char sbuf[9], *tmp;
@@ -25,21 +22,15 @@ keyword{2} clock
 end
 
 "&current - the currently active co-expression"
-keyword{1} current
-   abstract {
-      return coexpr
-      }
-   inline {
+keyword current
+   body {
        return coexpr(k_current);
       }
 end
 
 "&date - the current date"
-keyword{1} date
-   abstract {
-      return string
-      }
-   inline {
+keyword date
+   body {
       time_t t;
       struct tm *ct;
       char sbuf[11], *tmp;
@@ -54,10 +45,7 @@ keyword{1} date
 end
 
 "&dateline - current date and time"
-keyword{2} dateline
-   abstract {
-      return string
-      }
+keyword dateline
    body {
       static char *day[] = {
          "Sunday", "Monday", "Tuesday", "Wednesday",
@@ -96,28 +84,22 @@ keyword{2} dateline
 end
 
 "&digits - a cset consisting of the 10 decimal digits"
-keyword{1} digits
+keyword digits
    body {
     return cset(k_digits);
    }
 end
 
 "&error - enable/disable error conversion"
-keyword{1} error
-   abstract {
-      return kywdint
-      }
-   inline {
+keyword error
+   body {
       return kywdint(&kywd_err);
       }
 end
 
 "&errornumber - error number of last error converted to failure"
-keyword{0,1} errornumber
-   abstract {
-      return integer
-      }
-   inline {
+keyword errornumber
+   body {
       if (k_errornumber == 0)
          fail;
       return C_integer k_errornumber;
@@ -125,11 +107,8 @@ keyword{0,1} errornumber
 end
 
 "&errortext - error message of last error converted to failure"
-keyword{0,1} errortext
-   abstract {
-      return string
-      }
-   inline {
+keyword errortext
+   body {
       if (k_errornumber == 0)
          fail;
       return k_errortext;
@@ -137,11 +116,8 @@ keyword{0,1} errortext
 end
 
 "&errorvalue - erroneous value of last error converted to failure"
-keyword{0,1} errorvalue
-   abstract {
-      return any_value
-      }
-   inline {
+keyword errorvalue
+   body {
       if (have_errval)
          return k_errorvalue;
       else
@@ -150,20 +126,14 @@ keyword{0,1} errorvalue
 end
 
 "&fail - just fail"
-keyword{0} fail
-   abstract {
-      return empty_type
-      }
-   inline {
+keyword fail
+   body {
       fail;
       }
 end
 
 "&features - generate strings identifying features in this version of Icon"
-keyword{1,*} features
-   abstract {
-      return string
-      }
+keyword features
    body {
 #define Feature(guard,sym,kwval) if (kwval) suspend C_string kwval;
 #include "../h/features.h"
@@ -172,11 +142,8 @@ keyword{1,*} features
 end
 
 "&file - name of the source file for the current execution point"
-keyword{1} file
-   abstract {
-      return string
-      }
-   inline {
+keyword file
+   body {
       struct ipc_fname *pfile;
       pfile = frame_ipc_fname(curr_pf, 1);
       if (!pfile)
@@ -186,11 +153,8 @@ keyword{1} file
 end
 
 "&host - a string that identifies the host computer Icon is running on."
-keyword{1} host
-   abstract {
-     return string
-     }
-   inline {
+keyword host
+   body {
 #ifdef HAVE_UNAME
        struct utsname utsn;
        if (uname(&utsn) < 0) {
@@ -211,36 +175,30 @@ keyword{1} host
 end
 
 "&lcase - a cset consisting of the 26 lower case letters"
-keyword{1} lcase
+keyword lcase
    body {
     return cset(k_lcase);
    }
 end
 
 "&letters - a cset consisting of the 52 letters"
-keyword{1} letters
+keyword letters
    body {
     return cset(k_letters);
    }
 end
 
 "&level - level of procedure call."
-keyword{1} level
-   abstract {
-      return integer
-      }
+keyword level
 
-   inline {
+   body {
       return C_integer k_level;
       }
 end
 
 "&line - source line number of current execution point"
-keyword{1} line
-   abstract {
-      return integer;
-      }
-   inline {
+keyword line
+   body {
       struct ipc_line *pline;
 
       pline = frame_ipc_line(curr_pf, 1);
@@ -252,81 +210,57 @@ keyword{1} line
 end
 
 "&main - the main co-expression."
-keyword{1} main
-   abstract {
-      return coexpr
-      }
-   inline {
+keyword main
+   body {
        return coexpr(k_main);
       }
 end
 
 "&null - the null value."
-keyword{1} null
-   abstract {
-      return null
-      }
-   inline {
+keyword null
+   body {
       return nulldesc;
       }
 end
 
 "&pos - a variable containing the current focus in string scanning."
-keyword{1} pos
-   abstract {
-      return kywdpos
-      }
-    inline {
+keyword pos
+    body {
       return kywdpos(&kywd_pos);
       }
 end
 
 "&progname - a variable containing the program name."
-keyword{1} progname
-   abstract {
-      return kywdstr
-      }
-    inline {
+keyword progname
+    body {
       return kywdstr(&kywd_prog);
       }
 end
 
 "&random - a variable containing the current seed for random operations."
-keyword{1} random
-   abstract {
-      return kywdint
-      }
-   inline {
+keyword random
+   body {
       return kywdint(&kywd_ran);
       }
 end
 
 "&source - the co-expression that invoked the current co-expression."
-keyword{1} source
-   abstract {
-       return coexpr
-       }
-   inline {
+keyword source
+   body {
          return coexpr(k_current->activator);
          }
 end
 
 "&subject - variable containing the current subject of string scanning."
-keyword{1} subject
-   abstract {
-      return kywdsubj
-      }
-   inline {
+keyword subject
+   body {
       return kywdsubj(&k_subject);
       }
 end
 
 "&time - the elapsed execution time in milliseconds."
-keyword{1} time
-   abstract {
-      return integer
-      }
-   inline {
+keyword time
+   body {
       /*
        * &time in this program = total time - time spent in other programs
        */
@@ -335,44 +269,35 @@ keyword{1} time
 end
 
 "&trace - variable that controls procedure tracing."
-keyword{1} trace
-   abstract {
-      return kywdint
-      }
-   inline {
+keyword trace
+   body {
       return kywdint(&kywd_trace);
       }
 end
 
 "&maxlevel - variable that controls procedure tracing."
-keyword{1} maxlevel
-   abstract {
-      return kywdint
-      }
-   inline {
+keyword maxlevel
+   body {
       return kywdint(&kywd_maxlevel);
       }
 end
 
 "&dump - variable that controls termination dump."
-keyword{1} dump
-   abstract {
-      return kywdint
-      }
-   inline {
+keyword dump
+   body {
       return kywdint(&kywd_dump);
       }
 end
 
 "&ucase - a cset consisting of the 26 uppercase characters."
-keyword{1} ucase
+keyword ucase
    body {
     return cset(k_ucase);
    }
 end
 
 "&version - a string indentifying this version of Icon."
-keyword{1} version
+keyword version
    body {
     LitStr(Version, &result);
     return result;
@@ -380,52 +305,43 @@ keyword{1} version
 end
 
 "&ascii - a cset consisting of the 128 ascii characters"
-keyword{1} ascii
+keyword ascii
    body {
     return cset(k_ascii);
    }
 end
 
 "&cset - a cset consisting of the first 256 characters."
-keyword{1} cset
+keyword cset
    body {
     return cset(k_cset);
    }
 end
 
 "&uset - a cset consisting of all the unicode characters."
-keyword{1} uset
+keyword uset
    body {
     return cset(k_uset);
    }
 end
 
 "&why - a string giving information about the cause of failure"
-keyword{1} why
-   abstract {
-      return kywdstr
-      }
-    inline {
+keyword why
+    body {
       return kywdstr(&kywd_why);
       }
 end
 
 "&yes - the standard flag value for yes."
-keyword{1} yes
-   abstract {
-      return integer;
-      }
-   inline {
+keyword yes
+   body {
       return C_integer 1;
       }
 end
 
 "&no - the standard flag value for no."
-keyword{1} no
-   abstract {
-      return null
-      }
-   inline {
+keyword no
+   body {
       return nulldesc;
       }
 end

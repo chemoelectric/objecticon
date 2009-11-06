@@ -3,7 +3,7 @@
  */
 "x || y - concatenate strings x and y." 
 
-operator{1} || cater(x, y)
+operator || cater(x, y)
    if !cnv:string_or_ucs(x) then
       runerr(129,x)
    if !cnv:string_or_ucs(y) then
@@ -126,7 +126,7 @@ end
 
 "x ||| y - concatenate lists x and y."
 
-operator{1} ||| lconcat(x, y)
+operator ||| lconcat(x, y)
    /*
     * x and y must be lists.
     */
@@ -135,9 +135,6 @@ operator{1} ||| lconcat(x, y)
    if !is:list(y) then
       runerr(108, y)
 
-   abstract {
-      return new list(store[(type(x) ++ type(y)).lst_elem])
-      }
 
    body {
       register struct b_list *bp1;

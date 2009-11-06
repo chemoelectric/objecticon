@@ -8,7 +8,7 @@
 "delete(s,x) - delete element x from set or table or list s if it is there"
 " (always succeeds and returns s)."
 
-function{1} delete(s,x)
+function delete(s,x)
    body {
 
    type_case s of {
@@ -61,7 +61,7 @@ end
  * get(L) - get an element from end of list L.
  *  Identical to pop(L,i).
  */
-function{0,1} get_or_pop(x)
+function get_or_pop(x)
    if !is:list(x) then
       runerr(108, x)
    body {
@@ -79,7 +79,7 @@ GetOrPop(pop) /* pop(x) - pop an element from the left end of list x. */
 
 "key(T) - generate successive keys (entry values) from table T."
 
-function{*} key(t)
+function key(t)
    if !is:table(t) then
          runerr(124, t)
    body {
@@ -99,7 +99,7 @@ end
 "keyval(T) - generate alternate keys and their corresponding values (as variables)"
 "      from table T."
 
-function{*} keyval(t)
+function keyval(t)
    if !is:table(t) then
          runerr(124, t)
    body {
@@ -122,7 +122,7 @@ end
 " if s is a table or list, the assigned value for element x is y."
 " (always succeeds and returns s)."
 
-function{1} insert(s, x, y)
+function insert(s, x, y)
     body {
       type_case s of {
 
@@ -176,7 +176,7 @@ end
 
 "list(i, x) - create a list of size i, with initial value x."
 
-function{1} list(n, x)
+function list(n, x)
    if !def:C_integer(n, 0L) then
       runerr(101, n)
 
@@ -226,7 +226,7 @@ end
 "member(s, x) - if x is a set, return x if it is a member of s; if x is a table "
 " return s[x] (a variable) if x is a key of s.  Fails otherwise."
 
-function{0,1} member(s, x)
+function member(s, x)
    body {
      type_case s of {
         set: {
@@ -270,7 +270,7 @@ end
 
 "pull(L) - pull an element from end of list L."
 
-function{0,1} pull(x)
+function pull(x)
    /*
     * x must be a list.
     */
@@ -288,7 +288,7 @@ end
 
 "push(L, val) - push value onto beginning of list L."
 
-function{1} push(x, val)
+function push(x, val)
    /*
     * x must be a list.
     */
@@ -308,7 +308,7 @@ end
 
 "put(L, val) - put element onto end of list L."
 
-function{1} put(x, val)
+function put(x, val)
    /*
     * x must be a list.
     */
@@ -328,7 +328,7 @@ end
 
 "set(x1,...,xN) - create a set with given members."
 
-function{1} set(x[n])
+function set(x[n])
    body {
      tended union block *ps;
      int argc;
@@ -352,7 +352,7 @@ end
 
 "table(x,k1,v1,k2,v2...) - create a table with default value x, and initial mappings"
 "                          v[0]->v[1], v[2]->v[3] etc."
-function{1} table(x, v[n])
+function table(x, v[n])
    body {
       tended union block *bp;
       int argc;
@@ -376,7 +376,7 @@ end
 
 "keyof(s, x) - given a table or list s and a value x, generate the keys k such that s[k] === x"
 
-function{*} keyof(s,x)
+function keyof(s,x)
    body {
       type_case s of {
         list: {

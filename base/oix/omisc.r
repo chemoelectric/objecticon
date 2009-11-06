@@ -6,7 +6,7 @@
 /*
  * ^x - return an entry block for co-expression x from the refresh block.
  */
-operator{1} ^ refresh(x)
+operator ^ refresh(x)
    if !is:coexpr(x) then
        runerr(118, x)
 
@@ -31,7 +31,7 @@ operator{1} ^ refresh(x)
 end
 
 
-function{0,1} cocopy(x)
+function cocopy(x)
    if !is:coexpr(x) then
        runerr(118, x)
 
@@ -66,7 +66,7 @@ end
 
 "*x - return size of string or object x."
 
-operator{1} * size(x)
+operator * size(x)
   body {
    type_case x of {
       string: return C_integer StrLen(x);
@@ -92,7 +92,7 @@ end
 
 "=x - tab(match(x)).  Reverses effects if resumed."
 
-operator{*} = tabmat(x)
+operator = tabmat(x)
    body {
       register word l;
       char *s1, *s2;
@@ -203,7 +203,7 @@ end
 
 "i to j by k - generate successive values."
 
-operator{*} ... toby(from, to, by)
+operator ... toby(from, to, by)
    body {
     word by0, from0, to0;
     tended struct descrip by1, from1, to1;

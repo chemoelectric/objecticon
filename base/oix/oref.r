@@ -8,7 +8,7 @@
 
 "!x - generate successive values from object x."
 
-operator{*} ! bang(underef x -> dx)
+operator ! bang(underef x -> dx)
    body {
       register C_integer i, j;
       tended union block *ep;
@@ -183,7 +183,7 @@ end
 
 "?x - produce a randomly selected element of x."
 
-operator{0,1} ? random(underef x -> dx)
+operator ? random(underef x -> dx)
    body{
    type_case dx of {
       string: {
@@ -396,17 +396,17 @@ end
 
 "x[i:j] - form a substring or list section of x."
 
-operator{0,1} [:] sect(underef x -> dx, i, j)
+operator [:] sect(underef x -> dx, i, j)
     /*
     * If it isn't a C integer, but is a large integer, fail on
     * the out-of-range index.
     */
    if !cnv:C_integer(i) then {
-      if cnv : integer(i) then inline { fail; }
+      if cnv : integer(i) then body { fail; }
       runerr(101, i)
    }
    if !cnv:C_integer(j) then {
-      if cnv : integer(j) then inline { fail; }
+      if cnv : integer(j) then body { fail; }
       runerr(101, j)
    }
 
@@ -526,7 +526,7 @@ end
 
 "x[y] - access yth character or element of x."
 
-operator{0,1} [] subsc(underef x -> dx,y)
+operator [] subsc(underef x -> dx,y)
  body {
    int use_trap = 0;
    C_integer yi;
@@ -763,7 +763,7 @@ operator{0,1} [] subsc(underef x -> dx,y)
 end
 
 
-function{*} back(underef x -> dx)
+function back(underef x -> dx)
  body {
    register word i, j;
    tended union block *ep;

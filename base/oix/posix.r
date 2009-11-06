@@ -25,7 +25,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 
 "kill() - send a signal to a process."
 
-function{0,1} posix_System_kill(pid, signal)
+function posix_System_kill(pid, signal)
    if !cnv:C_integer(pid) then
       runerr(101, pid)
 
@@ -47,8 +47,8 @@ end
 
 "fork() - spawn a new identical process."
 
-function{0,1} posix_System_fork()
-   inline {
+function posix_System_fork()
+   body {
       int pid;
       
 #if UNIX
@@ -70,7 +70,7 @@ end
 
 extern char **environ;
 
-function{*} posix_System_environ()
+function posix_System_environ()
   body {
     char **p = environ;
     while (*p) {
@@ -136,7 +136,7 @@ static char ** list2stringptrs(dptr l)
     return a;
 }
 
-function{0,1} posix_System_execve(f, argv, envp)
+function posix_System_execve(f, argv, envp)
    if !cnv:C_string(f) then
       runerr(103, f)
    if !is:list(argv) then
@@ -181,14 +181,11 @@ end
 "wait() - wait for process to terminate or stop."
 "the return value is `status' from the wait(2) manpage."
 
-function{0,1} posix_System_wait(pid, options)
+function posix_System_wait(pid, options)
    if !def:C_integer(pid, -1) then
       runerr(101, pid)
    if !def:C_integer(options, 0) then 
       runerr(103, options)
-   abstract {
-      return string;
-      }
    body {
       char retval[64];
       int status = 0, wpid;
@@ -254,7 +251,7 @@ function{0,1} posix_System_wait(pid, options)
 end
 
 
-function{0,1} util_Time_get_system_seconds()
+function util_Time_get_system_seconds()
    body {
       struct timeval tp;
       if (gettimeofday(&tp, 0) < 0) {
@@ -265,7 +262,7 @@ function{0,1} util_Time_get_system_seconds()
    }
 end
 
-function{0,1} util_Time_get_system_millis()
+function util_Time_get_system_millis()
    body {
       struct timeval tp;
       struct descrip ls, lm;
@@ -284,7 +281,7 @@ function{0,1} util_Time_get_system_millis()
 end
 
 
-function{0,1} util_Time_get_system_micros()
+function util_Time_get_system_micros()
    body {
       struct timeval tp;
       struct descrip ls, lm;
@@ -301,7 +298,7 @@ function{0,1} util_Time_get_system_micros()
    }
 end
 
-function{0, 1} posix_System_unsetenv(name)
+function posix_System_unsetenv(name)
    if !cnv:C_string(name) then
       runerr(103, name)
    body {
@@ -319,7 +316,7 @@ end
 
 "setenv() - set an environment variable."
 
-function{0, 1} posix_System_setenv(name, value)
+function posix_System_setenv(name, value)
    if !cnv:C_string(name) then
       runerr(103, name)
    if !cnv:C_string(value) then
@@ -338,7 +335,7 @@ end
 
 "getenv(s) - return contents of environment variable s."
 
-function{0,1} posix_System_getenv(s)
+function posix_System_getenv(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
@@ -353,7 +350,7 @@ function{0,1} posix_System_getenv(s)
    }
 end
 
-function{0, 1} posix_System_uname_impl()
+function posix_System_uname_impl()
     body {
 #ifdef HAVE_UNAME
        tended struct descrip tmp;

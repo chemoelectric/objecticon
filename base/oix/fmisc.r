@@ -13,7 +13,7 @@ static int nthcmp  (dptr d1,dptr d2);
 
 "char(i) - produce a string consisting of character i."
 
-function{1} char(i)
+function char(i)
    if !cnv:C_integer(i) then
       runerr(101,i)
    body {
@@ -28,7 +28,7 @@ end
 
 "collect() - call garbage collector."
 
-function{1} collect()
+function collect()
    body {
       collect(User);
       return nulldesc;
@@ -38,7 +38,7 @@ end
 
 "copy(x) - make a copy of object x."
 
-function{1} copy(x)
+function copy(x)
  body {
    type_case x of {
       null:
@@ -122,7 +122,7 @@ end
 "display(i) - display local variables of i most recent"
 " procedure activations, plus global variables."
 
-function{1} display(i,c)
+function display(i,c)
 
    if !def:C_integer(i,(C_integer)k_level) then
       runerr(101, i)
@@ -161,7 +161,7 @@ end
 
 "errorclear() - clear error condition."
 
-function{1} errorclear()
+function errorclear()
    body {
       k_errornumber = 0;
       k_errortext = emptystr;
@@ -179,7 +179,7 @@ end
 
 #begdef  bitop(func_name, c_op, operation)
 #func_name "(i,j) - produce bitwise " operation " of i and j."
-function{1} func_name(i, j, a[n])
+function func_name(i, j, a[n])
    /*
     * i and j must be integers
     */
@@ -188,7 +188,7 @@ function{1} func_name(i, j, a[n])
    if !cnv:integer(j) then
       runerr(101,j)
 
-   inline {
+   body {
       int k ;
       if ((Type(i)==T_Lrgint) || (Type(j)==T_Lrgint)) {
          big_ ## c_op(i, j);
@@ -240,14 +240,14 @@ bitop(ixor, bitxor, "exclusive OR") /* ixor(i,j) bitwise "xor" of i and j */
 
 "icom(i) - produce bitwise complement (one's complement) of i."
 
-function{1} icom(i)
+function icom(i)
    /*
     * i must be an integer
     */
    if !cnv:integer(i) then
       runerr(101, i)
 
-   inline {
+   body {
       if (Type(i) == T_Lrgint) {
          bigsub(&minusonedesc, &i, &result);
          return result;
@@ -262,8 +262,8 @@ end
 /*
  *  All the interesting work happens in getimage()
  */
-function{1} image(x)
-   inline {
+function image(x)
+   body {
       getimage(&x,&result);
       return result;
       }
@@ -272,7 +272,7 @@ end
 
 "ishift(i,j) - produce i shifted j bit positions (left if j<0, right if j>0)."
 
-function{1} ishift(i,j)
+function ishift(i,j)
 
    if !cnv:integer(i) then
       runerr(101, i)
@@ -378,7 +378,7 @@ end
 
 "runerr(i,x) - produce runtime error i with value x."
 
-function{} runerr(i, x[n])
+function runerr(i, x[n])
    body {
       ERRFUNC();
    }
@@ -386,14 +386,14 @@ end
 
 "fatalerr(i,x) - same as runerr, but disable error conversion first."
 
-function{} fatalerr(i, x[n])
+function fatalerr(i, x[n])
    body {
       IntVal(kywd_err) = 0;
       ERRFUNC();
    }
 end
 
-function{} syserr(msg)
+function syserr(msg)
    if !cnv:string(msg) then
       runerr(103, msg)
 
@@ -432,7 +432,7 @@ end
 
 "seq(i, j) - generate i, i+j, i+2*j, ... ."
 
-function{1,*} seq(from, by)
+function seq(from, by)
    body {
     word by0, from0;
     tended struct descrip by1, from1;
@@ -508,7 +508,7 @@ end
 
 "serial(x) - return serial number of structure."
 
-function {0,1} serial(x)
+function serial(x)
  body {
    type_case x of {
       list:     return C_integer BlkLoc(x)->list.id;
@@ -524,12 +524,9 @@ end
 
 "sort(x,i) - sort structure x by method i (for tables)"
 
-function{1} sort(t, i)
+function sort(t, i)
    type_case t of {
       list: {
-         abstract {
-            return type(t)
-            }
          body {
             register word size;
 
@@ -548,9 +545,6 @@ function{1} sort(t, i)
          }
 
       record: {
-         abstract {
-            return new list(store[type(t).all_fields])
-            }
          body {
             register dptr d1;
             register word size;
@@ -582,9 +576,6 @@ function{1} sort(t, i)
          }
 
       set: {
-         abstract {
-            return new list(store[type(t).set_elem])
-            }
          body {
             register dptr d1;
             register word size;
@@ -619,10 +610,6 @@ function{1} sort(t, i)
          }
 
       table: {
-         abstract {
-            return new list(new list(store[type(t).tbl_key ++
-               type(t).tbl_val]) ++ store[type(t).tbl_key ++ type(t).tbl_val])
-            }
          if !def:C_integer(i, 1) then
             runerr(101, i)
          body {
@@ -841,7 +828,7 @@ static int tvcmp4(struct dpair *dp1, struct dpair *dp2)
 
 "sortf(x,i) - sort list or set x on field i of each member"
 
-function{1} sortf(t, i)
+function sortf(t, i)
   if !def:C_integer(i, 1) then
      runerr (101, i)
 
@@ -1020,7 +1007,7 @@ static dptr nth(dptr d)
 
 "type(x) - return type of x as a string."
 
-function{1} type(x)
+function type(x)
   body {
    type_case x of {
       string:      LitStr("string", &result);    
@@ -1049,7 +1036,7 @@ end
 
 "cast(o,c) - cast object o to class c."
 
-function{1} cast(o,c)
+function cast(o,c)
    if !is:object(o) then
        runerr(602, o)
    if !is:class(c) then
@@ -1432,7 +1419,7 @@ void cset_to_str(struct b_cset *b, word pos, word len, dptr res)
 
 "uchar(i) - produce a ucs consisting of character i."
 
-function{1} uchar(i)
+function uchar(i)
 
    if !cnv:C_integer(i) then
       runerr(101,i)
@@ -1446,7 +1433,7 @@ function{1} uchar(i)
 end
 
 
-function{1} lang_Text_utf8_seq(i)
+function lang_Text_utf8_seq(i)
 
    if !cnv:C_integer(i) then
       runerr(101,i)
@@ -1464,7 +1451,7 @@ function{1} lang_Text_utf8_seq(i)
 end
 
 
-function{1} lang_Text_create_cset(x[n])
+function lang_Text_create_cset(x[n])
    body {
      struct rangeset *rs;
      tended struct b_cset *b;
@@ -1541,7 +1528,7 @@ function{1} lang_Text_create_cset(x[n])
    }
 end
 
-function{*} lang_Text_get_ord_range(c)
+function lang_Text_get_ord_range(c)
    if !cnv:cset(c) then
       runerr(120, c)
    body {
@@ -1555,7 +1542,7 @@ function{*} lang_Text_get_ord_range(c)
 end
 
 
-function{*} lang_Text_slice(c, i, j)
+function lang_Text_slice(c, i, j)
    if !cnv:cset(c) then
       runerr(120, c)
    if !cnv:C_integer(i) then
@@ -1609,7 +1596,7 @@ function{*} lang_Text_slice(c, i, j)
    }
 end
 
-function{0,1} lang_Text_has_ord(c, x)
+function lang_Text_has_ord(c, x)
    if !cnv:cset(c) then
       runerr(120, c)
    if !cnv:C_integer(x) then
@@ -1635,7 +1622,7 @@ end
 
 "ord(c) - generate the code points in a cset, ucs or string for the range of entries i:j"
 
-function{*} ord(x, i, j)
+function ord(x, i, j)
    if !def:C_integer(i, 1) then
       runerr(101, i)
    if !def:C_integer(j, 0) then

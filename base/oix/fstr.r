@@ -6,13 +6,9 @@
 
 "detab(s,i,...) - replace tabs with spaces, with stops at columns indicated."
 
-function{1} detab(s,i[n])
+function detab(s,i[n])
    if !cnv:string_or_ucs(s) then
       runerr(129,s)
-
-   abstract {
-      return string
-      }
 
    body {
       C_integer last, interval, col, target, j;
@@ -212,13 +208,9 @@ end
 
 "entab(s,i,...) - replace spaces with tabs, with stops at columns indicated."
 
-function{1} entab(s,i[n])
+function entab(s,i[n])
    if !cnv:string_or_ucs(s) then
       runerr(129,s)
-
-   abstract {
-      return string
-      }
 
    body {
       C_integer last, interval, col, target, nt, nt1, j;
@@ -547,7 +539,7 @@ static int mappair_search_compare(int *key, struct mappair *item)
 
 "map(s1,s2,s3) - map s1, using s2 and s3."
 
-function{1} map(s1,s2,s3)
+function map(s1,s2,s3)
    /*
     * s1 must be a string; s2 and s3 default to (string conversions of)
     *  &ucase and &lcase, respectively.
@@ -741,16 +733,12 @@ end
 
 "repl(s,i) - concatenate i copies of string s."
 
-function{1} repl(s,n)
+function repl(s,n)
    if !cnv:string_or_ucs(s) then
       runerr(129,s)
 
    if !cnv:C_integer(n) then
       runerr(101,n)
-
-   abstract {
-       return string
-       }
 
    body {
       register C_integer cnt;
@@ -846,7 +834,7 @@ end
 
 "reverse(x) - reverse ucs, string or list x."
 
-function{1} reverse(x)
+function reverse(x)
    if is:list(x) then {
       body {
          int i=0, size = BlkLoc(x)->list.size;
@@ -918,7 +906,7 @@ end
 
 "left(s1,i,s2) - pad s1 on right with s2 to length i."
 
-function{1} left(s1,n,s2)
+function left(s1,n,s2)
    /*
     * s1 must be a string.  n must be a non-negative integer and defaults
     *  to 1.  s2 must be a string and defaults to a blank.
@@ -1057,7 +1045,7 @@ end
 
 "right(s1,i,s2) - pad s1 on left with s2 to length i."
 
-function{1} right(s1,n,s2)
+function right(s1,n,s2)
    /*
     * s1 must be a string.  n must be a non-negative integer and defaults
     *  to 1.  s2 must be a string and defaults to a blank.
@@ -1196,7 +1184,7 @@ end
 
 "center(s1,i,s2) - pad s1 on left and right with s2 to length i."
 
-function{1} center(s1,n,s2)
+function center(s1,n,s2)
    /*
     * s1 must be a string.  n must be a non-negative integer and defaults
     *  to 1.  s2 must be a string and defaults to a blank.
@@ -1386,7 +1374,7 @@ end
 
 "trim(s,c) - trim trailing characters in c from s."
 
-function{1} trim(s,c,ends)
+function trim(s,c,ends)
 
    if !cnv:string_or_ucs(s) then
      runerr(129,s)

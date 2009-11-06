@@ -71,7 +71,7 @@ if (self_id < 0)
     runerr(219, self);
 #enddef
 
-function{0,1} ipc_Shm_open_public_impl(key)
+function ipc_Shm_open_public_impl(key)
    if !cnv:C_integer(key) then
        runerr(101, key)
    body {
@@ -89,7 +89,7 @@ function{0,1} ipc_Shm_open_public_impl(key)
    }
 end
 
-function{0,1} ipc_Shm_create_public_impl(key, str)
+function ipc_Shm_create_public_impl(key, str)
    if !cnv:C_integer(key) then
        runerr(101, key)
    if !cnv:string(str) then
@@ -145,7 +145,7 @@ function{0,1} ipc_Shm_create_public_impl(key, str)
    }
 end
 
-function{0,1} ipc_Shm_create_private_impl(str)
+function ipc_Shm_create_private_impl(str)
    if !cnv:string(str) then
        runerr(103, str)
    body {
@@ -195,7 +195,7 @@ function{0,1} ipc_Shm_create_private_impl(str)
    }
 end
 
-function{0} ipc_Shm_remove(self)
+function ipc_Shm_remove(self)
     body {
        shm_top *tp;
        GetSelfId();
@@ -216,7 +216,7 @@ function{0} ipc_Shm_remove(self)
    }
 end
 
-function{1} ipc_Shm_set_value_impl(self, str)
+function ipc_Shm_set_value_impl(self, str)
    if !cnv:string(str) then
        runerr(103, str)
    body {
@@ -280,7 +280,7 @@ function{1} ipc_Shm_set_value_impl(self, str)
    }
 end
 
-function{1} ipc_Shm_get_value_impl(self)
+function ipc_Shm_get_value_impl(self)
     body {
        shm_top *tp;
        char *data;
@@ -316,7 +316,7 @@ function{1} ipc_Shm_get_value_impl(self)
    }
 end
 
-function{0,1} ipc_Sem_open_public_impl(key)
+function ipc_Sem_open_public_impl(key)
    if !cnv:C_integer(key) then
        runerr(101, key)
    body {
@@ -334,7 +334,7 @@ function{0,1} ipc_Sem_open_public_impl(key)
    }
 end
 
-function{0,1} ipc_Sem_create_public_impl(key, val)
+function ipc_Sem_create_public_impl(key, val)
    if !cnv:C_integer(key) then
        runerr(101, key)
    if !cnv:C_integer(val) then
@@ -362,7 +362,7 @@ function{0,1} ipc_Sem_create_public_impl(key, val)
    }
 end
 
-function{0,1} ipc_Sem_create_private_impl(val)
+function ipc_Sem_create_private_impl(val)
    if !cnv:C_integer(val) then
        runerr(101, val)
    body {
@@ -384,7 +384,7 @@ function{0,1} ipc_Sem_create_private_impl(val)
    }
 end
 
-function{1} ipc_Sem_set_value(self, val)
+function ipc_Sem_set_value(self, val)
    if !cnv:C_integer(val) then
        runerr(101, val)
    body {
@@ -398,7 +398,7 @@ function{1} ipc_Sem_set_value(self, val)
    }
 end
 
-function{1} ipc_Sem_get_value(self)
+function ipc_Sem_get_value(self)
    body {
        int ret;
        semun arg;
@@ -411,7 +411,7 @@ function{1} ipc_Sem_get_value(self)
    }
 end
 
-function{1} ipc_Sem_semop(self, n)
+function ipc_Sem_semop(self, n)
    if !cnv:C_integer(n) then
        runerr(101, n)
    body {
@@ -426,7 +426,7 @@ function{1} ipc_Sem_semop(self, n)
    }
 end
 
-function{1} ipc_Sem_semop_nowait(self, n)
+function ipc_Sem_semop_nowait(self, n)
    if !cnv:C_integer(n) then
        runerr(101, n)
    body {
@@ -448,7 +448,7 @@ function{1} ipc_Sem_semop_nowait(self, n)
    }
 end
 
-function{1} ipc_Sem_remove(self)
+function ipc_Sem_remove(self)
    body {
        GetSelfId();
        semctl(self_id, -1, IPC_RMID, 0);
@@ -458,7 +458,7 @@ function{1} ipc_Sem_remove(self)
    }
 end
 
-function{0,1} ipc_Msg_open_public_impl(key)
+function ipc_Msg_open_public_impl(key)
    if !cnv:C_integer(key) then
        runerr(101, key)
    body {
@@ -476,7 +476,7 @@ function{0,1} ipc_Msg_open_public_impl(key)
    }
 end
 
-function{0,1} ipc_Msg_create_public_impl(key)
+function ipc_Msg_create_public_impl(key)
    if !cnv:C_integer(key) then
        runerr(101, key)
    body {
@@ -525,7 +525,7 @@ function{0,1} ipc_Msg_create_public_impl(key)
    }
 end
 
-function{1} ipc_Msg_create_private_impl()
+function ipc_Msg_create_private_impl()
    body {
       int top_id, msg_id, rcv_sem_id, snd_sem_id;
       msg_top *tp;
@@ -568,7 +568,7 @@ function{1} ipc_Msg_create_private_impl()
    }
 end
 
-function{1} ipc_Msg_remove(self)
+function ipc_Msg_remove(self)
     body {
         msg_top *tp;
         GetSelfId();
@@ -589,7 +589,7 @@ function{1} ipc_Msg_remove(self)
    }
 end
 
-function{1} ipc_Msg_send_impl(self, str)
+function ipc_Msg_send_impl(self, str)
    if !cnv:string(str) then
        runerr(103, str)
    body {
@@ -646,7 +646,7 @@ function{1} ipc_Msg_send_impl(self, str)
    }
 end
 
-function{1} ipc_Msg_receive_impl(self)
+function ipc_Msg_receive_impl(self)
    body {
        msg_top *tp;
        int size, blocks, residue, i;
@@ -702,7 +702,7 @@ function{1} ipc_Msg_receive_impl(self)
    }
 end
 
-function{0,1} ipc_Msg_attempt_impl(self)
+function ipc_Msg_attempt_impl(self)
    body {
        msg_top *tp;
        int size, blocks, residue, i;

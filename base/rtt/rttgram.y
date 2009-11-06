@@ -35,11 +35,11 @@
 %token <t> Runerr Is Cnv Def Exact Empty_type IconType Component Variable
 %token <t> Any_value Named_var Struct_var C_Integer Arith_case Str_Or_Ucs
 %token <t> C_Double C_String Tmp_string Body End TokFunction Keyword
-%token <t> Operator Underef Declare Suspend Fail Inline Abstract Store
+%token <t> Operator Underef Declare Suspend Fail
 %token <t> TokType New All_fields Then Type_case Of Len_case Errorfail
 
 %type <t> unary_op assign_op struct_or_union typedefname
-%type <t> identifier op_name union attrb_name
+%type <t> identifier op_name
 
 %type <n> any_ident storage_class_spec type_qual 
 %type <n> primary_expr postfix_expr arg_expr_lst unary_expr cast_expr
@@ -65,10 +65,7 @@
 %type <n> type_check type_select_lst opt_default type_select selector_lst
 %type <n> c_opt_default c_type_select c_type_select_lst non_lbl_stmt
 %type <n> simple_check_conj simple_check len_select_lst len_select
-%type <n> type_computations side_effect_lst side_effect
-%type <n> type basic_type type_lst
 
-%type <i> opt_plus length
 
 /* Get rid of shift/reduce conflict on Else. Use precedence to force shift of
    Else rather than reduction of if-cond-expr. This insures that the Else
@@ -750,25 +747,24 @@ description
    ;
 
 fnc_oper
-   : TokFunction '{' result_seq '}' op_name '(' opt_s_parm_lst ')'
-      {impl_fnc($5); free_t($1); free_t($2); free_t($4); free_t($6);
-       free_t($8);}
-   | Operator '{' result_seq {lex_state = OpHead;} '}' OpSym
+   : TokFunction op_name '(' opt_s_parm_lst ')'
+      {impl_fnc($2); free_t($1);  free_t($3);
+       free_t($5);}
+   | Operator {lex_state = OpHead;} OpSym
       {lex_state = DfltLex;} op_name '(' opt_s_parm_lst ')'
-      {impl_op($6, $8); free_t($1); free_t($2); free_t($5); free_t($9);
-       free_t($11);}
+      {impl_op($3, $5); free_t($1); free_t($6);
+       free_t($8);}
 
 keyword
-   : Keyword  '{' result_seq '}' op_name
-       {impl_key($5); free_t($1); free_t($2); free_t($4);}
+   : Keyword op_name
+       {impl_key($2); free_t($1); }
    ;
 
 /*
  * Allow as many special names to be identifiers as possible
  */
 identifier
-   : Abstract
-   | All_fields
+   : All_fields
    | Any_value
    | Body
    | Component
@@ -778,11 +774,9 @@ identifier
    | Exact
    | IconType
    | Identifier
-   | Inline
    | Named_var
    | New
    | Of
-   | Store
    | Struct_var
    | Then
    | Tmp_string
@@ -842,22 +836,6 @@ op_name
    | While
    ;
 
-result_seq
-   :                            {set_r_seq(NoRsltSeq, NoRsltSeq, 0);}
-   | length            opt_plus {set_r_seq($1, $1, (int)$2);}
-   | length ',' length opt_plus {set_r_seq($1, $3, (int)$4); free_t($2);}
-   ;
-
-length
-   : IntConst {$$ = ttol($1); free_t($1);}
-   | '*'      {$$ = UnbndSeq; free_t($1);}
-   ;
-
-opt_plus
-   :     {$$ = 0;}
-   | '+' {$$ = 1; free_t($1);}
-   ;
-
 opt_s_parm_lst
    :
    | s_parm_lst
@@ -897,9 +875,6 @@ action
    | detail_code
    | runerr
    | '{' opt_actions '}' {$$ = node1(PrefxNd, $1, $2); free_t($3);}
-   | Abstract {lex_state = TypeComp;} '{' type_computations
-         {lex_state = DfltLex;} '}'
-         {$$ = $4; free_t($1); free_t($3); free_t($6);}
    ;
 
 checking_conversions
@@ -979,8 +954,6 @@ simple_check
 detail_code
    : Body   {push_cntxt(1);} compound_stmt
                         {$$ = node1(PrefxNd, $1, $3); pop_cntxt();}
-   | Inline {push_cntxt(1);} compound_stmt
-                        {$$ = node1(PrefxNd, $1, $3); pop_cntxt();}
    ;
 
 runerr
@@ -1030,55 +1003,6 @@ ret_val
    | C_Integer assign_expr             {$$ = node1(PrefxNd, $1, $2);}
    | C_Double assign_expr              {$$ = node1(PrefxNd, $1, $2);}
    | C_String assign_expr              {$$ = node1(PrefxNd, $1, $2);}
-   ;
-
-type_computations
-   : side_effect_lst Return type opt_semi {$$ = node2(AbstrNd, $2,   $1,   $3);}
-   |                 Return type opt_semi {$$ = node2(AbstrNd, $1,   NULL, $2);}
-   | side_effect_lst                      {$$ = node2(AbstrNd, NULL, $1, NULL);}
-   ;
-
-side_effect_lst
-   : side_effect
-   | side_effect_lst side_effect {$$ = node2(ConCatNd, NULL, $1, $2);}
-   ;
-
-side_effect
-   : Store '[' type ']' '=' type opt_semi {$$ = node2(BinryNd, $5, $3, $6);
-                                           free_t($1); free_t($2); free_t($4);}
-   ;
-
-type
-   : basic_type
-   | type union basic_type     {$$ = node2(BinryNd, $2, $1, $3);}
-   | type Intersect basic_type {$$ = node2(BinryNd, $2, $1, $3);}
-
-basic_type
-   : i_type_name                        {$$ = node1(IcnTypNd,
-                                         copy_t($1->tok), $1);}
-   | TokType '(' variable ')'              {$$ = node1(PrefxNd, $1, $3);
-                                         free_t($2); free_t($4);}
-   | New i_type_name '(' type_lst ')'   {$$ = node2(BinryNd, $1, $2, $4);
-                                         free_t($3); free_t($5);}
-   | Store '[' type ']'                 {$$ = node1(PrefxNd, $1, $3);
-                                         free_t($2); free_t($4);}
-   | basic_type '.' attrb_name          {$$ = node1(PstfxNd, $3, $1); 
-                                         free_t($2);}
-   | '(' type ')'                       {$$ = $2; free_t($1); free_t($3);}
-   ;
-
-union
-   : Incr
-   ;
-
-type_lst
-   : type
-   | type_lst ',' type {$$ = node2(CommaNd, $2, $1, $3);}
-   ;
-
-attrb_name
-   : Component
-   | All_fields
    ;
 
 %%

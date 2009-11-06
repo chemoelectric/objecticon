@@ -109,7 +109,6 @@ void init_lex()
       /*
        * Install keywords from run-time interface language.
        */
-      sym_add(Abstract,      spec_str("abstract"),      OtherDcl, 0);
       sym_add(All_fields,    spec_str("all_fields"),    OtherDcl, 0);
       sym_add(Any_value,     spec_str("any_value"),     OtherDcl, 0);
       sym_add(Arith_case,    spec_str("arith_case"),    OtherDcl, 0);
@@ -127,7 +126,6 @@ void init_lex()
       sym_add(Exact,         spec_str("exact"),         OtherDcl, 0);
       sym_add(Fail,          spec_str("fail"),          OtherDcl, 0);
       sym_add(TokFunction,   spec_str("function"),      OtherDcl, 0);
-      sym_add(Inline,        spec_str("inline"),        OtherDcl, 0);
       sym_add(Is,            spec_str("is"),            OtherDcl, 0);
       sym_add(Keyword,       spec_str("keyword"),       OtherDcl, 0);
       sym_add(Len_case,      spec_str("len_case"),      OtherDcl, 0);
@@ -137,7 +135,6 @@ void init_lex()
       sym_add(Operator,      spec_str("operator"),      OtherDcl, 0);
       str_rslt = spec_str("result");
       sym_add(Runerr,        spec_str("runerr"),        OtherDcl, 0);
-      sym_add(Store,         spec_str("store"),         OtherDcl, 0);
       sym_add(Struct_var,    spec_str("struct_var"),    OtherDcl, 0);
       sym_add(Suspend,       spec_str("suspend"),       OtherDcl, 0);
       sym_add(Tended,        spec_str("tended"),        OtherDcl, 0);

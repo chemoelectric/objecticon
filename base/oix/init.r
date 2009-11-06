@@ -70,7 +70,7 @@ struct b_proc *keyblks[] = {
 #undef KDef
 };
 
-function{0} deferred_method_stub(a[n])
+function deferred_method_stub(a[n])
    body {
       runerr(612);       
    }
@@ -623,7 +623,7 @@ static void handle_monitored_prog_exit()
 
 " load a program corresponding to string s as a co-expression."
 
-function{1} lang_Prog_load(s, arglist, blocksize, stringsize)
+function lang_Prog_load(s, arglist, blocksize, stringsize)
    declare {
       tended char *loadstring;
       C_integer bs, ss;

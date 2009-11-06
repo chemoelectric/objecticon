@@ -9,15 +9,12 @@
  */
 #begdef MathOp(funcname,ccode,comment,pre,post)
 #funcname "(r)" comment
-function{1} funcname(x)
+function funcname(x)
 
    if !cnv:C_double(x) then
       runerr(102, x)
 
-   abstract {
-      return real
-      }
-   inline {
+   body {
       double y;
       pre		/* Pre math-operation range checking */
       errno = 0;
@@ -51,21 +48,18 @@ MathOp(util_Math_rtod,RTOD, " - convert x from radians to degrees.", ; , ;)
 
 "atan(r1,r2) -- r1, r2  in radians; if r2 is present, produces atan2(r1,r2)."
 
-function{1} util_Math_atan(x,y)
+function util_Math_atan(x,y)
 
    if !cnv:C_double(x) then
       runerr(102, x)
 
-   abstract {
-      return real
-      }
    if is:null(y) then
-      inline {
+      body {
          return C_double atan(x);
          }
    if !cnv:C_double(y) then
       runerr(102, y)
-   inline {
+   body {
       return C_double atan2(x,y);
       }
 end
@@ -73,22 +67,19 @@ end
 
 "log(r1,r2) - logarithm of r1 to base r2."
 
-function{1} util_Math_log(x,b)
+function util_Math_log(x,b)
 
    if !cnv:C_double(x) then
       runerr(102, x)
 
-   abstract {
-      return real
-      }
-   inline {
+   body {
       if (x <= 0.0) {
          drunerr(205, x);
          errorfail;
          }
       }
    if is:null(b) then
-      inline {
+      body {
          return C_double log(x);
          }
    else {
@@ -114,10 +105,7 @@ end
 
 "max(x,y,...) - return the maximum of the arguments"
 
-function{1} max(argv[argc])
-abstract {
-   return any_value
-   }
+function max(argv[argc])
 body {
    int i;
    struct descrip dtmp;
@@ -131,10 +119,7 @@ end
 
 "min(x,y,...) - return the minimum of the arguments"
 
-function{1} min(argv[argc])
-abstract {
-   return any_value
-   }
+function min(argv[argc])
 body {
    int i;
    struct descrip dtmp;
