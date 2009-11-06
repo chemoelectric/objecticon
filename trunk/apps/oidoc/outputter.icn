@@ -1,0 +1,142 @@
+import
+   lang(Class),
+   parser(ClassSymbol, DeferredMethod, Tree, ULocal,
+          UMethod)
+
+class Outputter()
+   public static const
+      WHITESPACE,
+      ID_CHAR
+
+   protected const
+      symbol_table,
+      opts
+
+   private static init()
+      WHITESPACE := ' \t'
+      ID_CHAR := &ucase ++ &lcase ++ '_0987654321'
+   end
+
+   protected static name_sort(x)
+      return map(x.name)
+   end
+
+   protected get_packages()
+      local ps, e
+      ps := set()
+      every e := symbol_table.gen_symbols() do
+         insert(ps, get_package(e))
+      suspend !sort(ps)
+   end
+
+   protected get_package(e)
+      return \(\e.scanned_file).pack | "default"
+   end
+
+   protected should_print_symbol(e)
+      return should_print_package(get_package(e))
+   end
+
+   protected should_print_package(p)
+      return (p == "default") | /opts["r"] | member(arg_packs, p)
+   end
+
+   protected get_symbols_in(p)
+      local t, e
+      if p == "default" then
+         p := &null
+      t := table()
+      every e := symbol_table.gen_symbols() do {
+         if (\e.scanned_file).pack === p then
+            t[e.name] := e
+      }
+      suspend (!sort(t))[2]
+   end
+
+   protected get_classes_in(p)
+      local e
+      every e := get_symbols_in(p) do
+         if is(e, ClassSymbol) then
+            suspend e
+   end
+
+   protected get_others_in(p)
+      local e
+      every e := get_symbols_in(p) do
+         if not is(e, ClassSymbol) then
+            suspend e
+   end
+
+   protected is_final(obj)
+      if is(obj, Tree) then
+         return obj.is_final()
+      else
+         return iand(obj.flags, Class.M_Final) ~= 0
+   end
+
+   protected get_param_string(obj)
+      local s, a, has_self
+      s := ""
+      if is(obj, Tree) then {
+         every a := obj.get_args().gen() do
+            s ||:= a.str() || ", "
+         s[-2:0] := ""
+         if obj.has_varargs() then
+            s ||:= "[]"
+      } else {
+         # A non-static method will have an implicit self param.
+         if is(obj, UMethod) & iand(obj.flags, Class.M_Static) = 0 then
+            has_self := 1
+         every a := obj.get_locals() do {
+            if iand(a.flags, ULocal.F_Argument) ~= 0 then {
+               if \has_self then
+                  has_self := &null
+               else
+                  s ||:= a.id || ", "
+            }
+         }
+         s[-2:0] := ""
+         if iand(obj.locals[-1].flags, ULocal.F_Vararg) ~= 0 then
+            s ||:= "[]"
+      }
+      return s
+   end
+
+   protected get_access_string(obj)
+      local s
+      s := ""
+      if is(obj, Tree) then {
+         every s ||:= obj.get_access().gen().str() || " "
+         if is(obj, DeferredMethod) then
+            s ||:= "defer "
+         s[-1] := ""
+      } else {
+         if iand(obj.flags, Class.M_Private) ~= 0 then
+            s ||:= "private "
+         if iand(obj.flags, Class.M_Public) ~= 0 then
+            s ||:= "public "
+         if iand(obj.flags, Class.M_Protected) ~= 0 then
+            s ||:= "protected "
+         if iand(obj.flags, Class.M_Package) ~= 0 then
+            s ||:= "package "
+         if iand(obj.flags, Class.M_Static) ~= 0 then
+            s ||:= "static "
+         if iand(obj.flags, Class.M_Const) ~= 0 then
+            s ||:= "const "
+         if iand(obj.flags, Class.M_Readable) ~= 0 then
+            s ||:= "readable "
+         if iand(obj.flags, Class.M_Defer) ~= 0 then
+            s ||:= "defer "
+         if iand(obj.flags, Class.M_Final) ~= 0 then
+            s ||:= "final "
+         s[-1] := ""
+      }
+      return s
+   end
+
+   public new(opts, symbol_table)
+      self.opts := opts
+      self.symbol_table := symbol_table
+      return
+   end
+end

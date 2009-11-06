@@ -1,0 +1,24 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+
+#
+# The equivalent of a {ToggleTextButton}, but for an
+# {IconButton}.
+#
+class ToggleIconButton(IconButton)
+   public new(a[])
+      cast(self,IconButton).new()
+      self.toggles_flag := 1
+      set_fields(a)
+      return
+   end
+end
+

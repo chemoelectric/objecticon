@@ -1,0 +1,37 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+import gui
+
+
+class CanvasMenuBarUI(CanvasComponentUI)
+   public create_canvas_component(canvas)
+      local t, t1
+      t := CanvasMenuBar()
+      t1 := CanvasMenu()
+      t1.set_paint_mid(CanvasTextPaint("Edit me"))
+      t1.set_paint_right(CanvasImagePaint("image=",Icon.ARROW_RIGHT))
+      t.add(t1)
+      return t
+   end
+
+   public get_category()
+      return "Menu"
+   end
+
+   public get_name()
+      return "MenuBar"
+   end
+
+   public get_icon()
+      return (
+              $include "icon/icn9.icon"
+              )
+   end
+end
+
+

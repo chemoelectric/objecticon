@@ -1,0 +1,71 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+#############################################################################
+#
+# Dialog asking whether or not to save a file.  The actual saving is left up
+# to the creator of the dialog.
+#     
+class SaveChangesDialog(Dialog)
+   public res
+
+   public result()
+      return self.res
+   end
+
+   public on_yes()
+      res := "yes"
+      self.dispose()
+   end
+
+   public on_no()
+      res := "no"
+      self.dispose()
+   end
+
+   public on_cancel()
+      res := "cancel"
+      self.dispose()
+   end
+
+   public new()
+      local l, p, yes, no, cancel
+      cast(self,Dialog).new()
+      self.attrib("label=Save changes?")
+
+      set_layout(GridLayout())
+
+      l := Label("c:eol", "c:y_weight=1", "c:x_align=c")
+      l.set_label(".cell\nThe canvas has been modified.\n.br\nDo you wish to save these changes?\n.br")
+      add(l)
+      add(Line("c:eol", "size=100", "c:x_fill"))
+
+      p := Panel("c:y_weight=0")
+      p.set_layout(GridLayout("flush"))
+      yes := TextButton("label=Yes", "accel=y")
+      yes.connect(self.on_yes, Event.ACTION)
+      p.add(yes)
+
+      no := TextButton("label=No", "accel=n")
+      no.connect(self.on_no, Event.ACTION)
+      p.add(no)
+
+      cancel := TextButton("label=Cancel", "accel=c")
+      cancel.connect(self.on_cancel, Event.ACTION)
+      p.add(cancel)
+
+      self.add(p)
+
+      self.set_focus(yes)
+      return
+   end
+end
+
+

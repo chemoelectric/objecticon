@@ -1,0 +1,86 @@
+package lang
+
+#
+# This class contains various helpful methods to get information about
+# a record constructor at runtime.
+#
+class Constructor()
+   # Return the name of the constructor
+   #
+   public static defer get_name(c)
+
+   # Return the constructor of the given record
+   #
+   public static defer get_constructor(c)
+
+   # Return the program this constructor resides in.  The program's &main
+   # co-expression is returned.
+   #
+   public static defer get_program(c)
+
+   # Return the name of the package in which this constructor resides; fails
+   # if the constructor is not in a package.
+   #
+   public static defer get_package(c)
+
+   # Return the source location of the constructor
+   # @return a {Location} instance
+   #
+   public static get_location(c)
+      return Location!get_location_impl(c)
+   end
+
+   private static defer get_location_impl(c)
+
+   # Generate the field names of the constructor {c}.
+   #
+   public static defer get_field_names(c)
+
+   # Return the number of fields in the constructor {c}.
+   #
+   public static defer get_n_fields(c)
+
+   # Return the field index number of the given field in constructor{c}.
+   # @param c the constructor
+   # @param field either a field name or number
+   # @return an integer, being the index
+   # @fail if the field is unknown
+   #
+   public static defer get_field_index(c, field)
+
+   # Return the field name of the given field in constructor{c}.
+   # @param c the constructor
+   # @param field either a field name or number
+   # @return the field name
+   # @fail if the field is unknown
+   #
+   public static defer get_field_name(c, field)
+
+
+   # Return the source location of the given field in constructor{c}.
+   # @param c the constructor
+   # @param field either a field name or number
+   # @return a {Location} instance
+   # @fail if the field is unknown
+   #
+   public static get_field_location(c, field)
+      return Location!get_field_location_impl(c, field)
+   end
+
+   private static defer get_field_location_impl(c, field)
+
+   # Lookup a constructor by name
+   # 
+   # @param s a constructor name
+   # @param ce a coexpression, representing a loaded program, defaults
+   # @ to the main program
+   # @return a constructor
+   # @fail if the constructor is unknown
+   #
+   public static for_name(s, ce)
+      local t
+      if t := Prog.get_global(s, ce) & type(t) == "constructor" then
+         return t
+   end
+
+end

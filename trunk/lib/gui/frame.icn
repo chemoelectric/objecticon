@@ -1,0 +1,208 @@
+package gui
+
+#
+# @field content={Component} : see {set_content}
+# @field title=text : see {set_title}
+# @field see also {Component}
+#
+class Frame(Component)
+   public
+      held_flag,
+      bar,
+      content,
+      drag_x_offset,
+      drag_y_offset
+
+   public static const
+      FRAME_RSW
+
+   private static init()
+      FRAME_RSW := 12
+   end
+
+   public can_drag(e)
+      return bar.can_drag(e)
+   end
+
+   public setup()
+      self.bar := create_bar()
+      self.add(bar)
+   end
+
+   public create_bar()
+      return FrameBar()
+   end
+
+   public set_title(s)
+      bar.set_title(s)
+   end
+
+   public in_resize_corner(e)
+      return in_region(e) & 
+         (((self.x + self.w - FRAME_RSW <= e.x < self.x + self.w) & 
+          (self.y + self.h - border.get_b_inset() <= e.y < self.y + self.h)) | 
+          ((self.x + self.w - border.get_r_inset() <= e.x < self.x + self.w) & 
+           (self.y + self.h - FRAME_RSW <= e.y < self.y + self.h)))
+   end
+
+   public display(r)
+      border.draw_rect(self.cbwin, self)
+      self.display_children(r)
+   end
+
+   public set_content(c)
+      self.content := c
+      self.add(c)
+   end
+
+   public initially()
+      \self.content | runerr("no content component specified")
+      cast(self,Component).initially()
+   end
+
+   public layout()
+      bar.x := self.x + border.get_l_inset()
+      bar.y := self.y + border.get_t_inset()
+      bar.w := self.w - border.get_total_width()
+      bar.h := bar.get_preferred_height()
+      content.x := bar.x
+      content.y := bar.y + bar.h
+      content.w := bar.w
+      content.h := self.h - border.get_total_height() - bar.h
+      every (!children).layout()
+   end
+
+   public get_default_width()
+      return border.get_total_width() + max(bar.get_preferred_width(), content.get_preferred_width())
+   end
+
+   public get_default_height()
+      return border.get_total_height() + bar.get_preferred_height() + content.get_preferred_height()
+   end
+
+   public get_pointer(e)
+      if in_resize_corner(e) then
+         return "bottom right corner"
+   end
+
+   public handle_lpress(e)
+      if in_region(e) then
+         to_top()
+      if can_drag(e) then {
+         self.held_flag := 1
+         self.drag_x_offset := e.x - self.x
+         self.drag_y_offset := e.y - self.y
+      } else if in_resize_corner(e) then {
+         self.held_flag := 2
+         self.drag_x_offset := e.x - (self.x + self.w)
+         self.drag_y_offset := e.y - (self.y + self.h)
+      }
+   end
+
+   public handle_ldrag(e)
+      \self.held_flag | fail
+      case self.held_flag of {
+         1: {
+            self.x_spec := e.x - drag_x_offset - parent.x
+            self.y_spec := e.y - drag_y_offset - parent.y
+         }
+         2: {
+            self.w_spec := e.x - drag_x_offset - self.x
+            self.h_spec := e.y - drag_y_offset - self.y
+         }
+      }
+
+      self.invalidate()
+      self.resize()
+      self.invalidate()
+   end
+
+   public to_top()
+      if self === parent.z_children[-1] then
+         return
+      self.set_z(parent.get_top_z())
+      parent.compute_z_order()
+      self.invalidate()
+   end
+
+   public to_bottom()
+      if self === parent.z_children[1] then
+         return
+      self.set_z(parent.get_bottom_z())
+      parent.compute_z_order()
+      self.invalidate()
+   end
+
+   public close()
+      self.invalidate()
+      self.parent.remove(self)
+      self.finally()
+   end
+
+   public handle_lrelease(e)
+      self.held_flag := &null
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "content" : set_content(f.object_val(gui.Component))
+         "title" : set_title(f.text_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   protected set_special(a)
+      if is(a[1], Component) then
+         set_content(pop(a))
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      set_border(RaisedBorder())
+      setup()
+      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      set_fields(a)
+      return
+   end
+end
+
+
+class FrameBar(Component)
+   public lab
+   public on_close()
+      self.parent.close()
+   end
+
+   public set_title(s)
+      lab.set_label(s)
+   end
+
+   public can_drag(e)
+      return lab.in_region(e)
+   end
+
+   public setup()
+      local b
+      set_layout(GridLayout("doi=0", "dii=0"))
+      lab := Label("c:x_weight=1", "c:x_fill", "c:l_inset=3", "label=Frame")
+      add(lab)
+      b := IconButton("accepts_focus=no", "c:r_inset=3", "tooltip=Close")
+      b.set_border(EmptyBorder("flush"))
+      b.set_image(Icon.TINY_X)
+      b.connect(self.on_close, Event.ACTION)
+      self.add(b)
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      setup()
+      set_fields(a)
+      return
+   end
+end
+
+
+

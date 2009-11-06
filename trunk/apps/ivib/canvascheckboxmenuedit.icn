@@ -1,0 +1,140 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+
+import gui
+
+############################################################################
+#
+#
+#
+class CanvasCheckBoxMenuEdit(MenuComponentEdit)
+   public 
+      tab_basic,
+      tab_images,
+      paint_field,
+      paint_field_r,
+      shaded,                  #              
+      browse_custom,           #                     
+      group_list,              #                  
+      in_checkbox_group,       #                          
+      initially_checked
+
+   public on_in_checkbox_group()
+      group_list.toggle_is_shaded()
+      tab_images.maybe_standardize(in_checkbox_group)
+   end
+   
+   public validate_input()
+      \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
+      self.paint_field.validate_input() | fail
+      self.paint_field_r.validate_input() | fail
+      self.tab_images.validate_input() | fail
+      return cast(self,MenuComponentEdit).validate_input()
+   end
+
+   public set_vals()
+      cast(self,MenuComponentEdit).set_vals()
+      c.is_shaded_flag := shaded.get_status()
+
+      #
+      # If in cbg and on, turn off, since may go out of cbg or into
+      # a different one.
+      #
+      if (\c.parent_check_box_group).which_one === c then
+         c.parent_check_box_group.which_one := &null                 
+
+      if in_checkbox_group.is_checked() then {
+         #
+         # Put in cbg.
+         #
+         c.set_parent_check_box_group(c.parent_component.parent_Canvas.checkbox_groups[group_list.get_selection()])
+         if initially_checked.is_checked() then {
+            #      
+            # Turn off current one on, if any; turn self on.
+            #
+            (\c.parent_check_box_group.which_one).is_checked_flag := &null
+            c.parent_check_box_group.which_one := c
+         }
+      } else
+         c.parent_check_box_group := &null
+
+      #
+      # Set checked flag
+      #
+      c.is_checked_flag := initially_checked.get_status()
+
+      tab_images.set_vals()
+
+      c.set_paint_mid(paint_field.get_contents())
+      c.set_paint_right(paint_field_r.get_contents())
+   end
+
+   public setup()
+      local main_panel
+
+      cast(self,MenuComponentEdit).setup()
+
+      main_panel := TabItem()
+      main_panel.set_layout(GridLayout("extra=borders"))
+      add_tab_at_front(main_panel)
+      main_panel.set_label("General")
+
+      paint_field := PaintField("title=",Label("label=Label"), "c:eol", "c:w=2")
+      paint_field.set_contents(c.paint_mid)
+      main_panel.add(paint_field)
+
+      paint_field_r := PaintField("title=",Label("label=Label(R)"), "c:eol", "c:w=2")
+      paint_field_r.set_contents(c.paint_right)
+      main_panel.add(paint_field_r)
+
+      in_checkbox_group := CheckBox()
+      in_checkbox_group.connect(self.on_in_checkbox_group, Event.ACTION)
+      in_checkbox_group.set_label("CheckBox Group")
+      main_panel.add(in_checkbox_group)
+
+      group_list := List("c:eol")
+      group_list.set_size(200)
+      group_list.set_selection_list(cos_names(c.parent_component.parent_Canvas.checkbox_groups))
+      main_panel.add(group_list)
+
+      initially_checked := CheckBox("c:eol")
+      initially_checked.set_label("Initially checked")
+      main_panel.add(initially_checked)
+
+      shaded := CheckBox()
+      shaded.set_label("Is shaded")
+      if \c.is_shaded_flag then
+         shaded.set_is_checked(&yes)
+      main_panel.add(shaded)
+
+      if *c.parent_component.parent_Canvas.checkbox_groups = 0 then {
+         in_checkbox_group.set_is_shaded(&yes)
+         group_list.set_is_shaded(&yes)
+         if c.is_checked() then
+            initially_checked.set_is_checked(&yes)
+      } else {
+         if \c.parent_check_box_group then {
+            in_checkbox_group.set_is_checked(&yes)
+            group_list.set_selection(keyof(c.parent_component.parent_Canvas.checkbox_groups,
+                                           c.parent_check_box_group))
+            if c === c.parent_check_box_group.which_one then
+               initially_checked.set_is_checked(&yes)
+         } else  {
+            group_list.set_is_shaded(&yes)
+            if c.is_checked() then
+               initially_checked.set_is_checked(&yes)
+         }
+      }
+
+      tab_images := CheckBoxImageTab(c)
+      add_tab(tab_images)
+   end
+end
+
+

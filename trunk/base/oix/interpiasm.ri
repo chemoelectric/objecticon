@@ -1,0 +1,32 @@
+static word cofail_impl_code[] = {
+   Op_Custom,
+   (word)transmit_failure,
+   Op_FrameVar,
+   0,
+   Op_Tmp,
+   0,
+   (word)&cofail_impl_code[10],
+   Op_CReturn,
+   Op_Tmp,
+   0,
+   Op_CFail,
+};
+CustomProc(cofail_impl,cofail_impl_code,1,0,0,1,0,0,"internal:cofail_impl")
+static word lang_Prog_get_event_impl_impl_code[] = {
+   Op_Custom,
+   (word)activate_child_prog,
+   Op_FrameVar,
+   0,
+   Op_Custom,
+   (word)get_child_prog_result,
+   Op_FrameVar,
+   0,
+   Op_FrameVar,
+   1,
+   (word)&lang_Prog_get_event_impl_impl_code[14],
+   Op_CReturn,
+   Op_FrameVar,
+   1,
+   Op_CFail,
+};
+CustomProc(lang_Prog_get_event_impl_impl,lang_Prog_get_event_impl_impl_code,2,0,0,0,0,0,"internal:lang_Prog_get_event_impl_impl")

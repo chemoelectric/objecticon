@@ -1,0 +1,87 @@
+############################################################################
+#
+#	File:     zipread.icn
+#
+#	Subject:  Procedures for reading files from ZIP archives
+#
+#	Author:   Gregg M. Townsend
+#
+#	Date:     March 5, 2000
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#	These Unix procedures read files from ZIP format archives by
+#	opening pipes to the "unzip" utility.  It is assumed that
+#	"unzip" is in the shell search path.
+#
+#	iszip(zname) succeeds if zname is a ZIP archive.
+#	zipdir(zname) opens a ZIP archive directory.
+#	zipfile(zname, fname) opens a member of a ZIP archive.
+#
+############################################################################
+#
+#	iszip(zname) succeeds if the named file appears to be
+#	a ZIP format archive file.
+#
+############################################################################
+#
+#	zipdir(zname) returns a pipe from which the members of the
+#	ZIP archive can be read, one per line, as if reading a
+#	directory.  It is assumed that zname is a ZIP archive.
+#
+############################################################################
+#
+#	zipfile(zname, fname) returns a pipe from which the
+#	file fname within the ZIP archive zname can be read.
+#	It is assumed that zname and fname are valid.
+#
+############################################################################
+#
+#   Requires: UNIX with "unzip" utility.
+#
+############################################################################
+
+
+
+#  iszip(zname) -- succeed if zname is a ZIP archive file
+
+package ipl.zipread
+
+import
+   io(FileOpt, FileStream, ProgStream)
+
+# check for ZIP archive
+procedure iszip(fname)		
+   local f, s
+
+   f := FileStream.open(fname, FileOpt.RDONLY) | fail
+   s := f.reads(4)
+   f.close()
+   return s === "PK\03\04"
+end
+
+
+
+#  zipdir(zname) -- returns a file representing the ZIP directory
+
+# open ZIP directory
+procedure zipdir(zname)			
+   local f, g
+   f := ProgStream.open_read("unzip", ["-l", zname]) | fail
+   g := ProgStream.open_read("sed", ["-n", "s/.*:..   //p"],, f)
+   f.close()
+   return \g
+end
+
+
+
+#  zipfile(zname, fname) -- open file fname inside archive zname
+
+# open member of ZIP archive
+procedure zipfile(zname, fname)		
+   return ProgStream.open_read("unzip", ["-p", zname, fname])
+end

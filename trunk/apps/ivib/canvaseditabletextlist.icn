@@ -1,0 +1,90 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a EditableTextList on the canvas.
+#
+class CanvasEditableTextList(CanvasComponent,EditableTextList)
+   public min_height()
+      # need a smart calculation font height + borders + scrollbar
+      # for now based on constants in gui.icn, guiconst.icn we go with
+      # 14 + 8*2 + 22
+      return 52
+   end
+ 
+   public min_width()
+      # need a smart calculation font height + borders + scrollbar
+      # for now based on constants in gui.icn, guiconst.icn we go with
+      # 14 + 5*2 + 22
+      return 46
+   end
+
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      cast(self,CanvasComponent).gen_code(c)
+      c.line(name || ".set_contents(" || contents_string(self.contents) || ")")
+      if /self.is_editable_flag then
+         c.line(name || ".set_is_editable(&no)")
+      if /self.move_on_rpress_flag then
+         c.line(name || ".set_move_on_rpress(&no)")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c
+      c := CanvasEditableTextList()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.set_contents(copy(self.contents))
+      c.is_editable_flag := self.is_editable_flag
+      c.move_on_rpress_flag := self.move_on_rpress_flag
+      return c
+   end
+
+   #
+   # Return the I/O template.
+   #
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Contents", "contents"] |
+         ["Is editable flag", "is_editable_flag"] |
+         ["Move on rpress flag", "move_on_rpress_flag"]
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasEditableTextListDialog(self)
+   end
+
+   public allows_null_height()
+      return 1
+   end
+
+   public allows_null_width()
+      return 1
+   end
+
+   public new()
+      cast(self,EditableTextList).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "EditableTextList"
+      self.import_name := "gui"
+      self.name := "editable_text_list"
+      return
+   end
+end
+

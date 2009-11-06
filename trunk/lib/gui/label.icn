@@ -1,0 +1,107 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+#
+# This class implements a Text label.  The default width and 
+# height are determined by dimensions of text
+#
+# @field image=string : see {set_image}
+# @field label=text : see {set_label}
+# @field paint={Paint} : see {set_paint}
+# @field see also {Component}
+#
+class Label(Component)
+   public 
+      linked_accel,
+      paint
+
+   #
+   # Set the label.
+   # @param x   The label.
+   #
+   public set_label(x)
+      set_paint(paint_for_string(x))
+   end
+
+   #
+   # Set an image for the label, in icon image string format.
+   # @param x  The image to be displayed
+   #
+   public set_image(x)
+      set_paint(ImageStringPaint(x))
+   end
+
+   public set_paint(p)
+      local key
+      (\self.paint).finally()
+      self.paint := p
+      if is_initialized() then {
+         key := (\linked_accel).accel
+         self.paint.initially(self, key)
+         self.invalidate()
+      }
+   end
+
+   #
+   # Link this label to a component; the label will be displayed
+   # with the component's accelerator key underlined.
+   #
+   public set_linked_accel(c)
+      self.linked_accel := c
+   end
+
+   public initially()
+      local key
+      \self.paint | runerr("no label specified")
+      cast(self,Component).initially()
+      key := (\linked_accel).accel
+      paint.initially(self, key)
+   end
+
+   public finally()
+      cast(self,Component).finally()
+      paint.finally()
+   end
+
+   public get_default_width()
+      return paint.w + border.get_total_width()
+   end
+
+   public get_default_height()
+      return paint.h + border.get_total_height()
+   end
+
+   public display()
+      paint.draw_point(self.cbwin, border.float(self, paint))
+      border.draw_rect(self.cbwin, self)
+      if self.has_focus() & self.is_unshaded() then
+         border.draw_focus_rect(self.cbwin, self)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "image" : set_image(f.string_val())
+         "label" : set_label(f.text_val())
+         "paint" : set_paint(f.object_val(gui.Paint))
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.set_constraint("x_align", Align.L)
+      self.set_border(EmptyBorder("flush", "align=l,c"))
+      set_fields(a)
+      return
+   end
+end
+
+

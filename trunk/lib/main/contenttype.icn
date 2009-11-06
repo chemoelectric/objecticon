@@ -1,0 +1,87 @@
+#
+# $Id$
+#
+
+package mail
+
+import util(ClTable)
+
+#
+# This class represents a content type
+#
+class ContentType()
+   private readable
+      type,
+      subtype,
+      parameters
+
+   #
+   # Set type type
+   #
+   public set_type(t)
+      self.type := t
+   end
+
+   #
+   # Get the type
+   #
+   public get_type()
+      return .type
+   end
+
+   #
+   # Set subtype subtype
+   #
+   public set_subtype(s)
+      self.subtype := s
+   end
+
+   #
+   # Get the subtype
+   #
+   public get_subtype()
+      return .subtype
+   end
+
+   #
+   # Get the parameter for the given key.
+   #
+   # @param key the key
+   public get_parameter(key)
+      if parameters.member(key) then
+         return parameters.get(key)
+   end
+
+   #
+   # Set the parameter to the given value
+   # @param key the key
+   # @param value the value
+   #
+   public set_parameter(key, value)
+      parameters.insert(key, value)
+   end
+
+   public static parse(s)
+      local p
+      p := RFC822Parser()
+      return p.parse_content_type(s)
+   end   
+
+   public to_rfc1521()
+      local s, e
+      s := type || "/" || subtype
+      every e := !parameters.sort() do
+         s ||:= "; " || e[1] || "=" || RFC822Parser.escape_1521_value(e[2])
+      return s
+   end
+
+   public new(type, subtype, parameters)
+      /parameters := ClTable()
+      self.type := type
+      self.subtype := subtype
+      self.parameters := parameters
+      return
+   end
+end
+
+

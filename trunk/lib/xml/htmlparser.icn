@@ -1,0 +1,480 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+class Tag(Node)
+   public
+      name,
+      closed,
+      attributes,
+      empty
+
+   #
+   # Set the name of the tag, which is converted to upper case.  Any
+   # leading "/" should be omitted.
+   #
+   public set_name(s) 
+      name := map(s, &lcase, &ucase)
+   end
+
+   #
+   # Succeed if the given tag is a matching closing tag for this tag.
+   #
+   public balances(other)
+      return \other.closed & (name == other.name)
+   end
+
+   #
+   # Succeed if the tag is a closing tag.
+   #
+   public is_closed()
+      return \closed
+   end
+
+   #
+   # Indicate that the tag is a closing tag, ie has a leading "/"
+   #
+   public set_closed()
+      closed := 1
+   end
+
+   #
+   # Succeed if the tag is an empty tag, ie of the form <tag/>.
+   #
+   public is_empty()
+      return \empty
+   end
+
+   #
+   # Indicate that the tag is an empty tag.
+   #
+   public set_empty()
+      empty := 1
+   end
+
+   #
+   # Return the attributes map for this tag.
+   #
+   public get_attributes()
+      return attributes
+   end
+
+   #
+   # Set an attribute for this tag.
+   #
+   public set_attribute(key, value)
+      attributes[map(key, &lcase, &ucase)] := value
+   end
+
+   public new()
+      cast(self,Node).new()
+      self.attributes := table()
+      return
+   end
+end
+
+
+class HtmlParser()
+   private 
+      doc,
+      utf8_flag
+
+   public static const
+      HTML_IDINTRO,
+      HTML_IDCHARS,
+      HTML_KEYCHARS,
+      HTML_VALCHARS, 
+      HTML_DELIM,
+      HTML_SPACE,
+      HTML_STANDALONE,
+      HTML_AUTOCLOSE,
+      HTML_ENTITIES,
+      HTML_PUBID_CHAR
+
+   private static init()
+      local e
+
+      HTML_SPACE := '\x20\x09\x0D\x0A'
+      HTML_IDINTRO := 'A-Za-z'
+      HTML_IDCHARS := 'A-Za-z0-9.\-'
+      HTML_KEYCHARS := 'A-Za-z0-9_'
+      HTML_VALCHARS := &ascii -- ' \t\n\r>'
+      HTML_DELIM := '\"\''
+      HTML_PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
+      HTML_STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
+                             "OPTION", "BASEFONT", "BGSOUND", "COL", "COLGROUP", "ISINDEX", 
+                             "LINK", "NEXTID", "SPACER", "TBODY", "TFOOT", 
+                             "THEAD", "WBR")
+
+      HTML_AUTOCLOSE := set("LI", "P", "DD", "DT", "FONT")
+
+      HTML_ENTITIES := table()
+      every e := ![["amp", 38], ["lt", 60], ["gt", 62], ["quot", 34],
+                   ["nbsp", 160], ["iexcl", 161], ["cent", 162],
+                   ["pound", 163], ["curren", 164], ["yen", 165],
+                   ["brvbar", 166], ["sect", 167], ["uml", 168],
+                   ["copy", 169], ["ordf", 170], ["laquo", 171],
+                   ["not", 172], ["shy", 173], ["reg", 174],
+                   ["macr", 175], ["deg", 176], ["plusmn", 177],
+                   ["sup2", 178], ["sup3", 179], ["acute", 180],
+                   ["micro", 181], ["para", 182], ["middot", 183],
+                   ["cedil", 184], ["sup1", 185], ["ordm", 186],
+                   ["raquo", 187], ["frac14", 188], ["frac12", 189],
+                   ["frac34", 190], ["iquest", 191], ["Agrave", 192],
+                   ["Aacute", 193], ["Acirc", 194], ["Atilde", 195],
+                   ["Auml", 196], ["Aring", 197], ["AElig", 198],
+                   ["Ccedil", 199], ["Egrave", 200], ["Eacute", 201],
+                   ["Ecirc", 202], ["Euml", 203], ["Igrave", 204],
+                   ["Iacute", 205], ["Icirc", 206], ["Iuml", 207],
+                   ["ETH", 208], ["Ntilde", 209], ["Ograve", 210],
+                   ["Oacute", 211], ["Ocirc", 212], ["Otilde", 213],
+                   ["Ouml", 214], ["times", 215], ["Oslash", 216],
+                   ["Ugrave", 217], ["Uacute", 218], ["Ucirc", 219],
+                   ["Uuml", 220], ["Yacute", 221], ["THORN", 222],
+                   ["szlig", 223], ["agrave", 224], ["aacute", 225],
+                   ["acirc", 226], ["atilde", 227], ["auml", 228],
+                   ["aring", 229], ["aelig", 230], ["ccedil", 231],
+                   ["egrave", 232], ["eacute", 233], ["ecirc", 234],
+                   ["euml", 235], ["igrave", 236], ["iacute", 237],
+                   ["icirc", 238], ["iuml", 239], ["eth", 240],
+                   ["ntilde", 241], ["ograve", 242], ["oacute", 243],
+                   ["ocirc", 244], ["otilde", 245], ["ouml", 246],
+                   ["divide", 247], ["oslash", 248], ["ugrave", 249],
+                   ["uacute", 250], ["ucirc", 251], ["uuml", 252],
+                   ["yacute", 253], ["thorn", 254], ["yuml", 255]] do
+         HTML_ENTITIES[e[1]] := e[2]
+   end
+
+   #
+   # Parse the string s returning an HtmlDocument object.
+   #
+   public parse(s)
+      local i, node
+      doc := HtmlDocument()
+
+      if type(s) == "ucs" then {
+         utf8_flag := 1
+      } else {
+         utf8_flag := &null
+      }
+
+      s ? {
+         repeat {
+            move_to_node()
+
+            if pos(0) then {
+               #
+               # No opening node found, so put whole in html tags and retry
+               #
+               return parse("<html>" || s || "</html>")
+            }
+
+            i := &pos
+            node := parse_node() | break
+
+            if is(node, DocType | Comment) then
+               doc.add(node)
+            else if is(node, Tag) then {
+               if not(node.is_closed()) & (node.name == "HTML") then {
+                  #
+                  # Found the html start point, so parse and return that node.
+                  #
+                  doc.add(parse_element(node))
+                  return doc
+               } else {
+                  #
+                  # Bad structure, so put html tags around it and start again.
+                  #
+                  return parse(s[1:i] || "<html>" || s[i:0] || "</html>")
+               }
+            }
+         }
+      }
+   end
+
+   #
+   # Parse the current input into an {Node}
+   #
+   private parse_node(parent)
+      if match("<!DOCTYPE") then
+         return parse_doctype()
+      if match("<!") then
+         return parse_comment(parent)
+      if match("<") then
+         return parse_tag()
+   end
+
+   #
+   # Parse and return an Element, given the starting tag
+   #
+   private parse_element(start_tag, parent)
+      local res, i, node, n
+
+      res := HtmlElement()
+
+      res.name := start_tag.name
+      res.attributes := start_tag.attributes
+
+      if start_tag.name == "PLAINTEXT" then
+         res.add("" ~== remove_entities(tab(0)))
+      else if not(start_tag.is_empty() | 
+                  html_is_standalone_tag(start_tag.name)) then {
+         repeat {
+            res.add("" ~== remove_entities(move_to_node()))
+            if pos(0) then
+               break
+
+            i := &pos
+            node := parse_node(res) | break
+
+            if is(node, Tag) then {
+               if start_tag.balances(node) then 
+                  break
+
+               if html_is_autoclose_tag(start_tag.name) & start_tag.name == node.name then {
+                  #
+                  # For example <p> ... <p> is treated as <p> ... </p><p>.  The second
+                  # <p> has to be rescanned by the caller, so tab back.
+                  #
+                  tab(i)
+                  break
+               }
+
+               if node.is_closed() then {
+                  #
+                  # Mismatched close.  If processing something like a <p>, then assume
+                  # a </p> and break; otherwise just ignore.  For example :
+                  #   <p> ... </td> -> <p> ... </p></td>
+                  # Again, the </td> needs to be rescanned, so tab back.
+                  #
+                  if html_is_autoclose_tag(start_tag.name) then {
+                     tab(i)
+                     break
+                  }
+               } else {
+                  res.add(n := parse_element(node, res))
+               }
+            } else {
+               #
+               # It's either a coment, or something else; just add it to the list of children
+               #
+               res.add(node)
+            }            
+         }
+      }
+
+      return res
+   end
+
+   #
+   # DOCTYPE
+   #
+   private parse_doctype()
+      local res
+
+      res := DocType()
+      ="<!DOCTYPE" | fail
+
+      tab(upto(HTML_IDINTRO))
+      res.name := tab(many(HTML_IDCHARS))
+
+      tab(many(HTML_SPACE))
+      if ="SYSTEM" then {
+         res.external_id := ExternalID()
+         tab(many(HTML_SPACE))
+         res.external_id.system_id := parse_system_literal()
+      } else if ="PUBLIC" then {
+         res.external_id := ExternalID()
+         tab(many(HTML_SPACE))
+         res.external_id.public_id := parse_pubid_literal()
+         tab(many(HTML_SPACE))
+         res.external_id.system_id := parse_system_literal()
+      }
+      tab(upto('>')) | fail
+      move(1)
+      return res
+   end
+
+   private parse_system_literal()
+      local c, res
+      any('\'\"') | fail
+      c := move(1)
+      res := tab(upto(c)) | fail
+      move(1)
+      return res
+   end
+
+   private parse_pubid_literal()
+      local c, res, t
+      if any('\'') then
+         t := HTML_PUBID_CHAR -- '\''
+      else if any('\"') then
+         t := HTML_PUBID_CHAR
+      else
+         fail
+      c := move(1)
+      res := tab(many(t)) | ""
+      =c | fail
+      return res
+   end
+
+   #
+   # Comment - SGML style parsing; different from xml comment in that you can
+   # have a legal comment like <!-- abc -- def -->
+   # see http://htmlhelp.com/reference/wilbur/misc/comment.html
+   #
+   private parse_comment(parent)
+      local res, s, t
+      res := Comment()
+      ="<!" | fail
+      s := ""
+      repeat {
+         tab(upto('->'))
+         if =">" then
+            break
+         ="--" | fail
+         t := tab(find("--")) | fail
+         ="--"
+         s ||:= t
+      }
+      res.comment := s
+      return res
+   end
+
+   #
+   # Normal tag
+   #
+   private parse_tag()
+      local res, key, c, s, value
+
+      res := Tag()
+      ="<" | fail
+      if ="/" then
+         res.set_closed()
+      s := (any(HTML_IDINTRO) & tab(many(HTML_IDCHARS))) | fail
+      res.set_name(s)
+      repeat {
+         tab(upto(HTML_KEYCHARS ++ '/>'))
+         if ="/>" then {
+            res.set_empty()
+            break
+         }
+         if =">" then
+            break
+
+         key := tab(many(HTML_KEYCHARS)) | break
+
+         tab(upto(HTML_VALCHARS ++ '>='))
+
+         if ="=" then {
+            tab(upto(HTML_VALCHARS ++ HTML_DELIM))
+            if any(HTML_DELIM) then {
+               c := move(1)
+               s := tab(upto(c) | 0)
+               move(1)
+            } else
+               s := tab(many(HTML_VALCHARS)) | break
+            value := remove_entities(s)
+         } else
+            value := &null
+
+         res.set_attribute(key, value)
+      }
+
+      return res
+   end
+
+   #
+   # Move to the next node (tag, comment, doctype), or end of file.
+   #
+   private move_to_node()
+      local s, i
+      s := ""
+      repeat {
+         s ||:= tab(upto('<') | 0)
+         if pos(0) then
+            break
+         i := &pos
+         if parse_node() then {
+            #
+            # Found a valid node, so tab back and break
+            #
+            tab(i)
+            break
+         }
+         #
+         # Not a valid node, so tab back and continue
+         #
+         tab(i)
+         s ||:= move(1)
+      }
+
+      return s
+   end
+
+   #
+   # Remove the entity characters from a string.
+   #
+   private remove_entities(s)
+      local res, i
+
+      res := ""
+      s ? {
+         repeat {
+            res ||:= tab(upto('&') | 0)
+            if pos(0) then
+               break
+            ="&"
+            if ="#" then {
+               if i := (256 > integer(tab(many(&digits)))) then {
+                  if \utf8_flag then
+                     res ||:= uchar(i)
+                  else
+                     res ||:= char(i)
+                  =";"
+               } else
+                  res ||:= "&#"
+            } else {
+               if i := \HTML_ENTITIES[string(tab(many(&ucase ++ &lcase)))] then {
+                  if \utf8_flag then
+                     res ||:= uchar(i)
+                  else
+                     res ||:= char(i)
+                  =";"
+               } else
+                  res ||:= "&"
+            }
+         }
+      }
+      return res
+   end
+
+   #
+   # Return the document being parsed.
+   #
+   public get_document()
+      return doc
+   end
+
+   #
+   # Succeed if and only if the tag name is a standalone tag, ie it has no
+   # matching closing tag.
+   #
+   public static html_is_standalone_tag(name)
+      return member(HTML_STANDALONE, string(name))
+   end
+
+   #
+   # Succeed if and only if the tag implicitly closes when a matching opening
+   # tag is encountered at the same level.
+   #
+   public static html_is_autoclose_tag(name)
+      return member(HTML_AUTOCLOSE, string(name))
+   end
+end

@@ -1,0 +1,192 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics
+
+class CirculateLabel(Label)
+   public keeps(e)
+      return member(Key.CURSOR_V, e.code)
+   end
+
+   public go_up(e)
+      parent.go_up(e)
+   end
+
+   public go_down(e)
+      parent.go_down(e)
+   end
+
+   public on_key(e)
+      case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+   end
+
+   public new(a[])
+      cast(self,Label).new()
+      self.set_label("")
+      connect(self.on_key, Event.KEY_PRESS)
+      connect(self.go_up, Event.MOUSE_WHEEL_UP)
+      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
+      self.border.set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET)
+      set_fields(a)
+      return
+   end
+end
+
+
+#
+# Selection from a list
+#
+# @field selection=integer : see {set_selection}
+# @field selection_list=t1,t2,t3,... : see {set_selection_list}.  This may
+# @ also be given (as a list) as the first parameter to the constructor.
+# @field see also {Component}
+#
+class Circulate(SelectionList,Component)
+   public
+      old_selection, 
+      b,
+      l
+
+   public apply_selection()
+      local s
+      s := self.selection_list[\self.selection] | ""
+      self.l.set_label(s)
+   end
+
+   public get_default_height()
+      return border.get_total_height() + l.get_default_height()
+   end
+
+   public get_default_width()
+      local t
+      t := 0
+      every t <:= self.cbwin.text_width(!self.selection_list)
+      return border.get_total_width() + b.get_preferred_width() + t + l.border.get_total_width()
+   end
+
+   public layout()
+      #
+      # Set button position and size
+      #
+      b.x := self.x + border.get_l_inset()
+      l.y := b.y := self.y + border.get_t_inset()
+      l.h := b.h := self.h - border.get_total_height()
+      b.w := b.get_preferred_width()
+      l.x := b.x + b.w
+      l.w := self.w - border.get_total_width() - b.w
+      b.layout()
+      l.layout()
+   end
+
+   #
+   # Display the object.
+   #
+   public display(r)
+      border.draw_rect(self.cbwin, self)
+      display_children(r)
+   end
+
+   #
+   # The handler for the button - move the selection forward.
+   #
+   # @p
+   public on_button_pressed(ev)
+      go_up(ev)
+   end
+
+   public start_change(e)
+      self.old_selection := self.selection
+   end
+
+   public end_change(e)
+      if self.old_selection ~=== self.selection then
+         fire(Event.SELECTION_CHANGED, e)
+   end
+
+   public go_down(e)
+      if *selection_list = 0 then
+         fail
+      start_change(e)
+      if /self.selection | (self.selection = 1) then
+         set_selection(*self.selection_list)
+      else
+         self.set_selection(self.selection - 1)
+      end_change(e)
+   end
+
+   public go_up(e)
+      if *selection_list = 0 then
+         fail
+      start_change(e)
+      if /self.selection then
+         set_selection(1)
+      else
+         set_selection(1 + self.selection % *self.selection_list)
+      end_change(e)
+   end
+
+   public initially()
+      \self.selection_list | runerr("no selection list specified")
+      cast(self,Component).initially()
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "selection" : set_selection(f.int_val())
+         "selection_list" : set_selection_list(f.text_list_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   protected set_special(a)
+      if type(a[1]) == "list" then
+         set_selection_list(pop(a))
+   end
+
+   public new(a[]) 
+      cast(self,Component).new()
+      self.set_border(SunkenBorder())
+      self.preferred_focus := self.l := CirculateLabel()
+      self.l.set_accepts_focus(&yes)
+      add(self.l)
+      self.b := IconButton()
+      self.b.set_accepts_focus(&no)
+      self.b.connect(self.on_button_pressed, Event.ACTION)
+      add(self.b)
+      self.b.set_image("13,c1,_
+~~~~0000~~~~~_
+~~~000000~~~~_
+~~00~~~~00~~~_
+~00~~~~~~00~~_
+~00~~~~~~00~~_
+~00~~~~~~~~~~_
+~00~~~~~~~~~~_
+~00~~~~~~0~~~_
+~00~~~~~000~~_
+~00~~~~00000~_
+~00~~~0000000_
+~00~~~~~~00~~_
+~00~~~~~~00~~_
+~00~~~~~~00~~_
+~~00~~~~00~~~_
+~~~000000~~~~_
+~~~~0000~~~~~_
+")
+      set_fields(a)
+      return
+   end
+end
+
+
+

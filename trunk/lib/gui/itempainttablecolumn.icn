@@ -1,0 +1,88 @@
+package gui
+
+#
+# @field item_paint={ItemPaint} : see {set_item_paint}
+# @field item_border={ABorder} : see {set_item_border}
+# @field see also {TableColumn}
+#
+class ItemPaintTableColumn(TableColumn)
+   public
+      item_paint,
+      item_border
+
+   public initially()
+      \self.item_paint | runerr("ItemPaint not set")
+      cast(self,TableColumn).initially()
+      self.item_paint.initially(self)
+      self.item_border.initially(self)
+   end
+
+   public finally()
+      cast(self,TableColumn).finally()
+      self.item_paint.finally()
+      self.item_border.finally()
+   end
+
+   public set_item_paint(r)
+      (\self.item_paint).finally()
+      self.item_paint := r
+      if is_initialized() then
+         self.item_paint.initially(self)
+   end
+
+   #
+   # Set a border to draw along with each Paint instance.
+   #
+   public set_item_border(b)
+      (\self.item_border).finally()
+      self.item_border := b
+      if is_initialized() then
+         self.item_border.initially(self)
+   end
+
+   public set_column_align(x)
+      cast(self,TableColumn).set_column_align(x)
+      self.item_border.x_align := x
+   end
+
+   public calculate_line_height(W)
+      local h
+      if not(h := item_paint.get_constant_height(W) +
+             + item_border.get_total_height()) then
+      {
+         h := []
+         every put(h, item_paint.get_height(W, slice()) +
+                   item_border.get_total_height())
+      }
+      return h
+   end
+
+   public draw_cell(W, data, line, col, cy, ch)
+      local r
+      r := Rect(self.x, cy, self.w, ch)
+      item_paint.draw_point(W, data, item_border.float(r, item_paint.get_size(W, data)))
+      item_border.draw_rect(W, r)
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "item_paint" : set_item_paint(f.object_val(ItemPaint))
+         "item_border" : set_item_border(f.object_val(ABorder))
+         default: return cast(self,TableColumn).set_one(f)
+      }
+      return
+   end
+
+   protected set_special(a)
+      if is(a[1], ItemPaint) then
+         set_item_paint(pop(a))
+   end
+
+   public new(a[])
+      cast(self,TableColumn).new()
+      self.set_item_border(EmptyBorder("flush"))
+      set_fields(a)
+      return
+   end
+end
+

@@ -1,0 +1,40 @@
+#
+# $Id$
+#
+
+package mail
+
+#
+# Handles the 8bit, 7bit and binary encoding types, by doing nothing.
+#
+class NoOpEncodingHandler(EncodingHandler)
+   public can_handle(enc)
+      return map(enc) == ("7bit" | "8bit" | "binary")
+   end
+
+   public decode_data(m, data)
+      return data
+   end
+
+   public encode_data(m, data) 
+      return data
+  end
+end
+
+#
+# The pass-through type handler.
+#
+class NoOpTypeHandler(TypeHandler)
+   public can_handle(ct)
+      return (map(ct.get_type()) == "application") & 
+         (map(ct.get_subtype()) == "octet-stream")
+   end
+   
+   public convert_to_object(m, data)
+      return data
+   end
+
+   public convert_from_object(m, obj)
+      return obj
+   end
+end

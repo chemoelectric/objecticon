@@ -1,0 +1,52 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import parser, ipl.options, io
+
+global opts, arg_packs
+
+procedure warn(s)
+   ewrite(s)
+end
+
+procedure note(s)
+   write("Scanning ", s)
+end
+
+procedure main(a)
+   local s, o, symbol_table
+
+   opts := options(a, "-html -o: -a! -d! -r!")
+
+   symbol_table := SymbolTable()
+   if \opts["d"] then
+      symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
+   if \opts["a"] then {
+      every s := symbol_table.get_all_packages() do
+         symbol_table.scan_package(s) | stop(&why)
+   }
+
+   arg_packs := set()
+   every s := !a do {
+      if s[-4:0] == ".icn" then
+         symbol_table.scan_file(s) | warn(&why)
+      else {
+         insert(arg_packs, s)
+         symbol_table.scan_package(s) | stop(&why)
+      }
+   }
+
+   symbol_table.resolve_classes() | stop(&why)
+
+   if \opts["html"] then
+      o := HtmlOutputter(opts, symbol_table)
+   else
+      o := GroffOutputter(opts, symbol_table)
+
+   o.output()
+end

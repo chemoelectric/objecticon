@@ -1,0 +1,125 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+
+#
+# This class is the base class for all spin components.  It just provides the up/down
+# buttons and two abstract methods which are invoked to implement those actions.
+#
+class Spin(Component)
+   public 
+      up, 
+      down,
+      view
+
+   #
+   # This method must be overridden to do something to the component when the
+   # up button is pressed.
+   #
+   public defer do_increment()
+
+   #
+   # This method must be overridden to do something to the component when the
+   # down button is pressed.
+   #
+   public defer do_decrement()
+
+   #
+   # Create the view component
+   #
+   public defer create_view()
+
+   #
+   # This may be overridden to monitor for changes to trigger events.  It is
+   # invoked before the do_increment/do_decrement methods are called
+   #
+   public start_change(e)
+   end
+
+   #
+   # This may be overridden to monitor for changes to trigger events.  It is
+   # invoked after the do_increment/do_decrement methods are called
+   #
+   public end_change(e)
+   end
+
+   public on_up(ev)
+      go_up(ev)
+   end
+
+   public on_down(ev)
+      go_down(ev)
+   end
+
+   public display(r)
+      border.draw_rect(self.cbwin, self)
+      display_children(r)
+   end
+
+   public get_default_height()
+      return border.get_total_height() + view.get_default_height()
+   end
+
+   public layout()
+      local bh, bw
+      bw := up.get_preferred_width()
+      bh := (self.h - border.get_total_height()) / 2
+      down.x := up.x := self.x + self.w - border.get_r_inset() - bw
+      view.y := up.y := self.y + border.get_t_inset()
+      down.y := up.y + bh
+      down.w := up.w := bw
+      up.h := bh
+      down.h := self.h - border.get_total_height() - up.h
+      view.x := self.x + border.get_l_inset()
+      view.w := self.w - border.get_total_width() - bw
+      view.h := self.h - border.get_total_height()
+      up.layout()
+      down.layout()
+      view.layout()
+   end
+
+   public go_up(e)
+      start_change(e)
+      do_increment()
+      end_change(e)
+   end
+
+   public go_down(e)
+      start_change(e)
+      do_decrement()
+      end_change(e)
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.set_border(SunkenBorder())
+      self.up := IconButton("w=",ScrollBar.DEFAULT_SIZE)  # Consistent with DropDown
+      self.up.connect(self.on_up, Event.BUTTON_PRESS)
+      self.up.connect(self.on_up, Event.BUTTON_HELD)
+      self.up.set_image(Icon.TINY_ARROW_UP)
+      self.up.set_accepts_focus(&no)
+      self.add(up)
+      self.down := IconButton("w=",ScrollBar.DEFAULT_SIZE)
+      self.down.connect(self.on_down, Event.BUTTON_PRESS)
+      self.down.connect(self.on_down, Event.BUTTON_HELD)
+      self.down.set_image(Icon.TINY_ARROW_DOWN)
+      self.down.set_accepts_focus(&no)
+      self.add(down)
+      self.preferred_focus := self.view := create_view()
+      self.add(view)
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("x_align", Align.L)
+      self.set_constraint("x_weight", "1")
+      connect(self.go_up, Event.MOUSE_WHEEL_UP)
+      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
+      set_fields(a)
+      return
+   end
+end

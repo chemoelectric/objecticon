@@ -1,0 +1,135 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+import gui
+
+
+############################################################################
+#
+# Class for representing a TabSet on the canvas.
+#
+class CanvasTabSet(CanvasComponent,TabSet)
+   #
+   # Generate code into Code object c.
+   #
+   public gen_code(c)
+      local i
+      cast(self,CanvasComponent).gen_code(c)
+      every i := !self.children do {
+         i.gen_code(c)
+         c.line(self.name || ".add(" || i.name || ")")
+      }
+      if \self.no_click_focus_flag then
+         c.line(name || ".set_no_click_focus(&yes)")
+      if \self.prefer_one_row_flag then
+         c.line(name || ".set_prefer_one_row(&yes)")
+      if \self.tabs_at_bottom_flag then
+         c.line(name || ".set_tabs_at_bottom(&yes)")
+
+      c.line(self.name || ".set_which_one(" || self.which_one.name || ")")
+   end
+
+   #
+   # Duplicate object.
+   #
+   public dup()
+      local c, e, e1
+      c := CanvasTabSet()
+      cast(self,CanvasComponent).dup_fields(c)
+      c.tabs_at_bottom_flag := self.tabs_at_bottom_flag
+      c.no_click_focus_flag := self.no_click_focus_flag
+      c.prefer_one_row_flag := self.prefer_one_row_flag
+      every e := !self.children do {
+         e1 := e.dup()
+         c.add(e1)
+         if self.which_one === e then
+            c.set_which_one(e1)
+      }
+      return c
+   end
+      
+   #
+   # Return the I/O template.
+   #
+   public static get_template()
+      suspend CanvasComponent.get_template() |
+         ["Children", "children"] |
+         ["Which One", "which_one"] |
+         ["Prefer one row flag", "prefer_one_row_flag"] |
+         ["No click focus flag", "no_click_focus_flag"] |
+         ["Tabs at bottom flag", "tabs_at_bottom_flag"]
+   end
+
+   #
+   # Overrides CanvasComponent.is_inside)
+   #
+   public is_inside(c)
+      return (c ~=== self) & self.which_one.is_inside(c)
+   end
+
+   #
+   # Overrides CanvasComponent.which_cursor_over() 
+   #
+   public which_cursor_over(e)
+      local o
+      cast(self,CanvasComponent).which_cursor_over(e) | fail
+      if in_resize_region(e) then
+         return self
+      if o := self.which_one.which_cursor_over(e) then
+         return o
+      return self
+   end
+
+   #
+   # Open the configuration dialog box.
+   #
+   public dialog()
+      return CanvasTabSetDialog(self)
+   end
+
+   public allows_null_width()
+      local c
+      every c := !self.children do
+         c.allows_null_width() | fail
+      return
+   end
+
+   public allows_null_height()
+      local c
+      every c := !self.children do
+         c.allows_null_height() | fail
+      return
+   end
+
+   public string_rep()
+      local l, c, s
+      l := []
+      every c := !self.children do {
+         s := c.name
+         if c === self.which_one then
+            s ||:= "*"
+         put(l, s)
+      }
+      put(l, "")
+      return l
+   end
+
+   public gen_cos()
+      suspend cast(self,CanvasComponent).gen_cos() | !self.children
+   end
+
+   public new()
+      cast(self,TabSet).new()
+      cast(self,CanvasComponent).new()
+      self.class_name := "TabSet"
+      self.import_name := "gui"
+      self.name := "tab_set"
+      return
+   end
+end
+

@@ -1,0 +1,577 @@
+package gui
+
+import util, graphics, ipl.graphics(Zoom)
+
+class Paint(Size)
+   public defer initially(c, accel)
+   public defer draw(W, x, y)
+
+   public finally()
+   end
+
+   public draw_point(W, p)
+      self.draw(W, p.x, p.y)
+   end
+end
+
+procedure paint_for_string(s)
+   if /s then
+      return
+   if match(".cell", s) then
+      return GridPaint(s)
+   else
+      return TextPaint(s)
+end
+
+class TextPaint(Paint)
+   public str, accel
+
+   public initially(c, accel)
+      self.accel := accel
+      self.h := c.cbwin.attrib("fheight")
+      self.w := c.cbwin.text_width(str)
+   end
+
+   public draw(W, x, y)
+      draw_string_ex(W, x, y, str, accel)
+   end
+
+   public new(s)
+      self.str := s
+      return
+   end
+end
+
+class ImageStringPaint(Paint)
+   public str
+
+   public initially()
+      self.w := image_width(str)
+      self.h := image_height(str)
+   end
+
+   public draw(W, x, y)
+      draw_image_ex(W, x, y, str)
+   end
+
+   public new(s)
+      self.str := s
+      return
+   end
+end
+
+class ImageWindowPaint(Paint)
+   public win
+
+   public initially()
+      self.w := win.attrib("width")
+      self.h := win.attrib("height")
+   end
+
+   public draw(W, x, y)
+      Window.copy_area(\win, W,,,,, x, y)
+   end
+
+   public new(w)
+      self.win := w
+      return
+   end
+end
+
+class GridPaint(Paint)
+   public 
+      fmt,          # Format string
+      g,            # Grid object
+      win,          # Window buffer
+      pass,         # Pass number
+      curr_cell,    # Current cell being read
+      x,            # Text 'cursor' location in cell
+      y, 
+      ia_x,         # Alignment of lines in a cell
+      ia_y,
+      llen,         # Current line len, height
+      lheight, 
+      lno,          # Line no. in cell 
+      ii,           # Cell index counter.
+      buff,         # Input as a list of strings.
+      accel
+
+   public draw(W, x, y)
+      Window.copy_area(\win, W,,,,, x, y)
+   end
+
+   public initially(c, accel)
+      local attribs
+
+      /win | syserr("init called out of sequence")
+      attribs := wattribs_to_list(c.get_effective_wattribs())
+      win := Window.open!(attribs ||| ["size=1,1", "canvas=hidden"]) | runerr("Couldn't open window")
+      g := Grid("extra=ignore")
+      pass := 1
+      ia_x := ia_y := Align.C
+      lines(fmt)
+      close_win()
+      g.dimension()
+      g.compute_locations()
+      w := g.get_preferred_width()
+      h := g.get_preferred_height()
+      if (w > 0) & (h > 0) then {
+         win := Window.open!(attribs ||| ["size=" || w || "," || h, 
+                                    "canvas=hidden"]) | runerr("Couldn't open window")
+         pass := 2
+         curr_cell := &null
+         ii := 0
+         ia_x := ia_y := Align.C
+         self.accel := accel
+         lines(fmt)
+      }
+   end
+
+   public lines(s)
+      local t, cmd, args
+
+      buff := []
+      s ? repeat {
+         t := tab(upto('\n') | 0)
+         put(buff, t)
+         if pos(0) then
+            break
+         move(1)
+      }
+
+      # Move over any preliminary junk before the first .cell
+      while *buff > 0 & not(match(".cell", buff[1])) do
+         pop(buff)
+
+      while s := pop(buff) do {
+         s ? {
+            if ="." then {
+               cmd := tab(upto(' ') | 0)
+               args := []
+               repeat {
+                  tab(many(' '))
+                  if pos(0) then
+                     break
+                  t := tab(upto(' ') | 0)
+                  put(args, string(t))
+               }
+               case string(cmd) of {
+                  "cell" : do_cell(args)
+                  "br" : do_brk(args)
+                  "img" : do_img(args)
+                  "imgf" : do_imgf(args)
+                  "xs" : do_xs(args)
+                  "ys" : do_ys(args)
+                  "attr" : do_attr(args)
+               }
+            } else
+               str(s)
+         }
+      }
+   end
+
+   public do_xs(args)
+      local n
+      n := integer(args[1]) | 0
+      if pass = 1 then {
+         llen +:= n
+      } else {
+         ready_to_output() | fail
+         x +:= n
+      }
+   end
+
+   public do_ys(args)
+      local n
+      n := integer(args[1]) | 0
+      if pass = 1 then {
+         lheight <:= n
+      }
+   end
+
+   public do_cell(args)
+      local t, key, val, a
+
+      if pass = 1 then {
+         t := table()
+         every a := !args do {
+            a ? {
+               key := tab(upto('=') | 0)
+               if ="=" then
+                  val := tab(0)
+               else
+                  val := ""
+               insert(t, key, val)
+            }
+         }
+         curr_cell := g.create_cell(t)
+         curr_cell.pw := curr_cell.ph := 0
+         curr_cell.obj := []
+         llen := lheight := 0
+      } else {
+         ii +:= 1
+         curr_cell := g.info[ii]
+         lno := 1
+         x := &null
+         y := curr_cell.ay
+      }
+   end
+
+   public str(s)
+      local y1
+      if pass = 1 then {
+         llen +:= win.text_width(s)
+         lheight <:= win.attrib("fheight")
+      } else {
+         ready_to_output() | fail
+         y1 := case ia_y of {
+            Align.T : y
+            Align.C : y + (curr_cell.obj[lno].h - win.attrib("fheight")) / 2
+            Align.B : y + curr_cell.obj[lno].h - win.attrib("fheight")
+         }
+         draw_string_ex(win, x, y1, s, accel)
+         # Just print the accelerator once.
+         if upto(\accel, map(s)) then
+            accel := &null
+         x +:= win.text_width(s)
+      }
+   end
+
+   public do_brk(args)
+      if pass = 1 then {
+         curr_cell.pw <:= llen
+         curr_cell.ph +:= lheight
+         put(curr_cell.obj, Size(llen, lheight))
+         llen := lheight := 0
+      } else {
+         x := &null
+         y +:= curr_cell.obj[lno].h
+         lno +:= 1
+      }
+   end
+
+   public do_attr(args)
+      static attrib_set
+      local a, key, val
+      initial {
+         attrib_set := set()
+         every insert(attrib_set, "fg" | "bg" | "reverse" | "drawop" | "gamma" | 
+                      "font" | "leading" | "linewidth" | "linestyle" | "fillstyle" | "pattern")
+      }
+      every a := !args do {
+         a ? {
+            key := tab(upto('=') | 0)
+            if ="=" then
+               val := tab(0)
+            else
+               val := ""
+         }
+         if member(attrib_set, key) then
+            win.attrib(a)
+         else case key of {
+            "ia_x" : ia_x := (val === (Align.L | Align.R)) | Align.C
+            "ia_y" : ia_y := (val === (Align.T | Align.B)) | Align.C
+         }
+      }
+   end
+
+   public do_img(args)
+      local icon, s, term, y1
+      term := args[1] | "$"
+      icon := ""
+      repeat {
+         s := pop(buff) | break
+         if s == term then
+            break
+         icon ||:= s
+      }
+      if pass = 1 then {
+         llen +:= image_width(icon)
+         lheight <:= image_height(icon)
+      } else {
+         ready_to_output() | fail
+         y1 := case ia_y of {
+            Align.T : y
+            Align.C : y + (curr_cell.obj[lno].h - image_height(icon)) / 2
+            Align.B : y + curr_cell.obj[lno].h - image_height(icon)
+         }
+         draw_image_ex(win, 
+                     x, 
+                     y1,
+                     icon)
+         x +:= image_width(icon)
+      }
+   end
+
+   public do_imgf(args)
+      local W, y1
+      W := ImageCache.get(args[1]) | fail
+      if pass = 1 then {
+         llen +:= W.attrib("width")
+         lheight <:= W.attrib("height")
+      } else {
+         ready_to_output() | fail
+         y1 := case ia_y of {
+            Align.T : y
+            Align.C : y + (curr_cell.obj[lno].h - W.attrib("height")) / 2
+            Align.B : y + curr_cell.obj[lno].h - W.attrib("height")
+         }
+         Window.copy_area(W, win,,,,, x, y1)
+         x +:= W.attrib("width")
+      }
+   end
+
+   public ready_to_output()
+      if lno > *curr_cell.obj then
+         fail
+      /x :=  case ia_x of {
+         Align.L : curr_cell.ax
+         Align.R : curr_cell.ax + curr_cell.aw - curr_cell.obj[lno].w
+         Align.C : curr_cell.ax + (curr_cell.aw - curr_cell.obj[lno].w) / 2
+      }
+      return
+   end
+
+   public finally()
+      close_win()
+   end
+
+   public close_win()
+      if \win then {
+         Gui.style.dispose(win)
+         win.close()
+      }
+      win := &null
+   end
+
+   public draw_grid()
+      local i, cw
+
+      if /win then
+         return
+
+      cw := Gui.style.get_dashed_clone(win)
+
+      rectangle(cw, 0, 0, w, h)
+
+      every i := !(\g).info do {
+         rectangle(cw,
+                   g.col_x[i.x],
+                   g.row_y[i.y],
+                   g.slice(i.x, i.w, g.a_col_w),
+                   g.slice(i.y, i.h, g.a_row_h))
+      }
+
+      cw.uncouple()
+   end
+
+   public new(s)
+      self.fmt := s
+      return
+   end
+end
+
+#
+# @field image=string : see {set_image}
+# @field file=string : see {set_file}
+# @field window={Window} : see {set_window}
+# @field scale_up=flag : see {set_scale_up}
+# @field max_w=integer : see {set_max_w}
+# @field max_h=integer : see {set_max_h}
+# @field max_size=i1,i2 : see {set_max_size}
+# @field use_cache=flag : see {set_use_cache}
+#
+class ImagePaint(Paint,SetFields)
+   public 
+      image_file, 
+      image_str,
+      image_window,
+      win,
+      scale_up_flag,
+      use_cache_flag,
+      dont_close,
+      max_w,
+      max_h
+
+   #
+   # Set the name of the file from which to load the image.
+   #
+   public set_file(x)
+      self.image_file := x
+   end
+
+   #
+   # Set an image in Icon image format.
+   #
+   public set_image(x)
+      self.image_str := x
+   end
+
+   #
+   # Set a window to use as the image source.  It will not be closed.
+   #
+   public set_window(x)
+      self.image_window := x
+   end
+
+   #
+   # Set the maximum allowed width; the image will be scaled if necessary.
+   #
+   public set_max_w(w)
+      self.max_w := w
+   end
+
+   #
+   # Set the maximum allowed height; the image will be scaled if necessary.
+   #
+   public set_max_h(h)
+      self.max_h := h
+   end
+
+   #
+   # Set the maximum allowed size; the image will be scaled if necessary.
+   #
+   public set_max_size(w, h)
+      self.max_w := w
+      self.max_h := h
+   end
+   
+   #
+   # If set, then the image will be scaled up to fit in the space
+   # specified by {set_max_size()}.  The image will not be distorted, 
+   # but will be expanded to fill one of the dimensions depending 
+   # on its shape.  If the image is bigger than the specified size 
+   # then it will always be scaled down.
+   #
+   public set_scale_up(s)
+      self.scale_up_flag := check_flag(s)
+   end
+
+   #
+   # Indicate whether to use the image cache to load external files; by
+   # default "y".
+   #
+   public set_use_cache(s)
+      self.use_cache_flag := check_flag(s)
+   end
+
+   public initially(c)
+      /win | syserr("init called out of sequence")
+      load_image(c)
+      zoom_image()
+      if \win then {
+         self.w := win.attrib("width")
+         self.h := win.attrib("height")
+      } else
+         self.w := self.h := 0
+   end
+
+   public finally()
+      close_image()
+   end
+
+   public close_image()
+      if \win & /dont_close then {
+         Gui.style.dispose(win)
+         win.close()
+      }
+      dont_close := win := &null
+   end
+
+   public load_image(c)
+      local attribs
+      if \self.image_str then {
+         attribs := wattribs_to_list(c.get_effective_wattribs())
+         win := Window.open!(attribs ||| ["size=" || (0 < image_width(self.image_str)) || 
+                                    "," || (0 < image_height(self.image_str)),
+                                    "canvas=hidden"])
+         draw_image_ex(\win, 0, 0, self.image_str)
+      } else if \self.image_file then {
+         if \self.use_cache_flag then {
+            if win := ImageCache.get(self.image_file) then
+               dont_close := 1
+         } else
+            win := Window.open("image=" || self.image_file, "canvas=hidden")
+      } else if \self.image_window then {
+         win := self.image_window
+         dont_close := 1
+      }
+   end
+
+   public zoom_image()
+      local zoom_win, img_w, img_h,
+         asp_r, asp_max, zoom_w, zoom_h
+
+      if /win | (/max_w & /max_h) then
+         fail
+
+      img_w := win.attrib("width")
+      img_h := win.attrib("height")
+      if /self.scale_up_flag & 
+         (/max_w | img_w <= max_w)\1 & (/max_h | img_h <= \max_h) then
+         return
+
+      asp_r := real(img_w) / real(img_h)
+
+      if \max_w then {
+         if \max_h then {
+            asp_max := real(max_w) / real(max_h)
+            if asp_r > asp_max then {
+               zoom_w := max_w
+               zoom_h := integer(max_w / asp_r)
+            } else {
+               zoom_w := integer(max_h * asp_r)
+               zoom_h := max_h
+            }
+         } else {
+            # \max_w & /max_h
+            zoom_w := max_w
+            zoom_h := integer(max_w / asp_r)
+         }
+      } else {
+         # /max_w & \max_h
+         zoom_w := integer(max_h * asp_r)
+         zoom_h := max_h
+      }
+
+      zoom_w <:= 1
+      zoom_h <:= 1
+
+      zoom_win := Window.open("size=" || zoom_w || "," || zoom_h, 
+                              "canvas=hidden") | runerr("Couldn't open temp window")
+      Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
+
+      # Now swap the zoomed window into win.
+      close_image()
+      win := zoom_win
+   end
+
+   public draw(W, x, y)
+      Window.copy_area(\win, W,,,,, x, y)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "image" : set_image(f.string_val())
+         "file" : set_file(f.string_val())
+         "window" : set_window(f.object_val(Window))
+         "scale_up" : set_scale_up(f.flag_val())
+         "max_w" : set_max_w(f.int_val())
+         "max_h" : set_max_h(f.int_val())
+         "max_size" : set_max_size!(f.int_list_val(2))
+         "use_cache" : set_use_cache(f.flag_val())
+         default: fail
+      }
+      return
+   end
+
+   public new(a[])
+      self.use_cache_flag := 1
+      set_fields(a)
+      return
+   end
+end
+
+
+
+

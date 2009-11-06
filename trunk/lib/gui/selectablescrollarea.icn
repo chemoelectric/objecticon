@@ -1,0 +1,865 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import 
+   util, 
+   lang, 
+   graphics,
+   ipl.sets
+
+#
+# This class extends LineBasedScrollArea to provide selection on lines,
+# event handling and selection handling.
+#
+# @field select_mode=string : see {set_select_mode}
+# @field draggable_cursor=flag : see {set_draggable_cursor}
+# @field motion_cursor=flag : see {set_motion_cursor}
+# @field selection_on_key_moves=flag : see {set_selection_on_key_moves}
+# @field contents=list : see {set_contents}
+# @field selections=i1,i2,i3,... : see {set_selections}
+# @field see also {ScrollArea}
+#
+class SelectableScrollArea(LineBasedScrollArea)
+   public 
+      contents,
+      select_mode,
+      cursor,                                
+      selections,
+      old_cursor,
+      old_highlight,
+      old_selections,
+      going_up,
+      prev_cursor,
+      on_a_line,
+      highlight,
+      draggable_cursor,
+      motion_cursor,
+      selection_on_key_moves
+
+   public calculate_line_count()
+      return *self.contents
+   end
+
+   #
+   # Set the data to be displayed.
+   # @param x  The list of data.
+   #
+   public set_contents(x)
+      self.contents := x
+      contents_changed()
+   end
+
+   #
+   # Ensure all the selections are valid lines.
+   #
+   private constrain_selections()
+      local i
+      every i := !self.selections do
+         if i > *self.contents then
+            delete(self.selections, i)
+   end
+
+   #
+   # Call this method if the contents list, previously
+   # set with {set_contents()}, has changed.
+   #
+   public contents_changed()
+      constrain_selections()
+      constrain_cursor()
+      invalidate_subject_width()
+      invalidate_line_height()
+      invalidate_line_count()
+      compute_and_invalidate()
+   end
+
+   #
+   # Keep the cursor within the bounds of the contents.
+   # 
+   private constrain_cursor()
+      if *self.contents = 0 then
+         self.cursor := &null
+      else {
+         /self.cursor := 1
+         self.cursor <:= 1
+         self.cursor >:= *self.contents
+      }
+   end
+
+   #
+   # Clear the selections.
+   #
+   public clear_selections()
+      self.selections := set()
+      refresh()
+   end
+
+   #
+   # Configure the object so that drags move the cursor (precludes using d&d with the
+   # component).
+   #
+   public set_draggable_cursor(s)
+      self.draggable_cursor := check_flag(s)
+   end
+
+   #
+   # Configure the object so that mouse motion moves the cursor.
+   #
+   public set_motion_cursor(s)
+      self.motion_cursor := check_flag(s)
+   end
+
+   #
+   # Configure whether moving the cursor via the keyboard alters the
+   # selection (the default behaviour).
+   #
+   public set_selection_on_key_moves(s)
+      self.selection_on_key_moves := check_flag(s)
+   end
+
+   #
+   # Configure the selection mode.
+   # @param s a constant from {Select}
+   #
+   public set_select_mode(s)
+      self.select_mode := s
+   end
+
+   #
+   # Return item currently under the clicked cursor
+   # @return The item number
+   #
+   public get_cursor()
+      return \self.cursor
+   end
+
+   #
+   # Return object currently under the clicked cursor
+   # @return The object
+   #
+   public object_get_cursor()
+      return self.contents[\self.cursor]
+   end
+
+   #
+   # Return item currently under the dnd highlight
+   # @return The item number
+   #
+   public get_highlight()
+      return \self.highlight
+   end
+
+   #
+   # Return object currently under the dnd highlight
+   # @return The object
+   #
+   public object_get_highlight()
+      return self.contents[\self.highlight]
+   end
+
+   #
+   # Return the item previously under the clicked cursor
+   # @return The item number
+   #
+   public get_prev_cursor()
+      return \self.prev_cursor
+   end
+
+   #
+   # Return object currently under the clicked cursor
+   # @return The object
+   #
+   public object_get_prev_cursor()
+      return self.contents[\self.prev_cursor]
+   end
+
+   #
+   # Find the line which contains the given object, or fail
+   #
+   public find_line(o)
+      local i
+      every i := 1 to *self.contents do {
+         if self.contents[i] === o then
+            return i
+      }
+   end
+
+   #
+   # Return a list of items selected (highlighted)
+   # @return A list of items currently selected
+   #
+   public get_selections()
+      return sort(self.selections)
+   end
+
+   #
+   # Return a list of objects selected (highlighted)
+   # @return A list of objects currently selected
+   #
+   public object_get_selections()
+      local r
+      r := []
+      every put(r, self.contents[!sort(self.selections)])
+      return r
+   end
+
+   #
+   # Set the current selections to the list l, which is a list of
+   # item numbers.
+   # @param l   The list of item numbers.
+   #
+   public set_selections(l)
+      self.selections := elementset(l)
+      constrain_selections()
+      refresh()
+   end
+
+   #
+   # Select the given line number
+   #
+   public select_line(i)
+      if 0 < i <= *self.contents then
+         insert(self.selections, i)
+      refresh()
+   end
+
+   #
+   # De-select the given line number
+   #
+   public deselect_line(i)
+      delete(self.selections, i)
+      refresh()
+   end
+
+   #
+   # Select the given object
+   #
+   public select_object(o)
+      select_line(find_line(o))
+   end
+
+   #
+   # De-select the given object
+   #
+   public deselect_object(o)
+      local i
+      every i := !self.selections do {
+         if self.contents[i] === o then {
+            delete(self.selections, i)
+            break
+         }
+      }
+      refresh()
+   end
+
+   #
+   # Set the current selections to the list l, which is a list of objects
+   # @param l  The list of objects.
+   #
+   public object_set_selections(l)
+      local i, t
+      self.selections := set()
+      t := elementset(l)
+      every i := 1 to *self.contents do {
+         if member(t, self.contents[i]) then
+            insert(self.selections, i)
+      }
+      refresh()
+   end
+
+   #
+   # Set the cursor to the given object.  Has no effect if o is not
+   # in the contents list.
+   #
+   public object_set_cursor(o)
+      set_cursor(find_line(o))
+   end
+
+   #
+   # Set the cursor to the given line
+   #
+   public set_cursor(line)
+      self.cursor := line
+      constrain_cursor()
+      refresh()
+   end
+
+   #
+   # Return the contents of the {ScrollArea}
+   #
+   public get_contents()
+      return self.contents
+   end
+
+   #
+   # Return the given line from the contents list.
+   #
+   public get_line(i)
+      return self.contents[i]
+   end
+
+   #
+   # Delete lines from content
+   # @param l the list of lines in ascending order.
+   #
+   public delete_lines(l)
+      local i, t1, t2
+
+      t1 := sort(self.selections)
+      t2 := set()
+      every i := 1 to *l do {
+         delete(self.contents, l[i] - i + 1)
+         while t1[1] < l[i] do
+            insert(t2, pop(t1)-i+1)
+         if t1[1] = l[i] then
+            pop(t1)
+      }
+      while insert(t2, pop(t1)-i)
+      self.selections := t2
+
+      constrain_cursor()
+
+      invalidate_subject_width()
+      invalidate_line_height()
+      invalidate_line_count()
+      compute_and_invalidate()
+   end
+
+   #
+   # Set the given lines in the content starting at pos n.  Any elements out
+   # of the bounds of the current content are ignored.
+   # @param l the lines
+   # @param n the position
+   #
+   public set_lines(l, n)
+      local i
+      every i := 1 to *l do
+         self.contents[i + n - 1] := l[i]
+      invalidate_subject_width()
+      invalidate_line_height()
+      compute_and_invalidate()
+   end
+
+   #
+   # Insert lines into content at pos n
+   # @param l the lines
+   # @param n the position
+   #
+   public insert_lines(l, n)
+      local i, e, t
+      every i := 1 to *l do
+         insert(self.contents, i + n - 1, l[i])
+
+      t := set()
+      every e := !self.selections do {
+         if e >= n then
+            e +:= *l
+         insert(t, e)
+      }
+      self.selections := t
+
+      invalidate_subject_width()
+      invalidate_line_height()
+      invalidate_line_count()
+      compute_and_invalidate()
+   end
+
+   #
+   # Move the given list of lines to the given position.
+   # @param l the lines in ascending order
+   # @param n the position
+   #
+   public move_lines(l, n)
+      local t, s, e, n1, i
+
+      # Save the moving lines into a list
+      t := []
+      every put(t, self.contents[!l])
+
+      # Get the place to insert after we've deleted l.
+      n1 := n
+      every e := !l do
+         if e < n then
+            n1 -:= 1
+
+      # Get the selections we need to add after re-insertion.
+      s := set()
+      every i := 1 to *l do {
+         if member(self.selections, l[i]) then
+            insert(s, n1 + i - 1)
+      }
+
+      # Delete, re-insert and adjust selections.
+      delete_lines(l)
+      insert_lines(t, n1)
+      self.selections ++:= s
+   end
+
+   private move_cursor_on_key(e, line)
+      set_cursor(line)
+      self.prev_cursor := self.cursor
+      if \self.selection_on_key_moves & (self.select_mode ~=== Select.NONE) then {
+         if not (\e.shift & (self.select_mode === Select.MANY)) then {
+            self.selections := set()
+         }
+         insert(self.selections, self.cursor)
+      }
+      ensure_line_visible(self.cursor)
+   end
+
+   public start_handle(e)
+      self.old_cursor := self.cursor
+      self.old_highlight := self.highlight
+      self.old_selections := get_selections()
+   end
+
+   public end_handle(e)
+      if self.cursor ~=== self.old_cursor then {
+         self.refresh()
+         fire(Event.CURSOR_MOVED, e)
+      }
+      if self.highlight ~=== self.old_highlight then {
+         self.refresh()
+      }
+      if not lang.equals(self.old_selections, get_selections()) then {
+         self.refresh()
+         fire(Event.SELECTION_CHANGED, e)
+      }
+   end
+
+   public handle_return(e)
+      if /self.cursor | (self.select_mode === Select.NONE) then
+         return
+
+      start_handle(e)
+      if not (\e.shift & (self.select_mode === Select.MANY)) then {
+         self.selections := set()
+      }
+      insert(self.selections, self.cursor)
+      end_handle(e)
+   end
+
+   public handle_key_page_up(e)
+      start_handle(e)
+      move_cursor_on_key(e, get_page_movement(get_cursor(), -1))
+      end_handle(e)
+   end
+
+   public handle_key_page_down(e)
+      start_handle(e)
+      move_cursor_on_key(e, get_page_movement(get_cursor(), 1))
+      end_handle(e)
+   end
+
+   public handle_key_up(e)
+      start_handle(e)
+      move_cursor_on_key(e, get_cursor() - 1)
+      end_handle(e)
+   end
+
+   public handle_key_down(e)
+      start_handle(e)
+      move_cursor_on_key(e, get_cursor() + 1)
+      end_handle(e)
+   end
+
+   public handle_key_left(e)
+      \self.hsb | fail
+      start_handle(e)
+      set_area_x(get_area_x() - self.hsb.increment_size)
+      end_handle(e)
+   end
+
+   public handle_key_right(e)
+      \self.hsb | fail
+      start_handle(e)
+      set_area_x(get_area_x() + self.hsb.increment_size)
+      end_handle(e)
+   end
+
+   public handle_key_home(e)
+      start_handle(e)
+      move_cursor_on_key(e, 1)
+      end_handle(e)
+   end
+
+   public handle_key_end(e)
+      start_handle(e)
+      move_cursor_on_key(e, *self.contents)
+      end_handle(e)
+   end
+
+   public handle_lpress(e)
+      local l
+      # on_a_line indicates whether the current ldrag started over a line.
+      self.on_a_line := &null
+      l := get_line_under_pointer(e) | fail
+      start_handle(e)
+      self.prev_cursor := self.cursor
+      self.cursor := l
+      self.on_a_line := 1
+      ensure_line_visible(self.cursor)
+      end_handle(e)
+   end
+
+   public handle_rpress(e)
+      local l
+      l := get_line_under_pointer(e) | fail
+      start_handle(e)
+      self.prev_cursor := self.cursor
+      self.cursor := l
+      ensure_line_visible(self.cursor)
+      end_handle(e)
+   end
+
+   public handle_select_all(e)
+      self.select_mode === Select.MANY | fail
+      start_handle(e)
+      every insert(self.selections, 1 to *self.contents)
+      end_handle(e)
+   end
+
+   public handle_move(e)
+      \self.motion_cursor | fail
+      start_handle(e)
+      self.cursor := get_nearest_line_to_pointer(e)
+      ensure_line_visible(self.cursor)
+      end_handle(e)
+   end
+
+   public on_vsb(e)
+      self.refresh()
+      #
+      # Simulate drag or move events if appropriate in order to
+      # keep the cursor in synch.
+      #
+      if view.is_held(Mouse.LEFT_PRESS) then
+         handle_ldrag(e)
+      else if (parent_dialog.get_held_count() = 0) & view.in_region(e) then
+         handle_move(e)
+   end
+
+   public handle_ldrag(e)
+      \self.draggable_cursor | fail
+
+      #
+      # This ensures we don't start scrolling with the ticker until we
+      # have crossed one line (or started on a line).   Needed for
+      # DropDown's list so that we don't scroll immediately the button is
+      # pressed.
+      #
+      /self.on_a_line := get_line_under_pointer(e)
+      \self.on_a_line | fail
+
+      start_handle(e)
+      if e.y < self.view.y then {
+         self.going_up := 1
+         check_ticker(self.view.y - e.y)
+      } else if e.y >= self.view.y + self.view.h then {
+         self.going_up := &null
+         check_ticker(e.y - (self.view.y + self.view.h))
+      } else {
+         self.cursor := get_nearest_line_to_pointer(e)
+         ensure_line_visible(self.cursor)
+         stop_ticker()
+      }
+      end_handle(e)
+   end
+
+   public check_ticker(d)
+      local r
+      r := Gui.style.distance2ticker_rate(d)
+      if is_ticking() then
+         retime_ticker(r)
+      else
+         start_ticker(r)
+   end
+
+   public tick()
+      local i
+      start_handle()
+      i := get_line_info() | fail
+      if \self.highlight then {
+         if \going_up then {
+            self.highlight := i.first_whole - 1
+            self.highlight <:= 1
+            goto_first(self.highlight)
+         } else {
+            self.highlight := i.last_whole + 1
+            self.highlight >:= *self.contents 
+            goto_last(self.highlight)
+         }
+      } else {
+         if \going_up then {
+            self.cursor := i.first_whole - 1
+            self.cursor <:= 1
+            goto_first(self.cursor)
+         } else {
+            self.cursor := i.last_whole + 1
+            self.cursor >:= *self.contents 
+            goto_last(self.cursor)
+         }
+      }
+      end_handle()
+   end
+
+   public handle_lrelease(e)
+      start_handle(e)
+
+      #
+      # Mouse released after being held down.  Clear flag
+      #
+      stop_ticker()
+      #
+      # Clear flag, refresh, return event
+      #
+      if (self.select_mode ~=== Select.NONE) & (get_line_under_pointer(e) = self.cursor) then {
+         if (self.select_mode === Select.MANY) & (\e.shift | \e.ctrl) then {
+            if \e.ctrl then {
+               if member(self.selections, self.cursor) then
+                  delete(self.selections, self.cursor) 
+               else
+                  insert(self.selections, self.cursor)
+            } else {
+               #
+               # shift
+               #
+               if \self.prev_cursor then {
+                  if self.prev_cursor > self.cursor then {
+                     every insert(self.selections, self.cursor to self.prev_cursor)
+                  } else {
+                     every insert(self.selections, self.prev_cursor to self.cursor)
+                  }
+               } else {
+                  insert(self.selections, self.cursor)
+               }                  
+            }
+         } else {
+            self.selections := set()
+            insert(self.selections, \self.cursor)
+         }
+      }
+      ensure_line_visible(\self.cursor)
+      end_handle(e)
+   end
+
+   public handle_key_escape(e)
+      start_handle(e)
+      clear_selections()
+      end_handle(e)
+   end
+
+   public handle_key(e)
+      case e.code of {
+         Key.HOME : handle_key_home(e)
+         Key.END : handle_key_end(e)
+         Key.PGUP : handle_key_page_up(e)
+         Key.PGDN : handle_key_page_down(e)
+         Key.UP : handle_key_up(e)
+         Key.DOWN : handle_key_down(e)
+         Key.LEFT : handle_key_left(e)
+         Key.RIGHT : handle_key_right(e)
+         "\r" | "\l": handle_return(e)
+         "\e" : handle_key_escape(e)
+         "\^a" : handle_select_all(e)
+      }
+   end
+
+   public keeps(e)
+      return member(Key.CURSOR, e.code)
+   end
+
+   public object_get_gesture_selections()
+      \self.cursor | fail
+      if member(self.selections, self.cursor) then
+         return object_get_selections()
+      else
+         return [self.contents[self.cursor]]
+   end
+
+   public get_gesture_selections()
+      \self.cursor | fail
+      if member(self.selections, self.cursor) then
+         return get_selections()
+      else
+         return [self.cursor]
+   end
+
+   public draw(r)
+      local rev, xp, yp, i, info, selection_cw, cursor_cw, highlight_cw, h, lh
+
+      info := get_line_info() | fail
+      h := get_line_height()
+      yp := view.y - info.offset
+      xp := view.x - get_area_x()
+      rev := Gui.style.get_selection_clone(view.cbwin)
+
+      #
+      # Write the lines
+      #
+      every i := info.first to info.last do {
+         # Setup cloned windows
+         selection_cw := if member(self.selections, i) then rev else &null
+         if i = \self.cursor then {
+            if self.has_focus() & self.is_unshaded() then
+               cursor_cw := Gui.style.get_focus_clone(view.cbwin)
+            else
+               cursor_cw := Gui.style.get_dashed_clone(view.cbwin)
+         }
+         if i = \self.highlight then {
+            highlight_cw := Gui.style.get_highlight_clone(view.cbwin)
+         }
+
+         lh := integer(h) | h[i]
+
+         # Draw the line
+         draw_line(xp, yp, lh, i, r, selection_cw, cursor_cw, highlight_cw)
+
+         # Uncouple cloned windows.
+         if \cursor_cw then {
+            cursor_cw.uncouple()
+            cursor_cw := &null
+         }
+         if \highlight_cw then {
+            highlight_cw.uncouple()
+            highlight_cw := &null
+         }
+         yp +:= lh
+      }
+      rev.uncouple()
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "select_mode" : set_select_mode(f.string_val())
+         "draggable_cursor" : set_draggable_cursor(f.flag_val())
+         "motion_cursor" : set_motion_cursor(f.flag_val())
+         "selection_on_key_moves" : set_selection_on_key_moves(f.flag_val())
+         "contents" : set_contents(f.list_val())
+         "selections" : set_selections(f.int_list_val())
+         default: return cast(self,LineBasedScrollArea).set_one(f)
+      }
+      return
+   end
+
+   #
+   # This method is overridden by the subclass to draw the given 
+   # line at the given position, as well as the selection drawing.
+   # Alternatively, the simpler method {draw_line_data()} below
+   # can be overridden - this just has to draw the data, and leaves the selection drawing to
+   # be done by this class.
+   #
+   # @param xp  The x position it should be drawn at
+   # @param yp  The y position it should be drawn at
+   # @param lh  The line height allowed for this line
+   # @param i   The line number to draw
+   # @param r   The view's clipping region.
+   # @param selection_cw If non-null, this cloned window must be used to show a selected line
+   # @param cursor_cw    If non-null, this cloned window must be used to show the cursor
+   # @param highlight_cw If non-null, this cloned window must be used to show the highlight
+   #
+   public draw_line(xp, yp, lh, i, r, selection_cw, cursor_cw, highlight_cw)
+      draw_line_data(xp, yp, lh, i, r)
+      if \selection_cw then
+         selection_cw.fill_rectangle(self.view.x, yp, self.view.w, lh)
+
+      if \cursor_cw then 
+         rectangle(cursor_cw, self.view.x, yp, self.view.w, lh)
+
+      if \highlight_cw then
+         rectangle(highlight_cw, self.view.x, yp, self.view.w, lh)
+   end
+
+   public defer draw_line_data(xp, yp, lh, i, r)
+
+   public can_drag(ev)
+      if (ev.code === Mouse.LEFT_DRAG) & view.is_held(Mouse.LEFT_PRESS) & 
+                   /self.draggable_cursor & \self.on_a_line then
+         return self.object_get_gesture_selections()
+   end
+
+   public drag_event(drag, e)
+      start_handle(e)
+
+      # Do we already have the highlight, ie are we drag holder?
+      #
+      if \self.highlight then {
+         # Yes - are we above, below or in the view?
+         #
+         if self.view.x <= e.x < self.view.x + self.view.w then {
+            # Yes - move the highlight just like we drag the cursor.
+            #
+            if e.y < self.view.y then {
+               self.going_up := 1
+               check_ticker(self.view.y - e.y)
+            }
+            else if e.y >= self.view.y + self.view.h then {
+               self.going_up := &null
+               check_ticker(e.y - (self.view.y + self.view.h))
+            } else {
+               self.highlight := get_nearest_line_to_pointer(e)
+               ensure_line_visible(self.highlight)
+               stop_ticker()
+            }
+         } else {
+            # We've gone to the left or right of the view, so stop being drag holder.
+            stop_ticker()
+            self.highlight := &null
+         }
+      } else {
+         # We're not drag holder.  We require drag over a line to get started.
+         if self.highlight := self.get_line_under_pointer(e) then
+            ensure_line_visible(self.highlight)
+         else
+            self.highlight := &null
+      }
+      end_handle(e)
+
+      return \self.highlight
+   end
+
+   public can_drop(drag, e)
+      # Only permit a drop if the highlight is actually over a line, as opposed to
+      # scrolling,  in which case we will stay as drag holder, but not allow
+      # a drop.
+      if self.highlight === self.get_line_under_pointer(e) then
+         return self.object_get_highlight()
+   end
+
+   public drag_reset(e)
+      if \self.highlight then {
+         start_handle(e)
+         self.highlight := &null
+         stop_ticker()
+         end_handle(e)
+      }
+   end
+
+   public new(a[])
+      cast(self,ScrollArea).new()
+      self.set_accepts_focus(&yes)
+      self.select_mode := Select.NONE
+      self.contents := []
+      self.selections := set()
+      self.selection_on_key_moves := 1
+      view.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      view.connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
+      view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      view.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      view.connect(self.handle_move, Event.MOUSE_MOVEMENT)
+      connect(self.handle_key, Event.KEY_PRESS)
+      set_fields(a)
+      return
+   end
+end
+
+
+
+
+

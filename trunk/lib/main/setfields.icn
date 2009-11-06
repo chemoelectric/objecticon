@@ -1,0 +1,227 @@
+#
+# $Id$
+#
+
+package util
+
+import lang(Class)
+
+class Field()
+   public const 
+      attr,
+      val,
+      obj
+
+   public as_attrib() 
+      return attr || "=" || string_val() 
+   end
+
+   public flag_val()
+      return flag(val) | field_error("Need a boolean parameter")
+   end
+
+   public int_val()
+      return /val | integer(val) | field_error("Need an integer parameter")
+   end
+
+   public table_val()
+      type(\val) == "table" | field_error("Need a table paramter")
+      return val
+   end
+
+   public int_list_val(n)
+      return list_val(n, "integer")
+   end
+
+   public numeric_val()
+      return /val | numeric(val) | field_error("Need a single numeric parameter")
+   end
+
+   public numeric_list_val(n)
+      return list_val(n, "numeric")
+   end
+
+   public cset_val()
+      return /val | cset(val) | field_error("Need a single cset parameter")
+   end
+
+   public cset_list_val(n)
+      return list_val(n, "cset")
+   end
+
+   public string_val()
+      return /val | string(val) | field_error("Need a single string parameter")
+   end
+
+   public string_list_val(n)
+      return list_val(n, "string")
+   end
+
+   public ucs_val()
+      return /val | ucs(val) | field_error("Need a single ucs parameter")
+   end
+
+   public ucs_list_val(n)
+      return list_val(n, "ucs")
+   end
+
+   public text_val()
+      return /val | text(val) | field_error("Need a single text (ucs/string) parameter")
+   end
+
+   public text_list_val(n)
+      return list_val(n, "text")
+   end
+
+   public object_val(t)
+      if /val then
+         return val
+      if \t then
+         is(val, t) | field_error("Need object of type: " || Class.get_name(t))
+      return val
+   end
+
+   public val_of_type(t)
+      if /val then
+         return val
+      if \t then
+         type(val) == t | field_error("Need object of type: " || t)
+      return val
+   end
+
+   public list_val(n, type_name)
+      local l, t, e, p
+      if /val then
+         return val
+      p := proc(\type_name)
+
+      if type(val) == "list" then {
+         if *val < \n then
+            field_error("Need " || n || " parameters")
+         if \p then {
+            case type_name of {
+               "numeric": {
+                  every e := !val do
+                     type(e) == ("null" | "real" | "integer") | field_error("Need " || type_name || " parameters")
+               }
+               "text": {
+                  every e := !val do
+                     type(e) == ("null" | "string" | "ucs") | field_error("Need " || type_name || " parameters")
+               }
+               default: {
+                  every e := !val do
+                     type(e) == ("null" | type_name) | field_error("Need " || type_name || " parameters")
+               }
+            }
+         }
+         return val
+      }
+
+      l := []
+      val ? {
+         while t := tab(find(",")) do {
+            if *t = 0 then
+               put(l, &null)
+            else if \p then
+               put(l, p(t)) | field_error("Need " || type_name || " parameters")
+            else
+               put(l, t)
+            move(1)
+         }
+         t := tab(0)
+         if *t = 0 then {
+            if *l > 0 then
+               put(l, &null)
+         }
+         else if \p then
+            put(l, p(t)) | field_error("Need " || type_name || " parameters")
+         else
+            put(l, t)
+      }
+
+      if *l < \n then
+         field_error("Need " || n || " parameters")
+
+      return l
+   end
+
+   #
+   # Invoked on a field setup error: stop with an error.  This is
+   # always a runerr.
+   # @param s the error message
+   #
+   public field_error(s)
+      runerr("attribute: " || attr || ": " || s, val)
+   end
+
+   public new(attr, val, obj)
+      self.attr := attr
+      self.val := val
+      self.obj := obj
+      return
+   end
+end
+
+class SetFields()
+   #
+   # Set attribs in the object by calling {set_one} for each attribute
+   # argument.  Note that {set_special} is NOT called first.
+   #
+   public attrib(a[])
+      set_fields_impl(a)
+   end
+
+   #
+   # Process a list of arguments; this should be called from the
+   # constructor.  First, {set_special} is called.  Then each
+   # remaining attribute rgument is processed by calling {set_one}
+   # with an appropriate {Field} instance.
+   #
+   # @param l the arguments list
+   #
+   protected set_fields(l)
+      l := copy(l)
+      set_special(l)
+      set_fields_impl(l)
+   end
+
+   private set_fields_impl(l)
+      local s, attr, val
+      while s := pop(l) do {
+         s ? {
+            if attr := tab(find("=")) then {
+               ="="
+               if pos(0) then
+                  val := pop(l) | runerr("setfields: Missing last param, attribute: " || attr)
+               else
+                  val := tab(0)
+            } else {
+               attr := s
+               val := &yes
+            }
+         }
+         set_one(Field(attr, val, self)) | runerr("setfields: Unknown attribute", attr)
+      }
+   end
+
+   #
+   # This must be implemented to set a single field.  It should succeed if the given field
+   # was known, or fail if it was unknown.
+   #
+   # @param f the {Field}
+   #
+   protected defer set_one(f)
+
+   #
+   # This empty method, which is called from {set_fields}, can be
+   # overridden to transform the arguments list before it is processed.
+   # @param l the arguments list
+   #
+   protected set_special(l)
+   end
+
+   public new(a[])
+      set_fields(a)
+      return
+   end
+end

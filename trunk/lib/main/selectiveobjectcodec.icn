@@ -1,0 +1,172 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package lang
+
+import util(error)
+
+record ClassInfo(template_els, fnum_map)
+record TemplateElement(ident, fnum)
+
+#
+# An implementation of {object_encode} and {object_decode}.  The
+# subclass may override a static method {get_template()} to generate
+# a list of pairs.  The first element of each pair is an arbitrary
+# identifier used to identify the field; the second element is the
+# name of the field.
+#
+# @example
+# @   # This will save the three fields {increment_size}, {value} and 
+# @   # {is_range_flag}.
+# @   private static get_template()
+# @      suspend
+# @          ["Increment Size", "increment_size"] |
+# @          ["Value", "value"] |
+# @          ["Is Range Flag", "is_range_flag"]
+# @   end
+#
+# The programmer may change the name of the field afterwards; for
+# example {value} may be re-named {initial_value}, and the data would
+# still be restored correctly, so long as the {get_template()} method
+# was updated appropriately.
+#
+# Alternatively, any of the pairs may be a string field name, in which
+# the label is the field name itself.  This does not permit the field
+# name to change without rendering the encoded string invalid.
+#
+# If not implemented by a subclass, a default {get_template()}
+# suspends all of the fields in the class.
+#
+class SelectiveObjectCodec()
+   #
+   # This empty method may be overridden; it is invoked just before
+   # the object is encoded.
+   #
+   protected pre_encode()
+   end
+
+   #
+   # This empty method may be overridden; it is invoked just after
+   # the object has been encoded.
+   #
+   protected post_encode()
+   end
+
+   #
+   # This empty method may be overridden; it is invoked just before
+   # the object is decoded.
+   #
+   protected pre_decode()
+   end
+
+   #
+   # This empty method may be overridden; it is invoked just after
+   # the object has been decoded.
+   #
+   protected post_decode()
+   end
+
+   private object_encode(e)
+      local p, m, x
+
+      p := load_structs(classof(self))
+
+      pre_encode()
+      m := p.fnum_map
+      e.encode(*p.template_els) | fail
+      if /e.fast_flag then {
+         every x := !p.template_els do {
+            e.encode(x.ident) | fail
+            e.encode(Class.get(self, x.fnum)) | fail
+         }
+      } else {
+         every x := !p.template_els do
+            e.encode(Class.get(self, x.fnum)) | fail
+      }
+      post_encode()
+      return
+   end
+
+   private object_decode(e)
+      local p, m, v, f, n, x
+
+      p := load_structs(classof(self))
+
+      pre_decode()
+      m := p.fnum_map
+      n := integer(e.decode()) | fail
+      if /e.fast_flag then {
+         every 1 to n do {
+            (f := e.decode() &
+             v := e.decode()) | fail
+            Class.get(self, \m[f]) := v
+         }
+      } else {
+         n = *p.template_els | return error("Mismatch length versus template_els")
+         every x := !p.template_els do {
+            v := e.decode() | fail
+            Class.get(self, x.fnum) := v
+         }
+      }
+      post_decode()
+      return
+   end
+
+   #
+   # Get the conversion info structures for the given class, using
+   # caching for efficiency.  The result is a record with two items.
+   # The first element is a list of pairs of field identifiers and
+   # numbers to read/write.  The second element is a table mapping the
+   # field ids to field numbers.
+   #
+   # @param cl the class being encoded/decoded.
+   #
+   private static load_structs(cl)
+      local e, fnum, fnum_map, template_els, p, x
+      static cache
+      initial {
+         cache := table()
+      }
+
+      if x := member(cache, cl) then
+         return x
+
+      # Create a list of field ident/number pairs and a table mapping
+      # field idents to class field indices.  Check for duplicate
+      # names and non-existent variable names.
+      #
+      template_els := []
+      fnum_map := table()
+      every e := cl.get_template(cl) do {
+         if type(e) == "string" then {
+            fnum := Class.get_field_index(cl, e) | runerr("SelectiveObjectCodec: unknown field: " || e)
+            /fnum_map[e] := fnum | runerr("SelectiveObjectCodec: duplicate field: " || e)
+            put(template_els, TemplateElement(e, fnum))
+         } else {
+            fnum := Class.get_field_index(cl, e[2]) | runerr("SelectiveObjectCodec: unknown field: " || e[2])
+            /fnum_map[e[1]] := fnum | runerr("SelectiveObjectCodec: duplicate field: " || e[1])
+            put(template_els, TemplateElement(e[1], fnum))
+         }
+      }
+
+      p := ClassInfo(template_els, fnum_map)
+      insert(cache, cl, p)
+      return p
+   end
+
+   #
+   # This method may be overridden by a subclass to return the field
+   # template (see above).  By default, the method generates all of
+   # the instance fields of the class.
+   #
+   # @param cl the class being encoded/decoded.
+   #
+   protected static get_template(cl)
+      suspend Class.get_instance_field_names(cl)
+   end
+end

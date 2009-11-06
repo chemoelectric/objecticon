@@ -1,0 +1,192 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package lang
+
+import posix, io, util
+
+#
+# This class is a convenient way of creating a sub-process in a program,
+#
+class Process()
+   private readable
+      pid,
+      p
+
+   #
+   # Called by the parent process to start the child
+   #
+   public start()
+      pid := System.fork() | fail
+      if pid = 0 then {
+         run()
+         exit(0)
+      }
+      return
+   end
+   
+   #
+   # Called by the parent.  The method waits for the child to terminate.  The
+   # child process will no longer exist after this call, so it resets pid to
+   # &null.
+   #
+   public join()
+      System.wait(\pid) | fail
+      pid := &null
+      return
+   end
+
+   #
+   # Called by the parent to kill the child.  Then the {join} method is invoked.
+   #
+   public stop()
+      System.kill(\pid, Signal.SIGTERM) | fail
+      join() | fail
+      return
+   end
+
+   #
+   # Invoke the code of the process.
+   #
+   public run()
+      p()
+   end
+
+   #
+   # Set the procedure to run as the body of the process; alternatively
+   # subclass and override the {run()} method.
+   #
+   public set_proc(p)
+      self.p := p
+   end
+
+   public new(p)
+      self.p := p
+      return
+   end
+end
+
+# This class is similar to {Process}, but it sets up a socket
+# connection between the parent and child processes to allow them to
+# communicate in a bi-directional fashion.
+#
+class CommProcess()
+   private readable
+      pid,
+      p,
+      sock
+
+   #
+   # Called by the parent process to start the child
+   #
+   public start()
+      local l
+      l := SocketStream.socketpair() | fail
+      pid := System.fork() | fail
+      if pid = 0 then {
+         sock := l[1]
+         l[2].close()
+         run()
+         sock.close()
+         exit(0)
+      } else {
+         sock := l[2]
+         l[1].close()
+      }
+   end
+
+   #
+   # Send an object to the other process.
+   # 
+   public send(obj)
+      local s
+      # The message format is <len><nl><encoded-data>; knowing the
+      # length in advance lets us potentially get all the encoded data
+      # in one low-level socket read, which is much faster.
+      s := encode(obj, 1)
+      sock.write(*s) | fail
+      return sock.writes(s)
+   end
+
+   #
+   # Receive an object from the other process.
+   #
+   public receive()
+      local s, n
+      s := sock.read() | fail
+      n := integer(s) | return error("Expected integer size, got: " || s)
+      return decode(sock.reads(n))
+   end
+
+   #
+   # Attempt to get an object from the socket, failing if one is not
+   # ready immediately.
+   #
+   public attempt()
+      return poll(0)
+   end
+
+   #
+   # Poll the socket for some available data, waiting for {t}
+   # milliseconds.  If data becomes available then return it, else
+   # fail.
+   #
+   public poll(t)
+      DescStream.poll(sock, Poll.IN, t) | fail
+      return receive()
+   end
+
+   #
+   # Return the socket
+   #
+   public get_sock()
+      return .sock
+   end
+
+   #
+   # Called by the parent.  The method waits for the child to terminate.  The
+   # child process will no longer exist after this call, so it resets pid to
+   # &null and closes the socket.
+   #
+   public join()
+      System.wait(\pid) | fail
+      sock.close()
+      pid := &null
+      return
+   end
+
+   #
+   # Called by the parent to kill the child.  Then the {join} method is invoked.
+   #
+   public stop()
+      System.kill(\pid, Signal.SIGTERM) | fail
+      join() | fail
+      return
+   end
+
+   #
+   # Invoke the code of the process.
+   #
+   public run()
+      p()
+   end
+
+   #
+   # Set the procedure to run as the body of the process; alternatively
+   # subclass and override the {run()} method.
+   #
+   public set_proc(p)
+      self.p := p
+   end
+
+   public new(p)
+      self.p := p
+      return
+   end
+end
+

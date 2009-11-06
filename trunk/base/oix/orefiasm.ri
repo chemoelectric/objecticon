@@ -1,0 +1,23 @@
+static word coexp_bang_impl_code[] = {
+   Op_Refresh,
+   Op_FrameVar,
+   0,
+   Op_FrameVar,
+   0,
+   1,
+   (word)&coexp_bang_impl_code[19],
+   Op_Coact,
+   Op_Tmp,
+   0,
+   Op_Knull,
+   Op_FrameVar,
+   0,
+   (word)&coexp_bang_impl_code[19],
+   Op_CSuspend,
+   Op_Tmp,
+   0,
+   Op_Goto,
+   (word)&coexp_bang_impl_code[7],
+   Op_CFail,
+};
+CustomProc(coexp_bang_impl,coexp_bang_impl_code,1,0,0,1,0,0,"internal:coexp_bang_impl")

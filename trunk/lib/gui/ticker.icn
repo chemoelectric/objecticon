@@ -1,0 +1,122 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import util
+
+#
+# This class is used to generate "tick" events
+# at regular intervals.  These events will be fired
+# between the handling of input and repaint events,
+# so at least one dialog has to be open for the
+# Ticker class to work.
+#
+# The following will cause the method on_tick of object
+# obj to be invoked roughly every 2 seconds.
+#
+# @example
+# @ t := Ticker("interval=2000")
+# @ t.connect(obj.on_tick, Event.TICK)
+# @ t.start()
+#
+# @field interval=integer : see {set_interval}
+# @field delay=integer : see {set_delay}
+# @field times=integer : see {set_times}
+#
+class Ticker(SetFields,Connectable)
+   private readable
+      interval,
+      delay
+
+   package readable
+      times,
+      start_time,        # Time start() called
+      last_tick_time,    # Time tick() last called, or &null
+      next_tick_time
+
+   #
+   # This method is called repeatedly by the Dispatcher.  It
+   # fires off events to its listeners.
+   #
+   public tick()
+      fire(Event.TICK)
+   end
+
+   #
+   # Start the ticker process, with the {tick()}
+   # method being invoked according to the {interval}, {delay}
+   # and {times} paramters.
+   #
+   public start()
+      Dispatcher.start_ticker(self)
+   end
+
+   #
+   # Stop the ticker.
+   #
+   public stop()
+      Dispatcher.stop_ticker(self)
+   end
+
+   #
+   # Set the interval.
+   #
+   # @param n   the ticker interval in milliseconds.
+   #
+   public set_interval(n)
+      self.interval := n
+      Dispatcher.adjust_ticker(self)
+   end
+
+   #
+   # Set the initial delay between the start and the first tick.
+   #
+   # @param d   the initial delay, if any (default 0)
+   #
+   public set_delay(n)
+      self.delay := n
+      Dispatcher.adjust_ticker(self)
+   end
+
+   #
+   # Set the number of times to tick.
+   #
+   # @param c   the number of times to invoke (default infinite).
+   #
+   public set_times(n)
+      self.times := n
+   end
+
+   #
+   # Succeeds if and only if the ticker is active.
+   #
+   public is_ticking()
+      return Dispatcher.is_ticking(self)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "interval": set_interval(f.int_val())
+         "delay" : set_delay(f.int_val())
+         "times" : set_times(f.int_val())
+         default: fail
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Connectable).new()
+      set_fields(a)
+      return
+   end
+end
+
+
+
+

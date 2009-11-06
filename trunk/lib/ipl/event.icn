@@ -1,0 +1,47 @@
+############################################################################
+#
+#	File:     event.icn
+#
+#	Subject:  Procedure to produces events from a window event history
+#
+#	Author:   Ralph E. Griswold
+#
+#	Date:     April 30, 1996
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#  NextEvent(win) overloads the built-in function NextEvent() and produces
+#  events using evplay().
+#
+############################################################################
+#
+#  Requires:  Version 9 graphics
+#
+############################################################################
+#
+#  Links:  evplay
+#
+############################################################################
+
+package ipl.event
+
+import
+   io(stop),
+   ipl.evplay(evplay)
+
+procedure NextEvent(win)
+   static NextEvent_
+
+   initial {
+      NextEvent_ := proc("NextEvent", 0) | stop("*** cannot get built-in NextEvent()")
+      }
+
+   evplay(win) | exit()
+
+   return NextEvent_(win)
+
+end

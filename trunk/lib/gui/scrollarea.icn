@@ -1,0 +1,522 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+import graphics
+
+#
+# This is a base class for displaying an arbitrarily large object
+# using a pair of scroll bars.  This specification of the object is
+# provided by implementing methods in a subclass.
+#
+# @field wheel_factor=integer : see {set_wheel_factor}
+# @field vertical_increment=integer : see {set_vertical_increment}
+# @field horizontal_increment=integer : see {set_horizontal_increment}
+# @field see also {Component}
+#
+class ScrollArea(Component)
+   public 
+      hsb,              
+      vsb,
+      view,
+      subject_width,       
+      subject_height,
+      wheel_factor,
+      vertical_increment,
+      horizontal_increment,
+      use_default_keys_flag
+
+   #
+   # The x offset into the object we are viewing
+   #
+   public get_area_x()
+      return (\self.hsb).get_value() | 0
+   end
+
+   #
+   # The y offset into the object we are viewing
+   #
+   public get_area_y()
+      return (\self.vsb).get_value() | 0
+   end
+
+   #
+   # The virtual x position of the subject
+   #
+   public get_subject_x()
+      return self.view.x - get_area_x()
+   end
+
+   #
+   # The virtual y position of the subject
+   #
+   public get_subject_y()
+      return self.view.y - get_area_y()
+   end
+
+   #
+   # Recompute the scrollbars and redisplay the object.
+   #
+   public compute_and_invalidate()
+      is_live() | fail
+      self.set_internal_fields()
+      self.invalidate()
+   end
+
+   public get_default_height()
+      return get_subject_height() + border.get_total_height()
+   end
+
+   public get_default_width()
+      return get_subject_width() + border.get_total_width()
+   end
+
+   public layout()
+      self.set_internal_fields()
+   end
+
+   public on_vsb(e)
+      self.refresh()
+   end
+
+   public on_hsb(e)
+      self.refresh()
+   end
+
+   #
+   # Goto a horizontal pos.
+   #
+   public set_area_x(horiz)
+      if \self.hsb then {
+         self.hsb.set_value(horiz)
+         self.refresh()
+      }
+   end
+
+   #
+   # Goto a vertical pos.
+   #
+   public set_area_y(vert)
+      if \self.vsb then {
+         self.vsb.set_value(vert)
+         self.refresh()
+      }
+   end
+
+   #
+   # Set the wheel factor, being the number of vertical increments to
+   # move on a wheel press; if not set then the scrollbar will use
+   # its default value.
+   #
+   public set_wheel_factor(n)
+      self.wheel_factor := n
+   end
+
+   #
+   # Get the wheel_factor
+   #
+   public get_wheel_factor()
+      return self.wheel_factor
+   end
+
+   #
+   # Set the vertical increment, which is the amount moved on a press on
+   # the small button; if not set then the subclass's method
+   # {get_default_vertical_increment()} is used for the value.
+   #
+   public set_vertical_increment(n)
+      self.vertical_increment := n
+   end
+
+   public get_vertical_increment()
+      return self.vertical_increment
+   end
+
+   #
+   # Set the horizontal increment, which is the amount moved on a press on
+   # the small button; if not set then the subclass's method
+   # {get_default_horizontal_increment()} is used for the value.
+   #
+   public set_horizontal_increment(n)
+      self.horizontal_increment := n
+   end
+
+   public get_horizontal_increment()
+      return self.horizontal_increment
+   end
+
+   public predict_view_width(w, sb)
+      local w1
+      w1 := w - border.get_total_width()
+      if \sb then
+         w1 -:= ScrollBar.DEFAULT_SIZE
+      return w1
+   end
+
+   public predict_total_width(vw, sb)
+      local w1
+      w1 := vw + border.get_total_width()
+      if \sb then
+         w1 +:= ScrollBar.DEFAULT_SIZE
+      return w1
+   end
+
+   public predict_view_height(h, sb)
+      local h1
+      h1 := h - border.get_total_height()
+      if \sb then
+         h1 -:= ScrollBar.DEFAULT_SIZE
+      return h1
+   end
+
+   public predict_total_height(vh, sb)
+      local h1
+      h1 := vh + border.get_total_height()
+      if \sb then
+         h1 +:= ScrollBar.DEFAULT_SIZE
+      return h1
+   end
+
+   #
+   # Set an ideal size (into w_spec/h_spec) based on the given min and max
+   # dimensions.
+   #
+   public set_ideal_size(min_w, max_w, min_h, max_h)
+      local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb
+
+      max_tw := predict_view_width(max_w)
+      min_tw := predict_view_width(max_w, 1)
+      max_th := predict_view_height(max_h)
+      min_th := predict_view_height(max_h, 1)
+
+      if min_th >= get_subject_height() then
+         need_vsb := 0
+      else if max_th >= get_subject_height() then
+         need_vsb := 1
+      else
+         need_vsb := 2
+
+      if min_tw >= get_subject_width() then
+         need_hsb := 0
+      else if max_tw >= get_subject_width() then
+         need_hsb := 1
+      else
+         need_hsb := 2
+
+      # ptw(pvw(x))=x
+      # ptw(pvw(x,1),1)=x
+      # ptw(x) < ptw(x,1)
+      # pvw(x) > pvw(x,1)
+
+      if (need_vsb < 2) & (need_hsb < 2) then {
+         # sw <= pvw(max_w,1)
+         # w_spec = ptw(sw) <= ptw(pvw(max_w,1)) < ptw(pvw(max_w,1),1) = max_w
+         w_spec := predict_total_width(get_subject_width())
+         h_spec := predict_total_height(get_subject_height())
+      } else if (need_hsb + need_vsb > 2) then {
+         w_spec := max_w
+         h_spec := max_h
+      } else if (need_hsb = 0) & (need_vsb = 2) then {
+         # sw <= pvw(max_w,1) (since need_hsb=0)
+         # w_spec = ptw(sw,1) <= ptw(pvw(max_w,1),1) = max_w
+         w_spec := predict_total_width(get_subject_width(), 1)
+         h_spec := max_h
+      } else if (need_hsb = 2) & (need_vsb = 0) then {
+         w_spec := max_w
+         h_spec := predict_total_height(get_subject_height(), 1)
+      }
+
+      w_spec <:= min_w
+      h_spec <:= min_h
+   end
+
+   #
+   # Called on resize, buttons resized, or contents amended
+   #
+   public set_internal_fields()
+      local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb, 
+         new_vsb, new_hsb, i
+
+      #
+      # Position and size of scrolling region
+      #
+      view.x := self.x + border.get_l_inset()
+      view.y := self.y + border.get_t_inset()
+      max_tw := self.w - border.get_total_width()
+      max_th := self.h - border.get_total_height()
+      min_th := max_th - ScrollBar.DEFAULT_SIZE
+      min_tw := max_tw - ScrollBar.DEFAULT_SIZE
+
+      #
+      # Set flags indicating whether scroll bars needed.  0 => definitely not
+      # 1 => yes if opposite scroll bar needed; 2 => definitely yes.
+      #
+      if min_th >= get_subject_height() then
+         need_vsb := 0
+      else if max_th >= get_subject_height() then
+         need_vsb := 1
+      else
+         need_vsb := 2
+
+      if min_tw >= get_subject_width() then
+         need_hsb := 0
+      else if max_tw >= get_subject_width() then
+         need_hsb := 1
+      else
+         need_hsb := 2
+
+      #
+      # Case analysis on flags to set up correct scroll bars, text width
+      # and height fields.
+      #
+      if (need_vsb < 2) & (need_hsb < 2) then {
+         #
+         # No scroll bars.
+         #
+         view.w := max_tw
+         view.h := max_th
+         (\self.vsb).finally()
+         (\self.hsb).finally()
+         self.remove(\self.vsb)
+         self.remove(\self.hsb)
+         self.vsb := self.hsb := &null
+      } else if (need_hsb + need_vsb > 2) then {
+         #
+         # Two scroll bars.
+         #
+         if /self.vsb := ScrollBar() then
+            new_vsb := 1
+         if /self.hsb := ScrollBar() then {
+            self.hsb.set_is_horizontal(&yes)
+            new_hsb := 1
+         }
+
+         view.w := min_tw
+         view.h := min_th
+
+         self.vsb.x := self.x + self.w - ScrollBar.DEFAULT_SIZE - border.get_r_inset()
+         self.vsb.y := self.y + border.get_t_inset()
+         self.vsb.w := ScrollBar.DEFAULT_SIZE
+         self.vsb.h := self.h - ScrollBar.DEFAULT_SIZE - border.get_total_height()
+
+         self.hsb.x := self.x + border.get_l_inset()
+         self.hsb.y := self.y + self.h - ScrollBar.DEFAULT_SIZE - border.get_b_inset()
+         self.hsb.w := self.w - ScrollBar.DEFAULT_SIZE - border.get_total_width()
+         self.hsb.h := ScrollBar.DEFAULT_SIZE
+      } else if (need_hsb = 0) & (need_vsb = 2) then {
+         #
+         # One vertical scroll bar.
+         #
+         if /self.vsb := ScrollBar() then
+            new_vsb := 1
+         (\self.hsb).finally()
+         self.remove(\self.hsb)
+         self.hsb := &null
+
+         view.w := min_tw
+         view.h := max_th
+
+         self.vsb.x := self.x + self.w - ScrollBar.DEFAULT_SIZE - border.get_r_inset()
+         self.vsb.y := self.y + border.get_t_inset()
+         self.vsb.w := ScrollBar.DEFAULT_SIZE
+         self.vsb.h := self.h  - border.get_total_height()
+      } else if (need_hsb = 2) & (need_vsb = 0) then {
+         #
+         # One horizontal scroll bar.
+         #
+         if /self.hsb := ScrollBar() then {
+            self.hsb.set_is_horizontal(&yes)
+            new_hsb := 1
+         }
+         (\self.vsb).finally()
+         self.remove(\self.vsb)
+         self.vsb := &null
+
+         view.w := max_tw
+         view.h := min_th
+
+         self.hsb.x := self.x + border.get_l_inset()
+         self.hsb.y := self.y + self.h - ScrollBar.DEFAULT_SIZE - border.get_b_inset()
+         self.hsb.w := self.w - border.get_total_width()
+         self.hsb.h := ScrollBar.DEFAULT_SIZE
+      }
+
+      #
+      # Initialize scroll bars.
+      #
+      if \self.vsb then {
+         if view.h > 0 then
+            self.vsb.set_page_size(view.h)
+         else
+            self.vsb.set_page_size(1)
+         self.vsb.set_total_size(get_subject_height())
+         i := \self.vertical_increment | get_default_vertical_increment()
+         self.vsb.set_increment_size(i)
+         if \new_vsb then {
+            self.vsb.set_wheel_component(self)
+            self.vsb.set_wheel_factor(\self.wheel_factor)
+            self.vsb.connect(self.on_vsb, Event.VALUE_CHANGED)
+            self.vsb.set_value(0)
+            self.add(self.vsb)
+            self.vsb.initially()
+         }
+         self.vsb.layout()
+      } 
+
+      if \self.hsb then {
+         if view.w > 0 then
+            self.hsb.set_page_size(view.w)
+         else
+            self.hsb.set_page_size(1)
+         self.hsb.set_total_size(get_subject_width())
+         i := \self.horizontal_increment | get_default_horizontal_increment()
+         self.hsb.set_increment_size(i)
+         if \new_hsb then {
+            self.hsb.set_wheel_component(&null)
+            self.hsb.connect(self.on_hsb, Event.VALUE_CHANGED)
+            self.hsb.set_value(0)
+            self.add(self.hsb)
+            self.hsb.initially()
+         }
+         self.hsb.layout()
+      }
+
+      view.layout()
+   end
+
+   #
+   # Invalidate the view area.
+   #
+   # @p
+   public refresh()
+      view.invalidate()
+   end
+
+   public display(r)
+      local cw
+      border.draw_rect(self.cbwin, self)
+
+      display_children(r)
+
+      if \use_default_keys_flag & self.has_focus() & self.is_unshaded() then {
+         cw := Gui.style.get_focus_clone(self.cbwin)
+         rectangle(cw, self.x, self.y, self.w, self.h)
+         cw.uncouple()
+      }
+   end
+
+   public default_on_key(e)
+      case e.code of {
+         Key.HOME : set_area_y(0)
+         Key.END : set_area_y((\self.vsb).total_size)
+         Key.PGUP : set_area_y(get_area_y() - (\self.vsb).page_size)
+         Key.PGDN : set_area_y(get_area_y() + (\self.vsb).page_size)
+         Key.UP : set_area_y(get_area_y() - (\self.vsb).increment_size)
+         Key.DOWN : set_area_y(get_area_y() + (\self.vsb).increment_size)
+         Key.LEFT : set_area_x(get_area_x() - (\self.hsb).increment_size)
+         Key.RIGHT : set_area_x(get_area_x() + (\self.hsb).increment_size)
+      }
+   end
+
+   public use_default_keys()
+      self.set_accepts_focus(&yes)
+      self.connect(self.default_on_key, Event.KEY_PRESS)
+      self.use_default_keys_flag := 1
+   end
+
+   public keeps(e)
+      return \use_default_keys_flag & member(Key.CURSOR, e.code)
+   end
+
+   #
+   # Return the width of the subject object
+   #
+   public get_subject_width()
+      /self.subject_width := calculate_subject_width()
+      return self.subject_width
+   end
+
+   #
+   # This method must be implemented to compute the subject width.  Because
+   # this is potentially expensive, the value is calculated as late as
+   # possible and the result cached.
+   #
+   public defer calculate_subject_width()
+
+   #
+   # Clear the cached value of subject width.
+   #
+   public invalidate_subject_width()
+      self.subject_width := &null
+   end
+
+   #
+   # Return the height of the subject object
+   #
+   public get_subject_height()
+      /self.subject_height := calculate_subject_height()
+      return self.subject_height
+   end
+
+   #
+   # This method must be implemented to compute the subject width.  Because
+   # this is potentially expensive, the value is calculated as late as
+   # possible and the result cached.
+   #
+   public defer calculate_subject_height()
+
+   #
+   # Clear the cached value of subject height.
+   #
+   public invalidate_subject_height()
+      self.subject_height := &null
+   end
+
+   #
+   # Return the default increment on a line-up/line-down
+   #
+   public defer get_default_vertical_increment()
+
+   #
+   # Return the default increment on a line-left/line-right
+   #
+   public defer get_default_horizontal_increment()
+
+   #
+   # Create the view component
+   #
+   public defer create_view()
+
+   public set_one(f)
+      case f.attr of {
+         "wheel_factor": set_wheel_factor(f.int_val())
+         "vertical_increment" : set_vertical_increment(f.int_val())
+         "horizontal_increment" : set_horizontal_increment(f.int_val())
+         default: return cast(self,Component).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,Component).new()
+      self.set_border(SunkenBorder())
+      self.view := create_view()
+      add(view)
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("y_fill", &yes)
+      self.set_constraint("x_weight", "1")
+      self.set_constraint("y_weight", "1")
+      set_fields(a)
+      return
+   end
+end
+
+
+
+

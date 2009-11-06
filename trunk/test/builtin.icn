@@ -1,0 +1,31 @@
+import lang,io
+
+global l
+
+procedure FncDef(s)
+   put(l, s)
+end
+
+procedure main()
+   local f,s,i
+   l := []
+   $include "../base/h/fdefs.h"
+
+   every f := !l do {
+      yes_no{image(f), f === proc(Proc.get_name(f),0)}
+   }
+
+   every f := Prog.get_functions() do {
+      write(image(f))
+      s := Proc.get_name(f)
+      yes_no{s, f === proc(s,0)}
+   }
+
+   every f := Prog.get_operators() do {
+      write(image(f))
+      s := Proc.get_name(f)
+      i := Proc.get_n_arguments(f)
+      yes_no{s || i, f === proc(s,i)}
+   }
+
+end

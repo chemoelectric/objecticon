@@ -1,0 +1,141 @@
+#
+# $Id$
+#
+
+package util
+
+import ipl.tables
+
+#
+# This class represents a caseless table()
+#
+class ClTable()
+   private 
+      lookup,
+      names
+
+   public insert(key, val)
+      default.insert(lookup, map(key), val)
+      default.insert(names, map(key), key)
+   end
+
+   public member(key)
+      return default.member(lookup, map(key))
+   end
+
+   public delete(key)
+      default.delete(lookup, map(key))
+      default.delete(names, map(key))
+   end
+   
+   public get(key)
+      return lookup[map(key)]
+   end
+
+   public sort()
+      local l, e
+      l := default.sort(lookup)
+      every e := !l do
+         e[1] := names[e[1]]
+      return l
+   end
+
+   #
+   # Generate the keys (cf the builtin key() function.)
+   # @vals - a flag, if non-null then suspend the entries (as variables) too
+   #
+   public key(vals)
+      local t
+      if /vals then
+         suspend .!names
+      else {
+         every t := !names do
+            suspend t | lookup[map(t)]
+      }
+   end
+
+   #
+   # Generate the values (cf !t for a table).
+   #
+   public gen()
+      suspend !lookup
+   end
+
+   #
+   # Generate key-value pairs as a sequence of 2-element lists.  NB - for each
+   # invocation, the same list is returned every time, with the values replaced.
+   #
+   public entries()
+      local e
+      every e := ipl.tables.entries(lookup) do {
+         e[1] := names[e[1]]
+         suspend e
+      }
+   end
+
+   #
+   # Return the size of the table.
+   #
+   public size()
+      return *lookup
+   end
+
+   #
+   # Output object
+   #
+   private object_output(oo)
+      local pairs, e, sep
+      pairs := sort(names)
+      if oo.simple{!!pairs | lookup[[]]} then {
+         oo.object_start(self) | fail
+         if \lookup[[]] then {
+            oo.writes("default=") | fail
+            oo.traverse(lookup[[]]) | fail
+            sep := 1
+         }
+         every e := !pairs do {
+            if \sep then
+               oo.writes(";") | fail
+            oo.traverse(e[1]) | fail
+            oo.writes("->") | fail
+            oo.traverse(e[2]) | fail
+            sep := 1
+         }
+         oo.object_end(self) | fail
+      } else {
+         oo.nl() | fail
+         oo.object_start(self) | fail
+         oo.iplus()
+         if \lookup[[]] then {
+            oo.nl() | fail
+            oo.writes("default=") | fail
+            oo.iplus()
+            oo.traverse(lookup[[]]) | fail
+            oo.iminus()
+         }
+         every e := !pairs do {
+            oo.nl() | fail
+            oo.traverse(e[1]) | fail
+            oo.writes("->") | fail
+            oo.iplus()
+            oo.traverse(e[2]) | fail
+            oo.iminus()
+         }
+         oo.iminus()
+         oo.nl() | fail
+         oo.object_end(self) | fail
+      }
+      return
+   end
+
+   public new(def, entries[])
+      lookup := table(def)
+      names := table()
+      if *entries % 2 ~= 0 then
+          runerr(134)
+      while *entries > 0 do
+         insert(default.get(entries), default.get(entries))
+      return
+   end
+end
+

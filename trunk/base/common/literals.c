@@ -1,0 +1,131 @@
+#include "../h/gsupport.h"
+#include "../h/esctab.h"
+
+/*
+ * Prototypes.
+ */
+static int escape               (char **str_ptr,int *nchars_ptr);
+
+
+/*
+ * Macros used by escape() to advance to the next character and to
+ *  test the kind of character.
+ */
+#define NextChar(c) ((*nchars_ptr)--, c = *(*str_ptr)++)
+#define isoctal(c) ((c)>='0'&&(c)<='7')	/* macro to test for octal digit */
+
+
+
+/*
+ * escape - translate the character sequence following a '\' into the
+ *   single character it represents.
+ */
+static int escape(str_ptr, nchars_ptr)
+char **str_ptr;
+int *nchars_ptr;
+   {
+   register int c, nc, i;
+
+   /*
+    * Note, it is impossible to have a character string ending with a '\',
+    *  something must be here.
+    */
+   NextChar(c);
+   if (isoctal(c)) {
+      /*
+       * translate an octal escape -- backslash followed by one, two, or three
+       *  octal digits.
+       */
+      c -= '0';
+      for (i = 2; *nchars_ptr > 0 && isoctal(**str_ptr) && i <= 3; ++i) {
+         NextChar(nc);
+         c = (c << 3) | (nc - '0');
+         }
+      return (c & 0377);
+      }
+   else if (c == 'x') {
+      /*
+       * translate a hexadecimal escape -- backslash-x followed by one or
+       *  two hexadecimal digits.
+       */
+      c = 0;
+      for (i = 1; *nchars_ptr > 0 && isxdigit((unsigned char)**str_ptr) && i <= 2; ++i) {
+         NextChar(nc);
+         if (nc >= 'a' && nc <= 'f')
+             nc -= 'a' - 10;
+         else if (nc >= 'A' && nc <= 'F')
+            nc -= 'A' - 10;
+         else if (isdigit((unsigned char)nc))
+             nc -= '0';
+         c = (c << 4) | nc;
+         }
+      return c;
+      }
+   else if (c == '^') {
+      /*
+       * translate a control escape -- backslash followed by caret and one
+       *  character.
+       */
+      if (*nchars_ptr <= 0)
+         return 0;           /* could only happen in a keyword */
+      NextChar(c);
+      return (c & 037);
+      }
+   else
+      return esctab[c];
+   }
+
+
+
+/*
+ * prtstr - print an Icon string literal as a C string literal.
+ */
+int prt_i_str(f, s, len)
+FILE *f;
+char *s;
+int len;
+   {
+   int c;
+   int n_chars;
+
+   n_chars = 0;
+   while (len-- > 0) {
+      ++n_chars;
+      c = *s++;
+      if (c == '\\')
+         c = escape(&s, &len);
+      switch (c) {
+         case '\n':
+            fprintf(f, "\\n");
+            break;
+         case '\t':
+            fprintf(f, "\\t");
+            break;
+         case '\v':
+            fprintf(f, "\\v");
+            break;
+         case '\b':
+            fprintf(f, "\\b");
+            break;
+         case '\r':
+            fprintf(f, "\\r");
+            break;
+         case '\f':
+            fprintf(f, "\\f");
+            break;
+         case '\\':
+            fprintf(f, "\\\\");
+            break;
+         case '\"':
+            fprintf(f, "\\\"");
+            break;
+         default:
+            if (isprint((unsigned char)c))
+               fprintf(f, "%c", c);
+            else
+               fprintf(f, "\\%03o", (int)c);
+         }
+      }
+   return n_chars;
+   }
+

@@ -1,0 +1,87 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package xml
+
+#
+# This is a formatter for outputting XML documents in canonical form, which
+# is used for testing purposes.
+#
+class CanonicalXmlFormatter(XmlFormatter)
+   public format_cdata(n)
+      return out.writes(xml_escape(n.content, '\n\r\t&<>\"'))
+   end
+
+   public format_document(n)
+      local el
+      every el := !n.children do {
+         if is(el, DocType | ProcessingInstruction | Element) then
+            format_node(el) | fail
+      }
+      return
+   end
+
+   public format_doctype(n)
+      local s, x
+
+      if *n.parent.notation_declarations = 0 then
+         return
+      
+      s := "<!DOCTYPE " || n.name
+      s ||:= " [\n"
+      every x := !sort(n.parent.notation_declarations) do {
+         s ||:= "<!NOTATION " || x[1] || " "
+         if \x[2].public_id then
+            s ||:= "PUBLIC \'" || x[2].public_id || "\'"
+         else {
+            if \x[2].external_id.public_id then
+               s ||:= "PUBLIC \'" || x[2].external_id.public_id || "\' \'" || x[2].external_id.system_id || "\'"
+            else
+               s ||:= "SYSTEM \'" || x[2].external_id.system_id || "\'"
+         }
+         s ||:= ">\n"
+      }
+      s ||:= "]>\n"
+      return out.writes(s)
+   end
+
+   public format_element(n)
+      local s, x, e
+
+      s := "<" || n.name
+      if *n.attributes > 0 then {
+         s ||:= " "
+         every x := !sort(n.attributes) do {
+            s ||:= x[1] || "=\"" || xml_escape(x[2], '\n\r\t&<>\"') || "\" "
+         }
+         s[-1] := ""
+      }
+      s ||:= ">"
+      out.writes(s) | fail
+      every e := !n.children do {
+         if text(e) then
+            out.writes(xml_escape(e, '\n\r\t&<>\"')) | fail
+         else if not is(e, Comment) then
+            format_node(e) | fail
+      }
+
+      out.writes("</" || n.name || ">") | fail
+
+      return
+   end
+
+   public format_pi(n)
+      local s
+      s := "<?" || n.target || " "
+      if \n.content then
+         s ||:= n.content
+      s ||:= "?>"
+      return out.writes(s)
+   end
+end
+

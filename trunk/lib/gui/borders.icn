@@ -1,0 +1,294 @@
+package gui
+
+import util
+
+#
+# @field x_align=string : see {set_x_align}
+# @field y_align=string : see {set_y_align}
+# @field align=s1,s2 : see {set_align}
+#
+class ABorder(Insets,Align,SetFields)
+   public defer initially(c)
+   public defer draw(W, x, y, w, h)
+
+   public finally()
+   end
+
+   public draw_rect(W, r)
+      self.draw(W, r.x, r.y, r.w, r.h)
+   end
+
+   public draw_rev(W, x, y, w, h)
+      self.draw(W, x, y, w, h)
+   end
+
+   public draw_rev_rect(W, r)
+      self.draw_rev(W, r.x, r.y, r.w, r.h)
+   end
+
+   public draw_focus_rect(W, r)
+      self.draw_focus(W, r.x, r.y, r.w, r.h)
+   end
+
+   public draw_focus(W, x, y, w, h)
+      local cw
+      cw := Gui.style.get_focus_clone(W)
+      rectangle(cw, x, y, w, h)
+      cw.uncouple()
+   end
+
+   #
+   # Take a {Rect}, giving the bordered size, and a {Size}, giving
+   # an object within it, and "float" it within the area in accordance
+   # with the x and y alignment.  A {Point} is returned.
+   #
+   public float(r, s)
+      return get_inner_rect(r).float(s, self)
+   end
+
+   public set_x_align(x)
+      self.x_align := x
+   end
+      
+   public set_y_align(y)
+      self.y_align := y
+   end
+      
+   public set_align(x, y)
+      set_x_align(x)
+      set_y_align(y)
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "x_align" : set_x_align(f.string_val())
+         "y_align" : set_y_align(f.string_val())
+         "align" : set_align!(f.string_list_val(2))
+         default : fail
+      }
+      return
+   end
+
+   public new(a[])
+      x_align := y_align := Align.C
+      set_fields(a)
+      return
+   end
+end
+
+#
+# @field l_inset=integer : see {set_l_inset}
+# @field r_inset=integer : see {set_r_inset}
+# @field t_inset=integer : see {set_t_inset}
+# @field b_inset=integer : see {set_b_inset}
+# @field insets=i1,i2,i3,i4 : see {set_insets}
+# @field flush=: invokes {set_insets(0,0,0,0)}
+# @field see also {ABorder}
+#
+class EmptyBorder(ABorder)
+   public initially(c)
+   end
+
+   public finally()
+   end
+
+   public draw(W, x, y, w, h)
+   end
+
+   public set_insets(l, r, t, b)
+      set_l_inset(l)
+      set_r_inset(r)
+      set_t_inset(t)
+      set_b_inset(b)
+   end
+
+   public set_l_inset(n)
+      self.l_inset := n
+   end
+
+   public set_r_inset(n)
+      self.r_inset := n
+   end
+
+   public set_t_inset(n)
+      self.t_inset := n
+   end
+
+   public set_b_inset(n)
+      self.b_inset := n
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "l_inset" : set_l_inset(f.int_val())
+         "r_inset" : set_r_inset(f.int_val())
+         "t_inset" : set_t_inset(f.int_val())
+         "b_inset" : set_b_inset(f.int_val())
+         "insets" : set_insets!(f.int_list_val(4))
+         "flush" : set_insets(0, 0, 0, 0)
+         default : return cast(self,ABorder).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,ABorder).new()
+      l_inset := r_inset := Gui.X_INSET
+      t_inset := b_inset := Gui.Y_INSET
+      set_fields(a)
+      return
+   end
+end
+
+
+#
+# @field line_width=integer : see {set_line_width}
+# @field see also {ABorder}
+#
+class LineBorder(ABorder)
+   public line_width
+
+   public initially()
+      self.l_inset := self.t_inset := self.r_inset := self.b_inset := line_width
+   end
+
+   public finally()
+   end
+
+   public draw_focus(W, x, y, w, h)
+      local cw
+      cw := Gui.style.get_focus_clone(W)
+      rectangle(cw, 
+                x + line_width + 1, y + line_width + 1, 
+                w - 2 * line_width - 2, h - 2 * line_width - 2)
+      cw.uncouple()
+   end
+
+   public get_line_width()
+      return self.line_width
+   end
+
+   public set_line_width(n)
+      self.line_width := n
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "line_width" : set_line_width(f.int_val())
+         default : return cast(self,ABorder).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,ABorder).new()
+      line_width := Gui.BORDER_WIDTH
+      set_fields(a)
+      return
+   end
+end
+
+
+class RaisedBorder(LineBorder)
+   public draw(W, x, y, w, h)
+      Gui.style.draw_raised_rectangle(W, x, y, w, h, line_width)
+   end
+
+   public draw_rev(W, x, y, w, h)
+      Gui.style.draw_sunken_rectangle(W, x, y, w, h, line_width)
+   end
+end
+
+
+class SunkenBorder(LineBorder)
+   public draw(W, x, y, w, h)
+      Gui.style.draw_sunken_rectangle(W, x, y, w, h, line_width)
+   end
+
+   public draw_rev(W, x, y, w, h)
+      Gui.style.draw_raised_rectangle(W, x, y, w, h, line_width)
+   end
+end
+
+
+class BevelledBorder(LineBorder)
+   public draw(W, x, y, w, h)
+      Gui.style.draw_sunken_rectangle(W, x, y, w, h, line_width / 2)
+      Gui.style.draw_raised_rectangle(W, x + line_width / 2, y + line_width / 2,
+                                  w - line_width, h - line_width, line_width / 2)
+   end
+end
+
+
+class PlainBorder(LineBorder)
+   public draw(W, x, y, w, h)
+      local i
+      every i := 0 to line_width - 1 do
+         rectangle(W, x + i, y + i, w - 2 * i, h - 2 * i)
+   end
+end
+
+
+#
+# @field inner={ABorder} : see {set_inner}
+# @field outer={ABorder} : see {set_outer}
+# @field see also {ABorder}
+#
+class CompoundBorder(ABorder)
+   public
+      outer,
+      inner
+
+   public initially(c)
+      outer.initially(c)
+      inner.initially(c)
+      l_inset := outer.l_inset + inner.l_inset
+      r_inset := outer.r_inset + inner.r_inset
+      t_inset := outer.t_inset + inner.t_inset
+      b_inset := outer.b_inset + inner.b_inset
+   end
+
+   public finally()
+      outer.finally()
+      inner.finally()
+   end
+
+   public draw(W, x, y, w, h)
+      outer.draw(W, x, y, w, h)
+      inner.draw(W, x + outer.l_inset, y + outer.t_inset,
+              w - outer.l_inset - outer.r_inset,
+              h - outer.t_inset - outer.b_inset)
+   end
+
+   public draw_rev(W, x, y, w, h)
+      outer.draw_rev(W, x, y, w, h)
+      inner.draw_rev(W, x + outer.l_inset, y + outer.t_inset,
+                     w - outer.l_inset - outer.r_inset,
+                     h - outer.t_inset - outer.b_inset)
+   end
+
+   public draw_focus(W, x, y, w, h)
+      outer.draw_focus(W, x, y, w, h)
+   end
+
+   public set_inner(inner)
+      self.inner := inner
+   end
+
+   public set_outer(outer)
+      self.outer := outer
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "inner" : set_inner(f.object_val(gui.ABorder))
+         "outer" : set_outer(f.object_val(gui.ABorder))
+         default : return cast(self,ABorder).set_one(f)
+      }
+      return
+   end
+end
+
+
+
+

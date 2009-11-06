@@ -1,0 +1,557 @@
+############################################################################
+#
+#	File:     eventgen.icn
+#
+#	Subject:  Procedures for meta-variant code generation
+#
+#	Author:   Ralph E. Griswold
+#
+#	Date:     May 23, 1996
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#  This program is designed to be linked with the output of the meta-variant
+#  translator.
+#
+#  It is designed to insert event-reporting code in Icon programs.
+#
+############################################################################
+#
+#  Bug:  The invocable declaration is not handled properly.  "invocable all"
+#        will get by, but some other forms produce syntax errors.  The
+#        problem is in the meta-variant translator itself, not in this
+#	 program.
+#
+############################################################################
+#
+#  Links:  strings
+#
+############################################################################
+
+package ipl.eventgen
+
+import
+   io(write),
+   ipl.strings(cat)
+
+global procname
+
+
+#  main() calls tp(), which is produced by the meta-variant
+#  translation.
+
+procedure main(Mp)
+
+   write("$define MAssign 1")
+   write("$define MValue 2")
+   write("procedure noop()")
+   write("end")
+
+   Mp()
+
+end
+
+# e1 | e2
+procedure Alt(e1, e2)			
+
+   return cat("(", e1, "|", e2, ")")
+
+end
+
+# e1 ! e2
+procedure Apply(e1, e2)		
+
+   return cat("(", e1, "!", e2, ")")
+
+end
+
+procedure Arg(e)
+
+   return e
+
+end
+
+# e1 op e2
+procedure Asgnop(op, e1, e2)		
+
+   return cat("2(event(MAssign, ", image(e1) , "), ",
+      e1, " ", op, " ", e2, ", event(MValue, ", e1, "))")
+
+end
+
+# e1 ?:= e2
+procedure Augscan(e1, e2)		
+
+   return cat("(", e1, " ?:= ", e2, ")")
+
+end
+
+# e1 & e2
+procedure Bamper(e1, e2)		
+
+   return cat("(", e1, " & ", e2, ")")
+
+end
+
+# e1 op e2
+procedure Binop(op, e1, e2)		
+
+   return cat("(", e1, " ",  op, " ",  e2, ")")
+
+end
+
+# procedure body
+procedure Body(s[])			
+
+   if procname == "main" then
+      write("   if &source === &main then event := noop")
+
+   every write(!s)
+
+   return
+
+end
+
+# break e
+procedure Break(e)			
+
+   return cat("break ", e)
+
+end
+
+# case e of { caselist }
+procedure Case(e, clist)		
+
+   return cat("case ", e, " of {", clist, "}")
+
+end
+
+# e1 : e2
+procedure Cclause(e1, e2)		
+
+   return cat(e1, " : ", e2, "\n")
+
+end
+
+# e1 ; e2 in case list
+procedure Clist(e1, e2)		
+
+   return cat(e1, ";", e2)
+
+end
+
+# 's'
+procedure Clit(e)			
+
+#  return cat("'", e, "'")
+   return image(e)
+
+end
+
+# { e1; e2; ... }
+procedure Compound(es[])		
+   local result
+
+   if *es = 0 then return "{}\n"
+
+   result := "{\n"
+   every result ||:= !es || "\n"
+
+   return cat(result, "}\n")
+
+end
+
+# create e
+procedure Create(e)			
+
+   return cat("create ", e)
+
+end
+
+# default: e
+procedure Default(e)			
+
+   return cat("default: ", e)
+
+end
+
+# end
+procedure End()			
+
+   write("end")
+
+   return
+
+end
+
+# every e
+procedure Every(e)			
+
+   return cat("every ", e)
+
+end
+
+# every e1 do e2
+procedure EveryDo(e1, e2)		
+
+   return cat("every ", e1, " do ", e2)
+
+end
+
+# fail
+procedure Fail()			
+
+   return "fail"
+
+end
+
+# e . f
+procedure Field(e1, e2)		
+
+   return cat("(", e1, ".", e2, ")")
+
+end
+
+# global v1, v2, ...
+procedure Global(vs[])		
+   local result
+
+   result := ""
+   every result ||:= !vs || ", "
+
+   write("global ", result[1:-2])
+   
+   return
+
+end
+
+# if e1 then e2
+procedure If(e1, e2)			
+
+   return cat("if ", e1, " then ", e2)
+
+end
+
+# if e1 then e2 else e3
+procedure IfElse(e1, e2, e3)		
+
+   return cat("if ", e1, " then ", e2, " else ", e3)
+
+end
+
+# i
+procedure Ilit(e)			
+
+   return e
+
+end
+
+# initial e
+procedure Initial(s)			
+
+   write("initial ", s)
+
+   return
+
+end
+
+# invocable ... (problem)
+procedure Invocable(es[])		
+
+   if \es then write("invocable all")
+   else write("invocable ", es)
+
+   return
+
+end
+
+# e0(e1, e2, ...)
+procedure Invoke(e0, es[])		
+   local result
+
+   if *es = 0 then return cat(e0, "()")
+
+   result := ""
+   every result ||:= !es || ", "
+
+   return cat(e0, "(", result[1:-2], ")")
+
+end
+
+# &s
+procedure Key(s)			
+
+   return cat("&", s)
+
+end
+
+# e1 \ e2
+procedure Limit(e1, e2)		
+
+   return cat("(", e1, "\\", e2, ")")
+
+end
+
+# link "v1, v2, ..."
+procedure Link(vs[])			
+
+   local result
+
+   result := ""
+   every result ||:= !vs || ", "
+
+   write("link ", result[1:-2])
+
+   return
+
+end
+
+# [e1, e2, ... ]
+procedure List(es[])			
+   local result
+
+   if *es = 0 then return "[]"
+
+   result := ""
+   every result ||:= !es || ", "
+
+   return cat("[", result[1:-2], "]")
+
+end
+
+# local v1, v2, ...
+procedure Local(vs[])			
+   local result
+
+   result := ""
+   every result ||:= !vs || ", "
+
+   write("local ", result[1:-2])
+   
+   return
+
+end
+
+# next
+procedure Next()			
+
+   return "next"
+
+end
+
+# not e
+procedure Not(e)			
+
+   return cat("not(", e, ")")
+
+end
+
+# &null
+procedure Null()			
+
+   return ""
+
+end
+
+# (e1, e2, ... )
+procedure Paren(es[])			
+   local result
+
+   if *es = 0 then return "()"
+
+   result := ""
+   every result ||:= !es || ", "
+
+   return cat("(", result[1:-2], ")")
+
+end
+
+# e0{e1, e2, ... }
+procedure Pdco(e0, es[])		
+   local result
+
+   if *es = 0 then return cat(e0, "{}")
+
+   result := ""
+   every result ||:= !es || ", "
+
+   return cat(e0, "{", result[1:-2], "}")
+
+end
+
+# procedure s(v1, v2, ...)
+procedure Proc(s, es[])		
+   local result, e
+
+   if *es = 0 then write("procedure ", s, "()")
+
+   result := ""
+   every e := !es do
+      if \e == "[]" then result[-2:0] := e || ", "
+      else result ||:= (\e | "") || ", "
+
+   write("procedure ", s, "(", result[1:-2], ")")
+
+   procname := s			# needed later
+
+   return
+
+end
+
+# record s(v1, v2, ...)
+procedure Record(s, es[])		
+   local result, field
+
+   if *es = 0 then write("record ", s, "()")
+
+   result := ""
+   every field := !es do
+      result ||:= (\field | "") || ", "
+
+   write("record ", s, "(", result[1:-2], ")")
+
+   return
+
+end
+
+# repeat e
+procedure Repeat(e)			
+
+   return cat("repeat ", e)
+
+end
+
+# return e
+procedure Return(e)			
+
+   return cat("return ", e)
+
+end
+
+procedure Rlit(e)
+
+   return e
+
+end
+
+# e1 ? e2
+procedure Scan(e1, e2)			
+
+   return cat("(", e1 , " ? ", e2, ")")
+
+end
+
+# e1[e2 op  e3]
+procedure Section(op, e1, e2, e3)	
+
+   return cat(e1, "[", e2, op, e3, "]")
+
+end
+
+# "s"
+procedure Slit(s)			
+
+   return image(s)
+
+end
+
+# static v1, v2, ..
+procedure Static(ev[])			
+   local result
+
+   result := ""
+   every result ||:= !ev || ", "
+
+   write("static ", result[1:-2])
+   
+   return
+
+end
+
+# e1[e2]
+procedure Subscript(e1, e2)		
+
+   return cat(e1, "[", e2, "]")
+
+end
+
+# suspend e
+procedure Suspend(e)			
+
+   return cat("suspend ", e)
+
+end
+
+# suspend e1 do e2
+procedure SuspendDo(e1, e2)		
+
+   return cat("suspend ", e1, " do ", e2)
+
+end
+
+# e1 to e2
+procedure To(e1, e2)			
+
+   return cat("(", e1, " to ", e2, ")")
+
+end
+
+# e1 to e2 by e3
+procedure ToBy(e1, e2, e3)		
+
+   return cat("(", e1, " to ", e2, " by ", e3, ")")
+
+end
+
+# |e
+procedure Repalt(e)			
+
+   return cat("(|", e, ")")
+
+end
+
+# op e
+procedure Unop(op, e)			
+
+   return cat("(", op, e, ")")
+
+end
+
+# until e
+procedure Until(e)			
+
+   return cat("until ", e)
+
+end
+
+# until e1 do e2
+procedure UntilDo(e1, e2)		
+
+   return cat("until ", e1, " do ", e2)
+
+end
+
+# v
+procedure Var(s)			
+
+   return s
+
+end
+
+# while e
+procedure While(e)			
+
+   return cat("while ", e)
+
+end
+
+# while e1 do e2
+procedure WhileDo(e1, e2)		
+
+   return cat("while ", e1, " do ", e2)
+
+end

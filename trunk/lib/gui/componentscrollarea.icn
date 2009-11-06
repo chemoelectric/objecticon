@@ -1,0 +1,105 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+class ComponentScrollAreaView(Component)
+   public
+      inner, 
+      inner_w,
+      inner_h
+
+   public initially()
+      \self.inner | runerr("no inner component specified")
+      cast(self,Component).initially()
+   end
+
+   public layout()
+      inner.x := self.x - parent.get_area_x()
+      inner.y := self.y - parent.get_area_y()
+      inner.w := inner_w
+      inner.h := inner_h
+      inner.layout()
+   end
+
+   public size_inner()
+      inner_w := inner.get_preferred_width()
+      inner_h := inner.get_preferred_height()
+   end
+
+   public set_inner(inner)
+      remove(\self.inner)
+      self.inner := inner
+      add(inner)
+   end
+end
+
+
+#
+# This class allows an arbitrary Component to be placed within 
+# the ScrollArea.  The component is set with the {set_inner()}
+# method.
+#
+# @field inner={Component} : see {set_inner}.
+# @ inner may also be passed as the first parameter to the constructor.
+# @field see also {ScrollArea}
+#
+class ComponentScrollArea(ScrollArea)
+   public set_inner(inner)
+      view.set_inner(inner)
+   end
+
+   public layout()
+      view.size_inner()
+      cast(self,ScrollArea).layout()
+   end
+
+   public calculate_subject_width()
+      return view.inner_w 
+   end
+
+   public calculate_subject_height()
+      return view.inner_h
+   end
+
+   public get_default_vertical_increment()
+      return 10
+   end
+
+   public get_default_horizontal_increment()
+      return 10
+   end
+
+   public on_vsb(ev)
+      self.refresh()
+      view.layout()
+   end
+
+   public on_hsb(ev)
+      self.refresh()
+      view.layout()
+   end
+
+   public create_view()
+      return ComponentScrollAreaView()
+   end
+
+   protected set_one(f)
+      case f.attr of {
+         "inner" : set_inner(f.object_val(gui.Component))
+         default: return cast(self,ScrollArea).set_one(f)
+      }
+      return
+   end
+
+   protected set_special(a)
+      if is(a[1], Component) then
+         set_inner(pop(a))
+   end
+end
+

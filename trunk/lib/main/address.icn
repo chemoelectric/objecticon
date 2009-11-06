@@ -1,0 +1,18 @@
+#
+# $Id$
+#
+
+package mail
+
+class Address()
+   public defer to_rfc822()
+
+   public defer generate_mailboxes()
+
+   #
+   # Output object
+   #
+   private object_output(oo)
+      return oo.object_string(self, to_rfc822())
+   end
+end

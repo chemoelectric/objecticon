@@ -1,0 +1,107 @@
+#
+# $Id$
+#
+# This file is in the public domain.
+#
+# Author: Robert Parlett (parlett@dial.pipex.com)
+#
+
+package gui
+
+
+#
+# This is a Spin for numeric values, optionally within a fixed range.
+#
+# @field value=numeric : see {set_value}
+# @field increment_size=numeric : see {set_increment_size}
+# @field range=numeric1,numeric2 : see {set_range}
+# @field see also {EditSpin}
+#
+class RangeSpin(EditSpin)
+   public
+      lo,
+      hi,
+      increment_size
+
+   public do_increment()
+      set_value(get_value() + self.increment_size)
+   end
+
+   public do_decrement()
+      set_value(get_value() - self.increment_size)
+   end
+
+   #
+   # Set the range of allowed values.  The values may
+   # be integer or real.
+   #
+   # @param lo  The lower bound
+   # @param hi  The upper bound
+   #
+   public set_range(lo, hi)
+      self.lo := lo
+      self.hi := hi
+   end
+
+   #
+   # Set the value
+   #
+   public set_value(x)
+      x <:= \self.lo
+      x >:= \self.hi
+      view.set_contents(x)
+   end
+
+   #
+   # Set the increment, ie the amount moved up/down by the buttons.
+   #
+   public set_increment_size(x)
+      self.increment_size := x
+   end
+
+   public on_textfield(ev, src, type)
+      local x
+      if x := get_value() then {
+         if x < \self.lo then
+            view.set_contents(self.lo)
+         else if x > \self.hi then
+            view.set_contents(self.hi)
+      } 
+      cast(self,EditSpin).on_textfield(ev, src, type)
+   end
+
+   #
+   # Return the value, or fail if the value is not presently a valid
+   # numeric value.
+   #
+   public get_value()
+      return numeric(view.get_contents())
+   end
+
+   public get_default_width()
+      local t
+      t := 0
+      # Bit difficult if we don't have a maximum...
+      every t <:= self.cbwin.text_width((view.contents | \self.hi) || " ")
+      return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
+   end
+
+   public set_one(f)
+      case f.attr of {
+         "value" : set_value(f.numeric_val())
+         "increment_size" : set_increment_size(f.numeric_val())
+         "range" : set_range!(f.numeric_list_val(2))
+         default: return cast(self,EditSpin).set_one(f)
+      }
+      return
+   end
+
+   public new(a[])
+      cast(self,EditSpin).new()
+      view.set_filter(&digits ++ '.\-')
+      self.increment_size := 1
+      set_fields(a)
+      return
+   end
+end
+
