@@ -1360,18 +1360,9 @@ dptr dp1, dp2;
                alcstr(StrLoc(*field_name),StrLen(*field_name));
                alcstr(")", 1);
            } else {
-               char *type0;
-               /*
-                * Produce:
-                *  "methp(object objectname#m(n),procedure procname)"
-                *  OR
-                *  "methp(object objectname#m(n),function procname)"
-                */
-               if (proc0->program)
-                   type0 = "procedure ";
-               else
-                   type0 = "function ";
-               len = StrLen(*obj_class->name) + StrLen(*proc0->name) + strlen(sbuf) + strlen(type0) + 14;
+               /* No field - it should only be possible to be the deferred method stub here */
+               char *type0 = proc_kinds[proc0->kind];
+               len = StrLen(*obj_class->name) + StrLen(*proc0->name) + strlen(sbuf) + strlen(type0) + 15;
                MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;
                /* No need to refresh pointers, everything is static data */
@@ -1379,6 +1370,7 @@ dptr dp1, dp2;
                alcstr(StrLoc(*obj_class->name),StrLen(*obj_class->name));
                alcstr(sbuf, strlen(sbuf));
                alcstr(type0, strlen(type0));
+               alcstr(" ", 1);
                alcstr(StrLoc(*proc0->name),StrLen(*proc0->name));
                alcstr(")", 1);
            }

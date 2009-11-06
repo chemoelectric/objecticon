@@ -2944,11 +2944,12 @@ function lang_Proc_get_location_impl(c, flag)
          */
         if (proc0->field && (is:null(flag) ||
                             !(proc0->field->flags & M_Defer))) {
-            if (proc0->program->ClassFieldLocs == proc0->program->EClassFieldLocs) {
+            struct progstate *prog = proc0->field->defining_class->program;
+            if (prog->ClassFieldLocs == prog->EClassFieldLocs) {
                 LitWhy("No field location data in icode");
                 fail;
             }
-            p = &proc0->program->ClassFieldLocs[proc0->field - proc0->program->ClassFields];
+            p = &prog->ClassFieldLocs[proc0->field - prog->ClassFields];
         } else if (!proc0->program) {
             LitWhy("Proc is builtin, has no location");
             fail;
