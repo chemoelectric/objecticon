@@ -7,7 +7,7 @@ Object Icon incorporates some enhancements to Icon's dynamic loading facility wh
 Here is a not-very-useful function to generate the bit positions of ones in an integer (for example 6 is 110, so generates 2, 3).
 
 {{{
-function{*} bits(v)
+function bits(v)
     if !cnv:C_integer(v) then
        runerr(101, v)
     body {
