@@ -2966,6 +2966,15 @@ function lang_Proc_get_location_impl(c, flag)
      }
 end
 
+function lang_Proc_get_kind(c)
+   body {
+        struct b_proc *proc0;
+        if (!(proc0 = get_proc_for(&c)))
+            runerr(0);
+        return C_integer proc0->kind;
+     }
+end
+
 function lang_Proc_get_defining_class(c)
    body {
         struct b_proc *proc0;

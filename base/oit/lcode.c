@@ -936,7 +936,7 @@ static void lemitproc()
     struct lentry *le;
     struct centry *ce;
 
-    size = (22*WordSize) + WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
+    size = (23*WordSize) + WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
     if (loclevel > 1)
         size += 2*WordSize * (curr_lfunc->narguments + curr_lfunc->ndynamic + curr_lfunc->nstatics);
 
@@ -967,6 +967,7 @@ static void lemitproc()
     outwordx(curr_lfunc->defined->package_id, "   Package id");
     outwordx(0, "   Field");
     outsdescrip(ce, "   Procedure name (%s)", p);
+    outwordx(Procedure, "   Kind");
 
     /*
      * Pointers to the tables that follow.

@@ -47,7 +47,7 @@ static word ensure_class_initialized_code[] = {
    Initialized,
    Op_Fail,
 };
-CustomProc(ensure_class_initialized,ensure_class_initialized_code,1,0,0,2,0,1,"internal:ensure_class_initialized")
+CustomProc(ensure_class_initialized,ensure_class_initialized_code,1,0,0,2,0,1,"ensure_class_initialized")
 static word construct_object_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -75,7 +75,7 @@ static word construct_object_code[] = {
    Initialized,
    Op_Fail,
 };
-CustomProc(construct_object,construct_object_code,2,0,1,0,0,1,"internal:construct_object")
+CustomProc(construct_object,construct_object_code,2,0,1,0,0,1,"construct_object")
 static word construct_object0_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -92,14 +92,14 @@ static word construct_object0_code[] = {
    1,
    Op_Fail,
 };
-CustomProc(construct_object0,construct_object0_code,2,0,0,0,0,0,"internal:construct_object0")
+CustomProc(construct_object0,construct_object0_code,2,0,0,0,0,0,"construct_object0")
 static word generate_arg_code[] = {
    Op_Return,
    Op_FrameVar,
    0,
    Op_Fail,
 };
-CustomProc(generate_arg,generate_arg_code,1,0,0,0,0,0,"internal:generate_arg")
+CustomProc(generate_arg,generate_arg_code,1,0,0,0,0,0,"generate_arg")
 static word initialize_class_and_repeat_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -107,7 +107,7 @@ static word initialize_class_and_repeat_code[] = {
    0,
    Op_PopRepeat,
 };
-CustomProc(initialize_class_and_repeat,initialize_class_and_repeat_code,1,0,0,0,0,0,"internal:initialize_class_and_repeat")
+CustomProc(initialize_class_and_repeat,initialize_class_and_repeat_code,1,0,0,0,0,0,"initialize_class_and_repeat")
 static word get_impl_code[] = {
    Op_Custom,
    (word)simple_access,
@@ -128,7 +128,7 @@ static word get_impl_code[] = {
    Op_Int,
    1,
 };
-CustomProc(get_impl,get_impl_code,2,0,0,1,0,0,"internal:get_impl")
+CustomProc(get_impl,get_impl_code,2,0,0,1,0,0,"get_impl")
 static word getf_impl_code[] = {
    Op_Custom,
    (word)simple_access,
@@ -149,7 +149,7 @@ static word getf_impl_code[] = {
    Op_FrameVar,
    2,
 };
-CustomProc(getf_impl,getf_impl_code,3,0,0,1,0,0,"internal:getf_impl")
+CustomProc(getf_impl,getf_impl_code,3,0,0,1,0,0,"getf_impl")
 static word lang_Class_ensure_initialized_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -159,7 +159,7 @@ static word lang_Class_ensure_initialized_impl_code[] = {
    Op_FrameVar,
    0,
 };
-CustomProc(lang_Class_ensure_initialized_impl,lang_Class_ensure_initialized_impl_code,1,0,0,0,0,0,"internal:lang_Class_ensure_initialized_impl")
+CustomProc(lang_Class_ensure_initialized_impl,lang_Class_ensure_initialized_impl_code,1,0,0,0,0,0,"lang_Class_ensure_initialized_impl")
 static word lang_Class_create_raw_impl_code[] = {
    Op_Custom,
    (word)ensure_class_initialized,
@@ -175,4 +175,4 @@ static word lang_Class_create_raw_impl_code[] = {
    Op_Tmp,
    0,
 };
-CustomProc(lang_Class_create_raw_impl,lang_Class_create_raw_impl_code,1,0,0,1,0,0,"internal:lang_Class_create_raw_impl")
+CustomProc(lang_Class_create_raw_impl,lang_Class_create_raw_impl_code,1,0,0,1,0,0,"lang_Class_create_raw_impl")

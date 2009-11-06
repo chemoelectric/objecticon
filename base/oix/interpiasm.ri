@@ -11,7 +11,7 @@ static word cofail_impl_code[] = {
    0,
    Op_CFail,
 };
-CustomProc(cofail_impl,cofail_impl_code,1,0,0,1,0,0,"internal:cofail_impl")
+CustomProc(cofail_impl,cofail_impl_code,1,0,0,1,0,0,"cofail_impl")
 static word lang_Prog_get_event_impl_impl_code[] = {
    Op_Custom,
    (word)activate_child_prog,
@@ -29,4 +29,4 @@ static word lang_Prog_get_event_impl_impl_code[] = {
    1,
    Op_CFail,
 };
-CustomProc(lang_Prog_get_event_impl_impl,lang_Prog_get_event_impl_impl_code,2,0,0,0,0,0,"internal:lang_Prog_get_event_impl_impl")
+CustomProc(lang_Prog_get_event_impl_impl,lang_Prog_get_event_impl_impl_code,2,0,0,0,0,0,"lang_Prog_get_event_impl_impl")

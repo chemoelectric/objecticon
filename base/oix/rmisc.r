@@ -18,6 +18,12 @@ static void	listimage
    (FILE *f,struct b_list *lp, int noimage);
 static char *	csname		(dptr dp);
 
+static char *proc_kinds[] = { "procedure",
+                              "function",
+                              "keyword",
+                              "operator",
+                              "internal"};
+
 
 /* 
  * eq - compare two Icon strings for equality
@@ -612,21 +618,7 @@ int noimage;
              fprintf(f, ".");
              putstr(f, field->defining_class->program->Fnames[field->fnum]);
          } else {
-             /*
-              * Produce one of:
-              *  "procedure name"
-              *  "function name"
-              *  "keyword name"
-              *  "operator name"
-              */
-             if (BlkLoc(*dp)->proc.program)
-                 fprintf(f, "procedure ");
-             else if (isalpha((unsigned char)*StrLoc(*BlkLoc(*dp)->proc.name)))
-                 fprintf(f, "function ");
-             else if (*StrLoc(*BlkLoc(*dp)->proc.name) == '&')
-                 fprintf(f, "keyword ");
-             else
-                 fprintf(f, "operator ");
+             fprintf(f, "%s ", proc_kinds[BlkLoc(*dp)->proc.kind]);
              putstr(f, BlkLoc(*dp)->proc.name);
          }
       }
@@ -1244,28 +1236,12 @@ dptr dp1, dp2;
              alcstr(".", 1);
              alcstr(StrLoc(*field_name),StrLen(*field_name));
          } else {
-             char *type0;
-             /*
-              * Produce one of:
-              *  "procedure name"
-              *  "function name"
-              *  "keyword name"
-              *  "operator name"
-              *
-              */
-             if (BlkLoc(source)->proc.program)
-                 type0 = "procedure ";
-             else if (isalpha((unsigned char)*StrLoc(*BlkLoc(source)->proc.name)))
-                 type0 = "function ";
-             else if (*StrLoc(*BlkLoc(source)->proc.name) == '&')
-                 type0 = "keyword ";
-             else
-                 type0 = "operator ";
-
-             len = strlen(type0) + StrLen(*BlkLoc(source)->proc.name);
+             char *type0 = proc_kinds[BlkLoc(source)->proc.kind];
+             len = strlen(type0) + 1 + StrLen(*BlkLoc(source)->proc.name);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
              StrLen(*dp2) = len;
              alcstr(type0, strlen(type0));
+             alcstr(" ", 1);
              alcstr(StrLoc(*BlkLoc(source)->proc.name), StrLen(*BlkLoc(source)->proc.name));
          }
       }

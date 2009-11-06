@@ -268,6 +268,15 @@
 #define Blocks	3			/* collection is for blocks */
 
 /*
+ * procedure block kinds (b_proc.kind)
+ */
+#define Procedure  0
+#define Function   1
+#define Keyword    2
+#define Operator   3
+#define Internal   4
+
+/*
  * Get type of block pointed at by x.
  */
 #define BlkType(x)   (*(word *)x)
@@ -439,6 +448,7 @@
         underef,\
         0,0,\
       	(dptr)&Cat(f,_name_desc), \
+        Function,\
         0,0};
 
    /*
@@ -458,6 +468,7 @@
         underef,\
         0,0,  \
       	(dptr)&Cat(f,_name_desc), \
+        Operator,\
         0,0};
 
 
@@ -472,6 +483,7 @@
         ntend,\
         0,0,0,  \
       	(dptr)&Cat(f,_name_desc), \
+        Keyword,\
         0,0};
 
    /*

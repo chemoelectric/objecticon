@@ -123,6 +123,7 @@ struct b_proc {			/* procedure block */
                                  *     exception is the deferred method stub, which can be pointed to by
                                  *     many different fields of course. */
     dptr name;              	/*   procedure name (pointer to string qualifier) */
+    word kind;                  /*   kind of procedure */
     dptr *lnames;               /*   list of local names (qualifiers), null for a function */
     struct loc *llocs;	        /*   locations of local names, or null if not available */
 };

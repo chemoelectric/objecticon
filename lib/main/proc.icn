@@ -1,6 +1,21 @@
 package lang
 
 class Proc()
+   public static const
+      Procedure,
+      Function,
+      Keyword,
+      Operator,
+      Internal
+
+   private static init()
+      Procedure := 0
+      Function :=  1
+      Keyword :=   2
+      Operator :=  3
+      Internal :=  4
+   end
+      
    # Return the name of the proc
    #
    public static defer get_name(p, flag)
@@ -27,6 +42,7 @@ class Proc()
    public static defer get_defining_class(p)
    public static defer get_field_name(p)
 
+   public static defer get_kind(p)
    public static defer get_n_locals(p)
    public static defer get_n_arguments(p)
    public static defer has_varargs(p)

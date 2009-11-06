@@ -293,5 +293,6 @@ typedef int siptr, stringint, inst;
         nclo,ntmp,nlab,nmark,\
         0,0,0,0,0,\
       	(dptr)&Cat(f,_name_desc), \
+        Internal,\
         0,0};
    
