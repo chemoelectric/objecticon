@@ -45,7 +45,6 @@ Xpm                    : yes
 zlib compression       : yes
 dynamic loading        : yes
 mysql lib              : yes
-context switch         : config/system/linux_x86/rswitch.s
 }}}
 
 The meaning of these various options is as follows.
@@ -58,7 +57,6 @@ The meaning of these various options is as follows.
  * *zlib compression* - This allows icode files to be compressed with the -Z flag given to `oit`.
  * *dynamic loading* -Allows shared library (.so) files containing native functions to be loaded at runtime.
  * *mysql lib* -Allows a dynamic library to be built which provides an interface to mysql.  Has no effect either way on the runtime system proper.
- * *context switch* -This is a system-dependent source file which is used by co-expressions.  If the value is {{{config/system/default/rswitch.c}}}, then co-expressions will not be functional (activation will end with a runtime error).
 
 == Compilation ==
 After running `configure` successfully, just run the command
