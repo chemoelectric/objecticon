@@ -68,14 +68,3 @@ struct token *name;
    free_t(name);
    }
 
-/*
- * set_r_seq - save result sequence information for updating the
- *  operation entry.
- */
-void set_r_seq(min, max, resume)
-long min;
-long max;
-int resume;
-   {
-   }
-

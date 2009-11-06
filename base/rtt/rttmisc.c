@@ -25,41 +25,6 @@ void clr_def()
    abs_ret = SomeType;
    }
 
-/*
- * ttol - convert a token representing an integer constant into a long
- *  integer value.
- */
-long ttol(t)
-struct token *t;
-{
-   register long i;
-   register char *s;
-   int base;
-
-   s = t->image;
-   i = 0;
-   base = 10;
-
-   if (*s == '0') {
-      base = 8;
-      ++s;
-      if (*s == 'x') {
-         base = 16;
-         ++s;
-         }
-      }
-   while (*s != '\0') {
-      i *= base;
-      if (*s >= '0' && *s <= '9')
-         i += *s++ - '0';
-      else if (*s >= 'a' && *s <= 'f')
-         i += *s++ - 'a' + 10;
-      else if (*s >= 'A' && *s <= 'F')
-         i += *s++ - 'A' + 10;
-      }
-   return i;
-   }
-
 struct token *chk_exct(tok)
 struct token *tok;
    {
