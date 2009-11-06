@@ -1,0 +1,187 @@
+#summary List of keywords
+<wiki:toc max_depth="3" />
+= Introduction =
+
+This page lists Object Icon's builtin keywords.
+
+== &ascii ==
+`&ascii : c`
+
+The cset of ascii characters.
+
+== &clock ==
+`&clock : s`
+
+The current time of day, for example "15:38:27".
+
+== &cset ==
+`&cset : c`
+
+The cset of all 8-bit characters.
+
+== &current ==
+`&current : C`
+
+The current co-expression
+
+== &date ==
+`&date : s`
+
+The current date in the formay "yyyy/mm/dd"; for example "2009/11/06".
+
+== &dateline ==
+`&dateline : s`
+
+The current date and time, for example "Friday, November 6, 2009  3:38 pm".
+
+== &digits ==
+`&digits : c`
+
+The cset of digits 0-9
+
+== &dump ==
+`&dump : i`
+
+If non-zero, causes dump on termination
+
+== &error ==
+`&error : i`
+
+If non-zero, non-fatal run-time errors are converted to failure, setting `&errornumber`, `&errortext` and `&errorvalue`.
+
+== &errornumber ==
+`&errornumber : i`
+
+Run-time error number
+
+== &errortext ==
+`&errortext : s`
+
+Run-time error message text
+
+== &errorvalue ==
+`&errorvalue : x`
+
+Run-time error offending value
+
+== &fail ==
+`&fail`
+
+Simply fails.
+
+== &features ==
+`&features : s1,s2,...,sn`
+
+Generate a sequence of strings describing implementation features
+
+== &file ==
+`&file : s`
+
+The current source code file name
+
+== &host ==
+`&host : s`
+
+A string identifying the host computer
+
+== &lcase ==
+`&lcase : c`
+
+The cset of lower case letters a-z
+
+== &letters ==
+`&letters : c`
+
+The cset of all letters A-Za-z
+
+== &level ==
+`&level : i`
+
+The level of current procedure call
+
+== &line ==
+`&line : i`
+
+The current source code line number
+
+== &main ==
+`&main : C`
+
+The main co-expression
+
+== &maxlevel ==
+`&maxlevel : i`
+
+The maximum allowed procedure call depth, ie the maximum allowed value of `&level`.
+
+== &no ==
+`&no : n`
+
+A constant for representing "false", "off" etc.  It has the null value
+
+== &null ==
+`&null : n`
+
+The null value
+
+== &pos ==
+`&pos : i`
+
+String scanning position
+
+== &progname ==
+`&progname : s`
+
+The file name of the executing program
+
+== &random ==
+`&random : i`
+
+Random number seed
+
+== &source ==
+`&source : C`
+
+The activator of current co-expression
+
+== &subject ==
+`&subject : s`
+
+String scanning subject
+
+== &time ==
+`&time : i`
+
+Current run time in milliseconds
+
+== &trace ==
+`&trace : i`
+
+If non-zero, trace procedure calls
+
+== &ucase ==
+`&ucase : c`
+
+The cset of upper case letters A-Z
+
+== &uset ==
+`&uset : c`
+
+The cset of all unicode codepoints
+
+== &version ==
+`&version : s`
+
+String describing the veersion of Object Icon
+
+== &why ==
+`&why : s`
+
+Reason for failure
+
+== &yes ==
+`&yes : i`
+
+A constant for representing "true", "on" etc.  It has the value 1.
+
+
