@@ -137,7 +137,7 @@ class Encode(SetFields)
    private get_proc_code(f)
       local s, j
       image(f) ? {
-         if ="function " then
+         if =("function " | "keyword ") then
             s := 0
          else if ="operator " then 
             s := string(Proc.get_n_arguments(f))

@@ -616,11 +616,15 @@ int noimage;
               * Produce one of:
               *  "procedure name"
               *  "function name"
+              *  "keyword name"
+              *  "operator name"
               */
              if (BlkLoc(*dp)->proc.program)
                  fprintf(f, "procedure ");
              else if (isalpha((unsigned char)*StrLoc(*BlkLoc(*dp)->proc.name)))
                  fprintf(f, "function ");
+             else if (*StrLoc(*BlkLoc(*dp)->proc.name) == '&')
+                 fprintf(f, "keyword ");
              else
                  fprintf(f, "operator ");
              putstr(f, BlkLoc(*dp)->proc.name);
@@ -1245,6 +1249,7 @@ dptr dp1, dp2;
               * Produce one of:
               *  "procedure name"
               *  "function name"
+              *  "keyword name"
               *  "operator name"
               *
               */
@@ -1252,6 +1257,8 @@ dptr dp1, dp2;
                  type0 = "procedure ";
              else if (isalpha((unsigned char)*StrLoc(*BlkLoc(source)->proc.name)))
                  type0 = "function ";
+             else if (*StrLoc(*BlkLoc(source)->proc.name) == '&')
+                 type0 = "keyword ";
              else
                  type0 = "operator ";
 

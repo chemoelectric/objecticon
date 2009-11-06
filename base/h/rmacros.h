@@ -462,7 +462,7 @@
 
 
    #define KeywordBlock(f,ntend) \
-        static struct sdescrip Cat(f,_name_desc) = {sizeof("keyword:" Lit(f))-1, "keyword:" Lit(f)}; \
+        static struct sdescrip Cat(f,_name_desc) = {sizeof("&" Lit(f))-1, "&" Lit(f)}; \
    	struct b_proc Cat(L,f) = {\
    	T_Proc,\
    	sizeof(struct b_proc),\
