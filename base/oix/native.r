@@ -2860,7 +2860,7 @@ function lang_Proc_get_local_name(c, id)
      }
 end
 
-function lang_Proc_get_local_type(c, id)
+function lang_Proc_get_local_kind(c, id)
    body {
         struct b_proc *proc0;
         int i;
@@ -2871,10 +2871,10 @@ function lang_Proc_get_local_type(c, id)
         if (i < 0)
             fail;
         if (i < proc0->nparam)
-            return C_integer 1;
+            return C_integer 0;
         if (i < proc0->nparam + proc0->ndynam)
-            return C_integer 2;
-        return C_integer 3;
+            return C_integer 1;
+        return C_integer 2;
      }
 end
 

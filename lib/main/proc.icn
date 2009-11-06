@@ -6,14 +6,22 @@ class Proc()
       Function,
       Keyword,
       Operator,
-      Internal
+      Internal,
+      Argument,
+      Dynamic,
+      Static
 
    private static init()
+      # Kinds of procedure
       Procedure := 0
       Function :=  1
       Keyword :=   2
       Operator :=  3
       Internal :=  4
+      # Types of local variable
+      Argument := 0
+      Dynamic := 1
+      Static := 2
    end
       
    # Return the name of the proc
@@ -42,7 +50,16 @@ class Proc()
    public static defer get_defining_class(p)
    public static defer get_field_name(p)
 
+   #
+   # Return the kind of this procedure, which is one of the constants :-
+   #  {Procedure} for a procedure or method defined in an icon source file
+   #  {Function} a builtin function like {upto}
+   #  {Keyword} a keyword function, obtained via proc, eg, proc("&why")
+   #  {Operator} an operator function, obtained via proc, eg, proc(":=")
+   #  {Internal} an internally used block of VM instructions.
+   #
    public static defer get_kind(p)
+
    public static defer get_n_locals(p)
    public static defer get_n_arguments(p)
    public static defer has_varargs(p)
@@ -57,7 +74,12 @@ class Proc()
 
    private static defer get_local_location_impl(p, id)
    public static defer get_local_name(p, id)
-   public static defer get_local_type(p, id)
+
+   #
+   # Return the type of the given local, which is one of the constants
+   # {Argument}, {Dynamic} or {Static}.
+   #
+   public static defer get_local_kind(p, id)
 
    # load C function dynamically.
    public static defer load(filename, funcname)
