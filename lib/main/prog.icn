@@ -36,6 +36,11 @@ class Prog()
    public static defer get_operators()
 
    #
+   # Generate the builtin keywords (as invocable functions).
+   #
+   public static defer get_keywords()
+
+   #
    # Get the location of global {s} in program P, if that data is
    # available.
    # @return a {Location} instance

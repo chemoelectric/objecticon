@@ -43,12 +43,20 @@ struct b_proc *op_tbl[] = {
 /*
  * function table
  */
-
 #define FncDef(f)  Cat(&B,f),
 struct b_proc *fnc_tbl[] = {
 #include "../h/fdefs.h"
 };
 #undef FncDef
+
+/*
+ * keyword table
+ */
+#define KDef(p,n) Cat(&L,p),
+struct b_proc *keyword_tbl[] = {
+#include "../h/kdefs.h"
+};
+#undef KDef
 
 /*
  * Map from opcode to procedure block
@@ -189,6 +197,7 @@ struct region rootstring, rootblock;
 
 int op_tbl_sz = ElemCount(op_tbl);
 int fnc_tbl_sz = ElemCount(fnc_tbl);
+int keyword_tbl_sz = ElemCount(keyword_tbl);
 
 
 struct progstate *curpstate;

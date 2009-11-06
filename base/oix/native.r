@@ -499,7 +499,18 @@ function lang_Prog_get_operators()
       fail;
       }
 end
-
+
+function lang_Prog_get_keywords()
+   body {
+      register int i;
+
+      for (i = 0; i < keyword_tbl_sz; ++i)
+          suspend proc(keyword_tbl[i]);
+
+      fail;
+      }
+end
+
 
 function lang_Prog_get_global_location_impl(s, c)
    if !cnv:string(s) then

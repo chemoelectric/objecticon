@@ -807,6 +807,15 @@ C_integer arity;
    if (pp)
        return *pp;
 
+   /*
+    * See if the string represents a keyword function.
+    */
+   pp = (struct b_proc **)bsearch(s, keyword_tbl, keyword_tbl_sz,
+                                  sizeof(struct b_proc *), 
+                                  (BSearchFncCast)dp_pnmcmp);
+   if (pp)
+       return *pp;
+
    return NULL;
    }
 

@@ -335,7 +335,7 @@ end
 "&yes - the standard flag value for yes."
 keyword yes
    body {
-      return C_integer 1;
+    return onedesc;
       }
 end
 
