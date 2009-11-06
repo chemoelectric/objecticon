@@ -96,6 +96,7 @@ static void fold_to(struct lnode *n);
 static void fold_toby(struct lnode *n);
 static void fold_invoke(struct lnode *n);
 static void fold_apply(struct lnode *n);
+static void fold_keyword(struct lnode *n);
 
 static int over_flow;
 static word add(word a, word b);
@@ -114,6 +115,14 @@ static int cset_size(struct rangeset *rs);
 static int ucs_length(char *utf8, int utf8_len);
 
 static struct str_buf opt_sbuf;
+
+static struct rangeset *k_ascii_rangeset;
+static struct rangeset *k_cset_rangeset;
+static struct rangeset *k_lcase_rangeset;
+static struct rangeset *k_letters_rangeset;
+static struct rangeset *k_ucase_rangeset;
+static struct rangeset *k_uset_rangeset;
+static struct rangeset *k_digits_rangeset;
 
 static int fold_consts(struct lnode *n)
 {
@@ -376,6 +385,11 @@ static int fold_consts(struct lnode *n)
 
         case Uop_Plus: {
             fold_plus(n);
+            break;
+        }
+
+        case Uop_Keyword: {
+            fold_keyword(n);
             break;
         }
     }
@@ -676,8 +690,34 @@ static void compute_class_consts()
     }
 }
 
+static void init_rangesets()
+{
+    MemProtect(k_ascii_rangeset = init_rangeset());
+    add_range(k_ascii_rangeset, 0, 127);
+
+    MemProtect(k_cset_rangeset = init_rangeset());
+    add_range(k_cset_rangeset, 0, 255);
+
+    MemProtect(k_lcase_rangeset = init_rangeset());
+    add_range(k_lcase_rangeset, 'a', 'z');
+
+    MemProtect(k_letters_rangeset = init_rangeset());
+    add_range(k_letters_rangeset, 'A', 'Z');
+    add_range(k_letters_rangeset, 'a', 'z');
+
+    MemProtect(k_ucase_rangeset = init_rangeset());
+    add_range(k_ucase_rangeset, 'A', 'Z');
+
+    MemProtect(k_uset_rangeset = init_rangeset());
+    add_range(k_uset_rangeset, 0, MAX_CODE_POINT);
+                
+    MemProtect(k_digits_rangeset = init_rangeset());
+    add_range(k_digits_rangeset, '0', '9');
+}
+
 void optimize()
 {
+    init_rangesets();
     visit_post(compute_global_pure);
     compute_class_consts();
     visit_post(fold_consts);
@@ -2429,6 +2469,67 @@ static void fold_value(struct lnode *n)
     free_literal(&l);
 }
 
+static void replace_cset_keyword(struct lnode *n, struct rangeset *rs)
+{
+    int len;
+    len = rs->n_ranges * sizeof(struct range);
+    replace_node(n, (struct lnode*)
+                 lnode_const(&n->loc,
+                             new_constant(F_CsetLit, 
+                                          intern_n((char *)rs->range, len),
+                                          len)));
+}
+
+static void fold_keyword(struct lnode *n)
+{
+    struct lnode_keyword *x = (struct lnode_keyword *)n;
+
+    switch (x->num) {
+        case K_NO: {
+            replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_NULL));
+            break;
+        }
+
+        case K_YES: {
+            word w = 1;
+            replace_node(n, (struct lnode*)
+                         lnode_const(&n->loc,
+                                     new_constant(F_IntLit, 
+                                                  intern_n((char *)&w, sizeof(word)), 
+                                                  sizeof(word))));
+            break;
+        }
+
+        case K_ASCII:
+            replace_cset_keyword(n, k_ascii_rangeset);
+            break;
+
+        case K_CSET:
+            replace_cset_keyword(n, k_cset_rangeset);
+            break;
+
+        case K_LCASE:
+            replace_cset_keyword(n, k_lcase_rangeset);
+            break;
+
+        case K_LETTERS:
+            replace_cset_keyword(n, k_letters_rangeset);
+            break;
+
+        case K_UCASE:
+            replace_cset_keyword(n, k_ucase_rangeset);
+            break;
+
+        case K_USET:
+            replace_cset_keyword(n, k_uset_rangeset);
+            break;
+
+        case K_DIGITS:
+            replace_cset_keyword(n, k_digits_rangeset);
+            break;
+    }
+}
+
 static void fold_number(struct lnode *n)
 {
     struct lnode_1 *x = (struct lnode_1 *)n;
@@ -2944,57 +3045,8 @@ static int get_literal(struct lnode *n, struct literal *l)
     else if (n->op == Uop_Keyword) {
         int k = ((struct lnode_keyword *)n)->num;
         switch (k) {
-            case K_ASCII: {
-                l->type = CSET;
-                MemProtect(l->u.rs = init_rangeset());
-                add_range(l->u.rs, 0, 127);
-                return 1;
-            }
-            case K_CSET: {
-                l->type = CSET;
-                MemProtect(l->u.rs = init_rangeset());
-                add_range(l->u.rs, 0, 255);
-                return 1;
-            }
-            case K_DIGITS: {
-                l->type = CSET;
-                MemProtect(l->u.rs = init_rangeset());
-                add_range(l->u.rs, '0', '9');
-                return 1;
-            }
-            case K_LCASE: {
-                l->type = CSET;
-                MemProtect(l->u.rs = init_rangeset());
-                add_range(l->u.rs, 'a', 'z');
-                return 1;
-            }
-            case K_LETTERS: {
-                l->type = CSET;
-                MemProtect(l->u.rs = init_rangeset());
-                add_range(l->u.rs, 'A', 'Z');
-                add_range(l->u.rs, 'a', 'z');
-                return 1;
-            }
-            case K_UCASE: {
-                l->type = CSET;
-                MemProtect(l->u.rs = init_rangeset());
-                add_range(l->u.rs, 'A', 'Z');
-                return 1;
-            }
-            case K_USET: {
-                l->type = CSET;
-                MemProtect(l->u.rs = init_rangeset());
-                add_range(l->u.rs, 0, MAX_CODE_POINT);
-                return 1;
-            }
-            case K_NO:
             case K_NULL: {
                 l->type = NUL;
-                return 1;
-            }
-            case K_YES: {
-                l->type = INTEGER;
-                l->u.i = 1;
                 return 1;
             }
             case K_FAIL: {
