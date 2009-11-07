@@ -7,40 +7,40 @@ package lang
 class Class()
    public static const 
       # Integer flag for a method
-      M_Method,
+      Method,
       # Integer flag for a private field
-      M_Private,
+      Private,
       # Integer flag for a public field
-      M_Public,
+      Public,
       # Integer flag for a protected field
-      M_Protected,
+      Protected,
       # Integer flag for a package field
-      M_Package,
+      Package,
       # Integer flag for a static field
-      M_Static,
+      Static,
       # Integer flag for a constant field
-      M_Const,
+      Const,
       # Integer flag for a readable field
-      M_Readable,
+      Readable,
       # Integer flag for a deferred method
-      M_Defer, 
+      Defer, 
       # Integer flag for a final method or class
-      M_Final,
+      Final,
       # Integer flag for a special method, ie init or new.
-      M_Special
+      Special
 
    private static init()
-      M_Method := 8r01
-      M_Private := 8r02
-      M_Public := 8r04
-      M_Protected := 8r010
-      M_Package := 8r020
-      M_Static := 8r040
-      M_Const := 8r0100
-      M_Readable := 8r0200
-      M_Defer := 8r0400
-      M_Final := 8r01000
-      M_Special := 8r02000
+      Method := 8r01
+      Private := 8r02
+      Public := 8r04
+      Protected := 8r010
+      Package := 8r020
+      Static := 8r040
+      Const := 8r0100
+      Readable := 8r0200
+      Defer := 8r0400
+      Final := 8r01000
+      Special := 8r02000
    end
 
    private static defer create_raw(c)
@@ -97,7 +97,7 @@ class Class()
    public static defer get_n_fields(c)
 
    # Return the flags for the class {c}, which in fact can only be
-   # zero or {M_Final}, for a final class.
+   # zero or {Final}, for a final class.
    #
    public static defer get_class_flags(c)
 

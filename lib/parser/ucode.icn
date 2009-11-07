@@ -309,7 +309,7 @@ class UReader()
             UcodeOp.Classfield: {
                n := uin_32() | fail
                s := uin_str() | fail
-               if iand(n, lang.Class.M_Method) ~= 0 then {
+               if iand(n, lang.Class.Method) ~= 0 then {
                   curr_func := UMethod(s, file, line, n)
                   curr_class.add_field(curr_func)
                } else
