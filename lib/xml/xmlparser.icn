@@ -297,7 +297,7 @@ class XmlParser(Connectable,SetFields)
    #
    private parse_name(quiet)
       if any(XML_NAME_START) then
-         return move(1) || tab(many_star(XML_NAME_CHAR))
+         return move(1) || tab(opt(XML_NAME_CHAR))
       else
          return /quiet & err("Valid name start character expected")
    end
@@ -307,7 +307,7 @@ class XmlParser(Connectable,SetFields)
    #
    private dtd_parse_name()
       dtd_any(XML_NAME_START) | return err("Valid name start character expected")
-      return move(1) ||  tab(dtd_many_star(XML_NAME_CHAR))
+      return move(1) ||  tab(dtd_opt(XML_NAME_CHAR))
    end
 
    #
@@ -1132,7 +1132,7 @@ class XmlParser(Connectable,SetFields)
       else if dtd_match("(") then {
          # Awkward lookahead.
          i := &pos
-         if tab(dtd_match("(")) & tab(dtd_many_star(XML_SPACE)) & dtd_match("#PCDATA") then {
+         if tab(dtd_match("(")) & tab(dtd_opt(XML_SPACE)) & dtd_match("#PCDATA") then {
             tab(i)
             return parse_mixed()
          } else {
@@ -2127,9 +2127,9 @@ class XmlParser(Connectable,SetFields)
    end
 
    #
-   # Equivalent to many_star(), but checks for pe expansions
+   # Equivalent to opt(), but checks for pe expansions
    #
-   private dtd_many_star(c)
+   private dtd_opt(c)
       if dtd_any(c) then
          return dtd_many(c)
       else

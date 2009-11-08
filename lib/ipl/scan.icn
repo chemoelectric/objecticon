@@ -533,7 +533,7 @@ end
 # Like many, but succeeds with empty result if zero matching char. Many needs
 # one or more.
 #
-procedure many_star(c)
+procedure opt(c)
    if any(c) then
       return many(c)
    else
