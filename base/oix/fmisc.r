@@ -132,7 +132,7 @@ function display(i,c)
 
       if (!is:null(c)) {
          if (!is:coexpr(c)) runerr(118,c);
-         else if (BlkLoc(c) != (union block *)k_current)
+         else if (&CoexprBlk(c) != k_current)
             ce = &CoexprBlk(c);
       }
 
@@ -549,7 +549,7 @@ function sort(t, i)
             register dptr d1;
             register word size;
             tended struct b_list *lp;
-            union block *bp;
+            struct b_record *bp;
             register int i;
             /*
              * Create a list the size of the record, copy each element into
@@ -560,12 +560,12 @@ function sort(t, i)
 
             MemProtect(lp = alclist_raw(size, size));
 
-            bp = BlkLoc(t);  /* need not be tended if not set until now */
+            bp = &RecordBlk(t);  /* need not be tended if not set until now */
 
             if (size > 0) {  /* only need to sort non-empty records */
                d1 = lp->listhead->lelem.lslots;
                for (i = 0; i < size; i++)
-                  *d1++ = bp->record.fields[i];
+                  *d1++ = bp->fields[i];
                qsort((char *)lp->listhead->lelem.lslots,(int)size,
                      sizeof(struct descrip),(QSortFncCast)anycmp);
                }
@@ -581,7 +581,8 @@ function sort(t, i)
             register word size;
             register int j, k;
             tended struct b_list *lp;
-            union block *ep, *bp;
+            struct b_set *bp;
+            union block *ep;
             register struct b_slots *seg;
             /*
              * Create a list the size of the set, copy each element into
@@ -592,11 +593,11 @@ function sort(t, i)
 
             MemProtect(lp = alclist(size, size));
 
-            bp = BlkLoc(t);  /* need not be tended if not set until now */
+            bp = &SetBlk(t);  /* need not be tended if not set until now */
 
             if (size > 0) {  /* only need to sort non-empty sets */
                d1 = lp->listhead->lelem.lslots;
-               for (j=0; j < HSegs && (seg = bp->table.hdir[j]) != NULL; j++)
+               for (j=0; j < HSegs && (seg = bp->hdir[j]) != NULL; j++)
                   for (k = segsize[j] - 1; k >= 0; k--)
                      for (ep= seg->hslots[k]; ep != NULL; ep= ep->telem.clink)
                         *d1++ = ep->selem.setmem;
@@ -860,7 +861,7 @@ function sortf(t, i)
          dptr d1;
          word size;
          tended struct b_list *lp;
-         union block *bp;
+         struct b_record *bp;
          int j;
 
          /*
@@ -872,12 +873,12 @@ function sortf(t, i)
 
          MemProtect(lp = alclist_raw(size, size));
 
-         bp = BlkLoc(t);  /* need not be tended if not set until now */
+         bp = &RecordBlk(t);  /* need not be tended if not set until now */
 
          if (size > 0) {  /* only need to sort non-empty records */
              d1 = lp->listhead->lelem.lslots;
              for (j = 0; j < size; j++)
-                 *d1++ = bp->record.fields[j];
+                 *d1++ = bp->fields[j];
              sort_field = i;
              qsort((char *)lp->listhead->lelem.lslots,(int)size,
                    sizeof(struct descrip),(QSortFncCast)nthcmp);
@@ -892,7 +893,8 @@ function sortf(t, i)
          word size;
          int j, k;
          tended struct b_list *lp;
-         union block *ep, *bp;
+         union block *ep;
+         struct b_set *bp;
          struct b_slots *seg;
 
          /*
@@ -904,11 +906,11 @@ function sortf(t, i)
 
          MemProtect(lp = alclist(size, size));
 
-         bp = BlkLoc(t);  /* need not be tended if not set until now */
+         bp = &SetBlk(t);  /* need not be tended if not set until now */
 
          if (size > 0) {  /* only need to sort non-empty sets */
              d1 = lp->listhead->lelem.lslots;
-             for (j = 0; j < HSegs && (seg = bp->table.hdir[j]) != NULL; j++)
+             for (j = 0; j < HSegs && (seg = bp->hdir[j]) != NULL; j++)
                  for (k = segsize[j] - 1; k >= 0; k--)
                      for (ep = seg->hslots[k]; ep != NULL; ep= ep->telem.clink)
                          *d1++ = ep->selem.setmem;
