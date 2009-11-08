@@ -149,7 +149,12 @@ class Encode(SetFields)
                return error("Can only encode a public static method")
             s := "M"
          }
-         else syserr("Not a proc")
+         else if ="deferred" then
+            return error("Can't encode a deferred method")
+         else if ="internal" then
+            return error("Can't encode an internal procedure")
+         else 
+            syserr("Not a proc")
          return s || tab(0)
       }
    end

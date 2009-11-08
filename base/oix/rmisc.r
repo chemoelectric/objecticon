@@ -617,7 +617,9 @@ int noimage;
              putstr(f, field->defining_class->name);
              fprintf(f, ".");
              putstr(f, field->defining_class->program->Fnames[field->fnum]);
-         } else {
+         } else if (&BlkLoc(*dp)->proc == &Bdeferred_method_stub)
+             fprintf(f, "deferred method");
+         else {
              fprintf(f, "%s ", proc_kinds[BlkLoc(*dp)->proc.kind]);
              putstr(f, BlkLoc(*dp)->proc.name);
          }
@@ -1235,7 +1237,9 @@ dptr dp1, dp2;
              alcstr(StrLoc(*field_class->name),StrLen(*field_class->name));
              alcstr(".", 1);
              alcstr(StrLoc(*field_name),StrLen(*field_name));
-         } else {
+         } else if (&BlkLoc(source)->proc == &Bdeferred_method_stub)
+             LitStr("deferred method", dp2);
+         else {
              char *type0 = proc_kinds[BlkLoc(source)->proc.kind];
              len = strlen(type0) + 1 + StrLen(*BlkLoc(source)->proc.name);
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
@@ -1361,18 +1365,16 @@ dptr dp1, dp2;
                alcstr(")", 1);
            } else {
                /* No field - it should only be possible to be the deferred method stub here */
-               char *type0 = proc_kinds[proc0->kind];
-               len = StrLen(*obj_class->name) + StrLen(*proc0->name) + strlen(sbuf) + strlen(type0) + 15;
+               if (proc0 != &Bdeferred_method_stub)
+                   syserr("Expected deferred_method_stub");
+               len = StrLen(*obj_class->name) + strlen(sbuf) + 29;
                MemProtect (StrLoc(*dp2) = reserve(Strings, len));
                StrLen(*dp2) = len;
                /* No need to refresh pointers, everything is static data */
                alcstr("methp(object ", 13);
-               alcstr(StrLoc(*obj_class->name),StrLen(*obj_class->name));
+               alcstr(StrLoc(*obj_class->name), StrLen(*obj_class->name));
                alcstr(sbuf, strlen(sbuf));
-               alcstr(type0, strlen(type0));
-               alcstr(" ", 1);
-               alcstr(StrLoc(*proc0->name),StrLen(*proc0->name));
-               alcstr(")", 1);
+               alcstr("deferred method)", 16);
            }
        }
 
@@ -1414,7 +1416,6 @@ dptr dp1, dp2;
 
       default:
          syserr("Invalid type to getimage");
-
       }
    }
 
